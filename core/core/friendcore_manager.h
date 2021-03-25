@@ -139,6 +139,8 @@ typedef struct FriendCoreManager
 	FBOOL						fcm_DisableMobileWS;
 	FBOOL						fcm_DisableExternalWS;
 	FBOOL						fcm_WSExtendedDebug;
+	int							fcm_WSTimeout;
+	int							fcm_WSPingPongInterval;
 }FriendCoreManager;
 
 //

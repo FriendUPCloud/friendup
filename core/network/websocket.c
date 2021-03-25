@@ -273,9 +273,11 @@ int WebSocketStart( WebSocket *ws )
  * @param sslOn TRUE when WS must be secured through SSL, otherwise FALSE
  * @param proto protocols
  * @param extDebug enable extended debug
+ * @param timeout Websockets timeout
+ * @param ppinterval ping pong interval. If set to 0 internal ping-pong will not be enabled
  * @return pointer to new WebSocket structure, otherwise NULL
  */
-WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extDebug )
+WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extDebug, int timeout, int ppinterval )
 {
 	WebSocket *ws = NULL;
 	SystemBase *lsb = (SystemBase *)sb;
@@ -335,8 +337,11 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 		ws->ws_Info.options = ws->ws_Opts;// | LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT;
 		//ws->ws_Info.timeout_secs = 120;
 		//ws->ws_Info.timeout_secs_ah_idle = 90;
-		ws->ws_Info.ws_ping_pong_interval = 5;
-		ws->ws_Info.timeout_secs = 5;
+		ws->ws_Info.ws_ping_pong_interval = timeout;
+		if( ppinterval > 0 )
+		{
+			ws->ws_Info.timeout_secs = ppinterval;
+		}
 		if( ws->ws_UseSSL == TRUE ) 
 		{
 			ws->ws_Info.options |= LWS_SERVER_OPTION_REDIRECT_HTTP_TO_HTTPS;

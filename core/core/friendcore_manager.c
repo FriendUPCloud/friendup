@@ -182,6 +182,8 @@ FriendCoreManager *FriendCoreManagerNew()
 		fcm->fcm_DisableMobileWS = 0;
 		fcm->fcm_DisableExternalWS = 0;
 		fcm->fcm_WSExtendedDebug = 0;
+		fcm->fcm_WSTimeout = 30;
+		fcm->fcm_WSPingPongInterval = 0;
 		
 		Props *prop = NULL;
 		PropertiesInterface *plib = &(SLIB->sl_PropertiesInterface);
@@ -223,6 +225,8 @@ FriendCoreManager *FriendCoreManagerNew()
 				fcm->fcm_DisableMobileWS = plib->ReadIntNCS( prop, "core:disablemobilews", 0 );
 				fcm->fcm_DisableExternalWS = plib->ReadIntNCS( prop, "core:disableexternalws", 0 );
 				fcm->fcm_WSExtendedDebug = plib->ReadIntNCS( prop, "core:wsextendeddebug", 0 );
+				fcm->fcm_WSTimeout = plib->ReadIntNCS( prop, "core:wstimeout", 30 );
+				fcm->fcm_WSPingPongInterval = plib->ReadIntNCS( prop, "core:wspingponginterval", 0 );
 				
 				char *tptr  = plib->ReadStringNCS( prop, "LoginModules:modules", "" );
 				if( tptr != NULL )
@@ -350,7 +354,7 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 {
 	if( fcm->fcm_DisableWS != TRUE )
 		{
-			if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled, 0, fcm->fcm_WSExtendedDebug ) ) != NULL )
+			if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled, 0, fcm->fcm_WSExtendedDebug, fcm->fcm_WSTimeout, fcm->fcm_WSPingPongInterval ) ) != NULL )
 			{
 				WebSocketStart( fcm->fcm_WebSocket );
 			}
@@ -362,7 +366,7 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 			
 			if( fcm->fcm_DisableExternalWS == 0 )
 			{
-				if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, FALSE, 2, fcm->fcm_WSExtendedDebug ) ) != NULL )
+				if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, FALSE, 2, fcm->fcm_WSExtendedDebug, fcm->fcm_WSTimeout, fcm->fcm_WSPingPongInterval ) ) != NULL )
 				{
 					WebSocketStart( fcm->fcm_WebSocketNotification );
 				}
