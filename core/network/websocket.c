@@ -333,8 +333,10 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 		ws->ws_Info.ssl_cert_filepath = ws->ws_CertPath;
 		ws->ws_Info.ssl_private_key_filepath = ws->ws_KeyPath;
 		ws->ws_Info.options = ws->ws_Opts;// | LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT;
-		ws->ws_Info.timeout_secs = 120;
-		ws->ws_Info.timeout_secs_ah_idle = 90;
+		//ws->ws_Info.timeout_secs = 120;
+		//ws->ws_Info.timeout_secs_ah_idle = 90;
+		ws->ws_Info.ws_ping_pong_interval = 5;
+		ws->ws_Info.timeout_secs = 5;
 		if( ws->ws_UseSSL == TRUE ) 
 		{
 			ws->ws_Info.options |= LWS_SERVER_OPTION_REDIRECT_HTTP_TO_HTTPS;
