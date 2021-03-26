@@ -405,7 +405,8 @@ function add_apps($guacamole_db, $friend_db, $apps, $app_ids_to_add, $friend_use
         	' . $new_connection_id . ',
         	"READ"
         )';
-        $guacamole_db->Query( $add_permission_query );
+        
+        $guacamole_db->Query( $add_permission_query );
 
         //step 4 - add connection parameters
         $dummy_value = md5( $friend_user_data[ 'username' ] );
