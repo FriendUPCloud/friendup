@@ -80,7 +80,7 @@ file_upload_cb(void *data, const char *name, const char *filename,
 		 * simple demo use a fixed name so we don't have to deal with
 		 * attacks  */
 #if !defined(LWS_WITH_ESP32)
-		pss->fd = (lws_filefd_type)(long long)lws_open("/tmp/post-file",
+		pss->fd = (lws_filefd_type)(lws_intptr_t)lws_open("/tmp/post-file",
 			       O_CREAT | O_TRUNC | O_RDWR, 0600);
 #endif
 		break;
@@ -94,7 +94,7 @@ file_upload_cb(void *data, const char *name, const char *filename,
 				return 1;
 
 #if !defined(LWS_WITH_ESP32)
-			n = write((int)(long long)pss->fd, buf, len);
+			n = write((int)(lws_intptr_t)pss->fd, buf, len);
 			lwsl_info("%s: write %d says %d\n", __func__, len, n);
 #else
 			lwsl_notice("%s: Received chunk size %d\n", __func__, len);
@@ -103,7 +103,7 @@ file_upload_cb(void *data, const char *name, const char *filename,
 		if (state == LWS_UFS_CONTENT)
 			break;
 #if !defined(LWS_WITH_ESP32)
-		close((int)(long long)pss->fd);
+		close((int)(lws_intptr_t)pss->fd);
 		pss->fd = LWS_INVALID_FILE;
 #endif
 		break;
@@ -287,28 +287,17 @@ static const struct lws_protocols protocols[] = {
 	LWS_PLUGIN_PROTOCOL_POST_DEMO
 };
 
-LWS_VISIBLE int
-init_protocol_post_demo(struct lws_context *context,
-			struct lws_plugin_capability *c)
-{
-	if (c->api_magic != LWS_PLUGIN_API_MAGIC) {
-		lwsl_err("Plugin API %d, library API %d", LWS_PLUGIN_API_MAGIC,
-			 c->api_magic);
-		return 1;
-	}
+LWS_VISIBLE const lws_plugin_protocol_t post_demo = {
+	.hdr = {
+		"post demo",
+		"lws_protocol_plugin",
+		LWS_PLUGIN_API_MAGIC
+	},
 
-	c->protocols = protocols;
-	c->count_protocols = LWS_ARRAY_SIZE(protocols);
-	c->extensions = NULL;
-	c->count_extensions = 0;
-
-	return 0;
-}
-
-LWS_VISIBLE int
-destroy_protocol_post_demo(struct lws_context *context)
-{
-	return 0;
-}
+	.protocols = protocols,
+	.count_protocols = LWS_ARRAY_SIZE(protocols),
+	.extensions = NULL,
+	.count_extensions = 0,
+};
 
 #endif

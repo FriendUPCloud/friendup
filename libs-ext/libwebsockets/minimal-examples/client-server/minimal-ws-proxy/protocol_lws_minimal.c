@@ -41,6 +41,8 @@ struct per_vhost_data__minimal {
 	struct lws_vhost *vhost;
 	const struct lws_protocols *protocol;
 
+	lws_sorted_usec_list_t sul;
+
 	struct per_session_data__minimal *pss_list; /* linked-list of live pss*/
 
 	struct lws_ring *ring; /* ringbuffer holding unsent messages */
@@ -60,9 +62,12 @@ __minimal_destroy_message(void *_msg)
 	msg->len = 0;
 }
 
-static int
-connect_client(struct per_vhost_data__minimal *vhd)
+static void
+sul_connect_attempt(struct lws_sorted_usec_list *sul)
 {
+	struct per_vhost_data__minimal *vhd =
+		lws_container_of(sul, struct per_vhost_data__minimal, sul);
+
 	vhd->i.context = vhd->context;
 	vhd->i.port = 443;
 	vhd->i.address = "libwebsockets.org";
@@ -75,7 +80,9 @@ connect_client(struct per_vhost_data__minimal *vhd)
 	vhd->i.local_protocol_name = "lws-minimal-proxy";
 	vhd->i.pwsi = &vhd->client_wsi;
 
-	return !lws_client_connect_via_info(&vhd->i);
+	if (!lws_client_connect_via_info(&vhd->i))
+		lws_sul_schedule(vhd->context, 0, &vhd->sul,
+				 sul_connect_attempt, 10 * LWS_US_PER_SEC);
 }
 
 static int
@@ -109,14 +116,12 @@ callback_minimal(struct lws *wsi, enum lws_callback_reasons reason,
 		if (!vhd->ring)
 			return 1;
 
-		if (connect_client(vhd))
-			lws_timed_callback_vh_protocol(vhd->vhost,
-						vhd->protocol,
-					        LWS_CALLBACK_USER, 1);
+		sul_connect_attempt(&vhd->sul);
 		break;
 
 	case LWS_CALLBACK_PROTOCOL_DESTROY:
 		lws_ring_destroy(vhd->ring);
+		lws_sul_cancel(&vhd->sul);
 		break;
 
 	/* --- serving callbacks --- */
@@ -169,8 +174,8 @@ callback_minimal(struct lws *wsi, enum lws_callback_reasons reason,
 		lwsl_err("CLIENT_CONNECTION_ERROR: %s\n",
 			 in ? (char *)in : "(null)");
 		vhd->client_wsi = NULL;
-		lws_timed_callback_vh_protocol(vhd->vhost, vhd->protocol,
-					       LWS_CALLBACK_USER, 1);
+		lws_sul_schedule(vhd->context, 0, &vhd->sul,
+				 sul_connect_attempt, LWS_US_PER_SEC);
 		break;
 
 	case LWS_CALLBACK_CLIENT_ESTABLISHED:
@@ -214,18 +219,8 @@ callback_minimal(struct lws *wsi, enum lws_callback_reasons reason,
 
 	case LWS_CALLBACK_CLIENT_CLOSED:
 		vhd->client_wsi = NULL;
-		lws_timed_callback_vh_protocol(vhd->vhost, vhd->protocol,
-					       LWS_CALLBACK_USER, 1);
-		break;
-
-	/* rate-limited client connect retries */
-
-	case LWS_CALLBACK_USER:
-		lwsl_notice("%s: LWS_CALLBACK_USER\n", __func__);
-		if (connect_client(vhd))
-			lws_timed_callback_vh_protocol(vhd->vhost,
-						vhd->protocol,
-					        LWS_CALLBACK_USER, 1);
+		lws_sul_schedule(vhd->context, 0, &vhd->sul,
+				 sul_connect_attempt, LWS_US_PER_SEC);
 		break;
 
 	default:
@@ -243,37 +238,3 @@ callback_minimal(struct lws *wsi, enum lws_callback_reasons reason,
 		128, \
 		0, NULL, 0 \
 	}
-
-
-#if !defined (LWS_PLUGIN_STATIC)
-
-/* boilerplate needed if we are built as a dynamic plugin */
-
-static const struct lws_protocols protocols[] = {
-	LWS_PLUGIN_PROTOCOL_MINIMAL
-};
-
-int
-init_protocol_minimal(struct lws_context *context,
-		      struct lws_plugin_capability *c)
-{
-	if (c->api_magic != LWS_PLUGIN_API_MAGIC) {
-		lwsl_err("Plugin API %d, library API %d", LWS_PLUGIN_API_MAGIC,
-			 c->api_magic);
-		return 1;
-	}
-
-	c->protocols = protocols;
-	c->count_protocols = LWS_ARRAY_SIZE(protocols);
-	c->extensions = NULL;
-	c->count_extensions = 0;
-
-	return 0;
-}
-
-int
-destroy_protocol_minimal(struct lws_context *context)
-{
-	return 0;
-}
-#endif

@@ -75,6 +75,15 @@
 	#endif
 #endif
 
+#if defined(LWS_HAVE_PTHREAD_H)
+#include <pthread.h>
+typedef pthread_mutex_t lws_mutex_t;
+#define lws_mutex_init(x)	pthread_mutex_init(&(x), NULL)
+#define lws_mutex_destroy(x)	pthread_mutex_destroy(&(x))
+#define lws_mutex_lock(x)	pthread_mutex_lock(&(x))
+#define lws_mutex_unlock(x)	pthread_mutex_unlock(&(x))
+#endif
+
 #if defined(__sun) && defined(__GNUC__)
 
 #include <arpa/nameser_compat.h>
@@ -166,6 +175,7 @@ delete_from_fd(const struct lws_context *context, int fd);
 #endif
 
 #define compatible_close(x) close(x)
+#define compatible_file_close(fd) close(fd)
 #define lws_plat_socket_offset() (0)
 
 /*
@@ -173,6 +183,8 @@ delete_from_fd(const struct lws_context *context, int fd);
  * but happily have something equivalent in the SO_NOSIGPIPE flag.
  */
 #ifdef __APPLE__
+/* iOS SDK 12+ seems to define it, undef it for compatibility both ways */
+#undef MSG_NOSIGNAL
 #define MSG_NOSIGNAL SO_NOSIGPIPE
 #endif
 

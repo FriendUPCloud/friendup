@@ -48,6 +48,7 @@
 static struct lws *
 __lws_shadow_wsi(struct lws_dbus_ctx *ctx, DBusWatch *w, int fd, int create_ok)
 {
+	size_t s = sizeof(struct lws);
 	struct lws *wsi;
 
 	if (fd < 0 || fd >= (int)ctx->vh->context->fd_limit_per_thread) {
@@ -68,18 +69,26 @@ __lws_shadow_wsi(struct lws_dbus_ctx *ctx, DBusWatch *w, int fd, int create_ok)
 	if (!create_ok)
 		return NULL;
 
-	wsi = lws_zalloc(sizeof(*wsi), "shadow wsi");
+#if defined(LWS_WITH_EVENT_LIBS)
+	s += ctx->vh->context->event_loop_ops->evlib_size_wsi;
+#endif
+
+	wsi = lws_zalloc(s, "shadow wsi");
 	if (wsi == NULL) {
 		lwsl_err("Out of mem\n");
 		return NULL;
 	}
 
+#if defined(LWS_WITH_EVENT_LIBS)
+	wsi->evlib_wsi = (uint8_t *)wsi + sizeof(*wsi);
+#endif
+
 	lwsl_info("%s: creating shadow wsi\n", __func__);
 
-	wsi->context = ctx->vh->context;
+	wsi->a.context = ctx->vh->context;
 	wsi->desc.sockfd = fd;
 	lws_role_transition(wsi, 0, LRS_ESTABLISHED, &role_ops_dbus);
-	wsi->protocol = ctx->vh->protocols;
+	wsi->a.protocol = ctx->vh->protocols;
 	wsi->tsi = ctx->tsi;
 	wsi->shadow = 1;
 	wsi->opaque_parent_data = ctx;
@@ -170,7 +179,7 @@ lws_dbus_add_watch(DBusWatch *w, void *data)
 			}
 
 	for (n = 0; n < (int)LWS_ARRAY_SIZE(ctx->w); n++)
-		if (ctx->w[n])
+		if (ctx->w[n] && dbus_watch_get_enabled(ctx->w[n]))
 			flags |= dbus_watch_get_flags(ctx->w[n]);
 
 	if (flags & DBUS_WATCH_READABLE)
@@ -181,7 +190,8 @@ lws_dbus_add_watch(DBusWatch *w, void *data)
 	lwsl_info("%s: w %p, fd %d, data %p, flags %d\n", __func__, w,
 		  dbus_watch_get_unix_fd(w), data, lws_flags);
 
-	__lws_change_pollfd(wsi, 0, lws_flags);
+	if (lws_flags)
+		__lws_change_pollfd(wsi, 0, (int)lws_flags);
 
 	lws_pt_unlock(pt);
 
@@ -491,7 +501,7 @@ lws_dbus_sul_cb(lws_sorted_usec_list_t *sul)
 		}
 	} lws_end_foreach_dll_safe(rdt, nx);
 
-	__lws_sul_insert(&pt->pt_sul_owner, &pt->dbus.sul,
+	lws_sul_schedule(pt->context, pt->tid, &pt->dbus.sul, lws_dbus_sul_cb,
 			 3 * LWS_US_PER_SEC);
 }
 
@@ -501,13 +511,10 @@ rops_pt_init_destroy_dbus(struct lws_context *context,
 		    struct lws_context_per_thread *pt, int destroy)
 {
 	if (!destroy) {
-
-		pt->dbus.sul.cb = lws_dbus_sul_cb;
-
-		__lws_sul_insert(&pt->pt_sul_owner, &pt->dbus.sul,
+		lws_sul_schedule(context, pt->tid, &pt->dbus.sul, lws_dbus_sul_cb,
 				 3 * LWS_US_PER_SEC);
 	} else
-		lws_dll2_remove(&pt->dbus.sul.list);
+		lws_sul_cancel(&pt->dbus.sul);
 
 	return 0;
 }

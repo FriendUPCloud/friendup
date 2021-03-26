@@ -45,18 +45,16 @@ lws_sul_plat_unix(lws_sorted_usec_list_t *sul)
 
 #if !defined(LWS_NO_DAEMONIZE)
 	/* if our parent went down, don't linger around */
-	if (pt->context->started_with_parent &&
-	    kill(pt->context->started_with_parent, 0) < 0)
+	if (context->started_with_parent &&
+	    kill(context->started_with_parent, 0) < 0)
 		kill(getpid(), SIGTERM);
 #endif
 
-	if (pt->context->deprecated && !pt->context->count_wsi_allocated) {
+	if (context->deprecated && !context->count_wsi_allocated) {
 		lwsl_notice("%s: ending deprecated context\n", __func__);
 		kill(getpid(), SIGINT);
 		return;
 	}
-
-	lws_check_deferred_free(context, 0, 0);
 
 #if defined(LWS_WITH_SERVER)
 	lws_context_lock(context, "periodic checks");
@@ -75,7 +73,23 @@ lws_sul_plat_unix(lws_sorted_usec_list_t *sul)
 	lws_context_unlock(context);
 #endif
 
-	__lws_sul_insert(&pt->pt_sul_owner, &pt->sul_plat, 30 * LWS_US_PER_SEC);
+	__lws_sul_insert_us(&pt->pt_sul_owner[LWSSULLI_MISS_IF_SUSPENDED],
+			    &pt->sul_plat, 30 * LWS_US_PER_SEC);
+}
+#endif
+
+#if defined(LWS_WITH_PLUGINS)
+static int
+protocol_plugin_cb(struct lws_plugin *pin, void *each_user)
+{
+	struct lws_context *context = (struct lws_context *)each_user;
+	const lws_plugin_protocol_t *plpr =
+			(const lws_plugin_protocol_t *)pin->hdr;
+
+	context->plugin_protocol_count += plpr->count_protocols;
+	context->plugin_extension_count += plpr->count_extensions;
+
+	return 0;
 }
 #endif
 
@@ -126,14 +140,16 @@ lws_plat_init(struct lws_context *context,
 #endif
 	context->fd_random = fd;
 	if (context->fd_random < 0) {
-		lwsl_err("Unable to open random device %s %d\n",
-			 SYSTEM_RANDOM_FILEPATH, context->fd_random);
+		lwsl_err("Unable to open random device %s %d, errno %d\n",
+			 SYSTEM_RANDOM_FILEPATH, context->fd_random, errno);
 		return 1;
 	}
 
 #if defined(LWS_WITH_PLUGINS)
 	if (info->plugin_dirs)
-		lws_plat_plugins_init(context, info->plugin_dirs);
+		lws_plugins_init(&context->plugin_list, info->plugin_dirs,
+				 "lws_protocol_plugin", NULL,
+				 protocol_plugin_cb, context);
 #endif
 
 
@@ -141,8 +157,8 @@ lws_plat_init(struct lws_context *context,
 	/* we only need to do this on pt[0] */
 
 	context->pt[0].sul_plat.cb = lws_sul_plat_unix;
-	__lws_sul_insert(&context->pt[0].pt_sul_owner, &context->pt[0].sul_plat,
-			 30 * LWS_US_PER_SEC);
+	__lws_sul_insert_us(&context->pt[0].pt_sul_owner[LWSSULLI_MISS_IF_SUSPENDED],
+			    &context->pt[0].sul_plat, 30 * LWS_US_PER_SEC);
 #endif
 
 	return 0;
@@ -166,9 +182,9 @@ lws_plat_context_early_destroy(struct lws_context *context)
 void
 lws_plat_context_late_destroy(struct lws_context *context)
 {
-#ifdef LWS_WITH_PLUGINS
+#if defined(LWS_WITH_PLUGINS)
 	if (context->plugin_list)
-		lws_plat_plugins_destroy(context);
+		lws_plugins_destroy(&context->plugin_list, NULL, NULL);
 #endif
 #if defined(LWS_WITH_NETWORK)
 	if (context->lws_lookup)
