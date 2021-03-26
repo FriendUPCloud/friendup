@@ -28,12 +28,6 @@ if( !function_exists( 'authoriseFriendSAMLUser' ) )
 		$configpath = __DIR__ . '/../../../cfg/cfg.ini';
 		$samlconfig = __DIR__ . '/../../../cfg/saml.ini';
 
-        if( $f = fopen( '/tmp/testoutput.txt', 'a+' ) )
-        {
-            fwrite( $f, print_r( $samldata, 1 ) );
-            fclose( $f );
-        }
-
 		if( 
 			!(file_exists( $dbiopath ) && 
 			file_exists( $configpath ) && 
