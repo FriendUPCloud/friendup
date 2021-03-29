@@ -2288,7 +2288,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								var str = ''; var rows = '';
 								
 								var s = ( workgroup.groupid ? workgroup.groupid : 0 );
-								
+								return;
 								if( s > 0 && groups && groups[s] && groups[s].groups.length > 0 )
 								{
 									
