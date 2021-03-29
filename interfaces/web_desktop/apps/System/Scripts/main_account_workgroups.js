@@ -2280,7 +2280,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										}	
 									}
 									
-									if( ShowLog || 1==1 ) console.log( groups[ workgroup.groupid ] );
+									if( ShowLog/* || 1==1*/ ) console.log( groups[ workgroup.groupid ] );
 								}
 								
 								
@@ -2295,7 +2295,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 									for( var a in groups[s].groups )
 									{
 										rows = groups[s].groups[a];
-										
+										console.log( '[1]', rows );
 										str += '<div>';
 										
 										str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit\', {id:'+rows.ID+',_this:this} )">';
@@ -2313,7 +2313,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 											for( var aa in rows.groups )
 											{
 												rows = rows.groups[aa];
-												
+												console.log( '[2]', rows );
 												str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit\', {id:'+rows.ID+',_this:this} )">';
 												str += '	<div class="TextCenter HContent4 FloatLeft PaddingSmall" style="min-width:18px"></div>';
 												str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
@@ -2329,7 +2329,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 													for( var aaa in rows.groups )
 													{
 														rows = rows.groups[aaa];
-														
+														console.log( '[3]', rows );
 														str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit\', {id:'+rows.ID+',_this:this} )">';
 														str += '	<div class="TextCenter HContent8 FloatLeft PaddingSmall" style="min-width:38px"></div>';
 														str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';

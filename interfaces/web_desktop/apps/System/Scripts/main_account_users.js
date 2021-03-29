@@ -6692,6 +6692,8 @@ function NewUser( _this )
 							let d = document.createElement( 'div' );
 							d.className = 'HRow Box Padding';
 							d.id = 'WorkgroupInner';
+							d.style.overflow = 'auto';
+							d.style.maxHeight = '369px';
 							return d;
 						}()
 					}
