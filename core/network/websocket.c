@@ -274,10 +274,12 @@ int WebSocketStart( WebSocket *ws )
  * @param proto protocols
  * @param extDebug enable extended debug
  * @param timeout Websockets timeout
- * @param ppinterval ping pong interval. If set to 0 internal ping-pong will not be enabled
+ * @param katime timeout to all libwebsocket sockets, client or server
+ * @param kaprobes times to try to get a response from the peer before giving up and killing the connection
+ * @param kainterval if ka_time was nonzero, how long to wait before each ka_probes attempt
  * @return pointer to new WebSocket structure, otherwise NULL
  */
-WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extDebug, int timeout, int ppinterval )
+WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extDebug, int timeout, int katime, int kaprobes, int kainterval )
 {
 	WebSocket *ws = NULL;
 	SystemBase *lsb = (SystemBase *)sb;
@@ -337,11 +339,33 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 		ws->ws_Info.options = ws->ws_Opts;// | LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT;
 		//ws->ws_Info.timeout_secs = 120;
 		//ws->ws_Info.timeout_secs_ah_idle = 90;
-		ws->ws_Info.ws_ping_pong_interval = timeout;
-		if( ppinterval > 0 )
+		//ws->ws_Info.ws_ping_pong_interval = timeout;
+		ws->ws_Info.timeout_secs = timeout;
+		if( katime > 0 )
 		{
-			ws->ws_Info.timeout_secs = ppinterval;
+			ws->ws_Info.ka_time = katime;
+			if( kainterval <= 0 ) kainterval = 20;
+			ws->ws_Info.ka_interval = kainterval;
+			if( kaprobes <= 0 ) kaprobes = 2;
+			ws->ws_Info.ka_probes = kaprobes;
 		}
+		int ka_time;
+	//*< CONTEXT: 0 for no TCP keepalive, otherwise apply this keepalive
+	// * timeout to all libwebsocket sockets, client or server 
+	// int ka_probes;
+	// *< CONTEXT: if ka_time was nonzero, after the timeout expires how many
+	//times to try to get a response from the peer before giving up
+	//and killing the connection 
+	// int ka_interval;
+	// *< CONTEXT: if ka_time was nonzero, how long to wait before each ka_probes
+	//attempt 
+	// unsigned int timeout_secs;
+	// *< VHOST: various processes involving network roundtrips in the
+	// library are protected from hanging forever by timeouts.  If
+	//nonzero, this member lets you set the timeout used in seconds.
+	//Otherwise a default timeout is used. 
+		
+
 		if( ws->ws_UseSSL == TRUE ) 
 		{
 			ws->ws_Info.options |= LWS_SERVER_OPTION_REDIRECT_HTTP_TO_HTTPS;

@@ -183,7 +183,9 @@ FriendCoreManager *FriendCoreManagerNew()
 		fcm->fcm_DisableExternalWS = 0;
 		fcm->fcm_WSExtendedDebug = 0;
 		fcm->fcm_WSTimeout = 30;
-		fcm->fcm_WSPingPongInterval = 0;
+		fcm->fcm_WSka_time = 0;
+		fcm->fcm_WSka_probes = 0;
+		fcm->fcm_WSka_interval = 0;
 		
 		Props *prop = NULL;
 		PropertiesInterface *plib = &(SLIB->sl_PropertiesInterface);
@@ -226,7 +228,9 @@ FriendCoreManager *FriendCoreManagerNew()
 				fcm->fcm_DisableExternalWS = plib->ReadIntNCS( prop, "core:disableexternalws", 0 );
 				fcm->fcm_WSExtendedDebug = plib->ReadIntNCS( prop, "core:wsextendeddebug", 0 );
 				fcm->fcm_WSTimeout = plib->ReadIntNCS( prop, "core:wstimeout", 30 );
-				fcm->fcm_WSPingPongInterval = plib->ReadIntNCS( prop, "core:wspingponginterval", 0 );
+				fcm->fcm_WSka_time = plib->ReadIntNCS( prop, "core:katime", 0 );
+				fcm->fcm_WSka_probes = plib->ReadIntNCS( prop, "core:kaprobes", 0 );
+				fcm->fcm_WSka_interval = plib->ReadIntNCS( prop, "core:kainterval", 0 );
 				
 				char *tptr  = plib->ReadStringNCS( prop, "LoginModules:modules", "" );
 				if( tptr != NULL )
@@ -354,7 +358,7 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 {
 	if( fcm->fcm_DisableWS != TRUE )
 		{
-			if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled, 0, fcm->fcm_WSExtendedDebug, fcm->fcm_WSTimeout, fcm->fcm_WSPingPongInterval ) ) != NULL )
+			if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled, 0, fcm->fcm_WSExtendedDebug, fcm->fcm_WSTimeout, fcm->fcm_WSka_time, fcm->fcm_WSka_probes, fcm->fcm_WSka_interval ) ) != NULL )
 			{
 				WebSocketStart( fcm->fcm_WebSocket );
 			}
@@ -366,7 +370,7 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 			
 			if( fcm->fcm_DisableExternalWS == 0 )
 			{
-				if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, FALSE, 2, fcm->fcm_WSExtendedDebug, fcm->fcm_WSTimeout, fcm->fcm_WSPingPongInterval ) ) != NULL )
+				if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, FALSE, 2, fcm->fcm_WSExtendedDebug, fcm->fcm_WSTimeout, fcm->fcm_WSka_time, fcm->fcm_WSka_probes, fcm->fcm_WSka_interval ) ) != NULL )
 				{
 					WebSocketStart( fcm->fcm_WebSocketNotification );
 				}

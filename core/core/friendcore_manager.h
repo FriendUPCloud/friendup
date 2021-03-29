@@ -140,7 +140,9 @@ typedef struct FriendCoreManager
 	FBOOL						fcm_DisableExternalWS;
 	FBOOL						fcm_WSExtendedDebug;
 	int							fcm_WSTimeout;
-	int							fcm_WSPingPongInterval;
+	int							fcm_WSka_time;
+	int							fcm_WSka_probes;
+	int							fcm_WSka_interval;
 }FriendCoreManager;
 
 //
