@@ -65,7 +65,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 	// read --------------------------------------------------------------------------------------------------------- //
 	
-	function list( callback, id )
+	function list( callback, id, parentid )
 	{
 		
 		if( callback )
@@ -215,7 +215,15 @@ Sections.accounts_workgroups = function( cmd, extra )
 					return callback( false, false );*/
 					
 				}
-				f.execute( 'group/list', { authid: Application.authId, args: args } );
+				
+				if( 1!=1 && parentid )
+				{
+					f.execute( 'group/list', { parentid: parentid, authid: Application.authId, args: args } );
+				}
+				else
+				{
+					f.execute( 'group/list', { authid: Application.authId, args: args } );
+				}
 			}
 			
 			return true;
@@ -1653,7 +1661,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						
 						loadingList[ ++loadingSlot ]( info );
 						
-					} );
+					}, false, id );
 				
 				},
 				
@@ -2138,9 +2146,360 @@ Sections.accounts_workgroups = function( cmd, extra )
 						
 					},
 					
-					mode : { users : 'list' },
+					mode : { users : 'list', workgroups : 'list' },
 					
-					// Users --------------------------------------------------------------------------------------------
+					// Workgroups --------------------------------------------------------------------------------------
+					
+					workgroups : function ( func )
+					{
+						
+						var init = 
+						{
+							
+							func : this,
+							
+							head : function (  )
+							{
+								
+								// Heading ...
+								
+								let o = ge( 'SubWorkgroupGui' ); if( o ) o.innerHTML = '';
+								
+								let divs = appendChild( [ 
+									{ 
+										'element' : function() 
+										{
+											let d = document.createElement( 'div' );
+											d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+											return d;
+										}(),
+										'child' : 
+										[ 
+											{ 
+												'element' : function( _this ) 
+												{
+													let d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent40 FloatLeft';
+													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+													d.ele = this;
+													d.onclick = function(  )
+													{
+														_this.sortgroups( 'Name' );
+													};
+													return d;
+												}( this ) 
+											}, 
+											{ 
+												'element' : function(  ) 
+												{
+													let d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent45 FloatLeft Relative';
+													d.innerHTML = '<strong></strong>';
+													return d;
+												}(  )
+											},
+											{ 
+												'element' : function(  ) 
+												{
+													let d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+													return d;
+												}(  )
+											}
+										]
+									},
+									{
+										'element' : function() 
+										{
+											let d = document.createElement( 'div' );
+											d.className = 'HRow Box Padding';
+											d.style.overflow = 'auto';
+											d.style.maxHeight = '369px';
+											d.id = 'SubWorkgroupInner';
+											return d;
+										}()
+									}
+								] );
+				
+								if( divs )
+								{
+									for( var i in divs )
+									{
+										if( divs[i] && o )
+										{
+											o.appendChild( divs[i] );
+										}
+									}
+								}
+								
+							},
+							
+							list : function ( groups )
+							{
+								
+								this.head();
+								
+								
+								
+								groups = {};
+								
+								if( workgroups )
+								{
+									var unsorted = {};
+		
+									for( var i in workgroups )
+									{
+										if( workgroups[i] && workgroups[i].ID )
+										{
+											workgroups[i].groups = [];
+				
+											unsorted[workgroups[i].ID] = workgroups[i];
+										}
+									}
+				
+									
+				
+									for( var k in unsorted )
+									{
+										if( unsorted[k] && unsorted[k].ID )
+										{
+											if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
+											{
+												if( !groups[ unsorted[k].ParentID ] )
+												{
+													groups[ unsorted[k].ParentID ] = unsorted[ unsorted[k].ParentID ];
+												}
+							
+												if( groups[ unsorted[k].ParentID ] )
+												{
+													groups[ unsorted[k].ParentID ].groups.push( unsorted[k] );
+												}
+											}
+											else if( !groups[ unsorted[k].ID ] )
+											{
+												groups[ unsorted[k].ID ] = unsorted[k];
+											}
+										}	
+									}
+				
+									if( ShowLog || 1==1 ) console.log( groups[ workgroup.groupid ] );
+								}
+								
+								
+								
+								var inp = ge( 'AdminWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
+								inp.onkeyup = function( e )
+								{
+									init.searchgroups( this.value );
+								}
+								ge( 'WorkgroupSearchCancelBtn' ).onclick = function( e )
+								{
+									init.searchgroups( false );
+									inp.value = '';
+								}
+								
+							},
+							
+							searchgroups : function ( filter, server )
+							{
+								
+								if( ge( 'SubWorkgroupInner' ) )
+								{
+									var list = ge( 'SubWorkgroupInner' ).getElementsByTagName( 'div' );
+						
+									if( list.length > 0 )
+									{
+										for( var a = 0; a < list.length; a++ )
+										{
+											if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+								
+											var strong = list[a].getElementsByTagName( 'strong' )[0];
+											var span = list[a].getElementsByTagName( 'span' )[0];
+								
+											if( strong || span )
+											{
+									
+												if( !filter || filter == '' 
+												|| strong && strong.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+												|| span && span.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+												|| span && span.getAttribute( 'name' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+												)
+												{
+													list[a].style.display = '';
+										
+													if( list[a].parentNode.parentNode && list[a].parentNode.parentNode.parentNode && list[a].parentNode.parentNode.parentNode.className.indexOf( 'HRow' ) >= 0 )
+													{
+														//if( list[a].parentNode.classList.contains( 'Closed' ) )
+														//{
+														//	list[a].parentNode.classList.remove( 'Closed' );
+														//	list[a].parentNode.classList.add( 'Open' );
+														//}
+											
+														list[a].parentNode.style.display = '';
+														list[a].parentNode.parentNode.style.display = '';
+													}
+												}
+												else if( list[a].parentNode && list[a].parentNode.className )
+												{
+													list[a].style.display = 'none';
+												}
+											}
+										}
+
+									}
+						
+									if( ge( 'SubWorkgroupSearchCancelBtn' ) )
+									{
+										if( !filter && ( ge( 'SubWorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'SubWorkgroupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										{
+											ge( 'SubWorkgroupSearchCancelBtn' ).classList.remove( 'Open' );
+											ge( 'SubWorkgroupSearchCancelBtn' ).classList.add( 'Closed' );
+								
+											if( list.length > 0 )
+											{
+												for( var a = 0; a < list.length; a++ )
+												{
+													if( list[a].classList.contains( 'Open' ) )
+													{
+														list[a].classList.remove( 'Open' );
+														list[a].classList.add( 'Closed' );
+													}
+												}
+											}
+										}
+							
+										else if( filter != '' && ( ge( 'SubWorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'SubWorkgroupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										{
+											ge( 'SubWorkgroupSearchCancelBtn' ).classList.remove( 'Closed' );
+											ge( 'SubWorkgroupSearchCancelBtn' ).classList.add( 'Open' );
+										}
+									}
+								}
+					
+							},
+							
+							sortgroups : function ( sortby, orderby )
+							{
+					
+								//
+								
+								var _this = ge( 'SubWorkgroupInner' );
+					
+								if( _this )
+								{
+									orderby = ( orderby ? orderby : ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' ) );
+						
+									var list = _this.getElementsByTagName( 'div' );
+						
+									if( list.length > 0 )
+									{
+										var output = [];
+							
+										var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+							
+										for( var a = 0; a < list.length; a++ )
+										{
+											if( !list[a].className || ( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) ) continue;
+								
+											var span = list[a].getElementsByTagName( 'span' )[0];
+								
+											if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' && span.getAttribute( sortby.toLowerCase() ) )
+											{
+												if( !list[a].parentNode.className )
+												{
+													var obj = { 
+														sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+														content : list[a].parentNode
+													};
+									
+													output.push( obj );
+												}
+											}
+										}
+							
+										if( output.length > 0 )
+										{
+											// Sort ASC default
+								
+											output.sort( callback );
+								
+											// Sort DESC
+								
+											if( orderby == 'DESC' ) 
+											{ 
+												output.reverse();  
+											}
+								
+											_this.innerHTML = '';
+								
+											_this.setAttribute( 'orderby', orderby );
+								
+											for( var key in output )
+											{
+												if( output[key] && output[key].content )
+												{
+													// Add row
+													_this.appendChild( output[key].content );
+												}
+											}
+										}
+									}
+								}
+					
+							},
+							
+							refresh : function ( groups )
+							{
+								
+								switch( this.func.mode[ 'workgroups' ] )
+								{
+									
+									case 'list':
+										
+										this.list( groups );
+										
+										break;
+										
+								}
+								
+							}
+							
+						};
+						
+						switch( func )
+						{
+							
+							case 'head':
+								
+								init.head();
+								
+								break;
+								
+							case 'list':
+								
+								init.list();
+								
+								break;
+								
+							case 'refresh':
+								
+								init.refresh();
+								
+								break;
+							
+							default:
+								
+								// Show listed workgroups ... 
+						
+								init.list();
+								
+								break;
+								
+						}
+						
+					},
+					
+					// Users -------------------------------------------------------------------------------------------
 					
 					users : function ( func )
 					{
@@ -4314,7 +4673,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				};
 			
 				
-				
+				func.workgroups();
 				func.users();
 				func.storage();
 				func.roles();
