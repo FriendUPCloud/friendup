@@ -275,7 +275,7 @@ $ret = <<<EOT
 			}
 			else
 			{
-				parent.postMessage({'cmd':'login','username':'{$username}','password':'{$userpass}','logouturl':'{$logouturl}', 'samldata':{$samldata}},'*');			
+				parent.postMessage({'cmd':'login','username':'{$username}','password':'{$userpass}','logouturl':'{$logouturl}', 'samldata':{$samldata}},'*');
 			}
 		}
 		setTimeout( loginSAMLUser, 500 );
