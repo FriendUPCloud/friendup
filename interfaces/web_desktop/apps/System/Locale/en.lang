@@ -44,6 +44,7 @@ i18n_system_disk                       : System disk
 i18n_workspaces                        : Workspaces
 
 i18n_workgroups                        : Workgroups
+i18n_sub_workgroups                    : Subworkgroups
 
 i18n_user_workgroups_empty             : User workgroups empty.
 

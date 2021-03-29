@@ -423,7 +423,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				}
 			}
 			
-			console.log( 'listUsers( callback, obj ) ', { e:e, d:(users?users:d), args:args } );
+			//console.log( 'listUsers( callback, obj ) ', { e:e, d:(users?users:d), args:args } );
 			
 			if( callback )
 			{
@@ -1759,7 +1759,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		var users      = ( workgroup.users ? workgroup.users : [] );
 		var list       = ( info.users      ? info.users      : [] );
 		
-		if( ShowLog || 1==1 ) console.log( 'initDetails() ', info );
+		if( ShowLog/* || 1==1*/ ) console.log( 'initDetails() ', info );
 		
 		// Workgroups
 		var pstr = '';
@@ -2247,40 +2247,50 @@ Sections.accounts_workgroups = function( cmd, extra )
 								{
 									var unsorted = {};
 									
+									// Add all workgroups to unsorted and add subgroups array ...
+					
 									for( var i in workgroups )
 									{
 										if( workgroups[i] && workgroups[i].ID )
 										{
-											workgroups[i].groups = [];
-				
-											unsorted[workgroups[i].ID] = workgroups[i];
+											if( wgroups && !wgroups[workgroups[i].ID] )
+											{
+												continue;
+											}
+							
+											unsorted[workgroups[i].ID] = {};
+							
+											for( var ii in workgroups[i] )
+											{
+												if( workgroups[i][ii] )
+												{
+													unsorted[workgroups[i].ID][ii] = workgroups[i][ii];
+												}
+											}
+							
+											unsorted[workgroups[i].ID].groups = [];
 										}
 									}
 									
+									// Arrange all subgroups to parentgroups ...
+									
+									let set = [];
+					
 									for( var k in unsorted )
 									{
-										if( unsorted[k] && unsorted[k].ID )
+										if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
 										{
-											if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
-											{
-												if( !groups[ unsorted[k].ParentID ] )
-												{
-													groups[ unsorted[k].ParentID ] = unsorted[ unsorted[k].ParentID ];
-												}
+											unsorted[ unsorted[k].ParentID ].groups.push( unsorted[k] );
 							
-												if( groups[ unsorted[k].ParentID ] )
-												{
-													groups[ unsorted[k].ParentID ].groups.push( unsorted[k] );
-												}
-											}
-											else if( !groups[ unsorted[k].ID ] )
-											{
-												groups[ unsorted[k].ID ] = unsorted[k];
-											}
-										}	
+											set.push( unsorted[k].ID );
+											
+											
+										}
 									}
 									
-									if( ShowLog/* || 1==1*/ ) console.log( groups[ workgroup.groupid ] );
+									groups = unsorted;
+									
+									if( ShowLog ) console.log( [ unsorted, set, groups ] );
 								}
 								
 								
@@ -2288,67 +2298,76 @@ Sections.accounts_workgroups = function( cmd, extra )
 								var str = ''; var rows = '';
 								
 								var s = ( workgroup.groupid ? workgroup.groupid : 0 );
-								return;
+								
 								if( s > 0 && groups && groups[s] && groups[s].groups.length > 0 )
 								{
 									
 									for( var a in groups[s].groups )
 									{
-										rows = groups[s].groups[a];
-										console.log( '[1]', rows );
-										str += '<div>';
+										rows = ( groups[s].groups[a] ? groups[s].groups[a] : null );
 										
-										str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit\', {id:'+rows.ID+',_this:this} )">';
-						
-										str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
-										str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
-										str += '	</div>';
-										str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent94 FloatLeft Ellipsis">'+rows.Name+'</div>';
-										str += '</div>';
-										
-										if( rows.groups.length > 0 )
+										if( rows )
 										{
-											str += '<div class="SubGroups">';
-											
-											for( var aa in rows.groups )
+											str += '<div>';
+										
+											str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit\', {id:'+rows.ID+',_this:this} )">';
+						
+											str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
+											str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
+											str += '	</div>';
+											str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent94 FloatLeft Ellipsis">'+rows.Name+'</div>';
+											str += '</div>';
+										
+											if( rows.groups.length > 0 )
 											{
-												rows = rows.groups[aa];
-												console.log( '[2]', rows );
-												str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit\', {id:'+rows.ID+',_this:this} )">';
-												str += '	<div class="TextCenter HContent4 FloatLeft PaddingSmall" style="min-width:18px"></div>';
-												str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
-												str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
-												str += '	</div>';
-												str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent88 FloatLeft Ellipsis">'+rows.Name+'</div>';
-												str += '</div>';
+												str += '<div class="SubGroups">';
 												
-												if( rows.groups.length > 0 )
+												for( var aa in groups[s].groups[a].groups )
 												{
-													str += '<div class="SubGroups">';
-													
-													for( var aaa in rows.groups )
+													rows = ( groups[s].groups[a].groups[aa] ? groups[s].groups[a].groups[aa] : null );
+												
+													if( rows )
 													{
-														rows = rows.groups[aaa];
-														console.log( '[3]', rows );
 														str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit\', {id:'+rows.ID+',_this:this} )">';
-														str += '	<div class="TextCenter HContent8 FloatLeft PaddingSmall" style="min-width:38px"></div>';
+														str += '	<div class="TextCenter HContent4 FloatLeft PaddingSmall" style="min-width:18px"></div>';
 														str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
 														str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
 														str += '	</div>';
-														str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent82 FloatLeft Ellipsis">'+rows.Name+'</div>';
+														str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent88 FloatLeft Ellipsis">'+rows.Name+'</div>';
 														str += '</div>';
 														
-													}
+														if( rows.groups.length > 0 )
+														{
+															str += '<div class="SubGroups">';
 													
-													str += '</div>';
-												}
+															for( var aaa in groups[s].groups[a].groups[aa].groups )
+															{
+																rows = ( groups[s].groups[a].groups[aa].groups[aaa] ? groups[s].groups[a].groups[aa].groups[aaa] : null );
+															
+																if( rows )
+																{
+																	str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit\', {id:'+rows.ID+',_this:this} )">';
+																	str += '	<div class="TextCenter HContent8 FloatLeft PaddingSmall" style="min-width:38px"></div>';
+																	str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
+																	str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
+																	str += '	</div>';
+																	str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent82 FloatLeft Ellipsis">'+rows.Name+'</div>';
+																	str += '</div>';
+																}
+															
+															}
+													
+															str += '</div>';
+														}
+													}
 												
-											}
+												}
 											
+												str += '</div>';
+											}
+										
 											str += '</div>';
 										}
-										
-										str += '</div>';
 										
 									}
 									
@@ -4819,7 +4838,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 					}
 					
 					var unsorted = {};
-		
+					
+					// Add all workgroups to unsorted and add subgroups array ...
+					
 					for( var i in workgroups )
 					{
 						if( workgroups[i] && workgroups[i].ID )
@@ -4829,38 +4850,45 @@ Sections.accounts_workgroups = function( cmd, extra )
 								continue;
 							}
 							
-							workgroups[i].groups = [];
-				
-							unsorted[workgroups[i].ID] = workgroups[i];
+							unsorted[workgroups[i].ID] = {};
+							
+							for( var ii in workgroups[i] )
+							{
+								if( workgroups[i][ii] )
+								{
+									unsorted[workgroups[i].ID][ii] = workgroups[i][ii];
+								}
+							}
+							
+							unsorted[workgroups[i].ID].groups = [];
 						}
 					}
-				
 					
-				
+					// Arrange all subgroups to parentgroups ...
+					
+					let set = [];
+					
 					for( var k in unsorted )
 					{
-						if( unsorted[k] && unsorted[k].ID )
+						if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
 						{
-							if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
-							{
-								if( !groups[ unsorted[k].ParentID ] )
-								{
-									groups[ unsorted[k].ParentID ] = unsorted[ unsorted[k].ParentID ];
-								}
+							unsorted[ unsorted[k].ParentID ].groups.push( unsorted[k] );
 							
-								if( groups[ unsorted[k].ParentID ] )
-								{
-									groups[ unsorted[k].ParentID ].groups.push( unsorted[k] );
-								}
-							}
-							else if( !groups[ unsorted[k].ID ] )
-							{
-								groups[ unsorted[k].ID ] = unsorted[k];
-							}
-						}	
+							set.push( unsorted[k].ID );
+						}
 					}
-				
-					if( ShowLog ) console.log( groups );
+					
+					// Filter all subgroups allready set, away from root level ...
+					
+					for( var k in unsorted )
+					{
+						if( set.indexOf( unsorted[k].ID ) < 0 )
+						{
+							groups[ unsorted[k].ID ] = unsorted[k];
+						}
+					}
+					
+					if( ShowLog/* || 1==1*/ ) console.log( [ unsorted, set, groups ] );
 				}
 				
 				var str = '';
