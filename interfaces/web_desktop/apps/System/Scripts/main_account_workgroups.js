@@ -2220,7 +2220,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										}()
 									}
 								] );
-				
+								
 								if( divs )
 								{
 									for( var i in divs )
@@ -2234,19 +2234,19 @@ Sections.accounts_workgroups = function( cmd, extra )
 								
 							},
 							
-							list : function ( groups )
+							list : function ( wgroups )
 							{
 								
 								this.head();
 								
-								
-								
 								groups = {};
+								
+								workgroups = ( wgroups ? wgroups : workgroups );
 								
 								if( workgroups )
 								{
 									var unsorted = {};
-		
+									
 									for( var i in workgroups )
 									{
 										if( workgroups[i] && workgroups[i].ID )
@@ -2256,9 +2256,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 											unsorted[workgroups[i].ID] = workgroups[i];
 										}
 									}
-				
 									
-				
 									for( var k in unsorted )
 									{
 										if( unsorted[k] && unsorted[k].ID )
@@ -2281,8 +2279,86 @@ Sections.accounts_workgroups = function( cmd, extra )
 											}
 										}	
 									}
-				
+									
 									if( ShowLog || 1==1 ) console.log( groups[ workgroup.groupid ] );
+								}
+								
+								
+								
+								var str = ''; var rows = '';
+								
+								var s = ( workgroup.groupid ? workgroup.groupid : 0 );
+								
+								if( s > 0 && groups && groups[s] && groups[s].groups.length > 0 )
+								{
+									
+									for( var a in groups[s].groups )
+									{
+										rows = groups[s].groups[a];
+										
+										str += '<div>';
+										
+										str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit\', {id:'+rows.ID+',_this:this} )">';
+						
+										str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
+										str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
+										str += '	</div>';
+										str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent94 FloatLeft Ellipsis">'+rows.Name+'</div>';
+										str += '</div>';
+										
+										if( rows.groups.length > 0 )
+										{
+											str += '<div class="SubGroups">';
+											
+											for( var aa in rows.groups )
+											{
+												rows = rows.groups[aa];
+												
+												str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit\', {id:'+rows.ID+',_this:this} )">';
+												str += '	<div class="TextCenter HContent4 FloatLeft PaddingSmall" style="min-width:18px"></div>';
+												str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
+												str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
+												str += '	</div>';
+												str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent88 FloatLeft Ellipsis">'+rows.Name+'</div>';
+												str += '</div>';
+												
+												if( rows.groups.length > 0 )
+												{
+													str += '<div class="SubGroups">';
+													
+													for( var aaa in rows.groups )
+													{
+														rows = rows.groups[aaa];
+														
+														str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit\', {id:'+rows.ID+',_this:this} )">';
+														str += '	<div class="TextCenter HContent8 FloatLeft PaddingSmall" style="min-width:38px"></div>';
+														str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
+														str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
+														str += '	</div>';
+														str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent82 FloatLeft Ellipsis">'+rows.Name+'</div>';
+														str += '</div>';
+														
+													}
+													
+													str += '</div>';
+												}
+												
+											}
+											
+											str += '</div>';
+										}
+										
+										str += '</div>';
+										
+									}
+									
+								}
+								
+								
+								
+								if( ge( 'SubWorkgroupInner' ) )
+								{
+									ge( 'SubWorkgroupInner' ).innerHTML = str;
 								}
 								
 								

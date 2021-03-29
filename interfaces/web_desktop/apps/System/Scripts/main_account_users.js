@@ -4894,10 +4894,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						{
 							wgroups = JSON.parse( d );
 						}
-						catch( e )
-						{
-							wgroups = null;
-						}
+						catch( e ) {  }
 						
 						if( e != 'ok' ) wgroups = '';
 						loadingInfo.workgroups = wgroups;
@@ -4937,10 +4934,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							{
 								uroles = JSON.parse( d );
 							}
-							catch( e )
-							{
-								uroles = null;
-							}
+							catch( e ) {  }
+							
 							loadingInfo.roles = uroles;
 						}
 						
@@ -4973,15 +4968,12 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 					let u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
-						let rows = null;
+						let rows = [];
 						try
 						{
 							rows = JSON.parse( d );
 						}
-						catch( e )
-						{
-							rows = [];
-						}
+						catch( e ) {  }
 						
 						if( e != 'ok' ) rows = ''/*'404'*/;
 						loadingInfo.mountlist = rows;
@@ -5136,10 +5128,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						{
 							settings = JSON.parse( d );
 						}
-						catch( e )
-						{
-							settings = null;
-						}
+						catch( e ) {  }
 						
 						if( e != 'ok' ) settings = '404';
 						loadingInfo.settings = settings;
@@ -5181,10 +5170,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							{
 								workspacesettings = JSON.parse( d );
 							}
-							catch( e )
-							{
-								workspacesettings = null;
-							}
+							catch( e ) {  }
 						
 							if( e != 'ok' ) workspacesettings = '404';
 							loadingInfo.workspaceSettings = workspacesettings;
@@ -5920,11 +5906,11 @@ function getStorageInfo( path, id, args, callback )
 			{
 				try
 				{
-					let json = JSON.parse( d );
+					json = JSON.parse( d );
 				} 
 				catch( e ){ }
 			}
-		
+			
 			if( e == 'ok' && d )
 			{
 				if( json )
@@ -6431,10 +6417,7 @@ function NewUser( _this )
 						{
 							wgroups = JSON.parse( d );
 						}
-						catch( e )
-						{
-							wgroups = null;
-						}
+						catch( e ){ }
 						
 						if( ShowLog ) console.log( 'workgroups ', { e:e , d:(wgroups?wgroups:d), args: args } );
 						
@@ -6481,10 +6464,7 @@ function NewUser( _this )
 						{
 							userInfo = JSON.parse( d );
 						}
-						catch( e )
-						{
-							userInfo = null;
-						}
+						catch( e ){  }
 						
 						let workgroups = userInfo.Workgroup;
 						
@@ -6591,7 +6571,7 @@ function NewUser( _this )
 				
 					for( var a in groups )
 					{
-						let found = false;
+						var found = false;
 						
 						str += '<div>';
 						
@@ -6610,7 +6590,7 @@ function NewUser( _this )
 						
 							for( var aa in groups[a].groups )
 							{
-								let found = false;
+								var found = false;
 								
 								str += '<div class="HRow">\
 									<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
@@ -6627,7 +6607,7 @@ function NewUser( _this )
 								
 									for( var aaa in groups[a].groups[aa].groups )
 									{
-										let found = false;
+										var found = false;
 										
 										str += '<div class="HRow">\
 											<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
@@ -6661,7 +6641,7 @@ function NewUser( _this )
 				
 				
 				
-				let o = ge( 'WorkgroupGui' ); if( o ) o.innerHTML = '';
+				let o = ge( 'WorkgroupGui' ); if( o ) o.innerHTML = '<input type="hidden" id="usWorkgroups">';
 				
 				let divs = appendChild( [ 
 					{ 
@@ -6730,7 +6710,7 @@ function NewUser( _this )
 				
 				
 				
-				ge( 'WorkgroupInner' ).innerHTML = '<input type="hidden" id="usWorkgroups">' + str;
+				ge( 'WorkgroupInner' ).innerHTML = str;
 				
 				// Toggle arrow function, put into function that can be reused some time ...
 						
@@ -7634,10 +7614,7 @@ Sections.user_disk_cancel = function( userid )
 		{
 			ul = JSON.parse( d );
 		}
-		catch( e )
-		{
-			ul = null;
-		}
+		catch( e ) {  }
 		
 		//console.log( '[3] mountlist ', { e:e, d:(ul?ul:d), args: { userid: userid+"", authid: Application.authId } } );
 		
@@ -7666,14 +7643,13 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 		{
 			//console.log( { e:ee, d:dat } );
 			
+			let da = {};
+			
 			try
 			{
-				let da = JSON.parse( dat );
+				da = JSON.parse( dat );
 			}
-			catch( e )
-			{
-				let da = {};
-			}
+			catch( e ) {  }
 			
 			if( !da.length ) return;
 			
@@ -7688,15 +7664,14 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 		
 				if( e == 'ok' )
 				{
+					let js = {};
+					
 					try
 					{
-						let js = JSON.parse( d );
+						js = JSON.parse( d );
 					}
-					catch( e )
-					{
-						js = {};
-					}
-			
+					catch( e ) {  }
+					
 					if( js )
 					{
 						try
@@ -7976,6 +7951,7 @@ Sections.user_disk_refresh = function( mountlist, userid, func )
 				for( var b in rows )
 				{
 					if( rows[b].Type == 'SharedDrive' ) continue;
+					
 					try
 					{
 						if( typeof rows[b].Config != "object" )
@@ -8867,10 +8843,7 @@ Sections.user_disk_save = function( userid, did )
 					{
 						ul = JSON.parse( dd );
 					}
-					catch( ee )
-					{
-						ul = null;
-					}
+					catch( ee ){  }
 				
 					ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
 				
@@ -8928,10 +8901,7 @@ Sections.user_disk_mount = function( devname, userid, _this )
 						{
 							ul = JSON.parse( dd );
 						}
-						catch( ee )
-						{
-							ul = null;
-						}
+						catch( ee ) {  }
 					
 						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
 						
@@ -8971,10 +8941,7 @@ Sections.user_disk_mount = function( devname, userid, _this )
 						{
 							ul = JSON.parse( dd );
 						}
-						catch( ee )
-						{
-							ul = null;
-						}
+						catch( ee ) {  }
 					
 						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
 					}
@@ -9385,10 +9352,7 @@ Sections.user_disk_remove = function( devname, did, userid )
 								{
 									ul = JSON.parse( dd );
 								}
-								catch( ee )
-								{
-									ul = null;
-								}
+								catch( ee ) {  }
 							
 								ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
 							}
