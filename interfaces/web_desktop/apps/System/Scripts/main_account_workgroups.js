@@ -20,9 +20,16 @@ Sections.accounts_workgroups = function( cmd, extra )
 			break;
 		
 		case 'edit':
-			if( extra && extra.id && extra._this )
+			if( extra )
 			{
-				edit( extra.id, extra._this );
+				if( extra.id && extra._this )
+				{
+					edit( extra.id, extra._this );
+				}
+				else
+				{
+					edit( extra );
+				}
 			}
 			break;
 		
@@ -450,8 +457,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 	}
 	
-	function edit( id, _this )
+	function edit( id, _this, pid )
 	{
+		
+		cancel();
 		
 		if( _this )
 		{
@@ -469,9 +478,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					}
 				}
 			}*/
-			
-			cancel();
-						
+				
 			_this.classList.add( 'Selected' );
 		}
 		else if( id && ge( 'WorkgroupID_' + id ) )
@@ -479,7 +486,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			ge( 'WorkgroupID_' + id ).classList.add( 'Selected' );
 		}
 		
-		loading( id );
+		loading( id, pid );
 		
 	}
 	
@@ -541,7 +548,14 @@ Sections.accounts_workgroups = function( cmd, extra )
 			}
 			catch( e ) {  }
 			
-			if( ShowLog ) console.log( 'create() ', { e:e, d:(data?data:d), args: args } );
+			if( ShowLog || 1==1 ) console.log( 'create() ', { e:e, d:(data?data:d), args: {
+				groupname   : ( ge( 'WorkgroupName'   ).value                                          ), 
+				parentid    : ( ge( 'WorkgroupParent' ).value                                          ), 
+				description : ( ge( 'WorkgroupDescription' ).value                                     ), 
+				authid      : ( Application.authId                                                     ), 
+				type        : ( 'Workgroup'                                                            ),
+				args        : ( args                                                                   ) 
+			} } );
 			
 			if( e == 'ok' && d )
 			{
@@ -656,12 +670,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 				}
 				catch( e ) {  }
 				
-				if( ShowLog ) console.log( { e:e, d:(data?data:d), args: {
+				if( ShowLog || 1==1 ) console.log( { e:e, d:(data?data:d), args: {
 					id          : ( id                                                                     ), 
 					groupname   : ( ge( 'WorkgroupName'   ).value                                          ), 
 					parentid    : ( ge( 'WorkgroupParent' ).value                                          ), 
 					description : ( ge( 'WorkgroupDescription' ).value                                     ), 
-					/*users     : ( ge( 'WorkgroupUsers'  ).value ? ge( 'WorkgroupUsers' ).value : 'false' ),*/
 					authid      : ( Application.authId                                                     ), 
 					args        : ( args                                                                   ) 
 				} } );
@@ -732,7 +745,6 @@ Sections.accounts_workgroups = function( cmd, extra )
 				groupname   : ( ge( 'WorkgroupName'   ).value                                          ), 
 				description : ( ge( 'WorkgroupDescription' ).value                                     ),
 				parentid    : ( ge( 'WorkgroupParent' ).value                                          ),
-				/*users     : ( ge( 'WorkgroupUsers'  ).value ? ge( 'WorkgroupUsers' ).value : 'false' ),*/
 				authid    : ( Application.authId                                                       ),
 				args      : ( args                                                                     )
 			} );
@@ -1614,7 +1626,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 	// init --------------------------------------------------------------------------------------------------------- //
 	
-	function loading( id )
+	function loading( id, pid )
 	{
 		if( ShowLog ) console.log( 'loading( '+id+' )' );
 		
@@ -1737,6 +1749,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 		{
 			var info = {};
 			
+			if( pid != null )
+			{
+				info.workgroup = { parentid : pid };
+			}
+			
 			list( function( groups )
 			{
 				
@@ -1853,9 +1870,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 				ge( 'GroupDeleteBtn' ).style.display = 'none';
 				ge( 'GroupLockBtn'   ).style.display = 'none';
 				
-				ge( 'AdminUsersContainer'   ).style.display = 'none';
-				ge( 'AdminStorageContainer' ).style.display = 'none';
-				ge( 'AdminRolesContainer'   ).style.display = 'none';
+				ge( 'AdminSubWorkgroupContainer' ).style.display = 'none';
+				ge( 'AdminUsersContainer'        ).style.display = 'none';
+				ge( 'AdminStorageContainer'      ).style.display = 'none';
+				ge( 'AdminRolesContainer'        ).style.display = 'none';
 			}
 			else
 			{
@@ -2294,6 +2312,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								}
 								
 								
+								var ii = 0;
 								
 								var str = ''; var rows = '';
 								
@@ -2308,9 +2327,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 										
 										if( rows )
 										{
+											ii++;
+											
 											str += '<div>';
 										
-											str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit\', {id:'+rows.ID+',_this:this} )">';
+											str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit\','+rows.ID+')">';
 						
 											str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
 											str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
@@ -2328,7 +2349,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 												
 													if( rows )
 													{
-														str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit\', {id:'+rows.ID+',_this:this} )">';
+														ii++;
+														
+														str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit\','+rows.ID+')">';
 														str += '	<div class="TextCenter HContent4 FloatLeft PaddingSmall" style="min-width:18px"></div>';
 														str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
 														str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
@@ -2346,7 +2369,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 															
 																if( rows )
 																{
-																	str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit\', {id:'+rows.ID+',_this:this} )">';
+																	ii++;
+																	
+																	str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit\','+rows.ID+')">';
 																	str += '	<div class="TextCenter HContent8 FloatLeft PaddingSmall" style="min-width:38px"></div>';
 																	str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
 																	str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
@@ -2380,14 +2405,19 @@ Sections.accounts_workgroups = function( cmd, extra )
 									ge( 'SubWorkgroupInner' ).innerHTML = str;
 								}
 								
+								if( ge( 'AdminSubWorkgroupCount' ) )
+								{
+									ge( 'AdminSubWorkgroupCount' ).innerHTML = '(' + ii + ')';
+								}
 								
+								this.sortgroups( 'Name', 'ASC' );
 								
-								var inp = ge( 'AdminWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
+								var inp = ge( 'AdminSubWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
 								inp.onkeyup = function( e )
 								{
 									init.searchgroups( this.value );
 								}
-								ge( 'WorkgroupSearchCancelBtn' ).onclick = function( e )
+								ge( 'SubWorkgroupSearchCancelBtn' ).onclick = function( e )
 								{
 									init.searchgroups( false );
 									inp.value = '';
@@ -2583,6 +2613,30 @@ Sections.accounts_workgroups = function( cmd, extra )
 								break;
 							
 							default:
+								
+								var etn = ge( 'SubWorkgroupEdit' );
+								if( etn )
+								{
+									if( Application.checkAppPermission( [ 
+										
+										'WORKGROUP_CREATE',
+										
+										'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+										'PERM_WORKGROUP_UPDATE_GLOBAL', 'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+										'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP'
+										 
+									] ) )
+									{
+										etn.onclick = function( e )
+										{
+											edit( false, false, workgroup.groupid );
+										};
+									}
+									else
+									{
+										etn.style.display = 'none';
+									}
+								}
 								
 								// Show listed workgroups ... 
 						
@@ -2940,6 +2994,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 									ge( 'AdminUsersCount' ).innerHTML = '(' + ii + ')';
 								}
 								
+								this.sortusers( 'Name', 'ASC' );
+								
 								var inp = ge( 'AdminUsersContainer' ).getElementsByTagName( 'input' )[0];
 								inp.onkeyup = function( e )
 								{
@@ -3199,6 +3255,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 									ge( 'AdminUsersCount' ).innerHTML = ( list && list.Count ? '(' + list.Count + ')' : '(0)' );
 								}
 								
+								this.sortusers( 'Name', 'ASC' );
+								
 								// TODO: No need to keep adding every time ...
 								
 								var inp = ge( 'AdminUsersContainer' ).getElementsByTagName( 'input' )[0];
@@ -3316,7 +3374,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								
 							},
 							
-							sortusers : function ( sortby )
+							sortusers : function ( sortby, orderby )
 							{
 
 								//
@@ -3325,7 +3383,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 
 								if( _this )
 								{
-									var orderby = ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' );
+									var orderby = ( orderby ? orderby : ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' ) );
 	
 									var list = _this.getElementsByTagName( 'div' );
 	
@@ -4891,6 +4949,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 					if( ShowLog/* || 1==1*/ ) console.log( [ unsorted, set, groups ] );
 				}
 				
+				var ii = 0;
+				
 				var str = '';
 				
 				if( groups )
@@ -4899,6 +4959,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 					for( var a in groups )
 					{
 						var found = false;
+						
+						ii++;
 						
 						str += '<div>';
 						
@@ -4926,6 +4988,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 							{
 								var found = false;
 								
+								ii++;
+								
 								str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].groups[aa].ID+',_this:this} )">';
 								//str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].ID + '" onclick="edit( '+groups[a].groups[aa].ID+', this )">';
 								//str += '	<div class="PaddingSmall HContent100 FloatLeft Ellipsis">';
@@ -4951,6 +5015,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 									for( var aaa in groups[a].groups[aa].groups )
 									{
 										var found = false;
+										
+										ii++;
 										
 										str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].groups[aa].groups[aaa].ID+',_this:this} )">';
 										//str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '" onclick="edit( '+groups[a].groups[aa].groups[aaa].ID+', this )">';
@@ -5029,7 +5095,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												{
 													var h = document.createElement( 'h3' );
 													h.className = 'NoMargin FloatLeft';
-													h.innerHTML = '<strong>' + i18n( 'i18n_workgroups' ) + '</strong>';
+													h.innerHTML = '<strong>' + i18n( 'i18n_workgroups' ) + ' </strong><span id="AdminWorkgroupCount">(' + ii + ')</span>';
 													return h;
 												}()
 											}
