@@ -309,7 +309,7 @@ int FriendCoreManagerInit( FriendCoreManager *fcm )
 		Log(FLOG_INFO, "-----WS SSL enabled: %d\n", fcm->fcm_WSSSLEnabled );
 		Log(FLOG_INFO, "-----Communication SSL enabled: %d\n", fcm->fcm_SSLEnabledCommuncation );
 		Log(FLOG_INFO, "-----FCPort: %d\n", fcm->fcm_FCPort );
-		Log(FLOG_INFO, "-----WSPort: %d\n", fcm->fcm_WSPort );
+		
 		Log(FLOG_INFO, "-----WSNotificationPort: %d\n", fcm->fcm_WSNotificationPort );
 		Log(FLOG_INFO, "-----CommPort: %d\n", fcm->fcm_ComPort );
 		Log(FLOG_INFO, "-----CommRemotePort: %d\n", fcm->fcm_ComRemotePort );
@@ -318,6 +318,12 @@ int FriendCoreManagerInit( FriendCoreManager *fcm )
 		Log(FLOG_INFO, "-----UserFileShareCache (per drive): %ld\n", SLIB->sl_USFCacheMax );
 		Log(FLOG_INFO, "-----Cluster Master: %d\n", fcm->fcm_ClusterMaster );
 		Log(FLOG_INFO, "-----UserSession timeout: %d\n", SLIB->sl_RemoveSessionsAfterTime );
+		
+		Log(FLOG_INFO, "-----WSPort: %d\n", fcm->fcm_WSPort );
+		Log(FLOG_INFO, "-----WS ka_time: %d\n", fcm->fcm_WSka_time );
+		Log(FLOG_INFO, "-----WS ka_probes: %d\n", fcm->fcm_WSka_probes );
+		Log(FLOG_INFO, "-----WS ka_interval: %d\n", fcm->fcm_WSka_interval );
+		
 		/*
 		if( SLIB != NULL && SLIB->sl_ActiveAuthModule != NULL )
 		{
