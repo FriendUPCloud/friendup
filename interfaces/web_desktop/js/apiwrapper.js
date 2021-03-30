@@ -1806,6 +1806,12 @@ function apiWrapper( event, force )
 
 							CheckScreenTitle();
 							break;
+						case 'popout':
+							if( win )
+							{
+								PopoutWindow( win._window.parentNode );
+							}
+							break;
 						case 'toFront':
 							if( win )
 							{
@@ -2902,6 +2908,77 @@ function apiWrapper( event, force )
 						app.contentWindow.postMessage( msg, '*' );
 				}
 				break;
+			// Announcement calls
+			case 'announcement':
+			    var app = false;
+				if( msg.applicationId )
+					app = findApplication( msg.applicationId );
+				let cbak = null;
+			    if( msg.callback )
+			    {
+			        cbak = msg.callback;
+			        msg.callback = null;
+			    }
+				switch( msg.command )
+				{
+				    case 'announcement':
+				        let o = {
+				            type: msg.announcementType,
+				            users: msg.users,
+				            workgroups: msg.workgroups,
+				            payload: msg.payload
+				        };
+				        let m = new Module( 'system' );
+				        m.onExecuted = function( e, d )
+				        {
+				            if( cbak )
+				            {
+				                if( e == 'ok' )
+				                {
+								    let ms = {
+								        type: 'callback',
+								        resp: 'ok',
+								        callback: cbak
+								    };
+								    for( let z in msg ) 
+								    {
+								        if( z != 'payload' && z != 'users' && z != 'workgroups' && 
+								            z != 'theme' && z != 'userLevel' && z != 'username' && 
+								            z != 'workgroups' && z != 'users' && z != 'type' &&
+								            z != 'callback' )
+								        {
+								            ms[ z ] = msg[ z ];
+								        }
+								    }
+								    app.contentWindow.postMessage( ms, '*' );
+				                }
+				                else
+				                {
+				                   let ms = {
+								        type: 'callback',
+								        resp: 'fail',
+								        callback: cbak
+								    };
+								    for( let z in msg ) 
+								    {
+								        if( z != 'payload' && z != 'users' && z != 'workgroups' && 
+								            z != 'theme' && z != 'userLevel' && z != 'username' && 
+								            z != 'workgroups' && z != 'users' && z != 'type' &&
+								            z != 'callback' )
+								        {
+								            ms[ z ] = msg[ z ];
+								        }
+								    }
+								    console.log( 'Failed because: ', e, d );
+								    app.contentWindow.postMessage( ms, '*' );
+				                }
+				            }
+				        }
+				        m.execute( 'announcement', o );
+				        break;
+				}
+			    break;
+			
 			// System calls!
 			// TODO: Permissions, not all should be able to do this!
 			case 'system':

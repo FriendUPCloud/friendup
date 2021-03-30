@@ -566,6 +566,17 @@ if( isset( $args->command ) )
 			}
 			die( 'fail<!--separate-->{"response":"user level failed"}'  );
 			break;
+			
+		// Post an announcement to workgroups and known users
+		case 'announcement':
+    		require( 'modules/system/include/announcement.php' );
+		    break;
+		    
+		// Get user/workgroup relevant announcements
+		case 'getannouncements':
+		    require( 'modules/system/include/getannouncements.php' );
+		    break;
+			
 		case 'convertfile':
 			require( 'modules/system/include/convertfile.php' );
 			break;
