@@ -41,6 +41,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 					edit( extra.id, extra._this, null, true );
 					
 				}
+				else if( extra.id, extra.psub )
+				{
+					edit( extra.id, null, null, extra.psub );
+				}
 				else
 				{
 					edit( extra, null, null, true );
@@ -457,27 +461,32 @@ Sections.accounts_workgroups = function( cmd, extra )
 		m.execute( 'listusers', args );
 	}
 	
-	function refresh( id, _this )
+	function refresh( id, _this, psub )
 	{
 		
 		initMain( function(  )
 		{
 			
+			if( psub > 0 )
+			{
+				edit( psub, _this );
+			}
+			
 			if( id )
 			{
-				edit( id, _this );
+				edit( id, _this, null, psub );
 			}
 			
 		} );
 		
 	}
 	
-	function edit( id, _this, pid, sub )
+	function edit( id, _this, pid, psub )
 	{
 		
-		cancel( true );
+		cancel( true, psub );
 		
-		if( _this )
+		if( !psub && _this )
 		{
 			/*// TODO: remove all other Selected in the list first ...
 			
@@ -496,26 +505,37 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 			_this.classList.add( 'Selected' );
 		}
-		else if( id && ge( 'WorkgroupID_' + id ) )
+		else if( !psub && id && ge( 'WorkgroupID_' + id ) )
 		{
 			ge( 'WorkgroupID_' + id ).classList.add( 'Selected' );
 		}
+		else if( psub > 0 && ge( 'WorkgroupID_' + psub ) )
+		{
+			ge( 'WorkgroupID_' + psub ).classList.add( 'Selected' );
+		}
 		
-		loading( id, pid, sub );
+		loading( id, pid, psub );
 		
 	}
 	
-	function cancel( skip )
+	function cancel( skip, psub )
 	{
 		
 		if( ShowLog ) console.log( 'cancel(  ) ' );
 
 		if( !skip && ge( 'WorkgroupDetails' ) )
 		{
-			ge( 'WorkgroupDetails' ).innerHTML = '';
+			if( psub )
+			{
+				ge( 'SubWorkgroupDetails' ).innerHTML = '';
+			}
+			else
+			{
+				ge( 'WorkgroupDetails' ).innerHTML = '';
+			}
 		}
 		
-		if( ge( 'WorkgroupList' ) )
+		if( !psub && ge( 'WorkgroupList' ) )
 		{
 			var ele = ge( 'WorkgroupList' ).getElementsByTagName( 'div' );
 			
@@ -534,7 +554,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 	// write -------------------------------------------------------------------------------------------------------- //
 	
-	function create()
+	// TODO: Update subworkgroupslist
+	
+	function create( psub )
 	{
 		// Specific for Pawel's code ... He just wants to forward json ...
 		
@@ -584,7 +606,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					Notify( { title: i18n( 'i18n_workgroup_create' ), text: i18n( 'i18n_' + data.response ).replace( 'i18n_', '' ) } );
 				}
 				
-				refresh( data.id );
+				refresh( data.id, null, psub );
 				
 			}
 			
@@ -644,7 +666,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 	}
 	
-	function update( id )
+	// TODO: Update subworkgroupslist
+	
+	function update( id, psub )
 	{
 		
 		// TODO: Add more stuff to update for a workgroup ...
@@ -708,9 +732,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 						Notify( { title: i18n( 'i18n_workgroup_update' ), text: i18n( 'i18n_' + data.response ).replace( 'i18n_', '' ) } );
 					}
 					
-					refresh( data.id );
+					refresh( data.id, null, psub );
 					
-					editMode( true );
+					editMode( true, data.id );
 				}
 				
 				else if( data && data.code == '69' && data.response )
@@ -797,7 +821,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			f.onExecuted = function( e, d )
 			{
 				
-				console.log( 'updateStatus( '+id+', '+status+' )', { e:e, d:d } );
+				if( ShowLog ) console.log( 'updateStatus( '+id+', '+status+' )', { e:e, d:d } );
 				
 				if( e == 'ok' )
 				{
@@ -1309,7 +1333,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 	// delete ------------------------------------------------------------------------------------------------------- //
 	
-	function remove( id )
+	function remove( id, psub )
 	{
 		
 		/*Confirm( i18n( 'i18n_deleting_workgroup' ), i18n( 'i18n_deleting_workgroup_verify' ), function( result )
@@ -1346,7 +1370,16 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 						//Sections.accounts_workgroups( 'refresh' ); 
 					
-						refresh(); cancel();
+						refresh( null, null, psub ); cancel( null, psub );
+						
+						if( psub )
+						{
+							if( ge( 'SlideContainer' ) )
+							{
+								ge( 'SlideContainer' ).className = ge( 'SlideContainer' ).className.split( ' Slide' ).join( '' );
+							}
+						}
+						
 					}
 					f.execute( 'group/delete', { id: id, authid: Application.authId, args: args } );
 					
@@ -1500,9 +1533,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 			closeEdit();
 			
 			_this.savedState = { 
-				className: _this.className, 
-				innerHTML: _this.innerHTML, 
-				onclick: ( _this.onclick ? _this.onclick : function () {} ) 
+				id        : _this.id,
+				className : _this.className, 
+				innerHTML : _this.innerHTML, 
+				onclick   : ( _this.onclick ? _this.onclick : function () {} ) 
 			}
 			_this.classList.remove( 'IconButton' );
 			_this.classList.remove( 'IconToggle' );
@@ -1515,7 +1549,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			//_this.classList.add( 'ButtonAlt' );
 			_this.classList.add( 'Button' );
 			_this.classList.add( 'BackgroundRed' );
-			_this.id = ( _this.id ? _this.id : 'EditMode' );
+			_this.id = /*( _this.id ? _this.id : */'EditMode'/* )*/;
 			_this.innerHTML = ( args.button_text ? i18n( args.button_text ) : i18n( 'i18n_delete' ) );
 			_this.args = args;
 			_this.callback = callback;
@@ -1560,7 +1594,14 @@ Sections.accounts_workgroups = function( cmd, extra )
 				{
 					ge( 'EditMode' ).onclick = ge( 'EditMode' ).savedState.onclick;
 				}
-				ge( 'EditMode' ).removeAttribute( 'id' );
+				if( typeof ge( 'EditMode' ).savedState.id != 'undefined' )
+				{
+					ge( 'EditMode' ).id = ge( 'EditMode' ).savedState.id;
+				}
+				else
+				{
+					ge( 'EditMode' ).removeAttribute( 'id' );
+				}
 			}
 		}
 	}
@@ -1577,7 +1618,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				{
 					// Esc
 					case 27:
-					
+						
 						if( ge( 'GroupDeleteBtn' ) && ge( 'GroupDeleteBtn' ).savedState )
 						{
 							
@@ -1649,9 +1690,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 	// init --------------------------------------------------------------------------------------------------------- //
 	
-	function loading( id, pid, sub )
+	function loading( id, pid, psub )
 	{
-		if( ShowLog ) console.log( 'loading( '+id+', '+pid+', '+sub+' )' );
+		if( ShowLog ) console.log( 'loading( '+id+', '+pid+', '+psub+' )' );
 		
 		if( id )
 		{
@@ -1759,7 +1800,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				{
 					if( typeof info.workgroup == 'undefined' ) return;
 					
-					initDetails( info, sub );
+					initDetails( info, psub );
 				}
 			
 			];
@@ -1782,7 +1823,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 				info.workgroups = ( groups ? groups : null );
 				
-				initDetails( info );
+				initDetails( info, psub );
 				
 			} );
 			
@@ -1790,7 +1831,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 	}
 	
 	// Show the form
-	function initDetails( info, sub )
+	function initDetails( info, psub )
 	{
 		let uuid = (info.ID?'_'+info.ID:'');
 		
@@ -1874,22 +1915,23 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 		// Add all data for the template
 		d.replacements = {
-			id                    : ( info.ID               ? ( '_' + info.ID )     : ''                               ),
-			workgroup_edit        : ( sub ? i18n( 'i18n_subworkgroup_details' )     : i18n( 'i18n_workgroup_details' ) ),
-			workgroup_title       : ( workgroup.name        ? workgroup.name        : i18n( 'i18n_new_workgroup' )     ),
-			workgroup_name        : ( workgroup.name        ? workgroup.name        : ''                               ),
+			id                    : ( info.ID               ? ( '_' + info.ID )     : ''                                                                                ),
+			workgroup_back_btn    : ( psub ? '<button class="IconButton IconSmall ButtonSmall FloatLeft fa-arrow-circle-left" id="GroupBackBtn'+uuid+'"></button>' : '' ),
+			workgroup_edit        : ( psub ? i18n( 'i18n_subworkgroup_details' )     : i18n( 'i18n_workgroup_details' )                                                 ),
+			workgroup_title       : ( workgroup.name        ? workgroup.name        : i18n( 'i18n_new_workgroup' )                                                      ),
+			workgroup_name        : ( workgroup.name        ? workgroup.name        : ''                                                                                ),
 			workgroup_parent      : pstr,
-			workgroup_description : ( workgroup.description ? workgroup.description : ''                               ),
-			users_count           : ( list && list.Count ? '(' + list.Count + ')'   : '(0)'                            ),
-			storage               : ''/*mlst*/,
-			roles                 : ''/*rstr*/
+			workgroup_description : ( workgroup.description ? workgroup.description : ''                                                                                ),
+			users_count           : ( list && list.Count ? '(' + list.Count + ')'   : '(0)'                                                                             ),
+			storage               : '',
+			roles                 : ''
 		};
 		
 		// Add translations
 		d.i18n();
 		d.onLoad = function( data )
 		{
-			if( sub )
+			if( psub )
 			{
 				ge( 'SubWorkgroupDetails' ).innerHTML = data;
 				
@@ -1969,13 +2011,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 						{
 							if( ShowLog ) console.log( '// save workgroup' );
 					
-							update( info.ID );
+							update( info.ID, psub );
 						}
 						else
 						{
 							if( ShowLog ) console.log( '// create workgroup' );
 					
-							create();
+							create( psub );
 						}
 					}
 				}
@@ -1989,23 +2031,34 @@ Sections.accounts_workgroups = function( cmd, extra )
 			{
 				if( info.ID )
 				{
-					edit( info.ID );
+					edit( info.ID, null, null, psub );
 				}
 				else
 				{
-					cancel(  );
+					cancel( null, psub );
+					
+					if( psub )
+					{
+						if( ge( 'SlideContainer' ) )
+						{
+							ge( 'SlideContainer' ).className = ge( 'SlideContainer' ).className.split( ' Slide' ).join( '' );
+						}
+					}
 				}
 			}
 			var bg3  = ge( 'GroupBackBtn'+uuid );
 			if( bg3 ) bg3.onclick = function( e )
 			{
-				cancel(  );
+				if( ge( 'SlideContainer' ) )
+				{
+					ge( 'SlideContainer' ).className = ge( 'SlideContainer' ).className.split( ' Slide' ).join( '' );
+				}
 			}
 			
 			var bg4  = ge( 'GroupDeleteBtn'+uuid );
 			if( bg4 )
 			{
-				if( workgroup && workgroup.status != 2 && Application.checkAppPermission( [ 
+				if( Application.checkAppPermission( [ 
 					'PERM_WORKGROUP_DELETE_GLOBAL', 'PERM_WORKGROUP_DELETE_IN_WORKGROUP', 
 					'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
 				] ) )
@@ -2020,15 +2073,20 @@ Sections.accounts_workgroups = function( cmd, extra )
 						{
 							if( ShowLog ) console.log( '// delete workgroup' );
 			
-							removeBtn( this, { id: info.ID, button_text: 'i18n_delete_workgroup', }, function ( args )
+							removeBtn( this, { id: info.ID, psub: psub, button_text: 'i18n_delete_workgroup', }, function ( args )
 							{
 				
-								remove( args.id );
+								remove( args.id, args.psub );
 				
 							} );
 						}
 					
 					};
+					
+					if( workgroup && workgroup.status == 2 )
+					{
+						bg4.style.display = 'none';
+					}
 					
 				}
 				else
@@ -2329,7 +2387,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 											
 											str += '<div>';
 										
-											str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\','+rows.ID+');">';
+											str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\',{id:'+rows.ID+',psub:'+info.ID+'});">';
 						
 											str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
 											str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
@@ -2349,7 +2407,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 													{
 														ii++;
 														
-														str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\','+rows.ID+')">';
+														str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\',{id:'+rows.ID+',psub:'+info.ID+'})">';
 														str += '	<div class="TextCenter HContent4 FloatLeft PaddingSmall" style="min-width:18px"></div>';
 														str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
 														str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
@@ -2369,7 +2427,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																{
 																	ii++;
 																	
-																	str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\','+rows.ID+')">';
+																	str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\',{id:'+rows.ID+',psub:'+info.ID+'})">';
 																	str += '	<div class="TextCenter HContent8 FloatLeft PaddingSmall" style="min-width:38px"></div>';
 																	str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
 																	str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
@@ -2629,7 +2687,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 									{
 										etn.onclick = function( e )
 										{
-											edit( false, false, workgroup.groupid );
+											edit( false, false, workgroup.groupid, workgroup.groupid );
 										};
 									}
 									else
