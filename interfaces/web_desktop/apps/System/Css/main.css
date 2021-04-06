@@ -303,18 +303,18 @@
 
 /* Storage ------------------------------------------------------------------ */
 
-#Admin #StorageGui #DiskSizeContainer
+#Admin #StorageGui #DiskSizeContainer, #Admin .StorageGui .DiskSizeContainer
 {
 	display: none;
 }
 
-#Admin #StorageGui .HRow > .DiskContainer
+#Admin #StorageGui .HRow > .DiskContainer, #Admin .StorageGui .HRow > .DiskContainer
 {
 	min-width: 148px !important;
 	cursor: pointer;
 }
 
-#Admin #StorageGui .Col1
+#Admin #StorageGui .Col1, #Admin .StorageGui .Col1
 {
 	width: 40px;
 	height: 36px;
@@ -323,7 +323,7 @@
 	padding-bottom: 5px;
 }
 
-#Admin #StorageGui .Col2
+#Admin #StorageGui .Col2, #Admin .StorageGui .Col2
 {
 	width: calc(100% - 40px);
 	padding-left: 11px;
@@ -331,7 +331,7 @@
 	box-sizing: border-box;
 }
 
-#Admin #StorageGui .disk
+#Admin #StorageGui .disk, #Admin .StorageGui .disk
 {
 	position: relative;
 	width: 100%;
@@ -342,7 +342,7 @@
     background-repeat: no-repeat;
 }
 
-#Admin #StorageGui .disk > .label
+#Admin #StorageGui .disk > .label, #Admin .StorageGui .disk > .label
 {
 	position: absolute;
     right: calc(50% - 20px);
@@ -354,7 +354,7 @@
     background-size: 40%;
 }
 
-#Admin #StorageGui .name 
+#Admin #StorageGui .name, #Admin .StorageGui .name
 {
 	/*color: #20374D;*/
 	font-size: 12px;
@@ -362,15 +362,15 @@
 	line-height: 15px;
 }
 
-#Admin #StorageGui .type, 
-#Admin #StorageGui .bytes
+#Admin #StorageGui .type, #Admin .StorageGui .type,
+#Admin #StorageGui .bytes, #Admin .StorageGui .bytes
 {
 	/*color: #20374D;*/
 	font-size: 10px;
 	line-height: 13px;
 }
 
-#Admin #StorageGui .rectangle 
+#Admin #StorageGui .rectangle, #Admin .StorageGui .rectangle
 {
 	position: relative;
 	height: 6px;
@@ -380,7 +380,7 @@
 	box-sizing: border-box;
 }
 
-#Admin #StorageGui .rectangle > div 
+#Admin #StorageGui .rectangle > div, #Admin .StorageGui .rectangle > div
 {
 	position: absolute;
 	top: 0;

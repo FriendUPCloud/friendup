@@ -1,9 +1,9 @@
 
 	<div class="HRow PaddingBottom">
 		<div class="HContent50 FloatLeft">
-			<!--<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left" id="GroupBackBtn"></button>-->
+			<!--<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left" id="GroupBackBtn{id}"></button>-->
 			<h3 class="NoMargin FloatLeft">
-				<strong>{i18n_workgroup_details}</strong>
+				<strong>{workgroup_edit}</strong>
 			</h3>
 		</div>
 	</div>
@@ -21,14 +21,14 @@
 		</div>
 	</div>
 	
-	<div class="Box Padding" id="WorkgroupBasicDetails">
+	<div class="Box Padding" id="WorkgroupBasicDetails{id}">
 	
 		<div class="HRow MarginBottom">
 			<div class="HContent30 FloatLeft Ellipsis">
 				<strong>{i18n_workgroup_name}:</strong>
 			</div>
 			<div class="HContent70 FloatLeft Ellipsis">
-				<input id="WorkgroupName" type="text" class="FullWidth" value="{workgroup_name}"/>
+				<input id="WorkgroupName{id}" type="text" class="FullWidth" value="{workgroup_name}"/>
 			</div>
 		</div>
 		
@@ -37,7 +37,7 @@
 				<strong>{i18n_workgroup_parent}:</strong>
 			</div>
 			<div class="HContent70 FloatLeft Ellipsis">
-				<select class="InputHeight FullWidth" id="WorkgroupParent" disabled="disabled">
+				<select class="InputHeight FullWidth" id="WorkgroupParent{id}" disabled="disabled">
 					{workgroup_parent}
 				</select>
 			</div>
@@ -48,22 +48,22 @@
 				<strong>{i18n_workgroup_description}:</strong>
 			</div>
 			<div class="HContent70 FloatLeft Ellipsis">
-				<textarea id="WorkgroupDescription" class="FullWidth" style="resize: none;">{workgroup_description}</textarea>
+				<textarea id="WorkgroupDescription{id}" class="FullWidth" style="resize: none;">{workgroup_description}</textarea>
 			</div>
 		</div>
 		
-		<div id="GroupEditContainer">
+		<div id="GroupEditContainer{id}">
 			<div class="HRow">
-				<!--<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft NegativeAlt fa-trash" id="GroupDeleteBtn"></button>-->
-				<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft Positive fa-trash" id="GroupDeleteBtn"></button>
-				<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft Positive fa-unlock-alt" id="GroupLockBtn"></button>
-				<div id="GroupEditButtons">
-					<!--<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="GroupSaveBtn">-->
-					<button class="Button IconSmall FloatRight MarginLeft" id="GroupSaveBtn">
+				<!--<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft NegativeAlt fa-trash" id="GroupDeleteBtn{id}"></button>-->
+				<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft Positive fa-trash" id="GroupDeleteBtn{id}"></button>
+				<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft Positive fa-unlock-alt" id="GroupLockBtn{id}"></button>
+				<div id="GroupEditButtons{id}">
+					<!--<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="GroupSaveBtn{id}">-->
+					<button class="Button IconSmall FloatRight MarginLeft" id="GroupSaveBtn{id}">
 						{i18n_save}
 					</button>
-					<!--<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="GroupCancelBtn">-->
-					<button class="Button IconSmall FloatRight MarginLeft" id="GroupCancelBtn">
+					<!--<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="GroupCancelBtn{id}">-->
+					<button class="Button IconSmall FloatRight MarginLeft" id="GroupCancelBtn{id}">
 						{i18n_cancel}
 					</button>
 				</div>
@@ -72,51 +72,51 @@
 		
 	</div>
 	
-	<div id="AdminSubWorkgroupContainer">
+	<div id="AdminSubWorkgroupContainer{id}">
 		<div class="HRow MarginTop BackgroundNegative Negative Padding">
 			<div class="HContent40 FloatLeft">
 				<h3 class="NoMargin FloatLeft">
 					<strong>{i18n_sub_workgroups} </strong>
-					<span id="AdminSubWorkgroupCount">{sub_workgroups_count}</span>
+					<span id="AdminSubWorkgroupCount{id}">{sub_workgroups_count}</span>
 				</h3>
 			</div>
 			<div class="PaddingSmall HContent45 FloatLeft Relative">
-				<button class="IconButton IconSmall ButtonSmall fa-times-circle Closed" style="position:absolute;right:0;margin-top:-2px;margin-right:-2px;" id="SubWorkgroupSearchCancelBtn"></button>
+				<button class="IconButton IconSmall ButtonSmall fa-times-circle Closed" style="position:absolute;right:0;margin-top:-2px;margin-right:-2px;" id="SubWorkgroupSearchCancelBtn{id}"></button>
 				<input type="text" class="FullWidth" placeholder="{i18n_search}" style="padding-right:21px">
 			</div>
 			<div class="HContent15 FloatLeft Relative">
-				<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle Open" id="SubWorkgroupEdit"></button>
+				<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle Open" id="SubWorkgroupEdit{id}"></button>
 			</div>
 		</div>
-		<div id="SubWorkgroupGui">
+		<div id="SubWorkgroupGui{id}">
 			{workgroups}
 		</div>
 	</div>
 	
-	<div id="AdminUsersContainer" class="Closed">
+	<div id="AdminUsersContainer{id}" class="Closed">
 		<!--<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">-->
 		<div class="HRow MarginTop BackgroundNegative Negative Padding">
 			<div class="PaddingSmall HContent40 FloatLeft">
-				<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="UsersEditBack"></button>
+				<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="UsersEditBack{id}"></button>
 				<h3 class="NoMargin FloatLeft">
 					<strong>{i18n_users} </strong>
-					<span id="AdminUsersCount">{users_count}</span>
+					<span id="AdminUsersCount{id}">{users_count}</span>
 				</h3>
 			</div>
 			<div class="PaddingSmall HContent45 FloatLeft Relative">
-				<button class="IconButton IconSmall ButtonSmall fa-times-circle Closed" style="position:absolute;right:0;margin-top:-2px;margin-right:-2px;" id="UsersSearchCancelBtn"></button>
+				<button class="IconButton IconSmall ButtonSmall fa-times-circle Closed" style="position:absolute;right:0;margin-top:-2px;margin-right:-2px;" id="UsersSearchCancelBtn{id}"></button>
 				<input type="text" class="FullWidth" placeholder="{i18n_search}" style="padding-right:21px">
 			</div>
 			<div class="PaddingSmall HContent15 FloatLeft Relative">
-				<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle Open" id="UsersEdit"></button>
+				<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle Open" id="UsersEdit{id}"></button>
 			</div>
 		</div>
-		<div id="UsersGui">
+		<div id="UsersGui{id}">
 			{users}
 		</div>
 	</div>
 
-	<div id="AdminStorageContainer" class="Closed">
+	<div id="AdminStorageContainer{id}" class="Closed">
 		<!--<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">-->
 		<div class="HRow MarginTop BackgroundNegative Negative Padding">
 			<div class="HContent50 FloatLeft">
@@ -125,17 +125,17 @@
 				</h3>
 			</div>
 			<div class="HContent50 FloatLeft Relative">
-				<button class="IconButton IconSmall Negative FloatRight MarginRight fa-plus-circle" id="StorageEdit"></button>
+				<button class="IconButton IconSmall Negative FloatRight MarginRight fa-plus-circle" id="StorageEdit{id}"></button>
 			</div>
 		</div>
 		<div class="Box Padding">
-			<div class="HRow" id="StorageGui" style="overflow: auto; max-height: 369px;">
+			<div class="HRow StorageGui" id="StorageGui{id}" style="overflow: auto; max-height: 369px;">
 				{storage}
 			</div>
 		</div>
 	</div>
 
-	<!--<div id="AdminRolesContainer" class="Closed">
+	<!--<div id="AdminRolesContainer{id}" class="Closed">
 		<h2 class="MarginTop">
 			{i18n_roles}
 		</h2>
@@ -144,25 +144,25 @@
 		</div>
 	</div>-->
 	
-	<div id="AdminRolesContainer" class="Closed">
+	<div id="AdminRolesContainer{id}" class="Closed">
 		<!--<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">-->
 		<div class="HRow MarginTop BackgroundNegative Negative Padding">
 			<div class="HContent40 FloatLeft">
-				<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="RolesEditBack"></button>
+				<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="RolesEditBack{id}"></button>
 				<h3 class="NoMargin FloatLeft">
 					<strong>{i18n_roles}</strong>
 				</h3>
 			</div>
 			<div class="PaddingSmall HContent45 FloatLeft Relative">
-				<button class="IconButton IconSmall ButtonSmall fa-times-circle Closed" style="position:absolute;right:0;margin-top:-2px;margin-right:-2px;" id="RolesSearchCancelBtn"></button>
+				<button class="IconButton IconSmall ButtonSmall fa-times-circle Closed" style="position:absolute;right:0;margin-top:-2px;margin-right:-2px;" id="RolesSearchCancelBtn{id}"></button>
 				<input type="text" class="FullWidth" placeholder="{i18n_search}" style="padding-right:21px">
 			</div>
 			<div class="HContent15 FloatLeft Relative">
-				<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle Open" id="RolesEdit"></button>
+				<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle Open" id="RolesEdit{id}"></button>
 			</div>
 		</div>
-		<!--<div class="Box Padding" id="RolesGui">-->
-		<div id="RolesGui">
+		<!--<div class="Box Padding" id="RolesGui{id}">-->
+		<div id="RolesGui{id}">
 			{roles}
 		</div>
 	</div>

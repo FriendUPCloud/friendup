@@ -33,6 +33,21 @@ Sections.accounts_workgroups = function( cmd, extra )
 			}
 			break;
 		
+		case 'edit_sub':
+			if( extra )
+			{
+				if( extra.id && extra._this )
+				{
+					edit( extra.id, extra._this, null, true );
+					
+				}
+				else
+				{
+					edit( extra, null, null, true );
+				}
+			}
+			break;
+		
 		case 'create':
 			create();
 			break;
@@ -457,10 +472,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 	}
 	
-	function edit( id, _this, pid )
+	function edit( id, _this, pid, sub )
 	{
 		
-		cancel();
+		cancel( true );
 		
 		if( _this )
 		{
@@ -486,16 +501,16 @@ Sections.accounts_workgroups = function( cmd, extra )
 			ge( 'WorkgroupID_' + id ).classList.add( 'Selected' );
 		}
 		
-		loading( id, pid );
+		loading( id, pid, sub );
 		
 	}
 	
-	function cancel()
+	function cancel( skip )
 	{
 		
 		if( ShowLog ) console.log( 'cancel(  ) ' );
 
-		if( ge( 'WorkgroupDetails' ) )
+		if( !skip && ge( 'WorkgroupDetails' ) )
 		{
 			ge( 'WorkgroupDetails' ).innerHTML = '';
 		}
@@ -549,12 +564,12 @@ Sections.accounts_workgroups = function( cmd, extra )
 			catch( e ) {  }
 			
 			if( ShowLog || 1==1 ) console.log( 'create() ', { e:e, d:(data?data:d), args: {
-				groupname   : ( ge( 'WorkgroupName'   ).value                                          ), 
-				parentid    : ( ge( 'WorkgroupParent' ).value                                          ), 
-				description : ( ge( 'WorkgroupDescription' ).value                                     ), 
-				authid      : ( Application.authId                                                     ), 
-				type        : ( 'Workgroup'                                                            ),
-				args        : ( args                                                                   ) 
+				groupname   : ( ge( 'WorkgroupName'        ).value ), 
+				parentid    : ( ge( 'WorkgroupParent'      ).value ), 
+				description : ( ge( 'WorkgroupDescription' ).value ), 
+				authid      : ( Application.authId                 ), 
+				type        : ( 'Workgroup'                        ),
+				args        : ( args                               ) 
 			} } );
 			
 			if( e == 'ok' && d )
@@ -619,9 +634,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 			
 		}
 		f.execute( 'group/create', {
-			groupname   : ( ge( 'WorkgroupName'        ) ? ge( 'WorkgroupName'   ).value : 'Unnamed workgroup' ), 
-			description : ( ge( 'WorkgroupDescription' ) ? ge( 'WorkgroupDescription' ).value : ''             ),
-			parentid    : ( ge( 'WorkgroupParent'      ) ? ge( 'WorkgroupParent' ).value : 0                   ),
+			groupname   : ( ge( 'WorkgroupName'        ) ? ge( 'WorkgroupName'        ).value : 'Unnamed workgroup' ), 
+			description : ( ge( 'WorkgroupDescription' ) ? ge( 'WorkgroupDescription' ).value : ''                  ),
+			parentid    : ( ge( 'WorkgroupParent'      ) ? ge( 'WorkgroupParent'      ).value : 0                   ),
 			authid      : Application.authId,
 			type        : 'Workgroup',
 			args        : args
@@ -636,6 +651,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 		if( id )
 		{
+			
+			let uuid = '_'+id;
 			
 			// Specific for Pawel's code ... He just wants to forward json ...
 			
@@ -671,12 +688,12 @@ Sections.accounts_workgroups = function( cmd, extra )
 				catch( e ) {  }
 				
 				if( ShowLog || 1==1 ) console.log( { e:e, d:(data?data:d), args: {
-					id          : ( id                                                                     ), 
-					groupname   : ( ge( 'WorkgroupName'   ).value                                          ), 
-					parentid    : ( ge( 'WorkgroupParent' ).value                                          ), 
-					description : ( ge( 'WorkgroupDescription' ).value                                     ), 
-					authid      : ( Application.authId                                                     ), 
-					args        : ( args                                                                   ) 
+					id          : ( id                                      ), 
+					groupname   : ( ge( 'WorkgroupName'+uuid        ).value ), 
+					parentid    : ( ge( 'WorkgroupParent'+uuid      ).value ), 
+					description : ( ge( 'WorkgroupDescription'+uuid ).value ), 
+					authid      : ( Application.authId                      ), 
+					args        : ( args                                    ) 
 				} } );
 				
 				if( e == 'ok' && d )
@@ -700,9 +717,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 				{
 					Notify( { title: i18n( 'i18n_workgroup_update' ), text: i18n( 'i18n_' + data.response ).replace( 'i18n_', '' ) } );
 				
-					if( ge( 'WorkgroupName' ) )
+					if( ge( 'WorkgroupName'+uuid ) )
 					{
-						ge( 'WorkgroupName' ).focus();
+						ge( 'WorkgroupName'+uuid ).focus();
 					}
 				}
 				
@@ -712,9 +729,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 				{
 					Notify( { title: i18n( 'i18n_workgroup_update' ), text: i18n( 'i18n_' + data.response ).replace( 'i18n_', '' ) } );
 				
-					if( ge( 'WorkgroupName' ) )
+					if( ge( 'WorkgroupName'+uuid ) )
 					{
-						ge( 'WorkgroupName' ).focus();
+						ge( 'WorkgroupName'+uuid ).focus();
 					}
 				}
 			
@@ -741,12 +758,12 @@ Sections.accounts_workgroups = function( cmd, extra )
 				//Sections.accounts_workgroups( 'refresh' ); 
 			}
 			f.execute( 'group/update', {
-				id          : ( id                                                                     ), 
-				groupname   : ( ge( 'WorkgroupName'   ).value                                          ), 
-				description : ( ge( 'WorkgroupDescription' ).value                                     ),
-				parentid    : ( ge( 'WorkgroupParent' ).value                                          ),
-				authid    : ( Application.authId                                                       ),
-				args      : ( args                                                                     )
+				id          : ( id                                      ), 
+				groupname   : ( ge( 'WorkgroupName'+uuid        ).value ), 
+				description : ( ge( 'WorkgroupDescription'+uuid ).value ),
+				parentid    : ( ge( 'WorkgroupParent'+uuid      ).value ),
+				authid    : ( Application.authId                        ),
+				args      : ( args                                      )
 			} );
 			
 		}
@@ -887,11 +904,15 @@ Sections.accounts_workgroups = function( cmd, extra )
 		}
 	}
 	
-	function saveStorage( diskid, userid, callback )
+	function saveStorage( groupid, diskid, userid, callback )
 	{
+		// TODO: add workgroupid or diskid to id's ...
+		
+		let uuid = (groupid?'_'+groupid:'');
+		
 		var elems = {};
 		
-		var inputs = ge( 'StorageGui' ).getElementsByTagName( 'input' );
+		var inputs = ge( 'StorageGui'+uuid ).getElementsByTagName( 'input' );
 	
 		if( inputs.length > 0 )
 		{
@@ -904,7 +925,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			}
 		}
 	
-		var texts = ge( 'StorageGui' ).getElementsByTagName( 'textarea' );
+		var texts = ge( 'StorageGui'+uuid ).getElementsByTagName( 'textarea' );
 	
 		if( texts.length > 0 )
 		{
@@ -917,7 +938,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			}
 		}
 	
-		var selects = ge( 'StorageGui' ).getElementsByTagName( 'select' );
+		var selects = ge( 'StorageGui'+uuid ).getElementsByTagName( 'select' );
 	
 		if( selects.length > 0 )
 		{
@@ -941,7 +962,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			{
 				elems[ 'conf.DiskSize' ] = { id: 'conf.DiskSize', value: ( elems[ 'DiskSizeA' ].value + elems[ 'DiskSizeB' ].value ) };
 			}
-		
+			
 			var req = { 'Name' : i18n( 'i18n_disk_name_missing' ), 'Type' : i18n( 'i18n_disk_type_missing' ) };
 		
 			for( var r in req )
@@ -1053,7 +1074,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			if( ShowLog ) console.log( data );
 			
 			// if the disk is mounted, we need to unmount it based on its old name first.
-			if( elems[ 'Name' ].hasAttribute('data-stored-value') &&  elems[ 'Name' ].hasAttribute('data-mount-state') && elems[ 'Name' ].getAttribute('data-mount-state') == '1' )
+			if( elems[ 'Name' ].hasAttribute('data-stored-value') && elems[ 'Name' ].hasAttribute('data-mount-state') && elems[ 'Name' ].getAttribute('data-mount-state') == '1' )
 			{
 				unmountDisk( elems[ 'Name' ].getAttribute('data-stored-value'), userid, function( e, d )
 				{
@@ -1511,13 +1532,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 	}
 	
-	function editMode( close )
+	function editMode( close, id )
 	{
-		if( ShowLog ) console.log( 'editMode() ', ge( 'GroupEditButtons' ) );
+		if( ShowLog ) console.log( 'editMode() ', ge( 'GroupEditButtons'+(id?'_'+id:'') ) );
 		
-		if( ge( 'GroupEditButtons' ) )
+		if( ge( 'GroupEditButtons'+(id?'_'+id:'') ) )
 		{
-			ge( 'GroupEditButtons' ).className = ( close ? 'Closed' : 'Open' );
+			ge( 'GroupEditButtons'+(id?'_'+id:'') ).className = ( close ? 'Closed' : 'Open' );
 		}
 	}
 	
@@ -1585,7 +1606,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 			
 			if( act.targ )
 			{
-			
+				
+				// TODO: Get these id's ...
+				
 				if( ge( 'GroupDeleteBtn' ) && ge( 'GroupDeleteBtn' ).savedState )
 				{
 				
@@ -1626,9 +1649,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 	// init --------------------------------------------------------------------------------------------------------- //
 	
-	function loading( id, pid )
+	function loading( id, pid, sub )
 	{
-		if( ShowLog ) console.log( 'loading( '+id+' )' );
+		if( ShowLog ) console.log( 'loading( '+id+', '+pid+', '+sub+' )' );
 		
 		if( id )
 		{
@@ -1736,7 +1759,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				{
 					if( typeof info.workgroup == 'undefined' ) return;
 					
-					initDetails( info );
+					initDetails( info, sub );
 				}
 			
 			];
@@ -1767,8 +1790,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 	}
 	
 	// Show the form
-	function initDetails( info )
+	function initDetails( info, sub )
 	{
+		let uuid = (info.ID?'_'+info.ID:'');
+		
 		var workgroup  = ( info.workgroup  ? info.workgroup  : {} );
 		var workgroups = ( info.workgroups ? info.workgroups : [] );
 		var mountlist  = ( info.mountlist  ? info.mountlist  : {} );
@@ -1849,12 +1874,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 		// Add all data for the template
 		d.replacements = {
-			id                    : ( workgroup.groupid     ? workgroup.groupid     : ''                           ),
-			workgroup_title       : ( workgroup.name        ? workgroup.name        : i18n( 'i18n_new_workgroup' ) ),
-			workgroup_name        : ( workgroup.name        ? workgroup.name        : ''                           ),
+			id                    : ( info.ID               ? ( '_' + info.ID )     : ''                               ),
+			workgroup_edit        : ( sub ? i18n( 'i18n_subworkgroup_details' )     : i18n( 'i18n_workgroup_details' ) ),
+			workgroup_title       : ( workgroup.name        ? workgroup.name        : i18n( 'i18n_new_workgroup' )     ),
+			workgroup_name        : ( workgroup.name        ? workgroup.name        : ''                               ),
 			workgroup_parent      : pstr,
-			workgroup_description : ( workgroup.description ? workgroup.description : ''                           ),
-			users_count           : ( list && list.Count ? '(' + list.Count + ')' : '(0)' ),
+			workgroup_description : ( workgroup.description ? workgroup.description : ''                               ),
+			users_count           : ( list && list.Count ? '(' + list.Count + ')'   : '(0)'                            ),
 			storage               : ''/*mlst*/,
 			roles                 : ''/*rstr*/
 		};
@@ -1863,35 +1889,53 @@ Sections.accounts_workgroups = function( cmd, extra )
 		d.i18n();
 		d.onLoad = function( data )
 		{
-			ge( 'WorkgroupDetails' ).innerHTML = data;
-			
-			if( !info.ID )
+			if( sub )
 			{
-				ge( 'GroupDeleteBtn' ).style.display = 'none';
-				ge( 'GroupLockBtn'   ).style.display = 'none';
+				ge( 'SubWorkgroupDetails' ).innerHTML = data;
 				
-				ge( 'AdminSubWorkgroupContainer' ).style.display = 'none';
-				ge( 'AdminUsersContainer'        ).style.display = 'none';
-				ge( 'AdminStorageContainer'      ).style.display = 'none';
-				ge( 'AdminRolesContainer'        ).style.display = 'none';
+				if( ge( 'SlideContainer' ) )
+				{
+					ge( 'SlideContainer' ).className = ge( 'SlideContainer' ).className + ' Slide';
+				}
 			}
 			else
 			{
-				ge( 'GroupEditButtons' ).className = 'Closed';
+				ge( 'WorkgroupDetails'    ).innerHTML = data;
+			}
+			
+			
+			
+			if( !info.ID )
+			{
+				ge( 'GroupDeleteBtn'+uuid ).style.display = 'none';
+				ge( 'GroupLockBtn'+uuid   ).style.display = 'none';
 				
-				if( ge( 'WorkgroupBasicDetails' ) )
+				ge( 'AdminSubWorkgroupContainer'+uuid ).style.display = 'none';
+				ge( 'AdminUsersContainer'+uuid        ).style.display = 'none';
+				ge( 'AdminStorageContainer'+uuid      ).style.display = 'none';
+				ge( 'AdminRolesContainer'+uuid        ).style.display = 'none';
+			}
+			else
+			{
+				ge( 'GroupEditButtons'+uuid ).className = 'Closed';
+				
+				if( ge( 'WorkgroupBasicDetails'+uuid ) )
 				{
-					var inps = ge( 'WorkgroupBasicDetails' ).getElementsByTagName( '*' );
+					var inps = ge( 'WorkgroupBasicDetails'+uuid ).getElementsByTagName( '*' );
 					if( inps.length > 0 )
 					{
 						for( var a = 0; a < inps.length; a++ )
 						{
-							if( inps[ a ].id && [ 'WorkgroupName', 'WorkgroupParent', 'WorkgroupDescription' ].indexOf( inps[ a ].id ) >= 0 )
+							if( inps[ a ].id && [ 
+								'WorkgroupName'+uuid, 
+								'WorkgroupParent'+uuid, 
+								'WorkgroupDescription'+uuid 
+							].indexOf( inps[ a ].id ) >= 0 )
 							{
 								( function( i ) {
 									i.onclick = function( e )
 									{
-										editMode();
+										editMode( null, info.ID );
 									}
 								} )( inps[ a ] );
 							}
@@ -1899,10 +1943,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 					}
 				}
 				
-				//ge( 'AdminUsersContainer' ).className = 'Open';
+				//ge( 'AdminUsersContainer'+uuid ).className = 'Open';
 			}
 			
-			var bg1  = ge( 'GroupSaveBtn' );
+			var bg1  = ge( 'GroupSaveBtn'+uuid );
 			if( bg1 ) 
 			{
 				if( 
@@ -1940,7 +1984,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					bg1.style.display = 'none';
 				}
 			}
-			var bg2  = ge( 'GroupCancelBtn' );
+			var bg2  = ge( 'GroupCancelBtn'+uuid );
 			if( bg2 ) bg2.onclick = function( e )
 			{
 				if( info.ID )
@@ -1952,13 +1996,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 					cancel(  );
 				}
 			}
-			var bg3  = ge( 'GroupBackBtn' );
+			var bg3  = ge( 'GroupBackBtn'+uuid );
 			if( bg3 ) bg3.onclick = function( e )
 			{
 				cancel(  );
 			}
 			
-			var bg4  = ge( 'GroupDeleteBtn' );
+			var bg4  = ge( 'GroupDeleteBtn'+uuid );
 			if( bg4 )
 			{
 				if( workgroup && workgroup.status != 2 && Application.checkAppPermission( [ 
@@ -1966,72 +2010,26 @@ Sections.accounts_workgroups = function( cmd, extra )
 					'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
 				] ) )
 				{
-					if( 1==1/* || workgroup && workgroup.status != 2*/ )
+					
+					bg4.onclick = function( e )
 					{
-						bg4.onclick = function( e )
+		
+						// Delete workgroup ...
+					
+						if( info.ID )
 						{
+							if( ShowLog ) console.log( '// delete workgroup' );
 			
-							// Delete workgroup ...
-						
-							if( info.ID )
+							removeBtn( this, { id: info.ID, button_text: 'i18n_delete_workgroup', }, function ( args )
 							{
-								if( ShowLog ) console.log( '// delete workgroup' );
 				
-								removeBtn( this, { id: info.ID, button_text: 'i18n_delete_workgroup', }, function ( args )
-								{
-					
-									remove( args.id );
-					
-								} );
-							}
-						
-						};
-					}
-					/*else
-					{
-						
-						bg4.className = bg4.className.split( 'fa-trash' ).join( 'fa-lock' );
-						
-						bg4.onclick = function(  )
-						{
-							
-							// Unlock workgroup ...
-							
-							if( info.ID )
-							{
-								updateStatus( info.ID, 0, function( res )
-								{
-									
-									if( res )
-									{
-										bg4.className = bg4.className.split( 'fa-lock' ).join( 'fa-trash' );
-										
-										bg4.onclick = function(  )
-										{
-											
-											// Delete workgroup ...
-											
-											if( info.ID )
-											{
-												if( ShowLog ) console.log( '// delete workgroup' );
+								remove( args.id );
 				
-												removeBtn( this, { id: info.ID, button_text: 'i18n_delete_workgroup', }, function ( args )
-												{
+							} );
+						}
 					
-													remove( args.id );
+					};
 					
-												} );
-											}
-											
-										};
-									}
-									
-								} );
-							}
-							
-						};
-						
-					}*/
 				}
 				else
 				{
@@ -2039,7 +2037,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				}
 			}
 			
-			var bg5  = ge( 'GroupLockBtn' );
+			var bg5  = ge( 'GroupLockBtn'+uuid );
 			if( bg5 )
 			{
 				if( Application.checkAppPermission( [ 
@@ -2140,7 +2138,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 									this.userids[ key ] = value;
 								}
 								
-								if( ge( 'WorkgroupUsers' ) )
+								if( ge( 'WorkgroupUsers'+uuid ) )
 								{
 									if( this.userids )
 									{
@@ -2154,7 +2152,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 											}
 										}
 										
-										ge( 'WorkgroupUsers' ).setAttribute( 'value', ( arr ? arr.join( ',' ) : '' ) );
+										ge( 'WorkgroupUsers'+uuid ).setAttribute( 'value', ( arr ? arr.join( ',' ) : '' ) );
 									}
 								}
 								
@@ -2181,7 +2179,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								
 								// Heading ...
 								
-								let o = ge( 'SubWorkgroupGui' ); if( o ) o.innerHTML = '';
+								let o = ge( 'SubWorkgroupGui'+uuid ); if( o ) o.innerHTML = '';
 								
 								let divs = appendChild( [ 
 									{ 
@@ -2233,7 +2231,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 											d.className = 'HRow Box Padding';
 											d.style.overflow = 'auto';
 											d.style.maxHeight = '369px';
-											d.id = 'SubWorkgroupInner';
+											d.id = 'SubWorkgroupInner'+uuid;
 											return d;
 										}()
 									}
@@ -2331,7 +2329,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 											
 											str += '<div>';
 										
-											str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit\','+rows.ID+')">';
+											str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\','+rows.ID+');">';
 						
 											str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
 											str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
@@ -2351,7 +2349,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 													{
 														ii++;
 														
-														str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit\','+rows.ID+')">';
+														str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\','+rows.ID+')">';
 														str += '	<div class="TextCenter HContent4 FloatLeft PaddingSmall" style="min-width:18px"></div>';
 														str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
 														str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
@@ -2371,7 +2369,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																{
 																	ii++;
 																	
-																	str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit\','+rows.ID+')">';
+																	str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\','+rows.ID+')">';
 																	str += '	<div class="TextCenter HContent8 FloatLeft PaddingSmall" style="min-width:38px"></div>';
 																	str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
 																	str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
@@ -2400,24 +2398,24 @@ Sections.accounts_workgroups = function( cmd, extra )
 								
 								
 								
-								if( ge( 'SubWorkgroupInner' ) )
+								if( ge( 'SubWorkgroupInner'+uuid ) )
 								{
-									ge( 'SubWorkgroupInner' ).innerHTML = str;
+									ge( 'SubWorkgroupInner'+uuid ).innerHTML = str;
 								}
 								
-								if( ge( 'AdminSubWorkgroupCount' ) )
+								if( ge( 'AdminSubWorkgroupCount'+uuid ) )
 								{
-									ge( 'AdminSubWorkgroupCount' ).innerHTML = '(' + ii + ')';
+									ge( 'AdminSubWorkgroupCount'+uuid ).innerHTML = '(' + ii + ')';
 								}
 								
 								this.sortgroups( 'Name', 'ASC' );
 								
-								var inp = ge( 'AdminSubWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
+								var inp = ge( 'AdminSubWorkgroupContainer'+uuid ).getElementsByTagName( 'input' )[0];
 								inp.onkeyup = function( e )
 								{
 									init.searchgroups( this.value );
 								}
-								ge( 'SubWorkgroupSearchCancelBtn' ).onclick = function( e )
+								ge( 'SubWorkgroupSearchCancelBtn'+uuid ).onclick = function( e )
 								{
 									init.searchgroups( false );
 									inp.value = '';
@@ -2428,9 +2426,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 							searchgroups : function ( filter, server )
 							{
 								
-								if( ge( 'SubWorkgroupInner' ) )
+								if( ge( 'SubWorkgroupInner'+uuid ) )
 								{
-									var list = ge( 'SubWorkgroupInner' ).getElementsByTagName( 'div' );
+									var list = ge( 'SubWorkgroupInner'+uuid ).getElementsByTagName( 'div' );
 						
 									if( list.length > 0 )
 									{
@@ -2473,12 +2471,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 
 									}
 						
-									if( ge( 'SubWorkgroupSearchCancelBtn' ) )
+									if( ge( 'SubWorkgroupSearchCancelBtn'+uuid ) )
 									{
-										if( !filter && ( ge( 'SubWorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'SubWorkgroupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										if( !filter && ( ge( 'SubWorkgroupSearchCancelBtn'+uuid ).classList.contains( 'Open' ) 
+										|| ge( 'SubWorkgroupSearchCancelBtn'+uuid ).classList.contains( 'Closed' ) ) )
 										{
-											ge( 'SubWorkgroupSearchCancelBtn' ).classList.remove( 'Open' );
-											ge( 'SubWorkgroupSearchCancelBtn' ).classList.add( 'Closed' );
+											ge( 'SubWorkgroupSearchCancelBtn'+uuid ).classList.remove( 'Open' );
+											ge( 'SubWorkgroupSearchCancelBtn'+uuid ).classList.add( 'Closed' );
 								
 											if( list.length > 0 )
 											{
@@ -2493,10 +2492,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 											}
 										}
 							
-										else if( filter != '' && ( ge( 'SubWorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'SubWorkgroupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										else if( filter != '' && ( ge( 'SubWorkgroupSearchCancelBtn'+uuid ).classList.contains( 'Open' ) 
+										|| ge( 'SubWorkgroupSearchCancelBtn'+uuid ).classList.contains( 'Closed' ) ) )
 										{
-											ge( 'SubWorkgroupSearchCancelBtn' ).classList.remove( 'Closed' );
-											ge( 'SubWorkgroupSearchCancelBtn' ).classList.add( 'Open' );
+											ge( 'SubWorkgroupSearchCancelBtn'+uuid ).classList.remove( 'Closed' );
+											ge( 'SubWorkgroupSearchCancelBtn'+uuid ).classList.add( 'Open' );
 										}
 									}
 								}
@@ -2508,7 +2508,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 								//
 								
-								var _this = ge( 'SubWorkgroupInner' );
+								var _this = ge( 'SubWorkgroupInner'+uuid );
 					
 								if( _this )
 								{
@@ -2614,7 +2614,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 							
 							default:
 								
-								var etn = ge( 'SubWorkgroupEdit' );
+								var etn = ge( 'SubWorkgroupEdit'+uuid );
 								if( etn )
 								{
 									if( Application.checkAppPermission( [ 
@@ -2665,16 +2665,16 @@ Sections.accounts_workgroups = function( cmd, extra )
 							head : function ( hidecol )
 							{
 								
-								var inp = ge( 'AdminUsersContainer' ).getElementsByTagName( 'input' )[0];
+								var inp = ge( 'AdminUsersContainer'+uuid ).getElementsByTagName( 'input' )[0];
 								inp.value = '';
 								
-								if( ge( 'UsersSearchCancelBtn' ) && ge( 'UsersSearchCancelBtn' ).classList.contains( 'Open' ) )
+								if( ge( 'UsersSearchCancelBtn'+uuid ) && ge( 'UsersSearchCancelBtn'+uuid ).classList.contains( 'Open' ) )
 								{
-									ge( 'UsersSearchCancelBtn' ).classList.remove( 'Open' );
-									ge( 'UsersSearchCancelBtn' ).classList.add( 'Closed' );
+									ge( 'UsersSearchCancelBtn'+uuid ).classList.remove( 'Open' );
+									ge( 'UsersSearchCancelBtn'+uuid ).classList.add( 'Closed' );
 								}
 								
-								var o = ge( 'UsersGui' ); o.innerHTML = '<input type="hidden" id="WorkgroupUsers">';
+								var o = ge( 'UsersGui'+uuid ); o.innerHTML = '<input type="hidden" id="WorkgroupUsers'+uuid+'">';
 								
 								this.func.updateids( 'users' );
 								
@@ -2750,7 +2750,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 											d.className = 'HRow Box Padding';
 											d.style.overflow = 'auto';
 											d.style.maxHeight = '369px';
-											d.id = 'UsersInner';
+											d.id = 'UsersInner'+uuid;
 											return d;
 										}()
 									}
@@ -2782,7 +2782,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								{
 									this.head();
 									
-									var o = ge( 'UsersInner' ); o.innerHTML = '';
+									var o = ge( 'UsersInner'+uuid ); o.innerHTML = '';
 									
 									this.func.mode[ 'users' ] = 'list';
 									
@@ -2933,11 +2933,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 																								vars.pnt.innerHTML = '';
 																							}
 																							
-																							if( ge( 'AdminUsersCount' ) )
+																							if( ge( 'AdminUsersCount'+uuid ) )
 																							{
-																								if( ge( 'AdminUsersCount' ).innerHTML )
+																								if( ge( 'AdminUsersCount'+uuid ).innerHTML )
 																								{
-																									var count = ge( 'AdminUsersCount' ).innerHTML.split( '(' ).join( '' ).split( ')' ).join( '' );
+																									var count = ge( 'AdminUsersCount'+uuid ).innerHTML.split( '(' ).join( '' ).split( ')' ).join( '' );
 																									
 																									if( count && count > 0 )
 																									{
@@ -2945,7 +2945,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 							
 																										if( result >= 0 )
 																										{
-																											ge( 'AdminUsersCount' ).innerHTML = '(' + result + ')';
+																											ge( 'AdminUsersCount'+uuid ).innerHTML = '(' + result + ')';
 																										}
 																									}
 																								}
@@ -2989,19 +2989,19 @@ Sections.accounts_workgroups = function( cmd, extra )
 									
 								}
 								
-								if( ge( 'AdminUsersCount' ) )
+								if( ge( 'AdminUsersCount'+uuid ) )
 								{
-									ge( 'AdminUsersCount' ).innerHTML = '(' + ii + ')';
+									ge( 'AdminUsersCount'+uuid ).innerHTML = '(' + ii + ')';
 								}
 								
 								this.sortusers( 'Name', 'ASC' );
 								
-								var inp = ge( 'AdminUsersContainer' ).getElementsByTagName( 'input' )[0];
+								var inp = ge( 'AdminUsersContainer'+uuid ).getElementsByTagName( 'input' )[0];
 								inp.onkeyup = function( e )
 								{
 									init.searchusers( this.value );
 								}
-								ge( 'UsersSearchCancelBtn' ).onclick = function( e )
+								ge( 'UsersSearchCancelBtn'+uuid ).onclick = function( e )
 								{
 									init.searchusers( false );
 									inp.value = '';
@@ -3025,7 +3025,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 									
 									if( !users ) this.head( true );
 									
-									var o = ge( 'UsersInner' ); if( this.func.mode[ 'users' ] != 'edit' ) o.innerHTML = '';
+									var o = ge( 'UsersInner'+uuid ); if( this.func.mode[ 'users' ] != 'edit' ) o.innerHTML = '';
 									
 									this.func.mode[ 'users' ] = 'edit';
 									
@@ -3190,11 +3190,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 																							vars._this.classList.remove( 'fa-toggle-on' );
 																							vars._this.classList.add( 'fa-toggle-off' );
 																							
-																							if( ge( 'AdminUsersCount' ) )
+																							if( ge( 'AdminUsersCount'+uuid ) )
 																							{
-																								if( ge( 'AdminUsersCount' ).innerHTML )
+																								if( ge( 'AdminUsersCount'+uuid ).innerHTML )
 																								{
-																									var count = ge( 'AdminUsersCount' ).innerHTML.split( '(' ).join( '' ).split( ')' ).join( '' );
+																									var count = ge( 'AdminUsersCount'+uuid ).innerHTML.split( '(' ).join( '' ).split( ')' ).join( '' );
 																									
 																									if( count && count > 0 )
 																									{
@@ -3202,7 +3202,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 							
 																										if( result >= 0 )
 																										{
-																											ge( 'AdminUsersCount' ).innerHTML = '(' + result + ')';
+																											ge( 'AdminUsersCount'+uuid ).innerHTML = '(' + result + ')';
 																										}
 																									}
 																								}
@@ -3250,21 +3250,21 @@ Sections.accounts_workgroups = function( cmd, extra )
 									
 								}
 								
-								if( ge( 'AdminUsersCount' ) )
+								if( ge( 'AdminUsersCount'+uuid ) )
 								{
-									ge( 'AdminUsersCount' ).innerHTML = ( list && list.Count ? '(' + list.Count + ')' : '(0)' );
+									ge( 'AdminUsersCount'+uuid ).innerHTML = ( list && list.Count ? '(' + list.Count + ')' : '(0)' );
 								}
 								
 								this.sortusers( 'Name', 'ASC' );
 								
 								// TODO: No need to keep adding every time ...
 								
-								var inp = ge( 'AdminUsersContainer' ).getElementsByTagName( 'input' )[0];
+								var inp = ge( 'AdminUsersContainer'+uuid ).getElementsByTagName( 'input' )[0];
 								inp.onkeyup = function( e )
 								{
 									init.searchusers( this.value, true );
 								}
-								ge( 'UsersSearchCancelBtn' ).onclick = function( e )
+								ge( 'UsersSearchCancelBtn'+uuid ).onclick = function( e )
 								{
 									init.searchusers( false );
 									inp.value = '';
@@ -3280,9 +3280,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 									UsersSettings( 'searchquery', filter );
 								}
 								
-								if( ge( 'UsersInner' ) )
+								if( ge( 'UsersInner'+uuid ) )
 								{
-									var list = ge( 'UsersInner' ).getElementsByTagName( 'div' );
+									var list = ge( 'UsersInner'+uuid ).getElementsByTagName( 'div' );
 
 									if( list.length > 0 )
 									{
@@ -3328,18 +3328,20 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 									}
 									
-									if( ge( 'UsersSearchCancelBtn' ) )
+									if( ge( 'UsersSearchCancelBtn'+uuid ) )
 									{
-										if( !filter && ( ge( 'UsersSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'UsersSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										if( !filter && ( ge( 'UsersSearchCancelBtn'+uuid ).classList.contains( 'Open' ) 
+										|| ge( 'UsersSearchCancelBtn'+uuid ).classList.contains( 'Closed' ) ) )
 										{
-											ge( 'UsersSearchCancelBtn' ).classList.remove( 'Open' );
-											ge( 'UsersSearchCancelBtn' ).classList.add( 'Closed' );
+											ge( 'UsersSearchCancelBtn'+uuid ).classList.remove( 'Open' );
+											ge( 'UsersSearchCancelBtn'+uuid ).classList.add( 'Closed' );
 										}
 										
-										else if( filter != '' && ( ge( 'UsersSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'UsersSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										else if( filter != '' && ( ge( 'UsersSearchCancelBtn'+uuid ).classList.contains( 'Open' ) 
+										|| ge( 'UsersSearchCancelBtn'+uuid ).classList.contains( 'Closed' ) ) )
 										{
-											ge( 'UsersSearchCancelBtn' ).classList.remove( 'Closed' );
-											ge( 'UsersSearchCancelBtn' ).classList.add( 'Open' );
+											ge( 'UsersSearchCancelBtn'+uuid ).classList.remove( 'Closed' );
+											ge( 'UsersSearchCancelBtn'+uuid ).classList.add( 'Open' );
 										}
 									}
 								}
@@ -3379,7 +3381,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 
 								//
 
-								var _this = ge( 'UsersInner' );
+								var _this = ge( 'UsersInner'+uuid );
 
 								if( _this )
 								{
@@ -3521,7 +3523,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 							
 							default:
 								
-								var etn = ge( 'UsersEdit' );
+								var etn = ge( 'UsersEdit'+uuid );
 								if( etn )
 								{
 									if( Application.checkAppPermission( [ 
@@ -3559,7 +3561,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 									}
 								}
 						
-								var btn = ge( 'UsersEditBack' );
+								var btn = ge( 'UsersEditBack'+uuid );
 								if( btn )
 								{
 									btn.onclick = function( e )
@@ -3613,7 +3615,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								
 								this.func.mode[ 'storage' ] = 'list';
 								
-								var o = ge( 'StorageGui' ); o.innerHTML = '';
+								var o = ge( 'StorageGui'+uuid ); o.innerHTML = '';
 								
 								mountlist = ( rows ? rows : mountlist );
 								
@@ -3978,7 +3980,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										dosdrivergui( storage, function( storage )
 										{
 											
-											var o = ge( 'StorageGui' ); o.innerHTML = '';
+											var o = ge( 'StorageGui'+uuid ); o.innerHTML = '';
 											
 											var divs = appendChild( [
 												{
@@ -4179,7 +4181,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 															'element' : function(  ) 
 															{
 																var d = document.createElement( 'div' );
-																d.id = 'DosDriverGui';
+																d.id = 'DosDriverGui'+uuid;
 																return d;
 															}(  ),
 															
@@ -4312,7 +4314,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																	d.onclick = function ()
 																	{
 																	
-																		saveStorage( storage.id, storage.user, function()
+																		saveStorage( groupid, storage.id, storage.user, function()
 																		{
 																		
 																			listStorage( function( res, js )
@@ -4529,7 +4531,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 							
 							default:
 								
-								var etn = ge( 'StorageEdit' );
+								var etn = ge( 'StorageEdit'+uuid );
 								if( etn )
 								{
 									if( Application.checkAppPermission( [ 
@@ -4565,10 +4567,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 					roles : function (  )
 					{
 						
-						if( ge( 'RolesGui' ) && rstr )
+						if( ge( 'RolesGui'+uuid ) && rstr )
 						{
 							
-							var o = ge( 'RolesGui' ); if( o ) o.innerHTML = '';
+							var o = ge( 'RolesGui'+uuid ); if( o ) o.innerHTML = '';
 							
 							var divs = appendChild( [ 
 								{ 
@@ -4610,7 +4612,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										d.className = 'HRow Box Padding';
 										d.style.overflow = 'auto';
 										d.style.maxHeight = '369px';
-										d.id = 'RolesInner';
+										d.id = 'RolesInner'+uuid;
 										return d;
 									}()
 								}
@@ -4629,15 +4631,15 @@ Sections.accounts_workgroups = function( cmd, extra )
 							
 							
 							
-							ge( 'RolesInner' ).innerHTML = rstr;
+							ge( 'RolesInner'+uuid ).innerHTML = rstr;
 							
-							var inp = ge( 'AdminRolesContainer' ).getElementsByTagName( 'input' )[0];
+							var inp = ge( 'AdminRolesContainer'+uuid ).getElementsByTagName( 'input' )[0];
 							inp.value = '';
 							
-							if( ge( 'RolesSearchCancelBtn' ) && ge( 'RolesSearchCancelBtn' ).classList.contains( 'Open' ) )
+							if( ge( 'RolesSearchCancelBtn'+uuid ) && ge( 'RolesSearchCancelBtn'+uuid ).classList.contains( 'Open' ) )
 							{
-								ge( 'RolesSearchCancelBtn' ).classList.remove( 'Open' );
-								ge( 'RolesSearchCancelBtn' ).classList.add( 'Closed' );
+								ge( 'RolesSearchCancelBtn'+uuid ).classList.remove( 'Open' );
+								ge( 'RolesSearchCancelBtn'+uuid ).classList.add( 'Closed' );
 							}
 							
 							// Search ...............
@@ -4645,9 +4647,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 							var searchroles = function ( filter, server )
 							{
 							
-								if( ge( 'RolesInner' ) )
+								if( ge( 'RolesInner'+uuid ) )
 								{
-									var list = ge( 'RolesInner' ).getElementsByTagName( 'div' );
+									var list = ge( 'RolesInner'+uuid ).getElementsByTagName( 'div' );
 								
 									if( list.length > 0 )
 									{
@@ -4676,18 +4678,20 @@ Sections.accounts_workgroups = function( cmd, extra )
 
 									}
 									
-									if( ge( 'RolesSearchCancelBtn' ) )
+									if( ge( 'RolesSearchCancelBtn'+uuid ) )
 									{
-										if( !filter && ( ge( 'RolesSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'RolesSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										if( !filter && ( ge( 'RolesSearchCancelBtn'+uuid ).classList.contains( 'Open' ) 
+										|| ge( 'RolesSearchCancelBtn'+uuid ).classList.contains( 'Closed' ) ) )
 										{
-											ge( 'RolesSearchCancelBtn' ).classList.remove( 'Open' );
-											ge( 'RolesSearchCancelBtn' ).classList.add( 'Closed' );
+											ge( 'RolesSearchCancelBtn'+uuid ).classList.remove( 'Open' );
+											ge( 'RolesSearchCancelBtn'+uuid ).classList.add( 'Closed' );
 										}
 									
-										else if( filter != '' && ( ge( 'RolesSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'RolesSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										else if( filter != '' && ( ge( 'RolesSearchCancelBtn'+uuid ).classList.contains( 'Open' ) 
+										|| ge( 'RolesSearchCancelBtn'+uuid ).classList.contains( 'Closed' ) ) )
 										{
-											ge( 'RolesSearchCancelBtn' ).classList.remove( 'Closed' );
-											ge( 'RolesSearchCancelBtn' ).classList.add( 'Open' );
+											ge( 'RolesSearchCancelBtn'+uuid ).classList.remove( 'Closed' );
+											ge( 'RolesSearchCancelBtn'+uuid ).classList.add( 'Open' );
 										}
 									}
 								}
@@ -4765,12 +4769,12 @@ Sections.accounts_workgroups = function( cmd, extra )
 							
 							// .................
 							
-							var inp = ge( 'AdminRolesContainer' ).getElementsByTagName( 'input' )[0];
+							var inp = ge( 'AdminRolesContainer'+uuid ).getElementsByTagName( 'input' )[0];
 							inp.onkeyup = function( e )
 							{
 								searchroles( this.value );
 							}
-							ge( 'RolesSearchCancelBtn' ).onclick = function( e )
+							ge( 'RolesSearchCancelBtn'+uuid ).onclick = function( e )
 							{
 								searchroles( false );
 								inp.value = '';
@@ -4795,7 +4799,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								'PERM_USER_GLOBAL',      'PERM_USER_WORKGROUP' 
 							] ) )
 							{
-								if( ge( 'AdminUsersContainer' ) ) ge( 'AdminUsersContainer' ).className = 'Open';
+								if( ge( 'AdminUsersContainer'+uuid ) ) ge( 'AdminUsersContainer'+uuid ).className = 'Open';
 							}
 						}
 						
@@ -4806,7 +4810,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								'PERM_STORAGE_GLOBAL',      'PERM_STORAGE_WORKGROUP' 
 							] ) )
 							{
-								if( ge( 'AdminStorageContainer' ) ) ge( 'AdminStorageContainer' ).className = 'Open';
+								if( ge( 'AdminStorageContainer'+uuid ) ) ge( 'AdminStorageContainer'+uuid ).className = 'Open';
 							}
 						}
 						
@@ -4817,7 +4821,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								'PERM_ROLE_GLOBAL',      'PERM_ROLE_WORKGROUP' 
 							] ) )
 							{
-								if( ge( 'AdminRolesContainer' ) ) ge( 'AdminRolesContainer' ).className = 'Open';
+								if( ge( 'AdminRolesContainer'+uuid ) ) ge( 'AdminRolesContainer'+uuid ).className = 'Open';
 							}
 						}
 						

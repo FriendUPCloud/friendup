@@ -317,6 +317,7 @@ i18n_host_port                       : Server port
 i18n_host_ip                         : Server address or IP
 i18n_hostname                        : Server address
 i18n_workgroup_details               : Workgroup details
+i18n_subworkgroup_details            : Subworkgroup details
 i18n_new_workgroup                   : New workgroup
 i18n_workgroup_name                  : Workgroup name
 i18n_workgroup_parent                : Workgroup parent
