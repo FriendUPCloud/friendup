@@ -282,6 +282,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 							js = {};
 						}
 						
+						if( ShowLog/* || 1==1*/ ) console.log( { e:e, d:d } );
+						
 						if( e == 'ok' )
 						{
 							return callback( true, js );
@@ -310,7 +312,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 						{
 							rows = [];
 						}
-					
+						
+						if( ShowLog/* || 1==1*/ ) console.log( { e:e, d:d } );
+						
 						return callback( true, rows );
 						
 					}
@@ -1022,9 +1026,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 			{
 				data.Password = 'HASHED' + Sha256.hash( elems[ 'HashedPassword' ].value );
 			}
-			if( elems[ 'Path'          ] ) data.Path      = elems[ 'Path'      ].value;
-			if( elems[ 'Type'          ] ) data.Type      = elems[ 'Type'      ].value;
-			if( elems[ 'Workgroup'     ] ) data.Workgroup = elems[ 'Workgroup' ].value;
+			if( elems[ 'Path'          ] ) data.Path        = elems[ 'Path'      ].value;
+			if( elems[ 'Type'          ] ) data.Type        = elems[ 'Type'      ].value;
+			if( elems[ 'Workgroup'     ] ) data.WorkgroupID = elems[ 'Workgroup' ].value;
 			if( elems[ 'conf.Pollable' ] )
 			{
 				data.Pollable = elems[ 'conf.Pollable' ].checked ? 'yes' : 'no';
@@ -3710,7 +3714,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								
 								mountlist = ( rows ? rows : mountlist );
 								
-								if( ShowLog ) console.log( 'init.list ', mountlist );
+								if( /*1==1 || */ShowLog ) console.log( 'init.list ', mountlist );
 								
 								if( mountlist && mountlist.length )
 								{
@@ -4308,18 +4312,18 @@ Sections.accounts_workgroups = function( cmd, extra )
 																		
 																		{
 																			
-																			'element' : function( groupname ) 
+																			'element' : function( groupid, groupname ) 
 																			{
 																				var d = document.createElement( 'div' );
 																				d.className = 'HContent70 FloatLeft';
 																				d.innerHTML = ''
 																				+ '	<p class="Layout InputHeight" id="WorkgroupContainer">'
 																				+ '		<select id="Workgroup" class="FullWidth" disabled="true">'
-																				+ '			' + ( groupname ? '<option value="' + groupname + '">' + groupname + '</option>' : '' ) 
+																				+ '			' + ( groupname ? '<option value="' + groupid + '">' + groupname + '</option>' : '' ) 
 																				+ '		</select>'
 																				+ '	</p>';
 																				return d;
-																			}( workgroup.name )
+																			}( workgroup.groupid, workgroup.name )
 																			
 																		}
 																		
