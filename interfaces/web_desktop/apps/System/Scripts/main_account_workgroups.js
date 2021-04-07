@@ -2297,7 +2297,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 											let d = document.createElement( 'div' );
 											d.className = 'List HRow Box Padding';
 											d.style.overflow = 'auto';
-											d.style.maxHeight = '369px';
+											d.style.maxHeight = '288px';
 											d.id = 'SubWorkgroupInner'+uuid;
 											return d;
 										}()
