@@ -465,7 +465,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		m.execute( 'listusers', args );
 	}
 	
-	function refresh( id, _this, psub )
+	function refresh( id, _this, psub, sub )
 	{
 		
 		initMain( function(  )
@@ -473,19 +473,19 @@ Sections.accounts_workgroups = function( cmd, extra )
 			
 			if( psub > 0 )
 			{
-				edit( psub, _this );
+				edit( psub, _this, null, null, sub );
 			}
 			
 			if( id )
 			{
-				edit( id, _this, null, psub );
+				edit( id, _this, null, psub, sub );
 			}
 			
 		} );
 		
 	}
 	
-	function edit( id, _this, pid, psub )
+	function edit( id, _this, pid, psub, sub )
 	{
 		
 		cancel( true, psub );
@@ -518,7 +518,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			ge( 'WorkgroupID_' + psub ).classList.add( 'Selected' );
 		}
 		
-		loading( id, pid, psub );
+		loading( id, pid, psub, sub );
 		
 	}
 	
@@ -558,7 +558,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 	// write -------------------------------------------------------------------------------------------------------- //
 	
-	function create( psub )
+	function create( psub, callback )
 	{
 		// Specific for Pawel's code ... He just wants to forward json ...
 		
@@ -611,6 +611,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 				updateStatus( data.id, 2, function (  )
 				{
+					
+					if( callback )
+					{
+						callback( data.id );
+					}
 					
 					refresh( data.id, null, psub );
 					
@@ -675,7 +680,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 	}
 	
-	function update( id, psub )
+	function update( id, psub, sub )
 	{
 		
 		// TODO: Add more stuff to update for a workgroup ...
@@ -739,7 +744,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						Notify( { title: i18n( 'i18n_workgroup_update' ), text: i18n( 'i18n_' + data.response ).replace( 'i18n_', '' ) } );
 					}
 					
-					refresh( data.id, null, psub );
+					refresh( data.id, null, psub, sub );
 					
 					editMode( true, data.id );
 				}
@@ -1340,7 +1345,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 	// delete ------------------------------------------------------------------------------------------------------- //
 	
-	function remove( id, psub )
+	function remove( id, pid, psub, sub )
 	{
 		
 		/*Confirm( i18n( 'i18n_deleting_workgroup' ), i18n( 'i18n_deleting_workgroup_verify' ), function( result )
@@ -1373,20 +1378,33 @@ Sections.accounts_workgroups = function( cmd, extra )
 					var f = new Library( 'system.library' );
 					f.onExecuted = function( e, d )
 					{
-						if( ShowLog ) console.log( { e:e, d:d, args: args } );
-					
+						if( ShowLog || 1==1 ) console.log( { e:e, d:d, args: args, pid: pid, psub: psub, sub: sub } );
+						
 						//Sections.accounts_workgroups( 'refresh' ); 
 					
-						refresh( null, null, psub ); cancel( null, psub );
+						//refresh( null, null, psub ); cancel( null, psub );
 						
-						if( psub )
+						if( ge( 'SlideContainer' ) )
 						{
-							if( ge( 'SlideContainer' ) )
-							{
-								ge( 'SlideContainer' ).className = ge( 'SlideContainer' ).className.split( ' Slide' ).join( '' );
-							}
+							ge( 'SlideContainer' ).className = ge( 'SlideContainer' ).className.split( ' Slide' ).join( '' );
+							
+							ge( 'SubWorkgroupDetails' ).innerHTML = '';
 						}
 						
+						if( pid > 0 && sub > 0 )
+						{
+							//console.log( 'scenario 2' );
+							
+							refresh( sub, null, psub ); cancel( null, psub );
+						}
+						
+						else
+						{
+							//console.log( 'scenario 1' );
+							
+							refresh( null, null, psub ); cancel( null, psub );
+						}
+							
 					}
 					f.execute( 'group/delete', { id: id, authid: Application.authId, args: args } );
 					
@@ -1697,9 +1715,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 	// init --------------------------------------------------------------------------------------------------------- //
 	
-	function loading( id, pid, psub )
+	function loading( id, pid, psub, sub )
 	{
-		if( ShowLog ) console.log( 'loading( '+id+', '+pid+', '+psub+' )' );
+		if( ShowLog ) console.log( 'loading( '+id+', '+pid+', '+psub+', '+sub+' )' );
 		
 		if( id )
 		{
@@ -1807,7 +1825,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				{
 					if( typeof info.workgroup == 'undefined' ) return;
 					
-					initDetails( info, psub );
+					initDetails( info, psub, sub );
 				}
 			
 			];
@@ -1838,9 +1856,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 	}
 	
 	// Show the form
-	function initDetails( info, psub )
+	function initDetails( info, psub, sub )
 	{
 		let uuid = (info.ID?'_'+info.ID:'');
+		
+		var sub = ( sub ? sub : null );
 		
 		var workgroup  = ( info.workgroup  ? info.workgroup  : {} );
 		var workgroups = ( info.workgroups ? info.workgroups : [] );
@@ -2018,13 +2038,18 @@ Sections.accounts_workgroups = function( cmd, extra )
 						{
 							if( ShowLog ) console.log( '// save workgroup' );
 					
-							update( info.ID, psub );
+							update( info.ID, psub, sub );
 						}
 						else
 						{
 							if( ShowLog ) console.log( '// create workgroup' );
 					
-							create( psub );
+							create( psub, function( ret )
+							{
+								
+								sub = ret;
+								
+							} );
 						}
 					}
 				}
@@ -2080,10 +2105,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 						{
 							if( ShowLog ) console.log( '// delete workgroup' );
 			
-							removeBtn( this, { id: info.ID, psub: psub, button_text: 'i18n_delete_workgroup', }, function ( args )
+							removeBtn( this, { id: info.ID, pid: workgroup.parentid, psub: psub, sub: sub, button_text: 'i18n_delete_workgroup', }, function ( args )
 							{
 				
-								remove( args.id, args.psub );
+								remove( args.id, args.pid, args.psub, args.sub );
 				
 							} );
 						}
@@ -2420,7 +2445,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 												ii++;
 											
 												str += '<div>';
-										
+												
+												// TODO: Add sub here .... to keep track of latest onclick.
+												
+												sub = rows.ID;
+												
 												str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\',{id:'+rows.ID+',psub:'+info.ID+'});">';
 						
 												str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
