@@ -156,7 +156,7 @@ File = function( filename )
 			jax.cancelId = this.cancelId;
 
 		var noRelocatePath = false;
-		for( var a in this.vars )
+		for( let a in this.vars )
 		{
 			jax.addVar( a, this.vars[a] );
 			if( !mode && a == 'mode' )
