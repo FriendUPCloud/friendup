@@ -2364,21 +2364,31 @@ Sections.accounts_workgroups = function( cmd, extra )
 									{
 										if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
 										{
-											if( unsorted[k].level < ( unsorted[ unsorted[k].ParentID ].level + 1 ) )
-											{
-												unsorted[k].level = ( unsorted[ unsorted[k].ParentID ].level + 1 );
-											}
+											
 											unsorted[ unsorted[k].ParentID ].groups.push( unsorted[k] );
-							
+											
+											if( unsorted[ unsorted[k].ParentID ].groups )
+											{
+												for( var kk in unsorted[ unsorted[k].ParentID ].groups )
+												{
+													if( unsorted[ unsorted[k].ParentID ].groups[ kk ] )
+													{
+														unsorted[ unsorted[k].ParentID ].groups[ kk ].level = ( unsorted[ unsorted[k].ParentID ].level +1 );
+													}
+												}
+											}
+											
 											set.push( unsorted[k].ID );
 											
 											
 										}
+										
+										
 									}
 									
 									groups = unsorted;
 									
-									if( ShowLog ) console.log( [ unsorted, set, groups ] );
+									if( /*1==1 || */ShowLog ) console.log( [ unsorted, set, groups ] );
 								}
 								
 								
