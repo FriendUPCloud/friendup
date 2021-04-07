@@ -1154,9 +1154,12 @@ void *ParseAndCall( WSThreadData *wstd )
 									http->http_ParsedPostContent = HashmapNew();
 									http->http_Uri = UriNew();
 
-									if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( locus->us_SessionID ) ) == MAP_OK )
+									if( HashmapGet( http->http_ParsedPostContent, "sessionid" ) == NULL )
 									{
-										//DEBUG1("[WS]:New values passed to POST %s\n", s->us_SessionID );
+										if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( locus->us_SessionID ) ) == MAP_OK )
+										{
+											//DEBUG1("[WS]:New values passed to POST %s\n", s->us_SessionID );
+										}
 									}
 									/*
 									if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
@@ -1284,9 +1287,12 @@ void *ParseAndCall( WSThreadData *wstd )
 
 											if(( i1) < r && t[ i ].type != JSMN_ARRAY )
 											{
-												if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN( in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN( in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
+												if( strncmp( in + t[ i ].start, "sessionid", t[i].end-t[i].start ) != 0 )
 												{
-													//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", (int)(t[i].end-t[i].start), (char *)(in + t[i].start), (int)(t[i1].end-t[i1].start), (char *)(in + t[i1].start) );
+													if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN( in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN( in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
+													{
+														//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", (int)(t[i].end-t[i].start), (char *)(in + t[i].start), (int)(t[i1].end-t[i1].start), (char *)(in + t[i1].start) );
+													}
 												}
 												
 												if( t[ i1 ].type == JSMN_ARRAY || t[ i1 ].type == JSMN_OBJECT )
@@ -1352,9 +1358,12 @@ void *ParseAndCall( WSThreadData *wstd )
 									if( ses != NULL )
 									{
 										DEBUG("[WS] Session ptr %p  session %p\n", ses, ses->us_SessionID );
-										if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( ses->us_SessionID ) ) == MAP_OK )
+										if( HashmapGet( http->http_ParsedPostContent, "sessionid" ) == NULL )
 										{
-											DEBUG1("[WS] New values passed to POST %s\n", ses->us_SessionID );
+											if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( ses->us_SessionID ) ) == MAP_OK )
+											{
+												DEBUG1("[WS] New values passed to POST %s\n", ses->us_SessionID );
+											}
 										}
 									
 										int i, i1;
