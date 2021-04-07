@@ -110,7 +110,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
