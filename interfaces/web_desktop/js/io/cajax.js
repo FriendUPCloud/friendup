@@ -439,6 +439,8 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		this.openFunc = function() { 
 			if( window.Workspace )
 				self.addVar( 'sessionid', Workspace.sessionId );
+			else if( window.Application && Application.authId )
+			    self.addVar( 'authid', Application.authId );
 			self.proxy.open( self.lastOptions.method ? self.lastOptions.method : 'POST', self.lastOptions.url, self.lastOptions.syncing ); 
 		};
 	}
@@ -463,6 +465,8 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		{ 
 			if( window.Workspace )
 				self.addVar( 'sessionid', Workspace.sessionId );
+			else if( window.Application && Application.authId )
+			    self.addVar( 'authid', Application.authId );
 			let u = self.url;
 			if( u.substr( 0, 1 ) == '/' )
 			{

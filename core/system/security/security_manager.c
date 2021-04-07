@@ -282,8 +282,11 @@ RefreshToken *SecurityManagerCreateRefreshTokenByUserNameDB( SecurityManager* sm
 			{
 				char **row;
 				row = sqllibGlob->FetchRow( sqllibGlob, result );
-				char *end;
-				userid = strtol( (char *)row[0], &end, 0 );
+				if( row != NULL && row[ 0 ] != NULL )
+				{
+				    char *end;
+				    userid = strtol( (char *)row[0], &end, 0 );
+				}
 				sqllibGlob->FreeResult( sqllibGlob, result );
 			}
 			sb->DropDBConnection( sb, sqllibGlob );
