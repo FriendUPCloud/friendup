@@ -510,7 +510,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	}
 	else
 	{
-	    die( '404' );
+	    die( '404 - ' . print_r( $GLOBALS[ 'args' ], 1 ) );
 	}
 	
 	register_shutdown_function( function()

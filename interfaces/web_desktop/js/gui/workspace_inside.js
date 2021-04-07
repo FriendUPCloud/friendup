@@ -10270,6 +10270,7 @@ function loadApplicationBasics( callback )
 	c_.addVar( 'args', '%7B%22theme%22%3A%22friendup12%22%7D' );
 	c_.onLoad = function( data )
 	{
+		console.log( 'Response of theme call: ', data );
 		if( _applicationBasics.css )
 			_applicationBasics.css += data;
 		else _applicationBasics.css = data;
