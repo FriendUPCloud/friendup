@@ -554,8 +554,6 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 	// write -------------------------------------------------------------------------------------------------------- //
 	
-	// TODO: Update subworkgroupslist
-	
 	function create( psub )
 	{
 		// Specific for Pawel's code ... He just wants to forward json ...
@@ -590,6 +588,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				parentid    : ( ge( 'WorkgroupParent'      ).value ), 
 				description : ( ge( 'WorkgroupDescription' ).value ), 
 				authid      : ( Application.authId                 ), 
+				status      : ( 2                                  ),
 				type        : ( 'Workgroup'                        ),
 				args        : ( args                               ) 
 			} } );
@@ -606,7 +605,12 @@ Sections.accounts_workgroups = function( cmd, extra )
 					Notify( { title: i18n( 'i18n_workgroup_create' ), text: i18n( 'i18n_' + data.response ).replace( 'i18n_', '' ) } );
 				}
 				
-				refresh( data.id, null, psub );
+				updateStatus( data.id, 2, function (  )
+				{
+					
+					refresh( data.id, null, psub );
+					
+				} );
 				
 			}
 			
@@ -660,13 +664,12 @@ Sections.accounts_workgroups = function( cmd, extra )
 			description : ( ge( 'WorkgroupDescription' ) ? ge( 'WorkgroupDescription' ).value : ''                  ),
 			parentid    : ( ge( 'WorkgroupParent'      ) ? ge( 'WorkgroupParent'      ).value : 0                   ),
 			authid      : Application.authId,
+			status      : 2,
 			type        : 'Workgroup',
 			args        : args
 		} );
 		
 	}
-	
-	// TODO: Update subworkgroupslist
 	
 	function update( id, psub )
 	{
@@ -2106,14 +2109,16 @@ Sections.accounts_workgroups = function( cmd, extra )
 				{
 					if( workgroup && workgroup.status == 2 )
 					{
-						bg5.className = bg5.className.split( 'fa-unlock-alt' ).join( 'fa-lock' );
+						//bg5.className = bg5.className.split( 'fa-unlock-alt' ).join( 'fa-lock' );
+						bg5.className = bg5.className.split( 'fa-lock' ).join( 'fa-unlock-alt' );
 					}
 					
 					bg5.onclick = function(  )
 					{
 						let self = this;
 						
-						if( self.className.indexOf( 'fa-lock' ) >= 0 )
+						//if( self.className.indexOf( 'fa-lock' ) >= 0 )
+						if( self.className.indexOf( 'fa-unlock-alt' ) >= 0 )
 						{
 							// Unlock workgroup ...
 							
@@ -2124,7 +2129,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 									
 									if( res )
 									{
-										self.className = self.className.split( 'fa-lock' ).join( 'fa-unlock-alt' );
+										//self.className = self.className.split( 'fa-lock' ).join( 'fa-unlock-alt' );
+										self.className = self.className.split( 'fa-unlock-alt' ).join( 'fa-lock' );
 										bg4.style.display = null;
 									}
 									
@@ -2142,7 +2148,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 									
 									if( res )
 									{
-										self.className = self.className.split( 'fa-unlock-alt' ).join( 'fa-lock' );
+										//self.className = self.className.split( 'fa-unlock-alt' ).join( 'fa-lock' );
+										self.className = self.className.split( 'fa-lock' ).join( 'fa-unlock-alt' );
 										bg4.style.display = 'none';
 									}
 									
@@ -2232,6 +2239,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 							
 							func : this,
 							
+							hide : false,
+							
 							head : function (  )
 							{
 								
@@ -2286,7 +2295,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										'element' : function() 
 										{
 											let d = document.createElement( 'div' );
-											d.className = 'HRow Box Padding';
+											d.className = 'List HRow Box Padding';
 											d.style.overflow = 'auto';
 											d.style.maxHeight = '369px';
 											d.id = 'SubWorkgroupInner'+uuid;
@@ -2341,7 +2350,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 													unsorted[workgroups[i].ID][ii] = workgroups[i][ii];
 												}
 											}
-							
+											
+											unsorted[workgroups[i].ID].level = 1;
 											unsorted[workgroups[i].ID].groups = [];
 										}
 									}
@@ -2354,6 +2364,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 									{
 										if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
 										{
+											if( unsorted[k].level < ( unsorted[ unsorted[k].ParentID ].level + 1 ) )
+											{
+												unsorted[k].level = ( unsorted[ unsorted[k].ParentID ].level + 1 );
+											}
 											unsorted[ unsorted[k].ParentID ].groups.push( unsorted[k] );
 							
 											set.push( unsorted[k].ID );
@@ -2374,84 +2388,90 @@ Sections.accounts_workgroups = function( cmd, extra )
 								
 								var s = ( workgroup.groupid ? workgroup.groupid : 0 );
 								
-								if( s > 0 && groups && groups[s] && groups[s].groups.length > 0 )
+								if( s > 0 && groups && groups[s] )
 								{
-									
-									for( var a in groups[s].groups )
+									if( groups[s].level >= 3 )
 									{
-										rows = ( groups[s].groups[a] ? groups[s].groups[a] : null );
-										
-										if( rows )
+										this.hide = true;
+									}
+									
+									if( groups[s].groups.length > 0 )
+									{
+										for( var a in groups[s].groups )
 										{
-											ii++;
-											
-											str += '<div>';
+											rows = ( groups[s].groups[a] ? groups[s].groups[a] : null );
 										
-											str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\',{id:'+rows.ID+',psub:'+info.ID+'});">';
-						
-											str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
-											str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
-											str += '	</div>';
-											str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent94 FloatLeft Ellipsis">'+rows.Name+'</div>';
-											str += '</div>';
-										
-											if( rows.groups.length > 0 )
+											if( rows )
 											{
-												str += '<div class="SubGroups">';
-												
-												for( var aa in groups[s].groups[a].groups )
-												{
-													rows = ( groups[s].groups[a].groups[aa] ? groups[s].groups[a].groups[aa] : null );
-												
-													if( rows )
-													{
-														ii++;
-														
-														str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\',{id:'+rows.ID+',psub:'+info.ID+'})">';
-														str += '	<div class="TextCenter HContent4 FloatLeft PaddingSmall" style="min-width:18px"></div>';
-														str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
-														str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
-														str += '	</div>';
-														str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent88 FloatLeft Ellipsis">'+rows.Name+'</div>';
-														str += '</div>';
-														
-														if( rows.groups.length > 0 )
-														{
-															str += '<div class="SubGroups">';
-													
-															for( var aaa in groups[s].groups[a].groups[aa].groups )
-															{
-																rows = ( groups[s].groups[a].groups[aa].groups[aaa] ? groups[s].groups[a].groups[aa].groups[aaa] : null );
-															
-																if( rows )
-																{
-																	ii++;
-																	
-																	str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\',{id:'+rows.ID+',psub:'+info.ID+'})">';
-																	str += '	<div class="TextCenter HContent8 FloatLeft PaddingSmall" style="min-width:38px"></div>';
-																	str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
-																	str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
-																	str += '	</div>';
-																	str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent82 FloatLeft Ellipsis">'+rows.Name+'</div>';
-																	str += '</div>';
-																}
-															
-															}
-													
-															str += '</div>';
-														}
-													}
-												
-												}
+												ii++;
 											
+												str += '<div>';
+										
+												str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\',{id:'+rows.ID+',psub:'+info.ID+'});">';
+						
+												str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
+												str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
+												str += '	</div>';
+												str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent94 FloatLeft Ellipsis">'+rows.Name+'</div>';
+												str += '</div>';
+										
+												if( rows.groups.length > 0 )
+												{
+													str += '<div class="SubGroups">';
+												
+													for( var aa in groups[s].groups[a].groups )
+													{
+														rows = ( groups[s].groups[a].groups[aa] ? groups[s].groups[a].groups[aa] : null );
+												
+														if( rows )
+														{
+															ii++;
+														
+															str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\',{id:'+rows.ID+',psub:'+info.ID+'})">';
+															str += '	<div class="TextCenter HContent4 FloatLeft PaddingSmall" style="min-width:18px"></div>';
+															str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
+															str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
+															str += '	</div>';
+															str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent88 FloatLeft Ellipsis">'+rows.Name+'</div>';
+															str += '</div>';
+														
+															if( rows.groups.length > 0 )
+															{
+																str += '<div class="SubGroups">';
+													
+																for( var aaa in groups[s].groups[a].groups[aa].groups )
+																{
+																	rows = ( groups[s].groups[a].groups[aa].groups[aaa] ? groups[s].groups[a].groups[aa].groups[aaa] : null );
+															
+																	if( rows )
+																	{
+																		ii++;
+																	
+																		str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\',{id:'+rows.ID+',psub:'+info.ID+'})">';
+																		str += '	<div class="TextCenter HContent8 FloatLeft PaddingSmall" style="min-width:38px"></div>';
+																		str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
+																		str += '		<span name="'+rows.Name+'" class="IconSmall fa-users"></span>';
+																		str += '	</div>';
+																		str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent82 FloatLeft Ellipsis">'+rows.Name+'</div>';
+																		str += '</div>';
+																	}
+															
+																}
+													
+																str += '</div>';
+															}
+														}
+												
+													}
+											
+													str += '</div>';
+												}
+										
 												str += '</div>';
 											}
 										
-											str += '</div>';
 										}
-										
 									}
-									
 								}
 								
 								
@@ -2672,10 +2692,14 @@ Sections.accounts_workgroups = function( cmd, extra )
 							
 							default:
 								
+								// Show listed workgroups ... 
+						
+								init.list();
+								
 								var etn = ge( 'SubWorkgroupEdit'+uuid );
 								if( etn )
 								{
-									if( Application.checkAppPermission( [ 
+									if( !init.hide && Application.checkAppPermission( [ 
 										
 										'WORKGROUP_CREATE',
 										
@@ -2695,10 +2719,6 @@ Sections.accounts_workgroups = function( cmd, extra )
 										etn.style.display = 'none';
 									}
 								}
-								
-								// Show listed workgroups ... 
-						
-								init.list();
 								
 								break;
 								
@@ -2755,6 +2775,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmall HContent40 FloatLeft'/*  + ( hidecol ? ' Closed' : '' )*/;
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+													d.style.cursor = 'pointer';
 													d.ele = this;
 													d.onclick = function(  )
 													{
@@ -2769,6 +2790,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmall HContent25 FloatLeft Relative'/*  + ( hidecol ? ' Closed' : '' )*/;
 													d.innerHTML = '<strong>' + i18n( 'i18n_username' ) + '</strong>';
+													d.style.cursor = 'pointer';
 													d.ele = this;
 													d.onclick = function(  )
 													{
@@ -2783,6 +2805,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Relative'/* + ( hidecol ? ' Closed' : '' )*/;
 													d.innerHTML = '<strong>' + i18n( 'i18n_status' ) + '</strong>';
+													d.style.cursor = 'pointer';
 													d.ele = this;
 													d.onclick = function(  )
 													{
@@ -3778,6 +3801,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												{
 													var d = document.createElement( 'div' );
 													d.className = 'HContent33 FloatLeft DiskContainer';
+													d.style.cursor = 'pointer';
 													if( mounted <= 0 )
 													{
 														d.style.opacity = '0.6';
@@ -4646,6 +4670,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												var d = document.createElement( 'div' );
 												d.className = 'PaddingSmall HContent40 FloatLeft';
 												d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+												d.style.cursor = 'pointer';
 												d.onclick = function(  )
 												{
 													sortroles( 'Name' );
@@ -5241,6 +5266,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								'element' : function(  ) 
 								{
 									var d = document.createElement( 'div' );
+									d.className = 'List';
 									d.id = 'WorkgroupGui';
 									return d;
 								}(),
@@ -5291,7 +5317,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										'element' : function() 
 										{
 											var d = document.createElement( 'div' );
-											d.className = 'HRow'/* Box Padding'*/;
+											d.className = 'List HRow'/* Box Padding'*/;
 											d.id = 'WorkgroupInner';
 											return d;
 										}()
