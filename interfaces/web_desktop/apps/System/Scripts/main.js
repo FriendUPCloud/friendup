@@ -20,7 +20,8 @@ Application.run = function( msg )
 		height : document.body.clientHeight
 	};
 	
-	document.body.setAttribute( 'onresize', 'CheckWindowSize()' );
+	// Is it needed anymore???
+	//document.body.setAttribute( 'onresize', 'CheckWindowSize()' );
 }
 
 // Just initialize the GUI!
@@ -582,9 +583,12 @@ function setGUISection( module, section, child, action )
 		
 			if( section.toLowerCase() == 'users' || section.toLowerCase() == 'workgroups' ) 
 			{
-				//UsersSettings( 'maxlimit', 99999 );
+				if( typeof UsersSettings != 'undefined' )
+				{
+					//UsersSettings( 'maxlimit', 99999 );
 			
-				UsersSettings( 'reset', 'all' );
+					UsersSettings( 'reset', 'all' );
+				}
 			}
 		
 			Sections[ sectPart ]();

@@ -157,7 +157,6 @@ scrollengine = {
 			
 			document.body.addEventListener( 'mouseover', function()
 			{
-				window.focus();
 				document.body.focus();
 			} );
 			

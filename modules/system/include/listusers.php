@@ -191,7 +191,11 @@ switch( $args->args->mode )
 				(
 					' . ( !isset( $args->args->searchby ) || $args->args->searchby == 'FullName' ? '
 					( 
-						u.Fullname LIKE "' . trim( $args->args->query ) . '%" 
+						( 
+						       u.FullName LIKE "' . trim( $args->args->query ) . '%" 
+							OR REPLACE( u.FullName, SUBSTRING_INDEX( u.FullName, " ", -1 ), "" ) LIKE "%' . trim( $args->args->query ) . '%" 
+							OR SUBSTRING_INDEX( u.FullName, " ", -1 ) LIKE "' . trim( $args->args->query ) . '%" 
+						) 
 					) 
 					' . ( !isset( $args->args->searchby ) ? 'OR ' : '' ) : '' )
 					 .  ( !isset( $args->args->searchby ) || $args->args->searchby == 'Name' ? '
@@ -256,7 +260,11 @@ switch( $args->args->mode )
 				(
 					' . ( !isset( $args->args->searchby ) || $args->args->searchby == 'FullName' ? '
 					( 
-						u.Fullname LIKE "' . trim( $args->args->query ) . '%" 
+						( 
+							   u.FullName LIKE "' . trim( $args->args->query ) . '%" 
+							OR REPLACE( u.FullName, SUBSTRING_INDEX( u.FullName, " ", -1 ), "" ) LIKE "%' . trim( $args->args->query ) . '%" 
+							OR SUBSTRING_INDEX( u.FullName, " ", -1 ) LIKE "' . trim( $args->args->query ) . '%" 
+						) 
 					) 
 					' . ( !isset( $args->args->searchby ) ? 'OR ' : '' ) : '' )
 					 .  ( !isset( $args->args->searchby ) || $args->args->searchby == 'Name' ? '
@@ -311,7 +319,11 @@ switch( $args->args->mode )
 					(
 						' . ( !isset( $args->args->searchby ) || $args->args->searchby == 'FullName' ? '
 						( 
-							u.Fullname LIKE "' . trim( $args->args->query ) . '%" 
+							( 
+							       u.FullName LIKE "' . trim( $args->args->query ) . '%" 
+								OR REPLACE( u.FullName, SUBSTRING_INDEX( u.FullName, " ", -1 ), "" ) LIKE "%' . trim( $args->args->query ) . '%" 
+								OR SUBSTRING_INDEX( u.FullName, " ", -1 ) LIKE "' . trim( $args->args->query ) . '%" 
+							) 
 						) 
 						' . ( !isset( $args->args->searchby ) ? 'OR ' : '' ) : '' )
 						 .  ( !isset( $args->args->searchby ) || $args->args->searchby == 'Name' ? '
