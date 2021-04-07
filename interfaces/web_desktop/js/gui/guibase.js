@@ -2262,7 +2262,6 @@ function DrawRegionSelector( e )
 	let eh = 0; var ew = 0;
 	let rwc = window.regionWindow.classList;
 	let scrwn = window.regionWindow.directoryview ? window.regionWindow.directoryview.scroller : false;
-	
 	// In icon windows or new screens
 	
 	if ( rwc && ( rwc.contains( 'Content' ) || rwc.contains( 'ScreenContent' ) ) )
@@ -3801,11 +3800,13 @@ movableMouseDown = function ( e )
 		window.mouseDown = 4;
 		window.regionX = windowMouseX;
 		window.regionY = windowMouseY;
+		
 		if( tar ) window.regionWindow = tar;
 		else window.regionWindow = ge( 'DoorsScreen' );
 		if( clickOnView )
 		{
-			_ActivateWindow( tar.parentNode );
+			// This doesn't seem like it matters?
+			// Before we activated window here
 		}
 		else if( clickonDesktop )
 		{

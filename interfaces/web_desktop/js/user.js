@@ -493,6 +493,12 @@ Friend.User = {
 					clearInterval( this.checkInterval );
 				this.checkInterval = setInterval( 'Friend.User.CheckServerConnection()', 2500 );
 			}
+			// Remove dirlisting cache!
+			if( window.DoorCache )
+			{
+			    console.log( 'Nulling out dirlisting!' );
+			    DoorCache.dirListing = {};
+			}
 		}
 		else if( mode == 'online' )
 		{

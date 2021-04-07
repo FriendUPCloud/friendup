@@ -252,7 +252,8 @@ if( isset( $argv ) && isset( $argv[1] ) )
 							{
 								$value[ $k ] = rawurldecode( $v );
 							}
-							$value = implode( '%2B', $value );
+							// %2B also have to be rawurldecoded at the end ...
+							$value = rawurldecode( implode( '%2B', $value ) );
 						}
 						else
 						{
@@ -271,8 +272,8 @@ if( isset( $argv ) && isset( $argv[1] ) )
 				}
 			}
 		}
+		$GLOBALS['args'] = $kvdata;
 	}
-	$GLOBALS['args'] = $kvdata;
 }
 
 // Create a user account variable for use later

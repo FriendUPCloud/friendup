@@ -1210,9 +1210,21 @@ var WorkspaceInside = {
 		if( !Workspace.cachedSessionList || cand - this.refreshEWCTime > 30 )
 		{
 		    this.refreshEWCTime = cand;
-		    var mo = new Library( 'system.library' );
+		    
+		    Workspace.getAnnouncements();
+		    
+		    let mo = new Library( 'system.library' );
 		    mo.onExecuted = function( rc, sessionList )
 		    {
+			    let m = Workspace.widget ? Workspace.widget.target : ge( 'DoorsScreen' );
+			    if( m == ge( 'DoorsScreen' ) )
+				    m = ge( 'DoorsScreen' ).screenTitle.getElementsByClassName( 'Extra' )[0];
+			    if( !m )
+			    {
+				    //console.log( 'Can not find widget!' );
+				    return;
+			    }
+		    
 			    var sessions = [];
 			    if( rc == 'ok' )
 			    {
@@ -1356,6 +1368,34 @@ var WorkspaceInside = {
 			}
 		}
 	},
+	// Server announcements
+	getAnnouncements: function()
+	{
+		// TODO: Re-enable later
+	    return;
+	    let ann = new Module( 'system' );
+		ann.onExecuted = function( e, d )
+		{
+		    if( e == 'ok' )
+		    {
+		        console.log( 'We have an announcement!', d );
+		        try
+		        {
+		            let annList = JSON.parse( d );
+		            console.log( 'List: ', annList );
+		        }
+		        catch( e )
+		        {
+		            console.log( 'Could not read announcements.' );
+		        }
+		    }
+		    else
+		    {
+		        console.log( 'No new announcements.' );
+		    }
+		}
+		ann.execute( 'getannouncements', { deviceid: Workspace.deviceid } );
+    },
 	zapMobileAppMenu: function()
 	{
 		// Turn on openlock
@@ -1693,6 +1733,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					if( !Workspace.startupSequenceRegistered )
 					{	
 						Workspace.startupSequenceRegistered = true;
+						
+						// Reload the docks
+						Workspace.reloadDocks();
 						
 						// In single tasking mode, we just skip
 						if( Workspace.isSingleTask )
@@ -2523,16 +2566,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					
 					ConstrainWindows();
 					
-					// Make sure taskbar is polled
-					if( !isMobile )
-					{
-						PollTaskbar();
-					
-						// Reload start menu
-						// TODO: Remove the need for this hack
-						Workspace.pollStartMenu( true );
-					}
-					
 					// Open the main dock first
 					if( !Workspace.insideInitialized )
 					{
@@ -2698,6 +2731,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			title: i18n( 'i18n_files' ),
 		};
 		Workspace.mainDock.addLauncher( fmenu );
+		
+		// Make sure taskbar is polled
+		if( !isMobile )
+		{
+			PollTaskbar();
+		
+			// Reload start menu
+			// TODO: Remove the need for this hack
+			Workspace.pollStartMenu( true );
+		}
 		
 		// Make sure the tray position is there
 		PollTrayPosition();
@@ -3171,9 +3214,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					
 						// Flush theme info
 						themeInfo.loaded = false;
-					
-						// Reload the docks
-						Workspace.reloadDocks();
 					
 						// Refresh them
 						Workspace.initWorkspaces();
@@ -4692,46 +4732,46 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					doCopy = true;
 				}
 			}
-			
 			var d = new Door( destPath );
 			d.getIcons( destFinf, function( items )
 			{
-				for( var a = 0; a < items.length; a++ )
+				for( let a = 0; a < items.length; a++ )
 				{
-					for( var b = 0; b < clip.length; b++ )
+					for( let b = 0; b < clip.length; b++ )
 					{
-						var copy = 0;
+						let copy = 0;
 						if( items[ a ].Filename == clip[ b ].fileInfo.Filename )
 						{
-							var found = false;
+							let found = false;
 							do
 							{
 								found = false;
-								var str = 'Copy ' + ( copy > 0 ? ( copy + ' ' ) : '' );
-								str += 'of ' + items[a].Filename;
+								let str = 'Copy ' + ( copy > 0 ? ( copy + ' ' ) : '' );
+								str += 'of ' + items[ a ].Filename;
 							
-								var f = clip[ b ].fileInfo.Filename;
-								var p = clip[ b ].fileInfo.Path;
+								let p = clip[ b ].fileInfo.Path;
+								let f = clip[ b ].fileInfo.Filename;
 							
 								// Files
 								if( clip[ b ].fileInfo.MetaType == 'File' )
 								{
-									var dn = f;
+									let dn = f;
 									p = p.substr( 0, p.length - dn.length ) + str;
 									clip[ b ].fileInfo.NewPath = p;
 								}
 								// Directory
 								else
 								{
-									var dn = f + '/';
+									let dn = f + '/';
 									p = p.substr( 0, p.length - dn.length ) + str + '/';
 									clip[ b ].fileInfo.NewPath = p;
 								}
-							
-								clip[ b ].fileInfo.NewFilename = str;
 								
+								// Set the safe new filename
+								clip[ b ].fileInfo.NewFilename = str;
+							
 								// Still found?
-								for( var c = 0; c < items.length; c++ )
+								for( let c = 0; c < items.length; c++ )
 								{
 									if( items[ c ].Filename == str )
 									{
@@ -4740,7 +4780,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										break;
 									}
 								}
-								
 							}
 							while( found );
 						}
@@ -4751,9 +4790,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				for( let b = 0; b < clip.length; b++ )
 				{
 					let spath = clip[b].fileInfo.Path;
-					let ex = clip[b].fileInfo.Type == 'File' ? clip[b].fileInfo.Filename : '';
+					let lastChar = spath.substr( -1, 1 );
 					let sh = new Shell( 0 );
-					sh.parseScript( 'copy ' + spath + ' to ' + destPath+ex, function()
+					let source = spath.split( ' ' ).join( '\\ ' );
+					let destin = ( destPath ).split( ' ' ).join( '\\ ' );
+					let fn = ( clip[b].fileInfo.NewFilename ? clip[b].fileInfo.NewFilename : clip[b].fileInfo.Filename );
+					fn = fn.split( ' ' ).join( '\\ ' );
+					let copyStr = 'copy ' + source + ' to ' + destin + fn;
+					sh.parseScript( copyStr, function()
 					{
 						if( cliplen-- == 0 )
 						{
@@ -5877,8 +5921,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				m.onExecuted = function()
 				{
 					Workspace.refreshDesktop( false, true );
+					CloseWindow( ele );
 				}
 				m.execute( 'device/refresh', { devname: args.Filename } );
+			}
+			else
+			{
+			    CloseWindow( ele );
 			}
 			
 		}

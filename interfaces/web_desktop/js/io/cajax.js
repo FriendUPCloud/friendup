@@ -420,7 +420,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		url.indexOf( '/file/read' ) < 0 &&
 		url.indexOf( '/file/write' ) < 0
 	)
-	{
+	{	
 		this.mode = 'websocket';
 		this.url = url;
 		this.hasReturnCode = hasReturnCode;
@@ -566,7 +566,7 @@ cAjax.prototype.send = function( data, callback )
 
 	// Wait in case of check server connection
 	if( window.Workspace && ( window.Friend && Friend.User && Friend.User.State == 'offline' ) && !this.forceSend )
-	{
+	{	
 		//console.log( 'Adding because!' );
 		AddToCajaxQueue( self );
 		return;
@@ -596,7 +596,6 @@ cAjax.prototype.send = function( data, callback )
 	// Check if we can use websockets
 	if( self.mode == 'websocket' && window.Workspace && Workspace.conn && Workspace.conn.ws && Workspace.websocketState == 'open' )
 	{
-		//console.log( '[cajax] Sending ajax call with websockets.' );
         let u = self.url.split( '?' );
         let wsdata = ( data ? data : {} );
         if( self.vars )
@@ -627,14 +626,10 @@ cAjax.prototype.send = function( data, callback )
         
         if( typeof( reqID ) != 'undefined' && !reqID )
         {
-        	//console.log( 'Could not send a request!' );
         	AddToCajaxQueue( self );
         	return;
         }
         else if( typeof( reqID ) == 'undefined' )
-        {
-        }
-        else
         {
         }
         

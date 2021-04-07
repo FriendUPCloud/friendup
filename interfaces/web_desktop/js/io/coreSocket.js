@@ -729,11 +729,14 @@ FriendWebSocket.prototype.chunkSend = function( str )
 
 FriendWebSocket.prototype.wsSend = function( str )
 {
+    if( !this.onstate ) 
+    {
+        return false;
+    }
 	let self = this;
 	try
 	{
 		let res = self.ws.send( str );
-		// console.log( 'Test3: Successfully sent;', str );
 	}
 	catch( e )
 	{
