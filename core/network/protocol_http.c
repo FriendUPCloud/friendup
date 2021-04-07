@@ -206,43 +206,8 @@ static inline ListString *RunPHPScript( const char *command )
 	
 	ListStringJoin( ls );		//we join all string into one buffer
 	
-	DEBUG( "[RunPHPScript] Finished PHP call...(%lu length)-\n", ls->ls_Size );
+	DEBUG( "[RunPHPScript] Finished PHP call...(%lu length)- data: %s command: %s\n", ls->ls_Size, ls->ls_Data, command );
 	return ls;
-	
-	/*
-	FILE *pipe = popen( command, "r" );
-	if( !pipe )
-	{
-		Log( FLOG_ERROR,"Cannot open pipe for command: %s\n", command );
-		return NULL;
-	}
-
-	FULONG size = 0;
-	ListString *data = ListStringNew();
-
-#define PHP_READ_SIZE 65536
-	char *buf = FCalloc( PHP_READ_SIZE, sizeof( char ) );
-	if( buf != NULL )
-	{
-		while( !feof( pipe ) )
-		{
-			// Make a new buffer and read
-			size = fread( buf, sizeof(char), PHP_READ_SIZE, pipe );
-
-			if( size > 0 )
-			{
-				ListStringAdd( data, buf, size );
-			}
-			pthread_yield();
-		}
-		ListStringJoin( data );		
-		FFree( buf );
-	}
-	// Free buffer if it's there
-	pclose( pipe );
-
-	return data;
-	*/
 }
 
 /**

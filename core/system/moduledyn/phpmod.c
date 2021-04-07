@@ -123,6 +123,8 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 		DEBUG("[PHPmod] path or args = NULL\n");
 		return NULL;
 	}
+	
+	FERROR("\n\nRUN phpmod dyn. Path: %s args: %s\n\n\n", path, args );
 
 	FULONG res = 0;
 
@@ -358,7 +360,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	ls->ls_Data = NULL;
 	ListStringDelete( ls );
 	
-	DEBUG("FINAL:\n\n\n%s\n\n\n", final );
+	DEBUG("FINAL:\n\n\nFINAL: %s  PATH: %s  ARGS: %s\n\n\n", final, path, args );
 
 	if( command != NULL )
 	{

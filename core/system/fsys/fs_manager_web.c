@@ -281,7 +281,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 			
 			if( lrequest != NULL )
 			{
+#ifdef DB_SESSIONID_HASH
+				snprintf( lrequest, 512, "module=system&command=systempath&sessionid=%s&path=%s", loggedSession->us_HashedSessionID, path );
+#else
 				snprintf( lrequest, 512, "module=system&command=systempath&sessionid=%s&path=%s", loggedSession->us_SessionID, path );
+#endif
 				
 				returnData = l->RunMod( l, "php", "modules/system/module.php", lrequest, &resultLength );
 				
