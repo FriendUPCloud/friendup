@@ -896,10 +896,12 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														
 														cancelUser(  );
 														
-														if( UsersSettings( 'experiment' ) )
-														{
-															Sections.accounts_users( 'init' );
-														}
+														searchServer( null, true );
+														
+														//if( UsersSettings( 'experiment' ) )
+														//{
+														//	Sections.accounts_users( 'init' );
+														//}
 														
 													} );
 									
