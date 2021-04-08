@@ -1709,6 +1709,7 @@ int SystemInitExternal( SystemBase *l )
 		// get all user sessions from DB
 		//
 	
+		/*
 		l->sl_USM->usm_Sessions = USMGetSessionsByTimeout( l->sl_USM, l->sl_RemoveSessionsAfterTime );
 		UserSession *usess = l->sl_USM->usm_Sessions;
 		DEBUG("[SystemBase] Got users by timeout\n");
@@ -1766,6 +1767,7 @@ int SystemInitExternal( SystemBase *l )
 		
 			usess = (UserSession *)usess->node.mln_Succ;
 		}
+		*/
 		
 		//
 		// attach sentinel user
