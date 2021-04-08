@@ -15,6 +15,8 @@
  *  @date pushed 14/10/2015
  */
 
+#undef __DEBUG
+
 #include <core/types.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -35,9 +37,6 @@
 #ifndef INT_MAX
 #define INT_MAX (int) (0x7FFF/0x7FFFFFFF)
 #endif
-
-//test
-//#undef __DEBUG
 
 extern SystemBase *SLIB;
 

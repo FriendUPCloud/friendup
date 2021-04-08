@@ -27,7 +27,7 @@
 */
 
 #define _POSIX_SOURCE
-
+#undef __DEBUG
 //#define USE_SELECT
 
 #include <sys/types.h>
@@ -62,11 +62,6 @@
 #include <system/systembase.h>
 #include <core/friendcore_manager.h>
 #include <openssl/crypto.h>
-
-//#undef DEBUG
-//#define DEBUG( ...)
-//#undef DEBUG1
-//#define DEBUG1( ...)
 
 #define USE_PTHREAD
 //#define USE_WORKERS

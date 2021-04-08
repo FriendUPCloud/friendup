@@ -19,6 +19,8 @@
  *  @date created 11/2014
  */
 
+#undef __DEBUG
+
 #include <core/types.h>
 #include <netdb.h>
 #include <sys/types.h>
@@ -40,11 +42,6 @@
 #include <system/systembase.h>
 #include <sys/resource.h>
 #include <pthread.h>
-
-//#undef __DEBUG
-//#define DEBUG( ...)
-//#undef DEBUG1
-//#define DEBUG1( ...)
 
 void SocketFree( Socket *sock );
 

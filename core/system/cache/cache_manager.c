@@ -15,6 +15,8 @@
  *  @date created 2016
  */
 
+#undef __DEBUG
+
 #include "cache_manager.h"
 #include <util/murmurhash3.h>
 #include <system/user/user.h>

@@ -216,12 +216,12 @@ unsigned int BufStringDiskAddSize( BufStringDisk *bs, const char *stringToAppend
 	}
 	else	// we can still store data in memory
 	{
-		DEBUG("[BufStringDiskAddSize]\n");
+		//DEBUG("[BufStringDiskAddSize]\n");
 		// there is space in the buffer, we can put information there
 		memcpy( bs->bsd_Buffer + bs->bsd_Size, stringToAppend, stringToAppendLength );
 		bs->bsd_Size += stringToAppendLength;
 		bs->bsd_Buffer[ bs->bsd_Size ] = '\0'; //force null termination
-		DEBUG("[BufStringDiskAddSize] %ld\n", bs->bsd_Size );
+		//DEBUG("[BufStringDiskAddSize] %ld\n", bs->bsd_Size );
 	}
 	
 	return 0;
