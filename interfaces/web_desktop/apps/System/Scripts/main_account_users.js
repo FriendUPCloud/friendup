@@ -1125,7 +1125,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									if( info.workgroups )
 									{
-										let unsorted = {};
+										/*let unsorted = {};
 								
 										for( var i in info.workgroups )
 										{
@@ -1160,8 +1160,70 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													groups[ unsorted[k].ID ] = unsorted[k];
 												}
 											}	
+										}*/
+										
+										
+										
+										var unsorted = {};
+										
+										// Add all workgroups to unsorted and add subgroups array ...
+					
+										for( var i in info.workgroups )
+										{
+											if( info.workgroups[i] && info.workgroups[i].ID )
+											{
+												
+												unsorted[info.workgroups[i].ID] = {};
+							
+												for( var ii in info.workgroups[i] )
+												{
+													if( info.workgroups[i][ii] )
+													{
+														unsorted[info.workgroups[i].ID][ii] = info.workgroups[i][ii];
+													}
+												}
+												
+												unsorted[info.workgroups[i].ID].level = 1;
+												unsorted[info.workgroups[i].ID].groups = [];
+											}
+										}
+					
+										// Arrange all subgroups to parentgroups ...
+					
+										let set = [];
+					
+										for( var k in unsorted )
+										{
+											if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
+											{
+												unsorted[ unsorted[k].ParentID ].groups.push( unsorted[k] );
+												
+												if( unsorted[ unsorted[k].ParentID ].groups )
+												{
+													for( var kk in unsorted[ unsorted[k].ParentID ].groups )
+													{
+														if( unsorted[ unsorted[k].ParentID ].groups[ kk ] )
+														{
+															unsorted[ unsorted[k].ParentID ].groups[ kk ].level = ( unsorted[ unsorted[k].ParentID ].level +1 );
+														}
+													}
+												}
+												
+												set.push( unsorted[k].ID );
+											}
+										}
+					
+										// Filter all subgroups allready set, away from root level ...
+					
+										for( var k in unsorted )
+										{
+											if( set.indexOf( unsorted[k].ID ) < 0 )
+											{
+												groups[ unsorted[k].ID ] = unsorted[k];
+											}
 										}
 										
+										if( ShowLog || 1==1 ) console.log( [ unsorted, set, groups ] );
 										
 									}
 									
@@ -6521,7 +6583,7 @@ function NewUser( _this )
 						
 					}
 					
-					let unsorted = {};
+					/*let unsorted = {};
 		
 					for( var i in workgroups )
 					{
@@ -6563,7 +6625,73 @@ function NewUser( _this )
 						}	
 					}
 				
-					//console.log( groups );
+					//console.log( groups );*/
+					
+					var unsorted = {};
+					
+					// Add all workgroups to unsorted and add subgroups array ...
+					
+					for( var i in workgroups )
+					{
+						if( workgroups[i] && workgroups[i].ID )
+						{
+							if( wgroups && !wgroups[workgroups[i].ID] )
+							{
+								continue;
+							}
+							
+							unsorted[workgroups[i].ID] = {};
+							
+							for( var ii in workgroups[i] )
+							{
+								if( workgroups[i][ii] )
+								{
+									unsorted[workgroups[i].ID][ii] = workgroups[i][ii];
+								}
+							}
+							
+							unsorted[workgroups[i].ID].level = 1;
+							unsorted[workgroups[i].ID].groups = [];
+						}
+					}
+					
+					// Arrange all subgroups to parentgroups ...
+					
+					let set = [];
+					
+					for( var k in unsorted )
+					{
+						if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
+						{
+							unsorted[ unsorted[k].ParentID ].groups.push( unsorted[k] );
+							
+							if( unsorted[ unsorted[k].ParentID ].groups )
+							{
+								for( var kk in unsorted[ unsorted[k].ParentID ].groups )
+								{
+									if( unsorted[ unsorted[k].ParentID ].groups[ kk ] )
+									{
+										unsorted[ unsorted[k].ParentID ].groups[ kk ].level = ( unsorted[ unsorted[k].ParentID ].level +1 );
+									}
+								}
+							}
+							
+							set.push( unsorted[k].ID );
+						}
+					}
+					
+					// Filter all subgroups allready set, away from root level ...
+					
+					for( var k in unsorted )
+					{
+						if( set.indexOf( unsorted[k].ID ) < 0 )
+						{
+							groups[ unsorted[k].ID ] = unsorted[k];
+						}
+					}
+					
+					if( ShowLog || 1==1 ) console.log( [ unsorted, set, groups ] );
+					
 				}
 				
 				let str = '';

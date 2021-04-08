@@ -459,8 +459,8 @@
 
 #Admin .BackgroundRed
 {
-	background-color: #C0392B;
-	color: #f0f0f0;
+	background-color: #C0392B !important;
+	color: #f0f0f0 !important;
 }
 
 #Admin .BackgroundGrey
@@ -476,5 +476,75 @@ html body button.IconButton:not(:hover), html body .Button.IconButton:not(:hover
 html body button.IconButton, html body .Button.IconButton
 {
 	border: 1px solid rgba(0,0,0,0);
+}
+
+/* Custom Gui ------------------------------------------------------------------ */
+
+body:not(.Charcoal):not(.Synthwave),
+body:not(.Charcoal):not(.Synthwave) .Box
+{
+	color: #34495E;
+}
+
+body:not(.Charcoal):not(.Synthwave) button, 
+body:not(.Charcoal):not(.Synthwave) .Button
+{
+	color: #34495E;
+}
+
+body:not(.Charcoal):not(.Synthwave) button.Negative, 
+body:not(.Charcoal):not(.Synthwave) .Button.Negative
+{
+	color: #fdfdfd;
+}
+
+body:not(.Charcoal):not(.Synthwave) button:hover, 
+body:not(.Charcoal):not(.Synthwave) .Button:hover
+{
+	color: #fdfdfd;
+}
+
+body:not(.Charcoal):not(.Synthwave) #Admin .BackgroundNegative
+{
+	background-color: #34495E;
+	color: #fdfdfd;
+}
+
+body:not(.Charcoal):not(.Synthwave) #Admin .BackgroundPositive,
+body:not(.Charcoal):not(.Synthwave) #Admin .Positive
+{
+	background-color: #fdfdfd;
+	color: #34495E;
+}
+
+body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent button.Positive:hover, 
+body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent .Button.Positive:hover
+{
+	background-color: #34495E;
+	color: #fdfdfd;
+}
+
+body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent input
+{
+	color: #34495E;
+}
+
+/* Gui Sidebar ------------------------------------------------------------------ */
+
+body:not(.Charcoal):not(.Synthwave) #Admin #GuiSidebar .Selected
+{
+	background-color: #fdfdfd;
+}
+
+body:not(.Charcoal):not(.Synthwave) #Admin #GuiSidebar .Selected .Negative
+{
+	color: #34495E;
+}
+
+body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent .Selected
+{
+	/*background-color: #34495E;
+	color: #fdfdfd;*/
+	color: #34495E;
 }
 

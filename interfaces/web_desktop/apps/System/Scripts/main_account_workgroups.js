@@ -1945,6 +1945,22 @@ Sections.accounts_workgroups = function( cmd, extra )
 			}
 		}
 		
+		let gbackbtn = '';
+		
+		if( !psub )
+		{
+			gbackbtn += '<button class="IconButton IconSmall ButtonSmall FloatLeft fa-arrow-circle-left" id="GroupBackBtn'+uuid+'"></button>';
+			gbackbtn += '<h3 class="NoMargin FloatLeft">';
+			gbackbtn += '	<strong>' + i18n( 'i18n_workgroup_list' ) + '</strong>';
+			gbackbtn += '</h3>';
+		}
+		else
+		{
+			gbackbtn += '<button class="IconButton IconSmall ButtonSmall FloatLeft">&nbsp;</button>';
+			gbackbtn += '<h3 class="NoMargin FloatLeft">';
+			gbackbtn += '	<strong>&nbsp;</strong>';
+			gbackbtn += '</h3>';
+		}
 		
 		// Get the user details template
 		var d = new File( 'Progdir:Templates/account_workgroup_details.html' );
@@ -1952,8 +1968,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 		// Add all data for the template
 		d.replacements = {
 			id                    : ( info.ID               ? ( '_' + info.ID )     : ''                                                                                ),
-			workgroup_back_btn    : ( psub ? '<button class="IconButton IconSmall ButtonSmall FloatLeft fa-arrow-circle-left" id="GroupBackBtn'+uuid+'"></button>' : '' ),
-			workgroup_edit        : ( psub ? i18n( 'i18n_subworkgroup_details' )     : i18n( 'i18n_workgroup_details' )                                                 ),
+			workgroup_back_btn    : gbackbtn,
+			workgroup_edit        : ( psub ? i18n( 'i18n_subworkgroup_details' )    : i18n( 'i18n_workgroup_details' )                                                  ),
 			workgroup_title       : ( workgroup.name        ? workgroup.name        : i18n( 'i18n_new_workgroup' )                                                      ),
 			workgroup_name        : ( workgroup.name        ? workgroup.name        : ''                                                                                ),
 			workgroup_parent      : pstr,
@@ -1973,7 +1989,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 				if( ge( 'SlideContainer' ) )
 				{
-					ge( 'SlideContainer' ).className = ge( 'SlideContainer' ).className + ' Slide';
+					ge( 'SlideContainer' ).className = ge( 'SlideContainer' ).className.split( ' Slide' ).join( '' ) + ' Slide';
 				}
 			}
 			else
@@ -1981,7 +1997,26 @@ Sections.accounts_workgroups = function( cmd, extra )
 				ge( 'WorkgroupDetails'    ).innerHTML = data;
 			}
 			
+			if( psub && ge( 'SlideContainer' ) && ge( 'SlideContainer' ).className.indexOf( 'Slide' ) >= 0 )
+			{
+				if( ge( 'WorkgroupNavContainer_'+psub ) )
+				{
+					ge( 'WorkgroupNavContainer_'+psub ).className = ge( 'WorkgroupNavContainer_'+psub ).className.split( ' Closed' ).join( '' );
+				}
+				if( ge( 'WorkgroupNavContainer'+uuid ) )
+				{
+					ge( 'WorkgroupNavContainer'+uuid ).className = ge( 'WorkgroupNavContainer'+uuid ).className.split( ' Closed' ).join( '' );
+				}
+			}
+			else
+			{
+				if( ge( 'WorkgroupNavContainer'+uuid ) )
+				{
+					ge( 'WorkgroupNavContainer'+uuid ).className = ge( 'WorkgroupNavContainer'+uuid ).className.split( ' Closed' ).join( '' ) + ' Closed';
+				}
+			}
 			
+			//console.log( { id: info.ID, pid: workgroup.parentid, psub: psub, sub: sub } );
 			
 			if( !info.ID )
 			{
@@ -2092,6 +2127,12 @@ Sections.accounts_workgroups = function( cmd, extra )
 							{
 								ge( 'SlideContainer' ).className = ge( 'SlideContainer' ).className.split( ' Slide' ).join( '' );
 							}
+							
+							if( ge( 'WorkgroupNavContainer_'+psub ) )
+							{
+								ge( 'WorkgroupNavContainer_'+psub ).className = ge( 'WorkgroupNavContainer_'+psub ).className.split( ' Closed' ).join( '' ) + ' Closed';
+							}
+							
 						}
 					}
 					else
@@ -2103,10 +2144,22 @@ Sections.accounts_workgroups = function( cmd, extra )
 			var bg3  = ge( 'GroupBackBtn'+uuid );
 			if( bg3 ) bg3.onclick = function( e )
 			{
+				
 				if( ge( 'SlideContainer' ) )
 				{
 					ge( 'SlideContainer' ).className = ge( 'SlideContainer' ).className.split( ' Slide' ).join( '' );
 				}
+				
+				if( ge( 'WorkgroupNavContainer'+uuid ) )
+				{
+					ge( 'WorkgroupNavContainer'+uuid ).className = ge( 'WorkgroupNavContainer'+uuid ).className.split( ' Closed' ).join( '' ) + ' Closed';
+				}
+				
+				if( ge( 'WorkgroupNavContainer_'+sub ) )
+				{
+					ge( 'WorkgroupNavContainer_'+sub ).className = ge( 'WorkgroupNavContainer_'+sub ).className.split( ' Closed' ).join( '' ) + ' Closed';
+				}
+				
 			}
 			
 			var bg4  = ge( 'GroupDeleteBtn'+uuid );
@@ -5072,6 +5125,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								}
 							}
 							
+							unsorted[workgroups[i].ID].level = 1;
 							unsorted[workgroups[i].ID].groups = [];
 						}
 					}
@@ -5085,6 +5139,17 @@ Sections.accounts_workgroups = function( cmd, extra )
 						if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
 						{
 							unsorted[ unsorted[k].ParentID ].groups.push( unsorted[k] );
+							
+							if( unsorted[ unsorted[k].ParentID ].groups )
+							{
+								for( var kk in unsorted[ unsorted[k].ParentID ].groups )
+								{
+									if( unsorted[ unsorted[k].ParentID ].groups[ kk ] )
+									{
+										unsorted[ unsorted[k].ParentID ].groups[ kk ].level = ( unsorted[ unsorted[k].ParentID ].level +1 );
+									}
+								}
+							}
 							
 							set.push( unsorted[k].ID );
 						}
@@ -5221,7 +5286,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								'element' : function(  ) 
 								{
 									var d = document.createElement( 'div' );
-									d.className = 'HRow BackgroundNegative Negative Padding';
+									d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight';
 									return d;
 								}(), 
 								'child' : 
@@ -5343,7 +5408,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										'element' : function() 
 										{
 											var d = document.createElement( 'div' );
-											d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+											d.className = 'HRow BackgroundNegative Negative Padding';
 											return d;
 										}(),
 										'child' : 
@@ -5352,7 +5417,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												'element' : function(  ) 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent40 FloatLeft';
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft';
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
 													d.onclick = function(  )
 													{
@@ -5365,7 +5430,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												'element' : function( _this ) 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent45 FloatLeft Relative';
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent45 FloatLeft Relative';
 													d.innerHTML = '<strong></strong>';
 													return d;
 												}( this )
@@ -5374,7 +5439,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Relative';
 													return d;
 												}()
 											}
