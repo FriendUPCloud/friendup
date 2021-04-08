@@ -480,6 +480,11 @@ html body button.IconButton, html body .Button.IconButton
 
 /* Custom Gui ------------------------------------------------------------------ */
 
+body.Synthwave .Selected 
+{
+	background-color: #2d1a47;
+}
+
 body:not(.Charcoal):not(.Synthwave),
 body:not(.Charcoal):not(.Synthwave) .Box
 {
