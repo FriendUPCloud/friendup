@@ -36,6 +36,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 		case 'edit_sub':
 			if( extra )
 			{
+				//console.log( extra );
+				
 				if( extra.id && extra._this )
 				{
 					edit( extra.id, extra._this, null, true );
@@ -470,7 +472,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 		initMain( function(  )
 		{
-			
+				
 			if( psub > 0 )
 			{
 				edit( psub, _this, null, null, sub );
@@ -512,10 +514,17 @@ Sections.accounts_workgroups = function( cmd, extra )
 		else if( !psub && id && ge( 'WorkgroupID_' + id ) )
 		{
 			ge( 'WorkgroupID_' + id ).classList.add( 'Selected' );
+			
+			//console.log( '[1]', { text: ge( 'WorkgroupID_' + id ).innerText, id: id, _this: _this, psub: psub, sub: sub } );
 		}
 		else if( psub > 0 && ge( 'WorkgroupID_' + psub ) )
 		{
-			ge( 'WorkgroupID_' + psub ).classList.add( 'Selected' );
+			if( !ge( 'SubWorkgroupDetails' ).innerHTML )
+			{
+				ge( 'WorkgroupID_' + psub ).classList.add( 'Selected' );
+			}
+			
+			//console.log( '[2]', { text: ge( 'WorkgroupID_' + psub ).innerText, id: id, _this: _this, psub: psub, sub: sub } );
 		}
 		
 		loading( id, pid, psub, sub );
@@ -1717,7 +1726,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 	function loading( id, pid, psub, sub )
 	{
-		if( ShowLog ) console.log( 'loading( '+id+', '+pid+', '+psub+', '+sub+' )' );
+		if( ShowLog/* || 1==1*/ ) console.log( 'loading( '+id+', '+pid+', '+psub+', '+sub+' )' );
 		
 		if( id )
 		{
@@ -1848,7 +1857,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 				info.workgroups = ( groups ? groups : null );
 				
-				initDetails( info, psub );
+				initDetails( info, psub, ( sub == 'new_sub' ? sub : null ) );
 				
 			} );
 			
@@ -2043,7 +2052,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						else
 						{
 							if( ShowLog ) console.log( '// create workgroup' );
-					
+							
 							create( psub, function( ret )
 							{
 								
@@ -2063,18 +2072,31 @@ Sections.accounts_workgroups = function( cmd, extra )
 			{
 				if( info.ID )
 				{
-					edit( info.ID, null, null, psub );
+					edit( info.ID, null, null, psub, sub );
 				}
 				else
 				{
-					cancel( null, psub );
-					
 					if( psub )
 					{
-						if( ge( 'SlideContainer' ) )
+						//console.log( { psub: psub, sub: sub } );
+						
+						if( sub == 'new_sub' )
 						{
-							ge( 'SlideContainer' ).className = ge( 'SlideContainer' ).className.split( ' Slide' ).join( '' );
+							edit( psub, null, null, psub, null );
 						}
+						else
+						{
+							cancel( null, psub );
+							
+							if( ge( 'SlideContainer' ) )
+							{
+								ge( 'SlideContainer' ).className = ge( 'SlideContainer' ).className.split( ' Slide' ).join( '' );
+							}
+						}
+					}
+					else
+					{
+						cancel();
 					}
 				}
 			}
@@ -2434,6 +2456,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 										this.hide = true;
 									}
 									
+									//console.log( { psub: psub, sub: sub } );
+									
 									if( groups[s].groups.length > 0 )
 									{
 										for( var a in groups[s].groups )
@@ -2445,8 +2469,6 @@ Sections.accounts_workgroups = function( cmd, extra )
 												ii++;
 											
 												str += '<div>';
-												
-												// TODO: Add sub here .... to keep track of latest onclick.
 												
 												sub = rows.ID;
 												
@@ -2752,9 +2774,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 										 
 									] ) )
 									{
+										//console.log( { psub: psub, sub: sub } );
+										
 										etn.onclick = function( e )
 										{
-											edit( false, false, workgroup.groupid, workgroup.groupid );
+											edit( false, false, workgroup.groupid, workgroup.groupid, ( psub ? 'new_sub' : sub ) );
 										};
 									}
 									else
