@@ -10267,7 +10267,7 @@ function loadApplicationBasics( callback )
 	let c_ = new File( '/system.library/module/' );
 	c_.addVar( 'command', 'theme' );
 	c_.addVar( 'module', 'system' );
-	c_.addVar( 'args', '%7B%22theme%22%3A%22friendup12%22%7D' );
+	c_.addVar( 'args', JSON.stringify( { theme: 'friendup12' } ) ); //'%7B%22theme%22%3A%22friendup12%22%7D' );
 	c_.onLoad = function( data )
 	{
 		console.log( 'Response of theme call: ', data );
