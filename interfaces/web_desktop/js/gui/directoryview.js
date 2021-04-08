@@ -4888,7 +4888,7 @@ function CheckDoorsKeys( e )
 	// Do the thing! Keyboard navigation
 	if( 
 		!Workspace.editing &&
-		window.regionWindow && wobject._window.directoryview && 
+		window.regionWindow && wobject._window && wobject._window.directoryview && 
 		( wobject && ( !wobject.flags || !wobject.flags.editing ) ) &&
 		wobject._window.directoryview.keyboardNavigation &&
 		!e.ctrlKey
