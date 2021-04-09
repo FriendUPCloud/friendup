@@ -4727,15 +4727,43 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						break;
 					mc = mc.parentNode;
 				}
+				// Use the context menu file info, and sanitize it!
+				// The Path may include the filename
 				if( mc.fileInfo )
 				{
 					destPath = mc.fileInfo.Path;
-					destFinf = mc.fileInfo;
+					if( destPath.substr( -1, 1 ) != '/' )
+					{
+					    if( destPath.indexOf( '/' ) > 0 )
+					    {
+					        destPath = destPath.split( '/' );
+					        destPath.pop();
+					        destPath = destPath.join( '/' );
+					        destPath += '/';
+					    }
+					}
+					else if( destPath.substr( -1, 1 ) != ':' )
+					{
+					    if( destPath.indexOf( ':' ) > 0 )
+					    {
+				            destPath = destPath.split( ':' );
+				            destPath.pop();
+				            destPath = destPath.join( ':' );
+				            destPath += ':';
+				        }
+					}
+					destFinf = {};
+					for( let a in mc.fileInfo )
+					{
+					    destFinf[ a ] = mc.fileInfo[ a ];
+					}
+					destFinf.Path = destPath;
 					doCopy = true;
 				}
 			}
 			
 			let d = new Door( destPath );
+			
 			d.getIcons( destFinf, function( items )
 			{
 				for( let a = 0; a < items.length; a++ )
@@ -4791,7 +4819,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( !e ) e = {};
 				let cliplen = clip.length;
 				for( let b = 0; b < clip.length; b++ )
-				{
+				{	
 					let spath = clip[b].fileInfo.Path;
 					let lastChar = spath.substr( -1, 1 );
 					let sh = new Shell( 0 );
@@ -4800,6 +4828,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					let fn = ( clip[b].fileInfo.NewFilename ? clip[b].fileInfo.NewFilename : clip[b].fileInfo.Filename );
 					fn = fn.split( ' ' ).join( '\\ ' );
 					let copyStr = 'copy ' + source + ' to ' + destin + fn;
+					
 					sh.parseScript( copyStr, function()
 					{
 						if( cliplen-- == 0 )
