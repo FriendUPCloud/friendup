@@ -580,7 +580,7 @@ function setGUISection( module, section, child, action )
 			ge( 'GuiContent' ).innerHTML = data;
 		
 			// Temporary until search is fixed for users ...
-		
+			
 			if( section.toLowerCase() == 'users' || section.toLowerCase() == 'workgroups' ) 
 			{
 				if( typeof UsersSettings != 'undefined' )
@@ -660,7 +660,54 @@ var Sections = {
 	}
 }
 
-
+function CustomToggle( id, classn, name, onclick, checked )
+{
+	if( id )
+	{
+		// TODO: Don't use string ...
+		
+		var d = document.createElement( 'label' );
+		if( classn )
+		{
+			d.className = classn;
+		}
+		
+		var i = document.createElement( 'input' );
+		i.type = 'checkbox';
+		i.className = 'CustomToggleInput';
+		i.id = id;
+		if( name )
+		{
+			i.name = name;
+		}
+		if( checked )
+		{
+			i.checked = true;
+		}
+		if( onclick )
+		{
+			i.onclick = onclick;
+		}
+		
+		d.appendChild( i );
+		
+		var l = document.createElement( 'label' );
+		l.className = 'CustomToggleLabel';
+		l.for = id;
+		
+		d.appendChild( l );
+		
+		//return d;
+		
+		str  = '<label'+(classn?' class="'+classn+'"':'')+'>';
+		str += '	<input type="checkbox" class="CustomToggleInput" id="'+id+'"'+(name?' name="'+name+'"':'')+(checked?' checked="checked"':'')+'>';
+		str += '	<label class="CustomToggleLabel" for="'+id+'"></label>';
+		str += '</label>';
+		
+		return str;
+	}
+	return '';
+}
 
 function Toggle( _this, callback, on )
 {

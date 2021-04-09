@@ -355,7 +355,70 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
 									] ) )
 									{
-										wstr += '	<button wid="' + wids[b].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+										//wstr += '	<button wid="' + wids[b].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+										
+										wstr += CustomToggle( 'wid_' + wids[b].ID, 'FloatRight', null, function (  )
+										{
+		
+											var args = { 
+												id     : this.id.split( 'wid_' )[1], 
+												users  : userInfo.ID, 
+												authid : Application.authId 
+											};
+									
+											args.args = JSON.stringify( {
+												'type'    : 'write', 
+												'context' : 'application', 
+												'authid'  : Application.authId, 
+												'data'    : { 
+													'permission' : [ 
+														'PERM_WORKGROUP_CREATE_GLOBAL', 
+														'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+														'PERM_WORKGROUP_UPDATE_GLOBAL', 
+														'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+														'PERM_WORKGROUP_GLOBAL', 
+														'PERM_WORKGROUP_WORKGROUP' 
+													]
+												}, 
+												'object'   : 'workgroup', 
+												'objectid' : this.id.split( 'wid_' )[1] 
+											} );
+									
+											if( this.checked )
+											{
+												// Toggle off ...
+											
+												if( args && args.id && args.users )
+												{
+													let f = new Library( 'system.library' );
+													f.btn = this;
+													f.wids = wids;
+													f.onExecuted = function( e, d )
+													{
+														
+														this.wids[ this.btn.id.split( 'wid_' )[1] ] = false;
+												
+														let pnt = this.btn.parentNode.parentNode;
+												
+														if( pnt )
+														{
+															pnt.innerHTML = '';
+														}
+													
+														// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+													
+														// Refresh Storage ...
+														//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+														Sections.user_disk_cancel( userInfo.ID );
+													
+													}
+													f.execute( 'group/removeusers', args );
+												}
+										
+											}
+		
+										}, true );
+										
 									}
 									
 									wstr += '	</div>';
@@ -1112,6 +1175,84 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											}
 											
 										}
+										
+										let workInps = ge( 'WorkgroupInner' ).getElementsByTagName( 'input' );
+										
+										if( workInps )
+										{
+											for( var a = 0; a < workInps.length; a++ )
+											{
+												if( workInps[a] && workInps[a].checked && workInps[a].id.split( 'wid_' )[1] )
+												{
+													wge.wids[ workInps[a].id.split( 'wid_' )[1] ] = true;
+												}
+											}
+											
+											for( var a = 0; a < workInps.length; a++ )
+											{
+												// Toggle user relation to workgroup
+												( function( b, wids ) {
+													b.onclick = function( e )
+													{
+														var args = { 
+															id     : this.id.split( 'wid_' )[1], 
+															users  : userInfo.ID, 
+															authid : Application.authId 
+														};
+													
+														args.args = JSON.stringify( {
+															'type'    : 'write', 
+															'context' : 'application', 
+															'authid'  : Application.authId, 
+															'data'    : { 
+																'permission' : [ 
+																	'PERM_WORKGROUP_CREATE_GLOBAL', 
+																	'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+																	'PERM_WORKGROUP_UPDATE_GLOBAL', 
+																	'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+																	'PERM_WORKGROUP_GLOBAL', 
+																	'PERM_WORKGROUP_WORKGROUP' 
+																]
+															}, 
+															'object'   : 'workgroup', 
+															'objectid' : this.id.split( 'wid_' )[1] 
+														} );
+													
+														// Toggle off ...
+													
+														if( args && args.id && args.users )
+														{
+															let f = new Library( 'system.library' );
+															f.btn = this;
+															f.wids = wids;
+															f.onExecuted = function( e, d )
+															{
+																//console.log( { e:e, d:d } );
+															
+																this.wids[ this.btn.id.split( 'wid_' )[1] ] = false;
+															
+																let pnt = this.btn.parentNode.parentNode.parentNode;
+															
+																if( pnt )
+																{
+																	pnt.innerHTML = '';
+																}
+																
+																// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																
+																// Refresh Storage ...
+																//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																Sections.user_disk_cancel( userInfo.ID );
+															}
+															f.execute( 'group/removeusers', args );
+														}
+														
+													}
+												} )( workInps[ a ], wge.wids );
+											}
+											
+										}
+										
 									}
 									
 								}
@@ -1255,7 +1396,81 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
 												] ) )
 												{
-													str += '		<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
+													//str += '		<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
+													
+													str += CustomToggle( 'wid_' + groups[a].ID, 'FloatRight', null, function (  )
+													{
+							
+														var args = { 
+															id     : this.id.split( 'wid_' )[1], 
+															users  : userInfo.ID, 
+															authid : Application.authId 
+														};
+														
+														args.args = JSON.stringify( {
+															'type'    : 'write', 
+															'context' : 'application', 
+															'authid'  : Application.authId, 
+															'data'    : { 
+																'permission' : [ 
+																	'PERM_WORKGROUP_CREATE_GLOBAL', 
+																	'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+																	'PERM_WORKGROUP_UPDATE_GLOBAL', 
+																	'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+																	'PERM_WORKGROUP_GLOBAL', 
+																	'PERM_WORKGROUP_WORKGROUP' 
+																]
+															}, 
+															'object'   : 'workgroup', 
+															'objectid' : this.id.split( 'wid_' )[1] 
+														} );
+														
+														if( this.checked )
+														{
+															// Toggle on ...
+															
+															if( args && args.id && args.users )
+															{
+																let f = new Library( 'system.library' );
+																f.btn = this;
+																f.onExecuted = function( e, d )
+																{
+																	
+																	// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																	
+																	// Refresh Storage ...
+																	//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																	Sections.user_disk_cancel( userInfo.ID );
+																}
+																f.execute( 'group/addusers', args );
+															}
+															
+														}
+														else
+														{
+															// Toggle off ...
+															
+															if( args && args.id && args.users )
+															{
+																let f = new Library( 'system.library' );
+																f.btn = this;
+																f.onExecuted = function( e, d )
+																{
+																	
+																	// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																	
+																	// Refresh Storage ...
+																	//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																	Sections.user_disk_cancel( userInfo.ID );
+																	
+																}
+																f.execute( 'group/removeusers', args );
+															}
+															
+														}
+							
+													}, ( found ? true : false ) );
+													
 												}
 												
 												str += '	</div>';
@@ -1304,7 +1519,81 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 															'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
 														] ) )
 														{
-															str += '<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
+															//str += '<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
+															
+															str += CustomToggle( 'wid_' + groups[a].groups[aa].ID, 'FloatRight', null, function (  )
+															{
+						
+																var args = { 
+																	id     : this.id.split( 'wid_' )[1], 
+																	users  : userInfo.ID, 
+																	authid : Application.authId 
+																};
+													
+																args.args = JSON.stringify( {
+																	'type'    : 'write', 
+																	'context' : 'application', 
+																	'authid'  : Application.authId, 
+																	'data'    : { 
+																		'permission' : [ 
+																			'PERM_WORKGROUP_CREATE_GLOBAL', 
+																			'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+																			'PERM_WORKGROUP_UPDATE_GLOBAL', 
+																			'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+																			'PERM_WORKGROUP_GLOBAL', 
+																			'PERM_WORKGROUP_WORKGROUP' 
+																		]
+																	}, 
+																	'object'   : 'workgroup', 
+																	'objectid' : this.id.split( 'wid_' )[1] 
+																} );
+													
+																if( this.checked )
+																{
+																	// Toggle on ...
+														
+																	if( args && args.id && args.users )
+																	{
+																		let f = new Library( 'system.library' );
+																		f.btn = this;
+																		f.onExecuted = function( e, d )
+																		{
+																
+																			// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																
+																			// Refresh Storage ...
+																			//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																			Sections.user_disk_cancel( userInfo.ID );
+																		}
+																		f.execute( 'group/addusers', args );
+																	}
+														
+																}
+																else
+																{
+																	// Toggle off ...
+														
+																	if( args && args.id && args.users )
+																	{
+																		let f = new Library( 'system.library' );
+																		f.btn = this;
+																		f.onExecuted = function( e, d )
+																		{
+																
+																			// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																
+																			// Refresh Storage ...
+																			//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																			Sections.user_disk_cancel( userInfo.ID );
+																
+																		}
+																		f.execute( 'group/removeusers', args );
+																	}
+														
+																}
+						
+															}, ( found ? true : false ) );
+															
 														}
 														
 														str += '</div>';
@@ -1353,7 +1642,81 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																	'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
 																] ) )
 																{
-																	str += '		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
+																	//str += '		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
+																	
+																	str += CustomToggle( 'wid_' + groups[a].groups[aa].groups[aaa].ID, 'FloatRight', null, function (  )
+																	{
+						
+																		var args = { 
+																			id     : this.id.split( 'wid_' )[1], 
+																			users  : userInfo.ID, 
+																			authid : Application.authId 
+																		};
+													
+																		args.args = JSON.stringify( {
+																			'type'    : 'write', 
+																			'context' : 'application', 
+																			'authid'  : Application.authId, 
+																			'data'    : { 
+																				'permission' : [ 
+																					'PERM_WORKGROUP_CREATE_GLOBAL', 
+																					'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+																					'PERM_WORKGROUP_UPDATE_GLOBAL', 
+																					'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+																					'PERM_WORKGROUP_GLOBAL', 
+																					'PERM_WORKGROUP_WORKGROUP' 
+																				]
+																			}, 
+																			'object'   : 'workgroup', 
+																			'objectid' : this.id.split( 'wid_' )[1] 
+																		} );
+													
+																		if( this.checked )
+																		{
+																			// Toggle on ...
+														
+																			if( args && args.id && args.users )
+																			{
+																				let f = new Library( 'system.library' );
+																				f.btn = this;
+																				f.onExecuted = function( e, d )
+																				{
+																
+																					// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																
+																					// Refresh Storage ...
+																					//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																					Sections.user_disk_cancel( userInfo.ID );
+																				}
+																				f.execute( 'group/addusers', args );
+																			}
+														
+																		}
+																		else
+																		{
+																			// Toggle off ...
+														
+																			if( args && args.id && args.users )
+																			{
+																				let f = new Library( 'system.library' );
+																				f.btn = this;
+																				f.onExecuted = function( e, d )
+																				{
+																
+																					// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																
+																					// Refresh Storage ...
+																					//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																					Sections.user_disk_cancel( userInfo.ID );
+																
+																				}
+																				f.execute( 'group/removeusers', args );
+																			}
+														
+																		}
+						
+																	}, ( found ? true : false ) );
+																	
 																}
 																
 																str += '	</div>';
@@ -1553,7 +1916,95 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												} )( workBtns[ a ] );
 											}
 										}
+										
+										
+										
+										let workInps = ge( 'WorkgroupInner' ).getElementsByTagName( 'input' );
 							
+										if( workInps )
+										{
+											for( var a = 0; a < workInps.length; a++ )
+											{
+												// Toggle user relation to workgroup
+												( function( b ) {
+													b.onclick = function( e )
+													{
+														
+														var args = { 
+															id     : this.id.split( 'wid_' )[1], 
+															users  : userInfo.ID, 
+															authid : Application.authId 
+														};
+					
+														args.args = JSON.stringify( {
+															'type'    : 'write', 
+															'context' : 'application', 
+															'authid'  : Application.authId, 
+															'data'    : { 
+																'permission' : [ 
+																	'PERM_WORKGROUP_CREATE_GLOBAL', 
+																	'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+																	'PERM_WORKGROUP_UPDATE_GLOBAL', 
+																	'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+																	'PERM_WORKGROUP_GLOBAL', 
+																	'PERM_WORKGROUP_WORKGROUP' 
+																]
+															}, 
+															'object'   : 'workgroup', 
+															'objectid' : this.id.split( 'wid_' )[1] 
+														} );
+					
+														if( this.checked )
+														{
+															// Toggle on ...
+						
+															if( args && args.id && args.users )
+															{
+																let f = new Library( 'system.library' );
+																f.btn = this;
+																f.onExecuted = function( e, d )
+																{
+								
+																	// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+								
+																	// Refresh Storage ...
+																	//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																	Sections.user_disk_cancel( userInfo.ID );
+																}
+																f.execute( 'group/addusers', args );
+															}
+						
+														}
+														else
+														{
+															// Toggle off ...
+						
+															if( args && args.id && args.users )
+															{
+																let f = new Library( 'system.library' );
+																f.btn = this;
+																f.onExecuted = function( e, d )
+																{
+								
+																	// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+								
+																	// Refresh Storage ...
+																	//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																	Sections.user_disk_cancel( userInfo.ID );
+								
+																}
+																f.execute( 'group/removeusers', args );
+															}
+						
+														}
+														
+													}
+												} )( workInps[ a ] );
+											}
+										}
+										
+										
+										
 										sortgroups( 'Name', 'ASC' );
 	
 										let wgc = ge( 'WorkgroupEditBack' );
@@ -1597,6 +2048,20 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														}
 													}
 												}
+												
+												let workInps = ge( 'WorkgroupInner' ).getElementsByTagName( 'input' );
+									
+												if( workInps )
+												{
+													for( var a = 0; a < workInps.length; a++ )
+													{
+														if( workInps[a] && workInps[a].checked && workInps[a].id.split( 'wid_' )[1] )
+														{
+															this.wge.wids[ workInps[a].id.split( 'wid_' )[1] ] = true;
+														}
+													}
+												}
+												
 											}
 										
 											let wstr = '';
@@ -1623,7 +2088,69 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 															'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
 														] ) )
 														{
-															wstr += '		<button wid="' + groups[b].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+															//wstr += '		<button wid="' + groups[b].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+															wstr += CustomToggle( 'wid_' + groups[b].ID, 'FloatRight', null, function (  )
+															{
+							
+																var args = { 
+																	id     : this.id.split( 'wid_' )[1], 
+																	users  : userInfo.ID, 
+																	authid : Application.authId 
+																};
+														
+																args.args = JSON.stringify( {
+																	'type'    : 'write', 
+																	'context' : 'application', 
+																	'authid'  : Application.authId, 
+																	'data'    : { 
+																		'permission' : [ 
+																			'PERM_WORKGROUP_CREATE_GLOBAL', 
+																			'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+																			'PERM_WORKGROUP_UPDATE_GLOBAL', 
+																			'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+																			'PERM_WORKGROUP_GLOBAL', 
+																			'PERM_WORKGROUP_WORKGROUP' 
+																		]
+																	}, 
+																	'object'   : 'workgroup', 
+																	'objectid' : this.id.split( 'wid_' )[1] 
+																} );
+														
+																if( this.checked )
+																{
+																	// Toggle off ...
+																
+																	if( args && args.id && args.users )
+																	{
+																		let f = new Library( 'system.library' );
+																		f.btn = this;
+																		f.wids = wids;
+																		f.onExecuted = function( e, d )
+																		{
+																			
+																			this.wids[ this.btn.id.split( 'wid_' )[1] ] = false;
+																	
+																			let pnt = this.btn.parentNode.parentNode;
+																	
+																			if( pnt )
+																			{
+																				pnt.innerHTML = '';
+																			}
+																		
+																			// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																		
+																			// Refresh Storage ...
+																			//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																			Sections.user_disk_cancel( userInfo.ID );
+																		
+																		}
+																		f.execute( 'group/removeusers', args );
+																	}
+															
+																}
+							
+															}, true );
+															
 														}
 														
 														wstr += '	</div>';
@@ -1653,7 +2180,70 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
 																	] ) )
 																	{
-																		wstr += '		<button wid="' + groups[b].groups[k].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+																		//wstr += '		<button wid="' + groups[b].groups[k].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+																		
+																		wstr += CustomToggle( 'wid_' + groups[b].groups[k].ID, 'FloatRight', null, function (  )
+																		{
+							
+																			var args = { 
+																				id     : this.id.split( 'wid_' )[1], 
+																				users  : userInfo.ID, 
+																				authid : Application.authId 
+																			};
+														
+																			args.args = JSON.stringify( {
+																				'type'    : 'write', 
+																				'context' : 'application', 
+																				'authid'  : Application.authId, 
+																				'data'    : { 
+																					'permission' : [ 
+																						'PERM_WORKGROUP_CREATE_GLOBAL', 
+																						'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+																						'PERM_WORKGROUP_UPDATE_GLOBAL', 
+																						'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+																						'PERM_WORKGROUP_GLOBAL', 
+																						'PERM_WORKGROUP_WORKGROUP' 
+																					]
+																				}, 
+																				'object'   : 'workgroup', 
+																				'objectid' : this.id.split( 'wid_' )[1] 
+																			} );
+														
+																			if( this.checked )
+																			{
+																				// Toggle off ...
+																
+																				if( args && args.id && args.users )
+																				{
+																					let f = new Library( 'system.library' );
+																					f.btn = this;
+																					f.wids = wids;
+																					f.onExecuted = function( e, d )
+																					{
+																			
+																						this.wids[ this.btn.id.split( 'wid_' )[1] ] = false;
+																	
+																						let pnt = this.btn.parentNode.parentNode;
+																	
+																						if( pnt )
+																						{
+																							pnt.innerHTML = '';
+																						}
+																		
+																						// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																		
+																						// Refresh Storage ...
+																						//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																						Sections.user_disk_cancel( userInfo.ID );
+																		
+																					}
+																					f.execute( 'group/removeusers', args );
+																				}
+															
+																			}
+							
+																		}, true );
+																		
 																	}
 																	
 																	wstr += '	</div>';
@@ -1683,7 +2273,70 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																					'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
 																				] ) )
 																				{
-																					wstr += '		<button wid="' + groups[b].groups[k].groups[i].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+																					//wstr += '		<button wid="' + groups[b].groups[k].groups[i].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+																					
+																					wstr += CustomToggle( 'wid_' + groups[b].groups[k].groups[i].ID, 'FloatRight', null, function (  )
+																					{
+							
+																						var args = { 
+																							id     : this.id.split( 'wid_' )[1], 
+																							users  : userInfo.ID, 
+																							authid : Application.authId 
+																						};
+														
+																						args.args = JSON.stringify( {
+																							'type'    : 'write', 
+																							'context' : 'application', 
+																							'authid'  : Application.authId, 
+																							'data'    : { 
+																								'permission' : [ 
+																									'PERM_WORKGROUP_CREATE_GLOBAL', 
+																									'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+																									'PERM_WORKGROUP_UPDATE_GLOBAL', 
+																									'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+																									'PERM_WORKGROUP_GLOBAL', 
+																									'PERM_WORKGROUP_WORKGROUP' 
+																								]
+																							}, 
+																							'object'   : 'workgroup', 
+																							'objectid' : this.id.split( 'wid_' )[1] 
+																						} );
+														
+																						if( this.checked )
+																						{
+																							// Toggle off ...
+																
+																							if( args && args.id && args.users )
+																							{
+																								let f = new Library( 'system.library' );
+																								f.btn = this;
+																								f.wids = wids;
+																								f.onExecuted = function( e, d )
+																								{
+																			
+																									this.wids[ this.btn.id.split( 'wid_' )[1] ] = false;
+																	
+																									let pnt = this.btn.parentNode.parentNode;
+																	
+																									if( pnt )
+																									{
+																										pnt.innerHTML = '';
+																									}
+																		
+																									// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																		
+																									// Refresh Storage ...
+																									//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																									Sections.user_disk_cancel( userInfo.ID );
+																		
+																								}
+																								f.execute( 'group/removeusers', args );
+																							}
+															
+																						}
+							
+																					}, true );	
+																					
 																				}
 																				
 																				wstr += '	</div>';
@@ -1779,6 +2432,79 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													} )( workBtns[ a ], this.wge.wids );
 												}
 											}
+											
+											
+											
+											let workInps = ge( 'WorkgroupInner' ).getElementsByTagName( 'input' );
+							
+											if( workInps )
+											{
+												for( var a = 0; a < workInps.length; a++ )
+												{
+													// Toggle user relation to workgroup
+													( function( b, wids ) {
+														b.onclick = function( e )
+														{
+															
+															var args = { 
+																id     : this.id.split( 'wid_' )[1], 
+																users  : userInfo.ID, 
+																authid : Application.authId 
+															};
+													
+															args.args = JSON.stringify( {
+																'type'    : 'write', 
+																'context' : 'application', 
+																'authid'  : Application.authId, 
+																'data'    : { 
+																	'permission' : [ 
+																		'PERM_WORKGROUP_CREATE_GLOBAL', 
+																		'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+																		'PERM_WORKGROUP_UPDATE_GLOBAL', 
+																		'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+																		'PERM_WORKGROUP_GLOBAL', 
+																		'PERM_WORKGROUP_WORKGROUP' 
+																	]
+																}, 
+																'object'   : 'workgroup', 
+																'objectid' : this.id.split( 'wid_' )[1] 
+															} );
+															
+															// Toggle off ...
+														
+															if( args && args.id && args.users )
+															{
+																let f = new Library( 'system.library' );
+																f.btn = this;
+																f.wids = wids;
+																f.onExecuted = function( e, d )
+																{
+																	
+																	this.wids[ this.btn.id.split( 'wid_' )[1] ] = false;
+															
+																	let pnt = this.btn.parentNode.parentNode.parentNode;
+															
+																	if( pnt )
+																	{
+																		pnt.innerHTML = '';
+																	}
+																
+																	// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																
+																	// Refresh Storage ...
+																	//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																	Sections.user_disk_cancel( userInfo.ID );
+																
+																}
+																f.execute( 'group/removeusers', args );
+															}
+															
+														}
+													} )( workInps[ a ], this.wge.wids );
+												}
+											}
+											
+											
 											
 											// Hide back button ...
 											
@@ -4581,7 +5307,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											'PERM_WORKGROUP_GLOBAL',      'PERM_WORKGROUP_WORKGROUP' 
 										] ) )
 										{
-											if( ge( 'AdminWorkgroupContainer' ) ) ge( 'AdminWorkgroupContainer' ).className = 'Open';
+											if( ge( 'AdminWorkgroupContainer' ) )
+											{
+												ge( 'AdminWorkgroupContainer' ).className = ge( 'AdminWorkgroupContainer' ).className.split( 'Closed' ).join( 'Open' );
+											}
 										}
 										else
 										{
@@ -4596,7 +5325,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											'PERM_ROLE_GLOBAL',      'PERM_ROLE_WORKGROUP' 
 										] ) )
 										{
-											if( ge( 'AdminRoleContainer' ) ) ge( 'AdminRoleContainer' ).className = 'Open';
+											if( ge( 'AdminRoleContainer' ) )
+											{
+												ge( 'AdminRoleContainer' ).className = ge( 'AdminRoleContainer' ).className.split( 'Closed' ).join( 'Open' );
+											}
 										}
 										else
 										{
@@ -4611,7 +5343,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											'PERM_STORAGE_GLOBAL',      'PERM_STORAGE_WORKGROUP' 
 										] ) )
 										{
-											if( ge( 'AdminStorageContainer' ) ) ge( 'AdminStorageContainer' ).className = 'Open';
+											if( ge( 'AdminStorageContainer' ) )
+											{
+												ge( 'AdminStorageContainer' ).className = ge( 'AdminStorageContainer' ).className.split( 'Closed' ).join( 'Open' );
+											}
 										}
 										else
 										{
@@ -4626,7 +5361,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											'PERM_APPLICATION_GLOBAL',      'PERM_APPLICATION_WORKGROUP' 
 										] ) )
 										{
-											if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
+											if( ge( 'AdminApplicationContainer' ) )
+											{
+												ge( 'AdminApplicationContainer' ).className = ge( 'AdminApplicationContainer' ).className.split( 'Closed' ).join( 'Open' );
+											}
 										}
 										else
 										{
@@ -4641,7 +5379,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											'PERM_APPLICATION_GLOBAL',      'PERM_APPLICATION_WORKGROUP' 
 										] ) )
 										{
-											if( ge( 'AdminDockContainer' ) ) ge( 'AdminDockContainer' ).className = 'Open';
+											if( ge( 'AdminDockContainer' ) )
+											{
+												ge( 'AdminDockContainer' ).className = ge( 'AdminDockContainer' ).className.split( 'Closed' ).join( 'Open' );
+											}
 										}
 										else
 										{
@@ -4656,7 +5397,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											'PERM_LOOKNFEEL_GLOBAL',      'PERM_LOOKNFEEL_WORKGROUP' 
 										] ) )
 										{
-											if( ge( 'AdminLooknfeelContainer' ) ) ge( 'AdminLooknfeelContainer' ).className = 'Open';
+											if( ge( 'AdminLooknfeelContainer' ) )
+											{
+												ge( 'AdminLooknfeelContainer' ).className = ge( 'AdminLooknfeelContainer' ).className.split( 'Closed' ).join( 'Open' );
+											}
 										}
 										else
 										{
@@ -5597,7 +6341,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 function initUserlist( userList  )
 {
 	
-	let o = ge( 'UserList' );
+	ge( 'UserList' ).innerHTML = '<div class="VContent100 OverflowHidden BorderRadius Elevated"></div>';
+	
+	let o = ge( 'UserList' ).getElementsByTagName( 'div' )[0];
 					
 	if( !ge( 'ListUsersInner' ) )
 	{
@@ -6663,7 +7409,85 @@ function NewUser( _this )
 						str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom FloatLeft Ellipsis">' + groups[a].Name+ '</div>';
 						
 						str += '	<div class="PaddingSmall HContent20 FloatRight Ellipsis">';
-						str += '		<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
+						//str += '		<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
+						str += CustomToggle( 'wid_' + groups[a].ID, 'FloatRight', null, function (  )
+						{
+							
+							if( ge( 'usWorkgroups' ) )
+							{
+								
+								var wids = [];
+									
+								if( ge( 'usWorkgroups' ).value )
+								{
+									wids = ge( 'usWorkgroups' ).value.split( ',' );
+								}
+								
+								if( this.checked )
+								{
+									// Toggle on ...
+									
+									console.log( '// Toggle on ', wids );
+									
+									if( this.id && this.id.split( 'wid_' )[1] )
+									{
+										
+										wids.push( this.id.split( 'wid_' )[1] );
+										
+										if( wids )
+										{
+											ge( 'usWorkgroups' ).setAttribute( 'value', wids.join( ',' ) );
+										}
+										else
+										{
+											ge( 'usWorkgroups' ).removeAttribute( 'value' );	
+										}
+										
+									}
+									
+								}
+								else
+								{
+									// Toggle off ...
+								
+									console.log( '// Toggle off ', wids );
+									
+									if( this.id && this.id.split( 'wid_' )[1] )
+									{
+										var nwid = [];
+										
+										if( wids )
+										{
+											for( var a in wids )
+											{
+												if( wids[a] )
+												{
+													if( wids[a] != this.id.split( 'wid_' )[1] )
+													{
+														nwid.push( wids[a] );
+													}
+												}
+											}
+											
+											wids = nwid;
+										}
+										
+										if( wids )
+										{
+											ge( 'usWorkgroups' ).setAttribute( 'value', wids.join( ',' ) );
+										}
+										else
+										{
+											ge( 'usWorkgroups' ).removeAttribute( 'value' );	
+										}
+										
+									}
+																				
+								}
+							}
+							
+						}, ( found ? true : false ) );
+						
 						str += '	</div>';
 						
 						str += '</div>';
@@ -6688,7 +7512,86 @@ function NewUser( _this )
 								str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom FloatLeft Ellipsis">' + groups[a].groups[aa].Name + '</div>';
 								
 								str += '<div class="PaddingSmall FloatRight Ellipsis">';
-								str += '<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
+								//str += '<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
+								
+								str += CustomToggle( 'wid_' + groups[a].groups[aa].ID, 'FloatRight', null, function (  )
+								{
+							
+									if( ge( 'usWorkgroups' ) )
+									{
+								
+										var wids = [];
+									
+										if( ge( 'usWorkgroups' ).value )
+										{
+											wids = ge( 'usWorkgroups' ).value.split( ',' );
+										}
+								
+										if( this.checked )
+										{
+											// Toggle on ...
+									
+											console.log( '// Toggle on ', wids );
+									
+											if( this.id && this.id.split( 'wid_' )[1] )
+											{
+										
+												wids.push( this.id.split( 'wid_' )[1] );
+										
+												if( wids )
+												{
+													ge( 'usWorkgroups' ).setAttribute( 'value', wids.join( ',' ) );
+												}
+												else
+												{
+													ge( 'usWorkgroups' ).removeAttribute( 'value' );	
+												}
+										
+											}
+									
+										}
+										else
+										{
+											// Toggle off ...
+								
+											console.log( '// Toggle off ', wids );
+									
+											if( this.id && this.id.split( 'wid_' )[1] )
+											{
+												var nwid = [];
+										
+												if( wids )
+												{
+													for( var a in wids )
+													{
+														if( wids[a] )
+														{
+															if( wids[a] != this.id.split( 'wid_' )[1] )
+															{
+																nwid.push( wids[a] );
+															}
+														}
+													}
+											
+													wids = nwid;
+												}
+										
+												if( wids )
+												{
+													ge( 'usWorkgroups' ).setAttribute( 'value', wids.join( ',' ) );
+												}
+												else
+												{
+													ge( 'usWorkgroups' ).removeAttribute( 'value' );	
+												}
+										
+											}
+																				
+										}
+									}
+							
+								}, ( found ? true : false ) );
+								
 								str += '</div>';
 								
 								str += '</div>';
@@ -6713,7 +7616,86 @@ function NewUser( _this )
 										str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + '</div>';
 										
 										str += '	<div class="PaddingSmall FloatRight Ellipsis">';
-										str += '		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
+										//str += '		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
+										
+										str += CustomToggle( 'wid_' + groups[a].groups[aa].groups[aaa].ID, 'FloatRight', null, function (  )
+										{
+							
+											if( ge( 'usWorkgroups' ) )
+											{
+								
+												var wids = [];
+									
+												if( ge( 'usWorkgroups' ).value )
+												{
+													wids = ge( 'usWorkgroups' ).value.split( ',' );
+												}
+								
+												if( this.checked )
+												{
+													// Toggle on ...
+									
+													console.log( '// Toggle on ', wids );
+									
+													if( this.id && this.id.split( 'wid_' )[1] )
+													{
+										
+														wids.push( this.id.split( 'wid_' )[1] );
+										
+														if( wids )
+														{
+															ge( 'usWorkgroups' ).setAttribute( 'value', wids.join( ',' ) );
+														}
+														else
+														{
+															ge( 'usWorkgroups' ).removeAttribute( 'value' );	
+														}
+										
+													}
+									
+												}
+												else
+												{
+													// Toggle off ...
+								
+													console.log( '// Toggle off ', wids );
+									
+													if( this.id && this.id.split( 'wid_' )[1] )
+													{
+														var nwid = [];
+										
+														if( wids )
+														{
+															for( var a in wids )
+															{
+																if( wids[a] )
+																{
+																	if( wids[a] != this.id.split( 'wid_' )[1] )
+																	{
+																		nwid.push( wids[a] );
+																	}
+																}
+															}
+											
+															wids = nwid;
+														}
+										
+														if( wids )
+														{
+															ge( 'usWorkgroups' ).setAttribute( 'value', wids.join( ',' ) );
+														}
+														else
+														{
+															ge( 'usWorkgroups' ).removeAttribute( 'value' );	
+														}
+										
+													}
+																				
+												}
+											}
+							
+										}, ( found ? true : false ) );
+										
 										str += '	</div>';
 										
 										str += '</div>';
@@ -6985,6 +7967,95 @@ function NewUser( _this )
 								
 							}
 						} )( workBtns[ a ] );
+					}
+				}
+				
+				let workInps = ge( 'WorkgroupInner' ).getElementsByTagName( 'input' );
+				
+				if( workInps )
+				{
+					for( var a = 0; a < workInps.length; a++ )
+					{
+						// Toggle user relation to workgroup
+						( function( b ) {
+							b.onclick = function( e )
+							{
+								
+								if( ge( 'usWorkgroups' ) )
+								{
+								
+									var wids = [];
+									
+									if( ge( 'usWorkgroups' ).value )
+									{
+										wids = ge( 'usWorkgroups' ).value.split( ',' );
+									}
+								
+									if( this.checked )
+									{
+										// Toggle on ...
+									
+										console.log( '// Toggle on ', wids );
+									
+										if( this.id && this.id.split( 'wid_' )[1] )
+										{
+										
+											wids.push( this.id.split( 'wid_' )[1] );
+										
+											if( wids )
+											{
+												ge( 'usWorkgroups' ).setAttribute( 'value', wids.join( ',' ) );
+											}
+											else
+											{
+												ge( 'usWorkgroups' ).removeAttribute( 'value' );	
+											}
+										
+										}
+									
+									}
+									else
+									{
+										// Toggle off ...
+								
+										console.log( '// Toggle off ', wids );
+									
+										if( this.id && this.id.split( 'wid_' )[1] )
+										{
+											var nwid = [];
+										
+											if( wids )
+											{
+												for( var a in wids )
+												{
+													if( wids[a] )
+													{
+														if( wids[a] != this.id.split( 'wid_' )[1] )
+														{
+															nwid.push( wids[a] );
+														}
+													}
+												}
+											
+												wids = nwid;
+											}
+										
+											if( wids )
+											{
+												ge( 'usWorkgroups' ).setAttribute( 'value', wids.join( ',' ) );
+											}
+											else
+											{
+												ge( 'usWorkgroups' ).removeAttribute( 'value' );	
+											}
+										
+										}
+																				
+									}
+								}
+								
+							}
+						} )( workInps[ a ] );
 					}
 				}
 				

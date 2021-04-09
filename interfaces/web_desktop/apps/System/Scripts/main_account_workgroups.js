@@ -5002,7 +5002,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 								'PERM_USER_GLOBAL',      'PERM_USER_WORKGROUP' 
 							] ) )
 							{
-								if( ge( 'AdminUsersContainer'+uuid ) ) ge( 'AdminUsersContainer'+uuid ).className = 'Open';
+								if( ge( 'AdminUsersContainer'+uuid ) )
+								{
+									ge( 'AdminUsersContainer'+uuid ).className = ge( 'AdminUsersContainer'+uuid ).className.split( 'Closed' ).join( 'Open' );
+								}
 							}
 						}
 						
@@ -5013,7 +5016,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 								'PERM_STORAGE_GLOBAL',      'PERM_STORAGE_WORKGROUP' 
 							] ) )
 							{
-								if( ge( 'AdminStorageContainer'+uuid ) ) ge( 'AdminStorageContainer'+uuid ).className = 'Open';
+								if( ge( 'AdminStorageContainer'+uuid ) )
+								{
+									 ge( 'AdminStorageContainer'+uuid ).className = ge( 'AdminStorageContainer'+uuid ).className.split( 'Closed' ).join( 'Open' );
+								}
 							}
 						}
 						
@@ -5024,7 +5030,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 								'PERM_ROLE_GLOBAL',      'PERM_ROLE_WORKGROUP' 
 							] ) )
 							{
-								if( ge( 'AdminRolesContainer'+uuid ) ) ge( 'AdminRolesContainer'+uuid ).className = 'Open';
+								if( ge( 'AdminRolesContainer'+uuid ) )
+								{
+									ge( 'AdminRolesContainer'+uuid ).className = ge( 'AdminRolesContainer'+uuid ).className.split( 'Closed' ).join( 'Open' );
+								}
 							}
 						}
 						
@@ -5277,6 +5286,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						'element' : function() 
 						{
 							var d = document.createElement( 'div' );
+							d.className = 'OverflowHidden BorderRadius Elevated';
 							d.id = 'AdminWorkgroupContainer';
 							return d;
 						}(),

@@ -1,194 +1,198 @@
 
-	<!--<div class="HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingRight">-->
-	<div class="HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight">
-		<div class="HContent50 FloatLeft">
-			<!--<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left" id="UserBackBtn"></button>-->
-			<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left" id="UserBackBtn"></button>
-			<h3 class="NoMargin FloatLeft">
-				<strong>{i18n_user_profile}</strong>
-			</h3>
+	<div class="OverflowHidden BorderRadius Elevated">
+
+		<!--<div class="HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingRight">-->
+		<div class="HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight">
+			<div class="HContent50 FloatLeft">
+				<!--<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left" id="UserBackBtn"></button>-->
+				<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left" id="UserBackBtn"></button>
+				<h3 class="NoMargin FloatLeft">
+					<strong>{i18n_user_profile}</strong>
+				</h3>
+			</div>
 		</div>
-	</div>
 	
-	<!--<div class="HRow BackgroundNegativeAlt Negative Padding">-->
-	<div class="HRow BackgroundNegative Negative Padding">
-		<div class="HContent30 FloatLeft Ellipsis">
-			<!--<div class="BackgroundPositiveAlt NegativeAlt PaddingSmall FloatLeft IconMedium fa-user-circle-o"></div>-->
-			<div class="BackgroundPositive Positive PaddingSmall FloatLeft IconMedium fa-user-circle-o"></div>
+		<!--<div class="HRow BackgroundNegativeAlt Negative Padding">-->
+		<div class="HRow BackgroundNegative Negative Padding">
+			<div class="HContent30 FloatLeft Ellipsis">
+				<!--<div class="BackgroundPositiveAlt NegativeAlt PaddingSmall FloatLeft IconMedium fa-user-circle-o"></div>-->
+				<div class="BackgroundPositive Positive PaddingSmall FloatLeft IconMedium fa-user-circle-o"></div>
+			</div>
+			<div class="HContent70 FloatLeft Ellipsis">
+				<h2 class="ImageHeading NoMargin" id="usName">
+					<strong>{user_name}</strong>
+				</h2>
+			</div>
 		</div>
-		<div class="HContent70 FloatLeft Ellipsis">
-			<h2 class="ImageHeading NoMargin" id="usName">
-				<strong>{user_name}</strong>
-			</h2>
-		</div>
-	</div>
 	
-	<div class="Box Padding" id="UserBasicDetails">
+		<div class="Box Padding" id="UserBasicDetails">
 		
-		<div class="AvatarRect MarginTop MarginBottom HRow HContent70">
-			<div class="FloatLeft Padding TextLeft Relative">
-				<div id="AdminAvatarArea" class="IconSmall fa-user-circle-o">
-					<canvas id="AdminAvatar" width="256" height="256"></canvas>
+			<div class="AvatarRect MarginTop MarginBottom HRow HContent70">
+				<div class="FloatLeft Padding TextLeft Relative">
+					<div id="AdminAvatarArea" class="IconSmall fa-user-circle-o">
+						<canvas id="AdminAvatar" width="256" height="256"></canvas>
+					</div>
 				</div>
-			</div>
-			<div class="FloatLeft Padding TextLeft Relative">
-				<!--<button type="button" class="ButtonAlt IconSmall" id="AdminAvatarEdit">-->
-				<button type="button" class="Button IconSmall" id="AdminAvatarEdit">
-					{i18n_browse}
-				</button>
-			</div>
-		</div>
-		
-		<div class="HRow MarginBottom">
-			<div class="HContent30 FloatLeft InputHeight Ellipsis">
-				<strong>{i18n_user_fullname}</strong>
-			</div>
-			<div class="HContent70 FloatLeft Ellipsis">
-				<input type="text" class="FullWidth InputHeight" id="usFullname" value="{user_fullname}"/>
-			</div>
-		</div>
-		<div class="HRow MarginBottom">
-			<div class="HContent30 FloatLeft InputHeight Ellipsis">
-				<strong>{i18n_user_username}</strong>
-			</div>
-			<div class="HContent70 FloatLeft Ellipsis">
-				<input type="text" class="FullWidth InputHeight" id="usUsername" value="{user_username}"/>
-			</div>
-		</div>
-		<div class="HRow MarginBottom">
-			<div class="HContent30 FloatLeft InputHeight Ellipsis">
-				<strong>{i18n_user_email}</strong>
-			</div>
-			<div class="HContent70 FloatLeft Ellipsis">
-				<input type="text" class="FullWidth InputHeight" id="usEmail" value="{user_email}"/>
-			</div>
-		</div>
-		<div class="HRow MarginBottom">
-			<div class="HContent30 FloatLeft InputHeight Ellipsis">
-				<strong>{i18n_user_mobile}</strong>
-			</div>
-			<div class="HContent15 FloatLeft PaddingRight Ellipsis">
-				<select class="FullWidth InputHeight" id="usMobileCode">{user_mobile_code}</select>
-			</div>
-			<div class="HContent55 FloatLeft Ellipsis">
-				<input type="number" class="FullWidth InputHeight" id="usMobile" value="{user_mobile}"/>
-			</div>
-		</div>
-		
-		<div id="ResetPassContainer" class="Closed">
-			<div class="HRow MarginBottom">
-				<div class="HContent30 FloatLeft Ellipsis">
-					<strong>{i18n_user_password}</strong>
-				</div>
-				<div class="HContent70 FloatLeft Ellipsis">
-					<!--<button class="IconSmall ButtonAlt" id="passToggle">-->
-					<button class="IconSmall Button" id="passToggle">
-						{i18n_reset_password}
+				<div class="FloatLeft Padding TextLeft Relative">
+					<!--<button type="button" class="ButtonAlt IconSmall" id="AdminAvatarEdit">-->
+					<button type="button" class="Button IconSmall" id="AdminAvatarEdit">
+						{i18n_browse}
 					</button>
 				</div>
 			</div>
-		</div>
 		
-		<div id="ChangePassContainer">
-			<div id="PassError"></div>
 			<div class="HRow MarginBottom">
 				<div class="HContent30 FloatLeft InputHeight Ellipsis">
-					<strong>{i18n_new_password}</strong>
+					<strong>{i18n_user_fullname}</strong>
 				</div>
 				<div class="HContent70 FloatLeft Ellipsis">
-					<input class="FullWidth InputHeight" type="password" autocomplete="new-password" value="" placeholder="********" id="usPassword"/>
+					<input type="text" class="FullWidth InputHeight" id="usFullname" value="{user_fullname}"/>
 				</div>
 			</div>
 			<div class="HRow MarginBottom">
 				<div class="HContent30 FloatLeft InputHeight Ellipsis">
-					<strong>{i18n_confirm_password}</strong>
+					<strong>{i18n_user_username}</strong>
 				</div>
 				<div class="HContent70 FloatLeft Ellipsis">
-					<input class="FullWidth InputHeight" type="password" autocomplete="new-password" value="" placeholder="********" id="usPasswordConfirm"/>
+					<input type="text" class="FullWidth InputHeight" id="usUsername" value="{user_username}"/>
 				</div>
 			</div>
-		</div>
-		
-		<div class="HRow MarginBottom Closed" id="AdminLevelContainer">
-			<div class="HContent30 FloatLeft InputHeight">
-				<strong>{i18n_level}</strong>
-			</div>
-			<div class="HContent70 FloatLeft">
-				<select class="InputHeight FullWidth" id="usLevel">
-					<option value="User">{i18n_level_user}</option>
-					<option value="Admin">{i18n_level_admin}</option>
-					<option value="Guest">{i18n_level_guest}</option>
-					<option value="API">{i18n_level_api}</option>
-				</select>
-			</div>
-		</div>
-		
-		<div class="HRow MarginBottom">
-			<div class="HContent30 FloatLeft InputHeight Ellipsis">
-				<strong>{i18n_language}</strong>
-			</div>
-			<div class="HContent70 FloatLeft Ellipsis">
-				<select class="InputHeight FullWidth" id="usLanguage">
-					{user_language}
-				</select>
-			</div>
-		</div>
-		
-		<div class="HRow MarginBottom" id="AdminSetupContainer">
-			<div class="HContent30 FloatLeft InputHeight Ellipsis">
-				<strong>{i18n_setup}</strong>
-			</div>
-			<div class="HContent70 FloatLeft Ellipsis">
-				<select class="InputHeight FullWidth" id="usSetup">
-					{user_setup}
-				</select>
-			</div>
-		</div>
-		
-		<div class="HRow MarginBottom" id="AdminStatusContainer">
-		
-			<div class="HContent50 FloatLeft Ellipsis">
-				<div class="HContent60 FloatLeft Ellipsis">
-					<strong>{i18n_account_locked}</strong>
+			<div class="HRow MarginBottom">
+				<div class="HContent30 FloatLeft InputHeight Ellipsis">
+					<strong>{i18n_user_email}</strong>
 				</div>
-				<div class="HContent40 FloatLeft Ellipsis">
-					<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft {user_locked_toggle}" id="usLocked"></button>
+				<div class="HContent70 FloatLeft Ellipsis">
+					<input type="text" class="FullWidth InputHeight" id="usEmail" value="{user_email}"/>
 				</div>
 			</div>
+			<div class="HRow MarginBottom">
+				<div class="HContent30 FloatLeft InputHeight Ellipsis">
+					<strong>{i18n_user_mobile}</strong>
+				</div>
+				<div class="HContent15 FloatLeft PaddingRight Ellipsis">
+					<select class="FullWidth InputHeight" id="usMobileCode">{user_mobile_code}</select>
+				</div>
+				<div class="HContent55 FloatLeft Ellipsis">
+					<input type="number" class="FullWidth InputHeight" id="usMobile" value="{user_mobile}"/>
+				</div>
+			</div>
+		
+			<div id="ResetPassContainer" class="Closed">
+				<div class="HRow MarginBottom">
+					<div class="HContent30 FloatLeft Ellipsis">
+						<strong>{i18n_user_password}</strong>
+					</div>
+					<div class="HContent70 FloatLeft Ellipsis">
+						<!--<button class="IconSmall ButtonAlt" id="passToggle">-->
+						<button class="IconSmall Button" id="passToggle">
+							{i18n_reset_password}
+						</button>
+					</div>
+				</div>
+			</div>
+		
+			<div id="ChangePassContainer">
+				<div id="PassError"></div>
+				<div class="HRow MarginBottom">
+					<div class="HContent30 FloatLeft InputHeight Ellipsis">
+						<strong>{i18n_new_password}</strong>
+					</div>
+					<div class="HContent70 FloatLeft Ellipsis">
+						<input class="FullWidth InputHeight" type="password" autocomplete="new-password" value="" placeholder="********" id="usPassword"/>
+					</div>
+				</div>
+				<div class="HRow MarginBottom">
+					<div class="HContent30 FloatLeft InputHeight Ellipsis">
+						<strong>{i18n_confirm_password}</strong>
+					</div>
+					<div class="HContent70 FloatLeft Ellipsis">
+						<input class="FullWidth InputHeight" type="password" autocomplete="new-password" value="" placeholder="********" id="usPasswordConfirm"/>
+					</div>
+				</div>
+			</div>
+		
+			<div class="HRow MarginBottom Closed" id="AdminLevelContainer">
+				<div class="HContent30 FloatLeft InputHeight">
+					<strong>{i18n_level}</strong>
+				</div>
+				<div class="HContent70 FloatLeft">
+					<select class="InputHeight FullWidth" id="usLevel">
+						<option value="User">{i18n_level_user}</option>
+						<option value="Admin">{i18n_level_admin}</option>
+						<option value="Guest">{i18n_level_guest}</option>
+						<option value="API">{i18n_level_api}</option>
+					</select>
+				</div>
+			</div>
+		
+			<div class="HRow MarginBottom">
+				<div class="HContent30 FloatLeft InputHeight Ellipsis">
+					<strong>{i18n_language}</strong>
+				</div>
+				<div class="HContent70 FloatLeft Ellipsis">
+					<select class="InputHeight FullWidth" id="usLanguage">
+						{user_language}
+					</select>
+				</div>
+			</div>
+		
+			<div class="HRow MarginBottom" id="AdminSetupContainer">
+				<div class="HContent30 FloatLeft InputHeight Ellipsis">
+					<strong>{i18n_setup}</strong>
+				</div>
+				<div class="HContent70 FloatLeft Ellipsis">
+					<select class="InputHeight FullWidth" id="usSetup">
+						{user_setup}
+					</select>
+				</div>
+			</div>
+		
+			<div class="HRow MarginBottom" id="AdminStatusContainer">
+		
+				<div class="HContent50 FloatLeft Ellipsis">
+					<div class="HContent60 FloatLeft Ellipsis">
+						<strong>{i18n_account_locked}</strong>
+					</div>
+					<div class="HContent40 FloatLeft Ellipsis">
+						<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft {user_locked_toggle}" id="usLocked"></button>
+					</div>
+				</div>
 			
-			<div class="HContent50 FloatLeft Ellipsis">
-				<div class="HContent60 FloatLeft Ellipsis">
-					<strong>{i18n_account_disabled}</strong>
+				<div class="HContent50 FloatLeft Ellipsis">
+					<div class="HContent60 FloatLeft Ellipsis">
+						<strong>{i18n_account_disabled}</strong>
+					</div>
+					<div class="HContent40 FloatLeft Ellipsis">
+						<button class="IconButton IconSmall IconToggle ButtonSmall FloatRight {user_disabled_toggle}" id="usDisabled"></button>
+					</div>
 				</div>
-				<div class="HContent40 FloatLeft Ellipsis">
-					<button class="IconButton IconSmall IconToggle ButtonSmall FloatRight {user_disabled_toggle}" id="usDisabled"></button>
-				</div>
-			</div>
 			
-		</div>
+			</div>
 		
-		<div id="UserEditContainer">
-			<div class="HRow">
-				<!--<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft NegativeAlt fa-trash" id="UserDeleteBtn"></button>-->
-				<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft Positive fa-trash" id="UserDeleteBtn"></button>
-				<div id="UserEditButtons">
-					<!--<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="UserSaveBtn">-->
-					<button class="Button IconSmall FloatRight MarginLeft" id="UserSaveBtn">
-						{i18n_save}
-					</button>
-					<!--<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="UserCancelBtn">-->
-					<button class="Button IconSmall FloatRight MarginLeft" id="UserCancelBtn">
-						{i18n_cancel}
-					</button>
+			<div id="UserEditContainer">
+				<div class="HRow">
+					<!--<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft NegativeAlt fa-trash" id="UserDeleteBtn"></button>-->
+					<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft Positive fa-trash" id="UserDeleteBtn"></button>
+					<div id="UserEditButtons">
+						<!--<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="UserSaveBtn">-->
+						<button class="Button IconSmall FloatRight MarginLeft" id="UserSaveBtn">
+							{i18n_save}
+						</button>
+						<!--<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="UserCancelBtn">-->
+						<button class="Button IconSmall FloatRight MarginLeft" id="UserCancelBtn">
+							{i18n_cancel}
+						</button>
+					</div>
 				</div>
 			</div>
-		</div>
 		
+		</div>
+	
 	</div>
 	
-	<div id="AdminWorkgroupContainer" class="Closed">
+	<div id="AdminWorkgroupContainer" class="MarginTop OverflowHidden BorderRadius Elevated Closed">
 		<!--<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">-->
-		<div class="HRow MarginTop BackgroundNegative Negative Padding">
+		<div class="HRow BackgroundNegative Negative Padding">
 			<div class="HContent40 FloatLeft">
 				<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="WorkgroupEditBack"></button>
 				<h3 class="NoMargin FloatLeft">
@@ -209,9 +213,9 @@
 		</div>
 	</div>
 	
-	<div id="AdminRoleContainer" class="Closed">
+	<div id="AdminRoleContainer" class="MarginTop OverflowHidden BorderRadius Elevated Closed">
 		<!--<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">-->
-		<div class="HRow MarginTop BackgroundNegative Negative Padding">
+		<div class="HRow BackgroundNegative Negative Padding">
 			<div class="HContent40 FloatLeft">
 				<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="RolesEditBack"></button>
 				<h3 class="NoMargin FloatLeft">
@@ -232,9 +236,9 @@
 		</div>
 	</div>
 	
-	<div id="AdminStorageContainer" class="Closed">
+	<div id="AdminStorageContainer" class="MarginTop OverflowHidden BorderRadius Elevated Closed">
 		<!--<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">-->
-		<div class="HRow MarginTop BackgroundNegative Negative Padding">
+		<div class="HRow BackgroundNegative Negative Padding">
 			<div class="HContent50 FloatLeft">
 				<h3 class="NoMargin">
 					<strong>{i18n_drives}</strong>
@@ -249,9 +253,9 @@
 		</div>
 	</div>
 	
-	<div id="AdminApplicationContainer" class="Closed">
+	<div id="AdminApplicationContainer" class="MarginTop OverflowHidden BorderRadius Elevated Closed">
 		<!--<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">-->
-		<div class="HRow MarginTop BackgroundNegative Negative Padding">
+		<div class="HRow BackgroundNegative Negative Padding">
 			<div class="PaddingSmall HContent40 FloatLeft">
 				<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="ApplicationEditBack"></button>
 				<h3 class="NoMargin FloatLeft">
@@ -271,9 +275,9 @@
 		</div>
 	</div>
 	
-	<div id="AdminDockContainer" class="Closed">
+	<div id="AdminDockContainer" class="MarginTop OverflowHidden BorderRadius Elevated Closed">
 		<!--<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">-->
-		<div class="HRow MarginTop BackgroundNegative Negative Padding">
+		<div class="HRow BackgroundNegative Negative Padding">
 			<div class="PaddingSmall HContent40 FloatLeft">
 				<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="DockEditBack"></button>
 				<h3 class="NoMargin FloatLeft">
@@ -293,9 +297,9 @@
 		</div>
 	</div>
 	
-	<div id="AdminLooknfeelContainer" class="Closed">
+	<div id="AdminLooknfeelContainer" class="MarginTop OverflowHidden BorderRadius Elevated Closed">
 		<!--<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">-->
-		<div class="HRow MarginTop BackgroundNegative Negative Padding">
+		<div class="HRow BackgroundNegative Negative Padding">
 			<div class="PaddingSmall HContent100 FloatLeft">
 				<h3 class="NoMargin">
 					<strong>{i18n_looknfeel}</strong>
