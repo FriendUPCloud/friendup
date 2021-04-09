@@ -4759,6 +4759,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					destFinf.Path = destPath;
 					doCopy = true;
+					console.log( 'We got a new dest path: ' + destPath );
 				}
 			}
 			
