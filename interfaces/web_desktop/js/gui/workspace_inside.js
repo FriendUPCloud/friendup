@@ -4762,6 +4762,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					console.log( 'We got a new dest path: ' + destPath );
 				}
 			}
+			else
+			{
+			    console.log( 'Dest path: ' + destPath );
+			}
 			
 			let d = new Door( destPath );
 			d.getIcons( destFinf, function( items )
