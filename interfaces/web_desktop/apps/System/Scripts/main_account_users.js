@@ -946,6 +946,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													let d = document.createElement( 'div' );
 													d.className = 'PaddingSmall HContent40 FloatLeft';
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+													d.style.cursor = 'pointer';
 													d.ele = this;
 													d.onclick = function(  )
 													{
@@ -1125,45 +1126,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									if( info.workgroups )
 									{
-										/*let unsorted = {};
-								
-										for( var i in info.workgroups )
-										{
-											if( info.workgroups[i] && info.workgroups[i].ID )
-											{
-												info.workgroups[i].groups = [];
-										
-												unsorted[info.workgroups[i].ID] = info.workgroups[i];
-											}
-										}
-										
-										
-										
-										for( var k in unsorted )
-										{
-											if( unsorted[k] && unsorted[k].ID )
-											{
-												if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
-												{
-													if( !groups[ unsorted[k].ParentID ] )
-													{
-														groups[ unsorted[k].ParentID ] = unsorted[ unsorted[k].ParentID ];
-													}
-													
-													if( groups[ unsorted[k].ParentID ] )
-													{
-														groups[ unsorted[k].ParentID ].groups.push( unsorted[k] );
-													}
-												}
-												else if( !groups[ unsorted[k].ID ] )
-												{
-													groups[ unsorted[k].ID ] = unsorted[k];
-												}
-											}	
-										}*/
-										
-										
-										
+
 										var unsorted = {};
 										
 										// Add all workgroups to unsorted and add subgroups array ...
@@ -1223,7 +1186,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											}
 										}
 										
-										if( ShowLog || 1==1 ) console.log( [ unsorted, set, groups ] );
+										if( ShowLog/* || 1==1*/ ) console.log( [ unsorted, set, groups ] );
 										
 									}
 									
@@ -1242,7 +1205,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									
 										this.activated = true;
-							
+										
+										var ii = 0;
+										
 										let str = '';
 										
 										if( groups && groups == '404' )
@@ -1251,7 +1216,6 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										}
 										else if( userInfo.Status != 1 && groups )
 										{
-											
 											
 											for( var a in groups )
 											{
@@ -1271,16 +1235,19 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														}
 													}
 												}
-												
-												
-												
+						
+												ii++;
+						
 												str += '<div>';
-												
-												str += '<div class="HRow">';
-												str += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
-												str += '		<span name="' + groups[a].Name + '" class="IconSmall ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>';
+						
+												str += '<div class="HRow" id="WorkgroupID_' + groups[a].ID + '">';
+						
+												str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
+												str += '		<span name="' + groups[a].Name + '" class="IconSmall fa-users"></span>';
 												str += '	</div>';
-												str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+												str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom FloatLeft Ellipsis">' + groups[a].Name+ '</div>';
+						
+												str += '	<div class="PaddingSmall HContent20 FloatRight Ellipsis">';
 												
 												if( Application.checkAppPermission( [ 
 													'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
@@ -1288,18 +1255,18 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
 												] ) )
 												{
-													str += '	<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
+													str += '		<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
 												}
 												
 												str += '	</div>';
+						
 												str += '</div>';
-												
-												
-												
+						
 												if( groups[a].groups.length > 0 )
 												{
-													str += '<div class="Closed">';
-													
+							
+													str += '<div class="SubGroups">';
+							
 													for( var aa in groups[a].groups )
 													{
 														let found = false;
@@ -1318,12 +1285,18 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																}
 															}
 														}
-														
-														str += '<div class="HRow">';
-														str += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
-														str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconSmall ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>';
+								
+														ii++;
+								
+														str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].ID + '">';
+								
+														str += '	<div class="TextCenter HContent4 FloatLeft PaddingSmall" style="min-width:18px"></div>';
+														str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
+														str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconSmall fa-users"></span>';
 														str += '	</div>';
-														str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+														str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom FloatLeft Ellipsis">' + groups[a].groups[aa].Name + '</div>';
+								
+														str += '<div class="PaddingSmall FloatRight Ellipsis">';
 														
 														if( Application.checkAppPermission( [ 
 															'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
@@ -1331,16 +1304,18 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 															'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
 														] ) )
 														{
-															str += '	<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
+															str += '<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
 														}
 														
-														str += '	</div>';
 														str += '</div>';
-														
+								
+														str += '</div>';
+								
 														if( groups[a].groups[aa].groups.length > 0 )
 														{
-															str += '<div class="Closed">';
-															
+									
+															str += '<div class="SubGroups">';
+									
 															for( var aaa in groups[a].groups[aa].groups )
 															{
 																let found = false;
@@ -1359,12 +1334,18 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		}
 																	}
 																}
-																
-																str += '<div class="HRow">';
-																str += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
-																str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>';
+										
+																ii++;
+										
+																str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '">';
+										
+																str += '	<div class="TextCenter HContent8 FloatLeft PaddingSmall" style="min-width:38px"></div>';
+																str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
+																str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall fa-users"></span>';
 																str += '	</div>';
-																str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+																str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + '</div>';
+										
+																str += '	<div class="PaddingSmall FloatRight Ellipsis">';
 																
 																if( Application.checkAppPermission( [ 
 																	'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
@@ -1372,24 +1353,25 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																	'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
 																] ) )
 																{
-																	str += '	<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
+																	str += '		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
 																}
 																
 																str += '	</div>';
+										
 																str += '</div>';
-																
+									
 															}
-															
+								
 															str += '</div>';
 														}
-															
+								
 													}
-													
+						
 													str += '</div>';
 												}
-												
+					
 												str += '</div>';
-												
+					
 											}
 											
 											
@@ -1838,34 +1820,36 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									if( ge( 'WorkgroupInner' ) )
 									{
-										let list = ge( 'WorkgroupInner' ).getElementsByTagName( 'div' );
-										
+										var list = ge( 'WorkgroupInner' ).getElementsByTagName( 'div' );
+						
 										if( list.length > 0 )
 										{
 											for( var a = 0; a < list.length; a++ )
 											{
 												if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
-												
-												let strong = list[a].getElementsByTagName( 'strong' )[0];
-												let span = list[a].getElementsByTagName( 'span' )[0];
-												
+								
+												var strong = list[a].getElementsByTagName( 'strong' )[0];
+												var span = list[a].getElementsByTagName( 'span' )[0];
+								
 												if( strong || span )
 												{
+									
 													if( !filter || filter == '' 
 													|| strong && strong.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
 													|| span && span.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+													|| span && span.getAttribute( 'name' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
 													)
 													{
 														list[a].style.display = '';
-														
+										
 														if( list[a].parentNode.parentNode && list[a].parentNode.parentNode.parentNode && list[a].parentNode.parentNode.parentNode.className.indexOf( 'HRow' ) >= 0 )
 														{
-															if( list[a].parentNode.classList.contains( 'Closed' ) )
-															{
-																list[a].parentNode.classList.remove( 'Closed' );
-																list[a].parentNode.classList.add( 'Open' );
-															}
-															
+															//if( list[a].parentNode.classList.contains( 'Closed' ) )
+															//{
+															//	list[a].parentNode.classList.remove( 'Closed' );
+															//	list[a].parentNode.classList.add( 'Open' );
+															//}
+											
 															list[a].parentNode.style.display = '';
 															list[a].parentNode.parentNode.style.display = '';
 														}
@@ -1876,16 +1860,16 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													}
 												}
 											}
-		
+
 										}
-										
+						
 										if( ge( 'WorkgroupSearchCancelBtn' ) )
 										{
 											if( !filter && ( ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
 											{
 												ge( 'WorkgroupSearchCancelBtn' ).classList.remove( 'Open' );
 												ge( 'WorkgroupSearchCancelBtn' ).classList.add( 'Closed' );
-												
+								
 												if( list.length > 0 )
 												{
 													for( var a = 0; a < list.length; a++ )
@@ -1898,7 +1882,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													}
 												}
 											}
-											
+							
 											else if( filter != '' && ( ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
 											{
 												ge( 'WorkgroupSearchCancelBtn' ).classList.remove( 'Closed' );
@@ -2026,6 +2010,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														let d = document.createElement( 'div' );
 														d.className = 'PaddingSmall HContent40 FloatLeft';
 														d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+														d.style.cursor = 'pointer';
 														d.onclick = function(  )
 														{
 															sortroles( 'Name' );
@@ -2039,6 +2024,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														let d = document.createElement( 'div' );
 														d.className = 'PaddingSmall HContent45 FloatLeft Relative';
 														d.innerHTML = '<strong>' + i18n( 'i18n_workgroups' ) + '</strong>';
+														d.style.cursor = 'pointer';
 														d.onclick = function(  )
 														{
 															sortroles( 'Workgroups' );
@@ -2476,6 +2462,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 															let d = document.createElement( 'div' );
 															d.className = 'PaddingSmall HContent40 FloatLeft';
 															d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+															d.style.cursor = 'pointer';
 															d.ele = this;
 															d.onclick = function(  )
 															{
@@ -2490,6 +2477,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 															let d = document.createElement( 'div' );
 															d.className = 'PaddingSmall HContent45 FloatLeft Relative';
 															d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
+															d.style.cursor = 'pointer';
 															d.ele = this;
 															d.onclick = function(  )
 															{
@@ -3268,6 +3256,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 															let d = document.createElement( 'div' );
 															d.className = 'PaddingSmall HContent40 FloatLeft';
 															d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+															d.style.cursor = 'pointer';
 															d.ele = this;
 															d.onclick = function(  )
 															{
@@ -3282,6 +3271,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 															let d = document.createElement( 'div' );
 															d.className = 'PaddingSmall HContent25 FloatLeft Relative';
 															d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
+															d.style.cursor = 'pointer';
 															d.ele = this;
 															d.onclick = function(  )
 															{
@@ -6583,50 +6573,6 @@ function NewUser( _this )
 						
 					}
 					
-					/*let unsorted = {};
-		
-					for( var i in workgroups )
-					{
-						if( workgroups[i] && workgroups[i].ID )
-						{
-							if( wgroups && !wgroups[workgroups[i].ID] )
-							{
-								continue;
-							}
-							
-							workgroups[i].groups = [];
-				
-							unsorted[workgroups[i].ID] = workgroups[i];
-						}
-					}
-				
-					
-				
-					for( var k in unsorted )
-					{
-						if( unsorted[k] && unsorted[k].ID )
-						{
-							if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
-							{
-								if( !groups[ unsorted[k].ParentID ] )
-								{
-									groups[ unsorted[k].ParentID ] = unsorted[ unsorted[k].ParentID ];
-								}
-							
-								if( groups[ unsorted[k].ParentID ] )
-								{
-									groups[ unsorted[k].ParentID ].groups.push( unsorted[k] );
-								}
-							}
-							else if( !groups[ unsorted[k].ID ] )
-							{
-								groups[ unsorted[k].ID ] = unsorted[k];
-							}
-						}	
-					}
-				
-					//console.log( groups );*/
-					
 					var unsorted = {};
 					
 					// Add all workgroups to unsorted and add subgroups array ...
@@ -6690,63 +6636,87 @@ function NewUser( _this )
 						}
 					}
 					
-					if( ShowLog || 1==1 ) console.log( [ unsorted, set, groups ] );
+					if( ShowLog/* || 1==1*/ ) console.log( [ unsorted, set, groups ] );
 					
 				}
+				
+				var ii = 0;
 				
 				let str = '';
 				
 				if( groups )
 				{
-				
+						
 					for( var a in groups )
 					{
 						var found = false;
 						
+						ii++;
+						
 						str += '<div>';
 						
-						str += '<div class="HRow">\
-							<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-								<span name="' + groups[a].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>\
-							</div>\
-							<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-								<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
-							</div>\
-						</div>';
-					
+						str += '<div class="HRow" id="WorkgroupID_' + groups[a].ID + '">';
+						
+						str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
+						str += '		<span name="' + groups[a].Name + '" class="IconSmall fa-users"></span>';
+						str += '	</div>';
+						str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom FloatLeft Ellipsis">' + groups[a].Name+ '</div>';
+						
+						str += '	<div class="PaddingSmall HContent20 FloatRight Ellipsis">';
+						str += '		<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
+						str += '	</div>';
+						
+						str += '</div>';
+						
 						if( groups[a].groups.length > 0 )
 						{
-							str += '<div class="Closed">';
-						
+							
+							str += '<div class="SubGroups">';
+							
 							for( var aa in groups[a].groups )
 							{
 								var found = false;
 								
-								str += '<div class="HRow">\
-									<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-										<span name="' + groups[a].groups[aa].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>\
-									</div>\
-									<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-										<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
-									</div>\
-								</div>';
-							
+								ii++;
+								
+								str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].ID + '">';
+								
+								str += '	<div class="TextCenter HContent4 FloatLeft PaddingSmall" style="min-width:18px"></div>';
+								str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
+								str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconSmall fa-users"></span>';
+								str += '	</div>';
+								str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom FloatLeft Ellipsis">' + groups[a].groups[aa].Name + '</div>';
+								
+								str += '<div class="PaddingSmall FloatRight Ellipsis">';
+								str += '<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
+								str += '</div>';
+								
+								str += '</div>';
+								
 								if( groups[a].groups[aa].groups.length > 0 )
 								{
-									str += '<div class="Closed">';
-								
+									
+									str += '<div class="SubGroups">';
+									
 									for( var aaa in groups[a].groups[aa].groups )
 									{
 										var found = false;
 										
-										str += '<div class="HRow">\
-											<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-												<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>\
-											</div>\
-											<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-												<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
-											</div>\
-										</div>';
+										ii++;
+										
+										str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '">';
+										
+										str += '	<div class="TextCenter HContent8 FloatLeft PaddingSmall" style="min-width:38px"></div>';
+										str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
+										str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall fa-users"></span>';
+										str += '	</div>';
+										str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + '</div>';
+										
+										str += '	<div class="PaddingSmall FloatRight Ellipsis">';
+										str += '		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
+										str += '	</div>';
+										
+										str += '</div>';
 									
 									}
 								
@@ -6761,6 +6731,8 @@ function NewUser( _this )
 						str += '</div>';
 					
 					}
+					
+					
 					
 					if( ge( 'AdminWorkgroupContainer' ) ) 
 					{ 
@@ -6789,6 +6761,7 @@ function NewUser( _this )
 									let d = document.createElement( 'div' );
 									d.className = 'PaddingSmall HContent40 FloatLeft';
 									d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+									d.style.cursor = 'pointer';
 									d.ele = this;
 									d.onclick = function(  )
 									{
@@ -7022,7 +6995,7 @@ function NewUser( _this )
 					
 					if( ge( 'WorkgroupInner' ) )
 					{
-						let list = ge( 'WorkgroupInner' ).getElementsByTagName( 'div' );
+						var list = ge( 'WorkgroupInner' ).getElementsByTagName( 'div' );
 						
 						if( list.length > 0 )
 						{
@@ -7030,25 +7003,27 @@ function NewUser( _this )
 							{
 								if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
 								
-								let strong = list[a].getElementsByTagName( 'strong' )[0];
-								let span = list[a].getElementsByTagName( 'span' )[0];
+								var strong = list[a].getElementsByTagName( 'strong' )[0];
+								var span = list[a].getElementsByTagName( 'span' )[0];
 								
 								if( strong || span )
 								{
+									
 									if( !filter || filter == '' 
 									|| strong && strong.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
 									|| span && span.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+									|| span && span.getAttribute( 'name' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
 									)
 									{
 										list[a].style.display = '';
 										
 										if( list[a].parentNode.parentNode && list[a].parentNode.parentNode.parentNode && list[a].parentNode.parentNode.parentNode.className.indexOf( 'HRow' ) >= 0 )
 										{
-											if( list[a].parentNode.classList.contains( 'Closed' ) )
-											{
-												list[a].parentNode.classList.remove( 'Closed' );
-												list[a].parentNode.classList.add( 'Open' );
-											}
+											//if( list[a].parentNode.classList.contains( 'Closed' ) )
+											//{
+											//	list[a].parentNode.classList.remove( 'Closed' );
+											//	list[a].parentNode.classList.add( 'Open' );
+											//}
 											
 											list[a].parentNode.style.display = '';
 											list[a].parentNode.parentNode.style.display = '';
