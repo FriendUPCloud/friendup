@@ -4695,6 +4695,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				Friend.workspaceClipBoardMode = 'copy';
 				Friend.workspaceClipBoard = selected;
 			}
+			
+			WorkspaceMenu.show();
 		}
 	},
 	// paste from virtual clipboard
@@ -4704,10 +4706,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		if( window.currentMovable && Friend.workspaceClipBoard && Friend.workspaceClipBoard.length > 0 && typeof window.currentMovable.drop == 'function' )
 		{
-			var e = {};
+			e = {};
 			e.ctrlKey = ( Friend.workspaceClipBoardMode == 'copy' ? true : false );
 			
-			var clip = Friend.workspaceClipBoard;
+			let clip = Friend.workspaceClipBoard;
 			
 			// Make sure we don't overwrite existing files!
 			let destPath = currentMovable.content.fileInfo.Path;
@@ -4732,7 +4734,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					doCopy = true;
 				}
 			}
-			var d = new Door( destPath );
+			
+			let d = new Door( destPath );
 			d.getIcons( destFinf, function( items )
 			{
 				for( let a = 0; a < items.length; a++ )
