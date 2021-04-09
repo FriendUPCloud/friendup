@@ -4763,7 +4763,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			
 			let d = new Door( destPath );
-			
 			d.getIcons( destFinf, function( items )
 			{
 				for( let a = 0; a < items.length; a++ )
