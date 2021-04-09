@@ -4717,7 +4717,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			let doCopy = false;
 			
 			// Use menu context for file info path (folder icon etc)
-			if( Workspace.menuContext )
+			if( Workspace.menuContext && Workspace.contextMenuShowing )
 			{
 				let fi = null;
 				let mc = Workspace.menuContext;
