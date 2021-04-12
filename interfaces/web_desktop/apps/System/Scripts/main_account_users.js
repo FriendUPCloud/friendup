@@ -873,7 +873,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										{
 											if( ge( 'usUsername' ).value )
 											{
-												this.innerHTML = '<i class="fa fa-spinner" aria-hidden="true"></i>';
+												//this.innerHTML = '<i class="fa fa-spinner" aria-hidden="true"></i>';
 												
 												//_saveUser( userInfo.ID );
 										
@@ -1043,7 +1043,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											let d = document.createElement( 'div' );
 											d.className = 'HRow Box Padding';
 											d.style.overflow = 'auto';
-											d.style.maxHeight = '369px';
+											d.style.maxHeight = '316px';
 											d.id = 'WorkgroupInner';
 											return d;
 										}()
@@ -6999,7 +6999,7 @@ function NewUser( _this )
 						
 						if( ge( 'usUsername' ).value )
 						{
-							this.innerHTML = '<i class="fa fa-spinner" aria-hidden="true"></i>';
+							//this.innerHTML = '<i class="fa fa-spinner" aria-hidden="true"></i>';
 							
 							_saveUser( false, function( uid )
 							{
@@ -7716,10 +7716,10 @@ function NewUser( _this )
 					
 					
 					
-					if( ge( 'AdminWorkgroupContainer' ) ) 
-					{ 
-						ge( 'AdminWorkgroupContainer' ).className = 'Open';
-					}
+					//if( ge( 'AdminWorkgroupContainer' ) ) 
+					//{ 
+					//	ge( 'AdminWorkgroupContainer' ).className = 'Open';
+					//}
 					
 				}
 				
@@ -7778,7 +7778,7 @@ function NewUser( _this )
 							d.className = 'HRow Box Padding';
 							d.id = 'WorkgroupInner';
 							d.style.overflow = 'auto';
-							d.style.maxHeight = '369px';
+							d.style.maxHeight = '316px';
 							return d;
 						}()
 					}
@@ -10375,6 +10375,12 @@ function _saveUser( uid, callback )
 		args.id = uid;
 	}
 	
+	if( ge( 'UserSaveBtn' ) )
+	{
+		ge( 'UserSaveBtn' ).restore = ge( 'UserSaveBtn' ).innerHTML;
+		ge( 'UserSaveBtn' ).innerHTML = '<i class="fa fa-spinner" aria-hidden="true"></i>';
+	}
+	
 	let m = new Module( 'system' );
 	m.forceHTTP = true;
 	m.onExecuted = function( server )
@@ -10429,6 +10435,11 @@ function _saveUser( uid, callback )
 		else
 		{
 			Notify( { title: i18n( 'i18n_user_update_fail' ), text: i18n( 'i18n_user_update_failed' ) } );
+		}
+		
+		if( ge( 'UserSaveBtn' ) && ge( 'UserSaveBtn' ).restore )
+		{
+			ge( 'UserSaveBtn' ).innerHTML = ge( 'UserSaveBtn' ).restore;
 		}
 		
 	}
