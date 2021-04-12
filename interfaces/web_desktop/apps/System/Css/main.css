@@ -529,7 +529,14 @@ body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent .Button.Positive:hover
 	color: #fdfdfd;
 }
 
-body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent input
+body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent input,
+body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent textarea
+{
+	color: #20374D;
+	background-color: #e3e7e8;
+}
+
+body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent select
 {
 	color: #20374D;
 }

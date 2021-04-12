@@ -1957,14 +1957,14 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 		if( !psub )
 		{
-			gbackbtn += '<button class="IconButton IconSmall ButtonSmall FloatLeft fa-arrow-circle-left" id="GroupBackBtn'+uuid+'"></button>';
+			gbackbtn += '<button class="IconButton IconMedium ButtonSmall FloatLeft fa-arrow-circle-left" id="GroupBackBtn'+uuid+'"></button>';
 			gbackbtn += '<h3 class="NoMargin FloatLeft">';
 			gbackbtn += '	<strong>' + i18n( 'i18n_workgroup_list' ) + '</strong>';
 			gbackbtn += '</h3>';
 		}
 		else
 		{
-			gbackbtn += '<button class="IconButton IconSmall ButtonSmall FloatLeft">&nbsp;</button>';
+			gbackbtn += '<button class="IconButton IconMedium ButtonSmall FloatLeft">&nbsp;</button>';
 			gbackbtn += '<h3 class="NoMargin FloatLeft">';
 			gbackbtn += '	<strong>&nbsp;</strong>';
 			gbackbtn += '</h3>';
@@ -3038,7 +3038,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																		d.setAttribute( 'Name', list[k].Name );
 																		d.setAttribute( 'Status', status[ ( list[k].Status ? list[k].Status : 0 ) ] );
 																		//d.className = 'IconSmall NegativeAlt fa-user-circle-o avatar';
-																		d.className = 'IconSmall fa-user-circle-o avatar';
+																		d.className = 'IconMedium fa-user-circle-o avatar';
 																		//d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																		//d.style.backgroundSize = 'contain';
 																		//d.style.width = '24px';
@@ -3060,7 +3060,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																					d.style.backgroundPosition = 'center center';
 																					d.style.backgroundRepeat = 'no-repeat';
 																					d.style.position = 'absolute';
-																					d.style.top = '0';
+																					d.style.top = '-2px';
 																					d.style.left = '0';
 																					d.style.width = '100%'/*'24px'*/;
 																					d.style.height = '100%'/*'24px'*/;
@@ -3103,7 +3103,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																d.className = 'HContent15 FloatLeft Ellipsis';
 																return d;
 																
 															}(),
@@ -3119,7 +3119,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																		] ) )
 																		{
 																			var b = document.createElement( 'button' );
-																			b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																			b.className = 'IconButton IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																			b.onclick = function(  )
 																			{
 																			
@@ -5386,7 +5386,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										'element' : function(  ) 
 										{
 											var d = document.createElement( 'div' );
-											d.className = 'HContent40 FloatLeft';
+											d.className = 'HContent30 InputHeight FloatLeft';
 											return d;
 										}(),
 										'child' : 
@@ -5404,7 +5404,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												'element' : function(  ) 
 												{
 													var h = document.createElement( 'h3' );
-													h.className = 'NoMargin FloatLeft';
+													h.className = 'NoMargin PaddingSmallLeft PaddingSmallRight FloatLeft';
 													h.innerHTML = '<strong>' + i18n( 'i18n_workgroups' ) + ' </strong><span id="AdminWorkgroupCount">(' + ii + ')</span>';
 													return h;
 												}()
@@ -5415,7 +5415,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										'element' : function(  ) 
 										{
 											var d = document.createElement( 'div' );
-											d.className = 'PaddingSmall HContent45 FloatLeft Relative';
+											d.className = 'PaddingSmall HContent60 FloatLeft Relative';
 											return d;
 										}(),
 										'child' : 
@@ -5457,7 +5457,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										'element' : function(  ) 
 										{
 											var d = document.createElement( 'div' );
-											d.className = 'HContent15 FloatLeft Relative';
+											d.className = 'HContent10 FloatLeft Relative';
 											return d;
 										}(),
 										'child' : 
@@ -5472,7 +5472,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 													{
 														var b = document.createElement( 'button' );
 														b.id = 'WorkgroupEdit';
-														b.className = 'IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle Open';
+														b.className = 'IconButton IconMedium ButtonSmall Negative FloatRight fa-plus-circle Open';
 														b.onclick = function()
 														{
 															edit(  );

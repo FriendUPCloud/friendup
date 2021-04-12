@@ -3206,7 +3206,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														'element' : function( _this ) 
 														{
 															let d = document.createElement( 'div' );
-															d.className = 'PaddingSmall HContent45 FloatLeft Relative';
+															d.className = 'PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent45 FloatLeft Relative';
 															d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
 															d.style.cursor = 'pointer';
 															d.ele = this;
@@ -3340,7 +3340,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		'element' : function() 
 																		{
 																			let d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis name';
+																			d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis name';
 																			d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
 																			return d;
 																		}() 
@@ -3349,7 +3349,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		'element' : function() 
 																		{
 																			let d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis category';
+																			d.className = 'PaddingSmall HContent45 InputHeight FloatLeft Ellipsis category';
 																			d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																			return d;
 																		}() 
@@ -3358,7 +3358,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		'element' : function() 
 																		{
 																			let d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent15 FloatLeft';
+																			d.className = 'HContent15 FloatLeft';
 																			return d;
 																		}(),
 																		'child' : 
@@ -3373,7 +3373,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																					] ) )
 																					{
 																						let b = document.createElement( 'button' );
-																						b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																						b.className = 'IconButton IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																						b.onclick = function(  )
 																						{
 																			
@@ -4057,7 +4057,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														'element' : function( _this ) 
 														{
 															let d = document.createElement( 'div' );
-															d.className = 'PaddingSmall HContent25 FloatLeft Relative';
+															d.className = 'PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent25 FloatLeft Relative';
 															d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
 															d.style.cursor = 'pointer';
 															d.ele = this;
@@ -4204,7 +4204,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		'element' : function() 
 																		{
 																			let d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis name';
+																			d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis name';
 																			d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
 																			return d;
 																		}() 
@@ -4213,7 +4213,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		'element' : function() 
 																		{
 																			let d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent25 FloatLeft Ellipsis category';
+																			d.className = 'PaddingSmall HContent25 InputHeight FloatLeft Ellipsis category';
 																			d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																			return d;
 																		}() 
@@ -4222,7 +4222,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		'element' : function() 
 																		{
 																			let d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Ellipsis';
+																			d.className = 'HContent25 InputHeight TextCenter FloatLeft Ellipsis';
 																			return d;
 																		}(),
 																		'child' : 
@@ -4237,7 +4237,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																					] ) )
 																					{
 																						let b = document.createElement( 'button' );
-																						b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
+																						b.className = 'IconButton IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
 																						b.onclick = function(  )
 																						{
 																			
@@ -4268,7 +4268,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																					] ) )
 																					{
 																						let b = document.createElement( 'button' );
-																						b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
+																						b.className = 'IconButton IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
 																						b.onclick = function()
 																						{
 																			
@@ -4295,7 +4295,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		'element' : function() 
 																		{
 																			let d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent10 FloatLeft';
+																			d.className = 'HContent10 FloatLeft';
 																			return d;
 																
 																		}(),
@@ -4311,7 +4311,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																					] ) )
 																					{
 																						let b = document.createElement( 'button' );
-																						b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																						b.className = 'IconButton IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																						b.onclick = function(  )
 																						{
 																			
@@ -6481,16 +6481,17 @@ function initUserlist( userList  )
 						'element' : function() 
 						{
 							let d = document.createElement( 'div' );
-							d.className = 'HContent20 FloatLeft';
-							d.innerHTML = '<h3><strong>Users </strong><span id="AdminUsersCount">(' + userList['Count'] + ')</span></h3>';
+							d.className = 'HContent25 InputHeight FloatLeft';
+							d.innerHTML = '<h3 class="NoMargin PaddingSmallLeft PaddingSmallRight"><strong>Users </strong><span id="AdminUsersCount">(' + userList['Count'] + ')</span></h3>';
 							return d;
 						}() 
 					}, 
 					{ 
 						'element' : function() 
 						{
+							// TODO: Make this one dynamic based on left div width ...
 							let d = document.createElement( 'div' );
-							d.className = 'HContent70 FloatLeft Relative';
+							d.className = 'PaddingSmall HContent65 FloatLeft Relative';
 							return d;
 						}(),
 						'child' : 
@@ -6501,6 +6502,7 @@ function initUserlist( userList  )
 									let inpu = document.createElement( 'input' );
 									inpu.className = 'FullWidth';
 									inpu.type = 'text';
+									inpu.placeholder = i18n( 'i18n_search' );
 									inpu.onkeyup = function(  )
 									{
 										searchServer( this.value );
@@ -6523,7 +6525,7 @@ function initUserlist( userList  )
 								'element' : function() 
 								{
 									let btn = document.createElement( 'button' );
-									btn.className = 'IconButton IconSmall Negative fa-bars';
+									btn.className = 'IconButton IconMedium Negative fa-bars';
 									btn.id = 'AdminUsersBtn';
 									btn.onclick = function(  )
 									{
@@ -6636,7 +6638,7 @@ function initUserlist( userList  )
 						'element' : function() 
 						{
 							let d = document.createElement( 'div' );
-							d.className = 'HRow BackgroundNegative Negative PaddingTop PaddingBottom';
+							d.className = 'HRow BackgroundNegative Negative Padding';
 							return d;
 						}(),
 						'child' : 
@@ -6645,16 +6647,7 @@ function initUserlist( userList  )
 								'element' : function() 
 								{
 									let d = document.createElement( 'div' );
-									d.className = 'PaddingSmallLeft PaddingSmallRight HContent10 FloatLeft Ellipsis';
-									d.innerHTML = '<strong>&nbsp;</strong>';
-									return d;
-								}()
-							},
-							{
-								'element' : function() 
-								{
-									let d = document.createElement( 'div' );
-									d.className = 'PaddingSmallLeft PaddingSmallRight HContent30 FloatLeft Ellipsis';
+									d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft Ellipsis';
 									return d;
 								}(),
 								'child' : 
@@ -6677,7 +6670,7 @@ function initUserlist( userList  )
 								'element' : function() 
 								{
 									let d = document.createElement( 'div' );
-									d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 FloatLeft Ellipsis';
+									d.className = 'PaddingSmallRight HContent25 FloatLeft Ellipsis';
 									return d;
 								}(),
 								'child' : 
