@@ -166,7 +166,7 @@ function refreshSidebar( show )
 			'Roles': {
 				icon: 'fa-user-secret',
 				showing: isAdmin,
-				display: true,
+				display: false/*true*/,
 				permissions: [ 
 					
 					// Old
@@ -660,52 +660,71 @@ var Sections = {
 	}
 }
 
-function CustomToggle( id, classn, name, onclick, checked )
+function CustomToggle( id, classn, name, onclick, checked, mode, value )
 {
 	if( id )
 	{
 		// TODO: Don't use string ...
 		
-		var d = document.createElement( 'label' );
-		if( classn )
+		switch( mode )
 		{
-			d.className = classn;
+			
+			case 1:
+				
+				var d = document.createElement( 'label' );
+				if( classn )
+				{
+					d.className = classn;
+				}
+		
+				var i = document.createElement( 'input' );
+				i.type = 'checkbox';
+				i.className = 'CustomToggleInput';
+				i.id = id;
+				if( name )
+				{
+					i.name = name;
+				}
+				if( checked )
+				{
+					i.checked = true;
+				}
+				if( onclick )
+				{
+					i.onclick = onclick;
+				}
+				if( value )
+				{
+					i.value = value;
+				}
+		
+				d.appendChild( i );
+		
+				var l = document.createElement( 'label' );
+				l.className = 'CustomToggleLabel';
+				l.setAttribute( 'for', id );
+				
+				d.appendChild( l );
+		
+				return d;
+				
+				break;
+			
+			default:
+				
+				str  = '<label'+(classn?' class="'+classn+'"':'')+'>';
+				str += '	<input type="checkbox" class="CustomToggleInput" id="'+id+'"'+(name?' name="'+name+'"':'')+(checked?' checked="checked"':'')+(onclick?' onclick="'+onclick+'"':'')+'>';
+				str += '	<label class="CustomToggleLabel" for="'+id+'"></label>';
+				str += '</label>';
+				
+				return str;
+				
+				break;
+				
 		}
 		
-		var i = document.createElement( 'input' );
-		i.type = 'checkbox';
-		i.className = 'CustomToggleInput';
-		i.id = id;
-		if( name )
-		{
-			i.name = name;
-		}
-		if( checked )
-		{
-			i.checked = true;
-		}
-		if( onclick )
-		{
-			i.onclick = onclick;
-		}
-		
-		d.appendChild( i );
-		
-		var l = document.createElement( 'label' );
-		l.className = 'CustomToggleLabel';
-		l.for = id;
-		
-		d.appendChild( l );
-		
-		//return d;
-		
-		str  = '<label'+(classn?' class="'+classn+'"':'')+'>';
-		str += '	<input type="checkbox" class="CustomToggleInput" id="'+id+'"'+(name?' name="'+name+'"':'')+(checked?' checked="checked"':'')+'>';
-		str += '	<label class="CustomToggleLabel" for="'+id+'"></label>';
-		str += '</label>';
-		
-		return str;
 	}
+	
 	return '';
 }
 

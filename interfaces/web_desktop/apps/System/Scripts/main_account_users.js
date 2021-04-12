@@ -492,7 +492,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									'PERM_ROLE_GLOBAL',        'PERM_ROLE_WORKGROUP' 
 								] ) )
 								{
-									rstr += '<button onclick="Sections.userrole_update('+uroles[a].ID+','+userInfo.ID+',this)" class="IconButton IconSmall IconToggle ButtonSmall FloatRight' + ( uroles[a].UserID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+									//rstr += '<button onclick="Sections.userrole_update('+uroles[a].ID+','+userInfo.ID+',this)" class="IconButton IconSmall IconToggle ButtonSmall FloatRight' + ( uroles[a].UserID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+									
+									rstr += CustomToggle( 'rid_'+uroles[a].ID, 'FloatRight', null, 'Sections.userrole_update('+uroles[a].ID+','+userInfo.ID+',this)', ( uroles[a].UserID ? true : false ) );
+									
 								}
 								
 								rstr += '</div>';
@@ -686,14 +689,16 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												updateUserStatus( userInfo.ID, 1 );
 											};
 										}
-									
+										
 										if( ge( 'usLocked'   ) && ulocked )
 										{
-											ge( 'usLocked'   ).className = ge( 'usLocked'   ).className.split( 'fa-toggle-on' ).join( '' ).split( 'fa-toggle-off' ).join( '' ) + 'fa-toggle-on';
+											ge( 'usLocked'   ).checked = true;
+											//ge( 'usLocked'   ).className = ge( 'usLocked'   ).className.split( 'fa-toggle-on' ).join( '' ).split( 'fa-toggle-off' ).join( '' ) + 'fa-toggle-on';
 										}
 										if( ge( 'usDisabled' ) && udisabled )
 										{
-											ge( 'usDisabled' ).className = ge( 'usDisabled' ).className.split( 'fa-toggle-on' ).join( '' ).split( 'fa-toggle-off' ).join( '' ) + 'fa-toggle-on';
+											ge( 'usDisabled' ).checked = true;
+											//ge( 'usDisabled' ).className = ge( 'usDisabled' ).className.split( 'fa-toggle-on' ).join( '' ).split( 'fa-toggle-off' ).join( '' ) + 'fa-toggle-on';
 										}
 										
 									}
@@ -3557,7 +3562,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																					'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_GLOBAL' 
 																				] ) )
 																				{
-																					let b = document.createElement( 'button' );
+																					/*let b = document.createElement( 'button' );
 																					b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' );
 																					b.onclick = function(  )
 																					{
@@ -3618,7 +3623,64 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																							
 																						}
 																			
-																					};
+																					};*/
+																					
+																					var b = CustomToggle( 'aid_'+name, 'FloatRight', null, function (  )
+																					{
+																						
+																						if( this.checked )
+																						{
+																							
+																							func.updateids( 'applications', name, [ name, '0' ] );
+																							
+																							addApplication( name, userInfo.ID, function( e, d, vars )
+																							{
+																								
+																								if( e && vars )
+																								{
+																						
+																									if( vars.func )
+																									{
+																										vars.func.dock( 'refresh' );
+																									}
+																						
+																								}
+																								else
+																								{
+																									if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																								}
+																					
+																							}, { _this: this, func: func } );
+																							
+																						}
+																						else
+																						{
+																							
+																							func.updateids( 'applications', name, false );
+																							
+																							removeApplication( name, userInfo.ID, function( e, d, vars )
+																							{
+																					
+																								if( e && vars )
+																								{
+																									
+																									if( vars.func )
+																									{
+																										vars.func.dock( 'refresh' );
+																									}
+																						
+																								}
+																								else
+																								{
+																									if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																								}
+																					
+																							}, { _this: this, func: func } );
+																							
+																						}
+																						
+																					}, ( found ? true : false ), 1 );
+																					
 																					return b;
 																				}
 																			}( this.ids, apps[k].Name, this.func ) 
@@ -4439,7 +4501,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																						'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_GLOBAL' 
 																					] ) )
 																					{
-																						let b = document.createElement( 'button' );
+																						/*let b = document.createElement( 'button' );
 																						b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
 																						b.onclick = function(  )
 																						{
@@ -4480,7 +4542,46 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																								}, { _this: this, func: func, name: name } );
 																				
 																							}
-																						};
+																						};*/
+																						
+																						var b = CustomToggle( 'did_'+name, 'FloatRight', null, function (  )
+																						{
+																						
+																							if( this.checked )
+																							{
+																								
+																								addDockItem( name, userInfo.ID, function( e, d, vars )
+																								{
+																									
+																									if( e && d && vars )
+																									{
+																										
+																										vars.func.updateids( 'dock', vars.name, { Id: d, Name: vars.name } );
+																										
+																									}
+																									
+																								}, { _this: this, func: func, name: name } );
+																								
+																							}
+																							else
+																							{
+																								
+																								removeDockItem( name, userInfo.ID, function( e, d, vars )
+																								{
+																									
+																									if( e && vars )
+																									{
+																										
+																										vars.func.updateids( 'dock', vars.name, false );
+																										
+																									}
+																									
+																								}, { _this: this, func: func, name: name } );
+																								
+																							}
+																						
+																						}, ( toggle ? true : false ), 1 );
+																						
 																						return b;
 																					}
 																				}( apps[k].Name, this.func ) 
@@ -5009,15 +5110,19 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									if( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' )
 									{
-										b.classList.remove( 'fa-toggle-off' );
-										b.classList.add( 'fa-toggle-on' );
+										//b.classList.remove( 'fa-toggle-off' );
+										//b.classList.add( 'fa-toggle-on' );
+										
+										b.checked = true;
 										
 										themeConfig.colorSchemeText = 'charcoal';
 									}
 									else
 									{
-										b.classList.remove( 'fa-toggle-on' );
-										b.classList.add( 'fa-toggle-off' );
+										//b.classList.remove( 'fa-toggle-on' );
+										//b.classList.add( 'fa-toggle-off' );
+										
+										b.checked = false;
 										
 										themeConfig.colorSchemeText = 'light';
 									}
@@ -5032,7 +5137,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										b.onclick = function(  )
 										{
 										
-											if( this.classList.contains( 'fa-toggle-off' ) )
+											if( this.checked/* this.classList.contains( 'fa-toggle-off' )*/ )
 											{
 												themeConfig.colorSchemeText = 'charcoal';
 											}
@@ -5040,19 +5145,21 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											{
 												themeConfig.colorSchemeText = 'light';
 											}
-										
+											
 											let m = new Module( 'system' );
 											m.b = this;
 											m.onExecuted = function( e, d )
 											{
 												
-												if( this.b.classList.contains( 'fa-toggle-off' ) )
+												if( this.b.checked/*this.b.classList.contains( 'fa-toggle-off' )*/ )
 												{
 												
 													if( e == 'ok' )
 													{
-														this.b.classList.remove( 'fa-toggle-off' );
-														this.b.classList.add( 'fa-toggle-on' );
+														//this.b.classList.remove( 'fa-toggle-off' );
+														//this.b.classList.add( 'fa-toggle-on' );
+													
+														this.b.checked = true;
 													}
 													else
 													{
@@ -5065,8 +5172,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												
 													if( e == 'ok' )
 													{
-														this.b.classList.remove( 'fa-toggle-on' );
-														this.b.classList.add( 'fa-toggle-off' );
+														//this.b.classList.remove( 'fa-toggle-on' );
+														//this.b.classList.add( 'fa-toggle-off' );
+														
+														this.b.checked = false;
 													}
 													else
 													{
@@ -5320,7 +5429,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 									if( /*!show || */show.indexOf( 'role' ) >= 0 || show.indexOf( '*' ) >= 0 )
 									{
-										if( Application.checkAppPermission( [ 
+										if( 1!=1 && Application.checkAppPermission( [ 
 											'PERM_ROLE_READ_GLOBAL', 'PERM_ROLE_READ_IN_WORKGROUP', 
 											'PERM_ROLE_GLOBAL',      'PERM_ROLE_WORKGROUP' 
 										] ) )
@@ -5445,7 +5554,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							dark : function ()
 							{
 								
-								return '<button class="IconButton IconSmall IconToggle ButtonSmall fa-toggle-' + ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? 'on' : 'off' ) + '" id="theme_dark_button"></button>';
+								//return '<button class="IconButton IconSmall IconToggle ButtonSmall fa-toggle-' + ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? 'on' : 'off' ) + '" id="theme_dark_button"></button>';
+								
+								return CustomToggle( 'theme_dark_button', null, null, null, ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? true : false ) );
 								
 							},
 			
@@ -5570,8 +5681,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							user_mobile          : ( mobile.number() ),
 							user_language        : ( languages ? languages : '' ),
 							user_setup           : ( setup ? setup : '' ),
-							user_locked_toggle   : ( ulocked   ? 'fa-toggle-on' : 'fa-toggle-off' ),
-							user_disabled_toggle : ( udisabled ? 'fa-toggle-on' : 'fa-toggle-off' ),
+							user_locked_toggle   : ( CustomToggle( 'usLocked', 'FloatLeft', null, null, ( ulocked ? true : false ) ) ),
+							user_disabled_toggle : ( CustomToggle( 'usDisabled', 'FloatRight', null, null, ( udisabled ? true : false ) ) ),
 							
 							theme_dark           : theme.dark(),
 							theme_controls       : theme.controls(),
@@ -6953,8 +7064,8 @@ function NewUser( _this )
 			user_mobile          : '',
 			user_language        : languages,
 			user_setup           : setup,
-			user_locked_toggle   : 'fa-toggle-off',
-			user_disabled_toggle : 'fa-toggle-off',
+			user_locked_toggle   : ''/*'fa-toggle-off'*/,
+			user_disabled_toggle : ''/*'fa-toggle-off'*/,
 			theme_name           : '',
 			theme_dark           : '',
 			theme_style          : '',
@@ -9752,7 +9863,8 @@ Sections.user_status_update = function( userid, status, callback )
 			
 			case 1:
 			{
-				if( ge( 'usDisabled' ).className.indexOf( 'fa-toggle-off' ) >= 0 )
+				//if( ge( 'usDisabled' ).className.indexOf( 'fa-toggle-off' ) >= 0 )
+				if( ge( 'usDisabled' ).checked )
 				{
 					on = true;
 				}
@@ -9780,8 +9892,11 @@ Sections.user_status_update = function( userid, status, callback )
 					
 					if( e == 'ok' )
 					{
-						Toggle( ge( 'usDisabled' ), false, ( on ? true : false ) );
-						Toggle( ge( 'usLocked'   ), false, false );
+						//Toggle( ge( 'usDisabled' ), false, ( on ? true : false ) );
+						//Toggle( ge( 'usLocked'   ), false, false );
+						
+						ge( 'usDisabled' ).checked = ( on ? true : false );
+						ge( 'usLocked'   ).checked = false;
 					}
 					
 					if( callback ) return callback();
@@ -9794,7 +9909,8 @@ Sections.user_status_update = function( userid, status, callback )
 			
 			case 2:
 			{	
-				if( ge( 'usLocked' ).className.indexOf( 'fa-toggle-off' ) >= 0 )
+				//if( ge( 'usLocked' ).className.indexOf( 'fa-toggle-off' ) >= 0 )
+				if( ge( 'usLocked' ).checked )
 				{
 					on = true;
 				}
@@ -9822,8 +9938,11 @@ Sections.user_status_update = function( userid, status, callback )
 					
 					if( e == 'ok' )
 					{
-						Toggle( ge( 'usLocked'   ), false, ( on ? true : false ) );
-						Toggle( ge( 'usDisabled' ), false, false );
+						//Toggle( ge( 'usLocked'   ), false, ( on ? true : false ) );
+						//Toggle( ge( 'usDisabled' ), false, false );
+						
+						ge( 'usLocked'   ).checked = ( on ? true : false );
+						ge( 'usDisabled' ).checked = false;
 					}
 					
 					if( callback ) return callback();
@@ -9844,10 +9963,16 @@ Sections.userrole_update = function( rid, userid, _this )
 	
 	if( _this )
 	{
+		if( _this.checked )
+		{
+			data = 'Activated';
+		}
+		
 		Toggle( _this, function( on )
 		{
 			data = ( on ? 'Activated' : '' );
 		} );
+		
 	}
 	
 	if( rid && userid )
@@ -9855,7 +9980,7 @@ Sections.userrole_update = function( rid, userid, _this )
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			//console.log( { e:e, d:d } );
+			//console.log( { e:e, d:d, args: { id: rid, userid: userid, data: data, authid: Application.authId } } );
 		}
 		m.execute( 'userroleupdate', { id: rid, userid: userid, data: data, authid: Application.authId } );
 	}

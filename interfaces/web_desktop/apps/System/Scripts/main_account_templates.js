@@ -1144,7 +1144,13 @@ Sections.accounts_templates = function( cmd, extra )
 				};
 				return b;*/
 				
-				return '<button class="IconButton IconSmall IconToggle ButtonSmall fa-toggle-' + ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? 'on' : 'off' ) + '" id="theme_dark_button" value="' + ( themeData.colorSchemeText ? themeData.colorSchemeText : 'light' ) + '"></button>';
+				//return '<button class="IconButton IconSmall IconToggle ButtonSmall fa-toggle-' + ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? 'on' : 'off' ) + '" id="theme_dark_button" value="' + ( themeData.colorSchemeText ? themeData.colorSchemeText : 'light' ) + '"></button>';
+				
+				return CustomToggle( 
+					'theme_dark_button', null, null, null, 
+					( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? true : false ), 0, 
+					( themeData.colorSchemeText ? themeData.colorSchemeText : 'light' ) 
+				);
 				
 			},
 			
@@ -1948,7 +1954,7 @@ Sections.accounts_templates = function( cmd, extra )
 																{ 
 																	'element' : function( ids, name, func ) 
 																	{
-																		var b = document.createElement( 'button' );
+																		/*var b = document.createElement( 'button' );
 																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' );
 																		b.onclick = function(  )
 																		{
@@ -2017,7 +2023,80 @@ Sections.accounts_templates = function( cmd, extra )
 																				
 																			}
 																			
-																		};
+																		};*/
+																		
+																		var b = CustomToggle( 'aid_'+name, 'FloatRight', null, function (  )
+																		{
+																			
+																			if( this.checked )
+																			{
+																				
+																				func.updateids( 'applications', name, [ name, '0' ] );
+																				
+																				if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																				
+																				updateApplications( details.ID, function( e, d, vars )
+																				{
+																					
+																					if( e && vars )
+																					{
+																						
+																						vars._this.checked = true;
+																						
+																						if( vars.func )
+																						{
+																							vars.func.dock( 'refresh' );
+																							vars.func.startup( 'refresh' );
+																						}
+																						
+																					}
+																					else
+																					{
+																						if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																						
+																						vars._this.checked = false;
+																						
+																					}
+																					
+																				}, { _this: this, func: func } );
+																				
+																			}
+																			else
+																			{
+																				
+																				func.updateids( 'applications', name, false );
+																				
+																				if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																				
+																				updateApplications( details.ID, function( e, d, vars )
+																				{
+																					
+																					if( e && vars )
+																					{
+																						
+																						vars._this.checked = false;
+																						
+																						if( vars.func )
+																						{
+																							vars.func.dock( 'refresh' );
+																							vars.func.startup( 'refresh' );
+																						}
+																						
+																					}
+																					else
+																					{
+																						if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																						
+																						vars._this.checked = true;
+																						
+																					}
+																					
+																				}, { _this: this, func: func } );
+																				
+																			}
+																			
+																		}, ( found ? true : false ), 1 );
+																		
 																		return b;
 																	}( this.ids, apps[k].Name, this.func ) 
 																}
@@ -2774,7 +2853,7 @@ Sections.accounts_templates = function( cmd, extra )
 																	{ 
 																		'element' : function( ids, name, func ) 
 																		{
-																			var b = document.createElement( 'button' );
+																			/*var b = document.createElement( 'button' );
 																			b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
 																			b.onclick = function(  )
 																			{
@@ -2830,7 +2909,68 @@ Sections.accounts_templates = function( cmd, extra )
 																					}, { _this: this } );
 																				
 																				}
-																			};
+																			};*/
+																			
+																			var b = CustomToggle( 'did_'+name, 'FloatRight', null, function (  )
+																			{
+																			
+																				if( this.checked )
+																				{
+																					
+																					func.updateids( 'dock', name, [ name, '1' ] );
+																				
+																					if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																				
+																					updateApplications( details.ID, function( e, d, vars )
+																					{
+																				
+																						if( e && vars )
+																						{
+																							
+																							vars._this.checked = true;
+																						
+																						}
+																						else
+																						{
+																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																							
+																							vars._this.checked = false;
+																							
+																						}
+																				
+																					}, { _this: this } );
+																					
+																				}
+																				else
+																				{
+																					
+																					func.updateids( 'dock', name, [ name, '0' ] );
+																				
+																					if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																				
+																					updateApplications( details.ID, function( e, d, vars )
+																					{
+																					
+																						if( e && vars )
+																						{
+																						
+																							vars._this.checked = false;
+																						
+																						}
+																						else
+																						{
+																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																							
+																							vars._this.checked = true;
+																							
+																						}
+																					
+																					}, { _this: this } );
+																					
+																				}
+																			
+																			}, ( toggle ? true : false ), 1 );
+																			
 																			return b;
 																		}( this.ids, apps[k].Name, this.func ) 
 																	}
@@ -3746,7 +3886,7 @@ Sections.accounts_templates = function( cmd, extra )
 																	{ 
 																		'element' : function( ids, name, func ) 
 																		{
-																			var b = document.createElement( 'button' );
+																			/*var b = document.createElement( 'button' );
 																			b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
 																			b.onclick = function(  )
 																			{
@@ -3802,7 +3942,68 @@ Sections.accounts_templates = function( cmd, extra )
 																					}, { _this: this } );
 																				
 																				}
-																			};
+																			};*/
+																			
+																			var b = CustomToggle( 'sid_'+name, 'FloatRight', null, function (  )
+																			{
+																			
+																				if( this.checked )
+																				{
+																					
+																					func.updateids( 'startup', name, ( 'launch ' + name ) );
+																				
+																					if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																				
+																					updateApplications( details.ID, function( e, d, vars )
+																					{
+																				
+																						if( e && vars )
+																						{
+																							
+																							vars._this.checked = true;
+																					
+																						}
+																						else
+																						{
+																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																							
+																							vars._this.checked = false;
+																							
+																						}
+																				
+																					}, { _this: this } );
+																					
+																				}
+																				else
+																				{
+																					
+																					func.updateids( 'startup', name, false );
+																				
+																					if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																				
+																					updateApplications( details.ID, function( e, d, vars )
+																					{
+																					
+																						if( e && vars )
+																						{
+																						
+																							vars._this.checked = false;
+																						
+																						}
+																						else
+																						{
+																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																							
+																							vars._this.checked = true;
+																							
+																						}
+																					
+																					}, { _this: this } );
+																					
+																				}
+																			
+																			}, ( toggle ? true : false ), 1 );
+																			
 																			return b;
 																		}( this.ids, apps[k].Name, this.func ) 
 																	}
@@ -4250,7 +4451,7 @@ Sections.accounts_templates = function( cmd, extra )
 							b.onclick = function(  )
 							{
 								
-								if( this.classList.contains( 'fa-toggle-off' ) )
+								if( this.checked/*this.classList.contains( 'fa-toggle-off' )*/ )
 								{
 									
 									this.setAttribute( 'value', 'charcoal' );
@@ -4263,13 +4464,18 @@ Sections.accounts_templates = function( cmd, extra )
 										if( e && vars )
 										{
 											
-											vars._this.classList.remove( 'fa-toggle-off' );
-											vars._this.classList.add( 'fa-toggle-on' );
+											//vars._this.classList.remove( 'fa-toggle-off' );
+											//vars._this.classList.add( 'fa-toggle-on' );
+											
+											vars._this.checked = true;
 											
 										}
 										else
 										{
 											if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+											
+											vars._this.checked = false;
+											
 										}
 										
 									}, { _this: this } );
@@ -4288,13 +4494,18 @@ Sections.accounts_templates = function( cmd, extra )
 										if( e && vars )
 										{
 											
-											vars._this.classList.remove( 'fa-toggle-on' );
-											vars._this.classList.add( 'fa-toggle-off' );
+											//vars._this.classList.remove( 'fa-toggle-on' );
+											//vars._this.classList.add( 'fa-toggle-off' );
+											
+											vars._this.checked = false;
 											
 										}
 										else
 										{
 											if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+											
+											vars._this.checked = true;
+											
 										}
 										
 									}, { _this: this } );

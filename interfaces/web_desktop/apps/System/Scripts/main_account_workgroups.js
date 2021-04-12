@@ -1334,6 +1334,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 
 		if( _this )
 		{
+			if( _this.checked )
+			{
+				data = 'Activated';
+			}
+			
 			Toggle( _this, function( on )
 			{
 				data = ( on ? 'Activated' : '' );
@@ -1936,7 +1941,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 					'PERM_ROLE_GLOBAL',        'PERM_ROLE_WORKGROUP' 
 				] ) )
 				{
-					rstr += '<button onclick="Sections.accounts_workgroups(\'update_role\',{rid:'+roles[a].ID+',groupid:'+workgroup.groupid+',_this:this})" class="IconButton IconSmall ButtonSmall FloatRight' + ( roles[a].WorkgroupID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+					//rstr += '<button onclick="Sections.accounts_workgroups(\'update_role\',{rid:'+roles[a].ID+',groupid:'+workgroup.groupid+',_this:this})" class="IconButton IconSmall ButtonSmall FloatRight' + ( roles[a].WorkgroupID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+					
+					rstr += CustomToggle( 'rid'+uuid+'_'+roles[a].ID, 'FloatRight', null, 'Sections.accounts_workgroups(\'update_role\',{rid:'+roles[a].ID+',groupid:'+workgroup.groupid+',_this:this})', ( roles[a].WorkgroupID ? true : false ) );
+					
 				}
 				
 				rstr += '	</div>';
@@ -3008,7 +3016,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 													{
 														var d = document.createElement( 'div' );
 														d.className = 'HRow ' + status[ ( list[k].Status ? list[k].Status : 0 ) ];
-														d.id = ( 'UserListID_' + list[k].ID );
+														d.id = ( 'UserListID'+uuid+'_' + list[k].ID );
 														return d;
 													}(),
 													'child' : 
@@ -3234,7 +3242,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 									{
 										if( list[k] && list[k].ID )
 										{
-											if( !ge( 'UserListID_' + list[k].ID ) )
+											if( !ge( 'UserListID'+uuid+'_' + list[k].ID ) )
 											{
 												
 												var toggle = false;
@@ -3254,7 +3262,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 														{
 															var d = document.createElement( 'div' );
 															d.className = 'HRow ' + status[ ( list[k].Status ? list[k].Status : 0 ) ];
-															d.id = ( 'UserListID_' + list[k].ID );
+															d.id = ( 'UserListID'+uuid+'_' + list[k].ID );
 															return d;
 														}(),
 														'child' : 
@@ -3349,7 +3357,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																	{ 
 																		'element' : function( ids, id, func ) 
 																		{
-																			var b = document.createElement( 'button' );
+																			/*var b = document.createElement( 'button' );
 																			b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
 																			b.onclick = function(  )
 																			{
@@ -3417,7 +3425,80 @@ Sections.accounts_workgroups = function( cmd, extra )
 																					}, { uid: id, func: func, _this: this } );
 																				
 																				}
-																			};
+																			};*/
+																			
+																			var b = CustomToggle( 'uid'+uuid+'_'+id, 'FloatRight', null, function (  ) 
+																			{
+																				
+																				if( this.checked )
+																				{
+																				
+																					if( ShowLog ) console.log( 'addUser( '+id+', '+info.ID+', callback, vars )' );
+																				
+																					addUser( id, info.ID, function( e, d, vars )
+																					{
+																					
+																						if( e && vars )
+																						{
+																							vars.func.updateids( 'users', vars.uid, true );
+																							
+																							vars._this.checked = true;
+																						}
+																						else
+																						{
+																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																							
+																							vars._this.checked = false;
+																						}
+																					
+																					}, { uid: id, func: func, _this: this } );
+																				
+																				}
+																				else
+																				{
+																				
+																					if( ShowLog ) console.log( 'removeUser( '+id+', '+info.ID+', callback, vars )' );
+																				
+																					removeUser( id, info.ID, function( e, d, vars )
+																					{
+																					
+																						if( e && vars )
+																						{
+																							vars.func.updateids( 'users', vars.uid, false );
+																						
+																							vars._this.checked = false;
+																							
+																							if( ge( 'AdminUsersCount'+uuid ) )
+																							{
+																								if( ge( 'AdminUsersCount'+uuid ).innerHTML )
+																								{
+																									var count = ge( 'AdminUsersCount'+uuid ).innerHTML.split( '(' ).join( '' ).split( ')' ).join( '' );
+																									
+																									if( count && count > 0 )
+																									{
+																										var result = ( count - 1 );
+							
+																										if( result >= 0 )
+																										{
+																											ge( 'AdminUsersCount'+uuid ).innerHTML = '(' + result + ')';
+																										}
+																									}
+																								}
+																							}
+																						}
+																						else
+																						{
+																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																							
+																							vars._this.checked = true;
+																						}
+																					
+																					}, { uid: id, func: func, _this: this } );
+																				
+																				}
+																				
+																			}, ( toggle ? true : false ), 1 );
+																			
 																			return b;
 																		}( this.ids, list[k].ID, this.func ) 
 																	}
@@ -5025,7 +5106,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						
 						if( !show || show.indexOf( 'role' ) >= 0 )
 						{
-							if( Application.checkAppPermission( [ 
+							if( 1!=1 && Application.checkAppPermission( [ 
 								'PERM_ROLE_READ_GLOBAL', 'PERM_ROLE_READ_IN_WORKGROUP', 
 								'PERM_ROLE_GLOBAL',      'PERM_ROLE_WORKGROUP' 
 							] ) )
@@ -5192,7 +5273,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						
 						str += '<div>';
 						
-						str += '<div class="HRow" id="WorkgroupID_' + groups[a].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].ID+',_this:this} )">';
+						str += '<div class="HRow PaddingLeft" id="WorkgroupID_' + groups[a].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].ID+',_this:this} )">';
 						//str += '<div class="HRow" id="WorkgroupID_' + groups[a].ID + '" onclick="edit( '+groups[a].ID+', this )">';
 						//str += '	<div class="PaddingSmall HContent100 FloatLeft Ellipsis">';
 						//str += '		<span name="' + groups[a].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>';
@@ -5218,7 +5299,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								
 								ii++;
 								
-								str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].groups[aa].ID+',_this:this} )">';
+								str += '<div class="HRow PaddingLeft" id="WorkgroupID_' + groups[a].groups[aa].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].groups[aa].ID+',_this:this} )">';
 								//str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].ID + '" onclick="edit( '+groups[a].groups[aa].ID+', this )">';
 								//str += '	<div class="PaddingSmall HContent100 FloatLeft Ellipsis">';
 								//str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>';
@@ -5246,7 +5327,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										
 										ii++;
 										
-										str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].groups[aa].groups[aaa].ID+',_this:this} )">';
+										str += '<div class="HRow PaddingLeft" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].groups[aa].groups[aaa].ID+',_this:this} )">';
 										//str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '" onclick="edit( '+groups[a].groups[aa].groups[aaa].ID+', this )">';
 										//str += '	<div class="PaddingSmall HContent100 FloatLeft Ellipsis">';
 										//str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>';
@@ -5459,7 +5540,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										'element' : function() 
 										{
 											var d = document.createElement( 'div' );
-											d.className = 'List HRow'/* Box Padding'*/;
+											d.className = 'List HRow PaddingTop PaddingBottom'/* Box Padding'*/;
 											d.id = 'WorkgroupInner';
 											return d;
 										}()
