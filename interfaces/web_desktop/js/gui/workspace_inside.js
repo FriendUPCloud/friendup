@@ -4717,7 +4717,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			let doCopy = false;
 			
 			// Use menu context for file info path (folder icon etc)
-			if( Workspace.menuContext && Workspace.contextMenuShowing )
+			if( Workspace.menuContext )
 			{
 				let fi = null;
 				let mc = Workspace.menuContext;
@@ -4742,7 +4742,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					        destPath += '/';
 					    }
 					}
-					else if( destPath.substr( -1, 1 ) != ':' )
+					else if( destPath.substr( -1, 1 ) != ':' && !destPath.indexOf( '/' ) )
 					{
 					    if( destPath.indexOf( ':' ) > 0 )
 					    {
@@ -4759,11 +4759,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					destFinf.Path = destPath;
 					doCopy = true;
-					console.log( 'We got a new dest path: ' + destPath );
 				}
 			}
-
-		    console.log( 'Dest path: ' + destPath );
+			
+			Workspace.menuContext = null;
 			
 			let d = new Door( destPath );
 			d.getIcons( destFinf, function( items )
