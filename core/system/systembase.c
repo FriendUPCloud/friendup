@@ -250,7 +250,8 @@ SystemBase *SystemInit( void )
 	
 	// Set mutex
 	pthread_mutex_init( &l->sl_InternalMutex, NULL );
-	pthread_mutex_init( &l->sl_ResourceMutex, NULL );
+	pthread_mutex_init( &l->sl_DBMutex, NULL );
+	pthread_mutex_init( &l->sl_DBInternalMutex, NULL );
 
 	if( getcwd( tempString, PATH_MAX ) == NULL )
 	{
@@ -1573,7 +1574,8 @@ void SystemClose( SystemBase *l )
 	}
 	
 	// Destroy mutex
-	pthread_mutex_destroy( &l->sl_ResourceMutex );
+	pthread_mutex_destroy( &l->sl_DBInternalMutex );
+	pthread_mutex_destroy( &l->sl_DBMutex );
 	pthread_mutex_destroy( &l->sl_InternalMutex );
 	
 	Autotask *at = l->sl_Autotasks;
@@ -2248,7 +2250,7 @@ SQLLibrary *GetDBConnection( SystemBase *l )
 	
 	while( TRUE )
 	{
-		if( FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex ) == 0 )
+		if( FRIEND_MUTEX_LOCK( &l->sl_DBMutex ) == 0 )
 		{
 			DEBUG("[GetDBConnection] pointer %p\n", l->sqlpool[ l->sqlConnectionIndex ].sqll_Sqllib );
 			if( l->sqlpool[ l->sqlConnectionIndex ].sqll_Sqllib != NULL && l->sqlpool[ l->sqlConnectionIndex ].sqll_Sqllib->l_InUse == FALSE )
@@ -2261,7 +2263,7 @@ SQLLibrary *GetDBConnection( SystemBase *l )
 					FERROR( "[LibraryMYSQLGet] We found a NULL pointer on slot %d retlib %p status %d!\n", l->sqlConnectionIndex, retlib, status );
 					// Increment and check
 					if( ++l->sqlConnectionIndex >= l->sqlpoolConnections ) l->sqlConnectionIndex = 0;
-					FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
+					FRIEND_MUTEX_UNLOCK( &l->sl_DBMutex );
 					// Give some grace time..
 					usleep( 0 );
 					continue;
@@ -2281,12 +2283,12 @@ SQLLibrary *GetDBConnection( SystemBase *l )
 				{
 					l->sqlConnectionIndex = 0;
 				}
-				FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
+				FRIEND_MUTEX_UNLOCK( &l->sl_DBMutex );
 				break;
 			}
 			else
 			{
-				FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
+				FRIEND_MUTEX_UNLOCK( &l->sl_DBMutex );
 			}
 		}
 		
@@ -2333,10 +2335,10 @@ void DropDBConnection( SystemBase *l, SQLLibrary *mclose )
 	
 	if( mclose->l_InUse == TRUE )
 	{
-		if( FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex ) == 0 )
+		if( FRIEND_MUTEX_LOCK( &l->sl_DBMutex ) == 0 )
 		{
 			mclose->l_InUse = FALSE;
-			FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
+			FRIEND_MUTEX_UNLOCK( &l->sl_DBMutex );
 		}
 		closed = i;
 	}
@@ -2367,7 +2369,7 @@ SQLLibrary *GetInternalDBConnection( SystemBase *l )
 	
 	while( TRUE )
 	{
-		if( FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex ) == 0 )
+		if( FRIEND_MUTEX_LOCK( &l->sl_DBInternalMutex ) == 0 )
 		{
 			if( l->sqlpoolInternal[ l->sqlInternalConnectionIndex ].sqll_Sqllib->l_InUse == FALSE )
 			{
@@ -2379,7 +2381,7 @@ SQLLibrary *GetInternalDBConnection( SystemBase *l )
 					FERROR( "[LibraryMYSQLGet] We found a NULL pointer on slot %d retlib %p status %d!\n", l->sqlInternalConnectionIndex, retlib, status );
 					// Increment and check
 					if( ++l->sqlInternalConnectionIndex >= l->sqlpoolInternalConnections ) l->sqlInternalConnectionIndex = 0;
-					FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
+					FRIEND_MUTEX_UNLOCK( &l->sl_DBInternalMutex );
 					// Give some grace time..
 					usleep( 0 );
 					continue;
@@ -2399,12 +2401,12 @@ SQLLibrary *GetInternalDBConnection( SystemBase *l )
 				{
 					l->sqlInternalConnectionIndex = 0;
 				}
-				FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
+				FRIEND_MUTEX_UNLOCK( &l->sl_DBInternalMutex );
 				break;
 			}
 			else
 			{
-				FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
+				FRIEND_MUTEX_UNLOCK( &l->sl_DBInternalMutex );
 			}
 		}
 		
@@ -2440,10 +2442,10 @@ void DropInternalDBConnection( SystemBase *l, SQLLibrary *mclose )
 	
 	if( mclose->l_InUse == TRUE )
 	{
-		if( FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex ) == 0 )
+		if( FRIEND_MUTEX_LOCK( &l->sl_DBInternalMutex ) == 0 )
 		{
 			mclose->l_InUse = FALSE;
-			FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
+			FRIEND_MUTEX_UNLOCK( &l->sl_DBInternalMutex );
 		}
 		closed = i;
 	}

@@ -284,7 +284,8 @@ typedef struct SystemBase
 	SASManager						*sl_SASManager;			// SAS Manager
 	MitraManager					*sl_MitraManager;		// Mitra Manager
 
-	pthread_mutex_t 				sl_ResourceMutex;	// resource mutex
+	pthread_mutex_t 				sl_DBMutex;				// db mutex
+	pthread_mutex_t 				sl_DBInternalMutex;		// db internal mutex
 	pthread_mutex_t					sl_InternalMutex;		// internal slib mutex
 	
 	AuthMod							*sl_AuthModules;		// all login modules
