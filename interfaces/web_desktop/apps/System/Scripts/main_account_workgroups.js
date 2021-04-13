@@ -5305,7 +5305,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								//str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>';
 								//str += '	</div>';
 								
-								str += '	<div class="TextCenter HContent4 FloatLeft PaddingSmall" style="min-width:18px"></div>';
+								str += '	<div class="TextCenter HContent4 FloatLeft PaddingSmall" style="min-width:40px"></div>';
 								str += '	<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit">';
 								str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconMedium fa-users"></span>';
 								str += '	</div>';
@@ -5333,7 +5333,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										//str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>';
 										//str += '	</div>';
 										
-										str += '	<div class="TextCenter HContent8 FloatLeft PaddingSmall" style="min-width:38px"></div>';
+										str += '	<div class="TextCenter HContent8 FloatLeft PaddingSmall" style="min-width:80px"></div>';
 										str += '	<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit">';
 										str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconMedium fa-users"></span>';
 										str += '	</div>';
