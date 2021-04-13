@@ -281,10 +281,10 @@ User * UMUserGetByNameDB( UserManager *um, const char *name )
 	DEBUG("[UMUserGetByNameDB] Start\n");
 	SystemBase *sb = (SystemBase *)um->um_SB;
 	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
+	User *user = NULL;
 	
 	if( sqlLib != NULL )
 	{
-		User *user = NULL;
 		char tmpQuery[ 1024 ];
 		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," Name = '%s'", name );
 	
