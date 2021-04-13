@@ -810,6 +810,26 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									}
 								} 
 								
+								let ra = ge( 'AdminAvatarRemove' );
+								if( ra ) 
+								{
+									if( Application.checkAppPermission( [ 
+										'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
+										'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
+										'PERM_USER_GLOBAL',        'PERM_WORKGROUP_GLOBAL' 
+									] ) )
+									{
+										ra.onclick = function( e )
+										{
+											removeAvatar();
+										}
+									}
+									else
+									{
+										ra.style.display = 'none';
+									}
+								}
+								
 								let ae = ge( 'AdminAvatarEdit' );
 								if( ae ) 
 								{
@@ -7129,7 +7149,27 @@ function NewUser( _this )
 			}
 			
 			// Avatar 
-		
+			
+			let ra = ge( 'AdminAvatarRemove' );
+			if( ra ) 
+			{
+				if( Application.checkAppPermission( [ 
+					'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
+					'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
+					'PERM_USER_GLOBAL',        'PERM_WORKGROUP_GLOBAL' 
+				] ) )
+				{
+					ra.onclick = function( e )
+					{
+						removeAvatar();
+					}
+				}
+				else
+				{
+					ra.style.display = 'none';
+				}
+			}
+			
 			let ae = ge( 'AdminAvatarEdit' );
 			if( ae )
 			{
@@ -9746,6 +9786,36 @@ function changeAvatar()
 		filename: ""
 	}
 	let d = new Filedialog( description );
+}
+
+function removeAvatar()
+{
+	randomAvatar( ge( 'usFullname' ).value, function( avatar ) 
+	{
+		let canvas = 0;
+		
+		try
+		{
+			canvas = ge( 'AdminAvatar' ).toDataURL();
+		}
+		catch( e ) {  }
+		
+		if( ge( 'AdminAvatar' ) && avatar )
+		{
+			// Only update the avatar if it exists..
+			let avSrc = new Image();
+			avSrc.src = avatar;
+			avSrc.onload = function()
+			{
+				if( ge( 'AdminAvatar' ) )
+				{
+					let ctx = ge( 'AdminAvatar' ).getContext( '2d' );
+					ctx.drawImage( avSrc, 0, 0, 256, 256 );
+				}
+			}
+		}
+	
+	} );
 }
 
 Sections.user_status_update = function( userid, status, callback )

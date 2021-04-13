@@ -183,11 +183,12 @@
 #Admin #UserDetails .AvatarRect > div
 {
 	position: relative;
+	z-index: 0;
 	min-height: 138px;
 	box-sizing: border-box;
 }
 
-#Admin #UserDetails .AvatarRect > div button
+#Admin #UserDetails .AvatarRect > div button#AdminAvatarEdit
 {
 	position: absolute;
 	left: 10px;
@@ -221,6 +222,7 @@
     width: 256px;
     height: 256px;
     zoom: 0.5;
+    z-index: 5;
 }
 
 
@@ -479,6 +481,20 @@ html body button.IconButton, html body .Button.IconButton
 }
 
 /* Custom Gui ------------------------------------------------------------------ */
+
+body #Admin .AvatarRect > div #AdminAvatarRemove
+{
+	position: absolute;
+	top: 4px;
+	right: 0;
+	z-index: 10;
+	display: none;
+}
+
+body #Admin .AvatarRect > div:hover #AdminAvatarRemove
+{
+	display: block;
+}
 
 body #Admin .IconMedium:before
 {
