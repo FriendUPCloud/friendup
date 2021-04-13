@@ -480,6 +480,11 @@ html body button.IconButton, html body .Button.IconButton
 
 /* Custom Gui ------------------------------------------------------------------ */
 
+body #Admin .IconMedium:before
+{
+	font-size: 1.2em;
+}
+
 body #Admin #GuiSidebar a
 {
 	display: block;
