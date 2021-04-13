@@ -39,7 +39,7 @@ static inline void EscapeConfigFromString( char *str, char **configEscaped, char
 		{
 			FFree( *configEscaped );
 		}
-		*configEscaped = FCalloc( len * 2 + 2, sizeof( char ) );
+		*configEscaped = FCalloc( ((len * 2) + 2), sizeof( char ) );
 		if( *configEscaped != NULL )
 		{
 			int n = 0; for( ; n < len; n++ )
@@ -1691,6 +1691,14 @@ AND LOWER(f.Name) = LOWER('%s')",
 								sysname = sys->Name;
 							}
 					
+							if( configEscaped != NULL )
+							{
+								FFree( configEscaped );
+							}
+							if( executeCmd != NULL )
+							{
+								FFree( executeCmd );
+							}
 							EscapeConfigFromString( dev->f_Config, &configEscaped, &executeCmd );
 					
 							memset( tmp, '\0', TMP_SIZE );
