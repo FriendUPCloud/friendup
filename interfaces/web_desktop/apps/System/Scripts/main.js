@@ -307,11 +307,14 @@ function refreshSidebar( show )
 			{
 				var ch = mods[ a ][ b ];
 				var ptag = document.createElement( 'div' );
+				var wtag = document.createElement( 'div' );
 				var atag = document.createElement( 'a' );
 				atag.innerHTML = ( ch.name ? ch.name : b );
 				//ptag.className = 'HRow BackgroundNegativeAlt PaddingLeft PaddingSmallTop PaddingRight PaddingSmallBottom';
+				wtag.className = 'InputHeight';
 				ptag.className = 'HRow BackgroundNegative PaddingLeft PaddingSmallTop PaddingRight PaddingSmallBottom';
-				ptag.appendChild( atag );
+				wtag.appendChild( atag );
+				ptag.appendChild( wtag );
 			
 				if( !ch.display ) continue;
 			
@@ -342,7 +345,7 @@ function refreshSidebar( show )
 					//atag.classList.add( 'Negative', ch.icon );
 					//atag.classList.add( 'PaddingLeft', ch.icon );
 					//atag.classList.add( 'PaddingRight', ch.icon );
-					atag.className = 'IconSmall ' + ch.icon + ' Negative PaddingLeft PaddingRight';
+					atag.className = 'IconMedium ' + ch.icon + ' Negative PaddingLeft PaddingRight';
 					atag.innerHTML = '&nbsp;&nbsp;&nbsp;' + atag.innerHTML;
 					
 					if( !ch.childs )
@@ -370,7 +373,7 @@ function refreshSidebar( show )
 										}
 									}
 							
-									ele.parentNode.className = ( ele.parentNode.className.split( ' Selected' ).join( '' ) + ' Selected' );
+									ele.parentNode.parentNode.className = ( ele.parentNode.parentNode.className.split( ' Selected' ).join( '' ) + ' Selected' );
 									
 									setGUISection( module, sect, false, act );
 								} );
@@ -430,7 +433,7 @@ function refreshSidebar( show )
 					
 						if( chc.icon )
 						{
-							atag.className = 'IconSmall ' + chc.icon + ' Negative PaddingLeft PaddingRight';
+							atag.className = 'IconMedium ' + chc.icon + ' Negative PaddingLeft PaddingRight';
 							atag.innerHTML = '&nbsp;&nbsp;&nbsp;' + atag.innerHTML;
 							
 							( function( module, sect, child, ch, ele, act )
@@ -456,7 +459,7 @@ function refreshSidebar( show )
 											}
 										}
 						
-										ele.parentNode.className = ( ele.parentNode.className.split( ' Selected' ).join( '' ) + ' Selected' );
+										ele.parentNode.parentNode.className = ( ele.parentNode.parentNode.className.split( ' Selected' ).join( '' ) + ' Selected' );
 						
 										setGUISection( module, sect, child, act );
 									} );

@@ -480,6 +480,19 @@ html body button.IconButton, html body .Button.IconButton
 
 /* Custom Gui ------------------------------------------------------------------ */
 
+body #Admin #GuiSidebar a
+{
+	display: block;
+	position: relative;
+	top: -2px;
+}
+
+body #Admin #GuiSidebar a:before
+{
+	position: relative;
+	top: 2px;
+}
+
 body.Synthwave .Selected 
 {
 	background-color: #2d1a47;
