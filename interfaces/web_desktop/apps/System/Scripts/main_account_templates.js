@@ -1175,7 +1175,7 @@ Sections.accounts_templates = function( cmd, extra )
 			workspace_count : function ()
 			{
 				
-				return '<input type="number" class="FullWidth" id="workspace_count_input" value="' + ( workspacecount > 0 ? workspacecount : '1' ) + '">';
+				return '<input type="number" class="FullWidth InputHeight" id="workspace_count_input" value="' + ( workspacecount > 0 ? workspacecount : '1' ) + '">';
 				
 			},
 			
@@ -1588,7 +1588,7 @@ Sections.accounts_templates = function( cmd, extra )
 										{
 											var d = document.createElement( 'div' );
 											//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
-											d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+											d.className = 'HRow BackgroundNegative Negative Padding';
 											return d;
 										}(),
 										'child' : 
@@ -1597,7 +1597,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent40 FloatLeft';
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft';
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
 													d.onclick = function(  )
 													{
@@ -1610,7 +1610,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent45 FloatLeft Relative';
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent45 FloatLeft Relative';
 													d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
 													d.onclick = function(  )
 													{
@@ -1623,7 +1623,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Relative';
 													return d;
 												}()
 											}
@@ -1742,8 +1742,8 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
-																	d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																	d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis';
+																	d.innerHTML = '<strong class="PaddingSmallRight">' + apps[k].Name + '</strong>';
 																	return d;
 																}() 
 															},
@@ -1751,8 +1751,8 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
-																	d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																	d.className = 'PaddingSmall HContent45 InputHeight FloatLeft Ellipsis';
+																	d.innerHTML = '<span class="PaddingSmallLeft PaddingSmallRight">' + apps[k].Category + '</span>';
 																	return d;
 																}() 
 															}, 
@@ -1760,7 +1760,7 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent15 FloatLeft';
+																	d.className = 'HContent15 FloatLeft';
 																	return d;
 																}(),
 																'child' : 
@@ -1769,7 +1769,7 @@ Sections.accounts_templates = function( cmd, extra )
 																		'element' : function( ids, name, func ) 
 																		{
 																			var b = document.createElement( 'button' );
-																			b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																			b.className = 'IconButton IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																			b.onclick = function(  )
 																			{
 																			
@@ -1928,8 +1928,8 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
-																d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis';
+																d.innerHTML = '<strong class="PaddingSmallRight">' + apps[k].Name + '</strong>';
 																return d;
 															}() 
 														}, 
@@ -1937,8 +1937,8 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
-																d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																d.className = 'PaddingSmall HContent45 InputHeight FloatLeft Ellipsis';
+																d.innerHTML = '<span class="PaddingSmallLeft PaddingSmallRight">' + apps[k].Category + '</span>';
 																return d;
 															}() 
 														},
@@ -1954,76 +1954,6 @@ Sections.accounts_templates = function( cmd, extra )
 																{ 
 																	'element' : function( ids, name, func ) 
 																	{
-																		/*var b = document.createElement( 'button' );
-																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' );
-																		b.onclick = function(  )
-																		{
-																			if( this.classList.contains( 'fa-toggle-off' ) )
-																			{
-																				//ids[ name ] = ( ids[ name ] ? [ name, ids[ name ][ 1 ] ] : [ name, 0 ] );
-																				
-																				func.updateids( 'applications', name, [ name, '0' ] );
-																				
-																				if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
-																				
-																				updateApplications( details.ID, function( e, d, vars )
-																				{
-																					
-																					if( e && vars )
-																					{
-																						
-																						vars._this.classList.remove( 'fa-toggle-off' );
-																						vars._this.classList.add( 'fa-toggle-on' );
-																						
-																						if( vars.func )
-																						{
-																							vars.func.dock( 'refresh' );
-																							vars.func.startup( 'refresh' );
-																						}
-																						
-																					}
-																					else
-																					{
-																						if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
-																					}
-																					
-																				}, { _this: this, func: func } );
-																				
-																			}
-																			else
-																			{
-																				//ids[ name ] = ( ids[ name ] ? [ 0, ids[ name ][ 1 ] ] : [ 0, 0 ] );
-																				
-																				func.updateids( 'applications', name, false );
-																				
-																				if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
-																				
-																				updateApplications( details.ID, function( e, d, vars )
-																				{
-																					
-																					if( e && vars )
-																					{
-																						
-																						vars._this.classList.remove( 'fa-toggle-on' );
-																						vars._this.classList.add( 'fa-toggle-off' );
-																						
-																						if( vars.func )
-																						{
-																							vars.func.dock( 'refresh' );
-																							vars.func.startup( 'refresh' );
-																						}
-																						
-																					}
-																					else
-																					{
-																						if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
-																					}
-																					
-																				}, { _this: this, func: func } );
-																				
-																			}
-																			
-																		};*/
 																		
 																		var b = CustomToggle( 'aid_'+name, 'FloatRight', null, function (  )
 																		{
@@ -2428,7 +2358,7 @@ Sections.accounts_templates = function( cmd, extra )
 										{
 											var d = document.createElement( 'div' );
 											//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
-											d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+											d.className = 'HRow BackgroundNegative Negative Padding';
 											return d;
 										}(),
 										'child' : 
@@ -2437,7 +2367,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function( _this ) 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent40 FloatLeft';
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft';
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
 													d.ele = this;
 													d.onclick = function(  )
@@ -2451,7 +2381,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function( _this )  
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent25 FloatLeft Relative';
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 FloatLeft Relative';
 													d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
 													d.ele = this;
 													d.onclick = function(  )
@@ -2465,7 +2395,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
 													d.innerHTML = '<strong>' + i18n( 'i18n_order' ) + '</strong>';
 													return d;
 												}()
@@ -2474,7 +2404,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent10 FloatLeft Relative';
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent10 FloatLeft Relative';
 													return d;
 												}()
 											}
@@ -2593,8 +2523,8 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
-																	d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																	d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis';
+																	d.innerHTML = '<strong class="PaddingSmallRight">' + apps[k].Name + '</strong>';
 																	return d;
 																}() 
 															},
@@ -2602,8 +2532,8 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent25 FloatLeft Ellipsis';
-																	d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																	d.className = 'PaddingSmall HContent25 InputHeight FloatLeft Ellipsis';
+																	d.innerHTML = '<span class="PaddingSmallLeft PaddingSmallRight">' + apps[k].Category + '</span>';
 																	return d;
 																}() 
 															}, 
@@ -2611,7 +2541,7 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Ellipsis';
+																	d.className = 'HContent25 InputHeight TextCenter FloatLeft Ellipsis';
 																	return d;
 																}(),
 																'child' : 
@@ -2620,7 +2550,7 @@ Sections.accounts_templates = function( cmd, extra )
 																		'element' : function( order, _this ) 
 																		{
 																			var b = document.createElement( 'button' );
-																			b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
+																			b.className = 'IconButton IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
 																			b.onclick = function(  )
 																			{
 																			
@@ -2639,7 +2569,7 @@ Sections.accounts_templates = function( cmd, extra )
 																		'element' : function( order, _this ) 
 																		{
 																			var b = document.createElement( 'button' );
-																			b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
+																			b.className = 'IconButton IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
 																			b.onclick = function()
 																			{
 																			
@@ -2660,7 +2590,7 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent10 FloatLeft';
+																	d.className = 'HContent10 FloatLeft';
 																	return d;
 																
 																}(),
@@ -2670,7 +2600,7 @@ Sections.accounts_templates = function( cmd, extra )
 																		'element' : function( ids, name, func ) 
 																		{
 																			var b = document.createElement( 'button' );
-																			b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																			b.className = 'IconButton IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																			b.onclick = function(  )
 																			{
 																			
@@ -2827,8 +2757,8 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
-																	d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																	d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis';
+																	d.innerHTML = '<strong class="PaddingSmallRight">' + apps[k].Name + '</strong>';
 																	return d;
 																}() 
 															}, 
@@ -2836,8 +2766,8 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
-																	d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																	d.className = 'PaddingSmall HContent45 InputHeight FloatLeft Ellipsis';
+																	d.innerHTML = '<span class="PaddingSmallLeft PaddingSmallRight">' + apps[k].Category + '</span>';
 																	return d;
 																}() 
 															},
@@ -2853,63 +2783,6 @@ Sections.accounts_templates = function( cmd, extra )
 																	{ 
 																		'element' : function( ids, name, func ) 
 																		{
-																			/*var b = document.createElement( 'button' );
-																			b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
-																			b.onclick = function(  )
-																			{
-																				if( this.classList.contains( 'fa-toggle-off' ) )
-																				{
-																					//ids[ name ] = [ name, 1 ];
-																				
-																					func.updateids( 'dock', name, [ name, '1' ] );
-																				
-																					if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
-																				
-																					updateApplications( details.ID, function( e, d, vars )
-																					{
-																				
-																						if( e && vars )
-																						{
-																						
-																							vars._this.classList.remove( 'fa-toggle-off' );
-																							vars._this.classList.add( 'fa-toggle-on' );
-																						
-																						}
-																						else
-																						{
-																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
-																						}
-																				
-																					}, { _this: this } );
-																				
-																				}
-																				else
-																				{
-																					//ids[ name ] = [ name, 0 ];
-																				
-																					func.updateids( 'dock', name, [ name, '0' ] );
-																				
-																					if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
-																				
-																					updateApplications( details.ID, function( e, d, vars )
-																					{
-																					
-																						if( e && vars )
-																						{
-																						
-																							vars._this.classList.remove( 'fa-toggle-on' );
-																							vars._this.classList.add( 'fa-toggle-off' );
-																						
-																						}
-																						else
-																						{
-																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
-																						}
-																					
-																					}, { _this: this } );
-																				
-																				}
-																			};*/
 																			
 																			var b = CustomToggle( 'did_'+name, 'FloatRight', null, function (  )
 																			{
@@ -3434,7 +3307,7 @@ Sections.accounts_templates = function( cmd, extra )
 										{
 											var d = document.createElement( 'div' );
 											//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
-											d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+											d.className = 'HRow BackgroundNegative Negative Padding';
 											return d;
 										}(),
 										'child' : 
@@ -3443,7 +3316,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function( _this ) 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent40 FloatLeft';
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft';
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
 													d.ele = this;
 													d.onclick = function(  )
@@ -3457,7 +3330,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function( _this ) 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent25 FloatLeft Relative';
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 FloatLeft Relative';
 													d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
 													d.ele = this;
 													d.onclick = function(  )
@@ -3471,7 +3344,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
 													d.innerHTML = '<strong>' + i18n( 'i18n_order' ) + '</strong>';
 													return d;
 												}()
@@ -3480,7 +3353,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent10 FloatLeft Relative';
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent10 FloatLeft Relative';
 													return d;
 												}()
 											}
@@ -3614,8 +3487,8 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
-																	d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																	d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis';
+																	d.innerHTML = '<strong class="PaddingSmallRight">' + apps[k].Name + '</strong>';
 																	return d;
 																}() 
 															},
@@ -3623,8 +3496,8 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent25 FloatLeft Ellipsis';
-																	d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																	d.className = 'PaddingSmall HContent25 InputHeight FloatLeft Ellipsis';
+																	d.innerHTML = '<span class="PaddingSmallLeft PaddingSmallRight">' + apps[k].Category + '</span>';
 																	return d;
 																}() 
 															}, 
@@ -3632,7 +3505,7 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Ellipsis';
+																	d.className = 'HContent25 InputHeight TextCenter FloatLeft Ellipsis';
 																	return d;
 																}(),
 																'child' : 
@@ -3641,7 +3514,7 @@ Sections.accounts_templates = function( cmd, extra )
 																		'element' : function( order, _this ) 
 																		{
 																			var b = document.createElement( 'button' );
-																			b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
+																			b.className = 'IconButton IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
 																			b.onclick = function(  )
 																			{
 																			
@@ -3662,7 +3535,7 @@ Sections.accounts_templates = function( cmd, extra )
 																		'element' : function( order, _this ) 
 																		{
 																			var b = document.createElement( 'button' );
-																			b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
+																			b.className = 'IconButton IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
 																			b.onclick = function()
 																			{
 																			
@@ -3685,7 +3558,7 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent10 FloatLeft';
+																	d.className = 'HContent10 FloatLeft';
 																	return d;
 																
 																}(),
@@ -3695,7 +3568,7 @@ Sections.accounts_templates = function( cmd, extra )
 																		'element' : function( ids, name, func ) 
 																		{
 																			var b = document.createElement( 'button' );
-																			b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																			b.className = 'IconButton IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																			b.onclick = function(  )
 																			{
 																			
@@ -3860,8 +3733,8 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
-																	d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																	d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis';
+																	d.innerHTML = '<strong class="PaddingSmallRight">' + apps[k].Name + '</strong>';
 																	return d;
 																}() 
 															}, 
@@ -3869,8 +3742,8 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
-																	d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																	d.className = 'PaddingSmall HContent45 InputHeight FloatLeft Ellipsis';
+																	d.innerHTML = '<span class="PaddingSmallLeft PaddingSmallRight">' + apps[k].Category + '</span>';
 																	return d;
 																}() 
 															},
@@ -3886,63 +3759,6 @@ Sections.accounts_templates = function( cmd, extra )
 																	{ 
 																		'element' : function( ids, name, func ) 
 																		{
-																			/*var b = document.createElement( 'button' );
-																			b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
-																			b.onclick = function(  )
-																			{
-																				if( this.classList.contains( 'fa-toggle-off' ) )
-																				{
-																					//ids[ name ] = ( 'launch ' + name );
-																				
-																					func.updateids( 'startup', name, ( 'launch ' + name ) );
-																				
-																					if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
-																				
-																					updateApplications( details.ID, function( e, d, vars )
-																					{
-																				
-																						if( e && vars )
-																						{
-																					
-																							vars._this.classList.remove( 'fa-toggle-off' );
-																							vars._this.classList.add( 'fa-toggle-on' );
-																					
-																						}
-																						else
-																						{
-																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
-																						}
-																				
-																					}, { _this: this } );
-																				
-																				}
-																				else
-																				{
-																					//ids[ name ] = false;
-																				
-																					func.updateids( 'startup', name, false );
-																				
-																					if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
-																				
-																					updateApplications( details.ID, function( e, d, vars )
-																					{
-																					
-																						if( e && vars )
-																						{
-																						
-																							vars._this.classList.remove( 'fa-toggle-on' );
-																							vars._this.classList.add( 'fa-toggle-off' );
-																						
-																						}
-																						else
-																						{
-																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
-																						}
-																					
-																					}, { _this: this } );
-																				
-																				}
-																			};*/
 																			
 																			var b = CustomToggle( 'sid_'+name, 'FloatRight', null, function (  )
 																			{
@@ -4464,9 +4280,6 @@ Sections.accounts_templates = function( cmd, extra )
 										if( e && vars )
 										{
 											
-											//vars._this.classList.remove( 'fa-toggle-off' );
-											//vars._this.classList.add( 'fa-toggle-on' );
-											
 											vars._this.checked = true;
 											
 										}
@@ -4493,9 +4306,6 @@ Sections.accounts_templates = function( cmd, extra )
 										
 										if( e && vars )
 										{
-											
-											//vars._this.classList.remove( 'fa-toggle-on' );
-											//vars._this.classList.add( 'fa-toggle-off' );
 											
 											vars._this.checked = false;
 											
@@ -4693,7 +4503,10 @@ Sections.accounts_templates = function( cmd, extra )
 						{
 							if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
 							{
-								if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
+								if( ge( 'AdminApplicationContainer' ) )
+								{
+									ge( 'AdminApplicationContainer' ).className = ge( 'AdminApplicationContainer' ).className.split( 'Closed' ).join( 'Open' );
+								}
 							}
 						}
 						
@@ -4701,7 +4514,10 @@ Sections.accounts_templates = function( cmd, extra )
 						{
 							if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
 							{
-								if( ge( 'AdminDockContainer' ) ) ge( 'AdminDockContainer' ).className = 'Open';
+								if( ge( 'AdminDockContainer' ) )
+								{
+									ge( 'AdminDockContainer' ).className = ge( 'AdminDockContainer' ).className.split( 'Closed' ).join( 'Open' );
+								}
 							}
 						}
 						
@@ -4709,7 +4525,10 @@ Sections.accounts_templates = function( cmd, extra )
 						{
 							if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
 							{
-								if( ge( 'AdminStartupContainer' ) ) ge( 'AdminStartupContainer' ).className = 'Open';
+								if( ge( 'AdminStartupContainer' ) )
+								{
+									ge( 'AdminStartupContainer' ).className = ge( 'AdminStartupContainer' ).className.split( 'Closed' ).join( 'Open' );
+								}
 							}
 						}
 						
@@ -4717,7 +4536,10 @@ Sections.accounts_templates = function( cmd, extra )
 						{
 							if( Application.checkAppPermission( 'PERM_LOOKNFEEL_GLOBAL' ) || Application.checkAppPermission( 'PERM_LOOKNFEEL_WORKGROUP' ) )
 							{
-								if( ge( 'AdminLooknfeelContainer' ) ) ge( 'AdminLooknfeelContainer' ).className = 'Open';
+								if( ge( 'AdminLooknfeelContainer' ) )
+								{
+									ge( 'AdminLooknfeelContainer' ).className = ge( 'AdminLooknfeelContainer' ).className.split( 'Closed' ).join( 'Open' );
+								}
 							}
 						}
 					}
@@ -4788,103 +4610,192 @@ Sections.accounts_templates = function( cmd, extra )
 				
 				
 				var divs = appendChild( [ 
-					{ 
+					{
 						'element' : function() 
 						{
 							var d = document.createElement( 'div' );
-							d.className = 'HRow PaddingBottom';
+							d.className = 'OverflowHidden BorderRadius Elevated';
+							d.id = 'AdminTemplateContainer';
 							return d;
 						}(),
 						'child' : 
 						[ 
 							{ 
-								'element' : function() 
+								'element' : function(  ) 
 								{
 									var d = document.createElement( 'div' );
-									d.className = 'HContent50 FloatLeft';
-									d.innerHTML = '<h3 class="NoMargin FloatLeft"><strong>' + i18n( 'i18n_templates' ) + '</strong></h3>';
-									return d;
-								}() 
-							}, 
-							{ 
-								'element' : function() 
-								{
-									var d = document.createElement( 'div' );
-									d.className = 'HContent50 FloatLeft Relative';
+									d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight';
 									return d;
 								}(), 
 								'child' : 
 								[ 
-									{ 
-										'element' : function() 
+									{
+										'element' : function(  ) 
 										{
-											var d = document.createElement( 'input' );
-											d.type = 'text';
-											d.className = 'FullWidth';
-											d.placeholder = 'Search templates...';
-											d.onclick = function (  ){ alert( 'TODO ...' ); };
-											d.onkeyup = function ( e ) { filter( this.value, true ); console.log( 'do search ...' ); };
+											var d = document.createElement( 'div' );
+											d.className = 'HContent30 InputHeight FloatLeft';
 											return d;
-										}() 
+										}(),
+										'child' : 
+										[ 
+											{
+												'element' : function(  ) 
+												{
+													var b = document.createElement( 'button' );
+													b.id = 'TemplateEditBack';
+													b.className = 'IconButton IconMedium ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed';
+													return b;
+												}()
+											},
+											{
+												'element' : function(  ) 
+												{
+													var h = document.createElement( 'h3' );
+													h.className = 'NoMargin PaddingSmallLeft PaddingSmallRight FloatLeft';
+													h.innerHTML = '<strong>' + i18n( 'i18n_templates' ) + ' </strong><span id="AdminTemplateCount">(' + ( temp ? temp.length : '0' ) + ')</span>';
+													return h;
+												}()
+											}
+										]
+									},
+									{
+										'element' : function(  ) 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'PaddingSmall HContent60 FloatLeft Relative';
+											return d;
+										}(),
+										'child' : 
+										[ 
+											{
+												'element' : function(  ) 
+												{
+													var b = document.createElement( 'button' );
+													b.id = 'TemplateSearchCancelBtn';
+													b.className = 'IconButton IconSmall ButtonSmall fa-times-circle Closed';
+													b.style = 'position:absolute;right:0;margin-top:-2px;';
+													b.onclick = function(  )
+													{
+														searchtemplates( false );
+														var inp = ge( 'AdminTemplateContainer' ).getElementsByTagName( 'input' )[0];
+														inp.value = '';
+													}
+													return b;
+												}()
+											},
+											{
+												'element' : function(  ) 
+												{
+													var i = document.createElement( 'input' );
+													i.type = 'text';
+													i.className = 'FullWidth';
+													i.placeholder = i18n( 'i18n_search' );
+													i.style = 'padding-right:21px';
+													i.onkeyup = function(  )
+													{
+														searchtemplates( this.value );
+													}
+													return i;
+												}()
+											}
+										]
+									},
+									{
+										'element' : function(  ) 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'HContent10 FloatLeft Relative';
+											return d;
+										}(),
+										'child' : 
+										[ 
+											{
+												'element' : function(  ) 
+												{
+													if( Application.checkAppPermission( [ 
+														'PERM_TEMPLATE_CREATE_GLOBAL', 'PERM_TEMPLATE_CREATE_IN_WORKGROUP', 
+														'PERM_TEMPLATE_GLOBAL',        'PERM_TEMPLATE_WORKGROUP' 
+													] ) )
+													{
+														var b = document.createElement( 'button' );
+														b.className = 'IconButton IconMedium ButtonSmall Negative FloatRight fa-plus-circle Open';
+														b.onclick = function()
+														{
+															edit(  );
+														};
+														return b;
+													}
+												}()
+											}
+										]
 									}
 								]
-							}
-						]
-					}, 
-					{
-						'element' : function() 
-						{
-							var d = document.createElement( 'div' );
-							d.className = 'List';
-							return d;
-						}(),
-						'child' : 
-						[  
-							{ 
-								'element' : function() 
+							},
+							{
+								'element' : function(  ) 
 								{
 									var d = document.createElement( 'div' );
-									//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingBottom PaddingRight';
-									d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingBottom PaddingRight';
+									d.className = 'List';
+									d.id = 'TemplateGui';
 									return d;
 								}(),
 								'child' : 
 								[
-									{
+									{ 
 										'element' : function() 
 										{
 											var d = document.createElement( 'div' );
-											d.className = 'PaddingSmall HContent90 FloatLeft Ellipsis';
-											d.innerHTML = '<strong>Name</strong>';
+											d.className = 'HRow BackgroundNegative Negative Padding';
 											return d;
-										}()
+										}(),
+										'child' : 
+										[ 
+											{ 
+												'element' : function(  ) 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft';
+													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+													d.onclick = function(  )
+													{
+														sorttemplates( 'Name' );
+													};
+													return d;
+												}(  ) 
+											}, 
+											{ 
+												'element' : function( _this ) 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent45 FloatLeft Relative';
+													d.innerHTML = '<strong></strong>';
+													return d;
+												}( this )
+											},
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Relative';
+													return d;
+												}()
+											}
+										]
 									},
 									{
 										'element' : function() 
 										{
 											var d = document.createElement( 'div' );
-											d.className = 'HContent10 TextCenter FloatLeft Ellipsis';
-											d.onclick = function () {  };
+											d.className = 'List HRow PaddingTop PaddingBottom';
+											d.id = 'TemplateInner';
 											return d;
-											
-										}(),
-										'child' : 
-										[
-											{
-												'element' : function() 
-												{
-													var b = document.createElement( 'button' );
-													b.className = 'IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle';
-													b.onclick = function () { edit(); };
-													return b;
-												}()
-											}
-										]
+										}()
 									}
-								] 
+								]
 							}
-						]
-					}
+						] 
+						
+					} 
 				] );
 				
 				if( divs )
@@ -4898,13 +4809,12 @@ Sections.accounts_templates = function( cmd, extra )
 					}
 				}
 				
-				
+				o = ge( 'TemplateInner' );
 				
 				if( temp )
 				{
 					
 					var list = document.createElement( 'div' );
-					list.className = 'List PaddingSmallTop PaddingSmallBottom';
 					
 					for( var k in temp )
 					{
@@ -4932,9 +4842,8 @@ Sections.accounts_templates = function( cmd, extra )
 											'element' : function()
 											{
 												var d = document.createElement( 'div' );
-												d.className = 'TextCenter HContent10 FloatLeft PaddingSmall Ellipsis';
-												//d.innerHTML = '<span class="IconSmall NegativeAlt fa-file-text-o"></span>';
-												d.innerHTML = '<span class="IconSmall fa-file-text-o"></span>';
+												d.className = 'TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis';
+												d.innerHTML = '<span name="' + temp[k].Name + '" class="IconMedium fa-file-text"></span>';
 												return d;
 											}()
 										},
@@ -4942,7 +4851,7 @@ Sections.accounts_templates = function( cmd, extra )
 											'element' : function()
 											{
 												var d = document.createElement( 'div' );
-												d.className = 'HContent80 FloatLeft PaddingSmall Ellipsis';
+												d.className = 'HContent80 InputHeight FloatLeft PaddingSmall Ellipsis';
 												d.innerHTML = temp[k].Name;
 												return d;
 											}()
@@ -4951,27 +4860,9 @@ Sections.accounts_templates = function( cmd, extra )
 											'element' : function()
 											{
 												var d = document.createElement( 'div' );
-												d.className = 'HContent10 FloatLeft PaddingSmall';
+												d.className = 'HContent10 InputHeight FloatLeft PaddingSmall';
 												return d;
-											}()/*,
-											'child' : 
-											[
-												{
-													'element' : function()
-													{
-														var s = document.createElement( 'span' );
-														s.className = 'IconSmall FloatRight PaddingSmall fa-minus-circle';
-														s.tempid = temp[k].ID;
-														s.onclick = function ( e ) 
-														{ 
-															removeBtn(  );
-															e.stopPropagation();
-															e.preventDefault(); 
-														};
-														return s;
-													}()
-												}
-											]*/
+											}()
 										}
 									]
 								}
@@ -4995,6 +4886,154 @@ Sections.accounts_templates = function( cmd, extra )
 					
 				}
 				
+				// Search ...............
+				
+				var searchtemplates = function ( filter, server )
+				{
+					
+					if( ge( 'TemplateInner' ) )
+					{
+						var list = ge( 'TemplateInner' ).getElementsByTagName( 'div' );
+						
+						if( list.length > 0 )
+						{
+							for( var a = 0; a < list.length; a++ )
+							{
+								if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+								
+								var span = list[a].getElementsByTagName( 'span' )[0];
+								
+								if( span )
+								{
+									
+									if( !filter || filter == '' 
+									|| span && span.getAttribute( 'name' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+									)
+									{
+										list[a].style.display = '';
+										
+										if( list[a].parentNode && list[a].parentNode.parentNode && list[a].parentNode.parentNode.className.indexOf( 'HRow' ) >= 0 )
+										{
+											list[a].style.display = '';
+											list[a].parentNode.style.display = '';
+										}
+									}
+									else if( list[a] && list[a].className )
+									{
+										list[a].style.display = 'none';
+									}
+								}
+							}
+
+						}
+						
+						if( ge( 'TemplateSearchCancelBtn' ) )
+						{
+							if( !filter && ( ge( 'TemplateSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'TemplateSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+							{
+								ge( 'TemplateSearchCancelBtn' ).classList.remove( 'Open' );
+								ge( 'TemplateSearchCancelBtn' ).classList.add( 'Closed' );
+								
+								if( list.length > 0 )
+								{
+									for( var a = 0; a < list.length; a++ )
+									{
+										if( list[a].classList.contains( 'Open' ) )
+										{
+											list[a].classList.remove( 'Open' );
+											list[a].classList.add( 'Closed' );
+										}
+									}
+								}
+							}
+							
+							else if( filter != '' && ( ge( 'TemplateSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'TemplateSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+							{
+								ge( 'TemplateSearchCancelBtn' ).classList.remove( 'Closed' );
+								ge( 'TemplateSearchCancelBtn' ).classList.add( 'Open' );
+							}
+						}
+					}
+					
+				};
+				
+				// Sort .............
+				
+				var sorttemplates = function ( sortby, orderby )
+				{
+					
+					//
+					
+					var _this = ge( 'TemplateInner' );
+					
+					if( _this )
+					{
+						orderby = ( orderby ? orderby : ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' ) );
+						
+						var list = _this.getElementsByTagName( 'div' )[0].getElementsByTagName( 'div' );
+						
+						if( list.length > 0 )
+						{
+							var output = [];
+							
+							var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+							
+							for( var a = 0; a < list.length; a++ )
+							{
+								if( !list[a].className || ( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) ) continue;
+								
+								var span = list[a].getElementsByTagName( 'span' )[0];
+								
+								if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' && span.getAttribute( sortby.toLowerCase() ) )
+								{
+									// TODO: Fix this ...
+									
+									//console.log( list[a] );
+									
+									if( !list[a].className )
+									{
+										var obj = { 
+											sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+											content : list[a]
+										};
+									
+										output.push( obj );
+									}
+								}
+							}
+							
+							if( output.length > 0 )
+							{
+								// Sort ASC default
+								
+								output.sort( callback );
+								
+								// Sort DESC
+								
+								if( orderby == 'DESC' ) 
+								{ 
+									output.reverse();  
+								}
+								
+								_this.innerHTML = '';
+								
+								_this.setAttribute( 'orderby', orderby );
+								
+								for( var key in output )
+								{
+									if( output[key] && output[key].content )
+									{
+										// Add row
+										_this.appendChild( output[key].content );
+									}
+								}
+							}
+						}
+					}
+					
+				};
+				
+				sorttemplates( 'Name', 'ASC' );
 				
 				Friend.responsive.pageActive = ge( 'TemplateList' );
 				Friend.responsive.reinit();

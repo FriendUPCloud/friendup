@@ -2409,7 +2409,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 											let d = document.createElement( 'div' );
 											d.className = 'List HRow PaddingTop PaddingRight PaddingBottom';
 											d.style.overflow = 'auto';
-											d.style.maxHeight = '288px';
+											d.style.maxHeight = '314px';
 											d.id = 'SubWorkgroupInner'+uuid;
 											return d;
 										}()
@@ -2892,7 +2892,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										{
 											var d = document.createElement( 'div' );
 											//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
-											d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+											d.className = 'HRow BackgroundNegative Negative Padding';
 											return d;
 										}(),
 										'child' : 
@@ -2901,7 +2901,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												'element' : function( _this ) 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent40 FloatLeft'/*  + ( hidecol ? ' Closed' : '' )*/;
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft'/*  + ( hidecol ? ' Closed' : '' )*/;
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
 													d.style.cursor = 'pointer';
 													d.ele = this;
@@ -2916,7 +2916,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												'element' : function( _this ) 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent25 FloatLeft Relative'/*  + ( hidecol ? ' Closed' : '' )*/;
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 FloatLeft Relative'/*  + ( hidecol ? ' Closed' : '' )*/;
 													d.innerHTML = '<strong>' + i18n( 'i18n_username' ) + '</strong>';
 													d.style.cursor = 'pointer';
 													d.ele = this;
@@ -2931,7 +2931,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												'element' : function( _this ) 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Relative'/* + ( hidecol ? ' Closed' : '' )*/;
+													d.className = 'PaddingSmallRight HContent20 TextCenter FloatLeft Relative'/* + ( hidecol ? ' Closed' : '' )*/;
 													d.innerHTML = '<strong>' + i18n( 'i18n_status' ) + '</strong>';
 													d.style.cursor = 'pointer';
 													d.ele = this;
@@ -2946,7 +2946,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Relative';
 													return d;
 												}()
 											}
@@ -3077,7 +3077,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 															{
 																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis';
-																d.innerHTML = '<span class="PaddingRight">' + ( list[k].FullName ? list[k].FullName : 'n/a' ) + '</span>';
+																d.innerHTML = '<span class="PaddingSmallRight">' + ( list[k].FullName ? list[k].FullName : 'n/a' ) + '</span>';
 																return d;
 															}() 
 														},
@@ -3086,7 +3086,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 															{
 																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent25 InputHeight FloatLeft Ellipsis';
-																d.innerHTML = '<span class="PaddingRight">' + ( list[k].Name ? list[k].Name : '' ) + '</span>';
+																d.innerHTML = '<span class="PaddingLeft PaddingRight">' + ( list[k].Name ? list[k].Name : '' ) + '</span>';
 																return d;
 															}() 
 														}, 
@@ -3095,7 +3095,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 															{
 																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent20 InputHeight TextCenter FloatLeft Ellipsis';
-																d.innerHTML = '<span class="PaddingRight">' + ( status[ ( list[k].Status ? list[k].Status : 0 ) ] ) + '</span>';
+																d.innerHTML = '<span class="PaddingSmallLeft PaddingSmallRight">' + ( status[ ( list[k].Status ? list[k].Status : 0 ) ] ) + '</span>';
 																return d;
 															}() 
 														}, 
@@ -3271,7 +3271,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'TextCenter PaddingSmall HContent10 FloatLeft Ellipsis';
+																	d.className = 'TextCenter PaddingSmall HContent10 InputHeight FloatLeft Ellipsis';
 																	return d;;
 																}(),
 																 'child' : 
@@ -3322,8 +3322,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
-																	d.innerHTML = '<span>' + ( list[k].FullName ? list[k].FullName : 'n/a' ) + '</span>';
+																	d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis';
+																	d.innerHTML = '<span class="PaddingSmallRight">' + ( list[k].FullName ? list[k].FullName : 'n/a' ) + '</span>';
 																	return d;
 																}() 
 															}, 
@@ -3331,8 +3331,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent25 FloatLeft Ellipsis';
-																	d.innerHTML = '<span>' + ( list[k].Name ? list[k].Name : '' ) + '</span>';
+																	d.className = 'PaddingSmall HContent25 InputHeight FloatLeft Ellipsis';
+																	d.innerHTML = '<span class="PaddingLeft PaddingRight">' + ( list[k].Name ? list[k].Name : '' ) + '</span>';
 																	return d;
 																}() 
 															},
@@ -3340,8 +3340,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Ellipsis';
-																	d.innerHTML = '<span>' + ( status[ ( list[k].Status ? list[k].Status : 0 ) ] ) + '</span>';
+																	d.className = 'PaddingSmall HContent20 InputHeight TextCenter FloatLeft Ellipsis';
+																	d.innerHTML = '<span class="PaddingSmallLeft PaddingSmallRight">' + ( status[ ( list[k].Status ? list[k].Status : 0 ) ] ) + '</span>';
 																	return d;
 																}() 
 															}, 
@@ -3357,75 +3357,6 @@ Sections.accounts_workgroups = function( cmd, extra )
 																	{ 
 																		'element' : function( ids, id, func ) 
 																		{
-																			/*var b = document.createElement( 'button' );
-																			b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
-																			b.onclick = function(  )
-																			{
-																				if( this.classList.contains( 'fa-toggle-off' ) )
-																				{
-																				
-																					if( ShowLog ) console.log( 'addUser( '+id+', '+info.ID+', callback, vars )' );
-																				
-																					addUser( id, info.ID, function( e, d, vars )
-																					{
-																					
-																						if( e && vars )
-																						{
-																							vars.func.updateids( 'users', vars.uid, true );
-																						
-																							vars._this.classList.remove( 'fa-toggle-off' );
-																							vars._this.classList.add( 'fa-toggle-on' );
-																						}
-																						else
-																						{
-																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
-																						}
-																					
-																					}, { uid: id, func: func, _this: this } );
-																				
-																				}
-																				else
-																				{
-																				
-																					if( ShowLog ) console.log( 'removeUser( '+id+', '+info.ID+', callback, vars )' );
-																				
-																					removeUser( id, info.ID, function( e, d, vars )
-																					{
-																					
-																						if( e && vars )
-																						{
-																							vars.func.updateids( 'users', vars.uid, false );
-																						
-																							vars._this.classList.remove( 'fa-toggle-on' );
-																							vars._this.classList.add( 'fa-toggle-off' );
-																							
-																							if( ge( 'AdminUsersCount'+uuid ) )
-																							{
-																								if( ge( 'AdminUsersCount'+uuid ).innerHTML )
-																								{
-																									var count = ge( 'AdminUsersCount'+uuid ).innerHTML.split( '(' ).join( '' ).split( ')' ).join( '' );
-																									
-																									if( count && count > 0 )
-																									{
-																										var result = ( count - 1 );
-							
-																										if( result >= 0 )
-																										{
-																											ge( 'AdminUsersCount'+uuid ).innerHTML = '(' + result + ')';
-																										}
-																									}
-																								}
-																							}
-																						}
-																						else
-																						{
-																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
-																						}
-																					
-																					}, { uid: id, func: func, _this: this } );
-																				
-																				}
-																			};*/
 																			
 																			var b = CustomToggle( 'uid'+uuid+'_'+id, 'FloatRight', null, function (  ) 
 																			{
@@ -5426,7 +5357,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 													var b = document.createElement( 'button' );
 													b.id = 'WorkgroupSearchCancelBtn';
 													b.className = 'IconButton IconSmall ButtonSmall fa-times-circle Closed';
-													b.style = 'position:absolute;right:0;margin-top:-2px;margin-right:-2px;';
+													b.style = 'position:absolute;right:0;margin-top:-2px;';
 													b.onclick = function(  )
 													{
 														searchgroups( false );
