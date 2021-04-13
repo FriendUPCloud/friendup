@@ -2297,7 +2297,9 @@ SQLLibrary *GetDBConnection( SystemBase *l )
 		if( timer >= l->sqlpoolConnections )
 		{
 			timer = 0;
-			usleep( 1000 );
+			//usleep( 1000 );
+			sleep( 1 );
+			DEBUG("sleep1\n");
 		}
 		
 		l->sqlConnectionIndex++;
