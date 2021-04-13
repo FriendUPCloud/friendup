@@ -3053,7 +3053,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																			'element' : function() 
 																			{
 																				var d = document.createElement( 'div' );
-																				if( list[k].Avatar )
+																				if( 1!=1 && list[k].Avatar )
 																				{
 																					d.style.backgroundImage = 'url(\'' + list[k].Avatar + '\')';
 																					d.style.backgroundSize = 'contain';
@@ -3299,7 +3299,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																				'element' : function() 
 																				{
 																					var d = document.createElement( 'div' );
-																					if( list[k].Avatar )
+																					if( 1!=1 && list[k].Avatar )
 																					{
 																						d.style.backgroundImage = 'url(\'' + list[k].Avatar + '\')';
 																						d.style.backgroundSize = 'contain';

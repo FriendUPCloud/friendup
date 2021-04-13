@@ -8,27 +8,27 @@ label.CustomToggleLabel
 {
 	cursor: pointer;
 	display: block;
-	border: 1px solid #999;
+	border: 1px solid #ADADAD;
 	border-radius: 5px;
 	background-color: #DDD;
-	width: 40px;
-	height: 20px;
+	width: 32px;
+	height: 16px;
 	position: relative;
-	transition: all 0.2s;
+	transition: all 0.3s;
 }
 
 label.CustomToggleLabel:after
 {
 	content: '';
 	background-color: #FFF;
-	border: 1px solid #999;
-	border-radius: 5px;
-	width: 18px;
-	height: 18px;
+	border: 1px solid #ABABAB;
+	border-radius: 6px;
+	width: 14px;
+	height: 14px;
 	position: absolute;
 	top: 0;
 	left: 0;
-	transition: all 0.2s;
+	transition: all 0.3s;
 }
 
 input.CustomToggleInput:checked + label.CustomToggleLabel
