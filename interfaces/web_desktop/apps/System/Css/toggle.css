@@ -14,7 +14,7 @@ label.CustomToggleLabel
 	width: 32px;
 	height: 16px;
 	position: relative;
-	transition: all 0.3s;
+	transition: all 0.2s;
 }
 
 label.CustomToggleLabel:after
@@ -28,7 +28,7 @@ label.CustomToggleLabel:after
 	position: absolute;
 	top: 0;
 	left: 0;
-	transition: all 0.3s;
+	transition: all 0.2s;
 }
 
 input.CustomToggleInput:checked + label.CustomToggleLabel
@@ -39,7 +39,7 @@ input.CustomToggleInput:checked + label.CustomToggleLabel
 
 input.CustomToggleInput:checked + label.CustomToggleLabel:after
 {
-	left: 20px;
+	left: 16px;
 	border-color: #27AE60;
 }
 

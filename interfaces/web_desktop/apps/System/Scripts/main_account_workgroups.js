@@ -3284,7 +3284,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																			d.setAttribute( 'Name', list[k].Name );
 																			d.setAttribute( 'Status', status[ ( list[k].Status ? list[k].Status : 0 ) ] );
 																			//d.className = 'IconSmall NegativeAlt fa-user-circle-o avatar';
-																			d.className = 'IconSmall fa-user-circle-o avatar';
+																			d.className = 'IconMedium fa-user-circle-o avatar';
 																			//d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																			//d.style.backgroundSize = 'contain';
 																			//d.style.width = '24px';
