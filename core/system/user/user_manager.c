@@ -278,33 +278,36 @@ User *UMUserGetByName( UserManager *um, const char *name )
  */
 User * UMUserGetByNameDB( UserManager *um, const char *name )
 {
+	DEBUG("[UMUserGetByNameDB] Start\n");
 	SystemBase *sb = (SystemBase *)um->um_SB;
 	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	
-	if( sqlLib == NULL )
+	if( sqlLib != NULL )
+	{
+		User *user = NULL;
+		char tmpQuery[ 1024 ];
+		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," Name = '%s'", name );
+	
+		int entries;
+		user = sqlLib->Load( sqlLib, UserDesc, tmpQuery, &entries );
+	
+		// No need for sql lib anymore here
+		sb->DropDBConnection( sb, sqlLib );
+
+		if( user != NULL )
+		{
+			{
+				DEBUG("[UMUserGetByNameDB] User found %s  id %ld\n", user->u_Name, user->u_ID );
+				UGMAssignGroupToUser( sb->sl_UGM, user );
+				UMAssignApplicationsToUser( um, user );
+				user->u_MountedDevs = NULL;
+			}
+		}
+	}
+	else
 	{
 		FERROR("[UMUserGetByNameDB] Cannot get user, mysql.library was not open\n");
 		return NULL;
-	}
-
-	User *user = NULL;
-	char tmpQuery[ 1024 ];
-	sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," Name = '%s'", name );
-	
-	int entries;
-	user = sqlLib->Load( sqlLib, UserDesc, tmpQuery, &entries );
-	
-	// No need for sql lib anymore here
-	sb->DropDBConnection( sb, sqlLib );
-
-	if( user != NULL )
-	{
-		{
-			DEBUG("[UMUserGetByNameDB] User found %s  id %ld\n", user->u_Name, user->u_ID );
-			UGMAssignGroupToUser( sb->sl_UGM, user );
-			UMAssignApplicationsToUser( um, user );
-			user->u_MountedDevs = NULL;
-		}
 	}
 	
 	DEBUG("[UMUserGetByNameDB] END\n");

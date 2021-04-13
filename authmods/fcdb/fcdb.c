@@ -718,9 +718,8 @@ void Logout( struct AuthMod *l, Http *r __attribute__((unused)), char *sessionid
 		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserSession WHERE SessionID='%s'", sessionid );
 		DEBUG("Logout sql: %s\n", tmpQuery );
 		sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
-
-		sb->DropDBConnection( sb, sqlLib );
 #endif
+		sb->DropDBConnection( sb, sqlLib );
 	}
 	DEBUG("Logout get end\n");
 }
