@@ -8364,8 +8364,8 @@ function refreshUserList( userInfo )
 						
 						if( div[i].getElementsByTagName( 'span' )[0] )
 						{
-							let spa = div[i].getElementsByTagName( 'span' )[0].getElementsByTagName( 'div' )[0];
-        					spa.style.backgroundImage = 'url(' + src + ')';
+							//let spa = div[i].getElementsByTagName( 'span' )[0].getElementsByTagName( 'div' )[0];
+        					//spa.style.backgroundImage = 'url(' + src + ')';
 						}
 						
 						//var bg = 'background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;background-image: url(\'' + src + '\')';
