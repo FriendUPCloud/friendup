@@ -4726,7 +4726,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			function isDirectoryElement( ele )
 			{
 				if( !ele.classList ) return false;
-				if( ele.classList.contains( 'Directory' ) )
+				if( ele.classList.contains( 'Directory' ) || ele.classList.contains( 'Icon' ) )
 				{
 					while( !ele.fileInfo && ele != document.body )
 					{
