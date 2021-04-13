@@ -2243,6 +2243,8 @@ SQLLibrary *GetDBConnection( SystemBase *l )
 	SQLLibrary *retlib = NULL;
 	int i ;
 	int timer = 0;
+	int retries = 0;
+	int usingSleep = 0;
 	
 	while( TRUE )
 	{
@@ -2302,7 +2304,6 @@ SQLLibrary *GetDBConnection( SystemBase *l )
 			l->sqlConnectionIndex = 0;
 		}
 		
-		/*
 		retries++;
 		if( retries >= l->sqlpoolConnections )
 		{
@@ -2313,7 +2314,6 @@ SQLLibrary *GetDBConnection( SystemBase *l )
 			}
 			usleep( 5000 );
 		}
-		*/
 	}
 	
 	return retlib;
