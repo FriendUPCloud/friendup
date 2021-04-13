@@ -2365,7 +2365,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										'element' : function() 
 										{
 											let d = document.createElement( 'div' );
-											d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+											d.className = 'HRow BackgroundNegative Negative Padding';
 											return d;
 										}(),
 										'child' : 
@@ -2374,7 +2374,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												'element' : function( _this ) 
 												{
 													let d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent40 FloatLeft';
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft';
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
 													d.ele = this;
 													d.onclick = function(  )
@@ -2388,7 +2388,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												'element' : function(  ) 
 												{
 													let d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent45 FloatLeft Relative';
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent45 FloatLeft Relative';
 													d.innerHTML = '<strong></strong>';
 													return d;
 												}(  )
@@ -2397,7 +2397,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												'element' : function(  ) 
 												{
 													let d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Relative';
 													return d;
 												}(  )
 											}
@@ -5278,10 +5278,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 						//str += '	<div class="PaddingSmall HContent100 FloatLeft Ellipsis">';
 						//str += '		<span name="' + groups[a].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>';
 						
-						str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
+						str += '	<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit">';
 						str += '		<span name="' + groups[a].Name + '" class="IconSmall fa-users"></span>';
 						str += '	</div>';
-						str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent94 FloatLeft Ellipsis">' + groups[a].Name+ '</div>';
+						str += '	<div class="PaddingSmall HContent94 FloatLeft Ellipsis">' + groups[a].Name+ '</div>';
 						
 						//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 						//str += '		<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
@@ -5306,10 +5306,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 								//str += '	</div>';
 								
 								str += '	<div class="TextCenter HContent4 FloatLeft PaddingSmall" style="min-width:18px"></div>';
-								str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
+								str += '	<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit">';
 								str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconSmall fa-users"></span>';
 								str += '	</div>';
-								str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent88 FloatLeft Ellipsis">' + groups[a].groups[aa].Name + '</div>';
+								str += '	<div class="PaddingSmall HContent88 FloatLeft Ellipsis">' + groups[a].groups[aa].Name + '</div>';
 								
 								//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 								//str += '		<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
@@ -5334,10 +5334,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 										//str += '	</div>';
 										
 										str += '	<div class="TextCenter HContent8 FloatLeft PaddingSmall" style="min-width:38px"></div>';
-										str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
+										str += '	<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit">';
 										str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall fa-users"></span>';
 										str += '	</div>';
-										str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent82 FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + '</div>';
+										str += '	<div class="PaddingSmall HContent82 FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + '</div>';
 										
 										//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 										//str += '		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
