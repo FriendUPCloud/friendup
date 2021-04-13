@@ -4719,6 +4719,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			let doCopy = false;
 			
 			// Use menu context for file info path (folder icon etc)
+			if( Workspace.menuContext )
+			{
+				console.log( 'Classes: ', Workspace.menuContext.className );
+			}
 			function isDirectoryElement( ele )
 			{
 				if( !ele.classList ) return false;
@@ -4736,6 +4740,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					let p = ele.parentNode;
 					if( p.fileInfo )
 					{
+						console.log( 'pEle has directory and pEle has fileinfo? ' + p.fileInfo ? 'yes' : 'no' );
 						return p;
 					}
 				}
@@ -4749,6 +4754,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				// Use the context menu file info, and sanitize it!
 				// The Path may include the filename
 				destPath = mc.fileInfo.Path;
+				console.log( 'Our path is: ' + destPath );
 				if( destPath.substr( -1, 1 ) != '/' )
 				{
 				    if( destPath.indexOf( '/' ) > 0 )
@@ -4779,6 +4785,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			
 			Workspace.menuContext = null;
+			
+			console.log( 'Checking destpath: ' + destPath );
 			
 			let d = new Door( destPath );
 			d.getIcons( destFinf, function( items )
@@ -4845,6 +4853,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					let fn = ( clip[b].fileInfo.NewFilename ? clip[b].fileInfo.NewFilename : clip[b].fileInfo.Filename );
 					fn = fn.split( ' ' ).join( '\\ ' );
 					let copyStr = 'copy ' + source + ' to ' + destin + fn;
+					console.log( 'Copying with this: ' + copyStr );
 					sh.parseScript( copyStr, function()
 					{
 						if( cliplen-- == 0 )
