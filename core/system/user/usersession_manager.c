@@ -925,18 +925,19 @@ int USMSessionsDeleteDB( UserSessionManager *smgr, const char *sessionid )
 	char tmpQuery[ 1024 ];
 	
 	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
-	if( sqlLib == NULL )
+	if( sqlLib != NULL )
+	{
+		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "DELETE from FUserSession WHERE SessionID='%s'", sessionid );
+
+		sqlLib->QueryWithoutResults( sqlLib, tmpQuery );
+
+		sb->DropDBConnection( sb, sqlLib );
+	}
+	else
 	{
 		FERROR("[USMSessionsDeleteDB] Cannot get user, mysql.library was not open\n");
 		return -1;
 	}
-
-	sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "DELETE from FUserSession WHERE SessionID='%s'", sessionid );
-
-	sqlLib->QueryWithoutResults( sqlLib, tmpQuery );
-
-	sb->DropDBConnection( sb, sqlLib );
-
 	DEBUG("[USMSessionsDeleteDB] end\n");
 	return 0;
 }
