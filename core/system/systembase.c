@@ -2248,7 +2248,8 @@ SQLLibrary *GetDBConnection( SystemBase *l )
 	{
 		if( FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex ) == 0 )
 		{
-			if( l->sqlpool[ l->sqlConnectionIndex ].sqll_Sqllib->l_InUse == FALSE )
+			DEBUG("[GetDBConnection] pointer %p\n", l->sqlpool[ l->sqlConnectionIndex ].sqll_Sqllib );
+			if( l->sqlpool[ l->sqlConnectionIndex ].sqll_Sqllib != NULL && l->sqlpool[ l->sqlConnectionIndex ].sqll_Sqllib->l_InUse == FALSE )
 			{
 				retlib = l->sqlpool[l->sqlConnectionIndex ].sqll_Sqllib;
 				DEBUG("retlibptr %p pool %p\n", retlib, l->sqlpool[l->sqlConnectionIndex ].sqll_Sqllib );
