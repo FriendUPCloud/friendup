@@ -43,7 +43,7 @@ var UsersSettings = function ( setting, set )
 		minlength   : minlength,
 		limit       : limit,
 		uids        : [],
-		avatars     : true,
+		avatars     : false,
 		logintime   : true,
 		experiment  : true,
 		listall     : false,
@@ -343,11 +343,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									wstr += '<div>';
 									wstr += '<div class="HRow">';
-									wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
-									wstr += '		<span name="' + wids[b].Name + '" style="display: none;"></span>';
-									wstr += '		<strong>' + wids[b].Name + '</strong>';
+									wstr += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
+									wstr += '		<span name="' + wids[b].Name + '" class="IconMedium fa-users"></span>';
 									wstr += '	</div>';
-									wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+									wstr += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + wids[b].Name + '</div>';
+									wstr += '	<div class="PaddingSmall HContent40 FloatRight Ellipsis">';
 									
 									if( Application.checkAppPermission( [ 
 										'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
@@ -802,6 +802,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										//console.log( 'image have loaded ... ' + this.src );
 										if( ge( 'AdminAvatar' ) )
 										{
+											ge( 'AdminAvatarArea' ).className = ge( 'AdminAvatarArea' ).className.split( ' fa-user-circle-o' ).join( '' );
+											
 											let ctx = ge( 'AdminAvatar' ).getContext( '2d' );
 											ctx.drawImage( avSrc, 0, 0, 256, 256 );
 										}
@@ -1003,7 +1005,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										'element' : function() 
 										{
 											let d = document.createElement( 'div' );
-											d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+											d.className = 'HRow BackgroundNegative Negative Padding';
 											return d;
 										}(),
 										'child' : 
@@ -1012,7 +1014,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												'element' : function(  ) 
 												{
 													let d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent40 FloatLeft';
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft';
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
 													d.style.cursor = 'pointer';
 													d.ele = this;
@@ -1027,7 +1029,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												'element' : function( _this ) 
 												{
 													let d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent45 FloatLeft Relative';
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent45 FloatLeft Relative';
 													d.innerHTML = '<strong></strong>';
 													return d;
 												}( this )
@@ -1036,7 +1038,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												'element' : function() 
 												{
 													let d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Relative';
 													return d;
 												}()
 											}
@@ -1046,9 +1048,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										'element' : function() 
 										{
 											let d = document.createElement( 'div' );
-											d.className = 'HRow Box Padding';
+											d.className = 'HRow List PaddingTop PaddingRight PaddingBottom';
 											d.style.overflow = 'auto';
-											d.style.maxHeight = '316px';
+											d.style.maxHeight = '314px';
 											d.id = 'WorkgroupInner';
 											return d;
 										}()
@@ -1388,10 +1390,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 												str += '<div class="HRow" id="WorkgroupID_' + groups[a].ID + '">';
 						
-												str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
-												str += '		<span name="' + groups[a].Name + '" class="IconSmall fa-users"></span>';
+												str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
+												str += '		<span name="' + groups[a].Name + '" class="IconMedium fa-users"></span>';
 												str += '	</div>';
-												str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom FloatLeft Ellipsis">' + groups[a].Name+ '</div>';
+												str += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[a].Name+ '</div>';
 						
 												str += '	<div class="PaddingSmall HContent20 FloatRight Ellipsis">';
 												
@@ -1510,11 +1512,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 														str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].ID + '">';
 								
-														str += '	<div class="TextCenter HContent4 FloatLeft PaddingSmall" style="min-width:18px"></div>';
-														str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
-														str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconSmall fa-users"></span>';
+														str += '	<div class="TextCenter HContent4 FloatLeft InputHeight PaddingSmall" style="min-width:36px"></div>';
+														str += '	<div class="TextCenter HContent10 FloatLeft InputHeight PaddingSmall Ellipsis edit">';
+														str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconMedium fa-users"></span>';
 														str += '	</div>';
-														str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom FloatLeft Ellipsis">' + groups[a].groups[aa].Name + '</div>';
+														str += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].Name + '</div>';
 								
 														str += '<div class="PaddingSmall FloatRight Ellipsis">';
 														
@@ -1633,11 +1635,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										
 																str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '">';
 										
-																str += '	<div class="TextCenter HContent8 FloatLeft PaddingSmall" style="min-width:38px"></div>';
-																str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
-																str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall fa-users"></span>';
+																str += '	<div class="TextCenter HContent8 InputHeight FloatLeft PaddingSmall" style="min-width:73px"></div>';
+																str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
+																str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconMedium fa-users"></span>';
 																str += '	</div>';
-																str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + '</div>';
+																str += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + '</div>';
 										
 																str += '	<div class="PaddingSmall FloatRight Ellipsis">';
 																
@@ -2076,16 +2078,15 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												for( var b in groups )
 												{
 													
-													
 													if( groups[b].Name && this.wge.wids[ groups[b].ID ] )
 													{
-														wstr += '<div>';0
+														wstr += '<div>';
 														wstr += '<div class="HRow">';
-														wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
-														wstr += '		<span name="' + groups[b].Name + '" style="display: none;"></span>';
-														wstr += '		<strong>' + groups[b].Name + '</strong>';
+														wstr += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
+														wstr += '		<span name="' + groups[b].Name + '" class="IconMedium fa-users"></span>';
 														wstr += '	</div>';
-														wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+														wstr += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[b].Name + '</div>';
+														wstr += '	<div class="PaddingSmall HContent40 FloatRight Ellipsis">';
 														
 														if( Application.checkAppPermission( [ 
 															'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
@@ -2173,11 +2174,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																{
 																	wstr += '<div>';
 																	wstr += '<div class="HRow">';
-																	wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
-																	wstr += '		<span name="' + groups[b].groups[k].Name + '" style="display: none;"></span>';
-																	wstr += '		<strong>' + groups[b].groups[k].Name + '</strong>';
+																	wstr += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
+																	wstr += '		<span name="' + groups[b].groups[k].Name + '" class="IconMedium fa-users"></span>';
 																	wstr += '	</div>';
-																	wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+																	wstr += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[b].groups[k].Name + '</div>';
+																	wstr += '	<div class="PaddingSmall HContent40 FloatRight Ellipsis">';
 																	
 																	if( Application.checkAppPermission( [ 
 																		'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
@@ -2266,11 +2267,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																			{
 																				wstr += '<div>';
 																				wstr += '<div class="HRow">';
-																				wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
-																				wstr += '		<span name="' + groups[b].groups[k].groups[i].Name + '" style="display: none;"></span>';
-																				wstr += '		<strong>' + groups[b].groups[k].groups[i].Name + '</strong>';
+																				wstr += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
+																				wstr += '		<span name="' + groups[b].groups[k].groups[i].Name + '" class="IconMedium fa-users"></span>';
 																				wstr += '	</div>';
-																				wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+																				wstr += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[b].groups[k].groups[i].Name + '</div>';
+																				wstr += '	<div class="PaddingSmall HContent40 FloatRight Ellipsis">';
 																				
 																				if( Application.checkAppPermission( [ 
 																					'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
@@ -3182,7 +3183,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													let d = document.createElement( 'div' );
 													//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
-													d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+													d.className = 'HRow BackgroundNegative Negative Padding';
 													return d;
 												}(),
 												'child' : 
@@ -3191,7 +3192,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														'element' : function( _this ) 
 														{
 															let d = document.createElement( 'div' );
-															d.className = 'PaddingSmall HContent40 FloatLeft';
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft';
 															d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
 															d.style.cursor = 'pointer';
 															d.ele = this;
@@ -3206,7 +3207,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														'element' : function( _this ) 
 														{
 															let d = document.createElement( 'div' );
-															d.className = 'PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent45 FloatLeft Relative';
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent45 FloatLeft Relative';
 															d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
 															d.style.cursor = 'pointer';
 															d.ele = this;
@@ -3221,7 +3222,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														'element' : function() 
 														{
 															let d = document.createElement( 'div' );
-															d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+															d.className = 'PaddingSmallRight HContent15 FloatLeft Relative';
 															return d;
 														}()
 													}
@@ -3231,7 +3232,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												'element' : function() 
 												{
 													let d = document.createElement( 'div' );
-													d.className = 'HRow Box Padding';
+													d.className = 'HRow List Padding';
 													d.style.overflow = 'auto';
 													d.style.maxHeight = '366px';
 													d.id = 'ApplicationInner';
@@ -3298,7 +3299,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		'element' : function() 
 																		{
 																			let d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																			d.className = 'TextCenter PaddingSmall HContent10 FloatLeft Ellipsis';
 																			return d;
 																		}(),
 																		 'child' : 
@@ -3309,7 +3310,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																					let d = document.createElement( 'span' );
 																					d.setAttribute( 'Name', apps[k].Name );
 																					d.setAttribute( 'Category', apps[k].Category );
-																					d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																					d.style.backgroundImage = "url('/iconthemes/friendup15/File_Binary.svg')";
 																					d.style.backgroundSize = 'contain';
 																					d.style.width = '24px';
 																					d.style.height = '24px';
@@ -3341,7 +3342,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		{
 																			let d = document.createElement( 'div' );
 																			d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis name';
-																			d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																			d.innerHTML = '<strong class="PaddingSmallRight">' + apps[k].Name + '</strong>';
 																			return d;
 																		}() 
 																	},
@@ -3350,7 +3351,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		{
 																			let d = document.createElement( 'div' );
 																			d.className = 'PaddingSmall HContent45 InputHeight FloatLeft Ellipsis category';
-																			d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																			d.innerHTML = '<span class="PaddingSmallLeft PaddingSmallRight">' + apps[k].Category + '</span>';
 																			return d;
 																		}() 
 																	}, 
@@ -3499,7 +3500,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																				let d = document.createElement( 'span' );
 																				d.setAttribute( 'Name', apps[k].Name );
 																				d.setAttribute( 'Category', apps[k].Category );
-																				d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																				d.style.backgroundImage = "url('/iconthemes/friendup15/File_Binary.svg')";
 																				d.style.backgroundSize = 'contain';
 																				d.style.width = '24px';
 																				d.style.height = '24px';
@@ -3530,8 +3531,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																	'element' : function() 
 																	{
 																		let d = document.createElement( 'div' );
-																		d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis name';
-																		d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																		d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis name';
+																		d.innerHTML = '<strong class="PaddingSmallRight">' + apps[k].Name + '</strong>';
 																		return d;
 																	}() 
 																}, 
@@ -3539,8 +3540,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																	'element' : function() 
 																	{
 																		let d = document.createElement( 'div' );
-																		d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis category';
-																		d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																		d.className = 'PaddingSmall HContent45 InputHeight FloatLeft Ellipsis category';
+																		d.innerHTML = '<span class="PaddingSmallLeft PaddingSmallRight">' + apps[k].Category + '</span>';
 																		return d;
 																	}() 
 																},
@@ -3562,68 +3563,6 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																					'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_GLOBAL' 
 																				] ) )
 																				{
-																					/*let b = document.createElement( 'button' );
-																					b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' );
-																					b.onclick = function(  )
-																					{
-																						if( this.classList.contains( 'fa-toggle-off' ) )
-																						{
-																						
-																							func.updateids( 'applications', name, [ name, '0' ] );
-																							
-																							addApplication( name, userInfo.ID, function( e, d, vars )
-																							{
-																					
-																								if( e && vars )
-																								{
-																						
-																									vars._this.classList.remove( 'fa-toggle-off' );
-																									vars._this.classList.add( 'fa-toggle-on' );
-																						
-																									if( vars.func )
-																									{
-																										vars.func.dock( 'refresh' );
-																									}
-																						
-																								}
-																								else
-																								{
-																									if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
-																								}
-																					
-																							}, { _this: this, func: func } );
-																							
-																						}
-																						else
-																						{
-																						
-																							func.updateids( 'applications', name, false );
-																							
-																							removeApplication( name, userInfo.ID, function( e, d, vars )
-																							{
-																					
-																								if( e && vars )
-																								{
-																						
-																									vars._this.classList.remove( 'fa-toggle-on' );
-																									vars._this.classList.add( 'fa-toggle-off' );
-																						
-																									if( vars.func )
-																									{
-																										vars.func.dock( 'refresh' );
-																									}
-																						
-																								}
-																								else
-																								{
-																									if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
-																								}
-																					
-																							}, { _this: this, func: func } );
-																							
-																						}
-																			
-																					};*/
 																					
 																					var b = CustomToggle( 'aid_'+name, 'FloatRight', null, function (  )
 																					{
@@ -4033,7 +3972,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													let d = document.createElement( 'div' );
 													//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
-													d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+													d.className = 'HRow BackgroundNegative Negative Padding';
 													return d;
 												}(),
 												'child' : 
@@ -4042,7 +3981,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														'element' : function( _this ) 
 														{
 															let d = document.createElement( 'div' );
-															d.className = 'PaddingSmall HContent40 FloatLeft';
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft';
 															d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
 															d.style.cursor = 'pointer';
 															d.ele = this;
@@ -4057,7 +3996,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														'element' : function( _this ) 
 														{
 															let d = document.createElement( 'div' );
-															d.className = 'PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent25 FloatLeft Relative';
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 FloatLeft Relative';
 															d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
 															d.style.cursor = 'pointer';
 															d.ele = this;
@@ -4072,7 +4011,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														'element' : function() 
 														{
 															let d = document.createElement( 'div' );
-															d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
 															d.innerHTML = '<strong>' + i18n( 'i18n_order' ) + '</strong>';
 															return d;
 														}()
@@ -4205,7 +4144,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		{
 																			let d = document.createElement( 'div' );
 																			d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis name';
-																			d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																			d.innerHTML = '<strong class="PaddingSmallRight">' + apps[k].Name + '</strong>';
 																			return d;
 																		}() 
 																	},
@@ -4214,7 +4153,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		{
 																			let d = document.createElement( 'div' );
 																			d.className = 'PaddingSmall HContent25 InputHeight FloatLeft Ellipsis category';
-																			d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																			d.innerHTML = '<span class="PaddingSmallLeft PaddingSmallRight">' + apps[k].Category + '</span>';
 																			return d;
 																		}() 
 																	}, 
@@ -4469,8 +4408,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		'element' : function() 
 																		{
 																			let d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis name';
-																			d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																			d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis name';
+																			d.innerHTML = '<strong class="PaddingSmallRight">' + apps[k].Name + '</strong>';
 																			return d;
 																		}() 
 																	}, 
@@ -4478,8 +4417,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		'element' : function() 
 																		{
 																			let d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis category';
-																			d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																			d.className = 'PaddingSmall HContent45 InputHeight FloatLeft Ellipsis category';
+																			d.innerHTML = '<span class="PaddingSmallLeft PaddingSmallRight">' + apps[k].Category + '</span>';
 																			return d;
 																		}() 
 																	},
@@ -4501,48 +4440,6 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																						'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_GLOBAL' 
 																					] ) )
 																					{
-																						/*let b = document.createElement( 'button' );
-																						b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
-																						b.onclick = function(  )
-																						{
-																							if( this.classList.contains( 'fa-toggle-off' ) )
-																							{
-																							
-																								addDockItem( name, userInfo.ID, function( e, d, vars )
-																								{
-																								
-																									if( e && d && vars )
-																									{
-																									
-																										vars.func.updateids( 'dock', vars.name, { Id: d, Name: vars.name } );
-																									
-																										vars._this.classList.remove( 'fa-toggle-off' );
-																										vars._this.classList.add( 'fa-toggle-on' );
-																						
-																									}
-																								
-																								}, { _this: this, func: func, name: name } );
-																				
-																							}
-																							else
-																							{
-																							
-																								removeDockItem( name, userInfo.ID, function( e, d, vars )
-																								{
-																								
-																									if( e && vars )
-																									{
-																										vars.func.updateids( 'dock', vars.name, false );
-																									
-																										vars._this.classList.remove( 'fa-toggle-on' );
-																										vars._this.classList.add( 'fa-toggle-off' );
-																									
-																									}
-																								
-																								}, { _this: this, func: func, name: name } );
-																				
-																							}
-																						};*/
 																						
 																						var b = CustomToggle( 'did_'+name, 'FloatRight', null, function (  )
 																						{
@@ -5441,7 +5338,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										}
 										else
 										{
-											console.log( '// No Permission = role' );
+											//console.log( '// No Permission = role' );
 										}
 									}
 								
@@ -5581,7 +5478,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							workspace_count : function ()
 							{
 								
-								return '<input type="number" class="FullWidth" id="workspace_count_input" value="' + ( workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1' ) + '">';
+								return '<input type="number" class="InputHeight FullWidth" id="workspace_count_input" value="' + ( workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1' ) + '">';
 								
 							},
 							
@@ -6166,8 +6063,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 			else
 			{
 				
-				console.log( "UsersSettings( 'logintime', false ); to list users without lastlogin ..." );
-				console.log( "UsersSettings( 'experiment', true ); to show latest grid method ..." );
+				//console.log( "UsersSettings( 'logintime', false ); to list users without lastlogin ..." );
+				//console.log( "UsersSettings( 'experiment', true ); to show latest grid method ..." );
+				
+				console.log( "UsersSettings( 'avatars', true ); to show users list with avatars ..." );
 				
 				// Experimental ...
 				if( UsersSettings( 'experiment' ) )
@@ -6219,24 +6118,27 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											
 											let src = '';
 											
-											if( myArray[ s ].imageObj == null )
+											if( UsersSettings( 'avatars' ) )
 											{
-												src = '/system.library/module/?module=system&command=getavatar&userid=' + myArray[s].ID + ( myArray[s].image ? '&image=' + myArray[s].image : '' ) + '&width=16&height=16&authid=' + Application.authId;
-												let iii = new Image();
-												iii.myArray = myArray[ s ];
-												iii.onload = function() 
+												if( myArray[ s ].imageObj == null )
 												{
-													this.myArray.imageObj = this;
-													ctx.clearRect( 0, 0, 16, 16);
-													ctx.drawImage( this.myArray.imageObj, 0, 0, 16, 16 );
-													this.myArray.imageObj.blob = canvas.toDataURL( 'image/png' );
-												};
-												iii.src = src;
-											}
-											// From cache
-											else
-											{
-												src = myArray[ s ].imageObj.blob;
+													src = '/system.library/module/?module=system&command=getavatar&userid=' + myArray[s].ID + ( myArray[s].image ? '&image=' + myArray[s].image : '' ) + '&width=16&height=16&authid=' + Application.authId;
+													let iii = new Image();
+													iii.myArray = myArray[ s ];
+													iii.onload = function() 
+													{
+														this.myArray.imageObj = this;
+														ctx.clearRect( 0, 0, 16, 16);
+														ctx.drawImage( this.myArray.imageObj, 0, 0, 16, 16 );
+														this.myArray.imageObj.blob = canvas.toDataURL( 'image/png' );
+													};
+													iii.src = src;
+												}
+												// From cache
+												else
+												{
+													src = myArray[ s ].imageObj.blob;
+												}
 											}
 											
 											let obj = {
@@ -6284,9 +6186,12 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												}
 											
 												// TODO: Set the image once it's ready ...
-											
-												let spa = allNodes[ s ].getElementsByTagName( 'span' )[0].getElementsByTagName( 'div' )[0];
-												spa.style.backgroundImage = 'url(' + src + ')';
+												if( UsersSettings( 'avatars' ) )
+												{
+													let spa = allNodes[ s ].getElementsByTagName( 'span' )[0].getElementsByTagName( 'div' )[0];
+													spa.style.backgroundImage = 'url(' + src + ')';
+												}
+												
 												allNodes[ s ].title = 'Line ' + s;
 											
 												allNodes[ s ].myArrayID = obj.ID;
@@ -7057,8 +6962,8 @@ function NewUser( _this )
 			user_mobile          : '',
 			user_language        : languages,
 			user_setup           : setup,
-			user_locked_toggle   : ''/*'fa-toggle-off'*/,
-			user_disabled_toggle : ''/*'fa-toggle-off'*/,
+			user_locked_toggle   : '',
+			user_disabled_toggle : '',
 			theme_name           : '',
 			theme_dark           : '',
 			theme_style          : '',
@@ -7507,10 +7412,10 @@ function NewUser( _this )
 						
 						str += '<div class="HRow" id="WorkgroupID_' + groups[a].ID + '">';
 						
-						str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
-						str += '		<span name="' + groups[a].Name + '" class="IconSmall fa-users"></span>';
+						str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
+						str += '		<span name="' + groups[a].Name + '" class="IconMedium fa-users"></span>';
 						str += '	</div>';
-						str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom FloatLeft Ellipsis">' + groups[a].Name+ '</div>';
+						str += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[a].Name+ '</div>';
 						
 						str += '	<div class="PaddingSmall HContent20 FloatRight Ellipsis">';
 						//str += '		<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
@@ -7609,11 +7514,11 @@ function NewUser( _this )
 								
 								str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].ID + '">';
 								
-								str += '	<div class="TextCenter HContent4 FloatLeft PaddingSmall" style="min-width:18px"></div>';
-								str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
-								str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconSmall fa-users"></span>';
+								str += '	<div class="TextCenter HContent4 InputHeight FloatLeft PaddingSmall" style="min-width:36px"></div>';
+								str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
+								str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconMedium fa-users"></span>';
 								str += '	</div>';
-								str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom FloatLeft Ellipsis">' + groups[a].groups[aa].Name + '</div>';
+								str += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].Name + '</div>';
 								
 								str += '<div class="PaddingSmall FloatRight Ellipsis">';
 								//str += '<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
@@ -7713,11 +7618,11 @@ function NewUser( _this )
 										
 										str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '">';
 										
-										str += '	<div class="TextCenter HContent8 FloatLeft PaddingSmall" style="min-width:38px"></div>';
-										str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
-										str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall fa-users"></span>';
+										str += '	<div class="TextCenter HContent8 InputHeight FloatLeft PaddingSmall" style="min-width:73px"></div>';
+										str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
+										str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconMedium fa-users"></span>';
 										str += '	</div>';
-										str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + '</div>';
+										str += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + '</div>';
 										
 										str += '	<div class="PaddingSmall FloatRight Ellipsis">';
 										//str += '		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
@@ -7836,7 +7741,7 @@ function NewUser( _this )
 						'element' : function() 
 						{
 							let d = document.createElement( 'div' );
-							d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+							d.className = 'HRow BackgroundNegative Negative Padding';
 							return d;
 						}(),
 						'child' : 
@@ -7845,7 +7750,7 @@ function NewUser( _this )
 								'element' : function(  ) 
 								{
 									let d = document.createElement( 'div' );
-									d.className = 'PaddingSmall HContent40 FloatLeft';
+									d.className = 'PaddingSmallLeft PaddingSmallLeft HContent40 FloatLeft';
 									d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
 									d.style.cursor = 'pointer';
 									d.ele = this;
@@ -7860,7 +7765,7 @@ function NewUser( _this )
 								'element' : function( _this ) 
 								{
 									let d = document.createElement( 'div' );
-									d.className = 'PaddingSmall HContent45 FloatLeft Relative';
+									d.className = 'PaddingSmallLeft PaddingSmallLeft HContent45 FloatLeft Relative';
 									d.innerHTML = '<strong></strong>';
 									return d;
 								}( this )
@@ -7879,10 +7784,10 @@ function NewUser( _this )
 						'element' : function() 
 						{
 							let d = document.createElement( 'div' );
-							d.className = 'HRow Box Padding';
+							d.className = 'HRow List PaddingTop PaddingRight PaddingBottom';
 							d.id = 'WorkgroupInner';
 							d.style.overflow = 'auto';
-							d.style.maxHeight = '316px';
+							d.style.maxHeight = '314px';
 							return d;
 						}()
 					}
@@ -8099,7 +8004,7 @@ function NewUser( _this )
 									{
 										// Toggle on ...
 									
-										console.log( '// Toggle on ', wids );
+										//console.log( '// Toggle on ', wids );
 									
 										if( this.id && this.id.split( 'wid_' )[1] )
 										{
@@ -8122,7 +8027,7 @@ function NewUser( _this )
 									{
 										// Toggle off ...
 								
-										console.log( '// Toggle off ', wids );
+										//console.log( '// Toggle off ', wids );
 									
 										if( this.id && this.id.split( 'wid_' )[1] )
 										{
@@ -9826,6 +9731,8 @@ function changeAvatar()
 					let canvas = ge( 'AdminAvatar' );
 					let context = canvas.getContext( '2d' );
 					context.drawImage( image, 0, 0, 256, 256 );
+					
+					ge( 'AdminAvatarArea' ).className = ge( 'AdminAvatarArea' ).className.split( ' fa-user-circle-o' ).join( '' );
 					
 					// Activate edit mode.
 					editMode();
