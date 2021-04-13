@@ -482,6 +482,11 @@ html body button.IconButton, html body .Button.IconButton
 
 /* Custom Gui ------------------------------------------------------------------ */
 
+body #Admin button:before, body #Admin button.IconSmall:before
+{
+	margin-right: 0;
+}
+
 body #Admin .AvatarRect > div #AdminAvatarRemove
 {
 	position: absolute;
