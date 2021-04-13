@@ -4704,7 +4704,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( !e ) e = window.event;
 		
-		if( window.currentMovable && Friend.workspaceClipBoard && Friend.workspaceClipBoard.length > 0 && typeof window.currentMovable.drop == 'function' )
+		let cme = window.currentMovable;
+		let clp = Friend.workspaceClipBoard;
+		if( cme && clp && clp.length > 0 && typeof cme.drop == 'function' )
 		{
 			e = {};
 			e.ctrlKey = ( Friend.workspaceClipBoardMode == 'copy' ? true : false );
@@ -4717,49 +4719,63 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			let doCopy = false;
 			
 			// Use menu context for file info path (folder icon etc)
-			if( Workspace.menuContext && Workspace.menuContext.classList && Workspace.menuContext.classList.contains( 'Directory' ) )
+			function isDirectoryElement( ele )
+			{
+				if( !ele.classList ) return false;
+				if( ele.classList.contains( 'Directory' ) )
+				{
+					while( !ele.fileInfo && ele != document.body )
+					{
+						ele = ele.parentNode;
+					}
+					if( ele == document.body ) return false;
+					return ele;
+				}
+				if( ele.classList.contains( 'Column' ) )
+				{
+					let p = ele.parentNode;
+					if( p.fileInfo )
+					{
+						return p;
+					}
+				}
+				return false;
+			}
+			let mc = false;
+			if( Workspace.menuContext && ( mc = isDirectoryElement( Workspace.menuContext ) ) )
 			{
 				let fi = null;
-				let mc = Workspace.menuContext;
-				while( mc != document.body )
-				{
-					if( mc.fileInfo )
-						break;
-					mc = mc.parentNode;
-				}
+				
 				// Use the context menu file info, and sanitize it!
 				// The Path may include the filename
-				if( mc.fileInfo )
+				destPath = mc.fileInfo.Path;
+				if( destPath.substr( -1, 1 ) != '/' )
 				{
-					destPath = mc.fileInfo.Path;
-					if( destPath.substr( -1, 1 ) != '/' )
-					{
-					    if( destPath.indexOf( '/' ) > 0 )
-					    {
-					        destPath = destPath.split( '/' );
-					        destPath.pop();
-					        destPath = destPath.join( '/' );
-					        destPath += '/';
-					    }
-					}
-					else if( destPath.substr( -1, 1 ) != ':' && !destPath.indexOf( '/' ) )
-					{
-					    if( destPath.indexOf( ':' ) > 0 )
-					    {
-				            destPath = destPath.split( ':' );
-				            destPath.pop();
-				            destPath = destPath.join( ':' );
-				            destPath += ':';
-				        }
-					}
-					destFinf = {};
-					for( let a in mc.fileInfo )
-					{
-					    destFinf[ a ] = mc.fileInfo[ a ];
-					}
-					destFinf.Path = destPath;
-					doCopy = true;
+				    if( destPath.indexOf( '/' ) > 0 )
+				    {
+				        destPath = destPath.split( '/' );
+				        destPath.pop();
+				        destPath = destPath.join( '/' );
+				        destPath += '/';
+				    }
 				}
+				else if( destPath.substr( -1, 1 ) != ':' && !destPath.indexOf( '/' ) )
+				{
+				    if( destPath.indexOf( ':' ) > 0 )
+				    {
+			            destPath = destPath.split( ':' );
+			            destPath.pop();
+			            destPath = destPath.join( ':' );
+			            destPath += ':';
+			        }
+				}
+				destFinf = {};
+				for( let a in mc.fileInfo )
+				{
+				    destFinf[ a ] = mc.fileInfo[ a ];
+				}
+				destFinf.Path = destPath;
+				doCopy = true;
 			}
 			
 			Workspace.menuContext = null;
@@ -4829,7 +4845,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					let fn = ( clip[b].fileInfo.NewFilename ? clip[b].fileInfo.NewFilename : clip[b].fileInfo.Filename );
 					fn = fn.split( ' ' ).join( '\\ ' );
 					let copyStr = 'copy ' + source + ' to ' + destin + fn;
-					
 					sh.parseScript( copyStr, function()
 					{
 						if( cliplen-- == 0 )
