@@ -5278,10 +5278,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 						//str += '	<div class="PaddingSmall HContent100 FloatLeft Ellipsis">';
 						//str += '		<span name="' + groups[a].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>';
 						
-						str += '	<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit">';
+						str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 						str += '		<span name="' + groups[a].Name + '" class="IconMedium fa-users"></span>';
 						str += '	</div>';
-						str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent94 FloatLeft Ellipsis">' + groups[a].Name+ '</div>';
+						str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent94 InputHeight FloatLeft Ellipsis">' + groups[a].Name+ '</div>';
 						
 						//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 						//str += '		<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
@@ -5305,11 +5305,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 								//str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>';
 								//str += '	</div>';
 								
-								str += '	<div class="TextCenter HContent4 FloatLeft PaddingSmall" style="min-width:25px"></div>';
-								str += '	<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit">';
+								str += '	<div class="TextCenter HContent4 InputHeight FloatLeft PaddingSmall" style="min-width:25px"></div>';
+								str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 								str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconMedium fa-users"></span>';
 								str += '	</div>';
-								str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent88 FloatLeft Ellipsis">' + groups[a].groups[aa].Name + '</div>';
+								str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent88 InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].Name + '</div>';
 								
 								//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 								//str += '		<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
@@ -5333,11 +5333,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 										//str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>';
 										//str += '	</div>';
 										
-										str += '	<div class="TextCenter HContent8 FloatLeft PaddingSmall" style="min-width:50px"></div>';
-										str += '	<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit">';
+										str += '	<div class="TextCenter HContent8 InputHeight FloatLeft PaddingSmall" style="min-width:50px"></div>';
+										str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 										str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconMedium fa-users"></span>';
 										str += '	</div>';
-										str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent82 FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + '</div>';
+										str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent82 InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + '</div>';
 										
 										//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 										//str += '		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
@@ -5396,7 +5396,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												{
 													var b = document.createElement( 'button' );
 													b.id = 'WorkgroupEditBack';
-													b.className = 'IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed';
+													b.className = 'IconButton IconMedium ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed';
 													return b;
 												}()
 											},
