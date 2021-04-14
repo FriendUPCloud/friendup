@@ -29,12 +29,12 @@
 
 BufStringDisk *BufStringDiskNew(void)
 {
-	BufStringDisk *str = FCalloc(sizeof(BufStringDisk), 1 );
-	if( str != NULL)
+	BufStringDisk *str = NULL;
+	if( (str = FCalloc(sizeof(BufStringDisk), 1 )) != NULL)
 	{
-		str->bsd_Size = 0;
+		//str->bsd_Size = 0;
 		str->bsd_Bufsize = BUF_STRING_DISK_MAX;
-		str->bsd_Buffer = FCalloc( str->bsd_Bufsize+1, sizeof(char) );
+		str->bsd_Buffer = FCalloc( (str->bsd_Bufsize+1), sizeof(char) );
 		str->bsd_BufferIncrements = 0;
 	}
 	return str;
