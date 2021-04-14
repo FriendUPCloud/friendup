@@ -350,6 +350,9 @@ i18n_fail_unmount_more               : Could not unmount device.
 i18n_cannot_edit_workgroup_drive     : Cannot edit Workgroup drive
 i18n_workgroup_drive_edit_in         : Edit Workgroup drive in "Workgroups" section
 
+i18n_unlock_workgroup_failed         : Unlock Workgroup Failed
+i18n_cannot_unlock_workgroup         : Cannot unlock Workgroup, remove Subworkgroups first. 
+
 #Liberator related
 
 i18n_liberator_name                  : Name

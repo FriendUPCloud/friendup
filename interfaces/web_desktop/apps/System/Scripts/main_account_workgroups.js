@@ -1883,6 +1883,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 		var users      = ( workgroup.users ? workgroup.users : [] );
 		var list       = ( info.users      ? info.users      : [] );
 		
+		let groups = {};
+		
 		if( ShowLog/* || 1==1*/ ) console.log( 'initDetails() ', info );
 		
 		// Workgroups
@@ -2232,6 +2234,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 						//if( self.className.indexOf( 'fa-lock' ) >= 0 )
 						if( self.className.indexOf( 'fa-unlock-alt' ) >= 0 )
 						{
+							
+							if( groups && workgroup.groupid > 0 && groups[ workgroup.groupid ].groups.length > 0 )
+							{
+								Notify( { title: i18n( 'i18n_unlock_workgroup_failed' ), text: i18n( 'i18n_cannot_unlock_workgroup' ) } );
+								return;
+							}
+							
 							// Unlock workgroup ...
 							
 							if( info.ID )
@@ -2434,7 +2443,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 								
 								this.head();
 								
-								groups = {};
+								// Groups are set higher up to be used in other places in the scope.
+								
+								groups = ( groups ? groups : {} );
 								
 								workgroups = ( wgroups ? wgroups : workgroups );
 								
