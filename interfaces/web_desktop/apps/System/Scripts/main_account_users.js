@@ -6004,16 +6004,19 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 											};
 										}
-							
-										var inp = ge( 'AdminStartupContainer' ).getElementsByTagName( 'input' )[0];
-										inp.onkeyup = function( e )
+										
+										if( ge( 'AdminStartupContainer' ) )
 										{
-											init.searchstartup( this.value );
-										}
-										ge( 'StartupSearchCancelBtn' ).onclick = function( e )
-										{
-											init.searchstartup( false );
-											inp.value = '';
+											var inp = ge( 'AdminStartupContainer' ).getElementsByTagName( 'input' )[0];
+											inp.onkeyup = function( e )
+											{
+												init.searchstartup( this.value );
+											}
+											ge( 'StartupSearchCancelBtn' ).onclick = function( e )
+											{
+												init.searchstartup( false );
+												inp.value = '';
+											}
 										}
 							
 										// Show listed startup ... 
