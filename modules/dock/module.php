@@ -146,6 +146,7 @@ if( isset( $args->command ) )
 			{
 				if( $level != 'Admin' ) die('fail<!--separate-->not authorized to add dockitems');
 			}
+			$debug = false/*true*/;
 			//prepare....
 			$userid = ( $args->args->userID ? intval( $args->args->userID ) : $User->ID );
 			$s = filter_var( $args->args->name, FILTER_SANITIZE_STRING );
@@ -160,7 +161,7 @@ if( isset( $args->command ) )
 			}
 			if( $SqlDatabase->Query( $q ) )
 			{
-				die( 'ok<!--separate-->{"response":1,"message":"Dock item(s) removed","item":"' . $s . '"}' );
+				die( 'ok<!--separate-->{"response":1,"message":"Dock item(s) removed","item":"' . $s . '"' . ( $debug ? ',"debug":"' . $q . '"' : '' ) . '}' );
 			}
 			die( 'fail<!--separate-->{"response":0,"message":"Could not find dock item"}' );
 			break;

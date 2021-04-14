@@ -1321,7 +1321,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 					
 										// Arrange all subgroups to parentgroups ...
 					
-										let set = [];
+										var set = [];
 					
 										for( var k in unsorted )
 										{
@@ -1387,7 +1387,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											
 											for( var a in groups )
 											{
-												let found = false;
+												var found = false;
 												if( this.wids[ groups[a].ID ] )
 												{
 													found = true;
@@ -1511,7 +1511,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							
 													for( var aa in groups[a].groups )
 													{
-														let found = false;
+														var found = false;
 														if( this.wids[ groups[a].groups[aa].ID ] )
 														{
 															found = true;
@@ -1634,7 +1634,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 															for( var aaa in groups[a].groups[aa].groups )
 															{
-																let found = false;
+																var found = false;
 																if( this.wids[ groups[a].groups[aa].groups[aaa].ID ] )
 																{
 																	found = true;
@@ -2910,11 +2910,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													if( !list[a].className || ( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) ) continue;
 												
-													let span = list[a].getElementsByTagName( 'span' )[0];
+													var span = list[a].getElementsByTagName( 'span' )[0];
 													
 													if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
 													{
-														let obj = { 
+														var obj = { 
 															sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
 															content : list[a]
 														};
@@ -2983,11 +2983,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							
 							appids : function ( soft )
 							{
-								let output = []; var ids = {};
+								var output = []; var ids = {};
 								
 								if( soft )
 								{
-									let i = 0;
+									var i = 0;
 									
 									for( var a in soft )
 									{
@@ -3006,18 +3006,20 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									}
 									
 								}
-						
+								
+								//console.log( 'appids', ids );
+								
 								return ids;
 						
 							}( soft ),
 							
 							dockids : function ( dock )
 							{
-								let output = []; var ids = {};
+								var output = []; var ids = {};
 								
 								if( dock )
 								{
-									let i = 0;
+									var i = 0;
 									
 									for( var a in dock )
 									{
@@ -3043,14 +3045,18 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									}
 									
 								}
-						
+								
+								//console.log( 'dockids', ids );
+								
 								return ids;
 						
 							}( dock ),
 							
 							updateids : function ( mode, key, value )
 							{
-					
+								
+								// TODO: ALWAYS CHECK BEFORE CHANGING VAR TO LET, CODE BROKE !!!!
+								
 								switch( mode )
 								{
 									
@@ -3058,7 +3064,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										
 										if( this.appids )
 										{
-											let arr = []; var i = 0; var found = false;
+											var arr = []; var i = 0; var found = false;
 											
 											for( var a in this.appids )
 											{
@@ -3068,7 +3074,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													{
 														if( value[0] )
 														{
-															let obj = { Name: value[0], DockStatus: value[1] };
+															var obj = { Name: value[0], DockStatus: value[1] };
 														}
 														
 														this.appids[a] = ( value ? obj : false ); found = true;
@@ -3089,12 +3095,14 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													arr.push( value[0] + '_' + value[1] );
 													
-													let obj = { Name: value[0], DockStatus: value[1] };
+													var obj = { Name: value[0], DockStatus: value[1] };
 													
 													this.appids[ i++ ] = obj; 
 												}
 											}
-								
+											
+											//console.log( '[1] applications', arr, [ mode, key, value ] );
+											
 											if( ge( 'TempApplications' ) )
 											{
 												ge( 'TempApplications' ).setAttribute( 'value', ( arr ? arr.join( ',' ) : '' ) );
@@ -3104,11 +3112,13 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										{
 											if( value[0] )
 											{
-												let obj = { Name: value[0], DockStatus: value[1] };
+												var obj = { Name: value[0], DockStatus: value[1] };
 												
 												this.appids[0] = obj;
 											}
-								
+											
+											//console.log( '[2] applications', arr, [ mode, key, value ] );
+											
 											if( ge( 'TempApplications' ) && value[0] )
 											{
 												ge( 'TempApplications' ).setAttribute( 'value', value[0] + '_' + value[1] );
@@ -3121,7 +3131,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										
 										if( this.dockids )
 										{
-											let arr = []; var i = 0; var found = false;
+											var arr = []; var i = 0; var found = false;
 											
 											for( var a in this.dockids )
 											{
@@ -3148,6 +3158,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												this.dockids[ i++ ] = value; 
 											}
 											
+											//console.log( '[1] dock', this.dockids, [ mode, key, value ] );
 										}
 										else if( key && value )
 										{
@@ -3155,6 +3166,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											
 											this.dockids[0] = value;
 										}
+										
+										//console.log( '[2] dock', this.dockids, [ mode, key, value ] );
 										
 										break;
 							
@@ -3291,7 +3304,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													if( this.ids[a] && this.ids[a].Name )
 													{
-														let found = false;
+														var found = false;
 												
 														for( var k in apps )
 														{
@@ -3305,7 +3318,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														
 														if( !found ) continue;
 											
-														let divs = appendChild( [
+														var divs = appendChild( [
 															{ 
 																'element' : function() 
 																{
@@ -3420,6 +3433,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																										{	
 																											// TODO: Look at dock refresh, doesn't get latest info ...
 																											
+																											vars.func.updateids( 'dock', args.name, false );
+																											
 																											vars.func.dock( 'refresh' );
 																										}
 																						
@@ -3482,7 +3497,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											{
 												if( apps[k] && apps[k].Name )
 												{
-													let found = false;
+													var found = false;
 													
 													if( this.ids )
 													{
@@ -3495,7 +3510,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														}
 													}
 											
-													let divs = appendChild( [
+													var divs = appendChild( [
 														{ 
 															'element' : function() 
 															{
@@ -3684,11 +3699,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
 				
-													let span = list[a].getElementsByTagName( 'span' )[0];
+													var span = list[a].getElementsByTagName( 'span' )[0];
 				
 													if( span )
 													{
-														let param = [
+														var param = [
 															( " " + span.getAttribute( 'name' ).toLowerCase() + " " ), 
 															( " " + span.getAttribute( 'category' ).toLowerCase() + " " )
 														];
@@ -3700,7 +3715,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														{
 															list[a].style.display = '';
 						
-															let div = list[a].getElementsByTagName( 'div' );
+															var div = list[a].getElementsByTagName( 'div' );
 						
 															if( div.length )
 															{
@@ -3763,11 +3778,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
 					
-													let span = list[a].getElementsByTagName( 'span' )[0];
+													var span = list[a].getElementsByTagName( 'span' )[0];
 					
 													if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
 													{
-														let obj = { 
+														var obj = { 
 															sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
 															content : list[a]
 														};
@@ -4093,7 +4108,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													if( this.ids[a] && this.ids[a].Name )
 													{
-														let found = false;
+														var found = false;
 											
 														for( var k in apps )
 														{
@@ -4107,7 +4122,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														
 														if( !found ) continue;
 											
-														let divs = appendChild( [
+														var divs = appendChild( [
 															{ 
 																'element' : function() 
 																{
@@ -4345,7 +4360,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													if( this.func.appids[a] && this.func.appids[a].Name )
 													{
-														let found = false; var toggle = false;
+														var found = false; var toggle = false;
 												
 														for( var k in apps )
 														{
@@ -4372,7 +4387,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														
 														if( !found ) continue;
 											
-														let divs = appendChild( [
+														var divs = appendChild( [
 															{ 
 																'element' : function() 
 																{
@@ -4545,11 +4560,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
 				
-													let span = list[a].getElementsByTagName( 'span' )[0];
+													var span = list[a].getElementsByTagName( 'span' )[0];
 				
 													if( span )
 													{
-														let param = [
+														var param = [
 															( " " + span.getAttribute( 'name' ).toLowerCase() + " " ), 
 															( " " + span.getAttribute( 'category' ).toLowerCase() + " " )
 														];
@@ -4561,7 +4576,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														{
 															list[a].style.display = '';
 						
-															let div = list[a].getElementsByTagName( 'div' );
+															var div = list[a].getElementsByTagName( 'div' );
 						
 															if( div.length )
 															{
@@ -4624,11 +4639,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
 					
-													let span = list[a].getElementsByTagName( 'span' )[0];
+													var span = list[a].getElementsByTagName( 'span' )[0];
 					
 													if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
 													{
-														let obj = { 
+														var obj = { 
 															sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
 															content : list[a]
 														};
@@ -4695,9 +4710,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									sortup : function ( order, callback, vars )
 									{
 										
-										let num = 0; var array = []; var found = null;
+										// TODO: LOOK AT FUNCTIONALITY AND IMPLICATIONS BEFORE CHANGING IT TO LET INSTEAD OF VAR ...
 										
-										let current = false; var past = false;
+										var num = 0; var array = []; var found = null;
+										
+										var current = false; var past = false;
 										
 										if( this.ids && typeof order !== "undefined" )
 										{
@@ -4729,8 +4746,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											
 													if( typeof this.ids[ array[ found ] ] !== "undefined" && typeof this.ids[ array[ found-1 ] ] !== "undefined" )
 													{
-														let current = this.ids[ array[ found   ] ];
-														let past    = this.ids[ array[ found-1 ] ];
+														var current = this.ids[ array[ found   ] ];
+														var past    = this.ids[ array[ found-1 ] ];
 												
 														if( current && past )
 														{
@@ -4744,6 +4761,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													}
 												}
 											}
+											
+											//console.log( { ids: this.ids, order: order, vars: vars, found: found, array: array, current: current, past: past } );
 											
 											if( current && past )
 											{
@@ -4761,10 +4780,12 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							
 									sortdown : function ( order, callback, vars )
 									{
-																		
-										let num = 0; var array = []; var found = null;
 										
-										let current = false; var past = false;
+										// TODO: LOOK AT FUNCTIONALITY AND IMPLICATIONS BEFORE CHANGING IT TO LET INSTEAD OF VAR ...
+															
+										var num = 0; var array = []; var found = null;
+										
+										var current = false; var past = false;
 										
 										if( this.ids && typeof order !== "undefined" )
 										{
@@ -4794,8 +4815,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											
 													if( typeof this.ids[ array[ found ] ] !== "undefined" && typeof this.ids[ array[ found+1 ] ] !== "undefined" )
 													{
-														let current = this.ids[ array[ found   ] ];
-														let past    = this.ids[ array[ found+1 ] ];
+														var current = this.ids[ array[ found   ] ];
+														var past    = this.ids[ array[ found+1 ] ];
 														
 														if( current && past )
 														{
@@ -4809,6 +4830,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													}
 												}
 											}
+											
+											//console.log( { ids: this.ids, order: order, vars: vars, found: found, array: array, current: current, past: past } );
 											
 											if( current && past )
 											{
@@ -10561,7 +10584,7 @@ function removeApplication( appName, userId, callback, vars )
 	let m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
-		if( ShowLog ) console.log( 'removeApplication ', { e:e, d:d } );
+		if( ShowLog ) console.log( 'removeApplication ', { e:e, d:d, args: { application: appName, userid: userId, authid: Application.authId } } );
 		
 		if( e == 'ok' )
 		{
@@ -10601,7 +10624,7 @@ function removeDockItem( appName, userId, callback, vars )
 			if( callback ) callback( false, d, vars );
 		}
 	}
-	m.execute( 'removefromdock', { userID: userId, name: appName, type: '' } );
+	m.execute( 'removefromdock', { userID: userId, name: appName/*, type: ''*/ } );
 }
 
 Sections.user_disk_remove = function( devname, did, userid )
