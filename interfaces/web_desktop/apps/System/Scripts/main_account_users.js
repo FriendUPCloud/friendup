@@ -5092,6 +5092,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 															var d = document.createElement( 'div' );
 															d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft';
 															d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+															d.style.cursor = 'pointer';
 															d.ele = this;
 															d.onclick = function(  )
 															{
@@ -5106,6 +5107,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 															var d = document.createElement( 'div' );
 															d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 FloatLeft Relative';
 															d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
+															d.style.cursor = 'pointer';
 															d.ele = this;
 															d.onclick = function(  )
 															{

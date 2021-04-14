@@ -1599,6 +1599,7 @@ Sections.accounts_templates = function( cmd, extra )
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft';
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+													d.style.cursor = 'pointer';
 													d.onclick = function(  )
 													{
 														sortApps( 'Name' );
@@ -1612,6 +1613,7 @@ Sections.accounts_templates = function( cmd, extra )
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmallLeft PaddingSmallRight HContent45 FloatLeft Relative';
 													d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
+													d.style.cursor = 'pointer';
 													d.onclick = function(  )
 													{
 														sortApps( 'Category' );
@@ -2369,6 +2371,7 @@ Sections.accounts_templates = function( cmd, extra )
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft';
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+													d.style.cursor = 'pointer';
 													d.ele = this;
 													d.onclick = function(  )
 													{
@@ -2383,6 +2386,7 @@ Sections.accounts_templates = function( cmd, extra )
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 FloatLeft Relative';
 													d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
+													d.style.cursor = 'pointer';
 													d.ele = this;
 													d.onclick = function(  )
 													{
@@ -3318,6 +3322,7 @@ Sections.accounts_templates = function( cmd, extra )
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft';
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+													d.style.cursor = 'pointer';
 													d.ele = this;
 													d.onclick = function(  )
 													{
@@ -3332,6 +3337,7 @@ Sections.accounts_templates = function( cmd, extra )
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 FloatLeft Relative';
 													d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
+													d.style.cursor = 'pointer';
 													d.ele = this;
 													d.onclick = function(  )
 													{
