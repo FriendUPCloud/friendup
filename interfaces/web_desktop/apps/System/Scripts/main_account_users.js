@@ -5071,7 +5071,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 									head : function ( hidecol )
 									{
-										var o = ge( 'StartupGui' ); o.innerHTML = '<input type="hidden" id="TempStartup">';
+										var o = ge( 'StartupGui' ); if( o ) o.innerHTML = '<input type="hidden" id="TempStartup">';
 							
 										this.func.updateids( 'startup' );
 							
@@ -5169,7 +5169,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										{
 											this.head();
 								
-											var o = ge( 'StartupInner' ); o.innerHTML = '';
+											var o = ge( 'StartupInner' ); if( o ) o.innerHTML = '';
 								
 											if( this.ids )
 											{
@@ -5416,7 +5416,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										{
 											this.head( true );
 								
-											var o = ge( 'StartupInner' ); o.innerHTML = '';
+											var o = ge( 'StartupInner' ); if( o ) o.innerHTML = '';
 											
 											if( this.func.appids )
 											{
