@@ -213,7 +213,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 			// Show the form
 			function initUsersDetails( info, show, first )
 			{
-				// TODO: implement abort function ...
+				
 				
 				// Some shortcuts
 				let userInfo          = ( info.userInfo ? info.userInfo : {} );
@@ -225,8 +225,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				let soft              = ( info.software ? info.software : {} );
 				let apps              = ( info.applications ? info.applications : {} );
 				let dock              = ( info.dock ? info.dock : {} );
+				let star              = ( workspaceSettings.startupsequence && workspaceSettings.startupsequence != "[]" ? workspaceSettings.startupsequence : [] );
 				
-				if( ShowLog ) console.log( 'initUsersDetails( info ) ', info );		
+				if( /*1==1 || */ShowLog ) console.log( 'initUsersDetails( info ) ', info );		
 				
 				let func = {
 					
@@ -3052,6 +3053,29 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 							}( dock ),
 							
+							startids : function ( star )
+							{
+								var ids = {};
+								
+								if( star )
+								{
+									if( ShowLog ) console.log( 'star ', star );
+							
+									var i = 0;
+							
+									for( var a in star )
+									{
+										if( star[a] && star[a].split( 'launch ' )[1] )
+										{
+											ids[ i++ ] = star[a];
+										}
+									}
+								}
+						
+								return ids;
+							
+							}( star ),
+							
 							updateids : function ( mode, key, value )
 							{
 								
@@ -3170,12 +3194,60 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										//console.log( '[2] dock', this.dockids, [ mode, key, value ] );
 										
 										break;
-							
+									
+									case 'startup':
+										
+										if( ge( 'TempStartup' ) )
+										{
+											if( this.startids )
+											{
+												var arr = []; var i = 0;
+										
+												for( var a in this.startids )
+												{
+													if( this.startids[a] && this.startids[a].split( 'launch ' )[1] )
+													{
+														if( key && this.startids[a].split( 'launch ' )[1].toLowerCase() == key.toLowerCase() )
+														{
+															this.startids[a] = ( value ? value : false ); found = true;
+														}
+												
+														arr.push( this.startids[a] );
+													}
+											
+													i++;
+												}
+										
+												if( key && value && !found )
+												{
+													if( value.split( 'launch ' )[1] )
+													{
+														arr.push( value );
+												
+														this.startids[ i++ ] = value; 
+													}
+												}
+										
+												if( ShowLog ) console.log( 'startup ', this.startids );
+										
+												if( ge( 'TempStartup' ) )
+												{
+													ge( 'TempStartup' ).setAttribute( 'value', ( arr ? arr.join( ',' ) : '' ) );
+												}
+											}
+											else if( key && value )
+											{
+												this.startids[0] = value;
+											}
+										}
+								
+										break;
+									
 								}
 					
 							},
 							
-							mode : { applications : 'list', dock : 'list' },
+							mode : { applications : 'list', dock : 'list', startup : 'list' },
 							
 							// Applications ------------------------------------------------------------------------------------
 							
@@ -3436,6 +3508,12 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																											vars.func.updateids( 'dock', args.name, false );
 																											
 																											vars.func.dock( 'refresh' );
+																											
+																											args.func.updateids( 'startup', args.name, false );
+																							
+																											updateStartup( userInfo.ID );
+																											
+																											vars.func.startup( 'refresh' );
 																										}
 																						
 																									}
@@ -3616,6 +3694,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																									if( vars.func )
 																									{
 																										vars.func.dock( 'refresh' );
+																										vars.func.startup( 'refresh' );
 																									}
 																						
 																								}
@@ -3632,6 +3711,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																							
 																							func.updateids( 'applications', name, false );
 																							
+																							func.updateids( 'startup', name, false );
+																							
+																							updateStartup( userInfo.ID );
+																							
 																							removeApplication( name, userInfo.ID, function( e, d, vars )
 																							{
 																					
@@ -3641,6 +3724,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																									if( vars.func )
 																									{
 																										vars.func.dock( 'refresh' );
+																										vars.func.startup( 'refresh' );
 																									}
 																						
 																								}
@@ -4971,9 +5055,979 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 							},
 							
+							// Startup -----------------------------------------------------------------------------------------
+							
+							startup : function ( func )
+							{
+					
+								// Editing Startup
+					
+								var init =
+								{
+						
+									func : this,
+						
+									ids  : this.startids,
+						
+									head : function ( hidecol )
+									{
+										var o = ge( 'StartupGui' ); o.innerHTML = '<input type="hidden" id="TempStartup">';
+							
+										this.func.updateids( 'startup' );
+							
+										var divs = appendChild( [ 
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+													d.className = 'HRow BackgroundNegative Negative Padding';
+													return d;
+												}(),
+												'child' : 
+												[ 
+													{ 
+														'element' : function( _this ) 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft';
+															d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+															d.ele = this;
+															d.onclick = function(  )
+															{
+																_this.sortstartup( 'Name' );
+															};
+															return d;
+														}( this ) 
+													}, 
+													{ 
+														'element' : function( _this ) 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 FloatLeft Relative';
+															d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
+															d.ele = this;
+															d.onclick = function(  )
+															{
+																_this.sortstartup( 'Category' );
+															};
+															return d;
+														}( this )
+													},
+													{ 
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+															d.innerHTML = '<strong>' + i18n( 'i18n_order' ) + '</strong>';
+															return d;
+														}()
+													},
+													{ 
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent10 FloatLeft Relative';
+															return d;
+														}()
+													}
+												]
+											},
+											{
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'HRow Box Padding';
+													d.style.overflow = 'auto';
+													d.style.maxHeight = '366px';
+													d.id = 'StartupInner';
+													return d;
+												}()
+											}
+										] );
+					
+										if( divs )
+										{
+											for( var i in divs )
+											{
+												if( divs[i] && o )
+												{
+													o.appendChild( divs[i] );
+												}
+											}
+										}
+							
+									},
+						
+									list : function (  )
+									{
+										this.func.mode[ 'startup' ] = 'list';
+							
+										if( apps )
+										{
+											this.head();
+								
+											var o = ge( 'StartupInner' ); o.innerHTML = '';
+								
+											if( this.ids )
+											{
+												for( var a in this.ids )
+												{
+													if( this.ids[a] && this.ids[a].split( 'launch ' )[1] )
+													{
+														var found = false;
+											
+														for( var k in apps )
+														{
+															if( this.ids[a] && this.ids[a].split( 'launch ' )[1] == apps[k].Name )
+															{
+																//found = true;
+													
+																break;
+															}
+														}
+										
+														if( this.func.appids )
+														{
+															for( var i in this.func.appids )
+															{
+																if( this.func.appids[i] && this.func.appids[i].Name && this.ids[a].split( 'launch ' )[1] == this.func.appids[i].Name )
+																{
+																	found = true;
+																}
+															}
+														}
+											
+														if( !found ) 
+														{
+															this.func.updateids( 'startup', this.ids[a].split( 'launch ' )[1], false );
+												
+															continue;
+														}
+										
+														var divs = appendChild( [
+															{ 
+																'element' : function() 
+																{
+																	var d = document.createElement( 'div' );
+																	d.className = 'HRow';
+																	return d;
+																}(),
+																'child' : 
+																[ 
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																			return d;
+																		}(),
+																		 'child' : 
+																		[ 
+																			{ 
+																				'element' : function() 
+																				{
+																					var d = document.createElement( 'span' );
+																					d.setAttribute( 'Name', apps[k].Name );
+																					d.setAttribute( 'Category', apps[k].Category );
+																					d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																					d.style.backgroundSize = 'contain';
+																					d.style.width = '24px';
+																					d.style.height = '24px';
+																					d.style.display = 'block';
+																					return d;
+																				}(), 
+																				 'child' : 
+																				[ 
+																					{
+																						'element' : function() 
+																						{
+																							var d = document.createElement( 'div' );
+																							if( apps[k].Preview )
+																							{
+																								d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
+																								d.style.backgroundSize = 'contain';
+																								d.style.width = '24px';
+																								d.style.height = '24px';
+																							}
+																							return d;
+																						}()
+																					}
+																				]																		
+																			}
+																		] 
+																	},
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis';
+																			d.innerHTML = '<strong class="PaddingSmallRight">' + apps[k].Name + '</strong>';
+																			return d;
+																		}() 
+																	},
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent25 InputHeight FloatLeft Ellipsis';
+																			d.innerHTML = '<span class="PaddingSmallLeft PaddingSmallRight">' + apps[k].Category + '</span>';
+																			return d;
+																		}() 
+																	}, 
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'HContent25 InputHeight TextCenter FloatLeft Ellipsis';
+																			return d;
+																		}(),
+																		'child' : 
+																		[ 
+																			{ 
+																				'element' : function( order, _this ) 
+																				{
+																					var b = document.createElement( 'button' );
+																					b.className = 'IconButton IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
+																					b.onclick = function(  )
+																					{
+																		
+																						_this.sortdown( order, function()
+																						{
+																							
+																							// TODO: Make a callback here to let the user know if it was saved or not.
+																							
+																							updateStartup( userInfo.ID );
+																				
+																						} );
+																		
+																					};
+																					return b;
+																				}( a, this ) 
+																			},
+																			{ 
+																				'element' : function( order, _this ) 
+																				{
+																					var b = document.createElement( 'button' );
+																					b.className = 'IconButton IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
+																					b.onclick = function()
+																					{
+																		
+																						_this.sortup( order, function()
+																						{
+																				
+																							// TODO: Make a callback here to let the user know if it was saved or not.
+																							
+																							updateStartup( userInfo.ID );
+																				
+																						} );
+																		
+																					};
+																					return b;
+																				}( a, this ) 
+																			}
+																		] 
+																	}, 
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'HContent10 FloatLeft';
+																			return d;
+															
+																		}(),
+																		'child' : 
+																		[ 
+																			{ 
+																				'element' : function( ids, name, func ) 
+																				{
+																					var b = document.createElement( 'button' );
+																					b.className = 'IconButton IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																					b.onclick = function(  )
+																					{
+																		
+																						var pnt = this.parentNode.parentNode;
+																		
+																						removeBtn( this, { ids: ids, name: name, func: func, pnt: pnt }, function ( args )
+																						{
+																			
+																							//ids[ name ] = false;
+																			
+																							args.func.updateids( 'startup', args.name, false );
+																							
+																							updateStartup( userInfo.ID, function( e, d, vars )
+																							{
+																			
+																								if( e && vars )
+																								{
+																				
+																									if( vars.pnt )
+																									{
+																										vars.pnt.innerHTML = '';
+																									}
+																				
+																								}
+																								else
+																								{
+																									if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																								}
+																			
+																							}, { pnt: args.pnt } );
+																			
+																						} );
+																		
+																					};
+																					return b;
+																				}( this.ids, apps[k].Name, this.func ) 
+																			}
+																		]
+																	}
+																]
+															}
+														] );
+										
+														if( divs )
+														{
+															for( var i in divs )
+															{
+																if( divs[i] && o )
+																{
+																	o.appendChild( divs[i] );
+																}
+															}
+														}
+													}
+												}
+								
+											}
+								
+										}
+								
+									},
+						
+									edit : function (  )
+									{
+							
+										this.func.mode[ 'startup' ] = 'edit';
+							
+										if( apps )
+										{
+											this.head( true );
+								
+											var o = ge( 'StartupInner' ); o.innerHTML = '';
+											
+											if( this.func.appids )
+											{
+												for( var a in this.func.appids )
+												{
+													if( this.func.appids[a] && this.func.appids[a].Name )
+													{
+														var found = false; var toggle = false;
+											
+														for( var k in apps )
+														{
+															if( apps[k] && apps[k].Name == this.func.appids[a].Name )
+															{
+																found = true;
+													
+																if( this.ids )
+																{
+																	for( var i in this.ids )
+																	{
+																		if( this.ids[i] && this.ids[i].split( 'launch ' )[1] == apps[k].Name )
+																		{
+																			toggle = true;
+																
+																			break;
+																		}
+																	}
+																}
+													
+																break;
+															}
+														}
+											
+														if( !found ) continue;
+										
+														var divs = appendChild( [
+															{ 
+																'element' : function() 
+																{
+																	var d = document.createElement( 'div' );
+																	d.className = 'HRow';
+																	return d;
+																}(),
+																'child' : 
+																[ 
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																			return d;;
+																		}(),
+																		 'child' : 
+																		[ 
+																			{ 
+																				'element' : function() 
+																				{
+																					var d = document.createElement( 'span' );
+																					d.setAttribute( 'Name', apps[k].Name );
+																					d.setAttribute( 'Category', apps[k].Category );
+																					d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																					d.style.backgroundSize = 'contain';
+																					d.style.width = '24px';
+																					d.style.height = '24px';
+																					d.style.display = 'block';
+																					return d;
+																				}(), 
+																				 'child' : 
+																				[ 
+																					{
+																						'element' : function() 
+																						{
+																							var d = document.createElement( 'div' );
+																							if( apps[k].Preview )
+																							{
+																								d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
+																								d.style.backgroundSize = 'contain';
+																								d.style.width = '24px';
+																								d.style.height = '24px';
+																							}
+																							return d;
+																						}()
+																					}
+																				]
+																			}
+																		] 
+																	},
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis';
+																			d.innerHTML = '<strong class="PaddingSmallRight">' + apps[k].Name + '</strong>';
+																			return d;
+																		}() 
+																	}, 
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent45 InputHeight FloatLeft Ellipsis';
+																			d.innerHTML = '<span class="PaddingSmallLeft PaddingSmallRight">' + apps[k].Category + '</span>';
+																			return d;
+																		}() 
+																	},
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																			return d;
+																		}(),
+																		'child' : 
+																		[ 
+																			{ 
+																				'element' : function( ids, name, func ) 
+																				{
+																		
+																					var b = CustomToggle( 'sid_'+name, 'FloatRight', null, function (  )
+																					{
+																		
+																						if( this.checked )
+																						{
+																				
+																							func.updateids( 'startup', name, ( 'launch ' + name ) );
+																							
+																							updateStartup( userInfo.ID, function( e, d, vars )
+																							{
+																			
+																								if( e && vars )
+																								{
+																						
+																									vars._this.checked = true;
+																				
+																								}
+																								else
+																								{
+																									if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																						
+																									vars._this.checked = false;
+																						
+																								}
+																			
+																							}, { _this: this } );
+																				
+																						}
+																						else
+																						{
+																				
+																							func.updateids( 'startup', name, false );
+																							
+																							updateStartup( userInfo.ID, function( e, d, vars )
+																							{
+																			
+																								if( e && vars )
+																								{
+																					
+																									vars._this.checked = false;
+																					
+																								}
+																								else
+																								{
+																									if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																						
+																									vars._this.checked = true;
+																						
+																								}
+																			
+																							}, { _this: this } );
+																							
+																						}
+																		
+																					}, ( toggle ? true : false ), 1 );
+																		
+																					return b;
+																				}( this.ids, apps[k].Name, this.func ) 
+																			}
+																		]
+																	}
+																]
+															}
+														] );
+										
+														if( divs )
+														{
+															for( var i in divs )
+															{
+																if( divs[i] && o )
+																{
+																	o.appendChild( divs[i] );
+																}
+															}
+														}
+													}
+												}
+								
+											}
+								
+										}
+							
+										// Sort default by Name ASC
+										this.sortstartup( 'Name', 'ASC' );
+							
+									},
+						
+									refresh : function (  )
+									{
+							
+										switch( this.func.mode[ 'startup' ] )
+										{
+								
+											case 'list':
+									
+												this.list();
+									
+												break;
+									
+											case 'edit':
+									
+												this.edit();
+									
+												break;
+									
+										}
+							
+									},
+						
+									searchstartup : function ( filter, server )
+									{
+							
+										//
+							
+										if( ge( 'StartupInner' ) )
+										{
+											var list = ge( 'StartupInner' ).getElementsByTagName( 'div' );
+
+											if( list.length > 0 )
+											{
+												for( var a = 0; a < list.length; a++ )
+												{
+													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+	
+													var span = list[a].getElementsByTagName( 'span' )[0];
+	
+													if( span )
+													{
+														var param = [
+															( " " + span.getAttribute( 'name' ).toLowerCase() + " " ), 
+															( " " + span.getAttribute( 'category' ).toLowerCase() + " " )
+														];
+											
+														if( !filter || filter == ''  
+														|| span.getAttribute( 'name' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+														|| span.getAttribute( 'category' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+														)
+														{
+															list[a].style.display = '';
+			
+															var div = list[a].getElementsByTagName( 'div' );
+			
+															if( div.length )
+															{
+																for( var i in div )
+																{
+																	if( div[i] && div[i].className && ( div[i].className.indexOf( 'name' ) >= 0 || div[i].className.indexOf( 'category' ) >= 0 ) )
+																	{
+																		// TODO: Make text searched for ...
+																	}
+																}
+															}
+														}
+														else
+														{
+															list[a].style.display = 'none';
+														}
+													}
+												}
+
+											}
+								
+											if( ge( 'StartupSearchCancelBtn' ) )
+											{
+												if( !filter && ( ge( 'StartupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'StartupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+												{
+													ge( 'StartupSearchCancelBtn' ).classList.remove( 'Open' );
+													ge( 'StartupSearchCancelBtn' ).classList.add( 'Closed' );
+												}
+									
+												else if( filter != '' && ( ge( 'StartupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'StartupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+												{
+													ge( 'StartupSearchCancelBtn' ).classList.remove( 'Closed' );
+													ge( 'StartupSearchCancelBtn' ).classList.add( 'Open' );
+												}
+											}
+										}
+							
+									},
+						
+									sortstartup : function ( sortby, orderby )
+									{
+
+										//
+
+										var _this = ge( 'StartupInner' );
+
+										if( _this )
+										{
+											orderby = ( orderby ? orderby : ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' ) );
+								
+											var list = _this.getElementsByTagName( 'div' );
+
+											if( list.length > 0 )
+											{
+												var output = [];
+	
+												var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+	
+												for( var a = 0; a < list.length; a++ )
+												{
+													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+		
+													var span = list[a].getElementsByTagName( 'span' )[0];
+		
+													if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
+													{
+														var obj = { 
+															sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+															content : list[a]
+														};
+		
+														output.push( obj );
+													}
+												}
+	
+												if( output.length > 0 )
+												{
+													// Sort ASC default
+		
+													output.sort( callback );
+		
+													// Sort DESC
+		
+													if( orderby == 'DESC' ) 
+													{ 
+														output.reverse();  
+													}
+		
+													_this.innerHTML = '';
+		
+													_this.setAttribute( 'orderby', orderby );
+		
+													for( var key in output )
+													{
+														if( output[key] && output[key].content )
+														{
+															// Add row
+															_this.appendChild( output[key].content );
+														}
+													}
+												}
+											}
+										}
+
+										//console.log( output );
+									},
+						
+									// TODO: Check this function, top doesn't sort properly after one click ...
+						
+									sortup : function ( order, callback )
+									{
+							
+										if( ShowLog ) console.log( 'TODO: sortup: ' + order + ' ', this.ids );
+							
+										if( ShowLog ) console.log( 'star: ', star );
+							
+										var num = 0; var array = []; var found = null;
+							
+										if( this.ids && typeof order !== "undefined" )
+										{
+											for( var a in this.ids )
+											{
+												if( this.ids[a] && this.ids[a].split( 'launch ' )[1] )
+												{
+										
+													// 
+										
+													if( ShowLog ) console.log( { a:a, num:num } );
+										
+													if( order == a && typeof this.ids[ order ] !== "undefined" )
+													{
+														found = num;
+													}
+										
+													array.push( a );
+										
+													num++;
+												}
+											}
+								
+											if( ShowLog ) console.log( { array: array, found: found, past: array[ found-1 ] } );
+								
+											if( array && typeof found !== "undefined" )
+											{
+									
+												// 
+									
+												if( typeof array[ found ] !== "undefined" && typeof array[ found-1 ] !== "undefined" )
+												{
+										
+													if( typeof this.ids[ array[ found ] ] !== "undefined" && typeof this.ids[ array[ found-1 ] ] !== "undefined" )
+													{
+														var current = this.ids[ array[ found   ] ];
+														var past    = this.ids[ array[ found-1 ] ];
+											
+														if( current && past )
+														{
+												
+															// 
+												
+															this.ids[ array[ found   ] ] = past;
+															this.ids[ array[ found-1 ] ] = current;
+												
+														}
+													}
+												}
+											}
+								
+											if( ShowLog ) console.log( this.ids );
+								
+											this.refresh();
+								
+											if( callback ) return callback( true );
+										}
+							
+									},
+						
+									sortdown : function ( order, callback )
+									{
+							
+										if( ShowLog ) console.log( 'TODO: sortdown: ' + order + ' ', this.ids );
+							
+										if( ShowLog ) console.log( 'star: ', star );
+							
+										var num = 0; var array = []; var found = null;
+							
+										if( this.ids && typeof order !== "undefined" )
+										{
+											for( var a in this.ids )
+											{
+												if( this.ids[a] && this.ids[a].split( 'launch ' )[1] )
+												{
+										
+													// 
+										
+													if( ShowLog ) console.log( { a:a, num:num } );
+										
+													if( order == a && typeof this.ids[ order ] !== "undefined" )
+													{
+														found = num;
+													}
+										
+													array.push( a );
+										
+													num++;
+												}
+											}
+								
+											if( ShowLog ) console.log( { array: array, found: found, past: array[ found+1 ] } );
+								
+											if( array && typeof found !== "undefined" )
+											{
+									
+												// 
+									
+												if( typeof array[ found ] !== "undefined" && typeof array[ found+1 ] !== "undefined" )
+												{
+										
+													if( typeof this.ids[ array[ found ] ] !== "undefined" && typeof this.ids[ array[ found+1 ] ] !== "undefined" )
+													{
+														var current = this.ids[ array[ found   ] ];
+														var past    = this.ids[ array[ found+1 ] ];
+											
+														if( current && past )
+														{
+												
+															// 
+												
+															this.ids[ array[ found   ] ] = past;
+															this.ids[ array[ found+1 ] ] = current;
+												
+														}
+													}
+												}
+											}
+								
+											if( ShowLog ) console.log( this.ids );
+								
+											this.refresh();
+								
+											if( callback ) return callback( true );
+										}
+							
+									}
+						
+								};
+					
+								switch( func )
+								{
+						
+									case 'head':
+							
+										init.head();
+							
+										break;
+							
+									case 'list':
+							
+										init.list();
+							
+										break;
+							
+									case 'edit':
+							
+										init.edit();
+							
+										break;
+							
+									case 'refresh':
+							
+										init.refresh();
+							
+										break;
+						
+									default:
+							
+										var etn = ge( 'StartupEdit' );
+										if( etn )
+										{
+											etn.onclick = function( e )
+											{
+							
+												init.edit();
+							
+												// Hide add / edit button ...
+							
+												if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+												{
+													etn.classList.remove( 'Open' );
+													etn.classList.add( 'Closed' );
+												}
+							
+												// Show back button ...
+							
+												if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+												{
+													btn.classList.remove( 'Closed' );
+													btn.classList.add( 'Open' );
+												}
+									
+											};
+										}
+							
+										var btn = ge( 'StartupEditBack' );
+										if( btn )
+										{
+											btn.onclick = function( e )
+											{
+							
+												init.list();
+							
+												// Hide back button ...
+									
+												if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+												{
+													btn.classList.remove( 'Open' );
+													btn.classList.add( 'Closed' );
+												}
+					
+												// Show add / edit button ...
+							
+												if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+												{
+													etn.classList.remove( 'Closed' );
+													etn.classList.add( 'Open' );
+												}
+									
+											};
+										}
+							
+										var inp = ge( 'AdminStartupContainer' ).getElementsByTagName( 'input' )[0];
+										inp.onkeyup = function( e )
+										{
+											init.searchstartup( this.value );
+										}
+										ge( 'StartupSearchCancelBtn' ).onclick = function( e )
+										{
+											init.searchstartup( false );
+											inp.value = '';
+										}
+							
+										// Show listed startup ... 
+					
+										init.list();
+							
+										break;
+							
+								}
+					
+							},
+							
+							// Theme -----------------------------------------------------------------------------------
+							
 							theme : function (  )
 							{
-								// Theme ---------------------------------------------------
 								
 								let currTheme = ( settings.Theme ? settings.Theme : 'friendup12' );
 								
@@ -5438,7 +6492,22 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											console.log( '// No Permission = dock' );
 										}
 									}
-								
+									
+									if( /*!show || */show.indexOf( 'startup' ) >= 0 || show.indexOf( '*' ) >= 0 )
+									{
+										if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
+										{
+											if( ge( 'AdminStartupContainer' ) )
+											{
+												ge( 'AdminStartupContainer' ).className = ge( 'AdminStartupContainer' ).className.split( 'Closed' ).join( 'Open' );
+											}
+										}
+										else
+										{
+											console.log( '// No Permission = startup' );
+										}
+									}
+									
 									if( /*!show || */show.indexOf( 'looknfeel' ) >= 0 || show.indexOf( '*' ) >= 0 )
 									{
 										if( Application.checkAppPermission( [ 
@@ -5474,6 +6543,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						func.roles();
 						func.storage();
 						func.applications();
+						func.startup();
 						func.dock();
 						func.theme();
 						func.permissions( show );
@@ -5632,7 +6702,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							storage              : ( mlst ? mlst : '' ),
 							workgroups           : ( wstr ? wstr : '' ),
 							roles                : ( rstr ? rstr : '' ),
-							applications         : ''
+							applications         : '',
+							dock                 : '',
+							startup              : ''
 						};
 						
 						// Add translations
@@ -5671,7 +6743,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 			// Go through all data gathering until stop
 			let loadingSlot = 0;
 			let loadingInfo = {};
-			let loadingBoxs = [ 'workgroup', 'role', 'storage', 'dock', 'application', 'looknfeel' ];
+			let loadingBoxs = [ 'workgroup', 'role', 'storage', 'application', 'dock', 'startup', 'looknfeel' ];
 			let loadingList = [
 				
 				// 0 | Load userinfo
@@ -6043,7 +7115,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							'locale', 'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
 							'focusmode', 'hiddensystem', 'workspacecount', 
 							'scrolldesktopicons', 'wizardrun', 'themedata_' + loadingInfo.settings.Theme,
-							'workspacemode'
+							'workspacemode', 'startupsequence'
 						], userid: extra, authid: Application.authId } );
 					}
 					
@@ -6066,7 +7138,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						UsersSettings( 'abort', false ); return;
 					}
 					
-					initUsersDetails( loadingInfo, [ 'workgroup', 'role', 'storage', 'dock', 'application', 'looknfeel' ] );
+					initUsersDetails( loadingInfo, [ 'workgroup', 'role', 'storage', 'application', 'dock', 'startup', 'looknfeel' ] );
 				}
 				
 			];
@@ -7017,7 +8089,9 @@ function NewUser( _this )
 			storage              : '',
 			workgroups           : '',
 			roles                : '',
-			applications         : ''
+			applications         : '',
+			dock                 : '',
+			startup              : ''
 		};
 	
 		// Add translations
@@ -7035,6 +8109,8 @@ function NewUser( _this )
 			ge( 'AdminRoleContainer'        ).style.display = 'none';
 			ge( 'AdminStorageContainer'     ).style.display = 'none';
 			ge( 'AdminApplicationContainer' ).style.display = 'none';
+			ge( 'AdminDockContainer'        ).style.display = 'none';
+			ge( 'AdminStartupContainer'     ).style.display = 'none';
 			
 			// User
 			
@@ -10625,6 +11701,58 @@ function removeDockItem( appName, userId, callback, vars )
 		}
 	}
 	m.execute( 'removefromdock', { userID: userId, name: appName/*, type: ''*/ } );
+}
+
+function updateStartup( userId, callback, vars )
+{
+	
+	if( userId )
+	{
+		var o = [];
+	
+		if( ge( 'TempStartup' ) && ge( 'TempStartup' ).value )
+		{
+			var stars = ge( 'TempStartup' ).value.split( ',' );
+			
+			if( stars && stars.length > 0 )
+			{
+				for( var a = 0; a < stars.length; a++ )
+				{
+					if( stars[a] && stars[a].indexOf( 'launch ' ) >= 0 )
+					{
+						o.push( stars[a] );
+					}
+				}
+			}
+		}
+		
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( ShowLog ) console.log( { e:e, d:d, args: { 
+				setting : 'startupsequence', 
+				data    : JSON.stringify( o ), 
+				userid  : userId, 
+				authid  : Application.authId 
+			} } );
+		
+			if( e == 'ok' )
+			{
+				if( callback ) callback( true, d, vars );
+			}
+			else
+			{
+				if( callback ) callback( false, d, vars );
+			}
+		}
+		m.execute( 'setsetting', { 
+			setting : 'startupsequence', 
+			data    : JSON.stringify( o ), 
+			userid  : userId, 
+			authid  : Application.authId 
+		} );
+	}
+		
 }
 
 Sections.user_disk_remove = function( devname, did, userid )
