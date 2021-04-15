@@ -20,6 +20,8 @@ function initRoleDetails( info )
 	var data = info.permission;
 	var wgroups = info.workgroups;
 	
+	var apps = [];
+	
 	console.log( [ data, info.role ] );
 	
 	if( data )
@@ -507,6 +509,1267 @@ function initRoleDetails( info )
 	d.onLoad = function( data )
 	{
 		ge( 'RoleDetails' ).innerHTML = data;
+		
+		
+		function onLoad ( data )
+		{
+				
+			var func = {
+				
+				appids : function ( soft )
+				{
+					var ids = {};
+					
+					if( soft )
+					{
+						if( ShowLog ) console.log( 'soft ', soft );
+						
+						var i = 0;
+						
+						for( var a in soft )
+						{
+							if( soft[a] && soft[a][0] )
+							{
+								ids[ i++ ] = soft[a];
+							}
+						}
+					}
+					
+					return ids;
+					
+				}( null/*soft*/ ),
+				
+				updateids : function ( mode, key, value )
+				{
+					
+					switch( mode )
+					{
+						
+						case 'applications':
+							
+							if( this.appids )
+							{
+								var arr = []; /*var ids = {};*/ var i = 0; var found = false;
+								
+								for( var a in this.appids )
+								{
+									if( this.appids[a] && this.appids[a][0] )
+									{
+										if( key && this.appids[a][0].toLowerCase() == key.toLowerCase() )
+										{
+											this.appids[a] = ( value ? value : false ); found = true;
+										}
+										
+										if( this.appids[a] && this.appids[a][0] )
+										{
+											arr.push( this.appids[a][0] + '_' + this.appids[a][1] );
+											
+											//ids[ i++ ] = this.appids[a];
+										}
+									}
+									
+									i++;
+								}
+								
+								if( key && value && !found )
+								{
+									if( value[0] )
+									{
+										arr.push( value[0] + '_' + value[1] );
+										
+										/*ids[ i++ ] = value;*/
+										
+										this.appids[ i++ ] = value; 
+									}
+								}
+								
+								if( ShowLog ) console.log( 'applications ', this.appids );
+								
+								if( ge( 'RoleApplications' ) )
+								{
+									ge( 'RoleApplications' ).setAttribute( 'value', ( arr ? arr.join( ',' ) : '' ) );
+								}
+							}
+							else if( key && value )
+							{
+								this.appids[0] = value;
+								
+								if( ge( 'RoleApplications' ) && value[0] )
+								{
+									ge( 'RoleApplications' ).setAttribute( 'value', value[0] + '_' + value[1] );
+								}
+							}
+							
+							break;
+							
+					}
+					
+				},
+				
+				mode : { applications : 'list' },
+				
+				// Applications ------------------------------------------------------------------------------------
+				
+				applications : function ( func )
+				{
+					
+					// Editing applications
+					
+					var init =
+					{
+						
+						func : this,
+						
+						ids  : this.appids,
+						
+						head : function (  )
+						{
+							
+							var inp = ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0];
+							inp.value = '';
+							
+							if( ge( 'ApplicationSearchCancelBtn' ) && ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Open' ) )
+							{
+								ge( 'ApplicationSearchCancelBtn' ).classList.remove( 'Open' );
+								ge( 'ApplicationSearchCancelBtn' ).classList.add( 'Closed' );
+							}
+							
+							var o = ge( 'ApplicationGui' ); if( o ) o.innerHTML = '<input type="hidden" id="RoleApplications">';
+							
+							this.func.updateids( 'applications' );
+							
+							var divs = appendChild( [ 
+								{ 
+									'element' : function() 
+									{
+										var d = document.createElement( 'div' );
+										d.className = 'HRow BackgroundNegative Negative Padding';
+										return d;
+									}(),
+									'child' : 
+									[ 
+										{ 
+											'element' : function() 
+											{
+												var d = document.createElement( 'div' );
+												d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft';
+												d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+												d.style.cursor = 'pointer';
+												d.onclick = function(  )
+												{
+													sortApps( 'Name' );
+												};
+												return d;
+											}() 
+										}, 
+										{ 
+											'element' : function() 
+											{
+												var d = document.createElement( 'div' );
+												d.className = 'PaddingSmallLeft PaddingSmallRight HContent45 FloatLeft Relative';
+												d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
+												d.style.cursor = 'pointer';
+												d.onclick = function(  )
+												{
+													sortApps( 'Category' );
+												};
+												return d;
+											}()
+										},
+										{ 
+											'element' : function() 
+											{
+												var d = document.createElement( 'div' );
+												d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Relative';
+												return d;
+											}()
+										}
+									]
+								},
+								{
+									'element' : function() 
+									{
+										var d = document.createElement( 'div' );
+										d.className = 'HRow Box Padding';
+										d.style.overflow = 'auto';
+										d.style.maxHeight = '366px';
+										d.id = 'ApplicationInner';
+										return d;
+									}()
+								}
+							] );
+					
+							if( divs )
+							{
+								for( var i in divs )
+								{
+									if( divs[i] && o )
+									{
+										o.appendChild( divs[i] );
+									}
+								}
+							}
+							
+						},
+						
+						list : function (  )
+						{
+							
+							this.func.mode[ 'applications' ] = 'list';
+							
+							if( apps )
+							{
+								this.head();
+								
+								var o = ge( 'ApplicationInner' ); o.innerHTML = '';
+								
+								if( this.ids )
+								{
+									for( var a in this.ids )
+									{
+										if( this.ids[a] && this.ids[a][0] )
+										{
+											var found = false;
+											
+											for( var k in apps )
+											{
+												if( this.ids[a] && this.ids[a][0] == apps[k].Name )
+												{
+													found = true;
+													
+													break;
+												}
+											}
+											
+											if( !found ) continue;
+										
+											var divs = appendChild( [
+												{ 
+													'element' : function() 
+													{
+														var d = document.createElement( 'div' );
+														d.className = 'HRow';
+														return d;
+													}(),
+													'child' : 
+													[ 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																return d;
+															}(),
+															 'child' : 
+															[ 
+																{ 
+																	'element' : function() 
+																	{
+																		var d = document.createElement( 'span' );
+																		d.setAttribute( 'Name', apps[k].Name ? apps[k].Name : 'n/a' );
+																		d.setAttribute( 'Category', apps[k].Category ? apps[k].Category : 'n/a' );
+																		d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																		d.style.backgroundSize = 'contain';
+																		d.style.width = '24px';
+																		d.style.height = '24px';
+																		d.style.display = 'block';
+																		return d;
+																	}(), 
+																	 'child' : 
+																	[ 
+																		{
+																			'element' : function() 
+																			{
+																				var d = document.createElement( 'div' );
+																				if( apps[k].Preview )
+																				{
+																					d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
+																					d.style.backgroundSize = 'contain';
+																					d.style.width = '24px';
+																					d.style.height = '24px';
+																				}
+																				return d;
+																			}()
+																		}
+																	]
+																}
+															]
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis';
+																d.innerHTML = '<strong class="PaddingSmallRight">' + ( apps[k].Name ? apps[k].Name : 'n/a' ) + '</strong>';
+																return d;
+															}() 
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent45 InputHeight FloatLeft Ellipsis';
+																d.innerHTML = '<span class="PaddingSmallLeft PaddingSmallRight">' + ( apps[k].Category ? apps[k].Category : 'n/a' ) + '</span>';
+																return d;
+															}() 
+														}, 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'HContent15 FloatLeft';
+																return d;
+															}(),
+															'child' : 
+															[ 
+																{ 
+																	'element' : function( ids, name, func ) 
+																	{
+																		var b = document.createElement( 'button' );
+																		b.className = 'IconButton IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																		b.onclick = function(  )
+																		{
+																		
+																			var pnt = this.parentNode.parentNode;
+																		
+																			removeBtn( this, { ids: ids, name: name, func: func, pnt: pnt }, function ( args )
+																			{
+																			
+																				args.func.updateids( 'applications', args.name, false );
+																				
+																				if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																			
+																				/*updateApplications( details.ID, function( e, d, vars )
+																				{
+																				
+																					if( e && vars )
+																					{
+																					
+																						if( vars.pnt )
+																						{
+																							vars.pnt.innerHTML = '';
+																						}
+																		
+																						if( vars.func )
+																						{
+																							
+																						}
+																					
+																					}
+																					else
+																					{
+																						if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																					}
+																				
+																				}, { pnt: args.pnt, func: args.func } );*/
+																			
+																			} );
+																		
+																		};
+																		return b;
+																	}( this.ids, apps[k].Name, this.func ) 
+																}
+															]
+														}
+													]
+												}
+											] );
+										
+											if( divs )
+											{
+												for( var i in divs )
+												{
+													if( divs[i] && o )
+													{
+														o.appendChild( divs[i] );
+													}
+												}
+											}
+										}
+								
+									}
+									
+									// Sort default by Name ASC
+									this.sortapps( 'Name', 'ASC' );
+									
+								}
+								
+							}
+								
+						},
+						
+						edit : function (  )
+						{
+							
+							this.func.mode[ 'applications' ] = 'edit';
+							
+							if( apps )
+							{
+								this.head();
+								
+								var o = ge( 'ApplicationInner' ); o.innerHTML = '';
+								
+								for( var k in apps )
+								{
+									if( apps[k] && apps[k].Name )
+									{
+										var found = false;
+										
+										if( this.ids )
+										{
+											for( var a in this.ids )
+											{
+												if( this.ids[a] && this.ids[a][0] == apps[k].Name )
+												{
+													found = true;
+												}
+											}
+										}
+										
+										var divs = appendChild( [
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'HRow';
+													return d;
+												}(),
+												'child' : 
+												[ 
+													{ 
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+															return d;;
+														}(),
+														 'child' : 
+														[ 
+															{ 
+																'element' : function() 
+																{
+																	var d = document.createElement( 'span' );
+																	d.setAttribute( 'Name', apps[k].Name ? apps[k].Name : 'n/a' );
+																	d.setAttribute( 'Category', apps[k].Category ? apps[k].Category : 'n/a' );
+																	d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																	d.style.backgroundSize = 'contain';
+																	d.style.width = '24px';
+																	d.style.height = '24px';
+																	d.style.display = 'block';
+																	return d;
+																}(), 
+																 'child' : 
+																[ 
+																	{
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			if( apps[k].Preview )
+																			{
+																				d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
+																				d.style.backgroundSize = 'contain';
+																				d.style.width = '24px';
+																				d.style.height = '24px';
+																			}
+																			return d;
+																		}()
+																	}
+																]
+															}
+														]
+													},
+													{ 
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis';
+															d.innerHTML = '<strong class="PaddingSmallRight">' + ( apps[k].Name ? apps[k].Name : 'n/a' ) + '</strong>';
+															return d;
+														}() 
+													}, 
+													{ 
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmall HContent45 InputHeight FloatLeft Ellipsis';
+															d.innerHTML = '<span class="PaddingSmallLeft PaddingSmallRight">' + ( apps[k].Category ? apps[k].Category : 'n/a' ) + '</span>';
+															return d;
+														}() 
+													},
+													{ 
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+															return d;
+														}(),
+														'child' : 
+														[ 
+															{ 
+																'element' : function( ids, name, func ) 
+																{
+																	
+																	var b = CustomToggle( 'aid_'+name, 'FloatRight', null, function (  )
+																	{
+																		
+																		if( this.checked )
+																		{
+																			
+																			func.updateids( 'applications', name, [ name, '0' ] );
+																			
+																			if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																			
+																			/*updateApplications( details.ID, function( e, d, vars )
+																			{
+																				
+																				if( e && vars )
+																				{
+																					
+																					vars._this.checked = true;
+																					
+																					if( vars.func )
+																					{
+																						
+																					}
+																					
+																				}
+																				else
+																				{
+																					if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																					
+																					vars._this.checked = false;
+																					
+																				}
+																				
+																			}, { _this: this, func: func } );*/
+																			
+																		}
+																		else
+																		{
+																			
+																			func.updateids( 'applications', name, false );
+																			
+																			if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																			
+																			/*updateApplications( details.ID, function( e, d, vars )
+																			{
+																				
+																				if( e && vars )
+																				{
+																					
+																					vars._this.checked = false;
+																					
+																					if( vars.func )
+																					{
+																						
+																					}
+																					
+																				}
+																				else
+																				{
+																					if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																					
+																					vars._this.checked = true;
+																					
+																				}
+																				
+																			}, { _this: this, func: func } );*/
+																			
+																		}
+																		
+																	}, ( found ? true : false ), 1 );
+																	
+																	return b;
+																}( this.ids, apps[k].Name, this.func ) 
+															}
+														]
+													}
+												]
+											}
+										] );
+										
+										if( divs )
+										{
+											for( var i in divs )
+											{
+												if( divs[i] && o )
+												{
+													o.appendChild( divs[i] );
+												}
+											}
+										}
+									}
+								
+								}
+								
+								// Sort default by Name ASC
+								this.sortapps( 'Name', 'ASC' );
+								
+							}
+							
+						},
+						
+						searchapps : function ( filter, server )
+						{
+							
+							if( ge( 'ApplicationInner' ) )
+							{
+								var list = ge( 'ApplicationInner' ).getElementsByTagName( 'div' );
+
+								if( list.length > 0 )
+								{
+									for( var a = 0; a < list.length; a++ )
+									{
+										if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+	
+										var span = list[a].getElementsByTagName( 'span' )[0];
+	
+										if( span )
+										{
+											var param = [
+												( " " + span.getAttribute( 'name' ).toLowerCase() + " " ), 
+												( " " + span.getAttribute( 'category' ).toLowerCase() + " " )
+											];
+											
+											if( !filter || filter == ''  
+											|| span.getAttribute( 'name' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+											|| span.getAttribute( 'category' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+											)
+											{
+												list[a].style.display = '';
+			
+												var div = list[a].getElementsByTagName( 'div' );
+			
+												if( div.length )
+												{
+													for( var i in div )
+													{
+														if( div[i] && div[i].className && ( div[i].className.indexOf( 'name' ) >= 0 || div[i].className.indexOf( 'category' ) >= 0 ) )
+														{
+															// TODO: Make text searched for ...
+														}
+													}
+												}
+											}
+											else
+											{
+												list[a].style.display = 'none';
+											}
+										}
+									}
+
+								}
+								
+								if( ge( 'ApplicationSearchCancelBtn' ) )
+								{
+									if( !filter && ( ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+									{
+										ge( 'ApplicationSearchCancelBtn' ).classList.remove( 'Open' );
+										ge( 'ApplicationSearchCancelBtn' ).classList.add( 'Closed' );
+									}
+									
+									else if( filter != '' && ( ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+									{
+										ge( 'ApplicationSearchCancelBtn' ).classList.remove( 'Closed' );
+										ge( 'ApplicationSearchCancelBtn' ).classList.add( 'Open' );
+									}
+								}
+							}
+							
+						},
+						
+						sortapps : function ( sortby, orderby )
+						{
+
+							//
+
+							var _this = ge( 'ApplicationInner' );
+
+							if( _this )
+							{
+								orderby = ( orderby ? orderby : ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' ) );
+
+								var list = _this.getElementsByTagName( 'div' );
+
+								if( list.length > 0 )
+								{
+									var output = [];
+	
+									var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+	
+									for( var a = 0; a < list.length; a++ )
+									{
+										if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+		
+										var span = list[a].getElementsByTagName( 'span' )[0];
+		
+										if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
+										{
+											var obj = { 
+												sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+												content : list[a]
+											};
+		
+											output.push( obj );
+										}
+									}
+	
+									if( output.length > 0 )
+									{
+										// Sort ASC default
+		
+										output.sort( callback );
+		
+										// Sort DESC
+		
+										if( orderby == 'DESC' ) 
+										{ 
+											output.reverse();  
+										}
+		
+										_this.innerHTML = '';
+		
+										_this.setAttribute( 'orderby', orderby );
+		
+										for( var key in output )
+										{
+											if( output[key] && output[key].content )
+											{
+												// Add row
+												_this.appendChild( output[key].content );
+											}
+										}
+									}
+								}
+							}
+
+							//console.log( output );
+						},
+						
+						refresh : function (  )
+						{
+							
+							switch( this.func.mode[ 'applications' ] )
+							{
+								
+								case 'list':
+									
+									this.list();
+									
+									break;
+									
+								case 'edit':
+									
+									this.edit();
+									
+									break;
+									
+							}
+							
+						}
+						
+					};
+					
+					switch( func )
+					{
+						
+						case 'head':
+							
+							init.head();
+							
+							break;
+							
+						case 'list':
+							
+							init.list();
+							
+							break;
+							
+						case 'edit':
+							
+							init.edit();
+							
+							break;
+							
+						case 'refresh':
+							
+							init.refresh();
+							
+							break;
+						
+						default:
+							
+							var etn = ge( 'ApplicationEdit' );
+							if( etn )
+							{
+								etn.onclick = function( e )
+								{
+							
+									init.edit();
+							
+									// Hide add / edit button ...
+							
+									if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+									{
+										etn.classList.remove( 'Open' );
+										etn.classList.add( 'Closed' );
+									}
+							
+									// Show back button ...
+							
+									if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+									{
+										btn.classList.remove( 'Closed' );
+										btn.classList.add( 'Open' );
+									}
+							
+								};
+							}
+					
+							var btn = ge( 'ApplicationEditBack' );
+							if( btn )
+							{
+								btn.onclick = function( e )
+								{
+							
+									init.list();
+							
+									// Hide back button ...
+							
+									if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+									{
+										btn.classList.remove( 'Open' );
+										btn.classList.add( 'Closed' );
+									}
+					
+									// Show add / edit button ...
+							
+									if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+									{
+										etn.classList.remove( 'Closed' );
+										etn.classList.add( 'Open' );
+									}
+							
+								};
+							}
+							
+							var inp = ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0];
+							inp.onkeyup = function( e )
+							{
+								init.searchapps( this.value );
+							}
+							ge( 'ApplicationSearchCancelBtn' ).onclick = function( e )
+							{
+								init.searchapps( false );
+								inp.value = '';
+							}
+							
+							// Show listed applications ... 
+							
+							init.list();
+							
+							break;
+							
+					}
+					
+				},
+				
+				// Permissions ------------------------------------------------------------------------------------
+				
+				permissions : function ( func )
+				{
+					
+					var init =
+					{
+						
+						func : this,
+						
+						ids  : this.appids,
+						
+						head : function (  )
+						{
+							
+							var str = '';
+							
+							str += '<div class="MarginTop OverflowHidden BorderRadius Elevated">';
+							str += '	<div class="HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight">';
+							str += '		<div class="PaddingSmall HContent100 InputHeight FloatLeft">';
+							str += '			<h3 class="NoMargin PaddingSmallLeft PaddingSmallRight FloatLeft">';
+							str += '				<strong>' + i18n( 'i18n_system' ) + '</strong>';
+							str += '			</h3>';
+							str += '		</div>';
+							str += '	</div>';
+							str += '	<div id="PermissionGui"></div>';
+							str += '</div>';
+							
+							var head = ge( 'AdminPermissionContainer' ); if( head ) head.innerHTML = str;
+							
+							var o = ge( 'PermissionGui' ); if( o ) o.innerHTML = '';
+							
+							this.func.updateids( 'permissions' );
+							
+							var divs = appendChild( [ 
+								{ 
+									'element' : function() 
+									{
+										var d = document.createElement( 'div' );
+										d.className = 'HRow BackgroundNegative Negative Padding';
+										return d;
+									}(),
+									'child' : 
+									[ 
+										{ 
+											'element' : function() 
+											{
+												var d = document.createElement( 'div' );
+												d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft';
+												d.innerHTML = '<strong>' + i18n( 'permission' ) + '</strong>';
+												return d;
+											}() 
+										}, 
+										{ 
+											'element' : function() 
+											{
+												var d = document.createElement( 'div' );
+												d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Relative';
+												d.innerHTML = '<strong>' + i18n( 'create' ) + '</strong>';
+												return d;
+											}()
+										}, 
+										{ 
+											'element' : function() 
+											{
+												var d = document.createElement( 'div' );
+												d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Relative';
+												d.innerHTML = '<strong>' + i18n( 'read' ) + '</strong>';
+												return d;
+											}()
+										}, 
+										{ 
+											'element' : function() 
+											{
+												var d = document.createElement( 'div' );
+												d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Relative';
+												d.innerHTML = '<strong>' + i18n( 'update' ) + '</strong>';
+												return d;
+											}()
+										}, 
+										{ 
+											'element' : function() 
+											{
+												var d = document.createElement( 'div' );
+												d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Relative';
+												d.innerHTML = '<strong>' + i18n( 'delete' ) + '</strong>';
+												return d;
+											}()
+										}
+									]
+								},
+								{
+									'element' : function() 
+									{
+										var d = document.createElement( 'div' );
+										d.className = 'HRow Box Padding';
+										d.id = 'PermissionInner';
+										return d;
+									}()
+								}
+							] );
+							
+							if( divs )
+							{
+								for( var i in divs )
+								{
+									if( divs[i] && o )
+									{
+										o.appendChild( divs[i] );
+									}
+								}
+							}
+							
+						},
+						
+						list : function (  )
+						{
+							
+							this.func.mode[ 'permissions' ] = 'list';
+							
+							if( perm )
+							{
+								this.head();
+								
+								var o = ge( 'PermissionInner' ); o.innerHTML = '';
+								
+								
+								
+								for( var a in perm )
+								{
+									
+									if( perm[a].AppPermissions && perm[a].Name )
+									{
+										
+										for( var k in perm[a].AppPermissions )
+										{
+											
+											var divs = appendChild( [
+												{ 
+													'element' : function() 
+													{
+														var d = document.createElement( 'div' );
+														d.className = 'HRow';
+														return d;
+													}(),
+													'child' : 
+													[ 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent40 InputHeight FloatLeft Ellipsis';
+																d.innerHTML = '<strong class="PaddingSmallRight">' + i18n( perm[a].AppPermissions[k].Name ) + '</strong>';
+																return d;
+															}() 
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																return d;
+															}(),
+															'child' : 
+															[ 
+																{ 
+																	'element' : function( id, key, toggle ) 
+																	{
+																		
+																		var b = CustomToggle( id, null, null, function (  )
+																		{
+																			
+																			if( Application.checkAppPermission( 'ROLE_UPDATE' ) )
+																			{
+																			
+																				if( this.checked )
+																				{
+																					Sections.togglepermission( info.role.ID, id, key, this );
+																				}
+																				else
+																				{
+																					Sections.togglepermission( info.role.ID, id, key, this );
+																				}
+																			
+																			}
+																			
+																		}, ( toggle ? true : false ), 1 );
+																		
+																		return b;
+																	}( perm[a].AppPermissions[k].Permissions[0], perm[a].Name, ( info.role.Permissions[perm[a].Name] && info.role.Permissions[perm[a].Name][perm[a].AppPermissions[k].Permissions[0]] ? true : false ) ) 
+																}
+															]
+														}, 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																return d;
+															}(),
+															'child' : 
+															[ 
+																{ 
+																	'element' : function( id, key, toggle ) 
+																	{
+																		
+																		var b = CustomToggle( id, null, null, function (  )
+																		{
+																		
+																			if( Application.checkAppPermission( 'ROLE_UPDATE' ) )
+																			{
+																			
+																				if( this.checked )
+																				{
+																					Sections.togglepermission( info.role.ID, id, key, this );
+																				}
+																				else
+																				{
+																					Sections.togglepermission( info.role.ID, id, key, this );
+																				}
+																			
+																			}
+																		
+																		}, ( toggle ? true : false ), 1 );
+																		
+																		return b;
+																	}( perm[a].AppPermissions[k].Permissions[1], perm[a].Name, ( info.role.Permissions[perm[a].Name] && info.role.Permissions[perm[a].Name][perm[a].AppPermissions[k].Permissions[1]] ? true : false ) ) 
+																}
+															]
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																return d;
+															}(),
+															'child' : 
+															[ 
+																{ 
+																	'element' : function( id, key, toggle ) 
+																	{
+																		
+																		var b = CustomToggle( id, null, null, function (  )
+																		{
+																		
+																			if( Application.checkAppPermission( 'ROLE_UPDATE' ) )
+																			{
+																			
+																				if( this.checked )
+																				{
+																					Sections.togglepermission( info.role.ID, id, key, this );
+																				}
+																				else
+																				{
+																					Sections.togglepermission( info.role.ID, id, key, this );
+																				}
+																			
+																			}
+																		
+																		}, ( toggle ? true : false ), 1 );
+																		
+																		return b;
+																	}( perm[a].AppPermissions[k].Permissions[2], perm[a].Name, ( info.role.Permissions[perm[a].Name] && info.role.Permissions[perm[a].Name][perm[a].AppPermissions[k].Permissions[2]] ? true : false ) ) 
+																}
+															]
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																return d;
+															}(),
+															'child' : 
+															[ 
+																{ 
+																	'element' : function( id, key, toggle ) 
+																	{
+																		
+																		var b = CustomToggle( id, null, null, function (  )
+																		{
+																		
+																			if( Application.checkAppPermission( 'ROLE_UPDATE' ) )
+																			{
+																			
+																				if( this.checked )
+																				{
+																					Sections.togglepermission( info.role.ID, id, key, this );
+																				}
+																				else
+																				{
+																					Sections.togglepermission( info.role.ID, id, key, this );
+																				}
+																			
+																			}
+																		
+																		}, ( toggle ? true : false ), 1 );
+																		
+																		return b;
+																	}( perm[a].AppPermissions[k].Permissions[3], perm[a].Name, ( info.role.Permissions[perm[a].Name] && info.role.Permissions[perm[a].Name][perm[a].AppPermissions[k].Permissions[3]] ? true : false ) ) 
+																}
+															]
+														}
+													]
+												}
+											] );
+									
+											if( divs )
+											{
+												for( var i in divs )
+												{
+													if( divs[i] && o )
+													{
+														o.appendChild( divs[i] );
+													}
+												}
+											}
+										
+										}
+										
+									}
+									
+								}
+									
+									
+									
+								
+								
+							}
+								
+						},
+						
+						refresh : function (  )
+						{
+							
+							switch( this.func.mode[ 'permissions' ] )
+							{
+								
+								case 'list':
+									
+									this.list();
+									
+									break;
+									
+							}
+							
+						}
+						
+					};
+					
+					switch( func )
+					{
+						
+						case 'head':
+							
+							init.head();
+							
+							break;
+							
+						case 'list':
+							
+							init.list();
+							
+							break;
+							
+						case 'refresh':
+							
+							init.refresh();
+							
+							break;
+						
+						default:
+							
+							// Show listed permissions ... 
+							
+							init.list();
+							
+							break;
+							
+					}
+					
+				}
+				
+			};
+			
+			func.applications();
+			func.permissions();
+			
+		}
+		
+		// Run onload functions ....
+			
+		onLoad();
+		
+		
 		
 		// Responsive framework
 		Friend.responsive.pageActive = ge( 'RoleDetails' );
