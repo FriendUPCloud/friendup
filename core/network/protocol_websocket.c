@@ -233,6 +233,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			INFO("[WS] Callback peer session closed wsiptr %p\n", wsi);
 		break;
 		
+		case LWS_CALLBACK_CLIENT_CLOSED:
+		    //DEBUG("[WS] Callback client closed!\n");
 		case LWS_CALLBACK_CLOSED:
 			{
 				int tr = 8;
@@ -811,6 +813,9 @@ void *ParseAndCall( WSThreadData *wstd )
 	{
 		if( orig->us_WSD == NULL )
 		{
+			// This error is happening pretty random!
+			// This one leads to websocket errors...
+			
 			FERROR("[ParseAndCall] There is no WS connection attached to mutex!\n");
 			// Decrease use for external call
 			if( FRIEND_MUTEX_LOCK( &(orig->us_Mutex) ) == 0 )

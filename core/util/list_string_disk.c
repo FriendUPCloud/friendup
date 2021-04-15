@@ -203,7 +203,7 @@ int ListStringDiskJoin( ListStringDisk *ls )
 {
 	if( ls->lsd_FileHandler <= 0 )
 	{
-		ls->lsd_Data = FCalloc( ls->lsd_Size + 1, sizeof(char));
+		ls->lsd_Data = FCalloc( (ls->lsd_Size + 1), sizeof(char));
 		if( ls->lsd_Data != NULL )
 		{
 			ListStringDisk *cur = ls->lsd_Next;

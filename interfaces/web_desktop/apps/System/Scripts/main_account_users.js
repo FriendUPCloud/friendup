@@ -43,7 +43,7 @@ var UsersSettings = function ( setting, set )
 		minlength   : minlength,
 		limit       : limit,
 		uids        : [],
-		avatars     : true,
+		avatars     : false,
 		logintime   : true,
 		experiment  : true,
 		listall     : false,
@@ -213,7 +213,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 			// Show the form
 			function initUsersDetails( info, show, first )
 			{
-				// TODO: implement abort function ...
+				
 				
 				// Some shortcuts
 				let userInfo          = ( info.userInfo ? info.userInfo : {} );
@@ -225,8 +225,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				let soft              = ( info.software ? info.software : {} );
 				let apps              = ( info.applications ? info.applications : {} );
 				let dock              = ( info.dock ? info.dock : {} );
+				let star              = ( workspaceSettings.startupsequence && workspaceSettings.startupsequence != "[]" ? workspaceSettings.startupsequence : [] );
 				
-				if( ShowLog/* || 1==1*/ ) console.log( 'initUsersDetails( info ) ', info );		
+				if( /*1==1 || */ShowLog ) console.log( 'initUsersDetails( info ) ', info );		
 				
 				let func = {
 					
@@ -343,15 +344,76 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									wstr += '<div>';
 									wstr += '<div class="HRow">';
-									wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
-									wstr += '		<span name="' + wids[b].Name + '" style="display: none;"></span>';
-									wstr += '		<strong>' + wids[b].Name + '</strong>';
+									wstr += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
+									wstr += '		<span name="' + wids[b].Name + '" class="IconMedium fa-users"></span>';
 									wstr += '	</div>';
-									wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+									wstr += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + wids[b].Name + '</div>';
+									wstr += '	<div class="PaddingSmall HContent40 FloatRight Ellipsis">';
 									
 									if( Application.checkAppPermission( [ 'WORKGROUP_CREATE', 'WORKGROUP_UPDATE' ] ) )
 									{
-										wstr += '	<button wid="' + wids[b].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+										wstr += CustomToggle( 'wid_' + wids[b].ID, 'FloatRight', null, function (  )
+										{
+		
+											var args = { 
+												id     : this.id.split( 'wid_' )[1], 
+												users  : userInfo.ID, 
+												authid : Application.authId 
+											};
+									
+											args.args = JSON.stringify( {
+												'type'    : 'write', 
+												'context' : 'application', 
+												'authid'  : Application.authId, 
+												'data'    : { 
+													'permission' : [ 
+														'PERM_WORKGROUP_CREATE_GLOBAL', 
+														'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+														'PERM_WORKGROUP_UPDATE_GLOBAL', 
+														'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+														'PERM_WORKGROUP_GLOBAL', 
+														'PERM_WORKGROUP_WORKGROUP' 
+													]
+												}, 
+												'object'   : 'workgroup', 
+												'objectid' : this.id.split( 'wid_' )[1] 
+											} );
+									
+											if( this.checked )
+											{
+												// Toggle off ...
+											
+												if( args && args.id && args.users )
+												{
+													let f = new Library( 'system.library' );
+													f.btn = this;
+													f.wids = wids;
+													f.onExecuted = function( e, d )
+													{
+														
+														this.wids[ this.btn.id.split( 'wid_' )[1] ] = false;
+												
+														let pnt = this.btn.parentNode.parentNode;
+												
+														if( pnt )
+														{
+															pnt.innerHTML = '';
+														}
+													
+														// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+													
+														// Refresh Storage ...
+														//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+														Sections.user_disk_cancel( userInfo.ID );
+													
+													}
+													f.execute( 'group/removeusers', args );
+												}
+										
+											}
+		
+										}, true );
+										
 									}
 									
 									wstr += '	</div>';
@@ -416,7 +478,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 								if( Application.checkAppPermission( [ 'ROLE_CREATE', 'ROLE_UPDATE' ] ) )
 								{
-									rstr += '<button onclick="Sections.userrole_update('+uroles[a].ID+','+userInfo.ID+',this)" class="IconButton IconSmall IconToggle ButtonSmall FloatRight' + ( uroles[a].UserID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+									rstr += CustomToggle( 'rid_'+uroles[a].ID, 'FloatRight', null, 'Sections.userrole_update('+uroles[a].ID+','+userInfo.ID+',this)', ( uroles[a].UserID ? true : false ) );
+									
 								}
 								
 								rstr += '</div>';
@@ -607,14 +670,14 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												updateUserStatus( userInfo.ID, 1 );
 											};
 										}
-									
+										
 										if( ge( 'usLocked'   ) && ulocked )
 										{
-											ge( 'usLocked'   ).className = ge( 'usLocked'   ).className.split( 'fa-toggle-on' ).join( '' ).split( 'fa-toggle-off' ).join( '' ) + 'fa-toggle-on';
+											ge( 'usLocked'   ).checked = true;
 										}
 										if( ge( 'usDisabled' ) && udisabled )
 										{
-											ge( 'usDisabled' ).className = ge( 'usDisabled' ).className.split( 'fa-toggle-on' ).join( '' ).split( 'fa-toggle-off' ).join( '' ) + 'fa-toggle-on';
+											ge( 'usDisabled' ).checked = true;
 										}
 										
 									}
@@ -716,11 +779,33 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										//console.log( 'image have loaded ... ' + this.src );
 										if( ge( 'AdminAvatar' ) )
 										{
+											ge( 'AdminAvatarArea' ).className = ge( 'AdminAvatarArea' ).className.split( ' fa-user-circle-o' ).join( '' );
+											
 											let ctx = ge( 'AdminAvatar' ).getContext( '2d' );
 											ctx.drawImage( avSrc, 0, 0, 256, 256 );
 										}
 									}
 								} 
+								
+								let ra = ge( 'AdminAvatarRemove' );
+								if( ra ) 
+								{
+									if( Application.checkAppPermission( [ 
+										'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
+										'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
+										'PERM_USER_GLOBAL',        'PERM_WORKGROUP_GLOBAL' 
+									] ) )
+									{
+										ra.onclick = function( e )
+										{
+											removeAvatar();
+										}
+									}
+									else
+									{
+										ra.style.display = 'none';
+									}
+								}
 								
 								let ae = ge( 'AdminAvatarEdit' );
 								if( ae ) 
@@ -785,11 +870,6 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										{
 											if( ge( 'usUsername' ).value )
 											{
-												this.innerHTML = '<i class="fa fa-spinner" aria-hidden="true"></i>';
-												
-												//_saveUser( userInfo.ID );
-										
-												//editMode( true );
 												
 												_saveUser( userInfo.ID, function( uid )
 												{
@@ -868,10 +948,12 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														
 														cancelUser(  );
 														
-														if( UsersSettings( 'experiment' ) )
-														{
-															Sections.accounts_users( 'init' );
-														}
+														searchServer( null, true );
+														
+														//if( UsersSettings( 'experiment' ) )
+														//{
+														//	Sections.accounts_users( 'init' );
+														//}
 														
 													} );
 									
@@ -905,7 +987,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										'element' : function() 
 										{
 											let d = document.createElement( 'div' );
-											d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+											d.className = 'HRow BackgroundNegative Negative Padding';
 											return d;
 										}(),
 										'child' : 
@@ -914,8 +996,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												'element' : function(  ) 
 												{
 													let d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent40 FloatLeft';
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft';
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+													d.style.cursor = 'pointer';
 													d.ele = this;
 													d.onclick = function(  )
 													{
@@ -928,7 +1011,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												'element' : function( _this ) 
 												{
 													let d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent45 FloatLeft Relative';
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent45 FloatLeft Relative';
 													d.innerHTML = '<strong></strong>';
 													return d;
 												}( this )
@@ -937,7 +1020,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												'element' : function() 
 												{
 													let d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Relative';
 													return d;
 												}()
 											}
@@ -947,7 +1030,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										'element' : function() 
 										{
 											let d = document.createElement( 'div' );
-											d.className = 'HRow Box Padding';
+											d.className = 'HRow List PaddingTop PaddingRight PaddingBottom';
+											d.style.overflow = 'auto';
+											d.style.maxHeight = '314px';
 											d.id = 'WorkgroupInner';
 											return d;
 										}()
@@ -1068,6 +1153,84 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											}
 											
 										}
+										
+										let workInps = ge( 'WorkgroupInner' ).getElementsByTagName( 'input' );
+										
+										if( workInps )
+										{
+											for( var a = 0; a < workInps.length; a++ )
+											{
+												if( workInps[a] && workInps[a].checked && workInps[a].id.split( 'wid_' )[1] )
+												{
+													wge.wids[ workInps[a].id.split( 'wid_' )[1] ] = true;
+												}
+											}
+											
+											for( var a = 0; a < workInps.length; a++ )
+											{
+												// Toggle user relation to workgroup
+												( function( b, wids ) {
+													b.onclick = function( e )
+													{
+														var args = { 
+															id     : this.id.split( 'wid_' )[1], 
+															users  : userInfo.ID, 
+															authid : Application.authId 
+														};
+													
+														args.args = JSON.stringify( {
+															'type'    : 'write', 
+															'context' : 'application', 
+															'authid'  : Application.authId, 
+															'data'    : { 
+																'permission' : [ 
+																	'PERM_WORKGROUP_CREATE_GLOBAL', 
+																	'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+																	'PERM_WORKGROUP_UPDATE_GLOBAL', 
+																	'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+																	'PERM_WORKGROUP_GLOBAL', 
+																	'PERM_WORKGROUP_WORKGROUP' 
+																]
+															}, 
+															'object'   : 'workgroup', 
+															'objectid' : this.id.split( 'wid_' )[1] 
+														} );
+													
+														// Toggle off ...
+													
+														if( args && args.id && args.users )
+														{
+															let f = new Library( 'system.library' );
+															f.btn = this;
+															f.wids = wids;
+															f.onExecuted = function( e, d )
+															{
+																//console.log( { e:e, d:d } );
+															
+																this.wids[ this.btn.id.split( 'wid_' )[1] ] = false;
+															
+																let pnt = this.btn.parentNode.parentNode.parentNode;
+															
+																if( pnt )
+																{
+																	pnt.innerHTML = '';
+																}
+																
+																// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																
+																// Refresh Storage ...
+																//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																Sections.user_disk_cancel( userInfo.ID );
+															}
+															f.execute( 'group/removeusers', args );
+														}
+														
+													}
+												} )( workInps[ a ], wge.wids );
+											}
+											
+										}
+										
 									}
 									
 								}
@@ -1082,43 +1245,67 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									if( info.workgroups )
 									{
-										let unsorted = {};
-								
+
+										var unsorted = {};
+										
+										// Add all workgroups to unsorted and add subgroups array ...
+					
 										for( var i in info.workgroups )
 										{
 											if( info.workgroups[i] && info.workgroups[i].ID )
 											{
-												info.workgroups[i].groups = [];
-										
-												unsorted[info.workgroups[i].ID] = info.workgroups[i];
+												
+												unsorted[info.workgroups[i].ID] = {};
+							
+												for( var ii in info.workgroups[i] )
+												{
+													if( info.workgroups[i][ii] )
+													{
+														unsorted[info.workgroups[i].ID][ii] = info.workgroups[i][ii];
+													}
+												}
+												
+												unsorted[info.workgroups[i].ID].level = 1;
+												unsorted[info.workgroups[i].ID].groups = [];
+											}
+										}
+					
+										// Arrange all subgroups to parentgroups ...
+					
+										var set = [];
+					
+										for( var k in unsorted )
+										{
+											if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
+											{
+												unsorted[ unsorted[k].ParentID ].groups.push( unsorted[k] );
+												
+												if( unsorted[ unsorted[k].ParentID ].groups )
+												{
+													for( var kk in unsorted[ unsorted[k].ParentID ].groups )
+													{
+														if( unsorted[ unsorted[k].ParentID ].groups[ kk ] )
+														{
+															unsorted[ unsorted[k].ParentID ].groups[ kk ].level = ( unsorted[ unsorted[k].ParentID ].level +1 );
+														}
+													}
+												}
+												
+												set.push( unsorted[k].ID );
+											}
+										}
+					
+										// Filter all subgroups allready set, away from root level ...
+					
+										for( var k in unsorted )
+										{
+											if( set.indexOf( unsorted[k].ID ) < 0 )
+											{
+												groups[ unsorted[k].ID ] = unsorted[k];
 											}
 										}
 										
-										
-										
-										for( var k in unsorted )
-										{
-											if( unsorted[k] && unsorted[k].ID )
-											{
-												if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
-												{
-													if( !groups[ unsorted[k].ParentID ] )
-													{
-														groups[ unsorted[k].ParentID ] = unsorted[ unsorted[k].ParentID ];
-													}
-													
-													if( groups[ unsorted[k].ParentID ] )
-													{
-														groups[ unsorted[k].ParentID ].groups.push( unsorted[k] );
-													}
-												}
-												else if( !groups[ unsorted[k].ID ] )
-												{
-													groups[ unsorted[k].ID ] = unsorted[k];
-												}
-											}	
-										}
-										
+										if( ShowLog/* || 1==1*/ ) console.log( [ unsorted, set, groups ] );
 										
 									}
 									
@@ -1137,7 +1324,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									
 										this.activated = true;
-							
+										
+										var ii = 0;
+										
 										let str = '';
 										
 										if( groups && groups == '404' )
@@ -1147,10 +1336,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										else if( userInfo.Status != 1 && groups )
 										{
 											
-											
 											for( var a in groups )
 											{
-												let found = false;
+												var found = false;
 												if( this.wids[ groups[a].ID ] )
 												{
 													found = true;
@@ -1166,34 +1354,110 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														}
 													}
 												}
-												
-												
-												
+						
+												ii++;
+						
 												str += '<div>';
-												
-												str += '<div class="HRow">';
-												str += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
-												str += '		<span name="' + groups[a].Name + '" class="IconSmall ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>';
+						
+												str += '<div class="HRow" id="WorkgroupID_' + groups[a].ID + '">';
+						
+												str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
+												str += '		<span name="' + groups[a].Name + '" class="IconMedium fa-users"></span>';
 												str += '	</div>';
-												str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+												str += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[a].Name+ '</div>';
+						
+												str += '	<div class="PaddingSmall HContent20 FloatRight Ellipsis">';
 												
 												if( Application.checkAppPermission( 'WORKGROUP_UPDATE' ) )
 												{
-													str += '	<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
+													
+													str += CustomToggle( 'wid_' + groups[a].ID, 'FloatRight', null, function (  )
+													{
+							
+														var args = { 
+															id     : this.id.split( 'wid_' )[1], 
+															users  : userInfo.ID, 
+															authid : Application.authId 
+														};
+														
+														args.args = JSON.stringify( {
+															'type'    : 'write', 
+															'context' : 'application', 
+															'authid'  : Application.authId, 
+															'data'    : { 
+																'permission' : [ 
+																	'PERM_WORKGROUP_CREATE_GLOBAL', 
+																	'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+																	'PERM_WORKGROUP_UPDATE_GLOBAL', 
+																	'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+																	'PERM_WORKGROUP_GLOBAL', 
+																	'PERM_WORKGROUP_WORKGROUP' 
+																]
+															}, 
+															'object'   : 'workgroup', 
+															'objectid' : this.id.split( 'wid_' )[1] 
+														} );
+														
+														if( this.checked )
+														{
+															// Toggle on ...
+															
+															if( args && args.id && args.users )
+															{
+																let f = new Library( 'system.library' );
+																f.btn = this;
+																f.onExecuted = function( e, d )
+																{
+																	
+																	// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																	
+																	// Refresh Storage ...
+																	//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																	Sections.user_disk_cancel( userInfo.ID );
+																}
+																f.execute( 'group/addusers', args );
+															}
+															
+														}
+														else
+														{
+															// Toggle off ...
+															
+															if( args && args.id && args.users )
+															{
+																let f = new Library( 'system.library' );
+																f.btn = this;
+																f.onExecuted = function( e, d )
+																{
+																	
+																	// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																	
+																	// Refresh Storage ...
+																	//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																	Sections.user_disk_cancel( userInfo.ID );
+																	
+																}
+																f.execute( 'group/removeusers', args );
+															}
+															
+														}
+							
+													}, ( found ? true : false ) );
+													
 												}
 												
 												str += '	</div>';
+						
 												str += '</div>';
-												
-												
-												
+						
 												if( groups[a].groups.length > 0 )
 												{
-													str += '<div class="Closed">';
-													
+							
+													str += '<div class="SubGroups">';
+							
 													for( var aa in groups[a].groups )
 													{
-														let found = false;
+														var found = false;
 														if( this.wids[ groups[a].groups[aa].ID ] )
 														{
 															found = true;
@@ -1209,28 +1473,109 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																}
 															}
 														}
-														
-														str += '<div class="HRow">';
-														str += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
-														str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconSmall ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>';
+								
+														ii++;
+								
+														str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].ID + '">';
+								
+														str += '	<div class="TextCenter HContent4 FloatLeft InputHeight PaddingSmall" style="min-width:36px"></div>';
+														str += '	<div class="TextCenter HContent10 FloatLeft InputHeight PaddingSmall Ellipsis edit">';
+														str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconMedium fa-users"></span>';
 														str += '	</div>';
-														str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+														str += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].Name + '</div>';
+								
+														str += '<div class="PaddingSmall FloatRight Ellipsis">';
 														
 														if( Application.checkAppPermission( 'WORKGROUP_UPDATE' ) )
 														{
-															str += '	<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
+															
+															str += CustomToggle( 'wid_' + groups[a].groups[aa].ID, 'FloatRight', null, function (  )
+															{
+						
+																var args = { 
+																	id     : this.id.split( 'wid_' )[1], 
+																	users  : userInfo.ID, 
+																	authid : Application.authId 
+																};
+													
+																args.args = JSON.stringify( {
+																	'type'    : 'write', 
+																	'context' : 'application', 
+																	'authid'  : Application.authId, 
+																	'data'    : { 
+																		'permission' : [ 
+																			'PERM_WORKGROUP_CREATE_GLOBAL', 
+																			'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+																			'PERM_WORKGROUP_UPDATE_GLOBAL', 
+																			'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+																			'PERM_WORKGROUP_GLOBAL', 
+																			'PERM_WORKGROUP_WORKGROUP' 
+																		]
+																	}, 
+																	'object'   : 'workgroup', 
+																	'objectid' : this.id.split( 'wid_' )[1] 
+																} );
+													
+																if( this.checked )
+																{
+																	// Toggle on ...
+														
+																	if( args && args.id && args.users )
+																	{
+																		let f = new Library( 'system.library' );
+																		f.btn = this;
+																		f.onExecuted = function( e, d )
+																		{
+																
+																			// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																
+																			// Refresh Storage ...
+																			//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																			Sections.user_disk_cancel( userInfo.ID );
+																		}
+																		f.execute( 'group/addusers', args );
+																	}
+														
+																}
+																else
+																{
+																	// Toggle off ...
+														
+																	if( args && args.id && args.users )
+																	{
+																		let f = new Library( 'system.library' );
+																		f.btn = this;
+																		f.onExecuted = function( e, d )
+																		{
+																
+																			// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																
+																			// Refresh Storage ...
+																			//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																			Sections.user_disk_cancel( userInfo.ID );
+																
+																		}
+																		f.execute( 'group/removeusers', args );
+																	}
+														
+																}
+						
+															}, ( found ? true : false ) );
+															
 														}
 														
-														str += '	</div>';
 														str += '</div>';
-														
+								
+														str += '</div>';
+								
 														if( groups[a].groups[aa].groups.length > 0 )
 														{
-															str += '<div class="Closed">';
-															
+									
+															str += '<div class="SubGroups">';
+									
 															for( var aaa in groups[a].groups[aa].groups )
 															{
-																let found = false;
+																var found = false;
 																if( this.wids[ groups[a].groups[aa].groups[aaa].ID ] )
 																{
 																	found = true;
@@ -1246,33 +1591,113 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		}
 																	}
 																}
-																
-																str += '<div class="HRow">';
-																str += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
-																str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>';
+										
+																ii++;
+										
+																str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '">';
+										
+																str += '	<div class="TextCenter HContent8 InputHeight FloatLeft PaddingSmall" style="min-width:73px"></div>';
+																str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
+																str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconMedium fa-users"></span>';
 																str += '	</div>';
-																str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+																str += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + '</div>';
+										
+																str += '	<div class="PaddingSmall FloatRight Ellipsis">';
 																
 																if( Application.checkAppPermission( 'WORKGROUP_UPDATE' ) )
 																{
-																	str += '	<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
+																	
+																	str += CustomToggle( 'wid_' + groups[a].groups[aa].groups[aaa].ID, 'FloatRight', null, function (  )
+																	{
+						
+																		var args = { 
+																			id     : this.id.split( 'wid_' )[1], 
+																			users  : userInfo.ID, 
+																			authid : Application.authId 
+																		};
+													
+																		args.args = JSON.stringify( {
+																			'type'    : 'write', 
+																			'context' : 'application', 
+																			'authid'  : Application.authId, 
+																			'data'    : { 
+																				'permission' : [ 
+																					'PERM_WORKGROUP_CREATE_GLOBAL', 
+																					'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+																					'PERM_WORKGROUP_UPDATE_GLOBAL', 
+																					'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+																					'PERM_WORKGROUP_GLOBAL', 
+																					'PERM_WORKGROUP_WORKGROUP' 
+																				]
+																			}, 
+																			'object'   : 'workgroup', 
+																			'objectid' : this.id.split( 'wid_' )[1] 
+																		} );
+													
+																		if( this.checked )
+																		{
+																			// Toggle on ...
+														
+																			if( args && args.id && args.users )
+																			{
+																				let f = new Library( 'system.library' );
+																				f.btn = this;
+																				f.onExecuted = function( e, d )
+																				{
+																
+																					// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																
+																					// Refresh Storage ...
+																					//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																					Sections.user_disk_cancel( userInfo.ID );
+																				}
+																				f.execute( 'group/addusers', args );
+																			}
+														
+																		}
+																		else
+																		{
+																			// Toggle off ...
+														
+																			if( args && args.id && args.users )
+																			{
+																				let f = new Library( 'system.library' );
+																				f.btn = this;
+																				f.onExecuted = function( e, d )
+																				{
+																
+																					// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																
+																					// Refresh Storage ...
+																					//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																					Sections.user_disk_cancel( userInfo.ID );
+																
+																				}
+																				f.execute( 'group/removeusers', args );
+																			}
+														
+																		}
+						
+																	}, ( found ? true : false ) );
+																	
 																}
 																
 																str += '	</div>';
+										
 																str += '</div>';
-																
+									
 															}
-															
+								
 															str += '</div>';
 														}
-															
+								
 													}
-													
+						
 													str += '</div>';
 												}
-												
+					
 												str += '</div>';
-												
+					
 											}
 											
 											
@@ -1447,7 +1872,95 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												} )( workBtns[ a ] );
 											}
 										}
+										
+										
+										
+										let workInps = ge( 'WorkgroupInner' ).getElementsByTagName( 'input' );
 							
+										if( workInps )
+										{
+											for( var a = 0; a < workInps.length; a++ )
+											{
+												// Toggle user relation to workgroup
+												( function( b ) {
+													b.onclick = function( e )
+													{
+														
+														var args = { 
+															id     : this.id.split( 'wid_' )[1], 
+															users  : userInfo.ID, 
+															authid : Application.authId 
+														};
+					
+														args.args = JSON.stringify( {
+															'type'    : 'write', 
+															'context' : 'application', 
+															'authid'  : Application.authId, 
+															'data'    : { 
+																'permission' : [ 
+																	'PERM_WORKGROUP_CREATE_GLOBAL', 
+																	'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+																	'PERM_WORKGROUP_UPDATE_GLOBAL', 
+																	'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+																	'PERM_WORKGROUP_GLOBAL', 
+																	'PERM_WORKGROUP_WORKGROUP' 
+																]
+															}, 
+															'object'   : 'workgroup', 
+															'objectid' : this.id.split( 'wid_' )[1] 
+														} );
+					
+														if( this.checked )
+														{
+															// Toggle on ...
+						
+															if( args && args.id && args.users )
+															{
+																let f = new Library( 'system.library' );
+																f.btn = this;
+																f.onExecuted = function( e, d )
+																{
+								
+																	// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+								
+																	// Refresh Storage ...
+																	//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																	Sections.user_disk_cancel( userInfo.ID );
+																}
+																f.execute( 'group/addusers', args );
+															}
+						
+														}
+														else
+														{
+															// Toggle off ...
+						
+															if( args && args.id && args.users )
+															{
+																let f = new Library( 'system.library' );
+																f.btn = this;
+																f.onExecuted = function( e, d )
+																{
+								
+																	// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+								
+																	// Refresh Storage ...
+																	//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																	Sections.user_disk_cancel( userInfo.ID );
+								
+																}
+																f.execute( 'group/removeusers', args );
+															}
+						
+														}
+														
+													}
+												} )( workInps[ a ] );
+											}
+										}
+										
+										
+										
 										sortgroups( 'Name', 'ASC' );
 	
 										let wgc = ge( 'WorkgroupEditBack' );
@@ -1491,6 +2004,20 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														}
 													}
 												}
+												
+												let workInps = ge( 'WorkgroupInner' ).getElementsByTagName( 'input' );
+									
+												if( workInps )
+												{
+													for( var a = 0; a < workInps.length; a++ )
+													{
+														if( workInps[a] && workInps[a].checked && workInps[a].id.split( 'wid_' )[1] )
+														{
+															this.wge.wids[ workInps[a].id.split( 'wid_' )[1] ] = true;
+														}
+													}
+												}
+												
 											}
 										
 											let wstr = '';
@@ -1500,20 +2027,80 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												for( var b in groups )
 												{
 													
-													
 													if( groups[b].Name && this.wge.wids[ groups[b].ID ] )
 													{
-														wstr += '<div>';0
+														wstr += '<div>';
 														wstr += '<div class="HRow">';
-														wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
-														wstr += '		<span name="' + groups[b].Name + '" style="display: none;"></span>';
-														wstr += '		<strong>' + groups[b].Name + '</strong>';
+														wstr += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
+														wstr += '		<span name="' + groups[b].Name + '" class="IconMedium fa-users"></span>';
 														wstr += '	</div>';
-														wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+														wstr += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[b].Name + '</div>';
+														wstr += '	<div class="PaddingSmall HContent40 FloatRight Ellipsis">';
 														
 														if( Application.checkAppPermission( 'WORKGROUP_UPDATE' ) )
 														{
-															wstr += '		<button wid="' + groups[b].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+															wstr += CustomToggle( 'wid_' + groups[b].ID, 'FloatRight', null, function (  )
+															{
+							
+																var args = { 
+																	id     : this.id.split( 'wid_' )[1], 
+																	users  : userInfo.ID, 
+																	authid : Application.authId 
+																};
+														
+																args.args = JSON.stringify( {
+																	'type'    : 'write', 
+																	'context' : 'application', 
+																	'authid'  : Application.authId, 
+																	'data'    : { 
+																		'permission' : [ 
+																			'PERM_WORKGROUP_CREATE_GLOBAL', 
+																			'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+																			'PERM_WORKGROUP_UPDATE_GLOBAL', 
+																			'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+																			'PERM_WORKGROUP_GLOBAL', 
+																			'PERM_WORKGROUP_WORKGROUP' 
+																		]
+																	}, 
+																	'object'   : 'workgroup', 
+																	'objectid' : this.id.split( 'wid_' )[1] 
+																} );
+														
+																if( this.checked )
+																{
+																	// Toggle off ...
+																
+																	if( args && args.id && args.users )
+																	{
+																		let f = new Library( 'system.library' );
+																		f.btn = this;
+																		f.wids = wids;
+																		f.onExecuted = function( e, d )
+																		{
+																			
+																			this.wids[ this.btn.id.split( 'wid_' )[1] ] = false;
+																	
+																			let pnt = this.btn.parentNode.parentNode;
+																	
+																			if( pnt )
+																			{
+																				pnt.innerHTML = '';
+																			}
+																		
+																			// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																		
+																			// Refresh Storage ...
+																			//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																			Sections.user_disk_cancel( userInfo.ID );
+																		
+																		}
+																		f.execute( 'group/removeusers', args );
+																	}
+															
+																}
+							
+															}, true );
+															
 														}
 														
 														wstr += '	</div>';
@@ -1531,15 +2118,77 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																{
 																	wstr += '<div>';
 																	wstr += '<div class="HRow">';
-																	wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
-																	wstr += '		<span name="' + groups[b].groups[k].Name + '" style="display: none;"></span>';
-																	wstr += '		<strong>' + groups[b].groups[k].Name + '</strong>';
+																	wstr += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
+																	wstr += '		<span name="' + groups[b].groups[k].Name + '" class="IconMedium fa-users"></span>';
 																	wstr += '	</div>';
-																	wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+																	wstr += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[b].groups[k].Name + '</div>';
+																	wstr += '	<div class="PaddingSmall HContent40 FloatRight Ellipsis">';
 																	
 																	if( Application.checkAppPermission( 'WORKGROUP_UPDATE' ) )
 																	{
-																		wstr += '		<button wid="' + groups[b].groups[k].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+																		
+																		wstr += CustomToggle( 'wid_' + groups[b].groups[k].ID, 'FloatRight', null, function (  )
+																		{
+							
+																			var args = { 
+																				id     : this.id.split( 'wid_' )[1], 
+																				users  : userInfo.ID, 
+																				authid : Application.authId 
+																			};
+														
+																			args.args = JSON.stringify( {
+																				'type'    : 'write', 
+																				'context' : 'application', 
+																				'authid'  : Application.authId, 
+																				'data'    : { 
+																					'permission' : [ 
+																						'PERM_WORKGROUP_CREATE_GLOBAL', 
+																						'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+																						'PERM_WORKGROUP_UPDATE_GLOBAL', 
+																						'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+																						'PERM_WORKGROUP_GLOBAL', 
+																						'PERM_WORKGROUP_WORKGROUP' 
+																					]
+																				}, 
+																				'object'   : 'workgroup', 
+																				'objectid' : this.id.split( 'wid_' )[1] 
+																			} );
+														
+																			if( this.checked )
+																			{
+																				// Toggle off ...
+																
+																				if( args && args.id && args.users )
+																				{
+																					let f = new Library( 'system.library' );
+																					f.btn = this;
+																					f.wids = wids;
+																					f.onExecuted = function( e, d )
+																					{
+																			
+																						this.wids[ this.btn.id.split( 'wid_' )[1] ] = false;
+																	
+																						let pnt = this.btn.parentNode.parentNode;
+																	
+																						if( pnt )
+																						{
+																							pnt.innerHTML = '';
+																						}
+																		
+																						// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																		
+																						// Refresh Storage ...
+																						//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																						Sections.user_disk_cancel( userInfo.ID );
+																		
+																					}
+																					f.execute( 'group/removeusers', args );
+																				}
+															
+																			}
+							
+																		}, true );
+																		
 																	}
 																	
 																	wstr += '	</div>';
@@ -1557,15 +2206,77 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																			{
 																				wstr += '<div>';
 																				wstr += '<div class="HRow">';
-																				wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
-																				wstr += '		<span name="' + groups[b].groups[k].groups[i].Name + '" style="display: none;"></span>';
-																				wstr += '		<strong>' + groups[b].groups[k].groups[i].Name + '</strong>';
+																				wstr += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
+																				wstr += '		<span name="' + groups[b].groups[k].groups[i].Name + '" class="IconMedium fa-users"></span>';
 																				wstr += '	</div>';
-																				wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+																				wstr += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[b].groups[k].groups[i].Name + '</div>';
+																				wstr += '	<div class="PaddingSmall HContent40 FloatRight Ellipsis">';
 																				
 																				if( Application.checkAppPermission( 'WORKGROUP_UPDATE' ) )
 																				{
-																					wstr += '		<button wid="' + groups[b].groups[k].groups[i].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+																					
+																					wstr += CustomToggle( 'wid_' + groups[b].groups[k].groups[i].ID, 'FloatRight', null, function (  )
+																					{
+							
+																						var args = { 
+																							id     : this.id.split( 'wid_' )[1], 
+																							users  : userInfo.ID, 
+																							authid : Application.authId 
+																						};
+														
+																						args.args = JSON.stringify( {
+																							'type'    : 'write', 
+																							'context' : 'application', 
+																							'authid'  : Application.authId, 
+																							'data'    : { 
+																								'permission' : [ 
+																									'PERM_WORKGROUP_CREATE_GLOBAL', 
+																									'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+																									'PERM_WORKGROUP_UPDATE_GLOBAL', 
+																									'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+																									'PERM_WORKGROUP_GLOBAL', 
+																									'PERM_WORKGROUP_WORKGROUP' 
+																								]
+																							}, 
+																							'object'   : 'workgroup', 
+																							'objectid' : this.id.split( 'wid_' )[1] 
+																						} );
+														
+																						if( this.checked )
+																						{
+																							// Toggle off ...
+																
+																							if( args && args.id && args.users )
+																							{
+																								let f = new Library( 'system.library' );
+																								f.btn = this;
+																								f.wids = wids;
+																								f.onExecuted = function( e, d )
+																								{
+																			
+																									this.wids[ this.btn.id.split( 'wid_' )[1] ] = false;
+																	
+																									let pnt = this.btn.parentNode.parentNode;
+																	
+																									if( pnt )
+																									{
+																										pnt.innerHTML = '';
+																									}
+																		
+																									// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																		
+																									// Refresh Storage ...
+																									//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																									Sections.user_disk_cancel( userInfo.ID );
+																		
+																								}
+																								f.execute( 'group/removeusers', args );
+																							}
+															
+																						}
+							
+																					}, true );	
+																					
 																				}
 																				
 																				wstr += '	</div>';
@@ -1655,6 +2366,79 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												}
 											}
 											
+											
+											
+											let workInps = ge( 'WorkgroupInner' ).getElementsByTagName( 'input' );
+							
+											if( workInps )
+											{
+												for( var a = 0; a < workInps.length; a++ )
+												{
+													// Toggle user relation to workgroup
+													( function( b, wids ) {
+														b.onclick = function( e )
+														{
+															
+															var args = { 
+																id     : this.id.split( 'wid_' )[1], 
+																users  : userInfo.ID, 
+																authid : Application.authId 
+															};
+													
+															args.args = JSON.stringify( {
+																'type'    : 'write', 
+																'context' : 'application', 
+																'authid'  : Application.authId, 
+																'data'    : { 
+																	'permission' : [ 
+																		'PERM_WORKGROUP_CREATE_GLOBAL', 
+																		'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+																		'PERM_WORKGROUP_UPDATE_GLOBAL', 
+																		'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+																		'PERM_WORKGROUP_GLOBAL', 
+																		'PERM_WORKGROUP_WORKGROUP' 
+																	]
+																}, 
+																'object'   : 'workgroup', 
+																'objectid' : this.id.split( 'wid_' )[1] 
+															} );
+															
+															// Toggle off ...
+														
+															if( args && args.id && args.users )
+															{
+																let f = new Library( 'system.library' );
+																f.btn = this;
+																f.wids = wids;
+																f.onExecuted = function( e, d )
+																{
+																	
+																	this.wids[ this.btn.id.split( 'wid_' )[1] ] = false;
+															
+																	let pnt = this.btn.parentNode.parentNode.parentNode;
+															
+																	if( pnt )
+																	{
+																		pnt.innerHTML = '';
+																	}
+																
+																	// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																
+																	// Refresh Storage ...
+																	//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																	Sections.user_disk_cancel( userInfo.ID );
+																
+																}
+																f.execute( 'group/removeusers', args );
+															}
+															
+														}
+													} )( workInps[ a ], this.wge.wids );
+												}
+											}
+											
+											
+											
 											// Hide back button ...
 											
 											if( this.classList.contains( 'Open' ) || this.classList.contains( 'Closed' ) )
@@ -1695,34 +2479,30 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									if( ge( 'WorkgroupInner' ) )
 									{
-										let list = ge( 'WorkgroupInner' ).getElementsByTagName( 'div' );
-										
+										var list = ge( 'WorkgroupInner' ).getElementsByTagName( 'div' );
+						
 										if( list.length > 0 )
 										{
 											for( var a = 0; a < list.length; a++ )
 											{
 												if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
-												
-												let strong = list[a].getElementsByTagName( 'strong' )[0];
-												let span = list[a].getElementsByTagName( 'span' )[0];
-												
+								
+												var strong = list[a].getElementsByTagName( 'strong' )[0];
+												var span = list[a].getElementsByTagName( 'span' )[0];
+								
 												if( strong || span )
 												{
+									
 													if( !filter || filter == '' 
 													|| strong && strong.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
 													|| span && span.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+													|| span && span.getAttribute( 'name' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
 													)
 													{
 														list[a].style.display = '';
-														
+										
 														if( list[a].parentNode.parentNode && list[a].parentNode.parentNode.parentNode && list[a].parentNode.parentNode.parentNode.className.indexOf( 'HRow' ) >= 0 )
 														{
-															if( list[a].parentNode.classList.contains( 'Closed' ) )
-															{
-																list[a].parentNode.classList.remove( 'Closed' );
-																list[a].parentNode.classList.add( 'Open' );
-															}
-															
 															list[a].parentNode.style.display = '';
 															list[a].parentNode.parentNode.style.display = '';
 														}
@@ -1733,16 +2513,16 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													}
 												}
 											}
-		
+
 										}
-										
+						
 										if( ge( 'WorkgroupSearchCancelBtn' ) )
 										{
 											if( !filter && ( ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
 											{
 												ge( 'WorkgroupSearchCancelBtn' ).classList.remove( 'Open' );
 												ge( 'WorkgroupSearchCancelBtn' ).classList.add( 'Closed' );
-												
+								
 												if( list.length > 0 )
 												{
 													for( var a = 0; a < list.length; a++ )
@@ -1755,7 +2535,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													}
 												}
 											}
-											
+							
 											else if( filter != '' && ( ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
 											{
 												ge( 'WorkgroupSearchCancelBtn' ).classList.remove( 'Closed' );
@@ -1883,6 +2663,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														let d = document.createElement( 'div' );
 														d.className = 'PaddingSmall HContent40 FloatLeft';
 														d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+														d.style.cursor = 'pointer';
 														d.onclick = function(  )
 														{
 															sortroles( 'Name' );
@@ -1896,6 +2677,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														let d = document.createElement( 'div' );
 														d.className = 'PaddingSmall HContent45 FloatLeft Relative';
 														d.innerHTML = '<strong>' + i18n( 'i18n_workgroups' ) + '</strong>';
+														d.style.cursor = 'pointer';
 														d.onclick = function(  )
 														{
 															sortroles( 'Workgroups' );
@@ -1918,6 +2700,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											{
 												let d = document.createElement( 'div' );
 												d.className = 'HRow Box Padding';
+												d.style.overflow = 'auto';
+												d.style.maxHeight = '369px';
 												d.id = 'RolesInner';
 												return d;
 											}()
@@ -2027,11 +2811,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													if( !list[a].className || ( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) ) continue;
 												
-													let span = list[a].getElementsByTagName( 'span' )[0];
+													var span = list[a].getElementsByTagName( 'span' )[0];
 													
 													if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
 													{
-														let obj = { 
+														var obj = { 
 															sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
 															content : list[a]
 														};
@@ -2100,11 +2884,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							
 							appids : function ( soft )
 							{
-								let output = []; var ids = {};
+								var output = []; var ids = {};
 								
 								if( soft )
 								{
-									let i = 0;
+									var i = 0;
 									
 									for( var a in soft )
 									{
@@ -2123,18 +2907,20 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									}
 									
 								}
-						
+								
+								//console.log( 'appids', ids );
+								
 								return ids;
 						
 							}( soft ),
 							
 							dockids : function ( dock )
 							{
-								let output = []; var ids = {};
+								var output = []; var ids = {};
 								
 								if( dock )
 								{
-									let i = 0;
+									var i = 0;
 									
 									for( var a in dock )
 									{
@@ -2160,14 +2946,41 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									}
 									
 								}
-						
+								
+								//console.log( 'dockids', ids );
+								
 								return ids;
 						
 							}( dock ),
 							
+							startids : function ( star )
+							{
+								var ids = {};
+								
+								if( star )
+								{
+									if( ShowLog ) console.log( 'star ', star );
+							
+									var i = 0;
+							
+									for( var a in star )
+									{
+										if( star[a] && star[a].split( 'launch ' )[1] )
+										{
+											ids[ i++ ] = star[a];
+										}
+									}
+								}
+						
+								return ids;
+							
+							}( star ),
+							
 							updateids : function ( mode, key, value )
 							{
-					
+								
+								// TODO: ALWAYS CHECK BEFORE CHANGING VAR TO LET, CODE BROKE !!!!
+								
 								switch( mode )
 								{
 									
@@ -2175,7 +2988,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										
 										if( this.appids )
 										{
-											let arr = []; var i = 0; var found = false;
+											var arr = []; var i = 0; var found = false;
 											
 											for( var a in this.appids )
 											{
@@ -2185,7 +2998,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													{
 														if( value[0] )
 														{
-															let obj = { Name: value[0], DockStatus: value[1] };
+															var obj = { Name: value[0], DockStatus: value[1] };
 														}
 														
 														this.appids[a] = ( value ? obj : false ); found = true;
@@ -2206,12 +3019,14 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													arr.push( value[0] + '_' + value[1] );
 													
-													let obj = { Name: value[0], DockStatus: value[1] };
+													var obj = { Name: value[0], DockStatus: value[1] };
 													
 													this.appids[ i++ ] = obj; 
 												}
 											}
-								
+											
+											//console.log( '[1] applications', arr, [ mode, key, value ] );
+											
 											if( ge( 'TempApplications' ) )
 											{
 												ge( 'TempApplications' ).setAttribute( 'value', ( arr ? arr.join( ',' ) : '' ) );
@@ -2221,11 +3036,13 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										{
 											if( value[0] )
 											{
-												let obj = { Name: value[0], DockStatus: value[1] };
+												var obj = { Name: value[0], DockStatus: value[1] };
 												
 												this.appids[0] = obj;
 											}
-								
+											
+											//console.log( '[2] applications', arr, [ mode, key, value ] );
+											
 											if( ge( 'TempApplications' ) && value[0] )
 											{
 												ge( 'TempApplications' ).setAttribute( 'value', value[0] + '_' + value[1] );
@@ -2238,7 +3055,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										
 										if( this.dockids )
 										{
-											let arr = []; var i = 0; var found = false;
+											var arr = []; var i = 0; var found = false;
 											
 											for( var a in this.dockids )
 											{
@@ -2265,6 +3082,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												this.dockids[ i++ ] = value; 
 											}
 											
+											//console.log( '[1] dock', this.dockids, [ mode, key, value ] );
 										}
 										else if( key && value )
 										{
@@ -2273,13 +3091,63 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											this.dockids[0] = value;
 										}
 										
+										//console.log( '[2] dock', this.dockids, [ mode, key, value ] );
+										
 										break;
-							
+									
+									case 'startup':
+										
+										if( ge( 'TempStartup' ) )
+										{
+											if( this.startids )
+											{
+												var arr = []; var i = 0;
+										
+												for( var a in this.startids )
+												{
+													if( this.startids[a] && this.startids[a].split( 'launch ' )[1] )
+													{
+														if( key && this.startids[a].split( 'launch ' )[1].toLowerCase() == key.toLowerCase() )
+														{
+															this.startids[a] = ( value ? value : false ); found = true;
+														}
+												
+														arr.push( this.startids[a] );
+													}
+											
+													i++;
+												}
+										
+												if( key && value && !found )
+												{
+													if( value.split( 'launch ' )[1] )
+													{
+														arr.push( value );
+												
+														this.startids[ i++ ] = value; 
+													}
+												}
+										
+												if( ShowLog ) console.log( 'startup ', this.startids );
+										
+												if( ge( 'TempStartup' ) )
+												{
+													ge( 'TempStartup' ).setAttribute( 'value', ( arr ? arr.join( ',' ) : '' ) );
+												}
+											}
+											else if( key && value )
+											{
+												this.startids[0] = value;
+											}
+										}
+								
+										break;
+									
 								}
 					
 							},
 							
-							mode : { applications : 'list', dock : 'list' },
+							mode : { applications : 'list', dock : 'list', startup : 'list' },
 							
 							// Applications ------------------------------------------------------------------------------------
 							
@@ -2320,7 +3188,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													let d = document.createElement( 'div' );
 													//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
-													d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+													d.className = 'HRow BackgroundNegative Negative Padding';
 													return d;
 												}(),
 												'child' : 
@@ -2329,8 +3197,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														'element' : function( _this ) 
 														{
 															let d = document.createElement( 'div' );
-															d.className = 'PaddingSmall HContent40 FloatLeft';
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft';
 															d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+															d.style.cursor = 'pointer';
 															d.ele = this;
 															d.onclick = function(  )
 															{
@@ -2343,8 +3212,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														'element' : function( _this ) 
 														{
 															let d = document.createElement( 'div' );
-															d.className = 'PaddingSmall HContent45 FloatLeft Relative';
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent45 FloatLeft Relative';
 															d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
+															d.style.cursor = 'pointer';
 															d.ele = this;
 															d.onclick = function(  )
 															{
@@ -2357,7 +3227,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														'element' : function() 
 														{
 															let d = document.createElement( 'div' );
-															d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+															d.className = 'PaddingSmallRight HContent15 FloatLeft Relative';
 															return d;
 														}()
 													}
@@ -2367,7 +3237,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												'element' : function() 
 												{
 													let d = document.createElement( 'div' );
-													d.className = 'HRow Box Padding';
+													d.className = 'HRow List Padding';
+													d.style.overflow = 'auto';
+													d.style.maxHeight = '366px';
 													d.id = 'ApplicationInner';
 													return d;
 												}()
@@ -2404,7 +3276,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													if( this.ids[a] && this.ids[a].Name )
 													{
-														let found = false;
+														var found = false;
 												
 														for( var k in apps )
 														{
@@ -2418,7 +3290,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														
 														if( !found ) continue;
 											
-														let divs = appendChild( [
+														var divs = appendChild( [
 															{ 
 																'element' : function() 
 																{
@@ -2432,7 +3304,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		'element' : function() 
 																		{
 																			let d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																			d.className = 'TextCenter PaddingSmall HContent10 FloatLeft Ellipsis';
 																			return d;
 																		}(),
 																		 'child' : 
@@ -2443,7 +3315,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																					let d = document.createElement( 'span' );
 																					d.setAttribute( 'Name', apps[k].Name );
 																					d.setAttribute( 'Category', apps[k].Category );
-																					d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																					d.style.backgroundImage = "url('/iconthemes/friendup15/File_Binary.svg')";
 																					d.style.backgroundSize = 'contain';
 																					d.style.width = '24px';
 																					d.style.height = '24px';
@@ -2474,8 +3346,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		'element' : function() 
 																		{
 																			let d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis name';
-																			d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																			d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis name';
+																			d.innerHTML = '<strong class="PaddingSmallRight">' + apps[k].Name + '</strong>';
 																			return d;
 																		}() 
 																	},
@@ -2483,8 +3355,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		'element' : function() 
 																		{
 																			let d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis category';
-																			d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																			d.className = 'PaddingSmall HContent45 InputHeight FloatLeft Ellipsis category';
+																			d.innerHTML = '<span class="PaddingSmallLeft PaddingSmallRight">' + apps[k].Category + '</span>';
 																			return d;
 																		}() 
 																	}, 
@@ -2492,7 +3364,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		'element' : function() 
 																		{
 																			let d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent15 FloatLeft';
+																			d.className = 'HContent15 FloatLeft';
 																			return d;
 																		}(),
 																		'child' : 
@@ -2503,7 +3375,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																					if( Application.checkAppPermission( 'APPLICATION_UPDATE' ) )
 																					{
 																						let b = document.createElement( 'button' );
-																						b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																						b.className = 'IconButton IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																						b.onclick = function(  )
 																						{
 																			
@@ -2529,7 +3401,15 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																										{	
 																											// TODO: Look at dock refresh, doesn't get latest info ...
 																											
+																											vars.func.updateids( 'dock', args.name, false );
+																											
 																											vars.func.dock( 'refresh' );
+																											
+																											args.func.updateids( 'startup', args.name, false );
+																							
+																											updateStartup( userInfo.ID );
+																											
+																											vars.func.startup( 'refresh' );
 																										}
 																						
 																									}
@@ -2591,7 +3471,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											{
 												if( apps[k] && apps[k].Name )
 												{
-													let found = false;
+													var found = false;
 													
 													if( this.ids )
 													{
@@ -2604,7 +3484,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														}
 													}
 											
-													let divs = appendChild( [
+													var divs = appendChild( [
 														{ 
 															'element' : function() 
 															{
@@ -2629,7 +3509,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																				let d = document.createElement( 'span' );
 																				d.setAttribute( 'Name', apps[k].Name );
 																				d.setAttribute( 'Category', apps[k].Category );
-																				d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																				d.style.backgroundImage = "url('/iconthemes/friendup15/File_Binary.svg')";
 																				d.style.backgroundSize = 'contain';
 																				d.style.width = '24px';
 																				d.style.height = '24px';
@@ -2660,8 +3540,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																	'element' : function() 
 																	{
 																		let d = document.createElement( 'div' );
-																		d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis name';
-																		d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																		d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis name';
+																		d.innerHTML = '<strong class="PaddingSmallRight">' + apps[k].Name + '</strong>';
 																		return d;
 																	}() 
 																}, 
@@ -2669,8 +3549,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																	'element' : function() 
 																	{
 																		let d = document.createElement( 'div' );
-																		d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis category';
-																		d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																		d.className = 'PaddingSmall HContent45 InputHeight FloatLeft Ellipsis category';
+																		d.innerHTML = '<span class="PaddingSmallLeft PaddingSmallRight">' + apps[k].Category + '</span>';
 																		return d;
 																	}() 
 																},
@@ -2688,27 +3568,25 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																			{
 																				if( Application.checkAppPermission( 'APPLICATION_UPDATE' ) )
 																				{
-																					let b = document.createElement( 'button' );
-																					b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' );
-																					b.onclick = function(  )
+																					
+																					var b = CustomToggle( 'aid_'+name, 'FloatRight', null, function (  )
 																					{
-																						if( this.classList.contains( 'fa-toggle-off' ) )
-																						{
 																						
+																						if( this.checked )
+																						{
+																							
 																							func.updateids( 'applications', name, [ name, '0' ] );
 																							
 																							addApplication( name, userInfo.ID, function( e, d, vars )
 																							{
-																					
+																								
 																								if( e && vars )
 																								{
-																						
-																									vars._this.classList.remove( 'fa-toggle-off' );
-																									vars._this.classList.add( 'fa-toggle-on' );
 																						
 																									if( vars.func )
 																									{
 																										vars.func.dock( 'refresh' );
+																										vars.func.startup( 'refresh' );
 																									}
 																						
 																								}
@@ -2722,21 +3600,23 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																						}
 																						else
 																						{
-																						
+																							
 																							func.updateids( 'applications', name, false );
+																							
+																							func.updateids( 'startup', name, false );
+																							
+																							updateStartup( userInfo.ID );
 																							
 																							removeApplication( name, userInfo.ID, function( e, d, vars )
 																							{
 																					
 																								if( e && vars )
 																								{
-																						
-																									vars._this.classList.remove( 'fa-toggle-on' );
-																									vars._this.classList.add( 'fa-toggle-off' );
-																						
+																									
 																									if( vars.func )
 																									{
 																										vars.func.dock( 'refresh' );
+																										vars.func.startup( 'refresh' );
 																									}
 																						
 																								}
@@ -2748,8 +3628,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																							}, { _this: this, func: func } );
 																							
 																						}
-																			
-																					};
+																						
+																					}, ( found ? true : false ), 1 );
+																					
 																					return b;
 																				}
 																			}( this.ids, apps[k].Name, this.func ) 
@@ -2794,11 +3675,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
 				
-													let span = list[a].getElementsByTagName( 'span' )[0];
+													var span = list[a].getElementsByTagName( 'span' )[0];
 				
 													if( span )
 													{
-														let param = [
+														var param = [
 															( " " + span.getAttribute( 'name' ).toLowerCase() + " " ), 
 															( " " + span.getAttribute( 'category' ).toLowerCase() + " " )
 														];
@@ -2810,7 +3691,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														{
 															list[a].style.display = '';
 						
-															let div = list[a].getElementsByTagName( 'div' );
+															var div = list[a].getElementsByTagName( 'div' );
 						
 															if( div.length )
 															{
@@ -2873,11 +3754,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
 					
-													let span = list[a].getElementsByTagName( 'span' )[0];
+													var span = list[a].getElementsByTagName( 'span' )[0];
 					
 													if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
 													{
-														let obj = { 
+														var obj = { 
 															sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
 															content : list[a]
 														};
@@ -3098,7 +3979,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													let d = document.createElement( 'div' );
 													//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
-													d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+													d.className = 'HRow BackgroundNegative Negative Padding';
 													return d;
 												}(),
 												'child' : 
@@ -3107,8 +3988,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														'element' : function( _this ) 
 														{
 															let d = document.createElement( 'div' );
-															d.className = 'PaddingSmall HContent40 FloatLeft';
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft';
 															d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+															d.style.cursor = 'pointer';
 															d.ele = this;
 															d.onclick = function(  )
 															{
@@ -3121,8 +4003,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														'element' : function( _this ) 
 														{
 															let d = document.createElement( 'div' );
-															d.className = 'PaddingSmall HContent25 FloatLeft Relative';
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 FloatLeft Relative';
 															d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
+															d.style.cursor = 'pointer';
 															d.ele = this;
 															d.onclick = function(  )
 															{
@@ -3135,7 +4018,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														'element' : function() 
 														{
 															let d = document.createElement( 'div' );
-															d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
 															d.innerHTML = '<strong>' + i18n( 'i18n_order' ) + '</strong>';
 															return d;
 														}()
@@ -3155,6 +4038,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													let d = document.createElement( 'div' );
 													d.className = 'HRow Box Padding';
+													d.style.overflow = 'auto';
+													d.style.maxHeight = '366px';
 													d.id = 'DockInner';
 													return d;
 												}()
@@ -3191,7 +4076,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													if( this.ids[a] && this.ids[a].Name )
 													{
-														let found = false;
+														var found = false;
 											
 														for( var k in apps )
 														{
@@ -3205,7 +4090,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														
 														if( !found ) continue;
 											
-														let divs = appendChild( [
+														var divs = appendChild( [
 															{ 
 																'element' : function() 
 																{
@@ -3261,8 +4146,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		'element' : function() 
 																		{
 																			let d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis name';
-																			d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																			d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis name';
+																			d.innerHTML = '<strong class="PaddingSmallRight">' + apps[k].Name + '</strong>';
 																			return d;
 																		}() 
 																	},
@@ -3270,8 +4155,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		'element' : function() 
 																		{
 																			let d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent25 FloatLeft Ellipsis category';
-																			d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																			d.className = 'PaddingSmall HContent25 InputHeight FloatLeft Ellipsis category';
+																			d.innerHTML = '<span class="PaddingSmallLeft PaddingSmallRight">' + apps[k].Category + '</span>';
 																			return d;
 																		}() 
 																	}, 
@@ -3279,7 +4164,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		'element' : function() 
 																		{
 																			let d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Ellipsis';
+																			d.className = 'HContent25 InputHeight TextCenter FloatLeft Ellipsis';
 																			return d;
 																		}(),
 																		'child' : 
@@ -3290,7 +4175,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																					if( Application.checkAppPermission( 'APPLICATION_UPDATE' ) )
 																					{
 																						let b = document.createElement( 'button' );
-																						b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
+																						b.className = 'IconButton IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
 																						b.onclick = function(  )
 																						{
 																			
@@ -3317,7 +4202,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																					if( Application.checkAppPermission( 'APPLICATION_UPDATE' ) )
 																					{
 																						let b = document.createElement( 'button' );
-																						b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
+																						b.className = 'IconButton IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
 																						b.onclick = function()
 																						{
 																			
@@ -3344,7 +4229,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		'element' : function() 
 																		{
 																			let d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent10 FloatLeft';
+																			d.className = 'HContent10 FloatLeft';
 																			return d;
 																
 																		}(),
@@ -3356,7 +4241,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																					if( Application.checkAppPermission( 'APPLICATION_UPDATE' ) )
 																					{
 																						let b = document.createElement( 'button' );
-																						b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																						b.className = 'IconButton IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																						b.onclick = function(  )
 																						{
 																			
@@ -3431,7 +4316,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													if( this.func.appids[a] && this.func.appids[a].Name )
 													{
-														let found = false; var toggle = false;
+														var found = false; var toggle = false;
 												
 														for( var k in apps )
 														{
@@ -3458,7 +4343,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														
 														if( !found ) continue;
 											
-														let divs = appendChild( [
+														var divs = appendChild( [
 															{ 
 																'element' : function() 
 																{
@@ -3514,8 +4399,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		'element' : function() 
 																		{
 																			let d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis name';
-																			d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																			d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis name';
+																			d.innerHTML = '<strong class="PaddingSmallRight">' + apps[k].Name + '</strong>';
 																			return d;
 																		}() 
 																	}, 
@@ -3523,8 +4408,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		'element' : function() 
 																		{
 																			let d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis category';
-																			d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																			d.className = 'PaddingSmall HContent45 InputHeight FloatLeft Ellipsis category';
+																			d.innerHTML = '<span class="PaddingSmallLeft PaddingSmallRight">' + apps[k].Category + '</span>';
 																			return d;
 																		}() 
 																	},
@@ -3542,48 +4427,45 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																				{
 																					if( Application.checkAppPermission( 'APPLICATION_UPDATE' ) )
 																					{
-																						let b = document.createElement( 'button' );
-																						b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
-																						b.onclick = function(  )
+																						
+																						var b = CustomToggle( 'did_'+name, 'FloatRight', null, function (  )
 																						{
-																							if( this.classList.contains( 'fa-toggle-off' ) )
+																						
+																							if( this.checked )
 																							{
-																							
+																								
 																								addDockItem( name, userInfo.ID, function( e, d, vars )
 																								{
-																								
+																									
 																									if( e && d && vars )
 																									{
-																									
+																										
 																										vars.func.updateids( 'dock', vars.name, { Id: d, Name: vars.name } );
-																									
-																										vars._this.classList.remove( 'fa-toggle-off' );
-																										vars._this.classList.add( 'fa-toggle-on' );
-																						
+																										
 																									}
-																								
+																									
 																								}, { _this: this, func: func, name: name } );
-																				
+																								
 																							}
 																							else
 																							{
-																							
+																								
 																								removeDockItem( name, userInfo.ID, function( e, d, vars )
 																								{
-																								
+																									
 																									if( e && vars )
 																									{
+																										
 																										vars.func.updateids( 'dock', vars.name, false );
-																									
-																										vars._this.classList.remove( 'fa-toggle-on' );
-																										vars._this.classList.add( 'fa-toggle-off' );
-																									
+																										
 																									}
-																								
+																									
 																								}, { _this: this, func: func, name: name } );
-																				
+																								
 																							}
-																						};
+																						
+																						}, ( toggle ? true : false ), 1 );
+																						
 																						return b;
 																					}
 																				}( apps[k].Name, this.func ) 
@@ -3630,11 +4512,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
 				
-													let span = list[a].getElementsByTagName( 'span' )[0];
+													var span = list[a].getElementsByTagName( 'span' )[0];
 				
 													if( span )
 													{
-														let param = [
+														var param = [
 															( " " + span.getAttribute( 'name' ).toLowerCase() + " " ), 
 															( " " + span.getAttribute( 'category' ).toLowerCase() + " " )
 														];
@@ -3646,7 +4528,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														{
 															list[a].style.display = '';
 						
-															let div = list[a].getElementsByTagName( 'div' );
+															var div = list[a].getElementsByTagName( 'div' );
 						
 															if( div.length )
 															{
@@ -3709,11 +4591,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
 					
-													let span = list[a].getElementsByTagName( 'span' )[0];
+													var span = list[a].getElementsByTagName( 'span' )[0];
 					
 													if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
 													{
-														let obj = { 
+														var obj = { 
 															sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
 															content : list[a]
 														};
@@ -3780,9 +4662,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									sortup : function ( order, callback, vars )
 									{
 										
-										let num = 0; var array = []; var found = null;
+										// TODO: LOOK AT FUNCTIONALITY AND IMPLICATIONS BEFORE CHANGING IT TO LET INSTEAD OF VAR ...
 										
-										let current = false; var past = false;
+										var num = 0; var array = []; var found = null;
+										
+										var current = false; var past = false;
 										
 										if( this.ids && typeof order !== "undefined" )
 										{
@@ -3814,8 +4698,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											
 													if( typeof this.ids[ array[ found ] ] !== "undefined" && typeof this.ids[ array[ found-1 ] ] !== "undefined" )
 													{
-														let current = this.ids[ array[ found   ] ];
-														let past    = this.ids[ array[ found-1 ] ];
+														var current = this.ids[ array[ found   ] ];
+														var past    = this.ids[ array[ found-1 ] ];
 												
 														if( current && past )
 														{
@@ -3829,6 +4713,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													}
 												}
 											}
+											
+											//console.log( { ids: this.ids, order: order, vars: vars, found: found, array: array, current: current, past: past } );
 											
 											if( current && past )
 											{
@@ -3846,10 +4732,12 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							
 									sortdown : function ( order, callback, vars )
 									{
-																		
-										let num = 0; var array = []; var found = null;
 										
-										let current = false; var past = false;
+										// TODO: LOOK AT FUNCTIONALITY AND IMPLICATIONS BEFORE CHANGING IT TO LET INSTEAD OF VAR ...
+															
+										var num = 0; var array = []; var found = null;
+										
+										var current = false; var past = false;
 										
 										if( this.ids && typeof order !== "undefined" )
 										{
@@ -3879,8 +4767,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											
 													if( typeof this.ids[ array[ found ] ] !== "undefined" && typeof this.ids[ array[ found+1 ] ] !== "undefined" )
 													{
-														let current = this.ids[ array[ found   ] ];
-														let past    = this.ids[ array[ found+1 ] ];
+														var current = this.ids[ array[ found   ] ];
+														var past    = this.ids[ array[ found+1 ] ];
 														
 														if( current && past )
 														{
@@ -3894,6 +4782,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													}
 												}
 											}
+											
+											//console.log( { ids: this.ids, order: order, vars: vars, found: found, array: array, current: current, past: past } );
 											
 											if( current && past )
 											{
@@ -4029,9 +4919,987 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 							},
 							
+							// Startup -----------------------------------------------------------------------------------------
+							
+							startup : function ( func )
+							{
+					
+								// Editing Startup
+					
+								var init =
+								{
+						
+									func : this,
+						
+									ids  : this.startids,
+						
+									head : function ( hidecol )
+									{
+										var o = ge( 'StartupGui' ); if( o ) o.innerHTML = '<input type="hidden" id="TempStartup">';
+							
+										this.func.updateids( 'startup' );
+							
+										var divs = appendChild( [ 
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+													d.className = 'HRow BackgroundNegative Negative Padding';
+													return d;
+												}(),
+												'child' : 
+												[ 
+													{ 
+														'element' : function( _this ) 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft';
+															d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+															d.style.cursor = 'pointer';
+															d.ele = this;
+															d.onclick = function(  )
+															{
+																_this.sortstartup( 'Name' );
+															};
+															return d;
+														}( this ) 
+													}, 
+													{ 
+														'element' : function( _this ) 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 FloatLeft Relative';
+															d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
+															d.style.cursor = 'pointer';
+															d.ele = this;
+															d.onclick = function(  )
+															{
+																_this.sortstartup( 'Category' );
+															};
+															return d;
+														}( this )
+													},
+													{ 
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+															d.innerHTML = '<strong>' + i18n( 'i18n_order' ) + '</strong>';
+															return d;
+														}()
+													},
+													{ 
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent10 FloatLeft Relative';
+															return d;
+														}()
+													}
+												]
+											},
+											{
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'HRow Box Padding';
+													d.style.overflow = 'auto';
+													d.style.maxHeight = '366px';
+													d.id = 'StartupInner';
+													return d;
+												}()
+											}
+										] );
+					
+										if( divs )
+										{
+											for( var i in divs )
+											{
+												if( divs[i] && o )
+												{
+													o.appendChild( divs[i] );
+												}
+											}
+										}
+							
+									},
+						
+									list : function (  )
+									{
+										this.func.mode[ 'startup' ] = 'list';
+							
+										if( apps )
+										{
+											this.head();
+								
+											var o = ge( 'StartupInner' ); if( o ) o.innerHTML = '';
+								
+											if( this.ids )
+											{
+												for( var a in this.ids )
+												{
+													if( this.ids[a] && this.ids[a].split( 'launch ' )[1] )
+													{
+														var found = false;
+											
+														for( var k in apps )
+														{
+															if( this.ids[a] && this.ids[a].split( 'launch ' )[1] == apps[k].Name )
+															{
+																//found = true;
+													
+																break;
+															}
+														}
+										
+														if( this.func.appids )
+														{
+															for( var i in this.func.appids )
+															{
+																if( this.func.appids[i] && this.func.appids[i].Name && this.ids[a].split( 'launch ' )[1] == this.func.appids[i].Name )
+																{
+																	found = true;
+																}
+															}
+														}
+											
+														if( !found ) 
+														{
+															this.func.updateids( 'startup', this.ids[a].split( 'launch ' )[1], false );
+												
+															continue;
+														}
+										
+														var divs = appendChild( [
+															{ 
+																'element' : function() 
+																{
+																	var d = document.createElement( 'div' );
+																	d.className = 'HRow';
+																	return d;
+																}(),
+																'child' : 
+																[ 
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																			return d;
+																		}(),
+																		 'child' : 
+																		[ 
+																			{ 
+																				'element' : function() 
+																				{
+																					var d = document.createElement( 'span' );
+																					d.setAttribute( 'Name', apps[k].Name );
+																					d.setAttribute( 'Category', apps[k].Category );
+																					d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																					d.style.backgroundSize = 'contain';
+																					d.style.width = '24px';
+																					d.style.height = '24px';
+																					d.style.display = 'block';
+																					return d;
+																				}(), 
+																				 'child' : 
+																				[ 
+																					{
+																						'element' : function() 
+																						{
+																							var d = document.createElement( 'div' );
+																							if( apps[k].Preview )
+																							{
+																								d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
+																								d.style.backgroundSize = 'contain';
+																								d.style.width = '24px';
+																								d.style.height = '24px';
+																							}
+																							return d;
+																						}()
+																					}
+																				]																		
+																			}
+																		] 
+																	},
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis';
+																			d.innerHTML = '<strong class="PaddingSmallRight">' + apps[k].Name + '</strong>';
+																			return d;
+																		}() 
+																	},
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent25 InputHeight FloatLeft Ellipsis';
+																			d.innerHTML = '<span class="PaddingSmallLeft PaddingSmallRight">' + apps[k].Category + '</span>';
+																			return d;
+																		}() 
+																	}, 
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'HContent25 InputHeight TextCenter FloatLeft Ellipsis';
+																			return d;
+																		}(),
+																		'child' : 
+																		[ 
+																			{ 
+																				'element' : function( order, _this ) 
+																				{
+																					var b = document.createElement( 'button' );
+																					b.className = 'IconButton IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
+																					b.onclick = function(  )
+																					{
+																		
+																						_this.sortdown( order, function()
+																						{
+																							
+																							// TODO: Make a callback here to let the user know if it was saved or not.
+																							
+																							updateStartup( userInfo.ID );
+																				
+																						} );
+																		
+																					};
+																					return b;
+																				}( a, this ) 
+																			},
+																			{ 
+																				'element' : function( order, _this ) 
+																				{
+																					var b = document.createElement( 'button' );
+																					b.className = 'IconButton IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
+																					b.onclick = function()
+																					{
+																		
+																						_this.sortup( order, function()
+																						{
+																				
+																							// TODO: Make a callback here to let the user know if it was saved or not.
+																							
+																							updateStartup( userInfo.ID );
+																				
+																						} );
+																		
+																					};
+																					return b;
+																				}( a, this ) 
+																			}
+																		] 
+																	}, 
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'HContent10 FloatLeft';
+																			return d;
+															
+																		}(),
+																		'child' : 
+																		[ 
+																			{ 
+																				'element' : function( ids, name, func ) 
+																				{
+																					var b = document.createElement( 'button' );
+																					b.className = 'IconButton IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																					b.onclick = function(  )
+																					{
+																		
+																						var pnt = this.parentNode.parentNode;
+																		
+																						removeBtn( this, { ids: ids, name: name, func: func, pnt: pnt }, function ( args )
+																						{
+																			
+																							//ids[ name ] = false;
+																			
+																							args.func.updateids( 'startup', args.name, false );
+																							
+																							updateStartup( userInfo.ID, function( e, d, vars )
+																							{
+																			
+																								if( e && vars )
+																								{
+																				
+																									if( vars.pnt )
+																									{
+																										vars.pnt.innerHTML = '';
+																									}
+																				
+																								}
+																								else
+																								{
+																									if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																								}
+																			
+																							}, { pnt: args.pnt } );
+																			
+																						} );
+																		
+																					};
+																					return b;
+																				}( this.ids, apps[k].Name, this.func ) 
+																			}
+																		]
+																	}
+																]
+															}
+														] );
+										
+														if( divs )
+														{
+															for( var i in divs )
+															{
+																if( divs[i] && o )
+																{
+																	o.appendChild( divs[i] );
+																}
+															}
+														}
+													}
+												}
+								
+											}
+								
+										}
+								
+									},
+						
+									edit : function (  )
+									{
+							
+										this.func.mode[ 'startup' ] = 'edit';
+							
+										if( apps )
+										{
+											this.head( true );
+								
+											var o = ge( 'StartupInner' ); if( o ) o.innerHTML = '';
+											
+											if( this.func.appids )
+											{
+												for( var a in this.func.appids )
+												{
+													if( this.func.appids[a] && this.func.appids[a].Name )
+													{
+														var found = false; var toggle = false;
+											
+														for( var k in apps )
+														{
+															if( apps[k] && apps[k].Name == this.func.appids[a].Name )
+															{
+																found = true;
+													
+																if( this.ids )
+																{
+																	for( var i in this.ids )
+																	{
+																		if( this.ids[i] && this.ids[i].split( 'launch ' )[1] == apps[k].Name )
+																		{
+																			toggle = true;
+																
+																			break;
+																		}
+																	}
+																}
+													
+																break;
+															}
+														}
+											
+														if( !found ) continue;
+										
+														var divs = appendChild( [
+															{ 
+																'element' : function() 
+																{
+																	var d = document.createElement( 'div' );
+																	d.className = 'HRow';
+																	return d;
+																}(),
+																'child' : 
+																[ 
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																			return d;;
+																		}(),
+																		 'child' : 
+																		[ 
+																			{ 
+																				'element' : function() 
+																				{
+																					var d = document.createElement( 'span' );
+																					d.setAttribute( 'Name', apps[k].Name );
+																					d.setAttribute( 'Category', apps[k].Category );
+																					d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																					d.style.backgroundSize = 'contain';
+																					d.style.width = '24px';
+																					d.style.height = '24px';
+																					d.style.display = 'block';
+																					return d;
+																				}(), 
+																				 'child' : 
+																				[ 
+																					{
+																						'element' : function() 
+																						{
+																							var d = document.createElement( 'div' );
+																							if( apps[k].Preview )
+																							{
+																								d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
+																								d.style.backgroundSize = 'contain';
+																								d.style.width = '24px';
+																								d.style.height = '24px';
+																							}
+																							return d;
+																						}()
+																					}
+																				]
+																			}
+																		] 
+																	},
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent30 InputHeight FloatLeft Ellipsis';
+																			d.innerHTML = '<strong class="PaddingSmallRight">' + apps[k].Name + '</strong>';
+																			return d;
+																		}() 
+																	}, 
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent45 InputHeight FloatLeft Ellipsis';
+																			d.innerHTML = '<span class="PaddingSmallLeft PaddingSmallRight">' + apps[k].Category + '</span>';
+																			return d;
+																		}() 
+																	},
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																			return d;
+																		}(),
+																		'child' : 
+																		[ 
+																			{ 
+																				'element' : function( ids, name, func ) 
+																				{
+																		
+																					var b = CustomToggle( 'sid_'+name, 'FloatRight', null, function (  )
+																					{
+																		
+																						if( this.checked )
+																						{
+																				
+																							func.updateids( 'startup', name, ( 'launch ' + name ) );
+																							
+																							updateStartup( userInfo.ID, function( e, d, vars )
+																							{
+																			
+																								if( e && vars )
+																								{
+																						
+																									vars._this.checked = true;
+																				
+																								}
+																								else
+																								{
+																									if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																						
+																									vars._this.checked = false;
+																						
+																								}
+																			
+																							}, { _this: this } );
+																				
+																						}
+																						else
+																						{
+																				
+																							func.updateids( 'startup', name, false );
+																							
+																							updateStartup( userInfo.ID, function( e, d, vars )
+																							{
+																			
+																								if( e && vars )
+																								{
+																					
+																									vars._this.checked = false;
+																					
+																								}
+																								else
+																								{
+																									if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																						
+																									vars._this.checked = true;
+																						
+																								}
+																			
+																							}, { _this: this } );
+																							
+																						}
+																		
+																					}, ( toggle ? true : false ), 1 );
+																		
+																					return b;
+																				}( this.ids, apps[k].Name, this.func ) 
+																			}
+																		]
+																	}
+																]
+															}
+														] );
+										
+														if( divs )
+														{
+															for( var i in divs )
+															{
+																if( divs[i] && o )
+																{
+																	o.appendChild( divs[i] );
+																}
+															}
+														}
+													}
+												}
+								
+											}
+								
+										}
+							
+										// Sort default by Name ASC
+										this.sortstartup( 'Name', 'ASC' );
+							
+									},
+						
+									refresh : function (  )
+									{
+							
+										switch( this.func.mode[ 'startup' ] )
+										{
+								
+											case 'list':
+									
+												this.list();
+									
+												break;
+									
+											case 'edit':
+									
+												this.edit();
+									
+												break;
+									
+										}
+							
+									},
+						
+									searchstartup : function ( filter, server )
+									{
+							
+										//
+							
+										if( ge( 'StartupInner' ) )
+										{
+											var list = ge( 'StartupInner' ).getElementsByTagName( 'div' );
+
+											if( list.length > 0 )
+											{
+												for( var a = 0; a < list.length; a++ )
+												{
+													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+	
+													var span = list[a].getElementsByTagName( 'span' )[0];
+	
+													if( span )
+													{
+														var param = [
+															( " " + span.getAttribute( 'name' ).toLowerCase() + " " ), 
+															( " " + span.getAttribute( 'category' ).toLowerCase() + " " )
+														];
+											
+														if( !filter || filter == ''  
+														|| span.getAttribute( 'name' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+														|| span.getAttribute( 'category' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+														)
+														{
+															list[a].style.display = '';
+			
+															var div = list[a].getElementsByTagName( 'div' );
+			
+															if( div.length )
+															{
+																for( var i in div )
+																{
+																	if( div[i] && div[i].className && ( div[i].className.indexOf( 'name' ) >= 0 || div[i].className.indexOf( 'category' ) >= 0 ) )
+																	{
+																		// TODO: Make text searched for ...
+																	}
+																}
+															}
+														}
+														else
+														{
+															list[a].style.display = 'none';
+														}
+													}
+												}
+
+											}
+								
+											if( ge( 'StartupSearchCancelBtn' ) )
+											{
+												if( !filter && ( ge( 'StartupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'StartupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+												{
+													ge( 'StartupSearchCancelBtn' ).classList.remove( 'Open' );
+													ge( 'StartupSearchCancelBtn' ).classList.add( 'Closed' );
+												}
+									
+												else if( filter != '' && ( ge( 'StartupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'StartupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+												{
+													ge( 'StartupSearchCancelBtn' ).classList.remove( 'Closed' );
+													ge( 'StartupSearchCancelBtn' ).classList.add( 'Open' );
+												}
+											}
+										}
+							
+									},
+						
+									sortstartup : function ( sortby, orderby )
+									{
+
+										//
+
+										var _this = ge( 'StartupInner' );
+
+										if( _this )
+										{
+											orderby = ( orderby ? orderby : ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' ) );
+								
+											var list = _this.getElementsByTagName( 'div' );
+
+											if( list.length > 0 )
+											{
+												var output = [];
+	
+												var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+	
+												for( var a = 0; a < list.length; a++ )
+												{
+													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+		
+													var span = list[a].getElementsByTagName( 'span' )[0];
+		
+													if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
+													{
+														var obj = { 
+															sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+															content : list[a]
+														};
+		
+														output.push( obj );
+													}
+												}
+	
+												if( output.length > 0 )
+												{
+													// Sort ASC default
+		
+													output.sort( callback );
+		
+													// Sort DESC
+		
+													if( orderby == 'DESC' ) 
+													{ 
+														output.reverse();  
+													}
+		
+													_this.innerHTML = '';
+		
+													_this.setAttribute( 'orderby', orderby );
+		
+													for( var key in output )
+													{
+														if( output[key] && output[key].content )
+														{
+															// Add row
+															_this.appendChild( output[key].content );
+														}
+													}
+												}
+											}
+										}
+
+										//console.log( output );
+									},
+						
+									// TODO: Check this function, top doesn't sort properly after one click ...
+						
+									sortup : function ( order, callback )
+									{
+							
+										if( ShowLog ) console.log( 'TODO: sortup: ' + order + ' ', this.ids );
+							
+										if( ShowLog ) console.log( 'star: ', star );
+							
+										var num = 0; var array = []; var found = null;
+							
+										if( this.ids && typeof order !== "undefined" )
+										{
+											for( var a in this.ids )
+											{
+												if( this.ids[a] && this.ids[a].split( 'launch ' )[1] )
+												{
+										
+													// 
+										
+													if( ShowLog ) console.log( { a:a, num:num } );
+										
+													if( order == a && typeof this.ids[ order ] !== "undefined" )
+													{
+														found = num;
+													}
+										
+													array.push( a );
+										
+													num++;
+												}
+											}
+								
+											if( ShowLog ) console.log( { array: array, found: found, past: array[ found-1 ] } );
+								
+											if( array && typeof found !== "undefined" )
+											{
+									
+												// 
+									
+												if( typeof array[ found ] !== "undefined" && typeof array[ found-1 ] !== "undefined" )
+												{
+										
+													if( typeof this.ids[ array[ found ] ] !== "undefined" && typeof this.ids[ array[ found-1 ] ] !== "undefined" )
+													{
+														var current = this.ids[ array[ found   ] ];
+														var past    = this.ids[ array[ found-1 ] ];
+											
+														if( current && past )
+														{
+												
+															// 
+												
+															this.ids[ array[ found   ] ] = past;
+															this.ids[ array[ found-1 ] ] = current;
+												
+														}
+													}
+												}
+											}
+								
+											if( ShowLog ) console.log( this.ids );
+								
+											this.refresh();
+								
+											if( callback ) return callback( true );
+										}
+							
+									},
+						
+									sortdown : function ( order, callback )
+									{
+							
+										if( ShowLog ) console.log( 'TODO: sortdown: ' + order + ' ', this.ids );
+							
+										if( ShowLog ) console.log( 'star: ', star );
+							
+										var num = 0; var array = []; var found = null;
+							
+										if( this.ids && typeof order !== "undefined" )
+										{
+											for( var a in this.ids )
+											{
+												if( this.ids[a] && this.ids[a].split( 'launch ' )[1] )
+												{
+										
+													// 
+										
+													if( ShowLog ) console.log( { a:a, num:num } );
+										
+													if( order == a && typeof this.ids[ order ] !== "undefined" )
+													{
+														found = num;
+													}
+										
+													array.push( a );
+										
+													num++;
+												}
+											}
+								
+											if( ShowLog ) console.log( { array: array, found: found, past: array[ found+1 ] } );
+								
+											if( array && typeof found !== "undefined" )
+											{
+									
+												// 
+									
+												if( typeof array[ found ] !== "undefined" && typeof array[ found+1 ] !== "undefined" )
+												{
+										
+													if( typeof this.ids[ array[ found ] ] !== "undefined" && typeof this.ids[ array[ found+1 ] ] !== "undefined" )
+													{
+														var current = this.ids[ array[ found   ] ];
+														var past    = this.ids[ array[ found+1 ] ];
+											
+														if( current && past )
+														{
+												
+															// 
+												
+															this.ids[ array[ found   ] ] = past;
+															this.ids[ array[ found+1 ] ] = current;
+												
+														}
+													}
+												}
+											}
+								
+											if( ShowLog ) console.log( this.ids );
+								
+											this.refresh();
+								
+											if( callback ) return callback( true );
+										}
+							
+									}
+						
+								};
+					
+								switch( func )
+								{
+						
+									case 'head':
+							
+										init.head();
+							
+										break;
+							
+									case 'list':
+							
+										init.list();
+							
+										break;
+							
+									case 'edit':
+							
+										init.edit();
+							
+										break;
+							
+									case 'refresh':
+							
+										init.refresh();
+							
+										break;
+						
+									default:
+										
+										var etn = ge( 'StartupEdit' );
+										if( etn )
+										{
+											if( Application.checkAppPermission( 'APPLICATION_UPDATE' ) )
+											{
+												etn.onclick = function( e )
+												{
+							
+													init.edit();
+							
+													// Hide add / edit button ...
+							
+													if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+													{
+														etn.classList.remove( 'Open' );
+														etn.classList.add( 'Closed' );
+													}
+							
+													// Show back button ...
+							
+													if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+													{
+														btn.classList.remove( 'Closed' );
+														btn.classList.add( 'Open' );
+													}
+									
+												};
+											}
+										}
+							
+										var btn = ge( 'StartupEditBack' );
+										if( btn )
+										{
+											btn.onclick = function( e )
+											{
+							
+												init.list();
+							
+												// Hide back button ...
+									
+												if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+												{
+													btn.classList.remove( 'Open' );
+													btn.classList.add( 'Closed' );
+												}
+					
+												// Show add / edit button ...
+							
+												if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+												{
+													etn.classList.remove( 'Closed' );
+													etn.classList.add( 'Open' );
+												}
+									
+											};
+										}
+										
+										if( ge( 'AdminStartupContainer' ) )
+										{
+											var inp = ge( 'AdminStartupContainer' ).getElementsByTagName( 'input' )[0];
+											inp.onkeyup = function( e )
+											{
+												init.searchstartup( this.value );
+											}
+											ge( 'StartupSearchCancelBtn' ).onclick = function( e )
+											{
+												init.searchstartup( false );
+												inp.value = '';
+											}
+										}
+							
+										// Show listed startup ... 
+					
+										init.list();
+							
+										break;
+							
+								}
+					
+							},
+							
+							// Theme -----------------------------------------------------------------------------------
+							
 							theme : function (  )
 							{
-								// Theme ---------------------------------------------------
 								
 								let currTheme = ( settings.Theme ? settings.Theme : 'friendup12' );
 								
@@ -4104,15 +5972,13 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									if( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' )
 									{
-										b.classList.remove( 'fa-toggle-off' );
-										b.classList.add( 'fa-toggle-on' );
+										b.checked = true;
 										
 										themeConfig.colorSchemeText = 'charcoal';
 									}
 									else
 									{
-										b.classList.remove( 'fa-toggle-on' );
-										b.classList.add( 'fa-toggle-off' );
+										b.checked = false;
 										
 										themeConfig.colorSchemeText = 'light';
 									}
@@ -4123,7 +5989,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										b.onclick = function(  )
 										{
 										
-											if( this.classList.contains( 'fa-toggle-off' ) )
+											if( this.checked )
 											{
 												themeConfig.colorSchemeText = 'charcoal';
 											}
@@ -4131,19 +5997,18 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											{
 												themeConfig.colorSchemeText = 'light';
 											}
-										
+											
 											let m = new Module( 'system' );
 											m.b = this;
 											m.onExecuted = function( e, d )
 											{
 												
-												if( this.b.classList.contains( 'fa-toggle-off' ) )
+												if( this.b.checked )
 												{
 												
 													if( e == 'ok' )
 													{
-														this.b.classList.remove( 'fa-toggle-off' );
-														this.b.classList.add( 'fa-toggle-on' );
+														this.b.checked = true;
 													}
 													else
 													{
@@ -4156,8 +6021,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												
 													if( e == 'ok' )
 													{
-														this.b.classList.remove( 'fa-toggle-on' );
-														this.b.classList.add( 'fa-toggle-off' );
+														this.b.checked = false;
 													}
 													else
 													{
@@ -4387,23 +6251,29 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									{
 										if( Application.checkAppPermission( 'WORKGROUP_READ' ) )
 										{
-											if( ge( 'AdminWorkgroupContainer' ) ) ge( 'AdminWorkgroupContainer' ).className = 'Open';
+											if( ge( 'AdminWorkgroupContainer' ) )
+											{
+												ge( 'AdminWorkgroupContainer' ).className = ge( 'AdminWorkgroupContainer' ).className.split( 'Closed' ).join( 'Open' );
+											}
 										}
 										else
 										{
 											console.log( '// No Permission = workgroup' );
 										}
 									}
-								
+									
 									if( /*!show || */show.indexOf( 'role' ) >= 0 || show.indexOf( '*' ) >= 0 )
 									{
 										if( Application.checkAppPermission( 'ROLE_READ' ) )
 										{
-											if( ge( 'AdminRoleContainer' ) ) ge( 'AdminRoleContainer' ).className = 'Open';
+											if( ge( 'AdminRoleContainer' ) )
+											{
+												ge( 'AdminRoleContainer' ).className = ge( 'AdminRoleContainer' ).className.split( 'Closed' ).join( 'Open' );
+											}
 										}
 										else
 										{
-											console.log( '// No Permission = role' );
+											//console.log( '// No Permission = role' );
 										}
 									}
 								
@@ -4411,7 +6281,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									{
 										if( Application.checkAppPermission( 'STORAGE_READ' ) )
 										{
-											if( ge( 'AdminStorageContainer' ) ) ge( 'AdminStorageContainer' ).className = 'Open';
+											if( ge( 'AdminStorageContainer' ) )
+											{
+												ge( 'AdminStorageContainer' ).className = ge( 'AdminStorageContainer' ).className.split( 'Closed' ).join( 'Open' );
+											}
 										}
 										else
 										{
@@ -4423,7 +6296,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									{
 										if( Application.checkAppPermission( 'APPLICATION_READ' ) )
 										{
-											if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
+											if( ge( 'AdminApplicationContainer' ) )
+											{
+												ge( 'AdminApplicationContainer' ).className = ge( 'AdminApplicationContainer' ).className.split( 'Closed' ).join( 'Open' );
+											}
 										}
 										else
 										{
@@ -4435,19 +6311,40 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									{
 										if( Application.checkAppPermission( 'APPLICATION_READ' ) )
 										{
-											if( ge( 'AdminDockContainer' ) ) ge( 'AdminDockContainer' ).className = 'Open';
+											if( ge( 'AdminDockContainer' ) )
+											{
+												ge( 'AdminDockContainer' ).className = ge( 'AdminDockContainer' ).className.split( 'Closed' ).join( 'Open' );
+											}
 										}
 										else
 										{
 											console.log( '// No Permission = dock' );
 										}
 									}
-								
+									
+									if( /*!show || */show.indexOf( 'startup' ) >= 0 || show.indexOf( '*' ) >= 0 )
+									{
+										if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
+										{
+											if( ge( 'AdminStartupContainer' ) )
+											{
+												ge( 'AdminStartupContainer' ).className = ge( 'AdminStartupContainer' ).className.split( 'Closed' ).join( 'Open' );
+											}
+										}
+										else
+										{
+											console.log( '// No Permission = startup' );
+										}
+									}
+									
 									if( /*!show || */show.indexOf( 'looknfeel' ) >= 0 || show.indexOf( '*' ) >= 0 )
 									{
 										if( Application.checkAppPermission( 'LOOKNFEEL_READ' ) )
 										{
-											if( ge( 'AdminLooknfeelContainer' ) ) ge( 'AdminLooknfeelContainer' ).className = 'Open';
+											if( ge( 'AdminLooknfeelContainer' ) )
+											{
+												ge( 'AdminLooknfeelContainer' ).className = ge( 'AdminLooknfeelContainer' ).className.split( 'Closed' ).join( 'Open' );
+											}
 										}
 										else
 										{
@@ -4472,6 +6369,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						func.roles();
 						func.storage();
 						func.applications();
+						func.startup();
 						func.dock();
 						func.theme();
 						func.permissions( show );
@@ -4492,7 +6390,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							dark : function ()
 							{
 								
-								return '<button class="IconButton IconSmall IconToggle ButtonSmall fa-toggle-' + ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? 'on' : 'off' ) + '" id="theme_dark_button"></button>';
+								return CustomToggle( 'theme_dark_button', null, null, null, ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? true : false ) );
 								
 							},
 			
@@ -4517,7 +6415,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							workspace_count : function ()
 							{
 								
-								return '<input type="number" class="FullWidth" id="workspace_count_input" value="' + ( workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1' ) + '">';
+								return '<input type="number" class="InputHeight FullWidth" id="workspace_count_input" value="' + ( workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1' ) + '">';
 								
 							},
 							
@@ -4526,6 +6424,79 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								return '<button class="Button IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
 							}
 			
+						};
+						
+						let mobile = {
+							
+							codes : [ 47, 45 ],
+							
+							parts : function ( num )
+							{
+								let obj = { 0 : '', 1 : '' };
+								
+								if( userInfo && userInfo.Mobile )
+								{
+									if( userInfo.Mobile.indexOf( '+' ) >= 0 )
+									{
+										if( userInfo.Mobile.indexOf( ' ' ) >= 0 )
+										{
+											obj[0] = userInfo.Mobile.split( ' ' )[0];
+											obj[1] = userInfo.Mobile.split( obj[0] ).join( '' ).split( ' ' ).join( '' );
+										}
+										else
+										{
+											if( this.codes )
+											{
+												for( let i in this.codes )
+												{
+													if( this.codes[i] )
+													{
+														if( userInfo.Mobile.indexOf( '+' + this.codes[i] ) >= 0 )
+														{
+															obj[0] = ( '+' + this.codes[i] );
+															obj[1] = userInfo.Mobile.split( '+' + this.codes[i] ).join( '' ).split( ' ' ).join( '' );
+															break;
+														}
+													}
+												}
+											}
+										}
+									}
+									else
+									{
+										obj[1] = userInfo.Mobile.split( ' ' ).join( '' );
+									}
+								}
+								
+								return obj[num];
+							},
+							
+							select : function (  )
+							{
+								let opt = '';
+								
+								let code = this.parts( 0 );
+								
+								if( this.codes )
+								{
+									for( let i in this.codes )
+									{
+										if( this.codes[i] )
+										{
+											var sel = ( code == ( '+' + this.codes[i] ) ? ' selected="selected"' : '' );
+											opt += '<option value="+'+this.codes[i]+'"'+sel+'>+'+this.codes[i]+'</option>';
+										}
+									}
+								}
+								
+								return opt;
+							},
+							
+							number : function (  )
+							{
+								return this.parts( 1 );
+							}
+							
 						};
 						
 						
@@ -4540,11 +6511,12 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							user_fullname        : ( userInfo.FullName ? userInfo.FullName : ( userInfo.ID ? 'n/a' : '' ) ),
 							user_username        : ( userInfo.Name ? userInfo.Name : ( userInfo.ID ? 'n/a' : '' ) ),
 							user_email           : ( userInfo.Email ? userInfo.Email : '' ),
-							user_mobile          : ( userInfo.Mobile ? userInfo.Mobile : '' ),
+							user_mobile_code     : ( mobile.select() ),
+							user_mobile          : ( mobile.number() ),
 							user_language        : ( languages ? languages : '' ),
 							user_setup           : ( setup ? setup : '' ),
-							user_locked_toggle   : ( ulocked   ? 'fa-toggle-on' : 'fa-toggle-off' ),
-							user_disabled_toggle : ( udisabled ? 'fa-toggle-on' : 'fa-toggle-off' ),
+							user_locked_toggle   : ( CustomToggle( 'usLocked', 'FloatLeft', null, null, ( ulocked ? true : false ) ) ),
+							user_disabled_toggle : ( CustomToggle( 'usDisabled', 'FloatRight', null, null, ( udisabled ? true : false ) ) ),
 							
 							theme_dark           : theme.dark(),
 							theme_controls       : theme.controls(),
@@ -4554,7 +6526,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							storage              : ( mlst ? mlst : '' ),
 							workgroups           : ( wstr ? wstr : '' ),
 							roles                : ( rstr ? rstr : '' ),
-							applications         : ''
+							applications         : '',
+							dock                 : '',
+							startup              : ''
 						};
 						
 						// Add translations
@@ -4593,7 +6567,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 			// Go through all data gathering until stop
 			let loadingSlot = 0;
 			let loadingInfo = {};
-			let loadingBoxs = [ 'workgroup', 'role', 'storage', 'dock', 'application', 'looknfeel' ];
+			let loadingBoxs = [ 'workgroup', 'role', 'storage', 'application', 'dock', 'startup', 'looknfeel' ];
 			let loadingList = [
 				
 				// 0 | Load userinfo
@@ -4665,10 +6639,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						{
 							wgroups = JSON.parse( d );
 						}
-						catch( e )
-						{
-							wgroups = null;
-						}
+						catch( e ) {  }
 						
 						if( e != 'ok' ) wgroups = '';
 						loadingInfo.workgroups = wgroups;
@@ -4708,10 +6679,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							{
 								uroles = JSON.parse( d );
 							}
-							catch( e )
-							{
-								uroles = null;
-							}
+							catch( e ) {  }
+							
 							loadingInfo.roles = uroles;
 						}
 						
@@ -4744,16 +6713,14 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 					let u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
-						//console.log( { e:e, d:d } );
-						let rows = null;
+
+						let rows = [];
+
 						try
 						{
 							rows = JSON.parse( d );
 						}
-						catch( e )
-						{
-							rows = [];
-						}
+						catch( e ) {  }
 						
 						if( e != 'ok' ) rows = ''/*'404'*/;
 						loadingInfo.mountlist = rows;
@@ -4908,10 +6875,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						{
 							settings = JSON.parse( d );
 						}
-						catch( e )
-						{
-							settings = null;
-						}
+						catch( e ) {  }
 						
 						if( e != 'ok' ) settings = '404';
 						loadingInfo.settings = settings;
@@ -4953,10 +6917,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							{
 								workspacesettings = JSON.parse( d );
 							}
-							catch( e )
-							{
-								workspacesettings = null;
-							}
+							catch( e ) {  }
 						
 							if( e != 'ok' ) workspacesettings = '404';
 							loadingInfo.workspaceSettings = workspacesettings;
@@ -4980,7 +6941,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							'locale', 'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
 							'focusmode', 'hiddensystem', 'workspacecount', 
 							'scrolldesktopicons', 'wizardrun', 'themedata_' + loadingInfo.settings.Theme,
-							'workspacemode'
+							'workspacemode', 'startupsequence'
 						], userid: extra, authid: Application.authId } );
 					}
 					
@@ -5003,7 +6964,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						UsersSettings( 'abort', false ); return;
 					}
 					
-					initUsersDetails( loadingInfo, [ 'workgroup', 'role', 'storage', 'dock', 'application', 'looknfeel' ] );
+					initUsersDetails( loadingInfo, [ 'workgroup', 'role', 'storage', 'application', 'dock', 'startup', 'looknfeel' ] );
 				}
 				
 			];
@@ -5043,8 +7004,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 			else
 			{
 				
-				console.log( "UsersSettings( 'logintime', false ); to list users without lastlogin ..." );
-				console.log( "UsersSettings( 'experiment', true ); to show latest grid method ..." );
+				//console.log( "UsersSettings( 'logintime', false ); to list users without lastlogin ..." );
+				//console.log( "UsersSettings( 'experiment', true ); to show latest grid method ..." );
+				
+				console.log( "UsersSettings( 'avatars', true ); to show users list with avatars ..." );
 				
 				// Experimental ...
 				if( UsersSettings( 'experiment' ) )
@@ -5096,24 +7059,27 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											
 											let src = '';
 											
-											if( myArray[ s ].imageObj == null )
+											if( UsersSettings( 'avatars' ) )
 											{
-												src = '/system.library/module/?module=system&command=getavatar&userid=' + myArray[s].ID + ( myArray[s].image ? '&image=' + myArray[s].image : '' ) + '&width=16&height=16&authid=' + Application.authId;
-												let iii = new Image();
-												iii.myArray = myArray[ s ];
-												iii.onload = function() 
+												if( myArray[ s ].imageObj == null )
 												{
-													this.myArray.imageObj = this;
-													ctx.clearRect( 0, 0, 16, 16);
-													ctx.drawImage( this.myArray.imageObj, 0, 0, 16, 16 );
-													this.myArray.imageObj.blob = canvas.toDataURL( 'image/png' );
-												};
-												iii.src = src;
-											}
-											// From cache
-											else
-											{
-												src = myArray[ s ].imageObj.blob;
+													src = '/system.library/module/?module=system&command=getavatar&userid=' + myArray[s].ID + ( myArray[s].image ? '&image=' + myArray[s].image : '' ) + '&width=16&height=16&authid=' + Application.authId;
+													let iii = new Image();
+													iii.myArray = myArray[ s ];
+													iii.onload = function() 
+													{
+														this.myArray.imageObj = this;
+														ctx.clearRect( 0, 0, 16, 16);
+														ctx.drawImage( this.myArray.imageObj, 0, 0, 16, 16 );
+														this.myArray.imageObj.blob = canvas.toDataURL( 'image/png' );
+													};
+													iii.src = src;
+												}
+												// From cache
+												else
+												{
+													src = myArray[ s ].imageObj.blob;
+												}
 											}
 											
 											let obj = {
@@ -5161,9 +7127,12 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												}
 											
 												// TODO: Set the image once it's ready ...
-											
-												let spa = allNodes[ s ].getElementsByTagName( 'span' )[0].getElementsByTagName( 'div' )[0];
-												spa.style.backgroundImage = 'url(' + src + ')';
+												if( UsersSettings( 'avatars' ) )
+												{
+													let spa = allNodes[ s ].getElementsByTagName( 'span' )[0].getElementsByTagName( 'div' )[0];
+													spa.style.backgroundImage = 'url(' + src + ')';
+												}
+												
 												allNodes[ s ].title = 'Line ' + s;
 											
 												allNodes[ s ].myArrayID = obj.ID;
@@ -5329,7 +7298,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 function initUserlist( userList  )
 {
 	
-	let o = ge( 'UserList' );
+	ge( 'UserList' ).innerHTML = '<div class="VContent100 OverflowHidden BorderRadius Elevated"></div>';
+	
+	let o = ge( 'UserList' ).getElementsByTagName( 'div' )[0];
 					
 	if( !ge( 'ListUsersInner' ) )
 	{
@@ -5356,16 +7327,17 @@ function initUserlist( userList  )
 						'element' : function() 
 						{
 							let d = document.createElement( 'div' );
-							d.className = 'HContent20 FloatLeft';
-							d.innerHTML = '<h3><strong>Users </strong><span id="AdminUsersCount">(' + userList['Count'] + ')</span></h3>';
+							d.className = 'HContent25 InputHeight FloatLeft';
+							d.innerHTML = '<h3 class="NoMargin PaddingSmallLeft PaddingSmallRight"><strong>Users </strong><span id="AdminUsersCount">(' + userList['Count'] + ')</span></h3>';
 							return d;
 						}() 
 					}, 
 					{ 
 						'element' : function() 
 						{
+							// TODO: Make this one dynamic based on left div width ...
 							let d = document.createElement( 'div' );
-							d.className = 'HContent70 FloatLeft Relative';
+							d.className = 'PaddingSmall HContent65 FloatLeft Relative';
 							return d;
 						}(),
 						'child' : 
@@ -5376,6 +7348,7 @@ function initUserlist( userList  )
 									let inpu = document.createElement( 'input' );
 									inpu.className = 'FullWidth';
 									inpu.type = 'text';
+									inpu.placeholder = i18n( 'i18n_search' );
 									inpu.onkeyup = function(  )
 									{
 										searchServer( this.value );
@@ -5398,7 +7371,7 @@ function initUserlist( userList  )
 								'element' : function() 
 								{
 									let btn = document.createElement( 'button' );
-									btn.className = 'IconButton IconSmall Negative fa-bars';
+									btn.className = 'IconButton IconMedium Negative fa-bars';
 									btn.id = 'AdminUsersBtn';
 									btn.onclick = function(  )
 									{
@@ -5511,7 +7484,7 @@ function initUserlist( userList  )
 						'element' : function() 
 						{
 							let d = document.createElement( 'div' );
-							d.className = 'HRow BackgroundNegative Negative PaddingTop PaddingBottom';
+							d.className = 'HRow BackgroundNegative Negative Padding';
 							return d;
 						}(),
 						'child' : 
@@ -5520,16 +7493,7 @@ function initUserlist( userList  )
 								'element' : function() 
 								{
 									let d = document.createElement( 'div' );
-									d.className = 'PaddingSmallLeft PaddingSmallRight HContent10 FloatLeft Ellipsis';
-									d.innerHTML = '<strong>&nbsp;</strong>';
-									return d;
-								}()
-							},
-							{
-								'element' : function() 
-								{
-									let d = document.createElement( 'div' );
-									d.className = 'PaddingSmallLeft PaddingSmallRight HContent30 FloatLeft Ellipsis';
+									d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft Ellipsis';
 									return d;
 								}(),
 								'child' : 
@@ -5552,7 +7516,7 @@ function initUserlist( userList  )
 								'element' : function() 
 								{
 									let d = document.createElement( 'div' );
-									d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 FloatLeft Ellipsis';
+									d.className = 'PaddingSmallRight HContent25 FloatLeft Ellipsis';
 									return d;
 								}(),
 								'child' : 
@@ -5696,7 +7660,7 @@ function getStorageInfo( path, id, args, callback )
 				} 
 				catch( e ){ }
 			}
-		
+			
 			if( e == 'ok' && d )
 			{
 				if( json )
@@ -5906,6 +7870,30 @@ function NewUser( _this )
 			}
 		}
 		
+		let mobile = {
+			
+			codes : [ 47, 45 ],
+						
+			select : function (  )
+			{
+				let opt = '';
+				
+				if( this.codes )
+				{
+					for( let i in this.codes )
+					{
+						if( this.codes[i] )
+						{
+							opt += '<option value="+'+this.codes[i]+'">+'+this.codes[i]+'</option>';
+						}
+					}
+				}
+				
+				return opt;
+			}
+			
+		};
+		
 		let d = new File( 'Progdir:Templates/account_users_details.html' );
 		// Add all data for the template
 		d.replacements = {
@@ -5913,11 +7901,12 @@ function NewUser( _this )
 			user_fullname        : '',
 			user_username        : '',
 			user_email           : '',
+			user_mobile_code     : mobile.select(),
 			user_mobile          : '',
 			user_language        : languages,
 			user_setup           : setup,
-			user_locked_toggle   : 'fa-toggle-off',
-			user_disabled_toggle : 'fa-toggle-off',
+			user_locked_toggle   : '',
+			user_disabled_toggle : '',
 			theme_name           : '',
 			theme_dark           : '',
 			theme_style          : '',
@@ -5928,7 +7917,9 @@ function NewUser( _this )
 			storage              : '',
 			workgroups           : '',
 			roles                : '',
-			applications         : ''
+			applications         : '',
+			dock                 : '',
+			startup              : ''
 		};
 	
 		// Add translations
@@ -5946,6 +7937,8 @@ function NewUser( _this )
 			ge( 'AdminRoleContainer'        ).style.display = 'none';
 			ge( 'AdminStorageContainer'     ).style.display = 'none';
 			ge( 'AdminApplicationContainer' ).style.display = 'none';
+			ge( 'AdminDockContainer'        ).style.display = 'none';
+			ge( 'AdminStartupContainer'     ).style.display = 'none';
 			
 			// User
 			
@@ -5959,7 +7952,6 @@ function NewUser( _this )
 						
 						if( ge( 'usUsername' ).value )
 						{
-														
 							_saveUser( false, function( uid )
 							{
 								
@@ -5971,29 +7963,17 @@ function NewUser( _this )
 									searchServer( null, true, function(  )
 									{
 										
-										/*// TODO: look at a better way to handle this with the scrollengine for new users and refresh of the list ...
+										// Go to edit mode for the new user ...
 									
-										Sections.accounts_users( 'init', false, function( ok )
+										if( ge( 'UserListID_' + uid ) && ge( 'UserListID_' + uid ).parentNode.onclick )
 										{
-										
-											//console.log( "Sections.accounts_users( 'init', false, function( ok )" );
-										
-											if( ok )
-											{*/
-												// Go to edit mode for the new user ...
-											
-												if( ge( 'UserListID_' + uid ) && ge( 'UserListID_' + uid ).parentNode.onclick )
-												{
-													ge( 'UserListID_' + uid ).parentNode.skip = true;
-													ge( 'UserListID_' + uid ).parentNode.onclick(  );
-												}
-												else
-												{
-													Sections.accounts_users( 'edit', uid );
-												}
-											/*}
-										
-										} );*/
+											ge( 'UserListID_' + uid ).parentNode.skip = true;
+											ge( 'UserListID_' + uid ).parentNode.onclick(  );
+										}
+										else
+										{
+											Sections.accounts_users( 'edit', uid );
+										}
 										
 									} );
 								}
@@ -6079,7 +8059,23 @@ function NewUser( _this )
 			}
 			
 			// Avatar 
-		
+			
+			let ra = ge( 'AdminAvatarRemove' );
+			if( ra ) 
+			{
+				if( Application.checkAppPermission( 'USER_UPDATE' ) )
+				{
+					ra.onclick = function( e )
+					{
+						removeAvatar();
+					}
+				}
+				else
+				{
+					ra.style.display = 'none';
+				}
+			}
+			
 			let ae = ge( 'AdminAvatarEdit' );
 			if( ae )
 			{
@@ -6164,10 +8160,7 @@ function NewUser( _this )
 						{
 							wgroups = JSON.parse( d );
 						}
-						catch( e )
-						{
-							wgroups = null;
-						}
+						catch( e ){ }
 						
 						if( ShowLog ) console.log( 'workgroups ', { e:e , d:(wgroups?wgroups:d), args: args } );
 						
@@ -6214,10 +8207,7 @@ function NewUser( _this )
 						{
 							userInfo = JSON.parse( d );
 						}
-						catch( e )
-						{
-							userInfo = null;
-						}
+						catch( e ){  }
 						
 						let workgroups = userInfo.Workgroup;
 						
@@ -6272,8 +8262,10 @@ function NewUser( _this )
 						
 					}
 					
-					let unsorted = {};
-		
+					var unsorted = {};
+					
+					// Add all workgroups to unsorted and add subgroups array ...
+					
 					for( var i in workgroups )
 					{
 						if( workgroups[i] && workgroups[i].ID )
@@ -6283,93 +8275,371 @@ function NewUser( _this )
 								continue;
 							}
 							
-							workgroups[i].groups = [];
-				
-							unsorted[workgroups[i].ID] = workgroups[i];
+							unsorted[workgroups[i].ID] = {};
+							
+							for( var ii in workgroups[i] )
+							{
+								if( workgroups[i][ii] )
+								{
+									unsorted[workgroups[i].ID][ii] = workgroups[i][ii];
+								}
+							}
+							
+							unsorted[workgroups[i].ID].level = 1;
+							unsorted[workgroups[i].ID].groups = [];
 						}
 					}
-				
 					
-				
+					// Arrange all subgroups to parentgroups ...
+					
+					let set = [];
+					
 					for( var k in unsorted )
 					{
-						if( unsorted[k] && unsorted[k].ID )
+						if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
 						{
-							if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
-							{
-								if( !groups[ unsorted[k].ParentID ] )
-								{
-									groups[ unsorted[k].ParentID ] = unsorted[ unsorted[k].ParentID ];
-								}
+							unsorted[ unsorted[k].ParentID ].groups.push( unsorted[k] );
 							
-								if( groups[ unsorted[k].ParentID ] )
+							if( unsorted[ unsorted[k].ParentID ].groups )
+							{
+								for( var kk in unsorted[ unsorted[k].ParentID ].groups )
 								{
-									groups[ unsorted[k].ParentID ].groups.push( unsorted[k] );
+									if( unsorted[ unsorted[k].ParentID ].groups[ kk ] )
+									{
+										unsorted[ unsorted[k].ParentID ].groups[ kk ].level = ( unsorted[ unsorted[k].ParentID ].level +1 );
+									}
 								}
 							}
-							else if( !groups[ unsorted[k].ID ] )
-							{
-								groups[ unsorted[k].ID ] = unsorted[k];
-							}
-						}	
+							
+							set.push( unsorted[k].ID );
+						}
 					}
-				
-					//console.log( groups );
+					
+					// Filter all subgroups allready set, away from root level ...
+					
+					for( var k in unsorted )
+					{
+						if( set.indexOf( unsorted[k].ID ) < 0 )
+						{
+							groups[ unsorted[k].ID ] = unsorted[k];
+						}
+					}
+					
+					if( ShowLog/* || 1==1*/ ) console.log( [ unsorted, set, groups ] );
+					
 				}
+				
+				var ii = 0;
 				
 				let str = '';
 				
 				if( groups )
 				{
-				
+						
 					for( var a in groups )
 					{
 						var found = false;
 						
+						ii++;
+						
 						str += '<div>';
 						
-						str += '<div class="HRow">\
-							<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-								<span name="' + groups[a].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>\
-							</div>\
-							<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-								<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
-							</div>\
-						</div>';
-					
+						str += '<div class="HRow" id="WorkgroupID_' + groups[a].ID + '">';
+						
+						str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
+						str += '		<span name="' + groups[a].Name + '" class="IconMedium fa-users"></span>';
+						str += '	</div>';
+						str += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[a].Name+ '</div>';
+						
+						str += '	<div class="PaddingSmall HContent20 FloatRight Ellipsis">';
+						
+						str += CustomToggle( 'wid_' + groups[a].ID, 'FloatRight', null, function (  )
+						{
+							
+							if( ge( 'usWorkgroups' ) )
+							{
+								
+								var wids = [];
+									
+								if( ge( 'usWorkgroups' ).value )
+								{
+									wids = ge( 'usWorkgroups' ).value.split( ',' );
+								}
+								
+								if( this.checked )
+								{
+									// Toggle on ...
+									
+									console.log( '// Toggle on ', wids );
+									
+									if( this.id && this.id.split( 'wid_' )[1] )
+									{
+										
+										wids.push( this.id.split( 'wid_' )[1] );
+										
+										if( wids )
+										{
+											ge( 'usWorkgroups' ).setAttribute( 'value', wids.join( ',' ) );
+										}
+										else
+										{
+											ge( 'usWorkgroups' ).removeAttribute( 'value' );	
+										}
+										
+									}
+									
+								}
+								else
+								{
+									// Toggle off ...
+								
+									console.log( '// Toggle off ', wids );
+									
+									if( this.id && this.id.split( 'wid_' )[1] )
+									{
+										var nwid = [];
+										
+										if( wids )
+										{
+											for( var a in wids )
+											{
+												if( wids[a] )
+												{
+													if( wids[a] != this.id.split( 'wid_' )[1] )
+													{
+														nwid.push( wids[a] );
+													}
+												}
+											}
+											
+											wids = nwid;
+										}
+										
+										if( wids )
+										{
+											ge( 'usWorkgroups' ).setAttribute( 'value', wids.join( ',' ) );
+										}
+										else
+										{
+											ge( 'usWorkgroups' ).removeAttribute( 'value' );	
+										}
+										
+									}
+																				
+								}
+							}
+							
+						}, ( found ? true : false ) );
+						
+						str += '	</div>';
+						
+						str += '</div>';
+						
 						if( groups[a].groups.length > 0 )
 						{
-							str += '<div class="Closed">';
-						
+							
+							str += '<div class="SubGroups">';
+							
 							for( var aa in groups[a].groups )
 							{
 								var found = false;
 								
-								str += '<div class="HRow">\
-									<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-										<span name="' + groups[a].groups[aa].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>\
-									</div>\
-									<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-										<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
-									</div>\
-								</div>';
+								ii++;
+								
+								str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].ID + '">';
+								
+								str += '	<div class="TextCenter HContent4 InputHeight FloatLeft PaddingSmall" style="min-width:36px"></div>';
+								str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
+								str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconMedium fa-users"></span>';
+								str += '	</div>';
+								str += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].Name + '</div>';
+								
+								str += '<div class="PaddingSmall FloatRight Ellipsis">';
+								
+								str += CustomToggle( 'wid_' + groups[a].groups[aa].ID, 'FloatRight', null, function (  )
+								{
 							
+									if( ge( 'usWorkgroups' ) )
+									{
+								
+										var wids = [];
+									
+										if( ge( 'usWorkgroups' ).value )
+										{
+											wids = ge( 'usWorkgroups' ).value.split( ',' );
+										}
+								
+										if( this.checked )
+										{
+											// Toggle on ...
+									
+											console.log( '// Toggle on ', wids );
+									
+											if( this.id && this.id.split( 'wid_' )[1] )
+											{
+										
+												wids.push( this.id.split( 'wid_' )[1] );
+										
+												if( wids )
+												{
+													ge( 'usWorkgroups' ).setAttribute( 'value', wids.join( ',' ) );
+												}
+												else
+												{
+													ge( 'usWorkgroups' ).removeAttribute( 'value' );	
+												}
+										
+											}
+									
+										}
+										else
+										{
+											// Toggle off ...
+								
+											console.log( '// Toggle off ', wids );
+									
+											if( this.id && this.id.split( 'wid_' )[1] )
+											{
+												var nwid = [];
+										
+												if( wids )
+												{
+													for( var a in wids )
+													{
+														if( wids[a] )
+														{
+															if( wids[a] != this.id.split( 'wid_' )[1] )
+															{
+																nwid.push( wids[a] );
+															}
+														}
+													}
+											
+													wids = nwid;
+												}
+										
+												if( wids )
+												{
+													ge( 'usWorkgroups' ).setAttribute( 'value', wids.join( ',' ) );
+												}
+												else
+												{
+													ge( 'usWorkgroups' ).removeAttribute( 'value' );	
+												}
+										
+											}
+																				
+										}
+									}
+							
+								}, ( found ? true : false ) );
+								
+								str += '</div>';
+								
+								str += '</div>';
+								
 								if( groups[a].groups[aa].groups.length > 0 )
 								{
-									str += '<div class="Closed">';
-								
+									
+									str += '<div class="SubGroups">';
+									
 									for( var aaa in groups[a].groups[aa].groups )
 									{
 										var found = false;
 										
-										str += '<div class="HRow">\
-											<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-												<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>\
-											</div>\
-											<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-												<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
-											</div>\
-										</div>';
+										ii++;
+										
+										str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '">';
+										
+										str += '	<div class="TextCenter HContent8 InputHeight FloatLeft PaddingSmall" style="min-width:73px"></div>';
+										str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
+										str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconMedium fa-users"></span>';
+										str += '	</div>';
+										str += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + '</div>';
+										
+										str += '	<div class="PaddingSmall FloatRight Ellipsis">';
+										
+										str += CustomToggle( 'wid_' + groups[a].groups[aa].groups[aaa].ID, 'FloatRight', null, function (  )
+										{
+							
+											if( ge( 'usWorkgroups' ) )
+											{
+								
+												var wids = [];
+									
+												if( ge( 'usWorkgroups' ).value )
+												{
+													wids = ge( 'usWorkgroups' ).value.split( ',' );
+												}
+								
+												if( this.checked )
+												{
+													// Toggle on ...
+									
+													console.log( '// Toggle on ', wids );
+									
+													if( this.id && this.id.split( 'wid_' )[1] )
+													{
+										
+														wids.push( this.id.split( 'wid_' )[1] );
+										
+														if( wids )
+														{
+															ge( 'usWorkgroups' ).setAttribute( 'value', wids.join( ',' ) );
+														}
+														else
+														{
+															ge( 'usWorkgroups' ).removeAttribute( 'value' );	
+														}
+										
+													}
+									
+												}
+												else
+												{
+													// Toggle off ...
+								
+													console.log( '// Toggle off ', wids );
+									
+													if( this.id && this.id.split( 'wid_' )[1] )
+													{
+														var nwid = [];
+										
+														if( wids )
+														{
+															for( var a in wids )
+															{
+																if( wids[a] )
+																{
+																	if( wids[a] != this.id.split( 'wid_' )[1] )
+																	{
+																		nwid.push( wids[a] );
+																	}
+																}
+															}
+											
+															wids = nwid;
+														}
+										
+														if( wids )
+														{
+															ge( 'usWorkgroups' ).setAttribute( 'value', wids.join( ',' ) );
+														}
+														else
+														{
+															ge( 'usWorkgroups' ).removeAttribute( 'value' );	
+														}
+										
+													}
+																				
+												}
+											}
+							
+										}, ( found ? true : false ) );
+										
+										str += '	</div>';
+										
+										str += '</div>';
 									
 									}
 								
@@ -6385,10 +8655,7 @@ function NewUser( _this )
 					
 					}
 					
-					if( ge( 'AdminWorkgroupContainer' ) ) 
-					{ 
-						ge( 'AdminWorkgroupContainer' ).className = 'Open';
-					}
+					
 					
 				}
 				
@@ -6401,7 +8668,7 @@ function NewUser( _this )
 						'element' : function() 
 						{
 							let d = document.createElement( 'div' );
-							d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+							d.className = 'HRow BackgroundNegative Negative Padding';
 							return d;
 						}(),
 						'child' : 
@@ -6410,8 +8677,9 @@ function NewUser( _this )
 								'element' : function(  ) 
 								{
 									let d = document.createElement( 'div' );
-									d.className = 'PaddingSmall HContent40 FloatLeft';
+									d.className = 'PaddingSmallLeft PaddingSmallLeft HContent40 FloatLeft';
 									d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+									d.style.cursor = 'pointer';
 									d.ele = this;
 									d.onclick = function(  )
 									{
@@ -6424,7 +8692,7 @@ function NewUser( _this )
 								'element' : function( _this ) 
 								{
 									let d = document.createElement( 'div' );
-									d.className = 'PaddingSmall HContent45 FloatLeft Relative';
+									d.className = 'PaddingSmallLeft PaddingSmallLeft HContent45 FloatLeft Relative';
 									d.innerHTML = '<strong></strong>';
 									return d;
 								}( this )
@@ -6443,8 +8711,10 @@ function NewUser( _this )
 						'element' : function() 
 						{
 							let d = document.createElement( 'div' );
-							d.className = 'HRow Box Padding';
+							d.className = 'HRow List PaddingTop PaddingRight PaddingBottom';
 							d.id = 'WorkgroupInner';
+							d.style.overflow = 'auto';
+							d.style.maxHeight = '314px';
 							return d;
 						}()
 					}
@@ -6636,6 +8906,95 @@ function NewUser( _this )
 					}
 				}
 				
+				let workInps = ge( 'WorkgroupInner' ).getElementsByTagName( 'input' );
+				
+				if( workInps )
+				{
+					for( var a = 0; a < workInps.length; a++ )
+					{
+						// Toggle user relation to workgroup
+						( function( b ) {
+							b.onclick = function( e )
+							{
+								
+								if( ge( 'usWorkgroups' ) )
+								{
+								
+									var wids = [];
+									
+									if( ge( 'usWorkgroups' ).value )
+									{
+										wids = ge( 'usWorkgroups' ).value.split( ',' );
+									}
+								
+									if( this.checked )
+									{
+										// Toggle on ...
+									
+										//console.log( '// Toggle on ', wids );
+									
+										if( this.id && this.id.split( 'wid_' )[1] )
+										{
+										
+											wids.push( this.id.split( 'wid_' )[1] );
+										
+											if( wids )
+											{
+												ge( 'usWorkgroups' ).setAttribute( 'value', wids.join( ',' ) );
+											}
+											else
+											{
+												ge( 'usWorkgroups' ).removeAttribute( 'value' );	
+											}
+										
+										}
+									
+									}
+									else
+									{
+										// Toggle off ...
+								
+										//console.log( '// Toggle off ', wids );
+									
+										if( this.id && this.id.split( 'wid_' )[1] )
+										{
+											var nwid = [];
+										
+											if( wids )
+											{
+												for( var a in wids )
+												{
+													if( wids[a] )
+													{
+														if( wids[a] != this.id.split( 'wid_' )[1] )
+														{
+															nwid.push( wids[a] );
+														}
+													}
+												}
+											
+												wids = nwid;
+											}
+										
+											if( wids )
+											{
+												ge( 'usWorkgroups' ).setAttribute( 'value', wids.join( ',' ) );
+											}
+											else
+											{
+												ge( 'usWorkgroups' ).removeAttribute( 'value' );	
+											}
+										
+										}
+																				
+									}
+								}
+								
+							}
+						} )( workInps[ a ] );
+					}
+				}
+				
 				// Search ...............
 				
 				let searchgroups = function ( filter, server )
@@ -6643,7 +9002,7 @@ function NewUser( _this )
 					
 					if( ge( 'WorkgroupInner' ) )
 					{
-						let list = ge( 'WorkgroupInner' ).getElementsByTagName( 'div' );
+						var list = ge( 'WorkgroupInner' ).getElementsByTagName( 'div' );
 						
 						if( list.length > 0 )
 						{
@@ -6651,26 +9010,22 @@ function NewUser( _this )
 							{
 								if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
 								
-								let strong = list[a].getElementsByTagName( 'strong' )[0];
-								let span = list[a].getElementsByTagName( 'span' )[0];
+								var strong = list[a].getElementsByTagName( 'strong' )[0];
+								var span = list[a].getElementsByTagName( 'span' )[0];
 								
 								if( strong || span )
 								{
+									
 									if( !filter || filter == '' 
 									|| strong && strong.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
 									|| span && span.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+									|| span && span.getAttribute( 'name' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
 									)
 									{
 										list[a].style.display = '';
 										
 										if( list[a].parentNode.parentNode && list[a].parentNode.parentNode.parentNode && list[a].parentNode.parentNode.parentNode.className.indexOf( 'HRow' ) >= 0 )
 										{
-											if( list[a].parentNode.classList.contains( 'Closed' ) )
-											{
-												list[a].parentNode.classList.remove( 'Closed' );
-												list[a].parentNode.classList.add( 'Open' );
-											}
-											
 											list[a].parentNode.style.display = '';
 											list[a].parentNode.parentNode.style.display = '';
 										}
@@ -6930,8 +9285,8 @@ function refreshUserList( userInfo )
 						
 						if( div[i].getElementsByTagName( 'span' )[0] )
 						{
-							let spa = div[i].getElementsByTagName( 'span' )[0].getElementsByTagName( 'div' )[0];
-        					spa.style.backgroundImage = 'url(' + src + ')';
+							//let spa = div[i].getElementsByTagName( 'span' )[0].getElementsByTagName( 'div' )[0];
+        					//spa.style.backgroundImage = 'url(' + src + ')';
 						}
 						
 						//var bg = 'background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;background-image: url(\'' + src + '\')';
@@ -7075,7 +9430,7 @@ function getUserlist( callback, obj, limit )
 			console.log( { e:e, d:d, args:args } );
 		}
 		
-		//console.log( 'getUserlist( callback, obj ): ', { e:e, d:(userList?userList:d), args: args, usersettings: UsersSettings() } );
+		console.log( 'getUserlist( callback, obj ): ', { e:e, d:(userList?userList:d), args: args, usersettings: UsersSettings() } );
 		
 		if( callback )
 		{
@@ -7367,10 +9722,7 @@ Sections.user_disk_cancel = function( userid )
 		{
 			ul = JSON.parse( d );
 		}
-		catch( e )
-		{
-			ul = null;
-		}
+		catch( e ) {  }
 		
 		//console.log( '[3] mountlist ', { e:e, d:(ul?ul:d), args: { userid: userid+"", authid: Application.authId } } );
 		
@@ -7399,7 +9751,7 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 		{
 			//console.log( { e:ee, d:dat } );
 			
-			let da = false;
+			let da = {};
 			
 			try
 			{
@@ -7696,6 +10048,7 @@ Sections.user_disk_refresh = function( mountlist, userid, func )
 				for( var b in rows )
 				{
 					if( rows[b].Type == 'SharedDrive' ) continue;
+					
 					try
 					{
 						if( typeof rows[b].Config != "object" )
@@ -8285,6 +10638,8 @@ function changeAvatar()
 					let context = canvas.getContext( '2d' );
 					context.drawImage( image, 0, 0, 256, 256 );
 					
+					ge( 'AdminAvatarArea' ).className = ge( 'AdminAvatarArea' ).className.split( ' fa-user-circle-o' ).join( '' );
+					
 					// Activate edit mode.
 					editMode();
 				}
@@ -8297,6 +10652,36 @@ function changeAvatar()
 		filename: ""
 	}
 	let d = new Filedialog( description );
+}
+
+function removeAvatar()
+{
+	randomAvatar( ge( 'usFullname' ).value, function( avatar ) 
+	{
+		let canvas = 0;
+		
+		try
+		{
+			canvas = ge( 'AdminAvatar' ).toDataURL();
+		}
+		catch( e ) {  }
+		
+		if( ge( 'AdminAvatar' ) && avatar )
+		{
+			// Only update the avatar if it exists..
+			let avSrc = new Image();
+			avSrc.src = avatar;
+			avSrc.onload = function()
+			{
+				if( ge( 'AdminAvatar' ) )
+				{
+					let ctx = ge( 'AdminAvatar' ).getContext( '2d' );
+					ctx.drawImage( avSrc, 0, 0, 256, 256 );
+				}
+			}
+		}
+	
+	} );
 }
 
 Sections.user_status_update = function( userid, status, callback )
@@ -8314,7 +10699,8 @@ Sections.user_status_update = function( userid, status, callback )
 			
 			case 1:
 			{
-				if( ge( 'usDisabled' ).className.indexOf( 'fa-toggle-off' ) >= 0 )
+				//if( ge( 'usDisabled' ).className.indexOf( 'fa-toggle-off' ) >= 0 )
+				if( ge( 'usDisabled' ).checked )
 				{
 					on = true;
 				}
@@ -8337,8 +10723,11 @@ Sections.user_status_update = function( userid, status, callback )
 					
 					if( e == 'ok' )
 					{
-						Toggle( ge( 'usDisabled' ), false, ( on ? true : false ) );
-						Toggle( ge( 'usLocked'   ), false, false );
+						//Toggle( ge( 'usDisabled' ), false, ( on ? true : false ) );
+						//Toggle( ge( 'usLocked'   ), false, false );
+						
+						ge( 'usDisabled' ).checked = ( on ? true : false );
+						ge( 'usLocked'   ).checked = false;
 					}
 					
 					if( callback ) return callback();
@@ -8351,7 +10740,8 @@ Sections.user_status_update = function( userid, status, callback )
 			
 			case 2:
 			{	
-				if( ge( 'usLocked' ).className.indexOf( 'fa-toggle-off' ) >= 0 )
+				//if( ge( 'usLocked' ).className.indexOf( 'fa-toggle-off' ) >= 0 )
+				if( ge( 'usLocked' ).checked )
 				{
 					on = true;
 				}
@@ -8374,8 +10764,11 @@ Sections.user_status_update = function( userid, status, callback )
 					
 					if( e == 'ok' )
 					{
-						Toggle( ge( 'usLocked'   ), false, ( on ? true : false ) );
-						Toggle( ge( 'usDisabled' ), false, false );
+						//Toggle( ge( 'usLocked'   ), false, ( on ? true : false ) );
+						//Toggle( ge( 'usDisabled' ), false, false );
+						
+						ge( 'usLocked'   ).checked = ( on ? true : false );
+						ge( 'usDisabled' ).checked = false;
 					}
 					
 					if( callback ) return callback();
@@ -8396,10 +10789,16 @@ Sections.userrole_update = function( rid, userid, _this )
 	
 	if( _this )
 	{
+		if( _this.checked )
+		{
+			data = 'Activated';
+		}
+		
 		Toggle( _this, function( on )
 		{
 			data = ( on ? 'Activated' : '' );
 		} );
+		
 	}
 	
 	if( rid && userid )
@@ -8407,7 +10806,7 @@ Sections.userrole_update = function( rid, userid, _this )
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			//console.log( { e:e, d:d } );
+			//console.log( { e:e, d:d, args: { id: rid, userid: userid, data: data, authid: Application.authId } } );
 		}
 		m.execute( 'userroleupdate', { id: rid, userid: userid, data: data, authid: Application.authId } );
 	}
@@ -8573,10 +10972,7 @@ Sections.user_disk_save = function( userid, did )
 					{
 						ul = JSON.parse( dd );
 					}
-					catch( ee )
-					{
-						ul = null;
-					}
+					catch( ee ){  }
 				
 					ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
 				
@@ -8634,10 +11030,7 @@ Sections.user_disk_mount = function( devname, userid, _this )
 						{
 							ul = JSON.parse( dd );
 						}
-						catch( ee )
-						{
-							ul = null;
-						}
+						catch( ee ) {  }
 					
 						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
 						
@@ -8677,10 +11070,7 @@ Sections.user_disk_mount = function( devname, userid, _this )
 						{
 							ul = JSON.parse( dd );
 						}
-						catch( ee )
-						{
-							ul = null;
-						}
+						catch( ee ) {  }
 					
 						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
 					}
@@ -8844,6 +11234,14 @@ function _saveUser( uid, callback )
 			args[ k ] = Trim( ge( a ).value );
 		}
 		
+		if( a == 'usMobile' )
+		{
+			if( ge( 'usMobileCode' ) && ge( 'usMobileCode' ).value )
+			{
+				args[ k ] = ( ge( 'usMobileCode' ).value + ' ' + args[ k ] );
+			}
+		}
+		
 		// Special case, hashed password
 		if( a == 'usPassword' )
 		{
@@ -8979,8 +11377,6 @@ function _saveUser( uid, callback )
 			Notify( { title: i18n( 'i18n_user_update_fail' ), text: i18n( 'i18n_user_update_failed' ) } );
 		}
 		
-		
-		
 		if( ge( 'UserSaveBtn' ) && ge( 'UserSaveBtn' ).restore )
 		{
 			ge( 'UserSaveBtn' ).innerHTML = ge( 'UserSaveBtn' ).restore;
@@ -9010,7 +11406,7 @@ function removeApplication( appName, userId, callback, vars )
 	let m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
-		if( ShowLog ) console.log( 'removeApplication ', { e:e, d:d } );
+		if( ShowLog ) console.log( 'removeApplication ', { e:e, d:d, args: { application: appName, userid: userId, authid: Application.authId } } );
 		
 		if( e == 'ok' )
 		{
@@ -9050,7 +11446,59 @@ function removeDockItem( appName, userId, callback, vars )
 			if( callback ) callback( false, d, vars );
 		}
 	}
-	m.execute( 'removefromdock', { userID: userId, name: appName, type: '' } );
+	m.execute( 'removefromdock', { userID: userId, name: appName/*, type: ''*/ } );
+}
+
+function updateStartup( userId, callback, vars )
+{
+	
+	if( userId )
+	{
+		var o = [];
+	
+		if( ge( 'TempStartup' ) && ge( 'TempStartup' ).value )
+		{
+			var stars = ge( 'TempStartup' ).value.split( ',' );
+			
+			if( stars && stars.length > 0 )
+			{
+				for( var a = 0; a < stars.length; a++ )
+				{
+					if( stars[a] && stars[a].indexOf( 'launch ' ) >= 0 )
+					{
+						o.push( stars[a] );
+					}
+				}
+			}
+		}
+		
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( ShowLog ) console.log( { e:e, d:d, args: { 
+				setting : 'startupsequence', 
+				data    : JSON.stringify( o ), 
+				userid  : userId, 
+				authid  : Application.authId 
+			} } );
+		
+			if( e == 'ok' )
+			{
+				if( callback ) callback( true, d, vars );
+			}
+			else
+			{
+				if( callback ) callback( false, d, vars );
+			}
+		}
+		m.execute( 'setsetting', { 
+			setting : 'startupsequence', 
+			data    : JSON.stringify( o ), 
+			userid  : userId, 
+			authid  : Application.authId 
+		} );
+	}
+		
 }
 
 Sections.user_disk_remove = function( devname, did, userid )
@@ -9085,10 +11533,7 @@ Sections.user_disk_remove = function( devname, did, userid )
 								{
 									ul = JSON.parse( dd );
 								}
-								catch( ee )
-								{
-									ul = null;
-								}
+								catch( ee ) {  }
 							
 								ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
 							}

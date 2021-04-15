@@ -20,7 +20,8 @@ Application.run = function( msg )
 		height : document.body.clientHeight
 	};
 	
-	document.body.setAttribute( 'onresize', 'CheckWindowSize()' );
+	// Is it needed anymore???
+	//document.body.setAttribute( 'onresize', 'CheckWindowSize()' );
 }
 
 // Just initialize the GUI!
@@ -258,11 +259,14 @@ function refreshSidebar( show )
 			{
 				var ch = mods[ a ][ b ];
 				var ptag = document.createElement( 'div' );
+				var wtag = document.createElement( 'div' );
 				var atag = document.createElement( 'a' );
 				atag.innerHTML = ( ch.name ? ch.name : b );
 				//ptag.className = 'HRow BackgroundNegativeAlt PaddingLeft PaddingSmallTop PaddingRight PaddingSmallBottom';
+				wtag.className = 'InputHeight';
 				ptag.className = 'HRow BackgroundNegative PaddingLeft PaddingSmallTop PaddingRight PaddingSmallBottom';
-				ptag.appendChild( atag );
+				wtag.appendChild( atag );
+				ptag.appendChild( wtag );
 			
 				if( !ch.display ) continue;
 			
@@ -293,7 +297,7 @@ function refreshSidebar( show )
 					//atag.classList.add( 'Negative', ch.icon );
 					//atag.classList.add( 'PaddingLeft', ch.icon );
 					//atag.classList.add( 'PaddingRight', ch.icon );
-					atag.className = 'IconSmall ' + ch.icon + ' Negative PaddingLeft PaddingRight';
+					atag.className = 'IconMedium ' + ch.icon + ' Negative PaddingLeft PaddingRight';
 					atag.innerHTML = '&nbsp;&nbsp;&nbsp;' + atag.innerHTML;
 					
 					if( !ch.childs )
@@ -321,7 +325,7 @@ function refreshSidebar( show )
 										}
 									}
 							
-									ele.parentNode.className = ( ele.parentNode.className.split( ' Selected' ).join( '' ) + ' Selected' );
+									ele.parentNode.parentNode.className = ( ele.parentNode.parentNode.className.split( ' Selected' ).join( '' ) + ' Selected' );
 									
 									setGUISection( module, sect, false, act );
 								} );
@@ -381,7 +385,7 @@ function refreshSidebar( show )
 					
 						if( chc.icon )
 						{
-							atag.className = 'IconSmall ' + chc.icon + ' Negative PaddingLeft PaddingRight';
+							atag.className = 'IconMedium ' + chc.icon + ' Negative PaddingLeft PaddingRight';
 							atag.innerHTML = '&nbsp;&nbsp;&nbsp;' + atag.innerHTML;
 							
 							( function( module, sect, child, ch, ele, act )
@@ -407,7 +411,7 @@ function refreshSidebar( show )
 											}
 										}
 						
-										ele.parentNode.className = ( ele.parentNode.className.split( ' Selected' ).join( '' ) + ' Selected' );
+										ele.parentNode.parentNode.className = ( ele.parentNode.parentNode.className.split( ' Selected' ).join( '' ) + ' Selected' );
 						
 										setGUISection( module, sect, child, act );
 									} );
@@ -531,12 +535,15 @@ function setGUISection( module, section, child, action )
 			ge( 'GuiContent' ).innerHTML = data;
 		
 			// Temporary until search is fixed for users ...
-		
+			
 			if( section.toLowerCase() == 'users' || section.toLowerCase() == 'workgroups' ) 
 			{
-				//UsersSettings( 'maxlimit', 99999 );
+				if( typeof UsersSettings != 'undefined' )
+				{
+					//UsersSettings( 'maxlimit', 99999 );
 			
-				UsersSettings( 'reset', 'all' );
+					UsersSettings( 'reset', 'all' );
+				}
 			}
 		
 			Sections[ sectPart ]();
@@ -608,7 +615,73 @@ var Sections = {
 	}
 }
 
-
+function CustomToggle( id, classn, name, onclick, checked, mode, value )
+{
+	if( id )
+	{
+		// TODO: Don't use string ...
+		
+		switch( mode )
+		{
+			
+			case 1:
+				
+				var d = document.createElement( 'label' );
+				if( classn )
+				{
+					d.className = classn;
+				}
+		
+				var i = document.createElement( 'input' );
+				i.type = 'checkbox';
+				i.className = 'CustomToggleInput';
+				i.id = id;
+				if( name )
+				{
+					i.name = name;
+				}
+				if( checked )
+				{
+					i.checked = true;
+				}
+				if( onclick )
+				{
+					i.onclick = onclick;
+				}
+				if( value )
+				{
+					i.value = value;
+				}
+		
+				d.appendChild( i );
+		
+				var l = document.createElement( 'label' );
+				l.className = 'CustomToggleLabel';
+				l.setAttribute( 'for', id );
+				
+				d.appendChild( l );
+		
+				return d;
+				
+				break;
+			
+			default:
+				
+				str  = '<label'+(classn?' class="'+classn+'"':'')+'>';
+				str += '	<input type="checkbox" class="CustomToggleInput" id="'+id+'"'+(name?' name="'+name+'"':'')+(checked?' checked="checked"':'')+(onclick?' onclick="'+onclick+'"':'')+'>';
+				str += '	<label class="CustomToggleLabel" for="'+id+'"></label>';
+				str += '</label>';
+				
+				return str;
+				
+				break;
+				
+		}
+		
+	}
+	
+	return '';
+}
 
 function Toggle( _this, callback, on )
 {

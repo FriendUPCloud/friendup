@@ -876,9 +876,16 @@ void HashedString ( char **str )
 	unsigned char temp[SHA_DIGEST_LENGTH];
 	memset( temp, 0x0, SHA_DIGEST_LENGTH );
 	
-	char *buf = FCallocAlign( ( SHIFT_LEFT( SHA_DIGEST_LENGTH, 1) ) + 1, 1 );
-	if( buf != NULL )
+	if( *str != NULL )
 	{
+		FFree ( *str );
+		*str = NULL;
+	}
+	
+	*str = FCallocAlign( ( SHIFT_LEFT( SHA_DIGEST_LENGTH, 1) ) + 1, 1 );
+	if( *str != NULL )
+	{
+		char *buf = *str;
 		SHA1( ( unsigned char *)*str, strlen( *str ), temp);
 
 		int i = 0;
@@ -887,12 +894,6 @@ void HashedString ( char **str )
 			sprintf( (char*)&(buf[ SHIFT_LEFT( i, 1) ]), "%02x", temp[i] );
 		}
 
-		if ( *str ) 
-		{
-			FFree ( *str );
-		}
-		DEBUG ( "[HashedString] Hashing\n" );
-		*str = buf;
 		DEBUG ( "[HashedString] Hashed\n" );
 	}
 	else

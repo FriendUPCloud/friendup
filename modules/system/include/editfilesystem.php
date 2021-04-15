@@ -78,12 +78,12 @@ if( $o->group == 'Admin' && $level != 'Admin' )
 if( isset( $obj->ID ) && $obj->ID > 0 )
 {
 	// Support workgroups
-	$groupID = '0';
-	if( $group = $SqlDatabase->FetchObject( '
+	$groupID = ( isset( $args->args->WorkgroupID ) && $args->args->WorkgroupID ? $args->args->WorkgroupID : '0' );
+	if( !$groupID && ( $group = $SqlDatabase->FetchObject( '
 		SELECT ug.* FROM FUserGroup ug
 			WHERE ug.Name = "' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->Workgroup ) . '"
 			AND ug.Type = "Workgroup"
-	' ) )
+	' ) ) )
 	{
 		$groupID = $group->ID;
 	}

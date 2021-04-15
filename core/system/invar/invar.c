@@ -118,7 +118,7 @@ INVARGroup *INVARGroupNew( FULONG id, char *name )
 		ne->ng_Pointer = (FULONG)ne;
 		ne->ng_Name = StringDuplicate( name );
 		
-		DEBUG("INVARGroupNew created: name %s ptr %p\n", ne->ng_Name, (void *)ne->ng_Pointer );
+		DEBUG("INVARGroupNew created: name %s ptr %p\n", ne->ng_Name, (void *)ne );
 	}
 	
 	return ne;

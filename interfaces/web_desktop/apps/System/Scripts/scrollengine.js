@@ -157,7 +157,6 @@ scrollengine = {
 			
 			document.body.addEventListener( 'mouseover', function()
 			{
-				window.focus();
 				document.body.focus();
 			} );
 			
@@ -424,7 +423,7 @@ scrollengine = {
 		if( !this.elements.pageMiddle || force )
 		{
 			// TODO: look at why it updates the same twice if refresh is run ...
-			this.refresh();
+			this.refresh( force );
 		}
 		
 		if( data )
