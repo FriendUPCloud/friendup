@@ -41,7 +41,9 @@ else
 		
 			if( $perm->response == 1 && isset( $perm->data->users ) && isset( $args->args->userid ) )
 			{
-			
+				
+				// TODO: list based on workgroups and users one has access to ...
+				
 				// If user has GLOBAL or WORKGROUP access to this user
 			
 				if( $perm->data->users == '*' || strstr( ','.$perm->data->users.',', ','.$args->args->userid.',' ) )
@@ -112,26 +114,54 @@ if( !isset( $args->args->name ) && !isset( $args->args->id ) )
 {	
 	$out = array();
 	
-	if( $rows = $SqlDatabase->FetchObjects( $q = '
-		SELECT 
-			g.*, u.UserID AS UserRoleID, w.FromGroupID AS WorkgroupRoleID 
-		FROM 
-			FUserGroup g 
-				LEFT JOIN FUserToGroup u ON 
-				( 
-						u.UserGroupID = g.ID 
-					AND u.UserID = ' . ( isset( $args->args->userid ) && $args->args->userid ? intval( $args->args->userid, 10 ) : 'NULL' ) . ' 
-				)
-				LEFT JOIN FGroupToGroup w ON
-				(
-						w.ToGroupID = g.ID 
-					AND w.FromGroupID = ' . ( isset( $args->args->groupid ) && $args->args->groupid ? intval( $args->args->groupid, 10 ) : 'NULL' ) . ' 
-				) 
-		WHERE 
-			g.Type = "Role" 
-		ORDER BY 
-			g.Name 
-	' ) )
+	// TODO: Add list of workgroups and users allowed to list based on role permission access ...
+	
+	if( isset( $args->args->mode ) && $args->args->mode == 'all' )
+	{
+		$q = '
+			SELECT 
+				g.*, u.UserID AS UserRoleID, w.FromGroupID AS WorkgroupRoleID 
+			FROM 
+				FUserGroup g 
+					LEFT JOIN FUserToGroup u ON 
+					( 
+							u.UserGroupID = g.ID 
+					)
+					LEFT JOIN FGroupToGroup w ON
+					(
+							w.ToGroupID = g.ID 
+					) 
+			WHERE 
+				g.Type = "Role" 
+			ORDER BY 
+				g.Name 
+		';
+	}
+	else
+	{
+		$q = '
+			SELECT 
+				g.*, u.UserID AS UserRoleID, w.FromGroupID AS WorkgroupRoleID 
+			FROM 
+				FUserGroup g 
+					LEFT JOIN FUserToGroup u ON 
+					( 
+							u.UserGroupID = g.ID 
+						AND u.UserID = ' . ( isset( $args->args->userid ) && $args->args->userid ? intval( $args->args->userid, 10 ) : 'NULL' ) . ' 
+					)
+					LEFT JOIN FGroupToGroup w ON
+					(
+							w.ToGroupID = g.ID 
+						AND w.FromGroupID = ' . ( isset( $args->args->groupid ) && $args->args->groupid ? intval( $args->args->groupid, 10 ) : 'NULL' ) . ' 
+					) 
+			WHERE 
+				g.Type = "Role" 
+			ORDER BY 
+				g.Name 
+		';
+	}
+	
+	if( $rows = $SqlDatabase->FetchObjects( $q ) )
 	{
 		foreach( $rows as $row )
 		{

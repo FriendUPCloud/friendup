@@ -20,9 +20,9 @@ function initRoleDetails( info )
 	var data = info.permission;
 	var wgroups = info.workgroups;
 	
-	var apps = [];
+	var apps = ( info.applications ? info.applications : {} );
 	
-	console.log( [ data, info.role ] );
+	console.log( [ data, info.role, wgroups, apps ] );
 	
 	if( data )
 	{

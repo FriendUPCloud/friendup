@@ -1778,7 +1778,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 		let groups = {};
 		
-		if( ShowLog/* || 1==1*/ ) console.log( 'initDetails() ', info );
+		if( ShowLog || 1==1 ) console.log( 'initDetails() ', info );
 		
 		// Workgroups
 		var pstr = '';

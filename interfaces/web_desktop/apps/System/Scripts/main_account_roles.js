@@ -69,33 +69,115 @@ Sections.accounts_roles = function( cmd, extra )
 					m.execute( 'getsystempermissions', { authid: Application.authId } );
 				},
 				
-				/*// Load workgroups
+				// 1 | Load applications
+				
+				function(  )
+				{
+					
+					applications( function ( res, dat )
+					{
+					
+						if( ShowLog ) console.log( { e:res, d:dat } );
+						
+						//if( !res ) return;
+						
+						if( dat )
+						{
+							for( var k in dat )
+							{
+								if( dat[k] && dat[k].Name )
+								{
+									dat[k].Preview = ( !dat[k].Preview ? '/webclient/apps/'+dat[k].Name+'/icon.png' : '/system.library/module/?module=system&command=getapplicationpreview&application='+dat[k].Name+'&authid='+Application.authId );
+								}
+							}
+						}
+						
+						info.applications = dat;
+						
+						// Go to next in line ...
+						loadingList[ ++loadingSlot ]( info );
+						
+					} );
+					
+				},
+				
+				// Load workgroups
 				function()
 				{
-					var u = new Module( 'system' );
-					u.onExecuted = function( e, d )
+					
+					// Specific for Pawel's code ... He just wants to forward json ...
+					
+					var args = JSON.stringify( {
+						'type'    : 'read', 
+						'context' : 'application', 
+						'authid'  : Application.authId, 
+						'data'    : { 
+							'permission' : 'WORKGROUP_READ'
+						}, 
+						'listdetails' : 'workgroup' 
+					} );
+				
+					var f = new Library( 'system.library' );
+					f.onExecuted = function( e, d )
 					{
-						console.log( 'workgroups', { e:e, d:d } );
-						info.workgroups = null;
-						//if( e != 'ok' ) return;
-						
+					
+						var wgroups = null; var workgroups = null;
+					
 						try
 						{
-							info.workgroups = JSON.parse( d );
+							wgroups = JSON.parse( d );
 						}
 						catch( e )
 						{
-							return;
+							wgroups = null;
 						}
+					
+						if( ShowLog || 1==1 ) console.log( 'workgroups ', { e:e , d:(wgroups?wgroups:d), args: args } );
+					
+						if( wgroups.groups )
+						{
+							workgroups = wgroups.groups;
+						}
+						else if( wgroups.data && wgroups.data.details && wgroups.data.details.groups )
+						{
+							workgroups = wgroups.data.details.groups;
+						}
+						
+						info.workgroups = null;
+						
+						if( wgroups && workgroups )
+						{
+							var out = [];
+						
+							for( var a in workgroups )
+							{
+								if( workgroups[a] && workgroups[a].ID )
+								{
+									out.push( { 
+										ID       : workgroups[a].ID, 
+										UUID     : workgroups[a].uuid, 
+										Name     : workgroups[a].name, 
+										ParentID : workgroups[a].parentid, 
+										Status   : workgroups[a].status 
+									} );
+								}
+							}
+							
+							info.workgroups = out;
+						}
+						
 						loadingList[ ++loadingSlot ]( info );
+						
 					}
-					u.execute( 'workgroups', { authid: Application.authId } );
-				},*/
+					
+					f.execute( 'group/list', { parentid: 0, authid: Application.authId, args: args } );
+					
+				},
 				
 				// Then, finally, show role details
 				function( info )
 				{
-					if( typeof info.role == 'undefined' && typeof info.permission == 'undefined'/* && typeof info.workgroups == 'undefined'*/ ) return;
+					if( typeof info.role == 'undefined' && typeof info.permission == 'undefined' && typeof info.workgroups == 'undefined' ) return;
 					
 					initRoleDetails( info );
 				}
@@ -109,7 +191,143 @@ Sections.accounts_roles = function( cmd, extra )
 		}
 	}
 	
+	// Read --------------------------------------------------------------------
 	
+	function applications( callback )
+	{
+		
+		if( callback )
+		{
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				if( e == 'ok' && d )
+				{
+					try
+					{
+						var json = JSON.parse( d );
+					
+						if( json )
+						{
+							return callback( true, json );
+						}
+					} 
+					catch( e ){ } 
+				}
+				
+				return callback( false, false );
+			}
+			m.execute( 'software', { mode: 'showall', authid: Application.authId } );
+			
+			return true;
+		}
+		
+		return false;
+		
+	}
+	
+	function workgroups( callback )
+	{
+		
+		if( callback )
+		{
+			// Specific for Pawel's code ... He just wants to forward json ...
+			
+			var args = JSON.stringify( {
+				'type'    : 'read', 
+				'context' : 'application', 
+				'authid'  : Application.authId, 
+				'data'    : { 
+					'permission' : 'WORKGROUP_READ'
+				}, 
+				'listdetails' : 'workgroup' 
+			} );
+			
+			var f = new Library( 'system.library' );
+			f.onExecuted = function( e, d )
+			{
+				
+				var wgroups = null; var workgroups = null;
+				
+				try
+				{
+					wgroups = JSON.parse( d );
+				}
+				catch( e )
+				{
+					wgroups = null;
+				}
+				
+				if( 1==1 || ShowLog ) console.log( 'workgroups ', { e:e , d:(wgroups?wgroups:d), args: args } );
+				
+				if( wgroups.groups )
+				{
+					workgroups = wgroups.groups;
+				}
+				else if( wgroups.data && wgroups.data.details && wgroups.data.details.groups )
+				{
+					workgroups = wgroups.data.details.groups;
+				}
+				
+				if( wgroups && workgroups )
+				{
+					var out = [];
+					
+					for( var a in workgroups )
+					{
+						if( workgroups[a] && workgroups[a].ID )
+						{
+							out.push( { ID: workgroups[a].ID, UUID: workgroups[a].uuid, Name: workgroups[a].name, ParentID: workgroups[a].parentid, Status: workgroups[a].status } );
+						}
+					}
+					
+					if( callback ) return callback( out );
+				}
+				
+				if( callback ) return callback( [] );
+				
+				
+			}
+			
+			f.execute( 'group/list', { parentid: 0, authid: Application.authId, args: args } );
+			
+			return true;
+		}
+		
+		return false;
+		
+	}
+	
+	function roles( workgroups, callback )
+	{
+		
+		if( callback )
+		{
+			
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				
+				var roles = [];
+				
+				try
+				{
+					roles = JSON.parse( d );
+				}
+				catch( e ) {  }
+				
+				
+				
+			}
+			m.execute( 'userroleget', { mode: 'all', authid: Application.authId } );
+			
+			return true;
+			
+		}
+		
+		return false;
+		
+	}
 	
 	// Get the user list -------------------------------------------------------
 		
@@ -119,7 +337,6 @@ Sections.accounts_roles = function( cmd, extra )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d } );
 			
 			let roles = null;
 			
@@ -128,6 +345,8 @@ Sections.accounts_roles = function( cmd, extra )
 				roles = JSON.parse( d );
 			}
 			catch( e ) {  }
+			
+			console.log( { e:e, d:(roles?roles:d) } );
 			
 			var o = ge( 'RoleList' ); if( o ) o.innerHTML = '';
 			
@@ -668,8 +887,9 @@ Sections.accounts_roles = function( cmd, extra )
 		
 			Friend.responsive.pageActive = ge( 'RoleList' );
 			Friend.responsive.reinit();
+			
 		}
-		m.execute( 'userroleget', { authid: Application.authId } );
+		m.execute( 'userroleget', { mode: 'all', authid: Application.authId } );
 		
 	}
 	else
