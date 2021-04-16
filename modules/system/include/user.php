@@ -1388,35 +1388,35 @@ function _applySetup( $userid, $id )
 									$wp->Key = 'imagesdoors';
 									if( $wp->Load() && $wp->Data )
 									{
-										
-											$data = substr( $wp->Data, 1, -1 );
-	
+											
+											$data = str_replace( [ '"["', '"]"' ], [ '["', '"]' ], trim( $wp->Data ) );
+											
 											if( $data && !strstr( $data, '"Home:Wallpaper/' . $fi->Filename . '"' ) )
 											{
 												if( $json = json_decode( $data, true ) )
 												{
 													$json[] = ( 'Home:Wallpaper/' . $fi->Filename );
-			
+													
 													if( $data = json_encode( $json ) )
 													{
 														$wp->Data = stripslashes( '"' . $data . '"' );
 														$wp->Save();
 													}
-												
+													
 													$debug[$uid]->wallpaper->imagesdoors = ( $wp->ID > 0 ? $wp->Data : false );
+													
+													// Set the wallpaper in config
+													$s = new dbIO( 'FSetting' );
+													$s->UserID = $uid;
+													$s->Type = 'system';
+													$s->Key = 'wallpaperdoors';
+													$s->Load();
+													$s->Data = '"Home:Wallpaper/' . $fi->Filename . '"';
+													$s->Save();
+													
+													$debug[$uid]->wallpaper->wallpaperdoors = ( $s->ID > 0 ? $s->Data : false );
 												}
 											}
-											
-											// Set the wallpaper in config
-											$s = new dbIO( 'FSetting' );
-											$s->UserID = $uid;
-											$s->Type = 'system';
-											$s->Key = 'wallpaperdoors';
-											$s->Load();
-											$s->Data = '"Home:Wallpaper/' . $fi->Filename . '"';
-											$s->Save();
-								
-											$debug[$uid]->wallpaper->wallpaperdoors = ( $s->ID > 0 ? $s->Data : false );
 											
 									}
 									else
