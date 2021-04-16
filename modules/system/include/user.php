@@ -1338,19 +1338,6 @@ function _applySetup( $userid, $id )
 									$fl->Save();
 								}
 								
-								$fi = new dbIO( 'FSFile' );
-								$fi->Filename = ( 'default_wallpaper_' . $fl->FilesystemID . '_' . $fl->UserID . '.jpg' );
-								$fi->FolderID = $fl->ID;
-								$fi->FilesystemID = $f->ID;
-								$fi->UserID = $uid;
-								if( $fi->Load() && $fi->DiskFilename )
-								{
-									if( file_exists( $Config->FCUpload . $fi->DiskFilename ) )
-									{
-										unlink( $Config->FCUpload . $fi->DiskFilename );
-									}
-								}
-								
 								// Find disk filename
 								$uname = str_replace( array( '..', '/', ' ' ), '_', $theUser->Name );
 								if( !file_exists( $Config->FCUpload . $uname ) )
@@ -1363,6 +1350,19 @@ function _applySetup( $userid, $id )
 									$fnam = ( $fnam . rand( 0, 999999 ) );
 								}
 								
+								
+								$fi = new dbIO( 'FSFile' );
+								$fi->Filename = ( 'default_wallpaper_' . $f->ID . '_' . $uid . '.jpg' );
+								$fi->FolderID = $fl->ID;
+								$fi->FilesystemID = $f->ID;
+								$fi->UserID = $uid;
+								if( $fi->Load() && $fi->DiskFilename )
+								{
+									if( file_exists( $Config->FCUpload . $uname . '/' . $fi->DiskFilename ) )
+									{
+										unlink( $Config->FCUpload . $uname . '/' . $fi->DiskFilename );
+									}
+								}
 								
 								
 								if( $fp = fopen( $Config->FCUpload . $uname . '/' . $fnam . '.' . $ext, 'w+' ) )
