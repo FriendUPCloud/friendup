@@ -327,7 +327,8 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 										}
 									}
 									catch( e )
-									{};
+									{
+									};
 								}
 								var pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
 								callback( list, t.fileInfo.Path, pth );

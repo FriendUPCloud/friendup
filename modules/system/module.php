@@ -234,7 +234,7 @@ if( isset( $args->command ) )
 				'setfilepublic', 'setfileprivate', 'zip', 'unzip', 'volumeinfo',
 				'securitydomains', 'systemmail', 'removebookmark', 'addbookmark',
 				'getbookmarks', 'listapplicationdocs', 'finddocumentation', 'userinfoget',
-				'userinfoset',  'useradd', 'userupdate', 'userdelete', 'checkuserbyname', 'userbetamail', 'listbetausers', 'listconnectedusers',
+				'userinfoset',  'useradd', 'user/create', 'user/update', 'user/delete', 'checkuserbyname', 'userbetamail', 'listbetausers', 'listconnectedusers',
 				'usersetup', 'usersetupadd', 'usersetupapply', 'usersetupsave', 'usersetupdelete',
 				'usersetupget', 'userwallpaperset', 'workgroups', 'workgroupadd', 'workgroupupdate', 'workgroupdelete',
 				'workgroupget', 'setsetting', 'getsetting', 'getavatar', 'listlibraries', 'listmodules',
@@ -1552,11 +1552,10 @@ if( isset( $args->command ) )
 		case 'useradd':
 			require( 'modules/system/include/useradd.php' );
 			break;
-		case 'userupdate':
-			require( 'modules/system/include/userupdate.php' );
-			break;
-		case 'userdelete':
-			require( 'modules/system/include/userdelete.php' );
+		case 'user/create':
+		case 'user/update':
+		case 'user/delete':
+			require( 'modules/system/include/user.php' );
 			break;
 		//
 		case 'checkuserbyname':

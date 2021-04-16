@@ -31,7 +31,7 @@ Application.run = function( msg )
 		catch( e ){  }
 		
 		var v = new View( {
-			title: 'Friend System' + ( Config.data.Version ? ' (v' + Config.data.Version + ')' : '' ),
+			title: 'System' + ( Config.data.Version ? ' (v' + Config.data.Version + ')' : '' ),
 			width: 1280,
 			height: 960
 		} );

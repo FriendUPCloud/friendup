@@ -761,10 +761,10 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			let removers = [];
 			let found = [];
 			let foundElements = [];
-			for( var a = 0; a < eles.length; a++ )
+			for( let a = 0; a < eles.length; a++ )
 			{
 				let elFound = false;
-				for( var b = 0; b < msg.list.length; b++ )
+				for( let b = 0; b < msg.list.length; b++ )
 				{
 					if( eles[a].id == 'fileitem_' + msg.list[b].Filename.split( ' ' ).join( '' ) )
 					{
@@ -797,20 +797,29 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					removers.push( eles[a] );
 				}
 			}
-			for( var a = 0; a < removers.length; a++ )
+			
+			let finalRemovers = [];
+			for( let a = 0; a < removers.length; a++ )
 			{
-				rootElement.removeChild( removers[a] );
+				if( removers[ a ].nodeName == 'INPUT' ) 
+				{
+				    finalRemovers.push( removers[ a ] );
+				}
+				else
+				{
+				    rootElement.removeChild( removers[a] );
+				}
 			}
 			
 			delete removers;
 			
 			// Precalc
 			let d13 = depth * 13;
-			for( var a = 0; a < msg.list.length; a++ )
+			for( let a = 0; a < msg.list.length; a++ )
 			{
 				let foundItem = false;
 				if( msg.list[a].Filename.substr( 0, 1 ) == '.' ) continue; // skip hidden files
-				for( var b = 0; b < found.length; b++ )
+				for( let b = 0; b < found.length; b++ )
 				{
 					if( found[b] == msg.list[a].Filename )
 					{
@@ -887,7 +896,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			// Checkers
 			let rootPathLength = self.rootPath.split( '/' ).length;
 			let sw = 2;
-			for( var a = 0; a < eles.length; a++ )
+			for( let a = 0; a < eles.length; a++ )
 			{
 				sw = sw == 2 ? 1 : 2;
 				if( eles[a].className && ( eles[a].classList.contains( 'FolderItem' ) || eles[a].classList.contains( 'FileItem' ) ) )
@@ -911,6 +920,13 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					}, 5 );
 				}
 			}
+			
+			// Cleanup
+			for( let a = 0; a < finalRemovers.length; a++ )
+			{
+				finalRemovers[ a ].parentNode.removeChild( finalRemovers[ a ] );
+			}
+			
 		} );
 	}
 };

@@ -4695,6 +4695,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				Friend.workspaceClipBoardMode = 'copy';
 				Friend.workspaceClipBoard = selected;
 			}
+			
+			WorkspaceMenu.show();
 		}
 	},
 	// paste from virtual clipboard
@@ -4702,12 +4704,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( !e ) e = window.event;
 		
-		if( window.currentMovable && Friend.workspaceClipBoard && Friend.workspaceClipBoard.length > 0 && typeof window.currentMovable.drop == 'function' )
+		let cme = window.currentMovable;
+		let clp = Friend.workspaceClipBoard;
+		if( cme && clp && clp.length > 0 && typeof cme.drop == 'function' )
 		{
-			var e = {};
+			e = {};
 			e.ctrlKey = ( Friend.workspaceClipBoardMode == 'copy' ? true : false );
 			
-			var clip = Friend.workspaceClipBoard;
+			let clip = Friend.workspaceClipBoard;
 			
 			// Make sure we don't overwrite existing files!
 			let destPath = currentMovable.content.fileInfo.Path;
@@ -4715,24 +4719,68 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			let doCopy = false;
 			
 			// Use menu context for file info path (folder icon etc)
-			if( Workspace.menuContext )
+			function isDirectoryElement( ele )
+			{
+				if( !ele.classList ) return false;
+				if( ele.classList.contains( 'Directory' ) || ele.classList.contains( 'Icon' ) )
+				{
+					while( !ele.fileInfo && ele != document.body )
+					{
+						ele = ele.parentNode;
+					}
+					if( ele == document.body ) return false;
+					return ele;
+				}
+				if( ele.classList.contains( 'Column' ) )
+				{
+					let p = ele.parentNode;
+					if( p.fileInfo )
+					{
+						return p;
+					}
+				}
+				return false;
+			}
+			let mc = false;
+			if( Workspace.menuContext && ( mc = isDirectoryElement( Workspace.menuContext ) ) )
 			{
 				let fi = null;
-				let mc = Workspace.menuContext;
-				while( mc != document.body )
+				
+				// Use the context menu file info, and sanitize it!
+				// The Path may include the filename
+				destPath = mc.fileInfo.Path;
+				if( destPath.substr( -1, 1 ) != '/' )
 				{
-					if( mc.fileInfo )
-						break;
-					mc = mc.parentNode;
+				    if( destPath.indexOf( '/' ) > 0 )
+				    {
+				        destPath = destPath.split( '/' );
+				        destPath.pop();
+				        destPath = destPath.join( '/' );
+				        destPath += '/';
+				    }
 				}
-				if( mc.fileInfo )
+				else if( destPath.substr( -1, 1 ) != ':' && !destPath.indexOf( '/' ) )
 				{
-					destPath = mc.fileInfo.Path;
-					destFinf = mc.fileInfo;
-					doCopy = true;
+				    if( destPath.indexOf( ':' ) > 0 )
+				    {
+			            destPath = destPath.split( ':' );
+			            destPath.pop();
+			            destPath = destPath.join( ':' );
+			            destPath += ':';
+			        }
 				}
+				destFinf = {};
+				for( let a in mc.fileInfo )
+				{
+				    destFinf[ a ] = mc.fileInfo[ a ];
+				}
+				destFinf.Path = destPath;
+				doCopy = true;
 			}
-			var d = new Door( destPath );
+			
+			Workspace.menuContext = null;
+			
+			let d = new Door( destPath );
 			d.getIcons( destFinf, function( items )
 			{
 				for( let a = 0; a < items.length; a++ )
@@ -4788,7 +4836,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( !e ) e = {};
 				let cliplen = clip.length;
 				for( let b = 0; b < clip.length; b++ )
-				{
+				{	
 					let spath = clip[b].fileInfo.Path;
 					let lastChar = spath.substr( -1, 1 );
 					let sh = new Shell( 0 );

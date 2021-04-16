@@ -74,11 +74,11 @@ int ImageSavePNG( FImage *img, const char *filename )
 		return 0;
 	}
 #else
-	if( setjmp( png_ptr ) )
+	if( setjmp( (struct __jmp_buf_tag *)png_ptr ) )
 	{
 		/* If we get here, we had a problem reading the file */
 		fclose(fp);
-		png_destroy_write_struct(&png_ptr,  (png_infopp)NULL);
+		png_destroy_write_struct( &png_ptr,  (png_infopp)NULL);
 		return 0;
 	}
 #endif
