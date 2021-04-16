@@ -1387,7 +1387,7 @@ function _applySetup( $userid, $id )
 									$s->Type = 'system';
 									$s->Key = 'wallpaperdoors';
 									$s->Load();
-									$s->Data = '"Home:Wallpaper/' . $fi->Filename . '"';
+									$s->Data = '"Home:Wallpaper/' . $fi->DiskFilename . '"';
 									$s->Save();
 								
 									$debug[$uid]->wallpaper->wallpaperdoors = ( $s->ID > 0 ? $s->Data : false );
@@ -1401,11 +1401,11 @@ function _applySetup( $userid, $id )
 									{
 										$data = substr( $wp->Data, 1, -1 );
 	
-										if( $data && !strstr( $data, '"Home:Wallpaper/' . $fi->Filename . '"' ) )
+										if( $data && !strstr( $data, '"Home:Wallpaper/' . $fi->DiskFilename . '"' ) )
 										{
 											if( $json = json_decode( $data, true ) )
 											{
-												$json[] = ( 'Home:Wallpaper/' . $fi->Filename );
+												$json[] = ( 'Home:Wallpaper/' . $fi->DiskFilename );
 			
 												if( $data = json_encode( $json ) )
 												{
