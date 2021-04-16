@@ -452,7 +452,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -475,7 +475,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -510,7 +510,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -599,8 +599,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						HttpAddTextContent( response, buffer );
 						
 						{
-							char msg[ 512 ];
-							snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\"}", fg->ug_ID, fg->ug_Name );
+							char msg[ 1024 ];
+							snprintf( msg, sizeof(msg), "{\"id\":%lu,\"uuid\":\"%s\",\"name\":\"%s\"}", fg->ug_ID, fg->ug_UUID, fg->ug_Name );
 							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
 							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", msg );
 						}
@@ -675,8 +675,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
 							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", msg );
 					
-							char buffer[ 256 ];
-							snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"success\",\"id\":%lu }", groupID );
+							char buffer[ 1024 ];
+							snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"success\",\"id\":%lu,\"uuid\":\"%s\"}", groupID, ug->ug_UUID );
 							HttpAddTextContent( response, buffer );
 						}
 						else
@@ -704,7 +704,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					
 					IntListEl *el = ILEParseString( users );
 					
-					DEBUG("Assigning users to group\n");
+					DEBUG("[UMWebRequest] Assigning users to group\n");
 					
 					while( el != NULL )
 					{
@@ -727,10 +727,10 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					}
 					
 					{
-						char tmp[256];
+						char tmp[1024];
 						int itmp;
 						BufString *retString = BufStringNew();
-						itmp = snprintf( tmp, sizeof(tmp), "{\"groupid\":%lu,\"parentid\":%lu,\"userids\":[", groupID, parentID );
+						itmp = snprintf( tmp, sizeof(tmp), "{\"groupid\":%lu,\"parentid\":%lu,\"uuid\":\"%s\",\"userids\":[", groupID, parentID, ug->ug_UUID );
 						BufStringAddSize( retString, tmp, itmp );
 						// return user objects
 						//generateConnectedUsers( l, groupID, NULL, retString );
@@ -774,10 +774,6 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		{
 			FFree( description );
 		}
-		//if( args != NULL )
-		//{
-		//	FFree( args );
-		//}
 
 		*result = 200;
 	}
@@ -849,59 +845,72 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					}
 				}
 			
-				DEBUG("Group found\n");
+				DEBUG("[UMWebRequest] Group found\n");
 				if( fg != NULL )
 				{
 					FBOOL canChange = FALSE;
-					if( loggedSession->us_User->u_IsAdmin == TRUE )
+					
+					if( fg->ug_Status != USER_GROUP_STATUS_LOCKED )
 					{
-						canChange = TRUE;
-					}
-					else
-					{
-						if( fg->ug_UserID == loggedSession->us_UserID )
+					
+						if( loggedSession->us_User->u_IsAdmin == TRUE )
 						{
 							canChange = TRUE;
 						}
-					}
-				
-					DEBUG("Can change: %d\n", canChange );
-					if( canChange == TRUE )
-					{
-						if( strcmp( fg->ug_Type, "Level" ) != 0 )	//you can only remove entries which dont have "Level" type
+						else
 						{
-							SQLLibrary *sqllib  = l->GetDBConnection( l );
-							if( sqllib != NULL )
+							if( fg->ug_UserID == loggedSession->us_UserID )
 							{
-								//fg->ug_Status = USER_GROUP_STATUS_DISABLED;
-								//sqllib->Update( sqllib, UserGroupDesc, fg );
+								canChange = TRUE;
+							}
+						}
+				
+						DEBUG("[UMWebRequest] Can change: %d\n", canChange );
+						if( canChange == TRUE )
+						{
+							if( strcmp( fg->ug_Type, "Level" ) != 0 )	//you can only remove entries which dont have "Level" type
+							{
+								SQLLibrary *sqllib  = l->GetDBConnection( l );
+								if( sqllib != NULL )
+								{
+									//fg->ug_Status = USER_GROUP_STATUS_DISABLED;
+									//sqllib->Update( sqllib, UserGroupDesc, fg );
 
-								char msg[ 512 ];
-								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\"}", fg->ug_ID, fg->ug_Name );
-								UGMRemoveGroup( l->sl_UGM, fg );
-								//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
-								NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "delete", msg );
+									char msg[ 1024 ];
+									snprintf( msg, sizeof(msg), "{\"id\":%lu,\"uuid\":\"%s\",\"name\":\"%s\"}", fg->ug_ID, fg->ug_UUID, fg->ug_Name );
+									UGMRemoveGroup( l->sl_UGM, fg );
+									//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
+									NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "delete", msg );
 						
-								HttpAddTextContent( response, "ok<!--separate-->{\"Result\":\"success\"}" );
+									HttpAddTextContent( response, "ok<!--separate-->{\"Result\":\"success\"}" );
 
-								l->DropDBConnection( l, sqllib );
+									l->DropDBConnection( l, sqllib );
+								}
+								else
+								{
+									char buffer[ 256 ];
+									snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
+									HttpAddTextContent( response, buffer );
+								}
 							}
 							else
 							{
 								char buffer[ 256 ];
-								snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
+								snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_CANNOT_REMOVE_GROUP_WITH_LEVEL_TYPE] , DICT_CANNOT_REMOVE_GROUP_WITH_LEVEL_TYPE );
 								HttpAddTextContent( response, buffer );
 							}
 						}
 						else
 						{
-							HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"Cannot remove group with 'Level' type\",\"code\":\"1\"}" );
+							char buffer[ 256 ];
+							snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+							HttpAddTextContent( response, buffer );
 						}
 					}
-					else
+					else	// group is in locked state
 					{
 						char buffer[ 256 ];
-						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_CANNOT_EDIT_OR_REMOVE_USER_GROUP_LOCKED] , DICT_CANNOT_EDIT_OR_REMOVE_USER_GROUP_LOCKED );
 						HttpAddTextContent( response, buffer );
 					}
 				}
@@ -910,7 +919,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			{
 				char buffer[ 256 ];
 				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
-					HttpAddTextContent( response, buffer );
+				HttpAddTextContent( response, buffer );
 			}
 		}
 		else
@@ -983,21 +992,21 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			if( el != NULL )
 			{
 				groupname = UrlDecodeToMem( (char *)el->hme_Data );
-				DEBUG( "[Group/Update] Update groupname %s!!\n", groupname );
+				DEBUG( "[UMWebRequest] Group/Update Update groupname %s!!\n", groupname );
 			}
 			
 			el = HttpGetPOSTParameter( request, "type" );
 			if( el != NULL )
 			{
 				type = UrlDecodeToMem( (char *)el->hme_Data );
-				DEBUG( "[Group/Update] Update type %s!!\n", type );
+				DEBUG( "[UMWebRequest] Group/Update Update type %s!!\n", type );
 			}
 			
 			el = HttpGetPOSTParameter( request, "description" );
 			if( el != NULL )
 			{
 				description = UrlDecodeToMem( (char *)el->hme_Data );
-				DEBUG( "[Group/Update] Update description %s!!\n", description );
+				DEBUG( "[UMWebRequest] Group/Update Update description %s!!\n", description );
 			}
 			
 			el = HttpGetPOSTParameter( request, "id" );
@@ -1026,7 +1035,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			{
 				users = UrlDecodeToMem( (char *)el->hme_Data );
 				usersSQL = StringDuplicate( users );
-				DEBUG( "[Group/Update] update group, users %s!!\n", users );
+				DEBUG( "[UMWebRequest] Group/Update update group, users %s!!\n", users );
 			}
 			
 			if( groupID > 0 )
@@ -1034,7 +1043,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				// get information from DB if group already exist
 				
 				UserGroup *fg = UGMGetGroupByID( l->sl_UGM, groupID );
-				DEBUG("[Group/Update] pointer to group from memory: %p\n", fg );
+				DEBUG("[UMWebRequest] Group/Update pointer to group from memory: %p\n", fg );
 				
 				if( fg != NULL )	// group already exist, there is no need to create double
 				{
@@ -1077,8 +1086,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						l->DropDBConnection( l, sqlLib );
 					}
 					
-					char msg[ 512 ];
-					snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"type\":\"%s\",\"parentid\":%lu}", fg->ug_ID, fg->ug_Name, fg->ug_Type, fg->ug_ParentID );
+					char msg[ 1024 ];
+					snprintf( msg, sizeof(msg), "{\"id\":%lu,\"uuid\":\"%s\",\"name\":\"%s\",\"type\":\"%s\",\"parentid\":%lu}", fg->ug_ID, fg->ug_UUID, fg->ug_Name, fg->ug_Type, fg->ug_ParentID );
 					NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "update", msg );
 					
 					// if users parameter is passed then we must remove current users from group
@@ -1130,7 +1139,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 										nentry->node.mln_Succ = (MinNode *)diffListRoot;
 										diffListRoot = nentry;
 									}
-									DEBUG("[Group/Update] diff user id %s users in arg %s\n", row[0], users );
+									DEBUG("[UMWebRequest] Group/Update diff user id %s users in arg %s\n", row[0], users );
 								}
 								sqlLib->FreeResult( sqlLib, result );
 							}
@@ -1146,9 +1155,9 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 						if( strcmp( users, "false" ) == 0 )
 						{
 							char tmpQuery[ 512 ];
-							DEBUG("List is empty\n");
+							DEBUG("[UMWebRequest] List is empty\n");
 							
-							DEBUG("Remove users from group\n");
+							DEBUG("[UMWebRequest] Remove users from group\n");
 							
 							snprintf( tmpQuery, sizeof(tmpQuery), "SELECT UserID FROM FUserToGroup WHERE UserGroupID=%lu", groupID );
 							result = sqlLib->Query(  sqlLib, tmpQuery );
@@ -1179,7 +1188,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 						} // users == false (remove all users)
 						else
 						{
-							DEBUG("[Group/Update] going through diff list\n");
+							DEBUG("[UMWebRequest] Group/Update going through diff list\n");
 							// going through diff list and add or remove user from group
 							UsrGrEntry *el = diffListRoot;
 							while( el != NULL )
@@ -1202,7 +1211,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 								// do realtime update only to users which are in memory
 								if( usr != NULL )
 								{
-									DEBUG("[Group/Update] User found %s is in group %lu\n", usr->u_Name, el->ugid );
+									DEBUG("[UMWebRequest] User found %s is in group %lu\n", usr->u_Name, el->ugid );
 									
 									if( el->ugid == 0 ) // user is not in group we must add him
 									{
@@ -1268,10 +1277,6 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			HttpAddTextContent( response, buffer );
 		}
 		
-		//if( args != NULL )
-		//{
-		//	FFree( args );
-		//}
 		if( groupname != NULL )
 		{
 			FFree( groupname );
@@ -1298,6 +1303,124 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*
+	* <HR><H2>system.library/group/updatestatus</H2>Update group status. Function require admin rights.
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param id - (required) ID of group
+	* @param status - group status
+	* @return { "response": "sucess","id":<GROUP NUMBER>,"status":<STATUS> } when success, otherwise error with code
+	*/
+	/// @endcond
+	
+	else if( strcmp( urlpath[ 1 ], "updatestatus" ) == 0 )
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		FULONG groupID = 0;
+		int status = -1;
+		
+		DEBUG( "[UMGWebRequest] Update status group!\n" );
+		
+		HashmapElement *el = NULL;
+		
+		char *authid = NULL;
+		char *args = NULL;
+		el = HttpGetPOSTParameter( request, "authid" );
+		if( el != NULL )
+		{
+			authid = el->hme_Data;
+		}
+		el = HttpGetPOSTParameter( request, "args" );
+		if( el != NULL )
+		{
+			args = el->hme_Data;
+		}
+		
+		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
+		{
+			el = GetHEReq( request, "id" );
+			if( el != NULL )
+			{
+				char *end;
+				groupID = strtol( (char *)el->hme_Data, &end, 0 );
+			}
+			
+			el = GetHEReq( request, "status" );
+			if( el != NULL )
+			{
+				status = atoi( (char *)el->hme_Data );
+			}
+			
+			if( groupID > 0 && status >= 0 )
+			{
+				// get information from DB if group already exist
+				
+				UserGroup *fg = UGMGetGroupByID( l->sl_UGM, groupID );
+				DEBUG("[UMWebRequest] Group/Update pointer to group from memory: %p\n", fg );
+				
+				if( fg != NULL )	// group already exist, there is no need to create double
+				{
+					if( status >= 0 )
+					{
+						fg->ug_Status = status;
+					}
+					
+					fg->ug_UserID = loggedSession->us_UserID;
+					
+					SQLLibrary *sqlLib = l->GetDBConnection( l );
+
+					if( sqlLib != NULL )
+					{
+						char tmpQuery[ 512 ];
+						snprintf( tmpQuery, sizeof(tmpQuery), "UPDATE FUserGroup set Status=%d WHERE ID=%ld", status, groupID );
+						sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
+						l->DropDBConnection( l, sqlLib );
+					}
+					
+					char msg[ 1024 ];
+					snprintf( msg, sizeof(msg), "{\"id\":%lu,\"uuid\":\"%s\",\"name\":\"%s\",\"type\":\"%s\",\"parentid\":%lu}", fg->ug_ID, fg->ug_UUID, fg->ug_Name, fg->ug_Type, fg->ug_ParentID );
+					NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "update", msg );
+					
+					char buffer[ 256 ];
+					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"sucess\",\"id\":%lu,\"status\":%d}", fg->ug_ID, status );
+					HttpAddTextContent( response, buffer );
+				}
+				else	// group do not exist in memory
+				{
+				
+					char buffer[ 512 ];
+					char buffer1[ 256 ];
+					snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "UGMUserGroupUpdate", 1 );
+					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", buffer1 , DICT_FUNCTION_RETURNED );
+					HttpAddTextContent( response, buffer );
+				}
+			} // missing parameters
+			else
+			{
+				char buffer[ 512 ];
+				char buffer1[ 256 ];
+				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id, status" );
+				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\": \"%s\",\"code\":\"%d\"}", buffer1 , DICT_PARAMETERS_MISSING );
+				HttpAddTextContent( response, buffer );
+			}
+		}
+		else
+		{
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
+		}
+		*result = 200;
+	}
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
 	* <HR><H2>system.library/group/list</H2>List groups.
 	*
 	* @param sessionid - (required) session id of logged user
@@ -1313,7 +1436,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		int status = -1;
 		FULONG parentID = 0;
@@ -1352,7 +1475,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		{
 			BufString *retString = BufStringNew();
 			
-			DEBUG("Group/list - send information to 3rd party services\n");
+			DEBUG("[UMWebRequest] Group/list - send information to 3rd party services\n");
 			
 			BufStringAddSize( retString, "ok<!--separate-->{", 18 );
 			BufStringAdd( retString, "\"groups\":[" );
@@ -1398,7 +1521,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			
 				snprintf( command, len, "command=permissions&sessionid=%s&authid=%s&args=%s", sessionid, authid, args ); 
 			 
-				DEBUG("Run command via php: '%s'\n", command );
+				DEBUG("[UMWebRequest] Run command via php: '%s'\n", command );
 				FULONG dataLength;
 
 				char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
@@ -1408,11 +1531,6 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				}
 				FFree( command );
 			}
-
-			//if( args != NULL )
-			//{
-			//	FFree( args );
-			//}
 		}
 
 		if( type != NULL )
@@ -1438,7 +1556,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		FULONG groupID = 0;
 		int len = 512;
@@ -1472,14 +1590,21 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		
 		if( loggedSession->us_User->u_IsAdmin  == TRUE )
 		{
-			char tmp[ 512 ];
+			char tmp[ 1024 ];
 			int tmpsize = 0;
 			BufString *retString = BufStringNew();
 			BufStringAddSize( retString, "ok<!--separate-->{", 18 );
 			UserGroup *ug = UGMGetGroupByID( l->sl_UGM, groupID );
 			if( ug != NULL )
 			{
-				tmpsize = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"userid\":%lu,\"name\":\"%s\",\"parentid\":%lu,\"type\":\"%s\",\"status\":%d,\"users\":[", groupID, ug->ug_UserID, ug->ug_Name, ug->ug_ParentID, ug->ug_Type, ug->ug_Status );
+				if( ug->ug_Description != NULL )
+				{
+					tmpsize = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"userid\":%lu,\"name\":\"%s\",\"parentid\":%lu,\"type\":\"%s\",\"status\":%d,\"description\":\"%s\",\"users\":[", groupID, ug->ug_UserID, ug->ug_Name, ug->ug_ParentID, ug->ug_Type, ug->ug_Status, ug->ug_Description );
+				}
+				else
+				{
+					tmpsize = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"userid\":%lu,\"name\":\"%s\",\"parentid\":%lu,\"type\":\"%s\",\"status\":%d,\"users\":[", groupID, ug->ug_UserID, ug->ug_Name, ug->ug_ParentID, ug->ug_Type, ug->ug_Status );
+				}
 			}
 			else
 			{
@@ -1547,7 +1672,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			
 				snprintf( command, len, "command=permissions&sessionid=%s&authid=%s&args=%s", sessionid, authid, args ); 
 			 
-				DEBUG("Run command via php: '%s'\n", command );
+				DEBUG("[UMWebRequest] Run command via php: '%s'\n", command );
 				FULONG dataLength;
 
 				char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
@@ -1599,7 +1724,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 
 		FULONG groupID = 0;
@@ -1653,7 +1778,14 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				int itmp = 0;
 				ug = UGMGetGroupByID( l->sl_UGM, groupID );
 				
-				itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"userids\":[", groupID );
+				if( ug == NULL )
+				{
+					itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"userids\":[", groupID );
+				}
+				else
+				{
+					itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"uuid\":\"%s\",\"userids\":[", groupID, ug->ug_UUID );
+				}
 				BufStringAddSize( retString, tmp, itmp );
 				
 				BufStringAddSize( retServiceString, tmp, itmp );
@@ -1832,7 +1964,14 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				UserGroup *ug = NULL;
 				ug = UGMGetGroupByID( l->sl_UGM, groupID );
 				
-				itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"userids\":[", groupID );
+				if( ug == NULL )
+				{
+					itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"userids\":[", groupID );
+				}
+				else
+				{
+					itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"uuid\":\"%s\",\"userids\":[", groupID, ug->ug_UUID );
+				}
 				BufStringAddSize( retString, tmp, itmp );
 				BufStringAddSize( retExtString, tmp, itmp );
 				
@@ -1997,7 +2136,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -2032,7 +2171,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				// get information from DB if group already exist
 				
 				UserGroup *fg = UGMGetGroupByID( l->sl_UGM, groupID );
-				DEBUG("GroupUpdate: pointer to group from memory: %p\n", fg );
+				DEBUG("[UMGWebRequest] pointer to group from memory: %p\n", fg );
 				
 				if( fg != NULL )	// group already exist, there is no need to create double
 				{
@@ -2046,7 +2185,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 						SQLLibrary *sqlLib = l->GetDBConnection( l );
 						if( sqlLib != NULL )
 						{
-							DEBUG("Remove users from group\n");
+							DEBUG("[UMGWebRequest] Remove users from group\n");
 							char tmpQuery[ 512 ];
 							snprintf( tmpQuery, sizeof(tmpQuery), "SELECT UserID FROM FUserToGroup WHERE UserGroupID=%lu", groupID );
 							void *result = sqlLib->Query(  sqlLib, tmpQuery );
@@ -2083,7 +2222,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 					
 						IntListEl *el = ILEParseString( users );
 					
-						DEBUG("Assigning users to group\n");
+						DEBUG("[UMGWebRequest] Assigning users to group\n");
 					
 						while( el != NULL )
 						{
@@ -2103,9 +2242,9 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 					
 					{
 						int itmp = 0;
-						char tmp[ 512 ];
+						char tmp[ 1024 ];
 						BufString *retString = BufStringNew();
-						itmp = snprintf( tmp, sizeof(tmp), "{\"groupid\":%lu,\"parentid\":%lu,\"userids\":[", fg->ug_ID, fg->ug_ParentID );
+						itmp = snprintf( tmp, sizeof(tmp), "{\"groupid\":%lu,\"uuid\":\"%s\",\"parentid\":%lu,\"userids\":[", fg->ug_ID, fg->ug_UUID, fg->ug_ParentID );
 						BufStringAddSize( retString, tmp, itmp );
 
 						generateConnectedUsersIDByID( l, groupID, retString, retString, usersSQL );

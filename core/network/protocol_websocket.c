@@ -234,7 +234,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		break;
 		
 		case LWS_CALLBACK_CLIENT_CLOSED:
-		    DEBUG("[WS] Callback client closed!\n");
+		    //DEBUG("[WS] Callback client closed!\n");
 		case LWS_CALLBACK_CLOSED:
 			{
 				int tr = 8;

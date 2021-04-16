@@ -3509,6 +3509,37 @@ function apiWrapper( event, force )
 					case 'reloadmimetypes':
 						Workspace.reloadMimeTypes();
 						break;
+					// Check which mimetypes are available
+					case 'checkmimetypes':
+						if( app && msg.mimetypes )
+						{
+							let result = {};
+							let resultCount = 0;
+							for( let a = 0; a < msg.mimetypes.length; a++ )
+							{
+								for( let b = 0; b < Workspace.mimeTypes.length; b++ )
+								{
+									let m = Workspace.mimeTypes[ b ];
+									for( let c = 0; c < m.types.length; c++ )
+									{
+										if( m.types[ c ] == msg.mimetypes[ a ] )
+										{
+											result[ m.types[ c ] ] = m.executable;
+											resultCount++;
+										}
+									}
+								}
+							}
+							let nmsg = {}; for( let a in msg ) nmsg[a] = msg[a];
+							nmsg.data = resultCount > 0 ? result : false;
+							nmsg.type = 'callback';
+							delete nmsg.command;
+							const cw = GetContentWindowByAppMessage( app, msg );
+							cw.postMessage( nmsg, '*' );
+							//app.contentWindow.postMessage( nmsg, '*' );
+							msg = null;
+						}
+						break;
 					case 'getopenscreens':
 						if( app )
 						{

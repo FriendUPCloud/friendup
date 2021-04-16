@@ -21,6 +21,7 @@
 #include <system/fsys/device_handling.h>
 #include <util/string.h>
 #include <system/systembase.h>
+#include <util/session_id.h>
 
 /**
  * Create new User Group
@@ -45,6 +46,11 @@ UserGroup *UserGroupNew( FULONG id, char *name, FULONG uid, char *type, char *de
 		ug->ug_UserID = uid;
 		ug->ug_Type = StringDuplicate(type);
 		ug->ug_Description = StringDuplicate( description );
+		
+		if( ug->ug_UUID == NULL )
+		{
+			GenerateUUID( &( ug->ug_UUID ) );
+		}
 		
 		UserGroupInit( ug, NULL );
 	}
@@ -123,6 +129,11 @@ int UserGroupDelete( void *sb, UserGroup *ug )
 		if( ug->ug_Description != NULL )
 		{
 			FFree( ug->ug_Description );
+		}
+		
+		if( ug->ug_UUID != NULL )
+		{
+			FFree( ug->ug_UUID );
 		}
 		
 		pthread_mutex_destroy( &(ug->ug_Mutex) );

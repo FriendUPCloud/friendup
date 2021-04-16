@@ -382,7 +382,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 				if( !$rows = $SqlDatabase->FetchObject( $q = '
 					SELECT p.* 
 					FROM FUserRolePermission p 
-					WHERE p.Key ' . ( strstr( $name, '","' ) ? 'IN (' . $name . ')' : '= "' . $name . '"' ) . ' 
+					WHERE p.Key ' . ( strstr( $name, '","' ) || strstr( $name, "','" ) ? 'IN (' . $name . ')' : '= "' . $name . '"' ) . ' 
 					ORDER BY p.ID 
 					LIMIT 1 
 				' ) )

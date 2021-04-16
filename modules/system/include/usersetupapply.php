@@ -69,6 +69,8 @@ if( $args->args->id > 0 )
 		// 2. Get data for workground and connected template ...
 		// 3. Loop through each member and set template for everyone, also overwrite template set on the user display ... 
 		
+		$debug = [];
+		
 		$users = ( isset( $args->args->members ) ? explode( ',', $args->args->members ) : array( $args->args->userid ) );
 		
 		$ug->Data = ( $ug->Data ? json_decode( $ug->Data ) : false );
@@ -95,6 +97,8 @@ if( $args->args->id > 0 )
 		{
 			foreach( $users as $uid )
 			{
+				$debug[$uid] = new stdClass();
+				
 				// Make sure the user exists!
 				$theUser = new dbIO( 'FUser' );
 				$theUser->load( $uid );
@@ -116,6 +120,8 @@ if( $args->args->id > 0 )
 						$lang->Load();
 						$lang->Data = $ug->Data->language;
 						$lang->Save();
+						
+						$debug[$uid]->language = ( $lang->ID > 0 ? $lang->Data : false );
 					}
 		
 					// Wallpaper -----------------------------------------------
@@ -123,12 +129,16 @@ if( $args->args->id > 0 )
 					
 					if( $wallpaper )
 					{
+						$debug[$uid]->wallpaper = new stdClass();
+						
 						$fnam = $wallpaper->ValueString;
 						$fnam = explode( '/', $fnam );
 						$fnam = end( $fnam );
 						$ext  = explode( '.', $fnam );
 						$fnam = $ext[0];
 						$ext  = $ext[1];
+						
+						$debug[$uid]->wallpaper->filename = $wallpaper->ValueString;
 						
 						$f = new dbIO( 'Filesystem' );
 						$f->UserID = $uid;
@@ -193,7 +203,8 @@ if( $args->args->id > 0 )
 								fwrite( $fp, $wallpaperContent );
 								fclose( $fp );
 								
-								
+								$debug[$uid]->wallpaper->diskfilename = ( $uname . '/' . $fnam . '.' . $ext );
+								$debug[$uid]->wallpaper->content = ( $wallpaperContent ? true : false );
 								
 								$fi->DiskFilename = ( $uname . '/' . $fnam . '.' . $ext );
 								$fi->Filesize = filesize( $wallpaper->ValueString );
@@ -201,7 +212,7 @@ if( $args->args->id > 0 )
 								$fi->DateModified = $fi->DateCreated;
 								$fi->Save();
 								
-								
+								$debug[$uid]->wallpaper->id = ( $fi->ID > 0 ? $fi->ID : false );
 								
 								// Set the wallpaper in config
 								$s = new dbIO( 'FSetting' );
@@ -212,7 +223,7 @@ if( $args->args->id > 0 )
 								$s->Data = '"Home:Wallpaper/' . $fi->Filename . '"';
 								$s->Save();
 								
-								
+								$debug[$uid]->wallpaper->wallpaperdoors = ( $s->ID > 0 ? $s->Data : false );
 								
 								// Fill Wallpaper app with settings and set default wallpaper
 								$wp = new dbIO( 'FSetting' );
@@ -234,6 +245,8 @@ if( $args->args->id > 0 )
 												$wp->Data = stripslashes( '"' . $data . '"' );
 												$wp->Save();
 											}
+											
+											$debug[$uid]->wallpaper->imagesdoors = ( $wp->ID > 0 ? $wp->Data : false );
 										}
 									}
 								}
@@ -257,6 +270,8 @@ if( $args->args->id > 0 )
 						$star->Load();
 						$star->Data = ( $ug->Data->startups ? json_encode( $ug->Data->startups ) : '[]' );
 						$star->Save();
+						
+						$debug[$uid]->startup = ( $star->ID > 0 ? $star->Data : false );
 					}
 		
 					// Theme -------------------------------------------------------------------------------------------
@@ -272,6 +287,8 @@ if( $args->args->id > 0 )
 						$them->Load();
 						$them->Data = $ug->Data->theme;
 						$them->Save();
+						
+						$debug[$uid]->theme = ( $them->ID > 0 ? $them->Data : false );
 					}
 					
 					if( $ug->Data->themeconfig && $ug->Data->theme )
@@ -285,6 +302,8 @@ if( $args->args->id > 0 )
 						$them->Load();
 						$them->Data = json_encode( $ug->Data->themeconfig );
 						$them->Save(); 
+						
+						$debug[$uid]->themedata = ( $them->ID > 0 ? $them->Data : false );
 					}
 					
 					if( $ug->Data->workspacecount )
@@ -298,6 +317,8 @@ if( $args->args->id > 0 )
 						$them->Load();
 						$them->Data = $ug->Data->workspacecount;
 						$them->Save(); 
+						
+						$debug[$uid]->workspacecount = ( $them->ID > 0 ? $them->Data : false );
 					}
 					
 					// Software ----------------------------------------------------------------------------------------
@@ -458,7 +479,7 @@ if( $args->args->id > 0 )
 			}
 		}
 		
-		die( 'ok<!--separate-->' . ( $ug->Data ? json_encode( $ug->Data ) : 'false' ) );
+		die( 'ok<!--separate-->' . ( $ug->Data ? json_encode( [ $ug->Data, $debug ] ) : 'false' ) );
 	}
 }
 else if ( !$args->args->id || $args->args->id == 0 )

@@ -4,6 +4,8 @@
 
 CC			=	gcc
 CPP			=	g++
+#CC			=	gcc-10 -fanalyzer
+#CPP			=	g++-10 -fanalyzer
 OUTPUT			=	bin/FriendCore
 
 #`mysql_config --libs`

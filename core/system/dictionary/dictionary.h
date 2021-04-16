@@ -160,6 +160,8 @@ enum {
 	DICT_APPLICATION_SESSION_NOT_FOUND,
 	DICT_USB_REMOTE_CANNOT_BE_CREATED,
 	DICT_USB_REMOTE_CANNOT_BE_REMOVED,
+	DICT_CANNOT_REMOVE_GROUP_WITH_LEVEL_TYPE,
+	DICT_CANNOT_EDIT_OR_REMOVE_USER_GROUP_LOCKED,
 	DICT_MAX
 };
 /*
@@ -259,6 +261,9 @@ INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) 
 
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Application not found: %s', 'ENG', '74');
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Application Session not found', 'ENG', '75');
+
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot remove group with Level type', 'ENG', '76');
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot edit or remove UserGroup because its locked', 'ENG', '77');
 */
 
 // User status
