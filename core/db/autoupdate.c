@@ -111,12 +111,12 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 	
 	if( type == UPDATE_DB_TYPE_GLOBAL )
 	{
-		sqllib = l->GetDBConnection( l );
+		sqllib = l->LibrarySQLGet( l );
 		Log( FLOG_INFO, "---------Autoupdatedatabase process start-----------\n");
 	}
 	else
 	{
-		sqllib = l->GetInternalDBConnection( l );
+		//sqllib = l->GetInternalDBConnection( l );
 		Log( FLOG_INFO, "---------Autoupdatedatabase (internal) process start-----------\n");
 	}
 	
@@ -657,12 +657,12 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 		Log( FLOG_INFO, "----------------------------------------------------\n");
 		if( type == UPDATE_DB_TYPE_GLOBAL )
 		{
-			l->DropDBConnection( l, sqllib );
+			l->LibrarySQLDrop( l, sqllib );
 			Log( FLOG_INFO, "---------Autoupdatedatabase process END-------------\n");
 		}
 		else
 		{
-			l->DropInternalDBConnection( l, sqllib );
+			//l->DropInternalDBConnection( l, sqllib );
 			Log( FLOG_INFO, "---------Autoupdatedatabase (internal) process END-------------\n");
 		}
 		Log( FLOG_INFO, "----------------------------------------------------\n");
