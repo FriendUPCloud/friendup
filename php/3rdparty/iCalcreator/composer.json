@@ -1,0 +1,45 @@
+{
+    "name": "kigkonsult/icalcreator",
+    "type": "library",
+    "description": "iCalcreator is the PHP implementation of rfc2445/rfc5545, management of calendar information",
+    "keywords": [
+        "rfc2445",
+        "rfc5545",
+        "rfc6321",
+        "management",
+        "calendar",
+        "vCalendar",
+        "vevent",
+        "vtodo",
+        "vjournal",
+        "vfreebusy",
+        "valarm",
+        "vtimezone",
+        "standard",
+        "daylight"
+    ],
+    "time" : "2019-07-14",
+    "license": "LGPL-3.0-or-later",
+    "support": {
+       "issues": "https://github.com/iCalcreator/iCalcreator/issues"
+    },
+    "authors": [
+        {
+            "name": "Kjell-Inge Gustafsson",
+            "email": "ical@kigkonsult.se"
+        }
+    ],
+    "autoload": {
+        "files": ["autoload.php"],
+        "psr-4": { "Kigkonsult\\Icalcreator\\": ["src/", "src/Util/", "src/Traits/"] }
+    },
+    "require": {
+        "php": ">=5.6",
+        "ext-simplexml": "*",
+        "ext-openssl": "*",
+        "ext-zlib": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "6.5.13"
+    }
+}

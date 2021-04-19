@@ -67,7 +67,7 @@ FImage *ImageNew( int width, int height, int depth )
 		{
 			FERROR( "Cannot allocate memory for image!\n");
 			FFree( img );
-			img = NULL;
+			return NULL;
 		}
 	}
 	

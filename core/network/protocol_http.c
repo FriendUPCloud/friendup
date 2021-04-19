@@ -87,7 +87,8 @@ static inline ListString *RunPHPScript( const char *command )
 	
 #ifdef USE_NPOPEN_POLL
 
-	DEBUG("[RunPHPScript] command launched\n");
+	//DEBUG("[RunPHPScript] command launched: %s\n", command);
+	DEBUG("[RunPHPScript] command launched: %s\n", command);
 
 	int size = 0;
 	int errCounter = 0;
@@ -737,7 +738,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							{
 								FULONG res = 0;
 
-#define MAX_LEN_PHP_INT_COMMAND 1024
+#define MAX_LEN_PHP_INT_COMMAND 2048
 								char *command = FMalloc( MAX_LEN_PHP_INT_COMMAND );
 
 								// Make the commandline string with the safe, escaped arguments, and check for buffer overflows.

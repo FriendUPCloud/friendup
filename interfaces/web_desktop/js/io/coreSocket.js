@@ -17,6 +17,14 @@ FriendWebSocket = function( conf )
 	
 	let self = this;
 	
+	/*let uniqueWords = [ 'Ball', 'Jacket', 'Fish', 'Origon', 'Nelson', 'Blue', 'Red', 'Slash' ];
+	let ustr = '';
+	for( let a = 0; a < 4; a++ )
+	{
+		ustr += uniqueWords[ Math.floor( Math.random() * uniqueWords.length ) ];
+	}
+	self.uniqueName = ustr;*/
+	
 	// REQUIRED CONFIG
 	self.pConf = conf;
 	self.url = conf.url;
@@ -721,11 +729,14 @@ FriendWebSocket.prototype.chunkSend = function( str )
 
 FriendWebSocket.prototype.wsSend = function( str )
 {
+    if( !this.onstate ) 
+    {
+        return false;
+    }
 	let self = this;
 	try
 	{
 		let res = self.ws.send( str );
-		// console.log( 'Test3: Successfully sent;', str );
 	}
 	catch( e )
 	{
@@ -874,7 +885,7 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 	reason = reason || 'WS connection closed';
 	
 	try {
-		console.log('closing websocket',code,reason);
+		console.log( 'closing websocket', code, reason );
 		if( window.Friend && Friend.User )
 			Friend.User.CheckServerNow();
 		self.ws.close( code, reason );

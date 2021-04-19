@@ -186,7 +186,7 @@ class Mailer
 	// Send the email
 	function send()
 	{
-		global $Logger;
+		global $Logger, $Config, $configfilesettings;
 		
 		if( count( $this->recipients ) < 1 )
 		{
@@ -221,6 +221,7 @@ class Mailer
 			$mailer->isHTML( true );
 		
 		// Use the mail server setting for sending the e-mail
+
 		if( isset( $this->config[ 'FriendMail' ] ) )
 		{
 			$cnf = $this->config[ 'FriendMail' ];

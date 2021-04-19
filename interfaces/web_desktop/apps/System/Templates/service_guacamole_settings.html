@@ -1,0 +1,131 @@
+
+<head>
+	
+	<link rel='stylesheet' type='text/css' href='{url}app.css?v=1.2.0'>
+	<script src='Libs:js/apps/api.js'></script>
+	<script src='Progdir:Scripts/guacamole_functions.js'></script>
+	
+	<style>
+		
+		.login-ui .login-dialog .buttons input[name="login"] 
+		{
+			width: 100%;
+			margin: 0;
+		}
+		
+		input[name="login"] 
+		{
+			-webkit-appearance: none;
+			text-decoration: none;
+			background-color: #3c3c3c;
+			border: 1px solid rgba(0,0,0,0.4);
+			color: white;
+			text-shadow: -1px -1px rgba(0,0,0,0.3);
+			font-size: 1em;
+			font-weight: bold;
+			font-family: Carlito,FreeSans,Helvetica,Arial,sans-serif;
+			padding: .35em 1em;
+			min-width: 5em;
+			margin: .25em;
+			box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+		}
+		
+		input[name="login" i] 
+		{
+			align-items: flex-start;
+			text-align: center;
+			cursor: default;
+    	}
+		
+	</style>
+	
+</head>
+<body>
+	
+	<div class="login-ui ng-isolate-scope initial {error}" ng-class="{error: loginError, continuation: isContinuation(), initial: !isContinuation()}" ng-show="expectedCredentials" help-text="loginHelpText" form="expectedCredentials" values="acceptedCredentials">
+
+		<!-- Login error message -->
+		<p class="login-error ng-scope" translate="LOGIN.ERROR_INVALID_LOGIN" translate-values="">Invalid Login</p>
+		
+		<div class="login-dialog-middle">
+
+		    <div class="login-dialog">
+
+		        <form class="login-form ng-pristine ng-valid" ng-submit="login()">
+
+		            <!-- Guacamole version -->
+		            <div class="logo"></div>
+		            <div class="version">
+		                <div class="app-name ng-binding">Apache Guacamole</div>
+		                <div class="version-number ng-binding">1.2.0</div>
+		            </div>
+
+		            <!-- Login message/instructions -->
+		            <p ng-show="helpText" translate="" translate-values="" class="ng-scope ng-hide"></p>
+
+		            <!-- Login fields -->
+		            <div class="login-fields">
+		                <div class="form-group ng-isolate-scope" namespace="'LOGIN'" content="remainingFields" model="enteredValues" focused="relevantField.name" data-disabled="submitted">
+		<!-- ngRepeat: form in forms --><div ng-repeat="form in forms" class="form ng-scope" ng-show="containsVisible(form.fields)">
+
+		    <!-- Form name -->
+		    <h3 ng-show="form.name" class="ng-binding ng-hide"></h3>
+
+		    <!-- All fields in form -->
+		    <div class="fields">
+		        <!-- ngRepeat: field in form.fields --><!-- ngIf: isVisible(field) --><div class="labeled-field ng-scope ng-isolate-scope empty" ng-class="{empty: !model}" ng-show="isFieldVisible()" ng-repeat="field in form.fields" namespace="namespace" ng-if="isVisible(field)" data-disabled="disabled" focused="isFocused(field)" field="field" model="values[field.name]">
+
+		<!-- Field header -->
+		<!--<div class="field-header">
+		    <label ng-attr-for="{{ fieldId }}" class="ng-binding" for="guac-field-a9vbzlymnoz96fx9-kk43qpeo">Username</label>
+		</div>-->
+
+		<!-- Field content -->
+		<div class="form-field"><div class="text-field ng-scope">
+		<input type="text" ng-attr-id="{{ fieldId }}" ng-attr-list="{{ dataListId }}" ng-model="model" ng-disabled="disabled" guac-focus="focused" autocorrect="off" autocapitalize="off" class="ng-pristine ng-valid ng-empty ng-touched" id="guac-field-a9vbzlymnoz96fx9-kk43qpeo" placeholder="Username">
+		<!-- ngIf: dataListId -->
+	</div></div>
+
+	</div><!-- end ngIf: isVisible(field) --><!-- end ngRepeat: field in form.fields --><!-- ngIf: isVisible(field) --><div class="labeled-field ng-scope ng-isolate-scope empty" ng-class="{empty: !model}" ng-show="isFieldVisible()" ng-repeat="field in form.fields" namespace="namespace" ng-if="isVisible(field)" data-disabled="disabled" focused="isFocused(field)" field="field" model="values[field.name]">
+
+		<!-- Field header -->
+		<!--<div class="field-header">
+		    <label ng-attr-for="{{ fieldId }}" class="ng-binding" for="guac-field-5behj98ssr3qiahp-kk43qpep">Password</label>
+		</div>-->
+
+		<!-- Field content -->
+		<div class="form-field"><div class="password-field ng-scope">
+		<input type="password" ng-disabled="disabled" ng-attr-id="{{ fieldId }}" ng-model="model" ng-trim="false" guac-focus="focused" autocorrect="off" autocapitalize="off" class="ng-pristine ng-untouched ng-valid ng-empty" id="guac-field-5behj98ssr3qiahp-kk43qpep" placeholder="Password">
+		<div class="icon toggle-password" ng-click="togglePassword()" title="Click to show password"></div>
+	</div></div>
+
+	</div><!-- end ngIf: isVisible(field) --><!-- end ngRepeat: field in form.fields -->
+		    </div>
+
+		</div><!-- end ngRepeat: form in forms -->
+	</div>
+		            </div>
+
+		            <!-- Login/continue button -->
+		            <div class="buttons">
+
+		                <input name="login" class="login" ng-disabled="submitted" value="Login" onclick="saveCreds()">
+
+		                <!--<input type="submit" name="login" class="continue-login" ng-disabled="submitted" value="Continue">
+		                
+		                <br><br><input type="button" name="login" class="login" value="Test" onclick="saveCreds()">-->
+
+		            </div>
+					
+					<input type="hidden" name="host" value="{url}">
+					
+		        </form>
+
+		    </div>
+
+		</div>
+
+	</div>
+	
+</body>
+

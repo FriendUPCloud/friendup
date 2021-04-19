@@ -83,26 +83,34 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 	int nrSessions = 0;
 	int i;
 	
-	UserSession **toBeRemoved = NULL;
+	//UserSession **toBeRemoved = NULL;
+	
+	DEBUG("[killUserSessionByUser] start\n");
 	
 	if( FRIEND_MUTEX_LOCK( &u->u_Mutex ) == 0 )
 	{
 		UserSessListEntry *usl = u->u_SessionsList;
 		if( deviceid != NULL )
 		{
+			DEBUG("[killUserSessionByUser] remove session with deviceid: %s\n", deviceid );
 			while( usl != NULL )
 			{
 				UserSession *s = (UserSession *) usl->us;
+				
+				DEBUG("[killUserSessionByUser] remove session\n");
+				
 				if( s != NULL && s->us_DeviceIdentity != NULL && strcmp( s->us_DeviceIdentity, deviceid ) == 0 )
 				{
+					DEBUG("[killUserSessionByUser] fc will send message via WS\n");
+					
 					char tmpmsg[ 2048 ];
 					int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
 				
 					int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
 
-					DEBUG("Bytes send: %d\n", msgsndsize );
+					DEBUG("[killUserSessionByUser] Bytes send: %d\n", msgsndsize );
 			
-					break;
+					//break;
 				}
 				usl = (UserSessListEntry *)usl->node.mln_Succ;
 				nrSessions++;
@@ -110,6 +118,7 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 		}
 		else
 		{
+			DEBUG("[killUserSessionByUser] remove sessions\n");
 			while( usl != NULL )
 			{
 				UserSession *s = (UserSession *) usl->us;
@@ -120,15 +129,14 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 				
 					int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
 
-					DEBUG("Bytes send: %d\n", msgsndsize );
-			
-					break;
+					DEBUG("[killUserSessionByUser] Bytes send: %d\n", msgsndsize );
 				}
 				usl = (UserSessListEntry *)usl->node.mln_Succ;
 				nrSessions++;
 			}
 		}
 	
+		/*
 		// assign UserSessions to temporary table
 		if( nrSessions > 0 )
 		{
@@ -141,9 +149,11 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 				i++;
 			}
 		}
+		*/
 		FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
 	}
 	
+	/*
 	// remove sessions
 	for( i=0 ; i < nrSessions; i++ )
 	{
@@ -175,6 +185,9 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 	{
 		FFree( toBeRemoved );
 	}
+	*/
+	
+	DEBUG("[killUserSessionByUser] end\n");
 	
 	return error;
 }
@@ -558,6 +571,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	* @param password - (required) password
 	* @param fullname  - full user name
 	* @param email - user email
+	* @param timezone - timezone
 	* @param level - (required) groups to which user will be assigned, separated by comma
 	* @param workgroups - groups to which user will be assigned. Groups are passed as string, ID's separated by comma
 	* @return ok<!--separate-->{ "create": "sucess","id":"ID","uuid":"UUID" } when success, otherwise error with code
@@ -580,6 +594,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		char *email = NULL;
 		char *level = NULL;
 		char *workgroups = NULL;
+		char *timezone = NULL;
 		FBOOL userCreated = FALSE;
 		
 		DEBUG( "[UMWebRequest] Create user!!\n" );
@@ -654,6 +669,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						DEBUG( "[UMWebRequest] Update email %s!!\n", email );
 					}
 					
+					el = HttpGetPOSTParameter( request, "timezone" );
+					if( el != NULL )
+					{
+						timezone = UrlDecodeToMem( (char *)el->hme_Data );
+						DEBUG( "[UMWebRequest] Update timezone %s!!\n", timezone );
+					}
+					
 					User *locusr = UserNew();
 					if( locusr != NULL )
 					{
@@ -665,6 +687,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						locusr->u_Email = email;
 						email = NULL;
 						locusr->u_Password = usrpass;
+						locusr->u_Timezone = timezone;
 						usrpass = NULL;
 						userCreated = TRUE;
 						
@@ -929,6 +952,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						// update status and modify timestamp
 						sprintf( tmpQuery, "UPDATE `FUser` set Status=%lu,ModifyTime=%lu where ID=%lu", status, updateTime, id );
 						
+						DEBUG( "[UMWebRequest] status updated\n");
+						
 						sqllib->QueryWithoutResults( sqllib, tmpQuery );
 						
 						User *usr = UMGetUserByID( l->sl_UM, id );
@@ -970,6 +995,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 								User *u = UMGetUserByID( l->sl_UM, id );
 								if( u != NULL )
 								{
+									DEBUG("[UMWebRequest] user sessions will be removed\n");
 									killUserSessionByUser( l, u, NULL );
 								}
 								msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
@@ -1178,6 +1204,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	* @param password - new password
 	* @param fullname - new full user name
 	* @param email - new user email
+	* @param timezone - timezone
 	* @param level - new groups to which user will be assigned. Groups must be separated by comma sign
 	* @param workgroups - groups to which user will be assigned. Groups are passed as string, ID's separated by comma
 	* @param status - user status
@@ -1200,6 +1227,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		char *email = NULL;
 		char *level = NULL;
 		char *workgroups = NULL;
+		char *timezone = NULL;
 		FULONG id = 0;
 		FLONG status = -1;
 		FBOOL userFromSession = FALSE;
@@ -1352,6 +1380,18 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							FFree( logusr->u_Email );
 						}
 						logusr->u_Email = email;
+					}
+					
+					el = HttpGetPOSTParameter( request, "timezone" );
+					if( el != NULL )
+					{
+						timezone = UrlDecodeToMem( (char *)el->hme_Data );
+						DEBUG( "[UMWebRequest] Update timezone %s!!\n", timezone );
+						if( logusr->u_Timezone != NULL )
+						{
+							FFree( logusr->u_Timezone );
+						}
+						logusr->u_Timezone = timezone;
 					}
 			
 					el = HttpGetPOSTParameter( request, "level" );

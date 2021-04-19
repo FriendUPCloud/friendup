@@ -245,7 +245,20 @@ if( isset( $argv ) && isset( $argv[1] ) )
 					}
 					if( strstr( $value, '%' ) || strstr( $value, '&' ) ) 
 					{
-						$value = rawurldecode( $value );
+						if( strstr( $value, '%2B' ) )
+						{
+							$value = explode( '%2B', $value );
+							foreach( $value as $k=>$v )
+							{
+								$value[ $k ] = rawurldecode( $v );
+							}
+							// %2B also have to be rawurldecoded at the end ...
+							$value = rawurldecode( implode( '%2B', $value ) );
+						}
+						else
+						{
+							$value = rawurldecode( $value );
+						}
 					}
 					if( $value && ( $value[0] == '{' || $value[0] == '[' ) )
 					{
@@ -259,8 +272,8 @@ if( isset( $argv ) && isset( $argv[1] ) )
 				}
 			}
 		}
+		$GLOBALS['args'] = $kvdata;
 	}
-	$GLOBALS['args'] = $kvdata;
 }
 
 $UserAccount = false;

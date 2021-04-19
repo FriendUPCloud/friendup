@@ -56,10 +56,6 @@ Application.run = function( msg, iface )
 					command: 'new'
 				},
 				{
-					name: i18n( 'menu_load' ),
-					command: 'load'
-				},
-				{
 					name: i18n( 'menu_save' ),
 					command: 'save'
 				},
@@ -124,6 +120,7 @@ Application.run = function( msg, iface )
 		'i18n_find'   : i18n('i18n_find'),
 		'i18n_select' : i18n('i18n_select')
 	};
+	f.i18n();
 	f.onLoad = function( data )
 	{
 		w.setContent( data, function()
@@ -606,7 +603,9 @@ Application.receiveMessage = function( msg )
 			this.quit();
 			break;
 		case 'new':
-			this.newDocument();
+			this.mainView.sendMessage( {
+			    command: 'newnote'
+			} );
 			break;
 		case 'print':
 			var p = new Printdialog( {
