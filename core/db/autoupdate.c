@@ -103,6 +103,13 @@ static inline char *ReadDBFile( char *fname, int *fs )
 
 #define USE_NEW_WAY
 
+int compareDBUpdateEntry( const void* a, const void* b )
+{
+    DBUpdateEntry *a1 = (DBUpdateEntry *)a;
+	DBUpdateEntry *b1 = (DBUpdateEntry *)b;
+    return a1->number - b1->number;
+}
+
 void CheckAndUpdateDB( SystemBase *l, int type )
 {
 	Log( FLOG_INFO, "----------------------------------------------------\n");
@@ -174,6 +181,7 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 			
 			if( dp != NULL )
 			{
+				int pos = 0;
 				DEBUG("[SystemBase] UpdateDB found directory 1\n");
 				while( ( dptr = readdir( dp ) ) != NULL )
 				{
@@ -199,13 +207,17 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 					
 					DEBUG("[SystemBase] number found: '%s'\n", number );
 					
+					//
+					// get all entries and their numbers
+					
 					position = atoi( number )-1;
 					if( position > 0 )
 					{
-						dbentries[ position ].number = position+1;
+						dbentries[ pos ].number = position+1;
 
 						DEBUG("[SystemBase] Found script with number %d, script added: %s\n", position, dptr->d_name );
-						strcpy( dbentries[ position ].name, dptr->d_name );
+						strcpy( dbentries[ pos ].name, dptr->d_name );
+						pos++;
 					}
 					else
 					{
@@ -213,6 +225,11 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 						FERROR("[SystemBase] get number from name: %s FAIL\n", dptr->d_name );
 					}
 				}
+				
+				// sort all scripts
+				
+				qsort( dbentries, pos, sizeof(DBUpdateEntry), compareDBUpdateEntry );
+				
 				closedir( dp );
 			}
 			
