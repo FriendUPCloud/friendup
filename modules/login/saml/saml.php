@@ -24,8 +24,8 @@
 
 */
 
-include( 'include/helpers.php' );
 include( 'php/friend.php' );
+include( 'include/helpers.php' );
 
 //check that necessary globals and config are present
 if(
