@@ -40,12 +40,12 @@ if(
 if( $args = getArgs() )
 {
     // Just get the 2fa form
-    if( isset( $args->args->get2faform ) )
+    if( isset( $args->get2faform ) )
     {
         die( 'Get 2fa form.' );
     }
     // Check if auth 2fa token is registered for this session
-    else if( isset( $args->args->check2fa ) )
+    else if( isset( $args->check2fa ) )
     {
     	die( 'Checking 2fa.' );
     }
