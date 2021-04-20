@@ -1,6 +1,15 @@
 
     <div id="Auth2FAForm">
-        <div class="HRow">
+        <p>
+        	<strong>
+        		Validate your identity
+        	</strong>
+        </p>
+        <p>
+        	Do identify yourself, please enter your mobile number and user
+        	account password.
+        </p>
+        <div class="HRow MarginBottom">
             <div class="HContent30 FloatLeft PaddingSmall">
                 <strong>Your mobile number:</strong>
             </div>
@@ -8,7 +17,7 @@
             	<input type="text" id="MobileNumber" value=""/>
             </div>
         </div>
-        <div class="HRow">
+        <div class="HRow MarginBottom">
             <div class="HContent30 FloatLeft PaddingSmall">
                 <strong>Your password:</strong>
             </div>
@@ -16,8 +25,7 @@
             	<input type="password" id="AuthPassword" value=""/>
             </div>
         </div>
-        <br/>
-        <div class="HRow">
+        <div class="HRow MarginTop">
         	<button type="button" onclick="Application.validateMobileNumber()">
         		Validate mobile number
         	</button>
