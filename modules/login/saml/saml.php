@@ -37,7 +37,20 @@ if(
 	die( '<h1>Invalid SAML configuration. Contact your administrator!</h1>' );
 }
 
-//render the form
+if( $args = getArgs() )
+{
+    // Just get the 2fa form
+    if( isset( $args->args->get2faform ) )
+    {
+        
+    }
+    // Check if auth 2fa token is registered for this session
+    else if( isset( $args->args->check2fa ) )
+    {
+    }
+}
+
+// Fallback - and normal operation - render the form
 renderSAMLLoginForm();
 
 ?>

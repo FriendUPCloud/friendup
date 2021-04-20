@@ -42,6 +42,11 @@
 					//console.log('set it and will try again in half a second');
 					//setTimeout( 'parent.Workspace.loginPrompt.setFlag( \'height\', 290 );',500 );
 				},
+				// Start the mobile 2fa validation process
+				validateMobileNumber: function()
+				{
+					
+				},
 				doLogin: function( e )
 				{
 				
@@ -68,53 +73,77 @@
 						Application.uPass = msg.password;
 						Application.logoutURL = msg.logouturl;
 						
-					
+					    // Execute the login procedure
 						Application.loginUser();
 					}
 					
-					if ( msg.samldata ) {
-						console.log( 'modules/login/saml/templates/login.html - storing saml data on Workspace.samlData', msg );
+					// Store samldata on Workspace.samlData for later use
+					if( msg.samldata ) 
+					{
 						parent.Workspace.samlData = msg.samldata;
 					}
 				},
 				loginUser: function()
 				{
-					if( parent && parent.Workspace && parent.Friend && parent.Friend.User )
-					{
-						// Don't do it many times while working!
-						if( Application.busy ) return;
-						Application.busy = true;
-						
-						if( Application.uPass.indexOf( 'HASHED' ) >= 0 || Application.uPass.indexOf( '{S6}' ) >= 0 )
-						{
-							Application.pHash = true;
-						}
-						
-						parent.Friend.User.Init();
-						parent.Workspace.setLogoutURL( Application.logoutURL );
-						parent.Friend.User.Login( Trim( Application.uName ), Trim( Application.uPass ), false, function( result )
-						{
-							if( result == false )
-							{
-								console.log('Could NOT logg in... why...?' +  Application.uName + ':' +  Application.uPass + ':' + result);
-								showLoginError();
-							}
-							else if( result == 0 )
-							{
-								setTimeout( showLoginError, 1000 );
-							}
-							else
-							{
-								Application.busy = false;
-							}
-						}, false, { hashedPassword: Application.pHash ? true : false } );
+				    // Make sure we have a unique identifier
+				    if( !this.Auth2faToken )
+				    {
+				        this.Auth2faToken = md5( '2fa_' + ( Math.random() ) + '_' + ( Math.random() ) + ( new Date() ).getTime() );
+				    }
+				    let m = new cAjax();
+				    m.open( 'POST', '/loginprompt/?check2fa=1&auth2fatoken=' + this.Auth2faToken, true );
+				    m.onExecuted = function( e, d )
+				    {
+				        if( e == 'ok' )
+				        {
+					        if( parent && parent.Workspace && parent.Friend && parent.Friend.User )
+					        {
+						        // Don't do it many times while working!
+						        if( Application.busy ) return;
+						        Application.busy = true;
+						        
+						        if( Application.uPass.indexOf( 'HASHED' ) >= 0 || Application.uPass.indexOf( '{S6}' ) >= 0 )
+						        {
+							        Application.pHash = true;
+						        }
+						        
+						        parent.Friend.User.Init();
+						        parent.Workspace.setLogoutURL( Application.logoutURL );
+						        parent.Friend.User.Login( Trim( Application.uName ), Trim( Application.uPass ), false, function( result )
+						        {
+							        if( result == false )
+							        {
+								        showLoginError();
+							        }
+							        else if( result == 0 )
+							        {
+								        setTimeout( showLoginError, 1000 );
+							        }
+							        else
+							        {
+								        Application.busy = false;
+							        }
+						        }, false, { hashedPassword: Application.pHash ? true : false } );
+					        }
+					        else
+					        {
+						        Application.loginAttempts++;
+						        if( Application.loginAttempts < 10 ) setTimeout(Application.loginUser, 500 );
+						        else showLoginError('Could not login');
+					        }
+					    }
+					    // Auth2faToken not registered, show 2fa form
+					    else
+					    {
+					        let f = new File( '/loginprompt/?get2faform=1' );
+					        f.onLoad = function( data )
+					        {
+					            ge( 'LoginElement' ).innerHTML = data;
+					        }
+					        f.load();
+					    }
 					}
-					else
-					{
-						Application.loginAttempts++;
-						if( Application.loginAttempts < 10 ) setTimeout(Application.loginUser, 500 );
-						else showLoginError('Could not login');
-					}
+					m.send();
 				}				
 			};
 			
