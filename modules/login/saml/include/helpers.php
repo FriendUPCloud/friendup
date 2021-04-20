@@ -113,6 +113,7 @@ function check2faAuth( $token )
 {
 	global $SqlDatabase;
 	
+	die( 'fail<!--separate-->What?' );
 	$cleanToken = mysqli_real_escape_string( $SqlDatabase->_link, $token );
 	
 	if( $row = $SqlDatabase->fetchObject( '
