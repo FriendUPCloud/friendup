@@ -141,8 +141,8 @@
 						    u.open( 'POST', '/loginprompt/?get2faform=1', true );
 					        u.onload = function()
 					        {
-					            console.log( '2fa data loaded' );
-					            ge( 'LoginElement' ).innerHTML = this.responseText();
+					            console.log( '2fa data loaded', this.responseText() );
+					            //ge( 'LoginElement' ).innerHTML = this.responseText();
 					        }
 					        u.send();
 					    }
