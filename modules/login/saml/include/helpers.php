@@ -12,6 +12,36 @@
 *                                                                              *
 *****************************************************************************©*/
 
+// Get varargs
+function getArgs()
+{
+	$args = new stdClass();
+	
+	if( isset( $GLOBALS['request_path'] ) && $GLOBALS['request_path'] && strstr( $GLOBALS['request_path'], '/loginprompt/' ) )
+	{
+		if( $url = explode( '/loginprompt/', $GLOBALS['request_path'] ) )
+		{
+			if( isset( $url[1] ) && $url[1] )
+			{
+				$args->publickey = $url[1];
+			}
+		}
+	}
+	
+	if( isset( $GLOBALS['request_variables'] ) && $GLOBALS['request_variables'] )
+	{
+		foreach( $GLOBALS['request_variables'] as $k => $v )
+		{
+			if( $k && $k != '(null)' )
+			{
+				$args->{$k} = $v;
+			}
+		}
+	}
+	
+	return $args;
+}
+
 // Render the SAML login form
 function renderSAMLLoginForm()
 {

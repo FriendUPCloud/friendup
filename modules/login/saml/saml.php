@@ -40,7 +40,7 @@ if(
 if( $args = getArgs() )
 {
     // Just get the 2fa form
-    /*if( isset( $args->get2faform ) )
+    if( isset( $args->get2faform ) )
     {
         die( 'fail<!--separate-->Get 2fa form.' );
     }
@@ -48,7 +48,7 @@ if( $args = getArgs() )
     else if( isset( $args->check2fa ) )
     {
     	die( 'fail<!--separate-->Checking 2fa.' );
-    }*/
+    }
 }
 
 // Fallback - and normal operation - render the form
