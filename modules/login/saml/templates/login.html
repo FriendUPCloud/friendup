@@ -92,7 +92,7 @@
 				    }
 				    let m = new cAjax();
 				    m.open( 'POST', '/loginprompt/?check2fa=1&auth2fatoken=' + this.Auth2faToken, true );
-				    m.onLoad = function()
+				    m.onload = function()
 				    {
 				    	let resp = this.responseText().split( '<!--separate-->' );
 				    	let e = resp[0]; let d = resp[1];
