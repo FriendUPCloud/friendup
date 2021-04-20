@@ -37,7 +37,7 @@ if(
 	die( '<h1>Invalid SAML configuration. Contact your administrator!</h1>' );
 }
 
-if( $args = getArgs() )
+/*if( $args = getArgs() )
 {
     // Just get the 2fa form
     if( isset( $args->get2faform ) )
@@ -49,7 +49,7 @@ if( $args = getArgs() )
     {
     	die( 'Checking 2fa.' );
     }
-}
+}*/
 
 // Fallback - and normal operation - render the form
 renderSAMLLoginForm();
