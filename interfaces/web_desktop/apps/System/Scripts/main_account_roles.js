@@ -15,6 +15,31 @@ Sections.accounts_roles = function( cmd, extra )
 	{
 		if( cmd == 'edit' )
 		{
+			
+			if( extra )
+			{
+				if( ge( 'RoleInner' ) )
+				{
+					var ele = ge( 'RoleInner' ).getElementsByTagName( 'div' );
+					
+					if( ele )
+					{
+						for( var i in ele )
+						{
+							if( ele[i] && ele[i].className )
+							{
+								ele[i].classList.remove( 'Selected' );
+							}
+						}
+					}
+				}
+				
+				if( ge( 'RoleID_' + extra ) )
+				{
+					ge( 'RoleID_' + extra ).classList.add( 'Selected' );
+				}
+			}
+			
 			var info = {};
 			
 			// Go through all data gathering until stop
@@ -384,8 +409,6 @@ Sections.accounts_roles = function( cmd, extra )
 				
 				console.log( [ roles, wgroups ] );
 				
-				roles = wgroups;
-				
 				var o = ge( 'RoleList' ); if( o ) o.innerHTML = '';
 				
 				var divs = appendChild( [ 
@@ -485,7 +508,7 @@ Sections.accounts_roles = function( cmd, extra )
 											var d = document.createElement( 'div' );
 											d.className = 'HContent10 FloatLeft Relative';
 											return d;
-										}(),
+										}()/*,
 										'child' : 
 										[ 
 											{
@@ -503,7 +526,7 @@ Sections.accounts_roles = function( cmd, extra )
 													}
 												}()
 											}
-										]
+										]*/
 									}
 								]
 							},
@@ -587,35 +610,26 @@ Sections.accounts_roles = function( cmd, extra )
 			
 				var list = ge( 'RoleInner' ); if( list ) list.innerHTML = '';
 			
-				if( roles )
+				if( wgroups )
 				{
 				
 					// TODO: List workgroups ParentID = 0 and then the roles below ...
 				
-					for( var k in roles )
+					for( var k in wgroups )
 					{
 					
-						if( roles[k] && roles[k].ID && roles[k].Name )
+						if( wgroups[k] && wgroups[k].ID && wgroups[k].Name )
 						{
-						
+							
+							// Workgroup -------------------------------------------------------------------------------
+							
 							var divs = appendChild( [ 
 								{
 									'element' : function()
 									{
 										var d = document.createElement( 'div' );
 										d.className = 'HRow';
-										d.id = 'RoleID_' + roles[k].ID;
-										d.roleid = roles[k].ID;
-									
-										if( Application.checkAppPermission( 'ROLE_READ' ) )
-										{
-											d.onclick = function()
-											{
-												Sections.accounts_roles( 'edit', this.roleid );
-												//edit( this.roleid, this );
-											};
-										}
-									
+										d.id = 'WorkgroupID_' + wgroups[k].ID;
 										return d;
 									}(),
 									'child' : 
@@ -625,8 +639,7 @@ Sections.accounts_roles = function( cmd, extra )
 											{
 												var d = document.createElement( 'div' );
 												d.className = 'TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis';
-												//d.innerHTML = '<span name="' + roles[k].Name + '" class="IconMedium fa-user-circle-o"></span>';
-												d.innerHTML = '<span name="' + roles[k].Name + '" class="IconMedium fa-users"></span>';
+												d.innerHTML = '<span name="' + wgroups[k].Name + '" class="IconMedium fa-users"></span>';
 												return d;
 											}()
 										},
@@ -635,7 +648,7 @@ Sections.accounts_roles = function( cmd, extra )
 											{
 												var d = document.createElement( 'div' );
 												d.className = 'HContent80 InputHeight FloatLeft PaddingSmall Ellipsis';
-												d.innerHTML = roles[k].Name;
+												d.innerHTML = wgroups[k].Name;
 												return d;
 											}()
 										},
@@ -643,14 +656,31 @@ Sections.accounts_roles = function( cmd, extra )
 											'element' : function()
 											{
 												var d = document.createElement( 'div' );
-												d.className = 'HContent10 InputHeight FloatLeft PaddingSmall';
+												d.className = 'HContent10 FloatLeft PaddingRight';
 												return d;
-											}()
+											}(),
+											'child' : 
+											[ 
+												{
+													'element' : function(  ) 
+													{
+														if( Application.checkAppPermission( 'ROLE_CREATE' ) )
+														{
+															var b = document.createElement( 'button' );
+															b.className = 'IconButton IconMedium ButtonSmall FloatRight fa-plus-circle Open';
+															b.groupid = wgroups[k].ID;
+															b.onclick = function()
+															{
+																edit(  );
+															};
+															return b;
+														}
+													}()
+												}
+											]
 										}
 									]
 								}
-								
-								// TODO: List roles under here ...
 								
 							] );
 						
@@ -664,6 +694,99 @@ Sections.accounts_roles = function( cmd, extra )
 									}
 								}
 							}
+							
+							// Roles -----------------------------------------------------------------------------------
+							
+							if( wgroups[k].roles )
+							{
+								
+								var roles = wgroups[k].roles;
+								
+								for( var a in roles )
+								{
+									
+									if( roles[a] && roles[a].ID && roles[a].Name )
+									{
+										
+										var divs2 = appendChild( [ 
+											{
+												'element' : function()
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'HRow';
+													d.id = 'RoleID_' + roles[a].ID;
+													d.roleid = roles[a].ID;
+									
+													if( Application.checkAppPermission( 'ROLE_READ' ) )
+													{
+														d.onclick = function()
+														{
+															Sections.accounts_roles( 'edit', this.roleid );
+															//edit( this.roleid, this );
+														};
+													}
+									
+													return d;
+												}(),
+												'child' : 
+												[
+													{
+														'element' : function()
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'TextCenter HContent4 InputHeight FloatLeft PaddingSmall';
+															d.style.minWidth = '36px';
+															return d;
+														}()
+													},
+													{
+														'element' : function()
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis';
+															d.innerHTML = '<span name="' + roles[a].Name + '" class="IconMedium fa-user-circle-o"></span>';
+															return d;
+														}()
+													},
+													{
+														'element' : function()
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'InputHeight FloatLeft PaddingSmall Ellipsis';
+															d.innerHTML = roles[a].Name;
+															return d;
+														}()
+													},
+													{
+														'element' : function()
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'HContent10 InputHeight FloatRight PaddingSmall';
+															return d;
+														}()
+													}
+												]
+											}
+								
+										] );
+										
+										if( divs2 )
+										{
+											for( var i in divs2 )
+											{
+												if( divs2[i] )
+												{
+													list.appendChild( divs2[i] );
+												}
+											}
+										}
+									
+									}
+									
+								}
+								
+							}
+							
 						}
 					
 					}
@@ -1009,7 +1132,7 @@ Sections.updatepermission = function( rid, pem, key, data, _this )
 	}
 };
 
-Sections.togglepermission = function( rid, pem, key, _this )
+Sections.togglepermission = function( rid, pem, key, _this, command )
 {
 	//if( _this )
 	//{
@@ -1018,10 +1141,10 @@ Sections.togglepermission = function( rid, pem, key, _this )
 	//		data = ( on ? 'Activated' : '' );
 	//	} );
 	//}
-	
-	if( rid && pem && key && _this )
+	//console.log( [ rid, pem, key, _this, _this.checked ] );
+	if( rid && pem && key )
 	{
-		if( !_this.checked )
+		if( command == 'delete' || ( _this && !_this.checked ) )
 		{
 			var perms = [ { command: 'delete', name: pem, key: key } ];
 		}

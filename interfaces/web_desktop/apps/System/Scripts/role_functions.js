@@ -723,26 +723,26 @@ function initRoleDetails( info )
 								
 								var o = ge( 'ApplicationInner' ); o.innerHTML = '';
 								
-								if( this.ids )
+								if( perm )
 								{
-									for( var a in this.ids )
+									for( var a in perm )
 									{
-										if( this.ids[a] && this.ids[a][0] )
+										if( perm[a] && perm[a].Name )
 										{
-											var found = false;
+											var permissions = false;
 											
 											for( var k in apps )
 											{
-												if( this.ids[a] && this.ids[a][0] == apps[k].Name )
+												if( perm[a] && perm[a].AppPermissions && perm[a].Name == apps[k].Name && info.role.Permissions[apps[k].Name] )
 												{
-													found = true;
+													permissions = perm[a];
 													
 													break;
 												}
 											}
 											
-											if( !found ) continue;
-										
+											if( !permissions ) continue;
+											
 											var divs = appendChild( [
 												{ 
 													'element' : function() 
@@ -823,7 +823,7 @@ function initRoleDetails( info )
 															'child' : 
 															[ 
 																{ 
-																	'element' : function( ids, name, func ) 
+																	'element' : function( ids, permissions, func ) 
 																	{
 																		var b = document.createElement( 'button' );
 																		b.className = 'IconButton IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
@@ -832,42 +832,45 @@ function initRoleDetails( info )
 																		
 																			var pnt = this.parentNode.parentNode;
 																		
-																			removeBtn( this, { ids: ids, name: name, func: func, pnt: pnt }, function ( args )
+																			removeBtn( this, { ids: ids, permissions: permissions, func: func, pnt: pnt }, function ( args )
 																			{
 																			
-																				args.func.updateids( 'applications', args.name, false );
+																				//args.func.updateids( 'applications', args.permissions.Name, false );
 																				
-																				if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
-																			
-																				/*updateApplications( details.ID, function( e, d, vars )
+																				//if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																				
+																				console.log( args.permissions );
+																				
+																				if( args.permissions.AppPermissions )
 																				{
-																				
-																					if( e && vars )
+																					for( var a in args.permissions.AppPermissions )
 																					{
-																					
-																						if( vars.pnt )
+																						
+																						if( args.permissions.AppPermissions[a].Permissions )
 																						{
-																							vars.pnt.innerHTML = '';
+																						
+																							for( var b in args.permissions.AppPermissions[a].Permissions )
+																							{
+																								var id  = args.permissions.AppPermissions[a].Permissions[b];
+																								var key = args.permissions.Name;
+																								
+																								if( id && key )
+																								{
+																									Sections.togglepermission( info.role.ID, id, key, null, 'delete' );
+																								}
+																								
+																							}
+																						
 																						}
-																		
-																						if( vars.func )
-																						{
-																							
-																						}
-																					
 																					}
-																					else
-																					{
-																						if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
-																					}
+																				}
 																				
-																				}, { pnt: args.pnt, func: args.func } );*/
 																			
 																			} );
 																		
 																		};
 																		return b;
-																	}( this.ids, apps[k].Name, this.func ) 
+																	}( this.ids, permissions, this.func ) 
 																}
 															]
 														}
@@ -913,18 +916,25 @@ function initRoleDetails( info )
 								{
 									if( apps[k] && apps[k].Name )
 									{
-										var found = false;
+										var permissions = false; var toggle = false;
 										
-										if( this.ids )
+										if( perm )
 										{
-											for( var a in this.ids )
+											for( var a in perm )
 											{
-												if( this.ids[a] && this.ids[a][0] == apps[k].Name )
+												if( perm[a] && perm[a].AppPermissions && perm[a].Name == apps[k].Name )
 												{
-													found = true;
+													permissions = perm[a];
+												}
+												
+												if( perm[a] && perm[a].AppPermissions && perm[a].Name == apps[k].Name && info.role.Permissions[apps[k].Name] )
+												{
+													toggle = true;
 												}
 											}
 										}
+										
+										if( !permissions ) continue;
 										
 										var divs = appendChild( [
 											{ 
@@ -1006,7 +1016,7 @@ function initRoleDetails( info )
 														'child' : 
 														[ 
 															{ 
-																'element' : function( ids, name, func ) 
+																'element' : function( ids, permissions, func ) 
 																{
 																	
 																	var b = CustomToggle( 'aid_'+name, 'FloatRight', null, function (  )
@@ -1015,72 +1025,76 @@ function initRoleDetails( info )
 																		if( this.checked )
 																		{
 																			
-																			func.updateids( 'applications', name, [ name, '0' ] );
+																			//func.updateids( 'applications', permissions.Name, [ name, '0' ] );
 																			
-																			if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																			//if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
 																			
-																			/*updateApplications( details.ID, function( e, d, vars )
+																			console.log( permissions );
+																			
+																			if( permissions.AppPermissions )
 																			{
-																				
-																				if( e && vars )
+																				for( var a in permissions.AppPermissions )
 																				{
 																					
-																					vars._this.checked = true;
-																					
-																					if( vars.func )
+																					if( permissions.AppPermissions[a].Permissions )
 																					{
-																						
+																					
+																						for( var b in permissions.AppPermissions[a].Permissions )
+																						{
+																							var id  = permissions.AppPermissions[a].Permissions[b];
+																							var key = permissions.Name;
+																							
+																							if( id && key )
+																							{
+																								Sections.togglepermission( info.role.ID, id, key, null );
+																							}
+																							
+																						}
+																					
 																					}
-																					
 																				}
-																				else
-																				{
-																					if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
-																					
-																					vars._this.checked = false;
-																					
-																				}
-																				
-																			}, { _this: this, func: func } );*/
+																			}
 																			
 																		}
 																		else
 																		{
 																			
-																			func.updateids( 'applications', name, false );
+																			//func.updateids( 'applications', permissions.Name, false );
 																			
-																			if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																			//if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
 																			
-																			/*updateApplications( details.ID, function( e, d, vars )
+																			console.log( permissions );
+																			
+																			if( permissions.AppPermissions )
 																			{
-																				
-																				if( e && vars )
+																				for( var a in permissions.AppPermissions )
 																				{
 																					
-																					vars._this.checked = false;
-																					
-																					if( vars.func )
+																					if( permissions.AppPermissions[a].Permissions )
 																					{
-																						
+																					
+																						for( var b in permissions.AppPermissions[a].Permissions )
+																						{
+																							var id  = permissions.AppPermissions[a].Permissions[b];
+																							var key = permissions.Name;
+																							
+																							if( id && key )
+																							{
+																								Sections.togglepermission( info.role.ID, id, key, null, 'delete' );
+																							}
+																							
+																						}
+																					
 																					}
-																					
 																				}
-																				else
-																				{
-																					if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
-																					
-																					vars._this.checked = true;
-																					
-																				}
-																				
-																			}, { _this: this, func: func } );*/
+																			}
 																			
 																		}
 																		
-																	}, ( found ? true : false ), 1 );
+																	}, ( toggle ? true : false ), 1 );
 																	
 																	return b;
-																}( this.ids, apps[k].Name, this.func ) 
+																}( this.ids, permissions, this.func ) 
 															}
 														]
 													}
@@ -1376,7 +1390,7 @@ function initRoleDetails( info )
 				
 				// Permissions ------------------------------------------------------------------------------------
 				
-				permissions : function ( func )
+				permissions : function ( data )
 				{
 					
 					var init =
@@ -1384,27 +1398,29 @@ function initRoleDetails( info )
 						
 						func : this,
 						
+						pems : info.role.Permissions[data.Name],
+						
 						ids  : this.appids,
 						
 						head : function (  )
 						{
 							
 							var str = '';
-							
+							console.log( data );
 							str += '<div class="MarginTop OverflowHidden BorderRadius Elevated">';
 							str += '	<div class="HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight">';
 							str += '		<div class="PaddingSmall HContent100 InputHeight FloatLeft">';
 							str += '			<h3 class="NoMargin PaddingSmallLeft PaddingSmallRight FloatLeft">';
-							str += '				<strong>' + i18n( 'i18n_system' ) + '</strong>';
+							str += '				<strong>' + i18n( data.Name ) + '</strong>';
 							str += '			</h3>';
 							str += '		</div>';
 							str += '	</div>';
-							str += '	<div id="PermissionGui"></div>';
+							str += '	<div id="PermissionGui_' + data.Name + '"></div>';
 							str += '</div>';
 							
-							var head = ge( 'AdminPermissionContainer' ); if( head ) head.innerHTML = str;
+							var head = ge( 'AdminPermissionContainer' ); if( head ) head.innerHTML += str;
 							
-							var o = ge( 'PermissionGui' ); if( o ) o.innerHTML = '';
+							var o = ge( 'PermissionGui_' + data.Name ); if( o ) o.innerHTML = '';
 							
 							this.func.updateids( 'permissions' );
 							
@@ -1470,7 +1486,7 @@ function initRoleDetails( info )
 									{
 										var d = document.createElement( 'div' );
 										d.className = 'HRow Box Padding';
-										d.id = 'PermissionInner';
+										d.id = 'PermissionInner_' + data.Name;
 										return d;
 									}()
 								}
@@ -1494,212 +1510,201 @@ function initRoleDetails( info )
 							
 							this.func.mode[ 'permissions' ] = 'list';
 							
-							if( perm )
+							if( data )
 							{
 								this.head();
 								
-								var o = ge( 'PermissionInner' ); o.innerHTML = '';
+								var o = ge( 'PermissionInner_' + data.Name ); o.innerHTML = '';
 								
-								
-								
-								for( var a in perm )
+								if( data.AppPermissions && data.Name )
 								{
 									
-									if( perm[a].AppPermissions && perm[a].Name )
+									for( var k in data.AppPermissions )
 									{
 										
-										for( var k in perm[a].AppPermissions )
-										{
-											
-											var divs = appendChild( [
-												{ 
-													'element' : function() 
-													{
-														var d = document.createElement( 'div' );
-														d.className = 'HRow';
-														return d;
-													}(),
-													'child' : 
-													[ 
-														{ 
-															'element' : function() 
-															{
-																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent40 InputHeight FloatLeft Ellipsis';
-																d.innerHTML = '<strong class="PaddingSmallRight">' + i18n( perm[a].AppPermissions[k].Name ) + '</strong>';
-																return d;
-															}() 
-														},
-														{ 
-															'element' : function() 
-															{
-																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
-																return d;
-															}(),
-															'child' : 
-															[ 
-																{ 
-																	'element' : function( id, key, toggle ) 
-																	{
-																		
-																		var b = CustomToggle( id, null, null, function (  )
-																		{
-																			
-																			if( Application.checkAppPermission( 'ROLE_UPDATE' ) )
-																			{
-																			
-																				if( this.checked )
-																				{
-																					Sections.togglepermission( info.role.ID, id, key, this );
-																				}
-																				else
-																				{
-																					Sections.togglepermission( info.role.ID, id, key, this );
-																				}
-																			
-																			}
-																			
-																		}, ( toggle ? true : false ), 1 );
-																		
-																		return b;
-																	}( perm[a].AppPermissions[k].Permissions[0], perm[a].Name, ( info.role.Permissions[perm[a].Name] && info.role.Permissions[perm[a].Name][perm[a].AppPermissions[k].Permissions[0]] ? true : false ) ) 
-																}
-															]
-														}, 
-														{ 
-															'element' : function() 
-															{
-																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
-																return d;
-															}(),
-															'child' : 
-															[ 
-																{ 
-																	'element' : function( id, key, toggle ) 
-																	{
-																		
-																		var b = CustomToggle( id, null, null, function (  )
-																		{
-																		
-																			if( Application.checkAppPermission( 'ROLE_UPDATE' ) )
-																			{
-																			
-																				if( this.checked )
-																				{
-																					Sections.togglepermission( info.role.ID, id, key, this );
-																				}
-																				else
-																				{
-																					Sections.togglepermission( info.role.ID, id, key, this );
-																				}
-																			
-																			}
-																		
-																		}, ( toggle ? true : false ), 1 );
-																		
-																		return b;
-																	}( perm[a].AppPermissions[k].Permissions[1], perm[a].Name, ( info.role.Permissions[perm[a].Name] && info.role.Permissions[perm[a].Name][perm[a].AppPermissions[k].Permissions[1]] ? true : false ) ) 
-																}
-															]
-														},
-														{ 
-															'element' : function() 
-															{
-																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
-																return d;
-															}(),
-															'child' : 
-															[ 
-																{ 
-																	'element' : function( id, key, toggle ) 
-																	{
-																		
-																		var b = CustomToggle( id, null, null, function (  )
-																		{
-																		
-																			if( Application.checkAppPermission( 'ROLE_UPDATE' ) )
-																			{
-																			
-																				if( this.checked )
-																				{
-																					Sections.togglepermission( info.role.ID, id, key, this );
-																				}
-																				else
-																				{
-																					Sections.togglepermission( info.role.ID, id, key, this );
-																				}
-																			
-																			}
-																		
-																		}, ( toggle ? true : false ), 1 );
-																		
-																		return b;
-																	}( perm[a].AppPermissions[k].Permissions[2], perm[a].Name, ( info.role.Permissions[perm[a].Name] && info.role.Permissions[perm[a].Name][perm[a].AppPermissions[k].Permissions[2]] ? true : false ) ) 
-																}
-															]
-														},
-														{ 
-															'element' : function() 
-															{
-																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
-																return d;
-															}(),
-															'child' : 
-															[ 
-																{ 
-																	'element' : function( id, key, toggle ) 
-																	{
-																		
-																		var b = CustomToggle( id, null, null, function (  )
-																		{
-																		
-																			if( Application.checkAppPermission( 'ROLE_UPDATE' ) )
-																			{
-																			
-																				if( this.checked )
-																				{
-																					Sections.togglepermission( info.role.ID, id, key, this );
-																				}
-																				else
-																				{
-																					Sections.togglepermission( info.role.ID, id, key, this );
-																				}
-																			
-																			}
-																		
-																		}, ( toggle ? true : false ), 1 );
-																		
-																		return b;
-																	}( perm[a].AppPermissions[k].Permissions[3], perm[a].Name, ( info.role.Permissions[perm[a].Name] && info.role.Permissions[perm[a].Name][perm[a].AppPermissions[k].Permissions[3]] ? true : false ) ) 
-																}
-															]
-														}
-													]
-												}
-											] );
-									
-											if( divs )
-											{
-												for( var i in divs )
+										var divs = appendChild( [
+											{ 
+												'element' : function() 
 												{
-													if( divs[i] && o )
-													{
-														o.appendChild( divs[i] );
+													var d = document.createElement( 'div' );
+													d.className = 'HRow';
+													return d;
+												}(),
+												'child' : 
+												[ 
+													{ 
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmall HContent40 InputHeight FloatLeft Ellipsis';
+															d.innerHTML = '<strong class="PaddingSmallRight">' + i18n( data.AppPermissions[k].Name ) + '</strong>';
+															return d;
+														}() 
+													},
+													{ 
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+															return d;
+														}(),
+														'child' : 
+														[ 
+															{ 
+																'element' : function( id, key, toggle ) 
+																{
+																	var b = CustomToggle( id + '_' + key, null, null, function (  )
+																	{
+																		
+																		if( Application.checkAppPermission( 'ROLE_UPDATE' ) )
+																		{
+																		
+																			if( this.checked )
+																			{
+																				Sections.togglepermission( info.role.ID, id, key, this );
+																			}
+																			else
+																			{
+																				Sections.togglepermission( info.role.ID, id, key, this );
+																			}
+																		
+																		}
+																		
+																	}, ( toggle ? true : false ), 1 );
+																	
+																	return b;
+																}( data.AppPermissions[k].Permissions[0], data.Name, ( this.pems && this.pems[data.AppPermissions[k].Permissions[0]] ? true : false ) ) 
+															}
+														]
+													}, 
+													{ 
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+															return d;
+														}(),
+														'child' : 
+														[ 
+															{ 
+																'element' : function( id, key, toggle ) 
+																{
+																	var b = CustomToggle( id + '_' + key, null, null, function (  )
+																	{
+																	
+																		if( Application.checkAppPermission( 'ROLE_UPDATE' ) )
+																		{
+																		
+																			if( this.checked )
+																			{
+																				Sections.togglepermission( info.role.ID, id, key, this );
+																			}
+																			else
+																			{
+																				Sections.togglepermission( info.role.ID, id, key, this );
+																			}
+																		
+																		}
+																	
+																	}, ( toggle ? true : false ), 1 );
+																	
+																	return b;
+																}( data.AppPermissions[k].Permissions[1], data.Name, ( this.pems && this.pems[data.AppPermissions[k].Permissions[1]] ? true : false ) ) 
+															}
+														]
+													},
+													{ 
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+															return d;
+														}(),
+														'child' : 
+														[ 
+															{ 
+																'element' : function( id, key, toggle ) 
+																{
+																	
+																	var b = CustomToggle( id + '_' + key, null, null, function (  )
+																	{
+																	
+																		if( Application.checkAppPermission( 'ROLE_UPDATE' ) )
+																		{
+																		
+																			if( this.checked )
+																			{
+																				Sections.togglepermission( info.role.ID, id, key, this );
+																			}
+																			else
+																			{
+																				Sections.togglepermission( info.role.ID, id, key, this );
+																			}
+																		
+																		}
+																	
+																	}, ( toggle ? true : false ), 1 );
+																	
+																	return b;
+																}( data.AppPermissions[k].Permissions[2], data.Name, ( this.pems && this.pems[data.AppPermissions[k].Permissions[2]] ? true : false ) ) 
+															}
+														]
+													},
+													{ 
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+															return d;
+														}(),
+														'child' : 
+														[ 
+															{ 
+																'element' : function( id, key, toggle ) 
+																{
+																	
+																	var b = CustomToggle( id + '_' + key, null, null, function (  )
+																	{
+																	
+																		if( Application.checkAppPermission( 'ROLE_UPDATE' ) )
+																		{
+																		
+																			if( this.checked )
+																			{
+																				Sections.togglepermission( info.role.ID, id, key, this );
+																			}
+																			else
+																			{
+																				Sections.togglepermission( info.role.ID, id, key, this );
+																			}
+																		
+																		}
+																	
+																	}, ( toggle ? true : false ), 1 );
+																	
+																	return b;
+																}( data.AppPermissions[k].Permissions[3], data.Name, ( this.pems && this.pems[data.AppPermissions[k].Permissions[3]] ? true : false ) ) 
+															}
+														]
 													}
+												]
+											}
+										] );
+								
+										if( divs )
+										{
+											for( var i in divs )
+											{
+												if( divs[i] && o )
+												{
+													o.appendChild( divs[i] );
 												}
 											}
-										
 										}
-										
+									
 									}
 									
 								}
-									
-									
 									
 								
 								
@@ -1761,7 +1766,17 @@ function initRoleDetails( info )
 			};
 			
 			func.applications();
-			func.permissions();
+			
+			if( perm )
+			{
+				for( var a in perm )
+				{
+					if( perm[a] && perm[a].AppPermissions && perm[a].Name && info.role.Permissions[perm[a].Name] )
+					{
+						func.permissions( perm[a] );
+					}
+				}
+			}
 			
 		}
 		

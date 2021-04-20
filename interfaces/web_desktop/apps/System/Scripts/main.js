@@ -643,6 +643,7 @@ function CustomToggle( id, classn, name, onclick, checked, mode, value )
 				if( checked )
 				{
 					i.checked = true;
+					i.className = ( i.className + ' checked' );
 				}
 				if( onclick )
 				{
@@ -652,7 +653,8 @@ function CustomToggle( id, classn, name, onclick, checked, mode, value )
 				{
 					i.value = value;
 				}
-		
+				
+				d.i = i;
 				d.appendChild( i );
 		
 				var l = document.createElement( 'label' );

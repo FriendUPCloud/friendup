@@ -1,10 +1,10 @@
 
-input.CustomToggleInput 
+label > input.CustomToggleInput 
 {
 	display: none;
 }
 
-label.CustomToggleLabel
+label > label.CustomToggleLabel
 {
 	cursor: pointer;
 	display: block;
@@ -17,7 +17,7 @@ label.CustomToggleLabel
 	transition: all 0.2s;
 }
 
-label.CustomToggleLabel:after
+label > label.CustomToggleLabel:after
 {
 	content: '';
 	background-color: #FFF;
@@ -31,13 +31,13 @@ label.CustomToggleLabel:after
 	transition: all 0.2s;
 }
 
-input.CustomToggleInput:checked + label.CustomToggleLabel
+label > input.CustomToggleInput:checked + label.CustomToggleLabel
 {
 	background-color: #27AE60;
 	border-color: #27AE60;
 }
 
-input.CustomToggleInput:checked + label.CustomToggleLabel:after
+label > input.CustomToggleInput:checked + label.CustomToggleLabel:after
 {
 	left: 16px;
 	border-color: #27AE60;
