@@ -16,7 +16,7 @@
 
 	Login module for SAML authentication
 	
-	v0.1
+	v0.5
 	
 	Note that login modules are not normal modules as no user is present.
 	This file should be included by php/login.php and expects some global 
@@ -24,8 +24,8 @@
 
 */
 
+// Include database toolset ----------------------------------------------------
 include( 'php/classes/dbio.php' );
-
 $config = parse_ini_file( 'cfg/cfg.ini', true );
 $SqlDatabase = new SqlDatabase();
 $SqlDatabase->Open( 
@@ -34,7 +34,12 @@ $SqlDatabase->Open(
 	$config[ 'DatabaseUser' ][ 'password' ] ) or 
 		die( 'fail<!--separate-->Database error.' );
 $SqlDatabase->SelectDatabase( $config[ 'DatabaseUser' ][ 'dbname' ] );
-
+register_shutdown_function( function()
+{
+	global $SqlDatabase;
+	$SqlDatabase->close();
+} );
+// End database toolset --------------------------------------------------------
 
 include( 'include/helpers.php' );
 
