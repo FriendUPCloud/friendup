@@ -28,10 +28,10 @@ include( 'include/helpers.php' );
 
 //check that necessary globals and config are present
 if(
-	$GLOBALS[ 'request_path' ] === null ||
-	$GLOBALS[ 'request_variables' ] === null ||
-	$GLOBALS[ 'login_modules' ][ 'saml' ] === null ||
-	$GLOBALS[ 'login_modules' ][ 'saml' ][ 'Module' ] === null 
+	!isset( $GLOBALS[ 'request_path' ] ) ||
+	!isset( $GLOBALS[ 'request_variables' ] ) ||
+	!isset( $GLOBALS[ 'login_modules' ][ 'saml' ] ) ||
+	!isset( $GLOBALS[ 'login_modules' ][ 'saml' ][ 'Module' ] ) 
 )
 {
 	die( '<h1>Invalid SAML configuration. Contact your administrator!</h1>' );
