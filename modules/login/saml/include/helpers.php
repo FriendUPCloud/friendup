@@ -115,8 +115,6 @@ function check2faAuth( $token )
 	
 	$cleanToken = mysqli_real_escape_string( $SqlDatabase->_link, $token );
 	
-	die( 'fail<!--separate-->What: ' . $token );
-	
 	if( $row = $SqlDatabase->fetchObject( '
 		SELECT * FROM FUserLogin WHERE UserID=-1 AND Login="' . $cleanToken . '"
 	' ) )
