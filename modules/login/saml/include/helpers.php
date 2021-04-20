@@ -109,6 +109,7 @@ function renderReplacements( $template )
 	return str_replace( $finds, $replacements, $template );
 }
 
+// Check if this user was authenticated with an auth token!
 function check2faAuth( $token )
 {
 	global $SqlDatabase;

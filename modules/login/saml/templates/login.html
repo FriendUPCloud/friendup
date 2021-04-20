@@ -7,6 +7,15 @@
 			html body.Loading { background-color: #f8f8f8; }
 			h3 { padding-bottom:12px !important; }
 			#SamlFormFrame { width:100%; height:30px; }
+			#LoginElement
+			{
+				opacity: 1;
+				transition: opacity 0.35s;
+			}
+			#LoginElement.Faded
+			{
+				opacity: 0;
+			}
 		</style>
 		<script src="/webclient/js/apps/api.js"></script>
 	</head>
@@ -137,11 +146,13 @@
 					    // Auth2faToken not registered, show 2fa form
 					    else
 					    {
+					    	ge( 'LoginElement' ).classList.add( 'Faded' );
 					    	let u = new cAjax();
 						    u.open( 'POST', '/loginprompt/?get2faform=1', true );
 					        u.onload = function()
 					        {
 					            ge( 'LoginElement' ).innerHTML = this.responseText();
+					            ge( 'LoginElement' ).classList.remove( 'Faded' );
 					        }
 					        u.send();
 					    }
