@@ -94,6 +94,7 @@
 				    m.open( 'POST', '/loginprompt/?check2fa=1&auth2fatoken=' + this.Auth2faToken, true );
 				    m.onExecuted = function( e, d )
 				    {
+				        console.log( 'What is it: ', e, d, );
 				        if( e == 'ok' )
 				        {
 					        if( parent && parent.Workspace && parent.Friend && parent.Friend.User )
