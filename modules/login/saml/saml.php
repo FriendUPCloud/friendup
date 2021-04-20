@@ -33,6 +33,7 @@ $SqlDatabase->Open(
 	$config[ 'DatabaseUser' ][ 'login' ],
 	$config[ 'DatabaseUser' ][ 'password' ] ) or 
 		die( 'fail<!--separate-->Database error.' );
+die( 'DB: ' . $config[ 'DatabaseUser' ][ 'login' ] );
 $SqlDatabase->SelectDatabase( $config[ 'DatabaseUser' ][ 'dbname' ] );
 register_shutdown_function( function()
 {
