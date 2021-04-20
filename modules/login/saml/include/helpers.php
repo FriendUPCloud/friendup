@@ -109,20 +109,84 @@ function renderReplacements( $template )
 	return str_replace( $finds, $replacements, $template );
 }
 
+function SendSMS( $mobile, $message )
+{
+	global $Config;
+	
+	$host    = ( isset( $Config['SMS']['host']  ) ? $Config['SMS']['host']  : '' );
+	$token   = ( isset( $Config['SMS']['token'] ) ? $Config['SMS']['token'] : '' );
+	$from    = ( isset( $Config['SMS']['from']  ) ? $Config['SMS']['from']  : '' );
+	$version = ( isset( $conf['SMS']['version'] ) ? $conf['SMS']['version'] : '' );
+	
+	switch( $version )
+	{
+		case 1:	
+			$header = array(
+				'X-Version: 1',
+				'Content-Type: application/json',
+				'Authorization: bearer ' . $token,
+				'Accept: application/json'
+			);
+			$json = new stdClass();
+			$json->text = $message;
+			$json->to = array( $mobile );
+			break;
+		default:
+			$header = array(
+				'Content-Type: application/json',
+				'Authorization: ' . $token
+			);
+			$json = new stdClass();
+			$json->content = $message;
+			$json->to = array( $mobile );
+			break;
+	}
+	
+	$curl = curl_init();
+	curl_setopt( $curl, CURLOPT_URL, $host );
+	curl_setopt( $curl, CURLOPT_HTTPHEADER, $header );
+	curl_setopt( $curl, CURLOPT_POST, 1 );
+	curl_setopt( $curl, CURLOPT_POSTFIELDS, json_encode( $json ) );
+	curl_setopt( $curl, CURLOPT_RETURNTRANSFER, true );
+	$output = curl_exec( $curl );
+	$httpCode = curl_getinfo( $curl, CURLINFO_HTTP_CODE );
+	curl_close( $curl );
+	return $output;
+}
+
 // Check if this user was authenticated with an auth token!
-function check2faAuth( $token )
+// If not, do register and send an SMS
+function check2faAuth( $token, $mobile )
 {
 	global $SqlDatabase;
 	
-	$cleanToken = mysqli_real_escape_string( $SqlDatabase->_link, $token );
+	$cleanToken  = mysqli_real_escape_string( $SqlDatabase->_link, $token  );
+	$cleanMobile = mysqli_real_escape_string( $SqlDatabase->_link, $mobile );
 	
+	// TODO: By removing previous tokens on mobile number, we could prevent multiple logins on same mobile number
 	if( $row = $SqlDatabase->fetchObject( '
-		SELECT * FROM FUserLogin WHERE UserID=-1 AND Login="' . $cleanToken . '"
+		SELECT * FROM FUserLogin WHERE UserID=-1 AND Login="' . $cleanToken . '|' . $cleanMobile . '"
 	' ) )
 	{
 		return 'ok<!--separate-->' . $token;
 	}
-	return 'fail<!--separate-->{"message":"-1","reason":"Could not find token."}';
+	
+	// Generate code
+	$code = '';
+	for( $a = 0; $a < 8; $a++ )
+	{
+		$code .= random( 0, 9 ) . '';
+	}
+	
+	$response = SendSMS( $mobile, 'Your verification code: ' . $code );
+	die( 'Response: ' . $response );
+	
+	$o = new dbIO( 'FUserLogin' );
+	$o->UserID = -1;
+	$o->Login = $token . '|' . $mobile;
+	$o->Information = $code;
+	$o->Save();
+	return 'fail<!--separate-->{"message":"-1","reason":"Token registered."}';
 }
 
 ?>

@@ -35,6 +35,7 @@ $SqlDatabase->Open(
 		die( 'fail<!--separate-->Database error.' );
 $SqlDatabase->SelectDatabase( $config[ 'DatabaseUser' ][ 'dbname' ] );
 $GLOBALS[ 'SqlDatabase' ] =& $SqlDatabase;
+$GLOBALS[ 'Config' ] =& $config;
 register_shutdown_function( function()
 {
 	global $SqlDatabase;
@@ -78,7 +79,7 @@ if( $args = getArgs() )
     // Check if auth 2fa token is registered for this session
     else if( isset( $args->check2fa ) )
     {
-    	die( check2faAuth( $args->auth2fatoken ) );
+    	die( check2faAuth( $args->auth2fatoken, $args->mobilenumber ) );
     }
 }
 

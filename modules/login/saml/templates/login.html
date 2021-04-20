@@ -169,8 +169,15 @@
 				    {
 				        this.Auth2faToken = md5( '2fa_' + ( Math.random() ) + '_' + ( Math.random() ) + ( new Date() ).getTime() );
 				    }
+				    
+				    // Fetch samldata
+				    let smd = parent.Workspace.samlData.user;
+				    let us = null; for( us in smd ) break;
+				    
 				    let m = new cAjax();
 				    m.open( 'POST', '/loginprompt/?check2fa=1&auth2fatoken=' + this.Auth2faToken, true );
+				    m.addVar( 'auth2fatoken', this.Auth2faToken );
+				    m.addVar( 'mobilenumber', smd[ us ][ 0 ].split( '@' )[0] );
 				    m.onload = function()
 				    {
 				    	let resp = this.responseText().split( '<!--separate-->' );
@@ -231,8 +238,6 @@
 					m.send();
 				}				
 			};
-			
-
 			
 			function showLoginError(msg)
 			{
