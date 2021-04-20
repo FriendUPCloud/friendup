@@ -147,7 +147,7 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 		{
 			while( ( dptr = readdir( dp ) ) != NULL )
 			{
-				if( strcmp( dptr->d_name, "." ) == 0 || strcmp( dptr->d_name, ".." ) == 0 )
+				if( strncmp( dptr->d_name, ".", 1 ) == 0 || strncmp( dptr->d_name, "..", 2 ) == 0 )
 				{
 					continue;
 				}
@@ -180,7 +180,7 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 					char number[ 512 ];
 					unsigned int i;
 				
-					if( strcmp( dptr->d_name, "." ) == 0 || strcmp( dptr->d_name, ".." ) == 0 )
+					if( strncmp( dptr->d_name, ".", 1 ) == 0 || strncmp( dptr->d_name, "..", 2 ) == 0 )
 					{
 						continue;
 					}
@@ -200,10 +200,18 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 					DEBUG("[SystemBase] number found: '%s'\n", number );
 					
 					position = atoi( number )-1;
-					dbentries[ position ].number = position+1;
+					if( position > 0 )
+					{
+						dbentries[ position ].number = position+1;
 
-					DEBUG("[SystemBase] Found script with number %d, script added: %s\n", position, dptr->d_name );
-					strcpy( dbentries[ position ].name, dptr->d_name );
+						DEBUG("[SystemBase] Found script with number %d, script added: %s\n", position, dptr->d_name );
+						strcpy( dbentries[ position ].name, dptr->d_name );
+					}
+					else
+					{
+						numberOfFiles--;
+						FERROR("[SystemBase] get number from name: %s FAIL\n", dptr->d_name );
+					}
 				}
 				closedir( dp );
 			}
