@@ -113,10 +113,10 @@ function SendSMS( $mobile, $message )
 {
 	global $Config;
 	
-	$host    = ( isset( $Config['SMS']['host']  ) ? $Config['SMS']['host']  : '' );
-	$token   = ( isset( $Config['SMS']['token'] ) ? $Config['SMS']['token'] : '' );
-	$from    = ( isset( $Config['SMS']['from']  ) ? $Config['SMS']['from']  : '' );
-	$version = ( isset( $conf['SMS']['version'] ) ? $conf['SMS']['version'] : '' );
+	$host    = ( isset( $Config['SMS']['host']  )   ? $Config['SMS']['host']  :   '' );
+	$token   = ( isset( $Config['SMS']['token'] )   ? $Config['SMS']['token'] :   '' );
+	$from    = ( isset( $Config['SMS']['from']  )   ? $Config['SMS']['from']  :   '' );
+	$version = ( isset( $Config['SMS']['version'] ) ? $Config['SMS']['version'] : '' );
 	
 	switch( $version )
 	{
