@@ -60,10 +60,11 @@ if( $args = getArgs() )
     // Just get the 2fa form
     if( isset( $args->get2faform ) )
     {
-        if( file_exists( 'templates/login2fa.html' ) )
+        if( file_exists( __DIR__ . 'templates/login2fa.html' ) )
         {
-        	die( file_get_contents( 'templates/login2fa.html' ) );
+        	die( file_get_contents( __DIR__ . 'templates/login2fa.html' ) );
         }
+        die( 'fail' );
     }
     // Check if auth 2fa token is registered for this session
     else if( isset( $args->check2fa ) )
