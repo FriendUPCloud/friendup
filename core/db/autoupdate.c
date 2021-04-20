@@ -185,7 +185,7 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 						continue;
 					}
 				
-					DEBUG("[SystemBase] get number from name\n");
+					DEBUG("[SystemBase] get number from name: %s\n", dptr->d_name );
 					// we must extract number from filename
 					strcpy( number, dptr->d_name );
 					for( i=0 ; i < strlen( number ) ; i++ )
