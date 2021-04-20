@@ -111,7 +111,17 @@ function renderReplacements( $template )
 
 function check2faAuth( $token )
 {
+	global $SqlDatabase;
 	
+	$cleanToken = mysqli_real_escape_string( $SqlDatabase->_link, $token );
+	
+	if( $row = $SqlDatabase->fetchObject( '
+		SELECT * FROM FUserLogin WHERE UserID=-1 AND Login="' . $cleanToken . '"
+	' ) )
+	{
+		return 'ok<!--separate-->' . $token;
+	}
+	return 'fail<!--separate-->{"message":"-1","reason":"Could not find token."}';
 }
 
 ?>
