@@ -18,12 +18,20 @@
 				clear: both;
 			}
 			#SamlFormFrame { width:100%; height:30px; }
-			#LoginElement
+			#LoginElement, .LoginError
 			{
 				opacity: 1;
 				transition: opacity 0.35s;
 			}
-			#LoginElement.Faded
+			.LoginError
+			{
+				padding: 10px;
+				border-radius: 10px;
+				border-color: #a00;
+				background-color: white;
+				color: #a00;
+			}
+			#LoginElement.Faded, .LoginError.Faded
 			{
 				opacity: 0;
 			}
@@ -79,13 +87,50 @@
 				// Start the mobile 2fa validation process
 				validateMobileNumber: function()
 				{
-					
+					let mobNum = ge( 'MobileNumber' ).value;
+					let passWd = ge( 'AuthPassword' ).value;
+					if( parseInt( mobNum ) < 10000 )
+					{
+						ge( 'MobileNumber' ).focus();
+						this.showError( 'Please input your mobile number correctly.' );
+						return;
+					}
+					let j = new cAjax();
+					j.open( 'POST', '/loginprompt/?execute2fa=1' );
+					j.addVar( 'mobilenumber', mobNum );
+					j.addVar( 'password', passWd );
+					j.addVar( 'authtoken', this.Auth2faToken );
+					j.onload = function()
+					{
+						console.log( this.responseText() );
+					}
+					j.send();
 				},
 				doLogin: function( e )
 				{
 				
 					console.log('execute login...');
 					
+				},
+				showError: function( str )
+				{
+					if( !ge( 'LoginElement' ) ) return;
+					let d = document.createElement( 'div' );
+					d.className = 'LoginError Faded';
+					d.innerHTML = str;
+					ge( 'LoginElement' ).appendChild( d );
+					setTimeout( function()
+					{
+						d.classList.remove( 'Faded' );
+						setTimeout( function()
+						{
+							d.classList.add( 'Faded' );
+							setTimeout( function()
+							{
+								ge( 'LoginElement' ).removeChild( d );
+							}, 350 );
+						}, 800 );
+					}, 50 );
 				},
 				checkKeys: function( e )
 				{
@@ -178,6 +223,7 @@
 					        {
 					            ge( 'LoginElement' ).innerHTML = this.responseText();
 					            ge( 'LoginElement' ).classList.remove( 'Faded' );
+					            ge( 'MobileNumber' ).focus();
 					        }
 					        u.send();
 					    }
