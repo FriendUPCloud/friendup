@@ -65,7 +65,7 @@ if( $args = getArgs() )
         {
         	die( file_get_contents( __DIR__ . '/templates/login2fa.html' ) );
         }
-        die( 'fail -> ' . __DIR__ );
+        die( 'fail' );
     }
     // Check if auth 2fa token is registered for this session
     else if( isset( $args->check2fa ) )
