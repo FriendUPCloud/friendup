@@ -135,6 +135,7 @@
 					    // Auth2faToken not registered, show 2fa form
 					    else
 					    {
+					    	console.log( 'Trying to get 2fa form.' );
 					        let f = new File( '/loginprompt/?get2faform=1' );
 					        f.onLoad = function( data )
 					        {
