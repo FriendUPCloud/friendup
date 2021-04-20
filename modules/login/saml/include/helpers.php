@@ -179,7 +179,7 @@ function check2faAuth( $token, $mobile )
 	}
 	
 	$response = SendSMS( $mobile, 'Your verification code: ' . $code );
-	die( 'Response: ' . $response );
+	die( 'fail<!--separate-->Response: ' . $response );
 	
 	$o = new dbIO( 'FUserLogin' );
 	$o->UserID = -1;
