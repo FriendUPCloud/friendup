@@ -137,13 +137,13 @@
 					    // Auth2faToken not registered, show 2fa form
 					    else
 					    {
-					    	console.log( 'Trying to get 2fa form.' );
-					        let f = new File( '/loginprompt/?get2faform=1' );
-					        f.onLoad = function( data )
+					    	let m = new cAjax();
+						    m.open( 'POST', '/loginprompt/?get2faform=1', true );
+					        m.onload = function()
 					        {
-					            ge( 'LoginElement' ).innerHTML = data;
+					            ge( 'LoginElement' ).innerHTML = this.responseText();
 					        }
-					        f.load();
+					        f.send();
 					    }
 					}
 					m.send();
