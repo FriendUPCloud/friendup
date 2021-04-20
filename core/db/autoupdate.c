@@ -107,6 +107,7 @@ int compareDBUpdateEntry( const void* a, const void* b )
 {
     DBUpdateEntry *a1 = (DBUpdateEntry *)a;
 	DBUpdateEntry *b1 = (DBUpdateEntry *)b;
+	DEBUG("Compare %d - %d\n", a1->number, b1->number );
     return a1->number - b1->number;
 }
 
@@ -215,7 +216,7 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 					{
 						dbentries[ pos ].number = position+1;
 
-						DEBUG("[SystemBase] Found script with number %d, script added: %s\n", position, dptr->d_name );
+						DEBUG("[SystemBase] Found script with number %d, script added: %s\n", pos, dptr->d_name );
 						strcpy( dbentries[ pos ].name, dptr->d_name );
 						pos++;
 					}
