@@ -92,9 +92,10 @@
 				    }
 				    let m = new cAjax();
 				    m.open( 'POST', '/loginprompt/?check2fa=1&auth2fatoken=' + this.Auth2faToken, true );
-				    m.onExecuted = function( e, d )
+				    m.onLoad = function()
 				    {
-				        console.log( 'What is it: ', e, d, );
+				    	let resp = this.responseText().split( '<!--separate-->' );
+				    	let e = resp[0]; let d = resp[1];
 				        if( e == 'ok' )
 				        {
 					        if( parent && parent.Workspace && parent.Friend && parent.Friend.User )
