@@ -105,10 +105,10 @@ static inline char *ReadDBFile( char *fname, int *fs )
 
 int compareDBUpdateEntry( const void* a, const void* b )
 {
-    DBUpdateEntry *a1 = (DBUpdateEntry *)a;
+	DBUpdateEntry *a1 = (DBUpdateEntry *)a;
 	DBUpdateEntry *b1 = (DBUpdateEntry *)b;
-	DEBUG("Compare %d - %d\n", a1->number, b1->number );
-    return a1->number - b1->number;
+	//DEBUG("Compare %d - %d\n", a1->number, b1->number );
+	return a1->number - b1->number;
 }
 
 void CheckAndUpdateDB( SystemBase *l, int type )
