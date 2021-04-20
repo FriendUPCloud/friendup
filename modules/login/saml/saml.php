@@ -24,7 +24,18 @@
 
 */
 
-include( 'php/friend.php' );
+include( 'php/classes/dbio.php' );
+
+$config = parse_ini_file( 'cfg/cfg.ini', true );
+$SqlDatabase = new SqlDatabase();
+$SqlDatabase->Open( 
+	$config[ 'DatabaseUser' ][ 'host' ], 
+	$config[ 'DatabaseUser' ][ 'login' ],
+	$config[ 'DatabaseUser' ][ 'password' ] ) or 
+		die( 'fail<!--separate-->Database error.' );
+$SqlDatabase->SelectDatabase( $config[ 'DatabaseUser' ][ 'dbname' ] );
+
+
 include( 'include/helpers.php' );
 
 //check that necessary globals and config are present
