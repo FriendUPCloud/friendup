@@ -3534,7 +3534,9 @@ function apiWrapper( event, force )
 							nmsg.data = resultCount > 0 ? result : false;
 							nmsg.type = 'callback';
 							delete nmsg.command;
-							app.contentWindow.postMessage( nmsg, '*' );
+							const cw = GetContentWindowByAppMessage( app, msg );
+							cw.postMessage( nmsg, '*' );
+							//app.contentWindow.postMessage( nmsg, '*' );
 							msg = null;
 						}
 						break;

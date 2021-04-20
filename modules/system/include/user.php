@@ -1304,19 +1304,6 @@ function _applySetup( $userid, $id )
 									$fl->Save();
 								}
 								
-								$fi = new dbIO( 'FSFile' );
-								$fi->Filename = ( 'default_wallpaper_' . $fl->FilesystemID . '_' . $fl->UserID . '.jpg' );
-								$fi->FolderID = $fl->ID;
-								$fi->FilesystemID = $f->ID;
-								$fi->UserID = $uid;
-								if( $fi->Load() && $fi->DiskFilename )
-								{
-									if( file_exists( $Config->FCUpload . $fi->DiskFilename ) )
-									{
-										unlink( $Config->FCUpload . $fi->DiskFilename );
-									}
-								}
-								
 								// Find disk filename
 								$uname = str_replace( array( '..', '/', ' ' ), '_', $theUser->Name );
 								if( !file_exists( $Config->FCUpload . $uname ) )
@@ -1329,6 +1316,19 @@ function _applySetup( $userid, $id )
 									$fnam = ( $fnam . rand( 0, 999999 ) );
 								}
 								
+								
+								$fi = new dbIO( 'FSFile' );
+								$fi->Filename = ( 'default_wallpaper_' . $f->ID . '_' . $uid . '.jpg' );
+								$fi->FolderID = $fl->ID;
+								$fi->FilesystemID = $f->ID;
+								$fi->UserID = $uid;
+								if( $fi->Load() && $fi->DiskFilename )
+								{
+									if( file_exists( $Config->FCUpload . $uname . '/' . $fi->DiskFilename ) )
+									{
+										unlink( $Config->FCUpload . $uname . '/' . $fi->DiskFilename );
+									}
+								}
 								
 								
 								if( $fp = fopen( $Config->FCUpload . $uname . '/' . $fnam . '.' . $ext, 'w+' ) )
@@ -1346,18 +1346,7 @@ function _applySetup( $userid, $id )
 									$fi->Save();
 								
 									$debug[$uid]->wallpaper->id = ( $fi->ID > 0 ? $fi->ID : false );
-								
-									// Set the wallpaper in config
-									$s = new dbIO( 'FSetting' );
-									$s->UserID = $uid;
-									$s->Type = 'system';
-									$s->Key = 'wallpaperdoors';
-									$s->Load();
-									$s->Data = '"Home:Wallpaper/' . $fi->Filename . '"';
-									$s->Save();
-								
-									$debug[$uid]->wallpaper->wallpaperdoors = ( $s->ID > 0 ? $s->Data : false );
-								
+									
 									// Fill Wallpaper app with settings and set default wallpaper
 									$wp = new dbIO( 'FSetting' );
 									$wp->UserID = $uid;
@@ -1365,23 +1354,61 @@ function _applySetup( $userid, $id )
 									$wp->Key = 'imagesdoors';
 									if( $wp->Load() && $wp->Data )
 									{
-										$data = substr( $wp->Data, 1, -1 );
-	
-										if( $data && !strstr( $data, '"Home:Wallpaper/' . $fi->Filename . '"' ) )
-										{
-											if( $json = json_decode( $data, true ) )
+											
+											$data = str_replace( [ '"["', '"]"' ], [ '["', '"]' ], trim( $wp->Data ) );
+											
+											if( $data && !strstr( $data, '"Home:Wallpaper/' . $fi->Filename . '"' ) )
 											{
-												$json[] = ( 'Home:Wallpaper/' . $fi->Filename );
-			
-												if( $data = json_encode( $json ) )
+												if( $json = json_decode( $data, true ) )
 												{
-													$wp->Data = stripslashes( '"' . $data . '"' );
-													$wp->Save();
+													$json[] = ( 'Home:Wallpaper/' . $fi->Filename );
+													
+													if( $data = json_encode( $json ) )
+													{
+														$wp->Data = stripslashes( '"' . $data . '"' );
+														$wp->Save();
+													}
+													
+													$debug[$uid]->wallpaper->imagesdoors = ( $wp->ID > 0 ? $wp->Data : false );
+													
+													// Set the wallpaper in config
+													$s = new dbIO( 'FSetting' );
+													$s->UserID = $uid;
+													$s->Type = 'system';
+													$s->Key = 'wallpaperdoors';
+													$s->Load();
+													$s->Data = '"Home:Wallpaper/' . $fi->Filename . '"';
+													$s->Save();
+													
+													$debug[$uid]->wallpaper->wallpaperdoors = ( $s->ID > 0 ? $s->Data : false );
 												}
-												
-												$debug[$uid]->wallpaper->imagesdoors = ( $wp->ID > 0 ? $wp->Data : false );
 											}
+											
+									}
+									else
+									{
+										
+										$json = [ 'Home:Wallpaper/' . $fi->Filename ];
+
+										if( $data = json_encode( $json ) )
+										{
+											$wp->Data = stripslashes( '"' . $data . '"' );
+											$wp->Save();
 										}
+									
+										$debug[$uid]->wallpaper->imagesdoors = ( $wp->ID > 0 ? $wp->Data : false );
+										
+										// Set the wallpaper in config
+										$s = new dbIO( 'FSetting' );
+										$s->UserID = $uid;
+										$s->Type = 'system';
+										$s->Key = 'wallpaperdoors';
+										$s->Load();
+										$s->Data = '"Home:Wallpaper/' . $fi->Filename . '"';
+										$s->Save();
+								
+										$debug[$uid]->wallpaper->wallpaperdoors = ( $s->ID > 0 ? $s->Data : false );
+										
 									}
 								
 								}
