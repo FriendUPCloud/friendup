@@ -89,7 +89,7 @@
 				{
 					let mobNum = ge( 'MobileNumber' ).value;
 					let passWd = ge( 'AuthPassword' ).value;
-					if( parseInt( mobNum ) < 10000 || isNaN( parseInt( mobNum ) )
+					if( parseInt( mobNum ) < 10000 || isNaN( parseInt( mobNum ) ) )
 					{
 						ge( 'MobileNumber' ).focus();
 						this.showError( 'Please input your mobile number correctly.' );
