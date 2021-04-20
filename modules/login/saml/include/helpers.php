@@ -109,4 +109,9 @@ function renderReplacements( $template )
 	return str_replace( $finds, $replacements, $template );
 }
 
+function check2faAuth( $token )
+{
+	
+}
+
 ?>

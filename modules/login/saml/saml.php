@@ -25,6 +25,7 @@
 */
 
 include( 'include/helpers.php' );
+include( 'php/friend.php' );
 
 //check that necessary globals and config are present
 if(
@@ -47,7 +48,7 @@ if( $args = getArgs() )
     // Check if auth 2fa token is registered for this session
     else if( isset( $args->check2fa ) )
     {
-    	die( 'fail<!--separate-->Checking 2fa.' );
+    	die( check2faAuth( $args->auth2fatoken ) );
     }
 }
 
