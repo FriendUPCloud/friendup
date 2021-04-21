@@ -826,7 +826,7 @@ Sections.accounts_roles = function( cmd, extra )
 													b.style = 'position:absolute;right:0;margin-top:-2px;';
 													b.onclick = function(  )
 													{
-														searchtemplates( false );
+														searchroles( false );
 														var inp = ge( 'AdminRoleContainer' ).getElementsByTagName( 'input' )[0];
 														inp.value = '';
 													}
