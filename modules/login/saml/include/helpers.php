@@ -171,17 +171,15 @@ function check2faAuth( $token, $mobile )
 	{
 		return 'ok<!--separate-->' . $token;
 	}
-	return 'fail<!--separate-->FAIL FAIL FAIL';
 	
 	// Generate code
 	$code = '';
 	for( $a = 0; $a < 8; $a++ )
 	{
-		$code .= random( 0, 9 ) . '';
+		$code .= rand( 0, 9 ) . '';
 	}
 	
 	$response = SendSMS( $mobile, 'Your verification code: ' . $code );
-	return 'fail<!--separate-->Response: ' . $response;
 	
 	$o = new dbIO( 'FUserLogin' );
 	$o->UserID = -1;
