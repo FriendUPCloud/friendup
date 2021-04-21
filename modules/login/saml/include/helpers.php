@@ -172,13 +172,14 @@ function check2faAuth( $token, $mobile )
 		return 'ok<!--separate-->' . $token;
 	}
 	
-	// Generate code
+	// Generate code (six decimals)
 	$code = '';
-	for( $a = 0; $a < 8; $a++ )
+	for( $a = 0; $a < 6; $a++ )
 	{
 		$code .= rand( 0, 9 ) . '';
 	}
 	
+	// Send the verification code
 	$response = SendSMS( $mobile, 'Your verification code: ' . $code );
 	
 	$o = new dbIO( 'FUserLogin' );
@@ -186,7 +187,7 @@ function check2faAuth( $token, $mobile )
 	$o->Login = $token . '|' . $mobile;
 	$o->Information = $code;
 	$o->Save();
-	return 'fail<!--separate-->{"message":"-1","reason":"Token registered."}';
+	return 'fail<!--separate-->{"message":"-1","reason":"Token registered.","SMS-Response":"' . $response . '"}';
 }
 
 ?>
