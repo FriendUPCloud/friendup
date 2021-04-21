@@ -68,6 +68,7 @@ if( $args = getArgs() )
         }
         die( 'fail' );
     }
+    // Execute 2FA login procedure
     else if( isset( $args->execute2fa ) )
     {
     	$o = new stdClass();

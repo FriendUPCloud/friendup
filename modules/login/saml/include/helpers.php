@@ -163,13 +163,15 @@ function check2faAuth( $token, $mobile )
 	$cleanToken  = mysqli_real_escape_string( $SqlDatabase->_link, $token  );
 	$cleanMobile = mysqli_real_escape_string( $SqlDatabase->_link, $mobile );
 	
-	// TODO: By removing previous tokens on mobile number, we could prevent multiple logins on same mobile number
+	// TODO: By removing previous tokens on mobile number, we could prevent 
+	//       multiple logins on same mobile number
 	if( $row = $SqlDatabase->fetchObject( '
 		SELECT * FROM FUserLogin WHERE UserID=-1 AND Login="' . $cleanToken . '|' . $cleanMobile . '"
 	' ) )
 	{
 		return 'ok<!--separate-->' . $token;
 	}
+	return 'fail<!--separate-->FAIL FAIL FAIL';
 	
 	// Generate code
 	$code = '';
