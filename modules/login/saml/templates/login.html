@@ -174,9 +174,15 @@
 				    let mobileNumber = null;
 				    if( parent.Workspace && parent.Workspace.samlData )
 				    {
+				    	console.log( 'Checking SAML data...' );
 						let smd = parent.Workspace.samlData.user;
 						let us = null; for( us in smd ) break;
 						mobileNumber = smd[ us ][ 0 ].split( '@' )[0]
+						console.log( 'Mobile number is: ' + mobileNumber );
+					}
+					else
+					{
+						console.log( 'Unable to check saml data.' );
 					}
 				    
 				    let m = new cAjax();
