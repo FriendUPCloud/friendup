@@ -72,10 +72,12 @@ if( $args = getArgs() )
     else if( isset( $args->execute2fa ) )
     {
     	$o = new stdClass();
+    	$o->Code = $args->code;
     	$o->AuthToken = $args->authtoken;
+    	$o->Username = $args->username;
     	$o->MobileNumber = $args->mobilenumber;
     	$o->Password = $args->password;
-    	die( print_r( $o, 1 ) );
+    	execute2fa( $o );
     }
     // Check if auth 2fa token is registered for this session
     else if( isset( $args->check2fa ) )

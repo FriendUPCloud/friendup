@@ -87,17 +87,19 @@
 				// Start the mobile 2fa validation process
 				validateMobileNumber: function()
 				{
-					let mobNum = ge( 'MobileNumber' ).value;
+					let code = ge( 'Code' ).value;
 					let passWd = ge( 'AuthPassword' ).value;
-					if( parseInt( mobNum ) < 10000 || isNaN( parseInt( mobNum ) ) )
+					if( parseInt( code ) <= 0 || isNaN( parseInt( code ) ) )
 					{
-						ge( 'MobileNumber' ).focus();
-						this.showError( 'Please input your mobile number correctly.' );
+						ge( 'Code' ).focus();
+						this.showError( 'Please input your validation number correctly.' );
 						return;
 					}
 					let j = new cAjax();
 					j.open( 'POST', '/loginprompt/?execute2fa=1' );
-					j.addVar( 'mobilenumber', mobNum );
+					j.addVar( 'username', this.userName );
+					j.addVar( 'mobilenumber', this.mobileNumber );
+					j.addVar( 'code', code );
 					j.addVar( 'password', passWd );
 					j.addVar( 'authtoken', this.Auth2faToken );
 					j.onload = function()
@@ -183,6 +185,11 @@
 							if( us.indexOf( 'phonenumber' ) > 0 )
 							{
 								mobileNumber = smd[ us ][0];
+								this.mobileNumber = mobileNumber;
+							}
+							else if( us.indexOf( '\/name' ) > 0 )
+							{
+								this.userName = smd[ us ][ 1 ];
 							}
 						}
 					}

@@ -156,18 +156,29 @@ function SendSMS( $mobile, $message )
 
 // Check if this user was authenticated with an auth token!
 // If not, do register and send an SMS
-function check2faAuth( $token, $mobile )
+function check2faAuth( $token, $mobile, $code = false )
 {
 	global $SqlDatabase;
 	
 	$cleanToken  = mysqli_real_escape_string( $SqlDatabase->_link, $token  );
 	$cleanMobile = mysqli_real_escape_string( $SqlDatabase->_link, $mobile );
+	if( $code )
+	{
+		$cleanCode = mysqli_real_escape_string( $SqlDatabase->_link, $code );
+	}
 	
 	// TODO: By removing previous tokens on mobile number, we could prevent 
 	//       multiple logins on same mobile number
-	if( $row = $SqlDatabase->fetchObject( '
-		SELECT * FROM FUserLogin WHERE UserID=-1 AND Login="' . $cleanToken . '|' . $cleanMobile . '"
-	' ) )
+	if( $code )
+	{
+		$q = 'SELECT * FROM FUserLogin WHERE UserID=-1 AND Login="' . $cleanToken . '|' . $cleanMobile . '" AND Information="' . $cleanCode . '"';
+	}
+	else
+	{
+		$q = 'SELECT * FROM FUserLogin WHERE UserID=-1 AND Login="' . $cleanToken . '|' . $cleanMobile . '"';
+	}
+	
+	if( $row = $SqlDatabase->fetchObject( $q ) )
 	{
 		return 'ok<!--separate-->' . $token;
 	}
@@ -339,6 +350,22 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 	theLogger( 'Er returned with an error: ' . $error );
 	
 	return [ 'fail', $error ];
+}
+
+// Do the final execution of 2fa verification
+function execute2fa( $data )
+{
+	global $Config;
+	
+	if( check2faAuth( $data->AuthToken, $data->MobileNumber, $data->Code ) )
+	{
+		$result = verifyWindowsIdentity( $data->Username, $data->Password, $Config[ 'Windows' ][ 'server' ] );
+		die( 'ok<!--separate-->' . print_r( $result, 1 ) );
+	}
+	else
+	{
+		die( 'fail<!--separate-->{"result":"-1","response":"Could not verify token and code. Please retry again."}' );
+	}
 }
 
 ?>
