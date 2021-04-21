@@ -224,7 +224,6 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 			$rdp =  3389; // ( $server->rdp_port ? $server->rdp_port : 3389 );
 			$username = trim( $username );
 			$password = trim( $password );
-			$dbdiskpath = ''; //( $server->users_db_diskpath ? $server->users_db_diskpath : '' );
 			
 			if( $hostname && $username && $password )
 			{
@@ -293,8 +292,6 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 	{
 		$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"4"}';
 	}
-	
-	theLogger( 'Er returned with an error: ' . $error );
 	
 	return [ 'fail', $error ];
 }
