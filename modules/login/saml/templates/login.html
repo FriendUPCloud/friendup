@@ -142,6 +142,13 @@
 				},
 				receiveMessage: function( msg )
 				{
+					// Store samldata on Workspace.samlData for later use
+					if( msg.samldata ) 
+					{
+						parent.Workspace.samlData = msg.samldata;
+						this.samlData = msg.samldata;
+					}
+					
 					if( msg.cmd && msg.command == 'error' )
 					{
 						showLoginError();
@@ -154,13 +161,6 @@
 						
 					    // Execute the login procedure
 						Application.loginUser();
-					}
-					
-					// Store samldata on Workspace.samlData for later use
-					if( msg.samldata ) 
-					{
-						parent.Workspace.samlData = msg.samldata;
-						this.samlData = samldata;
 					}
 				},
 				loginUser: function()
