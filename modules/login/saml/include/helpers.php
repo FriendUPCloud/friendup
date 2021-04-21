@@ -208,7 +208,6 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 	
 	// TODO: set login data static for the presentation, remove later, only test data.
 	// TODO: verify user with free rdp ...
-	// TODO: Get user data from free rdp login or use powershell via ssh as friend admin user ...
 	// TODO: implement max security with certs for ssh / rdp access if possible, only allow local ...
 	
 	if( $username && $server )
@@ -220,14 +219,12 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 			// TODO: Move this to a server config, together with what mode to use for 2factor ...
 			// TODO: Look at hashing password or something ...
 			
-			$adminus = $server->username;
-			$adminpw = $server->password;
-			$hostname = $server->host;
-			$port = ( $server->ssh_port ? $server->ssh_port : 22 );
-			$rdp =  ( $server->rdp_port ? $server->rdp_port : 3389 );
+			$hostname = $server; //->host;
+			$port = 22; //( $server->ssh_port ? $server->ssh_port : 22 );
+			$rdp =  3389; // ( $server->rdp_port ? $server->rdp_port : 3389 );
 			$username = trim( $username );
 			$password = trim( $password );
-			$dbdiskpath = ( $server->users_db_diskpath ? $server->users_db_diskpath : '' );
+			$dbdiskpath = ''; //( $server->users_db_diskpath ? $server->users_db_diskpath : '' );
 			
 			if( $hostname && $username && $password )
 			{
@@ -283,57 +280,7 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 				
 				if( !$error )
 				{
-					//$path = ( SCRIPT_2FA_PATH . '/../../../cfg' );
-					// Specific usecase ...
-					if( $dbdiskpath && file_exists( $dbdiskpath /*$path . '/Friend-AD-Time-IT.csv'*/ ) )
-					{
-						if( $output = file_get_contents( $dbdiskpath /*$path . '/Friend-AD-Time-IT.csv'*/ ) )
-						{
-							$identity = new stdClass();
-							
-							if( $rows = explode( "\n", trim( $output ) ) )
-							{							
-								foreach( $rows as $line )
-								{
-									$line = explode( ';', $line );
-									list( $mobnum, $name, $user, ) = $line;
-									$mobnum = trim( $mobnum );
-									$name = trim( $name );
-									$user = trim( $user );
-									
-									// Our user!
-									if( isset( $mobnum ) && isset( $name ) && isset( $user ) && strtolower( $user ) == strtolower( trim( $username ) ) )
-									{
-										if( !intval( $mobnum ) )
-										{
-											// TODO: Will this even work?
-											if( $tmp_mobile = (int) filter_var( $mobnum, FILTER_SANITIZE_NUMBER_INT ) )
-											{
-												$mobnum = $tmp_mobile; // Set sanitized number
-											}
-										}
-										else
-										{
-											$mobnum = intval( $mobnum );
-										}
-										
-										$data = new stdClass();
-										$data->id       = '0';
-										$data->fullname = $name;
-										$data->mobile   = $mobnum;
-										
-										theLogger( 'Found ' . print_r( $data, 1 ) );
-										
-										return [ 'ok', $data ];
-									}
-								}
-							}
-							//return [ 'fail', '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"0"}' ];
-						}
-					}
-
-					// Failed to fin d user in list.
-					return [ 'fail', '{"result":"-1","response":"Could not find user in index, or index does not exist","code":"7","debug":"0"}' ];
+					return [ 'ok', '{"result":"1","response":"Successfully verified user."}' ];
 				}
 			}
 		}
@@ -359,14 +306,14 @@ function execute2fa( $data )
 	
 	if( check2faAuth( $data->AuthToken, $data->MobileNumber, $data->Code ) )
 	{
-		die( 'testing: ' . $Config[ 'Windows' ][ 'server' ] );
-		//$result = verifyWindowsIdentity( $data->Username, $data->Password, $Config[ 'Windows' ][ 'server' ] );
+		$result = verifyWindowsIdentity( $data->Username, $data->Password, $Config[ 'Windows' ][ 'server' ] );
+		if( $result )
+		{
+			die( $result[0] . '<!--separate-->' . $result[1] );
+		}
 		die( 'ok<!--separate-->' . print_r( $result, 1 ) );
 	}
-	else
-	{
-		die( 'fail<!--separate-->{"result":"-1","response":"Could not verify token and code. Please retry again."}' );
-	}
+	die( 'fail<!--separate-->{"result":"-1","response":"Could not verify token and code. Please retry again."}' );
 }
 
 ?>
