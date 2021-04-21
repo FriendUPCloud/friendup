@@ -160,6 +160,7 @@
 					if( msg.samldata ) 
 					{
 						parent.Workspace.samlData = msg.samldata;
+						this.samlData = samldata;
 					}
 				},
 				loginUser: function()
@@ -182,7 +183,7 @@
 					}
 					else
 					{
-						console.log( 'Unable to check saml data.' );
+						console.log( 'Unable to check saml data.', this.samlData );
 					}
 				    
 				    let m = new cAjax();
