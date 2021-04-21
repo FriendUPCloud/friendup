@@ -57,10 +57,11 @@ if( $d->Load() )
 {
 	die( 'fail<!--separate-->{"message":"Role already exists.","response":-1}' );
 }
+$d->Description = trim( $args->args->description );
 $d->Save();
 if( $d->ID > 0 )
 {
-	die( 'ok<!--separate-->{"message":"Role created.","response":1}' );
+	die( 'ok<!--separate-->{"message":"Role created.","roleid":'.$d->ID.',"response":1}' );
 }
 
 die( 'fail' );

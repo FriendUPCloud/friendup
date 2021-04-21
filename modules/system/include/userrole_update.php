@@ -61,6 +61,12 @@ if( isset( $args->args->id ) )
 {
 	$d->Load( $args->args->id );
 	
+	// Update description
+	if( isset( $args->args->description ) )
+	{
+		$d->Description = $args->args->description;
+	}
+	
 	// Update name
 	if( isset( $args->args->name ) )
 	{
@@ -223,7 +229,7 @@ if( $d->ID > 0 )
 	}
 	else if( $namechange )
 	{
-		die( 'ok<!--separate-->{"message":"Role updated. Name changed.","response":1}' );
+		die( 'ok<!--separate-->{"message":"Role updated. Name changed.","roleid":'.$d->ID.',"response":1}' );
 	}
 }
 

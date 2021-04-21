@@ -13,207 +13,266 @@ Sections.accounts_roles = function( cmd, extra )
 {
 	if( cmd )
 	{
-		if( cmd == 'edit' )
+		
+		switch( cmd )
 		{
 			
-			if( extra )
-			{
-				if( ge( 'RoleInner' ) )
+			case 'refresh':
+				
+				if( extra && extra.wid )
 				{
-					var ele = ge( 'RoleInner' ).getElementsByTagName( 'div' );
-					
-					if( ele )
-					{
-						for( var i in ele )
-						{
-							if( ele[i] && ele[i].className )
-							{
-								ele[i].classList.remove( 'Selected' );
-							}
-						}
-					}
+					edit( extra.wid, extra.rid );
+				}
+				else
+				{
+					cancel();
 				}
 				
-				if( ge( 'RoleID_' + extra ) )
+				break;
+			
+			case 'create':
+				
+				if( extra && extra.wid )
 				{
-					ge( 'RoleID_' + extra ).classList.add( 'Selected' );
+					create( extra.wid, ( extra.callback ? extra.callback : null ) );
+				}
+				
+				return;
+		
+			case 'update':
+				
+				if( extra && extra.wid && extra.rid )
+				{
+					update( extra.wid, extra.rid, ( extra.callback ? extra.callback : null ) );
+				}
+				
+				return;
+			
+			case 'delete':
+				
+				if( extra && extra.wid && extra.rid )
+				{
+					remove( extra.wid, extra.rid, ( extra.callback ? extra.callback : null ) );
+				}
+				
+				return;
+			
+			case 'edit':
+				
+				if( extra && extra.wid )
+				{
+					edit( extra.wid, extra.rid );
+				}
+				
+				return;
+		
+		}
+		
+		
+		
+	}
+	
+	// Init --------------------------------------------------------------------
+	
+	function loading( wid, rid )
+	{
+		
+		if( wid && rid )
+		{
+			if( ge( 'RoleInner' ) )
+			{
+				var ele = ge( 'RoleInner' ).getElementsByTagName( 'div' );
+		
+				if( ele )
+				{
+					for( var i in ele )
+					{
+						if( ele[i] && ele[i].className )
+						{
+							ele[i].classList.remove( 'Selected' );
+						}
+					}
 				}
 			}
 			
-			var info = {};
-			
-			// Go through all data gathering until stop
-			var loadingSlot = 0;
-			
-			var loadingList = [
-				
-				// Load roleinfo
-				function()
-				{
-					var u = new Module( 'system' );
-					u.onExecuted = function( e, d )
-					{
-						console.log( 'userroleget', { e:e, d:d } );
-						info.role = null;
-						if( e != 'ok' ) return;
-						
-						try
-						{
-							info.role = JSON.parse( d );
-						}
-						catch( e )
-						{
-							return;
-						}
-						
-						loadingList[ ++loadingSlot ]( info );
-					}
-					u.execute( 'userroleget', { id: extra, authid: Application.authId } );
-				},
-				
-				// Load system permissions
-				function()
-				{
-					var m = new Module( 'system' );
-					m.onExecuted = function( e, d )
-					{
-						console.log( 'getsystempermissions', { e:e, d:d } );
-						info.permission = null;
-						if( e != 'ok' ) return;
-						
-						try
-						{
-							info.permission = JSON.parse( d );
-						}
-						catch( e ) 
-						{
-							return;
-						}
-						loadingList[ ++loadingSlot ]( info );
-					}
-					m.execute( 'getsystempermissions', { authid: Application.authId } );
-				},
-				
-				// 1 | Load applications
-				
-				function(  )
-				{
-					
-					applications( function ( res, dat )
-					{
-					
-						if( ShowLog ) console.log( { e:res, d:dat } );
-						
-						//if( !res ) return;
-						
-						if( dat )
-						{
-							for( var k in dat )
-							{
-								if( dat[k] && dat[k].Name )
-								{
-									dat[k].Preview = ( !dat[k].Preview ? '/webclient/apps/'+dat[k].Name+'/icon.png' : '/system.library/module/?module=system&command=getapplicationpreview&application='+dat[k].Name+'&authid='+Application.authId );
-								}
-							}
-						}
-						
-						info.applications = dat;
-						
-						// Go to next in line ...
-						loadingList[ ++loadingSlot ]( info );
-						
-					} );
-					
-				},
-				
-				// Load workgroups
-				function()
-				{
-					
-					// Specific for Pawel's code ... He just wants to forward json ...
-					
-					var args = JSON.stringify( {
-						'type'    : 'read', 
-						'context' : 'application', 
-						'authid'  : Application.authId, 
-						'data'    : { 
-							'permission' : 'WORKGROUP_READ'
-						}, 
-						'listdetails' : 'workgroup' 
-					} );
-				
-					var f = new Library( 'system.library' );
-					f.onExecuted = function( e, d )
-					{
-					
-						var wgroups = null; var workgroups = null;
-					
-						try
-						{
-							wgroups = JSON.parse( d );
-						}
-						catch( e )
-						{
-							wgroups = null;
-						}
-					
-						if( ShowLog || 1==1 ) console.log( 'workgroups ', { e:e , d:(wgroups?wgroups:d), args: args } );
-					
-						if( wgroups.groups )
-						{
-							workgroups = wgroups.groups;
-						}
-						else if( wgroups.data && wgroups.data.details && wgroups.data.details.groups )
-						{
-							workgroups = wgroups.data.details.groups;
-						}
-						
-						info.workgroups = null;
-						
-						if( wgroups && workgroups )
-						{
-							var out = [];
-						
-							for( var a in workgroups )
-							{
-								if( workgroups[a] && workgroups[a].ID )
-								{
-									out.push( { 
-										ID       : workgroups[a].ID, 
-										UUID     : workgroups[a].uuid, 
-										Name     : workgroups[a].name, 
-										ParentID : workgroups[a].parentid, 
-										Status   : workgroups[a].status 
-									} );
-								}
-							}
-							
-							info.workgroups = out;
-						}
-						
-						loadingList[ ++loadingSlot ]( info );
-						
-					}
-					
-					f.execute( 'group/list', { parentid: 0, authid: Application.authId, args: args } );
-					
-				},
-				
-				// Then, finally, show role details
-				function( info )
-				{
-					if( typeof info.role == 'undefined' && typeof info.permission == 'undefined' && typeof info.workgroups == 'undefined' ) return;
-					
-					initRoleDetails( info );
-				}
-				
-			];
-			
-			loadingList[ 0 ]();
-			
-			
-			return;
+			if( ge( 'WorkgroupID_' + wid + '_RoleID_' + rid ) )
+			{
+				ge( 'WorkgroupID_' + wid + '_RoleID_' + rid ).classList.add( 'Selected' );
+			}
 		}
+
+		var info = { ID: ( rid ? rid : 0 ), GroupID: ( wid ? wid : 0 ) };
+		
+		// Go through all data gathering until stop
+		var loadingSlot = 0;
+
+		var loadingList = [
+	
+			// Load roleinfo
+			function()
+			{
+				var u = new Module( 'system' );
+				u.onExecuted = function( e, d )
+				{
+					console.log( 'userroleget', { e:e, d:d } );
+					info.role = null;
+					if( e != 'ok' ) return;
+			
+					try
+					{
+						info.role = JSON.parse( d );
+					}
+					catch( e )
+					{
+						return;
+					}
+			
+					loadingList[ ++loadingSlot ]( info );
+				}
+				u.execute( 'userroleget', { id: rid, authid: Application.authId } );
+			},
+	
+			// Load system permissions
+			function()
+			{
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					console.log( 'getsystempermissions', { e:e, d:d } );
+					info.permission = null;
+					if( e != 'ok' ) return;
+			
+					try
+					{
+						info.permission = JSON.parse( d );
+					}
+					catch( e ) 
+					{
+						return;
+					}
+					loadingList[ ++loadingSlot ]( info );
+				}
+				m.execute( 'getsystempermissions', { authid: Application.authId } );
+			},
+	
+			// 1 | Load applications
+	
+			function(  )
+			{
+		
+				applications( function ( res, dat )
+				{
+		
+					if( ShowLog ) console.log( { e:res, d:dat } );
+			
+					//if( !res ) return;
+			
+					if( dat )
+					{
+						for( var k in dat )
+						{
+							if( dat[k] && dat[k].Name )
+							{
+								dat[k].Preview = ( !dat[k].Preview ? '/webclient/apps/'+dat[k].Name+'/icon.png' : '/system.library/module/?module=system&command=getapplicationpreview&application='+dat[k].Name+'&authid='+Application.authId );
+							}
+						}
+					}
+			
+					info.applications = dat;
+			
+					// Go to next in line ...
+					loadingList[ ++loadingSlot ]( info );
+			
+				} );
+		
+			},
+	
+			// Load workgroups
+	
+			function(  )
+			{
+		
+				// Specific for Pawel's code ... He just wants to forward json ...
+		
+				var args = JSON.stringify( {
+					'type'    : 'read', 
+					'context' : 'application', 
+					'authid'  : Application.authId, 
+					'data'    : { 
+						'permission' : 'WORKGROUP_READ'
+					}, 
+					'listdetails' : 'workgroup' 
+				} );
+	
+				var f = new Library( 'system.library' );
+				f.onExecuted = function( e, d )
+				{
+		
+					var wgroups = null; var workgroups = null;
+		
+					try
+					{
+						wgroups = JSON.parse( d );
+					}
+					catch( e )
+					{
+						wgroups = null;
+					}
+		
+					if( ShowLog || 1==1 ) console.log( 'workgroups ', { e:e , d:(wgroups?wgroups:d), args: args } );
+		
+					if( wgroups.groups )
+					{
+						workgroups = wgroups.groups;
+					}
+					else if( wgroups.data && wgroups.data.details && wgroups.data.details.groups )
+					{
+						workgroups = wgroups.data.details.groups;
+					}
+			
+					info.workgroups = null;
+			
+					if( wgroups && workgroups )
+					{
+						var out = [];
+			
+						for( var a in workgroups )
+						{
+							if( workgroups[a] && workgroups[a].ID )
+							{
+								out.push( { 
+									ID       : workgroups[a].ID, 
+									UUID     : workgroups[a].uuid, 
+									Name     : workgroups[a].name, 
+									ParentID : workgroups[a].parentid, 
+									Status   : workgroups[a].status 
+								} );
+							}
+						}
+				
+						info.workgroups = out;
+					}
+			
+					loadingList[ ++loadingSlot ]( info );
+			
+				}
+		
+				f.execute( 'group/list', { parentid: 0, authid: Application.authId, args: args } );
+		
+			},
+	
+			// Then, finally, show role details
+			function( info )
+			{
+				if( typeof info.role == 'undefined' && typeof info.permission == 'undefined' && typeof info.workgroups == 'undefined' ) return;
+		
+				initRoleDetails( info );
+			}
+	
+		];
+
+		loadingList[ 0 ]();
+	
 	}
 	
 	// Read --------------------------------------------------------------------
@@ -396,6 +455,295 @@ Sections.accounts_roles = function( cmd, extra )
 		
 	}
 	
+	function edit( wid, rid )
+	{
+		
+		loading( wid, rid );
+		
+	}
+	
+	function cancel(  )
+	{
+		
+		if( ge( 'RoleDetails' ) )
+		{
+			ge( 'RoleDetails' ).innerHTML = '';
+		}
+		
+	}
+	
+	// write -------------------------------------------------------------------------------------------------------- //
+	
+	function create( wid, callback )
+	{
+		
+		if( wid )
+		{
+			
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				console.log( { e:e, d:d } );
+				
+				var data = null;
+				
+				try
+				{
+					data = JSON.parse( d );
+				}
+				catch( e ) 
+				{
+					
+				}
+				
+				if( callback )
+				{
+					return callback( ( e && e == 'ok' ? true : false ), data );
+				}
+			
+			}
+			m.execute( 'userroleadd', { 
+				name        : ( ge( 'RoleName' ) ? ge( 'RoleName' ).value : 'Unnamed role' ), 
+				description : ( ge( 'RoleDescription' ).value ? ge( 'RoleDescription' ).value : '' ),
+				authid      : Application.authId 
+			} );
+			
+		}
+		
+	}
+	
+	function update( wid, rid, callback )
+	{
+		
+		if( wid && rid )
+		{
+			
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				console.log( { e:e, d:d } );
+				
+				var data = null;
+				
+				try
+				{
+					data = JSON.parse( d );
+				}
+				catch( e ) 
+				{
+					
+				}
+				
+				if( callback )
+				{
+					return callback( ( e && e == 'ok' ? true : false ), data );
+				}
+				
+			}
+			m.execute( 'userroleupdate', { 
+				id          : rid, 
+				name        : ge( 'RoleName' ).value, 
+				description : ge( 'RoleDescription' ).value, 
+				authid      : Application.authId 
+			} );
+			
+		}
+	}
+	
+	// delete ------------------------------------------------------------------------------------------------------- //
+	
+	function remove( wid, rid, callback )
+	{
+				
+		if( wid && rid )
+		{
+			
+			// TODO: Look at implications for role with same id on different workgroups and users ...
+			
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				console.log( { e:e, d:d } );
+				
+				var data = null;
+				
+				try
+				{
+					data = JSON.parse( d );
+				}
+				catch( e ) 
+				{
+					
+				}
+				
+				if( callback )
+				{
+					return callback( ( e && e == 'ok' ? true : false ), data );
+				}
+				
+			}
+			m.execute( 'userroledelete', { 
+				id     : rid,
+				authid : Application.authId 
+			} );
+			
+		}
+		
+	}
+	
+	// helper functions --------------------------------------------------------------------------------------------- //
+	
+	function removeBtn( _this, args, callback )
+	{
+		
+		if( _this )
+		{
+			closeEdit();
+			
+			_this.savedState = { 
+				id        : _this.id,
+				className : _this.className, 
+				innerHTML : _this.innerHTML, 
+				onclick   : ( _this.onclick ? _this.onclick : function () {} ) 
+			}
+			_this.classList.remove( 'IconButton' );
+			_this.classList.remove( 'IconToggle' );
+			_this.classList.remove( 'ButtonSmall' );
+			_this.classList.remove( 'ColorStGrayLight' );
+			_this.classList.remove( 'fa-minus-circle' );
+			_this.classList.remove( 'fa-trash' );
+			_this.classList.remove( 'Negative' );
+			_this.classList.add( 'Button' );
+			_this.classList.add( 'BackgroundRed' );
+			_this.id = 'EditMode';
+			_this.innerHTML = ( args.button_text ? i18n( args.button_text ) : i18n( 'i18n_delete' ) );
+			_this.args = args;
+			_this.callback = callback;
+			_this.onclick = function(  )
+			{
+				
+				if( this.callback )
+				{
+					callback( this.args ? this.args : false );
+				}
+				
+			};
+		}
+		
+	}
+	
+	function closeEdit()
+	{
+		if( ge( 'EditMode' ) )
+		{
+			if( ge( 'EditMode' ) && ge( 'EditMode' ).savedState )
+			{
+				if( typeof ge( 'EditMode' ).savedState.className != 'undefined' )
+				{
+					ge( 'EditMode' ).className = ge( 'EditMode' ).savedState.className;
+				}
+				if( typeof ge( 'EditMode' ).savedState.innerHTML != 'undefined' )
+				{
+					ge( 'EditMode' ).innerHTML = ge( 'EditMode' ).savedState.innerHTML;
+				}
+				if( typeof ge( 'EditMode' ).savedState.onclick != 'undefined' )
+				{
+					ge( 'EditMode' ).onclick = ge( 'EditMode' ).savedState.onclick;
+				}
+				if( typeof ge( 'EditMode' ).savedState.id != 'undefined' )
+				{
+					ge( 'EditMode' ).id = ge( 'EditMode' ).savedState.id;
+				}
+				else
+				{
+					ge( 'EditMode' ).removeAttribute( 'id' );
+				}
+			}
+		}
+	}
+	
+	Application.closeAllEditModes = function( act )
+	{
+		
+		if( act )
+		{
+			if( act.keycode )
+			{
+				
+				switch ( act.keycode )
+				{
+					// Esc
+					case 27:
+						
+						if( ge( 'RoleDeleteBtn' ) && ge( 'RoleDeleteBtn' ).savedState )
+						{
+							
+							if( typeof ge( 'RoleDeleteBtn' ).savedState.className != 'undefined' )
+							{
+								ge( 'RoleDeleteBtn' ).className = ge( 'RoleDeleteBtn' ).savedState.className;
+							}
+							if( typeof ge( 'RoleDeleteBtn' ).savedState.innerHTML != 'undefined' )
+							{
+								ge( 'RoleDeleteBtn' ).innerHTML = ge( 'RoleDeleteBtn' ).savedState.innerHTML;
+							}
+							if( typeof ge( 'RoleDeleteBtn' ).savedState.onclick != 'undefined' )
+							{
+								ge( 'RoleDeleteBtn' ).onclick = ge( 'RoleDeleteBtn' ).savedState.onclick;
+							}
+							
+						}
+						
+						closeEdit();
+						
+						break;
+					default: break;
+				}
+				
+			}
+			
+			if( act.targ )
+			{
+				
+				// TODO: Get these id's ...
+				
+				if( ge( 'RoleDeleteBtn' ) && ge( 'RoleDeleteBtn' ).savedState )
+				{
+				
+					if( act.targ.id != 'RoleDeleteBtn' && act.targ.tagName != 'HTML' && act.targ.tagName != 'BODY' )
+					{
+						
+						if( typeof ge( 'RoleDeleteBtn' ).savedState.className != 'undefined' )
+						{
+							ge( 'RoleDeleteBtn' ).className = ge( 'RoleDeleteBtn' ).savedState.className;
+						}
+						if( typeof ge( 'RoleDeleteBtn' ).savedState.innerHTML != 'undefined' )
+						{
+							ge( 'RoleDeleteBtn' ).innerHTML = ge( 'RoleDeleteBtn' ).savedState.innerHTML;
+						}
+						if( typeof ge( 'RoleDeleteBtn' ).savedState.onclick != 'undefined' )
+						{
+							ge( 'RoleDeleteBtn' ).onclick = ge( 'RoleDeleteBtn' ).savedState.onclick;
+						}
+						
+					}
+					
+				}
+				
+				if( ge( 'EditMode' ) && ge( 'EditMode' ).savedState )
+				{
+					
+					if( act.targ.id != 'EditMode' && act.targ.tagName != 'HTML' && act.targ.tagName != 'BODY' )
+					{
+						closeEdit();
+					}
+					
+				}
+				
+			}
+		}
+		
+	}
+	
 	// Get the user list -------------------------------------------------------
 		
 	if( Application.checkAppPermission( 'ROLE_READ' ) )
@@ -563,16 +911,16 @@ Sections.accounts_roles = function( cmd, extra )
 												}(  ) 
 											}, 
 											{ 
-												'element' : function( _this ) 
+												'element' : function(  ) 
 												{
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmallLeft PaddingSmallRight HContent45 FloatLeft Relative';
 													d.innerHTML = '<strong></strong>';
 													return d;
-												}( this )
+												}()
 											},
 											{ 
-												'element' : function() 
+												'element' : function(  ) 
 												{
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Relative';
@@ -671,7 +1019,7 @@ Sections.accounts_roles = function( cmd, extra )
 															b.groupid = wgroups[k].ID;
 															b.onclick = function()
 															{
-																edit(  );
+																edit( this.groupid );
 															};
 															return b;
 														}
@@ -713,16 +1061,16 @@ Sections.accounts_roles = function( cmd, extra )
 												'element' : function()
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'HRow';
-													d.id = 'RoleID_' + roles[a].ID;
+													d.className = 'HRow' + ( extra && extra.wid == wgroups[k].ID && extra.rid == roles[a].ID ? ' Selected' : '' );
+													d.id = 'WorkgroupID_' + wgroups[k].ID + '_RoleID_' + roles[a].ID;
 													d.roleid = roles[a].ID;
-									
+													d.groupid = wgroups[k].ID;
+													
 													if( Application.checkAppPermission( 'ROLE_READ' ) )
 													{
 														d.onclick = function()
 														{
-															Sections.accounts_roles( 'edit', this.roleid );
-															//edit( this.roleid, this );
+															edit( this.groupid, this.roleid );
 														};
 													}
 									
@@ -1062,8 +1410,11 @@ Sections.userroleupdate = function( rid, input, perms, refresh )
 		{
 			//console.log( { e:e, d:d } );
 			
-			// refresh
-			Sections.accounts_roles();
+			if( refresh == null || typeof refresh == 'undefined' )
+			{
+				// refresh
+				Sections.accounts_roles();
+			}
 			
 			// refresh details also ...
 			if( refresh )
@@ -1132,6 +1483,8 @@ Sections.updatepermission = function( rid, pem, key, data, _this )
 	}
 };
 
+// TODO: Add to workgroup if is defined ...
+
 Sections.togglepermission = function( rid, pem, key, _this, command )
 {
 	//if( _this )
@@ -1155,7 +1508,7 @@ Sections.togglepermission = function( rid, pem, key, _this, command )
 		
 		console.log( 'Sections.togglepermission', { rid: rid, perms: perms, _this: _this } );
 		
-		Sections.userroleupdate( rid, null, perms );
+		Sections.userroleupdate( rid, null, perms, false );
 	}
 };
 

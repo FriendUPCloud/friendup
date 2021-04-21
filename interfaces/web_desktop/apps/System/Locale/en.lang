@@ -292,6 +292,10 @@ i18n_User Group already exist          : User Group already exist
 
 i18n_sucess                            : Success
 
+#Role related
+
+i18n_delete_role                  : Delete role
+
 #Storage related
 
 i18n_name                         : Name
