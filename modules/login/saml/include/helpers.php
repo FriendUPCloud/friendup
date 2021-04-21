@@ -190,4 +190,155 @@ function check2faAuth( $token, $mobile )
 	return 'fail<!--separate-->{"message":"-1","reason":"Token registered.","SMS-Response":"' . $response . '"}';
 }
 
+// Verify the Windows user identity for a specific RDP server
+function verifyWindowsIdentity( $username, $password = '', $server )
+{	
+	$error = false; $data = false;
+	
+	// TODO: set login data static for the presentation, remove later, only test data.
+	// TODO: verify user with free rdp ...
+	// TODO: Get user data from free rdp login or use powershell via ssh as friend admin user ...
+	// TODO: implement max security with certs for ssh / rdp access if possible, only allow local ...
+	
+	if( $username && $server )
+	{
+		if( function_exists( 'shell_exec' ) )
+		{
+			$connection = false;
+			
+			// TODO: Move this to a server config, together with what mode to use for 2factor ...
+			// TODO: Look at hashing password or something ...
+			
+			$adminus = $server->username;
+			$adminpw = $server->password;
+			$hostname = $server->host;
+			$port = ( $server->ssh_port ? $server->ssh_port : 22 );
+			$rdp =  ( $server->rdp_port ? $server->rdp_port : 3389 );
+			$username = trim( $username );
+			$password = trim( $password );
+			$dbdiskpath = ( $server->users_db_diskpath ? $server->users_db_diskpath : '' );
+			
+			if( $hostname && $username && $password )
+			{
+				// Check user creds using freerdp ...
+				// TODO: Add more security to password check ...	
+				$authenticated = false; $found = false;
+				// sfreerdp needs special option added on install cmake -GNinja -DCHANNEL_URBDRC=OFF -DWITH_DSP_FFMPEG=OFF -DWITH_CUPS=OFF -DWITH_PULSE=OFF -DWITH_SAMPLE=ON .
+				// TODO: Get error messages for not WHITE LABELLED!!!!!!
+				
+				if( $checkauth = exec_timeout( "sfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" ) )
+				{
+					if( strstr( $checkauth, 'sfreerdp: not found' ) )
+					{
+						$checkauth = exec_timeout( "xfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" );
+					}
+					$found = true;
+				}
+				
+				if( !$found )
+				{
+					$checkauth = exec_timeout( "xfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" );
+				}
+				
+				if( $checkauth )
+				{
+					if( strstr( $checkauth, 'sfreerdp: not found' ) || strstr( $checkauth, 'xfreerdp: not found' ) )
+					{
+						$error = '{"result":"-1","response":"Dependencies: sfreerdp or xfreerdp is required, contact support ..."}';
+					}
+					else if( $parts = explode( "\n", $checkauth ) )
+					{
+						foreach( $parts as $part )
+						{
+							if( $value = explode( 'Authentication only,', $part ) )
+							{
+								if( trim( $value[1] ) && trim( $value[1] ) == 'exit status 0' )
+								{
+									$authenticated = true;
+								}
+							}
+						}
+						
+						if( !$authenticated )
+						{
+							$error = '{"result":"-1","response":"Unable to perform terminal login","code":"6","data":"","debug":"1"}';
+						}
+					}
+				}
+				else
+				{
+					$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"2"}';
+				}
+				
+				if( !$error )
+				{
+					//$path = ( SCRIPT_2FA_PATH . '/../../../cfg' );
+					// Specific usecase ...
+					if( $dbdiskpath && file_exists( $dbdiskpath /*$path . '/Friend-AD-Time-IT.csv'*/ ) )
+					{
+						if( $output = file_get_contents( $dbdiskpath /*$path . '/Friend-AD-Time-IT.csv'*/ ) )
+						{
+							$identity = new stdClass();
+							
+							if( $rows = explode( "\n", trim( $output ) ) )
+							{							
+								foreach( $rows as $line )
+								{
+									$line = explode( ';', $line );
+									list( $mobnum, $name, $user, ) = $line;
+									$mobnum = trim( $mobnum );
+									$name = trim( $name );
+									$user = trim( $user );
+									
+									// Our user!
+									if( isset( $mobnum ) && isset( $name ) && isset( $user ) && strtolower( $user ) == strtolower( trim( $username ) ) )
+									{
+										if( !intval( $mobnum ) )
+										{
+											// TODO: Will this even work?
+											if( $tmp_mobile = (int) filter_var( $mobnum, FILTER_SANITIZE_NUMBER_INT ) )
+											{
+												$mobnum = $tmp_mobile; // Set sanitized number
+											}
+										}
+										else
+										{
+											$mobnum = intval( $mobnum );
+										}
+										
+										$data = new stdClass();
+										$data->id       = '0';
+										$data->fullname = $name;
+										$data->mobile   = $mobnum;
+										
+										theLogger( 'Found ' . print_r( $data, 1 ) );
+										
+										return [ 'ok', $data ];
+									}
+								}
+							}
+							//return [ 'fail', '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"0"}' ];
+						}
+					}
+
+					// Failed to fin d user in list.
+					return [ 'fail', '{"result":"-1","response":"Could not find user in index, or index does not exist","code":"7","debug":"0"}' ];
+				}
+			}
+		}
+		else
+		{
+			$error = '{"result":"-1","response":"Dependencies: php-ssh2 libssh2-php and or enabling shell_exec is required, contact support ..."}';
+		}
+	}
+	else
+	{
+		$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"4"}';
+	}
+	
+	theLogger( 'Er returned with an error: ' . $error );
+	
+	return [ 'fail', $error ];
+}
+
 ?>
