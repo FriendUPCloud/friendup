@@ -215,7 +215,12 @@ function initRoleDetails( info )
 							
 							if( e && d && d.roleid )
 							{
-								Sections.accounts_roles( 'refresh', { wid: info.GroupID, rid: d.roleid } );
+								Sections.workgrouproleupdate( d.roleid, info.GroupID, true, function()
+								{
+									
+									Sections.accounts_roles( 'refresh', { wid: info.GroupID, rid: d.roleid } );
+									
+								} );
 							}
 							
 						} } );
@@ -232,7 +237,12 @@ function initRoleDetails( info )
 							
 							if( e && d && d.roleid )
 							{
-								Sections.accounts_roles( 'refresh', { wid: info.GroupID, rid: d.roleid } );
+								Sections.workgrouproleupdate( d.roleid, info.GroupID, true, function()
+								{
+									
+									Sections.accounts_roles( 'refresh', { wid: info.GroupID, rid: d.roleid } );
+									
+								} );
 							}
 							
 						} } );
@@ -284,17 +294,22 @@ function initRoleDetails( info )
 							
 							if( ShowLog || 1==1 ) console.log( '// delete role' );
 							
-							Sections.accounts_roles( 'delete', { wid: args.wid, rid: args.rid, callback: function ( e, d )
+							Sections.workgrouproleupdate( info.ID, info.GroupID, false, function()
 							{
-							
-								console.log( 'delete ... refresh ... ', { e:e, d:d } );
 								
-								if( e )
+								Sections.accounts_roles( 'delete', { wid: args.wid, rid: args.rid, callback: function ( e, d )
 								{
-									Sections.accounts_roles( 'refresh' );
-								}
 							
-							} } );
+									console.log( 'delete ... refresh ... ', { e:e, d:d } );
+								
+									if( e )
+									{
+										Sections.accounts_roles( 'refresh' );
+									}
+							
+								} } );
+								
+							} );
 							
 						} );
 					}
@@ -321,22 +336,22 @@ function initRoleDetails( info )
 					
 					if( soft )
 					{
-						if( ShowLog ) console.log( 'soft ', soft );
+						if( ShowLog || 1==1 ) console.log( 'soft ', soft );
 						
 						var i = 0;
 						
 						for( var a in soft )
 						{
-							if( soft[a] && soft[a][0] )
+							if( soft[a] )
 							{
-								ids[ i++ ] = soft[a];
+								ids[ a ] = a;
 							}
 						}
 					}
 					
 					return ids;
 					
-				}( null/*soft*/ ),
+				}( role.Permissions ),
 				
 				updateids : function ( mode, key, value )
 				{
@@ -346,24 +361,24 @@ function initRoleDetails( info )
 						
 						case 'applications':
 							
+							// TODO: Collect real perm data here and add to ids ... nd use that ...
+							
 							if( this.appids )
 							{
-								var arr = []; /*var ids = {};*/ var i = 0; var found = false;
+								var arr = []; var i = 0; var found = false;
 								
 								for( var a in this.appids )
 								{
-									if( this.appids[a] && this.appids[a][0] )
+									if( this.appids[a] )
 									{
-										if( key && this.appids[a][0].toLowerCase() == key.toLowerCase() )
+										if( key && this.appids[a].toLowerCase() == key.toLowerCase() )
 										{
 											this.appids[a] = ( value ? value : false ); found = true;
 										}
 										
-										if( this.appids[a] && this.appids[a][0] )
+										if( this.appids[a] )
 										{
-											arr.push( this.appids[a][0] + '_' + this.appids[a][1] );
-											
-											//ids[ i++ ] = this.appids[a];
+											arr.push( this.appids[a] );
 										}
 									}
 									
@@ -372,17 +387,12 @@ function initRoleDetails( info )
 								
 								if( key && value && !found )
 								{
-									if( value[0] )
-									{
-										arr.push( value[0] + '_' + value[1] );
-										
-										/*ids[ i++ ] = value;*/
-										
-										this.appids[ i++ ] = value; 
-									}
+									arr.push( value );
+									
+									this.appids[ key ] = value; 
 								}
 								
-								if( ShowLog ) console.log( 'applications ', this.appids );
+								if( ShowLog || 1==1 ) console.log( 'applications ', this.appids );
 								
 								if( ge( 'RoleApplications' ) )
 								{
@@ -391,11 +401,11 @@ function initRoleDetails( info )
 							}
 							else if( key && value )
 							{
-								this.appids[0] = value;
+								this.appids[ key ] = value;
 								
-								if( ge( 'RoleApplications' ) && value[0] )
+								if( ge( 'RoleApplications' ) )
 								{
-									ge( 'RoleApplications' ).setAttribute( 'value', value[0] + '_' + value[1] );
+									ge( 'RoleApplications' ).setAttribute( 'value', value );
 								}
 							}
 							
@@ -532,7 +542,7 @@ function initRoleDetails( info )
 											
 											for( var k in apps )
 											{
-												if( perm[a] && perm[a].AppPermissions && perm[a].Name == apps[k].Name && role.Permissions && role.Permissions[apps[k].Name] )
+												if( perm[a] && perm[a].AppPermissions && perm[a].Name == apps[k].Name && this.ids[apps[k].Name] )
 												{
 													permissions = perm[a];
 													
@@ -664,6 +674,10 @@ function initRoleDetails( info )
 																					}
 																				}
 																				
+																				if( args.func )
+																				{
+																					args.func.permissions( 'refresh' );
+																				}
 																			
 																			} );
 																		
@@ -726,7 +740,7 @@ function initRoleDetails( info )
 													permissions = perm[a];
 												}
 												
-												if( perm[a] && perm[a].AppPermissions && perm[a].Name == apps[k].Name && role.Permissions && role.Permissions[apps[k].Name] )
+												if( perm[a] && perm[a].AppPermissions && perm[a].Name == apps[k].Name && this.ids[apps[k].Name] )
 												{
 													toggle = true;
 												}
@@ -824,7 +838,9 @@ function initRoleDetails( info )
 																		if( this.checked )
 																		{
 																			
-																			func.updateids( 'applications', permissions.Name, [ name, '0' ] );
+																			// TODO: Collect real perm data here and add to ids ... nd use that ...
+																			
+																			func.updateids( 'applications', permissions.Name, permissions.Name );
 																			
 																			//if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
 																			
@@ -852,6 +868,12 @@ function initRoleDetails( info )
 																					
 																					}
 																				}
+																				
+																				if( func )
+																				{
+																					func.permissions( 'refresh' );
+																				}
+																				
 																			}
 																			
 																		}
@@ -886,6 +908,12 @@ function initRoleDetails( info )
 																					
 																					}
 																				}
+																				
+																				if( func )
+																				{
+																					func.permissions( 'refresh' );
+																				}
+																				
 																			}
 																			
 																		}
@@ -1197,6 +1225,8 @@ function initRoleDetails( info )
 						
 						func : this,
 						
+						data : ( data ? data : null ),
+						
 						pems : ( data && data.Name && role.Permissions && role.Permissions[data.Name] ? role.Permissions[data.Name] : {} ),
 						
 						ids  : this.appids,
@@ -1204,102 +1234,111 @@ function initRoleDetails( info )
 						head : function (  )
 						{
 							
-							var str = '';
-							console.log( data );
-							str += '<div class="MarginTop OverflowHidden BorderRadius Elevated">';
-							str += '	<div class="HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight">';
-							str += '		<div class="PaddingSmall HContent100 InputHeight FloatLeft">';
-							str += '			<h3 class="NoMargin PaddingSmallLeft PaddingSmallRight FloatLeft">';
-							str += '				<strong>' + i18n( data.Name ) + '</strong>';
-							str += '			</h3>';
-							str += '		</div>';
-							str += '	</div>';
-							str += '	<div id="PermissionGui_' + data.Name + '"></div>';
-							str += '</div>';
+							console.log( this.data );
 							
-							var head = ge( 'AdminPermissionContainer' ); if( head ) head.innerHTML += str;
+							var data = this.data;
 							
-							var o = ge( 'PermissionGui_' + data.Name ); if( o ) o.innerHTML = '';
-							
-							this.func.updateids( 'permissions' );
-							
-							var divs = appendChild( [ 
-								{ 
-									'element' : function() 
-									{
-										var d = document.createElement( 'div' );
-										d.className = 'HRow BackgroundNegative Negative Padding';
-										return d;
-									}(),
-									'child' : 
-									[ 
-										{ 
-											'element' : function() 
-											{
-												var d = document.createElement( 'div' );
-												d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft';
-												d.innerHTML = '<strong>' + i18n( 'permission' ) + '</strong>';
-												return d;
-											}() 
-										}, 
-										{ 
-											'element' : function() 
-											{
-												var d = document.createElement( 'div' );
-												d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Relative';
-												d.innerHTML = '<strong>' + i18n( 'create' ) + '</strong>';
-												return d;
-											}()
-										}, 
-										{ 
-											'element' : function() 
-											{
-												var d = document.createElement( 'div' );
-												d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Relative';
-												d.innerHTML = '<strong>' + i18n( 'read' ) + '</strong>';
-												return d;
-											}()
-										}, 
-										{ 
-											'element' : function() 
-											{
-												var d = document.createElement( 'div' );
-												d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Relative';
-												d.innerHTML = '<strong>' + i18n( 'update' ) + '</strong>';
-												return d;
-											}()
-										}, 
-										{ 
-											'element' : function() 
-											{
-												var d = document.createElement( 'div' );
-												d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Relative';
-												d.innerHTML = '<strong>' + i18n( 'delete' ) + '</strong>';
-												return d;
-											}()
-										}
-									]
-								},
-								{
-									'element' : function() 
-									{
-										var d = document.createElement( 'div' );
-										d.className = 'HRow Box Padding';
-										d.id = 'PermissionInner_' + data.Name;
-										return d;
-									}()
-								}
-							] );
-							
-							if( divs )
+							if( data )
 							{
-								for( var i in divs )
-								{
-									if( divs[i] && o )
+								
+								var str = '';
+								
+								str += '<div class="MarginTop OverflowHidden BorderRadius Elevated">';
+								str += '	<div class="HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight">';
+								str += '		<div class="PaddingSmall HContent100 InputHeight FloatLeft">';
+								str += '			<h3 class="NoMargin PaddingSmallLeft PaddingSmallRight FloatLeft">';
+								str += '				<strong>' + i18n( data.Name ) + '</strong>';
+								str += '			</h3>';
+								str += '		</div>';
+								str += '	</div>';
+								str += '	<div id="PermissionGui_' + data.Name + '"></div>';
+								str += '</div>';
+							
+								var head = ge( 'AdminPermissionContainer' ); if( head ) head.innerHTML += str;
+							
+								var o = ge( 'PermissionGui_' + data.Name ); if( o ) o.innerHTML = '';
+							
+								this.func.updateids( 'permissions' );
+							
+								var divs = appendChild( [ 
+									{ 
+										'element' : function() 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'HRow BackgroundNegative Negative Padding';
+											return d;
+										}(),
+										'child' : 
+										[ 
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent40 FloatLeft';
+													d.innerHTML = '<strong>' + i18n( 'permission' ) + '</strong>';
+													return d;
+												}() 
+											}, 
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Relative';
+													d.innerHTML = '<strong>' + i18n( 'create' ) + '</strong>';
+													return d;
+												}()
+											}, 
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Relative';
+													d.innerHTML = '<strong>' + i18n( 'read' ) + '</strong>';
+													return d;
+												}()
+											}, 
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Relative';
+													d.innerHTML = '<strong>' + i18n( 'update' ) + '</strong>';
+													return d;
+												}()
+											}, 
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Relative';
+													d.innerHTML = '<strong>' + i18n( 'delete' ) + '</strong>';
+													return d;
+												}()
+											}
+										]
+									},
 									{
-										o.appendChild( divs[i] );
+										'element' : function() 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'HRow Box Padding';
+											d.id = 'PermissionInner_' + data.Name;
+											return d;
+										}()
+									}
+								] );
+							
+								if( divs )
+								{
+									for( var i in divs )
+									{
+										if( divs[i] && o )
+										{
+											o.appendChild( divs[i] );
+										}
 									}
 								}
+								
 							}
 							
 						},
@@ -1309,8 +1348,11 @@ function initRoleDetails( info )
 							
 							this.func.mode[ 'permissions' ] = 'list';
 							
+							var data = this.data;
+							
 							if( data )
 							{
+								
 								this.head();
 								
 								var o = ge( 'PermissionInner_' + data.Name ); o.innerHTML = '';
@@ -1513,6 +1555,8 @@ function initRoleDetails( info )
 						
 						refresh : function (  )
 						{
+							
+							// TODO: Create an array of current scopes and refresh either all or some based on refresh info ...
 							
 							switch( this.func.mode[ 'permissions' ] )
 							{

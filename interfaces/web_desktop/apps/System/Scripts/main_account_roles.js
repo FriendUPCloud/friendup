@@ -1426,6 +1426,26 @@ Sections.userroleupdate = function( rid, input, perms, refresh )
 	}
 };
 
+Sections.workgrouproleupdate = function( rid, wid, activate, callback )
+{
+	var data = ( activate ? 'Activated' : '' );
+	
+	if( rid && wid )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( ShowLog ) console.log( { e:e, d:d } );
+			
+			if( callback )
+			{
+				callback( e, d );
+			}
+		}
+		m.execute( 'userroleupdate', { id: rid, groupid: wid, data: data, authid: Application.authId } );
+	}
+}
+
 Sections.removepermission = function( rid, pem, key, data, _this )
 {
 	if( rid && pem && key && _this )
