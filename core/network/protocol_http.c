@@ -755,40 +755,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 										//DEBUG("\n\n\n\n\n\nDATA: %s\n\n\n\n\n\n", ls->ls_Data );
 										res = ls->ls_Size;
 									}
-									/*
-									FILE *pipe = popen( command, "r" );
-									ListString *ls = NULL;
-									
-									Log( FLOG_INFO, "Sending php command: %s < pipe: %p\n", command, pipe );
-
-									if( pipe != NULL )
-									{
-										ls = ListStringNew();
-										char buffer[ 1024 ];
-
-										while( !feof( pipe ) )
-										{
-											int reads = fread( buffer, sizeof( char ), 1024, pipe );
-											if( reads > 0 )
-											{
-												ListStringAdd( ls, buffer, reads );
-												res += reads;
-											}
-										}
-										pclose( pipe );
-									}
-									else
-									{
-										Log( FLOG_ERROR, "Cannot open pipe!\n");
-									}
-									
-									Log( FLOG_INFO, "End of PHP loop\n");
-
-									if( ls != NULL )
-									{
-										ListStringJoin( ls );
-									}
-									*/
 									
 									struct TagItem tags[] = {
 										{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
@@ -1005,9 +971,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							{
 								FBOOL mountedWithoutUser = FALSE;
 								char *error = NULL;
-
 								CacheFile *cf = NULL;
-
 								char *mime = NULL;
 								File *rootDev = NULL;
 
@@ -1016,8 +980,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								if( u != NULL )
 								{
 									rootDev = GetUserDeviceByFSysUserIDDevName( SLIB->sl_DeviceManager, sqllib, fsysID, fs_IDUser, fs_DeviceName, &error );
-									
-									
 								} // if user is not in memory (and his drives), we must mount drives only
 								else
 								{

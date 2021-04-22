@@ -31,6 +31,7 @@
 #include <arpa/inet.h>
 #include <linux/limits.h>
 #include <util/string.h>
+#include <zlib.h>
 
 #ifndef INT_MAX
 #define INT_MAX (int) (0x7FFF/0x7FFFFFFF)
@@ -2239,6 +2240,14 @@ void HttpAddTextContent( Http* http, char* content )
 	HttpAddHeader( http, HTTP_HEADER_CONTENT_LENGTH, Httpsprintf( "%ld", (unsigned long int)http->http_SizeOfContent ) );
 }
 
+//
+//
+//
+
+#define windowBits 15
+#define GZIP_ENCODING 16
+#define CHUNK_LEN 0x4000
+
 /**
  * build Http request string from Http request
  *
@@ -2248,7 +2257,7 @@ void HttpAddTextContent( Http* http, char* content )
 
 #define HTTP_MAX_ELEMENTS 512
 
-char *HttpBuild( Http* http )
+unsigned char *HttpBuild( Http* http )
 {
 	char *strings[ HTTP_MAX_ELEMENTS ];
 	int stringsSize[ HTTP_MAX_ELEMENTS ];
@@ -2261,10 +2270,15 @@ char *HttpBuild( Http* http )
 	int i = 0;
 	int tmpl = 512 + rrlen;
 	
+	if( http->http_Compression != HTTP_COMPRESSION_NONE )
+	{
+		tmpl += 128;
+	}
+	
 	char *tmpdat = FCalloc( tmpl, sizeof( char ) );
 	if( tmpdat != NULL )
 	{
-		snprintf( tmpdat , tmpl, "HTTP/%u.%u %u %s\r\n", http->http_VersionMajor, http->http_VersionMinor, http->http_ResponseCode, http->http_ResponseReason );
+		stringsSize[ stringPos ] = snprintf( tmpdat , tmpl, "HTTP/%u.%u %u %s\r\n", http->http_VersionMajor, http->http_VersionMinor, http->http_ResponseCode, http->http_ResponseReason );
 		strings[ stringPos++ ] = tmpdat;
 
 		// Add all the custom headers
@@ -2280,7 +2294,7 @@ char *HttpBuild( Http* http )
 					char *tmp = FCalloc( 512, sizeof( char ) );
 					if( tmp != NULL )
 					{
-						snprintf( tmp, 512, "%s: %s\r\n", HEADERS[ i ], http->http_RespHeaders[ i ] );
+						stringsSize[ stringPos ] = snprintf( tmp, 512, "%s: %s\r\n", HEADERS[ i ], http->http_RespHeaders[ i ] );
 						strings[ stringPos++ ] = tmp;
 						
 						if( i != HTTP_HEADER_X_FRAME_OPTIONS )
@@ -2305,7 +2319,7 @@ char *HttpBuild( Http* http )
 					char *tmp = FCalloc( 512, sizeof( char ) );
 					if( tmp != NULL )
 					{
-						snprintf( tmp, 512, "%s: %s\r\n", HEADERS[ i ], http->http_RespHeaders[ i ] );
+						stringsSize[ stringPos ] = snprintf( tmp, 512, "%s: %s\r\n", HEADERS[ i ], http->http_RespHeaders[ i ] );
 						strings[ stringPos++ ] = tmp;
 					}
 					else
@@ -2317,6 +2331,7 @@ char *HttpBuild( Http* http )
 			}
 		}
 
+		stringsSize[ stringPos ] = 2;
 		strings[ stringPos++ ] = StringDuplicateN( "\r\n", 2 );
 	}
 	else
@@ -2327,33 +2342,101 @@ char *HttpBuild( Http* http )
 	// Find the total size of the response
 	FLONG size = 0;
 	
-	if( http->http_Stream == FALSE )
-	{
-		size += http->http_SizeOfContent ? http->http_SizeOfContent : 0 ;
-	}
-	
 	for( i = 0; i < stringPos; i++ )
 	{
-		stringsSize[ i ] = strlen( strings[ i ] );
+		//stringsSize[ i ] = strlen( strings[ i ] );
 		size += stringsSize[ i ];
+	}
+	
+	if( http->http_Stream == FALSE )
+	{
+		size += http->http_SizeOfContent;// ? http->http_SizeOfContent : 0 ;
 	}
 
 	// Concat all the strings into one mega reply!!
-	char* response = FCalloc( (size + 1), sizeof( char ) );
+	unsigned char* response = FCalloc( (size + 1), sizeof( unsigned char ) );
 	if( response != NULL )
 	{
-		char* ptr = response;
+		unsigned char* storePtr = response;
 	
-		for( i = 0; i < stringPos; i++ )
+		if( http->http_Compression != HTTP_COMPRESSION_NONE )
 		{
-			memcpy( ptr, strings[ i ], stringsSize[ i ] );
-			ptr += stringsSize[ i ];
-			FFree( strings[ i ] );
+			FQUAD compressedLength = 0;
+			char chunk[ CHUNK_LEN ];
+			
+			z_stream strm;
+			strm.zalloc = Z_NULL;
+			strm.zfree  = Z_NULL;
+			strm.opaque = Z_NULL;
+			deflateInit2 ( &strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED,
+							windowBits | GZIP_ENCODING, 8,
+							Z_DEFAULT_STRATEGY );
+			
+			// when data is compressed we have to change content length
+			if( http->http_RespHeaders[ HTTP_HEADER_CONTENT_LENGTH ] != NULL )
+			{
+				for( i = 0; i < stringPos; i++ )
+				{
+					// "content-length"
+					if( strncmp( strings[ i ], HEADERS[ HTTP_HEADER_CONTENT_LENGTH ], 14 ) == 0 )
+					{
+						char tmp[ 128 ];
+						stringsSize[ i ] = snprintf( tmp, 128, "%s: %s\r\n", HEADERS[ i ], http->http_RespHeaders[ i ] );
+						strings[ i++ ] = tmp;
+						break;
+					}
+				}
+			}
+			else	// content length not found in response
+			{
+				unsigned char *dataPtr = (unsigned char *) http->http_Content;
+				
+				// header of response
+				for( i = 0; i < stringPos; i++ )
+				{
+					memcpy( storePtr, strings[ i ], stringsSize[ i ] );
+					storePtr += stringsSize[ i ];
+					FFree( strings[ i ] );
+				}
+				
+				if( http->http_SizeOfContent > 0 )
+				{
+					FQUAD dataLeft = http->http_SizeOfContent;
+					do
+					{
+						int have;
+						strm.next_in = dataPtr;
+						strm.avail_in = dataLeft;
+						
+						strm.avail_out = CHUNK_LEN;
+						strm.next_out = storePtr;
+						deflate( &strm, Z_FINISH );
+						have = CHUNK_LEN - strm.avail_out;
+						
+						dataLeft -= CHUNK_LEN;
+						storePtr += have;
+						compressedLength += have;
+						
+						//fwrite (out, sizeof (char), have, stdout);
+					}
+					while (strm.avail_out == 0);
+				}
+			}
+			deflateEnd( &strm );
 		}
-
-		if( http->http_Stream == FALSE && http->http_Content )
+		else	// no compression
 		{
-			memcpy( response + ( size - http->http_SizeOfContent ), http->http_Content, http->http_SizeOfContent );
+			for( i = 0; i < stringPos; i++ )
+			{
+				memcpy( storePtr, strings[ i ], stringsSize[ i ] );
+				storePtr += stringsSize[ i ];
+				FFree( strings[ i ] );
+			}
+
+			if( http->http_Stream == FALSE && http->http_Content )
+			{
+				memcpy( response + ( size - http->http_SizeOfContent ), http->http_Content, http->http_SizeOfContent );
+			}
 		}
 	
 		// Old response is gone
@@ -2665,3 +2748,14 @@ HashmapElement* HttpGetPOSTParameter( Http *request,  char* param)
 	return HashmapGet( request->http_ParsedPostContent, param );
 }
 
+/**
+ * Set compression
+ *
+ * @param request pointer to Http from which parameter will be taken
+ * @param comp compression mode
+ */
+
+void HttpSetCompression( Http* http, int comp )
+{
+	http->http_Compression = comp;
+}
