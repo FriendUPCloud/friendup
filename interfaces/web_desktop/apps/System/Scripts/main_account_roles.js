@@ -17,6 +17,15 @@ Sections.accounts_roles = function( cmd, extra )
 		switch( cmd )
 		{
 			
+			case 'permissions':
+				
+				if( extra && extra.rid )
+				{
+					permissions( extra.rid, ( extra.callback ? extra.callback : null ) );
+				}
+				
+				return;
+			
 			case 'refresh':
 				
 				if( extra && extra.wid )
@@ -135,7 +144,7 @@ Sections.accounts_roles = function( cmd, extra )
 			// Load system permissions
 			function()
 			{
-				var m = new Module( 'system' );
+				/*var m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
 					console.log( 'getsystempermissions', { e:e, d:d } );
@@ -152,7 +161,17 @@ Sections.accounts_roles = function( cmd, extra )
 					}
 					loadingList[ ++loadingSlot ]( info );
 				}
-				m.execute( 'getsystempermissions', { authid: Application.authId } );
+				m.execute( 'getsystempermissions', { authid: Application.authId } );*/
+				
+				permissions( rid, function( perm )
+				{
+					
+					info.permission = perm;
+					
+					loadingList[ ++loadingSlot ]( info );
+					
+				} );
+				
 			},
 	
 			// 1 | Load applications
@@ -452,6 +471,152 @@ Sections.accounts_roles = function( cmd, extra )
 		}
 		
 		return false;
+		
+	}
+	
+	function permissions( rid, callback )
+	{
+		
+		if( rid )
+		{
+			
+			var p = new Module( 'system' );
+			p.onExecuted = function( e, d )
+			{
+				var perm = null;
+			
+				try
+				{
+					perm = JSON.parse( d );
+				}
+				catch( e ) {  }
+				
+				var r = new Module( 'system' );
+				r.onExecuted = function( e, d )
+				{
+					role = null;
+					roleperm = null;
+			
+					try
+					{
+						role = JSON.parse( d );
+						
+						if( role && role.Permissions )
+						{
+							roleperm = role.Permissions;
+						}
+					}
+					catch( e ) {  }
+					
+					if( perm )
+					{
+						if( roleperm )
+						{
+							for( var i in perm )
+							{
+								for( var ii in perm[i].AppPermissions )
+								{
+									for( var r in roleperm )
+									{
+										if( roleperm[r] && r == perm[i].Name )
+										{
+											if( typeof perm[i].AppPermissions[ii] == 'string' )
+											{
+												if( perm[i].AppPermissions[ii].split( 'App ' )[1] )
+												{
+													if( roleperm[r].Permission == perm[i].AppPermissions[ii].split( 'App ' )[1].trim() )
+													{
+											
+														// New method ----
+										
+														if( !perm[i].RolePermissions )
+														{
+															perm[i].RolePermissions = {};
+														}
+										
+														if( !perm[i].RolePermissions[ roleperm[r].ID ] )
+														{
+															perm[i].RolePermissions[ roleperm[r].ID ] = {
+																id          : perm[i].AppPermissions[ii].split( 'App ' )[1].trim(), 
+																parameter   : '', 
+																description : '', 
+																data        : roleperm[r].Data
+															};
+														}
+											
+													}
+									
+												}
+											}
+											else if( typeof perm[i].AppPermissions[ii] == 'object' )
+											{
+												if( perm[i].AppPermissions[ii].id )
+												{
+													if( roleperm[r].Permission == perm[i].AppPermissions[ii].id )
+													{
+											
+														// New method ----
+									
+														if( !perm[i].RolePermissions )
+														{
+															perm[i].RolePermissions = {};
+														}
+										
+														if( !perm[i].RolePermissions[ roleperm[r].ID ] )
+														{
+															perm[i].RolePermissions[ roleperm[r].ID ] = {
+																id          : perm[i].AppPermissions[ii].id, 
+																parameter   : perm[i].AppPermissions[ii].parameter, 
+																description : '', 
+																data        : roleperm[r].Data
+															};
+														}
+											
+													}
+									
+												}
+												else if( perm[i].AppPermissions[ii].Permissions )
+												{
+													for( var iii in perm[i].AppPermissions[ii].Permissions )
+													{
+														if( roleperm[r][ perm[i].AppPermissions[ii].Permissions[iii] ] )
+														{
+															
+															// New method ----
+															
+															if( !perm[i].RolePermissions )
+															{
+																perm[i].RolePermissions = {};
+															}
+															
+															if( !perm[i].RolePermissions[ perm[i].AppPermissions[ii].Permissions[iii] ] )
+															{
+																perm[i].RolePermissions[ perm[i].AppPermissions[ii].Permissions[iii] ] = roleperm[r][ perm[i].AppPermissions[ii].Permissions[iii] ];
+															}
+															
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+					
+					if( callback )
+					{
+						return callback( perm );
+					}
+					
+				}
+				r.execute( 'userroleget', { id: rid, authid: Application.authId } );
+				
+			}
+			p.execute( 'getsystempermissions', { authid: Application.authId } );
+			
+		}
 		
 	}
 	

@@ -31,106 +31,7 @@ function initRoleDetails( info )
 	{
 		var perm = data;
 		
-		if( role.Permissions )
-		{
-			var roleperm = role.Permissions;
-			
-			for( var i in perm )
-			{
-				for( var ii in perm[i].AppPermissions )
-				{
-					for( var r in roleperm )
-					{
-						if( roleperm[r].Key && roleperm[r].Key == perm[i].Name )
-						{
-							
-							if( typeof perm[i].AppPermissions[ii] == 'string' )
-							{
-								if( perm[i].AppPermissions[ii].split( 'App ' )[1] )
-								{
-									if( roleperm[r].Permission == perm[i].AppPermissions[ii].split( 'App ' )[1].trim() )
-									{
-										//console.log( perm[i] );
-										if( ShowLog ) console.log( roleperm[r] );
-										
-										perm[i].AppPermissions[ii] = {
-											id          : perm[i].AppPermissions[ii].split( 'App ' )[1].trim(), 
-											parameter   : "", 
-											description : "", 
-											data        : roleperm[r].Data
-										};
-										
-										if( ShowLog ) console.log( '[1]', perm[i].AppPermissions[ii] );
-										
-										// New method ----
-										
-										if( !perm[i].RolePermissions )
-										{
-											perm[i].RolePermissions = {};
-										}
-										
-										if( !perm[i].RolePermissions[ roleperm[r].ID ] )
-										{
-											perm[i].RolePermissions[ roleperm[r].ID ] = {
-												id          : perm[i].AppPermissions[ii].split( 'App ' )[1].trim(), 
-												parameter   : '', 
-												description : '', 
-												data        : roleperm[r].Data
-											};
-										}
-									}
-									
-								}
-							}
-							else if( typeof perm[i].AppPermissions[ii] == 'object' )
-							{
-								if( perm[i].AppPermissions[ii].id )
-								{
-									if( roleperm[r].Permission == perm[i].AppPermissions[ii].id )
-									{
-										if( typeof perm[i].AppPermissions[ii].data == 'undefined' )
-										{
-											//console.log( perm[i] );
-											if( ShowLog ) console.log( roleperm[r] );
-										
-											perm[i].AppPermissions[ii].data = roleperm[r].Data;
-										
-											if( ShowLog ) console.log( '[2]', perm[i].AppPermissions[ii] );
-										}
-										
-										// New method ----
-									
-										if( !perm[i].RolePermissions )
-										{
-											perm[i].RolePermissions = {};
-										}
-										
-										if( !perm[i].RolePermissions[ roleperm[r].ID ] )
-										{
-											perm[i].RolePermissions[ roleperm[r].ID ] = {
-												id          : perm[i].AppPermissions[ii].id, 
-												parameter   : perm[i].AppPermissions[ii].parameter, 
-												description : '', 
-												data        : roleperm[r].Data
-											};
-										}
-									}
-									
-								}
-								
-							}
-							else
-							{
-								//console.log( perm[i].AppPermissions[ii] );
-							}
-						}
-					}
-				}
-			}
-		}
 	}
-	
-	if( ShowLog ) console.log( perm );
 	
 	
 	
@@ -336,22 +237,24 @@ function initRoleDetails( info )
 					
 					if( soft )
 					{
-						if( ShowLog || 1==1 ) console.log( 'soft ', soft );
+						// TODO: Add object data because devs can add pems with same name but different key or app ...
+						
+						if( ShowLog ) console.log( 'soft ', soft );
 						
 						var i = 0;
 						
 						for( var a in soft )
 						{
-							if( soft[a] )
+							if( soft[a] && soft[a].RolePermissions )
 							{
-								ids[ a ] = a;
+								ids[ a ] = soft[a].RolePermissions;
 							}
 						}
 					}
 					
 					return ids;
 					
-				}( role.Permissions ),
+				}( perm ),
 				
 				updateids : function ( mode, key, value )
 				{
@@ -361,7 +264,7 @@ function initRoleDetails( info )
 						
 						case 'applications':
 							
-							// TODO: Collect real perm data here and add to ids ... nd use that ...
+							// TODO: Collect real perm data here and add to ids ... not use that ...
 							
 							if( this.appids )
 							{
@@ -371,14 +274,14 @@ function initRoleDetails( info )
 								{
 									if( this.appids[a] )
 									{
-										if( key && this.appids[a].toLowerCase() == key.toLowerCase() )
+										if( key && a.toLowerCase() == key.toLowerCase() )
 										{
 											this.appids[a] = ( value ? value : false ); found = true;
 										}
 										
 										if( this.appids[a] )
 										{
-											arr.push( this.appids[a] );
+											arr.push( a );
 										}
 									}
 									
@@ -387,7 +290,7 @@ function initRoleDetails( info )
 								
 								if( key && value && !found )
 								{
-									arr.push( value );
+									arr.push( key );
 									
 									this.appids[ key ] = value; 
 								}
@@ -415,11 +318,15 @@ function initRoleDetails( info )
 					
 				},
 				
-				mode : { applications : 'list' },
+				queue : {},
+				
+				loaded : {},
+				
+				mode : { applications : 'list', permissions : 'list' },
 				
 				// Applications ------------------------------------------------------------------------------------
 				
-				applications : function ( func )
+				applications : function ( func, data )
 				{
 					
 					// Editing applications
@@ -428,6 +335,8 @@ function initRoleDetails( info )
 					{
 						
 						func : this,
+						
+						data : ( data ? data : null ),
 						
 						ids  : this.appids,
 						
@@ -676,7 +585,13 @@ function initRoleDetails( info )
 																				
 																				if( args.func )
 																				{
-																					args.func.permissions( 'refresh' );
+																					
+																					console.log( 'Remove from permissions list' );
+																					
+																					args.func.applications( 'refresh' );
+																					
+																					args.func.permissions( 'remove', args.permissions.Name );
+																					
 																				}
 																			
 																			} );
@@ -832,7 +747,7 @@ function initRoleDetails( info )
 																'element' : function( ids, permissions, func ) 
 																{
 																	
-																	var b = CustomToggle( 'aid_'+name, 'FloatRight', null, function (  )
+																	var b = CustomToggle( 'aid_'+permissions.Name, 'FloatRight', null, function (  )
 																	{
 																		
 																		if( this.checked )
@@ -840,7 +755,7 @@ function initRoleDetails( info )
 																			
 																			// TODO: Collect real perm data here and add to ids ... nd use that ...
 																			
-																			func.updateids( 'applications', permissions.Name, permissions.Name );
+																			func.updateids( 'applications', permissions.Name, permissions );
 																			
 																			//if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
 																			
@@ -871,7 +786,20 @@ function initRoleDetails( info )
 																				
 																				if( func )
 																				{
-																					func.permissions( 'refresh' );
+																					console.log( 'fetch latest ...' );
+																					
+																					console.log( 'Add to permissions list' );
+																					
+																					Sections.accounts_roles( 'permissions', { rid: info.ID, callback: function ( pems )
+																					{
+																						
+																						if( pems )
+																						{
+																							func.permissions( 'init', pems[permissions.Name] );
+																							func.permissions( 'refresh' );
+																						}
+																						
+																					} } );
 																				}
 																				
 																			}
@@ -911,7 +839,11 @@ function initRoleDetails( info )
 																				
 																				if( func )
 																				{
-																					func.permissions( 'refresh' );
+																					
+																					console.log( 'Remove from permissions list' );
+																					
+																					func.permissions( 'remove', permissions.Name );
+																					
 																				}
 																				
 																			}
@@ -1134,11 +1066,21 @@ function initRoleDetails( info )
 							
 						case 'refresh':
 							
-							init.refresh();
+							if( this.loaded[ 'applications' ] )
+							{
+								for( var a in this.loaded[ 'applications' ] )
+								{
+									this.loaded[ 'applications' ][ a ].refresh();
+								}
+							}
+							else
+							{
+								init.refresh();
+							}
 							
 							break;
 						
-						default:
+						case 'init': default:
 							
 							var etn = ge( 'ApplicationEdit' );
 							if( etn )
@@ -1209,6 +1151,13 @@ function initRoleDetails( info )
 							
 							init.list();
 							
+							if( !this.loaded[ 'applications' ] )
+							{
+								this.loaded[ 'applications' ] = [];
+							}
+							
+							this.loaded[ 'applications' ].push( init );
+							
 							break;
 							
 					}
@@ -1217,7 +1166,7 @@ function initRoleDetails( info )
 				
 				// Permissions ------------------------------------------------------------------------------------
 				
-				permissions : function ( data )
+				permissions : function ( func, data )
 				{
 					
 					var init =
@@ -1227,18 +1176,18 @@ function initRoleDetails( info )
 						
 						data : ( data ? data : null ),
 						
-						pems : ( data && data.Name && role.Permissions && role.Permissions[data.Name] ? role.Permissions[data.Name] : {} ),
+						pems : ( data && data.Name && data.RolePermissions ? data.RolePermissions : {} ),
 						
 						ids  : this.appids,
 						
-						head : function (  )
+						head : function ( data )
 						{
 							
-							console.log( this.data );
+							this.data = ( data ? data : this.data );
 							
-							var data = this.data;
+							//console.log( this.data );
 							
-							if( data )
+							if( this.data )
 							{
 								
 								var str = '';
@@ -1247,16 +1196,19 @@ function initRoleDetails( info )
 								str += '	<div class="HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight">';
 								str += '		<div class="PaddingSmall HContent100 InputHeight FloatLeft">';
 								str += '			<h3 class="NoMargin PaddingSmallLeft PaddingSmallRight FloatLeft">';
-								str += '				<strong>' + i18n( data.Name ) + '</strong>';
+								str += '				<strong>' + i18n( this.data.Name ) + '</strong>';
 								str += '			</h3>';
 								str += '		</div>';
 								str += '	</div>';
-								str += '	<div id="PermissionGui_' + data.Name + '"></div>';
+								str += '	<div id="PermissionGui_' + this.data.Name + '"></div>';
 								str += '</div>';
+								
+								if( !ge( 'PermissionGui_' + this.data.Name ) )
+								{
+									var head = ge( 'AdminPermissionContainer' ); if( head ) head.innerHTML += str;
+								}
 							
-								var head = ge( 'AdminPermissionContainer' ); if( head ) head.innerHTML += str;
-							
-								var o = ge( 'PermissionGui_' + data.Name ); if( o ) o.innerHTML = '';
+								var o = ge( 'PermissionGui_' + this.data.Name ); if( o ) o.innerHTML = '';
 							
 								this.func.updateids( 'permissions' );
 							
@@ -1318,16 +1270,16 @@ function initRoleDetails( info )
 										]
 									},
 									{
-										'element' : function() 
+										'element' : function( name )
 										{
 											var d = document.createElement( 'div' );
 											d.className = 'HRow Box Padding';
-											d.id = 'PermissionInner_' + data.Name;
+											d.id = 'PermissionInner_' + name;
 											return d;
-										}()
+										}( this.data.Name )
 									}
 								] );
-							
+								
 								if( divs )
 								{
 									for( var i in divs )
@@ -1343,25 +1295,44 @@ function initRoleDetails( info )
 							
 						},
 						
-						list : function (  )
+						list : function ( data, callback, args )
 						{
 							
 							this.func.mode[ 'permissions' ] = 'list';
 							
-							var data = this.data;
+							this.data = ( data ? data : this.data );
 							
-							if( data )
+							if( this.data )
 							{
 								
 								this.head();
 								
-								var o = ge( 'PermissionInner_' + data.Name ); o.innerHTML = '';
+								var o = ge( 'PermissionInner_' + this.data.Name ); o.innerHTML = '';
 								
-								if( data.AppPermissions && data.Name )
+								if( this.data.AppPermissions && this.data.Name )
 								{
 									
-									for( var k in data.AppPermissions )
+									for( var k in this.data.AppPermissions )
 									{
+										
+										var permission = {
+											'create' : { 
+												id     : ( this.data.AppPermissions[k].Permissions[0] ), 
+												toggle : ( this.data.RolePermissions && this.data.RolePermissions[ this.data.AppPermissions[k].Permissions[0] ] ? true : false )
+											},
+											'read'   : { 
+												id     : ( this.data.AppPermissions[k].Permissions[1] ), 
+												toggle : ( this.data.RolePermissions && this.data.RolePermissions[ this.data.AppPermissions[k].Permissions[1] ] ? true : false ) 
+											},
+											'update' : { 
+												id     : ( this.data.AppPermissions[k].Permissions[2] ), 
+												toggle : ( this.data.RolePermissions && this.data.RolePermissions[ this.data.AppPermissions[k].Permissions[2] ] ? true : false ) 
+											},
+											'delete' : { 
+												id     : ( this.data.AppPermissions[k].Permissions[3] ), 
+												toggle : ( this.data.RolePermissions && this.data.RolePermissions[ this.data.AppPermissions[k].Permissions[3] ] ? true : false ) 
+											}
+										};
 										
 										var divs = appendChild( [
 											{ 
@@ -1374,13 +1345,13 @@ function initRoleDetails( info )
 												'child' : 
 												[ 
 													{ 
-														'element' : function() 
+														'element' : function( name ) 
 														{
 															var d = document.createElement( 'div' );
 															d.className = 'PaddingSmall HContent40 InputHeight FloatLeft Ellipsis';
-															d.innerHTML = '<strong class="PaddingSmallRight">' + i18n( data.AppPermissions[k].Name ) + '</strong>';
+															d.innerHTML = '<strong class="PaddingSmallRight">' + i18n( name ) + '</strong>';
 															return d;
-														}() 
+														}( this.data.AppPermissions[k].Name ) 
 													},
 													{ 
 														'element' : function() 
@@ -1394,6 +1365,9 @@ function initRoleDetails( info )
 															{ 
 																'element' : function( id, key, toggle ) 
 																{
+																	
+																	//console.log( id + '_' + key, toggle );
+																	
 																	var b = CustomToggle( id + '_' + key, null, null, function (  )
 																	{
 																		
@@ -1414,7 +1388,8 @@ function initRoleDetails( info )
 																	}, ( toggle ? true : false ), 1 );
 																	
 																	return b;
-																}( data.AppPermissions[k].Permissions[0], data.Name, ( this.pems && this.pems[data.AppPermissions[k].Permissions[0]] ? true : false ) ) 
+																	
+																}( permission['create'].id, this.data.Name, permission['create'].toggle ) 
 															}
 														]
 													}, 
@@ -1430,6 +1405,9 @@ function initRoleDetails( info )
 															{ 
 																'element' : function( id, key, toggle ) 
 																{
+																	
+																	//console.log( id + '_' + key, toggle );
+																	
 																	var b = CustomToggle( id + '_' + key, null, null, function (  )
 																	{
 																	
@@ -1450,7 +1428,8 @@ function initRoleDetails( info )
 																	}, ( toggle ? true : false ), 1 );
 																	
 																	return b;
-																}( data.AppPermissions[k].Permissions[1], data.Name, ( this.pems && this.pems[data.AppPermissions[k].Permissions[1]] ? true : false ) ) 
+																	
+																}( permission['read'].id, this.data.Name, permission['read'].toggle ) 
 															}
 														]
 													},
@@ -1467,6 +1446,8 @@ function initRoleDetails( info )
 																'element' : function( id, key, toggle ) 
 																{
 																	
+																	//console.log( id + '_' + key, toggle );
+																	
 																	var b = CustomToggle( id + '_' + key, null, null, function (  )
 																	{
 																	
@@ -1487,7 +1468,8 @@ function initRoleDetails( info )
 																	}, ( toggle ? true : false ), 1 );
 																	
 																	return b;
-																}( data.AppPermissions[k].Permissions[2], data.Name, ( this.pems && this.pems[data.AppPermissions[k].Permissions[2]] ? true : false ) ) 
+																	
+																}( permission['update'].id, this.data.Name, permission['update'].toggle ) 
 															}
 														]
 													},
@@ -1504,6 +1486,8 @@ function initRoleDetails( info )
 																'element' : function( id, key, toggle ) 
 																{
 																	
+																	//console.log( id + '_' + key, toggle );
+																	
 																	var b = CustomToggle( id + '_' + key, null, null, function (  )
 																	{
 																	
@@ -1524,7 +1508,8 @@ function initRoleDetails( info )
 																	}, ( toggle ? true : false ), 1 );
 																	
 																	return b;
-																}( data.AppPermissions[k].Permissions[3], data.Name, ( this.pems && this.pems[data.AppPermissions[k].Permissions[3]] ? true : false ) ) 
+																	
+																}( permission['delete'].id, this.data.Name, permission['delete'].toggle ) 
 															}
 														]
 													}
@@ -1546,17 +1531,45 @@ function initRoleDetails( info )
 									}
 									
 								}
-									
 								
+								
+								
+							}
+							
+							if( callback )
+							{
+								
+								setTimeout( function (  )
+								{
+									callback( args ); 
+								}, 10 );
 								
 							}
 								
 						},
 						
-						refresh : function (  )
+						remove : function ( data )
+						{
+							
+							if( data )
+							{
+								var o = ge( 'PermissionGui_' + data );
+								
+								if( o && o.parentNode && o.parentNode.parentNode )
+								{
+									o.parentNode.parentNode.removeChild( o.parentNode );
+								}
+								
+							}
+							
+						},
+						
+						refresh : function ( data )
 						{
 							
 							// TODO: Create an array of current scopes and refresh either all or some based on refresh info ...
+							
+							//console.log( '[4] refresh ...' );
 							
 							switch( this.func.mode[ 'permissions' ] )
 							{
@@ -1565,7 +1578,7 @@ function initRoleDetails( info )
 								
 								case 'list':
 									
-									this.list();
+									this.list( data );
 									
 									break;
 									
@@ -1580,27 +1593,155 @@ function initRoleDetails( info )
 						
 						case 'head':
 							
-							init.head();
+							init.head( data );
 							
 							break;
 							
 						case 'list':
 							
-							init.list();
-							
-							break;
-							
-						case 'refresh':
-							
-							init.refresh();
+							init.list( data );
 							
 							break;
 						
-						default:
+						case 'remove':
+							
+							if( this.loaded[ 'permissions' ] )
+							{
+								for( var a in this.loaded[ 'permissions' ] )
+								{
+									if( this.loaded[ 'permissions' ][ a ] )
+									{
+										var name = a;
+									
+										if( this.loaded[ 'permissions' ][ a ].data && this.loaded[ 'permissions' ][ a ].data.Name )
+										{
+											name = this.loaded[ 'permissions' ][ a ].data.Name;
+										}
+									
+										if( name == data )
+										{
+											this.loaded[ 'permissions' ][ a ].remove( data );
+											this.loaded[ 'permissions' ][ a ] = false;
+										}
+										
+									}
+								}
+								
+								var arr = [];
+								
+								for( var b in this.loaded[ 'permissions' ] )
+								{
+									if( this.loaded[ 'permissions' ][ b ] )
+									{
+										arr.push( this.loaded[ 'permissions' ][ b ] );
+									}
+								}
+								
+								this.loaded[ 'permissions' ] = arr;
+								
+							}
+							else
+							{
+								init.remove( data );
+							}
+							
+							break;
+						
+						case 'refresh':
+							
+							if( this.loaded[ 'permissions' ] )
+							{
+								console.log( 'refresh ... ', this.loaded[ 'permissions' ] );
+								
+								for( var a in this.loaded[ 'permissions' ] )
+								{
+									var name = a;
+									
+									if( this.loaded[ 'permissions' ][ a ].data && this.loaded[ 'permissions' ][ a ].data.Name )
+									{
+										name = this.loaded[ 'permissions' ][ a ].data.Name;
+									}
+									
+									if( name && data && data[ name ] )
+									{
+										this.loaded[ 'permissions' ][ a ].refresh( data[ name ] );
+									}
+									else
+									{
+										this.loaded[ 'permissions' ][ a ].refresh(  );
+									}
+								}
+							}
+							else
+							{
+								init.refresh( data );
+							}
+							
+							break;
+						
+						case 'queue':
+							
+							if( !this.loaded[ 'permissions' ] )
+							{
+								this.loaded[ 'permissions' ] = [];
+							}
+							
+							this.loaded[ 'permissions' ].push( init );
+							
+							if( !this.queue[ 'permissions' ] )
+							{
+								this.queue[ 'permissions' ] = [];
+							}
+							
+							this.queue[ 'permissions' ].push( { 
+								num   : this.queue[ 'permissions' ].length, 
+								queue : this.queue[ 'permissions' ], 
+								init  : init, 
+								data  : data, 
+								run   : function (  ) 
+								{
+									
+									this.init.list( this.data, function ( args )
+									{
+										
+										if( args.queue && args.queue[args.num+1] )
+										{
+											args.queue[args.num+1].run();
+										}
+										else
+										{
+											args.queue = {};
+										}
+										
+									}, { num: this.num, queue: this.queue } );
+									
+								} 
+							} );
+							
+							break;
+						
+						case 'init': default:
 							
 							// Show listed permissions ... 
 							
-							init.list();
+							if( this.queue[ 'permissions' ] )
+							{
+								this.queue[ 'permissions' ][0].run();
+							}
+							else
+							{
+								if( !this.loaded[ 'permissions' ] )
+								{
+									this.loaded[ 'permissions' ] = [];
+								}
+								
+								// Refresh added as a hack, because some problems with input fields for some reason ...
+								
+								init.list( data, function(){ init.refresh(); console.log( 'refresh ...' ); } );
+							
+								this.loaded[ 'permissions' ].push( init );
+								
+							}
 							
 							break;
 							
@@ -1610,6 +1751,8 @@ function initRoleDetails( info )
 				
 			};
 			
+			// TODO: Add scopes to refresh ...
+			
 			func.applications();
 			
 			if( perm )
@@ -1618,9 +1761,13 @@ function initRoleDetails( info )
 				{
 					if( perm[a] && perm[a].AppPermissions && perm[a].Name && role.Permissions && role.Permissions[perm[a].Name] )
 					{
-						func.permissions( perm[a] );
+						// TODO: Add scopes to refresh ...
+						
+						func.permissions( 'init', perm[a] );
 					}
 				}
+				
+				//func.permissions( 'init' );
 			}
 			
 		}

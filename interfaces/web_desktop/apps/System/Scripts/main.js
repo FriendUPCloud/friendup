@@ -645,6 +645,7 @@ function CustomToggle( id, classn, name, onclick, checked, mode, value )
 					i.checked = true;
 					i.className = ( i.className + ' checked' );
 				}
+				//console.log( i.id + ' checked:', i.checked );
 				if( onclick )
 				{
 					i.onclick = onclick;
