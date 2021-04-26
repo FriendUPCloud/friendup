@@ -720,14 +720,16 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 							}
 							else if( strcmp( currentToken, "accept" ) == 0 )
 							{
-								http->http_RespHeaders[ HTTP_HEADER_HOST ] = lineStartPtr+8;
+								http->http_RespHeaders[ HTTP_HEADER_ACCEPT ] = lineStartPtr+8;
+								//http->http_RespHeaders[ HTTP_HEADER_HOST ] = lineStartPtr+8;
 								copyValue = FALSE;
 								FFree( currentToken );
 								currentToken = NULL;
 							}
 							else if( strcmp( currentToken, "method" ) == 0 )
 							{
-								http->http_RespHeaders[ HTTP_HEADER_HOST ] = lineStartPtr+8;
+								http->http_RespHeaders[ HTTP_HEADER_METHOD ] = lineStartPtr+8;
+								//http->http_RespHeaders[ HTTP_HEADER_HOST ] = lineStartPtr+8;
 								copyValue = FALSE;
 								FFree( currentToken );
 								currentToken = NULL;
@@ -742,6 +744,13 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 							else if( strcmp( currentToken, "accept-language" ) == 0 )
 							{
 								http->http_RespHeaders[ HTTP_HEADER_ACCEPT_LANGUAGE ] = lineStartPtr+17;
+								copyValue = FALSE;
+								FFree( currentToken );
+								currentToken = NULL;
+							}
+							else if( strcmp( currentToken, "accept-encoding" ) == 0 )
+							{
+								http->http_RespHeaders[ HTTP_HEADER_ACCEPT_ENCODING ] = lineStartPtr+17;
 								copyValue = FALSE;
 								FFree( currentToken );
 								currentToken = NULL;
@@ -2269,6 +2278,7 @@ unsigned char *HttpBuild( Http* http )
 	int rrlen = strlen( http->http_ResponseReason );
 	int i = 0;
 	int tmpl = 512 + rrlen;
+	int contentLenPosInString = 0;	// point in which string content-length is stored
 	
 	if( http->http_Compression != HTTP_COMPRESSION_NONE )
 	{
@@ -2287,6 +2297,7 @@ unsigned char *HttpBuild( Http* http )
 	
 		if( http->http_ResponseHeadersRelease == TRUE )
 		{
+			DEBUG("Response release\n");
 			for( i = 0 ; i < HTTP_HEADER_END ; i++ )
 			{
 				if( http->http_RespHeaders[ i ] != NULL )
@@ -2294,7 +2305,17 @@ unsigned char *HttpBuild( Http* http )
 					char *tmp = FCalloc( 512, sizeof( char ) );
 					if( tmp != NULL )
 					{
-						stringsSize[ stringPos ] = snprintf( tmp, 512, "%s: %s\r\n", HEADERS[ i ], http->http_RespHeaders[ i ] );
+						if( i == HTTP_HEADER_CONTENT_LENGTH )
+						{
+							contentLenPosInString = stringPos;		// we will add one space, in case if there will be need to change length
+							stringsSize[ stringPos ] = snprintf( tmp, 512, "%s: %s \r\n", HEADERS[ i ], http->http_RespHeaders[ i ] );
+						}
+						else
+						{
+							stringsSize[ stringPos ] = snprintf( tmp, 512, "%s: %s\r\n", HEADERS[ i ], http->http_RespHeaders[ i ] );
+						}
+						
+						DEBUG("Response release: %s\n", http->http_RespHeaders[ i ] );
 						strings[ stringPos++ ] = tmp;
 						
 						if( i != HTTP_HEADER_X_FRAME_OPTIONS )
@@ -2312,6 +2333,7 @@ unsigned char *HttpBuild( Http* http )
 		}
 		else
 		{
+			DEBUG("Response do not release\n");
 			for( i = 0; i < HTTP_HEADER_END; i++ )
 			{
 				if( http->http_RespHeaders[ i ] != NULL )
@@ -2319,7 +2341,15 @@ unsigned char *HttpBuild( Http* http )
 					char *tmp = FCalloc( 512, sizeof( char ) );
 					if( tmp != NULL )
 					{
-						stringsSize[ stringPos ] = snprintf( tmp, 512, "%s: %s\r\n", HEADERS[ i ], http->http_RespHeaders[ i ] );
+						if( i == HTTP_HEADER_CONTENT_LENGTH )
+						{
+							contentLenPosInString = stringPos;		// we will add one space, in case if there will be need to change length
+							stringsSize[ stringPos ] = snprintf( tmp, 512, "%s: %s \r\n", HEADERS[ i ], http->http_RespHeaders[ i ] );
+						}
+						else
+						{
+							stringsSize[ stringPos ] = snprintf( tmp, 512, "%s: %s\r\n", HEADERS[ i ], http->http_RespHeaders[ i ] );
+						}
 						strings[ stringPos++ ] = tmp;
 					}
 					else
@@ -2330,7 +2360,13 @@ unsigned char *HttpBuild( Http* http )
 				}
 			}
 		}
-
+		
+		if( http->http_Compression != HTTP_COMPRESSION_NONE )
+		{
+			int p = strlen(" Content-Encoding: deflate\r\n" );
+			stringsSize[ stringPos ] = p;
+			strings[ stringPos++ ] = StringDuplicateN( "Content-Encoding: deflate\r\n", p );
+		}
 		stringsSize[ stringPos ] = 2;
 		strings[ stringPos++ ] = StringDuplicateN( "\r\n", 2 );
 	}
@@ -2354,10 +2390,12 @@ unsigned char *HttpBuild( Http* http )
 	}
 
 	// Concat all the strings into one mega reply!!
-	unsigned char* response = FCalloc( (size + 1), sizeof( unsigned char ) );
+	unsigned char* response = FCalloc( (size + 512), sizeof( unsigned char ) );
 	if( response != NULL )
 	{
 		unsigned char* storePtr = response;
+		
+		// file compressed found
 	
 		if( http->http_Compression != HTTP_COMPRESSION_NONE )
 		{
@@ -2368,23 +2406,78 @@ unsigned char *HttpBuild( Http* http )
 			strm.zalloc = Z_NULL;
 			strm.zfree  = Z_NULL;
 			strm.opaque = Z_NULL;
-			deflateInit2 ( &strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED,
+			deflateInit2( &strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED,
 							windowBits | GZIP_ENCODING, 8,
 							Z_DEFAULT_STRATEGY );
 			
 			// when data is compressed we have to change content length
-			if( http->http_RespHeaders[ HTTP_HEADER_CONTENT_LENGTH ] != NULL )
+			if( contentLenPosInString > 0 )
 			{
+				unsigned char *contentLengthPosition = NULL;
+				DEBUG(">>>>>>>>> %s\n", strings[ contentLenPosInString ] );
+				
+				// header of response
 				for( i = 0; i < stringPos; i++ )
 				{
-					// "content-length"
-					if( strncmp( strings[ i ], HEADERS[ HTTP_HEADER_CONTENT_LENGTH ], 14 ) == 0 )
+					if( i == contentLenPosInString )
 					{
-						char tmp[ 128 ];
-						stringsSize[ i ] = snprintf( tmp, 128, "%s: %s\r\n", HEADERS[ i ], http->http_RespHeaders[ i ] );
-						strings[ i++ ] = tmp;
-						break;
+						contentLengthPosition = storePtr;
 					}
+					memcpy( storePtr, strings[ i ], stringsSize[ i ] );
+					
+					DEBUG("STRINGS: %s\n", strings[ i ] );
+					
+					storePtr += stringsSize[ i ];
+					FFree( strings[ i ] );
+				}
+				
+				if( http->http_SizeOfContent > 0 )
+				{
+					unsigned char *dataPtr = (unsigned char *) http->http_Content;
+					FQUAD dataLeft = http->http_SizeOfContent;
+					do
+					{
+						int have;
+						strm.next_in = dataPtr;
+						strm.avail_in = dataLeft;
+						
+						DEBUG("Store pointer %p data left %ld CHUNK_LEN %d\n", storePtr, dataLeft, CHUNK_LEN );
+						
+						if( dataLeft < CHUNK_LEN )
+						{
+							strm.avail_out = dataLeft;
+						}
+						else
+						{
+							strm.avail_out = CHUNK_LEN;
+						}
+						strm.next_out = storePtr;
+						deflate( &strm, Z_FINISH );
+						have = strm.avail_out;//CHUNK_LEN - strm.avail_out;
+						
+						DEBUG("COMPRESSION OUT: %d\n", have );
+						
+						dataLeft -= CHUNK_LEN;
+						storePtr += have;
+						compressedLength += have;
+						
+						//fwrite (out, sizeof (char), have, stdout);
+					}
+					while( dataLeft > 0 );// strm.avail_out == 0);
+					
+					// we must overwrite content-length
+					
+					if( contentLengthPosition != NULL )
+					{
+						DEBUG(">>>>>>>>>content length found, compressed size: %ld\n", compressedLength );
+						char tmp[ 128 ];
+						int len = snprintf( tmp, 128, "%s: %ld \r\n", HEADERS[ HTTP_HEADER_CONTENT_LENGTH ], compressedLength );
+						memcpy( contentLengthPosition, tmp, len );
+						
+						size -= http->http_SizeOfContent;
+						size += compressedLength;
+					}
+					printf("\n\n\nRESPONSE: %s\n", response );
 				}
 			}
 			else	// content length not found in response
@@ -2395,6 +2488,9 @@ unsigned char *HttpBuild( Http* http )
 				for( i = 0; i < stringPos; i++ )
 				{
 					memcpy( storePtr, strings[ i ], stringsSize[ i ] );
+					
+					DEBUG("STRINGS: %s\n", strings[ i ] );
+					
 					storePtr += stringsSize[ i ];
 					FFree( strings[ i ] );
 				}
@@ -2408,10 +2504,19 @@ unsigned char *HttpBuild( Http* http )
 						strm.next_in = dataPtr;
 						strm.avail_in = dataLeft;
 						
-						strm.avail_out = CHUNK_LEN;
+						DEBUG("Store pointer %p data left %ld\n", storePtr, dataLeft );
+						
+						if( dataLeft < CHUNK_LEN )
+						{
+							strm.avail_out = dataLeft;
+						}
+						else
+						{
+							strm.avail_out = CHUNK_LEN;
+						}
 						strm.next_out = storePtr;
 						deflate( &strm, Z_FINISH );
-						have = CHUNK_LEN - strm.avail_out;
+						have = strm.avail_out;//CHUNK_LEN - strm.avail_out;
 						
 						dataLeft -= CHUNK_LEN;
 						storePtr += have;
@@ -2419,7 +2524,7 @@ unsigned char *HttpBuild( Http* http )
 						
 						//fwrite (out, sizeof (char), have, stdout);
 					}
-					while (strm.avail_out == 0);
+					while( dataLeft > 0 );// strm.avail_out == 0);
 				}
 			}
 			deflateEnd( &strm );
