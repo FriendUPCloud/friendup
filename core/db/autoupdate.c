@@ -103,6 +103,14 @@ static inline char *ReadDBFile( char *fname, int *fs )
 
 #define USE_NEW_WAY
 
+int compareDBUpdateEntry( const void* a, const void* b )
+{
+	DBUpdateEntry *a1 = (DBUpdateEntry *)a;
+	DBUpdateEntry *b1 = (DBUpdateEntry *)b;
+	//DEBUG("Compare %d - %d\n", a1->number, b1->number );
+	return a1->number - b1->number;
+}
+
 void CheckAndUpdateDB( SystemBase *l, int type )
 {
 	Log( FLOG_INFO, "----------------------------------------------------\n");
@@ -129,8 +137,45 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 		DIR *dp = NULL;
 		struct dirent *dptr;
 		int numberOfFiles = 0;
-		
+
+		static const char *createUpdateDBscript = "CREATE TABLE IF NOT EXISTS `FDBUpdate` (\
+		`ID` bigint(20) NOT NULL AUTO_INCREMENT,`Filename` varchar(255) NOT NULL,\
+		`Created` bigint(20) NOT NULL,\
+		`Updated` bigint(20) NOT NULL,\
+		`Script` varchar(1024) NOT NULL DEFAULT '',\
+		`Error` varchar(1024) DEFAULT NULL,\
+		PRIMARY KEY (`ID`)\
+		) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;";
+
 		DEBUG("[SystemBase] UpdateDB found directory\n");
+		
+		// we have to check if FDBUpdate was created, if not then it should be
+		
+		{
+			FBOOL dbExist = FALSE;
+			
+			void *res = sqllib->Query( sqllib, "desc FDBUpdate" );
+			if( res != NULL )
+			{
+				char **row;
+				if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+				{
+					if( row[ 0 ] != NULL )
+					{
+						dbExist = TRUE;
+					}
+
+				}
+				sqllib->FreeResult( sqllib, res );
+			}
+			
+			if( dbExist == FALSE )
+			{
+				if( sqllib->QueryWithoutResults( sqllib, createUpdateDBscript ) != 0 )
+				{
+				}
+			}
+		}
 		
 		if( type == UPDATE_DB_TYPE_GLOBAL )
 		{
@@ -147,7 +192,7 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 		{
 			while( ( dptr = readdir( dp ) ) != NULL )
 			{
-				if( strcmp( dptr->d_name, "." ) == 0 || strcmp( dptr->d_name, ".." ) == 0 )
+				if( strncmp( dptr->d_name, ".", 1 ) == 0 || strncmp( dptr->d_name, "..", 2 ) == 0 )
 				{
 					continue;
 				}
@@ -174,13 +219,14 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 			
 			if( dp != NULL )
 			{
+				int pos = 0;
 				DEBUG("[SystemBase] UpdateDB found directory 1\n");
 				while( ( dptr = readdir( dp ) ) != NULL )
 				{
 					char number[ 512 ];
 					unsigned int i;
 				
-					if( strcmp( dptr->d_name, "." ) == 0 || strcmp( dptr->d_name, ".." ) == 0 )
+					if( strncmp( dptr->d_name, ".", 1 ) == 0 || strncmp( dptr->d_name, "..", 2 ) == 0 )
 					{
 						continue;
 					}
@@ -199,12 +245,28 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 					
 					DEBUG("[SystemBase] number found: '%s'\n", number );
 					
+					//
+					// get all entries and their numbers
+					
 					position = atoi( number )-1;
-					dbentries[ position ].number = position+1;
+					if( position > 0 )
+					{
+						dbentries[ pos ].number = position+1;
 
-					DEBUG("[SystemBase] Found script with number %d, script added: %s\n", position, dptr->d_name );
-					strcpy( dbentries[ position ].name, dptr->d_name );
+						DEBUG("[SystemBase] Found script with number %d, script added: %s\n", pos, dptr->d_name );
+						strcpy( dbentries[ pos ].name, dptr->d_name );
+						pos++;
+					}
+					else
+					{
+						numberOfFiles--;
+						FERROR("[SystemBase] get number from name: %s FAIL\n", dptr->d_name );
+					}
 				}
+				
+				// sort all scripts
+				
+				qsort( dbentries, pos, sizeof(DBUpdateEntry), compareDBUpdateEntry );
 				closedir( dp );
 			}
 			

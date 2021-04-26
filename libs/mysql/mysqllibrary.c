@@ -1081,6 +1081,21 @@ void DeleteWhere( struct SQLLibrary *l, FULONG *descr, char *where )
 }
 
 /**
+ * Return last error
+ *
+ * @param l pointer to mysql.library structure
+ * @return error string or null
+ */
+const char *GetLastError( struct SQLLibrary *l )
+{
+	if( l != NULL &&  l->con.sql_Con != NULL )
+	{
+		return mysql_error( l->con.sql_Con );
+	}
+	return NULL;
+}
+
+/**
  * Return number of entries in database
  *
  * @param l pointer to mysql.library structure
@@ -1267,21 +1282,6 @@ int QueryWithoutResults( struct SQLLibrary *l, const char *sel )
 		FERROR("Mysql.library is NULL\n");
 	}
 	return -2;
-}
-
-/**
- * Return last error
- *
- * @param l pointer to mysql.library structure
- * @return error string or null
- */
-const char *GetLastError( struct SQLLibrary *l )
-{
-	if( l != NULL &&  l->con.sql_Con != NULL )
-	{
-		return mysql_error( l->con.sql_Con );
-	}
-	return NULL;
 }
 
 /**

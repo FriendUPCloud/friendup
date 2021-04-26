@@ -20,6 +20,7 @@
 #include <system/systembase.h>
 #include <system/cache/cache_user_files.h>
 #include <system/application/appsession.h>
+#include <util/session_id.h>
 
 /**
  * Create new User
@@ -791,6 +792,33 @@ int UserRegenerateSessionID( User *usr, char *newsess )
 	/*
 	if( usr != NULL )
 	{
+<<<<<<< HEAD
+=======
+		//pthread_mutex_lock( &(usr->) );
+		// Remove old one and update
+		if( usr->u_MainSessionID )
+		{
+			FFree( usr->u_MainSessionID );
+		}
+		
+		if( newsess != NULL )
+		{
+			usr->u_MainSessionID = StringDuplicate( newsess );
+			DEBUG("[UserRegenerateSessionID] changed master DIRTY COPY OF SESSION ID user: %s session: %s\n", usr->u_Name, usr->u_MainSessionID );
+		}
+		else
+		{
+			time_t timestamp = time ( NULL );
+	
+			//char *hashBase = MakeString( 255 );
+			//sprintf( hashBase, "%ld%s%d", timestamp, usr->u_FullName, ( rand() % 999 ) + ( rand() % 999 ) + ( rand() % 999 ) );
+			//HashedString( &hashBase );
+
+			usr->u_MainSessionID = SessionIDGenerate( );//hashBase;
+			DEBUG("[UserRegenerateSessionID] changed master sessionid for user: %s session: %s\n", usr->u_Name, usr->u_MainSessionID );
+		}
+	
+>>>>>>> master
 		// UPDATE file systems
 		File *lDev = usr->u_MountedDevs;
 		if( lDev != NULL )

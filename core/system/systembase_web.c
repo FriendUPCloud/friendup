@@ -2486,7 +2486,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								{
 									sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime='%lld' WHERE `Name`='%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_Name );
 									
-									if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
+ 									//if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
 									{ 
 
 									}

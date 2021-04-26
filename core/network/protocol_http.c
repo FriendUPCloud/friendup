@@ -921,6 +921,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							
 							UserSession *session = USMCreateTemporarySession( SLIB->sl_USM, sqllib, fs_IDUser, 0 );
 
+							Log( FLOG_DEBUG,"Check variables fs_Name: %s fs_DeviceName: %s fs_Path: %s\n", fs_Name, fs_DeviceName, fs_Path );
 							//if( ( fs = sqllib->Load( sqllib, FileSharedTDesc, query, &entries ) ) != NULL )
 							if( fs_Name != NULL && fs_DeviceName != NULL && fs_Path != NULL )
 							{
@@ -962,6 +963,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								
 								if( error != NULL )
 								{
+									Log( FLOG_DEBUG,"Error from mount '%s'\n", error );
 									FFree( error );
 								}
 
@@ -983,6 +985,8 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									{
 										mime = StringDuplicate( "application/octet-stream" );
 									}
+									
+									Log( FLOG_DEBUG,"Getting extension '%s'\n", extension );
 
 									//add mounting and reading files from FS
 									struct TagItem tags[] = {
@@ -997,7 +1001,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									// there is no need to cache files which are stored on local disk
 									if( tim == 0 ) //|| strcmp( actFS->GetPrefix(), "local" ) )
 									{
-
+										Log( FLOG_DEBUG,"No cache support\n" );
 									}
 									else
 									{
@@ -1062,7 +1066,8 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									}
 									else
 									{
-										DEBUG("CACHE STATE: %d\n", cacheState );
+										//DEBUG("CACHE STATE: %d\n", cacheState );
+										Log( FLOG_DEBUG,"No cache\n" );
 										FILE *cffp = NULL;
 
 										if( cacheState == CACHE_FILE_MUST_BE_CREATED )
@@ -1083,15 +1088,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 										// We need to get the sessionId if we can!
 										// currently from table we read UserID
 
-										/*
-										UserSession *sess = USMGetSessionByUserID( SLIB->sl_USM, fs_IDUser );
-
-										if( sess != NULL )
-										{
-											rootDev->f_SessionIDPTR = sess->us_SessionID;
-											//DEBUG("[ProtocolHttp] Session %s\n", sess );
-										}
-										*/
 										FileFillSessionID( rootDev, session );
 
 										if( actFS != NULL )

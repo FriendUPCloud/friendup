@@ -313,7 +313,6 @@ static FULONG UserDesc[] = {
 	SQLT_STR,     (FULONG)"Password",    offsetof( struct User, u_Password ),
 	SQLT_STR,     (FULONG)"Fullname",    offsetof( struct User, u_FullName ),
 	SQLT_STR,     (FULONG)"Email",       offsetof( struct User, u_Email ),
-	SQLT_STR,     (FULONG)"Timezone",    offsetof( struct User, u_Timezone ),
 	//SQLT_STR,     (FULONG)"SessionID",   offsetof( struct User, u_MainSessionID ),
 	SQLT_INT,     (FULONG)"LoggedTime",  offsetof( struct User, u_LoggedTime ),
 	SQLT_INT,     (FULONG)"CreatedTime", offsetof( struct User, u_CreatedTime ),
@@ -323,6 +322,7 @@ static FULONG UserDesc[] = {
 	SQLT_INT,     (FULONG)"MaxReadedBytes", offsetof( struct User, u_MaxBytesReadPerDevice ),
 	SQLT_INT,     (FULONG)"Status", offsetof( struct User, u_Status ),
 	SQLT_STR,     (FULONG)"UniqueID",    offsetof( struct User, u_UUID ),
+	SQLT_STR,     (FULONG)"Timezone",    offsetof( struct User, u_Timezone ),
 	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&UserInit,
 	SQLT_NODE,    (FULONG)"node",        offsetof( struct User, node ),
 	SQLT_END 

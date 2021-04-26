@@ -637,7 +637,7 @@ SystemBase *SystemInit( void )
 	if( skipDBUpdate == FALSE )
 	{
 		CheckAndUpdateDB( l, UPDATE_DB_TYPE_GLOBAL );
-		
+
 		CheckAndUpdateDB( l, UPDATE_DB_TYPE_INTERNAL );
 	}
 	else
@@ -646,7 +646,7 @@ SystemBase *SystemInit( void )
 		Log( FLOG_INFO, "---------Autoupdatedatabase process skipped---------\n");
 		Log( FLOG_INFO, "----------------------------------------------------\n");
 	}
-	
+
 	SQLLibrary *lsqllib  = l->GetDBConnection( l );
 	if( lsqllib != NULL )
 	{

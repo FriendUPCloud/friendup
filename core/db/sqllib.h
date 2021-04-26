@@ -79,13 +79,13 @@ typedef struct SQLLibrary
 	void 					(*Delete)( struct SQLLibrary *l, const FULONG *descr, void *data );
 	void					(*DeleteWhere)( struct SQLLibrary *l, const FULONG *descr, char *where );
 	void 					*(*Query)( struct SQLLibrary *l, const char *sel );
+	const char				*(*GetLastError)( struct SQLLibrary *l );
 	int 					(*NumberOfRecords)( struct SQLLibrary *l, const FULONG *descr, char *where );
 	int 					(*NumberOfRecordsCustomQuery)( struct SQLLibrary *l, const char *query );
 	char 					**(*FetchRow)( struct SQLLibrary *l, void *res );
 	void 					(*FreeResult)( struct SQLLibrary *l, void *res );
 	int						(*NumberOfRows)( struct SQLLibrary *l, void *res );
 	int						(*QueryWithoutResults)( struct SQLLibrary *l, const char *sel );
-	const char				*(*GetLastError)( struct SQLLibrary *l );
 	int						(*SNPrintF)( struct SQLLibrary *l, char *str, size_t stringSize, const char *fmt, ... );
 	int						(*SetOption)( struct SQLLibrary *l, char *params );
 	char					*(*MakeEscapedString)( struct SQLLibrary *l, char *str );

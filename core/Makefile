@@ -430,6 +430,10 @@ obj/%.o: system/mitra/%.c system/mitra/*.h system/mitra/%.d
 obj/%.o: monitoring/%.c monitoring/*.h monitoring/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(CC) $(CFLAGS) -c -o $@ $<
+
+obj/%.o: system/support/%.c system/support/*.h system/support/%.d
+	@echo "\033[34mCompile ...\033[0m"
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 # build/install
 

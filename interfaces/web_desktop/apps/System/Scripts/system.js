@@ -31,9 +31,11 @@ Application.run = function( msg )
 		catch( e ){  }
 		
 		var v = new View( {
-			title: 'System' + ( Config.data.Version ? ' (v' + Config.data.Version + ')' : '' ),
-			width: 1280,
-			height: 960
+			'title'     : 'System' + ( Config.data.Version ? ' (v' + Config.data.Version + ')' : '' ),
+			'width'     : 1280,
+			'height'    : 960,
+			'min-width' : 1235,
+			'min-height': 400
 		} );
 	
 		this.mainView = v;
