@@ -428,6 +428,22 @@ SystemBase *SystemInit( void )
 				}
 			}
 			
+			// http compression
+
+			tptr  = plib->ReadStringNCS( prop, "core:http_compression", NULL );
+			if( tptr != NULL )
+			{
+				if( strstr( tptr, "deflate" ) != NULL )
+				{
+					l->l_HttpCompressionContent |= HTTP_COMPRESSION_DEFLATE;
+				}
+				
+				if( strstr( tptr, "bzip" ) != NULL )
+				{
+					l->l_HttpCompressionContent |= HTTP_COMPRESSION_BZIP;
+				}
+			}
+			
 			l->sl_WorkersNumber = plib->ReadIntNCS( prop, "Core:Workers", WORKERS_MAX );
 			if( l->sl_WorkersNumber < WORKERS_MIN )
 			{

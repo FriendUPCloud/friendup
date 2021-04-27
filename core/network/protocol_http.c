@@ -1753,11 +1753,16 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 											response = HttpNewSimple( HTTP_200_OK, tags );
 
-											char *comprFromHeader = HttpGetHeaderFromTable( request, HTTP_HEADER_ACCEPT_ENCODING );
-											DEBUG("\n\n\n\n\n\nCompression %s\n\n\n\n\n\n", comprFromHeader );
-											if( comprFromHeader != NULL && strstr( comprFromHeader, "deflate" ) != NULL )
+											// so, first we check if compression should be enabled
+											if( (SLIB->l_HttpCompressionContent&HTTP_COMPRESSION_DEFLATE) == HTTP_COMPRESSION_DEFLATE )
 											{
-												HttpSetCompression( response, HTTP_COMPRESSION_DEFLATE );
+												char *comprFromHeader = HttpGetHeaderFromTable( request, HTTP_HEADER_ACCEPT_ENCODING );
+												DEBUG("\n\n\n\n\n\nCompression %s\n\n\n\n\n\n", comprFromHeader );
+												
+												if( comprFromHeader != NULL && strstr( comprFromHeader, "deflate" ) != NULL )
+												{
+													HttpSetCompression( response, HTTP_COMPRESSION_DEFLATE );
+												}
 											}
 											
 											HttpSetContent( response, file->lf_Buffer, file->lf_FileSize );
