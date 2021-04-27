@@ -2250,12 +2250,70 @@ void HttpAddTextContent( Http* http, char* content )
 }
 
 //
-//
+// Deflate compression
 //
 
 #define windowBits 15
 #define GZIP_ENCODING 16
+//#define CHUNK_LEN 8096
 #define CHUNK_LEN 0x4000
+
+inline static void compressDataDeflate( Http *http, unsigned char *storePtr, FQUAD *outputLen )
+{
+	FQUAD compressedLength = 0;
+	
+	z_stream strm;
+	strm.zalloc = Z_NULL;
+	strm.zfree  = Z_NULL;
+	strm.opaque = Z_NULL;
+	
+	deflateInit(&strm, Z_DEFAULT_COMPRESSION);
+	
+	//deflateInit2( &strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED,
+	//	windowBits , 8,	//| GZIP_ENCODING
+	//	Z_DEFAULT_STRATEGY );
+	
+	DEBUG("start compressDataDeflate\n");
+	
+	unsigned char *dataPtr = (unsigned char *) http->http_Content;
+	FQUAD dataLeft = http->http_SizeOfContent;
+
+	int flushFlag = 0;
+	strm.next_in  = (Bytef*)dataPtr;
+    strm.next_out = storePtr;
+	
+	while( dataLeft > 0 )// strm.total_in < http->http_SizeOfContent )
+	{
+		int dataIn = 0;
+		if( dataLeft < CHUNK_LEN )
+		{
+			printf("finish will be used\n");
+			flushFlag = Z_FULL_FLUSH;// Z_FINISH;
+			dataIn = dataLeft;
+		}
+		else
+		{
+			printf("flush\n");
+			flushFlag = Z_PARTIAL_FLUSH;
+			dataIn = CHUNK_LEN;
+		}
+		strm.avail_in = dataIn;
+		strm.avail_out = CHUNK_LEN;
+		
+		int err = deflate(&strm, flushFlag );
+		dataLeft -= dataIn;
+		
+		unsigned long tin = (unsigned long) strm.total_in;
+		unsigned long tlen = (unsigned long)http->http_SizeOfContent;
+		DEBUG(" strm.total_in %ld <= http->http_SizeOfContent %ld  stored: %d\n", tin, tlen, (CHUNK_LEN - strm.avail_out) );
+	}
+	strm.avail_in = 0;
+	int err = deflate(&strm, Z_FINISH );
+	compressedLength = strm.total_out;
+	
+	deflateEnd( &strm );
+	*outputLen = compressedLength;
+}
 
 /**
  * build Http request string from Http request
@@ -2341,15 +2399,7 @@ unsigned char *HttpBuild( Http* http )
 					char *tmp = FCalloc( 512, sizeof( char ) );
 					if( tmp != NULL )
 					{
-						if( i == HTTP_HEADER_CONTENT_LENGTH )
-						{
-							contentLenPosInString = stringPos;		// we will add one space, in case if there will be need to change length
-							stringsSize[ stringPos ] = snprintf( tmp, 512, "%s: %s \r\n", HEADERS[ i ], http->http_RespHeaders[ i ] );
-						}
-						else
-						{
-							stringsSize[ stringPos ] = snprintf( tmp, 512, "%s: %s\r\n", HEADERS[ i ], http->http_RespHeaders[ i ] );
-						}
+						stringsSize[ stringPos ] = snprintf( tmp, 512, "%s: %s\r\n", HEADERS[ i ], http->http_RespHeaders[ i ] );
 						strings[ stringPos++ ] = tmp;
 					}
 					else
@@ -2363,9 +2413,9 @@ unsigned char *HttpBuild( Http* http )
 		
 		if( http->http_Compression != HTTP_COMPRESSION_NONE )
 		{
-			int p = strlen(" Content-Encoding: deflate\r\n" );
+			int p = strlen("content-encoding: deflate\r\n" );
 			stringsSize[ stringPos ] = p;
-			strings[ stringPos++ ] = StringDuplicateN( "Content-Encoding: deflate\r\n", p );
+			strings[ stringPos++ ] = StringDuplicateN( "content-encoding: deflate\r\n", p );
 		}
 		stringsSize[ stringPos ] = 2;
 		strings[ stringPos++ ] = StringDuplicateN( "\r\n", 2 );
@@ -2400,16 +2450,7 @@ unsigned char *HttpBuild( Http* http )
 		if( http->http_Compression != HTTP_COMPRESSION_NONE )
 		{
 			FQUAD compressedLength = 0;
-			char chunk[ CHUNK_LEN ];
-			
-			z_stream strm;
-			strm.zalloc = Z_NULL;
-			strm.zfree  = Z_NULL;
-			strm.opaque = Z_NULL;
-			deflateInit2( &strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED,
-							windowBits | GZIP_ENCODING, 8,
-							Z_DEFAULT_STRATEGY );
-			
+
 			// when data is compressed we have to change content length
 			if( contentLenPosInString > 0 )
 			{
@@ -2433,37 +2474,7 @@ unsigned char *HttpBuild( Http* http )
 				
 				if( http->http_SizeOfContent > 0 )
 				{
-					unsigned char *dataPtr = (unsigned char *) http->http_Content;
-					FQUAD dataLeft = http->http_SizeOfContent;
-					do
-					{
-						int have;
-						strm.next_in = dataPtr;
-						strm.avail_in = dataLeft;
-						
-						DEBUG("Store pointer %p data left %ld CHUNK_LEN %d\n", storePtr, dataLeft, CHUNK_LEN );
-						
-						if( dataLeft < CHUNK_LEN )
-						{
-							strm.avail_out = dataLeft;
-						}
-						else
-						{
-							strm.avail_out = CHUNK_LEN;
-						}
-						strm.next_out = storePtr;
-						deflate( &strm, Z_FINISH );
-						have = strm.avail_out;//CHUNK_LEN - strm.avail_out;
-						
-						DEBUG("COMPRESSION OUT: %d\n", have );
-						
-						dataLeft -= CHUNK_LEN;
-						storePtr += have;
-						compressedLength += have;
-						
-						//fwrite (out, sizeof (char), have, stdout);
-					}
-					while( dataLeft > 0 );// strm.avail_out == 0);
+					compressDataDeflate( http, storePtr, &compressedLength );
 					
 					// we must overwrite content-length
 					
@@ -2471,13 +2482,22 @@ unsigned char *HttpBuild( Http* http )
 					{
 						DEBUG(">>>>>>>>>content length found, compressed size: %ld\n", compressedLength );
 						char tmp[ 128 ];
-						int len = snprintf( tmp, 128, "%s: %ld \r\n", HEADERS[ HTTP_HEADER_CONTENT_LENGTH ], compressedLength );
+						int len = snprintf( tmp, 128, "%s: %ld", HEADERS[ HTTP_HEADER_CONTENT_LENGTH ], compressedLength );
 						memcpy( contentLengthPosition, tmp, len );
+						if( contentLengthPosition[ len ] != '\r' ){ contentLengthPosition[ len ] = ' '; printf("HERE!\n"); }
 						
+						int j;
+						for( j=0 ; j < len+5 ; j++ )
+						{
+							if( contentLengthPosition[ j ] == '\r' ){ printf("R\n"); }
+							if( contentLengthPosition[ j ] == '\n' ){ printf("N\n"); }
+						}
+
 						size -= http->http_SizeOfContent;
 						size += compressedLength;
 					}
-					printf("\n\n\nRESPONSE: %s\n", response );
+					unsigned char *end = strstr( (char *)response, "\r\n\r\n" );
+					printf("\n\n\nRESPONSE: %.*s\n", (int)(end-response), response );
 				}
 			}
 			else	// content length not found in response
@@ -2497,37 +2517,12 @@ unsigned char *HttpBuild( Http* http )
 				
 				if( http->http_SizeOfContent > 0 )
 				{
-					FQUAD dataLeft = http->http_SizeOfContent;
-					do
-					{
-						int have;
-						strm.next_in = dataPtr;
-						strm.avail_in = dataLeft;
-						
-						DEBUG("Store pointer %p data left %ld\n", storePtr, dataLeft );
-						
-						if( dataLeft < CHUNK_LEN )
-						{
-							strm.avail_out = dataLeft;
-						}
-						else
-						{
-							strm.avail_out = CHUNK_LEN;
-						}
-						strm.next_out = storePtr;
-						deflate( &strm, Z_FINISH );
-						have = strm.avail_out;//CHUNK_LEN - strm.avail_out;
-						
-						dataLeft -= CHUNK_LEN;
-						storePtr += have;
-						compressedLength += have;
-						
-						//fwrite (out, sizeof (char), have, stdout);
-					}
-					while( dataLeft > 0 );// strm.avail_out == 0);
+					compressDataDeflate( http, storePtr, &compressedLength );
+					size -= http->http_SizeOfContent;
+					size += compressedLength;
 				}
 			}
-			deflateEnd( &strm );
+			//deflateEnd( &strm );
 		}
 		else	// no compression
 		{
