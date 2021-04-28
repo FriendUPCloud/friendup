@@ -310,6 +310,15 @@ int FriendCoreManagerInit( FriendCoreManager *fcm )
 		Log(FLOG_INFO, "-----UserFileShareCache (per drive): %ld\n", SLIB->sl_USFCacheMax );
 		Log(FLOG_INFO, "-----Cluster Master: %d\n", fcm->fcm_ClusterMaster );
 		Log(FLOG_INFO, "-----UserSession timeout: %d\n", SLIB->sl_RemoveSessionsAfterTime );
+		
+		if( (SLIB->l_HttpCompressionContent & HTTP_COMPRESSION_DEFLATE ) == HTTP_COMPRESSION_DEFLATE )
+		{
+			Log(FLOG_INFO, "-----Http deflate compression: on\n" );
+		}
+		if( (SLIB->l_HttpCompressionContent & HTTP_COMPRESSION_BZIP ) == HTTP_COMPRESSION_BZIP )
+		{
+			Log(FLOG_INFO, "-----Http bzip compression: on\n" );
+		}
 		/*
 		if( SLIB != NULL && SLIB->sl_ActiveAuthModule != NULL )
 		{
