@@ -16,7 +16,7 @@ function Logging( $str )
 {
 	if( $f = fopen( '/tmp/log.txt', 'a+' ) )
 	{
-		fwrite( $f, $str );
+		fwrite( $f, date( 'YmdHis' ) . ': ' . $str . "\n" );
 		fclose( $f );
 	}
 }
