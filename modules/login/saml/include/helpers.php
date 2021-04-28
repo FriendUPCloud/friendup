@@ -246,13 +246,20 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 				
 				Logging( "Attempting to call with sfreerdp." );
 				
-				if( $checkauth = exec_timeout( "sfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" ) )
+				try
 				{
-					if( strstr( $checkauth, 'sfreerdp: not found' ) )
+					if( $checkauth = exec_timeout( "sfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" ) )
 					{
-						$checkauth = exec_timeout( "xfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" );
+						if( strstr( $checkauth, 'sfreerdp: not found' ) )
+						{
+							$checkauth = exec_timeout( "xfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" );
+						}
+						$found = true;
 					}
-					$found = true;
+				}
+				catch( Exception $e )
+				{
+					Logging( 'Borked with this error: ' . $e );
 				}
 				
 				Logging( 'Result was: ' . $checkauth );
