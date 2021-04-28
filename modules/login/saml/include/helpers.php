@@ -21,6 +21,33 @@ function Logging( $str )
 	}
 }
 
+// Execute shell function with a timeout
+function exec_timeout( $cmd, $timeout = 60 )
+{
+	$start = time();
+	$outfile = uniqid( '/tmp/out', 1 );
+	$pid = trim( shell_exec( "$cmd > $outfile 2>&1 & echo $!" ) );
+	if( empty( $pid ) ) return false;
+	while( 1 ) 
+	{
+		if( time() - $start > $timeout )
+		{
+			exec( "kill -9 $pid", $null );
+			break;
+		}
+		$exists = trim( shell_exec( "ps -p $pid -o pid=" ) );
+		if( empty( $exists ) ) break;
+		usleep( 100000 );
+	}
+	$output = file_get_contents( $outfile );
+	unlink( $outfile );
+	exec( "kill -9 $pid", $null );
+	// Remove bash history to protect temporary unsafe auth with terminal ...
+	exec( "history -c" );
+	return $output;
+}
+
+
 // Get varargs
 function getArgs()
 {
