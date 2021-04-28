@@ -2533,6 +2533,133 @@ FLONG SocketWriteSSL( Socket* sock, char* data, FLONG length )
 }
 
 /**
+ * Write data to socket (NOSSL)
+ *
+ * @param sock pointer to Socket on which write function will be called
+ * @param type type of compression
+ * @param data pointer to char table which will be send
+ * @param length length of data which will be send
+ * @return number of bytes writen to socket
+ */
+FLONG SocketWriteCompressionNOSSL( Socket* sock, int type, char* data, FLONG length )
+{
+	if( length < 1 )
+	{
+		//FERROR("Socket is NULL or length < 1: %lu\n", length );
+		return -1;
+	}
+
+	unsigned int written = 0, bufLength = length;
+	int retries = 0, res = 0;
+
+	do
+	{
+		if( bufLength > length - written ) bufLength = length - written;
+		res = send( sock->fd, data + written, bufLength, MSG_DONTWAIT );
+
+		if( res > 0 ) 
+		{
+			written += res;
+			retries = 0;
+		}
+		else if( res < 0 )
+		{
+			// Error, temporarily unavailable..
+			if( errno == 11 )
+			{
+				retries++;
+				usleep( 400 ); // Perhaps allow full throttle?
+				if( retries > 10 ) 
+					usleep( 20000 );
+				else if( retries > 250 )
+					break;
+				continue;
+			}
+			FERROR( "[SocketWriteNOSSL] Failed to write: %d, %s\n", errno, strerror( errno ) );
+			//socket can not be closed here, because http.c:1504 will fail
+			//we have to rely on the reaper thread to release stale sockets
+			break;
+		}
+	}
+	while( written < length );
+
+	DEBUG("[SocketWriteNOSSL] end write %d/%ld (had %d retries)\n", written, length, retries );
+	return written;
+}
+
+/**
+ * Write data to socket (SSL)
+ *
+ * @param sock pointer to Socket on which write function will be called
+ * @param type type of compression
+ * @param data pointer to char table which will be send
+ * @param length length of data which will be send
+ * @return number of bytes writen to socket
+ */
+FLONG SocketWriteCompressionSSL( Socket* sock, int type, char* data, FLONG length )
+{
+	if( length < 1 )
+	{
+		return -1;
+	}
+
+	FLONG left = length;
+	FLONG written = 0;
+	int res = 0;
+
+	FLONG bsize = left;
+
+	int err = 0;		
+	int counter = 0;
+
+	while( written < length )
+	{
+		if( (bsize + written) > length ) bsize = length - written;
+
+		if( sock->s_Ssl == NULL )
+		{
+			FERROR( "[SocketWriteSSL] The ssl connection was dropped on this file descriptor!\n" );
+			break;
+		}
+
+		res = SSL_write( sock->s_Ssl, data + written, bsize );
+
+		if( res <= 0 )
+		{
+			err = SSL_get_error( sock->s_Ssl, res );
+
+			switch( err )
+			{
+				// The operation did not complete. Call again.
+				case SSL_ERROR_WANT_WRITE:
+				{
+					break;
+				}
+				case SSL_ERROR_SSL:
+				{
+					FERROR("[SocketWriteSSL] Cannot write. Error %d stringerr: %s wanted to sent: %ld fullsize: %ld\n", err, strerror( err ), bsize, length );
+					if( counter++ > 3 )
+					{
+						return 0;
+					}
+					break;
+				}
+				default:
+				{
+					FERROR("[SocketWriteSSL] Cannot write. Error %d stringerr: %s wanted to sent: %ld fullsize: %ld\n", err, strerror( err ), bsize, length );
+					return 0;
+				}
+			}
+		}
+		else
+		{	
+			written += res;
+		}
+	}
+	return written;
+}
+
+/**
  * Abort write function
  *
  * @param sock pointer to Socket

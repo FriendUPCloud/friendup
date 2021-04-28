@@ -65,6 +65,21 @@ static void dump_handshake_info(struct lws_tokens *lwst);
 static int callback_http( struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
 
 //
+// Extensions
+//
+
+static const struct lws_extension exts[] = {
+	{
+		"permessage-deflate",
+		lws_extension_callback_pm_deflate,
+		"permessage-deflate"
+		 "; client_no_context_takeover"
+		 "; client_max_window_bits"
+	},
+	{ NULL, NULL, NULL /* terminator */ }
+};
+
+//
 //
 //
 
@@ -339,6 +354,7 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 		{
 			ws->ws_Info.options |= LWS_SERVER_OPTION_REDIRECT_HTTP_TO_HTTPS;
 		}
+		ws->ws_Info.extensions = exts;
 		
 		ws->ws_Info.user = ws;
 		

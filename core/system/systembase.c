@@ -149,6 +149,7 @@ SystemBase *SystemInit( void )
 	l->l_SocketISSL.SocketWaitRead = SocketWaitReadSSL;
 	l->l_SocketISSL.SocketReadTillEnd = SocketReadTillEndSSL;
 	l->l_SocketISSL.SocketWrite = SocketWriteSSL;
+	l->l_SocketISSL.SocketWriteCompression = SocketWriteCompressionSSL;
 	l->l_SocketISSL.SocketDelete = SocketDeleteSSL;
 	l->l_SocketISSL.SocketReadPackage = SocketReadPackageSSL;
 
@@ -162,6 +163,7 @@ SystemBase *SystemInit( void )
 	l->l_SocketINOSSL.SocketWaitRead = SocketWaitReadNOSSL;
 	l->l_SocketINOSSL.SocketReadTillEnd = SocketReadTillEndNOSSL;
 	l->l_SocketINOSSL.SocketWrite = SocketWriteNOSSL;
+	l->l_SocketINOSSL.SocketWriteCompression = SocketWriteCompressionNOSSL;
 	l->l_SocketINOSSL.SocketDelete = SocketDeleteNOSSL;
 	l->l_SocketINOSSL.SocketReadPackage = SocketReadPackageNOSSL;
 

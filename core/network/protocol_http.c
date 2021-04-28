@@ -1884,42 +1884,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												
 												if( request->http_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
 												{
-													/*
-													HashmapElement *he = HttpGetPOSTParameter( request, "module" );
-													if( he == NULL ) he = HashmapGet( request->query, "module" );
-
-													if( he != NULL && he->data != NULL )
-													{
-														struct stat f;
-														char runfile[ 512 ];
-														snprintf( runfile, sizeof(runfile), "php \"php/catch_all.php\" \"%s\";", (char *)he->data );
-					
-														DEBUG("Run module: '%s'\n", runfile );
-					
-														if( stat( runfile, &f ) != -1 )
-														{
-															FULONG dataLength;
-															DEBUG("MODRUNPHP %s\n", runfile );
-															char *allArgsNew = GetArgsAndReplaceSession( *request, NULL );
-															if( allArgsNew != NULL )
-															{
-																data = SLIB->sl_PHPModule->Run( SLIB->sl_PHPModule, runfile, allArgsNew, &dataLength );
-																
-																phpResp = ListStringNew();
-																if( data != NULL )
-																{
-																	ListStringAdd( phpResp, data, dataLength );
-																	ListStringJoin( phpResp );
-																}
-															}
-														}
-														else
-														{
-															FERROR("Module do not eixst %s\n", runfile );
-														}
-													}
-													*/
-													
 													DEBUG("MODRUNPHP %s\n", "php/catch_all.php" );
 													FBOOL isFile;
 													char *allArgsNew = GetArgsAndReplaceSession( request, NULL, &isFile );
