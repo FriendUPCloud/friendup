@@ -219,11 +219,13 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 			// TODO: Move this to a server config, together with what mode to use for 2factor ...
 			// TODO: Look at hashing password or something ...
 			
+			echo( "Trying to log in." );
+			
 			$hostname = $server; //->host;
 			$port = 22; //( $server->ssh_port ? $server->ssh_port : 22 );
 			$rdp =  3389; // ( $server->rdp_port ? $server->rdp_port : 3389 );
-			$username = trim( $username );
-			$password = trim( $password );
+			$username = trim( addslashes( $username ) );
+			$password = trim( addslashes( $password ) );
 			
 			if( $hostname && $username && $password )
 			{
@@ -232,6 +234,8 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 				$authenticated = false; $found = false;
 				// sfreerdp needs special option added on install cmake -GNinja -DCHANNEL_URBDRC=OFF -DWITH_DSP_FFMPEG=OFF -DWITH_CUPS=OFF -DWITH_PULSE=OFF -DWITH_SAMPLE=ON .
 				// TODO: Get error messages for not WHITE LABELLED!!!!!!
+				
+				echo( "Attempting to call with sfreerdp." );
 				
 				if( $checkauth = exec_timeout( "sfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" ) )
 				{
