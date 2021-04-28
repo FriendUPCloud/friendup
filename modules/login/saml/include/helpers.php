@@ -255,6 +255,8 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 					$found = true;
 				}
 				
+				Logging( 'Result was: ' . $checkauth );
+				
 				if( !$found )
 				{
 					$checkauth = exec_timeout( "xfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" );
@@ -289,6 +291,8 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 				{
 					$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"2"}';
 				}
+				
+				Logging( 'Final done.' );
 				
 				if( !$error )
 				{
