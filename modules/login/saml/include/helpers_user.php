@@ -769,6 +769,7 @@ function remoteAuth( $url, $args = false, $method = 'POST', $headers = false, $a
 		}
 		if( $args )
 		{
+			die( 'Using args: ' . print_r( $args, 1 ) );
 			if( is_object( $args ) )
 			{
 				$args = array(
