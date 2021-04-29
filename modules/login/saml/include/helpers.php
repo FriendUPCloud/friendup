@@ -373,7 +373,7 @@ function execute2fa( $data )
 				{
 					return 'fail<!--separate-->{"result":"-1","response":"Unexpected return value."}';
 				}
-				return $result[0] . '<!--separate-->' . json_encode( $data );
+				return $result[ 0 ] . '<!--separate-->' . json_encode( $data );
 			}
 		}
 		return 'fail<!--separate-->{"result":"-1","response":"Could not verify Microsoft account."}';

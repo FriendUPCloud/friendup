@@ -232,7 +232,7 @@ function checkFriendUser( $data, $create = false )
 						}
 					}
 					// Decode response string (TODO: Remove the need to escape backward slashes)
-					if( $decoded = json_decode( str_replace( '\\', '\\\\', $login ) ) )
+					if( $decoded = json_decode( str_replace( '\\', urlencode( '\\' ), $login ) ) )
 					{
 						foreach( $decoded as $k=>$v )
 						{
