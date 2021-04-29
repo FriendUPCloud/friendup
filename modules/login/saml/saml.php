@@ -76,6 +76,7 @@ if( $args = getArgs() )
     	$o->Code = $args->code;
     	$o->AuthToken = $args->authtoken;
     	$o->Username = $args->username;
+    	$o->Fullname = $args->fullname;
     	$o->MobileNumber = $args->mobilenumber;
     	$o->Password = $args->password;
     	$result = execute2fa( $o );

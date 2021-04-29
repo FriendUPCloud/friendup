@@ -103,6 +103,7 @@
 					j.addVar( 'code', code );
 					j.addVar( 'password', passWd );
 					j.addVar( 'authtoken', this.Auth2faToken );
+					j.addVar( 'deviceid', this.deviceId ); // TODO: Create device id!
 					j.onload = function()
 					{
 						let resp = this.responseText();

@@ -365,10 +365,11 @@ function execute2fa( $data )
 				$json->username = $data->Username;
 				$json->password = $data->Password;
 				$json->fullname = $data->Fullname;
+				$json->mobile   = $data->MobileNumber;
+				$json->deviceid = $data->DeviceId;
 				
-				die( 'Please wait: ' . $result[ 1 ] );
 				// Compare user data with Friend OS
-				if( !$data = checkFriendUser( $json, $ret[1], true ) )
+				if( !$data = checkFriendUser( $json, true ) )
 				{
 					return 'fail<!--separate-->{"result":"-1","response":"Unexpected return value."}';
 				}

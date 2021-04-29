@@ -14,13 +14,17 @@
 
 // Check a Friend user
 // TODO: Fix deprecated password hashing (deprecated soon!)
-function checkFriendUser( $data, $identity, $create = false )
+function checkFriendUser( $data, $create = false )
 {
 	global $Config, $SqlDatabase;
 	$conf =& $Config;
 	$dbo =& $SqlDatabase;
 	
-	if( $data && $identity && $data->username && isset( $data->password ) )
+	// Resulting identity object to return to caller
+	$identity = new stdClass();
+	
+	// Check vars and attributes
+	if( $data && $data->username && isset( $data->password ) )
 	{
 		if( $data->password && ( !strstr( $data->password, 'HASHED' ) && !strstr( $data->password, '{S6}' ) ) )
 		{
@@ -38,6 +42,7 @@ function checkFriendUser( $data, $identity, $create = false )
 				AND fu.Password = \'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $data->password ) ) . '\' 
 		';*/
 		
+		// Select query
 		$query = '
 			SELECT fu.ID FROM FUser fu 
 			WHERE fu.Name = \'' . mysqli_real_escape_string( $dbo->_link, $data->username ) . '\' 
@@ -68,30 +73,32 @@ function checkFriendUser( $data, $identity, $create = false )
 				if( $dbo->Query( '
 				INSERT INTO FUser ( `Name`, `Password`, `PublicKey`, `Fullname`, `Email`, `LoggedTime`, `CreatedTime`, `LoginTime`, `UniqueID` ) 
 				VALUES ('
-					. ' \'' . mysqli_real_escape_string( $dbo->_link, $data->username                                  ) . '\'' 
-					. ',\'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $data->password )       ) . '\'' 
-					. ',\'' . mysqli_real_escape_string( $dbo->_link, $data->publickey     ? trim( $data->publickey    ) : '' ) . '\'' 
-					. ',\'' . mysqli_real_escape_string( $dbo->_link, $identity->fullname  ? trim( $identity->fullname ) : '' ) . '\'' 
-					. ',\'' . mysqli_real_escape_string( $dbo->_link, $identity->email     ? trim( $identity->email    ) : '' ) . '\'' 
+					. ' \'' . mysqli_real_escape_string( $dbo->_link, $data->username                                    ) . '\'' 
+					. ',\'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $data->password )         ) . '\'' 
+					. ',\'' . mysqli_real_escape_string( $dbo->_link, isset( $data->publickey ) ? trim( $data->publickey ) : '' ) . '\'' 
+					. ',\'' . mysqli_real_escape_string( $dbo->_link, isset( $data->fullname )  ? trim( $data->fullname  ) : '' ) . '\'' 
+					. ',\'' . mysqli_real_escape_string( $dbo->_link, isset( $data->email )     ? trim( $data->email     ) : '' ) . '\'' 
 					. ','   . time() 
 					. ','   . time() 
 					. ','   . time() 
-					. ',\'' . mysqli_real_escape_string( $dbo->_link, generateFriendUniqueID( $data->username )        ) . '\'' 
+					. ',\'' . mysqli_real_escape_string( $dbo->_link, generateFriendUniqueID( $data->username )          ) . '\'' 
 				.') ' ) )
 				{
 					if( $creds = $dbo->fetchObject( $query ) )
 					{
 						// add user to users group....
 						$dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $creds->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'' . ( 'User' ) . '\' AND `Type` = \'Level\' ) );' );
+						
+						// Check if the "External" group exists
 						checkExternalUserGroup();
 						
 						// add user to External users group....
 						$dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $creds->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'User\' AND `Type` = \'External\' ) );' );
 						
-						if( $identity->mobile )
+						if( $data->mobile )
 						{
 							// Add phone number ...
-							$dbo->Query( 'INSERT INTO `FMetaData` ( `DataTable`, `DataID`, `Key`, `ValueString` ) VALUES ( "FUser", '. intval( $creds->ID ) .', "Mobile", "' . $identity->mobile . '" );' );
+							$dbo->Query( 'INSERT INTO `FMetaData` ( `DataTable`, `DataID`, `Key`, `ValueString` ) VALUES ( "FUser", '. intval( $creds->ID ) .', "Mobile", "' . $data->mobile . '" );' );
 						}
 						
 						// TODO: Find out what template to use, and define based on user level or admin access, for later ...
@@ -120,7 +127,6 @@ function checkFriendUser( $data, $identity, $create = false )
 							
 							if( $ses = json_decode( $login ) )
 							{
-								
 								if( $ses->sessionid )
 								{
 									if( !remoteAuth( '/system.library/user/update?sessionid=' . $ses->sessionid, 
