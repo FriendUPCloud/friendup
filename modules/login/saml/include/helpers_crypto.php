@@ -24,6 +24,10 @@ function getServerKeys()
 			}
 		}
 	}
+	else
+	{
+		die( 'fail<!--separate-->' . print_r( $pem, 1 ) . '----' . __DIR__ );
+	}
 	return $pem;
 }
 
