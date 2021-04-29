@@ -145,7 +145,7 @@ function checkFriendUser( $data, $create = false )
 								}
 								else
 								{
-									die( 'fail<!--separate-->{"message":"Error! Fail, no session.","response":-1}' );
+									die( 'fail<!--separate-->{"message":"Error! Fail, no session.","response":-1}<!--separate-->' . $login );
 								}
 							}
 						}
