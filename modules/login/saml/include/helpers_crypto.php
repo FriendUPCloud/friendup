@@ -15,11 +15,6 @@ function getServerKeys()
 			$pem->privatekey = trim( str_replace( '-----BEGIN CERTIFICATE-----', '', $data[0] ) );
 			$pem->publickey = trim( str_replace( '-----BEGIN CERTIFICATE-----', '', $data[1] ) );
 		}
-		die( print_r( $pem, 1 ) );
-	}
-	else
-	{
-		die( 'fail<!--separate-->' . print_r( $pem, 1 ) . '----' . __DIR__ );
 	}
 	return $pem;
 }
