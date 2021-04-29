@@ -231,7 +231,7 @@ function checkFriendUser( $data, $create = false )
 							}
 						}
 					}
-					if( $decoded = json_decode( $login ) )
+					if( $decoded = json_decode( addslashes( $login ) ) )
 					{
 						$identity->sessionid = $decoded->sessionid;
 					}
