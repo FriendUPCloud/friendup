@@ -43,8 +43,9 @@ register_shutdown_function( function()
 } );
 // End database toolset --------------------------------------------------------
 
-include( 'include/helpers.php' );      // General helper functions
-include( 'include/helpers_user.php' ); // User related helper functions
+include( 'include/helpers.php' );        // General helper functions
+include( 'include/helpers_user.php' );   // User related helper functions
+include( 'include/helpers_crypto.php' ); // Crypto related helper functions
 
 //check that necessary globals and config are present
 if(

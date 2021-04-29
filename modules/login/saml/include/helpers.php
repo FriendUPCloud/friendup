@@ -126,13 +126,25 @@ function renderReplacements( $template )
 		$samlMod['samlendpoint'] : 'about:blank';
 	$samlendpoint .= '?friendendpoint=' . urlencode( $GLOBALS['request_path'] );
 	
+	
+	// Public key
+	$publickey = '';
+	if( $keys = getServerKeys() )
+	{
+		if( $keys->publickey )
+		{
+			$publickey = base64_encode( $keys->publickey );
+		}
+	}
+	
 	$finds = [
 		'{scriptpath}',
 		'{welcome}',
 		'{friendlinktext}',
 		'{additionaliframestyles}',
 		'{samlendpoint}',
-		'{additionalfriendlinkstyle}'
+		'{additionalfriendlinkstyle}',
+		'{publickey}'
 	];
 	$replacements = [
 		$GLOBALS['request_path'],
@@ -140,7 +152,8 @@ function renderReplacements( $template )
 		$friendlink,
 		$additional_iframe_styles,
 		$samlendpoint,
-		$additionalfriendlinkstyles
+		$additionalfriendlinkstyles,
+		$publickey
 	];
 	
 	return str_replace( $finds, $replacements, $template );
