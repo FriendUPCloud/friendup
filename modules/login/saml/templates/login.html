@@ -110,7 +110,7 @@
 						resp = resp.split( '<!--separate-->' );
 						if( resp[0] == 'ok' )
 						{
-							let json = JSON.parse( resp );
+							let json = JSON.parse( resp[1] );
 							
 							parent.Workspace.sessionId     = json.sessionid;
 							parent.Workspace.loginUsername = json.username;
