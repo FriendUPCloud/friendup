@@ -23,6 +23,7 @@ function getServerKeys()
 				}
 			}
 		}
+		die( print_r( $pem, 1 ) );
 	}
 	else
 	{
