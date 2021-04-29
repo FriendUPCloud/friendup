@@ -130,6 +130,10 @@
 							{
 								json.username = json.username.split( '%5C' )[1];
 							}
+							else if( json.username.indexOf( '@' ) > 0 )
+							{
+								json.username = json.username.split( '%5C' )[0];
+							}
 							
 							parent.Workspace.sessionId     = json.sessionid;
 							parent.Workspace.loginUsername = json.username;
