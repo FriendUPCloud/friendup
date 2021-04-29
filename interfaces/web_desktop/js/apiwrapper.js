@@ -3004,9 +3004,11 @@ function apiWrapper( event, force )
 						// TODO: Investigate different credential types
 						if( msg.credentialType == 'friend' )
 						{
+							console.log( 'Getting Friend credentials.' );
 							// TODO: Filter application to get access to this!
 							if( msg.callback )
 							{
+								console.log( 'Checking stored credentials.' );
 								if( Workspace.storedCredentials )
 								{
 									let enc = Workspace.encryption;
@@ -3019,6 +3021,7 @@ function apiWrapper( event, force )
 											password: pass
 										};
 										message = 'Friend credentials successfully delivered.';
+										console.log( 'We got the credentials.' );
 									}
 								}
 								let nmsg = {}; for( let xz in msg ) nmsg[ xz ] = msg[ xz ];
