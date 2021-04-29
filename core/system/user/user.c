@@ -656,10 +656,12 @@ int UserRegenerateSessionID( void *lsb, User *usr, char *newsess )
 			DEBUG("[UserRegenerateSessionID] changed master sessionid for user: %s session: %s\n", usr->u_Name, usr->u_MainSessionID );
 			
 			sqllib = sb->LibrarySQLGet( sb );
-			if( sqllib == NULL )
+			if( sqllib != NULL )
 			{
 				char temptext[ 512 ];
 				sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "UPDATE `FUser` SET SessionID='%s' WHERE ID=%lu", usr->u_MainSessionID, usr->u_ID );
+				
+				DEBUG("[UserRegenerateSessionID] sql: %s\n", temptext );
 				
 				sqllib->QueryWithoutResults( sqllib, temptext );
 				sb->LibrarySQLDrop( sb, sqllib );
