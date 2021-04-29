@@ -192,14 +192,21 @@
 							{
 								mobileNumber = smd[ us ][0];
 								this.mobileNumber = mobileNumber;
+								console.log( 'Found mobile: ' + mobileNumber );
 							}
 							else if( us.indexOf( '\/name' ) > 0 )
 							{
 								this.userName = smd[ us ][ 1 ];
+								console.log( 'Found username: ' + this.userName );
 							}
 							else if( us.indexOf( '\/surname' ) > 0 )
 							{
 								this.fullName = smd[ us ][ 1 ];
+								console.log( 'Found full name: ' + this.fullName );
+							}
+							else
+							{
+								console.log( 'Not using ' + us );
 							}
 						}
 					}
