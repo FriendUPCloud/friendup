@@ -20,13 +20,11 @@ function checkFriendUser( $data, $create = false )
 	$conf =& $Config;
 	$dbo =& $SqlDatabase;
 	
-	die( 'poof' );
-	
 	// Resulting identity object to return to caller
 	$identity = new stdClass();
 	
 	// Check vars and attributes
-	if( $data && $data->username && isset( $data->password ) )
+	if( $data && isset( $data->username ) && isset( $data->password ) )
 	{
 		if( $data->password && ( !strstr( $data->password, 'HASHED' ) && !strstr( $data->password, '{S6}' ) ) )
 		{
@@ -239,6 +237,11 @@ function checkFriendUser( $data, $create = false )
 			
 		}
 		// TODO: Allways get user data as output on success ...
+	}
+	else
+	{
+		die( 'Final pook!' );
+		return false;
 	}
 }
 
