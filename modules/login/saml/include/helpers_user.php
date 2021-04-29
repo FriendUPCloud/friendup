@@ -106,7 +106,7 @@ function checkFriendUser( $data, $create = false )
 						firstLoginSetup( 0, $creds->ID );
 						
 						// Success now log the user in and activate it ...	
-						
+						die( 'pook!' );
 						if( $login = remoteAuth( '/system.library/login', 
 						[
 							'username' => $data->username, 
