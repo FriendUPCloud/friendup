@@ -258,6 +258,7 @@
 				    {
 				    	// Remember public key
 				    	window.publicKey = ge( 'publickey' ) ? ge( 'publickey' ).value : '';
+				    	console.log( 'This is the public key: ' + window.publicKey );
 				    	
 				    	let resp = this.responseText().split( '<!--separate-->' );
 				    	let e = resp[0]; let d = resp[1];
