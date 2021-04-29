@@ -14,6 +14,7 @@
 
 function Logging( $str )
 {
+	return null; // Disabled
 	if( $f = fopen( '/tmp/log.txt', 'a+' ) )
 	{
 		fwrite( $f, date( 'YmdHis' ) . ': ' . $str . "\n" );
@@ -357,11 +358,27 @@ function execute2fa( $data )
 		$result = verifyWindowsIdentity( $data->Username, $data->Password, $Config[ 'Windows' ][ 'server' ] );
 		if( $result )
 		{
-			die( $result[0] . '<!--separate-->' . $result[1] );
+			// Check if the windows identity was successful
+			if( $result[ 0 ] == 'ok' )
+			{
+				$json = new stdClass();
+				$json->username = $data->Username;
+				$json->password = $data->Password;
+				$json->fullname = 'Temporary user.';
+				$json->email    = $data->Username;
+				
+				die( 'Please wait.' );
+				// Compare user data with Friend OS
+				if( !$data = checkFriendUser( $json, $ret[1], true ) )
+				{
+					return 'fail<!--separate-->{"result":"-1","response":"Unexpected return value."}';
+				}
+			}
+			return $result[0] . '<!--separate-->' . $result[1];
 		}
-		die( 'ok<!--separate-->' . print_r( $result, 1 ) );
+		return 'ok<!--separate-->{"result":"-1","response":"Could not verify Microsoft account."}';
 	}
-	die( 'fail<!--separate-->{"result":"-1","response":"Could not verify token and code. Please retry again."}' );
+	return 'fail<!--separate-->{"result":"-1","response":"Could not verify token and code. Please retry again."}';
 }
 
 ?>

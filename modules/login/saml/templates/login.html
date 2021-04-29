@@ -104,7 +104,12 @@
 					j.addVar( 'authtoken', this.Auth2faToken );
 					j.onload = function()
 					{
-						console.log( this.responseText() );
+						let resp = this.responseText();
+						resp = resp.split( '<!--separate-->' );
+						if( resp[0] == 'ok' )
+						{
+							
+						}
 					}
 					j.send();
 				},

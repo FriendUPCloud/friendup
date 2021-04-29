@@ -43,7 +43,8 @@ register_shutdown_function( function()
 } );
 // End database toolset --------------------------------------------------------
 
-include( 'include/helpers.php' );
+include( 'include/helpers.php' );      // General helper functions
+include( 'include/helpers_user.php' ); // User related helper functions
 
 //check that necessary globals and config are present
 if(
@@ -77,7 +78,7 @@ if( $args = getArgs() )
     	$o->Username = $args->username;
     	$o->MobileNumber = $args->mobilenumber;
     	$o->Password = $args->password;
-    	execute2fa( $o );
+    	$result = execute2fa( $o );
     }
     // Check if auth 2fa token is registered for this session
     else if( isset( $args->check2fa ) )
