@@ -98,7 +98,7 @@
 					}
 					
 					// Manage public key
-					parent.Workspace.encryption.keys.server = ( ge( 'publickey' ) && ge( 'publickey' ).value ? { publickey: ge( 'publickey' ).value } : false );
+					parent.Workspace.encryption.keys.server = ( window.publicKey ? { publickey: window.publicKey  } : false );
 				
 					// So here we are setting keys twice first time in the login form to securely communicate with the server, then again in parent.Friend.User, might be overkill ...
 					parent.Workspace.encryption.setKeys( this.userName, passWd );
@@ -256,6 +256,9 @@
 				    m.addVar( 'mobilenumber', mobileNumber );
 				    m.onload = function()
 				    {
+				    	// Remember public key
+				    	window.publicKey = ge( 'publickey' ) ? ge( 'publickey' ).value : '';
+				    	
 				    	let resp = this.responseText().split( '<!--separate-->' );
 				    	let e = resp[0]; let d = resp[1];
 				        if( e == 'ok' )
