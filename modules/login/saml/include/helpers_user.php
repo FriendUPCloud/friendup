@@ -264,7 +264,7 @@ function checkFriendUser( $data, $create = false )
 				
 				$identity->userid = $creds->ID;
 			}
-			
+			die( 'Identity: ' . print_r( $identity, 1 ) );
 			return $identity;
 			
 		}
