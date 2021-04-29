@@ -68,6 +68,7 @@
 					</div>
 				</div>
 			</div>
+			<input type="hidden" id="publickey" value="{publickey}"/>
 		</div>
 		<style>#invalidLogin { color:#F00; }</style>
 		<script>
@@ -95,6 +96,19 @@
 						this.showError( 'Please input your validation number correctly.' );
 						return;
 					}
+					
+					// Manage public key
+					parent.Workspace.encryption.keys.server = ( ge( 'publickey' ) && ge( 'publickey' ).value ? { publickey: ge( 'publickey' ).value } : false );
+				
+					// So here we are setting keys twice first time in the login form to securely communicate with the server, then again in parent.Friend.User, might be overkill ...
+					parent.Workspace.encryption.setKeys( this.userName, passWd );
+				
+					if( !parent.Workspace.encryption.keys.server.publickey )
+					{
+						console.log( 'Server Key Missing:', parent.Workspace.encryption.keys.server );
+						return;
+					}
+					
 					let j = new cAjax();
 					j.open( 'POST', '/loginprompt/?execute2fa=1' );
 					j.addVar( 'username', this.userName );
@@ -118,6 +132,14 @@
 							parent.Workspace.loginid       = json.loginid;
 							parent.Workspace.userLevel     = json.level;
 							parent.Workspace.fullName      = json.fullname;
+							
+							// Set username and password so we can fetch it later
+							let enc = parent.Workspace.encryption;
+							parent.Workspace.storedCredentials = {
+								username: enc.encrypt( json.username, enc.getKeys().publickey ),
+								password: enc.encrypt( passWd, enc.getKeys().publickey )
+							};
+							
 							
 							// We are now online!
 							parent.Friend.User.SetUserConnectionState( 'online' );
