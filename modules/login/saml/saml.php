@@ -86,6 +86,10 @@ if( $args = getArgs() )
     {
     	die( check2faAuth( $args->auth2fatoken, $args->mobilenumber ) );
     }
+    else
+    {
+    	die( 'This is where the login is performed..' );
+    }
 }
 
 // Fallback - and normal operation - render the form
