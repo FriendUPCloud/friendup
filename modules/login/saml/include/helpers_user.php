@@ -235,6 +235,10 @@ function checkFriendUser( $data, $create = false )
 					{
 						$identity->sessionid = $login->sessionid;
 					}
+					else
+					{
+						die( 'Could not decode login: ' . $login );
+					}
 				}
 				else
 				{
