@@ -231,7 +231,10 @@ function checkFriendUser( $data, $create = false )
 							}
 						}
 					}
-					die( 'We got login: ' . $login );
+					if( $login = json_decode( $login ) )
+					{
+						$identity->sessionid = $login->sessionid;
+					}
 				}
 				else
 				{
