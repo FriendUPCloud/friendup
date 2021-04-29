@@ -11,17 +11,9 @@ function getServerKeys()
 	{
 		if( $keys = file_get_contents( __DIR__ . '/../../../../cfg/crt/server_encryption_key.pem' ) )
 		{
-			if( strstr( $keys, '-----' . "\r\n" . '-----' ) && ( $keys = explode( '-----' . "\r\n" . '-----', $keys ) ) )
-			{
-				if( isset( $keys[0] ) )
-				{
-					$pem->privatekey = ( $keys[0] . '-----' );
-				}
-				if( isset( $keys[1] ) )
-				{
-					$pem->publickey = ( '-----' . $keys[1] );
-				}
-			}
+			$data = explode( '-----END CERTIFICATE-----', $keys );
+			$pem->privatekey = trim( str_replace( '-----BEGIN CERTIFICATE-----', '', $data[0] ) );
+			$pem->publickey = trim( str_replace( '-----BEGIN CERTIFICATE-----', '', $data[1] ) );
 		}
 		die( print_r( $pem, 1 ) );
 	}
