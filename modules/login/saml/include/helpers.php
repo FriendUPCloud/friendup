@@ -364,8 +364,7 @@ function execute2fa( $data )
 				$json = new stdClass();
 				$json->username = $data->Username;
 				$json->password = $data->Password;
-				$json->fullname = 'Temporary user.';
-				$json->email    = $data->Username;
+				$json->fullname = $data->Fullname;
 				
 				die( 'Please wait.' );
 				// Compare user data with Friend OS
