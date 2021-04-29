@@ -113,7 +113,6 @@ function checkFriendUser( $data, $create = false )
 							'deviceid' => $data->deviceid 
 						] ) )
 						{
-							die( 'Here: ' . $login );
 							if( strstr( $login, '<!--separate-->' ) )
 							{
 								if( $ret = explode( '<!--separate-->', $login ) )
@@ -190,7 +189,6 @@ function checkFriendUser( $data, $create = false )
 							'deviceid' => $data->deviceid 
 						] ) )
 						{
-							die( 'Nere: ' . $login );
 							if( strstr( $login, '<!--separate-->' ) )
 							{
 								if( $ret = explode( '<!--separate-->', $login ) )
@@ -214,6 +212,35 @@ function checkFriendUser( $data, $create = false )
 		
 		if( $creds )
 		{
+			if( !$login )
+			{
+				if( $login = remoteAuth( '/system.library/login', 
+				[
+					'username' => $data->username, 
+					'password' => $data->password, 
+					'deviceid' => $data->deviceid 
+				] ) )
+				{
+					if( strstr( $login, '<!--separate-->' ) )
+					{
+						if( $ret = explode( '<!--separate-->', $login ) )
+						{
+							if( isset( $ret[1] ) )
+							{
+								$login = $ret[1];
+							}
+						}
+					}
+					die( 'We got login: ' . $login );
+				}
+				else
+				{
+					// Couldn't login ...
+					die( 'fail<!--separate-->{"message":"Error! Couldn\'t log in.","response":-1}' );
+				}
+			}
+			
+			
 			if( $creds->ID )
 			{
 				// Add custom DockItem temporary solution ...
