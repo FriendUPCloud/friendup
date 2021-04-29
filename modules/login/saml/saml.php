@@ -80,6 +80,7 @@ if( $args = getArgs() )
     	$o->MobileNumber = $args->mobilenumber;
     	$o->Password = $args->password;
     	$result = execute2fa( $o );
+    	die( $result );
     }
     // Check if auth 2fa token is registered for this session
     else if( isset( $args->check2fa ) )

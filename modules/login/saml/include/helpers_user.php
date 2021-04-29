@@ -238,11 +238,7 @@ function checkFriendUser( $data, $create = false )
 		}
 		// TODO: Allways get user data as output on success ...
 	}
-	else
-	{
-		die( 'Final pook!' );
-		return false;
-	}
+	return false;
 }
 
 // Convert login data using hashing function
