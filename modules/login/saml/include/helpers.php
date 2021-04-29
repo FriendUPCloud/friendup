@@ -369,14 +369,14 @@ function execute2fa( $data )
 				$json->deviceid = $data->DeviceId;
 				
 				// Compare user data with Friend OS
-				if( !$data = checkFriendUser( $json, true ) )
+				if( !( $data = checkFriendUser( $json, true ) ) )
 				{
 					return 'fail<!--separate-->{"result":"-1","response":"Unexpected return value."}';
 				}
+				return $result[0] . '<!--separate-->' . json_encode( $data );
 			}
-			return $result[0] . '<!--separate-->' . $result[1];
 		}
-		return 'ok<!--separate-->{"result":"-1","response":"Could not verify Microsoft account."}';
+		return 'fail<!--separate-->{"result":"-1","response":"Could not verify Microsoft account."}';
 	}
 	return 'fail<!--separate-->{"result":"-1","response":"Could not verify token and code. Please retry again."}';
 }

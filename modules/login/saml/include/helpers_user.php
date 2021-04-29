@@ -127,6 +127,7 @@ function checkFriendUser( $data, $create = false )
 							
 							if( $ses = json_decode( $login ) )
 							{
+								// We got a sessionid!
 								if( $ses->sessionid )
 								{
 									if( !remoteAuth( '/system.library/user/update?sessionid=' . $ses->sessionid, 
@@ -136,14 +137,17 @@ function checkFriendUser( $data, $create = false )
 									{
 										die( 'fail<!--separate-->{"message":"Error! Fail from friendcore.","response":-1}' );
 									}
+									// We were successful - set the sessionid on the identity object
+									else
+									{
+										$identity->sessionid = $ses->sessionid;
+									}
 								}
 								else
 								{
 									die( 'fail<!--separate-->{"message":"Error! Fail, no session.","response":-1}' );
 								}
-							
 							}
-						
 						}
 						else
 						{
@@ -155,14 +159,12 @@ function checkFriendUser( $data, $create = false )
 					{
 						die( 'fail<!--separate-->{"message":"Error!","response":-1}' );
 					}
-					
 				}
 				else
 				{
 					// Couldn't create user ...
 					die( 'fail<!--separate-->{"message":"Error! Couldn\'t create user.","response":-1}' );
 				}
-				
 			}
 		}
 		else
@@ -235,10 +237,8 @@ function checkFriendUser( $data, $create = false )
 			return $identity;
 			
 		}
-		
 		// TODO: Allways get user data as output on success ...
 	}
-	
 }
 
 // Convert login data using hashing function
@@ -667,6 +667,130 @@ function firstLoginSetup( $setupid, $uid )
 		}
 	}
 	return false;
+}
+
+// Authenticate with Friend Core
+function remoteAuth( $url, $args = false, $method = 'POST', $headers = false, $auth = false )
+{
+	global $Config, $SqlDatabase;
+	$conf =& $Config;
+	$dbo =& $SqlDatabase;
+	
+	// Generate valid url
+	$url = ( $conf['Core']['SSLEnable'] ? 'https://' : 'http://' ) . $conf['FriendCore']['fchost'] . ( $conf['FriendCore']['port'] ? ':' . $conf['FriendCore']['port'] : '' ) . $url;
+	
+	if( function_exists( 'curl_init' ) )
+	{
+		$curl = curl_init();
+	
+		if( $headers && $auth && $auth['username'] && $auth['password'] )
+		{
+			$base64 = base64_encode( trim( $auth['username'] ) . ':' . trim( $auth['password'] ) );	
+			$headers[] = ( 'Authorization: Basic ' . $base64 );
+		}
+	
+		// Create properly encoded URL
+		if( $url && strstr( $url, '?' ) )
+		{
+			$thispath = $url;
+			$url = explode( '?', $url );
+	
+			if( isset( $url[1] ) )
+			{
+				if( strstr( $url[1], '&' ) && strstr( $url[1], '=' ) )
+				{
+					$url[1] = explode( '&', $url[1] );
+					foreach( $url[1] as $k=>$p )
+					{
+						if( strstr( $url[1][$k], '=' ) )
+						{
+							$url[1][$k] = explode( '=', $url[1][$k] );
+							if( isset( $url[1][$k][1] ) )
+							{
+								$url[1][$k][1] = urlencode( $url[1][$k][1] );
+							}
+							$url[1][$k] = implode( '=', $url[1][$k] );
+						}
+					}
+					$url[1] = implode( '&', $url[1] );
+				}
+				else if( strstr( $url[1], '=' ) )
+				{
+					$url[1] = explode( '=', $url[1] );
+					if( isset( $url[1][1] ) )
+					{
+						$url[1][1] = urlencode( $url[1][1] );
+					}
+					$url[1] = implode( '=', $url[1] );
+				}
+			}
+			// Reconstitute url
+			$url = implode( '?', $url );
+		}
+
+		curl_setopt( $curl, CURLOPT_URL, $url );
+
+		if( $headers )
+		{
+			curl_setopt( $curl, CURLOPT_HTTPHEADER, $headers );
+		}
+		if( $method != 'POST' )
+		{
+			curl_setopt( $curl, CURLOPT_CUSTOMREQUEST, $method );
+		}
+		if( $args )
+		{
+			if( is_object( $args ) )
+			{
+				$args = array(
+					'args' => urlencode( json_encode( $args ) )
+				);
+			}
+			else if( is_string( $args ) )
+			{
+				$args = array(
+					'args' => urlencode( $args )
+				);
+			}
+		
+			$json = false;
+		
+			if( $headers )
+			{
+				foreach( $headers as $v )
+				{
+					if( strstr( $v, 'application/json' ) )
+					{
+						$json = true;
+					}
+				}
+				if( $json )
+				{
+					$args = json_encode( $args );
+				}
+			}
+		
+			curl_setopt( $curl, CURLOPT_POST, true );
+			curl_setopt( $curl, CURLOPT_POSTFIELDS, $args );
+		}
+		
+		curl_setopt( $curl, CURLOPT_RETURNTRANSFER, true );
+		$output = curl_exec( $curl );
+		$httpCode = curl_getinfo( $curl, CURLINFO_HTTP_CODE );
+		
+		if( !$httpCode && !$output )
+		{
+			curl_setopt( $curl, CURLOPT_SSL_VERIFYHOST, false );
+			curl_setopt( $curl, CURLOPT_SSL_VERIFYPEER, false );
+		
+			$output = curl_exec( $curl );	
+		}
+		
+		curl_close( $curl );
+	
+		return $output;
+	}
+	return 'fail<!--separate-->{"response":-1,"message":"CURL is not installed, contact support ..."}';
 }
 
 ?>
