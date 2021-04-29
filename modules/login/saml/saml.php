@@ -75,6 +75,7 @@ if( $args = getArgs() )
     	$o = new stdClass();
     	$o->Code = $args->code;
     	$o->AuthToken = $args->authtoken;
+    	$o->DeviceId = $args->deviceid;
     	$o->Username = $args->username;
     	$o->Fullname = $args->fullname;
     	$o->MobileNumber = $args->mobilenumber;
