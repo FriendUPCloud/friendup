@@ -113,6 +113,7 @@ function checkFriendUser( $data, $create = false )
 							'deviceid' => $data->deviceid 
 						] ) )
 						{
+							die( 'Here: ' . $login );
 							if( strstr( $login, '<!--separate-->' ) )
 							{
 								if( $ret = explode( '<!--separate-->', $login ) )
@@ -189,6 +190,7 @@ function checkFriendUser( $data, $create = false )
 							'deviceid' => $data->deviceid 
 						] ) )
 						{
+							die( 'Nere: ' . $login );
 							if( strstr( $login, '<!--separate-->' ) )
 							{
 								if( $ret = explode( '<!--separate-->', $login ) )
@@ -199,7 +201,6 @@ function checkFriendUser( $data, $create = false )
 									}
 								}
 							}
-							die( 'Testing: ' . $login );
 						}
 						else
 						{
