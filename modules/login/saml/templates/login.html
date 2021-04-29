@@ -110,7 +110,27 @@
 						resp = resp.split( '<!--separate-->' );
 						if( resp[0] == 'ok' )
 						{
+							let json = JSON.parse( resp );
 							
+							parent.Workspace.sessionId     = json.sessionid;
+							parent.Workspace.loginUsername = json.username;
+							parent.Workspace.loginUserId   = json.userid;
+							parent.Workspace.loginid       = json.loginid;
+							parent.Workspace.userLevel     = json.level;
+							parent.Workspace.fullName      = json.fullname;
+							
+							// We are now online!
+							parent.Friend.User.SetUserConnectionState( 'online' );
+							
+							if( !parent.Workspace.userWorkspaceInitialized )
+							{
+								return parent.Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
+							}
+							else
+							{
+								if( typeof( callback ) == 'function' ) return callback( true, serveranswer );
+								// Make sure we didn't lose websocket!
+							}
 						}
 					}
 					j.send();

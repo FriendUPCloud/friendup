@@ -234,7 +234,10 @@ function checkFriendUser( $data, $create = false )
 					// Decode response string (TODO: Remove the need to escape backward slashes)
 					if( $decoded = json_decode( str_replace( '\\', '\\\\', $login ) ) )
 					{
-						$identity->sessionid = $decoded->sessionid;
+						foreach( $decoded as $k=>$v )
+						{
+							$identity->$k = $v;
+						}
 					}
 					else
 					{
