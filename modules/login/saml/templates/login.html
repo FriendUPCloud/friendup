@@ -124,7 +124,7 @@
 							
 							if( !parent.Workspace.userWorkspaceInitialized )
 							{
-								return parent.Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
+								return parent.Workspace.initUserWorkspace( json, ( typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
 							}
 							else
 							{
