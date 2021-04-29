@@ -1674,7 +1674,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 			
 			char *endDivider = strstr( http->http_Content, "\r\n" );
 
-			DEBUG("UPLOAD endDivider pointer: %p\n", endDivider );
+			//DEBUG("UPLOAD endDivider pointer: %p\n", endDivider );
 
 			if( endDivider != NULL )
 			{
@@ -1692,7 +1692,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 				http->http_PartDividerLen = 1;
 				//strcpy( http->http_PartDivider, "\n");
 			}
-			DEBUG("[HttpParsePartialRequest] Purge... Divider: %s\n", http->http_PartDivider );
+			//DEBUG("[HttpParsePartialRequest] Purge... Divider: %s\n", http->http_PartDivider );
 		}
 	
 		DEBUG("Length %ld sizeof content %ld\n", length, http->http_SizeOfContent );
@@ -2273,7 +2273,7 @@ inline static void compressDataDeflate( Http *http, unsigned char *storePtr, FQU
 	//	windowBits , 8,	//| GZIP_ENCODING
 	//	Z_DEFAULT_STRATEGY );
 	
-	DEBUG("start compressDataDeflate\n");
+	//DEBUG("start compressDataDeflate\n");
 	
 	unsigned char *dataPtr = (unsigned char *) http->http_Content;
 	FQUAD dataLeft = http->http_SizeOfContent;
@@ -2287,13 +2287,13 @@ inline static void compressDataDeflate( Http *http, unsigned char *storePtr, FQU
 		int dataIn = 0;
 		if( dataLeft < CHUNK_LEN )
 		{
-			printf("finish will be used\n");
+			//printf("finish will be used\n");
 			flushFlag = Z_FULL_FLUSH;// Z_FINISH;
 			dataIn = dataLeft;
 		}
 		else
 		{
-			printf("flush\n");
+			//printf("flush\n");
 			flushFlag = Z_PARTIAL_FLUSH;
 			dataIn = CHUNK_LEN;
 		}
@@ -2303,9 +2303,9 @@ inline static void compressDataDeflate( Http *http, unsigned char *storePtr, FQU
 		int err = deflate(&strm, flushFlag );
 		dataLeft -= dataIn;
 		
-		unsigned long tin = (unsigned long) strm.total_in;
-		unsigned long tlen = (unsigned long)http->http_SizeOfContent;
-		DEBUG(" strm.total_in %ld <= http->http_SizeOfContent %ld  stored: %d\n", tin, tlen, (CHUNK_LEN - strm.avail_out) );
+		//unsigned long tin = (unsigned long) strm.total_in;
+		//unsigned long tlen = (unsigned long)http->http_SizeOfContent;
+		//DEBUG(" strm.total_in %ld <= http->http_SizeOfContent %ld  stored: %d\n", tin, tlen, (CHUNK_LEN - strm.avail_out) );
 	}
 	strm.avail_in = 0;
 	int err = deflate(&strm, Z_FINISH );
@@ -2355,7 +2355,7 @@ unsigned char *HttpBuild( Http* http )
 	
 		if( http->http_ResponseHeadersRelease == TRUE )
 		{
-			DEBUG("Response release\n");
+			//DEBUG("Response release\n");
 			for( i = 0 ; i < HTTP_HEADER_END ; i++ )
 			{
 				if( http->http_RespHeaders[ i ] != NULL )
@@ -2373,7 +2373,7 @@ unsigned char *HttpBuild( Http* http )
 							stringsSize[ stringPos ] = snprintf( tmp, 512, "%s: %s\r\n", HEADERS[ i ], http->http_RespHeaders[ i ] );
 						}
 						
-						DEBUG("Response release: %s\n", http->http_RespHeaders[ i ] );
+						//DEBUG("Response release: %s\n", http->http_RespHeaders[ i ] );
 						strings[ stringPos++ ] = tmp;
 						
 						if( i != HTTP_HEADER_X_FRAME_OPTIONS )
@@ -2391,7 +2391,7 @@ unsigned char *HttpBuild( Http* http )
 		}
 		else
 		{
-			DEBUG("Response do not release\n");
+			//DEBUG("Response do not release\n");
 			for( i = 0; i < HTTP_HEADER_END; i++ )
 			{
 				if( http->http_RespHeaders[ i ] != NULL )
@@ -2455,7 +2455,7 @@ unsigned char *HttpBuild( Http* http )
 			if( contentLenPosInString > 0 )
 			{
 				unsigned char *contentLengthPosition = NULL;
-				DEBUG(">>>>>>>>> %s\n", strings[ contentLenPosInString ] );
+				//DEBUG(">>>>>>>>> %s\n", strings[ contentLenPosInString ] );
 				
 				// header of response
 				for( i = 0; i < stringPos; i++ )
@@ -2466,7 +2466,7 @@ unsigned char *HttpBuild( Http* http )
 					}
 					memcpy( storePtr, strings[ i ], stringsSize[ i ] );
 					
-					DEBUG("STRINGS: %s\n", strings[ i ] );
+					//DEBUG("STRINGS: %s\n", strings[ i ] );
 					
 					storePtr += stringsSize[ i ];
 					FFree( strings[ i ] );
@@ -2480,7 +2480,7 @@ unsigned char *HttpBuild( Http* http )
 					
 					if( contentLengthPosition != NULL )
 					{
-						DEBUG(">>>>>>>>>content length found, compressed size: %ld\n", compressedLength );
+						//DEBUG(">>>>>>>>>content length found, compressed size: %ld\n", compressedLength );
 						char tmp[ 128 ];
 						int len = snprintf( tmp, 128, "%s: %ld", HEADERS[ HTTP_HEADER_CONTENT_LENGTH ], compressedLength );
 						memcpy( contentLengthPosition, tmp, len );
@@ -2497,7 +2497,7 @@ unsigned char *HttpBuild( Http* http )
 						size += compressedLength;
 					}
 					unsigned char *end = strstr( (char *)response, "\r\n\r\n" );
-					printf("\n\n\nRESPONSE: %.*s\n", (int)(end-response), response );
+					//printf("\n\n\nRESPONSE: %.*s\n", (int)(end-response), response );
 				}
 			}
 			else	// content length not found in response
@@ -2509,7 +2509,7 @@ unsigned char *HttpBuild( Http* http )
 				{
 					memcpy( storePtr, strings[ i ], stringsSize[ i ] );
 					
-					DEBUG("STRINGS: %s\n", strings[ i ] );
+					//DEBUG("STRINGS: %s\n", strings[ i ] );
 					
 					storePtr += stringsSize[ i ];
 					FFree( strings[ i ] );
@@ -2735,12 +2735,12 @@ void HttpWrite( Http* http, Socket *sock )
 		
 		if( http->http_WriteOnlyContent == TRUE )
 		{
-			DEBUG("only content\n");
+			//DEBUG("only content\n");
 			ret = sock->s_Interface->SocketWrite( sock, http->http_Content, http->http_SizeOfContent );
 		}
 		else
 		{
-			DEBUG("response\n");
+			//DEBUG("response\n");
 			ret = sock->s_Interface->SocketWrite( sock, http->http_Response, http->http_ResponseLength );
 		}
 	}

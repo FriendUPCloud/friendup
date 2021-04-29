@@ -41,6 +41,8 @@
 #include <sys/resource.h>
 #include <pthread.h>
 
+#include <zlib.h>
+
 //#undef __DEBUG
 //#define DEBUG( ...)
 //#undef DEBUG1
@@ -2532,6 +2534,72 @@ FLONG SocketWriteSSL( Socket* sock, char* data, FLONG length )
 	return written;
 }
 
+//
+// Deflate compression
+//
+
+#define windowBits 15
+#define GZIP_ENCODING 16
+//#define CHUNK_LEN 8096
+#define CHUNK_LEN 0x4000
+
+inline static void compressDataDeflate( char *source, FQUAD sourceLen, unsigned char *storePtr, FQUAD *outputLen )
+{
+	FQUAD compressedLength = 0;
+	
+	z_stream strm;
+	strm.zalloc = Z_NULL;
+	strm.zfree  = Z_NULL;
+	strm.opaque = Z_NULL;
+	
+	deflateInit(&strm, Z_DEFAULT_COMPRESSION);
+	
+	//deflateInit2( &strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED,
+	//	windowBits , 8,	//| GZIP_ENCODING
+	//	Z_DEFAULT_STRATEGY );
+	
+	//DEBUG("start compressDataDeflate\n");
+	
+	unsigned char *dataPtr = (unsigned char *) source;
+	FQUAD dataLeft = sourceLen;
+
+	int flushFlag = 0;
+	strm.next_in  = (Bytef*)dataPtr;
+    strm.next_out = storePtr;
+	
+	while( dataLeft > 0 )
+	{
+		int dataIn = 0;
+		if( dataLeft < CHUNK_LEN )
+		{
+			//printf("finish will be used\n");
+			flushFlag = Z_FULL_FLUSH;// Z_FINISH;
+			dataIn = dataLeft;
+		}
+		else
+		{
+			//printf("flush\n");
+			flushFlag = Z_PARTIAL_FLUSH;
+			dataIn = CHUNK_LEN;
+		}
+		strm.avail_in = dataIn;
+		strm.avail_out = CHUNK_LEN;
+		
+		int err = deflate(&strm, flushFlag );
+		dataLeft -= dataIn;
+		
+		//unsigned long tin = (unsigned long) strm.total_in;
+		//unsigned long tlen = (unsigned long)sourceLen;
+		//DEBUG(" strm.total_in %ld <= http->http_SizeOfContent %ld  stored: %d\n", tin, tlen, (CHUNK_LEN - strm.avail_out) );
+	}
+	strm.avail_in = 0;
+	int err = deflate(&strm, Z_FINISH );
+	compressedLength = strm.total_out;
+	
+	deflateEnd( &strm );
+	*outputLen = compressedLength;
+}
+
 /**
  * Write data to socket (NOSSL)
  *
@@ -2548,43 +2616,57 @@ FLONG SocketWriteCompressionNOSSL( Socket* sock, int type, char* data, FLONG len
 		//FERROR("Socket is NULL or length < 1: %lu\n", length );
 		return -1;
 	}
+	
+	unsigned char outputBuf[ CHUNK_LEN ];
+	
+	z_stream strm;
+	strm.zalloc = Z_NULL;
+	strm.zfree  = Z_NULL;
+	strm.opaque = Z_NULL;
+	
+	deflateInit(&strm, Z_DEFAULT_COMPRESSION);
+	
+	unsigned char *dataPtr = (unsigned char *) data;
+	FQUAD dataLeft = length;
 
-	unsigned int written = 0, bufLength = length;
-	int retries = 0, res = 0;
-
-	do
+	int flushFlag = 0;
+	strm.next_in  = (Bytef*)dataPtr;
+	
+	while( dataLeft > 0 )
 	{
-		if( bufLength > length - written ) bufLength = length - written;
-		res = send( sock->fd, data + written, bufLength, MSG_DONTWAIT );
-
-		if( res > 0 ) 
+		int dataIn = 0;
+		if( dataLeft < CHUNK_LEN )
 		{
-			written += res;
-			retries = 0;
+			//printf("finish will be used\n");
+			flushFlag = Z_FULL_FLUSH;// Z_FINISH;
+			dataIn = dataLeft;
 		}
-		else if( res < 0 )
+		else
 		{
-			// Error, temporarily unavailable..
-			if( errno == 11 )
-			{
-				retries++;
-				usleep( 400 ); // Perhaps allow full throttle?
-				if( retries > 10 ) 
-					usleep( 20000 );
-				else if( retries > 250 )
-					break;
-				continue;
-			}
-			FERROR( "[SocketWriteNOSSL] Failed to write: %d, %s\n", errno, strerror( errno ) );
-			//socket can not be closed here, because http.c:1504 will fail
-			//we have to rely on the reaper thread to release stale sockets
-			break;
+			//printf("flush\n");
+			flushFlag = Z_PARTIAL_FLUSH;
+			dataIn = CHUNK_LEN;
+		}
+		strm.next_out = outputBuf;
+		strm.avail_in = dataIn;
+		strm.avail_out = CHUNK_LEN;
+		
+		int err = deflate(&strm, flushFlag );
+		dataLeft -= dataIn;
+		int have = (CHUNK_LEN - strm.avail_out);
+		
+		if( have > 0 )
+		{
+			send( sock->fd, outputBuf, have, MSG_DONTWAIT );
 		}
 	}
-	while( written < length );
+	strm.avail_in = 0;
+	int err = deflate(&strm, Z_FINISH );
 
-	DEBUG("[SocketWriteNOSSL] end write %d/%ld (had %d retries)\n", written, length, retries );
-	return written;
+	deflateEnd( &strm );
+
+	DEBUG("[SocketWriteNOSSL] end write %ld\n", strm.total_in );
+	return strm.total_in;
 }
 
 /**
@@ -2603,60 +2685,83 @@ FLONG SocketWriteCompressionSSL( Socket* sock, int type, char* data, FLONG lengt
 		return -1;
 	}
 
-	FLONG left = length;
-	FLONG written = 0;
-	int res = 0;
+	unsigned char outputBuf[ CHUNK_LEN ];
+	
+	z_stream strm;
+	strm.zalloc = Z_NULL;
+	strm.zfree  = Z_NULL;
+	strm.opaque = Z_NULL;
+	
+	deflateInit(&strm, Z_DEFAULT_COMPRESSION);
+	
+	unsigned char *dataPtr = (unsigned char *) data;
+	FQUAD dataLeft = length;
 
-	FLONG bsize = left;
-
-	int err = 0;		
-	int counter = 0;
-
-	while( written < length )
+	int flushFlag = 0;
+	strm.next_in  = (Bytef*)dataPtr;
+	
+	while( dataLeft > 0 )
 	{
-		if( (bsize + written) > length ) bsize = length - written;
-
-		if( sock->s_Ssl == NULL )
+		int dataIn = 0;
+		if( dataLeft < CHUNK_LEN )
 		{
-			FERROR( "[SocketWriteSSL] The ssl connection was dropped on this file descriptor!\n" );
-			break;
+			//printf("finish will be used\n");
+			flushFlag = Z_FULL_FLUSH;// Z_FINISH;
+			dataIn = dataLeft;
 		}
-
-		res = SSL_write( sock->s_Ssl, data + written, bsize );
-
-		if( res <= 0 )
+		else
 		{
-			err = SSL_get_error( sock->s_Ssl, res );
+			//printf("flush\n");
+			flushFlag = Z_PARTIAL_FLUSH;
+			dataIn = CHUNK_LEN;
+		}
+		strm.next_out = outputBuf;
+		strm.avail_in = dataIn;
+		strm.avail_out = CHUNK_LEN;
+		
+		int err = deflate(&strm, flushFlag );
+		dataLeft -= dataIn;
+		int have = (CHUNK_LEN - strm.avail_out);
+		
+		if( have > 0 )
+		{
+			int counter = 0;
+			int res = SSL_write( sock->s_Ssl, outputBuf, have );
 
-			switch( err )
+			if( res <= 0 )
 			{
-				// The operation did not complete. Call again.
-				case SSL_ERROR_WANT_WRITE:
+				err = SSL_get_error( sock->s_Ssl, res );
+				switch( err )
 				{
-					break;
-				}
-				case SSL_ERROR_SSL:
-				{
-					FERROR("[SocketWriteSSL] Cannot write. Error %d stringerr: %s wanted to sent: %ld fullsize: %ld\n", err, strerror( err ), bsize, length );
-					if( counter++ > 3 )
+					// The operation did not complete. Call again.
+					case SSL_ERROR_WANT_WRITE:
 					{
+						break;
+					}
+					case SSL_ERROR_SSL:
+					{
+						FERROR("[SocketWriteSSL] Cannot write. Error %d stringerr: %s  fullsize: %ld\n", err, strerror( err ), length );
+						if( counter++ > 3 )
+						{
+							return 0;
+						}
+						break;
+					}
+					default:
+					{
+						FERROR("[SocketWriteSSL] Cannot write. Error %d stringerr: %s fullsize: %ld\n", err, strerror( err ), length );
 						return 0;
 					}
-					break;
-				}
-				default:
-				{
-					FERROR("[SocketWriteSSL] Cannot write. Error %d stringerr: %s wanted to sent: %ld fullsize: %ld\n", err, strerror( err ), bsize, length );
-					return 0;
 				}
 			}
 		}
-		else
-		{	
-			written += res;
-		}
 	}
-	return written;
+	strm.avail_in = 0;
+	int err = deflate(&strm, Z_FINISH );
+
+	deflateEnd( &strm );
+	
+	return strm.total_in;
 }
 
 /**
