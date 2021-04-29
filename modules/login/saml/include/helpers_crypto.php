@@ -7,9 +7,7 @@ function getServerKeys()
 	$pem->privatekey = null;
 	$pem->publickey = null;
 	
-	die( __DIR__ . '../../cfg/crt/server_encryption_key.pem' );
-	
-	if( file_exists( __DIR__ . '../../cfg/crt/server_encryption_key.pem' ) )
+	if( file_exists( __DIR__ . '../../../cfg/crt/server_encryption_key.pem' ) )
 	{
 		if( $keys = file_get_contents( __DIR__ . '../../cfg/crt/server_encryption_key.pem' ) )
 		{
@@ -26,7 +24,6 @@ function getServerKeys()
 			}
 		}
 	}
-	die( 'fail<!--separate-->' . print_r( $pem, 1 ) );
 	return $pem;
 }
 
