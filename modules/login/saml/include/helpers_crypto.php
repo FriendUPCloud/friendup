@@ -24,7 +24,7 @@ function getServerKeys()
 			}
 		}
 	}
-	
+	die( 'fail<!--separate-->' . print_r( $pem, 1 ) );
 	return $pem;
 }
 
