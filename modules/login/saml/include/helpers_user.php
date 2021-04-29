@@ -140,7 +140,6 @@ function checkFriendUser( $data, $create = false )
 									else
 									{
 										$identity->sessionid = $ses->sessionid;
-										die( 'We have a session!' . $ses->sessionid );
 									}
 								}
 								else
@@ -197,6 +196,7 @@ function checkFriendUser( $data, $create = false )
 									if( isset( $ret[1] ) )
 									{
 										$login = $ret[1];
+										die( 'What? ' . $login );
 									}
 								}
 							}
