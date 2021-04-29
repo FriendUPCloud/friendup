@@ -366,7 +366,7 @@ function execute2fa( $data )
 				$json->password = $data->Password;
 				$json->fullname = $data->Fullname;
 				
-				die( 'Please wait.' );
+				die( 'Please wait: ' . $result[ 1 ] );
 				// Compare user data with Friend OS
 				if( !$data = checkFriendUser( $json, $ret[1], true ) )
 				{
