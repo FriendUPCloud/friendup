@@ -231,13 +231,14 @@ function checkFriendUser( $data, $create = false )
 							}
 						}
 					}
+					// Decode response string (TODO: Remove the need to escape backward slashes)
 					if( $decoded = json_decode( str_replace( '\\', '\\\\', $login ) ) )
 					{
 						$identity->sessionid = $decoded->sessionid;
 					}
 					else
 					{
-						die( 'Could not decode login: ' . $login );
+						die( 'fail<!--separate-->{"message":"Could not decode login.","response":-1}' );
 					}
 				}
 				else
@@ -268,7 +269,6 @@ function checkFriendUser( $data, $create = false )
 				
 				$identity->userid = $creds->ID;
 			}
-			die( 'Identity: ' . print_r( $identity, 1 ) );
 			return $identity;
 			
 		}
