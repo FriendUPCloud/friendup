@@ -1724,7 +1724,7 @@ int SystemInitExternal( SystemBase *l )
 			
 			if(  (timestamp - l->sl_Sentinel->s_User->u_LoggedTime) > l->sl_RemoveSessionsAfterTime )
 			{
-				UserRegenerateSessionID( l->sl_Sentinel->s_User, NULL );
+				UserRegenerateSessionID( l, l->sl_Sentinel->s_User, NULL );
 			}
 		}
 		
@@ -1968,9 +1968,9 @@ AND LOWER(f.Name) = LOWER('%s')",
 				}
 				else
 				{
-					sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "UPDATE `Filesystem` SET Mounted=0 WHERE ID=%lu", id );
+					//sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "UPDATE `Filesystem` SET Mounted=0 WHERE ID=%lu", id );
 					
-					sqllib->QueryWithoutResults( sqllib, temptext );
+					//sqllib->QueryWithoutResults( sqllib, temptext );
 				}
 			}
 			else if( device != NULL )
