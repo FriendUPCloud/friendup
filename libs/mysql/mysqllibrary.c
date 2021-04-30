@@ -163,7 +163,7 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 
 	while( ( row = mysql_fetch_row( result ) ) != NULL )
 	{
-		unsigned long *lengths = mysql_fetch_lengths(result);
+		unsigned long *lengths = mysql_fetch_lengths( result );
 		(*entries)++;
 		
 		void *data = FCalloc( 1, descr[ SQL_DATA_STRUCTURE_SIZE ] );
@@ -199,12 +199,14 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 					case SQLT_IDINT:	// primary key
 					case SQLT_INT:
 						{
-							int tmp = 0;
+							FLONG tmp = 0;
 							if( row[ i ] != NULL )
 							{
-								tmp = (int)atol( row[ i ] );
+								char *end;
+								DEBUG("SQL: get field: %s\n", dptr[ 1 ] );
+								tmp = (FLONG)strtol( row[ i ], &end, 0 );
 							}
-							memcpy( strptr + dptr[ 2 ], &tmp, sizeof( int ) );
+							memcpy( strptr + dptr[ 2 ], &tmp, sizeof( FLONG ) );
 						}
 						break;
 					case SQLT_STR:
