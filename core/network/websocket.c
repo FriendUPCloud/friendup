@@ -636,6 +636,9 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 	User *actUser = actUserSess->us_User;
 	if( actUser != NULL )
 	{
+		lws_set_extension_option( wsi, "permessage-deflate", "rx_buf_size", "16");
+		//lws_set_extension_option( wsi, "permessage-deflate", "wx_buf_size", "16");
+		
 		Log( FLOG_INFO,"[WS] WebSocket connection set for user %s  sessionid %s\n", actUser->u_Name, actUserSess->us_SessionID );
 
 		INFO("[WS] ADD WEBSOCKET CONNECTION TO USER %s\n\n",  actUser->u_Name );
