@@ -1493,6 +1493,7 @@ int SNPrintF( struct SQLLibrary *l, char *str, size_t stringSize, const char *fm
 								
 								if( ( escapedString = FCalloc( (stringArgSize *4 ) + 1, sizeof(char) ) ) != NULL )
 								{
+									DEBUG("MYSQL_REAL_ESCAPE: %s\n", stringArg );
 									stringArgSize = mysql_real_escape_string( l->con.sql_Con, escapedString, stringArg, stringArgSize );
 									stringArg = escapedString;
 								}
