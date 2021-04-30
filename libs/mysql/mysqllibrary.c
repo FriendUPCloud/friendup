@@ -1135,10 +1135,12 @@ int QueryWithoutResults( struct SQLLibrary *l, const char *sel )
 				const char *errstr = mysql_error( l->con.sql_Con );
 				
 				FERROR("mysql_execute failed  SQL: %s error: %s\n", sel, errstr );
-				if( strstr( errstr, "List connection to MySQL server" ) != NULL )
+				if( strstr( errstr, "Lost connection to MySQL server" ) != NULL )
 				{
-					l->con.sql_Recconect = TRUE;
-				}else if( strstr( errstr, "Duplicate column name " ) != NULL )
+					Reconnect( l );
+					//l->con.sql_Recconect = TRUE;
+				}
+				else if( strstr( errstr, "Duplicate column name " ) != NULL )
 				{
 					return 0;
 				}
@@ -1876,6 +1878,7 @@ int Reconnect( struct SQLLibrary *l )
 	void *connection = mysql_real_connect( l->con.sql_Con, l->con.sql_Host, l->con.sql_DBName, l->con.sql_User, l->con.sql_Pass, l->con.sql_Port, NULL, 0 );
 	if( connection == NULL )
 	{
+		l->con.sql_Con = NULL;
 		FERROR( "[MYSQLLibrary] Failed to connect to database: '%s'.\n", mysql_error(l->con.sql_Con) );
 		return -1;
 	}
