@@ -239,7 +239,7 @@ File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error );
 //
 //
 
-int UserRegenerateSessionID( User *usr, char *newsess );
+int UserRegenerateSessionID( void *sb, User *usr, char *newsess );
 
 //
 //
