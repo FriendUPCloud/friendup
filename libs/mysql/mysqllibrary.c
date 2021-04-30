@@ -36,6 +36,8 @@
 #define LIB_VERSION 1
 #define LIB_REVISION 0
 
+int Reconnect( struct SQLLibrary *l );
+
 // special data
 
 typedef struct SpecialData{
@@ -871,7 +873,14 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 			if ( mysql_stmt_execute(stmt) )
 			{
 				//FERROR("mysql_stmt_execute failed %s\n", mysql_stmt_error(stmt));
-				sb->sl_UtilInterface.Log( FLOG_ERROR, "Save query error: %s, query: %s\n", mysql_stmt_error(stmt), finalQuery );
+				const char *error = mysql_stmt_error(stmt);
+				sb->sl_UtilInterface.Log( FLOG_ERROR, "Save query error: %s, query: %s\n", error, finalQuery );
+				
+				if( strstr( error, "Lost connection to MySQL server during" ) != NULL )
+				{
+					Reconnect( l );
+				}
+				
 				retValue = 1;
 			}
 		
