@@ -369,6 +369,8 @@ function cleanupTokens( $mobile )
 {
 	global $Config, $SqlDatabase;
 	
+	$cleanMobile = mysqli_real_escape_string( $SqlDatabase->_link, $mobile );
+	
 	// Just remove all 2fa access tokens on this mobile number
 	$SqlDatabase->query( 'DELETE FROM FUserLogin WHERE UserID=-1 AND `Login` LIKE "%|' . $cleanMobile . '"' );
 }
