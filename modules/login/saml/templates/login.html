@@ -72,23 +72,26 @@
 		</div>
 		<style>#invalidLogin { color:#F00; }</style>
 		<script>
-			if( ge( 'Code' ) )
+			function fixKeyboardInputThere()
 			{
-				ge( 'Code' ).onkeyup = function( e )
+				if( document.getElementById( 'Code' ) )
 				{
-					if( e.which == 13 )
+					document.getElementById( 'Code' ).onkeyup = function( e )
 					{
-						Application.validateMobileNumber();
+						if( e.which == 13 )
+						{
+							Application.validateMobileNumber();
+						}
 					}
 				}
-			}
-			if( ge( 'AuthPassword' ) )
-			{
-				ge( 'AuthPassword' ).onkeyup = function( e )
+				if( document.getElementById( 'AuthPassword' ) )
 				{
-					if( e.which == 13 )
+					document.getElementById( 'AuthPassword' ).onkeyup = function( e )
 					{
-						Application.validateMobileNumber();
+						if( e.which == 13 )
+						{
+							Application.validateMobileNumber();
+						}
 					}
 				}
 			}
@@ -340,6 +343,7 @@
 					            ge( 'LoginElement' ).innerHTML = this.responseText();
 					            ge( 'LoginElement' ).classList.remove( 'Faded' );
 					            ge( 'Code' ).focus();
+					            fixKeyboardInputThere();
 					        }
 					        u.send();
 					    }
