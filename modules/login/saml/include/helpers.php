@@ -243,7 +243,7 @@ function check2faAuth( $token, $mobile, $code = false )
 	// Send the verification code
 	$response = SendSMS( $mobile, 'Your verification code: ' . $code );
 	
-	cleanupTokens( $mobile )
+	cleanupTokens( $mobile );
 	
 	$o = new dbIO( 'FUserLogin' );
 	$o->UserID = -1;
