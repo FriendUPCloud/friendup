@@ -281,6 +281,7 @@ lws_extension_callback_pm_deflate(struct lws_context *context,
 
 		if (!priv->rx.avail_in)
 			return PMDR_DID_NOTHING;
+		printf("Pointer to output: %p\n", priv->rx.next_out );
 
 		n = inflate(&priv->rx, was_fin ? Z_SYNC_FLUSH : Z_NO_FLUSH);
 		lwsl_ext("inflate ret %d, avi %d, avo %d, wsifinal %d\n", n,
