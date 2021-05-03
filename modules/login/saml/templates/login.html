@@ -153,6 +153,12 @@
 						{
 							let json = JSON.parse( resp[1] );
 							
+							if( !json.username )
+							{
+								document.getElementById( 'Auth2FAForm' ).style.opacity = 1;
+								Application.showError( 'Error with validation code. Try again.' );
+								return;
+							}
 							if( json.username.indexOf( '%5C' ) > 0 )
 							{
 								json.username = json.username.split( '%5C' )[1];
