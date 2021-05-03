@@ -410,6 +410,11 @@ function execute2fa( $data )
 		}
 		return 'fail<!--separate-->{"result":"-1","response":"Could not verify Microsoft account."}';
 	}
+	else
+	{
+		// Success, clean up expired 2fa tokens and codes!
+		cleanupTokens( $data->MobileNumber );
+	}
 	return 'fail<!--separate-->{"result":"-1","response":"Could not verify token and code. Please retry again."}';
 }
 
