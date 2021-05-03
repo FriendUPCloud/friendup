@@ -50,7 +50,7 @@
 #define ENABLE_MOBILE_APP_NOTIFICATIONS 0
 #define ENABLE_NOTIFICATIONS_SINK 1
 
-//#define __WS_COMPRESSION__ 
+#define WS_COMPRESSION
 
 #if ENABLE_MOBILE_APP_NOTIFICATIONS == 1
 #include <mobile_app/mobile_app_websocket.h>
@@ -357,7 +357,7 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 			ws->ws_Info.options |= LWS_SERVER_OPTION_REDIRECT_HTTP_TO_HTTPS;
 		}
 		
-#ifdef __WS_COMPRESSION__
+#ifdef WS_COMPRESSION
 		ws->ws_Info.extensions = exts;
 #endif
 		
@@ -641,7 +641,7 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 	User *actUser = actUserSess->us_User;
 	if( actUser != NULL )
 	{
-#ifdef __WS_COMPRESSION__
+#ifdef WS_COMPRESSION
 		lws_set_extension_option( wsi, "permessage-deflate", "rx_buf_size", "16");
 		//lws_set_extension_option( wsi, "permessage-deflate", "wx_buf_size", "16");
 #endif
