@@ -72,6 +72,27 @@
 		</div>
 		<style>#invalidLogin { color:#F00; }</style>
 		<script>
+			if( ge( 'Code' ) )
+			{
+				ge( 'Code' ).onkeyup = function( e )
+				{
+					if( e.which == 13 )
+					{
+						Application.validateMobileNumber();
+					}
+				}
+			}
+			if( ge( 'AuthPassword' ) )
+			{
+				ge( 'AuthPassword' ).onkeyup = function( e )
+				{
+					if( e.which == 13 )
+					{
+						Application.validateMobileNumber();
+					}
+				}
+			}
+		
 			Application = {
 				failedAttempt: false,
 				uName: false,
