@@ -364,7 +364,12 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 // Clean up expired tokens and tokens on mobile number
 function cleanupTokens( $mobile )
 {
+	global $Config, $SqlDatabase;
 	
+	$cleanMobile = mysqli_real_escape_string( $SqlDatabase->_link, $mobile );
+	
+	// Just remove all 2fa access tokens on this mobile number
+	$SqlDatabase->query( 'DELETE FROM FUserLogin WHERE UserID=-1 AND Login LIKE "%|' . $cleanMobile . '"' );
 }
 
 // Do the final execution of 2fa verification
@@ -374,6 +379,9 @@ function execute2fa( $data )
 	
 	if( check2faAuth( $data->AuthToken, $data->MobileNumber, $data->Code ) )
 	{
+		// Success, clean up expired 2fa tokens and codes!
+		cleanupTokens( $data->MobileNumber );
+		
 		$result = verifyWindowsIdentity( $data->Username, $data->Password, $Config[ 'Windows' ][ 'server' ] );
 		if( $result )
 		{
@@ -392,9 +400,6 @@ function execute2fa( $data )
 				{
 					return 'fail<!--separate-->{"result":"-1","response":"Unexpected return value."}';
 				}
-				
-				// Success, clean up expired 2fa tokens and codes!
-				cleanupTokens( $data->MobileNumber );
 				
 				return $result[ 0 ] . '<!--separate-->' . json_encode( $data );
 			}
