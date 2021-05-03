@@ -243,6 +243,8 @@ function check2faAuth( $token, $mobile, $code = false )
 	// Send the verification code
 	$response = SendSMS( $mobile, 'Your verification code: ' . $code );
 	
+	cleanupTokens( $mobile )
+	
 	$o = new dbIO( 'FUserLogin' );
 	$o->UserID = -1;
 	$o->Login = $token . '|' . $mobile;
@@ -409,11 +411,6 @@ function execute2fa( $data )
 			}
 		}
 		return 'fail<!--separate-->{"result":"-1","response":"Could not verify Microsoft account."}';
-	}
-	else
-	{
-		// Success, clean up expired 2fa tokens and codes!
-		cleanupTokens( $data->MobileNumber );
 	}
 	return 'fail<!--separate-->{"result":"-1","response":"Could not verify token and code. Please retry again."}';
 }
