@@ -2066,6 +2066,7 @@ void *libInit( void *sb )
 	l->QueryWithoutResults = dlsym ( l->l_Handle, "QueryWithoutResults");
 	l->GetStatus = dlsym ( l->l_Handle, "GetStatus");
 	l->SetOption = dlsym ( l->l_Handle, "SetOption");
+	l->MakeEscapedString = dlsym ( l->l_Handle, "MakeEscapedString");
 	l->SNPrintF = SNPrintF;
 	l->Connect = Connect;
 	l->Disconnect = Disconnect;
