@@ -14,7 +14,7 @@
 
 function Logging( $str )
 {
-	return null; // Disabled
+	return null; // Disabled :)
 	if( $f = fopen( '/tmp/log.txt', 'a+' ) )
 	{
 		fwrite( $f, date( 'YmdHis' ) . ': ' . $str . "\n" );
@@ -361,6 +361,12 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 	return [ 'fail', $error ];
 }
 
+// Clean up expired tokens and tokens on mobile number
+function cleanupTokens( $mobile )
+{
+	
+}
+
 // Do the final execution of 2fa verification
 function execute2fa( $data )
 {
@@ -386,6 +392,10 @@ function execute2fa( $data )
 				{
 					return 'fail<!--separate-->{"result":"-1","response":"Unexpected return value."}';
 				}
+				
+				// Success, clean up expired 2fa tokens and codes!
+				cleanupTokens( $data->MobileNumber );
+				
 				return $result[ 0 ] . '<!--separate-->' . json_encode( $data );
 			}
 		}
