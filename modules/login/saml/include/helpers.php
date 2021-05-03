@@ -387,9 +387,6 @@ function execute2fa( $data )
 	
 	if( check2faAuth( $data->AuthToken, $data->MobileNumber, $data->Code ) )
 	{
-		// Success, clean up expired 2fa tokens and codes!
-		cleanupTokens( $data->MobileNumber );
-		
 		$result = verifyWindowsIdentity( $data->Username, $data->Password, $Config[ 'Windows' ][ 'server' ] );
 		if( $result )
 		{
