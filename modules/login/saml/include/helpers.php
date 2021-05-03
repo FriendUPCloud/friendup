@@ -374,7 +374,7 @@ function cleanupTokens( $mobile )
 // Do the final execution of 2fa verification
 function execute2fa( $data )
 {
-	global $Config;
+	global $Config, $SqlDatabase;
 	
 	// Remove expired 2fa tokens!
 	$thePast = strtotime( date( 'Y-m-d H:i:s' ) );
