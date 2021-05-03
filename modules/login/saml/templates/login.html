@@ -112,6 +112,8 @@
 				// Start the mobile 2fa validation process
 				validateMobileNumber: function()
 				{
+					document.getElementById( 'Auth2FAForm' ).style.opacity = 0.5;
+					
 					let code = ge( 'Code' ).value;
 					let passWd = ge( 'AuthPassword' ).value;
 					if( parseInt( code ) <= 0 || isNaN( parseInt( code ) ) )
@@ -130,6 +132,7 @@
 					if( !parent.Workspace.encryption.keys.server.publickey )
 					{
 						//console.log( 'Server Key Missing:', parent.Workspace.encryption.keys.server );
+						document.getElementById( 'Auth2FAForm' ).style.opacity = 1;
 						return;
 					}
 					
@@ -186,6 +189,11 @@
 								if( typeof( callback ) == 'function' ) return callback( true, serveranswer );
 								// Make sure we didn't lose websocket!
 							}
+						}
+						else
+						{
+							document.getElementById( 'Auth2FAForm' ).style.opacity = 1;
+							Application.showError( 'Error with validation code. Try again.' );
 						}
 					}
 					j.send();
