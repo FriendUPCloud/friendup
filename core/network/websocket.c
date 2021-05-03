@@ -643,7 +643,7 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 	{
 #ifdef WS_COMPRESSION
 		lws_set_extension_option( wsi, "permessage-deflate", "rx_buf_size", "16");
-		//lws_set_extension_option( wsi, "permessage-deflate", "wx_buf_size", "16");
+		lws_set_extension_option( wsi, "permessage-deflate", "tx_buf_size", "16");
 #endif
 		
 		Log( FLOG_INFO,"[WS] WebSocket connection set for user %s  sessionid %s\n", actUser->u_Name, actUserSess->us_SessionID );
