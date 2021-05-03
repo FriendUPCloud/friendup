@@ -217,8 +217,7 @@ function check2faAuth( $token, $mobile, $code = false )
 		$cleanCode = mysqli_real_escape_string( $SqlDatabase->_link, $code );
 	}
 	
-	// TODO: By removing previous tokens on mobile number, we could prevent 
-	//       multiple logins on same mobile number
+	// Check code
 	if( $code )
 	{
 		$q = 'SELECT * FROM FUserLogin WHERE UserID=-1 AND Login="' . $cleanToken . '|' . $cleanMobile . '" AND Information="' . $cleanCode . '"';
@@ -234,23 +233,31 @@ function check2faAuth( $token, $mobile, $code = false )
 	}
 	
 	// Generate code (six decimals)
-	$code = '';
-	for( $a = 0; $a < 6; $a++ )
+	if( !$code )
 	{
-		$code .= rand( 0, 9 ) . '';
+		$code = '';
+		for( $a = 0; $a < 6; $a++ )
+		{
+			$code .= rand( 0, 9 ) . '';
+		}
+	
+		// Send the verification code
+		$response = SendSMS( $mobile, 'Your verification code: ' . $code );
+	
+		cleanupTokens( $mobile );
+	
+		$o = new dbIO( 'FUserLogin' );
+		$o->UserID = -1;
+		$o->Login = $token . '|' . $mobile;
+		$o->Information = $code;
+		$o->LoginTime = strtotime( date( 'Y-m-d H:i:s' ) );
+		$o->Save();
+	}
+	else
+	{
+		$response = 'Code is wrong.';
 	}
 	
-	// Send the verification code
-	$response = SendSMS( $mobile, 'Your verification code: ' . $code );
-	
-	cleanupTokens( $mobile );
-	
-	$o = new dbIO( 'FUserLogin' );
-	$o->UserID = -1;
-	$o->Login = $token . '|' . $mobile;
-	$o->Information = $code;
-	$o->LoginTime = strtotime( date( 'Y-m-d H:i:s' ) );
-	$o->Save();
 	return 'fail<!--separate-->{"message":"-1","reason":"Token registered.","SMS-Response":"' . $response . '"}';
 }
 
