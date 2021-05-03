@@ -247,6 +247,7 @@ function check2faAuth( $token, $mobile, $code = false )
 	$o->UserID = -1;
 	$o->Login = $token . '|' . $mobile;
 	$o->Information = $code;
+	$o->LoginTime = strtotime( date( 'Y-m-d H:i:s' ) );
 	$o->Save();
 	return 'fail<!--separate-->{"message":"-1","reason":"Token registered.","SMS-Response":"' . $response . '"}';
 }
@@ -366,16 +367,19 @@ function cleanupTokens( $mobile )
 {
 	global $Config, $SqlDatabase;
 	
-	$cleanMobile = mysqli_real_escape_string( $SqlDatabase->_link, $mobile );
-	
 	// Just remove all 2fa access tokens on this mobile number
-	$SqlDatabase->query( 'DELETE FROM FUserLogin WHERE UserID=-1 AND Login LIKE "%|' . $cleanMobile . '"' );
+	$SqlDatabase->query( 'DELETE FROM FUserLogin WHERE UserID=-1 AND `Login` LIKE "%|' . $cleanMobile . '"' );
 }
 
 // Do the final execution of 2fa verification
 function execute2fa( $data )
 {
 	global $Config;
+	
+	// Remove expired 2fa tokens!
+	$thePast = strtotime( date( 'Y-m-d H:i:s' ) );
+	$thePast -= 60 * 10; // Ten minutes in the past!
+	$SqlDatabase->query( 'DELETE FROM FUserLogin WHERE UserID=-1 AND `LoginTime` <= ' . $thePast );
 	
 	if( check2faAuth( $data->AuthToken, $data->MobileNumber, $data->Code ) )
 	{
