@@ -279,6 +279,10 @@ function checkFriendUser( $data, $create = false )
 				
 				$identity->userid = $creds->ID;
 			}
+			if( !$identity->sessionid )
+			{
+				die( 'fail<!--separate-->{"message":"Could not obtain sessionid.","response":-1}' );
+			}
 			return $identity;
 			
 		}
