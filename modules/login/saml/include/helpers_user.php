@@ -60,7 +60,7 @@ function checkFriendUser( $data, $create = false )
 					fu.Name = \'' . mysqli_real_escape_string( $dbo->_link, $data->username ) . '\' 
 			' ) )
 			{
-				die( 'fail<!--separate-->{"message":"Error! User exists but Friend password is incorrect.","response":-1}' );
+				return 'fail<!--separate-->{"message":"Error! User exists but Friend password is incorrect.","response":-1}';
 			}
 			
 			// TODO: Make sure username is unique for the external service and that the password is not the users original ...
@@ -134,7 +134,7 @@ function checkFriendUser( $data, $create = false )
 										'setup' => '0' 
 									] ) )
 									{
-										die( 'fail<!--separate-->{"message":"Error! Fail from friendcore.","response":-1}' );
+										return 'fail<!--separate-->{"message":"Error! Fail from friendcore.","response":-1}';
 									}
 									// We were successful - set the sessionid on the identity object
 									else
@@ -144,25 +144,25 @@ function checkFriendUser( $data, $create = false )
 								}
 								else
 								{
-									die( 'fail<!--separate-->{"message":"Error! Fail, no session.","response":-1}' );
+									return 'fail<!--separate-->{"message":"Error! Fail, no session.","response":-1}';
 								}
 							}
 						}
 						else
 						{
 							// Couldn't login ...
-							die( 'fail<!--separate-->{"message":"Error! Could not log in.","response":-1}' );
+							return 'fail<!--separate-->{"message":"Error! Could not log in.","response":-1}';
 						}
 					}
 					else
 					{
-						die( 'fail<!--separate-->{"message":"Error!","response":-1}' );
+						return 'fail<!--separate-->{"message":"Error!","response":-1}';
 					}
 				}
 				else
 				{
 					// Couldn't create user ...
-					die( 'fail<!--separate-->{"message":"Error! Couldn\'t create user.","response":-1}' );
+					return 'fail<!--separate-->{"message":"Error! Couldn\'t create user.","response":-1}';
 				}
 			}
 		}
@@ -172,7 +172,6 @@ function checkFriendUser( $data, $create = false )
 			// Update password if different ... TODO: Look at this in the future ...
 			if( $creds && $creds->ID )
 			{
-				//die( 'fail<!--separate-->{"message":"Fail check!","response":-1}' );
 				$rname = mysqli_real_escape_string( $dbo->_link, $data->username );
 				$dbo->query( 'DELETE FROM FUser WHERE `Name` = "' . $rname . '" AND ID != \'' . $creds->ID . '\'' );
 				
@@ -209,7 +208,7 @@ function checkFriendUser( $data, $create = false )
 							else
 							{
 								// Couldn't login ...
-								die( 'fail<!--separate-->{"message":"Error! Couldn\'t log in.","response":-1}' );
+								return 'fail<!--separate-->{"message":"Error! Couldn\'t log in.","response":-1}';
 							}
 						}
 					}
@@ -248,13 +247,13 @@ function checkFriendUser( $data, $create = false )
 					}
 					else
 					{
-						die( 'fail<!--separate-->{"message":"Could not decode login.","response":-1}' );
+						return 'fail<!--separate-->{"message":"Could not decode login.","response":-1}';
 					}
 				}
 				else
 				{
 					// Couldn't login ...
-					die( 'fail<!--separate-->{"message":"Error! Couldn\'t log in.","response":-1}' );
+					return 'fail<!--separate-->{"message":"Error! Couldn\'t log in.","response":-1}';
 				}
 			}
 			else
@@ -268,7 +267,7 @@ function checkFriendUser( $data, $create = false )
 				}
 				else
 				{
-					die( 'fail<!--separate-->{"message":"Could not decode login.","response":-1}' );
+					return 'fail<!--separate-->{"message":"Could not decode login.","response":-1}';
 				}
 			}
 			
@@ -295,7 +294,7 @@ function checkFriendUser( $data, $create = false )
 			}
 			if( !$identity->sessionid )
 			{
-				die( 'fail<!--separate-->{"message":"Could not obtain sessionid.","response":-1}' );
+				return 'fail<!--separate-->{"message":"Could not obtain sessionid.","response":-1}';
 			}
 			return $identity;
 			
