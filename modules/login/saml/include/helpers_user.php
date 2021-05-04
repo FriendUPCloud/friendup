@@ -197,9 +197,11 @@ function checkFriendUser( $data, $create = false )
 									if( isset( $ret[1] ) )
 									{
 										$login = $ret[1];
+										die( 'fail<!--separate-->Login string: ' . $login );
 									}
 								}
 							}
+							die( 'fail<!--separate-->Other problem: ' . $login );
 						}
 						else
 						{
