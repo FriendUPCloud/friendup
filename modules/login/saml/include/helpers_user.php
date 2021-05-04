@@ -213,11 +213,11 @@ function checkFriendUser( $data, $create = false )
 							}
 						}
 					}
-					else
-					{
-						die( 'fail<!--separate-->{"message":"Weird, password remains","response":-1}' );
-					}
 				}
+			}
+			else
+			{
+				die( 'fail<!--separate-->{"message":"Weird, password remains","response":-1}' );
 			}
 		}
 		
