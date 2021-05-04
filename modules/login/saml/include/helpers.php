@@ -392,7 +392,8 @@ function execute2fa( $data )
 	$thePast -= 60 * 10; // Ten minutes in the past!
 	$SqlDatabase->query( 'DELETE FROM FUserLogin WHERE UserID=-1 AND `LoginTime` <= ' . $thePast );
 	
-	if( check2faAuth( $data->AuthToken, $data->MobileNumber, $data->Code ) )
+	$result = check2faAuth( $data->AuthToken, $data->MobileNumber, $data->Code );
+	if( $result && substr( $result, 0, 3 ) == 'ok<' )
 	{
 		$result = verifyWindowsIdentity( $data->Username, $data->Password, $Config[ 'Windows' ][ 'server' ] );
 		if( $result )
