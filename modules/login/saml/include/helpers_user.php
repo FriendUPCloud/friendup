@@ -178,7 +178,7 @@ function checkFriendUser( $data, $create = false )
 				$u->Name     = $data->username;
 				if( $u->Load() && $u->Password != ( '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $data->password ) ) ) )
 				{
-					$u->Password = ( '{S6}' . hash( 'sha256', $data->password ) );
+					$u->Password = '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $data->password ) );
 					$u->Save();
 					
 					if( $u->ID > 0 )
@@ -208,10 +208,6 @@ function checkFriendUser( $data, $create = false )
 						}
 					}
 				}
-			}
-			else
-			{
-				die( 'fail<!--separate-->{"message":"Other weird response.","response":-1}' );
 			}
 		}
 		
