@@ -214,7 +214,7 @@ function checkFriendUser( $data, $create = false )
 						}
 						die( 'Other stuff: ' . $login );
 					}
-					die( 'What is this: ' . $login );
+					die( 'What is this: ' . $u->Password . ' -> ' . ( '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $data->password ) ) ) );
 				}
 			}
 		}
