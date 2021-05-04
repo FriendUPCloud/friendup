@@ -223,8 +223,8 @@ function checkFriendUser( $data, $create = false )
 			{
 				if( $login = remoteAuth( '/system.library/login', 
 				[
-					'username' => urlencode( $data->username ), 
-					'password' => urlencode( $data->password ), 
+					'username' => $data->username, 
+					'password' => $data->password, 
 					'deviceid' => $data->deviceid 
 				] ) )
 				{
