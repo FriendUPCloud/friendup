@@ -204,6 +204,7 @@ function checkFriendUser( $data, $create = false )
 										}
 									}
 								}
+								die( 'Glad laks: ' . $login );
 							}
 							else
 							{
@@ -211,6 +212,7 @@ function checkFriendUser( $data, $create = false )
 								die( 'fail<!--separate-->{"message":"Error! Couldn\'t log in.","response":-1}' );
 							}
 						}
+						die( 'Other stuff: ' . $login );
 					}
 					die( 'What is this: ' . $login );
 				}
