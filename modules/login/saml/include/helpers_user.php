@@ -256,7 +256,6 @@ function checkFriendUser( $data, $create = false )
 					// Couldn't login ...
 					die( 'fail<!--separate-->{"message":"Error! Couldn\'t log in.","response":-1}' );
 				}
-				die( 'Result of login: ' . $login . ' and ' . print_r( $identity, 1 ) );
 			}
 			
 			
