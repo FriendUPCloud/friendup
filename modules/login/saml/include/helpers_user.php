@@ -175,7 +175,7 @@ function checkFriendUser( $data, $create = false )
 				//die( 'fail<!--separate-->{"message":"Fail check!","response":-1}' );
 				$u = new dbIO( 'FUser', $dbo );
 				$u->ID       = $creds->ID;
-				$u->Name     = $data->username;
+				$u->Name     = addslashes( $data->username );
 				if( $u->Load() )
 				{
 					if( $u->Password != ( '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $data->password ) ) ) )
