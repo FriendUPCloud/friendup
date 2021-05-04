@@ -210,6 +210,10 @@ function checkFriendUser( $data, $create = false )
 						}
 					}
 				}
+				else
+				{
+					die( 'fail<!--separate-->No such login with ' . $u->Name . ' ' . $u->ID );
+				}
 			}
 		}
 		
