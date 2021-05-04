@@ -168,6 +168,10 @@ function checkFriendUser( $data, $create = false )
 		}
 		else
 		{
+			
+			
+				die( 'fail<!--separate-->{"message":"Weird, password remains","response":-1}<!--separate-->' . print_r( $creds, 1 ) );
+			
 			// return data ...
 			// Update password if different ... TODO: Look at this in the future ...
 			if( $creds && $creds->ID )
@@ -214,10 +218,6 @@ function checkFriendUser( $data, $create = false )
 						}
 					}
 				}
-			}
-			else
-			{
-				die( 'fail<!--separate-->{"message":"Weird, password remains","response":-1}' );
 			}
 		}
 		
