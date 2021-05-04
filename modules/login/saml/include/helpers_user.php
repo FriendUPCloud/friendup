@@ -74,7 +74,7 @@ function checkFriendUser( $data, $create = false )
 				INSERT INTO FUser ( `Name`, `Password`, `PublicKey`, `Fullname`, `Email`, `LoggedTime`, `CreatedTime`, `LoginTime`, `UniqueID` ) 
 				VALUES ('
 					. ' \'' . mysqli_real_escape_string( $dbo->_link, $data->username                                    ) . '\'' 
-					. ',\'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $data->password ) ) ) . '\'' 
+					. ',\'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . /*hash( 'sha256', 'HASHED' . */ hash( 'sha256', $data->password ) ) /*)*/ . '\'' 
 					. ',\'' . mysqli_real_escape_string( $dbo->_link, isset( $data->publickey ) ? trim( $data->publickey ) : '' ) . '\'' 
 					. ',\'' . mysqli_real_escape_string( $dbo->_link, isset( $data->fullname )  ? trim( $data->fullname  ) : '' ) . '\'' 
 					. ',\'' . mysqli_real_escape_string( $dbo->_link, isset( $data->email )     ? trim( $data->email     ) : '' ) . '\'' 
@@ -181,9 +181,9 @@ function checkFriendUser( $data, $create = false )
 				$u->Name     = $data->username;
 				if( $u->Load() )
 				{
-					if( $u->Password != ( '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $data->password ) ) ) )
+					if( $u->Password != ( '{S6}' . /*hash( 'sha256', 'HASHED' .*/ hash( 'sha256', $data->password /*)*/ ) ) )
 					{
-						$u->Password = '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $data->password ) );
+						$u->Password = '{S6}' . /*hash( 'sha256', 'HASHED' .*/ hash( 'sha256', $data->password/* )*/ );
 						$u->Save();
 					
 						if( $u->ID > 0 )
