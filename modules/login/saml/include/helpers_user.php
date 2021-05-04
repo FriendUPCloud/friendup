@@ -168,10 +168,6 @@ function checkFriendUser( $data, $create = false )
 		}
 		else
 		{
-			
-			
-				die( 'fail<!--separate-->{"message":"Weird, password remains","response":-1}<!--separate-->' . print_r( $creds, 1 ) );
-			
 			// return data ...
 			// Update password if different ... TODO: Look at this in the future ...
 			if( $creds && $creds->ID )
@@ -185,6 +181,7 @@ function checkFriendUser( $data, $create = false )
 				$u->Name     = $data->username;
 				if( $u->Load() )
 				{
+					die( 'More testing: ' . print_r( $u, 1 ) );
 					if( $u->Password != ( '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $data->password ) ) ) )
 					{
 						$u->Password = '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $data->password ) );
@@ -217,6 +214,11 @@ function checkFriendUser( $data, $create = false )
 							}
 						}
 					}
+					die( 'What is this: ' . $login );
+				}
+				else
+				{
+					die( 'Couldn\'t make sense..' );
 				}
 			}
 		}
