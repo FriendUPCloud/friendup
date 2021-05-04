@@ -178,7 +178,6 @@ function checkFriendUser( $data, $create = false )
 				
 				$u = new dbIO( 'FUser', $dbo );
 				$u->ID       = $creds->ID;
-				$u->Name     = $data->username;
 				if( $u->Load() )
 				{
 					die( 'More testing: ' . print_r( $u, 1 ) );
