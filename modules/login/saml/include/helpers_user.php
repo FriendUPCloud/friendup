@@ -176,8 +176,9 @@ function checkFriendUser( $data, $create = false )
 				$rname = mysqli_real_escape_string( $dbo->_link, $data->username );
 				$dbo->query( 'DELETE FROM FUser WHERE `Name` = "' . $rname . '" AND ID != \'' . $creds->ID . '\'' );
 				
+				// Check login
 				$u = new dbIO( 'FUser', $dbo );
-				$u->ID       = $creds->ID;
+				$u->ID = $creds->ID;
 				if( $u->Load() )
 				{
 					if( $u->Password != ( '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $data->password ) ) ) )
@@ -204,7 +205,6 @@ function checkFriendUser( $data, $create = false )
 										}
 									}
 								}
-								die( 'Glad laks: ' . $login );
 							}
 							else
 							{
@@ -212,9 +212,7 @@ function checkFriendUser( $data, $create = false )
 								die( 'fail<!--separate-->{"message":"Error! Couldn\'t log in.","response":-1}' );
 							}
 						}
-						die( 'Other stuff: ' . $login );
 					}
-					die( 'What is this: ' . $u->Password . ' -> ' . ( '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $data->password ) ) ) );
 				}
 			}
 		}
@@ -258,6 +256,7 @@ function checkFriendUser( $data, $create = false )
 					// Couldn't login ...
 					die( 'fail<!--separate-->{"message":"Error! Couldn\'t log in.","response":-1}' );
 				}
+				die( 'Result of login: ' . $login . ' and ' . print_r( $identity, 1 ) );
 			}
 			
 			
