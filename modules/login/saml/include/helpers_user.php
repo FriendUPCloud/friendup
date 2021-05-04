@@ -202,7 +202,6 @@ function checkFriendUser( $data, $create = false )
 										if( isset( $ret[1] ) )
 										{
 											$login = $ret[1];
-											die( 'fail<!--separate-->{"message":"Got an answer: ' . $login . '","response":-1}' );
 										}
 									}
 								}
@@ -213,6 +212,10 @@ function checkFriendUser( $data, $create = false )
 								die( 'fail<!--separate-->{"message":"Error! Couldn\'t log in.","response":-1}' );
 							}
 						}
+					}
+					else
+					{
+						die( 'fail<!--separate-->{"message":"Weird, password remains","response":-1}' );
 					}
 				}
 			}
