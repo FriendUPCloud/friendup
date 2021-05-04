@@ -257,6 +257,20 @@ function checkFriendUser( $data, $create = false )
 					die( 'fail<!--separate-->{"message":"Error! Couldn\'t log in.","response":-1}' );
 				}
 			}
+			else
+			{
+				if( $decoded = json_decode( str_replace( '\\', urlencode( '\\' ), $login ) ) )
+				{
+					foreach( $decoded as $k=>$v )
+					{
+						$identity->$k = $v;
+					}
+				}
+				else
+				{
+					die( 'fail<!--separate-->{"message":"Could not decode login.","response":-1}' );
+				}
+			}
 			
 			
 			if( $creds->ID )
