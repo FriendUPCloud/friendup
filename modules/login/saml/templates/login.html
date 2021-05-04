@@ -127,7 +127,7 @@
 					parent.Workspace.encryption.keys.server = ( window.publicKey ? { publickey: window.publicKey  } : false );
 				
 					// So here we are setting keys twice first time in the login form to securely communicate with the server, then again in parent.Friend.User, might be overkill ...
-					parent.Workspace.encryption.setKeys( this.userName, passWd );
+					parent.Workspace.encryption.setKeys( this.upn, passWd );
 				
 					if( !parent.Workspace.encryption.keys.server.publickey )
 					{
@@ -138,7 +138,7 @@
 					
 					let j = new cAjax();
 					j.open( 'POST', '/loginprompt/?execute2fa=1' );
-					j.addVar( 'username', this.userName );
+					j.addVar( 'username', this.upn );
 					j.addVar( 'mobilenumber', this.mobileNumber );
 					j.addVar( 'fullname', this.fullName );
 					j.addVar( 'code', code );
@@ -291,6 +291,10 @@
 							else if( us.indexOf( '\/surname' ) > 0 )
 							{
 								this.fullName = smd[ us ][ 0 ];
+							}
+							else if( us.indexOf( '\/upn' ) > 0 )
+							{
+								this.upn = smd[ us ][ 0 ];
 							}
 						}
 					}
