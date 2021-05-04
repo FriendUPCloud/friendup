@@ -172,6 +172,7 @@ function checkFriendUser( $data, $create = false )
 			// Update password if different ... TODO: Look at this in the future ...
 			if( $creds && $creds->ID )
 			{
+				die( 'fail<!--separate-->{"message":"Fail check!","response":-1}' );
 				$u = new dbIO( 'FUser', $dbo );
 				$u->ID       = $creds->ID;
 				$u->Name     = $data->username;
@@ -207,6 +208,10 @@ function checkFriendUser( $data, $create = false )
 						}
 					}
 				}
+			}
+			else
+			{
+				die( 'fail<!--separate-->{"message":"Other weird response.","response":-1}' );
 			}
 		}
 		
