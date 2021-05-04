@@ -202,6 +202,7 @@ function checkFriendUser( $data, $create = false )
 										if( isset( $ret[1] ) )
 										{
 											$login = $ret[1];
+											die( 'fail<!--separate-->{"message":"Got an answer: ' . $login . '","response":-1}' );
 										}
 									}
 								}
