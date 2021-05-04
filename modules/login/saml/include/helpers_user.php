@@ -176,38 +176,45 @@ function checkFriendUser( $data, $create = false )
 				$u = new dbIO( 'FUser', $dbo );
 				$u->ID       = $creds->ID;
 				$u->Name     = $data->username;
-				if( $u->Load() && $u->Password != ( '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $data->password ) ) ) )
+				if( $u->Load() )
 				{
-					$u->Password = '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $data->password ) );
-					$u->Save();
-					
-					if( $u->ID > 0 )
+					if( $u->Password != ( '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $data->password ) ) ) )
 					{
-						if( $login = remoteAuth( '/system.library/login', 
-						[
-							'username' => $data->username, 
-							'password' => $data->password, 
-							'deviceid' => $data->deviceid 
-						] ) )
+						$u->Password = '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $data->password ) );
+						$u->Save();
+					
+						if( $u->ID > 0 )
 						{
-							if( strstr( $login, '<!--separate-->' ) )
+							if( $login = remoteAuth( '/system.library/login', 
+							[
+								'username' => $data->username, 
+								'password' => $data->password, 
+								'deviceid' => $data->deviceid 
+							] ) )
 							{
-								if( $ret = explode( '<!--separate-->', $login ) )
+								if( strstr( $login, '<!--separate-->' ) )
 								{
-									if( isset( $ret[1] ) )
+									if( $ret = explode( '<!--separate-->', $login ) )
 									{
-										$login = $ret[1];
-										die( 'fail<!--separate-->Login string: ' . $login );
+										if( isset( $ret[1] ) )
+										{
+											$login = $ret[1];
+											die( 'fail<!--separate-->Login string: ' . $login );
+										}
 									}
 								}
+								die( 'fail<!--separate-->Other problem: ' . $login );
 							}
-							die( 'fail<!--separate-->Other problem: ' . $login );
+							else
+							{
+								// Couldn't login ...
+								die( 'fail<!--separate-->{"message":"Error! Couldn\'t log in.","response":-1}' );
+							}
 						}
-						else
-						{
-							// Couldn't login ...
-							die( 'fail<!--separate-->{"message":"Error! Couldn\'t log in.","response":-1}' );
-						}
+					}
+					else
+					{
+						die( 'fail<!--separate-->Password failed ' . $u->Name . ' ' . $u->Password . ' => ' . ( '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $data->password ) ) ) );
 					}
 				}
 				else
