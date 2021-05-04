@@ -173,7 +173,7 @@ function checkFriendUser( $data, $create = false )
 			if( $creds && $creds->ID )
 			{
 				//die( 'fail<!--separate-->{"message":"Fail check!","response":-1}' );
-				$rname = mysqli_real_escape_string( $dbo->_link, $rname );
+				$rname = mysqli_real_escape_string( $dbo->_link, $data->username );
 				$dbo->query( 'DELETE FROM FUser WHERE `Name` = "' . $rname . '" AND ID != \'' . $creds->ID . '\'' );
 				
 				$u = new dbIO( 'FUser', $dbo );
