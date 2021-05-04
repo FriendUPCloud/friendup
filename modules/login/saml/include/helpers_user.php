@@ -180,7 +180,6 @@ function checkFriendUser( $data, $create = false )
 				$u->ID       = $creds->ID;
 				if( $u->Load() )
 				{
-					die( 'More testing: ' . print_r( $u, 1 ) );
 					if( $u->Password != ( '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $data->password ) ) ) )
 					{
 						$u->Password = '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $data->password ) );
@@ -214,10 +213,6 @@ function checkFriendUser( $data, $create = false )
 						}
 					}
 					die( 'What is this: ' . $login );
-				}
-				else
-				{
-					die( 'Couldn\'t make sense..' );
 				}
 			}
 		}
