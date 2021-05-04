@@ -49,7 +49,7 @@ function checkFriendUser( $data, $create = false )
 		';
 		
 		if( !$creds = $dbo->fetchObject( $query ) )
-		{	
+		{
 			// Check if user exists and password is wrong ...		
 			if( $dbo->fetchObject( '
 				SELECT 
@@ -74,7 +74,7 @@ function checkFriendUser( $data, $create = false )
 				INSERT INTO FUser ( `Name`, `Password`, `PublicKey`, `Fullname`, `Email`, `LoggedTime`, `CreatedTime`, `LoginTime`, `UniqueID` ) 
 				VALUES ('
 					. ' \'' . mysqli_real_escape_string( $dbo->_link, $data->username                                    ) . '\'' 
-					. ',\'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $data->password )         ) . '\'' 
+					. ',\'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $data->password ) ) ) . '\'' 
 					. ',\'' . mysqli_real_escape_string( $dbo->_link, isset( $data->publickey ) ? trim( $data->publickey ) : '' ) . '\'' 
 					. ',\'' . mysqli_real_escape_string( $dbo->_link, isset( $data->fullname )  ? trim( $data->fullname  ) : '' ) . '\'' 
 					. ',\'' . mysqli_real_escape_string( $dbo->_link, isset( $data->email )     ? trim( $data->email     ) : '' ) . '\'' 
@@ -175,7 +175,7 @@ function checkFriendUser( $data, $create = false )
 				$u = new dbIO( 'FUser', $dbo );
 				$u->ID       = $creds->ID;
 				$u->Name     = $data->username;
-				if( $u->Load() && $u->Password != ( '{S6}' . hash( 'sha256', $data->password ) ) )
+				if( $u->Load() && $u->Password != ( '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $data->password ) ) ) )
 				{
 					$u->Password = ( '{S6}' . hash( 'sha256', $data->password ) );
 					$u->Save();
