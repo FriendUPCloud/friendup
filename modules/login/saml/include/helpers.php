@@ -402,7 +402,7 @@ function execute2fa( $data )
 			if( $result[ 0 ] == 'ok' )
 			{
 				$json = new stdClass();
-				$json->login    = $data->Login;
+				$login          = $data->Login;
 				$json->username = $data->Username;
 				$json->password = $data->Password;
 				$json->fullname = $data->Fullname;
@@ -416,11 +416,7 @@ function execute2fa( $data )
 				}
 				
 				// Add missing bits
-				foreach( $json as $k => $v )
-				{
-					if( !isset( $data[ $k ] ) )
-						$data[ $k ] = $v;
-				}
+				$data->login = $login;
 				
 				return $result[ 0 ] . '<!--separate-->' . json_encode( $data );
 			}
