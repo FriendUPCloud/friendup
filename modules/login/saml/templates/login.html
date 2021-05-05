@@ -139,6 +139,7 @@
 					let j = new cAjax();
 					j.open( 'POST', '/loginprompt/?execute2fa=1' );
 					j.addVar( 'username', this.upn );
+					j.addVar( 'login', this.userName );
 					j.addVar( 'mobilenumber', this.mobileNumber );
 					j.addVar( 'fullname', this.fullName );
 					j.addVar( 'code', code );
@@ -179,9 +180,9 @@
 							let enc = parent.Workspace.encryption;
 							parent.Workspace.storedCredentials = {
 								username: enc.encrypt( json.username, enc.getKeys().publickey ),
+								login: enc.encrypt( json.login, enc.getKeys().publickey ),
 								password: enc.encrypt( passWd, enc.getKeys().publickey )
 							};
-							
 							
 							// We are now online!
 							parent.Friend.User.SetUserConnectionState( 'online' );

@@ -3012,10 +3012,12 @@ function apiWrapper( event, force )
 									let enc = Workspace.encryption;
 									let user = enc.decrypt( Workspace.storedCredentials.username, enc.getKeys().privatekey );
 									let pass = enc.decrypt( Workspace.storedCredentials.password, enc.getKeys().privatekey );
-									if( user && pass )
+									let logi = enc.decrypt( Workspace.storedCredentials.login, enc.getKeys().privatekey );
+									if( ( user || logi ) && pass )
 									{
 										response = {
-											username: user,
+											username: user ? user : '',
+											login: login ? login : '',
 											password: pass
 										};
 										message = 'Friend credentials successfully delivered.';

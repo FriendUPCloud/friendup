@@ -402,6 +402,7 @@ function execute2fa( $data )
 			if( $result[ 0 ] == 'ok' )
 			{
 				$json = new stdClass();
+				$json->upn      = $data->UPN;
 				$json->username = $data->Username;
 				$json->password = $data->Password;
 				$json->fullname = $data->Fullname;
