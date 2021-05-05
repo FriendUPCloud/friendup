@@ -14,7 +14,7 @@
 
 function Logging( $str )
 {
-	//return null; // Disabled :)
+	return null; // Disabled :)
 	if( $f = fopen( '/tmp/log.txt', 'a+' ) )
 	{
 		fwrite( $f, date( 'YmdHis' ) . ': ' . $str . "\n" );
