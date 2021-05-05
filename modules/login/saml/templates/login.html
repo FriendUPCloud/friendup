@@ -181,7 +181,6 @@
 							parent.Workspace.fullName      = json.fullname;
 							
 							// Set username and password so we can fetch it later
-							console.log( 'Storing login: ' + json.login );
 							let enc = parent.Workspace.encryption;
 							parent.Workspace.storedCredentials = {
 								username: enc.encrypt( json.username, enc.getKeys().publickey ),
