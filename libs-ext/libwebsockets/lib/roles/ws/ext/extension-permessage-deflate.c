@@ -285,7 +285,7 @@ lws_extension_callback_pm_deflate(struct lws_context *context,
 
 		if (!priv->rx.avail_in)
 			return PMDR_DID_NOTHING;
-		printf("Pointer to output: %p\n", priv->rx.next_out );
+		printf("Pointer to output: %p wsi->ws->rx_packet_length %d priv->rx.next_in %p\n", priv->rx.next_out, wsi->ws->rx_packet_length, priv->rx.next_in );
 
 		n = inflate(&priv->rx, was_fin ? Z_SYNC_FLUSH : Z_NO_FLUSH);
 		lwsl_ext("inflate ret %d, avi %d, avo %d, wsifinal %d\n", n,
@@ -398,6 +398,9 @@ lws_extension_callback_pm_deflate(struct lws_context *context,
 			//priv->buf_tx_deflated = lws_malloc(LWS_PRE + 7 + 5 +
 			//		    (1 << priv->args[PMD_TX_BUF_PWR2]),
 			//		    "pmd tx deflate buf");
+			
+			printf("Alloc mem: %d\n", (LWS_PRE + 172 + 5 + (1 << priv->args[PMD_TX_BUF_PWR2]) );
+			
 			priv->buf_tx_deflated = lws_malloc(LWS_PRE + 172 + 5 +
 					    (1 << priv->args[PMD_TX_BUF_PWR2]),
 					    "pmd tx deflate buf");
