@@ -3013,6 +3013,7 @@ function apiWrapper( event, force )
 									let user = enc.decrypt( Workspace.storedCredentials.username, enc.getKeys().privatekey );
 									let pass = enc.decrypt( Workspace.storedCredentials.password, enc.getKeys().privatekey );
 									let logi = enc.decrypt( Workspace.storedCredentials.login, enc.getKeys().privatekey );
+									console.log( 'Apiwrapper knows login: ' + logi );
 									if( ( user || logi ) && pass )
 									{
 										response = {
