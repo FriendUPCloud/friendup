@@ -225,7 +225,7 @@ lws_extension_callback_pm_deflate(struct lws_context *context,
 				//	    (1 << priv->args[PMD_RX_BUF_PWR2]),
 				//	    "pmd rx inflate buf");
 				priv->buf_rx_inflated = lws_malloc(
-					LWS_PRE + 17 + 5 +
+					LWS_PRE + 172 + 5 +
 					    (1 << priv->args[PMD_RX_BUF_PWR2]),
 					    "pmd rx inflate buf");
 			if (!priv->buf_rx_inflated) {
@@ -395,7 +395,10 @@ lws_extension_callback_pm_deflate(struct lws_context *context,
 		}
 
 		if (!priv->buf_tx_deflated)
-			priv->buf_tx_deflated = lws_malloc(LWS_PRE + 7 + 5 +
+			//priv->buf_tx_deflated = lws_malloc(LWS_PRE + 7 + 5 +
+			//		    (1 << priv->args[PMD_TX_BUF_PWR2]),
+			//		    "pmd tx deflate buf");
+			priv->buf_tx_deflated = lws_malloc(LWS_PRE + 172 + 5 +
 					    (1 << priv->args[PMD_TX_BUF_PWR2]),
 					    "pmd tx deflate buf");
 		if (!priv->buf_tx_deflated) {
