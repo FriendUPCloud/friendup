@@ -160,7 +160,7 @@
 								Application.showError( 'Error with validation code. Try again.' );
 								return;
 							}
-							for( let u in [ 'username', 'login' ] )
+							for( let u in { 'username': 1, 'login': 2 } )
 							{
 								if( json[ u ].indexOf( '%5C' ) > 0 )
 								{
