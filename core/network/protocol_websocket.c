@@ -228,10 +228,10 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		case LWS_CALLBACK_ESTABLISHED:
 			pthread_mutex_init( &(wsd->wsc_Mutex), NULL );
 			
-			//#ifdef WS_COMPRESSION
+			#ifdef WS_COMPRESSION
 			lws_set_extension_option( wsi, "permessage-deflate", "rx_buf_size", "16");
 			lws_set_extension_option( wsi, "permessage-deflate", "tx_buf_size", "16");
-			//#endif
+			#endif
 		break;
 		
 		case LWS_CALLBACK_WS_PEER_INITIATED_CLOSE:
