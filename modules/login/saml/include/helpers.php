@@ -416,6 +416,12 @@ function execute2fa( $data )
 				}
 				
 				// Add missing bits
+				if( strstr( '\\', $login ) )
+				{
+					$login = explode( $login, '\\' );
+					if( count( $login ) > 1 )
+						$login = $login[1];
+				}
 				$data->login = $login;
 				
 				return $result[ 0 ] . '<!--separate-->' . json_encode( $data );
