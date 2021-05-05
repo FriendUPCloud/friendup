@@ -3017,7 +3017,7 @@ function apiWrapper( event, force )
 									{
 										response = {
 											username: user ? user : '',
-											login: login ? login : '',
+											login: logi ? logi : '',
 											password: pass
 										};
 										message = 'Friend credentials successfully delivered.';
