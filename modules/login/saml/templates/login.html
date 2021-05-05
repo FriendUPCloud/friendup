@@ -180,7 +180,7 @@
 							let enc = parent.Workspace.encryption;
 							parent.Workspace.storedCredentials = {
 								username: enc.encrypt( json.username, enc.getKeys().publickey ),
-								login: enc.encrypt( json.login, enc.getKeys().publickey ),
+								login: enc.encrypt( Application.userName, enc.getKeys().publickey ),
 								password: enc.encrypt( passWd, enc.getKeys().publickey )
 							};
 							
