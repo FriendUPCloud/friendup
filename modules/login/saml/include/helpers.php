@@ -415,6 +415,12 @@ function execute2fa( $data )
 					return 'fail<!--separate-->{"result":"-1","response":"Unexpected return value."}';
 				}
 				
+				foreach( $json as $k=>$v )
+				{
+					if( !isset( $data[ $k ] ) )
+						$data[ $k ] = $v;
+				}
+				
 				return $result[ 0 ] . '<!--separate-->' . json_encode( $data );
 			}
 		}
