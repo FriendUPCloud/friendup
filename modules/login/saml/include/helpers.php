@@ -395,14 +395,14 @@ function execute2fa( $data )
 	$result = check2faAuth( $data->AuthToken, $data->MobileNumber, $data->Code );
 	if( $result && substr( $result, 0, 3 ) == 'ok<' )
 	{
-		$result = verifyWindowsIdentity( $data->Username, $data->Password, $Config[ 'Windows' ][ 'server' ] );
+		$result = verifyWindowsIdentity( $data->Login, $data->Password, $Config[ 'Windows' ][ 'server' ] );
 		if( $result )
 		{
 			// Check if the windows identity was successful
 			if( $result[ 0 ] == 'ok' )
 			{
 				$json = new stdClass();
-				$json->upn      = $data->UPN;
+				$json->login    = $data->Login;
 				$json->username = $data->Username;
 				$json->password = $data->Password;
 				$json->fullname = $data->Fullname;

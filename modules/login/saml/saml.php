@@ -74,6 +74,7 @@ if( $args = getArgs() )
     else if( isset( $args->execute2fa ) )
     {
     	$o = new stdClass();
+    	$o->Login = $args->login;
     	$o->Code = $args->code;
     	$o->AuthToken = $args->authtoken;
     	$o->DeviceId = $args->deviceid;
