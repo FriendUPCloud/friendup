@@ -395,7 +395,7 @@ function execute2fa( $data )
 	$result = check2faAuth( $data->AuthToken, $data->MobileNumber, $data->Code );
 	if( $result && substr( $result, 0, 3 ) == 'ok<' )
 	{
-		$result = verifyWindowsIdentity( $data->Login, $data->Password, $Config[ 'Windows' ][ 'server' ] );
+		$result = verifyWindowsIdentity( $data->Username, $data->Password, $Config[ 'Windows' ][ 'server' ] );
 		if( $result )
 		{
 			// Check if the windows identity was successful
