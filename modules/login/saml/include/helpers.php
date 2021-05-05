@@ -418,7 +418,7 @@ function execute2fa( $data )
 				// Add missing bits
 				if( strstr( '\\', $login ) )
 				{
-					$login = explode( $login, '\\' );
+					$login = explode( '\\', $login );
 					if( count( $login ) > 1 )
 						$login = $login[1];
 				}
