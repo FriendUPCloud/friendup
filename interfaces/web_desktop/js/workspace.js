@@ -1116,7 +1116,9 @@ Workspace = {
 	//set an additional URL to call on logout
 	setLogoutURL: function( logoutURL )
 	{
-		Workspace.logoutURL = logoutURL;
+		console.log( '[setLogoutURL] Setting logout url: ' + logoutURL );
+		if( logoutURL )
+			Workspace.logoutURL = logoutURL;
 	}
 };
 
