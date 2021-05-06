@@ -359,7 +359,7 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 {
 	if( fcm->fcm_DisableWS != TRUE )
 		{
-			if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled, 0, fcm->fcm_WSExtendedDebug ) ) != NULL )
+			if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled, WEBSOCKET_TYPE_BROWSER, fcm->fcm_WSExtendedDebug ) ) != NULL )
 			{
 				WebSocketStart( fcm->fcm_WebSocket );
 			}
@@ -371,7 +371,7 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 			
 			if( fcm->fcm_DisableExternalWS == 0 )
 			{
-				if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, FALSE, 2, fcm->fcm_WSExtendedDebug ) ) != NULL )
+				if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, FALSE, WEBSOCKET_TYPE_EXTERNAL, fcm->fcm_WSExtendedDebug ) ) != NULL )
 				{
 					WebSocketStart( fcm->fcm_WebSocketNotification );
 				}

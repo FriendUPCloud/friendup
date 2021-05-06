@@ -149,37 +149,9 @@ static struct lws_protocols protocols[] = {
 	}
 };
 
-
 // list of supported protocols and callbacks 
 
 static struct lws_protocols protocols1[] = {
-	// first protocol must always be HTTP handler 
-	{
-		"http-only",		/* name */
-		callback_http,		/* callback */
-		sizeof (struct per_session_data__http),	/* per_session_data_size */
-		0,			/* max frame size / rx buffer */
-		1,
-		NULL,
-		0
-	},
-	{
-		"FriendApp-v1",
-		WebsocketAppCallback,
-		sizeof( struct MobileAppNotif ),
-		WS_PROTOCOL_BUFFER_SIZE,
-		3, //id - not used for anything yet
-		NULL,
-		0
-	},
-	{
-		NULL, NULL, 0, 0, 0, NULL, 0 		// End of list 
-	}
-};
-
-// list of supported protocols and callbacks 
-
-static struct lws_protocols protocols2[] = {
 	// first protocol must always be HTTP handler 
 	{
 		"http-only",		//
@@ -196,6 +168,33 @@ static struct lws_protocols protocols2[] = {
 		sizeof( struct MobileAppNotif ),
 		WS_PROTOCOL_BUFFER_SIZE,
 		4, //id - not used for anything yet
+		NULL,
+		0
+	},
+	{
+		NULL, NULL, 0, 0, 0, NULL, 0 		// End of list 
+	}
+};
+
+// list of supported protocols and callbacks 
+
+static struct lws_protocols protocols2[] = {
+	// first protocol must always be HTTP handler 
+	{
+		"http-only",		/* name */
+		callback_http,		/* callback */
+		sizeof (struct per_session_data__http),	/* per_session_data_size */
+		0,			/* max frame size / rx buffer */
+		1,
+		NULL,
+		0
+	},
+	{
+		"FriendApp-v1",
+		WebsocketAppCallback,
+		sizeof( struct MobileAppNotif ),
+		WS_PROTOCOL_BUFFER_SIZE,
+		3, //id - not used for anything yet
 		NULL,
 		0
 	},
@@ -331,15 +330,18 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 		}
 		
 		ws->ws_Info.port = ws->ws_Port;
-		if( proto == 0 )
+		if( proto == WEBSOCKET_TYPE_BROWSER )
 		{
 			ws->ws_Info.protocols = protocols;
+#ifdef WS_COMPRESSION
+			ws->ws_Info.extensions = exts;
+#endif
 		}
-		else if( proto == 1 )
+		else if( proto == WEBSOCKET_TYPE_EXTERNAL )
 		{
 			ws->ws_Info.protocols = protocols1;
 		}
-		else
+		else	// MOBILE
 		{
 			ws->ws_Info.protocols = protocols2;
 		}
@@ -356,10 +358,6 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 		{
 			ws->ws_Info.options |= LWS_SERVER_OPTION_REDIRECT_HTTP_TO_HTTPS;
 		}
-		
-#ifdef WS_COMPRESSION
-		ws->ws_Info.extensions = exts;
-#endif
 		
 		ws->ws_Info.user = ws;
 		

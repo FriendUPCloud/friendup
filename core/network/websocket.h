@@ -39,6 +39,12 @@
 
 #define MAX_POLL_ELEMENTS 256
 
+enum
+{
+	WEBSOCKET_TYPE_BROWSER = 0,
+	WEBSOCKET_TYPE_EXTERNAL
+}
+
 //
 // main WebSocket structure
 //
