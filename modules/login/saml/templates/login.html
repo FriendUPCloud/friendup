@@ -333,8 +333,8 @@
 						        }
 						        
 						        parent.Friend.User.Init();
-						        console.log( 'Setting logout url: ' + Application.logoutUrl );
-						        parent.Workspace.setLogoutURL( Application.logoutURL );
+						        if( Application.logoutUrl )
+							        parent.Workspace.setLogoutURL( Application.logoutURL );
 						        parent.Friend.User.Login( Trim( Application.uName ), Trim( Application.uPass ), false, function( result )
 						        {
 							        if( result == false )

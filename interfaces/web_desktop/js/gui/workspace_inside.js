@@ -6228,6 +6228,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	externalLogout: function()
 	{
+		console.log( '[externalLogout] Running external logout.' );
 		var wl = new View( {
 			title: 'Logout',
 			width: 370,

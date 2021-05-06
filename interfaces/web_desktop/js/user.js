@@ -284,6 +284,8 @@ Friend.User = {
 
 		let dologt = null;
 
+		console.log( '[Logout] Attempting to save window storage.' );
+
 		SaveWindowStorage( function()
 		{
 			if( dologt != null )
@@ -292,6 +294,7 @@ Friend.User = {
 			// Do external logout and then our internal one.
 			if( Workspace.logoutURL )
 			{
+				console.log( '[Logout] Doing logout externally.' );
 				Workspace.externalLogout();
 				return;
 			}
