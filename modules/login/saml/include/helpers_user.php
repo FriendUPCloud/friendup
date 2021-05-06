@@ -175,6 +175,15 @@ function checkFriendUser( $data, $create = false )
 				$rname = mysqli_real_escape_string( $dbo->_link, $data->username );
 				$dbo->query( 'DELETE FROM FUser WHERE `Name` = "' . $rname . '" AND ID != \'' . $creds->ID . '\'' );
 				
+				// 3.b. Set 2 workspaces
+				$t = new dbIO( 'FSetting', $dbo );
+				$t->UserID = $creds->ID;
+				$t->Type = 'system';
+				$t->Key = 'workspacecount';
+				$t->Load();
+				$t->Data = '2';
+				$t->Save();
+				
 				// Check login
 				$u = new dbIO( 'FUser', $dbo );
 				$u->ID = $creds->ID;
@@ -581,16 +590,16 @@ function firstLoginSetup( $setupid, $uid )
 					$them->Load();
 					$them->Data = $ug->Data->theme;
 					$them->Save();
-					
-					// 3.b. Set 2 workspaces
-					$t = new dbIO( 'FSetting', $dbo );
-					$t->UserID = $uid;
-					$t->Type = 'system';
-					$t->Key = 'workspacecount';
-					$t->Load();
-					$t->Data = '2';
-					$t->Save();
 				}
+				
+				// 3.b. Set 2 workspaces
+				$t = new dbIO( 'FSetting', $dbo );
+				$t->UserID = $uid;
+				$t->Type = 'system';
+				$t->Key = 'workspacecount';
+				$t->Load();
+				$t->Data = '2';
+				$t->Save();
 		
 				// Software ----------------------------------------------------------------------------------------
 				if( !isset( $ug->Data->software ) )
