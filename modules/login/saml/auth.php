@@ -245,7 +245,6 @@ if( !function_exists( 'authoriseFriendSAMLUser' ) )
 	
 	function generateLoginOutput( $userdata, $samldata )
 	{
-		
 		$username = $userdata['username'];
 		$userpass = $userdata['userpass'];
 		$logouturl = $userdata['logout'];
@@ -257,7 +256,7 @@ if( !function_exists( 'authoriseFriendSAMLUser' ) )
 $ret = <<<EOT
 <html>
 	<head>
-		<title>login - pease wait</title>
+		<title>Friend OS logging in, please wait...</title>
 	</head>
 	<body>
 	<div id="result"></div>
@@ -269,12 +268,15 @@ $ret = <<<EOT
 		}
 		function loginSAMLUser()
 		{
+			console.log( '[loginSAMLUser] Doing the login.' );
 			if( window.opener )
 			{
+				console.log( '[loginSAMLUser] Closing window.' );
 				window.opener.location.href=''; window.close();
 			}
 			else
 			{
+				console.log( '[loginSAMLUser] Posting login message with logout url: {$logouturl}' );
 				parent.postMessage({'cmd':'login','username':'{$username}','password':'{$userpass}','logouturl':'{$logouturl}', 'samldata':{$samldata}},'*');
 			}
 		}
