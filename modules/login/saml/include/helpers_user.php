@@ -290,6 +290,12 @@ function checkFriendUser( $data, $create = false )
 					// It was added with success ...
 				}
 				
+				// Add Outlook Web Access
+				if( addCustomDockItem( $creds->ID, 'Epat', true, true, '' ) )
+				{
+					// It was added with success ...
+				}
+				
 				$identity->userid = $creds->ID;
 			}
 			if( !$identity->sessionid )
