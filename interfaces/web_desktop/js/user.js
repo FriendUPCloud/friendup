@@ -284,12 +284,7 @@ Friend.User = {
 
 		let dologt = null;
 
-		console.log( '[Logout] Attempting to save window storage.' );
-
-		SaveWindowStorage();
-		
-		// Do the actual logout
-		setTimeout( function()
+		SaveWindowStorage( function()
 		{
 			if( dologt != null )
 				clearTimeout( dologt );
@@ -297,22 +292,16 @@ Friend.User = {
 			// Do external logout and then our internal one.
 			if( Workspace.logoutURL )
 			{
-				console.log( '[Logout] Doing logout externally.' );
 				Workspace.externalLogout();
-				debugger;
 				return;
 			}
-
-			console.log( '[Logout] Executing logout procedure.' );
-			debugger;
 
 			let m = new cAjax();
 			m.open( 'get', '/system.library/user/logout/?sessionid=' + Workspace.sessionId, true );
 			m.forceHTTP = true;
 			m.send();
 			setTimeout( doLogout, 500 );
-		}, 25 );
-		
+		} );
 		// Could be there will be no connection..
 		function doLogout()
 		{
