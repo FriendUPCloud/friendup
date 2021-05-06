@@ -6228,7 +6228,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	externalLogout: function()
 	{
-		console.log( '[externalLogout] Running external logout.' );
 		var wl = new View( {
 			title: 'Logout',
 			width: 370,
@@ -8487,8 +8486,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				catch ( e ){}
 			}
-		
-			console.log( 'Trying to get shit done!', content );
 		
 			if( content )
 			{
