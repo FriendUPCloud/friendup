@@ -259,10 +259,14 @@
 					}
 					else if( msg.cmd && msg.cmd == 'login' )
 					{
-						console.log( 'Set logout url: ' + msg.logouturl );
 						Application.uName = msg.username;
 						Application.uPass = msg.password;
-						Application.logoutURL = msg.logouturl;
+						
+						if( msg.logouturl && parent.Workspace )
+						{
+							console.log( 'Setting logout url: ' + msg.logouturl );
+					        parent.Workspace.setLogoutURL( msg.logouturl );
+					    }
 						
 					    // Execute the login procedure
 						Application.loginUser();
@@ -333,8 +337,6 @@
 						        }
 						        
 						        parent.Friend.User.Init();
-						        if( Application.logoutURL )
-							        parent.Workspace.setLogoutURL( Application.logoutURL );
 						        parent.Friend.User.Login( Trim( Application.uName ), Trim( Application.uPass ), false, function( result )
 						        {
 							        if( result == false )
