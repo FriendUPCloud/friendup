@@ -259,6 +259,7 @@
 					}
 					else if( msg.cmd && msg.cmd == 'login' )
 					{
+						console.log( 'Set logout url: ' + msg.logouturl );
 						Application.uName = msg.username;
 						Application.uPass = msg.password;
 						Application.logoutURL = msg.logouturl;
@@ -332,6 +333,7 @@
 						        }
 						        
 						        parent.Friend.User.Init();
+						        console.log( 'Setting logout url: ' + Application.logoutUrl );
 						        parent.Workspace.setLogoutURL( Application.logoutURL );
 						        parent.Friend.User.Login( Trim( Application.uName ), Trim( Application.uPass ), false, function( result )
 						        {

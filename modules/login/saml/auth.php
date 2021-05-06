@@ -268,15 +268,12 @@ $ret = <<<EOT
 		}
 		function loginSAMLUser()
 		{
-			console.log( '[loginSAMLUser] Doing the login.' );
 			if( window.opener )
 			{
-				console.log( '[loginSAMLUser] Closing window.' );
 				window.opener.location.href=''; window.close();
 			}
 			else
 			{
-				console.log( '[loginSAMLUser] Posting login message with logout url: {$logouturl}' );
 				parent.postMessage({'cmd':'login','username':'{$username}','password':'{$userpass}','logouturl':'{$logouturl}', 'samldata':{$samldata}},'*');
 			}
 		}
