@@ -893,7 +893,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 						if( sqllib != NULL )
 						{
 							FULONG fs_IDUser = 0;
-							FULONG fsysID = 0;
+							//FULONG fsysID = 0;
 							char *fs_DeviceName = NULL;
 							char *fs_Name = NULL;
 							char *fs_Type = NULL;
@@ -934,11 +934,13 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									{
 										usrSessionID = StringDuplicate( row[ 5 ] );
 									}
+									/*
 									if( row[ 6 ] != NULL )
 									{
 										char *end;
 										fsysID = strtoul( row[ 6 ], &end, 0 );
 									}
+									*/
 								}
 								sqllib->FreeResult( sqllib, res );
 							}
