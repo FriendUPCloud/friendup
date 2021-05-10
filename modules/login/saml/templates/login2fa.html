@@ -1,0 +1,35 @@
+
+    <div id="Auth2FAForm">
+    	<img src="/graphics/securty.jpg" width="432" height="243" id="AuthImage"/>
+        <p>
+        	<strong>
+        		Validate your identity
+        	</strong>
+        </p>
+        <p>
+        	To identify yourself, please enter your validation number and
+        	account password.
+        </p>
+        <div class="HRow MarginBottom">
+            <div class="HContent30 FloatLeft PaddingSmall">
+                <strong>Validation number:</strong>
+            </div>
+            <div class="HContent70 FloatLeft">
+            	<input type="text" id="Code" value=""/>
+            </div>
+        </div>
+        <div class="HRow MarginBottom">
+            <div class="HContent30 FloatLeft PaddingSmall">
+                <strong>Your password:</strong>
+            </div>
+            <div class="HContent70 FloatLeft">
+            	<input type="password" id="AuthPassword" value=""/>
+            </div>
+        </div>
+        <div class="HRow MarginTop">
+        	<button type="button" onclick="Application.validateMobileNumber()">
+        		Validate to log in
+        	</button>
+        </div>
+    </div>
+

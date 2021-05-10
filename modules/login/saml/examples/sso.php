@@ -27,12 +27,25 @@
 	module in friend on the machine.
 */
 
-define( 'SSO_BASE_URL', 'https://volatile.friendup.cloud/saml/sso.php' );
-define( 'FRIEND_BASE', '/home/ubuntu/friendup/build' );
+/*
+
+    This is an example file using a locally installed simplesamlphp.
+    It will not work when just installed.
+    It ought to be modified and installed in:
+    
+        /var/location_of_simplesamlphp/www/saml/
+
+    Make sure to set up your simplesamlphp to make this work!
+    TODO: Nicer design of login button!
+
+*/
+
+define( 'SSO_BASE_URL', 'https://127.0.1.1/saml/sso.php' );
+define( 'FRIEND_BASE', '/home/user/where_is_your_friend/build' );
 
 // Test SAML stuff....
 
-require_once( '../lib/_autoload.php' );
+require_once( dirname(dirname(__FILE__)) . '../../lib/_autoload.php' );
 
 $as = new SimpleSAML_Auth_Simple( 'default-sp' );
 
@@ -52,31 +65,76 @@ else if( !$as->isAuthenticated() )
 {
 	if( isset( $_GET[ 'startauth' ] ) )
 	{
-		$as->requireAuth( array(
+	    $ar = [
 		    'ReturnTo' => SSO_BASE_URL,
 		    'KeepPost' => FALSE
-		) );
+		];
+	    $as->requireAuth( $ar );
 	}
 	else
 	{
-		echo '<html><head><title>Login</title><link rel="stylesheet" href="/webclient/theme/theme_compiled.css"></head><body style="padding:0; margin:0;">';
-		echo '		<script type="text/javascript">';
-		echo '			var loginwindow;';
-		echo '			function showLoginWindow()';
-		echo '			{';
-		echo '				var winwidth = 400; //Math.min(400, screen.availWidth);';
-		echo '				var winheight = 400; //Math.min(400, screen.availHeight);';
-		echo '				var leftpos = Math.floor( (screen.availWidth - winwidth) / 2  );';
-		echo '				var toppos = Math.floor( (screen.availHeight - winheight) / 2  );';
-		echo '			';
-		echo '				loginwindow = window.open(\'?startauth\',\'loginwindow\',\'width=\'+ ( winwidth )  +\',height=\' + ( winheight ) +\',top=\' + ( toppos ) + \',left=\' + ( leftpos ) + \'\');';
-		echo '			}';
-		echo '			';
-		echo '			//showLoginWindow();';
-		echo '		</script>';
-		echo '		<a href="javascript:showLoginWindow()">Open login window</a>';
-		echo '</body></html>';
-		die();
+	    die( '
+<html>
+    <head>
+        <title>Login</title>
+        <link rel="stylesheet" href="/webclient/theme/theme_compiled.css"></head><body style="padding:0; margin:0;">
+		<script type="text/javascript">
+			var loginwindow;
+			function showLoginWindow()
+			{
+				var winwidth = 400; //Math.min(400, screen.availWidth);
+				var winheight = 400; //Math.min(400, screen.availHeight);
+				var leftpos = Math.floor( (screen.availWidth - winwidth) / 2  );
+				var toppos = Math.floor( (screen.availHeight - winheight) / 2  );
+				loginwindow = window.open(\'?startauth\',\'loginwindow\',\'width=\'+ ( winwidth )  +\',height=\' + ( winheight ) +\',top=\' + ( toppos ) + \',left=\' + ( leftpos ) + \'\');
+			}
+		</script>
+		<style>
+		    body
+		    {
+		        background: transparent;
+		        color: white;
+		    }
+		    body > div
+		    {
+		        background: #225588;
+		        color: white;
+		        border-radius: 4px;
+		        position: absolute;
+		        top: 0;
+		        left: 0;
+		        width: 100%;
+		        height: 100%;
+		        padding: 20px;
+		        box-sizing: border-box;
+		        padding-top: 150px;
+		    }
+		    a
+		    {
+		        text-decoration: none;
+		        color: white;
+		        font-family: sans serif;
+		        font-size: 14px;
+		        font-weight: bold;
+		        background: #55aadd;
+		        border-radius: 5px;
+		        padding: 8px 12px;
+		    }
+		    a:hover
+		    {
+		        background: #66bbee;
+		    }
+		</style>
+    </head>
+    <body>
+        <div>
+    		<center>
+    		    <a href="javascript:showLoginWindow()">Open login window</a>
+    		</center>
+    	</div>
+    </body>
+</html>
+	    ' );
 	}		
 }
 else
