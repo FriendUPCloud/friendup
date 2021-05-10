@@ -443,6 +443,12 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			}
 
 			// Register name and ID
+			console.log( 'ifr setup', {
+				app       : app,
+				conf      : conf,
+				flags     : flags,
+				Workspace : Workspace,
+			});
 			ifr.applicationName = app.indexOf( ' ' ) > 0 ? app.split( ' ' )[0] : app;
 			ifr.userId = Workspace.userId;
 			ifr.username = Workspace.loginUsername;
@@ -649,6 +655,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					clipboard: Friend.clipboard,
 					cachedAppData: _applicationBasics
 				};
+				console.log( 'register', o );
 				if( conf.State ) o.state = conf.State;
 
 				// Get JSON data from url

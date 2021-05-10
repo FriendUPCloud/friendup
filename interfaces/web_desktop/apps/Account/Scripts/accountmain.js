@@ -14,6 +14,7 @@ Application.run = function( msg, iface )
 	{
 		getStorage();
 		getUnmounted();
+		getTokens();
 		
 		var d = new Module( 'system' );
 		d.onExecuted = function( r, c )
@@ -189,6 +190,7 @@ Application.receiveMessage = function( msg )
 		case 'refresh':
 			getStorage();
 			getUnmounted();
+			getTokens();
 			break;
 		case 'closeStorageWin':
 			if( this.storageView )
@@ -1572,3 +1574,7 @@ function SetSubTimeZones( zone )
 	ge( 'UserAccTimezone' ).value = ge( 'TimeZoneType' ).value + '/' + ge( 'TimeZoneSubType' ).value;
 }
 
+function getTokens() {
+	const el = ge( 'TokenList' );
+	console.log( 'getTokens', el );
+}
