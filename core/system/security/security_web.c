@@ -430,6 +430,116 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	* 
+	* <HR><H2>system.library/security/listhosts</H2>List of hosts
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param userid - hosts will be filtered by userid
+	* 
+	* @return response {"result":"success","hosts":[]} when success otherwise error
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 0 ], "listhosts" ) == 0 )
+	{
+		FUQUAD userID = 0;
+		FUQUAD userIDFromParams = 0;
+		FBOOL allowed = FALSE;
+		
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		HashmapElement *el =  HashmapGet( request->http_ParsedPostContent, "userid" );
+		if( el != NULL )
+		{
+			char *end;
+			userID = strtoull( el->hme_Data,  &end, 0 );
+			userIDFromParams = userID;
+		}
+		
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
+		{
+			allowed = TRUE;
+			if( userID == 0 )
+			{
+				userID = loggedSession->us_UserID;
+			}
+		}
+		else
+		{
+			if( userID == 0 || userID == loggedSession->us_UserID )
+			{
+				allowed = TRUE;
+			}
+		}
+
+		if( allowed == TRUE )
+		{
+			SQLLibrary *sqllib = l->GetDBConnection( l );
+			if( sqllib != NULL )
+			{
+				BufString *bs = BufStringNew();
+				
+				BufStringAdd( bs, "{\"result\":\"success\",\"hosts\":[" );
+				
+				char selectQuery[ 1024 ];
+				
+				if( userIDFromParams > 0 )
+				{
+					sqllib->SNPrintF( sqllib, selectQuery, sizeof(selectQuery), "SELECT Host,Status,UserID,CreateTime FROM `FSecuredHost` WHERE UserID='%ld'", userIDFromParams );
+				}
+				else
+				{
+					strcpy( selectQuery, "SELECT Host,Status,UserID,CreateTime FROM `FSecuredHost`" );
+				}
+				
+				void *result = sqllib->Query( sqllib, selectQuery );
+				if( result != NULL )
+				{
+					int pos = 0;
+					char **row;
+					while( ( row = sqllib->FetchRow( sqllib, result ) ) )
+					{
+						char entry[ 1024 ];
+						int len = 0;
+						if( pos == 0 )
+						{
+							len = snprintf( entry, sizeof( entry ), "{\"host\":\"%s\",\"status\":%s,\"userid\":%s,\"createtime\":%s}", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ] );
+						}
+						else
+						{
+							len = snprintf( entry, sizeof( entry ), ",{\"host\":\"%s\",\"status\":%s,\"userid\":%s,\"createtime\":%s}", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ] );
+						}
+						BufStringAddSize( bs, entry, len );
+						
+						pos++;
+					}
+					sqllib->FreeResult( sqllib, result );
+				}
+				
+				DEBUG("[SecurityWeb/listhosts] sl query %s\n", selectQuery );
+				l->DropDBConnection( l, sqllib );
+
+				BufStringAdd( bs, "]}" );
+				bs->bs_Buffer = NULL; // we do not want to release memory, it will be released during SocketWrite call
+				
+				HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
+				
+				BufStringDelete( bs );
+			}
+		}
+		else
+		{
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
+		}
+	}
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	* 
 	* <HR><H2>system.library/security/deletehost</H2>Remove Security Host entry
 	*
 	* @param sessionid - (required) session id of logged user
