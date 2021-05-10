@@ -1577,4 +1577,26 @@ function SetSubTimeZones( zone )
 function getTokens() {
 	const el = ge( 'TokenList' );
 	console.log( 'getTokens', el );
+	const hReq = new Library( 'system.library' );
+	hReq.execute( 'security/listhosts' );
+	hReq.onExecuted = hostsBack;
+	function hostsBack( err, res ) {
+		console.log( 'hostsBack', [ err, res ]);
+	}
+	
+	function buildRow( conf ) {
+		const html = '<div id="'
+			+ conf.id
+			+ '" class="HRow Padding">'
+				+ '<div>'
+				+ conf.host
+				+ '</div>'
+			+ '</div>';
+		
+		console.log( 'buildRow', {
+			conf : conf,
+			html : html,
+		});
+		return html;
+	}
 }

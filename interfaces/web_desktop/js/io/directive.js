@@ -227,9 +227,13 @@ function ExecuteApplication( app, args, callback, retries, flags )
 		}
 		catch( e )
 		{
-			//
+			console.log( 'directive.js, mod call friendapplication - JSON error', e );
 		}
-	
+		
+		console.log( 'friendapplication', {
+			r    : r,
+			conf : conf,
+		});
 		if( r == 'activate' )
 		{
 			ActivateApplication( app, conf );
