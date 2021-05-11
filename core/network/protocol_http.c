@@ -876,8 +876,9 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							char *fs_Type = NULL;
 							char *fs_Path = NULL;
 							FBOOL sessionIDGenerated = FALSE;
-							
-							sqllib->SNPrintF( sqllib, query, 1024, "SELECT fs.Name, fs.Devname, fs.Path, fs.UserID, f.Type FROM FFileShared fs, Filesystem f, FUser u WHERE fs.Hash=\"%s\" AND u.ID = fs.UserID AND f.Name = fs.Devname", path->p_Parts[ 1 ] );
+
+							DEBUG("First call releated to shared files did not return any results\n");
+							sqllib->SNPrintF( sqllib, query, 1024, "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,fs.ID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID where `Hash`='%s'", path->p_Parts[ 1 ] );
 							
 							void *res = sqllib->Query( sqllib, query );
 							if( res != NULL )
@@ -906,15 +907,15 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									{
 										fs_Type = StringDuplicate( row[ 4 ] );
 									}
-									if( row[ 6 ] != NULL )
+									if( row[ 5 ] != NULL )
 									{
 										char *end;
-										fsysID = strtoul( row[ 6 ], &end, 0 );
+										fsysID = strtoul( row[ 5 ], &end, 0 );
 									}
 								}
 								sqllib->FreeResult( sqllib, res );
 							}
-							
+
 							// Immediately drop here..
 							SLIB->DropDBConnection( SLIB, sqllib );
 							sqllib = NULL;

@@ -783,17 +783,23 @@ File *UserGetDeviceByName( User *usr, const char *name )
 /**
  * Regenerate sessionid for user (DEPRICATED)
  *
+ * @param lsb pointer to SystemBase
  * @param usr pointer to User which will have new sessionid
  * @param newsess new session hash. If passed value is equal to NULL new hash will be generated
  * @return 0 when success, otherwise error number
  */
-int UserRegenerateSessionID( User *usr, char *newsess )
+int UserRegenerateSessionID( void *lsb, User *usr, char *newsess )
 {
 	/*
 	if( usr != NULL )
 	{
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+		SystemBase *sb = (SystemBase *)lsb;
+		
+>>>>>>> master
 		//pthread_mutex_lock( &(usr->) );
 		// Remove old one and update
 		if( usr->u_MainSessionID )
@@ -808,6 +814,7 @@ int UserRegenerateSessionID( User *usr, char *newsess )
 		}
 		else
 		{
+			SQLLibrary *sqllib;
 			time_t timestamp = time ( NULL );
 	
 			//char *hashBase = MakeString( 255 );
@@ -816,6 +823,18 @@ int UserRegenerateSessionID( User *usr, char *newsess )
 
 			usr->u_MainSessionID = SessionIDGenerate( );//hashBase;
 			DEBUG("[UserRegenerateSessionID] changed master sessionid for user: %s session: %s\n", usr->u_Name, usr->u_MainSessionID );
+			
+			sqllib = sb->LibrarySQLGet( sb );
+			if( sqllib != NULL )
+			{
+				char temptext[ 512 ];
+				sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "UPDATE `FUser` SET SessionID='%s' WHERE ID=%lu", usr->u_MainSessionID, usr->u_ID );
+				
+				DEBUG("[UserRegenerateSessionID] sql: %s\n", temptext );
+				
+				sqllib->QueryWithoutResults( sqllib, temptext );
+				sb->LibrarySQLDrop( sb, sqllib );
+			}
 		}
 	
 >>>>>>> master

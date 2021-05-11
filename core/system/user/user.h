@@ -275,7 +275,7 @@ File *UserGetDeviceByName( User *usr, const char *name );
 //
 //
 
-int UserRegenerateSessionID( User *usr, char *newsess );
+int UserRegenerateSessionID( void *sb, User *usr, char *newsess );
 
 //
 //
