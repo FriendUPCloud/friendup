@@ -45,7 +45,7 @@
 /// endif
 Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *loggedSession )
 {
-	Log( FLOG_DEBUG, "SecurityWebRequest %s  CALLED BY: %s\n", urlpath[ 0 ], loggedSession->us_User->u_Name );
+	Log( FLOG_DEBUG, "SecurityWebRequest %s  CALLED BY: %s\n", urlpath[ 1 ], loggedSession->us_User->u_Name );
 
 	Http* response = NULL;
 	
@@ -59,7 +59,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	* @return return information about avaiable functions (security section)
 	*/
 	/// @endcond
-	if( strcmp( urlpath[ 0 ], "help" ) == 0 )
+	if( strcmp( urlpath[ 1 ], "help" ) == 0 )
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
@@ -89,7 +89,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	* @return return {"result":"success","token":"<TOKEN>"} when success otherwise error
 	*/
 	/// @endcond
-	else if( strcmp( urlpath[ 0 ], "regenerateservertoken" ) == 0 )
+	else if( strcmp( urlpath[ 1 ], "regenerateservertoken" ) == 0 )
 	{
 		FUQUAD userID = 0;
 		FBOOL allowed = FALSE;
@@ -165,7 +165,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	* @return return {"result":"success"} when succes otherwise error
 	*/
 	/// @endcond
-	else if( strcmp( urlpath[ 0 ], "deleteservertoken" ) == 0 )
+	else if( strcmp( urlpath[ 1 ], "deleteservertoken" ) == 0 )
 	{
 		FUQUAD userID = 0;
 		FBOOL allowed = FALSE;
@@ -240,7 +240,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	*/
 	/// @endcond
 	
-	else if( strcmp( urlpath[ 0 ], "createhost" ) == 0 )
+	else if( strcmp( urlpath[ 1 ], "createhost" ) == 0 )
 	{
 		char *host = NULL;
 		FUQUAD userID = 0;
@@ -347,7 +347,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	* @return { "response":"success" } otherwise information about error
 	*/
 	/// @endcond
-	else if( strcmp( urlpath[ 0 ], "updatehost" ) == 0 )
+	else if( strcmp( urlpath[ 1 ], "updatehost" ) == 0 )
 	{
 		char *host = NULL;
 		FUQUAD userID = 0;
@@ -438,7 +438,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	* @return response {"result":"success","hosts":[]} when success otherwise error
 	*/
 	/// @endcond
-	else if( strcmp( urlpath[ 0 ], "listhosts" ) == 0 )
+	else if( strcmp( urlpath[ 1 ], "listhosts" ) == 0 )
 	{
 		FUQUAD userID = 0;
 		FUQUAD userIDFromParams = 0;
@@ -478,10 +478,12 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 
 		if( allowed == TRUE )
 		{
+			DEBUG("[SecurityWeb] get hostslist\n");
 			SQLLibrary *sqllib = l->GetDBConnection( l );
 			if( sqllib != NULL )
 			{
 				BufString *bs = BufStringNew();
+				DEBUG("[SecurityWeb] get hostslist buffer created\n");
 				
 				BufStringAdd( bs, "{\"result\":\"success\",\"hosts\":[" );
 				
@@ -524,9 +526,9 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 				l->DropDBConnection( l, sqllib );
 
 				BufStringAdd( bs, "]}" );
-				bs->bs_Buffer = NULL; // we do not want to release memory, it will be released during SocketWrite call
 				
 				HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
+				bs->bs_Buffer = NULL; // we do not want to release memory, it will be released during SocketWrite call
 				
 				BufStringDelete( bs );
 			}
@@ -549,7 +551,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	* @return response {"result":"success","host":"<HOST>"} when success otherwise error
 	*/
 	/// @endcond
-	else if( strcmp( urlpath[ 0 ], "deletehost" ) == 0 )
+	else if( strcmp( urlpath[ 1 ], "deletehost" ) == 0 )
 	{
 		char *host = NULL;
 		FUQUAD userID = 0;
