@@ -1577,22 +1577,45 @@ function SetSubTimeZones( zone )
 async function initTokens() {
 	const list = ge( 'TokenList' );
 	const createBtn = ge( 'ServerTokenCreate' );
+	const current = await getList();
 	console.log( 'initTokens', {
 		list      : list,
 		children  : [ ...list.children ],
 		createBtn : createBtn,
 		Workspace : window.Workspace,
-		hosts     : await getList(),
+		hosts     : current,
 	});
+	
+	current.forEach( host => addRow( host ));
 	
 	createBtn.addEventListener( 'click', createClick, false );
 	
 	async function createClick( e ) {
-		console.log( 'createClick', e );
-		const created = await create( 'bonk.no' );
+		const input = ge( 'ServerTokenHost' );
+		let host = input.value;
+		if ( null == host )
+			return;
+		
+		host = host.trim();
+		if ( !host )
+			return;
+		
+		console.log( 'createClick', host );
+		const created = await create( host );
+		if ( null == created )
+			return;
+		
+		addRow( created );
+	}
+	
+	function addRow( conf ) {
+		console.log( 'addRow', conf );
+		const rowEl = buildRow( conf );
+		list.appendChild( rowEl );
 	}
 	
 	function buildRow( conf ) {
+		console.log( 'buildRow', conf );
 		const html = '<div id="'
 			+ conf.id
 			+ '" class="HRow Padding">'
@@ -1601,11 +1624,10 @@ async function initTokens() {
 				+ '</div>'
 			+ '</div>';
 		
-		console.log( 'buildRow', {
-			conf : conf,
-			html : html,
-		});
-		return html;
+		const wrap = document.createElement( 'div' );
+		wrap.innerHTML = html;
+		const el = wrap.firstChild;
+		return el;
 	}
 	
 	function create( host, status ) {
@@ -1620,8 +1642,8 @@ async function initTokens() {
 			create.execute( 'security/createhost', args );
 			create.onExecuted = createBack;
 			
-			function createBack( err, res ) {
-				console.log( 'createBack', [ err, res ]);
+			function createBack( res, yep ) {
+				console.log( 'createBack', [ res, yep ]);
 				resolve( res );
 			}
 		});
@@ -1632,9 +1654,9 @@ async function initTokens() {
 			const list = new Library( 'system.library' );
 			list.execute( 'security/listhosts' );
 			list.onExecuted = hostsBack;
-			function hostsBack( err, res ) {
-				console.log( 'hostsBack', [ err, res ]);
-				resolve( res );
+			function hostsBack( res, yep ) {
+				console.log( 'hostsBack', [ res, yep ]);
+				resolve( res.hosts );
 			}
 		});
 	}
@@ -1651,8 +1673,8 @@ async function initTokens() {
 			update.execute( 'security/updatehost', args );
 			update.onExecuted = updateBack;
 			
-			function updateBack( err, res ) {
-				console.log( 'updateBack', [ err, res ]);
+			function updateBack( res, yep ) {
+				console.log( 'updateBack', [ res, yep ]);
 				resolve( res );
 			}
 		});
@@ -1667,8 +1689,8 @@ async function initTokens() {
 			remove.execute( 'security/removehost', args );
 			remove.onExecuted = removeBack;
 			
-			function removeBack( err , res ) {
-				console.log( 'removeBack', [ err , res ]);
+			function removeBack( res, yep ) {
+				console.log( 'removeBack', [ res, yep ]);
 				resolve( res );
 			}
 		});
