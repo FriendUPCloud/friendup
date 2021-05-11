@@ -44,6 +44,15 @@
 				},
 				doLogin: function( e )
 				{
+					
+					// Don't do it many times while working!
+					if( this.busy ) return;
+					this.busy = true;
+					
+					// Track user's login
+					//if( typeof ga == 'function' ) ga( 'send', 'event', 'userloginattempt', Trim( ge( 'Username' ).value ) );
+					parent.Friend.User.Init();
+					
 					if( location.href && location.href.indexOf( 'localhost' ) >= 0 )
 					{
 						return oauth2Window(  );
@@ -54,22 +63,6 @@
 					}
 					
 					
-					
-					// Don't do it many times while working!
-					if( this.busy ) return;
-					this.busy = true;
-					
-					let us = Trim( ge( 'Username' ).value );
-					let pw = Trim( ge( 'Password' ).value );
-					
-					if( 1==1 || this.failedAttempt )
-					{
-						ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = 'Logging in...';
-					}
-					
-					// Track user's login
-					if( typeof ga == 'function' ) ga( 'send', 'event', 'userloginattempt', Trim( ge( 'Username' ).value ) );
-					parent.Friend.User.Init();
 					
 					this.login( us, pw, co, false, function( result, answer )
 					{
@@ -127,6 +120,93 @@
 						}
 					}, e, { hashedPassword: ge( 'Password' ).hashed ? true : false } );
 				},
+				
+				test: function( params )
+				{
+					
+					if( params && params['id_token'] && params['id_token_content'] )
+					{
+						parent.Workspace.encryption.keys.server = ( ge( 'publickey' ) && ge( 'publickey' ).value ? { publickey: ge( 'publickey' ).value } : false );
+						
+						if( !parent.Workspace.encryption.keys.server.publickey )
+						{
+							console.log( 'Server Key Missing:', parent.Workspace.encryption.keys.server );
+							return;
+						}
+						
+						var username = params['id_token_content']['sub'];
+						var password = params['id_token_content']['kid'];
+						
+						if( password )
+						{
+							if( password.indexOf('HASHED') < 0 )
+							{
+								password = 'HASHED' + Sha256.hash( password );
+							}
+						}
+						
+						console.log( { 
+							username: username, 
+							password: password 
+						} );
+						
+						// So here we are setting keys twice first time in the login form to securely communicate with the server, then again in parent.Friend.User, might be overkill ...
+						parent.Workspace.encryption.setKeys( username, password );
+						
+						/*console.log( {
+							'access_token'   : params['access_token'],
+							//'code'         : params['code'],
+							//'username'     : username,
+							//'password'     : password,
+							//'fullname'   : params['id_token_content']['name'],
+							//'firstname'  : params['id_token_content']['given_name'],
+							//'lastname'   : params['id_token_content']['family_name'],
+							//'email'      : params['id_token_content']['email'],
+							//'language'   : params['id_token_content']['locale'],
+							//'avatar'     : params['id_token_content']['picture'],
+							//'deviceid'   : parent.Workspace.deviceid
+						} );*/
+						
+						var m = new cAjax();
+						m.open( 'POST', '/loginprompt/' + parent.Workspace.encryption.keys.client.publickey, true );
+						
+						/*m.addVar( 'encrypted', parent.Workspace.encryption.encryptRSA( JSON.stringify( {
+							'access_token'   : params['access_token'],
+							//'code'         : params['code'],
+							//'username'     : username,
+							//'password'     : password,
+							//'fullname'   : params['id_token_content']['name'],
+							//'firstname'  : params['id_token_content']['given_name'],
+							//'lastname'   : params['id_token_content']['family_name'],
+							//'email'      : params['id_token_content']['email'],
+							//'language'   : params['id_token_content']['locale'],
+							//'avatar'     : params['id_token_content']['picture'],
+							//'deviceid'   : parent.Workspace.deviceid
+						} ), parent.Workspace.encryption.keys.server.publickey ) );*/
+						
+						m.addVar( 'token', params['id_token'] );
+						m.addVar( 'deviceid', parent.Workspace.deviceid );
+						
+						m.onload = function()
+						{
+							
+							if( this.responseText() )
+							{
+								var res = this.responseText().split( '<!--separate-->' );
+							
+								console.log( res );
+							}
+						
+							if( Application.showLog || 1==1 ) console.log( this.responseText() );
+						
+						}
+						m.send();
+					}
+					
+					return 0;
+					
+				},
+				
 				// Login overwrite ...
 				login: function( username, password, code, remember, callback, event, flags )
 				{
@@ -394,12 +474,22 @@
 						
 						console.log( 'params: ', params );
 						
-						if( params && params['id_token'] )
+						if( params && ( params['access_token'] || params[ 'id_token' ] ) )
 						{
-					   		getTokeninfo( params['id_token'] );
+					   		getTokeninfo( params, function( data )
+					   		{
+					   			
+					   			if( data )
+					   			{
+					   				return Application.test( data );
+					   			}
+					   			
+					   		} );
 						}
 						
 						if( loginwindow ) loginwindow.close();
+						
+						return params;
 						
 					}
 		
@@ -445,18 +535,37 @@
 				form.submit();
 			}
 			
-			function getTokeninfo( id_token )
+			function getTokeninfo( params, callback )
 			{
 				
-				if ( id_token )
+				if ( params && ( params['access_token'] || params['id_token'] ) )
 				{
 					var xhr = new XMLHttpRequest();
-					xhr.open('GET', 'https://oauth2.googleapis.com/tokeninfo?id_token=' + id_token );
+					xhr.open('GET', 'https://oauth2.googleapis.com/tokeninfo' + ( params['id_token'] ? '?id_token=' + params['id_token'] : '' ) );
+					
+					if( !params['id_token'] && params['access_token'] )
+					{
+						xhr.setRequestHeader( 'Authorization', 'Bearer ' + params['access_token'] );
+					}
+					
 					xhr.onreadystatechange = function ( e ) 
 					{
 						if( xhr.readyState === 4 && xhr.status === 200 ) 
 						{
 						    console.log( '[1] ' + xhr.response );
+						    
+						    try
+						    {
+						    	var data = JSON.parse( xhr.response );
+						    	
+						    	if( data )
+						    	{
+						    		params['id_token_content'] = data;
+						    		
+						    		callback( params );
+						    	}
+						    }
+						    catch {  }
 						} 
 						else if ( xhr.readyState === 4 && xhr.status === 401 ) 
 						{
