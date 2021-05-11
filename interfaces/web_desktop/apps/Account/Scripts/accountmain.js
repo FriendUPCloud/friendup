@@ -14,7 +14,7 @@ Application.run = function( msg, iface )
 	{
 		getStorage();
 		getUnmounted();
-		getTokens();
+		initTokens();
 		
 		var d = new Module( 'system' );
 		d.onExecuted = function( r, c )
@@ -190,7 +190,7 @@ Application.receiveMessage = function( msg )
 		case 'refresh':
 			getStorage();
 			getUnmounted();
-			getTokens();
+			initTokens();
 			break;
 		case 'closeStorageWin':
 			if( this.storageView )
@@ -1574,14 +1574,21 @@ function SetSubTimeZones( zone )
 	ge( 'UserAccTimezone' ).value = ge( 'TimeZoneType' ).value + '/' + ge( 'TimeZoneSubType' ).value;
 }
 
-function getTokens() {
-	const el = ge( 'TokenList' );
-	console.log( 'getTokens', el );
-	const hReq = new Library( 'system.library' );
-	hReq.execute( 'security/listhosts' );
-	hReq.onExecuted = hostsBack;
-	function hostsBack( err, res ) {
-		console.log( 'hostsBack', [ err, res ]);
+async function initTokens() {
+	const list = ge( 'TokenList' );
+	const createBtn = ge( 'ServerTokenCreate' );
+	console.log( 'initTokens', {
+		list      : list,
+		children  : list.children,
+		createBtn : createBtn,
+		Workspace : window.Workspace,
+	});
+	
+	createBtn.addEventListener( 'click', createClick, false );
+	
+	async function createClick( e ) {
+		console.log( 'createClick', e );
+		const created = await create( 'bonk.no' );
 	}
 	
 	function buildRow( conf ) {
@@ -1598,5 +1605,34 @@ function getTokens() {
 			html : html,
 		});
 		return html;
+	}
+	
+	function create( name, status ) {
+		const userId = Workspace.userId;
+		return new Promise(( resolve, reject ) => {
+			const req = {
+				host   : host,
+				userid : userId,
+				status : status || null,
+			};
+			const create = new Library( 'system.library' );
+			create.execute( 'security/createhost', req );
+			create.onExecuted = createBack;
+			
+			function createBack( err, res ) {
+				console.log( 'createBack', [ err, res ]);
+				resolve( res );
+			}
+		});
+	}
+	
+	function list() {
+		const list = new Library( 'system.library' );
+		list.execute( 'security/listhosts' );
+		list.onExecuted = hostsBack;
+		function hostsBack( err, res ) {
+			console.log( 'hostsBack', [ err, res ]);
+			resolve( res );
+		}
 	}
 }
