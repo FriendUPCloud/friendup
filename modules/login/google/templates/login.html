@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html>
+	<title>Friend UP</title>
+	<head>
+		<script onload="" src="/webclient/js/apps/api.js"></script>
+		<meta id="google-signin-client_id" name="google-signin-client_id" content="{google-signin-client_id}">
+	</head>
+	<body class="Loading" onload="loginNow()">
+		<link rel="stylesheet" href="/webclient/css/extraLoginCSS.css"/>
+		<style></style>
+		<div id="LoginElement" style="visibility: hidden">
+			<div class="VContentTop">
+				<div class="Logo">
+					Friend OS
+				</div>
+				<h1>
+					{welcome}
+				</h1>
+				<div class="Box">
+					<form method="post" onsubmit="return false">
+						<div class="HRow MarginTop">
+							<div class="HContent100">
+								<button class="IconSmall fa-unlock" tabindex="4" onclick="Application.doLogin()" style="cursor:pointer">
+									Sign in
+								</button>
+								<div id="invalidLogin" class="Padding"><p></p></div>
+							</div>
+						</div>
+						<input type="hidden" id="publickey" value="{publickey}"/>
+					</form>
+					<div id="compatability" class="HRow MarginTop BorderTop HideForPass">
+						<p><strong>Compatibility information:</strong></p>
+						<p>Please use Google Chrome, Firefox. Experimental support for Safari, Opera and MS Edge.</p>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript">
+			Application = {
+				showLog: false,
+				failedAttempt: false,
+				init: function( data )
+				{
+				},
+				doLogin: function( e )
+				{
+					if( location.href && location.href.indexOf( 'localhost' ) >= 0 )
+					{
+						return oauth2Window(  );
+					}
+					else
+					{
+						return oauth2SignIn(  );
+					}
+					
+					
+					
+					// Don't do it many times while working!
+					if( this.busy ) return;
+					this.busy = true;
+					
+					let us = Trim( ge( 'Username' ).value );
+					let pw = Trim( ge( 'Password' ).value );
+					
+					if( 1==1 || this.failedAttempt )
+					{
+						ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = 'Logging in...';
+					}
+					
+					// Track user's login
+					if( typeof ga == 'function' ) ga( 'send', 'event', 'userloginattempt', Trim( ge( 'Username' ).value ) );
+					parent.Friend.User.Init();
+					
+					this.login( us, pw, co, false, function( result, answer )
+					{
+						let tmp = null;
+						if( answer )
+						{
+							// Try to parse response answer
+							try
+							{
+								tmp = JSON.parse( answer );
+							}
+							catch( e )
+							{
+								console.log( 'Answer was not in json format: ', answer );
+							}
+							if( tmp && tmp.response )
+							{	
+								//check for block....
+								if( tmp.response.indexOf( 'Account blocked until:' ) > -1 )
+								{
+									let ts = tmp.response.replace( 'Account blocked until:', '' );
+									if( parseInt( ts ) > 0 )
+									{
+										Application.errorMessage = 'Account blocked (try again after ' + new Date( ts * 1000 ).toLocaleString() + ')';
+										showLoginError();  
+										return;
+									}
+								}
+								if( !tmp.code )
+								{
+									showLoginError( tmp.response );
+									return;
+								}
+							}
+						}
+						
+						if( result == false )
+						{
+							showLoginError();
+						}
+						else if( result == 0 )
+						{
+							setTimeout( showLoginError, 1000 );
+						}
+						// Success!
+						else
+						{
+							//track users login..
+							if( typeof ga == 'function' )
+							{
+								ga( 'send', 'event', 'userloginsuccess', us );	
+							}
+							parent.Workspace.showDesktop();
+							Application.busy = false;
+						}
+					}, e, { hashedPassword: ge( 'Password' ).hashed ? true : false } );
+				},
+				// Login overwrite ...
+				login: function( username, password, code, remember, callback, event, flags )
+				{
+					
+					if( username )
+					{
+						
+						parent.Workspace.encryption.keys.server = ( ge( 'publickey' ) && ge( 'publickey' ).value ? { publickey: ge( 'publickey' ).value } : false );
+					
+						// So here we are setting keys twice first time in the login form to securely communicate with the server, then again in parent.Friend.User, might be overkill ...
+						parent.Workspace.encryption.setKeys( username, password );
+						
+						if( !parent.Workspace.encryption.keys.server.publickey )
+						{
+							console.log( 'Server Key Missing:', parent.Workspace.encryption.keys.server );
+							return;
+						}
+						
+						// TODO: For Windows auth find a way to handle username / password auth here in client before sending anything to server ...
+						
+						var m = new cAjax();
+						m.open( 'POST', '/loginprompt/' + parent.Workspace.encryption.keys.client.publickey, true );
+						
+						m.addVar( 'encrypted', parent.Workspace.encryption.encryptRSA( JSON.stringify( {
+							'username'  : username,
+							'password'  : password,
+							'deviceid'  : parent.Workspace.deviceid
+						} ), parent.Workspace.encryption.keys.server.publickey ) );
+						
+						if( Application.showLog ) console.log( 'vars ', {
+							'username'  : username,
+							'password'  : password,
+							'deviceid'  : parent.Workspace.deviceid
+						} );
+						
+						// Set username and password so we can fetch it later
+						let enc = parent.Workspace.encryption;
+						parent.Workspace.storedCredentials = {
+							username: enc.encrypt( username, enc.getKeys().publickey ),
+							password: enc.encrypt( password, enc.getKeys().publickey )
+						};
+						
+						m.onload = function()
+						{
+							var json = null; var serveranswer = null; 
+							
+							if( this.responseText() )
+							{
+								var res = this.responseText().split( '<!--separate-->' );
+								
+								if( res && res[ 0 ] && res[ 1 ] )
+								{
+									
+									if( res[ 2 ] )
+									{
+										try
+										{
+											serveranswer = parent.Workspace.encryption.decrypt( res[ 2 ] );
+											
+											json = JSON.parse( serveranswer );
+										}
+										catch( e ) 
+										{
+											console.log( e );
+										}
+										
+										// We got a real error
+										if( json == null )
+										{
+											if( callback && typeof( callback ) == 'function' ) callback( false );
+										}
+									}
+									
+									if( Application.showLog || 1==1 ) console.log( { json: json, serveranswer: serveranswer, raw: this.responseText() } );
+									
+									switch( res[ 1 ] )
+									{
+										// ok identity check ...
+										case 'identity':
+												
+											if( res[0] == 'ok' )
+											{
+												Application.busy = false;
+												
+												if( ge( 'loginButton' ) )
+												{
+													ge( 'loginButton' ).innerHTML = 'Sign in';
+												}
+												
+												ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = '';
+												
+											}
+											else
+											{
+												console.log( 'What?', res );
+												if( json && json.response )
+												{
+													showLoginError( json.response );
+													
+													if( json.code == '6' )
+													{
+														return;
+													}
+													
+												}
+												else
+												{
+													if( callback && typeof( callback ) == 'function' ) return callback( false, serveranswer );
+												}
+											}
+											
+											// TODO: Cleanup ...
+											if( document.getElementById( 'step1' ) && document.getElementById( 'step1' ).className.indexOf( 'closed' ) < 0 )
+											{
+												document.getElementById( 'step1' ).classList.add( 'closed' );
+											}
+											if( document.getElementById( 'step2' ) && document.getElementById( 'step2' ).className.indexOf( 'closed' ) >= 0 )
+											{
+												document.getElementById( 'step2' ).classList.remove( 'closed' );
+											}
+											
+											return;
+											
+											break;
+									
+										// ok verification code ...
+										
+										case 'verification':
+											
+											if( res[ 0 ] == 'ok' && json && json.username && json.sessionid )
+											{
+												
+												parent.Workspace.sessionId     = json.sessionid;
+												parent.Workspace.loginUsername = json.username;
+												parent.Workspace.loginUserId   = json.userid;
+												parent.Workspace.loginid       = json.loginid;
+												parent.Workspace.userLevel     = json.level;
+												parent.Workspace.fullName      = json.fullname;
+												
+												// We are now online!
+												parent.Friend.User.SetUserConnectionState( 'online' );
+												
+												if( !parent.Workspace.userWorkspaceInitialized )
+												{
+													return parent.Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
+												}
+												else
+												{
+													if( typeof( callback ) == 'function' ) return callback( true, serveranswer );
+													// Make sure we didn't lose websocket!
+												}
+												
+											}
+											else
+											{
+												parent.Friend.User.SetUserConnectionState( 'offline' );
+												
+												if( callback && typeof( callback ) == 'function' ) return callback( false, serveranswer );
+											}
+											
+											break;
+										
+										// if nothing expected run default ...
+										
+										default:
+											
+											if( callback && typeof( callback ) == 'function' ) return callback( false, serveranswer );
+											
+											break;
+										
+									}
+								
+								}
+							}
+							
+							if( Application.showLog ) console.log( this.responseText() );
+							
+							if( callback && typeof( callback ) == 'function' ) callback( false );
+							
+						}
+						m.send();
+						
+					}
+					
+					return 0;
+				},
+				checkKeys: function( e )
+				{
+					var k = e.which ? e.which : e.keyCode;
+					if( k == 13 )
+					{
+						this.doLogin( e );
+					}
+				},
+				receiveMessage: function( msg )
+				{
+				}
+			};
+			
+			function getRandomString( length ) 
+			{
+				var randomChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+				var result = '';
+				for ( var i = 0; i < length; i++ ) {
+					result += randomChars.charAt(Math.floor(Math.random() * randomChars.length));
+				}
+				return result;
+			}
+			
+			function oauth2Window(  )
+			{
+				var CLIENT_ID = document.getElementById( 'google-signin-client_id' ).getAttribute( 'content' );
+				var REDIRECT_URI = 'https://volatile.friendup.cloud/loginprompt/oauth';
+				
+				var SCOPES = [ 'openid', 'profile', 'email' ];
+				
+				var winw  = Math.min( 600, screen.availWidth );
+				var winh = Math.min( 750, screen.availHeight );
+				
+				var lpos = Math.floor( ( screen.availWidth - winw ) / 2  );
+				var tpos  = Math.floor( ( screen.availHeight - winh ) / 2  );
+				
+				// Google's OAuth 2.0 endpoint for requesting an access token
+				var oauth2 = 'https://accounts.google.com/o/oauth2/v2/auth';
+				
+				var vars = '';
+				
+				// Parameters to pass to OAuth 2.0 endpoint.
+				vars += '?redirect_uri=' + REDIRECT_URI;
+				vars += '&client_id=' + CLIENT_ID;
+				vars += '&nonce=' + getRandomString( 20 );
+				vars += '&scope=' + SCOPES.join( ' ' );
+				vars += '&response_type=token id_token';
+				
+				loginwindow = window.open( oauth2 + vars, 'authwindow', 'width=' + winw + ',height=' + winh + ',top=' + tpos + ',left=' + lpos );
+				
+				window.addEventListener( 'message', function( msg ) 
+				{
+					
+					if( msg && msg.data.url )
+					{
+						var params = {}; var args = false;
+						
+						console.log( 'oauth msg: ', msg.data.url );
+						
+						if( msg.data.url.split( '#' )[1] )
+						{
+						    args = msg.data.url.split( '#' )[1].split( '&' );
+						}
+						else if( msg.data.url.split( '?' )[1] )
+						{
+						    args = msg.data.url.split( '?' )[1].split( '&' );
+						}
+						
+					    if( args && args.length > 0 )
+					    {
+					        for( var key in args )
+					        {
+					            if( args[key] && args[key].split( '=' )[1] )
+					            {
+					                params[ args[key].split( '=' )[0] ] = args[key].split( '=' )[1];
+					            }
+					        }
+					    }
+						
+						console.log( 'params: ', params );
+						
+						if( params && params['id_token'] )
+						{
+					   		getTokeninfo( params['id_token'] );
+						}
+						
+						if( loginwindow ) loginwindow.close();
+						
+					}
+		
+				} );
+				
+			}
+			
+			function oauth2SignIn()
+			{
+				var CLIENT_ID = document.getElementById( 'google-signin-client_id' ).getAttribute( 'content' );
+				var REDIRECT_URI = 'https://volatile.friendup.cloud/webclient/index.html';
+				
+				var SCOPES = [ 'openid', 'profile', 'email' ];
+				
+				// Google's OAuth 2.0 endpoint for requesting an access token
+				var oauth2 = 'https://accounts.google.com/o/oauth2/v2/auth';
+				
+				// Create element to open OAuth 2.0 endpoint in new window.
+				var form = document.createElement( 'form' );
+				form.setAttribute( 'method', 'GET' ); // Send as a GET request.
+				form.setAttribute( 'action', oauth2 );
+				
+				// Parameters to pass to OAuth 2.0 endpoint.
+				var params = {
+					'client_id'              : CLIENT_ID,
+					'nonce'                  : getRandomString( 20 ),
+					'redirect_uri'           : REDIRECT_URI,
+					'response_type'          : 'token id_token'
+				};
+				
+				// Add form parameters as hidden input values.
+				for ( var p in params ) 
+				{
+					var input = document.createElement( 'input' );
+					input.setAttribute( 'type', 'hidden' );
+					input.setAttribute( 'name', p );
+					input.setAttribute( 'value', params[p] );
+					form.appendChild( input );
+				}
+				
+				// Add form to page and submit it to open the OAuth 2.0 endpoint.
+				document.body.appendChild(form);
+				form.submit();
+			}
+			
+			function getTokeninfo( id_token )
+			{
+				
+				if ( id_token )
+				{
+					var xhr = new XMLHttpRequest();
+					xhr.open('GET', 'https://oauth2.googleapis.com/tokeninfo?id_token=' + id_token );
+					xhr.onreadystatechange = function ( e ) 
+					{
+						if( xhr.readyState === 4 && xhr.status === 200 ) 
+						{
+						    console.log( '[1] ' + xhr.response );
+						} 
+						else if ( xhr.readyState === 4 && xhr.status === 401 ) 
+						{
+						    console.log( '[2] ' + xhr.response );
+						}
+					};
+					xhr.send(  );
+				}
+				
+			}
+			
+			function showLoginError( msg )
+			{
+				parent.Workspace.loginPrompt.setFlag( 'height', 263 );
+				ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = ( 
+					Application.errorMessage ? Application.errorMessage : ( 
+						msg ? msg : 'Invalid credentials. Please check your input.'
+					) 
+				);
+				ge( 'Username' ).focus();
+				Application.failedAttempt = true;
+				Application.busy = false;
+				ge( 'LoginElement' ).style.visibility = 'visible';
+			}
+			
+			// Focus the username field
+			function loginNow( e )
+			{
+				console.log( 'location.href', location.href );
+				
+				if( typeof( GetCookie ) == 'undefined' ) return setTimeout( loginNow, 50 );
+				
+				Application.applicationId = 'loginprompt';
+				
+				document.getElementById('LoginElement').style.visibility = 'visible';
+			}
+		</script>
+	</body>
+</html>
