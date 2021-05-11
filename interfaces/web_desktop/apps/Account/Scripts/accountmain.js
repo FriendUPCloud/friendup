@@ -1579,9 +1579,10 @@ async function initTokens() {
 	const createBtn = ge( 'ServerTokenCreate' );
 	console.log( 'initTokens', {
 		list      : list,
-		children  : list.children,
+		children  : [ ...list.children ],
 		createBtn : createBtn,
 		Workspace : window.Workspace,
+		hosts     : await getList(),
 	});
 	
 	createBtn.addEventListener( 'click', createClick, false );
@@ -1607,16 +1608,16 @@ async function initTokens() {
 		return html;
 	}
 	
-	function create( name, status ) {
-		const userId = Workspace.userId;
+	function create( host, status ) {
 		return new Promise(( resolve, reject ) => {
-			const req = {
+			const userId = window.Application.userId;
+			const args = {
 				host   : host,
 				userid : userId,
 				status : status || null,
 			};
 			const create = new Library( 'system.library' );
-			create.execute( 'security/createhost', req );
+			create.execute( 'security/createhost', args );
 			create.onExecuted = createBack;
 			
 			function createBack( err, res ) {
@@ -1626,13 +1627,50 @@ async function initTokens() {
 		});
 	}
 	
-	function list() {
-		const list = new Library( 'system.library' );
-		list.execute( 'security/listhosts' );
-		list.onExecuted = hostsBack;
-		function hostsBack( err, res ) {
-			console.log( 'hostsBack', [ err, res ]);
-			resolve( res );
-		}
+	function getList() {
+		return new Promise(( resolve, reject ) => {
+			const list = new Library( 'system.library' );
+			list.execute( 'security/listhosts' );
+			list.onExecuted = hostsBack;
+			function hostsBack( err, res ) {
+				console.log( 'hostsBack', [ err, res ]);
+				resolve( res );
+			}
+		});
+	}
+	
+	function update( host, status ) {
+		return new Promise(( resolve, reject ) => {
+			const userId = window.Application.userId;
+			const args = {
+				host   : host,
+				userid : userId,
+				status : status || null,
+			};
+			const update = new Library( 'system.library' );
+			update.execute( 'security/updatehost', args );
+			update.onExecuted = updateBack;
+			
+			function updateBack( err, res ) {
+				console.log( 'updateBack', [ err, res ]);
+				resolve( res );
+			}
+		});
+	}
+	
+	function remove( host ) {
+		return new Promise(( resolve, reject ) => {
+			const args = {
+				host : host,
+			};
+			const remove = new Library( 'system.library' );
+			remove.execute( 'security/removehost', args );
+			remove.onExecuted = removeBack;
+			
+			function removeBack( err , res ) {
+				console.log( 'removeBack', [ err , res ]);
+				resolve( res );
+			}
+		});
 	}
 }
