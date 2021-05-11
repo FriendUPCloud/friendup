@@ -311,7 +311,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 				time_t ti = time( NULL );
 				// create host in DB
 				
-				size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FSecuredHost` (Host,Status,UserID,CreateTime) VALUES( %s, %lu, %lu, '%lu' )", host, status, userID, ti );
+				size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FSecuredHost` (Host,Status,UserID,CreateTime) VALUES('%s',%lu,%lu,%lu)", host, status, userID, ti );
 				sqllib->QueryWithoutResults( sqllib, insertQuery );
 			
 				DEBUG("[SecurityWeb/createhost] sl query %s\n", insertQuery );
