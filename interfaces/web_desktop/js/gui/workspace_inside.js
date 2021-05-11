@@ -8487,8 +8487,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				catch ( e ){}
 			}
 		
-			console.log( 'Trying to get shit done!', content );
-		
 			if( content )
 			{
 				var newfilename = file.name;

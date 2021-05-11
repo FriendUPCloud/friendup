@@ -947,20 +947,26 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				char *tmpQuery = FCalloc( 1025, sizeof( char ) );
 				if( tmpQuery )
 				{
-#ifdef DB_SESSIONID_HASH
-					char *tmpSessionID = l->sl_UtilInterface.DatabaseEncodeString( sessionid );
-					if( tmpSessionID != NULL )
+
+					char *esc = sqllib->MakeEscapedString( sqllib, sessionid );
+					if( esc != NULL )
 					{
-						sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime`='%ld' WHERE `SessionID`='%s'", timestamp, tmpSessionID );
-						FFree( tmpSessionID );
-					}
+#ifdef DB_SESSIONID_HASH
+						char *tmpSessionID = l->sl_UtilInterface.DatabaseEncodeString( esc );
+						if( tmpSessionID != NULL )
+						{
+							sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime`='%ld' WHERE `SessionID`='%s'", timestamp, tmpSessionID );
+							FFree( tmpSessionID );
+						}
 #else
-					sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime`='%ld' WHERE `SessionID`='%s'", timestamp, sessionid );
+						sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime`='%ld' WHERE `SessionID`='%s'", timestamp, esc );
 #endif
+						FFree( esc );
+					}
 					sqllib->QueryWithoutResults( sqllib, tmpQuery );
 				
 					INFO("[SysWebRequest] Logged time updated: %lu\n", timestamp );
-				
+
 					FFree( tmpQuery );
 				}
 				l->DropDBConnection( l, sqllib );
