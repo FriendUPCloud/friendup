@@ -116,15 +116,15 @@ function renderReplacements( $template )
 		die( 'ERROR! Google API: client_id is missing in cfg!' );
 	}
 	
-	if( $server && $server['googledrive'] && $server['googledrive']->redirect_uri )
+	/*if( $server && $server['googledrive'] && $server['googledrive']->redirect_uri )
 	{
 		$redirect_uri = $server['googledrive']->redirect_uri;
 	}
 	else
-	{
+	{*/
 		$redirect_uri  = ( $conf['Core']['SSLEnable'] ? 'https://' : 'http://' ) . $conf['FriendCore']['fchost'] . ( $conf['FriendCore']['port'] ? ':' . $conf['FriendCore']['port'] : '' );
 		$redirect_uri .= '/loginprompt/oauth';
-	}
+	/*}*/
 	
 	
 	
