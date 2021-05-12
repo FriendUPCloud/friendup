@@ -1334,7 +1334,7 @@ int FileRead( struct File *f, char *buffer, int rsize )
 			// Make a new buffer and read
 			if( sd->pofd )
 			{
-				DEBUG( "[fsysphp] Reading from pofd!\n" );
+				//DEBUG( "[fsysphp] Reading from pofd!\n" );
 				int size = 0, readSize = 0, ret = 0, errCounter = 0;
 				
 				int amountToRead = 0, wholeSize = rsize;

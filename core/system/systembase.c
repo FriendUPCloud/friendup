@@ -150,6 +150,7 @@ SystemBase *SystemInit( void )
 	l->l_SocketISSL.SocketWaitRead = SocketWaitReadSSL;
 	l->l_SocketISSL.SocketReadTillEnd = SocketReadTillEndSSL;
 	l->l_SocketISSL.SocketWrite = SocketWriteSSL;
+	l->l_SocketISSL.SocketWriteCompression = SocketWriteCompressionSSL;
 	l->l_SocketISSL.SocketDelete = SocketDeleteSSL;
 	l->l_SocketISSL.SocketReadPackage = SocketReadPackageSSL;
 
@@ -163,6 +164,7 @@ SystemBase *SystemInit( void )
 	l->l_SocketINOSSL.SocketWaitRead = SocketWaitReadNOSSL;
 	l->l_SocketINOSSL.SocketReadTillEnd = SocketReadTillEndNOSSL;
 	l->l_SocketINOSSL.SocketWrite = SocketWriteNOSSL;
+	l->l_SocketINOSSL.SocketWriteCompression = SocketWriteCompressionNOSSL;
 	l->l_SocketINOSSL.SocketDelete = SocketDeleteNOSSL;
 	l->l_SocketINOSSL.SocketReadPackage = SocketReadPackageNOSSL;
 
@@ -426,6 +428,22 @@ SystemBase *SystemInit( void )
 					sprintf( l->RSA_SERVER_KEY, "%s%s%s", ptr, tptr, "key.pem" );
 					sprintf( l->RSA_SERVER_CA_CERT, "%s%s%s", ptr, tptr, "certificate.pem" );
 					sprintf( l->RSA_SERVER_CA_PATH, "%s%s%s", ptr, tptr, "/" );
+				}
+			}
+			
+			// http compression
+
+			tptr  = plib->ReadStringNCS( prop, "core:http_compression", NULL );
+			if( tptr != NULL )
+			{
+				if( strstr( tptr, "deflate" ) != NULL )
+				{
+					l->l_HttpCompressionContent |= HTTP_COMPRESSION_DEFLATE;
+				}
+				
+				if( strstr( tptr, "bzip" ) != NULL )
+				{
+					l->l_HttpCompressionContent |= HTTP_COMPRESSION_BZIP;
 				}
 			}
 			

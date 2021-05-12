@@ -174,6 +174,7 @@ int					(*SocketReadBlocked)( Socket* sock, char* data, unsigned int length, uns
 int					(*SocketWaitRead)( Socket* sock, char* data, unsigned int length, unsigned int pass, int sec );
 BufString			*(*SocketReadTillEnd)( Socket* sock, unsigned int pass, int sec );
 FLONG				(*SocketWrite)( Socket* s, char* data, FLONG length );
+FLONG				(*SocketWriteCompression)( Socket* s, int type, char* data, FLONG length );
 void				(*SocketDelete)( Socket* s );
 BufString			*(*SocketReadPackage)( Socket *sock );
 };
@@ -264,6 +265,14 @@ BufString *SocketReadTillEndSSL( Socket* sock, unsigned int pass, int sec );
 
 FLONG SocketWriteNOSSL( Socket* s, char* data, FLONG length );
 FLONG SocketWriteSSL( Socket* s, char* data, FLONG length );
+
+//
+// Write to socket with compression
+//
+
+FLONG SocketWriteCompressionNOSSL( Socket* sock, int type, char* data, FLONG length );
+FLONG SocketWriteCompressionSSL( Socket* sock, int type, char* data, FLONG length );
+
 
 //
 // Request the socket to be closed (Acceptable if the other end also has closed the socket)
