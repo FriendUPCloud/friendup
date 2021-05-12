@@ -227,7 +227,7 @@ Http* PrinterManagerWebRequest( void *lb, char **urlpath, Http* request, UserSes
 					{
 						char dictmsgbuf1[ 196 ];
 						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PRINTER_NOT_ADDED_ERR], error );
-						size = snprintf( buffer, sizeof(buffer), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PRINTER_NOT_ADDED_ERR );
+						size = snprintf( buffer, sizeof(buffer), "{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_PRINTER_NOT_ADDED_ERR );
 						//size = sprintf(buffer, "{ \"response\": \"%s %d\" }", "Printer not added, error: ", error );
 					}
 				}
@@ -235,26 +235,26 @@ Http* PrinterManagerWebRequest( void *lb, char **urlpath, Http* request, UserSes
 				{
 					if( ( error =  PrinterManagerAddPrinter( l->sl_PrinterM, nprint, loggedSession ) ) == 0 )
 					{
-						size = sprintf(buffer, "{ \"PrinterID\": \"%lu\" }", nprint->fp_ID );
+						size = sprintf(buffer, "{\"PrinterID\":\"%lu\"}", nprint->fp_ID );
 					}
 					else
 					{
 						char dictmsgbuf1[ 196 ];
 						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PRINTER_NOT_ADDED_ERR], error );
-						size = snprintf( buffer, sizeof(buffer), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PRINTER_NOT_ADDED_ERR );
+						size = snprintf( buffer, sizeof(buffer), "{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_PRINTER_NOT_ADDED_ERR );
 					}
 				}
 			}
 			else
 			{
-				size = snprintf( buffer, sizeof(buffer), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+				size = snprintf( buffer, sizeof(buffer), "{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
 			}
 		}
 		else
 		{
 			char dictmsgbuf1[ 196 ];
 			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "name" );
-			size = snprintf( buffer, sizeof(buffer), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			size = snprintf( buffer, sizeof(buffer), "{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			//size = sprintf(buffer, "{ \"response\": \"%s\" }", "Name was not provided");
 		}
 		HttpAddTextContent(response, buffer);
@@ -296,7 +296,7 @@ Http* PrinterManagerWebRequest( void *lb, char **urlpath, Http* request, UserSes
 
 			if (error == 0)
 			{
-				int size = sprintf(buffer, "{ \"PrinterID\": \"%lu\" }", id);
+				int size = sprintf(buffer, "{\"PrinterID\":\"%lu\"}", id);
 				HttpAddTextContent(response, buffer);
 			}
 			else
@@ -306,7 +306,7 @@ Http* PrinterManagerWebRequest( void *lb, char **urlpath, Http* request, UserSes
 					char dictmsgbuf[ 256 ];
 					char dictmsgbuf1[ 196 ];
 					snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_CANNOT_UNLOCK_PORT], error );
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_CANNOT_UNLOCK_PORT );
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_CANNOT_UNLOCK_PORT );
 					HttpAddTextContent( response, dictmsgbuf );
 				}
 				else 
@@ -314,7 +314,7 @@ Http* PrinterManagerWebRequest( void *lb, char **urlpath, Http* request, UserSes
 					char dictmsgbuf[ 256 ];
 					char dictmsgbuf1[ 196 ];
 					snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_CANNOT_FIND_DEVICE], id );
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_CANNOT_FIND_DEVICE );
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_CANNOT_FIND_DEVICE );
 					HttpAddTextContent( response, dictmsgbuf );
 				}
 			}
@@ -334,7 +334,7 @@ Http* PrinterManagerWebRequest( void *lb, char **urlpath, Http* request, UserSes
 		};
 		response = HttpNewSimple( HTTP_200_OK, tags );
 		char dictmsgbuf[ 256 ];
-		snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FUNCTION_NOT_FOUND] , DICT_FUNCTION_NOT_FOUND );
+		snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_FUNCTION_NOT_FOUND] , DICT_FUNCTION_NOT_FOUND );
 		HttpAddTextContent( response, dictmsgbuf );
 	}
 	

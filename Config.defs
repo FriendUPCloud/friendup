@@ -2,6 +2,7 @@
 # global path's and variables
 #
 WEBSOCKETS_THREADS			=	1
+WS_COMPRESSION				=	1
 USE_SELECT					=	0
 NO_VALGRIND					=	0
 CYGWIN_BUILD				=	0
