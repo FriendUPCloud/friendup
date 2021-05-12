@@ -313,6 +313,15 @@ int FriendCoreManagerInit( FriendCoreManager *fcm )
 		Log(FLOG_INFO, "-----UserFileShareCache (per drive): %ld\n", SLIB->sl_USFCacheMax );
 		Log(FLOG_INFO, "-----Cluster Master: %d\n", fcm->fcm_ClusterMaster );
 		Log(FLOG_INFO, "-----UserSession timeout: %d\n", SLIB->sl_RemoveSessionsAfterTime );
+		
+		if( (SLIB->l_HttpCompressionContent & HTTP_COMPRESSION_DEFLATE ) == HTTP_COMPRESSION_DEFLATE )
+		{
+			Log(FLOG_INFO, "-----Http deflate compression: on\n" );
+		}
+		if( (SLIB->l_HttpCompressionContent & HTTP_COMPRESSION_BZIP ) == HTTP_COMPRESSION_BZIP )
+		{
+			Log(FLOG_INFO, "-----Http bzip compression: on\n" );
+		}
 		/*
 		if( SLIB != NULL && SLIB->sl_ActiveAuthModule != NULL )
 		{
@@ -353,7 +362,7 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 {
 	if( fcm->fcm_DisableWS != TRUE )
 		{
-			if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled, 0, fcm->fcm_WSExtendedDebug ) ) != NULL )
+			if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled, WEBSOCKET_TYPE_BROWSER, fcm->fcm_WSExtendedDebug ) ) != NULL )
 			{
 				WebSocketStart( fcm->fcm_WebSocket );
 			}
@@ -365,7 +374,7 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 			
 			if( fcm->fcm_DisableExternalWS == 0 )
 			{
-				if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, FALSE, 1, fcm->fcm_WSExtendedDebug ) ) != NULL )
+				if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, FALSE, WEBSOCKET_TYPE_EXTERNAL, fcm->fcm_WSExtendedDebug ) ) != NULL )
 				{
 					WebSocketStart( fcm->fcm_WebSocketNotification );
 				}

@@ -48,7 +48,7 @@ UserGroupManager *UGMNew( void *sb )
 			int entries;
 			char where[ 256 ];
 			
-			strcpy( where, " Type in( 'Workgroup','Level' )" );
+			strcpy( where, " Type in('Workgroup','Level')" );
 			
 			sm->ugm_UserGroups = sqlLib->Load( sqlLib, UserGroupDesc, where, &entries );
 			lsb->DropDBConnection( lsb, sqlLib );
@@ -625,12 +625,12 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 						// insert to database
 						if( pos == 0 )
 						{
-							loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %lu, %lu ) ", usr->u_ID, gr->ug_ID );
+							loctmplen = snprintf( loctmp, sizeof( loctmp ),  "(%lu, %lu) ", usr->u_ID, gr->ug_ID );
 							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
 						}
 						else
 						{
-							loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %lu, %lu ) ", usr->u_ID, gr->ug_ID ); 
+							loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",(%lu, %lu) ", usr->u_ID, gr->ug_ID ); 
 							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
 						}
 						BufStringAdd( bsInsert, loctmp );
@@ -661,7 +661,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 		}
 		
 		// removeing old group conections from DB
-		snprintf( tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserToGroup WHERE `UserID` = %lu AND `UserGroupID` IN (SELECT ID FROM FUserGroup where Type='Level')", usr->u_ID ) ;
+		snprintf( tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserToGroup WHERE `UserID`=%lu AND `UserGroupID` IN (SELECT ID FROM FUserGroup where Type='Level')", usr->u_ID ) ;
 		if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) !=  0 )
 		{
 			FERROR("[UMAssignGroupToUserByStringDB] Cannot call query: '%s'\n", tmpQuery );
@@ -715,12 +715,12 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 							// insert to database
 							if( pos == 0 )
 							{
-								loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %lu, %lu ) ", usr->u_ID, gr->ug_ID );
+								loctmplen = snprintf( loctmp, sizeof( loctmp ),  "(%lu, %lu) ", usr->u_ID, gr->ug_ID );
 								tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
 							}
 							else
 							{
-								loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %lu, %lu ) ", usr->u_ID, gr->ug_ID ); 
+								loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",(%lu, %lu) ", usr->u_ID, gr->ug_ID ); 
 								tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
 							}
 							BufStringAdd( bsInsert, loctmp );
