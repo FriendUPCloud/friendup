@@ -1574,125 +1574,456 @@ function SetSubTimeZones( zone )
 	ge( 'UserAccTimezone' ).value = ge( 'TimeZoneType' ).value + '/' + ge( 'TimeZoneSubType' ).value;
 }
 
-async function initTokens() {
-	const list = ge( 'TokenList' );
-	const createBtn = ge( 'ServerTokenCreate' );
-	const current = await getList();
-	console.log( 'initTokens', {
-		list      : list,
-		children  : [ ...list.children ],
-		createBtn : createBtn,
-		Workspace : window.Workspace,
-		hosts     : current,
+const ns = {};
+function initTokens()
+{
+	if ( null == Application.tabTokens )
+		Application.tabTokens = new ns.TabTokens();
+	else
+		Application.tabTokens.refresh();
+}
+
+ns.TabTokens = function()
+{
+	const self = this;
+	self.items = {};
+	self.itemIds = [];
+	self.list = null;
+	
+	self.init();
+}
+
+// Public
+
+ns.TabTokens.prototype.refresh = function()
+{
+	const self = this;
+	const list = [ self.list.children ];
+	console.log( 'TabTokens.update', {
+		items : self.items,
+		list  : list,
 	});
 	
-	current.forEach( host => addRow( host ));
+	self.populate();
+}
+
+// Pri<ate
+
+ns.TabTokens.prototype.statuses = [
+	'SECURED_HOST_STATUS_NONE',
+	'SECURED_HOST_STATUS_ALLOWED',
+	'SECURED_HOST_STATUS_BLOCKED',
+]
+
+ns.TabTokens.prototype.init = function()
+{
+	const self = this;
+	self.list = ge( 'TokenList' );
+	self.inputHost = ge( 'ServerTokenHost' );
+	self.inputStatus = ge( 'ServerTokenStatus' );
+	self.inputUID = ge( 'ServerTokenUID' );
+	self.addBtn = ge( 'ServerTokenCreate' );
+	self.setStatusOptions();
+	self.populate();
+	self.addBtn.addEventListener(
+		'click',
+		e => self.handleAddClick(),
+		false
+	);
+}
+
+ns.TabTokens.prototype.getReadableStatus = function( statusNum )
+{
+	const self = this;
+	const index = window.parseInt( statusNum, 10 );
+	if ( index !== index ) // NaN test
+		return 'ur nan';
 	
-	createBtn.addEventListener( 'click', createClick, false );
+	const status = self.statuses[ index ];
+	console.log( 'getReadableStatus', [ statusNum, index, status ]);
+	if ( null == status )
+		return 'no u';
 	
-	async function createClick( e ) {
-		const input = ge( 'ServerTokenHost' );
-		let host = input.value;
-		if ( null == host )
-			return;
+	const tail = status.split( '_' )[ 3 ];
+	return tail;
+}
+
+ns.TabTokens.prototype.setStatusOptions = function( selectEl )
+{
+	const self = this;
+	console.log( 'setStatusOptions', self.statuses );
+	const html = self.statuses
+		.map( ( s, i ) => buildOption( s, i ))
+		.join( '');
 		
-		host = host.trim();
-		if ( !host )
-			return;
+	console.log( 'html', html );
+	if ( null == selectEl )
+		self.inputStatus.innerHTML = html;
+	else
+		selectEl.innerHTML = html;
+	
+	function buildOption( status, index )
+	{
+		const str = self.getReadableStatus( index );
+		const html = '<option value="'
+			+ status
+			+ '">'
+			+ str
+			+ '</option>';
 		
-		console.log( 'createClick', host );
-		const created = await create( host );
-		if ( null == created )
-			return;
-		
-		addRow( created );
+		return html;
+	}
+}
+
+ns.TabTokens.prototype.handleAddClick = async function()
+{
+	const self = this;
+	const host = get( self.inputHost );
+	const status = get( self.inputStatus );
+	const uid = get( self.inputUID );
+	if ( null == host )
+		return;
+	
+	console.log( 'addClick', [ host, status, uid ]);
+	const created = await self.createHost( host, status, uid );
+	if ( null == created ) {
+		console.log( 'TabTokens.create failed', created );
+		return;
 	}
 	
-	function addRow( conf ) {
-		console.log( 'addRow', conf );
-		const rowEl = buildRow( conf );
-		list.appendChild( rowEl );
+	self.add( created );
+	
+	function get( input ) {
+		console.log( 'get', input );
+		if ( null == input )
+			return null;
+		
+		let value = input.value;
+		if ( !value || !value.trim )
+			return null;
+		
+		value = value.trim();
+		if ( !value )
+			return null;
+		
+		return value;
+	}
+}
+
+ns.TabTokens.prototype.handleRemoveClick = async function( hostId )
+{
+	const self = this;
+	console.log( 'removeClick', hostId );
+	const res = await self.removeHost( hostId );
+	console.log( 'remove res', res );
+	self.remove( hostId );
+}
+
+ns.TabTokens.prototype.handleEditClick = async function( hostId )
+{
+	const self = this;
+	console.log( 'handleEditClick', hostId );
+	const conf = self.items[ hostId ];
+	if ( null == conf ) {
+		console.log( 'handleEditClick, no conf', [ hostId, self.items ]);
+		return;
 	}
 	
-	function buildRow( conf ) {
-		console.log( 'buildRow', conf );
-		const html = '<div id="'
-			+ conf.id
-			+ '" class="HRow Padding">'
-				+ '<div>'
+	const currEl = conf.el;
+	const editEl = self.buildEditRow( conf );
+	self.insertRow( editEl, currEl );
+	currEl.parentNode.removeChild( currEl );
+	self.bindEditRow();
+}
+
+ns.TabTokens.prototype.populate = async function()
+{
+	const self = this;
+	const fresh = await self.getHosts();
+	const freshIds = fresh.map( r => self.getId( r.host ));
+	const remove = self.itemIds.filter( currId => {
+		return !freshIds.some( fId => currId === fId );
+	});
+	console.log( 'pop', {
+		freshIds : freshIds,
+		currIds  : self.itemIds,
+		remove   : remove,
+	});
+	
+	remove.forEach( hId => self.remove( hId ));
+	fresh.forEach( conf => self.add( conf ));
+}
+
+ns.TabTokens.prototype.add = function( conf )
+{
+	const self = this;
+	console.log( 'add', conf );
+	const id = self.getId( conf.host );
+	conf.id = id;
+	const rowEl = self.buildDisplayRow( conf );
+	conf.el = rowEl;
+	self.items[ id ] = conf;
+	self.itemIds.push( id );
+	self.insertRow( rowEl );
+	//self.list.appendChild( rowEl );
+	
+	self.bindDisplayRow( rowEl );
+}
+
+ns.TabTokens.prototype.insertRow = function( insertEl, beforeEl ) {
+	const self = this;
+	console.log( 'insertRow', [ insertEl, beforeEl ]);
+	self.list.insertBefore( insertEl, beforeEl );
+}
+
+ns.TabTokens.prototype.buildDisplayRow = function( conf ) {
+	const self = this;
+	console.log( 'buildRow', conf );
+	const status = self.getReadableStatus( conf.status );
+	const html = '<div id="'
+		+ conf.id
+		+ '" class="TokenRow Padding">'
+			+ '<div class="ServerTokenHostName">'
 				+ conf.host
-				+ '</div>'
-			+ '</div>';
+			+ '</div>'
+			+ '<div class="ServerTokenStatus">'
+				+ i18n( 'i18n_status' )
+				+ ': '
+				+ status
+			+ '</div>'
+			+ '<div>'
+				+ '<button class="ServerTokenEdit">'
+					+ '<i class="fa fa-fw fa-edit"></i>'
+				+ '</button>'
+				+ '<button class="ServerTokenRemove">'
+					+ i18n( 'i18n_remove' )
+				+ '</button>'
+			+ '</div>'
+		+ '</div>';
+	
+	const wrap = document.createElement( 'div' );
+	wrap.innerHTML = html;
+	const el = wrap.firstChild;
+	return el;
+}
+
+ns.TabTokens.prototype.buildEditRow = function( conf ) {
+	const self = this;
+	console.log( 'buildEditRow', conf );
+	const status = self.getReadableStatus( conf.status );
+	const html = '<div id="'
+		+ conf.id
+		+ '" class="TokenRow Padding">'
+			+ '<div class="ServerTokenHostName">'
+				+ conf.host
+			+ '</div>'
+			+ '<div class="ServerTokenStatus">'
+				+ i18n( 'i18n_status' )
+				+ ': '
+				+ status
+			+ '</div>'
+			+ '<div>'
+				+ '<button class="ServerTokenSave">'
+					+ '<i class="fa fa-fw fa-save"></i>'
+				+ '</button>'
+				+ '<button class="ServerTokenCancel">'
+					+ '<i class="fa fa-fw fa-cancel"></i>'
+				+ '</button>'
+			+ '</div>'
+		+ '</div>';
+	
+	const wrap = document.createElement( 'div' );
+	wrap.innerHTML = html;
+	const el = wrap.firstChild;
+	return el;
+}
+
+ns.TabTokens.prototype.bindDisplayRow = function( el ) {
+	const self = this;
+	const id = el.id;
+	console.log( 'bindDisplay', [ el, id ]);
+	const editBtn = el.querySelector( '.ServerTokenEdit' );
+	const remBtn = el.querySelector( '.ServerTokenRemove' );
+	
+	editBtn.addEventListener(
+		'click',
+		e => self.handleEditClick( id ),
+		false
+	);
+	
+	remBtn.addEventListener(
+		'click',
+		e => self.handleRemoveClick( id ),
+		false
+	);
+}
+
+ns.TabTokens.prototype.bindEditRow = function( el ) {
+	const self = this;
+	const id = el.id;
+	console.log( 'bindEditRow', [ el, id ]);
+	const saveBtn = el.querySelector( '.ServerTokenSave' );
+	const cancelBtn = el.querySelector( '.ServerTokenCancel' );
+	
+	saveBtn.addEventListener(
+		'click',
+		e => self.handleSaveClick( id ),
+		false
+	);
+	
+	cancelBtn.addEventListener(
+		'click',
+		e => self.handleCancelClick( id ),
+		false
+	);
+}
+
+ns.TabTokens.prototype.remove = function( hostId )
+{
+	const self = this;
+	console.log( 'remove', {
+		id   : hostId,
+		conf : self.items[ hostId ],
+	});
+	const conf = self.items[ hostId ];
+	delete self.items[ hostId ];
+	const el = conf.el;
+	if ( null != el )
+		el.parentNode.removeChild( el );
+	
+	self.itemIds = Object.keys( self.items );
+}
+
+ns.TabTokens.prototype.getId = function( host )
+{
+	const self = this;
+	const id = host.split( '.' ).join( '_' );
+	console.log( 'id', id );
+	return id;
+}
+
+ns.TabTokens.prototype.createHost = async function( host, status, userId )
+{
+	const self = this;
+	return new Promise(( resolve, reject ) => {
+		const id = self.getId( host );
+		console.log( 'create, id', id );
+		const conf = self.items[ id ];
+		if ( null != conf ) {
+			console.log( 'TabTokens.createHost, host already exists', {
+				host  : host,
+				id    : id,
+				items : self.items,
+			});
+			resolve( null );
+			return;
+		}
 		
-		const wrap = document.createElement( 'div' );
-		wrap.innerHTML = html;
-		const el = wrap.firstChild;
-		return el;
-	}
-	
-	function create( host, status ) {
-		return new Promise(( resolve, reject ) => {
-			const userId = window.Application.userId;
-			const args = {
-				host   : host,
-				userid : userId,
-				status : status || null,
-			};
-			const create = new Library( 'system.library' );
-			create.execute( 'security/createhost', args );
-			create.onExecuted = createBack;
-			
-			function createBack( res, yep ) {
-				console.log( 'createBack', [ res, yep ]);
+		if ( null != status )
+			status = self.statuses.indexOf( status );
+		if ( -1 === status )
+			status = 0;
+		
+		const userId = window.Application.userId;
+		const args = {
+			host   : host,
+			status : status,
+			userid : userId,
+		};
+		console.log( 'createHost, args', args );
+		const create = new Library( 'system.library' );
+		create.execute( 'security/createhost', args );
+		create.onExecuted = createBack;
+		
+		function createBack( res, yep )
+		{
+			console.log( 'createBack', [ res, yep ]);
+			if ( 'success' == res.result )
 				resolve( res );
-			}
-		});
-	}
-	
-	function getList() {
-		return new Promise(( resolve, reject ) => {
-			const list = new Library( 'system.library' );
-			list.execute( 'security/listhosts' );
-			list.onExecuted = hostsBack;
-			function hostsBack( res, yep ) {
-				console.log( 'hostsBack', [ res, yep ]);
-				resolve( res.hosts );
-			}
-		});
-	}
-	
-	function update( host, status ) {
-		return new Promise(( resolve, reject ) => {
-			const userId = window.Application.userId;
-			const args = {
-				host   : host,
-				userid : userId,
-				status : status || null,
-			};
-			const update = new Library( 'system.library' );
-			update.execute( 'security/updatehost', args );
-			update.onExecuted = updateBack;
-			
-			function updateBack( res, yep ) {
-				console.log( 'updateBack', [ res, yep ]);
+			else
+				resolve( null );
+		}
+	});
+}
+
+ns.TabTokens.prototype.getHosts = async function()
+{
+	const self = this;
+	return new Promise(( resolve, reject ) => {
+		const get = new Library( 'system.library' );
+		get.execute( 'security/listhosts' );
+		get.onExecuted = hostsBack;
+		
+		function hostsBack( res, yep )
+		{
+			console.log( 'hostsBack', [ res, yep ]);
+			resolve( res.hosts );
+		}
+	});
+}
+
+ns.TabTokens.prototype.updateHost = async function( hostId, status )
+{
+	const self = this;
+	return new Promise(( resolve, reject ) => {
+		const conf = self.items[ hostId ];
+		if ( null == conf ) {
+			console.log( 'updateHost', {
+				hostId : hostId,
+				items  : self.items,
+			});
+			throw new Error( 'TabTokens.updateHost, invalid hostId ^^^' );
+		}
+		
+		const args = {
+			host   : host,
+			userid : conf.userId || window.Application.userId,
+			status : status || null,
+		};
+		const update = new Library( 'system.library' );
+		update.execute( 'security/updatehost', args );
+		update.onExecuted = updateBack;
+		
+		function updateBack( res, yep )
+		{
+			console.log( 'updateBack', [ res, yep ]);
+			if ( 'success' == res.result )
 				resolve( res );
-			}
-		});
-	}
-	
-	function remove( host ) {
-		return new Promise(( resolve, reject ) => {
-			const args = {
-				host : host,
-			};
-			const remove = new Library( 'system.library' );
-			remove.execute( 'security/removehost', args );
-			remove.onExecuted = removeBack;
-			
-			function removeBack( res, yep ) {
-				console.log( 'removeBack', [ res, yep ]);
-				resolve( res );
-			}
-		});
-	}
+			else
+				resolve( null );
+		}
+	});
+}
+
+ns.TabTokens.prototype.removeHost = async function( hostId )
+{
+	const self = this;
+	return new Promise(( resolve, reject ) => {
+		const conf = self.items[ hostId ];
+		if ( null == conf ) {
+			console.log( 'TabTokens.remove - not found', {
+				hostId : hostId,
+				items  : self.items,
+			});
+			resolve( false );
+			return;
+		}
+		
+		const host = conf.host;
+		const args = {
+			host : host,
+		};
+		const remove = new Library( 'system.library' );
+		remove.execute( 'security/deletehost', args );
+		remove.onExecuted = removeBack;
+		
+		function removeBack( res, yep )
+		{
+			console.log( 'removeBack', [ res, yep ]);
+			if ( 'success' == res.result )
+				resolve( hostId );
+			else
+				resolve( false );
+		}
+	});
 }

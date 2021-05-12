@@ -168,3 +168,8 @@ i18n_fnetAskOnlyToCommunity			 : Ask only to your main community
 i18n_fnetAskOnlyToFriends			 : Ask only to friends
 i18n_fnetSharingPower				 : Share your power
 i18n_fnetAskForPower				 : Ask for power
+
+i18n_tokens                          : Tokens
+i18n_add_host                        : Add host
+i18n_status                          : Status
+i18n_remove                          : Remove

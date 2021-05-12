@@ -13,7 +13,7 @@
 					<div class="Tab IconSmall fa-key">
 						{i18n_key_management}
 					</div>
-					<div class="Tab IconSmall fa-cube">
+					<div class="Tab IconSmall fa-unlock-alt">
 						{i18n_tokens}
 					</div>
 					{friendNetwork1}
@@ -188,14 +188,17 @@
 						
 					</div>
 					<div class="Page">
-						<div class="HRow">
-							<input id="ServerTokenHost" type="text">
+						<div id="ServerTokenAddHostBox" class="">
+							<input id="ServerTokenHost" type="text" placeholder="host">
+							<select name="ServerTokenStatus" id="ServerTokenStatus">
+								
+							</select>
 							<button id="ServerTokenCreate">
-								create
+								{i18n_add_host}
 							</button>
 						</div>
 						<!-- some new stuff here -->
-						<div class="HRow Padding PageScroll" id="TokenList">
+						<div class="Padding PageScroll" id="TokenList">
 							
 						</div>
 						
@@ -275,6 +278,24 @@
 		{
 			display: inline-block;
 			margin: 0 5px 5px 0;
+		}
+		
+		#TokenList {
+			
+		}
+		
+		#TokenList .TokenRow {
+			display         : flex;
+			justify-content : space-between;
+			align-items     : center;
+		}
+		
+		#TokenList .TokenRow > * {
+			flex : 1;
+		}
+		
+		.hidden {
+			display: none;
 		}
 		
 	</style>
