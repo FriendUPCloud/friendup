@@ -96,7 +96,7 @@ function renderSecureLoginForm()
 // Sets replacements on template
 function renderReplacements( $template )
 {
-	$welcome = 'Login to your workspace (Google)';
+	$welcome = 'Login to your workspace';
 	
 	$publickey = '';
 	
@@ -108,14 +108,36 @@ function renderReplacements( $template )
 		}
 	}
 	
+	$server = getServerSettings(  );
+	$conf = parse_ini_file( SCRIPT_LOGIN_PATH . '/../../../cfg/cfg.ini', true );
+	
+	if( !isset( $conf['GoogleDriveAPI']['client_id'] ) )
+	{
+		die( 'ERROR! Google API: client_id is missing in cfg!' );
+	}
+	
+	if( $server && $server['googledrive'] && $server['googledrive']->redirect_uri )
+	{
+		$redirect_uri = $server['googledrive']->redirect_uri;
+	}
+	else
+	{
+		$redirect_uri  = ( $conf['Core']['SSLEnable'] ? 'https://' : 'http://' ) . $conf['FriendCore']['fchost'] . ( $conf['FriendCore']['port'] ? ':' . $conf['FriendCore']['port'] : '' );
+		$redirect_uri .= '/loginprompt/oauth';
+	}
+	
+	
+	
 	$finds = [
+		'{redirect_uri}',
 		'{google-signin-client_id}',
 		'{scriptpath}',
 		'{welcome}',
 		'{publickey}'
 	];
 	$replacements = [
-			'1053224064374-tc9k39g33m49ljrhrhu3rfp68mpfpsdd.apps.googleusercontent.com',
+			$redirect_uri,
+			$conf['GoogleDriveAPI']['client_id'],
 			$GLOBALS['request_path'],
 			$welcome,
 			$publickey
@@ -132,7 +154,10 @@ function remoteAuth( $url, $args = false, $method = 'POST', $headers = false, $a
 	
 	$conf = parse_ini_file( $configpath, true );
 	
-	$url = ( $conf['Core']['SSLEnable'] ? 'https://' : 'http://' ) . $conf['FriendCore']['fchost'] . ( $conf['FriendCore']['port'] ? ':' . $conf['FriendCore']['port'] : '' ) . $url;
+	if( $url && !strstr( $url, 'http://' ) && !strstr( $url, 'https://' ) )
+	{
+		$url = ( $conf['Core']['SSLEnable'] ? 'https://' : 'http://' ) . $conf['FriendCore']['fchost'] . ( $conf['FriendCore']['port'] ? ':' . $conf['FriendCore']['port'] : '' ) . $url;
+	}
 	
 	if( function_exists( 'curl_init' ) )
 	{
@@ -254,7 +279,7 @@ function remoteAuth( $url, $args = false, $method = 'POST', $headers = false, $a
 		}
 		
 		curl_close( $curl );
-	
+		
 		return $output;
 	}
 	else
@@ -265,6 +290,29 @@ function remoteAuth( $url, $args = false, $method = 'POST', $headers = false, $a
 
 // Get server settings configured using the FSettings table
 function getServerSettings(  )
+{
+	$dbo = initDBO();
+	// TODO: Look at this ...
+	if( $row = $dbo->FetchObject( '
+		SELECT * FROM FSetting s
+		WHERE
+			s.UserID = \'-1\'
+		AND s.Type = \'system\'
+		AND s.Key = \'googledrive\'
+		ORDER BY s.Key ASC
+	' ) )
+	{
+		
+		if( $resp = json_decode( $row->Data ) )
+		{
+			return $resp;
+		}
+	}
+	
+	return false;
+}
+
+function initDBO()
 {
 	include_once( SCRIPT_LOGIN_PATH . '/../../../php/classes/dbio.php' );
 	$conf = parse_ini_file( SCRIPT_LOGIN_PATH . '/../../../cfg/cfg.ini', true );
@@ -287,104 +335,66 @@ function getServerSettings(  )
 		die( 'ERROR! MySQL unavailable!' );
 	}
 	
-	if( $row = $dbo->FetchObject( '
-		SELECT * FROM FSetting s
-		WHERE
-			s.UserID = \'-1\'
-		AND s.Type = \'login\'
-		AND s.Key = \'google\'
-		ORDER BY s.Key ASC
-	' ) )
-	{
-		if( $resp = json_decode( $row->Data ) )
-		{
-			return $resp;
-		}
-	}
-	
-	return false;
+	return $dbo;
 }
 
-// Verify the user identity by Friend username and password
-// TODO: This function will stop working soon, using deprecated password
-//       hashing implementation
-function verifyIdentity( $username, $password = '' )
+function validateFriendIdentity( $username, $password, $fullname = false, $email = false, $publickey = false )
 {
+	
 	$error = false; $data = false;
 	
-	if( $username )
+	if( $username && $password )
 	{
-		include_once( SCRIPT_LOGIN_PATH . '/../../../php/classes/dbio.php' );
-		$conf = parse_ini_file( SCRIPT_LOGIN_PATH . '/../../../cfg/cfg.ini', true );
+		$dbo = initDBO();
 		
-		if( !( isset( $conf['DatabaseUser']['host'] ) && isset( $conf['DatabaseUser']['login'] ) && isset( $conf['DatabaseUser']['password'] ) && isset( $conf['DatabaseUser']['dbname'] ) ) )
-		{
-			die( 'CORRUPT FRIEND INSTALL!' );
-		}
-		
-		$dbo = new SqlDatabase( );
-		if( $dbo->open( $conf['DatabaseUser']['host'], $conf['DatabaseUser']['login'], $conf['DatabaseUser']['password'] ) )
-		{
-			if( !$dbo->SelectDatabase( $conf['DatabaseUser']['dbname'] ) )
-			{
-				die( 'ERROR! DB not found!' );
-			}
-		}
-		else
-		{
-			die( 'ERROR! MySQL unavailable!' );
-		}
-		
-		if( $password && ( !strstr( $password, 'HASHED' ) && !strstr( $password, '{S6}' ) ) )
-		{
-			$password = ( 'HASHED' . hash( 'sha256', $password ) );
-		}
-		
-		if( $creds = $dbo->fetchObject( '
+		if( $identity = $dbo->fetchObject( '
 			SELECT fu.ID FROM FUser fu 
-			WHERE 
-					fu.Name     = \'' . mysqli_real_escape_string( $dbo->_link, $username ) . '\' 
-				AND fu.Password = \'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $password ) ) . '\' 
+			WHERE fu.Name = \'' . mysqli_real_escape_string( $dbo->_link, $username ) . '\' 
 		' ) )
 		{
-			if( $identity = $dbo->fetchObject( '
-				SELECT 
-					fm.DataID AS UserID, fm.ValueString AS Mobile 
-				FROM 
-					FMetaData fm 
+			if( $creds = $dbo->fetchObject( '
+				SELECT fu.ID, fu.Status FROM FUser fu 
 				WHERE 
-						fm.Key       = "Mobile" 
-					AND fm.DataID    = \'' . $creds->ID . '\' 
-					AND fm.DataTable = "FUser" 
-				ORDER BY 
-					fm.ID DESC 
+						fu.Name     = \'' . mysqli_real_escape_string( $dbo->_link, $username ) . '\' 
+					AND fu.Password = \'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $password ) ) . '\' 
 			' ) )
 			{
-				if( $identity->UserID && $identity->Mobile )
+				
+				if( $creds->Status == 2 )
 				{
-					$data = $identity;
+					$error = '{"result":"-1","response":"Account is blocked, contact server admin ..."}';
 				}
 				else
 				{
-					$error = '{"result":"-1","response":"Mobile number for user account empty ...","code":"18"}';
+					$data = '';
 				}
+				
 			}
 			else
 			{
-				$error = '{"result":"-1","response":"Mobile number for user account missing ...","code":"19"}';
+				$error = '{"result":"-1","response":"Credentials are wrong, contact server admin ..."}';
 			}
 		}
 		else
 		{
-			$error = '{"result":"-1","response":"Account blocked until: 0","code":"6"}';
+			
+			if( createFriendAccount( $username, $password, $fullname, $email, $publickey ) )
+			{
+				$data = '{"result":"1","response":"Couldn\'t find account, created a new Friend account ..."}';
+			}
+			else
+			{
+				$error = '{"result":"-1","response":"Failed to create Friend account, contact server admin ..."}';
+			}
+			
 		}
 	}
 	else
 	{
-		$error = '{"result":"-1","response":"Account blocked until: 0","code":"6"}';
+		return false;
 	}
 	
-	if( $data )
+	if( $data !== false )
 	{
 		return [ 'ok', $data ];
 	}
@@ -392,9 +402,251 @@ function verifyIdentity( $username, $password = '' )
 	{
 		return [ 'fail', $error ];
 	}
+	
 }
 
+function verifyGoogleToken( $token, $deviceid )
+{
+	
+	if( $token )
+	{
+		
+		if( $verify = remoteAuth( 'https://oauth2.googleapis.com/tokeninfo?id_token=' . $token, false, 'GET' ) )
+		{
+		
+			if( $json = json_decode( $verify ) )
+			{
+			
+				$json->username = $json->sub;
+				$json->password = $json->kid;
+			
+				if( $json = convertLoginData( $json, 'GOOGLE' ) )
+				{
+					
+					if( $res = verifyFriendAuth( $json, $deviceid ) )
+					{
+						return $res;
+					}
+					
+				}
+			
+			}
+			
+		}
+		
+	}
+	
+	return false;
+	
+}
 
+function verifyFriendAuth( $json, $deviceid = '' )
+{
+	
+	$error = false; $data = false;
+	
+	if( $json && $json->username && $json->password )
+	{
+		$dbo = initDBO();
+		
+		if( $creds = $dbo->fetchObject( '
+			SELECT fu.ID, fu.Status FROM FUser fu 
+			WHERE 
+					fu.Name     = \'' . mysqli_real_escape_string( $dbo->_link, $json->username ) . '\' 
+				AND fu.Password = \'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $json->password ) ) . '\' 
+		' ) )
+		{
+			
+			if( $creds->Status == 2 )
+			{
+				$error = '{"result":"-1","response":"Account is blocked, contact server admin ..."}';
+			}
+			else
+			{
+				
+				if( $login = remoteAuth( '/system.library/login', 
+				[
+					'username' => $json->username, 
+					'password' => $json->password, 
+					'deviceid' => $deviceid 
+				] ) )
+				{
+					if( strstr( $login, '<!--separate-->' ) )
+					{
+						if( $ret = explode( '<!--separate-->', $login ) )
+						{
+							if( isset( $ret[1] ) )
+							{
+								$login = $ret[1];
+							}
+						}
+					}
+					
+					if( $ses = json_decode( $login ) )
+					{
+						
+						if( $ses->sessionid )
+						{
+							
+							if( !remoteAuth( '/system.library/user/update?sessionid=' . $ses->sessionid, 
+							[
+								'setup' => '0' 
+							] ) )
+							{
+								//
+							
+								die( '[update] fail from friendcore ...' );
+							}
+							
+						}
+						else
+						{
+							die( 'fail no session ...' );
+						}
+						
+						if( $json->locale )
+						{
+							updateLanguages( $creds->ID, $json->locale );
+						}
+						
+						if( $json->picture )
+						{
+							saveAvatar( $creds->ID, $json->picture );
+						}
+						
+						$data = json_encode( $ses );
+						
+					}
+					
+				}
+				else
+				{
+			
+					// Couldn't login ...
+			
+					die( '[login] fail from friendcore ...' );
+			
+				}
+				
+				
+			}
+			
+		}
+		else
+		{
+			$error = '{"result":"-1","response":"Credentials don\'t match, contact server admin ..."}';
+		}
+		
+	}
+	else
+	{
+		return false;
+	}
+	
+	if( $data !== false )
+	{
+		return [ 'ok', $data ];
+	}
+	else
+	{
+		return [ 'fail', $error ];
+	}
+	
+}
+
+function createFriendAccount( $username, $password, $fullname = false, $email = false, $publickey = false )
+{
+	
+	if( $username && $password )
+	{
+		
+		$dbo = initDBO();
+		
+		$query = '
+			SELECT fu.ID FROM FUser fu 
+			WHERE 
+					fu.Name = \'' . mysqli_real_escape_string( $dbo->_link, $username ) . '\' 
+				AND fu.Password = \'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $password ) ) . '\' 
+		';
+		
+		if( !$creds = $dbo->fetchObject( $query ) )
+		{
+			
+			// Check if user exists and password is wrong ...	
+			
+			if( $dbo->fetchObject( '
+				SELECT 
+					fu.* 
+				FROM 
+					FUser fu 
+				WHERE 
+					fu.Name = \'' . mysqli_real_escape_string( $dbo->_link, $username ) . '\' 
+			' ) )
+			{
+				die( 'CORRUPT FRIEND INSTALL! User exists but Friend password is incorrect.' );
+			}
+			
+			// Create new user ...
+			
+			// TODO: Create user with Status = 1 until it's verified ... but find out how to update later since login fails ...
+			
+			if( $dbo->Query( '
+			INSERT INTO FUser ( `Name`, `Password`, `PublicKey`, `Fullname`, `Email`, `LoggedTime`, `CreatedTime`, `LoginTime`, `UniqueID`, `Status` ) 
+			VALUES ('
+				. ' \'' . mysqli_real_escape_string( $dbo->_link, $username                                 ) . '\'' 
+				. ',\'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $password )      ) . '\'' 
+				. ',\'' . mysqli_real_escape_string( $dbo->_link, $publickey ? trim( $publickey      ) : '' ) . '\'' 
+				. ',\'' . mysqli_real_escape_string( $dbo->_link, $fullname  ? trim( $fullname       ) : '' ) . '\'' 
+				. ',\'' . mysqli_real_escape_string( $dbo->_link, $email     ? trim( $email          ) : '' ) . '\'' 
+				. ','   . time() 
+				. ','   . time() 
+				. ','   . time() 
+				. ',\'' . mysqli_real_escape_string( $dbo->_link, generateFriendUniqueID( $username )       ) . '\'' 
+				. ','   . 0 
+			.') ' ) )
+			{
+				if( $creds = $dbo->fetchObject( $query ) )
+				{
+					
+					// add user to users group....
+					$dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $creds->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'' . ( 'User' ) . '\' AND `Type` = \'Level\' ) );' );
+					
+					checkExternalUserGroup(  );
+					
+					// add user to External users group....
+					$dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $creds->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'User\' AND `Type` = \'External\' ) );' );
+											
+					
+					
+					firstLogin( $creds->ID );
+					
+					//applySetup( $creds->ID, 0 );
+					
+					// TODO: Add gmail link for dock to the account ...
+					
+					//addCustomDockItem( $creds->ID, $link, true, true );
+					
+					return true;
+					
+				}
+				else
+				{
+					die( 'fail something failed ...' );
+				}
+				
+			}
+			else
+			{
+				// Couldn't create user ...
+				
+				die( 'fail couldn\'t create user ...' );
+			}
+		}
+	}
+	
+	return false;
+	
+}
 
 // Receive an encrypted JSON string
 function receive_encrypted_json( $data = '' )
@@ -424,7 +676,7 @@ function send_encrypted_response( $result, $type = false, $data = '', $publickey
 	
 	$jsonData = $data;
 	
-	if( $publickey )
+	if( $publickey && $data )
 	{
 		include_once( 'php/3rdparty/fcrypto/fcrypto.class.php' );
 		
@@ -432,7 +684,7 @@ function send_encrypted_response( $result, $type = false, $data = '', $publickey
 		
 		if( $encrypted = $fcrypt->encryptString( $data, $publickey ) )
 		{
-			die( $ret . '<!--separate-->' . ( $type ? ( $type . '<!--separate-->' ) : '' ) . $encrypted->cipher . '<!--separate-->' . $data );
+			die( $ret . '<!--separate-->' . ( $type ? ( $type . '<!--separate-->' ) : '' ) . $encrypted->cipher );
 		}
 		else
 		{
@@ -444,291 +696,6 @@ function send_encrypted_response( $result, $type = false, $data = '', $publickey
 }
 
 
-// Verify the Windows user identity for a specific RDP server
-function verifyWindowsIdentity( $username, $password = '', $server )
-{	
-	$error = false; $data = false;
-	
-	// TODO: set login data static for the presentation, remove later, only test data.
-	// TODO: verify user with free rdp ...
-	// TODO: Get user data from free rdp login or use powershell via ssh as friend admin user ...
-	
-	// TODO: implement max security with certs for ssh / rdp access if possible, only allow local ...
-	
-	if( $username && $server )
-	{
-		if( /*function_exists( 'ssh2_connect' ) &&*/ function_exists( 'shell_exec' ) )
-		{
-			$connection = false;
-			
-			// TODO: Move this to a server config, together with what mode to use for 2factor ...
-			
-			// TODO: Look at hashing password or something ...
-			
-			$adminus = $server->username;
-			$adminpw = $server->password;
-			
-			$hostname = $server->host;
-			
-			$port = ( $server->ssh_port ? $server->ssh_port : 22 );
-			$rdp =  ( $server->rdp_port ? $server->rdp_port : 3389 );
-			
-			$username = trim( $username );
-			$password = trim( $password );
-			
-			$dbdiskpath = ( $server->users_db_diskpath ? $server->users_db_diskpath : '' );
-			
-			if( $hostname && $username && $password )
-			{
-				
-				// Check user creds using freerdp ...
-				
-				// TODO: Add more security to password check ...
-				
-				$authenticated = false; $found = false;
-				
-				// sfreerdp needs special option added on install cmake -GNinja -DCHANNEL_URBDRC=OFF -DWITH_DSP_FFMPEG=OFF -DWITH_CUPS=OFF -DWITH_PULSE=OFF -DWITH_SAMPLE=ON .
-				
-				// TODO: Get error messages for not WHITE LABELLED!!!!!!
-				
-				if( $checkauth = exec_timeout( "sfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" ) )
-				{
-					if( strstr( $checkauth, 'sfreerdp: not found' ) )
-					{
-						$checkauth = exec_timeout( "xfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" );
-					}
-				
-					$found = true;
-				}
-				
-				if( !$found )
-				{
-					$checkauth = exec_timeout( "xfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" );
-				}
-				
-				
-				
-				if( $checkauth )
-				{
-					if( strstr( $checkauth, 'sfreerdp: not found' ) || strstr( $checkauth, 'xfreerdp: not found' ) )
-					{
-						$error = '{"result":"-1","response":"Dependencies: sfreerdp or xfreerdp is required, contact support ..."}';
-					}
-					else if( $parts = explode( "\n", $checkauth ) )
-					{
-						foreach( $parts as $part )
-						{
-							if( $value = explode( 'Authentication only,', $part ) )
-							{
-								if( trim( $value[1] ) && trim( $value[1] ) == 'exit status 0' )
-								{
-									$authenticated = true;
-								}
-							}
-						}
-						
-						if( !$authenticated )
-						{
-							$error = '{"result":"-1","response":"Unable to perform terminal login","code":"6","data":"","debug":"1"}';
-						}
-					}
-				}
-				else
-				{
-					$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"2"}';
-				}
-				
-				
-				
-				
-				
-				if( !$error )
-				{
-					//$path = ( SCRIPT_LOGIN_PATH . '/../../../cfg' );
-					
-					// Specific usecase ...
-					
-					if( $dbdiskpath && file_exists( $dbdiskpath/*$path . '/Friend-AD-Time-IT.csv'*/ ) )
-					{
-						if( $output = file_get_contents( $dbdiskpath/*$path . '/Friend-AD-Time-IT.csv'*/ ) )
-						{
-							$identity = new stdClass();
-							
-							if( $rows = explode( "\n", trim( $output ) ) )
-							{							
-								foreach( $rows as $line )
-								{
-									$line = explode( ';', $line );
-									list( $mobnum, $name, $user, ) = $line;
-									$mobnum = trim( $mobnum );
-									$name = trim( $name );
-									$user = trim( $user );
-									// Our user!
-									if( isset( $mobnum ) && isset( $name ) && isset( $user ) && strtolower( $user ) == strtolower( trim( $username ) ) )
-									{
-										if( !intval( $mobnum ) )
-										{
-											// TODO: Will this even work?
-											if( $tmp_mobile = (int) filter_var( $mobnum, FILTER_SANITIZE_NUMBER_INT ) )
-											{
-												$mobnum = $tmp_mobile; // Set sanitized number
-											}
-										}
-										else
-										{
-											$mobnum = intval( $mobnum );
-										}
-										
-										$data = new stdClass();
-										$data->id       = '0';
-										$data->fullname = $name;
-										$data->mobile   = $mobnum;
-										
-										theLogger( 'Found ' . print_r( $data, 1 ) );
-										
-										return [ 'ok', $data ];
-									}
-								}
-							}
-							//return [ 'fail', '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"0"}' ];
-						}
-					}
-					
-
-					// Failed to fin d user in list.
-					return [ 'fail', '{"result":"-1","response":"Could not find user in index, or index does not exist","code":"7","debug":"0"}' ];
-				
-					// TODO: Powershell is commented out but may be used later
-				
-				
-					//function _ssh_disconnect( $reason, $message, $language ) 
-					//{
-					//	die( 'fail<!--separate-->server disconnected with reason code ' . $reason . ' and message: ' . $message );
-					//}
-				
-					// TODO: Options for more secure connection using SSH and authenticating, look into it.
-				
-					//$methods = [
-					//	'kex' => 'diffie-hellman-group1-sha1',
-					//	'client_to_server' => [
-					//		'crypt' => '3des-cbc',
-					//		'comp'  => 'none' 
-					//	],
-					//	'server_to_client' => [
-					//		'crypt' => 'aes256-cbc,aes192-cbc,aes128-cbc',
-					//		'comp'  => 'none' 
-					//	] 
-					//];
-				
-					//$callbacks = [ 'disconnect' => '_ssh_disconnect' ];
-				
-					/*if( !$connection = ssh2_connect( $hostname, $port ) )
-					{
-						$error = '{"result":"-1","response":"couldn\'t connect, contact support ..."}';
-					}
-				
-					if( $authenticated && $connection )
-					{
-					
-						if( $adminus && $adminpw )
-						{
-						
-							if( $auth = ssh2_auth_password( $connection, $adminus, $adminpw ) )
-							{
-						
-								$stream = ssh2_exec( $connection, "powershell;Get-ADUser -Identity $username -Properties *" );
-						
-								$outputStream = ssh2_fetch_stream( $stream, SSH2_STREAM_STDIO );
-								$errorStream  = ssh2_fetch_stream( $stream, SSH2_STREAM_STDERR );
-						
-								// Enable blocking for both streams
-								stream_set_blocking( $outputStream, true );
-								stream_set_blocking( $errorStream, true );
-				
-								$output = stream_get_contents( $outputStream );
-								$error  = stream_get_contents( $errorStream );
-				
-								// Close the streams        
-								fclose( $errorStream );
-								fclose( $stream );
-						
-								if( $output )
-								{
-									$identity = new stdClass();
-							
-									if( $parts = explode( "\n", $output ) )
-									{
-										foreach( $parts as $part )
-										{
-											if( $value = explode( ':', $part ) )
-											{
-												if( trim( $value[0] ) )
-												{
-													$identity->{ trim( $value[0] ) } = ( $value[1] ? trim( $value[1] ) : '' );
-												}
-											}
-										}
-								
-									}
-								}
-						
-								if( $identity )
-								{
-									if( $identity->MobilePhone )
-									{
-										$data = new stdClass();
-										$data->id       = ( $identity->SID          ? $identity->SID          : '0' );
-										$data->fullname = ( $identity->Name         ? $identity->Name         : ''  );
-										$data->mobile   = ( $identity->mobile       ? $identity->mobile       : ''  );
-										$data->email    = ( $identity->EmailAddress ? $identity->EmailAddress : ''  );
-									}
-									else
-									{
-										$error = '{"result":"-1","response":"Mobile number for user account empty ..."}';
-									}
-								}
-								else
-								{
-									$error = '{"result":"-1","response":"Mobile number for user account missing ..."}';
-								}
-						
-								if( $data )
-								{
-									return [ 'ok', $data ];
-								}
-						
-								if( $error )
-								{
-									return [ 'fail', $error ];
-								}
-						
-							}
-						
-						}
-					
-						$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"3"}';
-					
-					}*/
-				}
-			}
-		
-		}
-		else
-		{
-			$error = '{"result":"-1","response":"Dependencies: php-ssh2 libssh2-php and or enabling shell_exec is required, contact support ..."}';
-		}
-		
-	}
-	else
-	{
-		$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"4"}';
-	}
-	
-	theLogger( 'Er returned with an error: ' . $error );
-	
-	return [ 'fail', $error ];
-	
-}
 
 // Check a Friend user
 // TODO: Fix deprecated password hashing (deprecated soon!)
@@ -740,258 +707,7 @@ function checkFriendUser( $data, $identity, $create = false )
 	if( $data && $identity && $data->username && isset( $data->password ) )
 	{
 		
-		// TODO: Move this to it's own function ...
-		
-		include_once( SCRIPT_LOGIN_PATH . '/../../../php/classes/dbio.php' );
-		$conf = parse_ini_file( SCRIPT_LOGIN_PATH . '/../../../cfg/cfg.ini', true );
-	
-		if( !( isset( $conf['DatabaseUser']['host'] ) && isset( $conf['DatabaseUser']['login'] ) && isset( $conf['DatabaseUser']['password'] ) && isset( $conf['DatabaseUser']['dbname'] ) ) )
-		{
-			die( 'CORRUPT FRIEND INSTALL!' );
-		}
-	
-		$dbo = new SqlDatabase( );
-		if( $dbo->open( $conf['DatabaseUser']['host'], $conf['DatabaseUser']['login'], $conf['DatabaseUser']['password'] ) )
-		{
-			if( !$dbo->SelectDatabase( $conf['DatabaseUser']['dbname'] ) )
-			{
-				die( 'ERROR! DB not found!' );
-			}
-		}
-		else
-		{
-			die( 'ERROR! MySQL unavailable!' );
-		}
-		
-		
-		
-		if( $data->password && ( !strstr( $data->password, 'HASHED' ) && !strstr( $data->password, '{S6}' ) ) )
-		{
-			$data->password = ( 'HASHED' . hash( 'sha256', $data->password ) );
-		}
-		
-		// TODO: Handle password different for an external system ...
-		
-		$creds = false;
-		
-		// TODO: Base it on username and forget about password only one unique username is allowed for users ...
-		
-		/*$query = '
-			SELECT fu.ID FROM FUser fu 
-			WHERE 
-					fu.Name     = \'' . mysqli_real_escape_string( $dbo->_link, $data->username ) . '\' 
-				AND fu.Password = \'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $data->password ) ) . '\' 
-		';*/
-		
-		$query = '
-			SELECT fu.ID FROM FUser fu 
-			WHERE fu.Name = \'' . mysqli_real_escape_string( $dbo->_link, $data->username ) . '\' 
-		';
-		
-		if( !$creds = $dbo->fetchObject( $query ) )
-		{
-			
-			// Check if user exists and password is wrong ...	
-			
-			if( $dbo->fetchObject( '
-				SELECT 
-					fu.* 
-				FROM 
-					FUser fu 
-				WHERE 
-					fu.Name = \'' . mysqli_real_escape_string( $dbo->_link, $data->username ) . '\' 
-			' ) )
-			{
-				die( 'CORRUPT FRIEND INSTALL! User exists but Friend password is incorrect.' );
-			}
-			
-			// TODO: Make sure username is unique for the external service and that the password is not the users original ...
-			
-			// Create new user ...
-			
-			if( $create )
-			{
-				
-				if( $dbo->Query( '
-				INSERT INTO FUser ( `Name`, `Password`, `PublicKey`, `Fullname`, `Email`, `LoggedTime`, `CreatedTime`, `LoginTime`, `UniqueID` ) 
-				VALUES ('
-					. ' \'' . mysqli_real_escape_string( $dbo->_link, $data->username                                  ) . '\'' 
-					. ',\'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $data->password )       ) . '\'' 
-					. ',\'' . mysqli_real_escape_string( $dbo->_link, $data->publickey     ? trim( $data->publickey    ) : '' ) . '\'' 
-					. ',\'' . mysqli_real_escape_string( $dbo->_link, $identity->fullname  ? trim( $identity->fullname ) : '' ) . '\'' 
-					. ',\'' . mysqli_real_escape_string( $dbo->_link, $identity->email     ? trim( $identity->email    ) : '' ) . '\'' 
-					. ','   . time() 
-					. ','   . time() 
-					. ','   . time() 
-					. ',\'' . mysqli_real_escape_string( $dbo->_link, generateFriendUniqueID( $data->username )        ) . '\'' 
-				.') ' ) )
-				{
-					if( $creds = $dbo->fetchObject( $query ) )
-					{
-						
-						// add user to users group....
-						$dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $creds->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'' . ( 'User' ) . '\' AND `Type` = \'Level\' ) );' );
-						
-						checkExternalUserGroup(  );
-						
-						// add user to External users group....
-						$dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $creds->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'User\' AND `Type` = \'External\' ) );' );
-						
-						if( $identity->mobile )
-						{
-							// Add phone number ...
-							$dbo->Query( 'INSERT INTO `FMetaData` ( `DataTable`, `DataID`, `Key`, `ValueString` ) VALUES ( "FUser", '. intval( $creds->ID ) .', "Mobile", "' . $identity->mobile . '" );' );
-						}
-						
-						// TODO: Find out what template to use, and define based on user level or admin access, for later ...
-						
-						firstLoginSetup( 0, $creds->ID );
-						
-						// Success now log the user in and activate it ...	
-						
-						if( $login = remoteAuth( '/system.library/login', 
-						[
-							'username' => $data->username, 
-							'password' => $data->password, 
-							'deviceid' => $data->deviceid 
-						] ) )
-						{
-							if( strstr( $login, '<!--separate-->' ) )
-							{
-								if( $ret = explode( '<!--separate-->', $login ) )
-								{
-									if( isset( $ret[1] ) )
-									{
-										$login = $ret[1];
-									}
-								}
-							}
-							
-							if( $ses = json_decode( $login ) )
-							{
-								
-								if( $ses->sessionid )
-								{
-									if( !remoteAuth( '/system.library/user/update?sessionid=' . $ses->sessionid, 
-									[
-										'setup' => '0' 
-									] ) )
-									{
-										//
-										
-										die( 'fail from friendcore ...' );
-									}
-								}
-								else
-								{
-									die( 'fail no session ...' );
-								}
-							
-							}
-						
-						}
-						else
-						{
-						
-							// Couldn't login ...
-						
-							die( 'fail from friendcore ...' );
-						
-						}
-						
-					}
-					else
-					{
-						die( 'fail something failed ...' );
-					}
-					
-				}
-				else
-				{
-					// Couldn't create user ...
-					
-					die( 'fail couldn\'t create user ...' );
-					
-				}
-				
-			}
-			
-		}
-		else
-		{
-			
-			// return data ...
-			
-			// Update password if different ... TODO: Look at this in the future ...
-			
-			if( $creds && $creds->ID )
-			{
-				$u = new dbIO( 'FUser', $dbo );
-				$u->ID       = $creds->ID;
-				$u->Name     = $data->username;
-				if( $u->Load() && $u->Password != ( '{S6}' . hash( 'sha256', $data->password ) ) )
-				{
-					$u->Password = ( '{S6}' . hash( 'sha256', $data->password ) );
-					$u->Save();
-					
-					if( $u->ID > 0 )
-					{
-						if( $login = remoteAuth( '/system.library/login', 
-						[
-							'username' => $data->username, 
-							'password' => $data->password, 
-							'deviceid' => $data->deviceid 
-						] ) )
-						{
-							if( strstr( $login, '<!--separate-->' ) )
-							{
-								if( $ret = explode( '<!--separate-->', $login ) )
-								{
-									if( isset( $ret[1] ) )
-									{
-										$login = $ret[1];
-									}
-								}
-							}
-							
-							/*if( $ses = json_decode( $login ) )
-							{
-							
-								if( $ses->sessionid )
-								{
-									if( !remoteAuth( '/system.library/user/update?sessionid=' . $ses->sessionid, 
-									[
-										'setup' => '0' 
-									] ) )
-									{
-										//
-									
-										die( 'fail from friendcore ...' );
-									}
-								}
-								else
-								{
-									die( 'fail no session ...' );
-								}
-						
-							}*/
-							
-						}
-						else
-						{
-					
-							// Couldn't login ...
-					
-							die( 'fail from friendcore ...' );
-					
-						}
-					}
-					
-				}
-				
-			}
-			
-		}
+
 		
 		if( $creds )
 		{
@@ -1029,25 +745,19 @@ function checkFriendUser( $data, $identity, $create = false )
 }
 
 // Convert login data using hashing function
-function convertLoginData( $data )
+function convertLoginData( $data, $type = false )
 {
 	if( $data && ( $data->username && isset( $data->password ) ) )
 	{
 		
-		// TODO: Look if we are going to add a ID from the external service to the username ...
-		
 		if( $data->password )
 		{
 			$data->password = generateExternalFriendPassword( $data->password );
-			
-			// TODO: Look at this ...
-			// Password will have to be something that cannot be changed ...
-			//$data->password = generateExternalFriendPassword( $data->username );
 		}
 		
 		if( $data->username )
 		{
-			$data->username = generateExternalFriendUsername( $data->username );
+			$data->username = generateExternalFriendUsername( $data->username, $type );
 		}
 		
 	}
@@ -1056,11 +766,11 @@ function convertLoginData( $data )
 }
 
 // Hashing function
-function generateExternalFriendUsername( $input )
+function generateExternalFriendUsername( $input, $type = false )
 {
 	if( $input )
 	{
-		return hash( 'md5', 'HASHED' . $input );
+		return hash( 'md5', ( $type ? $type : 'HASHED' ) . $input );
 	}
 	
 	return '';
@@ -1075,8 +785,8 @@ function generateExternalFriendPassword( $input )
 		{
 			return ( $input );
 		}
-	
-		return ( 'HASHED' . hash( 'sha256', 'TOKEN' . $input ) );
+		
+		return ( 'HASHED' . hash( 'sha256', $input ) );
 	}
 	return '';
 }
@@ -1084,28 +794,8 @@ function generateExternalFriendPassword( $input )
 // Check if we have "External" type user's group
 function checkExternalUserGroup(  )
 {
-	// TODO: Move this to it's own function ...
 	
-	include_once( SCRIPT_LOGIN_PATH . '/../../../php/classes/dbio.php' );
-	$conf = parse_ini_file( SCRIPT_LOGIN_PATH . '/../../../cfg/cfg.ini', true );
-
-	if( !( isset( $conf['DatabaseUser']['host'] ) && isset( $conf['DatabaseUser']['login'] ) && isset( $conf['DatabaseUser']['password'] ) && isset( $conf['DatabaseUser']['dbname'] ) ) )
-	{
-		die( 'CORRUPT FRIEND INSTALL!' );
-	}
-
-	$dbo = new SqlDatabase( );
-	if( $dbo->open( $conf['DatabaseUser']['host'], $conf['DatabaseUser']['login'], $conf['DatabaseUser']['password'] ) )
-	{
-		if( !$dbo->SelectDatabase( $conf['DatabaseUser']['dbname'] ) )
-		{
-			die( 'ERROR! DB not found!' );
-		}
-	}
-	else
-	{
-		die( 'ERROR! MySQL unavailable!' );
-	}
+	$dbo = initDBO();
 	
 	if( $rs = $dbo->fetchObject( 'SELECT * FROM `FUserGroup` WHERE `Name`=\'User\' AND `Type`=\'External\' ' ) )
 	{
@@ -1143,30 +833,7 @@ function findInSearchPaths( $app )
 function addCustomDockItem( $uid, $appname, $dock = false, $preinstall = false, $params = '' )
 {
 	
-	// TODO: Move this to it's own function ...
-	
-	include_once( SCRIPT_LOGIN_PATH . '/../../../php/classes/dbio.php' );
-	$conf = parse_ini_file( SCRIPT_LOGIN_PATH . '/../../../cfg/cfg.ini', true );
-
-	if( !( isset( $conf['DatabaseUser']['host'] ) && isset( $conf['DatabaseUser']['login'] ) && isset( $conf['DatabaseUser']['password'] ) && isset( $conf['DatabaseUser']['dbname'] ) ) )
-	{
-		die( 'CORRUPT FRIEND INSTALL!' );
-	}
-
-	$dbo = new SqlDatabase( );
-	if( $dbo->open( $conf['DatabaseUser']['host'], $conf['DatabaseUser']['login'], $conf['DatabaseUser']['password'] ) )
-	{
-		if( !$dbo->SelectDatabase( $conf['DatabaseUser']['dbname'] ) )
-		{
-			die( 'ERROR! DB not found!' );
-		}
-	}
-	else
-	{
-		die( 'ERROR! MySQL unavailable!' );
-	}
-	
-	
+	$dbo = initDBO();
 	
 	if( $uid && $appname )
 	{
@@ -1263,212 +930,705 @@ function addCustomDockItem( $uid, $appname, $dock = false, $preinstall = false, 
 								
 }
 
-// Check database for first login
-function firstLoginSetup( $setupid, $uid )
+function firstLogin( $userid )
 {
-	// TODO: Move this to it's own function ...
 	
-	include_once( SCRIPT_LOGIN_PATH . '/../../../php/classes/dbio.php' );
-	$conf = parse_ini_file( SCRIPT_LOGIN_PATH . '/../../../cfg/cfg.ini', true );
-
-	if( !( isset( $conf['DatabaseUser']['host'] ) && isset( $conf['DatabaseUser']['login'] ) && isset( $conf['DatabaseUser']['password'] ) && isset( $conf['DatabaseUser']['dbname'] ) ) )
+	$SqlDatabase = initDBO();
+	
+	// TODO: Find out what is going to be the main module call / fc call for first login and use a module or library class to call, like doors.
+	
+	if( $userid > 0 )
 	{
-		die( 'CORRUPT FRIEND INSTALL!' );
-	}
-
-	$dbo = new SqlDatabase( );
-	if( $dbo->open( $conf['DatabaseUser']['host'], $conf['DatabaseUser']['login'], $conf['DatabaseUser']['password'] ) )
-	{
-		if( !$dbo->SelectDatabase( $conf['DatabaseUser']['dbname'] ) )
+		
+		// 2. Check if we never logged in before..
+		if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE UserID=\'' . $userid . '\'' ) ) )
 		{
-			die( 'ERROR! DB not found!' );
+			
+			// 3. Setup a standard disk
+			$o = new dbIO( 'Filesystem', $SqlDatabase );
+			$o->UserID = $userid;
+			$o->Name = 'Home';
+			$o->Load();
+			$o->Type = 'SQLDrive';
+			$o->ShortDescription = 'My data volume';
+			$o->Server = 'localhost';
+			$o->Mounted = '1';
+	
+			if( $o->Save() )
+			{
+				
+				// 4. Wallpaper images directory
+				$f2 = new dbIO( 'FSFolder', $SqlDatabase );
+				$f2->FilesystemID = $o->ID;
+				$f2->UserID = $userid;
+				$f2->Name = 'Wallpaper';
+				if( !$f2->Load() )
+				{
+					$f2->DateCreated = date( 'Y-m-d H:i:s' );
+					$f2->DateModified = $f2->DateCreated;
+					$f2->Save();
+				}
+				
+				// 5. Some example documents
+				$f = new dbIO( 'FSFolder', $SqlDatabase );
+				$f->FilesystemID = $o->ID;
+				$f->UserID = $userid;
+				$f->Name = 'Documents';
+				if( !$f->Load() )
+				{
+					$f->DateCreated = date( 'Y-m-d H:i:s' );
+					$f->DateModified = $f->DateCreated;
+					$f->Save();
+				}
+				
+				$fdownloadfolder = new dbIO( 'FSFolder', $SqlDatabase );
+				$fdownloadfolder->FilesystemID = $o->ID;
+				$fdownloadfolder->UserID = $userid;
+				$fdownloadfolder->Name = 'Downloads';
+				if( !$fdownloadfolder->Load() )
+				{
+					$fdownloadfolder->DateCreated = date( 'Y-m-d H:i:s' );
+					$fdownloadfolder->DateModified = $f->DateCreated;
+					$fdownloadfolder->Save();
+				}
+				
+				$f1 = new dbIO( 'FSFolder', $SqlDatabase );
+				$f1->FilesystemID = $o->ID;
+				$f1->UserID = $userid;
+				$f1->Name = 'Code examples';
+				if( !$f1->Load() )
+				{
+					$f1->DateCreated = date( 'Y-m-d H:i:s' );
+					$f1->DateModified = $f1->DateCreated;
+					$f1->Save();
+				}
+				
+				// 6. Copy some wallpapers
+				$prefix = "resources/webclient/theme/wallpaper/";
+				$files = array(
+					"Autumn",
+					"CalmSea",
+					"Domestic",
+					"Field",
+					"Fire",
+					"Freedom",
+					"NightClouds",
+					"RedLeaf",
+					"TechRoad",
+					"TreeBranch",
+					"Bug",
+					"CityLights",
+					"EveningCalm",
+					"FireCones",
+					"FjordCoast",
+					"GroundedLeaves",
+					"Omen",
+					"SummerLeaf",
+					"TrailBlazing",
+					"WindyOcean"
+				);
+				
+				$wallpaperstring = '';
+				$wallpaperseperator = '';
+				foreach( $files as $file )
+				{
+					$fl = new dbIO( 'FSFile', $SqlDatabase );
+					$fl->Filename = $file . '.jpg';
+					$fl->FolderID = $f2->ID;
+					$fl->FilesystemID = $o->ID;
+					$fl->UserID = $userid;
+					if( !$fl->Load() )
+					{
+						$newname = $file;
+						while( file_exists( 'storage/' . $newname . '.jpg' ) )
+							$newname = $file . rand( 0, 999999 );
+						copy( $prefix . $file . '.jpg', 'storage/' . $newname . '.jpg' );
+
+						$fl->DiskFilename = $newname . '.jpg';
+						$fl->Filesize = filesize( $prefix . $file . '.jpg' );
+						$fl->DateCreated = date( 'Y-m-d H:i:s' );
+						$fl->DateModified = $fl->DateCreated;
+						$fl->Save();
+
+						$wallpaperstring .= $wallpaperseperator . '"Home:Wallpaper/' . $file . '.jpg"';
+						$wallpaperseperator = ',';
+					}
+				}
+				
+				// 7. Copy some other files
+				$prefix = "resources/webclient/examples/";
+				$files = array(
+				"ExampleWindow.jsx", "Template.html"
+				);
+				
+				foreach( $files as $filen )
+				{
+					list( $file, $ext ) = explode( '.', $filen );
+
+					$fl = new dbIO( 'FSFile', $SqlDatabase );
+					$fl->Filename = $file . '.' . $ext;
+					$fl->FolderID = $f1->ID;
+					$fl->FilesystemID = $o->ID;
+					$fl->UserID = $userid;
+					if( !$fl->Load() )
+					{
+						$newname = $file;
+						while( file_exists( 'storage/' . $newname . '.' . $ext ) )
+							$newname = $file . rand( 0, 999999 );
+						copy( $prefix . $file . '.' . $ext, 'storage/' . $newname . '.' . $ext );
+
+						$fl->DiskFilename = $newname . '.' . $ext;
+						$fl->Filesize = filesize( $prefix . $file . '.' . $ext );
+						$fl->DateCreated = date( 'Y-m-d H:i:s' );
+						$fl->DateModified = $fl->DateCreated;
+						$fl->Save();
+					}
+				}
+				
+				// 8. Fill Wallpaper app with settings and set default wallpaper
+				$wp = new dbIO( 'FSetting', $SqlDatabase );
+				$wp->UserID = $userid;
+				$wp->Type = 'system';
+				$wp->Key = 'imagesdoors';
+				if( !$wp->Load() )
+				{
+					$wp->Data = '['. $wallpaperstring .']';
+					$wp->Save();
+				}
+				
+				$wp = new dbIO( 'FSetting', $SqlDatabase );
+				$wp->UserID = $userid;
+				$wp->Type = 'system';
+				$wp->Key = 'wallpaperdoors';
+				if( !$wp->Load() )
+				{
+					$wp->Data = '"Home:Wallpaper/Freedom.jpg"';
+					$wp->Save();
+				}
+				
+				return true;
+			}
 		}
 	}
-	else
+	
+	return false;
+}
+
+function updateLanguages( $userid, $lang )
+{
+	$dbo = initDBO();
+	
+	// TODO: Find out what is going to be the main module call / fc call for first login and use a module or library class to call, like doors.
+	
+	if( $userid > 0 && trim( $lang ) )
 	{
-		die( 'ERROR! MySQL unavailable!' );
-	}
+		// Find right language for speech
+		$langs = [ 'en', 'fr', 'no', 'fi', 'pl' ]; //speechSynthesis.getVoices();
 	
+		$voice = false;
 	
-	
-	if( $uid )
-	{
-		// If we have a populated dock it's not firstime and the template will have to be updated manual through the users app ...
+		foreach( $langs as $v )
+		{
+			if( strtolower( trim( $v ) ) == strtolower( trim( $lang ) ) )
+			{
+				$voice = '{"spokenLanguage":"' . $lang . '","spokenAlternate":"' . $lang . '"}';
+			}
+		}
 		
-		if( ( $row = $dbo->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'' . $uid . '\'' ) ) )
+		if( !$voice )
+		{
+			// Default to en ...
+			
+			$langs = 'en';
+			
+			$voice = '{"spokenLanguage":"' . $lang . '","spokenAlternate":"' . $lang . '"}';
+		}
+		
+		$lo = new dbIO( 'FSetting', $dbo );
+		$lo->UserID = $userid;
+		$lo->Type = 'system';
+		$lo->Key = 'locale';
+		$lo->Load();
+		if( $lo->Data != $lang )
+		{
+			$lo->Data = $lang;
+			$lo->Save();
+	
+			if( $lo->ID > 0 )
+			{
+				$lo = new dbIO( 'FSetting', $dbo );
+				$lo->UserID = $userid;
+				$lo->Type = 'system';
+				$lo->Key = 'language';
+				$lo->Load();
+				$lo->Data = $voice;
+				$lo->Save();
+			
+				return true;
+			}
+		}
+		else
 		{
 			return true;
 		}
-		
-		if( $ug = $dbo->FetchObject( '
+	}
+	
+	return false;
+}
+
+function saveAvatar( $userid, $imgurl )
+{
+	$SqlDatabase = initDBO();
+	
+	// TODO: Find out what is going to be the main module call / fc call for first login and use a module or library class to call, like doors.
+	
+	// Save image blob as filename hash on user
+	if( $userid > 0 && $imgurl )
+	{
+		$u = new dbIO( 'FUser', $SqlDatabase );
+		$u->ID = $userid;
+		if( $u->Load() && $u->Image != md5( $imgurl ) )
+		{
+			
+			if( $binary = file_get_contents( trim( $imgurl ) ) )
+			{
+				
+				if( $imgdata = getimagesize( trim( $imgurl ) ) )
+				{
+				
+					if( $base64 = base64_encode( $binary ) )
+					{
+						$base64 = ( 'data:' . $imgdata['mime'] . ';base64,' . $base64 );
+						
+						if( !base64_encode( base64_decode( $base64, true ) ) === $base64 )
+						{
+							die( 'fail not base64 string ...' );
+						}
+				
+						$o = new dbIO( 'FSetting', $SqlDatabase );
+						$o->UserID = $userid;
+						$o->Type = 'system';
+						$o->Key = 'avatar';
+						$o->Load();
+						$o->Data = trim( $base64 );
+						$o->Save();
+				
+						if( $o->ID > 0 )
+						{
+							$u->Image = md5( $imgurl );
+							$u->Save();
+							
+							return true;
+						}
+				
+					}
+					
+				}
+			
+			}
+			
+		}
+	}
+	
+	return false;
+}
+
+function applySetup( $userid, $id )
+{
+	
+	$Config = parse_ini_file( SCRIPT_LOGIN_PATH . '/../../../cfg/cfg.ini', true );
+	
+	$SqlDatabase = initDBO();
+	
+	// TODO: Find out what is going to be the main module call / fc call for first login and use a module or library class to call, like doors.
+	
+	if( $userid > 0 && $id > 0 )
+	{
+		if( $ug = $SqlDatabase->FetchObject( '
 			SELECT 
-				g.*, s.Data 
+				g.*, s.Data
 			FROM 
 				`FUserGroup` g, 
 				`FSetting` s 
 			WHERE 
-					' . ( $setupid ? 'g.ID = ' . $setupid . ' AND ' : '' ) . ' 
-					g.Type = "Setup" 
+					g.ID = \'' . $id . '\' 
+				AND g.Type = "Setup" 
 				AND s.Type = "setup" 
 				AND s.Key = "usergroup" 
 				AND s.UserID = g.ID 
-			ORDER BY g.ID ASC 
-			LIMIT 1
 		' ) )
 		{
+			$debug = [];
 			
-			$setupid = $ug->ID;
-			
-			// TODO: Connect this to the main handling of user templates so it doesn't fall out of sync ...
+			$users = array( $userid );
 			
 			$ug->Data = ( $ug->Data ? json_decode( $ug->Data ) : false );
-					
 			
-			if( $ug->Data && $uid )
+			// Try to get wallpaper
+			$wallpaper = new dbIO( 'FMetaData', $SqlDatabase );
+			$wallpaper->DataID = $ug->ID;
+			$wallpaper->DataTable = 'FSetting';
+			$wallpaper->Key = 'UserTemplateSetupWallpaper';
+			$wallpaperContent = false;
+			if( !$wallpaper->Load() )
 			{
-				// Language ----------------------------------------------------------------------------------------
-
-				if( $ug->Data->language )
+				$wallpaper = false;
+			}
+			else
+			{
+				if( !( $wallpaperContent = file_get_contents( $wallpaper->ValueString ) ) )
 				{
-					// 1. Check and update language!
-
-					$lang = new dbIO( 'FSetting', $dbo );
-					$lang->UserID = $uid;
-					$lang->Type = 'system';
-					$lang->Key = 'locale';
-					$lang->Load();
-					$lang->Data = $ug->Data->language;
-					$lang->Save();
+					$wallpaper = false;
 				}
-
-				// Startup -----------------------------------------------------------------------------------------
-
-				if( isset( $ug->Data->startups ) )
+			}
+			
+			if( $users )
+			{
+				foreach( $users as $uid )
 				{
-					// 2. Check and update startup!
-
-					$star = new dbIO( 'FSetting', $dbo );
-					$star->UserID = $uid;
-					$star->Type = 'system';
-					$star->Key = 'startupsequence';
-					$star->Load();
-					$star->Data = ( $ug->Data->startups ? json_encode( $ug->Data->startups ) : '[]' );
-					$star->Save();
-				}
-
-				// Theme -------------------------------------------------------------------------------------------
-
-				if( $ug->Data->theme )
-				{
-					// 3. Check and update theme!
-
-					$them = new dbIO( 'FSetting', $dbo );
-					$them->UserID = $uid;
-					$them->Type = 'system';
-					$them->Key = 'theme';
-					$them->Load();
-					$them->Data = $ug->Data->theme;
-					$them->Save();
+					$debug[$uid] = new stdClass();
 					
-					// 3.b. Set 2 workspaces
-					$t = new dbIO( 'FSetting', $dbo );
-					$t->UserID = $uid;
-					$t->Type = 'system';
-					$t->Key = 'workspacecount';
-					$t->Load();
-					$t->Data = '2';
-					$t->Save();
-				}
-		
-				// Software ----------------------------------------------------------------------------------------
-		
-				if( !isset( $ug->Data->software ) )
-				{
-					$ug->Data->software = json_decode( '[["Dock","1"]]' );
-				}
-		
-				if( $ug->Data->software )
-				{
-					// 4. Check dock!
-			
-					// TODO: Perhaps we should add the current list of dock items if there is any included with the software list for adding ...
-
-					if( 1==1/* || !( $row = $dbo->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'' . $uid . '\'' ) )*/ )
-					{
-						$i = 0;
-						
-						foreach( $ug->Data->software as $r )
-						{
-							if( $r[0] )
-							{
-								// 5. Store applications
-	
-								if( $path = findInSearchPaths( $r[0] ) )
-								{
-									if( file_exists( $path . '/Config.conf' ) )
-									{
-										$f = file_get_contents( $path . '/Config.conf' );
-										// Path is dynamic!
-										$f = preg_replace( '/\"Path[^,]*?\,/i', '"Path": "' . $path . '/",', $f );
-		
-										// Store application!
-										$a = new dbIO( 'FApplication', $dbo );
-										$a->UserID = $uid;
-										$a->Name = $r[0];
-										if( !$a->Load() )
-										{
-											$a->DateInstalled = date( 'Y-m-d H:i:s' );
-											$a->Config = $f;
-											$a->Permissions = 'UGO';
-											$a->DateModified = $a->DateInstalled;
-											$a->Save();
-										}
-			
-										// 6. Setup dock items
-			
-										if( $r[1] )
-										{
-											$d = new dbIO( 'DockItem', $dbo );
-											$d->Application = $r[0];
-											$d->UserID = $uid;
-											$d->Parent = 0;
-											if( !$d->Load() )
-											{
-												$d->Workspace = 1;
-												//$d->ShortDescription = $r[1];
-												$d->SortOrder = $i++;
-												$d->Save();
-											}
-										}
+					// Make sure the user exists!
+					$theUser = new dbIO( 'FUser', $SqlDatabase );
+					$theUser->load( $uid );
+					if( !$theUser->ID ) continue;
 				
-										// 7. Pre-install applications
+					// Great, we have a user
+					if( $ug->Data && $uid )
+					{
+						// Language ----------------------------------------------------------------------------------------
 			
-										if( $ug->Data->preinstall != '0' && $a->ID > 0 )
-										{
-											if( $a->Config && ( $cf = json_decode( $a->Config ) ) )
-											{
-												if( isset( $cf->Permissions ) && $cf->Permissions )
-												{
-													$perms = [];
-													foreach( $cf->Permissions as $p )
-													{
-														$perms[] = [$p,(strtolower($p)=='door all'?'all':'')];
-													}
+						if( $ug->Data->language )
+						{
+							// 1. Check and update language!
+	
+							$lang = new dbIO( 'FSetting', $SqlDatabase );
+							$lang->UserID = $uid;
+							$lang->Type = 'system';
+							$lang->Key = 'locale';
+							$lang->Load();
+							$lang->Data = $ug->Data->language;
+							$lang->Save();
+							
+							$debug[$uid]->language = ( $lang->ID > 0 ? $lang->Data : false );
+						}
+		
+						// Wallpaper -----------------------------------------------
+						// TODO: Support other filesystems than SQLDrive! (right now, not possible!)
 					
-													// TODO: Get this from Config.ini in the future, atm set nothing
-													$da = new stdClass();
-													$da->domain = '';
+						if( $wallpaper )
+						{
+							$debug[$uid]->wallpaper = new stdClass();
+							
+							$fnam = $wallpaper->ValueString;
+							$fnam = explode( '/', $fnam );
+							$fnam = end( $fnam );
+							$ext  = explode( '.', $fnam );
+							$fnam = $ext[0];
+							$ext  = $ext[1];
+							
+							$debug[$uid]->wallpaper->filename = $wallpaper->ValueString;
+							
+							$f = new dbIO( 'Filesystem', $SqlDatabase );
+							$f->UserID = $uid;
+							$f->Name   = 'Home';
+							$f->Type   = 'SQLDrive';
+							$f->Server = 'localhost';
+							if( !$f->Load() )
+							{
+								$f->ShortDescription = 'My data volume';
+								$f->Mounted = '1';
+							
+								// TODO: Enable this when we have figured out a better way to handle firstlogin.defaults.php if Home: is created it fucks up the first login procedure ...
+							
+								//$f->Save();
+							
+								$f->ID = 0;
+							}
 						
-													// Collect permissions in a string
-													$app = new dbIO( 'FUserApplication', $dbo );
-													$app->ApplicationID = $a->ID;
-													$app->UserID = $a->UserID;
-													if( !$app->Load() )
+							if( $f->ID > 0 && $fnam && $ext && $theUser->Name )
+							{
+								// Make sure we have wallpaper folder
+								$fl = new dbIO( 'FSFolder', $SqlDatabase );
+								$fl->FilesystemID = $f->ID;
+								$fl->UserID = $uid;
+								$fl->Name = 'Wallpaper';
+								$fl->FolderID = 0;
+								if( !$fl->Load() )
+								{
+									$fl->DateCreated = date( 'Y-m-d H:i:s' );
+									$fl->DateModified = $fl->DateCreated;
+								
+									$fl->Save();
+								}
+								
+								// Find disk filename
+								$uname = str_replace( array( '..', '/', ' ' ), '_', $theUser->Name );
+								if( !file_exists( $Config->FCUpload . $uname ) )
+								{
+									mkdir( $Config->FCUpload . $uname );
+								}
+							
+								while( file_exists( $Config->FCUpload . $uname . '/' . $fnam . '.' . $ext ) )
+								{
+									$fnam = ( $fnam . rand( 0, 999999 ) );
+								}
+								
+								
+								$fi = new dbIO( 'FSFile', $SqlDatabase );
+								$fi->Filename = ( 'default_wallpaper_' . $f->ID . '_' . $uid . '.jpg' );
+								$fi->FolderID = $fl->ID;
+								$fi->FilesystemID = $f->ID;
+								$fi->UserID = $uid;
+								if( $fi->Load() && $fi->DiskFilename )
+								{
+									if( file_exists( $Config->FCUpload . $uname . '/' . $fi->DiskFilename ) )
+									{
+										unlink( $Config->FCUpload . $uname . '/' . $fi->DiskFilename );
+									}
+								}
+								
+								
+								if( $fp = fopen( $Config->FCUpload . $uname . '/' . $fnam . '.' . $ext, 'w+' ) )
+								{
+									fwrite( $fp, $wallpaperContent );
+									fclose( $fp );
+									
+									$debug[$uid]->wallpaper->diskfilename = ( $uname . '/' . $fnam . '.' . $ext );
+									$debug[$uid]->wallpaper->content = ( $wallpaperContent ? true : false );
+									
+									$fi->DiskFilename = ( $uname . '/' . $fnam . '.' . $ext );
+									$fi->Filesize = filesize( $wallpaper->ValueString );
+									$fi->DateCreated = date( 'Y-m-d H:i:s' );
+									$fi->DateModified = $fi->DateCreated;
+									$fi->Save();
+								
+									$debug[$uid]->wallpaper->id = ( $fi->ID > 0 ? $fi->ID : false );
+									
+									// Fill Wallpaper app with settings and set default wallpaper
+									$wp = new dbIO( 'FSetting', $SqlDatabase );
+									$wp->UserID = $uid;
+									$wp->Type = 'system';
+									$wp->Key = 'imagesdoors';
+									if( $wp->Load() && $wp->Data )
+									{
+											
+											$data = str_replace( [ '"["', '"]"' ], [ '["', '"]' ], trim( $wp->Data ) );
+											
+											if( $data && !strstr( $data, '"Home:Wallpaper/' . $fi->Filename . '"' ) )
+											{
+												if( $json = json_decode( $data, true ) )
+												{
+													$json[] = ( 'Home:Wallpaper/' . $fi->Filename );
+													
+													if( $data = json_encode( $json ) )
 													{
-														$app->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . $a->ID );
-														$app->Permissions = json_encode( $perms );
-														$app->Data = json_encode( $da );
-														$app->Save();
+														$wp->Data = stripslashes( '"' . $data . '"' );
+														$wp->Save();
+													}
+													
+													$debug[$uid]->wallpaper->imagesdoors = ( $wp->ID > 0 ? $wp->Data : false );
+													
+													// Set the wallpaper in config
+													$s = new dbIO( 'FSetting', $SqlDatabase );
+													$s->UserID = $uid;
+													$s->Type = 'system';
+													$s->Key = 'wallpaperdoors';
+													$s->Load();
+													$s->Data = '"Home:Wallpaper/' . $fi->Filename . '"';
+													$s->Save();
+													
+													$debug[$uid]->wallpaper->wallpaperdoors = ( $s->ID > 0 ? $s->Data : false );
+												}
+											}
+											
+									}
+									else
+									{
+										
+										$json = [ 'Home:Wallpaper/' . $fi->Filename ];
+
+										if( $data = json_encode( $json ) )
+										{
+											$wp->Data = stripslashes( '"' . $data . '"' );
+											$wp->Save();
+										}
+									
+										$debug[$uid]->wallpaper->imagesdoors = ( $wp->ID > 0 ? $wp->Data : false );
+										
+										// Set the wallpaper in config
+										$s = new dbIO( 'FSetting', $SqlDatabase );
+										$s->UserID = $uid;
+										$s->Type = 'system';
+										$s->Key = 'wallpaperdoors';
+										$s->Load();
+										$s->Data = '"Home:Wallpaper/' . $fi->Filename . '"';
+										$s->Save();
+								
+										$debug[$uid]->wallpaper->wallpaperdoors = ( $s->ID > 0 ? $s->Data : false );
+										
+									}
+								
+								}
+							
+							
+							}
+						}
+						
+						// Startup -----------------------------------------------------------------------------------------
+		
+						if( isset( $ug->Data->startups ) )
+						{
+							// 2. Check and update startup!
+	
+							$star = new dbIO( 'FSetting', $SqlDatabase );
+							$star->UserID = $uid;
+							$star->Type = 'system';
+							$star->Key = 'startupsequence';
+							$star->Load();
+							$star->Data = ( $ug->Data->startups ? json_encode( $ug->Data->startups ) : '[]' );
+							$star->Save();
+							
+							$debug[$uid]->startup = ( $star->ID > 0 ? $star->Data : false );
+						}
+		
+						// Theme -------------------------------------------------------------------------------------------
+		
+						if( $ug->Data->theme )
+						{
+							// 3. Check and update theme!
+	
+							$them = new dbIO( 'FSetting', $SqlDatabase );
+							$them->UserID = $uid;
+							$them->Type = 'system';
+							$them->Key = 'theme';
+							$them->Load();
+							$them->Data = $ug->Data->theme;
+							$them->Save();
+							
+							$debug[$uid]->theme = ( $them->ID > 0 ? $them->Data : false );
+						}
+					
+						if( $ug->Data->themeconfig && $ug->Data->theme )
+						{
+							// 3. Check and update look and feel config!
+						
+							$them = new dbIO( 'FSetting', $SqlDatabase );
+							$them->UserID = $uid;
+							$them->Type = 'system';
+							$them->Key = 'themedata_' . strtolower( $ug->Data->theme );
+							$them->Load();
+							$them->Data = json_encode( $ug->Data->themeconfig );
+							$them->Save(); 
+							
+							$debug[$uid]->themedata = ( $them->ID > 0 ? $them->Data : false );
+						}
+					
+						if( $ug->Data->workspacecount )
+						{
+							// 3. Check and update look and feel workspace numbers!
+						
+							$them = new dbIO( 'FSetting', $SqlDatabase );
+							$them->UserID = $uid;
+							$them->Type = 'system';
+							$them->Key = 'workspacecount';
+							$them->Load();
+							$them->Data = $ug->Data->workspacecount;
+							$them->Save(); 
+							
+							$debug[$uid]->workspacecount = ( $them->ID > 0 ? $them->Data : false );
+						}
+					
+						// Software ----------------------------------------------------------------------------------------
+					
+						if( !isset( $ug->Data->software ) )
+						{
+							$ug->Data->software = json_decode( '[["Dock","1"]]' );
+						}
+					
+						if( $ug->Data->software )
+						{
+							// 4. Check dock!
+						
+							// TODO: Perhaps we should add the current list of dock items if there is any included with the software list for adding ...
+	
+							if( 1==1 || !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'' . $uid . '\'' ) ) )
+							{
+								$i = 0;
+		
+								foreach( $ug->Data->software as $r )
+								{
+									if( $r[0] )
+									{
+										// 5. Store applications
+				
+										if( $path = _findInSearchPaths( $r[0] ) )
+										{
+											if( file_exists( $path . '/Config.conf' ) )
+											{
+												$f = file_get_contents( $path . '/Config.conf' );
+												// Path is dynamic!
+												$f = preg_replace( '/\"Path[^,]*?\,/i', '"Path": "' . $path . '/",', $f );
+					
+												// Store application!
+												$a = new dbIO( 'FApplication', $SqlDatabase );
+												$a->UserID = $uid;
+												$a->Name = $r[0];
+												if( !$a->Load() )
+												{
+													$a->DateInstalled = date( 'Y-m-d H:i:s' );
+													$a->Config = $f;
+													$a->Permissions = 'UGO';
+													$a->DateModified = $a->DateInstalled;
+													$a->Save();
+												}
+						
+												// 6. Setup dock items
+						
+												if( $r[1] )
+												{
+													$d = new dbIO( 'DockItem', $SqlDatabase );
+													$d->Application = $r[0];
+													$d->UserID = $uid;
+													$d->Parent = 0;
+													if( !$d->Load() )
+													{
+														//$d->ShortDescription = $r[1];
+														$d->SortOrder = $i++;
+														$d->Save();
+													}
+												}
+							
+												// 7. Pre-install applications
+						
+												if( $ug->Data->preinstall != '0' && $a->ID > 0 )
+												{
+													if( $a->Config && ( $cf = json_decode( $a->Config ) ) )
+													{
+														if( isset( $cf->Permissions ) && $cf->Permissions )
+														{
+															$perms = [];
+															foreach( $cf->Permissions as $p )
+															{
+																$perms[] = [$p,(strtolower($p)=='door all'?'all':'')];
+															}
+								
+															// TODO: Get this from Config.ini in the future, atm set nothing
+															$da = new stdClass();
+															$da->domain = '';
+									
+															// Collect permissions in a string
+															$app = new dbIO( 'FUserApplication', $SqlDatabase );
+															$app->ApplicationID = $a->ID;
+															$app->UserID = $a->UserID;
+															if( !$app->Load() )
+															{
+																$app->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . $a->ID );
+																$app->Permissions = json_encode( $perms );
+																$app->Data = json_encode( $da );
+																$app->Save();
+															}
+														}
 													}
 												}
 											}
@@ -1478,64 +1638,102 @@ function firstLoginSetup( $setupid, $uid )
 							}
 						}
 					}
-				}
-			}
-			
-			
-			
-			if( $uid )
-			{
-				if( $dels = $dbo->FetchObjects( $q = '
-					SELECT 
-						g.* 
-					FROM 
-						`FUserGroup` g, 
-						`FUserToGroup` ug 
-					WHERE 
-							g.Type = "Setup" 
-						AND ug.UserGroupID = g.ID 
-						AND ug.UserID = \'' . $uid . '\' 
-					ORDER BY 
-						g.ID ASC 
-				' ) )
-				{
-
-					foreach( $dels as $del )
+				
+					
+				
+					if( $uid )
 					{
-						if( $del->ID != $setupid )
+						if( $dels = $SqlDatabase->FetchObjects( $q = '
+							SELECT 
+								g.* 
+							FROM 
+								`FUserGroup` g, 
+								`FUserToGroup` ug 
+							WHERE 
+									g.Type = "Setup" 
+								AND ug.UserGroupID = g.ID 
+								AND ug.UserID = \'' . $uid . '\' 
+							ORDER BY 
+								g.ID ASC 
+						' ) )
 						{
-							$dbo->Query( 'DELETE FROM FUserToGroup WHERE UserID = \'' . $uid . '\' AND UserGroupID = \'' . $del->ID . '\'' );
+		
+							foreach( $dels as $del )
+							{
+								if( $del->ID != $args->args->id )
+								{
+									$SqlDatabase->Query( 'DELETE FROM FUserToGroup WHERE UserID = \'' . $uid . '\' AND UserGroupID = \'' . $del->ID . '\'' );
+								}
+							}
+						}
+		
+						if( $SqlDatabase->FetchObject( '
+							SELECT 
+								ug.* 
+							FROM 
+								`FUserToGroup` ug 
+							WHERE 
+									ug.UserGroupID = \'' . $ug->ID . '\' 
+								AND ug.UserID = \'' . $uid . '\' 
+						' ) )
+						{
+							$SqlDatabase->query( '
+								UPDATE FUserToGroup SET UserGroupID = \'' . $ug->ID . '\' 
+								WHERE UserGroupID = \'' . $ug->ID . '\' AND UserID = \'' . $uid . '\' 
+							' );
+						}
+						else
+						{						
+							$SqlDatabase->query( 'INSERT INTO FUserToGroup ( UserID, UserGroupID ) VALUES ( \'' . $uid . '\', \'' . $ug->ID . '\' )' );
 						}
 					}
 				}
-
-				if( $dbo->FetchObject( '
-					SELECT 
-						ug.* 
-					FROM 
-						`FUserToGroup` ug 
-					WHERE 
-							ug.UserGroupID = \'' . $ug->ID . '\' 
-						AND ug.UserID = \'' . $uid . '\' 
-				' ) )
+			}
+			
+			return ( $ug->Data ? json_encode( [ $ug->Data, $debug ] ) : 'false' );
+		}
+	}
+	else if( $userid > 0 && ( !$id || $id == 0 ) )
+	{
+		
+		$users = array( $userid );	
+	
+		if( $users )
+		{
+			foreach( $users as $uid )
+			{
+				if( $uid )
 				{
-					$dbo->query( '
-						UPDATE FUserToGroup SET UserGroupID = \'' . $ug->ID . '\' 
-						WHERE UserGroupID = \'' . $ug->ID . '\' AND UserID = \'' . $uid . '\' 
-					' );
-				}
-				else
-				{
-					$dbo->query( 'INSERT INTO FUserToGroup ( UserID, UserGroupID ) VALUES ( \'' . $uid . '\', \'' . $ug->ID . '\' )' );
+					if( $dels = $SqlDatabase->FetchObjects( $q = '
+						SELECT 
+							g.* 
+						FROM 
+							`FUserGroup` g, 
+							`FUserToGroup` ug 
+						WHERE 
+								g.Type = "Setup" 
+							AND ug.UserGroupID = g.ID 
+							AND ug.UserID = \'' . $uid . '\' 
+						ORDER BY 
+							g.ID ASC 
+					' ) )
+					{
+						foreach( $dels as $del )
+						{
+							$SqlDatabase->Query( 'DELETE FROM FUserToGroup WHERE UserID = \'' . $uid . '\' AND UserGroupID = \'' . $del->ID . '\'' );
+						}
+					}
 				}
 			}
 			
-		
-			return ( $ug->Data ? json_encode( $ug->Data ) : false );
+			return '[]';
 		}
+		
 	}
 	
 	return false;
 }
+
+
 
 ?>
