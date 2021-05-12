@@ -332,6 +332,9 @@ SystemBase *SystemInit( void )
 	
 	l->sl_RemoveOldSessionTimeout = 0;
 	
+	// use deflate compression as default for http calls
+	l->l_HttpCompressionContent |= HTTP_COMPRESSION_DEFLATE;
+	
 	if( plib != NULL && plib->Open != NULL )
 	{
 		char *ptr = getenv("FRIEND_HOME");
@@ -444,6 +447,11 @@ SystemBase *SystemInit( void )
 				if( strstr( tptr, "bzip" ) != NULL )
 				{
 					l->l_HttpCompressionContent |= HTTP_COMPRESSION_BZIP;
+				}
+				
+				if( strstr( tptr, "none" ) != NULL )
+				{
+					l->l_HttpCompressionContent = 0;
 				}
 			}
 			
