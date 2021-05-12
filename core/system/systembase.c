@@ -59,6 +59,7 @@
 #include <network/websocket_client.h>
 #include <network/protocol_websocket.h>
 #include <util/session_id.h>
+#include <db/autoupdate.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -149,6 +150,7 @@ SystemBase *SystemInit( void )
 	l->l_SocketISSL.SocketWaitRead = SocketWaitReadSSL;
 	l->l_SocketISSL.SocketReadTillEnd = SocketReadTillEndSSL;
 	l->l_SocketISSL.SocketWrite = SocketWriteSSL;
+	l->l_SocketISSL.SocketWriteCompression = SocketWriteCompressionSSL;
 	l->l_SocketISSL.SocketDelete = SocketDeleteSSL;
 	l->l_SocketISSL.SocketReadPackage = SocketReadPackageSSL;
 
@@ -162,6 +164,7 @@ SystemBase *SystemInit( void )
 	l->l_SocketINOSSL.SocketWaitRead = SocketWaitReadNOSSL;
 	l->l_SocketINOSSL.SocketReadTillEnd = SocketReadTillEndNOSSL;
 	l->l_SocketINOSSL.SocketWrite = SocketWriteNOSSL;
+	l->l_SocketINOSSL.SocketWriteCompression = SocketWriteCompressionNOSSL;
 	l->l_SocketINOSSL.SocketDelete = SocketDeleteNOSSL;
 	l->l_SocketINOSSL.SocketReadPackage = SocketReadPackageNOSSL;
 
@@ -428,6 +431,22 @@ SystemBase *SystemInit( void )
 				}
 			}
 			
+			// http compression
+
+			tptr  = plib->ReadStringNCS( prop, "core:http_compression", NULL );
+			if( tptr != NULL )
+			{
+				if( strstr( tptr, "deflate" ) != NULL )
+				{
+					l->l_HttpCompressionContent |= HTTP_COMPRESSION_DEFLATE;
+				}
+				
+				if( strstr( tptr, "bzip" ) != NULL )
+				{
+					l->l_HttpCompressionContent |= HTTP_COMPRESSION_BZIP;
+				}
+			}
+			
 			l->sl_WorkersNumber = plib->ReadIntNCS( prop, "Core:Workers", WORKERS_MAX );
 			if( l->sl_WorkersNumber < WORKERS_MIN )
 			{
@@ -550,7 +569,7 @@ SystemBase *SystemInit( void )
 	
 	if( skipDBUpdate == FALSE )
 	{
-		CheckAndUpdateDB( l );
+		CheckAndUpdateDB( l, UPDATE_DB_TYPE_GLOBAL );
 	}
 	else
 	{
@@ -558,6 +577,10 @@ SystemBase *SystemInit( void )
 		Log( FLOG_INFO, "---------Autoupdatedatabase process skipped---------\n");
 		Log( FLOG_INFO, "----------------------------------------------------\n");
 	}
+	
+	
+	
+	
 	
 	SQLLibrary *lsqllib  = l->LibrarySQLGet( l );
 	if( lsqllib != NULL )
@@ -1719,7 +1742,7 @@ int SystemInitExternal( SystemBase *l )
 			
 			if(  (timestamp - l->sl_Sentinel->s_User->u_LoggedTime) > l->sl_RemoveSessionsAfterTime )
 			{
-				UserRegenerateSessionID( l->sl_Sentinel->s_User, NULL );
+				UserRegenerateSessionID( l, l->sl_Sentinel->s_User, NULL );
 			}
 		}
 		
@@ -1790,257 +1813,6 @@ int SystemInitExternal( SystemBase *l )
 	DEBUG("[SystembaseInitExternal]APNS init\n" );
 	
 	return 0;
-}
-
-//
-// we need structure which will hold name of scripts and their numbers
-//
-
-typedef struct DBUpdateEntry
-{
-	int number;
-	char name[ 512 ];
-}DBUpdateEntry;
-
-/**
- * Check and Update FC database
- *
- * @param l pointer to SystemBase
- */
-
-void CheckAndUpdateDB( struct SystemBase *l )
-{
-	Log( FLOG_INFO, "----------------------------------------------------\n");
-	Log( FLOG_INFO, "---------Autoupdatedatabase process start-----------\n");
-	Log( FLOG_INFO, "----------------------------------------------------\n");
-	
-	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-	if( sqllib != NULL )
-	{
-		int startUpdatePosition = 0;
-		int orgStartUpdateposition = -1;
-		
-		char query[ 1024 ];
-		snprintf( query, sizeof(query), "SELECT * FROM `FGlobalVariables` WHERE `Key`='DB_VERSION'" );
-		
-		void *res = sqllib->Query( sqllib, query );
-		if( res != NULL )
-		{
-			char **row;
-			while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
-			{
-				// Id, Key, Value, Comment, date
-			
-				DEBUG("[SystemBase] \tFound database entry-> ID '%s' Key '%s', Value '%s', Comment '%s', Date '%s'\n", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ] );
-			
-				orgStartUpdateposition = startUpdatePosition = atoi( row[ 2 ] );
-			}
-			sqllib->FreeResult( sqllib, res );
-		}
-		
-		DEBUG("[SystemBase] CheckAndUpdateDB: %d\n", startUpdatePosition );
-		
-		DIR *dp = NULL;
-		struct dirent *dptr;
-		int numberOfFiles = 0;
-		
-		DEBUG("[SystemBase] UpdateDB found directory\n");
-		
-		if( ( dp = opendir( "sqlupdatescripts" ) ) != NULL )
-		{
-			while( ( dptr = readdir( dp ) ) != NULL )
-			{
-				if( strcmp( dptr->d_name, "." ) == 0 || strcmp( dptr->d_name, ".." ) == 0 )
-				{
-					continue;
-				}
-				
-				numberOfFiles++;
-			}
-			closedir( dp );
-		}
-		
-		DBUpdateEntry *dbentries;
-		
-		if( ( dbentries = FCalloc( numberOfFiles, sizeof(DBUpdateEntry) ) ) != NULL )
-		{
-			int position = 0;
-			
-			if( ( dp = opendir( "sqlupdatescripts" ) ) != NULL )
-			{
-				DEBUG("[SystemBase] UpdateDB found directory 1\n");
-				while( ( dptr = readdir( dp ) ) != NULL )
-				{
-					char number[ 512 ];
-					unsigned int i;
-				
-					if( strcmp( dptr->d_name, "." ) == 0 || strcmp( dptr->d_name, ".." ) == 0 )
-					{
-						continue;
-					}
-				
-					DEBUG("[SystemBase] get number from name\n");
-					// we must extract number from filename
-					strcpy( number, dptr->d_name );
-					for( i=0 ; i < strlen( number ) ; i++ )
-					{
-						if( number[ i ] == '_' )
-						{
-							number[ i ] = 0;
-							break;
-						}
-					}
-					
-					DEBUG("[SystemBase] number found: '%s'\n", number );
-					
-					dbentries[ position ].number = atoi( number );
-					if( dbentries[ position ].number > startUpdatePosition )
-					{
-						DEBUG("[SystemBase] Found script with number %d, script added: %s\n", dbentries[ position ].number, dptr->d_name );
-						strcpy( dbentries[ position ].name, dptr->d_name );
-						position++;
-					}
-					else
-					{
-						DEBUG("[SystemBase] !!!! dbentries[ position ].number <= startUpdatePosition\n");
-					}
-				}
-				closedir( dp );
-			}
-			
-			DEBUG("[SystemBase] Directories parsed startUpdatePosition: %d position %d\n", startUpdatePosition, position );
-			
-			// we must run script which holds changes
-			startUpdatePosition++;
-			char *lastSQLname = NULL;
-			int error = 0;
-			// now FC will update DB script after script
-			int i;
-			for( i=0 ; i < position ; i++ )
-			{
-				int j;
-				for( j=0; j < position ; j++ )
-				{
-					DEBUG("[SystemBase] Checking numbers, start: %d actual: %d\n", startUpdatePosition, dbentries[j].number );
-					if( startUpdatePosition == dbentries[j].number )
-					{
-						FILE *fp;
-						char scriptfname[ 712 ];
-						snprintf( scriptfname, sizeof( scriptfname ), "sqlupdatescripts/%s", dbentries[j].name );
-						DEBUG("[SystemBase] Found script with ID %d\n", startUpdatePosition );
-						
-						if( ( fp = fopen( scriptfname, "rb" ) ) != NULL )
-						{
-							fseek( fp, 0, SEEK_END );
-							long fsize = ftell( fp );
-							fseek( fp, 0, SEEK_SET );
-							
-							char *script;
-							if( ( script = FCalloc( fsize+1, sizeof(char) ) ) != NULL )
-							{
-								int readbytes = 0;
-								if( ( readbytes = fread( script, fsize, 1, fp ) ) > 0 )
-								{
-									char *command = script;
-									int i;
-
-									for( i=1 ; i < fsize ; i++ )
-									{
-										if( strncmp( &(script[ i ]), "----script----" , 14 ) == 0 )
-										{
-											char *start = &(script[ i ]);
-											char *end = strstr( start, "----script-end----" );
-											int len = (end - start)-1;
-											i += len;
-											
-											start += 14;
-											*end = 0;
-											
-											DEBUG("[SystemBase] Running script1 : %s from file: %s on database\n", start, scriptfname );
-											
-											if( sqllib->QueryWithoutResults( sqllib, start ) != 0 )
-											{
-												error = 1;
-											}
-											else
-											{
-												lastSQLname = dbentries[ j ].name;
-											}
-											
-											command = &script[ i+1 ];
-										}
-										else
-										{
-											if( script[ i ] == ';' )
-											{
-												script[ i ] = 0;
-												DEBUG("[SystemBase] Running script: %s from file: %s on database\n", command, scriptfname ); 
-												if( strlen( command) > 10 )
-												{
-													if( sqllib->QueryWithoutResults( sqllib, command ) != 0 )
-													{
-														error = 1;
-													}
-													else
-													{
-														lastSQLname = dbentries[j].name;
-													}
-												}
-												command = &script[ i+1 ];
-											}
-										}
-									}
-									// error: Duplicate column name
-									DEBUG("[SystemBase] Running script : %s from file: %s on database\n", command, scriptfname ); 
-									if( strlen( command ) > 10 )
-									{
-										if( sqllib->QueryWithoutResults( sqllib, command ) != 0 )
-										{
-											error = 1;
-										}
-										else
-										{
-											lastSQLname = dbentries[j].name;
-										}
-									}
-								}
-								FFree( script );
-							}
-							fclose( fp );
-						}
-						break;
-					}
-					
-					if( error == 1 )
-					{
-						break;
-					}
-				}
-				
-				if( error == 1 )
-				{
-					break;
-				}
-				startUpdatePosition++;
-			}
-			
-			// we must update which update was last
-			startUpdatePosition--;
-			
-			if( orgStartUpdateposition != startUpdatePosition && lastSQLname != NULL )
-			{
-				DEBUG("[SystemBase] Last script will be updated in DB\n");
-				snprintf( query, sizeof(query), "UPDATE `FGlobalVariables` SET `Value`='%d', `Date`='%lu', `Comment`='%s' WHERE `Key`='DB_VERSION'", startUpdatePosition, time(NULL), lastSQLname );
-				sqllib->QueryWithoutResults( sqllib, query );
-			}
-			FFree( dbentries );
-		}
-		l->LibrarySQLDrop( l, sqllib );
-	}
-	
-	Log( FLOG_INFO, "----------------------------------------------------\n");
-	Log( FLOG_INFO, "---------Autoupdatedatabase process END-------------\n");
-	Log( FLOG_INFO, "----------------------------------------------------\n");
 }
 
 
@@ -2214,9 +1986,9 @@ AND LOWER(f.Name) = LOWER('%s')",
 				}
 				else
 				{
-					sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "UPDATE `Filesystem` SET Mounted=0 WHERE ID=%lu", id );
+					//sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "UPDATE `Filesystem` SET Mounted=0 WHERE ID=%lu", id );
 					
-					sqllib->QueryWithoutResults( sqllib, temptext );
+					//sqllib->QueryWithoutResults( sqllib, temptext );
 				}
 			}
 			else if( device != NULL )

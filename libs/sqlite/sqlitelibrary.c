@@ -847,6 +847,21 @@ void DeleteWhere( struct SQLLibrary *l, FULONG *descr, char *where )
 }
 
 /**
+ * Return last error
+ *
+ * @param l pointer to mysql.library structure
+ * @return error string or null
+ */
+const char *GetLastError( struct SQLLibrary *l )
+{
+	if( l != NULL &&  l->con.sql_Con != NULL )
+	{
+
+	}
+	return NULL;
+}
+
+/**
  * Return number of entries in database
  *
  * @param l pointer to mysql.library structure
@@ -1896,10 +1911,12 @@ void *libInit( void *sb )
 	l->NumberOfRecords = dlsym( l->l_Handle, "NumberOfRecords");
 	l->NumberOfRecordsCustomQuery = dlsym( l->l_Handle, "NumberOfRecordsCustomQuery");
 	l->NumberOfRows = dlsym( l->l_Handle, "NumberOfRows");
+	l->GetLastError = dlsym( l->l_Handle, "GetLastError");
 	l->FetchRow = dlsym ( l->l_Handle, "FetchRow");
 	l->FreeResult = dlsym ( l->l_Handle, "FreeResult");
 	l->DeleteWhere = dlsym ( l->l_Handle, "DeleteWhere");
 	l->QueryWithoutResults = dlsym ( l->l_Handle, "QueryWithoutResults");
+	l->MakeEscapedString = dlsym ( l->l_Handle, "MakeEscapedString");
 	l->GetStatus = dlsym ( l->l_Handle, "GetStatus");
 	l->SetOption = dlsym ( l->l_Handle, "SetOption");
 	l->SNPrintF = SNPrintF;

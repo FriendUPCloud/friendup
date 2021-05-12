@@ -968,7 +968,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 				sb->AuthModuleDrop( sb, ulib );
 			
 				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", sb->sl_Dictionary->d_Msg[DICT_BAD_ERROR_OR_PASSWORD] , DICT_BAD_ERROR_OR_PASSWORD );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, sb->sl_Dictionary->d_Msg[DICT_BAD_ERROR_OR_PASSWORD] , DICT_BAD_ERROR_OR_PASSWORD );
 				HttpAddTextContent( resp, dictmsgbuf );
 
 				FFree( path );
@@ -1005,7 +1005,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		char dictmsgbuf[ 256 ];
 		char dictmsgbuf1[ 196 ];
 		snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), sb->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "devname, sessionid" );
-		snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+		snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 		HttpAddTextContent( resp, dictmsgbuf );
 
 		goto end;
@@ -1105,7 +1105,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 			char dictmsgbuf[ 256 ];
 			char dictmsgbuf1[ 196 ];
 			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), sb->sl_Dictionary->d_Msg[DICT_ACCOUNT_BLOCKED], (tm_now + sb->sl_ActiveAuthModule->am_BlockAccountTimeout) );
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_ACCOUNT_BLOCKED );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_ACCOUNT_BLOCKED );
 			HttpAddTextContent( resp, dictmsgbuf );
 			//HttpAddTextContent( resp, "ok<!--separate-->{\"response\":\"your account is blocked!\"}" );
 		
@@ -1128,7 +1128,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 				FERROR("WEBDAV Wrong user or password '%s'!\n", usr->u_Name );
 		
 				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", sb->sl_Dictionary->d_Msg[DICT_BAD_ERROR_OR_PASSWORD] , DICT_BAD_ERROR_OR_PASSWORD );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, sb->sl_Dictionary->d_Msg[DICT_BAD_ERROR_OR_PASSWORD] , DICT_BAD_ERROR_OR_PASSWORD );
 				HttpAddTextContent( resp, dictmsgbuf );
 				//HttpAddTextContent( resp, "ok<!--separate-->{\"response\":\"user or password is wrong\"}" );
 		
