@@ -98,7 +98,7 @@ function renderReplacements( $template )
 {
 	$welcome = 'Login to your workspace';
 	
-	$publickey = '';
+	$publickey = ''; $redirect_uri = ''; $google_client_id = '';
 	
 	if( $keys = getServerKeys() )
 	{
@@ -111,25 +111,36 @@ function renderReplacements( $template )
 	$server = getServerSettings(  );
 	$conf = parse_ini_file( SCRIPT_LOGIN_PATH . '/../../../cfg/cfg.ini', true );
 	
-	if( !isset( $conf['GoogleDriveAPI']['client_id'] ) )
+	if( !isset( $conf['GoogleDriveAPI']['client_id'] ) && isset( $conf['GoogleAPI']['client_id'] ) )
 	{
 		die( 'ERROR! Google API: client_id is missing in cfg!' );
 	}
-	
-	/*if( $server && $server['googledrive'] && $server['googledrive']->redirect_uri )
+	else
 	{
-		$redirect_uri = $server['googledrive']->redirect_uri;
+		if( $conf['GoogleDriveAPI']['client_id'] )
+		{
+			$google_client_id = $conf['GoogleDriveAPI']['client_id'];
+		}
+		if( $conf['GoogleAPI']['client_id'] )
+		{
+			$google_client_id = $conf['GoogleAPI']['client_id'];
+		}
+	}
+	
+	if( $server && $server->redirect_uri )
+	{
+		$redirect_uri = $server->redirect_uri;
 	}
 	else
-	{*/
+	{
 		$redirect_uri  = ( $conf['Core']['SSLEnable'] ? 'https://' : 'http://' ) . $conf['FriendCore']['fchost'] . ( $conf['FriendCore']['port'] ? ':' . $conf['FriendCore']['port'] : '' );
 		$redirect_uri .= '/loginprompt/oauth';
-	/*}*/
+	}
 	
 	
 	
 	$finds = [
-		'{redirect_uri}',
+		'{oauth2_redirect_uri}',
 		'{google-signin-client_id}',
 		'{scriptpath}',
 		'{welcome}',
@@ -137,7 +148,7 @@ function renderReplacements( $template )
 	];
 	$replacements = [
 			$redirect_uri,
-			$conf['GoogleDriveAPI']['client_id'],
+			$google_client_id,
 			$GLOBALS['request_path'],
 			$welcome,
 			$publickey
@@ -297,8 +308,8 @@ function getServerSettings(  )
 		SELECT * FROM FSetting s
 		WHERE
 			s.UserID = \'-1\'
-		AND s.Type = \'system\'
-		AND s.Key = \'googledrive\'
+		AND s.Type = \'google\'
+		AND s.Key = \'settings\'
 		ORDER BY s.Key ASC
 	' ) )
 	{
@@ -445,7 +456,7 @@ function verifyFriendAuth( $json, $deviceid = '' )
 	
 	$error = false; $data = false;
 	
-	if( $json && $json->username && $json->password )
+	if( $json && $json->username && $json->password && $json->nonce )
 	{
 		$dbo = initDBO();
 		
@@ -457,78 +468,121 @@ function verifyFriendAuth( $json, $deviceid = '' )
 		' ) )
 		{
 			
-			if( $creds->Status == 2 )
+			if( $verify = $dbo->fetchObject( '
+				SELECT 
+					fm.DataID AS UserID, fm.ValueString AS Code 
+				FROM 
+					FMetaData fm 
+				WHERE 
+						fm.Key       = "VerificationCode" 
+					AND fm.DataID    = \'' . $creds->ID . '\' 
+					AND fm.DataTable = "FUser" 
+				ORDER BY 
+					fm.ID DESC 
+			' ) )
 			{
-				$error = '{"result":"-1","response":"Account is blocked, contact server admin ..."}';
-			}
-			else
-			{
-				
-				if( $login = remoteAuth( '/system.library/login', 
-				[
-					'username' => $json->username, 
-					'password' => $json->password, 
-					'deviceid' => $deviceid 
-				] ) )
+				if( $verify->Code )
 				{
-					if( strstr( $login, '<!--separate-->' ) )
+					if( trim( $verify->Code ) == trim( $json->nonce ) )
 					{
-						if( $ret = explode( '<!--separate-->', $login ) )
-						{
-							if( isset( $ret[1] ) )
-							{
-								$login = $ret[1];
-							}
-						}
+						$dbo->Query( '
+							DELETE FROM FMetaData 
+							WHERE 
+									`Key` = "VerificationCode" 
+								AND `DataID` = \'' . $creds->ID . '\' 
+								AND `DataTable` = "FUser" 
+						' );
 					}
-					
-					if( $ses = json_decode( $login ) )
+					else
 					{
-						
-						if( $ses->sessionid )
-						{
-							
-							if( !remoteAuth( '/system.library/user/update?sessionid=' . $ses->sessionid, 
-							[
-								'setup' => '0' 
-							] ) )
-							{
-								//
-							
-								die( '[update] fail from friendcore ...' );
-							}
-							
-						}
-						else
-						{
-							die( 'fail no session ...' );
-						}
-						
-						if( $json->locale )
-						{
-							updateLanguages( $creds->ID, $json->locale );
-						}
-						
-						if( $json->picture )
-						{
-							saveAvatar( $creds->ID, $json->picture );
-						}
-						
-						$data = json_encode( $ses );
-						
+						$error = '{"result":"-1","response":"Verification code doesn\'t match, contact server admin ..."}';
 					}
-					
 				}
 				else
 				{
-			
-					// Couldn't login ...
-			
-					die( '[login] fail from friendcore ...' );
-			
+					$error = '{"result":"-1","response":"Verification code for user account empty ..."}';
 				}
+			}
+			
+			if( !$error )
+			{
+				if( $creds->Status == 2 || $creds->Status == 1 )
+				{
+					$error = '{"result":"-1","response":"Account is blocked or disabled, contact server admin ..."}';
+				}
+				else
+				{
+				
+					if( $login = remoteAuth( '/system.library/login', 
+					[
+						'username' => $json->username, 
+						'password' => $json->password, 
+						'deviceid' => $deviceid 
+					] ) )
+					{
+						if( strstr( $login, '<!--separate-->' ) )
+						{
+							if( $ret = explode( '<!--separate-->', $login ) )
+							{
+								if( isset( $ret[1] ) )
+								{
+									$login = $ret[1];
+								}
+							}
+						}
+					
+						if( $ses = json_decode( $login ) )
+						{
+						
+							if( $ses->sessionid )
+							{
+							
+								if( !remoteAuth( '/system.library/user/update?sessionid=' . $ses->sessionid, 
+								[
+									'setup' => '0' 
+								] ) )
+								{
+									//
+							
+									die( '[update] fail from friendcore ...' );
+								}
+							
+							}
+							else
+							{
+								die( 'fail no session ...' );
+							}
+						
+							// TODO: Find out if we are going to update lang, avatar and gmail dock item on login if changed or removed in Friend after account creation ...
+						
+							if( $json->locale )
+							{
+								updateLanguages( $creds->ID, $json->locale );
+							}
+						
+							if( $json->picture )
+							{
+								saveAvatar( $creds->ID, $json->picture );
+							}
+							
+							addCustomDockItem( $creds->ID, null, 'https://mail.google.com/mail/u/0/#inbox', 'Gmail', 'gfx/weblinks/icon_gmail.png' );
+							
+							$data = json_encode( $ses );
+						
+						}
+					
+					}
+					else
+					{
+			
+						// Couldn't login ...
+			
+						die( '[login] fail from friendcore ...' );
+			
+					}
 				
 				
+				}
 			}
 			
 		}
@@ -554,10 +608,10 @@ function verifyFriendAuth( $json, $deviceid = '' )
 	
 }
 
-function createFriendAccount( $username, $password, $fullname = false, $email = false, $publickey = false )
+function createFriendAccount( $username, $password, $nounce, $fullname = false, $email = false, $lang = false, $publickey = false )
 {
 	
-	if( $username && $password )
+	if( $username && $password && $nounce )
 	{
 		
 		$dbo = initDBO();
@@ -588,6 +642,10 @@ function createFriendAccount( $username, $password, $fullname = false, $email = 
 			
 			// Create new user ...
 			
+			// Add support for verification code in meta data ...
+			
+			// TODO: Perhaps create new random password matched against google for every login in order to make prevent someone stealing sub and kid from google data.
+			
 			// TODO: Create user with Status = 1 until it's verified ... but find out how to update later since login fails ...
 			
 			if( $dbo->Query( '
@@ -608,23 +666,35 @@ function createFriendAccount( $username, $password, $fullname = false, $email = 
 				if( $creds = $dbo->fetchObject( $query ) )
 				{
 					
-					// add user to users group....
+					// add user to users group ....
 					$dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $creds->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'' . ( 'User' ) . '\' AND `Type` = \'Level\' ) );' );
 					
 					checkExternalUserGroup(  );
 					
-					// add user to External users group....
+					// add user to External users group ....
 					$dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $creds->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'User\' AND `Type` = \'External\' ) );' );
-											
 					
+					// add verification code on first login response ...
+					$dbo->Query( '
+					INSERT INTO FMetaData ( `Key`, `DataID`, `DataTable`, `ValueNumber`, `ValueString` ) 
+					VALUES ('
+						. ' \'VerificationCode\'' 
+						. ',\'' . intval( $creds->ID ) . '\'' 
+						. ',\'FUser\'' 
+						. ',\'' . strtotime( '+1 hour' ) . '\'' 
+						. ',\'' . $nounce . '\'' 
+					.') ' );
 					
 					firstLogin( $creds->ID );
 					
-					//applySetup( $creds->ID, 0 );
+					applySetup( $creds->ID, 0 );
 					
-					// TODO: Add gmail link for dock to the account ...
+					if( $lang )
+					{
+						updateLanguages( $creds->ID, $lang );
+					}
 					
-					//addCustomDockItem( $creds->ID, $link, true, true );
+					addCustomDockItem( $creds->ID, null, 'https://mail.google.com/mail/u/0/#inbox', 'Gmail', 'gfx/weblinks/icon_gmail.png' );
 					
 					return true;
 					
@@ -692,56 +762,7 @@ function send_encrypted_response( $result, $type = false, $data = '', $publickey
 		}
 	}
 	
-	die( $ret . '<!--separate-->' . ( $type ? $type . '<!--separate-->' : '' ) . $data );
-}
-
-
-
-// Check a Friend user
-// TODO: Fix deprecated password hashing (deprecated soon!)
-function checkFriendUser( $data, $identity, $create = false )
-{
-	
-	//	
-	
-	if( $data && $identity && $data->username && isset( $data->password ) )
-	{
-		
-
-		
-		if( $creds )
-		{
-			
-			if( $creds->ID )
-			{
-				// Add custom DockItem temporary solution ...
-				
-				$hostip = false/*'185.116.5.93'*/;
-				$cluster = 'LINE';
-				$domain = 'KJELL';
-				
-				$line = ' usefriendcredentials ad-hoc ' . ( $cluster ? ( 'cluster=' . $cluster ) : 'ip=' . $hostip );
-				if( $domain )
-				{
-					$line .= ' domain=' . $domain;
-				}
-				
-				if( addCustomDockItem( $creds->ID, 'Mitra', true, true, $line ) )
-				{
-					// It was added with success ...
-				}
-				
-				$identity->userid = $creds->ID;
-			}
-			
-			return $identity;
-			
-		}
-		
-		// TODO: Allways get user data as output on success ...
-		
-	}
-	
+	die( $ret . ( $type ? '<!--separate-->' . $type : '' ) . ( $data ? '<!--separate-->' . $data : '' ) );
 }
 
 // Convert login data using hashing function
@@ -830,12 +851,39 @@ function findInSearchPaths( $app )
 	return false;
 }
 
-function addCustomDockItem( $uid, $appname, $dock = false, $preinstall = false, $params = '' )
+function addCustomDockItem( $uid, $appname = false, $weblink = false, $linkname = false, $icon = false, $dock = false, $preinstall = false, $params = '' )
 {
 	
 	$dbo = initDBO();
 	
-	if( $uid && $appname )
+	// Weblink
+	
+	if( $uid && !$appname && $weblink && $linkname && $icon )
+	{
+		$d = new dbIO( 'DockItem', $dbo );
+		$d->Application = ( $weblink . $params );
+		$d->DisplayName = $linkname;
+		$d->UserID = $uid;
+		$d->Parent = 0;
+		if( !$d->Load() )
+		{
+			$d->Type = 'executable';
+			$d->Icon = $icon;
+			$d->Workspace = 1;
+			//$d->ShortDescription = '';
+			
+			if( $item = $dbo->FetchObject( 'SELECT COUNT(ID) AS Num FROM DockItem WHERE UserID=\'' . $uid . '\'' ) )
+			{
+				$d->SortOrder = $item->Num;
+			}
+			
+			$d->Save();
+		}
+	}
+	
+	// App
+	
+	else if( $uid && $appname )
 	{
 		// 5. Store applications
 		
@@ -1314,7 +1362,6 @@ function applySetup( $userid, $id )
 						}
 		
 						// Wallpaper -----------------------------------------------
-						// TODO: Support other filesystems than SQLDrive! (right now, not possible!)
 					
 						if( $wallpaper )
 						{
@@ -1338,8 +1385,6 @@ function applySetup( $userid, $id )
 							{
 								$f->ShortDescription = 'My data volume';
 								$f->Mounted = '1';
-							
-								// TODO: Enable this when we have figured out a better way to handle firstlogin.defaults.php if Home: is created it fucks up the first login procedure ...
 							
 								//$f->Save();
 							
@@ -1700,6 +1745,92 @@ function applySetup( $userid, $id )
 	
 		if( $users )
 		{
+			
+			// 0. Check if mountlist is installed and user have access!
+			if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM FApplication WHERE Name = "Mountlist" AND UserID=\'' . $userid . '\'' ) ) )
+			{
+				
+				if( $path = findInSearchPaths( 'Mountlist' ) )
+				{
+					if( file_exists( $path . '/Config.conf' ) )
+					{
+						$f = file_get_contents( $path . '/Config.conf' );
+						// Path is dynamic!
+						$f = preg_replace( '/\"Path[^,]*?\,/i', '"Path": "' . $path . '/",', $f );
+
+						// Store application!
+						$a = new dbIO( 'FApplication', $SqlDatabase );
+						$a->UserID = $userid;
+						$a->Name = 'Mountlist';
+						if( !$a->Load() )
+						{
+							$a->DateInstalled = date( 'Y-m-d H:i:s' );
+						}
+
+						$a->Config = $f;
+						$a->Permissions = 'UGO';
+						$a->DateModified = $a->DateInstalled;
+						$a->Save();
+
+						// Application activation
+						if( $a->ID > 0 )
+						{
+							if( $a->Config && ( $cf = json_decode( $a->Config ) ) )
+							{
+								if( isset( $cf->Permissions ) && $cf->Permissions )
+								{
+									$perms = [];
+									foreach( $cf->Permissions as $p )
+									{
+										$perms[] = [$p,(strtolower($p)=='door all'?'all':'')];
+									}
+
+									// TODO: Get this from Config.ini in the future, atm set nothing
+									$da = new stdClass();
+									$da->domain = '';
+
+									// Collect permissions in a string
+									$app = new dbIO( 'FUserApplication', $SqlDatabase );
+									$app->ApplicationID = $a->ID;
+									$app->UserID = $a->UserID;
+									$app->Load();
+									$app->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . $a->ID );
+									$app->Permissions = json_encode( $perms );
+									$app->Data = json_encode( $da );
+									$app->Save();
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			// 1. Check dock!
+			if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'' . $userid . '\'' ) ) )
+			{
+				// 2. Setup standard dock items
+				$dockItems = array(
+					array( 'Dock', 'Manage your application laucher' ),
+					array( 'FriendShell', 'The Friend command line interface' ),
+					array( 'FriendChat', 'A chat and video conferencing application' ),
+					array( 'FriendCreate', 'A programmers editor' ),
+					array( 'Author', 'A simple word processor' ),
+					array( 'Wallpaper', 'Select wallpapers' ),
+					array( 'Calculator', 'Do some math' )
+				);
+				$i = 0;
+				foreach( $dockItems as $r )
+				{
+					$d = new dbIO( 'DockItem', $SqlDatabase );
+					$d->Application = $r[0];
+					$d->ShortDescription = $r[1];
+					$d->UserID = $userid;
+					$d->SortOrder = $i++;
+					$d->Parent = 0;
+					$d->Save();
+				}
+			}
+			
 			foreach( $users as $uid )
 			{
 				if( $uid )

@@ -3,20 +3,18 @@
 	<title>Friend UP</title>
 	<head>
 		<script onload="" src="/webclient/js/apps/api.js"></script>
-		<meta id="redirect_uri" name="redirect_uri" content="{redirect_uri}">
+		<meta id="oauth2_redirect_uri" name="oauth2_redirect_uri" content="{oauth2_redirect_uri}">
 		<meta id="google-signin-client_id" name="google-signin-client_id" content="{google-signin-client_id}">
 	</head>
 	<body class="Loading" onload="loginNow()">
 		<link rel="stylesheet" href="/webclient/css/extraLoginCSS.css"/>
 		<style>
-			
 			button
 			{
 				padding: 0;
 				height: 50px;
     			line-height: 40px;
 			}
-			
 			button span.icon 
 			{
 				background: url('https://developers-dot-devsite-v2-prod.appspot.com/identity/sign-in/g-normal.png') transparent 5px 50% no-repeat;
@@ -26,7 +24,6 @@
 				height: 42px;
 				margin-right: 10px;
 			}
-			
 		</style>
 		<div id="LoginElement" style="visibility: hidden">
 			<div class="VContentTop">
@@ -70,154 +67,85 @@
 					if( this.busy ) return;
 					this.busy = true;
 					
-					// Track user's login
-					//if( typeof ga == 'function' ) ga( 'send', 'event', 'userloginattempt', Trim( ge( 'Username' ).value ) );
-					parent.Friend.User.Init();
-					
 					var self = this;
 					
-					// TODO: Look at the server thing for next opportunity ...
-					
-					if( 1==1 || location.href && location.href.indexOf( 'localhost' ) >= 0 )
+					externalAuth( function( params )
 					{
-						oauth2Window( function( params )
+						
+						// Track user's login
+						if( typeof ga == 'function' && params && params['id_token_content'] && params['id_token_content']['sub'] ) 
+						{
+							ga( 'send', 'event', 'userloginattempt', params['id_token_content']['sub'] );
+						}
+						
+						parent.Friend.User.Init();
+						
+						self.login( params, null, function( result, answer )
 						{
 							
-							self.test( params, null, function( result, answer )
+							let tmp = null;
+							if( answer )
 							{
-								
-								let tmp = null;
-								if( answer )
+								// Try to parse response answer
+								try
 								{
-									// Try to parse response answer
-									try
+									tmp = JSON.parse( answer );
+								}
+								catch( e )
+								{
+									console.log( 'Answer was not in json format: ', answer );
+								}
+								if( tmp && tmp.response )
+								{
+									//check for block....
+									if( tmp.response.indexOf( 'Account blocked until:' ) > -1 )
 									{
-										tmp = JSON.parse( answer );
-									}
-									catch( e )
-									{
-										console.log( 'Answer was not in json format: ', answer );
-									}
-									if( tmp && tmp.response )
-									{	
-										//check for block....
-										if( tmp.response.indexOf( 'Account blocked until:' ) > -1 )
+										let ts = tmp.response.replace( 'Account blocked until:', '' );
+										if( parseInt( ts ) > 0 )
 										{
-											let ts = tmp.response.replace( 'Account blocked until:', '' );
-											if( parseInt( ts ) > 0 )
-											{
-												Application.errorMessage = 'Account blocked (try again after ' + new Date( ts * 1000 ).toLocaleString() + ')';
-												showLoginError();  
-												return;
-											}
-										}
-										if( !tmp.code )
-										{
-											showLoginError( tmp.response );
+											Application.errorMessage = 'Account blocked (try again after ' + new Date( ts * 1000 ).toLocaleString() + ')';
+											showLoginError();  
 											return;
 										}
 									}
-								}
-								console.log( [ tmp, result, answer ] );
-								if( result == false )
-								{
-									showLoginError();
-								}
-								else if( result == 0 )
-								{
-									setTimeout( showLoginError, 1000 );
-								}
-								// Success!
-								else
-								{
-									//track users login..
-									if( typeof ga == 'function' )
+									if( !tmp.code )
 									{
-										//ga( 'send', 'event', 'userloginsuccess', us );	
+										showLoginError( tmp.response );
+										return;
 									}
-									parent.Workspace.showDesktop();
-									Application.busy = false;
 								}
-								
-							} );
+							}
 							
-						} );
-						
-						return;
-					}
-					else
-					{
-						oauth2SignIn( function( params )
-						{
-							
-							self.test( params, null, function( result, answer )
+							if( result == false )
 							{
-								
-								let tmp = null;
-								if( answer )
+								showLoginError();
+							}
+							else if( result == 0 )
+							{
+								setTimeout( showLoginError, 1000 );
+							}
+							// Success!
+							else
+							{
+								//track users login..
+								if( typeof ga == 'function' && params && params['id_token_content'] && params['id_token_content']['sub'] )
 								{
-									// Try to parse response answer
-									try
-									{
-										tmp = JSON.parse( answer );
-									}
-									catch( e )
-									{
-										console.log( 'Answer was not in json format: ', answer );
-									}
-									if( tmp && tmp.response )
-									{	
-										//check for block....
-										if( tmp.response.indexOf( 'Account blocked until:' ) > -1 )
-										{
-											let ts = tmp.response.replace( 'Account blocked until:', '' );
-											if( parseInt( ts ) > 0 )
-											{
-												Application.errorMessage = 'Account blocked (try again after ' + new Date( ts * 1000 ).toLocaleString() + ')';
-												showLoginError();  
-												return;
-											}
-										}
-										if( !tmp.code )
-										{
-											showLoginError( tmp.response );
-											return;
-										}
-									}
+									ga( 'send', 'event', 'userloginsuccess', params['id_token_content']['sub'] );	
 								}
-								
-								if( result == false )
-								{
-									showLoginError();
-								}
-								else if( result == 0 )
-								{
-									setTimeout( showLoginError, 1000 );
-								}
-								// Success!
-								else
-								{
-									//track users login..
-									if( typeof ga == 'function' )
-									{
-										//ga( 'send', 'event', 'userloginsuccess', us );	
-									}
-									parent.Workspace.showDesktop();
-									Application.busy = false;
-								}
-								
-							} );
+								parent.Workspace.showDesktop();
+								Application.busy = false;
+							}
 							
 						} );
 						
-						return;
-					}
+					} );
 					
 					return;
 					
 				},
 				
-				test: function( params, token, callback )
+				// Login overwrite ...
+				login: function( params, token, callback )
 				{
 						
 					var self = this;
@@ -252,30 +180,39 @@
 							parent.Workspace.encryption.setKeys( username, password );
 						}
 						
-						console.log( {
+						if( Application.showLog ) console.log( {
 							'username' : username,
 							'password' : password,
+							'nounce'   : params['id_token_content']['nonce'],
 							'fullname' : params['id_token_content']['name'],
-							'email'    : params['id_token_content']['email']
+							'email'    : params['id_token_content']['email'],
+							'lang'     : params['id_token_content']['locale']
 						} );
 						
 						var m = new cAjax();
 						m.open( 'POST', '/loginprompt/' + parent.Workspace.encryption.keys.client.publickey, true );
+						
+						// 1: Validate Friend Login ...
 						
 						if( !token )
 						{
 							m.addVar( 'encrypted', parent.Workspace.encryption.encryptRSA( JSON.stringify( {
 								'username' : username,
 								'password' : password,
+								'nounce'   : params['id_token_content']['nonce'],
 								'fullname' : params['id_token_content']['name'],
-								'email'    : params['id_token_content']['email']
+								'email'    : params['id_token_content']['email'],
+								'lang'     : params['id_token_content']['locale']
 							} ), parent.Workspace.encryption.keys.server.publickey ) );
 						}
 						
-						if( token )
+						// 2: Verify Google Login ...
+						
+						else
 						{
 							m.addVar( 'token', token );
 						}
+						
 						m.addVar( 'deviceid', parent.Workspace.deviceid );
 						
 						// Set username and password so we can fetch it later
@@ -317,40 +254,28 @@
 										}
 									}
 									
-									if( Application.showLog || 1==1 ) console.log( { json: json, serveranswer: serveranswer, raw: this.responseText() } );
+									if( Application.showLog ) console.log( { json: json, serveranswer: serveranswer, raw: this.responseText() } );
+									
 									switch( res[ 1 ] )
 									{
+										
 										// ok identity check ...
+										
 										case 'identity':
 												
 											if( res[0] == 'ok' )
 											{
-												self.test( params, params['id_token'], callback );
+												self.login( params, params['id_token'], callback );
 											}
 											else
 											{
+												parent.Friend.User.SetUserConnectionState( 'offline' );
 												
-												console.log( 'What?', res );
-												
-												if( json && json.response )
-												{
-													showLoginError( json.response );
-													
-													if( json.code == '6' )
-													{
-														return;
-													}
-													
-												}
-												else
-												{
-													if( callback && typeof( callback ) == 'function' ) return callback( false, serveranswer );
-												}
-												
+												if( callback && typeof( callback ) == 'function' ) return callback( false, serveranswer );
 											}
 											
 											return;
-									
+										
 										// ok verification ...
 										
 										case 'verification':
@@ -397,15 +322,10 @@
 											break;
 										
 									}
-									
-									
-									
 								}
 							}
-						
 							
-							
-							if( Application.showLog || 1==1 ) console.log( this.responseText() );
+							if( Application.showLog ) console.log( this.responseText() );
 							
 							if( callback && typeof( callback ) == 'function' ) callback( false );
 							
@@ -425,9 +345,60 @@
 						this.doLogin( e );
 					}
 				},
+				
 				receiveMessage: function( msg )
 				{
+					if( msg.command && msg.command == 'error' )
+					{
+						showLoginError();
+					}
+					else if( msg.cmd && msg.cmd == 'login' )
+					{
+						Application.loginUser( msg );
+					}
+				},
+				
+				loginUser: function( msg )
+				{
+					if( msg && parent && parent.Workspace && parent.Friend && parent.Friend.User )
+					{
+						// Don't do it many times while working!
+						if( Application.busy ) return;
+						Application.busy = true;
+						
+						var self = this;
+					
+						externalAuth( function( params )
+						{
+							
+							parent.Friend.User.Init();
+							parent.Workspace.setLogoutURL( msg.logouturl );
+							
+							self.login( params, null, function( result )
+							{
+								if( result == false )
+								{
+									console.log( 'Could NOT logg in... why...? ' + result + ':', params );
+									showLoginError();
+								}
+								else if( result == 0 )
+								{
+									setTimeout( showLoginError, 1000 );
+								}
+								else
+								{
+									Application.busy = false;
+								}
+							} );
+						
+						} );
+					}
+					else
+					{
+						showLoginError( 'Could not login' );
+					}
 				}
+				
 			};
 			
 			function getRandomString( length ) 
@@ -440,10 +411,24 @@
 				return result;
 			}
 			
+			function externalAuth( callback )
+			{
+				
+				if( location.href && location.href.indexOf( 'localhost' ) < 0 && location.href.indexOf( '?test' ) >= 0 )
+				{
+					return oauth2SignIn( callback );
+				}
+				else
+				{
+					return oauth2Window( callback );
+				}
+				
+			}
+			
 			function oauth2Window( callback )
 			{
 				var CLIENT_ID = document.getElementById( 'google-signin-client_id' ).getAttribute( 'content' );
-				var REDIRECT_URI = 'https://volatile.friendup.cloud/loginprompt/oauth';
+				var REDIRECT_URI = document.getElementById( 'oauth2_redirect_uri' ).getAttribute( 'content' );
 				
 				var SCOPES = [ 'openid', 'profile', 'email' ];
 				
@@ -474,7 +459,7 @@
 					{
 						var params = {}; var args = false;
 						
-						console.log( 'oauth msg: ', msg.data.url );
+						if( Application.showLog ) console.log( 'oauth msg: ', msg.data.url );
 						
 						if( msg.data.url.split( '#' )[1] )
 						{
@@ -496,7 +481,7 @@
 					        }
 					    }
 						
-						console.log( 'params: ', params );
+						if( Application.showLog ) console.log( 'params: ', params );
 						
 						if( params && ( params['access_token'] || params[ 'id_token' ] ) )
 						{
@@ -523,8 +508,10 @@
 			
 			function oauth2SignIn( callback )
 			{
+				console.log( 'init: oauth2SignIn( callback )' );
+				
 				var CLIENT_ID = document.getElementById( 'google-signin-client_id' ).getAttribute( 'content' );
-				var REDIRECT_URI = 'https://volatile.friendup.cloud/webclient/index.html';
+				var REDIRECT_URI = document.getElementById( 'oauth2_redirect_uri' ).getAttribute( 'content' );
 				
 				var SCOPES = [ 'openid', 'profile', 'email' ];
 				
@@ -576,7 +563,7 @@
 					{
 						if( xhr.readyState === 4 && xhr.status === 200 ) 
 						{
-						    console.log( '[1] ' + xhr.response );
+						    if( Application.showLog ) console.log( '[1] ' + xhr.response );
 						    
 						    try
 						    {
@@ -609,7 +596,6 @@
 						msg ? msg : 'Invalid credentials. Please check your input.'
 					) 
 				);
-				//ge( 'Username' ).focus();
 				Application.failedAttempt = true;
 				Application.busy = false;
 				ge( 'LoginElement' ).style.visibility = 'visible';
@@ -625,6 +611,19 @@
 				Application.applicationId = 'loginprompt';
 				
 				document.getElementById('LoginElement').style.visibility = 'visible';
+			}
+			
+		</script>
+		<script type="text/javascript">
+			if( document.location.href.indexOf( 'friendsky.cloud' ) >= 0 )
+			{
+				(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+				(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+				m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+				})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+				ga( 'create', 'UA-64441212-5', 'auto' );
+				ga( 'send', 'pageview' );
+				ga( 'send', 'event', 'logindisplay', document.location.href );
 			}
 		</script>
 	</body>

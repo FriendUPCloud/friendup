@@ -39,13 +39,11 @@ if( $args = getArgs() )
 		// Google token_id ...
 		$json->token = $args->token;
 	}
-	
 	if( isset( $args->publickey ) )
 	{
 		// Client publickey ...
 		$json->publickey = $args->publickey;
 	}
-	
 	if( isset( $args->deviceid ) )
 	{
 		// Client deviceid ...
@@ -64,9 +62,8 @@ if( $args = getArgs() )
 			
 			// TODO: perhaps validate the sub (username) and kid (password) id somehow with google ...
 			
-			if( $ret = validateFriendIdentity( $json->username, $json->password, $json->fullname, $json->email, $json->publickey ) )
+			if( $ret = validateFriendIdentity( $json->username, $json->password, $json->nounce, $json->fullname, $json->email, $json->lang, $json->publickey ) )
 			{
-				
 				if( $ret[0] == 'ok' )
 				{
 					send_encrypted_response( true, 'identity', $ret[1], $json->publickey );
@@ -75,23 +72,19 @@ if( $args = getArgs() )
 				{
 					send_encrypted_response( false, 'identity', $ret[1], $json->publickey );
 				}
-				
 			}
 			else
 			{
 				send_encrypted_response( false, 'identity' );
 			}
-			
 		}
 		
 		// 2: Verify Google Login ...
 		
 		else
 		{
-			
 			if( $ret = verifyGoogleToken( $json->token, $json->deviceid ) )
 			{
-				
 				if( $ret[0] == 'ok' )
 				{
 					send_encrypted_response( true, 'verification', $ret[1], $json->publickey );
@@ -100,13 +93,11 @@ if( $args = getArgs() )
 				{
 					send_encrypted_response( false, 'verification', $ret[1], $json->publickey );
 				}
-				
 			}
 			else
 			{
 				send_encrypted_response( false, 'verification' );
 			}
-			
 		}
 				
 		die( 'fail ... ' );
