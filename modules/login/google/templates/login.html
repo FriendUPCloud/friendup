@@ -511,7 +511,7 @@
 				console.log( 'init: oauth2SignIn( callback )' );
 				
 				var CLIENT_ID = document.getElementById( 'google-signin-client_id' ).getAttribute( 'content' );
-				var REDIRECT_URI = document.getElementById( 'oauth2_redirect_uri' ).getAttribute( 'content' );
+				var REDIRECT_URI = location.href;
 				
 				var SCOPES = [ 'openid', 'profile', 'email' ];
 				
