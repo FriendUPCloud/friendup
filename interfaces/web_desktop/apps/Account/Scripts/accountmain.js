@@ -1648,10 +1648,10 @@ ns.TabTokens.prototype.getReadableStatus = function( statusNum )
 	return tail;
 }
 
-ns.TabTokens.prototype.setStatusOptions = function( selectEl )
+ns.TabTokens.prototype.setStatusOptions = function( selectEl, select )
 {
 	const self = this;
-	console.log( 'setStatusOptions', self.statuses );
+	console.log( 'setStatusOptions', [ select, self.statuses ]);
 	const html = self.statuses
 		.map( ( s, i ) => buildOption( s, i ))
 		.join( '');
@@ -1665,7 +1665,13 @@ ns.TabTokens.prototype.setStatusOptions = function( selectEl )
 	function buildOption( status, index )
 	{
 		const str = self.getReadableStatus( index );
-		const html = '<option value="'
+		let selected = '';
+		if ( index === select )
+			selected = 'selected="selected"';
+		
+		const html = '<option '
+			+ selected
+			+ ' value="'
 			+ status
 			+ '">'
 			+ str
@@ -1679,11 +1685,12 @@ ns.TabTokens.prototype.handleAddClick = async function()
 {
 	const self = this;
 	const host = get( self.inputHost );
-	const status = get( self.inputStatus );
+	const statusStr = get( self.inputStatus );
 	const uid = get( self.inputUID );
 	if ( null == host )
 		return;
 	
+	const status = self.resolveStatus( statusStr );
 	console.log( 'addClick', [ host, status, uid ]);
 	const created = await self.createHost( host, status, uid );
 	if ( null == created ) {
@@ -1733,7 +1740,44 @@ ns.TabTokens.prototype.handleEditClick = async function( hostId )
 	const editEl = self.buildEditRow( conf );
 	self.insertRow( editEl, currEl );
 	currEl.parentNode.removeChild( currEl );
-	self.bindEditRow();
+	conf.el = editEl;
+	self.bindEditRow( editEl );
+}
+
+ns.TabTokens.prototype.handleSaveClick = async function( hostId ) {
+	const self = this;
+	const conf = self.items[ hostId ];
+	console.log( 'handleSaveClick', conf );
+	const el = conf.el;
+	const select = el.querySelector( '.ServerTokenStatus' );
+	const statusStr = select.value;
+	const status = self.resolveStatus( statusStr );
+	console.log( 'handleSaveClick - status', [ statusStr, status ] );
+	const res = await self.updateHost( hostId, status );
+	console.log( 'handleSaveClick - res', res );
+	conf.status = status;
+	self.switchToDisplayRow( hostId );
+}
+
+ns.TabTokens.prototype.handleCancelClick = async function( hostId ) {
+	const self = this;
+	console.log( 'handleCancelClick', hostId );
+	self.switchToDisplayRow( hostId );
+}
+
+ns.TabTokens.prototype.switchToDisplayRow = function( hostId ) {
+	const self = this;
+	const conf = self.items[ hostId ];
+	console.log( 'switchToDisplayRow', conf );
+	if ( null == conf )
+		return;
+	
+	const currEl = conf.el;
+	const displayEl = self.buildDisplayRow( conf );
+	self.insertRow( displayEl, currEl );
+	currEl.parentNode.removeChild( currEl );
+	conf.el = displayEl;
+	self.bindDisplayRow( displayEl );
 }
 
 ns.TabTokens.prototype.populate = async function()
@@ -1752,6 +1796,18 @@ ns.TabTokens.prototype.populate = async function()
 	
 	remove.forEach( hId => self.remove( hId ));
 	fresh.forEach( conf => self.add( conf ));
+}
+
+ns.TabTokens.prototype.resolveStatus = function( statusStr ) {
+	const self = this;
+	if ( null == statusStr )
+		return 0;
+	
+	let status = self.statuses.indexOf( statusStr );
+	if ( -1 === status )
+		status = 0;
+	
+	return status;
 }
 
 ns.TabTokens.prototype.add = function( conf )
@@ -1810,24 +1866,27 @@ ns.TabTokens.prototype.buildDisplayRow = function( conf ) {
 ns.TabTokens.prototype.buildEditRow = function( conf ) {
 	const self = this;
 	console.log( 'buildEditRow', conf );
-	const status = self.getReadableStatus( conf.status );
+	//const statusEl = self.getReadableStatus( conf.status );
 	const html = '<div id="'
 		+ conf.id
 		+ '" class="TokenRow Padding">'
 			+ '<div class="ServerTokenHostName">'
 				+ conf.host
 			+ '</div>'
-			+ '<div class="ServerTokenStatus">'
-				+ i18n( 'i18n_status' )
-				+ ': '
-				+ status
-			+ '</div>'
+			+ '<select class="ServerTokenStatus">'
+/*
+				+ '<div>'
+					+ i18n( 'i18n_status' )
+				+ '</div>'
+				+ '<select>'
+*/
+			+ '</select>'
 			+ '<div>'
 				+ '<button class="ServerTokenSave">'
 					+ '<i class="fa fa-fw fa-save"></i>'
 				+ '</button>'
 				+ '<button class="ServerTokenCancel">'
-					+ '<i class="fa fa-fw fa-cancel"></i>'
+					+ '<i class="fa fa-fw fa-close"></i>'
 				+ '</button>'
 			+ '</div>'
 		+ '</div>';
@@ -1835,6 +1894,8 @@ ns.TabTokens.prototype.buildEditRow = function( conf ) {
 	const wrap = document.createElement( 'div' );
 	wrap.innerHTML = html;
 	const el = wrap.firstChild;
+	const statusEl = el.querySelector( '.ServerTokenStatus' );
+	self.setStatusOptions( statusEl, conf.status );
 	return el;
 }
 
@@ -1862,6 +1923,7 @@ ns.TabTokens.prototype.bindEditRow = function( el ) {
 	const self = this;
 	const id = el.id;
 	console.log( 'bindEditRow', [ el, id ]);
+	const status = el.querySelector( '.ServerTokenStatus' );
 	const saveBtn = el.querySelector( '.ServerTokenSave' );
 	const cancelBtn = el.querySelector( '.ServerTokenCancel' );
 	
@@ -1919,17 +1981,13 @@ ns.TabTokens.prototype.createHost = async function( host, status, userId )
 			return;
 		}
 		
-		if ( null != status )
-			status = self.statuses.indexOf( status );
-		if ( -1 === status )
-			status = 0;
-		
 		const userId = window.Application.userId;
 		const args = {
 			host   : host,
 			status : status,
 			userid : userId,
 		};
+		
 		console.log( 'createHost, args', args );
 		const create = new Library( 'system.library' );
 		create.execute( 'security/createhost', args );
@@ -1967,6 +2025,7 @@ ns.TabTokens.prototype.updateHost = async function( hostId, status )
 	const self = this;
 	return new Promise(( resolve, reject ) => {
 		const conf = self.items[ hostId ];
+		console.log( 'updateHost', [ hostId, status, conf ]);
 		if ( null == conf ) {
 			console.log( 'updateHost', {
 				hostId : hostId,
@@ -1975,11 +2034,13 @@ ns.TabTokens.prototype.updateHost = async function( hostId, status )
 			throw new Error( 'TabTokens.updateHost, invalid hostId ^^^' );
 		}
 		
+		const host = conf.host;
 		const args = {
 			host   : host,
 			userid : conf.userId || window.Application.userId,
 			status : status || null,
 		};
+		console.log( 'updateHost, args', args );
 		const update = new Library( 'system.library' );
 		update.execute( 'security/updatehost', args );
 		update.onExecuted = updateBack;
