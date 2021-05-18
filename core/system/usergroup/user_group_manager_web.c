@@ -595,7 +595,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						fg->ug_Status = USER_GROUP_STATUS_ACTIVE;
 						
 						char buffer[ 256 ];
-						snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"sucess\",\"id\":%lu }", fg->ug_ID );
+						snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"sucess\",\"id\":%lu}", fg->ug_ID );
 						HttpAddTextContent( response, buffer );
 						
 						{
@@ -610,7 +610,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					else
 					{
 						char buffer[ 256 ];
-						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_GROUP_ALREADY_EXIST] , DICT_USER_GROUP_ALREADY_EXIST );
+						snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_USER_GROUP_ALREADY_EXIST] , DICT_USER_GROUP_ALREADY_EXIST );
 						HttpAddTextContent( response, buffer );
 					}
 				}
@@ -684,14 +684,14 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							char buffer[ 512 ];
 							char buffer1[ 256 ];
 							snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "UGMUserGroupCreate", error );
-							snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_FUNCTION_RETURNED );
+							snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_FUNCTION_RETURNED );
 							HttpAddTextContent( response, buffer );
 						}
 					}
 					else
 					{
 						char buffer[ 256 ];
-						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+						snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
 						HttpAddTextContent( response, buffer );
 					}
 				} // UserGroup found in db
@@ -747,14 +747,14 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				char buffer[ 512 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "groupname, type" );
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\":\"%s\",\"code\":\"%d\"}", buffer1 , DICT_PARAMETERS_MISSING );
+				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
 		}
 		else
 		{
 			char buffer[ 256 ];
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
 			HttpAddTextContent( response, buffer );
 		}
 		
@@ -889,28 +889,28 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 								else
 								{
 									char buffer[ 256 ];
-									snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
+									snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
 									HttpAddTextContent( response, buffer );
 								}
 							}
 							else
 							{
 								char buffer[ 256 ];
-								snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_CANNOT_REMOVE_GROUP_WITH_LEVEL_TYPE] , DICT_CANNOT_REMOVE_GROUP_WITH_LEVEL_TYPE );
+								snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CANNOT_REMOVE_GROUP_WITH_LEVEL_TYPE] , DICT_CANNOT_REMOVE_GROUP_WITH_LEVEL_TYPE );
 								HttpAddTextContent( response, buffer );
 							}
 						}
 						else
 						{
 							char buffer[ 256 ];
-							snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+							snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
 							HttpAddTextContent( response, buffer );
 						}
 					}
 					else	// group is in locked state
 					{
 						char buffer[ 256 ];
-						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_CANNOT_EDIT_OR_REMOVE_USER_GROUP_LOCKED] , DICT_CANNOT_EDIT_OR_REMOVE_USER_GROUP_LOCKED );
+						snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CANNOT_EDIT_OR_REMOVE_USER_GROUP_LOCKED] , DICT_CANNOT_EDIT_OR_REMOVE_USER_GROUP_LOCKED );
 						HttpAddTextContent( response, buffer );
 					}
 				}
@@ -918,7 +918,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			else
 			{
 				char buffer[ 256 ];
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
 				HttpAddTextContent( response, buffer );
 			}
 		}
@@ -927,7 +927,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			char buffer[ 512 ];
 			char buffer1[ 256 ];
 			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id" );
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\"\"code\":\"%d\"}", buffer1 , DICT_PARAMETERS_MISSING );
+			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, buffer );
 		}
 	}
@@ -1257,7 +1257,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 					char buffer[ 512 ];
 					char buffer1[ 256 ];
 					snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "UGMUserGroupUpdate", 1 );
-					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", buffer1 , DICT_FUNCTION_RETURNED );
+					snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_FUNCTION_RETURNED );
 					HttpAddTextContent( response, buffer );
 				}
 			} // missing parameters
@@ -1266,14 +1266,14 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				char buffer[ 512 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id" );
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\": \"%s\",\"code\":\"%d\"}", buffer1 , DICT_PARAMETERS_MISSING );
+				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
 		}
 		else
 		{
 			char buffer[ 256 ];
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
 			HttpAddTextContent( response, buffer );
 		}
 		
@@ -1397,7 +1397,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 					char buffer[ 512 ];
 					char buffer1[ 256 ];
 					snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "UGMUserGroupUpdate", 1 );
-					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", buffer1 , DICT_FUNCTION_RETURNED );
+					snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_FUNCTION_RETURNED );
 					HttpAddTextContent( response, buffer );
 				}
 			} // missing parameters
@@ -1406,14 +1406,14 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				char buffer[ 512 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id, status" );
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\": \"%s\",\"code\":\"%d\"}", buffer1 , DICT_PARAMETERS_MISSING );
+				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
 		}
 		else
 		{
 			char buffer[ 256 ];
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
 			HttpAddTextContent( response, buffer );
 		}
 		*result = 200;
@@ -1693,7 +1693,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			if( respSet == FALSE )
 			{
 				char buffer[ 256 ];
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
 				HttpAddTextContent( response, buffer );
 			}
 		}
@@ -1886,7 +1886,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		else
 		{
 			char buffer[ 256 ];
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
+			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
 			HttpAddTextContent( response, buffer );
 		}
 		*result = 200;
@@ -2114,7 +2114,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		else
 		{
 			char buffer[ 256 ];
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
+			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
 			HttpAddTextContent( response, buffer );
 		}
 		*result = 200;
@@ -2262,7 +2262,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 					char buffer[ 512 ];
 					char buffer1[ 256 ];
 					snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "UGMUserGroupUpdate", 1 );
-					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", buffer1 , DICT_FUNCTION_RETURNED );
+					snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_FUNCTION_RETURNED );
 					HttpAddTextContent( response, buffer );
 				}
 			} // missing parameters
@@ -2271,7 +2271,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				char buffer[ 512 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id, users" );
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\": \"%s\",\"code\":\"%d\"}", buffer1 , DICT_PARAMETERS_MISSING );
+				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
 		}

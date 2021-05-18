@@ -50,6 +50,8 @@
 #define ENABLE_MOBILE_APP_NOTIFICATIONS 0
 #define ENABLE_NOTIFICATIONS_SINK 1
 
+//#define WS_COMPRESSION
+
 #if ENABLE_MOBILE_APP_NOTIFICATIONS == 1
 #include <mobile_app/mobile_app_websocket.h>
 #endif
@@ -63,6 +65,21 @@ extern pthread_mutex_t WSThreadMutex;
 static void dump_handshake_info(struct lws_tokens *lwst);
 
 static int callback_http( struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+
+//
+// Extensions
+//
+
+static const struct lws_extension exts[] = {
+	{
+		"permessage-deflate",
+		lws_extension_callback_pm_deflate,
+		"permessage-deflate"
+		 "; client_no_context_takeover"
+		 "; client_max_window_bits"
+	},
+	{ NULL, NULL, NULL /* terminator */ }
+};
 
 //
 //
@@ -158,6 +175,34 @@ static struct lws_protocols protocols1[] = {
 		NULL, NULL, 0, 0, 0, NULL, 0 		// End of list 
 	}
 };
+
+// list of supported protocols and callbacks 
+/*
+static struct lws_protocols protocols2[] = {
+	// first protocol must always be HTTP handler 
+	{
+		"http-only",		// name 
+		callback_http,		// callback 
+		sizeof (struct per_session_data__http),	// per_session_data_size 
+		0,			// max frame size / rx buffer 
+		1,
+		NULL,
+		0
+	},
+	{
+		"FriendApp-v1",
+		WebsocketAppCallback,
+		sizeof( struct MobileAppNotif ),
+		WS_PROTOCOL_BUFFER_SIZE,
+		3, //id - not used for anything yet
+		NULL,
+		0
+	},
+	{
+		NULL, NULL, 0, 0, 0, NULL, 0 		// End of list 
+	}
+};
+*/
 
 void hand(int s )
 {
@@ -286,11 +331,14 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 		}
 		
 		ws->ws_Info.port = ws->ws_Port;
-		if( proto == 0 )
+		if( proto == WEBSOCKET_TYPE_BROWSER )
 		{
 			ws->ws_Info.protocols = protocols;
+#ifdef WS_COMPRESSION
+			ws->ws_Info.extensions = exts;
+#endif
 		}
-		else if( proto == 1 )
+		else if( proto == WEBSOCKET_TYPE_EXTERNAL )
 		{
 			ws->ws_Info.protocols = protocols1;
 		}
@@ -589,6 +637,11 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 	User *actUser = actUserSess->us_User;
 	if( actUser != NULL )
 	{
+#ifdef WS_COMPRESSION
+//		lws_set_extension_option( wsi, "permessage-deflate", "rx_buf_size", "16");
+//		lws_set_extension_option( wsi, "permessage-deflate", "tx_buf_size", "16");
+#endif
+		
 		Log( FLOG_INFO,"[WS] WebSocket connection set for user %s  sessionid %s\n", actUser->u_Name, actUserSess->us_SessionID );
 
 		INFO("[WS] ADD WEBSOCKET CONNECTION TO USER %s\n\n",  actUser->u_Name );

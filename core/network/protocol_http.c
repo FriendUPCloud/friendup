@@ -708,149 +708,111 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 						//
 						
 						char *newUrl = NULL;
-						
-
+						if( strcmp( SLIB->sl_ActiveModuleName, "fcdb.authmod" ) != 0 )
 						{
-							if( strcmp( SLIB->sl_ActiveModuleName, "fcdb.authmod" ) != 0 )
-							{
-								FULONG res = 0;
+							FULONG res = 0;
 
 #define MAX_LEN_PHP_INT_COMMAND 2048
-								char *command = FMalloc( MAX_LEN_PHP_INT_COMMAND );
+							char *command = FMalloc( MAX_LEN_PHP_INT_COMMAND );
 
-								// Make the commandline string with the safe, escaped arguments, and check for buffer overflows.
-								int cx = snprintf( command, MAX_LEN_PHP_INT_COMMAND-1, "php \"php/login.php\" \"%s\" \"%s\" \"%s\"; 2>&1", uri->uri_Path->p_Raw, uri->uri_QueryRaw, request->http_Content ); // SLIB->sl_ModuleNames
-								//if( !( cx >= 0 ) )
-								//{
-								//	FERROR( "[ProtocolHttp] snprintf\n" );;
-								//}
-								//else
-								{
-									ListString *ls = RunPHPScript( command );
-									if( ls != NULL )
-									{
-										//DEBUG("\n\n\n\n\n\nDATA: %s\n\n\n\n\n\n", ls->ls_Data );
-										res = ls->ls_Size;
-									}
-									/*
-									FILE *pipe = popen( command, "r" );
-									ListString *ls = NULL;
-									
-									Log( FLOG_INFO, "Sending php command: %s < pipe: %p\n", command, pipe );
-
-									if( pipe != NULL )
-									{
-										ls = ListStringNew();
-										char buffer[ 1024 ];
-
-										while( !feof( pipe ) )
-										{
-											int reads = fread( buffer, sizeof( char ), 1024, pipe );
-											if( reads > 0 )
-											{
-												ListStringAdd( ls, buffer, reads );
-												res += reads;
-											}
-										}
-										pclose( pipe );
-									}
-									else
-									{
-										Log( FLOG_ERROR, "Cannot open pipe!\n");
-									}
-									
-									Log( FLOG_INFO, "End of PHP loop\n");
-
-									if( ls != NULL )
-									{
-										ListStringJoin( ls );
-									}
-									*/
-									
-									struct TagItem tags[] = {
-										{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
-										{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-										{ HTTP_HEADER_CACHE_CONTROL, (FULONG )StringDuplicate( "max-age = 3600" ) },
-										{TAG_DONE, TAG_DONE}
-									};
-
-									response = HttpNewSimple( HTTP_200_OK, tags );
-
-									if( ls != NULL && ls->ls_Data != NULL )
-									{
-										HttpSetContent( response, ls->ls_Data, res );
-									}
-									else
-									{
-										HttpAddTextContent( response, "fail<!--separate-->PHP script return error" );
-									}
-
-									// write here and set data to NULL!!!!!
-									// return response
-									HttpWrite( response, sock );
-									result = 200;
-
-									if( ls != NULL )
-									{
-										ls->ls_Data = NULL;
-										ListStringDelete( ls );
-									}
-									DEBUG("Response delivered\n");
-									
-									FFree( command );
-								}
-							}
-
-							//
-							// default login page
-							//
-
-							else
+							// Make the commandline string with the safe, escaped arguments, and check for buffer overflows.
+							int cx = snprintf( command, MAX_LEN_PHP_INT_COMMAND-1, "php \"php/login.php\" \"%s\" \"%s\" \"%s\"; 2>&1", uri->uri_Path->p_Raw, uri->uri_QueryRaw, request->http_Content ); // SLIB->sl_ModuleNames
+							//if( !( cx >= 0 ) )
+							//{
+							//	FERROR( "[ProtocolHttp] snprintf\n" );;
+							//}
+							//else
 							{
-								FBOOL freeFile = FALSE;
-								//Path *base = PathNew( "resources" );
-								//Path *base = PathNew( "resources/webclient/templates/login_prompt.html" );
-								//Path *base = PathNew( "/webclient/templates/login_prompt.html" );
-								//if( base != NULL )
+								ListString *ls = RunPHPScript( command );
+								if( ls != NULL )
 								{
-									//Path* completePath = PathJoin( base, "templates/login_prompt.html" );
-									//if( completePath != NULL )
+									//DEBUG("\n\n\n\n\n\nDATA: %s\n\n\n\n\n\n", ls->ls_Data );
+									res = ls->ls_Size;
+								}
+								
+								struct TagItem tags[] = {
+									{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
+									{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+									{ HTTP_HEADER_CACHE_CONTROL, (FULONG )StringDuplicate( "max-age = 3600" ) },
+									{TAG_DONE, TAG_DONE}
+								};
+
+								response = HttpNewSimple( HTTP_200_OK, tags );
+
+								if( ls != NULL && ls->ls_Data != NULL )
+								{
+									HttpSetContent( response, ls->ls_Data, res );
+								}
+								else
+								{
+									HttpAddTextContent( response, "fail<!--separate-->PHP script return error" );
+								}
+
+								// write here and set data to NULL!!!!!
+								// return response
+								HttpWrite( response, sock );
+								result = 200;
+
+								if( ls != NULL )
+								{
+									ls->ls_Data = NULL;
+									ListStringDelete( ls );
+								}
+								DEBUG("Response delivered\n");
+								
+								FFree( command );
+							}
+						}
+
+						//
+						// default login page
+						//
+
+						else
+						{
+							FBOOL freeFile = FALSE;
+							//Path *base = PathNew( "resources" );
+							//Path *base = PathNew( "resources/webclient/templates/login_prompt.html" );
+							//Path *base = PathNew( "/webclient/templates/login_prompt.html" );
+							//if( base != NULL )
+							{
+								//Path* completePath = PathJoin( base, "templates/login_prompt.html" );
+								//if( completePath != NULL )
+								{
+									LocFile *file = LocFileNew( "resources/webclient/templates/login_prompt.html", FILE_READ_NOW | FILE_CACHEABLE );
+									if( file != NULL )
 									{
-										LocFile *file = LocFileNew( "resources/webclient/templates/login_prompt.html", FILE_READ_NOW | FILE_CACHEABLE );
-										if( file != NULL )
+										freeFile = TRUE;
+
+										struct TagItem tags[] = {
+											{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
+											{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+											{ HTTP_HEADER_CACHE_CONTROL, (FULONG )StringDuplicate( "max-age = 3600" ) },
+											{ TAG_DONE, TAG_DONE }
+										};
+
+										response = HttpNewSimple( HTTP_200_OK, tags );
+
+										HttpSetContent( response, file->lf_Buffer, file->lf_FileSize );
+
+										// write here and set data to NULL!!!!!
+										// retusn response
+										HttpWrite( response, sock );
+										result = 200;
+
+										//INFO("--------------------------------------------------------------%d\n", freeFile );
+										if( freeFile == TRUE )
 										{
-											freeFile = TRUE;
-
-											struct TagItem tags[] = {
-												{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
-												{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-												{ HTTP_HEADER_CACHE_CONTROL, (FULONG )StringDuplicate( "max-age = 3600" ) },
-												{ TAG_DONE, TAG_DONE }
-											};
-
-											response = HttpNewSimple( HTTP_200_OK, tags );
-
-											HttpSetContent( response, file->lf_Buffer, file->lf_FileSize );
-
-											// write here and set data to NULL!!!!!
-											// retusn response
-											HttpWrite( response, sock );
-											result = 200;
-
-											//INFO("--------------------------------------------------------------%d\n", freeFile );
-											if( freeFile == TRUE )
-											{
-												LocFileDelete( file );
-											}
-											response->http_Content = NULL;
-											response->http_SizeOfContent = 0;
-
-											response->http_WriteType = FREE_ONLY;
+											LocFileDelete( file );
 										}
+										response->http_Content = NULL;
+										response->http_SizeOfContent = 0;
+
+										response->http_WriteType = FREE_ONLY;
 									}
 								}
 							}
-						}	// newUrl == NULL
+						}	// fcdb
 					}
 
 					//
@@ -928,9 +890,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							{
 								FBOOL mountedWithoutUser = FALSE;
 								char *error = NULL;
-
 								CacheFile *cf = NULL;
-
 								char *mime = NULL;
 								File *rootDev = NULL;
 
@@ -1285,7 +1245,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 #define MAX_FILES_TO_LOAD 256
 
-							if( pos > 0 )
+							if( pos > 0 )	// Mutlifile  (like  file.js;data.css;etc...)
 							{
 								LocFile *file = CacheManagerFileGet( SLIB->cm, path->p_Raw, TRUE );
 
@@ -1609,60 +1569,57 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									if( completePath != NULL )
 									{
 										LocFile* file = NULL;
-
+										char *decoded = UrlDecodeToMem( completePath->p_Raw );
+										if( SLIB->sl_CacheFiles == 1 )
 										{
-											char *decoded = UrlDecodeToMem( completePath->p_Raw );
-											if( SLIB->sl_CacheFiles == 1 )
-											{
-												Log( FLOG_DEBUG, "[ProtocolHttp] Read single file, first from cache %s\n", decoded );
-												file = CacheManagerFileGet( SLIB->cm, decoded, FALSE );
+											Log( FLOG_DEBUG, "[ProtocolHttp] Read single file, first from cache %s\n", decoded );
+											file = CacheManagerFileGet( SLIB->cm, decoded, FALSE );
 
-												if( file == NULL )
-												{
-													// Don't allow directory traversal
-													if( !strstr( decoded, ".." ) )
-													{
-														file = LocFileNew( decoded, FILE_READ_NOW | FILE_CACHEABLE );
-													}
-
-													if( file != NULL )
-													{
-														if( CacheManagerFilePut( SLIB->cm, file ) != 0 )
-														{
-															freeFile = TRUE;
-														}
-													}
-												}
-												else
-												{
-													struct stat attr;
-													stat( decoded, &attr);
-
-													// if file is new file, reload it
-													
-													if( attr.st_mtime != file->lf_Info.st_mtime )
-													{
-														Log( FLOG_DEBUG, "[ProtocolHttp] File will be reloaded\n");
-														LocFileReload( file, decoded );
-													}
-												}
-												
-												if( file != NULL )
-												{
-													file->lf_InUse = 1;
-												}
-											}
-											else
+											if( file == NULL )
 											{
 												// Don't allow directory traversal
 												if( !strstr( decoded, ".." ) )
 												{
 													file = LocFileNew( decoded, FILE_READ_NOW | FILE_CACHEABLE );
 												}
-												freeFile = TRUE;
+												if( file != NULL )
+												{
+													if( CacheManagerFilePut( SLIB->cm, file ) != 0 )
+													{
+														freeFile = TRUE;
+													}
+												}
 											}
-											FFree( decoded );
+											else
+											{
+												struct stat attr;
+												stat( decoded, &attr);
+
+												// if file is new file, reload it
+												
+												if( attr.st_mtime != file->lf_Info.st_mtime )
+												{
+													Log( FLOG_DEBUG, "[ProtocolHttp] File will be reloaded\n");
+													LocFileReload( file, decoded );
+												}
+											}
+											
+											if( file != NULL )
+											{
+												file->lf_InUse = 1;
+											}
 										}
+										else
+										{
+											// Don't allow directory traversal
+											if( !strstr( decoded, ".." ) )
+											{
+												file = LocFileNew( decoded, FILE_READ_NOW | FILE_CACHEABLE );
+											}
+											freeFile = TRUE;
+										}
+										FFree( decoded );
+										
 										if( file != NULL )
 										{
 											Log( FLOG_DEBUG, "[ProtocolHttp] Return file content: file ptr %p filesize %lu\n", file, file->lf_FileSize );
@@ -1710,6 +1667,18 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 											response = HttpNewSimple( HTTP_200_OK, tags );
 
+											// so, first we check if compression should be enabled
+											if( (SLIB->l_HttpCompressionContent&HTTP_COMPRESSION_DEFLATE) == HTTP_COMPRESSION_DEFLATE )
+											{
+												char *comprFromHeader = HttpGetHeaderFromTable( request, HTTP_HEADER_ACCEPT_ENCODING );
+												DEBUG("\n\n\n\n\n\nCompression %s\n\n\n\n\n\n", comprFromHeader );
+												
+												if( comprFromHeader != NULL && strstr( comprFromHeader, "deflate" ) != NULL )
+												{
+													HttpSetCompression( response, HTTP_COMPRESSION_DEFLATE );
+												}
+											}
+											
 											HttpSetContent( response, file->lf_Buffer, file->lf_FileSize );
 
 											// write here and set data to NULL!!!!!

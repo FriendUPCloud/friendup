@@ -134,7 +134,7 @@ void WSThreadPing( WSThreadData *data )
 	
 		if( ( answer = FMalloc( 1024 ) ) != NULL )
 		{
-			int answersize = snprintf( (char *)answer, 1024, "{\"type\":\"con\",\"data\" :{\"type\":\"pong\",\"data\":\"%s\"}}", data->wstd_Requestid );
+			int answersize = snprintf( (char *)answer, 1024, "{\"type\":\"con\",\"data\":{\"type\":\"pong\",\"data\":\"%s\"}}", data->wstd_Requestid );
 			UserSessionWebsocketWrite( us, answer, answersize, LWS_WRITE_TEXT );	
 			FFree( answer );
 		}
@@ -227,6 +227,11 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	{
 		case LWS_CALLBACK_ESTABLISHED:
 			pthread_mutex_init( &(wsd->wsc_Mutex), NULL );
+			
+			#ifdef WS_COMPRESSION
+			lws_set_extension_option( wsi, "permessage-deflate", "rx_buf_size", "16");
+			lws_set_extension_option( wsi, "permessage-deflate", "tx_buf_size", "16");
+			#endif
 		break;
 		
 		case LWS_CALLBACK_WS_PEER_INITIATED_CLOSE:
@@ -709,7 +714,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 					
 						int END_CHAR_SIGNS = response->http_SizeOfContent > 0 ? 2 : 4;
 						char *end = response->http_SizeOfContent > 0 ? "}}" : "\"\"}}";
-						int jsonsize = sprintf( jsontemp, "{\"type\":\"msg\",\"data\":{ \"type\":\"response\",\"requestid\":\"%s\",\"data\":", wstd->wstd_Requestid );
+						int jsonsize = sprintf( jsontemp, "{\"type\":\"msg\",\"data\":{\"type\":\"response\",\"requestid\":\"%s\",\"data\":", wstd->wstd_Requestid );
 					
 						buf = (unsigned char *)FCalloc( jsonsize + response->http_SizeOfContent + END_CHAR_SIGNS + 128, sizeof( char ) );
 						if( buf != NULL )

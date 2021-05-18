@@ -360,7 +360,7 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 									CommServiceRegisterEvent( con, newsock );
 									lsqllib->Save( lsqllib, FConnectionDesc, con );
 								
-									snprintf( dictmsgbuf, sizeof(dictmsgbuf), "ok<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CONNECTION_CREATED] , DICT_CONNECTION_CREATED );
+									snprintf( dictmsgbuf, sizeof(dictmsgbuf), "ok<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_CONNECTION_CREATED] , DICT_CONNECTION_CREATED );
 									
 									// Send information about attached connection
 									
@@ -449,32 +449,32 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 								{
 									lsqllib->Update( lsqllib, FConnectionDesc, con );
 								
-									snprintf( dictmsgbuf, sizeof(dictmsgbuf), "ok<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CONNECTION_REUSED] , DICT_CONNECTION_REUSED );
+									snprintf( dictmsgbuf, sizeof(dictmsgbuf), "ok<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_CONNECTION_REUSED] , DICT_CONNECTION_REUSED );
 								}
 								
 								SLIB->DropDBConnection( SLIB, lsqllib );
 							}
 							else
 							{
-								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
 							}
 						}
 						else
 						{
-							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FCCONNECTION_CANNOT_CREATE] , DICT_FCCONNECTION_CANNOT_CREATE );
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_FCCONNECTION_CANNOT_CREATE] , DICT_FCCONNECTION_CANNOT_CREATE );
 						}
 					}
 				}
 				else
 				{
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CONNECTION_ALREADY_EXIST] , DICT_CONNECTION_ALREADY_EXIST );
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CONNECTION_ALREADY_EXIST] , DICT_CONNECTION_ALREADY_EXIST );
 				}
 			}
 			else
 			{
 				char dictmsgbuf1[ 196 ];
 				snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "name, address" );
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			}
 			
 			if( name != NULL )
@@ -490,7 +490,7 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 		else
 		{
 			char dictmsgbuf[ 256 ];
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
 		}
 		
 		HttpAddTextContent( response, dictmsgbuf );
@@ -683,35 +683,35 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 						{
 							int err = lsqllib->Update( lsqllib, FConnectionDesc, selcon );
 							
-							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"success\", \"code\":\"0\" }" );
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"success\",\"code\":\"0\"}" );
 							
 							SLIB->DropDBConnection( SLIB, lsqllib );
 						}
 						else
 						{
-							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
 						}
 					}
 					else
 					{
-						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CONNECTION_NOT_FOUND] , DICT_CONNECTION_NOT_FOUND );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CONNECTION_NOT_FOUND] , DICT_CONNECTION_NOT_FOUND );
 					}
 				}
 				else
 				{
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CONNECTION_ALREADY_EXIST] , DICT_CONNECTION_ALREADY_EXIST );
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CONNECTION_ALREADY_EXIST] , DICT_CONNECTION_ALREADY_EXIST );
 				}
 			}
 			else
 			{
 				char dictmsgbuf1[ 196 ];
 				snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id" );
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			}
 		}
 		else
 		{
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
 		}
 		
 		HttpAddTextContent( response, dictmsgbuf );
@@ -811,7 +811,7 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 						{
 							char dictmsgbuf1[ 196 ];
 							snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_CANNOT_DELETE_CONNECTION], err );
-							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_CANNOT_DELETE_CONNECTION );
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_CANNOT_DELETE_CONNECTION );
 							
 							DEBUG("[ConnectionWeb] Connection not deleted, error: %d\n", err );
 						}
@@ -820,12 +820,12 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 					}
 					else
 					{
-						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
 					}
 				}
 				else
 				{
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CONNECTION_NOT_FOUND] , DICT_CONNECTION_NOT_FOUND );
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CONNECTION_NOT_FOUND] , DICT_CONNECTION_NOT_FOUND );
 				}
 			}
 			else
@@ -834,19 +834,19 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 				{
 					char dictmsgbuf1[ 196 ];
 					snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id" );
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 				}
 				else if( name == NULL )
 				{
 					char dictmsgbuf1[ 196 ];
 					snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "name" );
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 				}
 			}
 		}
 		else
 		{
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
 		}
 		
 		if( name != NULL )

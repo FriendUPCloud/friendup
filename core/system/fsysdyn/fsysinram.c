@@ -687,12 +687,11 @@ BufString *Info( File *s, const char *path )
 		int size = 0;
 		if( buffer != NULL )
 		{
-			size = snprintf( buffer, globlen, "{ \"response\": \"%s\", \"code\":\"%d\",\"path\":\"%s\" }", l->sl_Dictionary->d_Msg[DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST] , DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST, path );
+			size = snprintf( buffer, globlen, "{\"response\":\"%s\",\"code\":\"%d\",\"path\":\"%s\"}", l->sl_Dictionary->d_Msg[DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST] , DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST, path );
 			
 			BufStringAddSize( bs, buffer, size );
 			FFree( buffer );
 		}
-		//BufStringAdd( bs, "{ \"response\": \"File or directory do not exist\"}" );
 	}
 	
 	DEBUG("[INRAM] Info END\n");
