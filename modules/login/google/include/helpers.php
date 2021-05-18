@@ -111,19 +111,19 @@ function renderReplacements( $template )
 	$server = getServerSettings(  );
 	$conf = parse_ini_file( SCRIPT_LOGIN_PATH . '/../../../cfg/cfg.ini', true );
 	
-	if( !isset( $conf['GoogleDriveAPI']['client_id'] ) && isset( $conf['GoogleAPI']['client_id'] ) )
+	if( !isset( $conf['GoogleDriveAPI']['client_id'] ) && !isset( $conf['GoogleAPI']['client_id'] ) )
 	{
 		die( 'ERROR! Google API: client_id is missing in cfg!' );
 	}
 	else
 	{
-		if( $conf['GoogleDriveAPI']['client_id'] )
-		{
-			$google_client_id = $conf['GoogleDriveAPI']['client_id'];
-		}
 		if( $conf['GoogleAPI']['client_id'] )
 		{
 			$google_client_id = $conf['GoogleAPI']['client_id'];
+		}
+		else if( $conf['GoogleDriveAPI']['client_id'] )
+		{
+			$google_client_id = $conf['GoogleDriveAPI']['client_id'];
 		}
 	}
 	

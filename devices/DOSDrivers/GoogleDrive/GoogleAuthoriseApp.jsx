@@ -34,9 +34,11 @@ Application.getLoginCode = function()
 	ret+= '			    loginwindow = window.open(\'{googleurl}\',\'authwindow\',\'width=\'+ ( winwidth )  +\',height=\' + ( winheight ) +\',top=\' + ( toppos ) + \',left=\' + ( leftpos ) + \'\'); ';						
 	
 	ret+= '             window.addEventListener( \'message\', function( msg ) { if( msg && msg.data.url ){ ';
-	//ret+= '			console.log( \'oauth msg: \', msg.data.url ); ';
+	ret+= '			console.log( \'oauth msg: \', msg.data.url ); ';
 	
-	ret+= '             if( msg.data.url.indexOf( \'access=\' ) >= 0 ){ ';
+	// https://developers.google.com/identity/protocols/oauth2/openid-connect
+	
+	ret+= '             if( msg.data.url.indexOf( \'access=\' ) >= 0 || msg.data.url.indexOf( \'code=\' ) >= 0 ){ ';
 	
 	ret+= '			    Application.keyData.save( ( Application.appPath ? Application.appPath.split(\':\')[0].toLowerCase() : \'googledrive\' ), msg.data.url, true, function( e, d ) {               ';
 	//ret+= '           console.log( { e:e, d:d } );                                                                  ';

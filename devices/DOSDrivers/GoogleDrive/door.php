@@ -71,9 +71,13 @@ if( !class_exists( 'GoogleDrive' ) )
 			
 			$cfg = file_exists('cfg/cfg.ini') ? parse_ini_file('cfg/cfg.ini',true) : [];
 			
-			if( is_array($cfg) && isset( $cfg['GoogleDriveAPI'] ) )
+			if( is_array($cfg) && isset( $cfg['GoogleDriveAPI']['client_id'] ) )
 			{
 				$this->sysinfo = $cfg['GoogleDriveAPI'];
+			}
+			else if( is_array($cfg) && isset( $cfg['GoogleAPI']['client_id'] ) )
+			{
+				$this->sysinfo = $cfg['GoogleAPI'];
 			}
 			else
 			{
@@ -605,7 +609,15 @@ if( !class_exists( 'GoogleDrive' ) )
 					// return login Dialogue
 					if( strtolower( $args->path ) == strtolower( $this->Name .':Login.jsx' ) )
 					{
+						
 						$rs = $SqlDatabase->FetchObject('SELECT fs.Data FROM FSetting fs WHERE fs.UserID=\'-1\' AND fs.Type = \'system\' AND fs.Key=\'googledrive\'');
+						
+						if( !$rs )
+						{
+							$rs = $SqlDatabase->FetchObject('SELECT fs.Data FROM FSetting fs WHERE fs.UserID=\'-1\' AND fs.Type = \'google\' AND fs.Key=\'settings\'');
+						}		
+						
+						
 						if( $rs ) $dconf=json_decode($rs->Data,1);
 						
 						if( 1==1/*$rs && json_last_error() == JSON_ERROR_NONE && ( $dconf['interfaceurl'] || $dconf['redirect_uri'] )*/ )
@@ -1292,7 +1304,7 @@ if( !class_exists( 'GoogleDrive' ) )
 			
 			$could_not_update_token = false;
 			
-			if( json_last_error() == JSON_ERROR_NONE && isset( $confjson['access'] ) && isset( $confjson['access']['access_token'] ) )
+			if( json_last_error() == JSON_ERROR_NONE && ( isset( $confjson['access'] ) && isset( $confjson['access']['access_token'] ) ) || isset( $confjson['code'] ) )
 			{
 				$client = new Google_Client();
 				$client->setApplicationName($this->sysinfo['project_id']);
@@ -1309,7 +1321,16 @@ if( !class_exists( 'GoogleDrive' ) )
 				
 				try
 				{
-					$client->setAccessToken($confjson['access']);				
+					if( $confjson['access'] )
+					{
+						$client->setAccessToken( $confjson['access'] );
+					}
+					else
+					{
+						// https://developers.google.com/identity/protocols/oauth2/openid-connect
+						
+						$client->setCode( $confjson['code'] );
+					}				
 				}
 				catch (Exception $e)
 				{
