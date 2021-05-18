@@ -453,7 +453,8 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				flags     : flags,
 				Workspace : Workspace,
 			});
-			ifr.applicationName = app.indexOf( ' ' ) > 0 ? app.split( ' ' )[0] : app;
+			//ifr.applicationName = app.indexOf( ' ' ) > 0 ? app.split( ' ' )[0] : app;
+			ifr.applicationName = conf.Name;
 			ifr.userId = Workspace.userId;
 			ifr.username = Workspace.loginUsername;
 			ifr.userLevel = Workspace.userLevel;

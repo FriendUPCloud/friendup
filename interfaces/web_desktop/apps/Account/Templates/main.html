@@ -187,12 +187,26 @@
 						<div class="HRow Padding PageScroll" id="KeysList"></div>
 						
 					</div>
-					<div class="Page">
-						<div id="ServerTokenAddHostBox" class="">
-							<input id="ServerTokenHost" type="text" placeholder="host">
-							<select name="ServerTokenStatus" id="ServerTokenStatus">
-								
-							</select>
+					<div id="SharedAccess" class="Page">
+						<div id="ServerTokenAddHostBox" class="Padding flexnes">
+							<div class="flexnes">
+								{i18n_domain}: 
+								<input
+									id="ServerTokenHost"
+									class="InputHeight"
+									type="text"
+									placeholder="host"
+								>
+							</div>
+							<div class="flexnes">
+								{i18n_status}: 
+								<select
+									name="ServerTokenStatus"
+									id="ServerTokenStatus"
+									class="InputHeight"
+								>
+								</select>
+							</div>
 							<button id="ServerTokenCreate">
 								{i18n_add_host}
 							</button>
@@ -280,14 +294,19 @@
 			margin: 0 5px 5px 0;
 		}
 		
-		#TokenList {
-			
+		/*
+			Shared access tab
+		*/
+		
+		#SharedAccess {}
+		#SharedAccess button {
+			height : 30px;
 		}
 		
+		#ServerTokenAddHostBox {}
+		#TokenList {}
+		
 		#TokenList .TokenRow {
-			display         : flex;
-			justify-content : space-between;
-			align-items     : center;
 		}
 		
 		#TokenList .TokenRow > * {
@@ -295,8 +314,19 @@
 		}
 		
 		.hidden {
-			display: none;
+			display : none;
 		}
+		
+		.flexnes {
+			display         : flex;
+			justify-content : space-between;
+			align-items     : center;
+		}
+		
+		.ServerTokenActions {
+			justify-content : flex-end;
+		}
+		
 		
 	</style>
 

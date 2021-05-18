@@ -1838,7 +1838,7 @@ ns.TabTokens.prototype.buildDisplayRow = function( conf ) {
 	const status = self.getReadableStatus( conf.status );
 	const html = '<div id="'
 		+ conf.id
-		+ '" class="TokenRow Padding">'
+		+ '" class="TokenRow Padding flexnes">'
 			+ '<div class="ServerTokenHostName">'
 				+ conf.host
 			+ '</div>'
@@ -1847,7 +1847,7 @@ ns.TabTokens.prototype.buildDisplayRow = function( conf ) {
 				+ ': '
 				+ status
 			+ '</div>'
-			+ '<div>'
+			+ '<div class="ServerTokenActions flexnes">'
 				+ '<button class="ServerTokenEdit">'
 					+ '<i class="fa fa-fw fa-edit"></i>'
 				+ '</button>'
@@ -1869,19 +1869,13 @@ ns.TabTokens.prototype.buildEditRow = function( conf ) {
 	//const statusEl = self.getReadableStatus( conf.status );
 	const html = '<div id="'
 		+ conf.id
-		+ '" class="TokenRow Padding">'
+		+ '" class="TokenRow Padding flexnes">'
 			+ '<div class="ServerTokenHostName">'
 				+ conf.host
 			+ '</div>'
-			+ '<select class="ServerTokenStatus">'
-/*
-				+ '<div>'
-					+ i18n( 'i18n_status' )
-				+ '</div>'
-				+ '<select>'
-*/
+			+ '<select class="ServerTokenStatus InputHeight">'
 			+ '</select>'
-			+ '<div>'
+			+ '<div class="ServerTokenActions flexnes">'
 				+ '<button class="ServerTokenSave">'
 					+ '<i class="fa fa-fw fa-save"></i>'
 				+ '</button>'
