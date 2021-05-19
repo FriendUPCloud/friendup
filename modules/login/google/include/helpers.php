@@ -689,7 +689,13 @@ function createFriendAccount( $username, $password, $nounce, $fullname = false, 
 					
 					firstLogin( $creds->ID );
 					
-					applySetup( $creds->ID, 0 );
+					if( $server = getServerSettings(  ) )
+					{
+						if( isset( $server->user_template_id ) && $server->user_template_id )
+						{
+							applySetup( $creds->ID, $server->user_template_id );
+						}
+					}
 					
 					if( $lang )
 					{
@@ -1613,7 +1619,7 @@ function applySetup( $userid, $id )
 									{
 										// 5. Store applications
 				
-										if( $path = _findInSearchPaths( $r[0] ) )
+										if( $path = findInSearchPaths( $r[0] ) )
 										{
 											if( file_exists( $path . '/Config.conf' ) )
 											{
