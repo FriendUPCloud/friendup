@@ -2589,6 +2589,11 @@ WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where User
 	void *res = sqllib->Query( sqllib, temptext );
 	if( res == NULL )
 	{
+		// remember to release sql if local one was used
+		if( gotGlobalSQL == FALSE )
+		{
+			l->LibrarySQLDrop( l, sqllib );
+		}
 		FERROR("GetUserDevice fail: database results = NULL\n");
 		return NULL;
 	}
@@ -2676,6 +2681,14 @@ WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where User
 		if( type != NULL ) FFree( type );
 		if( name != NULL ) FFree( name );
 	}	// going through all rows
+	else
+	{
+		// remember to release sql if local one was used
+		if( gotGlobalSQL == FALSE )
+		{
+			l->LibrarySQLDrop( l, sqllib );
+		}
+	}
 	
 	DEBUG( "[GetUserDeviceByUserID] Successfully freed.\n" );
 	

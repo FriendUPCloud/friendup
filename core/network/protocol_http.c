@@ -863,7 +863,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							char *usrSessionID = NULL;
 							FBOOL sessionIDGenerated = FALSE;
 							
-							sqllib->SNPrintF( sqllib, query, 1024, "SELECT fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID,fs.ID FROM FFileShared fs, Filesystem f, FUser u WHERE fs.Hash=\"%s\" AND u.ID = fs.UserID AND f.Name = fs.Devname", path->p_Parts[ 1 ] );
+							sqllib->SNPrintF( sqllib, query, 1024, "SELECT fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID,f.ID FROM FFileShared fs, Filesystem f, FUser u WHERE fs.Hash=\"%s\" AND u.ID = fs.UserID AND f.Name = fs.Devname", path->p_Parts[ 1 ] );
 							
 							void *res = sqllib->Query( sqllib, query );
 							if( res != NULL )
@@ -908,7 +908,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							if( usrSessionID == NULL )// if res == NULL
 							{
 								DEBUG("First call releated to shared files did not return any results\n");
-								sqllib->SNPrintF( sqllib, query, 1024, "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID,fs.ID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID inner join FUser u on fs.UserID=u.ID where `Hash`='%s'", path->p_Parts[ 1 ] );
+								sqllib->SNPrintF( sqllib, query, 1024, "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID,f.ID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID inner join FUser u on fs.UserID=u.ID where `Hash`='%s'", path->p_Parts[ 1 ] );
 							
 								res = sqllib->Query( sqllib, query );
 								if( res != NULL )
