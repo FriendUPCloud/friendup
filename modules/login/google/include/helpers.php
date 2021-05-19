@@ -554,10 +554,12 @@ function verifyFriendAuth( $json, $deviceid = '' )
 							}
 						
 							// TODO: Find out if we are going to update lang, avatar and gmail dock item on login if changed or removed in Friend after account creation ...
-						
+							
+							// Specc says to not overwrite friend data with google's unless specificed otherwise later.
+							
 							if( $json->locale )
 							{
-								updateLanguages( $creds->ID, $json->locale );
+								//updateLanguages( $creds->ID, $json->locale );
 							}
 						
 							if( $json->picture )
@@ -565,7 +567,7 @@ function verifyFriendAuth( $json, $deviceid = '' )
 								saveAvatar( $creds->ID, $json->picture );
 							}
 							
-							addCustomDockItem( $creds->ID, null, 'https://mail.google.com/mail/u/0/#inbox', 'Gmail', 'gfx/weblinks/icon_gmail.png' );
+							//addCustomDockItem( $creds->ID, null, 'https://mail.google.com/mail/u/0/#inbox', 'Gmail', 'gfx/weblinks/icon_gmail.png' );
 							
 							$data = json_encode( $ses );
 						
@@ -1233,44 +1235,48 @@ function saveAvatar( $userid, $imgurl )
 	// Save image blob as filename hash on user
 	if( $userid > 0 && $imgurl )
 	{
-		$u = new dbIO( 'FUser', $SqlDatabase );
-		$u->ID = $userid;
-		if( $u->Load() && $u->Image != md5( $imgurl ) )
+		$o = new dbIO( 'FSetting', $SqlDatabase );
+		$o->UserID = $userid;
+		$o->Type = 'system';
+		$o->Key = 'avatar';
+		if( !$o->Load() || !$o->Data )
 		{
 			
-			if( $binary = file_get_contents( trim( $imgurl ) ) )
+			$u = new dbIO( 'FUser', $SqlDatabase );
+			$u->ID = $userid;
+			if( $u->Load() && $u->Image != md5( $imgurl ) )
 			{
-				
-				if( $imgdata = getimagesize( trim( $imgurl ) ) )
+			
+				if( $binary = file_get_contents( trim( $imgurl ) ) )
 				{
 				
-					if( $base64 = base64_encode( $binary ) )
+					if( $imgdata = getimagesize( trim( $imgurl ) ) )
 					{
-						$base64 = ( 'data:' . $imgdata['mime'] . ';base64,' . $base64 );
+				
+						if( $base64 = base64_encode( $binary ) )
+						{
+							$base64 = ( 'data:' . $imgdata['mime'] . ';base64,' . $base64 );
 						
-						if( !base64_encode( base64_decode( $base64, true ) ) === $base64 )
-						{
-							die( 'fail not base64 string ...' );
-						}
+							if( !base64_encode( base64_decode( $base64, true ) ) === $base64 )
+							{
+								die( 'fail not base64 string ...' );
+							}
+						
+							$o->Data = trim( $base64 );
+							$o->Save();
 				
-						$o = new dbIO( 'FSetting', $SqlDatabase );
-						$o->UserID = $userid;
-						$o->Type = 'system';
-						$o->Key = 'avatar';
-						$o->Load();
-						$o->Data = trim( $base64 );
-						$o->Save();
-				
-						if( $o->ID > 0 )
-						{
-							$u->Image = md5( $imgurl );
-							$u->Save();
+							if( $o->ID > 0 )
+							{
+								$u->Image = md5( $imgurl );
+								$u->Save();
 							
-							return true;
-						}
+								return true;
+							}
 				
-					}
+						}
 					
+					}
+			
 				}
 			
 			}
