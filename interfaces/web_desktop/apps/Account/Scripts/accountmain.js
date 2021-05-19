@@ -207,6 +207,11 @@ Application.receiveMessage = function( msg )
 			ge( 'UserAccEmail'    ).value        = msg.Email ? msg.Email : '';
 			ge( 'UserAccTimezone'    ).value     = msg.Timezone ? msg.Timezone : '';
 			
+			if( ge( 'UserAccPasswordButton' ) && msg.UserType && ( msg.UserType == 'External' || msg.UserType == 'Doorman' ) )
+			{
+				ge( 'UserAccPasswordButton' ).innerHTML = '<input type="password" class="FullWidth InputHeight" value="********************" disabled="disabled"/>';	
+			}
+			
 			InitTimezoneGui();
 			
 			userCredentials = ge( 'UserAccFullname' ).value.substr( 0, 1 );
@@ -1261,7 +1266,7 @@ function saveDia()
 	nuserCredentials = nuserCredentials.toUpperCase();
 	
 	// Shall we save new password
-	if( ge( 'UserAccPassword' ).value != '' )
+	if( ge( 'UserAccPassword' ).value != '' && ge( 'UserAccPassword' ).value != '******' )
 	{
 		if( ge( 'UserAccPassword' ).value == ge( 'UserAccPasswordConfirm' ).value )
 		{
