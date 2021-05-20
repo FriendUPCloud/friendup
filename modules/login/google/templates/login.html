@@ -9,20 +9,61 @@
 	<body class="Loading" onload="loginNow()">
 		<link rel="stylesheet" href="/webclient/css/extraLoginCSS.css"/>
 		<style>
-			button
+			#LoginElement button
 			{
-				padding: 0;
-				height: 50px;
-    			line-height: 40px;
+				height: 35px;
+				background-color: #3e7eb6;
+				color: white;
 			}
-			button span.icon 
+			#LoginElement button.google
 			{
-				background: url('https://developers-dot-devsite-v2-prod.appspot.com/identity/sign-in/g-normal.png') transparent 5px 50% no-repeat;
-				display: inline-block;
-				vertical-align: middle;
-				width: 42px;
-				height: 42px;
-				margin-right: 10px;
+				height: 45px;
+				box-sizing: border-box;
+				padding: 0;
+				background-color: white;
+				color: #95A5A6;
+				border: 1px solid #BDC3C7;
+				white-space: nowrap;
+			}
+			#LoginElement button.google:hover 
+			{
+				cursor: pointer;
+			}
+			#LoginElement button.google svg
+			{
+				margin-bottom: -4px;
+				padding-right: 8px;
+			}
+			#LoginElement h1, #LoginElement label, #LoginElement button
+			{
+				text-transform: none;
+				font-weight: bold;
+			}
+			#LoginElement #forgotPassword
+			{
+				font-size: 15px;
+				line-height: 35px;
+			}
+			#LoginElement .forgotPassword p, #LoginElement #invalidLogin p
+			{
+				margin: 0;
+			}
+			#LoginElement #invalidLogin p > span
+			{
+				padding: 0 0 6px 0;
+			}
+			#LoginElement a, a:hover
+			{
+				color: #3e7eb6 !important;
+				font-weight: bold !important;
+			}
+			#LoginElement hr
+			{
+				border: 0;
+				border-top: 1px solid #BDC3C7;
+				margin-top: 18px;
+				margin-bottom: 18px;
+				height: 0;
 			}
 		</style>
 		<div id="LoginElement" style="visibility: hidden">
@@ -31,24 +72,61 @@
 					Friend OS
 				</div>
 				<h1>
-					{welcome}
+					Sign in to your Workspace
 				</h1>
 				<div class="Box">
 					<form method="post" onsubmit="return false">
+						<div class="HRow">
+							<label id="UsernameLabel" for="Username">Username</label>
+							<p>
+								<input type="username" id="Username" class="FullWidth" onkeydown="Application.checkKeys(event)" autocapitalize="none" autocorrect="none" tabindex="1" />
+							</p>
+						</div>
+						<div class="HRow MarginTop HideForPass">
+							<label id="PasswordLabel" for="Password">Password</label>
+							<p>
+								<input type="password" id="Password" class="FullWidth" onkeydown="Application.checkKeys(event)"  tabindex="2" />
+							</p>
+						</div>
+						<div class="HRow MarginTop">
+							<div class="HContent50 InputHeight FloatLeft forgotPassword">
+								<p>
+									<a id="forgotPassword" style="cursor:pointer;" onclick="Application.forgotPassword()" tabindex="-1000">Forgot password ?</a>
+								</p>
+							</div>
+							<div class="HContent50 InputHeight FloatLeft">
+								<button id="loginButton" class="IconSmall fa-unlock" tabindex="4" onclick="Application.doLogin()">
+									Sign in
+								</button>
+							</div>
+						</div>
 						<div class="HRow MarginTop">
 							<div class="HContent100">
-								<button class="IconSmall fa-unlock" tabindex="4" onclick="Application.doLogin()" style="cursor:pointer">
-									<span class="icon"></span>
-            						<span class="buttonText">Sign in with Google</span>
-								</button>
-								<div id="invalidLogin" class="Padding"><p></p></div>
+								<div id="invalidLogin" class="Padding"><p>&nbsp;</p></div>
 							</div>
 						</div>
 						<input type="hidden" id="publickey" value="{publickey}"/>
 					</form>
-					<div id="compatability" class="HRow MarginTop BorderTop HideForPass">
-						<p><strong>Compatibility information:</strong></p>
-						<p>Please use Google Chrome, Firefox. Experimental support for Safari, Opera and MS Edge.</p>
+					<hr/>
+					<div class="HRow MarginTop">
+						<div class="HContent100">
+							<button class="IconSmall fa-unlock google" tabindex="4" onclick="loginGoogle()">
+								<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" viewBox="0 0 48 48" class="abcRioButtonSvg">
+									<g>
+										<path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+										<path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+										<path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+										<path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+										<path fill="none" d="M0 0h48v48H0z"></path>
+									</g>
+								</svg>
+        						<span class="buttonText">Sign in with Google</span>
+							</button>
+						</div>
+					</div>
+					<hr/>
+					<div class="HRow MarginTop BorderTop HideForPass" style="text-align:center">
+						Don't have an account? <a href="/register" target="_blank">Sign Up</a>
 					</div>
 				</div>
 			</div>
@@ -57,95 +135,100 @@
 			Application = {
 				showLog: false,
 				failedAttempt: false,
+				passwordRecoveryMode: false,
 				init: function( data )
 				{
 				},
 				doLogin: function( e )
 				{
+					/*
+						In password recivery mode we do stuff a bit differently...
+					*/
+					if( this.passwordRecoveryMode )
+					{
+						
+						if( Trim( ge( 'Username' ).value ) == '')
+						{
+							ge( 'Username' ).focus();
+							ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = 'Enter your username.';
+							return;
+						}
+						ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = '';
+						parent.Friend.User.ResetPassword( Trim( ge( 'Username' ).value ), function( result ){
+							Application.forgotPassword();
+							if( ge( 'Username' ).value.indexOf( '@' ) > 1 ) 
+								ge( 'Username' ).value = '';
+							ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = ( result == 'ok' ? 'Please check your inbox.' : 'Could not reset password.' );
+						} );
+						return;
+					}
 					
 					// Don't do it many times while working!
 					if( this.busy ) return;
 					this.busy = true;
 					
-					var self = this;
-					
-					externalAuth( function( params )
+					if( this.failedAttempt )
 					{
-						
-						// Track user's login
-						if( typeof ga == 'function' && params && params['id_token_content'] && params['id_token_content']['sub'] ) 
+						ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = 'Logging in...';
+					}
+					
+					// Track user's login
+					if( typeof ga == 'function' ) ga( 'send', 'event', 'userloginattempt', Trim( ge( 'Username' ).value ) );
+					parent.Friend.User.Init();
+					let us = Trim( ge( 'Username' ).value );
+					let pw = Trim( ge( 'Password' ).value )
+					parent.Friend.User.Login( us, pw, false, function( result, answer )
+					{
+						let tmp = null;
+						if( answer )
 						{
-							ga( 'send', 'event', 'userloginattempt', params['id_token_content']['sub'] );
-						}
-						
-						parent.Friend.User.Init();
-						
-						self.login( params, null, function( result, answer )
-						{
-							
-							let tmp = null;
-							if( answer )
+							// Try to parse response answer
+							try
 							{
-								// Try to parse response answer
-								try
+								tmp = JSON.parse( answer );
+							}
+							catch( e )
+							{
+								console.log( 'Answer was not in json format: ', answer );
+							}
+							if( tmp && tmp.response )
+							{								//check for block....
+								if( tmp.response.indexOf( 'account blocked until:' ) > -1 )
 								{
-									tmp = JSON.parse( answer );
-								}
-								catch( e )
-								{
-									console.log( 'Answer was not in json format: ', answer );
-								}
-								if( tmp && tmp.response )
-								{
-									//check for block....
-									if( tmp.response.indexOf( 'Account blocked until:' ) > -1 )
+									let ts = tmp.response.replace( 'account blocked until:', '' );
+									if( parseInt( ts ) > 0 )
 									{
-										let ts = tmp.response.replace( 'Account blocked until:', '' );
-										if( parseInt( ts ) > 0 )
-										{
-											Application.errorMessage = 'Account blocked (try again after ' + new Date( ts * 1000 ).toLocaleString() + ')';
-											showLoginError();  
-											return;
-										}
-									}
-									if( !tmp.code )
-									{
-										showLoginError( tmp.response );
+										Application.errorMessage = 'Account blocked (try again after ' + new Date( ts * 1000 ).toLocaleString() + ')';
+										showLoginError();  
 										return;
 									}
 								}
 							}
-							
-							if( result == false )
-							{
-								showLoginError();
-							}
-							else if( result == 0 )
-							{
-								setTimeout( showLoginError, 1000 );
-							}
-							// Success!
-							else
-							{
-								//track users login..
-								if( typeof ga == 'function' && params && params['id_token_content'] && params['id_token_content']['sub'] )
-								{
-									ga( 'send', 'event', 'userloginsuccess', params['id_token_content']['sub'] );	
-								}
-								parent.Workspace.showDesktop();
-								Application.busy = false;
-							}
-							
-						} );
+						}
 						
-					} );
-					
-					return;
-					
+						if( result == false )
+						{
+							showLoginError();
+						}
+						else if( result == 0 )
+						{
+							setTimeout( showLoginError, 1000 );
+						}
+						// Success!
+						else
+						{
+							//track users login..
+							if( typeof ga == 'function' )
+							{
+								ga( 'send', 'event', 'userloginsuccess', us );	
+							}
+							parent.Workspace.showDesktop();
+							Application.busy = false;
+						}
+					}, e, { hashedPassword: ge( 'Password' ).hashed ? true : false } );
 				},
-				
 				// Login overwrite ...
-				login: function( params, token, callback )
+				loginExternal: function( params, token, callback )
 				{
 						
 					var self = this;
@@ -174,7 +257,6 @@
 							}
 						}
 						
-						// So here we are setting keys twice first time in the login form to securely communicate with the server, then again in parent.Friend.User, might be overkill ...
 						if( !parent.Workspace.encryption.keys.client )
 						{
 							parent.Workspace.encryption.setKeys( username, password );
@@ -265,7 +347,7 @@
 												
 											if( res[0] == 'ok' )
 											{
-												self.login( params, params['id_token'], callback );
+												self.loginExternal( params, params['id_token'], callback );
 											}
 											else
 											{
@@ -336,7 +418,6 @@
 					return 0;
 					
 				},
-				
 				checkKeys: function( e )
 				{
 					var k = e.which ? e.which : e.keyCode;
@@ -345,60 +426,63 @@
 						this.doLogin( e );
 					}
 				},
-				
 				receiveMessage: function( msg )
-				{
+				{	
+					// TODO: Remove if not in any use ...
 					if( msg.command && msg.command == 'error' )
 					{
 						showLoginError();
 					}
 					else if( msg.cmd && msg.cmd == 'login' )
 					{
+						ge( 'Username' ).value = msg.username;
+						ge( 'Password' ).value = msg.password;
+						
 						Application.loginUser( msg );
 					}
 				},
-				
 				loginUser: function( msg )
 				{
 					if( msg && parent && parent.Workspace && parent.Friend && parent.Friend.User )
 					{
-						// Don't do it many times while working!
-						if( Application.busy ) return;
-						Application.busy = true;
+						parent.Friend.User.Init();
+						parent.Workspace.setLogoutURL( msg.logouturl );
 						
-						var self = this;
-					
-						externalAuth( function( params )
-						{
-							
-							parent.Friend.User.Init();
-							parent.Workspace.setLogoutURL( msg.logouturl );
-							
-							self.login( params, null, function( result )
-							{
-								if( result == false )
-								{
-									console.log( 'Could NOT logg in... why...? ' + result + ':', params );
-									showLoginError();
-								}
-								else if( result == 0 )
-								{
-									setTimeout( showLoginError, 1000 );
-								}
-								else
-								{
-									Application.busy = false;
-								}
-							} );
-						
-						} );
+						this.doLogin(  );
 					}
 					else
 					{
 						showLoginError( 'Could not login' );
 					}
+				},
+				forgotPassword : function()
+				{
+					ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = '';
+					if( Application.passwordRecoveryMode )
+					{
+						Application.passwordRecoveryMode = false;
+						ge( 'loginButton' ).classList.remove( 'FloatRight' );
+						ge( 'loginButton' ).innerHTML = 'Sign in';
+						ge( 'UsernameLabel' ).innerHTML = 'Username';
+						ge( 'forgotPassword' ).innerHTML = 'Forgot password ?';
+						document.querySelectorAll( '.HideForPass' ).forEach( function( thisNode ){
+							thisNode.style.display = thisNode.dataset.oldDisplay;
+						} );	
+						ge('loginButton').classList.remove( 'Forgot' );
+						return;
+					}
+					
+					Application.passwordRecoveryMode = true;
+					document.querySelectorAll( '.HideForPass' ).forEach( function( thisNode ){
+						thisNode.dataset.oldDisplay = thisNode.style.display;
+						thisNode.style.display = 'none';
+					} );	
+					ge( 'loginButton' ).classList.add( 'FloatRight' );
+					ge( 'loginButton' ).innerHTML = ' &nbsp; Request new password';
+					ge( 'loginButton' ).classList.add( 'Forgot' );
+					ge( 'UsernameLabel' ).innerHTML = 'Username / e-mail:';
+					ge( 'forgotPassword' ).innerHTML = 'Return to login form';
 				}
-				
 			};
 			
 			function getRandomString( length ) 
@@ -413,6 +497,8 @@
 			
 			function externalAuth( callback )
 			{
+				
+				// TODO: Look at how to do this without iframes ... perhaps can avoid popups ...
 				
 				if( location.href && location.href.indexOf( 'localhost' ) < 0 && location.href.indexOf( '?test' ) >= 0 )
 				{
@@ -588,6 +674,94 @@
 				
 			}
 			
+			function loginGoogle( e )
+			{
+				var self = Application;
+				
+				// Don't do it many times while working!
+				if( self.busy ) return;
+				self.busy = true;
+				
+				var self = Application;
+				
+				externalAuth( function( params )
+				{
+					
+					// Track user's login
+					if( typeof ga == 'function' && params && params['id_token_content'] && params['id_token_content']['sub'] ) 
+					{
+						ga( 'send', 'event', 'userloginattempt', params['id_token_content']['sub'] );
+					}
+					
+					parent.Friend.User.Init();
+					
+					self.loginExternal( params, null, function( result, answer )
+					{
+						
+						let tmp = null;
+						if( answer )
+						{
+							// Try to parse response answer
+							try
+							{
+								tmp = JSON.parse( answer );
+							}
+							catch( e )
+							{
+								console.log( 'Answer was not in json format: ', answer );
+							}
+							if( tmp && tmp.response )
+							{
+								//check for block....
+								if( tmp.response.indexOf( 'Account blocked until:' ) > -1 )
+								{
+									let ts = tmp.response.replace( 'Account blocked until:', '' );
+									if( parseInt( ts ) > 0 )
+									{
+										Application.errorMessage = 'Account blocked (try again after ' + new Date( ts * 1000 ).toLocaleString() + ')';
+										showLoginError();  
+										return;
+									}
+								}
+								if( !tmp.code )
+								{
+									showLoginError( tmp.response );
+									return;
+								}
+							}
+						}
+						
+						if( result == false )
+						{
+							showLoginError();
+						}
+						else if( result == 0 )
+						{
+							setTimeout( showLoginError, 1000 );
+						}
+						// Success!
+						else
+						{
+							//track users login..
+							if( typeof ga == 'function' && params && params['id_token_content'] && params['id_token_content']['sub'] )
+							{
+								ga( 'send', 'event', 'userloginsuccess', params['id_token_content']['sub'] );	
+							}
+							parent.Workspace.showDesktop();
+							Application.busy = false;
+						}
+						
+					} );
+					
+				} );
+			}
+			
+			function signupForm(  )
+			{
+				// TODO: Add support for redirecting top layer window by adding support for flag 'allow-top-navigation' on the iframe.
+				window.top.location.href = '/register';
+			}
+			
 			function showLoginError( msg )
 			{
 				parent.Workspace.loginPrompt.setFlag( 'height', 263 );
@@ -604,13 +778,20 @@
 			// Focus the username field
 			function loginNow( e )
 			{
-				console.log( 'location.href', location.href );
-				
 				if( typeof( GetCookie ) == 'undefined' ) return setTimeout( loginNow, 50 );
 				
 				Application.applicationId = 'loginprompt';
 				
+				if( parent.GetUrlVar( 'username' ) )
+				{
+					ge( 'Username' ).value = parent.GetUrlVar( 'username' );
+					ge( 'Password' ).value = parent.GetUrlVar( 'password' );
+					ge( 'Password' ).hashed = true;
+					Application.doLogin( e );
+				}
+				
 				document.getElementById('LoginElement').style.visibility = 'visible';
+				document.getElementById('Username').focus();
 			}
 			
 		</script>

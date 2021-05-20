@@ -359,10 +359,14 @@ function validateFriendIdentity( $username, $password, $fullname = false, $email
 		$dbo = initDBO();
 		
 		if( $identity = $dbo->fetchObject( '
-			SELECT fu.ID FROM FUser fu 
+			SELECT fu.ID, fu.Password FROM FUser fu 
 			WHERE fu.Name = \'' . mysqli_real_escape_string( $dbo->_link, $username ) . '\' 
 		' ) )
 		{
+			// TODO: Find a better way to store / update password information using google's id_token ... (kid expires ...)
+			
+			//die( '{S6}' . hash( 'sha256', $password ) . "\r\n" . $identity->Password );
+			
 			if( $creds = $dbo->fetchObject( '
 				SELECT fu.ID, fu.Status FROM FUser fu 
 				WHERE 
