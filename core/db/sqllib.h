@@ -79,7 +79,6 @@ typedef struct SQLLibrary
 	void 					(*Delete)( struct SQLLibrary *l, const FULONG *descr, void *data );
 	void					(*DeleteWhere)( struct SQLLibrary *l, const FULONG *descr, char *where );
 	void 					*(*Query)( struct SQLLibrary *l, const char *sel );
-	const char				*(*GetLastError)( struct SQLLibrary *l );
 	int 					(*NumberOfRecords)( struct SQLLibrary *l, const FULONG *descr, char *where );
 	int 					(*NumberOfRecordsCustomQuery)( struct SQLLibrary *l, const char *query );
 	char 					**(*FetchRow)( struct SQLLibrary *l, void *res );
