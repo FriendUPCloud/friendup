@@ -72,10 +72,6 @@
 		</div>
 		<style>#invalidLogin { color:#F00; }</style>
 		<script>
-		
-			// Trap this
-			window.doLogout();
-		
 			// Used to allow "enter" on form input fields
 			function fixKeyboardInputThere()
 			{
@@ -113,6 +109,9 @@
 				ifr.style.visibility = 'hidden';
 				document.body.appendChild( ifr );
 			}
+			
+			// Trap this
+			window.doLogout();
 		
 			Application = {
 				failedAttempt: false,
