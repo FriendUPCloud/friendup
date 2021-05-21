@@ -26,7 +26,7 @@
             	<input type="password" id="AuthPassword" value=""/>
             </div>
         </div>
-        <div class="HRow MarginTop">
+        <div class="HRow MarginTop" id="ValidationButtons">
         	<div class="HContent50 FloatLeft">
 		    	<button type="button" onclick="parent.Workspace.logout()">
 		    		Log in as new user
@@ -39,4 +39,13 @@
 		    </div>
         </div>
     </div>
+    
+    <style>
+    	#ValidationButtons button
+    	{
+    		display: block;
+    		margin: auto;
+    		width: 90%;
+    	}
+    </style>
 
