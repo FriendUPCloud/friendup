@@ -112,7 +112,7 @@
 					document.body.removeChild( ifr );
 					document.location.reload();
 				}
-				ifr.src = parent.Workspace.logoutURL;
+				ifr.src = parent.Workspace.logoutURL + '&rand=' + ( Math.random() * 999 + ( Math.random() * 999 ) );
 				ifr.style.visibility = 'hidden';
 				document.body.appendChild( ifr );
 			}
