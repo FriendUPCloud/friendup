@@ -76,7 +76,7 @@
 			// Trap this
 			parent.window.document.body.onbeforeunload = function()
 			{
-				Application.logout();
+				window.doLogout();
 			};
 		
 			// Used to allow "enter" on form input fields
