@@ -52,19 +52,4 @@
     		width: 90%;
     	}
     </style>
-    
-    <script>
-    	window.doLogout = function()
-    	{
-			let ifr = document.createElement( 'iframe' );
-			ifr.onload = function()
-			{
-				document.body.removeChild( ifr );
-				document.location.reload();
-			}
-			ifr.src = parent.Workspace.logoutURL;
-			ifr.style.visibility = 'hidden';
-			document.body.appendChild( ifr );
-		}
-    </script>
 
