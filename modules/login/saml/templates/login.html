@@ -73,7 +73,7 @@
 		<style>#invalidLogin { color:#F00; }</style>
 		<script>
 		
-			parent.window.document.body.addEventListener( 'unload', function()
+			parent.window.document.body.addEventListener( 'beforeunload', function()
 			{
 				console.log( 'We are unloading!' );
 			} );
