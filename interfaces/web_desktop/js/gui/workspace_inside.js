@@ -8523,7 +8523,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				Notify(	{
 					title: i18n( 'i18n_paste_error' ),
-					text: 'Really unexpected error. Contact your Friendly administrator.'
+					text: 'Really unexpected error. Contact your Friend OS administrator.'
 				} );
 			}
 		}
