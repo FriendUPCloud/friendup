@@ -73,9 +73,10 @@
 		<style>#invalidLogin { color:#F00; }</style>
 		<script>
 		
+			// Trap this
 			parent.window.document.body.onbeforeunload = function()
 			{
-				console.log( 'We are unloading!' );
+				Application.logout();
 			};
 		
 			// Used to allow "enter" on form input fields
