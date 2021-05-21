@@ -73,11 +73,10 @@
 		<style>#invalidLogin { color:#F00; }</style>
 		<script>
 		
-			parent.window.document.body.addEventListener( 'beforeunload', function()
+			parent.window.document.body.onbeforeunload = function()
 			{
-				alert( 'Test' );
 				console.log( 'We are unloading!' );
-			} );
+			};
 		
 			// Used to allow "enter" on form input fields
 			function fixKeyboardInputThere()
