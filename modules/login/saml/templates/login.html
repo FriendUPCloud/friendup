@@ -74,10 +74,7 @@
 		<script>
 		
 			// Trap this
-			parent.window.document.body.onbeforeunload = function()
-			{
-				window.doLogout();
-			};
+			window.doLogout();
 		
 			// Used to allow "enter" on form input fields
 			function fixKeyboardInputThere()
