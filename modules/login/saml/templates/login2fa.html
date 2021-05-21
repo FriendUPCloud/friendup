@@ -33,7 +33,7 @@
 		    	</button>
 		    </div>
         	<div class="HContent50 FloatLeft">
-		    	<button type="button" onclick="doLogout()">
+		    	<button type="button" onclick="window.doLogout()">
 		    		Abort 2FA login
 		    	</button>
 		   	</div>
@@ -54,7 +54,7 @@
     </style>
     
     <script>
-    	function doLogout()
+    	window.doLogout = function()
     	{
 			let ifr = document.createElement( 'iframe' );
 			ifr.onload = function()
