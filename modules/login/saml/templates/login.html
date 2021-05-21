@@ -97,13 +97,14 @@
 				}
 			}
 		
-			window.doLogout = function()
+			window.doLogout = function( Noreload )
 			{
 				let ifr = document.createElement( 'iframe' );
 				ifr.onload = function()
 				{
 					document.body.removeChild( ifr );
-					document.location.reload();
+					if( !Noreload )
+						document.location.reload();
 				}
 				ifr.src = parent.Workspace.logoutURL + '&rand=' + ( Math.random() * 999 + ( Math.random() * 999 ) );
 				ifr.style.visibility = 'hidden';
@@ -111,7 +112,7 @@
 			}
 			
 			// Trap this
-			window.doLogout();
+			window.doLogout( true );
 		
 			Application = {
 				failedAttempt: false,
