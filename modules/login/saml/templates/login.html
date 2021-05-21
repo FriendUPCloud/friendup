@@ -108,12 +108,8 @@
 				}
 				ifr.src = parent.Workspace.logoutURL + '&rand=' + ( Math.random() * 999 + ( Math.random() * 999 ) );
 				ifr.style.visibility = 'hidden';
-				console.log( 'Doing it.' + ifr.src );
 				document.body.appendChild( ifr );
 			}
-			
-			// Trap this
-			window.doLogout( true );
 		
 			Application = {
 				failedAttempt: false,
@@ -283,6 +279,9 @@
 						if( msg.logouturl && parent.Workspace )
 						{
 					        parent.Workspace.setLogoutURL( msg.logouturl );
+					        
+					        // Trap this
+							window.doLogout( true );
 					    }
 						
 					    // Execute the login procedure
