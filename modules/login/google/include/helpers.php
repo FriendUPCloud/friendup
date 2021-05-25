@@ -108,7 +108,7 @@ function renderReplacements( $template )
 {
 	$welcome = 'Login to your workspace';
 	
-	$publickey = ''; $redirect_uri = ''; $google_client_id = '';
+	$publickey = ''; $redirect_uri = ''; $google_client_id = ''; $friend_register_uri = '';
 	
 	if( $keys = getServerKeys() )
 	{
@@ -139,6 +139,15 @@ function renderReplacements( $template )
 		}
 	}
 	
+	if( $server && $server->friend_register_uri )
+	{
+		$friend_register_uri = $server->friend_register_uri;
+	}
+	else
+	{
+		$friend_register_uri = '/register';
+	}
+	
 	if( $server && $server->redirect_uri )
 	{
 		$redirect_uri = $server->redirect_uri;
@@ -149,8 +158,8 @@ function renderReplacements( $template )
 		$redirect_uri .= '/loginprompt/oauth';
 	}
 	
-	$finds = [ '{oauth2_redirect_uri}', '{google-signin-client_id}', '{publickey}' ];
-	$replacements = [ $redirect_uri, $google_client_id, $publickey ];
+	$finds = [ '{oauth2_redirect_uri}', '{google-signin-client_id}', '{publickey}', '{friend_register_uri}' ];
+	$replacements = [ $redirect_uri, $google_client_id, $publickey, $friend_register_uri ];
 	
 	return str_replace( $finds, $replacements, $template );
 }
