@@ -154,7 +154,10 @@ function renderReplacements( $template )
 	}
 	else
 	{
-		$redirect_uri = '/loginprompt/oauth';
+		$redirect_uri  = ( $conf['Core']['SSLEnable'] ? 'https://' : 'http://' );
+		$redirect_uri .= ( $conf['FriendCore']['fchost'] );
+		$redirect_uri .= ( $conf['FriendCore']['fchost'] == 'localhost' ? ( $conf['FriendCore']['port'] ? ':' . $conf['FriendCore']['port'] : ':6502' ) : '' );
+		$redirect_uri .= ( '/loginprompt/oauth' );
 	}
 	
 	$finds = [ '{oauth2_redirect_uri}', '{google-signin-client_id}', '{publickey}', '{friend_register_uri}' ];
