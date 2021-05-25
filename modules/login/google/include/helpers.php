@@ -35,7 +35,17 @@ function getArgs()
 		{
 			if( isset( $url[1] ) && $url[1] )
 			{
-				$args->publickey = $url[1];
+				if( $parts = explode( '/', $url[1] ) )
+				{
+					if( isset( $parts[0] ) && $parts[0] )
+					{
+						$args->mode = $parts[0];
+					}
+					if( isset( $parts[1] ) && $parts[1] )
+					{
+						$args->publickey = $parts[1];
+					}
+				}
 			}
 		}
 	}
@@ -82,7 +92,7 @@ function getServerKeys()
 }
 
 // Renders the login form template
-function renderSecureLoginForm()
+function renderCustomLoginForm()
 {
 	
 	if( file_exists( SCRIPT_LOGIN_PATH . '/templates/login.html' ) )
@@ -111,6 +121,8 @@ function renderReplacements( $template )
 	$server = getServerSettings(  );
 	$conf = parse_ini_file( SCRIPT_LOGIN_PATH . '/../../../cfg/cfg.ini', true );
 	
+	// google api client_secret is also required atm ...
+	
 	if( !isset( $conf['GoogleDriveAPI']['client_id'] ) && !isset( $conf['GoogleAPI']['client_id'] ) )
 	{
 		die( 'ERROR! Google API: client_id is missing in cfg!' );
@@ -137,22 +149,8 @@ function renderReplacements( $template )
 		$redirect_uri .= '/loginprompt/oauth';
 	}
 	
-	
-	
-	$finds = [
-		'{oauth2_redirect_uri}',
-		'{google-signin-client_id}',
-		'{scriptpath}',
-		'{welcome}',
-		'{publickey}'
-	];
-	$replacements = [
-			$redirect_uri,
-			$google_client_id,
-			$GLOBALS['request_path'],
-			$welcome,
-			$publickey
-	];
+	$finds = [ '{oauth2_redirect_uri}', '{google-signin-client_id}', '{publickey}' ];
+	$replacements = [ $redirect_uri, $google_client_id, $publickey ];
 	
 	return str_replace( $finds, $replacements, $template );
 }
@@ -349,59 +347,53 @@ function initDBO()
 	return $dbo;
 }
 
-function validateFriendIdentity( $username, $password, $fullname = false, $email = false, $publickey = false )
+function validateFriendIdentity( $json, $nounce )
 {
+	$error = false; $data = false; $client_secret = false;
 	
-	$error = false; $data = false;
+	if( $conf = parse_ini_file( SCRIPT_LOGIN_PATH . '/../../../cfg/cfg.ini', true ) )
+	{
+		if( $conf['GoogleAPI']['client_secret'] )
+		{
+			$client_secret = $conf['GoogleAPI']['client_secret'];
+		}
+		else if( $conf['GoogleDriveAPI']['client_secret'] )
+		{
+			$client_secret = $conf['GoogleDriveAPI']['client_secret'];
+		}
+	}
 	
-	if( $username && $password )
+	if( $json && $json->username && $nounce && $client_secret )
 	{
 		$dbo = initDBO();
 		
 		if( $identity = $dbo->fetchObject( '
-			SELECT fu.ID, fu.Password FROM FUser fu 
-			WHERE fu.Name = \'' . mysqli_real_escape_string( $dbo->_link, $username ) . '\' 
+			SELECT fu.ID, fu.Status FROM FUser fu 
+			WHERE fu.Name = \'' . mysqli_real_escape_string( $dbo->_link, $json->username ) . '\' 
+			AND fu.Password != "" 
 		' ) )
 		{
-			// TODO: Find a better way to store / update password information using google's id_token ... (kid expires ...)
-			
-			//die( '{S6}' . hash( 'sha256', $password ) . "\r\n" . $identity->Password );
-			
-			if( $creds = $dbo->fetchObject( '
-				SELECT fu.ID, fu.Status FROM FUser fu 
-				WHERE 
-						fu.Name     = \'' . mysqli_real_escape_string( $dbo->_link, $username ) . '\' 
-					AND fu.Password = \'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $password ) ) . '\' 
-			' ) )
+			if( $identity->Status == 2 || $identity->Status == 1 )
 			{
-				
-				if( $creds->Status == 2 )
-				{
-					$error = '{"result":"-1","response":"Account is blocked, contact server admin ..."}';
-				}
-				else
-				{
-					$data = '';
-				}
-				
+				$error = '{"result":"-1","response":"Account is blocked or disabled, contact server admin ..."}';
 			}
 			else
 			{
-				$error = '{"result":"-1","response":"Credentials are wrong, contact server admin ..."}';
+				// Data ...
+				$data = '{"result":"1","token":"' . hash( 'sha256', '{"id":' . $identity->ID . ',"secret":"' . $client_secret . '"}' ) . '","response":"Identity confirmed ..."}';
 			}
 		}
 		else
 		{
-			
-			if( createFriendAccount( $username, $password, $fullname, $email, $publickey ) )
+			if( $ret = createFriendAccount( $json, $nounce ) )
 			{
-				$data = '{"result":"1","response":"Couldn\'t find account, created a new Friend account ..."}';
+				// Data ...
+				$data = '{"result":"1","mode":"account","token":"' . $ret . '","response":"Couldn\'t find account ..."}';
 			}
 			else
 			{
 				$error = '{"result":"-1","response":"Failed to create Friend account, contact server admin ..."}';
 			}
-			
 		}
 	}
 	else
@@ -417,256 +409,52 @@ function validateFriendIdentity( $username, $password, $fullname = false, $email
 	{
 		return [ 'fail', $error ];
 	}
-	
 }
 
-function verifyGoogleToken( $token, $deviceid )
+function createFriendAccount( $json, $nounce )
 {
 	
-	if( $token )
+	$client_secret = false;
+	
+	if( $conf = parse_ini_file( SCRIPT_LOGIN_PATH . '/../../../cfg/cfg.ini', true ) )
 	{
-		
-		if( $verify = remoteAuth( 'https://oauth2.googleapis.com/tokeninfo?id_token=' . $token, false, 'GET' ) )
+		if( $conf['GoogleAPI']['client_secret'] )
 		{
-		
-			if( $json = json_decode( $verify ) )
-			{
-			
-				$json->username = $json->sub;
-				$json->password = $json->kid;
-			
-				if( $json = convertLoginData( $json, 'GOOGLE' ) )
-				{
-					
-					if( $res = verifyFriendAuth( $json, $deviceid ) )
-					{
-						return $res;
-					}
-					
-				}
-			
-			}
-			
+			$client_secret = $conf['GoogleAPI']['client_secret'];
 		}
-		
-	}
-	
-	return false;
-	
-}
-
-function verifyFriendAuth( $json, $deviceid = '' )
-{
-	
-	$error = false; $data = false;
-	
-	if( $json && $json->username && $json->password && $json->nonce )
-	{
-		$dbo = initDBO();
-		
-		if( $creds = $dbo->fetchObject( '
-			SELECT fu.ID, fu.Status FROM FUser fu 
-			WHERE 
-					fu.Name     = \'' . mysqli_real_escape_string( $dbo->_link, $json->username ) . '\' 
-				AND fu.Password = \'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $json->password ) ) . '\' 
-		' ) )
+		else if( $conf['GoogleDriveAPI']['client_secret'] )
 		{
-			
-			if( $verify = $dbo->fetchObject( '
-				SELECT 
-					fm.DataID AS UserID, fm.ValueString AS Code 
-				FROM 
-					FMetaData fm 
-				WHERE 
-						fm.Key       = "VerificationCode" 
-					AND fm.DataID    = \'' . $creds->ID . '\' 
-					AND fm.DataTable = "FUser" 
-				ORDER BY 
-					fm.ID DESC 
-			' ) )
-			{
-				if( $verify->Code )
-				{
-					if( trim( $verify->Code ) == trim( $json->nonce ) )
-					{
-						$dbo->Query( '
-							DELETE FROM FMetaData 
-							WHERE 
-									`Key` = "VerificationCode" 
-								AND `DataID` = \'' . $creds->ID . '\' 
-								AND `DataTable` = "FUser" 
-						' );
-					}
-					else
-					{
-						$error = '{"result":"-1","response":"Verification code doesn\'t match, contact server admin ..."}';
-					}
-				}
-				else
-				{
-					$error = '{"result":"-1","response":"Verification code for user account empty ..."}';
-				}
-			}
-			
-			if( !$error )
-			{
-				if( $creds->Status == 2 || $creds->Status == 1 )
-				{
-					$error = '{"result":"-1","response":"Account is blocked or disabled, contact server admin ..."}';
-				}
-				else
-				{
-				
-					if( $login = remoteAuth( '/system.library/login', 
-					[
-						'username' => $json->username, 
-						'password' => $json->password, 
-						'deviceid' => $deviceid 
-					] ) )
-					{
-						if( strstr( $login, '<!--separate-->' ) )
-						{
-							if( $ret = explode( '<!--separate-->', $login ) )
-							{
-								if( isset( $ret[1] ) )
-								{
-									$login = $ret[1];
-								}
-							}
-						}
-					
-						if( $ses = json_decode( $login ) )
-						{
-						
-							if( $ses->sessionid )
-							{
-							
-								if( !remoteAuth( '/system.library/user/update?sessionid=' . $ses->sessionid, 
-								[
-									'setup' => '0' 
-								] ) )
-								{
-									//
-							
-									die( '[update] fail from friendcore ...' );
-								}
-							
-							}
-							else
-							{
-								die( 'fail no session ...' );
-							}
-						
-							// TODO: Find out if we are going to update lang, avatar and gmail dock item on login if changed or removed in Friend after account creation ...
-							
-							// Specc says to not overwrite friend data with google's unless specificed otherwise later.
-							
-							if( $json->locale )
-							{
-								//updateLanguages( $creds->ID, $json->locale );
-							}
-						
-							if( $json->picture )
-							{
-								saveAvatar( $creds->ID, $json->picture );
-							}
-							
-							//addCustomDockItem( $creds->ID, null, 'https://mail.google.com/mail/u/0/#inbox', 'Gmail', 'gfx/weblinks/icon_gmail.png' );
-							
-							$data = json_encode( $ses );
-						
-						}
-					
-					}
-					else
-					{
-			
-						// Couldn't login ...
-			
-						die( '[login] fail from friendcore ...' );
-			
-					}
-				
-				
-				}
-			}
-			
+			$client_secret = $conf['GoogleDriveAPI']['client_secret'];
 		}
-		else
-		{
-			$error = '{"result":"-1","response":"Credentials don\'t match, contact server admin ..."}';
-		}
-		
-	}
-	else
-	{
-		return false;
 	}
 	
-	if( $data !== false )
-	{
-		return [ 'ok', $data ];
-	}
-	else
-	{
-		return [ 'fail', $error ];
-	}
-	
-}
-
-function createFriendAccount( $username, $password, $nounce, $fullname = false, $email = false, $lang = false, $publickey = false )
-{
-	
-	if( $username && $password && $nounce )
+	if( $json && $json->username && $nounce && $client_secret )
 	{
 		
 		$dbo = initDBO();
 		
 		$query = '
 			SELECT fu.ID FROM FUser fu 
-			WHERE 
-					fu.Name = \'' . mysqli_real_escape_string( $dbo->_link, $username ) . '\' 
-				AND fu.Password = \'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $password ) ) . '\' 
+			WHERE fu.Name = \'' . mysqli_real_escape_string( $dbo->_link, $json->username ) . '\' 
 		';
 		
 		if( !$creds = $dbo->fetchObject( $query ) )
 		{
 			
-			// Check if user exists and password is wrong ...	
-			
-			if( $dbo->fetchObject( '
-				SELECT 
-					fu.* 
-				FROM 
-					FUser fu 
-				WHERE 
-					fu.Name = \'' . mysqli_real_escape_string( $dbo->_link, $username ) . '\' 
-			' ) )
-			{
-				die( 'CORRUPT FRIEND INSTALL! User exists but Friend password is incorrect.' );
-			}
-			
 			// Create new user ...
 			
-			// Add support for verification code in meta data ...
-			
-			// TODO: Perhaps create new random password matched against google for every login in order to make prevent someone stealing sub and kid from google data.
-			
-			// TODO: Create user with Status = 1 until it's verified ... but find out how to update later since login fails ...
-			
 			if( $dbo->Query( '
-			INSERT INTO FUser ( `Name`, `Password`, `PublicKey`, `Fullname`, `Email`, `LoggedTime`, `CreatedTime`, `LoginTime`, `UniqueID`, `Status` ) 
+			INSERT INTO FUser ( `Name`, `Password`, `PublicKey`, `Fullname`, `Email`, `LoggedTime`, `CreatedTime`, `LoginTime`, `UniqueID` ) 
 			VALUES ('
-				. ' \'' . mysqli_real_escape_string( $dbo->_link, $username                                 ) . '\'' 
-				. ',\'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $password )      ) . '\'' 
-				. ',\'' . mysqli_real_escape_string( $dbo->_link, $publickey ? trim( $publickey      ) : '' ) . '\'' 
-				. ',\'' . mysqli_real_escape_string( $dbo->_link, $fullname  ? trim( $fullname       ) : '' ) . '\'' 
-				. ',\'' . mysqli_real_escape_string( $dbo->_link, $email     ? trim( $email          ) : '' ) . '\'' 
+				. ' \'' . mysqli_real_escape_string( $dbo->_link, $json->username                   ) . '\''  
+				. ',""' 
+				. ',""' 
+				. ',\'' . mysqli_real_escape_string( $dbo->_link, $json->name  ? trim( $json->name  ) : '' ) . '\'' 
+				. ',\'' . mysqli_real_escape_string( $dbo->_link, $json->email ? trim( $json->email ) : '' ) . '\'' 
 				. ','   . time() 
 				. ','   . time() 
 				. ','   . time() 
-				. ',\'' . mysqli_real_escape_string( $dbo->_link, generateFriendUniqueID( $username )       ) . '\'' 
-				. ','   . 0 
+				. ',\'' . mysqli_real_escape_string( $dbo->_link, generateFriendUniqueID( $json->username ) ) . '\'' 
 			.') ' ) )
 			{
 				if( $creds = $dbo->fetchObject( $query ) )
@@ -701,14 +489,14 @@ function createFriendAccount( $username, $password, $nounce, $fullname = false, 
 						}
 					}
 					
-					if( $lang )
+					if( $json->locale )
 					{
-						updateLanguages( $creds->ID, $lang );
+						updateLanguages( $creds->ID, $json->locale );
 					}
 					
 					addCustomDockItem( $creds->ID, null, 'https://mail.google.com/mail/u/0/#inbox', 'Gmail', 'gfx/weblinks/icon_gmail.png' );
 					
-					return true;
+					return hash( 'sha256', '{"id":' . $creds->ID . ',"secret":"' . $client_secret . '"}' );
 					
 				}
 				else
@@ -724,9 +512,237 @@ function createFriendAccount( $username, $password, $nounce, $fullname = false, 
 				die( 'fail couldn\'t create user ...' );
 			}
 		}
+		else
+		{
+			return hash( 'sha256', '{"id":' . $creds->ID . ',"secret":"' . $client_secret . '"}' );
+		}
 	}
 	
 	return false;
+	
+}
+
+function verifyGoogleToken( $access_token, $nounce )
+{
+	if( $verify = remoteAuth( 'https://www.googleapis.com/oauth2/v3/userinfo', false, 'GET', [ 'Content-Type: application/json', 'Authorization: Bearer ' . $access_token ] ) )
+	{
+		if( $json = json_decode( $verify ) )
+		{
+			$json->username = $json->sub;
+			
+			if( $json = convertLoginData( $json, 'GOOGLE', true ) )
+			{
+				if( $res = validateFriendIdentity( $json, $nounce ) )
+				{
+					return $res;
+				}
+			}
+		}
+	}
+}
+
+function updateFriendAccount( $username, $password, $publickey, $nounce, $i_hash = false )
+{
+	
+	$error = false; $data = false;
+	
+	if( $username && $password && $publickey && $nounce )
+	{
+		$dbo = initDBO();
+		
+		if( $creds = $dbo->fetchObject( '
+			SELECT fu.ID, fu.Status FROM FUser fu 
+			WHERE fu.Name = \'' . mysqli_real_escape_string( $dbo->_link, $username ) . '\' 
+			AND fu.Password = "" 
+		' ) )
+		{
+			if( $verify = $dbo->fetchObject( '
+				SELECT 
+					fm.DataID AS UserID, fm.ValueString AS Code 
+				FROM 
+					FMetaData fm 
+				WHERE 
+						fm.Key       = "VerificationCode" 
+					AND fm.DataID    = \'' . $creds->ID . '\' 
+					AND fm.DataTable = "FUser" 
+				ORDER BY 
+					fm.ID DESC 
+			' ) )
+			{
+				if( $verify->Code )
+				{
+					if( trim( $verify->Code ) == trim( $nounce ) )
+					{
+						$dbo->Query( '
+							DELETE FROM FMetaData 
+							WHERE 
+									`Key` = "VerificationCode" 
+								AND `DataID` = \'' . $creds->ID . '\' 
+								AND `DataTable` = "FUser" 
+						' );
+					}
+					else
+					{
+						$error = '{"result":"-1","response":"Verification code doesn\'t match, contact server admin ..."}';
+					}
+				}
+				else
+				{
+					$error = '{"result":"-1","response":"Verification code for user account empty ..."}';
+				}
+			}
+			
+			if( !$error )
+			{
+				if( $creds->Status == 2 || $creds->Status == 1 )
+				{
+					$error = '{"result":"-1","response":"Account is blocked or disabled, contact server admin ..."}';
+				}
+				else
+				{
+					$usr = new dbIO( 'FUser', $dbo );
+					if( $usr->Load( $creds->ID ) )
+					{
+						$usr->Password = ( '{S6}' . hash( 'sha256', $password ) );
+						$usr->PublicKey = trim( $publickey );
+						$usr->Save();
+						
+						if( $i_hash )
+						{
+							saveAvatar( $creds->ID, 'https://lh3.googleusercontent.com/a-/' . $i_hash );
+						}
+						
+						$data = '{"result":"1","response":"Friend account created or updated successfully ..."}';
+					}
+				}
+			}
+		}
+		else
+		{
+			$error = '{"result":"-1","response":"Something went wrong, contact server admin ... "}';
+		}
+	}
+	else
+	{
+		return false;
+	}
+	
+	if( $data !== false )
+	{
+		return [ 'ok', $data ];
+	}
+	else
+	{
+		return [ 'fail', $error ];
+	}
+	
+}
+
+function verifyFriendAuth( $username, $publickey, $nonce = false, $deviceid = '' )
+{
+	
+	$error = false; $data = false;
+	
+	if( $username )
+	{
+		$dbo = initDBO();
+		
+		if( $creds = $dbo->fetchObject( '
+			SELECT fu.ID, fu.Name, fu.Password, fu.Status FROM FUser fu 
+			WHERE 
+					fu.Name      = \'' . mysqli_real_escape_string( $dbo->_link, $username  ) . '\' 
+				AND fu.PublicKey = \'' . mysqli_real_escape_string( $dbo->_link, $publickey ) . '\' 
+		' ) )
+		{
+			
+			if( $creds->Status == 2 || $creds->Status == 1 )
+			{
+				$error = '{"result":"-1","response":"Account is blocked or disabled, contact server admin ..."}';
+			}
+			else
+			{
+				
+				if( $login = remoteAuth( '/system.library/login', 
+				[
+					'username' => $creds->Name, 
+					'password' => $creds->Password, 
+					'deviceid' => $deviceid 
+				] ) )
+				{
+					if( strstr( $login, '<!--separate-->' ) )
+					{
+						if( $ret = explode( '<!--separate-->', $login ) )
+						{
+							if( isset( $ret[1] ) )
+							{
+								$login = $ret[1];
+							}
+						}
+					}
+					
+					if( $ses = json_decode( $login ) )
+					{
+						
+						if( $ses->sessionid )
+						{
+							
+							if( !remoteAuth( '/system.library/user/update?sessionid=' . $ses->sessionid, 
+							[
+								'setup' => '0' 
+							] ) )
+							{
+								//
+								
+								$error = '{"result":"-1","error":"[update] fail from friendcore ..."}';
+								
+							}
+							else
+							{
+								$data = json_encode( $ses );
+							}
+							
+						}
+						else
+						{
+							$error = '{"result":"-1","error":'.$login.'}';
+						}
+												
+					}
+					else
+					{
+						$error = '{"result":"-1","error":'.$login.'}';
+					}
+					
+				}
+				else
+				{
+					// Couldn't login ...
+					
+					$error = '{"result":"-1","error":"[login] fail from friendcore ..."}';
+				}
+			
+			}
+			
+		}
+		else
+		{
+			$error = '{"result":"-1","response":"Credentials don\'t match, contact server admin ..."}';
+		}
+		
+	}
+	else
+	{
+		return false;
+	}
+	
+	if( $data !== false )
+	{
+		return [ 'ok', $data ];
+	}
+	else
+	{
+		return [ 'fail', $error ];
+	}
 	
 }
 
@@ -778,29 +794,34 @@ function send_encrypted_response( $result, $type = false, $data = '', $publickey
 }
 
 // Convert login data using hashing function
-function convertLoginData( $data, $type = false )
+function convertLoginData( $data, $type = false, $force = false )
 {
-	if( $data && ( $data->username && isset( $data->password ) ) )
+	if( $data )
 	{
-		
 		if( $data->password )
 		{
-			$data->password = generateExternalFriendPassword( $data->password );
+			$data->password = generateExternalFriendPassword( $data->password, $force );
 		}
-		
 		if( $data->username )
 		{
-			$data->username = generateExternalFriendUsername( $data->username, $type );
+			$data->username = generateExternalFriendUsername( $data->username, $type, $force );
 		}
-		
+		if( $data->publickey && $data->username )
+		{
+			$data->publickey = getUnHashedPublicKey( $data->publickey, $data->username, $force );
+		}
 	}
 	
 	return $data;
 }
 
 // Hashing function
-function generateExternalFriendUsername( $input, $type = false )
+function generateExternalFriendUsername( $input, $type = false, $force = false )
 {
+	if( !$force && strlen( $input ) == 32 && ctype_xdigit( $input ) )
+	{
+    	return $input;
+	}
 	if( $input )
 	{
 		return hash( 'md5', ( $type ? $type : 'HASHED' ) . $input );
@@ -810,17 +831,40 @@ function generateExternalFriendUsername( $input, $type = false )
 }
 
 // Password hashing function
-function generateExternalFriendPassword( $input )
+function generateExternalFriendPassword( $input, $force = false )
 {
 	if( $input )
 	{
-		if( strstr( $input, 'HASHED' ) )
+		if( !$force && strstr( $input, 'HASHED' ) )
 		{
 			return ( $input );
 		}
 		
 		return ( 'HASHED' . hash( 'sha256', $input ) );
 	}
+	return '';
+}
+
+// PublicKey unhashed function
+function getUnHashedPublicKey( $publickey, $username, $force = false )
+{
+	$dbo = initDBO();
+	
+	if( !$force && $publickey && !strstr( $publickey, 'SHA256' ) )
+	{
+		return $publickey;
+	}
+	if( $publickey && $username )
+	{
+		if( $rs = $dbo->fetchObject( 'SELECT `PublicKey` FROM `FUser` WHERE `Name`=\'' . $username . '\' AND `Password` != "" ' ) )
+		{
+			if( hash( 'sha256', trim( $rs->PublicKey ) ) == str_replace( 'SHA256', '', trim( $publickey ) ) )
+			{
+				return $rs->PublicKey;
+			}
+		}
+	}
+	
 	return '';
 }
 
@@ -1177,9 +1221,7 @@ function firstLogin( $userid )
 function updateLanguages( $userid, $lang )
 {
 	$dbo = initDBO();
-	
-	// TODO: Find out what is going to be the main module call / fc call for first login and use a module or library class to call, like doors.
-	
+		
 	if( $userid > 0 && trim( $lang ) )
 	{
 		// Find right language for speech
@@ -1239,8 +1281,6 @@ function updateLanguages( $userid, $lang )
 function saveAvatar( $userid, $imgurl )
 {
 	$SqlDatabase = initDBO();
-	
-	// TODO: Find out what is going to be the main module call / fc call for first login and use a module or library class to call, like doors.
 	
 	// Save image blob as filename hash on user
 	if( $userid > 0 && $imgurl )
@@ -1360,7 +1400,7 @@ function applySetup( $userid, $id )
 					// Great, we have a user
 					if( $ug->Data && $uid )
 					{
-						// Language ----------------------------------------------------------------------------------------
+						// Language ------------------------------------------------------------------------------------
 			
 						if( $ug->Data->language )
 						{
@@ -1377,7 +1417,7 @@ function applySetup( $userid, $id )
 							$debug[$uid]->language = ( $lang->ID > 0 ? $lang->Data : false );
 						}
 		
-						// Wallpaper -----------------------------------------------
+						// Wallpaper -----------------------------------------------------------------------------------
 					
 						if( $wallpaper )
 						{
@@ -1536,7 +1576,7 @@ function applySetup( $userid, $id )
 							}
 						}
 						
-						// Startup -----------------------------------------------------------------------------------------
+						// Startup -------------------------------------------------------------------------------------
 		
 						if( isset( $ug->Data->startups ) )
 						{
@@ -1553,7 +1593,7 @@ function applySetup( $userid, $id )
 							$debug[$uid]->startup = ( $star->ID > 0 ? $star->Data : false );
 						}
 		
-						// Theme -------------------------------------------------------------------------------------------
+						// Theme ---------------------------------------------------------------------------------------
 		
 						if( $ug->Data->theme )
 						{
@@ -1600,7 +1640,7 @@ function applySetup( $userid, $id )
 							$debug[$uid]->workspacecount = ( $them->ID > 0 ? $them->Data : false );
 						}
 					
-						// Software ----------------------------------------------------------------------------------------
+						// Software ------------------------------------------------------------------------------------
 					
 						if( !isset( $ug->Data->software ) )
 						{

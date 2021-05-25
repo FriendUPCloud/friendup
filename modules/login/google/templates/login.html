@@ -133,6 +133,7 @@
 		</div>
 		<script type="text/javascript">
 			Application = {
+				tempKeys: genRandomKeys(),
 				showLog: false,
 				failedAttempt: false,
 				passwordRecoveryMode: false,
@@ -173,10 +174,10 @@
 					}
 					
 					// Track user's login
-					if( typeof ga == 'function' ) ga( 'send', 'event', 'userloginattempt', Trim( ge( 'Username' ).value ) );
+					if( typeof ga == 'function' && ge( 'Username' ).value ) ga( 'send', 'event', 'userloginattempt', Trim( ge( 'Username' ).value ) );
 					parent.Friend.User.Init();
 					let us = Trim( ge( 'Username' ).value );
-					let pw = Trim( ge( 'Password' ).value )
+					let pw = Trim( ge( 'Password' ).value );
 					parent.Friend.User.Login( us, pw, false, function( result, answer )
 					{
 						let tmp = null;
@@ -192,7 +193,8 @@
 								console.log( 'Answer was not in json format: ', answer );
 							}
 							if( tmp && tmp.response )
-							{								//check for block....
+							{
+								//check for block....
 								if( tmp.response.indexOf( 'account blocked until:' ) > -1 )
 								{
 									let ts = tmp.response.replace( 'account blocked until:', '' );
@@ -218,7 +220,7 @@
 						else
 						{
 							//track users login..
-							if( typeof ga == 'function' )
+							if( typeof ga == 'function' && us )
 							{
 								ga( 'send', 'event', 'userloginsuccess', us );	
 							}
@@ -228,81 +230,104 @@
 					}, e, { hashedPassword: ge( 'Password' ).hashed ? true : false } );
 				},
 				// Login overwrite ...
-				loginExternal: function( params, token, callback )
+				loginExternal: function( mode, params, callback )
 				{
-						
+					
+					let enc = parent.Workspace.encryption;
+					
 					var self = this;
 					
-					if( params && params['id_token'] && params['id_token_content'] )
+					if( !enc.keys.server )
 					{
-						if( !parent.Workspace.encryption.keys.server )
-						{
-							parent.Workspace.encryption.keys.server = ( ge( 'publickey' ) && ge( 'publickey' ).value ? { publickey: ge( 'publickey' ).value } : false );
-						}
+						enc.keys.server = ( ge( 'publickey' ) && ge( 'publickey' ).value ? { publickey: ge( 'publickey' ).value } : false );
+					}
+					
+					if( !enc.keys.server.publickey )
+					{
+						console.log( 'Server Key Missing:', enc.keys.server );
+						return;
+					}
+					
+					if( mode && params && params[ 'id_token' ] && params[ 'id_token_content' ] )
+					{
 						
-						if( !parent.Workspace.encryption.keys.server.publickey )
-						{
-							console.log( 'Server Key Missing:', parent.Workspace.encryption.keys.server );
-							return;
-						}
-						
-						var username = params['id_token_content']['sub'];
-						var password = params['id_token_content']['kid'];
-						
-						if( password )
-						{
-							if( password.indexOf('HASHED') < 0 )
-							{
-								password = 'HASHED' + Sha256.hash( password );
-							}
-						}
-						
-						if( !parent.Workspace.encryption.keys.client )
-						{
-							parent.Workspace.encryption.setKeys( username, password );
-						}
-						
-						if( Application.showLog ) console.log( {
-							'username' : username,
-							'password' : password,
-							'nounce'   : params['id_token_content']['nonce'],
-							'fullname' : params['id_token_content']['name'],
-							'email'    : params['id_token_content']['email'],
-							'lang'     : params['id_token_content']['locale']
-						} );
+						// TODO: Find a unique secret that doesn't have to be shared with the server for a better password and or keypairs ...
 						
 						var m = new cAjax();
-						m.open( 'POST', '/loginprompt/' + parent.Workspace.encryption.keys.client.publickey, true );
 						
-						// 1: Validate Friend Login ...
-						
-						if( !token )
+						switch( mode )
 						{
-							m.addVar( 'encrypted', parent.Workspace.encryption.encryptRSA( JSON.stringify( {
-								'username' : username,
-								'password' : password,
-								'nounce'   : params['id_token_content']['nonce'],
-								'fullname' : params['id_token_content']['name'],
-								'email'    : params['id_token_content']['email'],
-								'lang'     : params['id_token_content']['locale']
-							} ), parent.Workspace.encryption.keys.server.publickey ) );
-						}
-						
-						// 2: Verify Google Login ...
-						
-						else
-						{
-							m.addVar( 'token', token );
+							
+							// 1: Validate Google Identity ...
+							
+							case 'identity':
+								
+								m.open( 'POST', '/loginprompt/' + mode + '/' + self.tempKeys.publickey, true );
+								
+								if( Application.showLog ) console.log( 
+								{
+									'access_token' : params[ 'access_token' ], 
+									'nounce'       : params[ 'id_token_content' ][ 'payload' ][ 'nonce' ] 
+								} );
+								
+								m.addVar( 'encrypted', enc.encryptRSA( JSON.stringify( 
+								{
+									'access_token' : params[ 'access_token' ], 
+									'nounce'       : params[ 'id_token_content' ][ 'payload' ][ 'nonce' ] 
+								} ), 
+								enc.keys.server.publickey ) );
+								
+								break;
+							
+							// 2: Create Friend Account ...
+							
+							case 'account':
+								
+								m.open( 'POST', '/loginprompt/' + mode + '/' + enc.keys.client.publickey, true );
+								
+								if( Application.showLog ) console.log( 
+								{
+									'username' : enc.decrypt( parent.Workspace.storedCredentials.username ), 
+									'password' : enc.decrypt( parent.Workspace.storedCredentials.password ), 
+									'nounce'   : params[ 'id_token_content' ][ 'payload' ][ 'nonce' ], 
+									'i_hash'   : params[ 'id_token_content' ][ 'payload' ][ 'picture' ].split( '/' ).pop()
+								} );
+								
+								m.addVar( 'encrypted', enc.encryptRSA( JSON.stringify( 
+								{
+									'username' : enc.decrypt( parent.Workspace.storedCredentials.username ), 
+									'password' : enc.decrypt( parent.Workspace.storedCredentials.password ),  
+									'nounce'   : params[ 'id_token_content' ][ 'payload' ][ 'nonce'   ], 
+									'i_hash'   : params[ 'id_token_content' ][ 'payload' ][ 'picture' ].split( '/' ).pop()
+								} ), 
+								enc.keys.server.publickey ) );
+								
+								break;
+							
+							// 3: Verify Friend Login ...
+							
+							case 'verification':
+								
+								m.open( 'POST', '/loginprompt/' + mode + '/SHA256' + Sha256.hash( enc.keys.client.publickey ), true );
+								
+								if( Application.showLog ) console.log( 
+								{
+									'username' : enc.decrypt( parent.Workspace.storedCredentials.username ), 
+									'nounce'   : params[ 'id_token_content' ][ 'payload' ][ 'nonce' ] 
+								} );
+								
+								m.addVar( 'encrypted', enc.encryptRSA( JSON.stringify( 
+								{
+									'username' : enc.decrypt( parent.Workspace.storedCredentials.username ), 
+									'nounce'   : params[ 'id_token_content' ][ 'payload' ][ 'nonce' ] 
+								} ), 
+								enc.keys.server.publickey ) );
+								
+								break;
+							
 						}
 						
 						m.addVar( 'deviceid', parent.Workspace.deviceid );
-						
-						// Set username and password so we can fetch it later
-						let enc = parent.Workspace.encryption;
-						parent.Workspace.storedCredentials = {
-							username: enc.encrypt( username, enc.getKeys().publickey ),
-							password: enc.encrypt( password, enc.getKeys().publickey )
-						};
 						
 						m.onload = function()
 						{
@@ -311,6 +336,7 @@
 							
 							if( this.responseText() )
 							{
+								
 								var res = this.responseText().split( '<!--separate-->' );
 								
 								if( res && res[ 0 ] && res[ 1 ] )
@@ -320,8 +346,26 @@
 									{
 										try
 										{
-											serveranswer = parent.Workspace.encryption.decrypt( res[ 2 ] );
-										
+											
+											switch( res[ 1 ] )
+											{
+												
+												case 'identity':
+													
+													serveranswer = enc.decrypt( res[ 2 ], self.tempKeys.privatekey );
+													
+													break;
+												
+												default:
+													
+													serveranswer = enc.decrypt( res[ 2 ] );
+													
+													break;
+												
+											}
+											
+											serveranswer = ( serveranswer ? serveranswer : res[ 2 ] );
+											
 											json = JSON.parse( serveranswer );
 										}
 										catch( e ) 
@@ -341,13 +385,45 @@
 									switch( res[ 1 ] )
 									{
 										
-										// ok identity check ...
+										// 1: ok identity check ...
 										
 										case 'identity':
-												
-											if( res[0] == 'ok' )
+											
+											if( res[ 0 ] == 'ok' )
 											{
-												self.loginExternal( params, params['id_token'], callback );
+												
+												if( json )
+												{
+													
+													if( json.token )
+													{
+														var username = md5( 'GOOGLE' + params[ 'id_token_content' ][ 'payload' ][ 'sub' ] );
+														var password = ( 'HASHED' + Sha256.hash( '{"token":'+json.token+',"sub":'+params[ 'id_token_content' ][ 'payload' ][ 'sub' ]+'}' ) );
+														
+														enc.setKeys( username, password );
+														
+														parent.Workspace.storedCredentials = {
+															username: enc.encrypt( username, enc.getKeys().publickey ),
+															password: enc.encrypt( password, enc.getKeys().publickey )
+														};
+													}
+													
+													if( json.mode )
+													{
+														switch( json.mode )
+														{
+														
+															case 'account':
+																
+																return self.loginExternal( 'account', params, callback );
+															
+																break;
+														
+														}
+													}
+												}
+												
+												return self.loginExternal( 'verification', params, callback );
 											}
 											else
 											{
@@ -358,12 +434,31 @@
 											
 											return;
 										
-										// ok verification ...
+										// 2: ok account creation ...
+										
+										case 'account':
+												
+											if( res[ 0 ] == 'ok' )
+											{
+												self.loginExternal( 'verification', params, callback );
+											}
+											else
+											{
+												parent.Friend.User.SetUserConnectionState( 'offline' );
+												
+												if( callback && typeof( callback ) == 'function' ) return callback( false, serveranswer );
+											}
+											
+											return;
+										
+										// 3: ok verification ...
 										
 										case 'verification':
 											
 											if( res[ 0 ] == 'ok' && json && json.username && json.sessionid )
 											{
+												
+												// TODO: When all is ok set keys based on correct data and then init workspace ...
 												
 												parent.Workspace.sessionId     = json.sessionid;
 												parent.Workspace.loginUsername = json.username;
@@ -377,7 +472,9 @@
 												
 												if( !parent.Workspace.userWorkspaceInitialized )
 												{
-													return parent.Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
+													return parent.Workspace.initUserWorkspace( 
+														json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event 
+													);
 												}
 												else
 												{
@@ -399,6 +496,8 @@
 										
 										default:
 											
+											parent.Friend.User.SetUserConnectionState( 'offline' );
+											
 											if( callback && typeof( callback ) == 'function' ) return callback( false, serveranswer );
 											
 											break;
@@ -413,6 +512,7 @@
 							
 						}
 						m.send();
+						
 					}
 					
 					return 0;
@@ -500,7 +600,7 @@
 				
 				// TODO: Look at how to do this without iframes ... perhaps can avoid popups ...
 				
-				if( location.href && location.href.indexOf( 'localhost' ) < 0 && location.href.indexOf( '?test' ) >= 0 )
+				if( location.href && location.href.indexOf( 'localhost' ) < 0 && Application.testmode == true )
 				{
 					return oauth2SignIn( callback );
 				}
@@ -513,10 +613,10 @@
 			
 			function oauth2Window( callback )
 			{
-				var CLIENT_ID = document.getElementById( 'google-signin-client_id' ).getAttribute( 'content' );
-				var REDIRECT_URI = document.getElementById( 'oauth2_redirect_uri' ).getAttribute( 'content' );
+				var CLIENT_ID    = document.getElementById( 'google-signin-client_id' ).getAttribute( 'content' );
+				var REDIRECT_URI = document.getElementById( 'oauth2_redirect_uri'     ).getAttribute( 'content' );
 				
-				var SCOPES = [ 'openid', 'profile', 'email' ];
+				var SCOPES = [ 'profile', 'email' ];
 				
 				var winw  = Math.min( 600, screen.availWidth );
 				var winh = Math.min( 750, screen.availHeight );
@@ -536,7 +636,7 @@
 				vars += '&scope=' + SCOPES.join( ' ' );
 				vars += '&response_type=token id_token';
 				
-				loginwindow = window.open( oauth2 + vars, 'authwindow', 'width=' + winw + ',height=' + winh + ',top=' + tpos + ',left=' + lpos );
+				loginwindow = window.open( oauth2 + vars, 'authwindow', 'resizable=1,width=' + winw + ',height=' + winh + ',top=' + tpos + ',left=' + lpos );
 				
 				window.addEventListener( 'message', function( msg ) 
 				{
@@ -567,22 +667,24 @@
 					        }
 					    }
 						
-						if( Application.showLog ) console.log( 'params: ', params );
-						
-						if( params && ( params['access_token'] || params[ 'id_token' ] ) )
-						{
-					   		getTokeninfo( params, function( data )
-					   		{
-					   			
-					   			if( data )
-					   			{
-					   				if( callback && typeof( callback ) == 'function' ) return callback( data );
-					   			}
-					   			
-					   		} );
-						}
-						
 						if( loginwindow ) loginwindow.close();
+						
+						// TODO: If code do another step ...
+						// https://auth0.com/docs/protocols/protocol-oauth2
+						
+						if( params && params[ 'id_token' ] && params[ 'access_token' ] )
+						{
+					   		
+				   			var data = decodeIDToken( params );
+				   			
+				   			if( data )
+				   			{
+				   				if( Application.showLog ) console.log( 'params: ', params );
+				   				
+				   				if( callback && typeof( callback ) == 'function' ) return callback( data );
+				   			}
+					   		
+						}
 						
 						return params;
 						
@@ -596,10 +698,10 @@
 			{
 				console.log( 'init: oauth2SignIn( callback )' );
 				
-				var CLIENT_ID = document.getElementById( 'google-signin-client_id' ).getAttribute( 'content' );
+				var CLIENT_ID    = document.getElementById( 'google-signin-client_id' ).getAttribute( 'content' );
 				var REDIRECT_URI = location.href;
 				
-				var SCOPES = [ 'openid', 'profile', 'email' ];
+				var SCOPES = [ 'profile', 'email' ];
 				
 				// Google's OAuth 2.0 endpoint for requesting an access token
 				var oauth2 = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -632,46 +734,61 @@
 				form.submit();
 			}
 			
-			function getTokeninfo( params, callback )
+			function decodeIDToken( params )
 			{
-				
-				if ( params && ( params['access_token'] || params['id_token'] ) )
+				if ( params && params[ 'id_token' ] )
 				{
-					var xhr = new XMLHttpRequest();
-					xhr.open('GET', 'https://oauth2.googleapis.com/tokeninfo' + ( params['id_token'] ? '?id_token=' + params['id_token'] : '' ) );
+					var parts = params[ 'id_token' ].split( '.' );
 					
-					if( !params['id_token'] && params['access_token'] )
+					if( parts.length == 3 )
 					{
-						xhr.setRequestHeader( 'Authorization', 'Bearer ' + params['access_token'] );
+						var data = { 'base64': parts };
+						
+						for( var a in parts )
+						{
+							if( a <= 1 && parts[a] )
+							{
+								try
+								{
+									var decoded = atob( parts[a] );
+									
+									if( decoded )
+									{
+										var obj = JSON.parse( decoded );
+										
+										if( obj )
+										{
+											data[ a == 0 ? 'header' : 'payload' ] = obj;
+										}
+									}
+								}
+								catch {  }
+							}
+							else if( a == 2 )
+							{
+								data[ 'signature' ] = parts[a];
+							}
+						}
+						
+						params[ 'id_token_content' ] = data;
+						
 					}
 					
-					xhr.onreadystatechange = function ( e ) 
-					{
-						if( xhr.readyState === 4 && xhr.status === 200 ) 
-						{
-						    if( Application.showLog ) console.log( '[1] ' + xhr.response );
-						    
-						    try
-						    {
-						    	var data = JSON.parse( xhr.response );
-						    	
-						    	if( data )
-						    	{
-						    		params['id_token_content'] = data;
-						    		
-						    		callback( params );
-						    	}
-						    }
-						    catch {  }
-						} 
-						else if ( xhr.readyState === 4 && xhr.status === 401 ) 
-						{
-						    console.log( '[2] ' + xhr.response );
-						}
-					};
-					xhr.send(  );
 				}
 				
+				return params;
+			}
+					
+			function genRandomKeys()
+			{
+				var res = false;
+				
+				if( parent.Workspace && parent.Workspace.encryption )
+				{
+					res = parent.Workspace.encryption.generateKeys();
+				}
+				
+				return res;
 			}
 			
 			function loginGoogle( e )
@@ -688,14 +805,14 @@
 				{
 					
 					// Track user's login
-					if( typeof ga == 'function' && params && params['id_token_content'] && params['id_token_content']['sub'] ) 
+					if( typeof ga == 'function' && params && params[ 'id_token_content' ] && params[ 'id_token_content' ][ 'sub' ] ) 
 					{
-						ga( 'send', 'event', 'userloginattempt', params['id_token_content']['sub'] );
+						ga( 'send', 'event', 'userloginattempt', md5( 'GOOGLE' + params[ 'id_token_content' ][ 'sub' ] ) );
 					}
 					
 					parent.Friend.User.Init();
 					
-					self.loginExternal( params, null, function( result, answer )
+					self.loginExternal( 'identity', params, function( result, answer )
 					{
 						
 						let tmp = null;
@@ -729,6 +846,18 @@
 									return;
 								}
 							}
+							else if( tmp && tmp.error )
+							{
+								if( tmp.error.response )
+								{
+									showLoginError( tmp.error.response );
+								}
+								else
+								{
+									showLoginError( tmp.error );
+								}
+								return;
+							}
 						}
 						
 						if( result == false )
@@ -743,9 +872,9 @@
 						else
 						{
 							//track users login..
-							if( typeof ga == 'function' && params && params['id_token_content'] && params['id_token_content']['sub'] )
+							if( typeof ga == 'function' && params && params[ 'id_token_content' ] && params[ 'id_token_content' ][ 'sub' ] )
 							{
-								ga( 'send', 'event', 'userloginsuccess', params['id_token_content']['sub'] );	
+								ga( 'send', 'event', 'userloginsuccess', md5( 'GOOGLE' + params[ 'id_token_content' ][ 'sub' ] ) );	
 							}
 							parent.Workspace.showDesktop();
 							Application.busy = false;
