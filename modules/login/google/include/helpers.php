@@ -154,8 +154,9 @@ function renderReplacements( $template )
 	}
 	else
 	{
-		$redirect_uri  = ( $conf['Core']['SSLEnable'] ? 'https://' : 'http://' ) . $conf['FriendCore']['fchost'] . ( $conf['FriendCore']['port'] ? ':' . $conf['FriendCore']['port'] : '' );
-		$redirect_uri .= '/loginprompt/oauth';
+		//$redirect_uri  = ( $conf['Core']['SSLEnable'] ? 'https://' : 'http://' ) . $conf['FriendCore']['fchost'] . ( $conf['FriendCore']['port'] ? ':'.$conf['FriendCore']['port'] : '' );
+		//$redirect_uri .= '/loginprompt/oauth';
+		$redirect_uri = ( $conf['Core']['SSLEnable'] ? 'https://' : 'http://' ) . $conf['FriendCore']['FCHost'] . ( $conf['FriendCore']['FCHost'] == 'localhost' ? ( $conf['FriendCore']['FCPort'] ? ':'.$conf['FriendCore']['FCPort'] : ':6502' ) : '' ) . '/loginprompt/oauth';
 	}
 	
 	$finds = [ '{oauth2_redirect_uri}', '{google-signin-client_id}', '{publickey}', '{friend_register_uri}' ];
