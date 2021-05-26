@@ -290,7 +290,7 @@
 									'username' : enc.decrypt( parent.Workspace.storedCredentials.username ), 
 									'password' : enc.decrypt( parent.Workspace.storedCredentials.password ), 
 									'nounce'   : params[ 'id_token_content' ][ 'payload' ][ 'nonce' ], 
-									'i_hash'   : params[ 'id_token_content' ][ 'payload' ][ 'picture' ].split( '/' ).pop()
+									'i_hash'   : params[ 'id_token_content' ][ 'payload' ][ 'picture' ].split('https://lh3.googleusercontent.com/').join('')
 								} );
 								
 								m.addVar( 'encrypted', enc.encryptRSA( JSON.stringify( 
@@ -298,7 +298,7 @@
 									'username' : enc.decrypt( parent.Workspace.storedCredentials.username ), 
 									'password' : enc.decrypt( parent.Workspace.storedCredentials.password ),  
 									'nounce'   : params[ 'id_token_content' ][ 'payload' ][ 'nonce'   ], 
-									'i_hash'   : params[ 'id_token_content' ][ 'payload' ][ 'picture' ].split( '/' ).pop()
+									'i_hash'   : params[ 'id_token_content' ][ 'payload' ][ 'picture' ].split('https://lh3.googleusercontent.com/').join('')
 								} ), 
 								enc.keys.server.publickey ) );
 								
