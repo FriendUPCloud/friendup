@@ -720,7 +720,9 @@ Workspace = {
 			login: true,
 			theme: 'login'
 		} );
-		lp.setRichContentUrl( '/loginprompt' );
+		lp.setRichContentUrl( 
+			'/loginprompt' + ( window.location.href && window.location.href.match('[?&]module=([^&]+)') ? '?module=' + window.location.href.match('[?&]module=([^&]+)')[1] : '' ) 
+		);
 		Workspace.loginPrompt = lp;
 
 		// Show it
