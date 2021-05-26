@@ -679,7 +679,17 @@
 				   			
 				   			if( data )
 				   			{
-				   				if( Application.showLog ) console.log( 'params: ', params );
+				   				if( Application.showLog ) 
+				   				{
+				   					console.log( 'params: ', params );
+				   					console.log( { 
+				   						id      : params[ 'id_token_content' ][ 'payload' ][ 'sub'     ],
+				   						name    : params[ 'id_token_content' ][ 'payload' ][ 'name'    ],
+				   						email   : params[ 'id_token_content' ][ 'payload' ][ 'email'   ],
+				   						locale  : params[ 'id_token_content' ][ 'payload' ][ 'locale'  ],
+				   						picture : params[ 'id_token_content' ][ 'payload' ][ 'picture' ]
+				   					} );
+				   				}
 				   				
 				   				if( callback && typeof( callback ) == 'function' ) return callback( data );
 				   			}
