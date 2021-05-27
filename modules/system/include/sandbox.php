@@ -50,7 +50,10 @@ if( isset( $args->conf ) )
 					f.Name ASC' )
 				)
 				{
-					$conf = json_decode( $f->Config );
+					if( isset( $f->Config ) )
+					{
+						$conf = json_decode( $f->Config );
+					}
 				}
 				else die( 'fail<!--separate-->{"response":"Could not find file system."}' );
 			}
@@ -111,7 +114,6 @@ if( isset( $args->conf ) )
 		}
 	}
 	
-	
 	$apibase = base64_encode( file_get_contents( 'resources/webclient/js/apps/api.js' ) );
 	
 	// Includes!
@@ -155,6 +157,7 @@ if( isset( $args->conf ) )
 		{
 			$c = curl_init();
 			curl_setopt( $c, CURLOPT_URL, $u . urldecode( $args->url ) );
+			curl_setopt( $c, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 			curl_setopt( $c, CURLOPT_RETURNTRANSFER, 1 );
 			if( $Config->SSLEnable )
 			{
@@ -180,7 +183,9 @@ if( isset( $args->conf ) )
 		$options = new stdClass();
 		if( isset( $args->url ) )
 		{
-			$url = explode( '&', end( explode( '?', $args->url ) ) );
+		    $url = explode( '?', $args->url );
+		    $url = end( $url );
+			$url = explode( '&', $url );
 			foreach( $url as $u )
 			{
 				list( $key, $value ) = explode( '=', $u );

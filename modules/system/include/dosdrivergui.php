@@ -9,7 +9,10 @@ if( isset( $args->authid ) )
 {
 	require_once( 'php/include/permissions.php' );
 
-	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 'PERM_STORAGE_GLOBAL', 'PERM_STORAGE_WORKGROUP' ], 'user', ( isset( $args->args->userid ) ? $args->args->userid : $User->ID ) ) )
+	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 
+		'PERM_STORAGE_READ_GLOBAL', 'PERM_STORAGE_READ_IN_WORKGROUP', 
+		'PERM_STORAGE_GLOBAL',      'PERM_STORAGE_WORKGROUP' 
+	], 'user', ( isset( $args->args->userid ) ? $args->args->userid : $User->ID ) ) )
 	{
 		if( is_object( $perm ) )
 		{
@@ -42,7 +45,7 @@ if( isset( $args->authid ) )
 
 
 
-if( !isset( $args->args->type ) ) die( 'fail<!--separate-->{"response":"dos driver gui failed"}'  );
+if( !isset( $args->args->type ) ) die( 'fail<!--separate-->{"response":"invalid request"}'  );
 if( isset( $args->args->component ) && isset( $args->args->language ) )
 {
 	if( $args->args->component == 'locale' )

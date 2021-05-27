@@ -51,6 +51,7 @@
 
 int CommServiceThreadConnection( FThread *ptr )
 {
+	pthread_detach( pthread_self() );
 	CommFCConnection *cfccon = (CommFCConnection *)ptr->t_Data;
 	Socket *sock = cfccon->cfcc_Socket;
 	CommService *service = (CommService *)cfccon->cfcc_Service;
@@ -300,6 +301,7 @@ int CommServiceThreadConnection( FThread *ptr )
 	
 	ptr->t_Launched = FALSE;
 	
+	pthread_exit( NULL );
 	return 0;
 }
 
@@ -312,6 +314,7 @@ int CommServiceThreadConnection( FThread *ptr )
 
 int CommServiceThreadServerSelect( FThread *ptr )
 {
+	pthread_detach( pthread_self() );
 	CommService *service = (CommService *)ptr->t_Data;
 	
 	DEBUG("[COMMSERV-s] Start\n");
@@ -328,6 +331,7 @@ int CommServiceThreadServerSelect( FThread *ptr )
 		{
 			SocketClose( service->s_Socket );
 			FERROR("[COMMSERV]  Cannot listen on socket!\n");
+			pthread_exit( NULL );
 			return -1;
 		}
 		
@@ -503,6 +507,7 @@ int CommServiceThreadServerSelect( FThread *ptr )
 	
 	ptr->t_Launched = FALSE;
 	
+	pthread_exit( NULL );
 	return 0;
 }
 

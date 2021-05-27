@@ -22,7 +22,10 @@ if( isset( $args->authid ) )
 {
 	require_once( 'php/include/permissions.php' );
 	
-	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 'PERM_WORKGROUP_GLOBAL', 'PERM_WORKGROUP_WORKGROUP' ] ) )
+	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 
+		'PERM_WORKGROUP_READ_GLOBAL', 'PERM_WORKGROUP_READ_IN_WORKGROUP', 
+		'PERM_WORKGROUP_GLOBAL',      'PERM_WORKGROUP_WORKGROUP' 
+	] ) )
 	{
 		if( is_object( $perm ) )
 		{
@@ -75,7 +78,7 @@ if( isset( $args->authid ) )
 $userConn = 'LEFT'; // <- show all workgroups
 
 // Just show connected groups?
-if( isset( $args->args->connected ) )
+if( isset( $args->args->connected ) || $level != 'Admin' )
 {
 	$userConn = 'RIGHT';
 }

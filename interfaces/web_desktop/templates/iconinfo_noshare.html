@@ -1,0 +1,277 @@
+
+	
+	<style>
+		/* TODO: Fix hack! */
+		.IconInfoSkewed > div
+		{
+			margin-left: -18px;
+		}
+	</style>
+	
+	<div class="ContentFull LayoutButtonbarBottom">
+		<div class="VContentTop ScrollArea">
+			<div class="Padding">
+				<div class="Pages" id="IconInfo_!!">
+					<div class="Tab">
+						<div class="IconSmall fa-file">
+							&nbsp; {i18n_file_information}
+						</div>
+					</div>
+					<div class="Tab">
+						<div class="IconSmall fa-lock">
+							&nbsp; {i18n_file_permissions}
+						</div>
+					</div>
+					<div class="Tab">
+						<div class="IconSmall fa-file-photo-o">
+							&nbsp; {i18n_meta_information}
+						</div>
+					</div>
+					<div class="Page">
+						<div class="PageScroll">
+							<div class="Padding">
+								<div class="HRow">
+									<div class="FloatLeft HContent30">
+										<strong>{i18n_filename}:</strong>
+									</div>
+									<div class="FloatLeft HContent5">&nbsp;</div>
+									<div class="FloatLeft HContent65">
+										<input type="hidden" value="{path}" name="Path"/>
+										<input type="text" value="{filename}" name="Filename" class="FullWidth"/>
+									</div>
+								</div>
+								<div class="HRow MarginTop FileInfo">
+									<div class="FloatLeft HContent30">
+										<strong>{i18n_filesize}:</strong>
+									</div>
+									<div class="FloatLeft HContent5">&nbsp;</div>
+									<div class="FloatLeft HContent65">
+										{filesize}
+									</div>
+								</div>
+								<div class="HRow MarginTop FileInfo">
+									<div class="FloatLeft HContent30">
+										<strong>{i18n_filedate}:</strong>
+									</div>
+									<div class="FloatLeft HContent5">&nbsp;</div>
+									<div class="FloatLeft HContent65">
+										{filedate}
+									</div>
+								</div>
+								<div class="HRow MarginTop FileInfo">
+									<div class="FloatLeft HContent30">
+										<strong>{i18n_open_with}({ext}):</strong>
+									</div>
+									<div class="FloatLeft HContent5">&nbsp;</div>
+									<div class="FloatLeft HContent65">
+										<select name="MimetypeIntegration" onchange="Workspace.setMimetype( '{filename}', this.value )">
+										</select>
+									</div>
+								</div>
+								<div class="HRow MarginTop FileInfo">
+									<div class="FloatLeft HContent30">
+										<strong>{i18n_public_file}:</strong>
+									</div>
+									<div class="FloatLeft HContent5">&nbsp;</div>
+									<div class="FloatLeft HContent65">
+										<input type="checkbox"{public_checked} name="IsPublic"/>
+									</div>
+								</div>
+								<div class="HRow MarginTop FileInfo">
+									<div class="FloatLeft HContent30">
+										<strong>{i18n_public_link}:</strong>
+									</div>
+									<div class="FloatLeft HContent5">&nbsp;</div>
+									<div class="FloatLeft HContent65">
+										<input type="text" class="FullWidth"{public_disabled} name="PublicLink" title="{i18n_click_to_copy}" onclick="this.select(); document.execCommand( 'copy', true, true )"/>
+									</div>
+								</div>
+								<!--<div class="HRow MarginTop">
+									<div class="FloatLeft HContent30">
+										<strong>{sharename}:</strong>
+									</div>
+									<div class="FloatLeft HContent5">&nbsp;</div>
+									<div class="FloatLeft HContent65">
+										<input type="text" class="FullWidth" value="" name="Sharename"/>
+									</div>
+								</div>
+								<div class="HRow MarginTop">
+									<div class="FloatLeft HContent30">
+										<strong>{sharewith}:</strong>
+									</div>
+									<div class="FloatLeft HContent5">&nbsp;</div>
+									<div class="FloatLeft HContent65">
+										<input type="text" class="FullWidth" value="" name="Sharewith" placeholder="Username1, Username2"/>
+									</div>
+								</div>-->
+								<!--<div class="HRow MarginTop">
+									<div class="FloatLeft HContent30">
+										<strong>Protection:</strong>
+									</div>
+									<div class="FloatLeft HContent5">&nbsp;</div>
+									<div class="FloatLeft HContent65">
+										{protection}
+									</div>
+								</div>-->
+								<!--<div class="HRow MarginTop">
+									<div class="FloatLeft HContent30">
+										<strong>{Notes}:</strong>
+									</div>
+									<div class="FloatLeft HContent5">&nbsp;</div>
+									<div class="FloatLeft HContent65">
+										<textarea class="FullWidth" style="height: 80px" name="Notes">{iconnotes}</textarea>
+									</div>
+								</div>-->
+							</div>
+						</div>
+					</div>
+					<div class="Page">
+						<div class="PageScroll">
+							<div class="Padding">
+								<p class="Layout PaddingBottom MarginBottom BorderBottom"><strong>Owner privileges:</strong></p>
+								<p class="Layout">
+									<table style="border-collapse: collapse">
+										<tr>
+											<td align="center" class="PaddingLeft PaddingRight BorderRight">
+												Read
+											</td>
+											<td align="center" class="PaddingLeft PaddingRight BorderRight">
+												Write
+											</td>
+											<td align="center" class="PaddingLeft PaddingRight BorderRight">
+												Execute
+											</td>
+											<td align="center" class="PaddingLeft PaddingRight">
+												Delete
+											</td>
+										</tr>
+										<tr>
+											<td align="center" class="BorderRight">
+												<input type="checkbox" name="PUserR"/>
+											</td>
+											<td align="center" class="BorderRight">
+												<input type="checkbox" name="PUserW"/>
+											</td>
+											<td align="center" class="BorderRight">
+												<input type="checkbox" name="PUserE"/>
+											</td>
+											<td align="center">
+												<input type="checkbox" name="PUserD"/>
+											</td>
+										</tr>
+									</table>
+									<input type="hidden" name="POwnerA"/>
+								</p>
+								<p class="Layout PaddingBottom MarginBottom BorderBottom"><strong>Group privileges:</strong></p>
+								<p class="Layout">
+									<table style="border-collapse: collapse">
+										<tr>
+											<td align="center" class="PaddingLeft PaddingRight BorderRight">
+												Read
+											</td>
+											<td align="center" class="PaddingLeft PaddingRight BorderRight">
+												Write
+											</td>
+											<td align="center" class="PaddingLeft PaddingRight BorderRight">
+												Execute
+											</td>
+											<td align="center" class="PaddingLeft PaddingRight">
+												Delete
+											</td>
+										</tr>
+										<tr>
+											<td align="center" class="BorderRight">
+												<input type="checkbox" name="PGroupR"/>
+											</td>
+											<td align="center" class="BorderRight">
+												<input type="checkbox" name="PGroupW"/>
+											</td>
+											<td align="center" class="BorderRight">
+												<input type="checkbox" name="PGroupE"/>
+											</td>
+											<td align="center">
+												<input type="checkbox" name="PGroupD"/>
+											</td>
+										</tr>
+									</table>
+									<input type="hidden" name="PGroupA"/>
+								</p>
+								<p class="Layout PaddingBottom MarginBottom BorderBottom"><strong>Other's privileges:</strong></p>
+								<p class="Layout">
+									<table style="border-collapse: collapse">
+										<tr>
+											<td align="center" class="PaddingLeft PaddingRight BorderRight">
+												Read
+											</td>
+											<td align="center" class="PaddingLeft PaddingRight BorderRight">
+												Write
+											</td>
+											<td align="center" class="PaddingLeft PaddingRight BorderRight">
+												Execute
+											</td>
+											<td align="center" class="PaddingLeft PaddingRight">
+												Delete
+											</td>
+										</tr>
+										<tr>
+											<td align="center" class="BorderRight">
+												<input type="checkbox" name="POthersR"/>
+											</td>
+											<td align="center" class="BorderRight">
+												<input type="checkbox" name="POthersW"/>
+											</td>
+											<td align="center" class="BorderRight">
+												<input type="checkbox" name="POthersE"/>
+											</td>
+											<td align="center">
+												<input type="checkbox" name="POthersD"/>
+											</td>
+										</tr>
+									</table>
+									<input type="hidden" name="POthersA"/>
+								</p>
+							</div>
+						</div>
+					</div>
+					<div class="Page">
+						<div class="PageScroll">
+							<div class="HRow">
+								<div class="FloatLeft HContent40 BorderRight Padding">
+									<strong>{i18n_info_fields}:</strong>
+								</div>
+								<div class="FloatLeft HContent60 Padding">
+									<strong>{i18n_field_info}:</strong>
+								</div>
+							</div>
+							<div class="HRow">
+								<div class="FloatLeft HContent40 BorderRight Padding">
+									<select path="{path}" size="7" class="IconInfoSelect FullWidth Fields" onchange="Workspace.iconInfoDataField(this)">{info_fields}</select>
+								</div>
+								<div class="FloatLeft HContent60 Padding">
+									<div class="FieldInfo">
+									</div>
+								</div>
+							</div>
+							<!--<div class="HRow">
+								<div class="FloatLeft HContent40 BorderRight Padding BorderTop">
+									<button type="button" class="Button IconSmall fa-plus">
+										{i18n_add_attribute}
+									</button>
+								</div>
+								<div class="FloatLeft HContent60 Padding BorderTop">
+									<button type="button" class="Button IconSmall fa-edit">
+										{i18n_edit_attribute}
+									</button>
+								</div>
+							</div>-->
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="VContentBottom Padding BackgroundDefault BorderTop">
+			<button type="button" class="FloatRight IconSmall fa-save" onclick="Doors.saveFileInfo(this)">
+				{Save}
+			</button>
+		</div>
+	</div>

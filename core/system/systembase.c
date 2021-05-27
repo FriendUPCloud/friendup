@@ -58,18 +58,30 @@
 #include <security/server_checker.h>
 #include <network/websocket_client.h>
 #include <network/protocol_websocket.h>
+#include <util/session_id.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
 #define LIB_REVISION		0
 #define CONFIG_DIRECTORY	"cfg/"
 
+#define MINS1 60
+#define MINS5 300
+#define MINS6 460
+#define MINS30 1800
+#define MINS60 MINS6*10
+#define MINS360 6*MINS60
+#define HOUR12 12*MINS60
+#define DAYS1 24*MINS60
+#define DAYS5 5*24*MINS60
+
+//#define USE_WORKERS
 
 //
 // global structure
 //
 
-struct SystemBase *SLIB;
+extern struct SystemBase *SLIB;
 
 //
 // definitions
@@ -124,10 +136,43 @@ SystemBase *SystemInit( void )
 		FFree( tempString );
 		return NULL;
 	}
+	
+	// init socket interfaces
+	
+	l->l_SocketISSL.SocketListen = SocketListen;
+	l->l_SocketISSL.SocketConnect = SocketConnectSSL;
+	l->l_SocketISSL.SocketAccept = SocketAcceptSSL;
+	l->l_SocketISSL.SocketAcceptPair = SocketAcceptPairSSL;
+	l->l_SocketISSL.SocketSetBlocking = SocketSetBlocking;
+	l->l_SocketISSL.SocketRead = SocketReadSSL;
+	l->l_SocketISSL.SocketReadBlocked = SocketReadBlockedSSL;
+	l->l_SocketISSL.SocketWaitRead = SocketWaitReadSSL;
+	l->l_SocketISSL.SocketReadTillEnd = SocketReadTillEndSSL;
+	l->l_SocketISSL.SocketWrite = SocketWriteSSL;
+	l->l_SocketISSL.SocketWriteCompression = SocketWriteCompressionSSL;
+	l->l_SocketISSL.SocketDelete = SocketDeleteSSL;
+	l->l_SocketISSL.SocketReadPackage = SocketReadPackageSSL;
+
+	l->l_SocketINOSSL.SocketListen = SocketListen;
+	l->l_SocketINOSSL.SocketConnect = SocketConnectNOSSL;
+	l->l_SocketINOSSL.SocketAccept = SocketAcceptNOSSL;
+	l->l_SocketINOSSL.SocketAcceptPair = SocketAcceptPairNOSSL;
+	l->l_SocketINOSSL.SocketSetBlocking = SocketSetBlocking;
+	l->l_SocketINOSSL.SocketRead = SocketReadNOSSL;
+	l->l_SocketINOSSL.SocketReadBlocked = SocketReadBlockedNOSSL;
+	l->l_SocketINOSSL.SocketWaitRead = SocketWaitReadNOSSL;
+	l->l_SocketINOSSL.SocketReadTillEnd = SocketReadTillEndNOSSL;
+	l->l_SocketINOSSL.SocketWrite = SocketWriteNOSSL;
+	l->l_SocketINOSSL.SocketWriteCompression = SocketWriteCompressionNOSSL;
+	l->l_SocketINOSSL.SocketDelete = SocketDeleteNOSSL;
+	l->l_SocketINOSSL.SocketReadPackage = SocketReadPackageNOSSL;
+
 	// uptime
 	l->l_UptimeStart = time( NULL );
 	
 	PropertiesInterfaceInit( &(l->sl_PropertiesInterface) );
+	
+	UtilInterfaceInit( &(l->sl_UtilInterface) );
 	
 	LIBXML_TEST_VERSION;
 	
@@ -160,7 +205,7 @@ SystemBase *SystemInit( void )
 		
 		if( getcwd( l->sl_AutotaskPath, PATH_MAX ) == NULL )
 		{
-			FERROR("getcwd failed!");
+			Log( FLOG_ERROR, "[SystemInit] getcwd failed!");
 			exit(5);
 		}
 		strcat( l->sl_AutotaskPath, "/autostart/");
@@ -200,6 +245,9 @@ SystemBase *SystemInit( void )
 	l->AppLibCounter = 0;
 	l->PropLibCounter = 0;
 	l->ZLibCounter = 0;
+
+	l->sl_AvailableModules = CreateList();
+	l->sl_AvailableModules->l_Data = NULL;
 	
 	// Set mutex
 	pthread_mutex_init( &l->sl_InternalMutex, NULL );
@@ -208,7 +256,7 @@ SystemBase *SystemInit( void )
 	if( getcwd( tempString, PATH_MAX ) == NULL )
 	{
 		FFree( tempString );
-		FERROR("getcwd failed!");
+		Log( FLOG_ERROR, "[SystemInit] getcwd failed!");
 		exit(5);
 	}
 	l->handle = dlopen( 0, RTLD_LAZY );
@@ -234,7 +282,7 @@ SystemBase *SystemInit( void )
 	l->LibraryImageDrop = LibraryImageDrop;
 	l->WebSocketSendMessage = WebSocketSendMessage;
 	l->WebSocketSendMessageInt = WebSocketSendMessageInt;
-	l->WebsocketWrite = WebsocketWrite;
+	l->WebsocketWrite = UserSessionWebsocketWrite;
 	l->SendProcessMessage = SendProcessMessage;
 	l->GetRootDeviceByName = GetRootDeviceByName;
 	l->SystemInitExternal = SystemInitExternal;
@@ -280,6 +328,11 @@ SystemBase *SystemInit( void )
 	
 	strcpy( l->RSA_CLIENT_KEY_PEM, "/home/stefkos/development/friendup/build/testkeys/client.pem" );
 	l->RSA_CLIENT_KEY_PEM[ 0 ] = 0;
+	
+	l->sl_RemoveOldSessionTimeout = 0;
+	
+	// use deflate compression as default for http calls
+	l->l_HttpCompressionContent |= HTTP_COMPRESSION_DEFLATE;
 	
 	if( plib != NULL && plib->Open != NULL )
 	{
@@ -334,6 +387,8 @@ SystemBase *SystemInit( void )
 			options = plib->ReadStringNCS( prop, "databaseuser:options", NULL );
 			DEBUG("[SystemBase] options %s\n",options );
 			
+			l->sl_RemoveOldSessionTimeout = plib->ReadIntNCS( prop, "user:timeout", MINS60 );
+			
 			l->sl_CacheFiles = plib->ReadIntNCS( prop, "Options:CacheFiles", 1 );
 			l->sl_UnMountDevicesInDB = plib->ReadIntNCS( prop, "Options:UnmountInDB", 1 );
 			l->sl_SocketTimeout  = plib->ReadIntNCS( prop, "core:SSLSocketTimeout", 10000 );
@@ -375,6 +430,27 @@ SystemBase *SystemInit( void )
 					sprintf( l->RSA_SERVER_KEY, "%s%s%s", ptr, tptr, "key.pem" );
 					sprintf( l->RSA_SERVER_CA_CERT, "%s%s%s", ptr, tptr, "certificate.pem" );
 					sprintf( l->RSA_SERVER_CA_PATH, "%s%s%s", ptr, tptr, "/" );
+				}
+			}
+			
+			// http compression
+
+			tptr  = plib->ReadStringNCS( prop, "core:http_compression", NULL );
+			if( tptr != NULL )
+			{
+				if( strstr( tptr, "deflate" ) != NULL )
+				{
+					l->l_HttpCompressionContent |= HTTP_COMPRESSION_DEFLATE;
+				}
+				
+				if( strstr( tptr, "bzip" ) != NULL )
+				{
+					l->l_HttpCompressionContent |= HTTP_COMPRESSION_BZIP;
+				}
+				
+				if( strstr( tptr, "none" ) != NULL )
+				{
+					l->l_HttpCompressionContent = 0;
 				}
 			}
 			
@@ -456,11 +532,12 @@ SystemBase *SystemInit( void )
 
 			for( ; i < (unsigned int)l->sqlpoolConnections; i++ )
 			{
-				l->sqlpool[i ].sqllib = (struct SQLLibrary *)LibraryOpen( l, l->sl_DefaultDBLib, 0 );
-				if( l->sqlpool[i ].sqllib != NULL )
+				l->sqlpool[ i ].sqll_Sqllib = (struct SQLLibrary *)LibraryOpen( l, l->sl_DefaultDBLib, 0 );
+				if( l->sqlpool[ i ].sqll_Sqllib != NULL )
 				{
-					error = l->sqlpool[i ].sqllib->SetOption( l->sqlpool[i ].sqllib, options );
-					error = l->sqlpool[i ].sqllib->Connect( l->sqlpool[i ].sqllib, host, dbname, login, pass, port );
+					l->sqlpool[ i ].sql_ID = i;
+					error = l->sqlpool[i ].sqll_Sqllib->SetOption( l->sqlpool[ i ].sqll_Sqllib, options );
+					error = l->sqlpool[i ].sqll_Sqllib->Connect( l->sqlpool[ i ].sqll_Sqllib, host, dbname, login, pass, port );
 					if( error != 0 )
 					{
 						break;
@@ -473,8 +550,8 @@ SystemBase *SystemInit( void )
 				i = 0;
 				for( ; i < (unsigned int)l->sqlpoolConnections; i++ )
 				{
-					LibraryClose( l->sqlpool[ i ].sqllib );
-					l->sqlpool[i ].sqllib = NULL;
+					LibraryClose( l->sqlpool[ i ].sqll_Sqllib );
+					l->sqlpool[i ].sqll_Sqllib = NULL;
 				}
 			}
 		}
@@ -487,9 +564,9 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] Reading configuration END\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
-	if( l->sqlpool == NULL || l->sqlpool[ 0 ].sqllib == NULL )
+	if( l->sqlpool == NULL || l->sqlpool[ 0 ].sqll_Sqllib == NULL )
 	{
-		FERROR("Cannot open 'mysql.library' in first slot\n");
+		Log( FLOG_ERROR, "Cannot open 'mysql.library' in first slot\n");
 		FFree( tempString );
 		FFree( l->sqlpool );
 		FFree( l );
@@ -568,7 +645,7 @@ SystemBase *SystemInit( void )
 	}
 	else
 	{
-		FERROR("Cannot open 'mysql.library' instance!\n");
+		Log( FLOG_ERROR, "Cannot open 'mysql.library' instance!\n");
 		return NULL;
 	}
 	
@@ -580,7 +657,12 @@ SystemBase *SystemInit( void )
 	
 	l->fcm = FriendCoreManagerNew();
 
+#ifdef USE_WORKERS
 	l->sl_WorkerManager = WorkerManagerNew( l->sl_WorkersNumber );
+#else
+	l->sl_WorkerManager = NULL;
+#endif
+
 	if( FriendCoreManagerInit( l->fcm ) != 0 )
 	{
 		FriendCoreInstance *fci = l->fcm->fcm_FriendCores;
@@ -597,19 +679,13 @@ SystemBase *SystemInit( void )
 			l->fcm->fcm_WebSocket = NULL;
 		}
 		
-		if( l->fcm->fcm_WebSocketMobile != NULL )
-		{
-			WebSocketDelete( l->fcm->fcm_WebSocketMobile );
-			l->fcm->fcm_WebSocketMobile = NULL;
-		}
-		
 		if( l->fcm->fcm_WebSocketNotification != NULL )
 		{
 			WebSocketDelete( l->fcm->fcm_WebSocketNotification );
 			l->fcm->fcm_WebSocketNotification = NULL;
 		}
 		
-		FERROR("FriendCoreManagerInit fail!\n");
+		Log( FLOG_ERROR, "FriendCoreManagerInit fail!\n");
 		SystemClose( l );
 		return NULL;
 	}
@@ -631,7 +707,7 @@ SystemBase *SystemInit( void )
 	l->zlib = (ZLibrary *)LibraryOpen( l, "z.library", 0 );
 	if( l->zlib == NULL )
 	{
-		FERROR("[ERROR]: CANNOT OPEN z.library!\n");
+		Log( FLOG_ERROR, "[ERROR]: CANNOT OPEN z.library!\n");
 	}
 	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
@@ -647,6 +723,7 @@ SystemBase *SystemInit( void )
 	if( l->sl_ModPath == NULL )
 	{
 		FFree( l );
+		Log( FLOG_ERROR, "Cannot allocate memory for module path!\n");
 		return NULL;
 	}
 
@@ -715,7 +792,7 @@ SystemBase *SystemInit( void )
 	if (getcwd( tempString, PATH_MAX ) == NULL)
 	{
 		FFree( tempString );
-		FERROR("getcwd failed!");
+		Log( FLOG_ERROR, "[SystemInit] getcwd failed!");
 		exit(5);
 	}
 	
@@ -723,7 +800,7 @@ SystemBase *SystemInit( void )
 	if( l->sl_LoginModPath == NULL )
 	{
 		FFree( l );
-		FERROR("Cannot allocate memory for login module path!\n");
+		Log( FLOG_ERROR, "Cannot allocate memory for login module path!\n");
 		return NULL;
 	}
 
@@ -783,9 +860,16 @@ SystemBase *SystemInit( void )
 	}
 	else
 	{
-		FERROR("Authentication module not provided\n");
+		Log( FLOG_ERROR, "Authentication module not provided\n");
+
 		FFree( tempString );
 		return NULL;	
+	}
+	
+	l->sl_SecurityManager = SecurityManagerNew( l );
+	if( l->sl_SecurityManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize SecurityManager\n");
 	}
 	
 	l->sl_UM = UMNew( l );
@@ -845,7 +929,7 @@ SystemBase *SystemInit( void )
 	}
 	else
 	{
-		FERROR("Cannot open magic shared lib\n");
+		Log( FLOG_ERROR, "[SystemInit] Cannot open magic shared lib\n");
 	}
 	
 	//
@@ -857,6 +941,12 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
 	// create all managers
+	
+	l->sl_SupportManager = SupportManagerNew( l );
+	if( l->sl_SupportManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize SupportManager\n");
+	}
 	
 	l->sl_PermissionManager = PermissionManagerNew( l );
 	if( l->sl_PermissionManager == NULL )
@@ -944,10 +1034,16 @@ SystemBase *SystemInit( void )
 		Log( FLOG_ERROR, "Cannot initialize INVARManager\n");
 	}
 	
-	l->sl_AppSessionManager = AppSessionManagerNew();
-	if( l->sl_AppSessionManager == NULL )
+	l->sl_ApplicationManager = ApplicationManagerNew( l );
+	if( l->sl_ApplicationManager == NULL )
 	{
 		Log( FLOG_ERROR, "Cannot initialize AppSessionManager\n");
+	}
+	
+	l->sl_SASManager = SASManagerNew( l );
+	if( l->sl_SASManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize l_SASManager\n");
 	}
 	
 	l->sl_DOSTM = DOSTokenManagerNew( l );
@@ -975,19 +1071,9 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	Log( FLOG_INFO, "[SystemBase] Register Events\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
-	
-	#define MINS1 60
-	#define MINS5 300
-	#define MINS6 460
-	#define MINS30 1800
-	#define MINS60 MINS6*10
-	#define MINS360 6*MINS60
-	#define HOUR12 12*MINS60
-	#define DAYS1 24*MINS60
-	#define DAYS5 5*24*MINS60
 
 	EventAdd( l->sl_EventManager, "DoorNotificationRemoveEntries", DoorNotificationRemoveEntries, l, time( NULL )+MINS30, MINS30, -1 );
-	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+MINS360, MINS360, -1 );
+	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+l->sl_RemoveOldSessionTimeout, l->sl_RemoveOldSessionTimeout, -1 );	// default 60mins
 	// test, to remove
 	EventAdd( l->sl_EventManager, "PIDThreadManagerRemoveThreads", PIDThreadManagerRemoveThreads, l->sl_PIDTM, time( NULL )+MINS60, MINS60, -1 );
 	EventAdd( l->sl_EventManager, "CacheUFManagerRefresh", CacheUFManagerRefresh, l->sl_CacheUFM, time( NULL )+DAYS5, DAYS5, -1 );
@@ -999,6 +1085,8 @@ SystemBase *SystemInit( void )
 	EventAdd( l->sl_EventManager, "DOSTokenManagerAutoDelete", DOSTokenManagerAutoDelete, l->sl_DOSTM, time( NULL )+MINS5, MINS5, -1 );
 	
 	EventAdd( l->sl_EventManager, "RemoveOldLogs", RemoveOldLogs, l, time( NULL )+HOUR12, HOUR12, -1 );
+	
+	//EventAdd( l->sl_EventManager, "SecurityManagerRemoteOldBadSessionCalls", SecurityManagerRemoteOldBadSessionCalls, l->sl_SecurityManager, time( NULL )+MINS60, MINS60, -1 );
 	
 	//@BG-678 
 	//EventAdd( l->sl_EventManager, USMCloseUnusedWebSockets, l->sl_USM, time( NULL )+MINS5, MINS5, -1 );
@@ -1024,6 +1112,18 @@ SystemBase *SystemInit( void )
 }
 
 /**
+ * Just get milliseconds since 1 Jan 1970
+ * 
+ */
+
+int GetUnixTime()
+{
+	struct timeval tp;
+	gettimeofday( &tp, NULL );
+	return tp.tv_sec * 1000 + tp.tv_usec / 1000;
+}
+
+/**
  * SystemBase close function
  * @param l pointer to SystemBase
  * 
@@ -1033,15 +1133,17 @@ void SystemClose( SystemBase *l )
 {
 	if( l == NULL )
 	{
-		FERROR("SystemBase is NULL\n");
+		Log( FLOG_ERROR, "[SystemClose] SystemBase is NULL\n");
 		return;
 	}
 	
+	/*
 	if( l->l_APNSConnection != NULL )
 	{
 		WebsocketAPNSConnectorDelete( l->l_APNSConnection );
 		l->l_APNSConnection = NULL;
 	}
+	*/
 	
 	if( l->sl_MobileManager != NULL )
 	{
@@ -1062,10 +1164,10 @@ void SystemClose( SystemBase *l )
 	
 	Log( FLOG_INFO, "[SystemBase] SystemClose in progress\n");
 	
-	if( l->sl_AppSessionManager != NULL )
+	if( l->sl_ApplicationManager != NULL )
 	{
-		AppSessionManagerDelete( l->sl_AppSessionManager );
-		l->sl_AppSessionManager = NULL;
+		ApplicationManagerDelete( l->sl_ApplicationManager );
+		l->sl_ApplicationManager = NULL;
 	}
 	
 	// Check if INRAM is initialized
@@ -1190,6 +1292,18 @@ void SystemClose( SystemBase *l )
 	{
 		RMDelete( l->sl_RoleManager );
 	}
+	if( l->sl_SecurityManager != NULL )
+	{
+		SecurityManagerDelete( l->sl_SecurityManager );
+	}
+	if( l->sl_SASManager != NULL )
+	{
+		SASManagerDelete( l->sl_SASManager );
+	}
+	if( l->sl_SupportManager != NULL )
+	{
+		SupportManagerDelete( l->sl_SupportManager );
+	}
 	
 	// Remove sentinel from active memory
 	if( l->sl_Sentinel != NULL )
@@ -1282,7 +1396,7 @@ void SystemClose( SystemBase *l )
 		for( ; i < (unsigned int)l->sqlpoolConnections; i++ )
 		{
 			DEBUG( "[SystemBase] Closed mysql library slot %d\n", i );
-			LibraryClose( l->sqlpool[ i ].sqllib );
+			LibraryClose( l->sqlpool[ i ].sqll_Sqllib );
 		}
 		
 		FFree( l->sqlpool );
@@ -1316,6 +1430,28 @@ void SystemClose( SystemBase *l )
 	if( l->sl_ModuleNames != NULL )
 	{
 		FFree( l->sl_ModuleNames );
+	}
+	
+	// Clear available modules
+	if( FRIEND_MUTEX_LOCK( &l->sl_InternalMutex ) == 0 )
+	{
+		List *ls = l->sl_AvailableModules;
+		while( ls != NULL )
+		{
+			if( ls->l_Data )
+			{
+				struct ModuleSet *set = ( struct ModuleSet *)ls->l_Data;
+				if( set->name )
+					FFree( set->name );
+				if( set->extension )
+					FFree( set->extension );
+				FFree( ls->l_Data );
+			}
+			ls = ls->next;
+		}
+		FreeList( l->sl_AvailableModules );
+		l->sl_AvailableModules = NULL;
+		FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
 	}
 	
 	// Destroy mutex
@@ -1359,15 +1495,15 @@ void SystemClose( SystemBase *l )
 		{
 			if( l->l_ServerKeys[i] != NULL )
 			{
-				free( l->l_ServerKeys[i] );
+				FFree( l->l_ServerKeys[i] );
 			}
 			if( l->l_ServerKeyValues[i] != NULL )
 			{
-				free( l->l_ServerKeyValues[i] );
+				FFree( l->l_ServerKeyValues[i] );
 			}
 		}
-		free( l->l_ServerKeys );
-		free( l->l_ServerKeyValues );
+		FFree( l->l_ServerKeys );
+		FFree( l->l_ServerKeyValues );
 	}
 	
 	xmlCleanupParser();
@@ -1392,8 +1528,7 @@ int SystemInitExternal( SystemBase *l )
 	USMRemoveOldSessionsinDB( l );
 
 	DEBUG("[SystemBase] init users and all stuff connected to them\n");
-	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-	if( sqllib != NULL )
+	
 	{
 		//  get all users active
 	
@@ -1587,9 +1722,11 @@ int SystemInitExternal( SystemBase *l )
 			
 			if( foundRemoteSession == FALSE )
 			{
+				char *newSessionId = SessionIDGenerate();
 				DEBUG("[SystemBase] Remote session will be created for Sentinel\n");
 				
-				UserSession *ses = UserSessionNew( "remote", "remote" );
+				UserSession *ses = UserSessionNew( newSessionId, "remote" );
+				//UserSession *ses = UserSessionNew( "remote", "remote" );
 				if( ses != NULL )
 				{
 					ses->us_UserID = l->sl_Sentinel->s_User->u_ID;
@@ -1598,27 +1735,8 @@ int SystemInitExternal( SystemBase *l )
 					UserAddSession( l->sl_Sentinel->s_User, ses );
 					
 					USMUserSessionAddToList( l->sl_USM, ses );
-					/*
-					UserSession *nextses = NULL;
-					if( l->sl_USM->usm_Sessions != NULL )
-					{
-						l->sl_USM->usm_Sessions->node.mln_Succ;
-					}
-					ses->node.mln_Succ = (MinNode *)l->sl_USM->usm_Sessions;
-					l->sl_USM->usm_Sessions = ses;
-					if( nextses != NULL )
-					{
-						nextses->node.mln_Pred = (MinNode *)ses;
-					}
-					*/
-					
-					//
-					//if( sqllib->NumberOfRecordsCustomQuery( sqllib, "select * from `FUserSession` where UserID='1' AND DeviceIdentity='remote'") < 1)
-					//{
-					//	sqllib->Save( sqllib, UserSessionDesc, ses );
-					//}
-					//
 				}
+				FFree( newSessionId );
 			}
 			
 			//
@@ -1642,7 +1760,7 @@ int SystemInitExternal( SystemBase *l )
 		{
 			char *err = NULL;
 			DEBUG( "[SystemBase] FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
-			UserDeviceMount( l, sqllib, tmpUser, 1, TRUE, &err, FALSE );
+			UserDeviceMount( l, tmpUser, 1, TRUE, &err, FALSE );
 			if( err != NULL )
 			{
 				Log( FLOG_ERROR, "Initial system mount error. UserID: %lu Error: %s\n", tmpUser->u_ID, err );
@@ -1664,10 +1782,6 @@ int SystemInitExternal( SystemBase *l )
 		{
 			sentUser = l->sl_Sentinel->s_User;
 		}*/
-		
-		
-		
-		l->LibrarySQLDrop( l, sqllib );
 		
 		UGMMountDrives( l->sl_UGM );
 	}
@@ -1700,26 +1814,6 @@ int SystemInitExternal( SystemBase *l )
 	}
 	
 	DEBUG("[SystembaseInitExternal]APNS init\n" );
-	
-	/*
-	l->l_APNSConnection = WebsocketAPNSConnectorNew( l->l_AppleServerHost, l->l_AppleServerPort );
-	if( l->l_APNSConnection != NULL )
-	{
-		
-		//if( WebsocketClientConnect( l->l_APNSConnection->wapns_Connection ) > 0 )
-		//{
-		//	DEBUG("APNS server connected\n");
-		//}
-		//else
-		//{
-		//	DEBUG("APNS server not connected\n");
-		//}
-	}
-	else
-	{
-		FERROR("[SystembaseInitExternal]APNS init ERROR!\n");
-	}
-	*/
 	
 	return 0;
 }
@@ -1870,8 +1964,8 @@ void CheckAndUpdateDB( struct SystemBase *l )
 							char *script;
 							if( ( script = FCalloc( fsize+1, sizeof(char) ) ) != NULL )
 							{
-								int readedbytes = 0;
-								if( ( readedbytes = fread( script, fsize, 1, fp ) ) > 0 )
+								int readbytes = 0;
+								if( ( readbytes = fread( script, fsize, 1, fp ) ) > 0 )
 								{
 									char *command = script;
 									int i;
@@ -1975,11 +2069,17 @@ void CheckAndUpdateDB( struct SystemBase *l )
 	Log( FLOG_INFO, "----------------------------------------------------\n");
 }
 
+
+typedef struct DevNode
+{
+	char				*dn_Table[ 10 ];
+	MinNode				node;
+}DevNode;
+
 /**
  * Load and mount all user doors
  *
  * @param l pointer to SystemBase
- * @param sqllib pointer to sql.library
  * @param usr pointer to user to which doors belong
  * @param force integer 0 = don't force 1 = force
  * @param unmountIfFail should be device unmounted in DB if mount will fail
@@ -1988,9 +2088,10 @@ void CheckAndUpdateDB( struct SystemBase *l )
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **mountError, FBOOL notify )
+int UserDeviceMount( SystemBase *l, User *usr, int force, FBOOL unmountIfFail, char **mountError, FBOOL notify )
 {	
 	Log( FLOG_INFO,  "[UserDeviceMount] Mount user device from Database\n");
+	SQLLibrary *sqllib;
 	
 	if( usr == NULL )
 	{
@@ -2004,12 +2105,19 @@ int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FB
 		return 0;
 	}
 	
-	FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex );
+	sqllib = l->LibrarySQLGet( l );
+	if( sqllib == NULL )
+	{
+		DEBUG("[UserDeviceMount] SQLlib = NULL\n");
+		return 0;
+	}
 	
-	char temptext[ 1024 ];
+	if( FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex ) == 0 )
+	{
+		char temptext[ 1024 ];
 	//char *temptext = FCalloc( 1024, 1 );
 
-	sqllib->SNPrintF( sqllib, temptext, 1024 ,"\
+		sqllib->SNPrintF( sqllib, temptext, 1024 ,"\
 SELECT \
 `Name`, `Type`, `Server`, `Port`, `Path`, `Mounted`, `UserID`, `ID` \
 FROM `Filesystem` f \
@@ -2026,18 +2134,19 @@ ug.UserID = '%ld' \
 )AND ( (f.Owner='0' OR f.Owner IS NULL) AND f.Mounted=\'1\')", 
 usr->u_ID , usr->u_ID, usr->u_ID
 	);
-	DEBUG("[UserDeviceMount] Finding drives in DB\n");
-	void *res = sqllib->Query( sqllib, temptext );
-	if( res == NULL )
-	{
-		Log( FLOG_ERROR,  "[UserDeviceMount] UserDeviceMount fail: database results = NULL\n");
-		return 0;
-	}
-	DEBUG("[UserDeviceMount] Finding drives in DB no error during select:\n\n");
+		DEBUG("[UserDeviceMount] Finding drives in DB\n");
+		void *res = sqllib->Query( sqllib, temptext );
+		if( res == NULL )
+		{
+			Log( FLOG_ERROR,  "[UserDeviceMount] UserDeviceMount fail: database results = NULL\n");
+			l->LibrarySQLDrop( l, sqllib );
+			FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
+			return 0;
+		}
+		DEBUG("[UserDeviceMount] Finding drives in DB no error during select:\n\n");
 	
-	//if( FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex ) == 0 )
-	{
 		char **row;
+		DevNode *rootDev = NULL;
 
 		while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
 		{
@@ -2045,16 +2154,44 @@ usr->u_ID , usr->u_ID, usr->u_ID
 
 			DEBUG("[UserDeviceMount] \tFound database -> Name '%s' Type '%s', Server '%s', Port '%s', Path '%s', Mounted '%s'\n", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
 		
-			int mount = atoi( row[ 5 ] );
-			int id = atol( row[ 7 ] );
-			User *owner = NULL;
+			// make a list of devices
+			DevNode *ne = FCalloc( 1, sizeof(DevNode ) );
+			if( ne != NULL )
+			{
+				ne->dn_Table[ 0 ] = StringDuplicate( row[0] );
+				ne->dn_Table[ 1 ] = StringDuplicate( row[1] );
+				ne->dn_Table[ 4 ] = StringDuplicate( row[4] );
+				ne->dn_Table[ 5 ] = StringDuplicate( row[5] );
+				ne->dn_Table[ 7 ] = StringDuplicate( row[7] );
+				
+				ne->node.mln_Succ = (MinNode *)rootDev;
+				rootDev = ne;
+			}
+		}	// going through all rows
+		DEBUG( "[UserDeviceMount] Device mounted for user %s\n\n", usr->u_Name );
 
+		sqllib->FreeResult( sqllib, res );
+		l->LibrarySQLDrop( l, sqllib );
+		FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
+		
+		// mount all devices
+		DevNode *actDev = rootDev;
+		DevNode *remDev = rootDev;
+		while( actDev != NULL )
+		{
+			remDev = actDev;
+			actDev = (DevNode *)actDev->node.mln_Succ;
+			
+			int mount = atoi( remDev->dn_Table[ 5 ] );
+			int id = atol( remDev->dn_Table[ 7 ] );
+			User *owner = NULL;
+			
 			struct TagItem tags[] = {
-				{ FSys_Mount_Path,    (FULONG)row[ 4 ] },
+				{ FSys_Mount_Path,    (FULONG)remDev->dn_Table[ 4 ] },
 				{ FSys_Mount_Server,  (FULONG)NULL },
 				{ FSys_Mount_Port,    (FULONG)NULL },
-				{ FSys_Mount_Type,    (FULONG)row[ 1 ] },
-				{ FSys_Mount_Name,    (FULONG)row[ 0 ] },
+				{ FSys_Mount_Type,    (FULONG)remDev->dn_Table[ 1 ] },
+				{ FSys_Mount_Name,    (FULONG)remDev->dn_Table[ 0 ] },
 				{ FSys_Mount_UserName, (FULONG)usr->u_Name },
 				{ FSys_Mount_Owner,   (FULONG)owner },
 				{ FSys_Mount_ID,      (FULONG)id },
@@ -2064,19 +2201,16 @@ usr->u_ID , usr->u_ID, usr->u_ID
 				{TAG_DONE, TAG_DONE}
 			};
 
-			FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
-
 			File *device = NULL;
 			DEBUG("[UserDeviceMount] Before mounting\n");
 			
 			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, mountError, usr->u_IsAdmin, notify );
 
-			FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex );
-
+			sqllib = l->LibrarySQLGet( l );
 			// if there is error but error is not "device is already mounted"
 			if( err != 0 && err != FSys_Error_DeviceAlreadyMounted )
 			{
-				Log( FLOG_ERROR,"[UserDeviceMount] \tCannot mount device, device '%s' will be unmounted. ERROR %d\n", row[ 0 ], err );
+				Log( FLOG_ERROR,"[UserDeviceMount] \tCannot mount device, device '%s' will be unmounted. ERROR %d\n", remDev->dn_Table[ 0 ], err );
 				// if unmountIfFail is set
 				// and if error is not equal to FSys_Error_CustomError which is returned when main drive is installed but not shareddrive (for other users)
 				if( unmountIfFail == TRUE && err != FSys_Error_CustomError )
@@ -2120,18 +2254,20 @@ AND LOWER(f.Name) = LOWER('%s')",
 			}
 			else
 			{
-				Log( FLOG_ERROR, "[UserDeviceMount] \tCannot set device mounted state. Device = NULL (%s).\n", row[0] );
+				Log( FLOG_ERROR, "[UserDeviceMount] \tCannot set device mounted state. Device = NULL (%s).\n", remDev->dn_Table[ 0 ] );
 			}
+			l->LibrarySQLDrop( l, sqllib );
 			
-			//FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
-		}	// going through all rows
-		DEBUG( "[UserDeviceMount] Device mounted for user %s\n\n", usr->u_Name );
-
-		sqllib->FreeResult( sqllib, res );
+			if( remDev->dn_Table[ 0 ] != NULL ){ FFree( remDev->dn_Table[ 0 ] ); }
+			if( remDev->dn_Table[ 1 ] != NULL ){ FFree( remDev->dn_Table[ 1 ] ); }
+			if( remDev->dn_Table[ 4 ] != NULL ){ FFree( remDev->dn_Table[ 4 ] ); }
+			if( remDev->dn_Table[ 5 ] != NULL ){ FFree( remDev->dn_Table[ 5 ] ); }
+			if( remDev->dn_Table[ 7 ] != NULL ){ FFree( remDev->dn_Table[ 7 ] ); }
+			FFree( remDev );
+		}
 
 		usr->u_InitialDevMount = TRUE;
 	}
-	FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
 	
 	return 0;
 }
@@ -2189,8 +2325,6 @@ int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib __attribute__((unused))
 
 char *RunMod( SystemBase *l, const char *type, const char *path, const char *args, unsigned long *length )
 {
-	char tmpQuery[ 255 ];
-	int pathlen = strlen( path );
 	char *results = NULL;
 
 	EModule *lmod = l->sl_Modules;
@@ -2279,33 +2413,36 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 	{
 		if( FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex ) == 0 )
 		{
-			if( l->sqlpool[ l->MsqLlibCounter ].inUse == FALSE )
+			if( l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->l_InUse == FALSE )
 			{
-				//FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
-			
-				//FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex );
-				retlib = l->sqlpool[l->MsqLlibCounter ].sqllib;
-				DEBUG("retlibptr %p pool %p\n", retlib, l->sqlpool[l->MsqLlibCounter ].sqllib );
-				int status = retlib->GetStatus( (void *)l->sqlpool[l->MsqLlibCounter ].sqllib );
+				retlib = l->sqlpool[l->MsqLlibCounter ].sqll_Sqllib;
+				DEBUG("retlibptr %p pool %p\n", retlib, l->sqlpool[l->MsqLlibCounter ].sqll_Sqllib );
+				int status = retlib->GetStatus( (void *)l->sqlpool[l->MsqLlibCounter ].sqll_Sqllib );
 				if( retlib == NULL || status != SQL_STATUS_READY ) //retlib->con.sql_Con->status != MYSQL_STATUS_READY )
 				{
 					FERROR( "[LibraryMYSQLGet] We found a NULL pointer on slot %d retlib %p status %d!\n", l->MsqLlibCounter, retlib, status );
 					// Increment and check
 					if( ++l->MsqLlibCounter >= l->sqlpoolConnections ) l->MsqLlibCounter = 0;
 					FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
+					// Give some grace time..
+					usleep( 0 );
 					continue;
 				}
-				l->sqlpool[ l->MsqLlibCounter ].inUse = TRUE;
-				if( l->sqlpool[ l->MsqLlibCounter ].sqllib->con.sql_Recconect == TRUE )
+				
+				l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->l_InUse = TRUE;
+				if( l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->con.sql_Recconect == TRUE )
 				{
-					l->sqlpool[ l->MsqLlibCounter ].sqllib->Reconnect(  l->sqlpool[ l->MsqLlibCounter ].sqllib );
-					l->sqlpool[ l->MsqLlibCounter ].sqllib->con.sql_Recconect = FALSE;
+					l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->Reconnect(  l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib );
+					l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->con.sql_Recconect = FALSE;
 				}
 			
-				INFO( "[LibraryMYSQLGet] We found mysql library on slot %d.\n", l->MsqLlibCounter );
+				INFO( "[LibraryMYSQLGet] We found mysql library on slot %d (library %p).\n", l->MsqLlibCounter, l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib );
 			
 				// Increment and check
-				if( ++l->MsqLlibCounter >= l->sqlpoolConnections ) l->MsqLlibCounter = 0;
+				if( ++l->MsqLlibCounter >= l->sqlpoolConnections )
+				{
+					l->MsqLlibCounter = 0;
+				}
 				FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
 				break;
 			}
@@ -2316,10 +2453,11 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 		}
 		
 		timer++;
+		// We got too many connections, give grace time
 		if( timer >= l->sqlpoolConnections )
 		{
 			timer = 0;
-			usleep( 5000 );
+			usleep( 0 );
 		}
 		
 		l->MsqLlibCounter++;
@@ -2357,25 +2495,24 @@ void LibrarySQLDrop( SystemBase *l, SQLLibrary *mclose )
 	int i = 0;
 	int closed = -1;
 	
-	for( ; i < l->sqlpoolConnections ; i++ )
+	if( mclose->l_InUse == TRUE )
 	{
-		if( l->sqlpool[ i ].sqllib == mclose )
+		if( FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex ) == 0 )
 		{
-			FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex );
-			l->sqlpool[ i ].inUse = FALSE;
+			mclose->l_InUse = FALSE;
 			FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
-			closed = i;
 		}
+		closed = i;
+	}
 		
-		if( l->sqlpool[ i ].inUse != FALSE )
-		{
-			DEBUG( "[SystemBase] Mysql slot %d is still in use\n", i );
-		}
+	if( mclose->l_InUse != FALSE )
+	{
+		DEBUG( "[SystemBase] Mysql library %p is still in use\n", mclose );
 	}
 	
 	if( closed != -1 )
 	{
-		INFO( "[SystemBase] MYSQL slot %d was closed properly.\n", closed );
+		INFO( "[SystemBase] MYSQL library %p was closed properly.\n", mclose );
 	}
 }
 
@@ -2453,7 +2590,7 @@ ZLibrary *LibraryZGet( SystemBase *l )
  * Drop z.library to pool UNIMPLEMENTED
  *
  * @param l pointer to SystemBase
- * @param aclose pointer to z.library which will be returned to pool
+ * @param closelib pointer to z.library which will be returned to pool
  */
 
 void LibraryZDrop( SystemBase *l __attribute__((unused)), ZLibrary *closelib __attribute__((unused)) )
@@ -2551,36 +2688,27 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 		memcpy( buf, msg, len );
 	
 		DEBUG("[SystemBase] Writing to websockets, string '%s' size %d\n",msg, len );
-		if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
+		//if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
 		{
-			UserSessionWebsocket *wsc = usersession->us_WSConnections;
-			while( wsc != NULL )
+			if( usersession->us_WSD != NULL )
 			{
-				DEBUG("[SystemBase] Writing to websockets, pointer to wsdata %p, ptr to ws: %p wscptr: %p\n", wsc->wusc_Data, usersession, wsc );
-
-				//if( FRIEND_MUTEX_LOCK( &(wsc->wsc_Mutex) ) == 0 )
-				
-				if( wsc->wusc_Data != NULL )
-				{
-					bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
-				}
-				else
-				{
-					FERROR("Cannot write to WS, WSI is NULL!\n");
-				}
-				wsc = (UserSessionWebsocket *)wsc->node.mln_Succ;
-				}
-				FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
+				bytes += UserSessionWebsocketWrite( usersession, buf , len, LWS_WRITE_TEXT );
 			}
-			DEBUG("[SystemBase] Writing to websockets done, stuff released\n");
-			
-			FFree( buf );
+			else
+			{
+				FERROR("Cannot write to WS, WSI is NULL!\n");
+			}
+			//FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
 		}
-		else
-		{
-			Log( FLOG_ERROR,"Cannot allocate memory for message\n");
-			return 0;
-		}
+		DEBUG("[SystemBase] Writing to websockets done, stuff released\n");
+		
+		FFree( buf );
+	}
+	else
+	{
+		Log( FLOG_ERROR,"Cannot allocate memory for message\n");
+		return 0;
+	}
 	DEBUG("[SystemBase] WebSocketSendMessage end, wrote %d bytes\n", bytes );
 	
 	return bytes;
@@ -2606,34 +2734,15 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 		{
 			memcpy( buf, msg,  len );
 
-			if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
+			if( usersession->us_WSD != NULL && usersession->us_WebSocketStatus == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
 			{
-				UserSessionWebsocket *wsc = usersession->us_WSConnections;
-		
-				DEBUG("[SystemBase] Writing to websockets, string '%s' size %d ptr to websocket connection %p\n",msg, len, wsc );
-		
-				//if( usersession->us_WebSocketStatus == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
-				{
-					while( wsc != NULL )
-					{
-						//if(  )//&& wsc->wusc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
-						{
-							//WSCData *data = (WSCData *)wsc->wusc_Data;
-							if( wsc->wusc_Data != NULL && wsc->wusc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
-							{
-								bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
-							}
-							else
-							{
-								DEBUG("Websocket is disabled, dataptr: %p\n", wsc->wusc_Data );
-							}
-						}
-						wsc = (UserSessionWebsocket *)wsc->node.mln_Succ;
-					}
-				}
-				FFree( buf );
-				FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
+				bytes += UserSessionWebsocketWrite( usersession , buf , len, LWS_WRITE_TEXT );
 			}
+			else
+			{
+				DEBUG("Websocket is disabled, dataptr: %p\n", msg );
+			}
+			FFree( buf );
 		}
 		else
 		{
@@ -2658,11 +2767,11 @@ int SendProcessMessage( Http *request, char *data, int len )
 {
 	DEBUG("[SystemBase] SendProcessMessage\n");
 	
-	if( request->h_RequestSource == HTTP_SOURCE_HTTP_TO_WS )
+	if( request->http_RequestSource == HTTP_SOURCE_HTTP_TO_WS )
 	{
 		DEBUG("[SystemBase] SendProcessMessage to WS: %s\n", data );
 		
-		PIDThread *pidt = (PIDThread *)request->h_PIDThread;
+		PIDThread *pidt = (PIDThread *)request->http_PIDThread;
 		char *sendbuf;
 		int msglen = len+1024;
 		

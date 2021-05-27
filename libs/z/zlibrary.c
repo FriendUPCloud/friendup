@@ -73,7 +73,7 @@ FULONG GetRevision(void)
 
 int Unpack( struct ZLibrary *l, const char *name, const char *dir, const char *pass, Http *request )
 {
-	request->h_SB = l->sb;
+	request->http_SB = l->sb;
 	DEBUG("Z.library: Call unzip\n");
 	return UnpackZip( name, dir, pass, request );
 }
@@ -85,7 +85,7 @@ int Unpack( struct ZLibrary *l, const char *name, const char *dir, const char *p
 int Pack( struct ZLibrary *l, const char *name, const char *dir, int cutfilename, const char *pass, Http *request, int numberOfFiles )
 {
 	DEBUG("Z.library: pack called\n");
-	request->h_SB = l->sb;
+	request->http_SB = l->sb;
 	return PackZip( name, dir, cutfilename, pass, request, numberOfFiles );
 }
 

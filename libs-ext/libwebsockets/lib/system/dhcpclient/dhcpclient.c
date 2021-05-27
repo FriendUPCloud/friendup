@@ -168,6 +168,7 @@ static const uint8_t rawdisc[] = {
  * +---------------------------------------------------------------+
  */
 
+#if defined(_DEBUG)
 static const char *dhcp_entry_names[] = {
 	"proposed ip",
 	"dhcp server",
@@ -183,6 +184,7 @@ static const char *dhcp_entry_names[] = {
 	"rebinding secs",
 	"renewal secs",
 };
+#endif
 
 static void
 lws_dhcpc_retry_conn(struct lws_sorted_usec_list *sul)
@@ -199,7 +201,7 @@ lws_dhcpc_retry_conn(struct lws_sorted_usec_list *sul)
 					  68, LWS_CAUDP_PF_PACKET |
 					      LWS_CAUDP_BROADCAST,
 					  "lws-dhcpclient", (const char *)&r[1],
-					  NULL, &bo2);
+					  NULL, NULL, &bo2);
 	lwsl_debug("%s: created wsi_raw: %p\n", __func__, r->wsi_raw);
 	if (!r->wsi_raw) {
 		lwsl_err("%s: unable to create udp skt\n", __func__);
@@ -377,7 +379,7 @@ callback_dhcpc(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 			p += 0xec + 4;
 			while (p < end) {
 				uint8_t c = *p++;
-				uint8_t l;
+				uint8_t l = 0;
 
 				if (c && c != 0xff) {
 					/* pad 0 and EOT 0xff have no length */

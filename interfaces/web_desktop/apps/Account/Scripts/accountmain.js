@@ -205,6 +205,9 @@ Application.receiveMessage = function( msg )
 			ge( 'UserAccFullname' ).value        = html_entity_decode( msg.FullName ? msg.FullName : '' );
 			ge( 'UserAccUsername' ).value        = html_entity_decode( msg.Name );
 			ge( 'UserAccEmail'    ).value        = msg.Email ? msg.Email : '';
+			ge( 'UserAccTimezone'    ).value     = msg.Timezone ? msg.Timezone : '';
+			
+			InitTimezoneGui();
 			
 			userCredentials = ge( 'UserAccFullname' ).value.substr( 0, 1 );
 			var m = 0;
@@ -661,6 +664,14 @@ function refreshUserKeys()
 		data = JSON.parse( d );
 		
 		drawKeyList( data );
+		
+		Application.encryption.publickey( function( res, data )
+		{
+			if( res && data && data.publickey )
+			{
+				displayPublicKey( data.publickey );
+			}
+		} );
 	}
 	m.execute( 'keys' );	
 }
@@ -916,7 +927,13 @@ function ClearKeyCache( keyid, callback )
 
 function displayPublicKey( key )
 {
+	// What was this used for now again???
 	if( ge( 'PublicKeyContainer' ) )
+	{
+		ge( 'UserAccPublicKey' ).value = key;
+	}
+	
+	if( key && ge( 'UserAccPublicKey' ) )
 	{
 		ge( 'UserAccPublicKey' ).value = key;
 	}
@@ -1222,7 +1239,8 @@ function saveDia()
 	var obj = {
 		fullname: ( ge( 'UserAccFullname' ).value ),
 		name:     htmlentities( ge( 'UserAccUsername' ).value ),
- 		email:    ge( 'UserAccEmail' ).value
+ 		email:    ge( 'UserAccEmail' ).value,
+ 		timezone: ge( 'UserAccTimezone' ).value
 	};
 	
 	var nuserCredentials = ge( 'UserAccFullname' ).value.substr( 0, 1 );
@@ -1485,5 +1503,72 @@ function editStorage( name, mode, mounted )
 	}
 	
 	Application.editView = v;
+}
+
+// Init the timezone gui! ------------------------------------------------------
+
+var timezones = null;
+
+// Africa,Europe etc
+function InitTimezoneGui()
+{
+	if( !timezones )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e != 'ok' ) return;
+			timezones = JSON.parse( d );
+			InitTimezoneGui();
+		}
+		m.execute( 'gettimezones' );
+		return;
+	}
+	
+	var current = ge( 'UserAccTimezone' ).value.split( '/' );
+	current = current[0];
+	
+	let cstr = '';
+	let firstZone = null;
+	cstr += '<select id="TimeZoneType" onchange="SetSubTimeZones( this.value )">';
+	for( let a in timezones )
+	{
+		let sel = current == a ? ' selected="selected"' : '';
+		cstr += '<option' + sel + ' value="' + a + '">' + a + '</option>';
+		if( !firstZone )
+			firstZone = a;
+		if( current == a )
+			firstZone = a;
+	}
+	cstr += '</select>';
+	ge( 'TimeZoneSelectA' ).innerHTML = cstr;
+	SetSubTimeZones( firstZone );
+}
+
+// Africa/Somewhere
+function SetSubTimeZones( zone )
+{
+	var current = ge( 'UserAccTimezone' ).value.split( '/' );
+	if( current.length > 1 )
+		current = current[1];
+	else current = false;
+	
+	let found = false;
+	let cstr = '<select id="TimeZoneSubType" onchange="ge( \'UserAccTimezone\' ).value = ge( \'TimeZoneType\' ).value + \'/\' + ge( \'TimeZoneSubType\' ).value">';
+	for( let a in timezones )
+	{
+		if( a == zone )
+		{
+			found = true;
+			for( let b in timezones[ a ] )
+			{
+				let sel = current == timezones[ a ][ b ] ? ' selected="selected"' : '';
+				cstr += '<option' + sel + ' value="' + timezones[ a ][ b ] + '">' + timezones[ a ][ b ] + '</option>';
+			}
+		}
+	}
+	cstr += '</select>';
+	ge( 'TimeZoneSelectB' ).innerHTML = found ? cstr : '';
+	ge( 'UserAccTimezone' ).value = ge( 'TimeZoneType' ).value + '/' + ge( 'TimeZoneSubType' ).value;
 }
 

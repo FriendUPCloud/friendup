@@ -1,7 +1,7 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2020 Andy Green <andy@warmcat.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -37,12 +37,15 @@ lws_ssl_client_bio_create(struct lws *wsi)
 	const char *alpn_comma = wsi->context->tls.alpn_default;
 	struct alpn_ctx protos;
 
-	if (lws_hdr_copy(wsi, hostname, sizeof(hostname),
-			 _WSI_TOKEN_CLIENT_HOST) <= 0) {
-		lwsl_err("%s: Unable to get hostname\n", __func__);
+	if (wsi->stash)
+		lws_strncpy(hostname, wsi->stash->cis[CIS_HOST], sizeof(hostname));
+	else
+		if (lws_hdr_copy(wsi, hostname, sizeof(hostname),
+				_WSI_TOKEN_CLIENT_HOST) <= 0) {
+			lwsl_err("%s: Unable to get hostname\n", __func__);
 
-		return -1;
-	}
+			return -1;
+		}
 
 	/*
 	 * remove any :port part on the hostname... necessary for network
@@ -77,9 +80,14 @@ lws_ssl_client_bio_create(struct lws *wsi)
 	if (wsi->vhost->tls.alpn)
 		alpn_comma = wsi->vhost->tls.alpn;
 
-	if (lws_hdr_copy(wsi, hostname, sizeof(hostname),
-			 _WSI_TOKEN_CLIENT_ALPN) > 0)
-		alpn_comma = hostname;
+	if (wsi->stash) {
+		lws_strncpy(hostname, wsi->stash->cis[CIS_HOST], sizeof(hostname));
+		alpn_comma = wsi->stash->cis[CIS_ALPN];
+	} else {
+		if (lws_hdr_copy(wsi, hostname, sizeof(hostname),
+				_WSI_TOKEN_CLIENT_ALPN) > 0)
+			alpn_comma = hostname;
+	}
 
 	lwsl_info("%s: %p: client conn sending ALPN list '%s'\n",
 		  __func__, wsi, alpn_comma);
@@ -99,7 +107,58 @@ lws_ssl_client_bio_create(struct lws *wsi)
 
 	SSL_set_fd(wsi->tls.ssl, wsi->desc.sockfd);
 
+	if (wsi->sys_tls_client_cert) {
+		lws_system_blob_t *b = lws_system_get_blob(wsi->context,
+					LWS_SYSBLOB_TYPE_CLIENT_CERT_DER,
+					wsi->sys_tls_client_cert - 1);
+		const uint8_t *data;
+		size_t size;
+
+		if (!b)
+			goto no_client_cert;
+
+		/*
+		 * Set up the per-connection client cert
+		 */
+
+		size = lws_system_blob_get_size(b);
+		if (!size)
+			goto no_client_cert;
+
+		if (lws_system_blob_get_single_ptr(b, &data))
+			goto no_client_cert;
+
+		if (SSL_use_certificate_ASN1(wsi->tls.ssl, data, size) != 1)
+			goto no_client_cert;
+
+		b = lws_system_get_blob(wsi->context,
+					LWS_SYSBLOB_TYPE_CLIENT_KEY_DER,
+					wsi->sys_tls_client_cert - 1);
+		if (!b)
+			goto no_client_cert;
+		size = lws_system_blob_get_size(b);
+		if (!size)
+			goto no_client_cert;
+
+		if (lws_system_blob_get_single_ptr(b, &data))
+			goto no_client_cert;
+
+		if (SSL_use_PrivateKey_ASN1(0, wsi->tls.ssl, data, size) != 1)
+			goto no_client_cert;
+
+		/* no wrapper api for check key */
+
+		lwsl_notice("%s: set system client cert %u\n", __func__,
+				wsi->sys_tls_client_cert - 1);
+	}
+
 	return 0;
+
+no_client_cert:
+	lwsl_err("%s: unable to set up system client cert %d\n", __func__,
+			wsi->sys_tls_client_cert - 1);
+
+	return 1;
 }
 
 int ERR_get_error(void)
@@ -177,8 +236,8 @@ lws_tls_client_confirm_peer_cert(struct lws *wsi, char *ebuf, int ebuf_len)
 		return 0;
 	}
 	lws_snprintf(ebuf, ebuf_len,
-		"server's cert didn't look good, X509_V_ERR = %d: %s\n",
-		 n, ERR_error_string(n, sb));
+		"server's cert didn't look good, (use_ssl 0x%x) X509_V_ERR = %d: %s\n",
+		(unsigned int)wsi->tls.use_ssl, n, ERR_error_string(n, sb));
 	lwsl_info("%s\n", ebuf);
 	lws_tls_err_describe_clear();
 

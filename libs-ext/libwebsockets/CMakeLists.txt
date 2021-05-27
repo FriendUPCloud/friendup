@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 2.8.9)
 
+if(POLICY CMP0048)
+	cmake_policy(SET CMP0048 NEW)
+endif()
+
 # General Advice
 #
 # For selecting between DEBUG / RELEASE, use -DCMAKE_BUILD_TYPE=DEBUG or =RELEASE
@@ -13,6 +17,9 @@ endif()
 set(LWS_ROLE_RAW 1)
 set(LWS_WITH_POLL 1)
 
+# it's at this point any toolchain file is brought in
+project(libwebsockets C)
+
 #
 # Select features recommended for PC distro packaging
 #
@@ -25,8 +32,10 @@ option(LWS_FOR_GITOHASHI "Enable features recommended for use with gitohashi" OF
 option(LWS_WITH_NETWORK "Compile with network-related code" ON)
 option(LWS_ROLE_H1 "Compile with support for http/1 (needed for ws)" ON)
 option(LWS_ROLE_WS "Compile with support for websockets" ON)
+option(LWS_ROLE_MQTT "Build with support for MQTT client" OFF)
 option(LWS_ROLE_DBUS "Compile with support for DBUS" OFF)
 option(LWS_ROLE_RAW_PROXY "Raw packet proxy" OFF)
+option(LWS_ROLE_RAW_FILE "Compile with support for raw files" ON)
 option(LWS_WITH_HTTP2 "Compile with server support for HTTP/2" ON)
 option(LWS_WITH_LWSWS "Libwebsockets Webserver" OFF)
 option(LWS_WITH_CGI "Include CGI (spawn process with network-connected stdin/out/err) APIs" OFF)
@@ -47,10 +56,21 @@ option(LWS_WITH_HTTP_BROTLI "Also offer brotli http stream compression (requires
 option(LWS_WITH_ACME "Enable support for ACME automatic cert acquisition + maintenance (letsencrypt etc)" OFF)
 option(LWS_WITH_HUBBUB "Enable libhubbub rewriting support" OFF)
 option(LWS_WITH_ALSA "Enable alsa audio example" OFF)
+option(LWS_WITH_GTK "Enable gtk example" OFF)
 option(LWS_WITH_FTS "Full Text Search support" OFF)
 option(LWS_WITH_SYS_ASYNC_DNS "Nonblocking internal IPv4 + IPv6 DNS resolver" OFF)
 option(LWS_WITH_SYS_NTPCLIENT "Build in tiny ntpclient good for tls date validation and run via lws_system" OFF)
 option(LWS_WITH_SYS_DHCP_CLIENT "Build in tiny DHCP client" OFF)
+option(LWS_WITH_HTTP_BASIC_AUTH "Support Basic Auth" ON)
+option(LWS_WITH_HTTP_UNCOMMON_HEADERS "Include less common http header support" ON)
+
+#
+# Secure Streams
+#
+option(LWS_WITH_SECURE_STREAMS "Secure Streams protocol-agnostic API" OFF)
+option(LWS_WITH_SECURE_STREAMS_PROXY_API "Secure Streams support to work across processes" OFF)
+option(LWS_WITH_SECURE_STREAMS_SYS_AUTH_API_AMAZON_COM "Auth support for api.amazon.com" OFF)
+
 #
 # TLS library options... all except mbedTLS are basically OpenSSL variants.
 #
@@ -66,6 +86,8 @@ option(LWS_SSL_CLIENT_USE_OS_CA_CERTS "SSL support should make use of the OS-ins
 option(LWS_WITH_LIBEV "Compile with support for libev" OFF)
 option(LWS_WITH_LIBUV "Compile with support for libuv" OFF)
 option(LWS_WITH_LIBEVENT "Compile with support for libevent" OFF)
+option(LWS_WITH_GLIB "Compile with support for glib event loop" OFF)
+
 #
 # Static / Dynamic build options
 #
@@ -108,7 +130,8 @@ option(LWS_WITH_LEJP "With the Lightweight JSON Parser" ON)
 option(LWS_WITH_SQLITE3 "Require SQLITE3 support" OFF)
 option(LWS_WITH_STRUCT_JSON "Generic struct serialization to and from JSON" OFF)
 option(LWS_WITH_STRUCT_SQLITE3 "Generic struct serialization to and from SQLITE3" OFF)
-option(LWS_WITH_SMTP "Provide SMTP support" OFF)
+# broken atm
+#option(LWS_WITH_SMTP "Provide SMTP support" OFF)
 if (WIN32 OR LWS_WITH_ESP32)
 option(LWS_WITH_DIR "Directory scanning api support" OFF)
 option(LWS_WITH_LEJP_CONF "With LEJP configuration parser as used by lwsws" OFF)
@@ -116,7 +139,10 @@ else()
 option(LWS_WITH_DIR "Directory scanning api support" ON)
 option(LWS_WITH_LEJP_CONF "With LEJP configuration parser as used by lwsws" ON)
 endif()
-option(LWS_WITH_NO_LOGS "Disable all logging from being compiled in" OFF)
+option(LWS_WITH_NO_LOGS "Disable all logging other than _err and _user from being compiled in" OFF)
+set(LWS_LOGGING_BITFIELD_SET 0 CACHE STRING "Bitfield describing which log levels to force included into the build")
+set(LWS_LOGGING_BITFIELD_CLEAR 0 CACHE STRING "Bitfield describing which log levels to force removed from the build")
+option(LWS_LOGS_TIMESTAMP "Timestamp at start of logs" ON)
 option(LWS_AVOID_SIGPIPE_IGN "Android 7+ reportedly needs this" OFF)
 option(LWS_WITH_STATS "Keep statistics of lws internal operations" OFF)
 option(LWS_WITH_JOSE "JSON Web Signature / Encryption / Keys (RFC7515/6/) API" OFF)
@@ -143,12 +169,19 @@ option(LWS_CLIENT_HTTP_PROXYING "Support external http proxies for client connec
 option(LWS_WITH_FILE_OPS "Support file operations vfs" ON)
 option(LWS_WITH_DETAILED_LATENCY "Record detailed latency stats for each read and write" OFF)
 option(LWS_WITH_UDP "Platform supports UDP" ON)
+option(LWS_WITH_SPAWN "Spawn subprocesses with piped stdin/out/stderr" OFF)
+option(LWS_WITH_FSMOUNT "Overlayfs and fallback mounting apis" OFF)
+
 
 #
 # to use miniz, enable both LWS_WITH_ZLIB and LWS_WITH_MINIZ
 #
 # End of user settings
 #
+
+if(IOS)
+    set(LWS_DETECTED_PLAT_IOS 1)
+endif()
 
 # Workaround for ESP-IDF
 # Detect ESP_PLATFORM environment flag, if exist, set LWS_WITH_ESP32.
@@ -169,12 +202,12 @@ if (LWS_PLAT_FREERTOS OR LWS_PLAT_OPTEE)
 endif()
 
 if (WIN32 OR LWS_PLAT_FREERTOS)
-	message(STATUS "No LWS_WITH_DIR and LWS_WITH_DIR")
+	message(STATUS "No LWS_WITH_DIR or LWS_WITH_LEJP_CONF")
 	set(LWS_WITH_DIR OFF)
 	set(LWS_WITH_LEJP_CONF OFF)
 	message("LWS_WITH_DIR ${LWS_WITH_DIR}")
 else()
-	message(STATUS "Compiled with LWS_WITH_DIR and LWS_WITH_DIR")
+	message(STATUS "Compiled with LWS_WITH_DIR and LWS_WITH_LEJP_CONF")
 	set(LWS_WITH_DIR ON)
 	set(LWS_WITH_LEJP_CONF ON)
 endif()
@@ -188,6 +221,10 @@ if (LWS_FOR_GITOHASHI)
 	set(LWS_WITH_DISKCACHE 1)
 	set(LWS_WITH_LWSAC 1)
 	set(LWS_WITH_LEJP_CONF 1)
+	set(LWS_WITH_SPAWN 1)
+	set(LWS_WITH_FSMOUNT 1)
+	set(LWS_WITH_STRUCT_JSON 1)
+	set(LWS_WITH_STRUCT_SQLITE3 1)
 endif()
 
 if(LWS_WITH_DISTRO_RECOMMENDED)
@@ -200,6 +237,7 @@ if(LWS_WITH_DISTRO_RECOMMENDED)
 	set(LWS_WITH_RANGES 1)
 	set(LWS_WITH_ACME 1)
 	set(LWS_WITH_SERVER_STATUS 1)
+	set(LWS_WITH_GLIB 1)
 	set(LWS_WITH_LIBUV 1)
 	set(LWS_WITH_LIBEV 1)
 	# libev + libevent cannot coexist at build-time
@@ -217,9 +255,20 @@ if(LWS_WITH_DISTRO_RECOMMENDED)
 	set(LWS_ROLE_RAW_PROXY 1)
 	set(LWS_WITH_GENCRYPTO 1)
 	set(LWS_WITH_JOSE 1)
+	set(LWS_WITH_STRUCT_JSON 1)
+	set(LWS_WITH_STRUCT_SQLITE3 1)
+	set(LWS_WITH_SPAWN 1)
+	set(LWS_WITH_FSMOUNT 1)
+	set(LWS_ROLE_MQTT 1)
+endif()
+
+if (LWS_WITH_SECURE_STREAMS_PROXY_API)
+	set(LWS_WITH_LWS_DSH 1)
+	set(LWS_WITH_UNIX_SOCK 1)
 endif()
 
 if (NOT LWS_WITH_NETWORK)
+	set(LWS_ROLE_MQTT 0)
 	set(LWS_ROLE_H1 0)
 	set(LWS_ROLE_WS 0)
 	set(LWS_ROLE_RAW 0)
@@ -242,6 +291,11 @@ if (NOT LWS_WITH_NETWORK)
 	set(LWS_WITH_SEQUENCER 0)
 	set(LWS_ROLE_DBUS 0)
 	set(LWS_WITH_LWS_DSH 0)
+	set(LWS_WITH_THREADPOOL 0)
+endif()
+
+if (LWS_WITH_CGI)
+	set(LWS_WITH_SPAWN 1)
 endif()
 
 if (LWS_WITH_STRUCT_SQLITE3)
@@ -269,20 +323,18 @@ if (LWS_PLAT_FREERTOS)
 	set(LWS_WITH_FTS 0)
 endif()
 
-project(libwebsockets C)
-
 set(PACKAGE "libwebsockets")
 set(CPACK_PACKAGE_NAME "${PACKAGE}")
-set(CPACK_PACKAGE_VERSION_MAJOR "3")
-set(CPACK_PACKAGE_VERSION_MINOR "2")
-set(CPACK_PACKAGE_VERSION_PATCH "99")
+set(CPACK_PACKAGE_VERSION_MAJOR "4")
+set(CPACK_PACKAGE_VERSION_MINOR "0")
+set(CPACK_PACKAGE_VERSION_PATCH "9")
 set(CPACK_PACKAGE_RELEASE 1)
 set(CPACK_GENERATOR "RPM")
 set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 set(CPACK_PACKAGE_VENDOR "andy@warmcat.com")
 set(CPACK_PACKAGE_CONTACT "andy@warmcat.com")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PACKAGE} ${PACKAGE_VERSION}")
-set(SOVERSION "15")
+set(SOVERSION "16")
 if(NOT CPACK_GENERATOR)
     if(UNIX)
         set(CPACK_GENERATOR "TGZ")
@@ -314,7 +366,7 @@ find_package(Git)
 if(GIT_EXECUTABLE)
 	execute_process(
 		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-		COMMAND "${GIT_EXECUTABLE}" describe --tags
+		COMMAND "${GIT_EXECUTABLE}" describe --tags --always
 		OUTPUT_VARIABLE GIT_HASH
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 		)
@@ -362,7 +414,11 @@ if (LWS_WITH_MBEDTLS)
 	include_directories(lib/tls/mbedtls/wrapper/include)
 endif()
 
-include_directories(include plugins lib/core lib/core-net lib/event-libs include/abstract lib/tls lib/roles lib/event-libs/libuv lib/event-libs/poll lib/event-libs/libevent lib/event-libs/libev lib/jose/jwe lib/jose/jws lib/jose lib/misc lib/roles/http lib/roles/http/compression lib/roles/h1 lib/roles/h2 lib/roles/ws lib/roles/cgi lib/roles/dbus lib/roles/raw-proxy lib/abstract lib/system/async-dns)
+include_directories(include plugins lib/core lib/core-net lib/event-libs include/abstract lib/tls lib/roles lib/event-libs/libuv lib/event-libs/poll lib/event-libs/libevent lib/event-libs/glib lib/event-libs/libev lib/jose/jwe lib/jose/jws lib/jose lib/misc lib/roles/http lib/roles/http/compression lib/roles/h1 lib/roles/h2 lib/roles/ws lib/roles/cgi lib/roles/dbus lib/roles/raw-proxy lib/abstract lib/system/async-dns lib/roles/mqtt)
+
+if (LWS_WITH_SECURE_STREAMS)
+	set(LWS_WITH_SECURE_STREAMS_SYS_AUTH_API_AMAZON_COM 1)
+endif()
 
 if (LWS_PLAT_FREERTOS)
 	include_directories(lib/plat/freertos lib/plat/freertos/esp32)
@@ -424,7 +480,7 @@ endif()
 
 if (LWS_WITH_GENERIC_SESSIONS)
  set(LWS_WITH_SQLITE3 1)
- set(LWS_WITH_SMTP 1)
+ # set(LWS_WITH_SMTP 1)
  set(LWS_WITH_STRUCT_SQLITE3 1)
 endif()
 
@@ -441,10 +497,12 @@ if (LWS_PLAT_FREERTOS)
  set(LWS_HAVE_MALLOC 1)
  set(LWS_HAVE_REALLOC 1)
  set(LWS_HAVE_GETIFADDRS 1)
- set(LWS_WITH_ZIP_FOPS 1)
  set(LWS_WITH_CUSTOM_HEADERS 0)
 endif()
 
+if (LWS_WITH_ESP32)
+ set(LWS_WITH_ZIP_FOPS 1)
+endif()
 
 if (WIN32)
 set(LWS_MAX_SMP 1)
@@ -539,6 +597,10 @@ set(LWS_SQLITE3_LIBRARIES CACHE PATH "Path to the sqlite3 library")
 set(LWS_SQLITE3_INCLUDE_DIRS CACHE PATH "Path to the sqlite3 include directory")
 set(LWS_LIBEVENT_INCLUDE_DIRS CACHE PATH "Path to the libevent include directory")
 set(LWS_LIBEVENT_LIBRARIES CACHE PATH "Path to the libevent library")
+set(LWS_GLIB_INCLUDE_DIRS CACHE PATH "Path to the glib include directory")
+set(LWS_GLIB_LIBRARIES CACHE PATH "Path to the glib library")
+set(LWS_LIBMOUNT_INCLUDE_DIRS CACHE PATH "Path to the libmount include directory")
+set(LWS_LIBMOUNT_LIBRARIES CACHE PATH "Path to the libmount library")
 
 
 if (NOT LWS_WITH_SSL)
@@ -613,6 +675,23 @@ if (LWS_WITH_HTTP_STREAM_COMPRESSION)
 	set(LWS_WITH_ZLIB 1)
 endif()
 
+if (LWS_WITH_FSMOUNT AND ${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+	if ("${LWS_LIBMOUNT_LIBRARIES}" STREQUAL "" OR "${LWS_LIBMOUNT_INCLUDE_DIRS}" STREQUAL "")
+
+                # libmount paths (this is only on Linux)
+                #
+                find_path(   LIBMOUNT_INC_PATH NAMES "libmount/libmount.h")
+                find_library(LIBMOUNT_LIB_PATH NAMES "mount")
+	else()
+		set(LIBMOUNT_INC_PATH ${LWS_LIBMOUNT_INCLUDE_DIRS})
+		set(LIBMOUNT_LIB_PATH ${LWS_LIBMOUNT_LIBRARIES})
+	endif()
+
+	if (NOT LIBMOUNT_INC_PATH OR NOT LIBMOUNT_LIB_PATH)
+		message(FATAL_ERROR " Unable to find libmount")
+	endif()
+endif()
+
 if (LWS_WITH_ZLIB AND NOT LWS_WITH_BUNDLED_ZLIB)
 	if ("${LWS_ZLIB_LIBRARIES}" STREQUAL "" OR "${LWS_ZLIB_INCLUDE_DIRS}" STREQUAL "")
 	else()
@@ -646,6 +725,15 @@ if (LWS_WITH_LIBEVENT)
 		set(LIBEVENT_LIBRARIES ${LWS_LIBEVENT_LIBRARIES})
 		set(LIBEVENT_INCLUDE_DIRS ${LWS_LIBEVENT_INCLUDE_DIRS})
 		set(LIBEVENT_FOUND 1)
+	endif()
+endif()
+
+if (LWS_WITH_GLIB)
+	if ("${LWS_GLIB_LIBRARIES}" STREQUAL "" OR "${LWS_GLIB_INCLUDE_DIRS}" STREQUAL "")
+	else()
+		set(LIBGLIB_LIBRARIES ${LWS_GLIB_LIBRARIES})
+		set(LIBGLIB_INCLUDE_DIRS ${LWS_GLIB_INCLUDE_DIRS})
+		set(LIBGLIB_FOUND 1)
 	endif()
 endif()
 
@@ -690,14 +778,6 @@ if (LWS_WITHOUT_DAEMONIZE OR WIN32)
 	set(LWS_NO_DAEMONIZE 1)
 endif()
 
-if (LWS_WITHOUT_SERVER)
-	set(LWS_WITHOUT_SERVER 1)
-endif()
-
-if (LWS_WITHOUT_CLIENT)
-	set(LWS_WITHOUT_CLIENT 1)
-endif()
-
 if (LWS_WITH_LIBEV)
 	set(LWS_WITH_LIBEV 1)
 endif()
@@ -728,18 +808,18 @@ endif()
 
 set(LWS_WITH_CLIENT 1)
 if (LWS_WITHOUT_CLIENT)
-	set(LWS_WITH_CLIENT 0)
+	set(LWS_WITH_CLIENT)
 endif()
 set(LWS_WITH_SERVER 1)
 if (LWS_WITHOUT_SERVER)
-	set(LWS_WITH_SERVER 0)
+	set(LWS_WITH_SERVER)
 endif()
 
 # using any abstract protocol enables LWS_WITH_ABSTRACT
 
-if (LWS_WITH_SMTP)
-	set(LWS_WITH_ABSTRACT 1)
-endif()
+#if (LWS_WITH_SMTP)
+#	set(LWS_WITH_ABSTRACT 1)
+#endif()
 
 
 
@@ -831,6 +911,7 @@ CHECK_FUNCTION_EXISTS(atoll LWS_HAVE_ATOLL)
 CHECK_FUNCTION_EXISTS(_atoi64 LWS_HAVE__ATOI64)
 CHECK_FUNCTION_EXISTS(_stat32i64 LWS_HAVE__STAT32I64)
 CHECK_FUNCTION_EXISTS(clock_gettime LWS_HAVE_CLOCK_GETTIME)
+CHECK_FUNCTION_EXISTS(eventfd LWS_HAVE_EVENTFD)
 
 if (NOT LWS_HAVE_GETIFADDRS)
 	if (LWS_WITHOUT_BUILTIN_GETIFADDRS)
@@ -908,6 +989,18 @@ CHECK_INCLUDE_FILE(uv-version.h LWS_HAVE_UV_VERSION_H)
   endif()
 endif()
 
+if (LWS_WITH_LIBEV)
+	CHECK_C_SOURCE_COMPILES(
+        "#include <ev.h>
+        int main(int argc, char **argv) { return EVBACKEND_LINUXAIO; }
+        " LWS_HAVE_EVBACKEND_LINUXAIO)
+	CHECK_C_SOURCE_COMPILES(
+        "#include <ev.h>
+	int main(int argc, char **argv) { return EVBACKEND_IOURING; }
+	" LWS_HAVE_EVBACKEND_IOURING)
+
+endif()
+
 
 if (LWS_WITH_ZLIB AND NOT LWS_WITH_BUNDLED_ZLIB)
 	if (LWS_WITH_MINIZ)
@@ -929,18 +1022,25 @@ CHECK_C_SOURCE_COMPILES("#include <stdint.h>
 		return 0;
 	}" LWS_HAS_INTPTR_T)
 
-set(CMAKE_REQUIRED_FLAGS "-pthread")	
-CHECK_C_SOURCE_COMPILES("#define _GNU_SOURCE 
-	#include <pthread.h> 
-	int main(void) { 
-		pthread_t th = 0;
-		pthread_setname_np(th, NULL);
-		return 0;
-	}" LWS_HAS_PTHREAD_SETNAME_NP)
+if (LWS_HAVE_PTHREAD_H)
+	if ((CMAKE_C_COMPILER_ID MATCHES "Clang") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
+		set(CMAKE_REQUIRED_FLAGS "-pthread -Wno-error=unused-command-line-argument")
+	else()
+		set(CMAKE_REQUIRED_FLAGS "-pthread")
+	endif()
+
+	CHECK_C_SOURCE_COMPILES("#define _GNU_SOURCE
+		#include <pthread.h>
+		int main(void) {
+			pthread_t th = 0;
+			pthread_setname_np(th, NULL);
+			return 0;
+		}" LWS_HAS_PTHREAD_SETNAME_NP)
+endif()
 
 CHECK_C_SOURCE_COMPILES("#include <stddef.h>
-	#include <getopt.h> 
-	int main(void) { 
+	#include <getopt.h>
+	int main(void) {
 		void *p = (void *)getopt_long;
 		return p != NULL;
 	}" LWS_HAS_GETOPT_LONG)
@@ -1003,6 +1103,16 @@ set(SOURCES
 	lib/misc/base64-decode.c
 	lib/misc/lws-ring.c
 )
+
+if (LWS_WITH_SPAWN)
+	list(APPEND SOURCES lib/misc/spawn.c)
+endif()
+
+if (LWS_WITH_FSMOUNT AND ${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+	list(APPEND SOURCES lib/misc/fsmount.c)
+endif()
+
+
 
 if (LWS_WITH_FILE_OPS)
 	list(APPEND SOURCES lib/core/vfs.c)
@@ -1073,6 +1183,53 @@ if (LWS_WITH_NETWORK)
 		endif()
 	endif()
 
+	if (LWS_WITH_SECURE_STREAMS)
+		list(APPEND SOURCES
+			lib/secure-streams/secure-streams.c
+			lib/secure-streams/policy.c
+			lib/secure-streams/system/fetch-policy/fetch-policy.c
+		)
+		if (LWS_ROLE_H1)
+			list(APPEND SOURCES
+				lib/secure-streams/protocols/ss-h1.c
+			)
+		endif()
+		if (LWS_ROLE_H2)
+			list(APPEND SOURCES
+				lib/secure-streams/protocols/ss-h2.c
+			)
+		endif()
+		if (LWS_ROLE_WS)
+			list(APPEND SOURCES
+				lib/secure-streams/protocols/ss-ws.c
+			)
+		endif()
+		if (LWS_ROLE_MQTT)
+			list(APPEND SOURCES
+				lib/secure-streams/protocols/ss-mqtt.c
+			)
+		endif()
+
+		if (LWS_WITH_SECURE_STREAMS_PROXY_API)
+			list(APPEND SOURCES
+				lib/secure-streams/secure-streams-serialize.c
+				lib/secure-streams/secure-streams-client.c
+			)
+		endif()
+
+		if (LWS_WITH_SECURE_STREAMS_PROXY_API)
+			list(APPEND SOURCES
+				lib/secure-streams/secure-streams-process.c
+			)
+		endif()
+
+		if (LWS_WITH_SECURE_STREAMS_SYS_AUTH_API_AMAZON_COM)
+			list(APPEND SOURCES
+				lib/secure-streams/system/auth-api.amazon.com/auth.c
+			)
+		endif()
+	endif()
+
 	if (LWS_WITH_STATS)
 		list(APPEND SOURCES
 			lib/core-net/stats.c
@@ -1083,7 +1240,17 @@ endif()
 if (LWS_WITH_DIR)
 	list(APPEND SOURCES lib/misc/dir.c)
 endif()
-	
+
+if (LWS_ROLE_MQTT AND LWS_WITH_CLIENT)
+       list(APPEND SOURCES
+	       lib/roles/mqtt/mqtt.c
+	       lib/roles/mqtt/ops-mqtt.c
+	       lib/roles/mqtt/primitives.c
+	       lib/roles/mqtt/client/client-mqtt.c
+	       lib/roles/mqtt/client/client-mqtt-handshake.c
+       )
+endif()
+
 if (LWS_WITH_THREADPOOL AND UNIX AND LWS_HAVE_PTHREAD_H)
 	list(APPEND SOURCES lib/misc/threadpool/threadpool.c)
 endif()
@@ -1124,8 +1291,10 @@ endif()
 
 if (LWS_ROLE_RAW)
 	list(APPEND SOURCES
-		lib/roles/raw-skt/ops-raw-skt.c
-		lib/roles/raw-file/ops-raw-file.c)
+		lib/roles/raw-skt/ops-raw-skt.c)
+	if (LWS_ROLE_RAW_FILE)
+		list(APPEND SOURCES lib/roles/raw-file/ops-raw-file.c)
+	endif()
 		
 	if (LWS_WITH_ABSTRACT)
 		list(APPEND SOURCES
@@ -1196,7 +1365,11 @@ endif()
 
 if (NOT LWS_WITHOUT_SERVER)
 	list(APPEND SOURCES
-		lib/core-net/server.c
+		lib/core-net/server.c)
+endif()
+
+if (NOT LWS_WITHOUT_SERVER OR LWS_WITH_SECURE_STREAMS_PROCESS_API)
+	list(APPEND SOURCES
 		lib/roles/listen/ops-listen.c)
 endif()
 
@@ -1345,6 +1518,9 @@ if (WIN32)
 		lib/plat/windows/windows-service.c
 		lib/plat/windows/windows-sockets.c
 		)
+	if (LWS_WITH_SYS_ASYNC_DNS)
+		list(APPEND SOURCES lib/plat/windows/windows-resolv.c)
+	endif()
 else()
 
 	if (LWS_PLAT_OPTEE)
@@ -1365,13 +1541,15 @@ else()
 				lib/plat/freertos/freertos-pipe.c
 				lib/plat/freertos/freertos-service.c
 				lib/plat/freertos/freertos-sockets.c
-				lib/plat/freertos/freertos-resolv.c
 				lib/misc/romfs.c)
 			if (LWS_WITH_ESP32_HELPER)
 				list(APPEND SOURCES lib/plat/freertos/esp32/esp32-helpers.c)
 			endif()
 			if (LWS_WITH_FILE_OPS)
 				list(APPEND SOURCES lib/plat/freertos/freertos-file.c)
+			endif()
+			if (LWS_WITH_SYS_ASYNC_DNS)
+				list(APPEND SOURCES lib/plat/freertos/freertos-resolv.c)
 			endif()
 		else()
 			set(LWS_PLAT_UNIX 1)
@@ -1404,6 +1582,11 @@ else()
 			endif()
 		endif()
 	endif()
+endif()
+
+if (LWS_WITH_SOCKS5 AND NOT LWS_WITHOUT_CLIENT)
+	list(APPEND SOURCES
+		lib/core-net/socks5-client.c)
 endif()
 
 if ((LWS_ROLE_H1 OR LWS_ROLE_H2) AND NOT LWS_WITHOUT_SERVER)
@@ -1440,6 +1623,12 @@ if (LWS_WITH_LIBEVENT AND LWS_WITH_NETWORK)
 		lib/event-libs/libevent/libevent.c)
 endif()
 
+if (LWS_WITH_GLIB AND LWS_WITH_NETWORK)
+	list(APPEND SOURCES
+		lib/event-libs/glib/glib.c)
+endif()
+
+
 if (LWS_WITH_LIBEV AND LWS_WITH_NETWORK)
 	list(APPEND SOURCES
 		lib/event-libs/libev/libev.c)
@@ -1462,12 +1651,12 @@ if (LWS_WITH_ABSTRACT)
 		lib/abstract/transports/unit-test.c)
 endif()
 
-if (LWS_WITH_SMTP)
-	list(APPEND SOURCES
-		lib/abstract/protocols/smtp/smtp.c
-		lib/abstract/protocols/smtp/smtp-sequencer.c
-		)
-endif()
+#if (LWS_WITH_SMTP)
+#	list(APPEND SOURCES
+#		lib/abstract/protocols/smtp/smtp.c
+#		lib/abstract/protocols/smtp/smtp-sequencer.c
+#		)
+#endif()
 
 if (LWS_WITH_RANGES)
 	list(APPEND SOURCES
@@ -1498,7 +1687,7 @@ if (LWS_WITH_JOSE)
 		)
 endif()
 
-if (LWS_WITH_JOSE OR LWS_WITH_GENCRYPTO)
+if (LWS_WITH_TLS AND (LWS_WITH_JOSE OR LWS_WITH_GENCRYPTO))
 	list(APPEND SOURCES
 		lib/tls/lws-gencrypto-common.c)
 endif()
@@ -1567,7 +1756,7 @@ if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR COMPILER_IS_CLANG)
 	endif()
 
     if (UNIX AND NOT LWS_PLAT_FREERTOS)
-	    set(CMAKE_C_FLAGS "-Wall -Wsign-compare -Wuninitialized -Werror ${VISIBILITY_FLAG} -Wundef ${GCOV_FLAGS} ${CMAKE_C_FLAGS} ${ASAN_FLAGS}" )
+	    set(CMAKE_C_FLAGS "-Wall -Wsign-compare -Wstrict-aliasing -Wuninitialized -Werror ${VISIBILITY_FLAG} -Wundef ${GCOV_FLAGS} ${CMAKE_C_FLAGS} ${ASAN_FLAGS}" )
     else()
 	    set(CMAKE_C_FLAGS "-Wall -Wsign-compare -Wuninitialized -Werror ${VISIBILITY_FLAG} ${GCOV_FLAGS} ${CMAKE_C_FLAGS}" )
     endif()
@@ -1590,7 +1779,7 @@ if (COMPILER_IS_CLANG)
 	# otherwise osx blows a bunch of openssl deprecated api errors
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations" )
 	if (UNIX AND LWS_HAVE_PTHREAD_H)
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread" )
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wno-error=unused-command-line-argument" )
 	endif()
 endif()
 
@@ -1750,7 +1939,8 @@ if (LWS_WITH_ZLIB)
 	message("zlib/miniz include dirs: ${ZLIB_INCLUDE_DIRS}")
 	message("zlib/miniz libraries: ${ZLIB_LIBRARIES}")
 	include_directories(${ZLIB_INCLUDE_DIRS})
-	list(APPEND LIB_LIST ${ZLIB_LIBRARIES})
+	# done later at end of link list
+	# list(APPEND LIB_LIST ${ZLIB_LIBRARIES})
 endif()
 
 if (LWS_WITH_HTTP_BROTLI)
@@ -1775,13 +1965,17 @@ if (LWS_WITH_SSL)
 
 		if (LWS_WITH_CYASSL)
 			foreach(inc ${WOLFSSL_INCLUDE_DIRS})
+				set(OPENSSL_INCLUDE_DIRS ${OPENSSL_INCLUDE_DIRS} ${inc} ${inc}/cyassl)
 				include_directories("${inc}" "${inc}/cyassl")
 			endforeach()
 		else()
 			foreach(inc ${WOLFSSL_INCLUDE_DIRS})
+				set(OPENSSL_INCLUDE_DIRS ${OPENSSL_INCLUDE_DIRS} ${inc} ${inc}/wolfssl)
 				include_directories("${inc}" "${inc}/wolfssl")
 			endforeach()
 		endif()
+		set(CMAKE_REQUIRED_INCLUDES ${OPENSSL_INCLUDE_DIRS})
+		set(VARIA wolfSSL_)
 
 		list(APPEND LIB_LIST "${WOLFSSL_LIBRARIES}")
 		set(chose_ssl 1)
@@ -1878,6 +2072,37 @@ if (LWS_WITH_LIBEVENT)
 	list(APPEND LIB_LIST ${LIBEVENT_LIBRARIES})
 endif(LWS_WITH_LIBEVENT)
 
+if (LWS_WITH_GLIB)
+	include (FindPkgConfig)
+	if (NOT GLIB_FOUND)
+		find_path(GLIB_INCLUDE_DIRS NAMES glib-2.0/glib.h)
+		find_library(GLIB_LIBRARIES NAMES glib-2.0)
+		if(GLIB_INCLUDE_DIRS AND GLIB_LIBRARIES)
+			set(GLIB_FOUND 1)
+		endif()
+		if (GLIB_INCLUDE_DIRS)
+			set(GLIB_INCLUDE_DIRS "${GLIB_INCLUDE_DIRS}/glib-2.0")
+		endif()
+	endif()
+	PKG_SEARCH_MODULE(LWS_GLIB2 glib-2.0)
+	if (LWS_GLIB2_FOUND)
+		list(APPEND GLIB_INCLUDE_DIRS "${LWS_GLIB2_INCLUDE_DIRS}")
+	endif()
+	message("glib include dir: ${GLIB_INCLUDE_DIRS}")
+	message("glib libraries: ${GLIB_LIBRARIES}")
+	include_directories("${GLIB_INCLUDE_DIRS}")
+	list(APPEND LIB_LIST ${GLIB_LIBRARIES})
+endif(LWS_WITH_GLIB)
+
+if (LWS_WITH_FSMOUNT AND ${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+	message("libmount include dir: ${LIBMOUNT_INC_PATH}")
+	message("libmount libraries: ${LIBMOUNT_LIB_PATH}")
+
+	include_directories("${LIBMOUNT_INC_PATH}")
+	list(APPEND LIB_LIST ${LIBMOUNT_LIB_PATH})
+endif()
+
+
 if (LWS_WITH_SQLITE3)
 	if (NOT SQLITE3_FOUND)
 		find_path(SQLITE3_INCLUDE_DIRS NAMES sqlite3.h)
@@ -1891,6 +2116,7 @@ if (LWS_WITH_SQLITE3)
 	include_directories("${SQLITE3_INCLUDE_DIRS}")
 	list(APPEND LIB_LIST ${SQLITE3_LIBRARIES})
 endif()
+
 
 if (LWS_WITH_HUBBUB)
 	find_library(LIBHUBBUB_LIBRARIES NAMES hubbub)
@@ -1918,11 +2144,13 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "QNX")
 	list(APPEND LIB_LIST socket)
 endif()
 
+#
+# add libs here that need to be at the end of the link order
+#
+
 if (UNIX)
 	list(APPEND LIB_LIST m)
 endif()
-
-list(APPEND LIB_LIST dl)
 
 if(ILLUMOS)
 	list(APPEND LIB_LIST socket)
@@ -1934,6 +2162,14 @@ endif()
 
 if (LWS_HAVE_LIBCAP)
 	list(APPEND LIB_LIST cap )
+endif()
+
+if (UNIX)
+	list(APPEND LIB_LIST dl)
+endif()
+
+if (LWS_WITH_ZLIB AND NOT LWS_WITH_BUNDLED_ZLIB)
+	list(APPEND LIB_LIST "${ZLIB_LIBRARIES}")
 endif()
 
 # Setup the linking for all libs.
@@ -1953,39 +2189,35 @@ if (LWS_WITH_ZLIB)
 	endif()
 endif()
 
-#if (UNIX)
-	list(APPEND LIB_LIST dl)
-#endif()
-
-CHECK_FUNCTION_EXISTS(SSL_CTX_set1_param LWS_HAVE_SSL_CTX_set1_param)
-CHECK_FUNCTION_EXISTS(SSL_set_info_callback LWS_HAVE_SSL_SET_INFO_CALLBACK)
-CHECK_FUNCTION_EXISTS(X509_VERIFY_PARAM_set1_host LWS_HAVE_X509_VERIFY_PARAM_set1_host)
-CHECK_FUNCTION_EXISTS(RSA_set0_key LWS_HAVE_RSA_SET0_KEY)
-CHECK_FUNCTION_EXISTS(X509_get_key_usage LWS_HAVE_X509_get_key_usage)
-CHECK_FUNCTION_EXISTS(EVP_PKEY_new_raw_private_key LWS_HAVE_SSL_CTX_EVP_PKEY_new_raw_private_key)
-CHECK_FUNCTION_EXISTS(SSL_CTX_get0_certificate LWS_HAVE_SSL_CTX_get0_certificate)
-CHECK_FUNCTION_EXISTS(SSL_get0_alpn_selected LWS_HAVE_SSL_get0_alpn_selected)
-CHECK_FUNCTION_EXISTS(SSL_set_alpn_protos LWS_HAVE_SSL_set_alpn_protos)
-CHECK_FUNCTION_EXISTS(EVP_aes_128_cfb8 LWS_HAVE_EVP_aes_128_cfb8)
-CHECK_FUNCTION_EXISTS(EVP_aes_128_cfb128 LWS_HAVE_EVP_aes_128_cfb128)
-CHECK_FUNCTION_EXISTS(EVP_aes_192_cfb8 LWS_HAVE_EVP_aes_192_cfb8)
-CHECK_FUNCTION_EXISTS(EVP_aes_192_cfb128 LWS_HAVE_EVP_aes_192_cfb128)
-CHECK_FUNCTION_EXISTS(EVP_aes_256_cfb8 LWS_HAVE_EVP_aes_256_cfb8)
-CHECK_FUNCTION_EXISTS(EVP_aes_256_cfb128 LWS_HAVE_EVP_aes_256_cfb128)
-CHECK_FUNCTION_EXISTS(EVP_aes_128_xts LWS_HAVE_EVP_aes_128_xts)
-CHECK_FUNCTION_EXISTS(RSA_verify_pss_mgf1 LWS_HAVE_RSA_verify_pss_mgf1)
-CHECK_FUNCTION_EXISTS(HMAC_CTX_new LWS_HAVE_HMAC_CTX_new)
-CHECK_FUNCTION_EXISTS(SSL_CTX_set_ciphersuites LWS_HAVE_SSL_CTX_set_ciphersuites)
+CHECK_FUNCTION_EXISTS(${VARIA}SSL_CTX_set1_param LWS_HAVE_SSL_CTX_set1_param)
+CHECK_FUNCTION_EXISTS(${VARIA}SSL_set_info_callback LWS_HAVE_SSL_SET_INFO_CALLBACK)
+CHECK_FUNCTION_EXISTS(${VARIA}X509_VERIFY_PARAM_set1_host LWS_HAVE_X509_VERIFY_PARAM_set1_host)
+CHECK_FUNCTION_EXISTS(${VARIA}RSA_set0_key LWS_HAVE_RSA_SET0_KEY)
+CHECK_FUNCTION_EXISTS(${VARIA}X509_get_key_usage LWS_HAVE_X509_get_key_usage)
+CHECK_FUNCTION_EXISTS(${VARIA}EVP_PKEY_new_raw_private_key LWS_HAVE_SSL_CTX_EVP_PKEY_new_raw_private_key)
+CHECK_FUNCTION_EXISTS(${VARIA}SSL_CTX_get0_certificate LWS_HAVE_SSL_CTX_get0_certificate)
+CHECK_FUNCTION_EXISTS(${VARIA}SSL_get0_alpn_selected LWS_HAVE_SSL_get0_alpn_selected)
+CHECK_FUNCTION_EXISTS(${VARIA}SSL_set_alpn_protos LWS_HAVE_SSL_set_alpn_protos)
+CHECK_FUNCTION_EXISTS(${VARIA}EVP_aes_128_cfb8 LWS_HAVE_EVP_aes_128_cfb8)
+CHECK_FUNCTION_EXISTS(${VARIA}EVP_aes_128_cfb128 LWS_HAVE_EVP_aes_128_cfb128)
+CHECK_FUNCTION_EXISTS(${VARIA}EVP_aes_192_cfb8 LWS_HAVE_EVP_aes_192_cfb8)
+CHECK_FUNCTION_EXISTS(${VARIA}EVP_aes_192_cfb128 LWS_HAVE_EVP_aes_192_cfb128)
+CHECK_FUNCTION_EXISTS(${VARIA}EVP_aes_256_cfb8 LWS_HAVE_EVP_aes_256_cfb8)
+CHECK_FUNCTION_EXISTS(${VARIA}EVP_aes_256_cfb128 LWS_HAVE_EVP_aes_256_cfb128)
+CHECK_FUNCTION_EXISTS(${VARIA}EVP_aes_128_xts LWS_HAVE_EVP_aes_128_xts)
+CHECK_FUNCTION_EXISTS(${VARIA}RSA_verify_pss_mgf1 LWS_HAVE_RSA_verify_pss_mgf1)
+CHECK_FUNCTION_EXISTS(${VARIA}HMAC_CTX_new LWS_HAVE_HMAC_CTX_new)
+CHECK_FUNCTION_EXISTS(${VARIA}SSL_CTX_set_ciphersuites LWS_HAVE_SSL_CTX_set_ciphersuites)
 if (LWS_WITH_SSL AND NOT LWS_WITH_MBEDTLS)
  if (UNIX)
  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} dl)
  endif()
 CHECK_C_SOURCE_COMPILES("#include <openssl/ssl.h>\nint main(void) { STACK_OF(X509) *c = NULL; SSL_CTX *ctx = NULL; return (int)SSL_CTX_get_extra_chain_certs_only(ctx, &c); }\n" LWS_HAVE_SSL_EXTRA_CHAIN_CERTS)
 CHECK_C_SOURCE_COMPILES("#include <openssl/ssl.h>\nint main(void) { EVP_MD_CTX *md_ctx = NULL; EVP_MD_CTX_free(md_ctx); return 0; }\n" LWS_HAVE_EVP_MD_CTX_free)
-CHECK_FUNCTION_EXISTS(ECDSA_SIG_set0 LWS_HAVE_ECDSA_SIG_set0)
-CHECK_FUNCTION_EXISTS(BN_bn2binpad LWS_HAVE_BN_bn2binpad)
-CHECK_FUNCTION_EXISTS(EVP_aes_128_wrap LWS_HAVE_EVP_aes_128_wrap)
-CHECK_FUNCTION_EXISTS(EC_POINT_get_affine_coordinates LWS_HAVE_EC_POINT_get_affine_coordinates)
+CHECK_FUNCTION_EXISTS(${VARIA}ECDSA_SIG_set0 LWS_HAVE_ECDSA_SIG_set0)
+CHECK_FUNCTION_EXISTS(${VARIA}BN_bn2binpad LWS_HAVE_BN_bn2binpad)
+CHECK_FUNCTION_EXISTS(${VARIA}EVP_aes_128_wrap LWS_HAVE_EVP_aes_128_wrap)
+CHECK_FUNCTION_EXISTS(${VARIA}EC_POINT_get_affine_coordinates LWS_HAVE_EC_POINT_get_affine_coordinates)
 endif()
 if (LWS_WITH_MBEDTLS)
 	set(LWS_HAVE_TLS_CLIENT_METHOD 1)
@@ -2003,13 +2235,17 @@ if (LWS_WITH_MBEDTLS)
 	CHECK_FUNCTION_EXISTS(mbedtls_net_init LWS_HAVE_mbedtls_net_init)
 
 else()
-CHECK_FUNCTION_EXISTS(TLS_client_method LWS_HAVE_TLS_CLIENT_METHOD)
-CHECK_FUNCTION_EXISTS(TLSv1_2_client_method LWS_HAVE_TLSV1_2_CLIENT_METHOD)
+CHECK_FUNCTION_EXISTS(${VARIA}TLS_client_method LWS_HAVE_TLS_CLIENT_METHOD)
+CHECK_FUNCTION_EXISTS(${VARIA}TLSv1_2_client_method LWS_HAVE_TLSV1_2_CLIENT_METHOD)
 endif()
 
 # ideally we want to use pipe2()
 
 CHECK_C_SOURCE_COMPILES("#define _GNU_SOURCE\n#include <unistd.h>\nint main(void) {int fd[2];\n return pipe2(fd, 0);\n}\n" LWS_HAVE_PIPE2)
+
+# old mbedtls has everything in mbedtls/net.h
+
+CHECK_C_SOURCE_COMPILES("#include <mbedtls/net_sockets.h>\nint main(void) { return 0;}\n" LWS_HAVE_MBEDTLS_NET_SOCKETS)
 
 # tcp keepalive needs this on linux to work practically... but it only exists
 # after kernel 2.6.37
@@ -2209,8 +2445,6 @@ if ((LWS_ROLE_H1 OR LWS_ROLE_H2) AND NOT LWS_WITHOUT_TESTAPPS)
 		endif()
 	endif()
 
-	set(CMAKE_C_FLAGS= "${CMAKE_C_FLAGS} -ldl")
-
 	if (NOT LWS_WITHOUT_SERVER)
 		#
 		# test-server
@@ -2223,7 +2457,7 @@ if ((LWS_ROLE_H1 OR LWS_ROLE_H2) AND NOT LWS_WITHOUT_TESTAPPS)
 				""
 				"")
 
-			if (LWS_WITH_CGI)
+			if (LWS_WITH_CGI AND LWS_WITH_TLS)
 			create_test_app(test-sshd "test-apps/test-sshd.c"
 				""
 				""
@@ -2376,22 +2610,23 @@ if (LWS_ROLE_WS)
 			create_plugin(protocol_lws_raw_test ""
 			      "plugins/protocol_lws_raw_test.c" "" "")
 
-			create_plugin(protocol_deaddrop ""
-			      "plugins/deaddrop/protocol_lws_deaddrop.c" "" "")
-
+		      if (UNIX AND LWS_HAVE_PTHREAD_H)
+				create_plugin(protocol_deaddrop ""
+				      "plugins/deaddrop/protocol_lws_deaddrop.c" "" "")
+			endif()
 		endif()
 
-if (LWS_WITH_SERVER_STATUS)
-		create_plugin(protocol_lws_server_status ""
-			      "plugins/protocol_lws_server_status.c" "" "")
-endif()
+	if (LWS_WITH_SERVER_STATUS)
+			create_plugin(protocol_lws_server_status ""
+				      "plugins/protocol_lws_server_status.c" "" "")
+	endif()
 
-if (NOT LWS_WITHOUT_CLIENT)
-		create_plugin(protocol_client_loopback_test ""
-                              "plugins/protocol_client_loopback_test.c" "" "")
-endif()
+	if (NOT LWS_WITHOUT_CLIENT)
+			create_plugin(protocol_client_loopback_test ""
+        	                      "plugins/protocol_client_loopback_test.c" "" "")
+	endif()
 
-endif()
+endif(LWS_ROLE_WS)
 
 		create_plugin(protocol_post_demo ""
 			      "plugins/protocol_post_demo.c" "" "")
@@ -2422,7 +2657,7 @@ if (LWS_WITH_ACME)
 			      "plugins/acme-client/protocol_lws_acme_client.c" "" "")
 endif()
 
-if (LWS_WITH_GENERIC_SESSIONS AND LWS_ROLE_WS)
+if (LWS_WITH_GENERIC_SESSIONS AND LWS_ROLE_WS AND LWS_WITH_TLS)
 	create_plugin(protocol_generic_sessions ""
                       "plugins/generic-sessions/protocol_generic_sessions.c"
 		      "plugins/generic-sessions/utils.c"
@@ -2442,7 +2677,7 @@ if (LWS_WITH_GENERIC_SESSIONS AND LWS_ROLE_WS)
 		target_link_libraries(protocol_lws_messageboard sqlite3 )
 	endif(WIN32)
 
-endif(LWS_WITH_GENERIC_SESSIONS AND LWS_ROLE_WS)
+endif(LWS_WITH_GENERIC_SESSIONS AND LWS_ROLE_WS AND LWS_WITH_TLS)
 
 
 	endif(LWS_WITH_PLUGINS AND LWS_WITH_SHARED)
@@ -2510,6 +2745,59 @@ if (LWS_WITH_LWSWS)
 			     INSTALL_DATADIR="${CMAKE_INSTALL_PREFIX}/share"
 		)
 endif (LWS_WITH_LWSWS)
+
+# secure streams plugins
+
+if (LWS_WITH_SECURE_STREAMS)
+	#
+	# Helper function for adding a secure stream plugin
+	#
+	macro(create_ss_plugin NAME S2 S3 S4 S5 S6)
+
+		set(SSP_SRCS)
+		set(SSP_PUBLIC_HDR)
+		set(SSP_HDR)
+
+		if ("${S2}" STREQUAL "")
+		else()
+			list(APPEND SSP_SRCS
+			     lib/secure-streams/plugins/${NAME}/${S2})
+		endif()
+		if ("${S3}" STREQUAL "")
+		else()
+			list(APPEND SSP_SRCS
+			     lib/secure-streams/plugins/${NAME}/${S3})
+		endif()
+		if ("${S4}" STREQUAL "")
+		else()
+			list(APPEND SSP_SRCS
+			     lib/secure-streams/plugins/${NAME}/${S4})
+		endif()
+		if ("${S5}" STREQUAL "")
+		else()
+			list(APPEND SSP_SRCS
+			     lib/secure-streams/plugins/${NAME}/${S5})
+		endif()
+		if ("${S6}" STREQUAL "")
+		else()
+			list(APPEND SSP_SRCS
+			     lib/secure-streams/plugins/${NAME}/${S6})
+		endif()
+
+		source_group("Headers Private"  FILES ${SSP_HDR})
+		source_group("Sources"		FILES ${SSP_SRCS})
+
+		add_library( ${NAME} STATIC
+			     ${SSP_HDR} ${SSP_PUBLIC_HDR} ${SSP_SRCS} )
+
+                add_dependencies(${NAME} websockets_shared)
+		list(APPEND SS_PLUGINS_LIST ${NAME})
+	endmacro()
+
+	include_directories(lib/secure-streams)
+
+	create_ss_plugin(ssp-h1url "h1url.c" "" "" "" "")
+endif()
 
 if (UNIX)
 
@@ -2770,9 +3058,11 @@ message(" LWS_WITHOUT_DAEMONIZE = ${LWS_WITHOUT_DAEMONIZE}")
 message(" LWS_WITH_LIBEV = ${LWS_WITH_LIBEV}")
 message(" LWS_WITH_LIBUV = ${LWS_WITH_LIBUV}")
 message(" LWS_WITH_LIBEVENT = ${LWS_WITH_LIBEVENT}")
+message(" LWS_WITH_GLIB = ${LWS_WITH_GLIB}")
 message(" LWS_IPV6 = ${LWS_IPV6}")
 message(" LWS_UNIX_SOCK = ${LWS_UNIX_SOCK}")
 message(" LWS_WITH_HTTP2 = ${LWS_WITH_HTTP2}")
+message(" LWS_ROLE_MQTT = ${LWS_ROLE_MQTT}")
 message(" LWS_SSL_SERVER_WITH_ECDH_CERT = ${LWS_SSL_SERVER_WITH_ECDH_CERT}")
 message(" LWS_MAX_SMP = ${LWS_MAX_SMP}")
 message(" LWS_HAVE_PTHREAD_H = ${LWS_HAVE_PTHREAD_H}")
@@ -2787,7 +3077,8 @@ message(" LWS_WITH_ACCESS_LOG = ${LWS_WITH_ACCESS_LOG}")
 message(" LWS_WITH_SERVER_STATUS = ${LWS_WITH_SERVER_STATUS}")
 message(" LWS_WITH_LEJP = ${LWS_WITH_LEJP}")
 message(" LWS_WITH_LEJP_CONF = ${LWS_WITH_LEJP_CONF}")
-message(" LWS_WITH_SMTP = ${LWS_WITH_SMTP}")
+# this is broken atm
+#message(" LWS_WITH_SMTP = ${LWS_WITH_SMTP}")
 message(" LWS_WITH_GENERIC_SESSIONS = ${LWS_WITH_GENERIC_SESSIONS}")
 message(" LWS_STATIC_PIC = ${LWS_STATIC_PIC}")
 message(" LWS_WITH_RANGES = ${LWS_WITH_RANGES}")

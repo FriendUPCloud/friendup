@@ -8,8 +8,14 @@
 *                                                                              *
 *****************************************************************************©*/
 
+/* 
+	This is where Friend Jukebox starts.
+	Exotica was the first name of this app, hence, it's historic :-)
+*/
 Application.run = function( msg, iface )
 {
+	var self = this;
+	
 	// Start with empty playlist
 	this.playlist = [];
 	this.index = 0;
@@ -19,10 +25,6 @@ Application.run = function( msg, iface )
 		title: 'Friend Jukebox',
 		width: 400,
 		height: 160,
-		'min-width': 400,
-		'max-width': 400,
-		'min-height': 160,
-		'max-height': 160,
 		resize: false
 	} );
 	
@@ -39,18 +41,21 @@ Application.run = function( msg, iface )
 	f.i18n();
 	f.onLoad = function( data )
 	{
-		w.setContent( data );
+		w.setContent( data, function()
+		{
+			// Started with arguments
+			if( msg.args )
+			{
+				self.handleFiles( msg.args );
+			}
+		} );
 	}
 	f.load();
 	
 	this.redrawMenu();
-	
-	// Started with arguments
-	if( msg.args )
-		this.handleFiles( msg.args );
 }
 
-// Add the files of as playlist
+// Add the files of as playlist ------------------------------------------------
 Application.addPlaylist = function ( fname )
 {
 	var f = new File( fname );
@@ -72,7 +77,7 @@ Application.addPlaylist = function ( fname )
 	f.load();
 }
 
-// Handle files by path
+// Handle files by path --------------------------------------------------------
 Application.handleFiles = function( args )
 {
 	// We start with a bang!
@@ -92,7 +97,8 @@ Application.handleFiles = function( args )
 						fn = fn.split( '/' ).pop();
 					this.receiveMessage( {
 						command: 'append_to_playlist_and_play',
-						items: [ { Filename: fn, Path: args } ]
+						items: [ { Filename: fn, Path: args } ],
+						forcePlay: true
 					} );
 					break;
 				case 'pls':
@@ -107,7 +113,7 @@ Application.handleFiles = function( args )
 	}
 }
 
-// Redraws the main application pulldown menu
+// Redraws the main application pulldown menu ----------------------------------
 Application.redrawMenu = function()
 {
 	this.mainView.setMenuItems( [
@@ -154,36 +160,36 @@ Application.redrawMenu = function()
 	] );
 }
 
-// About exotica view window
+// About exotica view window ---------------------------------------------------
+var ab = null;
 Application.openAbout = function()
 {
-	if( this.aboutWindow ) return this.aboutWindow.activate();
-	this.aboutWindow = new View( {
-		title: i18n( 'i18n_about_exotica' ),
+	if( ab ) return ab.activate();
+	ab = new View( {
+		title: i18n( 'i18n_about_exotica' ) + ' - v1.2.4',
 		width: 400,
 		height: 300
 	} );
-	var v = this.aboutWindow;
-	v.onClose = function()
+	ab.onClose = function()
 	{
-		Application.aboutWindow = false;
+		ab = null;
 	}
-	var f = new File( 'Progdir:Templates/about.html' );
+	let f = new File( 'Progdir:Templates/about.html' );
 	f.i18n();
 	f.onLoad = function( data )
 	{
-		v.setContent( data );
+		ab.setContent( data );
 	}
 	f.load();
 }
 
-// Shows the playlist editor
+// Shows the playlist editor ---------------------------------------------------
 Application.editPlaylist = function()
 {
 	if( this.playlistWindow ) return this.playlistWindow.activate();
 	this.playlistWindow = new View( {
 		title: i18n( 'i18n_edit_playlist' ),
-		width: 900,
+		width: 600,
 		height: 600
 	} );
 	var p = this.playlistWindow;
@@ -239,7 +245,7 @@ Application.editPlaylist = function()
 	f.load();
 }
 
-// Opens a playlist using a file dialog
+// Opens a playlist using a file dialog ----------------------------------------
 Application.openPlaylist = function()
 {
 	if( this.of ) return this.of.activate();
@@ -262,10 +268,14 @@ Application.addToPlaylist = function( items )
 			{
 				for( var a = 0; a < arr.length; a++ )
 				{
-					Application.playlist.push( {
-						Filename: arr[a].Filename, 
-						Path: arr[a].Path
-					} );
+					if( supportedFormat( arr[ a ] ) )
+					{
+						Application.playlist.push( {
+							Filename: arr[a].Filename, 
+							Path: arr[a].Path,
+							UniqueID: genUniqueId()
+						} );
+					}
 				}
 				if( Application.playlistWindow )
 				{
@@ -283,7 +293,13 @@ Application.addToPlaylist = function( items )
 	
 }
 
-// Receives events from OS and child windows
+function genUniqueId()
+{
+	let seed = ( Math.random() % 9999 ) + ( new Date() ).getTime() + ( Math.random() % 9999 ) + ( Math.random() % 9999 ) + '.';
+	return md5( seed );
+}
+
+// Receives events from OS and child windows -----------------------------------
 Application.receiveMessage = function( msg )
 {
 	if( !msg.command ) return;
@@ -302,10 +318,14 @@ Application.receiveMessage = function( msg )
 						{
 							for( var a = 0; a < files.length; a++ )
 							{
-								Application.playlist.push( {
-									Filename: files[a].Filename,
-									Path: files[a].Path
-								} );
+								if( supportedFormat( files[ a ] ) )
+								{
+									Application.playlist.push( {
+										Filename: files[a].Filename,
+										Path: files[a].Path,
+										UniqueID: genUniqueId()
+									} );
+								}
 							}
 						}
 						else
@@ -314,10 +334,14 @@ Application.receiveMessage = function( msg )
 							var fn = files.split( ':' )[1];
 							if( fn.indexOf( '/' ) > 0 )
 								fn = fn.split( '/' ).pop();
-							Application.playlist.push( {
-								Filename: fn,
-								Path: pth
-							} );
+							if( supportedFormat( pth ) )
+							{
+								Application.playlist.push( {
+									Filename: fn,
+									Path: pth,
+									UniqueID: genUniqueId()
+								} );
+							}
 						}
 						Application.receiveMessage( { command: 'playsong' } );
 					}
@@ -339,11 +363,7 @@ Application.receiveMessage = function( msg )
 			break;
 		// Redraw the mini playlist
 		case 'mini_playlist':
-			this.mainView.setFlag( 'resize', true );
-			this.mainView.setFlag( 'min-height', this.miniplaylist ? 360 : 160 );
-			this.mainView.setFlag( 'max-height', this.miniplaylist ? 360 : 160 );
 			this.mainView.setFlag( 'height', this.miniplaylist ? 360 : 160 );
-			this.mainView.setFlag( 'resize', false );
 			this.mainView.sendMessage( { command: 'miniplaylist', playlist: this.playlist, index: this.index, visibility: this.miniplaylist } );
 			break;
 		case 'about_exotica':
@@ -373,7 +393,13 @@ Application.receiveMessage = function( msg )
 			if( msg.items )
 			{
 				for( var a in msg.items )
-					Application.playlist.push( msg.items[a] );
+				{
+					if( supportedFormat( msg.items[ a ] ) )
+					{
+						msg.items[ a ].UniqueID = genUniqueId();
+						Application.playlist.push( msg.items[a] );
+					}
+				}
 				Application.receiveMessage( { command: 'get_playlist' } );
 			}
 			else this.addToPlaylist();
@@ -421,14 +447,15 @@ Application.receiveMessage = function( msg )
 				index:    this.index
 			} );
 			break;
+		// Adds to the playlist and plays (if it's not already playing)
 		case 'append_to_playlist_and_play':
 			if( msg.items.length )
 			{
 				var added = 0;
-				this.index = this.playlist.length;
 				for( var a = 0; a < msg.items.length; a++ )
 				{
 					var it = msg.items[a];
+					// Playlist
 					if( it.Filename.substr( it.Filename.length - 4, 4 ).toLowerCase() == '.pls' )
 					{
 						var f = new File( it.Path );
@@ -461,17 +488,21 @@ Application.receiveMessage = function( msg )
 								// Add it!
 								if( path.length && title.length )
 								{
-									Application.playlist.push( {
-										Filename: title,
-										Path: path
-									} );
-									ad++;
+									if( supportedFormat( path ) )
+									{
+										Application.playlist.push( {
+											Filename: title,
+											Path: path,
+											UniqueID: genUniqueId()
+										} );
+										ad++;
+									}
 								}
 							}
 							// Yo!
 							if( ad > 0 )
 							{
-								Application.receiveMessage( { command: 'playsong' } );
+								Application.receiveMessage( { command: 'playsong', forcePlay: msg.forcePlay } );
 								if( Application.playlistWindow )
 								{
 									Application.playlistWindow.sendMessage( {
@@ -486,21 +517,84 @@ Application.receiveMessage = function( msg )
 					}
 					else 
 					{
-						this.playlist.push( it );
-						added++;
+						// Folder
+						var s = this;
+						if( it.Path.substr( -1, 1 ) == '/' )
+						{
+							function addByPath( theItem, volume )
+							{
+								if( !volume )
+									volume = theItem.Path.indexOf( ':' ) > 0 ? theItem.Path.split( ':' )[0] : false;
+								var m = new Library( 'system.library' );
+								m.onExecuted = function( e, d )
+								{
+									if( e != 'ok' ) return;
+									let list = false;
+									try
+									{
+										list = JSON.parse( d );
+									}
+									catch( e )
+									{
+										// Failed
+									}
+									if( !list ) return;
+									for( let a = 0; a < list.length; a++ )
+									{
+										// Recursive
+										if( ( list[ a ].Type && list[ a ].Type == 'Directory' ) || list[ a ].Path.substr( -1, 1 ) == '/' )
+										{
+											if( volume )
+												list[ a ].Path = volume + ':' + list[ a ].Path;
+											addByPath( list[ a ], volume );
+										}
+										else
+										{
+											if( supportedFormat( list[ a ] ) )
+											{
+												if( volume )
+													list[ a ].Path = volume + ':' + list[ a ].Path;
+												list[ a ].UniqueID = genUniqueId();
+												s.playlist.push( list[ a ] );
+											}
+										}
+									}
+									if( Application.playlistWindow )
+									{
+										Application.playlistWindow.sendMessage( {
+											command: 'refresh',
+											items: Application.playlist
+										} );
+									}
+									Application.receiveMessage ( { command: 'get_playlist' } );
+								}
+								m.execute( 'file/dir', { path: ( volume ? ( volume + ':' ) : '' ) + theItem.Path } );
+							}
+							addByPath( it );
+						}
+						// Normal file
+						else
+						{
+							if( supportedFormat( it ) )
+							{
+								it.UniqueID = genUniqueId();
+								this.playlist.push( it );
+								added++;
+							}
+						}
 					}
 				}
 				if( added > 0 )
 				{
-					this.receiveMessage( { command: 'playsong' } );
 					if( Application.playlistWindow )
 					{
 						Application.playlistWindow.sendMessage( {
 							command: 'refresh',
 							items: Application.playlist
 						} );
-						Application.receiveMessage ( { command: 'get_playlist' } );
 					}
+					Application.receiveMessage ( { command: 'get_playlist' } );
+					Application.receiveMessage( { command: 'playsong', forcePlay: msg.forcePlay } );
 				}
 			}
 			break;
@@ -509,12 +603,12 @@ Application.receiveMessage = function( msg )
 				this.playlistWindow.close();
 			break;
 		case 'resizemainwindow':
-			this.mainView.setFlag( 'min-height', msg.size );
+			// This is here to dynamically resize
 			break;
 		case 'playsongindex':
 			this.index = msg.index;
 		case 'playsong':
-			this.mainView.sendMessage( { command: 'play', index: this.index, item: this.playlist[this.index] } );
+			this.mainView.sendMessage( { command: 'play', index: this.index, item: this.playlist[this.index], forcePlay: msg.forcePlay } );
 			break;
 		case 'seek':
 			this.index += msg.dir;
@@ -523,13 +617,22 @@ Application.receiveMessage = function( msg )
 				this.index = 0;
 			this.mainView.sendMessage( { command: 'play', item: this.playlist[this.index], index: this.index } );
 			break;
+		case 'addplaylists':
+			if( msg.items && msg.items.length )
+			{
+				for( let a = 0; a < msg.items.length; a++ )
+				{
+					Application.addPlaylist( msg.items[ a ].Path );
+				}
+			}
+			break;
 		case 'quit':
 			Application.quit();
 			break;
 	}
 }
 
-// Shortcut
+// Shortcut --------------------------------------------------------------------
 function ShowPlaylist()
 {
 	Application.editPlaylist();
@@ -594,5 +697,22 @@ function LoadPlaylist()
 		}
 		f.load();
 	}, path, 'load', fnam, i18n( 'i18n_load_playlist' ) );
+}
+
+function supportedFormat( itm )
+{
+	if( itm && itm.Path )
+	{
+		var ext = itm.Path.split( '.' ).pop();
+		switch( ext.toLowerCase() )
+		{
+			case 'ogg':
+			case 'wav':
+			case 'flac':
+			case 'mp3':
+				return true;
+		}
+	}
+	return false;
 }
 

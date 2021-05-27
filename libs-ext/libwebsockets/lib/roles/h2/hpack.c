@@ -595,9 +595,9 @@ lws_hpack_dynamic_size(struct lws *wsi, int size)
 		goto bail;
 
 	dyn = &nwsi->h2.h2n->hpack_dyn_table;
-	lwsl_info("%s: from %d to %d, lim %d\n", __func__,
+	lwsl_info("%s: from %d to %d, lim %u\n", __func__,
 		  (int)dyn->num_entries, size,
-		  nwsi->vhost->h2.set.s[H2SET_HEADER_TABLE_SIZE]);
+		  (unsigned int)nwsi->vhost->h2.set.s[H2SET_HEADER_TABLE_SIZE]);
 
 	if (!size) {
 		size = dyn->num_entries * 8;
@@ -606,7 +606,7 @@ lws_hpack_dynamic_size(struct lws *wsi, int size)
 
 	if (size > (int)nwsi->vhost->h2.set.s[H2SET_HEADER_TABLE_SIZE]) {
 		lwsl_info("rejecting hpack dyn size %u vs %u\n", size,
-				nwsi->vhost->h2.set.s[H2SET_HEADER_TABLE_SIZE]);
+			  (unsigned int)nwsi->vhost->h2.set.s[H2SET_HEADER_TABLE_SIZE]);
 
 		// this seems necessary to work with some browsers
 
@@ -754,10 +754,46 @@ lws_hpack_use_idx_hdr(struct lws *wsi, int idx, int known_token)
 	return 0;
 }
 
+#if !defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) && !defined(LWS_ROLE_WS) && !defined(LWS_ROLE_H2)
 static uint8_t lws_header_implies_psuedoheader_map[] = {
-	0x07, 0x00, 0x00, 0x00, 0xf8, 0x00, 0x00, 0x00, 0x00 /* <-64 */,
-	0x0e /* <- 72 */, 0x04 /* <- 80 */, 0, 0, 0, 0
+	0x03,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 };
+#endif
+#if  defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) && !defined(LWS_ROLE_WS) && !defined(LWS_ROLE_H2)
+static uint8_t lws_header_implies_psuedoheader_map[] = {
+	0x07,0x00,0x00,0x00,0x00,0x00,0x00,0x0e,0x04,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+#endif
+#if !defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) &&  defined(LWS_ROLE_WS) && !defined(LWS_ROLE_H2)
+static uint8_t lws_header_implies_psuedoheader_map[] = {
+	0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+#endif
+#if  defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) &&  defined(LWS_ROLE_WS) && !defined(LWS_ROLE_H2)
+static uint8_t lws_header_implies_psuedoheader_map[] = {
+	0x07,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x38,0x10,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+#endif
+#if !defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) && !defined(LWS_ROLE_WS) &&  defined(LWS_ROLE_H2)
+static uint8_t lws_header_implies_psuedoheader_map[] = {
+	0x03,0x00,0x80,0x0f,0x00,0x00,0x00,0x00,0x02,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+#endif
+#if  defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) && !defined(LWS_ROLE_WS) &&  defined(LWS_ROLE_H2)
+static uint8_t lws_header_implies_psuedoheader_map[] = {
+	0x07,0x00,0x00,0x3e,0x00,0x00,0x00,0x80,0x03,0x01,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+#endif
+#if !defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) &&  defined(LWS_ROLE_WS) &&  defined(LWS_ROLE_H2)
+static uint8_t lws_header_implies_psuedoheader_map[] = {
+	0x03,0x00,0x00,0x00,0x3e,0x00,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+#endif
+#if  defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) &&  defined(LWS_ROLE_WS) &&  defined(LWS_ROLE_H2)
+static uint8_t lws_header_implies_psuedoheader_map[] = {
+	0x07,0x00,0x00,0x00,0xf8,0x00,0x00,0x00,0x00,0x0e,0x04,0x00,0x00,0x00,0x00,0x00,
+};
+#endif
 
 static int
 lws_hpack_handle_pseudo_rules(struct lws *nwsi, struct lws *wsi, int m)
@@ -958,7 +994,7 @@ int lws_hpack_interpret(struct lws *wsi, unsigned char c)
 
 		/* extended integer done */
 		h2n->hpack_len += h2n->hpack_m;
-		lwsl_header("HPKS_IDX_EXT: hpack_len %d\n", h2n->hpack_len);
+		lwsl_header("HPKS_IDX_EXT: hpack_len %u\n", (unsigned int)h2n->hpack_len);
 
 		switch (h2n->hpack_type) {
 		case HPKT_INDEXED_HDR_7:
@@ -1030,8 +1066,8 @@ pre_data:
 		} else {
 			n = lws_token_from_index(wsi, h2n->hdr_idx, NULL,
 						 NULL, NULL);
-			lwsl_header("  lws_tok_from_idx(%d) says %d\n",
-				   h2n->hdr_idx, n);
+			lwsl_header("  lws_tok_from_idx(%u) says %d\n",
+				   (unsigned int)h2n->hdr_idx, n);
 		}
 
 		if (n == LWS_HPACK_IGNORE_ENTRY || n == -1)
@@ -1363,7 +1399,7 @@ int lws_add_http2_header_by_name(struct lws *wsi, const unsigned char *name,
 		if (name[len - 1] == ':')
 			len--;
 
-	if (wsi->http2_substream && !strncmp((const char *)name,
+	if (wsi->mux_substream && !strncmp((const char *)name,
 					     "transfer-encoding", len)) {
 		lwsl_header("rejecting %s\n", name);
 

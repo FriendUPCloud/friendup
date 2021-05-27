@@ -37,7 +37,7 @@ var ScreenOverlay = {
 		if( this.debug )
 		{
 			this.enableDebug();
-		}
+		}	
 	},
 	// Trick hide
 	invisible: function()
@@ -67,10 +67,22 @@ var ScreenOverlay = {
 	{
 		if( this.debug ) return;
 		var self = this;
-		if( !this.visibility ) return;
+
+		// Reload the docks
+		Workspace.reloadDocks();
+		
+		if( !this.visibility ) 
+		{
+			return;
+		}
+
 		this.div.classList.add( 'Hiding' );
+
 		setTimeout( function()
 		{
+			// Reload the docks
+			Workspace.reloadDocks();
+			
 			self.div.classList.remove( 'Showing' );
 			self.div.classList.remove( 'Hiding' );
 			setTimeout( function()
@@ -95,6 +107,19 @@ var ScreenOverlay = {
 				
 				// Make sure we update screen title and tray/tasks
 				PollTaskbar();
+				
+				// Initialize tutorials
+				if( !isMobile )
+				{
+					if( typeof( TutorialWidget ) != 'undefined' )
+					{
+						let tuts = new TutorialWidget( {
+							x: 'right',
+							y: 'bottom'
+						} );
+					}
+				}
+				
 			}, 250 );
 		}, 250 );
 	},

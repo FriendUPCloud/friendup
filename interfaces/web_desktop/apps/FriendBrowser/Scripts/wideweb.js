@@ -16,8 +16,8 @@ Application.run = function( msg )
 {
 	var v = new View( {
 		title:  i18n( 'i18n_wideweb' ),
-		width:  900,
-		height: 600
+		width:  1100,
+		height: 900
 	} );
 
 	v.setMenuItems( [
@@ -55,24 +55,20 @@ Application.run = function( msg )
 			name: i18n( 'i18n_bookmarks' ),
 			items: [
 				{
-					name: 'Friend Browser Home',
-					command: 'navto:about:blank'
+					name: 'Friend OS Home',
+					command: 'navto:https://friendos.com/'
 				},
 				{
-					name: 'FriendUP',
-					command: 'navto:https://friendup.cloud/'
+					name: 'Friend User Docs',
+					command: 'navto:https://docs.friendos.com/docs/end-user-documentation/'
 				},
 				{
-					name: 'FriendUP Developers',
-					command: 'navto:https://developers.friendup.cloud/'
+					name: 'Friend Nexus Forum',
+					command: 'navto:https://friend-nexus.com/'
 				},
 				{
-					name: 'Friend Software Corporation',
-					command: 'navto:https://friendsoftware.cloud/'
-				},
-				{
-					name: 'Slashdot.org',
-					command: 'navto:https://slashdot.org/'
+					name: 'DTube Videos',
+					command: 'navto:https://d.tube/'
 				}
 			]
 		}/*,
@@ -163,9 +159,9 @@ Application.receiveMessage = function( msg )
 			this.ab = new View( {
 				title: i18n( 'i18n_about_wideweb' ),
 				width: 300,
-				height: 400
+				height: 300
 			} );
-			var f = new File( 'Progdir:Templates/about.html' );
+			var f = new File( 'Progdir:Templates/about_application.html' );
 			f.onLoad = function( data )
 			{
 				Application.ab.setContent( data );

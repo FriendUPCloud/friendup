@@ -4,15 +4,18 @@
 
 CC			=	gcc
 CPP			=	g++
+#CC			=	gcc-10 -fanalyzer
+#CPP			=	g++-10 -fanalyzer
 OUTPUT			=	bin/FriendCore
 
 #`mysql_config --libs`
 #MYSQLLIBSREQ		=	-lmysqlclient -lpthread -lz -lm -lrt -latomic -lssl -lcrypto -ldl
 MYSQLLIBSREQ		=	-lmysqlclient -lpthread -lz -lm -lrt -latomic 
 CFLAGS			=	$(GLOBAL_CFLAGS) -I../libs/ -I../$(LIBWS_INCLUDE_DIR) -I. $(shell mysql_config --cflags) -I../$(LIBXML2_INCLUDE_DIR) -I$(SAMBA_INCLUDE_DIR)  -I../$(LIBSSH2_INCLUDE_DIR)
-LFLAGS			=	../$(LIBWS_LIB_DIR)/libwebsockets.a -Lsystem/bin/ -lm -lrt -lmagic -lxml2 $(MYSQLLIBSREQ) -lgd -lpng -lz -ljpeg -luv
+LFLAGS			=	
 DFLAGS			=	-M $(CFLAGS)  
 FPATH			=	$(shell pwd)
+CFLAGS_EXT		=
 
 MODS			=	phpmod sysmod nodejsmod pythonmod javamod
 FSYS			=	fsyslocal fsysssh2 fsysphp fsysnode fsysinram fsysremote fsyssmb
@@ -22,11 +25,26 @@ SERVICES		=	apacheserv mysqlserv nodejsserv phpserv
 SERVICEFLAGS		=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -Ofast -funroll-loops -I. -Wno-unused  -shared -fPIC
 MATHLIB			=
 
+GLOBAL_CFLAGS		+=	-DMOD_TIMEOUT=$(MOD_TIMEOUT) -DFILESYSTEM_MOD_TIMEOUT=$(FILESYSTEM_MOD_TIMEOUT) -DMOD_NUMBER_TRIES=$(MOD_NUMBER_TRIES) -DMUTEX_TIMEOUT_NUMBER_TRIES=$(MUTEX_TIMEOUT_NUMBER_TRIES) 
+
+# we have to include Sanitizer lib before others
+ifeq ($(USE_SANITIZER),1)
+LFLAGS					+=	-lasan
+endif
+
+LFLAGS					+=	../$(LIBWS_LIB_DIR)/libwebsockets.a -Lsystem/bin/ -lm -lrt -lmagic -lxml2 $(MYSQLLIBSREQ) -lgd -lpng -lz -ljpeg -luv
+
+ifeq ($(USE_MEMCHECK),1)
+LFLAGS					+=	-lmcheck
+endif
+
 ifeq ($(OPENSSL_INTERNAL),1)
 CFLAGS					+=	-I../libs-ext/openssl/include/
 LFLAGS					+=	../libs-ext/openssl/libssl.a ../libs-ext/openssl/libcrypto.a -ldl -lpthread
+CFLAGS_EXT				+=	../libs-ext/openssl/libcrypto.a
 else
 LFLAGS					+=	-lssl -lcrypto -ldl -lpthread
+CFLAGS_EXT				+=	-lcrypto
 endif
 
 ifeq ($(LINK_LIB_STDCPP),1)
@@ -41,14 +59,10 @@ ifeq ($(ENABLE_SSH),1)
 LFLAGS					+=	-lssh
 endif
 
-ifeq ($(USE_SANITIZER),1)
-LFLAGS					+=	-lasan
-endif
-
 ifeq ($(DEBUG),1)
 CFLAGS					+=	-D__DEBUG -O0 -g
 else
-CFLAGS					+=	-O2
+CFLAGS					+=	-O3
 endif
 
 ifeq ($(PERF_MEAS),1)
@@ -86,10 +100,27 @@ ifeq ($(ENABLE_SSH),1)
 CFLAGS					+=	-DENABLE_SSH
 endif
 
+ifeq ($(LOG_TIMESTAMP),1)
+CFLAGS					+=	-DLOG_TIMESTAMP
+endif
+
+ifeq ($(COMMUNICATION_SERVICE),1)
+CFLAGS					+=	-DCOMMUNICATION_SERVICE
+endif
+
+ifeq ($(COMMUNICATION_REM_SERVICE),1)
+CFLAGS					+=	-DCOMMUNICATION_REM_SERVICE
+endif
+
+ifeq ($(WS_COMPRESSION),1)
+CFLAGS					+=	-DWS_COMPRESSION
+endif
+
 C_FILES := $(wildcard main.c core/*.c system/cache/*.c network/*.c system/services/*.c util/*.c class/*.c ssh/*.c hardware/*.c system/*.c \
 			system/dictionary/*.c system/module/*.c system/fsys/*.c system/json/*.c system/user/*.c util/log/*.c system/inram/*.c system/invar/*.c system/application/*.c system/auth/*.c \
 			hardware/usb/*.c hardware/printer/*.c system/datatypes/images/*.c system/log/*.c system/admin/*.c communication/*.c system/autotask/*.c system/token/*.c \
-			websockets/*.c security/*.c webdav/*.c system/connection/*.c mobile_app/*.c mutex/*.c system/usa/*.c system/mobile/*.c system/calendar/*.c config/*.c system/notification/*.c system/usergroup/*.c system/permission/*.c system/roles/*.c system/service/*.c )
+			websockets/*.c security/*.c webdav/*.c system/connection/*.c mobile_app/*.c mutex/*.c system/usa/*.c system/mobile/*.c system/calendar/*.c config/*.c system/notification/*.c system/usergroup/*.c system/permission/*.c system/roles/*.c system/security/*.c system/sas/*.c system/service/*.c system/support/*.c )
+
 OBJ_FILES := $(addprefix obj/,$(notdir $(C_FILES:.c=.o)))
 
 ALL:	$(OBJ_FILES) $(OUTPUT) $(MODS) $(FSYS) $(LOGGERS) $(SERVICES)
@@ -109,19 +140,19 @@ fsysssh2: system/fsysdyn/fsysssh2.c ../core/obj/buffered_string.o system/fsysdyn
 
 fsysphp: system/fsysdyn/fsysphp.c ../core/obj/buffered_string.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/newpopen.o ../core/obj/list.o system/fsysdyn/fsysphp.d
 	@echo "\033[34mCompile FSYSphp ...\033[0m"
-	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../core/  system/fsysdyn/fsysphp.c ../core/obj/buffered_string.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/list.o -o system/bin/fsys/php.fsys -shared -fPIC -lcrypto
+	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../core/  system/fsysdyn/fsysphp.c ../core/obj/buffered_string.o ../core/obj/buffered_string_disk.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/list.o -o system/bin/fsys/php.fsys -shared -fPIC $(CFLAGS_EXT)
 
 fsysnode: system/fsysdyn/fsysnode.c ../core/obj/buffered_string.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/list.o system/fsysdyn/fsysnode.d
 	@echo "\033[34mCompile FSYSnode ...\033[0m"
-	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../core/  system/fsysdyn/fsysnode.c ../core/obj/buffered_string.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/list.o -o system/bin/fsys/node.fsys -shared -fPIC -lcrypto
+	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../core/  system/fsysdyn/fsysnode.c ../core/obj/buffered_string.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/list.o -o system/bin/fsys/node.fsys -shared -fPIC $(CFLAGS_EXT)
 
 fsysinram: system/fsysdyn/fsysinram.c ../core/obj/buffered_string.o ../core/obj/inramfs.o ../core/obj/string.o ../core/obj/list.o system/fsysdyn/fsysinram.d
 	@echo "\033[34mCompile FSYSinram ...\033[0m"
-	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../core/  system/fsysdyn/fsysinram.c ../core/obj/buffered_string.o ../core/obj/inramfs.o ../core/obj/string.o ../core/obj/list.o -o system/bin/fsys/inram.fsys -shared -fPIC -lcrypto
+	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../core/  system/fsysdyn/fsysinram.c ../core/obj/buffered_string.o ../core/obj/inramfs.o ../core/obj/string.o ../core/obj/list.o -o system/bin/fsys/inram.fsys -shared -fPIC $(CFLAGS_EXT)
 
 fsysremote: system/fsysdyn/fsysremote.c ../core/obj/buffered_string.o ../core/obj/library.o ../core/obj/log.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/list.o ../core/obj/comm_msg.o ../core/obj/jsmn.o system/fsysdyn/fsysremote.d
 	@echo "\033[34mCompile FSYSremote ...\033[0m"
-	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../core/  system/fsysdyn/fsysremote.c ../core/obj/buffered_string.o ../core/obj/library.o ../core/obj/log.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/list.o ../core/obj/comm_msg.o ../core/obj/jsmn.o -o system/bin/fsys/remote.fsys -shared -fPIC -lcrypto
+	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../core/  system/fsysdyn/fsysremote.c ../core/obj/buffered_string.o ../core/obj/library.o ../core/obj/log.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/list.o ../core/obj/comm_msg.o ../core/obj/jsmn.o -o system/bin/fsys/remote.fsys -shared -fPIC $(CFLAGS_EXT)
 
 fsyssmb: system/fsysdyn/fsyssmb.c ../core/obj/buffered_string.o system/fsysdyn/fsyssmb.d
 	@echo "\033[34mCompile FSYSlocal ...\033[0m"
@@ -133,23 +164,23 @@ fsyssmb: system/fsysdyn/fsyssmb.c ../core/obj/buffered_string.o system/fsysdyn/f
 
 phpmod: system/moduledyn/phpmod.c ../core/obj/log.o ../core/obj/string.o ../core/obj/list.o ../core/obj/list_string.o ../core/obj/newpopen.o ../core/obj/library.o system/moduledyn/phpmod.d
 	@echo "\033[34mCompile php.emod ...\033[0m"
-	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -Isystem ../core/obj/log.o ../core/obj/string.o ../core/obj/list.o ../core/obj/list_string.o ../core/obj/library.o system/moduledyn/phpmod.c -o system/bin/emod/php.emod -shared -fPIC -lcrypto
+	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -Isystem ../core/obj/log.o ../core/obj/string.o ../core/obj/list.o ../core/obj/list_string.o ../core/obj/library.o system/moduledyn/phpmod.c -o system/bin/emod/php.emod -shared -fPIC $(CFLAGS_EXT)
 
 pythonmod: system/moduledyn/pythonmod.c ../core/obj/log.o ../core/obj/string.o ../core/obj/list.o ../core/obj/list_string.o ../core/obj/library.o system/moduledyn/pythonmod.d
 	@echo "\033[34mCompile php.emod ...\033[0m"
-	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -Isystem  system/moduledyn/pythonmod.c ../core/obj/log.o ../core/obj/string.o ../core/obj/list.o ../core/obj/list_string.o ../core/obj/library.o -o system/bin/emod/python.emod -shared -fPIC -lcrypto
+	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -Isystem  system/moduledyn/pythonmod.c ../core/obj/log.o ../core/obj/string.o ../core/obj/list.o ../core/obj/list_string.o ../core/obj/library.o -o system/bin/emod/python.emod -shared -fPIC $(CFLAGS_EXT)
 	
 javamod: system/moduledyn/javamod.c ../core/obj/log.o ../core/obj/string.o ../core/obj/list.o ../core/obj/list_string.o ../core/obj/library.o system/moduledyn/javamod.d
 	@echo "\033[34mCompile java.emod ...\033[0m"
-	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -Isystem ../core/obj/log.o ../core/obj/string.o ../core/obj/list.o ../core/obj/list_string.o ../core/obj/library.o  system/moduledyn/javamod.c -o system/bin/emod/java.emod -shared -fPIC -lcrypto
+	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -Isystem ../core/obj/log.o ../core/obj/string.o ../core/obj/list.o ../core/obj/list_string.o ../core/obj/library.o  system/moduledyn/javamod.c -o system/bin/emod/java.emod -shared -fPIC $(CFLAGS_EXT)
 
 sysmod: system/moduledyn/sysmod.c ../core/obj/string.o ../core/obj/list.o ../core/obj/list_string.o system/moduledyn/sysmod.d
 	@echo "\033[34mCompile sys.emod ...\033[0m"
-	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -Isystem system/moduledyn/sysmod.c ../core/obj/string.o ../core/obj/list.o ../core/obj/list_string.o -o system/bin/emod/sys.emod -shared -fPIC -lcrypto
+	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -Isystem system/moduledyn/sysmod.c ../core/obj/string.o ../core/obj/list.o ../core/obj/list_string.o -o system/bin/emod/sys.emod -shared -fPIC $(CFLAGS_EXT)
 
 nodejsmod: system/moduledyn/nodejsmod.c ../core/obj/log.o ../core/obj/list.o ../core/obj/list_string.o ../core/obj/library.o system/moduledyn/nodejsmod.d
 	@echo "\033[34mCompile nodejs.emod ...\033[0m"
-	$(CC) $(CFLAGS) -fPIC --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -Isystem system/moduledyn/nodejsmod.c ../core/obj/log.o ../core/obj/list.o ../core/obj/list_string.o ../core/obj/library.o -o system/bin/emod/nodejs.emod -shared -fPIC -lcrypto
+	$(CC) $(CFLAGS) -fPIC --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -Isystem system/moduledyn/nodejsmod.c ../core/obj/log.o ../core/obj/list.o ../core/obj/list_string.o ../core/obj/library.o -o system/bin/emod/nodejs.emod -shared -fPIC $(CFLAGS_EXT)
 
 #
 #	LOGGERS
@@ -157,11 +188,11 @@ nodejsmod: system/moduledyn/nodejsmod.c ../core/obj/log.o ../core/obj/list.o ../
 
 sql.ulogger: system/log/loggers/user_logger_sql.c ../core/obj/buffered_string.o ../core/obj/library.o ../core/obj/log.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/list.o ../core/obj/comm_msg.o ../core/obj/jsmn.o system/log/loggers/user_logger_sql.d
 	@echo "\033[34mCompile SQL logger ...\033[0m"
-	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../core/  system/log/loggers/user_logger_sql.c ../core/obj/buffered_string.o ../core/obj/library.o ../core/obj/log.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/list.o ../core/obj/comm_msg.o ../core/obj/jsmn.o -o system/bin/loggers/sql.ulogger -shared -fPIC -lcrypto
+	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../core/  system/log/loggers/user_logger_sql.c ../core/obj/buffered_string.o ../core/obj/library.o ../core/obj/log.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/list.o ../core/obj/comm_msg.o ../core/obj/jsmn.o -o system/bin/loggers/sql.ulogger -shared -fPIC $(CFLAGS_EXT)
 
 file.ulogger: system/log/loggers/user_logger_file.c ../core/obj/buffered_string.o ../core/obj/library.o ../core/obj/log.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/list.o ../core/obj/comm_msg.o ../core/obj/jsmn.o system/log/loggers/user_logger_file.d
 	@echo "\033[34mCompile SQL logger ...\033[0m"
-	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../core/ system/log/loggers/user_logger_file.c ../core/obj/buffered_string.o ../core/obj/library.o ../core/obj/log.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/list.o ../core/obj/comm_msg.o ../core/obj/jsmn.o -o system/bin/loggers/file.ulogger -shared -fPIC -lcrypto
+	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../core/ system/log/loggers/user_logger_file.c ../core/obj/buffered_string.o ../core/obj/library.o ../core/obj/log.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/list.o ../core/obj/comm_msg.o ../core/obj/jsmn.o -o system/bin/loggers/file.ulogger -shared -fPIC $(CFLAGS_EXT)
 
 #
 #	SERVICES
@@ -369,6 +400,18 @@ obj/%.o: system/permission/%.c system/permission/*.h system/permission/%.d
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: system/roles/%.c system/roles/*.h system/roles/%.d
+	@echo "\033[34mCompile ...\033[0m"
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+obj/%.o: system/security/%.c system/security/*.h system/security/%.d
+	@echo "\033[34mCompile ...\033[0m"
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+obj/%.o: system/sas/%.c system/sas/*.h system/sas/%.d
+	@echo "\033[34mCompile ...\033[0m"
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+obj/%.o: system/support/%.c system/support/*.h system/support/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(CC) $(CFLAGS) -c -o $@ $<
 	

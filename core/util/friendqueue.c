@@ -33,12 +33,11 @@ FQEntry *FQPop( FQueue *qroot )
 	FQEntry *ret = qroot->fq_First;
 
 	qroot->fq_First = (FQEntry *) qroot->fq_First->node.mln_Succ;
-	/*
 	if( qroot->fq_First == NULL )
 	{
 		qroot->fq_Last = NULL;
 	}
-	*/
+	
 	return ret;
 };
 

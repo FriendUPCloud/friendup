@@ -44,7 +44,7 @@ void FreeList( List* list )
 	{
 		l = list;
 		list = list->next;
-		free( l );
+		FFree( l );
 	}
 }
 
@@ -54,39 +54,37 @@ void FreeList( List* list )
 
 void AddToList( List *list, void *data )
 {
-	if( data == NULL )
+	if( data != NULL )
 	{
-		return;
-	}
-	
-	// First data
-	if( list->data == NULL )
-	{
-		list->data = data;
-		list->next = NULL;
-	}
-	// More data
-	else
-	{
-		List *tmp = list;
-	
-		// Go to end of list
-		while( tmp->next )
+		// First data
+		if( list->l_Data == NULL )
 		{
-			tmp = tmp->next;
+			list->l_Data = data;
+			list->next = NULL;
 		}
+		// More data
+		else
+		{
+			List *tmp = list;
+	
+			// Go to end of list
+			while( tmp->next )
+			{
+				tmp = tmp->next;
+			}
 
-		// Make new data
-		tmp->next = FCalloc( 1, sizeof( List ) );
-		if( tmp->next == NULL )
-		{
-			FERROR("Cannot allocate memory in Addtolist\n");
-			return;
-		}
+			// Make new data
+			tmp->next = FCalloc( 1, sizeof( List ) );
+			if( tmp->next == NULL )
+			{
+				FERROR("Cannot allocate memory in Addtolist\n");
+				return;
+			}
 	
-		// add data and set terminator
-		tmp->next->data = data;
-		//tmp->next->next = NULL;
+			// add data and set terminator
+			tmp->next->l_Data = data;
+			//tmp->next->next = NULL;
+		}
 	}
 }
 
@@ -104,7 +102,7 @@ List* ListNew()
 		FERROR("Cannot allocate memory in ListNew\n");
 		return NULL;
 	}
-	l->data = NULL;
+	l->l_Data = NULL;
 	l->last = l;
 	return l;
 }
@@ -119,15 +117,22 @@ List* ListNew()
 
 List* ListAdd( List** list, void* data )
 {
-	if( !(*list)->data )
+	if( list == NULL )
 	{
-		(*list)->data = data;
+		return NULL;
+	}
+	if( !(*list)->l_Data )
+	{
+		(*list)->l_Data = data;
 		return (*list);
 	}
 	List *l = ListNew();
-	l->next = (*list);
-	(*list) = l;
-	l->data = data;
+	if( l != NULL )
+	{
+		l->next = (*list);
+		(*list) = l;
+		l->l_Data = data;
+	}
 	return l;
 }
 
@@ -144,7 +149,7 @@ void ListFree( List* list )
 	{
 		l = list;
 		list = list->next;
-		free( l );
+		FFree( l );
 	}
 }
 
@@ -161,10 +166,10 @@ void ListFreeWithData( List* list )
 	{
 		l = list;
 		list = list->next;
-		if( l->data != NULL )
+		if( l->l_Data != NULL )
 		{
-			free( l->data );
+			FFree( l->l_Data );
 		}
-		free( l );
+		FFree( l );
 	}
 }

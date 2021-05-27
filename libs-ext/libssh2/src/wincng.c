@@ -208,6 +208,8 @@
  * Windows CNG backend: Generic functions
  */
 
+struct _libssh2_wincng_ctx _libssh2_wincng;
+
 void
 _libssh2_wincng_init(void)
 {
@@ -287,7 +289,8 @@ _libssh2_wincng_init(void)
                                 (PBYTE)BCRYPT_CHAIN_MODE_CBC,
                                 sizeof(BCRYPT_CHAIN_MODE_CBC), 0);
         if(!BCRYPT_SUCCESS(ret)) {
-            (void)BCryptCloseAlgorithmProvider(_libssh2_wincng.hAlg3DES_CBC, 0);
+            (void)BCryptCloseAlgorithmProvider(_libssh2_wincng.hAlg3DES_CBC,
+                                               0);
         }
     }
 }

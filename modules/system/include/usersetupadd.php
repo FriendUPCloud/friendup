@@ -34,12 +34,9 @@ if( $level == 'Admin' )
 		
 		$obj->software = array(
 			array( 'Dock', '1' ),
-			array( 'Dingo', '1' ),
-			array( 'FriendChat', '1' ),
 			array( 'FriendCreate', '1' ),
 			array( 'Author', '1' ),
 			array( 'Wallpaper', '1' ),
-			array( 'Astray', '1' ),
 			array( 'Calculator', '1' )
 		);
 		
@@ -54,29 +51,6 @@ if( $level == 'Admin' )
 		$obj->language = ( isset( $args->args->Languages ) ? $args->args->Languages : 'en' );
 		
 		$obj->theme = ( isset( $args->args->Themes ) ? $args->args->Themes : 'Friendup12' );
-		
-		//$obj->folders = array(
-		//	'Wallpaper',
-		//	'Documents',
-		//	'Code examples'
-		//);
-		
-		//$obj->wallpapers = array(
-		//	'wp_beach',
-		//	'wp_microscope',
-		//	'wp_morerocks',
-		//	'wp_mountains',
-		//	'wp_omnious',
-		//	'wp_rocks',
-		//	'wp_coffee'
-		//);
-		
-		//$obj->files = array(
-		//	'ExampleWindow.jsx',
-		//	'Template.html'
-		//);
-		
-		//$obj->default = 'wp_coffee';
 		
 		if ( $data = json_encode( $obj ) )
 		{

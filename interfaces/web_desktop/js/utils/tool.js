@@ -95,7 +95,7 @@ friendUP.tool = friendUP.tool || {};
 		}
 	}
 	
-	idCache = {}; // the best solution? possibly not.. >.>
+	const idCache = {}; // the best solution? possibly not.. >.>
 	ns.getId = function( prefix, length )
 	{
 		var prefix = startWithAlpha( prefix ) || 'id';
@@ -104,6 +104,8 @@ friendUP.tool = friendUP.tool || {};
 		prefix = limit( prefix, ( length / 3 ));
 		var partLength = 8;
 		
+		
+		let id='';
 		do
 		{
 			id = prefix;

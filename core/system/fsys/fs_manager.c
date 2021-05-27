@@ -94,35 +94,34 @@ FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User 
 	
 	SystemBase *sb = (SystemBase  *) fm->fm_SB;
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
-	
-	if( fm != NULL && perm != NULL && newPath != NULL && sqlLib != NULL )
+	if( sqlLib != NULL )
 	{
-		int querysize = 0;
-		querysize = 1024  + (2*strlen( newPath ));
-		
-		int pathLen = strlen(newPath);
-		
-		char *tmpQuery;
-		
-		DEBUG("[FSManagerCheckAccess] User ptr %p alloc size %d\n", usr, querysize );
-		
-		if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
+		if( fm != NULL && perm != NULL && newPath != NULL )
 		{
-			if( perm[ 2 ] == 'W' )	// if we are checking write permission, we must check also parent folder permissions
+			int querysize = 0;
+			querysize = 1024  + (2*strlen( newPath ));
+			int pathLen = strlen(newPath);
+			char *tmpQuery;
+		
+			DEBUG("[FSManagerCheckAccess] User ptr %p alloc size %d\n", usr, querysize );
+		
+			if( ( tmpQuery = FMalloc( querysize ) ) != NULL )
 			{
-				char *parentPath = StringDuplicate( newPath );
-				int i;
-				// getting parent directory path
-				for( i=pathLen ; i>=0 ; i-- )
+				if( perm[ 2 ] == 'W' )	// if we are checking write permission, we must check also parent folder permissions
 				{
-					if( parentPath[ i ] == '/' )
+					char *parentPath = StringDuplicate( newPath );
+					int i;
+					// getting parent directory path
+					for( i=pathLen ; i>=0 ; i-- )
 					{
-						parentPath[ i ] = 0;
-						break;
+						if( parentPath[ i ] == '/' )
+						{
+							parentPath[ i ] = 0;
+							break;
+						}
 					}
-				}
 				
-				sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
+					sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
 PermissionID in( \
 SELECT ID FROM `FFilePermission` WHERE \
 ( Path = '%s' OR Path = '%s' ) \
@@ -137,11 +136,11 @@ OR \
 ) \
 ", newPath, parentPath, devid, usr->u_ID, usr->u_ID );
 				
-				FFree( parentPath );
-			}
-			else
-			{
-				sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
+					FFree( parentPath );
+				}
+				else
+				{
+					sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
 PermissionID in( \
 SELECT ID FROM `FFilePermission` WHERE \
 Path = '%s' \
@@ -155,17 +154,17 @@ OR \
 ( Type = 2 ) \
 ) \
 ", newPath, devid, usr->u_ID, usr->u_ID );
-			}
+				}
 			
-			DEBUG("[FSManagerCheckAccess] Checking access via SQL '%s'\n", tmpQuery );
+				DEBUG("[FSManagerCheckAccess] Checking access via SQL '%s'\n", tmpQuery );
 		
-			void *res = sqlLib->Query( sqlLib, tmpQuery );
-			FBOOL access = FALSE;
+				void *res = sqlLib->Query( sqlLib, tmpQuery );
+				FBOOL access = FALSE;
 			
-			char defaultAccessRights[] = "-RWED";
+				//char defaultAccessRights[] = "-RWED";
 
-			if( res != NULL )
-			{
+				if( res != NULL )
+				{
 				// default access
 				// -RWED-     - ARWEDH
 				
@@ -175,75 +174,75 @@ OR \
 				// 2 - type of id  0 - user, 1- group,  2  - others
 				// 3 - permissionid
 				// 4 - ID - unused
-				int nrrows = sqlLib->NumberOfRows( sqlLib, res );
+					int nrrows = sqlLib->NumberOfRows( sqlLib, res );
 
-				if( nrrows > 0 )
-				{
-					char **row = NULL;
-					
-					DEBUG("[FSManagerCheckAccess] Checking permissions %c  -   permission param %s\n", (char)perm[ 0 ], perm );
-					
-					while( ( row = sqlLib->FetchRow( sqlLib, res ) ) ) 
+					if( nrrows > 0 )
 					{
-						DEBUG("[FSManagerCheckAccess] Found permission entry %s  permissions to check PERM %s OBJID %s TYPE %s\n", row[ 0 ], perm, row[1], row[2] );
-						
-						// others rights
-						//if( row[ 2 ][ 0 ] == '2' )
-						//{
-						//	strcpy( defaultAccessRights, row[ 0 ] );
-						//}
-						//else
+						char **row = NULL;
+					
+						DEBUG("[FSManagerCheckAccess] Checking permissions %c  -   permission param %s\n", (char)perm[ 0 ], perm );
+					
+						while( ( row = sqlLib->FetchRow( sqlLib, res ) ) ) 
 						{
-							// read
-							if( perm[ 1 ] == 'R' && ((char)row[ 0 ][ 1 ]) == perm[ 1 ] )
-							{
-								access = TRUE;
-								break;
-							}
-							// write
-							if( perm[ 2 ] == 'W' && ((char)row[ 0 ][ 2 ]) == perm[ 2 ] )
-							{
-								access = TRUE;
-								break;
-							}
+							DEBUG("[FSManagerCheckAccess] Found permission entry %s  permissions to check PERM %s OBJID %s TYPE %s\n", row[ 0 ], perm, row[1], row[2] );
 						
-							if( perm[ 3 ] == 'E' && ((char)row[ 0 ][ 3 ]) == perm[ 3 ] )
+							// others rights
+							//if( row[ 2 ][ 0 ] == '2' )
+							//{
+							//	strcpy( defaultAccessRights, row[ 0 ] );
+							//}
+							//else
 							{
-								access = TRUE;
-								break;
-							}
+								// read
+								if( perm[ 1 ] == 'R' && ((char)row[ 0 ][ 1 ]) == perm[ 1 ] )
+								{
+									access = TRUE;
+									break;
+								}
+								// write
+								if( perm[ 2 ] == 'W' && ((char)row[ 0 ][ 2 ]) == perm[ 2 ] )
+								{
+									access = TRUE;
+									break;
+								}
 						
-							if( perm[ 4 ] == 'D' && ((char)row[ 0 ][ 4 ]) == perm[ 4 ] )
-							{
-								access = TRUE;
-								break;
+								if( perm[ 3 ] == 'E' && ((char)row[ 0 ][ 3 ]) == perm[ 3 ] )
+								{
+									access = TRUE;
+									break;
+								}
+						
+								if( perm[ 4 ] == 'D' && ((char)row[ 0 ][ 4 ]) == perm[ 4 ] )
+								{
+									access = TRUE;
+									break;
+								}
 							}
 						}
 					}
-				}
-				// number of rows > 0
-				// checking default access
-				else
-				{
-					access = TRUE;
-				}
+					// number of rows > 0
+					// checking default access
+					else
+					{
+						access = TRUE;
+					}
 				
-				if( access == TRUE )
-				{
-					result = TRUE;
+					if( access == TRUE )
+					{
+						result = TRUE;
+					}
+					sqlLib->FreeResult( sqlLib, res );
 				}
-				sqlLib->FreeResult( sqlLib, res );
+				FFree( tmpQuery );
 			}
-			FFree( tmpQuery );
+			else
+			{
+				FERROR("Cannot allocate memory for query!\n");
+				FFree( newPath );
+				sb->LibrarySQLDrop( sb, sqlLib );
+				return result;
+			}
 		}
-		else
-		{
-			FERROR("Cannot allocate memory for query!\n");
-			FFree( newPath );
-			sb->LibrarySQLDrop( sb, sqlLib );
-			return result;
-		}
-		
 		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	FFree( newPath );
@@ -363,14 +362,14 @@ BufString *FSManagerGetAccess( FSManager *fm, const char *path, FULONG devid, Us
 				 )", newPath, parentPath, devid, usr->u_ID, usr->u_ID );
 				 */
 				
-				sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
-PermissionID in( \
+				sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID FROM `FPermLink` WHERE \
+PermissionID IN ( \
 SELECT ID FROM `FFilePermission` WHERE \
 ( Path = '%s' OR Path = '%s' ) \
 AND DeviceID = %lu \
 ) \
 AND ( \
-( ObjectID in( select UserGroupID from `FUserToGroup` where UserID = %lu ) and Type = 1 ) \
+( ObjectID IN ( SELECT UserGroupID FROM `FUserToGroup` WHERE UserID = %lu ) AND Type = 1 ) \
 OR \
 ( ObjectID = %lu and Type = 0 ) \
 OR \
@@ -495,6 +494,11 @@ OR \
 			return NULL;
 		}
 	}
+	// Empty list
+	else
+	{
+		BufStringAdd( bs, "[]" );
+	}
 	
 	FFree( newPath );
 	return bs;
@@ -610,24 +614,13 @@ OR \
 			// remove old entries
 			//
 			
-			// DELETE `FPermLink` WHERE PermissionID in( SELECT * FROM `FFilePermission` WHERE Path = '%s'  )
-			
-			// DELETE `FFilePermission` WHERE Path = '%s' 
-			
-			//DELETE FROM `FPermLink` WHERE PermissionID in( SELECT ID FROM `FFilePermission` WHERE Path='stefkosdev:wallhaven-241962.jpg' AND DeviceID=6 )
 			if( permissionid > 0 )
 			{
 				DEBUG("[FSManagerProtect3] Found permission, remove old entries\n");
 				sqllib->SNPrintF( sqllib, tmpQuery, querysize, "DELETE FROM `FPermLink` WHERE PermissionID in( SELECT ID FROM `FFilePermission` WHERE Path='%s'  AND DeviceID=%lu)", path, devid );
-				//sprintf( tmpQuery, "DELETE `FPermLink` WHERE PermissionID in( SELECT * FROM `FFilePermission` WHERE Path='%s'  ) AND DeviceID=%lu", path, devid );
 			
 				sqllib->QueryWithoutResults( sqllib, tmpQuery );
 			}
-			
-			// there is no need to remove main entry from DB
-			//sqllib->SNPrintF( sqllib, tmpQuery, querysize,  " DELETE  FROM`FFilePermission` WHERE Path='%s' AND DeviceID=%lu", path, devid );
-			//sprintf( tmpQuery, " DELETE `FFilePermission` WHERE Path='%s' AND DeviceID=%lu", path, devid );
-			//sqllib->QueryWithoutResults( sqllib, tmpQuery );
 			
 			FFree( tmpQuery );
 		}
@@ -676,9 +669,7 @@ OR \
 			
 			UserGroupLink *ugl = usr->u_UserGroupLinks;
 			while( ugl != NULL )
-			//for( i=0 ; i <usr->u_GroupsNr ; i++ )
 			{
-				//UserGroup *ug = usr->u_Groups[ i ];
 				UserGroup *ug = ugl->ugl_Group;
 				if( ug != NULL )
 				{
@@ -740,151 +731,158 @@ OR \
  */
 int FSManagerProtect( FSManager *fm, const char *path, FULONG devid, char *accgroups )
 {
-	if( accgroups == NULL )
+	if( accgroups != NULL && path != NULL )
 	{
-		FERROR("Groups parameter is empty\n");
-		return -1;
-	}
+		unsigned int i;
+		int entries = 1;		// number
 
-	if( path == NULL )
-	{
-		FERROR("Path parameter is empty\n");
-		return -1;
-	}
-	unsigned int i;
-	int entries = 1;		// number
-	char *users = accgroups;
+		//
+		// counting how many entries we have
+		// set pointer where groups and others start
+		char *key = accgroups;
+		char *value = NULL;
+		int type = 0;
+		AGroup *root = NULL;
+		AGroup *prev = root;
 
-	//
-	// counting how many entries we have
-	// set pointer where groups and others start
-	char *key = accgroups;
-	char *value = NULL;
-	int type = 0;
-	AGroup *root = NULL;
-	AGroup *prev = root;
+		DEBUG("[FSManagerProtect] command\n");
 
-	DEBUG("[FSManagerProtect] command\n");
-
-	for( i=1 ; i < strlen( accgroups ) ; i++ )
-	{
-		FBOOL createEntry = FALSE;
-
-		if( accgroups[ i ] == ',' )
+		for( i=1 ; i < strlen( accgroups ) ; i++ )
 		{
-			entries++;
-			accgroups[ i ] = 0;
-			createEntry = TRUE;
-		}
-		else if( accgroups[ i ] == ':' )
-		{
-			accgroups[ i ] = 0;
-			value = &accgroups[ i+1 ];
-		}
-		else if( accgroups[ i ] == ';' )
-		{
-			type++;
-			entries++;
-			accgroups[ i ] = 0;
-			createEntry = TRUE;
-		}
+			FBOOL createEntry = FALSE;
 
-		if( key != NULL && value != NULL )
-		{
-			AGroup *ng = FCalloc( 1, sizeof(AGroup ) );
-			if( ng != NULL )
+			if( accgroups[ i ] == ',' )
 			{
-				ng->key = key;
-				ng->val = value;
-				ng->type  = type;
+				entries++;
+				accgroups[ i ] = 0;
+				createEntry = TRUE;
+			}
+			else if( accgroups[ i ] == ':' )
+			{
+				accgroups[ i ] = 0;
+				value = &accgroups[ i+1 ];
+			}
+			else if( accgroups[ i ] == ';' )
+			{
+				type++;
+				entries++;
+				accgroups[ i ] = 0;
+				createEntry = TRUE;
+			}
+
+			if( key != NULL && value != NULL )
+			{
+				AGroup *ng = FCalloc( 1, sizeof(AGroup ) );
+				if( ng != NULL )
+				{
+					ng->key = key;
+					ng->val = value;
+					ng->type  = type;
 				
-				// if root is NULL, then we must create first element
-				if( prev == NULL )
-				{
-					prev = root = ng;
+					// if root is NULL, then we must create first element
+					if( prev == NULL )
+					{
+						prev = root = ng;
+					}
+					else
+					{
+						prev->next = ng;
+					}
 				}
-				else
+				key = &accgroups[ i+1 ];
+				value = NULL;
+			}
+		}
+
+		SystemBase *sb = (SystemBase *)fm->fm_SB;
+
+		SQLLibrary *sqllib  = sb->LibrarySQLGet( sb );
+		if( sqllib != NULL )
+		{
+			//
+			// remove old entries
+			//
+
+			char *tmpQuery = NULL;
+			int querysize = ( SHIFT_LEFT(strlen( path ), 1) ) + 512;
+
+			if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
+			{
+				// DELETE `FPermLink` WHERE PermissionID in( SELECT * FROM `FFilePermission` WHERE Path = '%s'  )
+			
+				// DELETE `FFilePermission` WHERE Path = '%s' 
+			
+				sqllib->SNPrintF( sqllib, tmpQuery, querysize, "DELETE `FPermLink` WHERE PermissionID in( SELECT * FROM `FFilePermission` WHERE Path='%s'  ) AND DeviceID=%lu", path, devid );
+				//sprintf( tmpQuery, "DELETE `FPermLink` WHERE PermissionID in( SELECT * FROM `FFilePermission` WHERE Path='%s'  ) AND DeviceID=%lu", path, devid );
+			
+				sqllib->QueryWithoutResults( sqllib, tmpQuery );
+			
+				sqllib->SNPrintF( sqllib, tmpQuery, querysize,  " DELETE `FFilePermission` WHERE Path='%s' AND DeviceID=%lu", path, devid );
+				//sprintf( tmpQuery, " DELETE `FFilePermission` WHERE Path='%s' AND DeviceID=%lu", path, devid );
+			
+				sqllib->QueryWithoutResults( sqllib, tmpQuery );
+			
+				FFree( tmpQuery );
+			}
+
+			FilePermission fperm;
+			fperm.fp_DeviceID = devid;
+			fperm.fp_Path = (char *)path;
+
+			if( ( sqllib->Save( sqllib, FilePermissionDesc, &fperm ) ) == 0 )
+			{
+				char insertQuery[ 2048 ];
+
+				// we can go now through all entries
+				// and put proper insert into DB
+
+				prev = root;
+				AGroup *rem = prev;
+				while( prev != NULL )
 				{
-					prev->next = ng;
+					rem = prev;
+					prev = prev->next;
+		
+					// users
+					if( rem->type == 0 )
+					{
+						int size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FPermLink` ('PermissionID','ObjectID','Type','Access') VALUES( %lu, (SELECT ID FROM `FUser` where Name='%s'), 0, %s )", fperm.fp_ID, rem->key, rem->val );
+						sqllib->QueryWithoutResults( sqllib, insertQuery );
+					}
+					// groups
+					else if( rem->type == 1 )
+					{
+						int size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FPermLink` ('PermissionID','ObjectID','Type','Access') VALUES( %lu, (SELECT ID FROM `FUserGroup` where Name='%s'), 1, %s )", fperm.fp_ID, rem->key, rem->val );
+						sqllib->QueryWithoutResults( sqllib, insertQuery );
+					}
+					// others
+					else
+					{
+						int size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FPermLink` ('PermissionID','ObjectID','Type','Access') VALUES( %lu, 0, 2, %s )", fperm.fp_ID, rem->val );
+						sqllib->QueryWithoutResults( sqllib, insertQuery );
+					}
+		
+					FFree( rem );
+				} // while( prev != NULL )
+			}
+			else
+			{
+				prev = root;
+				AGroup *rem = prev;
+				while( prev != NULL )
+				{
+					rem = prev;
+					prev = prev->next;
+					FFree( rem );
 				}
 			}
-			key = &accgroups[ i+1 ];
-			value = NULL;
+			sb->LibrarySQLDrop( sb, sqllib );
 		}
 	}
-
-	SystemBase *sb = (SystemBase *)fm->fm_SB;
-
-	SQLLibrary *sqllib  = sb->LibrarySQLGet( sb );
-	if( sqllib != NULL )
+	else
 	{
-		//
-		// remove old entries
-		//
-
-		char *tmpQuery = NULL;
-		int querysize = ( SHIFT_LEFT(strlen( path ), 1) ) + 512;
-
-		if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
-		{
-			// DELETE `FPermLink` WHERE PermissionID in( SELECT * FROM `FFilePermission` WHERE Path = '%s'  )
-			
-			// DELETE `FFilePermission` WHERE Path = '%s' 
-			
-			sqllib->SNPrintF( sqllib, tmpQuery, querysize, "DELETE `FPermLink` WHERE PermissionID in( SELECT * FROM `FFilePermission` WHERE Path='%s'  ) AND DeviceID=%lu", path, devid );
-			//sprintf( tmpQuery, "DELETE `FPermLink` WHERE PermissionID in( SELECT * FROM `FFilePermission` WHERE Path='%s'  ) AND DeviceID=%lu", path, devid );
-			
-			sqllib->QueryWithoutResults( sqllib, tmpQuery );
-			
-			sqllib->SNPrintF( sqllib, tmpQuery, querysize,  " DELETE `FFilePermission` WHERE Path='%s' AND DeviceID=%lu", path, devid );
-			//sprintf( tmpQuery, " DELETE `FFilePermission` WHERE Path='%s' AND DeviceID=%lu", path, devid );
-			
-			sqllib->QueryWithoutResults( sqllib, tmpQuery );
-			
-			FFree( tmpQuery );
-		}
-
-		FilePermission fperm;
-		fperm.fp_DeviceID = devid;
-		fperm.fp_Path = (char *)path;
-
-		if( ( sqllib->Save( sqllib, FilePermissionDesc, &fperm ) ) == 0 )
-		{
-			char insertQuery[ 2048 ];
-
-			// we can go now through all entries
-			// and put proper insert into DB
-
-			prev = root;
-			AGroup *rem = prev;
-			while( prev != NULL )
-			{
-				rem = prev;
-				prev = prev->next;
-		
-				// users
-				if( rem->type == 0 )
-				{
-					int size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FPermLink` ('PermissionID','ObjectID','Type','Access') VALUES( %lu, (SELECT ID FROM `FUser` where Name='%s'), 0, %s )", fperm.fp_ID, rem->key, rem->val );
-					sqllib->QueryWithoutResults( sqllib, insertQuery );
-				}
-				// groups
-				else if( rem->type == 1 )
-				{
-					int size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FPermLink` ('PermissionID','ObjectID','Type','Access') VALUES( %lu, (SELECT ID FROM `FUserGroup` where Name='%s'), 1, %s )", fperm.fp_ID, rem->key, rem->val );
-					sqllib->QueryWithoutResults( sqllib, insertQuery );
-				}
-				// others
-				else
-				{
-					int size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FPermLink` ('PermissionID','ObjectID','Type','Access') VALUES( %lu, 0, 2, %s )", fperm.fp_ID, rem->val );
-					sqllib->QueryWithoutResults( sqllib, insertQuery );
-				}
-		
-				FFree( rem );
-			}
-		}
-		sb->LibrarySQLDrop( sb, sqllib );
+		FERROR("Groups (%p) or Path (%p) parameter is empty\n", accgroups, path );
+		return -1;
 	}
 	return 0;
 }
@@ -1144,7 +1142,6 @@ OR \
 				else
 				{
 					FERROR("Cannot allocate memory for query!\n");
-					//BufStringDelete( bs );
 					FFree( newPath );
 					sb->LibrarySQLDrop( sb, sqlLib );
 					return NULL;
@@ -1164,11 +1161,11 @@ OR \
 		}
 	}
 	
+	sb->LibrarySQLDrop( sb, sqlLib );
+	
 	BufStringAddSize( bsres, permPtrLast, ( &recv->bs_Buffer[ recv->bs_Size ] )-permPtrLast );
 	
 	BufStringDelete( recv );
-	
-	sb->LibrarySQLDrop( sb, sqlLib );
 	
 	return bsres;
 }

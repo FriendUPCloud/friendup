@@ -129,7 +129,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 	
 	DEBUG("Mounting RAM filesystem!\n");
 	
-	if( ( dev = calloc( 1, sizeof( File ) ) ) != NULL )
+	if( ( dev = FCalloc( 1, sizeof( File ) ) ) != NULL )
 	{
 		struct TagItem *lptr = ti;
 		
@@ -157,10 +157,12 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 		}
 		
 		SpecialData *srd =  calloc( 1, sizeof( SpecialData ) );
-		srd->root = INRAMFileNew( INRAM_ROOT, name, name );
-		dev->f_SpecialData = srd;
-		srd->sb = sb;
-		
+		if( srd != NULL )
+		{
+			srd->root = INRAMFileNew( INRAM_ROOT, name, name );
+			dev->f_SpecialData = srd;
+			srd->sb = sb;
+		}
 		dev->f_FSys = s;
 		dev->f_Position = 0;
 		dev->f_User = usr;
@@ -230,6 +232,10 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 {
 	int spath = strlen( path );
 	char *tmppath = FCalloc( spath+10, sizeof(char) );
+	if( tmppath == NULL )
+	{
+		return NULL;
+	}
 	memcpy( tmppath, path, spath );
 	
 	File *locfil = NULL;
@@ -266,7 +272,10 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 	
 	if( directory != NULL )
 	{
-		DEBUG("Directory where file will be create/exist %s\n", directory->nf_Name );
+		if( directory->nf_Name != NULL )
+		{
+			DEBUG("Directory where file will be create/exist %s\n", directory->nf_Name );
+		}
 		
 		INRAMFile *nf = NULL;
 		
@@ -301,30 +310,26 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		}
 		
 		// Ready the file structure
-		if( ( locfil = calloc( sizeof( File ), 1 ) ) != NULL )
+		if( ( locfil = FCalloc( sizeof( File ), 1 ) ) != NULL )
 		{
 			locfil->f_Path = StringDup( path );
 			DEBUG("Fileopen, path duplicated %s\n", path );
 			
-			locfil->f_SpecialData = calloc( 1, sizeof( SpecialData ) );
-			SpecialData *sd = (SpecialData *)locfil->f_SpecialData;
-		
-			if( sd )
+			locfil->f_SpecialData = FCalloc( 1, sizeof( SpecialData ) );
+			if( locfil->f_SpecialData != NULL )
 			{
-				sd->fp = nf;
+				((SpecialData *)locfil->f_SpecialData)->fp = nf;
 			}
 			DEBUG("\nOffset set to %ld\n\n", nf->nf_Offset );
 			
 			DEBUG("File open, descriptor returned\n");
-			
-			return locfil;
 		}
 	}
 
 	FFree( tmppath );
 	DEBUG("File open end\n");
 
-	return NULL;
+	return locfil;
 }
 
 //
@@ -425,7 +430,6 @@ int FileSeek( struct File *s, int pos )
 
 int MakeDir( struct File *s, const char *path )
 {
-	DEBUG("\n\n\n\n\n\n");
 	INFO("MakeDir %s!\n", path );
 	int error = 0;
 	
@@ -503,17 +507,25 @@ int Rename( struct File *s, const char *path, const char *nname )
 	DEBUG("Rename!\n");
 	int res = 0;
 	
+	if( nname == NULL )
+	{
+		return -1;
+	}
+	
 	int error = 0;
 	SpecialData *srd = (SpecialData *) s->f_SpecialData;
-	INRAMFile *dir =INRAMFileGetLastPath( srd->root, path, &error );
+	INRAMFile *dir = INRAMFileGetLastPath( srd->root, path, &error );
 	if( dir != NULL )
 	{
-		free( dir->nf_Name );
-		free( dir->nf_Path );
+		if( dir->nf_Name != NULL )
+		{
+			FFree( dir->nf_Name );
+		}
+		FFree( dir->nf_Path );
 		dir->nf_Name = StringDup( nname );
 		
 		int len = strlen( path );
-		char *temp = calloc( len+512, sizeof(char) );
+		char *temp = FCalloc( len+512, sizeof(char) );
 		if( temp != NULL )
 		{
 			int i = len;
@@ -622,7 +634,7 @@ void FillStat( BufString *bs, INRAMFile *nf, File *d, const char *path )
 	}
 	else
 	{
-		sprintf( tmp, "\"Filesize\": %d,",(int) nf->nf_Data->bs_Size );
+		sprintf( tmp, "\"Filesize\": %ld,", nf->nf_Data->bs_Size );
 		BufStringAdd( bs, tmp );
 		BufStringAdd( bs, "\"MetaType\":\"File\",\"Type\":\"File\" }" );
 	}
@@ -675,12 +687,11 @@ BufString *Info( File *s, const char *path )
 		int size = 0;
 		if( buffer != NULL )
 		{
-			size = snprintf( buffer, globlen, "{ \"response\": \"%s\", \"code\":\"%d\",\"path\":\"%s\" }", l->sl_Dictionary->d_Msg[DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST] , DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST, path );
+			size = snprintf( buffer, globlen, "{\"response\":\"%s\",\"code\":\"%d\",\"path\":\"%s\"}", l->sl_Dictionary->d_Msg[DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST] , DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST, path );
 			
 			BufStringAddSize( bs, buffer, size );
 			FFree( buffer );
 		}
-		//BufStringAdd( bs, "{ \"response\": \"File or directory do not exist\"}" );
 	}
 	
 	DEBUG("[INRAM] Info END\n");
@@ -708,7 +719,6 @@ BufString *Call( File *s, const char *path, Http *request )
 BufString *Dir( File *s, const char *path )
 {
 	BufString *bs = BufStringNew();
-	DEBUG("\n\n\n\n\n\n");
 	DEBUG("Dir!\n");
 	
 	int error = 0;

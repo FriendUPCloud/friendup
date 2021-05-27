@@ -1,7 +1,13 @@
 /* Synthwave ---------------------------------------------------------------- */
 
+*
+{
+    scrollbar-color:  #461C64 #000010 !important;
+}
+
 html > body.Synthwave,
-html > body.Synthwave.Inside
+html > body.Synthwave.Inside,
+html > body.Synthwave .Content .Scroller:after
 {
 	background: #461C64;
 }
@@ -70,7 +76,7 @@ html body.Synthwave[mobile] #WorkspaceMenu.Open ul
 
 html body.Synthwave .Screen > .TitleBar .ScreenList
 {
-	color: white;
+	color: #b3b0f3;
 }
 
 html body.Synthwave #DoorScreen:after,
@@ -429,7 +435,7 @@ html body.Synthwave .Screen > .TitleBar
 
 html body.Synthwave div #Tray > div
 {
-	color: white;
+	color: #b3b0f3;
 }
 
 html body.Synthwave #WorkspaceMenu > ul > li,
@@ -442,7 +448,7 @@ html body.Synthwave .Screen > .TitleBar > .Left *
 
 body.Synthwave #DoorsScreen .Left > .VirtualWorkspaces > div.Active 
 {
-	border: 1px solid #505050;
+	border: 0;
 }
 
 .Synthwave .FileBrowser div.Name.Active
@@ -482,6 +488,10 @@ body.Synthwave .Active > .FileBrowserItemImage,
 	filter: invert(100%);
 }
 
+body.Synthwave .Frame .Progress
+{
+	text-shadow: 1px 1px rgba(0,0,0,0.7);
+}
 
 /* Synthwave scheme scrollbars */
 
@@ -526,6 +536,10 @@ html body.Synthwave .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	filter: contrast(1.5) hue-rotate(230deg) grayscale(0.3);
 }
 
+html body.Charcoal .Frame .Progress
+{
+	text-shadow: 1px 1px rgba(0,0,0,0.7);
+}
 
 
 

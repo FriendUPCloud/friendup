@@ -59,8 +59,10 @@ if( $Filesystem = new Door( $args ) )
 		if( !$door ) die( 'fail<!--separate-->{"response":"no door found"}' );
 		
 		// Set sessionid
-		if( $args->sessionid )
-			$door->sessionid = $args->sessionid;
+		if( isset( $args->sessionid ) )
+		{
+			$door->SetAuthContext( 'sessionid', $args->sessionid );
+		}
 		
 		// Execute dos action
 		if( $result = $door->dosAction( $args ) )

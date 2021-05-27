@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -19,6 +19,7 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/hmac.h>
+#include <ctype.h>
 
 #undef BUFSIZE
 #define BUFSIZE 1024*8
@@ -27,9 +28,15 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
           EVP_PKEY *key, unsigned char *sigin, int siglen,
           const char *sig_name, const char *md_name,
           const char *file);
+static void show_digests(const OBJ_NAME *name, void *bio_);
+
+struct doall_dgst_digests {
+    BIO *bio;
+    int n;
+};
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_LIST,
     OPT_C, OPT_R, OPT_OUT, OPT_SIGN, OPT_PASSIN, OPT_VERIFY,
     OPT_PRVERIFY, OPT_SIGNATURE, OPT_KEYFORM, OPT_ENGINE, OPT_ENGINE_IMPL,
     OPT_HEX, OPT_BINARY, OPT_DEBUG, OPT_FIPS_FINGERPRINT,
@@ -43,6 +50,7 @@ const OPTIONS dgst_options[] = {
     {OPT_HELP_STR, 1, '-',
         "  file... files to digest (default is stdin)\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
+    {"list", OPT_LIST, '-', "List digests"},
     {"c", OPT_C, '-', "Print the digest with separating colons"},
     {"r", OPT_R, '-', "Print the digest in coreutils format"},
     {"out", OPT_OUT, '>', "Output to filename rather than stdout"},
@@ -86,12 +94,12 @@ int dgst_main(int argc, char **argv)
     const EVP_MD *md = NULL, *m;
     const char *outfile = NULL, *keyfile = NULL, *prog = NULL;
     const char *sigfile = NULL;
-    const char *md_name = NULL;
     OPTION_CHOICE o;
     int separator = 0, debug = 0, keyform = FORMAT_PEM, siglen = 0;
     int i, ret = 1, out_bin = -1, want_pub = 0, do_verify = 0;
     unsigned char *buf = NULL, *sigbuf = NULL;
     int engine_impl = 0;
+    struct doall_dgst_digests dec;
 
     prog = opt_progname(argv[0]);
     buf = app_malloc(BUFSIZE, "I/O buffer");
@@ -107,6 +115,15 @@ int dgst_main(int argc, char **argv)
             goto end;
         case OPT_HELP:
             opt_help(dgst_options);
+            ret = 0;
+            goto end;
+        case OPT_LIST:
+            BIO_printf(bio_out, "Supported digests:\n");
+            dec.bio = bio_out;
+            dec.n = 0;
+            OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_MD_METH,
+                                   show_digests, &dec);
+            BIO_printf(bio_out, "\n");
             ret = 0;
             goto end;
         case OPT_C:
@@ -366,15 +383,13 @@ int dgst_main(int argc, char **argv)
         BIO_get_md_ctx(bmd, &tctx);
         md = EVP_MD_CTX_md(tctx);
     }
-    if (md != NULL)
-        md_name = EVP_MD_name(md);
 
     if (argc == 0) {
         BIO_set_fp(in, stdin, BIO_NOCLOSE);
         ret = do_fp(out, buf, inp, separator, out_bin, sigkey, sigbuf,
-                    siglen, NULL, md_name, "stdin");
+                    siglen, NULL, NULL, "stdin");
     } else {
-        const char *sig_name = NULL;
+        const char *md_name = NULL, *sig_name = NULL;
         if (!out_bin) {
             if (sigkey != NULL) {
                 const EVP_PKEY_ASN1_METHOD *ameth;
@@ -383,6 +398,8 @@ int dgst_main(int argc, char **argv)
                     EVP_PKEY_asn1_get0_info(NULL, NULL,
                                             NULL, NULL, &sig_name, ameth);
             }
+            if (md != NULL)
+                md_name = EVP_MD_name(md);
         }
         ret = 0;
         for (i = 0; i < argc; i++) {
@@ -412,6 +429,32 @@ int dgst_main(int argc, char **argv)
     BIO_free(bmd);
     release_engine(e);
     return ret;
+}
+
+static void show_digests(const OBJ_NAME *name, void *arg)
+{
+    struct doall_dgst_digests *dec = (struct doall_dgst_digests *)arg;
+    const EVP_MD *md = NULL;
+
+    /* Filter out signed digests (a.k.a signature algorithms) */
+    if (strstr(name->name, "rsa") != NULL || strstr(name->name, "RSA") != NULL)
+        return;
+
+    if (!islower((unsigned char)*name->name))
+        return;
+
+    /* Filter out message digests that we cannot use */
+    md = EVP_get_digestbyname(name->name);
+    if (md == NULL)
+        return;
+
+    BIO_printf(dec->bio, "-%-25s", name->name);
+    if (++dec->n == 3) {
+        BIO_printf(dec->bio, "\n");
+        dec->n = 0;
+    } else {
+        BIO_printf(dec->bio, " ");
+    }
 }
 
 /*
@@ -458,15 +501,16 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
           const char *sig_name, const char *md_name,
           const char *file)
 {
-    size_t len;
-    int i, backslash = 0;
+    size_t len = BUFSIZE;
+    int i, backslash = 0, ret = 1;
+    unsigned char *sigbuf = NULL;
 
     while (BIO_pending(bp) || !BIO_eof(bp)) {
         i = BIO_read(bp, (char *)buf, BUFSIZE);
         if (i < 0) {
             BIO_printf(bio_err, "Read Error in %s\n", file);
             ERR_print_errors(bio_err);
-            return 1;
+            goto end;
         }
         if (i == 0)
             break;
@@ -479,28 +523,35 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
             BIO_printf(out, "Verified OK\n");
         } else if (i == 0) {
             BIO_printf(out, "Verification Failure\n");
-            return 1;
+            goto end;
         } else {
             BIO_printf(bio_err, "Error Verifying Data\n");
             ERR_print_errors(bio_err);
-            return 1;
+            goto end;
         }
-        return 0;
+        ret = 0;
+        goto end;
     }
     if (key != NULL) {
         EVP_MD_CTX *ctx;
+        int pkey_len;
         BIO_get_md_ctx(bp, &ctx);
-        len = BUFSIZE;
+        pkey_len = EVP_PKEY_size(key);
+        if (pkey_len > BUFSIZE) {
+            len = pkey_len;
+            sigbuf = app_malloc(len, "Signature buffer");
+            buf = sigbuf;
+        }
         if (!EVP_DigestSignFinal(ctx, buf, &len)) {
             BIO_printf(bio_err, "Error Signing Data\n");
             ERR_print_errors(bio_err);
-            return 1;
+            goto end;
         }
     } else {
         len = BIO_gets(bp, (char *)buf, BUFSIZE);
         if ((int)len < 0) {
             ERR_print_errors(bio_err);
-            return 1;
+            goto end;
         }
     }
 
@@ -535,5 +586,11 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
         }
         BIO_printf(out, "\n");
     }
-    return 0;
+
+    ret = 0;
+ end:
+    if (sigbuf != NULL)
+        OPENSSL_clear_free(sigbuf, len);
+
+    return ret;
 }

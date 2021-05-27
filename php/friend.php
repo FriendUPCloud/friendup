@@ -18,6 +18,7 @@
 \******************************************************************************/
 
 ob_start();
+flush();
 
 set_time_limit( 10 ); // Replace this one later in the script if you need to!
 
@@ -38,7 +39,8 @@ function friend_json_decode( $string )
 function jsUrlEncode( $in )
 { 
 	$out = '';
-	for( $i = 0; $i < strlen( $in ); $i++ )
+	$len = strlen( $in );
+	for( $i = 0; $i < $len; $i++ )
 	{
 		$hex = dechex( ord( $in[ $i ] ) );
 		if( $hex == '' ) $out = $out . urlencode( $in[ $i ] );
@@ -52,7 +54,7 @@ function jsUrlEncode( $in )
 }
 
 // Connects to friend core! You must build the whole query after the fc path
-function FriendCall( $queryString = false, $flags = false )
+function FriendCall( $queryString = false, $flags = false, $post = false, $returnCurl = false )
 {
 	global $Config;
 	$ch = curl_init();
@@ -60,6 +62,7 @@ function FriendCall( $queryString = false, $flags = false )
 		$queryString = ( $Config->SSLEnable ? 'https://' : 'http://' ) . ( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort;
 	curl_setopt( $ch, CURLOPT_URL, $queryString );
 	curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+	curl_setopt( $ch, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 	
 	if( isset( $flags ) && $flags )
 	{
@@ -73,6 +76,15 @@ function FriendCall( $queryString = false, $flags = false )
 		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
 		curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
 	}
+	if( isset( $post ) && $post )
+	{
+		curl_setopt( $ch, CURLOPT_POST, true );
+		curl_setopt( $ch, CURLOPT_POSTFIELDS, $post );
+	}
+	
+	if( $returnCurl )
+		return $ch;
+		
 	$result = curl_exec( $ch );
 	curl_close( $ch );
 	return $result;
@@ -205,11 +217,16 @@ if( isset( $argv ) && isset( $argv[1] ) )
 		/*
 			special case for large amount of data in request; Friend Core creates a file for us to read and parse here
 		*/
-		if( count( $args ) == 1 && array_shift( explode('=',$args[0]) ) == 'friendrequestparameters')
+		if( count( $args ) == 1 )
 		{
-			$dataset = file_get_contents( end( explode( '=' , $args[0] ) ) );
-			$args = explode( '&', $dataset );
-			//$Logger->log( 'Date from that file: ' . print_r($newargs,1) );
+			$argso = explode( '=', $args[ 0 ] );
+			$args1 = $argso;
+			if( array_shift( $argso ) == 'friendrequestparameters' )
+			{
+				$dataset = file_get_contents( end( $args1 ) );
+				$args = explode( '&', $dataset );
+				//$Logger->log( 'Date from that file: ' . print_r($newargs,1) );
+			}
 		}
 
 		$num = 0;
@@ -228,7 +245,20 @@ if( isset( $argv ) && isset( $argv[1] ) )
 					}
 					if( strstr( $value, '%' ) || strstr( $value, '&' ) ) 
 					{
-						$value = rawurldecode( $value );
+						if( strstr( $value, '%2B' ) )
+						{
+							$value = explode( '%2B', $value );
+							foreach( $value as $k=>$v )
+							{
+								$value[ $k ] = rawurldecode( $v );
+							}
+							// %2B also have to be rawurldecoded at the end ...
+							$value = rawurldecode( implode( '%2B', $value ) );
+						}
+						else
+						{
+							$value = rawurldecode( $value );
+						}
 					}
 					if( $value && ( $value[0] == '{' || $value[0] == '[' ) )
 					{
@@ -242,8 +272,8 @@ if( isset( $argv ) && isset( $argv[1] ) )
 				}
 			}
 		}
+		$GLOBALS['args'] = $kvdata;
 	}
-	$GLOBALS['args'] = $kvdata;
 }
 
 $UserAccount = false;
@@ -257,7 +287,10 @@ if( defined( 'FRIEND_USERNAME' ) && defined( 'FRIEND_PASSWORD' ) )
 // No sessionid!!
 if( !$UserAccount && !isset( $groupSession ) && !isset( $GLOBALS[ 'args' ]->sessionid ) && !isset( $GLOBALS[ 'args' ]->authid ) )
 {
-	die( '404 NO SEESION' );
+	if( !isset( $GLOBALS[ 'args' ]->servertoken ) )
+	{
+		die( '404 NO SESSION 4' );
+	}
 }
 if( !$UserAccount && isset( $GLOBALS[ 'args' ]->sessionid ) && $GLOBALS[ 'args' ]->sessionid == '(null)' )
 	die( '404 NO SESSION 2' );
@@ -409,6 +442,12 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		{
 			$User = $mu;
 		}
+	}
+	// Try with server token
+	else if( isset( $GLOBALS[ 'args' ]->servertoken ) )
+	{
+		$User->ServerToken = $GLOBALS[ 'args' ]->servertoken;
+		$User->Load();
 	}
 	
 	// Get the sessionid

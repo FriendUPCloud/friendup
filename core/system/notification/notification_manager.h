@@ -65,12 +65,6 @@ typedef struct NotificationManager
 	Notification				*nm_Notifications;
 	pthread_mutex_t				nm_Mutex;
 	
-	FThread						*nm_IOSSendThread;
-	pthread_mutex_t				nm_IOSSendMutex;
-	pthread_cond_t				nm_IOSSendCond;
-	FQueue						nm_IOSSendMessages;
-	int							nm_IOSSendInUse;
-	
 	FThread						*nm_AndroidSendThread;
 	pthread_mutex_t				nm_AndroidSendMutex;
 	pthread_cond_t				nm_AndroidSendCond;
@@ -130,6 +124,8 @@ int NotificationManagerNotificationSendIOSQueue( NotificationManager *nm, const 
 int NotificationManagerNotificationSendAndroid( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens );
 
 int NotificationManagerNotificationSendAndroidQueue( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens );
+
+int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens, int type );
 
 NotificationSent *NotificationManagerGetNotificationsSentByStatusPlatformAndUMAIDDB( NotificationManager *nm, int status, int platform, FULONG umaID );
 

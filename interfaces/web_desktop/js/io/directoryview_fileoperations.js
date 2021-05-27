@@ -8,11 +8,381 @@
 *                                                                              *
 *****************************************************************************©*/
 
-// -------------------------------------------------------------------------
+// Share dialog ----------------------------------------------------------------
+DirectoryView.prototype.ShowShareDialog = function( elements, mode )
+{
+	let self = this;
+	let mixed = false;
+	let out = [];
+	for( let c = 0; c < elements.length; c++ )
+	{
+		// Only allow to drop regular files
+		if( elements[ c ].fileInfo.Type == 'File' )
+		{
+			let l = document.createElement( 'div' );
+			l.fileInfo = elements[ c ].fileInfo;
+			l.className = 'File';
+			l.setAttribute( 'title', elements[ c ].getAttribute( 'title' ) );
+			
+			let g = elements[ c ].getElementsByClassName( 'Column' );
+			if( g.length )
+			{
+				g = g[0];
+			}
+			else
+			{
+				g = elements[ c ].getElementsByClassName( 'Title' );
+				g = g[0];
+			}
+			
+			let ii = elements[ c ].getElementsByClassName( 'Icon' );
+			if( ii.length )
+			{
+				let i = document.createElement( 'div' );
+				i.className = 'Icon';
+				i.innerHTML = ii[0].innerHTML;
+				l.appendChild( i );
+			}
+			
+			let t = document.createElement( 'a' );
+			t.className = 'Title';
+			t.innerHTML = g.innerHTML;
+			l.appendChild( t );
+			
+			out.push( l );
+		}
+		else mixed = true;
+	}
+	// We have a list of files
+	if( out.length )
+	{
+		let d = null;
+		if( !this.shareDialog )
+		{
+			if( this.toolbar )
+				this.toolbar.classList.add( 'Ghosted', 'BackgroundDefault' );
+			
+			this.window.windowObject.toFront( { activate: false } );
+			this.shareDialog = d = document.createElement( 'div' );
+			d.className = 'ShareDialog BackgroundDefault';
+			this.window.appendChild( d );
+			setTimeout( function()
+			{
+				d.classList.add( 'Showing' );
+			}, 20 );
+		
+			// Existing fileshare info
+			if( mode && mode == 'shareinfo' )
+			{
+				let s = new Module( 'system' );
+				s.onExecuted = function( se, sd )
+				{
+					let shareInfo = null;
+					try
+					{
+						shareInfo = se == 'ok' ? JSON.parse( sd ) : false
+					}
+					catch( e ){};
+					getInfoAndDraw( shareInfo );
+				}
+				s.execute( 'getfileshareinfo', { path: out[0].fileInfo.ExternPath } );
+			}
+			else
+			{
+				getInfoAndDraw();
+			}
+			
+			function getInfoAndDraw( shareInfo )
+			{
+				// Get all workgroups
+				let w = new Module( 'system' );
+				w.onExecuted = function( we, wd )
+				{
+					let u = new Module( 'system' );
+					u.onExecuted = function( ue, ud )
+					{
+						let wstr = '';
+					
+						let exGroups = {};
+						let exUsers = {};
+						if( shareInfo )
+						{
+							for( let c = 0; c < shareInfo.length; c++ )
+							{
+								if( shareInfo[ c ].type == 'user' )
+									exUsers[ shareInfo[ c ].id ] = true;
+								else exGroups[ shareInfo[ c ].id ] = true;
+							}
+						}
+					
+						for( let c = 0; c < out.length; c++ )
+						{
+							wstr += '<div class="Rounded ShareFile File">' + out[ c ].innerHTML + '</div>';
+						}
+						wstr += '<div class="BorderTop fa-arrow-down IconSmall TextCenter MarginTop MarginBottom" style="clear: both">&nbsp;</div>';
+					
+						if( we == 'ok' )
+						{
+							try
+							{
+								let workgroups = JSON.parse( wd );
+								for( let z = 0; z < workgroups.length; z++ )
+								{
+									let sel = '';
+									if( exGroups[ workgroups[ z ].ID ] )
+										sel = 'Selected ';
+									wstr += '<div class="' + sel + 'ShareItem MousePointer IconSmall fa-group Rounded Workgroup" title="' + workgroups[ z ].Name + '" gid="' + workgroups[ z ].ID + '"><span>' + workgroups[ z ].Name + '</span></div>';
+								}
+							}
+							catch( e ){}
+						}
+						let ustr = '';
+						if( ue == 'ok' )
+						{
+							try
+							{
+								let users = JSON.parse( ud );
+								for( let z = 0; z < users.length; z++ )
+								{
+									let sel = '';
+									if( exUsers[ users[ z ].ID ] )
+										sel = 'Selected ';
+									wstr += '<div class="' + sel + 'ShareItem MousePointer IconSmall fa-user Rounded User" title="' + users[ z ].Fullname + '" uid="' + users[ z ].ID + '"><span>' + users[ z ].Fullname + '</span></div>';
+								}
+							}
+							catch( e ){};
+						}
+					
+					
+						var f = new File( 'Progdir:templates/sharing.html' );
+						f.replacements = {
+							'workgroups': wstr + ustr
+						};
+						f.i18n();
+						f.onLoad = function( data )
+						{
+							let v = document.createElement( 'div' );
+							v.className = 'GuiInner';
+							v.innerHTML = data;
+							d.appendChild( v );
+							setTimeout( function()
+							{
+								v.classList.add( 'Showing' );
+							}, 20 );
+						
+							// Cancel sharing
+							let eles = v.getElementsByClassName( 'CancelSharing' );
+							eles[0].onclick = function()
+							{
+								self.HideShareDialog();
+							}
+							eles = v.getElementsByClassName( 'SearchBarInput' );
+							
+							eles[0].onkeyup = function( e )
+							{
+								filterShareItems( this.value );
+								return cancelBubble( e );
+							}
+							// Apply current sharing info
+							eles = v.getElementsByClassName( 'DoShare' );
+							eles[0].onclick = function( she )
+							{
+								let itms = v.getElementsByClassName( 'ShareItem' );
+								let groups = [];
+								let users = [];
+								for( let h = 0; h < itms.length; h++ )
+								{
+									if( itms[ h ].classList.contains( 'Selected' ) )
+									{
+										if( itms[ h ].classList.contains( 'Workgroup' ) )
+										{
+											groups.push( {
+												id: itms[ h ].getAttribute( 'gid' )
+											} );
+										}
+										else
+										{
+											users.push( {
+												id: itms[ h ].getAttribute( 'uid' )
+											} );
+										}
+									}
+								}
+								let sharingLen = out.length;
+								if( groups.length || users.length )
+								{
+									for( let h = 0; h < out.length; h++ )
+									{
+										let sh = new Module( 'system' );
+										sh.onExecuted = function( she, shd )
+										{
+											sharingLen--;
+											if( sharingLen == 0 )
+											{
+												self.HideShareDialog();
+												self.window.refresh();
+											}
+										}
+										sh.execute( 'setfileshareinfo', { path: out[h].fileInfo.ExternPath ? out[h].fileInfo.ExternPath : out[h].fileInfo.Path, items: { group: groups, user: users } } );
+									}
+								}
+								else
+								{
+									Alert( i18n( 'i18n_nothing_shared' ), i18n( 'i18n_please_select_users_groups' ) );
+									return;
+								}
+							}
+						
+							eles = v.getElementsByClassName( 'ShareItem' );
+							if( eles.length )
+							{
+								for( let z = 0; z < eles.length; z++ )
+								{
+									eles[ z ].onclick = function()
+									{
+										if( this.classList.contains( 'Selected' ) )
+										{
+											this.classList.remove( 'Selected' );
+										}
+										else
+										{
+											this.classList.add( 'Selected' );
+										}
+									}
+								}
+							}
+							else
+							{
+								let dm = v.getElementsByClassName( 'Workgroups_and_users' );
+								if( dm )
+								{
+									let p = document.createElement( 'p' );
+									p.innerHTML = i18n( 'i18n_no_users_or_groups' );
+									dm[0].appendChild( p );
+								}
+							}
+							
+							function filterShareItems( str )
+							{
+								if( str == '' || !Trim( str) )
+								{
+									for( let z = 0; z < eles.length; z++ )
+									{
+										eles[z].classList.remove( 'HiddenElement' );
+									}
+									return;
+								}
+								let ks = str.split( ' ' ).join( ',' ).split( ',' );
+								for( let z = 0; z < ks.length; z++ )
+									ks[z] = ks[z].toLowerCase();
+								for( let z = 0; z < eles.length; z++ )
+								{
+									let found = false;
+									for( let zz = 0; zz < ks.length; zz++ )
+									{
+										if( !Trim( ks[zz] ) ) continue;
+										if( eles[ z ].innerText.toLowerCase().indexOf( ks[zz] ) >= 0 )
+										{
+											found = true;
+											break;
+										}
+									}
+									if( !found )
+									{
+										eles[ z ].classList.add( 'HiddenElement' );
+									}
+									else eles[ z ].classList.remove( 'HiddenElement' );
+								}
+							}
+						
+						}
+						f.load();
+					}
+					u.execute( 'listconnectedusers' );
+				}
+				w.execute( 'workgroups' );
+			}
+		}
+	}
+	// It's a mixed list without files..
+	else if( mixed )
+	{
+		Notify( { title: i18n( 'i18n_only_files_dropped' ), text: i18n( 'i18n_only_files_can_be_shared' ) } );
+	}
+}
+
+// Share dialog, hide it -------------------------------------------------------
+DirectoryView.prototype.HideShareDialog = function()
+{
+	let d = this;
+	if( d.shareDialog )
+	{
+		if( this.toolbar )
+			this.toolbar.classList.remove( 'Ghosted', 'BackgroundDefault' );
+		let v = d.shareDialog;
+		v.classList.remove( 'Showing' );
+		d.shareDialog = null;
+		setTimeout( function()
+		{
+			if( v.parentNode )
+				v.parentNode.removeChild( v );
+		}, 250 );
+	}
+}
+
+// Done sharing stuff ----------------------------------------------------------
+
 // Dropping an icon on a window or an icon!
 DirectoryView.prototype.doCopyOnElement = function( eles, e )
 {
-	var dview = this; // The view in question
+	// Can't handle file dialogs!
+	if( this.filedialog ) return false;
+	if( this.directoryView && this.directoryView.filedialog ) return false;
+	if( this.content && this.content.directoryview && this.content.directoryview.filedialog ) return false;
+	
+	let dview = this; // The view in question
+	
+	// OOOH! Shared drive action!
+	if( this.content && this.content.fileInfo && this.content.fileInfo.Path.indexOf( 'Shared:' ) == 0 )
+	{
+		// Subfolder
+		let finf = this.content.fileInfo;
+		if( finf.IconLabel && ( finf.IconLabel == 'UserShare' || finf.IconLabel == 'GroupShare' ) )
+		{
+			let mode = finf.IconLabel == 'UserShare' ? 'user' : 'group';
+			let sharingLen = eles.length;
+			if( sharingLen )
+			{
+				for( let h = 0; h < eles.length; h++ )
+				{
+					let sh = new Module( 'system' );
+					sh.onExecuted = function( she, shd )
+					{
+						sharingLen--;
+						if( sharingLen == 0 )
+						{
+							dview.content.refresh();
+						}
+					}
+					sh.execute( 'setfileshareinfo', { path: eles[h].fileInfo.Path, share: finf.Path, type: mode } );
+				}
+			}
+			else
+			{
+				Alert( i18n( 'i18n_nothing_shared' ), i18n( 'i18n_please_select_users_groups' ) );
+				return;
+			}
+		}
+		// Directly on the shared drive
+		else
+		{
+			var s = this;
+			if( !this.ShowShareDialog )
+				s = s.content.directoryview;
+			s.ShowShareDialog( eles );
+		}
+		return;
+	}
 	
 	var mode = 'view';
 	
@@ -38,7 +408,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 		}
 		m.execute( 'installpackage', { path: fileInfo.Path } );
 	}
-
+	
 	// Check if this is a special view
 	if( this.fileInfo && this.fileInfo.Path && this.fileInfo.Path.indexOf( 'System:' ) == 0 )
 	{
@@ -94,10 +464,12 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 
 	// Window is the target
 	if( !dview.content && !dview.object.file )
+	{
 		return;
+	}
 	
-	var cfo = mode == 'view' ? dview.content.fileInfo : dview.object.file.fileInfo;
-
+	let cfo = getCleanFileInfo( mode == 'view' ? dview.content.fileInfo : dview.object.file.fileInfo );
+	
 	var dragFromWindow = eles[0].window;
 
 	// Can't drop stuff on myself!
@@ -221,6 +593,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	// Examine destination
 	var destinationFI = mode == 'view' ? dview.content.fileInfo : dview.object.file.fileInfo;
 	var sPath = destinationFI.Path; // set path
+	if( !eles[0].window ) return;
 	var dPath = eles[0].window.fileInfo ? eles[0].window.fileInfo.Path : false; // <- dropped path
 
 	// We can't copy to self!
@@ -341,12 +714,12 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 		var dom = window.isMobile ? vie.dom : vie.getWindowElement();
 		var eled = dom.getElementsByTagName( '*' );
 		var groove = false, bar = false, frame = false, progressbar = false;
-		var fcb = infocontent = false;
+		var fcb = infocontent = false, progress = false;
 		for( var a = 0; a < eled.length; a++ )
 		{
 			if( eled[a].classList )
 			{
-				var types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'FileCancelButton', 'InfoContents' ];
+				var types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'FileCancelButton', 'InfoContents', 'Progress' ];
 				for( var b = 0; b < types.length; b++ )
 				{
 					if( eled[a].classList.contains( types[b] ) )
@@ -354,6 +727,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						switch( types[b] )
 						{
 							case 'ProgressBar': progressbar  = eled[a]; break;
+							case 'Progress':    progress     = eled[a]; break;
 							case 'Groove':      groove       = eled[a]; break;
 							case 'Frame':       frame        = eled[a]; break;
 							case 'Bar':         bar          = eled[a]; break;
@@ -384,6 +758,13 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 			progressbar.style.position = 'relative';
 			frame.style.width = '100%';
 			frame.style.height = '40px';
+			progress.style.position = 'absolute';
+			progress.style.top = '0';
+			progress.style.left = '0';
+			progress.style.width = '100%';
+			progress.style.height = '30px';
+			progress.style.textAlign = 'center';
+			progress.style.zIndex = 2;
 			groove.style.position = 'absolute';
 			groove.style.width = '100%';
 			groove.style.height = '30px';
@@ -418,7 +799,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 				{
 					bar.friendSize = size;
 					bar.style.width = size + '%';
-					bar.innerHTML = '<div>' + size + '%</div>';
+					progress.innerHTML = size + '%';
 				}
 			}, 100 );
 			
@@ -672,7 +1053,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						// Could be we have a just in time modified new path instead of path (in case of overwriting etc)
 						var destPath = fl.fileInfo.NewPath ? fl.fileInfo.NewPath : fl.fileInfo.Path;
 						
-						toPath = cfo.Path + p + destPath.split( eles[0].window.fileInfo.Path ).join( '' );
+						toPath = cfo.Path + p + destPath.split( dPath ).join( '' );
 						door = Workspace.getDoorByPath( fl.fileInfo.Path );
 						door.cancelId = series;
 
@@ -691,12 +1072,14 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 							{
 								if( result.substr( 0, 3 ) != 'ok<' )
 								{
+									console.log( 'ERROR COPY ' + result );
 									Notify( {
 										title: i18n( 'i18n_filecopy_error' ),
 										text: i18n( 'i18n_could_not_copy_files' ) + '<br>' + fl.fileInfo.Path + ' to ' + toPath
 									} );
 									fob.stop = true;
 									CancelCajaxOnId( series );
+									w.close();
 									return;
 								}						
 								if( fob.stop ) return;
@@ -726,7 +1109,9 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 							p = '/';
 
 						var dir = this.directories.shift();
-						var toPath = cfo.Path + p + dir.fileInfo.Path.split(eles[0].window.fileInfo.Path).join('');
+						
+						var toPath = cfo.Path + p + dir.fileInfo.Path.split( dPath ).join( '' );
+						
 						var door = Workspace.getDoorByPath( cfo.Path );
 						door.cancelId = series;
 
@@ -749,11 +1134,15 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 								// Failed - alert user
 								else
 								{
-									Notify( { title: i18n( 'i18n_filecopy_error' ), text: i18n( 'i18n_could_not_make_dir' ) + ' (' + toPath + ')' } );
+									// We stopped due to an error
+									if( !fileCopyObject.stop )
+									{
+										Notify( { title: i18n( 'i18n_filecopy_error' ), text: i18n( 'i18n_could_not_make_dir' ) + ' (' + toPath + ')' } );
+									}
 									w.close();
 									sview.refresh();
 								}
-							});
+							} );
 						}
 					
 						// If dir has infofile, copy it first
@@ -802,7 +1191,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						var f = fileCopyObject.files;
 						var nf = [];
 						for( var b = this.stepsize; b < f.length; b++ )
-							nf.push( f[b] );
+							nf.push( f[ b ] );
 						fileCopyObject.files = nf;
 						fileCopyObject.copyFiles();
 					}
@@ -857,7 +1246,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 										l.execute( 'file/notifychanges', { path: fob.files[0].fileInfo.Path } );
 										var l = new Library( 'system.library' );
 										l.cancelId = series;
-										l.execute( 'file/notifychanges', { path: eles[0].window.fileInfo.Path } );
+										l.execute( 'file/notifychanges', { path: dPath } );
 									}
 								} );
 							}
@@ -872,10 +1261,13 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 							// Tell Friend Core something changed
 							var l = new Library( 'system.library' );
 							l.cancelId = series;
-							var p = winobj._window ? ( winobj._window.fileInfo.Path ? winobj._window.fileInfo.Path : winobj._window.fileInfo.Volume ) : false;
-							if( p )
+							if( typeof( winobj ) != 'undefined' && winobj )
 							{
-								l.execute( 'file/notifychanges', { path: p } );
+								var p = winobj._window ? ( winobj._window.fileInfo.Path ? winobj._window.fileInfo.Path : winobj._window.fileInfo.Volume ) : false;
+								if( p )
+								{
+									l.execute( 'file/notifychanges', { path: p } );
+								}
 							}
 						}
 						// Clean out
@@ -911,7 +1303,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						// Set in directories and files
 						var alldirs = [];
 						var allfiles = [];
-						for(var i = 0; i < this.files.length; i++)
+						for( let i = 0; i < this.files.length; i++ )
 						{
 							if( this.files[i].fileInfo.Type == 'Directory' )
 							{

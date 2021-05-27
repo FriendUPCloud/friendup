@@ -24,83 +24,6 @@
 
 #include "private-lib-core.h"
 
-#if defined(LWS_WITH_MBEDTLS) || (defined(OPENSSL_VERSION_NUMBER) && \
-				  OPENSSL_VERSION_NUMBER >= 0x10002000L)
-static int
-alpn_cb(SSL *s, const unsigned char **out, unsigned char *outlen,
-	const unsigned char *in, unsigned int inlen, void *arg)
-{
-#if !defined(LWS_WITH_MBEDTLS)
-	struct alpn_ctx *alpn_ctx = (struct alpn_ctx *)arg;
-
-	if (SSL_select_next_proto((unsigned char **)out, outlen, alpn_ctx->data,
-				  alpn_ctx->len, in, inlen) !=
-	    OPENSSL_NPN_NEGOTIATED)
-		return SSL_TLSEXT_ERR_NOACK;
-#endif
-
-	return SSL_TLSEXT_ERR_OK;
-}
-#endif
-
-void
-lws_context_init_alpn(struct lws_vhost *vhost)
-{
-#if defined(LWS_WITH_MBEDTLS) || (defined(OPENSSL_VERSION_NUMBER) && \
-				  OPENSSL_VERSION_NUMBER >= 0x10002000L)
-	const char *alpn_comma = vhost->context->tls.alpn_default;
-
-	if (vhost->tls.alpn)
-		alpn_comma = vhost->tls.alpn;
-
-	lwsl_info(" Server '%s' advertising ALPN: %s\n",
-		    vhost->name, alpn_comma);
-	vhost->tls.alpn_ctx.len = lws_alpn_comma_to_openssl(alpn_comma,
-					vhost->tls.alpn_ctx.data,
-					sizeof(vhost->tls.alpn_ctx.data) - 1);
-
-	SSL_CTX_set_alpn_select_cb(vhost->tls.ssl_ctx, alpn_cb,
-				   &vhost->tls.alpn_ctx);
-#else
-	lwsl_err(
-		" HTTP2 / ALPN configured but not supported by OpenSSL 0x%lx\n",
-		    OPENSSL_VERSION_NUMBER);
-#endif // OPENSSL_VERSION_NUMBER >= 0x10002000L
-}
-
-int
-lws_tls_server_conn_alpn(struct lws *wsi)
-{
-#if defined(LWS_WITH_MBEDTLS) || (defined(OPENSSL_VERSION_NUMBER) && \
-				  OPENSSL_VERSION_NUMBER >= 0x10002000L)
-	const unsigned char *name = NULL;
-	char cstr[10];
-	unsigned len;
-
-	if (!wsi->tls.ssl)
-		return 0;
-
-	SSL_get0_alpn_selected(wsi->tls.ssl, &name, &len);
-	if (!len) {
-		lwsl_info("no ALPN upgrade\n");
-		return 0;
-	}
-
-	if (len > sizeof(cstr) - 1)
-		len = sizeof(cstr) - 1;
-
-	memcpy(cstr, name, len);
-	cstr[len] = '\0';
-
-	lwsl_info("negotiated '%s' using ALPN\n", cstr);
-	wsi->tls.use_ssl |= LCCSCF_USE_SSL;
-
-	return lws_role_call_alpn_negotiated(wsi, (const char *)cstr);
-#endif // OPENSSL_VERSION_NUMBER >= 0x10002000L
-
-	return 0;
-}
-
 #if defined(LWS_WITH_SERVER)
 
 static void
@@ -115,7 +38,7 @@ lws_sul_tls_cb(lws_sorted_usec_list_t *sul)
 			 (lws_usec_t)24 * 3600 * LWS_US_PER_SEC);
 }
 
-LWS_VISIBLE int
+int
 lws_context_init_server_ssl(const struct lws_context_creation_info *info,
 			    struct lws_vhost *vhost)
 {
@@ -149,10 +72,8 @@ lws_context_init_server_ssl(const struct lws_context_creation_info *info,
 			lwsl_notice(" SSL ciphers: '%s'\n",
 						info->ssl_cipher_list);
 
-		if (vhost->tls.use_ssl)
-			lwsl_notice(" Using SSL mode\n");
-		else
-			lwsl_notice(" Using non-SSL mode\n");
+		lwsl_notice(" Vhost '%s' using %sTLS mode\n",
+			    vhost->name, vhost->tls.use_ssl ? "" : "non-");
 	}
 
 	/*
@@ -201,16 +122,13 @@ lws_context_init_server_ssl(const struct lws_context_creation_info *info,
 }
 #endif
 
-LWS_VISIBLE int
+int
 lws_server_socket_service_ssl(struct lws *wsi, lws_sockfd_type accept_fd)
 {
 	struct lws_context *context = wsi->context;
 	struct lws_context_per_thread *pt = &context->pt[(int)wsi->tsi];
 	struct lws_vhost *vh;
-        char buf[256];
 	int n;
-
-        (void)buf;
 
 	if (!LWS_SSL_ENABLED(wsi->vhost))
 		return 0;
@@ -222,24 +140,16 @@ lws_server_socket_service_ssl(struct lws *wsi, lws_sockfd_type accept_fd)
 			lwsl_err("%s: leaking ssl\n", __func__);
 		if (accept_fd == LWS_SOCK_INVALID)
 			assert(0);
-		if (context->simultaneous_ssl_restriction &&
-		    context->simultaneous_ssl >=
-		    	    context->simultaneous_ssl_restriction) {
-			lwsl_notice("unable to deal with SSL connection\n");
+
+		if (lws_tls_restrict_borrow(context))
 			return 1;
-		}
 
 		if (lws_tls_server_new_nonblocking(wsi, accept_fd)) {
 			if (accept_fd != LWS_SOCK_INVALID)
 				compatible_close(accept_fd);
+			lws_tls_restrict_return(context);
 			goto fail;
 		}
-
-		if (context->simultaneous_ssl_restriction &&
-		    ++context->simultaneous_ssl ==
-				    context->simultaneous_ssl_restriction)
-			/* that was the last allowed SSL connection */
-			lws_gate_accepts(context, 0);
 
 #if defined(LWS_WITH_STATS)
 		context->updated = 1;
@@ -272,11 +182,10 @@ lws_server_socket_service_ssl(struct lws *wsi, lws_sockfd_type accept_fd)
 			goto fail;
 		}
 
-		if (wsi->vhost->tls.allow_non_ssl_on_ssl_port) {
+		if (wsi->vhost->tls.allow_non_ssl_on_ssl_port && !wsi->skip_fallback) {
 
 			n = recv(wsi->desc.sockfd, (char *)pt->serv_buf,
 				 context->pt_serv_buf_size, MSG_PEEK);
-
 			/*
 			 * We have LWS_SERVER_OPTION_ALLOW_NON_SSL_ON_SSL_PORT..
 			 * this just means don't hang up on him because of no

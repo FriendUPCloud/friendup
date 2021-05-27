@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -134,9 +134,14 @@ unsigned long X509_subject_name_hash_old(X509 *x)
 int X509_cmp(const X509 *a, const X509 *b)
 {
     int rv;
+
+    if (a == b) /* for efficiency */
+        return 0;
     /* ensure hash is valid */
-    X509_check_purpose((X509 *)a, -1, 0);
-    X509_check_purpose((X509 *)b, -1, 0);
+    if (X509_check_purpose((X509 *)a, -1, 0) != 1)
+        return -2;
+    if (X509_check_purpose((X509 *)b, -1, 0) != 1)
+        return -2;
 
     rv = memcmp(a->sha1_hash, b->sha1_hash, SHA_DIGEST_LENGTH);
     if (rv)

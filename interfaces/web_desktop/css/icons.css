@@ -491,6 +491,57 @@ html .File.Tiny, html .File.Tiny .Icon, html .File.Tiny .Icon > div
 {
 }
 
+.File .Icon .Directory.GroupShare:after
+{
+	font-family: fontawesome;
+	content: "\f0c0";
+	position: absolute;
+	top: 15px;
+	left: 0;
+	width: 100%;
+	text-align: center;
+}
+
+.File .Icon > .FileShared:before,
+.File .Icon > .Shared:after
+{
+	opacity: 1;
+	transition: opacity 0.15s;
+}
+
+[listmode=iconview] .File .Icon > .FileShared:before,
+[listmode=iconview] .File .Icon > .Shared:after
+{
+	min-width: 8px;
+}
+
+div.Columnview .File .Directory.GroupShare:after,
+div.Columnview .File .Directory.UserShare:after,
+div.Listview .File .Directory.GroupShare:after,
+div.Listview .File .Directory.UserShare:after
+{
+	top: 10px;
+	font-size: 0.6em;
+}
+
+div .File.ZoomX3 .Icon .Directory.GroupShare:after,
+div .File.ZoomX3 .Icon .Directory.UserShare:after
+{
+	top: 62px;
+    font-size: 2em;
+}
+
+.File .Icon .Directory.UserShare:after
+{
+	font-family: fontawesome;
+	content: "\f007";
+	position: absolute;
+	top: 15px;
+	left: 0;
+	width: 100%;
+	text-align: center;
+}
+
 .File .Icon .NetworkDirectory
 {
 }
@@ -548,14 +599,73 @@ html .File.Tiny, html .File.Tiny .Icon, html .File.Tiny .Icon > div
 {
 	display: block;
 	font-family: fontawesome;
-	content: '\f064';
+	font-size: 0.6em;
+	content: '\f0c1';
 	position: absolute;
 	right: 0;
 	top: 0;
-	background: rgba(255,255,255,0.8);
-	border-radius: 2px;
-	padding: 2px 4px;
+	background: #f0f0f0;
+	border: 2px solid rgba(0,0,0,0.2);
+	border-radius: 100%;
+	padding: 3px 3px;
 	color: black;
+}
+
+.File .Icon > .Shared.FileShared:before
+{
+	top: 20px;
+}
+
+div.Columnview .File .Icon > .Shared.FileShared:before,
+div.Listview .File .Icon > .Shared.FileShared:before,
+[listmode=compact] .File .Icon > .Shared.FileShared:before
+{
+	top: 10px;
+	right: 0;
+	width: 5px;
+}
+html .File.ZoomX3 .Icon > .Shared.FileShared::before
+{
+	right: 24px;
+	top: 35px;
+}
+
+html .File.ZoomX3 .Icon > .Shared.FileShared::before,
+html .File.ZoomX3 .Icon > .Shared:after
+{
+	padding: 4px;
+}
+
+[listmode=compact] .File .Icon > .Shared.FileShared:before
+{
+	top: 15px;
+}
+
+.File .Icon > .FileShared:before
+{
+	display: block;
+	font-family: fontawesome;
+	font-size: 0.6em;
+	content: '\f1e0';
+	position: absolute;
+	right: 0;
+	top: 0;
+	background: #f0f0f0;
+	border: 2px solid rgba(0,0,0,0.2);
+	border-radius: 100%;
+	padding: 3px 3px;
+	color: black;
+}
+
+div.Columnview .File .Icon > .FileShared:before,
+div.Columnview .File .Icon > .Shared:after,
+div.Listview .File .Icon > .FileShared:before,
+div.Listview .File .Icon > .Shared:after,
+[listmode=compact] .File .Icon > .FileShared:before,
+[listmode=compact] .File .Icon > .Shared:after
+{
+	font-size: 0.3em;
+	width: 5px;
 }
 
 .File .Icon .TypeJPG, .File .Icon .TypeJPEG, .File .Icon .TypePNG, 

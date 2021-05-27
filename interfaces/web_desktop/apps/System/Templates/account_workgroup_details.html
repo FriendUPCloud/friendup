@@ -1,0 +1,169 @@
+	
+	<div class="HRow PaddingBottom Closed" id="WorkgroupNavContainer{id}">
+		<div class="HContent50 InputHeight FloatLeft">
+			{workgroup_back_btn}
+		</div>
+	</div>
+	
+	<div class="OverflowHidden BorderRadius Elevated">
+	
+		<div class="HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight">
+			<div class="HContent50 InputHeight FloatLeft">
+				<h3 class="NoMargin FloatLeft">
+					<strong>{workgroup_edit}</strong>
+				</h3>
+			</div>
+		</div>
+	
+		<!--<div class="HRow BackgroundNegativeAlt Negative Padding">-->
+		<div class="HRow BackgroundNegative Negative Padding">
+			<div class="HContent30 FloatLeft Ellipsis">
+				<!--<div class="BackgroundPositiveAlt NegativeAlt PaddingSmall FloatLeft IconMedium fa-users"></div>-->
+				<div class="BackgroundPositive Positive PaddingSmall FloatLeft IconMedium fa-users"></div>
+			</div>
+			<div class="HContent70 FloatLeft Ellipsis">
+				<h2 class="ImageHeading NoMargin">
+					<strong>{workgroup_title}</strong>
+				</h2>
+			</div>
+		</div>
+	
+		<div class="Box Padding" id="WorkgroupBasicDetails{id}">
+	
+			<div class="HRow MarginBottom">
+				<div class="HContent30 InputHeight FloatLeft Ellipsis">
+					<strong>{i18n_workgroup_name}:</strong>
+				</div>
+				<div class="HContent70 FloatLeft Ellipsis">
+					<input id="WorkgroupName{id}" type="text" class="FullWidth InputHeight" value="{workgroup_name}"/>
+				</div>
+			</div>
+		
+			<div class="HRow MarginBottom" style="display:none;">
+				<div class="HContent30 InputHeight FloatLeft Ellipsis">
+					<strong>{i18n_workgroup_parent}:</strong>
+				</div>
+				<div class="HContent70 FloatLeft Ellipsis">
+					<select class="FullWidth InputHeight" id="WorkgroupParent{id}" disabled="disabled">
+						{workgroup_parent}
+					</select>
+				</div>
+			</div>
+		
+			<div class="HRow MarginBottom">
+				<div class="HContent30 InputHeight FloatLeft Ellipsis">
+					<strong>{i18n_workgroup_description}:</strong>
+				</div>
+				<div class="HContent70 FloatLeft Ellipsis">
+					<textarea id="WorkgroupDescription{id}" class="FullWidth" style="min-height: 100px;resize: none;">{workgroup_description}</textarea>
+				</div>
+			</div>
+		
+			<div id="GroupEditContainer{id}">
+				<div class="HRow">
+					<!--<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft NegativeAlt fa-trash" id="GroupDeleteBtn{id}"></button>-->
+					<button class="IconButton IconMedium IconToggle ButtonSmall FloatLeft Positive fa-lock" id="GroupLockBtn{id}"></button>
+					<button class="IconButton IconMedium IconToggle ButtonSmall FloatLeft Positive fa-trash" id="GroupDeleteBtn{id}"></button>
+					<div id="GroupEditButtons{id}">
+						<!--<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="GroupSaveBtn{id}">-->
+						<button class="Button IconSmall FloatRight MarginLeft" id="GroupSaveBtn{id}">
+							{i18n_save}
+						</button>
+						<!--<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="GroupCancelBtn{id}">-->
+						<button class="Button IconSmall FloatRight MarginLeft" id="GroupCancelBtn{id}">
+							{i18n_cancel}
+						</button>
+					</div>
+				</div>
+			</div>
+		
+		</div>
+	
+	</div>
+	
+	<div id="AdminSubWorkgroupContainer{id}" class="MarginTop OverflowHidden BorderRadius Elevated">
+		<div class="HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight">
+			<div class="HContent40 InputHeight FloatLeft">
+				<h3 class="NoMargin PaddingSmallLeft PaddingSmallRight FloatLeft">
+					<strong>{i18n_sub_workgroups} </strong>
+					<span id="AdminSubWorkgroupCount{id}">{sub_workgroups_count}</span>
+				</h3>
+			</div>
+			<div class="PaddingSmall HContent45 FloatLeft Relative">
+				<button class="IconButton IconSmall ButtonSmall fa-times-circle Closed" style="position:absolute;right:0;margin-top:-2px;" id="SubWorkgroupSearchCancelBtn{id}"></button>
+				<input type="text" class="FullWidth" placeholder="{i18n_search}" style="padding-right:21px">
+			</div>
+			<div class="HContent15 FloatLeft Relative">
+				<button class="IconButton IconMedium ButtonSmall Negative FloatRight fa-plus-circle Open" id="SubWorkgroupEdit{id}"></button>
+			</div>
+		</div>
+		<div id="SubWorkgroupGui{id}" class="List">
+			{workgroups}
+		</div>
+	</div>
+	
+	<div id="AdminUsersContainer{id}" class="MarginTop OverflowHidden BorderRadius Elevated Closed">
+		<!--<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">-->
+		<div class="HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight">
+			<div class="HContent40 InputHeight FloatLeft">
+				<button class="IconButton IconMedium ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="UsersEditBack{id}"></button>
+				<h3 class="NoMargin PaddingSmallLeft PaddingSmallRight FloatLeft">
+					<strong>{i18n_users} </strong>
+					<span id="AdminUsersCount{id}">{users_count}</span>
+				</h3>
+			</div>
+			<div class="PaddingSmall HContent45 FloatLeft Relative">
+				<button class="IconButton IconMedium ButtonSmall fa-times-circle Closed" style="position:absolute;right:0;margin-top:-2px;" id="UsersSearchCancelBtn{id}"></button>
+				<input type="text" class="FullWidth" placeholder="{i18n_search}" style="padding-right:21px">
+			</div>
+			<div class="HContent15 FloatLeft Relative">
+				<button class="IconButton IconMedium ButtonSmall Negative FloatRight fa-plus-circle Open" id="UsersEdit{id}"></button>
+			</div>
+		</div>
+		<div id="UsersGui{id}">
+			{users}
+		</div>
+	</div>
+
+	<div id="AdminStorageContainer{id}" class="MarginTop OverflowHidden BorderRadius Elevated Closed">
+		<!--<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">-->
+		<div class="HRow BackgroundNegative Negative Padding">
+			<div class="HContent50 InputHeight FloatLeft">
+				<h3 class="NoMargin PaddingSmallLeft PaddingSmallRight">
+					<strong>{i18n_drives}</strong>
+				</h3>
+			</div>
+			<div class="HContent50 FloatLeft Relative">
+				<button class="IconButton IconMedium Negative FloatRight MarginRight fa-plus-circle" id="StorageEdit{id}"></button>
+			</div>
+		</div>
+		<div class="Box Padding">
+			<div class="HRow StorageGui" id="StorageGui{id}" style="overflow: auto; max-height: 369px;">
+				{storage}
+			</div>
+		</div>
+	</div>
+	
+	<div id="AdminRolesContainer{id}" class="MarginTop OverflowHidden BorderRadius Elevated Closed">
+		<!--<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">-->
+		<div class="HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight">
+			<div class="HContent40 InputHeight FloatLeft">
+				<button class="IconButton IconMedium ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="RolesEditBack{id}"></button>
+				<h3 class="NoMargin PaddingSmallLeft PaddingSmallRight FloatLeft">
+					<strong>{i18n_roles}</strong>
+				</h3>
+			</div>
+			<div class="PaddingSmall HContent45 FloatLeft Relative">
+				<button class="IconButton IconMedium ButtonSmall fa-times-circle Closed" style="position:absolute;right:0;margin-top:-2px;" id="RolesSearchCancelBtn{id}"></button>
+				<input type="text" class="FullWidth" placeholder="{i18n_search}" style="padding-right:21px">
+			</div>
+			<div class="HContent15 FloatLeft Relative">
+				<button class="IconButton IconMedium ButtonSmall Negative FloatRight fa-plus-circle Open" id="RolesEdit{id}"></button>
+			</div>
+		</div>
+		<!--<div class="Box Padding" id="RolesGui{id}">-->
+		<div id="RolesGui{id}">
+			{roles}
+		</div>
+	</div>
+	

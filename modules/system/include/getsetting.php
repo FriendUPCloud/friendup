@@ -60,7 +60,10 @@ else
 	// Only check permissions if userid is defined ...
 	if( isset( $args->args->userid ) )
 	{
-		if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 'PERM_LOOKNFEEL_GLOBAL', 'PERM_LOOKNFEEL_WORKGROUP' ], 'user', ( isset( $args->args->userid ) ? $args->args->userid : $User->ID ) ) )
+		if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 
+			'PERM_LOOKNFEEL_READ_GLOBAL', 'PERM_LOOKNFEEL_READ_IN_WORKGROUP', 
+			'PERM_LOOKNFEEL_GLOBAL',      'PERM_LOOKNFEEL_WORKGROUP' 
+		], 'user', ( isset( $args->args->userid ) ? $args->args->userid : $User->ID ) ) )
 		{
 			if( is_object( $perm ) )
 			{
@@ -206,7 +209,9 @@ else if ( isset( $args->args->setting ) )
 		
 		// Draw letters
 		$color = imagecolorallocate( $img, 255, 255, 255 );
-		$initials = explode( ' ', ( isset( $args->args->fullname ) ? trim( $args->args->fullname ) : $User->FullName ) );
+		$initials = isset( $args->args->fullname ) ? trim( $args->args->fullname ) : $User->FullName;
+		$initials = mb_convert_encoding( $initials, 'ISO-8859-1', 'UTF-8' );
+		$initials = explode( ' ', $initials );
 		$initials = strtoupper( count( $initials ) > 1 ? $initials[0]{0} . $initials[1]{0} : substr( $initials[0], 0, 2 ) );
 		$dims = getsetting_calculateTextBox( $initials, $font, 88, 0 );
 		imagettftext( $img, 88, 0, 128 - ( $dims[ 'width' ] >> 1 ) - $dims[ 'left' ], 128 + ( $dims[ 'height' ] >> 1 ) + ( $dims[ 'height' ] - $dims[ 'top' ] ), $color, $font, $initials );

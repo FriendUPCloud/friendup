@@ -119,7 +119,7 @@ Http *USAWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		el = HttpGetPOSTParameter( request, "username" );
 		if( el != NULL )
 		{
-			usrname = UrlDecodeToMem( (char *)el->data );
+			usrname = UrlDecodeToMem( (char *)el->hme_Data );
 			DEBUG( "[USAWebRequest] Update usrname %s!!\n", usrname );
 		}
 		
@@ -129,10 +129,10 @@ Http *USAWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		} // missing parameters
 		else
 		{
-			char buffer[ 256 ];
+			char buffer[ 512 ];
 			char buffer1[ 256 ];
 			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, password" );
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, buffer );
 			
 			
@@ -164,7 +164,7 @@ Http *USAWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		

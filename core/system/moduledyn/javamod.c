@@ -130,74 +130,24 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 		return NULL;
 	}
 	
-	//char *buffer = NULL;
-	char *temp = NULL;
-	char *result = NULL;
-	char *gptr = NULL;
-	
-	
-	// List of chunks
-	struct linkedCharArray *chr = calloc( 1, sizeof( struct linkedCharArray ) );
-	struct linkedCharArray *lnk = chr;
-	
-	DEBUG("[PHPmod] command launched\n");
-	int errors = 0;
-	
+	char buffer[ LBUFFER_SIZE ];
+	BufString *bs = BufStringNew();
 	while( !feof( pipe ) )
 	{
-		// Make a new buffer and read
-		lnk->data = calloc( LBUFFER_SIZE + 1, sizeof( char ) );
-		if( !lnk->data )
-		{
-			lnk->next = NULL;
-			errors++;
-			break;
-		}
-		int reads = fread( lnk->data, sizeof( char ), LBUFFER_SIZE, pipe );
+		int reads = fread( buffer, sizeof( char ), LBUFFER_SIZE, pipe );
 		if( reads > 0 )
 		{
-			lnk->length = reads;
-			
-			// This is how the total size is now
-			res += reads;
+			BufStringAddSize( bs, buffer, reads );
 		}
-		struct linkedCharArray *l = calloc( 1, sizeof( struct linkedCharArray ) );
-		lnk->next = ( void *)l;
-		lnk = l;
 	}
-	 
-	//DEBUG("[PHPmod] received bytes %d  : %100s\n", bs->bs_Size, bs->bs_Buffer );
 	
 	// Free buffer if it's there
 	pclose( pipe );
 	
-	// Set the length
-	if( length != NULL ) *length = res;
+	char *final = bs->bs_Buffer;
+	bs->bs_Buffer = NULL;
+	BufStringDelete( bs );
 	
-	// Put the new string together
-	char *final = calloc( res + 1, sizeof( char ) );
-	lnk = chr;
-	int offset = 0;
-	struct linkedCharArray *tmp = NULL;
-	do
-	{
-		if( lnk->data && lnk->length )
-		{
-			memcpy( final + offset, lnk->data, lnk->length );
-			offset += lnk->length;
-			free( lnk->data ); 
-		}
-		tmp = lnk->next;
-		free( lnk );
-	}
-	while( ( lnk = tmp ) != NULL );
-	
-	// Don't accept errors
-	if( errors > 0 )
-	{
-		free( final ); free( command ); free( epath ); free( earg );
-		return NULL;
-	}
 	DEBUG( "[Javamod] We are now complete..\n" );
 	free( command ); free( epath ); free( earg );
 	return final;
@@ -462,7 +412,7 @@ const char *GetSuffix()
 		printf("[PHPmod] Closing busniess\n");
 	}
 	
-	printf("[PHPmod] Before free app ----readed %ld\n", res );
+	printf("[PHPmod] Before free app ----read %ld\n", res );
 	*length = (int)res;
 	
 	free( app );

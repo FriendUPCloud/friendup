@@ -348,7 +348,7 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 				if( df->df_ID == ID_HTTP )
 				{
 					Http *http = HttpNew( );
-					http->parsedPostContent = HashmapNew();
+					http->http_ParsedPostContent = HashmapNew();
 					char temp[ 1024 ];
 					char *pathParts[ 1024 ];
 					memset( pathParts, 0, 1024*sizeof(char *) );
@@ -470,7 +470,7 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 										DEBUG("[CommServiceRemote] Mem allocated for data %p\n",  param );
 									}
 									//char *param = StringDuplicateN( val, parsize );
-									if( HashmapPut( http->parsedPostContent, StringDuplicate( attr ), param ) == MAP_OK )
+									if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( attr ), param ) == MAP_OK )
 									{
 										DEBUG("[CommServiceRemote] New values passed to POST - %s - %.10s -\n", attr, val );
 									}
@@ -490,9 +490,9 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 						}
 					}
 					
-					http->h_Socket = socket;
-					http->h_RequestSource = HTTP_SOURCE_FC;
-					http->h_ResponseID = responseID;
+					http->http_Socket = socket;
+					http->http_RequestSource = HTTP_SOURCE_FC;
+					http->http_ResponseID = responseID;
 					DEBUG2("-----------------------------Calling SYSBASE via CommuncationService: %s\n\n", (pathParts[ 1 ]) );
 					
 					SystemBase *lsysbase = (SystemBase *) serv->csr_SB;
@@ -502,18 +502,18 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 						Http *response = lsysbase->SysWebRequest( lsysbase, &(pathParts[ 1 ]), &http, NULL, &respcode );
 						if( response != NULL )
 						{
-							*isStream = response->h_Stream;
+							*isStream = response->http_Stream;
 							MsgItem tags[] = {
 								{ ID_FCRE, (FULONG)0, MSG_GROUP_START },
 								{ ID_FRID, (FULONG)responseID , MSG_INTEGER_VALUE },
-								{ ID_RESP, (FULONG)response->sizeOfContent+1, (FULONG)response->content },
+								{ ID_RESP, (FULONG)response->http_SizeOfContent+1, (FULONG)response->http_Content },
 								//{ MSG_GROUP_END, 0,  0 },
 								{ TAG_DONE, TAG_DONE, TAG_DONE }
 							};
 							
 							actDataForm = DataFormNew( tags );
 							
-							DEBUG("[CommServiceRemote] Messsage received from systembase, responseid %lu\n", actDataForm[ 1 ].df_Size );
+							DEBUG("[CommServiceRemote] Messsage received from systembase, responseid %lu response: %s\n", actDataForm[ 1 ].df_Size, response->http_Content );
 							
 							HttpFree( response );
 						}
@@ -545,6 +545,8 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
  */
 int CommServiceRemoteThreadServer( FThread *ptr )
 {
+	pthread_detach( pthread_self() );
+	
 	CommServiceRemote *service = (CommServiceRemote *)ptr->t_Data;
 	
 	DEBUG("[CommServiceRemote]  Start\n");
@@ -562,8 +564,9 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 		#endif
 		if( SocketListen( service->csr_Socket ) != 0 )
 		{
-			SocketDelete( service->csr_Socket );
+			service->csr_Socket->s_Interface->SocketDelete( service->csr_Socket );
 			FERROR("[CommServiceRemote]  Cannot listen on socket!\n");
+			pthread_exit( NULL );
 			return -1;
 		}
 		
@@ -735,6 +738,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 		if( service->csr_Epollfd == -1 )
 		{
 			FERROR( "[CommServiceRemote]  poll_create\n" );
+			pthread_exit( NULL );
 			return -1;
 		}
 		
@@ -747,6 +751,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 		if( epoll_ctl( service->csr_Epollfd, EPOLL_CTL_ADD, service->csr_Socket->fd, &mevent ) == -1 )
 		{
 			FERROR( "[CommServiceRemote]  epoll_ctl" );
+			pthread_exit( NULL );
 			return -1;
 		}
 		
@@ -818,7 +823,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 						// Remove event
 						epoll_ctl( service->csr_Epollfd, EPOLL_CTL_DEL, sock->fd, NULL );
 
-						SocketDelete( sock );
+						sock->s_Interface->SocketDelete( sock );
 						sock = NULL;
 
 						DEBUG("[CommServiceRemote] socket closed\n");
@@ -832,7 +837,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 						{
 							FERROR("-=================RECEIVED========================-\n");
 							
-							incomming = SocketAccept( service->csr_Socket );
+							incomming = service->csr_Socket->s_Interface->SocketAccept( service->csr_Socket );
 							if( incomming == NULL )
 							{
 								// We have processed all incoming connections.
@@ -910,7 +915,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 						if( sock != NULL )
 						{
 							//bs = SocketReadPackage( sock );
-							bs = SocketReadTillEnd( sock, 0, 15 );
+							bs = sock->s_Interface->SocketReadTillEnd( sock, 0, 15 );
 						}
 						else
 						{
@@ -958,7 +963,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 										
 										if( isStream == FALSE )
 										{
-											wrote = SocketWrite( sock, (char *)recvDataForm, (FLONG)recvDataForm->df_Size );
+											wrote = sock->s_Interface->SocketWrite( sock, (char *)recvDataForm, (FLONG)recvDataForm->df_Size );
 										}
 										DEBUG2("[CommServiceRemote] Wrote bytes %d\n", wrote );
 										
@@ -982,7 +987,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 										
 										DEBUG2("[CommServiceRemote] Service, send message to socket, size %lu\n", tmpfrm->df_Size );
 										
-										SocketWrite( sock, (char *)tmpfrm, (FLONG)tmpfrm->df_Size );
+										sock->s_Interface->SocketWrite( sock, (char *)tmpfrm, (FLONG)tmpfrm->df_Size );
 										
 										DataFormDelete( tmpfrm );
 									}
@@ -1005,7 +1010,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 								}
 							}
 						}
-						SocketDelete( sock );
+						service->csr_Socket->s_Interface->SocketDelete( sock );
 					}
 				}//end for through events
 			} //end while
@@ -1031,7 +1036,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 		
 		#endif
 		
-		SocketDelete( service->csr_Socket );
+		service->csr_Socket->s_Interface->SocketDelete( service->csr_Socket );
 	}
 	else
 	{
@@ -1042,6 +1047,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 	
 	ptr->t_Launched = FALSE;
 	
+	pthread_exit( NULL );
 	return 0;
 }
 

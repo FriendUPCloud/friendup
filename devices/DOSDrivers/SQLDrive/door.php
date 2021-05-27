@@ -25,7 +25,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 		{
 			global $args;
 			$this->fileInfo = isset( $args->fileInfo ) ? $args->fileInfo : new stdClass();
-			$defaultDiskspace = 536870912;
+			$defaultDiskspace = 500000000;
 			if( isset( $this->Config ) && strlen( $this->Config) > 3 )
 			{
 				$this->configObject = json_decode( $this->Config );
@@ -38,19 +38,19 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					{
 						case 'kb':
 							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
-							$nn = intval( $nn, 10 ) * 1024;
+							$nn = intval( $nn, 10 ) * 1000;
 							break;
 						case 'mb':
 							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
-							$nn = intval( $nn, 10 ) * 1024 * 1024;
+							$nn = intval( $nn, 10 ) * 1000 * 1000;
 							break;
 						case 'gb':
 							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
-							$nn = intval( $nn, 10 ) * 1024 * 1024 * 1024;
+							$nn = intval( $nn, 10 ) * 1000 * 1000 * 1000;
 							break;
 						case 'tb':
 							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
-							$nn = intval( $nn, 10 ) * 1024 * 1024 * 1024 * 1024;
+							$nn = intval( $nn, 10 ) * 1000 * 1000 * 1000 * 1000;
 							break;
 						default:
 							$nn = intval( $ds, 10 );
@@ -70,6 +70,18 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				// 500 megabytes
 				define( 'SQLDRIVE_FILE_LIMIT', $defaultDiskspace );
 			}
+		}
+		
+		// Remove unwanted characters
+		private function safeFilename( $filename, $mode = 'normal' )
+		{
+			if( $mode == 'simple' )
+			{
+				$filename = str_replace( array( "\n", "\t", "\r" ), '', $filename );
+				return $filename;
+			}
+			$filename = str_replace( array( "\n", "\t", "\r", "/" ), '', $filename );
+			return $filename;
 		}
 		
 		// Public functions --------------------------------------------
@@ -267,7 +279,10 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						$fldInfo = new stdClass();
 						$fldInfo->Type = 'Directory';
 						$fldInfo->MetaType = $fldInfo->Type;
-						$fldInfo->Path = end( explode( ':', $path ) );
+						
+						$end = explode( ':', $path );
+						$fldInfo->Path = end( $end );
+						
 						$fldInfo->Filesize = 0;
 						$fldInfo->Filename = $sp->Name;
 						$fldInfo->DateCreated = $sp->DateCreated;
@@ -296,15 +311,19 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					// Create a file object
 					$f = new dbIO( 'FSFile' );
 					$f->FilesystemID = $this->ID;
-					$fname = end( explode( ':', $args->path ) );
-					$fname = end( explode( '/', $fname ) );
+					$fname = explode( ':', $args->path );
+					$fname = end( $fname );
+					$fname = explode( '/', $fname );
+					$fname = end( $fname );
 					$f->Filename = $fname;
 					//$f->UserID = $User->ID; // TODO: Add for security!
 					$f->FolderID = '0';
 					$fn = '';
 	
 					// Can we get sub folder?
-					if( isset( $args->path ) && $subPath = trim( end( explode( ':', $args->path ) ) ) )
+					$test = explode( ':', $args->path );
+					$test = end( $test );
+					if( isset( $args->path ) && $subPath = trim( $test ) )
 					{	
 						// Remove filename
 						if( substr( $subPath, -1, 1 ) != '/' && strstr( $subPath, '/' ) )
@@ -351,6 +370,8 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			}
 			else if( $args->command == 'write' )
 			{
+				set_time_limit( 0 );
+			
 				// We need to check how much is in our database first
 				$deletable = false;
 				$total = 0;
@@ -359,7 +380,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					WHERE u.UserID=\'' . $User->ID . '\' AND FilesystemID = \'' . $this->ID . '\'
 				' ) )
 				{
-					$total = $sum->z;
+					$total = intval( $sum->z, 10 );
 				}
 				
 				// Create a file object
@@ -382,7 +403,10 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				// Get by path (subfolder)
 				$subPath = $testPath = false;
 				if( is_string( $path ) && strstr( $path, ':' ) )
-					$testPath = $subPath = end( explode( ':', $path ) );
+				{
+					$subPath = explode( ':', $path );
+					$testPath = $subPath = end( $subPath );
+				}
 				
 				// Remove filename
 				if( substr( $subPath, -1, 1 ) != '/' && strstr( $subPath, '/' ) )
@@ -428,6 +452,8 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						$fn = explode( '/', $fn );
 						$fn = $fn[1];
 					}
+
+					$Logger->log( 'Before write file' );
 	
 					// Write the file
 				
@@ -448,51 +474,78 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							else $fn .= rand(0,99999); 
 						}
 					}
+
+					$Logger->log( 'Before w+' );
 				
 					if( $file = fopen( $wname . $fn, 'w+' ) )
 					{
 						// Delete existing file
 						if( $deletable ) unlink( $deletable );
 					
+						$Logger->log( 'is test' );
 						if( isset( $args->tmpfile ) )
 						{
+							$Logger->log( 'exist?' );
 							if( file_exists( $args->tmpfile ) )
 							{
+								$Logger->log( 'exist!' );
 								fclose( $file );
 								$len = filesize( $args->tmpfile );
-							
-								// TODO: UGLY WORKAROUND, FIX IT!
-								//       We need to support base64 streams
-								if( $fr = fopen( $args->tmpfile, 'r' ) )
+								
+								if( $len > 0 )
 								{
-									$string = fread( $fr, 32 );
-									fclose( $fr );
-									if( substr( urldecode( $string ), 0, strlen( '<!--BASE64-->' ) ) == '<!--BASE64-->' )
+									$Logger->log( 'workaround?' );
+									// TODO: UGLY WORKAROUND, FIX IT!
+									//       We need to support base64 streams
+									if( $fr = fopen( $args->tmpfile, 'r' ) )
 									{
-										$fr = file_get_contents( $args->tmpfile );
-										$fr = base64_decode( end( explode( '<!--BASE64-->', urldecode( $fr ) ) ) );
-										if( $fo = fopen( $args->tmpfile, 'w' ) )
+										$string = fread( $fr, 32 );
+										fclose( $fr );
+										if( substr( urldecode( $string ), 0, strlen( '<!--BASE64-->' ) ) == '<!--BASE64-->' )
 										{
-											fwrite( $fo, $fr );
-											fclose( $fo );
+											// TODO: Add filesize limit!
+											$Logger->log( '[SqlDrive] Trying to read the temp file! May crash!' );
+											$fr = file_get_contents( $args->tmpfile );
+											$fr = base64_decode( end( explode( '<!--BASE64-->', urldecode( $fr ) ) ) );
+											if( $fo = fopen( $args->tmpfile, 'w' ) )
+											{
+												fwrite( $fo, $fr );
+												fclose( $fo );
+											}
+										}
+										else
+										{
+											$Logger->log( '[SqlDrive] Not reading temp file, because it\'s not base 64. Plain move commencing.' );
 										}
 									}
-								}
 
-								if( $total + $len < SQLDRIVE_FILE_LIMIT )
-								{
-									rename( $args->tmpfile, $wname . $fn );
+									if( $total + $len < SQLDRIVE_FILE_LIMIT )
+									{
+										$Logger->log( '[SqlDrive] Moving tmp file ' . $args->tmpfile . ' to ' . $wname . $fn . ' because ' . ( $total + $len ) . ' < ' . SQLDRIVE_FILE_LIMIT );
+										
+										$res = rename( $args->tmpfile, $wname . $fn );
+										
+										if( !$res )
+										{
+											$Logger->log( '[SqlDrive] Failed to move file.' );
+											die( 'fail<!--separate-->{"response":"-1","message":"Failed to move temp file."}' );
+										}
+									}
+									else
+									{
+										$Logger->log( 'fail<!--separate-->Limit broken' );
+										die( 'fail<!--separate-->{"response":"-1","message":"Limit broken"}' );
+									}
 								}
 								else
 								{
-									$Logger->log( 'fail<!--separate-->Limit broken' );
-									die( 'fail<!--separate-->Limit broken' );
+									// Write a null byte file...
 								}
 							}
 							else
 							{
 								$Logger->log( 'fail<!--separate-->Tempfile does not exist!' );
-								die( 'fail<!--separate-->Tempfile does not exist!' );
+								die( 'fail<!--separate-->{"response","-1","message":"Tempfile does not exist"}' );
 							}
 						}
 						else
@@ -505,21 +558,48 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							else
 							{
 								fclose( $file );
-								$Logger->log( 'fail<!--separate-->Limit broken ' . SQLDRIVE_FILE_LIMIT );
-								die( 'fail<!--separate-->Limit broken' );
+								die( 'fail<!--separate-->{"response":"-1","message":"Limit broken"}' );
 							}
 						}
 					
 						// Sanitize username
 						$uname = str_replace( array( '..', '/', ' ' ), '_', $User->Name );
 					
-						$Logger->log( '[SQLDRIVE] WRITING ' . $uname . '/' . $fn . ' -> ' . $f->Filename . ' in ' . $subPath );
+						//$Logger->log( '[SQLDRIVE] WRITING ' . $uname . '/' . $fn . ' -> ' . $f->Filename . ' in ' . $subPath );
 					
 						$f->DiskFilename = $uname . '/' . $fn;
 						$f->Filesize = filesize( $wname. $fn );
+						//$Logger->log( '[SQLDRIVE] WRITING done, size: ' . $f->Filesize );
 						if( !$f->DateCreated ) $f->DateCreated = date( 'Y-m-d H:i:s' );
 						$f->DateModified = date( 'Y-m-d H:i:s' );
+						//$Logger->log( '[SQLDRIVE] WRITING store in DB' );
 						$f->Save();
+						//$Logger->log( '[SQLDRIVE] WRITING stored in db - recordID is ' . $f->ID . ' (Err: ' . $f->_lastError . ')' . ' -> ' . $f->_lastQuery );
+						
+						// Update latest StoredBytes for this Filesystem
+						if( $this->ID > 0 && $User->ID > 0 )
+						{
+							$sbytes = 0;
+							if( $sum = $SqlDatabase->FetchObject( '
+								SELECT SUM(u.Filesize) z FROM FSFile u 
+								WHERE u.UserID=\'' . $User->ID . '\' AND FilesystemID = \'' . $this->ID . '\'
+							' ) )
+							{
+								$sbytes = intval( $sum->z, 10 );
+							
+								$fs = new dbIO( 'Filesystem' );
+								$fs->ID     = $this->ID;
+								$fs->UserID = $User->ID;
+								if( $fs->Load() && $sbytes > 0 )
+								{
+									$Logger->log( '[SQLDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
+									
+									$fs->StoredBytes = $sbytes;
+									$fs->Save();
+								}
+							}
+						}
+						
 						return 'ok<!--separate-->' . $len . '<!--separate-->' . $f->ID;
 					}
 				}
@@ -534,6 +614,8 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				
 				$fname = explode( ':', $args->path );
 				$fname = end( $fname );
+
+				set_time_limit( 0 );
 				
 				$subPath = $fname;
 				
@@ -595,8 +677,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						{
 							//US-230 This is a memory friendly way to dump a file :-)
 							//Previously the download got broken at 94MB (or another file size depending on php.ini)
-							ob_end_clean(); 
-							readfile($fname);
+							set_time_limit( 0 );
+							ob_end_clean();
+							readfile( $fname );
 							die();
 						}
 						// Return ok
@@ -608,8 +691,12 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							return $okRet . base64_encode( file_get_contents( $fname ) );
 						}
 					
-						friendHeader( 'Content-Length: ' . filesize( $fname ) + strlen( $okRet ) );
+						friendHeader( 'Content-Length: ' . ( filesize( $fname ) + strlen( $okRet ) ) );
 						return $okRet . trim( file_get_contents( $fname ) );
+					}
+					else
+					{
+						return 'fail<!--separate-->{"response":"could not read file, file does not exist"}';
 					}
 				}
 				return 'fail<!--separate-->{"response":"could not read file"}'; //Could not read file: ' . $Config->FCUpload . $fn . '<!--separate-->' . print_r( $f, 1 );
@@ -707,6 +794,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						die( 'ok' );
 					case 'rename':
 						ob_clean();
+						
+						$args->newname = $this->safeFilename( $args->newname );
+						
 						// Is it a folder?
 						if( substr( $path, -1, 1 ) == '/' )
 						{
@@ -786,12 +876,17 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							
 						if( $path )
 						{
+							$path= $this->safeFilename( $path, 'simple' );
+							
 							$f = new DbIO( 'FSFolder' );
 		
 							// Get by path (subfolder)
 							$subPath = $testPath = false;
 							if( is_string( $path ) && strstr( $path, ':' ) )
-								$testPath = $subPath = end( explode( ':', $path ) );
+							{
+								$testPath = explode( ':', $path );
+								$testPath = $subPath = end( $testPath );
+							}
 						
 							// Remove filename
 							$fo = false;
@@ -822,14 +917,18 @@ if( !class_exists( 'DoorSQLDrive' ) )
 								if( substr( $name, -1, 1 ) == '/' )
 									$name = substr( $name, 0, strlen( $name ) - 1 );
 								if( strstr( $name, '/' ) )
-									$name = end( explode( '/', $name ) );
+								{
+								    $name = explode( '/', $name );
+								    $name = end( $name );
+								}
 						
 								if( trim( $name ) )
 								{
 									$name = trim( $name );
 									if( substr( $name, -1, 1 ) == '/' )
 										$name = substr( $name, 0, strlen( $name ) - 1 );
-									$newFolder = end( explode( '/', $name ) );
+									$newFolder = explode( '/', $name );
+									$newFolder = end( $newFolder );
 									$f->FilesystemID = $this->ID;
 									$f->Name = $newFolder;
 									$f->UserID = $User->ID;
@@ -857,6 +956,30 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						{
 							if( $this->deleteFile( $path, true ) )
 							{
+								// Update latest StoredBytes for this Filesystem
+								if( $this->ID > 0 && $User->ID > 0 )
+								{
+									$sbytes = 0;
+									if( $sum = $SqlDatabase->FetchObject( '
+										SELECT SUM(u.Filesize) z FROM FSFile u 
+										WHERE u.UserID=\'' . $User->ID . '\' AND FilesystemID = \'' . $this->ID . '\'
+									' ) )
+									{
+										$sbytes = intval( $sum->z, 10 );
+									}
+									
+									$fs = new dbIO( 'Filesystem' );
+									$fs->ID     = $this->ID;
+									$fs->UserID = $User->ID;
+									if( $fs->Load() )
+									{
+										$Logger->log( '[SQLDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
+								
+										$fs->StoredBytes = $sbytes;
+										$fs->Save();
+									}
+								}
+								
 								return 'ok';
 							}
 						}
@@ -866,6 +989,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					case 'copy':
 						$from = isset( $args->from ) ? $args->from : ( isset( $args->args->from ) ? $args->args->from : false );
 						$to   = isset( $args->to )   ? $args->to   : ( isset( $args->args->to )   ? $args->args->to   : false );
+						
+						$to = $this->safeFilename( $to, 'simple' );
+						
 						if( isset( $from ) && isset( $to ) )
 						{
 							//$Logger->log( 'Trying from ' . $from . ' to ' . $to );
@@ -1277,7 +1403,10 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				$fi->FilesystemID = $this->ID;
 				$fi->FolderID = $fo ? $fo->ID : '0';
 				if( strstr( $path, '/' ) )
-					$fi->Filename = end( explode( '/', $path ) );
+				{
+				    $fi->Filename = explode( '/', $path );
+				    $fi->Filename = end( $fi->Filename );
+				}
 				else $fi->Filename = end( explode( ':', $path ) );
 				$fi->Filename = str_replace( "'", "\\'", $fi->Filename );
 				$fi->Load();

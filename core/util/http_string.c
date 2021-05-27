@@ -37,12 +37,11 @@ HttpString *HttpStringNew( int bufsize )
 		
 		if( ( str->ht_Buffer = FCalloc( str->ht_Bufsize + 1, sizeof( char ) ) ) != NULL )
 		{
-			return str;
+			
 		}
-		FFree( str );
 	}
 	
-	return NULL;
+	return str;
 }
 
 //
@@ -110,15 +109,17 @@ int HttpStringAdd( HttpString *bs, const char *ntext, int len )
 		return 0;
 	}
 	
-	//FERROR("\n\n\n\n\requestnot null!!!%p\n\n\n\n\n", bs->ht_Reqest);
+	/*
+	//FERROR("requestnot null!!!%p\n", bs->ht_Reqest);
 	if( bs->ht_Reqest != NULL )
 	{
-		//FERROR("\n\n\n\n\requestnot null!!!\n\n\n\n\n");
-		if( bs->ht_Reqest->h_ContentType == HTTP_CONTENT_TYPE_MULTIPART )
+		//FERROR("requestnot null!!!\n");
+		if( bs->ht_Reqest->http_ContentType == HTTP_CONTENT_TYPE_MULTIPART )
 		{
-			//FERROR("\n\n\n\n\nMULTIPART!!!\n\n\n\n\n");
+			//FERROR("MULTIPART!!!\n");
 		}
 	}
+	*/
 		
 	int addsize = len;
 	//	int modsize = (bs->bs_Size / bs->bs_MAX_SIZE) * bs->bs_MAX_SIZE;

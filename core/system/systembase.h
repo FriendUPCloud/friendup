@@ -30,6 +30,7 @@
 
 #include <util/hooks.h>
 #include <util/hashmap.h>
+#include <util/hashmap_long.h>
 #include <util/tagitem.h>
 #include <util/base64.h>
 #include "auth/authmodule.h"
@@ -50,7 +51,6 @@
 #include <system/cache/cache_manager.h>
 #include <libwebsockets.h>
 #include <system/invar/invar_manager.h>
-#include <system/application/app_session_manager.h>
 #include <system/user/user_session.h>
 #include <system/user/user_sessionmanager.h>
 #include <system/roles/role_manager.h>
@@ -70,6 +70,10 @@
 #include <system/mobile/mobile_manager.h>
 #include <system/calendar/calendar_manager.h>
 #include <system/notification/notification_manager.h>
+#include <system/security/security_manager.h>
+#include <system/sas/sas_manager.h>
+#include <system/application/application_manager.h>
+#include <system/support/support_manager.h>
 
 #include <interface/socket_interface.h>
 #include <interface/string_interface.h>
@@ -79,6 +83,7 @@
 #include <interface/comm_service_interface.h>
 #include <interface/comm_service_remote_interface.h>
 #include <interface/properties_interface.h>
+#include <interface/util_interface.h>
 #include <core/event_manager.h>
 #include <system/cache/cache_uf_manager.h>
 #include <db/sqllib.h>
@@ -101,6 +106,8 @@
 #define MODULE_FILE_CALL_STRING "friendrequestparameters=%s"
 #define MODULE_FILE_CALL_STRING_LEN 24
 
+#define MODULE_PATH_LENGTH	768
+
 //
 // Exit code list
 //
@@ -109,6 +116,25 @@ enum {
 	EXIT_CODE_DUMMY = 0,
 	EXIT_CODE_LOCK,
 	EXIT_CODE_CONTROLLED
+};
+
+//
+// Login/Logout calls
+//
+
+enum {
+	LL_NONE = 0,
+	LL_LOGIN,
+	LL_LOGOUT
+};
+
+//
+// Registered modules have each a module set
+//
+
+struct ModuleSet {
+	char *name;
+	char *extension;
 };
 
 //
@@ -201,8 +227,9 @@ enum {
 
 typedef struct SQLConPool
 {
-	int inUse;
-	SQLLibrary *sqllib;
+	int				sql_ID;			// ID
+//	int				sqlcp_InUse;	// is in use
+	SQLLibrary		*sqll_Sqllib;	// pointer to library
 }SQLConPool;
 
 //
@@ -226,7 +253,7 @@ typedef struct SystemBase
 
 	DeviceManager					*sl_DeviceManager;	// DeviceManager
 	WorkerManager					*sl_WorkerManager; ///< Worker Manager
-	AppSessionManager				*sl_AppSessionManager;		// application sessions
+	ApplicationManager				*sl_ApplicationManager;		// application
 	UserSessionManager				*sl_USM;			// user session manager
 	UserManager						*sl_UM;		// user manager
 	UserGroupManager				*sl_UGM;	// user group manager
@@ -246,6 +273,9 @@ typedef struct SystemBase
 	NotificationManager				*sl_NotificationManager;	// Notification Manager
 	PermissionManager				*sl_PermissionManager;		// Permission Manager
 	RoleManager						*sl_RoleManager;	// Role Manager
+	SecurityManager					*sl_SecurityManager;	// Security Manager
+	SASManager						*sl_SASManager;			// SAS Manager
+	SupportManager					*sl_SupportManager;		// Support Manager
 
 	pthread_mutex_t 				sl_ResourceMutex;	// resource mutex
 	pthread_mutex_t					sl_InternalMutex;		// internal slib mutex
@@ -254,11 +284,13 @@ typedef struct SystemBase
 	AuthMod							*sl_ActiveAuthModule;	// active login module
 	AuthMod							*sl_DefaultAuthModule;  //
 	char 							*sl_ModuleNames;		// name of modules which will be used
+	List                            *sl_AvailableModules;   // available modules with extension
 	char 							*sl_ActiveModuleName;	// name of active module
 	char							*sl_DefaultDBLib;		// default DB library name
 	time_t							sl_RemoveSessionsAfterTime;	// time after which session will be removed
 	int								sl_MaxLogsInMB;			// Maximum size of logs in log folder in MB ( if > then old ones will be removed)
 	char							*sl_MasterServer;		// FriendCore master server
+	int								sl_RemoveOldSessionTimeout;	// Time in seconds after which old sessions will be removed
 	
 	//
 	// 60 seconds
@@ -290,6 +322,7 @@ typedef struct SystemBase
 	CommServiceInterface			sl_CommServiceInterface;	// communication interface
 	CommServiceRemoteInterface		sl_CommServiceRemoteInterface;	// communication remote interface
 	PropertiesInterface				sl_PropertiesInterface;	// communication remote interface
+	UtilInterface					sl_UtilInterface; // util interface
 	
 	EModule							*sl_PHPModule;
 
@@ -346,7 +379,7 @@ typedef struct SystemBase
 
 	void							(*LibraryImageDrop)( struct SystemBase *sb, ImageLibrary *pl );
 	
-	int								(*UserDeviceMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
+	int								(*UserDeviceMount)( struct SystemBase *l, User *usr, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
 	
 	int								(*UserDeviceUnMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr );
 	
@@ -358,7 +391,7 @@ typedef struct SystemBase
 	
 	int								(*WebSocketSendMessageInt)( UserSession *usersession, char *msg, int len );
 	
-	int								(*WebsocketWrite)( UserSessionWebsocket *wscl, unsigned char *msgptr, int msglen, int type );
+	int								(*WebsocketWrite)( UserSession *wscl, unsigned char *msgptr, int msglen, int type );
 	
 	int								(*SendProcessMessage)( Http *request, char *data, int len );
 
@@ -389,7 +422,10 @@ typedef struct SystemBase
 	char							**l_ServerKeyValues;
 	int								l_ServerKeysNum;
 	
-	WebsocketAPNSConnector			*l_APNSConnection;
+	struct LSocketInterface_t		l_SocketISSL;
+	struct LSocketInterface_t		l_SocketINOSSL;
+	
+	int								l_HttpCompressionContent;	// information which compression is supported by the server
 } SystemBase;
 
 
@@ -404,6 +440,12 @@ SystemBase *SystemInit( void );
 //
 
 UserGroup *LoadGroups( struct SystemBase *sb );
+
+//
+// Just get unixtime now
+//
+
+int GetUnixTime();
 
 //
 //
@@ -511,7 +553,7 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len );
 //
 //
 
-int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
+int UserDeviceMount( SystemBase *l, User *usr, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
 
 //
 //
@@ -555,9 +597,9 @@ extern SystemBase *SLIB;
 
 static inline HashmapElement *GetHEReq( Http *request, char *param )
 {
-	HashmapElement *tst = HashmapGet( request->parsedPostContent, param );
-	if( tst == NULL ) tst = HashmapGet( request->query, param );
-	if( tst && tst->data == NULL ) return NULL;
+	HashmapElement *tst = HashmapGet( request->http_ParsedPostContent, param );
+	if( tst == NULL ) tst = HashmapGet( request->http_Query, param );
+	if( tst && tst->hme_Data == NULL ) return NULL;
 	return tst;
 }
 

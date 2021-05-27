@@ -308,6 +308,7 @@ class DbTable
 						$value = str_replace( "'", "", $value );
 						if( $value == '' ) $value = 0;
 						return "'$value'";
+						
 					case 'datetime':
 					default:
 						$value = stripslashes( $value );
@@ -489,6 +490,8 @@ class DbIO extends DbTable
 	// Save data back into object
 	function Save()
 	{
+		global $Logger;
+		
 		if( !$this->_database )
 		{
 			$this->_lastError = 'No database connection.';
@@ -707,7 +710,7 @@ class DbIO extends DbTable
 					$wheres[] = "`$v`=" . $this->EncapsulateField( $v, $this->$v );
 				}
 			}
-			if( count( $this->_where ) )
+			if( is_array( $this->_where ) && count( $this->_where ) )
 			{
 				foreach( $this->_where as $ar )
 				{
@@ -716,7 +719,7 @@ class DbIO extends DbTable
 					else $wheres[] = "`$ar[0]`=" . $this->EncapsulateField( $ar[0], $ar[1] );
 				}
 			}
-			if( count( $this->_orderBy ) )
+			if( is_array( $this->_orderBy ) && count( $this->_orderBy ) )
 			{
 				foreach( $this->_orderBy as $ar )
 					$orderby[] = "`$ar[0]` $ar[1]";

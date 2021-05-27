@@ -1,7 +1,7 @@
 /*
  * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -29,14 +29,6 @@
 int asn1_get_choice_selector(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
     int *sel = offset2ptr(*pval, it->utype);
-
-    return *sel;
-}
-
-int asn1_get_choice_selector_const(const ASN1_VALUE **pval, const ASN1_ITEM *it)
-{
-    int *sel = offset2ptr(*pval, it->utype);
-
     return *sel;
 }
 
@@ -48,7 +40,6 @@ int asn1_set_choice_selector(ASN1_VALUE **pval, int value,
                              const ASN1_ITEM *it)
 {
     int *sel, ret;
-
     sel = offset2ptr(*pval, it->utype);
     ret = *sel;
     *sel = value;
@@ -75,7 +66,7 @@ int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
         && (it->itype != ASN1_ITYPE_NDEF_SEQUENCE))
         return 0;
     aux = it->funcs;
-    if (aux == NULL || (aux->flags & ASN1_AFLG_REFCOUNT) == 0)
+    if (!aux || !(aux->flags & ASN1_AFLG_REFCOUNT))
         return 0;
     lck = offset2ptr(*pval, aux->ref_offset);
     lock = offset2ptr(*pval, aux->ref_lock);
@@ -113,33 +104,19 @@ int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
 static ASN1_ENCODING *asn1_get_enc_ptr(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
     const ASN1_AUX *aux;
-
-    if (pval == NULL || *pval == NULL)
+    if (!pval || !*pval)
         return NULL;
     aux = it->funcs;
-    if (aux == NULL || (aux->flags & ASN1_AFLG_ENCODING) == 0)
-        return NULL;
-    return offset2ptr(*pval, aux->enc_offset);
-}
-
-static const ASN1_ENCODING *asn1_get_const_enc_ptr(const ASN1_VALUE **pval,
-                                                   const ASN1_ITEM *it)
-{
-    const ASN1_AUX *aux;
-
-    if (pval == NULL || *pval == NULL)
-        return NULL;
-    aux = it->funcs;
-    if (aux == NULL || (aux->flags & ASN1_AFLG_ENCODING) == 0)
+    if (!aux || !(aux->flags & ASN1_AFLG_ENCODING))
         return NULL;
     return offset2ptr(*pval, aux->enc_offset);
 }
 
 void asn1_enc_init(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-    ASN1_ENCODING *enc = asn1_get_enc_ptr(pval, it);
-
-    if (enc != NULL) {
+    ASN1_ENCODING *enc;
+    enc = asn1_get_enc_ptr(pval, it);
+    if (enc) {
         enc->enc = NULL;
         enc->len = 0;
         enc->modified = 1;
@@ -148,9 +125,9 @@ void asn1_enc_init(ASN1_VALUE **pval, const ASN1_ITEM *it)
 
 void asn1_enc_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-    ASN1_ENCODING *enc = asn1_get_enc_ptr(pval, it);
-
-    if (enc != NULL) {
+    ASN1_ENCODING *enc;
+    enc = asn1_get_enc_ptr(pval, it);
+    if (enc) {
         OPENSSL_free(enc->enc);
         enc->enc = NULL;
         enc->len = 0;
@@ -161,9 +138,9 @@ void asn1_enc_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 int asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen,
                   const ASN1_ITEM *it)
 {
-    ASN1_ENCODING *enc = asn1_get_enc_ptr(pval, it);
-
-    if (enc == NULL)
+    ASN1_ENCODING *enc;
+    enc = asn1_get_enc_ptr(pval, it);
+    if (!enc)
         return 1;
 
     OPENSSL_free(enc->enc);
@@ -178,18 +155,18 @@ int asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen,
     return 1;
 }
 
-int asn1_enc_restore(int *len, unsigned char **out, const ASN1_VALUE **pval,
+int asn1_enc_restore(int *len, unsigned char **out, ASN1_VALUE **pval,
                      const ASN1_ITEM *it)
 {
-    const ASN1_ENCODING *enc = asn1_get_const_enc_ptr(pval, it);
-
-    if (enc == NULL || enc->modified)
+    ASN1_ENCODING *enc;
+    enc = asn1_get_enc_ptr(pval, it);
+    if (!enc || enc->modified)
         return 0;
     if (out) {
         memcpy(*out, enc->enc, enc->len);
         *out += enc->len;
     }
-    if (len != NULL)
+    if (len)
         *len = enc->len;
     return 1;
 }
@@ -197,8 +174,8 @@ int asn1_enc_restore(int *len, unsigned char **out, const ASN1_VALUE **pval,
 /* Given an ASN1_TEMPLATE get a pointer to a field */
 ASN1_VALUE **asn1_get_field_ptr(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 {
-    ASN1_VALUE **pvaltmp = offset2ptr(*pval, tt->offset);
-
+    ASN1_VALUE **pvaltmp;
+    pvaltmp = offset2ptr(*pval, tt->offset);
     /*
      * NOTE for BOOLEAN types the field is just a plain int so we can't
      * return int **, so settle for (int *).
@@ -206,40 +183,31 @@ ASN1_VALUE **asn1_get_field_ptr(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
     return pvaltmp;
 }
 
-/* Given an ASN1_TEMPLATE get a const pointer to a field */
-const ASN1_VALUE **asn1_get_const_field_ptr(const ASN1_VALUE **pval,
-                                            const ASN1_TEMPLATE *tt)
-{
-    return offset2ptr(*pval, tt->offset);
-}
-
 /*
  * Handle ANY DEFINED BY template, find the selector, look up the relevant
  * ASN1_TEMPLATE in the table and return it.
  */
 
-const ASN1_TEMPLATE *asn1_do_adb(const ASN1_VALUE *val,
-                                 const ASN1_TEMPLATE *tt,
+const ASN1_TEMPLATE *asn1_do_adb(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt,
                                  int nullerr)
 {
     const ASN1_ADB *adb;
     const ASN1_ADB_TABLE *atbl;
     long selector;
-    const ASN1_VALUE **sfld;
+    ASN1_VALUE **sfld;
     int i;
-
-    if ((tt->flags & ASN1_TFLG_ADB_MASK) == 0)
+    if (!(tt->flags & ASN1_TFLG_ADB_MASK))
         return tt;
 
     /* Else ANY DEFINED BY ... get the table */
     adb = ASN1_ADB_ptr(tt->item);
 
     /* Get the selector field */
-    sfld = offset2ptr(val, adb->offset);
+    sfld = offset2ptr(*pval, adb->offset);
 
     /* Check if NULL */
     if (*sfld == NULL) {
-        if (adb->null_tt == NULL)
+        if (!adb->null_tt)
             goto err;
         return adb->null_tt;
     }
@@ -248,7 +216,7 @@ const ASN1_TEMPLATE *asn1_do_adb(const ASN1_VALUE *val,
      * Convert type to a long: NB: don't check for NID_undef here because it
      * might be a legitimate value in the table
      */
-    if ((tt->flags & ASN1_TFLG_ADB_OID) != 0)
+    if (tt->flags & ASN1_TFLG_ADB_OID)
         selector = OBJ_obj2nid((ASN1_OBJECT *)*sfld);
     else
         selector = ASN1_INTEGER_get((ASN1_INTEGER *)*sfld);

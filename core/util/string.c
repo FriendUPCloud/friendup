@@ -71,9 +71,16 @@ int SafeString ( char **string, int length )
 	if ( ( *string )[length-1] != '\0' )
 	{
 		char *newStr = MakeString ( length );
-		sprintf ( newStr, "%.*s", length, *string );
-		FFree ( *string );
-		*string = newStr;
+		if( newStr != NULL )
+		{
+			sprintf ( newStr, "%.*s", length, *string );
+			FFree ( *string );
+			*string = newStr;
+		}
+		else
+		{
+			return 0;
+		}
 		return length + 1;
 	}
 	return length;
@@ -230,18 +237,26 @@ int StrLenSafeSpaces( char *str )
 
 void AddEscapeChars( char *str )
 {
+	if( str == NULL )
+	{
+		return;
+	}
 	int len = strlen( str );
 	char *tmp = MakeString( len );
-	int i = 0, ii = 0; 
-	for ( ; i < len; i++ )
+	if( tmp != NULL )
 	{
-		if( str[i] == ' ' )
+		int i = 0, ii = 0; 
+		for ( ; i < len; i++ )
 		{
-			tmp[ii++] = '\\';
+			if( str[i] == ' ' )
+			{
+				tmp[ii++] = '\\';
+			}
+			tmp[ii++] = str[i];
 		}
-		tmp[ii++] = str[i];
+		strcpy( str, tmp );
+		FFree( tmp );
 	}
-	strcpy( str, tmp );
 }
 
 //
@@ -250,6 +265,14 @@ void AddEscapeChars( char *str )
 
 FULONG UrlDecode( char* dst, const char* src )
 {
+	// Do not touch non-encoded strings
+	if( strstr( src, "%" ) == NULL )
+	{
+		int len = strlen( src );
+		memcpy( dst, src, len + 1 );
+		return len;
+	}
+	
 	char* org_dst = dst;
 	char ch, a, b;
 	do 
@@ -287,7 +310,16 @@ char *UrlDecodeToMem( const char* src )
 	{
 		return NULL;
 	}
+
+	// Do not touch non-encoded strings
+	if( strstr( src, "%" ) == NULL )
+	{
+		return StringDuplicate( src );
+	}
+
 	int size = strlen( src );
+	
+	
 	//char *dst = FMallocAlign( size + 1);
 	char *dst = FCallocAlign( size + 1, 1 );
 	if( dst == NULL )
@@ -336,23 +368,25 @@ char *UrlEncodeToMem( const char *src )
 	if( _rfc3986[0] == 0 ) _UrlEncodeInitTables();
 	
 	int memsize = ( SHIFT_LEFT( strlen( src ), 2) );
-	//char *enc = FCalloc( ( SHIFT_LEFT( strlen( src ), 2) ), sizeof( char ) );
-	//char *enc = FMallocAlign( memsize );
+	char *res = NULL;
 	char *enc = FCallocAlign( memsize, 1 );
-	char *res = enc;
-	for( ; *src; src++ )
+	if( enc != NULL )
 	{
-		// if we don't have an index on the current character in the 
-		// table, then add it pure, else, encode it
-		if( _rfc3986[ (int)*src ] ) 
+		res = enc;
+		for( ; *src; src++ )
 		{
-			sprintf( enc, "%c", _rfc3986[ (int)*src ] );
+			// if we don't have an index on the current character in the 
+			// table, then add it pure, else, encode it
+			if( _rfc3986[ (int)*src ] ) 
+			{
+				sprintf( enc, "%c", _rfc3986[ (int)*src ] );
+			}
+			else 
+			{
+				sprintf( enc, "%%%02X", ( unsigned char)*src );
+			}
+			while( *( ++enc ) != '\0' ){};
 		}
-		else 
-		{
-			sprintf( enc, "%%%02X", ( unsigned char)*src );
-		}
-		while( *( ++enc ) != '\0' ){};
 	}
 	//enc[ memsize-1 ] = 0;
     return res;
@@ -544,7 +578,7 @@ char** StringSplit( char* str, char delimiter, unsigned int* length )
 		// Copy sub string and append to list
 		char* ns = StringDuplicateN( sptr, ptr - sptr );
 		List* nl = ListNew();
-		nl->data = ns;
+		nl->l_Data = ns;
 		lptr->next = nl;
 		lptr = nl;
 
@@ -560,7 +594,7 @@ char** StringSplit( char* str, char delimiter, unsigned int* length )
 	{
 		char* ns = StringDuplicate( sptr );
 		List* nl = ListNew();
-		nl->data = ns;
+		nl->l_Data = ns;
 		lptr->next = nl;
 		lptr = nl;
 		c++;
@@ -578,12 +612,12 @@ char** StringSplit( char* str, char delimiter, unsigned int* length )
 	free( l );
 	while( lptr->next )
 	{
-		a[i++] = lptr->data;
+		a[i++] = lptr->l_Data;
 		l = lptr;
 		lptr = lptr->next;
 		free( l );
 	}
-	a[i++] = lptr->data;
+	a[i++] = lptr->l_Data;
 	free( lptr );
 	*length = c;
 
@@ -701,26 +735,28 @@ char* StringShellEscapeSize( const char* str, int *len )
 //
 //
 
-static inline void preKmp(char *x, int m, int kmpNext[]) {
+static inline void preKmp(char *x, int m, int *kmpNext )
+{
 	int i, j;
 
 	i = 0;
 	j = kmpNext[0] = -1;
-	while (i < m) 
+	
+	while( i < m ) 
 	{
-		while (j > -1 && x[i] != x[j])
+		while( j > -1 && x[i] != x[j] )
 		{
-			j = kmpNext[j];
+			j = kmpNext[ j ];
 		}
 		i++;
 		j++;
-		if (x[i] == x[j])
+		if( x[i] == x[j] )
 		{
-			kmpNext[i] = kmpNext[j];
+			kmpNext[ i ] = kmpNext[ j ];
 		}
 		else
 		{
-			kmpNext[i] = j;
+			kmpNext[ i ] = j;
 		}
 	}
 }
@@ -767,30 +803,44 @@ char *FindInBinary(char *x, int m, char *y, int n)
 //
 //
 
-FLONG FindInBinaryPOS(char *x, int m, char *y, FULONG n) 
+FQUAD FindInBinaryPOS( char *findString, int m, char *findIn, FQUAD n) 
 {
-	FLONG i, j;
-	int kmpNext[ m ];
+	FQUAD j;
+	int i;
+	//int kmpNext[ m ];
+	int *kmpNext;
+	kmpNext = FMalloc( (m+1)*sizeof(int) );
+	if( kmpNext == NULL )
+	{
+		DEBUG("Cannot allocate memory for kmpNext!\n");
+		return -1;
+	}
 
 	// Preprocessing 
-	preKmp(x, m, kmpNext);
+	preKmp( findString, m, kmpNext );
 
 	// Searching 
-	i = j = 0;
-	while (j < (FLONG)n) 
+	j = 0;
+	i = 0;
+
+	while( j < n ) 
 	{
-		//printf("find %d\n", j );
-		while (i > -1 && x[i] != y[j])
+		//printf("find j %ld i %d\n", j, i );
+		
+		while( i > -1 && findString[ i ] != findIn[ j ] )
 		{
 			i = kmpNext[ i ];
 		}
 		i++;
 		j++;
-		if (i >= m) 
+		
+		if( i >= m )
 		{
+			FFree( kmpNext );
 			return j-i;
 		}
 	}
+	FFree( kmpNext );
 	return -1;
 }
 
@@ -798,9 +848,9 @@ FLONG FindInBinaryPOS(char *x, int m, char *y, FULONG n)
 //
 //
 
-FLONG FindInBinarySimple( char *x, int m, char *y, FULONG n )
+FQUAD FindInBinarySimple( char *x, int m, char *y, FQUAD n )
 {
-	FULONG i;
+	FQUAD i;
 	
 	//INFO("\n\n\nFIND TEXT %s\n", x );
 	
@@ -810,25 +860,32 @@ FLONG FindInBinarySimple( char *x, int m, char *y, FULONG n )
 		if( memcmp( x, y, m ) == 0 )
 		{
 			//FERROR("Found text %50s ------------------------------ %10s\n", (y-50), y );
-			return (FLONG)i;
+			return (FQUAD)i;
 		}
 		y++;
 	}
 	return -1;
 }
 
+//
+//
+//
 
 void HashedString ( char **str )
 {
 	unsigned char temp[SHA_DIGEST_LENGTH];
 	memset( temp, 0x0, SHA_DIGEST_LENGTH );
 	
-	//char *buf = FMallocAlign( ( SHIFT_LEFT( SHA_DIGEST_LENGTH, 1) ) + 1 );
-	char *buf = FCallocAlign( ( SHIFT_LEFT( SHA_DIGEST_LENGTH, 1) ) + 1, 1 );
-	//char *buf = FCalloc( ( SHIFT_LEFT( SHA_DIGEST_LENGTH, 1) ) + 1, sizeof( char ) );
-
-	if( buf != NULL )
+	if( *str != NULL )
 	{
+		FFree ( *str );
+		*str = NULL;
+	}
+	
+	*str = FCallocAlign( ( SHIFT_LEFT( SHA_DIGEST_LENGTH, 1) ) + 1, 1 );
+	if( *str != NULL )
+	{
+		char *buf = *str;
 		SHA1( ( unsigned char *)*str, strlen( *str ), temp);
 
 		int i = 0;
@@ -837,12 +894,6 @@ void HashedString ( char **str )
 			sprintf( (char*)&(buf[ SHIFT_LEFT( i, 1) ]), "%02x", temp[i] );
 		}
 
-		if ( *str ) 
-		{
-			FFree ( *str );
-		}
-		DEBUG ( "[HashedString] Hashing\n" );
-		*str = buf;
 		DEBUG ( "[HashedString] Hashed\n" );
 	}
 	else
@@ -903,7 +954,7 @@ char *EscapeStringToJSON( char *str )
 	if( strstr( str, "\\" ) != NULL )
 	{
 		int size = strlen( str );
-		char *ret = FMalloc( (size*2)+1 );
+		char *ret = FMalloc( (size<<1)+1 ); // * 2 == <<1
 		if( ret != NULL )
 		{
 			char *dst = ret;

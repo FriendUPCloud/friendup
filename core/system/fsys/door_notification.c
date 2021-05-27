@@ -119,17 +119,19 @@ FULONG DoorNotificationStartDB( SQLLibrary *sqllib, File *device, UserSession *s
 		len += strlen( lck.dn_Path );
 	}
 	buffer = FMalloc( len );
-	snprintf( buffer, len, "SELECT ID FROM `FDoorNotification` WHERE OwnerID=%lu AND Path='%s' AND DeviceID=%lu", lck.dn_OwnerID, lck.dn_Path, lck.dn_DeviceID );
-	
-	
-	if( sqllib->NumberOfRecordsCustomQuery( sqllib, buffer) < 1 )
+	if( buffer != NULL )
 	{
-		if( sqllib->Save( sqllib, DoorNotificationDesc, &lck ) != 0 )
+		snprintf( buffer, len, "SELECT ID FROM `FDoorNotification` WHERE OwnerID=%lu AND Path='%s' AND DeviceID=%lu", lck.dn_OwnerID, lck.dn_Path, lck.dn_DeviceID );
+	
+		if( sqllib->NumberOfRecordsCustomQuery( sqllib, buffer) < 1 )
 		{
+			if( sqllib->Save( sqllib, DoorNotificationDesc, &lck ) != 0 )
+			{
 
+			}
 		}
+		FFree( buffer );
 	}
-	FFree( buffer );
 
 	if( lck.dn_Path != NULL )
 	{
@@ -236,7 +238,7 @@ int DoorNotificationUpdateDB( SQLLibrary *sqllib, File *device __attribute__((un
 
 int DoorNotificationRemoveDB( SQLLibrary *sqllib, FULONG id )
 {
-	char temp[ 1024 ];
+	char temp[ 512 ];
 	snprintf( temp, sizeof(temp), "DELETE from `FDoorNotification` where `ID`=%lu", id );
 	
 	return sqllib->QueryWithoutResults( sqllib, temp );
@@ -269,7 +271,7 @@ DoorNotification *DoorNotificationGetNotificationsFromPath( SQLLibrary *sqllib, 
 	DoorNotification *rootLock = NULL;
 	DoorNotification *lastLock = NULL;
 	
-	if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
+	if( ( tmpQuery = FMalloc( querysize ) ) != NULL )
 	{
 		FBOOL rootPath = TRUE;
 		
@@ -433,7 +435,6 @@ int DoorNotificationRemoveEntries( void *lsb )
 		
 		sb->LibrarySQLDrop( sb, sqllib );
 	}
-	//pthread_exit( 0 );
 	return 0;
 }
 
@@ -448,13 +449,13 @@ int DoorNotificationRemoveEntries( void *lsb )
 
 int DoorNotificationRemoveEntriesByUser( void *lsb, FULONG uid )
 {
-	pthread_detach( pthread_self() );
+	//pthread_detach( pthread_self() ); - it is called in systembase_web.c , line 227
 	SystemBase *sb = (SystemBase *)lsb;
 	SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
 	if( sqllib != NULL )
 	{
 		DEBUG("[DoorNotificationRemoveEntriesByUser] start, userID %lu\n", uid );
-		char temp[ 1024 ];
+		char temp[ 512 ];
 		
 		// we remove old entries every 5 mins
 		snprintf( temp, sizeof(temp), "DELETE from `FDoorNotification` WHERE OwnerID=%lu", uid );

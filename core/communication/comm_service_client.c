@@ -124,7 +124,7 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 			//SocketSetBlocking( con->fc_Socket, TRUE );
 	
 			// send request
-			writebytes = SocketWrite( con->fc_Socket, (char *)df, (FLONG)df->df_Size );
+			writebytes = con->fc_Socket->s_Interface->SocketWrite( con->fc_Socket, (char *)df, (FLONG)df->df_Size );
 		}
 		else
 		{
@@ -424,7 +424,7 @@ DataForm *CommServiceSendMsgDirect( FConnection *con, DataForm *df )
  */
 FConnection *FConnectionNew( const char *add, const char *name, int type, void *service )
 {
-	FConnection *newcon;
+	FConnection *newcon = NULL;
 	
 	if( add == NULL )
 	{
@@ -435,11 +435,11 @@ FConnection *FConnectionNew( const char *add, const char *name, int type, void *
 	{
 		int addlen = strlen( add );
 
-		newcon->fc_Address = FCalloc( addlen+1 , sizeof( char ) );
 		newcon->fc_Name = StringDuplicate( (char *) name );
+		newcon->fc_Address = StringDuplicate( (char *) add );
 		
-		strcpy( newcon->fc_Address, add );
-		strcpy( newcon->fc_Name, name );
+		//strcpy( newcon->fc_Address, add );
+		//strcpy( newcon->fc_Name, name );
 		
 		newcon->fc_Type  = type;
 		newcon->fc_Service = service;
@@ -493,7 +493,7 @@ void FConnectionDelete( FConnection *con )
 		
 		if( con->fc_Socket != NULL )
 		{
-			SocketDelete( con->fc_Socket );
+			con->fc_Socket->s_Interface->SocketDelete( con->fc_Socket );
 			con->fc_Socket = NULL;
 		}
 		
@@ -596,7 +596,7 @@ FConnection *ConnectToServer( CommService *s, char *conname )
 			
 			DataForm * df = DataFormNew( tags );
 
-			SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
+			newsock->s_Interface->SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
 			
 			DataFormDelete( df );
 			
@@ -604,13 +604,14 @@ FConnection *ConnectToServer( CommService *s, char *conname )
 			int i;
 			
 			// if thats our core connection we just copy ID
-			
+			/*
 			if( coreConnection == TRUE )
 			{
 				memcpy( id, con->fc_FCID, FRIEND_CORE_MANAGER_ID_SIZE );
 			}
 			else
 			{
+				*/
 				strcpy( id, address );
 				
 				for( i=0 ; i<FRIEND_CORE_MANAGER_ID_SIZE; i++ )
@@ -620,7 +621,7 @@ FConnection *ConnectToServer( CommService *s, char *conname )
 						fcm->fcm_ID[ i ] = '0';
 					}
 				}
-			}
+			//}
 		}
 	}
 	
@@ -628,7 +629,7 @@ FConnection *ConnectToServer( CommService *s, char *conname )
 	{
 		if( newsock != NULL )
 		{
-			SocketDelete( newsock );
+			newsock->s_Interface->SocketDelete( newsock );
 		}
 	}
 	else

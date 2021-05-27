@@ -57,7 +57,8 @@ typedef struct GroupUserLink
 enum 
 {
 	USER_GROUP_STATUS_ACTIVE = 0,
-	USER_GROUP_STATUS_DISABLED
+	USER_GROUP_STATUS_DISABLED,
+	USER_GROUP_STATUS_LOCKED
 };
 
 //
@@ -67,9 +68,11 @@ typedef struct UserGroup
 	MinNode 			node;
 	FULONG 				ug_ID;
 	char 				*ug_Name;
+	char				*ug_UUID;
 	FULONG 				ug_UserID;
 	FULONG				ug_ParentID;
 	char 				*ug_Type;
+	char				*ug_Description;
 	struct UserGroup	*ug_ParentGroup;
 	
 	GroupUserLink		*ug_UserList;		// users assigned to group 
@@ -87,7 +90,7 @@ typedef struct UserGroup
 //
 //
 
-UserGroup *UserGroupNew( FULONG id, char *name, FULONG uid, char *type );
+UserGroup *UserGroupNew( FULONG id, char *name, FULONG uid, char *type, char *description );
 
 //
 //
@@ -134,8 +137,10 @@ static FULONG UserGroupDesc[] = { SQLT_TABNAME, (FULONG)"FUserGroup", SQLT_STRUC
 	SQLT_INT, (FULONG)"UserID", offsetof( struct UserGroup, ug_UserID ),
 	SQLT_STR, (FULONG)"Name", offsetof( struct UserGroup, ug_Name ),
 	SQLT_STR, (FULONG)"Type", offsetof( struct UserGroup, ug_Type ),
+	SQLT_STR, (FULONG)"Description", offsetof( struct UserGroup, ug_Description ),
 	SQLT_INT, (FULONG)"Status", offsetof( struct UserGroup, ug_Status ),
 	SQLT_INT, (FULONG)"ParentID", offsetof( struct UserGroup, ug_ParentID ),
+	SQLT_STR, (FULONG)"UniqueID",    offsetof( struct UserGroup, ug_UUID ),
 	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&UserGroupInit,
 	SQLT_NODE, (FULONG)"node", offsetof( struct UserGroup, node ),
 	SQLT_END };

@@ -438,7 +438,7 @@ FriendNetworkFriends =
 	watchDog: function()
 	{
 		var self = FriendNetworkFriends;
-		var connected = !Workspace.workspaceIsDisconnected;
+		var connected = Friend.User.ServerIsThere;
 		if ( self.connected != connected )
 		{
 			self.connected = connected;

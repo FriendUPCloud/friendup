@@ -75,11 +75,11 @@ Http *PIDThreadWebRequest( void *sb, char **urlpath, Http *request, UserSession 
 		char buffer[ 256 ];
 		FUQUAD pid = 0;
 		HashmapElement *el = HttpGetPOSTParameter( request, "id" );
-		if( el == NULL ) el = HashmapGet( request->query, "id" );
+		if( el == NULL ) el = HashmapGet( request->http_Query, "id" );
 		if( el != NULL )
 		{
 			char *end;
-			pid = strtoull( (char *)el->data,  &end, 0 );
+			pid = strtoull( (char *)el->hme_Data,  &end, 0 );
 		}
 		
 		response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ),
@@ -100,7 +100,7 @@ Http *PIDThreadWebRequest( void *sb, char **urlpath, Http *request, UserSession 
 		}
 		else
 		{
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_PID_IS_MISSING] , DICT_PID_IS_MISSING );
+			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_PID_IS_MISSING] , DICT_PID_IS_MISSING );
 			HttpAddTextContent( response, buffer );
 		}
 		
@@ -117,7 +117,7 @@ Http *PIDThreadWebRequest( void *sb, char **urlpath, Http *request, UserSession 
 									   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 		}
 		char buffer[ 256 ];
-		snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FUNCTION_NOT_FOUND] , DICT_FUNCTION_NOT_FOUND );
+		snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_FUNCTION_NOT_FOUND] , DICT_FUNCTION_NOT_FOUND );
 		HttpAddTextContent( response, buffer );
 	}
 	return response;

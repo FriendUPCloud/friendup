@@ -35,7 +35,8 @@ enum
 {
 	USER_SESSION_STATUS_NONE = 0,
 	USER_SESSION_STATUS_AUTHORIZING,
-	USER_SESSION_STATUS_AUTHORIZED
+	USER_SESSION_STATUS_AUTHORIZED,
+	USER_SESSION_STATUS_TO_REMOVE
 };
 
 /*
@@ -58,31 +59,34 @@ typedef struct UserSession
 {
 	MinNode					node;
 	
-	FULONG					us_ID;
-	//WebsocketServerClient	*us_WSClients;
-	UserSessionWebsocket	*us_WSConnections;
-	pthread_mutex_t			us_Mutex;
+	FULONG					us_ID;						// User session ID
+	pthread_mutex_t			us_Mutex;					// User mutex
 	
-	FULONG					us_UserID;					//
-	char					*us_DeviceIdentity;	// device identity
-	char					*us_SessionID;			// session id
-	time_t					us_LoggedTime;		// last update from user
-	int						us_LoginStatus;			// login status
+	FULONG					us_UserID;					// ID of user to which session is attached
+	char					*us_DeviceIdentity;			// device identity
+	char					*us_SessionID;				// session id
+	time_t					us_LoggedTime;				// last update from user
+	int						us_Status;					// session status
 	
-	File					*us_OpenedFiles;		// opened files in user session
+	File					*us_OpenedFiles;			// opened files in user session
 	
 	User					*us_User;					// pointer to user structure
 	
-	void					*us_SB;   // pointer to systembase
+	void					*us_SB;						// pointer to systembase
 	
-	char					us_UserActionInfo[ 512 ];
-	char					us_Name[ 256 ];		// session name
-	int						us_InUseCounter;
-	WebsocketReqManager		*us_WSReqManager;
-	void					*us_DOSToken;
-	FULONG					us_MobileAppID;
-	UserMobileApp			*us_MobileApp;
-	//int						us_WebSocketStatus;	// status of websocket
+	char					us_UserActionInfo[ 512 ];	// last action called
+	//char					us_Name[ 256 ];				// session name
+	int						us_InUseCounter;			// is session used counter
+	WebsocketReqManager		*us_WSReqManager;			// 
+	void					*us_DOSToken;				// 
+	FULONG					us_MobileAppID;				//
+	
+	// WEBSOCKETS
+	int						us_WebSocketStatus;	// status of websocket
+	struct lws				*us_Wsi;				// pointer to WSI
+	time_t					us_LastPingTime;		// ping timestamp
+	void					*us_WSD;				// pointer to WebsocketData
+	FQueue					us_MsgQueue;			// message queue
 }UserSession;
 
 //
@@ -107,11 +111,9 @@ void UserSessionInit( UserSession *us );
 //
 //
 
-UserSessionWebsocket *UserSessionRemoveConnection( UserSession *us, UserSessionWebsocket *wscl );
+int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msglen, int type );
 
-//
-//
-//
+
 
 static FULONG UserSessionDesc[] = { 
     SQLT_TABNAME, (FULONG)"FUserSession",       

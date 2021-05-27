@@ -1,0 +1,381 @@
+#User account info
+
+i18n_user_profile                      : User profile
+i18n_user_fullname                     : Full name
+i18n_user_username                     : Username
+i18n_user_email                        : E-mail
+i18n_user_mobile                       : Mobile
+i18n_user_password                     : Password
+i18n_delete_user                       : Delete user
+
+i18n_reset_password                    : Reset password
+
+i18n_new_password                      : New password
+i18n_confirm_password                  : Confirm password
+
+i18n_level                             : Level
+i18n_language                          : Language
+i18n_setup                             : Template
+
+i18n_fileselectoravatar                : Please choose a PNG image
+
+i18n_templates                         : Templates
+i18n_template_details                  : Template details
+i18n_new_template                      : New template
+i18n_template_name                     : Template name
+i18n_template_description              : Description
+i18n_template_language                 : Default language
+
+i18n_template_create                       : Template create
+i18n_template_update                       : Template update
+i18n_Template with that name already exist : Template with that name already exist
+
+i18n_account_locked                    : Account locked
+i18n_account_disabled                  : Account disabled
+
+i18n_browse                            : Browse
+
+i18n_looknfeel                         : Look and feel
+i18n_theme                             : Theme
+i18n_wallpaper                         : Wallpaper
+i18n_window_controls                   : Window controls
+i18n_darktheme                         : Dark theme
+i18n_system_disk                       : System disk
+i18n_workspaces                        : Workspaces
+
+i18n_workgroups                        : Workgroups
+i18n_sub_workgroups                    : Subworkgroups
+
+i18n_user_workgroups_empty             : User workgroups empty.
+
+i18n_roles                             : Roles
+
+i18n_user_roles_empty                  : User roles empty.
+
+i18n_storage                           : Storage
+i18n_drives                            : Drives
+
+i18n_applications                      : Applications
+
+i18n_enabled                           : Enabled
+i18n_disabled                          : Disabled
+i18n_default                           : Default
+
+i18n_name                              : Name
+i18n_category                          : Category
+i18n_order                             : Order
+i18n_dock                              : Dock
+i18n_startup                           : Startup
+
+i18n_user_mountlist_empty              : User mountlist empty.
+
+i18n_save_changes                      : Save changes
+
+i18n_no_applications_available         : No applications available.
+
+i18n_role_profile                      : Role Profile
+i18n_role_name                         : Role Name
+i18n_role_description                  : Description
+i18n_permissions                       : Permissions
+
+i18n_yes                               : Yes
+i18n_no                                : No
+i18n_col_name                          : Name
+i18n_col_visible                       : Visible
+i18n_col_featured                      : Featured
+i18n_col_date                          : Date
+
+i18n_application_visible               : Visible
+i18n_application_featured              : Featured
+
+#application related
+
+i18n_application_list                  : Application list
+i18n_application_profile               : Application profile
+i18n_app_marketplace_info              : Marketplace information
+i18n_application_graphics              : Graphics
+i18n_application_information           : Information
+i18n_applications                      : Applications
+i18n_find_applications                 : Find apps
+
+
+#permissions related
+
+i18n_PERM_USER_CREATE_GLOBAL              : Create users globally
+i18n_PERM_USER_READ_GLOBAL                : View users globally
+i18n_PERM_USER_UPDATE_GLOBAL              : Edit users globally
+i18n_PERM_USER_DELETE_GLOBAL              : Delete users globally
+
+i18n_PERM_USER_CREATE_IN_WORKGROUP        : Create users in workgroup
+i18n_PERM_USER_READ_IN_WORKGROUP          : View users in workgroup
+i18n_PERM_USER_UPDATE_IN_WORKGROUP        : Edit users in workgroup
+i18n_PERM_USER_DELETE_IN_WORKGROUP        : Delete users in workgroup
+
+i18n_PERM_WORKGROUP_CREATE_GLOBAL         : Create workgroups globally
+i18n_PERM_WORKGROUP_READ_GLOBAL           : View workgroups globally
+i18n_PERM_WORKGROUP_UPDATE_GLOBAL         : Edit workgroups globally
+i18n_PERM_WORKGROUP_DELETE_GLOBAL         : Delete workgroups globally
+
+i18n_PERM_WORKGROUP_CREATE_IN_WORKGROUP   : Create workgroups in workgroup
+i18n_PERM_WORKGROUP_READ_IN_WORKGROUP     : View workgroups in workgroup
+i18n_PERM_WORKGROUP_UPDATE_IN_WORKGROUP   : Edit workgroups in workgroup
+i18n_PERM_WORKGROUP_DELETE_IN_WORKGROUP   : Delete workgroups in workgroup
+
+i18n_PERM_ROLE_CREATE_GLOBAL              : Create roles globally
+i18n_PERM_ROLE_READ_GLOBAL                : View roles globally
+i18n_PERM_ROLE_UPDATE_GLOBAL              : Edit roles globally
+i18n_PERM_ROLE_DELETE_GLOBAL              : Delete roles globally
+
+i18n_PERM_ROLE_CREATE_IN_WORKGROUP        : Create roles in workgroup
+i18n_PERM_ROLE_READ_IN_WORKGROUP          : View roles in workgroup
+i18n_PERM_ROLE_UPDATE_IN_WORKGROUP        : Edit roles in workgroup
+i18n_PERM_ROLE_DELETE_IN_WORKGROUP        : Delete roles in workgroup
+
+i18n_PERM_STORAGE_CREATE_GLOBAL           : Create storage globally
+i18n_PERM_STORAGE_READ_GLOBAL             : View storage globally
+i18n_PERM_STORAGE_UPDATE_GLOBAL           : Edit storage globally
+i18n_PERM_STORAGE_DELETE_GLOBAL           : Delete storage globally
+
+i18n_PERM_STORAGE_CREATE_IN_WORKGROUP     : Create storage in workgroup
+i18n_PERM_STORAGE_READ_IN_WORKGROUP       : View storage in workgroup
+i18n_PERM_STORAGE_UPDATE_IN_WORKGROUP     : Edit storage in workgroup
+i18n_PERM_STORAGE_DELETE_IN_WORKGROUP     : Delete storage in workgroup
+
+i18n_PERM_APPLICATION_CREATE_GLOBAL       : Create applications globally
+i18n_PERM_APPLICATION_READ_GLOBAL         : View applications globally
+i18n_PERM_APPLICATION_UPDATE_GLOBAL       : Edit applications globally
+i18n_PERM_APPLICATION_DELETE_GLOBAL       : Delete applications globally
+
+i18n_PERM_APPLICATION_CREATE_IN_WORKGROUP : Create applications in workgroup
+i18n_PERM_APPLICATION_READ_IN_WORKGROUP   : View applications in workgroup
+i18n_PERM_APPLICATION_UPDATE_IN_WORKGROUP : Edit applications in workgroup
+i18n_PERM_APPLICATION_DELETE_IN_WORKGROUP : Delete applications in workgroup
+
+i18n_PERM_LOOKNFEEL_CREATE_GLOBAL         : Create look and feel globally
+i18n_PERM_LOOKNFEEL_READ_GLOBAL           : View look and feel globally
+i18n_PERM_LOOKNFEEL_UPDATE_GLOBAL         : Edit look and feel globally
+i18n_PERM_LOOKNFEEL_DELETE_GLOBAL         : Delete look and feel globally
+
+i18n_PERM_LOOKNFEEL_CREATE_IN_WORKGROUP   : Create look and feel in workgroup
+i18n_PERM_LOOKNFEEL_READ_IN_WORKGROUP     : View look and feel in workgroup
+i18n_PERM_LOOKNFEEL_UPDATE_IN_WORKGROUP   : Edit look and feel in workgroup
+i18n_PERM_LOOKNFEEL_DELETE_IN_WORKGROUP   : Delete look and feel in workgroup
+
+i18n_PERM_TEMPLATE_CREATE_GLOBAL          : Create templates globally
+i18n_PERM_TEMPLATE_READ_GLOBAL            : View templates globally
+i18n_PERM_TEMPLATE_UPDATE_GLOBAL          : Edit templates globally
+i18n_PERM_TEMPLATE_DELETE_GLOBAL          : Delete templates globally
+
+i18n_PERM_TEMPLATE_CREATE_IN_WORKGROUP    : Create templates in workgroup
+i18n_PERM_TEMPLATE_READ_IN_WORKGROUP      : View templates in workgroup
+i18n_PERM_TEMPLATE_UPDATE_IN_WORKGROUP    : Edit templates in workgroup
+i18n_PERM_TEMPLATE_DELETE_IN_WORKGROUP    : Delete templates in workgroup
+
+i18n_deleting_permission                  : Deleting permission
+i18n_deleting_permission_verify           : Please confirm that you want to delete this permission.
+
+#printers related
+
+i18n_file                              : File
+i18n_about                             : About
+i18n_save                              : Save
+i18n_delete                            : Delete
+i18n_delete_template                   : Delete template
+i18n_cancel                            : Cancel
+
+i18n_printers                          : Printers
+i18n_printer_profile                   : Printer profile
+
+i18n_printer_name                      : Name
+i18n_printer_type                      : Type
+i18n_printer_host                      : Host
+i18n_printer_ip                        : IP
+i18n_printer_port                      : Port
+i18n_printer_ip_port                   : IP/Port
+i18n_requires_confirmation_to_print    : Requires confirmation to print
+
+i18n_deleting_printer                  : Deleting printer
+i18n_deleting_printer_verify           : Are you sure?
+
+#User related
+
+i18n_users                             : Users
+i18n_find_users                        : Find users...
+
+i18n_search                            : Search
+
+i18n_header_FullName                   : Name
+i18n_header_Name                       : Username
+i18n_header_Level                      : Level
+i18n_header_Status                     : Status
+i18n_header_LoginTime                  : Last Login
+i18n_header_role_Name                  : Role
+
+
+i18n_user_updated                      : User updated
+i18n_user_updated_succ                 : The user was successfully updated.
+
+i18n_user_delete                       : User deleted
+i18n_user_delete_succ                  : The user was successfully deleted.
+i18n_user_delete_fail                  : User delete failed
+i18n_user_delete_failed                : Failed to delete user.
+
+i18n_user_create                       : User created
+i18n_user_create_succ                  : The user was successfully created.
+
+i18n_user_create_fail                  : User create failed
+i18n_user_update_fail                  : User update failed
+i18n_user_update_failed                : Failed to update the user.
+i18n_User already exist                : User already exists
+
+i18n_new_user                          : New user
+i18n_show_disabled_users               : Show disabled users
+i18n_hide_disabled_users               : Hide disabled users
+i18n_show_locked_users                 : Show locked users
+i18n_hide_locked_users                 : Hide locked users
+
+i18n_level_admin                       : Administrator
+i18n_level_user                        : Normal user
+i18n_level_guest                       : Guest user
+i18n_level_api                         : API user
+
+#Workgroup related
+
+i18n_header_name                       : Name
+
+i18n_workgroups                        : Workgroups
+i18n_workgroup_profile                 : Workgroup profile
+i18n_workgroup_name                    : Name
+i18n_workgroup_description             : Description
+i18n_delete_workgroup                  : Delete workgroup
+
+i18n_workgroup_create                  : Workgroup create
+i18n_workgroup_update                  : Workgroup update
+i18n_User Group already exist          : User Group already exist
+
+i18n_sucess                            : Success
+
+#Storage related
+
+i18n_name                         : Name
+i18n_type                         : Type
+i18n_size                         : Size
+
+#i18n_SQLDrive                    : SQL drive
+i18n_SQLDrive                     : Friend drive
+i18n_Server filesystem            : Server filesystem
+i18n_Local                        : Server filesystem
+#i18n_FriendStore                 : Friend Store
+i18n_FriendStore                  : FriendStore drive
+#i18n_Samba	                      : Samba filesystem
+i18n_Samba	                      : Samba drive
+i18n_DropboxDrive                 : Dropbox drive
+i18n_GoogleDrive                  : Google drive
+i18n_Wordpress                    : WordPress drive
+#i18n_SQLWorkgroupDrive           : MySQL Based Filesystem for workgroups
+i18n_SQLWorkgroupDrive            : Friend Workgroup drive
+i18n_Treeroot                     : Treeroot drive
+i18n_ArenaCM                      : Arena CM drive
+i18n_Website                      : Website drive
+i18n_Assign                       : Assign drive
+i18n_INRam                        : INRam drive
+i18n_FriendStoreDrive             : FriendStore drive
+i18n_Remote                       : Remote drive
+i18n_Node                         : Node Network drive
+i18n_SFTP                         : SFTP drive
+#i18n_CorvoDrive                  : Corvo Disk
+i18n_CorvoDrive                   : Corvo drive
+#i18n_QuickNG                     : Sybase QuickNG DOS Driver
+i18n_QuickNG                      : Sybase QuickNG drive
+#i18n_NodeDrive                   : Node network
+i18n_NodeDrive                    : Node Network drive
+#i18n_SQLRODrive                  : SQL Read only disk
+i18n_SQLRODrive                   : Friend Read only drive
+#i18n_IMAP                        : IMAP Disk
+i18n_IMAP                         : IMAP drive
+#i18n_IPFSDrive                   : IPFS disk
+i18n_IPFSDrive                    : IPFS drive
+i18n_SharedDrive                  : Shared
+
+
+i18n_disk_error                      : Disk error
+i18n_failed_to_edit                  : Failed to edit disk volume.
+i18n_disk_success                    : Disk edited
+i18n_disk_edited                     : Disk was edited successfully.
+
+i18n_connection_details              : Connection details
+i18n_notes                           : Notes
+i18n_directory                       : Remote directory
+i18n_login_info                      : Login info
+i18n_your_notes                      : Your notes
+i18n_username                        : Username
+i18n_password                        : Password
+i18n_you_forgot_username             : You forgot to enter a username
+i18n_you_forgot_username_desc        : You need a username in order to save the user
+i18n_status                          : Status
+i18n_host_port                       : Server port
+i18n_host_ip                         : Server address or IP
+i18n_hostname                        : Server address
+i18n_workgroup_list                  : Workgroup List
+i18n_workgroup_details               : Workgroup details
+i18n_subworkgroup_details            : Subworkgroup details
+i18n_new_workgroup                   : New workgroup
+i18n_workgroup_name                  : Workgroup name
+i18n_workgroup_parent                : Workgroup parent
+i18n_choose_workgroup                : Choose workgroup
+i18n_workgroup                       : Workgroup
+i18n_device_name                     : Disk name
+i18n_placeholder_connection          : Mydisk
+
+i18n_add_storage                     : Add storage
+i18n_update_disk                     : Update disk
+i18n_mount_disk                      : Mount disk
+i18n_unmount_disk                    : Unmount disk
+
+i18n_personal_drives                 : Personal drives
+i18n_workgroup_drives                : Workgroup drives
+
+i18n_this_will_remove                : This will remove the disk from the system.
+i18n_are_you_sure                    : Are you sure?
+
+i18n_mounting                        : Mounting
+i18n_unmounting                      : Unmounting
+i18n_successfully_mounted            : Your device was successfully mounted.
+i18n_successfully_unmounted          : Your device was successfully unmounted.
+i18n_fail_mount                      : Failed to mount device
+i18n_fail_mount_more                 : Could not mount device.
+i18n_fail_unmount                    : Failed to unmount device
+i18n_fail_unmount_more               : Could not unmount device.
+
+i18n_cannot_edit_workgroup_drive     : Cannot edit Workgroup drive
+i18n_workgroup_drive_edit_in         : Edit Workgroup drive in "Workgroups" section
+
+i18n_unlock_workgroup_failed         : Unlock Workgroup Failed
+i18n_cannot_unlock_workgroup         : Cannot unlock Workgroup, remove Subworkgroups first. 
+
+#Liberator related
+
+i18n_liberator_name                  : Name
+i18n_liberator_servers               : Servers
+i18n_liberator_server_details        : Server details
+i18n_liberator_type                  : Type
+i18n_liberator_address               : Address
+i18n_liberator_port                  : Port
+i18n_liberator_admin_username        : Admin username
+i18n_liberator_admin_password        : Admin password
+i18n_liberator_domain                : Domain
+
+i18n_delete_liberator_server         : Delete server
+
+i18n_liberator_application_name       : Application name
+i18n_liberator_application_alias      : Application alias
+i18n_liberator_application_remote_dir : Remote directory
+
+i18n_remove_app                       : Remove app
+i18n_this_will_remove_app             : This will remove the app from the system.
+
+i18n_link_friendrds                   : Friend RDS
+i18n_link_servers                     : Servers
+i18n_link_users                       : Users
+
+

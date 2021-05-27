@@ -36,6 +36,8 @@
 #define LIB_VERSION 1
 #define LIB_REVISION 0
 
+int Reconnect( struct SQLLibrary *l );
+
 // special data
 
 typedef struct SpecialData{
@@ -163,7 +165,7 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 
 	while( ( row = mysql_fetch_row( result ) ) != NULL )
 	{
-		unsigned long *lengths = mysql_fetch_lengths(result);
+		unsigned long *lengths = mysql_fetch_lengths( result );
 		(*entries)++;
 		
 		void *data = FCalloc( 1, descr[ SQL_DATA_STRUCTURE_SIZE ] );
@@ -199,12 +201,14 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 					case SQLT_IDINT:	// primary key
 					case SQLT_INT:
 						{
-							int tmp = 0;
+							FLONG tmp = 0;
 							if( row[ i ] != NULL )
 							{
-								tmp = (int)atol( row[ i ] );
+								char *end;
+								DEBUG("SQL: get field: %s\n", dptr[ 1 ] );
+								tmp = (FLONG)strtol( row[ i ], &end, 0 );
 							}
-							memcpy( strptr + dptr[ 2 ], &tmp, sizeof( int ) );
+							memcpy( strptr + dptr[ 2 ], &tmp, sizeof( FLONG ) );
 						}
 						break;
 					case SQLT_STR:
@@ -588,7 +592,8 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 	
 	if( mysql_query( l->con.sql_Con, querybs->bs_Buffer ) )
 	{
-		FERROR("Query error!\n");
+		SystemBase *sb = (SystemBase *)l->sb;
+		sb->sl_UtilInterface.Log( FLOG_ERROR, "Update query error: %s\n", querybs->bs_Buffer );
 		BufStringDelete( querybs );
 		
 		return 2;
@@ -821,16 +826,16 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 		// end of if( statement init)
 	
 		int finalqsize = tablequerybs->bs_Size + dataquerybs->bs_Size + 256;
+		SystemBase *sb = (SystemBase *)l->sb;
 		
 		if( ( finalQuery = FCalloc( finalqsize, sizeof(char) ) ) != NULL )
 		{
-			
 			sprintf( finalQuery, "INSERT INTO %s ( %s ) VALUES( %s )", (char *)descr[ 1 ], tablequerybs->bs_Buffer, dataquerybs->bs_Buffer );
 
 			if (mysql_stmt_prepare(stmt, finalQuery, strlen(finalQuery)))
 			{
-				FERROR( "\n mysql_stmt_prepare(), INSERT failed");
-				FERROR( "\n %s", mysql_stmt_error(stmt));
+				sb->sl_UtilInterface.Log( FLOG_ERROR,  "\n mysql_stmt_prepare(), INSERT failed");
+				sb->sl_UtilInterface.Log( FLOG_ERROR,  "\n %s", mysql_stmt_error(stmt));
 				mysql_stmt_close( stmt ); // Free
 				BufStringDelete( tablequerybs );
 				BufStringDelete( dataquerybs );
@@ -841,8 +846,8 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 			// Bind the buffers 
 			if (mysql_stmt_bind_param( stmt, bindTable ) )
 			{
-				FERROR("param bind failed! ");
-				FERROR(" %s\n", mysql_stmt_error(stmt) );
+				sb->sl_UtilInterface.Log( FLOG_ERROR, "param bind failed! ");
+				sb->sl_UtilInterface.Log( FLOG_ERROR, " %s\n", mysql_stmt_error(stmt) );
 				mysql_stmt_close( stmt ); // Free
 				BufStringDelete( tablequerybs );
 				BufStringDelete( dataquerybs );
@@ -859,7 +864,7 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 					// Supply data in chunks to server 
 					if (mysql_stmt_send_long_data(stmt, i, bindData[ i ]->ls_Data , bindData[ i ]->ls_Size ) )
 					{
-						FERROR( " send_long_data failed %s\n", mysql_stmt_error(stmt));
+						sb->sl_UtilInterface.Log( FLOG_ERROR," send_long_data failed %s\n", mysql_stmt_error(stmt));
 					}
 				}
 			}
@@ -867,7 +872,15 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 			// Now, execute the query 
 			if ( mysql_stmt_execute(stmt) )
 			{
-				FERROR("mysql_stmt_execute failed %s\n", mysql_stmt_error(stmt));
+				//FERROR("mysql_stmt_execute failed %s\n", mysql_stmt_error(stmt));
+				const char *error = mysql_stmt_error(stmt);
+				sb->sl_UtilInterface.Log( FLOG_ERROR, "Save query error: %s, query: %s\n", error, finalQuery );
+				
+				if( strstr( error, "Lost connection to MySQL server during" ) != NULL )
+				{
+					Reconnect( l );
+				}
+				
 				retValue = 1;
 			}
 		
@@ -1107,10 +1120,12 @@ int QueryWithoutResults( struct SQLLibrary *l, const char *sel )
 				const char *errstr = mysql_error( l->con.sql_Con );
 				
 				FERROR("mysql_execute failed  SQL: %s error: %s\n", sel, errstr );
-				if( strstr( errstr, "List connection to MySQL server" ) != NULL )
+				if( strstr( errstr, "Lost connection to MySQL server" ) != NULL )
 				{
-					l->con.sql_Recconect = TRUE;
-				}else if( strstr( errstr, "Duplicate column name " ) != NULL )
+					Reconnect( l );
+					//l->con.sql_Recconect = TRUE;
+				}
+				else if( strstr( errstr, "Duplicate column name " ) != NULL )
 				{
 					return 0;
 				}
@@ -1463,6 +1478,7 @@ int SNPrintF( struct SQLLibrary *l, char *str, size_t stringSize, const char *fm
 								
 								if( ( escapedString = FCalloc( (stringArgSize *4 ) + 1, sizeof(char) ) ) != NULL )
 								{
+									DEBUG("MYSQL_REAL_ESCAPE: %s\n", stringArg );
 									stringArgSize = mysql_real_escape_string( l->con.sql_Con, escapedString, stringArg, stringArgSize );
 									stringArg = escapedString;
 								}
@@ -1812,8 +1828,10 @@ int SNPrintF( struct SQLLibrary *l, char *str, size_t stringSize, const char *fm
 		escapedString = NULL;
 	}
 	
-	if (str[stringSize-2] != '\0'){ //leak occured - clean up the whole query to avoid SQL injection
+	if (str[stringSize-2] != '\0')
+	{ //leak occured - clean up the whole query to avoid SQL injection
 		memset(str, 0, stringSize);
+		DEBUG( "LEAK OCCURED!\n" );
 		return 0;
 	}
 
@@ -1846,6 +1864,7 @@ int Reconnect( struct SQLLibrary *l )
 	void *connection = mysql_real_connect( l->con.sql_Con, l->con.sql_Host, l->con.sql_DBName, l->con.sql_User, l->con.sql_Pass, l->con.sql_Port, NULL, 0 );
 	if( connection == NULL )
 	{
+		l->con.sql_Con = NULL;
 		FERROR( "[MYSQLLibrary] Failed to connect to database: '%s'.\n", mysql_error(l->con.sql_Con) );
 		return -1;
 	}
@@ -2009,6 +2028,7 @@ void *libInit( void *sb )
 		return NULL;
 	}
 
+	l->sb = sb;
 	l->l_Name = LIB_NAME;
 	l->l_Version = LIB_VERSION;
 	
@@ -2028,8 +2048,10 @@ void *libInit( void *sb )
 	l->FreeResult = dlsym ( l->l_Handle, "FreeResult");
 	l->DeleteWhere = dlsym ( l->l_Handle, "DeleteWhere");
 	l->QueryWithoutResults = dlsym ( l->l_Handle, "QueryWithoutResults");
+	l->MakeEscapedString = dlsym ( l->l_Handle, "MakeEscapedString");
 	l->GetStatus = dlsym ( l->l_Handle, "GetStatus");
 	l->SetOption = dlsym ( l->l_Handle, "SetOption");
+	l->MakeEscapedString = dlsym ( l->l_Handle, "MakeEscapedString");
 	l->SNPrintF = SNPrintF;
 	l->Connect = Connect;
 	l->Disconnect = Disconnect;

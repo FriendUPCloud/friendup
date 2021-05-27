@@ -40,6 +40,48 @@ function GetAppPermissions( $appName, $UserID = false )
 	// Specific or session based userid?
 	$UserID = ( $UserID ? $UserID : $User->ID );
 	
+	// Get user level
+	if( $level = $SqlDatabase->FetchObject( '
+		SELECT g.Name FROM FUserGroup g, FUserToGroup ug
+		WHERE
+			g.Type = \'Level\' AND
+			ug.UserID=\'' . $UserID . '\' AND
+			ug.UserGroupID = g.ID
+	' ) )
+	{
+		$level = $level->Name;
+	}
+	else $level = 'User';
+	
+	if( $level == 'Admin' )
+	{
+		$pem = new stdClass();
+		
+		if( $rows = $SqlDatabase->FetchObjects( $q = '
+			SELECT p.* 
+			FROM FUserRolePermission p 
+			WHERE p.Key ' . ( strstr( $appName, '","' ) ? 'IN (' . $appName . ')' : '= "' . $appName . '"' ) . ' 
+			ORDER BY p.ID 
+		' ) )
+		{
+			// Go through all roles and set permissions
+			foreach( $rows as $v )
+			{
+				if( $v->Permission )
+				{
+					$obj = new stdClass();
+					$obj->Permission = $v->Permission;
+					$obj->Key        = $v->Key;
+					$obj->Data       = $v->Data;
+					
+					$pem->{ $v->Permission } = array( $obj );
+				}
+			}
+		}
+		
+		return $pem;
+	}
+	
 	// Fetch permissions from user based on role relations
 	if( $rows = $SqlDatabase->FetchObjects( $q = '
 		SELECT 
@@ -340,7 +382,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 				if( !$rows = $SqlDatabase->FetchObject( $q = '
 					SELECT p.* 
 					FROM FUserRolePermission p 
-					WHERE p.Key ' . ( strstr( $name, '","' ) ? 'IN (' . $name . ')' : '= "' . $name . '"' ) . ' 
+					WHERE p.Key ' . ( strstr( $name, '","' ) || strstr( $name, "','" ) ? 'IN (' . $name . ')' : '= "' . $name . '"' ) . ' 
 					ORDER BY p.ID 
 					LIMIT 1 
 				' ) )
@@ -532,9 +574,10 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 								// TODO: Connect user or users to groups or group ...
 								
 								if( $usr = $SqlDatabase->FetchObjects( '
-									SELECT u.ID, u.UniqueID, u.Name, u.FullName 
+									SELECT u.ID, u.UniqueID, u.Name, u.FullName, u.Status 
 									FROM `FUser` u 
 									WHERE u.ID IN (' . implode( ',', $users ) . ') 
+									AND u.Status != 1 
 									ORDER BY u.ID ASC 
 								' ) )
 								{
@@ -550,6 +593,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 												$us->uuid     = $u->UniqueID;
 												$us->name     = $u->Name;
 												$us->fullname = $u->FullName;
+												$us->status   = $u->Status;
 											}
 										}
 										else
@@ -558,6 +602,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 											$us->uuid     = $u->UniqueID;
 											$us->name     = $u->Name;
 											$us->fullname = $u->FullName;
+											$us->status   = $u->Status;
 										}
 										
 										if( $us )

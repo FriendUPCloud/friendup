@@ -123,14 +123,14 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			el = HttpGetPOSTParameter( request, "msg" );
 			if( el != NULL )
 			{
-				msg = UrlDecodeToMem( (char *)el->data );
+				msg = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[NMWebRequest] msg %s!!\n", msg );
 			}
 			
 			el = HttpGetPOSTParameter( request, "servername" );
 			if( el != NULL )
 			{
-				servername = UrlDecodeToMem( (char *)el->data );
+				servername = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[NMWebRequest] servername %s!!\n", servername );
 			}
 			
@@ -141,16 +141,16 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 				DEBUG("[NMWebRequest] Send notification to server, error: %d\n", error );
 				
 				char buf[ 256 ];
-				snprintf( buf, sizeof(buf), "ok<!--separate-->{ \"result\":%d }", error );
+				snprintf( buf, sizeof(buf), "ok<!--separate-->{\"result\":%d}", error );
 				HttpAddTextContent( response, buf );
 
 			} // missing parameters
 			else
 			{
-				char buffer[ 256 ];
+				char buffer[ 512 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "msg" );
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
 		}
@@ -158,7 +158,7 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		else
 		{
 			char buffer[ 256 ];
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
 			HttpAddTextContent( response, buffer );
 		}
 		*/
@@ -176,6 +176,22 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		*result = 200;
 	}
 	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/notification/msgtoextservice</H2>Notify external connections
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param params - (required) paramaters
+	* @param type - (required) message type
+	* @param group - (required) group of message
+	* @param action - (required) action
+	* @param servername - name of the server to which message will be send or put NULL if to all
+	* @return { result: 0 } when success, otherwise error with code
+	*/
+	/// @endcond
+	/* MOVED TO SESSION MANAGER
+	*/
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*
@@ -212,53 +228,53 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		HashmapElement *el = HttpGetPOSTParameter( request, "username" );
 		if( el != NULL )
 		{
-			username = UrlDecodeToMem( el->data );
+			username = UrlDecodeToMem( el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "channelid" );
-		if( el != NULL )
+		if( el != NULL && el->hme_Data )
 		{
-			channelid = UrlDecodeToMem( el->data );
+			channelid = UrlDecodeToMem( el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "app" );
-		if( el != NULL )
+		if( el != NULL && el->hme_Data )
 		{
-			app = UrlDecodeToMem( el->data );
+			app = UrlDecodeToMem( el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "title" );
-		if( el != NULL )
+		if( el != NULL && el->hme_Data )
 		{
-			title = UrlDecodeToMem( el->data );
+			title = UrlDecodeToMem( el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "message" );
-		if( el != NULL )
+		if( el != NULL && el->hme_Data )
 		{
-			message = UrlDecodeToMem( el->data );
+			message = UrlDecodeToMem( el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "extra" );
-		if( el != NULL )
+		if( el != NULL && el->hme_Data )
 		{
-			extra = UrlDecodeToMem( el->data );
+			extra = UrlDecodeToMem( el->hme_Data );
 		}
 		
-		if( username == NULL || channelid == NULL || app == NULL || title == NULL || message == NULL )
+		if( username != NULL && channelid != NULL && app != NULL && title != NULL && message != NULL )
 		{
 			int error = MobileAppNotifyUserRegister( l, username, channelid, app, title, message, type, extra, time(NULL) );
 			
 			char buf[ 256 ];
-			snprintf( buf, sizeof(buf), "ok<!--separate-->{ \"result\":%d }", error );
+			snprintf( buf, sizeof(buf), "ok<!--separate-->{\"result\":%d}", error );
 			HttpAddTextContent( response, buf );
 		} // missing parameters
 		else
 		{
-			char buffer[ 256 ];
+			char buffer[ 512 ];
 			char buffer1[ 256 ];
 			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, channelid, app, title, message" );
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, buffer );
 		}
 		

@@ -1,0 +1,8 @@
+{
+	"type":    "SharedDrive",
+	"short":   "Shared",
+	"literal": "Shared disk",
+	"group":   "API",
+	"sharing": "0",
+	"icon": "logo.png"
+}

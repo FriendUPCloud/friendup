@@ -158,12 +158,12 @@ Http* USBManagerWebRequest( void *lb, char **urlpath, Http* request, UserSession
 		USBDevice *dev = USBManagerLockPort(l->sl_USB, loggedSession);
 		if (dev != NULL)
 		{
-			int size = sprintf(buffer, "{ \"USBDeviceID\": \"%lu\" }", dev->usbd_ID );
+			int size = sprintf(buffer, "{\"USBDeviceID\":\"%lu\"}", dev->usbd_ID );
 			HttpAddTextContent(response, buffer);
 		}
 		else
 		{
-			int size = sprintf(buffer, "{ \"response\": \"%s\" }", "All ports are busy");
+			int size = sprintf(buffer, "{\"response\":\"%s\"}", "All ports are busy");
 			HttpAddTextContent(response, buffer);
 		}
 	}
@@ -194,7 +194,7 @@ Http* USBManagerWebRequest( void *lb, char **urlpath, Http* request, UserSession
 		if (el != NULL)
 		{
 			char *next;
-			id = (FLONG)strtol((char *)el->data, &next, 0);
+			id = (FLONG)strtol((char *)el->hme_Data, &next, 0);
 		}
 		
 		if (id > 0)
@@ -216,7 +216,7 @@ Http* USBManagerWebRequest( void *lb, char **urlpath, Http* request, UserSession
 			if (error == 0)
 			{
 				char buffer[512];
-				int size = sprintf(buffer, "{ \"USBDeviceID\": \"%lu\" }", dev->usbd_ID);
+				int size = sprintf(buffer, "{\"USBDeviceID\":\"%lu\"}", dev->usbd_ID);
 				HttpAddTextContent(response, buffer);
 			}
 			else
@@ -226,7 +226,7 @@ Http* USBManagerWebRequest( void *lb, char **urlpath, Http* request, UserSession
 					char dictmsgbuf[ 256 ];
 					char dictmsgbuf1[ 196 ];
 					snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_CANNOT_UNLOCK_PORT], error );
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_CANNOT_UNLOCK_PORT );
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_CANNOT_UNLOCK_PORT );
 					HttpAddTextContent( response, dictmsgbuf );
 				}
 				else 
@@ -234,7 +234,7 @@ Http* USBManagerWebRequest( void *lb, char **urlpath, Http* request, UserSession
 					char dictmsgbuf[ 256 ];
 					char dictmsgbuf1[ 196 ];
 					snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_CANNOT_FIND_DEVICE], id );
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_CANNOT_FIND_DEVICE );
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_CANNOT_FIND_DEVICE );
 					HttpAddTextContent( response, dictmsgbuf );
 				}
 			}
@@ -265,7 +265,7 @@ Http* USBManagerWebRequest( void *lb, char **urlpath, Http* request, UserSession
 		HashmapElement *el = HttpGetPOSTParameter(request, "port");
 		if (el != NULL)
 		{
-			port = (char *)el->data;
+			port = (char *)el->hme_Data;
 		}
 		
 		char buffer[512];
@@ -301,7 +301,7 @@ Http* USBManagerWebRequest( void *lb, char **urlpath, Http* request, UserSession
 		};
 		response = HttpNewSimple( HTTP_200_OK, tags );
 		char dictmsgbuf[ 256 ];
-		snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FUNCTION_NOT_FOUND] , DICT_FUNCTION_NOT_FOUND );
+		snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_FUNCTION_NOT_FOUND] , DICT_FUNCTION_NOT_FOUND );
 		HttpAddTextContent( response, dictmsgbuf );
 	}
 	

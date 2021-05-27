@@ -38,7 +38,10 @@ else
 	
 	//$rolePermission = CheckPermission( 'user', $uid, 'edit' );
 
-	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ], 'user', $uid ) )
+	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 
+		'PERM_USER_READ_GLOBAL', 'PERM_USER_READ_IN_WORKGROUP', 
+		'PERM_USER_GLOBAL',      'PERM_USER_WORKGROUP' 
+	], 'user', $uid ) )
 	{
 		if( is_object( $perm ) )
 		{
@@ -236,6 +239,12 @@ if( 1==1/* || $rolePermission || $level == 'Admin' || $uid == $User->ID*/ )
 				break;
 		}
 		
+		// If User Status is Disabled the user cannot be in any workgroups ...
+		if( $userinfo->Status == 1 )
+		{
+			$userinfo->Workgroup = '';
+		}
+		
 		$gds = false;
 
 		if( $sts = $SqlDatabase->FetchObjects( '
@@ -285,7 +294,30 @@ if( 1==1/* || $rolePermission || $level == 'Admin' || $uid == $User->ID*/ )
 		{
 			$userinfo->Keys = $keys;
 		}
-
+		
+		// Add additional fields
+		if( $uid > 0 && ( $fields = $SqlDatabase->FetchObjects( $q = '
+			SELECT 
+				fm.* 
+			FROM 
+				FMetaData fm 
+			WHERE 
+					fm.Key       IN ("' . implode( '","', [ 'Mobile' ] ) . '") 
+				AND fm.DataID    = \'' . $uid . '\' 
+				AND fm.DataTable = "FUser" 
+			ORDER BY 
+				fm.ID ASC 
+		' ) ) )
+		{
+			foreach( $fields as $field )
+			{
+				if( $field->Key && !isset( $userinfo->{ $field->Key } ) )
+				{
+					$userinfo->{ $field->Key } = $field->ValueString;
+				}
+			}
+		}
+		
 		die( 'ok<!--separate-->' . json_encode( $userinfo ) );
 	}
 }

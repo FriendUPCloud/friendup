@@ -192,6 +192,7 @@ Screen = function ( flags, initObject )
 				for( var a in movableWindows )
 				{
 					var w = movableWindows[ a ].windowObject;
+					
 					if( w.flags.maximized || w.flags.width == 'max' || ( movableWindows[ a ].zoom && movableWindows[ a ].zoom.mode == 'maximized' ) )
 					{
 						var v = w._window.parentNode;
@@ -199,7 +200,7 @@ Screen = function ( flags, initObject )
 						v.style.width = self.getMaxViewWidth() + 'px';
 						v.style.height = self.getMaxViewHeight() + 'px';
 						w.setFlag( 'top', 0 );
-						w.setFlag( 'left', w.workspace * self.getMaxViewWidth() );
+						w.setFlag( 'left', 0 );
 					}
 				}
 				
@@ -444,7 +445,7 @@ Screen = function ( flags, initObject )
 		var t = e.target ? e.target : e.srcElement;
 		
 		// Clicking on the extra widget
-		if( t.classList && t.classList.contains( 'Extra' ) )
+		if( t.classList && t.classList.contains( 'Extra' ) && ( !window.Workspace || !window.Workspace.isSingleTask ) )
 		{
 			Workspace.calendarClickEvent();
 		}
@@ -1028,12 +1029,26 @@ Screen = function ( flags, initObject )
 			offline.innerHTML = i18n('i18n_server_disconnected');
 			this.div.appendChild( offline );	
 		}
+		
+		if( window.Workspace && Workspace.notifyAppsOfState )
+		{
+			Workspace.notifyAppsOfState( {
+				state: 'offline'
+			} );
+		}
 	}
 	
 	this.hideOfflineMessage = function()
 	{
 		var offline = this.div.getElementsByClassName( 'Offline' )[0];
 		if( offline ) offline.style.display = 'none';
+		
+		if( window.Workspace && Workspace.notifyAppsOfState )
+		{
+			Workspace.notifyAppsOfState( {
+				state: 'online'
+			} );
+		}
 	}
 	
 	// Go through flags

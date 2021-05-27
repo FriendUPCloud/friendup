@@ -1,26 +1,27 @@
 <div class="ContentFull" id="element_{uniqueId}">
-	<div class="VContentTop ScrollArea Padding">
+	<div class="VContentTop ScrollArea Padding" style="height: calc(100% - 50px)">
 		<div class="HRow">
-			<div class="Responsive-Page-Initial Responsive-Page HContent30 FloatLeft">
-				<!--<p class="InputHeight">
-					<strong>{i18n_sharing_name}:</strong>
-				</p>-->
+			<div class="HContent30 FloatLeft">
 				<p class="InputHeight">
 					<strong>{i18n_shared_with}:</strong>
 				</p>
 			</div>
-			<div class="Responsive-Page HContent70 FloatLeft">
-				<!--<p>
-					<input type="text" name="sharing_name" value="{sharing_name}" placeholder="MyHomeDisk" class="InputHeight FullWidth"/>
-				</p>-->
-				<p class="InputHeight">
-					<input type="text" name="sharing_with" value="" placeholder="{i18n_find_workgroup_user}" class="InputHeight FullWidth"/>
-				</p>
+			<div class="HContent70 FloatLeft">
+				<div class="InputHeight">
+					<input type="text" id="dropdownfield_{uniqueId}" value="" placeholder="{i18n_find_workgroup_user}" class="InputHeight FullWidth"/>
+					<div class="Relative">
+						<div id="dropdown_{uniqueId}" class="Dropdown SmoothScrolling"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="HRow">
+			<div class="List MarginTop" id="sharedList_{uniqueId}">
 			</div>
 		</div>
 	</div>
 	<div class="VContentBottom BorderTop Padding BackgroundDefault">
-		<button type="button" name="apply_sharing" class="IconSmall fa-share-alt-square">
+		<button type="button" name="apply_sharing" class="IconSmall fa-share-alt-square" onclick="Workspace.saveFileShareInfo('{uniqueId}')">
 			{i18n_apply_sharing_settings}
 		</button>
 	</div>

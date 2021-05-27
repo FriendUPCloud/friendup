@@ -134,7 +134,8 @@ typedef struct SpecialData
  * @param entries pointer to interger where number of loaded entries will be returned
  * @return pointer to new structure or list of structures.
  */
-void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
+void *Load( struct SQLLibrary *l, const FULONG *descr, char *where, int *entries )
+//void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 {
 	//char tmpQuery[ 1024 ];
 	BufString *tmpQuerybs = BufStringNew();
@@ -159,7 +160,7 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 	int pos = 0;
 	int size = 0;
 	BufStringAdd( tmpQuerybs, "SELECT " );
-	FULONG *dptr = &descr[ SQL_DATA_STRUCT_START ]; 
+	FULONG *dptr = (FULONG *)&descr[ SQL_DATA_STRUCT_START ]; 
 	
 	while( dptr[0] != SQLT_END )
 	{
@@ -227,7 +228,7 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 		FUBYTE *strptr = (FUBYTE *)data;	// pointer to structure to which will will insert data
 		
 		// first 2 entries inform about table and size, rest information provided is about columns
-		dptr = &descr[ SQL_DATA_STRUCT_START ]; 
+		dptr = (FULONG *)&descr[ SQL_DATA_STRUCT_START ]; 
 		
 		int i = 0;
 		int col = 0;
@@ -1899,6 +1900,7 @@ void *libInit( void *sb )
 	l->FreeResult = dlsym ( l->l_Handle, "FreeResult");
 	l->DeleteWhere = dlsym ( l->l_Handle, "DeleteWhere");
 	l->QueryWithoutResults = dlsym ( l->l_Handle, "QueryWithoutResults");
+	l->MakeEscapedString = dlsym ( l->l_Handle, "MakeEscapedString");
 	l->GetStatus = dlsym ( l->l_Handle, "GetStatus");
 	l->SetOption = dlsym ( l->l_Handle, "SetOption");
 	l->SNPrintF = SNPrintF;

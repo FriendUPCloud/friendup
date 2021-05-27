@@ -94,7 +94,11 @@ static const char *DefaultDictionaryMessages[] =
 "Cannot remove token from list",
 "User Group already exist",
 "Bad chars used",
-"No access, special rights required"
+"No access, special rights required",
+"User Mobile App entry not found",
+"File uncompress problem: %d",
+"Cannot remove group with 'Level' type",
+"Cannot edit or remove UserGroup because its locked"
 };
 
 /**

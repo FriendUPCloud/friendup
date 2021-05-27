@@ -25,7 +25,7 @@ if( !class_exists( 'DoorSQLRODrive' ) )
 		{
 			global $args;
 			$this->fileInfo = isset( $args->fileInfo ) ? $args->fileInfo : new stdClass();
-			$defaultDiskspace = 536870912;
+			$defaultDiskspace = 500000000;
 			if( $this->Config )
 			{
 				$this->configObject = json_decode( $this->Config );
@@ -38,19 +38,19 @@ if( !class_exists( 'DoorSQLRODrive' ) )
 					{
 						case 'kb':
 							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
-							$nn = intval( $nn, 10 ) * 1024;
+							$nn = intval( $nn, 10 ) * 1000;
 							break;
 						case 'mb':
 							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
-							$nn = intval( $nn, 10 ) * 1024 * 1024;
+							$nn = intval( $nn, 10 ) * 1000 * 1000;
 							break;
 						case 'gb':
 							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
-							$nn = intval( $nn, 10 ) * 1024 * 1024 * 1024;
+							$nn = intval( $nn, 10 ) * 1000 * 1000 * 1000;
 							break;
 						case 'tb':
 							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
-							$nn = intval( $nn, 10 ) * 1024 * 1024 * 1024 * 1024;
+							$nn = intval( $nn, 10 ) * 1000 * 1000 * 1000 * 1000;
 							break;
 						default:
 							$nn = intval( $ds, 10 );
@@ -374,7 +374,7 @@ if( !class_exists( 'DoorSQLRODrive' ) )
 					$fn = $f->DiskFilename;
 					
 					$fname = $Config->FCUpload . $fn;
-					if( file_exists( $fname ) )
+					if( file_exists( $fname ) && filesize( $fname ) > 0 )
 					{
 						$info = @getimagesize( $fname );
 					
@@ -405,6 +405,7 @@ if( !class_exists( 'DoorSQLRODrive' ) )
 						{
 							//US-230 This is a memory friendly way to dump a file :-)
 							//Previously the download got broken at 94MB (or another file size depending on php.ini)
+							set_time_limit( 0 );
 							ob_end_clean(); 
 							readfile($fname);
 							die();
@@ -420,6 +421,10 @@ if( !class_exists( 'DoorSQLRODrive' ) )
 					
 						friendHeader( 'Content-Length: ' . filesize( $fname ) + strlen( $okRet ) );
 						return $okRet . trim( file_get_contents( $fname ) );
+					}
+					else
+					{
+						$Logger->log( '[SqlRODrive] Filesize is zero or file does not exist.' );
 					}
 				}
 				return 'fail<!--separate-->{"response":"could not read file"}'; //Could not read file: ' . $Config->FCUpload . $fn . '<!--separate-->' . print_r( $f, 1 );

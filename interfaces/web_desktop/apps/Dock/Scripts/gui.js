@@ -46,6 +46,8 @@ Application.receiveMessage = function( msg )
 			ge( 'Icon' ).value = typeof( msg.item.Icon ) != 'undefined' ? msg.item.Icon : '';
 			ge( 'Workspace' ).value = typeof( msg.item.Workspace ) != 'undefined' ? msg.item.Workspace : '';
 			ge( 'Settings' ).classList.remove( 'Disabled' );
+			ge( 'OpenSilent' ).value = typeof( msg.item.OpenSilent ) != 'undefined' ? msg.item.OpenSilent : 0;
+			ge( 'OpenSilentCheck' ).checked = ge( 'OpenSilent' ).value == 1 ? 'checked' : '';
 		 	
 		 	document.body.classList.add( 'DockEdit' );
 		 	
@@ -180,6 +182,8 @@ function LoadDock( callback )
 				setSelectValue( ge( 'DockSize' )     , dd.options.size     );
 				ge( 'DockY' ).value = dd.options.dockx;
 				ge( 'DockX' ).value = dd.options.docky;
+				ge( 'OpenSilent' ).value = dd.options.opensilent;
+				ge( 'OpenSilentCheck' ).checked = dd.options.opensilent === '1' ? 'checked' : '';
 				ge( 'Workspace' ).value = dd.options.workspace >= 1 ? dd.options.workspace : 1;
 			}
 		}
@@ -189,7 +193,7 @@ function LoadDock( callback )
 
 function SaveCurrentDock()
 {	
-	var options = {};
+	let options = {};
 	//options.position  = getSelectValue( ge( 'DockPlacement' ) );
 	options.position  = 'aligned';
 	options.layout    = getSelectValue( ge( 'DockLayout' ) );
@@ -197,6 +201,8 @@ function SaveCurrentDock()
 	options.dockx     = ge( 'DockY' ).value;
 	options.docky     = ge( 'DockX' ).value;
 	options.workspace = ge( 'Workspace' ).value;
+	options.opensilent = ge( 'OpenSilentCheck' ).checked ? '1' : '0';
+	
 	Application.sendMessage( { 
 		command: 'savecurrentdock', 
 		dockid: currentDock, 

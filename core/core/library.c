@@ -46,7 +46,7 @@ void *LibraryOpen( void *sb, const char *name, long version )
 {
 	if( !name )
 	{
-		FERROR("Cannot open library with empty name!\n");
+		Log( FLOG_ERROR, "Cannot open library with empty name!\n");
 		return NULL;
 	}
 	DEBUG("Lib open\n");
@@ -59,7 +59,7 @@ void *LibraryOpen( void *sb, const char *name, long version )
 		
 	FBOOL loaded = FALSE;
 	char currentDirectory[ PATH_MAX ];
-	char loadLibraryPath[ PATH_MAX ];
+	char loadLibraryPath[ PATH_MAX+16 ];
 	memset( &currentDirectory, 0, sizeof(currentDirectory) );
 	memset( &loadLibraryPath, 0, sizeof(loadLibraryPath) );
 
@@ -78,14 +78,14 @@ void *LibraryOpen( void *sb, const char *name, long version )
 	// there is no need to multiply by sizeof(char)
 	if (getcwd( currentDirectory, sizeof ( currentDirectory ) ) == NULL)
 	{
-		FERROR("getcwd failed!");
+		Log( FLOG_ERROR, "[LibraryOpen] getcwd failed!");
 		exit(5);
 	}
 	//DEBUG( "[LibraryOpen] Current directory %s\n", currentDirectory );
 
 	// we should check and get lib from current dirrectory first (compatybility)
 	
-	sprintf ( loadLibraryPath, "%s/%s", currentDirectory, name );
+	snprintf( loadLibraryPath, sizeof(loadLibraryPath), "%s/%s", currentDirectory, name );
 	DEBUG("[LibraryOpen] Open library %s\n", loadLibraryPath );
 
 	if( ( handle = dlopen ( loadLibraryPath, RTLD_NOW|RTLD_GLOBAL ) ) != NULL )
@@ -163,7 +163,7 @@ void *LibraryOpen( void *sb, const char *name, long version )
 		char* error = dlerror();
 		if( error )
 		{
-			FERROR( "[LibraryOpen] Library error: %s  DYNAMIC LINK ERROR\n", error );
+			Log( FLOG_ERROR, "[LibraryOpen] Library error: %s  DYNAMIC LINK ERROR\n", error );
 		}
 	}
 

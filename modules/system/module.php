@@ -123,11 +123,13 @@ function curl_exec_follow( $cu, &$maxredirect = null )
 	if ( ini_get( 'open_basedir' ) == '' && ini_get( 'safe_mode' == 'Off' ) )
 	{
 		curl_setopt( $cu, CURLOPT_FOLLOWLOCATION, $mr > 0 );
+		curl_setopt( $cu, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 		curl_setopt( $cu, CURLOPT_MAXREDIRS, $mr );
 	}
 	else
 	{
 		curl_setopt( $cu, CURLOPT_FOLLOWLOCATION, false );
+		curl_setopt( $cu, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 
 		if ( $mr > 0 )
 		{
@@ -219,17 +221,6 @@ if( isset( $args->command ) )
 {
 	switch( $args->command )
 	{
-		/*case 'copytest':
-			include_once( 'php/classes/door.php' );
-			$d = new Door( 'Home:' );
-			$t = new Door( 'Documents:' );
-			if( $f = $d->getFile( 'Home:FriendWorkspace.odt' ) )
-			{
-				$t->putFile( 'Documents:Telenor/FriendWorkspace.odt', $f );
-				die( 'ok<!--separate-->' );
-			}
-			die( 'fail<!--separate-->{"response":"failed"}'  );
-			break;*/
 		case 'help':
 			$commands = array(
 				'ping', 'theme', 'systempath', 'software', 'save_external_file', 'proxycheck', 'proxyget',
@@ -243,11 +234,11 @@ if( isset( $args->command ) )
 				'setfilepublic', 'setfileprivate', 'zip', 'unzip', 'volumeinfo',
 				'securitydomains', 'systemmail', 'removebookmark', 'addbookmark',
 				'getbookmarks', 'listapplicationdocs', 'finddocumentation', 'userinfoget',
-				'userinfoset',  'useradd', 'checkuserbyname', 'userbetamail', 'listbetausers', 'listconnectedusers',
+				'userinfoset',  'useradd', 'user/create', 'user/update', 'user/delete', 'checkuserbyname', 'userbetamail', 'listbetausers', 'listconnectedusers',
 				'usersetup', 'usersetupadd', 'usersetupapply', 'usersetupsave', 'usersetupdelete',
 				'usersetupget', 'userwallpaperset', 'workgroups', 'workgroupadd', 'workgroupupdate', 'workgroupdelete',
 				'workgroupget', 'setsetting', 'getsetting', 'getavatar', 'listlibraries', 'listmodules',
-				'listuserapplications', 'getmimetypes',  'setmimetype', 'setmimetypes', 'deletemimetypes',
+				'listuserapplications', 'adduserapplication', 'removeuserapplication', 'getmimetypes',  'setmimetype', 'setmimetypes', 'deletemimetypes',
 				'deletecalendarevent', 'getcalendarevents', 'addcalendarevent',
 				'listappcategories', 'systempath', 'listthemes', 'settheme', /* DEPRECATED - look for comment below 'userdelete',*/'userunblock',
 				'usersettings', 'listsystemsettings', 'savestate', 'getsystemsetting',
@@ -325,6 +316,7 @@ if( isset( $args->command ) )
 			{
 				$c = curl_init();
 				curl_setopt( $c, CURLOPT_URL, $args->args->url );
+				curl_setopt( $c, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 				curl_setopt( $c, CURLOPT_FAILONERROR, true );
 				curl_setopt( $c, CURLOPT_NOBODY, true );
 				curl_setopt( $c, CURLOPT_RETURNTRANSFER, true );
@@ -389,6 +381,7 @@ if( isset( $args->command ) )
 					$fields[$k] = $v;
 				}
 				curl_setopt( $c, CURLOPT_POST, true );
+				curl_setopt( $c, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 				curl_setopt( $c, CURLOPT_POSTFIELDS, http_build_query( $fields ) );
 				curl_setopt( $c, CURLOPT_RETURNTRANSFER, true );
 				curl_setopt( $c, CURLOPT_HTTPHEADER, array( 'Accept-charset: UTF-8' ) );
@@ -506,6 +499,31 @@ if( isset( $args->command ) )
 			require( 'modules/system/include/savefile.php' );
 			break;
 
+		// Get timeszones in a json format
+		case 'gettimezones':
+			require( 'modules/system/include/gettimezones.php' );
+			break;
+		
+		// Save contact information
+		case 'setcontact':
+			require( 'modules/system/include/setcontact.php' );
+			break;
+		
+		// Delete a contact by contact id
+		case 'deletecontact':
+			require( 'modules/system/include/deletecontact.php' );
+			break;
+		
+		// Get single contact information
+		case 'getcontact':
+			require( 'modules/system/include/getcontact.php' );
+			break;
+
+		// Get contacts
+		case 'getcontacts':
+			require( 'modules/system/include/getcontacts.php' );
+			break;
+
 		// Likes
 		case 'like':
 			require( 'modules/system/include/like.php' );
@@ -548,6 +566,17 @@ if( isset( $args->command ) )
 			}
 			die( 'fail<!--separate-->{"response":"user level failed"}'  );
 			break;
+			
+		// Post an announcement to workgroups and known users
+		case 'announcement':
+    		require( 'modules/system/include/announcement.php' );
+		    break;
+		    
+		// Get user/workgroup relevant announcements
+		case 'getannouncements':
+		    require( 'modules/system/include/getannouncements.php' );
+		    break;
+			
 		case 'convertfile':
 			require( 'modules/system/include/convertfile.php' );
 			break;
@@ -653,6 +682,7 @@ if( isset( $args->command ) )
 			die( 'fail<!--separate-->{"response":"assign failed"}'  );
 			break;
 		case 'doorsupport':
+		
 			if( $dir = opendir( 'devices/DOSDrivers' ) )
 			{
 				$str = '';
@@ -672,6 +702,10 @@ if( isset( $args->command ) )
 		case 'setup':
 			//include( 'modules/system/include/dbchecker.php' );
 			die( 'ok' );
+			break;
+		// Get localized geographical information
+		case 'geoinfo':
+			include( 'modules/system/include/geoinfo.php' );
 			break;
 		case 'languages':
 			include( 'modules/system/include/languages.php' );
@@ -815,6 +849,25 @@ if( isset( $args->command ) )
 			}
 			die( 'fail<!--separate-->' );
 			break;
+		// Share something!
+		case 'share':
+			require( 'modules/system/include/share.php' );
+			break;
+		// Share a file to members
+		case 'removefileshareinfo':
+			require( 'modules/system/include/removefileshareinfo.php' );
+			break;
+		// Share a file to members
+		case 'setfileshareinfo':
+			require( 'modules/system/include/setfileshareinfo.php' );
+			break;
+		case 'checksharedpaths':
+			require( 'modules/system/include/checksharedpaths.php' );
+			break;
+		// Get shared file members
+		case 'getfileshareinfo':
+			require( 'modules/system/include/getfileshareinfo.php' );
+			break;
 		// Get a list of mounted and unmounted devices
 		case 'mountlist':
 			require( 'modules/system/include/mountlist.php' );
@@ -867,6 +920,10 @@ if( isset( $args->command ) )
 			break;
 		case 'fileinfo':
 			require( 'modules/system/include/fileinfo.php' );
+			break;
+		// Get settings per device or all user related devices
+		case 'devicesettings';
+			require( 'modules/system/include/devicesettings.php' );
 			break;
 		// List available systems stored for the current user
 		case 'filesystem':
@@ -1495,6 +1552,11 @@ if( isset( $args->command ) )
 		case 'useradd':
 			require( 'modules/system/include/useradd.php' );
 			break;
+		case 'user/create':
+		case 'user/update':
+		case 'user/delete':
+			require( 'modules/system/include/user.php' );
+			break;
 		//
 		case 'checkuserbyname':
 			if( $level == 'Admin' || $args->args->id == $User->ID )
@@ -1618,6 +1680,12 @@ if( isset( $args->command ) )
 			break;
 		case 'listuserapplications':
 			require( 'modules/system/include/listuserapplications.php' );
+			break;
+		case 'adduserapplication':
+			require( 'modules/system/include/adduserapplication.php' );
+			break;
+		case 'removeuserapplication':
+			require( 'modules/system/include/removeuserapplication.php' );
 			break;
 		case 'getapplicationpreview':
 			require( 'modules/system/include/getapplicationpreview.php' );
@@ -1873,6 +1941,35 @@ if( isset( $args->command ) )
 			sleep( $sleeptime );
 			
 			die( 'ok<!--separate-->{"slept_for": "'. $sleeptime .'" seconds", "randomstuff":"'.$randomstring.'" }' );
+			break;
+		
+		case 'checkeula':
+			$eula = isset( $configfilesettings[ 'Security' ][ 'EULARequired' ] ) ? $configfilesettings[ 'Security' ][ 'EULARequired' ] : false;
+			if( $eula )
+			{
+				$l = new dbIO( 'FSetting' );
+				$l->Type = 'system';
+				$l->Key = 'accepteula';
+				$l->UserID = $User->ID;
+				if( !$l->Load() )
+				{
+					die( 'fail<!--separate-->{"euladocument":"' . ( 
+						isset( $configfilesettings[ 'Security' ][ 'EULADocument' ] ) ? $configfilesettings[ 'Security' ][ 'EULADocument' ] : '' 
+					) . '"}' );
+				}
+			}
+			die( 'ok' );
+			break;
+		case 'geteuladocument':
+			if( isset( $configfilesettings[ 'Security' ][ 'EULADocument' ] ) )
+			{
+				$path = trim( $configfilesettings[ 'Security' ][ 'EULADocument' ] );
+				if( file_exists( $path ) )
+				{
+					die( 'ok<!--separate-->' . file_get_contents( $path ) );
+				}
+			}
+			die( 'fail' );
 			break;
 		
 		// Init firstlogin for a new user via this module call 

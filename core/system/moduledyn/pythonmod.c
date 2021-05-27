@@ -84,9 +84,14 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	int escapedSize = eargLen + epathLen + 1024;
 
 	int siz = eargLen + epathLen + 128;
+	int addlen = 0;
+	if( args != NULL )
+	{
+		addlen = strlen( args );
+	}
 	
 	char *command = NULL;
-	if( ( command = calloc( 1024 + strlen( path ) + ( args != NULL ? strlen( args ) : 0 ), sizeof( char ) ) ) == NULL )
+	if( ( command = calloc( 1024 + strlen( path ) + addlen, sizeof( char ) ) ) == NULL )
 	{
 		FERROR("Cannot allocate memory for data\n");
 		free( epath ); free( earg );
@@ -120,14 +125,28 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 		return NULL;
 	}
 	
-	//char *buffer = NULL;
-	char *temp = NULL;
-	char *result = NULL;
-	char *gptr = NULL;
+	char buffer[ LBUFFER_SIZE ];
+	BufString *bs = BufStringNew();
+	while( !feof( pipe ) )
+	{
+		int reads = fread( buffer, sizeof( char ), LBUFFER_SIZE, pipe );
+		if( reads > 0 )
+		{
+			BufStringAddSize( bs, buffer, reads );
+		}
+	}
+	// Free buffer if it's there
+	pclose( pipe );
 	
-	
+	/*
 	// List of chunks
-	struct linkedCharArray *chr = calloc( 1, sizeof( struct linkedCharArray ) );
+	struct linkedCharArray *chr = (struct linkedCharArray *)calloc( 1, sizeof( struct linkedCharArray ) );
+	if( chr == NULL )
+	{
+		FERROR("[Pythonmod] cannot allocate memory for list\n");
+		free( command ); free( epath ); free( earg );
+		return NULL;
+	}
 	struct linkedCharArray *lnk = chr;
 	
 	DEBUG("[PHPmod] command launched\n");
@@ -136,7 +155,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	while( !feof( pipe ) )
 	{
 		// Make a new buffer and read
-		lnk->data = calloc( LBUFFER_SIZE + 1, sizeof( char ) );
+		lnk->data = (char *)calloc( LBUFFER_SIZE + 1, sizeof( char ) );
 		if( !lnk->data )
 		{
 			lnk->next = NULL;
@@ -181,13 +200,11 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 		free( lnk );
 	}
 	while( ( lnk = tmp ) != NULL );
+	*/
+	char *final = bs->bs_Buffer;
+	bs->bs_Buffer = NULL;
+	BufStringDelete( bs );
 	
-	// Don't accept errors
-	if( errors > 0 )
-	{
-		free( final ); free( command ); free( epath ); free( earg );
-		return NULL;
-	}
 	DEBUG( "[Pythonmod] We are now complete..\n" );
 	free( command ); free( epath ); free( earg );
 	return final;
@@ -452,7 +469,7 @@ const char *GetSuffix()
 		printf("[PHPmod] Closing busniess\n");
 	}
 	
-	printf("[PHPmod] Before free app ----readed %ld\n", res );
+	printf("[PHPmod] Before free app ----read %ld\n", res );
 	*length = (int)res;
 	
 	free( app );

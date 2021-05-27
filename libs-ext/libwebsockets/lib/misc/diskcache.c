@@ -22,9 +22,12 @@
  * IN THE SOFTWARE.
  */
 
+#if !defined(_GNU_SOURCE)
 #define _GNU_SOURCE
+#endif
 #include <pthread.h>
 
+#include <libwebsockets.h>
 #include "private-lib-core.h"
 
 #include <string.h>
@@ -39,6 +42,14 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
+
+#if defined(__APPLE__)
+#include <sys/dirent.h>
+/* Travis OSX does not have DT_REG... */
+#if !defined(DT_REG)
+#define DT_REG 8
+#endif
+#endif
 
 struct file_entry {
 	lws_list_ptr sorted;

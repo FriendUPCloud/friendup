@@ -21,7 +21,7 @@ Application.run = function( msg )
 
 	if( !ge( 'StartupCommand' ).value )
 	{
-		ge( 'BrowserBox' ).src = getImageUrl( 'Progdir:Templates/about.html' );
+		ge( 'BrowserBox' ).src = 'https://friendos.com/';
 		this.registerUrl( ge( 'BrowserBox' ).src );
 	}
 
@@ -289,10 +289,9 @@ function setUrl( uri, move )
 	{
 		skiploading = true;
 		ge( 'BrowserBox' ).src = uri;
-		console.log( 'Setting browser uri: ' + uri );
 	}
 	
-	ge( 'uri' ).value = uri;
+	ge( 'uri' ).innerHTML = uri;
 
 	// Cap historyLog
 	if( !move )
@@ -427,7 +426,7 @@ function displayFNetPage( doorName, hostName, appName, community, path )
 		{
 			// Set the title
 			var uri = 'friend://' + hostName + '@' + community + '/' + parentPath + filename;
-			ge( 'uri' ).value = uri;
+			ge( 'uri' ).innerHTML = uri;
 			Application.sendMessage( { command: 'setcontent', url: uri } );
 
 			// Add to history

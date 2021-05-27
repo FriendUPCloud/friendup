@@ -49,12 +49,12 @@ typedef struct SpecialData
 	CommServiceRemote				*csr;
 	SystemBase 						*sb;
 	
-	char							*host;
-	char 							*id;
-	char 							*login;
-	char							*passwd;
-	char							*devid;
-	char 							*privkey;
+	char							*host;				// host name / ip
+	char 							*id;				//
+	char 							*login;				// remote user login
+	char							*passwd;			// remote user password
+	char							*devid;				// remote device id
+	char 							*privkey;			// private key
 	char 							fileptr[ 64 ];
 	char							enc[ 10 ];
 	
@@ -62,7 +62,7 @@ typedef struct SpecialData
 	char							*localDevName;
 	char							*remoteDevName;
 	
-	int								idi, 
+	int								idi, 			// length of commands
 									logini, 
 									passwdi, 
 									devidi,
@@ -72,13 +72,13 @@ typedef struct SpecialData
 	int								enci;
 
 	int								mode;			// read or write
-	char 							*tmppath;			// path to temporary file
-	char 							*remotepath;		// path to remote file
+	char 							*tmppath;		// path to temporary file
+	char 							*remotepath;	// path to remote file
 	int								fileSize;		// temporary file size
 	
 	FConnection		 				*con;			// remote fs connection
 	
-	char							*address;	// hold destination server address
+	char							*address;		// hold destination server address
 	int 							port;			// port
 	int								secured;		// is connection secured
 }SpecialData;
@@ -183,7 +183,7 @@ int FSRemoteLogin( SpecialData *sd )
 				//int len = t[ i ].end-t[ i ].start;
 				i1 = i + 1;
 				
-				if ( jsoneq( d, &t[i], "response" ) == 0) 
+				if( jsoneq( d, &t[i], "response" ) == 0 ) 
 				{
 					//int len = t[ i1 ].end-t[ i1 ].start;
 				
@@ -194,13 +194,16 @@ int FSRemoteLogin( SpecialData *sd )
 				}
 				//sessionid
 
-				if (jsoneq( d, &t[i], "sessionid") == 0) 
+				if( jsoneq( d, &t[i], "sessionid") == 0 ) 
 				{
 					int len = t[ i1 ].end-t[ i1 ].start;
 					char authidc[ 512 ];
+					char *tmpses = StringDuplicateN( d + t[i1].start, len );
+					
 					memset( authidc, 0, 512 );
 					
-					int locs = sprintf( authidc, "sessionid=%s", "remote" );
+					int locs = sprintf( authidc, "sessionid=%s", tmpses );
+					//int locs = sprintf( authidc, "sessionid=%s", "remote" );
 					if( sd->id != NULL )
 					{
 						FFree( sd->id );
@@ -215,6 +218,7 @@ int FSRemoteLogin( SpecialData *sd )
 					{
 						error = 0;
 					}
+					FFree( tmpses );
 					break;
 				}
 			}
@@ -255,12 +259,12 @@ DataForm *SendMessageRFS( SpecialData *sd, DataForm *df )
 	if( newsock != NULL )
 	{
 		DEBUG("[SendMessageRFS] Connection created, message will be send: %lu\n", df->df_Size );
-		int size = sd->sb->sl_SocketInterface.SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
-		bs = sd->sb->sl_SocketInterface.SocketReadTillEnd( newsock, 0, 15 );
+		int size = newsock->s_Interface->SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
+		bs = newsock->s_Interface->SocketReadTillEnd( newsock, 0, 15 );
 		
 		if( bs != NULL )
 		{
-			DEBUG2("[SendMessageRFS] Received from socket %d\n", bs->bs_Size );
+			DEBUG2("[SendMessageRFS] Received from socket %ld\n", bs->bs_Size );
 			lsdata = (FBYTE *)bs->bs_Buffer;
 			sockReadSize = bs->bs_Size;
 		}
@@ -303,7 +307,7 @@ DataForm *SendMessageRFS( SpecialData *sd, DataForm *df )
 			BufStringDelete( bs );
 		}
 		
-		sd->sb->sl_SocketInterface.SocketDelete( newsock );
+		newsock->s_Interface->SocketDelete( newsock );
 		
 		DEBUG("[SendMessageRFS] got reponse\n");
 		
@@ -339,12 +343,12 @@ DataForm *SendMessageRFSRelogin( SpecialData *sd, DataForm *df )
 	if( newsock != NULL )
 	{
 		DEBUG("[SendMessageRFSRelogin] Connection created, message will be send: %lu\n", df->df_Size );
-		int size = sd->sb->sl_SocketInterface.SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
-		bs = sd->sb->sl_SocketInterface.SocketReadTillEnd( newsock, 0, 15 );
+		int size = newsock->s_Interface->SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
+		bs = newsock->s_Interface->SocketReadTillEnd( newsock, 0, 15 );
 		
 		if( bs != NULL )
 		{
-			DEBUG2("[SendMessageRFSRelogin] Received from socket %d\n", bs->bs_Size );
+			DEBUG2("[SendMessageRFSRelogin] Received from socket %ld\n", bs->bs_Size );
 			lsdata = (FBYTE *)bs->bs_Buffer;
 			sockReadSize = bs->bs_Size;
 		}
@@ -385,7 +389,7 @@ DataForm *SendMessageRFSRelogin( SpecialData *sd, DataForm *df )
 						
 						BufStringDelete( bs );
 						
-						sd->sb->sl_SocketInterface.SocketDelete( newsock );
+						newsock->s_Interface->SocketDelete( newsock );
 						
 						return SendMessageRFS( sd, df );
 					}
@@ -402,7 +406,7 @@ DataForm *SendMessageRFSRelogin( SpecialData *sd, DataForm *df )
 			BufStringDelete( bs );
 		}
 		
-		sd->sb->sl_SocketInterface.SocketDelete( newsock );
+		newsock->s_Interface->SocketDelete( newsock );
 		
 		DEBUG("[SendMessageRFSRelogin] got reponse\n");
 		
@@ -514,7 +518,7 @@ FConnection *ConnectToServerRFS( SpecialData *sd, char *conname )
 			DataFormAdd( &df, (FBYTE *)fcm->fcm_ID, FRIEND_CORE_MANAGER_ID_SIZE );
 			//INFO("Message created name byte %c%c%c%c\n", fcm->fcm_ID[32], fcm->fcm_ID[33], fcm->fcm_ID[34], fcm->fcm_ID[35]	);
 		
-			int sbytes = sd->sb->sl_SocketInterface.SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
+			int sbytes = newsock->s_Interface->SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
 		
 			DEBUG("Message sent %d\n", sbytes );
 			DataFormDelete( df );
@@ -547,7 +551,7 @@ FConnection *ConnectToServerRFS( SpecialData *sd, char *conname )
 	{
 		if( newsock != NULL )
 		{
-			sd->sb->sl_SocketInterface.SocketDelete( newsock );
+			newsock->s_Interface->SocketDelete( newsock );
 		}
 	}
 	else
@@ -660,17 +664,19 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 		// we are trying to open folder/connection
 		
 		unsigned int pathlen = strlen( path );
-		dev->f_Path = FCalloc( pathlen + 10, sizeof(char) );
-		strcpy( dev->f_Path, path );
-		if( pathlen <=  0 )
+		if( ( dev->f_Path = FCalloc( pathlen + 10, sizeof(char) ) ) != NULL )
 		{
-			strcat( dev->f_Path, ":" );
-		}
-		else
-		{
-			if( path[ pathlen-1 ] != ':' )
+			strcpy( dev->f_Path, path );
+			if( pathlen <=  0 )
 			{
 				strcat( dev->f_Path, ":" );
+			}
+			else
+			{
+				if( path[ pathlen-1 ] != ':' )
+				{
+					strcat( dev->f_Path, ":" );
+				}
 			}
 		}
 		
@@ -695,7 +701,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 			
 			while( fcm->fcm_CommServiceRemote == NULL )
 			{
-				sleep( 1 );
+				usleep( 5000 );
 				if( (tr--) <= 0 )
 				{
 					break;
@@ -1045,7 +1051,7 @@ DataForm *SendMessageWithReconnection( SpecialData *sd, DataForm *df )
 					FriendCoreManager *fcm = sb->fcm;
 					DataFormAdd( &df, (FBYTE *)fcm->fcm_ID, FRIEND_CORE_MANAGER_ID_SIZE );
 
-					int sbytes = sd->sb->sl_SocketInterface.SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
+					int sbytes = newsock->s_Interface->SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
 		
 					DEBUG("Message sent %d\n", sbytes );
 					DataFormDelete( df );
@@ -1396,7 +1402,7 @@ int FileRead( struct File *f, char *buffer, int rsize )
 			
 			if( f->f_Stream == TRUE )
 			{
-				sd->sb->sl_SocketInterface.SocketWrite( f->f_Socket, d, (FLONG)result );
+				f->f_Socket->s_Interface->SocketWrite( f->f_Socket, d, (FLONG)result );
 			}
 			else
 			{

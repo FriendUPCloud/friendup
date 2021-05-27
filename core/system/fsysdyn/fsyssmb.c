@@ -53,51 +53,44 @@ typedef struct SpecialData
 //
 //
 
-void SDDelete( SpecialData *sd )
-{
-	if( sd == NULL )
-	{
-		return;
-	}
-	
-	if( sd->temp != NULL )
-	{
-		FFree( sd->temp );
-	}
-
-	if( sd->server != NULL )
-	{
-		FFree( sd->server );
-	}
-
-	if( sd->share != NULL )
-	{
-		FFree( sd->share );
-	}
-
-	if( sd->workgroup != NULL )
-	{
-		FFree( sd->workgroup );
-	}
-	
-	if( sd->username != NULL )
-	{
-		FFree( sd->username );
-	}
-
-	if( sd->password != NULL )
-	{
-		FFree( sd->password );
-	}
-	
-	//smbc_close( sd->ctx->f ->fd );
-	//libsmbc->fd = -1;
-  
-	if( sd->ctx != NULL )
-	{
-		smbc_free_context( sd->ctx, 1 );
-	}
-	FFree( sd );
+#define SDDelete( sd ) \
+	if( sd != NULL )\
+	{\
+	if( sd->temp != NULL )\
+	{\
+		FFree( sd->temp );\
+	}\
+\
+	if( sd->server != NULL )\
+	{\
+		FFree( sd->server );\
+	}\
+\
+	if( sd->share != NULL )\
+	{\
+		FFree( sd->share );\
+	}\
+\
+	if( sd->workgroup != NULL )\
+	{\
+		FFree( sd->workgroup );\
+	}\
+	\
+	if( sd->username != NULL ) \
+	{\
+		FFree( sd->username );\
+	}\
+\
+	if( sd->password != NULL )\
+	{\
+		FFree( sd->password );\
+	}\
+	\
+	if( sd->ctx != NULL )\
+	{\
+		smbc_free_context( sd->ctx, 1 );\
+	}\
+	FFree( sd );\
 }
 
 const char *GetSuffix()
@@ -184,17 +177,15 @@ typedef struct HandlerData
 
 char* StringDup( const char* str )
 {
-	if( str == NULL)
-	{
-		//DEBUG("Cannot copy string!\n");
-		return NULL;
-	}
-	
-	int len = strlen( str );
 	char *res = NULL;
-	if( ( res = calloc( len+1, sizeof(char) ) ) != NULL )
+	if( str != NULL)
 	{
-		strcpy( res, str );
+		int len = strlen( str );
+		
+		if( ( res = FCalloc( len+1, sizeof(char) ) ) != NULL )
+		{
+			strcpy( res, str );
+		}
 	}
 	
 	return res;
@@ -230,9 +221,12 @@ void init( struct FHandler *s )
 	if( s )
 	{
 		s->fh_SpecialData = FCalloc( 1, sizeof( HandlerData ) );
-		HandlerData *hd = (HandlerData *)s->fh_SpecialData;
-		hd->initialized = 0;
-		pthread_mutex_init( &hd->hd_Mutex, NULL );
+
+		if( s->fh_SpecialData != NULL )
+		{
+			((HandlerData *)s->fh_SpecialData)->initialized = 0;
+			pthread_mutex_init( &((HandlerData *)s->fh_SpecialData)->hd_Mutex, NULL );
+		}
 		DEBUG("[FSYSSMB] init\n");
 	}
 }
@@ -255,9 +249,6 @@ void deinit( struct FHandler *s )
 
 void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs, char **mountError )
 {
-	//FERROR("Disabled for a moment\n");
-	//return NULL;
-	
 	File *dev = NULL;
 	char *path = NULL, *ulogin = NULL, *upass = NULL;
 	char *name = NULL, *host = NULL;
@@ -269,8 +260,6 @@ void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs, char **m
 	{
 		return NULL;
 	}
-	
-	HandlerData *hd = (HandlerData *)s->fh_SpecialData;
 	
 	DEBUG("[SAMBA] Mounting samba filesystem!\n");
 	
@@ -308,7 +297,6 @@ void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs, char **m
 					upass = (char *)lptr->ti_Data;
 					break;
 			}
-		
 			lptr++;
 		}
 		
@@ -321,109 +309,107 @@ void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs, char **m
 			return NULL;
 		}
 		
-		dev->f_SpecialData = FCalloc( 1, sizeof(SpecialData) );
-		SpecialData *locsd = (SpecialData *)dev->f_SpecialData;
-		
-		locsd->sb = sb;
-		
-		// we are trying to find if workgroup is in login field
-		// if it is we create workgroup variable
-		unsigned int i;
-		char *wrkgr = NULL;
-		for( i=0 ; i < strlen( ulogin ) ; i++ )
+		dev->f_SpecialData = (void *)FCalloc( 1, sizeof(SpecialData) );
+		if( dev->f_SpecialData != NULL )
 		{
-			if( ulogin[ i ] == '/' )
+			((SpecialData *)dev->f_SpecialData)->sb = sb;
+		
+			// we are trying to find if workgroup is in login field
+			// if it is we create workgroup variable
+			unsigned int i;
+			for( i=0 ; i < strlen( ulogin ) ; i++ )
 			{
-				ulogin[ i ] = 0;
-				wrkgr = &(ulogin[i+1]);
+				if( ulogin[ i ] == '/' )
+				{
+					ulogin[ i ] = 0;
+					((SpecialData *)dev->f_SpecialData)->workgroup = StringDup( &(ulogin[i+1]) );
+				}
 			}
-		}
 		
-		locsd->username = StringDup( ulogin );
-		if( wrkgr != NULL )
-		{
-			locsd->workgroup = StringDup( wrkgr );
-		}
-		locsd->password = StringDup( upass );
-		locsd->server = StringDup( host );
-		locsd->share = StringDup( path );
-		locsd->port = port;
+			((SpecialData *)dev->f_SpecialData)->username = StringDup( ulogin );
+			((SpecialData *)dev->f_SpecialData)->password = StringDup( upass );
+			((SpecialData *)dev->f_SpecialData)->server = StringDup( host );
+			((SpecialData *)dev->f_SpecialData)->share = StringDup( path );
+			((SpecialData *)dev->f_SpecialData)->port = port;
 		
-		locsd->ctx = smbc_new_context();
-		if( locsd->ctx == NULL )
-		{
-			SDDelete( locsd );
-			FFree( dev );
-			return NULL;
-		}
+			((SpecialData *)dev->f_SpecialData)->ctx = smbc_new_context();
+			if( ((SpecialData *)dev->f_SpecialData)->ctx == NULL )
+			{
+				SDDelete( ((SpecialData *)dev->f_SpecialData) );
+				FFree( dev );
+				return NULL;
+			}
 		
-		if( !smbc_init_context( locsd->ctx ) )
-		{
-			SDDelete( locsd );
-			FFree( dev );
-			return NULL;
-		}
-		smbc_set_context( locsd->ctx );
+			if( !smbc_init_context( ((SpecialData *)dev->f_SpecialData)->ctx ) )
+			{
+				SDDelete( ((SpecialData *)dev->f_SpecialData) );
+				FFree( dev );
+				return NULL;
+			}
+			smbc_set_context( ((SpecialData *)dev->f_SpecialData)->ctx );
 
-		smbc_setOptionUserData( locsd->ctx, locsd );
-		smbc_setFunctionAuthDataWithContext( locsd->ctx, get_auth_data_fn );
-		DEBUG("[SAMBA] Before samba init\n");
-		if( smbc_init( NULL, 0 ) < 0 )
-		{
-			SDDelete( locsd );
-			FFree( dev );
-			FERROR("[SAMBA] init fail\n");
-			return NULL;
-		}
+			smbc_setOptionUserData( ((SpecialData *)dev->f_SpecialData)->ctx, ((SpecialData *)dev->f_SpecialData) );
+			smbc_setFunctionAuthDataWithContext( ((SpecialData *)dev->f_SpecialData)->ctx, get_auth_data_fn );
+			DEBUG("[SAMBA] Before samba init\n");
+			if( smbc_init( NULL, 0 ) < 0 )
+			{
+				SDDelete( ((SpecialData *)dev->f_SpecialData) );
+
+				FFree( dev );
+				FERROR("[SAMBA] init fail\n");
+				return NULL;
+			}
 		
-		int plen = strlen( path );
-		int hlen = strlen( host );
-		
-		if( ( dev->f_Path = FCalloc( plen+hlen+16, sizeof(char) ) ) != NULL )
-		{
+			int plen = 0;
 			if( path != NULL )
 			{
-				if( strlen( path ) > 0 )
+				plen = strlen( path );
+			}
+			int hlen = strlen( host );
+		
+			if( ( dev->f_Path = FCalloc( plen+hlen+16, sizeof(char) ) ) != NULL )
+			{
+				if( path != NULL )
 				{
-					snprintf( dev->f_Path, plen+hlen+16, "smb://%s/%s/", host, path );
+					if( strlen( path ) > 0 )
+					{
+						snprintf( dev->f_Path, plen+hlen+16, "smb://%s/%s/", host, path );
+					}
+					else
+					{
+						snprintf( dev->f_Path, plen+hlen+16, "smb://%s/", host );
+					}
 				}
 				else
 				{
 					snprintf( dev->f_Path, plen+hlen+16, "smb://%s/", host );
 				}
 			}
-			else
+		
+			DEBUG("[SAMBA] HOST %s PATH %s both %s\n", host, path, dev->f_Path );
+
+			int dh;
+		
+			smbc_opendir_fn opdir = smbc_getFunctionOpendir( ((SpecialData *)dev->f_SpecialData)->ctx );
+			smbc_closedir_fn closef = smbc_getFunctionClosedir( ((SpecialData *)dev->f_SpecialData)->ctx );
+
+			if( ( dh = smbc_opendir( dev->f_Path ) ) < 0 )
 			{
-				snprintf( dev->f_Path, plen+hlen+16, "smb://%s/", host );
+				FERROR("[SAMBA] Opendir fail! Path: %s\n", dev->f_Path );
+
+				SDDelete( ((SpecialData *)dev->f_SpecialData) );
+				FFree( dev );
+				return NULL;
 			}
-		}
+			smbc_closedir( dh );
+			//closef( locsd->ctx, dh );
 		
-		DEBUG("[SAMBA] HOST %s PATH %s both %s\n", host, path, dev->f_Path );
-		
-		//SMBCFILE *dh = NULL;
-		int dh;
-		
-		smbc_opendir_fn opdir = smbc_getFunctionOpendir( locsd->ctx );
-		smbc_closedir_fn closef = smbc_getFunctionClosedir( locsd->ctx );
-		
-		//if( ( dh = opdir( locsd->ctx, dev->f_Path ) ) == NULL )
-		if( ( dh = smbc_opendir( dev->f_Path ) ) < 0 )
-		{
-			//sb->sl_Error;
-			
-			FERROR("[SAMBA] Opendir fail! Path: %s\n", dev->f_Path );
-			SDDelete( locsd );
-			FFree( dev );
-			return NULL;
-		}
-		smbc_closedir( dh );
-		//closef( locsd->ctx, dh );
-		
-		DEBUG("[SAMBA] path is ok '%s'\n", dev->f_Path );
-		dev->f_FSys = s;
-		dev->f_Position = 0;
-		dev->f_User = usrs->us_User;
-		dev->f_Name = StringDup( name );
+			DEBUG("[SAMBA] path is ok '%s'\n", dev->f_Path );
+			dev->f_FSys = s;
+			dev->f_Position = 0;
+			dev->f_User = usrs->us_User;
+			dev->f_Name = StringDup( name );
+		} // special data == NULL
 	}
 	
 	DEBUG("[SAMBA] mount ok\n");
@@ -444,8 +430,7 @@ int Release( struct FHandler *s, void *f )
 		
 		if( lf->f_SpecialData )
 		{
-			SpecialData *sdat = (SpecialData *) lf->f_SpecialData;
-			SDDelete( lf->f_SpecialData );
+			SDDelete( ((SpecialData *) lf->f_SpecialData) );
 		}
 
 		return 0;
@@ -466,9 +451,7 @@ int UnMount( struct FHandler *s, void *f )
 		
 		if( lf->f_SpecialData )
 		{
-			SpecialData *sdat = (SpecialData *) lf->f_SpecialData;
-			
-			SDDelete( lf->f_SpecialData );
+			SDDelete( ((SpecialData *) lf->f_SpecialData) );
 		}
 		return 0;
 	}
@@ -484,10 +467,15 @@ int lstat(const char *path, struct stat *buf);
 
 void *FileOpen( struct File *s, const char *path, char *mode )
 {
+	File *locfil = NULL;
 	DEBUG("[SAMBA] FileOpen\n");
 	// Make relative path
 	int pathsize = strlen( path );
 	char *commClean = FCalloc( pathsize+10, sizeof( char ) );
+	if( commClean == NULL )
+	{
+		return NULL;
+	}
 	
 	int i = 0;
 	for( i=0 ; i < pathsize ; i++ )
@@ -509,7 +497,6 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 
 	int spath = pathsize;//strlen( path );		//commClean before
 	int rspath = strlen( s->f_Path );
-	File *locfil = NULL;
 	char *comm = FCalloc( rspath + spath + 5, sizeof( char ) );
 	
 	//DEBUG(" comm---size %d\n", rspath + spath + 5 );
@@ -532,10 +519,12 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		int slashes = 0, i = 0; for( ; i < spath; i++ )
 		{
 			if( commClean[i] == '/' )
+			{
 				slashes++;
+			}
 		}
 
-		int off = 0, slash = 0;
+		int slash = 0;
 		if( mode[ 0 ] == 'w' )
 		{
 			for( i = 0; i < spath; i++ )
@@ -566,10 +555,6 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 				}
 			}
 		}
-		
-		FFree( commClean );
-
-		commClean = NULL;
 
 		//
 		// read stream
@@ -599,27 +584,18 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 			if( ( locfil = FCalloc( sizeof( File ), 1 ) ) != NULL )
 			{
 				locfil->f_Path = StringDup( path );
-			
 				locfil->f_SpecialData = FCalloc( sizeof( SpecialData ), 1 );
-				
 				locfil->f_Stream = s->f_Stream;
-			
-				SpecialData *sd = (SpecialData *)locfil->f_SpecialData;
-			
-				if( sd )
-				{
-					SpecialData *locsd = (SpecialData *)s->f_SpecialData;
-					sd->sb = locsd->sb;
-					sd->fd = fd;
-				}
 
-				// Free temp string
-				FFree( comm );
-			
-				return locfil;
+				if( locfil->f_SpecialData )
+				{
+					if( s->f_SpecialData != NULL )
+					{
+						((SpecialData *)locfil->f_SpecialData)->sb = ((SpecialData *)s->f_SpecialData)->sb;
+					}
+					((SpecialData *)locfil->f_SpecialData)->fd = fd;
+				}
 			}
-			FFree( comm );
-			return NULL;
 		}
 		else
 		{
@@ -627,16 +603,12 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		}
 		FFree( comm );
 	}
-	
-	// Free commClean
-	if( commClean )
-	{
-		FFree( commClean );
-	}
 
-	FERROR("Cannot open file %s\n", path );
+	FFree( commClean );
+
+	FERROR("File opened %p (pointer say yes), path: %s\n", locfil, path );
 	
-	return NULL;
+	return locfil;
 }
 
 //
@@ -687,7 +659,7 @@ int FileRead( struct File *f, char *buffer, int rsize )
 		
 		if( f->f_Stream == TRUE )
 		{
-			sd->sb->sl_SocketInterface.SocketWrite( f->f_Socket, buffer, (FLONG)result );
+			f->f_Socket->s_Interface->SocketWrite( f->f_Socket, buffer, (FLONG)result );
 		}
 		
 		if( result == 0 )	// if smb return 0 then its the end of the file
@@ -980,68 +952,83 @@ FLONG Delete( struct File *s, const char *path )
 int Rename( struct File *s, const char *path, const char *nname )
 {
 	DEBUG("[SAMBA] Rename!\n");
-	char *newname = NULL;
+	if( s == NULL )
+	{
+		return -1;
+	}
+	if( s->f_Path == NULL )
+	{
+		return -2;
+	}
 	int spath = strlen( path );
 	int rspath = strlen( s->f_Path );
+	int res = 0;
 	
 	// 1a. is the source a folder? If so, remove trailing /
 	char *targetPath = NULL;
 	
-	if( path[spath-1] == '/' )
+	targetPath = FCalloc( spath+1, sizeof( char ) );
+	if( targetPath != NULL )
 	{
-		targetPath = FCalloc( spath, sizeof( char ) );
-		sprintf( targetPath, "%.*s", spath - 1, path );
-	}
-	else
-	{
-		targetPath = FCalloc( spath + 1, sizeof( char ) ); 
-		sprintf( targetPath, "%.*s", spath, path );
-	}
-	
-	// 1b. Do we have a sub folder in path?
-	int hasSubFolder = 0;
-	int off = 0;
-	int c = 0; for( ; c < spath; c++ )
-	{
-		if( targetPath[c] == '/' )
+		if( path[spath-1] == '/' )
 		{
-			hasSubFolder++;
-			off = c + 1;
+			sprintf( targetPath, "%.*s", spath - 1, path );
 		}
+		else
+		{
+			sprintf( targetPath, "%.*s", spath, path );
+		}
+	
+		// 1b. Do we have a sub folder in path?
+		int hasSubFolder = 0;
+		int off = 0;
+		int c = 0; for( ; c < spath; c++ )
+		{
+			if( targetPath[c] == '/' )
+			{
+				hasSubFolder++;
+				off = c + 1;
+			}
+		}
+	
+		// 2. Full path of source
+		char *source = FCalloc( rspath + spath + 1, sizeof( char ) );
+		if( source != NULL )
+		{
+			sprintf( source, "%s%s", s->f_Path, targetPath );
+	
+			// 3. Ok if we have sub folder or not, add it to our destination
+			char *dest = NULL;
+			dest = FCalloc( rspath + off + strlen( nname ) + 1, sizeof( char ) );
+			if( dest != NULL )
+			{
+				if( hasSubFolder > 0 )
+				{
+					sprintf( dest, "%.*s", rspath, s->f_Path );
+					sprintf( dest + rspath, "%.*s", off, targetPath );
+					sprintf( dest + rspath + off, "%s", nname );
+				}
+				else 
+				{
+					sprintf( dest, "%s", s->f_Path );
+					sprintf( dest + rspath, "%s", nname );
+				}
+	
+				SpecialData *sdat = (SpecialData *)s->f_SpecialData;
+				DEBUG( "[SAMBA] executing: rename %s %s\n", source, dest );
+	
+				smbc_rename_fn renfun = smbc_getFunctionRename( sdat->ctx );
+				res = renfun( sdat->ctx, source, sdat->ctx, dest );
+	
+				//int res = smbc_rename( source, dest );
+	
+				// 5. Free up
+				FFree( source );
+			}
+			FFree( dest );
+		}
+		FFree( targetPath );
 	}
-	
-	// 2. Full path of source
-	char *source = FCalloc( rspath + spath + 1, sizeof( char ) );
-	sprintf( source, "%s%s", s->f_Path, targetPath );
-	
-	// 3. Ok if we have sub folder or not, add it to our destination
-	char *dest = NULL;
-	if( hasSubFolder > 0 )
-	{
-		dest = FCalloc( rspath + off + strlen( nname ) + 1, sizeof( char ) );
-		sprintf( dest, "%.*s", rspath, s->f_Path );
-		sprintf( dest + rspath, "%.*s", off, targetPath );
-		sprintf( dest + rspath + off, "%s", nname );
-	}
-	else 
-	{
-		dest = FCalloc( rspath + strlen( nname ) + 1, sizeof( char ) );
-		sprintf( dest, "%s", s->f_Path );
-		sprintf( dest + rspath, "%s", nname );
-	}
-	
-	SpecialData *sdat = (SpecialData *)s->f_SpecialData;
-	DEBUG( "[SAMBA] executing: rename %s %s\n", source, dest );
-	
-	smbc_rename_fn renfun = smbc_getFunctionRename( sdat->ctx );
-	int res = renfun( sdat->ctx, source, sdat->ctx, dest );
-	
-	//int res = smbc_rename( source, dest );
-	
-	// 5. Free up
-	FFree( source );
-	FFree( dest );
-	FFree( targetPath );
 	
 	return res;
 }
@@ -1134,7 +1121,7 @@ void FillStatSAMBA( BufString *bs, struct stat *s, File *d, const char *path )
 	}
 
 	BufStringAdd( bs, tmp );
-	snprintf( tmp, 1023, "\"Filesize\": %d,",(int) s->st_size );
+	snprintf( tmp, 1023, "\"Filesize\": %ld,", s->st_size );
 	BufStringAdd( bs, tmp );
 	
 	char *timeStr = FCalloc( 40, sizeof( char ) );
@@ -1321,6 +1308,14 @@ BufString *Call( File *s, const char *path, char *args )
 	
 BufString *Dir( File *s, const char *path )
 {
+	if( s == NULL )
+	{
+		return NULL;
+	}
+	if( s->f_Path == NULL )
+	{
+		return NULL;
+	}
 	BufString *bs = BufStringNew();
 	
 	int rspath = strlen( s->f_Path );
@@ -1333,81 +1328,80 @@ BufString *Dir( File *s, const char *path )
 	
 	char *comm = NULL;
 	char *tempString = FCalloc( rspath +512, sizeof(char) );
-	
-	if( ( comm = FCalloc( rspath +512, sizeof(char) ) ) != NULL )
+	if( tempString != NULL )
 	{
-		DEBUG("-------------- %s-----------\n", s->f_Path );
-		strcpy( comm, s->f_Path );
-		if( comm[ strlen( comm ) -1 ] != '/' && s->f_Path[ strlen(s->f_Path)-1 ] != '/' )
+		if( ( comm = FCalloc( rspath +512, sizeof(char) ) ) != NULL )
 		{
-			DEBUG("[SAMBA] Added '/\n");
-			strcat( comm, "/" );
-		}
-		
-		if( path != NULL )
-		{
-			strcat( comm, path ); //&(path[ doub+1 ]) );
-		}
-		
- 		if( comm[ strlen( comm ) -1 ] != '/' )
-		{
-			DEBUG("[SAMBA] end was not endeed /\n");
-			strcat( comm, "/" );
-		}
-	
-		//SMBCFILE *dh = NULL;
-		int dh = 0;
-		struct smbc_dirent *sdir = NULL;
-		
-		DEBUG("[SAMBA] DIR -> directory '%s' for path '%s' devname '%s' double %d devpath '%s'\n", comm, path, s->f_Name, doub, s->f_Path );
-		
-		dh = smbc_opendir( comm );
-		
-		//if( dh != NULL )
-		if( dh >= 0 )
-		{
-			int pos = 0;
-			
-			BufStringAdd( bs, "ok<!--separate-->");
-			BufStringAdd( bs, "[" );
-			while( TRUE )
+			DEBUG("-------------- %s-----------\n", s->f_Path );
+			strcpy( comm, s->f_Path );
+			if( comm[ strlen( comm ) -1 ] != '/' && s->f_Path[ strlen(s->f_Path)-1 ] != '/' )
 			{
-				sdir = smbc_readdir( dh );
-				if( !sdir )
+				DEBUG("[SAMBA] Added '/\n");
+				strcat( comm, "/" );
+			}
+		
+			if( path != NULL )
+			{
+				strcat( comm, path ); //&(path[ doub+1 ]) );
+			}
+		
+			if( comm[ strlen( comm ) -1 ] != '/' )
+			{
+				DEBUG("[SAMBA] end was not endeed /\n");
+				strcat( comm, "/" );
+			}
+	
+			//SMBCFILE *dh = NULL;
+			int dh = 0;
+			struct smbc_dirent *sdir = NULL;
+		
+			DEBUG("[SAMBA] DIR -> directory '%s' for path '%s' devname '%s' double %d devpath '%s'\n", comm, path, s->f_Name, doub, s->f_Path );
+		
+			dh = smbc_opendir( comm );
+		
+			if( dh >= 0 )
+			{
+				int pos = 0;
+			
+				BufStringAdd( bs, "ok<!--separate-->");
+				BufStringAdd( bs, "[" );
+				while( TRUE )
 				{
-					break;
-				}
-				
-				sprintf( tempString, "%s%s", comm, sdir->name );
-				struct stat ls;
-				
-				if( smbc_stat( tempString, &ls ) == 0 )
-				//if( stat( tempString, &ls ) == 0 )
-				{
-					if( !(strcmp( sdir->name, "." ) == 0 || strcmp( sdir->name, ".." ) == 0 ) )
+					sdir = smbc_readdir( dh );
+					if( !sdir )
 					{
-						if( pos != 0 )
+						break;
+					}
+				
+					sprintf( tempString, "%s%s", comm, sdir->name );
+					struct stat ls;
+				
+					if( smbc_stat( tempString, &ls ) == 0 )
+					{
+						if( !(strcmp( sdir->name, "." ) == 0 || strcmp( sdir->name, ".." ) == 0 ) )
 						{
-							BufStringAdd( bs, "," );
+							if( pos != 0 )
+							{
+								BufStringAdd( bs, "," );
+							}
+							FillStatSAMBA( bs, &ls, s, tempString );
+							pos++;
 						}
-						FillStatSAMBA( bs, &ls, s, tempString );
-						pos++;
 					}
 				}
+				BufStringAdd( bs, "]" );
+			
+				smbc_closedir( dh );
 			}
-			BufStringAdd( bs, "]" );
-			
-			smbc_closedir( dh );
-			
-		}
-		else
-		{
-			BufStringAdd( bs, "fail<!--separate-->Could not open directory.");
-		}
+			else
+			{
+				BufStringAdd( bs, "fail<!--separate-->Could not open directory.");
+			}
 		
-		FFree( comm );
+			FFree( comm );
+		}
+		FFree( tempString );
 	}
-	FFree( tempString );
 	DEBUG("[SAMBA] Dir END\n");
 	
 	return bs;

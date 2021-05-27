@@ -102,7 +102,8 @@ lws_genec_keypair_import(struct lws_genec_ctx *ctx, enum enum_lws_dh_side side,
 
 	switch (ctx->genec_alg) {
 	case LEGENEC_ECDH:
-		if (mbedtls_ecdh_get_params(ctx->u.ctx_ecdh, &kp, side))
+		if (mbedtls_ecdh_get_params(ctx->u.ctx_ecdh, &kp,
+					    (mbedtls_ecdh_side)side))
 			goto bail1;
 		/* verify the key is consistent with the claimed curve */
 		if (ctx->has_private &&
@@ -137,7 +138,7 @@ bail1:
 	return ret;
 }
 
-LWS_VISIBLE int
+int
 lws_genecdh_create(struct lws_genec_ctx *ctx, struct lws_context *context,
 		   const struct lws_ec_curves *curve_table)
 {
@@ -156,7 +157,7 @@ lws_genecdh_create(struct lws_genec_ctx *ctx, struct lws_context *context,
 	return 0;
 }
 
-LWS_VISIBLE int
+int
 lws_genecdsa_create(struct lws_genec_ctx *ctx, struct lws_context *context,
 		    const struct lws_ec_curves *curve_table)
 {
@@ -176,7 +177,7 @@ lws_genecdsa_create(struct lws_genec_ctx *ctx, struct lws_context *context,
 }
 
 
-LWS_VISIBLE int
+int
 lws_genecdh_set_key(struct lws_genec_ctx *ctx, struct lws_gencrypto_keyelem *el,
 		    enum enum_lws_dh_side side)
 {
@@ -186,7 +187,7 @@ lws_genecdh_set_key(struct lws_genec_ctx *ctx, struct lws_gencrypto_keyelem *el,
 	return lws_genec_keypair_import(ctx, side, el);
 }
 
-LWS_VISIBLE int
+int
 lws_genecdsa_set_key(struct lws_genec_ctx *ctx,
 		     struct lws_gencrypto_keyelem *el)
 {
@@ -196,7 +197,7 @@ lws_genecdsa_set_key(struct lws_genec_ctx *ctx,
 	return lws_genec_keypair_import(ctx, 0, el);
 }
 
-LWS_VISIBLE void
+void
 lws_genec_destroy(struct lws_genec_ctx *ctx)
 {
 	switch (ctx->genec_alg) {
@@ -219,7 +220,7 @@ lws_genec_destroy(struct lws_genec_ctx *ctx)
 	}
 }
 
-LWS_VISIBLE int
+int
 lws_genecdh_new_keypair(struct lws_genec_ctx *ctx, enum enum_lws_dh_side side,
 			const char *curve_name,
 			struct lws_gencrypto_keyelem *el)
@@ -252,7 +253,8 @@ lws_genecdh_new_keypair(struct lws_genec_ctx *ctx, enum enum_lws_dh_side side,
 
 	kp = (mbedtls_ecp_keypair *)&ecdsa;
 
-	n = mbedtls_ecdh_get_params(ctx->u.ctx_ecdh, kp, side);
+	n = mbedtls_ecdh_get_params(ctx->u.ctx_ecdh, kp,
+				    (mbedtls_ecdh_side)side);
 	if (n) {
 		lwsl_err("mbedtls_ecdh_get_params failed 0x%x\n", -n);
 		goto bail1;
@@ -302,7 +304,7 @@ bail1:
 	return -1;
 }
 
-LWS_VISIBLE int
+int
 lws_genecdsa_new_keypair(struct lws_genec_ctx *ctx, const char *curve_name,
 			 struct lws_gencrypto_keyelem *el)
 {
@@ -375,7 +377,7 @@ bail1:
 	return -1;
 }
 
-LWS_VISIBLE LWS_EXTERN int
+int
 lws_genecdsa_hash_sign_jws(struct lws_genec_ctx *ctx, const uint8_t *in,
 			   enum lws_genhash_types hash_type, int keybits,
 			   uint8_t *sig, size_t sig_len)
@@ -437,7 +439,7 @@ bail1:
 	return -3;
 }
 
-LWS_VISIBLE LWS_EXTERN int
+int
 lws_genecdsa_hash_sig_verify_jws(struct lws_genec_ctx *ctx, const uint8_t *in,
 				 enum lws_genhash_types hash_type, int keybits,
 				 const uint8_t *sig, size_t sig_len)

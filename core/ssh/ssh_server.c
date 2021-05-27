@@ -31,8 +31,10 @@ clients must be made or how a client should react.
 
 //#include "config.h"
 
+#ifdef ENABLE_SSH
 #include <libssh/libssh.h>
 #include <libssh/server.h>
+#endif
 #include <system/auth/authmodule.h>
 #include <system/systembase.h>
 
@@ -46,7 +48,9 @@ clients must be made or how a client should react.
 #include <netdb.h>
 #include <unistd.h>
 #include <sys/select.h>
+#ifdef ENABLE_SSH
 #include <libssh/callbacks.h>
+#endif
 #include <signal.h>
 #include <core/friend_core.h>
 #include <util/sha256.h>
@@ -254,17 +258,11 @@ static int auth_password( ssh_session session, const char *uname, const char *pa
 			
 			if( s->sshs_Usr != NULL )
 			{
-				SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
-				if( sqllib != NULL )
+				char *err = NULL;
+				UserDeviceMount( sb, s->sshs_Usr, 1, TRUE, &err, TRUE );
+				if( err != NULL )
 				{
-					char *err = NULL;
-					UserDeviceMount( sb, sqllib, s->sshs_Usr, 1, TRUE, &err, TRUE );
-					if( err != NULL )
-					{
-						FFree( err );
-					}
-					
-					sb->LibrarySQLDrop( sb, sqllib );
+					FFree( err );
 				}
 				
 				User *tmp = s->sshs_Usr;
@@ -518,7 +516,7 @@ int handleSSHCommands( SSHSession *sess, const char *buf, const int len __attrib
 		SystemBase *sb = (SystemBase *)sess->sshs_SB;
 		WorkerManager *wm = sb->sl_WorkerManager;
 		
-		if( sess->sshs_Usr->u_IsAdmin == TRUE )
+		if( wm != NULL && sess->sshs_Usr->u_IsAdmin == TRUE )
 		{
 			for( i=0 ; i < wm->wm_MaxWorkers ; i++ )
 			{
@@ -724,6 +722,7 @@ int SSHThread( FThread *ptr )
 		r = ssh_bind_accept( sshbind , session );
 		if( r==SSH_ERROR )
 		{
+			ssh_free( session );
 			FERROR("error accepting a connection : %s\n",ssh_get_error(sshbind));
 			continue;
 		}

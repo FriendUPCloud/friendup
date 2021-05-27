@@ -40,13 +40,17 @@ UserGroupManager *UGMNew( void *sb )
 	{
 		SystemBase *lsb = (SystemBase *)sb;
 		sm->ugm_SB = sb;
-		Log( FLOG_INFO,  "[SystemBase] Loading groups from DB\n");
+		Log( FLOG_INFO,  "[UGMNew] Loading groups from DB\n");
 	
 		SQLLibrary *sqlLib = lsb->LibrarySQLGet( lsb );
 		if( sqlLib != NULL )
 		{
 			int entries;
-			sm->ugm_UserGroups = sqlLib->Load( sqlLib, UserGroupDesc, NULL, &entries );
+			char where[ 256 ];
+			
+			strcpy( where, " Type in('Workgroup','Level')" );
+			
+			sm->ugm_UserGroups = sqlLib->Load( sqlLib, UserGroupDesc, where, &entries );
 			lsb->LibrarySQLDrop( lsb, sqlLib );
 		}
 		
@@ -80,7 +84,7 @@ UserGroupManager *UGMNew( void *sb )
 
 void UGMDelete( UserGroupManager *um )
 {
-	Log( FLOG_INFO,  "UGMDelete release groups\n");
+	Log( FLOG_INFO, "UGMDelete release groups\n");
 
 	if( FRIEND_MUTEX_LOCK( &um->ugm_Mutex ) == 0 )
 	{
@@ -149,6 +153,36 @@ UserGroup *UGMGetGroupByName( UserGroupManager *ugm, const char *name )
 }
 
 /**
+ * Get UserGroup by Name from DB
+ *
+ * @param ugm pointer to UserManager structure
+ * @param name name of the group
+ * @return UserGroup structure if it exist, otherwise NULL
+ */
+
+UserGroup *UGMGetGroupByNameDB( UserGroupManager *ugm, const char *name )
+{
+	SystemBase *l = (SystemBase *)ugm->ugm_SB;
+	UserGroup *ug = NULL;
+	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	if( sqlLib != NULL )
+	{
+		// try to find if group is in DB, skip templates and roles
+		char where[ 512 ];
+		int size = snprintf( where, sizeof(where), "Name='%s' AND Type in('Workgroup','Level')", name );
+		int entries;
+	
+		ug = sqlLib->Load( sqlLib, UserGroupDesc, where, &entries );
+		if( ug != NULL )
+		{
+			ug->ug_Status = USER_GROUP_STATUS_ACTIVE;
+		}
+		l->LibrarySQLDrop( l, sqlLib );
+	}
+	return ug;
+}
+
+/**
  * Add UserGroup to list of groups
  *
  * @param ugm pointer to UserManager structure
@@ -160,9 +194,17 @@ int UGMAddGroup( UserGroupManager *ugm, UserGroup *ug )
 {
 	if( ugm == NULL )
 	{
-		FERROR("Cannot add NULL to group!\n");
+		FERROR("[UGMAddGroup] Cannot add NULL to group!\n");
 		return 1;
 	}
+	
+	UserGroup *locg = UGMGetGroupByName( ugm, ug->ug_Name );
+	if( locg != NULL )
+	{
+		FERROR("[UGMAddGroup] Cannot add same group to list: %s\n", ug->ug_Name );
+		return 2;
+	}
+	
 	if( FRIEND_MUTEX_LOCK( &ugm->ugm_Mutex ) == 0 )
 	{
 		ug->node.mln_Succ = (MinNode *) ugm->ugm_UserGroups;
@@ -192,7 +234,7 @@ int UGMRemoveGroup( UserGroupManager *ugm, UserGroup *ug )
 		SQLLibrary *sqlLib = l->LibrarySQLGet( l );
 		if( sqlLib != NULL )
 		{
-			DEBUG("Remove users from group\n");
+			DEBUG("[UGMRemoveGroup] Remove users from group\n");
 			char tmpQuery[ 512 ];
 			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT UserID FROM FUserToGroup WHERE UserGroupID=%lu", ug->ug_ID );
 			void *result = sqlLib->Query(  sqlLib, tmpQuery );
@@ -233,7 +275,7 @@ int UGMRemoveGroup( UserGroupManager *ugm, UserGroup *ug )
 			UserGroup *actug = ugm->ugm_UserGroups;
 			while( actug != NULL )
 			{
-				printf("Groupid %lu name %s\n", actug->ug_ID, actug->ug_Name );
+				DEBUG("[UGMRemoveGroup] Groupid %lu name %s\n", actug->ug_ID, actug->ug_Name );
 				actug = (UserGroup *)actug->node.mln_Succ;
 			}
 			actug = ugm->ugm_UserGroups;
@@ -243,26 +285,31 @@ int UGMRemoveGroup( UserGroupManager *ugm, UserGroup *ug )
 			{
 				if( ug == actug )
 				{
-					DEBUG("Found group to delete\n");
+					DEBUG("[UGMRemoveGroup] Found group to delete\n");
 					if( actug == ugm->ugm_UserGroups )
 					{
-						DEBUG("It is root\n");
+						DEBUG("[UGMRemoveGroup] It is root\n");
 						ugm->ugm_UserGroups = (UserGroup *) ugm->ugm_UserGroups->node.mln_Succ;
 					}
 					else
 					{
-						DEBUG("Its not root, prev %s current %s\n", prevug->ug_Name, actug->ug_Name );
+						DEBUG("[UGMRemoveGroup] Its not root, prev %s current %s\n", prevug->ug_Name, actug->ug_Name );
 						prevug->node.mln_Succ = actug->node.mln_Succ;
 					}
-					UserGroupDelete( l, actug );
-					DEBUG("Data removed\n");
+
+					DEBUG("[UGMRemoveGroup] Data removed\n");
 					break;
 				}
 				prevug = actug;
 				actug = (UserGroup *)actug->node.mln_Succ;
 			}
-			DEBUG("Unlock\n");
+			DEBUG("[UGMRemoveGroup] Unlock\n");
 			FRIEND_MUTEX_UNLOCK( &ugm->ugm_Mutex );
+			
+			if( actug != NULL )
+			{
+				UserGroupDelete( l, actug );
+			}
 		}
 	}
 	return 0;
@@ -289,10 +336,10 @@ File *UGMRemoveDrive( UserGroupManager *sm, const char *name )
 			File *lastone = lf;
 			while( lf != NULL )
 			{
-				DEBUG( "[UnMountFS] Checking fs in list %s == %s...\n", lf->f_Name, name );
+				DEBUG( "[UGMRemoveDrive] Checking fs in list %s == %s...\n", lf->f_Name, name );
 				if( strcmp( lf->f_Name, name ) == 0 )
 				{
-					DEBUG( "[UnMountFS] Found one (%s == %s)\n", lf->f_Name, name );
+					DEBUG( "[UGMRemoveDrive] Found one (%s == %s)\n", lf->f_Name, name );
 					remdev = lf;
 					break;
 				}
@@ -306,7 +353,7 @@ File *UGMRemoveDrive( UserGroupManager *sm, const char *name )
 			{
 				if( remdev->f_Operations <= 0 )
 				{
-					DEBUG("[UserRemDeviceByName] Remove device from list\n");
+					DEBUG("[UGMRemoveDrive] Remove device from list\n");
 				
 					if( ug->ug_MountedDevs == remdev )		// checking if its our first entry
 					{
@@ -378,34 +425,33 @@ int UGMMountDrives( UserGroupManager *sm )
 /**
  * Assign User to his groups in FC
  *
- * @param smgr pointer to UserGroupManager
+ * @param ugm pointer to UserGroupManager
  * @param usr pointer to user structure to which groups will be assigned
  * @return 0 when success, otherwise error number
  */
 
 #define QUERY_SIZE 1024
 
-int UGMAssignGroupToUser( UserGroupManager *smgr, User *usr )
+int UGMAssignGroupToUser( UserGroupManager *ugm, User *usr )
 {
 	char *tmpQuery;
 	DEBUG("[UMAssignGroupToUser] Assign group to user\n");
 
-	//sprintf( tmpQuery, "SELECT UserGroupID FROM FUserToGroup WHERE UserID = '%lu'", usr->u_ID );
-	if( smgr == NULL )
+	if( ugm == NULL )
 	{
 		return 1;
 	}
 	
 	tmpQuery = (char *)FCalloc( QUERY_SIZE, sizeof(char) );
 	
-	SystemBase *sb = (SystemBase *)smgr->ugm_SB;
+	SystemBase *sb = (SystemBase *)ugm->ugm_SB;
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 
 	if( sqlLib != NULL )
 	{
-		sqlLib->SNPrintF( sqlLib, tmpQuery, QUERY_SIZE, "SELECT UserGroupID FROM FUserToGroup WHERE UserID = '%lu'", usr->u_ID );
+		sqlLib->SNPrintF( sqlLib, tmpQuery, QUERY_SIZE, "SELECT UserGroupID FROM FUserToGroup WHERE UserID='%lu'", usr->u_ID );
 
-		void *result = sqlLib->Query(  sqlLib, tmpQuery );
+		void *result = sqlLib->Query( sqlLib, tmpQuery );
 	
 		if ( result == NULL ) 
 		{
@@ -424,15 +470,10 @@ int UGMAssignGroupToUser( UserGroupManager *smgr, User *usr )
 
 		UserRemoveFromGroups( usr );
 	
-		int rows = sqlLib->NumberOfRows( sqlLib, result );
-	
-		DEBUG("[UMAssignGroupToUser] Memory for %d  groups allocated\n", rows );
+		DEBUG("[UMAssignGroupToUser] Memory for groups allocated\n" );
 	
 		//if( usr->u_Groups != NULL )
 		{
-			int pos = 0;
-			//usr->u_GroupsNr = rows;
-		
 			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 			{
 				DEBUG("[UMAssignGroupToUser] Going through loaded rows %d -> %s\n", j, row[ 0 ] );
@@ -442,25 +483,29 @@ int UGMAssignGroupToUser( UserGroupManager *smgr, User *usr )
 				
 					DEBUG("[UMAssignGroupToUser] User is in group %lu\n", gid  );
 				
-					UserGroup *g = sb->sl_UGM->ugm_UserGroups;
-					while( g != NULL )
+					if( FRIEND_MUTEX_LOCK( &(ugm->ugm_Mutex) ) == 0 )
 					{
-						if( g->ug_ID == gid )
+						UserGroup *g = ugm->ugm_UserGroups;
+						while( g != NULL )
 						{
-							if( g->ug_IsAdmin == TRUE )
+							if( g->ug_ID == gid )
 							{
-								isAdmin = g->ug_IsAdmin;
-							}
-							if( g->ug_IsAPI == TRUE )
-							{
-								isAPI = g->ug_IsAPI;
-							}
+								if( g->ug_IsAdmin == TRUE )
+								{
+									isAdmin = g->ug_IsAdmin;
+								}
+								if( g->ug_IsAPI == TRUE )
+								{
+									isAPI = g->ug_IsAPI;
+								}
 							
-							UserGroupAddUser( g, usr );
-							DEBUG("[UMAssignGroupToUser] Added group %s to user %s\n", g->ug_Name, usr->u_Name );
-							//usr->u_Groups[ pos++ ] = g;
+								UserGroupAddUser( g, usr );
+								DEBUG("[UMAssignGroupToUser] Added group %s to user %s\n", g->ug_Name, usr->u_Name );
+								//usr->u_Groups[ pos++ ] = g;
+							}
+							g  = (UserGroup *) g->node.mln_Succ;
 						}
-						g  = (UserGroup *) g->node.mln_Succ;
+						FRIEND_MUTEX_UNLOCK( &(ugm->ugm_Mutex) );
 					}
 				}
 			}
@@ -479,17 +524,28 @@ int UGMAssignGroupToUser( UserGroupManager *smgr, User *usr )
 	return 0;
 }
 
+//
+//
+//
+
+typedef struct UTGEntry
+{
+	UserGroup		*ug;
+	User			*user;
+	MinNode			node;
+}UTGEntry;
+
 /**
  * Assign User to his groups in FC.
  * Groups are provided by string (comma is separator)
  *
- * @param um pointer to UserGroupManager
+ * @param ugm pointer to UserGroupManager
  * @param usr pointer to user structure to which groups will be assigned
  * @param level user level (Admin, User, etc.) 
  * @param workgroups provided as string, where comma is separator between group names
  * @return 0 when success, otherwise error number
  */
-int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level, char *workgroups )
+int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *level, char *workgroups )
 {
 	if( level == NULL && workgroups == NULL )
 	{
@@ -500,12 +556,12 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 	
 	DEBUG("[UMAssignGroupToUserByStringDB] Assign group to user start NEW GROUPS: >%s< AND WORKGROUPS: >%s<\n", level, workgroups );
 	
-	SystemBase *sb = (SystemBase *)um->ugm_SB;
+	SystemBase *sb = (SystemBase *)ugm->ugm_SB;
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	
 	if( sqlLib == NULL )
 	{
-		FERROR("Cannot get mysql.library slot\n");
+		FERROR("[UMAssignGroupToUserByStringDB] Cannot get mysql.library slot\n");
 		return -10;
 	}
 
@@ -514,15 +570,6 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 	int pos = 0;
 	
 	UIntListEl *el = UILEParseString( workgroups );
-	
-	DEBUG("-----------------------> show groups at 0\n" );
-	
-	// function store ID's of groups to which user is assigned
-	///BufString *bsGroups = BufStringNew();
-	//pos = 0;
-	
-	//int tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "{\"userid\":\"%s\",\"groupids\":[", usr->u_UUID );
-	//BufStringAddSize( bsGroups, tmpQuery, tmplen );
 	
 	int tmplen = 0;
 	
@@ -545,51 +592,55 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 		else
 		{
 			// set proper user level
-			UserGroup *gr = sb->sl_UGM->ugm_UserGroups;
-			while( gr != NULL )
+			if( FRIEND_MUTEX_LOCK( &(ugm->ugm_Mutex) ) == 0 )
 			{
-				if( strcmp( gr->ug_Name, level ) == 0 )
+				UserGroup *gr = ugm->ugm_UserGroups;
+				while( gr != NULL )
 				{
-					DEBUG("User is in level: %s\n", level );
-					if( gr->ug_IsAdmin == TRUE ) isAdmin = TRUE;
-					if( gr->ug_IsAPI == TRUE ) isAPI = TRUE;
+					if( strcmp( gr->ug_Name, level ) == 0 )
+					{
+						DEBUG("User is in level: %s\n", level );
+						if( gr->ug_IsAdmin == TRUE ) isAdmin = TRUE;
+						if( gr->ug_IsAPI == TRUE ) isAPI = TRUE;
 			
-					UserGroupAddUser( gr, usr );
+						UserGroupAddUser( gr, usr );
 			
-					DEBUG("[UMAssignGroupToUserByStringDB] Group found %s will be added to user %s\n", gr->ug_Name, usr->u_Name );
+						DEBUG("[UMAssignGroupToUserByStringDB] Group found %s will be added to user %s\n", gr->ug_Name, usr->u_Name );
 			
-					char loctmp[ 256 ];
-					int loctmplen;
-					// insert to database
-					if( pos == 0 )
-					{
-						loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %lu, %lu ) ", usr->u_ID, gr->ug_ID );
-						tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
+						char loctmp[ 256 ];
+						int loctmplen;
+						// insert to database
+						if( pos == 0 )
+						{
+							loctmplen = snprintf( loctmp, sizeof( loctmp ),  "(%lu, %lu) ", usr->u_ID, gr->ug_ID );
+							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
+						}
+						else
+						{
+							loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",(%lu, %lu) ", usr->u_ID, gr->ug_ID ); 
+							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
+						}
+						BufStringAdd( bsInsert, loctmp );
+						/*
+						// information to external service
+						if( pos == 0 )
+						{
+							loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %s, %lu ) ", usr->u_UUID, gr->ug_ID );
+							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
+						}
+						else
+						{
+							loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %s, %lu ) ", usr->u_UUID, gr->ug_ID ); 
+							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
+						}
+						BufStringAddSize( bsGroups, tmpQuery, tmplen );
+						*/
+						pos++;
+						break;
 					}
-					else
-					{
-						loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %lu, %lu ) ", usr->u_ID, gr->ug_ID ); 
-						tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
-					}
-					BufStringAdd( bsInsert, loctmp );
-					/*
-					// information to external service
-					if( pos == 0 )
-					{
-						loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %s, %lu ) ", usr->u_UUID, gr->ug_ID );
-						tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
-					}
-					else
-					{
-						loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %s, %lu ) ", usr->u_UUID, gr->ug_ID ); 
-						tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
-					}
-					BufStringAddSize( bsGroups, tmpQuery, tmplen );
-					*/
-					pos++;
-					break;
+					gr = (UserGroup *) gr->node.mln_Succ;
 				}
-				gr = (UserGroup *) gr->node.mln_Succ;
+				FRIEND_MUTEX_UNLOCK( &(ugm->ugm_Mutex) );
 			}
 		
 			usr->u_IsAdmin = isAdmin;
@@ -597,10 +648,10 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 		}
 		
 		// removeing old group conections from DB
-		snprintf( tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserToGroup WHERE `UserID` = %lu AND `UserGroupID` IN (SELECT ID FROM FUserGroup where Type='Level')", usr->u_ID ) ;
+		snprintf( tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserToGroup WHERE `UserID`=%lu AND `UserGroupID` IN (SELECT ID FROM FUserGroup where Type='Level')", usr->u_ID ) ;
 		if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) !=  0 )
 		{
-			FERROR("Cannot call query: '%s'\n", tmpQuery );
+			FERROR("[UMAssignGroupToUserByStringDB] Cannot call query: '%s'\n", tmpQuery );
 		}
 	}	// level != NULL
 	
@@ -623,52 +674,76 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 		
 				DEBUG("[UMAssignGroupToUserByStringDB] in loop %d\n", pos );
 		
-				UserGroup *gr = sb->sl_UGM->ugm_UserGroups;
-				while( gr != NULL )
+				if( FRIEND_MUTEX_LOCK( &(ugm->ugm_Mutex) ) == 0 )
 				{
-					DEBUG("[UMAssignGroupToUserByStringDB] compare %s - %s\n", gr->ug_Name, gr->ug_Name );
-			
-					if( gr->ug_ID == rmEntry->i_Data )
+					UTGEntry *root = NULL;
+					
+					UserGroup *gr = ugm->ugm_UserGroups;
+					while( gr != NULL )
 					{
-						UserGroupAddUser( gr, usr );
+						DEBUG("[UMAssignGroupToUserByStringDB] compare %s - %s\n", gr->ug_Name, gr->ug_Name );
+			
+						if( gr->ug_ID == rmEntry->i_Data )
+						{
+							UTGEntry *ne = FCalloc( 1, sizeof( UTGEntry ) );
+							if( ne != NULL )
+							{
+								ne->ug = gr;
+								ne->user = usr;
+								ne->node.mln_Succ = (MinNode *)root;
+								root = ne;
+							}
 				
-						DEBUG("[UMAssignGroupToUserByStringDB] Group found %s will be added to user %s\n", gr->ug_Name, usr->u_Name );
+							DEBUG("[UMAssignGroupToUserByStringDB] Group found %s will be added to user %s\n", gr->ug_Name, usr->u_Name );
 				
-						char loctmp[ 256 ];
-						int loctmplen;
+							char loctmp[ 256 ];
+							int loctmplen;
 						
-						// insert to database
-						if( pos == 0 )
-						{
-							loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %lu, %lu ) ", usr->u_ID, gr->ug_ID );
-							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
-						}
-						else
-						{
-							loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %lu, %lu ) ", usr->u_ID, gr->ug_ID ); 
-							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
-						}
-						BufStringAdd( bsInsert, loctmp );
-						/*
-						// message to external service
-						if( pos == 0 )
-						{
-							loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %s, %lu ) ", usr->u_UUID, gr->ug_ID );
-							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
-						}
-						else
-						{
-							loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %s, %lu ) ", usr->u_UUID, gr->ug_ID ); 
-							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
-						}
-						BufStringAddSize( bsGroups, tmpQuery, tmplen );
-						*/
+							// insert to database
+							if( pos == 0 )
+							{
+								loctmplen = snprintf( loctmp, sizeof( loctmp ),  "(%lu, %lu) ", usr->u_ID, gr->ug_ID );
+								tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
+							}
+							else
+							{
+								loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",(%lu, %lu) ", usr->u_ID, gr->ug_ID ); 
+								tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
+							}
+							BufStringAdd( bsInsert, loctmp );
+							/*
+							// message to external service
+							if( pos == 0 )
+							{
+								loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %s, %lu ) ", usr->u_UUID, gr->ug_ID );
+								tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
+							}
+							else
+							{
+								loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %s, %lu ) ", usr->u_UUID, gr->ug_ID ); 
+								tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
+							}
+							BufStringAddSize( bsGroups, tmpQuery, tmplen );
+							*/
 				
-						pos++;
-						break;
+							pos++;
+							break;
+						}
+						gr = (UserGroup *) gr->node.mln_Succ;
+					} // while group
+					FRIEND_MUTEX_UNLOCK( &(ugm->ugm_Mutex) );
+					
+					UTGEntry *ce = root;
+					UTGEntry *re = root;
+					while( ce != NULL )
+					{
+						re = ce;
+						ce = (UTGEntry *)ce->node.mln_Succ;
+						
+						UserGroupAddUser( re->ug, re->user );
+						FFree( re );
 					}
-					gr = (UserGroup *) gr->node.mln_Succ;
-				} // while group
+				}
 				FFree( rmEntry );
 			}
 		}	// workgroups != "none"
@@ -677,7 +752,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 		snprintf( tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserToGroup WHERE `UserID` = %lu AND `UserGroupID` IN (SELECT ID FROM FUserGroup where Type<>'Level')", usr->u_ID ) ;
 		if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) !=  0 )
 		{
-			FERROR("Cannot call query: '%s'\n", tmpQuery );
+			FERROR("[UMAssignGroupToUserByStringDB] Cannot call query: '%s'\n", tmpQuery );
 		}
 	}	// workgroups != NULL
 
@@ -685,7 +760,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 
 	if( sqlLib->QueryWithoutResults( sqlLib, bsInsert->bs_Buffer  ) !=  0 )
 	{
-		FERROR("Cannot call query: '%s'\n", bsInsert->bs_Buffer );
+		FERROR("[UMAssignGroupToUserByStringDB] Cannot call query: '%s'\n", bsInsert->bs_Buffer );
 	}
 
 	//BufStringAddSize( bsGroups, "]}", 2 );
@@ -699,10 +774,6 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 	{
 		BufStringDelete( bsInsert );
 	}
-	//if( bsGroups != NULL )
-	//{
-	//	BufStringDelete( bsGroups );
-	//}
 
 	sb->LibrarySQLDrop( sb, sqlLib );
 	DEBUG("[UMAssignGroupToUserByStringDB] Assign  groups to user end\n");
@@ -730,14 +801,14 @@ int UGMAddUserToGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID )
 		
 		if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) !=  0 )
 		{
-			FERROR("Cannot call query: '%s'\n", tmpQuery );
+			FERROR("[UGMAddUserToGroupDB] Cannot call query: '%s'\n", tmpQuery );
 		}
 		
 		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	else
 	{
-		FERROR("UGMAddUserToGroup DBConnection fail!\n");
+		FERROR("[UGMAddUserToGroupDB] DBConnection fail!\n");
 		return 1;
 	}
 	return 0;
@@ -758,7 +829,7 @@ int UGMGetUserGroupsDB( UserGroupManager *um, FULONG userID, BufString *bs )
 	
 	if( sqlLib != NULL )
 	{
-		DEBUG("Remove users from group\n");
+		DEBUG("[UGMGetUserGroupsDB] Get groups assigned to user\n");
 		char tmpQuery[ 512 ];
 		snprintf( tmpQuery, sizeof(tmpQuery), "SELECT UserGroupID FROM FUserToGroup WHERE UserID=%lu group by UserGroupID", userID );
 		void *result = sqlLib->Query(  sqlLib, tmpQuery );
@@ -782,7 +853,7 @@ int UGMGetUserGroupsDB( UserGroupManager *um, FULONG userID, BufString *bs )
 	}
 	else
 	{
-		FERROR("UGMAddUserToGroup DBConnection fail!\n");
+		FERROR("[UGMGetUserGroupsDB] DBConnection fail!\n");
 		return 1;
 	}
 	return 0;
@@ -808,14 +879,14 @@ int UGMRemoveUserFromGroupDB( UserGroupManager *um, FULONG groupID, FULONG userI
 		
 		if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) !=  0 )
 		{
-			FERROR("Cannot call query: '%s'\n", tmpQuery );
+			FERROR("[UGMRemoveUserFromGroupDB] Cannot call query: '%s'\n", tmpQuery );
 		}
 		
 		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	else
 	{
-		FERROR("UGMAddUserToGroup DBConnection fail!\n");
+		FERROR("[UGMRemoveUserFromGroupDB] DBConnection fail!\n");
 		return 1;
 	}
 	return 0;
@@ -859,7 +930,7 @@ FBOOL UGMUserToGroupISConnectedDB( UserGroupManager *um, FULONG ugroupid, FULONG
 	}
 	else
 	{
-		FERROR("UGMAddUserToGroup DBConnection fail!\n");
+		FERROR("[UGMUserToGroupISConnectedDB] DBConnection fail!\n");
 		return FALSE;
 	}
 	return ret;
@@ -992,7 +1063,7 @@ FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const cha
 	}
 	else
 	{
-		FERROR("UGMAddUserToGroup DBConnection fail!\n");
+		FERROR("[UGMGetGroupsDB] DBConnection fail!\n");
 		return FALSE;
 	}
 	return ret;
@@ -1011,11 +1082,9 @@ FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const cha
  */
 void UGMGetGroups( UserGroupManager *um, FULONG uid, BufString *bs, const char *type, FULONG parentID, int status, FBOOL fParentID )
 {
-	SystemBase *l = (SystemBase *)um->ugm_SB;
-	
-	if( FRIEND_MUTEX_LOCK( &(l->sl_UGM->ugm_Mutex) ) == 0 )
+	if( FRIEND_MUTEX_LOCK( &(um->ugm_Mutex) ) == 0 )
 	{
-		UserGroup *lg = l->sl_UGM->ugm_UserGroups;
+		UserGroup *lg = um->ugm_UserGroups;
 		int pos = 0;
 		
 		while( lg != NULL )
@@ -1038,6 +1107,7 @@ void UGMGetGroups( UserGroupManager *um, FULONG uid, BufString *bs, const char *
 				}
 			}
 			
+			DEBUG("[UGMGetGroups] name: %s type: %s\n", lg->ug_Name, lg->ug_Type );
 			if( type != NULL )
 			{
 				if( strcmp( type, lg->ug_Type ) != 0 )
@@ -1048,22 +1118,22 @@ void UGMGetGroups( UserGroupManager *um, FULONG uid, BufString *bs, const char *
 			
 			if( addToList == TRUE )
 			{
-				char tmp[ 512 ];
+				char tmp[ 1024 ];
 				int tmpsize = 0;
 				if( pos == 0 )
 				{
-					tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"ID\":%lu,\"parentid\":%lu,\"level\":\"%s\",\"status\":%d}", lg->ug_Name, lg->ug_ID, lg->ug_ParentID, lg->ug_Type, lg->ug_Status );
+					tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"ID\":%lu,\"parentid\":%lu,\"level\":\"%s\",\"status\":%d,\"uuid\":\"%s\"}", lg->ug_Name, lg->ug_ID, lg->ug_ParentID, lg->ug_Type, lg->ug_Status, lg->ug_UUID );
 				}
 				else
 				{
-					tmpsize = snprintf( tmp, sizeof(tmp), ",{\"name\":\"%s\",\"ID\":%lu,\"parentid\":%lu,\"level\":\"%s\",\"status\":%d}", lg->ug_Name, lg->ug_ID, lg->ug_ParentID, lg->ug_Type, lg->ug_Status );
+					tmpsize = snprintf( tmp, sizeof(tmp), ",{\"name\":\"%s\",\"ID\":%lu,\"parentid\":%lu,\"level\":\"%s\",\"status\":%d,\"uuid\":\"%s\"}", lg->ug_Name, lg->ug_ID, lg->ug_ParentID, lg->ug_Type, lg->ug_Status, lg->ug_UUID );
 				}
 				BufStringAddSize( bs, tmp, tmpsize );
 				pos++;
 			}
 			lg = (UserGroup *)lg->node.mln_Succ;
 		}
-		FRIEND_MUTEX_UNLOCK( &(l->sl_UGM->ugm_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(um->ugm_Mutex) );
 	}
 }
 
@@ -1105,7 +1175,7 @@ FBOOL UGMUserToGroupISConnectedByUNameDB( UserGroupManager *um, FULONG ugroupid,
 	}
 	else
 	{
-		FERROR("UGMAddUserToGroup DBConnection fail!\n");
+		FERROR("[UGMUserToGroupISConnectedByUNameDB] DBConnection fail!\n");
 		return FALSE;
 	}
 	return ret;
@@ -1151,7 +1221,7 @@ FBOOL UGMUserToGroupISConnectedByUIDDB( UserGroupManager *um, FULONG ugroupid, F
 	}
 	else
 	{
-		FERROR("UGMAddUserToGroup DBConnection fail!\n");
+		FERROR("[UGMUserToGroupISConnectedByUIDDB] DBConnection fail!\n");
 		return FALSE;
 	}
 	DEBUG("[UGMUserToGroupISConnectedByUIDDB] User is in group? %d\n", ret );
@@ -1173,19 +1243,19 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
 	if( sqlLib != NULL )
 	{
 		char tmpQuery[ 512 ];
-		char tmp[ 512 ];
+		char tmp[ 1024 ];
 		int itmp = 0;
 		FULONG currGroupID = 0;
 		
 		if( type == NULL )
 		{
 			//snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.UniqueID,u.Status,u.ModifyTime FROM FUserToGroup utg inner join FUser u on utg.UserID=u.ID inner join FUserGroup ug on utg.UserGroupID=ug.ID order by utg.UserGroupID" );
-			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.UniqueID,u.Status,u.ModifyTime FROM FUserGroup ug left outer join FUserToGroup utg on ug.ID=utg.UserGroupID left join FUser u on utg.UserID=u.ID order by utg.UserGroupID" );
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.UniqueID,u.Status,u.ModifyTime,ug.UniqueID FROM FUserGroup ug left outer join FUserToGroup utg on ug.ID=utg.UserGroupID left join FUser u on utg.UserID=u.ID order by utg.UserGroupID" );
 		}
 		else
 		{
 			//snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.UniqueID,u.Status,u.ModifyTime FROM FUserToGroup utg inner join FUser u on utg.UserID=u.ID inner join FUserGroup ug on utg.UserGroupId=ug.ID WHERE ug.Type='%s' order by utg.UserGroupID", type );
-			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.UniqueID,u.Status,u.ModifyTime FROM FUserGroup ug left outer join FUserToGroup utg on ug.ID=utg.UserGroupID left join FUser u on utg.UserID=u.ID WHERE ug.Type='%s' order by utg.UserGroupID", type );
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.UniqueID,u.Status,u.ModifyTime,ug.UniqueID FROM FUserGroup ug left outer join FUserToGroup utg on ug.ID=utg.UserGroupID left join FUser u on utg.UserID=u.ID WHERE ug.Type='%s' order by utg.UserGroupID", type );
 		}
 		
 		BufStringAddSize( bs, "[", 1 );
@@ -1206,11 +1276,11 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
 				{
 					if( currGroupID == 0 )
 					{
-						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"name\":\"%s\",\"type\":\"%s\",\"parentid\":%lu,\"userids\":[", groupid, (char *)row[1], (char *)row[3], parentid );
+						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\",\"name\":\"%s\",\"type\":\"%s\",\"parentid\":%lu,\"userids\":[", groupid, (char *)row[7], (char *)row[1], (char *)row[3], parentid );
 					}
 					else
 					{
-						itmp = snprintf( tmp, sizeof(tmp), "]},{\"id\":%lu,\"name\":\"%s\",\"type\":\"%s\",\"parentid\":%lu,\"userids\":[", groupid, (char *)row[1], (char *)row[3], parentid );
+						itmp = snprintf( tmp, sizeof(tmp), "]},{\"id\":%lu,\"uuid\":\"%s\",\"name\":\"%s\",\"type\":\"%s\",\"parentid\":%lu,\"userids\":[", groupid, (char *)row[7], (char *)row[1], (char *)row[3], parentid );
 					}
 					BufStringAddSize( bs, tmp, itmp );
 

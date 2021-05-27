@@ -9,11 +9,11 @@
 *****************************************************************************©*/
 
 // Delete selected files
-Workspace.deleteFile = function()
+Workspace.deleteFile = function( mode )
 {
 	var self = this;
 	
-	var w = window.regionWindow;
+	var w = window.currentMovable.content;
 	if( !window.currentMovable || ( window.currentMovable && !window.currentMovable.content.refresh ) )
 		return;
 
@@ -43,7 +43,16 @@ Workspace.deleteFile = function()
 
 		if( cnt > 0 )
 		{
-			Confirm( i18n( 'i18n_sure_delete' ), i18n( 'i18n_sure_deldesc' ), function( d )
+			let titlet = 'i18n_sure_delete';
+			let titled = 'i18n_sure_deldesc';
+			let titles = 'i18n_deleting_files';
+			if( mode == 'unshare' )
+			{
+				titlet = 'i18n_sure_unshare';
+				titled = 'i18n_sure_unshdesc';
+				titles = 'i18n_unsharing_files';
+			}
+			Confirm( i18n( titlet ), i18n( titled ), function( d )
 			{
 				if( d == true )
 				{
@@ -62,7 +71,7 @@ Workspace.deleteFile = function()
 					else
 					{
 						v = new View( {
-							title: i18n( 'i18n_deleting_files' ),
+							title: i18n( titles ),
 							width: 320,
 							height: 100
 						} );
@@ -90,11 +99,20 @@ Workspace.deleteFile = function()
 					bar.style.width = '0';
 					bar.style.height = 'calc(100% - 2px)';
 					
-					var text = document.createElement( 'div' );
-					bar.appendChild( text );
+					var progress = document.createElement( 'div' );
+					progress.className = 'Progress';
+					progress.style.position = 'absolute';
+					progress.style.top = '1px';
+					progress.style.left = '1px';
+					progress.style.width = 'calc(100% - 2px)';
+					progress.style.height = 'calc(100% - 2px)';
+					progress.style.textAlign = 'center';
+					progress.style.lineHeight = '28px';
+					progress.style.zIndex = 2;
 					
 					cont.appendChild( frame );						
 					cont.appendChild( bar );
+					cont.appendChild( progress );
 					
 					var stop = false;
 					
@@ -179,7 +197,7 @@ Workspace.deleteFile = function()
 							}, 100 );
 							
 							bar.style.width = 'calc(' + pct + ' - 2px)';
-							text.innerHTML = pct;
+							progress.innerHTML = pct;
 							
 							doDeleteFiles( files, index + 1 ); 
 						}

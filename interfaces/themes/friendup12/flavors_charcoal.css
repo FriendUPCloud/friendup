@@ -1,7 +1,13 @@
 /* Charcoal ----------------------------------------------------------------- */
 
+*
+{
+    scrollbar-color: #404040 #1e1e1e !important;
+}
+
 html > body.Charcoal,
-html > body.Charcoal.Inside
+html > body.Charcoal.Inside,
+html > body.Charcoal .Content .Scroller:after
 {
 	background: #303030;
 }
@@ -262,6 +268,10 @@ html body.Charcoal .PadBorder {
 	border-color : #303030;
 }
 
+html body.Charcoal .PadBackground {
+	background-color : #303030;
+}
+
 html body.Charcoal .BackgroundLists
 {
 	background-color: #202020;
@@ -286,6 +296,12 @@ html body.Charcoal .ZebraList > div .PadBorder
 	border-color: #282828;
 }
 
+html body.Charcoal .ZebraList > tr .PadBackground, 
+html body.Charcoal .ZebraList > div .PadBackground
+{
+	background-color: #282828;
+}
+
 html body.Charcoal .ZebraList.Interactive > tr:hover, 
 html body.Charcoal .ZebraList.Interactive > div:hover
 {
@@ -296,6 +312,12 @@ html body.Charcoal .ZebraList.Interactive > tr:hover .PadBorder,
 html body.Charcoal .ZebraList.Interactive > div:hover .PadBorder
 {
 	border-color: #303030;
+}
+
+html body.Charcoal .ZebraList.Interactive > tr:hover .PadBackground, 
+html body.Charcoal .ZebraList.Interactive > div:hover .PadBackground
+{
+	background-color: #303030;
 }
 
 html body.Charcoal .BackgroundLists .sw2,
@@ -317,6 +339,12 @@ html body.Charcoal .ZebraList > tr:nth-child(odd) .PadBorder,
 html body.Charcoal .ZebraList > div:nth-child(odd) .PadBorder
 {
 	border-color: #202020;
+}
+
+html body.Charcoal .ZebraList > tr:nth-child(odd) .PadBackground, 
+html body.Charcoal .ZebraList > div:nth-child(odd) .PadBackground
+{
+	background-color: #202020;
 }
 
 html body.Charcoal .ZebraList.Interactive > tr:nth-child(odd):hover, 
@@ -381,7 +409,7 @@ html body.Charcoal .Screen > .TitleBar > .Left *
 
 body.Charcoal #DoorsScreen .Left > .VirtualWorkspaces > div.Active 
 {
-	border: 1px solid #505050;
+	border: 0;
 }
 
 [mobile].Charcoal .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,
@@ -414,6 +442,11 @@ body.Charcoal .FileBrowserItemImage
 body.Charcoal .Active > .FileBrowserItemImage,
 {
 	filter: invert(100%);
+}
+
+body.Charcoal .Frame .Progress
+{
+	text-shadow: 1px 1px rgba(0,0,0,0.7);
 }
 
 /* Charcoal scheme scrollbars */
@@ -449,5 +482,10 @@ html body.Charcoal .View.Active.IconWindow ::-webkit-scrollbar-thumb
 {
 	background-color: #404040 !important;
 	border-color: #383838;
+}
+
+html body.Charcoal .Frame .Progress
+{
+	text-shadow: 1px 1px rgba(0,0,0,0.7);
 }
 

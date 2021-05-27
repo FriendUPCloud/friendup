@@ -95,21 +95,21 @@ Http* WebRequestNotification(struct Library *l __attribute__((unused)), char* fu
 		
 		if( message_element && title_element && session_element && extra_element )
 		{
-			User *user = USMGetUserBySessionID(((SystemBase*)(_library_handle->sb))->sl_USM, session_element->data);
+			User *user = USMGetUserBySessionID(((SystemBase*)(_library_handle->sb))->sl_USM, session_element->hme_Data );
 			if( user )
 			{
-				char *message = UrlDecodeToMem( message_element->data );
-				char *title = UrlDecodeToMem( title_element->data );
-				char *extra = UrlDecodeToMem( extra_element->data );
+				char *message = UrlDecodeToMem( message_element->hme_Data );
+				char *title = UrlDecodeToMem( title_element->hme_Data );
+				char *extra = UrlDecodeToMem( extra_element->hme_Data );
 				char *app = NULL;
 				char *username = user->u_Name;
 				char *end;
 				
-				FULONG ctime = strtoul( (char *)ctimestamp->data, &end, 0 );
+				FULONG ctime = strtoul( (char *)ctimestamp->hme_Data, &end, 0 );
 				
 				if( app_element != NULL )
 				{
-					app = UrlDecodeToMem( app_element->data );
+					app = UrlDecodeToMem( app_element->hme_Data );
 				}
 
 				/* Small bug: JavaScript call

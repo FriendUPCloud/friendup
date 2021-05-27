@@ -40,6 +40,13 @@ function InstallApp( $user_id, $app_name )
 	}
 }
 
+// Create server token required by certain doors
+if( !Trim( $User->ServerToken ) )
+{
+	$token = hash( 'sha256', $User->FullName . rand(0,999) . mktime() . rand( 0,999 ) );
+	$SqlDatabase->query( 'UPDATE FUser SET ServerToken="' . $token . '" WHERE ID=\'' . $User->ID . '\'' );
+}
+
 $debug = ( isset( $debug ) ? $debug : [] );
 
 $userid = ( isset( $args->args->userid ) ? $args->args->userid : $User->ID );
@@ -118,7 +125,10 @@ if( !$cr->Load() || ( isset( $args->args->force ) && $args->args->force ) )
 		require( 'firstlogin.defaults.php' );
 	}
 	// Now we had first login!
-	$cr->Save();
+	if( !isset( $args->args->force ) || !$args->args->force )
+	{
+		$cr->Save();
+	}
 }
 else
 {

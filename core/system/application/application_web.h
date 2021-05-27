@@ -15,8 +15,8 @@
  *  @date created 2016
  */
 
-#ifndef __APPLICATIONWEB_H__
-#define __APPLICATIONWEB_H__
+#ifndef __SYSTEM_APPLICATION_APPLICATIONWEB_H__
+#define __SYSTEM_APPLICATION_APPLICATIONWEB_H__
 
 #include <core/types.h>
 #include <core/library.h>
@@ -32,4 +32,4 @@
 
 Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *loggedUser );
 
-#endif // __APPLICATIONWEB_H__
+#endif // __SYSTEM_APPLICATION_APPLICATIONWEB_H__

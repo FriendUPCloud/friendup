@@ -1,7 +1,7 @@
 /*
- * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -92,19 +92,19 @@ BIO *CMS_dataInit(CMS_ContentInfo *cms, BIO *icont)
 
     default:
         CMSerr(CMS_F_CMS_DATAINIT, CMS_R_UNSUPPORTED_TYPE);
-        return NULL;
+        goto err;
     }
 
     if (cmsbio)
         return BIO_push(cmsbio, cont);
 
+err:
     if (!icont)
         BIO_free(cont);
     return NULL;
 
 }
 
-/* unfortunately cannot constify SMIME_write_ASN1() due to this function */
 int CMS_dataFinal(CMS_ContentInfo *cms, BIO *cmsbio)
 {
     ASN1_OCTET_STRING **pos = CMS_get0_content(cms);

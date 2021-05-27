@@ -4,7 +4,7 @@ i18n_bookmarks                      : Bokmerker
 i18n_file_menu                      : Filmeny
 i18n_create_folder                  : Lag mappe
 
-menu_new                          : Nytt dokument
+menu_new                          : Nytt notat
 menu_save                         : Lagre
 i18n_save                         : Lagre
 menu_save_as                      : Lagre som
@@ -26,6 +26,8 @@ menu_design_dark                  : Mørkt
 
 i18n_root_directory               : Notater
 
+i18n_unnamed                      : Uten navn
+
 i18n_list                         : Liste
 i18n_uncategorized                : Ukategorisert
 i18n_categories                   : Kategorier
@@ -39,6 +41,7 @@ i18n_status_loading               : Laster...
 i18n_status_saving                : Lagrer...
 
 i18n_find                         : Finn
+i18n_find_keywords                : Finn notater...
 i18n_select                       : Velg
 i18n_search                       : Søk
 

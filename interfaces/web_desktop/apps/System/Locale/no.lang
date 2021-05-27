@@ -1,0 +1,146 @@
+#User account info
+
+i18n_user_profile                      : Brukerprofil
+i18n_user_fullname                     : Fullt navn
+i18n_user_username                     : Brukernavn
+i18n_user_email                        : E-post
+i18n_user_password                     : Passord
+
+i18n_reset_password                    : Reset passord
+
+i18n_new_password                      : Nytt passord
+i18n_confirm_password                  : Bekreft passord
+
+i18n_language                          : Språk
+i18n_setup                             : Mal
+
+i18n_account_locked                    : Konto låst
+i18n_account_disabled                  : Konto deaktivert
+
+i18n_browse                            : Utforsk
+
+i18n_looknfeel                         : Utseende
+i18n_theme                             : Tema
+i18n_wallpaper                         : Bakgrunn
+i18n_window_style                      : Vindusstil
+i18n_darktheme                         : Mørkt tema
+i18n_system_disk                       : Systemdisk
+i18n_workspaces                        : Arbeidsbord
+
+i18n_workgroups                        : Arbeidsgrupper
+
+i18n_roles                             : Roller
+
+i18n_storage                           : Lagring
+i18n_drives                            : Stasjoner
+
+i18n_applications                      : Applikasjoner
+
+i18n_enabled                           : På
+i18n_disabled                          : Av
+i18n_default                           : Standard
+
+i18n_name                              : Navn
+i18n_category                          : Kategori
+i18n_dock                              : Dock
+
+i18n_user_mountlist_empty              : Disklisten er tom.
+
+i18n_save_changes                      : Lagre endringer
+
+i18n_no_applications_available         : Ingen applikasjoner tilgjengelig.
+
+i18n_role_profile                      : Rolle Profil
+i18n_role_name                         : Rolle Navn
+i18n_role_description                  : Beskrivelse
+i18n_permissions                       : Tillatelser
+
+i18n_yes                               : Ja
+i18n_no                                : Nei
+i18n_col_name                          : Navn
+i18n_col_visible                       : Viser
+i18n_col_featured                      : Promotert
+i18n_col_date                          : Dato
+
+i18n_application_visible               : Viser
+i18n_application_featured              : Promotert
+
+#application related
+
+i18n_application_list                  : Programliste
+i18n_application_profile               : Profil
+i18n_app_marketplace_info              : Markedsplass informasjon
+i18n_application_graphics              : Grafikk
+i18n_application_information           : Informasjon
+i18n_applications                      : Programmer
+i18n_find_applications                 : Finn programmer
+
+#permissions related
+
+i18n_PERM_USER_GLOBAL                  : Endre brukere globalt
+i18n_PERM_USER_WORKGROUP               : Endre brukere per arbeidsgruppe
+i18n_PERM_WORKGROUP_GLOBAL             : Endre arbeidsgrupper globalt
+i18n_PERM_WORKGROUP_WORKGROUP          : Endre arbeidsgrupper
+i18n_PERM_TEMPLATE_GLOBAL              : Endre maler globalt
+i18n_PERM_TEMPLATE_WORKGROUP           : Endre maler under arbeidsgruppe
+
+i18n_deleting_permission               : Sletter rettighet
+i18n_deleting_permission_verify        : Vennligst bekreft at du ønsker å slette.
+
+#printers related
+
+i18n_file                              : Fil
+i18n_about                             : About
+i18n_save                              : Lagre
+i18n_delete                            : Slett
+i18n_cancel                            : Avbryt
+
+i18n_printers                          : Printere
+i18n_printer_profile                   : Printer profil
+
+i18n_printer_name                      : Navn
+i18n_printer_type                      : Type
+i18n_printer_host                      : Host
+i18n_printer_ip                        : IP
+i18n_printer_port                      : Port
+i18n_printer_ip_port                   : IP/Port
+i18n_requires_confirmation_to_print    : Krever bekreftelse for å printe
+
+i18n_deleting_printer                  : Slett printer
+i18n_deleting_printer_verify           : Are you sure?
+
+#User related
+
+i18n_users                             : Brukere
+i18n_find_users                        : Finn brukere...
+
+i18n_search                            : Søk
+
+i18n_header_FullName                   : Navn
+i18n_header_Name                       : Brukernavn
+i18n_header_Level                      : Nivå
+i18n_header_Status                     : Status
+i18n_header_LoginTime                  : Sist Innlogging
+
+i18n_user_updated                      : Bruker oppdatert
+i18n_user_updated_succ                 : Brukeren ble oppdatert i databasen.
+
+i18n_user_update_fail                  : Feil ved oppdatering
+i18n_user_update_failed                : Kunne ikke oppdatere brukeren.
+
+i18n_SharedDrive                 	   : Delt
+
+
+#Workgroup related
+
+i18n_header_name                       : Navn
+
+i18n_workgroups                        : Arbeidsgrupper
+i18n_workgroup_profile                 : Arbeidsgruppe
+i18n_workgroup_name                    : Navn
+i18n_workgroup_description             : Beskrivelse
+
+
+i18n_you_forgot_username             : Du glemte brukernavn
+i18n_you_forgot_username_desc        : Du må skrive inn et brukernavn for å lagre
+

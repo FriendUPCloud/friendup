@@ -290,7 +290,6 @@ BufString *GetJSONFromStructure( FULONG *descr, void *data )
  */
 void *GetStructureFromJSON( FULONG *descr, const char *jsondata )
 {
-	char tmpQuery[ 1024 ];
 	void *firstObject = NULL;
 	void *lastObject = NULL;
 	
@@ -347,7 +346,11 @@ void *GetStructureFromJSON( FULONG *descr, const char *jsondata )
 		
 		if( value->type == json_object )
 		{
-			void *data = calloc( 1, descr[ SQL_DATA_STRUCTURE_SIZE ] );
+			void *data = FCalloc( 1, descr[ SQL_DATA_STRUCTURE_SIZE ] );
+			if( data == NULL )
+			{
+				return NULL;
+			}
 		
 			FUBYTE *strptr = (FUBYTE *)data;	// pointer to structure to which will will insert data
 			FULONG *dptr = &descr[ SQL_DATA_STRUCT_START ];		// first 2 entries inform about table and size, rest information provided is about columns
@@ -483,7 +486,12 @@ void *GetStructureFromJSON( FULONG *descr, const char *jsondata )
 			{
 				json_value*locaval = value->u.array.values[x]; 
 				
-				void *data = calloc( 1, descr[ SQL_DATA_STRUCTURE_SIZE ] );
+				void *data = FCalloc( 1, descr[ SQL_DATA_STRUCTURE_SIZE ] );
+				if( data == NULL )
+				{
+					return NULL;
+				}
+				
 				if( firstObject == NULL )
 				{
 					firstObject = data;
@@ -519,7 +527,7 @@ void *GetStructureFromJSON( FULONG *descr, const char *jsondata )
 							}
 							json_value*mval = locaval->u.object.values[retPos].value;
 							
-							//DEBUG("INT 1 '%s' '%ld'!\n\n\n\n", mval->u.string.ptr, mval->u.integer );
+							//DEBUG("INT 1 '%s' '%ld'!\n", mval->u.string.ptr, mval->u.integer );
 							if( retPos >= 0  && mval->type == json_string && mval->u.string.ptr != NULL )
 							{
 								char *end;

@@ -9,8 +9,16 @@
 *                                                                              *
 *****************************************************************************©*/
 
+if( !function_exists( 'microseconds' ) )
+{
+	function microseconds( $float = false ) 
+	{
+		list( $usec, $sec ) = explode( " ", microtime() );
+		return round( ( (float)$usec + (float)$sec ) * 1000 );
+	}
+}
 
-
+$micro_start = microseconds( true );
 
 /*// TODO: Permissions!!! Only list out when you have users below your
 //                      level, unless you are Admin
@@ -86,7 +94,10 @@ else
 {
 	require_once( 'php/include/permissions.php' );
 	
-	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ] ) )
+	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 
+		'PERM_USER_READ_GLOBAL', 'PERM_USER_READ_IN_WORKGROUP', 
+		'PERM_USER_GLOBAL',      'PERM_USER_WORKGROUP' 
+	] ) )
 	{
 		if( is_object( $perm ) )
 		{
@@ -114,6 +125,7 @@ else
 		}
 	}
 }
+
 
 
 // TODO: Create searchby komma separated so one can specify what to search by ...
@@ -147,6 +159,10 @@ switch( $args->args->mode )
 					}
 				}
 				
+				$micro_end = microseconds( true );
+				
+				$out['MS'] = ( $micro_end - $micro_start ) . ' ms';
+				
 				die( 'ok<!--separate-->' . json_encode( $out ) );
 			}
 		}
@@ -160,36 +176,26 @@ switch( $args->args->mode )
 		{
 			$out = [];
 			
-			$count = $SqlDatabase->FetchObject( 'SELECT COUNT( DISTINCT( u.ID ) ) AS Num FROM FUser u, FUserToGroup tg WHERE u.ID = tg.UserID ' );
-			$out['Count'] = ( $count ? $count->Num : 0 );
-			
-			die( 'ok<!--separate-->' . json_encode( $out ) );
-		}
-		
-		break;
-	
-	default:
-		
-		if( $users = $SqlDatabase->FetchObjects( $q = '
-			SELECT 
-				u.*, g.Name AS `Level`, "0" AS `LoginTime` 
-			FROM 
-				`FUser` u, 
-				`FUserGroup` g, 
-				`FUserToGroup` ug 
-			WHERE 
-					u.ID = ug.UserID 
-				AND g.ID = ug.UserGroupID 
-				AND g.Type = "Level" 
-				' . ( isset( $args->args->userid ) && $args->args->userid ? '
-				AND u.ID IN (' . $args->args->userid . ') 
+			//$count = $SqlDatabase->FetchObject( 'SELECT COUNT( DISTINCT( u.ID ) ) AS Num FROM FUser u, FUserToGroup tg WHERE u.ID = tg.UserID ' );
+			$count = $SqlDatabase->FetchObject( '
+				SELECT 
+					COUNT( DISTINCT( u.ID ) ) AS Num 
+				FROM 
+					FUser u, FUserToGroup tg 
+				WHERE u.ID = tg.UserID 
+				' . ( isset( $args->args->sortstatus ) ? '
+				AND u.Status IN (' . $args->args->sortstatus . ') 
 				' : '' ) . '
 				' . ( isset( $args->args->query ) && $args->args->query ? '
 				AND 
 				(
 					' . ( !isset( $args->args->searchby ) || $args->args->searchby == 'FullName' ? '
 					( 
-						u.Fullname LIKE "' . trim( $args->args->query ) . '%" 
+						( 
+						       u.FullName LIKE "' . trim( $args->args->query ) . '%" 
+							OR REPLACE( u.FullName, SUBSTRING_INDEX( u.FullName, " ", -1 ), "" ) LIKE "%' . trim( $args->args->query ) . '%" 
+							OR SUBSTRING_INDEX( u.FullName, " ", -1 ) LIKE "' . trim( $args->args->query ) . '%" 
+						) 
 					) 
 					' . ( !isset( $args->args->searchby ) ? 'OR ' : '' ) : '' )
 					 .  ( !isset( $args->args->searchby ) || $args->args->searchby == 'Name' ? '
@@ -202,17 +208,89 @@ switch( $args->args->mode )
 						u.Email LIKE "' . trim( $args->args->query ) . '%" 
 					) ' : '' ) . '
 				)' : '' ) . '
-			GROUP 
-				BY u.ID, g.Name 
-			ORDER BY 
-				u.' . ( isset( $args->args->sortby ) ? $args->args->sortby : 'FullName' ) . ' 
-				' . ( isset( $args->args->orderby ) ? $args->args->orderby : 'ASC' ) . ' 
+			' );
+			$out['Count'] = ( $count ? $count->Num : 0 );
+			
+			$micro_end = microseconds( true );
+			
+			$out['MS'] = ( $micro_end - $micro_start ) . ' ms';
+			
+			die( 'ok<!--separate-->' . json_encode( $out ) );
+		}
+		
+		break;
+	
+	default:
+		
+		$out = [];
+		
+		// TODO: Add support for LoginTime listing and sorting on various parameteres using left join, not in use by default.
+		
+		if( $users = $SqlDatabase->FetchObjects( $q = '
+			SELECT 
+				u.ID, u.Name AS `Name`, u.Password, u.FullName AS `FullName`, u.Email, u.CreatedTime, u.Image, u.UniqueID, u.Status,
+				g.Name AS `Level`, 
+				' . ( isset( $args->args->logintime ) && $args->args->logintime ? '
+				l.LoginTime AS `LoginTime`
+				' : '
+				"0" AS `LoginTime`
+				' ) . ' 
+			FROM 
+				`FUser` u
+				' . ( isset( $args->args->logintime ) && $args->args->logintime ? '
+					LEFT JOIN ( SELECT MAX( `ID` ), MAX( `LoginTime` ) AS `LoginTime`, `UserID` FROM `FUserLogin` WHERE `Information` = "Login success" GROUP BY `UserID` ) AS l ON l.UserID = u.ID
+				' : '' ) . ', 
+				`FUserGroup` g, 
+				`FUserToGroup` ug 
+			WHERE 
+					u.ID = ug.UserID 
+				AND g.ID = ug.UserGroupID 
+				AND g.Type = "Level" 
+				' . ( isset( $args->args->userid ) && $args->args->userid ? '
+				AND u.ID IN (' . $args->args->userid . ') 
+				' : '' ) . '
+				' . ( isset( $args->args->notids ) && $args->args->notids ? '
+				AND u.ID NOT IN (' . $args->args->notids . ') 
+				' : '' ) . '
+				' . ( isset( $args->args->sortstatus ) ? '
+				AND u.Status IN (' . $args->args->sortstatus . ') 
+				' : '' ) . '
+				' . ( isset( $args->args->query ) && $args->args->query ? '
+				AND 
+				(
+					' . ( !isset( $args->args->searchby ) || $args->args->searchby == 'FullName' ? '
+					( 
+						( 
+							   u.FullName LIKE "' . trim( $args->args->query ) . '%" 
+							OR REPLACE( u.FullName, SUBSTRING_INDEX( u.FullName, " ", -1 ), "" ) LIKE "%' . trim( $args->args->query ) . '%" 
+							OR SUBSTRING_INDEX( u.FullName, " ", -1 ) LIKE "' . trim( $args->args->query ) . '%" 
+						) 
+					) 
+					' . ( !isset( $args->args->searchby ) ? 'OR ' : '' ) : '' )
+					 .  ( !isset( $args->args->searchby ) || $args->args->searchby == 'Name' ? '
+					( 
+						u.Name LIKE "' . trim( $args->args->query ) . '%" 
+					) 
+					' . ( !isset( $args->args->searchby ) ? 'OR ' : '' ) : '' )
+					 .  ( !isset( $args->args->searchby ) || $args->args->searchby == 'Email' ? '
+					( 
+						u.Email LIKE "' . trim( $args->args->query ) . '%" 
+					) ' : '' ) . '
+				)' : '' ) . '
+			GROUP BY
+				u.ID, g.Name 
+			ORDER BY
+				' . ( isset( $args->args->customsort ) && $args->args->customsort && isset( $args->args->sortby ) && $args->args->sortby == 'Status' ? '
+				FIELD ( u.Status, ' . $args->args->customsort . ' ) 
+				' : '
+				`' . ( isset( $args->args->sortby ) ? $args->args->sortby : 'FullName' ) . '` 
+				' . ( isset( $args->args->orderby ) ? $args->args->orderby : 'ASC' ) ) . ' 
 			' . ( isset( $args->args->limit ) && $args->args->limit ? '
 			LIMIT ' . $args->args->limit . ' 
 			' : '' ) . '
 		' ) )
 		{
-			$out = [];
+			
 			foreach( $users as $u )
 			{
 				$keys = [ 'ID', 'Name', 'Password', 'FullName', 'Email', 'CreatedTime', 'LoginTime', 'Image', 'Level', 'UniqueID', 'Status' ];
@@ -226,12 +304,56 @@ switch( $args->args->mode )
 	
 			if( isset( $args->args->count ) && $args->args->count )
 			{
-				$count = $SqlDatabase->FetchObject( 'SELECT COUNT( DISTINCT( u.ID ) ) AS Num FROM FUser u, FUserToGroup tg WHERE u.ID = tg.UserID ' );
+				//$count = $SqlDatabase->FetchObject( 'SELECT COUNT( DISTINCT( u.ID ) ) AS Num FROM FUser u, FUserToGroup tg WHERE u.ID = tg.UserID ' );
+				$count = $SqlDatabase->FetchObject( '
+					SELECT 
+						COUNT( DISTINCT( u.ID ) ) AS Num 
+					FROM 
+						FUser u, FUserToGroup tg 
+					WHERE u.ID = tg.UserID 
+					' . ( isset( $args->args->sortstatus ) ? '
+					AND u.Status IN (' . $args->args->sortstatus . ') 
+					' : '' ) . '
+					' . ( isset( $args->args->query ) && $args->args->query ? '
+					AND 
+					(
+						' . ( !isset( $args->args->searchby ) || $args->args->searchby == 'FullName' ? '
+						( 
+							( 
+							       u.FullName LIKE "' . trim( $args->args->query ) . '%" 
+								OR REPLACE( u.FullName, SUBSTRING_INDEX( u.FullName, " ", -1 ), "" ) LIKE "%' . trim( $args->args->query ) . '%" 
+								OR SUBSTRING_INDEX( u.FullName, " ", -1 ) LIKE "' . trim( $args->args->query ) . '%" 
+							) 
+						) 
+						' . ( !isset( $args->args->searchby ) ? 'OR ' : '' ) : '' )
+						 .  ( !isset( $args->args->searchby ) || $args->args->searchby == 'Name' ? '
+						( 
+							u.Name LIKE "' . trim( $args->args->query ) . '%" 
+						) 
+						' . ( !isset( $args->args->searchby ) ? 'OR ' : '' ) : '' )
+						 .  ( !isset( $args->args->searchby ) || $args->args->searchby == 'Email' ? '
+						( 
+							u.Email LIKE "' . trim( $args->args->query ) . '%" 
+						) ' : '' ) . '
+					)' : '' ) . '
+				' );
 				$out['Count'] = ( $count ? $count->Num : 0 );
 			}
 			
+			$micro_end = microseconds( true );
+			
+			$out['MS'] = ( $micro_end - $micro_start ) . ' ms';
+			
 			die( 'ok<!--separate-->' . json_encode( $out ) );
 		}
+		
+		/*if( isset( $args->args->count ) && $args->args->count )
+		{
+			$count = $SqlDatabase->FetchObject( 'SELECT COUNT( DISTINCT( u.ID ) ) AS Num FROM FUser u, FUserToGroup tg WHERE u.ID = tg.UserID ' );
+			$out['Count'] = ( $count ? $count->Num : 0 );
+			
+			die( 'ok<!--separate-->' . json_encode( $out ) );
+		}*/
 		
 		break;
 	

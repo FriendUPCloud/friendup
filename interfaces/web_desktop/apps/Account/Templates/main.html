@@ -43,7 +43,7 @@
 								<hr class="Divider"/>
 								
 								<div class="HRow">
-									<div class="FloatLeft HContent55">
+									<div class="FloatLeft HContent50">
 										<div class="HRow MarginBottom">
 											<div class="FloatLeft HContent30">
 												<label class="InputHeight">{i18n_full_name}:</label>
@@ -112,11 +112,26 @@
 											</div>
 										</div>
 									</div>
-									<div class="FloatLeft HContent45">
+									<div class="FloatLeft HContent50">
 										<div class="FloatLeft HContent5">
 											&nbsp;
 										</div>
 										<div class="FloatLeft HContent95">
+										
+											<div class="HRow MarginBottom">
+												<div class="FloatLeft HContent30">
+													<label class="InputHeight">{i18n_timezone}:</label>
+												</div>
+												<div class="FloatLeft HContent70">
+													<div id="TimezoneSelect">
+														<div id="TimeZoneSelectA"></div><div id="TimeZoneSelectB"></div>
+													</div>
+													<input type="hidden" class="FullWidth InputHeight" value="" id="UserAccTimezone" value="{timezone}"/>
+												</div>
+											</div>
+										
+											<hr class="Divider"/>
+										
 											<div class="HRow MarginBottom">
 												<div class="FloatLeft HContent45">
 													<label class="InputHeight">{i18n_language}:</label>
@@ -238,6 +253,12 @@
 		{
 			.FloatLeft.HContent45,
 			.FloatLeft.HContent55 { float:none; margin:0; padding:0; width:100%; }
+		}
+		
+		#TimeZoneSelectB, #TimeZoneSelectA
+		{
+			display: inline-block;
+			margin: 0 5px 5px 0;
 		}
 		
 	</style>

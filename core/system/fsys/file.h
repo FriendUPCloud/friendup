@@ -81,8 +81,8 @@ typedef struct File
 	FUQUAD						f_Position;         // position where user stopped to read/write
 	FULONG						f_DataPassed;       // size in bytes, to read or write (inside buffer)
 	char						*f_Buffer;          // [ FILE_MAX_BUFFER ];
-	FLONG						f_BytesStored;		// number of bytes stored in root file
-	FLONG						f_MaxBytesStored;	// maximum bytes which could be stored on disk
+	FQUAD						f_BytesStored;		// number of bytes stored in root file
+	FQUAD						f_MaxBytesStored;	// maximum bytes which could be stored on disk
 	
 	struct File					*f_SharedFile;		// points to shared device
 	struct File					*f_RootDevice;
@@ -93,7 +93,7 @@ typedef struct File
 	
 	FBOOL						f_Stream;			// is file streamed
 	Socket						*f_Socket;			// != NULL then data should be streamed
-	UserSessionWebsocket		*f_WSocket;			// websocket context, if provided data should be delivered here
+	WSCData						*f_WSD;			// Pointer to websocket context, if provided data should be delivered here
 	int							f_Operations;		// operation counter
 	
 	int							f_OperationMode;	// read, write, etc.
@@ -146,23 +146,25 @@ typedef struct FileShared
 	
 	ListString							*fs_Data;		// pointer to liststring which represents file data, list must be finalised before it will be atached here
 	FULONG 								fs_AppID;		// application ID
+	FULONG								fs_FSID;		// Filesystem ID
 } FileShared;
 
 
 
 static const FULONG FileSharedTDesc[] = {
 	SQLT_TABNAME, (FULONG)"FFileShared", SQLT_STRUCTSIZE, (FULONG) sizeof( struct FileShared ), 
-	SQLT_IDINT, (FULONG)"ID",            offsetof( struct FileShared, fs_ID ), 
-	SQLT_STR, (FULONG)"Name",            offsetof( struct FileShared, fs_Name ), 
-	SQLT_STR, (FULONG)"Devname",         offsetof( struct FileShared, fs_DeviceName ), 
-	SQLT_STR, (FULONG)"Path",            offsetof( struct FileShared, fs_Path ), 
-	SQLT_INT, (FULONG)"UserID",          offsetof( struct FileShared, fs_IDUser ), 
-	SQLT_STR, (FULONG)"DstUserSID",      offsetof( struct FileShared, fs_DstUsers ), 
-	SQLT_DATETIME, (FULONG)"DateCreated",     offsetof( struct FileShared, fs_CreatedTime ),
-	SQLT_STR, (FULONG)"Hash",            offsetof( struct FileShared, fs_Hash ), 
-	SQLT_INT, (FULONG)"AppID",           offsetof( struct FileShared, fs_AppID ), 
-	SQLT_BLOB, (FULONG)"FileData",       offsetof( struct FileShared, fs_Data ), 
-	SQLT_NODE, (FULONG)NULL,             offsetof( struct FileShared, node ), 
+	SQLT_IDINT, (FULONG)"ID",             offsetof( struct FileShared, fs_ID ), 
+	SQLT_STR, (FULONG)"Name",             offsetof( struct FileShared, fs_Name ), 
+	SQLT_STR, (FULONG)"Devname",          offsetof( struct FileShared, fs_DeviceName ), 
+	SQLT_STR, (FULONG)"Path",             offsetof( struct FileShared, fs_Path ), 
+	SQLT_INT, (FULONG)"UserID",           offsetof( struct FileShared, fs_IDUser ), 
+	SQLT_STR, (FULONG)"DstUserSID",       offsetof( struct FileShared, fs_DstUsers ), 
+	SQLT_DATETIME, (FULONG)"DateCreated", offsetof( struct FileShared, fs_CreatedTime ),
+	SQLT_STR, (FULONG)"Hash",             offsetof( struct FileShared, fs_Hash ), 
+	SQLT_INT, (FULONG)"AppID",            offsetof( struct FileShared, fs_AppID ), 
+	SQLT_BLOB, (FULONG)"FileData",        offsetof( struct FileShared, fs_Data ),
+	SQLT_INT, (FULONG)"FSID",             offsetof( struct FileShared, fs_FSID ), 
+	SQLT_NODE, (FULONG)NULL,              offsetof( struct FileShared, node ), 
 	SQLT_END 
 };
 

@@ -29,7 +29,10 @@ else
 {
 	require_once( 'php/include/permissions.php' );
 	
-	if( $perm = Permissions( 'delete', 'application', ( 'AUTHID'.$args->authid ), [ 'PERM_STORAGE_GLOBAL', 'PERM_STORAGE_WORKGROUP' ], 'user', ( isset( $args->args->userid ) ? $args->args->userid : $userid ) ) )
+	if( $perm = Permissions( 'delete', 'application', ( 'AUTHID'.$args->authid ), [ 
+		'PERM_STORAGE_DELETE_GLOBAL', 'PERM_STORAGE_DELETE_IN_WORKGROUP', 
+		'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
+	], 'user', ( isset( $args->args->userid ) ? $args->args->userid : $userid ) ) )
 	{
 		if( is_object( $perm ) )
 		{
@@ -46,7 +49,7 @@ else
 			{
 				// If user has GLOBAL or WORKGROUP access to this user
 			
-				if( isset( $args->args->userid ) && $args->args->userid )
+				if( isset( $args->args->userid ) )
 				{
 					$userid = intval( $args->args->userid );
 				}

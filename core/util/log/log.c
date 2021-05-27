@@ -48,62 +48,60 @@ FlogFlags slg;
 
 int LogNew( const char* fname, const char* conf, int toFile, int lvl, int flvl, int maxSize )
 {
-    int status = 0;
-
-    slg.ff_Level = lvl;
-    slg.ff_FileLevel = flvl;
-    slg.ff_ToFile = toFile;
-    slg.ff_Pretty = 0;
-    slg.ff_Time = -1;
-    slg.ff_TdSafe = 1;
-    slg.ff_FP = NULL;
-    slg.ff_Fname = NULL;
-    slg.ff_MaxSize = 0;
-    slg.ff_LogNumber = 0;
-    slg.ff_Size = 0;
-    slg.ff_MaxSize = 0;
-    slg.ff_ArchiveFiles = 0;
+	slg.ff_Level = lvl;
+	slg.ff_FileLevel = flvl;
+	slg.ff_ToFile = toFile;
+	slg.ff_Pretty = 0;
+	slg.ff_Time = -1;
+	slg.ff_TdSafe = 1;
+	slg.ff_FP = NULL;
+	slg.ff_Fname = NULL;
+	slg.ff_MaxSize = 0;
+	slg.ff_LogNumber = 0;
+	slg.ff_Size = 0;
+	slg.ff_MaxSize = 0;
+	slg.ff_ArchiveFiles = 0;
 	slg.ff_ToConsole = 1;
 
-    if( maxSize >= 100000 )
-    {
-        slg.ff_MaxSize =  (FUQUAD)maxSize;
-    }
+	if( maxSize >= 100000 )
+	{
+		slg.ff_MaxSize =  (FUQUAD)maxSize;
+	}
 
-    {
-		Props *prop = NULL;
-		char *ptr, path[ 1024 ];
-		path[ 0 ] = 0;
+	Props *prop = NULL;
+	char *ptr, path[ 1024 ];
+	path[ 0 ] = 0;
 
-		ptr = getenv("FRIEND_HOME");
-		if( ptr != NULL )
+	ptr = getenv("FRIEND_HOME");
+	if( ptr != NULL )
+	{
+		sprintf( path, "%scfg/cfg.ini", ptr );
+	}
+
+	prop = PropertiesOpen( path );
+	if( prop != NULL)
+	{
+		char *path = NULL;
+		
+		slg.ff_Level = ReadIntNCS( prop, "Log:level", 1 );
+		slg.ff_ArchiveFiles = ReadIntNCS( prop, "Log:archiveFiles", 0 );
+
+		slg.ff_FileLevel = ReadIntNCS( prop, "Log:fileLevel", 1 );
+		slg.ff_Fname = ReadStringNCS( prop, "Log:fileName", (char *)fname );
+		slg.ff_ToConsole = ReadIntNCS( prop, "Log:toConsole", 1 );
+
+		path = ReadStringNCS( prop, "Log:filepath", "log/" );
+		
+		slg.ff_DestinationPathLength = strlen( slg.ff_Fname ) + strlen( path ) + 32;
+		slg.ff_DestinationPath = FCalloc( slg.ff_DestinationPathLength, sizeof(char) );
+		slg.ff_Path = FCalloc( slg.ff_DestinationPathLength, sizeof(char) );
+		
+		if( slg.ff_Path != NULL )
 		{
-			sprintf( path, "%scfg/cfg.ini", ptr );
-		}
-
-		prop = PropertiesOpen( path );
-		if( prop != NULL)
-		{
-			char *path = NULL;
-			
-			slg.ff_Level = ReadIntNCS( prop, "Log:level", 1 );
-			slg.ff_ArchiveFiles =  ReadIntNCS( prop, "Log:archiveFiles", 0 );
-
-			slg.ff_FileLevel  = ReadIntNCS( prop, "Log:fileLevel", 1 );
-			slg.ff_Fname = ReadStringNCS( prop, "Log:fileName", (char *)fname );
-			slg.ff_ToConsole = ReadIntNCS( prop, "Log:toConsole", 1 );
-
-			path = ReadStringNCS( prop, "Log:filepath", "log/" );
-			
-			slg.ff_DestinationPathLength = strlen( slg.ff_Fname ) + strlen( path ) + 32;
-			slg.ff_Path = FCalloc( slg.ff_DestinationPathLength, sizeof(char) );
-			slg.ff_DestinationPath = FCalloc( slg.ff_DestinationPathLength, sizeof(char) );
-			
 			strcpy( slg.ff_Path, path );
 			mkdir( slg.ff_Path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-			
-            PropertiesClose( prop );
 		}
+		PropertiesClose( prop );
 	}
 
 	if ( pthread_mutex_init(&slg.logMutex, NULL) )
@@ -111,11 +109,11 @@ int LogNew( const char* fname, const char* conf, int toFile, int lvl, int flvl, 
 		printf("<%s:%d> %s: [ERROR] Cannot initialize mutex: %d\n",  __FILE__, __LINE__, __FUNCTION__, errno );
 	}
 
-    if ( conf != NULL && slg.ff_Fname != NULL )
-    {
-        slg.ff_Fname = fname;
-        //status = LogParseConfig(conf);
-    }
+	if ( conf != NULL && slg.ff_Fname != NULL )
+	{
+		slg.ff_Fname = fname;
+		//status = LogParseConfig(conf);
+	}
 
 	if( slg.ff_ArchiveFiles > 0 )
 	{
@@ -134,7 +132,7 @@ int LogNew( const char* fname, const char* conf, int toFile, int lvl, int flvl, 
 		}
 	}
 
-    return 0;
+	return 0;
 }
 
 /**
@@ -151,8 +149,10 @@ void LogDelete( )
 			if( slg.ff_FileNames[ i ] != NULL )
 			{
 				FFree( slg.ff_FileNames[ i ] );
+				slg.ff_FileNames[ i ] = NULL;
 			}
 			FFree( slg.ff_FileNames );
+			slg.ff_FileNames = NULL;
 		}
 	}
     

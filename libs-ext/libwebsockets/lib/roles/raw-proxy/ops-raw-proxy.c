@@ -54,7 +54,12 @@ rops_handle_POLLIN_raw_proxy(struct lws_context_per_thread *pt, struct lws *wsi,
 	    !(wsi->favoured_pollin &&
 	      (pollfd->revents & pollfd->events & LWS_POLLOUT))) {
 
-		buffered = lws_buflist_aware_read(pt, wsi, &ebuf, __func__);
+		ebuf.token = NULL;
+		ebuf.len = 0;
+		buffered = lws_buflist_aware_read(pt, wsi, &ebuf, 1, __func__);
+		if (buffered < 0)
+			goto fail;
+
 		switch (ebuf.len) {
 		case 0:
 			lwsl_info("%s: read 0 len\n", __func__);
@@ -106,7 +111,7 @@ try_pollout:
 	}
 
 #if defined(LWS_WITH_CLIENT)
-	if (lws_client_socket_service(wsi, pollfd, NULL))
+	if (lws_client_socket_service(wsi, pollfd))
 		return LWS_HPI_RET_WSI_ALREADY_DIED;
 #endif
 
@@ -186,7 +191,7 @@ rops_handle_POLLOUT_raw_proxy(struct lws *wsi)
 	return LWS_HP_RET_BAIL_OK;
 }
 
-struct lws_role_ops role_ops_raw_proxy = {
+const struct lws_role_ops role_ops_raw_proxy = {
 	/* role name */			"raw-proxy",
 	/* alpn id */			NULL,
 	/* check_upgrades */		NULL,

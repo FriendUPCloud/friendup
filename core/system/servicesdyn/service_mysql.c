@@ -67,10 +67,9 @@ Service *ServiceNew( void *sysbase, char *command )
 			}
 		}
 		
-		MYSQLService *hs = calloc( 1, sizeof( MYSQLService ) );
-		if( hs != NULL )
+		if( ( service->s_SpecialData = FCalloc( 1, sizeof( MYSQLService ) ) ) != NULL )
 		{
-			service->s_SpecialData = hs;
+			MYSQLService *hs = (MYSQLService *)service->s_SpecialData;
 			hs->hs_SB = sysbase;
 		}
 		
@@ -130,12 +129,12 @@ int thread( FThread *t )
 
 			while( ( fgets( data, 2048, file ) ) != NULL )
 			{
-				if( s->s_USW != NULL )
+				if( s->s_UserSession != NULL )
 				{
 					int len = strlen( data );
 					memcpy( buf, data,  len );
 
-					hs->hs_SB->WebsocketWrite( s->s_USW, buf , len, LWS_WRITE_TEXT );
+					hs->hs_SB->WebsocketWrite( s->s_UserSession, buf , len, LWS_WRITE_TEXT );
 					
 					//DEBUG1("Wrote to websockets %d bytes\n", n );
 				}
@@ -229,21 +228,22 @@ char *ServiceGetStatus( Service *service, int *len )
 	}
     
 	char *status = FCalloc( 256, sizeof( char ) );
-	
-	switch( service->s_State )
+	if( status != NULL )
 	{
-		case SERVICE_STOPPED:
-			strcpy( status, "stopped" );
-			break;
-		case SERVICE_STARTED:
-			strcpy( status, "started" );
-			break;
-		case SERVICE_PAUSED:
-			strcpy( status, "paused" );
-			break;
+		switch( service->s_State )
+		{
+			case SERVICE_STOPPED:
+				strcpy( status, "stopped" );
+				break;
+			case SERVICE_STARTED:
+				strcpy( status, "started" );
+				break;
+			case SERVICE_PAUSED:
+				strcpy( status, "paused" );
+				break;
+		}
+		*len = strlen( status );
 	}
-	*len = strlen( status );
-    
 	return status;
 }
 

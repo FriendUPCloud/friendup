@@ -107,7 +107,10 @@ char *CheckEmbeddedHeaders( char *data, int dataLength, const char *header )
 			{
 				int block = charLength;
 				char *value = FCalloc( block + 1, 1 );
-				memcpy( value, data + charPos, block );
+				if( value != NULL )
+				{
+					memcpy( value, data + charPos, block );
+				}
 				return value;
 			}
 		}
@@ -144,8 +147,15 @@ int StripEmbeddedHeaders( char **data, unsigned int dataLength )
 			int dataLength = flen - ( i + hsearchLene );
 			
 			char *result = FCalloc( dataLength + 1, 1 );
-			memcpy( result, pdata + i + hsearchLene, dataLength );
-			free( *data ); *data = result;
+			if( result != NULL )
+			{
+				memcpy( result, pdata + i + hsearchLene, dataLength );
+				free( *data ); *data = result;
+			}
+			else
+			{
+				return -1;
+			}
 			return dataLength;
 		}
 	}

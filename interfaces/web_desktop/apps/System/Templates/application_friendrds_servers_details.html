@@ -1,0 +1,132 @@
+	
+	<div class="HRow PaddingBottom">
+		<div class="HContent50 FloatLeft">
+			<!--<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left" id="LiberatorBackBtn"></button>-->
+			<h3 class="NoMargin FloatLeft">
+				<strong>{i18n_liberator_server_details}</strong>
+			</h3>
+		</div>
+	</div>
+	
+	<!--<div class="HRow BackgroundNegativeAlt Negative Padding">-->
+	<div class="HRow BackgroundNegative Negative Padding">
+		<div class="HContent30 FloatLeft Ellipsis">
+			<!--<div class="BackgroundPositiveAlt NegativeAlt PaddingSmall FloatLeft IconMedium fa-file-text-o"></div>-->
+			<div class="BackgroundPositive Positive PaddingSmall FloatLeft IconMedium fa-file-text-o"></div>
+		</div>
+		<div class="HContent70 FloatLeft Ellipsis">
+			<h2 class="ImageHeading NoMargin">
+				<strong>{liberator_title}</strong>
+			</h2>
+		</div>
+	</div>
+	
+	<div class="Box Padding" id="LiberatorBasicDetails">
+		
+		<div class="HRow MarginBottom">
+			<div class="HContent30 FloatLeft Ellipsis">
+				<strong>{i18n_liberator_type}:</strong>
+			</div>
+			<div class="HContent70 FloatLeft Ellipsis">
+				<select id="LiberatorType" class="FullWidth" disabled="true">{liberator_type}</select>
+			</div>
+		</div>
+		
+		<div class="HRow MarginBottom">
+			<div class="HContent30 FloatLeft Ellipsis">
+				<strong>{i18n_liberator_name}:</strong>
+			</div>
+			<div class="HContent70 FloatLeft Ellipsis">
+				<input type="text" class="FullWidth" id="LiberatorName" value="{liberator_name}"/>
+			</div>
+		</div>
+		
+		<div class="HRow MarginBottom">
+			<div class="HContent30 FloatLeft Ellipsis">
+				<strong>{i18n_liberator_address}:</strong>
+			</div>
+			<div class="HContent70 FloatLeft Ellipsis">
+				<input type="text" class="FullWidth" id="LiberatorAddress" value="{liberator_address}"/>
+			</div>
+		</div>
+		
+		<div class="HRow MarginBottom">
+			<div class="HContent30 FloatLeft Ellipsis">
+				<strong>{i18n_liberator_port}:</strong>
+			</div>
+			<div class="HContent70 FloatLeft Ellipsis">
+				<input type="text" class="FullWidth" id="LiberatorPort" value="{liberator_port}"/>
+			</div>
+		</div>
+		
+		<div class="HRow MarginBottom">
+			<div class="HContent30 FloatLeft Ellipsis">
+				<strong>{i18n_liberator_admin_username}:</strong>
+			</div>
+			<div class="HContent70 FloatLeft Ellipsis">
+				<input type="text" class="FullWidth" id="LiberatorUsername" value="{liberator_admin_username}"/>
+			</div>
+		</div>
+		
+		<div class="HRow MarginBottom">
+			<div class="HContent30 FloatLeft Ellipsis">
+				<strong>{i18n_liberator_admin_password}:</strong>
+			</div>
+			<div class="HContent70 FloatLeft Ellipsis">
+				<input type="password" class="FullWidth" id="LiberatorPassword" value="{liberator_admin_password}"/>
+			</div>
+		</div>
+		
+		<div class="HRow MarginBottom">
+			<div class="HContent30 FloatLeft Ellipsis">
+				<strong>{i18n_liberator_domain}:</strong>
+			</div>
+			<div class="HContent70 FloatLeft Ellipsis">
+				<input type="text" class="FullWidth" id="LiberatorDomain" value="{liberator_domain}"/>
+			</div>
+		</div>
+		
+		<div id="LiberatorEditContainer">
+			<div class="HRow">
+				<!--<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft NegativeAlt fa-trash" id="LiberatorDeleteBtn"></button>-->
+				<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft Positive fa-trash" id="LiberatorDeleteBtn"></button>
+				<div id="LiberatorEditButtons">
+					<!--<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="LiberatorSaveBtn">-->
+					<button class="Button IconSmall FloatRight MarginLeft" id="LiberatorSaveBtn">
+						{i18n_save}
+					</button>
+					<!--<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="LiberatorCancelBtn">-->
+					<button class="Button IconSmall FloatRight MarginLeft" id="LiberatorCancelBtn">
+						{i18n_cancel}
+					</button>
+				</div>
+			</div>
+		</div>
+		
+	</div>
+	
+	
+	<div id="AdminApplicationContainer">
+		<!--<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">-->
+		<div class="HRow MarginTop BackgroundNegative Negative Padding">
+			<div class="PaddingSmall HContent40 FloatLeft">
+				<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="ApplicationEditBack"></button>
+				<h3 class="NoMargin FloatLeft">
+					<strong>{i18n_applications}</strong>
+				</h3>
+			</div>
+			<div class="PaddingSmall HContent45 FloatLeft Relative">
+				<button class="IconButton IconSmall ButtonSmall fa-times-circle Closed" style="position:absolute;right:0;margin-top:-2px;margin-right:-2px;" id="ApplicationSearchCancelBtn"></button>
+				<input type="text" class="FullWidth" placeholder="{i18n_search}" style="padding-right:21px">
+			</div>
+			<div class="PaddingSmall HContent15 FloatLeft Relative">
+				<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle Open" id="ApplicationEdit"></button>
+			</div>
+		</div>
+		<div id="ApplicationGui">
+			{applications}
+		</div>
+	</div>
+	
+	
+	

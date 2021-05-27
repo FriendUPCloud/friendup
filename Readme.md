@@ -1,5 +1,5 @@
-Friend Unifying Platform version 1.2.0
-======================================
+Friend OS v1.2.4, "Hydrogen"
+============================
 
 *NB*: For extended functionality and related Friend projects such as the Android app refer [here](https://github.com/FriendSoftwareLabs).
 
@@ -9,52 +9,28 @@ The Friend OS leverages the computing power of the Internet to offer many of the
 
 The FriendOS liberates you from Big Tech:  It gives you control to create, collaborate, store and share information, data and content across all your devices in a secure private environment and access it anywhere on any device.
 
-![FriendUP Workspace](https://cdn-images-1.medium.com/max/800/1*Ma4ZrbNC2aWsuU18NRc7LA.png "FriendUP Workspace")
+![Friend OS Hydrogen](https://friendos.com/wp-content/uploads/2020/07/hydrogen-fulldesktop.jpg "Friend OS Hydrogen")
 
 Across devices
 --------------
 
-With its responsive desktop environment and client-side, javascript based technologies, FriendUP offers a new reality where you work and play online, independently from your local web enabled hardware. By supporting all screen formats, from mobile phones to laptops and VR, FriendUP is a single target through which you can reach the entire user market.
-We have used considerable amount of time on making the FriendUP APIs simple and easy to understand. That is also why we are packaging the FriendUP Developers Manual with this release. In its third draft, it will soon cover the entire 1.0.x platform.
+With its responsive desktop environment and client-side, javascript based technologies, Friend OS offers a new reality where you work and play online, independently from your local web enabled hardware. By supporting all screen formats, from mobile phones to laptops and VR, Friend OS is a single target through which you can reach the entire user market.
 
 Distributed and powerful
 ------------------------
 
-FriendUP aims to make the powerful emerging web technologies easy to work with. This is why we reach out to you, to help us enrich this platform with DOS drivers, modules, libraries and apps so that we can cover all of the interesting technologies out there that people use and love.
-In the Future, FriendUP will be to the cloud users what Linux is for machines.
+Friend OS aims to make the powerful emerging web technologies easy to work with. This is why we reach out to you, to help us enrich this platform with DOS drivers, modules, libraries and apps so that we can cover all of the interesting technologies out there that people use and love.
+In the Future, Friend OS will be to the cloud users what Linux is for machines.
 
 Getting started
 ===============
 
-Prior to installation, check that 'bash', or a compatible shell is installed on your machine.
-
-Just clone this repository, run the install.sh script and follow the on screen instructions. This script should run on most modern Linux distributions. Post to the [Developer Community](https://discord.gg/GREj9Gv) if you run into any problems here.
-
-The below script has been tested on Ubuntu 16. You might need to install MySQL or MariaDB first.
+Please follow this guide to install Friend OS:
 
 ```
-git clone https://github.com/FriendSoftwareLabs/friendup
-apt install make cmake dialog
-cd friendup/
-./install.sh
+For Ubuntu 18: https://docs.friendos.com/docs/administrator-guide/installation/
+For Ubuntu 20: https://docs.friendos.com/docs/administrator-guide/installation-ubuntu-20/
 ```
-We recommend setting up a dedicated user for your FriendUP installation. You will need the MySQL root password to allow the install script to create the database and user.
-
-Note: the installer will not work if you launch it with anything else than bash. Example:
-```
-sh install.sh   << Will *not* work...
-```
-
-Dependencies
-------------
-
-The Friend installer relies on the following packages to work, and must be present on the machine before starting an installation :
-
-- bash
-- sudo
-- gcc
-
-If you encounter an error during the dependencies installation process, please refer to the end of this file for a complete list of the necessary dependencies, and install them manually. Then restart the installer.
 
 Running the serving kernel manually
 -----------------------------------
@@ -169,14 +145,14 @@ You can find the developer documentation in the docs folder. An administration g
 Licensing
 =========
 
-FriendUP is a large system consisting of several layers. It has a kernel core that is managing the Friend resources. This one is licensed under the MIT license. Then it has modules, DOS drivers and runtime linked libraries. These are licensed under the LGPLv3 license. Finally, we have the GUI for Friend - the Friend Workspace. This is licensed under the AGPLv3 license.
+Friend OS is a large system consisting of several layers. It has a kernel core that is managing the Friend resources. This one is licensed under the MIT license. Then it has modules, DOS drivers and runtime linked libraries. These are licensed under the LGPLv3 license. Finally, we have the GUI for Friend - the Friend Workspace. This is licensed under the AGPLv3 license.
 
 Contributor agreement
 =====================
 
 New developers joining the project needs to sign our contributor agreement before they are allowed to commit changes to the project. The contributor agreement can be found here:
 
- * https://friendup.cloud/developer-platform/open-source/contributors/
+ * https://friendos.com/contributors/
 
 The contributor agreement is our vehicle for ensuring that this project can enjoy commercial support and gain essential project management, as well as an open book development cycle on Github.
 
@@ -194,8 +170,6 @@ Tested - a lot
 ==============
 
 We extensively test our platform and use https://www.browserstack.com/ for cross browser testing.
-
-<a href="https://www.browserstack.com/"><img src="https://friendos.com/wp-content/uploads/2019/09/Browserstack-logo.png" style="max-width:320px;" /></a>
 
 List of dependencies
 ====================

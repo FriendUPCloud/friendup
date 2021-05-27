@@ -36,8 +36,6 @@ CacheManager *CacheManagerNew( FULONG size )
 		
 		pthread_mutex_init( &(cm->cm_Mutex), NULL );
 		
-		cm->cm_CacheMax = size;
-		
 		cm->cm_CacheFileGroup = FCalloc( CACHE_GROUP_MAX, sizeof(CacheFileGroup) );
 		if( cm->cm_CacheFileGroup != NULL )
 		{
@@ -46,6 +44,7 @@ CacheManager *CacheManagerNew( FULONG size )
 				cm->cm_CacheFileGroup[ i ].cg_EntryId = i;
 				cm->cm_CacheFileGroup[ i ].cg_File = NULL;
 			}
+			cm->cm_CacheMax = size;
 		}
 	}
 	else
@@ -302,7 +301,6 @@ LocFile *CacheManagerFileGet( CacheManager *cm, char *path, FBOOL checkByPath __
 			{
 				if( memcmp( hash, lf->hash, sizeof(hash) ) == 0 )
 				{
-					//DEBUG("\n\n\n\n\n======================================got file\n\n\n\n\n\n\n\n\n");
 					lf->lf_FileUsed++;
 					FRIEND_MUTEX_UNLOCK( &(cm->cm_Mutex) );
 					return lf;

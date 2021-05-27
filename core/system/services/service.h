@@ -94,7 +94,7 @@ typedef struct Service
 	void						*s_SpecialData;													// special data for every service
 	void						*s_CommService;												// pointer to communication service
 	
-	UserSessionWebsocket		*s_USW;				// pointer to websocket connection
+	void						*s_UserSession;
 	
 	void						*(*CommServiceSendMsg)( void *commService, DataForm *df );		// pointer to communcation function
 
@@ -104,7 +104,7 @@ typedef struct Service
 //
 //
 
-Service* ServiceOpen( void *sysbase, char* name, long version, void *sm, void (*sendMessage)(void *a, void *b) );
+Service* ServiceOpen( void *sysbase, char* name, long version, void *sm, void *(*sendMessage)(void *a, void *b) );
 
 //
 //

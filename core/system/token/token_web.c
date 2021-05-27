@@ -67,7 +67,7 @@ Http *TokenWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		FERROR( "URL path is NULL!\n" );
 		
 		char dictmsgbuf[ 256 ];
-		snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_PATH_PARAMETER_IS_EMPTY] , DICT_PATH_PARAMETER_IS_EMPTY );
+		snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_PATH_PARAMETER_IS_EMPTY] , DICT_PATH_PARAMETER_IS_EMPTY );
 		HttpAddTextContent( response, dictmsgbuf );
 		
 		goto error;
@@ -124,26 +124,26 @@ Http *TokenWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		int pos = 0;
 		
 		el = GetHEReq( *request, "command" );
-		if( el != NULL && el->data )
+		if( el != NULL && el->hme_Data )
 		{
-			command = UrlDecodeToMem( (char *)el->data );
+			command = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		el = GetHEReq( *request, "tokensesid" );
-		if( el != NULL && el->data )
+		if( el != NULL && el->hme_Data )
 		{
-			tokensesid = UrlDecodeToMem( (char *)el->data );
+			tokensesid = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		el = GetHEReq( *request, "times" );
-		if( el != NULL && el->data )
+		if( el != NULL && el->hme_Data )
 		{
 			char *end;
-			times = (int)strtol( (char *)el->data, &end, 0 );
+			times = (int)strtol( (char *)el->hme_Data, &end, 0 );
 		}
 		el = GetHEReq( *request, "timeout" );
-		if( el != NULL && el->data )
+		if( el != NULL && el->hme_Data )
 		{
 			char *end;
-			timeout = (int)strtol( (char *)el->data, &end, 0 );
+			timeout = (int)strtol( (char *)el->hme_Data, &end, 0 );
 		}
 		
 		DOSToken *ntoken = DOSTokenNew( loggedSession, timeout, times );
@@ -152,20 +152,20 @@ Http *TokenWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 			if( DOSTokenManagerAddDOSToken( l->sl_DOSTM, ntoken ) == 0 )
 			{
 				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "ok<!--separate-->{ \"response\": \"success\", \"dostoken\":\"%s\" }", ntoken->ct_TokenID );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "ok<!--separate-->{\"response\":\"success\",\"dostoken\":\"%s\"}", ntoken->ct_TokenID );
 				HttpAddTextContent( response, dictmsgbuf );
 			}
 			else
 			{
 				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ADD_DOSTOKEN] , DICT_CANNOT_ADD_DOSTOKEN );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CANNOT_ADD_DOSTOKEN] , DICT_CANNOT_ADD_DOSTOKEN );
 				HttpAddTextContent( response, dictmsgbuf );
 			}
 		}
 		else
 		{
 			char dictmsgbuf[ 256 ];
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_NO_MEMORY_FOR_DOSTOKEN] , DICT_NO_MEMORY_FOR_DOSTOKEN );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_NO_MEMORY_FOR_DOSTOKEN] , DICT_NO_MEMORY_FOR_DOSTOKEN );
 			HttpAddTextContent( response, dictmsgbuf );
 		}
 
@@ -197,9 +197,9 @@ Http *TokenWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		char *tokenid = NULL;		//
 		
 		el = GetHEReq( *request, "dostokenid" );
-		if( el != NULL && el->data )
+		if( el != NULL && el->hme_Data )
 		{
-			tokenid = UrlDecodeToMem( (char *)el->data );
+			tokenid = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
 		int error = DOSTokenManagerDeleteToken( l->sl_DOSTM, tokenid );
@@ -207,13 +207,13 @@ Http *TokenWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		if( error == 0 )
 		{
 			char dictmsgbuf[ 256 ];
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "ok<!--separate-->{ \"response\": \"success\", \"dostoken\":\"%s\" }", tokenid );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "ok<!--separate-->{\"response\":\"success\",\"dostoken\":\"%s\" }", tokenid );
 			HttpAddTextContent( response, dictmsgbuf );
 		}
 		else
 		{
 			char dictmsgbuf[ 256 ];
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_REMOVE_DOSTOKEN] , DICT_CANNOT_REMOVE_DOSTOKEN );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CANNOT_REMOVE_DOSTOKEN] , DICT_CANNOT_REMOVE_DOSTOKEN );
 			HttpAddTextContent( response, dictmsgbuf );
 		}
 

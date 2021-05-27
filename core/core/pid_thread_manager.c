@@ -86,7 +86,7 @@ void PIDThreadManagerDelete( PIDThreadManager *ptm )
  */
 int PIDThreadManagerRemoveThreads( PIDThreadManager *ptm )
 {
-	//pthread_detach( pthread_self() );
+	pthread_detach( pthread_self() );
 
 	PIDThread *thr = ptm->ptm_Threads;
 	PIDThread *thrdel;
@@ -121,6 +121,8 @@ int PIDThreadManagerRemoveThreads( PIDThreadManager *ptm )
 	
 	DEBUG("[PIDThreadManager] RemoteThreads end\n");
 	
+	pthread_exit( NULL );
+	
 	return 0;
 }
 
@@ -130,6 +132,8 @@ int PIDThreadManagerRemoveThreads( PIDThreadManager *ptm )
 
 void PIDThreadThread( FThread *t )
 {
+	pthread_detach( pthread_self() );
+	
 	DEBUG("[PIDThreadManager] thread start\n");
 	PIDThread *pidt = (PIDThread *)t->t_Data;
 	if( pidt != NULL )
@@ -155,7 +159,7 @@ void PIDThreadThread( FThread *t )
 	DEBUG("[PIDThreadManager] thread end\n");
 	t->t_Launched = FALSE;
 	
-	pthread_exit( 0 );
+	pthread_exit( NULL );
 }
 
 /**
@@ -184,8 +188,8 @@ FUQUAD PIDThreadManagerRunThread( PIDThreadManager *ptm, Http *request, char **u
 		
 		DEBUG("[PIDThreadManager] runThread ptr sb %p uurl %p func ptr %p reqptr %p usersession %p\n", pidt->pt_SB, pidt->pt_Url, pidt->pt_Function, pidt->pt_Request , pidt->pt_UserSession );
 		
-		request->h_RequestSource = HTTP_SOURCE_HTTP_TO_WS;
-		request->h_PIDThread = pidt;
+		request->http_RequestSource = HTTP_SOURCE_HTTP_TO_WS;
+		request->http_PIDThread = pidt;
 		
 		for( i=0 ; i < PID_URL_MAX_DEPTH ; i++ )
 		{

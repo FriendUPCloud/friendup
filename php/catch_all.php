@@ -10,6 +10,8 @@
 *****************************************************************************©*/
 
 
+// Set it to empty
+$path = '';
 
 // Get arguments from argv
 if( isset( $argv ) && isset( $argv[1] ) )
@@ -31,6 +33,7 @@ if( isset( $argv ) && isset( $argv[1] ) )
 			}
 		}
 	}
+	
 	$GLOBALS['args'] = $kvdata;
 	$args = $GLOBALS['args'];
 	
@@ -60,7 +63,12 @@ if( isset( $argv ) && isset( $argv[1] ) )
 			
 			die( '<script>document.location.href=\'' . $host . '/webclient/index.html\';</script>' );
 		}
-		// Check for quest accounts
+		// User is requesting an operation on calendarevent
+		else if( preg_match( '/^\/calendarevent[\/]{0,1}/i', $argv[ 1 ], $m ) )
+		{
+			require( 'calendarevent.php' );
+		}
+		// Check for guest accounts
 		else if( preg_match( '/^\/guests[\/]{0,1}/i', $argv[1], $m ) )
 		{
 			$groupSession = true;
@@ -126,7 +134,8 @@ if( isset( $argv ) && isset( $argv[1] ) )
 				}
 				
 				$path = implode( '/', $path );
-				$devname = reset( explode( ':', $base ) );
+				$devname = explode( ':', $base );
+				$devname = reset( $devname );
 								
 				if( $base && ( $auth || $session ) && $path )
 				{
@@ -187,18 +196,8 @@ if( isset( $argv ) && isset( $argv[1] ) )
 					
 					$url = ($ar['SSLEnable']?'https://':'http://') . ( $ar['fconlocalhost'] ? 'localhost' : $ar['fchost'] ) . ':' . $ar['fcport'] . '/system.library/file/read/';
 					// Potential new code
-					/*readfile( $url . '?devname=' . urlencode( $devname ) . '&path=' . urlencode( $base . $path ) . '&mode=rs&sessionid=' . urlencode( $auth ? $auth : $session ) );
-					die();*/
-					if( $f = fopen( $url . '?devname=' . urlencode( $devname ) . '&path=' . urlencode( $base . $path ) . '&mode=rs&sessionid=' . urlencode( $auth ? $auth : $session ), 'r' ) )
-					{
-						while( $data = fread( $f, 131072 ) )
-						{
-							echo( $data );
-						}
-						fclose( $f );
-						die();
-					}
-					
+					readfile( $url . '?devname=' . urlencode( $devname ) . '&path=' . urlencode( $base . $path ) . '&mode=rs&sessionid=' . urlencode( $auth ? $auth : $session ) );
+					die();
 				}	
 			}
 		}

@@ -75,14 +75,14 @@ function PollTray()
 	
 	PollTrayPosition();
 	
-	// Checks for tasks
+	// Checks for tasks (running programs)
 	if( tray.tasks )
 	{
 		tray.tasks.poll();
 	}
 	else
 	{
-		// Add task applet
+		// Add task applet (running programs)
 		tray.tasks = document.createElement( 'div' );
 		tray.tasks.className = 'Tasks TrayElement IconSmall';
 		tray.tasks.poll = function()
@@ -118,11 +118,159 @@ function PollTray()
 			return false;
 		}
 		tray.appendChild( da );
+		
+		/*
+		//TODO: Reenable when ready
+		var ca = tray.calendarApplet = document.createElement( 'div' );
+		ca.className = 'Calendar TrayElement IconSmall';
+		ca.onclick = function()
+		{
+			Workspace.newCalendarEvent();
+		}
+		ca.poll = function()
+		{
+		}
+		tray.appendChild( ca );*/
 	}
 	
 	// Check for notifications in history
 	if( Workspace.notificationEvents.length )
 	{
+		// Clear and repopulate popup
+		function repopulate()
+		{
+			if( !tray.notificationPopup ) return;
+			tray.notificationPopup.innerHTML = '';
+		
+			var h = 8;
+			var notties = Workspace.notificationEvents;
+			
+			if( notties.length > 0 )
+			{
+				for( let a = notties.length - 1; a >= 0; a-- )
+				{
+					let d = document.createElement( 'div' );
+					d.className = 'NotificationPopupElement BorderBottom';
+					d.notification = notties[a];
+					notties[ a ].seen = true;
+					
+					// Get timestring
+					let tim = new Date( notties[ a ].time );
+					let tdy = tim.getFullYear();
+					let tdm = StrPad( tim.getMonth() + 1, 2, '0' );
+					let tdd = StrPad( tim.getDate(), 2, '0' );
+					let tdh = StrPad( tim.getHours(), 2, '0' );
+					let tdi = StrPad( tim.getMinutes(), 2, '0' );
+					let timStr = tdy + '/' + tdm + '/' + tdd + ', ' + tdh + ':' + tdi;
+					
+					d.innerHTML = '\
+						<div>\
+							<div class="NotificationClose FloatRight fa-remove IconSmall"></div>\
+							<p class="Layout"><strong>' + notties[a].title + '<br><span class="DateStamp">' + timStr + '</span></strong></p>\
+							<p class="Layout">' + notties[a].text + '</p>\
+						</div>';
+					d.onmousedown = function( ev )
+					{
+						if( this.notification.clickCallback )
+						{
+							RemoveNotificationEvent( this.notification.uniqueId );
+							this.notification.clickCallback();
+						}
+						this.parentNode.removeChild( this );
+						repopulate();
+						return cancelBubble( ev );
+					}
+					// Cancel closing
+					d.onmouseover = function( ev )
+					{
+						if( tray.notifications.timeout )
+						{
+							clearTimeout( tray.notifications.timeout );
+							tray.notifications.timeout  = null;
+						}
+					}
+					tray.notificationPopup.appendChild( d );
+					
+					notties[ a ].seen = true; // They are seen!
+			
+					d.style.top = 27 + h + 'px';
+					
+					// Remove notification
+					( function( not, dd ){
+						var el = dd.getElementsByClassName( 'NotificationClose' )[ 0 ];
+						el.onmousedown = function( e )
+						{
+							var out = [];
+							for( var z = 0; z < Workspace.notificationEvents.length; z++ )
+							{
+								if( z == not ) continue;
+								else out.push( Workspace.notificationEvents[ z ] );
+							}
+							Workspace.notificationEvents = out;
+							cancelBubble( e );						
+							if( out.length )
+							{
+								repopulate();
+							}
+							else
+							{
+								PollTray();
+							}
+						}
+					} )( a, d );
+					
+					h += GetElementHeight( d ) + 8;
+
+					if( GetElementTop( d ) + d.offsetHeight > window.innerHeight - 160 )
+					{
+						break;
+					}						
+				}
+				
+				// Clear button
+				if( notties.length > 1 )
+				{
+					var remAll = document.createElement( 'div' );
+					remAll.className = 'NotificationPopupElement BorderBottom';
+					remAll.innerHTML = '\
+						<div>\
+							<div class="NotificationClose FloatRight fa-trash IconSmall"></div>\
+							<p class="Layout"><strong>' + i18n( 'i18n_remove_all' ) + '</strong></p>\
+						</div>';
+					tray.notificationPopup.appendChild( remAll );
+					remAll.onmousedown = function( e )
+					{
+						tray.notificationPopup.innerHTML = '';
+						Workspace.notificationEvents = [];
+						PollTray();
+						cancelBubble( e );
+					}
+					// Cancel closing
+					remAll.onmouseover = function( ev )
+					{
+						if( tray.notifications.timeout )
+						{
+							clearTimeout( tray.notifications.timeout );
+							tray.notifications.timeout  = null;
+						}
+					}
+					
+					remAll.style.top = 27 + h + 'px';
+				}
+				
+			}
+			// No notifications?
+			else 
+			{
+				// Remove blinking icon
+				tray.notifications.classList.remove( 'Blink' );
+				tray.notificationPopup.classList.remove( 'BubbleInfo' );
+				tray.notifications.innerHTML = '';
+				PollTray();
+			}
+		}
+	
+	
 		// Find notification
 		if( !tray.notifications )
 		{
@@ -134,10 +282,11 @@ function PollTray()
 		
 		tray.notifications.className = 'Notification TrayElement IconSmall';
 		
-		var toClear = true;
-		for( var a = 0; a < nots.length; a++ )
+		let toClear = true;
+		let tm = ( new Date() ).getTime();
+		for( let a = 0; a < nots.length; a++ )
 		{
-			if( ( new Date() ).getTime() - nots[ a ].time < 250 )
+			if( tm - nots[ a ].time < 250 )
 			{
 				toClear = false;
 			}
@@ -159,7 +308,7 @@ function PollTray()
 			tray.notifications.num.innerHTML = Workspace.notificationEvents.length;
 		// Done numbers bubble
 		
-		for( var a = 0; a < nots.length; a++ )
+		for( let a = 0; a < nots.length; a++ )
 		{
 			// Unseen notification!
 			if( !nots[ a ].seen )
@@ -184,42 +333,70 @@ function PollTray()
 				// Add this bubble!
 				( function( event )
 				{
-					var d = document.createElement( 'div' );
-					d.className = 'BubbleInfo';
-					d.innerHTML = '<div><p class="Layout"><strong>' + nots[a].title + '</strong></p><p class="Layout">' + nots[a].text + '</p></div>';
-					tray.notifications.appendChild( d );
-					d.onmousedown = function( e )
+					var prevs = tray.notifications.getElementsByTagName( 'div' );
+					var showingStuff = false;
+					for( var a = 0; a < prevs.length; a++ )
 					{
-						if( event.clickCallback )
+						if( prevs[a].classList && prevs[a].classList.contains( 'TrayNotificationPopup' ) )
 						{
-							event.clickCallback();
+							showingStuff = true;
+							break;
 						}
-						RemoveNotificationEvent( event.uniqueId );
-						if( tray.notifications && this && this.parentNode == tray.notifications )
-							tray.notifications.removeChild( this );
-						PollTray();
-						return cancelBubble( e );
 					}
-					if( event.showCallback )
+					if( !showingStuff )
 					{
-						event.showCallback();
-					}
-					setTimeout( function()
-					{
-						if( d.parentNode )
+						event.seen = true;
+					
+						// Get timestring
+						let tim = new Date( event.time );
+						let tdy = tim.getFullYear();
+						let tdm = StrPad( tim.getMonth() + 1, 2, '0' );
+						let tdd = StrPad( tim.getDate(), 2, '0' );
+						let tdh = StrPad( tim.getHours(), 2, '0' );
+						let tdi = StrPad( tim.getMinutes(), 2, '0' );
+						let timStr = tdy + '/' + tdm + '/' + tdd + ', ' + tdh + ':' + tdi;
+					
+						var d = document.createElement( 'div' );
+						d.className = 'BubbleInfo';
+						d.innerHTML = '<div><p class="Layout"><strong>' + event.title + '<br><span class="DateStamp">' + timStr + '</span></strong></p><p class="Layout">' + event.text + '</p></div>';
+						tray.notifications.appendChild( d );
+						d.onmousedown = function( e )
 						{
-							d.style.opacity = 0;
-							d.style.pointerEvents = 'none';
-							setTimeout( function()
+							if( event.clickCallback )
 							{
-								if( d.parentNode )
-								{
-									tray.notifications.removeChild( d );
-									PollTray();
-								}
-							}, 400 );
+								event.clickCallback();
+							}
+							RemoveNotificationEvent( event.uniqueId );
+							if( tray.notifications && this && this.parentNode == tray.notifications )
+								tray.notifications.removeChild( this );
+							PollTray();
+							return cancelBubble( e );
 						}
-					}, 5000 );
+						if( event.showCallback && typeof( event.showCallback ) == 'function' )
+						{
+							event.showCallback();
+						}
+						setTimeout( function()
+						{
+							if( d.parentNode )
+							{
+								d.style.opacity = 0;
+								d.style.pointerEvents = 'none';
+								setTimeout( function()
+								{
+									if( d.parentNode )
+									{
+										tray.notifications.removeChild( d );
+										PollTray();
+									}
+								}, 400 );
+							}
+						}, 5000 );
+					}
+					else
+					{
+						repopulate();
+					}
 				} )( nots[ a ] );
 			}
 		}
@@ -228,7 +405,15 @@ function PollTray()
 		
 		// On click to see all notifications!
 		tray.notifications.onclick = function( e )
-		{
+		{	
+			if( ge( 'Tray' ).notificationPopup && !ge( 'Tray' ).classList.contains( 'Blink' ) )
+			{
+				ge( 'Tray' ).notificationPopup.parentNode.removeChild( ge( 'Tray' ).notificationPopup );
+				ge( 'Tray' ).notificationPopup = null;
+				PollTray();
+				return;
+			}
+			
 			if( tray.notifications.timeout )
 			{
 				clearTimeout( tray.notifications.timeout );
@@ -247,129 +432,6 @@ function PollTray()
 			tray.notificationPopup.className = 'BubbleInfo TrayNotificationPopup';
 			tray.notifications.appendChild( tray.notificationPopup );
 			
-			// Clear and repopulate popup
-			function repopulate()
-			{
-				if( !tray.notificationPopup ) return;
-				tray.notificationPopup.innerHTML = '';
-			
-				var h = 8;
-				var notties = Workspace.notificationEvents;
-				
-				if( notties.length > 0 )
-				{
-					for( var a = notties.length - 1; a >= 0; a-- )
-					{
-						var d = document.createElement( 'div' );
-						d.className = 'NotificationPopupElement BorderBottom';
-						d.notification = notties[a];
-						notties[ a ].seen = true;
-						d.innerHTML = '\
-							<div>\
-								<div class="NotificationClose FloatRight fa-remove IconSmall"></div>\
-								<p class="Layout"><strong>' + notties[a].title + '</strong></p>\
-								<p class="Layout">' + notties[a].text + '</p>\
-							</div>';
-						d.onmousedown = function( ev )
-						{
-							if( this.notification.clickCallback )
-							{
-								RemoveNotificationEvent( this.notification.uniqueId );
-								this.notification.clickCallback();
-							}
-							this.parentNode.removeChild( this );
-							repopulate();
-							return cancelBubble( ev );
-						}
-						// Cancel closing
-						d.onmouseover = function( ev )
-						{
-							if( tray.notifications.timeout )
-							{
-								clearTimeout( tray.notifications.timeout );
-								tray.notifications.timeout  = null;
-							}
-						}
-						tray.notificationPopup.appendChild( d );
-						
-						notties[ a ].seen = true; // They are seen!
-				
-						d.style.top = 27 + h + 'px';
-						
-						// Remove notification
-						( function( not, dd ){
-							var el = dd.getElementsByClassName( 'NotificationClose' )[ 0 ];
-							el.onmousedown = function( e )
-							{
-								var out = [];
-								for( var z = 0; z < Workspace.notificationEvents.length; z++ )
-								{
-									if( z == not ) continue;
-									else out.push( Workspace.notificationEvents[ z ] );
-								}
-								Workspace.notificationEvents = out;
-								cancelBubble( e );						
-								if( out.length )
-								{
-									repopulate();
-								}
-								else
-								{
-									PollTray();
-								}
-							}
-						} )( a, d );
-						
-						h += GetElementHeight( d ) + 8;
-
-						if( GetElementTop( d ) + d.offsetHeight > window.innerHeight - 160 )
-						{
-							break;
-						}						
-					}
-					
-					// Clear button
-					if( notties.length > 1 )
-					{
-						var remAll = document.createElement( 'div' );
-						remAll.className = 'NotificationPopupElement BorderBottom';
-						remAll.innerHTML = '\
-							<div>\
-								<div class="NotificationClose FloatRight fa-trash IconSmall"></div>\
-								<p class="Layout"><strong>' + i18n( 'i18n_remove_all' ) + '</strong></p>\
-							</div>';
-						tray.notificationPopup.appendChild( remAll );
-						remAll.onmousedown = function( e )
-						{
-							tray.notificationPopup.innerHTML = '';
-							Workspace.notificationEvents = [];
-							PollTray();
-							cancelBubble( e );
-						}
-						// Cancel closing
-						remAll.onmouseover = function( ev )
-						{
-							if( tray.notifications.timeout )
-							{
-								clearTimeout( tray.notifications.timeout );
-								tray.notifications.timeout  = null;
-							}
-						}
-						
-						remAll.style.top = 27 + h + 'px';
-					}
-					
-				}
-				// No notifications?
-				else 
-				{
-					// Remove blinking icon
-					tray.notifications.classList.remove( 'Blink' );
-					tray.notificationPopup.classList.remove( 'BubbleInfo' );
-					tray.notifications.innerHTML = '';
-					PollTray();
-				}
-			}
 			repopulate();
 			
 			return cancelBubble( e );
@@ -466,7 +528,7 @@ function Notify( message, callback, clickcallback )
 	
 	// Not active?
 	if( Workspace.currentViewState != 'active' )
-	{
+	{	
 		// Use native app
 		if( window.friendApp )
 		{
@@ -475,6 +537,16 @@ function Notify( message, callback, clickcallback )
 		if( window.Notification )
 		{
 			mobileDebug( 'Showing desktop notification.' );
+			
+			// Add to history
+			AddNotificationEvent( {
+				title: message.title,
+				text: message.text,
+				seen: false,
+				time: ( new Date() ).getTime(),
+				showCallback: callback,
+				clickCallback: clickcallback
+			}, message.notificationId );
 			
 			// Desktop notifications
 			function showNotification()
@@ -520,6 +592,8 @@ function Notify( message, callback, clickcallback )
 					}
 				} );
 			}
+			
+			PollTray();
 			return;
 		}
 	}
@@ -586,8 +660,18 @@ function Notify( message, callback, clickcallback )
 		}
 		if( ic.length )
 			ic = '<div class="Application">' + ic + '</div>';
-			
-		n.innerHTML = ic + '<div class="Title">' + message.title + '</div><div class="Text">' + message.text + '</div>';
+		
+		// Get timestring
+		let tim = new Date( nev.time );
+		let tdy = tim.getFullYear();
+		let tdm = StrPad( tim.getMonth() + 1, 2, '0' );
+		let tdd = StrPad( tim.getDate(), 2, '0' );
+		let tdh = StrPad( tim.getHours(), 2, '0' );
+		let tdi = StrPad( tim.getMinutes(), 2, '0' );
+		let timStr = tdy + '/' + tdm + '/' + tdd + ', ' + tdh + ':' + tdi;
+		
+		
+		n.innerHTML = ic + '<div class="Title">' + message.title + '<br><span class="DateStamp">' + timStr + '</span></div><div class="Text">' + message.text + '</div>';
 		
 		// Check duplicate
 		var found = false;
@@ -734,22 +818,25 @@ function Notify( message, callback, clickcallback )
 }
 function CloseNotification( notification )
 {
-	var d = notification.childNodes[ 0 ];
-	notification.removeChild( d ); 
-	if( notification.getAttribute( 'label' ) )
-	{
-		notification.classList.remove( 'PopNotification' );
-	}
-	if( !notification.getElementsByTagName( 'div' ).length )
-	{
-		ge( 'Tray' ).removeChild( notification );
-	}
-	// Standard notifications can reply to notification origin
-	// that the bubble did close
-	if( d.struct && d.struct.onCloseBubble )
-	{
-		d.struct.onCloseBubble();
-	}
+    if( notification && notification.childNodes )
+    {
+	    var d = notification.childNodes[ 0 ];
+	    notification.removeChild( d ); 
+	    if( notification.getAttribute( 'label' ) )
+	    {
+		    notification.classList.remove( 'PopNotification' );
+	    }
+	    if( !notification.getElementsByTagName( 'div' ).length )
+	    {
+		    ge( 'Tray' ).removeChild( notification );
+	    }
+	    // Standard notifications can reply to notification origin
+	    // that the bubble did close
+	    if( d.struct && d.struct.onCloseBubble )
+	    {
+		    d.struct.onCloseBubble();
+	    }
+    }
 }
 
 // Buffer for click callbacks

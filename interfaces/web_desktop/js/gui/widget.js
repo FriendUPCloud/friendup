@@ -65,6 +65,11 @@ Widget.prototype.calcPosition = function()
 	if( !sccont ) sscont = screen;
 	
 	var realTop = 0;
+	if( window.Workspace && Workspace.screen )
+	{
+		realTop = Workspace.screen._titleBar.offsetHeight;
+	}
+	
 	var target = this.target;
 	
 	// TODO: Support left right bottom
@@ -77,10 +82,20 @@ Widget.prototype.calcPosition = function()
 	
 	if( this.tw == 'full' )
 		this.dom.style.width = '100%';
+	else if( this.tw.substr && this.tw.substr( -1, 1 ) == '%' )
+	{
+		var pct = window.innerWidth / 100 * parseInt( this.tw );
+		this.dom.style.width = pct + 'px';
+	}
 	else
 		this.dom.style.width = this.tw + 'px';
 	if( this.th == 'full' )
 		this.dom.style.height = '100%';
+	else if( this.th.substr && this.th.substr( -1, 1 ) == '%' )
+	{
+		var pct = window.innerHeight / 100 * parseInt( this.th );
+		this.dom.style.height = pct + 'px';
+	}
 	else
 		this.dom.style.height = this.th + 'px';
 	
@@ -100,6 +115,11 @@ Widget.prototype.calcPosition = function()
 		else if( this.tx == 'center' )
 		{
 			this.dom.style.left = ( target.offsetWidth >> 1 ) - ( this.tw >> 1 ) + 'px';
+		}
+		else if( this.tx.substr && this.tx.substr( -1, 1 ) == '%' )
+		{
+			var pct = window.innerWidth / 100 * parseInt( this.tx );
+			this.dom.style.left = pct + 'px';
 		}
 	}
 	else
@@ -130,13 +150,18 @@ Widget.prototype.calcPosition = function()
 		{
 			this.dom.style.top = ( target.offsetHeight >> 1 ) - ( this.th >> 1 ) + 'px';
 		}
+		else if( this.ty.substr && this.ty.substr( -1, 1 ) == '%' )
+		{
+			var pct = window.innerHeight / 100 * parseInt( this.ty );
+			this.dom.style.top = pct + 'px';
+		}
 	}
 	else
 	{	
 		// Absolute position
 		if( this.ty + this.th > target.offsetHeight )
 			this.ty = target.offsetHeight - this.th;
-		else if( this.ty < realTop ) this.ty = realTop;
+		if( this.ty < realTop ) this.ty = realTop;
 		
 		this.dom.style.top = this.ty + 'px';
 	}
@@ -149,6 +174,10 @@ Widget.prototype.calcPosition = function()
  */
 Widget.prototype.setFlag = function( flag, val )
 {
+	if( !this.target.screenObject )
+	{
+		this.target.screenObject = this.target.parentNode.screenObject; 
+	}
 	var realTop = this.target.screenObject._titleBar.offsetHeight;
 	var target = this.target;
 	switch( flag )
@@ -277,6 +306,9 @@ Widget.prototype.setFlag = function( flag, val )
 			this.dom.style.position = 'fixed';
 			this.dom.style.zIndex = '';
 			break;
+		case 'resizable':
+			
+			break;
 	}
 	this.flags[flag] = val;
 }
@@ -317,7 +349,9 @@ Widget.prototype.show = function( callback )
 			self.dom.classList.add( 'Fadein' );
 		}, 5 );
 	}
+	this.dom.classList.remove( 'Hiding' );
 	this.dom.style.visibility = 'visible';
+	this.dom.classList.add( 'Showing' );
 	this.dom.style.pointerEvents = 'all';
 	if( callback ) callback();
 }
@@ -328,7 +362,9 @@ Widget.prototype.hide = function( callback )
 	function doHide()
 	{
 		self.shown = false;
+		self.dom.classList.add( 'Hiding' );
 		self.dom.style.visibility = 'hidden';
+		self.dom.classList.remove( 'Showing' );
 		self.dom.style.pointerEvents = 'none';
 		if( callback ) callback();
 	}
@@ -531,12 +567,22 @@ Widget.prototype.autosize = function()
 	{
 		var children = this.dom.getElementsByTagName( '*' );
 		var height = 0;
-		for( var a = 0; a < children.length; a++ )
+		
+		// Try to not calculate
+		var lch = this.dom.lastChild;
+		if( lch.offsetTop + lch.offsetHeight > 0 )
 		{
-			var cand = children[a].offsetTop + children[a].offsetHeight;
-			if( cand > height )
+			height = lch.offsetTop + lch.offsetHeight;
+		}
+		else
+		{
+			for( var a = 0; a < children.length; a++ )
 			{
-				height = cand;
+				var cand = children[a].offsetTop + children[a].offsetHeight;
+				if( cand > height )
+				{
+					height = cand;
+				}
 			}
 		}
 

@@ -23,16 +23,8 @@ typedef struct SocketInterface
 {
 	Socket*					(*SocketNew)( void *sb, FBOOL ssl, unsigned short port, int type );
 	int						(*SocketListen)( Socket* s );
-	int						(*SocketConnect)( Socket* sock, const char *host );
 	Socket*					(*SocketConnectHost)( void *sb, FBOOL ssl, char *host, unsigned short port );
 	int						(*SocketSetBlocking)( Socket* s, FBOOL block );
-	Socket*					(*SocketAcceptPair)( Socket* sock, struct AcceptPair *p );
-	Socket*					(*SocketAccept)( Socket* s );
-	int						(*SocketRead)( Socket* sock, char* data, unsigned int length, unsigned int pass );
-	int						(*SocketWaitRead)( Socket* sock, char* data, unsigned int length, unsigned int pass, int sec );
-	BufString*				(*SocketReadTillEnd)( Socket* sock, unsigned int pass, int sec );
-	FLONG					(*SocketWrite)( Socket* s, char* data, FLONG length );
-	void					(*SocketDelete)( Socket* s );
 }SocketInterface;
 
 //
@@ -51,16 +43,9 @@ static inline void SocketInterfaceInit( SocketInterface *si )
 {
 	si->SocketNew = SocketNew;
 	si->SocketListen = SocketListen;
-	si->SocketConnect = SocketConnect;
+
 	si->SocketConnectHost = SocketConnectHost;
 	si->SocketSetBlocking = SocketSetBlocking;
-	si->SocketAcceptPair = SocketAcceptPair;
-	si->SocketAccept = SocketAccept;
-	si->SocketRead = SocketRead;
-	si->SocketWaitRead = SocketWaitRead;
-	si->SocketReadTillEnd = SocketReadTillEnd;
-	si->SocketWrite = SocketWrite;
-	si->SocketDelete = SocketDelete;
 }
 
 #endif

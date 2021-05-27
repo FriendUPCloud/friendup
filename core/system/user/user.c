@@ -118,14 +118,21 @@ int UserAddSession( User *usr, void *ls )
  *
  * @param usr pointer to User from which UserSession will be removed
  * @param ls pointer to UserSession which will be removed
+ * @return number of attached to user sessions left
  */
-void UserRemoveSession( User *usr, void *ls )
+int UserRemoveSession( User *usr, void *ls )
 {
+	int retVal = -1;
 	UserSession *remses = (UserSession *)ls;
 	if( usr  == NULL || ls == NULL )
 	{
 		FERROR("Cannot remove user session, its not connected to user\n");
-		return;
+		return -1;
+	}
+	
+	while( usr->u_InUse > 0 )
+	{
+		usleep( 5000 );
 	}
 	
 	if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
@@ -173,8 +180,10 @@ void UserRemoveSession( User *usr, void *ls )
 			usr->u_SessionsList = NULL;
 		}
 		
+		retVal = usr->u_SessionsNr;
 		FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 	}
+	return retVal;
 }
 
 /**
@@ -186,7 +195,12 @@ void UserDelete( User *usr )
 {
 	if( usr != NULL )
 	{
-		int i;
+		// Do not release User resources when structure is used
+		while( usr->u_InUse > 0 )
+		{
+			usleep( 5000 );
+		}
+
 		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 		{
 			if( usr->u_Printers != NULL )
@@ -237,17 +251,12 @@ void UserDelete( User *usr )
 
 		UserDeleteGroupLinkAll( usr->u_UserGroupLinks );
 		usr->u_UserGroupLinks = NULL;
-		/*
-		if( usr->u_Groups != NULL )
-		{
-			FFree( usr->u_Groups );
-			usr->u_Groups = NULL;
-		}
-		*/
-		
+
 		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 		{
 			if( usr->u_Email ){ FFree( usr->u_Email );}
+			
+			if( usr->u_Timezone ){ FFree( usr->u_Timezone );}
 		
 			if( usr->u_FullName ){ FFree( usr->u_FullName );}
 		

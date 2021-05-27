@@ -64,34 +64,36 @@ static inline char *GetFileNamePtr( char *path, int len )
 /**
  * Read a block of memory from LocFile
  *
- * @param file pointer to LocFile from which data will be readed
- * @param offset number of bytes from which data will be readed
+ * @param file pointer to LocFile from which data will be read
+ * @param offset number of bytes from which data will be read
  * @param size number of bytes to read
- * @return number of bytes readed from file
+ * @return number of bytes read from file
  */
 static inline int LocFileRead( LocFile* file, FILE *fp, long long offset, long long size )
 {
-	if( file == NULL )
+	int result = 0;
+	if( file != NULL )
+	{
+		file->lf_Buffer = (char *)FMalloc( (size + 1) );
+		if( file->lf_Buffer != NULL )
+		{
+			file->lf_Buffer[ size ] = 0;
+	
+			file->lf_FileSize = size;
+			fseeko( fp, offset, SEEK_SET );
+			result = fread( file->lf_Buffer, size, 1, fp );
+		}
+		else
+		{
+			DEBUG("Cannot allocate memory for file\n");
+		}
+	}
+	else
 	{
 		FERROR("Cannot read file which doesnt exist!\n");
 		return -1;
 	}
-
-	file->lf_Buffer = (char *)FMalloc( size + 1 );
-	if( file->lf_Buffer == NULL )
-	{
-		DEBUG("Cannot allocate memory for file\n");
-		return 0;
-	}
-	
-	file->lf_FileSize = size;
-	fseek( fp, offset, SEEK_SET );
-	int result = fread( file->lf_Buffer, size, 1, fp );
-	if( result < size )
-	{
-		return result; 
-	}
-	return 0;
+	return result;
 }
 #endif
 
@@ -109,6 +111,20 @@ LocFile* LocFileNew( char* path, unsigned int flags )
 		FERROR("File path is null\n");
 		return NULL;
 	}
+	
+	struct stat st;
+	if( stat( path, &st ) < 0 )
+	{
+		FERROR( "Cannot stat file: '%s'.\n", path );
+		return NULL;
+	}
+	
+	if( S_ISDIR( st.st_mode ) )
+	{
+		FERROR( "'%s' is a directory. Can not open.\n", path );
+		return NULL;
+	}
+	
 	FILE* fp = fopen( path, "rb" );
 	if( fp == NULL )
 	{
@@ -125,36 +141,21 @@ LocFile* LocFileNew( char* path, unsigned int flags )
 		return NULL;
 	}
 	
-	struct stat st;
-	if( stat( path, &st ) < 0 )
-	{
-		FERROR( "Cannot stat file: '%s'.\n", path );
-		fclose( fp );
-		return NULL;
-	}
-	
-	if( S_ISDIR( st.st_mode ) )
-	{
-		FERROR( "'%s' is a directory. Can not open.\n", path );
-		fclose( fp );
-		return NULL;
-	}
-	
 	LocFile* fo = (LocFile*) FCalloc( 1, sizeof(LocFile) );
 	if( fo != NULL )
 	{
 		fo->lf_PathLength = strlen( path );
 		fo->lf_Path = StringDuplicateN( path, fo->lf_PathLength );
-		//fo->lf_Filename = StringDuplicate( GetFileNamePtr( path, fo->lf_PathLength ) );
-		
-		MURMURHASH3( fo->lf_Path, fo->lf_PathLength, fo->hash );
+
+		//MURMURHASH3( fo->lf_Path, fo->lf_PathLength, fo->hash );
 		
 		memcpy(  &(fo->lf_Info),  &st, sizeof( struct stat) );
 
-		fseek( fp, 0, SEEK_END );
-		long fsize = ftell( fp );
-		fseek( fp, 0, SEEK_SET );  //same as rewind(f);
-		fo->lf_FileSize = fsize;// st.st_size; //ftell( fp );
+		// Use big file compliant seek/tell functions
+		fseeko( fp, 0, SEEK_END );
+		off_t fsize = ftello( fp );
+		fseeko( fp, 0, SEEK_SET );  //same as rewind(f);
+		fo->lf_FileSize = (FULONG)fsize;// st.st_size; //ftell( fp );
 
 		if( flags & FILE_READ_NOW )
 		{
@@ -210,11 +211,8 @@ LocFile* LocFileNewFromBuf( char* path, BufString *bs )
 	{
 		fo->lf_PathLength = strlen( path );
 		fo->lf_Path = StringDuplicateN( path, fo->lf_PathLength );
-		//fo->lf_Filename = StringDuplicateN( path, fo->lf_PathLength );//StringDuplicate( GetFileNamePtr( path, len ) );
-		MURMURHASH3( fo->lf_Path, fo->lf_PathLength, fo->hash );
+		//MURMURHASH3( fo->lf_Path, fo->lf_PathLength, fo->hash );
 		
-		//DEBUG("PATH: %s \n", fo->lf_Path );
-
 		fo->lf_FileSize = bs->bs_Size;
 		
 		if( ( fo->lf_Buffer = FMalloc( fo->lf_FileSize ) ) != NULL )
@@ -249,28 +247,31 @@ int LocFileReload( LocFile *file, char *path )
 	}
 	
 	FILE* fp = fopen( path, "rb" );
-	if( fp == NULL )
+	if( fp != NULL )
+	{
+		struct stat st;
+		if( stat( path, &st ) < 0 )
+		{
+			FERROR("Cannot run stat on file: %s!\n", path);
+			fclose( fp );
+			return -2;
+		}
+		memcpy(  &(file->lf_Info),  &st, sizeof(stat) );
+	
+		fseek( fp, 0, SEEK_END );
+		long fsize = ftell( fp );
+		fseek( fp, 0, SEEK_SET );  //same as rewind(f);
+		file->lf_FileSize = fsize;
+
+		LocFileRead( file, fp, 0, file->lf_FileSize );
+	
+		fclose( fp );
+	}
+	else
 	{
 		FERROR("Cannot open file %s (file does not exist?)..\n", path );
 		return -1;
 	}
-	
-	struct stat st;
-	if( stat( path, &st ) < 0 )
-	{
-		FERROR("Cannot run stat on file: %s!\n", path);
-		return -2;
-	}
-	memcpy(  &(file->lf_Info),  &st, sizeof(stat) );
-	
-	fseek( fp, 0, SEEK_END );
-	long fsize = ftell( fp );
-	fseek( fp, 0, SEEK_SET );  //same as rewind(f);
-	file->lf_FileSize = fsize;
-
-	LocFileRead( file, fp, 0, file->lf_FileSize );
-	
-	fclose( fp );
 	
 	return 0;
 }
@@ -374,26 +375,30 @@ FLONG LocFileAvaiableSpace( const char *path )
  * @param name pointer to file path
  * @return extension as string
  */
-char * GetExtension( char* name )
+char *GetExtension( char* name )
 {
+	char *extension = NULL;
 	char *reverse = FCalloc( 1, 16 ); // 16 characters extension!
-	int cmode = 0, cz = 0;
-	int len = strlen( name ) - 1;
-	for( cz = len; cz > 0 && cmode < 16; cz--, cmode++ )
+	if( reverse != NULL )
 	{
-		if( name[cz] == '.' )
+		int cmode = 0, cz = 0;
+		int len = strlen( name ) - 1;
+		for( cz = len; cz > 0 && cmode < 16; cz--, cmode++ )
 		{
-			break;
+			if( name[cz] == '.' )
+			{
+				break;
+			}
+			reverse[len-cz] = name[cz];
 		}
-		reverse[len-cz] = name[cz];
+		len = strlen( reverse );
+		extension = FCalloc( 1, len + 1 );
+		for( cz = 0; cz < len; cz++ )
+		{
+			extension[cz] = reverse[len-1-cz];
+		}
+		FFree( reverse );
 	}
-	len = strlen( reverse );
-	char *extension = FCalloc( 1, len + 1 );
-	for( cz = 0; cz < len; cz++ )
-	{
-		extension[cz] = reverse[len-1-cz];
-	}
-	FFree( reverse );
 	return extension;
 }
 

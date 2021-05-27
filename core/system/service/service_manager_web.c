@@ -77,28 +77,28 @@ Http *SMWebRequest( void *lsb, char **urlpath, Http* request, UserSession *logge
 		el = HttpGetPOSTParameter( request, "params" );
 		if( el != NULL )
 		{
-			params = UrlDecodeToMem( (char *)el->data );
+			params = UrlDecodeToMem( (char *)el->hme_Data );
 			DEBUG( "[NMWebRequest] params %s!!\n", params );
 		}
 		
 		el = HttpGetPOSTParameter( request, "type" );
 		if( el != NULL )
 		{
-			type = atoi( (char *)el->data );
+			type = atoi( (char *)el->hme_Data );
 			DEBUG( "[NMWebRequest] type %d!!\n", type );
 		}
 		
 		el = HttpGetPOSTParameter( request, "path" );
 		if( el != NULL )
 		{
-			path = UrlDecodeToMem( (char *)el->data );
+			path = UrlDecodeToMem( (char *)el->hme_Data );
 			DEBUG( "[NMWebRequest] group %s!!\n", path );
 		}
 		
 		el = HttpGetPOSTParameter( request, "servername" );
 		if( el != NULL )
 		{
-			servername = UrlDecodeToMem( (char *)el->data );
+			servername = UrlDecodeToMem( (char *)el->hme_Data );
 			DEBUG( "[NMWebRequest] servername %s!!\n", servername );
 		}
 		
@@ -123,10 +123,10 @@ Http *SMWebRequest( void *lsb, char **urlpath, Http* request, UserSession *logge
 		} // missing parameters
 		else
 		{
-			char buffer[ 256 ];
+			char buffer[ 512 ];
 			char buffer1[ 256 ];
-			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, channelid, app, title, message" );
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+			snprintf( buffer1, sizeof(buffer1)-1, l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, channelid, app, title, message" );
+			snprintf( buffer, sizeof(buffer)-1, ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, buffer );
 		}
 		

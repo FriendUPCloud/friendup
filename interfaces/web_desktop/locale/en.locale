@@ -24,6 +24,9 @@ i18n_upload_a_file                   : Upload file
 i18n_selected_files                  : Selected files
 i18n_in_total                        : In total
 i18n_deleting_files                  : Deleting files
+i18n_sure_unshare                    : Are you sure you want to unshare?
+i18n_sure_unshdesc                   : The files you unshare will not be available to others.
+i18n_unsharing_files                 : Unsharing files
 i18n_bookmarks_add                   : Add
 i18n_bookmarks_close                 : Close
 i18n_bookmarks_select                : Select
@@ -48,6 +51,7 @@ i18n_affirmative                     : Ok
 i18n_negative                        : No
 i18n_yes                             : Yes
 i18n_cancel                          : Cancel
+i18n_back                            : Back
 i18n_accept                          : Accept
 i18n_understood                      : Understood
 i18n_your_devices                    : Disks
@@ -73,6 +77,7 @@ i18n_open_sharing_options            : Open sharing options
 i18n_choose_disk                     : Choose disk
 i18n_run_application                 : Run application
 i18n_shared_with                     : Shared with
+i18n_find_users_groups               : Find users and groups...
 i18n_find_workgroup_user             : Find user...
 i18n_no_users_found                  : No users found...
 i18n_error_in_userlist               : Error in userlist...
@@ -143,6 +148,7 @@ i18n_your_command                       : Your command
 i18n_door_home                          : Home
 
 please_choose_an_icon                   : Please choose icon(s).
+i18n_title_about_friendos               : About Friend OS
 about_system                            : About system
 information                             : Information & updates
 documentation_central                   : Documentation central
@@ -152,7 +158,12 @@ documentation_on                        : Documentation on
 i18n_sharewith                          : Share with
 i18n_sharename                          : Share name
 i18n_share_with_workgroup               : Share with workgroup
+i18n_share_file                     	: Share file with user/workgroup
+i18n_sharing_options                    : Sharing options
 i18n_no_workgroup_sharing               : Do not share with a workgroup
+i18n_file_not_shared                    : This file is not shared.
+i18n_workgroups                         : Workgroups
+i18n_users                              : Users
 my_account                              : My account
 i18n_account_setup                      : My account - setup
 
@@ -231,6 +242,8 @@ menu_unzip                              : Decompress file(s)
 menu_looknfeel                          : Look and feel
 menu_backdrop                           : Show overview
 menu_share								: Share
+menu_unshare                            : Unshare
+menu_share_info                         : Share info
 menu_download                           : Download
 i18n_could_not_download                 : Could not download
 i18n_file_cannot_be_downloaded          : The file is not of the correct type to download
@@ -238,8 +251,10 @@ menu_close_idle_connections             : Close idle connections
 menu_hide_hidden_files                  : Hide hidden files
 menu_show_hidden_files                  : Show hidden files
 menu_new_window                         : New window
+menu_share_file                         : Sharing
 
 menu_help                               : Help
+menu_help_tutorials                     : Tutorials
 menu_help_bug                           : Report a bug
 menu_help_manual                        : User manual
 
@@ -252,6 +267,9 @@ i18n_remove_from_dock                   : Remove from dock
 i18n_object_not_supported               : Dropped object not supported
 i18n_only_executables_can_drop          : Only executables can be dropped on the dock
 
+i18n_copy_operation                     : File copy operation
+i18n_copying_files_complete             : Copying files complete.
+
 i18n_choose_file_to_upload              : Choose file to upload
 i18n_upload_target                      : Upload target
 i18n_browse                             : Browse
@@ -262,22 +280,28 @@ i18n_upload_failed                      : Upload failed.
 i18n_upload_completed_description       : The upload process completed successfully.
 i18n_upload_failed_description          : Could not upload your file.
 i18n_select_local_files                 : Select local files
+i18n_not_upload_target                  : Not an upload target
+i18n_not_upload_target_desc             : You can not upload to the Shared drive.
 
-i18n_unzip_completed                    : Uncompressing completed.
-i18n_unzip_comdesc                      : Uncompressing a file(s) completed successfully
-i18n_unzip_failed                       : Uncompressing failed.
-i18n_unzip_failed_desc                  : Uncompressing of file(s) did not complete
+i18n_unzip_completed                    : Decompressing completed.
+i18n_unzip_comdesc                      : Decompressing a file(s) completed successfully
+i18n_unzip_failed                       : Decompressing failed.
+i18n_unzip_failed_desc                  : Decompressing of file(s) did not complete
 
 i18n_zip_completed                      : Compressing completed.
 i18n_zip_comdesc                        : Compressing the file(s) completed successfully
 i18n_zip_not_completed                  : Compressing failed.
 i18n_zip_not_comdesc                    : Compressing the file(s) did not complete
 
-i18n_unzip_start                        : Uncompressing file(s).
-i18n_unzip_startdesc                    : Uncompressing selected file(s).
+i18n_unzip_start                        : Decompressing file(s).
+i18n_unzip_startdesc                    : Decompressing selected file(s).
+i18n_unzip_start_none                   : Could not decompress.
+i18n_unzip_startdesc_none               : You did not select any files.
 
 i18n_zip_start                          : Compressing file(s).
 i18n_zip_startdesc                      : Compressing selected file(s).
+i18n_zip_start_none                     : Could not compress.
+i18n_zip_startdesc_none                 : You did not select any files.
 
 cmd_execute                             : Execute
 
@@ -297,6 +321,7 @@ menu_open_parent_directory              : Open parent directory
 menu_show_as                            : Show as
 menu_show_as_icons                      : Icons
 menu_show_as_compact                    : Compact
+menu_show_as_gallery                    : Gallery
 menu_show_as_list                       : List
 menu_show_as_columns                    : Columns
 menu_close_window                       : Close window
@@ -392,6 +417,8 @@ i18n_no_field_information               : No attribute data available.
 i18n_non_compatible_field_information   : Can not preview field data.
 i18n_open_with                          : Open with
 
+i18n_list_header_group                  : Groups
+i18n_list_header_user                   : Users
 
 #File dialogs ------------------------------------------------------------------
 
@@ -449,6 +476,7 @@ i18n_volume_information                 : Disk information
 i18n_volume_permissions                 : Disk permissions
 i18n_drag_to_download_file              : Click or drag to desktop to download.
 i18n_drag_files_to_download             : Drop files to download.
+i18n_add_calendar_event                 : Add calendar event.
 
 i18n_creating_directory                 : Creating directory
 i18n_building_file_index                : Building file index...
@@ -517,6 +545,13 @@ i18n_FriendNetwork						: Friend Network
 i18n_connectionFailed					: Connection to the workgroup failed. Please check the password in your account settings.
 i18n_connectionAborted					: Connection to the workgroup aborted.
 i18n_password							: Password
+i18n_only_files_dropped                 : Wrong file types dropped
+i18n_only_files_can_be_shared           : Only regular files can be shared.
+i18n_share_with_users_or_groups         : Share with users or groups
+i18n_ok                                 : Ok
+i18n_no_users_or_groups                 : No users or groups to share with.
+i18n_nothing_shared                     : No share target(s) selected
+i18n_please_select_users_groups         : Did not share because no user(s) or group(s) were selected.
 
 
 i18n_paste_error                        : Paste error
@@ -561,6 +596,7 @@ i18n_diskspace                          : Diskspace
 i18n_dir_btn_iconview                   : Normal
 i18n_dir_btn_compact                    : Compact
 i18n_dir_btn_listview                   : List
+i18n_dir_btn_imageview                  : Gallery
 
 #Sessions ----------------------------------------------------------------------
 
@@ -592,8 +628,24 @@ i18n_cal_btn_edit                       : Save event
 i18n_from                               : From
 i18n_to                                 : To
 
-i18n_cal_evt_type                       : Choose calendar
+i18n_cal_evt_type                       : Calendar
 i18n_cal_private_calendar               : Your private calendar
+
+i18n_cal_evt_typec                      : Type
+i18n_cal_evt_type_event                 : Event
+i18n_cal_evt_type_meeting               : Meeting
+i18n_cal_evt_type_todo                  : Todo
+i18n_cal_evt_type_note                  : Note
+
+i18n_cal_evt_timezone                   : Timezone
+i18n_cal_evt_participants               : Participants
+i18n_cal_evt_link                       : Link URL
+i18n_cal_evt_location                   : Location
+i18n_find_contacts                      : Find contacts
+i18n_no_participants_here               : No participants here.
+
+i18n_to_not_in_past                     : Wrong to-date
+i18n_to_not_in_past_desc                : The meeting end time is before the start time.
 
 i18n_evt_added                          : Calendar updated
 i18n_evt_addeddesc                      : The event was added to your calendar.

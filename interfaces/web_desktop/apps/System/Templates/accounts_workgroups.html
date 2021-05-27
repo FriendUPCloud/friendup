@@ -1,0 +1,21 @@
+	
+	<style>
+		
+		#SlideContainer
+		{
+			transform: translate3d(0, 0, 0);
+			transition: transform .5s cubic-bezier(0, .52, 0, 1);
+		}
+		
+		#SlideContainer.Slide
+		{
+			transform: translate3d(-50%, 0, 0);
+		}
+		
+	</style>
+	
+	<div id="SlideContainer" class="HContentLeft HContent100">
+		<div class="FullContent ScrollArea HContentLeft VContent100 HContent50 Padding Responsive-Page" id="WorkgroupList"></div>
+		<div class="FullContent ScrollArea HContentRight VContent100 HContent50 Padding Responsive-Page" id="WorkgroupDetails"></div>
+		<div class="FullContent ScrollArea HContentRight VContent100 HContent50 Padding Responsive-Page" id="SubWorkgroupDetails" style="z-index:-1;right:-50%;"></div>
+	</div>

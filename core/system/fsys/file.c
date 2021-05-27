@@ -51,6 +51,7 @@ File *FileNew()
 
 void FileDelete( File *f )
 {
+	DEBUG("Delete file called\n");
 	if( f!= NULL )
 	{
 		if( f->f_Name != NULL )
@@ -296,7 +297,7 @@ int FileUploadFileOrDirectoryRec( Http *request, File *dstdev, const char *dst, 
 							{
 								int namelen = strlen( newdst );
 								char message[ 1024 ];
-								SystemBase *sb = (SystemBase *)request->h_SB;
+								SystemBase *sb = (SystemBase *)request->http_SB;
 								
 								char *fname = (char *)newdst;
 								if( namelen > 255 )
@@ -365,7 +366,7 @@ int FileUploadFileOrDirectoryRec( Http *request, File *dstdev, const char *dst, 
 		{
 			int namelen = strlen( dst );
 			char message[ 1024 ];
-			SystemBase *sb = (SystemBase *)request->h_SB;
+			SystemBase *sb = (SystemBase *)request->http_SB;
 			
 			char *fname = (char *)dst;
 			if( namelen > 255 )
@@ -442,7 +443,7 @@ int FileUploadFileOrDirectory( Http *request, void *us, const char *dst, const c
  * @param srcdev pointer to source Friend root File
  * @param dst pointer to destination path
  * @param src pointer to source path
- * @param cutPos point to place from which source path should be readed
+ * @param cutPos point to place from which source path should be read
  * @param fod file or directory flag. When you know if you want to process file or directory place values 1 for File and 2 for Directory
  * @return 0 when success, otherwise error number
  */
@@ -650,8 +651,6 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 											{
 												char dbuf[ 32768 ];
 												
-												//DEBUG("\n\n\n\n--->STOREFILE srcdev  : %s changed: %s NEWDST %s\n\n", src, &src[ cutPos ], newdst );
-											
 												File *srcfp = (File *)fsys->FileOpen( srcdev, newsrc, "rb" );
 												if( srcfp != NULL )
 												{
@@ -676,7 +675,7 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 											{
 												int namelen = strlen( dst );
 												char message[ 1024 ];
-												SystemBase *sb = (SystemBase *)request->h_SB;
+												SystemBase *sb = (SystemBase *)request->http_SB;
 												
 												char *fname = (char *)dst;
 												if( namelen > 255 )
@@ -790,7 +789,7 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 				{
 					int namelen = strlen( dst );
 					char message[ 1024 ];
-					SystemBase *sb = (SystemBase *)request->h_SB;
+					SystemBase *sb = (SystemBase *)request->http_SB;
 					
 					char *fname = (char *)dst;
 					if( namelen > 255 )
@@ -855,7 +854,7 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *basepath, co
 	
 	//DEBUG("[FileDownloadFilesOrFolder] getdevbyname\n");
 	
-	DEBUG("\n============================================================\n\n\n dst: %s\nsrc: %s\nbasepath: %s\nbasepos: %d\n\n\n\n\n", dst, src, basepath, basePos );
+	//DEBUG("\n============================================================\n\n\n dst: %s\nsrc: %s\nbasepath: %s\nbasepos: %d\n\n\n\n\n", dst, src, basepath, basePos );
 	
 	if( ( actDev = GetRootDeviceByName( loggedSession->us_User, devname ) ) != NULL )
 	{
@@ -895,7 +894,7 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *basepath, co
 					strcpy( tmpdst, dst );
 					strcat( tmpdst, &src[ lastslash+1 ] );
 					
-					DEBUG("\n\n\nCOPY------------>TMPDST %s   dst %s\n\n\n", tmpdst, &lfile[ j+1 ] );
+					//DEBUG("\n\n\nCOPY------------>TMPDST %s   dst %s\n\n\n", tmpdst, &lfile[ j+1 ] );
 
 					FileDownloadFileOrDirectoryRec( request, actDev, tmpdst, &lfile[ j+1 ], basePos, -1, numberFiles );
 					FFree( tmpdst );
@@ -1159,10 +1158,10 @@ int FileOrDirectoryDeleteRec( Http *request, File *srcdev, const char *src, int 
 			{
 				BufStringDelete( bsdir );
 			}
-			if( newsrc != NULL )
-			{
-				FFree( newsrc );
-			}
+		}
+		if( newsrc != NULL )
+		{
+			FFree( newsrc );
 		}
 	}
 	

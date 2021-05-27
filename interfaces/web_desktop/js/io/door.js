@@ -8,13 +8,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
-var DoorCache = {
-	dirListing: {}
-};
-
 Door = function( path )
 {
-	this.networkConnections = [];
 	this.init();
 	this.setPath( path );
 	this.vars = {};
@@ -41,12 +36,6 @@ Door.prototype.getPath = function()
 Door.prototype.stop = function()
 {
 	// Kill all bajax!
-	for( var a = 0; a < this.networkConnections.length; a++ )
-	{
-		if( this.networkConnections[ a ].destroy )
-			this.networkConnections[ a ].destroy();
-	}
-	this.networkConnections = [];
 }
 
 Door.prototype.setPath = function( path )
@@ -228,9 +217,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 
 		// If we end up here, we're not using dormant - which is OK! :)
 		if( !t.dormantDoor && ( !dirs || ( dirs && !dirs.length ) ) )
-		{
-			var cache = DoorCache.dirListing;
-			
+		{	
 			var updateurl = '/system.library/file/dir?r=1';
 
 			if( Workspace.conf && Workspace.conf.authId )
@@ -244,19 +231,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 			{
 				updateurl += '&details=true';
 			}
-			
-			// Use cache - used for preventing identical and pending dir requests
-			if( cache[ updateurl ] )
-			{
-				cache[ updateurl ].queue.push( callback );
-				return;
-			}
-			
-			// Setup cache queue
-			cache[ updateurl ] = {
-				queue: []
-			};
-			
+						
 			// Use standard Friend Core doors
 			var j = new cAjax();
 			if( t.cancelId )
@@ -265,17 +240,6 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 
 			//changed from post to get to get more speed.
 			j.open( 'POST', updateurl, true, true );
-			j.parseQueue = function( result, path, purePath )
-			{
-				if( cache[ updateurl ].queue.length )
-				{
-					for( var c = 0; c < cache[ updateurl ].queue.length; c++ )
-					{
-						cache[ updateurl ].queue[ c ]( result, path, purePath );
-					}
-				}
-				delete cache[ updateurl ]; // Flush!
-			}
 			
 			j.onload = function( e, d )
 			{
@@ -296,7 +260,6 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 							}
 						}
 						var res = callback( false, t.fileInfo.Path, false );
-						this.parseQueue( false, t.fileInfo.Path, false );
 						
 						return res;
 					}
@@ -330,34 +293,68 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 					if( typeof( list ) == 'object' && list.length )
 					{
 						// Fix paths
+						let sef = this;
+						let sharedCheck = [];
 						for( var a = 0; a < list.length; a++ )
 						{
 							if( list[a].Path.indexOf( ':' ) < 0 )
 								list[a].Path = deviceName + list[a].Path;
+							if( list[a].Path.substr( -1, 1 ) != '/' && deviceName != 'Shared:' )
+							{
+								sharedCheck.push( list[a].Path );
+							}
 						}
-						var pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
-						callback( list, t.fileInfo.Path, pth );
-						this.parseQueue( list, t.fileInfo.Path, pth );
+						if( sharedCheck.length )
+						{
+							let ch = new Library( 'system' );
+							ch.onExecuted = function( che, chd )
+							{
+								if( che == 'ok' )
+								{
+									try
+									{
+										chd = JSON.parse( chd );
+										for( let z = 0; z < list.length; z++ )
+										{
+											for( let c = 0; c < chd.length; c++ )
+											{
+												if( chd[c] == list[z].Path )
+												{
+													list[ z ].SharedFile = true;
+													break;
+												}
+											}
+										}
+									}
+									catch( e )
+									{
+									};
+								}
+								var pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
+								callback( list, t.fileInfo.Path, pth );
+							}
+							ch.execute( 'file/checksharedpaths', { paths: sharedCheck, path: deviceName } );
+						}
+						else
+						{
+							var pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
+							callback( list, t.fileInfo.Path, pth );
+						}
 					}
 					else
 					{
 						// Empty directory
 						callback( [], t.fileInfo.Path, false );
-						this.parseQueue( [], t.fileInfo.Path, false );
 					}
 				}
 				else
 				{
 					// Illegal directory
 					callback( false, t.fileInfo.Path, false );
-					this.parseQueue( false, t.fileInfo.Path, false );
 				}
 			}
 
 			j.send();
-			
-			// Register network connection
-			t.networkConnections.push( j );
 		}
 		else if( callback )
 		{
@@ -497,10 +494,7 @@ Door.prototype.write = function( filename, data, mode, extraData )
 	if( this.cancelId )
 		jax.cancelId = this.cancelId;
 	
-	//var old = Workspace.websocketsOffline;
-	//Workspace.websocketsOffline = true;
 	j.open( 'post', '/system.library/file/write', true, true );
-	//Workspace.websocketsOffline = false;
 	if( Workspace.conf && Workspace.conf.authId )
 		j.addVar( 'authid', Workspace.conf.authId );
 	else j.addVar( 'sessionid', Workspace.sessionId );
@@ -532,9 +526,6 @@ Door.prototype.write = function( filename, data, mode, extraData )
 			dr.onWrite( dat, extraData );
 	}
 	j.send();
-	
-	// Register network connection
-	this.networkConnections.push( j );
 }
 
 // Reads a file
@@ -614,9 +605,6 @@ Door.prototype.read = function( filename, mode, extraData )
 		}
 	}
 	j.send();
-	
-	// Register network connection
-	this.networkConnections.push( j );
 }
 
 // Execute a dos action now..
@@ -734,8 +722,6 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 		if( callback ) callback( this.responseText(), dr );
 	}
 	j.send();
-	
-	this.networkConnections.push( j );
 	
 	function refresh()
 	{

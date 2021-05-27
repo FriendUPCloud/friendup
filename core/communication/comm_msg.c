@@ -426,26 +426,26 @@ DataForm *DataFormFromHttp( Http *http )
 	
 	DEBUG("[DataFormFromHttp] headers parsed\n");
 	
-	if( http->parsedPostContent != NULL )
+	if( http->http_ParsedPostContent != NULL )
 	{
-		for( i = 0 ; i < http->parsedPostContent->table_size; i++ )
+		for( i = 0 ; i < http->http_ParsedPostContent->hm_TableSize; i++ )
 		{
-			HashmapElement e = http->parsedPostContent->data[i];
+			HashmapElement e = http->http_ParsedPostContent->hm_Data[i];
 			
-			if( e.key != NULL && e.inUse == TRUE )
+			if( e.hme_Key != NULL && e.hme_InUse == TRUE )
 			{
-				if( strcmp( e.key, "remoteurl" ) == 0 )
+				if( strcmp( e.hme_Key, "remoteurl" ) == 0 )
 				{
-					remoteurl = UrlDecodeToMem( e.data );
+					remoteurl = UrlDecodeToMem( e.hme_Data );
 				}
-				else if( strcmp( e.key, "remotehost" ) == 0 )
+				else if( strcmp( e.hme_Key, "remotehost" ) == 0 )
 				{
-					remotehost = UrlDecodeToMem( e.data );
+					remotehost = UrlDecodeToMem( e.hme_Data );
 				}
-				else if( strcmp( e.key, "remotecommand" ) == 0 )
+				else if( strcmp( e.hme_Key, "remotecommand" ) == 0 )
 				{
-					DEBUG("[DataFormFromHttp] remote command : %s\n", (char *)e.data );
-					char *data = UrlDecodeToMem( e.data );
+					DEBUG("[DataFormFromHttp] remote command : %s\n", (char *)e.hme_Data );
+					char *data = UrlDecodeToMem( e.hme_Data );
 					if( data != NULL )
 					{
 						// get commands, split them and add to request
@@ -492,12 +492,12 @@ DataForm *DataFormFromHttp( Http *http )
 				{
 					int size = 0;
 					
-					if( e.data != NULL )
+					if( e.hme_Data != NULL )
 					{
-						char *data = UrlDecodeToMem( (char *)e.data );
+						char *data = UrlDecodeToMem( (char *)e.hme_Data );
 						if( data != NULL )
 						{
-							DFList *ne = CreateListEntry( e.key, data );
+							DFList *ne = CreateListEntry( e.hme_Key, data );
 							/*
 							size = strlen( e.key ) + 2 + strlen( data );
 							char *tmp = NULL;

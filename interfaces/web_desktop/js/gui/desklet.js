@@ -703,39 +703,57 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		
 		for( var a = 0; a < Workspace.applications.length; a++ )
 		{
-			var ap = Workspace.applications[a];
-			if( ap.applicationName != ele.executable )
+			let ap = Workspace.applications[a];
+			if( ap.applicationId != ele.uniqueId )
 				continue;
 			if( !ap.windows ) continue;
 			
 			// TODO: Animation before hiding!
-			var st = 'idle';
+			let st = 'idle';
+			let wsSet = false;
 			for( var w in ap.windows )
 			{
-				var s = ap.windows[w].getFlag( 'screen' );
+				var s = ap.windows[ w ].getFlag( 'screen' );
 				if( s.div.id != 'DoorsScreen' ) continue;
 				
 				elementCount++; // Count app windows
 				
-				if( st == 'idle' )
-					st = ap.windows[w].getFlag( 'hidden' );
-				if( ap.windows[w].getFlag( 'invisible' ) ) continue;
+				st = ap.windows[ w ].flags.hidden;
+				if( ap.windows[ w ].getFlag( 'invisible' ) ) continue;
 				// Just minimize
-				var ws = ap.windows[w].workspace;
-				if( st || ws != globalConfig.workspaceCurrent )
+				var ws = ap.windows[ w ].workspace;
+				
+				if( !wsSet && ws != globalConfig.workspaceCurrent )
 				{
-					_ActivateWindow( ap.windows[w]._window );
-					_WindowToFront( ap.windows[w]._window );
-					ele.classList.remove( 'Minimized' );
-					Workspace.switchWorkspace( ws );
-					ap.windows[w].setFlag( 'hidden', false );
-					ap.windows[w].flags.minimized = false;
-					ap.windows[w].activate();
+			        Workspace.switchWorkspace( ws );
+			        wsSet = true;
+			    }
+				
+				if( st || wsSet )
+				{
+				    
+					if( ele.classList.contains( 'Minimized' ) )
+					{
+    					ele.classList.remove( 'Minimized' );
+					}
+					if( ws != globalConfig.workspaceCurrent )
+					{
+				        Workspace.switchWorkspace( ws );
+				    }
+				    ap.windows[ w ].setFlag( 'hidden', false );
+				    ap.windows[ w ].flags.minimized = false;
+				    ap.windows[ w ].activate();
+				    
+				    _WindowToFront( ap.windows[ w ]._window );
 				}
 				else
 				{
-					ele.classList.add( 'Minimized' );
-					ap.windows[w].setFlag( 'hidden', true );
+					if( !ele.classList.contains( 'Minimized' ) )
+					{
+    					ele.classList.add( 'Minimized' );
+    			    }
+					ap.windows[ w ].setFlag( 'hidden', true );
+					console.log( 'We set this as hidden: ', ap.windows[ w ] );
 				}
 			}
 			if( !ele.elementCount )
@@ -761,7 +779,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		this.dom.classList.remove( 'Initialized' );
 	}
 	
-	this.addLauncher = function ( o )
+	this.addLauncher = function( o )
 	{
 		var dk = this;
 		if ( o.src && ( o.click || o.exe ) )
@@ -773,11 +791,12 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			div.style.backgroundSize = 'contain';
 			div.style.height = this.width - ( this.margin * 2 ) + 'px';
 			div.executable = o.exe;
+			div.uniqueId = UniqueHash( o.exe + ' ' + o.displayname );
 			
 			// Running apps
 			for( var a in Workspace.applications )
 			{
-				if( Workspace.applications[ a ].applicationName == o.exe )
+				if( Workspace.applications[ a ].applicationId == div.uniqueId )
 				{
 					div.classList.add( 'Running' );
 					break;
@@ -789,6 +808,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			{
 				o.src = getImageUrl( o.src );
 			}
+			
+			o.opensilent = o.opensilent == '1' ? true : false;
 			
 			// This is web bookmarks
 			if( o.src == '.url' )
@@ -831,7 +852,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				d.innerHTML = '<div class="Icon"><div style="background-size: contain" class="TypeWebUrl"><span>' + o.exe + '</span></div></div><span>' + o.exe + '</span>';
 				div.appendChild( d );
 			}
-			else if( o.src.substr( 0, 1 ) == '.' )
+			else if( o.src.substr( 0, 1 ) == '.' && o.src != '.txt' )
 			{
 				div.style.backgroundImage = '';
 				var d = document.createElement( 'div' );
@@ -848,6 +869,12 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				div.setAttribute('data-workspace', ( o.workspace ? o.workspace : 0 ) );
 				div.setAttribute('data-displayname', ( o.displayname ? o.displayname: o.exe ) );
 				div.setAttribute('id', 'dockItem_' + o.exe );
+				let i = new Image();
+				i.src = o.src;
+				i.onerror = function( e )
+				{
+					div.style.backgroundImage = 'url(/iconthemes/friendup15/File_Function.svg)';
+				}
 			}
 			
 			function clickFunc( e )
@@ -855,14 +882,24 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				if( e.button != 0 && e.type != 'touchend' ) return;
 				if( div.helpBubble ) div.helpBubble.close();
 				
+				// Http url
+				if( o.exe.substr( 0, 7 ) == 'http://' || o.exe.substr( 0, 8 ) == 'https://' )
+				{
+					return window.open( o.exe, '', '' );
+				}
 				// We got views? Just manage them
 				if( !isMobile )
 				{
-					if( dk.toggleViewVisibility( this ) ) return;
+					if( dk.toggleViewVisibility( this ) ) 
+					{
+						return;
+					}
 				}
 
 				var rememberCurrent = false;
-				if( currentMovable )
+				
+				// If we have a non silent launch, and a current movable, deactivate current
+				if( currentMovable && o.opensilent === false )
 				{
 					rememberCurrent = currentMovable;
 					_DeactivateWindow( currentMovable );
@@ -914,7 +951,13 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 							{
 								if( ext == mt.types[ b ].toLowerCase() )
 								{
-									return ExecuteApplication( mt.executable, executable );
+									return ( function( mm, me, dd ){
+										ExecuteApplication( mm, me, false, false, {
+											dockItem: dd,
+											uniqueId: dd.uniqueId,
+											openSilent: o.opensilent ? true : false
+										} );
+									} )( mt.executable, executable, div );
 								}
 							}
 						}
@@ -937,9 +980,15 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				{
 					if( !Friend.singleInstanceApps[ executable ] )				
 					{
-						ExecuteApplication( executable, args );
+						( function( mm, me, dd ){
+							ExecuteApplication( mm, me, false, false, {
+								dockItem: dd,
+								uniqueId: dd.uniqueId,
+								openSilent: o.opensilent ? true : false
+							} );
+						} )( executable, args, div );
 					}
-					else if( rememberCurrent && rememberCurrent.windowObject.applicationName == executable )
+					else if( rememberCurrent && rememberCurrent.windowObject.applicationId == div.uniqueId )
 					{
 						_ActivateWindow( rememberCurrent );
 					}
@@ -949,7 +998,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 						// TODO: Find the last active
 						for( var a = 0; a < Workspace.applications.length; a++ )
 						{
-							if( Workspace.applications[a].applicationName == executable )
+							if( Workspace.applications[a].applicationId == div.uniqueId )
 							{
 								if( Workspace.applications[a].windows )
 								{
@@ -974,11 +1023,20 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					}
 				
 					// If we didn't find the app, execute
-					ExecuteApplication( executable, args );
+					( function( mm, me, dd ){
+						ExecuteApplication( mm, me, false, false, {
+							dockItem: dd,
+							uniqueId: dd.uniqueId,
+							openSilent: o.opensilent ? true : false
+						} );
+					} )( executable, args, div );
 				}
 			
-				// Switch to the workspace of the app
-				Workspace.switchWorkspace( o.workspace );
+				// Switch to the workspace of the app (unless silent)
+				if( !o.opensilent )
+				{
+					Workspace.switchWorkspace( o.workspace );
+				}
 			
 				// Close it for mobile
 				if( window.isMobile )
@@ -1099,7 +1157,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				}
 			}
 			this.dom.appendChild( div );
-			this.refresh ();
+			this.refresh();
 			return true;
 		}
 		return false;

@@ -77,7 +77,7 @@ self.checkVolume = function()
 					self.postMessage( { 'error': 1, 'errormessage': 'Illegal server response.' } ); return; 
 				}
 				
-				var diskspace = parseInt( tmp.Filesize ) - parseInt( tmp.Used );
+				var diskspace = parseInt( tmp.Filesize ) - parseInt( tmp.Used ? tmp.Used : 0 );
 				
 				for( var f in self.files )
 				{
@@ -156,6 +156,8 @@ self.uploadFiles = function()
 		// Are we done?
 		if( queuePos > filesList.length )
 		{
+			//console.log( 'We should now close the window!!!!!' );
+			
 			self.postMessage( {
 				'progressinfo': 1,
 				'progress': 100,
@@ -165,6 +167,10 @@ self.uploadFiles = function()
 			} );
 			self.close();
 			return;
+		}
+		else
+		{
+			//console.log( 'In queue: ' + queuePos + ' / ' + filesList.length );
 		}
 		
 		if( typeof filesList[ queuePos ] != 'object' )
@@ -247,6 +253,7 @@ self.uploadFiles = function()
 					// Now go upload!
 					doUpload( queuePos, function()
 					{
+						//console.log( 'Another next in queue!' );
 						// Rerun queue
 						uploadQueueRun( ++queuePos ); 
 					} );
@@ -264,6 +271,7 @@ self.uploadFiles = function()
 			//console.log( 'JUST UPLOAD: ' + destPath );
 			doUpload( queuePos, function()
 			{ 
+				//console.log( 'Next in queue!' );
 				// Rerun queue
 				uploadQueueRun( ++queuePos ); 
 			} );
@@ -352,6 +360,8 @@ self.uploadFiles = function()
 					self.postMessage( {
 						'progressinfo': 1,
 						'progress': progress,
+						'bytesWritten': prog,
+						'bytesTotal': tota,
 						'progresson': ind,
 						'filesundertransport': self.filesUnderTransport
 					} );
@@ -371,7 +381,50 @@ self.uploadFiles = function()
 			xh.onreadystatechange = function()
 			{
 				if( this.readyState == 4 && this.status == 200  )
-				{					
+				{
+					// Check the uploaded files..
+					let serverResponse = null;
+					let serverResponseCode = null;
+					let serverResponseMessage = 'Successful upload';
+					try
+					{
+						let d = this.responseText.split( '<!--separate-->' );
+						
+						serverResponseCode = d[0];
+						serverResponse = JSON.parse( d[1] );
+						if( serverResponse.files.length )
+						{
+							for( let b = 0; b < serverResponse.files.length; b++ )
+							{
+								if( serverResponse.files[b].responseCode == 2 )
+								{
+									serverResponseCode = 'fail';
+									serverResponseMessage = 'Not enough space on device';
+									break;
+								}
+							}
+						}
+					}
+					catch( e )
+					{
+						serverResponseCode = 'fail';
+						serverResponseMessage = 'Upload failed due to an unexpected error';
+					}
+					
+					if( serverResponseCode == 'fail' )
+					{
+						self.postMessage( {
+							'progressinfo' : 1,
+							'error' : 1,
+							'fileindex' : ind, 
+							'uploaderror' : 'Upload failed. Server response was readystate/status: |' + 
+								this.readyState + '/' + this.status + '|',
+							'message' : serverResponseMessage
+						} );
+						if( callback ) callback();
+						return;
+					}
+					
 					loadPieces[ ind ].loaded = loadPieces[ ind ].total;
 					
 					if( self.filesUnderTransport > 1 ) 
@@ -386,16 +439,25 @@ self.uploadFiles = function()
 					calcProgress();
 					
 					// Run callback
+					//console.log( 'Checking for callback.', this.responseText );
 					if( callback ) callback();
 				}
 				else if( this.readyState > 1 && this.status > 0 )
 				{
-					self.postMessage( {
-						'progressinfo' : 1,
-						'fileindex' : ind, 
-						'uploaderror' : 'Upload failed. Server response was readystate/status: |' + 
-							this.readyState + '/' + this.status + '|' 
-					} );
+					// Only flag fail if it actually failed!
+					if( this.responseText.substr( 0, 4 ) == 'fail' )
+					{
+						self.postMessage( {
+							'progressinfo' : 1,
+							'fileindex' : ind, 
+							'uploaderror' : 'Upload failed. Server response was readystate/status: |' + 
+								this.readyState + '/' + this.status + '|' 
+						} );
+					}
+				}
+				else
+				{
+					//console.log( 'Some other upload status: ' + this.readyState + ' / ' + this.status );
 				}
 			}
 		
@@ -411,6 +473,11 @@ self.uploadFiles = function()
 			fd.append( 'module','files' );
 			fd.append( 'command','uploadfile' );
 			fd.append( 'path', destPath );
+			// Sanitize
+			filename = filename.split( ':' ).join( '-' );
+			filename = filename.split( '/' ).join( '-' );
+			filename = filename.split( '[' ).join( '(' );
+			filename = filename.split( ']' ).join( ')' );
 			fd.append( 'file', file, encodeURIComponent( filename ) );
 		
 			// Get the party started
@@ -539,7 +606,7 @@ self.onmessage = function( e )
 	}
 	else if( e.data && e.data['terminate'] == 1 )
 	{
-		console.log('Terminating worker here...');
+		//console.log('Terminating worker here...');
 		self.close();
 	}
 } // end of onmessage

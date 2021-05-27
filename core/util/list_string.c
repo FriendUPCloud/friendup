@@ -97,6 +97,10 @@ FLONG ListStringAdd( ListString *ls, char *data, FLONG size )
 	}
 	else
 	{
+		if( nls != NULL )
+		{
+			FFree( nls );
+		}
 		return -2;
 	}
 	return 0;
@@ -106,9 +110,9 @@ FLONG ListStringAdd( ListString *ls, char *data, FLONG size )
 // join all lists to one string
 //
 
-ListString *ListStringJoin( ListString *ls )
+int ListStringJoin( ListString *ls )
 {
-	ls->ls_Data = FCalloc( ls->ls_Size + 1, sizeof(char));
+	ls->ls_Data = FCalloc( (ls->ls_Size + 1), sizeof(char));
 	if( ls->ls_Data != NULL )
 	{
 		ListString *cur = ls->ls_Next;
@@ -137,10 +141,10 @@ ListString *ListStringJoin( ListString *ls )
 		
 		ls->ls_Data[ ls->ls_Size ] = 0;
 
-		return ls;
+		return 0;
 	}
 	FERROR("Cannot allocate memory %ld\n", ls->ls_Size );
 	
-	return NULL;
+	return 1;
 }
 

@@ -23,15 +23,53 @@
 #include <core/friend_core.h>
 #include <ssh/ssh_server.h>
 #include <hardware/network.h>
-//#include <interface/properties_interface.h>
 #include <system/systembase.h>
 #include <hardware/machine_info.h>
+#include <openssl/rand.h>
 
 //
 // currently Friend can create only one core
 //
 
 void *FCM;
+
+/**
+* Mutex buffer for ssl locking
+*/
+
+static pthread_mutex_t *ssl_mutex_buf = NULL;
+
+/**
+* Static locking function.
+*
+* @param mode identifier of the mutex mode to use
+* @param n number of the mutex to use
+* @param file not used
+* @param line not used
+*/
+
+static void ssl_locking_function( int mode, int n, const char *file __attribute__((unused)), int line __attribute__((unused)))
+{ 
+	if( mode & CRYPTO_LOCK )
+	{
+		FRIEND_MUTEX_LOCK( &ssl_mutex_buf[ n ] );
+	}
+	else
+	{
+		FRIEND_MUTEX_UNLOCK( &ssl_mutex_buf[ n ] );
+	}
+}
+
+/**
+* Static ID function.
+*
+* @return function return thread ID as unsigned long
+*/
+
+static unsigned long ssl_id_function( void ) 
+{
+	return ( ( unsigned long )pthread_self() );
+}
 
 //
 // BTW we should have one instance of class what is makeing connection and then it should spread work to cores
@@ -50,7 +88,33 @@ FriendCoreManager *FriendCoreManagerNew()
 	
 	if( ( fcm = FCalloc( 1, sizeof( struct FriendCoreManager ) ) ) != NULL )
 	{
-		FCM = fcm;
+		// Static locks callbacks
+		SSL_library_init();
+		// Static locks buffer
+		ssl_mutex_buf = FCalloc( CRYPTO_num_locks(), sizeof( pthread_mutex_t ) );
+		if( ssl_mutex_buf == NULL)
+		{ 
+			LOG( FLOG_PANIC, "[FriendCoreNew] Failed to allocate ssl mutex buffer.\n" );
+			FFree( fcm );
+			return NULL; 
+		} 
+	
+		int i; for( i = 0; i < CRYPTO_num_locks(); i++ )
+		{ 
+			pthread_mutex_init( &ssl_mutex_buf[ i ], NULL );
+		}
+	
+		OpenSSL_add_all_algorithms();
+	
+		// Load the error strings for SSL & CRYPTO APIs 
+		SSL_load_error_strings();
+		
+		// Setup static locking.
+		CRYPTO_set_locking_callback( ssl_locking_function );
+		CRYPTO_set_id_callback( ssl_id_function );
+	
+		RAND_load_file( "/dev/urandom", 1024 );
+		
 		//
 		// Create FriendCoreID
 		//
@@ -85,7 +149,6 @@ FriendCoreManager *FriendCoreManagerNew()
 			strcat( fcm->fcm_ID, "error" );
 		}
 
-		int i;
 		for( i=0 ; i<FRIEND_CORE_MANAGER_ID_SIZE; i++ )
 		{
 			if( fcm->fcm_ID[i ] == 0 )
@@ -122,7 +185,6 @@ FriendCoreManager *FriendCoreManagerNew()
 		
 		Props *prop = NULL;
 		PropertiesInterface *plib = &(SLIB->sl_PropertiesInterface);
-		//if( ( plib = (struct PropertiesLibrary *)LibraryOpen( SLIB, "properties.library", 0 ) ) != NULL )
 		{
 			char *ptr, path[ 1024 ];
 			path[ 0 ] = 0;
@@ -154,7 +216,7 @@ FriendCoreManager *FriendCoreManagerNew()
 				
 				fcm->fcm_SSLEnabled = plib->ReadIntNCS( prop, "core:sslenable", 0 );
 				fcm->fcm_WSSSLEnabled = plib->ReadIntNCS( prop, "core:wssslenable", 0 );
-				fcm->fcm_SSLEnabledCommuncation = plib->ReadIntNCS( prop, "core:communicationsslenable", 0 );
+				fcm->fcm_SSLEnabledCommuncation = plib->ReadIntNCS( prop, "core:communicationsslenable", 1 );
 				fcm->fcm_ClusterMaster = plib->ReadIntNCS( prop, "core:clustermaster", 0 );
 				
 				fcm->fcm_DisableWS = plib->ReadIntNCS( prop, "core:disablews", 0 );
@@ -204,6 +266,8 @@ FriendCoreManager *FriendCoreManagerNew()
 			}
 		}
 		
+		FCM = fcm;
+		
 		fcm->fcm_ServiceManager = ServiceManagerNew( fcm );
 	}
 	return fcm;
@@ -230,12 +294,14 @@ int FriendCoreManagerInit( FriendCoreManager *fcm )
 		Log(FLOG_INFO, "-----FC id: %128s\n", fcm->fcm_ID  );
 		Log(FLOG_INFO, "-----FC launched with options\n");
 		Log(FLOG_INFO, "-----Cache files: %d\n", SLIB->sl_CacheFiles );
+#ifdef USE_WORKERS		
+		Log(FLOG_INFO, "-----Workers: %d\n", SLIB->sl_WorkerManager->wm_MaxWorkers );
+#endif
 		Log(FLOG_INFO, "-----HTTP SSL enabled: %d\n", fcm->fcm_SSLEnabled );
 		Log(FLOG_INFO, "-----WS SSL enabled: %d\n", fcm->fcm_WSSSLEnabled );
 		Log(FLOG_INFO, "-----Communication SSL enabled: %d\n", fcm->fcm_SSLEnabledCommuncation );
 		Log(FLOG_INFO, "-----FCPort: %d\n", fcm->fcm_FCPort );
 		Log(FLOG_INFO, "-----WSPort: %d\n", fcm->fcm_WSPort );
-		Log(FLOG_INFO, "-----WSMobilePort: %d\n", fcm->fcm_WSMobilePort );
 		Log(FLOG_INFO, "-----WSNotificationPort: %d\n", fcm->fcm_WSNotificationPort );
 		Log(FLOG_INFO, "-----CommPort: %d\n", fcm->fcm_ComPort );
 		Log(FLOG_INFO, "-----CommRemotePort: %d\n", fcm->fcm_ComRemotePort );
@@ -244,6 +310,15 @@ int FriendCoreManagerInit( FriendCoreManager *fcm )
 		Log(FLOG_INFO, "-----UserFileShareCache (per drive): %ld\n", SLIB->sl_USFCacheMax );
 		Log(FLOG_INFO, "-----Cluster Master: %d\n", fcm->fcm_ClusterMaster );
 		Log(FLOG_INFO, "-----UserSession timeout: %d\n", SLIB->sl_RemoveSessionsAfterTime );
+		
+		if( (SLIB->l_HttpCompressionContent & HTTP_COMPRESSION_DEFLATE ) == HTTP_COMPRESSION_DEFLATE )
+		{
+			Log(FLOG_INFO, "-----Http deflate compression: on\n" );
+		}
+		if( (SLIB->l_HttpCompressionContent & HTTP_COMPRESSION_BZIP ) == HTTP_COMPRESSION_BZIP )
+		{
+			Log(FLOG_INFO, "-----Http bzip compression: on\n" );
+		}
 		/*
 		if( SLIB != NULL && SLIB->sl_ActiveAuthModule != NULL )
 		{
@@ -274,70 +349,6 @@ int FriendCoreManagerInit( FriendCoreManager *fcm )
 		fcm->fcm_FCI = FriendCoreInfoNew( SLIB );
 		
 		fcm->fcm_Shutdown = FALSE;
-		
-		/*
-		if( fcm->fcm_DisableWS != TRUE )
-		{
-			if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled, 0, fcm->fcm_WSExtendedDebug ) ) != NULL )
-			{
-				WebSocketStart( fcm->fcm_WebSocket );
-			}
-			else
-			{
-				Log( FLOG_FATAL, "Cannot launch websocket server\n");
-				return -1;
-			}
-			
-			if( fcm->fcm_DisableMobileWS == 0 )
-			{
-				if( ( fcm->fcm_WebSocketMobile = WebSocketNew( SLIB, fcm->fcm_WSMobilePort, fcm->fcm_WSSSLEnabled, 1, fcm->fcm_WSExtendedDebug ) ) != NULL )
-				{
-					WebSocketStart( fcm->fcm_WebSocketMobile );
-				}
-				else
-				{
-					Log( FLOG_FATAL, "Cannot launch websocket server\n");
-					return -1;
-				}
-			}
-			
-			if( fcm->fcm_DisableExternalWS == 0 )
-			{
-				if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, fcm->fcm_WSSSLEnabled, 2, fcm->fcm_WSExtendedDebug ) ) != NULL )
-				{
-					WebSocketStart( fcm->fcm_WebSocketNotification );
-				}
-				else
-				{
-					Log( FLOG_FATAL, "Cannot launch websocket server\n");
-					return -1;
-				}
-			}
-		}
-
-		SLIB->fcm = fcm;
-		fcm->fcm_SB = SLIB;
-		
-		Log( FLOG_INFO,"Start SSH console\n");
-		
-		fcm->fcm_SSHServer = SSHServerNew( SLIB, fcm->fcm_SSHRSAKey, fcm->fcm_SSHDSAKey );
-		
-		fcm->fcm_Shutdown = FALSE;
-		
-		fcm->fcm_CommService = CommServiceNew( fcm->fcm_ComPort, fcm->fcm_SSLEnabledCommuncation, SLIB, fcm->fcm_MaxpCom, fcm->fcm_BufsizeCom );
-		
-		if( fcm->fcm_CommService )
-		{
-			CommServiceStart( fcm->fcm_CommService );
-		}
-		
-		fcm->fcm_CommServiceRemote = CommServiceRemoteNew( fcm->fcm_ComRemotePort, fcm->fcm_SSLEnabledCommuncation, SLIB, fcm->fcm_MaxpComRemote );
-		
-		if( fcm->fcm_CommServiceRemote )
-		{
-			CommServiceRemoteStart( fcm->fcm_CommServiceRemote );
-		}
-		*/
 	}
 	Log( FLOG_INFO,"FriendCoreManager Initialized\n");
 	
@@ -348,7 +359,7 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 {
 	if( fcm->fcm_DisableWS != TRUE )
 		{
-			if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled, 0, fcm->fcm_WSExtendedDebug ) ) != NULL )
+			if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled, WEBSOCKET_TYPE_BROWSER, fcm->fcm_WSExtendedDebug ) ) != NULL )
 			{
 				WebSocketStart( fcm->fcm_WebSocket );
 			}
@@ -357,24 +368,10 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 				Log( FLOG_FATAL, "Cannot launch websocket server\n");
 				return -1;
 			}
-			/*
-			if( fcm->fcm_DisableMobileWS == 0 )
-			{
-				if( ( fcm->fcm_WebSocketMobile = WebSocketNew( SLIB, fcm->fcm_WSMobilePort, fcm->fcm_WSSSLEnabled, 1, fcm->fcm_WSExtendedDebug ) ) != NULL )
-				{
-					WebSocketStart( fcm->fcm_WebSocketMobile );
-				}
-				else
-				{
-					Log( FLOG_FATAL, "Cannot launch websocket server\n");
-					return -1;
-				}
-			}
-			*/
 			
 			if( fcm->fcm_DisableExternalWS == 0 )
 			{
-				if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, fcm->fcm_WSSSLEnabled, 2, fcm->fcm_WSExtendedDebug ) ) != NULL )
+				if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, FALSE, WEBSOCKET_TYPE_EXTERNAL, fcm->fcm_WSExtendedDebug ) ) != NULL )
 				{
 					WebSocketStart( fcm->fcm_WebSocketNotification );
 				}
@@ -397,19 +394,23 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 		
 		fcm->fcm_Shutdown = FALSE;
 		
+#ifdef COMMUNICATION_SERVICE
 		fcm->fcm_CommService = CommServiceNew( fcm->fcm_ComPort, fcm->fcm_SSLEnabledCommuncation, SLIB, fcm->fcm_MaxpCom, fcm->fcm_BufsizeCom );
 		
 		if( fcm->fcm_CommService )
 		{
 			CommServiceStart( fcm->fcm_CommService );
 		}
-		
+#endif
+
+#ifdef COMMUNICATION_REM_SERVICE
 		fcm->fcm_CommServiceRemote = CommServiceRemoteNew( fcm->fcm_ComRemotePort, fcm->fcm_SSLEnabledCommuncation, SLIB, fcm->fcm_MaxpComRemote );
 		
 		if( fcm->fcm_CommServiceRemote )
 		{
 			CommServiceRemoteStart( fcm->fcm_CommServiceRemote );
 		}
+#endif
 		
 		return 0;
 }
@@ -425,18 +426,22 @@ void FriendCoreManagerDelete( FriendCoreManager *fcm )
 	Log( FLOG_INFO,"FriendCoreManager Delete\n");
 	if( fcm != NULL )
 	{
+#ifdef COMMUNICATION_REM_SERVICE
 		DEBUG("[FriendCoreManager] Close remote communcation service\n");
 		if( fcm->fcm_CommServiceRemote != NULL )
 		{
 			CommServiceRemoteDelete( fcm->fcm_CommServiceRemote );
 			fcm->fcm_CommServiceRemote = NULL;
 		}
+#endif
+#ifdef COMMUNICATION_SERVICE
 		DEBUG("[FriendCoreManager] Close communication service\n");
 		if( fcm->fcm_CommService != NULL )
 		{
 			CommServiceDelete( fcm->fcm_CommService );
 			fcm->fcm_CommService = NULL;
 		}
+#endif
 		
 		DEBUG("[FriendCoreManager] Closing websockets notification channel\n");
 		
@@ -451,13 +456,6 @@ void FriendCoreManagerDelete( FriendCoreManager *fcm )
 		{
 			WebSocketDelete( fcm->fcm_WebSocket );
 			fcm->fcm_WebSocket = NULL;
-		}
-		
-		DEBUG("[FriendCoreManager] Closing moble WS\n");
-		if( fcm->fcm_WebSocketMobile != NULL )
-		{
-			WebSocketDelete( fcm->fcm_WebSocketMobile );
-			fcm->fcm_WebSocketMobile = NULL;
 		}
 		
 		DEBUG("[FriendCoreManager] Shutdown\n");
@@ -512,6 +510,23 @@ void FriendCoreManagerDelete( FriendCoreManager *fcm )
 		{
 			FFree( fcm->fcm_SSHDSAKey );
 		}
+			
+		if( ssl_mutex_buf != NULL )
+		{
+			FFree( ssl_mutex_buf );
+			ssl_mutex_buf = NULL;
+		}
+		
+		ERR_free_strings( );
+		
+		EVP_cleanup( );
+		SSL_COMP_free_compression_methods();
+		COMP_zlib_cleanup();
+		//ERR_remove_state(0);
+		//ERR_remove_thread_state(NULL);
+
+		ERR_free_strings();
+		CRYPTO_cleanup_all_ex_data();
 		
 		FFree( fcm );
 	}

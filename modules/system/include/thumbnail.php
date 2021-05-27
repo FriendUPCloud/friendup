@@ -92,6 +92,21 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 
 	$door = new Door( $pure );
 	
+	// TODO: Find correct FilesystemID and FolderID for UserID's other then the logged in user.
+	
+	$filesize = 0;
+	
+	$newname = explode( '/', $dirnfile );
+	
+	$fl = new dbIO( 'FSFile' );
+	$fl->Filename = array_pop( $newname );
+	//$fl->FilesystemID = $door->ID;
+	$fl->UserID = $userid;
+	if( $fl->Load() )
+	{
+		$filesize = $fl->Filesize;
+	}
+	
 	// TODO: Check for changes overwritten with the same filename, thumbs could show the wrong image if it has the same name ...
 	
 	$found = false;
@@ -104,11 +119,11 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	{
 		if( isset( $args->debug ) )
 		{
-			die( '[1] ' . $thumb->UserID . ' -- ' . $thumb->Path . ' -- ' . $thumb->Filepath . ' -- ' . ( isset( $thumb->Filesize ) ? $thumb->Filesize . ' == ' . ( file_exists( $thumb->Filepath ) ? filesize( $thumb->Filepath ) : '0' ) : '' ) );
+			die( '[1] ' . $thumb->UserID . ' -- ' . $thumb->Path . ' -- ' . $thumb->Filepath . ' -- ' . $thumb->Filesize . ' == ' . $filesize );
 		}
 		
 		// Check if it exists!
-		if( ( file_exists( $thumb->Filepath ) && ( !isset( $thumb->Filesize ) || !$thumb->Filesize ) ) || ( file_exists( $thumb->Filepath ) && isset( $thumb->Filesize ) && $thumb->Filesize == filesize( $thumb->Filepath ) ) )
+		if( file_exists( $thumb->Filepath ) && ( !$filesize || ( $filesize > 0 && $thumb->Filesize == $filesize ) ) )
 		{
 			$found = true;
 			
@@ -118,16 +133,16 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		// Clean up..
 		else
 		{
-			$found = true;
+			$found = false;
 			
 			$thumb->delete();
-			_file_broken();
+			//_file_broken();
 		}
 	}
 	if( !$found )
 	{
 				
-		$d = new File( $p );
+		$d = new File( $p, false );
 
 		$source = null;
 	
@@ -137,20 +152,13 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
 		curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
+		curl_setopt( $ch, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 		$tmp = curl_exec( $ch );
 		curl_close( $ch );
 		
 		if( !$tmp || strstr( $tmp, 'fail<!--separate-->' ) )
 		{
-			$newname = explode( '/', $dirnfile );
-			
-			// TODO: Find correct FilesystemID and FolderID for UserID's other then the logged in user.
-			
-			$fl = new dbIO( 'FSFile' );
-			$fl->Filename = array_pop( $newname );
-			//$fl->FilesystemID = $door->ID;
-			$fl->UserID = $userid;
-			if( $fl->Load() && $fl->DiskFilename )
+			if( $filesize > 0 && $fl->DiskFilename )
 			{				
 				if( file_exists( 'storage/' . $fl->DiskFilename ) )
 				{
@@ -197,9 +205,15 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 				break;
 		}
 		
+		$filesize = 0;
+		
 		// Clean up
 		if( file_exists( '/tmp/Friendup/' . $smp ) )
+		{
+			$filesize = filesize( '/tmp/Friendup/' . $smp );
+			
 			unlink( '/tmp/Friendup/' . $smp );
+		}
 	
 		if( !$source )
 		{
@@ -261,7 +275,7 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		
 		if( file_exists( $wname . 'thumbnails/' . $fname ) )
 		{
-			$thumb->Filesize = filesize( $wname . 'thumbnails/' . $fname );
+			$thumb->Filesize = $filesize;
 			$thumb->Save();
 			
 			if( $thumb->ID > 0 )

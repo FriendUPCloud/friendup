@@ -69,7 +69,7 @@ typedef struct PHPInstance
 	char						*pi_Command;
 	int							pi_CommandLen;
 	int							pi_State;
-	UserSessionWebsocket		*pi_USW;				// pointer to websocket connection
+	UserSession					*pi_US;				// pointer to websocket connection via user session
 	
 	FThread						*pi_Thread;
 	MinNode						node;
@@ -157,7 +157,12 @@ pid_t popen2(const char *command, pid_t *p, int *infp, int *outfp)
 	int p_stdin[2], p_stdout[2];
 	pid_t pid;
 
-	if ( pipe(p_stdin) != 0 || pipe(p_stdout) != 0 )
+	if( pipe(p_stdin) != 0 )
+	{
+		return -1;
+	}
+	
+	if( pipe(p_stdout) != 0 )
 	{
 		return -1;
 	}
@@ -348,54 +353,54 @@ int thread( FThread *t )
 	if( sb != NULL )
 	{
 		fcm = sb->fcm;
-	}
 	
-	if( buf != NULL )
-	{
-		while( TRUE )// !feof( outid ) )
+		if( buf != NULL )
 		{
-			if( fcm != NULL && fcm->fcm_Shutdown == TRUE )
+			while( TRUE )// !feof( outid ) )
 			{
-				break;
-			}
-			
-			// Make a new buffer and read
-			//int reads = fread( buf, sizeof( char ), MY_BUF_SIZE, outid );
-			int reads = read( outid, buf, MY_BUF_SIZE );
-			if( reads > 0 )
-			{
-				DEBUG("Message replyed %.*s\n", reads, buf );
-				// This is how the total size is now
-				res += reads;
-				
-				if( si->pi_USW != NULL )
+				if( fcm != NULL && fcm->fcm_Shutdown == TRUE )
 				{
-					sb->WebsocketWrite( si->pi_USW , buf, reads, LWS_WRITE_TEXT );
+					break;
+				}
 			
-					DEBUG1("Wrote to websockets %lu bytes\n", res );
+				// Make a new buffer and read
+				//int reads = fread( buf, sizeof( char ), MY_BUF_SIZE, outid );
+				int reads = read( outid, buf, MY_BUF_SIZE );
+				if( reads > 0 )
+				{
+					DEBUG("Message replyed %.*s\n", reads, buf );
+					// This is how the total size is now
+					res += reads;
+				
+					if( si->pi_US != NULL )
+					{
+						sb->WebsocketWrite( si->pi_US , buf, reads, LWS_WRITE_TEXT );
+			
+						DEBUG1("Wrote to websockets %lu bytes\n", res );
+					}
+					else
+					{
+						DEBUG1("Websockets context not provided to NodeJS service, output is going to null\n");
+					}
 				}
 				else
 				{
-					DEBUG1("Websockets context not provided to NodeJS service, output is going to null\n");
+					break;
+				}
+			
+				if( t->t_Quit == TRUE )
+				{
+					si->pi_State = STATE_STOPPING;
+					DEBUG("Quit called\n");
+					break;
 				}
 			}
-			else
-			{
-				break;
-			}
-			
-			if( t->t_Quit == TRUE )
-			{
-				si->pi_State = STATE_STOPPING;
-				DEBUG("Quit called\n");
-				break;
-			}
+			FFree( buf );
 		}
-		FFree( buf );
-	}
-	else
-	{
-		FERROR("Cannot allocate memory for sendbuffer or buffer\n");
+		else
+		{
+			FERROR("Cannot allocate memory for sendbuffer or buffer\n");
+		}
 	}
 
 	pclose2( si->pi_PID );
@@ -564,40 +569,44 @@ char *ServiceRun( struct Service *s )
 
 char *ServiceCommand( struct Service *s, const char *serv, const char *cmd, Hashmap *params  )
 {
+	char *response = NULL;
 	PHPInstance *phpi = FCalloc( 1, sizeof( PHPInstance ) );
 	if( phpi != NULL )
 	{
 		phpi->pi_Command = StringShellEscapeSize( cmd, &(phpi->pi_CommandLen) );
 		phpi->pi_State = STATE_STARTED;
 		
-		PHPService *hs =(PHPService *) s->s_SpecialData;
-		if( hs != NULL )
+		if( s->s_SpecialData != NULL )
 		{
+			PHPService *hs =(PHPService *) s->s_SpecialData;
 			FRIEND_MUTEX_LOCK( &hs->ps_Mutex );
 			
 			phpi->node.mln_Succ = (MinNode *)hs->ps_Instances;
 			hs->ps_Instances = phpi;
 			
-			phpi->pi_USW = s->s_USW;
+			phpi->pi_US = s->s_UserSession;
 			phpi->pi_PHPService = hs;
 			
 			FRIEND_MUTEX_UNLOCK( &hs->ps_Mutex );
 			
 			phpi->pi_Thread = ThreadNew( thread, phpi, TRUE, NULL );
 			
-			char *response = FCalloc( 1024, sizeof( char ) );
+			response = (char *)FCalloc( 1024, sizeof( char ) );
 			if( response != NULL )
 			{
 				sprintf( response, "{\"pid\":\"%ld\"}",(FULONG) phpi->pi_PID );
-				return response;
 			}
+		}
+		else
+		{
+			FFree( phpi );
 		}
 	}
 	else
 	{
 		FERROR("Cannot allocate memory for PHPInstance\n");
 	}
-	return NULL;
+	return response;
 }
 
 //

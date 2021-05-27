@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ "$COVERITY_SCAN_BRANCH" != 1 -a "$TRAVIS_OS_NAME" = "osx" ]; then
-	if [ "$LWS_METHOD" != "mbedtls" ] ; then
+	if [ "$LWS_METHOD" != "mbedtls" -a "$LWS_METHOD" != "ss+mbedtls" ] ; then
 		mkdir build && cd build &&
 		cmake -DOPENSSL_ROOT_DIR="/usr/local/opt/openssl" $CMAKE_ARGS .. &&
 		cmake --build .
@@ -18,6 +18,7 @@ else
 			../scripts/h2spec.sh &&
 			../scripts/attack.sh &&
 			../scripts/h2load.sh &&
+			../scripts/autobahn-test-server.sh &&
 			../scripts/autobahn-test-client.sh
 		else
 			if [ "$LWS_METHOD" = "lwsws2" ] ; then
@@ -33,7 +34,7 @@ else
 					cmake --build . &&
 					../scripts/h2load-smp.sh
 				else
-					if [ "$LWS_METHOD" = "mbedtls" ] ; then
+					if [ "$LWS_METHOD" = "mbedtls" -o "$LWS_METHOD" = "ss+mbedtls" ] ; then
 						cmake $CMAKE_ARGS .. &&
 						cmake --build . &&
 						sudo make install &&

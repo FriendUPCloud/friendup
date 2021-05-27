@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <util/string.h>
 #include <mutex/mutex_manager.h>
+#include <system/systembase.h>
 
 void *EventManagerLoopThread( FThread *ptr );
 
@@ -95,6 +96,7 @@ void EventManagerDelete( EventManager *em )
 		
 		// waiting till all functions died
 		
+		int retries = 20;
 		while( TRUE )
 		{
 			if( threadsNo <= 0 )
@@ -102,7 +104,12 @@ void EventManagerDelete( EventManager *em )
 				break;
 			}
 			DEBUG("[EventManager] Not all threads were closed properly, waiting. ThreadsNo: %d\n", threadsNo );
-			usleep( 500 );
+			usleep( 50000 );
+			if( retries-- == 0 )
+			{
+				DEBUG( "[EventManager] We waited long enough.\n" );
+				break;
+			}
 		}
 		
 		CoreEvent *locnce = em->em_EventList;
@@ -157,7 +164,7 @@ void EventLaunch( CoreEvent *ptr )
 	ptr->ce_Launched = FALSE;
 	
 	DEBUG("[EventLaunch] quit\n");
-	pthread_exit( 0 );
+	pthread_exit( NULL );
 }
 
 //
@@ -175,7 +182,10 @@ void EventLaunch( CoreEvent *ptr )
  */
 void *EventManagerLoopThread( FThread *ptr )
 {
+	pthread_detach( pthread_self() );
+	
 	EventManager *ce = (EventManager *)ptr->t_Data;
+	SystemBase *lsb = (SystemBase *)ce->em_SB;
 	//const unsigned long long nano = 1000000000;
 	//unsigned long long t1, t2, lasttime;
 	//struct timespec tm;
@@ -205,12 +215,17 @@ void *EventManagerLoopThread( FThread *ptr )
 		
 		stime = etime;
 		etime = time( NULL );
+		
+		if( lsb->fcm->fcm_Shutdown == TRUE )
+		{
+			break;
+		}
 	}
 	while( ptr->t_Quit != TRUE );
 	
 	ptr->t_Launched = FALSE;
 	
-	//pthread_exit( 0 );
+	//pthread_exit( NULL );
 	/*
 	clock_t time = clock();
 
@@ -253,6 +268,8 @@ void *EventManagerLoopThread( FThread *ptr )
 		printf( "delay: %ld\n", ( t2 - t1 ) / 1000 );
 
 	}*/
+	
+	pthread_exit( NULL );
 	return NULL;
 }
 
@@ -304,7 +321,7 @@ int EventAdd( EventManager *em, char *name, void *function, void *data, time_t n
  * Force call an event
  *
  * @param em pointer to the event manager structure
- * @param id ID of the event to call
+ * @param ev event
  * @return NULL
  */
 CoreEvent *EventCheck( EventManager *em, CoreEvent *ev, time_t ti )

@@ -229,9 +229,15 @@ function UniqueId ()
 	return el;
 }
 
-function UniqueHash()
+function UniqueHash( str )
 {
-	return SHA256( "" + ( Math.random() * 999 ) + ( Math.random() * 999 ) + ( Math.random() * 999 ) + ( new Date() ).getTime() );
+    if( !str ) str = Math.random() + '' + Math.random() + '' + Math.random();
+    else str = str + '';
+    if( window.SHA256 )
+    {
+	    return SHA256( str );
+	}
+	return str;
 }
 
 // set a cookie
@@ -2696,8 +2702,8 @@ var __randDevId = false;
 function GetDeviceId()
 {
 	// Try to get the device id from cookie
-	var ck = GetCookie( 'deviceId' );
-	if( ck ) return ck;
+	/*var ck = GetCookie( 'deviceId' );
+	if( ck ) return ck;*/
 	
 	if( !__randDevId )
 	{
@@ -2711,24 +2717,96 @@ function GetDeviceId()
 	var platform = '';
 	if( !type ) type = ua.indexOf( 'phone' ) > 0 ? 'iphone' : false;
 	if( !type ) type = 'other';
-	if( ua.indexOf( 'ios' ) > 0 ) platform = 'iOS';
-	if( ua.indexOf( 'mac' ) > 0 ) platform = 'Apple';
-	if( ua.indexOf( 'windows' ) > 0 ) platform = 'Microsoft';
-	if( ua.indexOf( 'linux' ) > 0 ) platform = 'Linux';
+	if( ua.indexOf( 'ios' ) > 0 ){ platform = 'iOS'; }
+	else if( ua.indexOf( 'iphone' ) > 0 ){ platform = 'iOS'; }
+	else if( ua.indexOf( 'mac' ) > 0 ){ platform = 'Apple'; }
+	else if( ua.indexOf( 'windows' ) > 0 ){ platform = 'Microsoft'; }
+	else if( ua.indexOf( 'linux' ) > 0 ){ platform = 'Linux'; }
 	if( !platform ) platform = 'Generic';
 	
-	var r = id + '_' + type + '_' + platform + '_' + __randDevId;
+	let r = id + '_' + type + '_' + platform + '_' + __randDevId;
 
 	//application token is needed for iOS push notifications
-	if( typeof( window.friendApp ) != 'undefined' )
+	if( window.friendApp )
 	{
-		if( typeof( window.friendApp.appToken ) != 'undefined' )
+		if( window.friendApp.get_app_token )
 		{
-			r = id + '_ios_app_' + friendApp.appToken;
+			let oldToken = friendApp.get_app_token();
+			if( window.friendApp.get_platform )
+			{
+				if( friendApp.get_platform() == 'iOS' )
+				{
+					platform = 'iOS';
+					// Already has a token
+					if( oldToken.indexOf( '_ios_app_' ) > 0 )
+					{
+						r = friendApp.get_app_token();
+					}
+					else
+					{
+						r = id + '_ios_app_' + friendApp.get_app_token();
+					}
+				}
+				else
+				{
+					platform = 'Android';
+					// Already has a token
+					if( oldToken.indexOf( '_android_app_' ) > 0 )
+					{
+						r = friendApp.get_app_token();
+					}
+					else
+					{
+						r = id + '_android_app_' + friendApp.get_app_token();
+					}
+				}
+			}
+			else
+			{
+				if( platform === 'iOS' )
+				{	
+					platform = 'iOS';
+					// Already has a token
+					if( oldToken.indexOf( '_ios_app_' ) > 0 )
+					{
+						r = friendApp.get_app_token();
+					}
+					else
+					{	
+						r = id + '_ios_app_' + friendApp.get_app_token();
+					}
+				}
+				else
+				{
+					platform = 'Android';
+					// Already has a token
+					if( oldToken.indexOf( '_android_app_' ) > 0 )
+					{
+						r = friendApp.get_app_token();
+					}
+					else
+					{
+						r = id + '_android_app_' + friendApp.get_app_token();
+					}
+				}
+			}
 		}
 	}
+	
+	// Avoid duplicates
+	if( platform != 'iOS' )
+	{
+		while( r.indexOf( 'android_app_touch_android_app_' ) >= 0 ) 
+			r = r.split( 'android_app_touch_android_app_' ).join( 'android_app_' );
+	}
+	else
+	{
+		while( r.indexOf( 'ios_app_touch_ios_app_' ) >= 0 ) 
+			r = r.split( 'ios_app_touch_ios_app_' ).join( 'ios_app_' );
+	}
+	
 	// Store the cookie for later use
-	SetCookie( 'deviceId', r );
+	//SetCookie( 'deviceId', r );
 	
 	return r;
 }

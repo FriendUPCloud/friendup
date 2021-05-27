@@ -170,11 +170,13 @@ Workspace = {
 						'webclient/js/io/friendnetworkextension.js;' +
 						'webclient/js/io/friendnetworkdoor.js;' +
 						'webclient/js/io/friendnetworkapps.js;' +
+						'webclient/js/io/workspace_fileoperations.js;' + 
 						'webclient/js/io/DOS.js;' +
 						'webclient/3rdparty/favico.js/favico-0.3.10.min.js;' +
 						'webclient/js/gui/widget.js;' +
 						'webclient/js/gui/listview.js;' +
 						'webclient/js/gui/directoryview.js;' +
+						'webclient/js/io/directoryview_fileoperations.js;' +
 						'webclient/js/gui/menufactory.js;' +
 						'webclient/js/gui/workspace_menu.js;' +
 						'webclient/js/gui/deepestfield.js;' +
@@ -184,6 +186,7 @@ Workspace = {
 						'webclient/js/gui/calendar.js;' +
 						'webclient/js/gui/colorpicker.js;' +
 						'webclient/js/gui/workspace_tray.js;' +
+						'webclient/js/gui/tutorial.js;' +
 						'webclient/js/media/audio.js;' +
 						'webclient/js/io/p2p.js;' +
 						'webclient/js/io/request.js;' +
@@ -204,63 +207,62 @@ Workspace = {
 						if( !window.pingInt ) window.pingInt = setInterval( Workspace.pingAccount, 10000 );
 						Workspace.pingAccount();
 
-						// Get available drives
-						return Workspace.getMountlist( function()
+						// Setup default Doors screen
+						var wbscreen = new Screen( {
+								title: 'Friend Workspace v1.2.5',
+								id:	'DoorsScreen',
+								extra: Workspace.fullName,
+								taskbar: false
+							}
+						);
+
+						// Touch start show menu!
+						wbscreen.contentDiv.addEventListener( 'click', function( e )
 						{
-							// Setup default Doors screen
-							var wbscreen = new Screen( {
-									title: 'Friend Workspace v1.2-rc1',
-									id:	'DoorsScreen',
-									extra: Workspace.fullName,
-									taskbar: false
-								}
-							);
-
-							// Touch start show menu!
-							wbscreen.contentDiv.addEventListener( 'click', function( e )
+							var t = e.target ? e.target : e.srcElement;
+							if( t == wbscreen.contentDiv )
 							{
-								var t = e.target ? e.target : e.srcElement;
-								if( t == wbscreen.contentDiv )
+								// You need to click two times! And within 500 ms
+								setTimeout( function()
 								{
-									// You need to click two times! And within 500 ms
-									setTimeout( function()
-									{
-										wbscreen.canShowMenu = false;
-									}, 500 );
-									if( !wbscreen.canShowMenu )
-									{
-										wbscreen.canShowMenu = true;
-										return;
-									}
-									setTimeout( function()
-									{
-										WorkspaceMenu.show();
-										ge( 'MobileMenu' ).classList.add( 'Visible' );
-									}, 100 );
+									wbscreen.canShowMenu = false;
+								}, 500 );
+								if( !wbscreen.canShowMenu )
+								{
+									wbscreen.canShowMenu = true;
+									return;
 								}
-							}, true );
+								setTimeout( function()
+								{
+									WorkspaceMenu.show();
+									ge( 'MobileMenu' ).classList.add( 'Visible' );
+								}, 100 );
+							}
+						}, true );
 
-							document.body.style.visibility = 'visible';
-							// Loading notice
-							var loading = document.createElement( 'div' );
-							loading.className = 'LoadingMessage';
-							if( typeof( t.conf.app ) == 'undefined' )
-								loading.innerHTML = '<p>Nothing to load...</p>';
-							else loading.innerHTML = '<p>Entering ' + t.conf.app + '...</p>';
-							document.body.appendChild( loading );
-							setTimeout( function()
+						document.body.style.visibility = 'visible';
+						// Loading notice
+						var loading = document.createElement( 'div' );
+						loading.className = 'LoadingMessage';
+						if( typeof( t.conf.app ) == 'undefined' )
+							loading.innerHTML = '<p>Nothing to load...</p>';
+						else loading.innerHTML = '<p>Entering ' + t.conf.app + '...</p>';
+						document.body.appendChild( loading );
+						setTimeout( function()
+						{
+							loading.classList.add( 'Loaded' );
+						}, 25 );
+						
+						if( t.conf.app )
+						{
+							return loadApplicationBasics( function()
 							{
-								loading.classList.add( 'Loaded' );
-							}, 25 );
-							
-							if( t.conf.app )
-							{
-								return ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function( result )
+								ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function( result )
 								{
 									// Prevent loading twice...
 									if( document.body.loaded ) return;
 									document.body.loaded = true;
-									
+								
 									// Remove loading notice
 									if( loading )
 									{
@@ -283,7 +285,7 @@ Workspace = {
 											for( var a in window.movableWindows ){ count++; }
 											if( count <= 0 )
 												return setTimeout( showThankyou, 500 );
-											
+										
 											// Open the thank you template
 											var jo = new cAjax();
 											jo.open( 'get', '/webclient/templates/thankyou.html', true, false );
@@ -307,8 +309,8 @@ Workspace = {
 									}
 									showThankyou();
 								} );
-							}
-						} );
+							} );
+						}
 					}
 					document.body.appendChild( s );
 					return;
@@ -461,7 +463,6 @@ Workspace = {
 	},
 
 	// Dummy functions here
-	relogin: function( us, ps ){},
 	updateTasks: function(){},
 	refreshDesktop: function( callback ){ if ( callback ) callback(); },
 	refreshMenu: function(){},
@@ -495,7 +496,6 @@ Workspace = {
 	],
 	directoryView: false,
 	conn: null,
-	websocketsOffline: true,
 	//set an additional URL to call on logout
 	setLogoutURL: function( logoutURL )
 	{

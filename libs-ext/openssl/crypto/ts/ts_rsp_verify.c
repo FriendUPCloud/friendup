@@ -1,7 +1,7 @@
 /*
- * Copyright 2006-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -13,12 +13,12 @@
 #include <openssl/ts.h>
 #include <openssl/pkcs7.h>
 #include "ts_local.h"
-#include "crypto/ess.h"
 
 static int ts_verify_cert(X509_STORE *store, STACK_OF(X509) *untrusted,
                           X509 *signer, STACK_OF(X509) **chain);
 static int ts_check_signing_certs(PKCS7_SIGNER_INFO *si,
                                   STACK_OF(X509) *chain);
+static ESS_SIGNING_CERT *ess_get_signing_cert(PKCS7_SIGNER_INFO *si);
 static int ts_find_cert(STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert);
 static int ts_issuer_serial_cmp(ESS_ISSUER_SERIAL *is, X509 *cert);
 static int int_ts_RESP_verify_token(TS_VERIFY_CTX *ctx,
@@ -38,6 +38,7 @@ static int ts_check_signer_name(GENERAL_NAME *tsa_name, X509 *signer);
 static int ts_find_name(STACK_OF(GENERAL_NAME) *gen_names,
                         GENERAL_NAME *name);
 static int ts_find_cert_v2(STACK_OF(ESS_CERT_ID_V2) *cert_ids, X509 *cert);
+static ESS_SIGNING_CERT_V2 *ess_get_signing_cert_v2(PKCS7_SIGNER_INFO *si);
 
 /*
  * This must be large enough to hold all values in ts_status_text (with
@@ -200,9 +201,9 @@ end:
 static int ts_check_signing_certs(PKCS7_SIGNER_INFO *si,
                                   STACK_OF(X509) *chain)
 {
-    ESS_SIGNING_CERT *ss = ESS_SIGNING_CERT_get(si);
+    ESS_SIGNING_CERT *ss = ess_get_signing_cert(si);
     STACK_OF(ESS_CERT_ID) *cert_ids = NULL;
-    ESS_SIGNING_CERT_V2 *ssv2 = ESS_SIGNING_CERT_V2_get(si);
+    ESS_SIGNING_CERT_V2 *ssv2 = ess_get_signing_cert_v2(si);
     STACK_OF(ESS_CERT_ID_V2) *cert_ids_v2 = NULL;
     X509 *cert;
     int i = 0;
@@ -256,6 +257,29 @@ static int ts_check_signing_certs(PKCS7_SIGNER_INFO *si,
     return ret;
 }
 
+static ESS_SIGNING_CERT *ess_get_signing_cert(PKCS7_SIGNER_INFO *si)
+{
+    ASN1_TYPE *attr;
+    const unsigned char *p;
+    attr = PKCS7_get_signed_attribute(si, NID_id_smime_aa_signingCertificate);
+    if (!attr)
+        return NULL;
+    p = attr->value.sequence->data;
+    return d2i_ESS_SIGNING_CERT(NULL, &p, attr->value.sequence->length);
+}
+
+static ESS_SIGNING_CERT_V2 *ess_get_signing_cert_v2(PKCS7_SIGNER_INFO *si)
+{
+    ASN1_TYPE *attr;
+    const unsigned char *p;
+
+    attr = PKCS7_get_signed_attribute(si, NID_id_smime_aa_signingCertificateV2);
+    if (attr == NULL)
+        return NULL;
+    p = attr->value.sequence->data;
+    return d2i_ESS_SIGNING_CERT_V2(NULL, &p, attr->value.sequence->length);
+}
+
 /* Returns < 0 if certificate is not found, certificate index otherwise. */
 static int ts_find_cert(STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert)
 {
@@ -265,10 +289,11 @@ static int ts_find_cert(STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert)
     if (!cert_ids || !cert)
         return -1;
 
-    X509_digest(cert, EVP_sha1(), cert_sha1, NULL);
-
     /* Recompute SHA1 hash of certificate if necessary (side effect). */
     X509_check_purpose(cert, -1, 0);
+
+    if (!X509_digest(cert, EVP_sha1(), cert_sha1, NULL))
+        return -1;
 
     /* Look for cert in the cert_ids vector. */
     for (i = 0; i < sk_ESS_CERT_ID_num(cert_ids); ++i) {
@@ -302,7 +327,8 @@ static int ts_find_cert_v2(STACK_OF(ESS_CERT_ID_V2) *cert_ids, X509 *cert)
         else
             md = EVP_sha256();
 
-        X509_digest(cert, md, cert_digest, &len);
+        if (!X509_digest(cert, md, cert_digest, &len))
+            return -1;
         if (cid->hash->length != (int)len)
             return -1;
 

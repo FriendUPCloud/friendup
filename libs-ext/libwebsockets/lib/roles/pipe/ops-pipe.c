@@ -28,7 +28,11 @@ static int
 rops_handle_POLLIN_pipe(struct lws_context_per_thread *pt, struct lws *wsi,
 			struct lws_pollfd *pollfd)
 {
-#if !defined(WIN32) && !defined(_WIN32)
+#if defined(LWS_HAVE_EVENTFD)
+	eventfd_t value;
+	if (eventfd_read(wsi->desc.sockfd, &value) < 0)
+		return LWS_HPI_RET_PLEASE_CLOSE_ME;
+#elif !defined(WIN32) && !defined(_WIN32)
 	char s[100];
 	int n;
 
@@ -68,7 +72,7 @@ rops_handle_POLLIN_pipe(struct lws_context_per_thread *pt, struct lws *wsi,
 	return LWS_HPI_RET_HANDLED;
 }
 
-struct lws_role_ops role_ops_pipe = {
+const struct lws_role_ops role_ops_pipe = {
 	/* role name */			"pipe",
 	/* alpn id */			NULL,
 	/* check_upgrades */		NULL,

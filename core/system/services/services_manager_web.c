@@ -350,10 +350,10 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	if( serviceName == NULL )
 	{
 		FERROR( "ServiceName parameter is missing!\n" );
-		char buffer[ 256 ];
+		char buffer[ 512 ];
 		char buffer1[ 256 ];
 		snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "ServiceName (in url)" );
-		snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+		snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 		HttpAddTextContent( response, buffer );
 		
 		return response;
@@ -391,7 +391,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	
 	DEBUG("[ServiceManagerWebRequest] ---------------------------------%s----servicename %s servicename from service %s\n", urlpath[0], serviceName, selService->GetName() );
 	
-	selService->s_USW = request->h_WSocket;
+	selService->s_UserSession = loggedSession;//request->http_WSocket;
 	
 	DEBUG( "[ServiceManagerWebRequest]  Command OK %s !\n", urlpath[ ELEMENT_COMMAND ] );
 	
@@ -449,10 +449,10 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 				HashmapElement *el;
 				char *data = NULL;
 			
-				el =  HashmapGet( request->parsedPostContent, "data" );
+				el =  HashmapGet( request->http_ParsedPostContent, "data" );
 				if( el != NULL )
 				{
-					data = el->data;
+					data = el->hme_Data;
 				}
 			
 				selService->ServiceStop( selService, data );	
@@ -616,31 +616,33 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	
 	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "command" ) == 0 )
 	{
+
 		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
 		{
 			HashmapElement *el;
 			char *ret = NULL;
 		
-			el =  HashmapGet( request->parsedPostContent, "cmd" );
-			if( el != NULL && el->data != NULL )
+			el =  HashmapGet( request->http_ParsedPostContent, "cmd" );
+
+			if( el != NULL && el->hme_Data != NULL )
 			{
-				char *cmd = el->data;
+				char *cmd = el->hme_Data;
 				char *serv  = NULL;
 			
-				el =  HashmapGet( request->parsedPostContent, "servers" );
-				if( el != NULL && el->data != NULL )
+				el =  HashmapGet( request->http_ParsedPostContent, "servers" );
+				if( el != NULL && el->hme_Data != NULL )
 				{
-					serv  = el->data;
+					serv  = el->hme_Data;
 				}
 
 				if( serv == NULL )
 				{
 					// temporary call
-					ret = selService->ServiceCommand( selService, "ALL", cmd, request->parsedPostContent );
+					ret = selService->ServiceCommand( selService, "ALL", cmd, request->http_ParsedPostContent );
 				}
 				else
 				{
-					ret = selService->ServiceCommand( selService, serv, cmd, request->parsedPostContent );
+					ret = selService->ServiceCommand( selService, serv, cmd, request->http_ParsedPostContent );
 				}
 
 				if( ret != NULL )

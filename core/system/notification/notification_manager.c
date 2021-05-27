@@ -96,7 +96,7 @@ NotificationManager *NotificationManagerNew( void *sb )
 			FQInit( &(nm->nm_ExtServiceMessage) );
 			
 			//
-			// run android send thread
+			// run android/ios send thread
 			
 			pthread_mutex_init( &(nm->nm_AndroidSendMutex), NULL );
 			pthread_cond_init( &(nm->nm_AndroidSendCond), NULL );
@@ -105,24 +105,11 @@ NotificationManager *NotificationManagerNew( void *sb )
 			nm->nm_AndroidSendThread = ThreadNew( NotificationAndroidSendingThread, nm, TRUE, NULL );
 			
 			//
-			// run ios send thread
-			
-			pthread_mutex_init( &(nm->nm_IOSSendMutex), NULL );
-			pthread_cond_init( &(nm->nm_IOSSendCond), NULL );
-			FQInit( &(nm->nm_IOSSendMessages) );
-			
-			nm->nm_IOSSendThread = ThreadNew( NotificationIOSSendingThread, nm, TRUE, NULL );
-			
-			//
 			// run main thread
 			
 			nm->nm_TimeoutThread = ThreadNew( NotificationManagerTimeoutThread, nm, TRUE, NULL );
 			
-			// test
-			//NotificationManagerNotificationSendAndroid( nm, NULL, NULL, NULL, 0, NULL, NULL, NULL );
 		} // plib and plib->open != NULL
-
-		//nm_APNSNotificationTimeout_expirationDate = time(NULL) + 86400; // default expiration date set to 1 day
 	}	// calloc
 	DEBUG("[NotificationManagerNew] end\n");
 	return nm;
@@ -174,7 +161,7 @@ void NotificationManagerDelete( NotificationManager *nm )
 			while( TRUE )
 			{
 				DEBUG("[NotificationManagerDelete] killing android in use: %d\n", nm->nm_AndroidSendInUse );
-				if( nm->nm_AndroidSendInUse <= 0 || ((tr++)> 30 ) )
+				if( (nm->nm_AndroidSendInUse <= 0 && nm->nm_AndroidSendThread->t_Launched == FALSE ) || ((tr++)> 30 ) )
 				{
 					break;
 				}
@@ -190,49 +177,12 @@ void NotificationManagerDelete( NotificationManager *nm )
 			ThreadDelete( nm->nm_AndroidSendThread );
 		}
 		DEBUG("[NotificationManagerDelete] delete done\n");
+		
 		pthread_cond_destroy( &(nm->nm_AndroidSendCond) );
 		pthread_mutex_destroy( &(nm->nm_AndroidSendMutex) );
 		FQDeInit( &(nm->nm_AndroidSendMessages) );
+		
 		DEBUG("[NotificationManagerDelete] delete android all stuff released\n");
-		
-		// remove IOS sending thread
-		
-		// kill launched thread with messages to be send
-		
-		if( nm->nm_IOSSendThread != NULL )
-		{
-			int tr = 0;
-			DEBUG("[NotificationManagerDelete] set quit to IOS thread\n");
-			nm->nm_IOSSendThread->t_Quit = TRUE;
-			if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
-			{
-				pthread_cond_signal( &(nm->nm_IOSSendCond) ); // <- wake up!!
-				FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
-			}
-			DEBUG("[NotificationManagerDelete] before while\n");
-			while( TRUE )
-			{
-				DEBUG("[NotificationManagerDelete] killing ios in use: %d\n", nm->nm_IOSSendInUse );
-				if( nm->nm_IOSSendInUse <= 0 || ((tr++)> 30 ) )
-				{
-					break;
-				}
-				usleep( 500 );
-				if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
-				{
-					pthread_cond_signal( &(nm->nm_IOSSendCond) ); // <- wake up!!
-					FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
-				}
-			}
-		
-			DEBUG("[NotificationManagerDelete] delete IOS thread\n");
-			ThreadDelete( nm->nm_IOSSendThread );
-		}
-		pthread_cond_destroy( &(nm->nm_IOSSendCond) );
-		pthread_mutex_destroy( &(nm->nm_IOSSendMutex) );
-		FQDeInit( &(nm->nm_IOSSendMessages) );
-		
-		DEBUG("[NotificationManagerDelete] all threads deleted\n");
 		
 		//
 		// delete external services
@@ -290,7 +240,7 @@ Notification *NotificationManagerGetDB( NotificationManager *nm,  FULONG id )
 	SystemBase *sb = (SystemBase *)nm->nm_SB;
 	char where[ 1024 ];
 	
-	snprintf( where, sizeof(where), "ID='%lu'", id );
+	snprintf( where, 1024, "ID='%lu'", id );
 	
 	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
 	{
@@ -320,7 +270,7 @@ Notification *NotificationManagerGetTreeByNotifSentDB( NotificationManager *nm, 
 	{
 		DEBUG("NotificationManagerGetTreeByNotifSentDB id %lu start\n", notifSentId );
 	
-		snprintf( where, sizeof(where), "ID='%lu'", notifSentId );
+		snprintf( where, 1024, "ID='%lu'", notifSentId );
 	
 		int entries;
 	
@@ -328,7 +278,7 @@ Notification *NotificationManagerGetTreeByNotifSentDB( NotificationManager *nm, 
 		DEBUG("NotificationManagerGetTreeByNotifSentDB found ptr %p\n", notifSent );
 		if( notifSent != NULL )
 		{
-			snprintf( where, sizeof(where), "ID='%lu'", notifSent->ns_NotificationID );
+			snprintf( where, 1024, "ID='%lu'", notifSent->ns_NotificationID );
 			n = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationDesc, where, &entries );
 			DEBUG("NotificationManagerGetTreeByNotifSentDB found notifsent ptr %p\n", n );
 			if( n != NULL )
@@ -359,7 +309,7 @@ NotificationSent *NotificationManagerGetNotificationsSentDB( NotificationManager
 	
 	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
 	{
-		snprintf( where, sizeof(where), "ID='%lu'", ID );
+		snprintf( where, 1024, "ID='%lu'", ID );
 		ns = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationSentDesc, where, &entries );
 		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
 	}
@@ -383,7 +333,7 @@ NotificationSent *NotificationManagerGetNotificationsSentByStatusDB( Notificatio
 	
 	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
 	{
-		snprintf( where, sizeof(where), "ID='%lu' AND Status=%d", ID, status );
+		snprintf( where, 1024, "ID='%lu' AND Status=%d", ID, status );
 		ns = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationSentDesc, where, &entries );
 		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
 	}
@@ -407,7 +357,7 @@ NotificationSent *NotificationManagerGetNotificationsSentByStatusAndUMAIDDB( Not
 	
 	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
 	{
-		snprintf( where, sizeof(where), "Status=%d AND UserMobileAppID=%lu", status, umaID );
+		snprintf( where, 1024, "Status=%d AND UserMobileAppID=%lu", status, umaID );
 		ns = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationSentDesc, where, &entries );
 		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
 	}
@@ -434,11 +384,11 @@ NotificationSent *NotificationManagerGetNotificationsSentByStatusPlatformAndUMAI
 	{
 		if( platform <= 0 )
 		{
-			snprintf( where, sizeof(where), "Status=%d AND UserMobileAppID=%lu", status, umaID );
+			snprintf( where, 1024, "Status=%d AND UserMobileAppID=%lu", status, umaID );
 		}
 		else
 		{
-			snprintf( where, sizeof(where), "Status=%d AND UserMobileAppID=%lu AND Target=%d", status, umaID, platform );
+			snprintf( where, 1024, "Status=%d AND UserMobileAppID=%lu AND Target=%d", status, umaID, platform );
 		}
 		DEBUG("WHERE: >%s<\n", where );
 		ns = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationSentDesc, where, &entries );
@@ -521,11 +471,11 @@ int NotificationManagerDeleteNotificationDB( NotificationManager *nm, FULONG nid
 	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
 	{
 		char temp[ 1024 ];
-		snprintf( temp, sizeof(temp), "DELETE from `FNotification` where `ID`=%lu", nid );
+		snprintf( temp, 1024, "DELETE from `FNotification` where `ID`=%lu", nid );
 	
 		nm->nm_SQLLib->QueryWithoutResults( nm->nm_SQLLib, temp );
 	
-		snprintf( temp, sizeof(temp), "DELETE from `FNotificationSent` where `NotificationID`=%lu", nid );
+		snprintf( temp, 1024, "DELETE from `FNotificationSent` where `NotificationID`=%lu", nid );
 	
 		nm->nm_SQLLib->QueryWithoutResults( nm->nm_SQLLib, temp );
 		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
@@ -546,7 +496,7 @@ int NotificationManagerDeleteNotificationSentDB( NotificationManager *nm, FULONG
 	{
 		char temp[ 1024 ];
 
-		snprintf( temp, sizeof(temp), "DELETE from `FNotificationSent` where `ID`=%lu", nid );
+		snprintf( temp, 1024, "DELETE from `FNotificationSent` where `ID`=%lu", nid );
 	
 		nm->nm_SQLLib->QueryWithoutResults( nm->nm_SQLLib, temp );
 		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
@@ -572,7 +522,7 @@ int NotificationManagerNotificationSentSetStatusDB( NotificationManager *nm, FUL
 	{
 		char temp[ 1024 ];
 
-		snprintf( temp, sizeof(temp), "UPDATE `FNotificationSent` set Status=%d where `ID`=%lu", status, nid );
+		snprintf( temp, 1024, "UPDATE `FNotificationSent` set Status=%d where `ID`=%lu", status, nid );
 	
 		nm->nm_SQLLib->QueryWithoutResults( nm->nm_SQLLib, temp );
 		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
@@ -699,7 +649,7 @@ int NotificationManagerSendEventToConnections( NotificationManager *nm, Http *re
 		}
 	}
 	
-	if( req != NULL && req->h_RequestSource == HTTP_SOURCE_EXTERNAL_SERVER )
+	if( req != NULL && req->http_RequestSource == HTTP_SOURCE_EXTERNAL_SERVER )
 	{
 		INFO( "Request comes from external server\n");
 		return 0;
@@ -852,7 +802,7 @@ BufString *NotificationManagerSendRequestToConnections( NotificationManager *nm,
 	//char *retMessage = NULL;
 	BufString *retMsg = BufStringNew();
 	
-	if( req != NULL && req->h_RequestSource == HTTP_SOURCE_EXTERNAL_SERVER )
+	if( req != NULL && req->http_RequestSource == HTTP_SOURCE_EXTERNAL_SERVER )
 	{
 		INFO( "Request comes from external server\n");
 		return NULL;
@@ -913,7 +863,7 @@ BufString *NotificationManagerSendRequestToConnections( NotificationManager *nm,
 				}
 				*/
 				
-				dstsize = GenerateServiceMessage( dstMsg, reqID, path, params, us );
+				dstsize = GenerateServiceMessage( dstMsg, reqID, (char *)path, (char *)params, us );
 				
 				Log( FLOG_INFO, "[NotificationManagerSendRequestToConnections] Send message: '%s'\n", dstMsg );
 				
@@ -941,7 +891,7 @@ BufString *NotificationManagerSendRequestToConnections( NotificationManager *nm,
 				}
 				*/
 				
-				dstsize = GenerateServiceMessage( dstMsg, reqID, path, params, us );
+				dstsize = GenerateServiceMessage( dstMsg, reqID, (char *)path, (char *)params, us );
 				Log( FLOG_INFO, "[NotificationManagerSendRequestToConnections] Send message: '%s'\n", dstMsg );
 				
 				ret += WriteMessageToServers( con->esc_Connection, (unsigned char *)dstMsg, dstsize );
@@ -1095,7 +1045,7 @@ BufString *NotificationManagerSendRequestToConnections( NotificationManager *nm,
 int NotificationManagerAddIncomingRequestES( NotificationManager *nm, char *reqid, char *message )
 {
 	// allocate memory for new entry
-	FQEntry *newEntry = FCalloc( 1, sizeof( FQEntry ) );
+	FQEntry *newEntry = (FQEntry *)FCalloc( 1, sizeof( FQEntry ) );
 	
 	DEBUG("[NotificationManagerAddIncomingRequestES] requestid : %s message: %s\n", reqid, message );
 	
@@ -1114,6 +1064,10 @@ int NotificationManagerAddIncomingRequestES( NotificationManager *nm, char *reqi
 			DEBUG("[NotificationManagerAddIncomingRequestES] new entry added to list\n");
 			return 0;
 		}
+		else
+		{
+			FFree( newEntry );
+		}
 	}
 	return 1;
 }
@@ -1131,13 +1085,13 @@ int NotificationManagerDeleteOldNotificationDB( NotificationManager *nm )
 	time_t diff = 60 * 60 * 24 * 14; //1209600 = 14 days in seconds
 	t -= diff;		// time when entry was created < time minus diff
 	
-	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
+	if( nm && FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
 	{
-		snprintf( temp, sizeof(temp), "DELETE from `FNotification` WHERE Created>%lu", t );
+		snprintf( temp, 1024, "DELETE from `FNotification` WHERE Created>%lu", t );
 	
 		nm->nm_SQLLib->QueryWithoutResults( nm->nm_SQLLib, temp );
 	
-		snprintf( temp, sizeof(temp), "DELETE from `FNotificationSent` where `NotificationID` in(SELECT ID FROM `FNotification` WHERE Created>%lu)", t );
+		snprintf( temp, 1024, "DELETE from `FNotificationSent` where `NotificationID` in(SELECT ID FROM `FNotification` WHERE Created>%lu)", t );
 	
 		nm->nm_SQLLib->QueryWithoutResults( nm->nm_SQLLib, temp );
 		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
@@ -1257,6 +1211,8 @@ void NotificationSendThread( FThread *data )
 
 void NotificationManagerTimeoutThread( FThread *data )
 {
+	pthread_detach( pthread_self() );
+	
 	data->t_Launched = TRUE;
 	NotificationManager *nm = (NotificationManager *)data->t_Data;
 	int counter = 0;		// responsible for launching Notifcation checker
@@ -1366,40 +1322,145 @@ void NotificationManagerTimeoutThread( FThread *data )
 				}
 				FThread *t = ThreadNew( NotificationSendThread, sntd, TRUE, NULL );
 			}
-			/*
-			DelListEntry *le = rootDeleteList;
-			while( le != NULL )
-			{
-				DelListEntry *nextentry = (DelListEntry *)le->node.mln_Succ;
-				
-				Notification *dnotif = le->dle_NotificationPtr;
-				
-				if( dnotif != NULL )
-				{
-					DEBUG1("Msg will be sent! ID: %lu content: %s and deleted\n", dnotif->n_ID, dnotif->n_Content );
-				
-					MobileAppNotifyUserUpdate( nm->nm_SB, dnotif->n_UserName, dnotif, 0, NOTIFY_ACTION_TIMEOUT );
-					NotificationDelete( dnotif );
-					le->dle_NotificationPtr = NULL;
-				}
-				
-				FFree( le );
-				
-				le = nextentry;
-			}
-			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t update and remove list of entries END\n" );
-			*/
+
 			DEBUG("[NotificationManagerTimeoutThread] Check Notification!\n");
 			counter = 0;
 			
 			// 86400 - one day in seconds , 3600 *24
 			if( cleanCoutner > 17280 )	// 86400 seconds / 10 second interval * 2 days
 			{
+			
 				NotificationManagerDeleteOldNotificationDB( nm );
 				cleanCoutner = 0;
 			}
 		}
 	}
-	
 	data->t_Launched = FALSE;
+	pthread_exit( NULL );
+}
+
+#ifndef _LOCCOMP3
+#define _LOCCOMP3( str, len, A, B, C ) ( str[len-4]=='.' && str[len-3]==A && str[len-2]==B && str[len-1]==C )
+#endif
+
+#ifndef _LOCCOMP4
+#define _LOCCOMP4( str, len, A, B, C, D ) ( str[len-5]=='.' && str[len-4]==A && str[len-3]==B && str[len-2]==C && str[len-1]==D )
+#endif
+
+/**
+ * Send notification to Firebase server (in queue)
+ * 
+ * @param nm pointer to NotificationManager
+ * @param notif Notification structure
+ * @param ID NotificationSent  ID
+ * @param action actions after which messages were sent
+ * @param tokens device tokens separated by coma
+ * @param type notification type android/ios
+ * @return 0 when success, otherwise error number
+ */
+
+int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens, int type )
+{
+	SystemBase *sb = (SystemBase *)nm->nm_SB;
+	char *host = FIREBASE_HOST;
+	FBOOL isImage = FALSE;
+	
+	int msgSize = 728;
+	
+	if( tokens != NULL ){ msgSize += strlen( tokens ); }
+	if( notif->n_Channel != NULL ){ msgSize += strlen( notif->n_Channel ); }
+	if( notif->n_Content != NULL )
+	{
+		int conLen = strlen( notif->n_Content );
+		msgSize += (conLen*3); 
+		if( conLen > 4 )
+		{
+			if( _LOCCOMP3( notif->n_Content, conLen, 'j','p','g' ) || _LOCCOMP3( notif->n_Content, conLen, 'p','n','g' ) || _LOCCOMP3( notif->n_Content, conLen, 'g','i','f' ) || _LOCCOMP4( notif->n_Content, conLen, 'j','i','f','f' ) )
+			{
+				isImage = TRUE;
+			}
+		}
+	}
+	if( notif->n_Title != NULL ){ msgSize += (strlen( notif->n_Title )*2); }
+	if( notif->n_Extra != NULL ){ msgSize += strlen( notif->n_Extra ); }
+	if( notif->n_Application != NULL ){ msgSize += (strlen( notif->n_Application )*2); }
+
+#define DEFAULT_BADGE_NUMBER 0		// to be changed
+	
+	char *msg = FMalloc( msgSize );
+	if( msg != NULL )
+	{
+		// IOS
+		// "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\" }"
+		// "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, extras );
+		
+		int len = 0;
+		/*
+		if( isImage == TRUE )
+		{
+			len = snprintf( msg, msgSize, "{\"registration_ids\":[%s],\"notification\":{\"badge\":%d,\"title\":\"%s\",\"subtitle\":\"%s\",\"body\":\"%s\",\"image\":\"%s\",\"mutable_content\":true,\"content_available\":true},\"data\":{\"t\":\"notify\",\"title\":\"%s\",\"content\":\"%s\",\"channel\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"%s\",\"id\":%lu,\"notifid\":%lu,\"source\":\"notification\",\"createtime\":%lu},\"android\":{\"priority\":\"high\"},\"apns\":{\"payload\":{\"aps\":{\"mutable-content\":1}},\"fcm_options\":{\"image\":\"%s\"}}}", tokens, DEFAULT_BADGE_NUMBER, notif->n_Application, notif->n_Title, notif->n_Content, notif->n_Content, notif->n_Title, notif->n_Content, notif->n_Channel, notif->n_Extra, notif->n_Application, action, ID , notif->n_ID, notif->n_OriginalCreateT, notif->n_Content );
+		}
+		else
+		{
+			len = snprintf( msg, msgSize, "{\"registration_ids\":[%s],\"notification\":{\"badge\":%d,\"title\":\"%s\",\"subtitle\":\"%s\",\"body\":\"%s\",\"mutable_content\":true,\"content_available\":true},\"data\":{\"t\":\"notify\",\"title\":\"%s\",\"content\":\"%s\",\"channel\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"%s\",\"id\":%lu,\"notifid\":%lu,\"source\":\"notification\",\"createtime\":%lu},\"android\":{\"priority\":\"high\"}}", tokens, DEFAULT_BADGE_NUMBER, notif->n_Application, notif->n_Title, notif->n_Content, notif->n_Title, notif->n_Content, notif->n_Channel, notif->n_Extra, notif->n_Application, action, ID , notif->n_ID, notif->n_OriginalCreateT );
+		}
+		*/
+		
+		// original message
+		//len = snprintf( msg, msgSize, "{\"registration_ids\":[%s],\"notification\": {},\"data\":{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"%s\",\"id\":%lu,\"notifid\":%lu,\"source\":\"notification\",\"createtime\":%lu},\"android\":{\"priority\":\"high\"}}", tokens, notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, action, ID , notif->n_ID, notif->n_OriginalCreateT );
+	
+		if( type == MOBILE_APP_TYPE_ANDROID )
+		{
+			if( isImage == TRUE )
+			{
+				len = snprintf( msg, msgSize, "{\"registration_ids\":[%s],\"notification\":{},\"data\":{\"t\":\"notify\",\"badge\":%d,\"title\":\"%s\",\"subtitle\":\"%s\",\"body\":\"%s\",\"image\":\"%s\",\"channel\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"%s\",\"id\":%lu,\"notifid\":%lu,\"source\":\"notification\",\"createtime\":%lu},\"android\":{\"priority\":\"high\"}}", tokens, DEFAULT_BADGE_NUMBER, notif->n_Application, notif->n_Title, notif->n_Content, notif->n_Content, notif->n_Channel, notif->n_Extra, notif->n_Application, action, ID , notif->n_ID, notif->n_OriginalCreateT );
+			}
+			else
+			{
+				len = snprintf( msg, msgSize, "{\"registration_ids\":[%s],\"notification\":{},\"data\":{\"t\":\"notify\",\"badge\":%d,\"title\":\"%s\",\"subtitle\":\"%s\",\"body\":\"%s\",\"channel\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"%s\",\"id\":%lu,\"notifid\":%lu,\"source\":\"notification\",\"createtime\":%lu},\"android\":{\"priority\":\"high\"}}", tokens, DEFAULT_BADGE_NUMBER, notif->n_Application, notif->n_Title, notif->n_Content, notif->n_Channel, notif->n_Extra, notif->n_Application, action, ID , notif->n_ID, notif->n_OriginalCreateT );
+			}
+		}
+		else	// IOS
+		{
+			if( isImage == TRUE )
+			{
+				len = snprintf( msg, msgSize, "{\"registration_ids\":[%s],\"notification\":{\"badge\":%d,\"title\":\"%s\",\"subtitle\":\"%s\",\"body\":\"%s\",\"image\":\"%s\",\"mutable_content\":true,\"content_available\":true},\"data\":{\"t\":\"notify\",\"title\":\"%s\",\"content\":\"%s\",\"channel\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"%s\",\"id\":%lu,\"notifid\":%lu,\"source\":\"notification\",\"createtime\":%lu},\"android\":{\"priority\":\"high\"},\"apns\":{\"payload\":{\"aps\":{\"mutable-content\":1}},\"fcm_options\":{\"image\":\"%s\"}}}", tokens, DEFAULT_BADGE_NUMBER, notif->n_Application, notif->n_Title, notif->n_Content, notif->n_Content, notif->n_Title, notif->n_Content, notif->n_Channel, notif->n_Extra, notif->n_Application, action, ID , notif->n_ID, notif->n_OriginalCreateT, notif->n_Content );
+			}
+			else
+			{
+				len = snprintf( msg, msgSize, "{\"registration_ids\":[%s],\"notification\":{\"badge\":%d,\"title\":\"%s\",\"subtitle\":\"%s\",\"body\":\"%s\",\"image\":\"%s\",\"mutable_content\":true,\"content_available\":true},\"data\":{\"t\":\"notify\",\"title\":\"%s\",\"content\":\"%s\",\"channel\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"%s\",\"id\":%lu,\"notifid\":%lu,\"source\":\"notification\",\"createtime\":%lu},\"android\":{\"priority\":\"high\"},\"apns\":{\"payload\":{\"aps\":{\"mutable-content\":1}}}}", tokens, DEFAULT_BADGE_NUMBER, notif->n_Application, notif->n_Title, notif->n_Content, notif->n_Content, notif->n_Title, notif->n_Content, notif->n_Channel, notif->n_Extra, notif->n_Application, action, ID , notif->n_ID, notif->n_OriginalCreateT );
+				//len = snprintf( msg, msgSize, "{\"registration_ids\":[%s],\"notification\":{\"badge\":%d,\"title\":\"%s\",\"subtitle\":\"%s\",\"body\":\"%s\",\"mutable_content\":true,\"content_available\":true},\"data\":{\"t\":\"notify\",\"title\":\"%s\",\"content\":\"%s\",\"channel\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"%s\",\"id\":%lu,\"notifid\":%lu,\"source\":\"notification\",\"createtime\":%lu},\"android\":{\"priority\":\"high\"}}", tokens, DEFAULT_BADGE_NUMBER, notif->n_Application, notif->n_Title, notif->n_Content, notif->n_Title, notif->n_Content, notif->n_Channel, notif->n_Extra, notif->n_Application, action, ID , notif->n_ID, notif->n_OriginalCreateT );
+			}
+		}
+		
+		FQEntry *en = (FQEntry *)FCalloc( 1, sizeof( FQEntry ) );
+		if( en != NULL )
+		{
+			en->fq_Data = (void *)msg;
+			en->fq_Size = len;
+			
+			if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
+			{
+				FQPushFIFO( &(nm->nm_AndroidSendMessages), en );
+				
+				pthread_cond_signal( &(nm->nm_AndroidSendCond) );
+				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+			}
+			else
+			{
+				FFree( en );
+			}
+		}
+		else
+		{
+			FFree( msg ); // do not release message if its going to queue
+		}
+	}
+	else
+	{
+		DEBUG("Cannot allocate memory for message\n");
+		return -1;
+	}
+	
+	return 0;
 }

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Friend Workspace</title>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="height=device-height, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=contain"/>
+		<meta name="theme-color" content="#2C3E50">
+		<meta name="referrer" content="origin">
+		<link rel="stylesheet" href="css/friendup.css;/webclient/css/sharedapp.css;/webclient/theme/theme_compiled.css;/webclient/css/extraLoginCSS.css"/>
+		<style>
+			html body.Loading * { visibility: hidden; }
+			html body.Loading { background-color: #222222; }
+			html body { overflow: hidden; }
+		</style>
+		<script src="
+			/webclient/js/namespace.js;
+			webclient/js/api/friendapi.js;
+			webclient/js/utils/json.js;
+			webclient/js/utils/engine.js;
+			webclient/js/utils/cssparser.js;
+			webclient/js/io/applicationstorage.js;
+			webclient/js/io/friendlibrary.js;
+			webclient/js/io/cajax.js;
+			webclient/js/io/database.js;
+			webclient/js/io/DOS.js;
+			webclient/js/utils/fcrypto/deps/cryptodeps.js;
+			webclient/js/utils/fcrypto/fcrypto.js;
+			webclient/js/utils/sha256.js;
+			webclient/js/io/authenticate.js;
+			webclient/js/utils/md5.js;
+			webclient/js/utils/tool.js;
+			webclient/js/gui/template.js;
+			webclient/js/gui/guibase.js;
+			webclient/js/gui/window.js;
+			webclient/js/gui/screen.js;
+			webclient/js/gui/filebrowser.js;
+			webclient/js/gui/screenoverlay.js;
+			webclient/js/apiwrapper.js;
+			webclient/js/workspace_share.js;
+			webclient/js/user.js" type="text/javascript">
+		</script>
+		<meta name="apple-mobile-web-app-capable" content="yes">
+	</head>
+	<body onload="Workspace.preinit()" class="Loading" onunload="Workspace.doLeave();" onbeforeunload="Workspace.leave();" singletask="true">
+		<div id="Screens"></div>
+		<div id="Tasks"></div>
+		<div id="TaskSwitcher"></div>
+		<input id="FocusGrabber" type="text"/>
+	</body>
+</html>

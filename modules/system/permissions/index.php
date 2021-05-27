@@ -12,6 +12,30 @@
 
 require_once( 'php/include/permissions.php' );
 
+// If parameter sent from C isn't properly json decoded or urldecoded do it here ...
+
+if( is_string( $args->args ) )
+{
+	if( $urldecode = urldecode( $args->args ) )
+	{
+		$args->args = $urldecode;
+	}
+	
+	if( is_string( $args->args ) )
+	{
+		if( $jsondecode = json_decode( $args->args ) )
+		{
+			$args->args = $jsondecode;
+		}
+	}
+	
+}
+
+if( isset( $args->args->authid ) && ( !isset( $args->authid ) || !$args->authid || $args->authid == '(null)' ) )
+{
+	$args->authid = $args->args->authid;
+}
+
 if( file_exists( 'modules/system/permissions/' . $args->args->type . '.php' ) )
 {
 	include( 'modules/system/permissions/' . $args->args->type . '.php' );

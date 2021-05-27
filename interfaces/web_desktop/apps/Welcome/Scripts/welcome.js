@@ -26,7 +26,7 @@ Application.run = function( msg )
 	
 	document.body.classList.add( 'Tab1' );
 	
-	var m = new Module( 'system' );
+	/*var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
 		if( e == 'ok' )
@@ -47,17 +47,19 @@ Application.run = function( msg )
 			ge( 'LastUploads' ).innerHTML = str;
 		}
 	}
-	m.execute( 'proxyget', { url: 'https://www.youtube.com/channel/UCi_8eeLQt9DKJC0xZQsiIDg/videos?shelf_id=1&view=0&sort=dd' } );
+	m.execute( 'proxyget', { url: 'https://www.youtube.com/channel/UCi_8eeLQt9DKJC0xZQsiIDg/videos?shelf_id=1&view=0&sort=dd' } );*/
 	
 };
 
 function launch( app )
 {
-	Application.sendMessage( {
+	/* correct and nice, but doesnt work and we want a fix today...
+		Application.sendMessage( {
 		type: 'system',
 		command: 'executeapplication',
 		executable: app
-	} );
+	} );*/
+	parent.ExecuteApplication( app );
 };
 
 function nevershow()

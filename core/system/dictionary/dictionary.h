@@ -154,6 +154,10 @@ enum {
 	DICT_USER_GROUP_ALREADY_EXIST,
 	DICT_BAD_CHARS_USED,
 	DICT_NO_PERMISSION,
+	DICT_UMA_ENTRY_NOT_FOUND,
+	DICT_FILE_UNCOMPRESS_PROBLEM,
+	DICT_CANNOT_REMOVE_GROUP_WITH_LEVEL_TYPE,
+	DICT_CANNOT_EDIT_OR_REMOVE_USER_GROUP_LOCKED,
 	DICT_MAX
 };
 /*
@@ -235,17 +239,24 @@ INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) 
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'FCConnection cannot be created', 'ENG', '61');
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Connection not found', 'ENG', '62');
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Connection deleted', 'ENG', '63');
-INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot delete connection. Internal error: %d', 'ENG', '63');
-INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Connection with that name already exist', 'ENG', '64');
-INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot allocate memory for DOSToken', 'ENG', '65');
-INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot add token to list', 'ENG', '66');
-INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot remove token from list', 'ENG', '67');
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot delete connection. Internal error: %d', 'ENG', '64');
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Connection with that name already exist', 'ENG', '65');
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot allocate memory for DOSToken', 'ENG', '66');
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot add token to list', 'ENG', '67');
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot remove token from list', 'ENG', '68');
 
-INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'User Group already exist', 'ENG', '68');
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'User Group already exist', 'ENG', '69');
 
-INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Bad chars used', 'ENG', '69');
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Bad chars used', 'ENG', '70');
 
-INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'No access, special rights required', 'ENG', '70');
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'No access, special rights required', 'ENG', '71');
+
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'User Mobile App entry not found', 'ENG', '72');
+
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'File uncompress problem: %d', 'ENG', '73');
+
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot remove group with Level type', 'ENG', '74');
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot edit or remove UserGroup because its locked', 'ENG', '75');
 */
 
 // User status

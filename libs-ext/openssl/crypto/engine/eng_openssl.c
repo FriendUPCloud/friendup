@@ -1,8 +1,8 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -167,7 +167,7 @@ static int bind_fn(ENGINE *e, const char *id)
 }
 
 IMPLEMENT_DYNAMIC_CHECK_FN()
-    IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
+IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
 #endif                          /* ENGINE_DYNAMIC_SUPPORT */
 #ifdef TEST_ENG_OPENSSL_RC4
 /*-
@@ -191,15 +191,12 @@ typedef struct {
 static int test_rc4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                              const unsigned char *iv, int enc)
 {
-    const int n = EVP_CIPHER_CTX_key_length(ctx);
-
 # ifdef TEST_ENG_OPENSSL_RC4_P_INIT
     fprintf(stderr, "(TEST_ENG_OPENSSL_RC4) test_init_key() called\n");
 # endif
-    if (n <= 0)
-        return n;
-    memcpy(&test(ctx)->key[0], key, n);
-    RC4_set_key(&test(ctx)->ks, n, test(ctx)->key);
+    memcpy(&test(ctx)->key[0], key, EVP_CIPHER_CTX_key_length(ctx));
+    RC4_set_key(&test(ctx)->ks, EVP_CIPHER_CTX_key_length(ctx),
+                test(ctx)->key);
     return 1;
 }
 

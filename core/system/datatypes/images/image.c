@@ -45,20 +45,21 @@ FImage *ImageNew( int width, int height, int depth )
 	if( ( img = FCalloc( 1, sizeof(FImage) )  ) != NULL )
 	{
 		int bpp = 1;
+		int size = (width*height*bpp);
 		img->fi_Width = width;
 		img->fi_Height = height;
 		img->fi_Depth = depth;
 		
 		if( depth <= 8 )
 		{
-			
+			bpp = 1;
 		}
 		else	// 32 bit
 		{
 			bpp = 4;
 		}
 		
-		if( ( img->fi_Data = FCalloc( img->fi_Width*img->fi_Height*bpp, sizeof( FBYTE ) ) ) != NULL )
+		if( ( img->fi_Data = FCalloc( size, sizeof( FBYTE ) ) ) != NULL )
 		{
 			
 		}

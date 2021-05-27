@@ -3,7 +3,7 @@
 	<head>
 		<script src="
 			/webclient/js/apps/api.js;
-			/repository/packages/three_r75/three.min.js;
+			/webclient/3rdparty/three/three.min.js;
 			/webclient/js/native/ftheory.js;
 			/webclient/js/about_effect.js"
 		></script>
@@ -14,16 +14,39 @@
 				padding: 0; 
 				overflow: hidden;
 			}
+			body
+			{
+				opacity: 0;
+				transition: opacity 0.5s;
+			}
+			body.activated
+			{
+				opacity: 1;
+			}
+			body #content
+			{
+				opacity: 0;
+				transition: opacity 1s;
+				background: linear-gradient(180deg, hsla(283, 43%, 3%, 1) 0%, #010c13 80%);
+			}
+			body #content.Showing
+			{
+				opacity: 1;
+			}
 			#fc-info
 			{
 				position: relative;
 				color: white;
 				padding-top : 0.3em;
+				mask-image: linear-gradient(0deg, #00000044, black 50%, #00000044);
+				-moz-mask-image: linear-gradient(0deg, #00000044, black 50%, #00000044);
+				-webkit-mask-image: linear-gradient(0deg, #00000044, black 50%, #00000044);
 			}
 			#buildInfo
 			{
-				background: rgba( 230, 230, 230, 0.6 );
-				padding:12px;
+				background: rgba( 230, 230, 230, 0.1 );
+				padding: 12px 15px;
+				background-blend-mode: screen;
 			}
 			#buildInfo .item,
 			.contributorBlock
@@ -41,6 +64,10 @@
 			}
 			#contributors
 			{
+				mask-image: linear-gradient(180deg, transparent 0%, black 10%, black 50%, transparent 80%);
+				-moz-mask-image: linear-gradient(180deg, transparent 0%, black 10%, black 50%, transparent 80%);
+				-webkit-mask-image: linear-gradient(180deg, transparent 0%, black 10%, black 50%, transparent 80%);
+				box-shadow: 0px 2px 10px rgba(0,0,0,0.4);
 				position: absolute;
 				box-sizing: border-box;
 				top: 0;
@@ -48,7 +75,8 @@
 				width: 100%; 
 				height: 100%;
 				padding: 0;
-				background: rgba( 230, 230, 230, 0.3 ); 
+				background: rgba( 230, 230, 230, 0.1 );
+				background-blend-mode: screen;
 				color: white; 
 				text-shadow: 0px 1px 1px rgba(0,0,0,0.6);
 				position: relative;
@@ -88,7 +116,13 @@
 				left: 0;
 				bottom: 0;
 				right: 0;
-				background: #222
+				opacity: 0;
+				transition: opacity 1s;
+			}
+			
+			#FTheoryCanvasContainer.Showing
+			{
+				opacity: 1;
 			}
 		
 			#content 
@@ -98,25 +132,30 @@
 				width: 100%;
 			}
 		
-			#logo {
+			#logo
+			{
 				position: absolute;
 				top: 0;
 				left: 0;
 				width: 100%;
 				height: 280px;
+				perspective: 1000px;
 			}
 		
-			#logo img {
+			#logo img 
+			{
 				position: absolute;
 				top : 50%;
 				left: 50%;
 				transform: translate( -50%, -50% );
-				max-width:calc( 100% - 40px );
+				max-width: calc( 100% - 180px );
 				display:block;
 				margin:0 auto;
+				filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.5))
 			}
 		
-			#info {
+			#info
+			{
 				position: absolute;
 				top: 280px;
 				left: 0;
@@ -125,14 +164,13 @@
 			}
 		
 			html body.Loading > * { visibility: hidden; }
-			html body.Loading { background-color: #444444; }
 		</style>
 	</head>
 	<body class="Loading">
 		<div id="FTheoryCanvasContainer" style=""></div>
 		<div id="content" class="ScrollArea" style="">
 			<div id="logo" style="">
-				<img src="/webclient/gfx/system/logo_480_light.png" style=""/>
+				<img src="/graphics/release_logo_light.png" style=""/>
 			</div>
 			<div id="info">
 				<div id="fc-info"></div>
@@ -175,5 +213,6 @@
 				</div>
 			</div>
 		</div>
+		<script> setTimeout( function(){ document.getElementById( 'content' ).className = 'Showing'; }, 500 ); setTimeout( function(){ document.getElementById( 'FTheoryCanvasContainer' ).className = 'Showing'; }, 1500 );</script>
 	</body>
 </html>

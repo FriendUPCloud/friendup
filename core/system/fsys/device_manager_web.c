@@ -22,7 +22,9 @@
 #include <core/functions.h>
 #include <system/fsys/door_notification.h>
 
+//
 // local funciton
+//
 
 static inline void EscapeConfigFromString( char *str, char **configEscaped, char **executeCmd )
 {
@@ -37,59 +39,67 @@ static inline void EscapeConfigFromString( char *str, char **configEscaped, char
 		{
 			FFree( *configEscaped );
 		}
-		*configEscaped = FCalloc( len * 2 + 2, sizeof( char ) );
-		int n = 0; for( ; n < len; n++ )
+		*configEscaped = FCalloc( ((len * 2) + 2), sizeof( char ) );
+		if( *configEscaped != NULL )
 		{
-			if( str[n] == '"' )
+			int n = 0; for( ; n < len; n++ )
 			{
-				(*configEscaped)[k++] = '\\';
-			}
-			(*configEscaped)[k++] = str[n];
-		}
-		// Find executable
-		DEBUG( "[DeviceMWebRequest] Looking in: %s\n", str );
-		*executeCmd = FCalloc( 256, sizeof( char ) );
-		int mo = 0, im = 0, imrun = 1;
-		for( ; imrun == 1 && im < len - 14; im++ )
-		{
-			if( strncmp( str + im, "\"Executable\"", 12 ) == 0 )
-			{
-				im += 14;
-				imrun = 0;
-				for( ; im < len; im++ )
+				if( str[n] == '"' )
 				{
-					// Next quote is end of string
-					if( str[im] == '"' ) break;
-					*executeCmd[ mo++ ] = str[ im ];
+					(*configEscaped)[k++] = '\\';
+				}
+				(*configEscaped)[k++] = str[n];
+			}
+			// Find executable
+			DEBUG( "[DeviceMWebRequest] Looking in: %s\n", str );
+			*executeCmd = FCalloc( 256, sizeof( char ) );
+			if( *executeCmd != NULL )
+			{
+				int mo = 0, im = 0, imrun = 1;
+				for( ; imrun == 1 && im < len - 14; im++ )
+				{
+					if( strncmp( str + im, "\"Executable\"", 12 ) == 0 )
+					{
+						im += 14;
+						imrun = 0;
+						for( ; im < len; im++ )
+						{
+							// Next quote is end of string
+							if( str[im] == '"' ) break;
+							*executeCmd[ mo++ ] = str[ im ];
+						}
+					}
 				}
 			}
-		}
 		
-		// remove private user data
-		{
-			char *lockey = strstr( *configEscaped, "PrivateKey" );
-			if( lockey != NULL )
+			// remove private user data
 			{
-				// add  PrivateKey"="
-				lockey += 15;
-				int pos = 0;
-				while( TRUE )
+				char *lockey = strstr( *configEscaped, "PrivateKey" );
+				if( lockey != NULL )
 				{
-					//printf("inside '%c'\n", *lockey );
-					if( *lockey == 0 || (lockey[ 0 ] == '\\' && lockey[ 1 ] == '"' ) )
+					// add  PrivateKey"="
+					lockey += 15;
+					int pos = 0;
+					while( TRUE )
 					{
-						break;
+						//printf("inside '%c'\n", *lockey );
+						if( *lockey == 0 || (lockey[ 0 ] == '\\' && lockey[ 1 ] == '"' ) )
+						{
+							break;
+						}
+						*lockey = ' ';
+						lockey++;
+						pos++;
 					}
-					*lockey = ' ';
-					lockey++;
-					pos++;
 				}
 			}
 		}
 	}
 }
 
+//
 // fill information about device
+//
 
 static inline void FillDeviceInfo( int devnr, char *tmp, int tmplen, int mounted, char *fname, char *fsysname, char *path, char *sysname, char *config, int visible, char *exec, int isLimited, char *devserver, int devport, FULONG usergroupid )
 {
@@ -144,6 +154,22 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 	SystemBase *l = (SystemBase *)m;
 	Http *response = NULL;
 	
+	// No urlpath..
+	// TODO: Give this a unique error message..
+	if( urlpath == NULL || urlpath[ 1 ] == NULL )
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( DEFAULT_CONTENT_TYPE ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
+		};
+		response = HttpNewSimple( HTTP_200_OK, tags );
+		char dictmsgbuf[ 256 ];
+		snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_FUNCTION_NOT_FOUND], DICT_FUNCTION_NOT_FOUND );
+		HttpAddTextContent( response, dictmsgbuf );	
+		return response;
+	}
+	
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	* 
@@ -158,7 +184,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -210,7 +236,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 			char dictmsgbuf[ 256 ];
 			char dictmsgbuf1[ 196 ];
 			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "RefreshUserDrives", resperr );
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_FUNCTION_RETURNED );
 			HttpAddTextContent( response, dictmsgbuf );
 		}
 		BufStringDelete( bs );
@@ -245,21 +271,22 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
 		HashmapElement *el = HttpGetPOSTParameter( request, "devname" );
-		if( el != NULL ) devname = (char *)el->data;
+		if( el != NULL ) devname = (char *)el->hme_Data;
 		
 		int success = -1;
 		char *resultstring = NULL;
 		
+#define QUERY_LEN 512
+		
 		if( devname != NULL )
 		{
-			char *query = FCalloc( 512, sizeof( char ) );
+			char *query = FCalloc( QUERY_LEN, sizeof( char ) );
 			
 			// Fetch rows
 			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 			if( sqllib )
 			{
-				//snprintf( query, 512, ""
-				sqllib->SNPrintF( sqllib, query, 512, ""
+				sqllib->SNPrintF( sqllib, query, QUERY_LEN, ""
 "SELECT f.Name, f.ShortDescription FROM `Filesystem` f "
 "WHERE f.Config LIKE \"%%\\\"pollable\\\":\\\"yes\\\"%%\" "
 "AND f.Name = \"%s\" LIMIT 1", devname );
@@ -269,13 +296,16 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 				if( res != NULL )
 				{
 					char **row;
-					int rownr = 0;
 					if( ( row = sqllib->FetchRow( sqllib, res ) ) )
 					{
 						if( row[ 0 ] != NULL && row[ 1 ] != NULL )
 						{
-							resultstring = FCalloc( 512, sizeof( char ) );
-							sprintf( resultstring, "ok<!--separate-->{\"Name\":\"%s\",\"Description\":\"%s\"}", row[0], row[1] );
+							int len = 128 + strlen( row[ 0 ] ) + strlen( row[ 1 ] );
+							resultstring = FCalloc( len, sizeof( char ) );
+							if( resultstring != NULL )
+							{
+								sprintf( resultstring, "ok<!--separate-->{\"Name\":\"%s\",\"Description\":\"%s\"}", row[0], row[1] );
+							}
 							success = 0;
 						}
 					}
@@ -294,7 +324,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 				char dictmsgbuf[ 256 ];
 				char dictmsgbuf1[ 196 ];
 				snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_DRIVE_NOT_FOUND], devname );
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_DRIVE_NOT_FOUND );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_DRIVE_NOT_FOUND );
 				HttpAddTextContent( response, dictmsgbuf );
 			}
 			// Wee we succeeded
@@ -308,7 +338,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 				char dictmsgbuf[ 256 ];
 				char dictmsgbuf1[ 196 ];
 				snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_NO_ENTRY_IN_DB], devname );
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_NO_ENTRY_IN_DB );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_NO_ENTRY_IN_DB );
 				HttpAddTextContent( response, dictmsgbuf );
 			}
 			// Free resources
@@ -323,11 +353,9 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 			char dictmsgbuf[ 256 ];
 			char dictmsgbuf1[ 196 ];
 			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "devname" );
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
-		}		
-		
-		
+		}
 		*result = 200;
 	}
 
@@ -362,7 +390,7 @@ WHERE f.Config LIKE \"%\\\"pollable\\\":\\\"yes\\\"%\" AND u.ID = f.UserID \
 ORDER BY \
 f.Name ASC";
 			
-			ListString *str = ListStringNew();
+			BufString *bs = BufStringNew();
 			
 			// Fetch rows
 			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
@@ -378,9 +406,15 @@ f.Name ASC";
 					{
 						if( row[ 0 ] != NULL && row[ 1 ] != NULL )
 						{
-							char *prt = FCalloc( 512, sizeof( char ) );
-							sprintf( prt, "%s{\"Name\":\"%s\",\"Publisher\":\"%s\"}", rownr == 0 ? "" : ",", row[0], row[1] );
-							ListStringAdd( str, prt, strlen( prt ) ); 
+							int len = 128 + strlen( row[ 0 ] ) + strlen( row[ 1 ] );
+							char *prt = FCalloc( len, sizeof( char ) );
+							int spLen = 0;
+							if( prt != NULL )
+							{
+								spLen = sprintf( prt, "%s{\"Name\":\"%s\",\"Publisher\":\"%s\"}", rownr == 0 ? "" : ",", row[0], row[1] );
+								BufStringAddSize( bs, prt, spLen );
+							}
+							//ListStringAdd( str, prt, strlen( prt ) ); 
 							FFree( prt );
 							rownr++;
 						}
@@ -391,23 +425,27 @@ f.Name ASC";
 			}
 			
 			// Add positive response
-			if( ListStringJoin( str ) )
+			if( bs->bs_Size > 0 )
 			{
-				char *cnt = FCalloc( strlen( str->ls_Data ) + 20, sizeof( char ) );
-				sprintf( cnt, "ok<!--separate-->[%s]", str->ls_Data );
-				HttpAddTextContent( response, cnt );
-				FFree( cnt );
+				char *cnt = FMalloc( bs->bs_Size + 20 );
+				if( cnt != NULL )
+				{
+					int len = sprintf( cnt, "ok<!--separate-->[%s]", bs->bs_Buffer );
+					HttpSetContent( response, cnt, len );
+					//HttpAddTextContent( response, cnt );
+					//FFree( cnt );
+				}
 			}
 			// Add negative response
 			else
 			{
 				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_POLL_DRIVE_NO_DATA] , DICT_POLL_DRIVE_NO_DATA );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_POLL_DRIVE_NO_DATA] , DICT_POLL_DRIVE_NO_DATA );
 				HttpAddTextContent( response, dictmsgbuf );
 			}
 			
 			// Clean up and set result status
-			ListStringDelete( str );
+			BufStringDelete( bs );
 			*result = 200;
 	}
 	
@@ -457,19 +495,19 @@ f.Name ASC";
 		if( l->sl_ActiveAuthModule == NULL )
 		{
 			char dictmsgbuf[ 256 ];
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
 			HttpAddTextContent( response, dictmsgbuf );
 			
 			goto error;
 		}
 		
 		HashmapElement *el = HttpGetPOSTParameter( request, "devname" );
-		if( !el ) el = HashmapGet( request->query, "devname" );
+		if( !el ) el = HashmapGet( request->http_Query, "devname" );
 		
 		if( el != NULL )
 		{
 			char *ldevname = NULL;
-			devname = (char *)el->data;
+			devname = (char *)el->hme_Data;
 			
 			if( devname != NULL && ( ldevname = FCalloc( strlen( devname ) + 50, sizeof(char) ) ) != NULL )
 			{
@@ -498,13 +536,12 @@ f.Name ASC";
 		el = HttpGetPOSTParameter( request, "path" );
 		if( el != NULL )
 		{
-			path = (char *)el->data;
+			path = (char *)el->hme_Data;
 			if( path != NULL )
 			{
-				char *lpath = NULL;
-				if( ( lpath = FCalloc( strlen( path ) + 1, sizeof(char) ) ) != NULL )
+				char *lpath = UrlDecodeToMem( path );
+				if( lpath != NULL )
 				{
-					UrlDecode( lpath, path );
 					strcpy( path, lpath );
 					
 					FFree( lpath );
@@ -515,16 +552,16 @@ f.Name ASC";
 		el = HttpGetPOSTParameter( request, "enc" );
 		if( el != NULL )
 		{
-			if( (char *)el->data != NULL )
+			if( (char *)el->hme_Data != NULL )
 			{
-				enc = (char *)el->data;
+				enc = (char *)el->hme_Data;
 			}
 		}
 		
 		el = HttpGetPOSTParameter( request, "type" );
 		if( el != NULL )
 		{
-			type = (char *)el->data;
+			type = (char *)el->hme_Data;
 		}
 		
 		int mountError = 0;
@@ -536,7 +573,7 @@ f.Name ASC";
 			char dictmsgbuf[ 256 ];
 			char dictmsgbuf1[ 196 ];
 			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "devname" );
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
 		}
 		else
@@ -546,21 +583,21 @@ f.Name ASC";
 			char *port = NULL;
 			
 			el = HttpGetPOSTParameter( request, "execute" );
-			if( el != NULL ) execute = ( char *)el->data;
+			if( el != NULL ) execute = ( char *)el->hme_Data;
 			
 			el = HttpGetPOSTParameter( request, "visible" );
-			if( el != NULL ) visible = ( char *)el->data;
+			if( el != NULL ) visible = ( char *)el->hme_Data;
 			
 			el = HttpGetPOSTParameter( request, "Server" );
 			if( el != NULL )
 			{
-				host = (char *)el->data;
+				host = (char *)el->hme_Data;
 			}
 			
 			el = HttpGetPOSTParameter( request, "Port" );
 			if( el != NULL )
 			{
-				port = (char *)el->data;
+				port = (char *)el->hme_Data;
 			}
 			
 			//
@@ -571,33 +608,24 @@ f.Name ASC";
 			el = HttpGetPOSTParameter( request, "module" );
 			if( el != NULL )
 			{
-				module = (char *)el->data;
+				module = (char *)el->hme_Data;
 			}
 			
 			el = HttpGetPOSTParameter( request, "userid" );
 			if( el != NULL )
 			{
 				char *next;
-				userID = (FLONG)strtol(( char *)el->data, &next, 0);
+				userID = (FLONG)strtol(( char *)el->hme_Data, &next, 0);
 			}
 			
 			el = HttpGetPOSTParameter( request, "usergroupid" );
 			if( el != NULL )
 			{
 				char *next;
-				FULONG locid = (FLONG)strtol(( char *)el->data, &next, 0);
+				FULONG locid = (FLONG)strtol(( char *)el->hme_Data, &next, 0);
 				if( locid > 0 )
 				{
-					UserGroup *lg = l->sl_UGM->ugm_UserGroups;
-					while( lg != NULL )
-					{
-						if( locid == lg->ug_ID )
-						{
-							usrgrp = lg;
-							break;
-						}
-						lg = (UserGroup *)lg->node.mln_Succ;
-					}
+					usrgrp = UGMGetGroupByID( l->sl_UGM, locid );
 				}
 			}
 			
@@ -615,12 +643,12 @@ f.Name ASC";
 				el = HttpGetPOSTParameter( request, "authid" );
 				if( el != NULL )
 				{
-					authid = el->data;
+					authid = el->hme_Data;
 				}
 				el = HttpGetPOSTParameter( request, "args" );
 				if( el != NULL )
 				{
-					args = el->data;
+					args = el->hme_Data;
 					//args = UrlDecodeToMem( el->data );
 				}
 				
@@ -644,7 +672,10 @@ f.Name ASC";
 			}
 			else
 			{
-				userID = usr->u_ID;
+				if( usr != NULL )
+				{
+					userID = usr->u_ID;
+				}
 			}
 			
 			/*
@@ -659,7 +690,7 @@ f.Name ASC";
 				updateDatabase = TRUE;
 				HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Mounted successfully.\"}" );
 			}
-			else	// usr != NULL
+			else if( usr != NULL )
 			{
 				userID = usr->u_ID;
 				
@@ -672,7 +703,7 @@ f.Name ASC";
 					{ FSys_Mount_User_SessionID, (FULONG)usr->u_MainSessionID },
 					{ FSys_Mount_Module,         (FULONG)module },
 					{ FSys_Mount_Owner,          (FULONG)usr },
-					{ FSys_Mount_UserName, (FULONG)usr->u_Name },
+					{ FSys_Mount_UserName,       (FULONG)usr->u_Name },
 					{ FSys_Mount_Mount,          (FULONG)TRUE },
 					{ FSys_Mount_SysBase,        (FULONG)l },
 					{ FSys_Mount_UserGroup,      (FULONG)usrgrp },
@@ -696,32 +727,32 @@ f.Name ASC";
 						case FSys_Error_NOFSAvaiable:
 							if( error != NULL )
 							{
-								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\",\"code\":\"%d\",\"error\":\"%s\"}", l->sl_Dictionary->d_Msg[DICT_FILESYSTEM_NOT_FOUND] , DICT_FILESYSTEM_NOT_FOUND, error );
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\",\"error\":\"%s\"}", l->sl_Dictionary->d_Msg[DICT_FILESYSTEM_NOT_FOUND] , DICT_FILESYSTEM_NOT_FOUND, error );
 							}
 							else
 							{
-								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FILESYSTEM_NOT_FOUND] , DICT_FILESYSTEM_NOT_FOUND );
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_FILESYSTEM_NOT_FOUND] , DICT_FILESYSTEM_NOT_FOUND );
 							}
 							break;
 						case FSys_Error_NOFSType:
 							if( error != NULL )
 							{
-								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\",\"error\":\"%s\"}", l->sl_Dictionary->d_Msg[DICT_FILESYSTEM_NOT_FOUND] , DICT_FILESYSTEM_NOT_FOUND, error );
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\",\"error\":\"%s\"}", l->sl_Dictionary->d_Msg[DICT_FILESYSTEM_NOT_FOUND] , DICT_FILESYSTEM_NOT_FOUND, error );
 							}
 							else
 							{
-								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FILESYSTEM_NOT_FOUND] , DICT_FILESYSTEM_NOT_FOUND );
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_FILESYSTEM_NOT_FOUND] , DICT_FILESYSTEM_NOT_FOUND );
 							}
 							break;
 						case FSys_Error_NOName:
 						case FSys_Error_SelectFail:
 							if( error != NULL )
 							{
-								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\",\"error\":\"%s\"}", l->sl_Dictionary->d_Msg[DICT_NO_DISKNAME_OR_DISK] , DICT_NO_DISKNAME_OR_DISK, error );
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\",\"error\":\"%s\"}", l->sl_Dictionary->d_Msg[DICT_NO_DISKNAME_OR_DISK] , DICT_NO_DISKNAME_OR_DISK, error );
 							}
 							else
 							{
-								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_NO_DISKNAME_OR_DISK] , DICT_NO_DISKNAME_OR_DISK );
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_NO_DISKNAME_OR_DISK] , DICT_NO_DISKNAME_OR_DISK );
 							}
 							break;
 						default:
@@ -738,11 +769,11 @@ f.Name ASC";
 				{
 					if( mountError == FSys_Error_DeviceAlreadyMounted )
 					{
-						HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Device already mounted.\"}" );
+						HttpAddTextContent( response, "ok<!--separate-->{\"response\":\"Device already mounted.\"}" );
 					}
 					else
 					{
-						HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Mounted successfully.\"}" );
+						HttpAddTextContent( response, "ok<!--separate-->{\"response\":\"Mounted successfully.\"}" );
 					}
 					
 				}	// mount failed
@@ -815,7 +846,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 							);
 						}
 
-						void *res = sqllib->Query( sqllib, temptext );
+						sqllib->QueryWithoutResults( sqllib, temptext );
 
 						FFree( temptext );
 					}
@@ -858,7 +889,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 		if( l->sl_ActiveAuthModule == NULL )
 		{
 			char dictmsgbuf[ 256 ];
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
 			HttpAddTextContent( response, dictmsgbuf );
 			
 			goto error;
@@ -868,7 +899,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 		if( el != NULL )
 		{
 			char *next;
-			userID = (FLONG)strtol(( char *)el->data, &next, 0);
+			userID = (FLONG)strtol(( char *)el->hme_Data, &next, 0);
 		}
 		else
 		{
@@ -876,13 +907,13 @@ AND LOWER(f.Name) = LOWER('%s')",
 		}
 		
 		el = HttpGetPOSTParameter( request, "devname" );
-		if( !el ) el = HashmapGet( request->query, "devname" );
+		if( !el ) el = HashmapGet( request->http_Query, "devname" );
 		
 		// get device name from string
 		if( el != NULL )
 		{
 			char *ldevname = NULL;
-			devname = (char *)el->data;
+			devname = (char *)el->hme_Data;
 			
 			if( devname != NULL && ( ldevname = FCalloc( strlen( devname ) + 50, sizeof(char) ) ) != NULL )
 			{
@@ -914,7 +945,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 			char dictmsgbuf[ 256 ];
 			char dictmsgbuf1[ 196 ];
 			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "devname" );
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
 		}
 		else
@@ -937,13 +968,13 @@ AND LOWER(f.Name) = LOWER('%s')",
 					el = HttpGetPOSTParameter( request, "authid" );
 					if( el != NULL )
 					{
-						authid = el->data;
+						authid = el->hme_Data;
 					}
 					el = HttpGetPOSTParameter( request, "args" );
 					if( el != NULL )
 					{
-						args = el->data;
-						//args = UrlDecodeToMem( el->data );
+						args = el->hme_Data;
+						//args = UrlDecodeToMem( el->hme_Data );
 					}
 					DEBUG("UserID %lu\n", userID );
 			
@@ -974,7 +1005,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 							activeUser = locusr;
 							userID = activeUser->u_ID;
 						}
-						//deviceUnmounted = TRUE;
 
 						mountError = 0;
 					}
@@ -983,10 +1013,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 						Log( FLOG_INFO, "Admin1 ID[%lu] is mounting drive to user ID[%lu]\n", activeUser->u_ID, activeUser->u_ID );
 						userID = activeUser->u_ID;
 					}
-					//if( args != NULL )
-					//{
-					//	FFree( args );
-					//}
 				}
 				
 				DEBUG("[DeviceMWebRequest] device unmounted: %d\n", deviceUnmounted );
@@ -1112,7 +1138,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 						
 						sqllib->QueryWithoutResults( sqllib, temptext );
 					
-						HttpAddTextContent( response, "ok<!--separate-->{ \"Response\": \"Successfully unmounted\" }" );
+						HttpAddTextContent( response, "ok<!--separate-->{\"Response\":\"Successfully unmounted\"}" );
 						*result = 200;
 
 						l->LibrarySQLDrop( l, sqllib );
@@ -1124,7 +1150,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 				FERROR("User session is invalid\n");
 				
 				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_INVALID_USER_SESSION] , DICT_INVALID_USER_SESSION );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_INVALID_USER_SESSION] , DICT_INVALID_USER_SESSION );
 				HttpAddTextContent( response, dictmsgbuf );
 			}
 		}
@@ -1163,7 +1189,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 		if( l->sl_ActiveAuthModule == NULL )
 		{
 			char dictmsgbuf[ 256 ];
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
 			HttpAddTextContent( response, dictmsgbuf );
 			
 			goto error;
@@ -1173,7 +1199,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 		if( el != NULL )
 		{
 			char *ldevname = NULL;
-			devname = (char *)el->data;
+			devname = (char *)el->hme_Data;
 			
 			if( devname != NULL && ( ldevname = FCalloc( strlen( devname ) + 50, sizeof(char) ) ) != NULL )
 			{
@@ -1239,21 +1265,21 @@ AND LOWER(f.Name) = LOWER('%s')",
 					
 					if( rootdev != NULL )
 					{
-						HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"Device updated!\"}" );
+						HttpAddTextContent( response, "ok<!--separate-->{\"Result\":\"Device updated!\"}" );
 					}
 					else
 					{
 						char dictmsgbuf[ 256 ];
 						char dictmsgbuf1[ 196 ];
 						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_DEVICE_NOT_FOUND], devname );
-						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_DEVICE_NOT_FOUND );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_DEVICE_NOT_FOUND );
 						HttpAddTextContent( response, dictmsgbuf );
 					}
 				}
 				else
 				{
 					char dictmsgbuf[ 256 ];
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
 					HttpAddTextContent( response, dictmsgbuf );
 				}
 
@@ -1262,7 +1288,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 			else
 			{
 				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
 				HttpAddTextContent( response, dictmsgbuf );
 			}
 		}
@@ -1272,7 +1298,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 			char dictmsgbuf[ 256 ];
 			char dictmsgbuf1[ 196 ];
 			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "devname" );
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
 		}
 		
@@ -1308,7 +1334,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 		if( l->sl_ActiveAuthModule == NULL )
 		{
 			char dictmsgbuf[ 256 ];
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
 			HttpAddTextContent( response, dictmsgbuf );
 			
 			goto error;
@@ -1317,19 +1343,19 @@ AND LOWER(f.Name) = LOWER('%s')",
 		HashmapElement *el = HttpGetPOSTParameter( request, "devname" );
 		if( el != NULL )
 		{
-			devname = (char *)el->data;
+			devname = (char *)el->hme_Data;
 		}
 		
 		el = HttpGetPOSTParameter( request, "username" );
 		if( el != NULL )
 		{
-			username = (char *)el->data;
+			username = (char *)el->hme_Data;
 		}
 		
 		el = HttpGetPOSTParameter( request, "usergroup" );
 		if( el != NULL )
 		{
-			usergroupname = (char *)el->data;
+			usergroupname = (char *)el->hme_Data;
 		}
 		
 		if( devname == NULL || username == NULL )
@@ -1337,7 +1363,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 			char dictmsgbuf[ 256 ];
 			char dictmsgbuf1[ 196 ];
 			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, devname" );
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
 			FERROR("Devname or username are empty! Cannot share device\n");
 			goto error;
@@ -1358,13 +1384,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 				}
 			}
 			
-			LIST_FOR_EACH( l->sl_UGM->ugm_UserGroups, usergroup, UserGroup * )
-			{
-				if( strcmp( usergroupname, usergroup->ug_Name ) == 0 )
-				{
-					break;
-				}
-			}
+			usergroup = UGMGetGroupByName( l->sl_UGM, usergroupname );
 			
 			if( user == NULL )
 			{
@@ -1380,7 +1400,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 			{
 				FERROR("Cannot find user or usergroup with name %s/%s in database\n", username, usergroupname );
 				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
 				HttpAddTextContent( response, dictmsgbuf );
 				goto error;
 			}
@@ -1395,7 +1415,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 					break;
 				}
 			}
-			
 			
 			if( rootDev != NULL )
 			{
@@ -1412,16 +1431,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 					{
 						DEBUG("[DeviceMWebRequest] Devices were not mounted for user. They will be mounted now\n");
 					
-						SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-						if( sqllib != NULL )
-						{
-							UserDeviceMount( l, sqllib, user, 0, TRUE, &error, TRUE );
-							l->LibrarySQLDrop( l, sqllib );
-						}
-						else
-						{
-							FERROR("Cannot get sql.library slot\n");
-						}
+						UserDeviceMount( l, user, 0, TRUE, &error, TRUE );
+
 					}
 				
 					File *file = FCalloc( 1, sizeof( File ) );
@@ -1450,13 +1461,13 @@ AND LOWER(f.Name) = LOWER('%s')",
 							{
 								snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_DEVICE_CANNOT_BE_SHARED], err );
 							}
-							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_DEVICE_CANNOT_BE_SHARED );
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_DEVICE_CANNOT_BE_SHARED );
 							HttpAddTextContent( response, dictmsgbuf );
 						}
 						else
 						{
 							INFO("[DeviceMWebRequest] Device %s shared successfully\n", devname );
-							HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"Device shared successfully\"}" );
+							HttpAddTextContent( response, "ok<!--separate-->{\"Result\":\"Device shared successfully\"}" );
 						}
 					}
 					
@@ -1470,7 +1481,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 			{
 				FERROR("User account do not exist!Sharing device option is not possible\n");
 				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_OR_DEVICE_NOT_EXIST] , DICT_USER_OR_DEVICE_NOT_EXIST );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_USER_OR_DEVICE_NOT_EXIST] , DICT_USER_OR_DEVICE_NOT_EXIST );
 				HttpAddTextContent( response, dictmsgbuf );
 			}
 			
@@ -1531,165 +1542,192 @@ AND LOWER(f.Name) = LOWER('%s')",
 				
 #define TMP_SIZE 8112//2048
 #define TMP_SIZE_MIN1 (TMP_SIZE-1)
-				char *tmp = FCalloc( TMP_SIZE, sizeof( char ) ); 
-				char *executeCmd = NULL;
-				char *configEscaped = NULL;
-				
-				//
-				// get information about user drives
-				//
-				
-				while( dev != NULL )
+				char *tmp = FCalloc( TMP_SIZE, sizeof( char ) );
+				if( tmp != NULL )
 				{
-					FHandler *sys = (FHandler *)dev->f_FSys;
-					char *sysname = NULL;
-					if( sys != NULL )
+					char *executeCmd = NULL;
+					char *configEscaped = NULL;
+				
+					//
+					// get information about user drives
+					//
+				
+					if( FRIEND_MUTEX_LOCK( &( curusr->u_Mutex ) ) == 0 )
 					{
-						sysname = sys->Name;
-					}
-					Filesystem *fsys = ( Filesystem *)dev->f_DOSDriver;
-					
-					EscapeConfigFromString( dev->f_Config, &configEscaped, &executeCmd );
-					
-					memset( tmp, '\0', TMP_SIZE );
-					
-					FBOOL isLimited = FALSE;
-					
-					if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == FALSE )
-					{
-						if( strcmp( dev->f_FSysName, "Local" ) == 0 )
+						while( dev != NULL )
 						{
-							isLimited = TRUE;
-						}
-					}
+							FHandler *sys = (FHandler *)dev->f_FSys;
+							char *sysname = NULL;
+							if( sys != NULL )
+							{
+								sysname = sys->Name;
+							}
+							Filesystem *fsys = ( Filesystem *)dev->f_DOSDriver;
 					
-					FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, dev->f_Mounted, dev->f_Name, dev->f_FSysName, dev->f_Path, sysname, configEscaped, dev->f_Visible, executeCmd, isLimited, dev->f_DevServer, dev->f_DevPort, dev->f_UserGroupID );
+							EscapeConfigFromString( dev->f_Config, &configEscaped, &executeCmd );
 					
-					{
-						char inttmp[ 256 ];
-						int addlen = 0;
-						if( bsMountedDrives->bs_Size == 0 )
+							memset( tmp, '\0', TMP_SIZE );
+					
+							FBOOL isLimited = FALSE;
+					
+							if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == FALSE )
+							{
+								if( strcmp( dev->f_FSysName, "Local" ) == 0 )
+								{
+									isLimited = TRUE;
+								}
+							}
+					
+							FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, dev->f_Mounted, dev->f_Name, dev->f_FSysName, dev->f_Path, sysname, configEscaped, dev->f_Visible, executeCmd, isLimited, dev->f_DevServer, dev->f_DevPort, dev->f_UserGroupID );
+					
+							{
+								char inttmp[ 256 ];
+								int addlen = 0;
+								if( bsMountedDrives->bs_Size == 0 )
+								{
+									addlen = snprintf( inttmp, sizeof( inttmp ), "%lu", dev->f_ID );
+								}
+								else
+								{
+									addlen = snprintf( inttmp, sizeof( inttmp ), ",%lu", dev->f_ID );
+								}
+								BufStringAddSize( bsMountedDrives, inttmp, addlen );
+							}
+						/*
+						if( devnr == 0 )
 						{
-							addlen = snprintf( inttmp, sizeof( inttmp ), "%lu", dev->f_ID );
+							snprintf( tmp, TMP_SIZE_MIN1, "{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
+								dev->f_Name ? dev->f_Name : "", 
+								dev->f_FSysName ? dev->f_FSysName : "", 
+								dev->f_Path ? dev->f_Path : "",
+								sys && sys->Name ? sys->Name : "",
+								configEscaped ? configEscaped: "{}",
+								dev->f_Visible == 1 ? "true" : "false",
+								executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "", 
+								isLimited,
+								dev->f_DevServer ? dev->f_DevServer : "",
+								dev->f_DevPort,
+								dev->f_UserGroupID
+							);
 						}
 						else
 						{
-							addlen = snprintf( inttmp, sizeof( inttmp ), ",%lu", dev->f_ID );
+							snprintf( tmp, TMP_SIZE_MIN1, ",{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
+								dev->f_Name ? dev->f_Name : "",
+								dev->f_FSysName ? dev->f_FSysName : "", 
+								dev->f_Path ? dev->f_Path : "",
+								sys && sys->Name ? sys->Name : "",
+								configEscaped ? configEscaped: "{}",
+								dev->f_Visible == 1 ? "true" : "false",
+								executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "",
+								isLimited,
+								dev->f_DevServer ? dev->f_DevServer : "",
+								dev->f_DevPort,
+								dev->f_UserGroupID
+							);
 						}
-						BufStringAddSize( bsMountedDrives, inttmp, addlen );
-					}
-					/*
-					if( devnr == 0 )
-					{
-						snprintf( tmp, TMP_SIZE_MIN1, "{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
-							dev->f_Name ? dev->f_Name : "", 
-							dev->f_FSysName ? dev->f_FSysName : "", 
-							dev->f_Path ? dev->f_Path : "",
-							sys && sys->Name ? sys->Name : "",
-							configEscaped ? configEscaped: "{}",
-							dev->f_Visible == 1 ? "true" : "false",
-							executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "", 
-							isLimited,
-							dev->f_DevServer ? dev->f_DevServer : "",
-							dev->f_DevPort,
-							dev->f_UserGroupID
-						);
+						*/
+					
+							if( executeCmd )
+							{
+								FFree( executeCmd );
+								executeCmd = NULL;
+							}
+							if( configEscaped )
+							{
+								FFree( configEscaped );
+								configEscaped = NULL;
+							}
+						
+							BufStringAdd( bs, tmp );
+					
+							devnr++;
+							dev = (File *)dev->node.mln_Succ;
+						}
+						FRIEND_MUTEX_UNLOCK( &( curusr->u_Mutex ) );
 					}
 					else
 					{
-						snprintf( tmp, TMP_SIZE_MIN1, ",{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
-							dev->f_Name ? dev->f_Name : "",
-							dev->f_FSysName ? dev->f_FSysName : "", 
-							dev->f_Path ? dev->f_Path : "",
-							sys && sys->Name ? sys->Name : "",
-							configEscaped ? configEscaped: "{}",
-							dev->f_Visible == 1 ? "true" : "false",
-							executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "",
-							isLimited,
-							dev->f_DevServer ? dev->f_DevServer : "",
-							dev->f_DevPort,
-							dev->f_UserGroupID
-						);
+						if( executeCmd )
+						{
+							FFree( executeCmd );
+							executeCmd = NULL;
+						}
+						if( configEscaped )
+						{
+							FFree( configEscaped );
+							configEscaped = NULL;
+						}
 					}
-					*/
-					
-					if( executeCmd )
-					{
-						FFree( executeCmd );
-						executeCmd = NULL;
-					}
-					if( configEscaped )
-					{
-						FFree( configEscaped );
-						configEscaped = NULL;
-					}
-					
-					BufStringAdd( bs, tmp );
-					
-					devnr++;
-					dev = (File *)dev->node.mln_Succ;
-				}
 				
-				//
-				// get information about shared group drives
-				//
+					//
+					// get information about shared group drives
+					//
 				
-				UserGroupLink *ugl = loggedSession->us_User->u_UserGroupLinks;
-				while( ugl != NULL )
-				//int gr = 0;
-				//for( gr = 0 ; gr < curusr->u_GroupsNr ; gr++ )
-				{
-					//DEBUG("\n\n\n\nGROUP: %s\n\n\n\n\n", curusr->u_Groups[ gr ]->ug_Name );
-					dev = NULL;
-					if( ugl->ugl_Group != NULL )
+					UserGroupLink *ugl = loggedSession->us_User->u_UserGroupLinks;
+					while( ugl != NULL )
+					//int gr = 0;
+					//for( gr = 0 ; gr < curusr->u_GroupsNr ; gr++ )
 					{
-						dev = ugl->ugl_Group->ug_MountedDevs;
-					}
-					
-					while( dev != NULL )
-					{
-						// if this is shared drive and user want details we must point to original drive
-						if( dev->f_SharedFile != NULL )
+						//DEBUG("\n\n\n\nGROUP: %s\n\n\n\n\n", curusr->u_Groups[ gr ]->ug_Name );
+						dev = NULL;
+						if( ugl->ugl_Group != NULL )
 						{
-							dev = dev->f_SharedFile;
+							dev = ugl->ugl_Group->ug_MountedDevs;
 						}
+					
+						while( dev != NULL )
+						{
+							// if this is shared drive and user want details we must point to original drive
+							if( dev->f_SharedFile != NULL )
+							{
+								dev = dev->f_SharedFile;
+							}
 						
-						FHandler *sys = (FHandler *)dev->f_FSys;
-						char *sysname = NULL;
-						if( sys != NULL )
-						{
-							sysname = sys->Name;
-						}
-					
-						EscapeConfigFromString( dev->f_Config, &configEscaped, &executeCmd );
-					
-						memset( tmp, '\0', TMP_SIZE );
-					
-						FBOOL isLimited = FALSE;
-					
-						if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == FALSE )
-						{
-							if( strcmp( dev->f_FSysName, "Local" ) == 0 )
+							FHandler *sys = (FHandler *)dev->f_FSys;
+							char *sysname = NULL;
+							if( sys != NULL )
 							{
-								isLimited = TRUE;
+								sysname = sys->Name;
 							}
-						}
 					
-						FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, dev->f_Mounted, dev->f_Name, dev->f_FSysName, dev->f_Path, sysname, configEscaped, dev->f_Visible, executeCmd, isLimited, dev->f_DevServer, dev->f_DevPort, dev->f_UserGroupID );
+							if( configEscaped != NULL )
+							{
+								FFree( configEscaped );
+							}
+							if( executeCmd != NULL )
+							{
+								FFree( executeCmd );
+							}
+							EscapeConfigFromString( dev->f_Config, &configEscaped, &executeCmd );
+					
+							memset( tmp, '\0', TMP_SIZE );
+					
+							FBOOL isLimited = FALSE;
+					
+							if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == FALSE )
+							{
+								if( strcmp( dev->f_FSysName, "Local" ) == 0 )
+								{
+									isLimited = TRUE;
+								}
+							}
+					
+							FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, dev->f_Mounted, dev->f_Name, dev->f_FSysName, dev->f_Path, sysname, configEscaped, dev->f_Visible, executeCmd, isLimited, dev->f_DevServer, dev->f_DevPort, dev->f_UserGroupID );
 						
-						{
-							char inttmp[ 256 ];
-							int addlen = 0;
-							if( bsMountedDrives->bs_Size == 0 )
 							{
-								addlen = snprintf( inttmp, sizeof( inttmp ), "%lu", dev->f_ID );
+								char inttmp[ 256 ];
+								int addlen = 0;
+								if( bsMountedDrives->bs_Size == 0 )
+								{
+									addlen = snprintf( inttmp, sizeof( inttmp ), "%lu", dev->f_ID );
+								}
+								else
+								{
+									addlen = snprintf( inttmp, sizeof( inttmp ), ",%lu", dev->f_ID );
+								}
+								BufStringAddSize( bsMountedDrives, inttmp, addlen );
 							}
-							else
-							{
-								addlen = snprintf( inttmp, sizeof( inttmp ), ",%lu", dev->f_ID );
-							}
-							BufStringAddSize( bsMountedDrives, inttmp, addlen );
-						}
 					/*
 						if( devnr == 0 )
 						{
@@ -1763,61 +1801,10 @@ AND LOWER(f.Name) = LOWER('%s')",
 						devnr++;
 						dev = (File *)dev->node.mln_Succ;
 					}
-					ugl = (UserGroupLink *)ugl->node.mln_Succ;
-				}
-				
-				// now get all devices from database which are not mounted
-				//TODO we should get devices from DB assigned to user, to his groups and not mounted
-				/*
-				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-				if( sqllib != NULL )
-				{
-					int entries = 0;
-					int querysize = 256 + bsMountedDrives->bs_Size;
-					
-					char *query = FMalloc( querysize );
-					if( query != NULL )
-					{
-						sqllib->SNPrintF( sqllib, query, querysize, " ID NOT IN(%s) AND UserID", bsMountedDrives->bs_Buffer );
-						DEBUG("[DEVICE/LIST] sql: %s\n", query );
-					
-						Filesystem *rootdev = sqllib->Load( sqllib, FilesystemDesc, query, &entries );
-						if( rootdev != NULL )
-						{
-							Filesystem *locdev = rootdev;
-							while( locdev != NULL )
-							{
-								EscapeConfigFromString( locdev->fs_Config, &configEscaped, &executeCmd );
-								
-								FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, locdev->fs_Mounted, locdev->fs_Name, locdev->fs_Type, locdev->fs_Path, NULL, configEscaped, 0, executeCmd, 0, locdev->fs_Server, locdev->fs_Port, locdev->fs_GroupID );
-								//locdev->fs_Config
-								BufStringAdd( bs, tmp );
-								
-								if( executeCmd )
-								{
-									FFree( executeCmd );
-									executeCmd = NULL;
-								}
-								if( configEscaped )
-								{
-									FFree( configEscaped );
-									configEscaped = NULL;
-								}
-								
-								locdev = (Filesystem *)locdev->node.mln_Succ;
-							}
-							
-							FilesystemDeleteAll( rootdev );
-						
-							//DEBUG( "[DeviceMWebRequest] We now have information: %s (query: %s) - name: %s\n", rootdev->f_Config, query, rootdev->f_Name );
-						}
-						FFree( query );
+						ugl = (UserGroupLink *)ugl->node.mln_Succ;
 					}
-					l->LibrarySQLDrop( l, sqllib );
+					FFree( tmp );
 				}
-				*/
-				
-				FFree( tmp );
 				
 				BufStringAdd( bs, "]" );
 				
@@ -1829,7 +1816,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 			else
 			{
 				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USERSESSION_OR_USER_NOT_FOUND] , DICT_USERSESSION_OR_USER_NOT_FOUND );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_USERSESSION_OR_USER_NOT_FOUND] , DICT_USERSESSION_OR_USER_NOT_FOUND );
 				HttpAddTextContent( response, dictmsgbuf );
 			}
 		}
@@ -1851,8 +1838,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( DEFAULT_CONTENT_TYPE ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		if( response != NULL )
@@ -1865,7 +1852,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 		if( l->sl_ActiveAuthModule == NULL )
 		{
 			char dictmsgbuf[ 256 ];
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
 			HttpAddTextContent( response, dictmsgbuf );
 			goto error;
 		}
@@ -1886,11 +1873,11 @@ AND LOWER(f.Name) = LOWER('%s')",
 				{
 					if( fsysnr == 0 )
 					{
-						sprintf( tmp, "{ \"Name\": \"%s\" } \n", fsys->Name );
+						sprintf( tmp, "{\"Name\":\"%s\"}\n", fsys->Name );
 					}
 					else
 					{
-						sprintf( tmp, ", { \"Name\": \"%s\" } \n", fsys->Name );
+						sprintf( tmp, ",{\"Name\":\"%s\"}\n", fsys->Name );
 					}
 					BufStringAdd( bs, tmp );
 					
@@ -1906,7 +1893,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 			else
 			{
 				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USERSESSION_OR_USER_NOT_FOUND] , DICT_USERSESSION_OR_USER_NOT_FOUND );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_USERSESSION_OR_USER_NOT_FOUND] , DICT_USERSESSION_OR_USER_NOT_FOUND );
 				HttpAddTextContent( response, dictmsgbuf );
 			}
 		}
@@ -1926,8 +1913,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( DEFAULT_CONTENT_TYPE ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		char *devname = NULL;
@@ -1947,25 +1934,25 @@ AND LOWER(f.Name) = LOWER('%s')",
 		HashmapElement *el = HttpGetPOSTParameter( request, "devname" );
 		if( el != NULL )
 		{
-			devname = UrlDecodeToMem(( char *)el->data );
+			devname = UrlDecodeToMem(( char *)el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "config" );
 		if( el != NULL )
 		{
-			config = UrlDecodeToMem(( char *)el->data );
+			config = UrlDecodeToMem(( char *)el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "descryption" );
 		if( el != NULL )
 		{
-			descrypt = UrlDecodeToMem(( char *)el->data );
+			descrypt = UrlDecodeToMem(( char *)el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "id" );
 		{
 			char *next;
-			id = (FLONG)strtol(( char *)el->data, &next, 0);
+			id = (FLONG)strtol(( char *)el->hme_Data, &next, 0);
 		}
 		
 		if( id >= 0 )
@@ -2051,23 +2038,22 @@ AND LOWER(f.Name) = LOWER('%s')",
 						sqllib->QueryWithoutResults( sqllib, bs->bs_Buffer );
 						
 						HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"Database updated\"}" );
-						
-						l->LibrarySQLDrop( l, sqllib );
 					}
 					
 					BufStringDelete( bs );
+					l->LibrarySQLDrop( l, sqllib );
 				}
 				else	// bs == NULL
 				{
 					char dictmsgbuf[ 256 ];
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
 					HttpAddTextContent( response, dictmsgbuf );
 				}
 			} // values, names = NULL
 			else
 			{
 				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
 				HttpAddTextContent( response, dictmsgbuf );
 			}
 			
@@ -2086,7 +2072,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 			char dictmsgbuf[ 256 ];
 			char dictmsgbuf1[ 196 ];
 			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id" );
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
 		}
 		
@@ -2120,7 +2106,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 		};
 		response = HttpNewSimple( HTTP_200_OK, tags );
 		char dictmsgbuf[ 256 ];
-		snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FUNCTION_NOT_FOUND] , DICT_FUNCTION_NOT_FOUND );
+		snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_FUNCTION_NOT_FOUND] , DICT_FUNCTION_NOT_FOUND );
 		HttpAddTextContent( response, dictmsgbuf );
 	}
 	

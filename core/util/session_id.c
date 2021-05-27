@@ -109,8 +109,7 @@ FBOOL GenerateUUID( char **dst )
 	}
 	if( *dst == NULL )
 	{
-		*dst = FCalloc( KEY_LEN+16, sizeof(char) );
-		if( (*dst) != NULL )
+		if( (*dst = FCalloc( KEY_LEN+16, sizeof(char) )) != NULL )
 		{
 			char tmp[ KEY_TEMP_LEN ];
 			int i, j=0;
@@ -120,9 +119,9 @@ FBOOL GenerateUUID( char **dst )
 				(*dst)[ 2 * i ] = hexmap[ (tmp[i] & 0xF0) >> 4 ];
 				(*dst)[ 2 * i + 1 ] = hexmap[ tmp[i] & 0x0F ];
 			}
-		DEBUG("UUID generated: %s\n", *dst );
+			DEBUG("UUID generated: %s\n", *dst );
 		}
 	}
-return TRUE;
+	return TRUE;
 }
 

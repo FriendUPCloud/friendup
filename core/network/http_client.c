@@ -70,6 +70,10 @@ HttpClient *HttpClientNew( FBOOL post, FBOOL http2, char *param, char *headers, 
 		{
 			c->hc_Content = StringDuplicate( content );
 		}
+		else
+		{
+			c->hc_Content = NULL;
+		}
 	}
 	
 	return c;
@@ -144,14 +148,12 @@ BufString *HttpClientCall( HttpClient *c, char *host, int port, FBOOL secured )
 		DEBUG("Connection will be secured: %d\n", secured );
 		if( secured == TRUE )
 		{
-			BIO_METHOD *biofile = BIO_s_file();
+			const BIO_METHOD *biofile = BIO_s_file();
 			certbio = BIO_new( biofile );
 			outbio  = BIO_new_fp( stdout, BIO_NOCLOSE );
 			
-			SSL_library_init();
-			
-			OpenSSL_add_all_algorithms();  /* Load cryptos, et.al. */
-			SSL_load_error_strings();   /* Bring in and register error messages */
+			//OpenSSL_add_all_algorithms();  /* Load cryptos, et.al. */
+			//SSL_load_error_strings();   /* Bring in and register error messages */
 			method = TLSv1_2_client_method();  /* Create new client-method instance */
 
 			if ( (ctx = SSL_CTX_new(method)) == NULL)
@@ -481,6 +483,7 @@ client_error:
 
 	if( sockfd != 0 )
 	{
+		shutdown( sockfd, SHUT_RDWR );
 		close( sockfd );
 	}
 	

@@ -1,7 +1,7 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -13,9 +13,6 @@
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
 #include "internal/nelem.h"
-#include "crypto/asn1_dsa.h"
-
-#ifndef FIPS_MODE
 
 int EC_GROUP_get_basis_type(const EC_GROUP *group)
 {
@@ -140,6 +137,12 @@ struct ec_parameters_st {
     ASN1_INTEGER *cofactor;
 } /* ECPARAMETERS */ ;
 
+typedef enum {
+    ECPKPARAMETERS_TYPE_NAMED = 0,
+    ECPKPARAMETERS_TYPE_EXPLICIT,
+    ECPKPARAMETERS_TYPE_IMPLICIT
+} ecpk_parameters_type_t;
+
 struct ecpk_parameters_st {
     int type;
     union {
@@ -220,9 +223,9 @@ ASN1_CHOICE(ECPKPARAMETERS) = {
         ASN1_SIMPLE(ECPKPARAMETERS, value.implicitlyCA, ASN1_NULL)
 } ASN1_CHOICE_END(ECPKPARAMETERS)
 
-DECLARE_ASN1_FUNCTIONS(ECPKPARAMETERS)
-DECLARE_ASN1_ENCODE_FUNCTIONS_name(ECPKPARAMETERS, ECPKPARAMETERS)
-IMPLEMENT_ASN1_FUNCTIONS(ECPKPARAMETERS)
+DECLARE_ASN1_FUNCTIONS_const(ECPKPARAMETERS)
+DECLARE_ASN1_ENCODE_FUNCTIONS_const(ECPKPARAMETERS, ECPKPARAMETERS)
+IMPLEMENT_ASN1_FUNCTIONS_const(ECPKPARAMETERS)
 
 ASN1_SEQUENCE(EC_PRIVATEKEY) = {
         ASN1_EMBED(EC_PRIVATEKEY, version, INT32),
@@ -231,9 +234,9 @@ ASN1_SEQUENCE(EC_PRIVATEKEY) = {
         ASN1_EXP_OPT(EC_PRIVATEKEY, publicKey, ASN1_BIT_STRING, 1)
 } static_ASN1_SEQUENCE_END(EC_PRIVATEKEY)
 
-DECLARE_ASN1_FUNCTIONS(EC_PRIVATEKEY)
-DECLARE_ASN1_ENCODE_FUNCTIONS_name(EC_PRIVATEKEY, EC_PRIVATEKEY)
-IMPLEMENT_ASN1_FUNCTIONS(EC_PRIVATEKEY)
+DECLARE_ASN1_FUNCTIONS_const(EC_PRIVATEKEY)
+DECLARE_ASN1_ENCODE_FUNCTIONS_const(EC_PRIVATEKEY, EC_PRIVATEKEY)
+IMPLEMENT_ASN1_FUNCTIONS_const(EC_PRIVATEKEY)
 
 /* some declarations of internal function */
 
@@ -538,9 +541,10 @@ ECPKPARAMETERS *EC_GROUP_get_ecpkparameters(const EC_GROUP *group,
             return NULL;
         }
     } else {
-        if (ret->type == 0)
+        if (ret->type == ECPKPARAMETERS_TYPE_NAMED)
             ASN1_OBJECT_free(ret->value.named_curve);
-        else if (ret->type == 1 && ret->value.parameters)
+        else if (ret->type == ECPKPARAMETERS_TYPE_EXPLICIT
+                 && ret->value.parameters != NULL)
             ECPARAMETERS_free(ret->value.parameters);
     }
 
@@ -550,15 +554,22 @@ ECPKPARAMETERS *EC_GROUP_get_ecpkparameters(const EC_GROUP *group,
          */
         tmp = EC_GROUP_get_curve_name(group);
         if (tmp) {
-            ret->type = 0;
-            if ((ret->value.named_curve = OBJ_nid2obj(tmp)) == NULL)
+            ASN1_OBJECT *asn1obj = OBJ_nid2obj(tmp);
+
+            if (asn1obj == NULL || OBJ_length(asn1obj) == 0) {
+                ASN1_OBJECT_free(asn1obj);
+                ECerr(EC_F_EC_GROUP_GET_ECPKPARAMETERS, EC_R_MISSING_OID);
                 ok = 0;
+            } else {
+                ret->type = ECPKPARAMETERS_TYPE_NAMED;
+                ret->value.named_curve = asn1obj;
+            }
         } else
             /* we don't know the nid => ERROR */
             ok = 0;
     } else {
         /* use the ECPARAMETERS structure */
-        ret->type = 1;
+        ret->type = ECPKPARAMETERS_TYPE_EXPLICIT;
         if ((ret->value.parameters =
              EC_GROUP_get_ecparameters(group, NULL)) == NULL)
             ok = 0;
@@ -852,6 +863,20 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
          * serialized using explicit parameters by default.
          */
         EC_GROUP_set_asn1_flag(ret, OPENSSL_EC_EXPLICIT_CURVE);
+
+        /*
+         * If the input params do not contain the optional seed field we make
+         * sure it is not added to the returned group.
+         *
+         * The seed field is not really used inside libcrypto anyway, and
+         * adding it to parsed explicit parameter keys would alter their DER
+         * encoding output (because of the extra field) which could impact
+         * applications fingerprinting keys by their DER encoding.
+         */
+        if (params->curve->seed == NULL) {
+            if (EC_GROUP_set_seed(ret, NULL, 0) != 1)
+                goto err;
+        }
     }
 
     ok = 1;
@@ -883,7 +908,8 @@ EC_GROUP *EC_GROUP_new_from_ecpkparameters(const ECPKPARAMETERS *params)
         return NULL;
     }
 
-    if (params->type == 0) {    /* the curve is given by an OID */
+    if (params->type == ECPKPARAMETERS_TYPE_NAMED) {
+        /* the curve is given by an OID */
         tmp = OBJ_obj2nid(params->value.named_curve);
         if ((ret = EC_GROUP_new_by_curve_name(tmp)) == NULL) {
             ECerr(EC_F_EC_GROUP_NEW_FROM_ECPKPARAMETERS,
@@ -891,15 +917,16 @@ EC_GROUP *EC_GROUP_new_from_ecpkparameters(const ECPKPARAMETERS *params)
             return NULL;
         }
         EC_GROUP_set_asn1_flag(ret, OPENSSL_EC_NAMED_CURVE);
-    } else if (params->type == 1) { /* the parameters are given by a
-                                     * ECPARAMETERS structure */
+    } else if (params->type == ECPKPARAMETERS_TYPE_EXPLICIT) {
+        /* the parameters are given by an ECPARAMETERS structure */
         ret = EC_GROUP_new_from_ecparameters(params->value.parameters);
         if (!ret) {
             ECerr(EC_F_EC_GROUP_NEW_FROM_ECPKPARAMETERS, ERR_R_EC_LIB);
             return NULL;
         }
         EC_GROUP_set_asn1_flag(ret, OPENSSL_EC_EXPLICIT_CURVE);
-    } else if (params->type == 2) { /* implicitlyCA */
+    } else if (params->type == ECPKPARAMETERS_TYPE_IMPLICIT) {
+        /* implicit parameters inherited from CA - unsupported */
         return NULL;
     } else {
         ECerr(EC_F_EC_GROUP_NEW_FROM_ECPKPARAMETERS, EC_R_ASN1_ERROR);
@@ -928,6 +955,9 @@ EC_GROUP *d2i_ECPKParameters(EC_GROUP **a, const unsigned char **in, long len)
         ECPKPARAMETERS_free(params);
         return NULL;
     }
+
+    if (params->type == ECPKPARAMETERS_TYPE_EXPLICIT)
+        group->decoded_from_explicit_params = 1;
 
     if (a) {
         EC_GROUP_free(*a);
@@ -980,6 +1010,9 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
     if (priv_key->parameters) {
         EC_GROUP_free(ret->group);
         ret->group = EC_GROUP_new_from_ecpkparameters(priv_key->parameters);
+        if (ret->group != NULL
+            && priv_key->parameters->type == ECPKPARAMETERS_TYPE_EXPLICIT)
+            ret->group->decoded_from_explicit_params = 1;
     }
 
     if (ret->group == NULL) {
@@ -1037,7 +1070,7 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
     return NULL;
 }
 
-int i2d_ECPrivateKey(const EC_KEY *a, unsigned char **out)
+int i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 {
     int ret = 0, ok = 0;
     unsigned char *priv= NULL, *pub= NULL;
@@ -1109,7 +1142,7 @@ int i2d_ECPrivateKey(const EC_KEY *a, unsigned char **out)
     return (ok ? ret : 0);
 }
 
-int i2d_ECParameters(const EC_KEY *a, unsigned char **out)
+int i2d_ECParameters(EC_KEY *a, unsigned char **out)
 {
     if (a == NULL) {
         ECerr(EC_F_I2D_ECPARAMETERS, ERR_R_PASSED_NULL_PARAMETER);
@@ -1206,10 +1239,14 @@ int i2o_ECPublicKey(const EC_KEY *a, unsigned char **out)
     return buf_len;
 }
 
-DECLARE_ASN1_FUNCTIONS(ECDSA_SIG)
-DECLARE_ASN1_ENCODE_FUNCTIONS_name(ECDSA_SIG, ECDSA_SIG)
+ASN1_SEQUENCE(ECDSA_SIG) = {
+        ASN1_SIMPLE(ECDSA_SIG, r, CBIGNUM),
+        ASN1_SIMPLE(ECDSA_SIG, s, CBIGNUM)
+} static_ASN1_SEQUENCE_END(ECDSA_SIG)
 
-#endif /* FIPS_MODE */
+DECLARE_ASN1_FUNCTIONS_const(ECDSA_SIG)
+DECLARE_ASN1_ENCODE_FUNCTIONS_const(ECDSA_SIG, ECDSA_SIG)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(ECDSA_SIG, ECDSA_SIG, ECDSA_SIG)
 
 ECDSA_SIG *ECDSA_SIG_new(void)
 {
@@ -1226,74 +1263,6 @@ void ECDSA_SIG_free(ECDSA_SIG *sig)
     BN_clear_free(sig->r);
     BN_clear_free(sig->s);
     OPENSSL_free(sig);
-}
-
-ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **psig, const unsigned char **ppin, long len)
-{
-    ECDSA_SIG *sig;
-
-    if (len < 0)
-        return NULL;
-    if (psig != NULL && *psig != NULL) {
-        sig = *psig;
-    } else {
-        sig = ECDSA_SIG_new();
-        if (sig == NULL)
-            return NULL;
-    }
-    if (sig->r == NULL)
-        sig->r = BN_new();
-    if (sig->s == NULL)
-        sig->s = BN_new();
-    if (decode_der_dsa_sig(sig->r, sig->s, ppin, (size_t)len) == 0) {
-        if (psig == NULL || *psig == NULL)
-            ECDSA_SIG_free(sig);
-        return NULL;
-    }
-    if (psig != NULL && *psig == NULL)
-        *psig = sig;
-    return sig;
-}
-
-int i2d_ECDSA_SIG(const ECDSA_SIG *sig, unsigned char **ppout)
-{
-    BUF_MEM *buf = NULL;
-    size_t encoded_len;
-    WPACKET pkt;
-
-    if (ppout == NULL) {
-        if (!WPACKET_init_null(&pkt, 0))
-            return -1;
-    } else if (*ppout == NULL) {
-        if ((buf = BUF_MEM_new()) == NULL
-                || !WPACKET_init_len(&pkt, buf, 0)) {
-            BUF_MEM_free(buf);
-            return -1;
-        }
-    } else {
-        if (!WPACKET_init_static_len(&pkt, *ppout, SIZE_MAX, 0))
-            return -1;
-    }
-
-    if (!encode_der_dsa_sig(&pkt, sig->r, sig->s)
-            || !WPACKET_get_total_written(&pkt, &encoded_len)
-            || !WPACKET_finish(&pkt)) {
-        BUF_MEM_free(buf);
-        WPACKET_cleanup(&pkt);
-        return -1;
-    }
-
-    if (ppout != NULL) {
-        if (*ppout == NULL) {
-            *ppout = (unsigned char *)buf->data;
-            buf->data = NULL;
-            BUF_MEM_free(buf);
-        } else {
-            *ppout += encoded_len;
-        }
-    }
-
-    return (int)encoded_len;
 }
 
 void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
@@ -1325,7 +1294,6 @@ int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
     return 1;
 }
 
-#ifndef FIPS_MODE
 int ECDSA_size(const EC_KEY *r)
 {
     int ret, i;
@@ -1351,6 +1319,7 @@ int ECDSA_size(const EC_KEY *r)
     i = i2d_ASN1_INTEGER(&bs, NULL);
     i += i;                     /* r and s */
     ret = ASN1_object_size(1, i, V_ASN1_SEQUENCE);
+    if (ret < 0)
+        return 0;
     return ret;
 }
-#endif

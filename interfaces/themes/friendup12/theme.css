@@ -34,7 +34,7 @@
 	$ColorText:              #333333;
 	$ColorButton:            #f0f0f0;
 	$ColorBgButton:          #455155;
-	$ColorBgButtonAlt:       #34495E;
+	$ColorBgButtonAlt:       #20374D;
 	$ColorButtonHover:       #f0f0f0;
 	$ColorBgButtonHover:     #556368;
 	$ColorSelect:            #333333;
@@ -68,11 +68,11 @@
 	$ColorDialogHeader:      #f0f0f0;
 	$ColorPositive:          #333333;
 	$ColorNegative:          #f0f0f0;
-	$ColorNegativeAlt:       #34495E;
+	$ColorNegativeAlt:       #20374D;
 	$ColorBgPositive:        #cfcfcf;
 	$ColorBgPositiveAlt:     #f0f0f0;
 	$ColorBgNegative:        #3f3f3f;
-	$ColorBgNegativeAlt:     #34495E;
+	$ColorBgNegativeAlt:     #20374D;
 	$ColorBgHighlight:       #818181;
 	$ColorHighlight:         #e0e0e0;
 	$ColorSelect:            #f0f0f0;
@@ -102,38 +102,44 @@
 	$ColorStGreenLight:      #0C2032;
 	$ColorBgStBlueLight:     #3498DB;
 	$ColorStBlueLight:       #0C2032;
+	$ColorBgStBlueDark:      #0C2032;
+	$ColorStBlueDark:        #3498DB;
 	$ColorBgStGrayLight:     #BDC3C7;
 	$ColorStGrayLight:       #0C2032;
 
 	/* Context colors */
-	$ColorAccept:              #ECF0F1;
-	$ColorAcceptBg:            #0B9A49;
-	$ColorAcceptButton:        #ECF0F1;
-	$ColorAcceptButtonBg:      #519039;
-	$ColorAcceptButtonHover:   #FFFFFF;
-	$ColorAcceptButtonHoverBg: #97d137;
-	$ColorDanger:              #FFE26C;
-	$ColorDangerBg:            #C92918;
-	$ColorDangerButton:        #FFE26C;
-	$ColorDangerButtonBg:      #C92918;
-	$ColorDangerButtonHover:   #FFFFFF;
-	$ColorDangerButtonHoverBg: #E74C3C;
-	$ColorAvailable:           #F7F7F7;
-	$ColorAvailableBg:         #0F85D1;
-	$ColorAction:              #f7f7f7;
-	$ColorActionBg:            #8E44AD;
-	$ColorWarning:             #720B00;
-	$ColorWarningBg:           #F9D543;
-	$ColorNotify:              #0C2032;
-	$ColorNotifyBg:            #E67E22;
+	$ColorAccept:                 #ECF0F1;
+	$ColorAcceptBg:               #0B9A49;
+	$ColorAcceptButton:           #ECF0F1;
+	$ColorAcceptButtonBg:         #519039;
+	$ColorAcceptButtonHover:      #FFFFFF;
+	$ColorAcceptButtonHoverBg:    #97d137;
+	$ColorDanger:                 #FFE26C;
+	$ColorDangerBg:               #C92918;
+	$ColorDangerButton:           #FFE26C;
+	$ColorDangerButtonBg:         #C92918;
+	$ColorDangerButtonHover:      #FFFFFF;
+	$ColorDangerButtonHoverBg:    #E74C3C;
+	$ColorAvailable:              #F7F7F7;
+	$ColorAvailableBg:            #0F85D1;
+	$ColorAvailableButton:        #e0e0e0;
+	$ColorAvailableButtonBg:      #0F85d1;
+	$ColorAvailableButtonHover:   #FFFFFF;
+	$ColorAvailableButtonHoverBg: #58ADE3;
+	$ColorAction:                 #f7f7f7;
+	$ColorActionBg:               #8E44AD;
+	$ColorWarning:                #720B00;
+	$ColorWarningBg:              #F9D543;
+	$ColorNotify:                 #0C2032;
+	$ColorNotifyBg:               #E67E22;
 
 	$ColorIconBlinkStart:      #444444;
 	$ColorIconBlinkEnd:        grey;
-
+	
 	/* Font sizes */
 	$FontSizeButton:         14px;
 	$FontSizeDefault:        14px;
-
+	
 	/* Font weights */
 	$FontWeightButton:       normal;
 	$FontWeightThList:       normal;
@@ -201,6 +207,13 @@
 	$BorderDefaultLeft:      1px solid rgba(255,255,255,0.1);
 	$BorderDefaultRight:     1px solid rgba(0,0,0,0.1);
 	$BorderDefaultBottom:    1px solid rgba(0,0,0,0.1);
+
+	/* Border radius */
+	$BorderRadius:            5px;
+	$BorderTopLeftRadius:     5px;
+	$BorderTopRightRadius:    5px;
+	$BorderBottomRightRadius: 5px;
+	$BorderBottomLeftRadius:  5px;
 
 	/* Box shadow */
 	$BoxShadowButton:        none;
@@ -310,14 +323,26 @@ html #DoorsScreen .Left > .VirtualWorkspaces > div
 	height: 16px;
 	margin: 5px 6px 0 0 !important;
 	border-radius: 3px;
-	line-height: 14px;
+	line-height: 16px;
 	overflow: hidden;
-	border: 1px solid rgba(69, 81, 85, 0.4);
+	border: 0;
+	background: rgba(0,0,0,0.1);
+}
+
+html #DoorsScreen .Left > .VirtualWorkspaces > div:hover
+{
+	background: rgba(0,0,0,0.8);
+}
+
+html #DoorsScreen .Left > .VirtualWorkspaces > div.Active:hover
+{
+	background: rgba(0,0,0,0.9);
 }
 
 html #DoorsScreen .Left > .VirtualWorkspaces > div.Active
 {
-	background: #455155;
+	background: rgba(0,0,0,0.4);
+	border: 0;
 }
 
 html #DoorsScreen .Left > .VirtualWorkspaces > div:first-child
@@ -333,7 +358,7 @@ html #DoorsScreen .Left > .VirtualWorkspaces > div > span
 
 html #DoorsScreen .Left > .VirtualWorkspaces > div.Active > span
 {
-	background: #455155;
+	background: transparent;
 	color: #e0e0e0;
 }
 
@@ -357,7 +382,7 @@ html .Screen > .TitleBar > .Left > .Info
 
 html #Screens > div
 {
-	background: #34495E;
+	background: #20374D;
 }
 
 html #DoorsScreen > .ScreenContent,
@@ -876,6 +901,8 @@ html body[mobile] .Dialog > .ScrollArea
 	box-shadow: 0px 2px 5px rgba(0,0,0,0.7);
 }
 
+
+
 .Padding
 {
 	padding: $PaddingBox;
@@ -905,6 +932,40 @@ html body[mobile] .Dialog > .ScrollArea
 	padding-bottom: $PaddingBox;
 	box-sizing: border-box;
 }
+
+
+
+.BorderRadius
+{
+	border-radius: $BorderRadius;
+}
+
+.BorderRadiusTopLeft
+{
+	border-top-left-radius: $BorderTopLeftRadius;
+}
+
+.BorderRadiusTopRight
+{
+	border-top-right-radius: $BorderTopRightRadius;
+}
+
+.BorderRadiusBottomRight
+{
+	border-bottom-right-radius: $BorderBottomRightRadius;
+}
+
+.BorderRadiusBottomLeft
+{
+	border-bottom-left-radius: $BorderBottomLeftRadius;
+}
+
+
+.OverflowHidden
+{
+	overflow: hidden;
+}
+
 
 .FontLarge
 {
@@ -946,7 +1007,7 @@ html .DockMenu .DockMenuHeader, html .DockMenu .DockMenuItem
 
 html .DockMenu .DockMenuHeader
 {
-	background: #34495E;
+	background: #20374D;
 	border-radius: 2px 2px 0 0;
 }
 
@@ -1022,7 +1083,10 @@ html .View > .Title
 	height: 26.6px; /* .6 because of rounding bug in browsers */
 	background-image: none;
 	border-radius: 2px 2px 0 0;
-	background-color: #4A6075;
+	/* --- old color --- */
+	/*background-color: #4A6075;*/
+	/* --- new color --- */
+	background-color: #344A5E;
 }
 
 html .View > .Title > div > span
@@ -1082,7 +1146,10 @@ html .View.Active > .BottomBar
 html .View.Active > .Title,
 html body[mobile] .View > .Title
 {
-	background-color: #34495E;
+	/* --- old color --- */
+	/*background-color: #34495E;*/
+	/* --- new color ---*/
+	background-color: #20374D;
 }
 
 /* Done here - find marker to continue */
@@ -1466,7 +1533,10 @@ html body:not([mobile]) .View > .Content
 
 html > body:not(.Inside):not(.Loading), html body .View:not([transparent]) .View > .Content
 {
-	background-color: #f9f9f9 !important;
+	/* --- old color --- */
+	/*background-color: #f9f9f9 !important;*/
+	/* --- new color --- */
+	background-color: #ECF0F1 !important;
 	border-radius: 0 0 2px 2px;
 }
 
@@ -1542,12 +1612,12 @@ html body:not([mobile]) .View > .Resize
 
 html body:not([mobile]) .View:not(.Active) > .Resize:before
 {
-	background-color: #34495E;
+	background-color: #20374D;
 }
 
 html body:not([mobile]) .View.Active > .Resize:before
 {
-	background-color: #34495E;
+	background-color: #20374D;
 }
 
 html body:not([mobile]) .View > .Resize:hover:before,
@@ -1655,7 +1725,7 @@ html #WorkspaceMenu .Open ul > li
 html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu,
 html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu
 {
-	background: #34495E;
+	background: #20374D;
 }
 
 html #WorkspaceMenu ul
@@ -2088,7 +2158,7 @@ html #DockWindowList .Task:hover
 html > body #Statusbar .Task.Active:hover,
 html > body #DockWindowList .Task.Active:hover
 {
-	background-color: #34495e;
+	background-color: #20374D;
 }
 
 html #DockWindowList .Task
@@ -2102,7 +2172,7 @@ html > body #DockWindowList .Task.Active,
 html > body #Statusbar .Task.Active
 {
 	border-radius: 2px;
-	background-color: #34495e;
+	background-color: #20374D;
 }
 
 html #DockWindowList .Task.Active:hover, html #DockWindowList .Task:hover,
@@ -2428,7 +2498,11 @@ html body .Calendar div.HRow > .Current.Day:nth-child(even):hover
 
 html body .List tr.sw1.Selected, html body .List div.sw1.Selected
 {
-	background-color: #34495e;
+	background-color: #20374D;
+}
+html body .List tr.sw2.Selected, html body .List div.sw2.Selected
+{
+	background-color: #304357;
 }
 
 /* Toolbar icons ------------------------------------------------------------ */
@@ -2568,7 +2642,7 @@ html div.Listview > .Icons > .Scroller > .Row.Odd.Selected > .Column,
 html #MousePointer .Row.Selected .Column,
 html #MousePointer .Row.Odd.Selected .Column
 {
-	background: #34495e;
+	background: #20374D;
 	color: white;
 }
 
@@ -3029,6 +3103,11 @@ html .File .Icon .TypePDF
 html .File .Icon .TypeSVG
 {
 	background-image: url(/iconthemes/friendup15/File_Vector.svg);
+}
+
+html .File .Icon .TypeDRAWIO
+{
+	background-image: url(/iconthemes/friendup15/File_Drawio.svg);
 }
 
 html .File .Icon .TypeEPS
@@ -3605,6 +3684,7 @@ html select, html select:hover
 html button:before, html button.IconSmall:before
 {
 	font-size: 1.1em;
+	margin-right: 4px;
 }
 
 /* Mouse pointers ----------------------------------------------------------- */
@@ -3781,7 +3861,7 @@ html [mobile=mobile] > #MobileMenu.Visible
 
 html body[mobile] #WorkspaceMenu.Open ul
 {
-	background: #34495E;
+	background: #20374D;
 }
 
 [mobile] #WorkspaceMenu:before

@@ -18,43 +18,43 @@
  */
 
 #include "user_application.h"
+#include <util/session_id.h>
 
 /**
  * Create new instance of UserApplication
  *
- * @param id User ID
+ * @param userid User ID
  * @param appid unique application ID
+ * @param userSessionID user session ID
  * @param perm permissions
- * @param authid authentication ID
  * @return new UserApplication structure when success, otherwise NULL
  */
-UserApplication *UserAppNew( FULONG id, FULONG appid, char *perm, char *authid )
+UserApplication *UserAppNew( FULONG userid, FULONG appid, FULONG userSesionID, char *perm )
 {
 	UserApplication *ua = NULL;
 	
 	if( ( ua = FCalloc( 1, sizeof(UserApplication) ) ) != NULL )
 	{
-		ua->ua_UserID = id;
+		ua->ua_UserID = userid;
 		ua->ua_ApplicationID = appid;
-		int len = strlen( perm );
+		ua->ua_UserSessionID = userSesionID;
+		ua->ua_DateCreated = time( NULL );
 		
-		if( len > 0 )
+		if( perm != NULL )
 		{
-			ua->ua_Permissions = FCalloc( len+10, sizeof( char ) );
-			if( ua->ua_Permissions != NULL )
+			int len = strlen( perm );
+			if( len > 0 )
 			{
-				strcpy( ua->ua_Permissions, perm );
+				ua->ua_Permissions = StringDuplicate( perm );
 			}
 		}
 		
-		int lenauth = strlen( authid );
-		if( lenauth > 0 )
+		ua->ua_AuthID = SessionIDGenerate();
+		// to recognize this is application session
+		if( ua->ua_AuthID != NULL )
 		{
-			ua->ua_AuthID = FCalloc( len+10, sizeof( char ) );
-			if( ua->ua_AuthID != NULL )
-			{
-				strcpy( ua->ua_AuthID, authid );
-			}
+			ua->ua_AuthID[0] = 'A';
+			ua->ua_AuthID[1] = 'S';
 		}
 		
 		DEBUG("[UserAppNew] Added user application perm: %s authid %s\n", ua->ua_Permissions, ua->ua_AuthID );
@@ -83,6 +83,12 @@ void UserAppDelete( UserApplication *app )
 	{
 		FFree( app->ua_AuthID );
 		app->ua_AuthID = NULL;
+	}
+	
+	if( app->ua_Data != NULL )
+	{
+		FFree( app->ua_Data );
+		app->ua_Data = NULL;
 	}
 	
 	FFree( app );

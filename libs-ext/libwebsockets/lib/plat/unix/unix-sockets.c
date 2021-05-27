@@ -22,11 +22,17 @@
  * IN THE SOFTWARE.
  */
 
+#if !defined(_GNU_SOURCE)
 #define _GNU_SOURCE
+#endif
 #include "private-lib-core.h"
 
 #include <sys/ioctl.h>
+
+#if !defined(LWS_DETECTED_PLAT_IOS)
 #include <net/route.h>
+#endif
+
 #include <net/if.h>
 
 #include <pwd.h>
@@ -79,7 +85,7 @@ lws_send_pipe_choked(struct lws *wsi)
 }
 
 int
-lws_plat_set_nonblocking(int fd)
+lws_plat_set_nonblocking(lws_sockfd_type fd)
 {
 	return fcntl(fd, F_SETFL, O_NONBLOCK) < 0;
 }
@@ -366,7 +372,7 @@ lws_plat_if_up(const char *ifname, int fd, int up)
 }
 
 int
-lws_plat_BINDTODEVICE(int fd, const char *ifname)
+lws_plat_BINDTODEVICE(lws_sockfd_type fd, const char *ifname)
 {
 #if defined(__linux__)
 	struct ifreq i;

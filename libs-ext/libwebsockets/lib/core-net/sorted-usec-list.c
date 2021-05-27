@@ -47,6 +47,7 @@ int
 __lws_sul_insert(lws_dll2_owner_t *own, lws_sorted_usec_list_t *sul,
 		 lws_usec_t us)
 {
+	lws_usec_t now = lws_now_usecs();
 	lws_dll2_remove(&sul->list);
 
 	if (us == LWS_SET_TIMER_USEC_CANCEL) {
@@ -56,7 +57,7 @@ __lws_sul_insert(lws_dll2_owner_t *own, lws_sorted_usec_list_t *sul,
 		return 0;
 	}
 
-	sul->us = lws_now_usecs() + us;
+	sul->us = now + us;
 	assert(sul->cb);
 
 	/*
@@ -66,7 +67,28 @@ __lws_sul_insert(lws_dll2_owner_t *own, lws_sorted_usec_list_t *sul,
 
 	lws_dll2_add_sorted(&sul->list, own, sul_compare);
 
-	// lws_dll2_describe(own, "post-tail-insert");
+#if 0 // defined(_DEBUG)
+	{
+		lws_usec_t worst = 0;
+		int n = 1;
+
+		lwsl_info("%s: own %p: count %d\n", __func__, own, own->count);
+
+		lws_start_foreach_dll_safe(struct lws_dll2 *, p, tp,
+					   lws_dll2_get_head(own)) {
+			lws_sorted_usec_list_t *sul = (lws_sorted_usec_list_t *)p;
+			lwsl_info("%s:    %d: %llu (+%lld)\n", __func__, n++,
+					(unsigned long long)sul->us,
+					(long long)(sul->us - now));
+			if (sul->us < worst) {
+				lwsl_err("%s: wrongly sorted sul entry!\n",
+						__func__);
+				assert(0);
+			}
+			worst = sul->us;
+		} lws_end_foreach_dll_safe(p, tp);
+	}
+#endif
 
 	return 0;
 }
@@ -83,8 +105,15 @@ lws_sul_schedule(struct lws_context *context, int tsi,
 }
 
 lws_usec_t
-__lws_sul_check(lws_dll2_owner_t *own, lws_usec_t usnow)
+__lws_sul_service_ripe(lws_dll2_owner_t *own, lws_usec_t usnow)
 {
+	struct lws_context_per_thread *pt = (struct lws_context_per_thread *)
+			lws_container_of(own, struct lws_context_per_thread,
+					 pt_sul_owner);
+
+	if (pt->attach_owner.count)
+		lws_system_do_attach(pt);
+
 	while (lws_dll2_get_head(own)) {
 
 		/* .list is always first member in lws_sorted_usec_list_t */
@@ -99,7 +128,9 @@ __lws_sul_check(lws_dll2_owner_t *own, lws_usec_t usnow)
 		/* his moment has come... remove him from timeout list */
 		lws_dll2_remove(&sul->list);
 		sul->us = 0;
+		pt->inside_lws_service = 1;
 		sul->cb(sul);
+		pt->inside_lws_service = 0;
 
 		/*
 		 * The callback may have done any mixture of delete
@@ -108,6 +139,11 @@ __lws_sul_check(lws_dll2_owner_t *own, lws_usec_t usnow)
 		 * unsafe.  Always restart at the current head of list.
 		 */
 	}
+
+	/*
+	 * Nothing left to take care of in the list (cannot return 0 otherwise
+	 * because we will service anything equal to usnow rather than return)
+	 */
 
 	return 0;
 }

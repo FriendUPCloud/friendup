@@ -12,9 +12,12 @@
 
 global $SqlDatabase, $User, $Config;
 
+error_reporting( E_ALL & ~E_NOTICE & ~E_DEPRECATED );
+ini_set( 'display_errors', '1' );
 
+// Dependency ------------------------------------------------------------------
 
-// Dependency
+// Calculate the text box of the image (initials etc)
 function getsetting_calculateTextBox( $text, $fontFile, $fontSize, $fontAngle )
 {
 	$rect = imagettfbbox( $fontSize, $fontAngle, $fontFile, $text );
@@ -30,20 +33,87 @@ function getsetting_calculateTextBox( $text, $fontFile, $fontSize, $fontAngle )
 		"box"    => $rect
 	);
 }
-// End dependency
+// Return "broken file"
+function _file_broken( $display )
+{
+	$cnt = file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' );
+	FriendHeader( 'Content-Length: ' . strlen( $cnt ) );
+	FriendHeader( 'Content-Type: image/svg+xml' );	
+	switch( $display )
+	{
+		case 'base64':
+			
+				die( 'data:image/' . pathinfo( 'resources/iconthemes/friendup15/File_Broken.svg', PATHINFO_EXTENSION ) . ';base64,' . base64_encode( $cnt ) );
+				
+			break;
+			
+		default:
+			
+				readfile( 'resources/iconthemes/friendup15/File_Broken.svg' );
+			
+			break;
+	}
+}
+
+// Output the file
+function _file_output( $filepath, $display )
+{
+	if( $filepath )
+	{
+		ob_clean();
+		
+		FriendHeader( 'Content-Type: image/png' );
+		
+		FriendHeader( 'Expires: ' . gmdate( 'D, d M Y H:i:s \G\M\T', time() + 86400 ) );
+		
+		// Generate some useful time vars based on file date
+		$last_modified_time = filemtime( $filepath ); 
+		$etag = md5_file( $filepath );
+		
+		// Always send headers
+		FriendHeader( 'Last-Modified: ' . gmdate( 'D, d M Y H:i:s', $last_modified_time ) . ' GMT' ); 
+		FriendHeader( 'Etag: ' . $etag ); 
+		
+		// TODO: Fix this so it works in FriendCore ... only works in apache, nginx, etc ...
+		
+		// Exit if not modified
+		if ( ( @strtotime( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) == $last_modified_time ) ||  ( @trim( $_SERVER['HTTP_IF_NONE_MATCH'] ) == $etag ) )
+		{
+			FriendHeader( 'HTTP/1.1 304 Not Modified' ); 
+			die();
+		}
+
+		switch( $display )
+		{
+			case 'base64':
+				
+					die( 'data:image/' . pathinfo( $filepath, PATHINFO_EXTENSION ) . ';base64,' . base64_encode( file_get_contents( $filepath ) ) );
+				
+				break;
+				
+			default:
+				
+					die( readfile( $filepath ) );
+				
+				break;
+		}
+	}
+}
+
+// End dependency --------------------------------------------------------------
 
 
-
+// Get UserID
 if( isset( $args->args->userid ) && !isset( $args->userid ) )
 {
 	$args->userid = $args->args->userid;
 }
-
+// Get AuthID
 if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {
 	$args->authid = $args->args->authid;
 }
-
+// Try to fetch  user who is logged in
 if( !isset( $args->authid ) )
 {
 	$userid = ( $level == 'Admin' && isset( $args->userid ) ? $args->userid : $User->ID );
@@ -97,21 +167,32 @@ $height = 256;
 $mode = 'resize';
 $hash = false;
 
+$display = 'default';
+
+// Image was set
 if( isset( $args->image ) )
 {
 	$hash = $args->image;
 }
+// Width was requested
 if( isset( $args->width ) )
 {
 	$width = $args->width;
 }
+// Height was requested
 if( isset( $args->height ) )
 {
 	$height = $args->height;
 }
+// Mode was requested
 if( isset( $args->mode ) )
 {
 	$mode = $args->mode;
+}
+// Display was requested
+if( isset( $args->display ) )
+{
+	$display = $args->display;
 }
 
 // Sanitized username
@@ -122,44 +203,7 @@ if( !file_exists( $wname . 'thumbnails' ) )
 	mkdir( $wname . 'thumbnails' );
 }
 
-function _file_broken()
-{
-	$cnt = file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' );
-	FriendHeader( 'Content-Length: ' . strlen( $cnt ) );
-	FriendHeader( 'Content-Type: image/svg+xml' );
-	die( $cnt );
-}
 
-function _file_output( $filepath )
-{
-	if( $filepath )
-	{
-		ob_clean();
-		
-		FriendHeader( 'Content-Type: image/png' );
-		
-		FriendHeader( 'Expires: ' . gmdate( 'D, d M Y H:i:s \G\M\T', time() + 86400 ) );
-		
-		// Generate some useful time vars based on file date
-		$last_modified_time = filemtime( $filepath ); 
-		$etag = md5_file( $filepath );
-		
-		// Always send headers
-		FriendHeader( 'Last-Modified: ' . gmdate( 'D, d M Y H:i:s', $last_modified_time ) . ' GMT' ); 
-		FriendHeader( 'Etag: ' . $etag ); 
-		
-		// TODO: Fix this so it works in FriendCore ... only works in apache, nginx, etc ...
-		
-		// Exit if not modified
-		if ( ( @strtotime( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) == $last_modified_time ) ||  ( @trim( $_SERVER['HTTP_IF_NONE_MATCH'] ) == $etag ) )
-		{
-			FriendHeader( 'HTTP/1.1 304 Not Modified' ); 
-			die();
-		}
-		//die( print_r( $_SERVER,1 ) . ' .. ' . $last_modified_time . ' || ' . $etag );
-		die( file_get_contents( $filepath ) );
-	}
-}
 
 if( $userid > 0 && $wname )
 {
@@ -169,8 +213,10 @@ if( $userid > 0 && $wname )
 	// Check if it exists!
 	if( $hash && file_exists( $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png' ) )
 	{
-		_file_output( $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png' );
+		_file_output( $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png', $display );
+		die();
 	}
+	// Try to generate it
 	else
 	{
 	
@@ -180,6 +226,8 @@ if( $userid > 0 && $wname )
 		$s->Type = 'system';
 		$s->Key = 'avatar';
 		$s->UserID = $userid;
+		
+		// We do not have full name and we can load and ( we have no mode or the mode isn't reset )
 		if( !isset( $args->args->fullname ) && $s->Load() && ( !isset( $args->args->mode ) || $args->args->mode != 'reset' ) )
 		{
 			$json = false;
@@ -269,8 +317,11 @@ if( $userid > 0 && $wname )
 	
 			// Draw letters
 			$color = imagecolorallocate( $img, 255, 255, 255 );
-			$initials = explode( ' ', ( isset( $args->args->fullname ) ? trim( $args->args->fullname ) : $User->FullName ) );
+			$initials = isset( $args->args->fullname ) ? trim( $args->args->fullname ) : $User->FullName;
+			$initials = mb_convert_encoding( $initials, 'ISO-8859-1', 'UTF-8' );
+			$initials = explode( ' ', $initials );
 			$initials = strtoupper( count( $initials ) > 1 ? $initials[0]{0} . $initials[1]{0} : substr( $initials[0], 0, 2 ) );
+			
 			$dims = getsetting_calculateTextBox( $initials, $font, 88, 0 );
 			imagettftext( $img, 88, 0, 128 - ( $dims[ 'width' ] >> 1 ) - $dims[ 'left' ], 128 + ( $dims[ 'height' ] >> 1 ) + ( $dims[ 'height' ] - $dims[ 'top' ] ), $color, $font, $initials );
 			ob_start();
@@ -323,7 +374,7 @@ if( $userid > 0 && $wname )
 		// Check again ...
 		if( $hash && file_exists( $filepath ) )
 		{
-			_file_output( $filepath );	
+			_file_output( $filepath, $display );	
 		}
 		
 		if( $avatar && $hash && $fname && $filepath )
@@ -344,7 +395,7 @@ if( $userid > 0 && $wname )
 				}
 				if( !file_exists( $folderpath ) )
 				{
-					_file_broken();
+					_file_broken( $display );
 				}
 				
 				// Clean up ...
@@ -384,7 +435,7 @@ if( $userid > 0 && $wname )
 				
 				if( !$source )
 				{
-					_file_broken();
+					_file_broken( $display );
 				}
 				
 				
@@ -444,7 +495,8 @@ if( $userid > 0 && $wname )
 				// Check if it exists!
 				if( file_exists( $filepath ) )
 				{
-					_file_output( $filepath );
+					_file_output( $filepath, $display );
+					die();
 				}
 				
 			}
@@ -455,6 +507,6 @@ if( $userid > 0 && $wname )
 }
 
 // TODO: Support more icons
-_file_broken();
+_file_broken( $display );
 
 ?>

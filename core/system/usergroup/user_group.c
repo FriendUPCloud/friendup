@@ -21,6 +21,7 @@
 #include <system/fsys/device_handling.h>
 #include <util/string.h>
 #include <system/systembase.h>
+#include <util/session_id.h>
 
 /**
  * Create new User Group
@@ -29,9 +30,10 @@
  * @param name of new UserGroup
  * @param uid id of user assigned to group
  * @param type type of group as string
+ * @param description
  * @return new UserGroup structure when success, otherwise NULL
  */
-UserGroup *UserGroupNew( FULONG id, char *name, FULONG uid, char *type )
+UserGroup *UserGroupNew( FULONG id, char *name, FULONG uid, char *type, char *description )
 {
 	UserGroup *ug = NULL;
 	
@@ -43,6 +45,12 @@ UserGroup *UserGroupNew( FULONG id, char *name, FULONG uid, char *type )
 		ug->ug_Name = StringDuplicate(name);
 		ug->ug_UserID = uid;
 		ug->ug_Type = StringDuplicate(type);
+		ug->ug_Description = StringDuplicate( description );
+		
+		if( ug->ug_UUID == NULL )
+		{
+			GenerateUUID( &( ug->ug_UUID ) );
+		}
 		
 		UserGroupInit( ug );
 	}
@@ -115,6 +123,16 @@ int UserGroupDelete( void *sb, UserGroup *ug )
 		if( ug->ug_Type != NULL )
 		{
 			FFree( ug->ug_Type );
+		}
+		
+		if( ug->ug_Description != NULL )
+		{
+			FFree( ug->ug_Description );
+		}
+		
+		if( ug->ug_UUID != NULL )
+		{
+			FFree( ug->ug_UUID );
 		}
 		
 		pthread_mutex_destroy( &(ug->ug_Mutex) );
@@ -257,34 +275,50 @@ int UserGroupAddUser( UserGroup *ug, void *u )
 			}
 			au = (GroupUserLink *)au->node.mln_Succ;
 		}
+		FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
 	
 		// add link from group to user
 		if( ( au = (GroupUserLink *) FCalloc( 1, sizeof( GroupUserLink ) ) ) != NULL )
 		{
 			// add link from user to group
-			UserGroupLink *ugl = FCalloc( 1, sizeof(UserGroupLink ) );
+			UserGroupLink *ugl = (UserGroupLink *)FCalloc( 1, sizeof(UserGroupLink ) );
 			if( ugl != NULL )
 			{
 				ugl->ugl_Group = ug;
 				ugl->ugl_GroupID = ug->ug_ID;
-				ugl->node.mln_Succ = (MinNode *) locu->u_UserGroupLinks;
-				locu->u_UserGroupLinks = ugl;
+				if( FRIEND_MUTEX_LOCK( &locu->u_Mutex ) == 0 )
+				{
+					ugl->node.mln_Succ = (MinNode *) locu->u_UserGroupLinks;
+					locu->u_UserGroupLinks = ugl;
+					FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
+				}
+				else
+				{
+					FFree( ugl );
+					ugl = NULL;
+				}
 			}
-			FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
 			
 			au->ugau_UserID = locu->u_ID;
 			au->ugau_User = locu;
 			
-			if( FRIEND_MUTEX_LOCK( &ug->ug_Mutex ) == 0 )
+			if( FRIEND_MUTEX_LOCK( &(ug->ug_Mutex) ) == 0 )
 			{
 				au->node.mln_Succ = (MinNode *)ug->ug_UserList;
 				ug->ug_UserList = au;
-				FRIEND_MUTEX_UNLOCK( &ug->ug_Mutex );
+				FRIEND_MUTEX_UNLOCK( &(ug->ug_Mutex) );
+			}
+			else
+			{
+				if( ugl != NULL )
+				{
+					FFree( ugl );
+				}
+				FFree( au );
 			}
 		}
 		else
 		{
-			FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
 			return 2;
 		}
 		

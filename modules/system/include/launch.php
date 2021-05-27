@@ -27,6 +27,17 @@ function findBaseHref( $app )
 	return false;
 }
 
+// Activate whitelist
+if( isset( $args->app ) && isset( $configfilesettings[ 'Security' ][ 'UserAppWhitelist' ] ) )
+{
+	$whitelist = $configfilesettings[ 'Security' ][ 'UserAppWhitelist' ];
+	$whitelist = explode( ',', $whitelist );
+	if( $level != 'Admin' && !in_array( $args->app, $whitelist ) )
+	{
+		die( 'fail' );
+	}	
+}
+
 if( $level == 'API' )
 {
 	$app = new stdClass();

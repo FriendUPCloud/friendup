@@ -8,11 +8,12 @@
 *                                                                              *
 *****************************************************************************©*/
 
-var pausebtn, playbtn;
+var pausebtn, playbtn, weran, songID = false;
 
-
+// Initialize the GUI ----------------------------------------------------------
 Application.run = function( msg, iface )
 {
+	weran = true;
 	this.song = false;
 	pausebtn = ge( 'pausebutton' );
 	this.miniplaylist = false;
@@ -21,9 +22,11 @@ Application.run = function( msg, iface )
 	
 	this.volume = 64;
 	
-	CreateSlider( ge( 'Volume' ) );
+	CreateSlider( ge( 'Volume' ), {
+		type: 'volume'
+	} );
 	
-	ge( 'scroll' ).innerHTML = 'You should put on a song :-)';
+	ge( 'scroll' ).innerHTML = i18n( 'i18n_welcome' );
 	
 	if( window.isMobile )
 	{
@@ -31,6 +34,31 @@ Application.run = function( msg, iface )
 			command: 'miniplaylist',
 			visibility: true
 		} );
+	}
+	
+	this.clearVisualizer( 50 );
+	miniplaylistVisibility();
+}
+
+function miniplaylistVisibility()
+{
+	if( Application.miniplaylist )
+	{
+		ge( 'MiniPlaylistContainer' ).style.bottom = '47px';
+		ge( 'MiniPlaylistContainer' ).style.top = '113px';
+		ge( 'MiniPlaylistContainer' ).style.visibility = 'visible';
+		ge( 'MiniPlaylistContainer' ).style.inputEvents = '';
+		ge( 'MiniPlaylistContainer' ).style.opacity = 1;
+	}
+	else
+	{
+		ge( 'Equalizer' ).style.height = 'auto';
+		ge( 'Equalizer' ).style.bottom = '47px';
+		ge( 'MiniPlaylistContainer' ).style.bottom = '';
+		ge( 'MiniPlaylistContainer' ).style.top = 'auto';
+		ge( 'MiniPlaylistContainer' ).style.visibility = 'hidden';
+		ge( 'MiniPlaylistContainer' ).style.opacity = 0;
+		ge( 'MiniPlaylistContainer' ).style.inputEvents = 'none';
 	}
 }
 
@@ -56,30 +84,34 @@ Application.redrawMiniPlaylist = function()
 		var sw = 2;
 		var tb = document.createElement( 'div' );
 		tb.className = 'List NoPadding';
-		for( var a = 0; a < playlist.length; a++ )
+		for( let a = 0; a < playlist.length; a++ )
 		{
-			var tr = document.createElement( 'div' );
-			tr.innerHTML = playlist[a].Filename;
-			sw = sw == 1 ? 2 : 1;
-			var c = '';
-			if( a == index )
+			let tr = document.createElement( 'div' );
+			let sanitize = playlist[a].Filename;
+			if( sanitize.indexOf( '.' ) > 0 )
 			{
-				c = ' Selected Playing';
+				sanitize = sanitize.split( '.' );
+				sanitize.pop();
+				sanitize = sanitize.join( '.' );
 			}
-			tr.className = 'Padding Ellipsis sw' + sw + c;
+			tr.innerHTML = sanitize;
+			sw = sw == 1 ? 2 : 1;
+			let c = '';
+			if( playlist[ a ].UniqueID == songID )
+			{
+				c = ' Selected';
+				c += ' Playing';
+			}
+			tr.uniqueID = playlist[ a ].UniqueID;
+			tr.className = 'Tune Padding Ellipsis sw' + sw + c;
 			( function( ele, eles, index )
 			{
 				tr.onclick = function()
 				{
-					for( var u = 0; u < eles.childNodes.length; u++ )
+					if( Application.song )
 					{
-						if( eles.childNodes[u] != ele && eles.childNodes[u].classList )
-						{
-							eles.childNodes[u].classList.remove( 'Playing' );
-							eles.childNodes[u].classList.remove( 'Selected' );
-						}
+						Application.receiveMessage( { command: 'stop', temporary: true } );
 					}
-					ele.classList.add( 'Playing', 'Selected' );
 					Application.sendMessage( { command: 'playsongindex', index: index } );
 				}
 			} )( tr, tb, a );
@@ -89,18 +121,17 @@ Application.redrawMiniPlaylist = function()
 		{
 			ge( 'MiniPlaylist' ).innerHTML = '';
 			ge( 'MiniPlaylist' ).appendChild( tb );
-			ge( 'MiniPlaylist' ).style.bottom = '47px';
-			ge( 'MiniPlaylist' ).style.height = GetElementHeight( tb );
+			ge( 'MiniPlaylistContainer' ).style.bottom = '45px';
+			ge( 'MiniPlaylistContainer' ).style.height = GetElementHeight( tb );
 		}
 		else
 		{
-			ge( 'MiniPlaylist' ).innerHTML = '<div class="List"><div class="sw1">Playlist is empty.</div></div>';
+			ge( 'MiniPlaylist' ).innerHTML = '<div class="List"><div class="sw1 Padding">' + i18n( 'i18n_empty_playlist' ) + '</div></div>';
 		}
 		var h = GetElementHeight( ge( 'visualizer' ) );
 		h += GetElementHeight( tb );
 		h += GetElementHeight( ge( 'BottomButtons' ) );
 		if( h > 300 ) h = 300;
-		Application.sendMessage( { command: 'resizemainwindow', size: h } );
 	}
 }
 
@@ -130,39 +161,49 @@ Application.receiveMessage = function( msg )
 		
 			if( this.miniplaylist )
 			{
-				ge( 'Equalizer' ).style.height = '110px';
-				ge( 'MiniPlaylist' ).style.bottom = '47px';
-				ge( 'MiniPlaylist' ).style.top = '110px';
-				ge( 'MiniPlaylist' ).style.visibility = 'visible';
-				ge( 'MiniPlaylist' ).style.inputEvents = '';
-				ge( 'MiniPlaylist' ).style.opacity = 1;
+				ge( 'Equalizer' ).style.height = '113px';
 				this.index = msg.index;
 				this.playlist = msg.playlist;
 				this.redrawMiniPlaylist();
 			}
-			else
-			{
-				ge( 'Equalizer' ).style.height = 'auto';
-				ge( 'Equalizer' ).style.bottom = '47px';
-				ge( 'MiniPlaylist' ).style.bottom = '';
-				ge( 'MiniPlaylist' ).style.top = 'auto';
-				ge( 'MiniPlaylist' ).style.visibility = 'hidden';
-				ge( 'MiniPlaylist' ).style.opacity = 0;
-				ge( 'MiniPlaylist' ).style.inputEvents = 'none';
-			}
+			miniplaylistVisibility();
 			break;
 		case 'play':
 			if( !msg.item ) return;
+			if( !weran )
+			{
+				if( this.playtimeo )
+					clearTimeout( this.playtimeo );
+				this.playtimeo = setTimeout( function()
+				{
+					Application.playtimeo = null;
+					Application.receiveMessage( msg );
+				}, 50 );
+				return this.playtimeo;
+			}
 			var self = this;
-			//var src = '/system.library/file/read?mode=r&readraw=1' +
-			//	'&authid=' + Application.authId + '&path=' + msg.item.Path;
+			
+			// We're already playing
+			if( !msg.forcePlay )
+			{
+				if( document.body.classList.contains( 'Playing' ) )
+				{
+					return;
+				}
+			}
+			
 			ge( 'progress' ).style.opacity = 0;
-			ge( 'scroll' ).innerHTML = '<div>Loading song...</div>';
+			ge( 'scroll' ).innerHTML = '<div>' + i18n( 'i18n_loading_song' ) + '...</div>';
+			
 			if( this.song ) 
 			{
-				this.song.stop();
-				this.song.unload();
+				this.receiveMessage( { command: 'stop', temporary: true } );
 			}
+			
+			// Update song id!
+			songID = msg.item.UniqueID;
+			this.redrawMiniPlaylist();
+			
 			this.song = new AudioObject( msg.item.Path, function( result, err )
 			{
 				if( !result )
@@ -171,11 +212,7 @@ Application.receiveMessage = function( msg )
 					{
 						return;
 					}
-					// Try the next song
-					setTimeout( function()
-					{
-						Seek( 1 );
-					}, 500 );
+					ge( 'scroll' ).innerHTML = i18n( 'i18n_could_not_load_song' );
 				}
 				else
 				{
@@ -191,22 +228,65 @@ Application.receiveMessage = function( msg )
 				var eles = ge( 'MiniPlaylist' ).getElementsByClassName( 'Ellipsis' );
 				for( var a = 0; a < eles.length; a++ )
 				{
-					if( a == msg.index )
+					if( eles[ a ].uniqueID == songID )
 					{
-						eles[a].classList.add( 'Selected', 'Playing' );
+						eles[a].classList.add( 'Selected' );
+						eles[a].classList.add( 'Playing' );
 					}
 					else
 					{
-						eles[a].classList.remove( 'Selected', 'Playing' );
+						eles[a].classList.remove( 'Selected' );
+						eles[a].classList.remove( 'Playing' );
 					}
 				}
 				this.index = msg.index;
 			}
 			this.song.onload = function()
 			{
+				if( this.stopped ) return;
+				document.body.classList.remove( 'Paused' );
+				document.body.classList.add( 'Playing' );
+				
+				Application.clearVisualizer( 50 );
+				
 				this.play();
+				
 				Application.initVisualizer();
-				ge( 'scroll' ).innerHTML = '<div>' + msg.item.Filename + '</div>';
+				var fn = msg.item.Filename;
+				
+				var cand = '';
+				if( this.loader && this.loader.metadata )
+				{
+					let md = this.loader.metadata;
+					
+					if( typeof md.title != undefined && md.title != 'undefined' )
+					{
+						cand += md.title;
+					}
+					if( typeof md.artist != undefined && md.artist != 'undefined' )
+					{
+						cand += ' by ' + md.artist;
+					}
+					if( typeof md.album != undefined || typeof md.year != undefined )
+					{
+						cand += ' (';
+						if( typeof md.album != undefined && md.album != 'undefined' )
+						{
+							cand += md.album;
+							if( typeof md.year != undefined && md.year != 'undefined' )
+								cand += ', ';
+						}
+						if( typeof md.year != undefined && md.year != 'undefined' )
+						{
+							cand += md.year;
+						}
+						cand += ')';
+					}
+					fn = cand;
+				}
+				
+				if( fn == false ) return;
+				ge( 'scroll' ).innerHTML = '<div>' + fn + '</div>';
 			}
 			this.song.onfinished = function()
 			{
@@ -217,14 +297,24 @@ Application.receiveMessage = function( msg )
 			{	
 				var seconds = Math.round( ct - pt ) % 60;
 				
+				var timeFin = dr + ( pt - ct );
+				var finMins = Math.floor( timeFin / 60 );
+				var finSecs = Math.floor( timeFin ) % 60;
+				
 				if( this.ct != seconds )
 				{
-					ge( 'progress' ).style.width = Math.floor( progress * 100 ) + '%';
+					ge( 'progress' ).style.width = ( Math.floor( progress * 10000 ) / 100 ) + '%';
 					ge( 'progress' ).style.opacity = 1;
 					
 					this.ct = seconds;
-					var minutes = Math.round( ct - pt ) < 60 ? 0 : Math.round( ( ( ct - pt ) ) / 60 );
-					ge( 'time' ).innerHTML = minutes + ':' + StrPad( seconds, 2, '0' );
+
+					if( finMins < 0 )
+					{
+						Seek( 1 );
+						ge( 'time' ).innerHTML = '0:00';
+						return;
+					}
+					ge( 'time' ).innerHTML = finMins + ':' + StrPad( finSecs, 2, '0' );
 				}
 			}
 			pausebtn.className = pausebtn.className.split( 
@@ -238,6 +328,10 @@ Application.receiveMessage = function( msg )
 			var s = this.song;
 			if( !s ) return false;
 			s.pause();
+			
+			document.body.classList.add( 'Paused' );
+			document.body.classList.remove( 'Playing' );
+			
 			if( s.paused )
 			{
 				pausebtn.className = pausebtn.className.split( 
@@ -256,7 +350,19 @@ Application.receiveMessage = function( msg )
 		case 'stop':
 			var s = this.song;
 			if( !s ) return false;
+			
+			document.body.classList.remove( 'Paused' );
+			document.body.classList.remove( 'Playing' );
+			
+			s.onfinished = function(){};
 			s.stop();
+			s.unload();
+			
+			if( !msg.temporary )
+				ge( 'scroll' ).innerHTML = i18n( 'i18n_stopped' );
+			
+			Application.clearVisualizer( 50 );
+			
 			pausebtn.className = pausebtn.className.split( 
 				' active' ).join( '' );
 			playbtn.classList.remove( 'fa-refresh' );
@@ -264,41 +370,119 @@ Application.receiveMessage = function( msg )
 			playbtn.className  = playbtn.className.split( 
 				' active' ).join( '' );
 			ge( 'progress' ).style.opacity = 1;
-			
-			// Remove eq rect..
-			setTimeout( function()
-			{
-				var eq = ge( 'visualizer' );
-				var w = eq.offsetWidth, h = eq.offsetHeight;
-				var ctx = eq.getContext( '2d' );
-				ctx.fillStyle = '#0F2336';
-				ctx.fillRect( 0, 0, w, h );
-			}, 250 );
 			break;
 		case 'drop':
 			if( msg.data )
 			{
 				var items = [];
+				var plistitems = [];
 				for( var a in msg.data )
 				{
-					items.push( {
-						Path: msg.data[a].Path, 
-						Filename: msg.data[a].Filename
+					if( msg.data[ a ].Type == 'Directory' )
+					{
+						loadRecursiveFolder( msg.data[a].Path );
+					}
+					if( msg.data[a].Filename.indexOf( '.' ) < 0 ) continue;
+					if( msg.data[a].Filename.split( '.' ).pop().toLowerCase() == 'pls' )
+					{
+						plistitems.push( {
+							Path: msg.data[a].Path, 
+							Filename: msg.data[a].Filename
+						} );
+					}
+					else
+					{
+						items.push( {
+							Path: msg.data[a].Path, 
+							Filename: msg.data[a].Filename
+						} );
+					}
+				}
+				if( items.length )
+				{
+					Application.sendMessage( {
+						command: 'append_to_playlist_and_play',
+						items: items
 					} );
 				}
-				Application.sendMessage( {
-					command: 'append_to_playlist_and_play',
-					items: items
-				} );
+				if( plistitems.length )
+				{
+					Application.sendMessage( {
+						command: 'addplaylists',
+						items: plistitems
+					} );
+				}
 			}
 			break;
 	}
 }
 
+function loadRecursiveFolder( path )
+{
+	var d = new Door( path );
+	d.getDirectory( function( items )
+	{
+		let out = [];
+		for( let z = 0; z < items.length; z++ )
+		{
+			if( items[ z ].Type == 'Directory' )
+			{
+				loadRecursiveFolder( items[ z ].Path );
+			}
+			else
+			{
+				out.push( items[ z ] );
+			}
+		}
+		if( out.length )
+		{
+			Application.sendMessage( {
+				command: 'append_to_playlist_and_play',
+				items: out
+			} );
+		}
+	} );
+}
+
+Application.clearVisualizer = function( time )
+{
+	let eq = ge( 'visualizer' ); let w = eq.offsetWidth, h = eq.offsetHeight;
+	eq.setAttribute( 'width', w ); eq.setAttribute( 'height', h );
+
+	function f()
+	{
+		let ctx = eq.getContext( '2d' );
+		
+		let grd = ctx.createLinearGradient( 0, 0, 0, h );
+		grd.addColorStop( 0, '#150423' );
+		grd.addColorStop( 0.5, '#362544' );
+		grd.addColorStop( 1, '#150423' );
+		
+		ctx.fillStyle = grd;
+		ctx.fillRect( 0, 0, w, h );
+	}
+
+	if( time )
+	{
+		setTimeout( function()
+		{
+			f();
+		}, time );
+	}
+	else f();
+}
+
 // Initialize player!!!
 Application.initVisualizer = function()
-{
-	var eq = ge( 'visualizer' ); var w = eq.offsetWidth, h = eq.offsetHeight;
+{	
+	if( !this.song || !this.song.getContext )
+	{
+		return setTimeout( function()
+		{
+			Application.initVisualizer()
+		}, 50 );
+	}
+	let eq = ge( 'visualizer' ); let w = eq.offsetWidth, h = eq.offsetHeight;
 	eq.setAttribute( 'width', w ); eq.setAttribute( 'height', h );
 	
 	eq.onclick = function( e )
@@ -315,45 +499,72 @@ Application.initVisualizer = function()
 		
 	}
 	
-	var act = this.song.getContext();
-	var ana = act.createAnalyser(); ana.fftSize = 2048;
-	var bufLength = ana.frequencyBinCount;
-	var dataArray = new Uint8Array( bufLength );
-	var px = 0, py = 0, bx = 0, sw = 0;
+	let act = this.song.getContext();
+	let ana = act.createAnalyser(); ana.fftSize = 2048;
+	let bufLength = ana.frequencyBinCount;
+	let dataArray = new Uint8Array( bufLength );
+	let px = 0, py = 0, bx = 0, sw = 0;
 	
-	var ctx = eq.getContext( '2d' );
+	let ctx = eq.getContext( '2d' );
+	
+	this.clearVisualizer();
 	
 	// Connect to the source
-	var agr = this.song.loader.audioGraph;
-	var src = agr.source;
+	let agr = this.song.loader.audioGraph;
+	let src = agr.source;
 	src.connect( ana );
 	ana.connect( agr.context.destination );
 	
 	// Run it!
+	
+	let scroll = ge( 'scroll' );
+	let scrollPos = 0;
+	let scrollDir = -1;
+	let waitTime = 0;
+	
+	// For flashing
+	let pcolor = 0;
+	let changeTime = 0;
 	
 	this.dr = function()
 	{
 		ana.getByteTimeDomainData( dataArray );
 		
 		// Blur
-		var y = 0, x = 0, off = 0, w4 = w << 2;
-		var d = ctx.getImageData( 0, 0, w, h );
+		let y = 0, x = 0, off = 0, w4 = w << 2;
+		let d = ctx.getImageData( 0, 0, w, h );
+		let hy = 0;
+		let h2 = h >> 1;
 		for( y = 0; y < h; y++ )
 		{
+			hy = y < h2 ? y : ( h - y );
 			for( x = 0; x < w4; x += 4 )
 			{
-				d.data[ off ] -= ( d.data[ off++ ] - 15 ) >> 1;
-				d.data[ off ] -= ( d.data[ off++ ] - 35 ) >> 1;
-				d.data[ off ] -= ( d.data[ off++ ] - 54 ) >> 1;
+				d.data[ off ] -= ( d.data[ off++ ] - 20 - hy ) >> 1;
+				d.data[ off ] -= ( d.data[ off++ ] - 3 - hy ) >> 1;
+				d.data[ off ] -= ( d.data[ off++ ] - 34 - hy ) >> 1;
 				off++;
 			}
 		}
 		ctx.putImageData( d, 0, 0 );
-		ctx.strokeStyle = '#54AEFF';
+		ctx.strokeStyle = '#C48EFF';
 		ctx.lineWidth = 2;
 		ctx.beginPath();
-		var hh = h / 2;
-		var sw = 1 / bufLength * w;
+		let hh = h >> 1;
+		let sw = 1 / bufLength * w;
+		
+		
+		/* Drum flash (not working, disabled)
+		let start = dataArray[ bufLength - 1 ];
+		let cand = start > 220 ? '#8862B1' : '#000000';
+		if( pcolor != cand && changeTime == 0 )
+		{
+			ge( 'Flash' ).style.backgroundColor = cand;
+			pcolor = cand;
+			if( cand != '#000000' )
+				changeTime = 5;
+		}
+		if( changeTime > 0 ) changeTime--;*/
 		
 		// TODO: If amplitude is high, flash!
 		// TODO: Other visualizations
@@ -377,15 +588,47 @@ Application.initVisualizer = function()
 		{
 			requestAnimationFrame( Application.dr );
 		}
+		
+		if( scroll.firstChild && waitTime == 0 )
+		{
+			let scrollW = scroll.offsetWidth - 60;
+			let elemenW = scroll.firstChild.offsetWidth;
+			if( elemenW > scrollW )
+			{
+				if( scrollDir < 0 )
+				{
+					scrollPos -= 0.25;
+				
+					if( elemenW + scrollPos <= scrollW )
+					{
+						scrollDir = 1;
+						waitTime = 1000;
+					}
+				}
+				else
+				{
+					scrollPos += 0.25;
+					
+					if( scrollPos >= 0 )
+					{
+						scrollDir = -1;
+						waitTime = 1000;
+					}
+				}
+				scroll.firstChild.style.left = parseInt( scrollPos ) + 'px';
+			}
+		}
+		if( waitTime > 0 ) waitTime--;
 	};
 	requestAnimationFrame( Application.dr );
 	
 }
 
-function PlaySong()
+function PlaySong( force )
 {
+	if( !force ) force = false;
 	ge( 'player' ).src = '';
-	Application.sendMessage( { command: 'playsong' } );
+	Application.sendMessage( { command: 'playsong', forcePlay: force } );
 }
 
 function PauseSong()
@@ -400,6 +643,9 @@ function StopSong()
 
 function Seek( direction )
 {
+	if( Application.song.paused || Application.song.stopped )
+		return;
+	StopSong();
 	Application.sendMessage( { command: 'seek', dir: direction } ); 
 }
 

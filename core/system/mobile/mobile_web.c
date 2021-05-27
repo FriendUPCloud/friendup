@@ -110,7 +110,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -133,7 +133,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			if( el != NULL )
 			{
 				char *next;
-				uid = strtol( el->data, &next, 0 );
+				uid = strtol( el->hme_Data, &next, 0 );
 			}
 			if( uid <= 0 )
 			{
@@ -143,7 +143,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			el = HttpGetPOSTParameter( request, "apptoken" );
 			if( el != NULL )
 			{
-				apptoken = UrlDecodeToMem( (char *)el->data );
+				apptoken = UrlDecodeToMem( (char *)el->hme_Data );
 				unsigned int z;
 				for( z = 0 ; z < strlen( apptoken ) ; z++ )
 				{
@@ -158,7 +158,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			el = HttpGetPOSTParameter( request, "deviceid" );
 			if( el != NULL )
 			{
-				deviceID = UrlDecodeToMem( (char *)el->data );
+				deviceID = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG("Got deviceID: >%s<\n",  deviceID );
 				unsigned int z;
 				for( z = 0 ; z < strlen( deviceID ) ; z++ )
@@ -174,19 +174,19 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			el = HttpGetPOSTParameter( request, "appversion" );
 			if( el != NULL )
 			{
-				appversion = UrlDecodeToMem( (char *)el->data );
+				appversion = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			el = HttpGetPOSTParameter( request, "platform" );
 			if( el != NULL )
 			{
-				platform = UrlDecodeToMem( (char *)el->data );
+				platform = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			el = HttpGetPOSTParameter( request, "version" );
 			if( el != NULL )
 			{
-				version = UrlDecodeToMem( (char *)el->data );
+				version = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			if( uid > 0 && apptoken != NULL && deviceID != NULL )
@@ -275,116 +275,16 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 						}
 						UserMobileAppDelete( ma );
 					}
-					
-					
-
-					
-				/*
-					if( umaID == 0 )
-					{
-						int addErr = 1;	// 1 entry wasnt added, must be released
-						
-						UserMobileApp *ma = UserMobileAppNew();
-						if( ma != NULL )
-						{
-							char ipbuffer[ 128 ];
-							ma->uma_AppToken = apptoken;
-							ma->uma_DeviceID = deviceID;
-							ma->uma_AppVersion = appversion;
-							ma->uma_Platform = platform;
-							ma->uma_PlatformVersion = version;
-							ma->uma_UserID = uid;
-							apptoken = appversion = platform = version = deviceID = NULL;
-					
-							if( getLocalIP( ipbuffer, sizeof(ipbuffer) ) == 0 )
-							{
-								ma->uma_Core = StringDuplicate( ipbuffer );
-							}
-							else
-							{
-								ma->uma_Core = StringDuplicate("Error");
-							}
-					
-							err = sqllib->Save( sqllib, UserMobileAppDesc, ma );
-							
-							//addErr = MobileManagerAddUMA( l->sl_MobileManager, ma );
-							
-							if( err == 0 )
-							{
-								if( loggedSession->us_MobileAppID != ma->uma_ID )
-								{
-									char tmpQuery[ 256 ];
-									loggedSession->us_MobileAppID = ma->uma_ID;
-									sqllib->SNPrintF( sqllib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET UMA_ID=%lu WHERE `ID`=%lu", ma->uma_ID, loggedSession->us_ID );
-									sqllib->QueryWithoutResults( sqllib, tmpQuery );
-								}
-								snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"0\", \"create\":\"%lu\" }", ma->uma_ID );
-								HttpAddTextContent( response, buffer );
-							}
-						}
-						else
-						{
-							char where[ 256 ];
-							int entries;
-							snprintf( where, sizeof(where), " ID=%lu", umaID );
-			
-							UserMobileApp *ma = sqllib->Load( sqllib, FKeyDesc, where, &entries );
-							if( ma != NULL )
-							{
-								if( ma->uma_AppToken != NULL ){ FFree( ma->uma_AppToken ); }
-								if( ma->uma_AppVersion != NULL ){ FFree( ma->uma_AppVersion ); }
-								if( ma->uma_Platform != NULL ){ FFree( ma->uma_Platform ); }
-								if( ma->uma_PlatformVersion != NULL ){ FFree( ma->uma_PlatformVersion ); }
-								ma->uma_AppToken = apptoken;
-								ma->uma_AppVersion = appversion;
-								ma->uma_Platform = platform;
-								ma->uma_PlatformVersion = version;
-								ma->uma_UserID = uid;
-								apptoken = appversion = platform = version = NULL;
-								
-								err = sqllib->Update( sqllib, UserMobileAppDesc, ma );
-								
-								UserMobileAppDelete( ma );
-							}
-							//snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
-							err = 2;
-						}
-						
-						if( ma != NULL && addErr != 0 )
-						{
-							UserMobileAppDelete( ma );
-						}
-					}	// umaID > 0
-					else
-					{
-						snprintf( query, sizeof(query), "DELETE from `FUserMobileApp` where DeviceID='%s' AND UserID=%lu", deviceID, uid );
-					
-						sqllib->QueryWithoutResults( sqllib, query );
-					}
-					
-					*/
 					l->LibrarySQLDrop( l, sqllib );
 				}
-				
-				//if( umaID == TRUE )
-				{
-					//snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"0\", \"create\":\"0\" }" );
-					//HttpAddTextContent( response, buffer );
-				}
-				/*
-				else if( err != 0 )
-				{
-					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"1\", \"code\":\"%d\" }" , err );
-					HttpAddTextContent( response, buffer );
-				}
-				*/
+
 			} // missing parameters
 			else
 			{
-				char buffer[ 256 ];
+				char buffer[ 512 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "userid, apptoken, deviceid" );
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
 		}
@@ -445,73 +345,85 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		if( el != NULL )
 		{
 			char *next;
-			id = strtol ( (char *)el->data, &next, 0 );
+			id = strtol ( (char *)el->hme_Data, &next, 0 );
 		}
 		
 		el = HttpGetPOSTParameter( request, "deviceid" );
 		if( el != NULL )
 		{
-			deviceID = UrlDecodeToMem( (char *)el->data );
+			deviceID = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
-		SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-		if( sqllib != NULL )
+		if( id > 0 || deviceID != NULL )
 		{
-			// looks like id parameter was not passed, checking additional parameters like deviceid
-			if( id == 0 )
+			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			if( sqllib != NULL )
 			{
-				char query[ 512 ];
-			
-				DEBUG("Find entry for Device: %s\n", deviceID );
-			
-				snprintf( query, sizeof(query), "SELECT ID from `FUserMobileApp` where DeviceID='%s' AND UserID=%lu", deviceID, loggedSession->us_UserID );
-				void *res = sqllib->Query( sqllib, query );
-			
-				if( res != NULL )
+				FBOOL idFoundByDeviceID = FALSE;
+				// looks like id parameter was not passed, checking additional parameters like deviceid
+				if( deviceID != NULL && id == 0 )
 				{
-					char **row;
-					while( ( row = sqllib->FetchRow( sqllib, res ) ) )
+					char query[ 512 ];
+			
+					DEBUG("Find entry for Device: %s\n", deviceID );
+			
+					snprintf( query, sizeof(query), "SELECT ID from `FUserMobileApp` where DeviceID='%s' AND UserID=%lu", deviceID, loggedSession->us_UserID );
+					void *res = sqllib->Query( sqllib, query );
+			
+					if( res != NULL )
 					{
-						if( row[ 0 ] != NULL )
+						char **row;
+						while( ( row = sqllib->FetchRow( sqllib, res ) ) )
 						{
-							char *end;
-							id = strtoul( row[ 0 ], &end, 0 );
+							if( row[ 0 ] != NULL )
+							{
+								char *end;
+								id = strtoul( row[ 0 ], &end, 0 );
+								idFoundByDeviceID = TRUE;
+							}
 						}
+						sqllib->FreeResult( sqllib, res );
 					}
-					sqllib->FreeResult( sqllib, res );
 				}
-			}
 		
-			if( id > 0 )
-			{
-				char *tmpQuery = NULL;
-				int querysize = 1024;
-				
-				if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
+				// deviceID was not delivered but id was. So lets remove it by id
+				if( id > 0 )
 				{
-					sprintf( tmpQuery, "DELETE FROM `FUserMobileApp` WHERE ID=%lu", id );
+					char *tmpQuery = NULL;
+					int querysize = 1024;
+				
+					if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
+					{
+						sprintf( tmpQuery, "DELETE FROM `FUserMobileApp` WHERE ID=%lu", id );
 					
-					sqllib->QueryWithoutResults( sqllib, tmpQuery );
-					FFree( tmpQuery );
+						sqllib->QueryWithoutResults( sqllib, tmpQuery );
+						FFree( tmpQuery );
 					
-					HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"success\"}" );
+						HttpAddTextContent( response, "ok<!--separate-->{ \"result\":\"success\"}" );
+					}
+					else
+					{
+						char buffer[ 256 ];
+						snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+						HttpAddTextContent( response, buffer );
+					}
 				}
 				else
 				{
 					char buffer[ 256 ];
-					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+					snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_UMA_ENTRY_NOT_FOUND] , DICT_UMA_ENTRY_NOT_FOUND );
 					HttpAddTextContent( response, buffer );
 				}
+				l->LibrarySQLDrop( l, sqllib );
 			}
 			else
 			{
-				char buffer[ 256 ];
+				char buffer[ 512 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id or deviceid" );
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
-			l->LibrarySQLDrop( l, sqllib );
 		}	// no DB connection
 		
 		if( deviceID != NULL )
@@ -563,44 +475,44 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			if( el != NULL )
 			{
 				char *next;
-				umaid = strtol( el->data, &next, 0 );
+				umaid = strtol( el->hme_Data, &next, 0 );
 			}
 			
 			el = HttpGetPOSTParameter( request, "userid" );
 			if( el != NULL )
 			{
 				char *next;
-				uid = strtol( el->data, &next, 0 );
+				uid = strtol( el->hme_Data, &next, 0 );
 			}
 			
 			el = HttpGetPOSTParameter( request, "status" );
 			if( el != NULL )
 			{
-				status = atoi( el->data );
+				status = atoi( el->hme_Data );
 			}
 			
 			el = HttpGetPOSTParameter( request, "apptoken" );
 			if( el != NULL )
 			{
-				apptoken = UrlDecodeToMem( (char *)el->data );
+				apptoken = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			el = HttpGetPOSTParameter( request, "appversion" );
 			if( el != NULL )
 			{
-				appversion = UrlDecodeToMem( (char *)el->data );
+				appversion = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			el = HttpGetPOSTParameter( request, "platform" );
 			if( el != NULL )
 			{
-				platform = UrlDecodeToMem( (char *)el->data );
+				platform = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			el = HttpGetPOSTParameter( request, "version" );
 			if( el != NULL )
 			{
-				version = UrlDecodeToMem( (char *)el->data );
+				version = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			if( umaid > 0 )
@@ -673,28 +585,28 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 				}
 				else
 				{
-					//snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+					//snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
 					err = 2;
 				}
 				
 				if( err == 0 )
 				{
-					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"0\", \"updated\":\"%lu\" }", ma->uma_ID );
+					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"0\",\"updated\":\"%lu\"}", ma->uma_ID );
 					HttpAddTextContent( response, buffer );
 				}
 				else
 				{
-					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"1\", \"updated\":\"%d\" }" , err );
+					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"1\",\"updated\":\"%d\"}" , err );
 					HttpAddTextContent( response, buffer );
 				}
 				
 			} // missing parameters
 			else  // umaid
 			{
-				char buffer[ 256 ];
+				char buffer[ 512 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id" );
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
 		}
@@ -754,7 +666,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			if( el != NULL )
 			{
 				char *next;
-				uid = strtol( el->data, &next, 0 );
+				uid = strtol( el->hme_Data, &next, 0 );
 			}
 			
 			if( uid > 0 )
@@ -810,7 +722,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 				}
 				else
 				{
-					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"1\", \"updated\":\"%d\" }" , err );
+					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"1\",\"updated\":\"%d\"}" , err );
 					HttpAddTextContent( response, buffer );
 				}
 				
@@ -821,10 +733,10 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			} // missing parameters
 			else  // umaid
 			{
-				char buffer[ 256 ];
+				char buffer[ 512 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "userid" );
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
 		}
@@ -837,7 +749,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param notifid - (required) mobile request ID
-	* @param action - (required) action ( NOTIFY_ACTION_REGISTER = 0, NOTIFY_ACTION_READED, NOTIFY_ACTION_TIMEOUT )
+	* @param action - (required) action ( NOTIFY_ACTION_REGISTER = 0, NOTIFY_ACTION_READ, NOTIFY_ACTION_TIMEOUT )
 	* @return { update: sucess, result: <ID> } when success, otherwise error with code
 	*/
 	/// @endcond
@@ -860,12 +772,12 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		if( el != NULL )
 		{
 			char *next;
-			notifid = strtol( el->data, &next, 0 );
+			notifid = strtol( el->hme_Data, &next, 0 );
 		}
 		el = HttpGetPOSTParameter( request, "action" );
 		if( el != NULL )
 		{
-			action = atoi( (char *)el->data );
+			action = atoi( (char *)el->hme_Data );
 		}
 		
 		DEBUG("Update notification. Action %d notifsid %lu\n", action, notifid );
@@ -873,10 +785,31 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		if( action > 0 && notifid > 0 )	// register is not supported
 		{
 			char tmp[ 512 ];
+			char *userName = NULL;
 			
 			Notification *not = NotificationManagerRemoveNotification( l->sl_NotificationManager , notifid );
-			int err = MobileAppNotifyUserUpdate( l, loggedSession->us_User->u_Name, not, action );
-			Log( FLOG_INFO, "[Update notification] action %d uname: %s\n", action, loggedSession->us_User->u_Name );
+			if( FRIEND_MUTEX_LOCK( &(loggedSession->us_Mutex) ) == 0 )
+			{
+				loggedSession->us_InUseCounter++;
+				if( loggedSession->us_User != NULL )
+				{
+					userName = StringDuplicate( loggedSession->us_User->u_Name );
+				}
+				FRIEND_MUTEX_UNLOCK( &(loggedSession->us_Mutex) );
+			}
+			int err = MobileAppNotifyUserUpdate( l, userName, not, action );
+			Log( FLOG_INFO, "[Update notification] action %d uname: %s\n", action, userName );
+			
+			if( FRIEND_MUTEX_LOCK( &(loggedSession->us_Mutex) ) == 0 )
+			{
+				loggedSession->us_InUseCounter--;
+				if( userName != NULL )
+				{
+					FFree( userName );
+				}
+				FRIEND_MUTEX_UNLOCK( &(loggedSession->us_Mutex) );
+			}
+			
 			if( not != NULL )
 			{
 				NotificationDelete( not );
@@ -895,10 +828,10 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		}
 		else
 		{
-			char buffer[ 256 ];
+			char buffer[ 512 ];
 			char buffer1[ 256 ];
 			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "notifid, action" );
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, buffer );
 		}
 	}
@@ -963,7 +896,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		el = HttpGetPOSTParameter( request, "status" );
 		if( el != NULL )
 		{
-			status = atoi( el->data );
+			status = atoi( el->hme_Data );
 		}
 		
 		if( status >= 0 )
@@ -971,18 +904,9 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			char buffer[ 256 ];
 			
 			DEBUG("[MobileWebRequest] setWS state to: %d\n", status );
-			if( loggedSession->us_WSConnections != NULL )
+			if( loggedSession->us_WSD != NULL )
 			{
-				//loggedSession->us_WebSocketStatus = status;
-				UserSessionWebsocket *cl = loggedSession->us_WSConnections;
-				
-				while( cl != NULL )
-				{
-					cl->wusc_Status = status;
-					
-					//DEBUG("[MobileWebRequest] connection %p set status to: %d\n", cl->wsc_Wsi, cl->wsc_Status );
-					cl = (UserSessionWebsocket *) cl->node.mln_Succ;
-				}
+				loggedSession->us_WebSocketStatus = status;
 			}
 			
 			snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"0\", \"set\":\"%d\" }", status );
@@ -991,10 +915,10 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		} // missing parameters
 		else  // umaid
 		{
-			char buffer[ 256 ];
+			char buffer[ 512 ];
 			char buffer1[ 256 ];
 			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "status" );
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, buffer );
 		}
 	}

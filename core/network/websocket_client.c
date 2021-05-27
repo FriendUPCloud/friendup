@@ -84,30 +84,31 @@ static int WebsocketClientCallback( struct lws *wsi, enum lws_callback_reasons r
 				return 0;
 			}
 				
-			FRIEND_MUTEX_LOCK( &(cd->wcd_WSClient->wc_Mutex) );
-
-			FQEntry *e = NULL;
-			FQueue *q = &(cd->wcd_WSClient->wc_MsgQueue);
-			if( ( e = FQPop( q ) ) != NULL )
+			if( FRIEND_MUTEX_LOCK( &(cd->wcd_WSClient->wc_Mutex) ) == 0 )
 			{
-				FRIEND_MUTEX_UNLOCK( &(cd->wcd_WSClient->wc_Mutex) );
-				unsigned char *t = e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING;
-				t[ e->fq_Size+1 ] = 0;
-
-				lws_write( cd->wcd_WSClient->wc_WSI, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
-
-				int w = lws_send_pipe_choked( cd->wcd_WSClient->wc_WSI );
-
-				if( e != NULL )
+				FQEntry *e = NULL;
+				FQueue *q = &(cd->wcd_WSClient->wc_MsgQueue);
+				if( ( e = FQPop( q ) ) != NULL )
 				{
-					DEBUG("Release: %p\n", e->fq_Data );
-					FFree( e->fq_Data );
-					FFree( e );
+					FRIEND_MUTEX_UNLOCK( &(cd->wcd_WSClient->wc_Mutex) );
+					unsigned char *t = e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING;
+					t[ e->fq_Size+1 ] = 0;
+
+					lws_write( cd->wcd_WSClient->wc_WSI, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
+
+					int w = lws_send_pipe_choked( cd->wcd_WSClient->wc_WSI );
+
+					if( e != NULL )
+					{
+						DEBUG("Release: %p\n", e->fq_Data );
+						FFree( e->fq_Data );
+						FFree( e );
+					}
 				}
-			}
-			else
-			{
-				FRIEND_MUTEX_UNLOCK( &(cd->wcd_WSClient->wc_Mutex) );
+				else
+				{
+					FRIEND_MUTEX_UNLOCK( &(cd->wcd_WSClient->wc_Mutex) );
+				}
 			}
 			
 			if( cd->wcd_WSClient->wc_MsgQueue.fq_First != NULL )
@@ -156,6 +157,8 @@ static struct lws_protocols protocols[] =
 
 void WebsocketClientLoop( void *data )
 {
+	pthread_detach( pthread_self() );
+	
 	FThread *th = (FThread *)data;
 	WebsocketClient *cl = (WebsocketClient *)th->t_Data;
 	DEBUG("[WebsocketClientLoop] start\n" );
@@ -191,6 +194,7 @@ void WebsocketClientLoop( void *data )
 	}
 	th->t_Launched = FALSE;
 	DEBUG("[WebsocketClientLoop] end\n" );
+	pthread_exit( NULL );
 }
 
 /* // example
@@ -209,7 +213,7 @@ void WebsocketClientLoop( void *data )
  * @param port - port on which connection will be made
  * @return new WebsocketClient structure when success, otherwise NULL
  */
-WebsocketClient *WebsocketClientNew( char *host, int port, void (*fptr)( void *, char *, int ) )
+WebsocketClient *WebsocketClientNew( char *host, int port, void (*fptr)( struct WebsocketClient *, char *, int ) )
 {
 	DEBUG("[WebsocketClientNew] start\n" );
 	WebsocketClient *cl = FCalloc( 1, sizeof(WebsocketClient) );
@@ -297,7 +301,10 @@ int WebsocketClientConnect( WebsocketClient *cl )
 			cl->ws_Ccinfo.protocol = protocols[ PROTOCOL_FRIEND ].name;
 			
 			WClientData *ld = FCalloc( 1, sizeof( WClientData ) );
-			ld->wcd_WSClient = cl;
+			if( ld != NULL )
+			{
+				ld->wcd_WSClient = cl;
+			}
 			cl->wc_WSData = ld;
 			cl->ws_Ccinfo.userdata = ld;
 			

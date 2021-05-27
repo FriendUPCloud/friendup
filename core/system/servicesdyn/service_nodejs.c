@@ -54,7 +54,7 @@ Service *ServiceNew( void *sysbase, char *command )
 	Service *service = NULL;
 	DEBUG("[Nodejs service] New\n");
 	
-	if( ( service = calloc( 1, sizeof( Service ) )  ) != NULL )
+	if( ( service = FCalloc( 1, sizeof( Service ) )  ) != NULL )
 	{
 		int size = 0;
 		
@@ -67,18 +67,17 @@ Service *ServiceNew( void *sysbase, char *command )
 			}
 		}
 		
-		NodejsService *hs = calloc( 1, sizeof( NodejsService ) );
-		if( hs != NULL )
+		service->s_SpecialData = FCalloc( 1, sizeof( NodejsService ) );
+		if( service->s_SpecialData != NULL )
 		{
-			service->s_SpecialData = hs;
+			NodejsService *hs = (NodejsService *)service->s_SpecialData;
 			hs->hs_SB = sysbase;
 		}
-		
-		//service->s_Buffer = calloc( SERVICE_BUFFER_MAX, sizeof(BYTE) );
+
 		service->s_State = SERVICE_STOPPED;
 	}
 	
-	return (Service *) service;
+	return service;
 }
 
 //
@@ -133,11 +132,11 @@ int thread( FThread *t )
 			while( ( fgets( data, 2048, file ) ) != NULL )
 			{
 				int len = strlen( data );
-				if( s->s_USW != NULL )
+				if( s->s_UserSession != NULL )
 				{
 					memcpy( buf, data,  len );
 
-					hs->hs_SB->WebsocketWrite( s->s_USW, buf , len, LWS_WRITE_TEXT );
+					hs->hs_SB->WebsocketWrite( s->s_UserSession, buf , len, LWS_WRITE_TEXT );
 					
 					//DEBUG1("Wrote to websockets %d bytes\n", n );
 				}
@@ -231,21 +230,22 @@ char *ServiceGetStatus( Service *service, int *len )
 	}
     
 	char *status = FCalloc( 256, sizeof( char ) );
-	
-	switch( service->s_State )
+	if( status != NULL )
 	{
-		case SERVICE_STOPPED:
-			strcpy( status, "stopped" );
-			break;
-		case SERVICE_STARTED:
-			strcpy( status, "started" );
-			break;
-		case SERVICE_PAUSED:
-			strcpy( status, "paused" );
-			break;
+		switch( service->s_State )
+		{
+			case SERVICE_STOPPED:
+				strcpy( status, "stopped" );
+				break;
+			case SERVICE_STARTED:
+				strcpy( status, "started" );
+				break;
+			case SERVICE_PAUSED:
+				strcpy( status, "paused" );
+				break;
+		}
+		*len = strlen( status );
 	}
-	*len = strlen( status );
-    
 	return status;
 }
 

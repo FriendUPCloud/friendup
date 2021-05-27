@@ -7,6 +7,9 @@
 * found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
+
+// NOTICE: - this file is deprecated and will be removed!, 20/08/2020, HT
+
 /** @file
  * 
  *  Notification Manager IOS
@@ -22,6 +25,7 @@
 #include <mobile_app/mobile_app.h>
 #include <mobile_app/notifications_sink.h>
 #include <network/http_client.h>
+#include <util/element_list.h>
 
 //
 //
@@ -36,66 +40,138 @@
 
 int hex2int(char ch)
 {
-    if (ch >= '0' && ch <= '9')
-        return ch - '0';
-    if (ch >= 'A' && ch <= 'F')
-        return ch - 'A' + 10;
-    if (ch >= 'a' && ch <= 'f')
-        return ch - 'a' + 10;
-    return -1;
+	if (ch >= '0' && ch <= '9')
+	{
+		return ch - '0';
+	}
+	if (ch >= 'A' && ch <= 'F')
+	{
+		return ch - 'A' + 10;
+	}
+	if (ch >= 'a' && ch <= 'f')
+	{
+		return ch - 'a' + 10;
+	}
+	return -1;
 }
 
+
+/*
 char *TokenToBinary( const char *token )
 {
-	char inputCharVector[ 256 ];
-	memset( inputCharVector, 0, sizeof(inputCharVector) );
+	char inputCharVector[ 512 ];
 	int len = strlen( token );
+    int i, j;
+	
+	memset( inputCharVector, 0, sizeof(inputCharVector) );
+	
+	if( len > 32 )
+	{
+		Log( FLOG_ERROR, "Token len > 32: %s\n", token );
+		len = 32;
+	}
+	
+	//Convert the string to the hex vector string
+
+	//converting str character into Hex and adding into strH
+	for( i=0 ; i<len ;i++ )
+	{ 
+		char val = 0;
+		val = hex2int( token[ i ] );
+		inputCharVector[i] = val;
+	}
+    
+	char *buffer = (char *)FMalloc( 64 );	//	34
+	if( buffer != NULL )
+	{
+		int location = 0;
+		memset( buffer, 0, 34 );
+    
+		unsigned value;
+		unsigned data[4];
+
+		for( i = 0; i < len; i += 8)
+		{
+			memset(data, 0, 4);
+			data[0] = (inputCharVector[i] << 4) | (inputCharVector[i + 1]);
+			data[1] = (inputCharVector[i + 2] << 4) | (inputCharVector[i + 3]);
+			data[2] = (inputCharVector[i + 4] << 4) | (inputCharVector[i + 5]);
+			data[3] = (inputCharVector[i + 6] << 4) | (inputCharVector[i + 7]);
+        
+			value = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3];
+        
+			value = htonl(value);
+
+			memcpy( &buffer[ location ], &value, sizeof(unsigned) );
+		
+			location += sizeof(unsigned);
+		}
+		//buffer[ 32 ] = '0';
+		//buffer[ 33 ] = 0;
+		buffer[ i+1 ] = '0';
+		buffer[ i+2 ] = 0;
+	}
+	return buffer;
+}
+*/
+
+char *TokenToBinary( const char *token, int *bsize )
+{
+	int len = strlen( token );
+	char *inputCharVector = FCalloc( (len*2)+64, sizeof(char) );
     int i, j;
 	
 	//Convert the string to the hex vector string
 
-	/*converting str character into Hex and adding into strH*/
-    for( i=0 ; i<len ;i++ )
-    { 
+	//converting str character into Hex and adding into strH
+	for( i=0 ; i<len ;i++ )
+	{ 
 		char val = 0;
-        val = hex2int( token[ i ] );
+		val = hex2int( token[ i ] );
 		inputCharVector[i] = val;
-    }
-    
-	char *buffer = (char *)malloc( 34 );
-	int location = 0;
-	memset( buffer, 0, 34 );
-    
-	unsigned value;
-	unsigned data[4];
-
-	for( i = 0; i < len; i += 8)
-	{
-		memset(data, 0, 4);
-		data[0] = (inputCharVector[i] << 4) | (inputCharVector[i + 1]);
-		data[1] = (inputCharVector[i + 2] << 4) | (inputCharVector[i + 3]);
-		data[2] = (inputCharVector[i + 4] << 4) | (inputCharVector[i + 5]);
-		data[3] = (inputCharVector[i + 6] << 4) | (inputCharVector[i + 7]);
-        
-		value = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3];
-        
-		value = htonl(value);
-
-		memcpy( &buffer[location], &value, sizeof(unsigned) );
-		
-		location += sizeof(unsigned);
 	}
+    
+	char *buffer = (char *)FMalloc( len+64 );	//	34
+	if( buffer != NULL )
+	{
+		int location = 0;
+		memset( buffer, 0, 34 );
+    
+		unsigned value;
+		unsigned data[4];
 
-	buffer[ 32 ] = '0';
-	buffer[ 33 ] = 0;
+		for( i = 0; i < len; i += 8)
+		{
+			memset(data, 0, 4*sizeof(unsigned) );
+			data[0] = (inputCharVector[i] << 4) | (inputCharVector[i + 1]);
+			data[1] = (inputCharVector[i + 2] << 4) | (inputCharVector[i + 3]);
+			data[2] = (inputCharVector[i + 4] << 4) | (inputCharVector[i + 5]);
+			data[3] = (inputCharVector[i + 6] << 4) | (inputCharVector[i + 7]);
+        
+			value = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3];
+        
+			value = htonl(value);
 
+			memcpy( &buffer[ location ], &value, sizeof(unsigned) );
+		
+			location += sizeof(unsigned);
+		}
+		//buffer[ 32 ] = '0';
+		//buffer[ 33 ] = 0;
+		buffer[ i+1 ] = '0';
+		buffer[ i+2 ] = 0;
+		
+		*bsize = i/2;
+	}
+	FFree( inputCharVector );
 	return buffer;
 }
 
-#define IOS_MAX_MSG_SIZE sizeof (uint8_t) + sizeof (uint32_t) + sizeof (uint32_t) + sizeof (uint16_t) + DEVICE_BINARY_SIZE + sizeof (uint16_t) + MAXPAYLOAD_SIZE
+//#define IOS_MAX_MSG_SIZE sizeof (uint8_t) + sizeof (uint32_t) + sizeof (uint32_t) + sizeof (uint16_t) + DEVICE_BINARY_SIZE + sizeof (uint16_t) + MAXPAYLOAD_SIZE
+//#define IOS_MAX_MSG_SIZE (DEVICE_BINARY_SIZE+MAXPAYLOAD_SIZE+2048)
 
 // Source: https://developer.apple.com/library/ios/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/Chapters/LegacyFormat.html
-FBOOL SendPayload( NotificationManager *nm, SSL *sslPtr, char *deviceTokenBinary, char *payloadBuff, size_t payloadLength )
+FBOOL SendPayload( NotificationManager *nm, SSL *sslPtr, char *deviceTokenBinary, char *payloadBuff, size_t payloadLength, int toklen )
 {
 	DEBUG("Send payload\n");
 	FBOOL rtn = FALSE;
@@ -103,13 +179,14 @@ FBOOL SendPayload( NotificationManager *nm, SSL *sslPtr, char *deviceTokenBinary
 	{
 		uint8_t command = 1; /* command number */
 		char *binaryMessageBuff;
-		if( ( binaryMessageBuff = FMalloc( IOS_MAX_MSG_SIZE ) ) != NULL )
+		DEBUG("Alloc memory: %d\n", MAXPAYLOAD_SIZE );
+		if( ( binaryMessageBuff = FMalloc( MAXPAYLOAD_SIZE ) ) != NULL )
 		{
 			// message format is, |COMMAND|ID|EXPIRY|TOKENLEN|TOKEN|PAYLOADLEN|PAYLOAD|
 			char *binaryMessagePt = binaryMessageBuff;
 			uint32_t whicheverOrderIWantToGetBackInAErrorResponse_ID = 1234;
 			uint32_t networkOrderExpiryEpochUTC = htonl( nm->nm_APNSNotificationTimeout );
-			uint16_t networkOrderTokenLength = htons(DEVICE_BINARY_SIZE);
+			uint16_t networkOrderTokenLength = htons( toklen );// htons(DEVICE_BINARY_SIZE);
 			uint16_t networkOrderPayloadLength = htons(payloadLength);
         
 			// command
@@ -128,8 +205,10 @@ FBOOL SendPayload( NotificationManager *nm, SSL *sslPtr, char *deviceTokenBinary
 			binaryMessagePt += sizeof (uint16_t);
         
 			// device token
-			memcpy(binaryMessagePt, deviceTokenBinary, DEVICE_BINARY_SIZE);
-			binaryMessagePt += DEVICE_BINARY_SIZE;
+			//memcpy(binaryMessagePt, deviceTokenBinary, DEVICE_BINARY_SIZE);
+			//binaryMessagePt += DEVICE_BINARY_SIZE;
+			memcpy(binaryMessagePt, deviceTokenBinary, toklen);
+			binaryMessagePt += toklen;
         
 			// payload length network order 
 			memcpy(binaryMessagePt, &networkOrderPayloadLength, sizeof (uint16_t));
@@ -173,7 +252,7 @@ FBOOL SendPayload( NotificationManager *nm, SSL *sslPtr, char *deviceTokenBinary
 
 int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char *title, const char *content, const char *sound, int badge, const char *app, const char *extras, char *tokens )
 {
-	char *startToken = tokens;
+	/*char *startToken = tokens;
 	char *curToken = tokens+1;
 	SSL_CTX *ctx;
 	SSL *ssl;
@@ -200,7 +279,7 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 	nm->nm_APNSNotificationTimeout = time(NULL) + 86400; // default expiration date set to 1 day
     
 	SSLeay_add_ssl_algorithms();
-	SSL_load_error_strings();
+	//SSL_load_error_strings();
 	
 	//ctx = SSL_CTX_new( TLS_client_method() );
 	ctx = SSL_CTX_new(TLSv1_2_method());
@@ -307,6 +386,7 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 							SSL_set_fd( ssl, sockfd );
 							if( SSL_connect( ssl ) != -1 )
 							{
+								int tokLen = 0;
 								if( encmsg != NULL )
 								{
 									//pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\"},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, encmsg );
@@ -323,11 +403,11 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 									startToken++;
 								}
 			
-								char *tok = TokenToBinary( startToken );
+								char *tok = TokenToBinary( startToken, &tokLen );
 								DEBUG("Send payload, token pointer %p token '%s' payload: %s\n", tok, startToken, pushContent );
 								if( tok != NULL )
 								{
-									if( !SendPayload( nm, ssl, tok, pushContent, pushContentLen ) )
+									if( !SendPayload( nm, ssl, tok, pushContent, pushContentLen, tokLen ) )
 									{
 										failedNumber++;
 									}
@@ -369,7 +449,7 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 	{
 		FFree( encmsg );
 	}
-	
+	*/
 	return 0;
 }
 
@@ -379,6 +459,8 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 
 void NotificationIOSSendingThread( FThread *data )
 {
+	/*pthread_detach( pthread_self() );
+	
 	data->t_Launched = TRUE;
 	NotificationManager *nm = (NotificationManager *)data->t_Data;
 	SSL_CTX *ctx;
@@ -389,7 +471,7 @@ void NotificationIOSSendingThread( FThread *data )
 	in_port_t sinPort;
 	
 	SSLeay_add_ssl_algorithms();
-	SSL_load_error_strings();
+	//SSL_load_error_strings();
 	
 	//ctx = SSL_CTX_new( TLS_client_method() );
 	ctx = SSL_CTX_new(TLSv1_2_method());
@@ -397,6 +479,7 @@ void NotificationIOSSendingThread( FThread *data )
 	if( !ctx )
 	{
 		FERROR("NotificationIOSSendingThread: SSL_CTX_new()...failed\n");
+		pthread_exit( NULL );
 		return;
 	}
     
@@ -405,6 +488,7 @@ void NotificationIOSSendingThread( FThread *data )
 		SSL_CTX_free( ctx );
 		ERR_print_errors_fp( stderr );
 		FERROR("NotificationIOSSendingThread: verify location fail\n");
+		pthread_exit( NULL );
 		return;
 	}
     
@@ -413,6 +497,7 @@ void NotificationIOSSendingThread( FThread *data )
 		SSL_CTX_free( ctx );
 		ERR_print_errors_fp( stderr );
 		FERROR("NotificationIOSSendingThread: certyficate empty\n");
+		pthread_exit( NULL );
 		return;
 	}
 	
@@ -421,6 +506,7 @@ void NotificationIOSSendingThread( FThread *data )
 		SSL_CTX_free( ctx );
 		ERR_print_errors_fp( stderr );
 		FERROR("NotificationIOSSendingThread: use certyficate fail\n");
+		pthread_exit( NULL );
 		return;
 	}
     
@@ -429,6 +515,7 @@ void NotificationIOSSendingThread( FThread *data )
 		SSL_CTX_free( ctx );
 		ERR_print_errors_fp( stderr );
 		FERROR("NotificationIOSSendingThread: use private key fail\n");
+		pthread_exit( NULL );
 		return;
 	}
     
@@ -437,35 +524,36 @@ void NotificationIOSSendingThread( FThread *data )
 		SSL_CTX_free( ctx );
 		ERR_print_errors_fp( stderr );
 		FERROR("NotificationIOSSendingThread: check private key\n");
+		pthread_exit( NULL );
 		return;
 	}
 	
-	/*
-	if( nm->nm_APNSSandBox )
-	{
-		he = gethostbyname( APNS_SANDBOX_HOST );
-	}
-	else
-	{
-		he = gethostbyname( APNS_HOST );
-	}
+	
+	//if( nm->nm_APNSSandBox )
+	//{
+	//	he = gethostbyname( APNS_SANDBOX_HOST );
+	//}
+	//else
+	//{
+	//	he = gethostbyname( APNS_HOST );
+	//}
     
-	if( !he )
-	{
-		SSL_CTX_free( ctx );
-		FERROR("NotificationIOSSendingThread: get host fail\n");
-		return;
-	}
+	//if( !he )
+	//{
+	//	SSL_CTX_free( ctx );
+	//	FERROR("NotificationIOSSendingThread: get host fail\n");
+	//	return;
+	//}
+	//
+	//if( nm->nm_APNSSandBox )
+	//{
+	//	sinPort = htons(APNS_SANDBOX_PORT);
+	//}
+	//else
+	//{
+	//	sinPort = htons(APNS_PORT);
+	//}
 	
-	if( nm->nm_APNSSandBox )
-	{
-		sinPort = htons(APNS_SANDBOX_PORT);
-	}
-	else
-	{
-		sinPort = htons(APNS_PORT);
-	}
-	*/
 	
 	DEBUG("NotificationIOSSendingThread: starting main loop\n");
 	while( data->t_Quit != TRUE )
@@ -598,6 +686,8 @@ void NotificationIOSSendingThread( FThread *data )
 	SSL_CTX_free( ctx );
 	
 	data->t_Launched = FALSE;
+	
+	pthread_exit( NULL );*/
 }
 
 /**
@@ -616,10 +706,7 @@ void NotificationIOSSendingThread( FThread *data )
 
 int NotificationManagerNotificationSendIOSQueue( NotificationManager *nm, const char *title, const char *content, const char *sound, int badge, const char *app, const char *extras, char *tokens )
 {
-	char *startToken = tokens;
-	char *curToken = tokens+1;
-	
-	if( tokens == NULL || strlen( tokens ) < 6 )
+	/*if( tokens == NULL || strlen( tokens ) < 6 )
 	{
 		return 21;
 	}
@@ -638,117 +725,200 @@ int NotificationManagerNotificationSendIOSQueue( NotificationManager *nm, const 
 	int successNumber = 0;
 	int failedNumber = 0;
 	
-	char *pushContent = FMalloc( MAXPAYLOAD_SIZE );
+	char *pushContent = FCalloc( MAXPAYLOAD_SIZE, sizeof(char) );
 	if( pushContent != NULL )
-	{
-		while( TRUE )
+	{*/
+		/*
+		StringListEl *curToken = SLEParseString( tokens );
+		while( curToken != NULL )
 		{
-			// go through all tokens separated by , (coma)
-			// and send message to them
-			if( *curToken == 0 || *curToken == ',' )
+			char *tok = NULL;
+			int toksize;
+			
+			nm->nm_APNSNotificationTimeout = time(NULL) + 86400; // default expiration date set to 1 day
+			
+			DEBUG("Send message to IOS: >%s<\n", curToken->s_Data );
+			
+			if( encmsg != NULL )
 			{
-				FBOOL quit = FALSE;
-				if( *curToken != 0 )
-				{
-					*curToken = 0;
-				}
-				else
-				{
-					quit = TRUE;
-				}
-				
-				nm->nm_APNSNotificationTimeout = time(NULL) + 86400; // default expiration date set to 1 day
-			
-				DEBUG("Send message to IOS: >%s<\n", startToken );
-				
-				if( encmsg != NULL )
-				{
-					pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, encmsg );
-				}
-				else
-				{
-					pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, extras );
-				}
-				
-				if( *startToken == ',' )
-				{
-					startToken++;
-				}
-				
-				{
-					char *tok = TokenToBinary( startToken );
-					DEBUG("Send payload, token pointer %p token '%s' payload: %s\n", tok, startToken, pushContent );
-					if( tok != NULL )
-					{
-						DEBUG("Send payload\n");
-						FBOOL rtn = FALSE;
-						if( pushContent, pushContentLen )
-						{
-							uint8_t command = 1; /* command number */
-							char *binaryMessageBuff;
-							if( ( binaryMessageBuff = FMalloc( IOS_MAX_MSG_SIZE ) ) != NULL )
-							{
-								// message format is, |COMMAND|ID|EXPIRY|TOKENLEN|TOKEN|PAYLOADLEN|PAYLOAD|
-								char *binaryMessagePt = binaryMessageBuff;
-								uint32_t whicheverOrderIWantToGetBackInAErrorResponse_ID = 1234;
-								uint32_t networkOrderExpiryEpochUTC = htonl( nm->nm_APNSNotificationTimeout );
-								uint16_t networkOrderTokenLength = htons(DEVICE_BINARY_SIZE);
-								uint16_t networkOrderPayloadLength = htons( pushContentLen );
-        
-								// command
-								*binaryMessagePt++ = command;
-        
-								// provider preference ordered ID 
-								memcpy(binaryMessagePt, &whicheverOrderIWantToGetBackInAErrorResponse_ID, sizeof (uint32_t));
-								binaryMessagePt += sizeof (uint32_t);
-        
-								// expiry date network order 
-								memcpy(binaryMessagePt, &networkOrderExpiryEpochUTC, sizeof (uint32_t));
-								binaryMessagePt += sizeof (uint32_t);
-        
-								// token length network order
-								memcpy(binaryMessagePt, &networkOrderTokenLength, sizeof (uint16_t));
-								binaryMessagePt += sizeof (uint16_t);
-        
-								// device token
-								memcpy(binaryMessagePt, tok, DEVICE_BINARY_SIZE);
-								binaryMessagePt += DEVICE_BINARY_SIZE;
-        
-								// payload length network order 
-								memcpy(binaryMessagePt, &networkOrderPayloadLength, sizeof (uint16_t));
-								binaryMessagePt += sizeof (uint16_t);
-        
-								// payload 
-								memcpy(binaryMessagePt, pushContent, pushContentLen);
-								binaryMessagePt += pushContentLen;
-								
-								FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-								en->fq_Data = (void *)binaryMessageBuff;
-								en->fq_Size = (binaryMessagePt - binaryMessageBuff);
-				
-								FQPushFIFO( &(nm->nm_IOSSendMessages), en );
-
-								successNumber++;
-								//FFree( binaryMessageBuff ); // do not release when message is going to queue
-							}
-						} //if( pushContent, pushContentLen )
-						FFree( tok );
-					}
-				}
-				
-				startToken = curToken+1;
-			
-				if( quit == TRUE )
-				{
-					break;
-				}
-				curToken++;
-			} // if( *curToken == 0 || *curToken == ',' )
+				pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, encmsg );
+			}
 			else
 			{
-				curToken++;
+				pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, extras );
 			}
-		} // while, sending message
+
+			tok = TokenToBinary( curToken->s_Data, &toksize );
+			DEBUG("Send payload, token pointer %p token '%s' payload: %s tokensize: %d\n", tok, curToken->s_Data, pushContent, toksize );
+			if( tok != NULL )
+			{
+				DEBUG("Send payload\n");
+				FBOOL rtn = FALSE;
+				if( pushContentLen > 0 )
+				{
+					uint8_t command = 1; // command number 
+					char *binaryMessageBuff;
+					if( ( binaryMessageBuff = FCalloc( MAXPAYLOAD_SIZE, sizeof(char) ) ) != NULL )
+					{
+						// message format is, |COMMAND|ID|EXPIRY|TOKENLEN|TOKEN|PAYLOADLEN|PAYLOAD|
+						char *binaryMessagePt = binaryMessageBuff;
+						uint32_t whicheverOrderIWantToGetBackInAErrorResponse_ID = 1234;
+						uint32_t networkOrderExpiryEpochUTC = htonl( nm->nm_APNSNotificationTimeout );
+						//uint16_t networkOrderTokenLength = htons(DEVICE_BINARY_SIZE);
+						uint16_t networkOrderTokenLength = htons(toksize);
+						uint16_t networkOrderPayloadLength = htons( pushContentLen );
+        
+						// command
+						*binaryMessagePt++ = command;
+        
+						// provider preference ordered ID 
+						memcpy(binaryMessagePt, &whicheverOrderIWantToGetBackInAErrorResponse_ID, sizeof (uint32_t));
+						binaryMessagePt += sizeof (uint32_t);
+        
+						// expiry date network order 
+						memcpy(binaryMessagePt, &networkOrderExpiryEpochUTC, sizeof (uint32_t));
+						binaryMessagePt += sizeof (uint32_t);
+        
+						// token length network order
+						memcpy(binaryMessagePt, &networkOrderTokenLength, sizeof (uint16_t));
+						binaryMessagePt += sizeof (uint16_t);
+        
+						// device token
+						//memcpy(binaryMessagePt, tok, DEVICE_BINARY_SIZE);
+						//binaryMessagePt += DEVICE_BINARY_SIZE;
+						memcpy(binaryMessagePt, tok, toksize);
+						binaryMessagePt += toksize;
+        
+						// payload length network order 
+						memcpy(binaryMessagePt, &networkOrderPayloadLength, sizeof (uint16_t));
+						binaryMessagePt += sizeof (uint16_t);
+        
+						// payload 
+						memcpy(binaryMessagePt, pushContent, pushContentLen);
+						binaryMessagePt += pushContentLen;
+						
+						FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+						if( en != NULL )
+						{
+							en->fq_Data = (void *)binaryMessageBuff;
+							en->fq_Size = (binaryMessagePt - binaryMessageBuff);
+			
+							if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
+							{
+								FQPushFIFO( &(nm->nm_IOSSendMessages), en );
+								FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
+							}
+						}
+						successNumber++;
+						//FFree( binaryMessageBuff ); // do not release when message is going to queue
+					}
+				} //if( pushContent, pushContentLen )
+				FFree( tok );
+			}
+			
+			StringListEl *remToken = curToken;
+			curToken = (StringListEl *)curToken->node.mln_Succ;
+			if( remToken->s_Data != NULL )
+			{
+				FFree( remToken->s_Data );
+			}
+			FFree( remToken );
+		}	// while going through tokens
+		FFree( pushContent );
+		
+		if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
+		{
+			pthread_cond_signal( &(nm->nm_IOSSendCond) );
+			FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
+		}
+		*/
+		//StringListEl *curToken = SLEParseString( tokens );
+		//while( curToken != NULL )
+		/*{
+			char *tok = NULL;
+			int toksize;
+			
+			nm->nm_APNSNotificationTimeout = time(NULL) + 86400; // default expiration date set to 1 day
+			
+			DEBUG("Send message to IOS: >%s<\n", tokens );
+			
+			if( encmsg != NULL )
+			{
+				pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, encmsg );
+			}
+			else
+			{
+				pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, extras );
+			}
+
+			tok = TokenToBinary( tokens, &toksize );
+			DEBUG("Send payload, token pointer %p token '%s' payload: %s tokensize: %d\n", tok, tokens, pushContent, toksize );
+			if( tok != NULL )
+			{
+				DEBUG("Send payload\n");
+				FBOOL rtn = FALSE;
+				if( pushContentLen > 0 )
+				{
+					uint8_t command = 1; // command number 
+					char *binaryMessageBuff;
+					if( ( binaryMessageBuff = FCalloc( MAXPAYLOAD_SIZE, sizeof(char) ) ) != NULL )
+					{
+						// message format is, |COMMAND|ID|EXPIRY|TOKENLEN|TOKEN|PAYLOADLEN|PAYLOAD|
+						char *binaryMessagePt = binaryMessageBuff;
+						uint32_t whicheverOrderIWantToGetBackInAErrorResponse_ID = 1234;
+						uint32_t networkOrderExpiryEpochUTC = htonl( nm->nm_APNSNotificationTimeout );
+						//uint16_t networkOrderTokenLength = htons(DEVICE_BINARY_SIZE);
+						uint16_t networkOrderTokenLength = htons(toksize);
+						uint16_t networkOrderPayloadLength = htons( pushContentLen );
+        
+						// command
+						*binaryMessagePt++ = command;
+        
+						// provider preference ordered ID 
+						memcpy(binaryMessagePt, &whicheverOrderIWantToGetBackInAErrorResponse_ID, sizeof (uint32_t));
+						binaryMessagePt += sizeof (uint32_t);
+        
+						// expiry date network order 
+						memcpy(binaryMessagePt, &networkOrderExpiryEpochUTC, sizeof (uint32_t));
+						binaryMessagePt += sizeof (uint32_t);
+        
+						// token length network order
+						memcpy(binaryMessagePt, &networkOrderTokenLength, sizeof (uint16_t));
+						binaryMessagePt += sizeof (uint16_t);
+        
+						// device token
+						//memcpy(binaryMessagePt, tok, DEVICE_BINARY_SIZE);
+						//binaryMessagePt += DEVICE_BINARY_SIZE;
+						memcpy(binaryMessagePt, tok, toksize);
+						binaryMessagePt += toksize;
+        
+						// payload length network order 
+						memcpy(binaryMessagePt, &networkOrderPayloadLength, sizeof (uint16_t));
+						binaryMessagePt += sizeof (uint16_t);
+        
+						// payload 
+						memcpy(binaryMessagePt, pushContent, pushContentLen);
+						binaryMessagePt += pushContentLen;
+						
+						FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+						if( en != NULL )
+						{
+							en->fq_Data = (void *)binaryMessageBuff;
+							en->fq_Size = (binaryMessagePt - binaryMessageBuff);
+			
+							if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
+							{
+								FQPushFIFO( &(nm->nm_IOSSendMessages), en );
+								FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
+							}
+						}
+						successNumber++;
+						//FFree( binaryMessageBuff ); // do not release when message is going to queue
+					}
+				} //if( pushContent, pushContentLen )
+				FFree( tok );
+			}
+		}	// while going through tokens
 		FFree( pushContent );
 		
 		if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
@@ -764,6 +934,6 @@ int NotificationManagerNotificationSendIOSQueue( NotificationManager *nm, const 
 	{
 		FFree( encmsg );
 	}
-	
+	*/
 	return 0;
 }

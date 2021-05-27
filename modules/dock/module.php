@@ -44,12 +44,14 @@ else
 	$Type = false;
 	$Icon = false;
 	$DisplayName = false;
+	$OpenSilent = false;
 	foreach( $o->_fieldnames as $fn )
 	{
 		if( $fn == 'DockID' ) $DockID = true;
 		if( $fn == 'Type' ) $Type = true;
 		if( $fn == 'Icon' ) $Icon = true;
 		if( $fn == 'DisplayName' ) $DisplayName = true;
+		if( $fn == 'OpenSilent' ) $OpenSilent = true;
 	}
 	if( !$DockID )
 		$SqlDatabase->query( 'ALTER TABLE `DockItem` ADD `DockID` bigint(20) NOT NULL AFTER `Parent`' );
@@ -59,6 +61,8 @@ else
 		$SqlDatabase->query( 'ALTER TABLE `DockItem` ADD `Icon` varchar(255) AFTER `Type`' );
 	if( !$DisplayName )
 		$SqlDatabase->query( 'ALTER TABLE `DockItem` ADD `DisplayName` varchar(255) default \'\' AFTER `Application`' );
+	if( !$OpenSilent )
+		$SqlDatabase->query( 'ALTER TABLE `DockItem` ADD `OpenSilent` tinyint(4) default 0 AFTER `Application`' );
 }
 
 // End run things first time ---------------------------------------------------
@@ -82,12 +86,17 @@ if( isset( $args->command ) )
 	switch( $args->command )
 	{
 		case 'items':
+			if( isset( $args->args->userID ) && $args->args->userID != $User->ID )
+			{
+				if( $level != 'Admin' ) die( 'fail<!--separate-->not authorized to sort dockitems' );
+			}
+			$userid = ( isset( $args->args->userID ) ? intval( $args->args->userID ) : $User->ID );
 			// Load root items if nothing else is requested
 			if( $rows = $SqlDatabase->FetchObjects( '
 				SELECT d.* FROM
 					DockItem d
 				WHERE
-					d.UserID=\'' . $User->ID . '\' AND d.Parent=0 AND d.Type != \'Dock\'
+					d.UserID=\'' . $userid . '\' AND d.Parent=0 AND d.Type != \'Dock\'
 				ORDER BY 
 					d.SortOrder ASC
 			' ) )
@@ -107,6 +116,7 @@ if( isset( $args->command ) )
 					$o->Name = trim( $row->Application ) ? $row->Application : i18n( 'Unnamed' );
 					$o->Title = trim( $row->ShortDescription ) ? $row->ShortDescription : '';
 					$o->Workspace = $row->Workspace;
+					$o->OpenSilent = $row->OpenSilent;
 					$apath = 'apps/' . $row->Application . '/';
 					if( !$row->Icon )
 					{
@@ -123,6 +133,7 @@ if( isset( $args->command ) )
 						}
 					}
 					$o->Image = '';
+					$o->SortOrder = $row->SortOrder;
 					
 					// Get config
 					$eles[] = $o;
@@ -135,21 +146,22 @@ if( isset( $args->command ) )
 			{
 				if( $level != 'Admin' ) die('fail<!--separate-->not authorized to add dockitems');
 			}
+			$debug = false/*true*/;
 			//prepare....
 			$userid = ( $args->args->userID ? intval( $args->args->userID ) : $User->ID );
 			$s = filter_var( $args->args->name, FILTER_SANITIZE_STRING );
 			if( $args->args->fuzzy )
 			{
-				$q = ( 'DELETE FROM DockItem WHERE UserID=\'' . $userid . '\' AND `Application` LIKE "' . $s . ' %" AND `Type`="executable"' );
+				$q = ( 'DELETE FROM DockItem WHERE UserID=\'' . $userid . '\' AND `Application` LIKE "' . $s . ' %" AND ( `Type`="' . ( isset( $args->args->type ) ? '' : 'executable' ) . '" OR `Type`="" OR `Type`="file" ) LIMIT 1' );
 				//$Logger->log('cleaning a dock here... ' . $q);
 			}
 			else
 			{
-				$q = ( 'DELETE FROM DockItem WHERE UserID=\'' . $userid . '\' AND `Application`="' . $s . '" AND `Type`="executable" LIMIT 1' );
+				$q = ( 'DELETE FROM DockItem WHERE UserID=\'' . $userid . '\' AND `Application`="' . $s . '" AND ( `Type`="' . ( isset( $args->args->type ) ? '' : 'executable' ) . '" OR `Type`="" OR `Type`="file" ) LIMIT 1' );
 			}
 			if( $SqlDatabase->Query( $q ) )
 			{
-				die( 'ok<!--separate-->{"response":1,"message":"Dock item(s) removed","item":"' . $s . '"}' );
+				die( 'ok<!--separate-->{"response":1,"message":"Dock item(s) removed","item":"' . $s . '"' . ( $debug ? ',"debug":"' . $q . '"' : '' ) . '}' );
 			}
 			die( 'fail<!--separate-->{"response":0,"message":"Could not find dock item"}' );
 			break;
@@ -174,7 +186,12 @@ if( isset( $args->command ) )
 			}
 			die( 'fail' );
 		case 'sortorder':
-			if( $out = $SqlDatabase->FetchObjects( 'SELECT * FROM DockItem WHERE UserID=\'' . $User->ID . '\' ORDER BY SortOrder ASC' ) )
+			if( $args->args->userID && $args->args->userID != $User->ID )
+			{
+				if( $level != 'Admin' ) die('fail<!--separate-->not authorized to sort dockitems');
+			}
+			$userid = ( $args->args->userID ? intval( $args->args->userID ) : $User->ID );
+			if( $out = $SqlDatabase->FetchObjects( 'SELECT * FROM DockItem WHERE UserID=\'' . $userid . '\' ORDER BY SortOrder ASC' ) )
 			{
 				$i = 0;
 				$len = count( $out );
@@ -203,7 +220,7 @@ if( isset( $args->command ) )
 				$i = 0;
 				foreach( $out as $o )
 				{
-					$SqlDatabase->Query( 'UPDATE DockItem SET SortOrder = \'' . $i . '\' WHERE ID=\'' . $o->ID . '\' AND UserID=\'' . $User->ID . '\'' );
+					$SqlDatabase->Query( 'UPDATE DockItem SET SortOrder = \'' . $i . '\' WHERE ID=\'' . $o->ID . '\' AND UserID=\'' . $userid . '\'' );
 					$i++;
 				}
 				die( 'ok' );
@@ -216,6 +233,7 @@ if( isset( $args->command ) )
 			$shortdesc = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->shortdescription );
 			$icon = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->icon );
 			$work = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->workspace );
+			$opensilent = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->opensilent );
 			$dname = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->displayname );
 			$SqlDatabase->Query( '
 				UPDATE DockItem SET
@@ -223,7 +241,8 @@ if( isset( $args->command ) )
 					DisplayName = \'' . $dname . '\',
 					ShortDescription = \'' . $shortdesc . '\',
 					`Icon` = \'' . $icon . '\',
-					`Workspace` = \'' . $work . '\'
+					`Workspace` = \'' . $work . '\',
+					`OpenSilent` = \'' . $opensilent . '\'
 				WHERE
 					ID=\'' . $id . '\' AND
 					UserID=\'' . $User->ID . '\'
@@ -301,11 +320,16 @@ if( isset( $args->command ) )
 				';
 				$SqlDatabase->Query( $addquery );
 			}
-			
+			die('ok');
 			break;
 			
 		case 'additem':
-			$max = $SqlDatabase->FetchRow( 'SELECT MAX(SortOrder) MX FROM DockItem WHERE UserID = \'' . $User->ID . '\' AND Parent = 0' );
+			if( $args->args->userID && $args->args->userID != $User->ID )
+			{
+				if( $level != 'Admin' ) die('fail<!--separate-->not authorized to add dockitems');
+			}
+			$userid = ( $args->args->userID ? intval( $args->args->userID ) : $User->ID );
+			$max = $SqlDatabase->FetchRow( 'SELECT MAX(SortOrder) MX FROM DockItem WHERE UserID = \'' . $userid . '\' AND Parent = 0' );
 			if( isset( $args->args->application ) )
 			{
 				$exe = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->application );
@@ -323,7 +347,7 @@ if( isset( $args->command ) )
 				
 				// No duplicate!
 				$l = new dbIO( 'DockItem' );
-				$l->UserID = $User->ID;
+				$l->UserID = $userid;
 				$l->Application = $exe;
 				if( $l->load() ) die( 'fail<!--separate-->{"response":"0","message":"Application is already added."}' );
 				
@@ -332,7 +356,7 @@ if( isset( $args->command ) )
 						( UserID, `Type`, Application, DisplayName, ShortDescription, Icon, Parent, SortOrder, Workspace ) 
 					VALUES 
 						( 
-							\'' . $User->ID . '\', 
+							\'' . $userid . '\', 
 							\'' . $type . '\', 
 							\'' . $exe . '\', 
 							\'' . $dname . '\',
@@ -347,11 +371,11 @@ if( isset( $args->command ) )
 			else
 			{
 				$SqlDatabase->Query( '
-					INSERT INTO DockItem ( UserID, DockID, Parent, SortOrder, Workspace ) VALUES ( \'' . $User->ID . '\', 0, 0, \'' . ( intval($max['MX']) + 1 ) . '\', \'1\' )
+					INSERT INTO DockItem ( UserID, DockID, Parent, SortOrder, Workspace ) VALUES ( \'' . $userid . '\', 0, 0, \'' . ( intval($max['MX']) + 1 ) . '\', \'1\' )
 				' );
 			}
 			//get ID and give it back to the user...
-			$maxquery = 'SELECT ID FROM DockItem WHERE UserID = \'' . $User->ID . '\' AND Parent = 0 AND DockID = 0 AND SortOrder = \'' . ( intval( $max[ 'MX' ] ) + 1 ) . '\'';
+			$maxquery = 'SELECT ID FROM DockItem WHERE UserID = \'' . $userid . '\' AND Parent = 0 AND DockID = 0 AND SortOrder = \'' . ( intval( $max[ 'MX' ] ) + 1 ) . '\'';
 			$newid = $SqlDatabase->FetchRow( $maxquery );
 			//$Logger->log( 'Dock item saved' . print_r( $newid, 1 ) . ' :: ' . $maxquery );
 			die( 'ok<!--separate-->' .  $newid[ 'ID' ] );

@@ -62,7 +62,7 @@ char* UriGetScheme( char* str, unsigned int strLen, char** next )
 			break;
 		}
 		// Check for disallowed characters in the scheme
-		else if( !( CharIsAlpha( c ) || CharIsDigit( c ) || c == '+' || c == '-' || c == '.' ) )
+		else if( c == '+' || c == '-' || c == '.' || !( CharIsAlpha( c ) || CharIsDigit( c ) ) )
 		{
 			// We found a disallowed character, this is not a scheme.
 			return 0;
@@ -162,7 +162,10 @@ Authority *UriParseAuthority( char* str )
 	unsigned int userLen = 0;
 
 	Authority *authority = (Authority*) FCalloc( 1, sizeof( Authority ) );
-
+	if( authority == NULL )
+	{
+		return NULL;
+	}
 	// Get user (Ignore empty strings)
 	char* userEnd = memchr( str, '@', strLen );
 	if( userEnd )
@@ -175,7 +178,7 @@ Authority *UriParseAuthority( char* str )
 			{
 				memcpy( userStr, str, userLen );
 				userStr[userLen] = 0;
-				authority->user = userStr;
+				authority->a_User = userStr;
 			}
 			else
 			{
@@ -213,7 +216,7 @@ Authority *UriParseAuthority( char* str )
 		{
 			memcpy( hostStr, userEnd, hostLen );
 			hostStr[hostLen] = 0;
-			authority->host = hostStr;
+			authority->a_Host = hostStr;
 		}
 		else
 		{
@@ -237,7 +240,7 @@ Authority *UriParseAuthority( char* str )
 				portStr[portLen] = 0;
 				unsigned int port = StringParseUInt( portStr );
 
-				authority->port = port;
+				authority->a_Port = port;
 				FFree( portStr ); // We don't need this anymore...
 			}
 			else
@@ -381,7 +384,7 @@ Hashmap* UriParseQuery( char* query )
 		return NULL;
 	}
 	
-	int queryLen = strlen( query );
+	unsigned int queryLen = strlen( query );
 	if( queryLen <= 0 )
 	{
 		FERROR("Lenght of query is <= 0\n");
@@ -460,10 +463,11 @@ Hashmap* UriParseQuery( char* query )
 			}
 			
 			char *c = StringDuplicateN( &(query[spos]), i-spos );
-			if( HashmapPut( map, StringDuplicate("post_json_tab"), c ) == MAP_OK )
+			HashmapPut( map, StringDuplicate("post_json_tab"), c );
+			/*if( HashmapPut( map, StringDuplicate("post_json_tab"), c ) == MAP_OK )
 			{
 				DEBUG("POSTJSON1 - %s -\n", c );
-			}
+			}*/
 			i++;
 		}
 		
@@ -563,6 +567,10 @@ Uri* UriParse( char* str )
 		return NULL;
 	}
 	Uri* uri = UriNew();
+	if( uri == NULL )
+	{
+		return NULL;
+	}
 	unsigned int strLen = strlen( str );
 	unsigned int remainingLen = strLen;
 	char* end = str + strLen;
@@ -573,7 +581,7 @@ Uri* UriParse( char* str )
 	remainingLen = strLen - ( next - str );
 	if( scheme )
 	{
-		uri->scheme = scheme;
+		uri->uri_Scheme = scheme;
 	}
 	
 	if( next >= end )
@@ -586,7 +594,7 @@ Uri* UriParse( char* str )
 	remainingLen = strLen - ( next - str );
 	if( authority )
 	{
-		uri->authority = UriParseAuthority( authority );
+		uri->uri_Authority = UriParseAuthority( authority );
 		free( authority );
 	}
 	
@@ -600,7 +608,7 @@ Uri* UriParse( char* str )
 	remainingLen = strLen - ( next - str );
 	if( pathRaw != NULL )
 	{
-		uri->path = PathNew( pathRaw );
+		uri->uri_Path = PathNew( pathRaw );
 		free( pathRaw );
 	}
 
@@ -611,11 +619,12 @@ Uri* UriParse( char* str )
 
 	// Get query --------------------------------------------------------------
 	char* query = UriGetQuery( next, remainingLen, &next );
+	//DEBUG( "Testing UriGetQuery: %s\n", query );
 	remainingLen = strLen - ( next - str );
 	if( query != NULL )
 	{
-		uri->query = UriParseQuery( query );
-		uri->queryRaw = query;
+		uri->uri_Query = UriParseQuery( query );
+		uri->uri_QueryRaw = query;
 	}
 
 	if( next >= end )
@@ -627,7 +636,7 @@ Uri* UriParse( char* str )
 	char* fragment = UriGetFragment( next, remainingLen, &next );
 	if( fragment )
 	{
-		uri->fragment = fragment;
+		uri->uri_Fragment = fragment;
 	}
 
 	return uri;
@@ -700,69 +709,69 @@ void UriTest()
  */
 void UriFree( Uri* uri )
 {
-	if( !uri )
+	if( uri == NULL )
 	{
 		return;
 	}
 
-	if( uri->scheme )
+	if( uri->uri_Scheme )
 	{
-		FFree( uri->scheme );
-		uri->scheme = NULL;
+		FFree( uri->uri_Scheme );
+		uri->uri_Scheme = NULL;
 	}
 
-	if( uri->authority )
+	if( uri->uri_Authority )
 	{
-		if( uri->authority->user )
+		if( uri->uri_Authority->a_User )
 		{
-			FFree( uri->authority->user );
-			uri->authority->user = NULL;
+			FFree( uri->uri_Authority->a_User );
+			uri->uri_Authority->a_User = NULL;
 		}
 
-		if( uri->authority->host )
+		if( uri->uri_Authority->a_Host )
 		{
-			FFree( uri->authority->host );
-			uri->authority->host = NULL;
+			FFree( uri->uri_Authority->a_Host );
+			uri->uri_Authority->a_Host = NULL;
 		}
 
-		FFree( uri->authority );
-		uri->authority = NULL;
+		FFree( uri->uri_Authority );
+		uri->uri_Authority = NULL;
 	}
 
-	if( uri->path )
+	if( uri->uri_Path )
 	{
-		PathFree( uri->path );
-		uri->path = NULL;
+		PathFree( uri->uri_Path );
+		uri->uri_Path = NULL;
 	}
 
-	if( uri->query )
+	if( uri->uri_Query )
 	{
 		unsigned int iterator = 0;
 		HashmapElement* e = NULL;
-		while( ( e = HashmapIterate( uri->query, &iterator ) ) != NULL )
+		while( ( e = HashmapIterate( uri->uri_Query, &iterator ) ) != NULL )
 		{
-			if( e->data != NULL )
+			if( e->hme_Data != NULL )
 			{
-				FFree( e->data );
-				e->data = NULL;
+				FFree( e->hme_Data );
+				e->hme_Data = NULL;
 			}
-			FFree( e->key );
-			e->key = NULL;
+			FFree( e->hme_Key );
+			e->hme_Key = NULL;
 		}
-		HashmapFree( uri->query );
-		uri->query = NULL;
+		HashmapFree( uri->uri_Query );
+		uri->uri_Query = NULL;
 	}
 
-	if( uri->queryRaw )
+	if( uri->uri_QueryRaw )
 	{
-		FFree( uri->queryRaw );
-		uri->queryRaw = NULL;
+		FFree( uri->uri_QueryRaw );
+		uri->uri_QueryRaw = NULL;
 	}
 	
-	if( uri->fragment )
+	if( uri->uri_Fragment )
 	{
-		FFree( uri->fragment );
-		uri->fragment = NULL;
+		FFree( uri->uri_Fragment );
+		uri->uri_Fragment = NULL;
 	}
 
 	FFree( uri );
