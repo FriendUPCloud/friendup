@@ -3068,11 +3068,11 @@ ug.UserID = '%lu' \
 								int size = 0;
 								if( pos == 0 )
 								{
-									size = snprintf( temp, sizeof(temp), "{\"name\":\"%s\", \"error\":%d }", row[ 8 ], lmountError );
+									size = snprintf( temp, sizeof(temp), "{\"name\":\"%s\",\"error\":%d }", row[ 8 ], lmountError );
 								}
 								else
 								{
-									size = snprintf( temp, sizeof(temp), ",{\"name\":\"%s\", \"error\":%d }", row[ 8 ], lmountError );
+									size = snprintf( temp, sizeof(temp), ",{\"name\":\"%s\",\"error\":%d }", row[ 8 ], lmountError );
 								}
 					
 								DEBUG("[RefreshUserDrives] Device mounted %s\n", temp );

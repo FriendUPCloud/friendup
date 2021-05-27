@@ -424,6 +424,8 @@ typedef struct SystemBase
 	
 	struct LSocketInterface_t		l_SocketISSL;
 	struct LSocketInterface_t		l_SocketINOSSL;
+	
+	int								l_HttpCompressionContent;	// information which compression is supported by the server
 } SystemBase;
 
 
@@ -564,6 +566,12 @@ int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib, User *usr );
 //
 
 int SendProcessMessage( Http *request, char *data, int len );
+
+//
+//
+//
+
+void CheckAndUpdateDB( struct SystemBase *sb );
 
 //
 //
