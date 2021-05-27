@@ -2413,14 +2413,16 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*
-	* <HR><H2>system.library/user/relation-add</H2>Update relation between user and other users
+	* <HR><H2>system.library/user/addrelationship</H2>Update relation between user and other users
 	*
 	* @param sessionid - (required) session id of logged user
-	* @param keyid - (required) key id which will be reloaded
+	* @param sourceid - (required) uuid of person to which new relation will be added
+	* @param contactids - (required) uuids of person which will be attached as user contacts
+	* @param mode - (required) 
 	* @return { result: sucess } when success, otherwise error code
 	*/
 	/// @endcond
-	else if( strcmp( urlpath[ 1 ], "relation-add" ) == 0 )
+	else if( strcmp( urlpath[ 1 ], "addrelationship" ) == 0 )
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
@@ -2504,6 +2506,17 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		{
 			FFree( contactIDs );
 		}
+	}
+	else
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
+		};
+		
+		response = HttpNewSimple( HTTP_404_NOT_FOUND,  tags );
+	
+		return response;
 	}
 
 	return response;
