@@ -26,7 +26,7 @@ CallThings.prototype.init = function() {
 	const self = this;
 	self.main  = new View( {
 		title: i18n( 'i18n_callthings' ),
-		width: 700,
+		width: 500,
 		height: 600
 	});
 	
