@@ -15,6 +15,12 @@
 				background-color: #3e7eb6;
 				color: white;
 			}
+			#LoginElement #verifyButton 
+			{
+				float: right;
+				width: 100px;
+				cursor: pointer;
+			}
 			#LoginElement button.google
 			{
 				height: 45px;
@@ -71,64 +77,109 @@
 				<div class="Logo">
 					Friend OS
 				</div>
-				<h1>
-					Sign in to your Workspace
-				</h1>
-				<div class="Box">
-					<form method="post" onsubmit="return false">
-						<div class="HRow">
-							<label id="UsernameLabel" for="Username">Username</label>
-							<p>
-								<input type="username" id="Username" class="FullWidth" onkeydown="Application.checkKeys(event)" autocapitalize="none" autocorrect="none" tabindex="1" />
-							</p>
-						</div>
-						<div class="HRow MarginTop HideForPass">
-							<label id="PasswordLabel" for="Password">Password</label>
-							<p>
-								<input type="password" id="Password" class="FullWidth" onkeydown="Application.checkKeys(event)"  tabindex="2" />
-							</p>
-						</div>
-						<div class="HRow MarginTop">
-							<div class="HContent50 InputHeight FloatLeft forgotPassword">
+				<div id="LoginMode">
+					<h1>
+						Sign in to your Workspace
+					</h1>
+					<div class="Box">
+						<form method="post" onsubmit="return false">
+							<div class="HRow">
+								<label id="UsernameLabel" for="Username">Username</label>
 								<p>
-									<a id="forgotPassword" style="cursor:pointer;" onclick="Application.forgotPassword()" tabindex="-1000">Forgot password ?</a>
+									<input type="username" id="Username" class="FullWidth" onkeydown="Application.checkKeys(event)" autocapitalize="none" autocorrect="none" tabindex="1" />
 								</p>
 							</div>
-							<div class="HContent50 InputHeight FloatLeft">
-								<button id="loginButton" class="IconSmall fa-unlock" tabindex="4" onclick="Application.doLogin()">
-									Sign in
+							<div class="HRow MarginTop HideForPass">
+								<label id="PasswordLabel" for="Password">Password</label>
+								<p>
+									<input type="password" id="Password" class="FullWidth" onkeydown="Application.checkKeys(event)"  tabindex="2" />
+								</p>
+							</div>
+							<div class="HRow MarginTop">
+								<div class="HContent50 InputHeight FloatLeft forgotPassword">
+									<p>
+										<a id="forgotPassword" style="cursor:pointer;" onclick="Application.forgotPassword()" tabindex="-1000">Forgot password ?</a>
+									</p>
+								</div>
+								<div class="HContent50 InputHeight FloatLeft">
+									<button id="loginButton" class="IconSmall fa-unlock" tabindex="4" onclick="Application.doLogin()">
+										Sign in
+									</button>
+								</div>
+							</div>
+							<div class="HRow MarginTop">
+								<div class="HContent100">
+									<div id="invalidLogin" class="Padding"><p>&nbsp;</p></div>
+								</div>
+							</div>
+						</form>
+						<hr/>
+						<div class="HRow MarginTop">
+							<div class="HContent100">
+								<button class="IconSmall fa-unlock google" tabindex="4" onclick="loginGoogle()">
+									<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" viewBox="0 0 48 48" class="abcRioButtonSvg">
+										<g>
+											<path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+											<path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+											<path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+											<path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+											<path fill="none" d="M0 0h48v48H0z"></path>
+										</g>
+									</svg>
+		    						<span class="buttonText">Sign in with Google</span>
 								</button>
 							</div>
 						</div>
-						<div class="HRow MarginTop">
-							<div class="HContent100">
-								<div id="invalidLogin" class="Padding"><p>&nbsp;</p></div>
-							</div>
+						<hr/>
+						<div class="HRow MarginTop BorderTop HideForPass" style="text-align:center">
+							Don't have an account? <a href="{friend_register_uri}">Sign Up</a>
 						</div>
-						<input type="hidden" id="publickey" value="{publickey}"/>
-					</form>
-					<hr/>
-					<div class="HRow MarginTop">
-						<div class="HContent100">
-							<button class="IconSmall fa-unlock google" tabindex="4" onclick="loginGoogle()">
-								<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" viewBox="0 0 48 48" class="abcRioButtonSvg">
-									<g>
-										<path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
-										<path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
-										<path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
-										<path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
-										<path fill="none" d="M0 0h48v48H0z"></path>
-									</g>
-								</svg>
-        						<span class="buttonText">Sign in with Google</span>
-							</button>
-						</div>
-					</div>
-					<hr/>
-					<div class="HRow MarginTop BorderTop HideForPass" style="text-align:center">
-						Don't have an account? <a href="{friend_register_uri}">Sign Up</a>
 					</div>
 				</div>
+				<div id="VerifyMode" style="display: none">
+					<h1>
+						Verify your Workspace Account
+					</h1>
+					<div class="Box">
+						<form method="post" onsubmit="return false">
+							<div class="HRow">
+								<label id="VerificationLabel" for="Verification">Verification Code</label>
+								<p>
+									<input type="text" id="Verification" class="FullWidth" autocapitalize="none" autocorrect="none" tabindex="1" />
+								</p>
+							</div>
+							<div class="HRow MarginTop HideForPass">
+								<label id="NewPasswordLabel" for="NewPassword">Your Password</label>
+								<p>
+									<input type="password" id="NewPassword" class="FullWidth" tabindex="2" />
+								</p>
+							</div>
+							<div class="HRow MarginTop HideForPass">
+								<label id="ConfirmPasswordLabel" for="ConfirmPassword">Confirm Password</label>
+								<p>
+									<input type="password" id="ConfirmPassword" class="FullWidth" tabindex="3" />
+								</p>
+							</div>
+							<div class="HRow MarginTop">
+								<div class="HContent100 InputHeight FloatLeft">
+									<button id="verifyButton" class="IconSmall fa-unlock" tabindex="4" onclick="verifyCode()">
+										Verify
+									</button>
+								</div>
+							</div>
+							<div class="HRow MarginTop">
+								<div class="HContent100">
+									<div id="invalidVerification" class="Padding"><p>&nbsp;</p></div>
+								</div>
+							</div>
+						</form>
+						<hr/>
+						<div class="HRow MarginTop BorderTop HideForPass" style="text-align:center">
+							Already have an account? <a href="../loginprompt">Sign in</a>
+						</div>
+					</div>
+				</div>
+				<input type="hidden" id="publickey" value="{publickey}"/>
 			</div>
 		</div>
 		<script type="text/javascript">
@@ -788,7 +839,7 @@
 				
 				return params;
 			}
-					
+				
 			function genRandomKeys()
 			{
 				var res = false;
@@ -901,6 +952,131 @@
 				window.top.location.href = '/register';
 			}
 			
+			function verifyForm(  )
+			{
+				if( document.location.href && document.location.href.indexOf( 'verify=' ) >= 0 )
+				{
+					let verify = ( window.location.href.match( '[?&]verify=([^&]+)' ) && window.location.href.match( '[?&]verify=([^&]+)' )[1] ? window.location.href.match( '[?&]verify=([^&]+)' )[1] : '' );
+					
+					if( ge( 'VerifyMode' ) && ge( 'LoginMode'  ) )
+					{
+						ge( 'VerifyMode' ).style.display = 'block';
+						ge( 'LoginMode'  ).style.display = 'none';
+					}
+					
+					let json = false;
+					
+					if( verify )
+					{
+						try
+						{
+							var decoded = atob( verify );
+						
+							if( decoded )
+							{
+								json = JSON.parse( decoded );
+							}
+						}
+						catch {  }
+						
+						console.log( 'verify: ', json );
+						
+						if( json )
+						{
+							if( json.code && ge( 'Verification' ) )
+							{
+								ge( 'Verification' ).value = json.code;
+							}
+							if( json.password && ge( 'NewPassword' ) && ge( 'ConfirmPassword' ) )
+							{
+								ge( 'NewPassword'     ).value = json.password;
+								ge( 'ConfirmPassword' ).value = json.password;
+							}
+						}
+					}
+				}
+			}
+			
+			function verifyCode(  )
+			{
+				
+				let enc = parent.Workspace.encryption;
+				
+				if( !enc.keys.server )
+				{
+					enc.keys.server = ( ge( 'publickey' ) && ge( 'publickey' ).value ? { publickey: ge( 'publickey' ).value } : false );
+				}
+				
+				if( !enc.keys.server.publickey )
+				{
+					console.log( 'Server Key Missing:', enc.keys.server );
+					return;
+				}
+				
+				let vcode = Trim( ge( 'Verification' ).value );
+				let newpw = Trim( ge( 'NewPassword'  ).value );
+				
+				if( newpw.substring( 0, 6 ) != 'HASHED' )
+				{
+					console.log( newpw );
+					newpw = ( 'HASHED' + Sha256.hash( newpw ) );
+				}
+				
+				var m = new cAjax();
+				
+				m.open( 'POST', '/verify/v2/' + enc.encryptRSA( JSON.stringify( 
+				{
+					'code'     : vcode, 
+					'password' : newpw 
+				} ), 
+				enc.keys.server.publickey ), true );
+				
+				if( 1==1 ) console.log( 
+				{
+					'code'     : vcode, 
+					'password' : newpw 
+				} );
+				
+				m.onload = function()
+				{
+					
+					var json = null; var serveranswer = null;
+					
+					if( this.responseText() )
+					{
+						var res = this.responseText().split( '<!--separate-->' );
+						
+						if( res && res[ 0 ] && res[ 1 ] )
+						{
+							try
+							{
+								serveranswer = res[ 1 ];
+								
+								json = JSON.parse( serveranswer );
+							}
+							catch( e ) 
+							{
+								console.log( e );
+							}
+							
+							// We got a real error
+							if( json == null )
+							{
+								
+							}
+							
+							if( 1==1 ) console.log( { json: json, serveranswer: serveranswer, raw: this.responseText() } );
+							
+						}
+					}
+					
+					if( 1==1 ) console.log( this.responseText() );
+					
+				}
+				m.send();
+				
+			}
+			
 			function showLoginError( msg )
 			{
 				parent.Workspace.loginPrompt.setFlag( 'height', 263 );
@@ -920,6 +1096,11 @@
 				if( typeof( GetCookie ) == 'undefined' ) return setTimeout( loginNow, 50 );
 				
 				Application.applicationId = 'loginprompt';
+				
+				if( document.location.href && document.location.href.indexOf( 'verify=' ) >= 0 )
+				{
+					verifyForm();
+				}
 				
 				if( parent.GetUrlVar( 'username' ) )
 				{
