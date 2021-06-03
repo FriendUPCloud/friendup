@@ -193,6 +193,12 @@
 				},
 				doLogin: function( e )
 				{
+					if( ge( 'VerifyMode' ) && ge( 'LoginMode'  ) )
+					{
+						ge( 'VerifyMode' ).style.display = 'none';
+						ge( 'LoginMode'  ).style.display = 'block';
+					}
+					
 					/*
 						In password recivery mode we do stuff a bit differently...
 					*/
@@ -1067,15 +1073,24 @@
 							
 							if( Application.showLog || 1==1 ) console.log( { json: json, serveranswer: serveranswer, raw: this.responseText() } );
 							
-							if( json && json.data && json.data.username )
+							if( res[ 0 ] == 'ok' )
 							{
-								if( ge( 'Username' ) && ge( 'Password' ) && ge( 'NewPassword'  ) && ge( 'NewPassword'  ).value )
+								if( json && json.data && json.data.username )
 								{
-									ge( 'Username' ).value = json.data.username;
-									ge( 'Password' ).value = ge( 'NewPassword'  ).value;
+									if( ge( 'Username' ) && ge( 'Password' ) && ge( 'NewPassword'  ) && ge( 'NewPassword'  ).value )
+									{
+										ge( 'Username' ).value = json.data.username;
+										ge( 'Password' ).value = ge( 'NewPassword'  ).value;
 									
-									return Application.doLogin(  );
+										return Application.doLogin(  );
+									}
 								}
+							}
+							else
+							{
+								// Errors ...
+								
+								
 							}
 							
 						}
