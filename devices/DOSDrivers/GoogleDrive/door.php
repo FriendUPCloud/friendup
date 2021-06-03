@@ -1304,7 +1304,7 @@ if( !class_exists( 'GoogleDrive' ) )
 			
 			$could_not_update_token = false;
 			
-			if( json_last_error() == JSON_ERROR_NONE && ( isset( $confjson['access'] ) && isset( $confjson['access']['access_token'] ) ) || isset( $confjson['code'] ) )
+			if( json_last_error() == JSON_ERROR_NONE && ( isset( $confjson['access'] ) && isset( $confjson['access']['access_token'] ) ) )
 			{
 				$client = new Google_Client();
 				$client->setApplicationName($this->sysinfo['project_id']);
@@ -1324,12 +1324,6 @@ if( !class_exists( 'GoogleDrive' ) )
 					if( $confjson['access'] )
 					{
 						$client->setAccessToken( $confjson['access'] );
-					}
-					else
-					{
-						// https://developers.google.com/identity/protocols/oauth2/openid-connect
-						
-						$client->setCode( $confjson['code'] );
 					}				
 				}
 				catch (Exception $e)
