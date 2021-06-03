@@ -1026,14 +1026,14 @@
 				
 				m.open( 'POST', '/verify/v2/' + enc.encryptRSA( JSON.stringify( 
 				{
-					'code'     : vcode, 
+					'code'     : Sha256.hash( vcode ), 
 					'password' : newpw 
 				} ), 
 				enc.keys.server.publickey ), true );
 				
 				if( 1==1 ) console.log( 
 				{
-					'code'     : vcode, 
+					'code'     : Sha256.hash( vcode ), 
 					'password' : newpw 
 				} );
 				
