@@ -58,6 +58,11 @@
 			{
 				padding: 0 0 6px 0;
 			}
+			#LoginElement #invalidVerification 
+			{
+				color: #F00;
+				padding-top: 6px;
+			}
 			#LoginElement a, a:hover
 			{
 				color: #3e7eb6 !important;
@@ -138,7 +143,7 @@
 				</div>
 				<div id="VerifyMode" style="display: none">
 					<h1>
-						Verify your Workspace Account
+						Verify your Friend Account
 					</h1>
 					<div class="Box">
 						<form method="post" onsubmit="return false">
@@ -985,8 +990,6 @@
 						}
 						catch {  }
 						
-						console.log( 'verify: ', json );
-						
 						if( json )
 						{
 							if( json.code && ge( 'Verification' ) )
@@ -1019,12 +1022,28 @@
 					return;
 				}
 				
-				let vcode = Trim( ge( 'Verification' ).value );
-				let newpw = Trim( ge( 'NewPassword'  ).value );
+				let vcode = Trim( ge( 'Verification'    ).value );
+				let newpw = Trim( ge( 'NewPassword'     ).value );
+				let confm = Trim( ge( 'ConfirmPassword' ).value );
+				
+				if( !vcode )
+				{
+					document.getElementById( 'Verification' ).focus();
+					return showLoginError( 'Verification Code is missing, try again ...', 'invalidVerification' );
+				}
+				if( !newpw )
+				{
+					document.getElementById( 'NewPassword' ).focus();
+					return showLoginError( 'Password is missing, try again ...', 'invalidVerification' );
+				}
+				if( newpw != confm )
+				{
+					document.getElementById( 'ConfirmPassword' ).focus();
+					return showLoginError( 'Password doest\'t match, try again ...', 'invalidVerification' );
+				}
 				
 				if( newpw.substring( 0, 6 ) != 'HASHED' )
 				{
-					console.log( newpw );
 					newpw = ( 'HASHED' + Sha256.hash( newpw ) );
 				}
 				
@@ -1068,45 +1087,58 @@
 							// We got a real error
 							if( json == null )
 							{
-								
+								return showLoginError( 'Something went wrong ...', 'invalidVerification' );
 							}
 							
-							if( Application.showLog || 1==1 ) console.log( { json: json, serveranswer: serveranswer, raw: this.responseText() } );
+							if( Application.showLog ) console.log( { json: json, serveranswer: serveranswer, raw: this.responseText() } );
 							
 							if( res[ 0 ] == 'ok' )
 							{
+								// Login ...
+								
 								if( json && json.data && json.data.username )
 								{
-									if( ge( 'Username' ) && ge( 'Password' ) && ge( 'NewPassword'  ) && ge( 'NewPassword'  ).value )
+									if( ge( 'Username' ) && ge( 'Password' ) && ge( 'NewPassword' ) && ge( 'NewPassword' ).value )
 									{
 										ge( 'Username' ).value = json.data.username;
-										ge( 'Password' ).value = ge( 'NewPassword'  ).value;
-									
+										ge( 'Password' ).value = ge( 'NewPassword' ).value;
+										
 										return Application.doLogin(  );
 									}
 								}
+								
+								return showLoginError( 'Something went wrong ...', 'invalidVerification' );
 							}
 							else
 							{
 								// Errors ...
 								
-								
+								if( json && json.message )
+								{
+									return showLoginError( json.message, 'invalidVerification' );
+								}
+								else
+								{
+									return showLoginError( 'Could not verify', 'invalidVerification' );
+								}
 							}
 							
 						}
 					}
 					
-					if( Application.showLog || 1==1 ) console.log( this.responseText() );
+					if( Application.showLog ) console.log( this.responseText() );
+					
+					return showLoginError( 'Something went wrong ...', 'invalidVerification' );
 					
 				}
 				m.send();
 				
 			}
 			
-			function showLoginError( msg )
+			function showLoginError( msg, id )
 			{
 				parent.Workspace.loginPrompt.setFlag( 'height', 263 );
-				ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = ( 
+				ge( id ? id : 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = ( 
 					Application.errorMessage ? Application.errorMessage : ( 
 						msg ? msg : 'Invalid credentials. Please check your input.'
 					) 
