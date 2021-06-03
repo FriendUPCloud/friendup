@@ -1031,7 +1031,7 @@
 				} ), 
 				enc.keys.server.publickey ), true );
 				
-				if( 1==1 ) console.log( 
+				if( Application.showLog ) console.log( 
 				{
 					'code'     : Sha256.hash( vcode ), 
 					'password' : newpw 
@@ -1065,12 +1065,23 @@
 								
 							}
 							
-							if( 1==1 ) console.log( { json: json, serveranswer: serveranswer, raw: this.responseText() } );
+							if( Application.showLog || 1==1 ) console.log( { json: json, serveranswer: serveranswer, raw: this.responseText() } );
+							
+							if( json && json.data && json.data.username )
+							{
+								if( ge( 'Username' ) && ge( 'Password' ) && ge( 'NewPassword'  ) && ge( 'NewPassword'  ).value )
+								{
+									ge( 'Username' ).value = json.data.username;
+									ge( 'Password' ).value = ge( 'NewPassword'  ).value;
+									
+									return Application.doLogin(  );
+								}
+							}
 							
 						}
 					}
 					
-					if( 1==1 ) console.log( this.responseText() );
+					if( Application.showLog || 1==1 ) console.log( this.responseText() );
 					
 				}
 				m.send();
