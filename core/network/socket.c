@@ -2786,7 +2786,7 @@ void SocketAbortWrite( Socket* sock )
  */
 void SocketDeleteNOSSL( Socket* sock )
 {
-	if( sock->fd <= 0 )
+	if( sock == NULL || sock->fd <= 0 )
 	{
 		FERROR("[SocketDeleteNOSSL] sock == NULL!\n");
 		return;
@@ -2821,7 +2821,7 @@ void SocketDeleteNOSSL( Socket* sock )
  */
 void SocketDeleteSSL( Socket* sock )
 {
-	if( sock->fd <= 0 )
+	if( sock == NULL || sock->fd <= 0 )
 	{
 		FERROR("Socket: sock == NULL!\n");
 		return;
