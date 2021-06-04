@@ -198,11 +198,6 @@
 				},
 				doLogin: function( e )
 				{
-					if( ge( 'VerifyMode' ) && ge( 'LoginMode'  ) )
-					{
-						ge( 'VerifyMode' ).style.display = 'none';
-						ge( 'LoginMode'  ).style.display = 'block';
-					}
 					
 					/*
 						In password recivery mode we do stuff a bit differently...
@@ -263,7 +258,8 @@
 									if( parseInt( ts ) > 0 )
 									{
 										Application.errorMessage = 'Account blocked (try again after ' + new Date( ts * 1000 ).toLocaleString() + ')';
-										showLoginError();  
+										showLoginError();
+										switchForm();
 										return;
 									}
 								}
@@ -273,6 +269,7 @@
 						if( result == false )
 						{
 							showLoginError();
+							switchForm();
 						}
 						else if( result == 0 )
 						{
@@ -963,17 +960,30 @@
 				window.top.location.href = '/register';
 			}
 			
+			function switchForm( verify )
+			{
+				if( ge( 'VerifyMode' ) && ge( 'LoginMode'  ) )
+				{
+					if( verify )
+					{
+						ge( 'VerifyMode' ).style.display = 'block';
+						ge( 'LoginMode'  ).style.display = 'none';
+					}
+					else
+					{
+						ge( 'VerifyMode' ).style.display = 'none';
+						ge( 'LoginMode'  ).style.display = 'block';
+					}
+				}
+			}
+			
 			function verifyForm(  )
 			{
 				if( document.location.href && document.location.href.indexOf( 'verify=' ) >= 0 )
 				{
 					let verify = ( window.location.href.match( '[?&]verify=([^&]+)' ) && window.location.href.match( '[?&]verify=([^&]+)' )[1] ? window.location.href.match( '[?&]verify=([^&]+)' )[1] : '' );
 					
-					if( ge( 'VerifyMode' ) && ge( 'LoginMode'  ) )
-					{
-						ge( 'VerifyMode' ).style.display = 'block';
-						ge( 'LoginMode'  ).style.display = 'none';
-					}
+					switchForm( true );
 					
 					let json = false;
 					
