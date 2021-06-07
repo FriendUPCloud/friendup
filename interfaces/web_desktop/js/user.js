@@ -254,6 +254,9 @@ Friend.User = {
 			delete Workspace.conn;
 		}
 		
+		// Reset cajax http connections (because we lost connection)
+		_cajax_http_connections = 0;
+		
 		if( info.username || info.sessionid )
 		{
 			this.SendLoginCall( info, callback, 'relogin' );

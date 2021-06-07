@@ -1,0 +1,39 @@
+#input_exec_path {
+	width : 500px;
+}
+
+#ta_args {
+	height: 10em;
+	width : 500px;
+}
+
+.input-error {
+	border : 2px solid red !important;
+}
+
+.result {
+	flex : 1;
+	word-break: break-all;
+	user-select: text;
+}
+
+#call-things input,
+#call-things textarea,
+#call-things .result {
+	font-family: monospace;
+	font-size: 120%;
+}
+
+.flexnes {
+	display         : flex;
+	justify-content : space-between;
+	align-items     : center;
+}
+
+.bortover {
+	flex-direction: row;
+}
+
+.nedover {
+	flex-direction: column;
+}
