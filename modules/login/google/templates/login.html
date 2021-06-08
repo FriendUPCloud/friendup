@@ -866,16 +866,15 @@
 			
 			function loginGoogle( e )
 			{
-				var self = Application;
-				
-				// Don't do it many times while working!
-				if( self.busy ) return;
-				self.busy = true;
 				
 				var self = Application;
 				
 				externalAuth( function( params )
 				{
+					
+					// Don't do it many times while working!
+					if( self.busy ) return;
+					self.busy = true;
 					
 					// Track user's login
 					if( typeof ga == 'function' && params && params[ 'id_token_content' ] && params[ 'id_token_content' ][ 'sub' ] ) 
@@ -887,6 +886,8 @@
 					
 					self.loginExternal( 'identity', params, function( result, answer )
 					{
+						
+						self.busy = false;
 						
 						let tmp = null;
 						if( answer )
@@ -950,7 +951,6 @@
 								ga( 'send', 'event', 'userloginsuccess', md5( 'GOOGLE' + params[ 'id_token_content' ][ 'sub' ] ) );	
 							}
 							parent.Workspace.showDesktop();
-							Application.busy = false;
 						}
 						
 					} );
