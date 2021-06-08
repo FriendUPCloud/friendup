@@ -465,6 +465,10 @@
 															username: enc.encrypt( username, enc.getKeys().publickey ),
 															password: enc.encrypt( password, enc.getKeys().publickey )
 														};
+														
+														// This is needed for Friend.User.ReLogin()
+														parent.Workspace.loginPassword = parent.Workspace.storedCredentials.password;
+														parent.Workspace.loginHashed = true;
 													}
 													
 													if( json.mode )
