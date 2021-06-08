@@ -754,9 +754,7 @@ Workspace = {
 			login: true,
 			theme: 'login'
 		} );
-		lp.setRichContentUrl( 
-			'/loginprompt' + allowedHashVars() 
-		);
+		lp.setRichContentUrl( '/loginprompt' + allowedHashVars() );
 		Workspace.loginPrompt = lp;
 
 		// Show it
