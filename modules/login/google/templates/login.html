@@ -968,9 +968,14 @@
 			{
 				if( ge( 'VerifyMode' ) && ge( 'LoginMode'  ) )
 				{
-					if( verify )
+					if( verify && verify == 'verify' )
 					{
 						ge( 'VerifyMode' ).style.display = 'block';
+						ge( 'LoginMode'  ).style.display = 'none';
+					}
+					else if( verify && verify == 'expiry' )
+					{
+						ge( 'ExpiryMode' ).style.display = 'block';
 						ge( 'LoginMode'  ).style.display = 'none';
 					}
 					else
@@ -986,8 +991,6 @@
 				if( document.location.href && document.location.href.indexOf( 'verify=' ) >= 0 )
 				{
 					let verify = ( window.location.href.match( '[?&]verify=([^&]+)' ) && window.location.href.match( '[?&]verify=([^&]+)' )[1] ? window.location.href.match( '[?&]verify=([^&]+)' )[1] : '' );
-					
-					switchForm( true );
 					
 					let json = false;
 					
@@ -1006,6 +1009,10 @@
 						
 						if( json )
 						{
+							if( json.expiry )
+							{
+								console.log( json );
+							}
 							if( json.code && ge( 'Verification' ) )
 							{
 								ge( 'Verification' ).value = json.code;
@@ -1017,7 +1024,14 @@
 							}
 						}
 					}
+					
+					return switchForm( 'verify' );
 				}
+			}
+			
+			function expiryForm(  )
+			{
+				// TODO: Create form ....
 			}
 			
 			function verifyCode(  )
