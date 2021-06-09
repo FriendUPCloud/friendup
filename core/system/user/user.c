@@ -19,7 +19,6 @@
 #include "user.h"
 #include <system/systembase.h>
 #include <system/cache/cache_user_files.h>
-#include <util/session_id.h>
 
 /**
  * Create new User
@@ -620,17 +619,14 @@ File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error )
 /**
  * Regenerate sessionid for user
  *
- * @param lsb pointer to SystemBase
  * @param usr pointer to User which will have new sessionid
  * @param newsess new session hash. If passed value is equal to NULL new hash will be generated
  * @return 0 when success, otherwise error number
  */
-int UserRegenerateSessionID( void *lsb, User *usr, char *newsess )
+int UserRegenerateSessionID( User *usr, char *newsess )
 {
 	if( usr != NULL )
 	{
-		SystemBase *sb = (SystemBase *)lsb;
-		
 		//pthread_mutex_lock( &(usr->) );
 		// Remove old one and update
 		if( usr->u_MainSessionID )
@@ -641,31 +637,16 @@ int UserRegenerateSessionID( void *lsb, User *usr, char *newsess )
 		if( newsess != NULL )
 		{
 			usr->u_MainSessionID = StringDuplicate( newsess );
-			DEBUG("[UserRegenerateSessionID] changed master DIRTY COPY OF SESSION ID user: %s session: %s\n", usr->u_Name, usr->u_MainSessionID );
 		}
 		else
 		{
-			SQLLibrary *sqllib;
 			time_t timestamp = time ( NULL );
 	
-			//char *hashBase = MakeString( 255 );
-			//sprintf( hashBase, "%ld%s%d", timestamp, usr->u_FullName, ( rand() % 999 ) + ( rand() % 999 ) + ( rand() % 999 ) );
-			//HashedString( &hashBase );
+			char *hashBase = MakeString( 255 );
+			sprintf( hashBase, "%ld%s%d", timestamp, usr->u_FullName, ( rand() % 999 ) + ( rand() % 999 ) + ( rand() % 999 ) );
+			HashedString( &hashBase );
 
-			usr->u_MainSessionID = SessionIDGenerate( );//hashBase;
-			DEBUG("[UserRegenerateSessionID] changed master sessionid for user: %s session: %s\n", usr->u_Name, usr->u_MainSessionID );
-			
-			sqllib = sb->LibrarySQLGet( sb );
-			if( sqllib != NULL )
-			{
-				char temptext[ 512 ];
-				sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "UPDATE `FUser` SET SessionID='%s' WHERE ID=%lu", usr->u_MainSessionID, usr->u_ID );
-				
-				DEBUG("[UserRegenerateSessionID] sql: %s\n", temptext );
-				
-				sqllib->QueryWithoutResults( sqllib, temptext );
-				sb->LibrarySQLDrop( sb, sqllib );
-			}
+			usr->u_MainSessionID = hashBase;
 		}
 	
 		// UPDATE file systems

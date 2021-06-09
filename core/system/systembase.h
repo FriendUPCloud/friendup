@@ -571,6 +571,12 @@ int SendProcessMessage( Http *request, char *data, int len );
 //
 //
 
+void CheckAndUpdateDB( struct SystemBase *sb );
+
+//
+//
+//
+
 FBOOL FriendCoreLockCheckOrCreate( );
 
 //
