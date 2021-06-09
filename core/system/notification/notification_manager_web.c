@@ -150,7 +150,7 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 				char buffer[ 512 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "msg" );
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", buffer1 , DICT_PARAMETERS_MISSING );
+				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
 		}
@@ -158,7 +158,7 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		else
 		{
 			char buffer[ 256 ];
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
 			HttpAddTextContent( response, buffer );
 		}
 		*/
@@ -274,7 +274,7 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			char buffer[ 512 ];
 			char buffer1[ 256 ];
 			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, channelid, app, title, message" );
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", buffer1 , DICT_PARAMETERS_MISSING );
+			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, buffer );
 		}
 		

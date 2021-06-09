@@ -677,7 +677,7 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 				if( locusr != NULL && locusr->u_IsAPI == FALSE )
 				{
 					// we cannot regenerate session because drives are using this sessionid
-					UserRegenerateSessionID( smgr->usm_SB, locusr, NULL );
+					UserRegenerateSessionID( locusr, NULL );
 				}
 				
 				DEBUG("[USMUserSessionAdd] SessionID will be overwriten\n");
@@ -1096,7 +1096,7 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 			if( usr->u_ID == notification->dn_OwnerID )
 			{
 				char *uname = usr->u_Name;
-				int len = snprintf( tmpmsg, 2048, "{ \"type\":\"msg\", \"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%lu\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\" }}}", device->f_ID, device->f_Name, path, uname  );
+				int len = snprintf( tmpmsg, 2048, "{\"type\":\"msg\",\"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%lu\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\"}}}", device->f_ID, device->f_Name, path, uname  );
 			
 				DEBUG("[USMSendDoorNotification] found ownerid %lu\n", usr->u_ID );
 			

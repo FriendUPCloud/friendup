@@ -198,10 +198,16 @@
 							// Set username and password so we can fetch it later
 							let enc = parent.Workspace.encryption;
 							parent.Workspace.storedCredentials = {
-								username: enc.encrypt( json.username, enc.getKeys().publickey ),
-								login: enc.encrypt( json.login, enc.getKeys().publickey ),
-								password: enc.encrypt( passWd, enc.getKeys().publickey )
+								username : enc.encrypt( json.username, enc.getKeys().publickey ),
+								login    : enc.encrypt( json.login, enc.getKeys().publickey ),
+								password : enc.encrypt( passWd, enc.getKeys().publickey )
 							};
+							
+							// This is needed for Friend.User.ReLogin()
+							// TODO: Check if this passWd is allready hashed??? If it is use this instead ...
+							//parent.Workspace.loginPassword = enc.encrypt( passWd );
+							parent.Workspace.loginPassword = enc.encrypt( 'HASHED' + Sha256.hash( passWd ) );
+							parent.Workspace.loginHashed = true;
 							
 							// We are now online!
 							parent.Friend.User.SetUserConnectionState( 'online' );
