@@ -1042,6 +1042,7 @@
 						
 						if( json )
 						{
+							if( json.expiry ) console.log( [ json, ( json.expiry + ' < ' + Math.round( new Date().getTime() / 1000 ) ) ] );
 							if( json.code && ge( 'Verification' ) )
 							{
 								ge( 'Verification' ).value = json.code;
@@ -1053,8 +1054,6 @@
 							}
 							if( json.expiry && json.expiry < Math.round( new Date().getTime() / 1000 ) )
 							{
-								console.log( json );
-								
 								return switchForm( 'expiry' );
 							}
 						}
