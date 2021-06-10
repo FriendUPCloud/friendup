@@ -686,6 +686,48 @@
 				return result;
 			}
 			
+			function timezoneConvert( timestamp, timezone )
+			{
+				var date1 = null; var date2 = null; var tz1 = null; var tz2 = null;
+				
+				if( !timestamp )
+				{
+					var timestamp = new Date().getTime();
+				}
+				
+				if( timestamp )
+				{
+					if( timestamp.toString().length < 13 )
+					{
+						timestamp = timestamp.toString() + '100';
+					}
+					
+					var datetime = new Date( Number( timestamp ) );
+					
+					if( timezone )
+					{
+						date1 = new Date( datetime ).toLocaleString( 'en-GB', { timeZone: timezone } );
+						tz1   = new Date( date1 ).getTimezoneOffset();
+					}
+					
+					date2 = new Date( datetime ).toLocaleString( 'en-GB' );
+					tz2   = new Date( date2 ).getTimezoneOffset();
+					
+					if( date1 && tz1 != tz2 )
+					{
+						console.log( '[1] ' + datetime );
+						return new Date( date1 ).getTime();
+					}
+					else
+					{
+						console.log( '[2] ' + datetime );
+						return new Date( date2 ).getTime();
+					}
+				}
+				
+				return 0;
+			}
+			
 			function externalAuth( callback )
 			{
 				
@@ -1042,7 +1084,7 @@
 						
 						if( json )
 						{
-							if( json.expiry ) console.log( [ json, ( ( json.expiry - (60*60*2) ) + ' < ' + ( ( new Date().getTime() ).toString().slice(0,-3) ) ) ] );
+							if( json.expiry ) console.log( [ json, ( timezoneConvert( json.expiry ) + ' < ' + timezoneConvert( null, json.timezone ) ) ] );
 							
 							if( json.code && ge( 'Verification' ) )
 							{
@@ -1053,7 +1095,7 @@
 								ge( 'NewPassword'     ).value = json.password;
 								ge( 'ConfirmPassword' ).value = json.password;
 							}
-							if( json.expiry && ( json.expiry - (60*60*2) ) < ( new Date().getTime() ).toString().slice(0,-3) )
+							if( json.expiry && timezoneConvert( json.expiry ) < timezoneConvert( null, json.timezone ) )
 							{
 								return switchForm( 'expiry' );
 							}
