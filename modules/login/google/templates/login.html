@@ -1084,7 +1084,7 @@
 						
 						if( json )
 						{
-							if( json.expiry ) console.log( [ json, ( timezoneConvert( json.expiry ) + ' < ' + timezoneConvert( null, json.timezone ) ) ] );
+							if( json.expiry ) console.log( [ json, ( timezoneConvert( json.expiry, json.timezone ) + ' < ' + timezoneConvert( null, json.timezone ) ) ] );
 							
 							if( json.code && ge( 'Verification' ) )
 							{
@@ -1095,7 +1095,7 @@
 								ge( 'NewPassword'     ).value = json.password;
 								ge( 'ConfirmPassword' ).value = json.password;
 							}
-							if( json.expiry && timezoneConvert( json.expiry ) < timezoneConvert( null, json.timezone ) )
+							if( json.expiry && timezoneConvert( json.expiry, json.timezone ) < timezoneConvert( null, json.timezone ) )
 							{
 								return switchForm( 'expiry' );
 							}
