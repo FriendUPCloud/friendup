@@ -702,25 +702,25 @@
 						timestamp = timestamp.toString() + '100';
 					}
 					
-					var datetime = new Date( Number( timestamp ) );
+					//var datetime = new Date( Number( timestamp ) );
 					
 					if( timezone )
 					{
-						date1 = new Date( datetime ).toLocaleString( 'en-GB', { timeZone: timezone } );
+						date1 = new Date( Number( timestamp ) ).toLocaleString( 'en-GB', { timeZone: timezone } );
 						tz1   = new Date( date1 ).getTimezoneOffset();
 					}
 					
-					date2 = new Date( datetime ).toLocaleString( 'en-GB' );
+					date2 = new Date( Number( timestamp ) ).toLocaleString( 'en-GB' );
 					tz2   = new Date( date2 ).getTimezoneOffset();
 					
 					if( date1 )
 					{
-						console.log( '[1] ', [ timezone, datetime, date1, date2, tz1, tz2 ] );
+						console.log( '[1] ', [ timezone, date1, date2, tz1, tz2 ] );
 						return new Date( date1 ).getTime();
 					}
 					else
 					{
-						console.log( '[2] ', [ timezone, datetime, date1, date2, tz1, tz2 ] );
+						console.log( '[2] ', [ timezone, date1, date2, tz1, tz2 ] );
 						return new Date( date2 ).getTime();
 					}
 				}
