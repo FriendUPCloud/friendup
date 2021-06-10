@@ -713,14 +713,14 @@
 					date2 = new Date( datetime ).toLocaleString( 'en-GB' );
 					tz2   = new Date( date2 ).getTimezoneOffset();
 					
-					if( date1 && tz1 != tz2 )
+					if( date1 )
 					{
-						console.log( '[1] ' + datetime );
+						console.log( '[1] ', [ timezone, datetime, date1, date1, tz1, tz2 ] );
 						return new Date( date1 ).getTime();
 					}
 					else
 					{
-						console.log( '[2] ' + datetime );
+						console.log( '[2] ', [ timezone, datetime, date1, date1, tz1, tz2 ] );
 						return new Date( date2 ).getTime();
 					}
 				}
