@@ -1035,7 +1035,9 @@
 						
 							if( decoded )
 							{
-								if( !json = JSON.parse( decoded ) )
+								json = JSON.parse( decoded );
+								
+								if( !json )
 								{
 									console.log( decoded );
 								}
