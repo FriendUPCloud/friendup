@@ -15,11 +15,16 @@
 				background-color: #3e7eb6;
 				color: white;
 			}
-			#LoginElement #verifyButton 
+			#LoginElement #verifyButton, #LoginElement #expiryButton  
 			{
 				float: right;
 				width: 100px;
 				cursor: pointer;
+			}
+			#LoginElement #expiryButton
+			{
+				float: none;
+				margin: 0 auto;
 			}
 			#LoginElement button.google
 			{
@@ -77,7 +82,7 @@
 				height: 0;
 			}
 		</style>
-		<div id="LoginElement" style="visibility: hidden">
+		<div id="LoginElement" style="visibility:hidden">
 			<div class="VContentTop">
 				<div class="Logo">
 					Friend OS
@@ -141,7 +146,7 @@
 						</div>
 					</div>
 				</div>
-				<div id="VerifyMode" style="display: none">
+				<div id="VerifyMode" style="display:none">
 					<h1>
 						Verify your Friend Account
 					</h1>
@@ -181,6 +186,29 @@
 						<hr/>
 						<div class="HRow MarginTop BorderTop HideForPass" style="text-align:center">
 							Already have an account? <a href="../loginprompt">Sign in</a>
+						</div>
+					</div>
+				</div>
+				<div id="ExpiryMode" style="display:none">
+					<h1>
+						Verification code has expired
+					</h1>
+					<p>
+						&nbsp;
+					</p>
+					<div class="Box">
+						<div class="HRow">
+							<p>
+								Please try signing up again.
+							</p>
+							<p>
+								&nbsp;
+							</p>
+						</div>
+						<div class="HRow MarginTop" style="text-align:center">
+							<button id="expiryButton" class="IconSmall fa-unlock" tabindex="1" onclick="document.location = '{friend_register_uri}';">
+								Sign up
+							</button>
 						</div>
 					</div>
 				</div>
@@ -970,20 +998,25 @@
 				{
 					if( verify && verify == 'verify' )
 					{
-						ge( 'VerifyMode' ).style.display = 'block';
 						ge( 'LoginMode'  ).style.display = 'none';
+						ge( 'VerifyMode' ).style.display = 'block';
+						ge( 'ExpiryMode' ).style.display = 'none';
 					}
 					else if( verify && verify == 'expiry' )
 					{
-						ge( 'ExpiryMode' ).style.display = 'block';
 						ge( 'LoginMode'  ).style.display = 'none';
+						ge( 'VerifyMode' ).style.display = 'none';
+						ge( 'ExpiryMode' ).style.display = 'block';
 					}
 					else
 					{
-						ge( 'VerifyMode' ).style.display = 'none';
 						ge( 'LoginMode'  ).style.display = 'block';
+						ge( 'VerifyMode' ).style.display = 'none';
+						ge( 'ExpiryMode' ).style.display = 'none';
 					}
 				}
+				
+				return true;
 			}
 			
 			function verifyForm(  )
@@ -1009,10 +1042,6 @@
 						
 						if( json )
 						{
-							if( json.expiry )
-							{
-								console.log( json );
-							}
 							if( json.code && ge( 'Verification' ) )
 							{
 								ge( 'Verification' ).value = json.code;
@@ -1022,16 +1051,17 @@
 								ge( 'NewPassword'     ).value = json.password;
 								ge( 'ConfirmPassword' ).value = json.password;
 							}
+							if( json.expiry && json.expiry < Math.round( new Date().getTime() / 1000 ) )
+							{
+								console.log( json );
+								
+								return switchForm( 'expiry' );
+							}
 						}
 					}
 					
 					return switchForm( 'verify' );
 				}
-			}
-			
-			function expiryForm(  )
-			{
-				// TODO: Create form ....
 			}
 			
 			function verifyCode(  )
