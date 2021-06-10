@@ -1063,6 +1063,10 @@
 							}
 						}
 					}
+					else
+					{
+						console.log( window.location.href.match( '[?&]verify=([^&]+)' ) );
+					}
 					
 					return switchForm( 'verify' );
 				}
