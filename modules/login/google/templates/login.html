@@ -1035,7 +1035,10 @@
 						
 							if( decoded )
 							{
-								json = JSON.parse( decoded );
+								if( !json = JSON.parse( decoded ) )
+								{
+									console.log( decoded );
+								}
 							}
 						}
 						catch {  }
