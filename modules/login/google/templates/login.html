@@ -1025,30 +1025,25 @@
 				{
 					let verify = ( window.location.href.match( '[?&]verify=([^&]+)' ) && window.location.href.match( '[?&]verify=([^&]+)' )[1] ? window.location.href.match( '[?&]verify=([^&]+)' )[1] : '' );
 					
-					let json = false;
+					let json = false; let decoded = false;
 					
 					if( verify )
 					{
 						try
 						{
-							var decoded = atob( verify );
-						
+							decoded = atob( verify );
+							
 							if( decoded )
 							{
 								json = JSON.parse( decoded );
-								
-								if( !json )
-								{
-									console.log( decoded );
-								}
-								
 							}
 						}
 						catch {  }
-						console.log( json, decoded );
+						
 						if( json )
 						{
 							if( json.expiry ) console.log( [ json, ( ( json.expiry - (60*60*2) ) + ' < ' + ( ( new Date().getTime() ).toString().slice(0,-3) ) ) ] );
+							
 							if( json.code && ge( 'Verification' ) )
 							{
 								ge( 'Verification' ).value = json.code;
@@ -1062,6 +1057,10 @@
 							{
 								return switchForm( 'expiry' );
 							}
+						}
+						else
+						{
+							console.log( decoded );
 						}
 					}
 					
