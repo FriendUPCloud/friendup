@@ -498,6 +498,11 @@ function createFriendAccount( $json, $nounce )
 						{
 							applySetup( $creds->ID, $server->user_template_id );
 						}
+						
+						if( isset( $server->user_workgroup_id ) && $server->user_workgroup_id )
+						{
+							applyWorkgroupSetup( $creds->ID, $server->user_workgroup_id );
+						}
 					}
 					
 					if( $json->locale )
@@ -893,6 +898,40 @@ function checkExternalUserGroup(  )
 	$rs = $dbo->Query( 'INSERT INTO `FUserGroup` (`UserID`,`ParentID`,`Name`,`Type`) VALUES (\'0\',\'0\',\'User\',\'External\');' );
 	
 	return;
+}
+
+function applyWorkgroupSetup( $uid, $wid )
+{
+	$dbo = initDBO();
+	
+	if( $uid && $wid )
+	{
+		if( $rs = $dbo->fetchObject( '
+			SELECT 
+				gr.* 
+			FROM 
+				FUserGroup gr, 
+				FUserToGroup ug 
+			WHERE 
+					gr.ID = ' . intval( $wid ) . ' 
+				AND gr.Type = \'Workgroup\' 
+				AND ug.UserGroupID = gr.ID 
+				AND ug.UserID = ' . intval( $uid ) . ' 
+		' ) )
+		{
+			return true;
+		}
+		
+		if( $dbo->fetchObject( 'SELECT * FROM `FUserGroup` WHERE `ID` = ' . intval( $wid ) . ' AND `Type`=\'Workgroup\' ' ) )
+		{
+			// add user to workgroup....
+			$rs = $dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`, `UserGroupID` ) VALUES ( ' . intval( $uid ) . ', ' . intval( $wid ) . ' );' );
+			
+			return true;
+		}
+	}
+	
+	return false;
 }
 
 // Generate random hash
