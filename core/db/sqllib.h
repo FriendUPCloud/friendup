@@ -59,7 +59,6 @@ typedef struct SQLConnection
 
 typedef struct SQLLibrary
 {
-	FULONG					l_InUse;
 	char 					*l_Name;			// library name
 	FULONG 					l_Version;			// version information
 	void 					*l_Handle;
@@ -88,10 +87,11 @@ typedef struct SQLLibrary
 	int						(*SNPrintF)( struct SQLLibrary *l, char *str, size_t stringSize, const char *fmt, ... );
 	int						(*SetOption)( struct SQLLibrary *l, char *params );
 	char					*(*MakeEscapedString)( struct SQLLibrary *l, char *str );
-	int						(*GetStatus)( struct Library *l );
+	int						(*GetStatus)( struct SQLLibrary *l );
 
 	SQLConnection con;
 	void					*sd;	// special data
+	FULONG					l_InUse;
 	
 } SQLLibrary;
 
