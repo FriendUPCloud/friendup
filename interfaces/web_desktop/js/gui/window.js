@@ -4888,7 +4888,7 @@ var View = function( args )
 					value = value.split( 'px' ).join( '' );
 					if( !isMobile )
 					{
-						viewdiv.style.left = value.indexOf( '%' ) > 0 ? value : ( value + 'px' );
+						viewdiv.style.left = ( value.indexOf( '%' ) > 0 || value.indexOf( 'vw' ) > 0 ) ? value : ( value + 'px' );
 					}
 				}
 				break;
@@ -4900,7 +4900,7 @@ var View = function( args )
 					value = value.split( 'px' ).join( '' );
 					if( !isMobile )
 					{
-						viewdiv.style.top = value.indexOf( '%' ) > 0 ? value : ( value + 'px' );
+						viewdiv.style.top = ( value.indexOf( '%' ) > 0 || value.indexOf( 'vh' ) > 0 ) ? value : ( value + 'px' );
 					}
 				}
 				break;

@@ -189,9 +189,15 @@ function fc_query( $command = '', $args = false, $method = 'POST', $headers = fa
 	$LogThis = false;
 	
 	$curl = curl_init();
+<<<<<<< HEAD
 
 	$usePort = ( $Config->FCHost == 'localhost' || $Config->FCOnLocalhost ) && $Config->FCPort;
 	$server = ( $Config->SSLEnable ? 'https://' : 'http://' ) . $Config->FCHost . ( $usePort ? ( ':' . $Config->FCPort ) : '' );	
+=======
+	
+	$usePort = ( $Config->FCHost == 'localhost' || $Config->FCOnLocalhost ) && $Config->FCPort;
+	$server = ( $Config->SSLEnable ? 'https://' : 'http://' ) . $Config->FCHost . ( $usePort ? ( ':' . $Config->FCPort ) : '' );
+>>>>>>> master
 	
 	$url = ( $server . $command );
 	

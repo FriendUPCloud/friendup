@@ -1734,8 +1734,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{	
 						Workspace.startupSequenceRegistered = true;
 						
-						// Reload the docks
+						// Reload the docks here
 						Workspace.reloadDocks();
+						
 						
 						// In single tasking mode, we just skip
 						if( Workspace.isSingleTask )
@@ -1755,6 +1756,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							{
 								friendApp.reveal();
 							}
+													
 							return;
 						}
 						
@@ -8523,7 +8525,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				Notify(	{
 					title: i18n( 'i18n_paste_error' ),
-					text: 'Really unexpected error. Contact your Friendly administrator.'
+					text: 'Really unexpected error. Contact your Friend OS administrator.'
 				} );
 			}
 		}

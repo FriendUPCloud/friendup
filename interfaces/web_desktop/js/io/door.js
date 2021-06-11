@@ -231,7 +231,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 			{
 				updateurl += '&details=true';
 			}
-						
+			
 			// Use standard Friend Core doors
 			var j = new cAjax();
 			if( t.cancelId )

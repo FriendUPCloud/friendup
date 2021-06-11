@@ -1897,7 +1897,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								}
 								loggedSession->us_MobileAppID = umaID;
 							
-								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime=%lld,DeviceIdentity='%s',UMA_ID=%lu WHERE `SessionID`='%s'", (long long)loggedSession->us_LoggedTime, deviceid, umaID, loggedSession->us_SessionID );
+								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime = %lld,DeviceIdentity='%s',UMA_ID=%lu WHERE `SessionID`='%s'", (long long)loggedSession->us_LoggedTime, deviceid, umaID, loggedSession->us_SessionID );
 								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
 								{ 
 								
@@ -1907,7 +1907,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								// update user
 								//
 							
-								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime='%lld', SessionID='%s' WHERE `Name`='%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
+								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime='%lld', SessionID='%s' WHERE `Name` = '%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
 								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
 								{ 
 								
@@ -2183,7 +2183,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								// update UserSession
 								//
 								
-								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity`='%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_SessionID, umaID, deviceid,  loggedSession->us_UserID );
+								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_SessionID, umaID, deviceid,  loggedSession->us_UserID );
 								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
 								{ 
 									
@@ -2194,10 +2194,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								//
 							
 								if( loggedSession->us_User != NULL )
-								{	// stefkos - problem is here
-									sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime='%lld', SessionID='%s' WHERE `Name`='%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
+								{
+									sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime = '%lld', SessionID='%s' WHERE `Name` = '%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
 									
- 									//if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
+									if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
 									{ 
 
 									}
