@@ -205,13 +205,13 @@ int USMGetSessionsDeleteDB( UserSessionManager *smgr, const char *sessionid );
 // Generate temporary session
 //
 
-char *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, FULONG userID, int type );
+UserSession *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, FULONG userID, int type );
 
 //
 // Destroy temporary session
 //
 
-void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, char *sessionID );
+void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, UserSession *ses );
 
 //
 // Check if User Session is attached to Sentinel User

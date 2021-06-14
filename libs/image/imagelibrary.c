@@ -441,7 +441,7 @@ File *IMGGetRootDeviceByPath( struct ImageLibrary *lib, User *usr, char **dstpat
 	
 	*dstpath = (char *)&path[ dpos + 1 ];
 
-	fhand = sb->GetRootDeviceByName( usr, ddrivename );
+	fhand = sb->GetRootDeviceByName( usr, NULL, ddrivename );
 	/*
 	File *ldr = usr->u_MountedDevs;
 	while( ldr != NULL )

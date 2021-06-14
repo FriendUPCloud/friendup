@@ -224,8 +224,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 	char *name = NULL;
 	char *module = NULL;
 	char *type = NULL;
-	char *authid = NULL;
-//	FULONG id = 0;
+	UserSession *us = NULL;
 	
 	SystemBase *sb = NULL;
 	
@@ -273,6 +272,9 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 				case FSys_Mount_SysBase:
 					sb = (SystemBase *)lptr->ti_Data;
 					break;
+				case FSys_Mount_UserSession:
+					us = (UserSession *)lptr->ti_Data;
+					break;
 			}
 			lptr++;
 		}
@@ -315,8 +317,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 		{
 			sd->module = StringDup( module );
 			DEBUG( "Copying session.\n" );
-			//dev->f_SessionID = StringDup( usr->u_MainSessionID );
-			dev->f_SessionIDPTR = usr->u_MainSessionID;
+			FileFillSessionID( dev, us );
 			sd->type = StringDup( type );
 			dev->f_SpecialData = sd;
 			sd->sb = sb;

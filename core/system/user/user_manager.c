@@ -1423,3 +1423,52 @@ int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname )
 	}
 	return 0;
 }
+
+/**
+ * Init user drives
+ *
+ * @param um pointer to UserManager
+ * @return 0 when success, otherwise error number
+ */
+int UMInitUsers( UserManager *um )
+{
+	SystemBase *sb = (SystemBase *)um->um_SB;
+	Log( FLOG_INFO, "----------------------------------------------------\n");
+	Log( FLOG_INFO, "---------Mount user devices-------------------------\n");
+	Log( FLOG_INFO, "----------------------------------------------------\n");
+	
+	SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
+	if( sqllib != NULL )
+	{
+		User *tmpUser = sb->sl_UM->um_Users;
+		while( tmpUser != NULL )
+		{
+			char *err = NULL;
+			DEBUG( "[UMInitUsers] FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
+			
+			UserSession *session = USMCreateTemporarySession( sb->sl_USM, sqllib, tmpUser->u_ID, 0 );
+			if( session != NULL )
+			{
+				session->us_UserID = tmpUser->u_ID;
+				session->us_User = tmpUser;
+				
+				UserDeviceMount( sb, tmpUser, session, 1, TRUE, &err, FALSE );
+				if( err != NULL )
+				{
+					Log( FLOG_ERROR, "Initial system mount error. UserID: %lu Error: %s\n", tmpUser->u_ID, err );
+					FFree( err );
+				}
+				USMDestroyTemporarySession( sb->sl_USM, sqllib, session );
+			}
+			DEBUG( "[UMInitUsers] DONE FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
+			tmpUser = (User *)tmpUser->node.mln_Succ;
+		}
+		sb->LibrarySQLDrop( sb, sqllib );
+	}
+	
+	Log( FLOG_INFO, "----------------------------------------------------\n");
+	Log( FLOG_INFO, "---------Mount user group devices-------------------\n");
+	Log( FLOG_INFO, "----------------------------------------------------\n");
+		
+	return 0;
+}

@@ -9,7 +9,7 @@
 *                                                                              *
 *****************************************************************************©*/
 
-global $User, $SqlDatabase, $Logger;
+global $User, $SqlDatabase, $Logger, $UserSession;
 
 // 1. Check if we're looking for software.......................................
 $len = strlen('System:Software/');
@@ -151,7 +151,7 @@ if( isset( $args->args ) && substr( $args->args->path, 0, $len ) == 'System:Soft
 					$picon = file_exists( 'resources' . $svgPath ) ? $svgPath : $pngPath;
 					if( $path == 'repository/' )
 					{
-						$o->IconFile = '/system.library/module/?sessionid=' . $User->SessionID . '&module=system&command=repoappimage&i=' . $app->Filename;
+						$o->IconFile = '/system.library/module/?sessionid=' . $UserSession->SessionID . '&module=system&command=repoappimage&i=' . $app->Filename;
 					}
 					else if( file_exists( 'resources' . $picon ) )
 					{

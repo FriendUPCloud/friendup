@@ -517,7 +517,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 	char *name = NULL;
 	char *module = NULL;
 	char *type = NULL;
-	char *userSession = NULL;
+	UserSession *us = NULL;
 	char *empty = "";
 	
 	SystemBase *sb = NULL;
@@ -569,8 +569,8 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 				case FSys_Mount_SysBase:
 					sb = (SystemBase *)lptr->ti_Data;
 					break;
-				case FSys_Mount_User_SessionID:
-					userSession = (char *)lptr->ti_Data;
+				case FSys_Mount_UserSession:
+					us = (UserSession *)lptr->ti_Data;
 					break;
 			}
 			lptr++;
@@ -613,20 +613,10 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 		if( sd != NULL )
 		{
 			sd->module = StringDup( module );
-			if( usr != NULL && usr->u_MainSessionID != NULL )
-			{
-				userSession = usr->u_MainSessionID;
-			}
-			else
-			{
-				if( userSession == NULL )
-				{
-					userSession = empty;
-				}
-			}
-			DEBUG( "[fsysphp] Copying session: %s\n", userSession );
-			//dev->f_SessionID = StringDup( usr->u_MainSessionID );
-			dev->f_SessionIDPTR = userSession;
+			
+			DEBUG( "[fsysphp] Copying session normal: %s - hashed %s\n", us->us_SessionID, us->us_SessionID );
+			
+			FileFillSessionID( dev, us );
 			sd->type = StringDup( type );
 			dev->f_SpecialData = sd;
 			sd->sb = sb;
@@ -637,7 +627,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 				( name ? strlen( name ) : 0 ) + 
 				( path ? strlen( path ) : 0 ) + 
 				( module ? strlen( module ) : strlen( "files" ) ) + 
-				( strlen( userSession ) ) + 1;
+				( strlen( us->us_SessionID ) ) + 1;
 			
 			
 			// Whole command
@@ -656,7 +646,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 						name ? name : "", 
 						path ? path : "", 
 						module ? module : "files", 
-						userSession  );
+						us->us_SessionID );
 					sprintf( command, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 					FFree( commandCnt );
 			
