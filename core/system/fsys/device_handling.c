@@ -3467,7 +3467,7 @@ usrgrp->ug_ID
 				}
 			}
 			
-			DEBUG("Usergroup mount: pass sessionid: '%s'\n", us->us_SessionID );
+			//DEBUG("Usergroup mount: pass sessionid: '%s'\n", us->us_SessionID );
 			
 			struct TagItem tags[] = {
 				{ FSys_Mount_Path,				(FULONG)row[ 4 ] },
