@@ -537,7 +537,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					char qery[ 1024 ];
 
 					// TODO: Remove need for existing SessionID (instead generate it if it does not exist)!
-					sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT u.SessionID, u.Name FROM FUser u WHERE u.SessionID != \"\" AND u.ServerToken=\"%s\" LIMIT 1",( char *)sst->hme_Data );;
+					sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT u.SessionID, u.Name FROM FUser u WHERE u.ServerToken=\"%s\" LIMIT 1",( char *)sst->hme_Data );;
 					
 					void *res = sqllib->Query( sqllib, qery );
 					if( res != NULL )
