@@ -86,6 +86,7 @@ FriendWebSocket.prototype.send = function( msgObj )
 FriendWebSocket.prototype.reconnect = function()
 {
 	let self = this;
+	
 	self.allowReconnect = true;
 	
 	// We're pre reconnect - wait..
@@ -122,6 +123,7 @@ FriendWebSocket.prototype.close = function( code, reason )
 FriendWebSocket.prototype.init = function()
 {
 	let self = this;
+	
 	if ( !self.onmessage || !self.onstate || !self.onend )
 	{
 		console.log( 'FriendWebSocket - missing handlers', {
@@ -785,7 +787,10 @@ FriendWebSocket.prototype.sendPing = function( msg )
 		data : timestamp,
 	};
 
-	if( self.pingCheck == 0 ) self.pingCheck = setTimeout( checkPing, self.maxPingWait );
+	// Should always clear previous checkping so it doesn't suddenly fire as an orphan
+	if( self.pingCheck )
+		clearTimeout( self.pingCheck );
+	self.pingCheck = setTimeout( checkPing, self.maxPingWait );
 
 	function checkPing()
 	{
@@ -799,10 +804,12 @@ FriendWebSocket.prototype.sendPing = function( msg )
 FriendWebSocket.prototype.handlePing = function( data )
 {
 	let self = this;
+	
 	let msg = {
 		type : 'pong',
 		data : data,
 	};
+
 	self.sendCon( msg );
 }
 
@@ -812,11 +819,17 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 	let now = Date.now();
 	let pingTime = now - timeSent;
 
-	if( self.pingCheck ) { clearTimeout( self.pingCheck ); self.pingCheck = 0 }
+	if( self.pingCheck )
+	{ 
+		clearTimeout( self.pingCheck ); 
+		self.pingCheck = 0;
+	}
+	
 	self.setState( 'ping', pingTime );
+	
 	if( Friend.User )
 	{
-		// Reinit user!
+		// Reinit user! (sets => server is there)
 		Friend.User.Init();
 	}
 }
