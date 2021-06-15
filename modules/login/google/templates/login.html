@@ -686,7 +686,7 @@
 				return result;
 			}
 			
-			function timezoneConvert( timestamp, timezone )
+			function timezoneConvert( timestamp, timezone, debug )
 			{
 				var date1 = null; var date2 = null; var tz1 = null; var tz2 = null;
 				
@@ -705,21 +705,41 @@
 					if( timezone )
 					{
 						date1 = new Date( Number( timestamp ) ).toLocaleString( 'en-GB', { timeZone: timezone } );
-						//console.log( date1 );
+						
 						tz1   = new Date( date1 ).getTimezoneOffset();
 					}
 					
 					date2 = new Date( Number( timestamp ) ).toLocaleString( 'en-GB' );
-					//console.log( date2 );
+					
 					tz2   = new Date( date2 ).getTimezoneOffset();
 					
 					if( date1 )
 					{
-						return new Date( date1 ).getTime();
+						var Y = date1.split(',')[0].trim().split('/')[2];
+						var m = date1.split(',')[0].trim().split('/')[1];
+						var d = date1.split(',')[0].trim().split('/')[0];
+						
+						var H = date1.split(',')[1].trim().split(':')[0];
+						var i = date1.split(',')[1].trim().split(':')[1];
+						
+						if( debug ) console.log( 'timezoneConvert', [ date1, tz1, timezone, Y+'-'+m+'-'+d+' '+H+':'+i ] );
+						
+						// Year, Month, Day, Hour, Minute
+						return new Date( Y, m, d, H, i ).getTime();
 					}
-					else
+					else if( date2 )
 					{
-						return new Date( date2 ).getTime();
+						var Y = date2.split(',')[0].trim().split('/')[2];
+						var m = date2.split(',')[0].trim().split('/')[1];
+						var d = date2.split(',')[0].trim().split('/')[0];
+						
+						var H = date2.split(',')[1].trim().split(':')[0];
+						var i = date2.split(',')[1].trim().split(':')[1];
+						
+						if( debug ) console.log( 'timezoneConvert', [ date2, tz2, Y+'-'+m+'-'+d+' '+H+':'+i ] );
+						
+						// Year, Month, Day, Hour, Minute
+						return new Date( Y, m, d, H, i ).getTime();
 					}
 				}
 				
@@ -1082,7 +1102,7 @@
 						
 						if( json )
 						{
-							if( json.expiry ) console.log( [ json, ( timezoneConvert( json.expiry, json.timezone ) + ' < ' + timezoneConvert( null, json.timezone ) ) ] );
+							if( json.expiry ) console.log( [ json, ( timezoneConvert( json.expiry, json.timezone, true ) + ' < ' + timezoneConvert( null, json.timezone, true ) ) ] );
 							
 							if( json.code && ge( 'Verification' ) )
 							{
