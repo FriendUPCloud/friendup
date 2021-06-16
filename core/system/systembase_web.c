@@ -542,9 +542,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				if( sqllib != NULL )
 				{
 					char qery[ 1024 ];
+					FULONG uid = 0;
 
 					// TODO: Remove need for existing SessionID (instead generate it if it does not exist)!
-					sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT us.SessionID, u.Name FROM FUser u left outer join FUserSession us on u.ID=us.UserID WHERE u.ServerToken=\"%s\" LIMIT 1",( char *)sst->hme_Data );;
+					//sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT us.SessionID, u.Name FROM FUser u left outer join FUserSession us on u.ID=us.UserID WHERE u.ServerToken=\"%s\" LIMIT 1",( char *)sst->hme_Data );
+					sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT us.UserID, u.Name FROM FUser u left outer join FUserSession us on u.ID=us.UserID WHERE u.ServerToken=\"%s\" LIMIT 1",( char *)sst->hme_Data );
 					
 					void *res = sqllib->Query( sqllib, qery );
 					if( res != NULL )
@@ -554,13 +556,18 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						{
 							if( row[ 0 ] != NULL )
 							{
-								snprintf( sessionid, DEFAULT_SESSION_ID_SIZE,"%s", row[ 0 ] );
+								//snprintf( sessionid, DEFAULT_SESSION_ID_SIZE,"%s", row[ 0 ] );
+								//snprintf( userName, 256, "%s", row[ 1 ] );
+								char *next;
+								uid = strtol ( (char *) row[ 0 ], &next, 10);
 								snprintf( userName, 256, "%s", row[ 1 ] );
 							}
 						}
 						sqllib->FreeResult( sqllib, res );
 					}
 					l->LibrarySQLDrop( l, sqllib );
+					
+					loggedSession = USMGetSessionByUserID( l->sl_USM, uid );
 				}
 			}
 		}
