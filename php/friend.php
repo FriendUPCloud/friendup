@@ -480,6 +480,15 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	{
 		$User->ServerToken = $GLOBALS[ 'args' ]->servertoken;
 		$User->Load();
+
+		if( $mus = $SqlDatabase->FetchObject( '
+                    SELECT * FROM FUserSession WHERE UserID = \'' . $User->ID . '\' LIMIT 1
+                    ' ) )
+                    {
+			$Logger->log( 'UserSession found->servertoken' );
+			$UserSession = $mus;
+                    }
+
 	}
 	// Load by session id
 	else if( isset( $GLOBALS[ 'args' ]->sessionid ) )
