@@ -134,6 +134,23 @@ void WSThreadPing( WSThreadData *data )
 	
 		if( ( answer = FMalloc( 1024 ) ) != NULL )
 		{
+			data->wstd_WSD->wsc_UpdateLoggedTimeCounter++;
+			if( data->wstd_WSD->wsc_UpdateLoggedTimeCounter > SLIB->l_UpdateLoggedTimeOnUserMax )
+			{
+				char tmpQuery[ 64 ];
+				snprintf( tmpQuery, sizeof(tmpQuery), "UPDATE FUser Set LoggedTime=%ld where ID=%ld", time(NULL), us->us_UserID );
+				
+				SQLLibrary *sqlLib = SLIB->LibrarySQLGet( SLIB );
+				if( sqlLib != NULL )
+				{
+					sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
+	
+					SLIB->LibrarySQLDrop( SLIB, sqlLib );
+				}
+				
+				data->wstd_WSD->wsc_UpdateLoggedTimeCounter = 0;
+			}
+			
 			int answersize = snprintf( (char *)answer, 1024, "{\"type\":\"con\",\"data\":{\"type\":\"pong\",\"data\":\"%s\"}}", data->wstd_Requestid );
 			UserSessionWebsocketWrite( us, answer, answersize, LWS_WRITE_TEXT );	
 			FFree( answer );

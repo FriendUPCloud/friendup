@@ -426,6 +426,7 @@ typedef struct SystemBase
 	struct LSocketInterface_t		l_SocketINOSSL;
 	
 	int								l_HttpCompressionContent;	// information which compression is supported by the server
+	int								l_UpdateLoggedTimeOnUserMax;
 } SystemBase;
 
 
