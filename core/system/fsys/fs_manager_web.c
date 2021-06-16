@@ -255,6 +255,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 				DEBUG( "[FSMWebRequest] Device name '%s' Logguser name %s- path %s\n", devname, loggedSession->us_User->u_Name, path );
 
 				path = locpath;
+				
+				DEBUG("[FSMWebRequest] path after change: %s\n", path );
 			
 				freePath = 1;
 			}
@@ -279,7 +281,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 			
 			if( lrequest != NULL )
 			{
-				snprintf( lrequest, 512, "module=system&command=systempath&sessionid=%s&path=%s", loggedSession->us_User->u_MainSessionID, path );
+				snprintf( lrequest, 512, "module=system&command=systempath&sessionid=%s&path=%s", loggedSession->us_SessionID, path );
 				
 				returnData = l->RunMod( l, "php", "modules/system/module.php", lrequest, &resultLength );
 				
@@ -941,7 +943,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								if( command != NULL )
 								{
 									snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", origDecodedPath, loggedSession->us_SessionID );
-			
+									
 									DEBUG("Run command via php: '%s'\n", command );
 									FULONG dataLength;
 

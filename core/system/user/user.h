@@ -137,7 +137,7 @@ typedef struct User
 	UserSessListEntry			*u_SessionsList;
 	FULONG						u_Status;						// user status
 
-	char						*u_MainSessionID;				// session id ,  generated only when user is taken from db
+	//char						*u_MainSessionID;				// session id ,  generated only when user is taken from db
 	time_t						u_LoggedTime;       			// last action time
 	time_t						u_CreatedTime;					// when user strcture was created
 	time_t						u_LoginTime;					// last login time

@@ -264,8 +264,6 @@ void UserDelete( User *usr )
 		
 			if( usr->u_Password ){ FFree( usr->u_Password );}
 		
-			if( usr->u_MainSessionID ){ FFree( usr->u_MainSessionID );}
-		
 			if( usr->u_UUID ){ FFree( usr->u_UUID );}
 		
 			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
@@ -654,6 +652,7 @@ File *UserGetDeviceByName( User *usr, const char *name )
  */
 int UserRegenerateSessionID( User *usr, char *newsess )
 {
+/*
 	if( usr != NULL )
 	{
 		//pthread_mutex_lock( &(usr->) );
@@ -684,12 +683,7 @@ int UserRegenerateSessionID( User *usr, char *newsess )
 		{
 			while( lDev != NULL )
 			{
-				/*
-				if( lDev->f_SessionID )
-				{
-					FFree( lDev->f_SessionID );
-				}
-				*/
+
 				//lDev->f_SessionID = StringDuplicate( usr->u_MainSessionID );
 				lDev->f_SessionIDPTR = usr->u_MainSessionID;
 				lDev = (File *)lDev->node.mln_Succ;
@@ -701,6 +695,7 @@ int UserRegenerateSessionID( User *usr, char *newsess )
 		DEBUG("User structure = NULL\n");
 		return 1;
 	}
+*/
 	return 0;
 }
 

@@ -525,7 +525,7 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 	
 	if( us == NULL )
 	{
-		FERROR("Cannot add NULL session!\n");
+		FERROR("[USMUserSessionAdd] Cannot add NULL session!\n");
 		return NULL;
 	}
 	
@@ -663,12 +663,13 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 		}
 		else
 		{
-			DEBUG("[USMUserSessionAdd] User added to user %s main sessionid %s usptr: %p\n", locusr->u_Name, locusr->u_MainSessionID, us );
+			//DEBUG("[USMUserSessionAdd] User added to user %s main sessionid %s usptr: %p\n", locusr->u_Name, locusr->u_MainSessionID, us );
 			
 			UserAddSession( locusr, us );
 
 			us->us_User = locusr;
 			
+			/*
 			DEBUG("[USMUserSessionAdd] have more sessions: %d mainsessionid: '%s'\n", userHaveMoreSessions, locusr->u_MainSessionID );
 			
 			if( userHaveMoreSessions == FALSE && ( locusr->u_MainSessionID == NULL || ( strlen( locusr->u_MainSessionID ) <= 0 ) ) )
@@ -677,16 +678,17 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 				if( locusr != NULL && locusr->u_IsAPI == FALSE )
 				{
 					// we cannot regenerate session because drives are using this sessionid
-					UserRegenerateSessionID( locusr, NULL );
+					UserRegenerateSessionID( smgr->usm_SB, locusr, NULL );
 				}
 				
 				DEBUG("[USMUserSessionAdd] SessionID will be overwriten\n");
 			}
+			*/
 		}
 	}
 	else
 	{
-		FERROR("Couldnt find user with ID %lu\n", us->us_UserID );
+		FERROR("[USMUserSessionAdd] Couldnt find user with ID %lu\n", us->us_UserID );
 		if( FRIEND_MUTEX_LOCK( &us->us_Mutex ) == 0 )
 		{
 			us->us_InUseCounter--;
@@ -937,11 +939,11 @@ void USMDebugSessions( UserSessionManager *smgr )
 	{
 		if( lses->us_User != NULL )
 		{
-			DEBUG("[USMDebugSessions]----\n USER %s ID %ld\nsessionid %s mastersesid %s device %s\n\n", lses->us_User->u_Name, lses->us_ID, lses->us_SessionID, lses->us_User->u_MainSessionID, lses->us_DeviceIdentity );
+			DEBUG("[USMDebugSessions]----\n USER %s ID %ld\nsessionid %s device %s\n\n", lses->us_User->u_Name, lses->us_ID, lses->us_SessionID, lses->us_DeviceIdentity );
 		}
 		else
 		{
-			DEBUG("[USMDebugSessions]----\n USER %s ID %ld\nsessionid %s mastersesid %s device %s\n\n", "NOUSER!", lses->us_ID, lses->us_SessionID, lses->us_User->u_MainSessionID, lses->us_DeviceIdentity );
+			DEBUG("[USMDebugSessions]----\n USER %s ID %ld\nsessionid %s device %s\n\n", "NOUSER!", lses->us_ID, lses->us_SessionID, lses->us_DeviceIdentity );
 		}
 		lses = (UserSession *)lses->node.mln_Succ;
 	}
@@ -1358,4 +1360,49 @@ User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus,
 		FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	}
 	return tuser;
+}
+
+/**
+ * Get first UserSession by user name
+ *
+ * @param usm pointer to UserSessionManager
+ * @param name name of the user to which session belong
+ * @param caseSensitive if set to TRUE function will use case sensitive comparation
+ * @return UserSession structure
+ */
+UserSession *USMGetSessionByUserName( UserSessionManager *usm, char *name, FBOOL caseSensitive )
+{
+	// We will take only first session of that user
+	// protect in mutex
+	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
+	{
+		if( caseSensitive == TRUE )
+		{
+			UserSession *us = usm->usm_Sessions;
+			while( us != NULL )
+			{
+				if( us->us_User != NULL  && strcmp( us->us_User->u_Name, name ) == 0 )
+				{
+					FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+					return us;
+				}
+				us = (UserSession *) us->node.mln_Succ;
+			}
+		}
+		else // case sensitive = FALSE
+		{
+			UserSession *us = usm->usm_Sessions;
+			while( us != NULL )
+			{
+				if( us->us_User != NULL  && strcasecmp( us->us_User->u_Name, name ) == 0 )
+				{
+					FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+					return us;
+				}
+				us = (UserSession *) us->node.mln_Succ;
+			}
+		}
+		FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+	}
+	return NULL;
 }

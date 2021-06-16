@@ -328,7 +328,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 				( name ? strlen( name ) : 0 ) + 
 				( path ? strlen( path ) : 0 ) + 
 				( module ? strlen( module ) : strlen( "files" ) ) + 
-				( usr->u_MainSessionID ? strlen( usr->u_MainSessionID ) : 0 ) + 1;
+				( us ? strlen( us->us_SessionID ) : 0 ) + 1;
 			
 			
 			// Whole command
@@ -349,7 +349,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 						name ? name : "", 
 						path ? path : "", 
 						module ? module : "files", 
-						usr->u_MainSessionID ? usr->u_MainSessionID : ""  );
+						us->us_SessionID ? us->us_SessionID : ""  );
 					sprintf( command, "node \"modules/node/module.js\" \"%s\";", FilterNodeVar( commandCnt ) );
 					FFree( commandCnt );
 			
