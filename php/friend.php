@@ -521,9 +521,25 @@ if( file_exists( 'cfg/cfg.ini' ) )
 			' ) )
 			{
 				$User->Load( $row->ID );
-				
+
 				if( $User->ID > 0 )
+				{
 					$GLOBALS[ 'User' ] =& $User;
+					$Logger->log( 'User load by authid NEW' );
+
+					if( $mus = $SqlDatabase->FetchObject( '
+						SELECT * FROM FUserSession WHERE UserID = \'' . $User->ID . '\' LIMIT 1
+						' ) )
+						{
+							$Logger->log( 'UserSession found' );
+							$UserSession = $mus;
+							$GLOBALS['UserSession'] =& $UserSession;
+						}
+				}
+				else
+				{
+					$Logger->log('UserID not found');
+				}
 			}
 		}
 		
