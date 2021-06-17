@@ -227,18 +227,18 @@
 				doLogin: function( e )
 				{
 					
+					if( Trim( ge( 'Username' ).value ) == '' )
+					{
+						ge( 'Username' ).focus();
+						ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = 'Enter your username.';
+						return;
+					}
+					
 					/*
 						In password recivery mode we do stuff a bit differently...
 					*/
 					if( this.passwordRecoveryMode )
 					{
-						
-						if( Trim( ge( 'Username' ).value ) == '')
-						{
-							ge( 'Username' ).focus();
-							ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = 'Enter your username.';
-							return;
-						}
 						ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = '';
 						parent.Friend.User.ResetPassword( Trim( ge( 'Username' ).value ), function( result ){
 							Application.forgotPassword();
@@ -246,6 +246,13 @@
 								ge( 'Username' ).value = '';
 							ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = ( result == 'ok' ? 'Please check your inbox.' : 'Could not reset password.' );
 						} );
+						return;
+					}
+					
+					if( Trim( ge( 'Password' ).value ) == '' )
+					{
+						ge( 'Password' ).focus();
+						ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = 'Enter your password.';
 						return;
 					}
 					
@@ -265,6 +272,8 @@
 					let pw = Trim( ge( 'Password' ).value );
 					parent.Friend.User.Login( us, pw, false, function( result, answer )
 					{
+						Application.busy = false;
+						
 						let tmp = null;
 						if( answer )
 						{
@@ -312,7 +321,6 @@
 								ga( 'send', 'event', 'userloginsuccess', us );	
 							}
 							parent.Workspace.showDesktop();
-							Application.busy = false;
 						}
 					}, e, { hashedPassword: ge( 'Password' ).hashed ? true : false } );
 				},
