@@ -1578,7 +1578,10 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		if( el != NULL )
 		{
 			authid = el->hme_Data;
-			len += strlen( authid );
+			if( authid != NULL )
+			{
+				len += strlen( authid );
+			}
 		}
 		el = HttpGetPOSTParameter( request, "args" );
 		if( el != NULL )
