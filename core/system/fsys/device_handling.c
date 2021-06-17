@@ -382,6 +382,7 @@ int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, UserSession *se
 						{FSys_Mount_SysBase,(FULONG)l},
 						{FSys_Mount_Config,(FULONG)config},
 						{FSys_Mount_ID, (FULONG)id},
+						{FSys_Mount_UserSession,(FULONG)ses},
 						{TAG_DONE, TAG_DONE}
 					};
 		
