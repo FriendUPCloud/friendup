@@ -152,19 +152,19 @@
 					</h1>
 					<div class="Box">
 						<form method="post" onsubmit="return false">
-							<div class="HRow">
+							<div class="HRow" id="VerificationContainer" style="display:none">
 								<label id="VerificationLabel" for="Verification">Verification Code</label>
 								<p>
 									<input type="text" id="Verification" class="FullWidth" autocapitalize="none" autocorrect="none" tabindex="1" />
 								</p>
 							</div>
-							<div class="HRow MarginTop HideForPass">
+							<div class="HRow MarginTop">
 								<label id="NewPasswordLabel" for="NewPassword">Your Password</label>
 								<p>
 									<input type="password" id="NewPassword" class="FullWidth" tabindex="2" />
 								</p>
 							</div>
-							<div class="HRow MarginTop HideForPass">
+							<div class="HRow MarginTop">
 								<label id="ConfirmPasswordLabel" for="ConfirmPassword">Confirm Password</label>
 								<p>
 									<input type="password" id="ConfirmPassword" class="FullWidth" tabindex="3" />
@@ -1158,6 +1158,7 @@
 				
 				if( !vcode )
 				{
+					document.getElementById( 'VerificationContainer' ).style.display = 'block';
 					document.getElementById( 'Verification' ).focus();
 					return showLoginError( 'Verification Code is missing, try again ...', 'invalidVerification' );
 				}
@@ -1172,6 +1173,11 @@
 					return showLoginError( 'Password doest\'t match, try again ...', 'invalidVerification' );
 				}
 				
+				if( vcode.length < 60 )
+				{
+					vcode = Sha256.hash( vcode );
+				}
+				
 				if( newpw.substring( 0, 6 ) != 'HASHED' )
 				{
 					newpw = ( 'HASHED' + Sha256.hash( newpw ) );
@@ -1181,14 +1187,14 @@
 				
 				m.open( 'POST', '/verify/v2/' + enc.encryptRSA( JSON.stringify( 
 				{
-					'code'     : Sha256.hash( vcode ), 
+					'code'     : vcode, 
 					'password' : newpw 
 				} ), 
 				enc.keys.server.publickey ), true );
 				
 				if( Application.showLog ) console.log( 
 				{
-					'code'     : Sha256.hash( vcode ), 
+					'code'     : vcode, 
 					'password' : newpw 
 				} );
 				
@@ -1217,6 +1223,8 @@
 							// We got a real error
 							if( json == null )
 							{
+								document.getElementById( 'VerificationContainer' ).style.display = 'block';
+								
 								return showLoginError( 'Something went wrong ...', 'invalidVerification' );
 							}
 							
@@ -1237,11 +1245,15 @@
 									}
 								}
 								
+								document.getElementById( 'VerificationContainer' ).style.display = 'block';
+								
 								return showLoginError( 'Something went wrong ...', 'invalidVerification' );
 							}
 							else
 							{
 								// Errors ...
+								
+								document.getElementById( 'VerificationContainer' ).style.display = 'block';
 								
 								if( json && json.message )
 								{
@@ -1257,6 +1269,8 @@
 					}
 					
 					if( Application.showLog ) console.log( this.responseText() );
+					
+					document.getElementById( 'VerificationContainer' ).style.display = 'block';
 					
 					return showLoginError( 'Something went wrong ...', 'invalidVerification' );
 					
