@@ -1734,7 +1734,7 @@ int SystemInitExternal( SystemBase *l )
 				if( ses != NULL )
 				{
 					ses->us_UserID = l->sl_Sentinel->s_User->u_ID;
-					ses->us_LoggedTime = timestamp;
+					ses->us_LastActionTime = timestamp;
 					
 					UserAddSession( l->sl_Sentinel->s_User, ses );
 					
@@ -1747,7 +1747,7 @@ int SystemInitExternal( SystemBase *l )
 			// regenerate sessionid for User
 			//
 			
-			if(  (timestamp - l->sl_Sentinel->s_User->u_LoggedTime) > l->sl_RemoveSessionsAfterTime )
+			if(  (timestamp - l->sl_Sentinel->s_User->u_LastActionTime) > l->sl_RemoveSessionsAfterTime )
 			{
 				UserRegenerateSessionID( l->sl_Sentinel->s_User, NULL );
 			}

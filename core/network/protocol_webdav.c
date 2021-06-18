@@ -934,7 +934,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 					if( ses != NULL )
 					{
 						ses->us_UserID = usr->u_ID;
-						ses->us_LoggedTime = time( NULL );
+						ses->us_LastActionTime = time( NULL );
 					
 						UserAddSession( usr, ses );
 						USMSessionSaveDB( sb->sl_USM, ses );
@@ -1169,7 +1169,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		}
 		
 		// authentication passed, timestamp will be updated
-		tok->wt_CreateTime = time( NULL );
+		tok->wt_CreationTime = time( NULL );
 	}
 #endif
 	
