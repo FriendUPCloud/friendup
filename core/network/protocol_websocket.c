@@ -138,7 +138,8 @@ void WSThreadPing( WSThreadData *data )
 			if( data->wstd_WSD->wsc_UpdateLoggedTimeCounter > SLIB->l_UpdateLoggedTimeOnUserMax )
 			{
 				char tmpQuery[ 64 ];
-				snprintf( tmpQuery, sizeof(tmpQuery), "UPDATE FUser Set LastActionTime=%ld where ID=%ld", time(NULL), us->us_UserID );
+				us->us_LastActionTime = time(NULL);
+				snprintf( tmpQuery, sizeof(tmpQuery), "UPDATE FUser Set LastActionTime=%ld where ID=%ld", us->us_LastActionTime, us->us_UserID );
 				
 				SQLLibrary *sqlLib = SLIB->LibrarySQLGet( SLIB );
 				if( sqlLib != NULL )
