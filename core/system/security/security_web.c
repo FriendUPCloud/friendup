@@ -136,7 +136,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 				
 					// update server token
 				
-					int size = snprintf( insertQuery, sizeof( insertQuery ), "UPDATE `FUser` SET 'ServerToken'='%s' WHERE ID=%lu", tmpses, userID );
+					int size = snprintf( insertQuery, sizeof( insertQuery ), "UPDATE `FUser` SET ServerToken='%s' WHERE ID=%lu", tmpses, userID );
 					sqllib->QueryWithoutResults( sqllib, insertQuery );
 				
 					snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"token\":\"%s\"}", tmpses );
