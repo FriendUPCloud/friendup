@@ -414,6 +414,7 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 	}
 	
 	GenerateUUID( &( usr->u_UUID ) );
+	usr->u_MainSessionID = SessionIDGenerate();
 
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	int val = 0;
