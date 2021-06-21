@@ -1211,6 +1211,13 @@ int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, co
 FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int numberOfFail, time_t *lastLoginTime )
 {
 	FBOOL canILogin = FALSE;
+	
+	// if default value is equal or less then 0
+	if( numberOfFail <= 0 )
+	{
+		return TRUE;
+	}
+	
 	SystemBase *sb = (SystemBase *)um->um_SB;
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	
@@ -1218,7 +1225,7 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
 	{
 		DEBUG("[UMGetLoginPossibilityLastLogins] username %s\n", name );
 		// temporary solution, using MYSQL connection
-		char *query = FCalloc( 1, 2048 );
+		char *query = FMalloc( 2048 );
 		time_t tm = time( NULL );
 		
 		// we are checking failed logins in last hour
