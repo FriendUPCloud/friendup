@@ -1255,7 +1255,11 @@
 								
 								document.getElementById( 'VerificationContainer' ).style.display = 'block';
 								
-								if( json && json.message )
+								if( json && json.message && json.code == 10 )
+								{
+									return switchForm( 'expiry' );
+								}
+								else if( json && json.message )
 								{
 									return showLoginError( json.message, 'invalidVerification' );
 								}
