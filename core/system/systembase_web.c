@@ -678,7 +678,19 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 
 						if( serverTokenElement->hme_Data != NULL && strlen( serverTokenElement->hme_Data ) > 0 )
 						{
-							DEBUG("[SysWebRequest] servertoken entry: %s\n", serverTokenElement->hme_Data ); 
+							char *p = host;
+							// we have to remove end of the line
+							while( TRUE )
+							{
+								if( *p == '\r' || *p == 0 || *p == '\n' )
+								{
+									*p = 0;
+									break;
+								}
+								p++;
+							}
+							
+							DEBUG("[SysWebRequest] servertoken entry: %s host %s\n", serverTokenElement->hme_Data, host ); 
 							
 							// Check user server token and access to it
 							sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT u.ID,us.SessionID,u.Name FROM FUser u inner join FSecuredHost sh on u.ID=sh.UserID inner join FUserSession us on u.ID=us.UserID  WHERE us.SessionID !=\"\" AND u.ServerToken=\"%s\" AND sh.Status=1 AND sh.IP='%s' LIMIT 1",( char *)serverTokenElement->hme_Data, host );
