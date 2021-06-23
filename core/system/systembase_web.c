@@ -656,7 +656,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			// If loggedSession is not equal NULL then yes
 			//
 			
-			DEBUG("[SysWebRequest] ServerToken received\n");
+			DEBUG("[SysWebRequest] ServerToken received: '%s'\n", serverTokenElement->hme_Data );
 			
 			if( loggedSession == NULL )
 			{
