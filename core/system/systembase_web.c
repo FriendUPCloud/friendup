@@ -670,25 +670,28 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					{
 						char qery[ 1024 ];
 
-						// Check user server token and access to it
-						sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT u.ID,us.SessionID,u.Name FROM FUser u inner join FSecuredHost sh on u.ID=sh.UserID inner join FUserSession us on u.ID=us.UserID  WHERE us.SessionID !=\"\" AND u.ServerToken=\"%s\" AND sh.Status=1 AND sh.Host='%s' LIMIT 1",( char *)serverTokenElement->hme_Data, host );;
-					
-						void *res = sqllib->Query( sqllib, qery );
-						if( res != NULL )
+						if( serverTokenElement->hme_Data != NULL && strlen( serverTokenElement->hme_Data ) > 0 )
 						{
-							char **row;
-							if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+							// Check user server token and access to it
+							sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT u.ID,us.SessionID,u.Name FROM FUser u inner join FSecuredHost sh on u.ID=sh.UserID inner join FUserSession us on u.ID=us.UserID  WHERE us.SessionID !=\"\" AND u.ServerToken=\"%s\" AND sh.Status=1 AND sh.Host='%s' LIMIT 1",( char *)serverTokenElement->hme_Data, host );
+					
+							void *res = sqllib->Query( sqllib, qery );
+							if( res != NULL )
 							{
-								if( row[ 0 ] != NULL )
+								char **row;
+								if( ( row = sqllib->FetchRow( sqllib, res ) ) )
 								{
-									snprintf( sessionid, DEFAULT_SESSION_ID_SIZE,"%s", row[ 0 ] );
+									if( row[ 0 ] != NULL )
+									{
+										snprintf( sessionid, DEFAULT_SESSION_ID_SIZE,"%s", row[ 0 ] );
+									}
+									if( row[ 1 ] != NULL )
+									{
+										snprintf( userName, 256, "%s", row[ 1 ] );
+									}
 								}
-								if( row[ 1 ] != NULL )
-								{
-									snprintf( userName, 256, "%s", row[ 1 ] );
-								}
+								sqllib->FreeResult( sqllib, res );
 							}
-							sqllib->FreeResult( sqllib, res );
 						}
 					}
 					l->DropDBConnection( l, sqllib );
