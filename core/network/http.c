@@ -775,7 +775,7 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 							}
 							else if( strcmp( currentToken, "x-forwarded-for" ) == 0 )
 							{
-								http->http_RespHeaders[ HTTP_HEADER_DEPTH ] = lineStartPtr+17;
+								http->http_RespHeaders[ HTTP_HEADER_X_FORWARDED_FOR ] = lineStartPtr+17;
 								copyValue = FALSE;
 								FFree( currentToken );
 								currentToken = NULL;
