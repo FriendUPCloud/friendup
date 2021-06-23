@@ -660,8 +660,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			
 			if( loggedSession == NULL )
 			{
-				char *host = HttpGetHeader( *request, "X-Forwarded-For", HTTP_HEADER_END );
-				//HttpGetHeaderFromTable( *request, HTTP_HEADER_X_FORWARDED_FOR );
+				//char *host = HttpGetHeader( *request, "X-Forwarded-For", HTTP_HEADER_END );
+				char *host = HttpGetHeaderFromTable( *request, HTTP_HEADER_X_FORWARDED_FOR );
 				
 				DEBUG("[SysWebRequest] host: '%s'\n", host );
 				
