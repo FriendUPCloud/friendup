@@ -656,14 +656,20 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			// If loggedSession is not equal NULL then yes
 			//
 			
-			DEBUG("[SysWebRequest] ServerToken received\n");
+			DEBUG("[SysWebRequest] ServerToken received: '%s'\n", serverTokenElement->hme_Data );
 			
 			if( loggedSession == NULL )
 			{
+				//char *host = HttpGetHeader( *request, "X-Forwarded-For", HTTP_HEADER_END );
 				char *host = HttpGetHeaderFromTable( *request, HTTP_HEADER_X_FORWARDED_FOR );
+				
+				DEBUG("[SysWebRequest] host: '%s'\n", host );
+				
 				if( host != NULL )
 				{
 					SQLLibrary *sqllib = l->GetDBConnection( l );
+					
+					DEBUG("[SysWebRequest] entry from x-forwarded-for: %s\n", host );
 
 					// Get authid from mysql
 					if( sqllib != NULL )
@@ -672,8 +678,22 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 
 						if( serverTokenElement->hme_Data != NULL && strlen( serverTokenElement->hme_Data ) > 0 )
 						{
+							char *p = host;
+							// we have to remove end of the line
+							while( TRUE )
+							{
+								if( *p == '\r' || *p == 0 || *p == '\n' )
+								{
+									*p = 0;
+									break;
+								}
+								p++;
+							}
+							
+							DEBUG("[SysWebRequest] servertoken entry: %s host %s\n", serverTokenElement->hme_Data, host ); 
+							
 							// Check user server token and access to it
-							sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT u.ID,us.SessionID,u.Name FROM FUser u inner join FSecuredHost sh on u.ID=sh.UserID inner join FUserSession us on u.ID=us.UserID  WHERE us.SessionID !=\"\" AND u.ServerToken=\"%s\" AND sh.Status=1 AND sh.Host='%s' LIMIT 1",( char *)serverTokenElement->hme_Data, host );
+							sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT us.SessionID,u.Name FROM FUser u inner join FSecuredHost sh on u.ID=sh.UserID inner join FUserSession us on u.ID=us.UserID  WHERE us.SessionID !=\"\" AND u.ServerToken=\"%s\" AND sh.Status=1 AND sh.IP='%s' LIMIT 1",( char *)serverTokenElement->hme_Data, host );
 					
 							void *res = sqllib->Query( sqllib, qery );
 							if( res != NULL )
@@ -684,6 +704,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									if( row[ 0 ] != NULL )
 									{
 										snprintf( sessionid, DEFAULT_SESSION_ID_SIZE,"%s", row[ 0 ] );
+										DEBUG("[SysWebRequest] getting sessionid: %s\n", sessionid );
 									}
 									if( row[ 1 ] != NULL )
 									{
@@ -692,6 +713,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								}
 								sqllib->FreeResult( sqllib, res );
 							}
+							
+							DEBUG("[SysWebRequest] was sessionid found? '%s'\n", sessionid );
 						}
 					}
 					l->DropDBConnection( l, sqllib );
