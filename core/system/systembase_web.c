@@ -661,6 +661,9 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			if( loggedSession == NULL )
 			{
 				char *host = HttpGetHeaderFromTable( *request, HTTP_HEADER_X_FORWARDED_FOR );
+				
+				DEBUG("[SysWebRequest] host: '%s'\n", host );
+				
 				if( host != NULL )
 				{
 					SQLLibrary *sqllib = l->GetDBConnection( l );
