@@ -773,6 +773,13 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 								FFree( currentToken );
 								currentToken = NULL;
 							}
+							else if( strcmp( currentToken, "x-forwarded-for" ) == 0 )
+							{
+								http->http_RespHeaders[ HTTP_HEADER_DEPTH ] = lineStartPtr+17;
+								copyValue = FALSE;
+								FFree( currentToken );
+								currentToken = NULL;
+							}
 							else if( strcmp( currentToken, "x-expected-entity-length" ) == 0 )
 							{
 								http->http_RespHeaders[ HTTP_HEADER_EXPECTED_CONTENT_LENGTH ] = lineStartPtr+26;
