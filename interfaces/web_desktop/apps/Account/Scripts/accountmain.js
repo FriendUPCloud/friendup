@@ -1697,7 +1697,7 @@ ns.TabTokens.prototype.handleAddClick = async function()
 		console.log( 'TabTokens.create failed', created );
 		return;
 	}
-	
+	console.log( 'created', JSON.stringify( created ));
 	self.add( created );
 	
 	function get( input ) {
@@ -1977,7 +1977,7 @@ ns.TabTokens.prototype.createHost = async function( host, status, userId )
 		
 		const userId = window.Application.userId;
 		const args = {
-			host   : host,
+			ip     : host,
 			status : status,
 			userid : userId,
 		};
@@ -2030,7 +2030,7 @@ ns.TabTokens.prototype.updateHost = async function( hostId, status )
 		
 		const host = conf.host;
 		const args = {
-			host   : host,
+			ip     : host,
 			userid : conf.userId || window.Application.userId,
 			status : status || null,
 		};
@@ -2066,7 +2066,7 @@ ns.TabTokens.prototype.removeHost = async function( hostId )
 		
 		const host = conf.host;
 		const args = {
-			host : host,
+			ip : host,
 		};
 		const remove = new Library( 'system.library' );
 		remove.execute( 'security/deletehost', args );
