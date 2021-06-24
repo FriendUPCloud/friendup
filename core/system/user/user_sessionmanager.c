@@ -1357,10 +1357,11 @@ User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus,
  *
  * @param usm pointer to UserSessionManager
  * @param bs pointer to BufString where results will be stored (as string)
+ * @param details set to true if you want to get more details
  * @return 0 when success otherwise error number
  */
 
-int USMGetUserSessionStatistic( UserSessionManager *usm, BufString *bs )
+int USMGetUserSessionStatistic( UserSessionManager *usm, BufString *bs, FBOOL details )
 {
 	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
 	{

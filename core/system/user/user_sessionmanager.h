@@ -223,6 +223,6 @@ User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus,
 //
 //
 
-int USMGetUserSessionStatistic( UserSessionManager *usm, BufString *bs );
+int USMGetUserSessionStatistic( UserSessionManager *usm, BufString *bs, FBOOL details );
 
 #endif //__SYSTEM_USER_USER_SESSIONMANAGER_H__
