@@ -317,7 +317,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 				DEBUG("[SecurityWeb/createhost] sl query %s\n", insertQuery );
 				l->DropDBConnection( l, sqllib );
 				
-				snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":\"%s\",\"status\":%lu}", ip, status );
+				snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":{\"ip\":\"%s\",\"status\":%lu}}", ip, status );
 
 				HttpAddTextContent( response, insertQuery );
 			}
@@ -411,7 +411,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 				DEBUG("[SecurityWeb/createhost] sl query %s\n", insertQuery );
 				l->DropDBConnection( l, sqllib );
 				
-				snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":\"%s\"}", ip );
+				snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":{\"ip\":\"%s\"}}", ip );
 
 				HttpAddTextContent( response, insertQuery );
 			}
@@ -616,7 +616,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 				DEBUG("[SecurityWeb/deletehost] sl query %s\n", insertQuery );
 				l->DropDBConnection( l, sqllib );
 				
-				snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":\"%s\"}", ip );
+				snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":{\"ip\":\"%s\"}}", ip );
 
 				HttpAddTextContent( response, insertQuery );
 			}
