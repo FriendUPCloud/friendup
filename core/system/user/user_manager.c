@@ -1423,3 +1423,42 @@ int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname )
 	}
 	return 0;
 }
+
+/**
+ * Get statistic about user accounts
+ *
+ * @param usm pointer to UserManager
+ * @param bs pointer to BufString where results will be stored (as string)
+ * @return 0 when success otherwise error number
+ */
+
+int UMGetUserStatistic( UserManager *um, BufString *bs )
+{
+	if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
+	{
+		/*
+		int activeSessionCounter = 0;
+		int nonActiveSessionCounter = 0;
+		char tmp[ 512 ];
+		
+		UserSession *actSession = usm->usm_Sessions;
+		while( actSession != NULL )
+		{
+			activeSessionCounter++;
+			actSession = (UserSession *)actSession->node.mln_Succ;
+		}
+		
+		actSession = usm->usm_SessionsToBeRemoved;
+		while( actSession != NULL )
+		{
+			nonActiveSessionCounter++;
+			actSession = (UserSession *)actSession->node.mln_Succ;
+		}
+		
+		int len = snprintf( tmp, sizeof(tmp), "\"usersession\":{\"active\":%d,\"toberemoved\":%d}", activeSessionCounter, nonActiveSessionCounter );
+		BufStringAddSize( bs, tmp, len );
+		*/
+		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+	}
+	return 0;
+}

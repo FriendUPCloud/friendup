@@ -59,7 +59,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	
 	struct TagItem tags[] = {
 		{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicateN( "text/html", 9 ) },
-		{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ) },
+		{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ) },
 		{TAG_DONE, TAG_DONE}
 	};
 	
