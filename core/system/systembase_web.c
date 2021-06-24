@@ -676,7 +676,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					{
 						char qery[ 1024 ];
 
-						if( serverTokenElement->hme_Data != NULL && strlen( serverTokenElement->hme_Data ) > 0 )
+						if( serverTokenElement->hme_Data != NULL && strlen( (char *)serverTokenElement->hme_Data ) > 0 )
 						{
 							char *p = host;
 							// we have to remove end of the line
@@ -690,7 +690,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								p++;
 							}
 							
-							DEBUG("[SysWebRequest] servertoken entry: %s host %s\n", serverTokenElement->hme_Data, host ); 
+							DEBUG("[SysWebRequest] servertoken entry: %s host %s\n", (char *)serverTokenElement->hme_Data, host ); 
 							
 							// Check user server token and access to it
 							sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT us.SessionID,u.Name FROM FUser u inner join FSecuredHost sh on u.ID=sh.UserID inner join FUserSession us on u.ID=us.UserID  WHERE us.SessionID !=\"\" AND u.ServerToken=\"%s\" AND sh.Status=1 AND sh.IP='%s' LIMIT 1",( char *)serverTokenElement->hme_Data, host );
@@ -703,12 +703,12 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								{
 									if( row[ 0 ] != NULL )
 									{
-										snprintf( sessionid, DEFAULT_SESSION_ID_SIZE,"%s", row[ 0 ] );
+										snprintf( sessionid, DEFAULT_SESSION_ID_SIZE,"%s", (char *)row[ 0 ] );
 										DEBUG("[SysWebRequest] getting sessionid: %s\n", sessionid );
 									}
 									if( row[ 1 ] != NULL )
 									{
-										snprintf( userName, 256, "%s", row[ 1 ] );
+										snprintf( userName, 256, "%s", (char *)row[ 1 ] );
 									}
 								}
 								sqllib->FreeResult( sqllib, res );
