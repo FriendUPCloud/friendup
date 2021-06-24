@@ -232,17 +232,17 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	* <HR><H2>system.library/security/createhost</H2>Create secured host entry
 	*
 	* @param sessionid - (required) session id of logged user
-	* @param host - if passed it is stored, otherwise host is taken from field "fordwarded"
+	* @param ip - if passed it is stored, otherwise ip is taken from field "fordwarded"
 	* @param userid - id of user to which host will be assigned
 	* @param status - status of entry. Used enums: SECURED_HOST_STATUS_NONE = 0,SECURED_HOST_STATUS_ALLOWED = 1, SECURED_HOST_STATUS_BLOCKED = 2. By default it is set to 0.
 	* 
-	* @return response {"result":"success","host":"<HOST NAME>","status":<STATUS>} when success otherwise error
+	* @return response {"result":"success","host":"<HOST IP>","status":<STATUS>} when success otherwise error
 	*/
 	/// @endcond
 	
 	else if( strcmp( urlpath[ 1 ], "createhost" ) == 0 )
 	{
-		char *host = NULL;
+		char *ip = NULL;
 		FUQUAD userID = 0;
 		FULONG status = 0;
 		FBOOL allowed = FALSE;
@@ -255,10 +255,10 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		HashmapElement *el = HashmapGet( request->http_ParsedPostContent, "host" );
+		HashmapElement *el = HashmapGet( request->http_ParsedPostContent, "ip" );
 		if( el != NULL )
 		{
-			host = UrlDecodeToMem( ( char *)el->hme_Data );
+			ip = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		el = HashmapGet( request->http_ParsedPostContent, "userid" );
@@ -291,9 +291,9 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 			}
 		}
 		
-		if( host == NULL )
+		if( ip == NULL )
 		{
-			host = HttpGetHeaderFromTable( request, HTTP_HEADER_X_FORWARDED_FOR );
+			ip = HttpGetHeaderFromTable( request, HTTP_HEADER_X_FORWARDED_FOR );
 		}
 		
 		if( allowed == TRUE )
@@ -305,19 +305,19 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 				
 				// delete all hosts same hosts for user
 				
-				int size = snprintf( insertQuery, sizeof( insertQuery ), "DELETE FROM `FSecuredHost` where HOST='%s' AND UserID=%lu", host, userID );
+				int size = snprintf( insertQuery, sizeof( insertQuery ), "DELETE FROM `FSecuredHost` where IP='%s' AND UserID=%lu", ip, userID );
 				sqllib->QueryWithoutResults( sqllib, insertQuery );
 				
 				time_t ti = time( NULL );
 				// create host in DB
 				
-				size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FSecuredHost` (Host,Status,UserID,CreateTime) VALUES('%s',%lu,%lu,%lu)", host, status, userID, ti );
+				size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FSecuredHost` (IP,Status,UserID,CreateTime) VALUES('%s',%lu,%lu,%lu)", ip, status, userID, ti );
 				sqllib->QueryWithoutResults( sqllib, insertQuery );
 			
 				DEBUG("[SecurityWeb/createhost] sl query %s\n", insertQuery );
 				l->DropDBConnection( l, sqllib );
 				
-				snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":\"%s\",\"status\":%lu}", host, status );
+				snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":\"%s\",\"status\":%lu}", ip, status );
 
 				HttpAddTextContent( response, insertQuery );
 			}
@@ -328,9 +328,9 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
 		}
 
-		if( host != NULL )
+		if( ip != NULL )
 		{
-			FFree( host );
+			FFree( ip );
 		}
 	}
 	
@@ -349,7 +349,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "updatehost" ) == 0 )
 	{
-		char *host = NULL;
+		char *ip = NULL;
 		FUQUAD userID = 0;
 		FULONG status = 0;
 		FBOOL allowed = FALSE;
@@ -362,10 +362,10 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		HashmapElement *el = HashmapGet( request->http_ParsedPostContent, "host" );
+		HashmapElement *el = HashmapGet( request->http_ParsedPostContent, "ip" );
 		if( el != NULL )
 		{
-			host = UrlDecodeToMem( ( char *)el->hme_Data );
+			ip = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		el = HashmapGet( request->http_ParsedPostContent, "userid" );
@@ -405,13 +405,13 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 			{
 				char insertQuery[ 1024 ];
 				
-				snprintf( insertQuery, sizeof( insertQuery ), "UPDATE `FSecuredHost` Set Status='%lu' WHERE HOST='%s'", status, host );
+				snprintf( insertQuery, sizeof( insertQuery ), "UPDATE `FSecuredHost` Set Status='%lu' WHERE IP='%s'", status, ip );
 				sqllib->QueryWithoutResults( sqllib, insertQuery );
 			
 				DEBUG("[SecurityWeb/createhost] sl query %s\n", insertQuery );
 				l->DropDBConnection( l, sqllib );
 				
-				snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":\"%s\"}", host );
+				snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":\"%s\"}", ip );
 
 				HttpAddTextContent( response, insertQuery );
 			}
@@ -422,9 +422,9 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
 		}
 
-		if( host != NULL )
+		if( ip != NULL )
 		{
-			FFree( host );
+			FFree( ip );
 		}
 	}
 	/// @cond WEB_CALL_DOCUMENTATION
@@ -491,11 +491,11 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 				
 				if( userIDFromParams > 0 )
 				{
-					sqllib->SNPrintF( sqllib, selectQuery, sizeof(selectQuery), "SELECT Host,Status,UserID,CreateTime FROM `FSecuredHost` WHERE UserID='%ld'", userIDFromParams );
+					sqllib->SNPrintF( sqllib, selectQuery, sizeof(selectQuery), "SELECT IP,Status,UserID,CreateTime FROM `FSecuredHost` WHERE UserID='%ld'", userIDFromParams );
 				}
 				else
 				{
-					strcpy( selectQuery, "SELECT Host,Status,UserID,CreateTime FROM `FSecuredHost`" );
+					strcpy( selectQuery, "SELECT IP,Status,UserID,CreateTime FROM `FSecuredHost`" );
 				}
 				
 				void *result = sqllib->Query( sqllib, selectQuery );
@@ -509,11 +509,11 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 						int len = 0;
 						if( pos == 0 )
 						{
-							len = snprintf( entry, sizeof( entry ), "{\"host\":\"%s\",\"status\":%s,\"userid\":%s,\"createtime\":%s}", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ] );
+							len = snprintf( entry, sizeof( entry ), "{\"ip\":\"%s\",\"status\":%s,\"userid\":%s,\"createtime\":%s}", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ] );
 						}
 						else
 						{
-							len = snprintf( entry, sizeof( entry ), ",{\"host\":\"%s\",\"status\":%s,\"userid\":%s,\"createtime\":%s}", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ] );
+							len = snprintf( entry, sizeof( entry ), ",{\"ip\":\"%s\",\"status\":%s,\"userid\":%s,\"createtime\":%s}", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ] );
 						}
 						BufStringAddSize( bs, entry, len );
 						
@@ -545,15 +545,15 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	* <HR><H2>system.library/security/deletehost</H2>Remove Security Host entry
 	*
 	* @param sessionid - (required) session id of logged user
-	* @param host - if passed it is stored, otherwise host is taken from field "fordwarded". If host entry is not provided all hosts will be deleted.
+	* @param ip - if passed it is stored, otherwise host is taken from field "fordwarded". If host entry is not provided all hosts will be deleted.
 	* @param userid - id of user to which host will be assigned
 	* 
-	* @return response {"result":"success","host":"<HOST>"} when success otherwise error
+	* @return response {"result":"success","ip":"<HOST>"} when success otherwise error
 	*/
 	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "deletehost" ) == 0 )
 	{
-		char *host = NULL;
+		char *ip = NULL;
 		FUQUAD userID = 0;
 		FBOOL allowed = FALSE;
 		
@@ -565,10 +565,10 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		HashmapElement *el =  HashmapGet( request->http_ParsedPostContent, "host" );
+		HashmapElement *el =  HashmapGet( request->http_ParsedPostContent, "ip" );
 		if( el != NULL )
 		{
-			host = UrlDecodeToMem( ( char *)el->hme_Data );
+			ip = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		el =  HashmapGet( request->http_ParsedPostContent, "userid" );
@@ -603,20 +603,20 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 				
 				// delete all hosts same hosts for user
 				
-				if( host == NULL )
+				if( ip == NULL )
 				{
 					int size = snprintf( insertQuery, sizeof( insertQuery ), "DELETE FROM `FSecuredHost` where UserID=%lu", userID );
 				}
 				else	// delete only specified host
 				{
-					int size = snprintf( insertQuery, sizeof( insertQuery ), "DELETE FROM `FSecuredHost` where HOST='%s' AND UserID=%lu", host, userID );
+					int size = snprintf( insertQuery, sizeof( insertQuery ), "DELETE FROM `FSecuredHost` where IP='%s' AND UserID=%lu", ip, userID );
 				}
 				sqllib->QueryWithoutResults( sqllib, insertQuery );
 
 				DEBUG("[SecurityWeb/deletehost] sl query %s\n", insertQuery );
 				l->DropDBConnection( l, sqllib );
 				
-				snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":\"%s\"}", host );
+				snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":\"%s\"}", ip );
 
 				HttpAddTextContent( response, insertQuery );
 			}
@@ -627,9 +627,9 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
 		}
 
-		if( host != NULL )
+		if( ip != NULL )
 		{
-			FFree( host );
+			FFree( ip );
 		}
 	}
 	
