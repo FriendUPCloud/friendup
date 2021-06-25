@@ -1784,7 +1784,7 @@ ns.TabTokens.prototype.populate = async function()
 {
 	const self = this;
 	const fresh = await self.getHosts();
-	const freshIds = fresh.map( r => self.getId( r.host ));
+	const freshIds = fresh.map( r => self.getId( r.ip ));
 	const remove = self.itemIds.filter( currId => {
 		return !freshIds.some( fId => currId === fId );
 	});
@@ -1814,7 +1814,7 @@ ns.TabTokens.prototype.add = function( conf )
 {
 	const self = this;
 	console.log( 'add', conf );
-	const id = self.getId( conf.host );
+	const id = self.getId( conf.ip );
 	conf.id = id;
 	const rowEl = self.buildDisplayRow( conf );
 	conf.el = rowEl;
@@ -1839,8 +1839,8 @@ ns.TabTokens.prototype.buildDisplayRow = function( conf ) {
 	const html = '<div id="'
 		+ conf.id
 		+ '" class="TokenRow Padding flexnes">'
-			+ '<div class="ServerTokenHostName">'
-				+ conf.host
+			+ '<div class="ServerTokenIP">'
+				+ conf.ip
 			+ '</div>'
 			+ '<div class="ServerTokenStatus">'
 				+ i18n( 'i18n_status' )
@@ -1870,8 +1870,8 @@ ns.TabTokens.prototype.buildEditRow = function( conf ) {
 	const html = '<div id="'
 		+ conf.id
 		+ '" class="TokenRow Padding flexnes">'
-			+ '<div class="ServerTokenHostName">'
-				+ conf.host
+			+ '<div class="ServerTokenIP">'
+				+ conf.ip
 			+ '</div>'
 			+ '<select class="ServerTokenStatus InputHeight">'
 			+ '</select>'
@@ -1991,7 +1991,7 @@ ns.TabTokens.prototype.createHost = async function( host, status, userId )
 		{
 			console.log( 'createBack', [ res, yep ]);
 			if ( 'success' == res.result )
-				resolve( res );
+				resolve( res.host );
 			else
 				resolve( null );
 		}
@@ -2019,6 +2019,9 @@ ns.TabTokens.prototype.updateHost = async function( hostId, status )
 	const self = this;
 	return new Promise(( resolve, reject ) => {
 		const conf = self.items[ hostId ];
+		if ( null == status )
+			status = 0;
+		
 		console.log( 'updateHost', [ hostId, status, conf ]);
 		if ( null == conf ) {
 			console.log( 'updateHost', {
@@ -2028,11 +2031,10 @@ ns.TabTokens.prototype.updateHost = async function( hostId, status )
 			throw new Error( 'TabTokens.updateHost, invalid hostId ^^^' );
 		}
 		
-		const host = conf.host;
 		const args = {
-			ip     : host,
+			ip     : conf.ip,
 			userid : conf.userId || window.Application.userId,
-			status : status || null,
+			status : status,
 		};
 		console.log( 'updateHost, args', args );
 		const update = new Library( 'system.library' );
@@ -2043,7 +2045,7 @@ ns.TabTokens.prototype.updateHost = async function( hostId, status )
 		{
 			console.log( 'updateBack', [ res, yep ]);
 			if ( 'success' == res.result )
-				resolve( res );
+				resolve( res.host );
 			else
 				resolve( null );
 		}
@@ -2064,10 +2066,10 @@ ns.TabTokens.prototype.removeHost = async function( hostId )
 			return;
 		}
 		
-		const host = conf.host;
 		const args = {
-			ip : host,
+			ip : conf.ip,
 		};
+		console.log( 'removeHost args', args );
 		const remove = new Library( 'system.library' );
 		remove.execute( 'security/deletehost', args );
 		remove.onExecuted = removeBack;
