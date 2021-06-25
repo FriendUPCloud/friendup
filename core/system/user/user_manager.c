@@ -1484,11 +1484,11 @@ int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details )
 				
 				if( nr == 0 )
 				{
-					len = snprintf( tmp, sizeof(tmp), "\"user\":{\"name\":%s,\"size\":%d,\"sessions\":%d,\"sessionsbytes\":%d,\"devinmem\":%d,\"devinmembytes\":%d,\"groups\":%d\"groupsbytes\":%d}", usr->u_Name, (int)sizeof(User), sesCounter, sesCounterBytes, devCounter, devCounterBytes, uglCounter, uglCounterBytes );
+					len = snprintf( tmp, sizeof(tmp), "{\"name\":%s,\"size\":%d,\"sessions\":%d,\"sessionsbytes\":%d,\"devinmem\":%d,\"devinmembytes\":%d,\"groups\":%d\"groupsbytes\":%d}", usr->u_Name, (int)sizeof(User), sesCounter, sesCounterBytes, devCounter, devCounterBytes, uglCounter, uglCounterBytes );
 				}
 				else
 				{
-					len = snprintf( tmp, sizeof(tmp), ",\"user\":{\"name\":%s,\"size\":%d,\"sessions\":%d,\"sessionsbytes\":%d,\"devinmem\":%d,\"devinmembytes\":%d,\"groups\":%d\"groupsbytes\":%d}", usr->u_Name, (int)sizeof(User), sesCounter, sesCounterBytes, devCounter, devCounterBytes, uglCounter, uglCounterBytes );
+					len = snprintf( tmp, sizeof(tmp), ",{\"name\":%s,\"size\":%d,\"sessions\":%d,\"sessionsbytes\":%d,\"devinmem\":%d,\"devinmembytes\":%d,\"groups\":%d\"groupsbytes\":%d}", usr->u_Name, (int)sizeof(User), sesCounter, sesCounterBytes, devCounter, devCounterBytes, uglCounter, uglCounterBytes );
 				}
 				BufStringAddSize( bs, tmp, len );
 			
@@ -1518,11 +1518,11 @@ int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details )
 				
 				if( nr == 0 )
 				{
-					len = snprintf( tmp, sizeof(tmp), "\"user\":{\"name\":%s,\"sessions\":%d}", usr->u_Name, sesCounter );
+					len = snprintf( tmp, sizeof(tmp), "{\"name\":%s,\"sessions\":%d}", usr->u_Name, sesCounter );
 				}
 				else
 				{
-					len = snprintf( tmp, sizeof(tmp), ",\"user\":{\"name\":%s,\"sessions\":%d}", usr->u_Name, sesCounter );
+					len = snprintf( tmp, sizeof(tmp), ",{\"name\":%s,\"sessions\":%d}", usr->u_Name, sesCounter );
 				}
 				BufStringAddSize( bs, tmp, len );
 			
