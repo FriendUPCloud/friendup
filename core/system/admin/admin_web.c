@@ -81,6 +81,8 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		goto error;
 	}
 	
+	DEBUG("[AdminWebRequest] call: %s\n", urlpath[ 1 ] );
+	
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*
@@ -762,6 +764,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "getinfousersessions" ) == 0 )
 	{
+		DEBUG("getinfousersessions\n");
 		//ok<!--separate-->{"result":1,"uptime":unixtime_number}
 		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
@@ -776,6 +779,8 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 					details = TRUE;
 				}
 			}
+			
+			DEBUG("datails: %d\n", details);
 			
 			BufString *bs = BufStringNew();
 			if( bs != NULL )
