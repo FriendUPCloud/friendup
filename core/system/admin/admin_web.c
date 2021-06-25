@@ -731,7 +731,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	* @return function return information about uptime ok<!--separate-->{"result":1,"uptime":unixtime_number}
 	*/
 	/// @endcond
-	if( strcmp( urlpath[ 1 ], "uptime" ) == 0 )
+	else if( strcmp( urlpath[ 1 ], "uptime" ) == 0 )
 	{
 		//ok<!--separate-->{"result":1,"uptime":unixtime_number}
 		if( loggedSession->us_User->u_IsAdmin == TRUE )
@@ -750,10 +750,104 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		}
 	}
 	
-		//
-		// function not found
-		//
-		
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/admin/getinfousersessions</H2>Function return information about user sessions
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param details - if "true" then more details will be delivered
+	* @return function return information about user sessions holded by UserSessionManager
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 1 ], "getinfousersessions" ) == 0 )
+	{
+		//ok<!--separate-->{"result":1,"uptime":unixtime_number}
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
+		{
+			HashmapElement *el = NULL;
+			FBOOL details = FALSE;
+			
+			el = GetHEReq( (*request), "details" );
+			if( el != NULL )
+			{
+				if( el->hme_Data != NULL && strcmp( (char *)el->hme_Data, "true" ) == 0 )
+				{
+					details = TRUE;
+				}
+			}
+			
+			BufString *bs = BufStringNew();
+			if( bs != NULL )
+			{
+				USMGetUserSessionStatistic( l->sl_USM, bs, details );
+				HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
+				
+				bs->bs_Buffer = NULL;
+				*result = 200;
+				
+				BufStringDelete( bs );
+			}
+		}
+		else
+		{
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, dictmsgbuf );
+		}
+	}
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/admin/getinfousers</H2>Function return information about Users
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param details - if "true" then more details will be delivered
+	* @return function return information about user sessions holded by UserSessionManager
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 1 ], "getinfousers" ) == 0 )
+	{
+		//ok<!--separate-->{"result":1,"uptime":unixtime_number}
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
+		{
+			HashmapElement *el = NULL;
+			FBOOL details = FALSE;
+			
+			el = GetHEReq( (*request), "details" );
+			if( el != NULL )
+			{
+				if( el->hme_Data != NULL && strcmp( (char *)el->hme_Data, "true" ) == 0 )
+				{
+					details = TRUE;
+				}
+			}
+			
+			BufString *bs = BufStringNew();
+			if( bs != NULL )
+			{
+				UMGetUserStatistic( l->sl_UM, bs, details );
+				HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
+				
+				bs->bs_Buffer = NULL;
+				*result = 200;
+				
+				BufStringDelete( bs );
+			}
+		}
+		else
+		{
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, dictmsgbuf );
+		}
+	}
+	
+	//
+	// function not found
+	//
+	
 	error:
 	
 	return response;

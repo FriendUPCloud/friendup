@@ -1429,36 +1429,115 @@ int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname )
  *
  * @param usm pointer to UserManager
  * @param bs pointer to BufString where results will be stored (as string)
+ * @param details return more details
  * @return 0 when success otherwise error number
  */
 
-int UMGetUserStatistic( UserManager *um, BufString *bs )
+int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details )
 {
+	BufStringAddSize( bs, "\"users\":[", 9 );
+	
 	if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
 	{
-		/*
-		int activeSessionCounter = 0;
-		int nonActiveSessionCounter = 0;
+		int nr = 0;
+		int userCounter = 0;
 		char tmp[ 512 ];
+		int len = 0;
 		
-		UserSession *actSession = usm->usm_Sessions;
-		while( actSession != NULL )
+		if( details == TRUE )
 		{
-			activeSessionCounter++;
-			actSession = (UserSession *)actSession->node.mln_Succ;
+			User *usr = um->um_Users;
+			while( usr != NULL )
+			{
+				int sesCounter = 0;
+				int devCounter = 0;
+				int uglCounter = 0;
+				int sesCounterBytes = 0;
+				int devCounterBytes = 0;
+				int uglCounterBytes = 0;
+				
+				userCounter++;
+			
+				UserSessListEntry *sesentr = usr->u_SessionsList;
+				while( sesentr != NULL )
+				{
+					sesCounter++;
+					sesCounterBytes += sizeof( UserSessListEntry );
+					sesentr = (UserSessListEntry *)sesentr->node.mln_Succ;
+				}
+				
+				File *rootDev = usr->u_MountedDevs;
+				while( rootDev != NULL )
+				{
+					devCounter++;
+					devCounterBytes += sizeof( File );
+					rootDev = (File *)rootDev->node.mln_Succ;
+				}
+				
+				UserGroupLink *ugl = usr->u_UserGroupLinks;
+				while( ugl != NULL )
+				{
+					uglCounter++;
+					uglCounterBytes += sizeof( UserGroupLink );
+					ugl = (UserGroupLink *)ugl->node.mln_Succ;
+				}
+				
+				if( nr == 0 )
+				{
+					len = snprintf( tmp, sizeof(tmp), "\"user\":{\"name\":%s,\"size\":%d,\"sessions\":%d,\"sessionsbytes\":%d,\"devinmem\":%d,\"devinmembytes\":%d,\"groups\":%d\"groupsbytes\":%d}", usr->u_Name, (int)sizeof(User), sesCounter, sesCounterBytes, devCounter, devCounterBytes, uglCounter, uglCounterBytes );
+				}
+				else
+				{
+					len = snprintf( tmp, sizeof(tmp), ",\"user\":{\"name\":%s,\"size\":%d,\"sessions\":%d,\"sessionsbytes\":%d,\"devinmem\":%d,\"devinmembytes\":%d,\"groups\":%d\"groupsbytes\":%d}", usr->u_Name, (int)sizeof(User), sesCounter, sesCounterBytes, devCounter, devCounterBytes, uglCounter, uglCounterBytes );
+				}
+				BufStringAddSize( bs, tmp, len );
+			
+				nr++;
+				usr = (User *)usr->node.mln_Succ;
+			}
+			
+			BufStringAddSize( bs, "],", 2 );
+			
+			len = snprintf( tmp, sizeof(tmp), "\"usersnumber\":%d", userCounter );
+			BufStringAddSize( bs, tmp, len );
 		}
-		
-		actSession = usm->usm_SessionsToBeRemoved;
-		while( actSession != NULL )
+		else
 		{
-			nonActiveSessionCounter++;
-			actSession = (UserSession *)actSession->node.mln_Succ;
+			User *usr = um->um_Users;
+			while( usr != NULL )
+			{
+				int sesCounter = 0;
+				userCounter++;
+			
+				UserSessListEntry *sesentr = usr->u_SessionsList;
+				while( sesentr != NULL )
+				{
+					sesCounter++;
+					sesentr = (UserSessListEntry *)sesentr->node.mln_Succ;
+				}
+				
+				if( nr == 0 )
+				{
+					len = snprintf( tmp, sizeof(tmp), "\"user\":{\"name\":%s,\"sessions\":%d}", usr->u_Name, sesCounter );
+				}
+				else
+				{
+					len = snprintf( tmp, sizeof(tmp), ",\"user\":{\"name\":%s,\"sessions\":%d}", usr->u_Name, sesCounter );
+				}
+				BufStringAddSize( bs, tmp, len );
+			
+				nr++;
+				usr = (User *)usr->node.mln_Succ;
+			}
+			
+			BufStringAddSize( bs, "],", 2 );
+			
+			len = snprintf( tmp, sizeof(tmp), "\"usersnumber\":%d", userCounter );
+			BufStringAddSize( bs, tmp, len );
+			
 		}
-		
-		int len = snprintf( tmp, sizeof(tmp), "\"usersession\":{\"active\":%d,\"toberemoved\":%d}", activeSessionCounter, nonActiveSessionCounter );
-		BufStringAddSize( bs, tmp, len );
-		*/
 		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
 	}
+	
 	return 0;
 }

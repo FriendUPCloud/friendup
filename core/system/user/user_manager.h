@@ -236,6 +236,6 @@ int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname );
 //
 //
 
-int UMGetUserStatistic( UserManager *um, BufString *bs );
+int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details );
 
 #endif //__SYSTEM_USER_USER_MANAGER_H__

@@ -1352,6 +1352,33 @@ User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus,
 	return tuser;
 }
 
+#define USERSESSION_SIZE (sizeof(WebsocketReqManager) + sizeof(struct UserSession) + sizeof(struct FQueue) )
+
+int countSessionSize( UserSession *us )
+{
+	if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+	{
+		us->us_InUseCounter++;
+		FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+	}
+		
+	int size = USERSESSION_SIZE + 255;	// approx 255 for sessionid
+	FQEntry *fqe = us->us_MsgQueue.fq_First;
+	while( fqe != NULL )
+	{
+		size += fqe->fq_Size + sizeof( FQEntry );
+		fqe = (FQEntry *)fqe->node.mln_Succ;
+	}
+	
+	if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+	{
+		us->us_InUseCounter--;
+		FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+	}
+	
+	return size;
+}
+
 /**
  * Get statistic about user sessions
  *
@@ -1363,34 +1390,59 @@ User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus,
 
 int USMGetUserSessionStatistic( UserSessionManager *usm, BufString *bs, FBOOL details )
 {
+	int activeSessionCounter = 0;
+	int64_t activeSessionBytes = 0;
+	int nonActiveSessionCounter = 0;
+	int64_t nonActiveSessionBytes = 0;
+	char tmp[ 512 ];
+		
 	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
 	{
-		int activeSessionCounter = 0;
-		int nonActiveSessionCounter = 0;
-		char tmp[ 512 ];
-		
-		UserSession *actSession = usm->usm_Sessions;
-		while( actSession != NULL )
+		if( details == TRUE )
 		{
-			activeSessionCounter++;
-			actSession = (UserSession *)actSession->node.mln_Succ;
-		}
+			UserSession *actSession = usm->usm_Sessions;
+			while( actSession != NULL )
+			{
+				activeSessionCounter++;
+				activeSessionBytes += countSessionSize( actSession );
+				
+				actSession = (UserSession *)actSession->node.mln_Succ;
+			}
 		
-		actSession = usm->usm_SessionsToBeRemoved;
-		while( actSession != NULL )
+			actSession = usm->usm_SessionsToBeRemoved;
+			while( actSession != NULL )
+			{
+				nonActiveSessionCounter++;
+				nonActiveSessionBytes += countSessionSize( actSession );
+				actSession = (UserSession *)actSession->node.mln_Succ;
+			}
+			FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+			
+			int len = snprintf( tmp, sizeof(tmp), "\"usersessions\":{\"active\":%d,\"activebtes\":%ld,\"toberemoved\":%d,\"toberemovedbytes\":%ld},\"averagesize\":%d", activeSessionCounter, activeSessionBytes, nonActiveSessionCounter, nonActiveSessionBytes, (int)USERSESSION_SIZE );
+			BufStringAddSize( bs, tmp, len );
+		}
+		else
 		{
-			nonActiveSessionCounter++;
-			actSession = (UserSession *)actSession->node.mln_Succ;
+			UserSession *actSession = usm->usm_Sessions;
+			while( actSession != NULL )
+			{
+				activeSessionCounter++;
+				actSession = (UserSession *)actSession->node.mln_Succ;
+			}
+		
+			actSession = usm->usm_SessionsToBeRemoved;
+			while( actSession != NULL )
+			{
+				nonActiveSessionCounter++;
+				actSession = (UserSession *)actSession->node.mln_Succ;
+			}
+			FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+		
+			// average size of 
+			
+			int len = snprintf( tmp, sizeof(tmp), "\"usersessions\":{\"active\":%d,\"toberemoved\":%d},\"averagesize\":%d", activeSessionCounter, nonActiveSessionCounter, (int)USERSESSION_SIZE );
+			BufStringAddSize( bs, tmp, len );
 		}
-		
-		// average size of 
-		
-#define SIZE (sizeof(WebsocketReqManager) + sizeof(struct UserSession) + sizeof(struct FQueue) )
-		
-		int len = snprintf( tmp, sizeof(tmp), "\"usersession\":{\"active\":%d,\"toberemoved\":%d},\"averagesize\":%d", activeSessionCounter, nonActiveSessionCounter, (int)SIZE );
-		BufStringAddSize( bs, tmp, len );
-		
-		FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	}
 	return 0;
 }
