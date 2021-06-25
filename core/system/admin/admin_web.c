@@ -785,7 +785,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 			BufString *bs = BufStringNew();
 			if( bs != NULL )
 			{
-				BufStringAddSize( bs, "{", 1 );
+				BufStringAddSize( bs, "ok<!--separate-->{", 18 );
 				USMGetUserSessionStatistic( l->sl_USM, bs, details );
 				BufStringAddSize( bs, "}", 1 );
 				
@@ -835,7 +835,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 			BufString *bs = BufStringNew();
 			if( bs != NULL )
 			{
-				BufStringAddSize( bs, "{", 1 );
+				BufStringAddSize( bs, "ok<!--separate-->{", 18 );
 				UMGetUserStatistic( l->sl_UM, bs, details );
 				BufStringAddSize( bs, "}", 1 );
 				HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
