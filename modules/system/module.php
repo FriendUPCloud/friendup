@@ -1078,6 +1078,10 @@ if( isset( $args->command ) )
 		case 'sandbox':
 			require( 'modules/system/include/sandbox.php' );
 			break;
+		// Support per-app modules
+		case 'appmodule':
+			require( 'modules/system/include/appmodule.php' );
+			break;
 		// Try to lauch friend application
 		case 'friendapplication':
 			require( 'modules/system/include/friendapplication.php' );
