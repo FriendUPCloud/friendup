@@ -17,6 +17,8 @@ define( 'SCRIPT_LOGIN_PATH', dirname(__FILE__) );
 error_reporting( E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_WARNING );
 ini_set( 'display_errors', '1' );
 
+$args = false;
+
 // Get command line arguments
 if( $args = getArgs() )
 {
@@ -145,6 +147,6 @@ if( $args = getArgs() )
 }
 
 //render the form
-renderCustomLoginForm();
+renderCustomLoginForm( $args );
 
 ?>

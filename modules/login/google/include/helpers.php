@@ -92,19 +92,19 @@ function getServerKeys()
 }
 
 // Renders the login form template
-function renderCustomLoginForm()
+function renderCustomLoginForm( $args = false )
 {
 	
 	if( file_exists( SCRIPT_LOGIN_PATH . '/templates/login.html' ) )
 	{
-		die( renderReplacements( file_get_contents( SCRIPT_LOGIN_PATH . '/templates/login.html' ) ) );
+		die( renderReplacements( file_get_contents( SCRIPT_LOGIN_PATH . '/templates/login.html' ), $args ) );
 	}
 	
 	die( '<h1>Your FriendUP installation is incomplete!</h1>' );
 }
 
 // Sets replacements on template
-function renderReplacements( $template )
+function renderReplacements( $template, $args = false )
 {
 	$welcome = 'Login to your workspace';
 	
@@ -141,11 +141,11 @@ function renderReplacements( $template )
 	
 	if( $server && $server->friend_register_uri )
 	{
-		$friend_register_uri = $server->friend_register_uri;
+		$friend_register_uri = $server->friend_register_uri . ( $args && isset( $args->invite ) ? '?invite=' . $args->invite : '' );
 	}
 	else
 	{
-		$friend_register_uri = '/register';
+		$friend_register_uri = '/register' . ( $args && isset( $args->invite ) ? '?invite=' . $args->invite : '' );
 	}
 	
 	if( $server && $server->redirect_uri )

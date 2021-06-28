@@ -219,6 +219,7 @@
 			Application = {
 				tempKeys: genRandomKeys(),
 				showLog: false,
+				inviteHash: false,
 				failedAttempt: false,
 				passwordRecoveryMode: false,
 				init: function( data )
@@ -273,6 +274,8 @@
 					parent.Friend.User.Login( us, pw, false, function( result, answer )
 					{
 						Application.busy = false;
+						
+						// TODO: if we have invite hash included and login is success, add relation after sessionid is received ...
 						
 						let tmp = null;
 						if( answer )
@@ -400,6 +403,8 @@
 								break;
 							
 							// 3: Verify Friend Login ...
+							
+							// TODO: Add invite hash to the verification stage to add relation on success ...
 							
 							case 'verification':
 								
@@ -1170,7 +1175,7 @@
 				if( newpw != confm )
 				{
 					document.getElementById( 'ConfirmPassword' ).focus();
-					return showLoginError( 'Password doest\'t match, try again ...', 'invalidVerification' );
+					return showLoginError( 'Password doesn\'t match, try again ...', 'invalidVerification' );
 				}
 				
 				if( vcode.length < 60 )
@@ -1306,6 +1311,12 @@
 				if( document.location.href && document.location.href.indexOf( 'verify=' ) >= 0 )
 				{
 					verifyForm();
+				}
+				if( document.location.href && document.location.href.indexOf( 'invite=' ) >= 0 )
+				{
+					Application.inviteHash = ( window.location.href.match( '[?&]invite=([^&]+)' ) && window.location.href.match( '[?&]invite=([^&]+)' )[1] ? window.location.href.match( '[?&]invite=([^&]+)' )[1] : '' );
+					
+					console.log( Application.inviteHash );
 				}
 				
 				if( parent.GetUrlVar( 'username' ) )

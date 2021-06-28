@@ -714,7 +714,7 @@ Workspace = {
 			
 			if( window.location.hash && window.location.hash.split( '#' )[1] )
 			{
-				let allowed = [ 'module', 'verify' ];
+				let allowed = [ 'module', 'verify', 'invite' ];
 				
 				let url = window.location.hash.split( '#' )[1].split( '&' );
 				
