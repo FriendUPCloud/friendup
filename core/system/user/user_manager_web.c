@@ -2418,7 +2418,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	* @param sessionid - (required) session id of logged user
 	* @param sourceid - (required) uuid of person to which new relation will be added
 	* @param contactids - (required) uuids of person which will be attached as user contacts
-	* @param mode - (required) 
+	* @param mode - (required) currently FriendCore support only "presence" mode which will send information to presence server
 	* @return { result: sucess } when success, otherwise error code
 	*/
 	/// @endcond
