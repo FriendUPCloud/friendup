@@ -277,6 +277,12 @@
 						
 						// TODO: if we have invite hash included and login is success, add relation after sessionid is received ...
 						
+						if( Application.inviteHash )
+						{
+							console.log( 'TODO: create functionality to connect users on inviteHash before showing workspace ...', Application );
+							return false;
+						}
+						
 						let tmp = null;
 						if( answer )
 						{
@@ -413,13 +419,15 @@
 								if( Application.showLog ) console.log( 
 								{
 									'username' : enc.decrypt( parent.Workspace.storedCredentials.username ), 
-									'nounce'   : params[ 'id_token_content' ][ 'payload' ][ 'nonce' ] 
+									'nounce'   : params[ 'id_token_content' ][ 'payload' ][ 'nonce' ], 
+									'invite'   : self.inviteHash 
 								} );
 								
 								m.addVar( 'encrypted', enc.encryptRSA( JSON.stringify( 
 								{
 									'username' : enc.decrypt( parent.Workspace.storedCredentials.username ), 
-									'nounce'   : params[ 'id_token_content' ][ 'payload' ][ 'nonce' ] 
+									'nounce'   : params[ 'id_token_content' ][ 'payload' ][ 'nonce' ], 
+									'invite'   : self.inviteHash 
 								} ), 
 								enc.keys.server.publickey ) );
 								

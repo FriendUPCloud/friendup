@@ -119,6 +119,11 @@ if( $args = getArgs() )
 				
 				case 'verification':
 					
+					if( isset( $json->invite ) && $json->invite )
+					{
+						die( 'TODO: create invite relation handling for invite Hash => ' . print_r( $json,1 ) );
+					}
+					
 					if( $ret = verifyFriendAuth( $json->username, $json->publickey, $json->nounce, $json->deviceid ) )
 					{
 						if( $ret[0] == 'ok' )
