@@ -699,10 +699,10 @@ function _fcquery( $command = '', $args = false, $method = 'POST', $headers = fa
 	
 	if( function_exists( 'curl_init' ) )
 	{
-		
 		$curl = curl_init();
-	
-		$server = ( $Config->SSLEnable ? 'https://' : 'http://' ) . $Config->FCHost . ( $Config->FCHost == 'localhost' && $Config->FCPort ? ':' . $Config->FCPort : '' );
+
+		$usePort = ( $Config->FCHost == 'localhost' || $Config->FCOnLocalhost ) && $Config->FCPort;
+		$server = ( $Config->SSLEnable ? 'https://' : 'http://' ) . $Config->FCHost . ( $usePort ? ( ':' . $Config->FCPort ) : '' );
 	
 		$url = ( $server . $command );
 	
