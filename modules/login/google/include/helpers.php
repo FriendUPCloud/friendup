@@ -654,7 +654,7 @@ function updateFriendAccount( $username, $password, $publickey, $nounce, $i_hash
 	
 }
 
-function verifyFriendAuth( $username, $publickey, $nonce = false, $deviceid = '' )
+function verifyFriendAuth( $username, $publickey, $nonce = false, $deviceid = '', $invitehash = false )
 {
 	
 	$error = false; $data = false;
@@ -702,6 +702,11 @@ function verifyFriendAuth( $username, $publickey, $nonce = false, $deviceid = ''
 						if( $ses->sessionid )
 						{
 							
+							if( $invitehash )
+							{
+								createFriendRelation( $ses, $invitehash );
+							}
+								
 							if( !remoteAuth( '/system.library/user/update?sessionid=' . $ses->sessionid, 
 							[
 								'setup' => '0' 
@@ -758,6 +763,45 @@ function verifyFriendAuth( $username, $publickey, $nonce = false, $deviceid = ''
 	else
 	{
 		return [ 'fail', $error ];
+	}
+	
+}
+
+function createFriendRelation( $data, $invitehash )
+{
+	
+	if( $data && $invitehash )
+	{
+		
+		if( $res = remoteAuth( 
+			'/system.library/module/?sessionid=' . $data->sessionid . '&module=system&command=tinyurldata&args=' . ( '{"hash":"' . $invitehash . '"}' ), 
+			false, 'POST', [ 'Content-Type: application/x-www-form-urlencoded' ] 
+		) )
+		{
+			if( strstr( $res, '<!--separate-->' ) )
+			{
+				if( $ret = explode( '<!--separate-->', $res ) )
+				{
+					if( isset( $ret[1] ) )
+					{
+						if( $data = json_decode( $ret[1] ) )
+						{
+							die( print_r( $data,1 ) );
+							
+							
+							
+						}
+					}
+				}
+			}
+			
+			die( $res );
+		}
+		
+		die( 'NO DATA ??? FRIENDCORE !!! ...' );
+		
+		return false;
+		
 	}
 	
 }
