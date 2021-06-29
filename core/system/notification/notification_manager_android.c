@@ -73,9 +73,10 @@ void NotificationAndroidSendingThread( FThread *data )
 						HttpClient *c = HttpClientNew( TRUE, FALSE, tmp, headers, NULL );// msg );
 						c->hc_Content = (char *)e->fq_Data;
 						Log( FLOG_INFO, "Send message to android device: %s<\n", c->hc_Content );
-						BufString *bs = HttpClientCall( c, FIREBASE_HOST, 443, TRUE );
-						Log( FLOG_INFO, "Sent message to android device.\n" );
-						
+
+						BufString *bs = HttpClientCall( c, FIREBASE_HOST, 443, TRUE, FALSE );
+						//BufString *bs = HttpClientCall( nm->nm_AndroidSendHttpClient, FIREBASE_HOST, 443, TRUE );
+
 						if( bs != NULL )
 						{
 							DEBUG("Call done\n");
@@ -162,7 +163,7 @@ int NotificationManagerNotificationSendAndroid( NotificationManager *nm, Notific
 		if( c != NULL )
 		{
 			DEBUG("Client created\n");
-			BufString *bs = HttpClientCall( c, host, 443, TRUE );
+			BufString *bs = HttpClientCall( c, host, 443, TRUE, FALSE );
 			if( bs != NULL )
 			{
 				DEBUG("Call done\n");

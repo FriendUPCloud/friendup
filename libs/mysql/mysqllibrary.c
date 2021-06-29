@@ -205,12 +205,13 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 							if( row[ i ] != NULL )
 							{
 								char *end;
-								DEBUG("SQL: get field: %s\n", dptr[ 1 ] );
+								//DEBUG("SQL: get field: %s\n", dptr[ 1 ] );
 								tmp = (FLONG)strtol( row[ i ], &end, 0 );
 							}
 							memcpy( strptr + dptr[ 2 ], &tmp, sizeof( FLONG ) );
 						}
 						break;
+						
 					case SQLT_STR:
 						{
 							if( row[i] != NULL )

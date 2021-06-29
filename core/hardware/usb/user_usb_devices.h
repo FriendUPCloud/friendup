@@ -9,40 +9,55 @@
 *****************************************************************************©*/
 /** @file
  * 
- *  Permission Manager header
+ *  Function releated to user usb devices
  *
  *  @author PS (Pawel Stefanski)
- *  @date created 09/05/2019
+ *  @date created 13/07/2020
  */
 
-#ifndef __SYSTEM_PERMISSION_PERMISSION_MANAGER_H__
-#define __SYSTEM_PERMISSION_PERMISSION_MANAGER_H__
+#ifndef __CORE_USER_USB_USB_DEVICE_H__
+#define __CORE_USER_USB_USB_DEVICE_H__
 
 #include <core/types.h>
 #include <core/nodes.h>
-#include <system/dictionary/dictionary.h>
 #include <system/user/user_session.h>
+#include "usb_device.h"
 
 //
-// Permission Manager
+//
 //
 
-typedef struct PermissionManager
+typedef struct UserUSBDevices
 {
-	void						*pm_SB;
-	pthread_mutex_t				pm_Mutex;
-}PermissionManager;
+	char						*uusbd_UserName;			// user name
+	char						*uusbd_RemoteUserName;		// user name used by remote device
+	USBDevice					*uusbd_Devices;
+	pthread_mutex_t				uusbd_Mutex;
+	MinNode						node;
+}UserUSBDevices;
 
 //
+//
+//
 
-PermissionManager *PermissionManagerNew( void *sb );
+UserUSBDevices *UserUSBDevicesNew( char *username, char *realName );
 
-void PermissionManagerDelete( PermissionManager *pm );
+//
+//
+//
 
-FBOOL PermissionManagerCheckAppPermission( PermissionManager *pm, char *key,char *appname );
+void UserUSBDevicesDelete( UserUSBDevices *dev );
 
-FBOOL PermissionManagerCheckPermission( PermissionManager *pm, UserSession *ses, const char *authid, const char *args );
-//FBOOL PermissionManagerCheckPermission( PermissionManager *pm, UserSession *us, const char *auth, FULONG obid, const char *obtype, char *type );
+//
+//
+//
 
-#endif //__SYSTEM_PERMISSION_PERMISSION_MANAGER_H__
+int UserUSBDevicesAddPort( UserUSBDevices *udev, USBDevice *dev );
 
+//
+//
+//
+
+int UserUSBDevicesDeletePort( UserUSBDevices *dev, int port );
+
+#endif // __CORE_USB_USB_DEVICE_H__
