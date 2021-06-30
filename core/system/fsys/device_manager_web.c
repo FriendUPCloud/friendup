@@ -226,7 +226,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		
 		char *error = NULL;
 		BufString *bs = BufStringNew();
-		if( ( resperr = RefreshUserDrives( l->sl_DeviceManager, loggedSession->us_User, bs, &error ) ) == 0 )
+		if( ( resperr = RefreshUserDrives( l->sl_DeviceManager, loggedSession, bs, &error ) ) == 0 )
 		{
 			HttpSetContent( response, bs->bs_Buffer, bs->bs_Bufsize );
 			bs->bs_Buffer = NULL;
@@ -652,7 +652,7 @@ f.Name ASC";
 					//args = UrlDecodeToMem( el->data );
 				}
 				
-				if( usr->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
+				if( usr->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 				{
 					DEBUG("UserID = %lu user is admin: %d\n", userID, usr->u_IsAdmin );
 					User *locusr = UMGetUserByID( l->sl_UM, userID );
@@ -688,27 +688,27 @@ f.Name ASC";
 			if( foundUserInMemory == FALSE )
 			{
 				updateDatabase = TRUE;
-				HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Mounted successfully.\"}" );
+				HttpAddTextContent( response, "ok<!--separate-->{\"response\":\"Mounted successfully.\"}" );
 			}
 			else if( usr != NULL )
 			{
 				userID = usr->u_ID;
 				
 				struct TagItem tags[] = {
-					{ FSys_Mount_Path,           (FULONG)path },
-					{ FSys_Mount_Server,         (FULONG)host },
-					{ FSys_Mount_Port,           (FULONG)port },
-					{ FSys_Mount_Type,           (FULONG)type },
-					{ FSys_Mount_Name,           (FULONG)devname },
-					{ FSys_Mount_User_SessionID, (FULONG)usr->u_MainSessionID },
-					{ FSys_Mount_Module,         (FULONG)module },
-					{ FSys_Mount_Owner,          (FULONG)usr },
-					{ FSys_Mount_UserName,       (FULONG)usr->u_Name },
-					{ FSys_Mount_Mount,          (FULONG)TRUE },
-					{ FSys_Mount_SysBase,        (FULONG)l },
-					{ FSys_Mount_UserGroup,      (FULONG)usrgrp },
-					{ FSys_Mount_Visible,        visible == NULL ? (FULONG)1 : (FULONG)0 },
-					{ FSys_Mount_UserID,         userID },
+					{ FSys_Mount_Path,				(FULONG)path },
+					{ FSys_Mount_Server,			(FULONG)host },
+					{ FSys_Mount_Port,				(FULONG)port },
+					{ FSys_Mount_Type,				(FULONG)type },
+					{ FSys_Mount_Name,				(FULONG)devname },
+					{ FSys_Mount_UserSession,		(FULONG)loggedSession },   //loggedSession->us_SessionID },
+					{ FSys_Mount_Module,			(FULONG)module },
+					{ FSys_Mount_Owner,				(FULONG)usr },
+					{ FSys_Mount_UserName,			(FULONG)usr->u_Name },
+					{ FSys_Mount_Mount,				(FULONG)TRUE },
+					{ FSys_Mount_SysBase,			(FULONG)l },
+					{ FSys_Mount_UserGroup,			(FULONG)usrgrp },
+					{ FSys_Mount_Visible,			visible == NULL ? (FULONG)1 : (FULONG)0 },
+					{ FSys_Mount_UserID,			userID },
 					//{ FSys_Mount_Execute,        execute == NULL ? (FULONG)NULL : (FULONG)execute },
 					{ TAG_DONE, TAG_DONE }
 				};
@@ -716,7 +716,7 @@ f.Name ASC";
 				File *mountedDev = NULL;
 				char *error = NULL;
 				
-				int mountError = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &mountedDev, usr, &error, usr->u_IsAdmin, TRUE );
+				int mountError = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &mountedDev, usr, &error, loggedSession, TRUE );
 				
 				// This is ok!
 				if( mountError != 0 && mountError != FSys_Error_DeviceAlreadyMounted )
@@ -978,7 +978,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					}
 					DEBUG("UserID %lu\n", userID );
 			
-					if( activeUser->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
+					if( activeUser->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 					{
 						DEBUG("Permissions accepted or user is admin\n");
 						User *locusr = NULL;
@@ -1376,13 +1376,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 			User *user = NULL;
 			UserGroup *usergroup = NULL;
 			
-			LIST_FOR_EACH( l->sl_UM->um_Users, user, User * )
-			{
-				if( strcmp( username, user->u_Name ) == 0 )
-				{
-					break;
-				}
-			}
+			user = UMGetUserByName( l->sl_UM, username );
 			
 			usergroup = UGMGetGroupByName( l->sl_UGM, usergroupname );
 			
@@ -1405,16 +1399,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 				goto error;
 			}
 			
-			File *rootDev = NULL;
-			
-			LIST_FOR_EACH( loggedSession->us_User->u_MountedDevs, rootDev, File * )
-			{
-				if(  strcmp( rootDev->f_Name, devname ) == 0 )
-				{
-					INFO("Device for sharing found: %s\n", devname );
-					break;
-				}
-			}
+			File *rootDev = UserGetDeviceByName( loggedSession->us_User, devname );
 			
 			if( rootDev != NULL )
 			{
@@ -1431,7 +1416,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					{
 						DEBUG("[DeviceMWebRequest] Devices were not mounted for user. They will be mounted now\n");
 					
-						UserDeviceMount( l, user, 0, TRUE, &error, TRUE );
+						UserDeviceMount( l, user, loggedSession, 0, TRUE, &error, TRUE );
 
 					}
 				
@@ -1570,7 +1555,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					
 							FBOOL isLimited = FALSE;
 					
-							if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == FALSE )
+							if( loggedSession->us_User->u_IsAdmin == FALSE )
 							{
 								if( strcmp( dev->f_FSysName, "Local" ) == 0 )
 								{
@@ -1705,7 +1690,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					
 							FBOOL isLimited = FALSE;
 					
-							if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == FALSE )
+							if( loggedSession->us_User->u_IsAdmin == FALSE )
 							{
 								if( strcmp( dev->f_FSysName, "Local" ) == 0 )
 								{

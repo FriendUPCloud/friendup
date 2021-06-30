@@ -15,7 +15,8 @@
 // Get user by ID
 if( isset( $args->args->id ) )
 	$uid = $args->args->id;
-else $uid = $User->ID;
+//else $uid = $User->ID;
+else $uid = $UserSession->UserID;
 
 $workgroups = false;
 
