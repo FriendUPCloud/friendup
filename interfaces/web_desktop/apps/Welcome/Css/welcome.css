@@ -39,19 +39,30 @@ html > body:not(.Inside):not(.Loading)
 
 .BottomInfo .ImageLink
 {
-	width: 250px;
-	height: 240px;
+	width: 400px;
+	height: 260px;
 	background: #a0a0a0;
 	position: relative;
 	float: left;
 	margin: 0 20px 0 0;
+	overflow: hidden;
+	border-radius: 3px;
+}
+
+.BottomInfo .ImageLink > iframe
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
 }
 
 .BottomInfo .ImageDescription
 {
-	width: calc(100% - 290px);
+	width: calc(100% - 440px);
 	margin: 0;
-	height: 240px;
+	height: 260px;
 	overflow: hidden;
 	position: relative;
 	float: left;
@@ -59,6 +70,12 @@ html > body:not(.Inside):not(.Loading)
 	box-sizing: border-box;
 	padding: 10px 20px 10px 0px;
 }
+
+.BottomInfo .ImageDescription .Smaller
+{
+	font-size: 75%;
+}
+
 
 
 .BottomInfo .ImageDescription h2
@@ -85,6 +102,19 @@ html > body:not(.Inside):not(.Loading)
 {
 	overflow-x: hidden;
 }
+
+#Dontsee
+{
+	position: absolute;
+	bottom: 20px;
+	right: 20px;
+	padding: 2px 8px;
+	border-radius: 8px;
+	background-color: #01AE5C;
+	color: white;
+	cursor: pointer;
+}
+
 
 .WelTabs
 {
@@ -199,9 +229,9 @@ html > body:not(.Inside):not(.Loading)
 .WelPage .TextContent
 {
 	width: calc(100% - 250px);
-	float: right;
+	float: left;
 	box-sizing: border-box;
-	padding-left: 20px;
+	padding-right: 20px;
 	font-size: 16px;
 }
 
@@ -211,5 +241,7 @@ html > body:not(.Inside):not(.Loading)
 	min-height: 170px;
 	background-color: #c0c0c0;
 	float: right;
+	position: relative;
+	border-radius: 3px;
 }
 

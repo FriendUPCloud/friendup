@@ -1,3 +1,13 @@
+/*©agpl*************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
+*                                                                              *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
+*                                                                              *
+*****************************************************************************©*/
+
 let tabsConf = {};
 
 Application.run = function( msg )
@@ -30,6 +40,22 @@ Application.run = function( msg )
 		}
 		t[a].ontouchstart = t[a].onclick;
 	}
+	
+	let t = new Module( 'system' );
+	t.onExecuted = function( te, td )
+	{
+		// It is in startup
+		if te == 'ok' )
+		{
+	
+		}
+		// Not in startup
+		else
+		{
+		}
+	}
+	t.execute( 'appmodule', { appName: 'Welcome', command: 'checkstartup' } );
+	
 };
 
 function launch( app )
@@ -38,8 +64,8 @@ function launch( app )
 };
 
 function nevershow()
-{
-	var s = new Module( 'system' );
+{		
+	let s = new Module( 'system' );
 	s.onExecuted = function( e, d )
 	{
 		if( e == 'ok' )
