@@ -28,6 +28,10 @@ function decodeURL( $source = false )
 	
 	if( $source )
 	{
+		if( !( ( strstr( $source, 'http://' ) || strstr( $source, 'https://' ) ) && strstr( $source, '?' ) ) )
+		{
+			$source = urldecode( $source );
+		}
 		if( ( strstr( $source, 'http://' ) || strstr( $source, 'https://' ) ) && strstr( $source, '?' ) )
 		{
 			if( $parts = explode( '?', $source ) )

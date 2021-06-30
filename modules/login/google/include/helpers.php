@@ -664,7 +664,7 @@ function verifyFriendAuth( $username, $publickey, $nonce = false, $deviceid = ''
 		$dbo = initDBO();
 		
 		if( $creds = $dbo->fetchObject( '
-			SELECT fu.ID, fu.Name, fu.Password, fu.Status FROM FUser fu 
+			SELECT fu.ID, fu.UniqueID, fu.Name, fu.Password, fu.Status FROM FUser fu 
 			WHERE 
 					fu.Name      = \'' . mysqli_real_escape_string( $dbo->_link, $username  ) . '\' 
 				AND fu.PublicKey = \'' . mysqli_real_escape_string( $dbo->_link, $publickey ) . '\' 
@@ -704,7 +704,7 @@ function verifyFriendAuth( $username, $publickey, $nonce = false, $deviceid = ''
 							
 							if( $invitehash )
 							{
-								createFriendRelation( $ses, $invitehash );
+								createFriendRelation( $ses, $creds, $invitehash );
 							}
 								
 							if( !remoteAuth( '/system.library/user/update?sessionid=' . $ses->sessionid, 
@@ -767,14 +767,14 @@ function verifyFriendAuth( $username, $publickey, $nonce = false, $deviceid = ''
 	
 }
 
-function createFriendRelation( $data, $invitehash )
+function createFriendRelation( $data, $user, $invitehash )
 {
 	
-	if( $data && $invitehash )
+	if( $data && $user && $invitehash )
 	{
 		
 		if( $res = remoteAuth( 
-			'/system.library/module/?sessionid=' . $data->sessionid . '&module=system&command=tinyurldata&args=' . ( '{"hash":"' . $invitehash . '"}' ), 
+			'/system.library/module/?sessionid=' . $data->sessionid . '&module=system&command=tinyurldata&args={"hash":"'.$invitehash.'"}', 
 			false, 'POST', [ 'Content-Type: application/x-www-form-urlencoded' ] 
 		) )
 		{
@@ -784,11 +784,22 @@ function createFriendRelation( $data, $invitehash )
 				{
 					if( isset( $ret[1] ) )
 					{
-						if( $data = json_decode( $ret[1] ) )
+						if( $json = json_decode( $ret[1] ) )
 						{
-							die( print_r( $data,1 ) );
 							
+							if( isset( $json->source->data->mode ) && isset( $json->source->data->contactids ) && $user->UniqueID )
+							{
+								// TODO: Could potentially make support for cross node invites based on the url field.
+								
+								$result = remoteAuth( '/system.library/user/addrelationship?sessionid=' . $data->sessionid, 
+								[
+									'mode'       => $json->source->data->mode,
+									'contactids' => $json->source->data->contactids,
+									'sourceid'   => $user->UniqueID
+								] );
 							
+								die( $result . ' -- ' . print_r( $json,1 ) );
+							}
 							
 						}
 					}
