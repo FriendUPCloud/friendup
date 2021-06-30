@@ -1,3 +1,7 @@
+html > body:not(.Inside):not(.Loading)
+{
+	background-color: #fefefe !important;
+}
 
 #WelcomeContainer
 {
@@ -17,8 +21,8 @@
 
 .WelcomeHeading h2
 {
-	font-size: 82px;
-	margin: 0 0 10px 0;
+	font-size: 72px;
+	margin: 4px 0 10px 0;
 	color: #01AE5C;
 	font-family: Saira Condensed;
 }
@@ -45,14 +49,22 @@
 
 .BottomInfo .ImageDescription
 {
-	width: calc(100% - 270px);
+	width: calc(100% - 290px);
 	margin: 0;
 	height: 240px;
 	overflow: hidden;
 	position: relative;
 	float: left;
+	font-size: 150%;
+	box-sizing: border-box;
+	padding: 10px 20px 10px 0px;
 }
 
+
+.BottomInfo .ImageDescription h2
+{
+	color: #0e2656;
+}
 
 .WelTabs, .WelPages, .WelTabsWrapper
 {
@@ -101,7 +113,7 @@
 	border-radius: 8px 8px 0 0;
 	border-bottom: 1px solid;
 	box-sizing: border-box;
-	padding: 20px;
+	padding: 10px 20px;
 	display: inline-block;
 	min-width: 140px;
 	max-width: 140px;
@@ -113,6 +125,7 @@
 	font-weight: bold;
 	white-space: pre-wrap;
 	position: relative;
+	cursor: pointer;
 }
 
 .WelTab:first-child
@@ -128,7 +141,7 @@
 	height: 56px;
 	background: linear-gradient(0deg, #f0f0f0 0%, #c0c0c0 100%);
 	border-radius: 100%;
-	margin: 0 auto 10px auto;
+	margin: 0 auto 7px auto;
 }
 
 .WelTab.Active
@@ -181,5 +194,22 @@
 {
 	display: block;
 	min-width: 100%;
+}
+
+.WelPage .TextContent
+{
+	width: calc(100% - 250px);
+	float: right;
+	box-sizing: border-box;
+	padding-left: 20px;
+	font-size: 16px;
+}
+
+.WelPage .ImageContent
+{
+	width: 250px;
+	min-height: 170px;
+	background-color: #c0c0c0;
+	float: right;
 }
 
