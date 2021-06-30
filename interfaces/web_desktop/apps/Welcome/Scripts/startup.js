@@ -96,4 +96,3 @@ Application.receiveMessage = function( msg )
 	}
 }
 
-

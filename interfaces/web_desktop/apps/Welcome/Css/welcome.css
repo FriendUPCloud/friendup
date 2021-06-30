@@ -12,7 +12,7 @@
 .WelcomeHeading
 {
 	box-sizing: border-box;
-	padding: 20px;
+	padding: 0 20px;
 }
 
 .WelcomeHeading h2
@@ -29,7 +29,7 @@
 	bottom: 0px;
 	left: 0px;
 	width: 100%;
-	height: 280px;
+	height: 260px;
 	padding: 20px;
 }
 
@@ -54,67 +54,132 @@
 }
 
 
-.WelTabs
+.WelTabs, .WelPages, .WelTabsWrapper
 {
-	padding: 20px;
+	position: absolute;
 	white-space: nowrap;
 	text-overflow: hidden;
 	overflow: hidden;
 	position: absolute;
+	display: flex;
 	top: 120px;
-	height: calc(100% - 400px);
+	left: 20px;
+	height: 140px;
+	width: calc(100% - 40px);
 	box-sizing: border-box;
+}
+
+.WelTabsWrapper
+{
+	overflow-x: hidden;
+}
+
+.WelTabs
+{
+	top: 0;
+	left: 0;
+	width: 100%;
+}
+
+.WelTabs
+{ 
+	padding-bottom: 0; 
+	z-index: 2;
+	overflow: visible; 
+}
+.WelPages 
+{
+	padding-top: 0; 
+	z-index: 1; 
+	top: 240px; 
+	height: calc(100% - 540px); 
 }
 
 .WelTab
 {
-	border: 1px solid rgba(0,0,0,0.4);
+	border: 1px solid #909090;
 	border-radius: 8px 8px 0 0;
 	border-bottom: 1px solid;
 	box-sizing: border-box;
 	padding: 20px;
 	display: inline-block;
-	width: 160px;
-	height: 140px;
+	min-width: 140px;
+	max-width: 140px;
+	height: 121px;
 	text-align: center;
-	margin: 0;
+	margin: 0 0 0 -1px;
 	background: white;
-	overflow: hidden;
 	text-transform: uppercase;
 	font-weight: bold;
+	white-space: pre-wrap;
+	position: relative;
+}
+
+.WelTab:first-child
+{
+	margin-left: 0;
+}
+
+
+.WelTab > span
+{
+	display: block;
+	width: 56px;
+	height: 56px;
+	background: linear-gradient(0deg, #f0f0f0 0%, #c0c0c0 100%);
+	border-radius: 100%;
+	margin: 0 auto 10px auto;
 }
 
 .WelTab.Active
 {
-	border: 1px solid rgba(0,0,0,0.7);
+	border: 1px solid #2f2f2f;
 	border-radius: 8px 8px 0 0;
 	border-bottom: 0;
-	position: relative;
+	overflow: visible;
+	z-index: 5;
 }
 
-/*.WelTab.Active:after
+.WelTab.Active:after
 {
-	position: absolute;
 	content: " ";
-	bottom: 0%;
-	right: 0%;
-	width: 30px;
-	height: 30px;
-	border-radius: 100%;
-	border: 1px solid rgba(0,0,0,0.7);
-	border-right-width: 0;
-	border-top-width: 0;
-}*/
+	position: absolute;
+	bottom: 0;
+	right: -11px;
+	width: 11px;
+	height: 11px;
+}
+
+.WelTab.Active:before
+{
+	content: " ";
+	position: absolute;
+	bottom: 0;
+	left: -11px;
+	width: 11px;
+	height: 11px;
+}
+
+.WelTab.Active:first-child:before
+{
+	display: none;
+}
 
 .WelPage
 {
 	display: none;
 	padding: 20px;
 	clear: both;
+	border: 1px solid #2f2f2f;
+	border-radius: 0 0 8px 8px;
+	box-sizing: border-box;
+	white-space: normal;
+	background-color: white;
 }
 
 .WelPage.Active
 {
 	display: block;
+	min-width: 100%;
 }
 
