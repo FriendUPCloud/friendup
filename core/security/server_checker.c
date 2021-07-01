@@ -49,7 +49,7 @@ void CheckServerAndRestart( void* s )
 		DEBUG("Test shutdown %d test %d\n", sb->fcm->fcm_Shutdown , test );
 		
 		DEBUG("[CheckServerAndRestart] HttpClient created\n");
-		BufString *bs = HttpClientCall( c, "localhost", 6502, sb->fcm->fcm_SSLEnabled );
+		BufString *bs = HttpClientCall( c, "localhost", 6502, sb->fcm->fcm_SSLEnabled, FALSE );
 		if( bs != NULL )
 		{
 			if( bs->bs_Size == 0 )
