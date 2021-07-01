@@ -75,9 +75,9 @@
 					if( ge( 'Username' ) || ge( 'Password' ) )
 					{
 						if( !Trim( ge( 'Username' ).value ) )
-							ge( 'Username' ).focus();
+							return ge( 'Username' ).focus();
 						if( !Trim( ge( 'Password' ).value ) )
-							ge( 'Password' ).focus();
+							return ge( 'Password' ).focus();
 					}
 					
 					/*
