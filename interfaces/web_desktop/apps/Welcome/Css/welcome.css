@@ -260,3 +260,8 @@ html > body:not(.Inside):not(.Loading)
 	border-radius: 3px;
 }
 
+.WelPage table ul
+{
+	margin: 0;
+	font-size: 80%;
+}
