@@ -21,15 +21,21 @@ if( $args->args->command == 'checkstartup' )
 	{
 		$json = false;
 		$list = false;
-	
-		if( $d = json_decode( $s->Data ) )
+		$data = $s->Data;
+		
+		if( substr( $data, 0, 1 ) == '"' )
+		{
+			$data = substr( $data, 1, strlen( $data ) - 2 );
+		}
+		
+		if( $d = json_decode( $data ) )
 			$list = $d;
 	
 		if( $list )
 		{
 			foreach( $list as $l )
 			{
-				if( trim( $l ) == 'launch Welcome' )
+				if( trim( $l ) == 'launch ' . $args->args->appName )
 				{
 					die( 'ok<!--separate-->{"message":"It exists.","response":1}' );
 				}

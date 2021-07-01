@@ -44,15 +44,10 @@ Application.run = function( msg )
 	let st = new Module( 'system' );
 	st.onExecuted = function( te, td )
 	{
-		/*// It is in startup
-		if te == 'ok' )
+		if( te == 'ok' )
 		{
-	
+			ge( 'Dontsee' ).classList.add( 'Showing' );
 		}
-		// Not in startup
-		else
-		{
-		}*/
 	}
 	st.execute( 'appmodule', { appName: 'Welcome', command: 'checkstartup' } );
 	
