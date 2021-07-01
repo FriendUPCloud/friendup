@@ -663,7 +663,7 @@ function sendFriendMail( $user )
 	{
 		$dbo = initDBO();
 		
-		$qua = new dbIO( 'UserQuarantine' );
+		$qua = new dbIO( 'UserQuarantine', $dbo );
 		$qua->UserID   = $user->ID;
 		$qua->Type     = 'External';
 		$qua->Fullname = $user->FullName;
