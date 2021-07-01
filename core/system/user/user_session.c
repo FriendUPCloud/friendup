@@ -190,9 +190,7 @@ void UserSessionDelete( UserSession *us )
 			WebsocketReqManagerDelete( wrm );
 		}
 		pthread_mutex_destroy( &(us->us_Mutex) );
-		
-		
-		
+
 		// lets remove application sessions from system
 		if( nrOfSessionsAttached <= 0 && us->us_UserID > 0 )
 		{
