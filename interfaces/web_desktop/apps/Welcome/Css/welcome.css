@@ -24,7 +24,7 @@ html > body:not(.Inside):not(.Loading)
 	font-size: 72px;
 	margin: 4px 0 10px 0;
 	color: #01AE5C;
-	font-family: Saira Condensed;
+	font-family: 'TheSaira';
 }
 
 .BottomInfo
