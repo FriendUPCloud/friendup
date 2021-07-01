@@ -37,6 +37,8 @@ Application.run = function( msg, iface )
 		var s = JSON.parse( d );
 		var f = new File( 'Progdir:Templates/main.html' );
 		
+		//console.log( 'userinfoget', s );
+		
 		// Inject available languages in template
 		var availLangs = {
 			'en': 'English',
