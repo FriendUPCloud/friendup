@@ -169,9 +169,24 @@ html > body:not(.Inside):not(.Loading)
 	display: block;
 	width: 56px;
 	height: 56px;
-	background: linear-gradient(0deg, #f0f0f0 0%, #c0c0c0 100%);
+	background: linear-gradient(0deg, #202020 0%, #606060 100%);
 	border-radius: 100%;
 	margin: 0 auto 7px auto;
+	overflow: hidden;
+	position: relative;
+}
+
+.WelTab > span:after
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: calc(100% - 4px);
+	height: calc(100% - 4px);
+	border-radius: 100%;
+	background-size: contain;
 }
 
 .WelTab.Active

@@ -41,10 +41,10 @@ Application.run = function( msg )
 		t[a].ontouchstart = t[a].onclick;
 	}
 	
-	let t = new Module( 'system' );
-	t.onExecuted = function( te, td )
+	let st = new Module( 'system' );
+	st.onExecuted = function( te, td )
 	{
-		// It is in startup
+		/*// It is in startup
 		if te == 'ok' )
 		{
 	
@@ -52,9 +52,9 @@ Application.run = function( msg )
 		// Not in startup
 		else
 		{
-		}
+		}*/
 	}
-	t.execute( 'appmodule', { appName: 'Welcome', command: 'checkstartup' } );
+	st.execute( 'appmodule', { appName: 'Welcome', command: 'checkstartup' } );
 	
 };
 

@@ -8,13 +8,13 @@
 		</div>
 		<div class="WelTabsWrapper">
 			<div class="WelTabs" id="AppsPane">
-				<div class="WelTab"><span></span>Friend<br>Office</div>
-				<div class="WelTab"><span></span>Friend Mail & Calendar</div>
-				<div class="WelTab"><span></span>Friend<br>Chat</div>
-				<div class="WelTab"><span></span>Friend Conference</div>
-				<div class="WelTab"><span></span>Photopea</div>
-				<div class="WelTab"><span></span>DrawIO</div>
-				<div class="WelTab"><span></span>And much more!</div>
+				<div class="WelTab"><span class="Office"></span>Friend<br>Office</div>
+				<div class="WelTab"><span class="Mail"></span>Friend Mail & Calendar</div>
+				<div class="WelTab"><span class="Chat"></span>Friend<br>Chat</div>
+				<div class="WelTab"><span class="Conference"></span>Friend Conference</div>
+				<div class="WelTab"><span class="Photopea"></span>Photopea</div>
+				<div class="WelTab"><span class="Drawio"></span>DrawIO</div>
+				<div class="WelTab"><span class="More"></span>And much more!</div>
 			</div>
 		</div>
 		<div class="WelPages">
@@ -146,5 +146,21 @@
 			font-family: 'AssistantBold';
 			src: url('Progdir:Css/Assistant-Bold.ttf');
 		}
+		.WelTab > span.Conference:after
+		{ background-image: url('Progdir:Gfx/icon_conference.png'); }
+		.WelTab > span.Drawio:after
+		{ background-image: url('Progdir:Gfx/icon_drawio.png'); }
+		.WelTab > span.Photopea:after
+		{ background-image: url('Progdir:Gfx/icon_photopea.png'); }
+		.WelTab > span.Mail:after
+		{ background-image: url('Progdir:Gfx/icon_mail.png'); }
+		.WelTab > span.Office:after
+		{ background-image: url('Progdir:Gfx/icon_office.png'); 
+		  background-size: 101%;
+		}
+		.WelTab > span.Chat:after
+		{ background-image: url('Progdir:Gfx/icon_chat.png'); }
+		.WelTab > span.More:after
+		{ background-image: url('Progdir:Gfx/icon_more.jpg'); }
 	</style>
 
