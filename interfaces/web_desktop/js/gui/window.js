@@ -4373,6 +4373,9 @@ var View = function( args )
 		if( !base )
 			base = '/';
 
+		if( !this._window )
+			return;
+
 		let eles = this._window.getElementsByTagName( _viewType );
 		let ifr = false;
 		let w = this;
