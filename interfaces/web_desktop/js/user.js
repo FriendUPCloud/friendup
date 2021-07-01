@@ -254,6 +254,9 @@ Friend.User = {
 			delete Workspace.conn;
 		}
 		
+		// Reset cajax http connections (because we lost connection)
+		_cajax_http_connections = 0;
+		
 		if( info.username || info.sessionid )
 		{
 			this.SendLoginCall( info, callback, 'relogin' );
@@ -311,7 +314,7 @@ Friend.User = {
 				return;
 			}
 			Workspace.sessionId = ''; 
-			document.location.href = window.location.href.split( '?' )[0]; //document.location.reload();
+			document.location.href = window.location.href.split( '?' )[0].split( '#' )[0]; //document.location.reload();
 		}
 		dologt = setTimeout( doLogout, 750 );
 		return true;

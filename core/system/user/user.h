@@ -137,7 +137,7 @@ typedef struct User
 	UserSessListEntry			*u_SessionsList;
 	FULONG						u_Status;						// user status
 
-	char						*u_MainSessionID;				// session id ,  generated only when user is taken from db
+	//char						*u_MainSessionID;				// session id ,  generated only when user is taken from db
 	time_t						u_LoggedTime;       			// last action time
 	time_t						u_CreatedTime;					// when user strcture was created
 	time_t						u_LoginTime;					// last login time
@@ -239,7 +239,13 @@ File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error );
 //
 //
 
-int UserRegenerateSessionID( void *sb, User *usr, char *newsess );
+File *UserGetDeviceByName( User *usr, const char *name );
+
+//
+//
+//
+
+int UserRegenerateSessionID( User *usr, char *newsess );
 
 //
 //
@@ -277,7 +283,7 @@ static FULONG UserDesc[] = {
 	SQLT_STR,     (FULONG)"Password",    offsetof( struct User, u_Password ),
 	SQLT_STR,     (FULONG)"Fullname",    offsetof( struct User, u_FullName ),
 	SQLT_STR,     (FULONG)"Email",       offsetof( struct User, u_Email ),
-	SQLT_STR,     (FULONG)"SessionID",   offsetof( struct User, u_MainSessionID ),
+	//SQLT_STR,     (FULONG)"SessionID",   offsetof( struct User, u_MainSessionID ),
 	SQLT_INT,     (FULONG)"LoggedTime",  offsetof( struct User, u_LoggedTime ),
 	SQLT_INT,     (FULONG)"CreatedTime", offsetof( struct User, u_CreatedTime ),
 	SQLT_INT,     (FULONG)"ModifyTime", offsetof( struct User, u_ModifyTime ),

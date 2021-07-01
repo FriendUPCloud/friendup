@@ -9,14 +9,14 @@
 *****************************************************************************©*/
 /** @file
  * 
- *  USB web interface
+ *  USB Remote web interface
  *
  *  @author PS (Pawel Stefanski)
- *  @date created 20/01/2017
+ *  @date created 13/07/2020
  */
 
-#ifndef __HARDWARE_USB_USB_DEVICE_WEB_H__
-#define __HARDWARE_USB_USB_DEVICE_WEB_H__
+#ifndef __HARDWARE_USB_USB_REMOTE_DEVICE_WEB_H__
+#define __HARDWARE_USB_USB_REMOTE_DEVICE_WEB_H__
 
 #include <core/types.h>
 #include <core/library.h>
@@ -30,15 +30,15 @@
 #include <system/json/json_converter.h>
 
 /**
- * Network handler
+ * USB Remote Device handler
  *
- * @param l pointer to SystemBase
+ * @param lb pointer to SystemBase
  * @param urlpath pointer to table with path entries
  * @param request http request
  * @param loggedSession user session which made this call
  * @return http response
  */
 
-Http* USBManagerWebRequest( void *lb, char **urlpath, Http* request, UserSession *loggedSession );
+Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserSession *loggedSession );
 
-#endif // __HARDWARE_USB_USB_DEVICE_WEB_H__
+#endif // __HARDWARE_USB_USB_REMOTE_DEVICE_WEB_H__

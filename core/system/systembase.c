@@ -332,6 +332,9 @@ SystemBase *SystemInit( void )
 	
 	l->sl_RemoveOldSessionTimeout = 0;
 	
+	// use deflate compression as default for http calls
+	l->l_HttpCompressionContent |= HTTP_COMPRESSION_DEFLATE;
+	
 	if( plib != NULL && plib->Open != NULL )
 	{
 		char *ptr = getenv("FRIEND_HOME");
@@ -444,6 +447,11 @@ SystemBase *SystemInit( void )
 				if( strstr( tptr, "bzip" ) != NULL )
 				{
 					l->l_HttpCompressionContent |= HTTP_COMPRESSION_BZIP;
+				}
+				
+				if( strstr( tptr, "none" ) != NULL )
+				{
+					l->l_HttpCompressionContent = 0;
 				}
 			}
 			
@@ -578,10 +586,6 @@ SystemBase *SystemInit( void )
 		Log( FLOG_INFO, "----------------------------------------------------\n");
 	}
 	
-	
-	
-	
-	
 	SQLLibrary *lsqllib  = l->LibrarySQLGet( l );
 	if( lsqllib != NULL )
 	{
@@ -705,6 +709,13 @@ SystemBase *SystemInit( void )
 	if( l->zlib == NULL )
 	{
 		Log( FLOG_ERROR, "[ERROR]: CANNOT OPEN z.library!\n");
+	}
+	
+	l->usblib = (USBLibrary *)LibraryOpen( l, "usb.library", 0 );
+	if( l->usblib == NULL )
+	{
+		Log( FLOG_ERROR, "[ERROR]: CANNOT OPEN usb.library!\n");
+        FERROR("Cannot open usb.library!\n");
 	}
 	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
@@ -939,12 +950,6 @@ SystemBase *SystemInit( void )
 	
 	// create all managers
 	
-	l->sl_SupportManager = SupportManagerNew( l );
-	if( l->sl_SupportManager == NULL )
-	{
-		Log( FLOG_ERROR, "Cannot initialize SupportManager\n");
-	}
-	
 	l->sl_PermissionManager = PermissionManagerNew( l );
 	if( l->sl_PermissionManager == NULL )
 	{
@@ -975,10 +980,10 @@ SystemBase *SystemInit( void )
 		Log( FLOG_ERROR, "Cannot initialize FSManagerNew\n");
 	}
 	
-	l->sl_USB = USBManagerNew( l );
-	if( l->sl_USB == NULL )
+	l->sl_USBRemoteManager = USBRemoteManagerNew( l );
+	if( l->sl_USBRemoteManager == NULL )
 	{
-		Log( FLOG_ERROR, "Cannot initialize USBManagerNew\n");
+		Log( FLOG_ERROR, "Cannot initialize USBRemoteManagerNew\n");
 	}
 	
 	l->sl_USM = USMNew( l );
@@ -1053,6 +1058,12 @@ SystemBase *SystemInit( void )
 	if( l->sl_CalendarManager == NULL )
 	{
 		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
+	}
+	
+	l->sl_MitraManager = MitraManagerNew( l );
+	if( l->sl_MitraManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize Mitra Manager\n");
 	}
 	
 	FriendCoreManagerInitServices( l->fcm );
@@ -1245,9 +1256,9 @@ void SystemClose( SystemBase *l )
 	{
 		FSManagerDelete(  l->sl_FSM );
 	}
-	if( l->sl_USB != NULL )
+	if( l->sl_USBRemoteManager != NULL )
 	{
-		USBManagerDelete( l->sl_USB );
+		USBRemoteManagerDelete( l->sl_USBRemoteManager );
 	}
 	if( l->sl_PrinterM != NULL )
 	{
@@ -1297,9 +1308,10 @@ void SystemClose( SystemBase *l )
 	{
 		SASManagerDelete( l->sl_SASManager );
 	}
-	if( l->sl_SupportManager != NULL )
+	
+	if( l->sl_MitraManager != NULL )
 	{
-		SupportManagerDelete( l->sl_SupportManager );
+		MitraManagerDelete( l->sl_MitraManager );
 	}
 	
 	// Remove sentinel from active memory
@@ -1383,6 +1395,11 @@ void SystemClose( SystemBase *l )
 	if( l->zlib != NULL )
 	{
 		LibraryClose( (struct Library *)l->zlib );
+	}
+	
+	if( l->usblib != NULL )
+	{
+		LibraryClose( (struct Library *)l->usblib );
 	}
 	
 	// Close mysql library
@@ -1742,37 +1759,14 @@ int SystemInitExternal( SystemBase *l )
 			
 			if(  (timestamp - l->sl_Sentinel->s_User->u_LoggedTime) > l->sl_RemoveSessionsAfterTime )
 			{
-				UserRegenerateSessionID( l, l->sl_Sentinel->s_User, NULL );
+				UserRegenerateSessionID( l->sl_Sentinel->s_User, NULL );
 			}
 		}
 		
 		UMCheckAndLoadAPIUser( l->sl_UM );
 		
-		Log( FLOG_INFO, "----------------------------------------------------\n");
-		Log( FLOG_INFO, "---------Mount user devices-------------------------\n");
-		Log( FLOG_INFO, "----------------------------------------------------\n");
-	
-		User *tmpUser = l->sl_UM->um_Users;
-		while( tmpUser != NULL )
-		{
-			char *err = NULL;
-			DEBUG( "[SystemBase] FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
-			UserDeviceMount( l, tmpUser, 1, TRUE, &err, FALSE );
-			if( err != NULL )
-			{
-				Log( FLOG_ERROR, "Initial system mount error. UserID: %lu Error: %s\n", tmpUser->u_ID, err );
-				FFree( err );
-			}
-			DEBUG( "[SystemBase] DONE FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
-			tmpUser = (User *)tmpUser->node.mln_Succ;
-		}
-		
-		Log( FLOG_INFO, "----------------------------------------------------\n");
-		Log( FLOG_INFO, "---------Mount user group devices-------------------\n");
-		Log( FLOG_INFO, "----------------------------------------------------\n");
-		
-		
-		
+		UMInitUsers( l->sl_UM );
+
 		/*
 		User *sentUser = NULL;
 		if( l->sl_Sentinel != NULL )
@@ -1826,7 +1820,8 @@ typedef struct DevNode
  * Load and mount all user doors
  *
  * @param l pointer to SystemBase
- * @param usr pointer to user to which doors belong
+ * @param u pointer to user to which device will be assigned
+ * @param usrses pointer to usersession to which doors belong
  * @param force integer 0 = don't force 1 = force
  * @param unmountIfFail should be device unmounted in DB if mount will fail
  * @param mountError pointer to error message
@@ -1834,16 +1829,17 @@ typedef struct DevNode
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserDeviceMount( SystemBase *l, User *usr, int force, FBOOL unmountIfFail, char **mountError, FBOOL notify )
+int UserDeviceMount( SystemBase *l, User *u, UserSession *usrses, int force, FBOOL unmountIfFail, char **mountError, FBOOL notify )
 {	
 	Log( FLOG_INFO,  "[UserDeviceMount] Mount user device from Database\n");
 	SQLLibrary *sqllib;
 	
-	if( usr == NULL )
+	if( usrses == NULL || usrses->us_User == NULL )
 	{
 		DEBUG("[UserDeviceMount] User parameter is empty\n");
 		return -1;
 	}
+	User *usr = usrses->us_User;
 	
 	if( usr->u_MountedDevs != NULL && force == 0 )
 	{
@@ -1943,6 +1939,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 				{ FSys_Mount_ID,      (FULONG)id },
 				{ FSys_Mount_Mount,   (FULONG)mount },
 				{ FSys_Mount_SysBase, (FULONG)SLIB },
+				{ FSys_Mount_UserSession, (FULONG)usrses },
 				{ FSys_Mount_Visible, (FULONG)1 },     // Assume visible
 				{TAG_DONE, TAG_DONE}
 			};
@@ -1950,7 +1947,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 			File *device = NULL;
 			DEBUG("[UserDeviceMount] Before mounting\n");
 			
-			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, mountError, usr->u_IsAdmin, notify );
+			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, mountError, usrses, notify );
 
 			sqllib = l->LibrarySQLGet( l );
 			// if there is error but error is not "device is already mounted"
@@ -1963,23 +1960,6 @@ usr->u_ID , usr->u_ID, usr->u_ID
 				{
 					//Log( FLOG_INFO, "UserDeviceMount. Device unmounted: %s UserID: %lu 
 					
-					/*
-					sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "\
-UPDATE `Filesystem` f SET `Mounted` = '0' \
-WHERE \
-( \
-f.UserID = '%ld' OR \
-f.GroupID IN ( \
-SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g \
-WHERE \
-g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND \
-ug.UserID = '%ld' \
-) \
-) \
-AND LOWER(f.Name) = LOWER('%s')", 
-						usr->u_ID, usr->u_ID, (char *)row[ 0 ] 
-					);
-					*/
 					sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "UPDATE `Filesystem` SET Mounted=0 WHERE ID=%lu", id );
 					
 					sqllib->QueryWithoutResults( sqllib, temptext );
@@ -2027,7 +2007,7 @@ AND LOWER(f.Name) = LOWER('%s')",
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib __attribute__((unused)), User *usr )
+int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses )
 {
 	DEBUG("UserDeviceUnMount\n");
 	if( usr != NULL )
@@ -2042,7 +2022,7 @@ int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib __attribute__((unused))
 				remdev = dev;
 				dev = (File *)dev->node.mln_Succ;
 				
-				DeviceUnMount( l->sl_DeviceManager, remdev, usr );
+				DeviceUnMount( l->sl_DeviceManager, remdev, usr, ses );
 				
 				FFree( remdev );
 			}

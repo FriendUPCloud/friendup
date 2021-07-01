@@ -27,7 +27,7 @@ function storeRecentApps( $name )
 		if( !$list ) $list = [];
 	}
 	
-	$Logger->log( 'Merging? ' . $appHistory->Key );
+	//$Logger->log( 'Merging? ' . $appHistory->Key );
 	
 	$list = array_merge( array( $name ), $list );
 	

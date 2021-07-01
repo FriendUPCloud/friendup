@@ -257,7 +257,16 @@ FriendConnection.prototype.onWsMessage = function( msg )
 		let id = msg.requestid;
 		let handler = self.listenerMap[ id ];
 		if ( !id || !handler ) {
-			console.log( 'FriendConnection - stuff missing', {
+			if( window.Workspace )
+			{
+				if( !handler && self != Workspace.conn )
+				{
+					console.log( '[FriendConnection] We\'re an orphan ws. Kill.' );
+					self.onWsEnd();
+					delete self;
+				}
+			}
+			console.log( '[FriendConnection] Handler or requestId missing...', {
 				msg : msg,
 				id : id,
 				handler : handler,

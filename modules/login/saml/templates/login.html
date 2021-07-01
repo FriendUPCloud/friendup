@@ -97,6 +97,20 @@
 				}
 			}
 		
+			window.doLogout = function( Noreload )
+			{
+				let ifr = document.createElement( 'iframe' );
+				ifr.onload = function()
+				{
+					document.body.removeChild( ifr );
+					if( !Noreload )
+						document.location.reload();
+				}
+				ifr.src = parent.Workspace.logoutURL + '&rand=' + ( Math.random() * 999 + ( Math.random() * 999 ) );
+				ifr.style.visibility = 'hidden';
+				document.body.appendChild( ifr );
+			}
+		
 			Application = {
 				failedAttempt: false,
 				uName: false,
@@ -184,10 +198,16 @@
 							// Set username and password so we can fetch it later
 							let enc = parent.Workspace.encryption;
 							parent.Workspace.storedCredentials = {
-								username: enc.encrypt( json.username, enc.getKeys().publickey ),
-								login: enc.encrypt( json.login, enc.getKeys().publickey ),
-								password: enc.encrypt( passWd, enc.getKeys().publickey )
+								username : enc.encrypt( json.username, enc.getKeys().publickey ),
+								login    : enc.encrypt( json.login, enc.getKeys().publickey ),
+								password : enc.encrypt( passWd, enc.getKeys().publickey )
 							};
+							
+							// This is needed for Friend.User.ReLogin()
+							// TODO: Check if this passWd is allready hashed??? If it is use this instead ...
+							//parent.Workspace.loginPassword = enc.encrypt( passWd );
+							parent.Workspace.loginPassword = enc.encrypt( 'HASHED' + Sha256.hash( passWd ) );
+							parent.Workspace.loginHashed = true;
 							
 							// We are now online!
 							parent.Friend.User.SetUserConnectionState( 'online' );
@@ -265,6 +285,9 @@
 						if( msg.logouturl && parent.Workspace )
 						{
 					        parent.Workspace.setLogoutURL( msg.logouturl );
+					        
+					        // Trap this
+							window.doLogout( true );
 					    }
 						
 					    // Execute the login procedure

@@ -682,25 +682,32 @@ var WorkspaceInside = {
             //console.log('webproxy set to be tunneled as well.');
         }
 		
-		closeConn();
-		
-		if( typeof FriendConnection == 'undefined' )
+		// Reconnect if we already exist
+		if( this.conn )
 		{
-			return setTimeout( function(){ Workspace.initWebSocket( callback ); }, 250 );
+			this.conn.connectWebSocket();
+			console.log( '[initWebSocket] Reconnecting websocket.' );
 		}
-		
-		this.conn = new FriendConnection( conf );
-		this.conn.on( 'sasid-request', handleSASRequest ); // Shared Application Session
-		this.conn.on( 'server-notice', handleServerNotice );
-		this.conn.on( 'server-msg', handleServerMessage );
-		this.conn.on( 'refresh', function( msg )
+		else
 		{
-			// Do a deep refresh
-			Workspace.refreshDesktop( false, true );
-		} );
-		this.conn.on( 'icon-change', handleIconChange );
-		this.conn.on( 'filesystem-change', handleFilesystemChange );
-		this.conn.on( 'notification', handleNotifications );
+			if( typeof FriendConnection == 'undefined' )
+			{
+				return setTimeout( function(){ Workspace.initWebSocket( callback ); }, 250 );
+			}
+		
+			this.conn = new FriendConnection( conf );
+			this.conn.on( 'sasid-request', handleSASRequest ); // Shared Application Session
+			this.conn.on( 'server-notice', handleServerNotice );
+			this.conn.on( 'server-msg', handleServerMessage );
+			this.conn.on( 'refresh', function( msg )
+			{
+				// Do a deep refresh
+				Workspace.refreshDesktop( false, true );
+			} );
+			this.conn.on( 'icon-change', handleIconChange );
+			this.conn.on( 'filesystem-change', handleFilesystemChange );
+			this.conn.on( 'notification', handleNotifications );
+		}
 		
 		// Reference for handler
 		let selfConn = this.conn;
@@ -1734,8 +1741,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{	
 						Workspace.startupSequenceRegistered = true;
 						
-						// Reload the docks
+						// Reload the docks here
 						Workspace.reloadDocks();
+						
 						
 						// In single tasking mode, we just skip
 						if( Workspace.isSingleTask )
@@ -1755,6 +1763,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							{
 								friendApp.reveal();
 							}
+													
 							return;
 						}
 						
@@ -6746,7 +6755,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							{
 								OpenWindowByFileinfo( d, false );
 							}
-						}
+						},
+						invisible: !( Workspace.userLevel == 'admin' )
 					},
 					{
 						divider: true
@@ -8523,7 +8533,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				Notify(	{
 					title: i18n( 'i18n_paste_error' ),
-					text: 'Really unexpected error. Contact your Friendly administrator.'
+					text: 'Really unexpected error. Contact your Friend OS administrator.'
 				} );
 			}
 		}
