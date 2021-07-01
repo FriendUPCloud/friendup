@@ -6755,7 +6755,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							{
 								OpenWindowByFileinfo( d, false );
 							}
-						}
+						},
+						invisible: !( Workspace.userLevel == 'admin' )
 					},
 					{
 						divider: true
