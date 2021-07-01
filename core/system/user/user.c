@@ -137,6 +137,27 @@ int UserRemoveSession( User *usr, void *ls )
 	
 	if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 	{
+		UserSessListEntry *newRoot = NULL;
+		UserSessListEntry *actus = (UserSessListEntry *)usr->u_SessionsList;
+		while( actus != NULL )
+		{
+			UserSessListEntry *curus = actus;
+			actus = (UserSessListEntry *)actus->node.mln_Succ;
+			if( curus->us == remses )
+			{
+				usr->u_SessionsNr--;
+				FFree( curus );
+				//break;
+			}
+			else
+			{
+				curus->node.mln_Succ = (MinNode *)newRoot;
+				newRoot = curus;
+			}
+		}
+		
+		usr->u_SessionsList = newRoot;
+		/*
 		UserSessListEntry *actus = (UserSessListEntry *)usr->u_SessionsList;
 		UserSessListEntry *prevus = actus;
 		FBOOL removed = FALSE;
@@ -179,7 +200,7 @@ int UserRemoveSession( User *usr, void *ls )
 		{
 			usr->u_SessionsList = NULL;
 		}
-		
+		*/
 		retVal = usr->u_SessionsNr;
 		FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 	}
@@ -272,6 +293,55 @@ void UserDelete( User *usr )
 		pthread_mutex_destroy( &(usr->u_Mutex) );
 		
 		FFree( usr );
+	}
+}
+
+/**
+ * Remove User connected sessions
+ *
+ * @param usr pointer to root User
+ * @param release says if sessionentry should be removed or only pointer to user in a session should be removed
+ */
+void UserRemoveConnectedSessions( User *usr, FBOOL release )
+{
+	
+	if( FRIEND_MUTEX_LOCK(&usr->u_Mutex) == 0 )
+	{
+		usr->u_InUse++;
+		FRIEND_MUTEX_UNLOCK(&usr->u_Mutex);
+	}
+	UserSessListEntry *us = (UserSessListEntry *)usr->u_SessionsList;
+	UserSessListEntry *delus = us;
+	
+	if( release )
+	{
+		while( us != NULL )
+		{
+			delus = us;
+			us = (UserSessListEntry *)us->node.mln_Succ;
+		
+			UserSession *locses = (UserSession *)delus->us;
+			locses->us_User = NULL;
+			FFree( delus );
+		}
+		usr->u_SessionsList = NULL;
+	}
+	else
+	{
+		while( us != NULL )
+		{
+			delus = us;
+			us = (UserSessListEntry *)us->node.mln_Succ;
+		
+			UserSession *locses = (UserSession *)delus->us;
+			locses->us_User = NULL;
+		}
+	}
+	
+	if( FRIEND_MUTEX_LOCK(&usr->u_Mutex) == 0 )
+	{
+		usr->u_InUse--;
+		FRIEND_MUTEX_UNLOCK(&usr->u_Mutex);
 	}
 }
 

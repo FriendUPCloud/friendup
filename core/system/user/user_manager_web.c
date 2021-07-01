@@ -28,7 +28,7 @@
 //test
 //#undef __DEBUG
 
-int killUserSession( SystemBase *l, UserSession *ses )
+int killUserSession( SystemBase *l, UserSession *ses, FBOOL remove )
 {
 	int error = 0;
 	char tmpmsg[ 2048 ];
@@ -69,7 +69,10 @@ int killUserSession( SystemBase *l, UserSession *ses )
 		usleep( 1000 );
 	}
 	
-	error = USMUserSessionRemove( l->sl_USM, ses );	
+	if( remove == TRUE  )
+	{
+		error = USMUserSessionRemove( l->sl_USM, ses );	
+	}
 	return error;
 }
 
@@ -808,7 +811,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			args = el->hme_Data;//UrlDecodeToMem( el->data );
 		}
 		
-		if( loggedSession->us_User->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
+		if( IS_ADMIN_SESSION( loggedSession ) || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 		{
 			if( id > 0 )
 			{
@@ -1293,9 +1296,12 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		else
 		{
 			haveAccess = TRUE;
-			id = loggedSession->us_User->u_ID;
-			userFromSession = TRUE;
-			logusr = loggedSession->us_User;
+			if( loggedSession->us_User != NULL )
+			{
+				id = loggedSession->us_User->u_ID;
+				userFromSession = TRUE;
+				logusr = loggedSession->us_User;
+			}
 		}
 		
 		if( haveAccess == TRUE )
@@ -1542,7 +1548,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				args = el->hme_Data;
 			}
 			
-			if( loggedSession->us_User->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
+			if( IS_ADMIN_SESSION( loggedSession ) || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 			{
 				haveAccess = TRUE;
 			
@@ -1689,7 +1695,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		
 		HashmapElement *el = HttpGetPOSTParameter( request, "sessionid" );
 		
-		if( loggedSession->us_User->u_IsAdmin == TRUE )
+		if( IS_ADMIN_SESSION( loggedSession ) )
 		{
 			if( el == NULL )
 			{
@@ -1808,7 +1814,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		User *logusr = NULL;
 		logusr = loggedSession->us_User;
 		
-		if( loggedSession->us_User->u_IsAdmin == TRUE )
+		if( IS_ADMIN_SESSION( loggedSession ) )
 		{
 			// only when you are admin you can change stuff on other user accounts
 			if( usrname != NULL )
@@ -1971,7 +1977,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			UserSession *ses = USMGetSessionBySessionID( l->sl_USM, sessionid );
 			if( ses != NULL )
 			{
-				killUserSession( l, ses );
+				killUserSession( l, ses, TRUE );
 			}
 		}
 		else if( deviceid != NULL && usrname != NULL )
@@ -2065,62 +2071,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			// we are going through users and their sessions
 			// if session is active then its returned
 			
-			time_t  timestamp = time( NULL );
-			
-			int pos = 0;
-			User *usr = l->sl_UM->um_Users;
-			while( usr != NULL )
-			{
-				//DEBUG("[UMWebRequest] Going through users, user: %s\n", usr->u_Name );
-				
-				UserSessListEntry *usl = usr->u_SessionsList;
-				while( usl != NULL )
-				{
-					UserSession *locses = (UserSession *)usl->us;
-					if( locses != NULL )
-					{
-						FBOOL add = FALSE;
-						DEBUG("[UMWebRequest] Going through sessions, device: %s\n", locses->us_DeviceIdentity );
-						
-						if( ( (timestamp - locses->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) && locses->us_WSD != NULL )
-						{
-							add = TRUE;
-						}
-						
-						if( usersOnly == TRUE )
-						{
-							char newuser[ 255 ];
-							snprintf( newuser, 254, "\"%s\"", usr->u_Name );
-							
-							if( strstr( bs->bs_Buffer, newuser ) != NULL )
-							{
-								add = FALSE;
-							}
-						}
-						
-						if( add == TRUE )
-						{
-							char tmp[ 512 ];
-							int tmpsize = 0;
-
-							if( pos == 0 )
-							{
-								tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
-							}
-							else
-							{
-								tmpsize = snprintf( tmp, sizeof(tmp), ",{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
-							}
-							
-							BufStringAddSize( bs, tmp, tmpsize );
-							
-							pos++;
-						}
-					}
-					usl = (UserSessListEntry *)usl->node.mln_Succ;
-				}
-				usr = (User *)usr->node.mln_Succ;
-			}
+			UMGetAllActiveUsers( l->sl_UM, bs, usersOnly );
 			
 			BufStringAdd( bs, "]}");
 			
@@ -2175,66 +2126,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			// we are going through users and their sessions
 			// if session is active then its returned
 			
-			time_t  timestamp = time( NULL );
-			
-			int pos = 0;
-			User *usr = l->sl_UM->um_Users;
-			while( usr != NULL )
-			{
-				DEBUG("[UMWebRequest] Going through users, user: %s\n", usr->u_Name );
-				
-				FRIEND_MUTEX_LOCK( &usr->u_Mutex );
-				UserSessListEntry  *usl = usr->u_SessionsList;
-				while( usl != NULL )
-				{
-					UserSession *locses = (UserSession *)usl->us;
-					if( locses != NULL )
-					{
-						FBOOL add = FALSE;
-						//DEBUG("[UMWebRequest] Going through sessions, device: %s time %lu timeout time %lu WS ptr %p\n", locses->us_DeviceIdentity, (long unsigned int)(timestamp - locses->us_LoggedTime), l->sl_RemoveSessionsAfterTime, locses->us_WSClients );
-						
-						if( ( (timestamp - locses->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) && locses->us_WSD != NULL )
-						{
-							add = TRUE;
-						}
-						
-						if( usersOnly == TRUE )
-						{
-							char newuser[ 255 ];
-							sprintf( newuser, "\"%s\"", usr->u_Name );
-							
-							if( strstr( bs->bs_Buffer, newuser ) != NULL )
-							{
-								add = FALSE;
-							}
-						}
-						
-						if( add == TRUE )
-						{
-							char tmp[ 512 ];
-							int tmpsize = 0;
-							
-							if( pos == 0 )
-							{
-								tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
-							}
-							else
-							{
-								tmpsize = snprintf( tmp, sizeof(tmp), ",{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
-							}
-							
-							BufStringAddSize( bs, tmp, tmpsize );
-							
-							pos++;
-						}
-					}
-					usl = (UserSessListEntry *)usl->node.mln_Succ;
-				}
-				FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
-				
-				usr = (User *)usr->node.mln_Succ;
-			}
-			
+			UMGetAllActiveWSUsers( l->sl_UM, bs, usersOnly );
+
 			BufStringAdd( bs, "]}");
 			
 			HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );

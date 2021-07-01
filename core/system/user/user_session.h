@@ -113,6 +113,12 @@ void UserSessionInit( UserSession *us );
 
 int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msglen, int type );
 
+//
+//
+//
+
+#define IS_ADMIN_SESSION( ses ) \
+	(ses->us_User != NULL && ses->us_User->u_IsAdmin == TRUE)
 
 
 static FULONG UserSessionDesc[] = { 

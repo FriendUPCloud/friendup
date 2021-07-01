@@ -498,6 +498,8 @@ UserSession *USMUserSessionAddToList( UserSessionManager *smgr, UserSession *s )
 			remSess = actSess;
 			actSess = (UserSession *)actSess->node.mln_Succ;
 			
+			//UserRemoveSession( remSess->us_User, remSess );
+			
 			USMGetSessionsDeleteDB( smgr, remSess->us_SessionID );
 			UserSessionDelete( remSess );
 		}

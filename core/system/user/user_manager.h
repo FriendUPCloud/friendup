@@ -238,4 +238,16 @@ int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname );
 
 int UMInitUsers( UserManager *um );
 
+//
+//
+//
+
+int UMGetAllActiveUsers( UserManager *um, BufString *bs, FBOOL usersOnly );
+
+//
+//
+//
+
+int UMGetAllActiveWSUsers( UserManager *um, BufString *bs, FBOOL usersOnly );
+
 #endif //__SYSTEM_USER_USER_MANAGER_H__

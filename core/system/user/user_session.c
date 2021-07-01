@@ -92,21 +92,7 @@ void UserSessionDelete( UserSession *us )
 			{
 				break;
 			}
-			/*
-			else
-			{
-				count++;
-				if( count > 50 )
-				{
-					//Log( FLOG_INFO, "UserSessionDelete: number of working functions on user session: %d  sessionid: %s\n", us->us_InUseCounter, us->us_SessionID );
-#ifdef USE_WORKERS
-					WorkerManagerDebug( SLIB );
-#endif
-					count = 0;
-					break;
-				}
-			}
-			*/
+
 			DEBUG( "[UserSessionDelete] Trying to wait for use counter to be <= 0\n" );
 			usleep( 1000 );
 		}

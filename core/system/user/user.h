@@ -272,6 +272,12 @@ void UserRemoveFromGroups( User *u );
 FBOOL UserIsInGroup( User *usr, FULONG gid );
 
 //
+//
+//
+
+void UserRemoveConnectedSessions( User *usr, FBOOL release );
+
+//
 // SQL structure
 //
 
