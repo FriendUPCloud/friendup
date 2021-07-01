@@ -628,6 +628,8 @@ function updateFriendAccount( $username, $password, $publickey, $nounce, $i_hash
 							saveAvatar( $creds->ID, 'https://lh3.googleusercontent.com/' . $i_hash );
 						}
 						
+						sendFriendEmail( $usr );
+						
 						$data = '{"result":"1","response":"Friend account created or updated successfully ..."}';
 					}
 				}
@@ -652,6 +654,44 @@ function updateFriendAccount( $username, $password, $publickey, $nounce, $i_hash
 		return [ 'fail', $error ];
 	}
 	
+}
+
+function sendFriendMail( $user )
+{
+	
+	if( $Config = parse_ini_file( SCRIPT_LOGIN_PATH . '/../../../cfg/cfg.ini', true ) )
+	{
+		$dbo = initDBO();
+		
+		$qua = new dbIO( 'UserQuarantine' );
+		$qua->UserID   = $user->ID;
+		$qua->Type     = 'External';
+		$qua->Fullname = $user->FullName;
+		$qua->Username = $user->Name;
+		$qua->Email    = $user->Email;
+		if( !$qua->Load() )
+		{
+			$qua->DateCreated = time();
+		}
+		
+		if( $qua->Save() )
+		{
+			$db = new dbIO( 'FMailOutgoing', $dbo );
+			$db->UserID = $qua->UserID;
+			$db->From = $Config[ 'FriendMail' ][ 'friendmail_user' ];
+			$db->To = $qua->Email;
+			if( !$db->Load() )
+			{
+				$db->Date = date( 'Y-m-d H:i:s' );
+				$db->Save();
+			}
+			
+			return true;
+		}
+			
+	}
+	
+	return false;
 }
 
 function verifyFriendAuth( $username, $publickey, $nonce = false, $deviceid = '', $invitehash = false )
