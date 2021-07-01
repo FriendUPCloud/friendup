@@ -628,7 +628,7 @@ function updateFriendAccount( $username, $password, $publickey, $nounce, $i_hash
 							saveAvatar( $creds->ID, 'https://lh3.googleusercontent.com/' . $i_hash );
 						}
 						
-						sendFriendEmail( $usr );
+						sendFriendMail( $usr );
 						
 						$data = '{"result":"1","response":"Friend account created or updated successfully ..."}';
 					}
