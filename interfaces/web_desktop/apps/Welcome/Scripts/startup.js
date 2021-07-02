@@ -11,8 +11,10 @@
 Application.run = function( msg )
 {
 	//maybe do other stuff here.... and then:
-	Application.showWelcome();
-	console.log( msg );
+	setTimeout( function()
+	{
+		Application.showWelcome();
+	}, 720 );
 };
 
 Application.showWelcome = function()
