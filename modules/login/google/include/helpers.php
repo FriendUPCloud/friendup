@@ -831,6 +831,9 @@ function createFriendRelation( $data, $user, $invitehash )
 							{
 								// TODO: Could potentially make support for cross node invites based on the url field.
 								
+								$json->sourceid   = $user->UniqueID;
+								$json->sourcename = $user->Name;
+								
 								$result = remoteAuth( '/system.library/user/addrelationship?sessionid=' . $data->sessionid, 
 								[
 									'mode'       => $json->source->data->mode,
