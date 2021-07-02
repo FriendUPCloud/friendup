@@ -54,16 +54,18 @@ if( $args->command )
 			
 			if( isset( $args->args->workgroups ) && $args->args->workgroups )
 			{
-				if( !$groups = $SqlDatabase->FetchObjects( '
-					SELECT ID FROM FUserGroup 
+				if( $groups = $SqlDatabase->FetchObjects( '
+					SELECT ID, Name FROM FUserGroup 
 					WHERE Type = "Workgroup" AND ID IN ( ' . $args->args->workgroups . ' ) 
 					ORDER BY ID ASC 
 				' ) )
 				{
+					$data->workgroups = $groups;
+				}
+				else
+				{
 					die( '{"result":"fail","data":{"response":"could not find these workgroups: ' . $args->args->workgroups . '"}}' );
 				}
-				
-				$data->workgroups = $args->args->workgroups;
 			}
 			
 			$usr = new dbIO( 'FUser' );
@@ -71,14 +73,15 @@ if( $args->command )
 			if( $usr->Load() )
 			{
 				$data->userid     = $usr->ID;
+				$data->uniqueid   = $usr->UniqueID;
+				$data->username   = $usr->Name;
 				$data->fullname   = $usr->FullName;
-				$data->contactids = $usr->UniqueID;
 				
 				$f = new dbIO( 'FTinyUrl' );
 				$f->Source = ( $baseUrl . '/system.library/user/addrelationship?data=' . urlencode( json_encode( $data ) ) );
 				if( $f->Load() )
 				{
-					die( '{"result":"ok","data":{"response":"invite link found","id":"' . $f->ID . '","hash":"' . $f->Hash . '","url":"' . buildUrl( $f->Hash, $Conf, $ConfShort ) . '","expire":"' . $f->Expire . '"}}' );
+					die( '{"result":"ok","data":{"response":"invitelink found","id":"' . $f->ID . '","hash":"' . $f->Hash . '","invitelink":"' . buildUrl( $f->Hash, $Conf, $ConfShort ) . '","expire":"' . $f->Expire . '"}}' );
 				}
 			
 				$f->UserID = $User->ID;
@@ -95,11 +98,11 @@ if( $args->command )
 			
 				if( $f->ID > 0 )
 				{
-					die( '{"result":"ok","data":{"response":"invite link successfully created","id":"' . $f->ID . '","hash":"' . $f->Hash . '","url":"' . buildUrl( $f->Hash, $Conf, $ConfShort ) . '","expire":"' . $f->Expire . '"}}' );
+					die( '{"result":"ok","data":{"response":"invitelink successfully created","id":"' . $f->ID . '","hash":"' . $f->Hash . '","invitelink":"' . buildUrl( $f->Hash, $Conf, $ConfShort ) . '","expire":"' . $f->Expire . '"}}' );
 				}
 			}
 			
-			die( '{"result":"fail","data":{"response":"could not generate invite link"}}' );
+			die( '{"result":"fail","data":{"response":"could not generate invitelink"}}' );
 			
 			break;
 			
@@ -107,13 +110,15 @@ if( $args->command )
 			
 			// getinvites -> gives [{id:32,workgroups:[1,5,32,56]},{...}]
 			
-			if( $links = $SqlDatabase->FetchObjects( '
+			$found = false;
+			
+			if( $links = $SqlDatabase->FetchObjects( $q = '
 				SELECT * FROM FTinyUrl 
-				WHERE UserID = ' . $User->ID . ' AND Source LIKE "%system.library/user/addrelationship%" 
+				WHERE UserID = ' . $User->ID . ' AND Source LIKE "%/system.library/user/addrelationship%" 
 				ORDER BY ID ASC 
 			' ) )
 			{
-				$out = [];
+				$out = []; $found = true;
 				
 				foreach( $links as $f )
 				{
@@ -124,9 +129,13 @@ if( $args->command )
 							$obj = new stdClass();
 							$obj->id         = $f->ID;
 							$obj->invitelink = buildUrl( $f->Hash, $Conf, $ConfShort );
-							$obj->workgroups = ( isset( $json->source->data->workgroups ) ? explode( ',', $json->source->data->workgroups ) : []   );
-							$obj->mode       = ( isset( $json->source->data->mode       ) ? $json->source->data->mode                       : null );
-							$obj->app        = ( isset( $json->source->data->app        ) ? $json->source->data->app                        : null );
+							$obj->workgroups = ( isset( $json->source->data->workgroups ) ? $json->source->data->workgroups : [] );
+							$obj->userid     = ( isset( $json->source->data->userid     ) ? $json->source->data->userid     : null );
+							$obj->uniqueid   = ( isset( $json->source->data->uniqueid   ) ? $json->source->data->uniqueid   : null );
+							$obj->username   = ( isset( $json->source->data->username   ) ? $json->source->data->username   : null );
+							$obj->fullname   = ( isset( $json->source->data->fullname   ) ? $json->source->data->fullname   : null );
+							$obj->mode       = ( isset( $json->source->data->mode       ) ? $json->source->data->mode       : null );
+							$obj->app        = ( isset( $json->source->data->app        ) ? $json->source->data->app        : null );
 							
 							$out[] = $obj;
 						}
@@ -135,11 +144,11 @@ if( $args->command )
 				
 				if( $out )
 				{
-					die( '{"result":"ok","data":{"response":"invite links successfully fetched",invites:' . json_encode( $out ) . '}}' );
+					die( '{"result":"ok","data":{"response":"invite links successfully fetched","invites":' . json_encode( $out ) . '}}' );
 				}
 			}
 			
-			die( '{"result":"ok","data":{"response":"no invite links in database",invites:[]}}' );
+			die( '{"result":"ok","data":{"response":"no invite links in database","invites":[],"debug":"' . $q . ' [] ' . ( $found ? print_r( $links, 1 ) : '' ) . '"}}' );
 			
 			break;
 			
@@ -208,30 +217,35 @@ function decodeURL( $source = false )
 		{
 			if( $parts = explode( '?', $source ) )
 			{
-				$data->url = $parts[0];
-				
-				if( $parts[1] )
+				if( $parts[0] )
 				{
-					foreach( explode( '&', $parts[1] ) as $part )
+					$data = new stdClass();
+					
+					$data->url = $parts[0];
+				
+					if( $parts[1] )
 					{
-						if( strstr( $part, '=' ) )
+						foreach( explode( '&', $parts[1] ) as $part )
 						{
-							if( $var = explode( '=', $part ) )
+							if( strstr( $part, '=' ) )
 							{
-								if( $var[1] && ( $json = json_decode( urldecode( $var[1] ) ) ) )
+								if( $var = explode( '=', $part ) )
 								{
-									$data->{$var[0]} = $json;
-								}
-								else
-								{
-									$data->{$var[0]} = ( $var[1] ? urldecode( $var[1] ) : '' );
+									if( $var[1] && ( $json = json_decode( urldecode( $var[1] ) ) ) )
+									{
+										$data->{$var[0]} = $json;
+									}
+									else
+									{
+										$data->{$var[0]} = ( $var[1] ? urldecode( $var[1] ) : '' );
+									}
 								}
 							}
 						}
 					}
-				}
 				
-				return json_encode( $data );
+					return json_encode( $data );
+				}
 			}
 		}
 		else
