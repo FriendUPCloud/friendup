@@ -69,7 +69,7 @@ if( $args->command )
 			if( $usr->Load() )
 			{
 				$data->userid     = $usr->ID;
-				$data->username   = $usr->Name;
+				$data->fullname   = $usr->FullName;
 				$data->contactids = $usr->UniqueID;
 				
 				$f = new dbIO( 'FTinyUrl' );
