@@ -935,7 +935,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 				if( loggedSession != NULL )
 				{
 					loggedSession->us_UserID = usr->u_ID;
-					loggedSession->us_LoggedTime = time( NULL );
+					loggedSession->us_LastActionTime = time( NULL );
 				
 					UserAddSession( usr, loggedSession );
 					USMSessionSaveDB( sb->sl_USM, loggedSession );
@@ -1136,7 +1136,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		else
 		{
 			FULONG blockTime = 0;
-			if( ( sb->sl_ActiveAuthModule->CheckPassword( sb->sl_ActiveAuthModule, NULL, usr, userPassword, &blockTime ) ) == FALSE )
+			if( ( sb->sl_ActiveAuthModule->CheckPassword( sb->sl_ActiveAuthModule, NULL, usr, userPassword, &blockTime, "webdav" ) ) == FALSE )
 			{
 				struct TagItem tagsauth[] = {
 					{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
@@ -1191,7 +1191,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		}
 		
 		// authentication passed, timestamp will be updated
-		tok->wt_CreateTime = time( NULL );
+		tok->wt_CreationTime = time( NULL );
 	}
 #endif
 	

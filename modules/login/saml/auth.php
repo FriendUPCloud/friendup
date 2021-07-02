@@ -101,7 +101,7 @@ if( !function_exists( 'authoriseFriendSAMLUser' ) )
 		else
 		{
 			//create new user...
-			$insertquery = 'INSERT INTO FUser (`Name`,`Password`,`Fullname`,`Email`,`LoggedTime`,`CreatedTime`,`LoginTime`) VALUES ('
+			$insertquery = 'INSERT INTO FUser (`Name`,`Password`,`Fullname`,`Email`,`LastActionTime`,`CreationTime`,`LoginTime`) VALUES ('
 				. '\'' . mysqli_real_escape_string($dbo->_link, $uid) . '\''
 				. ',\'' . mysqli_real_escape_string($dbo->_link, '{S6}' . hash('sha256', generateSAMLUserPassword( $uid ) )  ) .'\''
 				. ',\'' . mysqli_real_escape_string($dbo->_link, $displayname) .'\''

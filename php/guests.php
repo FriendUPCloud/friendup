@@ -25,7 +25,7 @@ if( $rows = $SqlDatabase->FetchObjects( '
 	$now = mktime();
 	foreach( $rows as $row )
 	{
-		if( $row->LoggedTime + 25 < $now )
+		if( $row->LastLoginTime + 25 < $now )
 		{
 			$guest = $row;
 			break;
