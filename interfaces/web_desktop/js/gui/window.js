@@ -4256,6 +4256,7 @@ var View = function( args )
 		content = this.removeScriptsFromData( content );
 		if( !this._window )
 			return;
+			
 		let eles = this._window.getElementsByTagName( _viewType );
 		let ifr = false;
 		if( eles[0] )
@@ -4292,6 +4293,9 @@ var View = function( args )
 	{
 		let w = this;
 
+		if( !this._window )
+			return;
+			
 		let eles = this._window.getElementsByTagName( _viewType );
 		let ifr = false;
 		let appended = false;
@@ -4368,6 +4372,9 @@ var View = function( args )
 
 		if( !base )
 			base = '/';
+
+		if( !this._window )
+			return;
 
 		let eles = this._window.getElementsByTagName( _viewType );
 		let ifr = false;
