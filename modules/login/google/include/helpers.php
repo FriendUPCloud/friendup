@@ -455,7 +455,7 @@ function createFriendAccount( $json, $nounce )
 			// Create new user ...
 			
 			if( $dbo->Query( '
-			INSERT INTO FUser ( `Name`, `Password`, `PublicKey`, `Fullname`, `Email`, `LoggedTime`, `CreatedTime`, `LoginTime`, `UniqueID` ) 
+			INSERT INTO FUser ( `Name`, `Password`, `PublicKey`, `Fullname`, `Email`, `CreationTime`, `LoginTime`, `ModifyTime`, `UniqueID` ) 
 			VALUES ('
 				. ' \'' . mysqli_real_escape_string( $dbo->_link, $json->username                   ) . '\''  
 				. ',""' 
