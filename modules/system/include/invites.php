@@ -45,6 +45,8 @@ if( $args->command )
 		
 		case 'generateinvite':
 			
+			// generateinvite (args: workgroups=1,55,325,4)
+			
 			$data = new stdClass();
 			$data->app  = 'FriendChat';
 			$data->mode = 'presence';
@@ -103,13 +105,32 @@ if( $args->command )
 			
 		case 'getinvites':
 			
+			// getinvites -> gives [{id:32,workgroups:[1,5,32,56]},{...}]
+			
 			die( '[getinvites] ' . print_r( $args,1 ) );
 			
 			break;
 			
 		case 'deleteinvites':
-		
-			die( '[deleteinvites] ' . print_r( $args,1 ) );
+			
+			// deleteinvites (args: ids=1 or args: ids=1,55,2)
+			
+			if( isset( $args->args->ids ) && $args->args->ids )
+			{
+				if( $SqlDatabase->Query( 'DELETE FROM FTinyUrl WHERE IN IN (' . $args->args->ids . ') ' ) )
+				{
+					die( '{"result":"ok","data":{"response":"invite link with ids: ' . $args->args->ids . ' was successfully deleted"}}' );
+				}
+			}
+			else if( isset( $args->args->hash ) && $args->args->hash )
+			{
+				if( $SqlDatabase->Query( 'DELETE FROM FTinyUrl WHERE Hash = "' . $args->args->hash . '"' ) )
+				{
+					die( '{"result":"ok","data":{"response":"invite link with hash: ' . $args->args->hash . ' was successfully deleted"}}' );
+				}
+			}
+			
+			die( '{"result":"fail","data":{"response":"could not delete invite link(s)"}}' );
 			
 			break;
 	
