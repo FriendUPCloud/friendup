@@ -107,7 +107,39 @@ if( $args->command )
 			
 			// getinvites -> gives [{id:32,workgroups:[1,5,32,56]},{...}]
 			
-			die( '[getinvites] ' . print_r( $args,1 ) );
+			if( $links = $SqlDatabase->FetchObjects( '
+				SELECT * FROM FTinyUrl 
+				WHERE UserID = ' . $User->ID . ' AND Source LIKE "%system.library/user/addrelationship%" 
+				ORDER BY ID ASC 
+			' ) )
+			{
+				$out = [];
+				
+				foreach( $links as $f )
+				{
+					if( $f && $f->Source && $f->Hash )
+					{
+						if( $json = decodeUrl( $f->Source ) )
+						{
+							$obj = new stdClass();
+							$obj->id         = $f->ID;
+							$obj->invitelink = buildUrl( $f->Hash, $Conf, $ConfShort );
+							$obj->workgroups = ( isset( $json->source->data->workgroups ) ? explode( ',', $json->source->data->workgroups ) : []   );
+							$obj->mode       = ( isset( $json->source->data->mode       ) ? $json->source->data->mode                       : null );
+							$obj->app        = ( isset( $json->source->data->app        ) ? $json->source->data->app                        : null );
+							
+							$out[] = $obj;
+						}
+					}
+				}
+				
+				if( $out )
+				{
+					die( '{"result":"ok","data":{"response":"invite links successfully fetched",invites:' . json_encode( $out ) . '}}' );
+				}
+			}
+			
+			die( '{"result":"ok","data":{"response":"no invite links in database",invites:[]}}' );
 			
 			break;
 			
@@ -161,6 +193,54 @@ function buildURL( $hash, $conf, $confshort )
 	$conf[ 'FriendCore' ][ 'fchost' ] . $port;
 	
 	return ( $baseUrl . '/webclient/index.html#invite=' . $hash );
+}
+
+function decodeURL( $source = false )
+{
+	
+	if( $source )
+	{
+		if( !( ( strstr( $source, 'http://' ) || strstr( $source, 'https://' ) ) && strstr( $source, '?' ) ) )
+		{
+			$source = urldecode( $source );
+		}
+		if( ( strstr( $source, 'http://' ) || strstr( $source, 'https://' ) ) && strstr( $source, '?' ) )
+		{
+			if( $parts = explode( '?', $source ) )
+			{
+				$data->url = $parts[0];
+				
+				if( $parts[1] )
+				{
+					foreach( explode( '&', $parts[1] ) as $part )
+					{
+						if( strstr( $part, '=' ) )
+						{
+							if( $var = explode( '=', $part ) )
+							{
+								if( $var[1] && ( $json = json_decode( urldecode( $var[1] ) ) ) )
+								{
+									$data->{$var[0]} = $json;
+								}
+								else
+								{
+									$data->{$var[0]} = ( $var[1] ? urldecode( $var[1] ) : '' );
+								}
+							}
+						}
+					}
+				}
+				
+				return json_encode( $data );
+			}
+		}
+		else
+		{
+			return urldecode( $source );
+		}
+	}
+	
+	return false;
 }
 
 ?>
