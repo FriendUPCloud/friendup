@@ -704,7 +704,7 @@ function verifyFriendAuth( $username, $publickey, $nonce = false, $deviceid = ''
 		$dbo = initDBO();
 		
 		if( $creds = $dbo->fetchObject( '
-			SELECT fu.ID, fu.UniqueID, fu.Name, fu.Password, fu.Status FROM FUser fu 
+			SELECT fu.ID, fu.UniqueID, fu.Name, fu.FullName, fu.Password, fu.Status FROM FUser fu 
 			WHERE 
 					fu.Name      = \'' . mysqli_real_escape_string( $dbo->_link, $username  ) . '\' 
 				AND fu.PublicKey = \'' . mysqli_real_escape_string( $dbo->_link, $publickey ) . '\' 
