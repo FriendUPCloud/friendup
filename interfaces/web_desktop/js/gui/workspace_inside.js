@@ -341,6 +341,120 @@ var WorkspaceInside = {
 		if( loaded )
 			Workspace.wallpaperLoaded = true;
 	},
+	// Invite a friend to the Workspace
+	inviteFriend: function()
+	{
+		let self = this;
+		if( this.inviteView ) return this.inviteView.activate();
+		// TODO: check permissions
+		let f = new File( 'System:templates/invite.html' );
+		f.i18n();
+		f.onLoad = function( data )
+		{
+			let v = new View( {
+				title: i18n( 'i18n_invite_friend' ),
+				width: 700,
+				height: 700
+			} );
+			self.inviteView = v;
+			v.onClose = function()
+			{
+				self.inviteView = null;
+			}
+			v.setContent( data );
+			self.inviteLoadWorkgroups( '', self.getInviteCallback( 'workgroups' ) );
+			self.invitesGet( function( data )
+			{
+				console.log( 'We got these invites', data );
+			} );
+		}
+		f.load();
+	},
+	// Get the invite callback wanted
+	getInviteCallback: function( type )
+	{
+		let self = this;
+		if( type == 'workgroups' )
+		{
+			return function( data )
+			{
+				try
+				{
+					let str = data;
+					let ostr = '';
+					if( !str.length )
+					{
+						self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = '<option value="0">' + i18n( 'i18n_no_workgroups' ) + '</option>';
+						return;
+					}
+					for( let a = 0; a < str.length; a++ )
+					{
+						ostr += '<option value="' + str[a].ID + '">' + str[a].Name + '</option>';
+					}
+					self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = ostr;
+				}
+				catch( e )
+				{
+					self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = '<option value="0">' + i18n( 'i18n_no_workgroups' ) + '</option>';
+				}
+			};
+		}
+		return null;
+	},
+	// Load workgroups for invite
+	inviteLoadWorkgroups: function( keywords, callback )
+	{
+		if( !keywords ) keywords = '';
+		if( !callback ) return;
+		
+		let m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e != 'ok' )
+			{
+				return callback( false );
+			}
+			try
+			{
+				let str = JSON.parse( d );
+				if( keywords.length > 0 )
+				{
+					keywords = keywords.split( ',' );
+					let end = [];
+					for( let a = 0; a < keywords.length; a++ )
+					{
+						for( let b = 0; b < str.length; b++ )
+						{
+							if( str[b].Name.toLowerCase() == Trim( keywords[a] ).toLowerCase() )
+								end.push( str[b] );
+						}
+					}
+					return callback( end.length ? end : false );
+				}
+				
+				return callback( str );
+			}
+			catch( e ){};
+			callback( false );
+		}
+		m.execute( 'workgroups' );
+	},
+	// Get existing invites
+	invitesGet: function( callback )
+	{
+		if( !callback ) return;
+		
+		let m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e != 'ok' )
+			{
+				return callback( false );
+			}
+			callback( d );
+		}
+		m.execute( 'getinvites' );
+	},
 	// Initialize virtual workspaces
 	initWorkspaces: function()
 	{
@@ -6737,6 +6851,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						name:	i18n( 'my_account' ),
 						command: function(){ Workspace.accountSetup(); }
+					},
+					{
+						name:	i18n( 'invite_a_friend' ),
+						command: function(){ Workspace.inviteFriend(); }
 					},
 					{
 						name:	i18n( 'menu_examine_system' ),
