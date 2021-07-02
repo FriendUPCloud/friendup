@@ -363,10 +363,7 @@ var WorkspaceInside = {
 			}
 			v.setContent( data );
 			self.inviteLoadWorkgroups( '', self.getInviteCallback( 'workgroups' ) );
-			self.invitesGet( function( data )
-			{
-				console.log( 'We got these invites', data );
-			} );
+			self.invitesGet( self.getInviteCallback( 'invites' ) );
 		}
 		f.load();
 	},
@@ -399,7 +396,87 @@ var WorkspaceInside = {
 				}
 			};
 		}
+		else if( type == 'invites' )
+		{
+			return function( data )
+			{
+				if( !data )
+				{
+					data = [
+						{
+							Link: 'https://intranet.friendup.cloud/invite/372873827',
+							ID: 12,
+							Workgroups: [ { ID: 12, Name: 'Test' }, { ID: 13, Name: 'Flest' }, { ID: 14, Name: 'Vest' } ]
+						},
+						{
+							Link: 'https://intranet.friendup.cloud/invite/654356',
+							ID: 13,
+							Workgroups: false
+						},
+						{
+							Link: 'https://intranet.friendup.cloud/invite/8976987689',
+							ID: 15,
+							Workgroups: false
+						},
+						{
+							Link: 'https://intranet.friendup.cloud/invite/876979',
+							ID: 19,
+							Workgroups: [ { ID: 712, Name: 'Io' }, { ID: 153, Name: 'Gopa' } ]
+						}
+					];
+				}
+				
+				let str = '';
+				for( let a = 0; a < data.length; a++ )
+				{
+					let details = '';
+					for( let b = 0; b < data[a].Workgroups.length; b++ )
+					{
+						details += '<div class="Rounded BackgroundNegative Negative FloatLeft PaddingSmall MarginRight">' + data[a].Workgroups[b].Name + '</div>';
+					}
+					
+					str += '<div class="InviteBlock MarginBottom Rounded BackgroundLists Padding">\
+						<div class="HRow">\
+							<div class="FloatLeft Link HContent70"><input type="text" class="FullWidth LinkField" style="background: transparent; border: 0" value="' + data[a].Link + '"/></div><div class="Buttons HContent30 FloatLeft TextRight">\
+								<button type="button" class="ImageButton IconSmall fa-clipboard" onclick="let sp = this.parentNode.parentNode.querySelector( \'.LinkField\' ); sp.select(); sp.setSelectionRange(0,9999999); document.execCommand(\'copy\');"></button>\
+								<button type="button" class="ImageButton IconSmall fa-eye" onclick="let p = this.parentNode.parentNode.parentNode; if( p.classList.contains( \'Show\' ) ) { p.classList.remove( \'Show\' ); } else { p.classList.add( \'Show\' ); }"></button>\
+								<button type="button" class="ImageButton IconSmall fa-trash" onclick="Workspace.removeInvite(' + data[a].ID + ')"></button>\
+							</div>\
+						</div>\
+						<div class="HiddenDetails NoPadding\">\
+							' + details + '\
+							<br style="clear: both"/>\
+						</div>\
+					</div>';
+				}
+				self.inviteView.content.querySelector( '.InviteList' ).innerHTML = str;
+			}
+		}
 		return null;
+	},
+	// Remove an invite
+	removeInvite: function( id )
+	{
+		let self = this;
+		Confirm( 'i18n_are_you_sure', 'i18n_confirm_delete', function( data )
+		{
+			if( data.data == true )
+			{
+				let m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					if( e == 'ok' )
+					{
+						self.inviteGet( self.getInviteCallback( 'invites' ) );
+					}
+					else
+					{
+						Alert( i18n( 'i18n_failed_remove_invite' ), i18n( 'i18n_failed_remove_invite_desc' ) );
+					}
+				}
+				m.execute( 'removeinvite', { ids: id } );
+			}
+		} );
 	},
 	// Load workgroups for invite
 	inviteLoadWorkgroups: function( keywords, callback )
@@ -444,6 +521,8 @@ var WorkspaceInside = {
 	{
 		if( !callback ) return;
 		
+		callback( false );
+		return;
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
@@ -451,7 +530,13 @@ var WorkspaceInside = {
 			{
 				return callback( false );
 			}
-			callback( d );
+			try
+			{
+				let data = JSON.parse( d );
+				callback( data );
+			}
+			catch(e){};
+			callback( false );
 		}
 		m.execute( 'getinvites' );
 	},

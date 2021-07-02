@@ -172,6 +172,9 @@ i18n_add_invite                         : Legg til en invitasjon
 i18n_current_invites                    : Eksisterende invitasjoner
 i18n_invite_desc                        : Invitasjoner blir lagret som lenker du kan dele med dem du ønsker å samhandle med. Invitasjonene vil forbli aktive inntil du sletter dem.
 i18n_no_workgroups                      : Du er ikke i noen arbeidsgrupper
+i18n_confirm_delete_invite              : Når du sletter en invitasjon, så vil ikke nye brukere kunne anvende invitasjonslenken for å få seg en Friend konto.
+i18n_failed_remove_invite               : Kunne ikke slette invitasjonen
+i18n_failed_remove_invite_desc          : Vennligst ta kontakt med administratoren din hvis dette problemet fortsetter.
 
 #Default directorys for applications
 i18n_directory_Games                    : Spill
