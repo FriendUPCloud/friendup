@@ -173,6 +173,7 @@ i18n_account_setup                      : My account - setup
 i18n_add_invite                         : Add a new invite
 i18n_current_invites                    : Existing invites
 i18n_invite_desc                        : Invites are created as links that can be sent to individuals that you want to interact with. Your new invites will be active until you delete them.
+i18n_no_workgroups                      : You have no workgroups
 
 #Default directorys for applications
 i18n_directory_Games                    : Games

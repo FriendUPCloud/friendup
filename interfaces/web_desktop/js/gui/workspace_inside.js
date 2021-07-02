@@ -345,6 +345,7 @@ var WorkspaceInside = {
 	inviteFriend: function()
 	{
 		let self = this;
+		if( this.inviteView ) return this.inviteView.activate();
 		// TODO: check permissions
 		let f = new File( 'System:templates/invite.html' );
 		f.i18n();
@@ -355,17 +356,49 @@ var WorkspaceInside = {
 				width: 700,
 				height: 700
 			} );
-			v.setContent( data );
-			self.inviteLoadWorkgroups( '', function( data )
+			self.inviteView = v;
+			v.onClose = function()
 			{
-				console.log( 'We got these workgroups', data );
-			} );
+				self.inviteView = null;
+			}
+			v.setContent( data );
+			self.inviteLoadWorkgroups( '', self.getInviteCallback( 'workgroups' ) );
 			self.invitesGet( function( data )
 			{
 				console.log( 'We got these invites', data );
 			} );
 		}
 		f.load();
+	},
+	getInviteCallback: function( type )
+	{
+		let self = this;
+		if( type == 'workgroups' )
+		{
+			return function( data )
+			{
+				try
+				{
+					let str = data;
+					let ostr = '';
+					if( !str.length )
+					{
+						self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = '<option value="0">' + i18n( 'i18n_no_workgroups' ) + '</option>';
+						return;
+					}
+					for( let a = 0; a < str.length; a++ )
+					{
+						ostr += '<option value="' + str[a].ID + '">' + str[a].Name + '</option>';
+					}
+					self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = ostr;
+				}
+				catch( e )
+				{
+					self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = '<option value="0">' + i18n( 'i18n_no_workgroups' ) + '</option>';
+				}
+			};
+		}
+		return null;
 	},
 	inviteLoadWorkgroups: function( keywords, callback )
 	{
@@ -379,7 +412,28 @@ var WorkspaceInside = {
 			{
 				return callback( false );
 			}
-			callback( d );
+			try
+			{
+				let str = JSON.parse( d );
+				if( keywords.length > 0 )
+				{
+					keywords = keywords.split( ',' );
+					let end = [];
+					for( let a = 0; a < keywords.length; a++ )
+					{
+						for( let b = 0; b < str.length; b++ )
+						{
+							if( str[b].Name.toLowerCase() == Trim( keywords[a] ).toLowerCase() )
+								end.push( str[b] );
+						}
+					}
+					return callback( end.length ? end : false );
+				}
+				
+				return callback( str );
+			}
+			catch( e ){};
+			callback( false );
 		}
 		m.execute( 'workgroups' );
 	},

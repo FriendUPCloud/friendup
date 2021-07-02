@@ -10,10 +10,10 @@
 			<strong>Workgroup memberships:</strong>
 		</p>
 		<p>
-			<input type="text" class="FullWidth" placeholder="Find workgroups"/>
+			<input type="text" class="FullWidth" placeholder="Find workgroups" onkeyup="Workspace.inviteLoadWorkgroups( this.value, Workspace.getInviteCallback( 'workgroups' ) );"/>
 		</p>
 		<p>
-			<select size="8" multiple="multiple" class="FullWidth">{workgroups}</select>
+			<select size="8" multiple="multiple" class="MulSelect FullWidth">{workgroups}</select>
 		</p>
 		<p>
 			<button type="button" class="Button IconSmall fa-plus-circle">Add invite</button>
