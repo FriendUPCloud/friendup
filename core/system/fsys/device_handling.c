@@ -276,12 +276,13 @@ inline static int MountUnlock( DeviceManager *dm, User *usr )
  * 
  * @param dm pointer to DeviceManager
  * @param usr pointer to User structure to which drive will be attached
+ * @param ses session which will be used to mount drive
  * @param groupID ID of group to which user belong
  * @return error number
  * 
  **/
 
-int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, FULONG groupID )
+int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, UserSession *ses, FULONG groupID )
 {
 	int error = 0;
 	SystemBase *l = (SystemBase *)dm->dm_SB;
@@ -381,6 +382,7 @@ int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, FULONG groupID 
 						{FSys_Mount_SysBase,(FULONG)l},
 						{FSys_Mount_Config,(FULONG)config},
 						{FSys_Mount_ID, (FULONG)id},
+						{FSys_Mount_UserSession,(FULONG)ses},
 						{TAG_DONE, TAG_DONE}
 					};
 		
@@ -416,7 +418,7 @@ int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, FULONG groupID 
 						retFile->f_UserGroupID = groupID;
 						
 						retFile->f_UserID = usr->u_ID;
-						retFile->f_SessionIDPTR = usr->u_MainSessionID;
+						FileFillSessionID( retFile, ses );
 						retFile->f_Mounted = 1;
 						retFile->f_Config = StringDuplicate( config );
 						retFile->f_Visible = 1;
@@ -464,7 +466,7 @@ int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, FULONG groupID 
 //
 //
 
-static inline int MountFSNoSubMount( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError, FBOOL calledByAdmin, FBOOL notify )
+static inline int MountFSNoSubMount( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError, UserSession *us, FBOOL notify )
 {
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	int error = 0;
@@ -498,7 +500,6 @@ static inline int MountFSNoSubMount( DeviceManager *dm, struct TagItem *tl, File
 		DOSDriver *filedd = NULL;
 		struct TagItem *ltl = tl;
 		FULONG visible = 0;
-		char *sessionid = NULL;
 		FULONG dbid = 0;
 		FBOOL mount = FALSE;
 	
@@ -519,9 +520,6 @@ static inline int MountFSNoSubMount( DeviceManager *dm, struct TagItem *tl, File
 				case FSys_Mount_Name:
 					name = (char *)ltl->ti_Data;
 					break;
-				case FSys_Mount_User_SessionID:
-					sessionid = (char *)ltl->ti_Data;
-					break;
 				case FSys_Mount_ID:
 					dbid = (FULONG)ltl->ti_Data;
 					break;
@@ -541,7 +539,7 @@ static inline int MountFSNoSubMount( DeviceManager *dm, struct TagItem *tl, File
 			ltl++;
 		}
 		
-		DEBUG("Mount, sessionid passed: '%s'\n", sessionid );
+		//DEBUG("Mount, sessionid passed: '%s'\n", sessionid );
 		
 		if( usr != NULL )
 		{
@@ -876,15 +874,8 @@ AND f.Name = '%s'",
 					{
 						INFO("[MountFS] %s - Root device was on the list, mounted (%s)\n", usr->u_Name, name );
 						f->f_Mounted = mount;
-						// Renew the session
-						//if( f->f_SessionID ){ FFree( f->f_SessionID );}
-						// Using sentinel if that's the case
-						//if( usingSentinel ){ f->f_SessionID = StringDuplicate( sent->s_User->u_MainSessionID  );}
-						// Just use the session id
-						//else{ f->f_SessionID = StringDuplicate( sessionid );}
-					
-						if( usingSentinel ){ f->f_SessionIDPTR = sent->s_User->u_MainSessionID; }
-						else{ f->f_SessionIDPTR = sessionid;}
+
+						FileFillSessionID( f, us ); 
 					
 						f->f_ID = id;
 						if( f->f_FSysName != NULL ){ FFree( f->f_FSysName );}
@@ -947,7 +938,7 @@ AND f.Name = '%s'",
 			//{FSys_Mount_Execute,(FULONG)execute},
 			{FSys_Mount_UserGroup, (FULONG)usrgrp},
 			{FSys_Mount_ID, (FULONG)id},
-			{FSys_Mount_AdminRights,(FULONG)calledByAdmin},
+			{FSys_Mount_UserSession,(FULONG)us},
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -1010,7 +1001,7 @@ AND f.Name = '%s'",
 				}
 				
 				retFile->f_UserID = dbUserID;
-				retFile->f_SessionIDPTR = usr->u_MainSessionID;
+				FileFillSessionID( retFile, us ); 
 				retFile->f_UserGroupID = userGroupID;
 				retFile->f_ID = id;
 				retFile->f_Mounted = mount;
@@ -1136,11 +1127,12 @@ merror:
  * @param mfile pointer to pointer where new created door will be stored
  * @param usr pointer to user which call this function
  * @param mountError pointer where error will be stored if any
+ * @param us pointer to session which calls function
  * @param notify should other user must be notify about changes
  * @return success (0) or fail value (not equal to 0)
  */
 
-int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError, FBOOL calledByAdmin, FBOOL notify )
+int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError, UserSession *us, FBOOL notify )
 {
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	int error = 0;
@@ -1175,7 +1167,6 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 		DOSDriver *filedd = NULL;
 		struct TagItem *ltl = tl;
 		FULONG visible = 0;
-		char *sessionid = NULL;
 		FULONG dbid = 0;
 		FBOOL mount = FALSE;
 	
@@ -1196,9 +1187,6 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 				case FSys_Mount_Name:
 					name = (char *)ltl->ti_Data;
 					break;
-				case FSys_Mount_User_SessionID:
-					sessionid = (char *)ltl->ti_Data;
-					break;
 				case FSys_Mount_ID:
 					dbid = (FULONG)ltl->ti_Data;
 					break;
@@ -1218,7 +1206,7 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 			ltl++;
 		}
 		
-		DEBUG("Mount, sessionid passed: '%s'\n", sessionid );
+		DEBUG("Mount, sessionid passed: '%s'\n", us->us_SessionID );
 		
 		if( usr != NULL )
 		{
@@ -1554,15 +1542,8 @@ AND f.Name = '%s'",
 					{
 						INFO("[MountFS] %s - Root device was on the list, mounted (%s)\n", usr->u_Name, name );
 						f->f_Mounted = mount;
-						// Renew the session
-						//if( f->f_SessionID ){ FFree( f->f_SessionID );}
-						// Using sentinel if that's the case
-						//if( usingSentinel ){ f->f_SessionID = StringDuplicate( sent->s_User->u_MainSessionID  );}
-						// Just use the session id
-						//else{ f->f_SessionID = StringDuplicate( sessionid );}
-					
-						if( usingSentinel ){ f->f_SessionIDPTR = sent->s_User->u_MainSessionID; }
-						else{ f->f_SessionIDPTR = sessionid;}
+						
+						FileFillSessionID( f, us );
 					
 						f->f_ID = id;
 						if( f->f_FSysName != NULL ){ FFree( f->f_FSysName );}
@@ -1625,9 +1606,14 @@ AND f.Name = '%s'",
 			//{FSys_Mount_Execute,(FULONG)execute},
 			{FSys_Mount_UserGroup, (FULONG)usrgrp},
 			{FSys_Mount_ID, (FULONG)id},
-			{FSys_Mount_AdminRights,(FULONG)calledByAdmin},
+			{FSys_Mount_UserSession,(FULONG)us},
 			{TAG_DONE, TAG_DONE}
 		};
+		
+		/*
+		case FSys_Mount_User_SessionID:
+					sessionid 
+		 */
 		
 		//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 	
@@ -1687,7 +1673,7 @@ AND f.Name = '%s'",
 				}
 				
 				retFile->f_UserID = dbUserID;
-				retFile->f_SessionIDPTR = usr->u_MainSessionID;
+				FileFillSessionID( retFile, us );
 				retFile->f_UserGroupID = userGroupID;
 				retFile->f_ID = id;
 				retFile->f_Mounted = mount;
@@ -1786,7 +1772,7 @@ AND f.Name = '%s'",
 
 							MountUnlock( dm, usr );
 							File *dstFile = NULL;
-							if( MountFSNoSubMount( dm, tl, &dstFile, tmpUser, mountError, calledByAdmin, notify ) != 0 )
+							if( MountFSNoSubMount( dm, tl, &dstFile, tmpUser, mountError, us, notify ) != 0 )
 							{
 								Log( FLOG_INFO, "[MountFS] -- Could not mount device for user %s. Drive was %s. Pointer to dstFile: %p\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--", dstFile );
 								if( dstFile != NULL )
@@ -1907,6 +1893,7 @@ int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile, char **m
 	
 		//
 		// Get FSys Type to mount
+		//
 	
 		while( ltl->ti_Tag != TAG_DONE )
 		{
@@ -1923,8 +1910,6 @@ int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile, char **m
 					break;
 				case FSys_Mount_Mount:
 					mount = (FULONG)ltl->ti_Data;
-					break;
-				case FSys_Mount_User_SessionID:
 					break;
 				case FSys_Mount_UserID:
 					uid = (FULONG)ltl->ti_Data;
@@ -1983,9 +1968,7 @@ int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile, char **m
 					INFO("[MountFSNoUser] Root device was on the list, mounted (%s)\n", name );
 					f->f_Mounted = mount;
 					// Renew the session
-					//if( f->f_SessionID ) FFree( f->f_SessionID );
-					//f->f_SessionID = StringDuplicate( us->us_SessionID );
-					f->f_SessionIDPTR = us->us_SessionID;
+					FileFillSessionID( f, us );
 
 					// Set structure to caller
 					if( mfile ) *mfile = f;
@@ -2205,7 +2188,7 @@ ug.UserID = '%ld' \
 )\
 ", name, usr->u_ID, usr->u_ID );
 
-				if( DeviceUnMount( dm, remdev, usr ) != 0 )
+				if( DeviceUnMount( dm, remdev, usr, loggedSession ) != 0 )
 				//if( fsys->UnMount( remdev->f_FSys, remdev, usr ) != 0 )
 				{
 					FERROR("[UnMountFS] ERROR: Cannot unmount device\n");
@@ -2281,20 +2264,11 @@ ug.UserID = '%ld' \
 								
 									DEBUG( "[UnMountFS] Freeing this defunct device: %s (%s)\n", name, tmpUser->u_Name );
 								
-									DeviceUnMount( dm, search, usr );
+									DeviceUnMount( dm, search, tmpUser, loggedSession );
 									//fsys->UnMount( search->f_FSys, search, usr );
 								
 									FileDelete( search );
-									/*
-									// Free up some
-									//if( search->f_SessionID ) FFree( search->f_SessionID );
-									if( search->f_Config ) FFree( search->f_Config );
-									if( search->f_FSysName ) FFree( search->f_FSysName );
-									if( search->f_Execute ) FFree( search->f_Execute );
-									if( search->f_DevServer ) FFree( search->f_DevServer );
-									FFree( search );
-									*/
-								
+
 									int doBreak = 0;
 								
 									// First item
@@ -2551,12 +2525,13 @@ ug.UserID = '%ld' \
  * @param sqllib pointer to sql.library
  * @param fsysid filesystem id
  * @param uid user ID to which device is assigned
+ * @param us pointer to User Session
  * @param devname device name
  * @param mountError pointer to place where error string will be stored
  * @return when device exist and its avaiable then pointer to it is returned
  */
 
-File *GetUserDeviceByFSysUserIDDevName( DeviceManager *dm, SQLLibrary *sqllib, FULONG fsysid, FULONG uid, const char *devname, char **mountError )
+File *GetUserDeviceByFSysUserIDDevName( DeviceManager *dm, SQLLibrary *sqllib, FULONG fsysid, FULONG uid, UserSession *us, const char *devname, char **mountError )
 {
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	File *device = NULL;
@@ -2623,8 +2598,6 @@ WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where User
 		
 		// Done fetching sessionid =)
 		
-		char *masterSession = NULL;
-		
 		char *path = StringDuplicate( row[ 4 ] );
 		char *type = StringDuplicate( row[ 1 ] );
 		char *name = StringDuplicate( row[ 0 ] );
@@ -2639,14 +2612,13 @@ WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where User
 		
 		if( tuser != NULL )
 		{
-			masterSession = tuser->u_MainSessionID;
 			struct TagItem tags[] = {
 				{FSys_Mount_Path, (FULONG)path},
 				{FSys_Mount_Server, (FULONG)NULL},
 				{FSys_Mount_Port, (FULONG)NULL},
 				{FSys_Mount_Type, (FULONG)type},
 				{FSys_Mount_Name, (FULONG)name},
-				{FSys_Mount_User_SessionID, (FULONG)masterSession },
+				{FSys_Mount_UserSession, (FULONG)us },
 				//{FSys_Mount_User_SessionID, (FULONG)tuser->u_ID },
 				{FSys_Mount_Owner, (FULONG)owner },
 				{FSys_Mount_ID, (FULONG)id },
@@ -2655,7 +2627,7 @@ WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where User
 				{TAG_DONE, TAG_DONE}
 			};
 
-			int err = MountFS( dm, (struct TagItem *)&tags, &device, tuser, mountError, tuser->u_IsAdmin, TRUE );
+			int err = MountFS( dm, (struct TagItem *)&tags, &device, tuser, mountError, us, TRUE );
 			if( err != 0 )
 			{
 				if( l->sl_Error == FSys_Error_DeviceAlreadyMounted )
@@ -2971,16 +2943,18 @@ int MountDoorByRow( DeviceManager *dm, User *usr, char **row, User *mountUser __
  * Refresh user disk (difference between DB and FC)
  *
  * @param dm pointer to DeviceManager
- * @param u pointer to user which call this function
+ * @param us pointer to user session which call this function
  * @param bs pointer to BufferString when results will be stored
  * @param mountError pointer to place where error will be stored
  * @return success (0) or fail value (not equal to 0)
  */
-int RefreshUserDrives( DeviceManager *dm, User *u, BufString *bs, char **mountError )
+int RefreshUserDrives( DeviceManager *dm, UserSession *us, BufString *bs, char **mountError )
 {
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	FULONG *ids = FCalloc( 512, sizeof( FULONG ) );
 	int idsEntries = 0;
+	
+	User *u = us->us_User;
 	
 	// ask about all drives in DB
 	
@@ -3058,23 +3032,23 @@ ug.UserID = '%lu' \
 						{
 							// type 0, server 1, path 2, port 3, username 4, password 5, config 6, id 7, name 8, execute 9
 							struct TagItem tags[] = {
-								{ FSys_Mount_Path,           (FULONG)row[ 2 ] },
-								{ FSys_Mount_Server,         (FULONG)row[ 1 ] },
-								{ FSys_Mount_Port,           (FULONG)row[ 3 ] },
-								{ FSys_Mount_Type,           (FULONG)row[ 0 ] },
-								{ FSys_Mount_Name,           (FULONG)row[ 8 ] },
-								{ FSys_Mount_User_SessionID, (FULONG)u->u_MainSessionID },
-								{ FSys_Mount_Owner,          (FULONG)u },
-								{ FSys_Mount_Mount,          (FULONG)TRUE },
-								{ FSys_Mount_SysBase,        (FULONG)l },
-								{ FSys_Mount_UserName, (FULONG)u->u_Name },
-								{ FSys_Mount_Visible,        visible == NULL ? (FULONG)1 : (FULONG)0 },
+								{ FSys_Mount_Path,				(FULONG)row[ 2 ] },
+								{ FSys_Mount_Server,			(FULONG)row[ 1 ] },
+								{ FSys_Mount_Port,				(FULONG)row[ 3 ] },
+								{ FSys_Mount_Type,				(FULONG)row[ 0 ] },
+								{ FSys_Mount_Name,				(FULONG)row[ 8 ] },
+								{ FSys_Mount_UserSession,		(FULONG)us }, // us->us_SessionID },
+								{ FSys_Mount_Owner,				(FULONG)u },
+								{ FSys_Mount_Mount,				(FULONG)TRUE },
+								{ FSys_Mount_SysBase,			(FULONG)l },
+								{ FSys_Mount_UserName,			(FULONG)u->u_Name },
+								{ FSys_Mount_Visible,			visible == NULL ? (FULONG)1 : (FULONG)0 },
 								{ TAG_DONE, TAG_DONE }
 							};
 					
 							File *mountedDev = NULL;
 					
-							int lmountError = MountFS( dm, (struct TagItem *)&tags, &mountedDev, u, mountError, u->u_IsAdmin, TRUE );
+							int lmountError = MountFS( dm, (struct TagItem *)&tags, &mountedDev, u, mountError, us, TRUE );
 					
 							if( bs != NULL )
 							{
@@ -3271,9 +3245,10 @@ int DeviceRelease( DeviceManager *dm, File *rootDev )
  * @param dm pointer to DeviceManager
  * @param rootDev pointer to device root file
  * @param usr pointer to User structure (device owner)
+ * @param ses session which will be used to unmount device
  * @return success (0) or fail value (not equal to 0)
  */
-int DeviceUnMount( DeviceManager *dm, File *rootDev, User *usr )
+int DeviceUnMount( DeviceManager *dm, File *rootDev, User *usr, UserSession *ses )
 {
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	int errRet = 0;
@@ -3295,7 +3270,8 @@ int DeviceUnMount( DeviceManager *dm, File *rootDev, User *usr )
 
 		if( fsys != NULL && fsys->UnMount != NULL )
 		{
-			rootDev->f_SessionIDPTR = usr->u_MainSessionID;
+			FileFillSessionID( rootDev, ses );
+
 			errRet = fsys->UnMount( fsys, rootDev, usr );
 		}
 		else
@@ -3316,11 +3292,12 @@ int DeviceUnMount( DeviceManager *dm, File *rootDev, User *usr )
  * Get root device by name
  *
  * @param usr user to which device belong
+ * @param ses UserSession. If passed sessionid from UserSession is assigned to device
  * @param devname device name
  * @return pointer to device (File *)
  */
 
-File *GetRootDeviceByName( User *usr, char *devname )
+File *GetRootDeviceByName( User *usr, UserSession *ses, char *devname )
 {
 	//
 	// Check mounted devices for user
@@ -3404,6 +3381,10 @@ File *GetRootDeviceByName( User *usr, char *devname )
 	{
 		FERROR( "Cannot find mounted device by name: %s\n", devname );
 	}
+	else if( ses != NULL )
+	{
+		FileFillSessionID( actDev, ses );
+	}
 	
 	return actDev;
 }
@@ -3415,11 +3396,12 @@ File *GetRootDeviceByName( User *usr, char *devname )
  * @param sqllib pointer to sql.library
  * @param usrgrp pointer to usergroup to which doors belong
  * @param usr pointer to User. If user is not in FC list it will be added
+ * @param us pointer to User Session
  * @param mountError pointer to error message
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserGroupDeviceMount( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr, char **mountError )
+int UserGroupDeviceMount( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr, UserSession *us, char **mountError )
 {
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	Log( FLOG_INFO,  "[UserGroupDeviceMount] Mount user device from Database\n");
@@ -3470,7 +3452,6 @@ usrgrp->ug_ID
 			int mount = atoi( row[ 5 ] );
 			int id = atol( row[ 7 ] );
 			int userID = atol( row[ 6 ] );
-			char *sessionID = NULL;
 			
 			// if user is not passed then we must add him, becaouse he is drive owner
 			if( usr == NULL )
@@ -3487,34 +3468,29 @@ usrgrp->ug_ID
 				}
 			}
 			
-			if( usr != NULL )
-			{
-				sessionID = usr->u_MainSessionID;
-			}
-			
-			DEBUG("Usergroup mount: pass sessionid: '%s'\n", sessionID );
+			//DEBUG("Usergroup mount: pass sessionid: '%s'\n", us->us_SessionID );
 			
 			struct TagItem tags[] = {
-				{ FSys_Mount_Path,    (FULONG)row[ 4 ] },
-				{ FSys_Mount_Server,  (FULONG)NULL },
-				{ FSys_Mount_Port,    (FULONG)NULL },
-				{ FSys_Mount_Type,    (FULONG)row[ 1 ] },
-				{ FSys_Mount_Name,    (FULONG)row[ 0 ] },
-				{ FSys_Mount_UserGroup, (FULONG)usrgrp },
-				{ FSys_Mount_Owner,   (FULONG)usr },
-				{ FSys_Mount_ID,      (FULONG)id },
-				{ FSys_Mount_Mount,   (FULONG)mount },
-				{ FSys_Mount_SysBase, (FULONG)SLIB },
-				{ FSys_Mount_User_SessionID, (FULONG)sessionID },
-				{ FSys_Mount_Visible, (FULONG)1 },     // Assume visible
-				{TAG_DONE, TAG_DONE}
+				{ FSys_Mount_Path,				(FULONG)row[ 4 ] },
+				{ FSys_Mount_Server,			(FULONG)NULL },
+				{ FSys_Mount_Port,				(FULONG)NULL },
+				{ FSys_Mount_Type,				(FULONG)row[ 1 ] },
+				{ FSys_Mount_Name,				(FULONG)row[ 0 ] },
+				{ FSys_Mount_UserGroup,			(FULONG)usrgrp },
+				{ FSys_Mount_Owner,				(FULONG)usr },
+				{ FSys_Mount_ID,				(FULONG)id },
+				{ FSys_Mount_Mount,				(FULONG)mount },
+				{ FSys_Mount_SysBase,			(FULONG)SLIB },
+				{ FSys_Mount_UserSession,		(FULONG)us },
+				{ FSys_Mount_Visible,			(FULONG)1 },     // Assume visible
+				{ TAG_DONE, TAG_DONE }
 			};
 
 			FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 
 			File *device = NULL;
 			DEBUG("[UserGroupDeviceMount] Before mounting\n");
-			int err = MountFS( dm, (struct TagItem *)&tags, &device, usr, mountError, TRUE, TRUE );
+			int err = MountFS( dm, (struct TagItem *)&tags, &device, usr, mountError, us, TRUE );
 
 			FRIEND_MUTEX_LOCK( &dm->dm_Mutex );
 

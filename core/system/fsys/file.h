@@ -204,5 +204,17 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *basepath, co
 
 int FileOrDirectoryDeleteRec( Http *request, File *srcdev, const char *src, int fod, int *numberFiles );
 
+//
+// Use proper SessionID
+//
+
+#ifndef FileFillSessionID
+#ifdef DB_SESSIONID_HASH
+#define FileFillSessionID( f, us ) f->f_SessionIDPTR = us->us_HashedSessionID;
+#else
+#define FileFillSessionID( f, us ) f->f_SessionIDPTR = us->us_SessionID; 
+#endif
+#endif // FileFillSessionID
+
 
 #endif // __SYSTEM_FSYS_FILE_H__

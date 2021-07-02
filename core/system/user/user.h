@@ -60,6 +60,7 @@ typedef struct UserLogin
 	char						*ul_Login;
 	char						*ul_Failed;
 	char						*ul_Information;
+	char						*ul_Device;
 	time_t						ul_LoginTime;
 }UserLogin;
 
@@ -67,15 +68,16 @@ typedef struct UserLogin
 //
 //
 
-static FULONG UserLoginDesc[] = { 
-	SQLT_TABNAME, (FULONG)"FUserLogin",       
+static FULONG UserLoginDesc[] = {
+	SQLT_TABNAME, (FULONG)"FUserLogin",
 	SQLT_STRUCTSIZE, sizeof( struct UserLogin ), 
-	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct UserLogin, ul_ID ), 
+	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct UserLogin, ul_ID ),
 	SQLT_INT,     (FULONG)"UserID", offsetof( struct UserLogin, ul_UserID ),
 	SQLT_STR,     (FULONG)"Login",        offsetof( struct UserLogin, ul_Login ),
 	SQLT_STR,     (FULONG)"Failed",    offsetof( struct UserLogin, ul_Failed ),
 	SQLT_STR,     (FULONG)"Information",    offsetof( struct UserLogin, ul_Information ),
 	SQLT_INT,     (FULONG)"LoginTime", offsetof( struct UserLogin, ul_LoginTime ),
+	SQLT_STR,     (FULONG)"Device",    offsetof( struct UserLogin, ul_Device ),
 	SQLT_NODE,    (FULONG)"node",        offsetof( struct UserLogin, node ),
 	SQLT_END 
 };
@@ -234,6 +236,12 @@ File *UserRemDeviceByName( User *usr, const char *name, int *error );
 //
 
 File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error );
+
+//
+//
+//
+
+File *UserGetDeviceByName( User *usr, const char *name );
 
 //
 //

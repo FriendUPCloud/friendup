@@ -1,3 +1,13 @@
+/*©agpl*************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
+*                                                                              *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
+*                                                                              *
+*****************************************************************************©*/
+
 Application.run = function( msg )
 {
 	//maybe do other stuff here.... and then:
@@ -16,23 +26,11 @@ Application.showWelcome = function()
 	
 	v.setMenuItems( [
 		{
-			name: 'Navigation',
+			name: 'File',
 			items: [
 				{
-					name: 'Welcome',
-					command: 'set_welcome'
-				},
-				{
-					name: 'Business',
-					command: 'set_business'
-				},
-				{
-					name: 'Entertainment',
-					command: 'set_entertainment'
-				},
-				{
-					name: '10 things to do',
-					command: 'set_ten'
+					name: 'Quit',
+					command: 'quit'
 				}
 			]
 		}
@@ -95,5 +93,4 @@ Application.receiveMessage = function( msg )
 		this.mainView.sendMessage( msg );
 	}
 }
-
 

@@ -218,7 +218,7 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
 //
 //
 
-int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, const char *failReason );
+int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, const char *failReason, char *devicename );
 
 //
 //
@@ -237,5 +237,11 @@ int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname );
 //
 
 int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details );
+
+//
+//
+//
+
+int UMInitUsers( UserManager *um );
 
 #endif //__SYSTEM_USER_USER_MANAGER_H__

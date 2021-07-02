@@ -960,7 +960,7 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 	AuthMod *a = SLIB->AuthModuleGet( SLIB );
 
 	DEBUG("Check password %s \n", passwordString );
-	if( a->CheckPassword(a, NULL, user, passwordString, &block_time) == FALSE )
+	if( a->CheckPassword(a, NULL, user, passwordString, &block_time, "mobileapp") == FALSE )
 	{
 		DEBUG("Check = false\n");
 		if( user != NULL )

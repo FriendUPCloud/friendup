@@ -36,6 +36,8 @@ Application.getLoginCode = function()
 	ret+= '             window.addEventListener( \'message\', function( msg ) { if( msg && msg.data.url ){ ';
 	//ret+= '			console.log( \'oauth msg: \', msg.data.url ); ';
 	
+	// https://developers.google.com/identity/protocols/oauth2/openid-connect
+	
 	ret+= '             if( msg.data.url.indexOf( \'access=\' ) >= 0 ){ ';
 	
 	ret+= '			    Application.keyData.save( ( Application.appPath ? Application.appPath.split(\':\')[0].toLowerCase() : \'googledrive\' ), msg.data.url, true, function( e, d ) {               ';
@@ -49,6 +51,7 @@ Application.getLoginCode = function()
 	ret+= '             } ';
 	ret+= '             else if( retries > 1 ) ';
 	ret+= '             { ';
+	ret+= '				console.log( \'oauth msg: \', msg.data.url ); ';
 	ret+= '             alert( \'something went wrong, contact your administrator.\' ) ';
 	ret+= '             }';
 	ret+= '             else ';
