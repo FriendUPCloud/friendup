@@ -370,6 +370,7 @@ var WorkspaceInside = {
 		}
 		f.load();
 	},
+	// Get the invite callback wanted
 	getInviteCallback: function( type )
 	{
 		let self = this;
@@ -400,6 +401,7 @@ var WorkspaceInside = {
 		}
 		return null;
 	},
+	// Load workgroups for invite
 	inviteLoadWorkgroups: function( keywords, callback )
 	{
 		if( !keywords ) keywords = '';
@@ -437,6 +439,7 @@ var WorkspaceInside = {
 		}
 		m.execute( 'workgroups' );
 	},
+	// Get existing invites
 	invitesGet: function( callback )
 	{
 		if( !callback ) return;
