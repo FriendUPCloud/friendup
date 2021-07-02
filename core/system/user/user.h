@@ -44,6 +44,7 @@
 	`Failed` varchar(255) DEFAULT NULL,
 	`Information` TEXT DEFAULT NULL,
 	`LoginTime` bigint(32) NOT NULL,
+	`Device` varchar(255) DEFAULT NULL,
 	PRIMARY KEY (`ID`)
  ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 	 */
