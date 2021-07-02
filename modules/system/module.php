@@ -261,7 +261,7 @@ if( isset( $args->command ) )
 		case 'getinvites':
 		case 'deleteinvites':
 			if( isset( $User ) )
-				require( 'modules/system/include/invite.php' );
+				require( 'modules/system/include/invites.php' );
 			break;
 		case 'ping':
 			if( isset( $UserSession ) && isset( $UserSession->UserID ) )
