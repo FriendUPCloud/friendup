@@ -341,6 +341,63 @@ var WorkspaceInside = {
 		if( loaded )
 			Workspace.wallpaperLoaded = true;
 	},
+	// Invite a friend to the Workspace
+	inviteFriend: function()
+	{
+		let self = this;
+		// TODO: check permissions
+		let f = new File( 'System:templates/invite.html' );
+		f.i18n();
+		f.onLoad = function( data )
+		{
+			let v = new View( {
+				title: i18n( 'i18n_invite_friend' ),
+				width: 700,
+				height: 700
+			} );
+			v.setContent( data );
+			self.inviteLoadWorkgroups( '', function( data )
+			{
+				console.log( 'We got these workgroups', data );
+			} );
+			self.invitesGet( function( data )
+			{
+				console.log( 'We got these invites', data );
+			} );
+		}
+		f.load();
+	},
+	inviteLoadWorkgroups: function( keywords, callback )
+	{
+		if( !keywords ) keywords = '';
+		if( !callback ) return;
+		
+		let m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e != 'ok' )
+			{
+				return callback( false );
+			}
+			callback( d );
+		}
+		m.execute( 'workgroups' );
+	},
+	invitesGet: function( callback )
+	{
+		if( !callback ) return;
+		
+		let m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e != 'ok' )
+			{
+				return callback( false );
+			}
+			callback( d );
+		}
+		m.execute( 'getinvites' );
+	},
 	// Initialize virtual workspaces
 	initWorkspaces: function()
 	{
@@ -6737,6 +6794,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						name:	i18n( 'my_account' ),
 						command: function(){ Workspace.accountSetup(); }
+					},
+					{
+						name:	i18n( 'invite_a_friend' ),
+						command: function(){ Workspace.inviteFriend(); }
 					},
 					{
 						name:	i18n( 'menu_examine_system' ),

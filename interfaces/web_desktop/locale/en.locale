@@ -165,7 +165,14 @@ i18n_file_not_shared                    : This file is not shared.
 i18n_workgroups                         : Workgroups
 i18n_users                              : Users
 my_account                              : My account
+invite_a_friend                         : Invite a friend
+i18n_invite_friend                      : Invites
 i18n_account_setup                      : My account - setup
+
+#Invites
+i18n_add_invite                         : Add a new invite
+i18n_current_invites                    : Existing invites
+i18n_invite_desc                        : Invites are created as links that can be sent to individuals that you want to interact with. Your new invites will be active until you delete them.
 
 #Default directorys for applications
 i18n_directory_Games                    : Games
