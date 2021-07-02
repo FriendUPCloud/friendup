@@ -15,8 +15,30 @@ ini_set( 'display_errors', 1 );
 
 if( $args->command )
 {
+	$Conf = parse_ini_file( 'cfg/cfg.ini', true );
 	
-	$baseUrl = ( $conf->SSLEnable ? 'https://' : 'http://' ) . $conf->FCHost . ( $conf->FCPort && $conf->ProxyEnable == 0 ? ( ':' . $conf->FCPort ) : '' );
+	$ConfShort = new stdClass();
+	$ConfShort->SSLEnable = $Conf[ 'Core' ][ 'SSLEnable' ];
+	$ConfShort->FCPort    = $Conf[ 'Core' ][ 'port' ];
+	$ConfShort->FCHost    = $Conf[ 'FriendCore' ][ 'fchost' ];
+	
+	// Base url --------------------------------------------------------------------
+	$port = '';
+	if( $ConfShort->FCHost == 'localhost' && $ConfShort->FCPort )
+	{
+		$port = ':' . $ConfShort->FCPort;
+	}
+	// Apache proxy is overruling port!
+	if( isset( $Conf[ 'Core' ][ 'ProxyEnable' ] ) &&
+		$Conf[ 'FriendCore' ][ 'ProxyEnable' ] == 1 )
+	{
+		$port = '';
+	}
+
+	$baseUrl = ( isset( $Conf[ 'Core' ][ 'SSLEnable' ] ) && 
+		$Conf[ 'Core' ][ 'SSLEnable' ] == 1 ? 'https://' : 'http://' 
+	) .
+	$Conf[ 'FriendCore' ][ 'fchost' ] . $port;
 	
 	switch( $args->command )
 	{
@@ -54,7 +76,7 @@ if( $args->command )
 				$f->Source = ( $baseUrl . '/system.library/user/addrelationship?data=' . urlencode( json_encode( $data ) ) );
 				if( $f->Load() )
 				{
-					die( '{"result":"ok","data":{"response":"source for invite link is already in database","id":"' . $f->ID . '","hash":"' . $f->Hash . '","url":"' . buildUrl( $f->Hash, $Config ) . '","expire":"' . $f->Expire . '"}}' );
+					die( '{"result":"ok","data":{"response":"invite link found","id":"' . $f->ID . '","hash":"' . $f->Hash . '","url":"' . buildUrl( $f->Hash, $Conf, $ConfShort ) . '","expire":"' . $f->Expire . '"}}' );
 				}
 			
 				$f->UserID = $User->ID;
@@ -71,7 +93,7 @@ if( $args->command )
 			
 				if( $f->ID > 0 )
 				{
-					die( '{"result":"ok","data":{"response":"invite link successfully created","id":"' . $f->ID . '","hash":"' . $f->Hash . '","url":"' . buildUrl( $f->Hash, $Config ) . '","expire":"' . $f->Expire . '"}}' );
+					die( '{"result":"ok","data":{"response":"invite link successfully created","id":"' . $f->ID . '","hash":"' . $f->Hash . '","url":"' . buildUrl( $f->Hash, $Conf, $ConfShort ) . '","expire":"' . $f->Expire . '"}}' );
 				}
 			}
 			
@@ -97,15 +119,27 @@ if( $args->command )
 
 die( '{"result":"fail","data":{"response":"fail command not recognized ..."}}' );
 
-function buildURL( $hash, $conf )
+function buildURL( $hash, $conf, $confshort )
 {
-	$proto = $conf->SSLEnable ? 'https://' : 'http://';
-	$host = $conf->FCHost;
-	$port = $conf->FCPort ? ( ':' . $conf->FCPort ) : '';
-	if( $conf->ProxyEnable == 1 )
+	
+	$port = '';
+	if( $confshort->FCHost == 'localhost' && $confshort->FCPort )
+	{
+		$port = ':' . $confshort->FCPort;
+	}
+	// Apache proxy is overruling port!
+	if( isset( $conf[ 'Core' ][ 'ProxyEnable' ] ) &&
+		$conf[ 'FriendCore' ][ 'ProxyEnable' ] == 1 )
+	{
 		$port = '';
-	$url = $proto . $host . $port . '/webclient/index.html#invite=' . $hash;
-	return $url;
+	}
+	
+	$baseUrl = ( isset( $conf[ 'Core' ][ 'SSLEnable' ] ) && 
+		$conf[ 'Core' ][ 'SSLEnable' ] == 1 ? 'https://' : 'http://' 
+	) .
+	$conf[ 'FriendCore' ][ 'fchost' ] . $port;
+	
+	return ( $baseUrl . '/webclient/index.html#invite=' . $hash );
 }
 
 ?>
