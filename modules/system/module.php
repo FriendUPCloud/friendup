@@ -257,6 +257,12 @@ if( isset( $args->command ) )
 			if( isset( $User ) )
 				require( 'modules/system/include/tinyurldata.php' );
 			break;
+		case 'generateinvite':
+		case 'getinvites':
+		case 'deleteinvites':
+			if( isset( $User ) )
+				require( 'modules/system/include/invite.php' );
+			break;
 		case 'ping':
 			if( isset( $UserSession ) && isset( $UserSession->UserID ) )
 			{
