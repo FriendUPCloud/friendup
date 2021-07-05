@@ -568,6 +568,31 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					l->LibrarySQLDrop( l, sqllib );
 					
 					loggedSession = USMGetSessionByUserID( l->sl_USM, uid );
+					if( loggedSession == NULL && userName[ 0 ] != 0 )	// only if user exist and it has servertoken
+					{
+						loggedSession = UserSessionNew( NULL, "servertoken" );
+						if( loggedSession != NULL )
+						{
+							User *usr = UMUserGetByName( l->sl_UM, userName );
+							if( usr == NULL )
+							{
+								usr = UMUserGetByNameDB( l->sl_UM, userName );
+								if( usr != NULL )
+								{
+									UMAddUser( l->sl_UM, usr );
+								}
+							}
+							else
+							{
+								loggedSession->us_UserID = usr->u_ID;
+								UserAddSession( usr, loggedSession );
+							}
+							loggedSession->us_LastActionTime = time( NULL );
+							
+							USMSessionSaveDB( l->sl_USM, loggedSession );
+							USMUserSessionAddToList( l->sl_USM, loggedSession );
+						}
+					}
 				}
 			}
 		}
