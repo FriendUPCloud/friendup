@@ -521,8 +521,6 @@ var WorkspaceInside = {
 	{
 		if( !callback ) return;
 		
-		callback( false );
-		return;
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
@@ -533,7 +531,7 @@ var WorkspaceInside = {
 			try
 			{
 				let data = JSON.parse( d );
-				callback( data );
+				return callback( data );
 			}
 			catch(e){};
 			callback( false );

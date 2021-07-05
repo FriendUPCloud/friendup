@@ -64,7 +64,7 @@ if( $args->command )
 				}
 				else
 				{
-					die( '{"result":"fail","data":{"response":"could not find these workgroups: ' . $args->args->workgroups . '"}}' );
+					die( 'fail<!--separate-->{"Response":"Could not find these workgroups: ' . $args->args->workgroups . '"}' );
 				}
 			}
 			
@@ -81,7 +81,7 @@ if( $args->command )
 				$f->Source = ( $baseUrl . '/system.library/user/addrelationship?data=' . urlencode( json_encode( $data ) ) );
 				if( $f->Load() )
 				{
-					die( '{"result":"ok","data":{"response":"invitelink found","id":"' . $f->ID . '","hash":"' . $f->Hash . '","invitelink":"' . buildUrl( $f->Hash, $Conf, $ConfShort ) . '","expire":"' . $f->Expire . '"}}' );
+					die( 'ok<!--separate-->{"Response":"Invite link found","ID":"' . $f->ID . '","Hash":"' . $f->Hash . '","Link":"' . buildUrl( $f->Hash, $Conf, $ConfShort ) . '","Expire":"' . $f->Expire . '"}' );
 				}
 			
 				$f->UserID = $User->ID;
@@ -95,14 +95,14 @@ if( $args->command )
 			
 				$f->DateCreated = strtotime( date( 'Y-m-d H:i:s' ) );
 				$f->Save();
-			
+				
 				if( $f->ID > 0 )
 				{
-					die( '{"result":"ok","data":{"response":"invitelink successfully created","id":"' . $f->ID . '","hash":"' . $f->Hash . '","invitelink":"' . buildUrl( $f->Hash, $Conf, $ConfShort ) . '","expire":"' . $f->Expire . '"}}' );
+					die( 'ok<!--separate-->{"Response":"Invite link successfully created","ID":"' . $f->ID . '","Hash":"' . $f->Hash . '","Link":"' . buildUrl( $f->Hash, $Conf, $ConfShort ) . '","Expire":"' . $f->Expire . '"}' );
 				}
 			}
 			
-			die( '{"result":"fail","data":{"response":"could not generate invitelink"}}' );
+			die( 'fail<!--separate-->{"Response":"Could not generate invite link"}' );
 			
 			break;
 			
@@ -124,18 +124,18 @@ if( $args->command )
 				{
 					if( $f && $f->Source && $f->Hash )
 					{
-						if( $json = decodeUrl( $f->Source ) )
+						if( $json = json_decode( decodeUrl( $f->Source ) ) )
 						{
 							$obj = new stdClass();
-							$obj->id         = $f->ID;
-							$obj->invitelink = buildUrl( $f->Hash, $Conf, $ConfShort );
-							$obj->workgroups = ( isset( $json->source->data->workgroups ) ? $json->source->data->workgroups : [] );
-							$obj->userid     = ( isset( $json->source->data->userid     ) ? $json->source->data->userid     : null );
-							$obj->uniqueid   = ( isset( $json->source->data->uniqueid   ) ? $json->source->data->uniqueid   : null );
-							$obj->username   = ( isset( $json->source->data->username   ) ? $json->source->data->username   : null );
-							$obj->fullname   = ( isset( $json->source->data->fullname   ) ? $json->source->data->fullname   : null );
-							$obj->mode       = ( isset( $json->source->data->mode       ) ? $json->source->data->mode       : null );
-							$obj->app        = ( isset( $json->source->data->app        ) ? $json->source->data->app        : null );
+							$obj->ID         = $f->ID;
+							$obj->Link       = buildUrl( $f->Hash, $Conf, $ConfShort );
+							$obj->Workgroups = ( isset( $json->data->workgroups ) ? $json->data->workgroups : false );
+							$obj->UserID     = ( isset( $json->data->userid     ) ? $json->data->userid     : null  );
+							$obj->UniqueID   = ( isset( $json->data->uniqueid   ) ? $json->data->uniqueid   : null  );
+							$obj->Username   = ( isset( $json->data->username   ) ? $json->data->username   : null  );
+							$obj->FullName   = ( isset( $json->data->fullname   ) ? $json->data->fullname   : null  );
+							$obj->App        = ( isset( $json->data->app        ) ? $json->data->app        : null  );
+							$obj->Mode       = ( isset( $json->data->mode       ) ? $json->data->mode       : null  );
 							
 							$out[] = $obj;
 						}
@@ -144,34 +144,34 @@ if( $args->command )
 				
 				if( $out )
 				{
-					die( '{"result":"ok","data":{"response":"invite links successfully fetched","invites":' . json_encode( $out ) . '}}' );
+					die( 'ok<!--separate-->' . json_encode( $out ) );
 				}
 			}
 			
-			die( '{"result":"ok","data":{"response":"no invite links in database","invites":[],"debug":"' . $q . ' [] ' . ( $found ? print_r( $links, 1 ) : '' ) . '"}}' );
+			die( 'ok<!--separate-->[]' );
 			
 			break;
 			
-		case 'deleteinvites':
+		case 'removeinvite':
 			
-			// deleteinvites (args: ids=1 or args: ids=1,55,2)
+			// removeinvite (args: ids=1 or args: ids=1,55,2)
 			
 			if( isset( $args->args->ids ) && $args->args->ids )
 			{
 				if( $SqlDatabase->Query( 'DELETE FROM FTinyUrl WHERE IN IN (' . $args->args->ids . ') ' ) )
 				{
-					die( '{"result":"ok","data":{"response":"invite link with ids: ' . $args->args->ids . ' was successfully deleted"}}' );
+					die( 'ok<!--separate-->{"Response":"Invite link with ids: ' . $args->args->ids . ' was successfully deleted"}' );
 				}
 			}
 			else if( isset( $args->args->hash ) && $args->args->hash )
 			{
 				if( $SqlDatabase->Query( 'DELETE FROM FTinyUrl WHERE Hash = "' . $args->args->hash . '"' ) )
 				{
-					die( '{"result":"ok","data":{"response":"invite link with hash: ' . $args->args->hash . ' was successfully deleted"}}' );
+					die( 'ok<!--separate-->{"Response":"Invite link with hash: ' . $args->args->hash . ' was successfully deleted"}' );
 				}
 			}
 			
-			die( '{"result":"fail","data":{"response":"could not delete invite link(s)"}}' );
+			die( 'fail<!--separate-->{"Response":"Could not delete invite link(s)"}' );
 			
 			break;
 	
@@ -179,7 +179,7 @@ if( $args->command )
 	
 }
 
-die( '{"result":"fail","data":{"response":"fail command not recognized ..."}}' );
+die( 'fail<!--separate-->{"Response":"Fail! command not recognized ..."}' );
 
 function buildURL( $hash, $conf, $confshort )
 {
@@ -201,6 +201,10 @@ function buildURL( $hash, $conf, $confshort )
 	) .
 	$conf[ 'FriendCore' ][ 'fchost' ] . $port;
 	
+	if( file_exists( 'php/scripts/invite.php' ) )
+	{
+		return ( $baseUrl . '/invite/' . $hash );
+	}
 	return ( $baseUrl . '/webclient/index.html#invite=' . $hash );
 }
 
