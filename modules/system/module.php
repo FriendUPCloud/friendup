@@ -253,6 +253,10 @@ if( isset( $args->command ) )
 			if( isset( $UserSession ) )
 				require( 'modules/system/include/tinyurl.php' );
 			break;
+		case 'tinyurldata':
+			if( isset( $User ) )
+				require( 'modules/system/include/tinyurldata.php' );
+			break;
 		case 'ping':
 			if( isset( $UserSession ) && isset( $UserSession->UserID ) )
 			{

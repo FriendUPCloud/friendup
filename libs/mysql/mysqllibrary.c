@@ -397,7 +397,7 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 		dptr += 3;
 	}
 
-	//"UPDATE %s set SessionID = '%s', LoggedTime = '%lld' where Name = '%s'"
+	//"UPDATE %s set SessionID = '%s', LastActionTime = '%lld' where Name = '%s'"
 	
 	int lsize = sprintf( tmpQuery, "UPDATE %s set ", (char *)descr[ 1 ] );
 	BufStringAddSize( querybs, tmpQuery, lsize );

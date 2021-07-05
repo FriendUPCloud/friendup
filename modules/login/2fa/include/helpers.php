@@ -1182,7 +1182,7 @@ function checkFriendUser( $data, $identity, $create = false )
 			{
 				
 				if( $dbo->Query( '
-				INSERT INTO FUser ( `Name`, `Password`, `PublicKey`, `Fullname`, `Email`, `LoggedTime`, `CreatedTime`, `LoginTime`, `UniqueID` ) 
+				INSERT INTO FUser ( `Name`, `Password`, `PublicKey`, `Fullname`, `Email`, `LastActionTime`, `CreationTime`, `LoginTime`, `UniqueID` ) 
 				VALUES ('
 					. ' \'' . mysqli_real_escape_string( $dbo->_link, $data->username                                  ) . '\'' 
 					. ',\'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $data->password )       ) . '\'' 

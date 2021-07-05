@@ -310,7 +310,7 @@ else if( isset( $args->args ) && strtolower( trim( $args->args->path ) ) == 'sys
 			$o->IconClass = 'DeviceSession';
 			$o->Path = 'System:Devices/Sessions/' . $o->DeviceIdentity;
 			$o->Permissions = '';
-			$o->DateModified = date( 'Y-m-d H:i:s', $o->LoggedTime );
+			$o->DateModified = date( 'Y-m-d H:i:s', $o->LastActionTime );
 			$o->DateCreated = $o->DateModified;
 			$out[] = $o;
 		}
