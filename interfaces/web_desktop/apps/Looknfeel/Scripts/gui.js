@@ -295,7 +295,7 @@ function refreshThemes()
 			setNavigationMode( dd.navigationmode ? dd.navigationmode : 'browser' );
 			setFocusMode( dd.focusmode ? dd.focusmode : 'clicktofront' );
 			setWindowListMode( dd.windowlist ? dd.windowlist : 'separate' );
-			if( dd.hiddensystem == true )
+			if( dd.hiddensystem == true && ge( 'hiddenSystem' ) )
 				ge( 'hiddenSystem' ).checked = 'checked';
 			ge( 'workspaceCount' ).value = dd.workspacecount > 0 ? dd.workspacecount : 1;
 			ge( 'scrollDesktopIcons' ).checked = dd.scrolldesktopicons == '1' ? 'checked' : '';
@@ -318,7 +318,7 @@ function refreshThemes()
 	}
 	m.execute( 'getsetting', { settings: [ 
 		'menumode', 'navigationmode', 'focusmode', 
-		'windowlist', 'hiddensystem', 'workspacecount',
+		'windowlist', /*'hiddensystem',*/ 'workspacecount',
 		'hidedesktopicons', 'scrolldesktopicons', 
 		'themedata_' + Application.theme.toLowerCase(),
 		'workspace_labels'
