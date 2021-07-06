@@ -158,7 +158,7 @@ if( $args->command )
 			
 			if( isset( $args->args->ids ) && $args->args->ids )
 			{
-				if( $SqlDatabase->Query( 'DELETE FROM FTinyUrl WHERE IN IN (' . $args->args->ids . ') ' ) )
+				if( $SqlDatabase->Query( 'DELETE FROM FTinyUrl WHERE ID IN (' . $args->args->ids . ') ' ) )
 				{
 					die( 'ok<!--separate-->{"Response":"Invite link with ids: ' . $args->args->ids . ' was successfully deleted"}' );
 				}

@@ -460,14 +460,14 @@ var WorkspaceInside = {
 		let self = this;
 		Confirm( 'i18n_are_you_sure', 'i18n_confirm_delete', function( data )
 		{
-			if( data.data == true )
+			if( data == true )
 			{
 				let m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
 					if( e == 'ok' )
 					{
-						self.inviteGet( self.getInviteCallback( 'invites' ) );
+						self.invitesGet( self.getInviteCallback( 'invites' ) );
 					}
 					else
 					{
