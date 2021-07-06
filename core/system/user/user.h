@@ -140,7 +140,7 @@ typedef struct User
 	UserSessListEntry			*u_SessionsList;
 	FULONG						u_Status;						// user status
 
-	char						*u_MainSessionID;				// session id ,  generated only when user is taken from db
+	//char						*u_MainSessionID;				// session id ,  generated only when user is taken from db
 	time_t						u_LastActionTime;       		// last action time
 	time_t						u_CreationTime;					// when user strcture was created
 	time_t						u_LoginTime;					// last login time
@@ -287,7 +287,7 @@ static FULONG UserDesc[] = {
 	SQLT_STR,			(FULONG)"Fullname",			offsetof( struct User, u_FullName ),
 	SQLT_STR,			(FULONG)"Email",			offsetof( struct User, u_Email ),
 	SQLT_STR,			(FULONG)"Timezone",			offsetof( struct User, u_Timezone ),
-	SQLT_STR,			(FULONG)"SessionID",		offsetof( struct User, u_MainSessionID ),
+	//SQLT_STR,			(FULONG)"SessionID",		offsetof( struct User, u_MainSessionID ),
 	SQLT_INT,			(FULONG)"LastActionTime",	offsetof( struct User, u_LastActionTime ),
 	SQLT_INT,			(FULONG)"CreationTime",		offsetof( struct User, u_CreationTime ),
 	SQLT_INT,			(FULONG)"ModifyTime",		offsetof( struct User, u_ModifyTime ),
