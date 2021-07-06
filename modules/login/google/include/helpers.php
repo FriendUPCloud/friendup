@@ -1374,13 +1374,14 @@ function updateLanguages( $userid, $lang )
 	
 		$voice = false;
 	
-		foreach( $langs as $v )
+		// TODO: Too early to check languages
+		/*foreach( $langs as $v )
 		{
 			if( strtolower( trim( $v ) ) == strtolower( trim( $lang ) ) )
 			{
 				$voice = '{"spokenLanguage":"' . $lang . '","spokenAlternate":"' . $lang . '"}';
 			}
-		}
+		}*/
 		
 		if( !$voice )
 		{
