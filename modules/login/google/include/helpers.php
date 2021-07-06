@@ -507,7 +507,7 @@ function createFriendAccount( $json, $nounce )
 					
 					if( $json->locale )
 					{
-						updateLanguages( $creds->ID, $json->locale );
+						updateLanguages( $creds->ID, 'en' ); //$json->locale );
 					}
 					
 					addCustomDockItem( $creds->ID, null, 'https://mail.google.com/mail/u/0/#inbox', 'Gmail', 'gfx/weblinks/icon_gmail.png' );
@@ -1563,7 +1563,7 @@ function applySetup( $userid, $id )
 							$lang->Type = 'system';
 							$lang->Key = 'locale';
 							$lang->Load();
-							$lang->Data = $ug->Data->language;
+							$lang->Data = 'en'; //$ug->Data->language;
 							$lang->Save();
 							
 							$debug[$uid]->language = ( $lang->ID > 0 ? $lang->Data : false );
