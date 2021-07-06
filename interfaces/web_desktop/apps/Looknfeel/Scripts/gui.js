@@ -353,9 +353,9 @@ function applyTheme()
 				var m5 = new Module( 'system' );
 				m5.onExecuted = function()
 				{
-					var m6 = new Module( 'system' );
-					m6.onExecuted = function()
-					{
+					//var m6 = new Module( 'system' );
+					//m6.onExecuted = function()
+					//{
 						var m7 = new Module( 'system' );
 						m7.onExecuted = function()
 						{
@@ -403,8 +403,8 @@ function applyTheme()
 							m8.execute( 'setsetting', { setting: 'scrolldesktopicons', data: ge( 'scrollDesktopIcons' ).checked ? '1': '0' } );
 						}
 						m7.execute( 'setsetting', { setting: 'workspacecount', data: ge( 'workspaceCount' ).value } );
-					}
-					m6.execute( 'setsetting', { setting: 'hiddensystem', data: ge( 'hiddenSystem' ).checked ? 'true' : 'false' } );
+					//}
+					//m6.execute( 'setsetting', { setting: 'hiddensystem', data: ge( 'hiddenSystem' ).checked ? 'true' : 'false' } );
 				}
 				m5.execute( 'setsetting', { setting: 'windowlist', data: getWindowListMode() } );
 			}
