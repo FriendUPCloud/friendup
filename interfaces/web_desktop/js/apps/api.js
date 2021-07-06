@@ -1353,6 +1353,7 @@ function receiveEvent( event, queued )
 						authId:        dataPacket.authId,
 						sessionId:     dataPacket.sessionId,
 						userId:        dataPacket.userId,
+						fullName:      dataPacket.fullName,
 						username:      dataPacket.username
 					} ), event.origin );
 				}
@@ -1382,6 +1383,7 @@ function receiveEvent( event, queued )
 					authId:        dataPacket.authId,
 					sessionId:     dataPacket.sessionId,
 					userId:        dataPacket.userId,
+					fullName:      dataPacket.fullName,
 					username:      dataPacket.username
 				} ), event.origin );
 			}
@@ -1410,6 +1412,7 @@ function receiveEvent( event, queued )
 					authId:        dataPacket.authId,
 					sessionId:     dataPacket.sessionId,
 					userId:        dataPacket.userId,
+					fullName:      dataPacket.fullName,
 					username:      dataPacket.username
 				} ), event.origin );
 			}
