@@ -5681,6 +5681,10 @@ function setupMessageFunction( dataPacket, origin )
 		{
 			msg.username = dataPacket.username;
 		}
+		if( !msg.fullName )
+		{
+			msg.fullName = dataPacket.fullName;
+		}
 		if( !msg.userLevel )
 		{
 			msg.userLevel = dataPacket.userLevel;
