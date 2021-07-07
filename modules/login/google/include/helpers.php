@@ -845,7 +845,7 @@ function createFriendRelation( $data, $user, $invitehash )
 									[
 										'mode'       => $json->source->data->mode,
 										'sourceid'   => $user->UniqueID,
-										'contactids' => [ $json->source->data->uniqueid ]
+										'contactids' => json_encode( [ $json->source->data->uniqueid ] )
 									] ) )
 									{
 										
