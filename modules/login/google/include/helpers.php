@@ -844,8 +844,8 @@ function createFriendRelation( $data, $user, $invitehash )
 									if( $res2 = remoteAuth( '/system.library/user/addrelationship?sessionid=' . $data->sessionid, 
 									[
 										'mode'       => $json->source->data->mode,
-										'contactids' => $json->source->data->uniqueid,
-										'sourceid'   => $user->UniqueID
+										'sourceid'   => $user->UniqueID,
+										'contactids' => [ $json->source->data->uniqueid ]
 									] ) )
 									{
 										
