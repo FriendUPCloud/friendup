@@ -884,6 +884,7 @@ void ProcessSinkMessage( void *locd )
 						if( strncmp( data + t[6].start, "room", msize) == 0) 
 						{
 							char *reqid = NULL;
+							char *resp = NULL;
 							//{"type":"service","data":{"type":"room","data":{"type":"create","requestid":"EXTSER_1581518992698024_ID","data":{"ownerUserId":"df0499e006056004359160d3041d95b0","name":"blabla"}}}}
 							
 							
@@ -898,7 +899,16 @@ void ProcessSinkMessage( void *locd )
 								reqid = StringDuplicateN( data + t[10].start, t[10].end - t[10].start );
 							}
 							
-							if( NotificationManagerAddIncomingRequestES( SLIB->sl_NotificationManager, reqid, StringDuplicate( data ) ) != 0 )
+							if( strncmp( data + t[11].start, "response", t[11].end - t[11].start) == 0) 
+							{
+								resp = StringDuplicateN( data + t[12].start, t[12].end - t[12].start );
+							}
+							
+							/*
+							{"type":"service","data":{"type":"room","data":{"requestId":"EXTSER_1582796558924629_ID","response":{"roomId":"room-a9796bc3-6003-45d2-a019-e28d93e8aa6e","ownerId":"acc-688bf91c-97e5-4669-93a3-72e19a1f0fd0","name":"boop","invite":{"type":"public","data":{"token":"pub-9ecca629-17ab-4851-9b3d-0e072e643fb9","host":"yelena.friendup.vm:27970"}}},"error":null}}}
+							 */
+							
+							if( NotificationManagerAddIncomingRequestES( SLIB->sl_NotificationManager, reqid, resp ) != 0 )
 							{
 								FERROR("Notification from external service could not be added to queue!\n");
 							}
