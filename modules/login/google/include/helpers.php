@@ -472,12 +472,12 @@ function createFriendAccount( $json, $nounce )
 				{
 					
 					// add user to users group ....
-					$dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $creds->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'' . ( 'User' ) . '\' AND `Type` = \'Level\' ) );' );
+					$dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $creds->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'User\' AND `Type` = \'Level\' ORDER BY `ID` ASC LIMIT 1 ) );' );
 					
 					checkExternalUserGroup(  );
 					
 					// add user to External users group ....
-					$dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $creds->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'User\' AND `Type` = \'External\' ) );' );
+					$dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $creds->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'User\' AND `Type` = \'External\' ORDER BY `ID` ASC LIMIT 1 ) );' );
 					
 					// add verification code on first login response ...
 					$dbo->Query( '
@@ -507,7 +507,7 @@ function createFriendAccount( $json, $nounce )
 					
 					if( $json->locale )
 					{
-						updateLanguages( $creds->ID, $json->locale );
+						updateLanguages( $creds->ID, 'en' ); //$json->locale );
 					}
 					
 					addCustomDockItem( $creds->ID, null, 'https://mail.google.com/mail/u/0/#inbox', 'Gmail', 'gfx/weblinks/icon_gmail.png' );
@@ -985,7 +985,7 @@ function checkExternalUserGroup(  )
 	
 	$dbo = initDBO();
 	
-	if( $rs = $dbo->fetchObject( 'SELECT * FROM `FUserGroup` WHERE `Name`=\'User\' AND `Type`=\'External\' ' ) )
+	if( $rs = $dbo->fetchObject( 'SELECT * FROM `FUserGroup` WHERE `Name`=\'User\' AND `Type`=\'External\' ORDER BY `ID` ASC LIMIT 1' ) )
 	{
 		return;
 	}
@@ -1374,13 +1374,14 @@ function updateLanguages( $userid, $lang )
 	
 		$voice = false;
 	
-		foreach( $langs as $v )
+		// TODO: Too early to check languages
+		/*foreach( $langs as $v )
 		{
 			if( strtolower( trim( $v ) ) == strtolower( trim( $lang ) ) )
 			{
 				$voice = '{"spokenLanguage":"' . $lang . '","spokenAlternate":"' . $lang . '"}';
 			}
-		}
+		}*/
 		
 		if( !$voice )
 		{
@@ -1562,7 +1563,7 @@ function applySetup( $userid, $id )
 							$lang->Type = 'system';
 							$lang->Key = 'locale';
 							$lang->Load();
-							$lang->Data = $ug->Data->language;
+							$lang->Data = 'en'; //$ug->Data->language;
 							$lang->Save();
 							
 							$debug[$uid]->language = ( $lang->ID > 0 ? $lang->Data : false );
