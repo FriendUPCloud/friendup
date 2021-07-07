@@ -568,6 +568,31 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					l->LibrarySQLDrop( l, sqllib );
 					
 					loggedSession = USMGetSessionByUserID( l->sl_USM, uid );
+					if( loggedSession == NULL && userName[ 0 ] != 0 )	// only if user exist and it has servertoken
+					{
+						loggedSession = UserSessionNew( NULL, "servertoken" );
+						if( loggedSession != NULL )
+						{
+							User *usr = UMUserGetByName( l->sl_UM, userName );
+							if( usr == NULL )
+							{
+								usr = UMUserGetByNameDB( l->sl_UM, userName );
+								if( usr != NULL )
+								{
+									UMAddUser( l->sl_UM, usr );
+								}
+							}
+							else
+							{
+								loggedSession->us_UserID = usr->u_ID;
+								UserAddSession( usr, loggedSession );
+							}
+							loggedSession->us_LastActionTime = time( NULL );
+							
+							USMSessionSaveDB( l->sl_USM, loggedSession );
+							USMUserSessionAddToList( l->sl_USM, loggedSession );
+						}
+					}
 				}
 			}
 		}
@@ -623,7 +648,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									isSentinel = TRUE;
 								}
 								
-								if( isSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, curusr, (char *)passwd->hme_Data, &blockedTime ) == TRUE )
+								if( isSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, curusr, (char *)passwd->hme_Data, &blockedTime, "remote" ) == TRUE )
 								{
 									loggedSession = locus;
 									userAdded = TRUE;		// there is no need to free resources
@@ -769,10 +794,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			
 			time_t timestamp = time ( NULL );
 			
-			loggedSession->us_LoggedTime = timestamp;
+			loggedSession->us_LastActionTime = timestamp;
 			if( loggedSession->us_User != NULL )
 			{
-				loggedSession->us_User->u_LoggedTime = timestamp;
+				loggedSession->us_User->u_LastActionTime = timestamp;
 			}
 			
 			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
@@ -785,8 +810,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					char *esc = sqllib->MakeEscapedString( sqllib, sessionid );
 					if( esc != NULL )
 					{
-						//sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime`='%ld' WHERE `SessionID`='%s'", timestamp, sessionid );
-						snprintf( tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime`='%ld' WHERE `SessionID`='%s'", timestamp, esc );
+						snprintf( tmpQuery, 1024, "UPDATE FUserSession SET `LastActionTime`='%ld' WHERE `SessionID`='%s'", timestamp, esc );
 						DEBUG("[SystembaseWeb] query: %s\n", tmpQuery );
 						sqllib->QueryWithoutResults( sqllib, tmpQuery );
 						FFree( esc );
@@ -1796,6 +1820,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				locsessionid = ( char *)el->hme_Data;
 			}
 			
+			//
+			// user is trying to use his old session to login from same device
+			//
+			
 			if( locsessionid != NULL && deviceid != NULL )
 			{
 				int loginStatus = 0;
@@ -1870,23 +1898,18 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									}
 								}
 								loggedSession->us_MobileAppID = umaID;
+								loggedSession->us_LastActionTime = time( NULL );
 							
-								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime = %lld,DeviceIdentity='%s',UMA_ID=%lu WHERE `SessionID`='%s'", (long long)loggedSession->us_LoggedTime, deviceid, umaID, loggedSession->us_SessionID );
-								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
-								{ 
-								
-								}
+								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LastActionTime=%ld,DeviceIdentity='%s',UMA_ID=%lu WHERE `SessionID`='%s'", (long long)loggedSession->us_LastActionTime, deviceid, umaID, loggedSession->us_SessionID );
+								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) ){ }
 							
 								//
 								// update user
 								//
 							
-								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime='%lld' WHERE `Name`='%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_Name );
-								//sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime='%lld', SessionID='%s' WHERE `Name` = '%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
-								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
-								{ 
-								
-								}
+								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoginTime=%ld,LastActionTime=%ld WHERE `Name`='%s'", loggedSession->us_LastActionTime, loggedSession->us_LastActionTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
+								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) ){ }
+
 								l->LibrarySQLDrop( l, sqlLib );
 							
 								UMAddUser( l->sl_UM, loggedSession->us_User );
@@ -1952,7 +1975,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				snprintf( buffer, sizeof(buffer), "{\"result\":\"-1\",\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_AUTH_PUBLIC_KEY_NOT_SUPPORTED] , DICT_AUTH_PUBLIC_KEY_NOT_SUPPORTED );
 				HttpAddTextContent( response, buffer );
 			}
+			
+			//
 			// standard username and password mode
+			//
+			
 			else if( usrname != NULL && pass != NULL && deviceid != NULL )
 			{
 				DEBUG("[SysWebRequest] Found logged user under address user name %s pass %s deviceid %s\n", usrname, pass, deviceid );
@@ -1994,7 +2021,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						
 						if( tuser != NULL )
 						{
-							if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, tuser, pass, &blockedTime ) == TRUE )
+							if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, tuser, pass, &blockedTime, deviceid ) == TRUE )
 							{
 								dstusrsess = tusers;
 								DEBUG("Found user session  id %s\n", tusers->us_SessionID );
@@ -2003,26 +2030,20 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					}
 					else	// deviceid != NULL
 					{
-						
-						//if( FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) ) == 0 )
+						User *tuser = USMIsSentinel( l->sl_USM, usrname, &tusers, &isUserSentinel );
+					
+						if( tuser != NULL )
 						{
-							User *tuser = USMIsSentinel( l->sl_USM, usrname, &tusers, &isUserSentinel );
-						
-							if( tuser != NULL )
+							if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, tuser, pass, &blockedTime, deviceid ) == TRUE )
 							{
-								if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, tuser, pass, &blockedTime ) == TRUE )
+								dstusrsess = tusers;
+								if( tusers != NULL )
 								{
-									dstusrsess = tusers;
-									if( tusers != NULL )
-									{
-										DEBUG("Found user session  id %s\n", tusers->us_SessionID );
-									}
+									DEBUG("Found user session  id %s\n", tusers->us_SessionID );
 								}
 							}
 						}
 					}
-					
-					DEBUG("CHECK2END\n");
 					
 					if( dstusrsess == NULL )
 					{
@@ -2062,7 +2083,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						
 						if( loggedSession != NULL )
 						{
-							loggedSession->us_LoggedTime = time( NULL );
+							loggedSession->us_LastActionTime = time( NULL );
 							USMSessionSaveDB( l->sl_USM, loggedSession );
 						}
 						else
@@ -2119,9 +2140,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									lusr = (User *)lusr->node.mln_Succ;
 								}
 							}
-						//
-						// update user and session
-						//
+						
+							//
+							// update user and session
+							//
 							
 							char tmpQuery[ 512 ];
 							int lpos = 0;
@@ -2150,13 +2172,14 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									}
 								}
 								
-								DEBUG("[SysWebRequest] UMAID %lu\n", umaID );
+								DEBUG("UMAID %lu\n", umaID );
+								loggedSession->us_LastActionTime = time( NULL );
 								
 								//
 								// update UserSession
 								//
 								
-								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_SessionID, umaID, deviceid,  loggedSession->us_UserID );
+								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LastActionTime=%ld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity`='%s' AND `UserID`=%lu", (long long)loggedSession->us_LastActionTime, loggedSession->us_SessionID, umaID, deviceid,  loggedSession->us_UserID );
 								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
 								{ 
 									
@@ -2168,8 +2191,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							
 								if( loggedSession->us_User != NULL )
 								{
-									sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime='%lld' WHERE `Name` = '%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_Name );
-									//sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime = '%lld', SessionID='%s' WHERE `Name` = '%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
+									sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoginTime=%ld,LastActionTime=%ld WHERE `Name`='%s'", loggedSession->us_LastActionTime, loggedSession->us_LastActionTime, loggedSession->us_User->u_Name );
+									//sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime = '%lld', SessionID='%s' WHERE `Name` = '%s'",  (long long)loggedSession->us_LastActionTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
 									
 									if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
 									{ 

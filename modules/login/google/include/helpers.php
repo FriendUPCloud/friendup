@@ -455,7 +455,7 @@ function createFriendAccount( $json, $nounce )
 			// Create new user ...
 			
 			if( $dbo->Query( '
-			INSERT INTO FUser ( `Name`, `Password`, `PublicKey`, `Fullname`, `Email`, `LoggedTime`, `CreatedTime`, `LoginTime`, `UniqueID` ) 
+			INSERT INTO FUser ( `Name`, `Password`, `PublicKey`, `Fullname`, `Email`, `CreationTime`, `LoginTime`, `ModifyTime`, `UniqueID` ) 
 			VALUES ('
 				. ' \'' . mysqli_real_escape_string( $dbo->_link, $json->username                   ) . '\''  
 				. ',""' 
@@ -472,12 +472,12 @@ function createFriendAccount( $json, $nounce )
 				{
 					
 					// add user to users group ....
-					$dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $creds->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'' . ( 'User' ) . '\' AND `Type` = \'Level\' ) );' );
+					$dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $creds->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'User\' AND `Type` = \'Level\' ORDER BY `ID` ASC LIMIT 1 ) );' );
 					
 					checkExternalUserGroup(  );
 					
 					// add user to External users group ....
-					$dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $creds->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'User\' AND `Type` = \'External\' ) );' );
+					$dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $creds->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'User\' AND `Type` = \'External\' ORDER BY `ID` ASC LIMIT 1 ) );' );
 					
 					// add verification code on first login response ...
 					$dbo->Query( '
@@ -507,7 +507,7 @@ function createFriendAccount( $json, $nounce )
 					
 					if( $json->locale )
 					{
-						updateLanguages( $creds->ID, $json->locale );
+						updateLanguages( $creds->ID, 'en' ); //$json->locale );
 					}
 					
 					addCustomDockItem( $creds->ID, null, 'https://mail.google.com/mail/u/0/#inbox', 'Gmail', 'gfx/weblinks/icon_gmail.png' );
@@ -988,7 +988,7 @@ function checkExternalUserGroup(  )
 	
 	$dbo = initDBO();
 	
-	if( $rs = $dbo->fetchObject( 'SELECT * FROM `FUserGroup` WHERE `Name`=\'User\' AND `Type`=\'External\' ' ) )
+	if( $rs = $dbo->fetchObject( 'SELECT * FROM `FUserGroup` WHERE `Name`=\'User\' AND `Type`=\'External\' ORDER BY `ID` ASC LIMIT 1' ) )
 	{
 		return;
 	}
@@ -1377,13 +1377,14 @@ function updateLanguages( $userid, $lang )
 	
 		$voice = false;
 	
-		foreach( $langs as $v )
+		// TODO: Too early to check languages
+		/*foreach( $langs as $v )
 		{
 			if( strtolower( trim( $v ) ) == strtolower( trim( $lang ) ) )
 			{
 				$voice = '{"spokenLanguage":"' . $lang . '","spokenAlternate":"' . $lang . '"}';
 			}
-		}
+		}*/
 		
 		if( !$voice )
 		{
@@ -1490,6 +1491,12 @@ function applySetup( $userid, $id )
 	
 	$Config = parse_ini_file( SCRIPT_LOGIN_PATH . '/../../../cfg/cfg.ini', true );
 	
+	$ConfShort = new stdClass();
+	$ConfShort->SSLEnable = $Config[ 'Core' ][ 'SSLEnable' ];
+	$ConfShort->FCPort    = $Config[ 'Core' ][ 'port' ];
+	$ConfShort->FCHost    = $Config[ 'FriendCore' ][ 'fchost' ];
+	$ConfShort->FCUpload  = $Config[ 'FriendCore' ][ 'fcupload' ];
+	
 	$SqlDatabase = initDBO();
 	
 	// TODO: Find out what is going to be the main module call / fc call for first login and use a module or library class to call, like doors.
@@ -1559,13 +1566,14 @@ function applySetup( $userid, $id )
 							$lang->Type = 'system';
 							$lang->Key = 'locale';
 							$lang->Load();
-							$lang->Data = $ug->Data->language;
+							$lang->Data = 'en'; //$ug->Data->language;
 							$lang->Save();
 							
 							$debug[$uid]->language = ( $lang->ID > 0 ? $lang->Data : false );
 						}
 		
-						// Wallpaper -----------------------------------------------------------------------------------
+						// Wallpaper -----------------------------------------------
+						// TODO: Support other filesystems than SQLDrive! (right now, not possible!)
 					
 						if( $wallpaper )
 						{
@@ -1590,6 +1598,8 @@ function applySetup( $userid, $id )
 								$f->ShortDescription = 'My data volume';
 								$f->Mounted = '1';
 							
+								// TODO: Enable this when we have figured out a better way to handle firstlogin.defaults.php if Home: is created it fucks up the first login procedure ...
+							
 								//$f->Save();
 							
 								$f->ID = 0;
@@ -1611,34 +1621,34 @@ function applySetup( $userid, $id )
 									$fl->Save();
 								}
 								
-								// Find disk filename
-								$uname = str_replace( array( '..', '/', ' ' ), '_', $theUser->Name );
-								if( !file_exists( $Config->FCUpload . $uname ) )
-								{
-									mkdir( $Config->FCUpload . $uname );
-								}
-							
-								while( file_exists( $Config->FCUpload . $uname . '/' . $fnam . '.' . $ext ) )
-								{
-									$fnam = ( $fnam . rand( 0, 999999 ) );
-								}
-								
-								
 								$fi = new dbIO( 'FSFile', $SqlDatabase );
-								$fi->Filename = ( 'default_wallpaper_' . $f->ID . '_' . $uid . '.jpg' );
+								$fi->Filename = ( 'default_wallpaper_' . $fl->FilesystemID . '_' . $fl->UserID . '.jpg' );
 								$fi->FolderID = $fl->ID;
 								$fi->FilesystemID = $f->ID;
 								$fi->UserID = $uid;
 								if( $fi->Load() && $fi->DiskFilename )
 								{
-									if( file_exists( $Config->FCUpload . $uname . '/' . $fi->DiskFilename ) )
+									if( file_exists( $ConfShort->FCUpload . $fi->DiskFilename ) )
 									{
-										unlink( $Config->FCUpload . $uname . '/' . $fi->DiskFilename );
+										unlink( $ConfShort->FCUpload . $fi->DiskFilename );
 									}
 								}
 								
+								// Find disk filename
+								$uname = str_replace( array( '..', '/', ' ' ), '_', $theUser->Name );
+								if( !file_exists( $ConfShort->FCUpload . $uname ) )
+								{
+									mkdir( $ConfShort->FCUpload . $uname );
+								}
+							
+								while( file_exists( $ConfShort->FCUpload . $uname . '/' . $fnam . '.' . $ext ) )
+								{
+									$fnam = ( $fnam . rand( 0, 999999 ) );
+								}
 								
-								if( $fp = fopen( $Config->FCUpload . $uname . '/' . $fnam . '.' . $ext, 'w+' ) )
+								
+								
+								if( $fp = fopen( $ConfShort->FCUpload . $uname . '/' . $fnam . '.' . $ext, 'w+' ) )
 								{
 									fwrite( $fp, $wallpaperContent );
 									fclose( $fp );
@@ -1653,7 +1663,18 @@ function applySetup( $userid, $id )
 									$fi->Save();
 								
 									$debug[$uid]->wallpaper->id = ( $fi->ID > 0 ? $fi->ID : false );
-									
+								
+									// Set the wallpaper in config
+									$s = new dbIO( 'FSetting', $SqlDatabase );
+									$s->UserID = $uid;
+									$s->Type = 'system';
+									$s->Key = 'wallpaperdoors';
+									$s->Load();
+									$s->Data = '"Home:Wallpaper/' . $fi->Filename . '"';
+									$s->Save();
+								
+									$debug[$uid]->wallpaper->wallpaperdoors = ( $s->ID > 0 ? $s->Data : false );
+								
 									// Fill Wallpaper app with settings and set default wallpaper
 									$wp = new dbIO( 'FSetting', $SqlDatabase );
 									$wp->UserID = $uid;
@@ -1661,61 +1682,23 @@ function applySetup( $userid, $id )
 									$wp->Key = 'imagesdoors';
 									if( $wp->Load() && $wp->Data )
 									{
-											
-											$data = str_replace( [ '"["', '"]"' ], [ '["', '"]' ], trim( $wp->Data ) );
-											
-											if( $data && !strstr( $data, '"Home:Wallpaper/' . $fi->Filename . '"' ) )
-											{
-												if( $json = json_decode( $data, true ) )
-												{
-													$json[] = ( 'Home:Wallpaper/' . $fi->Filename );
-													
-													if( $data = json_encode( $json ) )
-													{
-														$wp->Data = stripslashes( '"' . $data . '"' );
-														$wp->Save();
-													}
-													
-													$debug[$uid]->wallpaper->imagesdoors = ( $wp->ID > 0 ? $wp->Data : false );
-													
-													// Set the wallpaper in config
-													$s = new dbIO( 'FSetting', $SqlDatabase );
-													$s->UserID = $uid;
-													$s->Type = 'system';
-													$s->Key = 'wallpaperdoors';
-													$s->Load();
-													$s->Data = '"Home:Wallpaper/' . $fi->Filename . '"';
-													$s->Save();
-													
-													$debug[$uid]->wallpaper->wallpaperdoors = ( $s->ID > 0 ? $s->Data : false );
-												}
-											}
-											
-									}
-									else
-									{
-										
-										$json = [ 'Home:Wallpaper/' . $fi->Filename ];
-
-										if( $data = json_encode( $json ) )
+										$data = substr( $wp->Data, 1, -1 );
+	
+										if( $data && !strstr( $data, '"Home:Wallpaper/' . $fi->Filename . '"' ) )
 										{
-											$wp->Data = stripslashes( '"' . $data . '"' );
-											$wp->Save();
+											if( $json = json_decode( $data, true ) )
+											{
+												$json[] = ( 'Home:Wallpaper/' . $fi->Filename );
+			
+												if( $data = json_encode( $json ) )
+												{
+													$wp->Data = stripslashes( '"' . $data . '"' );
+													$wp->Save();
+												}
+												
+												$debug[$uid]->wallpaper->imagesdoors = ( $wp->ID > 0 ? $wp->Data : false );
+											}
 										}
-									
-										$debug[$uid]->wallpaper->imagesdoors = ( $wp->ID > 0 ? $wp->Data : false );
-										
-										// Set the wallpaper in config
-										$s = new dbIO( 'FSetting', $SqlDatabase );
-										$s->UserID = $uid;
-										$s->Type = 'system';
-										$s->Key = 'wallpaperdoors';
-										$s->Load();
-										$s->Data = '"Home:Wallpaper/' . $fi->Filename . '"';
-										$s->Save();
-								
-										$debug[$uid]->wallpaper->wallpaperdoors = ( $s->ID > 0 ? $s->Data : false );
-										
 									}
 								
 								}

@@ -50,6 +50,8 @@ UserSession *UserSessionNew( char *sessid, char *devid )
 		
 		UserSessionInit( s );
 		
+		s->us_CreationTime = time( NULL );		
+		
 		INFO("Mutex initialized\n");
 	}
 	return s;

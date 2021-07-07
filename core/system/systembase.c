@@ -335,6 +335,8 @@ SystemBase *SystemInit( void )
 	// use deflate compression as default for http calls
 	l->l_HttpCompressionContent |= HTTP_COMPRESSION_DEFLATE;
 	
+	l->l_UpdateLoggedTimeOnUserMax = 10;
+	
 	if( plib != NULL && plib->Open != NULL )
 	{
 		char *ptr = getenv("FRIEND_HOME");
@@ -394,6 +396,8 @@ SystemBase *SystemInit( void )
 			l->sl_UnMountDevicesInDB = plib->ReadIntNCS( prop, "Options:UnmountInDB", 1 );
 			l->sl_SocketTimeout  = plib->ReadIntNCS( prop, "core:SSLSocketTimeout", 10000 );
 			l->sl_USFCacheMax = plib->ReadIntNCS( prop, "core:USFCachePerDevice", 102400000 );
+			
+			l->l_UpdateLoggedTimeOnUserMax = plib->ReadIntNCS( prop, "core:updateuserloggedtimeinterval", 10 );
 			
 			l->l_EnableHTTPChecker = plib->ReadIntNCS( prop, "Options:HttpChecker", 0 );
 			
@@ -1744,7 +1748,7 @@ int SystemInitExternal( SystemBase *l )
 				if( ses != NULL )
 				{
 					ses->us_UserID = l->sl_Sentinel->s_User->u_ID;
-					ses->us_LoggedTime = timestamp;
+					ses->us_LastActionTime = timestamp;
 					
 					UserAddSession( l->sl_Sentinel->s_User, ses );
 					
@@ -1757,7 +1761,7 @@ int SystemInitExternal( SystemBase *l )
 			// regenerate sessionid for User
 			//
 			
-			if(  (timestamp - l->sl_Sentinel->s_User->u_LoggedTime) > l->sl_RemoveSessionsAfterTime )
+			if(  (timestamp - l->sl_Sentinel->s_User->u_LastActionTime) > l->sl_RemoveSessionsAfterTime )
 			{
 				UserRegenerateSessionID( l->sl_Sentinel->s_User, NULL );
 			}

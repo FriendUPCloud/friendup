@@ -2484,14 +2484,20 @@ unsigned char *HttpBuild( Http* http )
 						char tmp[ 128 ];
 						int len = snprintf( tmp, 128, "%s: %ld", HEADERS[ HTTP_HEADER_CONTENT_LENGTH ], compressedLength );
 						memcpy( contentLengthPosition, tmp, len );
-						if( contentLengthPosition[ len ] != '\r' ){ contentLengthPosition[ len ] = ' '; printf("HERE!\n"); }
+						if( contentLengthPosition[ len ] != '\r' )
+						{
+							contentLengthPosition[ len ] = ' ';
+							// printf("HERE!\n"); 
+						}
 						
+						/*
 						int j;
 						for( j=0 ; j < len+5 ; j++ )
 						{
 							if( contentLengthPosition[ j ] == '\r' ){ printf("R\n"); }
 							if( contentLengthPosition[ j ] == '\n' ){ printf("N\n"); }
 						}
+						*/
 
 						size -= http->http_SizeOfContent;
 						size += compressedLength;

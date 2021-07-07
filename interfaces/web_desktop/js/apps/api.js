@@ -1305,6 +1305,7 @@ function receiveEvent( event, queued )
 			Application.filePath      = dataPacket.filePath;
 			Application.applicationId = dataPacket.applicationId;
 			Application.userId        = dataPacket.userId;
+			Application.fullName      = dataPacket.fullName;
 			Application.username      = dataPacket.username;
 
 			// Register screen
@@ -1352,6 +1353,7 @@ function receiveEvent( event, queued )
 						authId:        dataPacket.authId,
 						sessionId:     dataPacket.sessionId,
 						userId:        dataPacket.userId,
+						fullName:      dataPacket.fullName,
 						username:      dataPacket.username
 					} ), event.origin );
 				}
@@ -1381,6 +1383,7 @@ function receiveEvent( event, queued )
 					authId:        dataPacket.authId,
 					sessionId:     dataPacket.sessionId,
 					userId:        dataPacket.userId,
+					fullName:      dataPacket.fullName,
 					username:      dataPacket.username
 				} ), event.origin );
 			}
@@ -1409,6 +1412,7 @@ function receiveEvent( event, queued )
 					authId:        dataPacket.authId,
 					sessionId:     dataPacket.sessionId,
 					userId:        dataPacket.userId,
+					fullName:      dataPacket.fullName,
 					username:      dataPacket.username
 				} ), event.origin );
 			}
@@ -1423,6 +1427,7 @@ function receiveEvent( event, queued )
 			Application.filePath      = dataPacket.filePath;
 			Application.applicationId = dataPacket.applicationId;
 			Application.userId        = dataPacket.userId;
+			Application.fullName      = dataPacket.fullName;
 			Application.username      = dataPacket.username;
 			Application.workspaceMode = dataPacket.workspaceMode;
 			Application.applicationName = dataPacket.applicationName;
@@ -5676,6 +5681,10 @@ function setupMessageFunction( dataPacket, origin )
 		{
 			msg.username = dataPacket.username;
 		}
+		if( !msg.fullName )
+		{
+			msg.fullName = dataPacket.fullName;
+		}
 		if( !msg.userLevel )
 		{
 			msg.userLevel = dataPacket.userLevel;
@@ -6374,6 +6383,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Setup application id from message
 	Application.applicationId = packet.applicationId;
 	Application.userId        = packet.userId;
+	Application.fullName      = packet.fullName;
 	Application.username      = packet.username;
 	Application.workspaceMode = packet.workspaceMode;
 	Application.authId        = packet.authId;
