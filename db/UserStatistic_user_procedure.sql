@@ -21,15 +21,18 @@ BEGIN
  DECLARE login DECIMAL(8,0) DEFAULT 0;
  DECLARE timeSpent DECIMAL(8,0) DEFAULT 0;
  DECLARE mobileLogin DECIMAL(8,0) DEFAULT 0;
-    
- SELECT count(*) INTO login FROM FUser WHERE ID=userid AND LoginTime > (UNIX_TIMESTAMP()-(86400));
+ DECLARE loctime bigint(32) DEFAULT 0;
  
- SELECT count(*) INTO mobileLogin FROM FUserLogin where UserID=userid AND LoginTime > (UNIX_TIMESTAMP()-(86400)) AND (Device like '%Android%' OR Device like '%iOS%');
+ SELECT (UNIX_TIMESTAMP()-(86400)) INTO loctime;
+
+ SELECT count(*) INTO login FROM FUser WHERE ID=userid AND LoginTime > loctime;
+ 
+ SELECT count(*) INTO mobileLogin FROM FUserLogin where UserID=userid AND LoginTime > loctime AND (Device like '%Android%' OR Device like '%iOS%');
 
  IF login > 0 THEN
   SELECT (LastActionTime-LoginTime) as timespent
   INTO timeSpent
-  FROM FUser where LoginTime > (UNIX_TIMESTAMP()-(86400));
+  FROM FUser where ID=userid AND LoginTime > (UNIX_TIMESTAMP()-(86400));
  END IF;
 
  INSERT INTO FUserStats (UserID, Logins, Timespent, Uploads, Downloads, Livecalls, ChatroomCount, MobileLogins, Device) 
@@ -42,7 +45,7 @@ BEGIN
  0, 
  0,
  mobileLogin, 
- (SELECT Device FROM FUserLogin where UserID=userid AND LoginTime > (UNIX_TIMESTAMP()-(86400)) LIMIT 1) 
+ (SELECT Device FROM FUserLogin where UserID=userid AND LoginTime > loctime ORDER BY LoginTime DESC LIMIT 1)
  ); 
 
 END$$ 
