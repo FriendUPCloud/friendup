@@ -744,7 +744,7 @@ function verifyFriendAuth( $username, $publickey, $nonce = false, $deviceid = ''
 							
 							if( $invitehash )
 							{
-								createFriendRelation( $ses, $creds, $invitehash );
+								$rel = createFriendRelation( $ses, $creds, $invitehash );
 							}
 								
 							if( !remoteAuth( '/system.library/user/update?sessionid=' . $ses->sessionid, 
@@ -813,18 +813,20 @@ function createFriendRelation( $data, $user, $invitehash )
 	if( $data && $user && $invitehash )
 	{
 		
-		if( $res = remoteAuth( 
+		$error = false;
+		
+		if( $res1 = remoteAuth( 
 			'/system.library/module/?sessionid=' . $data->sessionid . '&module=system&command=tinyurldata&args={"hash":"'.$invitehash.'"}', 
 			false, 'POST', [ 'Content-Type: application/x-www-form-urlencoded' ] 
 		) )
 		{
-			if( strstr( $res, '<!--separate-->' ) )
+			if( strstr( $res1, '<!--separate-->' ) )
 			{
-				if( $ret = explode( '<!--separate-->', $res ) )
+				if( $ret1 = explode( '<!--separate-->', $res1 ) )
 				{
-					if( isset( $ret[1] ) )
+					if( isset( $ret1[1] ) )
 					{
-						if( $json = json_decode( $ret[1] ) )
+						if( $json = json_decode( $ret1[1] ) )
 						{
 							
 							if( isset( $json->source->data->mode ) && isset( $json->source->data->uniqueid ) && $user->UniqueID )
@@ -834,27 +836,48 @@ function createFriendRelation( $data, $user, $invitehash )
 								$json->source->data->sourceid   = $user->UniqueID;
 								$json->source->data->sourcename = $user->FullName;
 								
-								$result = remoteAuth( '/system.library/user/addrelationship?sessionid=' . $data->sessionid, 
-								[
-									'mode'       => $json->source->data->mode,
-									'contactids' => $json->source->data->uniqueid,
-									'sourceid'   => $user->UniqueID
-								] );
-							
-								die( $result . ' -- ' . print_r( $json,1 ) );
+								if( $json->source->data->sourceid && $json->source->data->sourceid != $json->source->data->uniqueid )
+								{
+									
+									// TODO: Add support for adding user to workgroup via invite link ...
+									
+									if( $res2 = remoteAuth( '/system.library/user/addrelationship?sessionid=' . $data->sessionid, 
+									[
+										'mode'       => $json->source->data->mode,
+										'contactids' => $json->source->data->uniqueid,
+										'sourceid'   => $user->UniqueID
+									] ) )
+									{
+										
+										if( strstr( $res2, '<!--separate-->' ) )
+										{
+											if( $ret2 = explode( '<!--separate-->', $res2 ) )
+											{
+												if( isset( $ret2[1] ) )
+												{
+													if( $ret2[0] == 'ok' )
+													{
+														return [ 'ok', $ret2[1] ];
+													}
+													else
+													{
+														return [ 'fail', $ret2[1] ];
+													}										
+												}
+											}
+										}
+									}
+									
+								}
 							}
 							
 						}
 					}
 				}
 			}
-			
-			die( $res );
 		}
 		
-		die( 'NO DATA ??? FRIENDCORE !!! ...' );
-		
-		return false;
+		return [ 'fail', $error ];
 		
 	}
 	
