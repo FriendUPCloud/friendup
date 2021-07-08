@@ -24,7 +24,7 @@ Application.windowImages = [];
 
 Application.addImages = function( images )
 {
-	if( !images || !images.length ) return;
+	if( !images || !images.length ) return this.showImages();
 	
 	var arr = Application.mode == 'doors' ? Application.wallpaperImages : 
 			Application.windowImages;
@@ -207,9 +207,13 @@ Application.operationUse = function()
 	// Weird stuff!
 	var i = '';
 	if( this.selectedImage >= 0 )
+	{
 		i = arr[this.selectedImage - 1];
+	}
 	else if( this.selectedImage === -1 )
+	{
 		i = 'color';
+	}
 	
 	this.sendMessage( {
 		type: 'system',
@@ -228,9 +232,13 @@ Application.operationSave = function()
 	// Weird stuff!
 	var i = '';
 	if( this.selectedImage >= 0 )
+	{
 		i = arr[this.selectedImage - 1];
+	}
 	else if( this.selectedImage == -1 )
+	{
 		i = 'color';
+	}
 	
 	this.sendMessage( {
 		type: 'system',
