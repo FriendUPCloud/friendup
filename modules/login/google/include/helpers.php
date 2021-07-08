@@ -1200,7 +1200,7 @@ function firstLogin( $userid )
 			$o->Load();
 			$o->Type = 'SQLDrive';
 			$o->ShortDescription = 'My data volume';
-			$o->Config = '{"DiskSize":"2GB"}';
+			$o->Config = '{"DiskSize":"1GB"}';
 			$o->Server = 'localhost';
 			$o->Mounted = '1';
 	
