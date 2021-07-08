@@ -3690,7 +3690,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							// If this borks up in 5 seconds, bail!
 							setTimeout( function()
 							{
-								console.log( 'Checking if it loaded.' );
 								if( 
 									typeof( Workspace.wallpaperImageObject ) != 'undefined' && 
 									!Workspace.wallpaperImageObject.done && 

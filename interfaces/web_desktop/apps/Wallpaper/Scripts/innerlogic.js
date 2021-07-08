@@ -40,6 +40,7 @@ Application.addImages = function( images )
 		if( !found )
 			arr.push( images[a] );
 	}
+	self.imageCache = false;
 	this.showImages();
 }
 
@@ -62,12 +63,14 @@ function scrapeImages()
 }
 
 // Show the wallpaper images
+let current = false;
 Application.showImages = function()
 {
-	var sm = new Module( 'system' );
-	sm.onExecuted = function( e, d ) 
+	let self = this;
+	
+	function onCache( e, d )
 	{
-		var current = false;
+		
 		if( e == 'ok' )
 		{
 			if( d )
@@ -84,14 +87,16 @@ Application.showImages = function()
 			}
 		}
 		
-		var si = Application.selectedImage;
+		let savedFound = false;
 		
-		var ml = ''; var found = false;
+		let si = Application.selectedImage;
 		
-		var arr = Application.mode == 'doors' ? Application.wallpaperImages : 
+		let ml = ''; let found = false;
+		
+		let arr = Application.mode == 'doors' ? Application.wallpaperImages : 
 			Application.windowImages;
 		
-		for( var a = 0; a < arr.length; a++ )
+		for( let a = 0; a < arr.length; a++ )
 		{
 			cl = '';
 			
@@ -101,7 +106,7 @@ Application.showImages = function()
 				cl = ' Selected BoxSelected';
 				found = true;
 			}
-			var fname = arr[a].split(':')[1];
+			let fname = arr[a].split(':')[1];
 			if( typeof( fname ) != 'undefined' )
 			{
 				if( fname.indexOf( '/' ) > 0 )
@@ -110,7 +115,11 @@ Application.showImages = function()
 					fname = fname[fname.length - 1];
 				}
 				
-				var ur = '/system.library/module/?module=system&command=thumbnail&width=568&height=320&mode=resize&authid=' + Application.authId + '&path=' + arr[a];
+				// This listed one is the current wallpaper
+				if( arr[a] == d['wallpaper'+Application.mode] )
+					savedFound = true;
+				
+				let ur = '/system.library/module/?module=system&command=thumbnail&width=568&height=320&mode=resize&authid=' + Application.authId + '&path=' + arr[a];
 				
 				ml += '<div class="MousePointer WPImage' + cl + '"><div class="Remove MousePointer IconSmall fa-remove" onclick="Application.removeImage(' + (a+1) + ')">&nbsp;</div><div class="Thumb" onclick="Application.setImage(' + 
 					(a+1) + ');" style="background-image: url(' + 
@@ -121,22 +130,40 @@ Application.showImages = function()
 		// Uninitialized, set to system default
 		if( Application.selectedImage == -3 )
 		{
+			// Use color
 			if( d && d['wallpaper'+Application.mode] == 'color' )
 				Application.selectedImage = -1;
+			// Just keep it!
+			else if ( d['wallpaper'+Application.mode] != '' )
+				Application.selectedImage = -3;
+			// We use default
 			else Application.selectedImage = -2;
 		}
 		
 		cl = '';
-		if( !found && Application.selectedImage == -1 )
+		if( !found && Application.selectedImage === -1 )
+		{
 			cl = ' Selected BoxSelected';
+		}
 		ml += '<div class="MousePointer WPImage' + cl + '"><div class="Thumb" onclick="Application.setImage(-1);" style="background-color: ' + ( Application.mode == 'doors' ? '#2F669F' : '#ffffff' ) + ';"><div>Use background color.</div></div></div>';
 		
 		if( Application.mode == 'doors' )
 		{
 			cl = '';
-			if( !found && Application.selectedImage == -2 )
+			if( !found && Application.selectedImage === -2 )
 				cl = ' Selected BoxSelected';
 			ml += '<div class="MousePointer WPImage' + cl + '"><div class="Thumb" onclick="Application.setImage(-2);" style="background-image: url(/webclient/gfx/theme/default_login_screen.jpg); background-size: cover"><div>Use system default.</div></div></div>';
+		}
+		
+		// Custmo image
+		if( !savedFound && current.indexOf( ':' ) > 0 )
+		{
+			cl = '';
+			if( Application.selectedImage === -3 )
+			{
+				cl = ' Selected BoxSelected';
+			}
+			ml += '<div class="MousePointer WPImage' + cl + '"><div class="Thumb" onclick="Application.setImage(-3);" style="background-image: url(' + getImageUrl(current) + '); background-size: cover"><div>Previously saved wallpaper.</div></div></div>';
 		}
 		
 		ge( 'Images' ).innerHTML = ml;
@@ -144,7 +171,7 @@ Application.showImages = function()
 		// Store these
 		if( d )
 		{
-			var m = new Module( 'system' );
+			let m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
 				//console.log( e, d );
@@ -152,8 +179,22 @@ Application.showImages = function()
 			m.execute( 'setsetting', { setting: 'images' + Application.mode, data: JSON.stringify( arr ) } );
 		}
 	}
-	// Get just the wallpaper
-	sm.execute( 'getsetting', { setting: 'wallpaper' + this.mode } );
+	
+	if( !this.imageCache )
+	{
+		let sm = new Module( 'system' );
+		sm.onExecuted = function( e, d ) 
+		{
+			self.imageCache = [ e, d ];
+			onCache( e, d );
+		}
+		// Get just the wallpaper
+		sm.execute( 'getsetting', { setting: 'wallpaper' + this.mode } );
+	}
+	else
+	{
+		onCache( this.imageCache[0], this.imageCache[1] );
+	}
 	
 }
 
@@ -182,6 +223,7 @@ Application.removeImage = function( image )
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
+		self.imageCache = false;
 		Application.showImages();
 	}
 	m.execute( 'setsetting', { setting: 'images' + Application.Mode, data: arr } );
@@ -214,6 +256,11 @@ Application.operationUse = function()
 	{
 		i = 'color';
 	}
+	// Current wallpaper
+	else if( this.selectedImage == -3 )
+	{
+		i = current;
+	}
 	
 	this.sendMessage( {
 		type: 'system',
@@ -238,6 +285,11 @@ Application.operationSave = function()
 	else if( this.selectedImage == -1 )
 	{
 		i = 'color';
+	}
+	// Current wallpaper
+	else if( this.selectedImage == -3 )
+	{
+		i = current;
 	}
 	
 	this.sendMessage( {
