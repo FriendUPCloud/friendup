@@ -287,7 +287,8 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 			}
 
 			// 7. Copy some other files
-			$prefix = "resources/webclient/examples/";
+			// This is deprecated
+			/*$prefix = "resources/webclient/examples/";
 			$files = array(
 			"ExampleWindow.jsx", "Template.html"
 			);
@@ -316,7 +317,7 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 				}
 			
 				$debug[] = $fl->Filename;
-			}
+			}*/
 		}
 
 		// 8. Fill Wallpaper app with settings and set default wallpaper

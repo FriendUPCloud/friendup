@@ -1119,6 +1119,8 @@ function _firstLogin( $userid )
 					}
 				
 					// 7. Copy some other files
+					// This is deprecated
+					/*
 					$prefix = "resources/webclient/examples/";
 					$files = array(
 					"ExampleWindow.jsx", "Template.html"
@@ -1146,7 +1148,7 @@ function _firstLogin( $userid )
 							$fl->DateModified = $fl->DateCreated;
 							$fl->Save();
 						}
-					}
+					}*/
 				}
 				
 				// 8. Fill Wallpaper app with settings and set default wallpaper
