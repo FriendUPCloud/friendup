@@ -1247,6 +1247,8 @@ function _applySetup( $userid, $id )
 			
 			$ug->Data = ( $ug->Data ? json_decode( $ug->Data ) : false );
 			
+			// TODO: Instead of file_get_contents, copy the file from source to save memory
+			
 			// Try to get wallpaper
 			$wallpaper = new dbIO( 'FMetaData' );
 			$wallpaper->DataID = $ug->ID;
@@ -1366,12 +1368,11 @@ function _applySetup( $userid, $id )
 									mkdir( $Config->FCUpload . $uname );
 								}
 							
+								$tempName = $fnam;
 								while( file_exists( $Config->FCUpload . $uname . '/' . $fnam . '.' . $ext ) )
 								{
-									$fnam = ( $fnam . rand( 0, 999999 ) );
+									$fnam = ( $tempName . rand( 0, 999999 ) );
 								}
-								
-								
 								
 								if( $fp = fopen( $Config->FCUpload . $uname . '/' . $fnam . '.' . $ext, 'w+' ) )
 								{
