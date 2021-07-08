@@ -1594,8 +1594,6 @@ function applySetup( $userid, $id )
 							$f = new dbIO( 'Filesystem', $SqlDatabase );
 							$f->UserID = $uid;
 							$f->Name   = 'Home';
-							$f->Type   = 'SQLDrive';
-							$f->Server = 'localhost';
 							if( !$f->Load() )
 							{
 								$f->ShortDescription = 'My data volume';
