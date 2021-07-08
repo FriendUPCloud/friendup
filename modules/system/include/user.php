@@ -1156,7 +1156,7 @@ function _firstLogin( $userid )
 				$wp->Key = 'imagesdoors';
 				if( !$wp->Load() )
 				{
-					$wp->Data = '['. $wallpaperstring .']';
+					$wp->Data = '';
 					$wp->Save();
 				}
 				
@@ -1166,7 +1166,7 @@ function _firstLogin( $userid )
 				$wp->Key = 'wallpaperdoors';
 				if( !$wp->Load() )
 				{
-					$wp->Data = '"Home:Wallpaper/Freedom.jpg"';
+					$wp->Data = '';
 					$wp->Save();
 				}
 				

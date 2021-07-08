@@ -326,7 +326,7 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 		$wp->Key = 'imagesdoors';
 		if( !$wp->Load() )
 		{
-			$wp->Data = '['. $wallpaperstring .']';
+			$wp->Data = '';
 			$wp->Save();
 		}
 		
@@ -338,7 +338,7 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 		$wp->Key = 'wallpaperdoors';
 		if( !$wp->Load() )
 		{
-			$wp->Data = '"Home:Wallpaper/Freedom.jpg"';
+			$wp->Data = '';
 			$wp->Save();
 		}
 		
