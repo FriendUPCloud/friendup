@@ -1313,6 +1313,7 @@ function _applySetup( $userid, $id )
 							$f = new dbIO( 'Filesystem' );
 							$f->UserID = $uid;
 							$f->Name   = 'Home';
+							$f->Config = '{"DiskSize":"1GB"}';
 							$f->Type   = 'SQLDrive';
 							$f->Server = 'localhost';
 							if( !$f->Load() )
