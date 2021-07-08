@@ -1051,7 +1051,7 @@ function _firstLogin( $userid )
 					$fdownloadfolder->Save();
 				}
 				
-				$f1 = new dbIO( 'FSFolder' );
+				/*$f1 = new dbIO( 'FSFolder' );
 				$f1->FilesystemID = $o->ID;
 				$f1->UserID = $userid;
 				$f1->Name = 'Code examples';
@@ -1060,7 +1060,7 @@ function _firstLogin( $userid )
 					$f1->DateCreated = date( 'Y-m-d H:i:s' );
 					$f1->DateModified = $f1->DateCreated;
 					$f1->Save();
-				}
+				}*/
 				
 				// 6. Copy some wallpapers
 				// TODO: Implement support for "copydefaultwallpapers"

@@ -215,7 +215,7 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 		
 		$debug[] = $fdownloadfolder->Name;
 		
-		$f1 = new dbIO( 'FSFolder' );
+		/*$f1 = new dbIO( 'FSFolder' );
 		$f1->FilesystemID = $o->ID;
 		$f1->UserID = $userid;
 		$f1->Name = 'Code examples';
@@ -226,7 +226,7 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 			$f1->Save();
 		}
 		
-		$debug[] = $f1->Name;
+		$debug[] = $f1->Name;*/
 		
 		// 6. Copy some wallpapers
 		// TODO: Implement support for "copydefaultwallpapers"
