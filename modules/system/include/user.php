@@ -1317,18 +1317,9 @@ function _applySetup( $userid, $id )
 							$f = new dbIO( 'Filesystem' );
 							$f->UserID = $uid;
 							$f->Name   = 'Home';
-							$f->Config = '{"DiskSize":"1GB"}';
-							$f->Type   = 'SQLDrive';
-							$f->Server = 'localhost';
+							
 							if( !$f->Load() )
 							{
-								$f->ShortDescription = 'My data volume';
-								$f->Mounted = '1';
-							
-								// TODO: Enable this when we have figured out a better way to handle firstlogin.defaults.php if Home: is created it fucks up the first login procedure ...
-							
-								//$f->Save();
-							
 								$f->ID = 0;
 							}
 						
