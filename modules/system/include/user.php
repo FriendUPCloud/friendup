@@ -1400,32 +1400,7 @@ function _applySetup( $userid, $id )
 								
 									$debug[$uid]->wallpaper->wallpaperdoors = ( $s->ID > 0 ? $s->Data : false );
 								
-									// Fill Wallpaper app with settings and set default wallpaper
-									$wp = new dbIO( 'FSetting' );
-									$wp->UserID = $uid;
-									$wp->Type = 'system';
-									$wp->Key = 'imagesdoors';
-									if( $wp->Load() && $wp->Data )
-									{
-										$data = substr( $wp->Data, 1, -1 );
-	
-										if( $data && !strstr( $data, '"Home:Wallpaper/' . $fi->Filename . '"' ) )
-										{
-											if( $json = json_decode( $data, true ) )
-											{
-												$json[] = ( 'Home:Wallpaper/' . $fi->Filename );
-			
-												if( $data = json_encode( $json ) )
-												{
-													$wp->Data = stripslashes( '"' . $data . '"' );
-													$wp->Save();
-												}
-												
-												$debug[$uid]->wallpaper->imagesdoors = ( $wp->ID > 0 ? $wp->Data : false );
-											}
-										}
-									}
-								
+									// Before, we added the wallpaper to the collection. Removed here..
 								}
 							
 							
