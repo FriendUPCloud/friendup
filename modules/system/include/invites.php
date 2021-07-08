@@ -13,6 +13,8 @@
 error_reporting( E_ALL & ~E_NOTICE );
 ini_set( 'display_errors', 1 );
 
+include_once( 'php/include/helpers.php' );
+
 if( $args->command )
 {
 	$Conf = parse_ini_file( 'cfg/cfg.ini', true );
@@ -174,7 +176,97 @@ if( $args->command )
 			die( 'fail<!--separate-->{"Response":"Could not delete invite link(s)"}' );
 			
 			break;
-	
+		
+		case 'verifyinvite':
+			
+			// verifyinvite (args: hash=123d4h)
+			
+			if( isset( $args->args->hash ) && $args->args->hash )
+			{
+				if( $f = $SqlDatabase->FetchObject( '
+					SELECT * FROM FTinyUrl 
+					WHERE Hash = "' . $args->args->hash . '" AND Source LIKE "%/system.library/user/addrelationship%" 
+					ORDER BY ID ASC LIMIT 1
+				' ) )
+				{
+					if( $f->Source )
+					{
+						if( $f->Expire == 0 || $f->Expire > time( ) )
+						{
+							if( $json = json_decode( decodeUrl( $f->Source ) ) )
+							{
+								
+								// TODO: Add support for adding to workgroup(s) when that is ready ...
+								
+								//if( $json->data->workgroups )
+								//{
+								//
+								//}
+								
+								if( isset( $json->data->userid ) && isset( $json->data->mode ) )
+								{
+									if( $relation = $SqlDatabase->FetchObject( '
+										SELECT 
+											s.ID AS SourceID, s.Name AS SourceName, s.FullName AS SourceFullName, 
+											s.Email AS SourceEmail, s.UniqueID AS SourceUniqueID, s.Status AS SourceStatus, 
+											c.ID AS ContactID, c.Name AS ContactName, c.FullName AS ContactFullName, 
+											c.Email AS ContactEmail, c.UniqueID AS ContactUniqueID, c.Status AS ContactStatus 
+										FROM 
+											FUser s, FUser c 
+										WHERE 
+												s.ID = ' . $json->data->userid . ' AND s.Status = 0 
+											AND c.ID = ' . $User->ID . ' AND c.Status = 0 
+									' ) )
+									{
+										if( $result = FriendCoreQuery( '/system.library/user/addrelationship', 
+										[
+											'mode'       => $json->data->mode,
+											'sourceid'   => $relation->SourceUniqueID,
+											'contactids' => json_encode( [ $relation->ContactUniqueID ] )
+										] ) )
+										{
+											die( $result );
+										}
+										else
+										{
+											die( 'fail<!--separate-->{"Response":"[ /system.library/user/addrelationship ] fail from friendcore, contact server admin ...."}' );
+										}
+									}
+									else
+									{
+										die( 'fail<!--separate-->{"Response":"Couldn\'t find the active users to connect a relation between the inviter and the invitee, contact server admin ..."}' );
+									}
+								}
+								else
+								{
+									die( 'fail<!--separate-->{"Response":"Source data is corrupt [1]."}' );
+								}
+							}
+							else
+							{
+								die( 'fail<!--separate-->{"Response":"Source data is corrupt [2]."}' );
+							}
+						}
+						else
+						{
+							die( 'fail<!--separate-->{"Response":"Invite hash is not valid anymore, it has expired ..."}' );
+						}
+					}
+					else
+					{
+						die( 'fail<!--separate-->{"Response":"Source data is corrupt [3]."}' );
+					}
+				}
+				else
+				{
+					die( 'fail<!--separate-->{"Response":"Invite hash is not valid."}' );
+				}
+			}
+			
+			die( 'fail<!--separate-->{"Response":"Could not verify inviteHash and add relation."}' );
+			
+			break;
+		
 	}
 	
 }

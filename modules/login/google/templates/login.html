@@ -275,14 +275,6 @@
 					{
 						Application.busy = false;
 						
-						// TODO: if we have invite hash included and login is success, add relation after sessionid is received ...
-						
-						if( Application.inviteHash )
-						{
-							console.log( 'TODO: create functionality to connect users on inviteHash before showing workspace ...', Application );
-							//return false;
-						}
-						
 						let tmp = null;
 						if( answer )
 						{
@@ -331,7 +323,7 @@
 							}
 							parent.Workspace.showDesktop();
 						}
-					}, e, { hashedPassword: ge( 'Password' ).hashed ? true : false } );
+					}, e, { hashedPassword: ge( 'Password' ).hashed ? true : false, inviteHash: Application.inviteHash } );
 				},
 				// Login overwrite ...
 				loginExternal: function( mode, params, callback )
@@ -419,15 +411,13 @@
 								if( Application.showLog ) console.log( 
 								{
 									'username' : enc.decrypt( parent.Workspace.storedCredentials.username ), 
-									'nounce'   : params[ 'id_token_content' ][ 'payload' ][ 'nonce' ], 
-									'invite'   : self.inviteHash 
+									'nounce'   : params[ 'id_token_content' ][ 'payload' ][ 'nonce' ]
 								} );
 								
 								m.addVar( 'encrypted', enc.encryptRSA( JSON.stringify( 
 								{
 									'username' : enc.decrypt( parent.Workspace.storedCredentials.username ), 
-									'nounce'   : params[ 'id_token_content' ][ 'payload' ][ 'nonce' ], 
-									'invite'   : self.inviteHash 
+									'nounce'   : params[ 'id_token_content' ][ 'payload' ][ 'nonce' ]
 								} ), 
 								enc.keys.server.publickey ) );
 								
@@ -578,6 +568,9 @@
 												parent.Workspace.loginid       = json.loginid;
 												parent.Workspace.userLevel     = json.level;
 												parent.Workspace.fullName      = json.fullname;
+												
+												// If we have inviteHash, verify and add relationship between the inviter and the invitee.
+												if( self.inviteHash ) json.inviteHash = self.inviteHash;
 												
 												// We are now online!
 												parent.Friend.User.SetUserConnectionState( 'online' );

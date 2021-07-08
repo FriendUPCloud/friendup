@@ -260,6 +260,7 @@ if( isset( $args->command ) )
 		case 'generateinvite':
 		case 'getinvites':
 		case 'removeinvite':
+		case 'verifyinvite':
 			if( isset( $User ) )
 				require( 'modules/system/include/invites.php' );
 			break;

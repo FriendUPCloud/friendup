@@ -987,7 +987,19 @@ Workspace = {
 				}
 
 				setupWorkspaceData( json );
-
+				
+				// Invites
+				if( json.inviteHash )
+				{
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
+					{
+						// TODO: Make some better error handling ...
+						if( e != 'ok' ) console.log( '[ERROR] verifyinvite: ' + ( d ? d : e ) );
+					}
+					m.execute( 'verifyinvite', { hash: json.inviteHash } );
+				}
+				
 				// Language
 				_this.locale = 'en';
 				var l = new Module( 'system' );

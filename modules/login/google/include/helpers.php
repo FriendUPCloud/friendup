@@ -694,7 +694,7 @@ function sendFriendMail( $user )
 	return false;
 }
 
-function verifyFriendAuth( $username, $publickey, $nonce = false, $deviceid = '', $invitehash = false )
+function verifyFriendAuth( $username, $publickey, $nonce = false, $deviceid = '' )
 {
 	
 	$error = false; $data = false;
@@ -741,11 +741,6 @@ function verifyFriendAuth( $username, $publickey, $nonce = false, $deviceid = ''
 						
 						if( $ses->sessionid )
 						{
-							
-							if( $invitehash )
-							{
-								$rel = createFriendRelation( $ses, $creds, $invitehash );
-							}
 								
 							if( !remoteAuth( '/system.library/user/update?sessionid=' . $ses->sessionid, 
 							[
@@ -803,82 +798,6 @@ function verifyFriendAuth( $username, $publickey, $nonce = false, $deviceid = ''
 	else
 	{
 		return [ 'fail', $error ];
-	}
-	
-}
-
-function createFriendRelation( $data, $user, $invitehash )
-{
-	
-	if( $data && $user && $invitehash )
-	{
-		
-		$error = false;
-		
-		if( $res1 = remoteAuth( 
-			'/system.library/module/?sessionid=' . $data->sessionid . '&module=system&command=tinyurldata&args={"hash":"'.$invitehash.'"}', 
-			false, 'POST', [ 'Content-Type: application/x-www-form-urlencoded' ] 
-		) )
-		{
-			if( strstr( $res1, '<!--separate-->' ) )
-			{
-				if( $ret1 = explode( '<!--separate-->', $res1 ) )
-				{
-					if( isset( $ret1[1] ) )
-					{
-						if( $json = json_decode( $ret1[1] ) )
-						{
-							
-							if( isset( $json->source->data->mode ) && isset( $json->source->data->uniqueid ) && $user->UniqueID )
-							{
-								// TODO: Could potentially make support for cross node invites based on the url field.
-								
-								$json->source->data->sourceid   = $user->UniqueID;
-								$json->source->data->sourcename = $user->FullName;
-								
-								if( $json->source->data->sourceid && $json->source->data->sourceid != $json->source->data->uniqueid )
-								{
-									
-									// TODO: Add support for adding user to workgroup via invite link ...
-									
-									if( $res2 = remoteAuth( '/system.library/user/addrelationship?sessionid=' . $data->sessionid, 
-									[
-										'mode'       => $json->source->data->mode,
-										'sourceid'   => $user->UniqueID,
-										'contactids' => json_encode( [ $json->source->data->uniqueid ] )
-									] ) )
-									{
-										
-										if( strstr( $res2, '<!--separate-->' ) )
-										{
-											if( $ret2 = explode( '<!--separate-->', $res2 ) )
-											{
-												if( isset( $ret2[1] ) )
-												{
-													if( $ret2[0] == 'ok' )
-													{
-														return [ 'ok', $ret2[1] ];
-													}
-													else
-													{
-														return [ 'fail', $ret2[1] ];
-													}										
-												}
-											}
-										}
-									}
-									
-								}
-							}
-							
-						}
-					}
-				}
-			}
-		}
-		
-		return [ 'fail', $error ];
-		
 	}
 	
 }
