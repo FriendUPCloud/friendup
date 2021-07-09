@@ -80,8 +80,9 @@ BEGIN
  LEAVE getID; 
  END IF; 
  -- call function on all users
- IF (SELECT count(*) FROM FUserLogin WHERE UserID=localID AND LoginTime > loctime ) > 0 THEN
-  SELECT Device INTO device FROM FUserLogin WHERE UserID=localID AND LoginTime > loctime ORDER BY LoginTime DESC LIMIT 1;
+ SET device = (SELECT ul.Device FROM FUser u LEFT OUTER JOIN FUserLogin ul on u.ID=ul.UserID WHERE ul.UserID=localID AND ul.LoginTime > loctime ORDER BY ul.LoginTime DESC LIMIT 1);
+ IF device IS NULL THEN
+  SET device = 'none';
  END IF;
  call GenerateStateForUser( loctime, localID, localUUID, device ); 
  END LOOP getID; 
