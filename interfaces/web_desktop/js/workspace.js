@@ -125,8 +125,6 @@ Workspace = {
 		// Do the init!
 		window.addEventListener( 'beforeunload', Workspace.leave, true );
 
-		this.loadSystemInfo();
-
 		InitWindowEvents();
 		InitWorkspaceEvents();
 		InitGuibaseEvents();
@@ -708,7 +706,41 @@ Workspace = {
 		document.body.className = 'Login';
 		if( Workspace.interfaceMode && Workspace.interfaceMode == 'native' )
 			return;
-
+		
+		// Allowed hash vars we can send to loginpromt
+		function allowedHashVars()
+		{
+			let vars = []; let hash = {};
+			
+			if( window.location.hash && window.location.hash.split( '#' )[1] )
+			{
+				let allowed = [ 'module', 'verify', 'invite' ];
+				
+				let url = window.location.hash.split( '#' )[1].split( '&' );
+				
+				for( let a in url )
+				{
+					if( url[ a ].indexOf( '=' ) >= 0 && url[ a ].split( '=' )[ 0 ] )
+					{
+						hash[ url[ a ].split( '=' )[ 0 ] ] = url[ a ].replace( url[ a ].split( '=' )[ 0 ] + '=', '' );
+					}
+				}
+				
+				for( let b in allowed )
+				{
+					if( allowed[ b ] in hash )
+					{
+						vars.push( allowed[ b ] + '=' + hash[ allowed[ b ] ] );
+					}
+				}
+				
+				// Remove the hash values from the url after
+				window.location.hash = '';
+			}
+			
+			return ( vars.length > 0 ? ( '?' + vars.join( '&' ) ) : '' );
+		}
+		
 		var lp = new View( {
 			id: 'Login',
 			width: 432,
@@ -722,7 +754,7 @@ Workspace = {
 			login: true,
 			theme: 'login'
 		} );
-		lp.setRichContentUrl( '/loginprompt' );
+		lp.setRichContentUrl( '/loginprompt' + allowedHashVars() );
 		Workspace.loginPrompt = lp;
 
 		// Show it
@@ -734,6 +766,12 @@ Workspace = {
 	},
 	login: function( u, p, r, callback, ev )
 	{
+		// Use authmodule login
+		if( Workspace.authModuleLogin )
+		{
+			console.log( 'Using our existing auth module.' );
+			return Workspace.authModuleLogin( callback, window );
+		}
 		// Wrap to user object
 		return Friend.User.Login( u, p, r, callback, ev );
 	},
@@ -1112,7 +1150,8 @@ Workspace = {
 	//set an additional URL to call on logout
 	setLogoutURL: function( logoutURL )
 	{
-		Workspace.logoutURL = logoutURL;
+		if( logoutURL )
+			Workspace.logoutURL = logoutURL;
 	}
 };
 

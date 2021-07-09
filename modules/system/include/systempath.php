@@ -9,7 +9,7 @@
 *                                                                              *
 *****************************************************************************©*/
 
-global $User, $SqlDatabase, $Logger;
+global $User, $SqlDatabase, $Logger, $UserSession;
 
 // 1. Check if we're looking for software.......................................
 $len = strlen('System:Software/');
@@ -151,7 +151,7 @@ if( isset( $args->args ) && substr( $args->args->path, 0, $len ) == 'System:Soft
 					$picon = file_exists( 'resources' . $svgPath ) ? $svgPath : $pngPath;
 					if( $path == 'repository/' )
 					{
-						$o->IconFile = '/system.library/module/?sessionid=' . $User->SessionID . '&module=system&command=repoappimage&i=' . $app->Filename;
+						$o->IconFile = '/system.library/module/?sessionid=' . $UserSession->SessionID . '&module=system&command=repoappimage&i=' . $app->Filename;
 					}
 					else if( file_exists( 'resources' . $picon ) )
 					{
@@ -310,7 +310,7 @@ else if( isset( $args->args ) && strtolower( trim( $args->args->path ) ) == 'sys
 			$o->IconClass = 'DeviceSession';
 			$o->Path = 'System:Devices/Sessions/' . $o->DeviceIdentity;
 			$o->Permissions = '';
-			$o->DateModified = date( 'Y-m-d H:i:s', $o->LoggedTime );
+			$o->DateModified = date( 'Y-m-d H:i:s', $o->LastActionTime );
 			$o->DateCreated = $o->DateModified;
 			$out[] = $o;
 		}

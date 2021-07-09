@@ -856,6 +856,8 @@ Screen = function ( flags, initObject )
 		if( !base ) 
 			base = '/';
 		
+		if( !this._screen ) return;
+		
 		var eles = this._screen.getElementsByTagName( _viewType );
 		var ifr = false;
 		var w = this;

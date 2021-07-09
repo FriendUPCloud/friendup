@@ -533,6 +533,29 @@ function GetStatusbarHeight( screen )
 	return 0;
 }
 
+// Pop a window up!
+function PopoutWindow( wind, e )
+{
+    let windowObject = wind.windowObject;
+    let ifr = wind.getElementsByTagName( 'iframe' )[0];
+    let v = window.open( '', '', 'width=900,height=900,status=no,topbar=no' );
+    let styl = document.createElement( 'style' );
+    styl.innerHTML = 'iframe{position:absolute;top:0;left:0;width:100%;height:100%;margin:0;border:0}';
+    v.document.body.appendChild( ifr );
+    v.document.body.appendChild( styl );
+    wind.parentNode.parentNode.removeChild( wind.parentNode );
+    windowObject.setFlag( 'invisible', true );
+    v.document.title = windowObject.flags.title;
+    setTimeout( function()
+    {
+        let ifr = v.document.getElementsByTagName( 'iframe' )[0];
+        ifr.contentWindow.document.body.setAttribute( 'style', '' );
+        ifr.contentWindow.document.body.classList.remove( 'Loading' );
+        ifr.contentWindow.Application.run();
+    }, 250 );
+}
+
+
 // Make sure we're not overlapping all of the time
 var _cascadeValue = 0;
 function CascadeWindowPosition( obj )
@@ -4233,6 +4256,7 @@ var View = function( args )
 		content = this.removeScriptsFromData( content );
 		if( !this._window )
 			return;
+			
 		let eles = this._window.getElementsByTagName( _viewType );
 		let ifr = false;
 		if( eles[0] )
@@ -4269,6 +4293,9 @@ var View = function( args )
 	{
 		let w = this;
 
+		if( !this._window )
+			return;
+			
 		let eles = this._window.getElementsByTagName( _viewType );
 		let ifr = false;
 		let appended = false;
@@ -4345,6 +4372,9 @@ var View = function( args )
 
 		if( !base )
 			base = '/';
+
+		if( !this._window )
+			return;
 
 		let eles = this._window.getElementsByTagName( _viewType );
 		let ifr = false;
@@ -4865,7 +4895,7 @@ var View = function( args )
 					value = value.split( 'px' ).join( '' );
 					if( !isMobile )
 					{
-						viewdiv.style.left = value.indexOf( '%' ) > 0 ? value : ( value + 'px' );
+						viewdiv.style.left = ( value.indexOf( '%' ) > 0 || value.indexOf( 'vw' ) > 0 ) ? value : ( value + 'px' );
 					}
 				}
 				break;
@@ -4877,7 +4907,7 @@ var View = function( args )
 					value = value.split( 'px' ).join( '' );
 					if( !isMobile )
 					{
-						viewdiv.style.top = value.indexOf( '%' ) > 0 ? value : ( value + 'px' );
+						viewdiv.style.top = ( value.indexOf( '%' ) > 0 || value.indexOf( 'vh' ) > 0 ) ? value : ( value + 'px' );
 					}
 				}
 				break;
@@ -5467,11 +5497,19 @@ var View = function( args )
 
 		// prepare for us to use to external libs. // good quality resize + EXIF data reader
 		// https://github.com/blueimp/JavaScript-Load-Image/blob/master/js/load-image.all.min.js
-		Include( '/webclient/3rdparty/load-image.all.min.js', function()
+		if( !self.cameraIncludesLoaded )
 		{
-			// Execute async operation
+			Include( '/webclient/3rdparty/load-image.all.min.js', function()
+			{
+				// Execute async operation
+				self.cameraIncludesLoaded = true;
+				getAvailableDevices( function( e ){ setCameraMode( e.data ) } );				
+			});
+		}
+		else
+		{
 			getAvailableDevices( function( e ){ setCameraMode( e.data ) } );				
-		});
+		}
 	}
 	
 	// Add a child window to this window

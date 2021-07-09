@@ -1846,7 +1846,10 @@ void *InternalPINGThread( void *d )
 			{
 				//DEBUG("[CommServicePING] Connection reestabilished\n");
 				
-				con->fc_Socket->s_Interface->SocketDelete( con->fc_Socket );
+				if( con->fc_Socket != NULL )
+				{
+					con->fc_Socket->s_Interface->SocketDelete( con->fc_Socket );
+				}
 				con->fc_Socket = newsock;
 				newsock->s_Data = con;
 				

@@ -2,11 +2,53 @@
 <html>
 	<head>
 		<style>
+			body
+			{
+				padding: 0;
+				margin: 0;
+			}
 			html { color: #f8f8f8; background: #f8f8f8; }
 			html body.Loading * { visibility: hidden; }
 			html body.Loading { background-color: #f8f8f8; }
 			h3 { padding-bottom:12px !important; }
+			.HRow:after
+			{
+				content: " ";
+				display: block;
+				clear: both;
+			}
 			#SamlFormFrame { width:100%; height:30px; }
+			#LoginElement, .LoginError
+			{
+				opacity: 1;
+				transition: opacity 0.35s;
+			}
+			.LoginError
+			{
+				padding: 10px;
+				border-radius: 10px;
+				border-color: #a00;
+				background-color: white;
+				color: #a00;
+			}
+			#LoginElement.Faded, .LoginError.Faded
+			{
+				opacity: 0;
+			}
+			.MarginBottom
+			{
+				margin-bottom: 10px;
+			}
+			.MarginTop
+			{
+				margin-top: 10px;
+			}
+			#AuthImage
+			{
+				position: relative;
+				margin: -20px -20px 20px -20px;
+				border: 0;
+			}
 		</style>
 		<script src="/webclient/js/apps/api.js"></script>
 	</head>
@@ -26,9 +68,49 @@
 					</div>
 				</div>
 			</div>
+			<input type="hidden" id="publickey" value="{publickey}"/>
 		</div>
 		<style>#invalidLogin { color:#F00; }</style>
 		<script>
+			// Used to allow "enter" on form input fields
+			function fixKeyboardInputThere()
+			{
+				if( document.getElementById( 'Code' ) )
+				{
+					document.getElementById( 'Code' ).onkeyup = function( e )
+					{
+						if( e.which == 13 )
+						{
+							Application.validateMobileNumber();
+						}
+					}
+				}
+				if( document.getElementById( 'AuthPassword' ) )
+				{
+					document.getElementById( 'AuthPassword' ).onkeyup = function( e )
+					{
+						if( e.which == 13 )
+						{
+							Application.validateMobileNumber();
+						}
+					}
+				}
+			}
+		
+			window.doLogout = function( Noreload )
+			{
+				let ifr = document.createElement( 'iframe' );
+				ifr.onload = function()
+				{
+					document.body.removeChild( ifr );
+					if( !Noreload )
+						document.location.reload();
+				}
+				ifr.src = parent.Workspace.logoutURL + '&rand=' + ( Math.random() * 999 + ( Math.random() * 999 ) );
+				ifr.style.visibility = 'hidden';
+				document.body.appendChild( ifr );
+			}
+		
 			Application = {
 				failedAttempt: false,
 				uName: false,
@@ -42,11 +124,137 @@
 					//console.log('set it and will try again in half a second');
 					//setTimeout( 'parent.Workspace.loginPrompt.setFlag( \'height\', 290 );',500 );
 				},
+				// Start the mobile 2fa validation process
+				validateMobileNumber: function()
+				{
+					document.getElementById( 'Auth2FAForm' ).style.opacity = 0.5;
+					
+					let code = ge( 'Code' ).value;
+					let passWd = ge( 'AuthPassword' ).value;
+					if( parseInt( code ) <= 0 || isNaN( parseInt( code ) ) )
+					{
+						ge( 'Code' ).focus();
+						this.showError( 'Please input your validation number correctly.' );
+						return;
+					}
+					
+					// Manage public key
+					parent.Workspace.encryption.keys.server = ( window.publicKey ? { publickey: window.publicKey  } : false );
+				
+					// So here we are setting keys twice first time in the login form to securely communicate with the server, then again in parent.Friend.User, might be overkill ...
+					parent.Workspace.encryption.setKeys( this.upn, passWd );
+				
+					if( !parent.Workspace.encryption.keys.server.publickey )
+					{
+						//console.log( 'Server Key Missing:', parent.Workspace.encryption.keys.server );
+						document.getElementById( 'Auth2FAForm' ).style.opacity = 1;
+						return;
+					}
+					
+					let j = new cAjax();
+					j.open( 'POST', '/loginprompt/?execute2fa=1' );
+					j.addVar( 'username', this.upn );
+					j.addVar( 'login', this.userName );
+					j.addVar( 'mobilenumber', this.mobileNumber );
+					j.addVar( 'fullname', this.fullName );
+					j.addVar( 'code', code );
+					j.addVar( 'password', passWd );
+					j.addVar( 'authtoken', this.Auth2faToken );
+					j.addVar( 'deviceid', parent.Workspace.deviceid ); // TODO: Create device id!
+					j.onload = function()
+					{
+						let resp = this.responseText();
+						resp = resp.split( '<!--separate-->' );
+						if( resp[0] == 'ok' )
+						{
+							let json = JSON.parse( resp[1] );
+							
+							if( !json.username )
+							{
+								document.getElementById( 'Auth2FAForm' ).style.opacity = 1;
+								Application.showError( 'Error with validation code. Try again.' );
+								return;
+							}
+							for( let u in { 'username': 1, 'login': 2 } )
+							{
+								if( json[ u ].indexOf( '%5C' ) > 0 )
+								{
+									json[ u ] = json[ u ].split( '%5C' )[1];
+								}
+								else if( json[ u ].indexOf( '@' ) > 0 )
+								{
+									json[ u ] = json[ u ].split( '%5C' )[0];
+								}
+							}
+							
+							parent.Workspace.sessionId     = json.sessionid;
+							parent.Workspace.login         = json.login;
+							parent.Workspace.loginUsername = json.username;
+							parent.Workspace.loginUserId   = json.userid;
+							parent.Workspace.loginid       = json.loginid;
+							parent.Workspace.userLevel     = json.level;
+							parent.Workspace.fullName      = json.fullname;
+							
+							// Set username and password so we can fetch it later
+							let enc = parent.Workspace.encryption;
+							parent.Workspace.storedCredentials = {
+								username : enc.encrypt( json.username, enc.getKeys().publickey ),
+								login    : enc.encrypt( json.login, enc.getKeys().publickey ),
+								password : enc.encrypt( passWd, enc.getKeys().publickey )
+							};
+							
+							// This is needed for Friend.User.ReLogin()
+							// TODO: Check if this passWd is allready hashed??? If it is use this instead ...
+							//parent.Workspace.loginPassword = enc.encrypt( passWd );
+							parent.Workspace.loginPassword = enc.encrypt( 'HASHED' + Sha256.hash( passWd ) );
+							parent.Workspace.loginHashed = true;
+							
+							// We are now online!
+							parent.Friend.User.SetUserConnectionState( 'online' );
+							
+							if( !parent.Workspace.userWorkspaceInitialized )
+							{
+								return parent.Workspace.initUserWorkspace( json, ( typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
+							}
+							else
+							{
+								if( typeof( callback ) == 'function' ) return callback( true, serveranswer );
+								// Make sure we didn't lose websocket!
+							}
+						}
+						else
+						{
+							document.getElementById( 'Auth2FAForm' ).style.opacity = 1;
+							Application.showError( 'Error with validation code. Try again.' );
+						}
+					}
+					j.send();
+				},
 				doLogin: function( e )
 				{
 				
-					console.log('execute login...');
+					//console.log('execute login...');
 					
+				},
+				showError: function( str )
+				{
+					if( !ge( 'LoginElement' ) ) return;
+					let d = document.createElement( 'div' );
+					d.className = 'LoginError Faded';
+					d.innerHTML = str;
+					ge( 'LoginElement' ).appendChild( d );
+					setTimeout( function()
+					{
+						d.classList.remove( 'Faded' );
+						setTimeout( function()
+						{
+							d.classList.add( 'Faded' );
+							setTimeout( function()
+							{
+								ge( 'LoginElement' ).removeChild( d );
+							}, 350 );
+						}, 1800 );
+					}, 50 );
 				},
 				checkKeys: function( e )
 				{
@@ -58,6 +266,13 @@
 				},
 				receiveMessage: function( msg )
 				{
+					// Store samldata on Workspace.samlData for later use
+					if( msg.samldata ) 
+					{
+						parent.Workspace.samlData = msg.samldata;
+						this.samlData = msg.samldata;
+					}
+					
 					if( msg.cmd && msg.command == 'error' )
 					{
 						showLoginError();
@@ -66,59 +281,126 @@
 					{
 						Application.uName = msg.username;
 						Application.uPass = msg.password;
-						Application.logoutURL = msg.logouturl;
 						
-					
+						if( msg.logouturl && parent.Workspace )
+						{
+					        parent.Workspace.setLogoutURL( msg.logouturl );
+					        
+					        // Trap this
+							window.doLogout( true );
+					    }
+						
+					    // Execute the login procedure
 						Application.loginUser();
-					}
-					
-					if ( msg.samldata ) {
-						console.log( 'modules/login/saml/templates/login.html - storing saml data on Workspace.samlData', msg );
-						parent.Workspace.samlData = msg.samldata;
 					}
 				},
 				loginUser: function()
 				{
-					if( parent && parent.Workspace && parent.Friend && parent.Friend.User )
-					{
-						// Don't do it many times while working!
-						if( Application.busy ) return;
-						Application.busy = true;
-						
-						if( Application.uPass.indexOf( 'HASHED' ) >= 0 || Application.uPass.indexOf( '{S6}' ) >= 0 )
+				    // Make sure we have a unique identifier
+				    if( !this.Auth2faToken )
+				    {
+				        this.Auth2faToken = md5( '2fa_' + ( Math.random() ) + '_' + ( Math.random() ) + ( new Date() ).getTime() );
+				    }
+				    
+				    // Fetch samldata
+				    let mobileNumber = null;
+				    if( parent.Workspace && parent.Workspace.samlData )
+				    {
+						let smd = parent.Workspace.samlData.user;
+						// Find user data from SAML
+						// TODO: This should be mapped depending on ADFS setup
+						let us = null;
+						for( us in smd )
 						{
-							Application.pHash = true;
+							if( us.indexOf( 'phonenumber' ) > 0 )
+							{
+								mobileNumber = smd[ us ][0];
+								this.mobileNumber = mobileNumber;
+							}
+							else if( us.indexOf( '\/name' ) > 0 )
+							{
+								this.userName = smd[ us ][ 1 ];
+							}
+							else if( us.indexOf( '\/surname' ) > 0 )
+							{
+								this.fullName = smd[ us ][ 0 ];
+							}
+							else if( us.indexOf( '\/upn' ) > 0 )
+							{
+								this.upn = smd[ us ][ 0 ];
+							}
 						}
-						
-						parent.Friend.User.Init();
-						parent.Workspace.setLogoutURL( Application.logoutURL );
-						parent.Friend.User.Login( Trim( Application.uName ), Trim( Application.uPass ), false, function( result )
-						{
-							if( result == false )
-							{
-								console.log('Could NOT logg in... why...?' +  Application.uName + ':' +  Application.uPass + ':' + result);
-								showLoginError();
-							}
-							else if( result == 0 )
-							{
-								setTimeout( showLoginError, 1000 );
-							}
-							else
-							{
-								Application.busy = false;
-							}
-						}, false, { hashedPassword: Application.pHash ? true : false } );
 					}
-					else
-					{
-						Application.loginAttempts++;
-						if( Application.loginAttempts < 10 ) setTimeout(Application.loginUser, 500 );
-						else showLoginError('Could not login');
+				    
+				    // TODO: No mobile number! Give error
+				    
+				    let m = new cAjax();
+				    m.open( 'POST', '/loginprompt/?check2fa=1&auth2fatoken=' + this.Auth2faToken, true );
+				    m.addVar( 'auth2fatoken', this.Auth2faToken );
+				    m.addVar( 'mobilenumber', mobileNumber );
+				    m.onload = function()
+				    {
+				    	// Remember public key
+				    	window.publicKey = ge( 'publickey' ) ? ge( 'publickey' ).value : '';
+				    	
+				    	let resp = this.responseText().split( '<!--separate-->' );
+				    	let e = resp[0]; let d = resp[1];
+				        if( e == 'ok' )
+				        {
+					        if( parent && parent.Workspace && parent.Friend && parent.Friend.User )
+					        {
+						        // Don't do it many times while working!
+						        if( Application.busy ) return;
+						        Application.busy = true;
+						        
+						        if( Application.uPass.indexOf( 'HASHED' ) >= 0 || Application.uPass.indexOf( '{S6}' ) >= 0 )
+						        {
+							        Application.pHash = true;
+						        }
+						        
+						        parent.Friend.User.Init();
+						        parent.Friend.User.Login( Trim( Application.uName ), Trim( Application.uPass ), false, function( result )
+						        {
+							        if( result == false )
+							        {
+								        showLoginError();
+							        }
+							        else if( result == 0 )
+							        {
+								        setTimeout( showLoginError, 1000 );
+							        }
+							        else
+							        {
+								        Application.busy = false;
+							        }
+						        }, false, { hashedPassword: Application.pHash ? true : false } );
+					        }
+					        else
+					        {
+						        Application.loginAttempts++;
+						        if( Application.loginAttempts < 10 ) setTimeout(Application.loginUser, 500 );
+						        else showLoginError('Could not login');
+					        }
+					    }
+					    // Auth2faToken not registered, show 2fa form
+					    else
+					    {
+					    	ge( 'LoginElement' ).classList.add( 'Faded' );
+					    	let u = new cAjax();
+						    u.open( 'POST', '/loginprompt/?get2faform=1', true );
+					        u.onload = function()
+					        {
+					            ge( 'LoginElement' ).innerHTML = this.responseText();
+					            ge( 'LoginElement' ).classList.remove( 'Faded' );
+					            ge( 'Code' ).focus();
+					            fixKeyboardInputThere();
+					        }
+					        u.send();
+					    }
 					}
+					m.send();
 				}				
 			};
-			
-
 			
 			function showLoginError(msg)
 			{

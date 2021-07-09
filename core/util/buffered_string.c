@@ -30,12 +30,12 @@
 
 BufString *BufStringNew(void)
 {
-	BufString *str = FCalloc(sizeof(BufString), 1 );
-	if( str != NULL )
+	BufString *str = NULL;
+	if( (str = FCalloc(sizeof(BufString), 1 )) != NULL )
 	{
-		str->bs_Size = 0;
+		//str->bs_Size = 0;
 		str->bs_Bufsize = BUF_STRING_MAX;
-		str->bs_Buffer = FCalloc( str->bs_Bufsize+1, sizeof(char) );
+		str->bs_Buffer = FCalloc( (str->bs_Bufsize+1), sizeof(char) );
 		str->buffer_increments = 0;
 	}
 	return str;

@@ -240,39 +240,41 @@ int HashmapRehash( Hashmap* in )
 	/* Setup the new elements */
 	Hashmap *m = (Hashmap *) in;
 	HashmapElement* temp = (HashmapElement *) FCalloc( (2 * m->hm_TableSize), sizeof( HashmapElement ) );
-	if( temp  == NULL )
+	if( temp != NULL )
+	{
+		// Update the array 
+		curr = m->hm_Data;
+		m->hm_Data = temp;
+
+		// Update the size 
+		oldSize = m->hm_TableSize;
+		m->hm_TableSize = 2 * m->hm_TableSize;
+		m->hm_Size = 0;
+
+		/* Rehash the elements */
+		for( i = 0; i < oldSize; i++ )
+		{
+			int status;
+		
+			if (curr[i].hme_InUse == 0)
+			{
+				continue;
+			}
+            
+			status = HashmapPut( m, curr[i].hme_Key, curr[i].hme_Data );
+			if( status != MAP_OK )
+			{
+				FFree(curr);
+				return status;
+			}
+		}
+
+		FFree(curr);
+	}
+	else
 	{
 		return MAP_OMEM;
 	}
-
-	// Update the array 
-	curr = m->hm_Data;
-	m->hm_Data = temp;
-
-	// Update the size 
-	oldSize = m->hm_TableSize;
-	m->hm_TableSize = 2 * m->hm_TableSize;
-	m->hm_Size = 0;
-
-	/* Rehash the elements */
-	for( i = 0; i < oldSize; i++ )
-	{
-        int status;
-
-        if (curr[i].hme_InUse == 0)
-		{
-            continue;
-		}
-            
-		status = HashmapPut( m, curr[i].hme_Key, curr[i].hme_Data );
-		if( status != MAP_OK )
-		{
-			FFree(curr);
-			return status;
-		}
-	}
-
-	FFree(curr);
 
 	return MAP_OK;
 }
@@ -426,8 +428,8 @@ void HashmapFree( Hashmap* in )
 		e = in->hm_Data[i];
 		if( e.hme_InUse == TRUE )
 		{
-			if( e.hme_Data != NULL ) FFree( e.hme_Data );
-			if( e.hme_Key  != NULL ) FFree( e.hme_Key );
+			if( e.hme_Data != NULL ) {FFree( e.hme_Data ); e.hme_Data = NULL; }
+			if( e.hme_Key  != NULL ) {FFree( e.hme_Key ); e.hme_Key = NULL; }
 		}
 	}
 	if( in->hm_Data != NULL )
