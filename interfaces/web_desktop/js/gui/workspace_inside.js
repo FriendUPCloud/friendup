@@ -1899,7 +1899,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				else
 				{
-					console.log( 'SET DEFAULT', e, d );
 					Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 					Workspace.windowWallpaperImage = '';
 					document.body.classList.add( 'DefaultWallpaper' );
@@ -3579,7 +3578,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// We haven't started with wallpaper yet. Just pass
 			if( typeof( self.wallpaperImage ) == 'undefined' )
 			{
-				console.log( 'WHAT is going on? ' + Workspace.wallpaperImage );
 				return;
 			}
 			// Recall wallpaper
@@ -3592,8 +3590,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				let eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
 				if( eles.length )
 				{
-					console.log( 'THEN it is!: ' + Workspace.wallpaperImage );
-				
 					let ext = false;
 					let found = false;
 					if( self.wallpaperImage )
@@ -3622,10 +3618,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						v[ z ].parentNode.removeChild( v[ z ] );
 					}
-
-					console.log( 'How it is!: ' + Workspace.wallpaperImage );
 					
-
 					// Check extension
 					switch( ext )
 					{
