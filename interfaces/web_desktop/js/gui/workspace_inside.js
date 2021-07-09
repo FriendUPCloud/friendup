@@ -294,6 +294,8 @@ var WorkspaceInside = {
 				url = getImageUrl( url );
 		}
 		
+		console.log( 'What is going on? ' + url );
+		
 		let workspacePositions = [];
 		let maxW = Workspace.screen.getMaxViewWidth();
 		for( let a = 0; a < globalConfig.workspacecount; a++ )
@@ -1586,8 +1588,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						
 				if( e == 'ok' && d )
 				{
-					var dat = JSON.parse( d );
-					if( dat.wallpaperdoors )
+					Workspace.userSettingsLoaded = true;
+					let dat = JSON.parse( d );
+					if( dat.wallpaperdoors && dat.wallpaperdoors.substr )
 					{
 						if( dat.wallpaperdoors.substr(0,5) == 'color' )
 						{
@@ -1606,6 +1609,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							document.body.classList.add( 'DefaultWallpaper' );
 							Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 						}
+						console.log( 'Set wallpaper: ' + Workspace.wallpaperImage );
 					}
 					else
 					{
@@ -1622,7 +1626,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					Workspace.applyThemeConfig();
 					Workspace.loadSystemInfo();
-				
+					
 					// Fallback
 					if( !isMobile )
 					{
@@ -1635,11 +1639,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 						}
 					}
-				
+					
 					if( !Workspace.wallpaperImage || Workspace.wallpaperImage == '""' || Workspace.wallpaperImage === '' )
 					{
 						Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 					}
+					
 					if( dat.wallpaperwindows )
 					{
 						Workspace.windowWallpaperImage = dat.wallpaperwindows;
@@ -1739,6 +1744,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								break;
 						}
 						window.friendApp.setBackgroundColor( col );
+					}
+					
+					// If we haven't refreshed, do it now
+					if( !Workspace.desktopFirstRefresh )
+					{
+						Workspace.refreshDesktop();
 					}
 					
 					// Do the startup sequence in sequence (only once)
@@ -1888,6 +1899,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				else
 				{
+					console.log( 'SET DEFAULT', e, d );
 					Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 					Workspace.windowWallpaperImage = '';
 					document.body.classList.add( 'DefaultWallpaper' );
@@ -3465,6 +3477,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Just refresh the desktop ------------------------------------------------
 	refreshDesktop: function( callback, forceRefresh )
 	{
+		// Need to wait
+		if( !this.userSettingsLoaded ) return;
+		this.desktopFirstRefresh = true;
+		
 		let self = this;
 		
 		// Get those dynamic classes
@@ -3560,8 +3576,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 			}
 
+			// We haven't started with wallpaper yet. Just pass
+			if( typeof( self.wallpaperImage ) == 'undefined' )
+			{
+				console.log( 'WHAT is going on? ' + Workspace.wallpaperImage );
+				return;
+			}
 			// Recall wallpaper
-			if( Workspace.mode != 'vr' && self.wallpaperImage != 'color' )
+			else if( Workspace.mode != 'vr' && self.wallpaperImage != 'color' )
 			{
 			    if( typeof( self.wallpaperImage ) == undefined )
 			    {
@@ -3570,6 +3592,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				let eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
 				if( eles.length )
 				{
+					console.log( 'THEN it is!: ' + Workspace.wallpaperImage );
+				
 					let ext = false;
 					let found = false;
 					if( self.wallpaperImage )
@@ -3598,6 +3622,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						v[ z ].parentNode.removeChild( v[ z ] );
 					}
+
+					console.log( 'How it is!: ' + Workspace.wallpaperImage );
+					
 
 					// Check extension
 					switch( ext )
