@@ -39,6 +39,12 @@
 
 #define MAX_POLL_ELEMENTS 256
 
+enum
+{
+	WEBSOCKET_TYPE_BROWSER = 0,
+	WEBSOCKET_TYPE_EXTERNAL
+};
+
 //
 // main WebSocket structure
 //
@@ -90,6 +96,7 @@ typedef struct WSCData
 	BufString						*wsc_Buffer;
 	pthread_mutex_t					wsc_Mutex;
 	int								wsc_InUseCounter;
+	int								wsc_UpdateLoggedTimeCounter;	// this field says how many calls left to call LoggedTime update on FUser table
 }WSCData;
 
 /*

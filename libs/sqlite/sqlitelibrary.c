@@ -419,7 +419,7 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 		return 0;
 	}
 	
-	//"UPDATE %s set SessionID = '%s', LoggedTime = '%lld' where Name = '%s'"
+	//"UPDATE %s set SessionID = '%s', LastActionTime = '%lld' where Name = '%s'"
 	
 	int lsize = sprintf( tmpQuery, "UPDATE %s set ", (char *)descr[ 1 ] );
 	BufStringAddSize( querybs, tmpQuery, lsize );
@@ -844,6 +844,21 @@ void DeleteWhere( struct SQLLibrary *l, FULONG *descr, char *where )
 	{
 		FERROR("Error: %s", (char *)sqlite3_errmsg( l->con.sql_Con ) );
 	}
+}
+
+/**
+ * Return last error
+ *
+ * @param l pointer to mysql.library structure
+ * @return error string or null
+ */
+const char *GetLastError( struct SQLLibrary *l )
+{
+	if( l != NULL &&  l->con.sql_Con != NULL )
+	{
+
+	}
+	return NULL;
 }
 
 /**
@@ -1896,10 +1911,12 @@ void *libInit( void *sb )
 	l->NumberOfRecords = dlsym( l->l_Handle, "NumberOfRecords");
 	l->NumberOfRecordsCustomQuery = dlsym( l->l_Handle, "NumberOfRecordsCustomQuery");
 	l->NumberOfRows = dlsym( l->l_Handle, "NumberOfRows");
+	l->GetLastError = dlsym( l->l_Handle, "GetLastError");
 	l->FetchRow = dlsym ( l->l_Handle, "FetchRow");
 	l->FreeResult = dlsym ( l->l_Handle, "FreeResult");
 	l->DeleteWhere = dlsym ( l->l_Handle, "DeleteWhere");
 	l->QueryWithoutResults = dlsym ( l->l_Handle, "QueryWithoutResults");
+	l->MakeEscapedString = dlsym ( l->l_Handle, "MakeEscapedString");
 	l->GetStatus = dlsym ( l->l_Handle, "GetStatus");
 	l->SetOption = dlsym ( l->l_Handle, "SetOption");
 	l->SNPrintF = SNPrintF;

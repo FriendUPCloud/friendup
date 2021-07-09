@@ -142,7 +142,7 @@
 								{
 									$s->SessionID = hash( 'sha256', ( time().$usr->Name.rand(0,999).rand(0,999).rand(0,999) ) );
 								}
-								$s->LoggedTime = time();
+								$s->CreationTime = time();
 								$s->Save();
 								
 								if( $s->ID > 0 && ( $ses = $SqlDatabase->FetchObject( '
@@ -307,7 +307,7 @@
 					{
 						$s->SessionID = hash( 'sha256', ( time().$usr->Name.rand(0,999).rand(0,999).rand(0,999) ) );
 					}
-					$s->LoggedTime = time();
+					$s->LastActionTime = time();
 					$s->Save();
 					
 					if( $s->ID > 0 && ( $ses = $SqlDatabase->FetchObject( '

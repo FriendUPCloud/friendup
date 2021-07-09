@@ -12,7 +12,8 @@
 
 global $SqlDatabase, $User, $Config;
 
-
+error_reporting( E_ALL & ~E_NOTICE & ~E_DEPRECATED );
+ini_set( 'display_errors', '1' );
 
 // Dependency ------------------------------------------------------------------
 
@@ -33,15 +34,29 @@ function getsetting_calculateTextBox( $text, $fontFile, $fontSize, $fontAngle )
 	);
 }
 // Return "broken file"
-function _file_broken()
+function _file_broken( $display )
 {
+	$cnt = file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' );
 	FriendHeader( 'Content-Length: ' . strlen( $cnt ) );
-	FriendHeader( 'Content-Type: image/svg+xml' );
-	readfile( 'resources/iconthemes/friendup15/File_Broken.svg' );
+	FriendHeader( 'Content-Type: image/svg+xml' );	
+	switch( $display )
+	{
+		case 'base64':
+			
+				die( 'data:image/' . pathinfo( 'resources/iconthemes/friendup15/File_Broken.svg', PATHINFO_EXTENSION ) . ';base64,' . base64_encode( $cnt ) );
+				
+			break;
+			
+		default:
+			
+				readfile( 'resources/iconthemes/friendup15/File_Broken.svg' );
+			
+			break;
+	}
 }
 
 // Output the file
-function _file_output( $filepath )
+function _file_output( $filepath, $display )
 {
 	if( $filepath )
 	{
@@ -67,8 +82,21 @@ function _file_output( $filepath )
 			FriendHeader( 'HTTP/1.1 304 Not Modified' ); 
 			die();
 		}
-		//die( print_r( $_SERVER,1 ) . ' .. ' . $last_modified_time . ' || ' . $etag );
-		die( readfile( $filepath ) );
+
+		switch( $display )
+		{
+			case 'base64':
+				
+					die( 'data:image/' . pathinfo( $filepath, PATHINFO_EXTENSION ) . ';base64,' . base64_encode( file_get_contents( $filepath ) ) );
+				
+				break;
+				
+			default:
+				
+					die( readfile( $filepath ) );
+				
+				break;
+		}
 	}
 }
 
@@ -139,6 +167,8 @@ $height = 256;
 $mode = 'resize';
 $hash = false;
 
+$display = 'default';
+
 // Image was set
 if( isset( $args->image ) )
 {
@@ -159,6 +189,11 @@ if( isset( $args->mode ) )
 {
 	$mode = $args->mode;
 }
+// Display was requested
+if( isset( $args->display ) )
+{
+	$display = $args->display;
+}
 
 // Sanitized username
 $wname = $Config->FCUpload;
@@ -168,6 +203,8 @@ if( !file_exists( $wname . 'thumbnails' ) )
 	mkdir( $wname . 'thumbnails' );
 }
 
+
+
 if( $userid > 0 && $wname )
 {
 	
@@ -176,7 +213,7 @@ if( $userid > 0 && $wname )
 	// Check if it exists!
 	if( $hash && file_exists( $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png' ) )
 	{
-		_file_output( $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png' );
+		_file_output( $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png', $display );
 		die();
 	}
 	// Try to generate it
@@ -337,7 +374,7 @@ if( $userid > 0 && $wname )
 		// Check again ...
 		if( $hash && file_exists( $filepath ) )
 		{
-			_file_output( $filepath );	
+			_file_output( $filepath, $display );	
 		}
 		
 		if( $avatar && $hash && $fname && $filepath )
@@ -358,7 +395,7 @@ if( $userid > 0 && $wname )
 				}
 				if( !file_exists( $folderpath ) )
 				{
-					_file_broken();
+					_file_broken( $display );
 				}
 				
 				// Clean up ...
@@ -398,7 +435,7 @@ if( $userid > 0 && $wname )
 				
 				if( !$source )
 				{
-					_file_broken();
+					_file_broken( $display );
 				}
 				
 				
@@ -458,7 +495,7 @@ if( $userid > 0 && $wname )
 				// Check if it exists!
 				if( file_exists( $filepath ) )
 				{
-					_file_output( $filepath );
+					_file_output( $filepath, $display );
 					die();
 				}
 				
@@ -470,6 +507,6 @@ if( $userid > 0 && $wname )
 }
 
 // TODO: Support more icons
-_file_broken();
+_file_broken( $display );
 
 ?>

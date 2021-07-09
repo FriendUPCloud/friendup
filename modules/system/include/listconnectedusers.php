@@ -17,12 +17,18 @@ global $SqlDatabase, $Logger, $User;
 // List all users by connection to workgroup
 if( $rows = $SqlDatabase->FetchObjects( '
 	SELECT 
-		u.ID, u.Name, u.Fullname, u.Email FROM FUser u, FUserToGroup utg1, FUserToGroup utg2
+		u.ID, u.Name, u.Fullname, u.Email 
+	FROM 
+		FUser u, FUserToGroup mygroup, FUserToGroup theirgroup, FUserGroup myg, FUserGroup theyg
 	WHERE
-		utg1.UserID = \'' . $User->ID . '\' AND
-		utg2.UserID = u.ID AND
-		utg1.UserGroupID = utg2.UserGroupID AND
-		u.ID != utg1.UserID
+		myg.Type        =   "Workgroup" AND
+		theyg.Type     =   "Workgroup" AND
+		mygroup.UserID      =   ' . $User->ID . ' AND
+		theirgroup.UserID   =   u.ID AND
+		mygroup.UserGroupID =   theirgroup.UserGroupID AND
+		u.ID                != ' . $User->ID . ' AND
+		theyg.ID            =   theirgroup.UserGroupID AND
+		myg.ID              =   mygroup.UserGroupID
 	GROUP BY u.ID
 ' ) )
 {

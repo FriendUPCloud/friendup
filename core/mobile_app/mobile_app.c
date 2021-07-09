@@ -715,7 +715,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 									UserSession *us = appConnection->mac_UserSession;
 									if( us != NULL )
 									{
-										us->us_LoggedTime = time( NULL );
+										us->us_LastActionTime = time( NULL );
 									}
 						
 									DEBUG("[websocket_app_callback] Msg to send1: %s pointer to user session %p\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, us );
@@ -960,7 +960,7 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 	AuthMod *a = SLIB->AuthModuleGet( SLIB );
 
 	DEBUG("Check password %s \n", passwordString );
-	if( a->CheckPassword(a, NULL, user, passwordString, &block_time) == FALSE )
+	if( a->CheckPassword(a, NULL, user, passwordString, &block_time, "mobileapp") == FALSE )
 	{
 		DEBUG("Check = false\n");
 		if( user != NULL )
@@ -1171,9 +1171,9 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						FRIEND_MUTEX_UNLOCK( &locses->us_Mutex );
 					}
 					
-					DEBUG("[AdminWebRequest] Send Message through websockets: %s clients: %p timestamptrue: %d\n", locses->us_DeviceIdentity, locses->us_WSD, ( ( (timestamp - locses->us_LoggedTime) < sb->sl_RemoveSessionsAfterTime ) ) );
+					DEBUG("[AdminWebRequest] Send Message through websockets: %s clients: %p timestamptrue: %d\n", locses->us_DeviceIdentity, locses->us_WSD, ( ( (timestamp - locses->us_LastActionTime) < sb->sl_RemoveSessionsAfterTime ) ) );
 				
-					if( ( ( (timestamp - locses->us_LoggedTime) < sb->sl_RemoveSessionsAfterTime ) ) && locses->us_WSD != NULL )
+					if( ( ( (timestamp - locses->us_LastActionTime) < sb->sl_RemoveSessionsAfterTime ) ) && locses->us_WSD != NULL )
 					{
 						int msgLen = 0;
 						NotificationSent *lns = NotificationSentNew();

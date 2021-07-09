@@ -81,7 +81,7 @@ void INVAREntryDelete( INVAREntry *ne )
  */
 int INVAREntryToJSON( INVAREntry *ne, char *buffer, int len )
 {
-	return snprintf( buffer, len, "{ \"Name\":\"%s\", \"Pointer\":\"%p\", \"Data\":\"%s\"}", \
+	return snprintf( buffer, len, "{\"Name\":\"%s\",\"Pointer\":\"%p\",\"Data\":\"%s\"}", \
 		ne->ne_Name, ne, ne->ne_Data );
 }
 
@@ -94,7 +94,7 @@ int INVAREntryToJSON( INVAREntry *ne, char *buffer, int len )
  */
 int INVAREntryJSONPTR( INVAREntry *ne, char *buffer, int len )
 {
-	return snprintf( buffer, len, "{ \"Name\":\"%s\", \"Pointer\":\"%p\"}", \
+	return snprintf( buffer, len, "{\"Name\":\"%s\",\"Pointer\":\"%p\"}", \
 		ne->ne_Name, ne );
 }
 
@@ -118,7 +118,7 @@ INVARGroup *INVARGroupNew( FULONG id, char *name )
 		ne->ng_Pointer = (FULONG)ne;
 		ne->ng_Name = StringDuplicate( name );
 		
-		DEBUG("INVARGroupNew created: name %s ptr %p\n", ne->ng_Name, (void *)ne->ng_Pointer );
+		DEBUG("INVARGroupNew created: name %s ptr %p\n", ne->ng_Name, (void *)ne );
 	}
 	
 	return ne;

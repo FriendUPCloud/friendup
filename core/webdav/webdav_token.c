@@ -29,7 +29,7 @@ WebdavToken *WebdavTokenNew()
 	WebdavToken *tok = FCalloc( 1, sizeof(WebdavToken) );
 	if( tok != NULL )
 	{
-		tok->wt_CreateTime = time( NULL );
+		tok->wt_CreationTime = time( NULL );
 	}
 	return tok;
 }

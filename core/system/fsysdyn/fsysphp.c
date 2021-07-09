@@ -517,7 +517,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 	char *name = NULL;
 	char *module = NULL;
 	char *type = NULL;
-	char *userSession = NULL;
+	UserSession *us = NULL;
 	char *empty = "";
 	
 	SystemBase *sb = NULL;
@@ -569,8 +569,8 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 				case FSys_Mount_SysBase:
 					sb = (SystemBase *)lptr->ti_Data;
 					break;
-				case FSys_Mount_User_SessionID:
-					userSession = (char *)lptr->ti_Data;
+				case FSys_Mount_UserSession:
+					us = (UserSession *)lptr->ti_Data;
 					break;
 			}
 			lptr++;
@@ -613,20 +613,10 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 		if( sd != NULL )
 		{
 			sd->module = StringDup( module );
-			if( usr != NULL && usr->u_MainSessionID != NULL )
-			{
-				userSession = usr->u_MainSessionID;
-			}
-			else
-			{
-				if( userSession == NULL )
-				{
-					userSession = empty;
-				}
-			}
-			DEBUG( "[fsysphp] Copying session: %s\n", userSession );
-			//dev->f_SessionID = StringDup( usr->u_MainSessionID );
-			dev->f_SessionIDPTR = userSession;
+			
+			DEBUG( "[fsysphp] Copying session normal: %s - hashed %s\n", us->us_SessionID, us->us_SessionID );
+			
+			FileFillSessionID( dev, us );
 			sd->type = StringDup( type );
 			dev->f_SpecialData = sd;
 			sd->sb = sb;
@@ -637,7 +627,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 				( name ? strlen( name ) : 0 ) + 
 				( path ? strlen( path ) : 0 ) + 
 				( module ? strlen( module ) : strlen( "files" ) ) + 
-				( strlen( userSession ) ) + 1;
+				( strlen( us->us_SessionID ) ) + 1;
 			
 			
 			// Whole command
@@ -656,7 +646,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 						name ? name : "", 
 						path ? path : "", 
 						module ? module : "files", 
-						userSession  );
+						us->us_SessionID );
 					sprintf( command, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 					FFree( commandCnt );
 			
@@ -672,13 +662,12 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 						if( strncmp( result->ls_Data, "ok", 2 ) != 0 )
 						{
 							DEBUG( "[fsysphp] Failed to mount device %s..\n", name );
-							//DEBUG( "[fsysphp] Output was: %s\n", result->ls_Data );
-							if( sd->module ) FFree( sd->module );
-							//if( dev->f_SessionID ) FFree( dev->f_SessionID );
-							if( sd->type ) FFree( sd->type );
-							if( dev->f_Name ) FFree( dev->f_Name );
-							if( dev->f_Path ) FFree( dev->f_Path );
-							if( dev->f_DevServer ) FFree( dev->f_DevServer );
+
+							if( sd->module ){ FFree( sd->module ); sd->module = NULL; }
+							if( sd->type ){ FFree( sd->type ); sd->type = NULL; }
+							if( dev->f_Name ){ FFree( dev->f_Name ); dev->f_Name = NULL; }
+							if( dev->f_Path ){ FFree( dev->f_Path ); dev->f_Path = NULL; }
+							if( dev->f_DevServer ){ FFree( dev->f_DevServer ); dev->f_DevServer = NULL; }
 							FFree( sd );
 							FFree( dev );
 							
@@ -696,12 +685,11 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 					else
 					{
 						DEBUG( "[fsysphp] Error mounting device %s..\n", name );
-						if( sd->module ) FFree( sd->module );
-						//if( dev->f_SessionID ) FFree( dev->f_SessionID );
-						if( sd->type ) FFree( sd->type );
-						if( dev->f_Name ) FFree( dev->f_Name );
-						if( dev->f_Path ) FFree( dev->f_Path );
-						if( dev->f_DevServer ) FFree( dev->f_DevServer );
+						if( sd->module ){ FFree( sd->module ); sd->module = NULL; }
+						if( sd->type ){ FFree( sd->type ); sd->type = NULL; }
+						if( dev->f_Name ){ FFree( dev->f_Name ); dev->f_Name = NULL; }
+						if( dev->f_Path ){ FFree( dev->f_Path ); dev->f_Path = NULL; }
+						if( dev->f_DevServer ){ FFree( dev->f_DevServer ); dev->f_DevServer = NULL; }
 						FFree( sd );
 						FFree( dev );
 						
@@ -749,8 +737,8 @@ int Release( struct FHandler *s, void *f )
 			SpecialData *sd = (SpecialData *)lf->f_SpecialData;
 		
 			// Free up active device information
-			if( sd->module ){ FFree( sd->module ); }
-			if( sd->type ){ FFree( sd->type ); }
+			if( sd->module ){ FFree( sd->module ); sd->module = NULL; }
+			if( sd->type ){ FFree( sd->type ); sd->type = NULL; }
 			FFree( lf->f_SpecialData );
 			lf->f_SpecialData = NULL;
 		}
@@ -821,8 +809,9 @@ int UnMount( struct FHandler *s, void *f )
 			// TODO: we should parse result to get information about success
 			
 			// Free up active device information
-			if( sd->module ) FFree( sd->module );
-			if( sd->type ) FFree( sd->type ); 
+			if( sd->module ){ FFree( sd->module ); sd->module = NULL; }
+			if( sd->type ){ FFree( sd->type ); sd->type = NULL; }
+
 			FFree( lf->f_SpecialData );
 			lf->f_SpecialData = NULL;
 		}
@@ -1334,7 +1323,7 @@ int FileRead( struct File *f, char *buffer, int rsize )
 			// Make a new buffer and read
 			if( sd->pofd )
 			{
-				DEBUG( "[fsysphp] Reading from pofd!\n" );
+				//DEBUG( "[fsysphp] Reading from pofd!\n" );
 				int size = 0, readSize = 0, ret = 0, errCounter = 0;
 				
 				int amountToRead = 0, wholeSize = rsize;

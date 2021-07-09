@@ -1305,6 +1305,7 @@ function receiveEvent( event, queued )
 			Application.filePath      = dataPacket.filePath;
 			Application.applicationId = dataPacket.applicationId;
 			Application.userId        = dataPacket.userId;
+			Application.fullName      = dataPacket.fullName;
 			Application.username      = dataPacket.username;
 
 			// Register screen
@@ -1352,6 +1353,7 @@ function receiveEvent( event, queued )
 						authId:        dataPacket.authId,
 						sessionId:     dataPacket.sessionId,
 						userId:        dataPacket.userId,
+						fullName:      dataPacket.fullName,
 						username:      dataPacket.username
 					} ), event.origin );
 				}
@@ -1381,6 +1383,7 @@ function receiveEvent( event, queued )
 					authId:        dataPacket.authId,
 					sessionId:     dataPacket.sessionId,
 					userId:        dataPacket.userId,
+					fullName:      dataPacket.fullName,
 					username:      dataPacket.username
 				} ), event.origin );
 			}
@@ -1409,6 +1412,7 @@ function receiveEvent( event, queued )
 					authId:        dataPacket.authId,
 					sessionId:     dataPacket.sessionId,
 					userId:        dataPacket.userId,
+					fullName:      dataPacket.fullName,
 					username:      dataPacket.username
 				} ), event.origin );
 			}
@@ -1423,6 +1427,7 @@ function receiveEvent( event, queued )
 			Application.filePath      = dataPacket.filePath;
 			Application.applicationId = dataPacket.applicationId;
 			Application.userId        = dataPacket.userId;
+			Application.fullName      = dataPacket.fullName;
 			Application.username      = dataPacket.username;
 			Application.workspaceMode = dataPacket.workspaceMode;
 			Application.applicationName = dataPacket.applicationName;
@@ -2308,6 +2313,16 @@ function View( flags )
 	if( Application.viewId )
 	{
 		msg.parentViewId = Application.viewId;
+	}
+	
+	// Pop out!
+	this.popout = function()
+	{
+		Application.sendMessage( {
+			type:    'view',
+			method:  'popout',
+			viewId: viewId
+		} );
 	}
 
 	// Bring a window to front
@@ -5666,6 +5681,10 @@ function setupMessageFunction( dataPacket, origin )
 		{
 			msg.username = dataPacket.username;
 		}
+		if( !msg.fullName )
+		{
+			msg.fullName = dataPacket.fullName;
+		}
 		if( !msg.userLevel )
 		{
 			msg.userLevel = dataPacket.userLevel;
@@ -6364,6 +6383,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Setup application id from message
 	Application.applicationId = packet.applicationId;
 	Application.userId        = packet.userId;
+	Application.fullName      = packet.fullName;
 	Application.username      = packet.username;
 	Application.workspaceMode = packet.workspaceMode;
 	Application.authId        = packet.authId;
@@ -9080,6 +9100,73 @@ Friend.GUI.checkInputFocus = function()
 			value: response
 		} );
 	}
+}
+
+// Announcements
+
+Friend.announceToUser = function( user, type, payload, callback )
+{
+    Application.sendMessage( {
+        type: 'announcement',
+        command: 'announcement',
+        users: [ user ],
+        workgroups: false,
+        announcementType: type,
+        payload: payload,
+        callback: callback ? addCallback( callback ) : false
+    } );
+}
+
+Friend.announceToUsers = function( users, type, payload, callback )
+{
+    Application.sendMessage( {
+        type: 'announcement',
+        command: 'announcement',
+        users: users,
+        workgroups: false,
+        announcementType: type,
+        payload: payload,
+        callback: callback ? addCallback( callback ) : false
+    } );
+}
+
+Friend.announceToWorkgroup = function( workgroup, type, payload, callback )
+{
+    Application.sendMessage( {
+        type: 'announcement',
+        command: 'announcement',
+        users: false,
+        workgroups: [ workgroup ],
+        announcementType: type,
+        payload: payload,
+        callback: callback ? addCallback( callback ) : false
+    } );
+}
+
+Friend.announceToWorkgroups = function( workgroups, type, payload, callback )
+{
+    Application.sendMessage( {
+        type: 'announcement',
+        command: 'announcement',
+        users: false,
+        workgroups: workgroups,
+        announcementType: type,
+        payload: payload,
+        callback: callback ? addCallback( callback ) : false
+    } );
+}
+
+Friend.announce = function( data, callback )
+{
+     Application.sendMessage( {
+        type: 'announcement',
+        command: 'announcement',
+        users: data.users,
+        workgroups: data.workgroups,
+        announcementType: data.type,
+        payload: data.payload,
+        callback: callback ? addCallback( callback ) : false
+    } );
 }
 
 // Responsive layout

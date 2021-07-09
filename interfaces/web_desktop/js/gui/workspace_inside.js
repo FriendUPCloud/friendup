@@ -275,14 +275,18 @@ var WorkspaceInside = {
 		if( this.mode == 'vr' ) return;
 		if( globalConfig.workspacecount <= 1 ) return;
 
-		if( !Workspace.wallpaperLoaded && !loaded ) return;
+		if( !Workspace.wallpaperLoaded && !loaded ) 
+		{
+			return;
+		}
 		
 		// Check if we already have workspace wallpapers
-		var o = []; // <- result after cleanup
-		var co = [];
-		var m = globalConfig.workspacecount;
-		var scr = ge( 'DoorsScreen' ).screenObject;
-		var url = Workspace.wallpaperImage;
+		let o = []; // <- result after cleanup
+		let co = [];
+		let m = globalConfig.workspacecount;
+		let scr = ge( 'DoorsScreen' ).screenObject;
+		let url = Workspace.wallpaperImage;
+		
 		if( !url || !url.indexOf ) url = 'none';
 		else
 		{
@@ -290,20 +294,21 @@ var WorkspaceInside = {
 				url = getImageUrl( url );
 		}
 		
-		var workspacePositions = [];
-		var maxW = Workspace.screen.getMaxViewWidth();
-		for( var a = 0; a < globalConfig.workspacecount; a++ )
+		let workspacePositions = [];
+		let maxW = Workspace.screen.getMaxViewWidth();
+		for( let a = 0; a < globalConfig.workspacecount; a++ )
 		{
 			workspacePositions.push( a * maxW );
 		}
-		for( var a in movableWindows )
+		for( let a in movableWindows )
 		{
-			var wo = movableWindows[a].windowObject;
+			let wo = movableWindows[a].windowObject;
 			movableWindows[a].viewContainer.style.left = workspacePositions[ wo.workspace ] + 'px';
 		}
 		
-		var image = url == 'none' ? url : ( 'url(' + url + ')' );
-		for( var a = 0; a < m; a++ )
+		let image = url == 'none' ? url : ( 'url(' + url + ')' );
+		
+		for( let a = 0; a < m; a++ )
 		{
 			// Check if we already have wallpapers
 			if( this.workspaceWallpapers && a < this.workspaceWallpapers.length )
@@ -325,7 +330,7 @@ var WorkspaceInside = {
 			// New entry
 			else
 			{
-				var d = document.createElement( 'div' );
+				let d = document.createElement( 'div' );
 				d.className = 'WorkspaceWallpaper';
 				d.style.left = scr.div.offsetWidth * a + 'px';
 				d.style.width = scr.div.offsetWidth + 'px';
@@ -682,25 +687,32 @@ var WorkspaceInside = {
             //console.log('webproxy set to be tunneled as well.');
         }
 		
-		closeConn();
-		
-		if( typeof FriendConnection == 'undefined' )
+		// Reconnect if we already exist
+		if( this.conn )
 		{
-			return setTimeout( function(){ Workspace.initWebSocket( callback ); }, 250 );
+			this.conn.connectWebSocket();
+			console.log( '[initWebSocket] Reconnecting websocket.' );
 		}
-		
-		this.conn = new FriendConnection( conf );
-		this.conn.on( 'sasid-request', handleSASRequest ); // Shared Application Session
-		this.conn.on( 'server-notice', handleServerNotice );
-		this.conn.on( 'server-msg', handleServerMessage );
-		this.conn.on( 'refresh', function( msg )
+		else
 		{
-			// Do a deep refresh
-			Workspace.refreshDesktop( false, true );
-		} );
-		this.conn.on( 'icon-change', handleIconChange );
-		this.conn.on( 'filesystem-change', handleFilesystemChange );
-		this.conn.on( 'notification', handleNotifications );
+			if( typeof FriendConnection == 'undefined' )
+			{
+				return setTimeout( function(){ Workspace.initWebSocket( callback ); }, 250 );
+			}
+		
+			this.conn = new FriendConnection( conf );
+			this.conn.on( 'sasid-request', handleSASRequest ); // Shared Application Session
+			this.conn.on( 'server-notice', handleServerNotice );
+			this.conn.on( 'server-msg', handleServerMessage );
+			this.conn.on( 'refresh', function( msg )
+			{
+				// Do a deep refresh
+				Workspace.refreshDesktop( false, true );
+			} );
+			this.conn.on( 'icon-change', handleIconChange );
+			this.conn.on( 'filesystem-change', handleFilesystemChange );
+			this.conn.on( 'notification', handleNotifications );
+		}
 		
 		// Reference for handler
 		let selfConn = this.conn;
@@ -1210,10 +1222,13 @@ var WorkspaceInside = {
 		if( !Workspace.cachedSessionList || cand - this.refreshEWCTime > 30 )
 		{
 		    this.refreshEWCTime = cand;
-		    var mo = new Library( 'system.library' );
+		    
+		    Workspace.getAnnouncements();
+		    
+		    let mo = new Library( 'system.library' );
 		    mo.onExecuted = function( rc, sessionList )
 		    {
-			    var m = Workspace.widget ? Workspace.widget.target : ge( 'DoorsScreen' );
+			    let m = Workspace.widget ? Workspace.widget.target : ge( 'DoorsScreen' );
 			    if( m == ge( 'DoorsScreen' ) )
 				    m = ge( 'DoorsScreen' ).screenTitle.getElementsByClassName( 'Extra' )[0];
 			    if( !m )
@@ -1230,7 +1245,6 @@ var WorkspaceInside = {
 
 				    if( sessionList )
 				    {
-				    	Workspace.cachedSessionList = sessionList;
 					    try
 					    {
 						    var exists = [];
@@ -1273,6 +1287,7 @@ var WorkspaceInside = {
 							    sessions.push( '<p class="Relative FullWidth Ellipsis IconSmall fa-close MousePointer" onmousedown="Workspace.terminateSession(\'' +
 								    sessionList[b].sessionid + '\', \'' + sessionList[b].deviceidentity + '\');">&nbsp;' + svn + '</p>' );
 						    }
+						    Workspace.cachedSessionList = sessions;
 					    }
 					    catch( e )
 					    {
@@ -1287,7 +1302,7 @@ var WorkspaceInside = {
 		}
 		else
 		{
-			doItCal( [] );
+			doItCal( Workspace.cachedSessionList ? Workspace.cachedSessionList : [] );
 		}
 		
 		// For mobiles, we have a Friend icon at the top of the screen
@@ -1365,6 +1380,34 @@ var WorkspaceInside = {
 			}
 		}
 	},
+	// Server announcements
+	getAnnouncements: function()
+	{
+		// TODO: Re-enable later
+	    return;
+	    let ann = new Module( 'system' );
+		ann.onExecuted = function( e, d )
+		{
+		    if( e == 'ok' )
+		    {
+		        console.log( 'We have an announcement!', d );
+		        try
+		        {
+		            let annList = JSON.parse( d );
+		            console.log( 'List: ', annList );
+		        }
+		        catch( e )
+		        {
+		            console.log( 'Could not read announcements.' );
+		        }
+		    }
+		    else
+		    {
+		        console.log( 'No new announcements.' );
+		    }
+		}
+		ann.execute( 'getannouncements', { deviceid: Workspace.deviceid } );
+    },
 	zapMobileAppMenu: function()
 	{
 		// Turn on openlock
@@ -1404,6 +1447,7 @@ var WorkspaceInside = {
 			var str = JSON.stringify(e);
 			Workspace.systemInfo = e;
 		}
+		f.forceHTTP = true;
 		f.execute( 'admin', {command:'info'} );
 	},
 	// If we have stored a theme config for the current theme, use its setup
@@ -1577,6 +1621,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						Workspace.themeData = false;
 					}
 					Workspace.applyThemeConfig();
+					Workspace.loadSystemInfo();
 				
 					// Fallback
 					if( !isMobile )
@@ -1591,7 +1636,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						}
 					}
 				
-					if( !Workspace.wallpaperImage || Workspace.wallpaperImage == '""' )
+					if( !Workspace.wallpaperImage || Workspace.wallpaperImage == '""' || Workspace.wallpaperImage === '' )
 					{
 						Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 					}
@@ -1701,6 +1746,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{	
 						Workspace.startupSequenceRegistered = true;
 						
+						// Reload the docks here
+						Workspace.reloadDocks();
+						
+						
 						// In single tasking mode, we just skip
 						if( Workspace.isSingleTask )
 						{
@@ -1719,6 +1768,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							{
 								friendApp.reveal();
 							}
+													
 							return;
 						}
 						
@@ -2515,163 +2565,20 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					try
 					{
 						Workspace.mainDock.readConfig( JSON.parse( conf ) );
-						Workspace.mainDock.clear();
 					}
 					catch( e )
 					{
-						Workspace.mainDock.clear();
-					}
-
-					function getOnClickFn( appName )
-					{
-						return function()
-						{
-							ExecuteApplication( appName );
-						}
-					}
-
-					function genFunc( fod )
-					{
-						return function()
-						{
-							Workspace.launchNativeApp( fod );
-						}
-					}
-
-					// Clear tasks
-					ge( 'Taskbar' ).innerHTML = '';
-					ge( 'Taskbar' ).tasks = [];
-
-					// Add start menu
-					if( !isMobile && globalConfig.viewList == 'dockedlist' )
-					{
-						var img = 'startmenu.png';
-						if( Workspace.mainDock.conf )
-						{
-							if( Workspace.mainDock.conf.size == '32' )
-							{
-								img = 'startmenu_32.png';
-							}
-							else if( Workspace.mainDock.conf.size == '16' )
-							{
-								img = 'startmenu_16.png';
-							}
-						}
-						var ob = {
-							type: 'startmenu',
-							src: '/webclient/gfx/system/' + img,
-							title: 'Start',
-							className: 'Startmenu',
-							click: function( e ){ Workspace.toggleStartMenu(); },
-							noContextMenu: true
-						}
-						Workspace.mainDock.addLauncher( ob );
-					}
-
-					let elements = JSON.parse( dat );
-					for( let a = 0; a < elements.length; a++ )
-					{
-						let ele = elements[a];
-						let icon = 'apps/' + ele.Name + '/icon.png';
-						if( ele.Name.indexOf( ':' ) > 0 )
-						{
-							ext = ele.Name.split( ':' )[1];
-							if( ext.indexOf( '/' ) > 0 )
-							{
-								ext = ext.split( '/' )[1];
-							}
-							ext = ext.split( '.' )[1];
-							icon = '.' + ( ext ? ext : 'txt' );
-						}
-						
-						if( ele.Icon )
-						{
-							ele.Icon = ele.Icon.split( /sessionid\=[^&]+/i ).join( 'sessionid=' + Workspace.sessionId );
-							if( ele.Icon.indexOf( ':' ) > 0 )
-								icon = getImageUrl( ele.Icon );
-							else icon = ele.Icon;
-						}
-						
-						let ob = {
-							exe         : ele.Name,
-							type        : ele.Type,
-							src         : icon,
-							workspace   : ele.Workspace - 1,
-							opensilent  : ele.OpenSilent,
-							displayname : ele.DisplayName,
-							'title'     : ele.Title ? ele.Title : ele.Name
-						};
-						
-						// For Linux apps..
-						if( ele.Name.substr( 0, 7 ) == 'native:' )
-						{
-							let tmp = ob.exe.split( 'native:' )[1];
-							ob.click = genFunc( tmp );
-						}
-
-						Workspace.mainDock.addLauncher( ob );
 					}
 					
-					// Add desktop shortcuts too for mobile
-					if( window.isMobile )
-					{
-						for( var a = 0; a < Workspace.icons.length; a++ )
-						{
-							if( Workspace.icons[a].Type == 'Executable' && Workspace.icons[a].MetaType == 'ExecutableShortcut' )
-							{
-								var el = Workspace.icons[a];
-								var ob = {
-									exe:  el.Filename,
-									type: 'Executable',
-									src:  el.IconFile,
-									displayname: el.Title,
-									title: el.Title
-								};
-								Workspace.mainDock.addLauncher( ob );
-							}
-						}
-					}
-					// File browser
-					var fmenu = {
-						click: function( e )
-						{
-							var u = CryptoJS.SHA1( ( new Date() ).getTime() + ( Math.random() * 999 ) + ( Math.random() * 999 ) + "" ).toString();
-							if( isMobile )
-							{
-								OpenWindowByFileinfo( { Title: 'Mountlist', Path: 'Mountlist:', Type: 'Directory', MetaType: 'Directory' }, false, false, u );
-							}
-							else
-							{
-								OpenWindowByFileinfo( 
-									{ Title: 'Home', Path: 'Home:', Type: 'Directory', MetaType: 'Directory' },
-									false, false, u
-								);
-							}
-							if( !Workspace.isSingleTask )
-								Workspace.mainDock.closeDesklet();
-						},
-						type: 'Executable',
-						displayname: i18n( 'i18n_files' ),
-						src: isMobile ? '/iconthemes/friendup15/Folder_Smaller.svg' : '/iconthemes/friendup15/Folder.svg',
-						title: i18n( 'i18n_files' ),
-					};
-					Workspace.mainDock.addLauncher( fmenu );
+					let elements = JSON.parse( dat );
+					Workspace.cachedDockElements = elements;
+					Workspace.refreshDocks();
 					
 					Workspace.mainDock.initialized();
 					
 					Workspace.docksReloading = null;
 					
 					ConstrainWindows();
-					
-					// Make sure taskbar is polled
-					if( !isMobile )
-					{
-						PollTaskbar();
-					
-						// Reload start menu
-						// TODO: Remove the need for this hack
-						Workspace.pollStartMenu( true );
-					}
 					
 					// Open the main dock first
 					if( !Workspace.insideInitialized )
@@ -2696,6 +2603,161 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 		}
 		c.execute( 'items', { sessionid: false } );
+	},
+	refreshDocks: function()
+	{
+		let elements = Workspace.cachedDockElements;
+		
+		Workspace.mainDock.clear();
+		
+		
+		function getOnClickFn( appName )
+		{
+			return function()
+			{
+				ExecuteApplication( appName );
+			}
+		}
+
+		function genFunc( fod )
+		{
+			return function()
+			{
+				Workspace.launchNativeApp( fod );
+			}
+		}
+
+		// Clear tasks
+		ge( 'Taskbar' ).innerHTML = '';
+		ge( 'Taskbar' ).tasks = [];
+
+		// Add start menu
+		if( !isMobile && globalConfig.viewList == 'dockedlist' )
+		{
+			var img = 'startmenu.png';
+			if( Workspace.mainDock.conf )
+			{
+				if( Workspace.mainDock.conf.size == '32' )
+				{
+					img = 'startmenu_32.png';
+				}
+				else if( Workspace.mainDock.conf.size == '16' )
+				{
+					img = 'startmenu_16.png';
+				}
+			}
+			var ob = {
+				type: 'startmenu',
+				src: '/webclient/gfx/system/' + img,
+				title: 'Start',
+				className: 'Startmenu',
+				click: function( e ){ Workspace.toggleStartMenu(); },
+				noContextMenu: true
+			}
+			Workspace.mainDock.addLauncher( ob );
+		}
+		
+		if( !elements || !elements.length ) return;
+		for( let a = 0; a < elements.length; a++ )
+		{
+			let ele = elements[a];
+			let icon = 'apps/' + ele.Name + '/icon.png';
+			if( ele.Name.indexOf( ':' ) > 0 )
+			{
+				ext = ele.Name.split( ':' )[1];
+				if( ext.indexOf( '/' ) > 0 )
+				{
+					ext = ext.split( '/' )[1];
+				}
+				ext = ext.split( '.' )[1];
+				icon = '.' + ( ext ? ext : 'txt' );
+			}
+			
+			if( ele.Icon )
+			{
+				ele.Icon = ele.Icon.split( /sessionid\=[^&]+/i ).join( 'sessionid=' + Workspace.sessionId );
+				if( ele.Icon.indexOf( ':' ) > 0 )
+					icon = getImageUrl( ele.Icon );
+				else icon = ele.Icon;
+			}
+			
+			let ob = {
+				exe         : ele.Name,
+				type        : ele.Type,
+				src         : icon,
+				workspace   : ele.Workspace - 1,
+				opensilent  : ele.OpenSilent,
+				displayname : ele.DisplayName,
+				'title'     : ele.Title ? ele.Title : ele.Name
+			};
+			
+			// For Linux apps..
+			if( ele.Name.substr( 0, 7 ) == 'native:' )
+			{
+				let tmp = ob.exe.split( 'native:' )[1];
+				ob.click = genFunc( tmp );
+			}
+
+			Workspace.mainDock.addLauncher( ob );
+		}
+		
+		// Add desktop shortcuts too for mobile
+		if( window.isMobile )
+		{
+			for( var a = 0; a < Workspace.icons.length; a++ )
+			{
+				if( Workspace.icons[a].Type == 'Executable' && Workspace.icons[a].MetaType == 'ExecutableShortcut' )
+				{
+					var el = Workspace.icons[a];
+					var ob = {
+						exe:  el.Filename,
+						type: 'Executable',
+						src:  el.IconFile,
+						displayname: el.Title,
+						title: el.Title
+					};
+					Workspace.mainDock.addLauncher( ob );
+				}
+			}
+		}
+		// File browser
+		var fmenu = {
+			click: function( e )
+			{
+				var u = CryptoJS.SHA1( ( new Date() ).getTime() + ( Math.random() * 999 ) + ( Math.random() * 999 ) + "" ).toString();
+				if( isMobile )
+				{
+					OpenWindowByFileinfo( { Title: 'Mountlist', Path: 'Mountlist:', Type: 'Directory', MetaType: 'Directory' }, false, false, u );
+				}
+				else
+				{
+					OpenWindowByFileinfo( 
+						{ Title: 'Home', Path: 'Home:', Type: 'Directory', MetaType: 'Directory' },
+						false, false, u
+					);
+				}
+				if( !Workspace.isSingleTask )
+					Workspace.mainDock.closeDesklet();
+			},
+			type: 'Executable',
+			displayname: i18n( 'i18n_files' ),
+			src: isMobile ? '/iconthemes/friendup15/Folder_Smaller.svg' : '/iconthemes/friendup15/Folder.svg',
+			title: i18n( 'i18n_files' ),
+		};
+		Workspace.mainDock.addLauncher( fmenu );
+		
+		// Make sure taskbar is polled
+		if( !isMobile )
+		{
+			PollTaskbar();
+		
+			// Reload start menu
+			// TODO: Remove the need for this hack
+			Workspace.pollStartMenu( true );
+		}
+		
+		// Make sure the tray position is there
+		PollTrayPosition();
 	},
 	connectFilesystem: function( execute )
 	{
@@ -3167,9 +3229,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						// Flush theme info
 						themeInfo.loaded = false;
 					
-						// Reload the docks
-						Workspace.reloadDocks();
-					
 						// Refresh them
 						Workspace.initWorkspaces();
 					
@@ -3406,6 +3465,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Just refresh the desktop ------------------------------------------------
 	refreshDesktop: function( callback, forceRefresh )
 	{
+		let self = this;
+		
 		// Get those dynamic classes
 		RefreshDynamicClasses( {} );
 		
@@ -3415,17 +3476,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var imgOffline = GetThemeInfo( 'OfflineIcon' );
 		if( !Workspace.iconsPreloaded && this.mode != 'vr' )
 		{
-			var imgs = [];
+			let imgs = [];
 			imgs.push( imgOffline.backgroundImage );
 			function preloadAndRemove( n )
 			{
 				if( !n ) return;
 			
-				var t = false;
-				var i = new Image();
+				let t = false;
+				let i = new Image();
 				i.src = n;
-				var out = [];
-				for( var a = 0; a < window.preloader.length; a++ )
+				let out = [];
+				for( let a = 0; a < window.preloader.length; a++ )
 				{
 					if( window.preloader[a].src == i.src )
 					{
@@ -3437,7 +3498,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				document.body.appendChild( i );
 				window.preloader.push( i );
 			}
-			for( var a = 0; a < imgs.length; a++ )
+			for( let a = 0; a < imgs.length; a++ )
 			{
 				if( imgs[a] && imgs[a].length )
 				{
@@ -3454,7 +3515,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		
 		// Oh yeah, update windows
-		for( var a in movableWindows )
+		for( let a in movableWindows )
 		{
 			if( movableWindows[a].content.redrawBackdrop )
 			{
@@ -3466,8 +3527,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				movableWindows[a].windowObject.sendToWorkspace( globalConfig.workspacecount - 1 );
 			}
 		}
-
-		var self = this;
 		
 		this.getMountlist( function( data )
 		{	
@@ -3504,7 +3563,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Recall wallpaper
 			if( Workspace.mode != 'vr' && self.wallpaperImage != 'color' )
 			{
-			    if( self.wallpaperImage == undefined )
+			    if( typeof( self.wallpaperImage ) == undefined )
 			    {
 			        return setTimeout( function(){ Workspace.refreshDesktop( callback, forceRefresh ) }, 25 );
 			    }
@@ -3579,6 +3638,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							break;
 						default:
 							Workspace.wallpaperLoaded = false;
+							let src = found ? getImageUrl( self.wallpaperImage ) : '/webclient/gfx/theme/default_login_screen.jpg';
 							let workspaceBackgroundImage = new Image();
 							workspaceBackgroundImage.onload = function()
 							{
@@ -3603,6 +3663,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								this.done = true;
 								
 								Workspace.wallpaperImageObject = workspaceBackgroundImage;
+								Workspace.wallpaperLoaded = src;
 								
 								// Mobile is not using multiple workspaces
 								if( !isMobile && globalConfig.workspacecount > 1 )
@@ -3615,16 +3676,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									// Set the wallpaper
 									eles[0].style.backgroundImage = 'url(' + this.src + ')';
 								}
-								Workspace.wallpaperLoaded = this.src;
 							};
-							if( found )
-							{
-								workspaceBackgroundImage.src = getImageUrl( self.wallpaperImage );
-							}
-							else 
-							{
-								workspaceBackgroundImage.src = '/webclient/gfx/theme/default_login_screen.jpg';
-							}
+							
+							workspaceBackgroundImage.src = src;
+							
 							if( workspaceBackgroundImage.width > 0 && workspaceBackgroundImage.height > 0 && workspaceBackgroundImage.onload )
 							{
 								workspaceBackgroundImage.onload();
@@ -3655,7 +3710,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 			}
 			// We have no wallpaper...
-			else if( Workspace.mode == 'standard' )
+			else if( Workspace.mode == 'standard' || Workspace.mode == 'default' )
 			{
 				let eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
 				if( eles.length )
@@ -3669,6 +3724,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			else if( Workspace.mode == 'vr' )
 			{
 				Workspace.wallpaperLoaded = true;
+			}
+			else
+			{
+				//console.log( 'Wallpaper: What happened and which mode? ' + Workspace.mode );
 			}
 
 		}, forceRefresh );
@@ -4650,59 +4709,131 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				Friend.workspaceClipBoardMode = 'copy';
 				Friend.workspaceClipBoard = selected;
 			}
+			
+			WorkspaceMenu.show();
 		}
 	},
 	// paste from virtual clipboard
 	pasteFiles: function( e )
 	{
-		if( window.currentMovable && Friend.workspaceClipBoard && Friend.workspaceClipBoard.length > 0 && typeof window.currentMovable.drop == 'function' )
+		if( !e ) e = window.event;
+		
+		let cme = window.currentMovable;
+		let clp = Friend.workspaceClipBoard;
+		if( cme && clp && clp.length > 0 && typeof cme.drop == 'function' )
 		{
-			var e = {};
+			e = {};
 			e.ctrlKey = ( Friend.workspaceClipBoardMode == 'copy' ? true : false );
 			
-			var clip = Friend.workspaceClipBoard;
+			let clip = Friend.workspaceClipBoard;
 			
 			// Make sure we don't overwrite existing files!
-			var destPath = currentMovable.content.fileInfo.Path;
-			var d = new Door( destPath );
-			d.getIcons( currentMovable.content.fileInfo, function( items )
+			let destPath = currentMovable.content.fileInfo.Path;
+			let destFinf = currentMovable.content.fileInfo;
+			let doCopy = false;
+			
+			// Use menu context for file info path (folder icon etc)
+			function isDirectoryElement( ele )
 			{
-				for( var a = 0; a < items.length; a++ )
+				if( !ele.classList ) return false;
+				if( ele.classList.contains( 'Directory' ) || ele.classList.contains( 'Icon' ) )
 				{
-					for( var b = 0; b < clip.length; b++ )
+					while( !ele.fileInfo && ele != document.body )
 					{
-						var copy = 0;
+						ele = ele.parentNode;
+					}
+					if( ele == document.body ) return false;
+					return ele;
+				}
+				if( ele.classList.contains( 'Column' ) )
+				{
+					let p = ele.parentNode;
+					if( p.fileInfo )
+					{
+						return p;
+					}
+				}
+				return false;
+			}
+			let mc = false;
+			if( Workspace.menuContext && ( mc = isDirectoryElement( Workspace.menuContext ) ) )
+			{
+				let fi = null;
+				
+				// Use the context menu file info, and sanitize it!
+				// The Path may include the filename
+				destPath = mc.fileInfo.Path;
+				if( destPath.substr( -1, 1 ) != '/' )
+				{
+				    if( destPath.indexOf( '/' ) > 0 )
+				    {
+				        destPath = destPath.split( '/' );
+				        destPath.pop();
+				        destPath = destPath.join( '/' );
+				        destPath += '/';
+				    }
+				}
+				else if( destPath.substr( -1, 1 ) != ':' && !destPath.indexOf( '/' ) )
+				{
+				    if( destPath.indexOf( ':' ) > 0 )
+				    {
+			            destPath = destPath.split( ':' );
+			            destPath.pop();
+			            destPath = destPath.join( ':' );
+			            destPath += ':';
+			        }
+				}
+				destFinf = {};
+				for( let a in mc.fileInfo )
+				{
+				    destFinf[ a ] = mc.fileInfo[ a ];
+				}
+				destFinf.Path = destPath;
+				doCopy = true;
+			}
+			
+			Workspace.menuContext = null;
+			
+			let d = new Door( destPath );
+			d.getIcons( destFinf, function( items )
+			{
+				for( let a = 0; a < items.length; a++ )
+				{
+					for( let b = 0; b < clip.length; b++ )
+					{
+						let copy = 0;
 						if( items[ a ].Filename == clip[ b ].fileInfo.Filename )
 						{
-							var found = false;
+							let found = false;
 							do
 							{
 								found = false;
-								var str = 'Copy ' + ( copy > 0 ? ( copy + ' ' ) : '' );
-								str += 'of ' + items[a].Filename;
+								let str = 'Copy ' + ( copy > 0 ? ( copy + ' ' ) : '' );
+								str += 'of ' + items[ a ].Filename;
 							
-								var f = clip[ b ].fileInfo.Filename;
-								var p = clip[ b ].fileInfo.Path;
+								let p = clip[ b ].fileInfo.Path;
+								let f = clip[ b ].fileInfo.Filename;
 							
 								// Files
 								if( clip[ b ].fileInfo.MetaType == 'File' )
 								{
-									var dn = f;
+									let dn = f;
 									p = p.substr( 0, p.length - dn.length ) + str;
 									clip[ b ].fileInfo.NewPath = p;
 								}
 								// Directory
 								else
 								{
-									var dn = f + '/';
+									let dn = f + '/';
 									p = p.substr( 0, p.length - dn.length ) + str + '/';
 									clip[ b ].fileInfo.NewPath = p;
 								}
-							
-								clip[ b ].fileInfo.NewFilename = str;
 								
+								// Set the safe new filename
+								clip[ b ].fileInfo.NewFilename = str;
+							
 								// Still found?
-								for( var c = 0; c < items.length; c++ )
+								for( let c = 0; c < items.length; c++ )
 								{
 									if( items[ c ].Filename == str )
 									{
@@ -4711,15 +4842,32 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										break;
 									}
 								}
-								
 							}
 							while( found );
 						}
 					}
 				}
 				if( !e ) e = {};
-				e.paste = true;
-				window.currentMovable.drop( Friend.workspaceClipBoard, e );
+				let cliplen = clip.length;
+				for( let b = 0; b < clip.length; b++ )
+				{	
+					let spath = clip[b].fileInfo.Path;
+					let lastChar = spath.substr( -1, 1 );
+					let sh = new Shell( 0 );
+					let source = spath.split( ' ' ).join( '\\ ' );
+					let destin = ( destPath ).split( ' ' ).join( '\\ ' );
+					let fn = ( clip[b].fileInfo.NewFilename ? clip[b].fileInfo.NewFilename : clip[b].fileInfo.Filename );
+					fn = fn.split( ' ' ).join( '\\ ' );
+					let copyStr = 'copy ' + source + ' to ' + destin + fn;
+					sh.parseScript( copyStr, function()
+					{
+						if( cliplen-- == 0 )
+						{
+							Notify( { title: i18n( 'i18n_copy_operation' ), text: i18n( 'i18n_copying_files_complete' ) } );
+						}
+						delete sh;
+					}  );
+				}
 			} );
 		}
 	},
@@ -5835,8 +5983,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				m.onExecuted = function()
 				{
 					Workspace.refreshDesktop( false, true );
+					CloseWindow( ele );
 				}
 				m.execute( 'device/refresh', { devname: args.Filename } );
+			}
+			else
+			{
+			    CloseWindow( ele );
 			}
 			
 		}
@@ -6607,7 +6760,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							{
 								OpenWindowByFileinfo( d, false );
 							}
-						}
+						},
+						invisible: !( Workspace.userLevel == 'admin' )
 					},
 					{
 						divider: true
@@ -6688,7 +6842,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					},
 					{
 						name:	i18n( 'menu_paste' ),
-						command: function() { Workspace.pasteFiles(); },
+						command: function( e ) { Workspace.pasteFiles( e ); },
 						disabled: sharedVolume || !iconsInClipboard || systemDrive || cannotWrite
 					},
 					{
@@ -6843,7 +6997,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							// Find icon for download
 							if( currentMovable )
 							{
-								var selPath = false;
+								var selPath = [];
 								var dv = currentMovable.content;
 								if( dv )
 								{
@@ -6852,15 +7006,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										var ic = dv.icons[a];
 										if( ic.domNode && ic.domNode.fileInfo && ic.domNode.fileInfo.Type == 'File' && ic.selected )
 										{
-											selPath = ic.domNode.fileInfo.Path;
-											console.log( ic.domNode.fileInfo, ' domnode: ' + ic.domNode.selected + ' ic: ' + ic.selected );
-											break;
+											selPath.push( ic.domNode.fileInfo.Path );
 										}
 									}
 								}
-								if( selPath )
+								if( selPath.length >= 1 )
 								{
-									Workspace.download( selPath ); 
+									for( let a = 0; a < selPath.length; a++ )
+									{
+										Workspace.download( selPath[a] ); 
+									}
 								}
 								else
 								{
@@ -7086,6 +7241,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		if( tr == window )
 			tr = document.body;
+		
+		this.menuContext = tr;
 		
 		// Check if we need to activate
 		var iconWindow = false;
@@ -8345,8 +8502,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				catch ( e ){}
 			}
 		
-			console.log( 'Trying to get shit done!', content );
-		
 			if( content )
 			{
 				var newfilename = file.name;
@@ -8383,7 +8538,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				Notify(	{
 					title: i18n( 'i18n_paste_error' ),
-					text: 'Really unexpected error. Contact your Friendly administrator.'
+					text: 'Really unexpected error. Contact your Friend OS administrator.'
 				} );
 			}
 		}
@@ -9491,7 +9646,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	var v = new View( {
-		title: i18n( 'i18n_title_about_friendos' ) + ' Hydrogen',
+		title: i18n( 'i18n_title_about_friendos' ) + ' Hydrogen³',
 		width: 540,
 		height: 560,
 		id: 'about_friendup'

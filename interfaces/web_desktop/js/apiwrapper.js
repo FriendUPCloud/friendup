@@ -1806,6 +1806,12 @@ function apiWrapper( event, force )
 
 							CheckScreenTitle();
 							break;
+						case 'popout':
+							if( win )
+							{
+								PopoutWindow( win._window.parentNode );
+							}
+							break;
 						case 'toFront':
 							if( win )
 							{
@@ -2902,6 +2908,77 @@ function apiWrapper( event, force )
 						app.contentWindow.postMessage( msg, '*' );
 				}
 				break;
+			// Announcement calls
+			case 'announcement':
+			    var app = false;
+				if( msg.applicationId )
+					app = findApplication( msg.applicationId );
+				let cbak = null;
+			    if( msg.callback )
+			    {
+			        cbak = msg.callback;
+			        msg.callback = null;
+			    }
+				switch( msg.command )
+				{
+				    case 'announcement':
+				        let o = {
+				            type: msg.announcementType,
+				            users: msg.users,
+				            workgroups: msg.workgroups,
+				            payload: msg.payload
+				        };
+				        let m = new Module( 'system' );
+				        m.onExecuted = function( e, d )
+				        {
+				            if( cbak )
+				            {
+				                if( e == 'ok' )
+				                {
+								    let ms = {
+								        type: 'callback',
+								        resp: 'ok',
+								        callback: cbak
+								    };
+								    for( let z in msg ) 
+								    {
+								        if( z != 'payload' && z != 'users' && z != 'workgroups' && 
+								            z != 'theme' && z != 'userLevel' && z != 'username' && 
+								            z != 'workgroups' && z != 'users' && z != 'type' &&
+								            z != 'callback' )
+								        {
+								            ms[ z ] = msg[ z ];
+								        }
+								    }
+								    app.contentWindow.postMessage( ms, '*' );
+				                }
+				                else
+				                {
+				                   let ms = {
+								        type: 'callback',
+								        resp: 'fail',
+								        callback: cbak
+								    };
+								    for( let z in msg ) 
+								    {
+								        if( z != 'payload' && z != 'users' && z != 'workgroups' && 
+								            z != 'theme' && z != 'userLevel' && z != 'username' && 
+								            z != 'workgroups' && z != 'users' && z != 'type' &&
+								            z != 'callback' )
+								        {
+								            ms[ z ] = msg[ z ];
+								        }
+								    }
+								    console.log( 'Failed because: ', e, d );
+								    app.contentWindow.postMessage( ms, '*' );
+				                }
+				            }
+				        }
+				        m.execute( 'announcement', o );
+				        break;
+				}
+			    break;
+			
 			// System calls!
 			// TODO: Permissions, not all should be able to do this!
 			case 'system':
@@ -2935,10 +3012,12 @@ function apiWrapper( event, force )
 									let enc = Workspace.encryption;
 									let user = enc.decrypt( Workspace.storedCredentials.username, enc.getKeys().privatekey );
 									let pass = enc.decrypt( Workspace.storedCredentials.password, enc.getKeys().privatekey );
-									if( user && pass )
+									let logi = enc.decrypt( Workspace.storedCredentials.login, enc.getKeys().privatekey );
+									if( ( user || logi ) && pass )
 									{
 										response = {
-											username: user,
+											username: user ? user : '',
+											login: logi ? logi : '',
 											password: pass
 										};
 										message = 'Friend credentials successfully delivered.';
@@ -3432,6 +3511,37 @@ function apiWrapper( event, force )
 					case 'reloadmimetypes':
 						Workspace.reloadMimeTypes();
 						break;
+					// Check which mimetypes are available
+					case 'checkmimetypes':
+						if( app && msg.mimetypes )
+						{
+							let result = {};
+							let resultCount = 0;
+							for( let a = 0; a < msg.mimetypes.length; a++ )
+							{
+								for( let b = 0; b < Workspace.mimeTypes.length; b++ )
+								{
+									let m = Workspace.mimeTypes[ b ];
+									for( let c = 0; c < m.types.length; c++ )
+									{
+										if( m.types[ c ] == msg.mimetypes[ a ] )
+										{
+											result[ m.types[ c ] ] = m.executable;
+											resultCount++;
+										}
+									}
+								}
+							}
+							let nmsg = {}; for( let a in msg ) nmsg[a] = msg[a];
+							nmsg.data = resultCount > 0 ? result : false;
+							nmsg.type = 'callback';
+							delete nmsg.command;
+							const cw = GetContentWindowByAppMessage( app, msg );
+							cw.postMessage( nmsg, '*' );
+							//app.contentWindow.postMessage( nmsg, '*' );
+							msg = null;
+						}
+						break;
 					case 'getopenscreens':
 						if( app )
 						{
@@ -3512,7 +3622,7 @@ function apiWrapper( event, force )
 							{
 								if( msg.mode == 'doors' )
 								{
-									Workspace.wallpaperImage = msg.image;
+									Workspace.wallpaperImage = msg.image ? msg.image : '/webclient/gfx/theme/default_login_screen.jpg';
 								}
 								else
 								{

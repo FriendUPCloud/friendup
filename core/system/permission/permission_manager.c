@@ -167,7 +167,7 @@ FBOOL PermissionManagerCheckPermission( PermissionManager *pm, UserSession *us, 
 }
 */
 
-FBOOL PermissionManagerCheckPermission( PermissionManager *pm, const char *sessionid, const char *authid, const char *args )
+FBOOL PermissionManagerCheckPermission( PermissionManager *pm, UserSession *ses, const char *authid, const char *args )
 {
 /*
 Uses: module=system&command=checkuserpermission&type=%type%&identifier=%identifier%
@@ -181,9 +181,9 @@ Ofcourse module calls need user session id etc as standard (&sessionid=%thesessi
 	{
 		SystemBase *sb = (SystemBase *)pm->pm_SB;
 		int len = 512;
-		if( sessionid != NULL )
+		if( ses->us_SessionID != NULL )
 		{
-			len += strlen( sessionid );
+			len += strlen( ses->us_SessionID );
 		}
 		if( authid != NULL )
 		{
@@ -200,7 +200,7 @@ Ofcourse module calls need user session id etc as standard (&sessionid=%thesessi
 		{
 			//module=system&command=checkapppermission&key=%key%&appname=%appname%
 			
-			snprintf( command, len, "command=permissions&sessionid=%s&authid=%s&args=%s", sessionid, authid, args ); 
+			snprintf( command, len, "command=permissions&sessionid=%s&authid=%s&args=%s", ses->us_SessionID, authid, args ); 
 			 
 			DEBUG("Run command via php: '%s'\n", command );
 			FULONG dataLength;
