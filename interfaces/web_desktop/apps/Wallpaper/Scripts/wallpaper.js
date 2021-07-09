@@ -109,9 +109,15 @@ Application.receiveMessage = function( msg )
 			break;
 		// This one "boots up", and starts with backdrop images
 		case 'getimages':
+			// Send list from settings
 			if( this.settings )
 			{
 				this.mainView.sendMessage ( { command: 'setimages', mode: 'doors', images: Application.settings.imagesdoors } );
+			}
+			// Just send an empty list
+			else
+			{
+				this.mainView.sendMessage ( { command: 'setimages', mode: 'doors', images: [] } );
 			}
 			break;
 	}

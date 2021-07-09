@@ -275,14 +275,18 @@ var WorkspaceInside = {
 		if( this.mode == 'vr' ) return;
 		if( globalConfig.workspacecount <= 1 ) return;
 
-		if( !Workspace.wallpaperLoaded && !loaded ) return;
+		if( !Workspace.wallpaperLoaded && !loaded ) 
+		{
+			return;
+		}
 		
 		// Check if we already have workspace wallpapers
-		var o = []; // <- result after cleanup
-		var co = [];
-		var m = globalConfig.workspacecount;
-		var scr = ge( 'DoorsScreen' ).screenObject;
-		var url = Workspace.wallpaperImage;
+		let o = []; // <- result after cleanup
+		let co = [];
+		let m = globalConfig.workspacecount;
+		let scr = ge( 'DoorsScreen' ).screenObject;
+		let url = Workspace.wallpaperImage;
+		
 		if( !url || !url.indexOf ) url = 'none';
 		else
 		{
@@ -290,20 +294,21 @@ var WorkspaceInside = {
 				url = getImageUrl( url );
 		}
 		
-		var workspacePositions = [];
-		var maxW = Workspace.screen.getMaxViewWidth();
-		for( var a = 0; a < globalConfig.workspacecount; a++ )
+		let workspacePositions = [];
+		let maxW = Workspace.screen.getMaxViewWidth();
+		for( let a = 0; a < globalConfig.workspacecount; a++ )
 		{
 			workspacePositions.push( a * maxW );
 		}
-		for( var a in movableWindows )
+		for( let a in movableWindows )
 		{
-			var wo = movableWindows[a].windowObject;
+			let wo = movableWindows[a].windowObject;
 			movableWindows[a].viewContainer.style.left = workspacePositions[ wo.workspace ] + 'px';
 		}
 		
-		var image = url == 'none' ? url : ( 'url(' + url + ')' );
-		for( var a = 0; a < m; a++ )
+		let image = url == 'none' ? url : ( 'url(' + url + ')' );
+		
+		for( let a = 0; a < m; a++ )
 		{
 			// Check if we already have wallpapers
 			if( this.workspaceWallpapers && a < this.workspaceWallpapers.length )
@@ -325,7 +330,7 @@ var WorkspaceInside = {
 			// New entry
 			else
 			{
-				var d = document.createElement( 'div' );
+				let d = document.createElement( 'div' );
 				d.className = 'WorkspaceWallpaper';
 				d.style.left = scr.div.offsetWidth * a + 'px';
 				d.style.width = scr.div.offsetWidth + 'px';
@@ -1631,7 +1636,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						}
 					}
 				
-					if( !Workspace.wallpaperImage || Workspace.wallpaperImage == '""' )
+					if( !Workspace.wallpaperImage || Workspace.wallpaperImage == '""' || Workspace.wallpaperImage === '' )
 					{
 						Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 					}
@@ -3460,6 +3465,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Just refresh the desktop ------------------------------------------------
 	refreshDesktop: function( callback, forceRefresh )
 	{
+		let self = this;
+		
 		// Get those dynamic classes
 		RefreshDynamicClasses( {} );
 		
@@ -3469,17 +3476,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var imgOffline = GetThemeInfo( 'OfflineIcon' );
 		if( !Workspace.iconsPreloaded && this.mode != 'vr' )
 		{
-			var imgs = [];
+			let imgs = [];
 			imgs.push( imgOffline.backgroundImage );
 			function preloadAndRemove( n )
 			{
 				if( !n ) return;
 			
-				var t = false;
-				var i = new Image();
+				let t = false;
+				let i = new Image();
 				i.src = n;
-				var out = [];
-				for( var a = 0; a < window.preloader.length; a++ )
+				let out = [];
+				for( let a = 0; a < window.preloader.length; a++ )
 				{
 					if( window.preloader[a].src == i.src )
 					{
@@ -3491,7 +3498,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				document.body.appendChild( i );
 				window.preloader.push( i );
 			}
-			for( var a = 0; a < imgs.length; a++ )
+			for( let a = 0; a < imgs.length; a++ )
 			{
 				if( imgs[a] && imgs[a].length )
 				{
@@ -3508,7 +3515,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		
 		// Oh yeah, update windows
-		for( var a in movableWindows )
+		for( let a in movableWindows )
 		{
 			if( movableWindows[a].content.redrawBackdrop )
 			{
@@ -3520,8 +3527,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				movableWindows[a].windowObject.sendToWorkspace( globalConfig.workspacecount - 1 );
 			}
 		}
-
-		var self = this;
 		
 		this.getMountlist( function( data )
 		{	
@@ -3558,7 +3563,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Recall wallpaper
 			if( Workspace.mode != 'vr' && self.wallpaperImage != 'color' )
 			{
-			    if( self.wallpaperImage == undefined )
+			    if( typeof( self.wallpaperImage ) == undefined )
 			    {
 			        return setTimeout( function(){ Workspace.refreshDesktop( callback, forceRefresh ) }, 25 );
 			    }
@@ -3633,6 +3638,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							break;
 						default:
 							Workspace.wallpaperLoaded = false;
+							let src = found ? getImageUrl( self.wallpaperImage ) : '/webclient/gfx/theme/default_login_screen.jpg';
 							let workspaceBackgroundImage = new Image();
 							workspaceBackgroundImage.onload = function()
 							{
@@ -3657,6 +3663,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								this.done = true;
 								
 								Workspace.wallpaperImageObject = workspaceBackgroundImage;
+								Workspace.wallpaperLoaded = src;
 								
 								// Mobile is not using multiple workspaces
 								if( !isMobile && globalConfig.workspacecount > 1 )
@@ -3669,16 +3676,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									// Set the wallpaper
 									eles[0].style.backgroundImage = 'url(' + this.src + ')';
 								}
-								Workspace.wallpaperLoaded = this.src;
 							};
-							if( found )
-							{
-								workspaceBackgroundImage.src = getImageUrl( self.wallpaperImage );
-							}
-							else 
-							{
-								workspaceBackgroundImage.src = '/webclient/gfx/theme/default_login_screen.jpg';
-							}
+							
+							workspaceBackgroundImage.src = src;
+							
 							if( workspaceBackgroundImage.width > 0 && workspaceBackgroundImage.height > 0 && workspaceBackgroundImage.onload )
 							{
 								workspaceBackgroundImage.onload();
@@ -3709,7 +3710,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 			}
 			// We have no wallpaper...
-			else if( Workspace.mode == 'standard' )
+			else if( Workspace.mode == 'standard' || Workspace.mode == 'default' )
 			{
 				let eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
 				if( eles.length )
@@ -3723,6 +3724,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			else if( Workspace.mode == 'vr' )
 			{
 				Workspace.wallpaperLoaded = true;
+			}
+			else
+			{
+				//console.log( 'Wallpaper: What happened and which mode? ' + Workspace.mode );
 			}
 
 		}, forceRefresh );

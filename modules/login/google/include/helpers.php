@@ -1200,6 +1200,7 @@ function firstLogin( $userid )
 			$o->Load();
 			$o->Type = 'SQLDrive';
 			$o->ShortDescription = 'My data volume';
+			$o->Config = '{"DiskSize":"1GB"}';
 			$o->Server = 'localhost';
 			$o->Mounted = '1';
 	
@@ -1241,7 +1242,7 @@ function firstLogin( $userid )
 					$fdownloadfolder->Save();
 				}
 				
-				$f1 = new dbIO( 'FSFolder', $SqlDatabase );
+				/*$f1 = new dbIO( 'FSFolder', $SqlDatabase );
 				$f1->FilesystemID = $o->ID;
 				$f1->UserID = $userid;
 				$f1->Name = 'Code examples';
@@ -1250,88 +1251,94 @@ function firstLogin( $userid )
 					$f1->DateCreated = date( 'Y-m-d H:i:s' );
 					$f1->DateModified = $f1->DateCreated;
 					$f1->Save();
-				}
+				}*/
 				
 				// 6. Copy some wallpapers
-				$prefix = "resources/webclient/theme/wallpaper/";
-				$files = array(
-					"Autumn",
-					"CalmSea",
-					"Domestic",
-					"Field",
-					"Fire",
-					"Freedom",
-					"NightClouds",
-					"RedLeaf",
-					"TechRoad",
-					"TreeBranch",
-					"Bug",
-					"CityLights",
-					"EveningCalm",
-					"FireCones",
-					"FjordCoast",
-					"GroundedLeaves",
-					"Omen",
-					"SummerLeaf",
-					"TrailBlazing",
-					"WindyOcean"
-				);
-				
-				$wallpaperstring = '';
-				$wallpaperseperator = '';
-				foreach( $files as $file )
+				// TODO: Implement support for "copydefaultwallpapers"
+				// This was disabled to conserve space when many user accounts are created
+				if( isset( $Config ) && isset( $Config->copydefaultwallpapers ) )
 				{
-					$fl = new dbIO( 'FSFile', $SqlDatabase );
-					$fl->Filename = $file . '.jpg';
-					$fl->FolderID = $f2->ID;
-					$fl->FilesystemID = $o->ID;
-					$fl->UserID = $userid;
-					if( !$fl->Load() )
-					{
-						$newname = $file;
-						while( file_exists( 'storage/' . $newname . '.jpg' ) )
-							$newname = $file . rand( 0, 999999 );
-						copy( $prefix . $file . '.jpg', 'storage/' . $newname . '.jpg' );
-
-						$fl->DiskFilename = $newname . '.jpg';
-						$fl->Filesize = filesize( $prefix . $file . '.jpg' );
-						$fl->DateCreated = date( 'Y-m-d H:i:s' );
-						$fl->DateModified = $fl->DateCreated;
-						$fl->Save();
-
-						$wallpaperstring .= $wallpaperseperator . '"Home:Wallpaper/' . $file . '.jpg"';
-						$wallpaperseperator = ',';
-					}
-				}
+					$prefix = "resources/webclient/theme/wallpaper/";
+					$files = array(
+						"Autumn",
+						"CalmSea",
+						"Domestic",
+						"Field",
+						"Fire",
+						"Freedom",
+						"NightClouds",
+						"RedLeaf",
+						"TechRoad",
+						"TreeBranch",
+						"Bug",
+						"CityLights",
+						"EveningCalm",
+						"FireCones",
+						"FjordCoast",
+						"GroundedLeaves",
+						"Omen",
+						"SummerLeaf",
+						"TrailBlazing",
+						"WindyOcean"
+					);
 				
-				// 7. Copy some other files
-				$prefix = "resources/webclient/examples/";
-				$files = array(
-				"ExampleWindow.jsx", "Template.html"
-				);
-				
-				foreach( $files as $filen )
-				{
-					list( $file, $ext ) = explode( '.', $filen );
-
-					$fl = new dbIO( 'FSFile', $SqlDatabase );
-					$fl->Filename = $file . '.' . $ext;
-					$fl->FolderID = $f1->ID;
-					$fl->FilesystemID = $o->ID;
-					$fl->UserID = $userid;
-					if( !$fl->Load() )
+					$wallpaperstring = '';
+					$wallpaperseperator = '';
+					foreach( $files as $file )
 					{
-						$newname = $file;
-						while( file_exists( 'storage/' . $newname . '.' . $ext ) )
-							$newname = $file . rand( 0, 999999 );
-						copy( $prefix . $file . '.' . $ext, 'storage/' . $newname . '.' . $ext );
+						$fl = new dbIO( 'FSFile', $SqlDatabase );
+						$fl->Filename = $file . '.jpg';
+						$fl->FolderID = $f2->ID;
+						$fl->FilesystemID = $o->ID;
+						$fl->UserID = $userid;
+						if( !$fl->Load() )
+						{
+							$newname = $file;
+							while( file_exists( 'storage/' . $newname . '.jpg' ) )
+								$newname = $file . rand( 0, 999999 );
+							copy( $prefix . $file . '.jpg', 'storage/' . $newname . '.jpg' );
 
-						$fl->DiskFilename = $newname . '.' . $ext;
-						$fl->Filesize = filesize( $prefix . $file . '.' . $ext );
-						$fl->DateCreated = date( 'Y-m-d H:i:s' );
-						$fl->DateModified = $fl->DateCreated;
-						$fl->Save();
+							$fl->DiskFilename = $newname . '.jpg';
+							$fl->Filesize = filesize( $prefix . $file . '.jpg' );
+							$fl->DateCreated = date( 'Y-m-d H:i:s' );
+							$fl->DateModified = $fl->DateCreated;
+							$fl->Save();
+
+							$wallpaperstring .= $wallpaperseperator . '"Home:Wallpaper/' . $file . '.jpg"';
+							$wallpaperseperator = ',';
+						}
 					}
+				
+					// 7. Copy some other files
+					// This is deprecated
+					/*$prefix = "resources/webclient/examples/";
+					$files = array(
+					"ExampleWindow.jsx", "Template.html"
+					);
+				
+					foreach( $files as $filen )
+					{
+						list( $file, $ext ) = explode( '.', $filen );
+
+						$fl = new dbIO( 'FSFile', $SqlDatabase );
+						$fl->Filename = $file . '.' . $ext;
+						$fl->FolderID = $f1->ID;
+						$fl->FilesystemID = $o->ID;
+						$fl->UserID = $userid;
+						if( !$fl->Load() )
+						{
+							$newname = $file;
+							while( file_exists( 'storage/' . $newname . '.' . $ext ) )
+								$newname = $file . rand( 0, 999999 );
+							copy( $prefix . $file . '.' . $ext, 'storage/' . $newname . '.' . $ext );
+
+							$fl->DiskFilename = $newname . '.' . $ext;
+							$fl->Filesize = filesize( $prefix . $file . '.' . $ext );
+							$fl->DateCreated = date( 'Y-m-d H:i:s' );
+							$fl->DateModified = $fl->DateCreated;
+							$fl->Save();
+						}
+					}*/
 				}
 				
 				// 8. Fill Wallpaper app with settings and set default wallpaper
@@ -1341,7 +1348,7 @@ function firstLogin( $userid )
 				$wp->Key = 'imagesdoors';
 				if( !$wp->Load() )
 				{
-					$wp->Data = '['. $wallpaperstring .']';
+					$wp->Data = '';
 					$wp->Save();
 				}
 				
@@ -1351,7 +1358,7 @@ function firstLogin( $userid )
 				$wp->Key = 'wallpaperdoors';
 				if( !$wp->Load() )
 				{
-					$wp->Data = '"Home:Wallpaper/Freedom.jpg"';
+					$wp->Data = '';
 					$wp->Save();
 				}
 				
@@ -1588,8 +1595,6 @@ function applySetup( $userid, $id )
 							$f = new dbIO( 'Filesystem', $SqlDatabase );
 							$f->UserID = $uid;
 							$f->Name   = 'Home';
-							$f->Type   = 'SQLDrive';
-							$f->Server = 'localhost';
 							if( !$f->Load() )
 							{
 								$f->ShortDescription = 'My data volume';
