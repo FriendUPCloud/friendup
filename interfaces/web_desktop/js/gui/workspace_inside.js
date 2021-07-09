@@ -2621,7 +2621,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		Workspace.mainDock.clear();
 		
-		
 		function getOnClickFn( appName )
 		{
 			return function()
@@ -2645,7 +2644,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Add start menu
 		if( !isMobile && globalConfig.viewList == 'dockedlist' )
 		{
-			var img = 'startmenu.png';
+			let img = 'startmenu.png';
 			if( Workspace.mainDock.conf )
 			{
 				if( Workspace.mainDock.conf.size == '32' )
@@ -2657,7 +2656,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					img = 'startmenu_16.png';
 				}
 			}
-			var ob = {
+			let ob = {
 				type: 'startmenu',
 				src: '/webclient/gfx/system/' + img,
 				title: 'Start',
