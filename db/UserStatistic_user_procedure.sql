@@ -16,21 +16,16 @@ CREATE TABLE IF NOT EXISTS FUserStats (
 
 DELIMITER $$ 
 
-CREATE PROCEDURE GenerateStateForUser( IN userid bigint(32) ) 
+CREATE PROCEDURE GenerateStateForUser( IN loctime BigInt(32), IN userid BigInt(32), IN useruuid varchar(256), IN device varchar(256) ) 
 BEGIN 
  DECLARE login DECIMAL(8,0) DEFAULT 0;
- DECLARE timeSpent DECIMAL(8,0) DEFAULT 0;
+ DECLARE timeSpent bigint(32) DEFAULT 0;
  DECLARE mobileLogin DECIMAL(8,0) DEFAULT 0;
- DECLARE loctime bigint(32) DEFAULT 0;
- DECLARE device varchar(256) DEFAULT ' ';
- 
- SELECT (UNIX_TIMESTAMP()-(86400)) INTO loctime;
+ DECLARE device varchar(256);
 
  SELECT count(*) INTO login FROM FUser WHERE ID=userid AND LoginTime > loctime;
  
- SELECT count(*) INTO mobileLogin FROM FUserLogin where UserID=userid AND LoginTime > loctime AND (Device like '%Android%' OR Device like '%iOS%');
-
- SELECT Device INTO device FROM FUserLogin where UserID=userid AND LoginTime > loctime ORDER BY LoginTime DESC LIMIT 1;
+ SELECT count(*) INTO mobileLogin FROM FUserLogin WHERE UserID=userid AND LoginTime > loctime AND (Device like '%Android%' OR Device like '%iOS%');
 
  IF login > 0 THEN
   SELECT (LastActionTime-LoginTime) as timespent
@@ -45,7 +40,10 @@ BEGIN
  timeSpent, 
  (SELECT SUM(f.Filesize) AS FIRST_DRINK FROM FSFile f, Filesystem fl WHERE fl.UserID=userid AND fl.Name='Home' AND f.FilesystemID=fl.ID), 
  0, 
- 0, 
+ (SELECT count(*) FROM presence.user_relation AS ur LEFT JOIN presence.account AS a ON a.clientId=ur.userId
+     WHERE a.fUserId=useruuid AND ur.roomId IN ( SELECT m.roomId FROM presence.message AS m WHERE m.fromId=a.clientId
+     AND m.timestamp > loctime
+     )), 
  0,
  mobileLogin, 
  device
@@ -59,30 +57,39 @@ CREATE PROCEDURE CreateUserStatistic( )
 BEGIN 
  DECLARE finished INTEGER DEFAULT 0; 
  DECLARE localID BigInt(32) DEFAULT 0; 
+ DECLARE localUUID varchar(256) DEFAULT '';
+ DECLARE device varchar(256) DEFAULT '';
+ DECLARE loctime BigInt(32) DEFAULT 0;
 
  -- declare cursor for ID 
  DEClARE locIDCursor 
  CURSOR FOR 
- SELECT ID FROM FUser; 
+ SELECT ID,UniqueID FROM FUser; 
 
  -- declare NOT FOUND handler 
  DECLARE CONTINUE HANDLER 
  FOR NOT FOUND SET finished = 1; 
+ 
+ SELECT (UNIX_TIMESTAMP()-(86400)) INTO loctime;
 
  OPEN locIDCursor; 
 
  getID: LOOP 
- FETCH locIDCursor INTO localID; 
+ FETCH locIDCursor INTO localID, localUUID;
  IF finished = 1 THEN 
  LEAVE getID; 
  END IF; 
- -- call function on all users 
- call GenerateStateForUser( localID ); 
+ -- call function on all users
+ IF (SELECT count(*) FROM FUserLogin WHERE UserID=localID AND LoginTime > loctime ) > 0 THEN
+  SELECT Device INTO device FROM FUserLogin WHERE UserID=localID AND LoginTime > loctime ORDER BY LoginTime DESC LIMIT 1;
+ END IF;
+ call GenerateStateForUser( loctime, localID, localUUID, device ); 
  END LOOP getID; 
  CLOSE locIDCursor; 
 END$$ 
 
 DELIMITER ; 
+
 
 SET GLOBAL event_scheduler = ON; 
 
