@@ -344,17 +344,26 @@ var WorkspaceInside = {
 	// Invite a friend to the Workspace
 	inviteFriend: function()
 	{
+		var version = 1;
+		
 		let self = this;
 		if( this.inviteView ) return this.inviteView.activate();
 		// TODO: check permissions
-		let f = new File( 'System:templates/invite.html' );
+		if( version == 1 )
+		{
+			var f = new File( 'System:templates/invite_link.html' );
+		}
+		else
+		{
+			var f = new File( 'System:templates/invite.html' );
+		}
 		f.i18n();
 		f.onLoad = function( data )
 		{
 			let v = new View( {
 				title: i18n( 'i18n_invite_friend' ),
-				width: 700,
-				height: 700
+				width: ( version == 1 ? 440 : 700 ),
+				height: ( version == 1 ? 205 : 700 )
 			} );
 			self.inviteView = v;
 			v.onClose = function()
@@ -362,6 +371,7 @@ var WorkspaceInside = {
 				self.inviteView = null;
 			}
 			v.setContent( data );
+			if( version == 1 ) self.addInvite();
 			self.inviteLoadWorkgroups( '', self.getInviteCallback( 'workgroups' ) );
 			self.invitesGet( self.getInviteCallback( 'invites' ) );
 		}
@@ -370,6 +380,8 @@ var WorkspaceInside = {
 	// Get the invite callback wanted
 	getInviteCallback: function( type )
 	{
+		var version = 1;
+		
 		let self = this;
 		if( type == 'workgroups' )
 		{
@@ -435,48 +447,117 @@ var WorkspaceInside = {
 						details += '<div class="Rounded BackgroundNegative Negative FloatLeft PaddingSmall MarginRight">' + data[a].Workgroups[b].Name + '</div>';
 					}
 					
-					str += '<div class="InviteBlock MarginBottom Rounded BackgroundLists Padding">\
-						<div class="HRow">\
-							<div class="FloatLeft Link HContent70"><input type="text" class="FullWidth LinkField" style="background: transparent; border: 0" value="' + data[a].Link + '"/></div><div class="Buttons HContent30 FloatLeft TextRight">\
-								<button type="button" class="ImageButton IconSmall fa-clipboard" onclick="let sp = this.parentNode.parentNode.querySelector( \'.LinkField\' ); sp.select(); sp.setSelectionRange(0,9999999); document.execCommand(\'copy\');"></button>\
-								<button type="button" class="ImageButton IconSmall fa-eye" onclick="let p = this.parentNode.parentNode.parentNode; if( p.classList.contains( \'Show\' ) ) { p.classList.remove( \'Show\' ); } else { p.classList.add( \'Show\' ); }"></button>\
-								<button type="button" class="ImageButton IconSmall fa-trash" onclick="Workspace.removeInvite(' + data[a].ID + ')"></button>\
+					if( version == 1 )
+					{
+						str += '<div class="InviteBlock MarginBottom Rounded BackgroundLists Padding">\
+							<div class="HRow">\
+								<div class="FloatLeft Link HContent70"><input type="text" class="FullWidth LinkField" style="background: transparent; border: 0" value="' + data[a].Link + '"/></div><div class="Buttons HContent30 FloatLeft TextRight">\
+									<button type="button" class="ImageButton IconSmall fa-clipboard" onclick="let sp = this.parentNode.parentNode.querySelector( \'.LinkField\' ); sp.select(); sp.setSelectionRange(0,9999999); document.execCommand(\'copy\');"></button>\
+									<button type="button" class="ImageButton IconSmall fa-refresh" onclick="Workspace.refreshInvite(' + data[a].ID + ')"></button>\
+								</div>\
 							</div>\
-						</div>\
-						<div class="HiddenDetails NoPadding\">\
-							' + details + '\
-							<br style="clear: both"/>\
-						</div>\
-					</div>';
+						</div>';
+					}
+					else
+					{
+						str += '<div class="InviteBlock MarginBottom Rounded BackgroundLists Padding">\
+							<div class="HRow">\
+								<div class="FloatLeft Link HContent70"><input type="text" class="FullWidth LinkField" style="background: transparent; border: 0" value="' + data[a].Link + '"/></div><div class="Buttons HContent30 FloatLeft TextRight">\
+									<button type="button" class="ImageButton IconSmall fa-clipboard" onclick="let sp = this.parentNode.parentNode.querySelector( \'.LinkField\' ); sp.select(); sp.setSelectionRange(0,9999999); document.execCommand(\'copy\');"></button>\
+									<button type="button" class="ImageButton IconSmall fa-eye" onclick="let p = this.parentNode.parentNode.parentNode; if( p.classList.contains( \'Show\' ) ) { p.classList.remove( \'Show\' ); } else { p.classList.add( \'Show\' ); }"></button>\
+									<button type="button" class="ImageButton IconSmall fa-trash" onclick="Workspace.removeInvite(' + data[a].ID + ')"></button>\
+								</div>\
+							</div>\
+							<div class="HiddenDetails NoPadding\">\
+								' + details + '\
+								<br style="clear: both"/>\
+							</div>\
+						</div>';
+					}
 				}
 				self.inviteView.content.querySelector( '.InviteList' ).innerHTML = str;
 			}
 		}
 		return null;
 	},
-	// Remove an invite
-	removeInvite: function( id )
+	// Re-generate a new refresh token
+	refreshInvite( id )
 	{
 		let self = this;
-		Confirm( 'i18n_are_you_sure', 'i18n_confirm_delete', function( data )
+		
+		self.removeInvite( id, true, function(  )
 		{
-			if( data == true )
+			
+			self.addInvite();
+			
+		} );
+	},
+	// Generate a invite
+	addInvite: function()
+	{
+		let self = this;
+		
+		let m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e == 'ok' )
 			{
-				let m = new Module( 'system' );
-				m.onExecuted = function( e, d )
+				self.invitesGet( self.getInviteCallback( 'invites' ) );
+			}
+			else
+			{
+				Alert( i18n( 'i18n_failed_generate_invite' ), i18n( 'i18n_failed_generate_invite_desc' ) );
+			}
+		}
+		// TODO: Make support for workgroups ...
+		m.execute( 'generateinvite'/*, { workgroups: '' }*/ );
+	},
+	// Remove an invite
+	removeInvite: function( id, force, callback )
+	{
+		let self = this;
+		
+		if( force )
+		{
+			let m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				if( e == 'ok' )
 				{
-					if( e == 'ok' )
+					if( callback )
 					{
-						self.invitesGet( self.getInviteCallback( 'invites' ) );
-					}
-					else
-					{
-						Alert( i18n( 'i18n_failed_remove_invite' ), i18n( 'i18n_failed_remove_invite_desc' ) );
+						return callback( e, d );
 					}
 				}
-				m.execute( 'removeinvite', { ids: id } );
+				else
+				{
+					Alert( i18n( 'i18n_failed_remove_invite' ), i18n( 'i18n_failed_remove_invite_desc' ) );
+				}
 			}
-		} );
+			m.execute( 'removeinvite', { ids: id } );
+		}
+		else
+		{
+			Confirm( 'i18n_are_you_sure', 'i18n_confirm_delete', function( data )
+			{
+				if( data == true )
+				{
+					let m = new Module( 'system' );
+					m.onExecuted = function( e, d )
+					{
+						if( e == 'ok' )
+						{
+							self.invitesGet( self.getInviteCallback( 'invites' ) );
+						}
+						else
+						{
+							Alert( i18n( 'i18n_failed_remove_invite' ), i18n( 'i18n_failed_remove_invite_desc' ) );
+						}
+					}
+					m.execute( 'removeinvite', { ids: id } );
+				}
+			} );
+		}
 	},
 	// Load workgroups for invite
 	inviteLoadWorkgroups: function( keywords, callback )

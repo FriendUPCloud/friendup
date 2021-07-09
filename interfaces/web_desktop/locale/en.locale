@@ -172,7 +172,9 @@ i18n_account_setup                      : My account - setup
 #Invites
 i18n_add_invite                         : Add a new invite
 i18n_current_invites                    : Existing invites
+i18n_current_invite                     : Your invite link
 i18n_invite_desc                        : Invites are created as links that can be sent to individuals that you want to interact with. Your new invites will be active until you delete them.
+i18n_current_invite_desc                : You may invite your friends, partners or colleagues to use Friend OS by sending them your invite link. When they use it, they will get their own Friend account and appear on your contact list in Friend Chat.
 i18n_no_workgroups                      : You have no workgroups
 i18n_confirm_delete_invite              : When deleting an invite, it will not be possible to use that invite link to sign up for a Friend account.
 i18n_failed_remove_invite               : Failed to remove invite
