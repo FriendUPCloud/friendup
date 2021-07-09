@@ -294,8 +294,6 @@ var WorkspaceInside = {
 				url = getImageUrl( url );
 		}
 		
-		console.log( 'What is going on? ' + url );
-		
 		let workspacePositions = [];
 		let maxW = Workspace.screen.getMaxViewWidth();
 		for( let a = 0; a < globalConfig.workspacecount; a++ )
@@ -1609,7 +1607,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							document.body.classList.add( 'DefaultWallpaper' );
 							Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 						}
-						console.log( 'Set wallpaper: ' + Workspace.wallpaperImage );
 					}
 					else
 					{
