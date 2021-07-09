@@ -83,7 +83,7 @@ if( $q )
 {
 	if( $row = $SqlDatabase->FetchObject( $q ) )
 	{
-		if( !$User->SessionID )
+		if( !$UserSession->SessionID )
 		{
 			die( 'fail<!--separate-->{"response":"deletedoor failed"}'  ); // print_r( $User, 1 )  ???
 		}

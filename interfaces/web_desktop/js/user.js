@@ -314,7 +314,7 @@ Friend.User = {
 				return;
 			}
 			Workspace.sessionId = ''; 
-			document.location.href = window.location.href.split( '?' )[0]; //document.location.reload();
+			document.location.href = window.location.href.split( '?' )[0].split( '#' )[0]; //document.location.reload();
 		}
 		dologt = setTimeout( doLogout, 750 );
 		return true;

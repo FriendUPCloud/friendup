@@ -15,7 +15,7 @@
 include_once( 'php/friend.php' );
 include_once( 'php/classes/file.php' );
 
-if( !isset( $User ) || ( $User && ( !isset( $User->ID ) || !$User->ID ) ) || !is_object( $User ) )
+if( !isset( $UserSession ) || ( $UserSession && ( !isset( $UserSession->ID ) || !$UserSession->ID ) ) || !is_object( $UserSession ) )
 {
 	die( 'fail<!--separate-->{"response":"user did not authenticate. system module. Argv[1]: ' . $argv[1] . '"}' );
 }
@@ -35,7 +35,7 @@ if( $level = $SqlDatabase->FetchObject( '
 	SELECT g.Name FROM FUserGroup g, FUserToGroup ug
 	WHERE
 		g.Type = \'Level\' AND
-		ug.UserID=\'' . $User->ID . '\' AND
+		ug.UserID=\'' . $UserSession->UserID . '\' AND
 		ug.UserGroupID = g.ID
 ' ) )
 {
@@ -45,7 +45,7 @@ else $level = false;
 
 function GetFilesystemByArgs( $args )
 {
-	global $SqlDatabase, $User;
+	global $SqlDatabase, $User, $UserSession;
 	$identifier = false;
 
 	if( isset( $args->fileInfo ) )
@@ -71,10 +71,10 @@ function GetFilesystemByArgs( $args )
 						SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
 						WHERE
 							g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-							ug.UserID = \'' . $User->ID . '\'
+							ug.UserID = \'' . $UserSession->UserID . '\'
 					)
 			OR
-			f.UserID=\'' . $User->ID . '\'
+			f.UserID=\'' . $UserSession->UserID . '\'
 		)
 		AND ' . $identifier . '
 	' ) )
@@ -250,14 +250,18 @@ if( isset( $args->command ) )
 			die( 'ok<!--separate-->{"Commands": ' . json_encode( $commands ) . '}' );
 			break;
 		case 'tinyurl':
-			if( isset( $User ) )
+			if( isset( $UserSession ) )
 				require( 'modules/system/include/tinyurl.php' );
 			break;
+		case 'tinyurldata':
+			if( isset( $User ) )
+				require( 'modules/system/include/tinyurldata.php' );
+			break;
 		case 'ping':
-			if( isset( $User ) && isset( $User->ID ) )
+			if( isset( $UserSession ) && isset( $UserSession->UserID ) )
 			{
-				$User->Loggedtime = mktime();
-				$User->Save();
+				$UserSession->Loggedtime = mktime();
+				$UserSession->Save();
 				die( 'ok' );
 			}
 			die( 'fail<!--separate-->{"response":"ping failed"}'  );
@@ -558,7 +562,7 @@ if( isset( $args->command ) )
 			if( $o = $SqlDatabase->FetchObject( '
 				SELECT g.Name FROM FUserGroup g, FUserToGroup ug
 				WHERE
-					ug.UserID=\'' . $User->ID . '\' AND ug.UserGroupID = g.ID
+					ug.UserID=\'' . $UserSession->UserID . '\' AND ug.UserGroupID = g.ID
 					AND g.Type = \'Level\'
 			' ) )
 			{
@@ -592,7 +596,7 @@ if( isset( $args->command ) )
 					SELECT f.Name, f.Mounted FROM
 						Filesystem f
 					WHERE
-						f.Type="Assign" AND f.UserID=\'' . $User->ID . '\'
+						f.Type="Assign" AND f.UserID=\'' . $UserSession->UserID . '\'
 					ORDER BY f.Name ASC
 				' ) )
 				{
@@ -608,7 +612,7 @@ if( isset( $args->command ) )
 			if( $mode ) $mode = strtolower( $mode );
 			if( !$mode || ( $mode && $mode != 'add' ) )
 			{
-				$SqlDatabase->query( 'DELETE FROM `Filesystem` WHERE `Type` = "Assign" AND `UserID`=\'' . $User->ID . '\' AND `Name` = "' . mysqli_real_escape_string( $SqlDatabase->_link, str_replace( ':', '', trim( $assign ) ) ) . '"' );
+				$SqlDatabase->query( 'DELETE FROM `Filesystem` WHERE `Type` = "Assign" AND `UserID`=\'' . $UserSession->UserID . '\' AND `Name` = "' . mysqli_real_escape_string( $SqlDatabase->_link, str_replace( ':', '', trim( $assign ) ) ) . '"' );
 			}
 
 			// Just remove the assign
@@ -619,7 +623,7 @@ if( isset( $args->command ) )
 
 			// Add item
 			$o = new dbIO( 'Filesystem' );
-			$o->UserID = $User->ID;
+			$o->UserID = $UserSession->UserID;
 			$o->Name = str_replace( ':', '', trim( $assign ) );
 			$o->Type = 'Assign';
 			$o->Load(); // Try to load..
@@ -744,7 +748,7 @@ if( isset( $args->command ) )
 				if( $fsys = $SqlDatabase->FetchObject( '
 					SELECT f.* 
 					FROM `Filesystem` f 
-					WHERE f.UserID = \'' . $User->ID . '\' AND f.Name = \'' . $args->args->appPath . '\' 
+					WHERE f.UserID = \'' . $UserSession->UserID . '\' AND f.Name = \'' . $args->args->appPath . '\' 
 					ORDER BY f.ID ASC 
 				' ) )
 				{
@@ -763,7 +767,7 @@ if( isset( $args->command ) )
 						LEFT JOIN `FUserApplication` u ON 
 						( 
 								u.ApplicationID = k.ApplicationID 
-							AND u.UserID = \'' . $User->ID . '\' 
+							AND u.UserID = \'' . $UserSession->UserID . '\' 
 						)
 				WHERE 
 						k.UserID = \'' . $User->ID . '\' 
@@ -955,7 +959,7 @@ if( isset( $args->command ) )
 								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
 								WHERE
 									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-									ug.UserID = \'' . $User->ID . '\'
+									ug.UserID = \'' . $UserSession->UserID . '\'
 							)
 						)
 						AND f.Name=\'' . $devname . '\'
@@ -984,12 +988,12 @@ if( isset( $args->command ) )
 					WHERE
 						f.Name=\'' . mysqli_real_escape_string( $SqlDatabase->_link, $devname ) . '\' AND
 						(
-							f.UserID=\'' . intval( $User->ID ) .'\' OR
+							f.UserID=\'' . intval( $UserSession->UserID ) .'\' OR
 							f.GroupID IN (
 								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
 								WHERE
 									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-									ug.UserID = \'' . intval( $User->ID ) . '\'
+									ug.UserID = \'' . intval( $UserSession->UserID ) . '\'
 							)
 						)
 					LIMIT 1
@@ -1037,12 +1041,12 @@ if( isset( $args->command ) )
 					SELECT * FROM `Filesystem`
 					WHERE
 						(
-							f.UserID=\'' . intval( $User->ID ) . '\' OR
+							f.UserID=\'' . intval( $UserSession->UserID ) . '\' OR
 							f.GroupID IN (
 								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
 								WHERE
 									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-									ug.UserID = \'' . intval( $User->ID ) . '\'
+									ug.UserID = \'' . intval( $UserSession->UserID ) . '\'
 							)
 						)
 						AND Name=\'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->devname ) . '\'
@@ -1054,7 +1058,7 @@ if( isset( $args->command ) )
 					UPDATE `Filesystem`
 						SET `Mounted` = "0"
 					WHERE
-						`ID` = \'' . $row->ID . '\' AND UserID=\'' . $User->ID . '\'
+						`ID` = \'' . $row->ID . '\' AND UserID=\'' . $UserSession->UserID . '\'
 					' );
 
 
@@ -1077,6 +1081,10 @@ if( isset( $args->command ) )
 		// Populate a sandbox
 		case 'sandbox':
 			require( 'modules/system/include/sandbox.php' );
+			break;
+		// Support per-app modules
+		case 'appmodule':
+			require( 'modules/system/include/appmodule.php' );
 			break;
 		// Try to lauch friend application
 		case 'friendapplication':
@@ -1150,7 +1158,7 @@ if( isset( $args->command ) )
 		// Remove a bookmark
 		case 'removebookmark':
 			$s = new dbIO( 'FSetting' );
-			$s->UserID = $User->ID;
+			$s->UserID = $UserSession->UserID;
 			$s->Type = 'bookmark';
 			$s->Key = $args->args->name;
 			$s->Load(); // Try to load it
@@ -1164,7 +1172,7 @@ if( isset( $args->command ) )
 		// Add a filesystem bookmark
 		case 'addbookmark':
 			$s = new dbIO( 'FSetting' );
-			$s->UserID = $User->ID;
+			$s->UserID = $UserSession->UserID;
 			$s->Type = 'bookmark';
 			$s->Key = $args->args->path;
 			$s->Load(); // Try to load it
@@ -1179,7 +1187,7 @@ if( isset( $args->command ) )
 		case 'getbookmarks':
 			if( $rows = $SqlDatabase->FetchObjects( '
 				SELECT * FROM `FSetting` WHERE
-				`UserID`=\'' . $User->ID . '\' AND
+				`UserID`=\'' . $UserSession->UserID . '\' AND
 				`Type`=\'bookmark\'
 				ORDER BY `Key` ASC
 			' ) )
@@ -1219,7 +1227,7 @@ if( isset( $args->command ) )
 				WHERE
 					a.ID = ua.ApplicationID
 				AND
-					ua.UserID = \'' . $User->ID . '\'
+					ua.UserID = \'' . $UserSession->UserID . '\'
 				ORDER BY a.Name DESC
 			' ) )
 			{
@@ -1267,7 +1275,7 @@ if( isset( $args->command ) )
 				WHERE
 					a.ID = ua.ApplicationID
 				AND
-					ua.UserID = \'' . $User->ID . '\'
+					ua.UserID = \'' . $UserSession->UserID . '\'
 				ORDER BY a.Name DESC
 			' ) )
 			{
@@ -1321,7 +1329,7 @@ if( isset( $args->command ) )
 				
 				$key = new dbIO( 'FKeys' );
 				$key->IsDeleted = '0';
-				$key->UserID = $User->ID;
+				$key->UserID = $UserSession->UserID;
 				if( isset( $args->args->id ) && $args->args->id )
 				{
 					if( !$key->Load( $args->args->id ) )
@@ -1340,7 +1348,7 @@ if( isset( $args->command ) )
 							`FUserApplication` u, 
 							`FApplication` a 
 						WHERE 
-								u.UserID = \'' . $User->ID . '\' 
+								u.UserID = \'' . $UserSession->UserID . '\' 
 							AND u.AuthID = \'' . $args->args->authId . '\' 
 							AND a.ID = u.ApplicationID 
 						ORDER BY 
@@ -1371,7 +1379,7 @@ if( isset( $args->command ) )
 						FROM 
 							`Filesystem` f 
 						WHERE 
-								f.UserID = \'' . $User->ID . '\' 
+								f.UserID = \'' . $UserSession->UserID . '\' 
 							AND f.Name = \'' . $args->args->appPath . '\' 
 						ORDER BY 
 							f.ID ASC 
@@ -1388,7 +1396,7 @@ if( isset( $args->command ) )
 							FROM 
 								`FKeys` k 
 							WHERE 
-									k.UserID = \'' . $User->ID . '\' 
+									k.UserID = \'' . $UserSession->UserID . '\' 
 								AND k.ID IN ( ' . $fs->KeysID . ' ) 
 								AND k.IsDeleted = "0" 
 								AND k.ApplicationID = "-1" 
@@ -1448,7 +1456,7 @@ if( isset( $args->command ) )
 				{
 					$sys = new dbIO( 'Filesystem' );
 					$sys->ID = $fsysid;
-					$sys->UserID = $User->ID;
+					$sys->UserID = $UserSession->UserID;
 					if( $sys->Load() )
 					{
 						$sys->KeysID = ( !strstr( ','.$sys->KeysID.',', ','.$key->ID.',' ) ? ( $sys->KeysID ? $sys->KeysID.',' : '' ) . $key->ID : $sys->KeysID );
@@ -1461,10 +1469,10 @@ if( isset( $args->command ) )
 			die( 'fail<!--separate-->{"response":"user keys update failed"}'  );
 			break;
 		case 'userkeysdelete':
-			if( $User->ID > 0 && $args->args->id )
+			if( $UserSession->UserID > 0 && $args->args->id )
 			{
 				$key = new dbIO( 'FKeys' );
-				$key->UserID = $User->ID;
+				$key->UserID = $UserSession->UserID;
 				if( $key->Load( $args->args->id ) )
 				{
 					$key->IsDeleted = 1;
@@ -1478,7 +1486,7 @@ if( isset( $args->command ) )
 		// Set info on a user
 		// TODO: Update with correct encryption algo
 		case 'userinfoset':
-			if( $level == 'Admin' || $args->args->id == $User->ID )
+			if( $level == 'Admin' || $args->args->id == $UserSession->UserID )
 			{
 				$u = new dbIO( 'FUser' );
 				if( $u->Load( $args->args->id ) )
@@ -1559,7 +1567,7 @@ if( isset( $args->command ) )
 			break;
 		//
 		case 'checkuserbyname':
-			if( $level == 'Admin' || $args->args->id == $User->ID )
+			if( $level == 'Admin' || $args->args->id == $UserSession->UserID )
 			{
 				if( $userinfo = $SqlDatabase->FetchObject( '
 					SELECT `ID` FROM `FUser` WHERE Name = \'' . $args->args->username . '\'
@@ -1746,7 +1754,7 @@ if( isset( $args->command ) )
 			break;
 		case 'settheme':
 			$o = new dbIO( 'FSetting' );
-			$o->UserID = $User->ID;
+			$o->UserID = $UserSession->UserID;
 			$o->Type = 'system';
 			$o->Key = 'theme';
 			$o->Load();
@@ -1950,7 +1958,7 @@ if( isset( $args->command ) )
 				$l = new dbIO( 'FSetting' );
 				$l->Type = 'system';
 				$l->Key = 'accepteula';
-				$l->UserID = $User->ID;
+				$l->UserID = $UserSession->UserID;
 				if( !$l->Load() )
 				{
 					die( 'fail<!--separate-->{"euladocument":"' . ( 

@@ -22,6 +22,7 @@
 #include <system/systembase.h>
 #include <system/token/dos_token.h>
 #include <system/application/application_manager.h>
+#include <util/session_id.h>
 
 extern SystemBase *SLIB;
 
@@ -37,10 +38,19 @@ UserSession *UserSessionNew( char *sessid, char *devid )
 	UserSession *s;
 	if( ( s = FCalloc( 1, sizeof(UserSession) ) ) != NULL )
 	{
-		s->us_SessionID = StringDuplicate( sessid );
+		if( sessid != NULL )
+		{
+			s->us_SessionID = StringDuplicate( sessid );
+		}
+		else
+		{
+			s->us_SessionID = SessionIDGenerate();
+		}
 		s->us_DeviceIdentity = StringDuplicate( devid );
 		
 		UserSessionInit( s );
+		
+		s->us_CreationTime = time( NULL );		
 		
 		INFO("Mutex initialized\n");
 	}

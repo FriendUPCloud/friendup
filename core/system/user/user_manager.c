@@ -25,6 +25,7 @@
 #include <util/sha256.h>
 #include <system/fsys/device_handling.h>
 #include <util/session_id.h>
+#include <strings.h>
 
 /**
  * Create UserManager
@@ -414,7 +415,6 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 	}
 	
 	GenerateUUID( &( usr->u_UUID ) );
-	usr->u_MainSessionID = SessionIDGenerate();
 
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	int val = 0;
@@ -425,7 +425,7 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 	}
 	else
 	{
-		FERROR("Cannot create user, mysql.library was not opened!\n");
+		FERROR("[UMUserCreate] Cannot create user, mysql.library was not opened!\n");
 		return 2;
 	}
 	return val;
@@ -467,7 +467,7 @@ FBOOL UMUserIsAdminByAuthID( UserManager *smgr, Http *r __attribute__((unused)),
 	
 	if( sqlLib == NULL )
 	{
-		FERROR("Cannot get user, mysql.library was not open\n");
+		FERROR("[UMUserIsAdminByAuthID] Cannot get user, mysql.library was not open\n");
 		return FALSE;
 	}
 	
@@ -1160,9 +1160,10 @@ FULONG UMGetAllowedLoginTime( UserManager *um, const char *name )
  * @param name login name
  * @param info additional information which will be stored in DB
  * @param failReason if field is not equal to NULL then user is not authenticated
+ * @param deviceID device id/name
  * @return 0 when success otherwise error number
  */
-int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, const char *failReason )
+int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, const char *failReason, char *devicename )
 {
 	UserLogin ul;
 	SystemBase *sb = (SystemBase *)um->um_SB;
@@ -1185,6 +1186,7 @@ int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, co
 		ul.ul_Information = (char *)info;
 		ul.ul_Failed = (char *)failReason;
 		ul.ul_LoginTime = time( NULL );
+		ul.ul_Device = devicename;
 		
 		sqlLib->Save( sqlLib, UserLoginDesc, &ul );
 		
@@ -1291,6 +1293,7 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
  */
 int UMCheckAndLoadAPIUser( UserManager *um )
 {
+	int result = 0;
 	SystemBase *sb = (SystemBase *)um->um_SB;
 	DEBUG("[UMCheckAndLoadAPIUser] Start\n" );
 	
@@ -1301,62 +1304,70 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 		if( tuser->u_IsAPI || strcmp( tuser->u_Name, "apiuser" ) == 0 )
 		{
 			um->um_APIUser = tuser;
-			return 0;
+			break;
 		}
 		tuser = (User *)tuser->node.mln_Succ;
 	}
-	
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
-	
-	if( sqlLib != NULL )
+
+	// We have to create user
+	if( tuser == NULL )
 	{
-		User *user = NULL;
-
-		int entries;
-		user = sqlLib->Load( sqlLib, UserDesc, "Name='apiuser' LIMIT 1", &entries );
-
-		if( user != NULL )
+		SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	
+		if( sqlLib != NULL )
 		{
-			// Generate the API user session
-			char temptext[ 2048 ];
-			char *sesid = SessionIDGenerate( );
-			if( user->u_MainSessionID != NULL )
+			User *user = NULL;
+
+			int entries;
+			user = sqlLib->Load( sqlLib, UserDesc, "Name='apiuser' LIMIT 1", &entries );
+
+			if( user != NULL )
 			{
-				FFree( user->u_MainSessionID );
-			}
-			user->u_MainSessionID = sesid;
+				sb->LibrarySQLDrop( sb, sqlLib );
 			
-			sqlLib->SNPrintF( sqlLib, temptext, 2048, "UPDATE `FUser` f SET f.SessionID = '%s' WHERE`ID` = '%ld'",  user->u_MainSessionID, user->u_ID );
-			sqlLib->QueryWithoutResults( sqlLib, temptext );
-			sb->LibrarySQLDrop( sb, sqlLib );
+				DEBUG("[UMCheckAndLoadAPIUser] User found %s  id %ld\n", user->u_Name, user->u_ID );
+				UGMAssignGroupToUser( sb->sl_UGM, user );
+				UMAssignApplicationsToUser( um, user );
+				user->u_MountedDevs = NULL;
+				
+				UMAddUser( sb->sl_UM, user );
+				tuser = user;
 			
-			DEBUG("[UMCheckAndLoadAPIUser] User found %s  id %ld\n", user->u_Name, user->u_ID );
-			UGMAssignGroupToUser( sb->sl_UGM, user );
-			UMAssignApplicationsToUser( um, user );
-			user->u_MountedDevs = NULL;
-			
-			if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
-			{
-				user->node.mln_Succ  = (MinNode *) um->um_Users;
-				if( um->um_Users != NULL )
+				// API user have only one session
+				if( user->u_SessionsList == NULL )
 				{
-					um->um_Users->node.mln_Pred = (MinNode *)user;
+					// we now generate dummy session
+					//UserSession *ses = UserSessionNew( sb, "api", "api" );
+					UserSession *ses = UserSessionNew( NULL, "api" );
+					if( ses != NULL )
+					{
+						ses->us_UserID = user->u_ID;
+						ses->us_LastActionTime = time( NULL );
+				
+						UserAddSession( user, ses );
+						USMSessionSaveDB( sb->sl_USM, ses );
+					
+						USMUserSessionAdd( sb->sl_USM, ses );
+					}
 				}
-				um->um_Users = user;
-			
-				um->um_APIUser = user;
-				FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+
+				result = 0;
+			}
+			else
+			{
+				sb->LibrarySQLDrop( sb, sqlLib );
+				result = 1;
 			}
 			return 0;
 		}
 		else
 		{
-			sb->LibrarySQLDrop( sb, sqlLib );
+			
 		}
-	}
-	return 1;
+	}	// tuser != NULL
+	
+	return result;
 }
-
 
 /**
  * Return all users from database
@@ -1428,5 +1439,171 @@ int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname )
 		
 		BufStringAddSize( bs, "]", 1 );
 	}
+	return 0;
+}
+
+/**
+ * Get statistic about user accounts
+ *
+ * @param usm pointer to UserManager
+ * @param bs pointer to BufString where results will be stored (as string)
+ * @param details return more details
+ * @return 0 when success otherwise error number
+ */
+
+int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details )
+{
+	BufStringAddSize( bs, "\"users\":[", 9 );
+	
+	if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
+	{
+		int nr = 0;
+		int userCounter = 0;
+		char tmp[ 512 ];
+		int len = 0;
+		
+		if( details == TRUE )
+		{
+			User *usr = um->um_Users;
+			while( usr != NULL )
+			{
+				int sesCounter = 0;
+				int devCounter = 0;
+				int uglCounter = 0;
+				int sesCounterBytes = 0;
+				int devCounterBytes = 0;
+				int uglCounterBytes = 0;
+				
+				userCounter++;
+			
+				UserSessListEntry *sesentr = usr->u_SessionsList;
+				while( sesentr != NULL )
+				{
+					sesCounter++;
+					sesCounterBytes += sizeof( UserSessListEntry );
+					sesentr = (UserSessListEntry *)sesentr->node.mln_Succ;
+				}
+				
+				File *rootDev = usr->u_MountedDevs;
+				while( rootDev != NULL )
+				{
+					devCounter++;
+					devCounterBytes += sizeof( File );
+					rootDev = (File *)rootDev->node.mln_Succ;
+				}
+				
+				UserGroupLink *ugl = usr->u_UserGroupLinks;
+				while( ugl != NULL )
+				{
+					uglCounter++;
+					uglCounterBytes += sizeof( UserGroupLink );
+					ugl = (UserGroupLink *)ugl->node.mln_Succ;
+				}
+				
+				if( nr == 0 )
+				{
+					len = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"size\":%d,\"sessions\":%d,\"sessionsbytes\":%d,\"volumesinmem\":%d,\"volumesinmembytes\":%d,\"groups\":%d,\"groupsbytes\":%d}", usr->u_Name, (int)sizeof(User), sesCounter, sesCounterBytes, devCounter, devCounterBytes, uglCounter, uglCounterBytes );
+				}
+				else
+				{
+					len = snprintf( tmp, sizeof(tmp), ",{\"name\":\"%s\",\"size\":%d,\"sessions\":%d,\"sessionsbytes\":%d,\"volumesinmem\":%d,\"volumesinmembytes\":%d,\"groups\":%d,\"groupsbytes\":%d}", usr->u_Name, (int)sizeof(User), sesCounter, sesCounterBytes, devCounter, devCounterBytes, uglCounter, uglCounterBytes );
+				}
+				BufStringAddSize( bs, tmp, len );
+			
+				nr++;
+				usr = (User *)usr->node.mln_Succ;
+			}
+			
+			BufStringAddSize( bs, "],", 2 );
+			
+			len = snprintf( tmp, sizeof(tmp), "\"usersnumber\":%d", userCounter );
+			BufStringAddSize( bs, tmp, len );
+		}
+		else
+		{
+			User *usr = um->um_Users;
+			while( usr != NULL )
+			{
+				int sesCounter = 0;
+				userCounter++;
+			
+				UserSessListEntry *sesentr = usr->u_SessionsList;
+				while( sesentr != NULL )
+				{
+					sesCounter++;
+					sesentr = (UserSessListEntry *)sesentr->node.mln_Succ;
+				}
+				
+				if( nr == 0 )
+				{
+					len = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"sessions\":%d}", usr->u_Name, sesCounter );
+				}
+				else
+				{
+					len = snprintf( tmp, sizeof(tmp), ",{\"name\":\"%s\",\"sessions\":%d}", usr->u_Name, sesCounter );
+				}
+				BufStringAddSize( bs, tmp, len );
+			
+				nr++;
+				usr = (User *)usr->node.mln_Succ;
+			}
+			
+			BufStringAddSize( bs, "],", 2 );
+			
+			len = snprintf( tmp, sizeof(tmp), "\"usersnumber\":%d", userCounter );
+			BufStringAddSize( bs, tmp, len );
+			
+		}
+		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+	}
+	return 0;
+}
+
+/*
+ * Init user drives
+ *
+ * @param um pointer to UserManager
+ * @return 0 when success, otherwise error number
+ */
+int UMInitUsers( UserManager *um )
+{
+	SystemBase *sb = (SystemBase *)um->um_SB;
+	Log( FLOG_INFO, "----------------------------------------------------\n");
+	Log( FLOG_INFO, "---------Mount user devices-------------------------\n");
+	Log( FLOG_INFO, "----------------------------------------------------\n");
+	
+	SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
+	if( sqllib != NULL )
+	{
+		User *tmpUser = sb->sl_UM->um_Users;
+		while( tmpUser != NULL )
+		{
+			char *err = NULL;
+			DEBUG( "[UMInitUsers] FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
+			
+			UserSession *session = USMCreateTemporarySession( sb->sl_USM, sqllib, tmpUser->u_ID, 0 );
+			if( session != NULL )
+			{
+				session->us_UserID = tmpUser->u_ID;
+				session->us_User = tmpUser;
+				
+				UserDeviceMount( sb, tmpUser, session, 1, TRUE, &err, FALSE );
+				if( err != NULL )
+				{
+					Log( FLOG_ERROR, "Initial system mount error. UserID: %lu Error: %s\n", tmpUser->u_ID, err );
+					FFree( err );
+				}
+				USMDestroyTemporarySession( sb->sl_USM, sqllib, session );
+			}
+			DEBUG( "[UMInitUsers] DONE FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
+			tmpUser = (User *)tmpUser->node.mln_Succ;
+		}
+		sb->LibrarySQLDrop( sb, sqllib );
+	}
+	
+	Log( FLOG_INFO, "----------------------------------------------------\n");
+	Log( FLOG_INFO, "---------Mount user group devices-------------------\n");
+	Log( FLOG_INFO, "----------------------------------------------------\n");
+
 	return 0;
 }

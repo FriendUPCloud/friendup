@@ -228,7 +228,7 @@ switch( $args->args->mode )
 		
 		if( $users = $SqlDatabase->FetchObjects( $q = '
 			SELECT 
-				u.ID, u.Name AS `Name`, u.Password, u.FullName AS `FullName`, u.Email, u.CreatedTime, u.Image, u.UniqueID, u.Status,
+				u.ID, u.Name AS `Name`, u.Password, u.FullName AS `FullName`, u.Email, u.CreationTime, u.Image, u.UniqueID, u.Status,
 				g.Name AS `Level`, 
 				' . ( isset( $args->args->logintime ) && $args->args->logintime ? '
 				l.LoginTime AS `LoginTime`
@@ -293,7 +293,7 @@ switch( $args->args->mode )
 			
 			foreach( $users as $u )
 			{
-				$keys = [ 'ID', 'Name', 'Password', 'FullName', 'Email', 'CreatedTime', 'LoginTime', 'Image', 'Level', 'UniqueID', 'Status' ];
+				$keys = [ 'ID', 'Name', 'Password', 'FullName', 'Email', 'CreationTime', 'LoginTime', 'Image', 'Level', 'UniqueID', 'Status' ];
 				$o = new stdClass();
 				foreach( $keys as $key )
 				{

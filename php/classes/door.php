@@ -26,6 +26,7 @@ if( !class_exists( 'Door' ) )
 		var $_authcontext = null; // authentication key (e.g. sessionid)
 		var $_authdata = null; // authentication data (e.g. a sessionid hash)
 		var $_user = null; // override user
+		var $_userSession = null;
 	
 		// Construct a Door object
 		function __construct( $path = false, $authcontext = false, $authdata = false )
@@ -156,7 +157,7 @@ if( !class_exists( 'Door' ) )
 		// Gets the correct identifier to extract a filesystem
 		function getQuery( $path = false )
 		{
-			global $args, $User, $Logger, $SqlDatabase;
+			global $args, $User, $Logger, $SqlDatabase, $UserSession;
 			if( !isset( $User->ID ) && !isset( $this->_user ) ) 
 			{
 				return false;
@@ -164,6 +165,7 @@ if( !class_exists( 'Door' ) )
 		
 			// For whom are we calling?
 			$activeUser = isset( $this->_user ) ? $this->_user : $User;
+			$activeUserSession = isset( $this->_usersession ) ? $this->_usersession : $UserSession;
 		
 			$identifier = false;
 		
@@ -224,12 +226,12 @@ if( !class_exists( 'Door' ) )
 					SELECT * FROM `Filesystem` f 
 					WHERE 
 						(
-							f.UserID=\'' . $activeUser->ID . '\' OR
+							f.UserID=\'' . $activeUserSession->UserID . '\' OR
 							f.GroupID IN (
 								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
 								WHERE 
 									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-									ug.UserID = \'' . $activeUser->ID . '\'
+									ug.UserID = \'' . $activeUserSession->UserID . '\'
 							)
 						)
 						AND ' . $identifier . ' LIMIT 1';
@@ -244,12 +246,12 @@ if( !class_exists( 'Door' ) )
 					SELECT * FROM `Filesystem` f 
 					WHERE 
 						(
-							f.UserID=\'' . $activeUser->ID . '\' OR
+							f.UserID=\'' . $activeUserSession->UserID . '\' OR
 							f.GroupID IN (
 								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
 								WHERE 
 									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-									ug.UserID = \'' . $activeUser->ID . '\'
+									ug.UserID = \'' . $activeUserSession->UserID . '\'
 							)
 						)
 						AND
@@ -262,9 +264,10 @@ if( !class_exists( 'Door' ) )
 	
 		function dosQuery( $query )
 		{
-			global $Config, $User, $SqlDatabase, $Logger;
+			global $Config, $User, $SqlDatabase, $Logger, $UserSession;
 		
 			$activeUser = isset( $this->_user ) ? $this->user : $User;
+			$activeUserSession = isset( $this->_userSession ) ? $this->userSession : $UserSession;
 		
 			// Support auth context
 			if( isset( $this->_authdata ) )
@@ -283,11 +286,11 @@ if( !class_exists( 'Door' ) )
 			{
 				if( !strstr( $query, '?' ) )
 				{
-					$query .= '?sessionid=' . $activeUser->SessionID;
+					$query .= '?sessionid=' . $activeUserSession->SessionID;
 				}
 				else
 				{
-					$query .= '&sessionid=' . $activeUser->SessionID;
+					$query .= '&sessionid=' . $activeUserSession->SessionID;
 				}
 			}
 		
@@ -651,9 +654,10 @@ if( !class_exists( 'Door' ) )
 	
 		function deleteFile( $delpath )
 		{
-			global $User, $Logger;
+			global $User, $Logger, $UserSession;
 		
 			$activeUser = isset( $this->_user ) ? $this->_user : $User;
+			$activeUserSession = isset( $this->_usersession ) ? $this->_usersession : $UserSession;
 		
 			// 1. Get the filesystem objects
 			$ph = explode( ':', $delpath );
@@ -666,7 +670,7 @@ if( !class_exists( 'Door' ) )
 			}
 		
 			$fs = new dbIO( 'Filesystem' );
-			$fs->UserID = $activeUser->ID;
+			$fs->UserID = $activeUserSession->UserID;
 			$fs->Name   = $ph;
 			$fs->Load();
 		
@@ -727,9 +731,10 @@ if( !class_exists( 'Door' ) )
 	
 		function copyFile( $pathFrom, $pathTo )
 		{
-			global $User, $Logger;
+			global $User, $Logger, $UserSession;
 		
 			$activeUser = isset( $this->_user ) ? $this->_user : $User;
+			$activeUserSession = isset( $this->_usersession ) ? $this->_usersession : $UserSession;
 		
 			// 1. Get the filesystem objects
 			$from = explode( ':', $pathFrom ); $from = $from[0];
@@ -750,7 +755,7 @@ if( !class_exists( 'Door' ) )
 			else
 			{
 				$fsFrom = new dbIO( 'Filesystem' );
-				$fsFrom->UserID = $activeUser->ID;
+				$fsFrom->UserID = $activeUserSession->UserID;
 				$fsFrom->Name   = $from;
 				$fsFrom->Load();
 				$this->cacheFrom = $fsFrom;
@@ -762,7 +767,7 @@ if( !class_exists( 'Door' ) )
 			else
 			{
 				$fsTo = new dbIO( 'Filesystem' ); 
-				$fsTo->UserID = $activeUser->ID;
+				$fsTo->UserID = $activeUserSession->UserID;
 				$fsTo->Name   = $to;
 				$fsTo->Load();
 				$this->cacheTo = $fsTo;
