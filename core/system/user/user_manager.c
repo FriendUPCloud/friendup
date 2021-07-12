@@ -1045,6 +1045,7 @@ int UMRemoveUser( UserManager *um, User *usr, UserSessionManager *userSessionMan
 {
 	User *userCurrent = NULL; //current element of the linked list, set to the beginning of the list
 	User *userPrevious = NULL; //previous element of the linked list
+	SystemBase *sb = (SystemBase *)um->um_SB;
 
 	if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 	{
@@ -1061,10 +1062,12 @@ int UMRemoveUser( UserManager *um, User *usr, UserSessionManager *userSessionMan
 	UserSession *sessionToDelete;
 	while( ( sessionToDelete = USMGetSessionByUserID( userSessionManager, userId ) ) != NULL )
 	{
+		USMUserSessionRemove( sb->sl_USM, sessionToDelete );
+		
 		killUserSession( um->um_SB, sessionToDelete, FALSE );
 		
 		// we must remove session from user otherwise it will go into infinite loop
-		//UserRemoveSession( usr, sessionToDelete );
+		UserRemoveSession( usr, sessionToDelete );
 		
 		//int status = USMUserSessionRemove( userSessionManager, sessionToDelete );
 		//DEBUG("%s removing session at %p, status %d\n", __func__, sessionToDelete, status);
@@ -1092,6 +1095,12 @@ int UMRemoveUser( UserManager *um, User *usr, UserSessionManager *userSessionMan
 		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
 	}
 	
+	if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
+	{
+		usr->u_InUse--;
+		FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+	}
+	
 	if( found == TRUE )
 	{ //the requested user has been found in the list
 		if( userPrevious )
@@ -1104,23 +1113,9 @@ int UMRemoveUser( UserManager *um, User *usr, UserSessionManager *userSessionMan
 			um->um_Users = (User *)userCurrent->node.mln_Succ; //set the global start pointer of the list
 		}
 		
-		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
-		{
-			usr->u_InUse--;
-			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
-		}
-		
 		UserDelete( userCurrent );
 		
 		return 0;
-	}
-	else
-	{
-		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
-		{
-			usr->u_InUse--;
-			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
-		}
 	}
 	
 	return -1;

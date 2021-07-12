@@ -106,16 +106,17 @@ void UserSessionDelete( UserSession *us )
 			dosToken->ct_UserSessionID = 0;
 		}
 		
-		if( count > 50 )
-		{
-			Log( FLOG_DEBUG, "UserRemoveSession will be called\n");
-		}
+		//if( count > 50 )
+		//{
+		//	Log( FLOG_DEBUG, "UserRemoveSession will be called\n");
+		//}
 		
 		if( us->us_User != NULL )
 		{
-			
-			nrOfSessionsAttached = UserRemoveSession( us->us_User, us );
+			User *userToClean = us->us_User;
 			us->us_User = NULL;
+			DEBUG("[UserSessionDelete] detach session from user\n");
+			nrOfSessionsAttached = UserRemoveSession( userToClean, us );
 		}
 		SystemBase *lsb = SLIB;
 

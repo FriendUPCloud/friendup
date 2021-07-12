@@ -126,17 +126,24 @@ int UserAddSession( User *usr, void *ls )
 int UserRemoveSession( User *usr, void *ls )
 {
 	int retVal = -1;
+	int del = 5;
 	UserSession *remses = (UserSession *)ls;
-	if( usr  == NULL || ls == NULL )
+	if( usr  == NULL || ls == NULL || remses->us_User == NULL )
 	{
 		FERROR("Cannot remove user session, its not connected to user\n");
 		return -1;
 	}
 	
+	DEBUG("[UserRemoveSession]\n");
 	while( usr->u_InUse > 0 )
 	{
+		DEBUG("[UserRemoveSession] in loop : %d\n", usr->u_InUse );
 		usleep( 5000 );
+		
+		if( ( del-- ) <= 0 ) break;
 	}
+	
+	DEBUG("[UserRemoveSession] after in use\n");
 	
 	if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 	{
@@ -150,7 +157,6 @@ int UserRemoveSession( User *usr, void *ls )
 			{
 				usr->u_SessionsNr--;
 				FFree( curus );
-				//break;
 			}
 			else
 			{
@@ -160,50 +166,7 @@ int UserRemoveSession( User *usr, void *ls )
 		}
 		
 		usr->u_SessionsList = newRoot;
-		/*
-		UserSessListEntry *actus = (UserSessListEntry *)usr->u_SessionsList;
-		UserSessListEntry *prevus = actus;
-		FBOOL removed = FALSE;
 	
-		if( usr->u_SessionsList != NULL )
-		{
-			if( usr->u_SessionsList->us == remses )
-			{
-				usr->u_SessionsList = (UserSessListEntry *)usr->u_SessionsList->node.mln_Succ;
-				if( prevus != NULL )
-				{
-					FFree( actus );
-				}
-			}
-			else
-			{
-				while( actus != NULL )
-				{
-					prevus = actus;
-					actus = (UserSessListEntry *)actus->node.mln_Succ;
-			
-					if( actus != NULL && actus->us == remses )
-					{
-						prevus->node.mln_Succ = actus->node.mln_Succ;
-					
-						usr->u_SessionsNr--;
-						removed = TRUE;
-					
-						if( prevus != NULL )
-						{
-							FFree( actus );
-						}
-						break;
-					}
-				}
-			}
-		}
-		
-		if( usr->u_SessionsNr <= 0 )
-		{
-			usr->u_SessionsList = NULL;
-		}
-		*/
 		retVal = usr->u_SessionsNr;
 		FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 	}
