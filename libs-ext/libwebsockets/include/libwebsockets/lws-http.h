@@ -1,7 +1,7 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2020 Andy Green <andy@warmcat.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -215,18 +215,18 @@ struct lws_tokens {
 enum lws_token_indexes {
 	WSI_TOKEN_GET_URI, /* 0 */
 	WSI_TOKEN_POST_URI,
-#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS)
+#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) || defined(LWS_HTTP_HEADERS_ALL)
 	WSI_TOKEN_OPTIONS_URI,
 #endif
 	WSI_TOKEN_HOST,
 	WSI_TOKEN_CONNECTION,
 	WSI_TOKEN_UPGRADE, /* 5 */
 	WSI_TOKEN_ORIGIN,
-#if defined(LWS_ROLE_WS)
+#if defined(LWS_ROLE_WS) || defined(LWS_HTTP_HEADERS_ALL)
 	WSI_TOKEN_DRAFT,
 #endif
 	WSI_TOKEN_CHALLENGE,
-#if defined(LWS_ROLE_WS)
+#if defined(LWS_ROLE_WS) || defined(LWS_HTTP_HEADERS_ALL)
 	WSI_TOKEN_EXTENSIONS,
 	WSI_TOKEN_KEY1, /* 10 */
 	WSI_TOKEN_KEY2,
@@ -235,11 +235,11 @@ enum lws_token_indexes {
 	WSI_TOKEN_NONCE,
 #endif
 	WSI_TOKEN_HTTP,
-#if defined(LWS_ROLE_H2)
+#if defined(LWS_ROLE_H2) || defined(LWS_HTTP_HEADERS_ALL)
 	WSI_TOKEN_HTTP2_SETTINGS, /* 16 */
 #endif
 	WSI_TOKEN_HTTP_ACCEPT,
-#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS)
+#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) || defined(LWS_HTTP_HEADERS_ALL)
 	WSI_TOKEN_HTTP_AC_REQUEST_HEADERS,
 #endif
 	WSI_TOKEN_HTTP_IF_MODIFIED_SINCE,
@@ -254,15 +254,15 @@ enum lws_token_indexes {
 	WSI_TOKEN_HTTP_CONTENT_TYPE,
 	WSI_TOKEN_HTTP_DATE,
 	WSI_TOKEN_HTTP_RANGE,
-#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) || defined(LWS_ROLE_H2)
+#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) || defined(LWS_ROLE_H2) || defined(LWS_HTTP_HEADERS_ALL)
 	WSI_TOKEN_HTTP_REFERER,
 #endif
-#if defined(LWS_ROLE_WS)
+#if defined(LWS_ROLE_WS) || defined(LWS_HTTP_HEADERS_ALL)
 	WSI_TOKEN_KEY,
 	WSI_TOKEN_VERSION,
 	WSI_TOKEN_SWORIGIN,
 #endif
-#if defined(LWS_ROLE_H2)
+#if defined(LWS_ROLE_H2) || defined(LWS_HTTP_HEADERS_ALL)
 	WSI_TOKEN_HTTP_COLON_AUTHORITY,
 	WSI_TOKEN_HTTP_COLON_METHOD,
 	WSI_TOKEN_HTTP_COLON_PATH,
@@ -270,11 +270,11 @@ enum lws_token_indexes {
 	WSI_TOKEN_HTTP_COLON_STATUS,
 #endif
 
-#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) || defined(LWS_ROLE_H2)
+#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) || defined(LWS_ROLE_H2) || defined(LWS_HTTP_HEADERS_ALL)
 	WSI_TOKEN_HTTP_ACCEPT_CHARSET,
 #endif
 	WSI_TOKEN_HTTP_ACCEPT_RANGES,
-#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) || defined(LWS_ROLE_H2)
+#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) || defined(LWS_ROLE_H2) || defined(LWS_HTTP_HEADERS_ALL)
 	WSI_TOKEN_HTTP_ACCESS_CONTROL_ALLOW_ORIGIN,
 #endif
 	WSI_TOKEN_HTTP_AGE,
@@ -294,7 +294,7 @@ enum lws_token_indexes {
 	WSI_TOKEN_HTTP_LAST_MODIFIED,
 	WSI_TOKEN_HTTP_LINK,
 	WSI_TOKEN_HTTP_LOCATION,
-#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) || defined(LWS_ROLE_H2)
+#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) || defined(LWS_ROLE_H2) || defined(LWS_HTTP_HEADERS_ALL)
 	WSI_TOKEN_HTTP_MAX_FORWARDS,
 	WSI_TOKEN_HTTP_PROXY_AUTHENTICATE,
 	WSI_TOKEN_HTTP_PROXY_AUTHORIZATION,
@@ -303,24 +303,24 @@ enum lws_token_indexes {
 	WSI_TOKEN_HTTP_RETRY_AFTER,
 	WSI_TOKEN_HTTP_SERVER,
 	WSI_TOKEN_HTTP_SET_COOKIE,
-#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) || defined(LWS_ROLE_H2)
+#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) || defined(LWS_ROLE_H2) || defined(LWS_HTTP_HEADERS_ALL)
 	WSI_TOKEN_HTTP_STRICT_TRANSPORT_SECURITY,
 #endif
 	WSI_TOKEN_HTTP_TRANSFER_ENCODING,
-#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) || defined(LWS_ROLE_H2)
+#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) || defined(LWS_ROLE_H2) || defined(LWS_HTTP_HEADERS_ALL)
 	WSI_TOKEN_HTTP_USER_AGENT,
 	WSI_TOKEN_HTTP_VARY,
 	WSI_TOKEN_HTTP_VIA,
 	WSI_TOKEN_HTTP_WWW_AUTHENTICATE,
 #endif
-#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS)
+#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) || defined(LWS_HTTP_HEADERS_ALL)
 	WSI_TOKEN_PATCH_URI,
 	WSI_TOKEN_PUT_URI,
 	WSI_TOKEN_DELETE_URI,
 #endif
 
 	WSI_TOKEN_HTTP_URI_ARGS,
-#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS)
+#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) || defined(LWS_HTTP_HEADERS_ALL)
 	WSI_TOKEN_PROXY,
 	WSI_TOKEN_HTTP_X_REAL_IP,
 #endif
@@ -328,11 +328,11 @@ enum lws_token_indexes {
 	WSI_TOKEN_X_FORWARDED_FOR,
 	WSI_TOKEN_CONNECT,
 	WSI_TOKEN_HEAD_URI,
-#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) || defined(LWS_ROLE_H2)
+#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) || defined(LWS_ROLE_H2) || defined(LWS_HTTP_HEADERS_ALL)
 	WSI_TOKEN_TE,
 	WSI_TOKEN_REPLAY_NONCE, /* ACME */
 #endif
-#if defined(LWS_ROLE_H2)
+#if defined(LWS_ROLE_H2) || defined(LWS_HTTP_HEADERS_ALL)
 	WSI_TOKEN_COLON_PROTOCOL,
 #endif
 	WSI_TOKEN_X_AUTH_TOKEN,
@@ -356,7 +356,7 @@ enum lws_token_indexes {
 
 	/* parser state additions, no storage associated */
 	WSI_TOKEN_NAME_PART,
-#if defined(LWS_WITH_CUSTOM_HEADERS)
+#if defined(LWS_WITH_CUSTOM_HEADERS) || defined(LWS_HTTP_HEADERS_ALL)
 	WSI_TOKEN_UNKNOWN_VALUE_PART,
 #endif
 	WSI_TOKEN_SKIPPING,
@@ -849,6 +849,36 @@ lws_http_compression_apply(struct lws *wsi, const char *name,
  */
 LWS_VISIBLE LWS_EXTERN int
 lws_http_is_redirected_to_get(struct lws *wsi);
+
+/**
+ * lws_http_cookie_get() - return copy of named cookie if present
+ *
+ * \param wsi: the wsi to check
+ * \param name: name of the cookie
+ * \param buf: buffer to store the cookie contents into
+ * \param max_len: on entry, maximum length of buf... on exit, used len of buf
+ *
+ * If no cookie header, or no cookie of the requested name, or the value is
+ * larger than can fit in buf, returns nonzero.
+ *
+ * If the cookie is found, copies its value into buf with a terminating NUL,
+ * sets *max_len to the used length, and returns 0.
+ *
+ * This handles the parsing of the possibly multi-cookie header string and
+ * terminating the requested cookie at the next ; if present.
+ */
+LWS_VISIBLE LWS_EXTERN int
+lws_http_cookie_get(struct lws *wsi, const char *name, char *buf, size_t *max);
+
+/**
+ * lws_http_client_http_error() - determine if the response code indicates an error
+ *
+ * \param code: the response code to test
+ *
+ * Returns nonzero if the code indicates an error, else zero if reflects a
+ * non-error condition
+ */
+#define lws_http_client_http_resp_is_error(code) (!(code < 400))
 
 /**
  * lws_h2_update_peer_txcredit() - manually update stream peer tx credit

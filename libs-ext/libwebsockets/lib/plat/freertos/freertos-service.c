@@ -46,7 +46,7 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 
 	/* stay dead once we are dead */
 
-	if (!context || !context->vhost_list)
+	if (!context)
 		return 1;
 
 	pt = &context->pt[tsi];
@@ -57,19 +57,19 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 
 		if (m > context->time_last_state_dump) {
 			context->time_last_state_dump = m;
-#if defined(LWS_AMAZON_RTOS)
-			n = xPortGetFreeHeapSize();
-#else
+#if defined(LWS_ESP_PLATFORM)
 			n = esp_get_free_heap_size();
+#else
+			n = xPortGetFreeHeapSize();
 #endif
 			if ((unsigned int)n != context->last_free_heap) {
 				if ((unsigned int)n > context->last_free_heap)
-					lwsl_notice(" heap :%ld (+%ld)\n",
+					lwsl_debug(" heap :%ld (+%ld)\n",
 						    (unsigned long)n,
 						    (unsigned long)(n -
 						      context->last_free_heap));
 				else
-					lwsl_notice(" heap :%ld (-%ld)\n",
+					lwsl_debug(" heap :%ld (-%ld)\n",
 						    (unsigned long)n,
 						    (unsigned long)(
 						      context->last_free_heap -
@@ -86,15 +86,14 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 		timeout_ms = 2000000000;
 	timeout_us = ((lws_usec_t)timeout_ms) * LWS_US_PER_MS;
 
-	if (!pt->service_tid_detected) {
-		struct lws *_lws = pt->fake_wsi;
+	if (!pt->service_tid_detected && context->vhost_list) {
+		lws_fakewsi_def_plwsa(pt);
 
-		if (!_lws)
-			return 1;
-		_lws->context = context;
+		lws_fakewsi_prep_plwsa_ctx(context);
 
 		pt->service_tid = context->vhost_list->protocols[0].callback(
-			_lws, LWS_CALLBACK_GET_THREAD_ID, NULL, NULL, 0);
+			(struct lws *)plwsa, LWS_CALLBACK_GET_THREAD_ID,
+			NULL, NULL, 0);
 		pt->service_tid_detected = 1;
 	}
 
@@ -110,7 +109,9 @@ again:
 
 			lws_pt_lock(pt, __func__);
 			/* don't stay in poll wait longer than next hr timeout */
-			us = __lws_sul_service_ripe(&pt->pt_sul_owner, lws_now_usecs());
+			us = __lws_sul_service_ripe(pt->pt_sul_owner,
+						    LWS_COUNT_PT_SUL_OWNERS,
+						    lws_now_usecs());
 			if (us && us < timeout_us)
 				timeout_us = us;
 
@@ -177,10 +178,11 @@ again:
 		m |= !!pt->ws.rx_draining_ext_list;
 	#endif
 
+#if defined(LWS_WITH_TLS)
 		if (pt->context->tls_ops &&
 		    pt->context->tls_ops->fake_POLLIN_for_buffered)
 			m |= pt->context->tls_ops->fake_POLLIN_for_buffered(pt);
-
+#endif
 		if (!m && !n)
 			return 0;
 	} else

@@ -27,7 +27,7 @@
 int
 lws_callback_as_writeable(struct lws *wsi)
 {
-	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
+	struct lws_context_per_thread *pt = &wsi->a.context->pt[(int)wsi->tsi];
 	int n, m;
 
 	lws_stats_bump(pt, LWSSTATS_C_WRITEABLE_CB, 1);
@@ -42,7 +42,7 @@ lws_callback_as_writeable(struct lws *wsi)
 	}
 #endif
 #if defined(LWS_WITH_DETAILED_LATENCY)
-	if (wsi->context->detailed_latency_cb && lwsi_state_est(wsi)) {
+	if (wsi->a.context->detailed_latency_cb && lwsi_state_est(wsi)) {
 		lws_usec_t us = lws_now_usecs();
 
 		wsi->detlat.earliest_write_req_pre_write =
@@ -53,7 +53,7 @@ lws_callback_as_writeable(struct lws *wsi)
 	}
 #endif
 	n = wsi->role_ops->writeable_cb[lwsi_role_server(wsi)];
-	m = user_callback_handle_rxflow(wsi->protocol->callback,
+	m = user_callback_handle_rxflow(wsi->a.protocol->callback,
 					wsi, (enum lws_callback_reasons) n,
 					wsi->user_space, NULL, 0);
 
@@ -245,7 +245,7 @@ bail_die:
 int
 lws_rxflow_cache(struct lws *wsi, unsigned char *buf, int n, int len)
 {
-	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
+	struct lws_context_per_thread *pt = &wsi->a.context->pt[(int)wsi->tsi];
 	uint8_t *buffered;
 	size_t blen;
 	int ret = LWSRXFC_CACHED, m;
@@ -299,7 +299,24 @@ lws_service_adjust_timeout(struct lws_context *context, int timeout_ms, int tsi)
 	if (!context)
 		return 1;
 
+#if defined(LWS_WITH_SYS_SMD)
+	if (!tsi && lws_smd_message_pending(context)) {
+		lws_smd_msg_distribute(context);
+		if (lws_smd_message_pending(context))
+			return 0;
+	}
+#endif
+
 	pt = &context->pt[tsi];
+
+#if defined(LWS_WITH_EXTERNAL_POLL)
+	{
+		lws_usec_t u = __lws_sul_service_ripe(pt->pt_sul_owner,
+				      LWS_COUNT_PT_SUL_OWNERS, lws_now_usecs());
+		if (u < timeout_ms * 1000)
+			timeout_ms = u / 1000;
+	}
+#endif
 
 	/*
 	 * Figure out if we really want to wait in poll()... we only need to
@@ -363,8 +380,8 @@ lws_buflist_aware_read(struct lws_context_per_thread *pt, struct lws *wsi,
 	if (!ebuf->token)
 		ebuf->token = pt->serv_buf + LWS_PRE;
 	if (!ebuf->len ||
-	    (unsigned int)ebuf->len > wsi->context->pt_serv_buf_size - LWS_PRE)
-		ebuf->len = wsi->context->pt_serv_buf_size - LWS_PRE;
+	    (unsigned int)ebuf->len > wsi->a.context->pt_serv_buf_size - LWS_PRE)
+		ebuf->len = wsi->a.context->pt_serv_buf_size - LWS_PRE;
 
 	e = ebuf->len;
 	ep = ebuf->token;
@@ -387,7 +404,7 @@ lws_buflist_aware_read(struct lws_context_per_thread *pt, struct lws *wsi,
 	ebuf->token = ep;
 	ebuf->len = n = lws_ssl_capable_read(wsi, ep, e);
 
-	lwsl_info("%s: wsi %p: %s: ssl_capable_read %d\n", __func__,
+	lwsl_debug("%s: wsi %p: %s: ssl_capable_read %d\n", __func__,
 			wsi, hint, ebuf->len);
 
 	if (!bns && /* only acknowledge error when we handled buflist content */
@@ -442,7 +459,7 @@ int
 lws_buflist_aware_finished_consuming(struct lws *wsi, struct lws_tokens *ebuf,
 				     int used, int buffered, const char *hint)
 {
-	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
+	struct lws_context_per_thread *pt = &wsi->a.context->pt[(int)wsi->tsi];
 	int m;
 
 	//lwsl_debug("%s %s consuming buffered %d used %zu / %zu\n", __func__, hint,
@@ -587,18 +604,17 @@ lws_service_flag_pending(struct lws_context *context, int tsi)
 
 		if (wsi->position_in_fds_table >= 0) {
 
-		pt->fds[wsi->position_in_fds_table].revents |=
-			pt->fds[wsi->position_in_fds_table].events & LWS_POLLIN;
-		if (pt->fds[wsi->position_in_fds_table].revents & LWS_POLLIN) {
-			forced = 1;
-			/*
-			 * he's going to get serviced now, take him off the
-			 * list of guys with buffered SSL.  If he still has some
-			 * at the end of the service, he'll get put back on the
-			 * list then.
-			 */
-			__lws_ssl_remove_wsi_from_buffered_list(wsi);
-		}
+			pt->fds[wsi->position_in_fds_table].revents |=
+				pt->fds[wsi->position_in_fds_table].events &
+								LWS_POLLIN;
+			if (pt->fds[wsi->position_in_fds_table].revents &
+								LWS_POLLIN)
+				/*
+				 * We're not going to remove the wsi from the
+				 * pending tls list.  The processing will have
+				 * to do it if he exhausts the pending tls.
+				 */
+				forced = 1;
 		}
 
 	} lws_end_foreach_dll_safe(p, p1);
@@ -707,6 +723,8 @@ lws_service_fd_tsi(struct lws_context *context, struct lws_pollfd *pollfd,
 	case LWS_HPI_RET_HANDLED:
 		break;
 	case LWS_HPI_RET_PLEASE_CLOSE_ME:
+		//lwsl_notice("%s: %s pollin says please close me\n", __func__,
+		//		wsi->role_ops->name);
 close_and_handled:
 		lwsl_debug("%p: Close and handled\n", wsi);
 		lws_close_free_wsi(wsi, LWS_CLOSE_STATUS_NOSTATUS,
@@ -717,7 +735,7 @@ close_and_handled:
 		 * it waits for libuv service to complete the first async
 		 * close
 		 */
-		if (context->event_loop_ops == &event_loop_ops_uv)
+		if (!strcmp(context->event_loop_ops->name, "libuv"))
 			lws_close_free_wsi(wsi, LWS_CLOSE_STATUS_NOSTATUS,
 					   "close_and_handled uv repeat test");
 #endif

@@ -568,6 +568,31 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					l->LibrarySQLDrop( l, sqllib );
 					
 					loggedSession = USMGetSessionByUserID( l->sl_USM, uid );
+					if( loggedSession == NULL && userName[ 0 ] != 0 )	// only if user exist and it has servertoken
+					{
+						loggedSession = UserSessionNew( NULL, "servertoken" );
+						if( loggedSession != NULL )
+						{
+							User *usr = UMUserGetByName( l->sl_UM, userName );
+							if( usr == NULL )
+							{
+								usr = UMUserGetByNameDB( l->sl_UM, userName );
+								if( usr != NULL )
+								{
+									UMAddUser( l->sl_UM, usr );
+								}
+							}
+							else
+							{
+								loggedSession->us_UserID = usr->u_ID;
+								UserAddSession( usr, loggedSession );
+							}
+							loggedSession->us_LastActionTime = time( NULL );
+							
+							USMSessionSaveDB( l->sl_USM, loggedSession );
+							USMUserSessionAddToList( l->sl_USM, loggedSession );
+						}
+					}
 				}
 			}
 		}
@@ -1881,8 +1906,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								//
 								// update user
 								//
-							
-								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoginTime=%ld,LastActionTime=%ld WHERE `Name`='%s'", loggedSession->us_LastActionTime, loggedSession->us_LastActionTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
+								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoginTime='%lld' WHERE `Name`='%s'",  (long long)loggedSession->us_User->u_LastActionTime, loggedSession->us_User->u_Name );						
+								//sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoginTime=%ld,LastActionTime=%ld WHERE `Name`='%s'", loggedSession->us_LastActionTime, loggedSession->us_LastActionTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
 								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) ){ }
 
 								l->LibrarySQLDrop( l, sqlLib );

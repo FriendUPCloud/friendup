@@ -21,6 +21,12 @@
 #include <libwebsockets.h>
 #include <string.h>
 #include <signal.h>
+#if defined(WIN32)
+#define HAVE_STRUCT_TIMESPEC
+#if defined(pid_t)
+#undef pid_t
+#endif
+#endif
 #include <pthread.h>
 
 static int interrupted;
@@ -37,6 +43,8 @@ struct per_vhost_data__minimal {
 	struct lws_vhost *vhost;
 	const struct lws_protocols *protocol;
 	pthread_t pthread_spam[2];
+
+	lws_sorted_usec_list_t sul;
 
 	pthread_mutex_t lock_ring; /* serialize access to the ring buffer */
 	struct lws_ring *ring; /* ringbuffer holding unsent messages */
@@ -70,7 +78,11 @@ thread_spam(void *d)
 	struct per_vhost_data__minimal *vhd =
 			(struct per_vhost_data__minimal *)d;
 	struct msg amsg;
-	int len = 128, index = 1, n;
+	int len = 128, index = 1, n, whoami = 0;
+
+	for (n = 0; n < (int)LWS_ARRAY_SIZE(vhd->pthread_spam); n++)
+		if (pthread_equal(pthread_self(), vhd->pthread_spam[n]))
+			whoami = n + 1;
 
 	do {
 		/* don't generate output if client not connected */
@@ -92,10 +104,9 @@ thread_spam(void *d)
 			goto wait_unlock;
 		}
 		n = lws_snprintf((char *)amsg.payload + LWS_PRE, len,
-			         "tid: %p, msg: %d",
-			         (void *)pthread_self(), index++);
+			         "tid: %d, msg: %d", whoami, index++);
 		amsg.len = n;
-		n = lws_ring_insert(vhd->ring, &amsg, 1);
+		n = (int)lws_ring_insert(vhd->ring, &amsg, 1);
 		if (n != 1) {
 			__minimal_destroy_message(&amsg);
 			lwsl_user("dropping!\n");
@@ -114,16 +125,19 @@ wait:
 
 	} while (!vhd->finished);
 
-	lwsl_notice("thread_spam %p exiting\n", (void *)pthread_self());
+	lwsl_notice("thread_spam %d exiting\n", whoami);
 
 	pthread_exit(NULL);
 
 	return NULL;
 }
 
-static int
-connect_client(struct per_vhost_data__minimal *vhd)
+static void
+sul_connect_attempt(struct lws_sorted_usec_list *sul)
 {
+	struct per_vhost_data__minimal *vhd =
+		lws_container_of(sul, struct per_vhost_data__minimal, sul);
+
 	vhd->i.context = vhd->context;
 	vhd->i.port = 7681;
 	vhd->i.address = "localhost";
@@ -135,7 +149,9 @@ connect_client(struct per_vhost_data__minimal *vhd)
 	vhd->i.protocol = "lws-minimal-broker";
 	vhd->i.pwsi = &vhd->client_wsi;
 
-	return !lws_client_connect_via_info(&vhd->i);
+	if (!lws_client_connect_via_info(&vhd->i))
+		lws_sul_schedule(vhd->context, 0, &vhd->sul,
+				 sul_connect_attempt, 10 * LWS_US_PER_SEC);
 }
 
 static int
@@ -179,21 +195,19 @@ callback_minimal_broker(struct lws *wsi, enum lws_callback_reasons reason,
 				goto init_fail;
 			}
 
-		if (connect_client(vhd))
-			lws_timed_callback_vh_protocol(vhd->vhost,
-					vhd->protocol, LWS_CALLBACK_USER, 1);
+		sul_connect_attempt(&vhd->sul);
 		break;
 
 	case LWS_CALLBACK_PROTOCOL_DESTROY:
 init_fail:
 		vhd->finished = 1;
 		for (n = 0; n < (int)LWS_ARRAY_SIZE(vhd->pthread_spam); n++)
-			if (vhd->pthread_spam[n])
-				pthread_join(vhd->pthread_spam[n], &retval);
+			pthread_join(vhd->pthread_spam[n], &retval);
 
 		if (vhd->ring)
 			lws_ring_destroy(vhd->ring);
 
+		lws_sul_cancel(&vhd->sul);
 		pthread_mutex_destroy(&vhd->lock_ring);
 
 		return r;
@@ -202,8 +216,8 @@ init_fail:
 		lwsl_err("CLIENT_CONNECTION_ERROR: %s\n",
 			 in ? (char *)in : "(null)");
 		vhd->client_wsi = NULL;
-		lws_timed_callback_vh_protocol(vhd->vhost,
-				vhd->protocol, LWS_CALLBACK_USER, 1);
+		lws_sul_schedule(vhd->context, 0, &vhd->sul,
+				 sul_connect_attempt, LWS_US_PER_SEC);
 		break;
 
 	/* --- client callbacks --- */
@@ -242,8 +256,8 @@ skip:
 	case LWS_CALLBACK_CLIENT_CLOSED:
 		vhd->client_wsi = NULL;
 		vhd->established = 0;
-		lws_timed_callback_vh_protocol(vhd->vhost, vhd->protocol,
-					       LWS_CALLBACK_USER, 1);
+		lws_sul_schedule(vhd->context, 0, &vhd->sul,
+				 sul_connect_attempt, LWS_US_PER_SEC);
 		break;
 
 	case LWS_CALLBACK_EVENT_WAIT_CANCELLED:
@@ -257,16 +271,6 @@ skip:
 		 */
 		if (vhd && vhd->client_wsi && vhd->established)
 			lws_callback_on_writable(vhd->client_wsi);
-		break;
-
-	/* rate-limited client connect retries */
-
-	case LWS_CALLBACK_USER:
-		lwsl_notice("%s: LWS_CALLBACK_USER\n", __func__);
-		if (connect_client(vhd))
-			lws_timed_callback_vh_protocol(vhd->vhost,
-						vhd->protocol,
-						LWS_CALLBACK_USER, 1);
 		break;
 
 	default:

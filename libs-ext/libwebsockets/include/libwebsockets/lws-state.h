@@ -25,6 +25,8 @@
 struct lws_state_notify_link;
 struct lws_state_manager;
 
+#if defined(LWS_WITH_SYS_STATE)
+
 typedef int (*lws_state_notify_t)(struct lws_state_manager *mgr,
 				  struct lws_state_notify_link *link,
 				  int current, int target);
@@ -37,10 +39,14 @@ typedef struct lws_state_notify_link {
 
 typedef struct lws_state_manager {
 	lws_dll2_owner_t	notify_list;
+	struct lws_context	*context;
 	void			*parent;
+#if defined(LWS_WITH_SYS_SMD)
+	lws_smd_class_t		smd_class;
+#endif
 	/**< optional opaque pointer to owning object... useful to make such
 	 * a pointer available to a notification callback.  Ignored by lws */
-	const char		**state_names;	/* may be NULL */
+	const char		**state_names;
 	const char		*name;
 	int			state;
 } lws_state_manager_t;
@@ -107,3 +113,7 @@ lws_state_transition_steps(lws_state_manager_t *mgr, int target);
  */
 LWS_EXTERN LWS_VISIBLE int
 lws_state_transition(lws_state_manager_t *mgr, int target);
+
+#else
+
+#endif

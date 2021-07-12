@@ -3622,7 +3622,7 @@ function apiWrapper( event, force )
 							{
 								if( msg.mode == 'doors' )
 								{
-									Workspace.wallpaperImage = msg.image;
+									Workspace.wallpaperImage = msg.image ? msg.image : '/webclient/gfx/theme/default_login_screen.jpg';
 								}
 								else
 								{

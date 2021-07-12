@@ -27,6 +27,10 @@
 #include <private-lib-core.h>
 
 #if !defined(LWS_PLAT_FREERTOS) || defined(LWS_ROLE_H2)
+#define LWS_WITH_SS_RIDESHARE
+#endif
+
+#if defined(LWS_WITH_SS_RIDESHARE)
 static int
 ss_http_multipart_parser(lws_ss_handle_t *h, void *in, size_t len)
 {
@@ -148,6 +152,58 @@ around:
 }
 #endif
 
+static int
+lws_apply_metadata(lws_ss_handle_t *h, struct lws *wsi, uint8_t *buf,
+		   uint8_t **pp, uint8_t *end)
+{
+	int m;
+
+	for (m = 0; m < h->policy->metadata_count; m++) {
+		lws_ss_metadata_t *polmd;
+
+		/* has to have a header string listed */
+		if (!h->metadata[m].value)
+			continue;
+
+		polmd = lws_ss_policy_metadata_index(h->policy, m);
+
+		assert(polmd);
+		if (!polmd)
+			return -1;
+
+		/* has to have a value */
+		if (polmd->value && ((uint8_t *)polmd->value)[0]) {
+			if (lws_add_http_header_by_name(wsi,
+					polmd->value,
+					h->metadata[m].value,
+					(int)h->metadata[m].length, pp, end))
+			return -1;
+		}
+	}
+
+	/*
+	 * Content-length on POST / PUT if we have the length information
+	 */
+
+	if (h->policy->u.http.method && (
+		(!strcmp(h->policy->u.http.method, "POST") ||
+	         !strcmp(h->policy->u.http.method, "PUT"))) &&
+	    wsi->http.writeable_len) {
+		if (!(h->policy->flags &
+			LWSSSPOLF_HTTP_NO_CONTENT_LENGTH)) {
+			int n = lws_snprintf((char *)buf, 20, "%u",
+				(unsigned int)wsi->http.writeable_len);
+			if (lws_add_http_header_by_token(wsi,
+					WSI_TOKEN_HTTP_CONTENT_LENGTH,
+					buf, n, pp, end))
+				return -1;
+		}
+		lws_client_http_body_pending(wsi, 1);
+	}
+
+	return 0;
+}
+
 static const uint8_t blob_idx[] = {
 	LWS_SYSBLOB_TYPE_AUTH,
 	LWS_SYSBLOB_TYPE_DEVICE_SERIAL,
@@ -161,37 +217,67 @@ secstream_h1(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 {
 	lws_ss_handle_t *h = (lws_ss_handle_t *)lws_get_opaque_user_data(wsi);
 	uint8_t buf[LWS_PRE + 1520], *p = &buf[LWS_PRE],
+#if defined(LWS_WITH_SERVER)
+			*start = p,
+#endif
 		*end = &buf[sizeof(buf) - 1];
-	int f = 0, m, status, txr;
+	lws_ss_state_return_t r;
+	int f = 0, m, status;
+	char conceal_eom = 0;
 	size_t buflen;
 
 	switch (reason) {
 
-	/* because we are protocols[0] ... */
 	case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
-		assert(h);
+		if (!h)
+			break;
 		assert(h->policy);
 		lwsl_info("%s: h: %p, %s CLIENT_CONNECTION_ERROR: %s\n", __func__,
 			  h, h->policy->streamtype, in ? (char *)in : "(null)");
-		lws_ss_event_helper(h, LWSSSCS_UNREACHABLE);
+		/* already disconnected, no action for DISCONNECT_ME */
+		r = lws_ss_event_helper(h, LWSSSCS_UNREACHABLE);
+		if (r)
+			return _lws_ss_handle_state_ret(r, wsi, &h);
+
 		h->wsi = NULL;
-		lws_ss_backoff(h);
+		r = lws_ss_backoff(h);
+		if (r != LWSSSSRET_OK)
+			return _lws_ss_handle_state_ret(r, wsi, &h);
 		break;
 
+	case LWS_CALLBACK_CLIENT_HTTP_REDIRECT:
+		if (h->policy->u.http.fail_redirect)
+			lws_system_cpd_set(lws_get_context(wsi),
+					   LWS_CPD_CAPTIVE_PORTAL);
+		/* unless it's explicitly allowed, reject to follow it */
+		return !(h->policy->flags & LWSSSPOLF_ALLOW_REDIRECTS);
+
+	case LWS_CALLBACK_CLOSED_HTTP: /* server */
 	case LWS_CALLBACK_CLOSED_CLIENT_HTTP:
 		if (!h)
 			break;
+
+		lws_sul_cancel(&h->sul_timeout);
 		lwsl_info("%s: h: %p, %s LWS_CALLBACK_CLOSED_CLIENT_HTTP\n",
 			  __func__, h,
 			  h->policy ? h->policy->streamtype : "no policy");
 		h->wsi = NULL;
-		//bad = status != 200;
-		//lws_cancel_service(lws_get_context(wsi)); /* abort poll wait */
+
 		if (h->policy && !(h->policy->flags & LWSSSPOLF_OPPORTUNISTIC) &&
-		    !h->txn_ok && !wsi->context->being_destroyed)
-			lws_ss_backoff(h);
-		if (lws_ss_event_helper(h, LWSSSCS_DISCONNECTED))
-			lws_ss_destroy(&h);
+#if defined(LWS_WITH_SERVER)
+		    !(h->info.flags & LWSSSINFLAGS_ACCEPTED) && /* not server */
+#endif
+		    !h->txn_ok && !wsi->a.context->being_destroyed) {
+			r = lws_ss_backoff(h);
+			if (r != LWSSSSRET_OK)
+				return _lws_ss_handle_state_ret(r, wsi, &h);
+			break;
+		} else
+			h->seqstate = SSSEQ_IDLE;
+		/* already disconnected, no action for DISCONNECT_ME */
+		r = lws_ss_event_helper(h, LWSSSCS_DISCONNECTED);
+		if (r != LWSSSSRET_OK)
+			return _lws_ss_handle_state_ret(r, wsi, &h);
 		break;
 
 
@@ -201,22 +287,32 @@ secstream_h1(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 	//	if (!status)
 			/* it's just telling use we connected / joined the nwsi */
 	//		break;
-		h->u.http.good_respcode = (status >= 200 && status < 300);
+
+		if (h->policy->u.http.resp_expect)
+			h->u.http.good_respcode =
+					status == h->policy->u.http.resp_expect;
+		else
+			h->u.http.good_respcode = (status >= 200 && status < 300);
 		// lwsl_err("%s: good resp %d %d\n", __func__, status, h->u.http.good_respcode);
 
 		if (h->u.http.good_respcode)
 			lwsl_info("%s: Connected streamtype %s, %d\n", __func__,
 				  h->policy->streamtype, status);
 		else
-			lwsl_warn("%s: Connected streamtype %s, BAD %d\n", __func__,
-				  h->policy->streamtype, status);
+			if (h->u.http.good_respcode)
+				lwsl_warn("%s: Connected streamtype %s, BAD %d\n",
+					  __func__, h->policy->streamtype,
+					  status);
 
 		h->hanging_som = 0;
 
 		h->retry = 0;
 		h->seqstate = SSSEQ_CONNECTED;
-		lws_ss_set_timeout_us(h, LWS_SET_TIMER_USEC_CANCEL);
-		lws_ss_event_helper(h, LWSSSCS_CONNECTED);
+		lws_sul_cancel(&h->sul);
+
+		r = lws_ss_event_helper(h, LWSSSCS_CONNECTED);
+		if (r != LWSSSSRET_OK)
+			return _lws_ss_handle_state_ret(r, wsi, &h);
 
 		/*
 		 * Since it's an http transaction we initiated... this is
@@ -224,7 +320,15 @@ secstream_h1(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 		 */
 		lws_validity_confirmed(wsi);
 
-#if !defined(LWS_PLAT_FREERTOS) || defined(LWS_ROLE_H2)
+#if defined(LWS_WITH_SS_RIDESHARE)
+
+		/*
+		 * There are two ways we might want to deal with multipart,
+		 * one is pass it through raw (although the user code needs
+		 * a helping hand for learning the boundary), and the other
+		 * is to deframe it and provide basically submessages in the
+		 * different parts.
+		 */
 
 		if (lws_hdr_copy(wsi, (char *)buf, sizeof(buf),
 				 WSI_TOKEN_HTTP_CONTENT_TYPE) > 0 &&
@@ -261,7 +365,8 @@ secstream_h1(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 					lws_strnncpy(h->u.http.boundary + 4,
 						     ts.token, ts.token_len,
 						     sizeof(h->u.http.boundary) - 4);
-					h->u.http.boundary_len = ts.token_len + 4;
+					h->u.http.boundary_len =
+						(uint8_t)(ts.token_len + 4);
 					h->u.http.boundary_seq = 2;
 					h->u.http.boundary_dashes = 0;
 				}
@@ -271,7 +376,8 @@ secstream_h1(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 
 			/* inform the ss that a related message group begins */
 
-			if (h->u.http.boundary[0])
+			if ((h->policy->flags & LWSSSPOLF_HTTP_MULTIPART_IN) &&
+			    h->u.http.boundary[0])
 				h->info.rx(ss_to_userobj(h), NULL, 0,
 					   LWSSS_FLAG_RELATED_START);
 
@@ -298,6 +404,7 @@ malformed:
 		 */
 
 		for (m = 0; m < _LWSSS_HBI_COUNT; m++) {
+			lws_system_blob_t *ab;
 			int o = 0, n;
 
 			if (!h->policy->u.http.blob_header[m])
@@ -311,10 +418,12 @@ malformed:
 			if (o > (int)sizeof(buf) - 2)
 				return -1;
 
+			ab = lws_system_get_blob(wsi->a.context, blob_idx[m], 0);
+			if (!ab)
+				return -1;
+
 			buflen = sizeof(buf) - o - 2;
-			n = lws_system_blob_get(
-				lws_system_get_blob(wsi->context, blob_idx[m], 0),
-						    buf + o, &buflen, 0);
+			n = lws_system_blob_get(ab, buf + o, &buflen, 0);
 			if (n < 0)
 				return -1;
 
@@ -322,8 +431,8 @@ malformed:
 			lwsl_debug("%s: adding blob %d: %s\n", __func__, m, buf);
 
 			if (lws_add_http_header_by_name(wsi,
-					 (uint8_t *)h->policy->u.http.blob_header[m],
-					 buf, buflen + o, p, end))
+				 (uint8_t *)h->policy->u.http.blob_header[m],
+				 buf, (int)(buflen + o), p, end))
 				return -1;
 		}
 
@@ -331,43 +440,8 @@ malformed:
 		 * metadata-based headers
 		 */
 
-		for (m = 0; m < h->policy->metadata_count; m++) {
-			lws_ss_metadata_t *polmd;
-
-			/* has to have a header string listed */
-			if (!h->metadata[m].value)
-				continue;
-
-			polmd = lws_ss_policy_metadata_index(h->policy, m);
-
-			assert(polmd);
-			/* has to have a value */
-			if (polmd->value && ((uint8_t *)polmd->value)[0]) {
-				if (lws_add_http_header_by_name(wsi,
-						polmd->value,
-						h->metadata[m].value,
-						h->metadata[m].length, p, end))
-				return -1;
-			}
-		}
-
-		/*
-		 * Content-length on POST if we have the length information
-		 */
-
-		if (!strcmp(h->policy->u.http.method, "POST") &&
-		    wsi->http.writeable_len) {
-			if (!(h->policy->flags &
-				LWSSSPOLF_HTTP_NO_CONTENT_LENGTH)) {
-				int n = lws_snprintf((char *)buf, 20, "%u",
-					(unsigned int)wsi->http.writeable_len);
-				if (lws_add_http_header_by_token(wsi,
-						WSI_TOKEN_HTTP_CONTENT_LENGTH,
-						buf, n, p, end))
-					return -1;
-			}
-			lws_client_http_body_pending(wsi, 1);
-		}
+		if (lws_apply_metadata(h, wsi, buf, p, end))
+			return -1;
 
 		(void)oin;
 		// if (*p != oin)
@@ -375,17 +449,34 @@ malformed:
 
 		}
 
+		/*
+		 * So when proxied, for POST we have to synthesize a CONNECTED
+		 * state, so it can request a writeable and deliver the POST
+		 * body
+		 */
+		if ((h->policy->protocol == LWSSSP_H1 ||
+		     h->policy->protocol == LWSSSP_H2) &&
+		     h->being_serialized && (
+				!strcmp(h->policy->u.http.method, "PUT") ||
+				!strcmp(h->policy->u.http.method, "POST"))) {
+			r = lws_ss_event_helper(h, LWSSSCS_CONNECTED);
+			if (r)
+				return _lws_ss_handle_state_ret(r, wsi, &h);
+		}
+
 		break;
 
 	/* chunks of chunked content, with header removed */
+	case LWS_CALLBACK_HTTP_BODY:
 	case LWS_CALLBACK_RECEIVE_CLIENT_HTTP_READ:
 		lwsl_debug("%s: RECEIVE_CLIENT_HTTP_READ: read %d\n",
 				__func__, (int)len);
-		if (!h)
+		if (!h || !h->info.rx)
 			return 0;
 
-#if !defined(LWS_PLAT_FREERTOS) || defined(LWS_ROLE_H2)
-		if (h->u.http.boundary[0])
+#if defined(LWS_WITH_SS_RIDESHARE)
+		if ((h->policy->flags & LWSSSPOLF_HTTP_MULTIPART_IN) &&
+		    h->u.http.boundary[0])
 			return ss_http_multipart_parser(h, in, len);
 #endif
 
@@ -398,8 +489,9 @@ malformed:
 	//	lwsl_notice("%s: HTTP_READ: client side sent len %d fl 0x%x\n",
 	//		    __func__, (int)len, (int)f);
 
-		if (h->info.rx(ss_to_userobj(h), (const uint8_t *)in, len, f) < 0)
-			return -1;
+		r = h->info.rx(ss_to_userobj(h), (const uint8_t *)in, len, f);
+		if (r != LWSSSSRET_OK)
+			return _lws_ss_handle_state_ret(r, wsi, &h);
 
 		return 0; /* don't passthru */
 
@@ -409,8 +501,9 @@ malformed:
 			char *px = (char *)buf + LWS_PRE; /* guarantees LWS_PRE */
 			int lenx = sizeof(buf) - LWS_PRE;
 
-			if (lws_http_client_read(wsi, &px, &lenx) < 0)
-				return -1;
+			m = lws_http_client_read(wsi, &px, &lenx);
+			if (m < 0)
+				return m;
 		}
 		lws_set_timeout(wsi, 99, 30);
 
@@ -422,28 +515,75 @@ malformed:
 			h->info.rx(ss_to_userobj(h), NULL, 0, LWSSS_FLAG_EOM);
 
 		wsi->http.writeable_len = h->writeable_len = 0;
+		lws_sul_cancel(&h->sul_timeout);
 
-		if (h->u.http.good_respcode)
-			lws_ss_event_helper(h, LWSSSCS_QOS_ACK_REMOTE);
-		else
-			lws_ss_event_helper(h, LWSSSCS_QOS_NACK_REMOTE);
-
-		h->wsi = NULL;
 		h->txn_ok = 1;
-		//bad = status != 200;
+
+		r = lws_ss_event_helper(h, h->u.http.good_respcode ?
+						LWSSSCS_QOS_ACK_REMOTE :
+						LWSSSCS_QOS_NACK_REMOTE);
+		if (r != LWSSSSRET_OK)
+			return _lws_ss_handle_state_ret(r, wsi, &h);
+
 		lws_cancel_service(lws_get_context(wsi)); /* abort poll wait */
 		break;
 
+	case LWS_CALLBACK_HTTP_WRITEABLE:
 	case LWS_CALLBACK_CLIENT_HTTP_WRITEABLE:
-		lwsl_info("%s: LWS_CALLBACK_CLIENT_HTTP_WRITEABLE\n", __func__);
-		if (!h)
+		//lwsl_info("%s: wsi %p, par %p, HTTP_WRITEABLE\n", __func__,
+		//		wsi, wsi->mux.parent_wsi);
+		if (!h || !h->info.tx) {
+			lwsl_notice("%s: no handle / tx %p\n", __func__, h);
 			return 0;
+		}
 
-		if (!h->rideshare)
+#if defined(LWS_WITH_SERVER)
+		if (h->txn_resp_pending) {
+			/*
+			 * If we're going to start sending something, we need to
+			 * to take care of the http response header for it first
+			 */
+			h->txn_resp_pending = 0;
+
+			if (lws_add_http_common_headers(wsi,
+					h->txn_resp_set ?
+						(h->txn_resp ? h->txn_resp : 200) :
+						HTTP_STATUS_NOT_FOUND,
+					NULL, h->wsi->http.writeable_len,
+					&p, end))
+				return 1;
+
+			/*
+			 * metadata-based headers
+			 */
+
+			if (lws_apply_metadata(h, wsi, buf, &p, end))
+				return -1;
+
+			if (lws_finalize_write_http_header(wsi, start, &p, end))
+				return 1;
+
+			/* write the body separately */
+			lws_callback_on_writable(wsi);
+
+			return 0;
+		}
+#endif
+
+		if (
+#if defined(LWS_WITH_SERVER)
+		    !(h->info.flags & LWSSSINFLAGS_ACCEPTED) && /* not accepted */
+#endif
+		    !h->rideshare)
+
 			h->rideshare = h->policy;
 
-#if !defined(LWS_PLAT_FREERTOS) || defined(LWS_ROLE_H2)
-		if (!h->inside_msg && h->rideshare->u.http.multipart_name)
+#if defined(LWS_WITH_SS_RIDESHARE)
+		if (
+#if defined(LWS_WITH_SERVER)
+		    !(h->info.flags & LWSSSINFLAGS_ACCEPTED) && /* not accepted */
+#endif
+		    !h->inside_msg && h->rideshare->u.http.multipart_name)
 			lws_client_http_multipart(wsi,
 				h->rideshare->u.http.multipart_name,
 				h->rideshare->u.http.multipart_filename,
@@ -453,40 +593,41 @@ malformed:
 		buflen = lws_ptr_diff(end, p);
 		if (h->policy->u.http.multipart_name)
 			buflen -= 24; /* allow space for end of multipart */
-
+#else
+		buflen = lws_ptr_diff(end, p);
 #endif
-
-		txr = h->info.tx(ss_to_userobj(h),  h->txord++, p, &buflen, &f);
-		if (txr < 0) {
-			lwsl_debug("%s: tx handler asked to close\n", __func__);
-			return -1;
-		}
-		if (txr > 0) {
-			/* don't want to send anything */
-			lwsl_debug("%s: dont want to write\n", __func__);
+		r = h->info.tx(ss_to_userobj(h),  h->txord++, p, &buflen, &f);
+		if (r == LWSSSSRET_TX_DONT_SEND)
 			return 0;
-		}
+		if (r < 0)
+			return _lws_ss_handle_state_ret(r, wsi, &h);
 
-		lwsl_info("%s: WRITEABLE: user tx says len %d fl 0x%x\n",
-			    __func__, (int)buflen, (int)f);
+		// lwsl_notice("%s: WRITEABLE: user tx says len %d fl 0x%x\n",
+		//	    __func__, (int)buflen, (int)f);
 
 		p += buflen;
 
 		if (f & LWSSS_FLAG_EOM) {
-#if !defined(LWS_PLAT_FREERTOS) || defined(LWS_ROLE_H2)
+#if defined(LWS_WITH_SERVER)
+		    if (!(h->info.flags & LWSSSINFLAGS_ACCEPTED)) {
+#endif
+			conceal_eom = 1;
 			/* end of rideshares */
 			if (!h->rideshare->rideshare_streamtype) {
 				lws_client_http_body_pending(wsi, 0);
+#if defined(LWS_WITH_SS_RIDESHARE)
 				if (h->rideshare->u.http.multipart_name)
 					lws_client_http_multipart(wsi, NULL, NULL, NULL,
 						(char **)&p, (char *)end);
-			} else {
+				conceal_eom = 0;
 #endif
-				h->rideshare = lws_ss_policy_lookup(wsi->context,
+			} else {
+				h->rideshare = lws_ss_policy_lookup(wsi->a.context,
 						h->rideshare->rideshare_streamtype);
 				lws_callback_on_writable(wsi);
-#if !defined(LWS_PLAT_FREERTOS) || defined(LWS_ROLE_H2)
 			}
+#if defined(LWS_WITH_SERVER)
+		    }
 #endif
 
 			h->inside_msg = 0;
@@ -502,14 +643,69 @@ malformed:
 			  lws_ptr_diff(p, buf + LWS_PRE), f);
 
 		if (lws_write(wsi, buf + LWS_PRE, lws_ptr_diff(p, buf + LWS_PRE),
-			 f & LWSSS_FLAG_EOM ? LWS_WRITE_HTTP_FINAL : LWS_WRITE_HTTP) !=
+			 (!conceal_eom && (f & LWSSS_FLAG_EOM)) ?
+				    LWS_WRITE_HTTP_FINAL : LWS_WRITE_HTTP) !=
 				(int)lws_ptr_diff(p, buf + LWS_PRE)) {
 			lwsl_err("%s: write failed\n", __func__);
 			return -1;
 		}
 
+#if defined(LWS_WITH_SERVER)
+		if (!(h->info.flags & LWSSSINFLAGS_ACCEPTED) &&
+		    (f & LWSSS_FLAG_EOM) &&
+		     lws_http_transaction_completed(wsi))
+			return -1;
+#else
 		lws_set_timeout(wsi, 0, 0);
+#endif
 		break;
+
+#if defined(LWS_WITH_SERVER)
+	case LWS_CALLBACK_HTTP:
+
+		lwsl_notice("%s: LWS_CALLBACK_HTTP\n", __func__);
+		{
+
+			h->txn_resp_set = 0;
+			h->txn_resp_pending = 1;
+			h->writeable_len = 0;
+
+#if defined(LWS_ROLE_H2)
+			m = lws_hdr_total_length(wsi, WSI_TOKEN_HTTP_COLON_METHOD);
+			if (m) {
+				lws_ss_set_metadata(h, "method",
+						    lws_hdr_simple_ptr(wsi,
+						     WSI_TOKEN_HTTP_COLON_METHOD), m);
+				m = lws_hdr_total_length(wsi, WSI_TOKEN_HTTP_COLON_PATH);
+				lws_ss_set_metadata(h, "path",
+						    lws_hdr_simple_ptr(wsi,
+						     WSI_TOKEN_HTTP_COLON_PATH), m);
+			} else
+#endif
+			{
+				m = lws_hdr_total_length(wsi, WSI_TOKEN_GET_URI);
+				if (m) {
+					lws_ss_set_metadata(h, "path",
+							lws_hdr_simple_ptr(wsi,
+								WSI_TOKEN_GET_URI), m);
+					lws_ss_set_metadata(h, "method", "GET", 3);
+				} else {
+					m = lws_hdr_total_length(wsi, WSI_TOKEN_POST_URI);
+					if (m) {
+						lws_ss_set_metadata(h, "path",
+								lws_hdr_simple_ptr(wsi,
+									WSI_TOKEN_POST_URI), m);
+						lws_ss_set_metadata(h, "method", "POST", 4);
+					}
+				}
+			}
+		}
+
+		r = lws_ss_event_helper(h, LWSSSCS_SERVER_TXN);
+		if (r)
+			return _lws_ss_handle_state_ret(r, wsi, &h);
+		return 0;
+#endif
 
 	default:
 		break;
@@ -539,13 +735,19 @@ secstream_connect_munge_h1(lws_ss_handle_t *h, char *buf, size_t len,
 			   struct lws_client_connect_info *i,
 			   union lws_ss_contemp *ct)
 {
+	const char *pbasis = h->policy->u.http.url;
 	size_t used_in, used_out;
 	lws_strexp_t exp;
 
-	if (!h->policy->u.http.url)
+	/* i.path on entry is used to override the policy urlpath if not "" */
+
+	if (i->path[0])
+		pbasis = i->path;
+
+	if (!pbasis)
 		return 0;
 
-#if !defined(LWS_PLAT_FREERTOS) || defined(LWS_ROLE_H2)
+#if defined(LWS_WITH_SS_RIDESHARE)
 	if (h->policy->flags & LWSSSPOLF_HTTP_MULTIPART)
 		i->ssl_connection |= LCCSCF_HTTP_MULTIPART_MIME;
 
@@ -556,12 +758,16 @@ secstream_connect_munge_h1(lws_ss_handle_t *h, char *buf, size_t len,
 	/* protocol aux is the path part */
 
 	i->path = buf;
+
+	/* skip the unnessary '/' */
+	if (*pbasis == '/')
+		pbasis = pbasis + 1;
+
 	buf[0] = '/';
 
 	lws_strexp_init(&exp, (void *)h, lws_ss_exp_cb_metadata, buf + 1, len - 1);
 
-	if (lws_strexp_expand(&exp, h->policy->u.http.url,
-			      strlen(h->policy->u.http.url),
+	if (lws_strexp_expand(&exp, pbasis, strlen(pbasis),
 			      &used_in, &used_out) != LSTRX_DONE)
 		return 1;
 
@@ -572,7 +778,7 @@ secstream_connect_munge_h1(lws_ss_handle_t *h, char *buf, size_t len,
 const struct ss_pcols ss_pcol_h1 = {
 	"h1",
 	"http/1.1",
-	"lws-secstream-h1",
+	&protocol_secstream_h1,
 	secstream_connect_munge_h1,
 	NULL
 };
