@@ -38,6 +38,8 @@ Workspace = {
 	themeOverride: false,
 	systemInfo: false,
 	lastfileSystemChangeMessage: false,
+	userSettingsLoaded: false, // Tell when user settings loaded
+	desktopFirstRefresh: false, // Tell when workspace first refreshed
 	serverIsThere: false,
 	runLevels: [
 		{

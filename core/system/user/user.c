@@ -19,6 +19,7 @@
 #include "user.h"
 #include <system/systembase.h>
 #include <system/cache/cache_user_files.h>
+#include <util/session_id.h>
 
 /**
  * Create new User
@@ -31,6 +32,8 @@ User *UserNew( )
 	if( ( u = FCalloc( 1, sizeof( User ) ) ) != NULL )
 	{
 		UserInit( u );
+		
+		GenerateUUID( &( u->u_UUID ) );
 	}
 	else
 	{

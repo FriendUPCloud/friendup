@@ -115,8 +115,7 @@ callback_http(struct lws *wsi, enum lws_callback_reasons reason,
 	case LWS_CALLBACK_CLOSED_CLIENT_HTTP:
 		interrupted = 1;
 		bad = status != 200;
-		lws_sul_schedule(lws_get_context(wsi), 0, &pss->sul, NULL,
-				 LWS_SET_TIMER_USEC_CANCEL);
+		lws_sul_cancel(&pss->sul);
 		lws_cancel_service(lws_get_context(wsi)); /* abort poll wait */
 		break;
 
@@ -259,6 +258,8 @@ int main(int argc, const char **argv)
 	info.protocols = protocols;
 	info.user = &args;
 	info.register_notifier_list = na;
+	info.timeout_secs = 10;
+	info.connect_timeout_secs = 30;
 
 	/*
 	 * since we know this lws context is only ever going to be used with
@@ -269,7 +270,7 @@ int main(int argc, const char **argv)
 	 */
 	info.fd_limit_per_thread = 1 + 1 + 1;
 
-#if defined(LWS_WITH_MBEDTLS)
+#if defined(LWS_WITH_MBEDTLS) || defined(USE_WOLFSSL)
 	/*
 	 * OpenSSL uses the system trust store.  mbedTLS has to be told which
 	 * CA to trust explicitly.

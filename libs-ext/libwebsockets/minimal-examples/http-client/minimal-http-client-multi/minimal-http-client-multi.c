@@ -44,7 +44,7 @@ static int completed, failed, numbered, stagger_idx, posting, count = COUNT;
 static lws_sorted_usec_list_t sul_stagger;
 static struct lws_client_connect_info i;
 static struct lws *client_wsi[COUNT];
-static char urlpath[64];
+static char urlpath[64], intr;
 static struct lws_context *context;
 
 /* we only need this for tracking POST emit state */
@@ -132,7 +132,9 @@ callback_http(struct lws *wsi, enum lws_callback_reasons reason,
 			break;
 		if (lws_http_is_redirected_to_get(wsi))
 			break;
-		lwsl_user("LWS_CALLBACK_CLIENT_HTTP_WRITEABLE: %p, part %d\n", wsi, pss->body_part);
+		lwsl_info("LWS_CALLBACK_CLIENT_HTTP_WRITEABLE: %p, idx %d,"
+				" part %d\n", wsi, idx, pss->body_part);
+
 		n = LWS_WRITE_HTTP;
 
 		/*
@@ -198,7 +200,7 @@ finished:
 			lwsl_user("Done: all OK\n");
 		else
 			lwsl_err("Done: failed: %d\n", failed);
-		//interrupted = 1;
+		intr = 1;
 		/*
 		 * This is how we can exit the event loop even when it's an
 		 * event library backing it... it will start and stage the
@@ -318,17 +320,13 @@ int main(int argc, const char **argv)
 {
 	struct lws_context_creation_info info;
 	unsigned long long start;
+	int m, staggered = 0;
 	const char *p;
-	int m, staggered = 0, logs = LLL_USER | LLL_ERR | LLL_WARN | LLL_NOTICE
-		/* for LLL_ verbosity above NOTICE to be built into lws,
-		 * lws must have been configured and built with
-		 * -DCMAKE_BUILD_TYPE=DEBUG instead of =RELEASE */
-		/* | LLL_INFO */ /* | LLL_PARSER */ /* | LLL_HEADER */
-		/* | LLL_EXT */ /* | LLL_CLIENT */ /* | LLL_LATENCY */
-		/* | LLL_DEBUG */;
 
 	memset(&info, 0, sizeof info); /* otherwise uninitialized garbage */
 	memset(&i, 0, sizeof i); /* otherwise uninitialized garbage */
+
+	lws_cmdline_option_handle_builtin(argc, argv, &info);
 
 	info.signal_cb = signal_cb;
 	info.options = LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
@@ -348,10 +346,7 @@ int main(int argc, const char **argv)
 					signal(SIGINT, sigint_handler);
 
 	staggered = !!lws_cmdline_option(argc, argv, "-s");
-	if ((p = lws_cmdline_option(argc, argv, "-d")))
-		logs = atoi(p);
 
-	lws_set_log_level(logs, NULL);
 	lwsl_user("LWS minimal http client [-s (staggered)] [-p (pipeline)]\n");
 	lwsl_user("   [--h1 (http/1 only)] [-l (localhost)] [-d <logs>]\n");
 	lwsl_user("   [-n (numbered)] [--post]\n");
@@ -367,7 +362,7 @@ int main(int argc, const char **argv)
 	 */
 	info.fd_limit_per_thread = 1 + COUNT + 1;
 
-#if defined(LWS_WITH_MBEDTLS)
+#if defined(LWS_WITH_MBEDTLS) || defined(USE_WOLFSSL)
 	/*
 	 * OpenSSL uses the system trust store.  mbedTLS has to be told which
 	 * CA to trust explicitly.
@@ -424,6 +419,9 @@ int main(int argc, const char **argv)
 			strcpy(urlpath, "/testserver/formtest");
 	}
 
+	if (lws_cmdline_option(argc, argv, "--no-tls"))
+		i.ssl_connection &= ~(LCCSCF_USE_SSL);
+
 	if (lws_cmdline_option(argc, argv, "-n"))
 		numbered = 1;
 
@@ -459,7 +457,7 @@ int main(int argc, const char **argv)
 				 100 * LWS_US_PER_MS);
 
 	start = us();
-	while (!lws_service(context, 0))
+	while (!intr && !lws_service(context, 0))
 		;
 
 	lwsl_user("Duration: %lldms\n", (us() - start) / 1000);

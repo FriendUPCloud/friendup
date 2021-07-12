@@ -1864,8 +1864,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						
 				if( e == 'ok' && d )
 				{
-					var dat = JSON.parse( d );
-					if( dat.wallpaperdoors )
+					Workspace.userSettingsLoaded = true;
+					let dat = JSON.parse( d );
+					if( dat.wallpaperdoors && dat.wallpaperdoors.substr )
 					{
 						if( dat.wallpaperdoors.substr(0,5) == 'color' )
 						{
@@ -1900,7 +1901,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					Workspace.applyThemeConfig();
 					Workspace.loadSystemInfo();
-				
+					
 					// Fallback
 					if( !isMobile )
 					{
@@ -1913,11 +1914,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 						}
 					}
-				
+					
 					if( !Workspace.wallpaperImage || Workspace.wallpaperImage == '""' || Workspace.wallpaperImage === '' )
 					{
 						Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 					}
+					
 					if( dat.wallpaperwindows )
 					{
 						Workspace.windowWallpaperImage = dat.wallpaperwindows;
@@ -2017,6 +2019,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								break;
 						}
 						window.friendApp.setBackgroundColor( col );
+					}
+					
+					// If we haven't refreshed, do it now
+					if( !Workspace.desktopFirstRefresh )
+					{
+						Workspace.refreshDesktop();
 					}
 					
 					// Do the startup sequence in sequence (only once)
@@ -2888,7 +2896,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		Workspace.mainDock.clear();
 		
-		
 		function getOnClickFn( appName )
 		{
 			return function()
@@ -2912,7 +2919,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Add start menu
 		if( !isMobile && globalConfig.viewList == 'dockedlist' )
 		{
-			var img = 'startmenu.png';
+			let img = 'startmenu.png';
 			if( Workspace.mainDock.conf )
 			{
 				if( Workspace.mainDock.conf.size == '32' )
@@ -2924,7 +2931,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					img = 'startmenu_16.png';
 				}
 			}
-			var ob = {
+			let ob = {
 				type: 'startmenu',
 				src: '/webclient/gfx/system/' + img,
 				title: 'Start',
@@ -3743,6 +3750,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Just refresh the desktop ------------------------------------------------
 	refreshDesktop: function( callback, forceRefresh )
 	{
+		// Need to wait
+		if( !this.userSettingsLoaded ) return;
+		this.desktopFirstRefresh = true;
+		
 		let self = this;
 		
 		// Get those dynamic classes
@@ -3838,8 +3849,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 			}
 
+			// We haven't started with wallpaper yet. Just pass
+			if( typeof( self.wallpaperImage ) == 'undefined' )
+			{
+				return;
+			}
 			// Recall wallpaper
-			if( Workspace.mode != 'vr' && self.wallpaperImage != 'color' )
+			else if( Workspace.mode != 'vr' && self.wallpaperImage != 'color' )
 			{
 			    if( typeof( self.wallpaperImage ) == undefined )
 			    {
@@ -3876,7 +3892,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						v[ z ].parentNode.removeChild( v[ z ] );
 					}
-
+					
 					// Check extension
 					switch( ext )
 					{
