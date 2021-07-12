@@ -1,7 +1,7 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2020 Andy Green <andy@warmcat.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -109,6 +109,13 @@ _lws_state_transition(lws_state_manager_t *mgr, int target)
 	/* Indicate success by calling the notifers again with both args same */
 	_report(mgr, target, target);
 
+#if defined(LWS_WITH_SYS_SMD)
+	if (mgr->smd_class)
+		(void)lws_smd_msg_printf(mgr->context,
+				   mgr->smd_class, "{\"state\":\"%s\"}",
+				   mgr->state_names[target]);
+#endif
+
 	return 0;
 }
 
@@ -120,6 +127,9 @@ lws_state_transition_steps(lws_state_manager_t *mgr, int target)
 	int i = mgr->state;
 	char temp8[8];
 #endif
+
+	if (mgr->state > target)
+		return 0;
 
 	while (!n && mgr->state != target)
 		n = _lws_state_transition(mgr, mgr->state + 1);

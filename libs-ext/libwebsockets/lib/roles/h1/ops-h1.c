@@ -150,7 +150,7 @@ http_postbody:
 
 				/* returns how much used */
 				n = user_callback_handle_rxflow(
-					wsi->protocol->callback,
+					wsi->a.protocol->callback,
 					wsi, LWS_CALLBACK_CGI_STDIN_DATA,
 					wsi->user_space,
 					(void *)&args, 0);
@@ -159,7 +159,7 @@ http_postbody:
 			} else {
 #endif
 				if (lwsi_state(wsi) != LRS_DISCARD_BODY) {
-				n = wsi->protocol->callback(wsi,
+				n = wsi->a.protocol->callback(wsi,
 					LWS_CALLBACK_HTTP_BODY, wsi->user_space,
 					buf, (size_t)body_chunk_len);
 				if (n)
@@ -174,7 +174,7 @@ http_postbody:
 			if (wsi->http.rx_content_remain)  {
 				lws_set_timeout(wsi,
 						PENDING_TIMEOUT_HTTP_CONTENT,
-						wsi->context->timeout_secs);
+						wsi->a.context->timeout_secs);
 				break;
 			}
 			/* he sent all the content in time */
@@ -186,7 +186,7 @@ postbody_completion:
 			 */
 			if (wsi->http.cgi)
 				lws_set_timeout(wsi, PENDING_TIMEOUT_CGI,
-						wsi->context->timeout_secs);
+						wsi->a.context->timeout_secs);
 			else
 #endif
 			lws_set_timeout(wsi, NO_PENDING_TIMEOUT, 0);
@@ -203,14 +203,14 @@ postbody_completion:
 					 */
 
 					if (lws_http_transaction_completed(wsi))
-						return -1;
+						goto bail;
 					break;
 				}
 #endif
 				lwsl_info("HTTP_BODY_COMPLETION: %p (%s)\n",
-					  wsi, wsi->protocol->name);
+					  wsi, wsi->a.protocol->name);
 
-				n = wsi->protocol->callback(wsi,
+				n = wsi->a.protocol->callback(wsi,
 					LWS_CALLBACK_HTTP_BODY_COMPLETION,
 					wsi->user_space, NULL, 0);
 				if (n)
@@ -301,7 +301,7 @@ bail:
 static int
 lws_h1_server_socket_service(struct lws *wsi, struct lws_pollfd *pollfd)
 {
-	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
+	struct lws_context_per_thread *pt = &wsi->a.context->pt[(int)wsi->tsi];
 	struct lws_tokens ebuf;
 	int n, buffered;
 
@@ -507,7 +507,7 @@ try_pollout:
 		}
 #endif
 
-		n = user_callback_handle_rxflow(wsi->protocol->callback, wsi,
+		n = user_callback_handle_rxflow(wsi->a.protocol->callback, wsi,
 						LWS_CALLBACK_HTTP_WRITEABLE,
 						wsi->user_space, NULL, 0);
 		if (n < 0) {
@@ -643,7 +643,8 @@ rops_handle_POLLIN_h1(struct lws_context_per_thread *pt, struct lws *wsi,
 			return n;
 		if (lwsi_state(wsi) != LRS_SSL_INIT)
 			if (lws_server_socket_service_ssl(wsi,
-							  LWS_SOCK_INVALID))
+							  LWS_SOCK_INVALID,
+					!!(pollfd->revents & LWS_POLLIN)))
 				return LWS_HPI_RET_PLEASE_CLOSE_ME;
 
 		return LWS_HPI_RET_HANDLED;
@@ -669,12 +670,12 @@ rops_handle_POLLIN_h1(struct lws_context_per_thread *pt, struct lws *wsi,
 		if (lws_change_pollfd(wsi, LWS_POLLIN, 0))
 			return LWS_HPI_RET_PLEASE_CLOSE_ME;
 
-		//lwsl_notice("calling back %s\n", wsi->protocol->name);
+		//lwsl_notice("calling back %s\n", wsi->a.protocol->name);
 
 		/* let user code know, he'll usually ask for writeable
 		 * callback and drain / re-enable it there
 		 */
-		if (user_callback_handle_rxflow(wsi->protocol->callback, wsi,
+		if (user_callback_handle_rxflow(wsi->a.protocol->callback, wsi,
 					       LWS_CALLBACK_RECEIVE_CLIENT_HTTP,
 						wsi->user_space, NULL, 0)) {
 			lwsl_info("RECEIVE_CLIENT_HTTP closed it\n");
@@ -752,7 +753,7 @@ rops_handle_POLLOUT_h1(struct lws *wsi)
 #endif
 				lwsi_set_state(wsi, LRS_WAITING_SERVER_REPLY);
 				lws_set_timeout(wsi, PENDING_TIMEOUT_AWAITING_SERVER_RESPONSE,
-						wsi->context->timeout_secs);
+						wsi->a.context->timeout_secs);
 			}
 		}
 #endif
@@ -856,7 +857,7 @@ rops_alpn_negotiated_h1(struct lws *wsi, const char *alpn)
 static int
 rops_destroy_role_h1(struct lws *wsi)
 {
-	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
+	struct lws_context_per_thread *pt = &wsi->a.context->pt[(int)wsi->tsi];
 	struct allocated_headers *ah;
 
 	/* we may not have an ah, but may be on the waiting list... */
@@ -906,25 +907,43 @@ rops_adoption_bind_h1(struct lws *wsi, int type, const char *vh_prot_name)
 		return 1;
 	}
 
-	lws_role_transition(wsi, LWSIFR_SERVER, (type & LWS_ADOPT_ALLOW_SSL) ?
-			    LRS_SSL_INIT : LRS_HEADERS, &role_ops_h1);
+#if defined(LWS_WITH_SERVER) && defined(LWS_WITH_SECURE_STREAMS)
+	if (wsi->a.vhost->ss_handle &&
+	    wsi->a.vhost->ss_handle->policy->protocol == LWSSSP_RAW) {
+		lws_role_transition(wsi, LWSIFR_SERVER, (type & LWS_ADOPT_ALLOW_SSL) ?
+				LRS_SSL_INIT : LRS_ESTABLISHED, &role_ops_raw_skt);
+		return 1;
+	}
+#endif
+
+	/* If Non-TLS and HTTP2 prior knowledge is enabled, skip to clear text HTTP2 */
+
+#if defined(LWS_WITH_HTTP2)
+	if ((!(type & LWS_ADOPT_ALLOW_SSL)) && (wsi->a.vhost->options & LWS_SERVER_OPTION_H2_PRIOR_KNOWLEDGE)) {
+		lwsl_info("http/2 prior knowledge\n");
+		lws_role_call_alpn_negotiated(wsi, "h2");
+	}
+	else
+#endif
+		lws_role_transition(wsi, LWSIFR_SERVER, (type & LWS_ADOPT_ALLOW_SSL) ?
+				LRS_SSL_INIT : LRS_HEADERS, &role_ops_h1);
 
 	/*
-	 * We have to bind to h1 as a default even when we're actually going to
+	 * Otherwise, we have to bind to h1 as a default even when we're actually going to
 	 * replace it as an h2 bind later.  So don't take this seriously if the
 	 * default is disabled (ws upgrade caees properly about it)
 	 */
 
-	if (!vh_prot_name && wsi->vhost->default_protocol_index <
-			     wsi->vhost->count_protocols)
-		wsi->protocol = &wsi->vhost->protocols[
-				wsi->vhost->default_protocol_index];
+	if (!vh_prot_name && wsi->a.vhost->default_protocol_index <
+			     wsi->a.vhost->count_protocols)
+		wsi->a.protocol = &wsi->a.vhost->protocols[
+				wsi->a.vhost->default_protocol_index];
 	else
-		wsi->protocol = &wsi->vhost->protocols[0];
+		wsi->a.protocol = &wsi->a.vhost->protocols[0];
 
 	/* the transport is accepted... give him time to negotiate */
 	lws_set_timeout(wsi, PENDING_TIMEOUT_ESTABLISH_WITH_SERVER,
-			wsi->context->timeout_secs);
+			wsi->a.context->timeout_secs);
 
 	return 1; /* bound */
 }
@@ -1002,12 +1021,13 @@ rops_client_bind_h1(struct lws *wsi, const struct lws_client_connect_info *i)
 #if defined(LWS_ROLE_WS)
 		if (lws_create_client_ws_object(i, wsi))
 			goto fail_wsi;
+
+		goto bind_h1;
 #else
 		lwsl_err("%s: ws role not configured\n", __func__);
 
 		goto fail_wsi;
 #endif
-		goto bind_h1;
 	}
 
 	/* if a recognized http method, bind to it */
@@ -1107,7 +1127,7 @@ rops_close_kill_connection_h1(struct lws *wsi, enum lws_close_status reason)
 
 	wsi->http.proxy_clientside = 0;
 
-	if (user_callback_handle_rxflow(wsi->protocol->callback, wsi,
+	if (user_callback_handle_rxflow(wsi->a.protocol->callback, wsi,
 					LWS_CALLBACK_COMPLETED_CLIENT_HTTP,
 					wsi->user_space, NULL, 0))
 		return 0;
@@ -1129,8 +1149,8 @@ rops_pt_init_destroy_h1(struct lws_context *context,
 
 		pt->sul_ah_lifecheck.cb = lws_sul_http_ah_lifecheck;
 
-		__lws_sul_insert(&pt->pt_sul_owner, &pt->sul_ah_lifecheck,
-				 30 * LWS_US_PER_SEC);
+		__lws_sul_insert_us(&pt->pt_sul_owner[LWSSULLI_MISS_IF_SUSPENDED],
+				 &pt->sul_ah_lifecheck, 30 * LWS_US_PER_SEC);
 	} else
 		lws_dll2_remove(&pt->sul_ah_lifecheck.list);
 #endif

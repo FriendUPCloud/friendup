@@ -40,7 +40,7 @@ static void (*lwsl_emit)(int level, const char *line)
 	= lwsl_emit_optee;
 #endif
 	;
-#ifndef LWS_PLAT_OPTEE
+#if !defined(LWS_PLAT_OPTEE) && !defined(LWS_WITH_NO_LOGS)
 static const char * log_level_names ="EWNIDPHXCLUT??";
 #endif
 
@@ -48,7 +48,7 @@ static const char * log_level_names ="EWNIDPHXCLUT??";
 int
 lwsl_timestamp(int level, char *p, int len)
 {
-#ifndef LWS_PLAT_OPTEE
+#if !defined(LWS_PLAT_OPTEE) && !defined(LWS_WITH_NO_LOGS)
 	time_t o_now;
 	unsigned long long now;
 	struct timeval tv;
@@ -162,7 +162,8 @@ lwsl_emit_stderr_notimestamp(int level, const char *line)
 #if !(defined(LWS_PLAT_OPTEE) && !defined(LWS_WITH_NETWORK))
 void _lws_logv(int filter, const char *format, va_list vl)
 {
-#if LWS_MAX_SMP == 1
+#if LWS_MAX_SMP == 1 && !defined(LWS_WITH_THREADPOOL)
+	/* this is incompatible with multithreaded logging */
 	static char buf[256];
 #else
 	char buf[1024];

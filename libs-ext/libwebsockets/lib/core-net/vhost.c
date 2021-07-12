@@ -46,22 +46,6 @@ const struct lws_role_ops *available_roles[] = {
 	NULL
 };
 
-const struct lws_event_loop_ops *available_event_libs[] = {
-#if defined(LWS_WITH_POLL)
-	&event_loop_ops_poll,
-#endif
-#if defined(LWS_WITH_LIBUV)
-	&event_loop_ops_uv,
-#endif
-#if defined(LWS_WITH_LIBEVENT)
-	&event_loop_ops_event,
-#endif
-#if defined(LWS_WITH_LIBEV)
-	&event_loop_ops_ev,
-#endif
-	NULL
-};
-
 #if defined(LWS_WITH_ABSTRACT)
 const struct lws_protocols *available_abstract_protocols[] = {
 #if defined(LWS_ROLE_RAW)
@@ -85,6 +69,7 @@ const struct lws_protocols *available_secstream_protocols[] = {
 #if defined(LWS_ROLE_MQTT)
 	&protocol_secstream_mqtt,
 #endif
+	&protocol_secstream_raw,
 	NULL
 };
 #endif
@@ -125,7 +110,9 @@ lws_role_call_alpn_negotiated(struct lws *wsi, const char *alpn)
 	if (!alpn)
 		return 0;
 
+#if !defined(LWS_ESP_PLATFORM)
 	lwsl_info("%s: '%s'\n", __func__, alpn);
+#endif
 
 	LWS_FOR_EVERY_AVAILABLE_ROLE_START(ar)
 		if (ar->alpn && !strcmp(ar->alpn, alpn) && ar->alpn_negotiated)
@@ -144,18 +131,18 @@ lws_role_call_adoption_bind(struct lws *wsi, int type, const char *prot)
 	 * if the vhost is told to bind accepted sockets to a given role,
 	 * then look it up by name and try to bind to the specific role.
 	 */
-	if (lws_check_opt(wsi->vhost->options,
+	if (lws_check_opt(wsi->a.vhost->options,
 			  LWS_SERVER_OPTION_ADOPT_APPLY_LISTEN_ACCEPT_CONFIG) &&
-	    wsi->vhost->listen_accept_role) {
+	    wsi->a.vhost->listen_accept_role) {
 		const struct lws_role_ops *role =
-			lws_role_by_name(wsi->vhost->listen_accept_role);
+			lws_role_by_name(wsi->a.vhost->listen_accept_role);
 
 		if (!prot)
-			prot = wsi->vhost->listen_accept_protocol;
+			prot = wsi->a.vhost->listen_accept_protocol;
 
 		if (!role)
 			lwsl_err("%s: can't find role '%s'\n", __func__,
-				  wsi->vhost->listen_accept_role);
+				  wsi->a.vhost->listen_accept_role);
 
 		if (role && role->adoption_bind) {
 			n = role->adoption_bind(wsi, type, prot);
@@ -174,7 +161,7 @@ lws_role_call_adoption_bind(struct lws *wsi, int type, const char *prot)
 
 		lwsl_warn("%s: adoption bind to role '%s', "
 			  "protocol '%s', type 0x%x, failed\n", __func__,
-			  wsi->vhost->listen_accept_role, prot, type);
+			  wsi->a.vhost->listen_accept_role, prot, type);
 	}
 
 	/*
@@ -310,16 +297,17 @@ int
 lws_protocol_init_vhost(struct lws_vhost *vh, int *any)
 {
 	const struct lws_protocol_vhost_options *pvo, *pvo1;
-	struct lws *wsi = vh->context->pt[0].fake_wsi;
+	lws_fakewsi_def_plwsa(&vh->context->pt[0]);
 	int n;
 
-	wsi->context = vh->context;
-	wsi->vhost = vh;
+	lws_fakewsi_prep_plwsa_ctx(vh->context);
+
+	plwsa->vhost = vh;
 
 	/* initialize supported protocols on this vhost */
 
 	for (n = 0; n < vh->count_protocols; n++) {
-		wsi->protocol = &vh->protocols[n];
+		plwsa->protocol = &vh->protocols[n];
 		if (!vh->protocols[n].name)
 			continue;
 		pvo = lws_vhost_protocol_options(vh, vh->protocols[n].name);
@@ -369,10 +357,10 @@ lws_protocol_init_vhost(struct lws_vhost *vh, int *any)
 		 * inform all the protocols that they are doing their
 		 * one-time initialization if they want to.
 		 *
-		 * NOTE the wsi is all zeros except for the context, vh
-		 * + protocol ptrs so lws_get_context(wsi) etc can work
+		 * NOTE the fakewsi is garbage, except the key pointers that are
+		 * prepared in case the protocol handler wants to touch them
 		 */
-		if (vh->protocols[n].callback(wsi,
+		if (vh->protocols[n].callback((struct lws *)plwsa,
 				LWS_CALLBACK_PROTOCOL_INIT, NULL,
 				(void *)pvo, 0)) {
 			if (vh->protocol_vh_privs[n]) {
@@ -429,8 +417,9 @@ next:
 	context->protocol_init_done = 1;
 
 #if defined(LWS_WITH_SERVER)
-	if (any)
+	if (any) {
 		lws_tls_check_all_cert_lifetimes(context);
+	}
 #endif
 
 	return 0;
@@ -466,8 +455,7 @@ struct lws_vhost *
 lws_create_vhost(struct lws_context *context,
 		 const struct lws_context_creation_info *info)
 {
-	struct lws_vhost *vh = lws_zalloc(sizeof(*vh), "create vhost"),
-			 **vh1 = &context->vhost_list;
+	struct lws_vhost *vh, **vh1 = &context->vhost_list;
 	const struct lws_http_mount *mounts;
 	const struct lws_protocols *pcols = info->protocols;
 #ifdef LWS_WITH_PLUGINS
@@ -485,8 +473,18 @@ lws_create_vhost(struct lws_context *context,
 #endif
 	int n;
 
+
+	vh = lws_zalloc(sizeof(*vh)
+#if defined(LWS_WITH_EVENT_LIBS)
+			+ context->event_loop_ops->evlib_size_vh
+#endif
+			, __func__);
 	if (!vh)
 		return NULL;
+
+#if defined(LWS_WITH_EVENT_LIBS)
+	vh->evlib_vh = (void *)&vh[1];
+#endif
 
 #if LWS_MAX_SMP > 1
 	pthread_mutex_init(&vh->lock, NULL);
@@ -511,6 +509,12 @@ lws_create_vhost(struct lws_context *context,
 	vh->iface = info->iface;
 #if !defined(LWS_PLAT_FREERTOS) && !defined(OPTEE_TA) && !defined(WIN32)
 	vh->bind_iface = info->bind_iface;
+#endif
+#if defined(LWS_WITH_CLIENT)
+	if (info->connect_timeout_secs)
+		vh->connect_timeout_secs = info->connect_timeout_secs;
+	else
+		vh->connect_timeout_secs = 20;
 #endif
 	/* apply the context default lws_retry */
 
@@ -674,15 +678,18 @@ lws_create_vhost(struct lws_context *context,
 #ifdef LWS_WITH_PLUGINS
 	if (plugin) {
 		while (plugin) {
-			for (n = 0; n < plugin->caps.count_protocols; n++) {
+			const lws_plugin_protocol_t *plpr =
+				(const lws_plugin_protocol_t *)plugin->hdr;
+
+			for (n = 0; n < plpr->count_protocols; n++) {
 				/*
 				 * for compatibility's sake, no pvo implies
 				 * allow all protocols
 				 */
 				if (f || lws_vhost_protocol_options(vh,
-				    plugin->caps.protocols[n].name)) {
+						plpr->protocols[n].name)) {
 					memcpy(&lwsp[m],
-					       &plugin->caps.protocols[n],
+					       &plpr->protocols[n],
 					       sizeof(struct lws_protocols));
 					m++;
 					vh->count_protocols++;
@@ -821,7 +828,10 @@ lws_create_vhost(struct lws_context *context,
 		goto bail1;
 	}
 #endif
+
+#if defined(LWS_WITH_SYS_ASYNC_DNS)
 	n = !!context->vhost_list;
+#endif
 
 	while (1) {
 		if (!(*vh1)) {
@@ -886,7 +896,7 @@ lws_cancel_service(struct lws_context *context)
 	if (context->being_destroyed1)
 		return;
 
-	lwsl_info("%s\n", __func__);
+	lwsl_debug("%s\n", __func__);
 
 	while (m--) {
 		if (pt->pipe_wsi)
@@ -898,6 +908,8 @@ lws_cancel_service(struct lws_context *context)
 int
 lws_create_event_pipes(struct lws_context *context)
 {
+	struct lws_context_per_thread *pt;
+	size_t s = sizeof(struct lws);
 	struct lws *wsi;
 	int n;
 
@@ -912,23 +924,34 @@ lws_create_event_pipes(struct lws_context *context)
 	n = 0;
 	{
 #endif
-		if (context->pt[n].pipe_wsi)
+		pt = &context->pt[n];
+
+		if (pt->pipe_wsi)
 			return 0;
 
-		wsi = lws_zalloc(sizeof(*wsi), "event pipe wsi");
+#if defined(LWS_WITH_EVENT_LIBS)
+		s += context->event_loop_ops->evlib_size_wsi;
+#endif
+
+		wsi = lws_zalloc(s, "event pipe wsi");
 		if (!wsi) {
 			lwsl_err("%s: Out of mem\n", __func__);
 			return 1;
 		}
-		wsi->context = context;
+#if defined(LWS_WITH_EVENT_LIBS)
+		wsi->evlib_wsi = (uint8_t *)wsi + sizeof(*wsi);
+#endif
+		wsi->a.context = context;
 		lws_role_transition(wsi, 0, LRS_UNCONNECTED, &role_ops_pipe);
-		wsi->protocol = NULL;
+		wsi->a.protocol = NULL;
 		wsi->tsi = n;
-		wsi->vhost = NULL;
+		wsi->a.vhost = NULL;
 		wsi->event_pipe = 1;
 		wsi->desc.sockfd = LWS_SOCK_INVALID;
 		context->pt[n].pipe_wsi = wsi;
 		context->count_wsi_allocated++;
+
+		lws_pt_lock(pt, __func__); /* -------------- pt { */
 
 		if (!lws_plat_pipe_create(wsi)) {
 			/*
@@ -945,14 +968,21 @@ lws_create_event_pipes(struct lws_context *context)
 
 			if (context->event_loop_ops->sock_accept)
 				if (context->event_loop_ops->sock_accept(wsi))
-					return 1;
+					goto bail;
 
 			if (__insert_wsi_socket_into_fds(context, wsi))
-				return 1;
+				goto bail;
 		}
+
+		lws_pt_unlock(pt);
 	}
 
 	return 0;
+
+bail:
+	lws_pt_unlock(pt);
+
+	return 1;
 }
 
 void
@@ -963,20 +993,104 @@ lws_destroy_event_pipe(struct lws *wsi)
 	if (lws_socket_is_valid(wsi->desc.sockfd))
 		__remove_wsi_socket_from_fds(wsi);
 
-	if (!wsi->context->event_loop_ops->destroy_wsi &&
-	    wsi->context->event_loop_ops->wsi_logical_close) {
-		wsi->context->event_loop_ops->wsi_logical_close(wsi);
+	if (!wsi->a.context->event_loop_ops->destroy_wsi &&
+	    wsi->a.context->event_loop_ops->wsi_logical_close) {
+		wsi->a.context->event_loop_ops->wsi_logical_close(wsi);
 		lws_plat_pipe_close(wsi);
 		return;
 	}
 
-	if (wsi->context->event_loop_ops->destroy_wsi)
-		wsi->context->event_loop_ops->destroy_wsi(wsi);
+	if (wsi->a.context->event_loop_ops->destroy_wsi)
+		wsi->a.context->event_loop_ops->destroy_wsi(wsi);
 	lws_plat_pipe_close(wsi);
-	wsi->context->count_wsi_allocated--;
+	wsi->a.context->count_wsi_allocated--;
 	lws_free(wsi);
 }
 
+/*
+ * Start close process for any wsi bound to this vhost that belong to the
+ * service thread we are called from.  Because of async event lib close, or
+ * protocol staged close on wsi, latency with pts joining in closing their
+ * wsi on the vhost, this may take some time.
+ *
+ * When the wsi count bound to the vhost (from all pts) drops to zero, the
+ * vhost destruction will be finalized.
+ */
+
+void
+__lws_vhost_destroy_pt_wsi_dieback_start(struct lws_vhost *vh)
+{
+#if LWS_MAX_SMP > 1
+	/* calling pt thread has done its wsi dieback */
+	int tsi = lws_pthread_self_to_tsi(vh->context);
+#else
+	int tsi = 0;
+#endif
+	struct lws_context *ctx = vh->context;
+	struct lws_context_per_thread *pt = &ctx->pt[tsi];
+	unsigned int n;
+
+#if LWS_MAX_SMP > 1
+	if (vh->close_flow_vs_tsi[lws_pthread_self_to_tsi(vh->context)])
+		/* this pt has already done its bit */
+		return;
+#endif
+
+	lwsl_info("%s: %s\n", __func__, vh->name);
+
+#if defined(LWS_WITH_CLIENT)
+	/*
+	 * destroy any wsi that are associated with us but have no socket
+	 * (and will otherwise be missed for destruction)
+	 */
+	lws_start_foreach_dll_safe(struct lws_dll2 *, d, d1,
+			      vh->vh_awaiting_socket_owner.head) {
+		struct lws *w =
+			lws_container_of(d, struct lws, vh_awaiting_socket);
+
+		if (w->tsi == tsi) {
+
+			lwsl_debug("%s: closing aso\n", __func__);
+			lws_close_free_wsi(w, LWS_CLOSE_STATUS_NOSTATUS,
+					   "awaiting skt");
+		}
+
+	} lws_end_foreach_dll_safe(d, d1);
+#endif
+
+	/*
+	 * Close any wsi on this pt bound to the vhost
+	 */
+
+	n = 0;
+	while (n < pt->fds_count) {
+		struct lws *wsi = wsi_from_fd(ctx, pt->fds[n].fd);
+
+		if (wsi && wsi->tsi == tsi && wsi->a.vhost == vh) {
+
+			lwsl_debug("%s: pt %d: closing wsi %p: role %s\n",
+					__func__, tsi, wsi, wsi->role_ops->name);
+
+			lws_wsi_close(wsi, LWS_TO_KILL_ASYNC);
+
+			if (pt->pipe_wsi == wsi)
+				pt->pipe_wsi = NULL;
+		}
+		n++;
+	}
+
+#if LWS_MAX_SMP > 1
+	/* calling pt thread has done its wsi dieback */
+	vh->close_flow_vs_tsi[lws_pthread_self_to_tsi(vh->context)] = 1;
+#endif
+}
+
+
+/*
+ * Mark the vhost as being destroyed, so things trying to use it abort.
+ *
+ * Dispose of the listen socket.
+ */
 
 void
 lws_vhost_destroy1(struct lws_vhost *vh)
@@ -992,6 +1106,10 @@ lws_vhost_destroy1(struct lws_vhost *vh)
 
 	lws_vhost_lock(vh); /* -------------- vh { */
 
+	vh->being_destroyed = 1;
+	lws_dll2_add_tail(&vh->vh_being_destroyed_list,
+			  &context->owner_vh_being_destroyed);
+
 #if defined(LWS_WITH_NETWORK)
 	/*
 	 * PHASE 1: take down or reassign any listen wsi
@@ -1000,12 +1118,13 @@ lws_vhost_destroy1(struct lws_vhost *vh)
 	 * If so we need to hand the listen socket off to one of the others
 	 * so it will remain open.
 	 *
-	 * If not, leave it attached to the closing vhost, the vh being marked
-	 * being_destroyed will defeat any service and it will get closed in
-	 * later phases.
+	 * If not, close the listen socket now.
+	 *
+	 * Either way the listen socket response to the vhost close is
+	 * immediately performed.
 	 */
 
-	if (vh->lserv_wsi)
+	if (vh->lserv_wsi) {
 		lws_start_foreach_ll(struct lws_vhost *, v,
 				     context->vhost_list) {
 			if (v != vh &&
@@ -1021,32 +1140,37 @@ lws_vhost_destroy1(struct lws_vhost *vh)
 				 * swap it to a vhost that has the same
 				 * iface + port, but is not closing.
 				 */
+
+				lwsl_notice("%s: listen skt migrate %s -> %s\n",
+					    __func__, vh->name, v->name);
+
 				assert(v->lserv_wsi == NULL);
 				v->lserv_wsi = vh->lserv_wsi;
-
-				lwsl_notice("%s: listen skt from %s to %s\n",
-					    __func__, vh->name, v->name);
 
 				if (v->lserv_wsi) {
 					lws_vhost_unbind_wsi(vh->lserv_wsi);
 					lws_vhost_bind_wsi(v, v->lserv_wsi);
+					vh->lserv_wsi = NULL;
 				}
 
 				break;
 			}
 		} lws_end_foreach_ll(v, vhost_next);
 
+		if (vh->lserv_wsi) {
+			/*
+			 * we didn't pass it off to another vhost on the same
+			 * listen port... let's close it next time around the
+			 * event loop without waiting for the logical destroy
+			 * of the vhost itself
+			 */
+			lws_set_timeout(vh->lserv_wsi, 1, LWS_TO_KILL_ASYNC);
+			vh->lserv_wsi = NULL;
+		}
+	}
 #endif
 
 	lws_vhost_unlock(vh); /* } vh -------------- */
-
-	/*
-	 * lws_check_deferred_free() will notice there is a vhost that is
-	 * marked for destruction during the next 1s, for all tsi.
-	 *
-	 * It will start closing all wsi on this vhost.  When the last wsi
-	 * is closed, it will trigger lws_vhost_destroy2()
-	 */
 
 out:
 	lws_context_unlock(context); /* --------------------------- context { */
@@ -1064,52 +1188,43 @@ destroy_ais(struct lws_dll2 *d, void *user)
 }
 #endif
 
+/*
+ * Either start close or destroy any wsi on the vhost that belong to this pt,
+ * if SMP mark the vh that we have done it for
+ */
+
 void
 __lws_vhost_destroy2(struct lws_vhost *vh)
 {
 	const struct lws_protocols *protocol = NULL;
 	struct lws_context *context = vh->context;
-	struct lws_deferred_free *df;
 	struct lws wsi;
 	int n;
 
 	vh->being_destroyed = 0;
 
-#if defined(LWS_WITH_CLIENT)
-	/*
-	 * destroy any wsi that are associated with us but have no socket
-	 * (and will otherwise be missed for destruction)
-	 */
-	lws_start_foreach_dll_safe(struct lws_dll2 *, d, d1,
-			      vh->vh_awaiting_socket_owner.head) {
-		struct lws *w =
-			lws_container_of(d, struct lws, vh_awaiting_socket);
+	lwsl_info("%s: %s\n", __func__, vh->name);
 
-		lws_close_free_wsi(w, LWS_CLOSE_STATUS_NOSTATUS,
-				   "awaiting skt");
-
-	} lws_end_foreach_dll_safe(d, d1);
-#endif
-
+#if defined(LWS_WITH_DEPRECATED_THINGS)
 	/*
 	 * destroy any pending timed events
 	 */
 
 	while (vh->timed_vh_protocol_list)
 		__lws_timed_callback_remove(vh, vh->timed_vh_protocol_list);
-
+#endif
 	/*
 	 * let the protocols destroy the per-vhost protocol objects
 	 */
 
 	memset(&wsi, 0, sizeof(wsi));
-	wsi.context = vh->context;
-	wsi.vhost = vh; /* not a real bound wsi */
+	wsi.a.context = vh->context;
+	wsi.a.vhost = vh; /* not a real bound wsi */
 	protocol = vh->protocols;
 	if (protocol && vh->created_vhost_protocols) {
 		n = 0;
 		while (n < vh->count_protocols) {
-			wsi.protocol = protocol;
+			wsi.a.protocol = protocol;
 
 			if (protocol->callback)
 				protocol->callback(&wsi, LWS_CALLBACK_PROTOCOL_DESTROY,
@@ -1132,22 +1247,12 @@ __lws_vhost_destroy2(struct lws_vhost *vh)
 
 	/* add ourselves to the pending destruction list */
 
-	vh->vhost_next = vh->context->vhost_pending_destruction_list;
-	vh->context->vhost_pending_destruction_list = vh;
+	if (vh->context->vhost_pending_destruction_list != vh) {
+		vh->vhost_next = vh->context->vhost_pending_destruction_list;
+		vh->context->vhost_pending_destruction_list = vh;
+	}
 
 	lwsl_info("%s: %p\n", __func__, vh);
-
-	/* if we are still on deferred free list, remove ourselves */
-
-	lws_start_foreach_llp(struct lws_deferred_free **, pdf,
-			      context->deferred_free_list) {
-		if ((*pdf)->payload == vh) {
-			df = *pdf;
-			*pdf = df->next;
-			lws_free(df);
-			break;
-		}
-	} lws_end_foreach_llp(pdf, next);
 
 	/* remove ourselves from the pending destruction list */
 
@@ -1235,109 +1340,72 @@ __lws_vhost_destroy2(struct lws_vhost *vh)
 
 	lwsl_info("  %s: Freeing vhost %p\n", __func__, vh);
 
+	lws_dll2_remove(&vh->vh_being_destroyed_list);
+
 	memset(vh, 0, sizeof(*vh));
 	lws_free(vh);
 }
 
 /*
- * each service thread calls this once a second or so
+ * Starts the vhost destroy process
+ *
+ * Vhosts are not simple to deal with because they are an abstraction that
+ * crosses SMP thread boundaries, a wsi on any pt can bind to any vhost.  If we
+ * want another pt to do something to its wsis safely, we have to asynchronously
+ * ask it to do it.
+ *
+ * In addition, with event libs, closing any handles (which are bound to vhosts
+ * in their wsi) can happens asynchronously, so we can't just linearly do some
+ * cleanup flow and free it in one step.
+ *
+ * The vhost destroy is cut into two pieces:
+ *
+ * 1) dispose of the listen socket, either by passing it on to another vhost
+ *    that was already sharing it, or just closing it.
+ *
+ *    If any wsi bound to the vhost, mark the vhost as in the process of being
+ *    destroyed, triggering each pt to close all wsi bound to the vhost next
+ *    time around the event loop.  Call lws_cancel_service() so all the pts wake
+ *    to deal with this without long poll waits making delays.
+ *
+ * 2) When the number of wsis bound to the vhost reaches zero, do the final
+ *    vhost destroy flow, this can be triggered from any pt.
  */
-
-int
-lws_check_deferred_free(struct lws_context *context, int tsi, int force)
-{
-	struct lws_context_per_thread *pt;
-	int n;
-
-	/*
-	 * If we see a vhost is being destroyed, forcibly close every wsi on
-	 * this tsi associated with this vhost.  That will include the listen
-	 * socket if it is still associated with the closing vhost.
-	 *
-	 * For SMP, we do this once per tsi per destroyed vhost.  The reference
-	 * counting on the vhost as the bound wsi close will notice that there
-	 * are no bound wsi left, that vhost destruction can complete,
-	 * and perform it.  It doesn't matter which service thread does that
-	 * because there is nothing left using the vhost to conflict.
-	 */
-
-	lws_context_lock(context, "check deferred free"); /* ------ context { */
-
-	lws_start_foreach_ll_safe(struct lws_vhost *, v, context->vhost_list, vhost_next) {
-		if (v->being_destroyed
-#if LWS_MAX_SMP > 1
-			&& !v->close_flow_vs_tsi[tsi]
-#endif
-		) {
-
-			pt = &context->pt[tsi];
-
-			lws_pt_lock(pt, "vhost removal"); /* -------------- pt { */
-
-#if LWS_MAX_SMP > 1
-			v->close_flow_vs_tsi[tsi] = 1;
-#endif
-
-			for (n = 0; (unsigned int)n < pt->fds_count; n++) {
-				struct lws *wsi = wsi_from_fd(context, pt->fds[n].fd);
-				if (!wsi)
-					continue;
-				if (wsi->vhost != v)
-					continue;
-
-				__lws_close_free_wsi(wsi,
-					LWS_CLOSE_STATUS_NOSTATUS_CONTEXT_DESTROY,
-					"vh destroy"
-					/* no protocol close */);
-				n--;
-			}
-
-			lws_pt_unlock(pt); /* } pt -------------- */
-		}
-	} lws_end_foreach_ll_safe(v);
-
-
-	lws_context_unlock(context); /* } context ------------------- */
-
-	return 0;
-}
-
 
 void
 lws_vhost_destroy(struct lws_vhost *vh)
 {
-	struct lws_deferred_free *df = lws_malloc(sizeof(*df), "deferred free");
 	struct lws_context *context = vh->context;
-
-	if (!df)
-		return;
 
 	lws_context_lock(context, __func__); /* ------ context { */
 
+	/* dispose of the listen socket one way or another */
 	lws_vhost_destroy1(vh);
 
-	lwsl_debug("%s: count_bound_wsi %d\n", __func__, vh->count_bound_wsi);
+	/* start async closure of all wsi on this pt thread attached to vh */
+	__lws_vhost_destroy_pt_wsi_dieback_start(vh);
 
+	lwsl_notice("%s: count_bound_wsi %d\n", __func__, vh->count_bound_wsi);
+
+	/* if there are none, finalize now since no further chance */
 	if (!vh->count_bound_wsi) {
-		/*
-		 * After listen handoff, there are already no wsi bound to this
-		 * vhost by any pt: nothing can be servicing any wsi belonging
-		 * to it any more.
-		 *
-		 * Finalize the vh destruction immediately
-		 */
 		__lws_vhost_destroy2(vh);
-		lws_free(df);
 
 		goto out;
 	}
 
-	/* part 2 is deferred to allow all the handle closes to complete */
+	/*
+	 * We have some wsi bound to this vhost, we have to wait for these to
+	 * complete close and unbind before progressing the vhost removal.
+	 *
+	 * When the last bound wsi on this vh is destroyed we will auto-call
+	 * __lws_vhost_destroy2() to finalize vh destruction
+	 */
 
-	df->next = vh->context->deferred_free_list;
-	df->deadline = lws_now_secs();
-	df->payload = vh;
-	vh->context->deferred_free_list = df;
+#if LWS_MAX_SMP > 1
+	/* alert other pts they also need to do dieback flow for their wsi */
+	lws_cancel_service(context);
+#endif
 
 out:
 	lws_context_unlock(context); /* } context ------------------- */
@@ -1379,7 +1447,7 @@ lws_context_deprecate(struct lws_context *context, lws_reload_func cb)
 		if (wsi) {
 			wsi->socket_is_permanently_unusable = 1;
 			lws_close_free_wsi(wsi, LWS_CLOSE_STATUS_NOSTATUS, "ctx deprecate");
-			wsi->context->deprecation_pending_listen_close_count++;
+			wsi->a.context->deprecation_pending_listen_close_count++;
 			/*
 			 * other vhosts can share the listen port, they
 			 * point to the same wsi.  So zap those too.
@@ -1406,7 +1474,7 @@ lws_get_vhost_by_name(struct lws_context *context, const char *name)
 {
 	lws_start_foreach_ll(struct lws_vhost *, v,
 			     context->vhost_list) {
-		if (!strcmp(v->name, name))
+		if (!v->being_destroyed && !strcmp(v->name, name))
 			return v;
 
 	} lws_end_foreach_ll(v, vhost_next);
@@ -1423,6 +1491,10 @@ lws_get_vhost_by_name(struct lws_context *context, const char *name)
  *
  * This was originally in the client code but since the list is held on the
  * vhost (to ensure the same client tls ctx is involved) it's cleaner in vhost.c
+ *
+ * ACTIVE_CONNS_QUEUED: We're queued on an active connection, set *nwsi to that
+ * ACTIVE_CONNS_MUXED: We are joining an active mux conn *nwsi as a child
+ * ACTIVE_CONNS_SOLO: There's no existing conn to join either way
  */
 
 int
@@ -1449,10 +1521,10 @@ lws_vhost_active_conns(struct lws *wsi, struct lws **nwsi, const char *adsin)
 	}
 #endif
 
-	lws_vhost_lock(wsi->vhost); /* ----------------------------------- { */
+	lws_vhost_lock(wsi->a.vhost); /* ----------------------------------- { */
 
 	lws_start_foreach_dll_safe(struct lws_dll2 *, d, d1,
-				   wsi->vhost->dll_cli_active_conns_owner.head) {
+				   wsi->a.vhost->dll_cli_active_conns_owner.head) {
 		struct lws *w = lws_container_of(d, struct lws,
 						 dll_cli_active_conns);
 
@@ -1501,14 +1573,14 @@ lws_vhost_active_conns(struct lws *wsi, struct lws **nwsi, const char *adsin)
 
 				if (lwsi_state(w) == LRS_IDLING) {
 					// lwsi_set_state(w, LRS_ESTABLISHED);
-					_lws_generic_transaction_completed_active_conn(&w);
+					_lws_generic_transaction_completed_active_conn(&w, 0);
 				}
 
 				//lwsi_set_state(w, LRS_H1C_ISSUE_HANDSHAKE2);
 
 				wsi->client_h2_alpn = 1;
 				lws_wsi_h2_adopt(w, wsi);
-				lws_vhost_unlock(wsi->vhost); /* } ---------- */
+				lws_vhost_unlock(wsi->a.vhost); /* } ---------- */
 
 				*nwsi = w;
 
@@ -1530,7 +1602,7 @@ lws_vhost_active_conns(struct lws *wsi, struct lws **nwsi, const char *adsin)
 					lws_dll2_remove(&wsi->dll2_cli_txn_queue);
 					wsi->client_mux_substream = 1;
 
-					lws_vhost_unlock(wsi->vhost); /* } ---------- */
+					lws_vhost_unlock(wsi->a.vhost); /* } ---------- */
 
 
 					return ACTIVE_CONNS_MUXED;
@@ -1555,7 +1627,7 @@ lws_vhost_active_conns(struct lws *wsi, struct lws **nwsi, const char *adsin)
 
 			if (lwsi_state(w) == LRS_IDLING) {
 				// lwsi_set_state(w, LRS_ESTABLISHED);
-				_lws_generic_transaction_completed_active_conn(&w);
+				_lws_generic_transaction_completed_active_conn(&w, 0);
 			}
 
 			/*
@@ -1563,7 +1635,7 @@ lws_vhost_active_conns(struct lws *wsi, struct lws **nwsi, const char *adsin)
 			 * and wait for our turn at client transaction_complete
 			 * to take over parsing the rx.
 			 */
-			lws_vhost_unlock(wsi->vhost); /* } ---------- */
+			lws_vhost_unlock(wsi->a.vhost); /* } ---------- */
 
 			*nwsi = w;
 
@@ -1573,7 +1645,7 @@ lws_vhost_active_conns(struct lws *wsi, struct lws **nwsi, const char *adsin)
 	} lws_end_foreach_dll_safe(d, d1);
 
 solo:
-	lws_vhost_unlock(wsi->vhost); /* } ---------------------------------- */
+	lws_vhost_unlock(wsi->a.vhost); /* } ---------------------------------- */
 
 	/* there is nobody already connected in the same way */
 

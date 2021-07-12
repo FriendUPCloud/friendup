@@ -46,6 +46,27 @@ rops_handle_POLLIN_cgi(struct lws_context_per_thread *pt, struct lws *wsi,
 		return LWS_HPI_RET_WSI_ALREADY_DIED;
 	}
 
+	if (!wsi->parent) {
+		lwsl_debug("%s: stdwsi content with parent\n",
+				__func__);
+
+		return LWS_HPI_RET_HANDLED;
+	}
+
+	if (!wsi->parent->http.cgi) {
+		lwsl_notice("%s: stdwsi content with deleted cgi object\n",
+				__func__);
+
+		return LWS_HPI_RET_HANDLED;
+	}
+
+	if (!wsi->parent->http.cgi->lsp) {
+		lwsl_notice("%s: stdwsi content with reaped lsp\n",
+				__func__);
+
+		return LWS_HPI_RET_HANDLED;
+	}
+
 	args.ch = wsi->lsp_channel;
 	args.stdwsi = &wsi->parent->http.cgi->lsp->stdwsi[0];
 	args.hdr_state = wsi->hdr_state;
@@ -53,7 +74,7 @@ rops_handle_POLLIN_cgi(struct lws_context_per_thread *pt, struct lws *wsi,
 	lwsl_debug("CGI LWS_STDOUT %p wsistate 0x%x\n",
 		   wsi->parent, wsi->wsistate);
 
-	if (user_callback_handle_rxflow(wsi->parent->protocol->callback,
+	if (user_callback_handle_rxflow(wsi->parent->a.protocol->callback,
 					wsi->parent, LWS_CALLBACK_CGI,
 					wsi->parent->user_space,
 					(void *)&args, 0))
@@ -92,8 +113,8 @@ lws_cgi_sul_cb(lws_sorted_usec_list_t *sul)
 
 	lws_cgi_kill_terminated(pt);
 
-	__lws_sul_insert(&pt->pt_sul_owner, &pt->sul_cgi,
-			 3 * LWS_US_PER_SEC);
+	__lws_sul_insert_us(&pt->pt_sul_owner[LWSSULLI_MISS_IF_SUSPENDED],
+			    &pt->sul_cgi, 3 * LWS_US_PER_SEC);
 }
 
 static int
@@ -105,10 +126,19 @@ rops_pt_init_destroy_cgi(struct lws_context *context,
 
 		pt->sul_cgi.cb = lws_cgi_sul_cb;
 
-		__lws_sul_insert(&pt->pt_sul_owner, &pt->sul_cgi,
-				 3 * LWS_US_PER_SEC);
+		__lws_sul_insert_us(&pt->pt_sul_owner[LWSSULLI_MISS_IF_SUSPENDED],
+				    &pt->sul_cgi, 3 * LWS_US_PER_SEC);
 	} else
 		lws_dll2_remove(&pt->sul_cgi.list);
+
+	return 0;
+}
+
+static int
+rops_close_role_cgi(struct lws_context_per_thread *pt, struct lws *wsi)
+{
+	if (wsi->parent && wsi->parent->http.cgi && wsi->parent->http.cgi->lsp)
+		lws_spawn_stdwsi_closed(wsi->parent->http.cgi->lsp, wsi);
 
 	return 0;
 }
@@ -131,7 +161,7 @@ const struct lws_role_ops role_ops_cgi = {
 	/* encapsulation_parent */	NULL,
 	/* alpn_negotiated */		NULL,
 	/* close_via_role_protocol */	NULL,
-	/* close_role */		NULL,
+	/* close_role */		rops_close_role_cgi,
 	/* close_kill_connection */	NULL,
 	/* destroy_role */		rops_destroy_role_cgi,
 	/* adoption_bind */		NULL,
