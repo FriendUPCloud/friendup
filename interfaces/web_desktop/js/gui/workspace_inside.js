@@ -3848,23 +3848,26 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				let eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
 				if( eles.length )
 				{
-					// Check if we have a loadable image!
-					let p = self.wallpaperImage.split( ':' )[0];
-					let found = false;
-					for( let a = 0; a < self.icons.length; a++ )
-					{
-						if( self.icons[a].Title == p )
-						{
-							found = true;
-						}
-					}
-					
-					// Load image
 					let ext = false;
-					if( self.wallpaperImage.indexOf( '.' ) > 0 )
+					let found = false;
+					if( self.wallpaperImage )
 					{
-						ext = self.wallpaperImage.split( '.' );
-						ext = ( ( ext[ ext.length - 1 ] ) + "" ).toLowerCase();
+						// Check if we have a loadable image!
+						let p = self.wallpaperImage.split( ':' )[0];
+						for( let a = 0; a < self.icons.length; a++ )
+						{
+							if( self.icons[a].Title == p )
+							{
+								found = true;
+							}
+						}
+					
+						// Load image
+						if( self.wallpaperImage.indexOf( '.' ) > 0 )
+						{
+							ext = self.wallpaperImage.split( '.' );
+							ext = ( ( ext[ ext.length - 1 ] ) + "" ).toLowerCase();
+						}
 					}
 
 					// Remove prev
