@@ -79,8 +79,9 @@ if( $o->group == 'Admin' && $level != 'Admin' )
 if( isset( $obj->Name ) && strlen( $obj->Name ) > 0 )
 {
 	// Support workgroups (that we are member of)!
-	$groupID = '';
-	if( isset( $args->args->Workgroup ) )
+	$groupID = ( isset( $args->args->WorkgroupID ) && $args->args->WorkgroupID ? $args->args->WorkgroupID : '' );
+	
+	if( !$groupID && isset( $args->args->Workgroup ) )
 	{
 		if( $group = $SqlDatabase->FetchObject( '
 			SELECT ug.* FROM FUserGroup ug

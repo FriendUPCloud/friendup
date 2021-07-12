@@ -72,6 +72,14 @@
 				},
 				doLogin: function( e )
 				{
+					if( ge( 'Username' ) || ge( 'Password' ) )
+					{
+						if( !Trim( ge( 'Username' ).value ) )
+							return ge( 'Username' ).focus();
+						if( !Trim( ge( 'Password' ).value ) )
+							return ge( 'Password' ).focus();
+					}
+					
 					/*
 						In password recivery mode we do stuff a bit differently...
 					*/

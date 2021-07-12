@@ -68,41 +68,41 @@ int LogNew( const char* fname, const char* conf, int toFile, int lvl, int flvl, 
 		slg.ff_MaxSize =  (FUQUAD)maxSize;
 	}
 
-		Props *prop = NULL;
-		char *ptr, path[ 1024 ];
-		path[ 0 ] = 0;
+	Props *prop = NULL;
+	char *ptr, path[ 1024 ];
+	path[ 0 ] = 0;
 
-		ptr = getenv("FRIEND_HOME");
-		if( ptr != NULL )
+	ptr = getenv("FRIEND_HOME");
+	if( ptr != NULL )
+	{
+		sprintf( path, "%scfg/cfg.ini", ptr );
+	}
+
+	prop = PropertiesOpen( path );
+	if( prop != NULL)
+	{
+		char *path = NULL;
+		
+		slg.ff_Level = ReadIntNCS( prop, "Log:level", 1 );
+		slg.ff_ArchiveFiles = ReadIntNCS( prop, "Log:archiveFiles", 0 );
+
+		slg.ff_FileLevel = ReadIntNCS( prop, "Log:fileLevel", 1 );
+		slg.ff_Fname = ReadStringNCS( prop, "Log:fileName", (char *)fname );
+		slg.ff_ToConsole = ReadIntNCS( prop, "Log:toConsole", 1 );
+
+		path = ReadStringNCS( prop, "Log:filepath", "log/" );
+		
+		slg.ff_DestinationPathLength = strlen( slg.ff_Fname ) + strlen( path ) + 32;
+		slg.ff_DestinationPath = FCalloc( slg.ff_DestinationPathLength, sizeof(char) );
+		slg.ff_Path = FCalloc( slg.ff_DestinationPathLength, sizeof(char) );
+		
+		if( slg.ff_Path != NULL )
 		{
-			sprintf( path, "%scfg/cfg.ini", ptr );
+			strcpy( slg.ff_Path, path );
+			mkdir( slg.ff_Path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 		}
-
-		prop = PropertiesOpen( path );
-		if( prop != NULL)
-		{
-			char *path = NULL;
-			
-			slg.ff_Level = ReadIntNCS( prop, "Log:level", 1 );
-			slg.ff_ArchiveFiles =  ReadIntNCS( prop, "Log:archiveFiles", 0 );
-
-			slg.ff_FileLevel  = ReadIntNCS( prop, "Log:fileLevel", 1 );
-			slg.ff_Fname = ReadStringNCS( prop, "Log:fileName", (char *)fname );
-			slg.ff_ToConsole = ReadIntNCS( prop, "Log:toConsole", 1 );
-
-			path = ReadStringNCS( prop, "Log:filepath", "log/" );
-			
-			slg.ff_DestinationPathLength = strlen( slg.ff_Fname ) + strlen( path ) + 32;
-			slg.ff_DestinationPath = FCalloc( slg.ff_DestinationPathLength, sizeof(char) );
-			slg.ff_Path = FCalloc( slg.ff_DestinationPathLength, sizeof(char) );
-			
-			if( slg.ff_Path != NULL )
-			{
-				strcpy( slg.ff_Path, path );
-				mkdir( slg.ff_Path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-			}
-			PropertiesClose( prop );
-		}
+		PropertiesClose( prop );
+	}
 
 	if ( pthread_mutex_init(&slg.logMutex, NULL) )
 	{

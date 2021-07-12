@@ -109,6 +109,9 @@ lws_extension_server_handshake(struct lws *wsi, char **p, int budget)
 
 		while (args && *args == ' ')
 			args++;
+		
+		lwsl_debug("%s: extname %s\n", __func__, ext_name );
+		//lwsl_info("%s: extname %s\n", __func__, ext_name);
 
 		/* check a client's extension against our support */
 
@@ -116,7 +119,7 @@ lws_extension_server_handshake(struct lws *wsi, char **p, int budget)
 
 		while (ext && ext->callback) {
 
-			if (strcmp(ext_name, ext->name)) {
+			if ( strcmp(ext_name, ext->name)) {
 				ext++;
 				continue;
 			}

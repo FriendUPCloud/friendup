@@ -144,24 +144,12 @@ void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs, char **m
 					path = (char *)lptr->ti_Data;
 					DEBUG("Mount FS path set '%s'\n", path );
 					break;
-				case FSys_Mount_Server:
-					break;
-				case FSys_Mount_Port:
-					break;
 				case FSys_Mount_Name:
 					name = (char *)lptr->ti_Data;
 					break;
 				case FSys_Mount_SysBase:
 					sb = (SystemBase *)lptr->ti_Data;
 					break;
-				case FSys_Mount_AdminRights:
-					//isAdmin = (FBOOL)lptr->ti_Data;
-					break;
-					/*
-				case FSys_Mount_User:
-					usr = (User *)lptr->ti_Data;
-					break;
-					*/
 			}
 		
 			lptr++;

@@ -350,11 +350,11 @@ UserSession *USMGetSessionsByTimeout( UserSessionManager *smgr, const FULONG tim
 
 	if( ( sent = sb->GetSentinelUser( sb ) ) != NULL )
 	{
-		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "( LoggedTime > '%lld' OR  `UserID` in( SELECT ID FROM `FUser` WHERE `Name`='%s') )", (long long int)(timestamp - timeout), sent->s_ConfigUsername );
+		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), " (LastActionTime>%lld OR `UserID` in( SELECT ID FROM `FUser` WHERE `Name`='%s'))", (long long int)(timestamp - timeout), sent->s_ConfigUsername );
 	}
 	else
 	{
-		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), " ( LoggedTime > '%lld' )", (long long int)(timestamp - timeout) );
+		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), " (LastActionTime>%lld)", (long long int)(timestamp - timeout) );
 	}
 	
 	DEBUG( "[USMGetSessionsByTimeout] Sending query: %s...\n", tmpQuery );
@@ -525,7 +525,7 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 	
 	if( us == NULL )
 	{
-		FERROR("Cannot add NULL session!\n");
+		FERROR("[USMUserSessionAdd] Cannot add NULL session!\n");
 		return NULL;
 	}
 	
@@ -663,12 +663,13 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 		}
 		else
 		{
-			DEBUG("[USMUserSessionAdd] User added to user %s main sessionid %s usptr: %p\n", locusr->u_Name, locusr->u_MainSessionID, us );
+			//DEBUG("[USMUserSessionAdd] User added to user %s main sessionid %s usptr: %p\n", locusr->u_Name, locusr->u_MainSessionID, us );
 			
 			UserAddSession( locusr, us );
 
 			us->us_User = locusr;
 			
+			/*
 			DEBUG("[USMUserSessionAdd] have more sessions: %d mainsessionid: '%s'\n", userHaveMoreSessions, locusr->u_MainSessionID );
 			
 			if( userHaveMoreSessions == FALSE && ( locusr->u_MainSessionID == NULL || ( strlen( locusr->u_MainSessionID ) <= 0 ) ) )
@@ -677,16 +678,17 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 				if( locusr != NULL && locusr->u_IsAPI == FALSE )
 				{
 					// we cannot regenerate session because drives are using this sessionid
-					UserRegenerateSessionID( locusr, NULL );
+					UserRegenerateSessionID( smgr->usm_SB, locusr, NULL );
 				}
 				
 				DEBUG("[USMUserSessionAdd] SessionID will be overwriten\n");
 			}
+			*/
 		}
 	}
 	else
 	{
-		FERROR("Couldnt find user with ID %lu\n", us->us_UserID );
+		FERROR("[USMUserSessionAdd] Couldnt find user with ID %lu\n", us->us_UserID );
 		if( FRIEND_MUTEX_LOCK( &us->us_Mutex ) == 0 )
 		{
 			us->us_InUseCounter--;
@@ -937,11 +939,11 @@ void USMDebugSessions( UserSessionManager *smgr )
 	{
 		if( lses->us_User != NULL )
 		{
-			DEBUG("[USMDebugSessions]----\n USER %s ID %ld\nsessionid %s mastersesid %s device %s\n\n", lses->us_User->u_Name, lses->us_ID, lses->us_SessionID, lses->us_User->u_MainSessionID, lses->us_DeviceIdentity );
+			DEBUG("[USMDebugSessions]----\n USER %s ID %ld\nsessionid %s device %s\n\n", lses->us_User->u_Name, lses->us_ID, lses->us_SessionID, lses->us_DeviceIdentity );
 		}
 		else
 		{
-			DEBUG("[USMDebugSessions]----\n USER %s ID %ld\nsessionid %s mastersesid %s device %s\n\n", "NOUSER!", lses->us_ID, lses->us_SessionID, lses->us_User->u_MainSessionID, lses->us_DeviceIdentity );
+			DEBUG("[USMDebugSessions]----\n USER %s ID %ld\nsessionid %s device %s\n\n", "NOUSER!", lses->us_ID, lses->us_SessionID, lses->us_DeviceIdentity );
 		}
 		lses = (UserSession *)lses->node.mln_Succ;
 	}
@@ -998,7 +1000,7 @@ int USMRemoveOldSessions( void *lsb )
 				actSession = (UserSession *)actSession->node.mln_Succ;
 				
 				// we delete session
-				if( canDelete == TRUE && ( ( acttime -  remSession->us_LoggedTime ) > sb->sl_RemoveSessionsAfterTime ) )
+				if( canDelete == TRUE && ( ( acttime -  remSession->us_LastActionTime ) > sb->sl_RemoveSessionsAfterTime ) )
 				{
 					if( remSession != (UserSession *) smgr->usm_SessionsToBeRemoved )
 					{
@@ -1047,7 +1049,7 @@ int USMRemoveOldSessionsinDB( void *lsb )
 		char temp[ 1024 ];
 	 
 		// we remove old entries older then sl_RemoveSessionsAfterTime (look in systembase.c)
-		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` WHERE LoggedTime>0 AND (%lu-LoggedTime)>%lu", acttime, sb->sl_RemoveSessionsAfterTime );
+		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` WHERE LastActionTime>0 AND (%lu-LastActionTime)>%lu", acttime, sb->sl_RemoveSessionsAfterTime );
 		DEBUG("USMRemoveOldSessionsDB launched SQL: %s\n", temp );
 	 
 		sqllib->QueryWithoutResults( sqllib, temp );
@@ -1096,7 +1098,7 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 			if( usr->u_ID == notification->dn_OwnerID )
 			{
 				char *uname = usr->u_Name;
-				int len = snprintf( tmpmsg, 2048, "{ \"type\":\"msg\", \"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%lu\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\" }}}", device->f_ID, device->f_Name, path, uname  );
+				int len = snprintf( tmpmsg, 2048, "{\"type\":\"msg\",\"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%lu\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\"}}}", device->f_ID, device->f_Name, path, uname  );
 			
 				DEBUG("[USMSendDoorNotification] found ownerid %lu\n", usr->u_ID );
 			
@@ -1232,35 +1234,37 @@ void USMCloseUnusedWebSockets( UserSessionManager *usm )
  * @param sqllib pointer to SQLLibrary. If you want to use it during one sql connection
  * @param userID user ID to which user session will be assigned
  * @param type type of session
- * @return session ID when success, otherwise NULL
+ * @return UserSession when success, otherwise NULL
  */
-char *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, FULONG userID, int type )
+UserSession *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, FULONG userID, int type )
 {
-	char *sessionID = NULL;
+	UserSession *ses = NULL;
 	FBOOL locSQLused = FALSE;
-	SystemBase *sb = NULL;
 
-	
+	SystemBase *sb = (SystemBase *)smgr->usm_SB;
+
 	SQLLibrary *locSqllib = sqllib;
 	if( sqllib == NULL )
 	{
-		sb = (SystemBase *)smgr->usm_SB;
 		locSqllib = sb->LibrarySQLGet( sb );
 		locSQLused = TRUE;
 	}
 	
-	sessionID = SessionIDGenerate( );
-	
-	if( locSqllib != NULL )
+	ses = UserSessionNew( NULL, "tempsession" );
+	if( ses != NULL )
 	{
-		char temp[ 1024 ];
+		ses->us_UserID = userID;
+		if( locSqllib != NULL )
+		{
+			char temp[ 1024 ];
 	 
-		//INSERT INTO `FUserSession` ( `UserID`, `DeviceIdentity`, `SessionID`, `LoggedTime`) VALUES (0, 'tempsession','93623b68df9e390bc89eff7875d6b8407257d60d',0 )
-		snprintf( temp, sizeof(temp), "INSERT INTO `FUserSession` (`UserID`,`DeviceIdentity`,`SessionID`,`LoggedTime`) VALUES (%lu,'tempsession','%s',%lu)", userID, sessionID, time(NULL) );
+			//INSERT INTO `FUserSession` ( `UserID`, `DeviceIdentity`, `SessionID`, `CreationTime`) VALUES (0, 'tempsession','93623b68df9e390bc89eff7875d6b8407257d60d',0 )
+			snprintf( temp, sizeof(temp), "INSERT INTO `FUserSession` (`UserID`,`DeviceIdentity`,`SessionID`,`CreationTime`) VALUES (%lu,'tempsession','%s',%lu)", userID, ses->us_SessionID, time(NULL) );
 
-		DEBUG("USMCreateTemporarySession launched SQL: %s\n", temp );
+			DEBUG("[USMCreateTemporarySession] launched SQL: %s\n", temp );
 	
-		locSqllib->QueryWithoutResults( locSqllib, temp );
+			locSqllib->QueryWithoutResults( locSqllib, temp );
+		}
 	}
 	
 	if( locSQLused == TRUE )
@@ -1268,7 +1272,7 @@ char *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, F
 		sb->LibrarySQLDrop( sb, locSqllib );
 	}
 	
-	return sessionID;
+	return ses;
 }
 
 /**
@@ -1276,9 +1280,9 @@ char *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, F
  *
  * @param smgr pointer to UserSessionManager
  * @param sqllib pointer to SQLLibrary. If you want to use it during one sql connection
- * @param sessionID session which will be deleted
+ * @param ses session which will be deleted
  */
-void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, char *sessionID )
+void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, UserSession *ses )
 {
 	FBOOL locSQLused = FALSE;
 	SystemBase *sb = NULL;
@@ -1295,9 +1299,9 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, c
 	{
 		char temp[ 1024 ];
 	 
-		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` where 'SessionID'='%s' AND 'DeviceIdentity'='tempsession'", sessionID );
+		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` where 'SessionID'='%s' AND 'DeviceIdentity'='tempsession'", ses->us_SessionID );
 
-		DEBUG("USMDestroyTemporarySession launched SQL: %s\n", temp );
+		DEBUG("[USMDestroyTemporarySession] launched SQL: %s\n", temp );
 	
 		locSqllib->QueryWithoutResults( locSqllib, temp );
 	}
@@ -1305,6 +1309,11 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, c
 	if( locSQLused == TRUE )
 	{
 		sb->LibrarySQLDrop( sb, locSqllib );
+	}
+	
+	if( ses != NULL )
+	{
+		UserSessionDelete( ses );
 	}
 }
 
@@ -1351,4 +1360,145 @@ User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus,
 		FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	}
 	return tuser;
+}
+
+
+#define USERSESSION_SIZE (sizeof(WebsocketReqManager) + sizeof(struct UserSession) + sizeof(struct FQueue) )
+
+int countSessionSize( UserSession *us )
+{
+	if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+	{
+		us->us_InUseCounter++;
+		FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+	}
+		
+	int size = USERSESSION_SIZE + 255;	// approx 255 for sessionid
+	FQEntry *fqe = us->us_MsgQueue.fq_First;
+	while( fqe != NULL )
+	{
+		size += fqe->fq_Size + sizeof( FQEntry );
+		fqe = (FQEntry *)fqe->node.mln_Succ;
+	}
+	
+	if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+	{
+		us->us_InUseCounter--;
+		FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+	}
+	
+	return size;
+}
+
+/**
+ * Get statistic about user sessions
+ *
+ * @param usm pointer to UserSessionManager
+ * @param bs pointer to BufString where results will be stored (as string)
+ * @param details set to true if you want to get more details
+ * @return 0 when success otherwise error number
+ */
+
+int USMGetUserSessionStatistic( UserSessionManager *usm, BufString *bs, FBOOL details )
+{
+	int activeSessionCounter = 0;
+	int64_t activeSessionBytes = 0;
+	int nonActiveSessionCounter = 0;
+	int64_t nonActiveSessionBytes = 0;
+	char tmp[ 512 ];
+		
+	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
+	{
+		if( details == TRUE )
+		{
+			UserSession *actSession = usm->usm_Sessions;
+			while( actSession != NULL )
+			{
+				activeSessionCounter++;
+				activeSessionBytes += countSessionSize( actSession );
+				
+				actSession = (UserSession *)actSession->node.mln_Succ;
+			}
+		
+			actSession = usm->usm_SessionsToBeRemoved;
+			while( actSession != NULL )
+			{
+				nonActiveSessionCounter++;
+				nonActiveSessionBytes += countSessionSize( actSession );
+				actSession = (UserSession *)actSession->node.mln_Succ;
+			}
+			FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+			
+			int len = snprintf( tmp, sizeof(tmp), "\"usersessions\":{\"active\":%d,\"activebtes\":%ld,\"toberemoved\":%d,\"toberemovedbytes\":%ld},\"averagesize\":%d", activeSessionCounter, activeSessionBytes, nonActiveSessionCounter, nonActiveSessionBytes, (int)USERSESSION_SIZE );
+			BufStringAddSize( bs, tmp, len );
+		}
+		else
+		{
+			UserSession *actSession = usm->usm_Sessions;
+			while( actSession != NULL )
+			{
+				activeSessionCounter++;
+				actSession = (UserSession *)actSession->node.mln_Succ;
+			}
+		
+			actSession = usm->usm_SessionsToBeRemoved;
+			while( actSession != NULL )
+			{
+				nonActiveSessionCounter++;
+				actSession = (UserSession *)actSession->node.mln_Succ;
+			}
+			FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+		
+			// average size of 
+			
+			int len = snprintf( tmp, sizeof(tmp), "\"usersessions\":{\"active\":%d,\"toberemoved\":%d},\"averagesize\":%d", activeSessionCounter, nonActiveSessionCounter, (int)USERSESSION_SIZE );
+			BufStringAddSize( bs, tmp, len );
+		}
+	}
+	return 0;
+}
+
+/**
+ * Get first UserSession by user name
+ *
+ * @param usm pointer to UserSessionManager
+ * @param name name of the user to which session belong
+ * @param caseSensitive if set to TRUE function will use case sensitive comparation
+ * @return UserSession structure
+ */
+UserSession *USMGetSessionByUserName( UserSessionManager *usm, char *name, FBOOL caseSensitive )
+{
+	// We will take only first session of that user
+	// protect in mutex
+	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
+	{
+		if( caseSensitive == TRUE )
+		{
+			UserSession *us = usm->usm_Sessions;
+			while( us != NULL )
+			{
+				if( us->us_User != NULL  && strcmp( us->us_User->u_Name, name ) == 0 )
+				{
+					FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+					return us;
+				}
+				us = (UserSession *) us->node.mln_Succ;
+			}
+		}
+		else // case sensitive = FALSE
+		{
+			UserSession *us = usm->usm_Sessions;
+			while( us != NULL )
+			{
+				if( us->us_User != NULL  && strcasecmp( us->us_User->u_Name, name ) == 0 )
+				{
+					FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+					return us;
+				}
+				us = (UserSession *) us->node.mln_Succ;
+			}
+		}
+		FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+	}
+	return NULL;
 }

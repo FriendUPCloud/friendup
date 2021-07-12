@@ -44,6 +44,7 @@ i18n_system_disk                       : System disk
 i18n_workspaces                        : Workspaces
 
 i18n_workgroups                        : Workgroups
+i18n_sub_workgroups                    : Subworkgroups
 
 i18n_user_workgroups_empty             : User workgroups empty.
 
@@ -315,7 +316,9 @@ i18n_status                          : Status
 i18n_host_port                       : Server port
 i18n_host_ip                         : Server address or IP
 i18n_hostname                        : Server address
+i18n_workgroup_list                  : Workgroup List
 i18n_workgroup_details               : Workgroup details
+i18n_subworkgroup_details            : Subworkgroup details
 i18n_new_workgroup                   : New workgroup
 i18n_workgroup_name                  : Workgroup name
 i18n_workgroup_parent                : Workgroup parent
@@ -346,4 +349,33 @@ i18n_fail_unmount_more               : Could not unmount device.
 
 i18n_cannot_edit_workgroup_drive     : Cannot edit Workgroup drive
 i18n_workgroup_drive_edit_in         : Edit Workgroup drive in "Workgroups" section
+
+i18n_unlock_workgroup_failed         : Unlock Workgroup Failed
+i18n_cannot_unlock_workgroup         : Cannot unlock Workgroup, remove Subworkgroups first. 
+
+#Liberator related
+
+i18n_liberator_name                  : Name
+i18n_liberator_servers               : Servers
+i18n_liberator_server_details        : Server details
+i18n_liberator_type                  : Type
+i18n_liberator_address               : Address
+i18n_liberator_port                  : Port
+i18n_liberator_admin_username        : Admin username
+i18n_liberator_admin_password        : Admin password
+i18n_liberator_domain                : Domain
+
+i18n_delete_liberator_server         : Delete server
+
+i18n_liberator_application_name       : Application name
+i18n_liberator_application_alias      : Application alias
+i18n_liberator_application_remote_dir : Remote directory
+
+i18n_remove_app                       : Remove app
+i18n_this_will_remove_app             : This will remove the app from the system.
+
+i18n_link_friendrds                   : Friend RDS
+i18n_link_servers                     : Servers
+i18n_link_users                       : Users
+
 

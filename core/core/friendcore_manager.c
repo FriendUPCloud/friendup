@@ -324,6 +324,14 @@ int FriendCoreManagerInit( FriendCoreManager *fcm )
 		Log(FLOG_INFO, "-----WS ka_probes: %d\n", fcm->fcm_WSka_probes );
 		Log(FLOG_INFO, "-----WS ka_interval: %d\n", fcm->fcm_WSka_interval );
 		
+		if( (SLIB->l_HttpCompressionContent & HTTP_COMPRESSION_DEFLATE ) == HTTP_COMPRESSION_DEFLATE )
+		{
+			Log(FLOG_INFO, "-----Http deflate compression: on\n" );
+		}
+		if( (SLIB->l_HttpCompressionContent & HTTP_COMPRESSION_BZIP ) == HTTP_COMPRESSION_BZIP )
+		{
+			Log(FLOG_INFO, "-----Http bzip compression: on\n" );
+		}
 		/*
 		if( SLIB != NULL && SLIB->sl_ActiveAuthModule != NULL )
 		{
@@ -364,7 +372,7 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 {
 	if( fcm->fcm_DisableWS != TRUE )
 		{
-			if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled, 0, fcm->fcm_WSExtendedDebug, fcm->fcm_WSTimeout, fcm->fcm_WSka_time, fcm->fcm_WSka_probes, fcm->fcm_WSka_interval ) ) != NULL )
+			if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled, WEBSOCKET_TYPE_BROWSER, fcm->fcm_WSExtendedDebug, fcm->fcm_WSTimeout, fcm->fcm_WSka_time, fcm->fcm_WSka_probes, fcm->fcm_WSka_interval ) ) != NULL )
 			{
 				WebSocketStart( fcm->fcm_WebSocket );
 			}
@@ -376,7 +384,7 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 			
 			if( fcm->fcm_DisableExternalWS == 0 )
 			{
-				if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, FALSE, 2, fcm->fcm_WSExtendedDebug, fcm->fcm_WSTimeout, fcm->fcm_WSka_time, fcm->fcm_WSka_probes, fcm->fcm_WSka_interval ) ) != NULL )
+				if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, FALSE, WEBSOCKET_TYPE_EXTERNAL, fcm->fcm_WSExtendedDebug, fcm->fcm_WSTimeout, fcm->fcm_WSka_time, fcm->fcm_WSka_probes, fcm->fcm_WSka_interval ) ) != NULL )
 				{
 					WebSocketStart( fcm->fcm_WebSocketNotification );
 				}

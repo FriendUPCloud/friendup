@@ -4256,6 +4256,7 @@ var View = function( args )
 		content = this.removeScriptsFromData( content );
 		if( !this._window )
 			return;
+			
 		let eles = this._window.getElementsByTagName( _viewType );
 		let ifr = false;
 		if( eles[0] )
@@ -4292,6 +4293,9 @@ var View = function( args )
 	{
 		let w = this;
 
+		if( !this._window )
+			return;
+			
 		let eles = this._window.getElementsByTagName( _viewType );
 		let ifr = false;
 		let appended = false;
@@ -4368,6 +4372,9 @@ var View = function( args )
 
 		if( !base )
 			base = '/';
+
+		if( !this._window )
+			return;
 
 		let eles = this._window.getElementsByTagName( _viewType );
 		let ifr = false;
@@ -4888,7 +4895,7 @@ var View = function( args )
 					value = value.split( 'px' ).join( '' );
 					if( !isMobile )
 					{
-						viewdiv.style.left = value.indexOf( '%' ) > 0 ? value : ( value + 'px' );
+						viewdiv.style.left = ( value.indexOf( '%' ) > 0 || value.indexOf( 'vw' ) > 0 ) ? value : ( value + 'px' );
 					}
 				}
 				break;
@@ -4900,7 +4907,7 @@ var View = function( args )
 					value = value.split( 'px' ).join( '' );
 					if( !isMobile )
 					{
-						viewdiv.style.top = value.indexOf( '%' ) > 0 ? value : ( value + 'px' );
+						viewdiv.style.top = ( value.indexOf( '%' ) > 0 || value.indexOf( 'vh' ) > 0 ) ? value : ( value + 'px' );
 					}
 				}
 				break;
