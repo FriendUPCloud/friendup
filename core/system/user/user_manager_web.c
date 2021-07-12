@@ -2458,7 +2458,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		
 		if( sourceID != NULL && contactIDs != NULL && mode != NULL )
 		{
-			if( ( loggedSession->us_User->u_UUID != NULL && strcmp( sourceID, loggedSession->us_User->u_UUID ) == 0 ) || loggedSession->us_User->u_IsAdmin == TRUE )
+			if( (loggedSession->us_User != NULL) && (( loggedSession->us_User->u_UUID != NULL && strcmp( sourceID, loggedSession->us_User->u_UUID ) == 0 ) || loggedSession->us_User->u_IsAdmin == TRUE ) )
 			{
 				if( strcmp( mode, "presence" ) == 0 )
 				{
