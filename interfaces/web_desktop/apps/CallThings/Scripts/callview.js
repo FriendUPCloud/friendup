@@ -41,9 +41,15 @@ CallView.prototype.bind = function() {
 	self.clearBtn = ge( 'btn_clear' );
 	self.closeBtn = ge( 'btn_close' );
 	
+	self.modLib.addEventListener( 'change', e => self.modLibChange( e ));
 	self.callBtn.addEventListener( 'click', e => self.makeCall());
 	self.clearBtn.addEventListener( 'click', e => self.clearInputs());
 	self.closeBtn.addEventListener( 'click', e => self.closeWin());
+}
+
+CallView.prototype.modLibChange = function( e ) {
+	const self = this;
+	console.log( 'modLibChange', [ e, self.modLib, self.modLib.value ]);
 }
 
 CallView.prototype.makeCall = function() {
