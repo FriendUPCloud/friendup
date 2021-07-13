@@ -4287,6 +4287,8 @@ var View = function( args )
 
 		this.isRich = true;
 		this.iframe = ifr;
+		
+		this.initOnMessageCallback();
 	}
 	// Sets rich content in a safe iframe
 	this.setJSXContent = function( content, appName )
@@ -4588,6 +4590,23 @@ var View = function( args )
 			this.sendQueue.push( dataObject );
 		}
 		return true;
+	}
+	// Receive a message specifically for this view.
+	this.initOnMessageCallback = function()
+	{
+		if( this.onMessage && this.iframe && !window.onmessage )
+		{
+			window.onmessage = function( msg ) 
+			{
+				if( msg && msg.isTrusted && msg.data && msg.data.type )
+				{
+					if( self.iframe.contentWindow == msg.source )
+					{
+						self.onMessage( msg.data );
+					}
+				}
+			};
+		}
 	}
 	// Send messages to window that hasn't been sent because iframe was not loaded
 	this.executeSendQueue = function()

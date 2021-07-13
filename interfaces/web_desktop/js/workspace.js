@@ -756,6 +756,42 @@ Workspace = {
 			login: true,
 			theme: 'login'
 		} );
+		lp.onMessage = function( msg )
+		{
+			if( msg && msg.type && msg.src && msg.action == 'openWindow' )
+			{
+				switch( msg.type )
+				{
+					
+					case 'eula':
+						
+						var v = new View( {
+							title: 'EULA',
+							width: 432,
+							height: 480,
+							resize: false
+						} );
+						
+						v.setRichContentUrl( '/' + msg.src );
+						
+						break;
+						
+					case 'privacypolicy':
+						
+						var v = new View( {
+							title: 'PrivacyPolicy',
+							width: 432,
+							height: 480,
+							resize: false
+						} );
+						
+						v.setRichContentUrl( '/' + msg.src );
+						
+						break;
+					
+				}
+			}
+		}
 		lp.setRichContentUrl( '/loginprompt' + allowedHashVars() );
 		Workspace.loginPrompt = lp;
 
