@@ -4287,8 +4287,6 @@ var View = function( args )
 
 		this.isRich = true;
 		this.iframe = ifr;
-		
-		this.initOnMessageCallback();
 	}
 	// Sets rich content in a safe iframe
 	this.setJSXContent = function( content, appName )
@@ -4523,7 +4521,8 @@ var View = function( args )
 		
 		// Add after options set
 		if( !eles[0] ) this._window.appendChild( ifr );
-
+		
+		this.initOnMessageCallback();
 	}
 	
 	this.showBackButton = function( visible, cbk )
