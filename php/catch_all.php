@@ -214,7 +214,7 @@ if( !strstr( $argv[1], '..' ) && $argv[1] != '/' )
 		$dop = array_shift( $dop );
 		if( file_exists( 'php/scripts/' . $dop . '.php' ) )	
 		{
-			require( 'php/scripts/' . array_shift( explode( '/', $argv[1] ) ) . '.php' );
+			require( 'php/scripts/' . $dop . '.php' );
 		}
 	}
 }
