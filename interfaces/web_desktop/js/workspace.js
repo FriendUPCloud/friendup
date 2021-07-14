@@ -743,7 +743,7 @@ Workspace = {
 			return ( vars.length > 0 ? ( '?' + vars.join( '&' ) ) : '' );
 		}
 		
-		var lp = new View( {
+		let lp = new View( {
 			id: 'Login',
 			width: 432,
 			'min-width': 290,
@@ -765,7 +765,7 @@ Workspace = {
 					
 					case 'eula':
 						
-						var v = new View( {
+						let v = new View( {
 							title: 'EULA',
 							width: 432,
 							height: 480,
@@ -778,7 +778,7 @@ Workspace = {
 						
 					case 'privacypolicy':
 						
-						var v = new View( {
+						let v = new View( {
 							title: 'PrivacyPolicy',
 							width: 432,
 							height: 480,
