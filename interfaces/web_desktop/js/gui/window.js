@@ -4490,7 +4490,9 @@ var View = function( args )
 
 				try
 				{
-					ifr.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
+					// TODO: Why we used protocol was for security domains - may be deprecated
+					//ifr.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
+					ifr.contentWindow.postMessage( JSON.stringify( msg ), '*' );
 				}
 				catch(e)
 				{
