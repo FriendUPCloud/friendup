@@ -275,6 +275,16 @@ html > body:not(.Inside):not(.Loading)
 	font-size: 80%;
 }
 
+.WelTab span.Space
+{
+	clear: both;
+	display: block;
+	position: relative;
+	width: 5px;
+	height: 5px;
+	overflow: hidden;
+}
+
 @media (max-width: 460px)
 {
 	html .WelcomeHeading
@@ -299,6 +309,42 @@ html > body:not(.Inside):not(.Loading)
 	}
 	html .BottomInfo
 	{
+		display: none;
+	}
+	
+	html .WelTab span.Space
+	{
+		clear: none;
+		display: inline-block;
+		position: relative;
+		width: 5px;
+		height: 5px;
+		overflow: hidden;
+	}
+	
+	html .WelTabs > .WelTab.Active
+	{
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 50px;
+		text-align: left;
+	}
+	
+	html .WelTabs > .WelTab.Active > span
+	{
+		display: inline-block;
+		width: 32px;
+		height: 32px;
+	}
+	
+	html .WelTabs > .WelTab:not(.Active)
+	{
+		text-align: left;
+		position: relative;
+		width: 100%;
+		height: 50px;
 		display: none;
 	}
 }
