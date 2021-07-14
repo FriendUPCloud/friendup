@@ -281,8 +281,10 @@ html > body:not(.Inside):not(.Loading)
 	display: block;
 	position: relative;
 	width: 5px;
-	height: 5px;
+	background: transparent;
+	height: 0px;
 	overflow: hidden;
+	margin: 0;
 }
 
 @media (max-width: 460px)
