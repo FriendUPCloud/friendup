@@ -191,7 +191,8 @@ label
 }
 
 /* All content in the login window needs to be full size */
-html > body.activated.Login, html > body.activated.Login .ViewContainer, html > body.activated.Login .View
+html > body.activated.Login, html > body.activated.Login .ViewContainer, html > body.activated.Login .View,
+html > body[mobile].Login, html > body[mobile].Login .ViewContainer, html > body[mobile].Login .View
 {
 	position: absolute;
 	top: 0;
