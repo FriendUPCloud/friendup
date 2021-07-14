@@ -219,6 +219,7 @@
 			Application = {
 				tempKeys: genRandomKeys(),
 				showLog: false,
+				inviteUser: false,
 				inviteHash: false,
 				failedAttempt: false,
 				passwordRecoveryMode: false,
@@ -1066,21 +1067,28 @@
 				window.top.location.href = '/register';
 			}
 			
-			function switchForm( verify )
+			function switchForm( form )
 			{
 				if( ge( 'VerifyMode' ) && ge( 'LoginMode'  ) )
 				{
-					if( verify && verify == 'verify' )
+					if( form && form == 'verify' )
 					{
 						ge( 'LoginMode'  ).style.display = 'none';
 						ge( 'VerifyMode' ).style.display = 'block';
 						ge( 'ExpiryMode' ).style.display = 'none';
 					}
-					else if( verify && verify == 'expiry' )
+					else if( form && form == 'expiry' )
 					{
 						ge( 'LoginMode'  ).style.display = 'none';
 						ge( 'VerifyMode' ).style.display = 'none';
 						ge( 'ExpiryMode' ).style.display = 'block';
+					}
+					else if( form && form == 'invite' )
+					{
+						if( Application.inviteUser && ge( 'LoginMode' ) && ge( 'LoginMode' ).getElementsByTagName( 'h1' )[0] )
+						{
+							ge( 'LoginMode' ).getElementsByTagName( 'h1' )[0].innerHTML = 'Sign in and connect to ' + Application.inviteUser;
+						}
 					}
 					else
 					{
@@ -1091,6 +1099,50 @@
 				}
 				
 				return true;
+			}
+			
+			function inviteForm(  )
+			{
+				if( document.location.href && document.location.href.indexOf( 'invite=' ) >= 0 )
+				{
+					var invite = ( window.location.href.match( '[?&]invite=([^&]+)' ) && window.location.href.match( '[?&]invite=([^&]+)' )[1] ? window.location.href.match( '[?&]invite=([^&]+)' )[1] : '' );
+					
+					var json = false; var decoded = false;
+					
+					if( invite )
+					{
+						try
+						{
+							decoded = atob( invite );
+							
+							if( decoded )
+							{
+								json = JSON.parse( decoded );
+							}
+						}
+						catch {  }
+						
+						console.log( json ? json : invite );
+						
+						if( json )
+						{
+							if( json.user )
+							{
+								Application.inviteUser = json.user;
+							}
+							if( json.hash )
+							{
+								Application.inviteHash = json.hash;
+							}
+						}
+						else
+						{
+							Application.inviteHash = invite;
+						}
+					}
+					
+					return switchForm( 'invite' );
+				}
 			}
 			
 			function verifyForm(  )
@@ -1315,9 +1367,7 @@
 				}
 				if( document.location.href && document.location.href.indexOf( 'invite=' ) >= 0 )
 				{
-					Application.inviteHash = ( window.location.href.match( '[?&]invite=([^&]+)' ) && window.location.href.match( '[?&]invite=([^&]+)' )[1] ? window.location.href.match( '[?&]invite=([^&]+)' )[1] : '' );
-					
-					console.log( Application.inviteHash );
+					inviteForm();
 				}
 				
 				if( parent.GetUrlVar( 'username' ) )
