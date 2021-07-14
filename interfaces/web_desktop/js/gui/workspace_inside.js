@@ -392,24 +392,27 @@ var WorkspaceInside = {
 		{
 			return function( data )
 			{
-				try
+				if( self.inviteView && self.inviteView.content.querySelector( '.MulSelect' ) )
 				{
-					let str = data;
-					let ostr = '';
-					if( !str.length )
+					try
+					{
+						let str = data;
+						let ostr = '';
+						if( !str.length )
+						{
+							self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = '<option value="0">' + i18n( 'i18n_no_workgroups' ) + '</option>';
+							return;
+						}
+						for( let a = 0; a < str.length; a++ )
+						{
+							ostr += '<option value="' + str[a].ID + '">' + str[a].Name + '</option>';
+						}
+						self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = ostr;
+					}
+					catch( e )
 					{
 						self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = '<option value="0">' + i18n( 'i18n_no_workgroups' ) + '</option>';
-						return;
 					}
-					for( let a = 0; a < str.length; a++ )
-					{
-						ostr += '<option value="' + str[a].ID + '">' + str[a].Name + '</option>';
-					}
-					self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = ostr;
-				}
-				catch( e )
-				{
-					self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = '<option value="0">' + i18n( 'i18n_no_workgroups' ) + '</option>';
 				}
 			};
 		}
