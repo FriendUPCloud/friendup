@@ -4608,15 +4608,13 @@ var View = function( args )
 			let b = self.iframe.getAttribute( 'sandbox' );
 			window.onmessage = function( msg ) 
 			{
-				console.log( 'FUK' );
-				self.iframe.setAttribute( 'sandbox', b );
-				 
 				if( msg && msg.isTrusted && msg.data && msg.data.type )
 				{
 					if( self.iframe.contentWindow == msg.source )
 					{
 						self.onMessage( msg.data );
-						console.log( 'FOK!' );
+						
+						// Enforce prevailing sandbox attributes
 						self.iframe.setAttribute( 'sandbox', b );
 					}
 				}
