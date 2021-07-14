@@ -154,7 +154,7 @@ html > body:not(.Inside):not(.Loading)
 	box-sizing: border-box;
 	padding: 10px 20px;
 	display: inline-block;
-	min-width: 140px;
+	min-width: 133px;
 	max-width: 140px;
 	height: 121px;
 	text-align: center;
