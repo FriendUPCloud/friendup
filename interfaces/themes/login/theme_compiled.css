@@ -24,7 +24,7 @@ body
 {
 	margin: 0;
 	padding: 0;
-	color: #95A5A6;
+	color: #5f7172;
 	font-family: 'assistant', sans-serif;
 	font-size: 15px;
 }
@@ -48,7 +48,7 @@ body
 { 
 	text-transform: uppercase; 
 	font-size: 0.9em;
-	color: #95A5A6;
+	color: #5f7172;
 }
 
 #LoginElement h1
