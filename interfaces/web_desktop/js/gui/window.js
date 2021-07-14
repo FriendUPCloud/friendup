@@ -4603,10 +4603,13 @@ var View = function( args )
 	// Receive a message specifically for this view.
 	this.initOnMessageCallback = function()
 	{
-		/*if( this.onMessage && this.iframe && !window.onmessage )
+		if( self.onMessage && self.iframe && !window.onmessage )
 		{
+			let b = self.iframe.getAttribute( 'sandbox' );
 			window.onmessage = function( msg ) 
 			{
+				self.setAttribute( 'sandbox', b );
+				 
 				if( msg && msg.isTrusted && msg.data && msg.data.type )
 				{
 					if( self.iframe.contentWindow == msg.source )
@@ -4615,7 +4618,7 @@ var View = function( args )
 					}
 				}
 			};
-		}*/
+		}
 	}
 	// Send messages to window that hasn't been sent because iframe was not loaded
 	this.executeSendQueue = function()
