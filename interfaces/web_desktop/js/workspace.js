@@ -764,30 +764,52 @@ Workspace = {
 				{
 					
 					case 'eula':
-						
+					{
 						let v = new View( {
-							title: 'EULA',
+							title: 'LoginPopup',
 							width: 432,
 							height: 480,
 							resize: false
 						} );
 						
-						v.setRichContentUrl( '/' + msg.src );
-						
-						break;
+						let f = new XMLHttpRequest();
+						f.open( 'POST', '/webclient/templates/EULA.html', true, true );
+						f.onload = function()
+						{
+							let t = this.responseText + '';
+							t += '<hr class="Divider"/>\
+								<div class="ContractAcceptReject">\
+									<button type="button" onclick="CloseView()">I accept</button>\
+								</div>';
+							v.setContent( t );
+						}
+						f.send();
+					}
+					break;
 						
 					case 'privacypolicy':
-						
+					{
 						let v = new View( {
-							title: 'PrivacyPolicy',
+							title: 'LoginPopup',
 							width: 432,
 							height: 480,
 							resize: false
 						} );
 						
-						v.setRichContentUrl( '/' + msg.src );
-						
-						break;
+						let f = new XMLHttpRequest();
+						f.open( 'POST', '/webclient/templates/PrivacyPolicy.html', true, true );
+						f.onload = function()
+						{
+							let t = this.responseText + '';
+							t += '<hr class="Divider"/>\
+								<div class="ContractAcceptReject">\
+									<button type="button" onclick="CloseView()">I accept</button>\
+								</div>';
+							v.setContent( t );
+						}
+						f.send();
+					}
+					break;
 					
 				}
 			}
