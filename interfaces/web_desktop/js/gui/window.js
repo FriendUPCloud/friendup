@@ -4392,7 +4392,7 @@ var View = function( args )
 		ifr.applicationName = self.applicationName;
 		ifr.applicationDisplayName = self.applicationDisplayName;
 		ifr.authId = self.authId;
-
+		
 		let conf = this.flags || {};
 		if( this.flags && this.flags.allowScrolling )
 		{
@@ -4462,6 +4462,14 @@ var View = function( args )
 			}
 			if( !found ) sbx.push( 'allow-popups' );
 			if( typeof friendApp == 'undefined' )  ifr.sandbox = sbx.join( ' ' );
+		}
+		
+		// Special insecure mode (use with caution!)
+		if( this.limitless && this.limitless === true )
+		{
+			let sb = ifr.getAttribute( 'sandbox' );
+			sb += ' allow-top-navigation';
+			ifr.setAttribute( 'sandbox', sb );
 		}
 
 		ifr.onload = function( e )

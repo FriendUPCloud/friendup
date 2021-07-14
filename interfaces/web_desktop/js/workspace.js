@@ -756,6 +756,7 @@ Workspace = {
 			login: true,
 			theme: 'login'
 		} );
+		lp.limitless = true;
 		lp.onMessage = function( msg )
 		{
 			if( msg && msg.type && msg.src && msg.action == 'openWindow' )
