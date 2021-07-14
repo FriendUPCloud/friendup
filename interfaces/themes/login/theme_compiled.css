@@ -191,13 +191,26 @@ label
 }
 
 /* All content in the login window needs to be full size */
-html > body.activated.Login, html > body.activated.Login .ViewContainer, html > body.activated.Login .View
+html > body.activated.Login, html > body.activated.Login .ViewContainer, html > body.activated.Login .View,
+html > body[mobile].Login, html > body[mobile].Login .ViewContainer, html > body[mobile].Login .View
 {
 	position: absolute;
 	top: 0;
 	left: 0;
 	width: 100%;
 	min-height: 100%;
+}
+
+@media screen and (max-device-width: 420px)
+{
+	html > body.Login, html > body.Login .ViewContainer, html > body.Login .View
+	{
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		min-height: 100%;
+	}
 }
 
 /* Classes */
