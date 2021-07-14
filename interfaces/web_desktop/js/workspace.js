@@ -779,7 +779,7 @@ Workspace = {
 							let t = this.responseText + '';
 							t += '<hr class="Divider"/>\
 								<div class="ContractAcceptReject">\
-									<button type="button" onclick="CloseView()">I accept</button>\
+									<button type="button" class="IconSmall fa-remove" onclick="CloseView()"> Close</button>\
 								</div>';
 							v.setContent( t );
 						}
@@ -803,7 +803,7 @@ Workspace = {
 							let t = this.responseText + '';
 							t += '<hr class="Divider"/>\
 								<div class="ContractAcceptReject">\
-									<button type="button" onclick="CloseView()">I accept</button>\
+									<button type="button"  class="IconSmall fa-remove" onclick="CloseView()"> Close</button>\
 								</div>';
 							v.setContent( t );
 						}

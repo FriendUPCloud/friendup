@@ -519,6 +519,10 @@ html body:not([mobile]).Login #Login.View
 	left: calc(50% - 50px);
 	width: 100px;
 	margin-bottom: 30px;
+	background-color: #3e7eb6;
+	text-shadow: none;
+	font-size: 15px;
+	font-weight: bold;
 }
 
 #LoginPopup > div:not(.Content)
