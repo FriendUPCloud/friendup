@@ -190,6 +190,16 @@ label
 	line-height: 30px;
 }
 
+/* All content in the login window needs to be full size */
+html > body.Login, html > body.Login .ViewContainer, html > body.Login .View
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	min-height: 100%;
+}
+
 /* Classes */
 
 .HRow

@@ -2007,7 +2007,7 @@ function CloseView( win, delayed )
 	// Check window
 	CheckScreenTitle();
 	
-	if( isMobile )
+	if( isMobile && Workspace.redrawIcons )
 		Workspace.redrawIcons();
 }
 // Obsolete!!!

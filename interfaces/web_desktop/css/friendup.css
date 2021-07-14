@@ -548,11 +548,12 @@ html body:not([mobile]).Login #Login.View
 	overflow: auto;
 }
 
-body.mobile #LoginPopup
+body[mobile] #LoginPopup
 {
-	left: 10px;
-	top: 10px;
-	width: calc(100% - 20px);
-	height: calc(100% - 20px);
+	left: 0px;
+	top: 0px;
+	width: 100% !important;
+	height: 100% !important;
+	border-radius: 0;
 }
 
