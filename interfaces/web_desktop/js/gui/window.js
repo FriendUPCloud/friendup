@@ -4603,7 +4603,7 @@ var View = function( args )
 	// Receive a message specifically for this view.
 	this.initOnMessageCallback = function()
 	{
-		if( this.onMessage && this.iframe && !window.onmessage )
+		/*if( this.onMessage && this.iframe && !window.onmessage )
 		{
 			window.onmessage = function( msg ) 
 			{
@@ -4615,7 +4615,7 @@ var View = function( args )
 					}
 				}
 			};
-		}
+		}*/
 	}
 	// Send messages to window that hasn't been sent because iframe was not loaded
 	this.executeSendQueue = function()
