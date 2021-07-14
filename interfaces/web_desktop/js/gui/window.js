@@ -4608,7 +4608,7 @@ var View = function( args )
 			let b = self.iframe.getAttribute( 'sandbox' );
 			window.onmessage = function( msg ) 
 			{
-				self.setAttribute( 'sandbox', b );
+				self.iframe.setAttribute( 'sandbox', b );
 				 
 				if( msg && msg.isTrusted && msg.data && msg.data.type )
 				{
