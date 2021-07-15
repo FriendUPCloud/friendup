@@ -267,6 +267,77 @@ if( $args->command )
 			
 			break;
 		
+		case 'sendinvite':
+			
+			$data = new stdClass();
+			$data->app  = 'FriendChat';
+			$data->mode = 'presence';
+			$data->description = 'Update relation between user and other users';
+			
+			if( isset( $args->args->workgroups ) && $args->args->workgroups )
+			{
+				if( $groups = $SqlDatabase->FetchObjects( '
+					SELECT ID, Name FROM FUserGroup 
+					WHERE Type = "Workgroup" AND ID IN ( ' . $args->args->workgroups . ' ) 
+					ORDER BY ID ASC 
+				' ) )
+				{
+					$data->workgroups = $groups;
+				}
+				else
+				{
+					die( 'fail<!--separate-->{"Response":"Could not find these workgroups: ' . $args->args->workgroups . '"}' );
+				}
+			}
+			
+			// TODO: send invite without having to register it, or just use the default invite link ...
+			
+			// So how to find out if user is online ??? and how to send notification ... using friendcore ...
+			
+			// TODO: Make the email sendout first ....
+			
+			$usr = new dbIO( 'FUser' );
+			$usr->ID = $User->ID;
+			if( $usr->Load() )
+			{
+				$data->userid     = $usr->ID;
+				$data->uniqueid   = $usr->UniqueID;
+				$data->username   = $usr->Name;
+				$data->fullname   = $usr->FullName;
+				
+				$f = new dbIO( 'FTinyUrl' );
+				$f->Source = ( $baseUrl . '/system.library/user/addrelationship?data=' . urlencode( json_encode( $data ) ) );
+				if( $f->Load() )
+				{
+					
+					
+					die( 'ok<!--separate-->{"Response":"Invite link found","ID":"' . $f->ID . '","Hash":"' . $f->Hash . '","Link":"' . buildUrl( $f->Hash, $Conf, $ConfShort ) . '","Expire":"' . $f->Expire . '"}' );
+				}
+			
+				$f->UserID = $User->ID;
+			
+				do
+				{
+					$hash = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) );
+					$f->Hash = substr( $hash, 0, 8 );
+				}
+				while( $f->Load() );
+			
+				$f->DateCreated = strtotime( date( 'Y-m-d H:i:s' ) );
+				$f->Save();
+				
+				if( $f->ID > 0 )
+				{
+					
+					
+					die( 'ok<!--separate-->{"Response":"Invite link successfully created","ID":"' . $f->ID . '","Hash":"' . $f->Hash . '","Link":"' . buildUrl( $f->Hash, $Conf, $ConfShort ) . '","Expire":"' . $f->Expire . '"}' );
+				}
+			}
+			
+			die( 'fail<!--separate-->{"Response":"Could not send invite"}' );
+			
+			break;
+		
 	}
 	
 }
