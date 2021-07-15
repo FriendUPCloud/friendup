@@ -671,6 +671,7 @@ function sendFriendMail( $user )
 		$qua->Email    = $user->Email;
 		if( !$qua->Load() )
 		{
+			$qua->Verified = 1;
 			$qua->DateCreated = time();
 		}
 		
