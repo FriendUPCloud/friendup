@@ -1113,16 +1113,21 @@
 					
 					if( invite )
 					{
-						try
+						if( invite.indexOf( 'BASE64' ) >= 0 )
 						{
-							decoded = atob( invite );
-							
-							if( decoded )
+							try
 							{
-								json = JSON.parse( decoded );
+								decoded = atob( invite.split( 'BASE64' )[1] );
+								
+								if( decoded )
+								{
+									json = JSON.parse( decoded );
+								}
 							}
+							catch {  }
+							
+							invite = invite.split( 'BASE64' )[0];
 						}
-						catch {  }
 						
 						console.log( json ? json : invite );
 						
