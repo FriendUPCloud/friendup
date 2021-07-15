@@ -207,9 +207,15 @@ if( isset( $argv ) && isset( $argv[1] ) )
 // If we pass what is allowed, continue.
 if( !strstr( $argv[1], '..' ) && $argv[1] != '/' )
 {
-	if( file_exists( 'php/scripts' ) && is_dir( 'php/scripts' ) && file_exists( 'php/scripts/' . array_shift( explode( '/', $argv[1] ) ) . '.php' ) )
+	
+	if( file_exists( 'php/scripts' ) && is_dir( 'php/scripts' ) )
 	{
-		require( 'php/scripts/' . array_shift( explode( '/', $argv[1] ) ) . '.php' );
+		$dop = explode( '/', $argv[1] );
+		$dop = array_shift( $dop );
+		if( file_exists( 'php/scripts/' . $dop . '.php' ) )	
+		{
+			require( 'php/scripts/' . $dop . '.php' );
+		}
 	}
 }
 
