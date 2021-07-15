@@ -212,7 +212,7 @@ FULONG UMGetAllowedLoginTime( UserManager *um, const char *name );
 //
 //
 
-FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int numberOfFail, time_t *lastLoginTime );
+FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, char *password, int numberOfFail, time_t *lastLoginTime );
 
 //
 //

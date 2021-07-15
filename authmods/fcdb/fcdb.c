@@ -147,7 +147,7 @@ FBOOL CheckPassword( struct AuthMod *l, Http *r __attribute__((unused)), User *u
 		DEBUG("SystemBase ptr %p\n", sb );
 		time_t tm = 0;
 		time_t tm_now = time( NULL );
-		FBOOL access = sb->sl_UserManagerInterface.UMGetLoginPossibilityLastLogins( sb->sl_UM, usr->u_Name, l->am_BlockAccountAttempts, &tm );
+		FBOOL access = sb->sl_UserManagerInterface.UMGetLoginPossibilityLastLogins( sb->sl_UM, usr->u_Name, usr->u_Password, l->am_BlockAccountAttempts, &tm );
 		
 		DEBUG("[FCDB] Authentication, access flag set: %d, time difference between last login attempt and now %lu\n", (int)access, (unsigned long)( tm_now - tm ) );
 		// if last 3 access failed you must wait one hour from last login attempt
@@ -322,7 +322,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 	{
 		time_t tm = 0;
 		time_t tm_now = time( NULL );
-		FBOOL access = sb->sl_UserManagerInterface.UMGetLoginPossibilityLastLogins( sb->sl_UM, name, l->am_BlockAccountAttempts, &tm );
+		FBOOL access = sb->sl_UserManagerInterface.UMGetLoginPossibilityLastLogins( sb->sl_UM, name, pass, l->am_BlockAccountAttempts, &tm );
 		
 		DEBUG("[FCDB] Authentication, access: %d, time difference between last login attempt and now %lu\n", access, ( tm_now - tm ) );
 		// if last 3 access failed you must wait one hour from last login attempt

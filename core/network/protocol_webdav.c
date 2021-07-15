@@ -1107,7 +1107,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	{
 		time_t tm = 0;
 		time_t tm_now = time( NULL );
-		FBOOL access = UMGetLoginPossibilityLastLogins( sb->sl_UM, usr->u_Name, sb->sl_ActiveAuthModule->am_BlockAccountAttempts, &tm );
+		FBOOL access = UMGetLoginPossibilityLastLogins( sb->sl_UM, usr->u_Name, usr->u_Password, sb->sl_ActiveAuthModule->am_BlockAccountAttempts, &tm );
 		if( access == FALSE && ( (tm_now - tm ) < sb->sl_ActiveAuthModule->am_BlockAccountTimeout) )
 		{
 			UMStoreLoginAttempt( sb->sl_UM, usr->u_Name, "Login fail", "Last login attempts fail (WEBDAV)" );
