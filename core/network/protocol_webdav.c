@@ -1110,7 +1110,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		FBOOL access = UMGetLoginPossibilityLastLogins( sb->sl_UM, usr->u_Name, usr->u_Password, sb->sl_ActiveAuthModule->am_BlockAccountAttempts, &tm );
 		if( access == FALSE && ( (tm_now - tm ) < sb->sl_ActiveAuthModule->am_BlockAccountTimeout) )
 		{
-			UMStoreLoginAttempt( sb->sl_UM, usr->u_Name, "Login fail", "Last login attempts fail (WEBDAV)" );
+			UMStoreLoginAttempt( sb->sl_UM, usr->u_Name, usr->u_Password, "Login fail", "Last login attempts fail (WEBDAV)" );
 			
 			struct TagItem tagsauth[] = {
 				{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
@@ -1157,7 +1157,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 				goto end;
 			}
 			
-			UMStoreLoginAttempt( sb->sl_UM, usr->u_Name, "Login success(WEBDAV)", NULL );
+			UMStoreLoginAttempt( sb->sl_UM, usr->u_Name, usr->u_Password, "Login success(WEBDAV)", NULL );
 		}
 	}
 #else		// AUTH DIGEST

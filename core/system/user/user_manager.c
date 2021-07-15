@@ -1161,9 +1161,10 @@ FULONG UMGetAllowedLoginTime( UserManager *um, const char *name )
  * @param info additional information which will be stored in DB
  * @param failReason if field is not equal to NULL then user is not authenticated
  * @param deviceID device id/name
+ * @param password password
  * @return 0 when success otherwise error number
  */
-int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, const char *failReason, char *devicename )
+int UMStoreLoginAttempt( UserManager *um, const char *name, char *password, const char *info, const char *failReason, char *devicename )
 {
 	UserLogin ul;
 	SystemBase *sb = (SystemBase *)um->um_SB;
@@ -1187,6 +1188,7 @@ int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, co
 		ul.ul_Failed = (char *)failReason;
 		ul.ul_LoginTime = time( NULL );
 		ul.ul_Device = devicename;
+		ul.ul_Password = password;
 		
 		sqlLib->Save( sqlLib, UserLoginDesc, &ul );
 		
@@ -1257,6 +1259,7 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, char *
 					break;
 				}
 				
+				DEBUG("row2: %s\n", row[ 2 ] );
 				if( row[ 2 ] != NULL && ( strcmp( row[ 2 ], password) == 0 ) )
 				{
 					goodLogin = TRUE;
@@ -1273,7 +1276,7 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, char *
 			}
 			sqlLib->FreeResult( sqlLib, result );
 			
-			if( i  <  numberOfFail )
+			if( i < numberOfFail )
 			{
 				goodLogin = TRUE;
 			}
