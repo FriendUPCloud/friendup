@@ -827,8 +827,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						if( usr != NULL )
 						{
 							UserDeviceUnMount( l, usr, loggedSession );
-							DEBUG( "[UMWebRequest] UMRemoveUser!!\n" );
-							UMRemoveUser( l->sl_UM, usr, ((SystemBase*)m)->sl_USM);
+							DEBUG( "[UMWebRequest] UMRemoveAndDeleteUser!!\n" );
+							UMRemoveAndDeleteUser( l->sl_UM, usr, ((SystemBase*)m)->sl_USM);
 						}
 
 						sprintf( tmpQuery, "DELETE FROM `FUser` WHERE ID=%lu", id );

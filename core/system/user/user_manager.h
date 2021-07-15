@@ -200,7 +200,13 @@ int  UMAddUser( UserManager *um,  User *usr );
 //
 //
 
-int UMRemoveUser(UserManager *um, User *usr, UserSessionManager *user_session_manager);
+void UMRemoveUserFromList( UserManager *um,  User *usr );
+
+//
+//
+//
+
+int UMRemoveAndDeleteUser(UserManager *um, User *usr, UserSessionManager *user_session_manager);
 
 //
 //

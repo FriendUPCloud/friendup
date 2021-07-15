@@ -83,6 +83,7 @@ void UMDelete( UserManager *smgr )
 		{
 			DEBUG("[UMDelete] Releasing user devices\n");
 			// Remove all mounted devices
+			/*
 			File *lf = remusr->u_MountedDevs;
 			File *remdev = lf;
 			while( lf != NULL )
@@ -101,6 +102,8 @@ void UMDelete( UserManager *smgr )
 			}
 
 			DEBUG("[UMDelete] Free user %s\n", remusr->u_Name );
+			*/
+			UserReleaseDrives( remusr, smgr->um_SB );
 			
 			UserDelete( remusr );
 			
@@ -1041,7 +1044,7 @@ int killUserSession( SystemBase *l, UserSession *ses, FBOOL remove );
  * @param userSessionManager Session manager of the currently running instance
  * @return 0 when success, otherwise error number
  */
-int UMRemoveUser( UserManager *um, User *usr, UserSessionManager *userSessionManager )
+int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userSessionManager )
 {
 	User *userCurrent = NULL; //current element of the linked list, set to the beginning of the list
 	User *userPrevious = NULL; //previous element of the linked list
@@ -1053,7 +1056,7 @@ int UMRemoveUser( UserManager *um, User *usr, UserSessionManager *userSessionMan
 		FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 	}
 	
-	DEBUG("[UMRemoveUser] remove user\n");
+	DEBUG("[UMRemoveAndDeleteUser] remove user\n");
 	
 	FULONG userId = usr->u_ID;
 
@@ -1102,14 +1105,17 @@ int UMRemoveUser( UserManager *um, User *usr, UserSessionManager *userSessionMan
 	}
 	
 	if( found == TRUE )
-	{ //the requested user has been found in the list
+	{
+		//the requested user has been found in the list
 		if( userPrevious )
-		{ //we are in the middle or at the end of the list
+		{
+			//we are in the middle or at the end of the list
 			DEBUG("Deleting from the middle or end of the list\n");
 			userPrevious->node.mln_Succ = userCurrent->node.mln_Succ;
 		}
 		else
-		{ //we are at the very beginning of the list
+		{
+			//we are at the very beginning of the list
 			um->um_Users = (User *)userCurrent->node.mln_Succ; //set the global start pointer of the list
 		}
 		
@@ -1769,4 +1775,42 @@ int UMGetAllActiveWSUsers( UserManager *um, BufString *bs, FBOOL usersOnly )
 		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
 	}
 	return 0;
+}
+
+/**
+ * Remove user from UM list
+ *
+ * @param um pointer to UserManager
+ * @param usr pointer to user which will be removed from list
+ */
+void UMRemoveUserFromList( UserManager *um,  User *usr )
+{
+	if( um->um_Users == NULL )
+	{
+		return;
+	}
+	if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
+	{
+		if( usr == um->um_Users )
+		{
+			
+		}
+		else
+		{
+			User *prevUsr = um->um_Users;
+			User *actUsr = (User *)um->um_Users->node.mln_Succ;
+		
+			while( actUsr != NULL )
+			{
+				if( actUsr == usr )
+				{
+					prevUsr->node.mln_Succ = actUsr->node.mln_Succ;
+					break;
+				}
+				prevUsr = actUsr;
+				actUsr = (User *)actUsr->node.mln_Succ;
+			}
+		}
+		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+	}
 }

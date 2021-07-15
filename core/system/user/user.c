@@ -855,3 +855,32 @@ FBOOL UserIsInGroup( User *usr, FULONG gid )
 	}
 	return FALSE;
 }
+
+/**
+ * Release User drives
+ *
+ * @param usr User
+ * @param lsb pointer to SystemBase
+ */
+void UserReleaseDrives( User* usr, void *lsb )
+{
+	SystemBase *sb = (SystemBase *)lsb;
+	
+	File *lf = usr->u_MountedDevs;
+	File *remdev = lf;
+	while( lf != NULL )
+	{
+		remdev = lf;
+		lf = (File *)lf->node.mln_Succ;
+		
+		if( remdev != NULL )
+		{
+			DeviceRelease( sb->sl_DeviceManager, remdev );
+		
+			FileDelete( remdev );
+			remdev = NULL;
+		}
+	}
+	usr->u_MountedDevs = NULL;
+}
+

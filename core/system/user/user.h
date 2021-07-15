@@ -230,6 +230,12 @@ int UserAddDevice( User *usr, File *file );
 //
 //
 
+void UserReleaseDrives( User *usr, void *sb );
+
+//
+//
+//
+
 File *UserRemDeviceByName( User *usr, const char *name, int *error );
 
 //
