@@ -367,8 +367,8 @@ var WorkspaceInside = {
 		{
 			let v = new View( {
 				title: i18n( 'i18n_invite_friend' ),
-				width: ( version == 1 ? 440 : 700 ),
-				height: ( version == 1 ? 205 : 700 )
+				width: ( version == 1 ? 470 : 700 ),
+				height: ( version == 1 ? 204 : 700 )
 			} );
 			self.inviteView = v;
 			v.onClose = function()
