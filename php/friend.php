@@ -22,6 +22,32 @@ flush();
 
 set_time_limit( 10 ); // Replace this one later in the script if you need to!
 
+// Handle shutdown functions extensively
+$friendShutdownFunctions = array();
+function addShutdownFunction( $func )
+{
+	global $friendShutdownFunctions;
+	$friendShutdownFunctions[] = $func;
+	return $func;
+}
+function removeShutdownFunction( $func )
+{
+	global $friendShutdownFunctions;
+	$out = [];
+	$ret = false;
+	foreach( $friendShutdownFunctions as $k=>$v )
+	{
+		if( $v != $func )
+		{
+			$out[] = $v;
+		}
+		else $ret = true;
+	}
+	$friendShutdownFunctions = $out;
+	return $ret;
+}
+// Done shutdown functions
+
 // Separator aware json encode/decode
 function friend_json_encode( $object )
 {
@@ -561,8 +587,17 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	
 	register_shutdown_function( function()
 	{
-		global $SqlDatabase, $friendHeaders;
+		global $SqlDatabase, $friendHeaders, $friendShutdownFunctions;
 		$SqlDatabase->close();
+		
+		if( count( $friendShutdownFunctions ) )
+		{
+			foreach( $friendShutdownFunctions as $k=>$v )
+			{
+				$friendShutdownFunctions[$k]();
+			}
+		}
+		
 		if( count( $friendHeaders ) > 0 )
 		{
 			// Get current data
