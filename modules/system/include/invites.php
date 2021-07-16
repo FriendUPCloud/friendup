@@ -10,10 +10,13 @@
 *                                                                              *
 *****************************************************************************©*/
 
+global $Config;
+
 error_reporting( E_ALL & ~E_NOTICE );
 ini_set( 'display_errors', 1 );
 
 include_once( 'php/include/helpers.php' );
+include_once( 'php/classes/mailserver.php' );
 
 if( $args->command )
 {
@@ -296,6 +299,10 @@ if( $args->command )
 			
 			// TODO: Make the email sendout first ....
 			
+			
+			
+			
+			
 			$usr = new dbIO( 'FUser' );
 			$usr->ID = $User->ID;
 			if( $usr->Load() )
@@ -304,6 +311,77 @@ if( $args->command )
 				$data->uniqueid   = $usr->UniqueID;
 				$data->username   = $usr->Name;
 				$data->fullname   = $usr->FullName;
+				
+				$msg = ( $usr->FullName . ' invites to you connect here on Friend Sky, a great collaboration platform that\'s free to use' );
+				
+				$online = false;
+			
+				if( FriendCoreQuery( '/system.library/user/activelwsist' ) )
+				{
+					$online = true;
+				}
+				
+				// Send a notification message if online ...
+				
+				if( $online )
+				{
+					if( FriendCoreQuery( '/system.library/user/servermessage', 
+					[
+						'message' => $msg
+					] ) )
+					{
+						// Sent ...
+					}
+				}
+				
+				// Send email ...
+				
+				else
+				{
+					
+					
+					
+					// Set up mail content!
+					$cnt = file_get_contents( "$basePath/mail_templates/base_email_template.html" );
+						
+					$repl = new stdClass(); $baserepl = new stdClass();
+				
+					$repl->baseUrl = $baserepl->baseUrl = $baseUrl;
+					
+					$repl->url = buildUrl( $f->Hash, $Conf, $ConfShort );
+					
+					// TODO: Check this ...
+					$baserepl->unsubscribe = $baseUrl . '/unsubscribe/' . base64_encode( '{"id":"' . $qua->ID . '","email":"' . $qua->Email . '","userid":"' . $qua->UserID . '","username":"' . $qua->Username . '"}' );
+					
+					$repl->sitename = ( isset( $Config[ 'Registration' ][ 'reg_sitename' ] ) ? $Config[ 'Registration' ][ 'reg_sitename' ] : 'Friend Sky' );
+					$repl->user     = $qua->Fullname;
+					$repl->email    = $qua->Email;
+					
+					$baserepl->body = doReplacements( file_get_contents( "$basePath/mail_templates/activate_account_email_template.html"  ), $repl );
+					
+					$cnt = doReplacements( $cnt, $Version == 'v2' ? $baserepl : $repl );
+					
+					
+					
+					// Notify the user!
+					$mail = new Mailer( $Config );
+					$mail->isHTML = true;
+					$mail->debug = 0;
+					$mail->setReplyTo( $Config[ 'FriendMail' ][ 'friendmail_user' ], ( isset( $Config[ 'FriendMail' ][ 'friendmail_name' ] ) ? $Config[ 'FriendMail' ][ 'friendmail_name' ] : 'Friend Software Corporation' ) );
+					$mail->setFrom( $Config[ 'FriendMail' ][ 'friendmail_user' ] );
+					$mail->setSubject( 'Invite Hash' );
+					$mail->addRecipient( $qua->Email, $qua->Fullname );
+					$mail->setContent( utf8_decode( $cnt ) );
+					if( !$mail->send() )
+					{
+						// ...
+					}
+					
+				}
+				
+				
+				// TODO: See when we need this stuff below ...
+				
 				
 				$f = new dbIO( 'FTinyUrl' );
 				$f->Source = ( $baseUrl . '/system.library/user/addrelationship?data=' . urlencode( json_encode( $data ) ) );
@@ -333,6 +411,22 @@ if( $args->command )
 					die( 'ok<!--separate-->{"Response":"Invite link successfully created","ID":"' . $f->ID . '","Hash":"' . $f->Hash . '","Link":"' . buildUrl( $f->Hash, $Conf, $ConfShort ) . '","Expire":"' . $f->Expire . '"}' );
 				}
 			}
+			
+			/* <HR><H2>system.library/user/activelwsist</H2>Get active user list, all users have working websocket connections
+			*
+			* @param sessionid - (required) session id of logged user
+			* @param usersonly - if set to 'true' get unique user list
+			* @return all users in JSON list when success, otherwise error code
+			*/
+			
+			/**
+			*
+			* <HR><H2>system.library/user/servermessage</H2>Send message to all User sessions
+			*
+			* @param message - (required) message which will be delivered
+			* @return fail or ok response
+			*/
+			/// @endcond
 			
 			die( 'fail<!--separate-->{"Response":"Could not send invite"}' );
 			
