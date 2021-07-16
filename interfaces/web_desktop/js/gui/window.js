@@ -4468,6 +4468,7 @@ var View = function( args )
 		if( this.limitless && this.limitless === true )
 		{
 			let sb = ifr.getAttribute( 'sandbox' );
+			if( !sb ) sb = 'allow-scripts';
 			sb += ' allow-top-navigation';
 			ifr.setAttribute( 'sandbox', sb );
 		}
