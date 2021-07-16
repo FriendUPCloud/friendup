@@ -4468,7 +4468,7 @@ var View = function( args )
 		if( this.limitless && this.limitless === true )
 		{
 			let sb = ifr.getAttribute( 'sandbox' );
-			if( !sb ) sb = 'allow-scripts';
+			if( !sb ) sb = 'allow-same-origin allow-forms allow-scripts allow-popups allow-popups-to-escape-sandbox';
 			sb += ' allow-top-navigation';
 			ifr.setAttribute( 'sandbox', sb );
 		}
