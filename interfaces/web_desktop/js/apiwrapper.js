@@ -2997,6 +2997,9 @@ function apiWrapper( event, force )
 							return df( msg.data ? msg.data : ( msg.error ? msg.error : null ) );
 						}
 						return false;
+					case 'invite':
+						Workspace.inviteFriend();
+						break;
 					// Application is asking for Friend credentials
 					case 'friendcredentials':
 						let response = false;

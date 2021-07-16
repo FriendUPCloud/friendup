@@ -125,7 +125,7 @@ CallView.prototype.makeLibraryCall = async function( path, args ) {
 CallView.prototype.makeModuleCall = async function( path, args ) {
 	const self = this;
 	console.log( 'makeModCall', [ path, args ]);
-	const req = new Module( 'system.module' );
+	const req = new Module( 'system' );
 	req.execute( path, args );
 	req.onExecuted = ( r, d ) => {
 		console.log( 'onExecuted', [ r, d ]);

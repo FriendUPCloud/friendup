@@ -61,6 +61,7 @@
 #include <system/sas/sas_web.h>
 #include <system/service/service_manager_web.h>
 #include <strings.h>
+#include <system/externalservice/externalservice_manager_web.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -546,7 +547,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 
 					// TODO: Remove need for existing SessionID (instead generate it if it does not exist)!
 					//sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT us.SessionID, u.Name FROM FUser u left outer join FUserSession us on u.ID=us.UserID WHERE u.ServerToken=\"%s\" LIMIT 1",( char *)sst->hme_Data );
-					sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT us.UserID, u.Name FROM FUser u left outer join FUserSession us on u.ID=us.UserID WHERE u.ServerToken=\"%s\" LIMIT 1",( char *)sst->hme_Data );
+					sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT u.ID, u.Name FROM FUser u left outer join FUserSession us on u.ID=us.UserID WHERE u.ServerToken=\"%s\" LIMIT 1",( char *)sst->hme_Data );
 					
 					void *res = sqllib->Query( sqllib, qery );
 					if( res != NULL )
@@ -559,7 +560,14 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								//snprintf( sessionid, DEFAULT_SESSION_ID_SIZE,"%s", row[ 0 ] );
 								//snprintf( userName, 256, "%s", row[ 1 ] );
 								char *next;
-								uid = strtol ( (char *) row[ 0 ], &next, 10);
+								if( row[ 0 ] != NULL )
+								{
+									uid = strtol ( (char *) row[ 0 ], &next, 0);
+								}
+							}
+							
+							if( row[ 1 ] != NULL )
+							{
 								snprintf( userName, 256, "%s", row[ 1 ] );
 							}
 						}
@@ -588,6 +596,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								UserAddSession( usr, loggedSession );
 							}
 							loggedSession->us_LastActionTime = time( NULL );
+							
+							UGMAssignGroupToUser( l->sl_UGM, usr );
 							
 							USMSessionSaveDB( l->sl_USM, loggedSession );
 							USMUserSessionAddToList( l->sl_USM, loggedSession );
@@ -1582,6 +1592,32 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		
 			char buffer[ 256 ];
 			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
+
+			goto error;
+		}
+	}
+	
+	else if( strcmp( urlpath[ 0 ], "externalservice" ) == 0 )
+	{
+		response = ExternalServiceManagerWebRequest( l, &(urlpath[1]), *request, loggedSession );
+		if( response == NULL )
+		{
+			struct TagItem tags[] = {
+				{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ) },
+				{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ) },
+				{ TAG_DONE, TAG_DONE}
+			};
+		
+			if( response != NULL )
+			{
+				HttpFree( response );
+				FERROR("RESPONSE service\n");
+			}
+			response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
 			HttpAddTextContent( response, buffer );
 
 			goto error;

@@ -1,8 +1,8 @@
 
 	<link rel="stylesheet" href="Progdir:Css/callthings.css"/>
 	
-	<div id="call-things" class="ContentFull LayoutButtonbarBottom">
-		<div class="VContentTop">
+	<div id="call-things" class="ContentFull flexnes nedover">
+		<div id="io">
 			<div class="Padding">
 				library / module
 			</div>
@@ -12,7 +12,7 @@
 						system.library
 					</option>
 					<option value="module">
-						system.module
+						module, system
 					</option>
 				</select>
 			</div>
@@ -38,15 +38,15 @@
 				</div>
 			</div>
 		</div>
-		<div class="VContentBottom Padding BackgroundDefault BorderTop" id="Bottom">
+		<div id="action-bar" class="Padding BackgroundDefault BorderTop">
 			<button id="btn_call" type="button" class="Button fa-check IconSmall">
-				{i18n_call}
+				Call
 			</button>
 			<button id="btn_clear" type="button" class="Button fa-recycle IconSmall">
-				{i18n_clear}
+				Clear
 			</button>
 			<button id="btn_close" type="button" class="Button fa-close IconSmall">
-				{i18n_close}
+				Close
 			</button>
 		</div>
 	</div>
