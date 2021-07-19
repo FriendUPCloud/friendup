@@ -122,6 +122,7 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 {
 	let drop = 0;
 	let self = this;
+
 	// Only if we have bookmarks
 	if( self.flags.bookmarks )
 	{

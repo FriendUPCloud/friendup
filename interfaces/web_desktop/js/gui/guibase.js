@@ -309,6 +309,7 @@ var mousePointer =
 	{
 		if ( !e ) e = window.event;
 		let tar = e.targetReplacement ? e.targetReplacement : ( e.target ? e.target : e.srcElement );
+		
 		if ( this.elements.length )
 		{
 			let dropper = false;
@@ -382,7 +383,7 @@ var mousePointer =
 			if( !dropper )
 			{
 				let z = 0;
-				for ( var a in ars )
+				for ( let a in ars )
 				{
 					let wn = ars[a];
 					let wnZ = parseInt ( wn.style.zIndex );
@@ -546,6 +547,15 @@ var mousePointer =
 			
 			if( dropper )
 			{
+				// Double check that we didn't get to the filebrowser
+				if( dropper.className && dropper.classList.contains( 'View' ) )
+				{
+					if( e.targetReplacement && e.targetReplacement.classList.contains( 'Bookmarks' ) )
+					{
+						dropper = dropper.content.fileBrowser;
+					}
+				}
+			
 				// Assume the drop was handled correctly
 				let dropResult = true;
 				
