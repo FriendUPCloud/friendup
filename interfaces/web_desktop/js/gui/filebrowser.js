@@ -477,6 +477,25 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				let foundElements = [];
 				let foundStructures = [];
 				let removers = [];
+				
+				// Move Home: to the top
+				let temp = [];
+				for( let a = 0; a < msg.list.length; a++ )
+				{
+					if( msg.list[a].Volume == 'Home:' )
+					{
+						temp.push( msg.list[a] );
+						break;
+					}
+				}
+				for( let a = 0; a < msg.list.length; a++ )
+				{
+					if( msg.list[a].Volume != 'Home:' )
+						temp.push( msg.list[a] );
+				}
+				msg.list = temp;
+				// Done moving Home: to the top
+				
 				for( let a = 0; a < eles.length; a++ )
 				{
 					let elFound = false;
