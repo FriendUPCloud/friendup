@@ -547,7 +547,7 @@ cAjax.prototype.send = function( data, callback )
 	if( this.application )
 	{
 		this.deleteVar( 'authid' );
-		this.addVar( 'authid', this.application.authId );
+		this.addVar( 'authid', window.Application ? window.Application.authId : this.application.authId );
 	}
 	
 	
