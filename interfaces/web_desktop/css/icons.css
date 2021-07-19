@@ -42,11 +42,6 @@
 	box-sizing: border-box;
 }
 
-.FileBrowserContainer.FileBrowser.Bookmarks
-{
-	padding-bottom: 100px;
-}
-
 .FileBrowserContainer.FileBrowser.Bookmarks:after
 {
 	content: " ";
