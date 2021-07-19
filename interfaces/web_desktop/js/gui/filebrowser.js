@@ -546,6 +546,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					if( self.flags.bookmarks && msg.list[a].Type && msg.list[a].Type == 'header' && !self.bookmarksHeader )
 					{
 						let d = document.createElement( 'div' );
+						d.classList.add( 'Bookmarks' );
 						self.bookmarksHeader = d;
 						d.innerHTML = '<p class="Layout BorderBottom PaddingTop BorderTop PaddingBottom"><strong>' + i18n( 'i18n_bookmarks' ) + ':</strong></p>';
 						rootElement.appendChild( d );

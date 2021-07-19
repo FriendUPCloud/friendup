@@ -42,6 +42,11 @@
 	box-sizing: border-box;
 }
 
+.FileBrowser > .Bookmarks
+{
+	min-height: 160px;
+}
+
 /* Busy busy */
 
 .IconWindow .Content .DirectoryRefresh
