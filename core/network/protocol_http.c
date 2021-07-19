@@ -644,7 +644,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							}
 							else
 							{
-								Log( FLOG_INFO, "[HTTP] SysWebRequest response: '%.*s'\n", 200, response->http_Content );
+								//Log( FLOG_INFO, "[HTTP] SysWebRequest response: '%.*s'\n", 200, response->content );
 							}
 						}
 						else
@@ -860,10 +860,10 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							char *fs_Name = NULL;
 							char *fs_Type = NULL;
 							char *fs_Path = NULL;
-							char *usrSessionID = NULL;
 							FBOOL sessionIDGenerated = FALSE;
-							
-							sqllib->SNPrintF( sqllib, query, 1024, "SELECT fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID,f.ID FROM FFileShared fs, Filesystem f, FUser u WHERE fs.Hash=\"%s\" AND u.ID = fs.UserID AND f.Name = fs.Devname", path->p_Parts[ 1 ] );
+
+							DEBUG("First call releated to shared files did not return any results\n");
+							sqllib->SNPrintF( sqllib, query, 1024, "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,fs.ID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID where `Hash`='%s'", path->p_Parts[ 1 ] );
 							
 							void *res = sqllib->Query( sqllib, query );
 							if( res != NULL )
@@ -892,76 +892,22 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									{
 										fs_Type = StringDuplicate( row[ 4 ] );
 									}
-									if( row[ 5 ] != NULL && strlen( row[ 5 ] ) > 0 )
-									{
-										usrSessionID = StringDuplicate( row[ 5 ] );
-									}
-									if( row[ 6 ] != NULL )
+									if( row[ 5 ] != NULL )
 									{
 										char *end;
-										fsysID = strtoul( row[ 6 ], &end, 0 );
+										fsysID = strtoul( row[ 5 ], &end, 0 );
 									}
 								}
 								sqllib->FreeResult( sqllib, res );
 							}
-							
-							if( usrSessionID == NULL )// if res == NULL
-							{
-								DEBUG("First call releated to shared files did not return any results\n");
-								sqllib->SNPrintF( sqllib, query, 1024, "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID,f.ID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID inner join FUser u on fs.UserID=u.ID where `Hash`='%s'", path->p_Parts[ 1 ] );
-							
-								res = sqllib->Query( sqllib, query );
-								if( res != NULL )
-								{
-									char **row;
-									if( ( row = sqllib->FetchRow( sqllib, res ) ) )
-									{
-										if( row[ 0 ] != NULL )
-										{
-											fs_Name = StringDuplicate( row[ 0 ] );
-										}
-										if( row[ 1 ] != NULL )
-										{
-											fs_DeviceName = StringDuplicate( row[ 1 ] );
-										}
-										if( row[ 2 ] != NULL )
-										{
-											fs_Path = StringDuplicate( row[ 2 ] );
-										}
-										if( row[ 3 ] != NULL )
-										{
-											char *end;
-											fs_IDUser = strtoul( row[ 3 ], &end, 0 );
-										}
-										if( row[ 4 ] != NULL )
-										{
-											fs_Type = StringDuplicate( row[ 4 ] );
-										}
-										if( row[ 5 ] != NULL && strlen( row[ 5 ] ) > 0 )
-										{
-											usrSessionID = StringDuplicate( row[ 5 ] );
-										}
-										if( row[ 6 ] != NULL )
-										{
-											char *end;
-											fsysID = strtoul( row[ 6 ], &end, 0 );
-										}
-									}
-									sqllib->FreeResult( sqllib, res );
-								}
-							}
-							
+
 							// Immediately drop here..
 							SLIB->LibrarySQLDrop( SLIB, sqllib );
 							sqllib = NULL;
 							
-							// session was not found. Lets generate temporary one
-							if( usrSessionID == NULL )
-							{
-								sessionIDGenerated = TRUE;
-								usrSessionID = USMCreateTemporarySession( SLIB->sl_USM, sqllib, fs_IDUser, 0 );
-							}
+							UserSession *session = USMCreateTemporarySession( SLIB->sl_USM, sqllib, fs_IDUser, 0 );
 
+							Log( FLOG_DEBUG,"Check variables fs_Name: %s fs_DeviceName: %s fs_Path: %s\n", fs_Name, fs_DeviceName, fs_Path );
 							//if( ( fs = sqllib->Load( sqllib, FileSharedTDesc, query, &entries ) ) != NULL )
 							if( fs_Name != NULL && fs_DeviceName != NULL && fs_Path != NULL )
 							{
@@ -975,17 +921,17 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								User *u = UMGetUserByID( SLIB->sl_UM, fs_IDUser );
 								if( u != NULL )
 								{
-									rootDev = GetUserDeviceByFSysUserIDDevName( SLIB->sl_DeviceManager, sqllib, fsysID, fs_IDUser, fs_DeviceName, &error );
-
+									rootDev = UserGetDeviceByName( u, fs_DeviceName );
 								} // if user is not in memory (and his drives), we must mount drives only
-								else
+								
+								if( rootDev == NULL )
 								{
 									struct TagItem tags[] = {
 										{FSys_Mount_Type, (FULONG)fs_Type },
 										{FSys_Mount_Name, (FULONG)fs_DeviceName },
 										{FSys_Mount_UserID, (FULONG)fs_IDUser },
 										{FSys_Mount_Owner, (FULONG)NULL },
-										{FSys_Mount_User_SessionID, (FULONG)usrSessionID },
+										{FSys_Mount_UserSession, (FULONG)session },
 										{TAG_DONE, TAG_DONE}
 									};
 									
@@ -1036,7 +982,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									// there is no need to cache files which are stored on local disk
 									if( tim == 0 ) //|| strcmp( actFS->GetPrefix(), "local" ) )
 									{
-
+										Log( FLOG_DEBUG,"No cache support\n" );
 									}
 									else
 									{
@@ -1121,19 +1067,8 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 										// We need to get the sessionId if we can!
 										// currently from table we read UserID
-										User *tuser = UMGetUserByID( SLIB->sl_UM, fs_IDUser );
 
-										if( tuser != NULL )
-										{
-											char *sess = USMUserGetFirstActiveSessionID( SLIB->sl_USM, tuser );
-
-											if( sess != NULL )
-											{
-												rootDev->f_SessionIDPTR = tuser->u_MainSessionID;
-												DEBUG("[ProtocolHttp] Session %s tusr ptr %p\n", sess, tuser );
-											}
-										}
-
+										FileFillSessionID( rootDev, session );
 
 										if( actFS != NULL )
 										{
@@ -1250,7 +1185,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								// if device was mounted without user (not in memory) it must be removed on the end
 								if( mountedWithoutUser == TRUE )
 								{
-									//DeviceRelease( SLIB->sl_DeviceManager, rootDev );
 									DeviceRelease( SLIB->sl_DeviceManager, rootDev );
 									FileDelete( rootDev );
 								}
@@ -1277,10 +1211,8 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							// if temporary session was generated, we must remove it
 							if( sessionIDGenerated == TRUE )
 							{
-								USMDestroyTemporarySession( SLIB->sl_USM, sqllib, usrSessionID );
+								USMDestroyTemporarySession( SLIB->sl_USM, sqllib, session );
 							}
-							
-							if( usrSessionID != NULL ) FFree( usrSessionID );
 						}
 					}
 

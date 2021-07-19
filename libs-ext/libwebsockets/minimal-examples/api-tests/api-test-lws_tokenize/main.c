@@ -299,7 +299,8 @@ expand:
 	if (total < budget)
 		budget = total;
 
-	memcpy(out + *pos, replace + (*exp_ofs), budget);
+	if (out)
+		memcpy(out + *pos, replace + (*exp_ofs), budget);
 	*exp_ofs += budget;
 	*pos += budget;
 
@@ -354,6 +355,17 @@ int main(int argc, const char **argv)
 			return 1;
 		}
 
+		/* as above, but don't generate output, just find the length */
+
+		lws_strexp_init(&exp, NULL, exp_cb1, NULL, (size_t)-1);
+		n = lws_strexp_expand(&exp, exp_inp1, 28, &used_in, &used_out);
+		if (n != LSTRX_DONE || used_in != 28 || used_out != 39) {
+			lwsl_err("%s: lws_strexp test 2 failed: %d, used_out: %d\n",
+					__func__, n, (int)used_out);
+
+			return 1;
+		}
+
 		p = exp_inp1;
 		in_len = strlen(p);
 		memset(obuf, 0, sizeof(obuf));
@@ -403,6 +415,74 @@ int main(int argc, const char **argv)
 		lwsl_err("%s: lws_strnncpy check failed\n", __func__);
 
 		return 1;
+	}
+
+	/* sanity check lws_nstrstr() */
+
+	{
+		static const char *t1 = "abc123456";
+		const char *mcp;
+
+		mcp = lws_nstrstr(t1, strlen(t1), "abc", 3);
+		if (mcp != t1) {
+			lwsl_err("%s: lws_nstrstr 1 failed\n", __func__);
+			return 1;
+		}
+		mcp = lws_nstrstr(t1, strlen(t1), "def", 3);
+		if (mcp != NULL) {
+			lwsl_err("%s: lws_nstrstr 2 failed\n", __func__);
+			return 1;
+		}
+		mcp = lws_nstrstr(t1, strlen(t1), "456", 3);
+		if (mcp != t1 + 6) {
+			lwsl_err("%s: lws_nstrstr 3 failed: %p\n", __func__, mcp);
+			return 1;
+		}
+		mcp = lws_nstrstr(t1, strlen(t1), "1", 1);
+		if (mcp != t1 + 3) {
+			lwsl_err("%s: lws_nstrstr 4 failed\n", __func__);
+			return 1;
+		}
+		mcp = lws_nstrstr(t1, strlen(t1), "abc1234567", 10);
+		if (mcp != NULL) {
+			lwsl_err("%s: lws_nstrstr 5 failed\n", __func__);
+			return 1;
+		}
+	}
+
+	/* sanity check lws_json_simple_find() */
+
+	{
+		static const char *t1 = "{\"myname1\":true,"
+					 "\"myname2\":\"string\", "
+					 "\"myname3\": 123}";
+		size_t alen;
+		const char *mcp;
+
+		mcp = lws_json_simple_find(t1, strlen(t1), "\"myname1\":", &alen);
+		if (mcp != t1 + 11 || alen != 4) {
+			lwsl_err("%s: lws_json_simple_find 1 failed: (%d) %s\n",
+				 __func__, (int)alen, mcp);
+			return 1;
+		}
+
+		mcp = lws_json_simple_find(t1, strlen(t1), "\"myname2\":", &alen);
+		if (mcp != t1 + 27 || alen != 6) {
+			lwsl_err("%s: lws_json_simple_find 2 failed\n", __func__);
+			return 1;
+		}
+
+		mcp = lws_json_simple_find(t1, strlen(t1), "\"myname3\":", &alen);
+		if (mcp != t1 + 47 || alen != 3) {
+			lwsl_err("%s: lws_json_simple_find 3 failed\n", __func__);
+			return 1;
+		}
+
+		mcp = lws_json_simple_find(t1, strlen(t1), "\"nope\":", &alen);
+		if (mcp != NULL) {
+			lwsl_err("%s: lws_json_simple_find 4 failed\n", __func__);
+			return 1;
+		}
 	}
 
 	p = lws_cmdline_option(argc, argv, "-s");

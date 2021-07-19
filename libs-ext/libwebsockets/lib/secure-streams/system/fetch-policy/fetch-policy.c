@@ -38,20 +38,20 @@ typedef struct ss_fetch_policy {
 
 /* secure streams payload interface */
 
-static int
+static lws_ss_state_return_t
 ss_fetch_policy_rx(void *userobj, const uint8_t *buf, size_t len, int flags)
 {
 	ss_fetch_policy_t *m = (ss_fetch_policy_t *)userobj;
 	struct lws_context *context = (struct lws_context *)m->opaque_data;
 
 	if (flags & LWSSS_FLAG_SOM) {
-		if (lws_ss_policy_parse_begin(context))
-			return 1;
+		if (lws_ss_policy_parse_begin(context, 0))
+			return LWSSSSRET_OK;
 		m->partway = 1;
 	}
 
 	if (len && lws_ss_policy_parse(context, buf, len) < 0)
-		return 1;
+		return LWSSSSRET_OK;
 
 	if (flags & LWSSS_FLAG_EOM)
 		m->partway = 2;
@@ -59,7 +59,7 @@ ss_fetch_policy_rx(void *userobj, const uint8_t *buf, size_t len, int flags)
 	return 0;
 }
 
-static int
+static lws_ss_state_return_t
 ss_fetch_policy_tx(void *userobj, lws_ss_tx_ordinal_t ord, uint8_t *buf,
 		   size_t *len, int *flags)
 {
@@ -77,16 +77,20 @@ policy_set(lws_sorted_usec_list_t *sul)
 	 * ss connection close that was using the vhost from the old policy
 	 */
 
+	lws_ss_destroy(&m->ss);
+
 	if (lws_ss_policy_set(context, "updated"))
 		lwsl_err("%s: policy set failed\n", __func__);
 	else {
 		context->policy_updated = 1;
+#if defined(LWS_WITH_SYS_STATE)
 		lws_state_transition_steps(&context->mgr_system,
 					   LWS_SYSTATE_OPERATIONAL);
+#endif
 	}
 }
 
-static int
+static lws_ss_state_return_t
 ss_fetch_policy_state(void *userobj, void *sh, lws_ss_constate_t state,
 		      lws_ss_tx_ordinal_t ack)
 {

@@ -35,7 +35,6 @@
 #include <core/pid_thread_web.h>
 #include <system/fsys/device_manager_web.h>
 #include <network/mime.h>
-#include <hardware/usb/usb_device_web.h>
 #include <system/fsys/door_notification.h>
 #include <mobile_app/mobile_app.h>
 
@@ -59,7 +58,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	
 	struct TagItem tags[] = {
 		{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicateN( "text/html", 9 ) },
-		{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ) },
+		{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ) },
 		{TAG_DONE, TAG_DONE}
 	};
 	
@@ -80,6 +79,8 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		
 		goto error;
 	}
+	
+	DEBUG("[AdminWebRequest] call: %s\n", urlpath[ 1 ] );
 	
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
@@ -144,7 +145,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 			FCID = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
-		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE && temp != NULL )
+		if( loggedSession->us_User->u_IsAdmin == TRUE && temp != NULL )
 		{
 			BufString *bs = BufStringNew();
 
@@ -218,11 +219,11 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 							char *serverdata = receivedbs->bs_Buffer + (COMM_MSG_HEADER_SIZE*4) + FRIEND_CORE_MANAGER_ID_SIZE;
 							DataForm *locdf = (DataForm *)serverdata;
 							
-							DEBUG("Checking RESPONSE\n");
+							DEBUG("[AdminWebRequest] Checking RESPONSE\n");
 							if( locdf->df_ID == ID_RESP )
 							{
 								serverdata += COMM_MSG_HEADER_SIZE;
-								DEBUG("Response: %s\n", serverdata );
+								DEBUG("[AdminWebRequest] Response: %s\n", serverdata );
 							
 								if( pos == 0 )
 								{
@@ -233,7 +234,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 									size = snprintf( temp, 2048, ",{\"name\":\"%s\",\"id\":\"%s\",\"host\":\"%s\",\"type\":\"fcnode\",\"ping\":%lu,\"status\":%d,\"details\":%s}", actCon->fc_Name, actCon->fc_FCID, actCon->fc_Address, actCon->fc_PINGTime, actCon->fc_Status, serverdata );
 								}
 								
-								DEBUG("TEMPADD: %s\n", temp );
+								DEBUG("[AdminWebRequest] TEMPADD: %s\n", temp );
 								
 								pos++;
 							}
@@ -305,7 +306,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		
 		BufStringAddSize( bs, "ok<!--separate-->[", 18 );
 		
-		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			uiadmin = TRUE;
 		}
@@ -450,7 +451,6 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 							char dictmsgbuf[ 256 ];
 							snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
 							HttpAddTextContent( response, dictmsgbuf );
-							//HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"cannot allocate memory for response!\"}" );
 						}
 						DataFormDelete( recvdf );
 					}
@@ -539,7 +539,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		{
 			msgsize += strlen( msg )+1024;
 		
-			if( usersession == NULL && UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE )
+			if( usersession == NULL && loggedSession->us_User->u_IsAdmin == TRUE )
 			{
 				BufStringAdd( bs, "{\"userlist\":[");
 			
@@ -559,7 +559,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 								{
 									DEBUG("[AdminWebRequest] Going through sessions, device: %s\n", locses->us_DeviceIdentity );
 						
-									if( ( (timestamp - locses->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) )
+									if( ( (timestamp - locses->us_LastActionTime) < l->sl_RemoveSessionsAfterTime ) )
 									{
 										char tmp[ 512 ];
 										int tmpsize = 0;
@@ -603,7 +603,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 			}
 			else	//is admin
 			{
-				DEBUG("Send server msg: usersession %s\n", usersession );
+				DEBUG("[AdminWebRequest] Send server msg: usersession %s\n", usersession );
 				if( usersession != NULL )
 				{
 					BufStringAdd( bs, "{\"userlist\":[");
@@ -623,10 +623,10 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 								UserSession *ls = (UserSession *)usle->us;
 								if( ls != NULL )
 								{
-									DEBUG("Going through all usersessions: %p, compare %s vs %s\n", ls->us_SessionID, usersession, ls->us_SessionID );
+									DEBUG("[AdminWebRequest] Going through all usersessions: %p, compare %s vs %s\n", ls->us_SessionID, usersession, ls->us_SessionID );
 									if( strcmp( usersession, ls->us_SessionID ) == 0 )
 									{
-										DEBUG("Found same session, sending msg\n");
+										DEBUG("[AdminWebRequest] Found same session, sending msg\n");
 										char tmp[ 512 ];
 										int tmpsize = 0;
 						
@@ -704,7 +704,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		
 			Log( FLOG_INFO, "Websocket stopped\n");
 			
-			if( ( l->fcm->fcm_WebSocket = WebSocketNew( l,  l->fcm->fcm_WSPort, l->fcm->fcm_WSSSLEnabled, 0, l->fcm->fcm_WSExtendedDebug ) ) != NULL )
+			if( ( l->fcm->fcm_WebSocket = WebSocketNew( l,  l->fcm->fcm_WSPort, l->fcm->fcm_WSSSLEnabled, 0, l->fcm->fcm_WSExtendedDebug, l->fcm->fcm_WSTimeout, l->fcm->fcm_WSka_time, l->fcm->fcm_WSka_probes, l->fcm->fcm_WSka_interval ) ) != NULL )
 			{
 				WebSocketStart( l->fcm->fcm_WebSocket );
 				Log( FLOG_INFO, "Websocket thread will started\n");
@@ -731,7 +731,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	* @return function return information about uptime ok<!--separate-->{"result":1,"uptime":unixtime_number}
 	*/
 	/// @endcond
-	if( strcmp( urlpath[ 1 ], "uptime" ) == 0 )
+	else if( strcmp( urlpath[ 1 ], "uptime" ) == 0 )
 	{
 		//ok<!--separate-->{"result":1,"uptime":unixtime_number}
 		if( loggedSession->us_User->u_IsAdmin == TRUE )
@@ -750,10 +750,112 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		}
 	}
 	
-		//
-		// function not found
-		//
-		
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/admin/getinfousersessions</H2>Function return information about user sessions
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param details - if "true" then more details will be delivered
+	* @return function return information about user sessions holded by UserSessionManager
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 1 ], "getinfousersessions" ) == 0 )
+	{
+		DEBUG("getinfousersessions\n");
+		//ok<!--separate-->{"result":1,"uptime":unixtime_number}
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
+		{
+			HashmapElement *el = NULL;
+			FBOOL details = FALSE;
+			
+			el = GetHEReq( (*request), "details" );
+			if( el != NULL )
+			{
+				if( el->hme_Data != NULL && strcmp( (char *)el->hme_Data, "true" ) == 0 )
+				{
+					details = TRUE;
+				}
+			}
+			
+			DEBUG("datails: %d\n", details);
+			
+			BufString *bs = BufStringNew();
+			if( bs != NULL )
+			{
+				BufStringAddSize( bs, "ok<!--separate-->{", 18 );
+				USMGetUserSessionStatistic( l->sl_USM, bs, details );
+				BufStringAddSize( bs, "}", 1 );
+				
+				HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
+				
+				bs->bs_Buffer = NULL;
+				*result = 200;
+				
+				BufStringDelete( bs );
+			}
+		}
+		else
+		{
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, dictmsgbuf );
+		}
+	}
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/admin/getinfousers</H2>Function return information about Users
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param details - if "true" then more details will be delivered
+	* @return function return information about user sessions holded by UserSessionManager
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 1 ], "getinfousers" ) == 0 )
+	{
+		//ok<!--separate-->{"result":1,"uptime":unixtime_number}
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
+		{
+			HashmapElement *el = NULL;
+			FBOOL details = FALSE;
+			
+			el = GetHEReq( (*request), "details" );
+			if( el != NULL )
+			{
+				if( el->hme_Data != NULL && strcmp( (char *)el->hme_Data, "true" ) == 0 )
+				{
+					details = TRUE;
+				}
+			}
+			
+			BufString *bs = BufStringNew();
+			if( bs != NULL )
+			{
+				BufStringAddSize( bs, "ok<!--separate-->{", 18 );
+				UMGetUserStatistic( l->sl_UM, bs, details );
+				BufStringAddSize( bs, "}", 1 );
+				HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
+				
+				bs->bs_Buffer = NULL;
+				*result = 200;
+				
+				BufStringDelete( bs );
+			}
+		}
+		else
+		{
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, dictmsgbuf );
+		}
+	}
+	
+	//
+	// function not found
+	//
+	
 	error:
 	
 	return response;

@@ -54,15 +54,18 @@ typedef struct lws_ss_handle {
 	struct lws_sequencer	*seq;	  /**< owning sequencer if any */
 	struct lws		*wsi;	  /**< the stream wsi if any */
 
+#if defined(LWS_WITH_SSPLUGINS)
 	void			*nauthi;  /**< the nauth plugin instance data */
 	void			*sauthi;  /**< the sauth plugin instance data */
+#endif
 
 	lws_ss_metadata_t	*metadata;
 	const lws_ss_policy_t	*rideshare;
 
-	struct lws_ss_handle	*h_sink;  /**< sink we are bound to, or NULL */
-	void 			*sink_obj;/**< sink's private object representing us */
+	//struct lws_ss_handle	*h_sink;  /**< sink we are bound to, or NULL */
+	//void 			*sink_obj;/**< sink's private object representing us */
 
+	lws_sorted_usec_list_t	sul_timeout;
 	lws_sorted_usec_list_t	sul;
 	lws_ss_tx_ordinal_t	txord;
 
@@ -92,10 +95,19 @@ typedef struct lws_ss_handle {
 
 			union {
 				struct { /* LWSSSP_H1 */
+#if defined(WIN32)
+					uint8_t dummy;
+#endif
 				} h1;
 				struct { /* LWSSSP_H2 */
+#if defined(WIN32)
+					uint8_t dummy;
+#endif
 				} h2;
 				struct { /* LWSSSP_WS */
+#if defined(WIN32)
+					uint8_t dummy;
+#endif
 				} ws;
 			} u;
 		} http;
@@ -106,7 +118,17 @@ typedef struct lws_ss_handle {
 			lws_mqtt_topic_elem_t		topic_qos;
 			lws_mqtt_topic_elem_t		sub_top;
 			lws_mqtt_subscribe_param_t 	sub_info;
+			/* allocation that must be destroyed with conn */
+			void				*heap_baggage;
+			const char			*subscribe_to;
+			size_t				subscribe_to_len;
 		} mqtt;
+#endif
+#if defined(LWS_WITH_SYS_SMD)
+		struct {
+			struct lws_smd_peer		*smd_peer;
+			lws_sorted_usec_list_t		sul_write;
+		} smd;
 #endif
 	} u;
 
@@ -115,6 +137,10 @@ typedef struct lws_ss_handle {
 	lws_ss_constate_t	connstate;/**< public connection state */
 	lws_ss_seq_state_t	seqstate; /**< private connection state */
 
+#if defined(LWS_WITH_SERVER)
+	int			txn_resp;
+#endif
+
 	uint16_t		retry;	  /**< retry / backoff tracking */
 	int16_t			temp16;
 
@@ -122,9 +148,12 @@ typedef struct lws_ss_handle {
 	uint8_t			subseq;	  /**< emulate SOM tracking */
 	uint8_t			txn_ok;	  /**< 1 = transaction was OK */
 
+	uint8_t			txn_resp_set:1; /**< user code set one */
+	uint8_t			txn_resp_pending:1; /**< we have yet to send */
 	uint8_t			hanging_som:1;
 	uint8_t			inside_msg:1;
 	uint8_t			being_serialized:1; /* we are not the consumer */
+	uint8_t			destroying:1;
 } lws_ss_handle_t;
 
 /* connection helper that doesn't need to hang around after connection starts */
@@ -132,6 +161,10 @@ typedef struct lws_ss_handle {
 union lws_ss_contemp {
 #if defined(LWS_ROLE_MQTT)
 	lws_mqtt_client_connect_param_t ccp;
+#else
+#if defined(WIN32)
+	uint8_t	dummy;
+#endif
 #endif
 };
 
@@ -209,6 +242,14 @@ typedef struct lws_sspc_metadata {
 	/* the value of length .len is overallocated after this */
 } lws_sspc_metadata_t;
 
+/* state of the upstream proxy onward connection */
+
+enum {
+	LWSSSPC_ONW_NONE,
+	LWSSSPC_ONW_REQ,
+	LWSSSPC_ONW_ONGOING,
+	LWSSSPC_ONW_CONN,
+};
 
 typedef struct lws_sspc_handle {
 	char			rideshare_list[128];
@@ -229,19 +270,79 @@ typedef struct lws_sspc_handle {
 
 	lws_usec_t		us_earliest_write_req;
 
+	unsigned long		writeable_len;
+
 	lws_ss_conn_states_t	state;
+
+	uint32_t		timeout_ms;
+	uint32_t		ord;
 
 	int16_t			temp16;
 
-	uint32_t		ord;
-
 	uint8_t			rideshare_ofs[4];
-	uint8_t			conn_req;
 	uint8_t			rsidx;
 
+	uint8_t			conn_req_state:2;
 	uint8_t			destroying:1;
+	uint8_t			non_wsi:1;
+	uint8_t			ignore_txc:1;
+	uint8_t			pending_timeout_update:1;
+	uint8_t			pending_writeable_len:1;
+	uint8_t			creating_cb_done:1;
 } lws_sspc_handle_t;
 
+typedef struct backoffs {
+	struct backoffs *next;
+	const char *name;
+	lws_retry_bo_t r;
+} backoff_t;
+
+union u {
+	backoff_t *b;
+	lws_ss_x509_t *x;
+	lws_ss_trust_store_t *t;
+	lws_ss_policy_t *p;
+};
+
+enum {
+	LTY_BACKOFF,
+	LTY_X509,
+	LTY_TRUSTSTORE,
+	LTY_POLICY,
+
+	_LTY_COUNT /* always last */
+};
+
+
+struct policy_cb_args {
+	struct lejp_ctx jctx;
+	struct lws_context *context;
+	struct lwsac *ac;
+
+	const char *socks5_proxy;
+
+	struct lws_b64state b64;
+
+	union u heads[_LTY_COUNT];
+	union u curr[_LTY_COUNT];
+
+	uint8_t *p;
+
+	int count;
+};
+
+#if defined(LWS_WITH_SYS_SMD)
+extern const lws_ss_policy_t pol_smd;
+#endif
+
+
+/*
+ * returns one of
+ *
+ * 	LWSSSSRET_OK
+ *	LWSSSSRET_DISCONNECT_ME
+ *	LWSSSSRET_DESTROY_ME
+ */
 int
 lws_ss_deserialize_parse(struct lws_ss_serialization_parser *par,
 			 struct lws_context *context,
@@ -272,27 +373,21 @@ lws_ss_destroy_dll(struct lws_dll2 *d, void *user);
 int
 lws_sspc_destroy_dll(struct lws_dll2 *d, void *user);
 
-
-int
-lws_ss_policy_parse_begin(struct lws_context *context);
-
-int
-lws_ss_policy_parse(struct lws_context *context, const uint8_t *buf, size_t len);
-
 int
 lws_ss_policy_set(struct lws_context *context, const char *name);
 
 int
-lws_ss_policy_parse_abandon(struct lws_context *context);
-
-int
 lws_ss_sys_fetch_policy(struct lws_context *context);
 
-int
+lws_ss_state_return_t
 lws_ss_event_helper(lws_ss_handle_t *h, lws_ss_constate_t cs);
 
-int
+lws_ss_state_return_t
 lws_ss_backoff(lws_ss_handle_t *h);
+
+int
+_lws_ss_handle_state_ret(lws_ss_state_return_t r, struct lws *wsi,
+			 lws_ss_handle_t **ph);
 
 int
 lws_ss_set_timeout_us(lws_ss_handle_t *h, lws_usec_t us);
@@ -318,6 +413,22 @@ int
 lws_ss_exp_cb_metadata(void *priv, const char *name, char *out, size_t *pos,
 			size_t olen, size_t *exp_ofs);
 
+int
+_lws_ss_client_connect(lws_ss_handle_t *h, int is_retry);
+
+struct lws_vhost *
+lws_ss_policy_ref_trust_store(struct lws_context *context,
+			      const lws_ss_policy_t *pol, char doref);
+
+#if defined(LWS_WITH_SECURE_STREAMS_STATIC_POLICY_ONLY)
+int
+lws_ss_policy_unref_trust_store(struct lws_context *context,
+				const lws_ss_policy_t *pol);
+#endif
+
+int
+lws_ss_sys_cpd(struct lws_context *cx);
+
 typedef int (* const secstream_protocol_connect_munge_t)(lws_ss_handle_t *h,
 		char *buf, size_t len, struct lws_client_connect_info *i,
 		union lws_ss_contemp *ct);
@@ -329,19 +440,21 @@ typedef int (* const secstream_protocol_get_txcr_t)(lws_ss_handle_t *h);
 struct ss_pcols {
 	const char					*name;
 	const char					*alpn;
-	const char					*protocol_name;
-	const secstream_protocol_connect_munge_t	munge;
-	const secstream_protocol_add_txcr_t		tx_cr_add;
-	const secstream_protocol_get_txcr_t		tx_cr_est;
+	const struct lws_protocols			*protocol;
+	secstream_protocol_connect_munge_t		munge;
+	secstream_protocol_add_txcr_t			tx_cr_add;
+	secstream_protocol_get_txcr_t			tx_cr_est;
 };
 
 extern const struct ss_pcols ss_pcol_h1;
 extern const struct ss_pcols ss_pcol_h2;
 extern const struct ss_pcols ss_pcol_ws;
 extern const struct ss_pcols ss_pcol_mqtt;
+extern const struct ss_pcols ss_pcol_raw;
 
 extern const struct lws_protocols protocol_secstream_h1;
 extern const struct lws_protocols protocol_secstream_h2;
 extern const struct lws_protocols protocol_secstream_ws;
 extern const struct lws_protocols protocol_secstream_mqtt;
+extern const struct lws_protocols protocol_secstream_raw;
 

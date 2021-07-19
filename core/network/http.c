@@ -2484,19 +2484,25 @@ unsigned char *HttpBuild( Http* http )
 						char tmp[ 128 ];
 						int len = snprintf( tmp, 128, "%s: %ld", HEADERS[ HTTP_HEADER_CONTENT_LENGTH ], compressedLength );
 						memcpy( contentLengthPosition, tmp, len );
-						if( contentLengthPosition[ len ] != '\r' ){ contentLengthPosition[ len ] = ' '; printf("HERE!\n"); }
+						if( contentLengthPosition[ len ] != '\r' )
+						{
+							contentLengthPosition[ len ] = ' ';
+							// printf("HERE!\n"); 
+						}
 						
+						/*
 						int j;
 						for( j=0 ; j < len+5 ; j++ )
 						{
 							if( contentLengthPosition[ j ] == '\r' ){ printf("R\n"); }
 							if( contentLengthPosition[ j ] == '\n' ){ printf("N\n"); }
 						}
+						*/
 
 						size -= http->http_SizeOfContent;
 						size += compressedLength;
 					}
-					unsigned char *end = strstr( (char *)response, "\r\n\r\n" );
+					unsigned char *end = (unsigned char *)strstr( (const char *)response, "\r\n\r\n" );
 					//printf("\n\n\nRESPONSE: %.*s\n", (int)(end-response), response );
 				}
 			}
@@ -2644,7 +2650,7 @@ char *HttpBuildHeader( Http* http )
 	}
 		
 	// Store the response pointer, so that we can free it later
-	http->http_Response = response;
+	http->http_Response = (unsigned char *)response;
 	http->http_ResponseLength = size;
 
 	return response;
@@ -2685,7 +2691,7 @@ void HttpWriteAndFree( Http* http, Socket *sock )
 			if( HttpBuild( http ) != NULL )
 			{
 				// Write to the socket!
-				sock->s_Interface->SocketWrite( sock, http->http_Response, http->http_ResponseLength );
+				sock->s_Interface->SocketWrite( sock, (char *)http->http_Response, http->http_ResponseLength );
 			}
 			else
 			{
@@ -2741,7 +2747,7 @@ void HttpWrite( Http* http, Socket *sock )
 		else
 		{
 			//DEBUG("response\n");
-			ret = sock->s_Interface->SocketWrite( sock, http->http_Response, http->http_ResponseLength );
+			ret = sock->s_Interface->SocketWrite( sock, (char *)http->http_Response, http->http_ResponseLength );
 		}
 	}
 

@@ -28,6 +28,7 @@
 #include "lws_config.h"
 #include "lws_config_private.h"
 
+
 #if defined(LWS_WITH_CGI) && defined(LWS_HAVE_VFORK) && \
     !defined(NO_GNU_SOURCE_THIS_TIME) && !defined(_GNU_SOURCE)
  #define  _GNU_SOURCE
@@ -46,6 +47,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <stdarg.h>
+#include <errno.h>
 
 #ifdef LWS_HAVE_INTTYPES_H
 #include <inttypes.h>
@@ -60,8 +62,14 @@
  #include <sys/stat.h>
 #endif
 
-#if LWS_MAX_SMP > 1
+#if LWS_MAX_SMP > 1 || defined(LWS_WITH_SYS_SMD)
+ /* https://stackoverflow.com/questions/33557506/timespec-redefinition-error */
+ #define HAVE_STRUCT_TIMESPEC
  #include <pthread.h>
+#else
+ #if !defined(pid_t) && defined(WIN32)
+ #define pid_t int
+ #endif
 #endif
 
 #ifndef LWS_DEF_HEADER_LEN
@@ -81,9 +89,6 @@
 #endif
 #ifndef SPEC_LATEST_SUPPORTED
 #define SPEC_LATEST_SUPPORTED 13
-#endif
-#ifndef AWAITING_TIMEOUT
-#define AWAITING_TIMEOUT 20
 #endif
 #ifndef CIPHERS_LIST_STRING
 #define CIPHERS_LIST_STRING "DEFAULT"
@@ -105,6 +110,7 @@
 #ifndef LWS_HAVE_STRERROR
  #define strerror(x) ""
 #endif
+
 
  /*
   *
@@ -134,6 +140,7 @@
 
 #include "libwebsockets.h"
 
+
 /*
  * Generic bidi tx credit management
  */
@@ -148,8 +155,19 @@ struct lws_tx_credit {
 	uint8_t			manual;
 };
 
+#ifdef LWS_WITH_IPV6
+#if defined(WIN32) || defined(_WIN32)
+#include <iphlpapi.h>
+#else
+#include <net/if.h>
+#endif
+#endif
 
+#undef X509_NAME
+
+#if defined(LWS_WITH_TLS)
 #include "private-lib-tls.h"
+#endif
 
 #if defined(WIN32) || defined(_WIN32)
 	 // Visual studio older than 2015 and WIN_CE has only _stricmp
@@ -171,7 +189,7 @@ struct lws_tx_credit {
 extern "C" {
 #endif
 
-
+#define lws_safe_modulo(_a, _b) ((_b) ? ((_a) % (_b)) : 0)
 
 #if defined(__clang__)
 #define lws_memory_barrier() __sync_synchronize()
@@ -194,43 +212,16 @@ struct lws_ring {
 struct lws_protocols;
 struct lws;
 
-#if defined(LWS_WITH_NETWORK)
+#if defined(LWS_WITH_NETWORK) /* network */
 #include "private-lib-event-libs.h"
 
 #if defined(LWS_WITH_SECURE_STREAMS)
 #include "private-lib-secure-streams.h"
 #endif
 
-struct lws_io_watcher {
-#ifdef LWS_WITH_LIBEV
-	struct lws_io_watcher_libev ev;
+#if defined(LWS_WITH_SYS_SMD)
+#include "private-lib-system-smd.h"
 #endif
-#ifdef LWS_WITH_LIBUV
-	struct lws_io_watcher_libuv uv;
-#endif
-#ifdef LWS_WITH_LIBEVENT
-	struct lws_io_watcher_libevent event;
-#endif
-#ifdef LWS_WITH_GLIB
-	struct lws_io_watcher_glib glib;
-#endif
-	struct lws_context *context;
-
-	uint8_t actual_events;
-};
-
-struct lws_signal_watcher {
-#ifdef LWS_WITH_LIBEV
-	struct lws_signal_watcher_libev ev;
-#endif
-#ifdef LWS_WITH_LIBUV
-	struct lws_signal_watcher_libuv uv;
-#endif
-#ifdef LWS_WITH_LIBEVENT
-	struct lws_signal_watcher_libevent event;
-#endif
-	struct lws_context *context;
-};
 
 struct lws_foreign_thread_pollfd {
 	struct lws_foreign_thread_pollfd *next;
@@ -238,41 +229,11 @@ struct lws_foreign_thread_pollfd {
 	int _and;
 	int _or;
 };
-#endif
-
-#if LWS_MAX_SMP > 1
-
-struct lws_mutex_refcount {
-	pthread_mutex_t lock;
-	pthread_t lock_owner;
-	const char *last_lock_reason;
-	char lock_depth;
-	char metadata;
-};
-
-void
-lws_mutex_refcount_init(struct lws_mutex_refcount *mr);
-
-void
-lws_mutex_refcount_destroy(struct lws_mutex_refcount *mr);
-
-void
-lws_mutex_refcount_lock(struct lws_mutex_refcount *mr, const char *reason);
-
-void
-lws_mutex_refcount_unlock(struct lws_mutex_refcount *mr);
-#endif
+#endif /* network */
 
 #if defined(LWS_WITH_NETWORK)
 #include "private-lib-core-net.h"
 #endif
-
-struct lws_deferred_free
-{
-	struct lws_deferred_free *next;
-	time_t deadline;
-	void *payload;
-};
 
 struct lws_system_blob {
 	union {
@@ -315,58 +276,74 @@ struct lws_context {
 
 	lws_system_blob_t system_blobs[LWS_SYSBLOB_TYPE_COUNT];
 
+#if defined(LWS_WITH_SYS_SMD)
+	lws_smd_t		smd;
+#endif
+
 #if defined(LWS_WITH_NETWORK)
-	struct lws_context_per_thread pt[LWS_MAX_SMP];
-	lws_retry_bo_t	default_retry;
-	lws_sorted_usec_list_t sul_system_state;
+	struct lws_context_per_thread		pt[LWS_MAX_SMP];
+	lws_retry_bo_t				default_retry;
+	lws_sorted_usec_list_t			sul_system_state;
 
 #if defined(LWS_PLAT_FREERTOS)
-	struct sockaddr_in frt_pipe_si;
+	struct sockaddr_in			frt_pipe_si;
 #endif
 
 #if defined(LWS_WITH_HTTP2)
-	struct http2_settings set;
+	struct http2_settings			set;
 #endif
 
 #if defined(LWS_WITH_SERVER_STATUS)
-	struct lws_conn_stats conn_stats;
+	struct lws_conn_stats			conn_stats;
 #endif
 #if LWS_MAX_SMP > 1
-	struct lws_mutex_refcount mr;
+	struct lws_mutex_refcount		mr;
 #endif
 
 #if defined(LWS_WITH_NETWORK)
-#if defined(LWS_WITH_LIBEV)
-	struct lws_context_eventlibs_libev ev;
-#endif
-#if defined(LWS_WITH_LIBUV)
-	struct lws_context_eventlibs_libuv uv;
-#endif
-#if defined(LWS_WITH_LIBEVENT)
-	struct lws_context_eventlibs_libevent event;
-#endif
-#if defined(LWS_WITH_GLIB)
-	struct lws_context_eventlibs_glib glib;
+
+/*
+ * LWS_WITH_NETWORK =====>
+ */
+
+	lws_dll2_owner_t		owner_vh_being_destroyed;
+
+#if defined(LWS_WITH_EVENT_LIBS)
+	struct lws_plugin		*evlib_plugin_list;
+	void				*evlib_ctx; /* overallocated */
 #endif
 
 #if defined(LWS_WITH_TLS)
-	struct lws_context_tls tls;
+	struct lws_context_tls		tls;
+#endif
+#if defined(LWS_WITH_DRIVERS)
+	lws_netdevs_t			netdevs;
 #endif
 
 #if defined(LWS_WITH_SYS_ASYNC_DNS)
-	lws_async_dns_t		async_dns;
+	lws_async_dns_t			async_dns;
 #endif
 
-#if defined(LWS_WITH_SECURE_STREAMS_SYS_AUTH_API_AMAZON_COM)
-	void				*pol_args;
-	struct lws_ss_handle		*hss_auth;
+#if defined(LWS_WITH_SYS_NTPCLIENT)
+	void				*ntpclient_priv;
+#endif
+
+#if defined(LWS_WITH_SECURE_STREAMS)
 	struct lws_ss_handle		*hss_fetch_policy;
+#if defined(LWS_WITH_SECURE_STREAMS_SYS_AUTH_API_AMAZON_COM)
+	struct lws_ss_handle		*hss_auth;
 	lws_sorted_usec_list_t		sul_api_amazon_com;
 	lws_sorted_usec_list_t		sul_api_amazon_com_kick;
 #endif
+#if !defined(LWS_WITH_SECURE_STREAMS_STATIC_POLICY_ONLY)
+	struct lws_ss_x509		*server_der_list;
+#endif
+#endif
 
+#if defined(LWS_WITH_SYS_STATE)
 	lws_state_manager_t		mgr_system;
 	lws_state_notify_link_t		protocols_notify;
+#endif
 #if defined (LWS_WITH_SYS_DHCP_CLIENT)
 	lws_dll2_owner_t		dhcpc_owner;
 					/**< list of ifaces with dhcpc */
@@ -374,27 +351,27 @@ struct lws_context {
 
 	/* pointers */
 
-	struct lws_vhost *vhost_list;
-	struct lws_vhost *no_listener_vhost_list;
-	struct lws_vhost *vhost_pending_destruction_list;
-	struct lws_vhost *vhost_system;
+	struct lws_vhost		*vhost_list;
+	struct lws_vhost		*no_listener_vhost_list;
+	struct lws_vhost		*vhost_pending_destruction_list;
+	struct lws_vhost		*vhost_system;
 
 #if defined(LWS_WITH_SERVER)
-	const char *server_string;
+	const char			*server_string;
 #endif
 
-	struct lws_event_loop_ops *event_loop_ops;
+	const struct lws_event_loop_ops	*event_loop_ops;
 #endif
 
 #if defined(LWS_WITH_TLS)
-	const struct lws_tls_ops *tls_ops;
+	const struct lws_tls_ops	*tls_ops;
 #endif
 
 #if defined(LWS_WITH_DETAILED_LATENCY)
-	det_lat_buf_cb_t detailed_latency_cb;
+	det_lat_buf_cb_t		detailed_latency_cb;
 #endif
 #if defined(LWS_WITH_PLUGINS)
-	struct lws_plugin *plugin_list;
+	struct lws_plugin		*plugin_list;
 #endif
 #ifdef _WIN32
 /* different implementation between unix and windows */
@@ -403,6 +380,11 @@ struct lws_context {
 	struct lws **lws_lookup;
 
 #endif
+
+/*
+ * <====== LWS_WITH_NETWORK end
+ */
+
 #endif /* NETWORK */
 
 #if defined(LWS_WITH_SECURE_STREAMS_PROXY_API)
@@ -415,35 +397,41 @@ struct lws_context {
 #endif
 
 	struct lws_context **pcontext_finalize;
+#if !defined(LWS_PLAT_FREERTOS)
 	const char *username, *groupname;
+#endif
 #if defined(LWS_WITH_DETAILED_LATENCY)
 	const char *detailed_latency_filepath;
 #endif
 
-#if defined(LWS_AMAZON_RTOS)
+#if defined(LWS_AMAZON_RTOS) && defined(LWS_WITH_MBEDTLS)
 	mbedtls_entropy_context mec;
 	mbedtls_ctr_drbg_context mcdc;
 #endif
-
-	struct lws_deferred_free *deferred_free_list;
 
 #if defined(LWS_WITH_THREADPOOL)
 	struct lws_threadpool *tp_list_head;
 #endif
 
 #if defined(LWS_WITH_PEER_LIMITS)
-	struct lws_peer **pl_hash_table;
-	struct lws_peer *peer_wait_list;
-	time_t next_cull;
+	struct lws_peer			**pl_hash_table;
+	struct lws_peer			*peer_wait_list;
+	lws_peer_limits_notify_t	pl_notify_cb;
+	time_t				next_cull;
 #endif
 
-	const lws_system_ops_t *system_ops;
+	const lws_system_ops_t		*system_ops;
 
 #if defined(LWS_WITH_SECURE_STREAMS)
-	const char *pss_policies_json;
-	const lws_ss_policy_t *pss_policies;
-	const lws_ss_plugin_t **pss_plugins;
-	struct lwsac *ac_policy;
+#if !defined(LWS_WITH_SECURE_STREAMS_STATIC_POLICY_ONLY)
+	const char			*pss_policies_json;
+	struct lwsac			*ac_policy;
+	void				*pol_args;
+#endif
+	const lws_ss_policy_t		*pss_policies;
+#if defined(LWS_WITH_SSPLUGINS)
+	const lws_ss_plugin_t		**pss_plugins;
+#endif
 #endif
 
 	void *external_baggage_free_on_destroy;
@@ -453,7 +441,9 @@ struct lws_context {
 	const struct lws_protocol_vhost_options *reject_service_keywords;
 	lws_reload_func deprecation_cb;
 #endif
+#if !defined(LWS_PLAT_FREERTOS)
 	void (*eventlib_signal_cb)(void *event_lib_handle, int signum);
+#endif
 
 #if defined(LWS_HAVE_SYS_CAPABILITY_H) && defined(LWS_HAVE_LIBCAP)
 	cap_value_t caps[4];
@@ -472,18 +462,21 @@ struct lws_context {
 #endif
 
 	int max_fds;
-	int count_event_loop_static_asset_handles;
 #if !defined(LWS_NO_DAEMONIZE)
 	pid_t started_with_parent;
 #endif
-	int uid, gid;
 
+#if !defined(LWS_PLAT_FREERTOS)
+	int uid, gid;
+	int count_event_loop_static_asset_handles;
 	int fd_random;
+	int count_cgi_spawned;
+#endif
+
 #if defined(LWS_WITH_DETAILED_LATENCY)
 	int latencies_fd;
 #endif
 	int count_wsi_allocated;
-	int count_cgi_spawned;
 	unsigned int fd_limit_per_thread;
 	unsigned int timeout_secs;
 	unsigned int pt_serv_buf_size;
@@ -514,7 +507,6 @@ struct lws_context {
 	short plugin_protocol_count;
 	short plugin_extension_count;
 	short server_string_len;
-	unsigned short ws_ping_pong_interval;
 	unsigned short deprecation_pending_listen_close_count;
 #if defined(LWS_WITH_SECURE_STREAMS_PROXY_API)
 	uint16_t	ss_proxy_port;
@@ -523,14 +515,13 @@ struct lws_context {
 	uint8_t max_fi;
 	uint8_t udp_loss_sim_tx_pc;
 	uint8_t udp_loss_sim_rx_pc;
+	uint8_t captive_portal_detect;
+	uint8_t captive_portal_detect_type;
 
 #if defined(LWS_WITH_STATS)
 	uint8_t updated;
 #endif
 };
-
-int
-lws_check_deferred_free(struct lws_context *context, int tsi, int force);
 
 #define lws_get_context_protocol(ctx, x) ctx->vhost_list->protocols[x]
 #define lws_get_vh_protocol(vh, x) vh->protocols[x]
@@ -585,7 +576,7 @@ LWS_EXTERN void lwsl_emit_stderr(int level, const char *line);
  #define lws_ssl_capable_read lws_ssl_capable_read_no_ssl
  #define lws_ssl_capable_write lws_ssl_capable_write_no_ssl
  #define lws_ssl_pending lws_ssl_pending_no_ssl
- #define lws_server_socket_service_ssl(_b, _c) (0)
+ #define lws_server_socket_service_ssl(_b, _c, _d) (0)
  #define lws_ssl_close(_a) (0)
  #define lws_ssl_context_destroy(_a)
  #define lws_ssl_SSL_CTX_destroy(_a)
@@ -620,6 +611,7 @@ lws_vhost_unlock(struct lws_vhost *vhost)
 #define lws_pt_mutex_init(_a) (void)(_a)
 #define lws_pt_mutex_destroy(_a) (void)(_a)
 #define lws_pt_lock(_a, b) (void)(_a)
+#define lws_pt_assert_lock_held(_a) (void)(_a)
 #define lws_pt_unlock(_a) (void)(_a)
 #define lws_context_lock(_a, _b) (void)(_a)
 #define lws_context_unlock(_a) (void)(_a)
@@ -701,10 +693,13 @@ lws_plat_init(struct lws_context *context,
 LWS_EXTERN int
 lws_plat_drop_app_privileges(struct lws_context *context, int actually_drop);
 
-#if defined(LWS_WITH_UNIX_SOCK)
+#if defined(LWS_WITH_UNIX_SOCK) && !defined(WIN32)
 int
 lws_plat_user_colon_group_to_ids(const char *u_colon_g, uid_t *puid, gid_t *pgid);
 #endif
+
+int
+lws_plat_ntpclient_config(struct lws_context *context);
 
 int
 lws_plat_ifname_to_hwaddr(int fd, const char *ifname, uint8_t *hwaddr, int len);
@@ -715,6 +710,8 @@ LWS_EXTERN int LWS_WARN_UNUSED_RESULT
 lws_check_utf8(unsigned char *state, unsigned char *buf, size_t len);
 LWS_EXTERN int alloc_file(struct lws_context *context, const char *filename,
 			  uint8_t **buf, lws_filepos_t *amount);
+
+void lws_msleep(unsigned int);
 
 void
 lws_context_destroy2(struct lws_context *context);

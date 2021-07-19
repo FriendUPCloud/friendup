@@ -96,8 +96,8 @@ _lws_header_table_reset(struct allocated_headers *ah)
 	ah->http_response = 0;
 	ah->parser_state = WSI_TOKEN_NAME_PART;
 	ah->lextable_pos = 0;
-#if defined(LWS_WITH_CUSTOM_HEADERS)
 	ah->unk_pos = 0;
+#if defined(LWS_WITH_CUSTOM_HEADERS)
 	ah->unk_ll_head = 0;
 	ah->unk_ll_tail = 0;
 #endif
@@ -124,7 +124,7 @@ __lws_header_table_reset(struct lws *wsi, int autoservice)
 
 	/* while we hold the ah, keep a timeout on the wsi */
 	__lws_set_timeout(wsi, PENDING_TIMEOUT_HOLDING_AH,
-			  wsi->vhost->timeout_secs_ah_idle);
+			  wsi->a.vhost->timeout_secs_ah_idle);
 
 	time(&ah->assigned);
 
@@ -133,7 +133,7 @@ __lws_header_table_reset(struct lws *wsi, int autoservice)
 	    autoservice) {
 		lwsl_debug("%s: service on readbuf ah\n", __func__);
 
-		pt = &wsi->context->pt[(int)wsi->tsi];
+		pt = &wsi->a.context->pt[(int)wsi->tsi];
 		/*
 		 * Unlike a normal connect, we have the headers already
 		 * (or the first part of them anyway)
@@ -141,14 +141,14 @@ __lws_header_table_reset(struct lws *wsi, int autoservice)
 		pfd = &pt->fds[wsi->position_in_fds_table];
 		pfd->revents |= LWS_POLLIN;
 		lwsl_err("%s: calling service\n", __func__);
-		lws_service_fd_tsi(wsi->context, pfd, wsi->tsi);
+		lws_service_fd_tsi(wsi->a.context, pfd, wsi->tsi);
 	}
 }
 
 void
 lws_header_table_reset(struct lws *wsi, int autoservice)
 {
-	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
+	struct lws_context_per_thread *pt = &wsi->a.context->pt[(int)wsi->tsi];
 
 	lws_pt_lock(pt, __func__);
 
@@ -160,7 +160,7 @@ lws_header_table_reset(struct lws *wsi, int autoservice)
 static void
 _lws_header_ensure_we_are_on_waiting_list(struct lws *wsi)
 {
-	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
+	struct lws_context_per_thread *pt = &wsi->a.context->pt[(int)wsi->tsi];
 	struct lws_pollargs pa;
 	struct lws **pwsi = &pt->http.ah_wait_list;
 
@@ -183,7 +183,7 @@ _lws_header_ensure_we_are_on_waiting_list(struct lws *wsi)
 static int
 __lws_remove_from_ah_waiting_list(struct lws *wsi)
 {
-        struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
+        struct lws_context_per_thread *pt = &wsi->a.context->pt[(int)wsi->tsi];
 	struct lws **pwsi =&pt->http.ah_wait_list;
 
 	while (*pwsi) {
@@ -206,7 +206,7 @@ __lws_remove_from_ah_waiting_list(struct lws *wsi)
 int LWS_WARN_UNUSED_RESULT
 lws_header_table_attach(struct lws *wsi, int autoservice)
 {
-	struct lws_context *context = wsi->context;
+	struct lws_context *context = wsi->a.context;
 	struct lws_context_per_thread *pt = &context->pt[(int)wsi->tsi];
 	struct lws_pollargs pa;
 	int n;
@@ -308,7 +308,7 @@ bail:
 
 int __lws_header_table_detach(struct lws *wsi, int autoservice)
 {
-	struct lws_context *context = wsi->context;
+	struct lws_context *context = wsi->a.context;
 	struct allocated_headers *ah = wsi->http.ah;
 	struct lws_context_per_thread *pt = &context->pt[(int)wsi->tsi];
 	struct lws_pollargs pa;
@@ -451,7 +451,7 @@ nobody_usable_waiting:
 
 int lws_header_table_detach(struct lws *wsi, int autoservice)
 {
-	struct lws_context *context = wsi->context;
+	struct lws_context *context = wsi->a.context;
 	struct lws_context_per_thread *pt = &context->pt[(int)wsi->tsi];
 	int n;
 
@@ -659,10 +659,10 @@ lws_pos_in_bounds(struct lws *wsi)
 		return -1;
 
 	if (wsi->http.ah->pos <
-	    (unsigned int)wsi->context->max_http_header_data)
+	    (unsigned int)wsi->a.context->max_http_header_data)
 		return 0;
 
-	if ((int)wsi->http.ah->pos >= wsi->context->max_http_header_data - 1) {
+	if ((int)wsi->http.ah->pos >= wsi->a.context->max_http_header_data - 1) {
 		lwsl_err("Ran out of header data space\n");
 		return 1;
 	}
@@ -673,7 +673,7 @@ lws_pos_in_bounds(struct lws *wsi)
 	 */
 	lwsl_err("%s: pos %ld, limit %ld\n", __func__,
 		 (unsigned long)wsi->http.ah->pos,
-		 (unsigned long)wsi->context->max_http_header_data);
+		 (unsigned long)wsi->a.context->max_http_header_data);
 	assert(0);
 
 	return 1;
@@ -961,7 +961,7 @@ lws_parser_return_t LWS_WARN_UNUSED_RESULT
 lws_parse(struct lws *wsi, unsigned char *buf, int *len)
 {
 	struct allocated_headers *ah = wsi->http.ah;
-	struct lws_context *context = wsi->context;
+	struct lws_context *context = wsi->a.context;
 	unsigned int n, m;
 	unsigned char c;
 	int r, pos;
@@ -1065,12 +1065,18 @@ lws_parse(struct lws *wsi, unsigned char *buf, int *len)
 check_eol:
 			/* bail at EOL */
 			if (ah->parser_state != WSI_TOKEN_CHALLENGE &&
-			    c == '\x0d') {
+			    (c == '\x0d' || c == '\x0a')) {
 				if (ah->ues != URIES_IDLE)
 					goto forbid;
 
+				if (c == '\x0a') {
+					/* broken peer */
+					ah->parser_state = WSI_TOKEN_NAME_PART;
+					ah->unk_pos = ah->lextable_pos = 0;
+				} else
+					ah->parser_state = WSI_TOKEN_SKIPPING_SAW_CR;
+
 				c = '\0';
-				ah->parser_state = WSI_TOKEN_SKIPPING_SAW_CR;
 				lwsl_parser("*\n");
 			}
 
@@ -1095,11 +1101,12 @@ swallow:
 				    (unsigned long)lwsi_role(wsi),
 				    ah->lextable_pos);
 
+			if (!ah->unk_pos && c == '\x0a')
+				/* broken peer */
+				goto set_parsing_complete;
+
 			if (c >= 'A' && c <= 'Z')
 				c += 'a' - 'A';
-
-#if defined(LWS_WITH_CUSTOM_HEADERS)
-
 			/*
 			 * ...in case it's an unknown header, speculatively
 			 * store it as the name comes in.  If we recognize it as
@@ -1108,6 +1115,8 @@ swallow:
 
 			if (!wsi->mux_substream && !ah->unk_pos) {
 				ah->unk_pos = ah->pos;
+
+#if defined(LWS_WITH_CUSTOM_HEADERS)
 				/*
 				 * Prepare new unknown header linked-list entry
 				 *
@@ -1118,8 +1127,8 @@ swallow:
 				for (n = 0; n < 8; n++)
 					if (!lws_pos_in_bounds(wsi))
 						ah->data[ah->pos++] = 0;
-			}
 #endif
+			}
 
 			if (lws_pos_in_bounds(wsi))
 				return LPR_FAIL;
@@ -1201,7 +1210,6 @@ nope:
 
 				/* b7 = 0, end or 3-byte */
 				if (lextable_h1[pos] < FAIL_CHAR) {
-#if defined(LWS_WITH_CUSTOM_HEADERS)
 					if (!wsi->mux_substream) {
 						/*
 						 * We hit a terminal marker, so
@@ -1212,7 +1220,7 @@ nope:
 						ah->pos = ah->unk_pos;
 						ah->unk_pos = 0;
 					}
-#endif
+
 					ah->lextable_pos = pos;
 					break;
 				}
@@ -1274,7 +1282,7 @@ nope:
 				 * Are we set up to transition to another role
 				 * in these cases?
 				 */
-				if (lws_check_opt(wsi->vhost->options,
+				if (lws_check_opt(wsi->a.vhost->options,
 		    LWS_SERVER_OPTION_FALLBACK_TO_APPLY_LISTEN_ACCEPT_CONFIG)) {
 					lwsl_notice("%s: http fail fallback\n",
 						    __func__);
@@ -1286,6 +1294,9 @@ nope:
 				goto forbid;
 			}
 			if (ah->lextable_pos < 0) {
+				/*
+				 * It's not a header that lws knows about...
+				 */
 #if defined(LWS_WITH_CUSTOM_HEADERS)
 				if (!wsi->mux_substream)
 					goto unknown_hdr;
@@ -1312,11 +1323,21 @@ nope:
 						return LPR_FAIL;
 					}
 
+				if (!wsi->mux_substream) {
+					/*
+					 * Whether we are collecting unknown names or not,
+					 * if we matched an internal header we can dispense
+					 * with the header name part we were keeping
+					 */
+					ah->pos = ah->unk_pos;
+					ah->unk_pos = 0;
+				}
+
+#if defined(LWS_ROLE_WS)
 				/*
 				 * WSORIGIN is protocol equiv to ORIGIN,
 				 * JWebSocket likes to send it, map to ORIGIN
 				 */
-#if defined(LWS_ROLE_WS)
 				if (n == WSI_TOKEN_SWORIGIN)
 					n = WSI_TOKEN_ORIGIN;
 #endif
@@ -1331,7 +1352,7 @@ nope:
 							      ah->parser_state];
 				else
 					ah->current_token_limit =
-						wsi->context->max_http_header_data;
+						wsi->a.context->max_http_header_data;
 
 				if (ah->parser_state == WSI_TOKEN_CHALLENGE)
 					goto set_parsing_complete;
@@ -1380,6 +1401,12 @@ excessive:
 		case WSI_TOKEN_SKIPPING:
 			lwsl_parser("WSI_TOKEN_SKIPPING '%c'\n", c);
 
+			if (c == '\x0a') {
+				/* broken peer */
+				ah->parser_state = WSI_TOKEN_NAME_PART;
+				ah->unk_pos = ah->lextable_pos = 0;
+			}
+
 			if (c == '\x0d')
 				ah->parser_state = WSI_TOKEN_SKIPPING_SAW_CR;
 			break;
@@ -1390,10 +1417,7 @@ excessive:
 				goto forbid;
 			if (c == '\x0a') {
 				ah->parser_state = WSI_TOKEN_NAME_PART;
-#if defined(LWS_WITH_CUSTOM_HEADERS)
-				ah->unk_pos = 0;
-#endif
-				ah->lextable_pos = 0;
+				ah->unk_pos = ah->lextable_pos = 0;
 			} else
 				ah->parser_state = WSI_TOKEN_SKIPPING;
 			break;
@@ -1414,9 +1438,9 @@ set_parsing_complete:
 
 	if (lws_hdr_total_length(wsi, WSI_TOKEN_UPGRADE)) {
 #if defined(LWS_ROLE_WS)
-		if (lws_hdr_total_length(wsi, WSI_TOKEN_VERSION))
-			wsi->rx_frame_type = /* temp for ws version index */
-			       atoi(lws_hdr_simple_ptr(wsi, WSI_TOKEN_VERSION));
+		const char *pv = lws_hdr_simple_ptr(wsi, WSI_TOKEN_VERSION);
+		if (pv)
+			wsi->rx_frame_type = atoi(pv);
 
 		lwsl_parser("v%02d hdrs done\n", wsi->rx_frame_type);
 #endif
@@ -1435,3 +1459,158 @@ forbid:
 	return LPR_FORBIDDEN;
 }
 
+int
+lws_http_cookie_get(struct lws *wsi, const char *name, char *buf,
+		    size_t *max_len)
+{
+	int n, bl = (int)strlen(name);
+	size_t max = *max_len;
+	char *p, *bo = buf;
+
+	n = lws_hdr_total_length(wsi, WSI_TOKEN_HTTP_COOKIE);
+	lwsl_notice("%s: cookie hdr len %d\n", __func__, n);
+	if (n < bl + 1)
+		return 1;
+
+	p = lws_hdr_simple_ptr(wsi, WSI_TOKEN_HTTP_COOKIE);
+	if (!p)
+		return 1;
+
+	lwsl_hexdump_notice(p, n);
+
+	p += bl;
+	n -= bl;
+	while (n-- > bl) {
+		if (*p == '=' && !memcmp(p - bl, name, bl)) {
+			p++;
+			while (*p != ';' && n-- && max) {
+				*buf++ = *p++;
+				max--;
+			}
+			if (!max)
+				return 2;
+
+			*buf = '\0';
+			*max_len = lws_ptr_diff(buf, bo);
+
+			return 0;
+		}
+		p++;
+	}
+
+	return 1;
+}
+
+#if defined(LWS_WITH_JOSE)
+
+#define MAX_JWT_SIZE 1024
+
+int
+lws_jwt_get_http_cookie_validate_jwt(struct lws *wsi,
+				     struct lws_jwt_sign_set_cookie *i,
+				     char *out, size_t *out_len)
+{
+	char temp[MAX_JWT_SIZE * 2];
+	size_t cml = *out_len;
+	const char *cp;
+
+	/* first use out to hold the encoded JWT */
+
+	if (lws_http_cookie_get(wsi, i->cookie_name, out, out_len)) {
+		lwsl_notice("%s: cookie %s not provided\n", __func__,
+				i->cookie_name);
+		return 1;
+	}
+
+	/* decode the JWT into temp */
+
+	if (lws_jwt_signed_validate(wsi->a.context, i->jwk, i->alg, out,
+				    *out_len, temp, sizeof(temp), out, &cml)) {
+		lwsl_notice("%s: jwt validation failed\n", __func__);
+		return 1;
+	}
+
+	/*
+	 * Copy out the decoded JWT payload into out, overwriting the
+	 * original encoded JWT taken from the cookie (that has long ago been
+	 * translated into allocated buffers in the JOSE object)
+	 */
+
+	if (lws_jwt_token_sanity(out, cml, i->iss, i->aud, i->csrf_in,
+				 i->sub, sizeof(i->sub),
+				 &i->expiry_unix_time)) {
+		lwsl_notice("%s: jwt sanity failed\n", __func__);
+		return 1;
+	}
+
+	/*
+	 * If he's interested in his private JSON part, point him to that in
+	 * the args struct (it's pointing to the data in out
+	 */
+
+	cp = lws_json_simple_find(out, cml, "\"ext\":", &i->extra_json_len);
+	if (cp)
+		i->extra_json = cp;
+
+	if (cp)
+		lwsl_hexdump_notice(cp, i->extra_json_len);
+	else
+		lwsl_notice("%s: no ext JWT payload\n", __func__);
+
+	return 0;
+}
+
+int
+lws_jwt_sign_token_set_http_cookie(struct lws *wsi,
+				   const struct lws_jwt_sign_set_cookie *i,
+				   uint8_t **p, uint8_t *end)
+{
+	char plain[MAX_JWT_SIZE + 1], temp[MAX_JWT_SIZE * 2], csrf[17];
+	size_t pl = sizeof(plain);
+	unsigned long long ull;
+	int n;
+
+	/*
+	 * Create a 16-char random csrf token with the same lifetime as the JWT
+	 */
+
+	lws_hex_random(wsi->a.context, csrf, sizeof(csrf));
+	ull = lws_now_secs();
+	if (lws_jwt_sign_compact(wsi->a.context, i->jwk, i->alg, plain, &pl,
+			         temp, sizeof(temp),
+			         "{\"iss\":\"%s\",\"aud\":\"%s\","
+			          "\"iat\":%llu,\"nbf\":%llu,\"exp\":%llu,"
+			          "\"csrf\":\"%s\",\"sub\":\"%s\"%s%s%s}",
+			         i->iss, i->aud, ull, ull - 60,
+			         ull + i->expiry_unix_time,
+			         csrf, i->sub,
+			         i->extra_json ? ",\"ext\":{" : "",
+			         i->extra_json ? i->extra_json : "",
+			         i->extra_json ? "}" : "")) {
+		lwsl_err("%s: failed to create JWT\n", __func__);
+
+		return 1;
+	}
+
+	/*
+	 * There's no point the browser holding on to a JWT beyond the JWT's
+	 * expiry time, so set it to be the same.
+	 */
+
+	n = lws_snprintf(temp, sizeof(temp), "__Host-%s=%s;"
+			 "HttpOnly;"
+			 "Secure;"
+			 "SameSite=strict;"
+			 "Path=/;"
+			 "Max-Age=%lu",
+			 i->cookie_name, plain, i->expiry_unix_time);
+
+	if (lws_add_http_header_by_token(wsi, WSI_TOKEN_HTTP_SET_COOKIE,
+					 (uint8_t *)temp, n, p, end)) {
+		lwsl_err("%s: failed to add JWT cookie header\n", __func__);
+		return 1;
+	}
+
+	return 0;
+}
+#endif
