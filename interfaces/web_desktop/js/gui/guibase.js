@@ -308,7 +308,7 @@ var mousePointer =
 	drop: function ( e )
 	{
 		if ( !e ) e = window.event;
-		let tar = e.target ? e.target : e.srcElement;
+		let tar = e.targetReplacement ? e.targetReplacement : ( e.target ? e.target : e.srcElement );
 		if ( this.elements.length )
 		{
 			let dropper = false;
@@ -2591,7 +2591,13 @@ movableMouseUp = function( e )
 	
 	ClearSelectRegion();
 	
-	// Execute drop function on mousepointer (and stop moving!)
+	// Make sure
+	if( e.target && e.target.classList.contains( 'MoveOverlay' ) )
+	{
+		e.targetReplacement = document.elementFromPoint( e.clientX, e.clientY );
+	}
+
+	// Execute drop function on mousepointer (and stop moving!)		
 	mousePointer.drop( e );	
 	mousePointer.stopMove( e );
 	RemoveDragTargets();

@@ -546,7 +546,6 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					if( self.flags.bookmarks && msg.list[a].Type && msg.list[a].Type == 'header' && !self.bookmarksHeader )
 					{
 						let d = document.createElement( 'div' );
-						d.classList.add( 'Bookmarks' );
 						self.bookmarksHeader = d;
 						d.innerHTML = '<p class="Layout BorderBottom PaddingTop BorderTop PaddingBottom"><strong>' + i18n( 'i18n_bookmarks' ) + ':</strong></p>';
 						rootElement.appendChild( d );
@@ -670,6 +669,13 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						}
 					}
 				}
+				
+				// Manage space.
+				if( self.bookmarksHeader )
+				{
+					self.bookmarksHeader.parentNode.classList.add( 'Bookmarks' );
+				}
+				
 				// Add checkers classes
 				let sw = 2;
 				for( var a = 0; a < eles.length; a++ )
@@ -719,6 +725,8 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						Type: 'header'
 					} );
 					
+					self.hasBookmarks = false;
+					
 					if( js )
 					{
 						for( var a = 0; a < js.length; a++ )
@@ -731,6 +739,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 							};
 							msg.list.push( ele );
 						}
+						self.hasBookmarks = true;
 					}
 					
 					done();

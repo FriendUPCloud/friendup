@@ -42,9 +42,20 @@
 	box-sizing: border-box;
 }
 
-.FileBrowser > .Bookmarks
+.FileBrowserContainer.FileBrowser.Bookmarks
 {
-	min-height: 160px;
+	padding-bottom: 100px;
+}
+
+.FileBrowserContainer.FileBrowser.Bookmarks:after
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	height: 100px;
+	width: 100%;
+	bottom: 0;
+	left: 0;
 }
 
 /* Busy busy */
