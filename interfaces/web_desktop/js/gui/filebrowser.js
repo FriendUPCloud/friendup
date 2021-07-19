@@ -702,35 +702,37 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				let m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
+					let js = false;
+					
 					if( e == 'ok' )
 					{
 						try
 						{
-							let js = JSON.parse( d );
-							msg.list.push( {
-								Title: i18n( 'i18n_bookmarks' ) + ':',
-								Type: 'header'
-							} );
-							for( var a = 0; a < js.length; a++ )
-							{
-								let ele = {
-									Title: js[a].name,
-									Type: 'bookmark',
-									Path: js[a].path,
-									Volume: js[a].path
-								};
-								msg.list.push( ele );
-							}
+							js = JSON.parse( d );
 						}
-						catch( e )
-						{
-						}
-						done();
+						catch( e ){}
 					}
-					else
+					
+					msg.list.push( {
+						Title: i18n( 'i18n_bookmarks' ) + ':',
+						Type: 'header'
+					} );
+					
+					if( js )
 					{
-						done();
+						for( var a = 0; a < js.length; a++ )
+						{
+							let ele = {
+								Title: js[a].name,
+								Type: 'bookmark',
+								Path: js[a].path,
+								Volume: js[a].path
+							};
+							msg.list.push( ele );
+						}
 					}
+					
+					done();
 				}
 				m.execute( 'getbookmarks' );
 			}
