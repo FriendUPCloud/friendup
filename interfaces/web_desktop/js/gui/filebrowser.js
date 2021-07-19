@@ -402,14 +402,6 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					data: { path: ppath }
 				} );
 			}
-			if( cmd != 'menuloadfile' )
-			{
-				menu.push( {
-					name: i18n( 'i18n_create_folder' ),
-					command: 'createdirectory',
-					data: { path: ppath }
-				} );
-			}
 			if( type == 'volume' )
 			{
 				menu.push( {
