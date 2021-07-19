@@ -3761,6 +3761,7 @@ function apiWrapper( event, force )
 						break;
 					case 'librarycall':
 						var j = new cAjax();
+						j.application = app;
 						var ex = '';
 						if( msg.func )
 						{

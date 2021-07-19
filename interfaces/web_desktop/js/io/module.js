@@ -42,6 +42,10 @@ var Module = function( mod )
 		if( args ) this.args = args;
 		
 		var j = new cAjax ();
+		
+		if( this.application )
+			j.application = this.application;
+		
 		if( this.cancelId )
 			j.cancelId = this.cancelId;
 		if( this.onQueue )

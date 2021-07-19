@@ -503,6 +503,18 @@ cAjax.prototype.addVar = function( key, val )
 	return true;
 }
 
+// Remove variable
+cAjax.prototype.deleteVar = function( key )
+{
+	let out = [];
+	for( let a in this.vars )
+	{
+		if( a == key ) continue;
+		out[ a ] = this.vars[ a ];
+	}
+	this.vars = out;
+}
+
 // Set a request header
 cAjax.prototype.setRequestHeader = function( type, data )
 {
@@ -530,6 +542,14 @@ cAjax.prototype.responseText = function()
 cAjax.prototype.send = function( data, callback )
 {
 	RemoveFromCajaxQueue( this );
+	
+	// Maintain authid
+	if( this.application )
+	{
+		this.deleteVar( 'authid' );
+		this.addVar( 'authid', this.application.authId );
+	}
+	
 	
 	// Make sure we don't f this up!
 	if( this.onload && !this.onloadAfter )
