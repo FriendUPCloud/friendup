@@ -51,11 +51,9 @@
 {
 	content: " ";
 	display: block;
-	position: absolute;
+	position: relative;
 	height: 100px;
 	width: 100%;
-	bottom: 0;
-	left: 0;
 }
 
 /* Busy busy */
