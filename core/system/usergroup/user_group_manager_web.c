@@ -528,6 +528,9 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		char *authid = NULL;
 		char *args = NULL;
 		char *description = NULL;
+		FBOOL onlyWorkgroup = FALSE;
+		FBOOL canCreateWorkgroup = FALSE;
+		
 		el = HttpGetPOSTParameter( request, "authid" );
 		if( el != NULL )
 		{
@@ -537,18 +540,63 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		if( el != NULL )
 		{
 			args = el->hme_Data;
-			//args = UrlDecodeToMem( el->hme_Data );
+		}
+		
+		el = HttpGetPOSTParameter( request, "groupname" );
+		if( el != NULL )
+		{
+			groupname = UrlDecodeToMem( (char *)el->hme_Data );
+			DEBUG( "[UMGWebRequest] Update groupname %s!!\n", groupname );
 		}
 		
 		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 		{	// user cannot create any groups without permissions
-			el = HttpGetPOSTParameter( request, "groupname" );
-			if( el != NULL )
+			canCreateWorkgroup = TRUE;
+		}
+		else
+		{
+			// We need to check how many groups were created by the user before
+			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			if( sqllib != NULL )
 			{
-				groupname = UrlDecodeToMem( (char *)el->hme_Data );
-				DEBUG( "[UMGWebRequest] Update groupname %s!!\n", groupname );
+				FBOOL sameName = FALSE;
+				char *qery = FMalloc( 1048 );
+				onlyWorkgroup = TRUE;
+				
+				qery[ 1024 ] = 0;
+				
+				sqllib->SNPrintF( sqllib, qery, 1024, "SELECT Name FROM FUserGroup WHERE UserID=%ld", loggedSession->us_UserID );
+				void *res = sqllib->Query( sqllib, qery );
+				if( res != NULL )
+				{
+					int count = 0;
+					char **row;
+					while( ( row = sqllib->FetchRow( sqllib, res ) ) )
+					{
+						if( row[ 0 ] != NULL )
+						{
+							if( strcmp( groupname, (char *)row[ 0 ] ) == 0 )
+							{
+								sameName = TRUE;
+							}
+							count++;
+						}
+					}
+					sqllib->FreeResult( sqllib, res );
+					
+					if( count < 3 && sameName == FALSE )
+					{
+						canCreateWorkgroup = TRUE;
+					}
+				}
+				l->LibrarySQLDrop( l, sqllib );
+				
+				FFree( qery );
 			}
-			
+		}
+		
+		if( canCreateWorkgroup == TRUE )
+		{
 			el = HttpGetPOSTParameter( request, "description" );
 			if( el != NULL )
 			{
@@ -561,6 +609,11 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			{
 				type = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[UMWebRequest] Update type %s!!\n", type );
+				if( onlyWorkgroup == TRUE && strcmp( type, "Workgroup" ) != 0 )
+				{
+					FFree( type );
+					type = StringDuplicate( "Workgroup" );
+				}
 			}
 			else
 			{
@@ -578,6 +631,14 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			{
 				users = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[UMWebRequest] create group, users %s!!\n", users );
+				
+				// users which have own groups cannot add users
+				// they will be added via invitation and "accepted" by ServerToken
+				if( onlyWorkgroup == TRUE && users != NULL )
+				{
+					FFree( users );
+					users = NULL;
+				}
 			}
 			
 			if( groupname != NULL && type != NULL )
@@ -594,16 +655,13 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					{
 						fg->ug_Status = USER_GROUP_STATUS_ACTIVE;
 						
-						char buffer[ 256 ];
+						char buffer[ 1024 ];
 						snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"sucess\",\"id\":%lu}", fg->ug_ID );
 						HttpAddTextContent( response, buffer );
 						
-						{
-							char msg[ 1024 ];
-							snprintf( msg, sizeof(msg), "{\"id\":%lu,\"uuid\":\"%s\",\"name\":\"%s\"}", fg->ug_ID, fg->ug_UUID, fg->ug_Name );
-							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
-							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", msg );
-						}
+						snprintf( buffer, sizeof(buffer), "{\"id\":%lu,\"uuid\":\"%s\",\"name\":\"%s\"}", fg->ug_ID, fg->ug_UUID, fg->ug_Name );
+						
+						NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", buffer );
 						ug = fg;
 						addUsers = TRUE;
 					}
@@ -672,7 +730,6 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 
 							char msg[ 512 ];
 							snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"parentid\":%lu}", ug->ug_ID, ug->ug_Name, ug->ug_ParentID );
-							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
 							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", msg );
 					
 							char buffer[ 1024 ];
@@ -733,7 +790,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						itmp = snprintf( tmp, sizeof(tmp), "{\"groupid\":%lu,\"parentid\":%lu,\"uuid\":\"%s\",\"userids\":[", groupID, parentID, ug->ug_UUID );
 						BufStringAddSize( retString, tmp, itmp );
 						// return user objects
-						//generateConnectedUsers( l, groupID, NULL, retString );
+
 						generateConnectedUsersID( l, groupID, NULL, retString );
 						BufStringAddSize( retString, "]}", 2 );
 						
@@ -799,6 +856,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 
 		FULONG id = 0;
+		FBOOL canDeleteGroup = FALSE;
 		
 		DEBUG( "[UMWebRequest] Delete group!!\n" );
 		
@@ -824,8 +882,47 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				args = el->hme_Data;
 				//args = UrlDecodeToMem( el->hme_Data );
 			}
-				
+			
 			if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
+			{	// user cannot delete any groups without permissions
+				canDeleteGroup = TRUE;
+			}
+			else
+			{
+				// We need to check if user is group owner
+				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+				if( sqllib != NULL )
+				{
+					char *qery = FMalloc( 1048 );
+				
+					qery[ 1024 ] = 0;
+				
+					sqllib->SNPrintF( sqllib, qery, 1024, "SELECT count(*) FROM FUserGroup WHERE UserID=%ld AND ID=%ld", loggedSession->us_UserID, id );
+					void *res = sqllib->Query( sqllib, qery );
+					if( res != NULL )
+					{
+						char **row;
+						if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+						{
+							if( row[ 0 ] != NULL )
+							{
+								char *end;
+								int val = (int)strtol( row[ 0 ],  &end, 0 );
+								if( val > 0 )
+								{
+									canDeleteGroup = TRUE;
+								}
+							}
+						}
+						sqllib->FreeResult( sqllib, res );
+					}
+					l->LibrarySQLDrop( l, sqllib );
+				
+					FFree( qery );
+				}
+			}
+			//if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
+			if( canDeleteGroup == TRUE )
 			{
 				UserGroup *fg = UGMGetGroupByID( l->sl_UGM, id );
 			
@@ -879,7 +976,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 									char msg[ 1024 ];
 									snprintf( msg, sizeof(msg), "{\"id\":%lu,\"uuid\":\"%s\",\"name\":\"%s\"}", fg->ug_ID, fg->ug_UUID, fg->ug_Name );
 									UGMRemoveGroup( l->sl_UGM, fg );
-									//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
+
 									NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "delete", msg );
 						
 									HttpAddTextContent( response, "ok<!--separate-->{\"Result\":\"success\"}" );
@@ -965,6 +1062,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		char *description = NULL;
 		FULONG parentID = 0;
 		FBOOL fParentID = FALSE;
+		FBOOL canUpdateWorkgroup = FALSE;
+		FBOOL canAddRemoveUsers = TRUE;
 		FULONG groupID = 0;
 		int status = -1;
 		
@@ -986,7 +1085,55 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			//args = UrlDecodeToMem( el->hme_Data );
 		}
 		
+		el = HttpGetPOSTParameter( request, "id" );
+		if( el != NULL )
+		{
+			char *end;
+			groupID = strtol( (char *)el->hme_Data, &end, 0 );
+		}
+		
 		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
+		{	// user cannot create any groups without permissions
+			canUpdateWorkgroup = TRUE;
+		}
+		else
+		{
+			// We need to check if user owns group
+			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			if( sqllib != NULL )
+			{
+				canAddRemoveUsers = FALSE;
+				char *qery = FMalloc( 1048 );
+				
+				qery[ 1024 ] = 0;
+				
+				sqllib->SNPrintF( sqllib, qery, 1024, "SELECT count(*) FROM FUserGroup WHERE UserID=%ld AND ID=%ld", loggedSession->us_UserID, groupID );
+				void *res = sqllib->Query( sqllib, qery );
+				if( res != NULL )
+				{
+					char **row;
+					if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+					{
+						if( row[ 0 ] != NULL )
+						{
+							char *end;
+							int val = (int)strtol( row[ 0 ],  &end, 0 );
+							if( val > 0 )
+							{
+								canUpdateWorkgroup = TRUE;
+							}
+						}
+					}
+					sqllib->FreeResult( sqllib, res );
+				}
+				l->LibrarySQLDrop( l, sqllib );
+				
+				FFree( qery );
+			}
+		}
+		
+		//if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
+		if( canUpdateWorkgroup == TRUE )
 		{
 			el = HttpGetPOSTParameter( request, "groupname" );
 			if( el != NULL )
@@ -1009,13 +1156,6 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				DEBUG( "[UMWebRequest] Group/Update Update description %s!!\n", description );
 			}
 			
-			el = HttpGetPOSTParameter( request, "id" );
-			if( el != NULL )
-			{
-				char *end;
-				groupID = strtol( (char *)el->hme_Data, &end, 0 );
-			}
-			
 			el = HttpGetPOSTParameter( request, "parentid" );
 			if( el != NULL )
 			{
@@ -1033,9 +1173,13 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			el = HttpGetPOSTParameter( request, "users" );
 			if( el != NULL )
 			{
-				users = UrlDecodeToMem( (char *)el->hme_Data );
-				usersSQL = StringDuplicate( users );
-				DEBUG( "[UMWebRequest] Group/Update update group, users %s!!\n", users );
+				// if user can add/remove users from workgroup
+				if( canAddRemoveUsers == TRUE )
+				{
+					users = UrlDecodeToMem( (char *)el->hme_Data );
+					usersSQL = StringDuplicate( users );
+					DEBUG( "[UMWebRequest] Group/Update update group, users %s!!\n", users );
+				}
 			}
 			
 			if( groupID > 0 )
@@ -1152,7 +1296,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 						// go through all elements and find proper users
 						// this part is called when user is assigned to at least one group
 					
-						if( strcmp( users, "false" ) == 0 )
+						if( canAddRemoveUsers == TRUE && strcmp( users, "false" ) == 0 )
 						{
 							char tmpQuery[ 512 ];
 							DEBUG("[UMWebRequest] List is empty\n");
@@ -1186,7 +1330,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 							sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
 
 						} // users == false (remove all users)
-						else
+						else if( canAddRemoveUsers == TRUE )
 						{
 							DEBUG("[UMWebRequest] Group/Update going through diff list\n");
 							// going through diff list and add or remove user from group
