@@ -272,6 +272,8 @@ if( $args->command )
 		
 		case 'sendinvite':
 			
+			$contact = new stdClass();
+			
 			$data = new stdClass();
 			$data->app  = 'FriendChat';
 			$data->mode = 'presence';
@@ -290,6 +292,20 @@ if( $args->command )
 				else
 				{
 					die( 'fail<!--separate-->{"Response":"Could not find these workgroups: ' . $args->args->workgroups . '"}' );
+				}
+			}
+			
+			if( isset( $args->args->userid ) && $args->args->userid )
+			{
+				if( !$contact = $SqlDatabase->FetchObject( '
+					SELECT ID, Name, FullName, Email 
+					FROM FUser 
+					WHERE ID = \'' . $args->args->userid . '\' 
+					ORDER BY ID ASC 
+					LIMIT 1
+				' ) )
+				{
+					die( 'fail<!--separate-->{"Response":"Could not find user: ' . $args->args->userid . '"}' );
 				}
 			}
 			
@@ -312,11 +328,50 @@ if( $args->command )
 				$data->username   = $usr->Name;
 				$data->fullname   = $usr->FullName;
 				
-				$msg = ( $usr->FullName . ' invites to you connect here on Friend Sky, a great collaboration platform that\'s free to use' );
 				
-				$online = false;
-			
-				if( FriendCoreQuery( '/system.library/user/activelwsist' ) )
+				$hash = false; $online = false;
+				
+				
+				// TODO: See when we need this stuff below ...
+				
+				$f = new dbIO( 'FTinyUrl' );
+				$f->Source = ( $baseUrl . '/system.library/user/addrelationship?data=' . urlencode( json_encode( $data ) ) );
+				if( !$f->Load() )
+				{
+					$f->UserID = $User->ID;
+					
+					do
+					{
+						$f->Hash = substr( md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) ), 0, 8 );
+					}
+					while( $f->Load() );
+					
+					$f->DateCreated = strtotime( date( 'Y-m-d H:i:s' ) );
+					$f->Save();
+				}
+				if( $f->ID > 0 )
+				{
+					$hash = $f->Hash;
+				}
+				else
+				{
+					die( 'fail<!--separate-->' );
+				}
+				
+				if( !$hash )
+				{
+					die( 'fail<!--separate-->' );
+				}
+				
+				
+				$invitelink = buildUrl( $hash, $Conf, $ConfShort );
+				
+				$msg = ( $usr->FullName . ' invites to you connect here on Friend Sky, a great collaboration platform that\'s free to use Invite Link: ' . $invitelink );
+				
+				
+				// Check if user is online ...
+				
+				if( 1!=1 /*FriendCoreQuery( '/system.library/user/activelwsist' )*/ )
 				{
 					$online = true;
 				}
@@ -331,6 +386,8 @@ if( $args->command )
 					] ) )
 					{
 						// Sent ...
+						
+						
 					}
 				}
 				
@@ -340,76 +397,50 @@ if( $args->command )
 				{
 					
 					
-					
 					// Set up mail content!
-					$cnt = file_get_contents( "$basePath/mail_templates/base_email_template.html" );
-						
+					//$cnt = file_get_contents( "$basePath/mail_templates/base_email_template.html" );
+					
 					$repl = new stdClass(); $baserepl = new stdClass();
 				
 					$repl->baseUrl = $baserepl->baseUrl = $baseUrl;
 					
-					$repl->url = buildUrl( $f->Hash, $Conf, $ConfShort );
+					$repl->url = $invitelink;
 					
 					// TODO: Check this ...
-					$baserepl->unsubscribe = $baseUrl . '/unsubscribe/' . base64_encode( '{"id":"' . $qua->ID . '","email":"' . $qua->Email . '","userid":"' . $qua->UserID . '","username":"' . $qua->Username . '"}' );
+					//$baserepl->unsubscribe = $baseUrl . '/unsubscribe/' . base64_encode( '{"id":"' . $usr->ID . '","email":"' . $usr->Email . '","userid":"' . $usr->UserID . '","username":"' . $usr->Username . '"}' );
 					
-					$repl->sitename = ( isset( $Config[ 'Registration' ][ 'reg_sitename' ] ) ? $Config[ 'Registration' ][ 'reg_sitename' ] : 'Friend Sky' );
-					$repl->user     = $qua->Fullname;
-					$repl->email    = $qua->Email;
+					$repl->sitename = ( isset( $Conf[ 'Registration' ][ 'reg_sitename' ] ) ? $Conf[ 'Registration' ][ 'reg_sitename' ] : 'Friend Sky' );
+					$repl->user     = $usr->Fullname;
+					$repl->email    = $usr->Email;
 					
-					$baserepl->body = doReplacements( file_get_contents( "$basePath/mail_templates/activate_account_email_template.html"  ), $repl );
+					//$baserepl->body = doReplacements( file_get_contents( "$basePath/mail_templates/activate_account_email_template.html"  ), $repl );
 					
-					$cnt = doReplacements( $cnt, $Version == 'v2' ? $baserepl : $repl );
+					//$cnt = doReplacements( $cnt, $baserepl );
 					
 					
 					
 					// Notify the user!
-					$mail = new Mailer( $Config );
+					$mail = new Mailer(  );
 					$mail->isHTML = true;
 					$mail->debug = 0;
-					$mail->setReplyTo( $Config[ 'FriendMail' ][ 'friendmail_user' ], ( isset( $Config[ 'FriendMail' ][ 'friendmail_name' ] ) ? $Config[ 'FriendMail' ][ 'friendmail_name' ] : 'Friend Software Corporation' ) );
-					$mail->setFrom( $Config[ 'FriendMail' ][ 'friendmail_user' ] );
-					$mail->setSubject( 'Invite Hash' );
-					$mail->addRecipient( $qua->Email, $qua->Fullname );
-					$mail->setContent( utf8_decode( $cnt ) );
+					$mail->setReplyTo( $Conf[ 'FriendMail' ][ 'friendmail_user' ], ( isset( $Conf[ 'FriendMail' ][ 'friendmail_name' ] ) ? $Conf[ 'FriendMail' ][ 'friendmail_name' ] : 'Friend Software Corporation' ) );
+					$mail->setFrom( $Conf[ 'FriendMail' ][ 'friendmail_user' ] );
+					$mail->setSubject( 'Invite Link' );
+					$mail->addRecipient( ( $contact->Email ? $contact->Email : $usr->Email ), ( $contact->FullName ? $contact->FullName : $usr->FullName ) );
+					$mail->setContent( utf8_decode( $msg/*$cnt*/ ) );
 					if( !$mail->send() )
 					{
 						// ...
+						
+						die( 'fail<!--separate-->' );
 					}
 					
+					die( 'ok<!--separate-->' );
+					
 				}
 				
 				
-				// TODO: See when we need this stuff below ...
 				
-				
-				$f = new dbIO( 'FTinyUrl' );
-				$f->Source = ( $baseUrl . '/system.library/user/addrelationship?data=' . urlencode( json_encode( $data ) ) );
-				if( $f->Load() )
-				{
-					
-					
-					die( 'ok<!--separate-->{"Response":"Invite link found","ID":"' . $f->ID . '","Hash":"' . $f->Hash . '","Link":"' . buildUrl( $f->Hash, $Conf, $ConfShort ) . '","Expire":"' . $f->Expire . '"}' );
-				}
-			
-				$f->UserID = $User->ID;
-			
-				do
-				{
-					$hash = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) );
-					$f->Hash = substr( $hash, 0, 8 );
-				}
-				while( $f->Load() );
-			
-				$f->DateCreated = strtotime( date( 'Y-m-d H:i:s' ) );
-				$f->Save();
-				
-				if( $f->ID > 0 )
-				{
-					
-					
-					die( 'ok<!--separate-->{"Response":"Invite link successfully created","ID":"' . $f->ID . '","Hash":"' . $f->Hash . '","Link":"' . buildUrl( $f->Hash, $Conf, $ConfShort ) . '","Expire":"' . $f->Expire . '"}' );
-				}
 			}
 			
 			/* <HR><H2>system.library/user/activelwsist</H2>Get active user list, all users have working websocket connections
