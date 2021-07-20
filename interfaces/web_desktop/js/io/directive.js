@@ -227,9 +227,9 @@ function ExecuteApplication( app, args, callback, retries, flags )
 		}
 		catch( e )
 		{
-			//
+			console.log( 'directive.js, mod call friendapplication - JSON error', e );
 		}
-	
+		
 		if( r == 'activate' )
 		{
 			ActivateApplication( app, conf );
@@ -443,7 +443,8 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			}
 
 			// Register name and ID
-			ifr.applicationName = app.indexOf( ' ' ) > 0 ? app.split( ' ' )[0] : app;
+			//ifr.applicationName = app.indexOf( ' ' ) > 0 ? app.split( ' ' )[0] : app;
+			ifr.applicationName = conf.Name;
 			ifr.userId = Workspace.userId;
 			ifr.username = Workspace.loginUsername;
 			ifr.userLevel = Workspace.userLevel;
@@ -1201,7 +1202,7 @@ function ExecuteJSXByPath( path, args, callback, conf, flags )
 function ExecuteJSX( data, app, args, path, callback, conf, flags )
 {
 	if( data.indexOf( '{' ) < 0 ) return;
-
+	
 	// Remove from execution queue
 	RemoveFromExecutionQueue( app );
 	
@@ -1427,7 +1428,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 						data = data.split( /libs\:/i ).join ( document.location.href.split( /[^\/].*\.html/i ).join ( '' ) + '/webclient/' );
 						data = data.split( /system\:/i ).join ( document.location.href.split( /[^\/].*\.html/i ).join ( '' ) + '/webclient/' );
 					}
-
+					
 					jsx.innerHTML = data;
 
 					ifr.contentWindow.document.getElementsByTagName( 'head' )[0].appendChild( jsx );
@@ -1467,9 +1468,8 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 
 					if( !msg.authId && ifr.conf.authid ) msg.authId = ifr.conf.authid;
 					if( !msg.sessionId && ifr.conf.sessionid ) msg.sessionId = ifr.conf.sessionid;
-
+					
 					msg = JSON.stringify( msg );
-
 					// Get JSON data from url
 					var vdata = GetUrlVar( 'data' ); if( vdata ) msg.data = vdata;
 

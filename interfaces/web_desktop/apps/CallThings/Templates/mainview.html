@@ -1,0 +1,81 @@
+
+	<link rel="stylesheet" href="Progdir:Css/callthings.css"/>
+	
+	<div id="call-things" class="ContentFull flexnes nedover">
+		<div id="io">
+			<div class="flexnes">
+				<div class="Padding">
+					library / module
+					<div class="Padding flexnes">
+						<select id="select_mod_lib">
+							<option value="library">
+								system.library
+							</option>
+							<option value="module">
+								module, system
+							</option>
+						</select>
+						<div id="mod_name_wrap" class="InputHeight hidden">
+							<input id="module_name" type="text" placeholder="system">
+						</div>
+					</div>
+				</div>
+				<div class="Padding">
+					Pull user info, result in console
+					<div class="Padding">
+						<button id="user_info_get" type="button" class="Button fa-user IconSmall">
+							userinfoget
+						</button>
+					</div>
+				</div>
+			</div>
+			<div class="Padding">
+				OPTIONAL: Auth token
+				<div class="Padding">
+					<input id="token_auth_id" placeholder="authId"
+						type="text" class="InputHeight">
+						
+					<input id="token_server_token" placeholder="serverToken"
+						type="text" class="InputHeight">
+						
+					<input id="token_session_id" placeholder="sessionId"
+						type="text" class="InputHeight">
+				</div>
+			</div>
+			<div class="Padding">
+				exec path
+				<div class="Padding">
+					<input id="input_exec_path" type="text" class="InputHeight">
+				</div>
+			</div>
+			<div class="Padding">
+				add args as JSON
+				<div class="Padding">
+					<textarea id="ta_args"></textarea>
+				</div>
+			</div>
+			<div class="Padding">
+				result ( also dumped to console ): 
+			</div>
+			<div class="flexnes">
+				<div id="result_response" class="result Padding">
+				</div>
+				<div id="result_data" class="result Padding">
+				</div>
+			</div>
+		</div>
+		<div id="action-bar" class="Padding BackgroundDefault BorderTop">
+			<button id="btn_call" type="button" class="Button fa-check IconSmall">
+				Call
+			</button>
+			<button id="btn_clear" type="button" class="Button fa-recycle IconSmall">
+				Clear
+			</button>
+			<button id="btn_close" type="button" class="Button fa-close IconSmall">
+				Close
+			</button>
+		</div>
+	</div>
+	
+	<script src="Progdir:Scripts/callview.js"></script>
+
