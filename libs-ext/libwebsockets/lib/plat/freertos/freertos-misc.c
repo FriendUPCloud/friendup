@@ -24,6 +24,18 @@
 
 #include "private-lib-core.h"
 
+/*
+ * Normally you don't want this, use lws_sul instead inside the event loop.
+ * But sometimes for drivers it makes sense, so there's an internal-only
+ * crossplatform api for it.
+ */
+
+void
+lws_msleep(unsigned int ms)
+{
+	vTaskDelay(portTICK_PERIOD_MS > ms ? 1 : ms / portTICK_PERIOD_MS);
+}
+
 lws_usec_t
 lws_now_usecs(void)
 {
@@ -43,7 +55,7 @@ lws_get_random(struct lws_context *context, void *buf, size_t len)
 		uint8_t *p = (uint8_t *)&r;
 		int b = 4;
 
-		if (len < b)
+		if (len < (size_t)b)
 			b = len;
 
 		len -= b;
@@ -54,6 +66,7 @@ lws_get_random(struct lws_context *context, void *buf, size_t len)
 
 	return pb - (uint8_t *)buf;
 #else
+#if defined(LWS_WITH_MBEDTLS)
 	int n;
 
 	n = mbedtls_ctr_drbg_random(&context->mcdc, buf, len);
@@ -63,7 +76,7 @@ lws_get_random(struct lws_context *context, void *buf, size_t len)
 	/* failed */
 
 	lwsl_err("%s: mbedtls_ctr_drbg_random returned 0x%x\n", __func__, n);
-
+#endif
 	return 0;
 #endif
 }

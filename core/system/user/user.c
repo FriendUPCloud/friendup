@@ -32,7 +32,13 @@ User *UserNew( )
 	User *u;
 	if( ( u = FCalloc( 1, sizeof( User ) ) ) != NULL )
 	{
+<<<<<<< HEAD
 		UserInit( u, NULL );
+=======
+		UserInit( u );
+		
+		GenerateUUID( &( u->u_UUID ) );
+>>>>>>> release/1.2.6
 	}
 	else
 	{
@@ -788,8 +794,9 @@ File *UserGetDeviceByName( User *usr, const char *name )
  * @param newsess new session hash. If passed value is equal to NULL new hash will be generated
  * @return 0 when success, otherwise error number
  */
-int UserRegenerateSessionID( void *lsb, User *usr, char *newsess )
+int UserRegenerateSessionID( User *usr, char *newsess )
 {
+<<<<<<< HEAD
 	/*
 	if( usr != NULL )
 	{
@@ -800,6 +807,11 @@ int UserRegenerateSessionID( void *lsb, User *usr, char *newsess )
 		SystemBase *sb = (SystemBase *)lsb;
 		
 >>>>>>> master
+=======
+/*
+	if( usr != NULL )
+	{
+>>>>>>> release/1.2.6
 		//pthread_mutex_lock( &(usr->) );
 		// Remove old one and update
 		if( usr->u_MainSessionID )
@@ -810,31 +822,16 @@ int UserRegenerateSessionID( void *lsb, User *usr, char *newsess )
 		if( newsess != NULL )
 		{
 			usr->u_MainSessionID = StringDuplicate( newsess );
-			DEBUG("[UserRegenerateSessionID] changed master DIRTY COPY OF SESSION ID user: %s session: %s\n", usr->u_Name, usr->u_MainSessionID );
 		}
 		else
 		{
-			SQLLibrary *sqllib;
 			time_t timestamp = time ( NULL );
 	
-			//char *hashBase = MakeString( 255 );
-			//sprintf( hashBase, "%ld%s%d", timestamp, usr->u_FullName, ( rand() % 999 ) + ( rand() % 999 ) + ( rand() % 999 ) );
-			//HashedString( &hashBase );
+			char *hashBase = MakeString( 255 );
+			sprintf( hashBase, "%ld%s%d", timestamp, usr->u_FullName, ( rand() % 999 ) + ( rand() % 999 ) + ( rand() % 999 ) );
+			HashedString( &hashBase );
 
-			usr->u_MainSessionID = SessionIDGenerate( );//hashBase;
-			DEBUG("[UserRegenerateSessionID] changed master sessionid for user: %s session: %s\n", usr->u_Name, usr->u_MainSessionID );
-			
-			sqllib = sb->LibrarySQLGet( sb );
-			if( sqllib != NULL )
-			{
-				char temptext[ 512 ];
-				sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "UPDATE `FUser` SET SessionID='%s' WHERE ID=%lu", usr->u_MainSessionID, usr->u_ID );
-				
-				DEBUG("[UserRegenerateSessionID] sql: %s\n", temptext );
-				
-				sqllib->QueryWithoutResults( sqllib, temptext );
-				sb->LibrarySQLDrop( sb, sqllib );
-			}
+			usr->u_MainSessionID = hashBase;
 		}
 	
 >>>>>>> master
@@ -844,11 +841,15 @@ int UserRegenerateSessionID( void *lsb, User *usr, char *newsess )
 		{
 			while( lDev != NULL )
 			{
+<<<<<<< HEAD
 				//if( lDev->f_SessionID )
 				//{
 				//	FFree( lDev->f_SessionID );
 				//}
 				
+=======
+
+>>>>>>> release/1.2.6
 				//lDev->f_SessionID = StringDuplicate( usr->u_MainSessionID );
 				lDev->f_SessionIDPTR = usr->u_MainSessionID;
 				lDev = (File *)lDev->node.mln_Succ;
@@ -859,7 +860,12 @@ int UserRegenerateSessionID( void *lsb, User *usr, char *newsess )
 	{
 		DEBUG("User structure = NULL\n");
 		return 1;
+<<<<<<< HEAD
 	}*/
+=======
+	}
+*/
+>>>>>>> release/1.2.6
 	return 0;
 }
 

@@ -186,7 +186,7 @@ void WebdavTokenManagerDeleteOld( WebdavTokenManager *wtm )
 		tok = (WebdavToken *) tok->node.mln_Succ;
 		
 		// remove entry
-		if( ( curTime - acttok->wt_CreateTime ) > MINS360 )
+		if( ( curTime - acttok->wt_CreationTime ) > MINS360 )
 		{
 			WebdavTokenDelete( acttok );
 		}

@@ -490,6 +490,15 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	{
 		$User->ServerToken = $GLOBALS[ 'args' ]->servertoken;
 		$User->Load();
+
+		if( $mus = $SqlDatabase->FetchObject( '
+                    SELECT * FROM FUserSession WHERE UserID = \'' . $User->ID . '\' LIMIT 1
+                    ' ) )
+                    {
+			$Logger->log( 'UserSession found->servertoken' );
+			$UserSession = $mus;
+                    }
+
 	}
 	// Load by session id
 	else if( isset( $GLOBALS[ 'args' ]->sessionid ) )
@@ -510,7 +519,54 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	}
 	else
 	{
-	    die( '404 - ' . print_r( $GLOBALS[ 'args' ], 1 ) );
+		// Ok, did we have auth id?
+		if( isset( $GLOBALS['args']->authid ) )
+		{
+			$asid = mysqli_real_escape_string( $SqlDatabase->_link, $GLOBALS['args']->authid );
+			if( $row = $SqlDatabase->FetchObject( $q = '
+				SELECT * FROM ( 
+					( 
+						SELECT u.ID FROM FUser u, FUserApplication a 
+						WHERE 
+							a.AuthID="' . $asid . '" AND a.UserID = u.ID LIMIT 1 
+					) 
+					UNION 
+					( 
+						SELECT u2.ID FROM FUser u2, Filesystem f 
+						WHERE 
+							f.Config LIKE "%' . $asid . '%" AND u2.ID = f.UserID LIMIT 1 
+					) 
+				) z LIMIT 1
+			' ) )
+			{
+				$User->Load( $row->ID );
+
+				if( $User->ID > 0 )
+				{
+					$GLOBALS[ 'User' ] =& $User;
+					$Logger->log( 'User load by authid NEW' );
+
+					if( $mus = $SqlDatabase->FetchObject( '
+						SELECT * FROM FUserSession WHERE UserID = \'' . $User->ID . '\' LIMIT 1
+						' ) )
+						{
+							$Logger->log( 'UserSession found' );
+							$UserSession = $mus;
+							$GLOBALS['UserSession'] =& $UserSession;
+						}
+				}
+				else
+				{
+					$Logger->log('UserID not found');
+				}
+			}
+		}
+		
+		//$logger->log( 'ok: ' . ( isset( $User ) ? ' has user' : ' no user' ) );
+		
+		// Failed to authenticate
+		if( !isset( $groupSession ) && isset( $User->ID ) && $User->ID <= 0 )
+			die( '404' );
 	}
 	
 	register_shutdown_function( function()

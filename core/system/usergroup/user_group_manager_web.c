@@ -1342,7 +1342,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			args = el->hme_Data;
 		}
 		
-		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
+		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 		{
 			el = GetHEReq( request, "id" );
 			if( el != NULL )
@@ -1578,7 +1578,10 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		if( el != NULL )
 		{
 			authid = el->hme_Data;
-			len += strlen( authid );
+			if( authid != NULL )
+			{
+				len += strlen( authid );
+			}
 		}
 		el = HttpGetPOSTParameter( request, "args" );
 		if( el != NULL )
@@ -1597,14 +1600,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			UserGroup *ug = UGMGetGroupByID( l->sl_UGM, groupID );
 			if( ug != NULL )
 			{
-				if( ug->ug_Description != NULL )
-				{
-					tmpsize = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"userid\":%lu,\"name\":\"%s\",\"parentid\":%lu,\"type\":\"%s\",\"status\":%d,\"description\":\"%s\",\"users\":[", groupID, ug->ug_UserID, ug->ug_Name, ug->ug_ParentID, ug->ug_Type, ug->ug_Status, ug->ug_Description );
-				}
-				else
-				{
-					tmpsize = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"userid\":%lu,\"name\":\"%s\",\"parentid\":%lu,\"type\":\"%s\",\"status\":%d,\"users\":[", groupID, ug->ug_UserID, ug->ug_Name, ug->ug_ParentID, ug->ug_Type, ug->ug_Status );
-				}
+				tmpsize = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"uuid\":\"%s\",\"userid\":%lu,\"name\":\"%s\",\"parentid\":%lu,\"type\":\"%s\",\"status\":%d,\"users\":[", groupID, ug->ug_UUID, ug->ug_UserID, ug->ug_Name, ug->ug_ParentID, ug->ug_Type, ug->ug_Status );
 			}
 			else
 			{

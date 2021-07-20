@@ -609,7 +609,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							}
 							else
 							{
-								Log( FLOG_INFO, "[HTTP] SysWebRequest response: '%.*s'\n", 200, response->http_Content );
+								//Log( FLOG_INFO, "[HTTP] SysWebRequest response: '%.*s'\n", 200, response->content );
 							}
 						}
 						else
@@ -924,7 +924,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								
 								if( error != NULL )
 								{
-									Log( FLOG_DEBUG,"Error from mount '%s'\n", error );
 									FFree( error );
 								}
 
@@ -946,8 +945,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									{
 										mime = StringDuplicate( "application/octet-stream" );
 									}
-									
-									Log( FLOG_DEBUG,"Getting extension '%s'\n", extension );
 
 									//add mounting and reading files from FS
 									struct TagItem tags[] = {
@@ -1027,8 +1024,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									}
 									else
 									{
-										//DEBUG("CACHE STATE: %d\n", cacheState );
-										Log( FLOG_DEBUG,"No cache\n" );
+										DEBUG("CACHE STATE: %d\n", cacheState );
 										FILE *cffp = NULL;
 
 										if( cacheState == CACHE_FILE_MUST_BE_CREATED )

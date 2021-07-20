@@ -46,34 +46,34 @@ void lwsi_set_state(struct lws *wsi, lws_wsi_state_t lrs)
 void
 lws_vhost_bind_wsi(struct lws_vhost *vh, struct lws *wsi)
 {
-	if (wsi->vhost == vh)
+	if (wsi->a.vhost == vh)
 		return;
 	lws_context_lock(vh->context, __func__); /* ---------- context { */
-	wsi->vhost = vh;
+	wsi->a.vhost = vh;
 	vh->count_bound_wsi++;
 	lws_context_unlock(vh->context); /* } context ---------- */
 	lwsl_debug("%s: vh %s: wsi %s/%s, count_bound_wsi %d\n", __func__,
 		   vh->name, wsi->role_ops ? wsi->role_ops->name : "none",
-		   wsi->protocol ? wsi->protocol->name : "none",
+		   wsi->a.protocol ? wsi->a.protocol->name : "none",
 		   vh->count_bound_wsi);
-	assert(wsi->vhost->count_bound_wsi > 0);
+	assert(wsi->a.vhost->count_bound_wsi > 0);
 }
 
 void
 lws_vhost_unbind_wsi(struct lws *wsi)
 {
-	if (!wsi->vhost)
+	if (!wsi->a.vhost)
 		return;
 
-	lws_context_lock(wsi->context, __func__); /* ---------- context { */
+	lws_context_lock(wsi->a.context, __func__); /* ---------- context { */
 
-	assert(wsi->vhost->count_bound_wsi > 0);
-	wsi->vhost->count_bound_wsi--;
+	assert(wsi->a.vhost->count_bound_wsi > 0);
+	wsi->a.vhost->count_bound_wsi--;
 	lwsl_debug("%s: vh %s: count_bound_wsi %d\n", __func__,
-		   wsi->vhost->name, wsi->vhost->count_bound_wsi);
+		   wsi->a.vhost->name, wsi->a.vhost->count_bound_wsi);
 
-	if (!wsi->vhost->count_bound_wsi &&
-	    wsi->vhost->being_destroyed) {
+	if (!wsi->a.vhost->count_bound_wsi &&
+	    wsi->a.vhost->being_destroyed) {
 		/*
 		 * We have closed all wsi that were bound to this vhost
 		 * by any pt: nothing can be servicing any wsi belonging
@@ -81,11 +81,11 @@ lws_vhost_unbind_wsi(struct lws *wsi)
 		 *
 		 * Finalize the vh destruction
 		 */
-		__lws_vhost_destroy2(wsi->vhost);
+		__lws_vhost_destroy2(wsi->a.vhost);
 	}
-	wsi->vhost = NULL;
+	wsi->a.vhost = NULL;
 
-	lws_context_unlock(wsi->context); /* } context ---------- */
+	lws_context_unlock(wsi->a.context); /* } context ---------- */
 }
 
 struct lws *
@@ -135,7 +135,7 @@ lws_callback_all_protocol(struct lws_context *context,
 			wsi = wsi_from_fd(context, pt->fds[n].fd);
 			if (!wsi)
 				continue;
-			if (wsi->protocol == protocol)
+			if (wsi->a.protocol == protocol)
 				protocol->callback(wsi, reason, wsi->user_space,
 						   NULL, 0);
 		}
@@ -160,9 +160,9 @@ lws_callback_all_protocol_vhost_args(struct lws_vhost *vh,
 			wsi = wsi_from_fd(context, pt->fds[n].fd);
 			if (!wsi)
 				continue;
-			if (wsi->vhost == vh && (wsi->protocol == protocol ||
+			if (wsi->a.vhost == vh && (wsi->a.protocol == protocol ||
 						 !protocol))
-				wsi->protocol->callback(wsi, reason,
+				wsi->a.protocol->callback(wsi, reason,
 						wsi->user_space, argp, len);
 		}
 		pt++;
@@ -183,8 +183,8 @@ lws_callback_vhost_protocols(struct lws *wsi, int reason, void *in, int len)
 {
 	int n;
 
-	for (n = 0; n < wsi->vhost->count_protocols; n++)
-		if (wsi->vhost->protocols[n].callback(wsi, reason, NULL, in, len))
+	for (n = 0; n < wsi->a.vhost->count_protocols; n++)
+		if (wsi->a.vhost->protocols[n].callback(wsi, reason, NULL, in, len))
 			return 1;
 
 	return 0;
@@ -200,12 +200,12 @@ lws_callback_vhost_protocols_vhost(struct lws_vhost *vh, int reason, void *in,
 	if (!wsi)
 		return 1;
 
-	wsi->context = vh->context;
+	wsi->a.context = vh->context;
 	lws_vhost_bind_wsi(vh, wsi);
 
-	for (n = 0; n < wsi->vhost->count_protocols; n++) {
-		wsi->protocol = &vh->protocols[n];
-		if (wsi->protocol->callback(wsi, reason, NULL, in, len)) {
+	for (n = 0; n < wsi->a.vhost->count_protocols; n++) {
+		wsi->a.protocol = &vh->protocols[n];
+		if (wsi->a.protocol->callback(wsi, reason, NULL, in, len)) {
 			lws_free(wsi);
 			return 1;
 		}
@@ -220,7 +220,7 @@ lws_callback_vhost_protocols_vhost(struct lws_vhost *vh, int reason, void *in,
 int
 lws_rx_flow_control(struct lws *wsi, int _enable)
 {
-	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
+	struct lws_context_per_thread *pt = &wsi->a.context->pt[(int)wsi->tsi];
 	int en = _enable;
 
 	// h2 ignores rx flow control atm
@@ -285,7 +285,7 @@ lws_rx_flow_allow_all_protocol(const struct lws_context *context,
 			wsi = wsi_from_fd(context, pt->fds[n].fd);
 			if (!wsi)
 				continue;
-			if (wsi->protocol == protocol)
+			if (wsi->a.protocol == protocol)
 				lws_rx_flow_control(wsi, LWS_RXFLOW_ALLOW);
 		}
 		pt++;
@@ -364,28 +364,28 @@ __lws_rx_flow_control(struct lws *wsi)
 const struct lws_protocols *
 lws_get_protocol(struct lws *wsi)
 {
-	return wsi->protocol;
+	return wsi->a.protocol;
 }
 
 
 int
 lws_ensure_user_space(struct lws *wsi)
 {
-	if (!wsi->protocol)
+	if (!wsi->a.protocol)
 		return 0;
 
 	/* allocate the per-connection user memory (if any) */
 
-	if (wsi->protocol->per_session_data_size && !wsi->user_space) {
+	if (wsi->a.protocol->per_session_data_size && !wsi->user_space) {
 		wsi->user_space = lws_zalloc(
-			    wsi->protocol->per_session_data_size, "user space");
+			    wsi->a.protocol->per_session_data_size, "user space");
 		if (wsi->user_space == NULL) {
 			lwsl_err("%s: OOM\n", __func__);
 			return 1;
 		}
 	} else
 		lwsl_debug("%s: %p protocol pss %lu, user_space=%p\n", __func__,
-			   wsi, (long)wsi->protocol->per_session_data_size,
+			   wsi, (long)wsi->a.protocol->per_session_data_size,
 			   wsi->user_space);
 	return 0;
 }
@@ -607,21 +607,27 @@ int
 lws_broadcast(struct lws_context_per_thread *pt, int reason, void *in, size_t len)
 {
 	struct lws_vhost *v = pt->context->vhost_list;
+	lws_fakewsi_def_plwsa(pt);
 	int n, ret = 0;
 
-	pt->fake_wsi->context = pt->context;
+	lws_fakewsi_prep_plwsa_ctx(pt->context);
+#if !defined(LWS_PLAT_FREERTOS) && LWS_MAX_SMP > 1
+	((struct lws *)plwsa)->tsi = (int)(pt - &pt->context->pt[0]);
+#endif
 
 	while (v) {
 		const struct lws_protocols *p = v->protocols;
-		pt->fake_wsi->vhost = v; /* not a real bound wsi */
+
+		plwsa->vhost = v; /* not a real bound wsi */
 
 		for (n = 0; n < v->count_protocols; n++) {
-			pt->fake_wsi->protocol = p;
+			plwsa->protocol = p;
 			if (p->callback &&
-			    p->callback(pt->fake_wsi, reason, NULL, in, len))
+			    p->callback((struct lws *)plwsa, reason, NULL, in, len))
 				ret |= 1;
 			p++;
 		}
+
 		v = v->vhost_next;
 	}
 
@@ -633,6 +639,13 @@ lws_wsi_user(struct lws *wsi)
 {
 	return wsi->user_space;
 }
+
+int
+lws_wsi_tsi(struct lws *wsi)
+{
+	return wsi->tsi;
+}
+
 
 void
 lws_set_wsi_user(struct lws *wsi, void *data)
@@ -671,13 +684,13 @@ lws_set_opaque_parent_data(struct lws *wsi, void *data)
 void *
 lws_get_opaque_user_data(const struct lws *wsi)
 {
-	return wsi->opaque_user_data;
+	return wsi->a.opaque_user_data;
 }
 
 void
 lws_set_opaque_user_data(struct lws *wsi, void *data)
 {
-	wsi->opaque_user_data = data;
+	wsi->a.opaque_user_data = data;
 }
 
 int
@@ -730,19 +743,19 @@ lws_get_socket_fd(struct lws *wsi)
 struct lws_vhost *
 lws_vhost_get(struct lws *wsi)
 {
-	return wsi->vhost;
+	return wsi->a.vhost;
 }
 
 struct lws_vhost *
 lws_get_vhost(struct lws *wsi)
 {
-	return wsi->vhost;
+	return wsi->a.vhost;
 }
 
 const struct lws_protocols *
 lws_protocol_get(struct lws *wsi)
 {
-	return wsi->protocol;
+	return wsi->a.protocol;
 }
 
 #if defined(LWS_WITH_UDP)
@@ -756,12 +769,12 @@ lws_get_udp(const struct lws *wsi)
 struct lws_context *
 lws_get_context(const struct lws *wsi)
 {
-	return wsi->context;
+	return wsi->a.context;
 }
 
 #if defined(LWS_WITH_CLIENT)
 int
-_lws_generic_transaction_completed_active_conn(struct lws **_wsi)
+_lws_generic_transaction_completed_active_conn(struct lws **_wsi, char take_vh_lock)
 {
 	struct lws *wnew, *wsi = *_wsi;
 
@@ -798,7 +811,8 @@ _lws_generic_transaction_completed_active_conn(struct lws **_wsi)
 		lwsl_info("%s: nothing pipelined waiting\n", __func__);
 		lwsi_set_state(wsi, LRS_IDLING);
 
-		lws_set_timeout(wsi, PENDING_TIMEOUT_CLIENT_CONN_IDLE, 5);
+		lws_set_timeout(wsi, PENDING_TIMEOUT_CLIENT_CONN_IDLE,
+				wsi->keep_warm_secs);
 
 		return 0; /* no new transaction right now */
 	}
@@ -808,7 +822,8 @@ _lws_generic_transaction_completed_active_conn(struct lws **_wsi)
 	 * closing ourself
 	 */
 
-	lws_vhost_lock(wsi->vhost);
+	if (take_vh_lock)
+		lws_vhost_lock(wsi->a.vhost);
 
 	wnew = lws_container_of(wsi->dll2_cli_txn_queue_owner.head, struct lws,
 				dll2_cli_txn_queue);
@@ -819,6 +834,8 @@ _lws_generic_transaction_completed_active_conn(struct lws **_wsi)
 
 	assert(lws_socket_is_valid(wsi->desc.sockfd));
 
+	__lws_change_pollfd(wsi, LWS_POLLOUT | LWS_POLLIN, 0);
+
 	/* copy the fd */
 	wnew->desc = wsi->desc;
 
@@ -828,13 +845,32 @@ _lws_generic_transaction_completed_active_conn(struct lws **_wsi)
 
 	if (__remove_wsi_socket_from_fds(wsi))
 		return -1;
+
+	sanity_assert_no_wsi_traces(wsi->a.context, wsi);
+	sanity_assert_no_sockfd_traces(wsi->a.context, wsi->desc.sockfd);
 	wsi->desc.sockfd = LWS_SOCK_INVALID;
+
+	__lws_wsi_remove_from_sul(wsi);
+
+	/*
+	 * ... we're doing some magic here in terms of handing off the socket
+	 * that has been active to a wsi that has not yet itself been active...
+	 * depending on the event lib we may need to give a magic spark to the
+	 * new guy and snuff out the old guy's magic spark at that level as well
+	 */
+
+#if defined(LWS_WITH_EVENT_LIBS)
+	if (wsi->a.context->event_loop_ops->destroy_wsi)
+		wsi->a.context->event_loop_ops->destroy_wsi(wsi);
+	if (wsi->a.context->event_loop_ops->sock_accept)
+		wsi->a.context->event_loop_ops->sock_accept(wnew);
+#endif
 
 	/* point the fd table entry to new guy */
 
 	assert(lws_socket_is_valid(wnew->desc.sockfd));
 
-	if (__insert_wsi_socket_into_fds(wsi->context, wnew))
+	if (__insert_wsi_socket_into_fds(wsi->a.context, wnew))
 		return -1;
 
 #if defined(LWS_WITH_TLS)
@@ -850,7 +886,7 @@ _lws_generic_transaction_completed_active_conn(struct lws **_wsi)
 
 	wnew->cli_hostname_copy = wsi->cli_hostname_copy;
 	wsi->cli_hostname_copy = NULL;
-
+	wnew->keep_warm_secs = wsi->keep_warm_secs;
 
 	/*
 	 * selected queued guy now replaces the original leader on the
@@ -859,7 +895,7 @@ _lws_generic_transaction_completed_active_conn(struct lws **_wsi)
 
 	lws_dll2_remove(&wsi->dll_cli_active_conns);
 	lws_dll2_add_tail(&wnew->dll_cli_active_conns,
-			  &wsi->vhost->dll_cli_active_conns_owner);
+			  &wsi->a.vhost->dll_cli_active_conns_owner);
 
 	/* move any queued guys to queue on new active conn */
 
@@ -874,7 +910,8 @@ _lws_generic_transaction_completed_active_conn(struct lws **_wsi)
 
 	} lws_end_foreach_dll_safe(d, d1);
 
-	lws_vhost_unlock(wsi->vhost);
+	if (take_vh_lock)
+		lws_vhost_unlock(wsi->a.vhost);
 
 	/*
 	 * The original leader who passed on all his powers already can die...
@@ -923,12 +960,12 @@ int
 lws_bind_protocol(struct lws *wsi, const struct lws_protocols *p,
 		  const char *reason)
 {
-//	if (wsi->protocol == p)
+//	if (wsi->a.protocol == p)
 //		return 0;
-	const struct lws_protocols *vp = wsi->vhost->protocols, *vpo;
+	const struct lws_protocols *vp = wsi->a.vhost->protocols, *vpo;
 
-	if (wsi->protocol && wsi->protocol_bind_balance) {
-		wsi->protocol->callback(wsi,
+	if (wsi->a.protocol && wsi->protocol_bind_balance) {
+		wsi->a.protocol->callback(wsi,
 		       wsi->role_ops->protocol_unbind_cb[!!lwsi_role_server(wsi)],
 					wsi->user_space, (void *)reason, 0);
 		wsi->protocol_bind_balance = 0;
@@ -938,17 +975,17 @@ lws_bind_protocol(struct lws *wsi, const struct lws_protocols *p,
 
 	lws_same_vh_protocol_remove(wsi);
 
-	wsi->protocol = p;
+	wsi->a.protocol = p;
 	if (!p)
 		return 0;
 
 	if (lws_ensure_user_space(wsi))
 		return 1;
 
-	if (p > vp && p < &vp[wsi->vhost->count_protocols])
+	if (p > vp && p < &vp[wsi->a.vhost->count_protocols])
 		lws_same_vh_protocol_insert(wsi, (int)(p - vp));
 	else {
-		int n = wsi->vhost->count_protocols;
+		int n = wsi->a.vhost->count_protocols;
 		int hit = 0;
 
 		vpo = vp;
@@ -963,10 +1000,10 @@ lws_bind_protocol(struct lws *wsi, const struct lws_protocols *p,
 		}
 		if (!hit)
 			lwsl_err("%s: %p is not in vhost '%s' protocols list\n",
-				 __func__, p, wsi->vhost->name);
+				 __func__, p, wsi->a.vhost->name);
 	}
 
-	if (wsi->protocol->callback(wsi, wsi->role_ops->protocol_bind_cb[
+	if (wsi->a.protocol->callback(wsi, wsi->role_ops->protocol_bind_cb[
 				    !!lwsi_role_server(wsi)],
 				    wsi->user_space, NULL, 0))
 		return 1;
@@ -998,8 +1035,8 @@ lws_http_close_immortal(struct lws *wsi)
 		 * need to reapply a normal timeout regime to the nwsi
 		 */
 		lws_set_timeout(nwsi, PENDING_TIMEOUT_HTTP_KEEPALIVE_IDLE,
-				wsi->vhost->keepalive_timeout ?
-				    wsi->vhost->keepalive_timeout : 31);
+				wsi->a.vhost->keepalive_timeout ?
+				    wsi->a.vhost->keepalive_timeout : 31);
 }
 
 void
@@ -1019,6 +1056,8 @@ lws_mux_mark_immortal(struct lws *wsi)
 	}
 
 	nwsi = lws_get_network_wsi(wsi);
+	if (!nwsi)
+		return;
 
 	lwsl_debug("%s: %p %p %d\n", __func__, wsi, nwsi,
 				     nwsi->immortal_substream_count);
@@ -1034,6 +1073,9 @@ lws_mux_mark_immortal(struct lws *wsi)
 int
 lws_http_mark_sse(struct lws *wsi)
 {
+	if (!wsi)
+		return 0;
+
 	lws_http_headers_detach(wsi);
 	lws_mux_mark_immortal(wsi);
 
@@ -1116,11 +1158,13 @@ void
 lws_wsi_mux_close_children(struct lws *wsi, int reason)
 {
 	struct lws *wsi2;
+	struct lws **w;
 
 	if (!wsi->mux.child_list)
 		return;
 
-	lws_start_foreach_llp(struct lws **, w, wsi->mux.child_list) {
+	w = &wsi->mux.child_list;
+	while (*w) {
 		lwsl_info("   closing child %p\n", *w);
 		/* disconnect from siblings */
 		wsi2 = (*w)->mux.sibling_list;
@@ -1129,8 +1173,7 @@ lws_wsi_mux_close_children(struct lws *wsi, int reason)
 		(*w)->socket_is_permanently_unusable = 1;
 		__lws_close_free_wsi(*w, reason, "mux child recurse");
 		*w = wsi2;
-		continue;
-	} lws_end_foreach_llp(w, mux.sibling_list);
+	}
 }
 
 
@@ -1170,7 +1213,7 @@ lws_wsi_mux_dump_waiting_children(struct lws *wsi)
 			  wsi->mux.requested_POLLOUT ? '*' : ' ',
 			  wsi, wsi->mux.my_sid, lwsi_state(wsi),
 			  wsi->role_ops->name,
-			  wsi->protocol ? wsi->protocol->name : "noprotocol");
+			  wsi->a.protocol ? wsi->a.protocol->name : "noprotocol");
 
 		wsi = wsi->mux.sibling_list;
 	}
@@ -1315,7 +1358,7 @@ lws_wsi_txc_report_manual_txcr_in(struct lws *wsi, int32_t bump)
 		 */
 		return 0;
 
-	return user_callback_handle_rxflow(wsi->protocol->callback,
+	return user_callback_handle_rxflow(wsi->a.protocol->callback,
 					   wsi, LWS_CALLBACK_WSI_TX_CREDIT_GET,
 					   wsi->user_space, NULL, (size_t)bump);
 }
@@ -1327,7 +1370,7 @@ lws_wsi_mux_apply_queue(struct lws *wsi)
 {
 	/* we have a transaction queue that wants to pipeline */
 
-	lws_vhost_lock(wsi->vhost);
+	lws_vhost_lock(wsi->a.vhost);
 
 	lws_start_foreach_dll_safe(struct lws_dll2 *, d, d1,
 				   wsi->dll2_cli_txn_queue_owner.head) {
@@ -1364,7 +1407,7 @@ lws_wsi_mux_apply_queue(struct lws *wsi)
 
 	} lws_end_foreach_dll_safe(d, d1);
 
-	lws_vhost_unlock(wsi->vhost);
+	lws_vhost_unlock(wsi->a.vhost);
 
 	return 0;
 }

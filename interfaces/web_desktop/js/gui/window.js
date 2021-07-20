@@ -2007,7 +2007,7 @@ function CloseView( win, delayed )
 	// Check window
 	CheckScreenTitle();
 	
-	if( isMobile )
+	if( isMobile && Workspace.redrawIcons )
 		Workspace.redrawIcons();
 }
 // Obsolete!!!
@@ -4256,6 +4256,7 @@ var View = function( args )
 		content = this.removeScriptsFromData( content );
 		if( !this._window )
 			return;
+			
 		let eles = this._window.getElementsByTagName( _viewType );
 		let ifr = false;
 		if( eles[0] )
@@ -4292,6 +4293,9 @@ var View = function( args )
 	{
 		let w = this;
 
+		if( !this._window )
+			return;
+			
 		let eles = this._window.getElementsByTagName( _viewType );
 		let ifr = false;
 		let appended = false;
@@ -4369,6 +4373,9 @@ var View = function( args )
 		if( !base )
 			base = '/';
 
+		if( !this._window )
+			return;
+
 		let eles = this._window.getElementsByTagName( _viewType );
 		let ifr = false;
 		let w = this;
@@ -4385,7 +4392,7 @@ var View = function( args )
 		ifr.applicationName = self.applicationName;
 		ifr.applicationDisplayName = self.applicationDisplayName;
 		ifr.authId = self.authId;
-
+		
 		let conf = this.flags || {};
 		if( this.flags && this.flags.allowScrolling )
 		{
@@ -4456,6 +4463,15 @@ var View = function( args )
 			if( !found ) sbx.push( 'allow-popups' );
 			if( typeof friendApp == 'undefined' )  ifr.sandbox = sbx.join( ' ' );
 		}
+		
+		// Special insecure mode (use with caution!)
+		if( this.limitless && this.limitless === true )
+		{
+			let sb = ifr.getAttribute( 'sandbox' );
+			if( !sb ) sb = DEFAULT_SANDBOX_ATTRIBUTES;
+			sb += ' allow-top-navigation';
+			ifr.setAttribute( 'sandbox', sb );
+		}
 
 		ifr.onload = function( e )
 		{
@@ -4483,7 +4499,9 @@ var View = function( args )
 
 				try
 				{
-					ifr.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
+					// TODO: Why we used protocol was for security domains - may be deprecated
+					//ifr.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
+					ifr.contentWindow.postMessage( JSON.stringify( msg ), '*' );
 				}
 				catch(e)
 				{
@@ -4514,7 +4532,8 @@ var View = function( args )
 		
 		// Add after options set
 		if( !eles[0] ) this._window.appendChild( ifr );
-
+		
+		this.initOnMessageCallback();
 	}
 	
 	this.showBackButton = function( visible, cbk )
@@ -4581,6 +4600,27 @@ var View = function( args )
 			this.sendQueue.push( dataObject );
 		}
 		return true;
+	}
+	// Receive a message specifically for this view.
+	this.initOnMessageCallback = function()
+	{
+		if( self.onMessage && self.iframe && !window.onmessage )
+		{
+			let b = self.iframe.getAttribute( 'sandbox' );
+			window.onmessage = function( msg ) 
+			{
+				if( msg && msg.isTrusted && msg.data && msg.data.type )
+				{
+					if( self.iframe.contentWindow == msg.source )
+					{
+						self.onMessage( msg.data );
+						
+						// Enforce prevailing sandbox attributes
+						self.iframe.setAttribute( 'sandbox', b );
+					}
+				}
+			};
+		}
 	}
 	// Send messages to window that hasn't been sent because iframe was not loaded
 	this.executeSendQueue = function()
@@ -4888,7 +4928,7 @@ var View = function( args )
 					value = value.split( 'px' ).join( '' );
 					if( !isMobile )
 					{
-						viewdiv.style.left = value.indexOf( '%' ) > 0 ? value : ( value + 'px' );
+						viewdiv.style.left = ( value.indexOf( '%' ) > 0 || value.indexOf( 'vw' ) > 0 ) ? value : ( value + 'px' );
 					}
 				}
 				break;
@@ -4900,7 +4940,7 @@ var View = function( args )
 					value = value.split( 'px' ).join( '' );
 					if( !isMobile )
 					{
-						viewdiv.style.top = value.indexOf( '%' ) > 0 ? value : ( value + 'px' );
+						viewdiv.style.top = ( value.indexOf( '%' ) > 0 || value.indexOf( 'vh' ) > 0 ) ? value : ( value + 'px' );
 					}
 				}
 				break;

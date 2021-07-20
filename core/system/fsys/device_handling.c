@@ -382,6 +382,7 @@ int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, UserSession *se
 						{FSys_Mount_SysBase,(FULONG)l},
 						{FSys_Mount_Config,(FULONG)config},
 						{FSys_Mount_ID, (FULONG)id},
+						{FSys_Mount_UserSession,(FULONG)ses},
 						{TAG_DONE, TAG_DONE}
 					};
 		
@@ -2558,6 +2559,11 @@ WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where User
 	void *res = sqllib->Query( sqllib, temptext );
 	if( res == NULL )
 	{
+		// remember to release sql if local one was used
+		if( gotGlobalSQL == FALSE )
+		{
+			l->LibrarySQLDrop( l, sqllib );
+		}
 		FERROR("GetUserDevice fail: database results = NULL\n");
 		return NULL;
 	}
@@ -2642,6 +2648,14 @@ WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where User
 		if( type != NULL ) FFree( type );
 		if( name != NULL ) FFree( name );
 	}	// going through all rows
+	else
+	{
+		// remember to release sql if local one was used
+		if( gotGlobalSQL == FALSE )
+		{
+			l->LibrarySQLDrop( l, sqllib );
+		}
+	}
 	
 	DEBUG( "[GetUserDeviceByUserID] Successfully freed.\n" );
 	
@@ -3449,7 +3463,11 @@ usrgrp->ug_ID
 				}
 			}
 			
+<<<<<<< HEAD
 			DEBUG("Usergroup mount: pass sessionid: '%s'\n", us->us_SessionID );
+=======
+			//DEBUG("Usergroup mount: pass sessionid: '%s'\n", us->us_SessionID );
+>>>>>>> release/1.2.6
 			
 			struct TagItem tags[] = {
 				{ FSys_Mount_Path,				(FULONG)row[ 4 ] },

@@ -344,6 +344,11 @@ SystemBase *SystemInit( void )
 	
 	l->sl_RemoveOldSessionTimeout = 0;
 	
+	// use deflate compression as default for http calls
+	l->l_HttpCompressionContent |= HTTP_COMPRESSION_DEFLATE;
+	
+	l->l_UpdateLoggedTimeOnUserMax = 10;
+	
 	if( plib != NULL && plib->Open != NULL )
 	{
 		char *ptr = getenv("FRIEND_HOME");
@@ -419,6 +424,8 @@ SystemBase *SystemInit( void )
 			l->sl_SocketTimeout  = plib->ReadIntNCS( prop, "core:SSLSocketTimeout", 10000 );
 			l->sl_USFCacheMax = plib->ReadIntNCS( prop, "core:USFCachePerDevice", 102400000 );
 			
+			l->l_UpdateLoggedTimeOnUserMax = plib->ReadIntNCS( prop, "core:updateuserloggedtimeinterval", 10 );
+			
 			l->l_EnableHTTPChecker = plib->ReadIntNCS( prop, "Options:HttpChecker", 0 );
 			
 			l->sl_MasterServer = StringDuplicate( plib->ReadStringNCS( prop, "core:masterserveraddress", "pal.ideverket.no") );
@@ -471,6 +478,11 @@ SystemBase *SystemInit( void )
 				if( strstr( tptr, "bzip" ) != NULL )
 				{
 					l->l_HttpCompressionContent |= HTTP_COMPRESSION_BZIP;
+				}
+				
+				if( strstr( tptr, "none" ) != NULL )
+				{
+					l->l_HttpCompressionContent = 0;
 				}
 			}
 			
@@ -664,8 +676,13 @@ SystemBase *SystemInit( void )
 		Log( FLOG_INFO, "---------Autoupdatedatabase process skipped---------\n");
 		Log( FLOG_INFO, "----------------------------------------------------\n");
 	}
+<<<<<<< HEAD
 
 	SQLLibrary *lsqllib  = l->GetDBConnection( l );
+=======
+	
+	SQLLibrary *lsqllib  = l->LibrarySQLGet( l );
+>>>>>>> release/1.2.6
 	if( lsqllib != NULL )
 	{
 		// session timeout
@@ -1034,12 +1051,6 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
 	// create all managers
-	
-	l->sl_SupportManager = SupportManagerNew( l );
-	if( l->sl_SupportManager == NULL )
-	{
-		Log( FLOG_ERROR, "Cannot initialize SupportManager\n");
-	}
 	
 	l->sl_PermissionManager = PermissionManagerNew( l );
 	if( l->sl_PermissionManager == NULL )
@@ -1875,7 +1886,7 @@ int SystemInitExternal( SystemBase *l )
 				if( ses != NULL )
 				{
 					ses->us_UserID = l->sl_Sentinel->s_User->u_ID;
-					ses->us_LoggedTime = timestamp;
+					ses->us_LastActionTime = timestamp;
 					
 					UserAddSession( l->sl_Sentinel->s_User, ses );
 					
@@ -1887,9 +1898,9 @@ int SystemInitExternal( SystemBase *l )
 			// regenerate sessionid for User
 			//
 			
-			if(  (timestamp - l->sl_Sentinel->s_User->u_LoggedTime) > l->sl_RemoveSessionsAfterTime )
+			if(  (timestamp - l->sl_Sentinel->s_User->u_LastActionTime) > l->sl_RemoveSessionsAfterTime )
 			{
-				UserRegenerateSessionID( l, l->sl_Sentinel->s_User, NULL );
+				UserRegenerateSessionID( l->sl_Sentinel->s_User, NULL );
 			}
 		}
 		

@@ -1967,6 +1967,9 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		{
 			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
 			
+			// Remove System: drive from workspace listing
+			if( icons[a].Path == 'System:' ) continue;
+			
 			// Volumes don't sort by folders, then files
 			if( this.mode == 'Volumes' )
 			{
@@ -4888,7 +4891,7 @@ function CheckDoorsKeys( e )
 	// Do the thing! Keyboard navigation
 	if( 
 		!Workspace.editing &&
-		window.regionWindow && wobject._window && wobject._window.directoryview && 
+		window.regionWindow && wobject && wobject._window.directoryview && 
 		( wobject && ( !wobject.flags || !wobject.flags.editing ) ) &&
 		wobject._window.directoryview.keyboardNavigation &&
 		!e.ctrlKey

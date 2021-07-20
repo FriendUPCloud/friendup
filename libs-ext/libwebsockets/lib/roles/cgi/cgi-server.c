@@ -68,12 +68,49 @@ urlencode(const char *in, int inlen, char *out, int outlen)
 	return out - start;
 }
 
+static void
+lws_cgi_grace(lws_sorted_usec_list_t *sul)
+{
+	struct lws_cgi *cgi = lws_container_of(sul, struct lws_cgi, sul_grace);
+
+	/* act on the reap cb from earlier */
+
+	lwsl_info("%s: wsi %p\n", __func__, cgi->wsi);
+
+	if (!cgi->wsi->http.cgi->post_in_expected)
+		cgi->wsi->http.cgi->cgi_transaction_over = 1;
+
+	lws_callback_on_writable(cgi->wsi);
+}
+
+
+static void
+lws_cgi_reap_cb(void *opaque, lws_usec_t *accounting, siginfo_t *si,
+		 int we_killed_him)
+{
+	struct lws *wsi = (struct lws *)opaque;
+
+	/*
+	 * The cgi has come to an end, by itself or with a signal...
+	 */
+
+	lwsl_info("%s: wsi %p post_in_expected %d\n", __func__, wsi,
+			(int)wsi->http.cgi->post_in_expected);
+
+	/*
+	 * Grace period to handle the incoming stdout
+	 */
+
+	lws_sul_schedule(wsi->a.context, wsi->tsi, &wsi->http.cgi->sul_grace,
+			 lws_cgi_grace, 1 * LWS_US_PER_SEC);
+}
+
 int
 lws_cgi(struct lws *wsi, const char * const *exec_array,
 	int script_uri_path_len, int timeout_secs,
 	const struct lws_protocol_vhost_options *mp_cgienv)
 {
-	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
+	struct lws_context_per_thread *pt = &wsi->a.context->pt[(int)wsi->tsi];
 	struct lws_spawn_piped_info info;
 	char *env_array[30], cgi_path[500], e[1024], *p = e,
 	     *end = p + sizeof(e) - 1, tok[256], *t, *sum, *sumend;
@@ -354,9 +391,11 @@ lws_cgi(struct lws *wsi, const char * const *exec_array,
 	info.opt_parent = wsi;
 	info.timeout_us = 5 * 60 * LWS_US_PER_SEC;
 	info.tsi = wsi->tsi;
-	info.vh = wsi->vhost;
+	info.vh = wsi->a.vhost;
 	info.ops = &role_ops_cgi;
 	info.plsp = &wsi->http.cgi->lsp;
+	info.opaque = wsi;
+	info.reap_cb = lws_cgi_reap_cb;
 
 	/*
 	 * Actually having made the env, as a cgi we don't need the ah
@@ -375,10 +414,10 @@ lws_cgi(struct lws *wsi, const char * const *exec_array,
 
 	/* we are the parent process */
 
-	wsi->context->count_cgi_spawned++;
+	wsi->a.context->count_cgi_spawned++;
 
 	/* inform cgi owner of the child PID */
-	n = user_callback_handle_rxflow(wsi->protocol->callback, wsi,
+	n = user_callback_handle_rxflow(wsi->a.protocol->callback, wsi,
 				    LWS_CALLBACK_CGI_PROCESS_ATTACH,
 				    wsi->user_space, NULL, cgi->lsp->child_pid);
 	(void)n;
@@ -386,6 +425,7 @@ lws_cgi(struct lws *wsi, const char * const *exec_array,
 	return 0;
 
 bail:
+	lws_sul_cancel(&wsi->http.cgi->sul_grace);
 	lws_free_set_NULL(wsi->http.cgi);
 
 	lwsl_err("%s: failed\n", __func__);
@@ -561,7 +601,7 @@ post_hpack_recode:
 
 			cmd = LWS_WRITE_HTTP_HEADERS_CONTINUATION;
 			if (wsi->http.cgi->headers_dumped + n !=
-			    wsi->http.cgi->headers_pos) {
+						wsi->http.cgi->headers_pos) {
 				lwsl_notice("adding no fin flag\n");
 				cmd |= LWS_WRITE_NO_FIN;
 			}
@@ -578,14 +618,23 @@ post_hpack_recode:
 			    wsi->http.cgi->headers_pos) {
 				wsi->hdr_state = LHCS_PAYLOAD;
 				lws_free_set_NULL(wsi->http.cgi->headers_buf);
-				lwsl_debug("freed cgi headers\n");
+				lwsl_debug("%s: freed cgi headers\n", __func__);
+
+				if (wsi->http.cgi->post_in_expected) {
+					lwsl_info("%s: post data still expected, "
+						  "asking for writeable\n",
+						  __func__);
+					lws_callback_on_writable(wsi);
+				}
+
 			} else {
 				wsi->reason_bf |=
 					LWS_CB_REASON_AUX_BF__CGI_HEADERS;
 				lws_callback_on_writable(wsi);
 			}
 
-			/* writeability becomes uncertain now we wrote
+			/*
+			 * writeability becomes uncertain now we wrote
 			 * something, we must return to the event loop
 			 */
 			return 0;
@@ -821,7 +870,7 @@ agin:
 		if (!wsi->mux_substream && m) {
 			uint8_t term[LWS_PRE + 6];
 
-			lwsl_notice("%s: sent trailer\n", __func__);
+			lwsl_info("%s: sent trailer\n", __func__);
 			memcpy(term + LWS_PRE, (uint8_t *)"0\x0d\x0a\x0d\x0a", 5);
 
 			if (lws_write(wsi, term + LWS_PRE, 5,
@@ -867,7 +916,7 @@ lws_cgi_kill(struct lws *wsi)
 
 	if (pid != -1) {
 		m = wsi->http.cgi->being_closed;
-		n = user_callback_handle_rxflow(wsi->protocol->callback, wsi,
+		n = user_callback_handle_rxflow(wsi->a.protocol->callback, wsi,
 						LWS_CALLBACK_CGI_TERMINATED,
 						wsi->user_space, (void *)&args,
 						pid);
@@ -962,7 +1011,7 @@ lws_cgi_kill_terminated(struct lws_context_per_thread *pt)
 		cgi = *pcgi;
 		pcgi = &(*pcgi)->cgi_list;
 
-		if (cgi->lsp->child_pid <= 0)
+		if (!cgi || !cgi->lsp || cgi->lsp->child_pid <= 0)
 			continue;
 
 		/* we deferred killing him after reaping his PID */
@@ -1026,7 +1075,7 @@ lws_cgi_get_stdwsi(struct lws *wsi, enum lws_enum_stdinouterr ch)
 void
 lws_cgi_remove_and_kill(struct lws *wsi)
 {
-	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
+	struct lws_context_per_thread *pt = &wsi->a.context->pt[(int)wsi->tsi];
 	struct lws_cgi **pcgi = &pt->http.cgi_list;
 
 	/* remove us from the cgi list */
@@ -1040,7 +1089,7 @@ lws_cgi_remove_and_kill(struct lws *wsi)
 		pcgi = &(*pcgi)->cgi_list;
 	}
 	if (wsi->http.cgi->headers_buf) {
-		lwsl_debug("close: freed cgi headers\n");
+		lwsl_debug("%s: close: freed cgi headers\n", __func__);
 		lws_free_set_NULL(wsi->http.cgi->headers_buf);
 	}
 	/* we have a cgi going, we must kill it */

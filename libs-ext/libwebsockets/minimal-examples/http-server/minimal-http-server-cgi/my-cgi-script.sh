@@ -14,7 +14,7 @@ if [ "$REQUEST_METHOD" = "POST" ] ; then
 	>&2 echo "lwstest script stderr: doing read"
 	echo "CONTENT_LENGTH=$CONTENT_LENGTH"
 	read -n $CONTENT_LENGTH line
-	>&2 echo "lwstest script stderr: done read"
+	>&2 echo "lwstest script stderr: done read $line"
 
 	echo "read=\"$line\""
 else
@@ -31,6 +31,6 @@ fi
 
 echo "<br/>done"
 echo "</body></html>"
-
+sleep 0.5
 exit 0
 

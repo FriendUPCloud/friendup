@@ -273,7 +273,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 	
 	this.render = function( forceRefresh )
 	{
-		var self = this;
+		let self = this;
 		
 		// Setup the container for the launcher icons
 		this.dom.style.position = 'absolute';
@@ -281,7 +281,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		if( window.isMobile )
 		{
 			// Create hider
-			var hider = document.createElement( 'div' );
+			let hider = document.createElement( 'div' );
 			hider.className = 'Hider';
 			hider.onclick = function()
 			{
@@ -291,8 +291,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		}
 		
 		// Move window list
-		var viewList = false;
-		for( var a = 0; a < this.dom.childNodes.length; a++ )
+		let viewList = false;
+		for( let a = 0; a < this.dom.childNodes.length; a++ )
 		{
 			if( this.dom.childNodes[a].className == 'ViewList' )
 			{
@@ -306,36 +306,36 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			this.dom.appendChild( viewList );
 		}
 		
-		var items = [];
-		for( var a = 0; a < this.dom.childNodes.length; a++ )
+		let items = [];
+		for( let a = 0; a < this.dom.childNodes.length; a++ )
 		{
 			if( this.dom.childNodes[a].className == 'ViewList' ) continue;
 			items.push( this.dom.childNodes[a] );
 		}
 		if( this.viewList ) 
 		{
-			for( var a = 0; a < this.viewList.childNodes.length; a++ )
+			for( let a = 0; a < this.viewList.childNodes.length; a++ )
 				items.push( this.viewList.childNodes[a] );
 		}
 		
-		var horizontal = this.direction == 'horizontal' ? true : false;
+		let horizontal = this.direction == 'horizontal' ? true : false;
 		
-		var itemWidth = this.conf && this.conf.size ? this.conf.size : 56;
-		var itemHeight = this.conf && this.conf.size ? this.conf.size : 56;
-		var marginWidth = horizontal ? 12 : 7;
-		var marginHeight = !horizontal ? 12 : 7;
+		let itemWidth = this.conf && this.conf.size ? this.conf.size : 56;
+		let itemHeight = this.conf && this.conf.size ? this.conf.size : 56;
+		let marginWidth = horizontal ? 12 : 7;
+		let marginHeight = !horizontal ? 12 : 7;
 		
-		var pos = this.conf.layout;
-		var position = this.conf.position;
+		let pos = this.conf.layout;
+		let position = this.conf.position;
 		
-		var scrollerMargins = {
+		let scrollerMargins = {
 			top: 0,
 			left: 0,
 			right: 0,
 			bottom: 0
 		};
 		
-		var positionClass = '';
+		let positionClass = '';
 		
 		if( position != 'fixed' )
 		{
@@ -431,36 +431,36 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		}
 		
 		// Screen content
-		var cnt = ge( 'DoorsScreen' ).object._screen;
+		let cnt = ge( 'DoorsScreen' ).object._screen;
 
 		// Do the rendering of icons
-		var sh = ge( 'DoorsScreen' )[ !horizontal ? 'offsetHeight' : 'offsetWidth' ];
+		let sh = ge( 'DoorsScreen' )[ !horizontal ? 'offsetHeight' : 'offsetWidth' ];
 		if( !horizontal )
 		{
 			sh -= cnt.offsetTop;
 		}		
 		
 		// With dockwindowlist we allocate a bit more room for tasks
-		var availSpace = sh - ( ge( 'DockWindowList' ) ? 200 : 80 );
+		let availSpace = sh - ( ge( 'DockWindowList' ) ? 200 : 80 );
 		
-		var step = horizontal ? marginWidth : marginHeight;
+		let step = horizontal ? marginWidth : marginHeight;
 		
-		var calcLength = ( ( ( !horizontal ? itemHeight : itemWidth ) + step ) * items.length ) - step;
-		var blocks = Math.ceil( calcLength / availSpace ); // TODO: Make dynamic
+		let calcLength = ( ( ( !horizontal ? itemHeight : itemWidth ) + step ) * items.length ) - step;
+		let blocks = Math.ceil( calcLength / availSpace ); // TODO: Make dynamic
 		if( blocks < 1 ) blocks = 1;
 		
-		var currBlock = 0;
-		var len = 0;
-		var itemUnit = ( !horizontal ? itemHeight : itemWidth ) + step;
-		var maxLength = availSpace - itemUnit;
+		let currBlock = 0;
+		let len = 0;
+		let itemUnit = ( !horizontal ? itemHeight : itemWidth ) + step;
+		let maxLength = availSpace - itemUnit;
 		
-		var x = marginWidth, y = marginHeight, maxLen = 0;
-		var cols = rows = 1;
+		let x = marginWidth, y = marginHeight, maxLen = 0;
+		let cols = rows = 1;
 		this.iconListPixelLength = 0;
-		var comp;
-		for( var a = 0; a < items.length; a++ )
+		let comp;
+		for( let a = 0; a < items.length; a++ )
 		{
-			var cn = items[a];
+			let cn = items[a];
 			if( cn.classList.contains( 'WindowList' ) || cn.classList.contains( 'DockMenu' ) )
 				continue;
 			cn.style.position = 'absolute';
@@ -552,8 +552,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		// Position of container
 		if( position != 'fixed' )
 		{
-			var th = cnt.offsetTop;
-			var midScreenH = ( ( this.dom.parentNode.offsetHeight - th ) * 0.5 ) + th;
+			let th = cnt.offsetTop;
+			let midScreenH = ( ( this.dom.parentNode.offsetHeight - th ) * 0.5 ) + th;
 			
 			this.dom.style.left = 'auto';
 			this.dom.style.top = 'auto';
@@ -615,7 +615,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			// Add margins around icons based on dock!
 			if( !window.isMobile )
 			{
-				var scroller = Workspace.screen.contentDiv;
+				let scroller = Workspace.screen.contentDiv;
 				if( scroller )
 				{
 					scroller.style.paddingTop = scrollerMargins.top + 'px';

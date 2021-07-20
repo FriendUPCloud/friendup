@@ -275,14 +275,18 @@ var WorkspaceInside = {
 		if( this.mode == 'vr' ) return;
 		if( globalConfig.workspacecount <= 1 ) return;
 
-		if( !Workspace.wallpaperLoaded && !loaded ) return;
+		if( !Workspace.wallpaperLoaded && !loaded ) 
+		{
+			return;
+		}
 		
 		// Check if we already have workspace wallpapers
-		var o = []; // <- result after cleanup
-		var co = [];
-		var m = globalConfig.workspacecount;
-		var scr = ge( 'DoorsScreen' ).screenObject;
-		var url = Workspace.wallpaperImage;
+		let o = []; // <- result after cleanup
+		let co = [];
+		let m = globalConfig.workspacecount;
+		let scr = ge( 'DoorsScreen' ).screenObject;
+		let url = Workspace.wallpaperImage;
+		
 		if( !url || !url.indexOf ) url = 'none';
 		else
 		{
@@ -290,20 +294,21 @@ var WorkspaceInside = {
 				url = getImageUrl( url );
 		}
 		
-		var workspacePositions = [];
-		var maxW = Workspace.screen.getMaxViewWidth();
-		for( var a = 0; a < globalConfig.workspacecount; a++ )
+		let workspacePositions = [];
+		let maxW = Workspace.screen.getMaxViewWidth();
+		for( let a = 0; a < globalConfig.workspacecount; a++ )
 		{
 			workspacePositions.push( a * maxW );
 		}
-		for( var a in movableWindows )
+		for( let a in movableWindows )
 		{
-			var wo = movableWindows[a].windowObject;
+			let wo = movableWindows[a].windowObject;
 			movableWindows[a].viewContainer.style.left = workspacePositions[ wo.workspace ] + 'px';
 		}
 		
-		var image = url == 'none' ? url : ( 'url(' + url + ')' );
-		for( var a = 0; a < m; a++ )
+		let image = url == 'none' ? url : ( 'url(' + url + ')' );
+		
+		for( let a = 0; a < m; a++ )
 		{
 			// Check if we already have wallpapers
 			if( this.workspaceWallpapers && a < this.workspaceWallpapers.length )
@@ -325,7 +330,7 @@ var WorkspaceInside = {
 			// New entry
 			else
 			{
-				var d = document.createElement( 'div' );
+				let d = document.createElement( 'div' );
 				d.className = 'WorkspaceWallpaper';
 				d.style.left = scr.div.offsetWidth * a + 'px';
 				d.style.width = scr.div.offsetWidth + 'px';
@@ -340,6 +345,287 @@ var WorkspaceInside = {
 		
 		if( loaded )
 			Workspace.wallpaperLoaded = true;
+	},
+	// Invite a friend to the Workspace
+	inviteFriend: function()
+	{
+		var version = 1;
+		
+		let self = this;
+		if( this.inviteView ) return this.inviteView.activate();
+		// TODO: check permissions
+		if( version == 1 )
+		{
+			var f = new File( 'System:templates/invite_link.html' );
+		}
+		else
+		{
+			var f = new File( 'System:templates/invite.html' );
+		}
+		f.i18n();
+		f.onLoad = function( data )
+		{
+			let v = new View( {
+				title: i18n( 'i18n_invite_friend' ),
+				width: ( version == 1 ? 470 : 700 ),
+				height: ( version == 1 ? 204 : 700 )
+			} );
+			self.inviteView = v;
+			v.onClose = function()
+			{
+				self.inviteView = null;
+			}
+			v.setContent( data );
+			if( version == 1 ) self.addInvite();
+			self.inviteLoadWorkgroups( '', self.getInviteCallback( 'workgroups' ) );
+			self.invitesGet( self.getInviteCallback( 'invites' ) );
+		}
+		f.load();
+	},
+	// Get the invite callback wanted
+	getInviteCallback: function( type )
+	{
+		var version = 1;
+		
+		let self = this;
+		if( type == 'workgroups' )
+		{
+			return function( data )
+			{
+				if( self.inviteView && self.inviteView.content.querySelector( '.MulSelect' ) )
+				{
+					try
+					{
+						let str = data;
+						let ostr = '';
+						if( !str.length )
+						{
+							self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = '<option value="0">' + i18n( 'i18n_no_workgroups' ) + '</option>';
+							return;
+						}
+						for( let a = 0; a < str.length; a++ )
+						{
+							ostr += '<option value="' + str[a].ID + '">' + str[a].Name + '</option>';
+						}
+						self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = ostr;
+					}
+					catch( e )
+					{
+						self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = '<option value="0">' + i18n( 'i18n_no_workgroups' ) + '</option>';
+					}
+				}
+			};
+		}
+		else if( type == 'invites' )
+		{
+			return function( data )
+			{
+				if( !data )
+				{
+					data = [
+						{
+							Link: 'https://intranet.friendup.cloud/invite/372873827',
+							ID: 12,
+							Workgroups: [ { ID: 12, Name: 'Test' }, { ID: 13, Name: 'Flest' }, { ID: 14, Name: 'Vest' } ]
+						},
+						{
+							Link: 'https://intranet.friendup.cloud/invite/654356',
+							ID: 13,
+							Workgroups: false
+						},
+						{
+							Link: 'https://intranet.friendup.cloud/invite/8976987689',
+							ID: 15,
+							Workgroups: false
+						},
+						{
+							Link: 'https://intranet.friendup.cloud/invite/876979',
+							ID: 19,
+							Workgroups: [ { ID: 712, Name: 'Io' }, { ID: 153, Name: 'Gopa' } ]
+						}
+					];
+				}
+				
+				let str = '';
+				for( let a = 0; a < data.length; a++ )
+				{
+					let details = '';
+					for( let b = 0; b < data[a].Workgroups.length; b++ )
+					{
+						details += '<div class="Rounded BackgroundNegative Negative FloatLeft PaddingSmall MarginRight">' + data[a].Workgroups[b].Name + '</div>';
+					}
+					
+					if( version == 1 )
+					{
+						str += '<div class="InviteBlock MarginBottom Rounded BackgroundLists Padding">\
+							<div class="HRow">\
+								<div class="FloatLeft Link HContent70"><input type="text" class="FullWidth LinkField" style="background: transparent; border: 0" value="' + data[a].Link + '"/></div><div class="Buttons HContent30 FloatLeft TextRight">\
+									<button type="button" class="ImageButton IconSmall fa-clipboard" onclick="let sp = this.parentNode.parentNode.querySelector( \'.LinkField\' ); sp.select(); sp.setSelectionRange(0,9999999); document.execCommand(\'copy\');"></button>\
+									<button type="button" class="ImageButton IconSmall fa-refresh" onclick="Workspace.refreshInvite(' + data[a].ID + ')"></button>\
+								</div>\
+							</div>\
+						</div>';
+					}
+					else
+					{
+						str += '<div class="InviteBlock MarginBottom Rounded BackgroundLists Padding">\
+							<div class="HRow">\
+								<div class="FloatLeft Link HContent70"><input type="text" class="FullWidth LinkField" style="background: transparent; border: 0" value="' + data[a].Link + '"/></div><div class="Buttons HContent30 FloatLeft TextRight">\
+									<button type="button" class="ImageButton IconSmall fa-clipboard" onclick="let sp = this.parentNode.parentNode.querySelector( \'.LinkField\' ); sp.select(); sp.setSelectionRange(0,9999999); document.execCommand(\'copy\');"></button>\
+									<button type="button" class="ImageButton IconSmall fa-eye" onclick="let p = this.parentNode.parentNode.parentNode; if( p.classList.contains( \'Show\' ) ) { p.classList.remove( \'Show\' ); } else { p.classList.add( \'Show\' ); }"></button>\
+									<button type="button" class="ImageButton IconSmall fa-trash" onclick="Workspace.removeInvite(' + data[a].ID + ')"></button>\
+								</div>\
+							</div>\
+							<div class="HiddenDetails NoPadding\">\
+								' + details + '\
+								<br style="clear: both"/>\
+							</div>\
+						</div>';
+					}
+				}
+				self.inviteView.content.querySelector( '.InviteList' ).innerHTML = str;
+			}
+		}
+		return null;
+	},
+	// Re-generate a new refresh token
+	refreshInvite( id )
+	{
+		let self = this;
+		
+		self.removeInvite( id, true, function(  )
+		{
+			
+			self.addInvite();
+			
+		} );
+	},
+	// Generate a invite
+	addInvite: function()
+	{
+		let self = this;
+		
+		let m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e == 'ok' )
+			{
+				self.invitesGet( self.getInviteCallback( 'invites' ) );
+			}
+			else
+			{
+				Alert( i18n( 'i18n_failed_generate_invite' ), i18n( 'i18n_failed_generate_invite_desc' ) );
+			}
+		}
+		// TODO: Make support for workgroups ...
+		m.execute( 'generateinvite'/*, { workgroups: '' }*/ );
+	},
+	// Remove an invite
+	removeInvite: function( id, force, callback )
+	{
+		let self = this;
+		
+		if( force )
+		{
+			let m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				if( e == 'ok' )
+				{
+					if( callback )
+					{
+						return callback( e, d );
+					}
+				}
+				else
+				{
+					Alert( i18n( 'i18n_failed_remove_invite' ), i18n( 'i18n_failed_remove_invite_desc' ) );
+				}
+			}
+			m.execute( 'removeinvite', { ids: id } );
+		}
+		else
+		{
+			Confirm( 'i18n_are_you_sure', 'i18n_confirm_delete', function( data )
+			{
+				if( data == true )
+				{
+					let m = new Module( 'system' );
+					m.onExecuted = function( e, d )
+					{
+						if( e == 'ok' )
+						{
+							self.invitesGet( self.getInviteCallback( 'invites' ) );
+						}
+						else
+						{
+							Alert( i18n( 'i18n_failed_remove_invite' ), i18n( 'i18n_failed_remove_invite_desc' ) );
+						}
+					}
+					m.execute( 'removeinvite', { ids: id } );
+				}
+			} );
+		}
+	},
+	// Load workgroups for invite
+	inviteLoadWorkgroups: function( keywords, callback )
+	{
+		if( !keywords ) keywords = '';
+		if( !callback ) return;
+		
+		let m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e != 'ok' )
+			{
+				return callback( false );
+			}
+			try
+			{
+				let str = JSON.parse( d );
+				if( keywords.length > 0 )
+				{
+					keywords = keywords.split( ',' );
+					let end = [];
+					for( let a = 0; a < keywords.length; a++ )
+					{
+						for( let b = 0; b < str.length; b++ )
+						{
+							if( str[b].Name.toLowerCase() == Trim( keywords[a] ).toLowerCase() )
+								end.push( str[b] );
+						}
+					}
+					return callback( end.length ? end : false );
+				}
+				
+				return callback( str );
+			}
+			catch( e ){};
+			callback( false );
+		}
+		m.execute( 'workgroups' );
+	},
+	// Get existing invites
+	invitesGet: function( callback )
+	{
+		if( !callback ) return;
+		
+		let m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e != 'ok' )
+			{
+				return callback( false );
+			}
+			try
+			{
+				let data = JSON.parse( d );
+				return callback( data );
+			}
+			catch(e){};
+			callback( false );
+		}
+		m.execute( 'getinvites' );
 	},
 	// Initialize virtual workspaces
 	initWorkspaces: function()
@@ -682,25 +968,32 @@ var WorkspaceInside = {
             //console.log('webproxy set to be tunneled as well.');
         }
 		
-		closeConn();
-		
-		if( typeof FriendConnection == 'undefined' )
+		// Reconnect if we already exist
+		if( this.conn )
 		{
-			return setTimeout( function(){ Workspace.initWebSocket( callback ); }, 250 );
+			this.conn.connectWebSocket();
+			console.log( '[initWebSocket] Reconnecting websocket.' );
 		}
-		
-		this.conn = new FriendConnection( conf );
-		this.conn.on( 'sasid-request', handleSASRequest ); // Shared Application Session
-		this.conn.on( 'server-notice', handleServerNotice );
-		this.conn.on( 'server-msg', handleServerMessage );
-		this.conn.on( 'refresh', function( msg )
+		else
 		{
-			// Do a deep refresh
-			Workspace.refreshDesktop( false, true );
-		} );
-		this.conn.on( 'icon-change', handleIconChange );
-		this.conn.on( 'filesystem-change', handleFilesystemChange );
-		this.conn.on( 'notification', handleNotifications );
+			if( typeof FriendConnection == 'undefined' )
+			{
+				return setTimeout( function(){ Workspace.initWebSocket( callback ); }, 250 );
+			}
+		
+			this.conn = new FriendConnection( conf );
+			this.conn.on( 'sasid-request', handleSASRequest ); // Shared Application Session
+			this.conn.on( 'server-notice', handleServerNotice );
+			this.conn.on( 'server-msg', handleServerMessage );
+			this.conn.on( 'refresh', function( msg )
+			{
+				// Do a deep refresh
+				Workspace.refreshDesktop( false, true );
+			} );
+			this.conn.on( 'icon-change', handleIconChange );
+			this.conn.on( 'filesystem-change', handleFilesystemChange );
+			this.conn.on( 'notification', handleNotifications );
+		}
 		
 		// Reference for handler
 		let selfConn = this.conn;
@@ -1574,8 +1867,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						
 				if( e == 'ok' && d )
 				{
-					var dat = JSON.parse( d );
-					if( dat.wallpaperdoors )
+					Workspace.userSettingsLoaded = true;
+					let dat = JSON.parse( d );
+					if( dat.wallpaperdoors && dat.wallpaperdoors.substr )
 					{
 						if( dat.wallpaperdoors.substr(0,5) == 'color' )
 						{
@@ -1610,7 +1904,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					Workspace.applyThemeConfig();
 					Workspace.loadSystemInfo();
-				
+					
 					// Fallback
 					if( !isMobile )
 					{
@@ -1623,11 +1917,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 						}
 					}
-				
-					if( !Workspace.wallpaperImage || Workspace.wallpaperImage == '""' )
+					
+					if( !Workspace.wallpaperImage || Workspace.wallpaperImage == '""' || Workspace.wallpaperImage === '' )
 					{
 						Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 					}
+					
 					if( dat.wallpaperwindows )
 					{
 						Workspace.windowWallpaperImage = dat.wallpaperwindows;
@@ -1729,13 +2024,20 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						window.friendApp.setBackgroundColor( col );
 					}
 					
+					// If we haven't refreshed, do it now
+					if( !Workspace.desktopFirstRefresh )
+					{
+						Workspace.refreshDesktop();
+					}
+					
 					// Do the startup sequence in sequence (only once)
 					if( !Workspace.startupSequenceRegistered )
 					{	
 						Workspace.startupSequenceRegistered = true;
 						
-						// Reload the docks
+						// Reload the docks here
 						Workspace.reloadDocks();
+						
 						
 						// In single tasking mode, we just skip
 						if( Workspace.isSingleTask )
@@ -1755,6 +2057,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							{
 								friendApp.reveal();
 							}
+													
 							return;
 						}
 						
@@ -2596,7 +2899,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		Workspace.mainDock.clear();
 		
-		
 		function getOnClickFn( appName )
 		{
 			return function()
@@ -2620,7 +2922,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Add start menu
 		if( !isMobile && globalConfig.viewList == 'dockedlist' )
 		{
-			var img = 'startmenu.png';
+			let img = 'startmenu.png';
 			if( Workspace.mainDock.conf )
 			{
 				if( Workspace.mainDock.conf.size == '32' )
@@ -2632,7 +2934,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					img = 'startmenu_16.png';
 				}
 			}
-			var ob = {
+			let ob = {
 				type: 'startmenu',
 				src: '/webclient/gfx/system/' + img,
 				title: 'Start',
@@ -3451,6 +3753,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Just refresh the desktop ------------------------------------------------
 	refreshDesktop: function( callback, forceRefresh )
 	{
+		// Need to wait
+		if( !this.userSettingsLoaded ) return;
+		this.desktopFirstRefresh = true;
+		
+		let self = this;
+		
 		// Get those dynamic classes
 		RefreshDynamicClasses( {} );
 		
@@ -3460,17 +3768,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var imgOffline = GetThemeInfo( 'OfflineIcon' );
 		if( !Workspace.iconsPreloaded && this.mode != 'vr' )
 		{
-			var imgs = [];
+			let imgs = [];
 			imgs.push( imgOffline.backgroundImage );
 			function preloadAndRemove( n )
 			{
 				if( !n ) return;
 			
-				var t = false;
-				var i = new Image();
+				let t = false;
+				let i = new Image();
 				i.src = n;
-				var out = [];
-				for( var a = 0; a < window.preloader.length; a++ )
+				let out = [];
+				for( let a = 0; a < window.preloader.length; a++ )
 				{
 					if( window.preloader[a].src == i.src )
 					{
@@ -3482,7 +3790,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				document.body.appendChild( i );
 				window.preloader.push( i );
 			}
-			for( var a = 0; a < imgs.length; a++ )
+			for( let a = 0; a < imgs.length; a++ )
 			{
 				if( imgs[a] && imgs[a].length )
 				{
@@ -3499,7 +3807,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		
 		// Oh yeah, update windows
-		for( var a in movableWindows )
+		for( let a in movableWindows )
 		{
 			if( movableWindows[a].content.redrawBackdrop )
 			{
@@ -3511,8 +3819,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				movableWindows[a].windowObject.sendToWorkspace( globalConfig.workspacecount - 1 );
 			}
 		}
-
-		var self = this;
 		
 		this.getMountlist( function( data )
 		{	
@@ -3546,33 +3852,41 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 			}
 
-			// Recall wallpaper
-			if( Workspace.mode != 'vr' && self.wallpaperImage != 'color' )
+			// We haven't started with wallpaper yet. Just pass
+			if( typeof( self.wallpaperImage ) == 'undefined' )
 			{
-			    if( self.wallpaperImage == undefined )
+				return;
+			}
+			// Recall wallpaper
+			else if( Workspace.mode != 'vr' && self.wallpaperImage != 'color' )
+			{
+			    if( typeof( self.wallpaperImage ) == undefined )
 			    {
 			        return setTimeout( function(){ Workspace.refreshDesktop( callback, forceRefresh ) }, 25 );
 			    }
 				let eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
 				if( eles.length )
 				{
-					// Check if we have a loadable image!
-					let p = self.wallpaperImage.split( ':' )[0];
-					let found = false;
-					for( let a = 0; a < self.icons.length; a++ )
-					{
-						if( self.icons[a].Title == p )
-						{
-							found = true;
-						}
-					}
-					
-					// Load image
 					let ext = false;
-					if( self.wallpaperImage.indexOf( '.' ) > 0 )
+					let found = false;
+					if( self.wallpaperImage )
 					{
-						ext = self.wallpaperImage.split( '.' );
-						ext = ( ( ext[ ext.length - 1 ] ) + "" ).toLowerCase();
+						// Check if we have a loadable image!
+						let p = self.wallpaperImage.split( ':' )[0];
+						for( let a = 0; a < self.icons.length; a++ )
+						{
+							if( self.icons[a].Title == p )
+							{
+								found = true;
+							}
+						}
+					
+						// Load image
+						if( self.wallpaperImage.indexOf( '.' ) > 0 )
+						{
+							ext = self.wallpaperImage.split( '.' );
+							ext = ( ( ext[ ext.length - 1 ] ) + "" ).toLowerCase();
+						}
 					}
 
 					// Remove prev
@@ -3581,7 +3895,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						v[ z ].parentNode.removeChild( v[ z ] );
 					}
-
+					
 					// Check extension
 					switch( ext )
 					{
@@ -3624,6 +3938,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							break;
 						default:
 							Workspace.wallpaperLoaded = false;
+							let src = found ? getImageUrl( self.wallpaperImage ) : '/webclient/gfx/theme/default_login_screen.jpg';
 							let workspaceBackgroundImage = new Image();
 							workspaceBackgroundImage.onload = function()
 							{
@@ -3648,6 +3963,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								this.done = true;
 								
 								Workspace.wallpaperImageObject = workspaceBackgroundImage;
+								Workspace.wallpaperLoaded = src;
 								
 								// Mobile is not using multiple workspaces
 								if( !isMobile && globalConfig.workspacecount > 1 )
@@ -3660,16 +3976,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									// Set the wallpaper
 									eles[0].style.backgroundImage = 'url(' + this.src + ')';
 								}
-								Workspace.wallpaperLoaded = this.src;
 							};
-							if( found )
-							{
-								workspaceBackgroundImage.src = getImageUrl( self.wallpaperImage );
-							}
-							else 
-							{
-								workspaceBackgroundImage.src = '/webclient/gfx/theme/default_login_screen.jpg';
-							}
+							
+							workspaceBackgroundImage.src = src;
+							
 							if( workspaceBackgroundImage.width > 0 && workspaceBackgroundImage.height > 0 && workspaceBackgroundImage.onload )
 							{
 								workspaceBackgroundImage.onload();
@@ -3700,7 +4010,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 			}
 			// We have no wallpaper...
-			else if( Workspace.mode == 'standard' )
+			else if( Workspace.mode == 'standard' || Workspace.mode == 'default' )
 			{
 				let eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
 				if( eles.length )
@@ -3714,6 +4024,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			else if( Workspace.mode == 'vr' )
 			{
 				Workspace.wallpaperLoaded = true;
+			}
+			else
+			{
+				//console.log( 'Wallpaper: What happened and which mode? ' + Workspace.mode );
 			}
 
 		}, forceRefresh );
@@ -6730,6 +7044,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						command: function(){ Workspace.accountSetup(); }
 					},
 					{
+						name:	i18n( 'invite_a_friend' ),
+						command: function(){ Workspace.inviteFriend(); }
+					},
+					{
 						name:	i18n( 'menu_examine_system' ),
 						command: function()
 						{ 
@@ -6746,7 +7064,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							{
 								OpenWindowByFileinfo( d, false );
 							}
-						}
+						},
+						invisible: !( Workspace.userLevel == 'admin' )
 					},
 					{
 						divider: true
@@ -8523,7 +8842,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				Notify(	{
 					title: i18n( 'i18n_paste_error' ),
-					text: 'Really unexpected error. Contact your Friendly administrator.'
+					text: 'Really unexpected error. Contact your Friend OS administrator.'
 				} );
 			}
 		}
@@ -9631,7 +9950,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	var v = new View( {
-		title: i18n( 'i18n_title_about_friendos' ) + ' Hydrogen',
+		title: i18n( 'i18n_title_about_friendos' ) + ' Hydrogen³',
 		width: 540,
 		height: 560,
 		id: 'about_friendup'

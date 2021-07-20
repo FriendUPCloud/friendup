@@ -1,0 +1,55 @@
+
+	<link rel="stylesheet" href="Progdir:Css/callthings.css"/>
+	
+	<div id="call-things" class="ContentFull flexnes nedover">
+		<div id="io">
+			<div class="Padding">
+				library / module
+			</div>
+			<div class="Padding">
+				<select id="select_mod_lib">
+					<option value="library">
+						system.library
+					</option>
+					<option value="module">
+						module, system
+					</option>
+				</select>
+			</div>
+			<div class="Padding">
+				exec path:
+			</div>
+			<div class="Padding">
+				<input id="input_exec_path" type="text" class="InputHeight">
+			</div>
+			<div class="Padding">
+				add args as JSON
+			</div>
+			<div class="Padding">
+				<textarea id="ta_args"></textarea>
+			</div>
+			<div class="Padding">
+				result:
+			</div>
+			<div class="flexnes">
+				<div id="result_response" class="result Padding">
+				</div>
+				<div id="result_data" class="result Padding">
+				</div>
+			</div>
+		</div>
+		<div id="action-bar" class="Padding BackgroundDefault BorderTop">
+			<button id="btn_call" type="button" class="Button fa-check IconSmall">
+				Call
+			</button>
+			<button id="btn_clear" type="button" class="Button fa-recycle IconSmall">
+				Clear
+			</button>
+			<button id="btn_close" type="button" class="Button fa-close IconSmall">
+				Close
+			</button>
+		</div>
+	</div>
+	
+	<script src="Progdir:Scripts/callview.js"></script>
+

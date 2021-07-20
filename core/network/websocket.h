@@ -96,6 +96,7 @@ typedef struct WSCData
 	BufString						*wsc_Buffer;
 	pthread_mutex_t					wsc_Mutex;
 	int								wsc_InUseCounter;
+	int								wsc_UpdateLoggedTimeCounter;	// this field says how many calls left to call LoggedTime update on FUser table
 }WSCData;
 
 /*
@@ -124,7 +125,7 @@ typedef struct WSCData
 //
 //
 
-WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extDebug );
+WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extDebug, int timeout, int katime, int kaprobes, int kainterval );
 
 //
 //

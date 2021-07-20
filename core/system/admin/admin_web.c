@@ -58,7 +58,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	
 	struct TagItem tags[] = {
 		{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicateN( "text/html", 9 ) },
-		{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ) },
+		{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ) },
 		{TAG_DONE, TAG_DONE}
 	};
 	
@@ -79,6 +79,8 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		
 		goto error;
 	}
+	
+	DEBUG("[AdminWebRequest] call: %s\n", urlpath[ 1 ] );
 	
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
@@ -557,7 +559,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 								{
 									DEBUG("[AdminWebRequest] Going through sessions, device: %s\n", locses->us_DeviceIdentity );
 						
-									if( ( (timestamp - locses->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) )
+									if( ( (timestamp - locses->us_LastActionTime) < l->sl_RemoveSessionsAfterTime ) )
 									{
 										char tmp[ 512 ];
 										int tmpsize = 0;
@@ -702,7 +704,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		
 			Log( FLOG_INFO, "Websocket stopped\n");
 			
-			if( ( l->fcm->fcm_WebSocket = WebSocketNew( l,  l->fcm->fcm_WSPort, l->fcm->fcm_WSSSLEnabled, 0, l->fcm->fcm_WSExtendedDebug ) ) != NULL )
+			if( ( l->fcm->fcm_WebSocket = WebSocketNew( l,  l->fcm->fcm_WSPort, l->fcm->fcm_WSSSLEnabled, 0, l->fcm->fcm_WSExtendedDebug, l->fcm->fcm_WSTimeout, l->fcm->fcm_WSka_time, l->fcm->fcm_WSka_probes, l->fcm->fcm_WSka_interval ) ) != NULL )
 			{
 				WebSocketStart( l->fcm->fcm_WebSocket );
 				Log( FLOG_INFO, "Websocket thread will started\n");
@@ -729,7 +731,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	* @return function return information about uptime ok<!--separate-->{"result":1,"uptime":unixtime_number}
 	*/
 	/// @endcond
-	if( strcmp( urlpath[ 1 ], "uptime" ) == 0 )
+	else if( strcmp( urlpath[ 1 ], "uptime" ) == 0 )
 	{
 		//ok<!--separate-->{"result":1,"uptime":unixtime_number}
 		if( loggedSession->us_User->u_IsAdmin == TRUE )
@@ -751,6 +753,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*
+<<<<<<< HEAD
 	* <HR><H2>system.library/admin/eveusbrestart</H2>Function which restart eveusb service or daemon
 	*
 	* @param sessionid - (required) session id of logged user
@@ -760,10 +763,23 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	/// @endcond
 	if( strcmp( urlpath[ 1 ], "eveusbrestart" ) == 0 )
 	{
+=======
+	* <HR><H2>system.library/admin/getinfousersessions</H2>Function return information about user sessions
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param details - if "true" then more details will be delivered
+	* @return function return information about user sessions holded by UserSessionManager
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 1 ], "getinfousersessions" ) == 0 )
+	{
+		DEBUG("getinfousersessions\n");
+>>>>>>> release/1.2.6
 		//ok<!--separate-->{"result":1,"uptime":unixtime_number}
 		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			HashmapElement *el = NULL;
+<<<<<<< HEAD
 			char *type = NULL;
 		
 			el = HttpGetPOSTParameter( (*request), "message" );
@@ -804,20 +820,108 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 				snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "remotehost" );
 				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, dictmsgbuf );
+=======
+			FBOOL details = FALSE;
+			
+			el = GetHEReq( (*request), "details" );
+			if( el != NULL )
+			{
+				if( el->hme_Data != NULL && strcmp( (char *)el->hme_Data, "true" ) == 0 )
+				{
+					details = TRUE;
+				}
+			}
+			
+			DEBUG("datails: %d\n", details);
+			
+			BufString *bs = BufStringNew();
+			if( bs != NULL )
+			{
+				BufStringAddSize( bs, "ok<!--separate-->{", 18 );
+				USMGetUserSessionStatistic( l->sl_USM, bs, details );
+				BufStringAddSize( bs, "}", 1 );
+				
+				HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
+				
+				bs->bs_Buffer = NULL;
+				*result = 200;
+				
+				BufStringDelete( bs );
 			}
 		}
 		else
 		{
 			char dictmsgbuf[ 256 ];
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
 			HttpAddTextContent( response, dictmsgbuf );
 		}
 	}
 	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/admin/getinfousers</H2>Function return information about Users
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param details - if "true" then more details will be delivered
+	* @return function return information about user sessions holded by UserSessionManager
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 1 ], "getinfousers" ) == 0 )
+	{
+		//ok<!--separate-->{"result":1,"uptime":unixtime_number}
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
+		{
+			HashmapElement *el = NULL;
+			FBOOL details = FALSE;
+			
+			el = GetHEReq( (*request), "details" );
+			if( el != NULL )
+			{
+				if( el->hme_Data != NULL && strcmp( (char *)el->hme_Data, "true" ) == 0 )
+				{
+					details = TRUE;
+				}
+			}
+			
+			BufString *bs = BufStringNew();
+			if( bs != NULL )
+			{
+				BufStringAddSize( bs, "ok<!--separate-->{", 18 );
+				UMGetUserStatistic( l->sl_UM, bs, details );
+				BufStringAddSize( bs, "}", 1 );
+				HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
+				
+				bs->bs_Buffer = NULL;
+				*result = 200;
+				
+				BufStringDelete( bs );
+>>>>>>> release/1.2.6
+			}
+		}
+		else
+		{
+			char dictmsgbuf[ 256 ];
+<<<<<<< HEAD
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+=======
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+>>>>>>> release/1.2.6
+			HttpAddTextContent( response, dictmsgbuf );
+		}
+	}
+	
+<<<<<<< HEAD
 		//
 		// function not found
 		//
 		
+=======
+	//
+	// function not found
+	//
+	
+>>>>>>> release/1.2.6
 	error:
 	
 	return response;

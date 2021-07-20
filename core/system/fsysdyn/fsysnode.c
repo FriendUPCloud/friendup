@@ -328,11 +328,16 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 				( name ? strlen( name ) : 0 ) + 
 				( path ? strlen( path ) : 0 ) + 
 				( module ? strlen( module ) : strlen( "files" ) ) + 
+<<<<<<< HEAD
 #ifdef DB_SESSIONID_HASH
 				( us ? strlen( us->us_HashedSessionID ) : 0 ) + 1;
 #else
 				( us ? strlen( us->us_SessionID ) : 0 ) + 1;
 #endif
+=======
+				( us ? strlen( us->us_SessionID ) : 0 ) + 1;
+			
+>>>>>>> release/1.2.6
 			
 			// Whole command
 			char *command = FCalloc(
@@ -352,11 +357,15 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 						name ? name : "", 
 						path ? path : "", 
 						module ? module : "files", 
+<<<<<<< HEAD
 #ifdef DB_SESSIONID_HASH
 						us->us_HashedSessionID ? us->us_HashedSessionID : ""  );
 #else
 						us->us_SessionID ? us->us_SessionID : ""  );
 #endif
+=======
+						us->us_SessionID ? us->us_SessionID : ""  );
+>>>>>>> release/1.2.6
 					sprintf( command, "node \"modules/node/module.js\" \"%s\";", FilterNodeVar( commandCnt ) );
 					FFree( commandCnt );
 			

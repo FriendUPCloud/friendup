@@ -148,7 +148,7 @@ if( isset( $args->command ) )
 			}
 			$debug = false/*true*/;
 			//prepare....
-			$userid = ( $args->args->userID ? intval( $args->args->userID ) : $UserSession->ID );
+			$userid = ( $args->args->userID ? intval( $args->args->userID ) : $UserSession->UserID );
 			$s = filter_var( $args->args->name, FILTER_SANITIZE_STRING );
 			if( $args->args->fuzzy )
 			{

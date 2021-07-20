@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 Friend OS v1.2.7, "Helium"
 ==========================
+=======
+Friend OS v1.2.6, "Hydrogen 3"
+==============================
+>>>>>>> release/1.2.6
 
 *NB*: For extended functionality and related Friend projects such as the Android app refer [here](https://github.com/FriendSoftwareLabs).
 

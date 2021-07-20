@@ -26,10 +26,25 @@
 
 #include <glib-unix.h>
 
-#define wsi_to_subclass(_w)	  ((_w)->w_read.glib.source)
+#include "private-lib-event-libs-glib.h"
+
+#if !defined(G_SOURCE_FUNC)
+#define G_SOURCE_FUNC(f)	  ((GSourceFunc) (void (*)(void)) (f))
+#endif
+
+#define pt_to_priv_glib(_pt) ((struct lws_pt_eventlibs_glib *)(_pt)->evlib_pt)
+#define wsi_to_priv_glib(_w) ((struct lws_wsi_eventlibs_glib *)(_w)->evlib_wsi)
+
+#define wsi_to_subclass(_w)	  (wsi_to_priv_glib(_w)->w_read.source)
 #define wsi_to_gsource(_w)	  ((GSource *)wsi_to_subclass(_w))
-#define pt_to_loop(_pt)		  ((_pt)->glib.loop)
+#define pt_to_loop(_pt)		  (pt_to_priv_glib(_pt)->loop)
 #define pt_to_g_main_context(_pt) g_main_loop_get_context(pt_to_loop(_pt))
+
+#define lws_gs_valid(t)		  (t.gs)
+#define lws_gs_destroy(t)	  if (lws_gs_valid(t)) { \
+					g_source_destroy(t.gs); \
+					g_source_unref(t.gs); \
+					t.gs = NULL; t.tag = 0; }
 
 static gboolean
 lws_glib_idle_timer_cb(void *p);
@@ -58,17 +73,17 @@ lws_glib_check(GSource *src)
 static int
 lws_glib_set_idle(struct lws_context_per_thread *pt)
 {
-	GSource *gis;
-
-	if (pt->glib.idle_tag)
+	if (lws_gs_valid(pt_to_priv_glib(pt)->idle))
 		return 0;
 
-	gis = g_idle_source_new();
-	if (!gis)
+	pt_to_priv_glib(pt)->idle.gs = g_idle_source_new();
+	if (!pt_to_priv_glib(pt)->idle.gs)
 		return 1;
 
-	g_source_set_callback(gis, lws_glib_idle_timer_cb, pt, NULL);
-	pt->glib.idle_tag = g_source_attach(gis, pt_to_g_main_context(pt));
+	g_source_set_callback(pt_to_priv_glib(pt)->idle.gs,
+			      lws_glib_idle_timer_cb, pt, NULL);
+	pt_to_priv_glib(pt)->idle.tag = g_source_attach(
+			pt_to_priv_glib(pt)->idle.gs, pt_to_g_main_context(pt));
 
 	return 0;
 }
@@ -76,14 +91,17 @@ lws_glib_set_idle(struct lws_context_per_thread *pt)
 static int
 lws_glib_set_timeout(struct lws_context_per_thread *pt, unsigned int ms)
 {
-	GSource *gts;
+	lws_gs_destroy(pt_to_priv_glib(pt)->hrtimer);
 
-	gts = g_timeout_source_new(ms);
-	if (!gts)
+	pt_to_priv_glib(pt)->hrtimer.gs = g_timeout_source_new(ms);
+	if (!pt_to_priv_glib(pt)->hrtimer.gs)
 		return 1;
 
-	g_source_set_callback(gts, lws_glib_hrtimer_cb, pt, NULL);
-	pt->glib.hrtimer_tag = g_source_attach(gts, pt_to_g_main_context(pt));
+	g_source_set_callback(pt_to_priv_glib(pt)->hrtimer.gs,
+			      lws_glib_hrtimer_cb, pt, NULL);
+	pt_to_priv_glib(pt)->hrtimer.tag = g_source_attach(
+						pt_to_priv_glib(pt)->hrtimer.gs,
+					        pt_to_g_main_context(pt));
 
 	return 0;
 }
@@ -117,13 +135,13 @@ lws_glib_dispatch(GSource *src, GSourceFunc x, gpointer userData)
 	lwsl_debug("%s: wsi %p: fd %d, events %d\n", __func__, sub->wsi,
 			eventfd.fd, eventfd.revents);
 
-	pt = &sub->wsi->context->pt[(int)sub->wsi->tsi];
+	pt = &sub->wsi->a.context->pt[(int)sub->wsi->tsi];
 	if (pt->is_destroyed)
 		return G_SOURCE_CONTINUE;
 
-	lws_service_fd_tsi(sub->wsi->context, &eventfd, sub->wsi->tsi);
+	lws_service_fd_tsi(sub->wsi->a.context, &eventfd, sub->wsi->tsi);
 
-	if (!pt->glib.idle_tag)
+	if (!lws_gs_valid(pt_to_priv_glib(pt)->idle))
 		lws_glib_set_idle(pt);
 
 	if (pt->destroy_self)
@@ -153,7 +171,11 @@ lws_glib_hrtimer_cb(void *p)
 	lws_usec_t us;
 
 	lws_pt_lock(pt, __func__);
-	us = __lws_sul_service_ripe(&pt->pt_sul_owner, lws_now_usecs());
+
+	lws_gs_destroy(pt_to_priv_glib(pt)->hrtimer);
+
+	us = __lws_sul_service_ripe(pt->pt_sul_owner, LWS_COUNT_PT_SUL_OWNERS,
+				    lws_now_usecs());
 	if (us) {
 		ms = us / LWS_US_PER_MS;
 		if (!ms)
@@ -201,7 +223,7 @@ lws_glib_idle_timer_cb(void *p)
 	 * We reenable the idle callback on the next network or scheduled event
 	 */
 
-	pt->glib.idle_tag = 0;
+	lws_gs_destroy(pt_to_priv_glib(pt)->idle);
 
 	return FALSE;
 }
@@ -226,12 +248,12 @@ static int
 elops_init_context_glib(struct lws_context *context,
 			 const struct lws_context_creation_info *info)
 {
-	int n;
+//	int n;
 
 	context->eventlib_signal_cb = info->signal_cb;
 
-	for (n = 0; n < context->count_threads; n++)
-		context->pt[n].w_sigint.context = context;
+//	for (n = 0; n < context->count_threads; n++)
+//		pt_to_priv_glib(&context->pt[n])->w_sigint.context = context;
 
 	return 0;
 }
@@ -239,7 +261,8 @@ elops_init_context_glib(struct lws_context *context,
 static int
 elops_accept_glib(struct lws *wsi)
 {
-	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
+	struct lws_context_per_thread *pt = &wsi->a.context->pt[(int)wsi->tsi];
+	struct lws_wsi_eventlibs_glib *wsipr = wsi_to_priv_glib(wsi);
 	int fd;
 
 	assert(!wsi_to_subclass(wsi));
@@ -250,7 +273,7 @@ elops_accept_glib(struct lws *wsi)
 	if (!wsi_to_subclass(wsi))
 		return 1;
 
-	wsi->w_read.context = wsi->context;
+	wsipr->w_read.context = wsi->a.context;
 	wsi_to_subclass(wsi)->wsi = wsi;
 
 	if (wsi->role_ops->file_handle)
@@ -260,10 +283,10 @@ elops_accept_glib(struct lws *wsi)
 
 	wsi_to_subclass(wsi)->tag = g_source_add_unix_fd(wsi_to_gsource(wsi),
 						fd, (GIOCondition)LWS_POLLIN);
-	wsi->w_read.actual_events = LWS_POLLIN;
+	wsipr->w_read.actual_events = LWS_POLLIN;
 
 	g_source_set_callback(wsi_to_gsource(wsi),
-			G_SOURCE_FUNC(lws_service_fd), wsi->context, NULL);
+			G_SOURCE_FUNC(lws_service_fd), wsi->a.context, NULL);
 
 	g_source_attach(wsi_to_gsource(wsi), pt_to_g_main_context(pt));
 
@@ -274,6 +297,7 @@ static int
 elops_init_pt_glib(struct lws_context *context, void *_loop, int tsi)
 {
 	struct lws_context_per_thread *pt = &context->pt[tsi];
+	struct lws_pt_eventlibs_glib *ptpr = pt_to_priv_glib(pt);
 	struct lws_vhost *vh = context->vhost_list;
 	GMainLoop *loop = (GMainLoop *)_loop;
 
@@ -288,7 +312,7 @@ elops_init_pt_glib(struct lws_context *context, void *_loop, int tsi)
 		return -1;
 	}
 
-	pt->glib.loop = loop;
+	ptpr->loop = loop;
 
 	/*
 	* Initialize all events with the listening sockets
@@ -309,7 +333,7 @@ elops_init_pt_glib(struct lws_context *context, void *_loop, int tsi)
 	if (pt->event_loop_foreign)
 		return 0;
 
-	pt->glib.sigint_tag = g_unix_signal_add(SIGINT,
+	ptpr->sigint.tag = g_unix_signal_add(SIGINT,
 					G_SOURCE_FUNC(lws_glib_sigint_cb), pt);
 
 	return 0;
@@ -322,10 +346,15 @@ elops_init_pt_glib(struct lws_context *context, void *_loop, int tsi)
 static void
 elops_io_glib(struct lws *wsi, int flags)
 {
-	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
-	GIOCondition cond = wsi->w_read.actual_events | G_IO_ERR;
+	struct lws_context_per_thread *pt = &wsi->a.context->pt[(int)wsi->tsi];
+	struct lws_wsi_eventlibs_glib *wsipr = wsi_to_priv_glib(wsi);
+	GIOCondition cond = wsipr->w_read.actual_events | G_IO_ERR;
 
-	if (!pt_to_loop(pt) || wsi->context->being_destroyed || pt->is_destroyed)
+	if (!pt_to_loop(pt) || wsi->a.context->being_destroyed ||
+	    pt->is_destroyed)
+		return;
+
+	if (!wsi_to_subclass(wsi))
 		return;
 
 	/*
@@ -347,7 +376,7 @@ elops_io_glib(struct lws *wsi, int flags)
 			cond |= G_IO_OUT;
 	}
 
-	wsi->w_read.actual_events = cond;
+	wsipr->w_read.actual_events = cond;
 
 	lwsl_debug("%s: wsi %p, fd %d, 0x%x/0x%x\n", __func__, wsi,
 			wsi->desc.sockfd, flags, (int)cond);
@@ -373,7 +402,7 @@ elops_destroy_wsi_glib(struct lws *wsi)
 	if (!wsi)
 		return;
 
-	pt = &wsi->context->pt[(int)wsi->tsi];
+	pt = &wsi->a.context->pt[(int)wsi->tsi];
 	if (pt->is_destroyed)
 		return;
 
@@ -387,6 +416,7 @@ elops_destroy_wsi_glib(struct lws *wsi)
 	}
 
 	g_source_destroy(wsi_to_gsource(wsi));
+	g_source_unref(wsi_to_gsource(wsi));
 	wsi_to_subclass(wsi) = NULL;
 }
 
@@ -394,6 +424,7 @@ static void
 elops_destroy_pt_glib(struct lws_context *context, int tsi)
 {
 	struct lws_context_per_thread *pt = &context->pt[tsi];
+	struct lws_pt_eventlibs_glib *ptpr = pt_to_priv_glib(pt);
 	struct lws_vhost *vh = context->vhost_list;
 
 	if (!pt_to_loop(pt))
@@ -409,12 +440,12 @@ elops_destroy_pt_glib(struct lws_context *context, int tsi)
 		vh = vh->vhost_next;
 	}
 
-	if (pt->glib.hrtimer_tag)
-		g_source_remove(pt->glib.hrtimer_tag);
+	lws_gs_destroy(ptpr->idle);
+	lws_gs_destroy(ptpr->hrtimer);
 
 	if (!pt->event_loop_foreign) {
 		g_main_loop_quit(pt_to_loop(pt));
-		g_source_remove(pt->glib.sigint_tag);
+		lws_gs_destroy(ptpr->sigint);
 		g_main_loop_unref(pt_to_loop(pt));
 	}
 
@@ -444,7 +475,7 @@ elops_wsi_logical_close_glib(struct lws *wsi)
 	return 0;
 }
 
-struct lws_event_loop_ops event_loop_ops_glib = {
+static const struct lws_event_loop_ops event_loop_ops_glib = {
 	/* name */			"glib",
 	/* init_context */		elops_init_context_glib,
 	/* destroy_context1 */		NULL,
@@ -461,4 +492,22 @@ struct lws_event_loop_ops event_loop_ops_glib = {
 	/* destroy wsi */		elops_destroy_wsi_glib,
 
 	/* flags */			LELOF_DESTROY_FINAL,
+
+	/* evlib_size_ctx */	0,
+	/* evlib_size_pt */	sizeof(struct lws_pt_eventlibs_glib),
+	/* evlib_size_vh */	0,
+	/* evlib_size_wsi */	sizeof(struct lws_io_watcher_glib),
+};
+
+#if defined(LWS_WITH_EVLIB_PLUGINS)
+LWS_VISIBLE
+#endif
+const lws_plugin_evlib_t evlib_glib = {
+	.hdr = {
+		"glib event loop",
+		"lws_evlib_plugin",
+		LWS_PLUGIN_API_MAGIC
+	},
+
+	.ops	= &event_loop_ops_glib
 };

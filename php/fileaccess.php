@@ -645,7 +645,12 @@ function faConnectDB( $username )
 	global $User, $UserSession;
 	$User = new dbIO( 'FUser' );
 	$User->Name = $username;
+        
 	if( !$User->Load() ){ faLog('Could not load user: ' . $username ); friend404(); }
+
+	$UserSession = new dbIO( 'FUserSession' );
+	$UserSession->UserID = $User->ID;
+	$UserSession->Load();
 
 	define( 'FRIEND_USERNAME', $username );
 	define( 'FRIEND_PASSWORD', 'NOT_THE_REAL_PASSWORD' );
@@ -653,13 +658,12 @@ function faConnectDB( $username )
 	global $GLOBALS;
 	if( !isset( $GLOBALS[ 'args' ] ) )
 	{
-		$GLOBALS[ 'args' ] = (object) array('sessionid' => $UserSession->SessionID);
+		$GLOBALS[ 'args' ] = (object) array( 'servertoken' => $User->ServerToken );
 	}
 	else
 	{
-		$GLOBALS[ 'args' ]->sessionid = $UserSession->SessionID;
+		$GLOBALS[ 'args' ]->servertoken = $User->ServerToken;
 	}
-
 }
 
 ?>

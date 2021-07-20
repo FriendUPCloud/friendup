@@ -413,7 +413,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		Workspace.conn && 
 		Workspace.conn.ws && 
 		Workspace.websocketState == 'open' &&
-		this.proxy.responseType != 'arraybuffer' &&
+		( this.proxy && this.proxy.responseType != 'arraybuffer' ) &&
 		typeof( url ) == 'string' && 
 		url.indexOf( 'http' ) != 0 && 
 		url.indexOf( 'system.library' ) >= 0 &&
@@ -612,7 +612,7 @@ cAjax.prototype.send = function( data, callback )
 	// Register successful send
 	_cajax_http_last_time = ( new Date() ).getTime();
 	
-	if( this.mode == 'websocket' && this.proxy.responseType == 'arraybuffer' )
+	if( this.mode == 'websocket' && this.proxy && this.proxy.responseType == 'arraybuffer' )
 	{
 		this.mode = '';
 	}

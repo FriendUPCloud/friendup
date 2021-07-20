@@ -73,7 +73,7 @@
  *   -  3: 4-byte MSB-first flags
  *   -  7: 4-byte MSB-first us between client requested write and wrote to proxy
  *   - 11: 8-byte MSB-first us resolution unix time client wrote to proxy
- *   - 17: payload
+ *   - 19: payload
  *
  * - Proxied secure stream destroy
  *
@@ -84,9 +84,27 @@
  *
  *   -  0: LWSSS_SER_TXPRE_METADATA
  *   -  1: 2-byte MSB-first rest-of-frame length
- *   -  2: 1-byte metadata name length
- *   -  3: metadata name
+ *   -  3: 1-byte metadata name length
+ *   -  4: metadata name
  *   -  ...: metadata value (for rest of packet)
+ *
+ * - TX credit management - sent when using tx credit apis, cf METADATA
+ *
+ *   - 0: LWSSS_SER_TXPRE_TXCR_UPDATE
+ *   - 1: 2-byte MSB-first rest-of-frame length 00, 04
+ *   - 3: 4-byte additional tx credit adjust value
+ *
+ * - Stream timeout management - forwarded when user applying or cancelling t.o.
+ *
+ *   -  0: LWSSS_SER_TXPRE_TIMEOUT_UPDATE
+ *   -  1: 2-byte MSB-first rest-of-frame length 00, 04
+ *   -  3: 4-byte MSB-first unsigned 32-bit timeout, 0 = use policy, -1 = cancel
+ *
+ * - Passing up payload length hint
+ *
+ *   -  0: LWSSS_SER_TXPRE_PAYLOAD_LENGTH_HINT
+ *   -  1: 2-byte MSB-first rest-of-frame length 00, 04
+ *   -  3: 4-byte MSB-first unsigned 32-bit payload length hint
  *
  * Proxy to client
  *
@@ -117,9 +135,9 @@
  * - Proxied state
  *
  *   -  0: LWSSS_SER_RXPRE_CONNSTATE
- *   -  1: 00, 05
- *   -  3: 1 byte state index
- *   -  7: 4-byte MSB-first ordinal
+ *   -  1: 00, 05 if state < 256, else 00, 08
+ *   -  3: 1 byte state index if state < 256, else 4-byte MSB-first state index
+ *   -  4 or 7: 4-byte MSB-first ordinal
  *
  *
  * Proxied tx may be read by the proxy but rejected due to lack of buffer space
@@ -165,6 +183,10 @@ typedef enum {
 	LWSSSCS_QOS_NACK_REMOTE,
 	LWSSSCS_QOS_ACK_LOCAL,		/* local proxy accepted our tx */
 	LWSSSCS_QOS_NACK_LOCAL,		/* local proxy refused our tx */
+	LWSSSCS_TIMEOUT,		/* optional timeout timer fired */
+
+	LWSSSCS_SERVER_TXN,
+	LWSSSCS_SERVER_UPGRADE,		/* the server protocol upgraded */
 
 	LWSSSCS_SINK_JOIN,		/* sinks get this when a new source
 					 * stream joins the sink */
@@ -215,22 +237,38 @@ enum {
 	LWSSS_SER_TXPRE_TX_PAYLOAD,
 	LWSSS_SER_TXPRE_METADATA,
 	LWSSS_SER_TXPRE_TXCR_UPDATE,
+	LWSSS_SER_TXPRE_TIMEOUT_UPDATE,
+	LWSSS_SER_TXPRE_PAYLOAD_LENGTH_HINT,
 	LWSSS_SER_TXPRE_TLSNEG_ENCLAVE_SIGNED,
 };
 
 typedef enum {
-	LPCS_WAIT_INITIAL_TX = 1, /* after connect, must send streamtype */
-	LPCS_REPORTING_FAIL, /* stream creation failed, wait to to tell */
-	LPCS_REPORTING_OK, /* stream creation succeeded, wait to to tell */
-	LPCS_OPERATIONAL, /* ready for payloads */
-	LPCS_DESTROYED,
+	LPCSPROX_WAIT_INITIAL_TX = 1, /* after connect, must send streamtype */
+	LPCSPROX_REPORTING_FAIL, /* stream creation failed, wait to to tell */
+	LPCSPROX_REPORTING_OK, /* stream creation succeeded, wait to to tell */
+	LPCSPROX_OPERATIONAL, /* ready for payloads */
+	LPCSPROX_DESTROYED,
 
-	LPCS_SENDING_INITIAL_TX = 1,  /* after connect, must send streamtype */
-	LPCS_WAITING_CREATE_RESULT,   /* wait to hear if proxy ss create OK */
-	LPCS_LOCAL_CONNECTED,	      /* we are in touch with the proxy */
-	LPCS_ONWARD_CONNECT,	      /* request onward ss connection */
+	LPCSCLI_SENDING_INITIAL_TX,  /* after connect, must send streamtype */
+	LPCSCLI_WAITING_CREATE_RESULT,   /* wait to hear if proxy ss create OK */
+	LPCSCLI_LOCAL_CONNECTED,	      /* we are in touch with the proxy */
+	LPCSCLI_ONWARD_CONNECT,	      /* request onward ss connection */
+	LPCSCLI_OPERATIONAL, /* ready for payloads */
 
 } lws_ss_conn_states_t;
+
+/*
+ * Returns from state() callback can tell the caller what the user code
+ * wants to do
+ */
+
+typedef enum lws_ss_state_return {
+	LWSSSSRET_TX_DONT_SEND		=  1, /* (*tx) only */
+
+	LWSSSSRET_OK			=  0, /* no error */
+	LWSSSSRET_DISCONNECT_ME		= -1, /* caller should disconnect us */
+	LWSSSSRET_DESTROY_ME		= -2, /* caller should destroy us */
+} lws_ss_state_return_t;
 
 /**
  * lws_ss_info_t: information about stream to be created
@@ -239,6 +277,27 @@ typedef enum {
  * the stream should interface with your code, and pass it to lws_ss_create()
  * to create the requested stream.
  */
+
+enum {
+	LWSSSINFLAGS_REGISTER_SINK			=	(1 << 0),
+	/**< If set, we're not creating a specific stream, but registering
+	 * ourselves as the "sink" for .streamtype.  It's analogous to saying
+	 * we want to be the many-to-one "server" for .streamtype; when other
+	 * streams are created with that streamtype, they should be forwarded
+	 * to this stream owner, where they join and part from the sink via
+	 * (*state) LWSSSCS_SINK_JOIN / _PART events, the new client handle
+	 * being provided in the h_src parameter.
+	 */
+	LWSSSINFLAGS_PROXIED				=	(1 << 1),
+	/**< Set if the stream is being created as a stand-in at the proxy */
+	LWSSSINFLAGS_SERVER				=	(1 << 2),
+	/**< Set on the server object copy of the ssi / info to indicate that
+	 * stream creation using this ssi is for Accepted connections belonging
+	 * to a server */
+	LWSSSINFLAGS_ACCEPTED				=	(1 << 3),
+	/**< Set on the accepted object copy of the ssi / info to indicate that
+	 * we are an accepted connection from a server's listening socket */
+};
 
 typedef struct lws_ss_info {
 	const char *streamtype; /**< type of stream we want to create */
@@ -249,31 +308,28 @@ typedef struct lws_ss_info {
 	/**< offset of opaque user data ptr in user_alloc type, set to
 	     offsetof(mytype, opaque_ud_member) */
 
-	int	    (*rx)(void *userobj, const uint8_t *buf, size_t len,
-			  int flags);
+	lws_ss_state_return_t (*rx)(void *userobj, const uint8_t *buf,
+				    size_t len, int flags);
 	/**< callback with rx payload for this stream */
-	int	    (*tx)(void *userobj, lws_ss_tx_ordinal_t ord, uint8_t *buf,
-			  size_t *len, int *flags);
+	lws_ss_state_return_t (*tx)(void *userobj, lws_ss_tx_ordinal_t ord,
+				    uint8_t *buf, size_t *len, int *flags);
 	/**< callback to send payload on this stream... 0 = send as set in
 	 * len and flags, 1 = do not send anything (ie, not even 0 len frame) */
-	int	    (*state)(void *userobj, void *h_src /* ss handle type */,
-			     lws_ss_constate_t state, lws_ss_tx_ordinal_t ack);
+	lws_ss_state_return_t (*state)(void *userobj, void *h_src /* ss handle type */,
+			      lws_ss_constate_t state, lws_ss_tx_ordinal_t ack);
 	/**< advisory cb about state of stream and QoS status if applicable...
 	 * h_src is only used with sinks and LWSSSCS_SINK_JOIN/_PART events.
 	 * Return nonzero to indicate you want to destroy the stream. */
 	int	    manual_initial_tx_credit;
 	/**< 0 = manage any tx credit automatically, nonzero explicitly sets the
 	 * peer stream to have the given amount of tx credit, if the protocol
-	 * can support it. */
-	char	    register_sink;
-	/**< If set, we're not creating a specific stream, but registering
-	 * ourselves as the "sink" for .streamtype.  It's analogous to saying
-	 * we want to be the many-to-one "server" for .streamtype; when other
-	 * streams are created with that streamtype, they should be forwarded
-	 * to this stream owner, where they join and part from the sink via
-	 * (*state) LWSSSCS_SINK_JOIN / _PART events, the new client handle
-	 * being provided in the h_src parameter.
-	 */
+	 * can support it.
+	 *
+	 * In the special case of _lws_smd streamtype, this is used to indicate
+	 * the connection's rx class mask.
+	 * */
+	uint8_t	    flags;
+
 } lws_ss_info_t;
 
 /**
@@ -335,8 +391,10 @@ lws_ss_destroy(struct lws_ss_handle **ppss);
  * Schedules a write on the stream represented by \p pss.  When it's possible to
  * write on this stream, the *tx callback will occur with an empty buffer for
  * the stream owner to fill in.
+ *
+ * Returns 0 or LWSSSSRET_SS_HANDLE_DESTROYED
  */
-LWS_VISIBLE LWS_EXTERN void
+LWS_VISIBLE LWS_EXTERN lws_ss_state_return_t
 lws_ss_request_tx(struct lws_ss_handle *pss);
 
 /**
@@ -352,9 +410,8 @@ lws_ss_request_tx(struct lws_ss_handle *pss);
  * This api variant should be used when it's possible the payload will go out
  * over h1 with x-web-form-urlencoded or similar Content-Type.
  */
-LWS_VISIBLE LWS_EXTERN void
+LWS_VISIBLE LWS_EXTERN lws_ss_state_return_t
 lws_ss_request_tx_len(struct lws_ss_handle *pss, unsigned long len);
-
 
 /**
  * lws_ss_client_connect() - Attempt the client connect
@@ -420,6 +477,48 @@ lws_ss_state_name(int state);
 LWS_VISIBLE LWS_EXTERN struct lws_context *
 lws_ss_get_context(struct lws_ss_handle *h);
 
+#define LWSSS_TIMEOUT_FROM_POLICY				0
+
+/**
+ * lws_ss_start_timeout() - start or restart the timeout on the stream
+ *
+ * \param h: secure streams handle
+ * \param timeout_ms: LWSSS_TIMEOUT_FROM_POLICY for policy value, else use timeout_ms
+ *
+ * Starts or restarts the stream's own timeout timer.  If the specified time
+ * passes without lws_ss_cancel_timeout() being called on the stream, then the
+ * stream state callback receives LWSSSCS_TIMEOUT
+ *
+ * The process being protected by the timeout is up to the user code, it may be
+ * arbitrarily long and cross multiple protocol transactions or involve other
+ * streams.  It's up to the user to decide when to start and when / if to cancel
+ * the stream timeout.
+ */
+LWS_VISIBLE LWS_EXTERN void
+lws_ss_start_timeout(struct lws_ss_handle *h, unsigned int timeout_ms);
+
+/**
+ * lws_ss_cancel_timeout() - remove any timeout on the stream
+ *
+ * \param h: secure streams handle
+ *
+ * Disable any timeout that was applied to the stream by lws_ss_start_timeout().
+ */
+LWS_VISIBLE LWS_EXTERN void
+lws_ss_cancel_timeout(struct lws_ss_handle *h);
+
+/**
+ * lws_ss_to_user_object() - convenience helper to get user object from handle
+ *
+ * \param h: secure streams handle
+ *
+ * Returns the user allocation related to the handle.  Normally you won't need
+ * this since it's available in the rx, tx and state callbacks as "userdata"
+ * already.
+ */
+LWS_VISIBLE LWS_EXTERN void *
+lws_ss_to_user_object(struct lws_ss_handle *h);
+
 /**
  * lws_ss_rideshare() - find the current streamtype when types rideshare
  *
@@ -463,8 +562,62 @@ lws_ss_rideshare(struct lws_ss_handle *h);
  */
 LWS_VISIBLE LWS_EXTERN int
 lws_ss_set_metadata(struct lws_ss_handle *h, const char *name,
-		    void *value, size_t len);
+		    const void *value, size_t len);
 
+/*
+ * lws_ss_server_ack() - indicate how we feel about what the server has sent
+ *
+ * \param h: ss handle of accepted connection
+ * \param nack: 0 means we are OK with it, else some problem
+ *
+ * For SERVER secure streams
+ *
+ * Depending on the protocol, the server sending us something may be
+ * transactional, ie, built into it sending something is the idea we will
+ * respond somehow out-of-band; HTTP is like this with, eg, 200 response code.
+ *
+ * Calling this with nack=0 indicates that when we later respond, we want to
+ * acknowledge the transaction (eg, it means a 200 if http underneath), if
+ * nonzero that the transaction should act like it failed.
+ *
+ * If the underlying protocol doesn't understand transactions (eg, ws) then this
+ * has no effect either way.
+ */
+LWS_VISIBLE LWS_EXTERN void
+lws_ss_server_ack(struct lws_ss_handle *h, int nack);
+
+/**
+ * lws_ss_change_handlers() - helper for dynamically changing stream handlers
+ *
+ * \param h: ss handle
+ * \param rx: the new RX handler
+ * \param tx: the new TX handler
+ * \param state: the new state handler
+ *
+ * Handlers set to NULL are left unchanged.
+ *
+ * This works on any handle, client or server and takes effect immediately.
+ *
+ * Depending on circumstances this may be helpful when
+ *
+ * a) a server stream undergoes an LWSSSCS_SERVER_UPGRADE (as in http -> ws) and
+ * the payloads in the new protocol have a different purpose that is best
+ * handled in their own rx and tx callbacks, and
+ *
+ * b) you may want to serve several different, possibly large things based on
+ * what was requested.  Setting a customized handler allows clean encapsulation
+ * of the different serving strategies.
+ *
+ * If the stream is long-lived, like ws, you should set the changed handler back
+ * to the default when the transaction wanting it is completed.
+ */
+LWS_VISIBLE LWS_EXTERN void
+lws_ss_change_handlers(struct lws_ss_handle *h,
+	int (*rx)(void *userobj, const uint8_t *buf, size_t len, int flags),
+	int (*tx)(void *userobj, lws_ss_tx_ordinal_t ord, uint8_t *buf,
+		  size_t *len, int *flags),
+	int (*state)(void *userobj, void *h_src /* ss handle type */,
+		     lws_ss_constate_t state, lws_ss_tx_ordinal_t ack));
 
 /**
  * lws_ss_add_peer_tx_credit() - allow peer to transmit more to us

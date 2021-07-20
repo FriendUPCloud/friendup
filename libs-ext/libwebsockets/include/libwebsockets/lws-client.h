@@ -58,6 +58,20 @@ enum lws_client_connect_ssl_connection_flags {
 		 * HTTP/2:   always possible... uses parallel streams
 		 */
 	LCCSCF_MUXABLE_STREAM			= (1 << 17),
+	LCCSCF_H2_PRIOR_KNOWLEDGE		= (1 << 18),
+	LCCSCF_WAKE_SUSPEND__VALIDITY		= (1 << 19),
+	/* our validity checks are important enough to wake from suspend */
+	LCCSCF_PRIORITIZE_READS			= (1 << 20),
+	/**<
+	 * Normally lws balances reads and writes on all connections, so both
+	 * are possible even on busy connections, and we go around the event
+	 * loop more often to facilitate that, even if there is pending data.
+	 *
+	 * This flag indicates that you want to handle any pending reads on this
+	 * connection without yielding the service loop for anything else.  This
+	 * means you may block other connection processing in favour of incoming
+	 * data processing on this one if it receives back to back incoming rx.
+	 */
 };
 
 /** struct lws_client_connect_info - parameters to connect with when using
@@ -162,6 +176,12 @@ struct lws_client_connect_info {
 #else
 	void		*mqtt_cp;
 #endif
+
+	uint16_t	keep_warm_secs;
+	/**< 0 means 5s.  If the client connection to the endpoint becomes idle,
+	 * defer closing it for this many seconds in case another outgoing
+	 * connection to the same endpoint turns up.
+	 */
 
 	/* Add new things just above here ---^
 	 * This is part of the ABI, don't needlessly break compatibility
