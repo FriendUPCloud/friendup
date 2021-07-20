@@ -281,15 +281,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 			
 			if( lrequest != NULL )
 			{
-<<<<<<< HEAD
 #ifdef DB_SESSIONID_HASH
 				snprintf( lrequest, 512, "module=system&command=systempath&sessionid=%s&path=%s", loggedSession->us_HashedSessionID, path );
 #else
 				snprintf( lrequest, 512, "module=system&command=systempath&sessionid=%s&path=%s", loggedSession->us_SessionID, path );
 #endif
-=======
-				snprintf( lrequest, 512, "module=system&command=systempath&sessionid=%s&path=%s", loggedSession->us_SessionID, path );
->>>>>>> release/1.2.6
 				
 				returnData = l->RunMod( l, "php", "modules/system/module.php", lrequest, &resultLength );
 				
@@ -954,10 +950,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", origDecodedPath, loggedSession->us_HashedSessionID );
 #else
 									snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", origDecodedPath, loggedSession->us_SessionID );
-<<<<<<< HEAD
 #endif
-=======
->>>>>>> release/1.2.6
 									
 									DEBUG("Run command via php: '%s'\n", command );
 									FULONG dataLength;

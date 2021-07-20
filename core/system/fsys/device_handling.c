@@ -2562,7 +2562,7 @@ WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where User
 		// remember to release sql if local one was used
 		if( gotGlobalSQL == FALSE )
 		{
-			l->LibrarySQLDrop( l, sqllib );
+			l->DropDBConnection( l, sqllib );
 		}
 		FERROR("GetUserDevice fail: database results = NULL\n");
 		return NULL;
@@ -2653,7 +2653,7 @@ WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where User
 		// remember to release sql if local one was used
 		if( gotGlobalSQL == FALSE )
 		{
-			l->LibrarySQLDrop( l, sqllib );
+			l->DropDBConnection( l, sqllib );
 		}
 	}
 	
@@ -3463,11 +3463,7 @@ usrgrp->ug_ID
 				}
 			}
 			
-<<<<<<< HEAD
-			DEBUG("Usergroup mount: pass sessionid: '%s'\n", us->us_SessionID );
-=======
 			//DEBUG("Usergroup mount: pass sessionid: '%s'\n", us->us_SessionID );
->>>>>>> release/1.2.6
 			
 			struct TagItem tags[] = {
 				{ FSys_Mount_Path,				(FULONG)row[ 4 ] },

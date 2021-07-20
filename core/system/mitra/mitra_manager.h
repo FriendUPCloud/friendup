@@ -21,15 +21,9 @@
 #define __SYSTEM_MITRA_MITRA_MANAGER_H__
 
 #include <core/types.h>
-<<<<<<< HEAD
 #include <system/user/usersession.h>
 #include <system/usergroup/user_group.h>
 #include <system/user/usersession_manager.h>
-=======
-#include <system/user/user_session.h>
-#include <system/usergroup/user_group.h>
-#include <system/user/user_sessionmanager.h>
->>>>>>> release/1.2.6
 #include <system/user/user.h>
 
 //

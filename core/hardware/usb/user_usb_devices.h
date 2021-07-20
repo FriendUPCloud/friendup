@@ -20,11 +20,7 @@
 
 #include <core/types.h>
 #include <core/nodes.h>
-<<<<<<< HEAD
 #include <system/user/usersession.h>
-=======
-#include <system/user/user_session.h>
->>>>>>> release/1.2.6
 #include "usb_device.h"
 
 //

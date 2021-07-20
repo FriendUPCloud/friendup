@@ -65,13 +65,10 @@ typedef struct UserSession
 	FULONG					us_UserID;					// ID of user to which session is attached
 	char					*us_DeviceIdentity;			// device identity
 	char					*us_SessionID;				// session id
-<<<<<<< HEAD:core/system/user/usersession.h
 	char					*us_HashedSessionID;		// Hashed SessionID used by database
-	time_t					us_LoggedTime;				// last update from user
-=======
 	time_t					us_LastActionTime;			// last update from user
 	time_t					us_CreationTime;			// last login
->>>>>>> release/1.2.6:core/system/user/user_session.h
+
 	int						us_Status;					// session status
 	
 	File					*us_OpenedFiles;			// opened files in user session
@@ -124,30 +121,19 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 static FULONG UserSessionDesc[] = { 
     SQLT_TABNAME, (FULONG)"FUserSession",       
     SQLT_STRUCTSIZE, sizeof( struct UserSession ), 
-<<<<<<< HEAD:core/system/user/usersession.h
-	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct UserSession, us_ID ), 
-	SQLT_INT,     (FULONG)"UserID", offsetof( struct UserSession, us_UserID ),
-	SQLT_STR,     (FULONG)"DeviceIdentity",       offsetof( struct UserSession, us_DeviceIdentity ),
-#ifdef DB_SESSIONID_HASH
-	SQLT_STR_HASH,(FULONG)"SessionID",   offsetof( struct UserSession, us_SessionID ),
-#else
-	SQLT_STR,     (FULONG)"SessionID",   offsetof( struct UserSession, us_SessionID ),
-#endif
-	SQLT_INT,     (FULONG)"LoggedTime", offsetof( struct UserSession, us_LoggedTime ),
-	SQLT_INT,     (FULONG)"UMA_ID", offsetof( struct UserSession, us_MobileAppID ),
-	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&UserSessionInit,
-	SQLT_NODE,    (FULONG)"node",        offsetof( struct UserSession, node ),
-=======
 	SQLT_IDINT,			(FULONG)"ID",				offsetof( struct UserSession, us_ID ), 
 	SQLT_INT,			(FULONG)"UserID",			offsetof( struct UserSession, us_UserID ),
 	SQLT_STR,			(FULONG)"DeviceIdentity",	offsetof( struct UserSession, us_DeviceIdentity ),
+#ifdef DB_SESSIONID_HASH
+	SQLT_STR_HASH,		(FULONG)"SessionID",		offsetof( struct UserSession, us_SessionID ),
+#else
 	SQLT_STR,			(FULONG)"SessionID",		offsetof( struct UserSession, us_SessionID ),
+#endif
 	SQLT_INT,			(FULONG)"LastActionTime", 	offsetof( struct UserSession, us_LastActionTime ),
 	SQLT_INT,			(FULONG)"CreationTime", 	offsetof( struct UserSession, us_CreationTime ),
 	SQLT_INT,			(FULONG)"UMA_ID",			offsetof( struct UserSession, us_MobileAppID ),
 	SQLT_INIT_FUNCTION,	(FULONG)"init",				(FULONG)&UserSessionInit,
 	SQLT_NODE,			(FULONG)"node",				offsetof( struct UserSession, node ),
->>>>>>> release/1.2.6:core/system/user/user_session.h
 	SQLT_END 
 };
 

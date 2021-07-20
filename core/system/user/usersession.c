@@ -23,11 +23,6 @@
 #include <system/token/dos_token.h>
 #include <system/application/application_manager.h>
 #include <util/session_id.h>
-<<<<<<< HEAD:core/system/user/usersession.c
-=======
-
-extern SystemBase *SLIB;
->>>>>>> release/1.2.6:core/system/user/user_session.c
 
 /**
  * Create new User Session
@@ -42,24 +37,15 @@ UserSession *UserSessionNew( void *sb, char *sesid, char *devid )
 	UserSession *s;
 	if( ( s = FCalloc( 1, sizeof(UserSession) ) ) != NULL )
 	{
-<<<<<<< HEAD:core/system/user/usersession.c
 		if( sesid != NULL )
 		{
 			s->us_SessionID = StringDuplicate( sesid );
-=======
-		if( sessid != NULL )
-		{
-			s->us_SessionID = StringDuplicate( sessid );
->>>>>>> release/1.2.6:core/system/user/user_session.c
 		}
 		else
 		{
 			s->us_SessionID = SessionIDGenerate();
 		}
-<<<<<<< HEAD:core/system/user/usersession.c
-		
-=======
->>>>>>> release/1.2.6:core/system/user/user_session.c
+
 		s->us_DeviceIdentity = StringDuplicate( devid );
 		
 		UserSessionInit( s, sb );
@@ -232,8 +218,6 @@ void UserSessionDelete( UserSession *us )
 			WebsocketReqManagerDelete( wrm );
 		}
 		pthread_mutex_destroy( &(us->us_Mutex) );
-		
-		
 		
 		// lets remove application sessions from system
 		if( nrOfSessionsAttached <= 0 && us->us_UserID > 0 )

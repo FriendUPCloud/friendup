@@ -141,12 +141,12 @@ void WSThreadPing( WSThreadData *data )
 				us->us_LastActionTime = time(NULL);
 				snprintf( tmpQuery, sizeof(tmpQuery), "UPDATE FUser Set LastActionTime=%ld where ID=%ld", us->us_LastActionTime, us->us_UserID );
 				
-				SQLLibrary *sqlLib = SLIB->LibrarySQLGet( SLIB );
+				SQLLibrary *sqlLib = SLIB->GetDBConnection( SLIB );
 				if( sqlLib != NULL )
 				{
 					sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
 	
-					SLIB->LibrarySQLDrop( SLIB, sqlLib );
+					SLIB->DropDBConnection( SLIB, sqlLib );
 				}
 				
 				data->wstd_WSD->wsc_UpdateLoggedTimeCounter = 0;
@@ -1136,12 +1136,8 @@ void *ParseAndCall( WSThreadData *wstd )
 							{
 								locus->us_LastActionTime = time( NULL );
 								
-<<<<<<< HEAD
 								//char *tmpSessionID = sb->sl_UtilInterface.DatabaseEncodeString( sessionid );
 								//sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_SessionID, umaID, deviceid,  loggedSession->us_UserID );
-=======
-								//sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LastActionTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_SessionID, umaID, deviceid,  loggedSession->us_UserID );
->>>>>>> release/1.2.6
 								WSThreadPing( wstd );
 								wstd = NULL;
 							}

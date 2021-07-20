@@ -25,13 +25,10 @@
 #include <util/sha256.h>
 #include <system/fsys/device_handling.h>
 #include <util/session_id.h>
-<<<<<<< HEAD
 #include <system/sas/sas_session.h>
 
 #define USE_HASHMAP_TO_HOLD_USERS
-=======
 #include <strings.h>
->>>>>>> release/1.2.6
 
 /**
  * Create UserManager
@@ -1321,11 +1318,7 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 	// We have to create user
 	if( tuser == NULL )
 	{
-<<<<<<< HEAD
 		SQLLibrary *sqlLib = sb->GetDBConnection( sb );
-=======
-		SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
->>>>>>> release/1.2.6
 	
 		if( sqlLib != NULL )
 		{
@@ -1336,11 +1329,7 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 
 			if( user != NULL )
 			{
-<<<<<<< HEAD
 				sb->DropDBConnection( sb, sqlLib );
-=======
-				sb->LibrarySQLDrop( sb, sqlLib );
->>>>>>> release/1.2.6
 			
 				DEBUG("[UMCheckAndLoadAPIUser] User found %s  id %ld\n", user->u_Name, user->u_ID );
 				UGMAssignGroupToUser( sb->sl_UGM, user );
@@ -1355,19 +1344,11 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 				{
 					// we now generate dummy session
 					//UserSession *ses = UserSessionNew( sb, "api", "api" );
-<<<<<<< HEAD
 					UserSession *ses = UserSessionNew( sb, NULL, "api" );
 					if( ses != NULL )
 					{
 						ses->us_UserID = user->u_ID;
-						ses->us_LoggedTime = time( NULL );
-=======
-					UserSession *ses = UserSessionNew( NULL, "api" );
-					if( ses != NULL )
-					{
-						ses->us_UserID = user->u_ID;
 						ses->us_LastActionTime = time( NULL );
->>>>>>> release/1.2.6
 				
 						UserAddSession( user, ses );
 						USMSessionSaveDB( sb->sl_USM, ses );
@@ -1380,11 +1361,7 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 			}
 			else
 			{
-<<<<<<< HEAD
 				sb->DropDBConnection( sb, sqlLib );
-=======
-				sb->LibrarySQLDrop( sb, sqlLib );
->>>>>>> release/1.2.6
 				result = 1;
 			}
 			return 0;
@@ -1721,11 +1698,7 @@ int UMInitUsers( UserManager *um )
 	Log( FLOG_INFO, "---------Mount user devices-------------------------\n");
 	Log( FLOG_INFO, "----------------------------------------------------\n");
 	
-<<<<<<< HEAD
 	SQLLibrary *sqllib = sb->GetDBConnection( sb );
-=======
-	SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
->>>>>>> release/1.2.6
 	if( sqllib != NULL )
 	{
 		User *tmpUser = sb->sl_UM->um_Users;
@@ -1751,20 +1724,12 @@ int UMInitUsers( UserManager *um )
 			DEBUG( "[UMInitUsers] DONE FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
 			tmpUser = (User *)tmpUser->node.mln_Succ;
 		}
-<<<<<<< HEAD
 		sb->DropDBConnection( sb, sqllib );
-=======
-		sb->LibrarySQLDrop( sb, sqllib );
->>>>>>> release/1.2.6
 	}
 	
 	Log( FLOG_INFO, "----------------------------------------------------\n");
 	Log( FLOG_INFO, "---------Mount user group devices-------------------\n");
 	Log( FLOG_INFO, "----------------------------------------------------\n");
-<<<<<<< HEAD
-		
-=======
 
->>>>>>> release/1.2.6
 	return 0;
 }

@@ -676,13 +676,8 @@ SystemBase *SystemInit( void )
 		Log( FLOG_INFO, "---------Autoupdatedatabase process skipped---------\n");
 		Log( FLOG_INFO, "----------------------------------------------------\n");
 	}
-<<<<<<< HEAD
 
 	SQLLibrary *lsqllib  = l->GetDBConnection( l );
-=======
-	
-	SQLLibrary *lsqllib  = l->LibrarySQLGet( l );
->>>>>>> release/1.2.6
 	if( lsqllib != NULL )
 	{
 		// session timeout
@@ -1900,7 +1895,7 @@ int SystemInitExternal( SystemBase *l )
 			
 			if(  (timestamp - l->sl_Sentinel->s_User->u_LastActionTime) > l->sl_RemoveSessionsAfterTime )
 			{
-				UserRegenerateSessionID( l->sl_Sentinel->s_User, NULL );
+				UserRegenerateSessionID( l, l->sl_Sentinel->s_User, NULL );
 			}
 		}
 		

@@ -240,15 +240,12 @@ int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname );
 //
 //
 
-<<<<<<< HEAD
-=======
 int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details );
 
 //
 //
 //
 
->>>>>>> release/1.2.6
 int UMInitUsers( UserManager *um );
 
 #endif //__SYSTEM_USER_USER_MANAGER_H__

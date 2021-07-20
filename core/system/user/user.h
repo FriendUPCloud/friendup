@@ -162,13 +162,8 @@ typedef struct User
 	FULONG						u_Status;						// user status
 
 	//char						*u_MainSessionID;				// session id ,  generated only when user is taken from db
-<<<<<<< HEAD
-	time_t						u_LoggedTime;       			// last action time
-	time_t						u_CreatedTime;					// when user strcture was created
-=======
 	time_t						u_LastActionTime;       		// last action time
 	time_t						u_CreationTime;					// when user strcture was created
->>>>>>> release/1.2.6
 	time_t						u_LoginTime;					// last login time
 	time_t						u_ModifyTime;					// when user structure was modifiede
 	
@@ -286,11 +281,7 @@ File *UserGetDeviceByName( User *usr, const char *name );
 //
 //
 
-<<<<<<< HEAD
 int UserRegenerateSessionID( void *sb, User *usr, char *newsess );
-=======
-int UserRegenerateSessionID( User *usr, char *newsess );
->>>>>>> release/1.2.6
 
 //
 //
@@ -322,26 +313,7 @@ FBOOL UserIsInGroup( User *usr, FULONG gid );
 
 static FULONG UserDesc[] = { 
     SQLT_TABNAME, (FULONG)"FUser",       
-    SQLT_STRUCTSIZE, sizeof( struct User ), 
-<<<<<<< HEAD
-	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct User, u_ID ), 
-	SQLT_STR,     (FULONG)"Name",        offsetof( struct User, u_Name ),
-	SQLT_STR,     (FULONG)"Password",    offsetof( struct User, u_Password ),
-	SQLT_STR,     (FULONG)"Fullname",    offsetof( struct User, u_FullName ),
-	SQLT_STR,     (FULONG)"Email",       offsetof( struct User, u_Email ),
-	//SQLT_STR,     (FULONG)"SessionID",   offsetof( struct User, u_MainSessionID ),
-	SQLT_INT,     (FULONG)"LoggedTime",  offsetof( struct User, u_LoggedTime ),
-	SQLT_INT,     (FULONG)"CreatedTime", offsetof( struct User, u_CreatedTime ),
-	SQLT_INT,     (FULONG)"ModifyTime", offsetof( struct User, u_ModifyTime ),
-	SQLT_INT,     (FULONG)"LoginTime", offsetof( struct User, u_LoginTime ),
-	SQLT_INT,     (FULONG)"MaxStoredBytes", offsetof( struct User, u_MaxBytesStorPerDevice ),
-	SQLT_INT,     (FULONG)"MaxReadedBytes", offsetof( struct User, u_MaxBytesReadPerDevice ),
-	SQLT_INT,     (FULONG)"Status", offsetof( struct User, u_Status ),
-	SQLT_STR,     (FULONG)"UniqueID",    offsetof( struct User, u_UUID ),
-	SQLT_STR,     (FULONG)"Timezone",    offsetof( struct User, u_Timezone ),
-	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&UserInit,
-	SQLT_NODE,    (FULONG)"node",        offsetof( struct User, node ),
-=======
+    SQLT_STRUCTSIZE, sizeof( struct User ),
 	SQLT_IDINT,			(FULONG)"ID",				offsetof( struct User, u_ID ), 
 	SQLT_STR,			(FULONG)"Name",				offsetof( struct User, u_Name ),
 	SQLT_STR,			(FULONG)"Password",			offsetof( struct User, u_Password ),
@@ -359,7 +331,6 @@ static FULONG UserDesc[] = {
 	SQLT_STR,			(FULONG)"UniqueID",			offsetof( struct User, u_UUID ),
 	SQLT_INIT_FUNCTION,	(FULONG)"init",				(FULONG)&UserInit,
 	SQLT_NODE,			(FULONG)"node",				offsetof( struct User, node ),
->>>>>>> release/1.2.6
 	SQLT_END 
 };
 

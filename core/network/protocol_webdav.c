@@ -931,19 +931,11 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 			
 			if( loggedSession == NULL )
 			{
-<<<<<<< HEAD
 				loggedSession = UserSessionNew( sb, NULL, "webdav" );
 				if( loggedSession != NULL )
 				{
 					loggedSession->us_UserID = usr->u_ID;
-					loggedSession->us_LoggedTime = time( NULL );
-=======
-				loggedSession = UserSessionNew( NULL, "webdav" );
-				if( loggedSession != NULL )
-				{
-					loggedSession->us_UserID = usr->u_ID;
 					loggedSession->us_LastActionTime = time( NULL );
->>>>>>> release/1.2.6
 				
 					UserAddSession( usr, loggedSession );
 					USMSessionSaveDB( sb->sl_USM, loggedSession );

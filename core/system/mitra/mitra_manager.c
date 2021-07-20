@@ -84,11 +84,7 @@ MitraManager *MitraManagerNew( void *sb )
 		mm->mm_SB = sb;
 		SystemBase *l = (SystemBase *)sb;
 		
-<<<<<<< HEAD
 		SQLLibrary *sqllib = l->GetDBConnection( l );
-=======
-		SQLLibrary *sqllib = l->LibrarySQLGet( l );
->>>>>>> release/1.2.6
 	
 		DEBUG("[MitraManagerNew] mount\n");
 		
@@ -137,11 +133,7 @@ MitraManager *MitraManagerNew( void *sb )
 				sqllib->FreeResult( sqllib, res );
 			} // res != NULL
 			
-<<<<<<< HEAD
 			l->DropDBConnection( l, sqllib );
-=======
-			l->LibrarySQLDrop( l, sqllib );
->>>>>>> release/1.2.6
 		
 			int error;
 		

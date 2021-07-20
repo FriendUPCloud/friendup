@@ -754,14 +754,9 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r __attribute__((unused)),
 	}
 
 	// we check if user is already logged in
-<<<<<<< HEAD
-	if( ( timestamp - users->us_LoggedTime ) < sb->sl_RemoveSessionsAfterTime )
-	{
-		// session timeout
-=======
+
 	if( ( timestamp - users->us_LastActionTime ) < sb->sl_RemoveSessionsAfterTime )
 	{	// session timeout
->>>>>>> release/1.2.6
 		// we set timeout
 
 		if( strcmp( users->us_SessionID, sessionId ) == 0 )
@@ -769,24 +764,17 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r __attribute__((unused)),
 			DEBUG( "[FCDB] IsSessionValid: Session is valid! %s\n", sessionId );
 			char tmpQuery[ 512 ];
 			
-<<<<<<< HEAD
 #ifdef DB_SESSIONID_HASH
 			char *tmpSessionID = sb->sl_UtilInterface.DatabaseEncodeString( sessionId );
 			if( tmpSessionID != NULL )
-=======
-			sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUserSession SET `LastActionTime`=%ld WHERE `SessionID`='%s'", timestamp, sessionId );
-
-			void *res = sqlLib->Query( sqlLib, tmpQuery );
-			if( res != NULL )
->>>>>>> release/1.2.6
 			{
-				sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUserSession SET `LoggedTime`='%ld' WHERE `SessionID`='%s'", timestamp, tmpSessionID );
+				sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUserSession SET `LastActionTime`='%ld' WHERE `SessionID`='%s'", timestamp, tmpSessionID );
 			
 				sqlLib->QueryWithoutResults( sqlLib, tmpQuery );
 				FFree( tmpSessionID );
 			}
 #else
-			sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUserSession SET `LoggedTime`='%ld' WHERE `SessionID`='%s'", timestamp, sessionId );
+			sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUserSession SET `LastActionTime`='%ld' WHERE `SessionID`='%s'", timestamp, sessionId );
 		
 			sqlLib->QueryWithoutResults( sqlLib, tmpQuery );
 #endif

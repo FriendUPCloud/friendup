@@ -614,11 +614,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 		{
 			sd->module = StringDup( module );
 			
-<<<<<<< HEAD
 			DEBUG( "[fsysphp] Copying session normal: %s - hashed %s\n", us->us_SessionID, us->us_HashedSessionID );
-=======
-			DEBUG( "[fsysphp] Copying session normal: %s - hashed %s\n", us->us_SessionID, us->us_SessionID );
->>>>>>> release/1.2.6
 			
 			FileFillSessionID( dev, us );
 			sd->type = StringDup( type );
@@ -631,17 +627,12 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 				( name ? strlen( name ) : 0 ) + 
 				( path ? strlen( path ) : 0 ) + 
 				( module ? strlen( module ) : strlen( "files" ) ) + 
-<<<<<<< HEAD
 #ifdef DB_SESSIONID_HASH
 				( strlen( us->us_HashedSessionID ) ) + 1;
 #else
 				( strlen( us->us_SessionID ) ) + 1;
 #endif
 			 
-=======
-				( strlen( us->us_SessionID ) ) + 1;
-			
->>>>>>> release/1.2.6
 			
 			// Whole command
 			char *command = FCalloc( strlen( "php \"modules/system/module.php\" \"\";" ) + cmdLength + 1, sizeof( char ) );
@@ -659,15 +650,11 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 						name ? name : "", 
 						path ? path : "", 
 						module ? module : "files", 
-<<<<<<< HEAD
 #ifdef DB_SESSIONID_HASH
 				us->us_HashedSessionID );
 #else
 				us->us_SessionID );
 #endif
-=======
-						us->us_SessionID );
->>>>>>> release/1.2.6
 					sprintf( command, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 					FFree( commandCnt );
 			

@@ -61,11 +61,8 @@
 #include <system/service/service_manager_web.h>
 #include <system/security/security_web.h>
 #include <strings.h>
-<<<<<<< HEAD
 #include <util/session_id.h>
-=======
 #include <system/externalservice/externalservice_manager_web.h>
->>>>>>> release/1.2.6
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -660,7 +657,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			// If loggedSession is not equal NULL then yes
 			//
 			
-			DEBUG("[SysWebRequest] ServerToken received: '%s'\n", serverTokenElement->hme_Data );
+			DEBUG("[SysWebRequest] ServerToken received: '%s'\n", (char *)serverTokenElement->hme_Data );
 			
 			if( loggedSession == NULL )
 			{
@@ -671,16 +668,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				
 				if( host != NULL )
 				{
-<<<<<<< HEAD
 					SQLLibrary *sqllib = l->GetDBConnection( l );
-=======
-					char qery[ 1024 ];
 					FULONG uid = 0;
-
-					//inner join FUserSession us on u.ID=us.UserID 
-					//sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT * FROM ( ( SELECT us.SessionID FROM FUserSession us, FUserApplication a WHERE a.AuthID=\"%s\" AND a.UserID=us.UserID LIMIT 1 ) UNION ( SELECT us2.SessionID FROM FUserSession us2, Filesystem f WHERE f.Config LIKE \"%s%s%s\" AND us2.UserID=f.UserID LIMIT 1 ) ) z LIMIT 1",( char *)ast->hme_Data, "%", ( char *)ast->hme_Data, "%");
-					sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT * FROM ( ( SELECT us.UserID FROM FUserSession us, FUserApplication a WHERE a.AuthID=\"%s\" AND a.UserID=us.UserID LIMIT 1 ) UNION ( SELECT us2.UserID FROM FUserSession us2, Filesystem f WHERE f.Config LIKE \"%s%s%s\" AND us2.UserID=f.UserID LIMIT 1 ) ) z LIMIT 1",( char *)ast->hme_Data, "%", ( char *)ast->hme_Data, "%");
->>>>>>> release/1.2.6
 					
 					DEBUG("[SysWebRequest] entry from x-forwarded-for: %s\n", host );
 
@@ -695,18 +684,12 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							// we have to remove end of the line
 							while( TRUE )
 							{
-<<<<<<< HEAD
 								if( *p == '\r' || *p == 0 || *p == '\n' )
 								{
 									*p = 0;
 									break;
 								}
 								p++;
-=======
-								//snprintf( sessionid, DEFAULT_SESSION_ID_SIZE,"%s", row[ 0 ] );
-								char *next;
-								uid = strtol ( (char *) row[ 0 ], &next, 10);
->>>>>>> release/1.2.6
 							}
 							
 							DEBUG("[SysWebRequest] servertoken entry: %s host %s\n", (char *)serverTokenElement->hme_Data, host ); 
@@ -722,8 +705,9 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								{
 									if( row[ 0 ] != NULL )
 									{
-										snprintf( sessionid, DEFAULT_SESSION_ID_SIZE,"%s", (char *)row[ 0 ] );
-										DEBUG("[SysWebRequest] getting sessionid: %s\n", sessionid );
+										//snprintf( sessionid, DEFAULT_SESSION_ID_SIZE,"%s", (char *)row[ 0 ] );
+										char *next;
+										uid = strtol ( (char *) row[ 0 ], &next, 0);
 									}
 									if( row[ 1 ] != NULL )
 									{
@@ -736,77 +720,12 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							DEBUG("[SysWebRequest] was sessionid found? '%s'\n", sessionid );
 						}
 					}
-<<<<<<< HEAD
 					l->DropDBConnection( l, sqllib );
-=======
-					l->LibrarySQLDrop( l, sqllib );
-					
-					loggedSession = USMGetSessionByUserID( l->sl_USM, uid );
->>>>>>> release/1.2.6
-				}
-			}
-		}
-		else if( refreshTokenElement != NULL && refreshTokenElement->hme_Data != NULL )
-		{
-			char *deviceid = NULL;
-			
-			DEBUG("REFRESH TOKEN!!!\n");
-			
-			HashmapElement *el = HashmapGet( (*request)->http_ParsedPostContent, "deviceid" );
-			if( el != NULL )
-			{
-<<<<<<< HEAD
-				deviceid = UrlDecodeToMem( ( char *)el->hme_Data );
-			}
-			
-			if( deviceid != NULL )
-			{
-				RefreshToken *rt = SecurityManagerGetRefreshTokenAndRecreateDB( l->sl_SecurityManager, refreshTokenElement->hme_Data, deviceid, &newRefreshToken );
-				
-				FFree( deviceid );
-=======
-				SQLLibrary *sqllib = l->LibrarySQLGet( l );
 
-				// Get authid from mysql
-				if( sqllib != NULL )
-				{
-					char qery[ 1024 ];
-					FULONG uid = 0;
-
-					// TODO: Remove need for existing SessionID (instead generate it if it does not exist)!
-					//sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT us.SessionID, u.Name FROM FUser u left outer join FUserSession us on u.ID=us.UserID WHERE u.ServerToken=\"%s\" LIMIT 1",( char *)sst->hme_Data );
-					sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT u.ID, u.Name FROM FUser u left outer join FUserSession us on u.ID=us.UserID WHERE u.ServerToken=\"%s\" LIMIT 1",( char *)sst->hme_Data );
-					
-					void *res = sqllib->Query( sqllib, qery );
-					if( res != NULL )
-					{
-						char **row;
-						if( ( row = sqllib->FetchRow( sqllib, res ) ) )
-						{
-							if( row[ 0 ] != NULL )
-							{
-								//snprintf( sessionid, DEFAULT_SESSION_ID_SIZE,"%s", row[ 0 ] );
-								//snprintf( userName, 256, "%s", row[ 1 ] );
-								char *next;
-								if( row[ 0 ] != NULL )
-								{
-									uid = strtol ( (char *) row[ 0 ], &next, 0);
-								}
-							}
-							
-							if( row[ 1 ] != NULL )
-							{
-								snprintf( userName, 256, "%s", row[ 1 ] );
-							}
-						}
-						sqllib->FreeResult( sqllib, res );
-					}
-					l->LibrarySQLDrop( l, sqllib );
-					
 					loggedSession = USMGetSessionByUserID( l->sl_USM, uid );
 					if( loggedSession == NULL && userName[ 0 ] != 0 )	// only if user exist and it has servertoken
 					{
-						loggedSession = UserSessionNew( NULL, "servertoken" );
+						loggedSession = UserSessionNew( l, NULL, "servertoken" );
 						if( loggedSession != NULL )
 						{
 							User *usr = UMUserGetByName( l->sl_UM, userName );
@@ -832,7 +751,25 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						}
 					}
 				}
->>>>>>> release/1.2.6
+			}
+		}
+		else if( refreshTokenElement != NULL && refreshTokenElement->hme_Data != NULL )
+		{
+			char *deviceid = NULL;
+			
+			DEBUG("REFRESH TOKEN!!!\n");
+			
+			HashmapElement *el = HashmapGet( (*request)->http_ParsedPostContent, "deviceid" );
+			if( el != NULL )
+			{
+				deviceid = UrlDecodeToMem( ( char *)el->hme_Data );
+			}
+			
+			if( deviceid != NULL )
+			{
+				RefreshToken *rt = SecurityManagerGetRefreshTokenAndRecreateDB( l->sl_SecurityManager, refreshTokenElement->hme_Data, deviceid, &newRefreshToken );
+				
+				FFree( deviceid );
 			}
 		}
 		
@@ -886,11 +823,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									isSentinel = TRUE;
 								}
 								
-<<<<<<< HEAD
-								if( isSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, curusr, (char *)passwd->hme_Data, &blockedTime ) == TRUE )
-=======
-								if( isSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, curusr, (char *)passwd->hme_Data, &blockedTime, "remote" ) == TRUE )
->>>>>>> release/1.2.6
+								if( isSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, curusr, (char *)passwd->hme_Data, &blockedTime, deviceid ) == TRUE )
 								{
 									loggedSession = locus;
 									userAdded = TRUE;		// there is no need to free resources
@@ -911,7 +844,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				DEBUG("[SysWebRequest] USMGetSessionBySessionID\n");
 				UserSession *locus = USMGetSessionBySessionID( l->sl_USM, sessionid );
 				
-<<<<<<< HEAD
 #ifdef DB_SESSIONID_HASH
 				
 				//
@@ -958,30 +890,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						locus->us_InUseCounter--;
 						FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
 					}
-=======
-				
-				if( locus != NULL )
-				{
-					if( FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
-					{
-						locus->us_InUseCounter++;
-						FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
-					}
-					
-					loggedSession = locus;
-					userAdded = TRUE;
-					User *curusr = locus->us_User;
-					if( curusr != NULL )
-					{
-						DEBUG("[SysWebRequest] FOUND session sessionid %s provided session %s\n", locus->us_SessionID, sessionid );
-					}
-					
-					if( FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
-					{
-						locus->us_InUseCounter--;
-						FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
-					}
->>>>>>> release/1.2.6
 				}
 			}
 			
@@ -1101,7 +1009,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					char *esc = sqllib->MakeEscapedString( sqllib, sessionid );
 					if( esc != NULL )
 					{
-<<<<<<< HEAD
 #ifdef DB_SESSIONID_HASH
 						char *tmpSessionID = l->sl_UtilInterface.DatabaseEncodeString( esc );
 						if( tmpSessionID != NULL )
@@ -1112,11 +1019,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 #else
 						sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime`='%ld' WHERE `SessionID`='%s'", timestamp, esc );
 #endif
-=======
-						snprintf( tmpQuery, 1024, "UPDATE FUserSession SET `LastActionTime`='%ld' WHERE `SessionID`='%s'", timestamp, esc );
-						DEBUG("[SystembaseWeb] query: %s\n", tmpQuery );
-						sqllib->QueryWithoutResults( sqllib, tmpQuery );
->>>>>>> release/1.2.6
 						FFree( esc );
 					}
 					sqllib->QueryWithoutResults( sqllib, tmpQuery );
@@ -2162,7 +2064,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			}
 			
 			//
-<<<<<<< HEAD
 			// If login is done by using RefreshToken
 			//
 			
@@ -2217,9 +2118,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			else
 			//
 			// Normal login procedure
-=======
 			// user is trying to use his old session to login from same device
->>>>>>> release/1.2.6
 			//
 			
 			if( locsessionid != NULL && deviceid != NULL )
@@ -2296,44 +2195,29 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									}
 								}
 								loggedSession->us_MobileAppID = umaID;
-<<<<<<< HEAD
-								
+						
 #ifdef DB_SESSIONID_HASH
 								char *locSessionID = loggedSession->us_HashedSessionID;
 #else
 								char *locSessionID = loggedSession->us_SessionID;
 #endif
 							
-								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime = %lld,DeviceIdentity='%s',UMA_ID=%lu WHERE `SessionID`='%s'", (long long)loggedSession->us_LoggedTime, deviceid, umaID, locSessionID );
+								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LastActionTime = %lld,DeviceIdentity='%s',UMA_ID=%lu WHERE `SessionID`='%s'", (long long)loggedSession->us_LastActionTime, deviceid, umaID, locSessionID );
 								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
 								{ 
 								
 								}
-=======
-								loggedSession->us_LastActionTime = time( NULL );
-							
-								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LastActionTime=%ld,DeviceIdentity='%s',UMA_ID=%lu WHERE `SessionID`='%s'", (long long)loggedSession->us_LastActionTime, deviceid, umaID, loggedSession->us_SessionID );
-								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) ){ }
->>>>>>> release/1.2.6
 							
 								//
 								// update user
 								//
-<<<<<<< HEAD
-							
-								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime='%lld' WHERE `Name`='%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_Name );
+
+								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoginTime='%lld' WHERE `Name`='%s'",  (long long)loggedSession->us_LastActionTime, loggedSession->us_User->u_Name );
 								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
 								{ 
 								
 								}
 								l->DropDBConnection( l, sqlLib );
-=======
-								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoginTime='%lld' WHERE `Name`='%s'",  (long long)loggedSession->us_User->u_LastActionTime, loggedSession->us_User->u_Name );						
-								//sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoginTime=%ld,LastActionTime=%ld WHERE `Name`='%s'", loggedSession->us_LastActionTime, loggedSession->us_LastActionTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
-								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) ){ }
-
-								l->LibrarySQLDrop( l, sqlLib );
->>>>>>> release/1.2.6
 							
 								UMAddUser( l->sl_UM, loggedSession->us_User );
 							
@@ -2473,44 +2357,31 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						{
 							if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, tuser, pass, &blockedTime, deviceid ) == TRUE )
 							{
-<<<<<<< HEAD
-								if( isUserSentinel == TRUE || ( l->sl_ActiveAuthModule && l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, tuser, pass, &blockedTime ) == TRUE ) )
-								{
-									dstusrsess = tusers;
-									if( tusers != NULL )
-									{
-										DEBUG("[SysWebRequest] Found user session  id %s\n", tusers->us_SessionID );
-									}
-									
-									// this is first login, we must create RefreshToken
-							
-									RefreshToken *tok = SecurityManagerCreateRefreshTokenByUserNameDB( l->sl_SecurityManager, deviceid, usrname );
-									if( tok != NULL )
-									{
-										if( newRefreshToken != NULL )
-										{
-											FFree( newRefreshToken );
-										}
-										newRefreshToken = tok->rt_Token;
-										tok->rt_Token = NULL;
-										RefreshTokenDelete( tok );
-									}
-=======
 								dstusrsess = tusers;
 								if( tusers != NULL )
 								{
-									DEBUG("Found user session  id %s\n", tusers->us_SessionID );
->>>>>>> release/1.2.6
+									DEBUG("[SysWebRequest] Found user session  id %s\n", tusers->us_SessionID );
+								}
+								
+								// this is first login, we must create RefreshToken
+						
+								RefreshToken *tok = SecurityManagerCreateRefreshTokenByUserNameDB( l->sl_SecurityManager, deviceid, usrname );
+								if( tok != NULL )
+								{
+									if( newRefreshToken != NULL )
+									{
+										FFree( newRefreshToken );
+									}
+									newRefreshToken = tok->rt_Token;
+									tok->rt_Token = NULL;
+									RefreshTokenDelete( tok );
 								}
 							}
 						}
 					}
 					
-<<<<<<< HEAD
 					// if user do not exist in memory, we must create it and add to global list
 
-=======
->>>>>>> release/1.2.6
 					if( dstusrsess == NULL )
 					{
 						Sentinel *sent = l->GetSentinelUser( l );
@@ -2686,45 +2557,29 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									}
 								}
 								
-<<<<<<< HEAD
-								DEBUG("[SysWebRequest] UMAID %lu\n", umaID );
-=======
 								DEBUG("UMAID %lu\n", umaID );
 								loggedSession->us_LastActionTime = time( NULL );
->>>>>>> release/1.2.6
 								
 								//
 								// update UserSession
 								//
 								
-<<<<<<< HEAD
 #ifdef DB_SESSIONID_HASH
-								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity`='%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_HashedSessionID, umaID, deviceid,  loggedSession->us_UserID );
+								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LastActionTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity`='%s' AND `UserID`=%lu", (long long)loggedSession->us_LastActionTime, loggedSession->us_HashedSessionID, umaID, deviceid,  loggedSession->us_UserID );
 								sqlLib->QueryWithoutResults( sqlLib, tmpQuery );
 #else
-								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity`='%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_SessionID, umaID, deviceid,  loggedSession->us_UserID );
+								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LastActionTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity`='%s' AND `UserID`=%lu", (long long)loggedSession->us_LastActionTime, loggedSession->us_SessionID, umaID, deviceid,  loggedSession->us_UserID );
 								sqlLib->QueryWithoutResults( sqlLib, tmpQuery );
 #endif
-=======
-								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LastActionTime=%ld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity`='%s' AND `UserID`=%lu", (long long)loggedSession->us_LastActionTime, loggedSession->us_SessionID, umaID, deviceid,  loggedSession->us_UserID );
-								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
-								{ 
-									
-								}
-
->>>>>>> release/1.2.6
+								
 								//
 								// update user
 								//
 							
 								if( loggedSession->us_User != NULL )
 								{
-<<<<<<< HEAD
-									sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime='%lld' WHERE `Name`='%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_Name );
-=======
 									sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoginTime=%ld,LastActionTime=%ld WHERE `Name`='%s'", loggedSession->us_LastActionTime, loggedSession->us_LastActionTime, loggedSession->us_User->u_Name );
 									//sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime = '%lld', SessionID='%s' WHERE `Name` = '%s'",  (long long)loggedSession->us_LastActionTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
->>>>>>> release/1.2.6
 									
 									if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
 									{ 

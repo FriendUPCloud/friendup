@@ -32,13 +32,9 @@ User *UserNew( )
 	User *u;
 	if( ( u = FCalloc( 1, sizeof( User ) ) ) != NULL )
 	{
-<<<<<<< HEAD
 		UserInit( u, NULL );
-=======
-		UserInit( u );
 		
 		GenerateUUID( &( u->u_UUID ) );
->>>>>>> release/1.2.6
 	}
 	else
 	{
@@ -794,9 +790,8 @@ File *UserGetDeviceByName( User *usr, const char *name )
  * @param newsess new session hash. If passed value is equal to NULL new hash will be generated
  * @return 0 when success, otherwise error number
  */
-int UserRegenerateSessionID( User *usr, char *newsess )
+int UserRegenerateSessionID( void *lsb, User *usr, char *newsess )
 {
-<<<<<<< HEAD
 	/*
 	if( usr != NULL )
 	{
@@ -808,7 +803,7 @@ int UserRegenerateSessionID( User *usr, char *newsess )
 		
 >>>>>>> master
 =======
-/*
+
 	if( usr != NULL )
 	{
 >>>>>>> release/1.2.6
@@ -861,11 +856,8 @@ int UserRegenerateSessionID( User *usr, char *newsess )
 		DEBUG("User structure = NULL\n");
 		return 1;
 <<<<<<< HEAD
-	}*/
-=======
 	}
 */
->>>>>>> release/1.2.6
 	return 0;
 }
 

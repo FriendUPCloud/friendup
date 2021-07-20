@@ -2409,7 +2409,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			HttpAddTextContent( response, dictmsgbuf );
 		}
 	}
-<<<<<<< HEAD
+
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*
@@ -2426,33 +2426,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
-=======
-	
-	/// @cond WEB_CALL_DOCUMENTATION
-	/**
-	*
-	* <HR><H2>system.library/user/addrelationship</H2>Update relation between user and other users
-	*
-	* @param sessionid - (required) session id of logged user
-	* @param sourceid - (required) uuid of person to which new relation will be added
-	* @param contactids - (required) uuids of person which will be attached as user contacts. Id's should come as json array to friendcore. Example: ["aaa","bbb","ccc"]
-	* @param mode - (required) currently FriendCore support only "presence" mode which will send information to presence server
-	* @return { result: sucess } when success, otherwise error code
-	*/
-	/// @endcond
-	else if( strcmp( urlpath[ 1 ], "addrelationship" ) == 0 )
-	{
-		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{ TAG_DONE, TAG_DONE }
->>>>>>> release/1.2.6
-		};
-		
+			{TAG_DONE, TAG_DONE} };
+			
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-<<<<<<< HEAD
+
 		//UserSession *usrses = l->sl_USM->usm_Sessions;
 		char *time = NULL;
 		
@@ -2480,7 +2458,26 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		}
 	}
 	
-=======
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/user/addrelationship</H2>Update relation between user and other users
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param sourceid - (required) uuid of person to which new relation will be added
+	* @param contactids - (required) uuids of person which will be attached as user contacts. Id's should come as json array to friendcore. Example: ["aaa","bbb","ccc"]
+	* @param mode - (required) currently FriendCore support only "presence" mode which will send information to presence server
+	* @return { result: sucess } when success, otherwise error code
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 1 ], "addrelationship" ) == 0 )
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
+		};
+
 		char *sourceID = NULL;
 		char *contactIDs = NULL;
 		char *mode = NULL;
@@ -2575,6 +2572,5 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		return response;
 	}
 
->>>>>>> release/1.2.6
 	return response;
 }

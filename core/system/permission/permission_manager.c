@@ -181,16 +181,10 @@ Ofcourse module calls need user session id etc as standard (&sessionid=%thesessi
 	{
 		SystemBase *sb = (SystemBase *)pm->pm_SB;
 		int len = 512;
-<<<<<<< HEAD
 #ifdef DB_SESSIONID_HASH
 		if( ses->us_HashedSessionID != NULL )
 		{
 			len += strlen( ses->us_HashedSessionID );
-=======
-		if( ses->us_SessionID != NULL )
-		{
-			len += strlen( ses->us_SessionID );
->>>>>>> release/1.2.6
 		}
 #else
 		if( ses->us_SessionID != NULL )
@@ -213,15 +207,11 @@ Ofcourse module calls need user session id etc as standard (&sessionid=%thesessi
 		{
 			//module=system&command=checkapppermission&key=%key%&appname=%appname%
 			
-<<<<<<< HEAD
 #ifdef DB_SESSIONID_HASH
 			snprintf( command, len, "command=permissions&sessionid=%s&authid=%s&args=%s", ses->us_HashedSessionID, authid, args );
 #else
 			snprintf( command, len, "command=permissions&sessionid=%s&authid=%s&args=%s", ses->us_SessionID, authid, args );
 #endif
-=======
-			snprintf( command, len, "command=permissions&sessionid=%s&authid=%s&args=%s", ses->us_SessionID, authid, args ); 
->>>>>>> release/1.2.6
 			 
 			DEBUG("Run command via php: '%s'\n", command );
 			FULONG dataLength;

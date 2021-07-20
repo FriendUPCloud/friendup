@@ -753,7 +753,6 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*
-<<<<<<< HEAD
 	* <HR><H2>system.library/admin/eveusbrestart</H2>Function which restart eveusb service or daemon
 	*
 	* @param sessionid - (required) session id of logged user
@@ -763,23 +762,10 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	/// @endcond
 	if( strcmp( urlpath[ 1 ], "eveusbrestart" ) == 0 )
 	{
-=======
-	* <HR><H2>system.library/admin/getinfousersessions</H2>Function return information about user sessions
-	*
-	* @param sessionid - (required) session id of logged user
-	* @param details - if "true" then more details will be delivered
-	* @return function return information about user sessions holded by UserSessionManager
-	*/
-	/// @endcond
-	else if( strcmp( urlpath[ 1 ], "getinfousersessions" ) == 0 )
-	{
-		DEBUG("getinfousersessions\n");
->>>>>>> release/1.2.6
 		//ok<!--separate-->{"result":1,"uptime":unixtime_number}
 		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			HashmapElement *el = NULL;
-<<<<<<< HEAD
 			char *type = NULL;
 		
 			el = HttpGetPOSTParameter( (*request), "message" );
@@ -820,7 +806,32 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 				snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "remotehost" );
 				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, dictmsgbuf );
-=======
+			}
+		}
+		else
+		{
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, dictmsgbuf );
+		}
+	}
+	
+		/**
+	*
+	* <HR><H2>system.library/admin/getinfousersessions</H2>Function return information about user sessions
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param details - if "true" then more details will be delivered
+	* @return function return information about user sessions holded by UserSessionManager
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 1 ], "getinfousersessions" ) == 0 )
+	{
+		DEBUG("getinfousersessions\n");
+		//ok<!--separate-->{"result":1,"uptime":unixtime_number}
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
+		{
+			HashmapElement *el = NULL;
 			FBOOL details = FALSE;
 			
 			el = GetHEReq( (*request), "details" );
@@ -896,32 +907,20 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 				*result = 200;
 				
 				BufStringDelete( bs );
->>>>>>> release/1.2.6
 			}
 		}
 		else
 		{
 			char dictmsgbuf[ 256 ];
-<<<<<<< HEAD
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
-=======
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
->>>>>>> release/1.2.6
 			HttpAddTextContent( response, dictmsgbuf );
 		}
 	}
 	
-<<<<<<< HEAD
-		//
-		// function not found
-		//
-		
-=======
 	//
 	// function not found
 	//
 	
->>>>>>> release/1.2.6
 	error:
 	
 	return response;

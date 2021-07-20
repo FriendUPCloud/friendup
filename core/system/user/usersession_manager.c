@@ -786,22 +786,6 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 			UserAddSession( locusr, us );
 
 			us->us_User = locusr;
-			
-			/*
-			DEBUG("[USMUserSessionAdd] have more sessions: %d mainsessionid: '%s'\n", userHaveMoreSessions, locusr->u_MainSessionID );
-			
-			if( userHaveMoreSessions == FALSE && ( locusr->u_MainSessionID == NULL || ( strlen( locusr->u_MainSessionID ) <= 0 ) ) )
-			{
-				DEBUG("[USMUserSessionAdd] is api: %d\n", locusr->u_IsAPI );
-				if( locusr != NULL && locusr->u_IsAPI == FALSE )
-				{
-					// we cannot regenerate session because drives are using this sessionid
-					UserRegenerateSessionID( smgr->usm_SB, locusr, NULL );
-				}
-				
-				DEBUG("[USMUserSessionAdd] SessionID will be overwriten\n");
-			}
-			*/
 		}
 	}
 	else
@@ -1176,13 +1160,8 @@ int USMRemoveOldSessionsinDB( void *lsb )
 		char temp[ 1024 ];
 	 
 		// we remove old entries older then sl_RemoveSessionsAfterTime (look in systembase.c)
-<<<<<<< HEAD:core/system/user/usersession_manager.c
-		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` WHERE LoggedTime>0 AND (%lu-LoggedTime)>%lu", acttime, sb->sl_RemoveSessionsAfterTime );
-		DEBUG("[USMRemoveOldSessionsDB] launched SQL: %s\n", temp );
-=======
 		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` WHERE LastActionTime>0 AND (%lu-LastActionTime)>%lu", acttime, sb->sl_RemoveSessionsAfterTime );
 		DEBUG("USMRemoveOldSessionsDB launched SQL: %s\n", temp );
->>>>>>> release/1.2.6:core/system/user/user_sessionmanager.c
 	 
 		sqllib->QueryWithoutResults( sqllib, temp );
 	 
@@ -1366,7 +1345,7 @@ UserSession *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sq
 {
 	UserSession *ses = NULL;
 	FBOOL locSQLused = FALSE;
-<<<<<<< HEAD:core/system/user/usersession_manager.c
+
 	SystemBase *sb = (SystemBase *)smgr->usm_SB;
 	
 	SQLLibrary *locSqllib = sqllib;
@@ -1377,19 +1356,7 @@ UserSession *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sq
 	}
 	
 	ses = UserSessionNew( sb, NULL, "tempsession" );
-=======
 
-	SystemBase *sb = (SystemBase *)smgr->usm_SB;
-
-	SQLLibrary *locSqllib = sqllib;
-	if( sqllib == NULL )
-	{
-		locSqllib = sb->LibrarySQLGet( sb );
-		locSQLused = TRUE;
-	}
-	
-	ses = UserSessionNew( NULL, "tempsession" );
->>>>>>> release/1.2.6:core/system/user/user_sessionmanager.c
 	if( ses != NULL )
 	{
 		ses->us_UserID = userID;
@@ -1397,14 +1364,8 @@ UserSession *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sq
 		{
 			char temp[ 1024 ];
 	 
-<<<<<<< HEAD:core/system/user/usersession_manager.c
-			// There is no need to hash temporary session, it will be destroyed
-			//INSERT INTO `FUserSession` ( `UserID`, `DeviceIdentity`, `SessionID`, `LoggedTime`) VALUES (0, 'tempsession','93623b68df9e390bc89eff7875d6b8407257d60d',0 )
-			snprintf( temp, sizeof(temp), "INSERT INTO `FUserSession` (`UserID`,`DeviceIdentity`,`SessionID`,`LoggedTime`) VALUES (%lu,'tempsession','%s',%lu)", userID, ses->us_HashedSessionID, time(NULL) );
-=======
 			//INSERT INTO `FUserSession` ( `UserID`, `DeviceIdentity`, `SessionID`, `CreationTime`) VALUES (0, 'tempsession','93623b68df9e390bc89eff7875d6b8407257d60d',0 )
 			snprintf( temp, sizeof(temp), "INSERT INTO `FUserSession` (`UserID`,`DeviceIdentity`,`SessionID`,`CreationTime`) VALUES (%lu,'tempsession','%s',%lu)", userID, ses->us_SessionID, time(NULL) );
->>>>>>> release/1.2.6:core/system/user/user_sessionmanager.c
 
 			DEBUG("[USMCreateTemporarySession] launched SQL: %s\n", temp );
 	
@@ -1444,12 +1405,11 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, U
 	{
 		char temp[ 1024 ];
 	 
-<<<<<<< HEAD:core/system/user/usersession_manager.c
+#ifdef DB_SESSIONID_HASH
 		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` where 'SessionID'='%s' AND 'DeviceIdentity'='tempsession'", ses->us_HashedSessionID );
-=======
+#else
 		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` where 'SessionID'='%s' AND 'DeviceIdentity'='tempsession'", ses->us_SessionID );
->>>>>>> release/1.2.6:core/system/user/user_sessionmanager.c
-
+#endif
 		DEBUG("[USMDestroyTemporarySession] launched SQL: %s\n", temp );
 	
 		locSqllib->QueryWithoutResults( locSqllib, temp );
@@ -1458,11 +1418,6 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, U
 	if( locSQLused == TRUE )
 	{
 		sb->DropDBConnection( sb, locSqllib );
-	}
-	
-	if( ses != NULL )
-	{
-		UserSessionDelete( ses );
 	}
 	
 	if( ses != NULL )
@@ -1614,6 +1569,7 @@ int USMGetUserSessionStatistic( UserSessionManager *usm, BufString *bs, FBOOL de
  * @param caseSensitive if set to TRUE function will use case sensitive comparation
  * @return UserSession structure
  */
+/*
 UserSession *USMGetSessionByUserName( UserSessionManager *usm, char *name, FBOOL caseSensitive )
 {
 	// We will take only first session of that user
@@ -1650,3 +1606,4 @@ UserSession *USMGetSessionByUserName( UserSessionManager *usm, char *name, FBOOL
 	}
 	return NULL;
 }
+*/

@@ -74,13 +74,9 @@
 #include <system/sas/sas_manager.h>
 #include <system/application/application_manager.h>
 #include <system/support/support_manager.h>
-<<<<<<< HEAD
 #include <system/application/appsession_manager.h>
 #include <system/mitra/mitra_manager.h>
 #include <core/pid_thread_manager.h>
-=======
-#include <system/mitra/mitra_manager.h>
->>>>>>> release/1.2.6
 
 #include <interface/socket_interface.h>
 #include <interface/string_interface.h>
@@ -195,10 +191,7 @@ typedef struct Device
 #define FSys_Mount_UserSession			(FSys_Mount_Dummy + 15 ) 
 #define FSys_Mount_Visible				(FSys_Mount_Dummy + 16 ) // Is the drive visible?
 #define FSys_Mount_Execute				(FSys_Mount_Dummy + 17 ) // Can we execute something on mount?
-<<<<<<< HEAD
 //#define FSys_Mount_AdminRights			(FSys_Mount_Dummy + 18 ) // If functiona was called by admin
-=======
->>>>>>> release/1.2.6
 #define FSys_Mount_UserName				(FSys_Mount_Dummy+19)		// name of device
 #define FSys_Mount_UserID				(FSys_Mount_Dummy+20)		// userID - this will allow admin to mount drives to other users
 #define FSys_Mount_UserGroupID			(FSys_Mount_Dummy+21)		// user group id
