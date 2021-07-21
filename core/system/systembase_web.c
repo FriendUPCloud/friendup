@@ -1013,11 +1013,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						char *tmpSessionID = l->sl_UtilInterface.DatabaseEncodeString( esc );
 						if( tmpSessionID != NULL )
 						{
-							sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime`='%ld' WHERE `SessionID`='%s'", timestamp, tmpSessionID );
+							sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LastActionTime`='%ld' WHERE `SessionID`='%s'", timestamp, tmpSessionID );
 							FFree( tmpSessionID );
 						}
 #else
-						sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime`='%ld' WHERE `SessionID`='%s'", timestamp, esc );
+						sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LastActionTime`='%ld' WHERE `SessionID`='%s'", timestamp, esc );
 #endif
 						FFree( esc );
 					}
