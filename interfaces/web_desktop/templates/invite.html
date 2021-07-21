@@ -1,0 +1,27 @@
+
+<div class="ContentFull Padding ScrollArea SmoothScrolling">
+	<div class="InviteGUI">
+		<h2>
+			{i18n_add_invite}
+		</h2>
+		<p>
+			{i18n_invite_desc}
+		</p>
+		<p>
+			<strong>Workgroup memberships:</strong>
+		</p>
+		<p>
+			<input type="text" class="FullWidth" placeholder="Find workgroups" onkeyup="Workspace.inviteLoadWorkgroups( this.value, Workspace.getInviteCallback( 'workgroups' ) );"/>
+		</p>
+		<p>
+			<select size="8" multiple="multiple" class="MulSelect FullWidth">{workgroups}</select>
+		</p>
+		<p>
+			<button type="button" class="Button IconSmall fa-plus-circle" onclick="Workspace.addInvite()">Add invite</button>
+		</p>
+	</div>
+	<hr class="Divider"/>
+	<h2>{i18n_current_invites}</h2>
+	<div class="InviteList"></div>
+</div>
+

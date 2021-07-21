@@ -9,9 +9,10 @@
 		</div>
 		<div class="WelTabsWrapper">
 			<div class="WelTabs" id="AppsPane">
-				<div class="WelTab"><span class="Office"></span>Friend<br>Office</div>
+				<div class="WelTab"><span class="Welcome"></span>Getting<span class="Space"> </span>started</div>
+				<div class="WelTab"><span class="Office"></span>Friend<span class="Space"> </span>Office</div>
 				<div class="WelTab"><span class="Mail"></span>Friend Mail & Calendar</div>
-				<div class="WelTab"><span class="Chat"></span>Friend<br>Chat</div>
+				<div class="WelTab"><span class="Chat"></span>Friend<span class="Space"> </span>Chat</div>
 				<div class="WelTab"><span class="Conference"></span>Friend Conference</div>
 				<div class="WelTab"><span class="Photopea"></span>Photopea</div>
 				<div class="WelTab"><span class="Drawio"></span>DrawIO</div>
@@ -19,6 +20,25 @@
 			</div>
 		</div>
 		<div class="WelPages">
+			<div class="WelPage Welcome">
+				<div class="TextContent">
+					<h2>Let's get you started with Friend</h2>
+					<p>
+						Friend is your digital backpack online. It allows you to 
+						organize all of your contacts, files, apps and services in 
+						one place. And the best thing is; we don't sell your data
+						or push ads on you. Your Sky Computer is private.
+					</p>
+					<p>
+						Friend is a social platform. As such, you are able to 
+						interact with others in real time. Why don't you 
+						<strong><a href="javascript:void(0)" onclick="Application.sendMessage( { type: 'system', command: 'invite' } )">invite 
+						some of your friends</a></strong> to participate? It's free!
+					</p>
+				</div>
+				<div class="ImageContent">
+				</div>
+			</div>
 			<div class="WelPage Office">
 				<div class="TextContent">
 					<h2>Your multitasking office workflow</h2>
@@ -232,6 +252,8 @@
 		{ background-image: url('Progdir:Gfx/icon_chat.png'); }
 		.WelTab > span.More:after
 		{ background-image: url('Progdir:Gfx/icon_more.jpg'); }
+		.WelTab > span.Welcome:after
+		{ background-image: url('Progdir:Gfx/icon_welcome.png'); }
 		.WelPage.Office .ImageContent
 		{ background-image: url('Progdir:Gfx/app_office.png'); }
 		.WelPage.Mail .ImageContent
@@ -246,5 +268,7 @@
 		{ background-image: url('Progdir:Gfx/app_chat.png'); }
 		.WelPage.More .ImageContent
 		{ background-image: url('Progdir:Gfx/app_more.png'); }
+		.WelPage.Welcome .ImageContent
+		{ background-image: url('Progdir:Gfx/app_welcome.png'); }
 	</style>
 

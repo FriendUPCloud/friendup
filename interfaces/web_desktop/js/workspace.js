@@ -743,7 +743,7 @@ Workspace = {
 			return ( vars.length > 0 ? ( '?' + vars.join( '&' ) ) : '' );
 		}
 		
-		var lp = new View( {
+		let lp = new View( {
 			id: 'Login',
 			width: 432,
 			'min-width': 290,
@@ -756,6 +756,65 @@ Workspace = {
 			login: true,
 			theme: 'login'
 		} );
+		lp.limitless = true;
+		lp.onMessage = function( msg )
+		{
+			if( msg && msg.type && msg.src && msg.action == 'openWindow' )
+			{
+				switch( msg.type )
+				{
+					
+					case 'eula':
+					{
+						let v = new View( {
+							title: 'LoginPopup',
+							width: 432,
+							height: 480,
+							resize: false
+						} );
+						
+						let f = new XMLHttpRequest();
+						f.open( 'POST', '/webclient/templates/EULA.html', true, true );
+						f.onload = function()
+						{
+							let t = this.responseText + '';
+							t += '<hr class="Divider"/>\
+								<div class="ContractAcceptReject">\
+									<button type="button" class="IconSmall fa-remove" onclick="CloseView()"> Close</button>\
+								</div>';
+							v.setContent( t );
+						}
+						f.send();
+					}
+					break;
+						
+					case 'privacypolicy':
+					{
+						let v = new View( {
+							title: 'LoginPopup',
+							width: 432,
+							height: 480,
+							resize: false
+						} );
+						
+						let f = new XMLHttpRequest();
+						f.open( 'POST', '/webclient/templates/PrivacyPolicy.html', true, true );
+						f.onload = function()
+						{
+							let t = this.responseText + '';
+							t += '<hr class="Divider"/>\
+								<div class="ContractAcceptReject">\
+									<button type="button"  class="IconSmall fa-remove" onclick="CloseView()"> Close</button>\
+								</div>';
+							v.setContent( t );
+						}
+						f.send();
+					}
+					break;
+					
+				}
+			}
+		}
 		lp.setRichContentUrl( '/loginprompt' + allowedHashVars() );
 		Workspace.loginPrompt = lp;
 
@@ -989,7 +1048,19 @@ Workspace = {
 				}
 
 				setupWorkspaceData( json );
-
+				
+				// Invites
+				if( json.inviteHash )
+				{
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
+					{
+						// TODO: Make some better error handling ...
+						if( e != 'ok' ) console.log( '[ERROR] verifyinvite: ' + ( d ? d : e ) );
+					}
+					m.execute( 'verifyinvite', { hash: json.inviteHash } );
+				}
+				
 				// Language
 				_this.locale = 'en';
 				var l = new Module( 'system' );

@@ -59,7 +59,8 @@ Friend.User = {
 				username: username,
 				password: password,
 				remember: remember,
-				hashedPassword: flags.hashedPassword
+				hashedPassword: flags.hashedPassword,
+				inviteHash: flags.inviteHash
 			}, callback );
 		}
 		else
@@ -116,6 +117,8 @@ Friend.User = {
     	{
     		this.lastLogin.currentRequest.destroy();
     	}
+    	
+    	let self = this;
     	
     	// Create a new library call object
 		let m = new FriendLibrary( 'system' );
@@ -174,6 +177,9 @@ Friend.User = {
 					Workspace.loginid = json.loginid;
 					Workspace.userLevel = json.level;
 					Workspace.fullName = json.fullname;
+					
+					// If we have inviteHash, verify and add relationship between the inviter and the invitee.
+					if( info.inviteHash ) json.inviteHash = info.inviteHash;
 					
 					// We are now online!
 					Friend.User.SetUserConnectionState( 'online' );

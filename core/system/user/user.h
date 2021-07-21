@@ -45,6 +45,7 @@
 	`Information` TEXT DEFAULT NULL,
 	`LoginTime` bigint(32) NOT NULL,
 	`Device` varchar(255) DEFAULT NULL,
+	`Password' varchar(255) DEFAULT NULL,
 	PRIMARY KEY (`ID`)
  ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 	 */
@@ -62,6 +63,7 @@ typedef struct UserLogin
 	char						*ul_Failed;
 	char						*ul_Information;
 	char						*ul_Device;
+	char						*ul_Password;
 	time_t						ul_LoginTime;
 }UserLogin;
 
@@ -79,6 +81,7 @@ static FULONG UserLoginDesc[] = {
 	SQLT_STR,     (FULONG)"Information",    offsetof( struct UserLogin, ul_Information ),
 	SQLT_INT,     (FULONG)"LoginTime", offsetof( struct UserLogin, ul_LoginTime ),
 	SQLT_STR,     (FULONG)"Device",    offsetof( struct UserLogin, ul_Device ),
+	SQLT_STR,     (FULONG)"Password",    offsetof( struct UserLogin, ul_Password ),
 	SQLT_NODE,    (FULONG)"node",        offsetof( struct UserLogin, node ),
 	SQLT_END 
 };

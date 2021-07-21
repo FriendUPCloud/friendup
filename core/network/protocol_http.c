@@ -644,7 +644,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							}
 							else
 							{
-								Log( FLOG_INFO, "[HTTP] SysWebRequest response: '%.*s'\n", 200, response->http_Content );
+								//Log( FLOG_INFO, "[HTTP] SysWebRequest response: '%.*s'\n", 200, response->content );
 							}
 						}
 						else
