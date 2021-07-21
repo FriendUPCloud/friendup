@@ -972,7 +972,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						{
 							time_t tm = 0;
 							time_t tm_now = time( NULL );
-							FBOOL access = UMGetLoginPossibilityLastLogins( l->sl_UM, usr->u_Name, l->sl_ActiveAuthModule->am_BlockAccountAttempts, &tm );
+							FBOOL access = UMGetLoginPossibilityLastLogins( l->sl_UM, usr->u_Name, usr->u_Password, l->sl_ActiveAuthModule->am_BlockAccountAttempts, &tm );
 							
 							// if access is disabled and user should be enabled, we remove last login fail
 							if( access == FALSE )
@@ -1417,7 +1417,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						DEBUG("[UMWebRequest] FC will do a change\n");
 					
 						GenerateUUID( &( logusr->u_UUID ) );
-					
+						
 						if( status >= 0 )
 						{
 							char msg[ 512 ];
@@ -1846,22 +1846,22 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 								continue;
 							}
 
-							//if( (us->us_LoggedTime - t) > LOGOUT_TIME )
+							//if( (us->us_LastActionTime - t) > LOGOUT_TIME )
 							//if( us->us_WSClients != NULL )
 							time_t timestamp = time(NULL);
 							
 							if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 							{
-								if( us->us_WSD != NULL && ( (timestamp - us->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) )
+								if( us->us_WSD != NULL && ( (timestamp - us->us_LastActionTime) < l->sl_RemoveSessionsAfterTime ) )
 								{
 									int size = 0;
 									if( pos == 0 )
 									{
-										size = snprintf( temp, 2047, "{\"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime );
+										size = snprintf( temp, 2047, "{\"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LastActionTime );
 									}
 									else
 									{
-										size = snprintf( temp, 2047, ",{\"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime );
+										size = snprintf( temp, 2047, ",{\"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LastActionTime );
 									}
 									BufStringAddSize( bs, temp, size );
 							
@@ -2082,7 +2082,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						FBOOL add = FALSE;
 						DEBUG("[UMWebRequest] Going through sessions, device: %s\n", locses->us_DeviceIdentity );
 						
-						if( ( (timestamp - locses->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) && locses->us_WSD != NULL )
+						if( ( (timestamp - locses->us_LastActionTime) < l->sl_RemoveSessionsAfterTime ) && locses->us_WSD != NULL )
 						{
 							add = TRUE;
 						}
@@ -2193,7 +2193,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						FBOOL add = FALSE;
 						//DEBUG("[UMWebRequest] Going through sessions, device: %s time %lu timeout time %lu WS ptr %p\n", locses->us_DeviceIdentity, (long unsigned int)(timestamp - locses->us_LoggedTime), l->sl_RemoveSessionsAfterTime, locses->us_WSClients );
 						
-						if( ( (timestamp - locses->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) && locses->us_WSD != NULL )
+						if( ( (timestamp - locses->us_LastActionTime) < l->sl_RemoveSessionsAfterTime ) && locses->us_WSD != NULL )
 						{
 							add = TRUE;
 						}
@@ -2409,6 +2409,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			HttpAddTextContent( response, dictmsgbuf );
 		}
 	}
+
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*
@@ -2425,11 +2426,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
-		};
-		
+			{TAG_DONE, TAG_DONE} };
+			
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
+
 		//UserSession *usrses = l->sl_USM->usm_Sessions;
 		char *time = NULL;
 		
@@ -2457,5 +2458,119 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		}
 	}
 	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/user/addrelationship</H2>Update relation between user and other users
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param sourceid - (required) uuid of person to which new relation will be added
+	* @param contactids - (required) uuids of person which will be attached as user contacts. Id's should come as json array to friendcore. Example: ["aaa","bbb","ccc"]
+	* @param mode - (required) currently FriendCore support only "presence" mode which will send information to presence server
+	* @return { result: sucess } when success, otherwise error code
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 1 ], "addrelationship" ) == 0 )
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
+		};
+
+		char *sourceID = NULL;
+		char *contactIDs = NULL;
+		char *mode = NULL;
+		
+		DEBUG( "[UMWebRequest] update key" );
+		
+		HashmapElement *el = HttpGetPOSTParameter( request, "sourceid" );
+		if( el != NULL )
+		{
+			sourceID = UrlDecodeToMem( el->hme_Data );
+		}
+		
+		el = HttpGetPOSTParameter( request, "contactids" );
+		if( el != NULL )
+		{
+			contactIDs = UrlDecodeToMem( el->hme_Data );
+		}
+		
+		el = HttpGetPOSTParameter( request, "mode" );
+		if( el != NULL )
+		{
+			mode = (char *) el->hme_Data;
+		}
+		
+		if( sourceID != NULL && contactIDs != NULL && mode != NULL )
+		{
+			if( (loggedSession->us_User != NULL) && (( loggedSession->us_User->u_UUID != NULL && strcmp( sourceID, loggedSession->us_User->u_UUID ) == 0 ) || loggedSession->us_User->u_IsAdmin == TRUE ) )
+			{
+				if( strcmp( mode, "presence" ) == 0 )
+				{
+					int len = 256 + strlen( sourceID ) + strlen( contactIDs );
+					HttpAddTextContent( response, "ok<!--separate-->{\"result\":\"sucess\"}" );
+				
+					char *msg = FMalloc( len );
+					if( msg != NULL )
+					{
+						snprintf( msg, len, "{\"sourceId\":\"%s\",\"contactIds\":%s}", sourceID, contactIDs );
+
+						NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "relation-add", msg );
+						
+						FFree( msg );
+					}
+				}
+				else
+				{
+					HttpAddTextContent( response, "mode not supported" );
+				}
+			}
+			else
+			{
+				if( loggedSession->us_User == NULL )
+				{
+					Log( FLOG_ERROR,"UserSession '%s' dont have admin rights\n", loggedSession->us_SessionID );
+				}
+				else
+				{
+					Log( FLOG_ERROR,"User '%s' dont have admin rights\n", loggedSession->us_User->u_Name );
+				}
+				char buffer[ 256 ];
+				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+				HttpAddTextContent( response, buffer );
+			}
+		}
+		else
+		{
+			FERROR("[ERROR] username or password parameters missing\n" );
+			char buffer[ 512 ];
+			char buffer1[ 256 ];
+			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "sourceid, contactids, mode" );
+			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, buffer );
+		}
+		
+		if( sourceID != NULL )
+		{
+			FFree( sourceID );
+		}
+		if( contactIDs != NULL )
+		{
+			FFree( contactIDs );
+		}
+	}
+	else
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
+		};
+		
+		response = HttpNewSimple( HTTP_404_NOT_FOUND,  tags );
+	
+		return response;
+	}
+
 	return response;
 }

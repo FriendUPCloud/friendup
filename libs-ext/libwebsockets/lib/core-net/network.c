@@ -23,6 +23,7 @@
  */
 
 #include "private-lib-core.h"
+#include <errno.h>
 
 #if !defined(LWS_PLAT_FREERTOS) && !defined(LWS_PLAT_OPTEE)
 static int
@@ -152,7 +153,7 @@ lws_get_peer_addresses(struct lws *wsi, lws_sockfd_type fd, char *name,
 	name[0] = '\0';
 
 #ifdef LWS_WITH_IPV6
-	if (LWS_IPV6_ENABLED(wsi->vhost)) {
+	if (LWS_IPV6_ENABLED(wsi->a.vhost)) {
 		len = sizeof(sin6);
 		p = &sin6;
 	} else
@@ -167,7 +168,7 @@ lws_get_peer_addresses(struct lws *wsi, lws_sockfd_type fd, char *name,
 		goto bail;
 	}
 
-	lws_get_addresses(wsi->vhost, p, name, name_len, rip, rip_len);
+	lws_get_addresses(wsi->a.vhost, p, name, name_len, rip, rip_len);
 
 bail:
 #endif
@@ -215,7 +216,6 @@ lws_socket_bind(struct lws_vhost *vhost, lws_sockfd_type sockfd, int port,
 #if defined(LWS_WITH_UNIX_SOCK)
 	if (!port && LWS_UNIX_SOCK_ENABLED(vhost)) {
 		v = (struct sockaddr *)&serv_unix;
-		n = sizeof(struct sockaddr_un);
 		memset(&serv_unix, 0, sizeof(serv_unix));
 		serv_unix.sun_family = AF_UNIX;
 		if (!iface)
@@ -225,11 +225,14 @@ lws_socket_bind(struct lws_vhost *vhost, lws_sockfd_type sockfd, int port,
 			         iface);
 			return LWS_ITOSA_NOT_EXIST;
 		}
+		n = (int)(sizeof(uint16_t) + strlen(iface));
 		strcpy(serv_unix.sun_path, iface);
 		if (serv_unix.sun_path[0] == '@')
 			serv_unix.sun_path[0] = '\0';
 		else
 			unlink(serv_unix.sun_path);
+
+		// lwsl_hexdump_notice(v, n);
 
 	} else
 #endif
@@ -312,7 +315,7 @@ lws_socket_bind(struct lws_vhost *vhost, lws_sockfd_type sockfd, int port,
 		return LWS_ITOSA_NOT_EXIST;
 	}
 
-#if defined(LWS_WITH_UNIX_SOCK)
+#if defined(LWS_WITH_UNIX_SOCK) && !defined(WIN32)
 	if (!port && LWS_UNIX_SOCK_ENABLED(vhost)) {
 		uid_t uid = vhost->context->uid;
 		gid_t gid = vhost->context->gid;
@@ -325,21 +328,21 @@ lws_socket_bind(struct lws_vhost *vhost, lws_sockfd_type sockfd, int port,
 				return LWS_ITOSA_NOT_EXIST;
 			}
 		}
-		if (uid && gid) {
-			if (chown(serv_unix.sun_path, uid, gid)) {
+		if (iface && iface[0] != '@' && uid && gid) {
+			if (chown(iface, uid, gid)) {
 				lwsl_err("%s: failed to set %s perms %u:%u\n",
-					 __func__, serv_unix.sun_path,
+					 __func__, iface,
 					 (unsigned int)uid, (unsigned int)gid);
 
 				return LWS_ITOSA_NOT_EXIST;
 			}
 			lwsl_notice("%s: vh %s unix skt %s perms %u:%u\n",
-				    __func__, vhost->name, serv_unix.sun_path,
+				    __func__, vhost->name, iface,
 				    (unsigned int)uid, (unsigned int)gid);
 
-			if (chmod(serv_unix.sun_path, 0660)) {
+			if (chmod(iface, 0660)) {
 				lwsl_err("%s: failed to set %s to 0600 mode\n",
-					 __func__, serv_unix.sun_path);
+					 __func__, iface);
 
 				return LWS_ITOSA_NOT_EXIST;
 			}
@@ -427,20 +430,45 @@ int
 lws_retry_sul_schedule_retry_wsi(struct lws *wsi, lws_sorted_usec_list_t *sul,
 				 sul_cb_t cb, uint16_t *ctry)
 {
-	return lws_retry_sul_schedule(wsi->context, wsi->tsi, sul,
+	return lws_retry_sul_schedule(wsi->a.context, wsi->tsi, sul,
 				      wsi->retry_policy, cb, ctry);
 }
 
 #if defined(LWS_WITH_IPV6)
 unsigned long
-lws_get_addr_scope(const char *ipaddr)
+lws_get_addr_scope(const char *ifname_or_ipaddr)
 {
-	unsigned long scope = 0;
-
-#ifndef WIN32
-	struct ifaddrs *addrs, *addr;
+	unsigned long scope;
 	char ip[NI_MAXHOST];
 	unsigned int i;
+#if !defined(WIN32)
+	struct ifaddrs *addrs, *addr;
+#else
+	PIP_ADAPTER_ADDRESSES adapter, addrs = NULL;
+	PIP_ADAPTER_UNICAST_ADDRESS addr;
+	struct sockaddr_in6 *sockaddr;
+	ULONG size = 0;
+	int found = 0;
+	DWORD ret;
+#endif
+
+	/*
+	 * First see if we can look the string up as a network interface name...
+	 * windows vista+ also has this
+	 */
+
+	scope = if_nametoindex(ifname_or_ipaddr);
+	if (scope > 0)
+		/* we found it from the interface name lookup */
+		return scope;
+
+	/*
+	 * if not, try to look it up as an IP -> interface -> interface index
+	 */
+
+	scope = 0;
+
+#if !defined(WIN32)
 
 	getifaddrs(&addrs);
 	for (addr = addrs; addr; addr = addr->ifa_next) {
@@ -448,6 +476,7 @@ lws_get_addr_scope(const char *ipaddr)
 			addr->ifa_addr->sa_family != AF_INET6)
 			continue;
 
+		ip[0] = '\0';
 		getnameinfo(addr->ifa_addr,
 				sizeof(struct sockaddr_in6),
 				ip, sizeof(ip),
@@ -460,21 +489,13 @@ lws_get_addr_scope(const char *ipaddr)
 				break;
 			}
 
-		if (!strcmp(ip, ipaddr)) {
+		if (!strcmp(ip, ifname_or_ipaddr)) {
 			scope = if_nametoindex(addr->ifa_name);
 			break;
 		}
 	}
 	freeifaddrs(addrs);
 #else
-	PIP_ADAPTER_ADDRESSES adapter, addrs = NULL;
-	PIP_ADAPTER_UNICAST_ADDRESS addr;
-	ULONG size = 0;
-	DWORD ret;
-	struct sockaddr_in6 *sockaddr;
-	char ip[NI_MAXHOST];
-	unsigned int i;
-	int found = 0;
 
 	for (i = 0; i < 5; i++)
 	{
@@ -513,7 +534,7 @@ lws_get_addr_scope(const char *ipaddr)
 							&sockaddr->sin6_addr,
 							ip, sizeof(ip));
 
-					if (!strcmp(ip, ipaddr)) {
+					if (!strcmp(ip, ifname_or_ipaddr)) {
 						scope = sockaddr->sin6_scope_id;
 						found = 1;
 						break;
@@ -830,8 +851,10 @@ lws_sa46_compare_ads(const lws_sockaddr46 *sa46a, const lws_sockaddr46 *sa46b)
 	return sa46a->sa4.sin_addr.s_addr != sa46b->sa4.sin_addr.s_addr;
 }
 
+#if defined(LWS_WITH_SYS_STATE)
 lws_state_manager_t *
 lws_system_get_state_manager(struct lws_context *context)
 {
 	return &context->mgr_system;
 }
+#endif

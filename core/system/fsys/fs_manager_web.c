@@ -2478,7 +2478,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								snprintf( tmp, sizeof(tmp), "%s%d%d%d", path, rand() % 999, rand() % 999, rand() % 999 );
 								StrToMD5Str( hashmap, 512, tmp, strlen( tmp ) );
 								tmpfs->fs_Hash = StringDuplicate( hashmap );
-								tmpfs->fs_CreatedTime = time( NULL );
+								tmpfs->fs_CreationTime = time( NULL );
 								/*
 								struct tm* ti;
 								ti = localtime( &(tmpfs->fs_CreatedTime) );

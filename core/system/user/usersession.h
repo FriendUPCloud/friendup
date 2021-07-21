@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS `FUserSession` (
   `UserID` bigint(32) NOT NULL,
   `DeviceIdentity` varchar(255) DEFAULT NULL,
   `SessionID` varchar(255) DEFAULT NULL,
-  `LoggedTime` bigint(32) NOT NULL,
+  `LastActionTime` bigint(32) NOT NULL,
   PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
@@ -66,7 +66,9 @@ typedef struct UserSession
 	char					*us_DeviceIdentity;			// device identity
 	char					*us_SessionID;				// session id
 	char					*us_HashedSessionID;		// Hashed SessionID used by database
-	time_t					us_LoggedTime;				// last update from user
+	time_t					us_LastActionTime;			// last update from user
+	time_t					us_CreationTime;			// last login
+
 	int						us_Status;					// session status
 	
 	File					*us_OpenedFiles;			// opened files in user session
@@ -119,18 +121,19 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 static FULONG UserSessionDesc[] = { 
     SQLT_TABNAME, (FULONG)"FUserSession",       
     SQLT_STRUCTSIZE, sizeof( struct UserSession ), 
-	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct UserSession, us_ID ), 
-	SQLT_INT,     (FULONG)"UserID", offsetof( struct UserSession, us_UserID ),
-	SQLT_STR,     (FULONG)"DeviceIdentity",       offsetof( struct UserSession, us_DeviceIdentity ),
+	SQLT_IDINT,			(FULONG)"ID",				offsetof( struct UserSession, us_ID ), 
+	SQLT_INT,			(FULONG)"UserID",			offsetof( struct UserSession, us_UserID ),
+	SQLT_STR,			(FULONG)"DeviceIdentity",	offsetof( struct UserSession, us_DeviceIdentity ),
 #ifdef DB_SESSIONID_HASH
-	SQLT_STR_HASH,(FULONG)"SessionID",   offsetof( struct UserSession, us_SessionID ),
+	SQLT_STR_HASH,		(FULONG)"SessionID",		offsetof( struct UserSession, us_SessionID ),
 #else
-	SQLT_STR,     (FULONG)"SessionID",   offsetof( struct UserSession, us_SessionID ),
+	SQLT_STR,			(FULONG)"SessionID",		offsetof( struct UserSession, us_SessionID ),
 #endif
-	SQLT_INT,     (FULONG)"LoggedTime", offsetof( struct UserSession, us_LoggedTime ),
-	SQLT_INT,     (FULONG)"UMA_ID", offsetof( struct UserSession, us_MobileAppID ),
-	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&UserSessionInit,
-	SQLT_NODE,    (FULONG)"node",        offsetof( struct UserSession, node ),
+	SQLT_INT,			(FULONG)"LastActionTime", 	offsetof( struct UserSession, us_LastActionTime ),
+	SQLT_INT,			(FULONG)"CreationTime", 	offsetof( struct UserSession, us_CreationTime ),
+	SQLT_INT,			(FULONG)"UMA_ID",			offsetof( struct UserSession, us_MobileAppID ),
+	SQLT_INIT_FUNCTION,	(FULONG)"init",				(FULONG)&UserSessionInit,
+	SQLT_NODE,			(FULONG)"node",				offsetof( struct UserSession, node ),
 	SQLT_END 
 };
 

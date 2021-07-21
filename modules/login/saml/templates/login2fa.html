@@ -3,16 +3,16 @@
     	<img src="/graphics/securty.jpg" width="432" height="243" id="AuthImage"/>
         <p>
         	<strong>
-        		Validate your identity
+        		User verification
         	</strong>
         </p>
         <p>
-        	To identify yourself, please enter your validation number and
-        	account password.
+        	To verify your user, please enter the code received on SMS as well as your
+        	password.
         </p>
         <div class="HRow MarginBottom">
             <div class="HContent30 FloatLeft PaddingSmall">
-                <strong>Validation number:</strong>
+                <strong>SMS Code:</strong>
             </div>
             <div class="HContent70 FloatLeft">
             	<input type="text" id="Code" value=""/>
@@ -20,16 +20,36 @@
         </div>
         <div class="HRow MarginBottom">
             <div class="HContent30 FloatLeft PaddingSmall">
-                <strong>Your password:</strong>
+                <strong>Password:</strong>
             </div>
             <div class="HContent70 FloatLeft">
             	<input type="password" id="AuthPassword" value=""/>
             </div>
         </div>
-        <div class="HRow MarginTop">
-        	<button type="button" onclick="Application.validateMobileNumber()">
-        		Validate to log in
-        	</button>
+        <div class="HRow MarginTop" id="ValidationButtons">
+        	<div class="HContent50 FloatLeft">
+		    	<button type="button" onclick="window.doLogout()">
+		    		Back
+		    	</button>
+		   	</div>
+        	<div class="HContent50 FloatLeft">
+		    	<button type="button" onclick="Application.validateMobileNumber()">
+		    		Validate
+		    	</button>
+		    </div>
         </div>
     </div>
+    
+    <style>
+    	#ValidationButtons
+    	{
+    		margin-top: 20px;
+    	}
+    	#ValidationButtons button
+    	{
+    		display: block;
+    		margin: auto;
+    		width: 90%;
+    	}
+    </style>
 

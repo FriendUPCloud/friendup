@@ -670,13 +670,12 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 						if( strncmp( result->ls_Data, "ok", 2 ) != 0 )
 						{
 							DEBUG( "[fsysphp] Failed to mount device %s..\n", name );
-							//DEBUG( "[fsysphp] Output was: %s\n", result->ls_Data );
-							if( sd->module ) FFree( sd->module );
-							//if( dev->f_SessionID ) FFree( dev->f_SessionID );
-							if( sd->type ) FFree( sd->type );
-							if( dev->f_Name ) FFree( dev->f_Name );
-							if( dev->f_Path ) FFree( dev->f_Path );
-							if( dev->f_DevServer ) FFree( dev->f_DevServer );
+
+							if( sd->module ){ FFree( sd->module ); sd->module = NULL; }
+							if( sd->type ){ FFree( sd->type ); sd->type = NULL; }
+							if( dev->f_Name ){ FFree( dev->f_Name ); dev->f_Name = NULL; }
+							if( dev->f_Path ){ FFree( dev->f_Path ); dev->f_Path = NULL; }
+							if( dev->f_DevServer ){ FFree( dev->f_DevServer ); dev->f_DevServer = NULL; }
 							FFree( sd );
 							FFree( dev );
 							
@@ -694,12 +693,11 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 					else
 					{
 						DEBUG( "[fsysphp] Error mounting device %s..\n", name );
-						if( sd->module ) FFree( sd->module );
-						//if( dev->f_SessionID ) FFree( dev->f_SessionID );
-						if( sd->type ) FFree( sd->type );
-						if( dev->f_Name ) FFree( dev->f_Name );
-						if( dev->f_Path ) FFree( dev->f_Path );
-						if( dev->f_DevServer ) FFree( dev->f_DevServer );
+						if( sd->module ){ FFree( sd->module ); sd->module = NULL; }
+						if( sd->type ){ FFree( sd->type ); sd->type = NULL; }
+						if( dev->f_Name ){ FFree( dev->f_Name ); dev->f_Name = NULL; }
+						if( dev->f_Path ){ FFree( dev->f_Path ); dev->f_Path = NULL; }
+						if( dev->f_DevServer ){ FFree( dev->f_DevServer ); dev->f_DevServer = NULL; }
 						FFree( sd );
 						FFree( dev );
 						
@@ -747,8 +745,8 @@ int Release( struct FHandler *s, void *f )
 			SpecialData *sd = (SpecialData *)lf->f_SpecialData;
 		
 			// Free up active device information
-			if( sd->module ){ FFree( sd->module ); }
-			if( sd->type ){ FFree( sd->type ); }
+			if( sd->module ){ FFree( sd->module ); sd->module = NULL; }
+			if( sd->type ){ FFree( sd->type ); sd->type = NULL; }
 			FFree( lf->f_SpecialData );
 			lf->f_SpecialData = NULL;
 		}
@@ -819,8 +817,9 @@ int UnMount( struct FHandler *s, void *f )
 			// TODO: we should parse result to get information about success
 			
 			// Free up active device information
-			if( sd->module ) FFree( sd->module );
-			if( sd->type ) FFree( sd->type ); 
+			if( sd->module ){ FFree( sd->module ); sd->module = NULL; }
+			if( sd->type ){ FFree( sd->type ); sd->type = NULL; }
+
 			FFree( lf->f_SpecialData );
 			lf->f_SpecialData = NULL;
 		}

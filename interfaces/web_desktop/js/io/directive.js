@@ -464,6 +464,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			]);
 			ifr.applicationName = conf.Name;
 			ifr.userId = Workspace.userId;
+			ifr.fullName = Workspace.fullName;
 			ifr.username = Workspace.loginUsername;
 			ifr.userLevel = Workspace.userLevel;
 			ifr.workspace = workspace;
@@ -652,6 +653,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					applicationName: ifr.applicationName,
 					workspaceMode: Workspace.workspacemode,
 					userId: ifr.userId,
+					fullName: ifr.fullName,
 					userLevel: ifr.userLevel,
 					username: ifr.username,
 					authId: ifr.authId,
@@ -1314,6 +1316,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 			ifr.applicationId = applicationId;
 			ifr.workspaceMode = Workspace.workspacemode;
 			ifr.userId = Workspace.userId;
+			ifr.fullName = Workspace.fullName;
 			ifr.userLevel = Workspace.userLevel;
 			ifr.username = Workspace.loginUsername;
 			ifr.workspace = flags && flags.workspace ? flags.workspace : 0;
@@ -1467,6 +1470,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 						base:             '/',
 						applicationId:    ifr.applicationId,
 						userId:           ifr.userId,
+						fullName:         ifr.fullName,
 						userLevel:        ifr.userLevel,
 						username:         ifr.username,
 						theme:            Workspace.theme,

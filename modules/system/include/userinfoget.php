@@ -15,7 +15,8 @@
 // Get user by ID
 if( isset( $args->args->id ) )
 	$uid = $args->args->id;
-else $uid = $User->ID;
+//else $uid = $User->ID;
+else $uid = $UserSession->UserID;
 
 $workgroups = false;
 
@@ -239,6 +240,24 @@ if( 1==1/* || $rolePermission || $level == 'Admin' || $uid == $User->ID*/ )
 				break;
 		}
 		
+		if( $utg = $SqlDatabase->FetchObject( '
+			SELECT 
+				g.* 
+			FROM 
+				`FUserGroup` g, 
+				`FUserToGroup` ug 
+			WHERE 
+					ug.UserID = \'' . $uid . '\' 
+				AND g.ID = ug.UserGroupID 
+				AND g.Name = "User" 
+				AND g.Type IN ( "External", "Doorman" ) 
+			ORDER BY g.ID ASC 
+			LIMIT 1
+		' ) )
+		{
+			$userinfo->UserType = $utg->Type;
+		}
+		
 		// If User Status is Disabled the user cannot be in any workgroups ...
 		if( $userinfo->Status == 1 )
 		{
@@ -271,7 +290,7 @@ if( 1==1/* || $rolePermission || $level == 'Admin' || $uid == $User->ID*/ )
 		{
 			$userinfo->Setup = $sts;
 		}
-
+		
 		if( $uid > 0 && ( $keys = $SqlDatabase->FetchObjects( '
 			SELECT k.*, a.Name AS Application, u.AuthID AS ApplicationAuthID 
 			FROM 

@@ -30,7 +30,8 @@ secstream_ws(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 {
 	lws_ss_handle_t *h = (lws_ss_handle_t *)lws_get_opaque_user_data(wsi);
 	uint8_t buf[LWS_PRE + 1400];
-	int f = 0, f1, txr;
+	lws_ss_state_return_t r;
+	int f = 0, f1, n;
 	size_t buflen;
 
 	switch (reason) {
@@ -41,39 +42,58 @@ secstream_ws(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 			 in ? (char *)in : "(null)");
 		if (!h)
 			break;
-		lws_ss_event_helper(h, LWSSSCS_UNREACHABLE);
+		r = lws_ss_event_helper(h, LWSSSCS_UNREACHABLE);
+		if (r == LWSSSSRET_DESTROY_ME)
+			return _lws_ss_handle_state_ret(r, wsi, &h);
+
 		h->wsi = NULL;
-		lws_ss_backoff(h);
+		r = lws_ss_backoff(h);
+		if (r != LWSSSSRET_OK)
+			return _lws_ss_handle_state_ret(r, wsi, &h);
 		break;
 
+	case LWS_CALLBACK_CLOSED: /* server */
 	case LWS_CALLBACK_CLIENT_CLOSED:
 		if (!h)
 			break;
-		f = lws_ss_event_helper(h, LWSSSCS_DISCONNECTED);
+		lws_sul_cancel(&h->sul_timeout);
+		r = lws_ss_event_helper(h, LWSSSCS_DISCONNECTED);
+		if (r == LWSSSSRET_DESTROY_ME)
+			return _lws_ss_handle_state_ret(r, wsi, &h);
+
 		if (h->wsi)
 			lws_set_opaque_user_data(h->wsi, NULL);
 		h->wsi = NULL;
 
-		if (f) {
-			lws_ss_destroy(&h);
-			break;
+		if (reason == LWS_CALLBACK_CLIENT_CLOSED) {
+			if (h->policy &&
+			    !(h->policy->flags & LWSSSPOLF_OPPORTUNISTIC) &&
+#if defined(LWS_WITH_SERVER)
+			    !(h->info.flags & LWSSSINFLAGS_ACCEPTED) && /* not server */
+#endif
+			    !h->txn_ok && !wsi->a.context->being_destroyed) {
+				r = lws_ss_backoff(h);
+				if (r != LWSSSSRET_OK)
+					return _lws_ss_handle_state_ret(r, wsi, &h);
+				break;
+			}
 		}
-
-		if (h->policy && !(h->policy->flags & LWSSSPOLF_OPPORTUNISTIC) &&
-		    !h->txn_ok && !wsi->context->being_destroyed)
-			lws_ss_backoff(h);
 		break;
 
+	case LWS_CALLBACK_ESTABLISHED:
 	case LWS_CALLBACK_CLIENT_ESTABLISHED:
 		h->retry = 0;
 		h->seqstate = SSSEQ_CONNECTED;
-		lws_ss_set_timeout_us(h, LWS_SET_TIMER_USEC_CANCEL);
-		lws_ss_event_helper(h, LWSSSCS_CONNECTED);
+		lws_sul_cancel(&h->sul);
+		r = lws_ss_event_helper(h, LWSSSCS_CONNECTED);
+		if (r != LWSSSSRET_OK)
+			return _lws_ss_handle_state_ret(r, wsi, &h);
 		break;
 
+	case LWS_CALLBACK_RECEIVE:
 	case LWS_CALLBACK_CLIENT_RECEIVE:
 		// lwsl_user("LWS_CALLBACK_CLIENT_RECEIVE: read %d\n", (int)len);
-		if (!h)
+		if (!h || !h->info.rx)
 			return 0;
 		if (lws_is_first_fragment(wsi))
 			f |= LWSSS_FLAG_SOM;
@@ -83,15 +103,17 @@ secstream_ws(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 
 		h->subseq = 1;
 
-		if (h->info.rx(ss_to_userobj(h), (const uint8_t *)in, len, f) < 0)
-			return -1;
+		r = h->info.rx(ss_to_userobj(h), (const uint8_t *)in, len, f);
+		if (r != LWSSSSRET_OK)
+			return _lws_ss_handle_state_ret(r, wsi, &h);
 
 		return 0; /* don't passthru */
 
+	case LWS_CALLBACK_SERVER_WRITEABLE:
 	case LWS_CALLBACK_CLIENT_WRITEABLE:
-		if (!h)
-			return 0;
 		// lwsl_notice("%s: ss %p: WRITEABLE\n", __func__, h);
+		if (!h || !h->info.tx)
+			return 0;
 
 		if (h->seqstate != SSSEQ_CONNECTED) {
 			lwsl_warn("%s: seqstate %d\n", __func__, h->seqstate);
@@ -99,22 +121,23 @@ secstream_ws(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 		}
 
 		buflen = sizeof(buf) - LWS_PRE;
-		txr = h->info.tx(ss_to_userobj(h),  h->txord++, buf + LWS_PRE,
-				&buflen, &f);
-		if (txr < 0) {
-			lwsl_debug("%s: tx handler asked to close\n", __func__);
-			return -1;
-		}
-		if (txr > 0)
-			/* don't want to send anything */
+		r = h->info.tx(ss_to_userobj(h),  h->txord++, buf + LWS_PRE,
+				  &buflen, &f);
+		if (r == LWSSSSRET_TX_DONT_SEND)
 			return 0;
+		if (r != LWSSSSRET_OK)
+			return _lws_ss_handle_state_ret(r, wsi, &h);
 
-		f1 = lws_write_ws_flags(LWS_WRITE_BINARY,
+		f1 = lws_write_ws_flags(h->policy->u.http.u.ws.binary ?
+					   LWS_WRITE_BINARY : LWS_WRITE_TEXT,
 					!!(f & LWSSS_FLAG_SOM),
 					!!(f & LWSSS_FLAG_EOM));
 
-		if (lws_write(wsi, buf + LWS_PRE, buflen, f1) != (int)buflen) {
-			lwsl_err("%s: write failed\n", __func__);
+		n = lws_write(wsi, buf + LWS_PRE, buflen, f1);
+		if (n < (int)buflen) {
+			lwsl_info("%s: write failed %d %d\n", __func__,
+					n, (int)buflen);
+
 			return -1;
 		}
 
@@ -149,15 +172,30 @@ secstream_connect_munge_ws(lws_ss_handle_t *h, char *buf, size_t len,
 			   struct lws_client_connect_info *i,
 			   union lws_ss_contemp *ct)
 {
+	const char *pbasis = h->policy->u.http.url;
+	size_t used_in, used_out;
+	lws_strexp_t exp;
+
 	lwsl_notice("%s\n", __func__);
 
-	if (!h->policy->u.http.url)
+	/* i.path on entry is used to override the policy urlpath if not "" */
+
+	if (i->path[0])
+		pbasis = i->path;
+
+	if (!pbasis)
 		return 0;
 
 	/* protocol aux is the path part ; ws subprotocol name */
 
-	i->path = h->policy->u.http.url;
-	lws_snprintf(buf, len, "/%s", h->policy->u.http.url);
+	i->path = buf;
+	buf[0] = '/';
+
+	lws_strexp_init(&exp, (void *)h, lws_ss_exp_cb_metadata, buf + 1, len - 1);
+
+	if (lws_strexp_expand(&exp, pbasis, strlen(pbasis),
+			      &used_in, &used_out) != LSTRX_DONE)
+		return 1;
 
 	i->protocol = h->policy->u.http.u.ws.subprotocol;
 
@@ -167,5 +205,5 @@ secstream_connect_munge_ws(lws_ss_handle_t *h, char *buf, size_t len,
 }
 
 const struct ss_pcols ss_pcol_ws = {
-	"ws",  "http/1.1",  "lws-secstream-ws", secstream_connect_munge_ws
+	"ws",  "http/1.1",  &protocol_secstream_ws, secstream_connect_munge_ws
 };

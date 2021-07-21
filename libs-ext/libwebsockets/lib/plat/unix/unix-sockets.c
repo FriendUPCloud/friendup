@@ -38,7 +38,13 @@
 #include <pwd.h>
 #include <grp.h>
 
-
+#if defined(LWS_WITH_MBEDTLS)
+#if defined(LWS_HAVE_MBEDTLS_NET_SOCKETS)
+#include "mbedtls/net_sockets.h"
+#else
+#include "mbedtls/net.h"
+#endif
+#endif
 
 int
 lws_send_pipe_choked(struct lws *wsi)
@@ -197,9 +203,13 @@ lws_interface_to_sa(int ipv6, const char *ifname, struct sockaddr_in *addr,
 	struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *)addr;
 #endif
 
-	getifaddrs(&ifr);
+	if (getifaddrs(&ifr)) {
+		lwsl_err("%s: unable to getifaddrs: errno %d\n", __func__, errno);
+
+		return LWS_ITOSA_USABLE;
+	}
 	for (ifc = ifr; ifc != NULL && rc; ifc = ifc->ifa_next) {
-		if (!ifc->ifa_addr)
+		if (!ifc->ifa_addr || !ifc->ifa_name)
 			continue;
 
 		lwsl_debug(" interface %s vs %s (fam %d) ipv6 %d\n",
@@ -399,7 +409,6 @@ lws_plat_ifconfig_ip(const char *ifname, int fd, uint8_t *ip, uint8_t *mask_ip,
 			uint8_t *gateway_ip)
 {
 #if defined(__linux__)
-	struct sockaddr_in *addr;
 	struct sockaddr_in sin;
 	struct rtentry route;
 	struct ifreq ifr;
@@ -430,17 +439,12 @@ lws_plat_ifconfig_ip(const char *ifname, int fd, uint8_t *ip, uint8_t *mask_ip,
 
 	lws_plat_if_up(ifname, fd, 1);
 
-	addr = (struct sockaddr_in *)&route.rt_gateway;
-	addr->sin_family = AF_INET;
-	addr->sin_addr.s_addr = htonl(*(uint32_t *)gateway_ip);
+	sin.sin_addr.s_addr = htonl(*(uint32_t *)gateway_ip);
+	memcpy(&route.rt_gateway, &sin, sizeof(struct sockaddr));
 
-	addr = (struct sockaddr_in *)&route.rt_dst;
-	addr->sin_family = AF_INET;
-	addr->sin_addr.s_addr = 0;
-
-	addr = (struct sockaddr_in *)&route.rt_genmask;
-	addr->sin_family = AF_INET;
-	addr->sin_addr.s_addr = 0;
+	sin.sin_addr.s_addr = 0;
+	memcpy(&route.rt_dst, &sin, sizeof(struct sockaddr));
+	memcpy(&route.rt_genmask, &sin, sizeof(struct sockaddr));
 
 	route.rt_flags = RTF_UP | RTF_GATEWAY;
 	route.rt_metric = 100;
@@ -459,3 +463,55 @@ lws_plat_ifconfig_ip(const char *ifname, int fd, uint8_t *ip, uint8_t *mask_ip,
 	return -1;
 #endif
 }
+
+#if defined(LWS_WITH_MBEDTLS)
+int
+lws_plat_mbedtls_net_send(void *ctx, const uint8_t *buf, size_t len)
+{
+	int fd = ((mbedtls_net_context *) ctx)->fd;
+	int ret;
+
+	if (fd < 0)
+		return MBEDTLS_ERR_NET_INVALID_CONTEXT;
+
+	ret = write(fd, buf, len);
+	if (ret >= 0)
+		return ret;
+
+	if (errno == EAGAIN || errno == EWOULDBLOCK)
+		return MBEDTLS_ERR_SSL_WANT_WRITE;
+
+	if (errno == EPIPE || errno == ECONNRESET)
+		return MBEDTLS_ERR_NET_CONN_RESET;
+
+	if( errno == EINTR )
+		return MBEDTLS_ERR_SSL_WANT_WRITE;
+
+	return MBEDTLS_ERR_NET_SEND_FAILED;
+}
+
+int
+lws_plat_mbedtls_net_recv(void *ctx, unsigned char *buf, size_t len)
+{
+	int fd = ((mbedtls_net_context *) ctx)->fd;
+	int ret;
+
+	if (fd < 0)
+		return MBEDTLS_ERR_NET_INVALID_CONTEXT;
+
+	ret = (int)read(fd, buf, len);
+	if (ret >= 0)
+		return ret;
+
+	if (errno == EAGAIN || errno == EWOULDBLOCK)
+		return MBEDTLS_ERR_SSL_WANT_READ;
+
+	if (errno == EPIPE || errno == ECONNRESET)
+		return MBEDTLS_ERR_NET_CONN_RESET;
+
+	if (errno == EINTR)
+		return MBEDTLS_ERR_SSL_WANT_READ;
+
+	return MBEDTLS_ERR_NET_RECV_FAILED;
+}
+#endif

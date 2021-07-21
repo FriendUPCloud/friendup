@@ -205,7 +205,7 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 							if( row[ i ] != NULL )
 							{
 								char *end;
-								DEBUG("SQL: get field: %s\n", dptr[ 1 ] );
+								//DEBUG("SQL: get field: %s\n", dptr[ 1 ] );
 								tmp = (FLONG)strtol( row[ i ], &end, 0 );
 							}
 							memcpy( strptr + dptr[ 2 ], &tmp, sizeof( FLONG ) );
@@ -418,7 +418,7 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 		dptr += 3;
 	}
 
-	//"UPDATE %s set SessionID = '%s', LoggedTime = '%lld' where Name = '%s'"
+	//"UPDATE %s set SessionID = '%s', LastActionTime = '%lld' where Name = '%s'"
 	
 	int lsize = sprintf( tmpQuery, "UPDATE %s set ", (char *)descr[ 1 ] );
 	BufStringAddSize( querybs, tmpQuery, lsize );

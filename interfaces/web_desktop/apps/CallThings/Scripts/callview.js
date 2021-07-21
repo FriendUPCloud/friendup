@@ -49,6 +49,7 @@ CallView.prototype.bind = function() {
 	
 	self.modLib.addEventListener( 'change', e => self.modLibChange( e ));
 	self.getUserInfoBtn.addEventListener( 'click', e => self.pullUserInfo( e ));
+	
 	self.callBtn.addEventListener( 'click', e => self.makeCall());
 	self.clearBtn.addEventListener( 'click', e => self.clearInputs());
 	self.closeBtn.addEventListener( 'click', e => self.closeWin());
@@ -299,8 +300,6 @@ CallView.prototype.closeWin = function()
 	const self = this;
 	self.app.sendMessage( { command: 'quit' } );
 }
-
-
 
 
 

@@ -45,10 +45,12 @@ UserSession *UserSessionNew( void *sb, char *sesid, char *devid )
 		{
 			s->us_SessionID = SessionIDGenerate();
 		}
-		
+
 		s->us_DeviceIdentity = StringDuplicate( devid );
 		
 		UserSessionInit( s, sb );
+		
+		s->us_CreationTime = time( NULL );		
 		
 		INFO("Mutex initialized\n");
 	}
@@ -216,8 +218,6 @@ void UserSessionDelete( UserSession *us )
 			WebsocketReqManagerDelete( wrm );
 		}
 		pthread_mutex_destroy( &(us->us_Mutex) );
-		
-		
 		
 		// lets remove application sessions from system
 		if( nrOfSessionsAttached <= 0 && us->us_UserID > 0 )

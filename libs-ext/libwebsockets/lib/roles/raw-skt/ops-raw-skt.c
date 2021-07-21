@@ -60,7 +60,8 @@ rops_handle_POLLIN_raw_skt(struct lws_context_per_thread *pt, struct lws *wsi,
 
 		if (lwsi_state(wsi) != LRS_SSL_INIT)
 			if (lws_server_socket_service_ssl(wsi,
-							  LWS_SOCK_INVALID))
+							  LWS_SOCK_INVALID,
+				!!(pollfd->revents & pollfd->events & LWS_POLLIN)))
 				return LWS_HPI_RET_PLEASE_CLOSE_ME;
 
 		return LWS_HPI_RET_HANDLED;
@@ -139,15 +140,15 @@ rops_handle_POLLIN_raw_skt(struct lws_context_per_thread *pt, struct lws *wsi,
 			}
 
 #if defined(LWS_WITH_UDP)
-			if (wsi->context->udp_loss_sim_rx_pc) {
+			if (wsi->a.context->udp_loss_sim_rx_pc) {
 				uint16_t u16;
 				/*
 				 * We should randomly drop some of these
 				 */
 
-				if (lws_get_random(wsi->context, &u16, 2) == 2 &&
+				if (lws_get_random(wsi->a.context, &u16, 2) == 2 &&
 				    ((u16 * 100) / 0xffff) <=
-					    wsi->context->udp_loss_sim_rx_pc) {
+					    wsi->a.context->udp_loss_sim_rx_pc) {
 					lwsl_warn("%s: dropping udp rx\n", __func__);
 					/* pretend it was handled */
 					n = ebuf.len;
@@ -156,7 +157,7 @@ rops_handle_POLLIN_raw_skt(struct lws_context_per_thread *pt, struct lws *wsi,
 			}
 #endif
 
-			n = user_callback_handle_rxflow(wsi->protocol->callback,
+			n = user_callback_handle_rxflow(wsi->a.protocol->callback,
 							wsi, LWS_CALLBACK_RAW_RX,
 							wsi->user_space, ebuf.token,
 							ebuf.len);
@@ -213,7 +214,7 @@ try_pollout:
 		wsi->active_writable_req_us = 0;
 	}
 #endif
-	n = user_callback_handle_rxflow(wsi->protocol->callback,
+	n = user_callback_handle_rxflow(wsi->a.protocol->callback,
 			wsi, LWS_CALLBACK_RAW_WRITEABLE,
 			wsi->user_space, NULL, 0);
 	if (n < 0) {
@@ -250,11 +251,11 @@ rops_adoption_bind_raw_skt(struct lws *wsi, int type, const char *vh_prot_name)
 				LRS_ESTABLISHED, &role_ops_raw_skt);
 
 	if (vh_prot_name)
-		lws_bind_protocol(wsi, wsi->protocol, __func__);
+		lws_bind_protocol(wsi, wsi->a.protocol, __func__);
 	else
 		/* this is the only time he will transition */
 		lws_bind_protocol(wsi,
-			&wsi->vhost->protocols[wsi->vhost->raw_protocol_index],
+			&wsi->a.vhost->protocols[wsi->a.vhost->raw_protocol_index],
 			__func__);
 
 	return 1; /* bound */

@@ -235,4 +235,16 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, U
 
 User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus, FBOOL *isSentinel );
 
+//
+//
+//
+
+int USMGetUserSessionStatistic( UserSessionManager *usm, BufString *bs, FBOOL details );
+
+//
+//
+//
+
+UserSession *USMGetSessionByUserName( UserSessionManager *usm, char *name, FBOOL caseSensitive );
+
 #endif //__SYSTEM_USER_USER_SESSIONMANAGER_H__

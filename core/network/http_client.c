@@ -381,14 +381,14 @@ User-Agent: Friend/1.0.0
 					else
 					{
 						DEBUG("[HttpClientCall] Retrieved the server's certificate from: %s.\n", host);
+						
+						//certname = X509_NAME_new();
+						certname = X509_get_subject_name(cert);
+
+						DEBUG("[HttpClientCall] Displaying the certificate subject data:\n");
+						X509_NAME_print_ex(outbio, certname, 0, 0);
+						DEBUG( "[HttpClientCall] WRITE MESSAGE VIA HTTP/S : %s\n", message );
 					}
-
-					//certname = X509_NAME_new();
-					certname = X509_get_subject_name(cert);
-
-					DEBUG("[HttpClientCall] Displaying the certificate subject data:\n");
-					X509_NAME_print_ex(outbio, certname, 0, 0);
-					DEBUG( "[HttpClientCall] WRITE MESSAGE VIA HTTP/S : %s\n", message );
 				}
 				
 				bytes = SSL_write( ssl, message, addsize );

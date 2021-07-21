@@ -28,6 +28,7 @@
 #include <system/sas/sas_session.h>
 
 #define USE_HASHMAP_TO_HOLD_USERS
+#include <strings.h>
 
 /**
  * Create UserManager
@@ -1152,9 +1153,11 @@ FULONG UMGetAllowedLoginTime( UserManager *um, const char *name )
  * @param name login name
  * @param info additional information which will be stored in DB
  * @param failReason if field is not equal to NULL then user is not authenticated
+ * @param deviceID device id/name
+ * @param password password
  * @return 0 when success otherwise error number
  */
-int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, const char *failReason )
+int UMStoreLoginAttempt( UserManager *um, const char *name, char *password, const char *info, const char *failReason, char *devicename )
 {
 	UserLogin ul;
 	SystemBase *sb = (SystemBase *)um->um_SB;
@@ -1177,6 +1180,8 @@ int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, co
 		ul.ul_Information = (char *)info;
 		ul.ul_Failed = (char *)failReason;
 		ul.ul_LoginTime = time( NULL );
+		ul.ul_Device = devicename;
+		ul.ul_Password = password;
 		
 		sqlLib->Save( sqlLib, UserLoginDesc, &ul );
 		
@@ -1196,13 +1201,21 @@ int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, co
  *
  * @param um pointer to UserManager
  * @param name username which will be checked
+ * @param password user password
  * @param numberOfFail if last failed logins will have same value as this variable then login possibility will be blocked for some period of time
  * @param lastLoginTime in this field infomration about last login time will be stored
  * @return TRUE if user can procced with login procedure or FALSE if error appear
  */
-FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int numberOfFail, time_t *lastLoginTime )
+FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, char *password, int numberOfFail, time_t *lastLoginTime )
 {
 	FBOOL canILogin = FALSE;
+	
+	// if default value is equal or less then 0
+	if( numberOfFail <= 0 )
+	{
+		return TRUE;
+	}
+	
 	SystemBase *sb = (SystemBase *)um->um_SB;
 	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	
@@ -1210,11 +1223,11 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
 	{
 		DEBUG("[UMGetLoginPossibilityLastLogins] username %s\n", name );
 		// temporary solution, using MYSQL connection
-		char *query = FCalloc( 1, 2048 );
+		char *query = FMalloc( 2048 );
 		time_t tm = time( NULL );
 		
 		// we are checking failed logins in last hour
-		sqlLib->SNPrintF( sqlLib, query, 2048, "SELECT `LoginTime`,`Failed` FROM `FUserLogin` WHERE `Login`='%s' AND (`LoginTime` > %lu AND `LoginTime` <= %lu) ORDER BY `LoginTime` DESC", name, tm-(3600l), tm );
+		sqlLib->SNPrintF( sqlLib, query, 2048, "SELECT LoginTime,Failed,Password FROM `FUserLogin` WHERE `Login`='%s' AND (`LoginTime`>%lu AND `LoginTime`<=%lu) ORDER BY `LoginTime` DESC", name, tm-(3600l), tm );
 		
 		void *result = sqlLib->Query( sqlLib, query );
 		if( result != NULL )
@@ -1235,18 +1248,28 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
 				if( row[ 1 ] == NULL )
 				{
 					goodLogin = TRUE;
+					DEBUG("[UMGetLoginPossibilityLastLogins] last login was ok\n" );
+					break;
+				}
+				
+				DEBUG("row2: %s\n", row[ 2 ] );
+				if( row[ 2 ] != NULL && ( strcmp( row[ 2 ], password) == 0 ) )
+				{
+					goodLogin = TRUE;
+					DEBUG("[UMGetLoginPossibilityLastLogins] previous and current password are same\n" );
 					break;
 				}
 				
 				i++;
 				if( i >= numberOfFail )
 				{
+					DEBUG("[UMGetLoginPossibilityLastLogins] number of fail login exceed\n" );
 					break;
 				}
 			}
 			sqlLib->FreeResult( sqlLib, result );
 			
-			if( i  <  numberOfFail )
+			if( i < numberOfFail )
 			{
 				goodLogin = TRUE;
 			}
@@ -1325,7 +1348,7 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 					if( ses != NULL )
 					{
 						ses->us_UserID = user->u_ID;
-						ses->us_LoggedTime = time( NULL );
+						ses->us_LastActionTime = time( NULL );
 				
 						UserAddSession( user, ses );
 						USMSessionSaveDB( sb->sl_USM, ses );
@@ -1426,6 +1449,7 @@ int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname )
 }
 
 /**
+<<<<<<< HEAD
  * Find user by name, add to SAS and send message to all user sessions that user was added to SAS
  *
  * @param um pointer to UserManager
@@ -1543,6 +1567,125 @@ int UMFindUserByNameAndAddToSas( UserManager *um, char *uname, void *las, char *
 }
 
 /**
+=======
+ * Get statistic about user accounts
+ *
+ * @param usm pointer to UserManager
+ * @param bs pointer to BufString where results will be stored (as string)
+ * @param details return more details
+ * @return 0 when success otherwise error number
+ */
+
+int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details )
+{
+	BufStringAddSize( bs, "\"users\":[", 9 );
+	
+	if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
+	{
+		int nr = 0;
+		int userCounter = 0;
+		char tmp[ 512 ];
+		int len = 0;
+		
+		if( details == TRUE )
+		{
+			User *usr = um->um_Users;
+			while( usr != NULL )
+			{
+				int sesCounter = 0;
+				int devCounter = 0;
+				int uglCounter = 0;
+				int sesCounterBytes = 0;
+				int devCounterBytes = 0;
+				int uglCounterBytes = 0;
+				
+				userCounter++;
+			
+				UserSessListEntry *sesentr = usr->u_SessionsList;
+				while( sesentr != NULL )
+				{
+					sesCounter++;
+					sesCounterBytes += sizeof( UserSessListEntry );
+					sesentr = (UserSessListEntry *)sesentr->node.mln_Succ;
+				}
+				
+				File *rootDev = usr->u_MountedDevs;
+				while( rootDev != NULL )
+				{
+					devCounter++;
+					devCounterBytes += sizeof( File );
+					rootDev = (File *)rootDev->node.mln_Succ;
+				}
+				
+				UserGroupLink *ugl = usr->u_UserGroupLinks;
+				while( ugl != NULL )
+				{
+					uglCounter++;
+					uglCounterBytes += sizeof( UserGroupLink );
+					ugl = (UserGroupLink *)ugl->node.mln_Succ;
+				}
+				
+				if( nr == 0 )
+				{
+					len = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"size\":%d,\"sessions\":%d,\"sessionsbytes\":%d,\"volumesinmem\":%d,\"volumesinmembytes\":%d,\"groups\":%d,\"groupsbytes\":%d}", usr->u_Name, (int)sizeof(User), sesCounter, sesCounterBytes, devCounter, devCounterBytes, uglCounter, uglCounterBytes );
+				}
+				else
+				{
+					len = snprintf( tmp, sizeof(tmp), ",{\"name\":\"%s\",\"size\":%d,\"sessions\":%d,\"sessionsbytes\":%d,\"volumesinmem\":%d,\"volumesinmembytes\":%d,\"groups\":%d,\"groupsbytes\":%d}", usr->u_Name, (int)sizeof(User), sesCounter, sesCounterBytes, devCounter, devCounterBytes, uglCounter, uglCounterBytes );
+				}
+				BufStringAddSize( bs, tmp, len );
+			
+				nr++;
+				usr = (User *)usr->node.mln_Succ;
+			}
+			
+			BufStringAddSize( bs, "],", 2 );
+			
+			len = snprintf( tmp, sizeof(tmp), "\"usersnumber\":%d", userCounter );
+			BufStringAddSize( bs, tmp, len );
+		}
+		else
+		{
+			User *usr = um->um_Users;
+			while( usr != NULL )
+			{
+				int sesCounter = 0;
+				userCounter++;
+			
+				UserSessListEntry *sesentr = usr->u_SessionsList;
+				while( sesentr != NULL )
+				{
+					sesCounter++;
+					sesentr = (UserSessListEntry *)sesentr->node.mln_Succ;
+				}
+				
+				if( nr == 0 )
+				{
+					len = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"sessions\":%d}", usr->u_Name, sesCounter );
+				}
+				else
+				{
+					len = snprintf( tmp, sizeof(tmp), ",{\"name\":\"%s\",\"sessions\":%d}", usr->u_Name, sesCounter );
+				}
+				BufStringAddSize( bs, tmp, len );
+			
+				nr++;
+				usr = (User *)usr->node.mln_Succ;
+			}
+			
+			BufStringAddSize( bs, "],", 2 );
+			
+			len = snprintf( tmp, sizeof(tmp), "\"usersnumber\":%d", userCounter );
+			BufStringAddSize( bs, tmp, len );
+			
+		}
+		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+	}
+	return 0;
+}
+
+/*
+>>>>>>> release/1.2.6
  * Init user drives
  *
  * @param um pointer to UserManager
@@ -1587,6 +1730,6 @@ int UMInitUsers( UserManager *um )
 	Log( FLOG_INFO, "----------------------------------------------------\n");
 	Log( FLOG_INFO, "---------Mount user group devices-------------------\n");
 	Log( FLOG_INFO, "----------------------------------------------------\n");
-		
+
 	return 0;
 }

@@ -134,6 +134,24 @@ void WSThreadPing( WSThreadData *data )
 	
 		if( ( answer = FMalloc( 1024 ) ) != NULL )
 		{
+			data->wstd_WSD->wsc_UpdateLoggedTimeCounter++;
+			if( data->wstd_WSD->wsc_UpdateLoggedTimeCounter > SLIB->l_UpdateLoggedTimeOnUserMax )
+			{
+				char tmpQuery[ 64 ];
+				us->us_LastActionTime = time(NULL);
+				snprintf( tmpQuery, sizeof(tmpQuery), "UPDATE FUser Set LastActionTime=%ld where ID=%ld", us->us_LastActionTime, us->us_UserID );
+				
+				SQLLibrary *sqlLib = SLIB->GetDBConnection( SLIB );
+				if( sqlLib != NULL )
+				{
+					sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
+	
+					SLIB->DropDBConnection( SLIB, sqlLib );
+				}
+				
+				data->wstd_WSD->wsc_UpdateLoggedTimeCounter = 0;
+			}
+			
 			int answersize = snprintf( (char *)answer, 1024, "{\"type\":\"con\",\"data\":{\"type\":\"pong\",\"data\":\"%s\"}}", data->wstd_Requestid );
 			UserSessionWebsocketWrite( us, answer, answersize, LWS_WRITE_TEXT );	
 			FFree( answer );
@@ -238,7 +256,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			INFO("[WS] Callback peer session closed wsiptr %p\n", wsi);
 		break;
 		
-		case LWS_CALLBACK_CLIENT_CLOSED:
+		//case LWS_CALLBACK_CLIENT_CLOSED:
 		    //DEBUG("[WS] Callback client closed!\n");
 		case LWS_CALLBACK_CLOSED:
 			{
@@ -697,7 +715,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 						//Log( FLOG_INFO, "[WS] NO JSON - Passed memcpy..\n" );
 						DEBUG("[WS] user session ptr %p message len %d\n", locus, msgLen );
 
-						locus->us_LoggedTime = time( NULL );
+						locus->us_LastActionTime = time( NULL );
 						UserSessionWebsocketWrite( locus, buf, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
 					
 						FFree( buf );
@@ -1116,7 +1134,7 @@ void *ParseAndCall( WSThreadData *wstd )
 
 							if( locus != NULL )
 							{
-								locus->us_LoggedTime = time( NULL );
+								locus->us_LastActionTime = time( NULL );
 								
 								//char *tmpSessionID = sb->sl_UtilInterface.DatabaseEncodeString( sessionid );
 								//sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_SessionID, umaID, deviceid,  loggedSession->us_UserID );

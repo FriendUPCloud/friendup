@@ -253,6 +253,17 @@ if( isset( $args->command ) )
 			if( isset( $UserSession ) )
 				require( 'modules/system/include/tinyurl.php' );
 			break;
+		case 'tinyurldata':
+			if( isset( $User ) )
+				require( 'modules/system/include/tinyurldata.php' );
+			break;
+		case 'generateinvite':
+		case 'getinvites':
+		case 'removeinvite':
+		case 'verifyinvite':
+			if( isset( $User ) )
+				require( 'modules/system/include/invites.php' );
+			break;
 		case 'ping':
 			if( isset( $UserSession ) && isset( $UserSession->UserID ) )
 			{
@@ -1081,6 +1092,10 @@ if( isset( $args->command ) )
 		// Populate a sandbox
 		case 'sandbox':
 			require( 'modules/system/include/sandbox.php' );
+			break;
+		// Support per-app modules
+		case 'appmodule':
+			require( 'modules/system/include/appmodule.php' );
 			break;
 		// Try to lauch friend application
 		case 'friendapplication':

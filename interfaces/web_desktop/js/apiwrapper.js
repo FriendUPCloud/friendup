@@ -2997,6 +2997,9 @@ function apiWrapper( event, force )
 							return df( msg.data ? msg.data : ( msg.error ? msg.error : null ) );
 						}
 						return false;
+					case 'invite':
+						Workspace.inviteFriend();
+						break;
 					// Application is asking for Friend credentials
 					case 'friendcredentials':
 						let response = false;
@@ -3622,7 +3625,7 @@ function apiWrapper( event, force )
 							{
 								if( msg.mode == 'doors' )
 								{
-									Workspace.wallpaperImage = msg.image;
+									Workspace.wallpaperImage = msg.image ? msg.image : '/webclient/gfx/theme/default_login_screen.jpg';
 								}
 								else
 								{

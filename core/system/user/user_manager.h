@@ -210,13 +210,13 @@ FULONG UMGetAllowedLoginTime( UserManager *um, const char *name );
 //
 //
 
-FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int numberOfFail, time_t *lastLoginTime );
+FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, char *password, int numberOfFail, time_t *lastLoginTime );
 
 //
 //
 //
 
-int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, const char *failReason );
+int UMStoreLoginAttempt( UserManager *um, const char *name, char *password, const char *info, const char *failReason, char *devicename );
 
 //
 //
@@ -235,6 +235,12 @@ int UMFindUserByNameAndAddToSas( UserManager *um, char *uname, void *las, char *
 //
 
 int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname );
+
+//
+//
+//
+
+int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details );
 
 //
 //

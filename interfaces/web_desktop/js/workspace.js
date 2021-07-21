@@ -38,6 +38,8 @@ Workspace = {
 	themeOverride: false,
 	systemInfo: false,
 	lastfileSystemChangeMessage: false,
+	userSettingsLoaded: false, // Tell when user settings loaded
+	desktopFirstRefresh: false, // Tell when workspace first refreshed
 	serverIsThere: false,
 	runLevels: [
 		{
@@ -706,8 +708,42 @@ Workspace = {
 		document.body.className = 'Login';
 		if( Workspace.interfaceMode && Workspace.interfaceMode == 'native' )
 			return;
-
-		var lp = new View( {
+		
+		// Allowed hash vars we can send to loginpromt
+		function allowedHashVars()
+		{
+			let vars = []; let hash = {};
+			
+			if( window.location.hash && window.location.hash.split( '#' )[1] )
+			{
+				let allowed = [ 'module', 'verify', 'invite' ];
+				
+				let url = window.location.hash.split( '#' )[1].split( '&' );
+				
+				for( let a in url )
+				{
+					if( url[ a ].indexOf( '=' ) >= 0 && url[ a ].split( '=' )[ 0 ] )
+					{
+						hash[ url[ a ].split( '=' )[ 0 ] ] = url[ a ].replace( url[ a ].split( '=' )[ 0 ] + '=', '' );
+					}
+				}
+				
+				for( let b in allowed )
+				{
+					if( allowed[ b ] in hash )
+					{
+						vars.push( allowed[ b ] + '=' + hash[ allowed[ b ] ] );
+					}
+				}
+				
+				// Remove the hash values from the url after
+				window.location.hash = '';
+			}
+			
+			return ( vars.length > 0 ? ( '?' + vars.join( '&' ) ) : '' );
+		}
+		
+		let lp = new View( {
 			id: 'Login',
 			width: 432,
 			'min-width': 290,
@@ -720,7 +756,66 @@ Workspace = {
 			login: true,
 			theme: 'login'
 		} );
-		lp.setRichContentUrl( '/loginprompt' );
+		lp.limitless = true;
+		lp.onMessage = function( msg )
+		{
+			if( msg && msg.type && msg.src && msg.action == 'openWindow' )
+			{
+				switch( msg.type )
+				{
+					
+					case 'eula':
+					{
+						let v = new View( {
+							title: 'LoginPopup',
+							width: 432,
+							height: 480,
+							resize: false
+						} );
+						
+						let f = new XMLHttpRequest();
+						f.open( 'POST', '/webclient/templates/EULA.html', true, true );
+						f.onload = function()
+						{
+							let t = this.responseText + '';
+							t += '<hr class="Divider"/>\
+								<div class="ContractAcceptReject">\
+									<button type="button" class="IconSmall fa-remove" onclick="CloseView()"> Close</button>\
+								</div>';
+							v.setContent( t );
+						}
+						f.send();
+					}
+					break;
+						
+					case 'privacypolicy':
+					{
+						let v = new View( {
+							title: 'LoginPopup',
+							width: 432,
+							height: 480,
+							resize: false
+						} );
+						
+						let f = new XMLHttpRequest();
+						f.open( 'POST', '/webclient/templates/PrivacyPolicy.html', true, true );
+						f.onload = function()
+						{
+							let t = this.responseText + '';
+							t += '<hr class="Divider"/>\
+								<div class="ContractAcceptReject">\
+									<button type="button"  class="IconSmall fa-remove" onclick="CloseView()"> Close</button>\
+								</div>';
+							v.setContent( t );
+						}
+						f.send();
+					}
+					break;
+					
+				}
+			}
+		}
+		lp.setRichContentUrl( '/loginprompt' + allowedHashVars() );
 		Workspace.loginPrompt = lp;
 
 		// Show it
@@ -953,7 +1048,19 @@ Workspace = {
 				}
 
 				setupWorkspaceData( json );
-
+				
+				// Invites
+				if( json.inviteHash )
+				{
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
+					{
+						// TODO: Make some better error handling ...
+						if( e != 'ok' ) console.log( '[ERROR] verifyinvite: ' + ( d ? d : e ) );
+					}
+					m.execute( 'verifyinvite', { hash: json.inviteHash } );
+				}
+				
 				// Language
 				_this.locale = 'en';
 				var l = new Module( 'system' );
