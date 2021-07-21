@@ -2138,6 +2138,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param usersonly - if set to 'true' get unique user list
+	* @param userid - id of user which we want to check
 	* @return all users in JSON list when success, otherwise error code
 	*/
 	/// @endcond
@@ -2155,6 +2156,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		
 		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
+			FULONG userID = 0;
 			FBOOL usersOnly = FALSE;
 			
 			HashmapElement *el = HttpGetPOSTParameter( request, "usersonly" );
@@ -2164,6 +2166,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				{
 					usersOnly = TRUE;
 				}
+			}
+			
+			el = HttpGetPOSTParameter( request, "userid" );
+			if( el != NULL )
+			{
+				char *end;
+				userID = strtol( (char *)el->hme_Data, &end, 0 );
 			}
 			
 			DEBUG("[UMWebRequest] Get active sessions\n");
