@@ -2327,10 +2327,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				if( !depth ) depth = 1;
 				
+				console.log( 'buildMenu', [ path, parent, depth ]);
 				var dr = new Door().get( path );
 				dr.getIcons( false, function( data )
 				{
 					// Create container
+					console.trace( 'getIcons', data );
 					var dd = document.createElement( 'div' );
 					dd.className = 'DockSubMenu';
 					parent.appendChild( dd );

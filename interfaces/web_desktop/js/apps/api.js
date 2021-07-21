@@ -5789,7 +5789,6 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 {
 	// TODO: Setup correct origin
 	eventOrigin = '*';
-	
 	if( window.frameInitialized )
 	{
 		if( initcallback ) initcallback();
@@ -5799,13 +5798,14 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 	// Disable debugging now
 	if( packet.workspaceMode == 'normal' || packet.workspaceMode == 'gamified' )
 		console.log = function(){};
+	
 	Application.workspaceMode = packet.workspaceMode ? packet.workspaceMode : 'developer';
 
 	if( packet.userLevel )
 	{
 		Application.getUserLevel = function(){ return packet.userLevel; };
 	}
-
+	
 	// Don't do this twice
 	document.body.style.opacity = '0';
 	document.body.style.pointerEvents = 'none';
@@ -5840,7 +5840,7 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 	{
 		Application.theme = Application.theme;
 	}
-
+	
 	// Load translations
 	function loadLocale( path, callback )
 	{
@@ -6027,6 +6027,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		Friend.themeStyleElement.innerHTML = str;
 	};
+	
 	Application.applyThemeConfig = ApplyThemeConfig;
 
 	// On page load

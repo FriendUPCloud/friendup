@@ -13,6 +13,9 @@
 					<div class="Tab IconSmall fa-key">
 						{i18n_key_management}
 					</div>
+					<div class="Tab IconSmall fa-unlock-alt">
+						{i18n_shared_access}
+					</div>
 					{friendNetwork1}
 					<div class="Page ScrollBarSmall">
 						<div class="PageScroll">
@@ -184,6 +187,36 @@
 						<div class="HRow Padding PageScroll" id="KeysList"></div>
 						
 					</div>
+					<div id="SharedAccess" class="Page">
+						<div id="ServerTokenAddHostBox" class="Padding flexnes">
+							<div class="flexnes">
+								{i18n_IP}: 
+								<input
+									id="ServerTokenHost"
+									class="InputHeight"
+									type="text"
+									placeholder="host"
+								>
+							</div>
+							<div class="flexnes">
+								{i18n_status}: 
+								<select
+									name="ServerTokenStatus"
+									id="ServerTokenStatus"
+									class="InputHeight"
+								>
+								</select>
+							</div>
+							<button id="ServerTokenCreate">
+								{i18n_add_host}
+							</button>
+						</div>
+						<!-- some new stuff here -->
+						<div class="Padding PageScroll" id="TokenList">
+							
+						</div>
+						
+					</div>
 					{friendNetwork2}
 				</div>
 				<script> InitTabs( 'MTabs' ); </script>
@@ -260,6 +293,40 @@
 			display: inline-block;
 			margin: 0 5px 5px 0;
 		}
+		
+		/*
+			Shared access tab
+		*/
+		
+		#SharedAccess {}
+		#SharedAccess button {
+			height : 30px;
+		}
+		
+		#ServerTokenAddHostBox {}
+		#TokenList {}
+		
+		#TokenList .TokenRow {
+		}
+		
+		#TokenList .TokenRow > * {
+			flex : 1;
+		}
+		
+		.hidden {
+			display : none;
+		}
+		
+		.flexnes {
+			display         : flex;
+			justify-content : space-between;
+			align-items     : center;
+		}
+		
+		.ServerTokenActions {
+			justify-content : flex-end;
+		}
+		
 		
 	</style>
 

@@ -31,6 +31,12 @@ CallView.prototype.init = function() {
 CallView.prototype.bind = function() {
 	const self = this;
 	self.modLib = ge( 'select_mod_lib' );
+	self.moduleName = ge( 'module_name' );
+	self.modNameWrap = ge( 'mod_name_wrap' );
+	self.getUserInfoBtn = ge( 'user_info_get' );
+	self.tokenAuthId = ge( 'token_auth_id' );
+	self.tokenServerToken = ge( 'token_server_token' );
+	self.tokenSessionId = ge( 'token_session_id' );
 	self.execPath = ge( 'input_exec_path' );
 	self.args = ge( 'ta_args' );
 	
@@ -41,9 +47,37 @@ CallView.prototype.bind = function() {
 	self.clearBtn = ge( 'btn_clear' );
 	self.closeBtn = ge( 'btn_close' );
 	
+	self.modLib.addEventListener( 'change', e => self.modLibChange( e ));
+	self.getUserInfoBtn.addEventListener( 'click', e => self.pullUserInfo( e ));
+	
 	self.callBtn.addEventListener( 'click', e => self.makeCall());
 	self.clearBtn.addEventListener( 'click', e => self.clearInputs());
 	self.closeBtn.addEventListener( 'click', e => self.closeWin());
+}
+
+CallView.prototype.modLibChange = function( e ) {
+	const self = this;
+	console.log( 'modLibChange', [ e, self.modLib, self.modLib.value ]);
+	const type = self.modLib.value;
+	const hideModName = ( type == 'library' ) ? true : false;
+	self.modNameWrap.classList.toggle( 'hidden', hideModName );
+}
+
+CallView.prototype.pullUserInfo = async function() {
+	const self = this;
+	const uInfo = await get();
+	console.log( 'userinfoget', uInfo );
+	
+	function get() {
+		return new Promise(( resolve, reject ) => {
+			const req = new Module( 'system' );
+			req.execute( 'userinfoget' );
+			req.onExecuted = ( r, d ) => {
+				console.log( 'pull uinfo', [ r, d ]);
+				resolve( JSON.parse( d ));
+			}
+		});
+	}
 }
 
 CallView.prototype.makeCall = function() {
@@ -74,7 +108,8 @@ CallView.prototype.makeCall = function() {
 			self.setError( self.args, true );
 			return;
 		}
-	}
+	} else
+		args = null;
 	
 	self.setError( self.args, false );
 	if ( 'library' == type )
@@ -102,6 +137,10 @@ CallView.prototype.clearInputs = function() {
 	const self = this;
 	console.log( 'clearInputs' );
 	self.clearResult();
+	self.moduleName.value = '';
+	self.tokenAuthId.value = '';
+	self.tokenServerToken.value = '';
+	self.tokenSessionId.value = '';
 	self.execPath.value = '';
 	self.args.value = '';
 }
@@ -111,44 +150,136 @@ CallView.prototype.setError = function( el, show ) {
 	el.classList.toggle( 'input-error', show );
 }
 
-CallView.prototype.makeLibraryCall = async function( path, args ) {
+CallView.prototype.makeLibraryCall = async function( exec, args ) {
 	const self = this;
-	console.log( 'makeLibCall', [ path, args ]);
-	const req = new Library( 'system.library' );
-	req.execute( path, args );
-	req.onExecuted = ( r, d ) => {
-		console.log( 'onExecuted', [ r, d ]);
-		self.setResult( r , d );
+	const token = self.getToken();
+	console.log( 'makeLibCall', [ exec, args, token ]);
+	if ( null == token )
+		nativeCall( exec, args );
+	else
+		directCall( exec, args, token );
+	
+	function nativeCall( exec, args ) {
+		const req = new Library( 'system.library' );
+		req.execute( exec, args );
+		req.onExecuted = ( r, d ) => {
+			console.log( 'lib onExecuted', [ r, d ]);
+			self.setResult( r , d );
+		}
+	}
+	
+	async function directCall( exec, args, token ) {
+		const path = '/system.library/' + exec + '?';
+		const req = new Request( path, null, null, args, token );
+		const res = await req.send();
+		console.log( 'lib directCall, res', res );
+		self.setResult( res[ 0 ], res[ 1 ]);
 	}
 }
 
-CallView.prototype.makeModuleCall = async function( path, args ) {
+CallView.prototype.makeModuleCall = async function( exec, args ) {
 	const self = this;
-	console.log( 'makeModCall', [ path, args ]);
-	const req = new Module( 'system' );
-	req.execute( path, args );
-	req.onExecuted = ( r, d ) => {
-		console.log( 'onExecuted', [ r, d ]);
-		self.setResult( r, d );
+	const token = self.getToken();
+	let modName = self.moduleName.value;
+	if ( !modName )
+		modName = 'system';
+	
+	console.log( 'makeModCall', [ modName, exec, args, token ]);
+	if ( null == token ) 
+		nativeCall( modName, exec, args );
+	else
+		directCall( modName, exec, args, token );
+	
+	function nativeCall( modName, exec, args ) {
+		const req = new Module( modName );
+		req.execute( exec, args );
+		req.onExecuted = ( r, d ) => {
+			console.log( 'mod onExecuted', [ r, d ]);
+			self.setResult( r, d );
+		}
+	}
+	
+	async function directCall( modName, exec, args, token ) {
+		const path = '/system.library/module/?';
+		const req = new Request( path, modName, exec, args, token );
+		const res = await req.send();
+		console.log( 'mod direct call, res', res );
+		self.setResult( res[ 0 ], res[ 1 ]);
 	}
 }
 
 CallView.prototype.setResult = function( res, data ) {
 	const self = this;
-	console.log( 'setResult' );
-	if ( '' == res )
-		res = '""';
-	if ( '' == data )
-		data = '""';
+	let jRes = null;
+	let jData = null;
+	try {
+		jRes = JSON.parse( res );
+	} catch(e){}
+	
+	try {
+		jData = JSON.parse( data );
+	} catch(e){}
+	
+	console.log( 'setResult', {
+		res   : res,
+		jRes  : jRes,
+		data  : data,
+		jData : jData,
+	});
+	res = makeStringy( res );
+	data = makeStringy( data );
 	
 	self.resEl.textContent = res;
 	self.dataEl.textContent = data;
+	
+	function makeStringy( something ) {
+		if ( undefined === something )
+			return 'undefined';
+		
+		if ( null === something )
+			return 'null';
+		
+		if ( '' == res )
+			return '""';
+		
+		let str = null;
+		try {
+			str = JSON.stringify( something );
+		} catch( ex ) {
+			return something;
+		}
+		
+		return str;
+	}
 }
 
 CallView.prototype.clearResult = function() {
 	const self = this;
 	self.resEl.textContent = '';
 	self.dataEl.textContent = '';
+}
+
+CallView.prototype.getToken = function() {
+	const self = this;
+	const authId = self.tokenAuthId.value;
+	if ( '' != authId ) {
+		console.log( 'found authId', authId );
+		return { authid : authId };
+	}
+	
+	const serverToken = self.tokenServerToken.value;
+	if ( '' != serverToken ) {
+		console.log( 'found serverToken', serverToken );
+		return { servertoken : serverToken };
+	}
+	
+	const sessionId = self.tokenSessionId.value;
+	if ( '' != sessionId ) {
+		console.log( 'found sessionId' );
+		return { sessionid : sessionId };
+	}
+	
+	return null;
 }
 
 /*
@@ -170,3 +301,75 @@ CallView.prototype.closeWin = function()
 	self.app.sendMessage( { command: 'quit' } );
 }
 
+
+
+const Request = function( ...args ) {
+	const self = this;
+	console.log( 'request', args );
+	self.init( ...args );
+}
+
+Request.prototype.send = async function() {
+	const self = this;
+	const res = await window.fetch( self.reqString );
+	const text = await res.text();
+	console.log( 'Request.send, res', text );
+	return text.split( '<!--separate-->' );
+}
+
+// Priv
+
+Request.prototype.init = function( path, modName, exec, args, token ) {
+	const self = this;
+	const proto = 'https://';
+	const host = document.location.host;
+	const tokenType = Object.keys( token )[ 0 ];
+	const conf = {};
+	if ( null != modName )
+		conf.module = modName;
+	
+	if ( null != exec )
+		conf.command = exec;
+	
+	conf[ tokenType ] = token[ tokenType ];
+	if ( null != args )
+		conf.args = args;
+	
+	const query = self.buildQueryString( conf );
+	console.log( 'Request', {
+		host   : host,
+		path   : path,
+		module : modName,
+		exec   : exec,
+		args   : args,
+		token  : token,
+		query  : query,
+	});
+	const parts = [
+		proto,
+		host,
+		path,
+		query,
+	];
+	const reqString = parts.join( '' );
+	console.log('reqString', reqString );
+	self.reqString = reqString;
+}
+
+Request.prototype.buildQueryString = function( conf ) {
+	const self = this;
+	const parts = [];
+	const keys = Object.keys( conf );
+	keys.forEach( k => {
+		let v = conf[ k ];
+		if ( 'args' == k ) {
+			v = JSON.stringify( v );
+			v = window.encodeURI( v );
+		}
+		const q = k + '=' + v;
+		parts.push( q );
+	});
+	const query = parts.join( '&' );
+	console.log( 'buildQueryString, query', query );
+	return query;
+}

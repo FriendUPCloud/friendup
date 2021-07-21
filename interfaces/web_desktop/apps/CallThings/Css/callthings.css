@@ -7,7 +7,7 @@
 	flex : 0 1 auto;
 }
 
-#input_exec_path {
+.Padding input {
 	width : 100%;
 }
 
@@ -47,4 +47,8 @@
 .nedover {
 	flex-direction : column;
 	align-items    : stretch;
+}
+
+.hidden {
+	display : none;
 }
