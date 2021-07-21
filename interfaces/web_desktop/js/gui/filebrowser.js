@@ -52,6 +52,10 @@ Friend.FileBrowserEntry = function()
 Friend.FileBrowser = function( initElement, flags, callbacks )
 {
 	let self = this;
+	
+	this.clickType = null;
+	this.prevPath = null;
+	
 	this.dom = initElement;
 	this.dom.addEventListener( 'scroll', function()
 	{
@@ -115,7 +119,7 @@ Friend.FileBrowser.prototype.render = function( force )
 	{
 		this.clear();
 	}
-		
+	
 	this.refresh();
 };
 Friend.FileBrowser.prototype.drop = function( elements, e, win )
@@ -188,7 +192,19 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	if( !callback ) callback = false;
 	if( !path ) path = this.rootPath; // Use the rootpath
 	if( !depth ) depth = 1;
-
+	
+	// Track refresh context
+	let context = flags && flags.context ? flags.context : null;
+	if( !context && path != 'Mountlist:' ) return;
+	if( context == null )
+	{
+		context = this.prevContext;
+	}
+	this.prevContext = this.context;
+	this.context = context;
+	
+	console.log( 'Refreshing using context: ' + context );
+	
 	// Fix column problem
 	if ( path.indexOf( ':' ) < 0 )
 		path += ':';
@@ -210,6 +226,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	
 	function createOnclickAction( ele, ppath, type, depth )
 	{
+		ele.clickType = type;
 		ele.onclick = function( e )
 		{
 			// Real click removes temp flags
@@ -307,7 +324,13 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						// Only refresh at final destination
 						if( doClick )
 						{
-							self.refresh( ppath, subitems[0], callback, depth );
+							let ctxType = type;
+							if( ctxType == 'Directory' )
+							{
+								ctxType = context;
+							}
+							console.log( 'Refreshing on context: ' + ctxType );
+							self.refresh( ppath, subitems[0], callback, depth, { context: ctxType } );
 							if( self.callbacks && self.callbacks.folderOpen )
 							{
 								self.callbacks.folderOpen( ppath, e, self.tempFlags );
@@ -500,6 +523,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						
 						if( eles[a].id == 'diskitem_' + msg.list[b].Title )
 						{
+							eles[a].context = context;
 							createOnclickAction( eles[a], msg.list[b].Volume, 'volume', depth + 1 );
 							
 							// Don't add twice
@@ -571,8 +595,9 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						nm.innerHTML = '<span> ' + msg.list[a].Title + '</span>';
 						
 						// We have an incoming path
-						if( !clickElement && self.flags.path && targetPath == d.path )
+						if( !clickElement && self.flags.path && targetPath == d.path && self.clickType && d.context == context )
 						{
+							console.log( 'Found i clickelement with context: ' + d.context + ' == ' + context );
 							clickElement = d;
 						}				
 						
@@ -638,9 +663,10 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						}
 						
 						let s = document.createElement( 'div' );
-						s.className = 'SubItems';
+						s.className = 'SubItems ' + msg.list[a].Type;
 						d.appendChild( s );
 						rootElement.appendChild( d );
+						d.context = context;
 						createOnclickAction( d, d.path, msg.list[a].Type && msg.list[a].Type == 'bookmark' ? 'bookmark' : 'volume', depth + 1 );
 					}
 					// Existing items
@@ -656,8 +682,9 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 							}
 						}
 						
-						if( !clickElement && self.flags.path && targetPath == foundItem.path )
+						if( !clickElement && self.flags.path && targetPath == foundItem.path && foundItem.context == context )
 						{
+							console.log( 'Found ff clickelement with context: ' + foundItem.context + ' == ' + context );
 							clickElement = foundItem;
 						}
 					}
@@ -796,6 +823,8 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						if( msg.list[b].Type == 'Directory' )
 							fn += '/';
 						
+						eles[a].context = context;
+						
 						// Special case - isn't really a directory (uses path without filename)
 						if( msg.list[b].MetaType == 'RootDirectory' )
 						{
@@ -861,7 +890,6 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 							continue;
 						}
 						let d = document.createElement( 'div' );
-						
 						d.className = msg.list[a].Type == 'Directory' ? 'FolderItem' : 'FileItem';
 						let ext = msg.list[a].Filename.split( '.' ).pop().toLowerCase();
 						let icon = d.className == 'FolderItem' ? 'IconFolder' : ( 'IconFile ' + ext );
@@ -880,11 +908,13 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 							msg.list[a].Type = 'RootDirectory';
 						}
 						
+						d.context = context;
 						createOnclickAction( d, d.path, msg.list[a].Type, depth + 1 );
 						
 						// We have an incoming path
-						if( !clickElement && self.flags.path && targetPath == d.path )
+						if( !clickElement && self.flags.path && targetPath == d.path && d.context == context )
 						{
+							console.log( 'Found clickelement with context: ' + d.context + ' == ' + context );
 							clickElement = d;
 						}
 					}
@@ -911,8 +941,9 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						}
 					}
 					// We have an incoming path
-					if( !clickElement && self.flags.path && targetPath == foundItem.path )
+					if( !clickElement && self.flags.path && targetPath == foundItem.path && foundItem.context == context )
 					{
+						console.log( 'Found f clickelement with context: ' + foundItem.context + ' == ' + context );
 						clickElement = foundItem;
 					}
 				}
