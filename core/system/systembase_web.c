@@ -666,6 +666,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				
 				DEBUG("[SysWebRequest] host: '%s'\n", host );
 				
+				userName[ 0 ] = 0;
+				
 				if( host != NULL )
 				{
 					SQLLibrary *sqllib = l->GetDBConnection( l );
@@ -722,32 +724,39 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					}
 					l->DropDBConnection( l, sqllib );
 
-					loggedSession = USMGetSessionByUserID( l->sl_USM, uid );
-					if( loggedSession == NULL && userName[ 0 ] != 0 )	// only if user exist and it has servertoken
+					DEBUG("[SysWebRequest] userid: %ld\n", uid );
+					
+					if( uid > 0 )
 					{
-						loggedSession = UserSessionNew( l, NULL, "servertoken" );
-						if( loggedSession != NULL )
+						loggedSession = USMGetSessionByUserID( l->sl_USM, uid );
+						if( loggedSession == NULL && userName[ 0 ] != 0 )	// only if user exist and it has servertoken
 						{
-							User *usr = UMUserGetByName( l->sl_UM, userName );
-							if( usr == NULL )
+							DEBUG("[SysWebRequest] logged session is null! servertoken session will be created. Username : %s\n", userName );
+						
+							loggedSession = UserSessionNew( l, NULL, "servertoken" );
+							if( loggedSession != NULL )
 							{
-								usr = UMUserGetByNameDB( l->sl_UM, userName );
-								if( usr != NULL )
+								User *usr = UMUserGetByName( l->sl_UM, userName );
+								if( usr == NULL )
 								{
-									UMAddUser( l->sl_UM, usr );
+									usr = UMUserGetByNameDB( l->sl_UM, userName );
+									if( usr != NULL )
+									{
+										UMAddUser( l->sl_UM, usr );
+									}
 								}
-							}
-							else
-							{
-								loggedSession->us_UserID = usr->u_ID;
-								UserAddSession( usr, loggedSession );
-							}
-							loggedSession->us_LastActionTime = time( NULL );
+								else
+								{
+									loggedSession->us_UserID = usr->u_ID;
+									UserAddSession( usr, loggedSession );
+								}
+								loggedSession->us_LastActionTime = time( NULL );
 							
-							UGMAssignGroupToUser( l->sl_UGM, usr );
+								UGMAssignGroupToUser( l->sl_UGM, usr );
 							
-							USMSessionSaveDB( l->sl_USM, loggedSession );
-							USMUserSessionAddToList( l->sl_USM, loggedSession );
+								USMSessionSaveDB( l->sl_USM, loggedSession );
+								USMUserSessionAddToList( l->sl_USM, loggedSession );
+							}
 						}
 					}
 				}

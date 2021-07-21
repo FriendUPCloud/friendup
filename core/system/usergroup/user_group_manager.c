@@ -447,8 +447,9 @@ int UGMAssignGroupToUser( UserGroupManager *ugm, User *usr )
 	char *tmpQuery;
 	DEBUG("[UMAssignGroupToUser] Assign group to user\n");
 
-	if( ugm == NULL )
+	if( ugm == NULL || usr == NULL )
 	{
+		DEBUG("[UGMAssignGroupToUser] user (%p) or usergroupmanager (%p) are empty\n", usr, ugm );
 		return 1;
 	}
 

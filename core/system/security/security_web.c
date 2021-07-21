@@ -246,6 +246,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 		FUQUAD userID = 0;
 		FULONG status = 0;
 		FBOOL allowed = FALSE;
+		FBOOL releaseIP = FALSE;
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
@@ -259,6 +260,8 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 		if( el != NULL )
 		{
 			ip = UrlDecodeToMem( ( char *)el->hme_Data );
+			DEBUG("[security/createhost] ip is not null: %s\n", ip );
+			releaseIP = TRUE;
 		}
 		
 		el = HashmapGet( request->http_ParsedPostContent, "userid" );
@@ -328,7 +331,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
 		}
 
-		if( ip != NULL )
+		if( ip != NULL && releaseIP == TRUE )
 		{
 			FFree( ip );
 		}
