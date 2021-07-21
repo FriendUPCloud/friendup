@@ -679,6 +679,31 @@ Friend.ClipboardPasteIn = function( ele, text )
 
 /* Done clipboard ----------------------------------------------------------- */
 
+Friend.renewAuthId = async function() {
+	const authId = await get();
+	console.log( 'api renewAuthId result', authId );
+	return authId;
+	
+	function get( msg ) {
+		return new Promise(( resolve, reject ) => {
+			const cbId = addCallback( authIdBack );
+			const req = {
+				type     : 'system',
+				command  : 'renewauthid',
+				callback : cbId,
+			};
+			
+			Application.sendMessage( req );
+			
+			function authIdBack( res, data ) {
+				console.log( 'authIdBack', [ res, data ]);
+				resolve( res.authId );
+			}
+			
+		});
+	}
+}
+
 // Callbacks -------------------------------------------------------------------
 
 // Generate a unique id in a select array buffer
@@ -6350,6 +6375,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				function runNow()
 				{
 					if( window.applicationStarted ) return;
+					console.log( 'runNow', Application.authId );
+					if ( !Application.authId )
+						Friend.renewAuthId();
+					
 					window.applicationStarted = true;
 					if( packet.state ) Application.sessionStateSet( packet.state );
 					for( let a = 0; a < activat.length; a++ )

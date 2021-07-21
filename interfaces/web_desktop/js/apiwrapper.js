@@ -4008,6 +4008,36 @@ function apiWrapper( event, force )
 								app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );	
 						};
 						break;
+					case 'renewauthid':
+						const appName = app.applicationName;
+						const oldAuthId = app.authId;
+						
+						console.log( 'apiwrapper.renewauthid', {
+							msg     : msg,
+							app     : app,
+							aName   : appName,
+							oAuthId : oldAuthId,
+						});
+						
+						Friend.renewAuthId( appName, oldAuthId )
+							.then( aIdBack )
+							.catch( error );
+						
+						function error( err ) {
+							console.log( 'apiwrapper renewauthid failed to fetch a new one', err );
+						}
+						
+						function aIdBack( res, data ) {
+							console.log( 'apiwrapper renewauthid FC res', [ res, data ]);
+							const res = {
+								callback : msg.callback,
+								authId   : 'sdasdasdasdas',
+							};
+							
+							app.contentWindow.postMessage( res );
+						}
+						
+						break;
 				}
 				break;
 		}

@@ -448,20 +448,6 @@ function ExecuteApplication( app, args, callback, retries, flags )
 
 			// Register name and ID
 			//ifr.applicationName = app.indexOf( ' ' ) > 0 ? app.split( ' ' )[0] : app;
-			console.log( 'lets set the things on iframe', [
-				conf.Name,
-				Workspace.userId,
-				Workspace.loginUsername,
-				Workspace.userLevel,
-				workspace,
-				flags.openSilent,
-				applicationId,
-				Workspace.workspacemode,
-				'sandbox_' + applicationId,
-				conf.AuthID,
-				_appNum,
-				conf.Permissions,
-			]);
 			ifr.applicationName = conf.Name;
 			ifr.userId = Workspace.userId;
 			ifr.fullName = Workspace.fullName;
@@ -472,7 +458,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			ifr.applicationId = applicationId;
 			ifr.workspaceMode = Workspace.workspacemode;
 			ifr.id = 'sandbox_' + ifr.applicationId;
-			ifr.authId = conf.AuthID;
+			ifr.authId = false; //conf.AuthID;
 			ifr.applicationNumber = _appNum++;
 			ifr.permissions = conf.Permissions;
 
