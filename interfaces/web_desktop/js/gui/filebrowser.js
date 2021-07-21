@@ -173,6 +173,12 @@ Friend.FileBrowser.prototype.setPath = function( target, cbk, tempFlags, e )
 		return;
 	}
 	
+	if( this.context == 'bookmark' )
+	{
+		console.log( 'We are in bookmark land. Abort setpath!' );
+		return;
+	}
+
 	this.tempFlags = false;
 	this.flags.path = target; // This is the current target path..
 	if( tempFlags ) this.tempFlags = tempFlags;
@@ -195,7 +201,6 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	
 	// Track refresh context
 	let context = flags && flags.context ? flags.context : null;
-	if( !context && path != 'Mountlist:' ) return;
 	if( context == null )
 	{
 		context = this.prevContext;
@@ -327,7 +332,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 							let ctxType = type;
 							if( ctxType == 'Directory' )
 							{
-								ctxType = context;
+								ctxType = self.context;
 							}
 							console.log( 'Refreshing on context: ' + ctxType );
 							self.refresh( ppath, subitems[0], callback, depth, { context: ctxType } );
@@ -587,6 +592,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						let d = document.createElement( 'div' );
 						d.className = 'DiskItem';
 						d.id = 'diskitem_' + msg.list[a].Title;
+						d.context = msg.list[a].Type;
 						d.path = msg.list[a].Volume;
 						d.type = msg.list[a].Type;
 						let nm = document.createElement( 'div' );
