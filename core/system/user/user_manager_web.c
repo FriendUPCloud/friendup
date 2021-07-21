@@ -2181,68 +2181,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			
 			BufStringAdd( bs, "{\"userlist\":[");
 			
-			// we are going through users and their sessions
-			// if session is active then its returned
-			
-			time_t  timestamp = time( NULL );
-			
-			int pos = 0;
-			User *usr = l->sl_UM->um_Users;
-			while( usr != NULL )
-			{
-				DEBUG("[UMWebRequest] Going through users, user: %s\n", usr->u_Name );
-				
-				FRIEND_MUTEX_LOCK( &usr->u_Mutex );
-				UserSessListEntry  *usl = usr->u_SessionsList;
-				while( usl != NULL )
-				{
-					UserSession *locses = (UserSession *)usl->us;
-					if( locses != NULL )
-					{
-						FBOOL add = FALSE;
-						//DEBUG("[UMWebRequest] Going through sessions, device: %s time %lu timeout time %lu WS ptr %p\n", locses->us_DeviceIdentity, (long unsigned int)(timestamp - locses->us_LoggedTime), l->sl_RemoveSessionsAfterTime, locses->us_WSClients );
-						
-						if( ( (timestamp - locses->us_LastActionTime) < l->sl_RemoveSessionsAfterTime ) && locses->us_WSD != NULL )
-						{
-							add = TRUE;
-						}
-						
-						if( usersOnly == TRUE )
-						{
-							char newuser[ 255 ];
-							sprintf( newuser, "\"%s\"", usr->u_Name );
-							
-							if( strstr( bs->bs_Buffer, newuser ) != NULL )
-							{
-								add = FALSE;
-							}
-						}
-						
-						if( add == TRUE )
-						{
-							char tmp[ 512 ];
-							int tmpsize = 0;
-							
-							if( pos == 0 )
-							{
-								tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
-							}
-							else
-							{
-								tmpsize = snprintf( tmp, sizeof(tmp), ",{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
-							}
-							
-							BufStringAddSize( bs, tmp, tmpsize );
-							
-							pos++;
-						}
-					}
-					usl = (UserSessListEntry *)usl->node.mln_Succ;
-				}
-				FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
-				
-				usr = (User *)usr->node.mln_Succ;
-			}
+			UMGetActiveUsersWSList( l->sl_UM, bs, userID, usersOnly );
 			
 			BufStringAdd( bs, "]}");
 			
@@ -2265,9 +2204,10 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*
-	* <HR><H2>system.library/user/servermessage</H2>Send message to all User sessions
+	* <HR><H2>system.library/user/servermessage</H2>Send message to one or all User sessions
 	*
 	* @param message - (required) message which will be delivered
+	* @param userid - id of user to which message will be sent
 	* @return fail or ok response
 	*/
 	/// @endcond
@@ -2283,13 +2223,20 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		
 		HashmapElement *el = NULL;
 		char *msg = NULL;
+		FULONG userID = 0;
 
 		el = HttpGetPOSTParameter( request, "message" );
 		if( el == NULL ) el = HashmapGet( request->http_Query, "message" );
-		//el =  HashmapGet( (*request)->parsedPostContent, "message" );
 		if( el != NULL )
 		{
 			msg = UrlDecodeToMem( ( char *)el->hme_Data );
+		}
+		
+		el = HttpGetPOSTParameter( request, "userid" );
+		if( el != NULL )
+		{
+			char *end;
+			userID = strtol( (char *)el->hme_Data, &end, 0 );
 		}
 		
 		BufString *bs = BufStringNew();
@@ -2297,53 +2244,14 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		// we are going through users and their sessions
 		// if session is active then its returned
 		
-		time_t timestamp = time( NULL );
-		
-		int msgsndsize = 0; 
-		int msgsize = 1024;
-		
+		//time_t timestamp = time( NULL );
+
 		if( msg != NULL )
 		{
-			msgsize += strlen( msg )+1024;
-
 			BufStringAdd( bs, "{\"userlist\":[");
 			
-			int msgsize = strlen( msg )+1024;
-			char *sndbuffer = FCalloc( msgsize, sizeof(char) );
+			UMSendMessageToUserOrSession( l->sl_UM, bs, loggedSession, userID, msg );
 			
-			User *usr = (User *)loggedSession->us_User;
-			if( usr != NULL )
-			{
-				if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
-				{
-					UserSessListEntry *usle = (UserSessListEntry *)usr->u_SessionsList;
-					int msgsndsize = 0;
-					while( usle != NULL )
-					{
-						UserSession *ls = (UserSession *)usle->us;
-						if( ls != NULL )
-						{
-							DEBUG("Found same session, sending msg\n");
-							char tmp[ 512 ];
-							int tmpsize = 0;
-						
-							tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, ls->us_DeviceIdentity );
-						
-							int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":{\"username\":\"%s\",\"message\":\"%s\"}}}", 
-							loggedSession->us_User->u_Name , msg );
-						
-							msgsndsize = WebSocketSendMessageInt( ls, sndbuffer, lenmsg );
-						}
-						usle = (UserSessListEntry *)usle->node.mln_Succ;
-					}
-					FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
-				}
-				
-				if( msgsndsize > 0 )
-				{
-					BufStringAdd( bs, usr->u_Name );
-				}
-			}
 			BufStringAdd( bs, "]}");
 		}
 		

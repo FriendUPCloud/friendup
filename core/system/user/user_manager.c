@@ -1607,3 +1607,204 @@ int UMInitUsers( UserManager *um )
 
 	return 0;
 }
+
+/**
+ * Get statistic about user accounts
+ *
+ * @param usm pointer to UserManager
+ * @param bs pointer to BufString where results will be stored (as string)
+ * @param userid if set then FC return information only about this user
+ * @param usersOnly if information only about users should be returned. If set to FALSE devices will be returned
+ * @return 0 when success otherwise error number
+ */
+
+int UMGetActiveUsersWSList( UserManager *um, BufString *bs, FULONG userid, FBOOL usersOnly )
+{
+	// we are going through users and their sessions
+	// if session is active then its returned
+	
+	SystemBase *l = (SystemBase *)um->um_SB;
+	time_t  timestamp = time( NULL );
+	
+	int pos = 0;
+	User *usr = um->um_Users;
+	
+	if( userid > 0 )
+	{
+		while( usr != NULL )
+		{
+			DEBUG("[UMWebRequest] Going through users, user: %s\n", usr->u_Name );
+		
+			if( usr->u_ID == userid )
+			{
+				FRIEND_MUTEX_LOCK( &usr->u_Mutex );
+				UserSessListEntry  *usl = usr->u_SessionsList;
+				while( usl != NULL )
+				{
+					UserSession *locses = (UserSession *)usl->us;
+					if( locses != NULL )
+					{
+						FBOOL add = FALSE;
+						//DEBUG("[UMWebRequest] Going through sessions, device: %s time %lu timeout time %lu WS ptr %p\n", locses->us_DeviceIdentity, (long unsigned int)(timestamp - locses->us_LoggedTime), l->sl_RemoveSessionsAfterTime, locses->us_WSClients );
+				
+						if( ( (timestamp - locses->us_LastActionTime) < l->sl_RemoveSessionsAfterTime ) && locses->us_WSD != NULL )
+						{
+							add = TRUE;
+						}
+				
+						if( usersOnly == TRUE )
+						{
+							char newuser[ 255 ];
+							sprintf( newuser, "\"%s\"", usr->u_Name );
+					
+							if( strstr( bs->bs_Buffer, newuser ) != NULL )
+							{
+								add = FALSE;
+							}
+						}
+				
+						if( add == TRUE )
+						{
+							char tmp[ 512 ];
+							int tmpsize = 0;
+					
+							if( pos == 0 )
+							{
+								tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
+							}
+							else
+							{
+								tmpsize = snprintf( tmp, sizeof(tmp), ",{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
+							}
+					
+							BufStringAddSize( bs, tmp, tmpsize );
+					
+							pos++;
+						}
+					}
+					usl = (UserSessListEntry *)usl->node.mln_Succ;
+				}
+				break; // we need information only about one user
+			}	// userid
+			FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+			usr = (User *)usr->node.mln_Succ;
+		}
+	}
+	else	// return information about all users
+	{
+		while( usr != NULL )
+		{
+			DEBUG("[UMWebRequest] Going through users, user: %s\n", usr->u_Name );
+		
+			FRIEND_MUTEX_LOCK( &usr->u_Mutex );
+			UserSessListEntry  *usl = usr->u_SessionsList;
+			while( usl != NULL )
+			{
+				UserSession *locses = (UserSession *)usl->us;
+				if( locses != NULL )
+				{
+					FBOOL add = FALSE;
+					//DEBUG("[UMWebRequest] Going through sessions, device: %s time %lu timeout time %lu WS ptr %p\n", locses->us_DeviceIdentity, (long unsigned int)(timestamp - locses->us_LoggedTime), l->sl_RemoveSessionsAfterTime, locses->us_WSClients );
+				
+					if( ( (timestamp - locses->us_LastActionTime) < l->sl_RemoveSessionsAfterTime ) && locses->us_WSD != NULL )
+					{
+						add = TRUE;
+					}
+				
+					if( usersOnly == TRUE )
+					{
+						char newuser[ 255 ];
+						sprintf( newuser, "\"%s\"", usr->u_Name );
+					
+						if( strstr( bs->bs_Buffer, newuser ) != NULL )
+						{
+							add = FALSE;
+						}
+					}
+				
+					if( add == TRUE )
+					{
+						char tmp[ 512 ];
+						int tmpsize = 0;
+					
+						if( pos == 0 )
+						{
+							tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
+						}
+						else
+						{
+							tmpsize = snprintf( tmp, sizeof(tmp), ",{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
+						}
+					
+						BufStringAddSize( bs, tmp, tmpsize );
+					
+						pos++;
+					}
+				}
+				usl = (UserSessListEntry *)usl->node.mln_Succ;
+			}
+			FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+			usr = (User *)usr->node.mln_Succ;
+		}
+	}
+	return 0;
+}
+
+/**
+ * Send message to current user or user pointed by userid
+ *
+ * @param usm pointer to UserManager
+ * @param bs pointer to BufString where results will be stored (as string)
+ * @param loggedSession current user serssion
+ * @param userid if set then FC will send information to this user
+ * @param message information which will be send to user
+ * @return 0 when success otherwise error number
+ */
+
+int UMSendMessageToUserOrSession( UserManager *um, BufString *bs, UserSession *loggedSession, FULONG userid, char *message )
+{
+	int msgsize = strlen( message )+1024;
+	int msgsndsize = 0;
+	char *sndbuffer = FCalloc( msgsize, sizeof(char) );
+	
+	User *usr = (User *)loggedSession->us_User;
+	
+	if( userid > 0 )
+	{
+		usr = UMGetUserByID( um, userid );
+	}
+	
+	if( usr != NULL )
+	{
+		if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
+		{
+			UserSessListEntry *usle = (UserSessListEntry *)usr->u_SessionsList;
+			int msgsndsize = 0;
+			while( usle != NULL )
+			{
+				UserSession *ls = (UserSession *)usle->us;
+				if( ls != NULL )
+				{
+					DEBUG("Found same session, sending msg\n");
+					char tmp[ 512 ];
+					int tmpsize = 0;
+					
+					tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, ls->us_DeviceIdentity );
+					
+					int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":{\"username\":\"%s\",\"message\":\"%s\"}}}", 
+					loggedSession->us_User->u_Name , message );
+					
+					msgsndsize = WebSocketSendMessageInt( ls, sndbuffer, lenmsg );
+				}
+				usle = (UserSessListEntry *)usle->node.mln_Succ;
+			}
+			FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+		}
+		
+		if( msgsndsize > 0 )
+		{
+			BufStringAdd( bs, usr->u_Name );
+		}
+	}
+	return 0;
+}
