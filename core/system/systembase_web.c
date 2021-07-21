@@ -722,9 +722,13 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					}
 					l->DropDBConnection( l, sqllib );
 
+					DEBUG("[SysWebRequest] userid: %ld\n", uid );
+					
 					loggedSession = USMGetSessionByUserID( l->sl_USM, uid );
 					if( loggedSession == NULL && userName[ 0 ] != 0 )	// only if user exist and it has servertoken
 					{
+						DEBUG("[SysWebRequest] logged session is null! servertoken session will be created. Username : %s\n", userName );
+						
 						loggedSession = UserSessionNew( l, NULL, "servertoken" );
 						if( loggedSession != NULL )
 						{
