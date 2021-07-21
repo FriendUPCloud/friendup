@@ -39,6 +39,7 @@ function RemoveFromExecutionQueue( app )
 // Load a javascript application into a sandbox
 function ExecuteApplication( app, args, callback, retries, flags )
 {
+	console.log( 'ExecuteApplication', [ app, args, callback, retries, flags ]);
 	// Just nothing.
 	if( !app ) return;
 	
@@ -215,11 +216,13 @@ function ExecuteApplication( app, args, callback, retries, flags )
 		// TODO: Open a file window!
 	}
 
+	console.log( 'args before module call', args );
 	// 1. Ask about application.................................................
 	var m = new Module( 'system' );
 	m.onExecuted = function( r, d )
 	{	
 		// Get data from Friend Core
+		console.log( 'ExecuteApplication onExecuted', [ r, d ]);
 		var conf = false;
 		try
 		{
@@ -230,6 +233,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			console.log( 'directive.js, mod call friendapplication - JSON error', e );
 		}
 		
+		console.log( 'ExecuteApplication onExecuted conf', conf );
 		if( r == 'activate' )
 		{
 			ActivateApplication( app, conf );
@@ -444,6 +448,20 @@ function ExecuteApplication( app, args, callback, retries, flags )
 
 			// Register name and ID
 			//ifr.applicationName = app.indexOf( ' ' ) > 0 ? app.split( ' ' )[0] : app;
+			console.log( 'lets set the things on iframe', [
+				conf.Name,
+				Workspace.userId,
+				Workspace.loginUsername,
+				Workspace.userLevel,
+				workspace,
+				flags.openSilent,
+				applicationId,
+				Workspace.workspacemode,
+				'sandbox_' + applicationId,
+				conf.AuthID,
+				_appNum,
+				conf.Permissions,
+			]);
 			ifr.applicationName = conf.Name;
 			ifr.userId = Workspace.userId;
 			ifr.username = Workspace.loginUsername;
@@ -702,6 +720,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 		}
 	}
 	var eo = { application: app, args: args };
+	console.log( 'workspace.conf ??', Workspace.conf );
 	if( Workspace.conf && Workspace.conf.authid )
 		eo.authid = Workspace.conf.authid;
 	m.execute( 'friendapplication', eo );
