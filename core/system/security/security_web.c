@@ -361,6 +361,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 		FUQUAD userID = 0;
 		FULONG status = 0;
 		FBOOL allowed = FALSE;
+		FBOOL ipProperFormat = TRUE;
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
@@ -374,6 +375,35 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 		if( el != NULL )
 		{
 			ip = UrlDecodeToMem( ( char *)el->hme_Data );
+			if( ip != NULL )
+			{
+				int dots = 0;
+				int ddots = 0;
+				int i;
+				for( i=0 ; i < strlen( ip ) ; i++ )
+				{
+					if( ip[ i ] == '.' )
+					{
+						dots++;
+					}
+					if( ip[ i ] == ':' )
+					{
+						ddots++;
+					}
+				}
+				if( dots > 0 && ddots > 0 )
+				{
+					ipProperFormat = FALSE;
+				}
+				else if( dots != 3 )
+				{
+					ipProperFormat = FALSE;
+				}
+				else if( ddots != 3 )
+				{
+					ipProperFormat = FALSE;
+				}
+			}
 		}
 		
 		el = HashmapGet( request->http_ParsedPostContent, "userid" );
@@ -411,28 +441,36 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 			}
 		}
 		
-		if( allowed == TRUE )
+		if( ipProperFormat == TRUE )
 		{
-			SQLLibrary *sqllib = l->GetDBConnection( l );
-			if( sqllib != NULL )
+			if( allowed == TRUE )
 			{
-				char insertQuery[ 1024 ];
+				SQLLibrary *sqllib = l->GetDBConnection( l );
+				if( sqllib != NULL )
+				{
+					char insertQuery[ 1024 ];
 				
-				snprintf( insertQuery, sizeof( insertQuery ), "UPDATE `FSecuredHost` Set Status='%lu' WHERE IP='%s'", status, ip );
-				sqllib->QueryWithoutResults( sqllib, insertQuery );
+					snprintf( insertQuery, sizeof( insertQuery ), "UPDATE `FSecuredHost` Set Status='%lu' WHERE IP='%s'", status, ip );
+					sqllib->QueryWithoutResults( sqllib, insertQuery );
 			
-				DEBUG("[SecurityWeb/createhost] sl query %s\n", insertQuery );
-				l->DropDBConnection( l, sqllib );
+					DEBUG("[SecurityWeb/createhost] sl query %s\n", insertQuery );
+					l->DropDBConnection( l, sqllib );
 				
-				snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":{\"ip\":\"%s\",\"status\":%ld,\"userid\":%lu}}", ip, status, userID );
+					snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":{\"ip\":\"%s\",\"status\":%ld,\"userid\":%lu}}", ip, status, userID );
 
-				HttpAddTextContent( response, insertQuery );
+					HttpAddTextContent( response, insertQuery );
+				}
+			}
+			else
+			{
+				char dictmsgbuf[ 256 ];
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
 			}
 		}
 		else
 		{
 			char dictmsgbuf[ 256 ];
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_IP_MISSING_OR_WRONG_FORMAT] , DICT_IP_MISSING_OR_WRONG_FORMAT );
 		}
 
 		if( ip != NULL )
