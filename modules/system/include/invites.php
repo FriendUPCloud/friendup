@@ -379,21 +379,20 @@ if( $args->command )
 				{
 					if( $dat = json_decode( $res ) )
 					{
-						die( print_r( $dat,1 ) );
 						if( isset( $dat[0]->username ) && $dat[0]->username == $contact->Name )
 						{
 							$online = true;
 						}
 					}
 				}
-				die( 'hm' );
+				
 				// Send a notification message if online ...
 				
 				if( $online )
 				{
 					if( $res = FriendCoreQuery( '/system.library/user/servermessage', 
 					[
-						'message' => $msg,
+						'message' => '{"message":"'.$msg.'","accept":"/system.library/module/?module=system&command=verifyinvite&args='.urlencode('{"hash":"'.$hash.'"}').'","decline":"/system.library/module/?module=system&command=removeinvite&args='.urlencode('{"hash":"'.$hash.'"}').'"}',
 						'userid' => $contact->ID
 					] ) )
 					{
@@ -401,7 +400,7 @@ if( $args->command )
 						
 						die( $res );
 					}
-					die( 'hm ??' );
+					die( 'Fail to send message to user ...' );
 				}
 				
 				// Send email ...
