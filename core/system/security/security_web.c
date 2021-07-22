@@ -414,7 +414,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 				DEBUG("[SecurityWeb/createhost] sl query %s\n", insertQuery );
 				l->DropDBConnection( l, sqllib );
 				
-				snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":{\"ip\":\"%s\"}}", ip );
+				snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":{\"ip\":\"%s\",\"status\":%ld,\"userid\":%lu}}", ip, status, userID );
 
 				HttpAddTextContent( response, insertQuery );
 			}
