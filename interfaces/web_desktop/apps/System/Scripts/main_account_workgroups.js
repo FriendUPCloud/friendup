@@ -5245,7 +5245,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						
 						str += '<div>';
 						
-						str += '<div class="HRow" id="WorkgroupID_' + groups[a].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].ID+',_this:this} )">';
+						str += '<div class="HRow Ellipsis" id="WorkgroupID_' + groups[a].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].ID+',_this:this} )">';
 						//str += '<div class="HRow" id="WorkgroupID_' + groups[a].ID + '" onclick="edit( '+groups[a].ID+', this )">';
 						//str += '	<div class="PaddingSmall HContent100 FloatLeft Ellipsis">';
 						//str += '		<span name="' + groups[a].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>';
@@ -5271,7 +5271,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								
 								ii++;
 								
-								str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].groups[aa].ID+',_this:this} )">';
+								str += '<div class="HRow Ellipsis" id="WorkgroupID_' + groups[a].groups[aa].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].groups[aa].ID+',_this:this} )">';
 								//str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].ID + '" onclick="edit( '+groups[a].groups[aa].ID+', this )">';
 								//str += '	<div class="PaddingSmall HContent100 FloatLeft Ellipsis">';
 								//str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>';
@@ -5299,7 +5299,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										
 										ii++;
 										
-										str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].groups[aa].groups[aaa].ID+',_this:this} )">';
+										str += '<div class="HRow Ellipsis" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].groups[aa].groups[aaa].ID+',_this:this} )">';
 										//str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '" onclick="edit( '+groups[a].groups[aa].groups[aaa].ID+', this )">';
 										//str += '	<div class="PaddingSmall HContent100 FloatLeft Ellipsis">';
 										//str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>';
@@ -5309,7 +5309,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 										str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconMedium fa-users"></span>';
 										str += '	</div>';
-										str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent82 InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + (groups[a].groups[aa].groups[aaa].Owner?' ('+groups[a].groups[aa].groups[aaa].Owner+')':'') + '</div>';
+										str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent82 InputHeight FloatLeft Ellipsis" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + groups[a].groups[aa].groups[aaa].Name + (groups[a].groups[aa].groups[aaa].Owner?' ('+groups[a].groups[aa].groups[aaa].Owner+')':'') + '</div>';
 										
 										//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 										//str += '		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';

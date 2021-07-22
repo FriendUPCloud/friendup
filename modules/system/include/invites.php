@@ -366,29 +366,43 @@ if( $args->command )
 				
 				$invitelink = buildUrl( $hash, $Conf, $ConfShort );
 				
-				$msg = ( $usr->FullName . ' invites to you connect here on Friend Sky, a great collaboration platform that\'s free to use Invite Link: ' . $invitelink );
+				$msg = ($usr->FullName.' invites to you connect here on Friend Sky, a great collaboration platform that\'s free to use Invite Link: <a target="_BLANK" href="'.$invitelink.'">'.$invitelink.'</a>');
 				
 				
 				// Check if user is online ...
 				
-				if( 1!=1 /*FriendCoreQuery( '/system.library/user/activelwsist' )*/ )
+				if( $res1 = FriendCoreQuery( '/system.library/user/activewslist',
+				[
+					'usersonly' => true,
+					'userid' => $contact->ID
+				] ) )
 				{
-					$online = true;
+					if( $dat = json_decode( $res1 ) )
+					{
+						if( isset( $dat->userlist[0]->username ) && $dat->userlist[0]->username == $contact->Name )
+						{
+							$online = true;
+						}
+					}
 				}
 				
 				// Send a notification message if online ...
 				
 				if( $online )
 				{
-					if( FriendCoreQuery( '/system.library/user/servermessage', 
+					$jsn = '{"message":"'.$invitelink.'","accept":"/system.library/module/?module=system&command=verifyinvite&args='.urlencode('{"hash":"'.$hash.'"}').'","decline":"/system.library/module/?module=system&command=removeinvite&args='.urlencode('{"hash":"'.$hash.'"}').'"}';
+					
+					if( $res2 = FriendCoreQuery( '/system.library/user/servermessage', 
 					[
-						'message' => $msg
+						'message' => ($usr->FullName.' invites to you connect here on Friend Sky, a great collaboration platform that\'s free to use Invite Link: '.$invitelink),
+						'userid' => $contact->ID
 					] ) )
 					{
 						// Sent ...
 						
-						
+						die( 'Message sent? ' . $res2 );
 					}
+					die( 'Fail to send message to user ...' );
 				}
 				
 				// Send email ...
@@ -435,7 +449,7 @@ if( $args->command )
 						die( 'fail<!--separate-->' );
 					}
 					
-					die( 'ok<!--separate-->' );
+					die( 'ok<!--separate-->Mail sent!' );
 					
 				}
 				
