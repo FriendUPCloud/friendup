@@ -371,24 +371,37 @@ if( $args->command )
 				
 				// Check if user is online ...
 				
-				if( 1!=1 /*FriendCoreQuery( '/system.library/user/activelwsist' )*/ )
+				if( $res = FriendCoreQuery( '/system.library/user/activewslist',
+				[
+					'usersonly' => true,
+					'userid' => $contact->ID
+				] ) )
 				{
-					$online = true;
+					if( $dat = json_decode( $res ) )
+					{
+						die( print_r( $dat,1 ) );
+						if( isset( $dat[0]->username ) && $dat[0]->username == $contact->Name )
+						{
+							$online = true;
+						}
+					}
 				}
-				
+				die( 'hm' );
 				// Send a notification message if online ...
 				
 				if( $online )
 				{
-					if( FriendCoreQuery( '/system.library/user/servermessage', 
+					if( $res = FriendCoreQuery( '/system.library/user/servermessage', 
 					[
-						'message' => $msg
+						'message' => $msg,
+						'userid' => $contact->ID
 					] ) )
 					{
 						// Sent ...
 						
-						
+						die( $res );
 					}
+					die( 'hm ??' );
 				}
 				
 				// Send email ...
