@@ -1523,7 +1523,7 @@ var WorkspaceInside = {
 		    Workspace.getAnnouncements();
 		    
 		    let no = new Module( 'system' );
-		    mo.onExecuted = function( e, d )
+		    no.onExecuted = function( e, d )
 		    {
 		    	if( e == 'ok' )
 		    	{
@@ -1534,7 +1534,7 @@ var WorkspaceInside = {
 		    		}
 		    		catch( e ){};
 		    		if( !list ) return;
-		    		for( let a = 0; a < list.length; ++ )
+		    		for( let a = 0; a < list.length; a++ )
 		    		{
 		    			AddNotificationEvent( {
 		    				title: list[a].Title,
@@ -1545,7 +1545,7 @@ var WorkspaceInside = {
 		    		}
 		    	}
 		    }
-		    mo.execute( 'getqueuedevents' );
+		    no.execute( 'getqueuedevents' );
 		    
 		    let mo = new Library( 'system.library' );
 		    mo.onExecuted = function( rc, sessionList )
