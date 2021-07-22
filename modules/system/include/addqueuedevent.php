@@ -10,6 +10,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+global $SqlDatabase, $User;
+
 // Need message|type
 if( !( isset( $args->args->message ) && isset( $args->args->type ) ) )
 	die( 'fail<!--separate-->{"response":-1,"message":"You need to add a message and type in order to add to queue."}' );

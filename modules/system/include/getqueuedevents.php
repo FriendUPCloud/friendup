@@ -10,6 +10,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+global $SqlDatabase, $User;
+
 // Just fetch all queued events either by workgroup or user
 
 if( $rows = $SqlDatabase->fetchObjects( '

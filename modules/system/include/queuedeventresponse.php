@@ -10,6 +10,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+global $SqlDatabase, $User;
+
 $o = new dbIO( 'FQueuedEvent' );
 if( $o->Load( $args->args->eventId ) )
 {
