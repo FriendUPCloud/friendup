@@ -170,11 +170,11 @@ function PollTray()
 							<hr class="Divider"/>\
 							<p class="Layout">\
 								<button class="Reject FloatRight" type="button" ' +
-								'onclick="Workspace.handleNotificationInteraction(\'' + notties[a].eventId + '\', false, \'' + notties[a].uniqueId + '\')">\
+								'onmousedown="Workspace.handleNotificationInteraction(\'' + notties[a].eventId + '\', false, \'' + notties[a].uniqueId + '\')">\
 									' + i18n( 'i18n_reject' ) + '\
 								</button>\
 								<button class="Accept FloatLeft" type="button" ' +
-								'onclick="Workspace.handleNotificationInteraction(\'' + notties[a].eventId + '\', true, \'' + notties[a].uniqueId + '\')">\
+								'onmousedown="Workspace.handleNotificationInteraction(\'' + notties[a].eventId + '\', true, \'' + notties[a].uniqueId + '\')">\
 									' + i18n( 'i18n_accept' ) + '\
 								</button>\
 							</p>';
