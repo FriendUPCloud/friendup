@@ -1452,6 +1452,7 @@ var WorkspaceInside = {
 			if( e == 'ok' )
 			{
 				RemoveNotificationEvent( uniqueId );
+				PollTray();
 			}
 		}
 		m.execute( 'queuedeventresponse', {

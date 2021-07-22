@@ -17,7 +17,7 @@ global $SqlDatabase, $User;
 if( $rows = $SqlDatabase->fetchObjects( '
 	SELECT e.* FROM FQueuedEvent e 
 	WHERE 
-		e.Status == "unseen" AND
+		( e.Status = \'unseen\' OR e.Status = \'seen\' ) AND
 		e.TargetUserID = \'' . $User->ID . '\'
 ' ) )
 {
