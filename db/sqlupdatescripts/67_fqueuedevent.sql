@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXIST `FQueuedEvent` (
+CREATE TABLE IF NOT EXISTS `FQueuedEvent` (
   `ID` bigint(20) NOT NULL AUTO_INCREMENT,
   `UserID` bigint(20) DEFAULT 0,
   `TargetUserID` bigint(20) DEFAULT 0,
