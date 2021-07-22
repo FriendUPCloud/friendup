@@ -474,7 +474,15 @@ function PollMobileTray()
 // Add notification event for safe keeping
 function AddNotificationEvent( evt )
 {
-	var uniqueId = CryptoJS.SHA1( 
+	// Check duplicates
+	if( evt.eventId )
+	{
+		for( let b = 0; b < Workspace.notificationEvents.length; b++ )
+		{
+			if( Workspace.notificationEvents[b].eventId == evt.eventId ) return;
+		}
+	}
+	let uniqueId = CryptoJS.SHA1( 
 		'evt' + 
 		( new Date() ).getTime() + 
 		( Math.random() * 999 ) + 
@@ -486,7 +494,7 @@ function AddNotificationEvent( evt )
 		evt.externNotificationId = evt.notificationId;
 	if( evt.notificationId )
 	{
-		for( var b = 0; b < Workspace.notificationEvents.length; b++ )
+		for( let b = 0; b < Workspace.notificationEvents.length; b++ )
 		{
 			if( !Workspace.notificationEvents[ b ].externNotificationId )
 				continue;
