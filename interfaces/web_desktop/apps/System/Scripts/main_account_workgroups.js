@@ -196,51 +196,26 @@ Sections.accounts_workgroups = function( cmd, extra )
 						workgroups = wgroups.data.details.groups;
 					}
 					
+					var out = {};
+					
 					if( wgroups && workgroups )
 					{
-						var out = [];
 						
 						for( var a in workgroups )
 						{
 							if( workgroups[a] && workgroups[a].ID )
 							{
-								out.push( { ID: workgroups[a].ID, UUID: workgroups[a].uuid, Name: workgroups[a].name, ParentID: workgroups[a].parentid, Status: workgroups[a].status } );
+								out[workgroups[a].ID] = ( { ID: workgroups[a].ID, UUID: workgroups[a].uuid, Name: workgroups[a].name, ParentID: workgroups[a].parentid, Status: workgroups[a].status } );
 							}
 						}
 						
-						if( callback ) return callback( out );
+						//if( callback ) return callback( out );
+						
 					}
 					
-					if( callback ) return callback( [] );
+					listModuleWorkgroups( out, callback );
 					
-					// OLD code ...
-					
-					/*if( ShowLog ) console.log( { e:e , d:d, args: args } );
-				
-					if( e == 'ok' && d )
-					{
-						try
-						{
-							var data = JSON.parse( d );
-							
-							// Workaround for now .... until rolepermissions is correctly implemented in C ...
-							
-							if( ShowLog ) console.log( '[1] ', data );
-							
-							if( data && data.data && data.data.details && data.data.details.groups )
-							{
-								data = data.data.details;
-							}
-														
-							if( data.groups )
-							{
-								return callback( true, data.groups );
-							}
-						} 
-						catch( e ){ } 
-					}
-				
-					return callback( false, false );*/
+					//if( callback ) return callback( [] );
 					
 				}
 				
@@ -258,6 +233,61 @@ Sections.accounts_workgroups = function( cmd, extra )
 		}
 		
 		return false;
+		
+	}
+	
+	// TODO: Temporary until owner and only admin flags are supported in system.library/group/list
+	
+	function listModuleWorkgroups( workgroups, callback )
+	{
+		
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			var data = null;
+			
+			try
+			{
+				data = JSON.parse( d );
+			}
+			catch( e ) {  }
+			
+			if( data && workgroups )
+			{
+				for( var i in data )
+				{
+					// Set Owner ...
+					
+					if( data[i] && data[i].ID && data[i].Owner && workgroups[data[i].ID] )
+					{
+						workgroups[data[i].ID].Owner = data[i].Owner;
+					}
+					
+					// Skip non Admin workgroups ...
+					
+					if( data[i] && data[i].ID && data[i].Level == 'User' && workgroups[data[i].ID] )
+					{
+						workgroups[data[i].ID] = null;
+					}
+				}
+			}
+			
+			console.log( '[1] listModuleWorkgroups', workgroups );
+			
+			console.log( '[2] listModuleWorkgroups', { e:e, d:(data?data:d) } );
+			
+			if( callback )
+			{
+				if( workgroups )
+				{
+					return callback( workgroups );
+				}
+				
+				return callback( [] );
+			}
+			
+		}
+		m.execute( 'workgroups', { owner: true, level: true, authid: Application.authId } );
 		
 	}
 	
@@ -5223,7 +5253,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 						str += '		<span name="' + groups[a].Name + '" class="IconMedium fa-users"></span>';
 						str += '	</div>';
-						str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent94 InputHeight FloatLeft Ellipsis">' + groups[a].Name+ '</div>';
+						str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent94 InputHeight FloatLeft Ellipsis">' + groups[a].Name + (groups[a].Owner?' ('+groups[a].Owner+')':'') + '</div>';
 						
 						//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 						//str += '		<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
@@ -5251,7 +5281,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 								str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconMedium fa-users"></span>';
 								str += '	</div>';
-								str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent88 InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].Name + '</div>';
+								str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent88 InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].Name + (groups[a].groups[aa].Owner?' ('+groups[a].groups[aa].Owner+')':'') + '</div>';
 								
 								//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 								//str += '		<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
@@ -5279,7 +5309,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 										str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconMedium fa-users"></span>';
 										str += '	</div>';
-										str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent82 InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + '</div>';
+										str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent82 InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + (groups[a].groups[aa].groups[aaa].Owner?' ('+groups[a].groups[aa].groups[aaa].Owner+')':'') + '</div>';
 										
 										//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 										//str += '		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
