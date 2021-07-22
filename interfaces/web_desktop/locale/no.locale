@@ -55,6 +55,7 @@ i18n_startup_sequence                : Oppstartsekvens
 i18n_cancel                          : Avbryt
 i18n_back                            : Tilbake
 i18n_accept                          : Aksepter
+i18n_reject                          : Avslå
 i18n_understood                      : Forstått
 i18n_your_devices                    : Disker
 i18n_quit                            : Avslutt

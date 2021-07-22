@@ -53,6 +53,7 @@ i18n_yes                             : Yes
 i18n_cancel                          : Cancel
 i18n_back                            : Back
 i18n_accept                          : Accept
+i18n_reject                          : Reject
 i18n_understood                      : Understood
 i18n_your_devices                    : Disks
 i18n_quit                            : Quit
