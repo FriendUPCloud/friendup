@@ -13,12 +13,19 @@
 // Just fetch all queued events either by workgroup or user
 
 if( $rows = $SqlDatabase->fetchObjects( '
-	SELECT * FROM FQueuedEvent e LEFT JOIN FUserToGroup UG ON ( UG.UserID = \'' . $User->ID . '\' AND e.TargetGroupID = UG.UserGroupID )
+	SELECT e.* FROM FQueuedEvent e 
 	WHERE 
-		e.TargetGroupID = UG.UserGroupID OR
 		e.TargetUserID = \'' . $User->ID . '\'
 ' ) )
 {
+	// Set events as seen
+	$ids = [];
+	foreach( $rows as $row )
+	{
+		$ids[] = $row->ID;
+	}
+	$SqlDatabase->query( 'UPDATE FQueuedEvent SET Status="seen" WHERE ID IN ( ' . implode( ',', $ids ) . ' )' );
+	
 	die( 'ok<!--separate-->' . json_encode( $rows ) );
 }
 

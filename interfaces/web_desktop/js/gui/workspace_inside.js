@@ -1506,6 +1506,31 @@ var WorkspaceInside = {
 		    
 		    Workspace.getAnnouncements();
 		    
+		    let no = new Module( 'system' );
+		    mo.onExecuted = function( e, d )
+		    {
+		    	if( e == 'ok' )
+		    	{
+		    		let list = false;
+		    		try
+		    		{
+		    			list = JSON.parse( d );
+		    		}
+		    		catch( e ){};
+		    		if( !list ) return;
+		    		for( let a = 0; a < list.length; ++ )
+		    		{
+		    			AddNotificationEvent( {
+		    				title: list[a].Title,
+		    				text: list[a].Message,
+		    				type: list[a].Type,
+		    				eventId: list[a].ID
+		    			} );
+		    		}
+		    	}
+		    }
+		    mo.execute( 'getqueuedevents' );
+		    
 		    let mo = new Library( 'system.library' );
 		    mo.onExecuted = function( rc, sessionList )
 		    {
