@@ -295,6 +295,8 @@ if( $args->command )
 				}
 			}
 			
+			// TODO: Make support for sending invites by email to users who doesn't exists yet ... $args->email / $args->fullname then perhaps?
+			
 			if( isset( $args->args->userid ) && $args->args->userid )
 			{
 				if( !$contact = $SqlDatabase->FetchObject( '
@@ -390,18 +392,38 @@ if( $args->command )
 				
 				if( $online )
 				{
-					$jsn = '{"message":"'.$invitelink.'","accept":"/system.library/module/?module=system&command=verifyinvite&args='.urlencode('{"hash":"'.$hash.'"}').'","decline":"/system.library/module/?module=system&command=removeinvite&args='.urlencode('{"hash":"'.$hash.'"}').'"}';
+					//$jsn = '{"message":"'.$invitelink.'","accept":"/system.library/module/?module=system&command=verifyinvite&args='.urlencode('{"hash":"'.$hash.'"}').'","decline":"/system.library/module/?module=system&command=removeinvite&args='.urlencode('{"hash":"'.$hash.'"}').'"}';
 					
-					if( $res2 = FriendCoreQuery( '/system.library/user/servermessage', 
-					[
-						'message' => ($usr->FullName.' invites to you connect here on Friend Sky, a great collaboration platform that\'s free to use Invite Link: '.$invitelink),
-						'userid' => $contact->ID
-					] ) )
-					{
+					//if( $res2 = FriendCoreQuery( '/system.library/user/servermessage', 
+					//[
+					//	'message' => ($usr->FullName.' invites to you connect here on Friend Sky, a great collaboration platform that\'s free to use Invite Link: '.$invitelink),
+					//	'userid' => $contact->ID
+					//] ) )
+					//{
 						// Sent ...
 						
-						die( 'Message sent? ' . $res2 );
+					//	die( 'Message sent? ' . $res2 );
+					//}
+					
+					$n = new dbIO( 'FQueuedEvent' );
+					$n->UserID = $usr->ID;
+					$n->TargetUserID = $contact->ID;
+					$n->TargetGroupID = 0;
+					$n->Type = 'interaction';
+					$n->Date = date( 'Y-m-d' );
+					$n->Status = 'unseen';
+					$n->Message = ( $usr->FullName.' invites to you connect on Friend Chat.' );
+					$n->ActionAccepted = '/system.library/module/?module=system&command=verifyinvite&args='.urlencode('{"hash":"'.$hash.'"}');
+					$n->ActionRejected = '/system.library/module/?module=system&command=removeinvite&args='.urlencode('{"hash":"'.$hash.'"}');
+					if( $n->Load() )
+					{
+						die( 'fail<!--separate-->notification event already exists ...' );
 					}
+					if( $n->Save() )
+					{
+						die( 'ok<!--separate-->notification event stored id: ' . $n->ID );
+					}
+					
 					die( 'Fail to send message to user ...' );
 				}
 				
