@@ -558,6 +558,13 @@ if( isset( $args->command ) )
 		case 'workspaceshortcuts':
 			require( 'modules/system/include/workspaceshortcuts.php' );
 			break;
+		// Notification related
+		case 'addqueuedevent':
+		case 'getqueuedevents':
+		case 'queuedeventresponse':
+			require( 'modules/system/include/' . $args->command . '.php' );
+			break;
+		
 		// Forcefully renew a session for a user
 		case 'usersessionrenew':
 			require( 'modules/system/include/usersessionrenew.php' );
