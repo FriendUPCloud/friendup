@@ -1539,6 +1539,7 @@ var WorkspaceInside = {
 		    			AddNotificationEvent( {
 		    				title: list[a].Title,
 		    				text: list[a].Message,
+		    				time: list[a].Date,
 		    				type: list[a].Type,
 		    				eventId: list[a].ID
 		    			} );
