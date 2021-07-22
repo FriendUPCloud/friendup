@@ -163,11 +163,27 @@ function PollTray()
 					let tdi = StrPad( tim.getMinutes(), 2, '0' );
 					let timStr = tdy + '/' + tdm + '/' + tdd + ', ' + tdh + ':' + tdi;
 					
+					let interactions = '';
+					if( notties[a].type == 'interaction' && notties[a].eventId )
+					{
+						interactions = '\
+							<p class="Layout">\
+								<button class="Reject FloatRight" type="button" ' +
+								'onclick="Workspace.handleNotificationInteraction(\'' + notties[a].eventId + '\', false, \'' + notties[a].notificationId + '\')">\
+									' + i18n( 'i18n_reject' ) + '\
+								</button>\
+								<button class="Accept FloatLeft" type="button" ' +
+								'onclick="Workspace.handleNotificationInteraction(\'' + notties[a].eventId + '\', true, \'' + notties[a].notificationId + '\')">\
+									' + i18n( 'i18n_accept' ) + '\
+								</button>\
+							</p>';
+					}
+					
 					d.innerHTML = '\
 						<div>\
 							<div class="NotificationClose FloatRight fa-remove IconSmall"></div>\
 							<p class="Layout"><strong>' + notties[a].title + '<br><span class="DateStamp">' + timStr + '</span></strong></p>\
-							<p class="Layout">' + notties[a].text + '</p>\
+							<p class="Layout">' + notties[a].text + '</p>' + interactions + '\
 						</div>';
 					d.onmousedown = function( ev )
 					{
