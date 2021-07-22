@@ -1684,9 +1684,10 @@ int UMGetActiveUsersWSList( UserManager *um, BufString *bs, FULONG userid, FBOOL
 					}
 					usl = (UserSessListEntry *)usl->node.mln_Succ;
 				}
+				FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 				break; // we need information only about one user
 			}	// userid
-			FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+			
 			usr = (User *)usr->node.mln_Succ;
 		}
 	}
