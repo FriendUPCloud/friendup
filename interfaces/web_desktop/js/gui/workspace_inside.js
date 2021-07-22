@@ -1443,6 +1443,22 @@ var WorkspaceInside = {
 		} );
 		return cancelBubble( e );
 	},
+	// Handle an interaction event on a queued event
+	handleNotificationInteraction: function( eventId, response, uniqueId )
+	{
+		let m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e == 'ok' )
+			{
+				RemoveNotificationEvent( uniqueId );
+			}
+		}
+		m.execute( 'queuedeventresponse', {
+			eventid: eventId,
+			response: response
+		} );
+	},
 	refreshExtraWidgetContents: function()
 	{
 		if( this.mode == 'vr' ) return;
