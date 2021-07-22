@@ -242,6 +242,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 {
 	SystemBase *l = (SystemBase *)m;
 	Http *response = NULL;
+	DEBUG("[UMWebRequest] url: %s\n",urlpath[ 1 ] );
 	
 	if( urlpath[ 1 ] == NULL )
 	{
@@ -2134,7 +2135,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*
-	* <HR><H2>system.library/user/activelwsist</H2>Get active user list, all users have working websocket connections
+	* <HR><H2>system.library/user/activewslist</H2>Get active user list, all users have working websocket connections
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param usersonly - if set to 'true' get unique user list
