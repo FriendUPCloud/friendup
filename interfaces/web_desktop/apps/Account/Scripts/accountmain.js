@@ -38,6 +38,8 @@ Application.run = function( msg, iface )
 		d.execute( 'getsetting', { setting: 'avatar_color' } );
 	} );
 	
+	refreshGroups();
+	
 	// Clear / autoregenerate avatar
 	ge( 'ClearAvatar' ).onclick = function( e )
 	{
@@ -69,6 +71,51 @@ Application.run = function( msg, iface )
 		}
 		m.execute( 'getsetting', { setting: 'avatar', mode: 'reset' } );
 	}
+}
+
+
+function refreshGroups()
+{
+	let m = new Library( 'system.library' );
+	m.onExecuted = function( e, d )
+	{
+		let list = null;
+		if( e != 'ok' )
+		{
+			return ge( 'GroupList' ).innerHTML = '<p>' + i18n( 'i18n_no_groups_available' ) + '</p>';
+		}
+		try
+		{
+			list = JSON.parse( d );
+		}
+		catch( e )
+		{
+			return ge( 'GroupList' ).innerHTML = '<p>' + i18n( 'i18n_failed_reading_groups' ) + '</p>';
+		}
+		let str = '<div class="List">';
+		let sw = 1;
+		for( let a in list.groups )
+		{
+			str += '<div class="sw' + sw + ' HRow">\
+				<div class="HContent60 FloatLeft PaddingSmall">' + list.groups[a].name + '</div>\
+				<div class="HContent40 FloatLeft TextRight PaddingSmall">\
+					<button type="button" class="Button IconSmall fa-edit" onclick="EditWorkgroup(\'' + list.groups[a].id + '\')">\
+					</button>\
+				</div>\
+			</div>';
+			sw = sw == 1 ? 2 : 1;
+		}
+		
+		str += '<p class="BorderTop PaddingTop MarginTop">\
+			<button type="button" class="Button IconSmall fa-plus">\
+				' + i18n( 'i18n_create_group' ) + '\
+			</button>\
+		</p>';
+		
+		str += '</div>';
+		ge( 'GroupList' ).innerHTML = str;
+	}
+	m.execute( 'group/list' );
 }
 
 var palette = [ '#1ABC9C', '#2ECC71', '#3498DB', '#9B59B6', 

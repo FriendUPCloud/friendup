@@ -40,12 +40,17 @@ i18n_back                            : Go back
 i18n_publickey                       : Public key
 
 i18n_key_information                 : Key information
-i18n_your_apps                       : Your apps
+i18n_your_apps                       : Applications
 i18n_available_storage               : Available storage
 i18n_unmounted_storage               : Disconnected storage
+i18n_groups                          : Groups
 
 i18n_no_apps                         : Status
 i18n_no_apps_desc                    : None installed.
+
+i18n_no_groups_available             : You are not member of any groups.
+i18n_failed_reading_groups           : Failed to read groups.
+i18n_create_group                    : Create new group
 
 i18n_add_storage                     : Add storage
 i18n_edit_storage                    : Edit disk
