@@ -111,6 +111,23 @@ function CancelCajaxOnId( id )
 	Friend.cajax = o;
 }
 
+function executeCAjaxQueue()
+{
+	const self = this;
+	// Reset this in this case
+	_cajax_http_connections = 0;
+	
+	// Check if there's a queue of objects waiting to run
+	if( Friend.cajax && Friend.cajax.length )
+	{
+		for( var a = 0; a < Friend.cajax.length; a++ )
+		{
+			Friend.cajax[a].send();
+		}
+		Friend.cajax = [];
+	}
+}
+
 // A simple ajax function
 // Can have a cancellable series
 cAjax = function( app )
