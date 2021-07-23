@@ -134,7 +134,8 @@ function saveGroup()
 	{
 		t.execute( 'group/update', {
 			groupname: ge( 'groupName' ).value,
-			description: ge( 'groupDescription' ).value
+			description: ge( 'groupDescription' ).value,
+			id: ge( 'groupId' ).value
 		} );
 	}	
 }
