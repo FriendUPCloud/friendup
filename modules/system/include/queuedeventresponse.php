@@ -19,12 +19,13 @@ if( $o->Load() )
 	$response = new stdClass();
 	
 	if( $args->args->response === false )
-	{
+	{		
 		$o->Status = 'rejected';
 		if( isset( $o->ActionRejected ) )
 		{
 			if( $action = json_decode( $o->ActionRejected ) )
 			{
+				$action->module = str_replace( '.', '', $action->module );
 				if( file_exists( 'modules/' . $action->module . '.php' ) )
 				{
 					$args = $action->args;
@@ -42,6 +43,7 @@ if( $o->Load() )
 		{
 			if( $action = json_decode( $o->ActionAccepted ) )
 			{
+				$action->module = str_replace( '.', '', $action->module );
 				if( file_exists( 'modules/' . $action->module . '/module.php' ) )
 				{
 					$args = $action->args;
