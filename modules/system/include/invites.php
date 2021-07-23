@@ -313,6 +313,13 @@ if( $args->command )
 				}
 			}
 			
+			if( isset( $args->args->email ) && $args->args->email )
+			{
+				$contact = new stdClass();
+				$contact->Email = $args->args->email;
+				$contact->FullName = $args->args->fullname;
+			}
+			
 			// TODO: send invite without having to register it, or just use the default invite link ...
 			
 			// So how to find out if user is online ??? and how to send notification ... using friendcore ...
@@ -392,7 +399,7 @@ if( $args->command )
 				
 				// Send a notification message if online ...
 				
-				if( $online )
+				if( $online && !isset( $args->args->email ) )
 				{
 					//$jsn = '{"message":"'.$invitelink.'","accept":"/system.library/module/?module=system&command=verifyinvite&args='.urlencode('{"hash":"'.$hash.'"}').'","decline":"/system.library/module/?module=system&command=removeinvite&args='.urlencode('{"hash":"'.$hash.'"}').'"}';
 					
