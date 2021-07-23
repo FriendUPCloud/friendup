@@ -409,8 +409,9 @@ if( $args->command )
 					$n->UserID = $usr->ID;
 					$n->TargetUserID = $contact->ID;
 					$n->TargetGroupID = 0;
+					$n->Title = 'Invitation to connect';
 					$n->Type = 'interaction';
-					$n->Date = date( 'Y-m-d' );
+					$n->Date = date( 'Y-m-d H:i' );
 					$n->Status = 'unseen';
 					$n->Message = ( $usr->FullName.' invites to you connect on Friend Chat.' );
 					$n->ActionAccepted = '/system.library/module/?module=system&command=verifyinvite&args='.urlencode('{"hash":"'.$hash.'"}');
