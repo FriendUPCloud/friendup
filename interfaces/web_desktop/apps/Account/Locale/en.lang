@@ -65,6 +65,7 @@ i18n_edit_group                      : Edit group
 i18n_can_not_invite                  : Can not send invite
 i18n_can_not_invite_desc             : You can not invite users to this group because it hasn't been saved.
 i18n_sure_remove_user_from           : Are you sure that you want to remove the user from this group?
+i18n_pending_invites                 : Ubesvarte invitasjoner
 
 i18n_add_storage                     : Add storage
 i18n_edit_storage                    : Edit disk

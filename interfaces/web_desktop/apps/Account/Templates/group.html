@@ -22,6 +22,7 @@
 			</div>
 		</div>
 		<div class="HRow BorderBottom BorderTop">
+			<div id="Pending"></div>
 			<p>
 				<strong>{i18n_group_members}:</strong>
 			</p>
@@ -29,7 +30,7 @@
 		</div>
 		<div class="HRow">
 			<p>
-				<strong>{i18n_find_users}:</strong> - <input type="text" id="findUsers" value="" placeholder="John Doe..."/>
+				<strong>{i18n_find_users}:</strong> - <input type="text" id="findUsers" value="" onkeyup="searchUser(this.value)" placeholder="John Doe..."/>
 			</p>
 			<div id="Usersearch"></div>
 		</div>

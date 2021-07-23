@@ -96,12 +96,23 @@ function refreshGroups()
 		let sw = 1;
 		for( let a in list.groups )
 		{
+			// TODO: Make sure we can get our descriptions!
+			if( !list.groups[a].description )
+				list.groups[a].description = '';
 			str += '<div class="sw' + sw + ' HRow">\
 				<div class="HContent60 FloatLeft PaddingSmall">' + list.groups[a].name + '</div>\
 				<div class="HContent40 FloatLeft TextRight PaddingSmall">\
 					<button type="button" class="Button IconSmall fa-edit NoText" title="' + i18n( 'i18n_edit_group' ) + '" onclick="editGroup(\'' + list.groups[a].ID + '\')"></button>\
 				</div>\
 			</div>';
+			if( list.groups[a].description )
+			{
+				str += '<div class="sw' + sw + ' HRow BorderTop">\
+					<div class="HContent100 Padding FloatLeft">\
+						' + list.groups[a].description.split( "\n" ).join( '<br/>' ) + '\
+					</div>\
+				</div>';
+			}
 			sw = sw == 1 ? 2 : 1;
 		}
 		

@@ -14,11 +14,19 @@ global $SqlDatabase, $Logger, $User;
 
 // TODO: For scaling, allow search parameters!
 
+$ecpt = '';
 if( isset( $args->args->except ) )
 {
 	foreach( $args->args->except as $k=>$v )
 		$args->args->except[$k] = intval( $v, 10 );
 	$ecpt = "\n\t\t" . 'AND u.ID NOT IN ( ' . implode( ', ', $args->args->except ) . ')' . "\n";
+}
+
+$keyz = '';
+if( isset( $args->args->keywords ) )
+{
+	$args->args->keywords = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->keywords );
+	$keyz = "\n\t\t" . 'AND ( u.Name LIKE ( "%' . $args->args->keywords . '%" ) OR u.Fullname LIKE "%' . $args->args->keywords . '%" )' . "\n";
 }
 
 $query =  '
@@ -34,7 +42,7 @@ $query =  '
 		mygroup.UserGroupID =   theirgroup.UserGroupID AND
 		u.ID                != ' . $User->ID . ' AND
 		theyg.ID            =   theirgroup.UserGroupID AND
-		myg.ID              =   mygroup.UserGroupID' . $ecpt . '
+		myg.ID              =   mygroup.UserGroupID' . $ecpt . $keyz . '
 	GROUP BY u.ID
 ';
 
@@ -54,7 +62,7 @@ if( isset( $args->args->groupId ) )
 			theygroup.UserGroupID = \'' . intval( $args->args->groupId, 10 ) . '\' AND
 			mygroup.UserGroupID = theygroup.UserGroupID AND
 			mygroup.UserID = \'' . $User->ID . '\' AND
-			u.ID != \'' . $User->ID . '\'' . $ecpt . '
+			u.ID != \'' . $User->ID . '\'' . $ecpt . $keyz . '
 		GROUP BY u.ID
 	';
 }
