@@ -61,6 +61,7 @@ i18n_no_users_connected_to_group     : No users are connected to group.
 i18n_remove_from_group               : Remove from group
 i18n_could_not_save_group            : Could not save group
 i18n_an_error_occured_group_save     : An error occured when saving your group. Please try again.
+i18n_edit_group                      : Edit group
 
 i18n_add_storage                     : Add storage
 i18n_edit_storage                    : Edit disk

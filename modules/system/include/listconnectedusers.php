@@ -39,8 +39,11 @@ $query =  '
 ';
 
 // Get members of a group I am connected to
-if( isset( $args->args->groupid ) )
+if( isset( $args->args->groupId ) )
 {
+	if( $args->args->groupId == '0' )
+		die( 'fail<!--separate-->' );
+		
 	$query =  '
 		SELECT 
 			u.ID, u.Name, u.Fullname, u.Email 
@@ -48,7 +51,7 @@ if( isset( $args->args->groupid ) )
 			FUser u, FUserToGroup mygroup, FUserToGroup theygroup
 		WHERE
 			u.ID = theygroup.UserID AND
-			theygroup.UserGroupID = \'' . intval( $args->args->groupid, 10 ) . '\' AND
+			theygroup.UserGroupID = \'' . intval( $args->args->groupId, 10 ) . '\' AND
 			mygroup.UserGroupID = theygroup.UserGroupID AND
 			mygroup.UserID = \'' . $User->ID . '\' AND
 			u.ID != \'' . $User->ID . '\'' . $ecpt . '

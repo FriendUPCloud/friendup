@@ -99,8 +99,7 @@ function refreshGroups()
 			str += '<div class="sw' + sw + ' HRow">\
 				<div class="HContent60 FloatLeft PaddingSmall">' + list.groups[a].name + '</div>\
 				<div class="HContent40 FloatLeft TextRight PaddingSmall">\
-					<button type="button" class="Button IconSmall fa-edit" onclick="EditWorkgroup(\'' + list.groups[a].id + '\')">\
-					</button>\
+					<button type="button" class="Button IconSmall fa-edit" title="' + i18n( 'i18n_edit_group' ) + '" onclick="editGroup(\'' + list.groups[a].ID + '\')"></button>\
 				</div>\
 			</div>';
 			sw = sw == 1 ? 2 : 1;
@@ -138,6 +137,39 @@ function createGroup()
 		v.setContent( d );
 	}
 	f.load();
+}
+
+function editGroup( id )
+{
+	let m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		if( e != 'ok' )
+		{
+			return;
+		}
+		let gr = JSON.parse( d );
+		
+		let v = new View( {
+			title: i18n( 'i18n_edit_group' ),
+			width: 500,
+			height: 500
+		} );
+		
+		let f = new File( 'Progdir:Templates/group.html' );
+		f.replacements = {
+			ID: id,
+			Description: gr.Description ? gr.Description : '',
+			Name: gr.Name
+		};
+		f.i18n();
+		f.onLoad = function( d )
+		{
+			v.setContent( d );
+		}
+		f.load();
+	}
+	m.execute( 'workgroupget', { id: id } );
 }
 
 
@@ -253,6 +285,9 @@ Application.receiveMessage = function( msg )
 	
 	switch( msg.command )
 	{
+		case 'refreshgroups':
+			refreshGroups();
+			break;
 		case 'addstorage':
 			addStorage( 'quitonclose' );
 			break;

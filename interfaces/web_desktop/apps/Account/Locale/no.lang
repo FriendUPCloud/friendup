@@ -61,6 +61,7 @@ i18n_no_users_connected_to_group     : Ingen brukere er tilknyttet gruppe.
 i18n_remove_from_group               : Fjern fra gruppe
 i18n_could_not_save_group            : Kunne ikke lagre gruppe
 i18n_an_error_occured_group_save     : En feil oppsto mens du prøvde å lagre gruppen. Vennligst prøv igjen.
+i18n_edit_group                      : Endre gruppen
 
 i18n_add_storage                     : Mer lagringsplass
 i18n_edit_storage                    : Endre disk

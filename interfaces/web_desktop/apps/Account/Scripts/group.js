@@ -38,18 +38,22 @@ function listConnectedUsers( limit, pos )
 		
 		ge( 'Usersearch' ).innerHTML = str;
 	}
-	m.execute( 'listconnectedusers', { limit: 11, except: groupUsersList } );
+	let o = { limit: 11 };
+	if( groupUsersList.length > 0 )
+		o.except = groupUsersList;
+	m.execute( 'listconnectedusers', o );
 }
 
 function groupUsers( callback )
 {
-	let gid = ge( 'groupId' ).value;
+	let gid = ge( 'groupId' ).value ? ge( 'groupId' ).value : '0';
 	
 	let m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
 		if( e != 'ok' )
 		{
+			if( callback ) callback();
 			return ge( 'Userlist' ).innerHTML = '<p>' + i18n( 'i18n_no_users_connected_to_group' ) + '</p>';
 		}
 		let list = JSON.parse( d );
@@ -112,6 +116,7 @@ function saveGroup()
 			Alert( i18n( 'i18n_could_not_save_group' ), i18n( 'i18n_an_error_occured_group_save' ) );
 			return;
 		}
+		Application.sendMessage( { command: 'refreshgroups' } );
 		CloseView();
 	}
 	
@@ -127,7 +132,9 @@ function saveGroup()
 	// Update
 	else
 	{
-	}
-	
-	
+		t.execute( 'group/update', {
+			groupname: ge( 'groupName' ).value,
+			description: ge( 'groupDescription' ).value
+		} );
+	}	
 }

@@ -186,6 +186,9 @@ Application.receiveMessage = function( msg )
 	
 	switch( msg.command )
 	{
+		case 'refreshgroups':
+			Application.mainView.sendMessage( { command: 'refreshgroups' } );
+			break;
 		case 'publickey': 
 			Application.sendMessage( { type: 'encryption', command: 'publickey', args: { encoded: false } }, function( res, data )
 			{
