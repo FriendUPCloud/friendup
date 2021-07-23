@@ -40,13 +40,17 @@ i18n_back                            : Tilbake
 i18n_publickey                       : Fellesnøkkel
 
 i18n_key_information                 : Nøkkel informasjon
-
+i18n_your_apps                       : Dine applikasjoner
 i18n_available_storage               : Tilgjengelige disker
 i18n_unmounted_storage               : Frakoblede disker
-i18n_your_apps                       : Dine applikasjoner
+i18n_groups                          : Dine grupper
 
 i18n_no_apps                         : Status
 i18n_no_apps_desc                    : Ingen installert.
+
+i18n_no_groups_available             : Du er ikke medlem av noen grupper.
+i18n_failed_reading_groups           : Kunne ikke lese gruppene.
+i18n_create_group                    : Ny gruppe
 
 i18n_add_storage                     : Mer lagringsplass
 i18n_edit_storage                    : Endre disk
