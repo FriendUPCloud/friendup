@@ -51,6 +51,9 @@ function listConnectedUsers( limit, pos, keyw )
 		if( e != 'ok' ) { ge( 'Pending' ).innerHTML = '' };
 		
 		let list = JSON.parse( d );
+		
+		console.log( 'TADA: ', list );
+		
 		let str = '<p><strong>' + i18n( 'i18n_pending_invites' ) + '</strong></p>';
 		str += '<div class="List">';
 		let sw = 1;
@@ -65,7 +68,7 @@ function listConnectedUsers( limit, pos, keyw )
 		}
 		str += '</div><hr class="Divider"/>';
 		
-		ge( 'Usersearch' ).innerHTML = str;
+		ge( 'Pending' ).innerHTML = str;
 	}
 	p.execute( 'getinvites', { groupId: gid } );
 }
