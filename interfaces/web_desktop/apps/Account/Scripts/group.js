@@ -48,7 +48,7 @@ function listConnectedUsers( limit, pos, keyw )
 	let p = new Module( 'system' );
 	p.onExecuted = function( e, d )
 	{
-		if( e != 'ok' ) { ge( 'Pending' ).innerHTML = '';
+		if( e != 'ok' ) { ge( 'Pending' ).innerHTML = '' };
 		
 		let list = JSON.parse( d );
 		let str = '<p><strong>' + i18n( 'i18n_pending_invites' ) + '</strong></p>';
