@@ -418,8 +418,8 @@ if( $args->command )
 					$n->Date = date( 'Y-m-d H:i' );
 					$n->Status = 'unseen';
 					$n->Message = ( $usr->FullName.' invites to you connect on Friend Chat.' );
-					$n->ActionAccepted = '{"module":"system/module.php","command":"verifyinvite","args":{"hash":"'.$hash.'"},"skip":"true"}';
-					$n->ActionRejected = '{"module":"system/module.php","command":"removeinvite","args":{"hash":"'.$hash.'"},"skip":"true"}';
+					$n->ActionAccepted = '{"module":"system/module","command":"verifyinvite","args":{"hash":"'.$hash.'"},"skip":"true"}';
+					$n->ActionRejected = '{"module":"system/module","command":"removeinvite","args":{"hash":"'.$hash.'"},"skip":"true"}';
 					if( $n->Load() )
 					{
 						die( 'fail<!--separate-->notification event already exists ...' );
