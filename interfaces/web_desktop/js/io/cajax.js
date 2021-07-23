@@ -114,8 +114,20 @@ function CancelCajaxOnId( id )
 function executeCAjaxQueue()
 {
 	const self = this;
-	// Reset this in this case
-	_cajax_http_connections = 0;
+	console.log( 'executeCAjaxQueue', {
+		queue   : Friend.cajax,
+		timeout : _cajax_queue_execute_timeout,
+		
+	});
+	
+	if ( null != _cajax_queue_execute_timeout )
+	{
+		_cajax_queue_execute_waiting = true;
+		return;
+	}
+	
+	_cajax_queue_execute_timeout = window.setTimeout( unlockAndRetryMaybe, 2000 );
+	
 	
 	// Check if there's a queue of objects waiting to run
 	if( Friend.cajax && Friend.cajax.length )
@@ -125,6 +137,17 @@ function executeCAjaxQueue()
 			Friend.cajax[a].send();
 		}
 		Friend.cajax = [];
+	}
+	
+	function unlockAndRetryMaybe()
+	{
+		console.log( 'clearing kju lock' );
+		_cajax_queue_execute_timeout = null;
+		if ( !_cajax_queue_execute_waiting )
+			return;
+		
+		_cajax_queue_execute_waiting = false;
+		executeCAjaxQueue();
 	}
 }
 
@@ -570,7 +593,13 @@ cAjax.prototype.responseText = function()
 // Send ajax query
 cAjax.prototype.send = function( data, callback )
 {
+	const self = this;
 	RemoveFromCajaxQueue( this );
+	
+	if( window.Workspace )
+		self.addVar( 'sessionid', Workspace.sessionId );
+	if( window.Application && Application.authId )
+		self.addVar( 'authid', Application.authId );
 	
 	// Maintain authid
 	if( this.application )
@@ -595,8 +624,6 @@ cAjax.prototype.send = function( data, callback )
 			CleanAjaxCalls();
 		}
 	}
-
-	let self = this;
 	
 	if( self.life )
 	{

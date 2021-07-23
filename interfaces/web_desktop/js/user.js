@@ -352,6 +352,10 @@ Friend.User = {
 		if( session )
 			Workspace.sessionId = session;
 		
+		
+		// Reset this in this case
+		_cajax_http_connections = 0;
+		
 		executeCAjaxQueue();
 		
 	},
