@@ -44,6 +44,30 @@ function listConnectedUsers( limit, pos, keyw )
 	if( keyw )
 		o.keywords = keyw;
 	m.execute( 'listconnectedusers', o );
+	
+	let p = new Module( 'system' );
+	p.onExecuted = function( e, d )
+	{
+		if( e != 'ok' ) { ge( 'Pending' ).innerHTML = '';
+		
+		let list = JSON.parse( d );
+		let str = '<p><strong>' + i18n( 'i18n_pending_invites' ) + '</strong></p>';
+		str += '<div class="List">';
+		let sw = 1;
+		for( let a = 0; a < 10 && a < list.length; a++ )
+		{
+			str += '<div class="HRow sw' + sw + '">\
+				<div class="HContent100 FloatLeft Ellipsis PaddingSmall">\
+					' + list[a].Fullname + '\
+				</div>\
+			</div>';
+			sw = sw == 1 ? 2 : 1;
+		}
+		str += '</div><hr class="Divider"/>';
+		
+		ge( 'Usersearch' ).innerHTML = str;
+	}
+	p.execute( 'getinvites', { groupId: gid } );
 }
 
 function searchUser( keyw )
