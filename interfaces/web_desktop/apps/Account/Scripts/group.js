@@ -10,6 +10,9 @@ function listConnectedUsers( limit, pos, keyw )
 	if( !limit ) limit = 11;
 	if( !pos ) pos = 0;
 	
+	if( !keyw && ge( 'findUsers' ).value.length > 0 )
+		keyw = ge( 'findUsers' ).value;
+	
 	let gid = ge( 'groupId' ).value;
 	
 	let m = new Module( 'system' );
