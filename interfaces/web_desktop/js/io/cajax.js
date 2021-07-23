@@ -596,10 +596,12 @@ cAjax.prototype.send = function( data, callback )
 	const self = this;
 	RemoveFromCajaxQueue( this );
 	
+	/*
 	if( window.Workspace )
 		self.addVar( 'sessionid', Workspace.sessionId );
 	if( window.Application && Application.authId )
 		self.addVar( 'authid', Application.authId );
+	*/
 	
 	// Maintain authid
 	if( this.application )
