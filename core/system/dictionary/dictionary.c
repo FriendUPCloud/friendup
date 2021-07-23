@@ -104,7 +104,8 @@ static const char *DefaultDictionaryMessages[] =
 "Cannot remove group with 'Level' type",
 "Cannot edit or remove UserGroup because its locked",
 "IP parameter is missing or it comes in wrong format",
-"AuthID is missing"
+"AuthID is missing",
+"Please set proper status value"
 };
 
 /**

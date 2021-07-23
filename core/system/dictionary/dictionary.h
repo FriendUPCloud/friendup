@@ -164,6 +164,7 @@ enum {
 	DICT_CANNOT_EDIT_OR_REMOVE_USER_GROUP_LOCKED,
 	DICT_IP_MISSING_OR_WRONG_FORMAT,
 	DICT_AUTHID_IS_MISSING,
+	DICT_SET_PROPER_STATUS,
 	DICT_MAX
 };
 /*
@@ -270,6 +271,8 @@ INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) 
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'IP parameter is missing or it comes in wrong format', 'ENG', '78');
 
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'AuthID is missing', 'ENG', '79');
+
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Please set proper status value', 'ENG', '80');
 */
 
 // User status
