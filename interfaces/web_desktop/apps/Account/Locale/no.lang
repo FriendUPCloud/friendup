@@ -51,6 +51,10 @@ i18n_no_apps_desc                    : Ingen installert.
 i18n_no_groups_available             : Du er ikke medlem av noen grupper.
 i18n_failed_reading_groups           : Kunne ikke lese gruppene.
 i18n_create_group                    : Ny gruppe
+i18n_name                            : Navn
+i18n_group_description               : Gruppebeskrivelse
+i18n_find_users                      : Finn brukere
+i18n_group_members                   : Gruppemedlemmer
 
 i18n_add_storage                     : Mer lagringsplass
 i18n_edit_storage                    : Endre disk

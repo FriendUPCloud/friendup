@@ -1,7 +1,48 @@
-<div class="ContentFull">
+
+<div class="ContentFull LayoutButtonbarBottom">
+	<div class="VContentTop Padding ScrollArea SmoothScrolling">
+		<div class="HRow">
+			<div class="HContent30 FloatLeft">
+				<p class="Layout"><strong>{i18n_name}:</strong></p>
+			</div>
+			<div class="HContent70 FloatLeft">
+				<p class="Layout">
+					<input type="text" id="groupName" class="FullWidth InputHeight" value="{Name}"/>
+				</p>
+			</div>
+		</div>
+		<div class="HRow">
+			<div class="HContent30 FloatLeft">
+				<p class="Layout"><strong>{i18n_group_description}:</strong></p>
+			</div>
+			<div class="HContent70 FloatLeft">
+				<p class="Layout">
+					<textarea id="groupDescription" class="FullWidth" size="8">{Description}</textarea>
+				</p>
+			</div>
+		</div>
+		<div class="HRow BorderBottom BorderTop">
+			<p>
+				<strong>{i18n_group_members}:</strong>
+			</p>
+			<div id="Userlist"></div>
+		</div>
+		<div class="HRow">
+			<p>
+				<strong>{i18n_find_users}:</strong> - <input type="text" id="findUsers" value="" placeholder="John Doe..."/>
+			</p>
+			<div id="Usersearch"></div>
+		</div>
+	</div>
+	<div class="VContentBottom Padding BackgroundDefault BorderTop">
+		<button type="button" class="Button IconSmall fa-save FloatRight">
+			{i18n_save}
+		</button>
+		<button type="button" class="Button IconSmall fa-remove FloatLeft">
+			{i18n_cancel}
+		</button>
+	</div>
 </div>
-<div class="BottomBar Padding">
-	<button type="button" class="Button IconSmall fa-remove">
-		{i18n_cancel}
-	</button>
-</div>
+
+<link rel="stylesheet" href="Progdir:Css/group.css"/>
+<script src="Progdir:Scripts/group.js"></script>
