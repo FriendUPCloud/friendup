@@ -1,6 +1,0 @@
-Application.run = function()
-{
-}
-
-
-
