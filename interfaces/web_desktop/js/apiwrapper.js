@@ -3763,8 +3763,8 @@ function apiWrapper( event, force )
 						}
 						break;
 					case 'librarycall':
-						var j = new cAjax();
-						j.application = app;
+						var j = new cAjax( app );
+						//j.application = app;
 						var ex = '';
 						if( msg.func )
 						{
@@ -3800,8 +3800,10 @@ function apiWrapper( event, force )
 							}
 						}
 						j.open( 'post', '/' + msg.library + '/' + ex, true, true );
+						/*
 						if( !msg.args || ( msg.args && !msg.args.skipsession ) )
 							j.addVar( 'sessionid', Workspace.sessionId );
+						*/
 						j.onload = function( rc, dt )
 						{
 							var nmsg = msg;
@@ -4009,32 +4011,40 @@ function apiWrapper( event, force )
 						};
 						break;
 					case 'renewauthid':
-						const appName = app.applicationName;
+						const appId = app.applicationId;
 						const oldAuthId = app.authId;
+						const cbId = msg.callback;
+						msg.callback = null;
 						
-						console.log( 'apiwrapper.renewauthid', {
+						console.log( 'apiwrapper renewauthid', {
 							msg     : msg,
 							app     : app,
-							aName   : appName,
+							aId     : appId,
 							oAuthId : oldAuthId,
+							Friend  : Friend,
 						});
 						
-						Friend.renewAuthId( appName, oldAuthId )
-							.then( aIdBack )
+						Friend.renewAuthId( appId )
+							.then( authIdBack )
 							.catch( error );
 						
 						function error( err ) {
 							console.log( 'apiwrapper renewauthid failed to fetch a new one', err );
 						}
 						
-						function aIdBack( res, data ) {
-							console.log( 'apiwrapper renewauthid FC res', [ res, data ]);
+						function authIdBack( authId ) {
+							console.log( 'apiwrapper renewauthid FC res', authId );
 							const res = {
-								callback : msg.callback,
-								authId   : 'sdasdasdasdas',
+								callback : cbId,
+								authId   : authId,
 							};
 							
-							app.contentWindow.postMessage( res );
+							const cw = GetContentWindowByAppMessage( app, msg );
+							if ( !cw )
+								return;
+							
+							console.log( 'apiwrapper renewauthid cw', cw );
+							cw.postMessage( JSON.stringify( res ), '*' );
 						}
 						
 						break;
@@ -4519,4 +4529,28 @@ function AddCSSByUrl( csspath, callback )
 	if( callback ){ s.onload = function() { callback(); } }
 	document.body.appendChild( s );
 	window.cssStyles[csspath] = s;
+}
+
+
+function broadcastToAppContexts( appId, msg ) {
+	console.log( 'broadcastToAppContexts', [ appId, msg ]);
+	const app = findApplication( appId );
+	if ( !app )
+		return;
+	
+	app.contentWindow.postMessage( msg, '*' );
+	viewIds = Object.keys( app.windows );
+	viewIds.forEach( vId => {
+		console.log( 'vId', vId );
+		const view = app.windows[ vId ];
+		console.log( 'view', view );
+		view.sendMessage( msg );
+		/*
+		const iframe = view.iframe;
+		console.log( 'iframe', iframe );
+		const cw = iframe.contentWindow;
+		console.log( 'contentWindow', cw );
+		*/
+		
+	});
 }

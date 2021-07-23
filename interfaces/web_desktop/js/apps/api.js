@@ -693,10 +693,12 @@ Friend.renewAuthId = async function() {
 				callback : cbId,
 			};
 			
+			console.log( 'api renewAuthId', req );
 			Application.sendMessage( req );
 			
 			function authIdBack( res, data ) {
-				console.log( 'authIdBack', [ res, data ]);
+				console.log( 'api renewAuthId authIdBack', [ res, data ]);
+				res.callback = null;
 				resolve( res.authId );
 			}
 			
@@ -854,9 +856,10 @@ function receiveEvent( event, queued )
 {
 	// TODO: Do security stuff...
 	//
+	//console.log( 'receiveEvent', [ event, queued ]);
 	if( !window.eventQueue )
 		window.eventQueue = [];
-
+	
 	let dataPacket;
 	
 	// TODO: Stop overwriting origin (security)
@@ -1920,6 +1923,16 @@ function receiveEvent( event, queued )
 			{
 				Application.windows[dataPacket.viewId].sendMessage( dataPacket );
 			}
+			break;
+		case 'setauthid':
+			console.log( 'api setauthid', {
+				event  : dataPacket,
+				appObj : Application,
+			});
+			if ( !dataPacket.data )
+				return;
+			
+			Application.authId = dataPacket.data.authId;
 			break;
 		// Received quit signal!
 		case 'quit':
@@ -6375,11 +6388,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				function runNow()
 				{
 					if( window.applicationStarted ) return;
-					console.log( 'runNow', Application.authId );
+					window.applicationStarted = true;
 					if ( !Application.authId )
 						Friend.renewAuthId();
-					
-					window.applicationStarted = true;
 					if( packet.state ) Application.sessionStateSet( packet.state );
 					for( let a = 0; a < activat.length; a++ )
 						ExecuteScript( activat[a] );
@@ -8766,7 +8777,7 @@ GuiDesklet = function()
 					if( callback ) callback( { response: false, message: 'Unexpected error occured.' } );
 				}
 			}
-			j.send ();
+			j.send();
 		}
 		
 		// end of uploadPastedFile

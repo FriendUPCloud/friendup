@@ -12,6 +12,9 @@
 var FriendLibrary = function ( library, encryption )
 {
 	// Get cleaned library
+	if ( null == library )
+		library = 'system.library';
+	
 	this.encryption = encryption ? true : false;
 	this.library = library.split( '.library' ).join ( '' ).toLowerCase();
 	this.args = false;
@@ -129,57 +132,60 @@ var FriendLibrary = function ( library, encryption )
 			}
 		}
 		
-		if( this.onExecuted )
+		if ( null == this.onExecuted )
+			this.onExecuted = () => {}
+		
+		//if( this.onExecuted )
+		//{
+		var t = this;
+		j.onload = function( rc, d )
 		{
-			var t = this;
-			j.onload = function( rc, d )
+			// First try to parse a pure JSON string
+			try
 			{
-				// First try to parse a pure JSON string
-				try
+				
+				if( t.encryption )
 				{
-					
-					if( t.encryption )
+					// If ssl is enabled decrypt the data returned by cAjax
+					if( rc && typeof( fcrypt ) != 'undefined' && typeof( Workspace ) != 'undefined' && Workspace.encryption.keys.server && Workspace.encryption.keys.client )
 					{
-						// If ssl is enabled decrypt the data returned by cAjax
-						if( rc && typeof( fcrypt ) != 'undefined' && typeof( Workspace ) != 'undefined' && Workspace.encryption.keys.server && Workspace.encryption.keys.client )
-						{
-							// TODO: This will probably not work in C code only made for js/php since decryptString is a RSA+AES combination to support large blocks of data outside of RSA limitations, make decryptRSA() support stacking of blocks split by block limit
-							//var decrypted = fcrypt.decryptString( rc, Workspace.keys.client.privatekey );
-							
-							//if( decrypted && decrypted.plaintext )
-							//{
-							//	rc = decrypted.plaintext;
-							//}
-							
-							rc = fcrypt.decryptRSA( rc, Workspace.encryption.keys.client.privatekey );
-						}
+						// TODO: This will probably not work in C code only made for js/php since decryptString is a RSA+AES combination to support large blocks of data outside of RSA limitations, make decryptRSA() support stacking of blocks split by block limit
+						//var decrypted = fcrypt.decryptString( rc, Workspace.keys.client.privatekey );
+						
+						//if( decrypted && decrypted.plaintext )
+						//{
+						//	rc = decrypted.plaintext;
+						//}
+						
+						rc = fcrypt.decryptRSA( rc, Workspace.encryption.keys.client.privatekey );
 					}
-					
-					var json = JSON.parse( rc );
-					if( json )
-					{
-						return t.onExecuted( json );
-					}
-					// No json then..
-					t.onExecuted( rc, d );
-					t.destroy();
 				}
-				// No, it's not that
-				catch( e )
+				
+				var json = JSON.parse( rc );
+				if( json )
 				{
-					// Used for localization of responses etc
-					if( d && d.length && t.replacements )
-					{
-						for( var z in t.replacements )
-						{
-							d = d.split ( '{'+z+'}' ).join ( t.replacements[z] );
-						}
-					}
-					t.onExecuted( rc, d );
-					t.destroy();
+					return t.onExecuted( json );
 				}
+				// No json then..
+				t.onExecuted( rc, d );
+				t.destroy();
+			}
+			// No, it's not that
+			catch( e )
+			{
+				// Used for localization of responses etc
+				if( d && d.length && t.replacements )
+				{
+					for( var z in t.replacements )
+					{
+						d = d.split ( '{'+z+'}' ).join ( t.replacements[z] );
+					}
+				}
+				t.onExecuted( rc, d );
+				t.destroy();
 			}
 		}
+		//}
 		
 		j.send ( data );
 	}

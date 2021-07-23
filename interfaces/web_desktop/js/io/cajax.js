@@ -113,9 +113,10 @@ function CancelCajaxOnId( id )
 
 // A simple ajax function
 // Can have a cancellable series
-cAjax = function()
+cAjax = function( app )
 {
 	let self = this;
+	self.application = app;
 	
 	_cajax_process_count++;
 	
@@ -167,8 +168,12 @@ cAjax = function()
 	let jax = this;
 	this.proxy.onreadystatechange = function()
 	{
+		if ( this.readyState != 4 )
+			return;
+		
 		// We're finished handshaking
-		if( this.readyState == 4 && this.status == 200  )
+		
+		if( this.status == 200  )
 		{
 			if( this.responseType == 'arraybuffer' )
 			{
@@ -304,17 +309,21 @@ cAjax = function()
 			jax.destroy();
 		}
 		// Something went wrong!
-		else if( this.readyState == 4 && ( this.status == 500 || this.status == 0 || this.status == 404 ) )
-		{
-			// tell our caller...
-			if( jax.onload ) 
-			{
-				jax.onload( 'error', '' );
-			}
-			jax.destroy();
-		}
 		else
 		{
+			console.log( 'cajax, request error', this );
+			if( this.status == 500 
+				|| this.status == 0 
+				|| this.status == 404 
+			)
+			{
+				// tell our caller...
+				if( jax.onload ) 
+				{
+					jax.onload( 'error', '' );
+				}
+				jax.destroy();
+			}
 		}
 	}
 }
@@ -333,7 +342,8 @@ cAjax.prototype.destroySilent = function()
 
 	if( self.life ) clearTimeout( self.life );
 	self.life = null;
-
+	
+	self.application = null;
 	self.vars = null;
 	self.mode = null;
 	self.url = null;
@@ -421,6 +431,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		url.indexOf( '/file/write' ) < 0
 	)
 	{	
+		console.log( 'cajax.open websockets' );
 		this.mode = 'websocket';
 		this.url = url;
 		this.hasReturnCode = hasReturnCode;
@@ -433,6 +444,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		url = AjaxUrl( url );
 	}
 	
+	console.log( 'cajax.open not websocket ??', this.lastOptions );
 	if( this.lastOptions && !method && !url && !syncing && !hasReturnCode )
 	{
 		this.proxy.hasReturnCode = this.lastOptions.hasReturnCode;
@@ -546,10 +558,13 @@ cAjax.prototype.send = function( data, callback )
 	// Maintain authid
 	if( this.application )
 	{
+		console.log( 'cAjax app call', {
+			app    : this.application,
+			authId : this.application.authId,
+		});
 		this.deleteVar( 'authid' );
-		this.addVar( 'authid', window.Application ? window.Application.authId : this.application.authId );
+		this.addVar( 'authid', this.application.authId );
 	}
-	
 	
 	// Make sure we don't f this up!
 	if( this.onload && !this.onloadAfter )
@@ -925,6 +940,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	// Respond to old expired sessions!
 	else if( self.returnCode == 'fail' )
 	{
+		console.log( 'handleWebSocketResponse fail', self.returnData );
 		try
 		{
 			let r = JSON.parse( self.returnData );
