@@ -107,7 +107,7 @@ function refreshGroups()
 		}
 		
 		str += '<p class="BorderTop PaddingTop MarginTop">\
-			<button type="button" class="Button IconSmall fa-plus">\
+			<button type="button" class="Button IconSmall fa-plus" onclick="createGroup()">\
 				' + i18n( 'i18n_create_group' ) + '\
 			</button>\
 		</p>';
@@ -117,6 +117,24 @@ function refreshGroups()
 	}
 	m.execute( 'group/list' );
 }
+
+function createGroup()
+{
+	let v = new View( {
+		title: i18n( 'i18n_create_group' ),
+		width: 500,
+		height: 500
+	} );
+	
+	let f = new File( 'Progdir:Templates/group.html' );
+	f.i18n();
+	f.onLoad = function( d )
+	{
+		v.setContent( d );
+	}
+	f.load();
+}
+
 
 var palette = [ '#1ABC9C', '#2ECC71', '#3498DB', '#9B59B6', 
 				'#34495E', '#E67E22', '#E74C3C', '#95A5A6' ];
