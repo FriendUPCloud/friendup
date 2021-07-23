@@ -5,7 +5,7 @@ Application.run = function()
 
 let groupUsersList = [];
 
-function listConnectedUsers( limit, pos )
+function listConnectedUsers( limit, pos, keyw )
 {
 	if( !limit ) limit = 11;
 	if( !pos ) pos = 0;
@@ -41,7 +41,14 @@ function listConnectedUsers( limit, pos )
 	let o = { limit: 11 };
 	if( groupUsersList.length > 0 )
 		o.except = groupUsersList;
+	if( keyw )
+		o.keywords = keyw;
 	m.execute( 'listconnectedusers', o );
+}
+
+function searchUser( keyw )
+{
+	listConnectedUsers( null, null, keyw );
 }
 
 function groupUsers( callback )
