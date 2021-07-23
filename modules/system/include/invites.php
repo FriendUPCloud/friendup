@@ -88,20 +88,22 @@ if( $args->command )
 				{
 					die( 'ok<!--separate-->{"Response":"Invite link found","ID":"' . $f->ID . '","Hash":"' . $f->Hash . '","Link":"' . buildUrl( $f->Hash, $Conf, $ConfShort ) . '","Expire":"' . $f->Expire . '"}' );
 				}
-			
-				$f->UserID = $User->ID;
-			
-				do
+				else
 				{
-					$hash = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) );
-					$f->Hash = substr( $hash, 0, 8 );
-				}
-				while( $f->Load() );
+					$f->UserID = $User->ID;
 			
-				$f->DateCreated = strtotime( date( 'Y-m-d H:i:s' ) );
-				$f->Save();
+					do
+					{
+						$hash = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) );
+						$f->Hash = substr( $hash, 0, 8 );
+					}
+					while( $f->Load() );
+			
+					$f->DateCreated = strtotime( date( 'Y-m-d H:i:s' ) );
+					$f->Save();
+				}
 				
-				if( $f->ID > 0 )
+				if( $f->ID > 0)
 				{
 					die( 'ok<!--separate-->{"Response":"Invite link successfully created","ID":"' . $f->ID . '","Hash":"' . $f->Hash . '","Link":"' . buildUrl( $f->Hash, $Conf, $ConfShort ) . '","Expire":"' . $f->Expire . '"}' );
 				}
@@ -165,18 +167,18 @@ if( $args->command )
 			{
 				if( $SqlDatabase->Query( 'DELETE FROM FTinyUrl WHERE ID IN (' . $args->args->ids . ') ' ) )
 				{
-					die( 'ok<!--separate-->{"Response":"Invite link with ids: ' . $args->args->ids . ' was successfully deleted"}' );
+					if( !$args->skip ) die( 'ok<!--separate-->{"Response":"Invite link with ids: ' . $args->args->ids . ' was successfully deleted"}' );
 				}
 			}
 			else if( isset( $args->args->hash ) && $args->args->hash )
 			{
 				if( $SqlDatabase->Query( 'DELETE FROM FTinyUrl WHERE Hash = "' . $args->args->hash . '"' ) )
 				{
-					die( 'ok<!--separate-->{"Response":"Invite link with hash: ' . $args->args->hash . ' was successfully deleted"}' );
+					if( !$args->skip ) die( 'ok<!--separate-->{"Response":"Invite link with hash: ' . $args->args->hash . ' was successfully deleted"}' );
 				}
 			}
 			
-			die( 'fail<!--separate-->{"Response":"Could not delete invite link(s)"}' );
+			if( !$args->skip ) die( 'fail<!--separate-->{"Response":"Could not delete invite link(s)"}' );
 			
 			break;
 		
@@ -228,7 +230,7 @@ if( $args->command )
 											'contactids' => json_encode( [ $relation->ContactUniqueID ] )
 										] ) )
 										{
-											die( $result );
+											if( !$args->skip ) die( $result );
 										}
 										else
 										{
@@ -266,7 +268,7 @@ if( $args->command )
 				}
 			}
 			
-			die( 'fail<!--separate-->{"Response":"Could not verify inviteHash and add relation."}' );
+			if( !$args->skip ) die( 'fail<!--separate-->{"Response":"Could not verify inviteHash and add relation."}' );
 			
 			break;
 		
@@ -405,16 +407,19 @@ if( $args->command )
 					//	die( 'Message sent? ' . $res2 );
 					//}
 					
+					
+					
 					$n = new dbIO( 'FQueuedEvent' );
 					$n->UserID = $usr->ID;
 					$n->TargetUserID = $contact->ID;
 					$n->TargetGroupID = 0;
+					$n->Title = 'Invitation to connect';
 					$n->Type = 'interaction';
-					$n->Date = date( 'Y-m-d' );
+					$n->Date = date( 'Y-m-d H:i' );
 					$n->Status = 'unseen';
 					$n->Message = ( $usr->FullName.' invites to you connect on Friend Chat.' );
-					$n->ActionAccepted = '/system.library/module/?module=system&command=verifyinvite&args='.urlencode('{"hash":"'.$hash.'"}');
-					$n->ActionRejected = '/system.library/module/?module=system&command=removeinvite&args='.urlencode('{"hash":"'.$hash.'"}');
+					$n->ActionAccepted = '{"module":"system/module","command":"verifyinvite","args":{"hash":"'.$hash.'"},"skip":"true"}';
+					$n->ActionRejected = '{"module":"system/module","command":"removeinvite","args":{"hash":"'.$hash.'"},"skip":"true"}';
 					if( $n->Load() )
 					{
 						die( 'fail<!--separate-->notification event already exists ...' );
@@ -503,7 +508,7 @@ if( $args->command )
 	
 }
 
-die( 'fail<!--separate-->{"Response":"Fail! command not recognized ..."}' );
+if( !$args->skip ) die( 'fail<!--separate-->{"Response":"Fail! command not recognized ..."}' );
 
 function buildURL( $hash, $conf, $confshort )
 {
