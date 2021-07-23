@@ -103,7 +103,8 @@ static const char *DefaultDictionaryMessages[] =
 "USB Remote device cannot be removed",
 "Cannot remove group with 'Level' type",
 "Cannot edit or remove UserGroup because its locked",
-"IP parameter is missing or it comes in wrong format"
+"IP parameter is missing or it comes in wrong format",
+"AuthID is missing"
 };
 
 /**

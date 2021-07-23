@@ -554,17 +554,9 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			return response;
 		}
 		// Ah, we got our session
-		if( sessIDElement )
-		{
-			char tmp[ DEFAULT_SESSION_ID_SIZE ];
-			UrlDecode( tmp, (char *)sessIDElement->hme_Data );
-			
-			snprintf( sessionid, DEFAULT_SESSION_ID_SIZE, "%s", tmp );
-			
-			DEBUG( "[SysWebRequest] Finding sessionid %s\n", sessionid );
-		}
+		
 		// Get it by authid
-		else if( authIDElement != NULL )
+		if( authIDElement != NULL )
 		{
 			char *authID = UrlDecodeToMem( ( char *)authIDElement->hme_Data );
 			char *assID = NULL;
@@ -647,7 +639,33 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				}
 				FFree( authID );
 			} //authID
+			else
+			{
+				struct TagItem tags[] = {
+					{ HTTP_HEADER_CONTENT_TYPE,(FULONG)StringDuplicate( "text/html" ) },
+					{ HTTP_HEADER_CONNECTION,(FULONG)StringDuplicate( "close" ) },
+					{ TAG_DONE, TAG_DONE }
+				};
+
+				response = HttpNewSimple( HTTP_200_OK, tags );
+			
+				char buffer[ 256 ];
+				snprintf( buffer, sizeof( buffer ), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_SESSIONID_AUTH_MISSING] , DICT_SESSIONID_AUTH_MISSING );
+				HttpAddTextContent( response, buffer );
+				FERROR( "login function miss parameter sessionid or authid\n" );
+				FFree( sessionid );
+				return response;
+			}
 		}	//authIDElement
+		else if( sessIDElement )
+		{
+			char tmp[ DEFAULT_SESSION_ID_SIZE ];
+			UrlDecode( tmp, (char *)sessIDElement->hme_Data );
+			
+			snprintf( sessionid, DEFAULT_SESSION_ID_SIZE, "%s", tmp );
+			
+			DEBUG( "[SysWebRequest] Finding sessionid %s\n", sessionid );
+		}
 		
 		// access through server token
 		else if( serverTokenElement != NULL )

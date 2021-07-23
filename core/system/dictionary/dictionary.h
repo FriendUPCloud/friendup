@@ -163,6 +163,7 @@ enum {
 	DICT_CANNOT_REMOVE_GROUP_WITH_LEVEL_TYPE,
 	DICT_CANNOT_EDIT_OR_REMOVE_USER_GROUP_LOCKED,
 	DICT_IP_MISSING_OR_WRONG_FORMAT,
+	DICT_AUTHID_IS_MISSING,
 	DICT_MAX
 };
 /*
@@ -267,6 +268,8 @@ INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) 
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot edit or remove UserGroup because its locked', 'ENG', '77');
 
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'IP parameter is missing or it comes in wrong format', 'ENG', '78');
+
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'AuthID is missing', 'ENG', '79');
 */
 
 // User status

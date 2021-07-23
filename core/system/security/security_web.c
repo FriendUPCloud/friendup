@@ -232,9 +232,9 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	* <HR><H2>system.library/security/createhost</H2>Create secured host entry
 	*
 	* @param sessionid - (required) session id of logged user
-	* @param ip - if passed it is stored, otherwise ip is taken from field "fordwarded"
+	* @param ip - (required) if passed it is stored, otherwise ip is taken from field "fordwarded"
 	* @param userid - id of user to which host will be assigned
-	* @param status - status of entry. Used enums: SECURED_HOST_STATUS_NONE = 0,SECURED_HOST_STATUS_ALLOWED = 1, SECURED_HOST_STATUS_BLOCKED = 2. By default it is set to 0.
+	* @param status - (required) status of entry. Used enums: SECURED_HOST_STATUS_NONE = 0,SECURED_HOST_STATUS_ALLOWED = 1, SECURED_HOST_STATUS_BLOCKED = 2. By default it is set to 0.
 	* 
 	* @return response {"result":"success","host":"<HOST IP>","status":<STATUS>} when success otherwise error
 	*/
@@ -244,7 +244,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	{
 		char *ip = NULL;
 		FUQUAD userID = 0;
-		FULONG status = 0;
+		FLONG status = -1;
 		FBOOL allowed = FALSE;
 		FBOOL releaseIP = FALSE;
 		
@@ -304,36 +304,47 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 			ip = HttpGetHeaderFromTable( request, HTTP_HEADER_X_FORWARDED_FOR );
 		}
 		
-		if( allowed == TRUE )
+		if( status >= 0 && ip != NULL )
 		{
-			SQLLibrary *sqllib = l->GetDBConnection( l );
-			if( sqllib != NULL )
+			if( allowed == TRUE )
 			{
-				char insertQuery[ 1024 ];
+				SQLLibrary *sqllib = l->GetDBConnection( l );
+				if( sqllib != NULL )
+				{
+					char insertQuery[ 1024 ];
 				
-				// delete all hosts same hosts for user
+					// delete all hosts same hosts for user
 				
-				int size = snprintf( insertQuery, sizeof( insertQuery ), "DELETE FROM `FSecuredHost` where IP='%s' AND UserID=%lu", ip, userID );
-				sqllib->QueryWithoutResults( sqllib, insertQuery );
+					int size = snprintf( insertQuery, sizeof( insertQuery ), "DELETE FROM `FSecuredHost` where IP='%s' AND UserID=%lu", ip, userID );
+					sqllib->QueryWithoutResults( sqllib, insertQuery );
 				
-				time_t ti = time( NULL );
-				// create host in DB
+					time_t ti = time( NULL );
+					// create host in DB
 				
-				size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FSecuredHost` (IP,Status,UserID,CreateTime) VALUES('%s',%lu,%lu,%lu)", ip, status, userID, ti );
-				sqllib->QueryWithoutResults( sqllib, insertQuery );
+					size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FSecuredHost` (IP,Status,UserID,CreateTime) VALUES('%s',%lu,%lu,%lu)", ip, status, userID, ti );
+					sqllib->QueryWithoutResults( sqllib, insertQuery );
 			
-				DEBUG("[SecurityWeb/createhost] sl query %s\n", insertQuery );
-				l->DropDBConnection( l, sqllib );
+					DEBUG("[SecurityWeb/createhost] sl query %s\n", insertQuery );
+					l->DropDBConnection( l, sqllib );
 				
-				snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":{\"ip\":\"%s\",\"status\":%lu}}", ip, status );
+					snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":{\"ip\":\"%s\",\"status\":%lu}}", ip, status );
 
-				HttpAddTextContent( response, insertQuery );
+					HttpAddTextContent( response, insertQuery );
+				}
+			}
+			else
+			{
+				char dictmsgbuf[ 256 ];
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
 			}
 		}
 		else
 		{
-			char dictmsgbuf[ 256 ];
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
+			char buffer[ 512 ];
+			char buffer1[ 256 ];
+			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "ip, status" );
+			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, buffer );
 		}
 
 		if( ip != NULL && releaseIP == TRUE )
@@ -348,9 +359,9 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	* <HR><H2>system.library/security/updatehost</H2>Update security host assigned to user
 	*
 	* @param sessionid - (required) session id of logged user
-	* @param host - if passed it is stored, otherwise host is taken from field "fordwarded"
+	* @param ip - (required) if passed it is stored, otherwise host is taken from field "fordwarded"
 	* @param userid - id of user to which host will be assigned
-	* @param status - status of entry. Used enums: SECURED_HOST_STATUS_NONE = 0,SECURED_HOST_STATUS_ALLOWED = 1, SECURED_HOST_STATUS_BLOCKED = 2. By default it is set to 0.
+	* @param status - (required) status of entry. Used enums: SECURED_HOST_STATUS_NONE = 0,SECURED_HOST_STATUS_ALLOWED = 1, SECURED_HOST_STATUS_BLOCKED = 2. By default it is set to 0.
 	* 
 	* @return { "response":"success" } otherwise information about error
 	*/
@@ -359,7 +370,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	{
 		char *ip = NULL;
 		FUQUAD userID = 0;
-		FULONG status = 0;
+		FLONG status = -1;
 		FBOOL allowed = FALSE;
 		FBOOL ipProperFormat = TRUE;
 		
@@ -441,36 +452,48 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 			}
 		}
 		
-		if( ipProperFormat == TRUE )
+		if( ip != NULL && status >= 0 )
 		{
-			if( allowed == TRUE )
+			if( ipProperFormat == TRUE )
 			{
-				SQLLibrary *sqllib = l->GetDBConnection( l );
-				if( sqllib != NULL )
+				if( allowed == TRUE )
 				{
-					char insertQuery[ 1024 ];
+					SQLLibrary *sqllib = l->GetDBConnection( l );
+					if( sqllib != NULL )
+					{
+						char insertQuery[ 1024 ];
 				
-					snprintf( insertQuery, sizeof( insertQuery ), "UPDATE `FSecuredHost` Set Status='%lu' WHERE IP='%s'", status, ip );
-					sqllib->QueryWithoutResults( sqllib, insertQuery );
-			
-					DEBUG("[SecurityWeb/createhost] sl query %s\n", insertQuery );
-					l->DropDBConnection( l, sqllib );
-				
-					snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":{\"ip\":\"%s\",\"status\":%ld,\"userid\":%lu}}", ip, status, userID );
+						snprintf( insertQuery, sizeof( insertQuery ), "UPDATE `FSecuredHost` Set Status='%lu' WHERE IP='%s'", status, ip );
 
-					HttpAddTextContent( response, insertQuery );
+						sqllib->QueryWithoutResults( sqllib, insertQuery );
+			
+						DEBUG("[SecurityWeb/createhost] sl query %s\n", insertQuery );
+						l->DropDBConnection( l, sqllib );
+				
+						snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":{\"ip\":\"%s\",\"status\":%ld,\"userid\":%lu}}", ip, status, userID );
+
+						HttpAddTextContent( response, insertQuery );
+					}
+				}
+				else
+				{
+					char dictmsgbuf[ 256 ];
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
 				}
 			}
 			else
 			{
 				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_IP_MISSING_OR_WRONG_FORMAT] , DICT_IP_MISSING_OR_WRONG_FORMAT );
 			}
 		}
 		else
 		{
-			char dictmsgbuf[ 256 ];
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_IP_MISSING_OR_WRONG_FORMAT] , DICT_IP_MISSING_OR_WRONG_FORMAT );
+			char buffer[ 512 ];
+			char buffer1[ 256 ];
+			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "ip, status" );
+			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, buffer );
 		}
 
 		if( ip != NULL )
