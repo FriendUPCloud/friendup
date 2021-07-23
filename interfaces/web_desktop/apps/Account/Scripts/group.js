@@ -102,7 +102,7 @@ function inviteUser( uid )
 // Remove user from group
 function removeUser( uid )
 {
-
+	
 }
 
 // Save the group
@@ -138,3 +138,4 @@ function saveGroup()
 		} );
 	}	
 }
+
