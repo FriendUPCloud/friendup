@@ -366,14 +366,13 @@ if( $args->command )
 				}
 				else
 				{
-					die( 'fail<!--separate-->' );
+					die( 'fail<!--separate-->{"response":-1,"message":"Could not load invite record."}' );
 				}
 				
 				if( !$hash )
 				{
-					die( 'fail<!--separate-->' );
+					die( 'fail<!--separate-->{"response":-1,"message":"Could not read invite hash."}' );
 				}
-				
 				
 				$invitelink = buildUrl( $hash, $Conf, $ConfShort );
 				
@@ -480,7 +479,7 @@ if( $args->command )
 					{
 						// ...
 						
-						die( 'fail<!--separate-->' );
+						die( 'fail<!--separate-->{"response":-1,"message":"Could not send e-mail."}' );
 					}
 					
 					die( 'ok<!--separate-->Mail sent!' );

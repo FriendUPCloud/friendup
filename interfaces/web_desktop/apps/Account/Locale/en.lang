@@ -62,6 +62,8 @@ i18n_remove_from_group               : Remove from group
 i18n_could_not_save_group            : Could not save group
 i18n_an_error_occured_group_save     : An error occured when saving your group. Please try again.
 i18n_edit_group                      : Edit group
+i18n_can_not_invite                  : Can not send invite
+i18n_can_not_invite_desc             : You can not invite users to this group because it hasn't been saved.
 
 i18n_add_storage                     : Add storage
 i18n_edit_storage                    : Edit disk

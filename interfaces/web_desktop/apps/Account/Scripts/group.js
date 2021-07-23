@@ -96,7 +96,27 @@ function groupUsers( callback )
 // Invite a user to participate in group
 function inviteUser( uid )
 {
-	
+	if( ge( 'groupId' ).value )
+	{
+		let m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e != 'ok' )
+			{
+				return 
+			}
+			groupUsers( function(){ listConnectedUsers(); } );
+		}
+		m.execute( 'sendinvite', {
+			userid: uid,
+			authid: Application.authId,
+			workgroups: ge( 'groupId' ).value
+		} );
+	}
+	else
+	{
+		Alert( i18n( 'i18n_can_not_invite' ), i18n( 'i18n_can_not_invite_desc' ) );
+	}
 }
 
 // Remove user from group
