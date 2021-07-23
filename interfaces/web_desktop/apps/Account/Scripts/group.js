@@ -122,7 +122,28 @@ function inviteUser( uid )
 // Remove user from group
 function removeUser( uid )
 {
-	
+	if( ge( 'groupId' ).value )
+	{
+		Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_sure_remove_user_from' ), function( data )
+		{
+			if( data.data == true )
+			{
+				let m = new Library( 'system.library' );
+				m.onExecuted = function( e, d )
+				{
+					if( e != 'ok' )
+					{
+						return 
+					}
+					groupUsers( function(){ listConnectedUsers(); } );
+				}
+				m.execute( 'group/removeusers', {
+					users: uid,
+					id: ge( 'groupId' ).value
+				} );
+			}
+		} );
+	}
 }
 
 // Save the group

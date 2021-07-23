@@ -64,6 +64,7 @@ i18n_an_error_occured_group_save     : En feil oppsto mens du prøvde å lagre g
 i18n_edit_group                      : Endre gruppen
 i18n_can_not_invite                  : Kan ikke sende invitasjon
 i18n_can_not_invite_desc             : Du kan ikke invitere til gruppen fordi den er ikke lagret.
+i18n_sure_remove_user_from           : Er du sikker på at du ønsker å fjerne brukeren fra gruppen?
 
 i18n_add_storage                     : Mer lagringsplass
 i18n_edit_storage                    : Endre disk
