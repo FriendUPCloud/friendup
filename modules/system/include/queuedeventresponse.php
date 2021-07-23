@@ -12,6 +12,9 @@
 
 global $SqlDatabase, $User;
 
+error_reporting( E_ALL & ~E_NOTICE );
+ini_set( 'display_errors', 1 );
+
 $o = new dbIO( 'FQueuedEvent' );
 $o->ID = intval( $args->args->eventid, 10 );
 if( $o->Load() )
@@ -28,7 +31,7 @@ if( $o->Load() )
 				$action->module = str_replace( '.', '', $action->module );
 				if( file_exists( 'modules/' . $action->module . '/module.php' ) )
 				{
-					$args = $action->args;
+					$args = $action;
 					include( 'modules/' . $action->module . '/module.php' );
 					$response->message = 'Successfully executed module call.';
 					$response->flag = 'rejected';
@@ -46,7 +49,7 @@ if( $o->Load() )
 				$action->module = str_replace( '.', '', $action->module );
 				if( file_exists( 'modules/' . $action->module . '/module.php' ) )
 				{
-					$args = $action->args;
+					$args = $action;
 					include( 'modules/' . $action->module . '/module.php' );
 					$response->message = 'Successfully executed module call.';
 					$response->flag = 'accepted';

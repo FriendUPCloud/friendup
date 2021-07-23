@@ -313,6 +313,13 @@ if( $args->command )
 				}
 			}
 			
+			if( isset( $args->args->email ) && $args->args->email )
+			{
+				$contact = new stdClass();
+				$contact->Email = $args->args->email;
+				$contact->FullName = $args->args->fullname;
+			}
+			
 			// TODO: send invite without having to register it, or just use the default invite link ...
 			
 			// So how to find out if user is online ??? and how to send notification ... using friendcore ...
@@ -392,7 +399,7 @@ if( $args->command )
 				
 				// Send a notification message if online ...
 				
-				if( $online )
+				if( $online && !isset( $args->args->email ) )
 				{
 					//$jsn = '{"message":"'.$invitelink.'","accept":"/system.library/module/?module=system&command=verifyinvite&args='.urlencode('{"hash":"'.$hash.'"}').'","decline":"/system.library/module/?module=system&command=removeinvite&args='.urlencode('{"hash":"'.$hash.'"}').'"}';
 					
@@ -413,11 +420,11 @@ if( $args->command )
 					$n->UserID = $usr->ID;
 					$n->TargetUserID = $contact->ID;
 					$n->TargetGroupID = 0;
-					$n->Title = 'Invitation to connect';
+					$n->Title = ( isset( $args->args->title ) ? $args->args->title : 'Invitation to connect' );
 					$n->Type = 'interaction';
 					$n->Date = date( 'Y-m-d H:i' );
 					$n->Status = 'unseen';
-					$n->Message = ( $usr->FullName.' invites to you connect on Friend Chat.' );
+					$n->Message = ( isset( $args->args->message ) ?$args->args->message : ( $usr->FullName.' invites to you connect on Friend Chat.' ) );
 					$n->ActionAccepted = '{"module":"system","command":"verifyinvite","args":{"hash":"'.$hash.'"},"skip":"true"}';
 					$n->ActionRejected = '{"module":"system","command":"removeinvite","args":{"hash":"'.$hash.'"},"skip":"true"}';
 					if( $n->Load() )
