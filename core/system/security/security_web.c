@@ -151,6 +151,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 		{
 			char dictmsgbuf[ 256 ];
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
+			HttpAddTextContent( response, dictmsgbuf );
 		}
 	}
 
@@ -222,6 +223,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 		{
 			char dictmsgbuf[ 256 ];
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
+			HttpAddTextContent( response, dictmsgbuf );
 		}
 	}
 
@@ -234,7 +236,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	* @param sessionid - (required) session id of logged user
 	* @param ip - (required) if passed it is stored, otherwise ip is taken from field "fordwarded"
 	* @param userid - id of user to which host will be assigned
-	* @param status - (required) status of entry. Used enums: SECURED_HOST_STATUS_NONE = 0,SECURED_HOST_STATUS_ALLOWED = 1, SECURED_HOST_STATUS_BLOCKED = 2. By default it is set to 0.
+	* @param status - (required) status of entry. Used enums: SECURED_HOST_STATUS_NONE = 0,SECURED_HOST_STATUS_ALLOWED = 1, SECURED_HOST_STATUS_BLOCKED = 2.
 	* 
 	* @return response {"result":"success","host":"<HOST IP>","status":<STATUS>} when success otherwise error
 	*/
@@ -336,6 +338,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 			{
 				char dictmsgbuf[ 256 ];
 				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
+				HttpAddTextContent( response, dictmsgbuf );
 			}
 		}
 		else
@@ -361,7 +364,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	* @param sessionid - (required) session id of logged user
 	* @param ip - (required) if passed it is stored, otherwise host is taken from field "fordwarded"
 	* @param userid - id of user to which host will be assigned
-	* @param status - (required) status of entry. Used enums: SECURED_HOST_STATUS_NONE = 0,SECURED_HOST_STATUS_ALLOWED = 1, SECURED_HOST_STATUS_BLOCKED = 2. By default it is set to 0.
+	* @param status - (required) status of entry. Used enums: SECURED_HOST_STATUS_NONE = 0,SECURED_HOST_STATUS_ALLOWED = 1, SECURED_HOST_STATUS_BLOCKED = 2.
 	* 
 	* @return { "response":"success" } otherwise information about error
 	*/
@@ -479,12 +482,14 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 				{
 					char dictmsgbuf[ 256 ];
 					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
+					HttpAddTextContent( response, dictmsgbuf );
 				}
 			}
 			else
 			{
 				char dictmsgbuf[ 256 ];
 				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_IP_MISSING_OR_WRONG_FORMAT] , DICT_IP_MISSING_OR_WRONG_FORMAT );
+				HttpAddTextContent( response, dictmsgbuf );
 			}
 		}
 		else
@@ -616,6 +621,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 		{
 			char dictmsgbuf[ 256 ];
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
+			HttpAddTextContent( response, dictmsgbuf );
 		}
 	}
 	/// @cond WEB_CALL_DOCUMENTATION
@@ -709,6 +715,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 		{
 			char dictmsgbuf[ 256 ];
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
+			HttpAddTextContent( response, dictmsgbuf );
 		}
 
 		if( ip != NULL )
