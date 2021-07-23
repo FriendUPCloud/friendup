@@ -61,7 +61,7 @@ function listConnectedUsers( limit, pos, keyw )
 		{
 			str += '<div class="HRow sw' + sw + '">\
 				<div class="HContent100 FloatLeft Ellipsis PaddingSmall">\
-					' + list[a].Fullname + '\
+					' + list[a].FullName + '\
 				</div>\
 			</div>';
 			sw = sw == 1 ? 2 : 1;
