@@ -555,11 +555,15 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		}
 		// Ah, we got our session
 		
+		DEBUG("\n\nauthidelement pointer %p\n\n\n", authIDElement );
+		
 		// Get it by authid
 		if( authIDElement != NULL )
 		{
 			char *authID = UrlDecodeToMem( ( char *)authIDElement->hme_Data );
 			char *assID = NULL;
+			
+			//DEBUG("Authid %s authid pointer %p\n", authID, authIDElement->hme_Data );
 			
 			if( authID != NULL )
 			{
