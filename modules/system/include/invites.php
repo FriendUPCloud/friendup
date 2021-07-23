@@ -139,7 +139,7 @@ if( $args->command )
 							$obj->Link       = buildUrl( $f->Hash, $Conf, $ConfShort );
 							
 							// Filter by group ID
-							if( isset( $args->args->groupId ) )
+							/*if( isset( $args->args->groupId ) )
 							{
 								$found = false;
 								foreach( $json->data->workgroups as $w )
@@ -149,7 +149,7 @@ if( $args->command )
 								}
 								if( !$found )
 									continue;
-							}
+							}*/
 							$obj->Workgroups = ( isset( $json->data->workgroups ) ? $json->data->workgroups : false );
 							$obj->UserID     = ( isset( $json->data->userid     ) ? $json->data->userid     : null  );
 							$obj->UniqueID   = ( isset( $json->data->uniqueid   ) ? $json->data->uniqueid   : null  );
