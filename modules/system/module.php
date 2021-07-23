@@ -43,178 +43,185 @@ if( $level = $SqlDatabase->FetchObject( '
 }
 else $level = false;
 
-function GetFilesystemByArgs( $args )
+if( !function_exists( 'GetFilesystemByArgs' ) )
 {
-	global $SqlDatabase, $User, $UserSession;
-	$identifier = false;
-
-	if( isset( $args->fileInfo ) )
+	function GetFilesystemByArgs( $args )
 	{
-		if( isset( $args->fileInfo->ID ) )
+		global $SqlDatabase, $User, $UserSession;
+		$identifier = false;
+
+		if( isset( $args->fileInfo ) )
 		{
-			$identifier = 'f.ID=\'' . intval( $args->fileInfo->ID, 10 ) . '\'';
+			if( isset( $args->fileInfo->ID ) )
+			{
+				$identifier = 'f.ID=\'' . intval( $args->fileInfo->ID, 10 ) . '\'';
+			}
+			else
+			{
+				$identifier = 'f.Name=\'' . mysqli_real_escape_string( $SqlDatabase->_link, reset( explode( ':', $args->fileInfo->Path ) ) )  . '\'';
+			}
+		}
+		else if( isset( $args->path ) )
+		{
+			$identifier = 'f.Name=\'' . mysqli_real_escape_string( $SqlDatabase->_link, reset( explode( ':', $args->path ) ) ) . '\'';
+		}
+		if( $Filesystem = $SqlDatabase->FetchObject( '
+		SELECT * FROM `Filesystem` f
+		WHERE
+			(
+				f.GroupID IN (
+							SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
+							WHERE
+								g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
+								ug.UserID = \'' . $UserSession->UserID . '\'
+						)
+				OR
+				f.UserID=\'' . $UserSession->UserID . '\'
+			)
+			AND ' . $identifier . '
+		' ) )
+		{
+			return $Filesystem;
+		}
+		return $identifier;
+	}
+}
+
+if( !function_exists( 'checkDesktopEvents' ) )
+{
+	// Check for desktop events now
+	function checkDesktopEvents()
+	{
+		// Returnvar
+		$returnvar = [];
+
+		// Check if we have files to import
+		$files = [];
+		if( file_exists( 'import' ) && $f = opendir( 'import' ) )
+		{
+			while( $file = readdir( $f ) )
+			{
+				if( $file{0} == '.' ) continue;
+				$files[] = $file;
+			}
+			closedir( $f );
+		}
+		if( count( $files ) > 0 )
+		{
+			$returnvar['Import'] = $files;
+		}
+		// Count
+		$c = 0;
+		foreach( $returnvar as $k=>$v )
+			$c++;
+		if( $c > 0 )
+			return json_encode( $returnvar );
+		return false;
+	}
+}
+
+if( !function_exists( 'curl_exec_follow' ) )
+{
+	function curl_exec_follow( $cu, &$maxredirect = null )
+	{
+		$mr = 5;
+
+		if ( ini_get( 'open_basedir' ) == '' && ini_get( 'safe_mode' == 'Off' ) )
+		{
+			curl_setopt( $cu, CURLOPT_FOLLOWLOCATION, $mr > 0 );
+			curl_setopt( $cu, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
+			curl_setopt( $cu, CURLOPT_MAXREDIRS, $mr );
 		}
 		else
 		{
-			$identifier = 'f.Name=\'' . mysqli_real_escape_string( $SqlDatabase->_link, reset( explode( ':', $args->fileInfo->Path ) ) )  . '\'';
-		}
-	}
-	else if( isset( $args->path ) )
-	{
-		$identifier = 'f.Name=\'' . mysqli_real_escape_string( $SqlDatabase->_link, reset( explode( ':', $args->path ) ) ) . '\'';
-	}
-	if( $Filesystem = $SqlDatabase->FetchObject( '
-	SELECT * FROM `Filesystem` f
-	WHERE
-		(
-			f.GroupID IN (
-						SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
-						WHERE
-							g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-							ug.UserID = \'' . $UserSession->UserID . '\'
-					)
-			OR
-			f.UserID=\'' . $UserSession->UserID . '\'
-		)
-		AND ' . $identifier . '
-	' ) )
-	{
-		return $Filesystem;
-	}
-	return $identifier;
-}
+			curl_setopt( $cu, CURLOPT_FOLLOWLOCATION, false );
+			curl_setopt( $cu, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 
-// Check for desktop events now
-function checkDesktopEvents()
-{
-	// Returnvar
-	$returnvar = [];
-
-	// Check if we have files to import
-	$files = [];
-	if( file_exists( 'import' ) && $f = opendir( 'import' ) )
-	{
-		while( $file = readdir( $f ) )
-		{
-			if( $file{0} == '.' ) continue;
-			$files[] = $file;
-		}
-		closedir( $f );
-	}
-	if( count( $files ) > 0 )
-	{
-		$returnvar['Import'] = $files;
-	}
-	// Count
-	$c = 0;
-	foreach( $returnvar as $k=>$v )
-		$c++;
-	if( $c > 0 )
-		return json_encode( $returnvar );
-	return false;
-}
-
-
-
-function curl_exec_follow( $cu, &$maxredirect = null )
-{
-	$mr = 5;
-
-	if ( ini_get( 'open_basedir' ) == '' && ini_get( 'safe_mode' == 'Off' ) )
-	{
-		curl_setopt( $cu, CURLOPT_FOLLOWLOCATION, $mr > 0 );
-		curl_setopt( $cu, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
-		curl_setopt( $cu, CURLOPT_MAXREDIRS, $mr );
-	}
-	else
-	{
-		curl_setopt( $cu, CURLOPT_FOLLOWLOCATION, false );
-		curl_setopt( $cu, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
-
-		if ( $mr > 0 )
-		{
-			$newurl = curl_getinfo( $cu, CURLINFO_EFFECTIVE_URL );
-			$rch = curl_copy_handle( $cu );
-
-			curl_setopt( $rch, CURLOPT_HEADER, true );
-			curl_setopt( $rch, CURLOPT_NOBODY, true );
-			curl_setopt( $rch, CURLOPT_FORBID_REUSE, false );
-			curl_setopt( $rch, CURLOPT_RETURNTRANSFER, true );
-			do
+			if ( $mr > 0 )
 			{
-				curl_setopt( $rch, CURLOPT_URL, $newurl );
+				$newurl = curl_getinfo( $cu, CURLINFO_EFFECTIVE_URL );
+				$rch = curl_copy_handle( $cu );
 
-				$header = curl_exec( $rch );
-
-				if ( curl_errno( $rch ) )
+				curl_setopt( $rch, CURLOPT_HEADER, true );
+				curl_setopt( $rch, CURLOPT_NOBODY, true );
+				curl_setopt( $rch, CURLOPT_FORBID_REUSE, false );
+				curl_setopt( $rch, CURLOPT_RETURNTRANSFER, true );
+				do
 				{
-					$code = 0;
-				}
-				else
-				{
-					$code = curl_getinfo( $rch, CURLINFO_HTTP_CODE );
+					curl_setopt( $rch, CURLOPT_URL, $newurl );
 
-					if ( $code == 301 || $code == 302 || $code == 303 )
-					{
-						preg_match( '/Location:(.*?)\n/', $header, $matches );
+					$header = curl_exec( $rch );
 
-						if ( !$matches )
-						{
-							preg_match( '/location:(.*?)\n/', $header, $matches );
-						}
-
-						$oldurl = $newurl;
-						$newurl = trim( array_pop( $matches ) );
-
-						if ( $newurl && !strstr( $newurl, 'http://' ) && !strstr( $newurl, 'https://' ) )
-						{
-							if ( strstr( $oldurl, 'https://' ) )
-							{
-								$parts = explode( '/', str_replace( 'https://', '', $oldurl ) );
-								$newurl = ( 'https://' . reset( $parts ) . ( $newurl{0} != '/' ? '/' : '' ) . $newurl );
-							}
-							if ( strstr( $oldurl, 'http://' ) )
-							{
-								$parts = explode( '/', str_replace( 'http://', '', $oldurl ) );
-								$newurl = ( 'http://' . reset( $parts ) . ( $newurl{0} != '/' ? '/' : '' ) . $newurl );
-							}
-
-						}
-					}
-					else
+					if ( curl_errno( $rch ) )
 					{
 						$code = 0;
 					}
+					else
+					{
+						$code = curl_getinfo( $rch, CURLINFO_HTTP_CODE );
+
+						if ( $code == 301 || $code == 302 || $code == 303 )
+						{
+							preg_match( '/Location:(.*?)\n/', $header, $matches );
+
+							if ( !$matches )
+							{
+								preg_match( '/location:(.*?)\n/', $header, $matches );
+							}
+
+							$oldurl = $newurl;
+							$newurl = trim( array_pop( $matches ) );
+
+							if ( $newurl && !strstr( $newurl, 'http://' ) && !strstr( $newurl, 'https://' ) )
+							{
+								if ( strstr( $oldurl, 'https://' ) )
+								{
+									$parts = explode( '/', str_replace( 'https://', '', $oldurl ) );
+									$newurl = ( 'https://' . reset( $parts ) . ( $newurl{0} != '/' ? '/' : '' ) . $newurl );
+								}
+								if ( strstr( $oldurl, 'http://' ) )
+								{
+									$parts = explode( '/', str_replace( 'http://', '', $oldurl ) );
+									$newurl = ( 'http://' . reset( $parts ) . ( $newurl{0} != '/' ? '/' : '' ) . $newurl );
+								}
+
+							}
+						}
+						else
+						{
+							$code = 0;
+						}
+					}
 				}
-			}
-			while ( $code && --$mr );
-			curl_close( $rch );
-			if ( !$mr )
-			{
-				if ( $maxredirect === null )
+				while ( $code && --$mr );
+				curl_close( $rch );
+				if ( !$mr )
 				{
+					if ( $maxredirect === null )
+					{
+						return false;
+					}
+					else
+					{
+						$maxredirect = 0;
+					}
+
 					return false;
 				}
-				else
-				{
-					$maxredirect = 0;
-				}
 
-				return false;
+				curl_setopt( $cu, CURLOPT_URL, $newurl );
 			}
-
-			curl_setopt( $cu, CURLOPT_URL, $newurl );
 		}
+
+		$cu = curl_exec( $cu );
+
+		if( $cu )
+		{
+			return $cu;
+		}
+
+		return false;
 	}
-
-	$cu = curl_exec( $cu );
-
-	if( $cu )
-	{
-		return $cu;
-	}
-
-	return false;
 }
 
 if( isset( $args->command ) )
@@ -2049,7 +2056,7 @@ if( isset( $args->command ) )
 }
 
 // End of the line
-die( 'fail<!--separate-->{"response":"uncaught command exception"}' ); //end of the line<!--separate-->' . print_r( $args, 1 ) . '<!--separate-->' . ( isset( $User ) ? $User : 'No user object!' ) );
+if( !$args->skip ) die( 'fail<!--separate-->{"response":"uncaught command exception ' . print_r( $args,1 ) . '"}' ); //end of the line<!--separate-->' . print_r( $args, 1 ) . '<!--separate-->' . ( isset( $User ) ? $User : 'No user object!' ) );
 
 
 ?>

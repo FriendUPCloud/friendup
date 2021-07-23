@@ -424,7 +424,7 @@ if( $args->command )
 					$n->Type = 'interaction';
 					$n->Date = date( 'Y-m-d H:i' );
 					$n->Status = 'unseen';
-					$n->Message = ( isset( $args->args->message ) ?$args->args->message : ( $usr->FullName.' invites to you connect on Friend Chat.' ) : '' );
+					$n->Message = ( isset( $args->args->message ) ?$args->args->message : ( $usr->FullName.' invites to you connect on Friend Chat.' ) );
 					$n->ActionAccepted = '{"module":"system","command":"verifyinvite","args":{"hash":"'.$hash.'"},"skip":"true"}';
 					$n->ActionRejected = '{"module":"system","command":"removeinvite","args":{"hash":"'.$hash.'"},"skip":"true"}';
 					if( $n->Load() )
