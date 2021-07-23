@@ -220,10 +220,23 @@ if( $args->command )
 								
 								// TODO: Add support for adding to workgroup(s) when that is ready ...
 								
-								//if( $json->data->workgroups )
-								//{
-								//
-								//}
+								if( $json->data->workgroups )
+								{
+									foreach( $json->data->workgroups as $group )
+									{
+										if( $group->ID )
+										{
+											if( !FriendCoreQuery( '/system.library/group/addusers', 
+											[
+												'id'    => $group->ID,
+												'users' => $User->ID
+											] ) )
+											{
+												die( 'fail<!--separate-->{"Response":"[ /system.library/group/addusers ] fail from friendcore, contact server admin ...."}' );
+											}
+										}
+									}
+								}
 								
 								if( isset( $json->data->userid ) && isset( $json->data->mode ) )
 								{
