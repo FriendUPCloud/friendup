@@ -389,6 +389,8 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 		if( el != NULL )
 		{
 			ip = UrlDecodeToMem( ( char *)el->hme_Data );
+			
+			DEBUG("IP: %s\n", ip );
 			if( ip != NULL )
 			{
 				int dots = 0;
@@ -405,15 +407,18 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 						ddots++;
 					}
 				}
+				
+				DEBUG("dots: %d ddots: %d\n", dots, ddots );
+				
 				if( dots > 0 && ddots > 0 )
 				{
 					ipProperFormat = FALSE;
 				}
-				else if( dots != 3 )
+				else if( dots > 0 && dots != 3 )
 				{
 					ipProperFormat = FALSE;
 				}
-				else if( ddots != 3 )
+				else if( ddots > 0 && ddots != 3 )
 				{
 					ipProperFormat = FALSE;
 				}
@@ -431,7 +436,8 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 		if( el != NULL )
 		{
 			char *end;
-			status = strtoull( el->hme_Data,  &end, 0 );
+			status = strtoll( el->hme_Data,  &end, 0 );
+			DEBUG("status: %ld\n", status );
 		}
 		
 		if( loggedSession->us_User->u_IsAdmin == TRUE )
