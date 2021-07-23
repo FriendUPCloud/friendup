@@ -359,7 +359,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	* 
-	* <HR><H2>system.library/security/updatehost</H2>Update security host assigned to user
+	* <HR><H2>system.library/security/updatehost</H2>Update security host assigned to user. If entry doesnt exist it will be created
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param ip - (required) if passed it is stored, otherwise host is taken from field "fordwarded"
@@ -471,8 +471,33 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 					if( sqllib != NULL )
 					{
 						char insertQuery[ 1024 ];
+						int pos = 0;
+						
+						//
+						// Find first if entry exist in DB
+						//
+						
+						sqllib->SNPrintF( sqllib, insertQuery, sizeof(insertQuery), "SELECT IP FROM `FSecuredHost` WHERE UserID='%ld' AND IP='%s'", userID, ip );
 				
-						snprintf( insertQuery, sizeof( insertQuery ), "UPDATE `FSecuredHost` Set Status='%lu' WHERE IP='%s'", status, ip );
+						void *result = sqllib->Query( sqllib, insertQuery );
+						if( result != NULL )
+						{
+							char **row;
+							while( ( row = sqllib->FetchRow( sqllib, result ) ) )
+							{
+								pos++;
+							}
+							sqllib->FreeResult( sqllib, result );
+						}
+				
+						if( pos > 0 )
+						{
+							snprintf( insertQuery, sizeof( insertQuery ), "UPDATE `FSecuredHost` Set Status='%lu' WHERE IP='%s'", status, ip );
+						}
+						else
+						{
+							snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FSecuredHost` (IP,Status,UserID,CreateTime) VALUES('%s',%lu,%lu,%lu)", ip, status, userID, time(NULL) );
+						}
 
 						sqllib->QueryWithoutResults( sqllib, insertQuery );
 			
