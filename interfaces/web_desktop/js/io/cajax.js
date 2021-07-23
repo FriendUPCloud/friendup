@@ -111,6 +111,46 @@ function CancelCajaxOnId( id )
 	Friend.cajax = o;
 }
 
+function executeCAjaxQueue()
+{
+	const self = this;
+	console.log( 'executeCAjaxQueue', {
+		queue   : Friend.cajax,
+		timeout : _cajax_queue_execute_timeout,
+		
+	});
+	
+	if ( null != _cajax_queue_execute_timeout )
+	{
+		_cajax_queue_execute_waiting = true;
+		return;
+	}
+	
+	_cajax_queue_execute_timeout = window.setTimeout( unlockAndRetryMaybe, 2000 );
+	
+	
+	// Check if there's a queue of objects waiting to run
+	if( Friend.cajax && Friend.cajax.length )
+	{
+		for( var a = 0; a < Friend.cajax.length; a++ )
+		{
+			Friend.cajax[a].send();
+		}
+		Friend.cajax = [];
+	}
+	
+	function unlockAndRetryMaybe()
+	{
+		console.log( 'clearing kju lock' );
+		_cajax_queue_execute_timeout = null;
+		if ( !_cajax_queue_execute_waiting )
+			return;
+		
+		_cajax_queue_execute_waiting = false;
+		executeCAjaxQueue();
+	}
+}
+
 // A simple ajax function
 // Can have a cancellable series
 cAjax = function( app )
@@ -553,7 +593,13 @@ cAjax.prototype.responseText = function()
 // Send ajax query
 cAjax.prototype.send = function( data, callback )
 {
+	const self = this;
 	RemoveFromCajaxQueue( this );
+	
+	if( window.Workspace )
+		self.addVar( 'sessionid', Workspace.sessionId );
+	if( window.Application && Application.authId )
+		self.addVar( 'authid', Application.authId );
 	
 	// Maintain authid
 	if( this.application )
@@ -578,8 +624,6 @@ cAjax.prototype.send = function( data, callback )
 			CleanAjaxCalls();
 		}
 	}
-
-	let self = this;
 	
 	if( self.life )
 	{
