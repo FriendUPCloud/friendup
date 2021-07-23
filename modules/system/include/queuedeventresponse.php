@@ -26,7 +26,7 @@ if( $o->Load() )
 			if( $action = json_decode( $o->ActionRejected ) )
 			{
 				$action->module = str_replace( '.', '', $action->module );
-				if( file_exists( 'modules/' . $action->module . '.php' ) )
+				if( file_exists( 'modules/' . $action->module . '/module.php' ) )
 				{
 					$args = $action->args;
 					include( 'modules/' . $action->module . '/module.php' );
@@ -47,7 +47,7 @@ if( $o->Load() )
 				if( file_exists( 'modules/' . $action->module . '/module.php' ) )
 				{
 					$args = $action->args;
-					include( 'modules/' . $action->module . '.php' );
+					include( 'modules/' . $action->module . '/module.php' );
 					$response->message = 'Successfully executed module call.';
 					$response->flag = 'accepted';
 				}
