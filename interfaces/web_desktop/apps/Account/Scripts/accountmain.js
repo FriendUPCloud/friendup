@@ -127,6 +127,11 @@ function createGroup()
 	} );
 	
 	let f = new File( 'Progdir:Templates/group.html' );
+	f.replacements = {
+		ID: '',
+		Description: '',
+		Name: ''
+	};
 	f.i18n();
 	f.onLoad = function( d )
 	{

@@ -1,8 +1,9 @@
 Application.run = function()
 {
-	listConnectedUsers();
-	groupUsers();
+	groupUsers( function(){ listConnectedUsers(); } );
 }
+
+let groupUsersList = [];
 
 function listConnectedUsers( limit, pos )
 {
@@ -37,10 +38,10 @@ function listConnectedUsers( limit, pos )
 		
 		ge( 'Usersearch' ).innerHTML = str;
 	}
-	m.execute( 'listconnectedusers', { limit: 11 } );
+	m.execute( 'listconnectedusers', { limit: 11, except: groupUsersList } );
 }
 
-function groupUsers()
+function groupUsers( callback )
 {
 	let gid = ge( 'groupId' ).value;
 	
@@ -56,6 +57,19 @@ function groupUsers()
 		let sw = 1;
 		for( let a = 0; a < 10 && a < list.length; a++ )
 		{
+			// Add to a global list
+			let found = false;
+			for( let b = 0; b < groupUsersList.length; b++ )
+			{
+				if( groupUsersList[b] == list[a].ID )
+				{
+					found = true;
+					break;
+				}
+			}
+			if( !found )
+				groupUsersList.push( list[a].ID );
+			
 			str += '<div class="HRow sw' + sw + '">\
 				<div class="HContent60 FloatLeft Ellipsis PaddingSmall">\
 					' + list[a].Fullname + '\
@@ -69,6 +83,8 @@ function groupUsers()
 		str += '</div>';
 		
 		ge( 'Userlist' ).innerHTML = str;
+		
+		if( callback ) callback();
 	}
 	m.execute( 'listconnectedusers', { groupId: gid, limit: 11 } );
 }
@@ -76,7 +92,7 @@ function groupUsers()
 // Invite a user to participate in group
 function inviteUser( uid )
 {
-
+	
 }
 
 // Remove user from group
@@ -85,4 +101,33 @@ function removeUser( uid )
 
 }
 
-
+// Save the group
+function saveGroup()
+{
+	let t = new Library( 'system.library' );
+	t.onExecuted = function( e, d )
+	{
+		if( e != 'ok' )
+		{
+			Alert( i18n( 'i18n_could_not_save_group' ), i18n( 'i18n_an_error_occured_group_save' ) );
+			return;
+		}
+		CloseView();
+	}
+	
+	// Create
+	if( ge( 'groupId' ).value <= 0 )
+	{
+		t.execute( 'group/create', {
+			type: 'Workgroup',
+			description: ge( 'groupDescription' ).value,
+			groupname: ge( 'groupName' ).value
+		} );
+	}
+	// Update
+	else
+	{
+	}
+	
+	
+}

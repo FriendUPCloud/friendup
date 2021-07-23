@@ -14,6 +14,13 @@ global $SqlDatabase, $Logger, $User;
 
 // TODO: For scaling, allow search parameters!
 
+if( isset( $args->args->except ) )
+{
+	foreach( $args->args->except as $k=>$v )
+		$args->args->except[$k] = intval( $v, 10 );
+	$ecpt = "\n\t\t" . 'AND u.ID NOT IN ( ' . implode( ', ', $args->args->except ) . ')' . "\n";
+}
+
 $query =  '
 	SELECT 
 		u.ID, u.Name, u.Fullname, u.Email 
@@ -27,7 +34,7 @@ $query =  '
 		mygroup.UserGroupID =   theirgroup.UserGroupID AND
 		u.ID                != ' . $User->ID . ' AND
 		theyg.ID            =   theirgroup.UserGroupID AND
-		myg.ID              =   mygroup.UserGroupID
+		myg.ID              =   mygroup.UserGroupID' . $ecpt . '
 	GROUP BY u.ID
 ';
 
@@ -44,7 +51,7 @@ if( isset( $args->args->groupid ) )
 			theygroup.UserGroupID = \'' . intval( $args->args->groupid, 10 ) . '\' AND
 			mygroup.UserGroupID = theygroup.UserGroupID AND
 			mygroup.UserID = \'' . $User->ID . '\' AND
-			u.ID != \'' . $User->ID . '\'
+			u.ID != \'' . $User->ID . '\'' . $ecpt . '
 		GROUP BY u.ID
 	';
 }
