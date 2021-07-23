@@ -13,7 +13,8 @@
 global $SqlDatabase, $User;
 
 $o = new dbIO( 'FQueuedEvent' );
-if( $o->Load( $args->args->eventId ) )
+$o->ID = intval( $args->args->eventid, 10 );
+if( $o->Load() )
 {
 	$response = new stdClass();
 	
@@ -28,6 +29,8 @@ if( $o->Load( $args->args->eventId ) )
 				{
 					$args = $action->args;
 					include( 'modules/' . $action->module . '.php' );
+					$response->message = 'Successfully executed module call.';
+					$response->flag = 'rejected';
 				}
 			}
 		}
@@ -43,12 +46,19 @@ if( $o->Load( $args->args->eventId ) )
 				{
 					$args = $action->args;
 					include( 'modules/' . $action->module . '.php' );
+					$response->message = 'Successfully executed module call.';
+					$response->flag = 'accepted';
 				}
 			}
 		}
 	}
-	$o->Save();
-	die( 'ok<!--separate-->' . $response );
+	if( $o->Save() ) 
+	{
+		$response->response = 1;
+	}
+	else $response->response = -1;
+	
+	die( 'ok<!--separate-->' . json_encode( $response ) );
 }
 
 die( 'fail<!--separate-->{"response":-1,"message":"Failed to find queued event."}' );
