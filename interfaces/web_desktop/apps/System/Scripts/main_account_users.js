@@ -6787,7 +6787,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 						loadingInfo.userInfo = userInfo;
 						
-						if( ShowLog ) console.log( '// 0 | Load userinfo', userInfo );
+						if( ShowLog || 1==1 ) console.log( '// 0 | Load userinfo', userInfo );
 						
 						// If abort request is set stop loading this user ...
 						if( UsersSettings( 'abort' ) )
@@ -6825,7 +6825,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						if( e != 'ok' ) wgroups = '';
 						loadingInfo.workgroups = wgroups;
 						
-						if( ShowLog ) console.log( '// 3 | Get user\'s workgroups' );
+						if( ShowLog || 1==1 ) console.log( '// 3 | Get user\'s workgroups', wgroups );
 						
 						// If abort request is set stop loading this user ...
 						if( UsersSettings( 'abort' ) )
