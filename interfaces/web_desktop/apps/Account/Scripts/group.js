@@ -29,7 +29,7 @@ function listConnectedUsers( limit, pos )
 					' + list[a].Fullname + '\
 				</div>\
 				<div class="HContent40 FloatLeft PaddingSmall TextRight">\
-					<button type="button" class="Button IconSmall fa-arrow-up" onclick="inviteUser(' + list[a].ID + ')" title="' + i18n( 'i18n_invite_user_to_group' ) + '"></button>\
+					<button type="button" class="Button IconSmall NoText fa-arrow-up" onclick="inviteUser(' + list[a].ID + ')" title="' + i18n( 'i18n_invite_user_to_group' ) + '"></button>\
 				</div>\
 			</div>';
 			sw = sw == 1 ? 2 : 1;
@@ -79,7 +79,7 @@ function groupUsers( callback )
 					' + list[a].Fullname + '\
 				</div>\
 				<div class="HContent40 FloatLeft PaddingSmall TextRight">\
-					<button type="button" class="Button IconSmall fa-remove" onclick="removeUser(' + list[a].ID + ')" title="' + i18n( 'i18n_remove_from_group' ) + '"></button>\
+					<button type="button" class="Button IconSmall NoText fa-remove" onclick="removeUser(' + list[a].ID + ')" title="' + i18n( 'i18n_remove_from_group' ) + '"></button>\
 				</div>\
 			</div>';
 			sw = sw == 1 ? 2 : 1;

@@ -99,7 +99,7 @@ function refreshGroups()
 			str += '<div class="sw' + sw + ' HRow">\
 				<div class="HContent60 FloatLeft PaddingSmall">' + list.groups[a].name + '</div>\
 				<div class="HContent40 FloatLeft TextRight PaddingSmall">\
-					<button type="button" class="Button IconSmall fa-edit" title="' + i18n( 'i18n_edit_group' ) + '" onclick="editGroup(\'' + list.groups[a].ID + '\')"></button>\
+					<button type="button" class="Button IconSmall fa-edit NoText" title="' + i18n( 'i18n_edit_group' ) + '" onclick="editGroup(\'' + list.groups[a].ID + '\')"></button>\
 				</div>\
 			</div>';
 			sw = sw == 1 ? 2 : 1;

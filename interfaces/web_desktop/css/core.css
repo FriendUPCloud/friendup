@@ -364,6 +364,11 @@ button, .Button
 	font-size: inherit;
 }
 
+.Button.NoText:after, .Button.NoText:before
+{
+	margin: 0;
+}
+
 button, .ButtonAlt
 {
 	color: $ColorButton;
