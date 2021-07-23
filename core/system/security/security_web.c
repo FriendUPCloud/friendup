@@ -234,7 +234,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	* @param sessionid - (required) session id of logged user
 	* @param ip - (required) if passed it is stored, otherwise ip is taken from field "fordwarded"
 	* @param userid - id of user to which host will be assigned
-	* @param status - (required) status of entry. Used enums: SECURED_HOST_STATUS_NONE = 0,SECURED_HOST_STATUS_ALLOWED = 1, SECURED_HOST_STATUS_BLOCKED = 2. By default it is set to 0.
+	* @param status - (required) status of entry. Used enums: SECURED_HOST_STATUS_NONE = 0,SECURED_HOST_STATUS_ALLOWED = 1, SECURED_HOST_STATUS_BLOCKED = 2.
 	* 
 	* @return response {"result":"success","host":"<HOST IP>","status":<STATUS>} when success otherwise error
 	*/
@@ -361,7 +361,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	* @param sessionid - (required) session id of logged user
 	* @param ip - (required) if passed it is stored, otherwise host is taken from field "fordwarded"
 	* @param userid - id of user to which host will be assigned
-	* @param status - (required) status of entry. Used enums: SECURED_HOST_STATUS_NONE = 0,SECURED_HOST_STATUS_ALLOWED = 1, SECURED_HOST_STATUS_BLOCKED = 2. By default it is set to 0.
+	* @param status - (required) status of entry. Used enums: SECURED_HOST_STATUS_NONE = 0,SECURED_HOST_STATUS_ALLOWED = 1, SECURED_HOST_STATUS_BLOCKED = 2.
 	* 
 	* @return { "response":"success" } otherwise information about error
 	*/
