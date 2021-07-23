@@ -56,12 +56,13 @@ if( isset( $args->args->groupId ) )
 		SELECT 
 			u.ID, u.Name, u.Fullname, u.Email 
 		FROM 
-			FUser u, FUserToGroup mygroup, FUserToGroup theygroup
+			FUser u, FUserToGroup mygroup, FUserToGroup theygroup, FUserGroup ug
 		WHERE
 			u.ID = theygroup.UserID AND
+			ug.ID = theygroup.UserGroupID AND
 			theygroup.UserGroupID = \'' . intval( $args->args->groupId, 10 ) . '\' AND
 			mygroup.UserGroupID = theygroup.UserGroupID AND
-			mygroup.UserID = \'' . $User->ID . '\' AND
+			( mygroup.UserID = \'' . $User->ID . '\' OR ug.UserID = \'' . $User->ID . '\' ) AND
 			u.ID != \'' . $User->ID . '\'' . $ecpt . $keyz . '
 		GROUP BY u.ID
 	';
