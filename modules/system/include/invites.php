@@ -142,10 +142,13 @@ if( $args->command )
 							if( isset( $args->args->groupId ) )
 							{
 								$found = false;
-								foreach( $json->data->workgroups as $w )
+								if( isset( $json->data->workgroups ) )
 								{
-									if( $w->ID == $args->args->groupId )
-										$found = true;
+									foreach( $json->data->workgroups as $w )
+									{
+										if( $w->ID == $args->args->groupId )
+											$found = true;
+									}
 								}
 								if( !$found )
 									continue;
