@@ -47,7 +47,6 @@ function FriendCoreQuery( $command = '', $args = false, $method = 'POST', $heade
 	$server = ( $sconf->SSLEnable ? 'https://' : 'http://' ) . $host . ( $host == 'localhost' && $sconf->FCPort ? ( ':' . $sconf->FCPort ) : '' );
 	
 	$url = ( $server . $command );
-	
 	// If sessionid or servertoken is missing in command and args add servertoken with admin privileges from config to communicate with FriendCore internal.
 	
 	if( 

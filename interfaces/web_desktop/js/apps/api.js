@@ -679,6 +679,33 @@ Friend.ClipboardPasteIn = function( ele, text )
 
 /* Done clipboard ----------------------------------------------------------- */
 
+Friend.renewAuthId = async function() {
+	const authId = await get();
+	console.log( 'api renewAuthId result', authId );
+	return authId;
+	
+	function get( msg ) {
+		return new Promise(( resolve, reject ) => {
+			const cbId = addCallback( authIdBack );
+			const req = {
+				type     : 'system',
+				command  : 'renewauthid',
+				callback : cbId,
+			};
+			
+			console.log( 'api renewAuthId', req );
+			Application.sendMessage( req );
+			
+			function authIdBack( res, data ) {
+				console.log( 'api renewAuthId authIdBack', [ res, data ]);
+				res.callback = null;
+				resolve( res.authId );
+			}
+			
+		});
+	}
+}
+
 // Callbacks -------------------------------------------------------------------
 
 // Generate a unique id in a select array buffer
@@ -829,9 +856,10 @@ function receiveEvent( event, queued )
 {
 	// TODO: Do security stuff...
 	//
+	//console.log( 'receiveEvent', [ event, queued ]);
 	if( !window.eventQueue )
 		window.eventQueue = [];
-
+	
 	let dataPacket;
 	
 	// TODO: Stop overwriting origin (security)
@@ -1895,6 +1923,16 @@ function receiveEvent( event, queued )
 			{
 				Application.windows[dataPacket.viewId].sendMessage( dataPacket );
 			}
+			break;
+		case 'setauthid':
+			console.log( 'api setauthid', {
+				event  : dataPacket,
+				appObj : Application,
+			});
+			if ( !dataPacket.data )
+				return;
+			
+			Application.authId = dataPacket.data.authId;
 			break;
 		// Received quit signal!
 		case 'quit':
@@ -6351,6 +6389,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					if( window.applicationStarted ) return;
 					window.applicationStarted = true;
+					if ( !Application.authId )
+						Friend.renewAuthId();
 					if( packet.state ) Application.sessionStateSet( packet.state );
 					for( let a = 0; a < activat.length; a++ )
 						ExecuteScript( activat[a] );
@@ -8737,7 +8777,7 @@ GuiDesklet = function()
 					if( callback ) callback( { response: false, message: 'Unexpected error occured.' } );
 				}
 			}
-			j.send ();
+			j.send();
 		}
 		
 		// end of uploadPastedFile

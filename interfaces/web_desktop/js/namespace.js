@@ -12,14 +12,14 @@ if( window.friendUP )
 	throw new Error( 'namespace.js - friendUP namespace is already defined, make sure this is the first script executed' );
 
 window.friendUP = {
-	app : {},
+	app       : {},
 	component : {},
-	gui : {},
-	io : {},
-	media : {},
-	system : {},
-	tool : {},
-	util : {}
+	gui       : {},
+	io        : {},
+	media     : {},
+	system    : {},
+	tool      : {},
+	util      : {}
 };
 window.Friend = window.Friend || {};
 
