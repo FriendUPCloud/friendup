@@ -189,9 +189,14 @@ if( $args->command )
 			}
 			else if( isset( $args->args->hash ) && $args->args->hash )
 			{
-				if( $SqlDatabase->Query( 'DELETE FROM FTinyUrl WHERE Hash = "' . $args->args->hash . '"' ) )
+				// TODO: Look at this ... don't remove invite link if it's a general invite link to connect to the inviter or a group ...
+				
+				if( !$args->skip )
 				{
-					if( !$args->skip ) die( 'ok<!--separate-->{"Response":"Invite link with hash: ' . $args->args->hash . ' was successfully deleted"}' );
+					if( $SqlDatabase->Query( 'DELETE FROM FTinyUrl WHERE Hash = "' . $args->args->hash . '"' ) )
+					{
+						if( !$args->skip ) die( 'ok<!--separate-->{"Response":"Invite link with hash: ' . $args->args->hash . ' was successfully deleted"}' );
+					}
 				}
 			}
 			
@@ -350,30 +355,29 @@ if( $args->command )
 				$contact->FullName = $args->args->fullname;
 			}
 			
-			// TODO: send invite without having to register it, or just use the default invite link ...
-			
-			// So how to find out if user is online ??? and how to send notification ... using friendcore ...
-			
-			// TODO: Make the email sendout first ....
 			
 			
-			
-			
-			
-			$usr = new dbIO( 'FUser' );
-			$usr->ID = $User->ID;
-			if( $usr->Load() )
+			if( $usr = $SqlDatabase->FetchObject( '
+				SELECT f.ID, f.Name, f.FullName, f.Email, f.UniqueID, f.Status, s.Data AS Avatar 
+				FROM FUser f 
+					LEFT JOIN FSetting s ON 
+					(
+						 	 s.Type = "system" 
+						 AND s.Key = "avatar" 
+						 AND s.UserID = ' . $User->ID . '
+					)
+				WHERE f.ID = ' . $User->ID . ' 
+			' ) )
 			{
 				$data->userid     = $usr->ID;
 				$data->uniqueid   = $usr->UniqueID;
 				$data->username   = $usr->Name;
 				$data->fullname   = $usr->FullName;
 				
+				// TODO: See if we need to include $args->args->email (including fullname) or $args->args->userid (contact uniqueid) here ...
 				
-				$hash = false; $online = false;
+				$hash = false; $online = false/*true*/;
 				
-				
-				// TODO: See when we need this stuff below ...
 				
 				$f = new dbIO( 'FTinyUrl' );
 				$f->Source = ( $baseUrl . '/system.library/user/addrelationship?data=' . urlencode( json_encode( $data ) ) );
@@ -404,18 +408,15 @@ if( $args->command )
 					die( 'fail<!--separate-->{"response":-1,"message":"Could not read invite hash."}' );
 				}
 				
-				$invitelink = buildUrl( $hash, $Conf, $ConfShort );
-				
-				$msg = ($usr->FullName.' invites to you connect here on Friend Sky, a great collaboration platform that\'s free to use Invite Link: <a target="_BLANK" href="'.$invitelink.'">'.$invitelink.'</a>');
 				
 				
 				// Check if user is online ...
 				
-				if( $res1 = FriendCoreQuery( '/system.library/user/activewslist',
+				if( !$online && ( $res1 = FriendCoreQuery( '/system.library/user/activewslist',
 				[
 					'usersonly' => true,
 					'userid' => $contact->ID
-				] ) )
+				] ) ) )
 				{
 					if( $dat = json_decode( $res1 ) )
 					{
@@ -426,25 +427,11 @@ if( $args->command )
 					}
 				}
 				
-				// Send a notification message if online ...
+				// Send a notification message if online and user exists ...
 				
 				if( $online && !isset( $args->args->email ) )
 				{
-					//$jsn = '{"message":"'.$invitelink.'","accept":"/system.library/module/?module=system&command=verifyinvite&args='.urlencode('{"hash":"'.$hash.'"}').'","decline":"/system.library/module/?module=system&command=removeinvite&args='.urlencode('{"hash":"'.$hash.'"}').'"}';
-					
-					//if( $res2 = FriendCoreQuery( '/system.library/user/servermessage', 
-					//[
-					//	'message' => ($usr->FullName.' invites to you connect here on Friend Sky, a great collaboration platform that\'s free to use Invite Link: '.$invitelink),
-					//	'userid' => $contact->ID
-					//] ) )
-					//{
-						// Sent ...
-						
-					//	die( 'Message sent? ' . $res2 );
-					//}
-					
-					
-					
+										
 					$n = new dbIO( 'FQueuedEvent' );
 					$n->UserID = $usr->ID;
 					$n->TargetUserID = $contact->ID;
@@ -468,31 +455,42 @@ if( $args->command )
 					die( 'Fail to send message to user ...' );
 				}
 				
-				// Send email ...
+				// Send email if not online or if user doesn't exist ...
 				
 				else
 				{
 					
-					
-					// Set up mail content!
-					//$cnt = file_get_contents( "$basePath/mail_templates/base_email_template.html" );
-					
-					$repl = new stdClass(); $baserepl = new stdClass();
+					$invitelink = buildUrl( $hash, $Conf, $ConfShort );
 				
-					$repl->baseUrl = $baserepl->baseUrl = $baseUrl;
+					$msg = ($usr->FullName.' invites to you connect here on Friend Sky, a great collaboration platform that\'s free to use Invite Link: <a target="_BLANK" href="'.$invitelink.'">'.$invitelink.'</a>');
 					
-					$repl->url = $invitelink;
 					
-					// TODO: Check this ...
-					//$baserepl->unsubscribe = $baseUrl . '/unsubscribe/' . base64_encode( '{"id":"' . $usr->ID . '","email":"' . $usr->Email . '","userid":"' . $usr->UserID . '","username":"' . $usr->Username . '"}' );
 					
-					$repl->sitename = ( isset( $Conf[ 'Registration' ][ 'reg_sitename' ] ) ? $Conf[ 'Registration' ][ 'reg_sitename' ] : 'Friend Sky' );
-					$repl->user     = $usr->Fullname;
-					$repl->email    = $usr->Email;
+					if( file_exists( "php/scripts/registration/mail_templates/invite_email_template.html" ) )
+					{
+						// Set up mail content!
+						$cnt = file_get_contents( "php/scripts/registration/mail_templates/base_email_template.html" );
 					
-					//$baserepl->body = doReplacements( file_get_contents( "$basePath/mail_templates/activate_account_email_template.html"  ), $repl );
+						$repl = new stdClass(); $baserepl = new stdClass();
+				
+						$repl->baseUrl = $baserepl->baseUrl = $baseUrl;
 					
-					//$cnt = doReplacements( $cnt, $baserepl );
+						$repl->url = ( $baseUrl . '/webclient/index.html#invite=' . $hash . 'BASE64' . base64_encode( '{"user":"' . $usr->FullName . '","hash":"' . $hash . '"}' ) );
+						
+						// TODO: Check this ...
+						$baserepl->unsubscribe = ''/*$baseUrl . '/unsubscribe/' . base64_encode( '{"id":"' . $contact->QuarantineID . '","email":"' . $contact->Email . '","userid":"' . $contact->ID . '","username":"' . $contact->Name . '"}' )*/;
+						
+						$repl->sitename = ( isset( $Conf[ 'Registration' ][ 'reg_sitename' ] ) ? $Conf[ 'Registration' ][ 'reg_sitename' ] : 'Friend Sky' );
+						$repl->user     = $usr->FullName;
+						$repl->email    = $usr->Email;
+						$repl->avatar   = 'https://cdn.eteknix.com/wp-content/uploads/2013/04/anonymous.jpg'/*$usr->Avatar*/;
+						
+						//die( print_r( $repl,1 ) . ' -- ' );
+						
+						$baserepl->body = doReplacements( file_get_contents( "php/scripts/registration/mail_templates/invite_email_template.html"  ), $repl );
+					
+						$cnt = doReplacements( $cnt, $baserepl );
+					}
 					
 					
 					
@@ -502,9 +500,9 @@ if( $args->command )
 					$mail->debug = 0;
 					$mail->setReplyTo( $Conf[ 'FriendMail' ][ 'friendmail_user' ], ( isset( $Conf[ 'FriendMail' ][ 'friendmail_name' ] ) ? $Conf[ 'FriendMail' ][ 'friendmail_name' ] : 'Friend Software Corporation' ) );
 					$mail->setFrom( $Conf[ 'FriendMail' ][ 'friendmail_user' ] );
-					$mail->setSubject( 'Invite Link' );
-					$mail->addRecipient( ( $contact->Email ? $contact->Email : $usr->Email ), ( $contact->FullName ? $contact->FullName : $usr->FullName ) );
-					$mail->setContent( utf8_decode( $msg/*$cnt*/ ) );
+					$mail->setSubject( 'Invitation' );
+					$mail->addRecipient( $contact->Email, $contact->FullName );
+					$mail->setContent( utf8_decode( file_exists( "php/scripts/registration/mail_templates/invite_email_template.html" ) ? $cnt : $msg ) );
 					if( !$mail->send() )
 					{
 						// ...
@@ -520,22 +518,6 @@ if( $args->command )
 				
 			}
 			
-			/* <HR><H2>system.library/user/activelwsist</H2>Get active user list, all users have working websocket connections
-			*
-			* @param sessionid - (required) session id of logged user
-			* @param usersonly - if set to 'true' get unique user list
-			* @return all users in JSON list when success, otherwise error code
-			*/
-			
-			/**
-			*
-			* <HR><H2>system.library/user/servermessage</H2>Send message to all User sessions
-			*
-			* @param message - (required) message which will be delivered
-			* @return fail or ok response
-			*/
-			/// @endcond
-			
 			die( 'fail<!--separate-->{"Response":"Could not send invite"}' );
 			
 			break;
@@ -545,6 +527,30 @@ if( $args->command )
 }
 
 if( !$args->skip ) die( 'fail<!--separate-->{"Response":"Fail! command not recognized ..."}' );
+
+function doReplacements( $str, $replacements )
+{
+	foreach( $replacements as $k=>$v )
+	{
+		if( is_object( $v ) )
+		{
+			if( $v->type == 'urlobject' )
+			{
+				$v->data = base64_encode( $v->data );
+				if( $v->contentType )
+				{
+					$v->data = 'data:' . $v->contentType . ';base64,' . $v->data;
+				}
+			}
+			$str = str_replace( '{' . $k . '}', $v->data, $str );
+		}
+		else
+		{
+			$str = str_replace( '{' . $k . '}', $v, $str );
+		}
+	}
+	return $str;
+}
 
 function buildURL( $hash, $conf, $confshort )
 {

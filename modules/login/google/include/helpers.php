@@ -139,6 +139,17 @@ function renderReplacements( $template, $args = false )
 		}
 	}
 	
+	if( $args && isset( $args->invite ) )
+	{
+		if( $args->invite && strstr( $args->invite, 'BASE64' ) )
+		{
+			if( $parts = explode( 'BASE64', $args->invite ) )
+			{
+				$args->invite = trim( $parts[0] );
+			}
+		}
+	}
+	
 	if( $server && $server->friend_register_uri )
 	{
 		$friend_register_uri = $server->friend_register_uri . ( $args && isset( $args->invite ) ? '?invite=' . $args->invite : '' );
@@ -671,6 +682,7 @@ function sendFriendMail( $user )
 		$qua->Email    = $user->Email;
 		if( !$qua->Load() )
 		{
+			$qua->Verified = 1;
 			$qua->DateCreated = time();
 		}
 		
