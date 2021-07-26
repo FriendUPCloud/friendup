@@ -100,7 +100,7 @@ function refreshGroups()
 			if( !list.groups[a].description )
 				list.groups[a].description = '';
 			str += '<div class="sw' + sw + ' Collection">\
-				<div class="Name">' + list.groups[a].name + '</div>\
+				<div class="Name" title="' + list.groups[a].name + '">' + list.groups[a].name + '</div>\
 				<div class="Buttons">\
 					<button type="button" class="Button IconSmall fa-edit NoText" title="' + i18n( 'i18n_edit_group' ) + '" onclick="editGroup(\'' + list.groups[a].ID + '\')"></button>\
 				</div>\
@@ -1517,7 +1517,9 @@ function getUnmounted()
 		var str = '';
 		for( var a = 0; a < js.length; a++ )
 		{
-			str += '<div class="FloatLeft Disk MousePointer" onclick="editStorage(\'' + js[a].Name + '\')"><div class="Label Ellipsis">' + js[a].Name + '</div></div>';
+			if( js[a].Name == 'Home' )
+				js[a].Type = 'Home';
+			str += '<div class="FloatLeft Disk MousePointer ' + js[a].Type + '" onclick="editStorage(\'' + js[a].Name + '\')"><div class="Label Ellipsis">' + js[a].Name + '</div></div>';
 		}
 		ge( 'StorageListUnmounted' ).innerHTML = str;
 	}
@@ -1542,10 +1544,13 @@ function getStorage()
 			{
 				//console.log('storage device', JSON.stringify(js[a]));
 				//dont let non-admins manage workgroup drives.
+				if( js[a].Name == 'Home' )
+					js[a].Type = 'Home';
+				if( js[a].Name == 'Shared' ) continue;
 				if( js[a].Type == 'SQLWorkgroupDrive' && userLevel != 'admin')
-					str += '<div class="FloatLeft Disk MousePointer NonEditableDisk" onclick="Notify({\'title\':\''+ i18n('i18n_account') + '\',\'text\':\'' + i18n('i18n_admin_managed_drive') + '\'})"><div class="Label Ellipsis">' + js[a].Name + '</div></div>';
+					str += '<div class="FloatLeft Disk MousePointer NonEditableDisk ' + js[a].Type + '" onclick="Notify({\'title\':\''+ i18n('i18n_account') + '\',\'text\':\'' + i18n('i18n_admin_managed_drive') + '\'})"><div class="Label Ellipsis">' + js[a].Name + '</div></div>';
 				else if( js[a].Mounted != '0' )
-					str += '<div class="FloatLeft Disk MousePointer" onclick="editStorage(\'' + js[a].Name + '\', false, \'mounted\' )"><div class="Label Ellipsis">' + js[a].Name + '</div></div>';
+					str += '<div class="FloatLeft Disk MousePointer ' + js[a].Type + '" onclick="editStorage(\'' + js[a].Name + '\', false, \'mounted\' )"><div class="Label Ellipsis">' + js[a].Name + '</div></div>';
 			}
 			str += '<div onclick="addStorage()" class="MousePointer FloatLeft BigButton IconSmall fa-plus"><div class="Label Ellipsis">' + i18n( 'i18n_add_storage' ) + '</div></div>';
 			ge( 'StorageList' ).innerHTML = str;

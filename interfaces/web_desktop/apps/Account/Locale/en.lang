@@ -67,6 +67,8 @@ i18n_can_not_invite_desc             : You can not invite users to this group be
 i18n_sure_remove_user_from           : Are you sure that you want to remove the user from this group?
 i18n_pending_invites                 : Pending invites
 
+i18n_find_groups                     : Find groups
+
 i18n_add_storage                     : Add storage
 i18n_edit_storage                    : Edit disk
 

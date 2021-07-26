@@ -155,7 +155,10 @@
 	padding: 10px;
 	margin-bottom: 5px;
 	line-height: 76px;
-	border: 2px solid white;
+	border: 2px solid rgba(0,0,0,0.25);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
 }
 
 .Collections > .Collection > .Name.sw2
@@ -167,4 +170,70 @@
 {
 	margin-top: -65px;
 }
+
+html #GroupSearch input, html #GroupSearch button
+{
+	height: 25px;
+	vertical-align: middle;
+	box-sizing: border-box;
+}
+
+/* Labels */
+
+#StorageList .Disk:after,
+#StorageListUnmounted .Disk:after
+{
+	position: relative;
+	display: block;
+	content: ' ';
+	background-size: 16px 16px;
+	background-position: center;
+	background-repeat: no-repeat;
+	width: 100%;
+	height: calc(100% - 8px);
+	text-align: center;
+}
+
+.Disk.SQLDrive:after
+{
+	background-image: url('/iconthemes/friendup15/DriveLabels/FriendDisk.svg');
+}
+
+.Disk.Home:after
+{
+	
+	background-image: url('/iconthemes/friendup15/DriveLabels/Home.svg');
+}
+html div > .Disk.SQLWorkgroupDrive:after
+{
+	font-family: fontawesome;
+	content: '\f0c0' !important;
+	line-height: 32px;
+	color: #222222;
+}
+
+html div > .Disk.Local:after
+{
+	font-family: fontawesome;
+	content: '\f17c' !important;
+	line-height: 32px;
+	color: #222222;
+}
+
+html div > .Disk.GoogleDrive:after
+{
+	font-family: fontawesome;
+	content: '\f1a0' !important;
+	line-height: 32px;
+	color: #222222;
+}
+
+html div > .Disk.DropboxDrive:after
+{
+	font-family: fontawesome;
+	content: '\f16b' !important;
+	line-height: 32px;
+	color: #222222;
+}
+
 
