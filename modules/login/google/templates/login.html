@@ -1069,6 +1069,11 @@
 			
 			function switchForm( form )
 			{
+				if( Application.inviteUser && ge( 'LoginMode' ) && ge( 'LoginMode' ).getElementsByTagName( 'h1' )[0] )
+				{
+					ge( 'LoginMode' ).getElementsByTagName( 'h1' )[0].innerHTML = 'Sign in and connect to ' + Application.inviteUser;
+				}
+				
 				if( ge( 'VerifyMode' ) && ge( 'LoginMode'  ) )
 				{
 					if( form && form == 'verify' )
@@ -1085,10 +1090,7 @@
 					}
 					else if( form && form == 'invite' )
 					{
-						if( Application.inviteUser && ge( 'LoginMode' ) && ge( 'LoginMode' ).getElementsByTagName( 'h1' )[0] )
-						{
-							ge( 'LoginMode' ).getElementsByTagName( 'h1' )[0].innerHTML = 'Sign in and connect to ' + Application.inviteUser;
-						}
+						return true;
 					}
 					else
 					{
@@ -1111,16 +1113,21 @@
 					
 					if( invite )
 					{
-						try
+						if( invite.indexOf( 'BASE64' ) >= 0 )
 						{
-							decoded = atob( invite );
-							
-							if( decoded )
+							try
 							{
-								json = JSON.parse( decoded );
+								decoded = atob( invite.split( 'BASE64' )[1] );
+								
+								if( decoded )
+								{
+									json = JSON.parse( decoded );
+								}
 							}
+							catch {  }
+							
+							invite = invite.split( 'BASE64' )[0];
 						}
-						catch {  }
 						
 						console.log( json ? json : invite );
 						
@@ -1170,6 +1177,14 @@
 						{
 							if( json.expiry ) console.log( [ json, ( timezoneConvert( json.expiry, json.timezone, true ) + ' < ' + timezoneConvert( null, json.timezone, true ) ) ] );
 							
+							if( json.user )
+							{
+								Application.inviteUser = json.user;
+							}
+							if( json.invite )
+							{
+								Application.inviteHash = json.invite;
+							}
 							if( json.code && ge( 'Verification' ) )
 							{
 								ge( 'Verification' ).value = json.code;
