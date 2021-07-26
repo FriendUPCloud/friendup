@@ -236,4 +236,12 @@ html div > .Disk.DropboxDrive:after
 	color: #222222;
 }
 
+html div > .Disk.Remote:after
+{
+	font-family: fontawesome;
+	content: '\f0c2' !important;
+	line-height: 32px;
+	color: #222222;
+}
+
 
