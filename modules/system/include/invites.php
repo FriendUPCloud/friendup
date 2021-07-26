@@ -376,6 +376,8 @@ if( $args->command )
 				
 				// TODO: See if we need to include $args->args->email (including fullname) or $args->args->userid (contact uniqueid) here ...
 				
+				// TODO: Change this to online once support for only sending emails to users not created is ready in the gui ...
+				
 				$hash = false; $online = false/*true*/;
 				
 				
@@ -461,36 +463,29 @@ if( $args->command )
 				{
 					
 					$invitelink = buildUrl( $hash, $Conf, $ConfShort );
+					
+					// Set up mail content!
+					$cnt = file_get_contents( "php/templates/mail/base_email_template.html" );
 				
-					$msg = ($usr->FullName.' invites to you connect here on Friend Sky, a great collaboration platform that\'s free to use Invite Link: <a target="_BLANK" href="'.$invitelink.'">'.$invitelink.'</a>');
-					
-					
-					
-					if( file_exists( "php/scripts/registration/mail_templates/invite_email_template.html" ) )
-					{
-						// Set up mail content!
-						$cnt = file_get_contents( "php/scripts/registration/mail_templates/base_email_template.html" );
-					
-						$repl = new stdClass(); $baserepl = new stdClass();
+					$repl = new stdClass(); $baserepl = new stdClass();
+			
+					$repl->baseUrl = $baserepl->baseUrl = $baseUrl;
 				
-						$repl->baseUrl = $baserepl->baseUrl = $baseUrl;
+					$repl->url = ( $baseUrl . '/webclient/index.html#invite=' . $hash . 'BASE64' . base64_encode( '{"user":"' . utf8_decode( $usr->FullName ) . '","hash":"' . $hash . '"}' ) );
 					
-						$repl->url = ( $baseUrl . '/webclient/index.html#invite=' . $hash . 'BASE64' . base64_encode( '{"user":"' . $usr->FullName . '","hash":"' . $hash . '"}' ) );
-						
-						// TODO: Check this ...
-						$baserepl->unsubscribe = ''/*$baseUrl . '/unsubscribe/' . base64_encode( '{"id":"' . $contact->QuarantineID . '","email":"' . $contact->Email . '","userid":"' . $contact->ID . '","username":"' . $contact->Name . '"}' )*/;
-						
-						$repl->sitename = ( isset( $Conf[ 'Registration' ][ 'reg_sitename' ] ) ? $Conf[ 'Registration' ][ 'reg_sitename' ] : 'Friend Sky' );
-						$repl->user     = $usr->FullName;
-						$repl->email    = $usr->Email;
-						$repl->avatar   = 'https://cdn.eteknix.com/wp-content/uploads/2013/04/anonymous.jpg'/*$usr->Avatar*/;
-						
-						//die( print_r( $repl,1 ) . ' -- ' );
-						
-						$baserepl->body = doReplacements( file_get_contents( "php/scripts/registration/mail_templates/invite_email_template.html"  ), $repl );
+					// TODO: Check this ...
+					$baserepl->unsubscribe = ''/*$baseUrl . '/unsubscribe/' . base64_encode( '{"id":"' . $contact->QuarantineID . '","email":"' . $contact->Email . '","userid":"' . $contact->ID . '","username":"' . $contact->Name . '"}' )*/;
 					
-						$cnt = doReplacements( $cnt, $baserepl );
-					}
+					$repl->sitename = ( isset( $Conf[ 'Registration' ][ 'reg_sitename' ] ) ? $Conf[ 'Registration' ][ 'reg_sitename' ] : 'Friend Sky' );
+					$repl->user     = $usr->FullName;
+					$repl->email    = $usr->Email;
+					$repl->avatar   = ( $baseUrl . '/public/' . $hash . '/avatar' );
+					
+					// TODO: Get avatar / group info somewhere public or with access code / invite token ...
+					
+					$baserepl->body = doReplacements( file_get_contents( "php/templates/mail/invite_email_template.html"  ), $repl );
+				
+					$cnt = doReplacements( $cnt, $baserepl );
 					
 					
 					
@@ -500,9 +495,9 @@ if( $args->command )
 					$mail->debug = 0;
 					$mail->setReplyTo( $Conf[ 'FriendMail' ][ 'friendmail_user' ], ( isset( $Conf[ 'FriendMail' ][ 'friendmail_name' ] ) ? $Conf[ 'FriendMail' ][ 'friendmail_name' ] : 'Friend Software Corporation' ) );
 					$mail->setFrom( $Conf[ 'FriendMail' ][ 'friendmail_user' ] );
-					$mail->setSubject( 'Invitation' );
+					$mail->setSubject( utf8_decode( $usr->FullName ) . ' invites to you connect' );
 					$mail->addRecipient( $contact->Email, $contact->FullName );
-					$mail->setContent( utf8_decode( file_exists( "php/scripts/registration/mail_templates/invite_email_template.html" ) ? $cnt : $msg ) );
+					$mail->setContent( utf8_decode( $cnt ) );
 					if( !$mail->send() )
 					{
 						// ...
