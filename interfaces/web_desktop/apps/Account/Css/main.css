@@ -252,4 +252,19 @@ html div > .Disk.SFTP:after
 	color: #222222;
 }
 
+html div > .Disk.Wordpress:after
+{
+	font-family: fontawesome;
+	content: '\f19a' !important;
+	line-height: 32px;
+	color: #222222;
+}
+
+html div > .Disk.Assign:after
+{
+	font-family: fontawesome;
+	content: '\f115' !important;
+	line-height: 32px;
+	color: #222222;
+}
 
