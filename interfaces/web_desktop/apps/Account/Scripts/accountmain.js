@@ -282,7 +282,7 @@ function refreshAvatar()
 				avSrc.onload = function()
 				{
 					var ctx = avatar.getContext( '2d' );
-					ctx.drawImage( avSrc, 0, 0, 256, 256 );
+					ctx.drawImage( avSrc, 0, 0, 128, 128 );
 				}
 			}
 		}
@@ -568,7 +568,7 @@ function changeAvatar()
 					// Resizes the image
 					var canvas = ge( 'Avatar' );
 					var context = canvas.getContext( '2d' );
-					context.drawImage( image, 0, 0, 256, 256 );
+					context.drawImage( image, 0, 0, 128, 128 );
 				}
 				image.src = getImageUrl( item[ 0 ].Path );
 			}
