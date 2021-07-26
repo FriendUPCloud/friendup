@@ -74,8 +74,15 @@ Application.run = function( msg, iface )
 }
 
 
-function refreshGroups()
+function findGroups()
 {
+	refreshGroups( ge( 'groupSearcher' ).value );
+}
+
+function refreshGroups( keys )
+{
+	if( !keys ) keys = '';
+	
 	let m = new Library( 'system.library' );
 	m.onExecuted = function( e, d )
 	{
@@ -92,6 +99,19 @@ function refreshGroups()
 		{
 			return ge( 'GroupList' ).innerHTML = '<p>' + i18n( 'i18n_failed_reading_groups' ) + '</p>';
 		}
+		
+		// Filter on keywords
+		if( keys.length )
+		{
+			let out = {};
+			for( let a in list.groups )
+			{
+				if( list.groups[a].name.toLowerCase().indexOf( keys.toLowerCase() ) >= 0 )
+					out[a] = list.groups[a];
+			}
+			list.groups = out;
+		}
+		
 		let str = '<div class="Collections">';
 		let sw = 1;
 		for( let a in list.groups )

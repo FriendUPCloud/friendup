@@ -190,8 +190,8 @@
 					<div class="Page">
 						<div id="GroupSearch" class="BorderBottom">
 							<p class="TextCenter">
-								<input type="text" class="InputHeight" placeholder=""/>
-								<button type="button" class="Button IconSmall fa-search">
+								<input type="text" id="groupSearcher" class="InputHeight" placeholder="" onkeyup="findGroups()"/>
+								<button type="button" class="Button IconSmall fa-search" onclick="findGroups()">
 									{i18n_find_groups}
 								</button>
 							</p>
