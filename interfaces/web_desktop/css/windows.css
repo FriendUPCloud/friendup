@@ -20,6 +20,11 @@ body:not([mobile]) .ViewContainer
 	opacity: 1;
 }
 
+.ViewContainer.Closing, .ViewContainer.Closing *
+{
+	pointer-events: none;
+}
+
 .View
 {
 	position: absolute;
