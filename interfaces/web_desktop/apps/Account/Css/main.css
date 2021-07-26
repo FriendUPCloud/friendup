@@ -244,4 +244,12 @@ html div > .Disk.Remote:after
 	color: #222222;
 }
 
+html div > .Disk.SFTP:after
+{
+	font-family: fontawesome;
+	content: '\f120' !important;
+	line-height: 32px;
+	color: #222222;
+}
+
 
