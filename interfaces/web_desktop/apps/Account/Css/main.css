@@ -127,3 +127,44 @@
 	}
 }
 
+/* Groups */
+
+.Collections
+{
+	text-align: center;
+}
+
+.Collections > .Collection
+{
+	position: relative;
+	width: 128px;
+	height: 128px;
+	display: inline-block;
+	margin: 10px 10px 0 0;
+	text-align: center;
+}
+
+.Collections > .Collection > .Name
+{
+	width: 128px;
+	height: 128px;
+	background-color: rgba(0,0,0,0.15);
+	text-align: center;
+	border-radius: 100%;
+	box-sizing: border-box;
+	padding: 10px;
+	margin-bottom: 5px;
+	line-height: 76px;
+	border: 2px solid white;
+}
+
+.Collections > .Collection > .Name.sw2
+{
+	background-color: rgba(0,0,0,0.1);
+}
+
+.Collection .Buttons
+{
+	margin-top: -65px;
+}
+
