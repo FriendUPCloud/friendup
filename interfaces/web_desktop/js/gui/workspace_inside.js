@@ -1542,7 +1542,8 @@ var WorkspaceInside = {
 		    				text: list[a].Message,
 		    				time: list[a].Date,
 		    				type: list[a].Type,
-		    				eventId: list[a].ID
+		    				eventId: list[a].ID,
+		    				seen: false
 		    			} );
 		    		}
 		    	}
