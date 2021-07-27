@@ -211,8 +211,8 @@ if( $args->command )
 		case 'removependinginvite':
 			$eventId = intval( $args->args->eventId, 10 );
 			$SqlDatabase->query( '
-				DELETE FROM FQueuedEvent q
-				WHERE q.ID = \'' . $eventId . '\'
+				DELETE FROM FQueuedEvent
+				WHERE ID = \'' . $eventId . '\'
 			' );
 			die( 'ok' );
 			break;
