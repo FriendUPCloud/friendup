@@ -487,37 +487,29 @@ if( $args->command )
 					}
 				}
 				
-				// Send a notification message if online and user exists ...
-				
-				if( $online && !isset( $args->args->email ) )
+				// Send a notification message			
+				$n = new dbIO( 'FQueuedEvent' );
+				$n->UserID = $usr->ID;
+				$n->TargetUserID = $contact->ID;
+				$n->TargetGroupID = $gid;
+				$n->Title = ( isset( $args->args->title ) ? $args->args->title : ( $gname ? 'Invitation to join' : 'Invitation to connect' ) );
+				$n->Type = 'interaction';
+				$n->Status = 'unseen';
+				$n->Message = ( isset( $args->args->message ) ?$args->args->message : ( $usr->FullName . ( $gname ? ' invited you to join ' . $gname : ' invites to you connect on Friend Chat.' ) ) );
+				$n->ActionAccepted = '{"module":"system","command":"verifyinvite","args":{"hash":"'.$hash.'"},"skip":"true"}';
+				$n->ActionRejected = '{"module":"system","command":"removeinvite","args":{"hash":"'.$hash.'"},"skip":"true"}';
+				if( !$n->Load() )
 				{
-									
-					$n = new dbIO( 'FQueuedEvent' );
-					$n->UserID = $usr->ID;
-					$n->TargetUserID = $contact->ID;
-					$n->TargetGroupID = $gid;
-					$n->Title = ( isset( $args->args->title ) ? $args->args->title : ( $gname ? 'Invitation to join' : 'Invitation to connect' ) );
-					$n->Type = 'interaction';
 					$n->Date = date( 'Y-m-d H:i' );
-					$n->Status = 'unseen';
-					$n->Message = ( isset( $args->args->message ) ?$args->args->message : ( $usr->FullName . ( $gname ? ' invited you to join ' . $gname : ' invites to you connect on Friend Chat.' ) ) );
-					$n->ActionAccepted = '{"module":"system","command":"verifyinvite","args":{"hash":"'.$hash.'"},"skip":"true"}';
-					$n->ActionRejected = '{"module":"system","command":"removeinvite","args":{"hash":"'.$hash.'"},"skip":"true"}';
-					if( $n->Load() )
-					{
-						die( 'fail<!--separate-->notification event already exists ...' );
-					}
 					if( $n->Save() )
 					{
-						die( 'ok<!--separate-->notification event stored id: ' . $n->ID );
+						// Wee!
 					}
-					
-					die( 'Fail to send message to user ...' );
 				}
 				
 				// Send email if not online or if user doesn't exist ...
 				
-				else
+				if( !$online )
 				{
 					
 					$invitelink = buildUrl( $hash, $Conf, $ConfShort );
