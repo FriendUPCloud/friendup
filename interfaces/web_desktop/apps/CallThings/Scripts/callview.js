@@ -169,7 +169,7 @@ CallView.prototype.makeLibraryCall = async function( exec, args ) {
 	}
 	
 	async function directCall( exec, args, token ) {
-		const path = '/system.library/' + exec + '?';
+		const path = '/system.library/' + exec;
 		const req = new Request( path, null, null, args, token );
 		const res = await req.send();
 		console.log( 'lib directCall, res', res );
@@ -200,7 +200,7 @@ CallView.prototype.makeModuleCall = async function( exec, args ) {
 	}
 	
 	async function directCall( modName, exec, args, token ) {
-		const path = '/system.library/module/?';
+		const path = '/system.library/module/';
 		const req = new Request( path, modName, exec, args, token );
 		const res = await req.send();
 		console.log( 'mod direct call, res', res );
@@ -303,15 +303,31 @@ CallView.prototype.closeWin = function()
 
 
 
-const Request = function( ...args ) {
+const Request = function( type, path, token ) {
 	const self = this;
-	console.log( 'request', args );
-	self.init( ...args );
+	self.type = type;
+	self.path = path;
+	console.log( 'request', [ type, path, token ]);
+	self.init( token );
 }
 
-Request.prototype.send = async function() {
+Request.prototype.send = async function( conf, args ) {
 	const self = this;
-	const res = await window.fetch( self.reqString );
+	let body = null;
+	if ( 'library' == self.type )
+		req = self.buildLibBody( conf );
+	else
+		req = self.buildModBody( conf, args );
+	
+	let req = {
+		method  : 'POST',
+		body    : body,
+		headers : {
+			'Content-Type' : 'application/x-www-form-urlencoded',
+		},
+	};
+	
+	const res = await window.fetch( self.url, req );
 	const text = await res.text();
 	console.log( 'Request.send, res', text );
 	return text.split( '<!--separate-->' );
@@ -319,11 +335,19 @@ Request.prototype.send = async function() {
 
 // Priv
 
-Request.prototype.init = function( path, modName, exec, args, token ) {
+Request.prototype.init = function( token ) {
 	const self = this;
 	const proto = 'https://';
 	const host = document.location.host;
+	self.url = [ proto, host, self.path ].join( '' );
+	
 	const tokenType = Object.keys( token )[ 0 ];
+	self.token = {
+		type  : tokenType,
+		value : token[ tokenType ],
+	};
+	
+	/*
 	const conf = {};
 	if ( null != modName )
 		conf.module = modName;
@@ -335,7 +359,9 @@ Request.prototype.init = function( path, modName, exec, args, token ) {
 	if ( null != args )
 		conf.args = args;
 	
-	const query = self.buildQueryString( conf );
+	const req = 
+	
+	//const query = self.buildQueryString( conf );
 	console.log( 'Request', {
 		host   : host,
 		path   : path,
@@ -343,8 +369,11 @@ Request.prototype.init = function( path, modName, exec, args, token ) {
 		exec   : exec,
 		args   : args,
 		token  : token,
-		query  : query,
+		url    : self.url,
+		req    : req,
 	});
+	self.reqConf = req;
+	/*
 	const parts = [
 		proto,
 		host,
@@ -354,7 +383,15 @@ Request.prototype.init = function( path, modName, exec, args, token ) {
 	const reqString = parts.join( '' );
 	console.log('reqString', reqString );
 	self.reqString = reqString;
+	*/
 }
+
+Request.prototype.buildModBody = function( conf, args ) {
+	const self = this;
+	console.log( 'buildModBody', [ conf, args ]);
+}
+
+Request.prototype.buildLibBody = function()
 
 Request.prototype.buildQueryString = function( conf ) {
 	const self = this;
@@ -363,12 +400,21 @@ Request.prototype.buildQueryString = function( conf ) {
 	keys.forEach( k => {
 		let v = conf[ k ];
 		if ( 'args' == k ) {
-			v = JSON.stringify( v );
-			v = window.encodeURI( v );
+			const aKeys = Object.keys( v );
+			aKeys.forEach( aK => {
+				let aV = v[ aK ];
+				//aV = JSON.stringify( aV );
+				//aV = window.encodeURI( aV );
+				const aP = aK + '=' + aV;
+				parts.push( aP );
+			});
+		} else {
+			const p = k + '=' + v;
+			parts.push( p );
 		}
-		const q = k + '=' + v;
-		parts.push( q );
 	});
+	
+	//return form;
 	const query = parts.join( '&' );
 	console.log( 'buildQueryString, query', query );
 	return query;

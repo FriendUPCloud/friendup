@@ -344,6 +344,10 @@ cAjax = function( app )
 			// Execute onload action with appropriate data
 			if( jax.onload )
 			{
+				console.log( 'http to onload', {
+					r : self.returnCode,
+					d : self.returnData,
+				});
 				jax.onload( jax.returnCode, jax.returnData );
 			}
 			jax.destroy();
@@ -458,6 +462,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	
 	// Try websockets!!
 	if( 
+		//false &&
 		!this.forceHTTP &&
 		window.Workspace &&
 		Workspace.conn && 
@@ -594,14 +599,18 @@ cAjax.prototype.responseText = function()
 cAjax.prototype.send = function( data, callback )
 {
 	const self = this;
-	RemoveFromCajaxQueue( this );
+	//RemoveFromCajaxQueue( this );
 	
+	/*
 	if( window.Workspace )
 		self.addVar( 'sessionid', Workspace.sessionId );
 	if( window.Application && Application.authId )
 		self.addVar( 'authid', Application.authId );
+	*/
 	
 	// Maintain authid
+	
+	/*
 	if( this.application )
 	{
 		console.log( 'cAjax app call', {
@@ -611,6 +620,7 @@ cAjax.prototype.send = function( data, callback )
 		this.deleteVar( 'authid' );
 		this.addVar( 'authid', this.application.authId );
 	}
+	*/
 	
 	// Make sure we don't f this up!
 	if( this.onload && !this.onloadAfter )
@@ -618,6 +628,7 @@ cAjax.prototype.send = function( data, callback )
 		this.onloadAfter = this.onload;
 		this.onload = function( e, d )
 		{
+			console.log( 'onload', [ e, d ]);
 			this.onload = null;
 			this.onloadAfter( e, d );
 			this.onloadAfter = null;
@@ -1012,6 +1023,10 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	}
 	if( self.onload )
 	{
+		console.log( 'ws to onload', {
+			r : self.returnCode,
+			d : self.returnData,
+		});
 		self.onload( self.returnCode, self.returnData );
 	}
 	else
