@@ -81,7 +81,12 @@ function listConnectedUsers( limit, pos, keyw )
 
 function removeInvite( eventId )
 {
-	console.log( 'soon: ' + eventId );
+	let b = new Module( 'system' );
+	b.onExecuted = function( e, d )
+	{
+		groupUsers( function(){ listConnectedUsers(); } );
+	}
+	b.execute( 'removependinginvite', { eventId: eventId } );
 }
 
 function searchUser( keyw )

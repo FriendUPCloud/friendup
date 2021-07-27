@@ -267,6 +267,7 @@ if( isset( $args->command ) )
 		case 'generateinvite':
 		case 'getinvites':
 		case 'getpendinginvites':
+		case 'removependinginvite':
 		case 'removeinvite':
 		case 'verifyinvite':
 		case 'sendinvite':

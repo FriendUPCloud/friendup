@@ -207,6 +207,14 @@ if( $args->command )
 			
 			break;
 		
+		case 'removependinginvite':
+			$eventId = intval( $args->args->eventId, 10 );
+			$SqlDatabase->query( '
+				DELETE FROM FQueuedEvent q
+				WHERE q.ID = \'' . $eventId . '\' LIMIT 1
+			' );
+			break;
+		
 		case 'verifyinvite':
 			
 			// verifyinvite (args: hash=123d4h)
