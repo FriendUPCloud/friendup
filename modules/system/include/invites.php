@@ -309,7 +309,7 @@ if( $args->command )
 		
 		case 'sendinvite':
 			
-			$contact = new stdClass();
+			$contact = new stdClass(); $gname = '';
 			
 			$data = new stdClass();
 			$data->app  = 'FriendChat';
@@ -324,6 +324,8 @@ if( $args->command )
 					ORDER BY ID ASC 
 				' ) )
 				{
+					$gname = $groups[0]->Name;
+					
 					$data->workgroups = $groups;
 				}
 				else
@@ -478,16 +480,17 @@ if( $args->command )
 					
 					$repl->sitename = ( isset( $Conf[ 'Registration' ][ 'reg_sitename' ] ) ? $Conf[ 'Registration' ][ 'reg_sitename' ] : 'Friend Sky' );
 					$repl->user     = $usr->FullName;
+					$repl->group    = $gname;
 					$repl->email    = $usr->Email;
 					$repl->avatar   = ( $baseUrl . '/public/' . $hash . '/avatar' );
 					
 					// TODO: Get avatar / group info somewhere public or with access code / invite token ...
 					
-					$baserepl->body = doReplacements( file_get_contents( "php/templates/mail/invite_email_template.html"  ), $repl );
-				
+					$baserepl->body = doReplacements( file_get_contents( $gname ? "php/templates/mail/group_invite_email_template.html" : "php/templates/mail/invite_email_template.html" ), $repl );
+					
 					$cnt = doReplacements( $cnt, $baserepl );
 					
-					
+					// TODO: Divide mail template into invite for user and invite for group ...
 					
 					// Notify the user!
 					$mail = new Mailer(  );
@@ -495,7 +498,7 @@ if( $args->command )
 					$mail->debug = 0;
 					$mail->setReplyTo( $Conf[ 'FriendMail' ][ 'friendmail_user' ], ( isset( $Conf[ 'FriendMail' ][ 'friendmail_name' ] ) ? $Conf[ 'FriendMail' ][ 'friendmail_name' ] : 'Friend Software Corporation' ) );
 					$mail->setFrom( $Conf[ 'FriendMail' ][ 'friendmail_user' ] );
-					$mail->setSubject( utf8_decode( $usr->FullName ) . ' invites to you connect' );
+					$mail->setSubject( utf8_decode( $usr->FullName ) . ( $gname ? ' invited you to join ' . utf8_decode( $gname ) : ' invites you to connect on ' . $repl->sitename ) );
 					$mail->addRecipient( $contact->Email, $contact->FullName );
 					$mail->setContent( utf8_decode( $cnt ) );
 					if( !$mail->send() )
