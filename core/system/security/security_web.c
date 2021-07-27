@@ -413,7 +413,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 			{
 				int dots = 0;
 				int ddots = 0;
-				int i;
+				unsigned int i;
 				for( i=0 ; i < strlen( ip ) ; i++ )
 				{
 					if( ip[ i ] == '.' )
