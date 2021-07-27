@@ -334,6 +334,11 @@ html #DoorsScreen .Left > .VirtualWorkspaces > div:hover
 	background: rgba(0,0,0,0.8);
 }
 
+html #DoorsScreen .Left > .VirtualWorkspaces > div:hover > span
+{
+	color: rgba(255,255,255,0.6);
+}
+
 html #DoorsScreen .Left > .VirtualWorkspaces > div.Active:hover
 {
 	background: rgba(0,0,0,0.9);
