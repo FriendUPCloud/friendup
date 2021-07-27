@@ -171,11 +171,31 @@
 	margin-top: -65px;
 }
 
-html #GroupSearch input, html #GroupSearch button
+html #GroupSearch input
 {
 	height: 25px;
 	vertical-align: middle;
 	box-sizing: border-box;
+	width: 100%;
+}
+
+html #GroupSearch .Searcher
+{
+	margin: 10px auto 15px auto;
+	width: 340px;
+	position: relative;
+	height: 25px;
+}
+
+html #GroupSearch .Searcher:after
+{
+	content: "\f002";
+	font-family: fontawesome;
+	display: block;
+	position: absolute;
+	right: 8px;
+	top: 5px;
+	pointer-events: none;
 }
 
 /* Labels */
