@@ -242,6 +242,13 @@ if( $args->command )
 											{
 												die( 'fail<!--separate-->{"Response":"[ /system.library/group/addusers ] fail from friendcore, contact server admin ...."}' );
 											}
+											else
+											{
+												$SqlDatabase->query( '
+													DELETE FROM FQueuedEvent q
+													WHERE q.TargetUserID = \'' . $User->ID . '\' AND q.TargetGroupID = \'' . $group->ID . '\' AND q.Status = \'unseen\'
+												' );
+											}
 										}
 									}
 								}
