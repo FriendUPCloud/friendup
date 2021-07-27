@@ -169,9 +169,10 @@ CallView.prototype.makeLibraryCall = async function( exec, args ) {
 	}
 	
 	async function directCall( exec, args, token ) {
+		args = args || {};
 		const path = '/system.library/' + exec;
-		const req = new Request( path, null, null, args, token );
-		const res = await req.send();
+		const req = new Request( 'library', path, token );
+		const res = await req.send( args );
 		console.log( 'lib directCall, res', res );
 		self.setResult( res[ 0 ], res[ 1 ]);
 	}
@@ -200,9 +201,13 @@ CallView.prototype.makeModuleCall = async function( exec, args ) {
 	}
 	
 	async function directCall( modName, exec, args, token ) {
+		const conf = {
+			module  : modName,
+			command : exec,
+		};
 		const path = '/system.library/module/';
-		const req = new Request( path, modName, exec, args, token );
-		const res = await req.send();
+		const req = new Request( 'module', path, token );
+		const res = await req.send( conf, args );
 		console.log( 'mod direct call, res', res );
 		self.setResult( res[ 0 ], res[ 1 ]);
 	}
@@ -282,26 +287,13 @@ CallView.prototype.getToken = function() {
 	return null;
 }
 
-/*
-CallView.prototype.parseKV = function( inputStr ) {
-	const self = this;
-	console.log( 'parseKV', inputStr );
-	const pairs = {};
-	const lines = inputStr.split( ',' );
-	console.log( 'lines', lines );
-	lines.forEach( line => {
-		const kv = line.split( ':' );
-	});
-}
-*/
-
 CallView.prototype.closeWin = function()
 {
 	const self = this;
 	self.app.sendMessage( { command: 'quit' } );
 }
 
-
+//////
 
 const Request = function( type, path, token ) {
 	const self = this;
@@ -315,9 +307,9 @@ Request.prototype.send = async function( conf, args ) {
 	const self = this;
 	let body = null;
 	if ( 'library' == self.type )
-		req = self.buildLibBody( conf );
+		body = self.buildLibBody( conf );
 	else
-		req = self.buildModBody( conf, args );
+		body = self.buildModBody( conf, args );
 	
 	let req = {
 		method  : 'POST',
@@ -389,13 +381,48 @@ Request.prototype.init = function( token ) {
 Request.prototype.buildModBody = function( conf, args ) {
 	const self = this;
 	console.log( 'buildModBody', [ conf, args ]);
+	self.setToken( conf );
+	let body = self.buildQueryString( conf );
+	if ( args ) {
+		let aJ = JSON.stringify( args );
+		aJ = window.encodeURIComponent( aJ );
+		body = body + '&' + 'args=' + aJ;
+	}
+	
+	console.log( 'buildModBody, body', body );
+	return body;
 }
 
-Request.prototype.buildLibBody = function()
+Request.prototype.buildLibBody = function( conf ) {
+	const self = this;
+	console.log( 'buildLibBody', [ conf, self.token ]);
+	self.setToken( conf );
+	const body = self.buildQueryString( conf );
+	console.log( 'buildLibBody, body', body );
+	return body;
+}
+
+Request.prototype.setToken = function( body ) {
+	const self = this;
+	const t = self.token;
+	body[ t.type ] = t.value;
+}
 
 Request.prototype.buildQueryString = function( conf ) {
 	const self = this;
 	const parts = [];
+	const cKeys = Object.keys( conf );
+	cKeys.forEach( k => {
+		const v = conf[ k ];
+		const p = k + '=' + v;
+		parts.push( p );
+	});
+	
+	const body = parts.join('&');
+	return body;
+	
+	/*
+	
 	const keys = Object.keys( conf );
 	keys.forEach( k => {
 		let v = conf[ k ];
@@ -418,4 +445,5 @@ Request.prototype.buildQueryString = function( conf ) {
 	const query = parts.join( '&' );
 	console.log( 'buildQueryString, query', query );
 	return query;
+	*/
 }
