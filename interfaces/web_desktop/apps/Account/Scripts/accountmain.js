@@ -1760,7 +1760,7 @@ ns.TabTokens.prototype.handleSaveClick = async function( hostId ) {
 	console.log( 'handleSaveClick - status', [ statusStr, status ] );
 	const res = await self.updateHost( hostId, status );
 	console.log( 'handleSaveClick - res', res );
-	conf.status = status;
+	conf.status = res.status;
 	self.switchToDisplayRow( hostId );
 }
 
