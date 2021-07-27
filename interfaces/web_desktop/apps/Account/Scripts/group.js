@@ -63,8 +63,11 @@ function listConnectedUsers( limit, pos, keyw )
 		for( let a = 0; a < list.length; a++ )
 		{
 			str += '<div class="HRow sw' + sw + '">\
-				<div class="HContent100 FloatLeft Ellipsis PaddingSmall">\
-					' + list[a].FullName + '\
+				<div class="HContent80 FloatLeft Ellipsis PaddingSmall">\
+					' + list[a].Fullname + '\
+				</div>\
+				<div class="HContent20 FloatLeft Ellipsis PaddingSmall TextRight">\
+					<button class="Button IconSmall fa-remove NoText" onclick="removeInvite(\'' + list[a].EventID + '\')"></button>\
 				</div>\
 			</div>';
 			sw = sw == 1 ? 2 : 1;
@@ -73,7 +76,12 @@ function listConnectedUsers( limit, pos, keyw )
 		
 		ge( 'Pending' ).innerHTML = str;
 	}
-	p.execute( 'getinvites', { groupId: gid } );
+	p.execute( 'getpendinginvites', { groupId: gid } );
+}
+
+function removeInvite( eventId )
+{
+	console.log( 'soon: ' + eventId );
 }
 
 function searchUser( keyw )
