@@ -57,7 +57,7 @@ function listConnectedUsers( limit, pos, keyw )
 		
 		if( !list.length ) { ge( 'Pending' ).innerHTML = ''; return; };
 		
-		let str = '<p><strong>' + i18n( 'i18n_pending_invites' ) + '</strong></p>';
+		let str = '<hr class="Divider"/><p><strong>' + i18n( 'i18n_pending_invites' ) + '</strong></p>';
 		str += '<div class="List">';
 		let sw = 1;
 		for( let a = 0; a < list.length; a++ )
@@ -72,7 +72,7 @@ function listConnectedUsers( limit, pos, keyw )
 			</div>';
 			sw = sw == 1 ? 2 : 1;
 		}
-		str += '</div><hr class="Divider"/>';
+		str += '</div>';
 		
 		ge( 'Pending' ).innerHTML = str;
 	}
