@@ -60,7 +60,7 @@ function listConnectedUsers( limit, pos, keyw )
 		let str = '<p><strong>' + i18n( 'i18n_pending_invites' ) + '</strong></p>';
 		str += '<div class="List">';
 		let sw = 1;
-		for( let a = 0; a < 10 && a < list.length; a++ )
+		for( let a = 0; a < list.length; a++ )
 		{
 			str += '<div class="HRow sw' + sw + '">\
 				<div class="HContent100 FloatLeft Ellipsis PaddingSmall">\

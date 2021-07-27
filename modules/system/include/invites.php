@@ -147,7 +147,10 @@ if( $args->command )
 									foreach( $json->data->workgroups as $w )
 									{
 										if( $w->ID == $args->args->groupId )
+										{
 											$found = true;
+											break;
+										}
 									}
 								}
 								if( !$found )
