@@ -502,6 +502,7 @@ CREATE TABLE `FQueuedEvent` (
   `ID` bigint(20) NOT NULL AUTO_INCREMENT,
   `UserID` bigint(20) DEFAULT 0,
   `TargetUserID` bigint(20) DEFAULT 0,
+  `TargetGroupID` bigint(20) DEFAULT 0,
   `Type` varchar(255) NOT NULL,
   `Date` datetime,
   `Status` varchar(255) NOT NULL DEFAULT '',

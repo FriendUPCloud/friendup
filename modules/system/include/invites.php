@@ -358,7 +358,7 @@ if( $args->command )
 			}
 			$reason->response = -1;
 			$reason->message = 'Failed to find any queued events.';
-			die( 'fail' );
+			die( 'fail<!--separate-->' . json_encode( $reason ) );
 			
 			break;
 		
