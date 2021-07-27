@@ -212,8 +212,9 @@ if( $args->command )
 			$eventId = intval( $args->args->eventId, 10 );
 			$SqlDatabase->query( '
 				DELETE FROM FQueuedEvent q
-				WHERE q.ID = \'' . $eventId . '\' LIMIT 1
+				WHERE q.ID = \'' . $eventId . '\'
 			' );
+			die( 'ok' );
 			break;
 		
 		case 'verifyinvite':
