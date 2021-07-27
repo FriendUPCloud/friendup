@@ -501,13 +501,27 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 								sqllib->FreeResult( sqllib, result );
 							}
 				
-							if( pos > 0 )
+							if( userID > 0 )
 							{
-								snprintf( insertQuery, sizeof( insertQuery ), "UPDATE `FSecuredHost` Set Status='%lu' WHERE IP='%s'", status, ip );
+								if( pos > 0 )
+								{
+									snprintf( insertQuery, sizeof( insertQuery ), "UPDATE `FSecuredHost` Set Status='%lu' WHERE IP='%s' AND UserID=%ld", status, ip, userID );
+								}
+								else
+								{
+									snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FSecuredHost` (IP,Status,UserID,CreateTime) VALUES('%s',%lu,%lu,%lu)", ip, status, userID, time(NULL) );
+								}
 							}
 							else
 							{
-								snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FSecuredHost` (IP,Status,UserID,CreateTime) VALUES('%s',%lu,%lu,%lu)", ip, status, userID, time(NULL) );
+								if( pos > 0 )
+								{
+									snprintf( insertQuery, sizeof( insertQuery ), "UPDATE `FSecuredHost` Set Status='%lu' WHERE IP='%s'", status, ip );
+								}
+								else
+								{
+									snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FSecuredHost` (IP,Status,UserID,CreateTime) VALUES('%s',%lu,%lu,%lu)", ip, status, userID, time(NULL) );
+								}
 							}
 
 							sqllib->QueryWithoutResults( sqllib, insertQuery );
