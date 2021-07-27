@@ -248,4 +248,10 @@ int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details );
 
 int UMInitUsers( UserManager *um );
 
+//
+//
+//
+
+FBOOL UMUserExistInDBByID( UserManager *um, FQUAD id );
+
 #endif //__SYSTEM_USER_USER_MANAGER_H__
