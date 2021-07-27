@@ -774,6 +774,44 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 				if( sqllib != NULL )
 				{
 					char insertQuery[ 1024 ];
+					BufString *bs = BufStringNew();
+					
+					BufStringAdd( bs, "{\"result\":\"success\",\"hosts\":[" );
+					
+					// get all entries which will be removed from DB
+					
+					if( ip == NULL )
+					{
+						int size = snprintf( insertQuery, sizeof( insertQuery ), "SELECT IP FROM `FSecuredHost` where UserID=%lu", userID );
+					}
+					else
+					{
+						int size = snprintf( insertQuery, sizeof( insertQuery ), "SELECT IP FROM `FSecuredHost` where IP='%s' AND UserID=%lu", ip, userID );
+					}
+					
+					void *result = sqllib->Query( sqllib, insertQuery );
+					if( result != NULL )
+					{
+						int pos = 0;
+						char **row;
+						while( ( row = sqllib->FetchRow( sqllib, result ) ) )
+						{
+							char entry[ 1024 ];
+							int len = 0;
+							if( pos == 0 )
+							{
+								len = snprintf( entry, sizeof( entry ), "{\"ip\":\"%s\"}", row[ 0 ] );
+							}
+							else
+							{
+								len = snprintf( entry, sizeof( entry ), ",{\"ip\":\"%s\"}", row[ 0 ] );
+							}
+							BufStringAddSize( bs, entry, len );
+						
+							pos++;
+						}
+						sqllib->FreeResult( sqllib, result );
+					}
 				
 					// delete all hosts same hosts for user
 				
@@ -790,9 +828,16 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 					DEBUG("[SecurityWeb/deletehost] sl query %s\n", insertQuery );
 					l->DropDBConnection( l, sqllib );
 				
-					snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":{\"ip\":\"%s\"}}", ip );
+					BufStringAdd( bs, "]}" );
+				
+					HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
+					bs->bs_Buffer = NULL; // we do not want to release memory, it will be released during SocketWrite call
+				
+					BufStringDelete( bs );
+					
+					//snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":{\"ip\":\"%s\"}}", ip );
 
-					HttpAddTextContent( response, insertQuery );
+					//HttpAddTextContent( response, insertQuery );
 				}
 			}
 			else
