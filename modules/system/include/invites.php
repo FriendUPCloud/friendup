@@ -207,6 +207,7 @@ if( $args->command )
 			
 			break;
 		
+		// Remove an already pending invite
 		case 'removependinginvite':
 			$eventId = intval( $args->args->eventId, 10 );
 			$SqlDatabase->query( '
