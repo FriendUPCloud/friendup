@@ -319,6 +319,9 @@ if( $args->command )
 			$n->TargetGroupID = $args->args->groupId;
 			$n->Type = 'interaction';
 			$n->Status = 'unseen';
+			
+			$reason = new stdClass();
+			
 			if( $events = $n->find() )
 			{
 				$out = [];
@@ -349,7 +352,12 @@ if( $args->command )
 				{
 					die( 'ok<!--separate-->' . json_encode( $out ) );
 				}
+				$reason->response = -1;
+				$reason->message = 'Failed to find any queued events that were pending.';
+				die( 'fail<!--separate-->' . json_encode( $reason ) );
 			}
+			$reason->response = -1;
+			$reason->message = 'Failed to find any queued events.';
 			die( 'fail' );
 			
 			break;
