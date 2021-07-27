@@ -310,6 +310,50 @@ if( $args->command )
 			
 			break;
 		
+		
+		// Get pending invites with names
+		case 'getpendinginvites':
+			
+			$n = new dbIO( 'FQueuedEvent' );
+			$n->UserID = $User->ID;
+			$n->TargetGroupID = $args->args->groupId;
+			$n->Type = 'interaction';
+			$n->Status = 'unseen';
+			if( $events = $n->find() )
+			{
+				$out = [];
+				$userInfo = [];
+				foreach( $events as $e )
+				{
+					$userInfo[] = $e->TargetUserID;
+					$s = new stdClass();
+					$s->EventID = $e->ID;
+					$s->UserID = $e->TargetUserID;
+					$out[] = $s;
+				}
+				if( $rows = $SqlDatabase->fetchObjects( 'SELECT ID, Fullname FROM FUser WHERE ID IN ( ' . implode( ',', $userInfo ) . ' )' ) )
+				{
+					foreach( $rows as $row )
+					{
+						foreach( $out as $k=>$v )
+						{
+							if( $v->UserID == $row->ID )
+							{
+								$out[$k]->Fullname = $row->Fullname;
+								break;
+							}
+						}
+					}
+				}
+				if( count( $out ) )
+				{
+					die( 'ok<!--separate-->' . json_encode( $out ) );
+				}
+			}
+			die( 'fail' );
+			
+			break;
+		
 		case 'sendinvite':
 			
 			$contact = new stdClass(); $gname = ''; $gid = 0;
