@@ -309,7 +309,7 @@ if( $args->command )
 		
 		case 'sendinvite':
 			
-			$contact = new stdClass(); $gname = '';
+			$contact = new stdClass(); $gname = ''; $gid = 0;
 			
 			$data = new stdClass();
 			$data->app  = 'FriendChat';
@@ -325,6 +325,7 @@ if( $args->command )
 				' ) )
 				{
 					$gname = $groups[0]->Name;
+					$gid   = $groups[0]->ID;
 					
 					$data->workgroups = $groups;
 				}
@@ -435,16 +436,16 @@ if( $args->command )
 				
 				if( $online && !isset( $args->args->email ) )
 				{
-										
+									
 					$n = new dbIO( 'FQueuedEvent' );
 					$n->UserID = $usr->ID;
 					$n->TargetUserID = $contact->ID;
-					$n->TargetGroupID = 0;
-					$n->Title = ( isset( $args->args->title ) ? $args->args->title : 'Invitation to connect' );
+					$n->TargetGroupID = $gid;
+					$n->Title = ( isset( $args->args->title ) ? $args->args->title : ( $gname ? 'Invitation to join' : 'Invitation to connect' ) );
 					$n->Type = 'interaction';
 					$n->Date = date( 'Y-m-d H:i' );
 					$n->Status = 'unseen';
-					$n->Message = ( isset( $args->args->message ) ?$args->args->message : ( $usr->FullName.' invites to you connect on Friend Chat.' ) );
+					$n->Message = ( isset( $args->args->message ) ?$args->args->message : ( $usr->FullName . ( $gname ? ' invited you to join ' . $gname : ' invites to you connect on Friend Chat.' ) ) );
 					$n->ActionAccepted = '{"module":"system","command":"verifyinvite","args":{"hash":"'.$hash.'"},"skip":"true"}';
 					$n->ActionRejected = '{"module":"system","command":"removeinvite","args":{"hash":"'.$hash.'"},"skip":"true"}';
 					if( $n->Load() )
