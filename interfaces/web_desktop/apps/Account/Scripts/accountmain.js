@@ -89,7 +89,7 @@ function refreshGroups( keys )
 		let list = null;
 		if( e != 'ok' )
 		{
-			return ge( 'GroupList' ).innerHTML = '<p>' + i18n( 'i18n_no_groups_available' ) + '</p>\
+			return ge( 'GroupList' ).innerHTML = '<p class="TextCenter">' + i18n( 'i18n_no_groups_available' ) + '</p>\
 			<p class="BorderTop PaddingTop MarginTop TextCenter">\
 				<button type="button" class="Button IconSmall fa-plus" onclick="createGroup()">\
 					' + i18n( 'i18n_create_group' ) + '\
@@ -102,7 +102,7 @@ function refreshGroups( keys )
 		}
 		catch( e )
 		{
-			return ge( 'GroupList' ).innerHTML = '<p>' + i18n( 'i18n_failed_reading_groups' ) + '</p>';
+			return ge( 'GroupList' ).innerHTML = '<p class="TextCenter">' + i18n( 'i18n_failed_reading_groups' ) + '</p>';
 		}
 		
 		// Filter on keywords
