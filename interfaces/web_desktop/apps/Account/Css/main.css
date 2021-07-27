@@ -161,6 +161,13 @@
 	overflow: hidden;
 }
 
+.Collections > .Collection button
+{
+	border-radius: 100%;
+	width: 30px;
+	height: 30px;
+}
+
 .Collections > .Collection > .Name.sw2
 {
 	background-color: rgba(0,0,0,0.1);

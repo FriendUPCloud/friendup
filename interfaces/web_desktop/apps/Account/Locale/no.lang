@@ -67,7 +67,7 @@ i18n_can_not_invite_desc             : Du kan ikke invitere til gruppen fordi de
 i18n_sure_remove_user_from           : Er du sikker på at du ønsker å fjerne brukeren fra gruppen?
 i18n_pending_invites                 : Ubesvarte invitasjoner
 
-i18n_find_groups                     : Finn grupper
+i18n_find_groups                     : Finn grupper...
 
 i18n_add_storage                     : Mer lagringsplass
 i18n_edit_storage                    : Endre disk
