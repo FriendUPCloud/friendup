@@ -1161,9 +1161,9 @@ FBOOL UMUserExistInDBByID( UserManager *um, FQUAD id )
 	
 	if( sqlLib != NULL )
 	{
-		DEBUG("[UMUserExistInDBByID] user name: %s\n", name );
+		DEBUG("[UMUserExistInDBByID] user id: %ld\n", id );
 		char query[ 1024 ];
-		sqlLib->SNPrintF( sqlLib, query, sizeof(query), "SELECT count(*) FROM `FUser` WHERE ID=%ld", id );
+		sqlLib->SNPrintF( sqlLib, query, sizeof(query), "SELECT * FROM `FUser` WHERE ID=%ld", id );
 		
 		void *result = sqlLib->Query( sqlLib, query );
 		if( result != NULL )
@@ -1171,6 +1171,7 @@ FBOOL UMUserExistInDBByID( UserManager *um, FQUAD id )
 			char **row;
 			if( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 			{
+				DEBUG("[UMUserExistInDBByID] USER EXIST IN DB!\n" );
 				exist = TRUE;
 			}
 			sqlLib->FreeResult( sqlLib, result );

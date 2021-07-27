@@ -474,8 +474,8 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 			}
 			else
 			{
-				userID = loggedSession->us_UserID;
-				allowed = TRUE;
+				//userID = loggedSession->us_UserID;
+				//allowed = TRUE;
 			}
 		}
 		
@@ -568,16 +568,18 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 			}
 			else
 			{
-				char buffer[ 512 ];
-				char buffer1[ 256 ];
-				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "ip, status" );
-				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
-				HttpAddTextContent( response, buffer );
+				char dictmsgbuf[ 256 ];
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_USER_DO_NOT_EXIST] ,DICT_USER_DO_NOT_EXIST );
+				HttpAddTextContent( response, dictmsgbuf );
 			}
 		}
 		else
 		{
-			
+			char buffer[ 512 ];
+			char buffer1[ 256 ];
+			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "ip, status" );
+			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, buffer );
 		}
 
 		if( ip != NULL )
@@ -759,8 +761,8 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 			}
 			else
 			{
-				userID = loggedSession->us_UserID;
-				allowed = TRUE;
+				//userID = loggedSession->us_UserID;
+				//allowed = TRUE;
 			}
 		}
 
