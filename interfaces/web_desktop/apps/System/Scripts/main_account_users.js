@@ -8487,10 +8487,15 @@ function NewUser( _this )
 			
 					if( callback )
 					{
-						if( workgroups )
+						// Temporary until FriendCore supports all this ...
+						if( data )
 						{
-							return callback( workgroups );
+							return callback( data );
 						}
+						//if( workgroups )
+						//{
+						//	return callback( workgroups );
+						//}
 				
 						return callback( [] );
 					}
