@@ -17,3 +17,7 @@
 	max-height: 0px;
 }
 
+button.Hidden
+{
+	display: none;
+}

@@ -158,7 +158,8 @@ function createGroup()
 		ID: '',
 		Description: '',
 		Name: '',
-		Hidden: 'Hidden'
+		Hidden: 'Hidden',
+		DeleteCl: ' Hidden'
 	};
 	f.i18n();
 	f.onLoad = function( d )
@@ -190,7 +191,8 @@ function editGroup( id )
 			ID: id,
 			Description: gr.Description ? gr.Description : '',
 			Name: gr.Name,
-			Hidden: 'Showing'
+			Hidden: 'Showing',
+			DeleteCl: ' Showing'
 		};
 		f.i18n();
 		f.onLoad = function( d )

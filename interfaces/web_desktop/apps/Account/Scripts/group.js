@@ -198,6 +198,7 @@ function removeUser( uid )
 
 function reveilUIComponents()
 {
+	ge( 'dGroup' ).classList.remove( 'Hidden' );
 	ge( 'Relations' ).classList.remove( 'Hidden' );
 }
 
