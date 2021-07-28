@@ -129,7 +129,7 @@ if( $rows = $SqlDatabase->FetchObjects( '
 	{
 		// TODO: Find out what variables are needed to be able to display when the doormanoffice employee is currently at work showing and hiding workgroups ...
 		
-		if( ( $row->Level && $row->Level == 'User' ) || ( isset( $args->args->owner ) && !$row->Owner ) )
+		if( $User->ID != $row->UserID && ( $row->Level && $row->Level == 'User' ) || ( isset( $args->args->owner ) && !$row->Owner ) )
 		{
 			$row->Hide = true;
 		}
