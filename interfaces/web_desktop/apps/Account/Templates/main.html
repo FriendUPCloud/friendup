@@ -190,16 +190,20 @@
 					<div id="SharedAccess" class="Page">
 						<div id="ServerTokenAddHostBox" class="Padding flexnes">
 							<div class="flexnes">
-								{i18n_IP}: 
+								<div class="InputHeight">
+									{i18n_host}:
+								</div>
 								<input
 									id="ServerTokenHost"
 									class="InputHeight"
 									type="text"
-									placeholder="host"
+									placeholder="{i18n_IP}"
 								>
 							</div>
 							<div class="flexnes">
-								{i18n_status}: 
+								<div class="InputHeight">
+									{i18n_status}: 
+								</div>
 								<select
 									name="ServerTokenStatus"
 									id="ServerTokenStatus"
@@ -301,6 +305,11 @@
 		#SharedAccess {}
 		#SharedAccess button {
 			height : 30px;
+		}
+		
+		#ServerTokenHost,
+		#ServerTokenStatus {
+			margin-left : 5px;
 		}
 		
 		#ServerTokenAddHostBox {}

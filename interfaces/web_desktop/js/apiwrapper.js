@@ -2423,6 +2423,9 @@ function apiWrapper( event, force )
 				break;
 			// Module ----------------------------------------------------------
 			case 'module':
+				const msgStr = JSON.stringify( msg );
+				const msgCpy = JSON.parse( msgStr );
+				console.log( 'apiwrapper - module', msgCpy );
 				var fileId = msg.fileId;
 
 				// Perhaps do error?
@@ -2435,7 +2438,7 @@ function apiWrapper( event, force )
 						return false;
 					}*/
 				}
-
+				
 				// Make real module object
 				var f = new Module( msg.module );
 				f.application = app;
@@ -2444,24 +2447,24 @@ function apiWrapper( event, force )
 				{
 					f.forceHTTP = msg.forceHTTP;
 				}
-
+				
 				// Add variables
 				if( msg.vars )
 				{
 					for( let a in msg.vars )
 						f.addVar( a, msg.vars[a] );
 				}
-
+				
 				// Respond with file contents (uses raw data..)
 				f.onExecuted = function( cod, dat )
 				{
 					if( app )
 					{
 						var nmsg = { command: 'fileload', fileId: fileId, data: dat, returnCode: cod };
-
+						
 						// Module calls should remain in their view context
 						var cw = GetContentWindowByAppMessage( app, msg );
-
+						
 						// Pass window id down
 						if( msg.viewId )
 						{

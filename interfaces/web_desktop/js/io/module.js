@@ -64,6 +64,7 @@ var Module = function( mod )
 		j.open( 'post', '/system.library/module/', true, true );
 		
 		// Make sure we can read args (from the myriad of places )
+		/*
 		var authId = false;
 		if( args )
 		{
@@ -77,6 +78,8 @@ var Module = function( mod )
 		if( authId ) j.addVar( 'authid', authId   );
 		// session id
 		else if( Workspace.sessionId ) j.addVar( 'sessionid', Workspace.sessionId );
+		*/
+		
 		j.addVar( 'module',    this.module                  );
 		j.addVar( 'args',      JSON.stringify( this.args )  );
 		j.addVar( 'command',   this.command                 );

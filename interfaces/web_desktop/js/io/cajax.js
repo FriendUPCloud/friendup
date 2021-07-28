@@ -357,10 +357,6 @@ cAjax = function( app )
 			// Execute onload action with appropriate data
 			if( jax.onload )
 			{
-				console.log( 'http to onload', {
-					r : self.returnCode,
-					d : self.returnData,
-				});
 				jax.onload( jax.returnCode, jax.returnData );
 			}
 			jax.destroy();
@@ -460,10 +456,68 @@ cAjax.prototype.destroy = function()
 	this.destroySilent();
 }
 
+cAjax.prototype.setAuthToken = function()
+{
+	const self = this;
+	console.log( 'cAjax.setAuthToken', {
+		winWork   : !!window.Workspace,
+		sessionId : !!window.Workspace ? Workspace.sessionId : null,
+		selfApp   : !!self.application,
+		selfAId   : !!self.application ? self.application.authId : null,
+		winApp    : !!window.Application,
+		winAppId  : !!window.Application ? window.Application.authId : null,
+	});
+	
+	const app = self.application || window.Application;
+	const work = window.Workspace;
+	if ( app && work ) {
+		console.trace( 'both work and app present', {
+			work : work,
+			app  : app,
+			vars : self.vars,
+		});
+	}
+	
+	if ( app )
+	{
+		if ( null == app.authId )
+		{
+			console.log( 'no authid :(' );
+			return false;
+		}
+		
+		const aId = app.authId;
+		console.log( 'setting authId', aId );
+		self.addVar( 'authid', aId );
+		return true;
+	}
+	
+	if ( work )
+	{
+		if ( null == work.sessionId )
+		{
+			console.log( 'no sessionid :(' );
+			return false;
+		}
+		
+		const sId = work.sessionId;
+		console.log( 'setting sessionId', sId );
+		self.addVar( 'sessionid', sId );
+		return true;
+	}
+	
+	/*
+	if( window.Workspace )
+		self.addVar( 'sessionid', Workspace.sessionId );
+	else if( window.Application && Application.authId )
+		self.addVar( 'authid', Application.authId );
+	*/
+}
+
 // Open an ajax query
 cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 {
-	let self = this;
+	const self = this;
 	
 	if( this.opened )
 	{
@@ -507,10 +561,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	{
 		this.proxy.hasReturnCode = this.lastOptions.hasReturnCode;
 		this.openFunc = function() { 
-			if( window.Workspace )
-				self.addVar( 'sessionid', Workspace.sessionId );
-			else if( window.Application && Application.authId )
-			    self.addVar( 'authid', Application.authId );
+			self.setAuthToken();
 			self.proxy.open( self.lastOptions.method ? self.lastOptions.method : 'POST', self.lastOptions.url, self.lastOptions.syncing ); 
 		};
 	}
@@ -533,10 +584,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		this.proxy.hasReturnCode = hasReturnCode;
 		this.openFunc = function()
 		{ 
-			if( window.Workspace )
-				self.addVar( 'sessionid', Workspace.sessionId );
-			else if( window.Application && Application.authId )
-			    self.addVar( 'authid', Application.authId );
+			self.setAuthToken();
 			let u = self.url;
 			if( u.substr( 0, 1 ) == '/' )
 			{
@@ -641,7 +689,6 @@ cAjax.prototype.send = function( data, callback )
 		this.onloadAfter = this.onload;
 		this.onload = function( e, d )
 		{
-			console.log( 'onload', [ e, d ]);
 			this.onload = null;
 			this.onloadAfter( e, d );
 			this.onloadAfter = null;
@@ -1036,10 +1083,6 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	}
 	if( self.onload )
 	{
-		console.log( 'ws to onload', {
-			r : self.returnCode,
-			d : self.returnData,
-		});
 		self.onload( self.returnCode, self.returnData );
 	}
 	else

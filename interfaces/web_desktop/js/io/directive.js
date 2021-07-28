@@ -458,10 +458,10 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			ifr.applicationId = applicationId;
 			ifr.workspaceMode = Workspace.workspacemode;
 			ifr.id = 'sandbox_' + ifr.applicationId;
-			ifr.authId = 'bingbongbang' //false; //conf.AuthID;
+			ifr.authId = conf.AuthID; //'bingbongbang' //false; //conf.AuthID;
 			ifr.applicationNumber = _appNum++;
 			ifr.permissions = conf.Permissions;
-
+			
 			// Quit the application
 			ifr.quit = function( level )
 			{
