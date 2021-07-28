@@ -6839,7 +6839,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 						initUsersDetails( loadingInfo, [ 'workgroup' ] );
 					}
-					u.execute( 'workgroups', { userid: extra, authid: Application.authId } );
+					u.execute( 'workgroups', { userid: extra, owner: true, level: true, authid: Application.authId } );
 					
 					// Go to next in line ...
 					loadingList[ ++loadingSlot ](  );

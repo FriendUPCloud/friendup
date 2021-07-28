@@ -17,6 +17,7 @@ i18n_mode_normal                     : Normal
 i18n_mode_developer                  : Developer
 
 i18n_are_you_sure                    : Are you sure?
+i18n_deleting_desc                   : When deleting a group, all members and connected data will be dissolved.
 i18n_this_will_remove                : This will remove the disk from your mountlist.
 
 i18n_delete_disk                     : Delete disk
@@ -87,6 +88,7 @@ i18n_description : Please choose which disk type you want to add to your system.
 i18n_disk                            : disk
 i18n_add_a                           : Add a
 i18n_edit                            : Edit
+i18n_delete                          : Delete
 
 i18n_disk_error                      : Disk error
 i18n_failed_to_edit                  : Failed to edit disk volume.
