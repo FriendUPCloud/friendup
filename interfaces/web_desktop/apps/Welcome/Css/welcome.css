@@ -289,9 +289,9 @@ html > body:not(.Inside):not(.Loading)
 
 @media (max-width: 460px)
 {
-	.ExtendedInfo
+	html .ExtendedInfo
 	{
-		display: none;
+		display: none !important;
 	}
 	
 	html .WelcomeHeading
