@@ -594,6 +594,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param userid - hosts will be filtered by userid
+	* @param filter - filter users option. Currently "all" is only supported
 	* 
 	* @return response {"result":"success","hosts":[]} when success otherwise error
 	*/
@@ -601,8 +602,8 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	else if( strcmp( urlpath[ 1 ], "listhosts" ) == 0 )
 	{
 		FUQUAD userID = 0;
-		FUQUAD userIDFromParams = 0;
 		FBOOL allowed = FALSE;
+		int filter = 0;
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
@@ -616,7 +617,16 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 		if( el != NULL )
 		{
 			char *end;
-			userIDFromParams = userID = strtoull( el->hme_Data,  &end, 0 );
+			userID = strtoull( el->hme_Data,  &end, 0 );
+		}
+		
+		el =  HashmapGet( request->http_ParsedPostContent, "filter" );
+		if( el != NULL && el->hme_Data != NULL )
+		{
+			if( strcmp( (char *)el->hme_Data, "all" ) == 0 )
+			{
+				filter = 1;
+			}
 		}
 		
 		if( loggedSession->us_User->u_IsAdmin == TRUE )
@@ -653,9 +663,9 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 				
 				char selectQuery[ 1024 ];
 				
-				if( loggedSession->us_User->u_IsAdmin == TRUE && userIDFromParams == 0 )
+				if( loggedSession->us_User->u_IsAdmin == TRUE && filter == 1 )
 				{
-					DEBUG("[SecurityWeb] user is admin and ID = %ld\n", userIDFromParams );
+					DEBUG("[SecurityWeb] user is admin\n" );
 					
 					strcpy( selectQuery, "SELECT IP,Status,UserID,CreateTime FROM `FSecuredHost`" );
 				}
