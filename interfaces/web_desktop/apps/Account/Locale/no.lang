@@ -17,6 +17,7 @@ i18n_mode_normal                     : Normal
 i18n_mode_developer                  : Utvikler
 
 i18n_are_you_sure                    : Er du sikker?
+i18n_deleting_desc                   : Når du sletter en gruppe vil alle tilknyttede medlemmer og annen data oppløses.
 i18n_this_will_remove                : Dette vil fjerne disken fra listen.
 
 i18n_delete_disk                     : Slett
@@ -87,6 +88,7 @@ i18n_description                     : Vennligst velg hvilken type disk du ønsk
 i18n_disk                            : disk
 i18n_add_a                           : Tilføy en
 i18n_edit                            : Endre
+i18n_delete                          : Slett
 
 i18n_disk_error                      : Disk feil
 i18n_failed_to_edit                  : Kunne ikke oppdatere disken.

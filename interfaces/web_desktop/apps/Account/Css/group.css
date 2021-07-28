@@ -2,3 +2,18 @@
 {
 	height: 150px;
 }
+
+#Relations
+{
+	position: relative;
+	max-height: 10000px;
+	transition: max-height,opacity 0.25s,0.25s;
+	overflow: hidden;
+}
+
+#Relations.Hidden
+{
+	opacity: 0;
+	max-height: 0px;
+}
+
