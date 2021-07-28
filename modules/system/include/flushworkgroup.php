@@ -12,20 +12,33 @@
 
 /* Remove all known connections to a Workgroup */
 
+$res = new stdClass();
+$res->response = -1;
+
 $g = new dbIO( 'FUserGroup' );
 $g->UserID = $User->ID;
 $g->ID = $args->args->groupId;
 if( !$g->Load() )
 {
-	$res = new stdClass();
-	$res->response = -1;
 	$res->message = 'Could not load workgroup.';
 	die( 'fail<!--separate-->' . json_encode( $res ) );
 }
 
+// Delete queued events
+if( !$SqlDatabase->query( 'DELETE FROM FQueuedEvent WHERE TargetGroupID=\'' . $g->ID . '\'' ) )
+{
+	$res->message = 'Could not load workgroup.';
+	die( 'fail<!--separate-->' . json_encode( $res ) );
+}
 
+// Delete group user relations
+if( !$SqlDatabase->query( 'DELETE FROM FUserToGroup WHERE UserGroupID=\'' . $g->ID . '\'' ) )
+{
+	$res->message = 'Could not flush group members.';
+	die( 'fail<!--separate-->' . json_encode( $res ) );
+}
 
-die( 'fail' );
+die( 'ok' );
 
 
 ?>
