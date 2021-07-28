@@ -48,7 +48,9 @@ UserGroupManager *UGMNew( void *sb )
 			int entries;
 			char where[ 256 ];
 			
-			strcpy( where, " Type in('Workgroup','Level')" );
+			// get only groups created by admins
+			//strcpy( where, " Type in('Workgroup','Level')" );
+			//select * from FUser u left join FUserToGroup utg on u.ID=utg.UserID left join FUserGroup ug on utg.UserGroupID=ug.id where ug.Name='Admin' and (ug.Type='Workgroup' or ug.Type='Level')
 			
 			sm->ugm_UserGroups = sqlLib->Load( sqlLib, UserGroupDesc, where, &entries );
 			lsb->LibrarySQLDrop( lsb, sqlLib );
