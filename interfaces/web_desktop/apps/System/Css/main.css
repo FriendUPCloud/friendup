@@ -470,12 +470,12 @@
 	background-color: #e3e7e8;
 }
 
-#Admin #WorkgroupInner .Hidden
+#Admin .Hidden
 {
 	display: none;
 }
 
-#Admin #WorkgroupInner.Visible .Hidden
+#Admin .Visible .Hidden
 {
 	display: block;
 }
