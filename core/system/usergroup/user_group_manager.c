@@ -49,11 +49,21 @@ UserGroupManager *UGMNew( void *sb )
 			char where[ 512 ];
 			
 			// get only groups created by admins
+			//strcpy( where, "(UserID=0)");
 			strcpy( where, "(UserID=0 OR UserID in(select u.ID from FUser u left join FUserToGroup utg on u.ID=utg.UserID left join FUserGroup ug on utg.UserGroupID=ug.id where ug.Name='Admin' and (ug.Type='Workgroup' or ug.Type='Level')) ) AND Type in('Workgroup','Level')");
 			//strcpy( where, " Type in('Workgroup','Level')" );
 			//select * from FUser u left join FUserToGroup utg on u.ID=utg.UserID left join FUserGroup ug on utg.UserGroupID=ug.id where ug.Name='Admin' and (ug.Type='Workgroup' or ug.Type='Level')
 			
 			sm->ugm_UserGroups = sqlLib->Load( sqlLib, UserGroupDesc, where, &entries );
+			
+			// DEBUG
+			UserGroup *locug = sm->ugm_UserGroups;
+			while( locug != NULL )
+			{
+				DEBUG("[UMGNew] Group loaded: %s uuid: %s type: %s\n", locug->ug_Name, locug->ug_UUID, locug->ug_Type );
+				locug = (UserGroup *)locug->node.mln_Succ;
+			}
+			
 			lsb->LibrarySQLDrop( lsb, sqlLib );
 		}
 		
