@@ -208,13 +208,16 @@ if( $args->command )
 			break;
 		
 		// Remove an already pending invite
+		
 		case 'removependinginvite':
+			
 			$eventId = intval( $args->args->eventId, 10 );
 			$SqlDatabase->query( '
 				DELETE FROM FQueuedEvent
 				WHERE ID = \'' . $eventId . '\'
 			' );
 			die( 'ok' );
+			
 			break;
 		
 		case 'verifyinvite':
@@ -329,6 +332,7 @@ if( $args->command )
 		
 		
 		// Get pending invites with names
+		
 		case 'getpendinginvites':
 			
 			$n = new dbIO( 'FQueuedEvent' );
@@ -453,7 +457,7 @@ if( $args->command )
 				
 				// TODO: Change this to online once support for only sending emails to users not created is ready in the gui ...
 				
-				$hash = false; $online = false/*true*/;
+				$hash = false; $online = false;
 				
 				
 				$f = new dbIO( 'FTinyUrl' );
@@ -518,9 +522,10 @@ if( $args->command )
 				if( !$n->Load() )
 				{
 					$n->Date = date( 'Y-m-d H:i' );
-					if( $n->Save() )
+					if( !$n->Save() )
 					{
-						// Wee!
+						// 
+						die( 'fail<!--separate-->{"response":-1,"message":"Could not register Invitation notification in database ..."}' );
 					}
 				}
 				
@@ -577,7 +582,7 @@ if( $args->command )
 					
 				}
 				
-				
+				die( 'ok<!--separate-->{"Response":"Invitation notification registered in database id: ' . $n->ID . '"}' );
 				
 			}
 			

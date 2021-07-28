@@ -243,7 +243,7 @@ if( isset( $args->command ) )
 				'getbookmarks', 'listapplicationdocs', 'finddocumentation', 'userinfoget',
 				'userinfoset',  'useradd', 'user/create', 'user/update', 'user/delete', 'checkuserbyname', 'userbetamail', 'listbetausers', 'listconnectedusers',
 				'usersetup', 'usersetupadd', 'usersetupapply', 'usersetupsave', 'usersetupdelete',
-				'usersetupget', 'userwallpaperset', 'workgroups', 'workgroupadd', 'workgroupupdate', 'workgroupdelete',
+				'usersetupget', 'userwallpaperset', 'workgroups', 'listworkgroups', 'workgroupadd', 'workgroupupdate', 'workgroupdelete',
 				'workgroupget', 'setsetting', 'getsetting', 'getavatar', 'listlibraries', 'listmodules',
 				'listuserapplications', 'adduserapplication', 'removeuserapplication', 'getmimetypes',  'setmimetype', 'setmimetypes', 'deletemimetypes',
 				'deletecalendarevent', 'getcalendarevents', 'addcalendarevent',
@@ -1670,6 +1670,10 @@ if( isset( $args->command ) )
 		// Wallpaper
 		case 'userwallpaperset':
 			require( 'modules/system/include/userwallpaperset.php' );
+			break;
+		// List own workgroups (user's)
+		case 'listworkgroups':
+			require( 'modules/system/include/listworkgroups.php' );
 			break;
 		// List workgroups
 		case 'workgroups':
