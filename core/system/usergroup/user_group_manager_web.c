@@ -530,6 +530,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		char *description = NULL;
 		FBOOL onlyWorkgroup = FALSE;
 		FBOOL canCreateWorkgroup = FALSE;
+		FBOOL userGroup = FALSE;
 		
 		el = HttpGetPOSTParameter( request, "authid" );
 		if( el != NULL )
@@ -587,6 +588,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					if( count < 3 && sameName == FALSE )
 					{
 						canCreateWorkgroup = TRUE;
+						userGroup = TRUE;
 					}
 				}
 				l->LibrarySQLDrop( l, sqllib );
@@ -644,160 +646,188 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			if( groupname != NULL && type != NULL )
 			{
 				FBOOL addUsers = FALSE;
-				// get information from DB if group already exist
-				UserGroup *ug = NULL;
-				UserGroup *fg = UGMGetGroupByName( l->sl_UGM, groupname );
-				DEBUG("[UMWebRequest] GroupCreate: pointer to group from memory: %p\n", fg );
 				
-				if( fg != NULL )	// group already exist, there is no need to create double
+				if( userGroup == TRUE )
 				{
-					if( fg->ug_Status == USER_GROUP_STATUS_DISABLED )
+					UserGroup *ug = UserGroupNew( 0, groupname, loggedSession->us_User->u_ID, type, description );
+					SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+					int val = 0;
+					if( sqlLib != NULL )
 					{
-						fg->ug_Status = USER_GROUP_STATUS_ACTIVE;
-						
-						char buffer[ 1024 ];
-						snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"sucess\",\"id\":%lu}", fg->ug_ID );
-						HttpAddTextContent( response, buffer );
-						
-						snprintf( buffer, sizeof(buffer), "{\"id\":%lu,\"uuid\":\"%s\",\"name\":\"%s\"}", fg->ug_ID, fg->ug_UUID, fg->ug_Name );
-						
-						NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", buffer );
-						ug = fg;
-						addUsers = TRUE;
-					}
-					else
-					{
-						char buffer[ 256 ];
-						snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_USER_GROUP_ALREADY_EXIST] , DICT_USER_GROUP_ALREADY_EXIST );
-						HttpAddTextContent( response, buffer );
-					}
-				}
-				else	// group do not exist in memory
-				{
-					DEBUG("[UMWebRequest] GroupCreate: group do not exist in memory\n");
-					FBOOL ugFromDatabase = FALSE;
-
-					ug = UGMGetGroupByNameDB( l->sl_UGM, groupname );
-					if( ug != NULL )
-					{
-						ugFromDatabase = TRUE;
-					}
-					
-					if( ug == NULL )
-					{
-						DEBUG("[UMWebRequest] GroupCreate: new UserGroup will be created\n");
-						if( loggedSession->us_User->u_IsAdmin == TRUE )
-						{
-							ug = UserGroupNew( 0, groupname, 0, type, description );
-						}
-						else
-						{
-							ug = UserGroupNew( 0, groupname, loggedSession->us_User->u_ID, type, description );
-						}
-					}
-					
-					if( ug != NULL )
-					{
-						ug->ug_UserID = loggedSession->us_UserID;
-						ug->ug_ParentID = parentID;
-						int error = UGMAddGroup( l->sl_UGM, ug );
-						
-						DEBUG("[UMWebRequest] GroupCreate: addgroup error: %d\n", error  );
-						
-						if( error == 0 )
-						{
-							SQLLibrary *sqlLib = l->LibrarySQLGet( l );
-							int val = 0;
-							if( sqlLib != NULL )
-							{
-								DEBUG("[UMWebRequest] GroupCreate: sqllib is available\n");
-								if( ugFromDatabase == TRUE )
-								{
-									DEBUG("[UMWebRequest] GroupCreate: group will be updated in DB\n");
-									val = sqlLib->Update( sqlLib, UserGroupDesc, ug );
-								}
-								else
-								{
-									DEBUG("[UMWebRequest] GroupCreate: group will be stored in DB\n");
-									val = sqlLib->Save( sqlLib, UserGroupDesc, ug );
-								}
+						DEBUG("[UMWebRequest] GroupCreate: sqllib is available\n");
+						DEBUG("[UMWebRequest] GroupCreate: group will be stored in DB\n");
+						val = sqlLib->Save( sqlLib, UserGroupDesc, ug );
 								
-								l->LibrarySQLDrop( l, sqlLib );
-							}
-							groupID = ug->ug_ID;
-							
-							addUsers = TRUE;
-
-							char msg[ 512 ];
-							snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"parentid\":%lu}", ug->ug_ID, ug->ug_Name, ug->ug_ParentID );
-							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", msg );
+						l->LibrarySQLDrop( l, sqlLib );
+					}
+					groupID = ug->ug_ID;
+				
+					char msg[ 512 ];
+					snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"parentid\":%lu}", ug->ug_ID, ug->ug_Name, ug->ug_ParentID );
+					NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", msg );
 					
+					char buffer[ 1024 ];
+					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"success\",\"id\":%lu,\"uuid\":\"%s\"}", groupID, ug->ug_UUID );
+					HttpAddTextContent( response, buffer );
+				}
+				else
+				{
+				
+					// get information from DB if group already exist
+					UserGroup *ug = NULL;
+					UserGroup *fg = UGMGetGroupByName( l->sl_UGM, groupname );
+					DEBUG("[UMWebRequest] GroupCreate: pointer to group from memory: %p\n", fg );
+				
+					if( fg != NULL )	// group already exist, there is no need to create double
+					{
+						if( fg->ug_Status == USER_GROUP_STATUS_DISABLED )
+						{
+							fg->ug_Status = USER_GROUP_STATUS_ACTIVE;
+						
 							char buffer[ 1024 ];
-							snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"success\",\"id\":%lu,\"uuid\":\"%s\"}", groupID, ug->ug_UUID );
+							snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"sucess\",\"id\":%lu}", fg->ug_ID );
 							HttpAddTextContent( response, buffer );
+						
+							snprintf( buffer, sizeof(buffer), "{\"id\":%lu,\"uuid\":\"%s\",\"name\":\"%s\"}", fg->ug_ID, fg->ug_UUID, fg->ug_Name );
+						
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", buffer );
+							ug = fg;
+							addUsers = TRUE;
 						}
 						else
 						{
-							char buffer[ 512 ];
-							char buffer1[ 256 ];
-							snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "UGMUserGroupCreate", error );
-							snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_FUNCTION_RETURNED );
+							char buffer[ 256 ];
+							snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_USER_GROUP_ALREADY_EXIST] , DICT_USER_GROUP_ALREADY_EXIST );
 							HttpAddTextContent( response, buffer );
 						}
 					}
-					else
+					else	// group do not exist in memory
 					{
-						char buffer[ 256 ];
-						snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
-						HttpAddTextContent( response, buffer );
-					}
-				} // UserGroup found in db
-				
-				// group was created, its time to add users to it
-				
-				if( addUsers == TRUE && users != NULL )
-				{
-					// go through all elements and find proper users
-					
-					IntListEl *el = ILEParseString( users );
-					
-					DEBUG("[UMWebRequest] Assigning users to group\n");
-					
-					while( el != NULL )
-					{
-						IntListEl *rmEntry = el;
-						
-						el = (IntListEl *)el->node.mln_Succ;
-						
-						User *usr = UMGetUserByID( l->sl_UM, (FULONG)rmEntry->i_Data );
-						if( usr != NULL )
-						{
-							UserGroupAddUser( ug, usr );
-						}
-						FBOOL exist = UGMUserToGroupISConnectedByUIDDB( l->sl_UGM, groupID, rmEntry->i_Data );
-						if( exist == FALSE )
-						{
-							UGMAddUserToGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
-						}
-						
-						FFree( rmEntry );
-					}
-					
-					{
-						char tmp[1024];
-						int itmp;
-						BufString *retString = BufStringNew();
-						itmp = snprintf( tmp, sizeof(tmp), "{\"groupid\":%lu,\"parentid\":%lu,\"uuid\":\"%s\",\"userids\":[", groupID, parentID, ug->ug_UUID );
-						BufStringAddSize( retString, tmp, itmp );
-						// return user objects
+						DEBUG("[UMWebRequest] GroupCreate: group do not exist in memory\n");
+						FBOOL ugFromDatabase = FALSE;
 
-						generateConnectedUsersID( l, groupID, NULL, retString );
-						BufStringAddSize( retString, "]}", 2 );
+						ug = UGMGetGroupByNameDB( l->sl_UGM, groupname );
+						if( ug != NULL )
+						{
+							ugFromDatabase = TRUE;
+						}
+					
+						if( ug == NULL )
+						{
+							DEBUG("[UMWebRequest] GroupCreate: new UserGroup will be created\n");
+							if( loggedSession->us_User->u_IsAdmin == TRUE )
+							{
+								ug = UserGroupNew( 0, groupname, 0, type, description );
+							}
+							else
+							{
+								ug = UserGroupNew( 0, groupname, loggedSession->us_User->u_ID, type, description );
+							}
+						}
+					
+						if( ug != NULL )
+						{
+							ug->ug_UserID = loggedSession->us_UserID;
+							ug->ug_ParentID = parentID;
+							int error = UGMAddGroup( l->sl_UGM, ug );
 						
-						NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "setusers", retString->bs_Buffer );
-						BufStringDelete( retString );
+							DEBUG("[UMWebRequest] GroupCreate: addgroup error: %d\n", error  );
+						
+							if( error == 0 )
+							{
+								SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+								int val = 0;
+								if( sqlLib != NULL )
+								{
+									DEBUG("[UMWebRequest] GroupCreate: sqllib is available\n");
+									if( ugFromDatabase == TRUE )
+									{
+										DEBUG("[UMWebRequest] GroupCreate: group will be updated in DB\n");
+										val = sqlLib->Update( sqlLib, UserGroupDesc, ug );
+									}
+									else
+									{
+										DEBUG("[UMWebRequest] GroupCreate: group will be stored in DB\n");
+										val = sqlLib->Save( sqlLib, UserGroupDesc, ug );
+									}
+								
+									l->LibrarySQLDrop( l, sqlLib );
+								}
+								groupID = ug->ug_ID;
+							
+								addUsers = TRUE;
+
+								char msg[ 512 ];
+								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"parentid\":%lu}", ug->ug_ID, ug->ug_Name, ug->ug_ParentID );
+								NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", msg );
+					
+								char buffer[ 1024 ];
+								snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"success\",\"id\":%lu,\"uuid\":\"%s\"}", groupID, ug->ug_UUID );
+								HttpAddTextContent( response, buffer );
+							}
+							else
+							{
+								char buffer[ 512 ];
+								char buffer1[ 256 ];
+								snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "UGMUserGroupCreate", error );
+								snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_FUNCTION_RETURNED );
+								HttpAddTextContent( response, buffer );
+							}
+						}
+						else
+						{
+							char buffer[ 256 ];
+							snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+							HttpAddTextContent( response, buffer );
+						}
+					} // UserGroup found in db
+				
+					// group was created, its time to add users to it
+				
+					if( addUsers == TRUE && users != NULL )
+					{
+						// go through all elements and find proper users
+					
+						IntListEl *el = ILEParseString( users );
+					
+						DEBUG("[UMWebRequest] Assigning users to group\n");
+					
+						while( el != NULL )
+						{
+							IntListEl *rmEntry = el;
+						
+							el = (IntListEl *)el->node.mln_Succ;
+						
+							User *usr = UMGetUserByID( l->sl_UM, (FULONG)rmEntry->i_Data );
+							if( usr != NULL )
+							{
+								UserGroupAddUser( ug, usr );
+							}
+							FBOOL exist = UGMUserToGroupISConnectedByUIDDB( l->sl_UGM, groupID, rmEntry->i_Data );
+							if( exist == FALSE )
+							{
+								UGMAddUserToGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
+							}
+						
+							FFree( rmEntry );
+						}
+					
+						{
+							char tmp[1024];
+							int itmp;
+							BufString *retString = BufStringNew();
+							itmp = snprintf( tmp, sizeof(tmp), "{\"groupid\":%lu,\"parentid\":%lu,\"uuid\":\"%s\",\"userids\":[", groupID, parentID, ug->ug_UUID );
+							BufStringAddSize( retString, tmp, itmp );
+							// return user objects
+
+							generateConnectedUsersID( l, groupID, NULL, retString );
+							BufStringAddSize( retString, "]}", 2 );
+						
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "setusers", retString->bs_Buffer );
+							BufStringDelete( retString );
+						}
 					}
-				}
+				}	// user group
 			} // missing parameters
 			else
 			{
