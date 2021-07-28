@@ -243,8 +243,21 @@ cAjax = function( app )
 				}
 				else
 				{
+					//console.log( 'no separator found', this.responseText );
+					let responseObj = null;
+					try {
+						responseObj = JSON.parse( this.responseText );
+					} catch( ex ) {
+						console.log( 'opps', ex );
+					}
+					
+					//console.log( 'responseObj', responseObj );
+					
 					jax.returnData = false;
-					jax.returnCode = this.responseText;
+					if ( null != responseObj )
+						jax.returnCode = responseObj;
+					else
+						jax.returnCode = this.responseText;
 				}
 			}
 			else
@@ -299,7 +312,7 @@ cAjax = function( app )
 						let r = JSON.parse( jax.returnData );
 						
 						let res = r ? r.response.toLowerCase() : '';
-						
+						console.log( 'fail res', r );
 						if( res == 'user not found' || res.toLowerCase() == 'user session not found' )
 						{
 							if( window.Workspace && res.toLowerCase() == 'user session not found' ) 
@@ -462,7 +475,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	
 	// Try websockets!!
 	if( 
-		//false &&
+		false &&
 		!this.forceHTTP &&
 		window.Workspace &&
 		Workspace.conn && 
@@ -475,7 +488,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		url.indexOf( '/file/read' ) < 0 &&
 		url.indexOf( '/file/write' ) < 0
 	)
-	{	
+	{
 		console.log( 'cajax.open websockets' );
 		this.mode = 'websocket';
 		this.url = url;

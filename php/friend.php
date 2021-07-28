@@ -444,10 +444,13 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	$UserSession = new dbIO( 'FUserSession' );
 
 	// Match sessionid by authid
+	$logger->log( 'match session by authid: ' . $args->authid );
 	if( isset( $args->authid ) && !isset( $args->sessionid ) && !isset( $args->args->sessionid ) )
 	{
 		$authid = mysqli_real_escape_string( $SqlDatabase->_link, $args->authid );
-		$sess = $SqlDatabase->fetchObject( 'SELECT us.SessionID FROM FUserSession us, FAppSession a1 WHERE a1.AuthID=\'' . $authid . '\' AND us.UserID = a1.UserID LIMIT 1' );
+		$sess = $SqlDatabase->fetchObject( 'SELECT us.SessionID 
+			FROM FUserSession us, FAppSession a1 
+			WHERE a1.AuthID=\'' . $authid . '\' AND us.UserID = a1.UserID LIMIT 1' );
 		if( $sess )
 		{
 			$args->sessionid = $sess->SessionID;
