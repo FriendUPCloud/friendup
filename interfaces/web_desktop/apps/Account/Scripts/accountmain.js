@@ -83,7 +83,7 @@ function refreshGroups( keys )
 {
 	if( !keys ) keys = '';
 	
-	let m = new Library( 'system.library' );
+	let m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
 		let list = null;
@@ -125,7 +125,7 @@ function refreshGroups( keys )
 			if( !list.groups[a].description )
 				list.groups[a].description = '';
 			str += '<div class="sw' + sw + ' Collection">\
-				<div class="Name" title="' + list.groups[a].name + '">' + list.groups[a].name + '</div>\
+				<div class="Name" title="' + list.groups[a].Name + '">' + list.groups[a].Name + '</div>\
 				<div class="Buttons">\
 					<button type="button" class="Button IconSmall fa-edit NoText" title="' + i18n( 'i18n_edit_group' ) + '" onclick="editGroup(\'' + list.groups[a].ID + '\')"></button>\
 				</div>\
@@ -142,7 +142,7 @@ function refreshGroups( keys )
 		str += '</div>';
 		ge( 'GroupList' ).innerHTML = str;
 	}
-	m.execute( 'group/list' );
+	m.execute( 'listworkgroups' );
 }
 
 function createGroup()
