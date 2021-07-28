@@ -196,6 +196,22 @@ function removeUser( uid )
 	}
 }
 
+function reveilUIComponents()
+{
+	ge( 'Relations' ).classList.remove( 'Hidden' );
+}
+
+function deleteGroup()
+{
+	Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_deleting_desc' ), function( data )
+	{
+		if( data.data == true )
+		{
+			/// ...
+		}
+	} );
+}
+
 // Save the group
 function saveGroup()
 {
@@ -208,7 +224,14 @@ function saveGroup()
 			return;
 		}
 		Application.sendMessage( { command: 'refreshgroups' } );
-		CloseView();
+		if( ge( 'groupId' ).value > 0 )
+		{
+			CloseView();
+		}
+		else
+		{
+			reveilUIComponents();
+		}
 	}
 	
 	// Create
