@@ -198,18 +198,44 @@ function removeUser( uid )
 
 function reveilUIComponents()
 {
+	ge( 'dGroup' ).classList.remove( 'Hidden' );
 	ge( 'Relations' ).classList.remove( 'Hidden' );
 }
 
 function deleteGroup()
 {
-	Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_deleting_desc' ), function( data )
+	let groupId = ge( 'groupId' ).value;
+	if( parseInt( groupId ) > 0 )
 	{
-		if( data.data == true )
+		Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_deleting_desc' ), function( data )
 		{
-			/// ...
-		}
-	} );
+			if( data.data == true )
+			{
+				let d = new Module( 'system' );
+				d.onExecuted = function( e, d )
+				{
+					if( e == 'ok' )
+					{
+						let t = new Library( 'system.library' );
+						t.onExecuted = function( e, d )
+						{
+							if( e == 'ok' )
+							{
+								Application.sendMessage( { command: 'refreshgroups' } );
+								CloseView();
+							}
+							else
+							{
+								Alert( i18n( 'i18n_gr_failed_to_delete' ), i18n( 'i18n_gr_failed_to_delete_desc' ) );
+							}
+						}
+						t.execute( 'group/delete', { id: groupId } );
+					}
+				}
+				d.execute( 'flushworkgroup', { groupId: groupId } );
+			}
+		} );
+	}
 }
 
 // Save the group
@@ -230,7 +256,17 @@ function saveGroup()
 		}
 		else
 		{
-			reveilUIComponents();
+			try
+			{
+			
+				let t = JSON.parse( d );
+				ge( 'groupId' ).value = t.id;
+				reveilUIComponents();
+			}
+			catch( e )
+			{
+				CloseView();
+			}
 		}
 	}
 	

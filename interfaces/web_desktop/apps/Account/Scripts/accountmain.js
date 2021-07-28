@@ -157,7 +157,9 @@ function createGroup()
 	f.replacements = {
 		ID: '',
 		Description: '',
-		Name: ''
+		Name: '',
+		Hidden: 'Hidden',
+		DeleteCl: ' Hidden'
 	};
 	f.i18n();
 	f.onLoad = function( d )
@@ -188,7 +190,9 @@ function editGroup( id )
 		f.replacements = {
 			ID: id,
 			Description: gr.Description ? gr.Description : '',
-			Name: gr.Name
+			Name: gr.Name,
+			Hidden: 'Showing',
+			DeleteCl: ' Showing'
 		};
 		f.i18n();
 		f.onLoad = function( d )
