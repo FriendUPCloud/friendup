@@ -306,57 +306,66 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 			ip = HttpGetHeaderFromTable( request, HTTP_HEADER_X_FORWARDED_FOR );
 		}
 		
-		if( status >= 0 && ip != NULL )
+		if( UMUserExistInDBByID( l->sl_UM, userID ) == TRUE )
 		{
-			if( status >= 0 && status < SECURED_HOST_STATUS_MAX )
+			if( status >= 0 && ip != NULL )
 			{
-				if( allowed == TRUE )
+				if( status >= 0 && status < SECURED_HOST_STATUS_MAX )
 				{
-					SQLLibrary *sqllib = l->GetDBConnection( l );
-					if( sqllib != NULL )
+					if( allowed == TRUE )
 					{
-						char insertQuery[ 1024 ];
+						SQLLibrary *sqllib = l->GetDBConnection( l );
+						if( sqllib != NULL )
+						{
+							char insertQuery[ 1024 ];
 				
-						// delete all hosts same hosts for user
+							// delete all hosts same hosts for user
 				
-						int size = snprintf( insertQuery, sizeof( insertQuery ), "DELETE FROM `FSecuredHost` where IP='%s' AND UserID=%lu", ip, userID );
-						sqllib->QueryWithoutResults( sqllib, insertQuery );
+							int size = snprintf( insertQuery, sizeof( insertQuery ), "DELETE FROM `FSecuredHost` where IP='%s' AND UserID=%lu", ip, userID );
+							sqllib->QueryWithoutResults( sqllib, insertQuery );
 				
-						time_t ti = time( NULL );
-						// create host in DB
+							time_t ti = time( NULL );
+							// create host in DB
 				
-						size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FSecuredHost` (IP,Status,UserID,CreateTime) VALUES('%s',%lu,%lu,%lu)", ip, status, userID, ti );
-						sqllib->QueryWithoutResults( sqllib, insertQuery );
+							size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FSecuredHost` (IP,Status,UserID,CreateTime) VALUES('%s',%lu,%lu,%lu)", ip, status, userID, ti );
+							sqllib->QueryWithoutResults( sqllib, insertQuery );
 			
-						DEBUG("[SecurityWeb/createhost] sl query %s\n", insertQuery );
-						l->DropDBConnection( l, sqllib );
+							DEBUG("[SecurityWeb/createhost] sl query %s\n", insertQuery );
+							l->DropDBConnection( l, sqllib );
 				
-						snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":{\"ip\":\"%s\",\"status\":%lu}}", ip, status );
+							snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":{\"ip\":\"%s\",\"status\":%lu}}", ip, status );
 
-						HttpAddTextContent( response, insertQuery );
+							HttpAddTextContent( response, insertQuery );
+						}
+					}
+					else
+					{
+						char dictmsgbuf[ 256 ];
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
+						HttpAddTextContent( response, dictmsgbuf );
 					}
 				}
 				else
 				{
 					char dictmsgbuf[ 256 ];
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_SET_PROPER_STATUS] ,DICT_SET_PROPER_STATUS );
 					HttpAddTextContent( response, dictmsgbuf );
 				}
 			}
 			else
 			{
-				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_SET_PROPER_STATUS] , DICT_SET_PROPER_STATUS );
-				HttpAddTextContent( response, dictmsgbuf );
+				char buffer[ 512 ];
+				char buffer1[ 256 ];
+				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "ip, status" );
+				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
+				HttpAddTextContent( response, buffer );
 			}
 		}
 		else
 		{
-			char buffer[ 512 ];
-			char buffer1[ 256 ];
-			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "ip, status" );
-			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
-			HttpAddTextContent( response, buffer );
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_USER_DO_NOT_EXIST] ,DICT_USER_DO_NOT_EXIST );
+			HttpAddTextContent( response, dictmsgbuf );
 		}
 
 		if( ip != NULL && releaseIP == TRUE )
@@ -404,7 +413,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 			{
 				int dots = 0;
 				int ddots = 0;
-				int i;
+				unsigned int i;
 				for( i=0 ; i < strlen( ip ) ; i++ )
 				{
 					if( ip[ i ] == '.' )
@@ -465,79 +474,102 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 			}
 			else
 			{
-				userID = loggedSession->us_UserID;
-				allowed = TRUE;
+				//userID = loggedSession->us_UserID;
+				//allowed = TRUE;
 			}
 		}
 		
 		if( ip != NULL && status >= 0 )
 		{
-			if( ipProperFormat == TRUE )
+			if( UMUserExistInDBByID( l->sl_UM, userID ) == TRUE )
 			{
-				if( allowed == TRUE )
+				if( ipProperFormat == TRUE )
 				{
-					if( status >= 0 && status < SECURED_HOST_STATUS_MAX )
+					if( allowed == TRUE )
 					{
-						SQLLibrary *sqllib = l->GetDBConnection( l );
-						if( sqllib != NULL )
+						if( status >= 0 && status < SECURED_HOST_STATUS_MAX )
 						{
-							char insertQuery[ 1024 ];
-							int pos = 0;
-						
-							//
-							// Find first if entry exist in DB
-							//
-						
-							sqllib->SNPrintF( sqllib, insertQuery, sizeof(insertQuery), "SELECT IP FROM `FSecuredHost` WHERE UserID='%ld' AND IP='%s'", userID, ip );
-				
-							void *result = sqllib->Query( sqllib, insertQuery );
-							if( result != NULL )
+							SQLLibrary *sqllib = l->GetDBConnection( l );
+							if( sqllib != NULL )
 							{
-								char **row;
-								while( ( row = sqllib->FetchRow( sqllib, result ) ) )
+								char insertQuery[ 1024 ];
+								int pos = 0;
+						
+								//
+								// Find first if entry exist in DB
+								//
+						
+								sqllib->SNPrintF( sqllib, insertQuery, sizeof(insertQuery), "SELECT IP FROM `FSecuredHost` WHERE UserID='%ld' AND IP='%s'", userID, ip );
+				
+								void *result = sqllib->Query( sqllib, insertQuery );
+								if( result != NULL )
 								{
-									pos++;
+									char **row;
+									while( ( row = sqllib->FetchRow( sqllib, result ) ) )
+									{
+										pos++;
+									}
+									sqllib->FreeResult( sqllib, result );
 								}
-								sqllib->FreeResult( sqllib, result );
-							}
 				
-							if( pos > 0 )
-							{
-								snprintf( insertQuery, sizeof( insertQuery ), "UPDATE `FSecuredHost` Set Status='%lu' WHERE IP='%s'", status, ip );
-							}
-							else
-							{
-								snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FSecuredHost` (IP,Status,UserID,CreateTime) VALUES('%s',%lu,%lu,%lu)", ip, status, userID, time(NULL) );
-							}
+								if( userID > 0 )
+								{
+									if( pos > 0 )
+									{
+										snprintf( insertQuery, sizeof( insertQuery ), "UPDATE `FSecuredHost` Set Status='%lu' WHERE IP='%s' AND UserID=%ld", status, ip, userID );
+									}
+									else
+									{
+										snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FSecuredHost` (IP,Status,UserID,CreateTime) VALUES('%s',%lu,%lu,%lu)", ip, status, userID, time(NULL) );
+									}
+								}
+								else
+								{
+									if( pos > 0 )
+									{
+										snprintf( insertQuery, sizeof( insertQuery ), "UPDATE `FSecuredHost` Set Status='%lu' WHERE IP='%s'", status, ip );
+									}
+									else
+									{
+										snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FSecuredHost` (IP,Status,UserID,CreateTime) VALUES('%s',%lu,%lu,%lu)", ip, status, userID, time(NULL) );
+									}
+								}
 
-							sqllib->QueryWithoutResults( sqllib, insertQuery );
+								sqllib->QueryWithoutResults( sqllib, insertQuery );
 			
-							DEBUG("[SecurityWeb/createhost] sl query %s\n", insertQuery );
-							l->DropDBConnection( l, sqllib );
+								DEBUG("[SecurityWeb/createhost] sl query %s\n", insertQuery );
+								l->DropDBConnection( l, sqllib );
 				
-							snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":{\"ip\":\"%s\",\"status\":%ld,\"userid\":%lu}}", ip, status, userID );
+								snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":{\"ip\":\"%s\",\"status\":%ld,\"userid\":%lu}}", ip, status, userID );
 
-							HttpAddTextContent( response, insertQuery );
+								HttpAddTextContent( response, insertQuery );
+							}
+						}
+						else
+						{
+							char dictmsgbuf[ 256 ];
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_SET_PROPER_STATUS] , DICT_SET_PROPER_STATUS );
+							HttpAddTextContent( response, dictmsgbuf );
 						}
 					}
 					else
 					{
 						char dictmsgbuf[ 256 ];
-						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_SET_PROPER_STATUS] , DICT_SET_PROPER_STATUS );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
 						HttpAddTextContent( response, dictmsgbuf );
 					}
 				}
 				else
 				{
 					char dictmsgbuf[ 256 ];
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_IP_MISSING_OR_WRONG_FORMAT] , DICT_IP_MISSING_OR_WRONG_FORMAT );
 					HttpAddTextContent( response, dictmsgbuf );
 				}
 			}
 			else
 			{
 				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_IP_MISSING_OR_WRONG_FORMAT] , DICT_IP_MISSING_OR_WRONG_FORMAT );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_USER_DO_NOT_EXIST] ,DICT_USER_DO_NOT_EXIST );
 				HttpAddTextContent( response, dictmsgbuf );
 			}
 		}
@@ -562,6 +594,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param userid - hosts will be filtered by userid
+	* @param filter - filter users option. Currently "all" is only supported
 	* 
 	* @return response {"result":"success","hosts":[]} when success otherwise error
 	*/
@@ -569,8 +602,8 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	else if( strcmp( urlpath[ 1 ], "listhosts" ) == 0 )
 	{
 		FUQUAD userID = 0;
-		FUQUAD userIDFromParams = 0;
 		FBOOL allowed = FALSE;
+		int filter = 0;
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
@@ -584,7 +617,16 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 		if( el != NULL )
 		{
 			char *end;
-			userIDFromParams = userID = strtoull( el->hme_Data,  &end, 0 );
+			userID = strtoull( el->hme_Data,  &end, 0 );
+		}
+		
+		el =  HashmapGet( request->http_ParsedPostContent, "filter" );
+		if( el != NULL && el->hme_Data != NULL )
+		{
+			if( strcmp( (char *)el->hme_Data, "all" ) == 0 )
+			{
+				filter = 1;
+			}
 		}
 		
 		if( loggedSession->us_User->u_IsAdmin == TRUE )
@@ -621,8 +663,10 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 				
 				char selectQuery[ 1024 ];
 				
-				if( loggedSession->us_User->u_IsAdmin == TRUE && userIDFromParams == 0 )
+				if( loggedSession->us_User->u_IsAdmin == TRUE && filter == 1 )
 				{
+					DEBUG("[SecurityWeb] user is admin\n" );
+					
 					strcpy( selectQuery, "SELECT IP,Status,UserID,CreateTime FROM `FSecuredHost`" );
 				}
 				else
@@ -727,42 +771,96 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 			}
 			else
 			{
-				userID = loggedSession->us_UserID;
-				allowed = TRUE;
+				//userID = loggedSession->us_UserID;
+				//allowed = TRUE;
 			}
 		}
 
-		if( allowed == TRUE )
+		if( UMUserExistInDBByID( l->sl_UM, userID ) == TRUE )
 		{
-			SQLLibrary *sqllib = l->GetDBConnection( l );
-			if( sqllib != NULL )
+			if( allowed == TRUE )
 			{
-				char insertQuery[ 1024 ];
-				
-				// delete all hosts same hosts for user
-				
-				if( ip == NULL )
+				SQLLibrary *sqllib = l->GetDBConnection( l );
+				if( sqllib != NULL )
 				{
-					int size = snprintf( insertQuery, sizeof( insertQuery ), "DELETE FROM `FSecuredHost` where UserID=%lu", userID );
-				}
-				else	// delete only specified host
-				{
-					int size = snprintf( insertQuery, sizeof( insertQuery ), "DELETE FROM `FSecuredHost` where IP='%s' AND UserID=%lu", ip, userID );
-				}
-				sqllib->QueryWithoutResults( sqllib, insertQuery );
-
-				DEBUG("[SecurityWeb/deletehost] sl query %s\n", insertQuery );
-				l->DropDBConnection( l, sqllib );
+					char insertQuery[ 1024 ];
+					BufString *bs = BufStringNew();
+					
+					BufStringAdd( bs, "{\"result\":\"success\",\"hosts\":[" );
+					
+					// get all entries which will be removed from DB
+					
+					if( ip == NULL )
+					{
+						int size = snprintf( insertQuery, sizeof( insertQuery ), "SELECT IP FROM `FSecuredHost` where UserID=%lu", userID );
+					}
+					else
+					{
+						int size = snprintf( insertQuery, sizeof( insertQuery ), "SELECT IP FROM `FSecuredHost` where IP='%s' AND UserID=%lu", ip, userID );
+					}
+					
+					void *result = sqllib->Query( sqllib, insertQuery );
+					if( result != NULL )
+					{
+						int pos = 0;
+						char **row;
+						while( ( row = sqllib->FetchRow( sqllib, result ) ) )
+						{
+							char entry[ 1024 ];
+							int len = 0;
+							if( pos == 0 )
+							{
+								len = snprintf( entry, sizeof( entry ), "{\"ip\":\"%s\"}", row[ 0 ] );
+							}
+							else
+							{
+								len = snprintf( entry, sizeof( entry ), ",{\"ip\":\"%s\"}", row[ 0 ] );
+							}
+							BufStringAddSize( bs, entry, len );
+						
+							pos++;
+						}
+						sqllib->FreeResult( sqllib, result );
+					}
 				
-				snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":{\"ip\":\"%s\"}}", ip );
+					// delete all hosts same hosts for user
+				
+					if( ip == NULL )
+					{
+						int size = snprintf( insertQuery, sizeof( insertQuery ), "DELETE FROM `FSecuredHost` where UserID=%lu", userID );
+					}
+					else	// delete only specified host
+					{
+						int size = snprintf( insertQuery, sizeof( insertQuery ), "DELETE FROM `FSecuredHost` where IP='%s' AND UserID=%lu", ip, userID );
+					}
+					sqllib->QueryWithoutResults( sqllib, insertQuery );
 
-				HttpAddTextContent( response, insertQuery );
+					DEBUG("[SecurityWeb/deletehost] sl query %s\n", insertQuery );
+					l->DropDBConnection( l, sqllib );
+				
+					BufStringAdd( bs, "]}" );
+				
+					HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
+					bs->bs_Buffer = NULL; // we do not want to release memory, it will be released during SocketWrite call
+				
+					BufStringDelete( bs );
+					
+					//snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":{\"ip\":\"%s\"}}", ip );
+
+					//HttpAddTextContent( response, insertQuery );
+				}
+			}
+			else
+			{
+				char dictmsgbuf[ 256 ];
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
+				HttpAddTextContent( response, dictmsgbuf );
 			}
 		}
 		else
 		{
 			char dictmsgbuf[ 256 ];
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_USER_DO_NOT_EXIST] ,DICT_USER_DO_NOT_EXIST );
 			HttpAddTextContent( response, dictmsgbuf );
 		}
 

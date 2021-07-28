@@ -1147,6 +1147,42 @@ FULONG UMGetAllowedLoginTime( UserManager *um, const char *name )
 }
 
 /**
+ * Check if user exist in DB by ID
+ *
+ * @param um pointer to UserManager
+ * @param id user id
+ * @return TRUE when user exist, otherwise FALSE
+ */
+FBOOL UMUserExistInDBByID( UserManager *um, FQUAD id )
+{
+	FBOOL exist = FALSE;
+	SystemBase *sb = (SystemBase *)um->um_SB;
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
+	
+	if( sqlLib != NULL )
+	{
+		DEBUG("[UMUserExistInDBByID] user id: %ld\n", id );
+		char query[ 1024 ];
+		sqlLib->SNPrintF( sqlLib, query, sizeof(query), "SELECT * FROM `FUser` WHERE ID=%ld", id );
+		
+		void *result = sqlLib->Query( sqlLib, query );
+		if( result != NULL )
+		{ 
+			char **row;
+			if( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+			{
+				DEBUG("[UMUserExistInDBByID] USER EXIST IN DB!\n" );
+				exist = TRUE;
+			}
+			sqlLib->FreeResult( sqlLib, result );
+		}
+		
+		sb->DropDBConnection( sb, sqlLib );
+	}
+	return exist;
+}
+
+/**
  * Get User login possibility
  *
  * @param um pointer to UserManager
@@ -1449,7 +1485,6 @@ int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname )
 }
 
 /**
-<<<<<<< HEAD
  * Find user by name, add to SAS and send message to all user sessions that user was added to SAS
  *
  * @param um pointer to UserManager
@@ -1567,7 +1602,6 @@ int UMFindUserByNameAndAddToSas( UserManager *um, char *uname, void *las, char *
 }
 
 /**
-=======
  * Get statistic about user accounts
  *
  * @param usm pointer to UserManager
@@ -1685,7 +1719,6 @@ int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details )
 }
 
 /*
->>>>>>> release/1.2.6
  * Init user drives
  *
  * @param um pointer to UserManager

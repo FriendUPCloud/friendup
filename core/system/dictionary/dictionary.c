@@ -105,7 +105,8 @@ static const char *DefaultDictionaryMessages[] =
 "Cannot edit or remove UserGroup because its locked",
 "IP parameter is missing or it comes in wrong format",
 "AuthID is missing",
-"Please set proper status value"
+"Please set proper status value",
+"User do not exist"
 };
 
 /**
