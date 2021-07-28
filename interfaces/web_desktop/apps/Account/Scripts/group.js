@@ -32,7 +32,7 @@ function listConnectedUsers( limit, pos, keyw )
 					' + list[a].Fullname + '\
 				</div>\
 				<div class="HContent40 FloatLeft PaddingSmall TextRight">\
-					<button type="button" class="Button IconSmall NoText fa-arrow-up" onclick="inviteUser(' + list[a].ID + ')" title="' + i18n( 'i18n_invite_user_to_group' ) + '"></button>\
+					<button type="button" class="Button IconSmall NoText fa-user-plus" onclick="inviteUser(' + list[a].ID + ')" title="' + i18n( 'i18n_invite_user_to_group' ) + '"></button>\
 				</div>\
 			</div>';
 			sw = sw == 1 ? 2 : 1;
@@ -151,10 +151,6 @@ function inviteUser( uid )
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			if( e != 'ok' )
-			{
-				return 
-			}
 			groupUsers( function(){ listConnectedUsers(); } );
 		}
 		m.execute( 'sendinvite', {
