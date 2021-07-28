@@ -109,25 +109,25 @@ function refreshGroups( keys )
 		if( keys.length )
 		{
 			let out = {};
-			for( let a in list.groups )
+			for( let a in list )
 			{
-				if( list.groups[a].name.toLowerCase().indexOf( keys.toLowerCase() ) >= 0 )
-					out[a] = list.groups[a];
+				if( list[a].Name.toLowerCase().indexOf( keys.toLowerCase() ) >= 0 )
+					out[a] = list[a];
 			}
-			list.groups = out;
+			list = out;
 		}
 		
 		let str = '<div class="Collections">';
 		let sw = 1;
-		for( let a in list.groups )
+		for( let a in list )
 		{
 			// TODO: Make sure we can get our descriptions!
-			if( !list.groups[a].description )
-				list.groups[a].description = '';
+			if( !list[a].description )
+				list[a].description = '';
 			str += '<div class="sw' + sw + ' Collection">\
-				<div class="Name" title="' + list.groups[a].Name + '">' + list.groups[a].Name + '</div>\
+				<div class="Name" title="' + list[a].Name + '">' + list[a].Name + '</div>\
 				<div class="Buttons">\
-					<button type="button" class="Button IconSmall fa-edit NoText" title="' + i18n( 'i18n_edit_group' ) + '" onclick="editGroup(\'' + list.groups[a].ID + '\')"></button>\
+					<button type="button" class="Button IconSmall fa-edit NoText" title="' + i18n( 'i18n_edit_group' ) + '" onclick="editGroup(\'' + list[a].ID + '\')"></button>\
 				</div>\
 			</div>';
 			sw = sw == 1 ? 2 : 1;
