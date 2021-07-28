@@ -263,12 +263,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 						workgroups[data[i].ID].Owner = data[i].Owner;
 					}
 					
-					// Skip non Admin workgroups ...
+					// Hide non Admin workgroups ...
 					
 					if( data[i] && data[i].ID && data[i].Level == 'User' && workgroups[data[i].ID] )
 					{
-						workgroups[data[i].ID] = null;
+						workgroups[data[i].ID].Hide = true;
 					}
+					
 				}
 			}
 			
@@ -2484,7 +2485,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 									var unsorted = {};
 									
 									// Add all workgroups to unsorted and add subgroups array ...
-					
+									
 									for( var i in workgroups )
 									{
 										if( workgroups[i] && workgroups[i].ID )
@@ -2493,9 +2494,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 											{
 												continue;
 											}
-							
+											
 											unsorted[workgroups[i].ID] = {};
-							
+											
 											for( var ii in workgroups[i] )
 											{
 												if( workgroups[i][ii] )
@@ -2574,14 +2575,14 @@ Sections.accounts_workgroups = function( cmd, extra )
 												
 												sub = rows.ID;
 												
-												str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\',{id:'+rows.ID+',psub:'+info.ID+'});">';
+												str += '<div class="HRow'+(rows.Hide||!rows.Owner?' Hidden':'')+'" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\',{id:'+rows.ID+',psub:'+info.ID+'});">';
 						
 												str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 												str += '		<span name="'+rows.Name+'" class="IconMedium fa-users"></span>';
 												str += '	</div>';
 												str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent94 InputHeight FloatLeft Ellipsis">'+rows.Name+'</div>';
 												str += '</div>';
-										
+												
 												if( rows.groups.length > 0 )
 												{
 													str += '<div class="SubGroups">';
@@ -2593,8 +2594,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 														if( rows )
 														{
 															ii++;
-														
-															str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\',{id:'+rows.ID+',psub:'+info.ID+'})">';
+															
+															str += '<div class="HRow'+(rows.Hide||!rows.Owner?' Hidden':'')+'" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\',{id:'+rows.ID+',psub:'+info.ID+'})">';
 															str += '	<div class="TextCenter HContent4 InputHeight FloatLeft PaddingSmall" style="min-width:36px"></div>';
 															str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 															str += '		<span name="'+rows.Name+'" class="IconMedium fa-users"></span>';
@@ -2614,7 +2615,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																	{
 																		ii++;
 																	
-																		str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\',{id:'+rows.ID+',psub:'+info.ID+'})">';
+																		str += '<div class="HRow'+(rows.Hide||!rows.Owner?' Hidden':'')+'" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\',{id:'+rows.ID+',psub:'+info.ID+'})">';
 																		str += '	<div class="TextCenter HContent8 InputHeight FloatLeft PaddingSmall" style="min-width:73px"></div>';
 																		str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 																		str += '		<span name="'+rows.Name+'" class="IconMedium fa-users"></span>';
@@ -2674,7 +2675,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 								if( ge( 'SubWorkgroupInner'+uuid ) )
 								{
 									var list = ge( 'SubWorkgroupInner'+uuid ).getElementsByTagName( 'div' );
-						
+									
+									ge( 'SubWorkgroupInner'+uuid ).className = ge( 'SubWorkgroupInner'+uuid ).className.split( ' Visible' ).join( '' ) + ( filter ? ' Visible' : '' );
+									
 									if( list.length > 0 )
 									{
 										for( var a = 0; a < list.length; a++ )
@@ -5245,7 +5248,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						
 						str += '<div>';
 						
-						str += '<div class="HRow Ellipsis" id="WorkgroupID_' + groups[a].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].ID+',_this:this} )">';
+						str += '<div class="HRow Ellipsis' +(groups[a].Hide||!groups[a].Owner?' Hidden':'')+'" id="WorkgroupID_' + groups[a].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].ID+',_this:this} )">';
 						//str += '<div class="HRow" id="WorkgroupID_' + groups[a].ID + '" onclick="edit( '+groups[a].ID+', this )">';
 						//str += '	<div class="PaddingSmall HContent100 FloatLeft Ellipsis">';
 						//str += '		<span name="' + groups[a].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>';
@@ -5253,7 +5256,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 						str += '		<span name="' + groups[a].Name + '" class="IconMedium fa-users"></span>';
 						str += '	</div>';
-						str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent94 InputHeight FloatLeft Ellipsis">' + groups[a].Name + (groups[a].Owner?' ('+groups[a].Owner+')':'') + '</div>';
+						str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent94 InputHeight FloatLeft Ellipsis">' + groups[a].Name + (groups[a].Owner?' (by '+groups[a].Owner+')':'') + '</div>';
 						
 						//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 						//str += '		<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
@@ -5271,7 +5274,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								
 								ii++;
 								
-								str += '<div class="HRow Ellipsis" id="WorkgroupID_' + groups[a].groups[aa].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].groups[aa].ID+',_this:this} )">';
+								str += '<div class="HRow Ellipsis' +(groups[a].groups[aa].Hide||!groups[a].groups[aa].Owner?' Hidden':'')+'" id="WorkgroupID_' + groups[a].groups[aa].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].groups[aa].ID+',_this:this} )">';
 								//str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].ID + '" onclick="edit( '+groups[a].groups[aa].ID+', this )">';
 								//str += '	<div class="PaddingSmall HContent100 FloatLeft Ellipsis">';
 								//str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>';
@@ -5281,7 +5284,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 								str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconMedium fa-users"></span>';
 								str += '	</div>';
-								str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent88 InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].Name + (groups[a].groups[aa].Owner?' ('+groups[a].groups[aa].Owner+')':'') + '</div>';
+								str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent88 InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].Name + (groups[a].groups[aa].Owner?' (by '+groups[a].groups[aa].Owner+')':'') + '</div>';
 								
 								//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 								//str += '		<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
@@ -5299,7 +5302,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										
 										ii++;
 										
-										str += '<div class="HRow Ellipsis" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].groups[aa].groups[aaa].ID+',_this:this} )">';
+										str += '<div class="HRow Ellipsis' +(groups[a].groups[aa].groups[aaa].Hide||!groups[a].groups[aa].groups[aaa].Owner?' Hidden':'')+'" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].groups[aa].groups[aaa].ID+',_this:this} )">';
 										//str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '" onclick="edit( '+groups[a].groups[aa].groups[aaa].ID+', this )">';
 										//str += '	<div class="PaddingSmall HContent100 FloatLeft Ellipsis">';
 										//str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>';
@@ -5309,7 +5312,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 										str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconMedium fa-users"></span>';
 										str += '	</div>';
-										str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent82 InputHeight FloatLeft Ellipsis" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + groups[a].groups[aa].groups[aaa].Name + (groups[a].groups[aa].groups[aaa].Owner?' ('+groups[a].groups[aa].groups[aaa].Owner+')':'') + '</div>';
+										str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent82 InputHeight FloatLeft Ellipsis" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + groups[a].groups[aa].groups[aaa].Name + (groups[a].groups[aa].groups[aaa].Owner?' (by '+groups[a].groups[aa].groups[aaa].Owner+')':'') + '</div>';
 										
 										//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 										//str += '		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
@@ -5642,6 +5645,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 						
 						if( list.length > 0 )
 						{
+							ge( 'WorkgroupInner' ).className = ge( 'WorkgroupInner' ).className.split( ' Visible' ).join( '' ) + ( filter ? ' Visible' : '' );
+							
 							for( var a = 0; a < list.length; a++ )
 							{
 								if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
