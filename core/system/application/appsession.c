@@ -50,7 +50,8 @@ AppSession *AppSessionNew( void *sb, FQUAD applicationID, FQUAD userID, char *au
 		
 		as->as_UserID = userID;
 		as->as_UserApplicationID = applicationID;
-
+		as->as_CreateTime = time( NULL );
+		
 		AppSessionInit( as, sb );
 	}
 	return as;
@@ -72,7 +73,6 @@ void AppSessionInit( AppSession *as, void *sb )
 #ifdef DB_SESSIONID_HASH
 		as->as_HashedAuthID = lsb->sl_UtilInterface.DatabaseEncodeString( as->as_AuthID );
 #endif
-		as->as_CreateTime = time( NULL );
 	}
 }
 

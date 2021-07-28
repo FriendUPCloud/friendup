@@ -511,6 +511,8 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 									}
 									sqllib->FreeResult( sqllib, result );
 								}
+								
+								DEBUG("[security/updatehost] userid: %ld pos: %d\n", userID, pos );
 				
 								if( userID > 0 )
 								{
@@ -527,7 +529,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 								{
 									if( pos > 0 )
 									{
-										snprintf( insertQuery, sizeof( insertQuery ), "UPDATE `FSecuredHost` Set Status='%lu' WHERE IP='%s'", status, ip );
+										snprintf( insertQuery, sizeof( insertQuery ), "UPDATE `FSecuredHost` Set Status='%lu' WHERE IP='%s' AND", status, ip );
 									}
 									else
 									{

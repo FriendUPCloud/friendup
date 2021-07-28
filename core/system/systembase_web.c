@@ -581,29 +581,38 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					AppSession *locas = AppSessionManagerGetSessionByAuthID( l->sl_AppSessionManager, authID );
 					if( locas != NULL && locas->as_User != NULL )
 					{
-						if( FRIEND_MUTEX_LOCK( &(locas->as_User->u_Mutex ) ) == 0 )
+						time_t acttime = time( NULL );
+						
+						if( ( acttime - locas->as_CreateTime ) > l->sl_AppSessionManager->asm_SessionTimeout )
 						{
-							locas->as_User->u_InUse++;
-							FRIEND_MUTEX_UNLOCK( &(locas->as_User->u_Mutex ) );
+							
 						}
-						UserSessListEntry *usle = locas->as_User->u_SessionsList;
-						while( usle != NULL )
+						else
 						{
-							UserSession *tus = (UserSession *)usle->us;
-							if( tus != NULL && tus->us_WSD != NULL )
+							if( FRIEND_MUTEX_LOCK( &(locas->as_User->u_Mutex ) ) == 0 )
 							{
-								loggedSession = tus;
-								strncpy( sessionid, loggedSession->us_SessionID, 255 );
-								break;
+								locas->as_User->u_InUse++;
+								FRIEND_MUTEX_UNLOCK( &(locas->as_User->u_Mutex ) );
 							}
-							usle = (UserSessListEntry *)usle->node.mln_Succ;
-						}
+							UserSessListEntry *usle = locas->as_User->u_SessionsList;
+							while( usle != NULL )
+							{
+								UserSession *tus = (UserSession *)usle->us;
+								if( tus != NULL && tus->us_WSD != NULL )
+								{
+									loggedSession = tus;
+									strncpy( sessionid, loggedSession->us_SessionID, 255 );
+									break;
+								}
+								usle = (UserSessListEntry *)usle->node.mln_Succ;
+							}
 				
-						if( FRIEND_MUTEX_LOCK( &(locas->as_User->u_Mutex ) ) == 0 )
-						{
-							locas->as_User->u_InUse--;
-							FRIEND_MUTEX_UNLOCK( &(locas->as_User->u_Mutex ) );
-						}
+							if( FRIEND_MUTEX_LOCK( &(locas->as_User->u_Mutex ) ) == 0 )
+							{
+								locas->as_User->u_InUse--;
+								FRIEND_MUTEX_UNLOCK( &(locas->as_User->u_Mutex ) );
+							}
+						}	// timeout
 					}
 				}
 				else
