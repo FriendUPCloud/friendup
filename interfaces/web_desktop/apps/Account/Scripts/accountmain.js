@@ -119,6 +119,7 @@ function refreshGroups( keys )
 		
 		let str = '<div class="Collections">';
 		let sw = 1;
+		let count = 0;
 		for( let a in list )
 		{
 			// TODO: Make sure we can get our descriptions!
@@ -131,13 +132,25 @@ function refreshGroups( keys )
 				</div>\
 			</div>';
 			sw = sw == 1 ? 2 : 1;
+			count++;
 		}
 		
-		str += '<p class="BorderTop PaddingTop MarginTop">\
-			<button type="button" class="Button IconSmall fa-plus" onclick="createGroup()">\
-				' + i18n( 'i18n_create_group' ) + '\
-			</button>\
-		</p>';
+		if( count >= 3 )
+		{
+			str += '<p class="BorderTop PaddingTop MarginTop">\
+				<button type="button" class="Button IconSmall fa-plus Disabled" disabled="disabled">\
+					' + i18n( 'i18n_create_group_disabled' ) + '\
+				</button>\
+			</p>';
+		}
+		else
+		{
+			str += '<p class="BorderTop PaddingTop MarginTop">\
+				<button type="button" class="Button IconSmall fa-plus" onclick="createGroup()">\
+					' + i18n( 'i18n_create_group' ) + '\
+				</button>\
+			</p>';
+		}
 		
 		str += '</div>';
 		ge( 'GroupList' ).innerHTML = str;

@@ -25,18 +25,10 @@ if( !$g->Load() )
 }
 
 // Delete queued events
-if( !$SqlDatabase->query( 'DELETE FROM FQueuedEvent WHERE TargetGroupID=\'' . $g->ID . '\'' ) )
-{
-	$res->message = 'Could not load workgroup.';
-	die( 'fail<!--separate-->' . json_encode( $res ) );
-}
+$SqlDatabase->query( 'DELETE FROM FQueuedEvent WHERE TargetGroupID=\'' . $g->ID . '\'' );
 
 // Delete group user relations
-if( !$SqlDatabase->query( 'DELETE FROM FUserToGroup WHERE UserGroupID=\'' . $g->ID . '\'' ) )
-{
-	$res->message = 'Could not flush group members.';
-	die( 'fail<!--separate-->' . json_encode( $res ) );
-}
+$SqlDatabase->query( 'DELETE FROM FUserToGroup WHERE UserGroupID=\'' . $g->ID . '\'' );
 
 die( 'ok' );
 

@@ -335,6 +335,8 @@ if( $args->command )
 		
 		case 'getpendinginvites':
 			
+			if( !isset( $args->args->groupId ) )
+				die( 'fail<!--separate-->' );
 			$n = new dbIO( 'FQueuedEvent' );
 			$n->UserID = $User->ID;
 			$n->TargetGroupID = $args->args->groupId;

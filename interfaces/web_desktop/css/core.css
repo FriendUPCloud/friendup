@@ -410,7 +410,7 @@ button.Glue:last-child
 	border-bottom-right-radius: $ButtonBorderRadius;
 }
 
-button:hover, .Button:hover
+button:not(.Disabled):hover, .Button:not(.Disabled):hover
 {
 	color: $ColorButtonHover;
 	background-color: $ColorBgButtonHover;
