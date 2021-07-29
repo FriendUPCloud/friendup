@@ -166,6 +166,7 @@ enum {
 	DICT_AUTHID_IS_MISSING,
 	DICT_SET_PROPER_STATUS,
 	DICT_USER_DO_NOT_EXIST,
+	DICT_AUTHID_EXPIRED,
 	DICT_MAX
 };
 /*
@@ -276,6 +277,7 @@ INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) 
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Please set proper status value', 'ENG', '80');
 
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'User do not exist', 'ENG', '81');
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Authid is expired', 'ENG', '82');
 */
 
 // User status
