@@ -271,6 +271,7 @@ function saveGroup()
 				joinGroup( t.id, function()
 				{
 					reveilUIComponents();
+					groupUsers( function(){ listConnectedUsers(); } );
 				} );
 			}
 			catch( e )
