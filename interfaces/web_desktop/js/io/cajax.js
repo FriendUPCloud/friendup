@@ -114,11 +114,6 @@ function CancelCajaxOnId( id )
 function executeCAjaxQueue()
 {
 	const self = this;
-	console.log( 'executeCAjaxQueue', {
-		queue   : Friend.cajax,
-		timeout : _cajax_queue_execute_timeout,
-		
-	});
 	
 	if ( null != _cajax_queue_execute_timeout )
 	{
@@ -248,7 +243,7 @@ cAjax = function( app )
 					try {
 						responseObj = JSON.parse( this.responseText );
 					} catch( ex ) {
-						console.log( 'opps', ex );
+						//console.log( 'opps', ex );
 					}
 					
 					//console.log( 'responseObj', responseObj );
@@ -312,7 +307,7 @@ cAjax = function( app )
 						let r = JSON.parse( jax.returnData );
 						
 						let res = r ? r.response.toLowerCase() : '';
-						console.log( 'fail res', r );
+						//console.log( 'fail res', r );
 						if( res == 'user not found' || res.toLowerCase() == 'user session not found' )
 						{
 							if( window.Workspace && res.toLowerCase() == 'user session not found' ) 
@@ -364,7 +359,7 @@ cAjax = function( app )
 		// Something went wrong!
 		else
 		{
-			console.log( 'cajax, request error', this );
+			//console.log( 'cajax, request error', this );
 			if( this.status == 500 
 				|| this.status == 0 
 				|| this.status == 404 
@@ -461,24 +456,8 @@ cAjax.prototype.setAuthToken = function()
 	const self = this;
 	delete self.vars[ 'sessionid' ];
 	delete self.vars[ 'authid' ];
-	console.log( 'cAjax.setAuthToken', {
-		winWork   : !!window.Workspace,
-		sessionId : !!window.Workspace ? Workspace.sessionId : null,
-		selfApp   : !!self.application,
-		selfAId   : !!self.application ? self.application.authId : null,
-		winApp    : !!window.Application,
-		winAppId  : !!window.Application ? window.Application.authId : null,
-	});
-	
 	const app = self.application || window.Application;
 	const work = window.Workspace;
-	if ( app && work ) {
-		console.trace( 'both work and app present', {
-			work : work,
-			app  : app,
-			vars : self.vars,
-		});
-	}
 	
 	if ( app )
 	{
@@ -489,7 +468,6 @@ cAjax.prototype.setAuthToken = function()
 		}
 		
 		const aId = app.authId;
-		console.log( 'setting authId', aId );
 		self.addVar( 'authid', aId );
 		return true;
 	}
@@ -503,7 +481,6 @@ cAjax.prototype.setAuthToken = function()
 		}
 		
 		const sId = work.sessionId;
-		console.log( 'setting sessionId', sId );
 		self.addVar( 'sessionid', sId );
 		return true;
 	}
@@ -545,7 +522,6 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		url.indexOf( '/file/write' ) < 0
 	)
 	{
-		console.log( 'cajax.open websockets' );
 		this.mode = 'websocket';
 		this.url = url;
 		this.hasReturnCode = hasReturnCode;
@@ -558,7 +534,6 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		url = AjaxUrl( url );
 	}
 	
-	console.log( 'cajax.open not websocket ??', this.lastOptions );
 	if( this.lastOptions && !method && !url && !syncing && !hasReturnCode )
 	{
 		this.proxy.hasReturnCode = this.lastOptions.hasReturnCode;
@@ -1063,7 +1038,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	// Respond to old expired sessions!
 	else if( self.returnCode == 'fail' )
 	{
-		console.log( 'handleWebSocketResponse fail', self.returnData );
+		//console.log( 'handleWebSocketResponse fail', self.returnData );
 		try
 		{
 			let r = JSON.parse( self.returnData );
