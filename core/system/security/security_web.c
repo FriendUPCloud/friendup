@@ -472,7 +472,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 			{
 				allowed = TRUE;
 			}
-			else
+			else if( userID == 0 )
 			{
 				userID = loggedSession->us_UserID;
 				allowed = TRUE;
