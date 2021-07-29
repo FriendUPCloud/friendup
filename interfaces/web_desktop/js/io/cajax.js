@@ -459,6 +459,8 @@ cAjax.prototype.destroy = function()
 cAjax.prototype.setAuthToken = function()
 {
 	const self = this;
+	delete self.vars[ 'sessionid' ];
+	delete self.vars[ 'authid' ];
 	console.log( 'cAjax.setAuthToken', {
 		winWork   : !!window.Workspace,
 		sessionId : !!window.Workspace ? Workspace.sessionId : null,
@@ -529,7 +531,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	
 	// Try websockets!!
 	if( 
-		false &&
+		//false &&
 		!this.forceHTTP &&
 		window.Workspace &&
 		Workspace.conn && 
@@ -561,7 +563,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	{
 		this.proxy.hasReturnCode = this.lastOptions.hasReturnCode;
 		this.openFunc = function() { 
-			self.setAuthToken();
+			//self.setAuthToken();
 			self.proxy.open( self.lastOptions.method ? self.lastOptions.method : 'POST', self.lastOptions.url, self.lastOptions.syncing ); 
 		};
 	}
@@ -584,7 +586,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		this.proxy.hasReturnCode = hasReturnCode;
 		this.openFunc = function()
 		{ 
-			self.setAuthToken();
+			//self.setAuthToken();
 			let u = self.url;
 			if( u.substr( 0, 1 ) == '/' )
 			{
@@ -660,7 +662,7 @@ cAjax.prototype.responseText = function()
 cAjax.prototype.send = function( data, callback )
 {
 	const self = this;
-	//RemoveFromCajaxQueue( this );
+	RemoveFromCajaxQueue( self );
 	
 	/*
 	if( window.Workspace )
@@ -682,6 +684,12 @@ cAjax.prototype.send = function( data, callback )
 		this.addVar( 'authid', this.application.authId );
 	}
 	*/
+	const hasToken = self.setAuthToken();
+	if ( !hasToken )
+	{
+		AddToCajaxQueue( self );
+		return;
+	}
 	
 	// Make sure we don't f this up!
 	if( this.onload && !this.onloadAfter )
