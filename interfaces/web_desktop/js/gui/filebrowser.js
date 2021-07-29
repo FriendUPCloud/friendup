@@ -73,7 +73,7 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 	self.flags = { displayFiles: false, filedialog: false, justPaths: false, path: self.rootPath, bookmarks: true, rootPath: false, noContextMenu: false };
 	if( flags )
 	{
-		for( var a in flags )
+		for( let a in flags )
 			self.flags[ a ] = flags[ a ];
 	}
 	if( this.flags.rootPath )
@@ -131,7 +131,7 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 	if( self.flags.bookmarks )
 	{
 		// Element was dropped here
-		for( var a = 0; a < elements.length; a++ )
+		for( let a = 0; a < elements.length; a++ )
 		{
 			if( elements[a].fileInfo.Type == 'Directory' )
 			{
@@ -172,17 +172,11 @@ Friend.FileBrowser.prototype.setPath = function( target, cbk, tempFlags, e )
 	{
 		return;
 	}
-	
-	if( this.context == 'bookmark' )
-	{
-		console.log( 'We are in bookmark land. Abort setpath!' );
-		return;
-	}
 
 	this.tempFlags = false;
 	this.flags.path = target; // This is the current target path..
 	if( tempFlags ) this.tempFlags = tempFlags;
-	this.refresh( this.rootPath, this.dom, cbk, 0 );
+	this.refresh( this.rootPath, this.dom, cbk, 0, { context: this.lastContext } );
 }
 
 Friend.FileBrowser.prototype.rollOver = function( elements )
@@ -199,20 +193,16 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	if( !path ) path = this.rootPath; // Use the rootpath
 	if( !depth ) depth = 1;
 	
-	// Track refresh context
-	let context = flags && flags.context ? flags.context : null;
-	if( context == null )
-	{
-		context = this.prevContext;
-	}
-	this.prevContext = this.context;
-	this.context = context;
-	
-	console.log( 'Refreshing using context: ' + context );
-	
 	// Fix column problem
 	if ( path.indexOf( ':' ) < 0 )
 		path += ':';
+
+	let context = null;
+	if( flags && flags.context )
+	{
+		context = flags.context;
+		self.lastContext = context;
+	}
 
 	if( !this.headerDisks )
 	{
@@ -231,12 +221,18 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	
 	function createOnclickAction( ele, ppath, type, depth )
 	{
-		ele.clickType = type;
+		ele.clickType = context ? context : type;
 		ele.onclick = function( e )
 		{
 			// Real click removes temp flags
 			if( e && ( e.button === 0 || e.button > 0 ) )
 				self.tempFlags = false;
+			
+			// Don't allow the "simulated click" to trigger different contexts
+			if( !e && this.clickType != self.lastContext )
+				return;
+			
+			console.log( 'Ok we got: ' + this.clickType + ' -> ' + self.lastContext );
 				
 			if( !ppath ) 
 			{
@@ -251,7 +247,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			if( type == 'File' )
 			{
 				let eles = self.dom.getElementsByTagName( 'div' );
-				for( var a = 0; a < eles.length; a++ )
+				for( let a = 0; a < eles.length; a++ )
 				{
 					eles[a].classList.remove( 'Active' );
 				}
@@ -297,7 +293,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				
 				// Set this to active
 				let eles = self.dom.getElementsByTagName( 'div' );
-				for( var a = 0; a < eles.length; a++ )
+				for( let a = 0; a < eles.length; a++ )
 				{
 					eles[a].classList.remove( 'Active' );
 				}
@@ -329,13 +325,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						// Only refresh at final destination
 						if( doClick )
 						{
-							let ctxType = type;
-							if( ctxType == 'Directory' )
-							{
-								ctxType = self.context;
-							}
-							console.log( 'Refreshing on context: ' + ctxType );
-							self.refresh( ppath, subitems[0], callback, depth, { context: ctxType } );
+							self.refresh( ppath, subitems[0], callback, depth, { context: type == 'volume' || type == 'bookmark' ? type : null } );
 							if( self.callbacks && self.callbacks.folderOpen )
 							{
 								self.callbacks.folderOpen( ppath, e, self.tempFlags );
@@ -370,7 +360,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				
 				// Set this to active
 				let eles = self.dom.getElementsByTagName( 'div' );
-				for( var a = 0; a < eles.length; a++ )
+				for( let a = 0; a < eles.length; a++ )
 				{
 					eles[a].classList.remove( 'Active' );
 				}
@@ -436,7 +426,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					name: i18n( 'menu_show_icon_information' ),
 					command: function()
 					{
-						for( var c = 0; c < Workspace.icons.length; c++ )
+						for( let c = 0; c < Workspace.icons.length; c++ )
 						{
 							if( Workspace.icons[ c ].Volume === ppath )
 							{
@@ -463,7 +453,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 
 	// Just get a list of disks
 	if( path == 'Mountlist:' )
-	{
+	{	
 		let func = function( flags, cb )
 		{
 			// For Workspace scope
@@ -517,18 +507,26 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				msg.list = temp;
 				// Done moving Home: to the top
 				
+				// Check the existing nodes, if we have items that do not
+				// exist any longer and needs to be removed
 				for( let a = 0; a < eles.length; a++ )
 				{
 					let elFound = false;
+					if( !eles[a].id ) continue;
+					
+					// Check our list (also contains bookmarks!)
 					for( let b = 0; b < msg.list.length; b++ )
 					{
 						if( msg.list[ b ].Volume == 'System:' ) continue;
+						
+						// Ignore shared: TODO: We are trying to remove it
 						if( self.directoryView && self.directoryView.filedialog && msg.list[ b ].Volume == 'Shared:' )
+						{
 							continue;
+						}
 						
 						if( eles[a].id == 'diskitem_' + msg.list[b].Title )
 						{
-							eles[a].context = context;
 							createOnclickAction( eles[a], msg.list[b].Volume, 'volume', depth + 1 );
 							
 							// Don't add twice
@@ -539,6 +537,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 								foundStructures.push( msg.list[ b ] ); // Found dos structures
 							}
 							elFound = true;
+							break;
 						}
 					}
 					// Deleted element
@@ -576,7 +575,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					
 					// Check if this item already exists
 					let foundItem = foundStructure = false;
-					for( var b = 0; b < found.length; b++ )
+					for( let b = 0; b < found.length; b++ )
 					{
 						if( found[b] == msg.list[a].Title || msg.list[a].Type == 'header' )
 						{
@@ -592,19 +591,20 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						let d = document.createElement( 'div' );
 						d.className = 'DiskItem';
 						d.id = 'diskitem_' + msg.list[a].Title;
-						d.context = msg.list[a].Type;
 						d.path = msg.list[a].Volume;
 						d.type = msg.list[a].Type;
+						d.clickType = d.type;
 						let nm = document.createElement( 'div' );
 						nm.style.paddingLeft = ( depth << 3 ) + 'px'; // * 8
 						nm.className = 'Name IconSmall IconDisk';
 						nm.innerHTML = '<span> ' + msg.list[a].Title + '</span>';
 						
 						// We have an incoming path
-						if( !clickElement && self.flags.path && targetPath == d.path && self.clickType && d.context == context )
+						if( !clickElement && self.flags.path && targetPath == d.path )
 						{
-							console.log( 'Found i clickelement with context: ' + d.context + ' == ' + context );
 							clickElement = d;
+							if( context && clickElement.clickType != context )
+								clickElement = false;
 						}				
 						
 						if( Friend.dosDrivers && !( msg.list[a].Type && msg.list[a].Type == 'bookmark' ) )
@@ -656,10 +656,6 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 											self.clear();
 											self.refresh();
 										}
-										else
-										{
-											console.log( 'Could not remove bookmark: ', e, d );
-										}
 									}
 									m.execute( 'removebookmark', { name: ls.Path } );
 									return cancelBubble( e );
@@ -672,7 +668,6 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						s.className = 'SubItems ' + msg.list[a].Type;
 						d.appendChild( s );
 						rootElement.appendChild( d );
-						d.context = context;
 						createOnclickAction( d, d.path, msg.list[a].Type && msg.list[a].Type == 'bookmark' ? 'bookmark' : 'volume', depth + 1 );
 					}
 					// Existing items
@@ -684,14 +679,15 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 							let s = foundItem.getElementsByClassName( 'SubItems' );
 							if( s && s.length && msg.list[a].Volume )
 							{
-								self.refresh( msg.list[a].Volume, s[0], false, depth + 1 );
+								self.refresh( msg.list[a].Volume, s[0], false, depth + 1, { context: foundItem.clickType } );
 							}
 						}
 						
-						if( !clickElement && self.flags.path && targetPath == foundItem.path && foundItem.context == context )
+						if( !clickElement && self.flags.path && targetPath == foundItem.path )
 						{
-							console.log( 'Found ff clickelement with context: ' + foundItem.context + ' == ' + context );
 							clickElement = foundItem;
+							if( context && clickElement.clickType != context )
+								clickElement = false;
 						}
 					}
 				}
@@ -704,7 +700,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				
 				// Add checkers classes
 				let sw = 2;
-				for( var a = 0; a < eles.length; a++ )
+				for( let a = 0; a < eles.length; a++ )
 				{
 					sw = sw == 2 ? 1 : 2;
 					if( eles[a].className && eles[a].classList.contains( 'DiskItem' ) )
@@ -731,7 +727,6 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			
 			if( self.flags.bookmarks )
 			{
-				done();
 				let m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
@@ -755,7 +750,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					
 					if( js )
 					{
-						for( var a = 0; a < js.length; a++ )
+						for( let a = 0; a < js.length; a++ )
 						{
 							let ele = {
 								Title: js[a].name,
@@ -828,8 +823,6 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						let fn = msg.list[b].Filename;
 						if( msg.list[b].Type == 'Directory' )
 							fn += '/';
-						
-						eles[a].context = context;
 						
 						// Special case - isn't really a directory (uses path without filename)
 						if( msg.list[b].MetaType == 'RootDirectory' )
@@ -914,14 +907,14 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 							msg.list[a].Type = 'RootDirectory';
 						}
 						
-						d.context = context;
 						createOnclickAction( d, d.path, msg.list[a].Type, depth + 1 );
 						
 						// We have an incoming path
-						if( !clickElement && self.flags.path && targetPath == d.path && d.context == context )
+						if( !clickElement && self.flags.path && targetPath == d.path )
 						{
-							console.log( 'Found clickelement with context: ' + d.context + ' == ' + context );
 							clickElement = d;
+							if( context && clickElement.clickType != context )
+								clickElement = false;
 						}
 					}
 				}
@@ -942,15 +935,16 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 								let fn = msg.list[a].Filename;
 								if( msg.list[a].Type == 'Directory' )
 									fn += '/';
-								self.refresh( path + fn, s[0], false, depth + 1 );
+								self.refresh( path + fn, s[0], false, depth + 1, { context: foundItem.clickType } );
 							}
 						}
 					}
 					// We have an incoming path
-					if( !clickElement && self.flags.path && targetPath == foundItem.path && foundItem.context == context )
+					if( !clickElement && self.flags.path && targetPath == foundItem.path )
 					{
-						console.log( 'Found f clickelement with context: ' + foundItem.context + ' == ' + context );
 						clickElement = foundItem;
+						if( context && clickElement.clickType != context )
+							clickElement = false;
 					}
 				}
 			}
