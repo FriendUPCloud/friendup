@@ -124,13 +124,15 @@ function groupUsers( callback )
 			if( !found )
 				groupUsersList.push( list[a].ID );
 			
+			let me = list[a].ID == Application.userId ? ' (you)' : '';
+			
 			str += '<div class="HRow sw' + sw + '">\
 				<div class="HContent60 FloatLeft Ellipsis PaddingSmall">\
-					' + list[a].Fullname + '\
+					' + list[a].Fullname + me + '\
 				</div>\
-				<div class="HContent40 FloatLeft PaddingSmall TextRight">\
+				' + ( me == '' ? ( '<div class="HContent40 FloatLeft PaddingSmall TextRight">\
 					<button type="button" class="Button IconSmall NoText fa-remove" onclick="removeUser(' + list[a].ID + ')" title="' + i18n( 'i18n_remove_from_group' ) + '"></button>\
-				</div>\
+				</div>' ) : '' ) + '\
 			</div>';
 			sw = sw == 1 ? 2 : 1;
 		}
