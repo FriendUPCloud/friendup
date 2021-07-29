@@ -1214,7 +1214,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			
 			if( groupID > 0 )
 			{
-				if( IS_SESSION_ADMIN( loggedSession ) )
+				if( !IS_SESSION_ADMIN( loggedSession ) )
 				{
 					BufString *bs = BufStringNew();
 					if( bs != NULL )
