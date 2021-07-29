@@ -135,7 +135,7 @@ function refreshGroups( keys )
 			count++;
 		}
 		
-		if( count >= 3 )
+		if( Application.getUserLevel() != 'admin' && count >= 3 )
 		{
 			str += '<p class="BorderTop PaddingTop MarginTop">\
 				<button type="button" class="Button IconSmall fa-plus Disabled" disabled="disabled">\
