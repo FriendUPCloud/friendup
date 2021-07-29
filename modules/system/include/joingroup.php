@@ -14,20 +14,20 @@ $g = new dbIO( 'FUserGroup' );
 if( $g->Load( intval( $args->args->groupId, 10 ) ) )
 {
 	// It belongs to you!
-	if( $g->UserID = $User->ID )
+	if( $g->UserID == $User->ID )
 	{
 		if( !$SqlDatabase->fetchObject( 'SELECT * FROM FUserToGroup ug WHERE ug.UserGroupID = \'' . intval( $args->args->groupId, 10 ) . '\' AND ug.UserID=\'' . $User->ID . '\'' ) )
 		{
-			$o = new dbIO( 'FUserToGroup' );
-			$o->UserGroupID = $args->args->groupId;
-			$o->UserID = $User->ID;
-			if( $o->Save() )
+			if( $SqlDatabase->query( 'INSERT INTO FUserToGroup ( UserGroupID, UserID ) VALUES ( \'' . intval( $args->args->groupId, 10 ) . '\', \'' . $User->ID . '\' )' ) )
 			{
 				die( 'ok<!--separate-->' );
 			}
+			die( 'fail<!--separate-->{"response":-1,"message":"Could not save group membership."}' );
 		}
+		die( 'fail<!--separate-->{"response":-1,"message":"Already a member of group."}' );
 	}
+	die( 'fail<!--separate-->{"response":-1,"message":"Group does not belong to you."}' );
 }
-die( 'fail' );
+die( 'fail<!--separate-->{"response":-1,"message":"Could not load group."}' );
 
 ?>

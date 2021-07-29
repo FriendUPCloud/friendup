@@ -237,6 +237,13 @@ function deleteGroup()
 // Save the group
 function saveGroup()
 {
+	function joinGroup( gid, cb )
+	{
+		m = new Module( 'system' );
+		m.onExecuted = function( e, d ){ if( cb ) cb(); }
+		m.execute( 'joingroup', { groupId: gid } );
+	}
+	
 	let t = new Library( 'system.library' );
 	t.onExecuted = function( e, d )
 	{
@@ -244,13 +251,6 @@ function saveGroup()
 		{
 			Alert( i18n( 'i18n_could_not_save_group' ), i18n( 'i18n_an_error_occured_group_save' ) );
 			return;
-		}
-		
-		function joinGroup( gid, cb )
-		{
-			m = new Module( 'system' );
-			m.onExecuted = function( e, d ){ if( cb ) cb(); }
-			m.execute( 'joingroup', { groupId: gid } );
 		}
 		
 		Application.sendMessage( { command: 'refreshgroups' } );
@@ -290,10 +290,13 @@ function saveGroup()
 	// Update
 	else
 	{
-		t.execute( 'group/update', {
-			groupname: ge( 'groupName' ).value,
-			description: ge( 'groupDescription' ).value,
-			id: ge( 'groupId' ).value
+		joinGroup( ge( 'groupId' ).value, function()
+		{
+			t.execute( 'group/update', {
+				groupname: ge( 'groupName' ).value,
+				description: ge( 'groupDescription' ).value,
+				id: ge( 'groupId' ).value
+			} );
 		} );
 	}	
 }

@@ -1677,7 +1677,7 @@ if( isset( $args->command ) )
 			break;
 		// Join a group (own group)
 		case 'joingroup':
-			require( 'modules/system/include/flushworkgroup.php' );
+			require( 'modules/system/include/joingroup.php' );
 			break;
 		// Flush relational group info
 		case 'flushworkgroup':
