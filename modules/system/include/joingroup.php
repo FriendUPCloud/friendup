@@ -13,14 +13,18 @@
 $g = new dbIO( 'FUserGroup' );
 if( $g->Load( intval( $args->args->groupId, 10 ) ) )
 {
-	if( !$SqlDatabase->fetchObject( 'SELECT * FROM FUserToGroup ug WHERE ug.UserGroupID = \'' . intval( $args->args->groupId, 10 ) . '\' AND ug.UserID=\'' . $User->ID . '\'' ) )
+	// It belongs to you!
+	if( $g->UserID = $User->ID )
 	{
-		$o = new dbIO( 'FUserToGroup' );
-		$o->UserGroupID = $args->args->groupId;
-		$o->UserID = $User->ID;
-		if( $o->Save() )
+		if( !$SqlDatabase->fetchObject( 'SELECT * FROM FUserToGroup ug WHERE ug.UserGroupID = \'' . intval( $args->args->groupId, 10 ) . '\' AND ug.UserID=\'' . $User->ID . '\'' ) )
 		{
-			die( 'ok<!--separate-->' );
+			$o = new dbIO( 'FUserToGroup' );
+			$o->UserGroupID = $args->args->groupId;
+			$o->UserID = $User->ID;
+			if( $o->Save() )
+			{
+				die( 'ok<!--separate-->' );
+			}
 		}
 	}
 }
