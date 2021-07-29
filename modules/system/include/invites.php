@@ -103,7 +103,7 @@ if( $args->command )
 					$f->Save();
 				}
 				
-				if( $f->ID > 0)
+				if( $f->ID > 0 )
 				{
 					die( 'ok<!--separate-->{"Response":"Invite link successfully created","ID":"' . $f->ID . '","Hash":"' . $f->Hash . '","Link":"' . buildUrl( $f->Hash, $Conf, $ConfShort ) . '","Expire":"' . $f->Expire . '"}' );
 				}
@@ -132,8 +132,7 @@ if( $args->command )
 					if( $f && $f->Source && $f->Hash )
 					{
 						if( $json = json_decode( decodeUrl( $f->Source ) ) )
-						{
-							
+						{	
 							$obj = new stdClass();
 							$obj->ID         = $f->ID;
 							$obj->Link       = buildUrl( $f->Hash, $Conf, $ConfShort );
@@ -156,6 +155,9 @@ if( $args->command )
 								if( !$found )
 									continue;
 							}
+							$obj = new stdClass();
+							$obj->ID         = $f->ID;
+							$obj->Link       = buildUrl( $f->Hash, $Conf, $ConfShort );
 							$obj->Workgroups = ( isset( $json->data->workgroups ) ? $json->data->workgroups : false );
 							$obj->UserID     = ( isset( $json->data->userid     ) ? $json->data->userid     : null  );
 							$obj->UniqueID   = ( isset( $json->data->uniqueid   ) ? $json->data->uniqueid   : null  );
@@ -216,8 +218,6 @@ if( $args->command )
 				DELETE FROM FQueuedEvent
 				WHERE ID = \'' . $eventId . '\'
 			' );
-			die( 'ok' );
-			
 			break;
 		
 		case 'verifyinvite':
@@ -622,6 +622,8 @@ function doReplacements( $str, $replacements )
 	return $str;
 }
 
+die( 'fail<!--separate-->{"response":-1,"message":"Fail! Command not recognized..."}' );
+
 function buildURL( $hash, $conf, $confshort )
 {
 	
@@ -651,7 +653,6 @@ function buildURL( $hash, $conf, $confshort )
 
 function decodeURL( $source = false )
 {
-	
 	if( $source )
 	{
 		if( !( ( strstr( $source, 'http://' ) || strstr( $source, 'https://' ) ) && strstr( $source, '?' ) ) )
@@ -688,7 +689,6 @@ function decodeURL( $source = false )
 							}
 						}
 					}
-				
 					return json_encode( $data );
 				}
 			}
@@ -698,7 +698,6 @@ function decodeURL( $source = false )
 			return urldecode( $source );
 		}
 	}
-	
 	return false;
 }
 

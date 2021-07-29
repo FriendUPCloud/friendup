@@ -4477,6 +4477,7 @@ var View = function( args )
 		if( this.limitless && this.limitless === true )
 		{
 			let sb = ifr.getAttribute( 'sandbox' );
+			if( !sb ) sb = DEFAULT_SANDBOX_ATTRIBUTES;
 			sb += ' allow-top-navigation';
 			ifr.setAttribute( 'sandbox', sb );
 		}

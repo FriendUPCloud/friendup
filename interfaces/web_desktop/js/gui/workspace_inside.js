@@ -349,7 +349,7 @@ var WorkspaceInside = {
 	// Invite a friend to the Workspace
 	inviteFriend: function()
 	{
-		var version = 2;
+		let version = 2;
 		
 		let self = this;
 		if( this.inviteView ) return this.inviteView.activate();
@@ -385,7 +385,7 @@ var WorkspaceInside = {
 	// Get the invite callback wanted
 	getInviteCallback: function( type )
 	{
-		var version = 2;
+		let version = 2;
 		
 		let self = this;
 		if( type == 'workgroups' )
@@ -505,6 +505,7 @@ var WorkspaceInside = {
 	{
 		let self = this;
 		
+
 		let workgroups = [];
 		
 		if( self.inviteView && self.inviteView.content.querySelector( '.MulSelect' ) )
@@ -523,6 +524,7 @@ var WorkspaceInside = {
 			}
 		}
 		
+
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
@@ -536,6 +538,7 @@ var WorkspaceInside = {
 			}
 		}
 		// TODO: Make support for workgroups ...
+
 		m.execute( 'generateinvite', { workgroups: ( workgroups ? workgroups.join( ',' ) : '' ) } );
 	},
 	// Remove an invite
@@ -564,6 +567,7 @@ var WorkspaceInside = {
 		}
 		else
 		{
+
 			Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_confirm_delete' ), function( data )
 			{
 				if( data == true )

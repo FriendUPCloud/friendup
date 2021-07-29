@@ -180,8 +180,10 @@ i18n_no_workgroups                      : You have no workgroups
 i18n_confirm_delete_invite              : When deleting an invite, it will not be possible to use that invite link to sign up for a Friend account.
 i18n_failed_remove_invite               : Failed to remove invite
 i18n_failed_remove_invite_desc          : Please contact your administrator if this problem persists.
+
 i18n_are_you_sure                       : Are you sure?
 i18n_confirm_delete                     : This will remove the invite link from the database.
+
 
 #Default directorys for applications
 i18n_directory_Games                    : Games

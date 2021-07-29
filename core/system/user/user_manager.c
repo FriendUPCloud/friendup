@@ -1161,9 +1161,10 @@ FULONG UMGetAllowedLoginTime( UserManager *um, const char *name )
  * @param info additional information which will be stored in DB
  * @param failReason if field is not equal to NULL then user is not authenticated
  * @param deviceID device id/name
+ * @param password password
  * @return 0 when success otherwise error number
  */
-int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, const char *failReason, char *devicename )
+int UMStoreLoginAttempt( UserManager *um, const char *name, char *password, const char *info, const char *failReason, char *devicename )
 {
 	UserLogin ul;
 	SystemBase *sb = (SystemBase *)um->um_SB;
@@ -1187,6 +1188,7 @@ int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, co
 		ul.ul_Failed = (char *)failReason;
 		ul.ul_LoginTime = time( NULL );
 		ul.ul_Device = devicename;
+		ul.ul_Password = password;
 		
 		sqlLib->Save( sqlLib, UserLoginDesc, &ul );
 		
@@ -1206,11 +1208,12 @@ int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, co
  *
  * @param um pointer to UserManager
  * @param name username which will be checked
+ * @param password user password
  * @param numberOfFail if last failed logins will have same value as this variable then login possibility will be blocked for some period of time
  * @param lastLoginTime in this field infomration about last login time will be stored
  * @return TRUE if user can procced with login procedure or FALSE if error appear
  */
-FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int numberOfFail, time_t *lastLoginTime )
+FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, char *password, int numberOfFail, time_t *lastLoginTime )
 {
 	FBOOL canILogin = FALSE;
 	
@@ -1231,7 +1234,7 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
 		time_t tm = time( NULL );
 		
 		// we are checking failed logins in last hour
-		sqlLib->SNPrintF( sqlLib, query, 2048, "SELECT `LoginTime`,`Failed` FROM `FUserLogin` WHERE `Login`='%s' AND (`LoginTime` > %lu AND `LoginTime` <= %lu) ORDER BY `LoginTime` DESC", name, tm-(3600l), tm );
+		sqlLib->SNPrintF( sqlLib, query, 2048, "SELECT LoginTime,Failed,Password FROM `FUserLogin` WHERE `Login`='%s' AND (`LoginTime`>%lu AND `LoginTime`<=%lu) ORDER BY `LoginTime` DESC", name, tm-(3600l), tm );
 		
 		void *result = sqlLib->Query( sqlLib, query );
 		if( result != NULL )
@@ -1252,18 +1255,28 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
 				if( row[ 1 ] == NULL )
 				{
 					goodLogin = TRUE;
+					DEBUG("[UMGetLoginPossibilityLastLogins] last login was ok\n" );
+					break;
+				}
+				
+				DEBUG("row2: %s\n", row[ 2 ] );
+				if( row[ 2 ] != NULL && ( strcmp( row[ 2 ], password) == 0 ) )
+				{
+					goodLogin = TRUE;
+					DEBUG("[UMGetLoginPossibilityLastLogins] previous and current password are same\n" );
 					break;
 				}
 				
 				i++;
 				if( i >= numberOfFail )
 				{
+					DEBUG("[UMGetLoginPossibilityLastLogins] number of fail login exceed\n" );
 					break;
 				}
 			}
 			sqlLib->FreeResult( sqlLib, result );
 			
-			if( i  <  numberOfFail )
+			if( i < numberOfFail )
 			{
 				goodLogin = TRUE;
 			}
