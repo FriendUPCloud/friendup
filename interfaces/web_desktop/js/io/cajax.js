@@ -155,7 +155,7 @@ function executeCAjaxQueue()
 // Can have a cancellable series
 cAjax = function( app )
 {
-	let self = this;
+	const self = this;
 	self.application = app;
 	
 	_cajax_process_count++;
@@ -309,9 +309,9 @@ cAjax = function( app )
 				{
 					try
 					{
-						let r = JSON.parse( jax.returnData );
-						
-						let res = r ? r.response.toLowerCase() : '';
+						const r = JSON.parse( jax.returnData );
+						const res = r ? r.response.toLowerCase() : '';
+						const code = r.code;
 						console.log( 'fail res', r );
 						if( res == 'user not found' || res.toLowerCase() == 'user session not found' )
 						{
@@ -324,6 +324,39 @@ cAjax = function( app )
 								AddToCajaxQueue( jax );
 								return Friend.User.CheckServerConnection();
 							}
+						}
+						
+						// response : "Authid is expired"
+						if ( '84' == code ) {
+							console.log( 'code 84', {
+								vars : self.vars,
+								app  : self.application,
+								url  : self.url,
+								r    : r,
+							});
+							
+							delete self.vars[ 'authid' ];
+							let appId = null;
+							if ( self.application )
+								appId = self.application.applicationId;
+							else
+								window.Application.applicationId;
+							
+							console.log( 'appId', appId );
+							Friend.renewAuthId( appId )
+								.then( authIdBack )
+								.catch( authIdErr );
+								
+							function authIdBack( authId ) {
+								console.log( 'authIdBack', authId );
+								self.send();
+							}
+							
+							function authIdErr( err ) {
+								console.trace( 'authIdErr', err );
+							}
+							
+							return;
 						}
 					}
 					catch( e )
@@ -462,6 +495,8 @@ cAjax.prototype.setAuthToken = function()
 	delete self.vars[ 'sessionid' ];
 	delete self.vars[ 'authid' ];
 	console.log( 'cAjax.setAuthToken', {
+		url       : self.url,
+		vars      : self.vars,
 		winWork   : !!window.Workspace,
 		sessionId : !!window.Workspace ? Workspace.sessionId : null,
 		selfApp   : !!self.application,
@@ -531,7 +566,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	
 	// Try websockets!!
 	if( 
-		//false &&
+		false &&
 		!this.forceHTTP &&
 		window.Workspace &&
 		Workspace.conn && 
@@ -687,6 +722,7 @@ cAjax.prototype.send = function( data, callback )
 	const hasToken = self.setAuthToken();
 	if ( !hasToken )
 	{
+		console.log( 'CAjax.send - no auth token, add to queue' );
 		AddToCajaxQueue( self );
 		return;
 	}

@@ -682,6 +682,7 @@ Friend.ClipboardPasteIn = function( ele, text )
 Friend.renewAuthId = async function() {
 	const authId = await get();
 	console.log( 'api renewAuthId result', authId );
+	Application.authId = authId;
 	return authId;
 	
 	function get( msg ) {

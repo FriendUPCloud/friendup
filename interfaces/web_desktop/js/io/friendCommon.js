@@ -19,6 +19,11 @@ window.Friend = window.Friend || {};
 	requests for the same app in a short timeframe result in only a single
 	call to FC and all have the same authId returned. Timeframe is set to
 	2 seconds.
+	
+	returns a promise that resolves to either of
+		new authId 
+		false, if one could not be obtained
+		
 */
 Friend.authIdRequests = {};
 Friend.renewAuthId = async function( appId )
