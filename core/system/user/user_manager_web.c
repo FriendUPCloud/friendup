@@ -2155,7 +2155,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		
 		DEBUG("[UMWebRequest] GET activews list\n");
 		
-		if( loggedSession->us_User->u_IsAdmin == TRUE )
+		if( loggedSession->us_User != NULL && loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			FULONG userID = 0;
 			FBOOL usersOnly = FALSE;
