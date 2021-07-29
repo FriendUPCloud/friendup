@@ -106,7 +106,8 @@ static const char *DefaultDictionaryMessages[] =
 "IP parameter is missing or it comes in wrong format",
 "AuthID is missing",
 "Please set proper status value",
-"User do not exist"
+"User do not exist",
+"Authid is expired"
 };
 
 /**

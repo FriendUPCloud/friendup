@@ -585,7 +585,20 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						
 						if( ( acttime - locas->as_CreateTime ) > l->sl_AppSessionManager->asm_SessionTimeout )
 						{
-							
+							struct TagItem tags[] = {
+								{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
+								{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+								{ TAG_DONE, TAG_DONE }
+							};
+
+							response = HttpNewSimple( HTTP_200_OK, tags );
+			
+							char buffer[ 256 ];
+							snprintf( buffer, sizeof( buffer ), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_AUTHID_EXPIRED] , DICT_AUTHID_EXPIRED );
+							HttpAddTextContent( response, buffer );
+							FERROR( "AuthID expired\n" );
+							FFree( sessionid );
+							return response;
 						}
 						else
 						{
