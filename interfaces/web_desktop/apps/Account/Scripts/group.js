@@ -245,9 +245,18 @@ function saveGroup()
 			Alert( i18n( 'i18n_could_not_save_group' ), i18n( 'i18n_an_error_occured_group_save' ) );
 			return;
 		}
+		
+		function joinGroup( gid )
+		{
+			m = new Module( 'system' );
+			m.onExecuted = function( e, d ){}
+			m.execute( 'joingroup', { groupId: gid } );
+		}
+		
 		Application.sendMessage( { command: 'refreshgroups' } );
 		if( ge( 'groupId' ).value > 0 )
 		{
+			joinGroup( ge( 'groupId' ).value );
 			CloseView();
 		}
 		else
@@ -257,7 +266,10 @@ function saveGroup()
 			
 				let t = JSON.parse( d );
 				ge( 'groupId' ).value = t.id;
-				reveilUIComponents();
+				joinGeoup( t.id, function()
+				{
+					reveilUIComponents();
+				} );
 			}
 			catch( e )
 			{
