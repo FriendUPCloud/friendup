@@ -124,13 +124,15 @@ function groupUsers( callback )
 			if( !found )
 				groupUsersList.push( list[a].ID );
 			
+			let me = list[a].ID == Application.userId ? ' (you)' : '';
+			
 			str += '<div class="HRow sw' + sw + '">\
 				<div class="HContent60 FloatLeft Ellipsis PaddingSmall">\
-					' + list[a].Fullname + '\
+					' + list[a].Fullname + me + '\
 				</div>\
-				<div class="HContent40 FloatLeft PaddingSmall TextRight">\
+				' + ( me == '' ? ( '<div class="HContent40 FloatLeft PaddingSmall TextRight">\
 					<button type="button" class="Button IconSmall NoText fa-remove" onclick="removeUser(' + list[a].ID + ')" title="' + i18n( 'i18n_remove_from_group' ) + '"></button>\
-				</div>\
+				</div>' ) : '' ) + '\
 			</div>';
 			sw = sw == 1 ? 2 : 1;
 		}
@@ -237,6 +239,13 @@ function deleteGroup()
 // Save the group
 function saveGroup()
 {
+	function joinGroup( gid, cb )
+	{
+		m = new Module( 'system' );
+		m.onExecuted = function( e, d ){ if( cb ) cb(); }
+		m.execute( 'joingroup', { groupId: gid } );
+	}
+	
 	let t = new Library( 'system.library' );
 	t.onExecuted = function( e, d )
 	{
@@ -245,9 +254,11 @@ function saveGroup()
 			Alert( i18n( 'i18n_could_not_save_group' ), i18n( 'i18n_an_error_occured_group_save' ) );
 			return;
 		}
+		
 		Application.sendMessage( { command: 'refreshgroups' } );
 		if( ge( 'groupId' ).value > 0 )
 		{
+			joinGroup( ge( 'groupId' ).value );
 			CloseView();
 		}
 		else
@@ -257,7 +268,10 @@ function saveGroup()
 			
 				let t = JSON.parse( d );
 				ge( 'groupId' ).value = t.id;
-				reveilUIComponents();
+				joinGroup( t.id, function()
+				{
+					reveilUIComponents();
+				} );
 			}
 			catch( e )
 			{
@@ -278,10 +292,13 @@ function saveGroup()
 	// Update
 	else
 	{
-		t.execute( 'group/update', {
-			groupname: ge( 'groupName' ).value,
-			description: ge( 'groupDescription' ).value,
-			id: ge( 'groupId' ).value
+		joinGroup( ge( 'groupId' ).value, function()
+		{
+			t.execute( 'group/update', {
+				groupname: ge( 'groupName' ).value,
+				description: ge( 'groupDescription' ).value,
+				id: ge( 'groupId' ).value
+			} );
 		} );
 	}	
 }
