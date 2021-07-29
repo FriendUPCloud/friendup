@@ -554,7 +554,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		{	// user cannot create any groups without permissions
 			canCreateWorkgroup = TRUE;
 		}
-		else
+		else if( groupname != NULL )
 		{
 			// We need to check how many groups were created by the user before
 			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
