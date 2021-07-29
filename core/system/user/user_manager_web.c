@@ -2193,7 +2193,10 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		}
 		else	//is admin
 		{
-			Log( FLOG_ERROR,"User '%s' dont have admin rights\n", loggedSession->us_User->u_Name );
+			if( loggedSession->us_User != NULL )
+			{
+				Log( FLOG_ERROR,"User '%s' dont have admin rights\n", loggedSession->us_User->u_Name );
+			}
 			char buffer[ 256 ];
 			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
 			HttpAddTextContent( response, buffer );
