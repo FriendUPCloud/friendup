@@ -779,7 +779,7 @@ html > body > div button:last-child, html > body > div .Button:last-child
 	margin-right: 0;
 }
 
-html > body > div button:hover, html > body > div .Button:hover
+html > body > div button:not(.Disabled):hover, html > body > div .Button:not(.Disabled):hover
 {
 	background-color: #343c4b;
 }
