@@ -246,10 +246,10 @@ function saveGroup()
 			return;
 		}
 		
-		function joinGroup( gid )
+		function joinGroup( gid, cb )
 		{
 			m = new Module( 'system' );
-			m.onExecuted = function( e, d ){}
+			m.onExecuted = function( e, d ){ if( cb ) cb(); }
 			m.execute( 'joingroup', { groupId: gid } );
 		}
 		
@@ -266,7 +266,7 @@ function saveGroup()
 			
 				let t = JSON.parse( d );
 				ge( 'groupId' ).value = t.id;
-				joinGeoup( t.id, function()
+				joinGroup( t.id, function()
 				{
 					reveilUIComponents();
 				} );
