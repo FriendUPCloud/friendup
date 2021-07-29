@@ -474,8 +474,8 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 			}
 			else
 			{
-				//userID = loggedSession->us_UserID;
-				//allowed = TRUE;
+				userID = loggedSession->us_UserID;
+				allowed = TRUE;
 			}
 		}
 		
@@ -773,8 +773,8 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 			}
 			else
 			{
-				//userID = loggedSession->us_UserID;
-				//allowed = TRUE;
+				userID = loggedSession->us_UserID;
+				allowed = TRUE;
 			}
 		}
 
