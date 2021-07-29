@@ -44,6 +44,7 @@ $query =  '
 		theyg.ID            =   theirgroup.UserGroupID AND
 		myg.ID              =   mygroup.UserGroupID' . $ecpt . $keyz . '
 	GROUP BY u.ID
+	ORDER BY u.Fullname ASC
 ';
 
 // Get members of a group I am connected to
@@ -64,6 +65,7 @@ if( isset( $args->args->groupId ) )
 			mygroup.UserGroupID = theygroup.UserGroupID AND
 			( mygroup.UserID = \'' . $User->ID . '\' OR ug.UserID = \'' . $User->ID . '\' ) ' . $ecpt . $keyz . '
 		GROUP BY u.ID
+		ORDER BY u.Fullname ASC
 	';
 }
 
