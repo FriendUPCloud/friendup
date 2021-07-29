@@ -349,7 +349,7 @@ var WorkspaceInside = {
 	// Invite a friend to the Workspace
 	inviteFriend: function()
 	{
-		var version = 1;
+		var version = 2;
 		
 		let self = this;
 		if( this.inviteView ) return this.inviteView.activate();
@@ -385,7 +385,7 @@ var WorkspaceInside = {
 	// Get the invite callback wanted
 	getInviteCallback: function( type )
 	{
-		var version = 1;
+		var version = 2;
 		
 		let self = this;
 		if( type == 'workgroups' )
@@ -505,6 +505,24 @@ var WorkspaceInside = {
 	{
 		let self = this;
 		
+		let workgroups = [];
+		
+		if( self.inviteView && self.inviteView.content.querySelector( '.MulSelect' ) )
+		{
+			var opts = self.inviteView.content.querySelector( '.MulSelect' ).getElementsByTagName( 'option' );
+			
+			if( opts.length > 0 )
+			{
+				for( let v in opts )
+				{
+					if( opts[v] && opts[v].selected && opts[v].value )
+					{
+						workgroups.push( opts[v].value );
+					}
+				}
+			}
+		}
+		
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
@@ -518,7 +536,7 @@ var WorkspaceInside = {
 			}
 		}
 		// TODO: Make support for workgroups ...
-		m.execute( 'generateinvite'/*, { workgroups: '' }*/ );
+		m.execute( 'generateinvite', { workgroups: ( workgroups ? workgroups.join( ',' ) : '' ) } );
 	},
 	// Remove an invite
 	removeInvite: function( id, force, callback )
@@ -546,7 +564,7 @@ var WorkspaceInside = {
 		}
 		else
 		{
-			Confirm( 'i18n_are_you_sure', 'i18n_confirm_delete', function( data )
+			Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_confirm_delete' ), function( data )
 			{
 				if( data == true )
 				{
@@ -591,8 +609,11 @@ var WorkspaceInside = {
 					{
 						for( let b = 0; b < str.length; b++ )
 						{
-							if( str[b].Name.toLowerCase() == Trim( keywords[a] ).toLowerCase() )
+							//if( str[b].Name.toLowerCase() == Trim( keywords[a] ).toLowerCase() )
+							if( str[b].Name.toLowerCase().indexOf( Trim( keywords[a] ).toLowerCase() ) >= 0 )
+							{
 								end.push( str[b] );
+							}
 						}
 					}
 					return callback( end.length ? end : false );
