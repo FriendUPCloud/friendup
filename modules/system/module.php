@@ -1675,6 +1675,14 @@ if( isset( $args->command ) )
 		case 'listworkgroups':
 			require( 'modules/system/include/listworkgroups.php' );
 			break;
+		// Join a group (own group)
+		case 'joingroup':
+			require( 'modules/system/include/joingroup.php' );
+			break;
+		// Flush relational group info
+		case 'flushworkgroup':
+			require( 'modules/system/include/flushworkgroup.php' );
+			break;
 		// List workgroups
 		case 'workgroups':
 			require( 'modules/system/include/workgroups.php' );

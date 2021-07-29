@@ -279,10 +279,15 @@ Sections.accounts_workgroups = function( cmd, extra )
 			
 			if( callback )
 			{
-				if( workgroups )
+				// Temporary until FriendCore supports all this ...
+				if( data )
 				{
-					return callback( workgroups );
+					return callback( data );
 				}
+				//if( workgroups )
+				//{
+				//	return callback( workgroups );
+				//}
 				
 				return callback( [] );
 			}
@@ -2580,7 +2585,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 												str += '		<span name="'+rows.Name+'" class="IconMedium fa-users"></span>';
 												str += '	</div>';
-												str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent94 InputHeight FloatLeft Ellipsis">'+rows.Name+'</div>';
+												str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent90 InputHeight FloatLeft Ellipsis">'+rows.Name+(rows.Owner?' (by '+rows.Owner+')':'')+'</div>';
 												str += '</div>';
 												
 												if( rows.groups.length > 0 )
@@ -2600,7 +2605,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 															str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 															str += '		<span name="'+rows.Name+'" class="IconMedium fa-users"></span>';
 															str += '	</div>';
-															str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent88 InputHeight FloatLeft Ellipsis">'+rows.Name+'</div>';
+															str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent80 InputHeight FloatLeft Ellipsis">'+rows.Name+(rows.Owner?' (by '+rows.Owner+')':'')+'</div>';
 															str += '</div>';
 														
 															if( rows.groups.length > 0 )
@@ -2620,7 +2625,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																		str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 																		str += '		<span name="'+rows.Name+'" class="IconMedium fa-users"></span>';
 																		str += '	</div>';
-																		str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent82 InputHeight FloatLeft Ellipsis">'+rows.Name+'</div>';
+																		str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent70 InputHeight FloatLeft Ellipsis">'+rows.Name+(rows.Owner?' (by '+rows.Owner+')':'')+'</div>';
 																		str += '</div>';
 																	}
 															
@@ -5239,7 +5244,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 				if( groups )
 				{
-				
+					
 					for( var a in groups )
 					{
 						var found = false;
@@ -5256,7 +5261,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 						str += '		<span name="' + groups[a].Name + '" class="IconMedium fa-users"></span>';
 						str += '	</div>';
-						str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent94 InputHeight FloatLeft Ellipsis">' + groups[a].Name + (groups[a].Owner?' (by '+groups[a].Owner+')':'') + '</div>';
+						str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent90 InputHeight FloatLeft Ellipsis">' + groups[a].Name + (groups[a].Owner?' (by '+groups[a].Owner+')':'') + '</div>';
 						
 						//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 						//str += '		<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
@@ -5284,7 +5289,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 								str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconMedium fa-users"></span>';
 								str += '	</div>';
-								str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent88 InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].Name + (groups[a].groups[aa].Owner?' (by '+groups[a].groups[aa].Owner+')':'') + '</div>';
+								str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent80 InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].Name + (groups[a].groups[aa].Owner?' (by '+groups[a].groups[aa].Owner+')':'') + '</div>';
 								
 								//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 								//str += '		<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
@@ -5312,13 +5317,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 										str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 										str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconMedium fa-users"></span>';
 										str += '	</div>';
-										str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent82 InputHeight FloatLeft Ellipsis" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + groups[a].groups[aa].groups[aaa].Name + (groups[a].groups[aa].groups[aaa].Owner?' (by '+groups[a].groups[aa].groups[aaa].Owner+')':'') + '</div>';
+										str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent70 InputHeight FloatLeft Ellipsis" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + groups[a].groups[aa].groups[aaa].Name + (groups[a].groups[aa].groups[aaa].Owner?' (by '+groups[a].groups[aa].groups[aaa].Owner+')':'') + '</div>';
 										
 										//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 										//str += '		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
 										//str += '	</div>';
 										str += '</div>';
-									
+										
 									}
 								
 									str += '</div>';

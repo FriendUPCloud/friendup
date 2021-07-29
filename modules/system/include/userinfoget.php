@@ -176,7 +176,9 @@ if( 1==1/* || $rolePermission || $level == 'Admin' || $uid == $User->ID*/ )
 						g.ID, 
 						g.ParentID, 
 						g.Name, 
-						ug.UserID 
+						ug.UserID '
+						 . ( isset( $args->args->owner ) ? ',f.FullName AS Owner ' : '' ) 
+						 . ( isset( $args->args->level ) ? ',l2.Name AS Level' : '' ) . ' 
 					FROM 
 						`FUserGroup` g 
 						RIGHT JOIN `FUserToGroup` ug ON 
@@ -184,6 +186,23 @@ if( 1==1/* || $rolePermission || $level == 'Admin' || $uid == $User->ID*/ )
 								ug.UserID = \'' . $uid . '\'
 							AND g.ID = ug.UserGroupID
 						)
+						' . ( isset( $args->args->owner ) ? '
+						LEFT JOIN FUser f ON 
+						( 
+							f.ID = g.UserID 
+						) 
+						' : '' ) . ( isset( $args->args->level ) ? '
+						JOIN FUserGroup l2 ON 
+						( 
+								l2.Type = "Level" 
+							AND l2.Name IN ( "Admin", "User" ) 
+						)
+						JOIN FUserToGroup l1 ON 
+						( 
+								l1.UserID = g.UserID 
+							AND l1.UserGroupID = l2.ID 
+						)
+						' : '' ) . '
 					WHERE g.Type = "Workgroup"' . ( $workgroups ? 'AND ( g.ParentID IN (' . $workgroups . ') OR g.ID IN (' . $workgroups . ') ) ' : '' ) . ' 
 					ORDER BY g.Name ASC 
 				' ) )
@@ -192,6 +211,11 @@ if( 1==1/* || $rolePermission || $level == 'Admin' || $uid == $User->ID*/ )
 
 					foreach( $wgs as $wg )
 					{
+						if( $User->ID != $wg->UserID && ( $wg->Level && $wg->Level == 'User' ) || ( isset( $args->args->owner ) && !$wg->Owner ) )
+						{
+							$row->Hide = true;
+						}
+						
 						if( $wg->UserID > 0 )
 						{
 							$gds = ( $gds ? ( $gds . ',' . $wg->ID ) : $wg->ID );

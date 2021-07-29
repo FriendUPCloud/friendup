@@ -32,7 +32,7 @@ function listConnectedUsers( limit, pos, keyw )
 					' + list[a].Fullname + '\
 				</div>\
 				<div class="HContent40 FloatLeft PaddingSmall TextRight">\
-					<button type="button" class="Button IconSmall NoText fa-arrow-up" onclick="inviteUser(' + list[a].ID + ')" title="' + i18n( 'i18n_invite_user_to_group' ) + '"></button>\
+					<button type="button" class="Button IconSmall NoText fa-user-plus" onclick="inviteUser(' + list[a].ID + ')" title="' + i18n( 'i18n_invite_user_to_group' ) + '"></button>\
 				</div>\
 			</div>';
 			sw = sw == 1 ? 2 : 1;
@@ -124,13 +124,15 @@ function groupUsers( callback )
 			if( !found )
 				groupUsersList.push( list[a].ID );
 			
+			let me = list[a].ID == Application.userId ? ' (you)' : '';
+			
 			str += '<div class="HRow sw' + sw + '">\
 				<div class="HContent60 FloatLeft Ellipsis PaddingSmall">\
-					' + list[a].Fullname + '\
+					' + list[a].Fullname + me + '\
 				</div>\
-				<div class="HContent40 FloatLeft PaddingSmall TextRight">\
+				' + ( me == '' ? ( '<div class="HContent40 FloatLeft PaddingSmall TextRight">\
 					<button type="button" class="Button IconSmall NoText fa-remove" onclick="removeUser(' + list[a].ID + ')" title="' + i18n( 'i18n_remove_from_group' ) + '"></button>\
-				</div>\
+				</div>' ) : '' ) + '\
 			</div>';
 			sw = sw == 1 ? 2 : 1;
 		}
@@ -151,10 +153,6 @@ function inviteUser( uid )
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			if( e != 'ok' )
-			{
-				return 
-			}
 			groupUsers( function(){ listConnectedUsers(); } );
 		}
 		m.execute( 'sendinvite', {
@@ -198,23 +196,56 @@ function removeUser( uid )
 
 function reveilUIComponents()
 {
+	ge( 'dGroup' ).classList.remove( 'Hidden' );
 	ge( 'Relations' ).classList.remove( 'Hidden' );
 }
 
 function deleteGroup()
 {
-	Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_deleting_desc' ), function( data )
+	let groupId = ge( 'groupId' ).value;
+	if( parseInt( groupId ) > 0 )
 	{
-		if( data.data == true )
+		Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_deleting_desc' ), function( data )
 		{
-			/// ...
-		}
-	} );
+			if( data.data == true )
+			{
+				let d = new Module( 'system' );
+				d.onExecuted = function( e, d )
+				{
+					if( e == 'ok' )
+					{
+						let t = new Library( 'system.library' );
+						t.onExecuted = function( e, d )
+						{
+							if( e == 'ok' )
+							{
+								Application.sendMessage( { command: 'refreshgroups' } );
+								CloseView();
+							}
+							else
+							{
+								Alert( i18n( 'i18n_gr_failed_to_delete' ), i18n( 'i18n_gr_failed_to_delete_desc' ) );
+							}
+						}
+						t.execute( 'group/delete', { id: groupId } );
+					}
+				}
+				d.execute( 'flushworkgroup', { groupId: groupId } );
+			}
+		} );
+	}
 }
 
 // Save the group
 function saveGroup()
 {
+	function joinGroup( gid, cb )
+	{
+		m = new Module( 'system' );
+		m.onExecuted = function( e, d ){ if( cb ) cb(); }
+		m.execute( 'joingroup', { groupId: gid } );
+	}
+	
 	let t = new Library( 'system.library' );
 	t.onExecuted = function( e, d )
 	{
@@ -223,14 +254,29 @@ function saveGroup()
 			Alert( i18n( 'i18n_could_not_save_group' ), i18n( 'i18n_an_error_occured_group_save' ) );
 			return;
 		}
+		
 		Application.sendMessage( { command: 'refreshgroups' } );
 		if( ge( 'groupId' ).value > 0 )
 		{
+			joinGroup( ge( 'groupId' ).value );
 			CloseView();
 		}
 		else
 		{
-			reveilUIComponents();
+			try
+			{
+			
+				let t = JSON.parse( d );
+				ge( 'groupId' ).value = t.id;
+				joinGroup( t.id, function()
+				{
+					reveilUIComponents();
+				} );
+			}
+			catch( e )
+			{
+				CloseView();
+			}
 		}
 	}
 	
@@ -246,10 +292,13 @@ function saveGroup()
 	// Update
 	else
 	{
-		t.execute( 'group/update', {
-			groupname: ge( 'groupName' ).value,
-			description: ge( 'groupDescription' ).value,
-			id: ge( 'groupId' ).value
+		joinGroup( ge( 'groupId' ).value, function()
+		{
+			t.execute( 'group/update', {
+				groupname: ge( 'groupName' ).value,
+				description: ge( 'groupDescription' ).value,
+				id: ge( 'groupId' ).value
+			} );
 		} );
 	}	
 }

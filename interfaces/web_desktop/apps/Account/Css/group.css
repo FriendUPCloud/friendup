@@ -1,6 +1,7 @@
 #groupDescription
 {
 	height: 150px;
+	resize: none;
 }
 
 #Relations
@@ -17,3 +18,7 @@
 	max-height: 0px;
 }
 
+button.Hidden
+{
+	display: none;
+}
