@@ -276,6 +276,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 
 			// Real click or entering target path
 			let doClick = ( ppath == self.flags.path ) || ( e && e.button >= 0 );
+			if( refreshMode == 'poll' ) doClick = false;
 
 			if( type == 'File' )
 			{
