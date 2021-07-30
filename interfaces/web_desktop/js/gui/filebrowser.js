@@ -149,7 +149,7 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 						if( e == 'ok' )
 						{
 							self.clear();
-							self.refresh( 'Mountlist:' );
+							self.refresh( 'Mountlist:', null, null, null, { mode: 'poll' } );
 						}
 					}
 					m.execute( 'addbookmark', { path: elements[a].fileInfo.Path, name: elements[a].fileInfo.Filename } );
@@ -203,15 +203,21 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	if ( path.indexOf( ':' ) < 0 )
 		path += ':';
 
+	let refreshMode = 'normal';
 	let context = null;
-	if( flags && flags.context )
+	if( flags )
 	{
-		if( self.lastContext != flags.context && !evt.button )
+		if( flags.context )
 		{
-			return;
+			if( self.lastContext != flags.context && !evt.button )
+			{
+				return;
+			}
+			context = flags.context;
+			self.lastContext = context;
 		}
-		context = flags.context;
-		self.lastContext = context;
+		if( flags.mode )
+			refreshMode = flags.mode;
 	}
 
 	if( !this.headerDisks )
@@ -401,7 +407,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					nam[0].classList.add( 'Active' );
 					
 					// Scroll into view
-					if( !isMobile && !self.scrolling )
+					if( !isMobile && !self.scrolling && refreshMode != 'poll' )
 					{
 						let d = self.dom;
 						let h = d.offsetHeight >> 1;
@@ -687,7 +693,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 										if( e == 'ok' )
 										{
 											self.clear();
-											self.refresh();
+											self.refresh( null, null, null, null, { mode: 'poll' } );
 										}
 									}
 									m.execute( 'removebookmark', { name: ls.Path } );
