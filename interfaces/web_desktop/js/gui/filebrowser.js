@@ -15,6 +15,12 @@
  *
  * @author HT (Hogne Titlestad)
  */
+ 
+/**
+ * TODO: There are some race conditions left between 'bookmark' type and 
+ *       'volume' type paths jumping around. Make sure that the context
+ *       isn't broken (i.e. suddenly a bookmark item triggers a volume item)
+ */
 
 Friend = window.Friend || {};
 
