@@ -146,6 +146,16 @@ html body[mobile] .View .FileDialog .FileBrowser .FileBrowserItemImage
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
+.FileBrowser .DiskItem > .Name span.fa-remove
+{
+	cursor: pointer;
+	transition: opacity 0.25s;
+}
+
+.FileBrowser .DiskItem > .Name span.fa-remove:hover
+{
+	opacity: 0.8;
+}
 
 
 .View > .ImageViewerToolbar
