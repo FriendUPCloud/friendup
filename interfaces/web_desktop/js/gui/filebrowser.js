@@ -200,6 +200,10 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	let context = null;
 	if( flags && flags.context )
 	{
+		if( self.lastContext != flags.context && !evt.button )
+		{
+			return;
+		}
 		context = flags.context;
 		self.lastContext = context;
 	}
@@ -221,7 +225,26 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	
 	function createOnclickAction( ele, ppath, type, depth )
 	{
+		// Not more than once
+		if( ele.onclick ) return;
+		
 		ele.clickType = context ? context : type;
+		
+		// Parent decides
+		try
+		{
+			 if( ele.parentNode.parentNode.clickType )
+			 {
+			 	ele.clickType = ele.parentNode.parentNode.clickType;
+			 }
+		}
+		catch( e ){};
+		
+		ele.onmouseover = function()
+		{
+			self.lastContext = this.clickType;
+		}
+		
 		ele.onclick = function( e )
 		{
 			// Real click removes temp flags
@@ -232,8 +255,6 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			if( !e && this.clickType != self.lastContext )
 				return;
 			
-			console.log( 'Ok we got: ' + this.clickType + ' -> ' + self.lastContext );
-				
 			if( !ppath ) 
 			{
 				return cancelBubble( e );
@@ -325,7 +346,11 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						// Only refresh at final destination
 						if( doClick )
 						{
-							self.refresh( ppath, subitems[0], callback, depth, { context: type == 'volume' || type == 'bookmark' ? type : null } );
+							// Register that this is now the path
+							// such that we don't double refresh
+							self.flags.path = ppath;
+							
+							self.refresh( ppath, subitems[0], callback, depth, { context: type == 'volume' || type == 'bookmark' ? type : null }, e );
 							if( self.callbacks && self.callbacks.folderOpen )
 							{
 								self.callbacks.folderOpen( ppath, e, self.tempFlags );
@@ -632,6 +657,8 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						
 						d.appendChild( nm );
 						
+						let ctype = 'volume';
+						
 						if( msg.list[a].Type && msg.list[a].Type == 'bookmark' )
 						{
 							// Set nice folder icon
@@ -662,13 +689,15 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 								}
 								nm.appendChild( ex );
 							} )( msg.list[a] );
+							
+							ctype = 'bookmark';
 						}
 						
 						let s = document.createElement( 'div' );
 						s.className = 'SubItems ' + msg.list[a].Type;
 						d.appendChild( s );
 						rootElement.appendChild( d );
-						createOnclickAction( d, d.path, msg.list[a].Type && msg.list[a].Type == 'bookmark' ? 'bookmark' : 'volume', depth + 1 );
+						createOnclickAction( d, d.path, ctype, depth + 1 );
 					}
 					// Existing items
 					else
