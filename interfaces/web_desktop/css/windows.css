@@ -541,6 +541,11 @@ body:not([mobile]) .View[created=created]
 	transform: scale(1,0.1) !important;
 }
 
+.ViewContainer.Closing, .ViewContainer.Closing *
+{
+	pointer-events: none;
+}
+
 .View > .Toolbar
 {
 	position: absolute;
