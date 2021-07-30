@@ -276,7 +276,6 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 
 			// Real click or entering target path
 			let doClick = ( ppath == self.flags.path ) || ( e && e.button >= 0 );
-			if( refreshMode == 'poll' ) doClick = false;
 
 			if( type == 'File' )
 			{
@@ -757,7 +756,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				if( clickElement && !( self.tempFlags && !self.tempFlags.passive ) )
 				{
 					self.lastClickElement = clickElement; // store it
-					if( !( evt.target && evt.srcElement ) )
+					if( !( evt.target && evt.srcElement ) && refreshMode != 'poll' )
 					{
 						setTimeout( function()
 						{
@@ -1009,7 +1008,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			{
 				self.lastClickElement = clickElement; // Store it
 				// Only when clicking
-				if( !( evt.target && evt.srcElement ) )
+				if( !( evt.target && evt.srcElement ) && refreshMode != 'poll' )
 				{
 					setTimeout( function()
 					{
