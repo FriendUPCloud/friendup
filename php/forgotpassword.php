@@ -207,9 +207,9 @@
 					require_once( 'php/include/helpers.php' );
 					
 					$d = array();
-					$d[ 'id' ] = $rs->ID;
+					$d[ 'username' ] = $rs->Name;
 					$d[ 'password' ] = '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $pass ) );
-					$result = FriendCoreQuery( '/system.library/user/update', $d, 'POST', false, false, true );
+					$result = FriendCoreQuery( '/system.library/user/updatepassword', $d, 'POST', false, false, true );
 					if( $result && substr( $result, 0, 3 ) == 'ok<' )
 					{
 						$mail->Subject = 'FriendUP password recovery - new password';
