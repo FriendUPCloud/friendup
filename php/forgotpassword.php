@@ -225,7 +225,8 @@
 						$result = FriendCoreQuery( '/system.library/user/update', $data );
 						if( $result && substr( $result, 0, 3 ) == 'ok<' )
 						{
-							
+							$tpl = file_get_contents( 'php/templates/password_change.html' );
+							die( $tpl );
 						}
 					}
 					else
