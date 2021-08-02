@@ -622,8 +622,6 @@ function doReplacements( $str, $replacements )
 	return $str;
 }
 
-die( 'fail<!--separate-->{"response":-1,"message":"Fail! Command not recognized..."}' );
-
 function buildURL( $hash, $conf, $confshort )
 {
 	
