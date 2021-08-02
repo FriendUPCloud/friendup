@@ -162,11 +162,19 @@
 					if( $i == 2 ) $pass.= mt_rand( 10, 99 );
 				}
 				
+				// Create link
 				$link = '';
-				
-				$server = ( $sconf->SSLEnable ? 'https://' : 'http://' ) . $host . ( $host == 'localhost' && $sconf->FCPort ? ( ':' . $sconf->FCPort ) : '' );
-				
-				$link .= $server . '/';
+				// Get some vars from config
+				$fcport = $cfg['FriendCore']['fcport'];
+				if( !$fcport ) $fcport = $cfg['Core']['port'];
+				$host = $cfg['FriendCore']['fchost'];
+				$proxy = $cfg['Core']['ProxyEnable'];
+				$ssl = $cfg['Core']['SSLEnable'] ? true : false;
+				// Actually create link
+				$link .= ( $ssl ? 'https://' : 'http://' );
+				$link .= $host;
+				$link .= ( $host == 'localhost' && !$proxy ) ? $fcport : '';
+				$link .= '/';
 				
 				//now get mail template and out everything together
 				try
