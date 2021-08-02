@@ -210,20 +210,34 @@
 				$mail->addAddress( $rs->Email );
 				if( $mail->send() )
 				{
-				
 					$q = 'DELETE FROM FSetting WHERE `UserID` = '. $rs->ID .' AND `Type` = \'system\' AND `Key` = \'passwordreset\';';
 					$r = $SqlDatabase->query( $q );
 				
 					//save it to DB as well
-					$updatequery = 'UPDATE  FUser SET Password = \'{S6}'. hash('sha256', 'HASHED' . hash('sha256', $pass) ) .'\' WHERE ID = ' . $rs->ID;
-					$unblockquery = 'INSERT INTO FUserLogin (`UserID`,`Login`,`Information`,`LoginTime`) VALUES ('. $rs->ID .',\''. $rs->Name .'\',\'Passwordreset\',\''. time() .'\')';
-					if( $rs = $SqlDatabase->query( $updatequery ) )
+					if( isset( $cfg['ServiceKeys']['AdminModuleServerToken'] ) )
 					{
-						$rs2 = $SqlDatabase->query( $unblockquery );
-						$result = 'Your password has been changed and sent to you.';
+						$d = array();
+						$d[ 'id' ] = $rs->ID;
+						$d[ 'password' ] = $pass;
+						$d[ 'servertoken' ] = $cfg['ServiceKeys']['AdminModuleServerToken'];
+						$result = FriendCoreQuery( '/system.library/user/update', $data );
+						
 					}
 					else
 					{
+						/*
+						TODO: This is the old deprecated code - will be removed later
+						$updatequery = 'UPDATE  FUser SET Password = \'{S6}'. hash('sha256', 'HASHED' . hash('sha256', $pass) ) .'\' WHERE ID = ' . $rs->ID;
+						$unblockquery = 'INSERT INTO FUserLogin (`UserID`,`Login`,`Information`,`LoginTime`) VALUES ('. $rs->ID .',\''. $rs->Name .'\',\'Passwordreset\',\''. time() .'\')';
+						if( $rs = $SqlDatabase->query( $updatequery ) )
+						{
+							$rs2 = $SqlDatabase->query( $unblockquery );
+							$result = 'Your password has been changed and sent to you.';
+						}
+						else
+						{
+							$result = 'Password could not be updated in database. Please delete e-mail and try again.';
+						}*/
 						$result = 'Password could not be updated in database. Please delete e-mail and try again.';
 					}
 				}
@@ -251,9 +265,10 @@
 				], $output);
 				die($output);
 			}
-			die('no no no.');
+			die('You already renewed your password.');
 			
 		}
-		die('go away');
+		die('You already renewed your password.');
 	}
 	die('fail') ;
+?>
