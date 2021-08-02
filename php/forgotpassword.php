@@ -216,12 +216,13 @@
 					//save it to DB as well
 					if( isset( $cfg['ServiceKeys']['AdminModuleServerToken'] ) )
 					{
+						require_once( 'php/include/helpers.php' );
+						
 						$d = array();
 						$d[ 'id' ] = $rs->ID;
 						$d[ 'password' ] = $pass;
 						$d[ 'servertoken' ] = $cfg['ServiceKeys']['AdminModuleServerToken'];
 						$result = FriendCoreQuery( '/system.library/user/update', $data );
-						
 					}
 					else
 					{
