@@ -442,7 +442,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				
 				// we must get application id from database
 				
-				sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT * FROM `FApplication` a inner join `FUserApplication` ua on a.ID=ua.ApplicationID WHERE a.Name='%s' AND ua.UserID=%ld LIMIT 1", appname, uid );
+				sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT ua.ID FROM `FApplication` a inner join `FUserApplication` ua on a.ID=ua.ApplicationID WHERE a.Name='%s' AND ua.UserID=%ld LIMIT 1", appname, uid );
 		
 				void *result = sqllib->Query( sqllib, query );
 				if( result != NULL )
@@ -455,6 +455,8 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 					}
 					sqllib->FreeResult( sqllib, result );
 				}
+				
+				DEBUG("GenerateID with appid: %ld for appname: %s\n", appID, appname );
 			
 				// now its time to generate hash
 			
@@ -463,6 +465,20 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 					AppSession *las = AppSessionNew( l, appID, uid, NULL );
 					if( las != NULL )
 					{
+						User *setUser = NULL;
+						
+						if( uid == loggedSession->us_UserID )
+						{
+							setUser = loggedSession->us_User;
+						}
+						else
+						{
+							setUser = UMGetUserByID( l->sl_UM, uid );
+						}
+						las->as_User = setUser;
+						
+						DEBUG("[AuthID gen] user set: %p appsession created authid %s hashed %s\n", setUser, las->as_AuthID, las->as_HashedAuthID );
+						
 						err = sqllib->Save( sqllib, AppSessionDesc, las );
 						if( err == 0 )
 						{
@@ -558,8 +574,18 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				int err = 0;
 				
 				// we must get application id from database
-				
+		
+#ifdef DB_SESSIONID_HASH
+				char *tmpSessionID = l->sl_UtilInterface.DatabaseEncodeString( oldid );
+				if( tmpSessionID != NULL )
+				{
+					sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT ass.ID, a.ID FROM `FApplication` a inner join `FUserApplication` ua on a.ID=ua.ApplicationID inner join `FAppSession` ass on ua.ID=ass.UserApplicationID WHERE a.Name='%s' AND ass.AuthID='%s' LIMIT 1", appname, tmpSessionID );
+			
+					FFree( tmpSessionID );
+				}
+#else
 				sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT ass.ID, a.ID FROM `FApplication` a inner join `FUserApplication` ua on a.ID=ua.ApplicationID inner join `FAppSession` ass on ua.ID=ass.UserApplicationID WHERE a.Name='%s' AND ass.AuthID='%s' LIMIT 1", appname, oldid );
+#endif
 		
 				void *result = sqllib->Query( sqllib, query );
 				if( result != NULL )
@@ -577,6 +603,8 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 					}
 					sqllib->FreeResult( sqllib, result );
 				}
+				
+				DEBUG("Regen authid. AsID %ld AppID %ld\n", asID, appID );
 			
 				// entry found so we have to update it
 			
@@ -585,6 +613,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 					AppSession *locas = AppSessionManagerGetSessionByAuthID( l->sl_AppSessionManager, oldid );
 					if( locas != NULL )
 					{
+						DEBUG("Regenerate by update\n");
 						AppSessionRegenerateAuthID( locas, l );
 						
 #ifdef DB_SESSIONID_HASH
@@ -605,7 +634,23 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				}
 				else	// entry not found, will be generated
 				{
+					DEBUG("Regenerate by creating new entry\n");
 					AppSession *las = AppSessionNew( l, appID, uid, NULL );
+					
+					User *setUser = NULL;
+						
+					if( uid == loggedSession->us_UserID )
+					{
+						setUser = loggedSession->us_User;
+					}
+					else
+					{
+						setUser = UMGetUserByID( l->sl_UM, uid );
+					}
+					las->as_User = setUser;
+					
+					DEBUG("[AuthID regen] pointer to user: %p\n", setUser );
+					
 					if( las != NULL )
 					{
 						err = sqllib->Save( sqllib, AppSessionDesc, las );

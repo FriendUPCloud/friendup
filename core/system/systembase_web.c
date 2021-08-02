@@ -578,9 +578,19 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				
 				if( assID == NULL )
 				{
+					DEBUG("Application session is null\n");
+					
 					AppSession *locas = AppSessionManagerGetSessionByAuthID( l->sl_AppSessionManager, authID );
+					
+					if( locas != NULL )
+					{
+						DEBUG("Application session pointer %p pointer to user: %p userid: %lu\n", locas, locas->as_User, locas->as_UserID );
+					}
+					
 					if( locas != NULL && locas->as_User != NULL )
 					{
+						DEBUG("Application session found: %p\n", locas->as_User );
+						
 						time_t acttime = time( NULL );
 						
 						if( ( acttime - locas->as_CreateTime ) > l->sl_AppSessionManager->asm_SessionTimeout )
@@ -602,6 +612,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						}
 						else
 						{
+							DEBUG("Valid app session found\n");
+							
 							if( FRIEND_MUTEX_LOCK( &(locas->as_User->u_Mutex ) ) == 0 )
 							{
 								locas->as_User->u_InUse++;
@@ -627,6 +639,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							}
 						}	// timeout
 					}
+					DEBUG("Application session end\n");
 				}
 				else
 				{
@@ -894,7 +907,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			}
 			else
 			{
-				DEBUG("[SysWebRequest] USMGetSessionBySessionID\n");
+				DEBUG("[SysWebRequest] USMGetSessionBySessionID: %s\n", sessionid );
 				UserSession *locus = USMGetSessionBySessionID( l->sl_USM, sessionid );
 				
 #ifdef DB_SESSIONID_HASH

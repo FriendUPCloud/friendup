@@ -26,7 +26,7 @@
 #include <strings.h>
 #include "appsession.h"
 
-#define USE_HASHMAP_FOR_SEARCH
+//#define USE_HASHMAP_FOR_SEARCH
 
 /**
  * Create new App Session Manager
@@ -212,6 +212,7 @@ AppSession *AppSessionManagerGetSessionByAuthID( AppSessionManager *asmgr, char 
 		AppSession *as = asmgr->asm_Sessions;
 		while( as != NULL )
 		{
+			DEBUG("[AppSessionManagerGetSessionByAuthID] find: %s : inlist: %s / %s\n", authid, as->as_AuthID, as->as_HashedAuthID );
 			if( strcmp( authid, as->as_AuthID ) == 0 )
 			{
 				FRIEND_MUTEX_UNLOCK( &(asmgr->asm_Mutex) );

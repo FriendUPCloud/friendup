@@ -122,6 +122,7 @@ void AppSessionRegenerateAuthID( AppSession *as, void *sb )
 		}
 		
 		as->as_AuthID = SessionIDGenerate();
+		as->as_CreateTime = time( NULL );
 		
 #ifdef DB_SESSIONID_HASH
 		as->as_HashedAuthID = lsb->sl_UtilInterface.DatabaseEncodeString( as->as_AuthID );
