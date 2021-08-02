@@ -201,55 +201,40 @@
 				$mail->CharSet = 'UTF-8';
 				$mail->isHTML(true); 
 				
-				
-				
-				$mail->Subject = 'FriendUP password recovery - new password';
-				$mail->Body    = $mailtemplate;
-				$mail->AltBody = strip_tags($mailtemplate);
-				
-				$mail->addAddress( $rs->Email );
-				if( $mail->send() )
+				//save it to DB as well
+				if( isset( $cfg['ServiceKeys']['AdminModuleServerToken'] ) )
 				{
-					$q = 'DELETE FROM FSetting WHERE `UserID` = '. $rs->ID .' AND `Type` = \'system\' AND `Key` = \'passwordreset\';';
-					$r = $SqlDatabase->query( $q );
-				
-					//save it to DB as well
-					if( isset( $cfg['ServiceKeys']['AdminModuleServerToken'] ) )
+					require_once( 'php/include/helpers.php' );
+					
+					$d = array();
+					$d[ 'id' ] = $rs->ID;
+					$d[ 'password' ] = '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $pass ) );
+					$d[ 'servertoken' ] = $cfg['ServiceKeys']['AdminModuleServerToken'];
+					$result = FriendCoreQuery( '/system.library/user/update', $data, 'POST', false, false, true );
+					if( $result && substr( $result, 0, 3 ) == 'ok<' )
 					{
-						require_once( 'php/include/helpers.php' );
-						
-						$d = array();
-						$d[ 'username' ] = $rs->Name;
-						$d[ 'password' ] = '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $pass ) );
-						$d[ 'servertoken' ] = $cfg['ServiceKeys']['AdminModuleServerToken'];
-						$result = FriendCoreQuery( '/system.library/user/updatepassword', $data, false, false, false, true );
-						if( $result && substr( $result, 0, 3 ) == 'ok<' )
+						$mail->Subject = 'FriendUP password recovery - new password';
+						$mail->Body    = $mailtemplate;
+						$mail->AltBody = strip_tags($mailtemplate);
+				
+						$mail->addAddress( $rs->Email );
+						if( $mail->send() )
 						{
+							$q = 'DELETE FROM FSetting WHERE `UserID` = '. $rs->ID .' AND `Type` = \'system\' AND `Key` = \'passwordreset\';';
+							$r = $SqlDatabase->query( $q );
+				
+							$unblockquery = 'INSERT INTO FUserLogin (`UserID`,`Login`,`Information`,`LoginTime`) VALUES ('. $rs->ID .',\''. $rs->Name .'\',\'Passwordreset\',\''. time() .'\')';
+							$rs2 = $SqlDatabase->query( $unblockquery );
+					
+							// Completion
 							$tpl = file_get_contents( 'php/templates/password_change.html' );
 							die( $tpl );
 						}
-					}
-					else
-					{
-						/*
-						TODO: This is the old deprecated code - will be removed later
-						$updatequery = 'UPDATE  FUser SET Password = \'{S6}'. hash('sha256', 'HASHED' . hash('sha256', $pass) ) .'\' WHERE ID = ' . $rs->ID;
-						$unblockquery = 'INSERT INTO FUserLogin (`UserID`,`Login`,`Information`,`LoginTime`) VALUES ('. $rs->ID .',\''. $rs->Name .'\',\'Passwordreset\',\''. time() .'\')';
-						if( $rs = $SqlDatabase->query( $updatequery ) )
-						{
-							$rs2 = $SqlDatabase->query( $unblockquery );
-							$result = 'Your password has been changed and sent to you.';
-						}
 						else
 						{
-							$result = 'Password could not be updated in database. Please delete e-mail and try again.';
-						}*/
-						$result = 'Password could not be updated in database. Please delete e-mail and try again.';
+							$result = 'Could not send e-mail with new password. Please try again.';
+						}
 					}
-				}
-				else
-				{
-					$result = 'Could not send e-mail with new password. Please try again.';
 				}				
 				
 				//now get mail template and out everything together
