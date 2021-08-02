@@ -209,8 +209,7 @@
 					$d = array();
 					$d[ 'id' ] = $rs->ID;
 					$d[ 'password' ] = '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $pass ) );
-					$d[ 'servertoken' ] = $cfg['ServiceKeys']['AdminModuleServerToken'];
-					$result = FriendCoreQuery( '/system.library/user/update', $data, 'POST', false, false, true );
+					$result = FriendCoreQuery( '/system.library/user/update', $d, 'POST', false, false, true );
 					if( $result && substr( $result, 0, 3 ) == 'ok<' )
 					{
 						$mail->Subject = 'FriendUP password recovery - new password';
