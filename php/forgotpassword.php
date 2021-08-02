@@ -164,7 +164,11 @@
 				
 				$link = 'http';
 				$link.= ( isset($cfg['Core'])&&isset($cfg['Core']['SSLEnable'])&& $cfg['Core']['SSLEnable'] == 1 ? 's' : '' ) . '://';
-				$link.= $cfg['FriendCore']['fchost'] . ':' . $cfg['FriendCore']['fcport'] . '/';
+				$link.= $cfg['FriendCore']['fchost'] . ( 
+					( $cfg['FriendCore']['fchost'] == 'localhost' && $cfg['FriendCore']['fcport' ] ) ? ( ':' . $cfg['FriendCore']['fcport'] ) : '' 
+				). '/';
+				
+				$server = ( $sconf->SSLEnable ? 'https://' : 'http://' ) . $host . ( $host == 'localhost' && $sconf->FCPort ? ( ':' . $sconf->FCPort ) : '' );
 				
 				//now get mail template and out everything together
 				try
