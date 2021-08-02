@@ -46,13 +46,21 @@
 						$q = 'INSERT INTO FSetting (`UserID`,`Type`,`Key`,`Data`) VALUES ( '. $rs->ID .',\'system\',\'passwordreset\',\''.  mysqli_real_escape_string($SqlDatabase->_link, $randomhash ) .'\' )';
 						$r = $SqlDatabase->query( $q );
 
-						// we have an email. build a link...
-						$link = 'http';
-						$link.= ( isset($cfg['Core'])&&isset($cfg['Core']['SSLEnable'])&& $cfg['Core']['SSLEnable'] == 1 ? 's' : '' ) . '://';
-						$link.= $cfg['FriendCore']['fchost'] . ':' . $cfg['FriendCore']['fcport'] . '/';
-						$link.= 'forgotpassword/token/';
-						$link.= urlencode( str_replace('{S6}', '', $rs->Password) ) . '/';
-						$link.= urlencode( $rs->Email ) . '/' . urlencode( $randomhash );
+						// Get some vars from config
+						$fcport = $cfg['FriendCore']['fcport'];
+						if( !$fcport ) $fcport = $cfg['Core']['port'];
+						$host = $cfg['FriendCore']['fchost'];
+						$proxy = $cfg['Core']['ProxyEnable'];
+						$ssl = $cfg['Core']['SSLEnable'] ? true : false;
+						// Actually create link
+						$link .= ( $ssl ? 'https://' : 'http://' );
+						$link .= $host;
+						$link .= ( $host == 'localhost' && !$proxy ) ? $fcport : '';
+						$link .= '/';
+						
+						$link .= 'forgotpassword/token/';
+						$link .= urlencode( str_replace('{S6}', '', $rs->Password) ) . '/';
+						$link .= urlencode( $rs->Email ) . '/' . urlencode( $randomhash );
 					}
 					else
 					{
