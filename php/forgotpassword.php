@@ -220,9 +220,13 @@
 						
 						$d = array();
 						$d[ 'id' ] = $rs->ID;
-						$d[ 'password' ] = $pass;
+						$d[ 'password' ] = 'HASHED' . hash( 'sha256', $pass );
 						$d[ 'servertoken' ] = $cfg['ServiceKeys']['AdminModuleServerToken'];
 						$result = FriendCoreQuery( '/system.library/user/update', $data );
+						if( $result && substr( $result, 0, 3 ) == 'ok<' )
+						{
+							
+						}
 					}
 					else
 					{
