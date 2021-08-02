@@ -222,7 +222,7 @@
 						$d[ 'username' ] = $rs->Name;
 						$d[ 'password' ] = '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $pass ) );
 						$d[ 'servertoken' ] = $cfg['ServiceKeys']['AdminModuleServerToken'];
-						$result = FriendCoreQuery( '/system.library/user/updatepassword', $data );
+						$result = FriendCoreQuery( '/system.library/user/updatepassword', $data, false, false, true );
 						if( $result && substr( $result, 0, 3 ) == 'ok<' )
 						{
 							$tpl = file_get_contents( 'php/templates/password_change.html' );
