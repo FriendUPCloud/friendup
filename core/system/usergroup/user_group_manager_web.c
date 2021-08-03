@@ -1879,7 +1879,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			int tmpsize = 0;
 			BufString *retString = BufStringNew();
 			BufStringAddSize( retString, "ok<!--separate-->{", 18 );
-			UserGroup *ug = UGMGetGroupByID( l->sl_UGM, groupID );
+			UserGroup *ug = UGMGetGroupByIDDB( l->sl_UGM, groupID );
 			if( ug != NULL )
 			{
 				tmpsize = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"uuid\":\"%s\",\"userid\":%lu,\"name\":\"%s\",\"parentid\":%lu,\"type\":\"%s\",\"status\":%d,\"users\":[", groupID, ug->ug_UUID, ug->ug_UserID, ug->ug_Name, ug->ug_ParentID, ug->ug_Type, ug->ug_Status );
@@ -1934,6 +1934,10 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			
 			retString->bs_Buffer = NULL;
 			BufStringDelete( retString );
+			if( ug != NULL )
+			{
+				UserGroupDeleteAll( l, ug );
+			}
 		}
 		else	// if user is not admin, get user groups by permission module call
 		{
@@ -2373,6 +2377,10 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 							FFree( rmEntry );
 						}
 					} // ug = NULL
+					
+					// remove from mem, entries were loaded from DB
+					
+					UserGroupDeleteAll( l, ug );
 				}
 				else	// group found in memory, so we can move forward
 				{
