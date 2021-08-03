@@ -227,6 +227,64 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 		}
 	}
 
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/security/getservertoken</H2>Function return server token
+	*
+	* @param sessionid - (required) session id of logged user
+	* 
+	* @return return {"result":"success","servertoken":"<XXXX>"} when succes otherwise error
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 1 ], "getservertoken" ) == 0 )
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		HashmapElement *tokid = GetHEReq( request, "authid" );
+		
+		if( tokid == NULL )
+		{
+			SQLLibrary *sqllib = l->GetDBConnection( l );
+			if( sqllib != NULL )
+			{
+				char insertQuery[ 1024 ];
+				char res[ 512 ];
+				
+				// update server token
+				
+				int size = snprintf( insertQuery, sizeof( insertQuery ), "SELECT ServerToken FROM `FUser` WHERE ID=%lu", loggedSession->us_UserID );
+				void *result = sqllib->Query( sqllib, insertQuery );
+				if( result != NULL )
+				{
+					char **row;
+					while( ( row = sqllib->FetchRow( sqllib, result ) ) )
+					{
+						if( row[ 0 ] != NULL )
+						{
+							snprintf( res, sizeof(res), "{\"result\":\"success\",\"servertoken\":%s}", row[ 0 ] );
+						}
+					}
+					sqllib->FreeResult( sqllib, result );
+				}
+				l->DropDBConnection( l, sqllib );
+				
+				HttpAddTextContent( response, res );
+			}
+		}
+		else
+		{
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_AUTHID_PASSED] , DICT_AUTHID_PASSED );
+			HttpAddTextContent( response, dictmsgbuf );
+		}
+	}
 	
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
@@ -314,7 +372,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 				{
 					if( allowed == TRUE )
 					{
-						SQLLibrary *sqllib = l->GetDBConnection( l );
+						SQLLibrary *sqllib = l->GetInternalDBConnection( l );
 						if( sqllib != NULL )
 						{
 							char insertQuery[ 1024 ];
@@ -331,7 +389,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 							sqllib->QueryWithoutResults( sqllib, insertQuery );
 			
 							DEBUG("[SecurityWeb/createhost] sl query %s\n", insertQuery );
-							l->DropDBConnection( l, sqllib );
+							l->DropInternalDBConnection( l, sqllib );
 				
 							snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":{\"ip\":\"%s\",\"status\":%lu}}", ip, status );
 
@@ -489,7 +547,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 					{
 						if( status >= 0 && status < SECURED_HOST_STATUS_MAX )
 						{
-							SQLLibrary *sqllib = l->GetDBConnection( l );
+							SQLLibrary *sqllib = l->GetInternalDBConnection( l );
 							if( sqllib != NULL )
 							{
 								char insertQuery[ 1024 ];
@@ -540,7 +598,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 								sqllib->QueryWithoutResults( sqllib, insertQuery );
 			
 								DEBUG("[SecurityWeb/createhost] sl query %s\n", insertQuery );
-								l->DropDBConnection( l, sqllib );
+								l->DropInternalDBConnection( l, sqllib );
 				
 								snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":{\"ip\":\"%s\",\"status\":%ld,\"userid\":%lu}}", ip, status, userID );
 
@@ -655,7 +713,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 		if( allowed == TRUE )
 		{
 			DEBUG("[SecurityWeb] get hostslist\n");
-			SQLLibrary *sqllib = l->GetDBConnection( l );
+			SQLLibrary *sqllib = l->GetInternalDBConnection( l );
 			if( sqllib != NULL )
 			{
 				BufString *bs = BufStringNew();
@@ -701,7 +759,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 				}
 				
 				DEBUG("[SecurityWeb/listhosts] sl query %s\n", selectQuery );
-				l->DropDBConnection( l, sqllib );
+				l->DropInternalDBConnection( l, sqllib );
 
 				BufStringAdd( bs, "]}" );
 				
@@ -782,7 +840,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 		{
 			if( allowed == TRUE )
 			{
-				SQLLibrary *sqllib = l->GetDBConnection( l );
+				SQLLibrary *sqllib = l->GetInternalDBConnection( l );
 				if( sqllib != NULL )
 				{
 					char insertQuery[ 1024 ];
@@ -838,7 +896,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 					sqllib->QueryWithoutResults( sqllib, insertQuery );
 
 					DEBUG("[SecurityWeb/deletehost] sl query %s\n", insertQuery );
-					l->DropDBConnection( l, sqllib );
+					l->DropInternalDBConnection( l, sqllib );
 				
 					BufStringAdd( bs, "]}" );
 				
@@ -846,10 +904,6 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 					bs->bs_Buffer = NULL; // we do not want to release memory, it will be released during SocketWrite call
 				
 					BufStringDelete( bs );
-					
-					//snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":{\"ip\":\"%s\"}}", ip );
-
-					//HttpAddTextContent( response, insertQuery );
 				}
 			}
 			else
