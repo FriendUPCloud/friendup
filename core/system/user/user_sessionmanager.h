@@ -199,7 +199,7 @@ void USMCloseUnusedWebSockets( UserSessionManager *usm );
 //
 //
 
-int USMGetSessionsDeleteDB( UserSessionManager *smgr, const char *sessionid );
+int USMSessionsDeleteDB( UserSessionManager *smgr, const char *sessionid );
 
 //
 // Generate temporary session

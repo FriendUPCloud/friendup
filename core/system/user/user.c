@@ -126,63 +126,47 @@ int UserAddSession( User *usr, void *ls )
 int UserRemoveSession( User *usr, void *ls )
 {
 	int retVal = -1;
+	int del = 5;
 	UserSession *remses = (UserSession *)ls;
-	if( usr  == NULL || ls == NULL )
+	if( usr  == NULL || ls == NULL || remses->us_User == NULL )
 	{
 		FERROR("Cannot remove user session, its not connected to user\n");
 		return -1;
 	}
 	
+	DEBUG("[UserRemoveSession]\n");
 	while( usr->u_InUse > 0 )
 	{
+		DEBUG("[UserRemoveSession] in loop : %d\n", usr->u_InUse );
 		usleep( 5000 );
+		
+		if( ( del-- ) <= 0 ) break;
 	}
+	
+	DEBUG("[UserRemoveSession] after in use\n");
 	
 	if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 	{
+		UserSessListEntry *newRoot = NULL;
 		UserSessListEntry *actus = (UserSessListEntry *)usr->u_SessionsList;
-		UserSessListEntry *prevus = actus;
-		FBOOL removed = FALSE;
-	
-		if( usr->u_SessionsList != NULL )
+		while( actus != NULL )
 		{
-			if( usr->u_SessionsList->us == remses )
+			UserSessListEntry *curus = actus;
+			actus = (UserSessListEntry *)actus->node.mln_Succ;
+			if( curus->us == remses )
 			{
-				usr->u_SessionsList = (UserSessListEntry *)usr->u_SessionsList->node.mln_Succ;
-				if( prevus != NULL )
-				{
-					FFree( actus );
-				}
+				usr->u_SessionsNr--;
+				FFree( curus );
 			}
 			else
 			{
-				while( actus != NULL )
-				{
-					prevus = actus;
-					actus = (UserSessListEntry *)actus->node.mln_Succ;
-			
-					if( actus != NULL && actus->us == remses )
-					{
-						prevus->node.mln_Succ = actus->node.mln_Succ;
-					
-						usr->u_SessionsNr--;
-						removed = TRUE;
-					
-						if( prevus != NULL )
-						{
-							FFree( actus );
-						}
-						break;
-					}
-				}
+				curus->node.mln_Succ = (MinNode *)newRoot;
+				newRoot = curus;
 			}
 		}
 		
-		if( usr->u_SessionsNr <= 0 )
-		{
-			usr->u_SessionsList = NULL;
-		}
-		
+		usr->u_SessionsList = newRoot;
+	
 		retVal = usr->u_SessionsNr;
 		FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 	}
@@ -275,6 +259,55 @@ void UserDelete( User *usr )
 		pthread_mutex_destroy( &(usr->u_Mutex) );
 		
 		FFree( usr );
+	}
+}
+
+/**
+ * Remove User connected sessions
+ *
+ * @param usr pointer to root User
+ * @param release says if sessionentry should be removed or only pointer to user in a session should be removed
+ */
+void UserRemoveConnectedSessions( User *usr, FBOOL release )
+{
+	
+	if( FRIEND_MUTEX_LOCK(&usr->u_Mutex) == 0 )
+	{
+		usr->u_InUse++;
+		FRIEND_MUTEX_UNLOCK(&usr->u_Mutex);
+	}
+	UserSessListEntry *us = (UserSessListEntry *)usr->u_SessionsList;
+	UserSessListEntry *delus = us;
+	
+	if( release )
+	{
+		while( us != NULL )
+		{
+			delus = us;
+			us = (UserSessListEntry *)us->node.mln_Succ;
+		
+			UserSession *locses = (UserSession *)delus->us;
+			locses->us_User = NULL;
+			FFree( delus );
+		}
+		usr->u_SessionsList = NULL;
+	}
+	else
+	{
+		while( us != NULL )
+		{
+			delus = us;
+			us = (UserSessListEntry *)us->node.mln_Succ;
+		
+			UserSession *locses = (UserSession *)delus->us;
+			locses->us_User = NULL;
+		}
+	}
+	
+	if( FRIEND_MUTEX_LOCK(&usr->u_Mutex) == 0 )
+	{
+		usr->u_InUse--;
+		FRIEND_MUTEX_UNLOCK(&usr->u_Mutex);
 	}
 }
 
@@ -822,3 +855,32 @@ FBOOL UserIsInGroup( User *usr, FULONG gid )
 	}
 	return FALSE;
 }
+
+/**
+ * Release User drives
+ *
+ * @param usr User
+ * @param lsb pointer to SystemBase
+ */
+void UserReleaseDrives( User* usr, void *lsb )
+{
+	SystemBase *sb = (SystemBase *)lsb;
+	
+	File *lf = usr->u_MountedDevs;
+	File *remdev = lf;
+	while( lf != NULL )
+	{
+		remdev = lf;
+		lf = (File *)lf->node.mln_Succ;
+		
+		if( remdev != NULL )
+		{
+			DeviceRelease( sb->sl_DeviceManager, remdev );
+		
+			FileDelete( remdev );
+			remdev = NULL;
+		}
+	}
+	usr->u_MountedDevs = NULL;
+}
+

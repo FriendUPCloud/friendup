@@ -2028,7 +2028,8 @@ int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses )
 				
 				DeviceUnMount( l->sl_DeviceManager, remdev, usr, ses );
 				
-				FFree( remdev );
+				//FFree( remdev );
+				FileDelete( remdev );
 			}
 		}
 		
