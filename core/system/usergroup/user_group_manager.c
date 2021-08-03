@@ -139,6 +139,36 @@ UserGroup *UGMGetGroupByID( UserGroupManager *um, FULONG id )
 }
 
 /**
+ * Get UserGroup by ID from DB
+ *
+ * @param ugm pointer to UserManager structure
+ * @param id unique group identifier
+ * @return UserGroup structure if it exist, otherwise NULL
+ */
+
+UserGroup *UGMGetGroupByIDDB( UserGroupManager *ugm, FQUAD id )
+{
+	SystemBase *l = (SystemBase *)ugm->ugm_SB;
+	UserGroup *ug = NULL;
+	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	if( sqlLib != NULL )
+	{
+		// try to find if group is in DB, skip templates and roles
+		char where[ 512 ];
+		int size = snprintf( where, sizeof(where), "ID='%ld' AND Type in('Workgroup','Level')", id );
+		int entries;
+	
+		ug = sqlLib->Load( sqlLib, UserGroupDesc, where, &entries );
+		if( ug != NULL )
+		{
+			ug->ug_Status = USER_GROUP_STATUS_ACTIVE;
+		}
+		l->LibrarySQLDrop( l, sqlLib );
+	}
+	return ug;
+}
+
+/**
  * Get UserGroup by Name
  *
  * @param ugm pointer to UserManager structure
