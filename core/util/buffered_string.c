@@ -88,7 +88,7 @@ unsigned int BufStringAddSize(BufString *bs, const char *string_to_append, unsig
 {
 	if( bs == NULL || string_to_append == NULL || string_to_append_length < 1 )
 	{
-		FERROR("Cannot add NULL text!\n");
+		DEBUG("Cannot add NULL text!\n");
 		return 1;
 	}
 
