@@ -624,14 +624,14 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			if( el != NULL )
 			{
 				usrname = UrlDecodeToMem( (char *)el->hme_Data );
-				DEBUG( "[UMWebRequest] Update usrname %s!!\n", usrname );
+				DEBUG( "[UMWebRequest] Create usrname %s!!\n", usrname );
 			}
 			
 			el = HttpGetPOSTParameter( request, "password" );
 			if( el != NULL )
 			{
 				usrpass = UrlDecodeToMem( (char *)el->hme_Data );
-				DEBUG( "[UMWebRequest] Update usrpass %s!!\n", usrpass );
+				DEBUG( "[UMWebRequest] Create usrpass %s!!\n", usrpass );
 			}
 			
 			el = HttpGetPOSTParameter( request, "workgroups" );
@@ -845,6 +845,10 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						sqllib->QueryWithoutResults( sqllib, tmpQuery );
 						
 						sprintf( tmpQuery, " DELETE FROM `Filesystem` WHERE UserID=%lu", id );
+						
+						sqllib->QueryWithoutResults( sqllib, tmpQuery );
+						
+						sprintf( tmpQuery, "DELETE FROM `FUserToGroup` WHERE UserID=%lu", usr->u_ID );
 						
 						sqllib->QueryWithoutResults( sqllib, tmpQuery );
 						

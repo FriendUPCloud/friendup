@@ -423,7 +423,13 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 	int val = 0;
 	if( sqlLib != NULL )
 	{
+		char tmpQuery[ 128 ];
+		
 		val = sqlLib->Save( sqlLib, UserDesc, usr );
+		
+		sprintf( tmpQuery, "DELETE FROM `FUserToGroup` WHERE UserID=%lu", usr->u_ID );
+		sqlLib->QueryWithoutResults( sqlLib, tmpQuery );
+		
 		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	else
