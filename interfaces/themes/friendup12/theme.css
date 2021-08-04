@@ -659,11 +659,30 @@ html #Screens .File.Selected .Title
 
 html #DoorsScreen > .ScreenContent > div > div > .File.Selected .Title
 {
+	background: none;
 	border: 0;
-	background: rgba(0,0,0,0.5);
-	color: #f0f0f0;
 	box-shadow: none;
-	border-radius: 1px;
+}
+
+html #DoorsScreen > .ScreenContent > div > div > .File .Title > span
+{
+	transition: background 0.25s;
+}
+
+html #DoorsScreen > .ScreenContent > div > div > .File:not(.Selected) .Title > span
+{
+	background: rgba(0,0,0,0.3);
+	color: #f0f0f0;
+	border-radius: 10px;
+	padding: 2px 10px 3px 10px;
+}
+
+html #DoorsScreen > .ScreenContent > div > div > .File.Selected .Title > span
+{
+	background: rgba(0,0,0,0.8);
+	color: #f0f0f0;
+	border-radius: 10px;
+	padding: 2px 10px 3px 10px;
 }
 
 .ToolbarBackground
