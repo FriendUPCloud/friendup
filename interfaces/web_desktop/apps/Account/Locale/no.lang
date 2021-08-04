@@ -208,3 +208,7 @@ i18n_optional                           : valgfritt
 i18n_full_name                          : Fullt navn
 
 
+i18n_failed_to_send                     : Kunne ikke sende invitasjon
+i18n_email_error                        : Kunne ikke sende epost. Vennligst sjekk adressen.
+i18n_unknown_error                      : Det oppsto en ukjent server feil.
+

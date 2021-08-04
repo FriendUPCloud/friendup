@@ -12,3 +12,38 @@ Application.run = function()
 {
 	
 }
+
+function sendInvite()
+{
+	let email = ge( 'recipient' ).value;
+	let tname = ge( 'recipientname' ).value;
+	
+	if( email.indexOf( '@' ) <= 0 )
+	{
+		Alert( i18n( 'i18n_failed_to_send' ), i18n( 'i18n_email_error' ) );
+		return false;
+	}
+	
+	if( email.indexOf( '.' ) <= email.indexOf( '@' ) )
+	{
+		Alert( i18n( 'i18n_failed_to_send' ), i18n( 'i18n_email_error' ) );
+		return false;
+	}
+	
+	let msg = {};
+	
+	let m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		if( e == 'ok' )
+		{
+			CloseWindow();
+		}
+		else
+		{
+			Alert( i18n( 'i18n_failed_to_send' ), i18n( 'i18n_unknown_error' ) );
+			return false;
+		}
+	}
+	m.execute( 'invite', msg );
+}
