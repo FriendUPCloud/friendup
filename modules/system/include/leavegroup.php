@@ -13,7 +13,7 @@
 if( isset( $args->args->groupId ) )
 {
 	$groupId = intval( $args->args->groupId, 10 );
-	$SqlDatabase->query( 'DELETE FROM FUserToGroup WHERE UserID=\'' . $User->ID . '\' AND UserGroupID=\'' . $groupId . \'' );
+	$SqlDatabase->query( 'DELETE FROM FUserToGroup WHERE UserID=\'' . $User->ID . '\' AND UserGroupID=\'' . $groupId . '\'' );
 	$SqlDatabase->query( 'DELETE FROM FQueuedEvent WHERE TargetGroupID=\'' . $groupId . '\' AND TargetUserID=\'' . $User->ID . '\'' );
 	die( 'ok<!--separate-->' );
 }
