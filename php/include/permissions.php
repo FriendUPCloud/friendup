@@ -296,20 +296,26 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 	 
 	if( $name && strstr( $name, 'AUTHID' ) )
 	{
+		$logger = new Logger();
+		$authId = '"' . str_replace( 'AUTHID', '', $name ) . '"';
+		$logger->log( 'permissions yep, authid: ' . $authId );
 		
-		if( $app = $SqlDatabase->FetchObject( $q = '
-			SELECT 
-				a.*, u.UserID, u.Permissions, u.AuthID 
-			FROM 
-				FUserApplication u, FApplication a 
-			WHERE 
-				u.AuthID = "' . str_replace( 'AUTHID', '', $name ) . '" AND u.UserID = ' . $User->ID . ' AND a.ID = u.ApplicationID 
-			ORDER BY a.ID DESC 
-		' ) )
+		$query = "SELECT a.Name, u.*, s.AuthID
+			FROM FAppSession AS s
+			JOIN FUserApplication AS u
+			    ON s.UserApplicationID=u.ID
+			JOIN FApplication AS a
+			    ON u.ApplicationID=a.ID
+			WHERE s.AuthID=$authId";
+		
+		//$logger->log( 'query: ' . $query );
+		$app = $SqlDatabase->FetchObject( $query );
+		
+		$debug->app = $app;
+		if ( $app )
 		{
-			//
-			
-			$name = ''; $debug->name = '';
+			$name = '';
+			$debug->name = '';
 			
 			if( $app->Name )
 			{
@@ -322,7 +328,6 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 		else
 		{
 			$debug->name = '';
-			
 			$debug->authid = str_replace( 'AUTHID', '', $name );
 			
 			$out = new stdClass();

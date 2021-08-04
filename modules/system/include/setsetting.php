@@ -11,6 +11,9 @@
 
 $userid = $User->ID;
 
+$logger = new Logger();
+$logger->log( 'setsetting: ' . $args->authid );
+
 if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {
 	$args->authid = $args->args->authid;

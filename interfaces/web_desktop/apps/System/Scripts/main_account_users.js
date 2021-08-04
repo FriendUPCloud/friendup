@@ -6091,7 +6091,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												setting : 'themedata_' + currTheme.toLowerCase(), 
 												data    : themeConfig, 
 												userid  : userInfo.ID, 
-												authid  : Application.authId 
+												//authid  : Application.authId 
 											} );
 										
 										};
@@ -6188,7 +6188,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												setting : 'themedata_' + currTheme.toLowerCase(), 
 												data    : themeConfig, 
 												userid  : userInfo.ID, 
-												authid  : Application.authId 
+												//authid  : Application.authId 
 											} );
 										
 										};
@@ -6234,7 +6234,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													setting : 'workspacecount', 
 													data    : this.value, 
 													userid  : userInfo.ID, 
-													authid  : Application.authId 
+													//authid  : Application.authId 
 												}
 												m.execute( 'setsetting', setData );
 											}
@@ -6326,7 +6326,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														m.execute( 'userwallpaperset', { 
 															path    : item[ 0 ].Path, 
 															userid  : userInfo.ID, 
-															authid  : Application.authId 
+															//authid  : Application.authId 
 														} );
 													
 													}
@@ -6804,7 +6804,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						// Go to next in line ...
 						loadingList[ ++loadingSlot ](  );
 					}
-					u.execute( 'userinfoget', { id: extra, mode: 'all', authid: Application.authId } );
+					u.execute( 'userinfoget', {
+						id: extra,
+						mode: 'all',
+						//authid: Application.authId,
+					});
 				},
 				
 				// 3 | Get user's workgroups
@@ -6839,7 +6843,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 						initUsersDetails( loadingInfo, [ 'workgroup' ] );
 					}
-					u.execute( 'workgroups', { userid: extra, authid: Application.authId } );
+					u.execute( 'workgroups', {
+						userid: extra,
+						//authid: Application.authId,
+					});
 					
 					// Go to next in line ...
 					loadingList[ ++loadingSlot ](  );
@@ -6881,7 +6888,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 						initUsersDetails( loadingInfo, [ 'role' ] );
 					}
-					u.execute( 'userroleget', { userid: extra, authid: Application.authId } );
+					u.execute( 'userroleget', {
+						userid: extra,
+						//authid: Application.authId,
+					});
 					
 					// Go to next in line ...
 					loadingList[ ++loadingSlot ](  );
@@ -6919,7 +6929,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						initUsersDetails( loadingInfo, [ 'storage' ] );
 						
 					}
-					u.execute( 'mountlist', { userid: extra, authid: Application.authId } );
+					u.execute( 'mountlist', {
+						userid: extra,
+						//authid: Application.authId,
+					});
 					
 					// Go to next in line ...
 					loadingList[ ++loadingSlot ](  );
@@ -7076,7 +7089,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						// Go to next in line ...
 						loadingList[ ++loadingSlot ](  );
 					}
-					u.execute( 'usersettings', { userid: extra, authid: Application.authId } );
+					u.execute( 'usersettings', {
+						userid: extra,
+						//authid: Application.authId,
+					});
 					
 				},
 				
@@ -7115,13 +7131,18 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							
 							initUsersDetails( loadingInfo, [ '*' ] );
 						}
-						u.execute( 'getsetting', { settings: [ 
-							'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
-							'locale', 'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
-							'focusmode', 'hiddensystem', 'workspacecount', 
-							'scrolldesktopicons', 'wizardrun', 'themedata_' + loadingInfo.settings.Theme,
-							'workspacemode', 'startupsequence'
-						], userid: extra, authid: Application.authId } );
+						u.execute( 'getsetting', {
+							settings: [ 
+								'workspacemode', 'wallpaperdoors', 'wallpaperwindows',
+								'language', 'locale', 'menumode', 'startupsequence',
+								'navigationmode', 'windowlist', 'focusmode', 'hiddensystem',
+								'workspacecount', 'scrolldesktopicons', 'wizardrun',
+								'themedata_' + loadingInfo.settings.Theme,
+								'workspacemode', 'startupsequence',
+							],
+							userid: extra,
+							//authid: Application.authId,
+						});
 					}
 					
 					// Go to next in line ..., might not need to load the next ...
@@ -7863,7 +7884,11 @@ function getStorageInfo( path, id, args, callback )
 		
 			return callback( false, ( json ? json : false ), args );
 		}
-		m.execute( 'volumeinfo', { path: path, userid: id, authid: Application.authId } );
+		m.execute( 'volumeinfo', {
+			path: path,
+			userid: id,
+			//authid: Application.authId,
+		});
 	
 		return true;
 	}
@@ -7901,7 +7926,10 @@ function applications( callback, id )
 				
 				return callback( false, false );
 			}
-			m.execute( 'listuserapplications', { userid: id, authid: Application.authId } );
+			m.execute( 'listuserapplications', {
+				userid: id,
+				//authid: Application.authId,
+			});
 		}
 		else
 		{
@@ -7928,7 +7956,10 @@ function applications( callback, id )
 				
 				return callback( false, false );
 			}
-			m.execute( 'software', { mode: 'showall', authid: Application.authId } );
+			m.execute( 'software', {
+				mode: 'showall',
+				//authid: Application.authId,
+			});
 		}
 		
 		return true;
@@ -8007,7 +8038,12 @@ function randomAvatar( fullname, callback )
 				callback( out && out.avatar ? out.avatar : false );
 			}
 		}
-		u.execute( 'getsetting', { setting: 'avatar', fullname: fullname, read: 'only', authid: Application.authId } );
+		u.execute( 'getsetting', {
+			setting: 'avatar',
+			fullname: fullname,
+			read: 'only',
+			//authid: Application.authId,
+		});
 	}
 }
 
@@ -8431,7 +8467,10 @@ function NewUser( _this )
 						if( callback ) return callback( [] );
 						
 					}
-					u.execute( 'userinfoget', { mode: 'all', authid: Application.authId } );
+					u.execute( 'userinfoget', {
+						mode: 'all',
+						//authid: Application.authId,
+					});
 					
 				}
 				
@@ -9627,7 +9666,7 @@ function getUserlist( callback, obj, limit )
 		limit      : limit ? limit : UsersSettings( 'limit' ),
 		/*notids   : UsersSettings( 'uids'        ).join( ',' ),*/
 		count      : true, 
-		authid     : Application.authId 
+		//authid     : Application.authId 
 	};
 	
 	if( UsersSettings( 'total' ) > 0 && UsersSettings( 'startlimit' ) > UsersSettings( 'total' ) )
@@ -9673,7 +9712,7 @@ function getLastLoginlist( callback, users )
 		let args = { 
 			mode    : 'logintime',
 			userid  : users,
-			authid  : Application.authId 
+			//authid  : Application.authId 
 		};
 	
 		// Get the user list
@@ -9955,7 +9994,10 @@ Sections.user_disk_cancel = function( userid )
 		
 		Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 	}
-	u.execute( 'mountlist', { userid: userid+"", authid: Application.authId } );
+	u.execute( 'mountlist', {
+		userid: userid+"",
+		//authid: Application.authId,
+	});
 	
 };
 
@@ -10214,11 +10256,15 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 			m.execute( 'filesystem', {
 				userid: user,
 				devname: name, 
-				authid: Application.authId
+				//authid: Application.authId
 			} );
 			
 		}
-		n.execute( 'types', { mode: 'all', userid: user, authid: Application.authId } );
+		n.execute( 'types', {
+			mode: 'all',
+			userid: user,
+			//authid: Application.authId,
+		});
 	}
 };
 
@@ -10670,9 +10716,18 @@ function StorageForm( storage, callback )
 				}
 			}
 		}
-		m.execute( 'dosdrivergui', { type: storage.type, id: storage.id, authid: Application.authId } );
+		m.execute( 'dosdrivergui', {
+			type : storage.type,
+			id   : storage.id,
+			//authid: Application.authId,
+		});
 	}
-	ft.execute( 'dosdrivergui', { component: 'locale', type: storage.type, language: Application.language, authid: Application.authId } );
+	ft.execute( 'dosdrivergui', {
+		component : 'locale',
+		type      : storage.type,
+		language  : Application.language,
+		//authid: Application.authId,
+	});
 	
 }
 
@@ -10747,10 +10802,18 @@ function LoadDOSDriverGUI( _this )
 					ge( 'DosDriverGui' ).innerHTML = '';
 				}
 			}
-			m.execute( 'dosdrivergui', { type: type, authid: Application.authId } );
+			m.execute( 'dosdrivergui', {
+				type: type,
+				//authid: Application.authId,
+			});
 		
 		}
-		ft.execute( 'dosdrivergui', { component: 'locale', type: type, language: Application.language, authid: Application.authId } );
+		ft.execute( 'dosdrivergui', {
+			component: 'locale',
+			type: type,
+			language: Application.language,
+			//authid: Application.authId,
+		});
 	}
 }
 
@@ -10776,7 +10839,11 @@ function addApplication( appName, userId, callback, vars )
 			if( callback ) callback( false, d, vars );
 		}
 	}
-	m.execute( 'adduserapplication', { application: appName, userid: userId, authid: Application.authId } );
+	m.execute( 'adduserapplication', {
+		application: appName,
+		userid: userId,
+		authid: Application.authId,
+	});
 }
 
 function updateUserStatus( userid, status )
@@ -11056,7 +11123,12 @@ Sections.userrole_update = function( rid, userid, _this )
 		{
 			//console.log( { e:e, d:d, args: { id: rid, userid: userid, data: data, authid: Application.authId } } );
 		}
-		m.execute( 'userroleupdate', { id: rid, userid: userid, data: data, authid: Application.authId } );
+		m.execute( 'userroleupdate', {
+			id     : rid,
+			userid : userid,
+			data   : data,
+			//authid: Application.authId,
+		});
 	}
 };
 
@@ -11188,7 +11260,7 @@ Sections.user_disk_save = function( userid, did )
 		if( Application.userId != userid )
 		{
 			data.userid = userid;
-			data.authid = Application.authId;
+			//data.authid = Application.authId;
 		}
 		
 		//console.log( data );
@@ -11226,7 +11298,10 @@ Sections.user_disk_save = function( userid, did )
 				
 					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 				}
-				u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
+				u.execute( 'mountlist', {
+					userid: userid,
+					//authid: Application.authId,
+				});
 			
 			} );
 		}
@@ -11283,7 +11358,10 @@ Sections.user_disk_mount = function( devname, userid, _this )
 						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
 						
 					}
-					u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
+					u.execute( 'mountlist', {
+						userid: userid,
+						//authid: Application.authId,
+					});
 				
 					return;
 				}
@@ -11322,7 +11400,10 @@ Sections.user_disk_mount = function( devname, userid, _this )
 					
 						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
 					}
-					u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
+					u.execute( 'mountlist', {
+						userid: userid,
+						//authid: Application.authId,
+					});
 				
 					return;
 				}
@@ -11684,7 +11765,11 @@ function removeApplication( appName, userId, callback, vars )
 			if( callback ) callback( false, d, vars );
 		}
 	}
-	m.execute( 'removeuserapplication', { application: appName, userid: userId, authid: Application.authId } );
+	m.execute( 'removeuserapplication', {
+		application: appName,
+		userid: userId,
+		//authid: Application.authId,
+	});
 }
 
 function removeDockItem( appName, userId, callback, vars )
@@ -11738,7 +11823,7 @@ function updateStartup( userId, callback, vars )
 				setting : 'startupsequence', 
 				data    : JSON.stringify( o ), 
 				userid  : userId, 
-				authid  : Application.authId 
+				//authid  : Application.authId 
 			} } );
 		
 			if( e == 'ok' )
@@ -11754,7 +11839,7 @@ function updateStartup( userId, callback, vars )
 			setting : 'startupsequence', 
 			data    : JSON.stringify( o ), 
 			userid  : userId, 
-			authid  : Application.authId 
+			//authid  : Application.authId 
 		} );
 	}
 		
@@ -11796,7 +11881,10 @@ Sections.user_disk_remove = function( devname, did, userid )
 							
 								ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
 							}
-							u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
+							u.execute( 'mountlist', {
+								userid: userid,
+								//authid: Application.authId,
+							});
 						
 							return;
 						}
@@ -11812,7 +11900,11 @@ Sections.user_disk_remove = function( devname, did, userid )
 						return;
 					
 					}
-					m.execute( 'deletedoor', { id: did, userid: userid, authid: Application.authId } );
+					m.execute( 'deletedoor', {
+						id: did,
+						userid: userid,
+						//authid: Application.authId,
+					});
 					
 				} );
 				
@@ -11887,7 +11979,9 @@ function _removeUser( id, callback )
 				Notify( { title: i18n( 'i18n_user_delete_fail' ), text: i18n( 'i18n_user_delete_failed' ) } );
 			}
 		}
-		m.execute( 'user/delete', { id: id } );
+		m.execute( 'user/delete', {
+			id: id,
+		});
 	}
 }
 
