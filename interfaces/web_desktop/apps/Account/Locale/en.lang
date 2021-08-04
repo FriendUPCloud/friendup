@@ -196,4 +196,5 @@ i18n_fnetAskForPower				 : Ask for power
 
 i18n_leave_group                        : Leave group.
 i18n_other_groups                       : Group memberships
+i18n_leave_warning                      : If you leave, you may lose access to functionality that is connected to this group.
 

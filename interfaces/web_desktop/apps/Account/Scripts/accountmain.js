@@ -38,7 +38,7 @@ Application.run = function( msg, iface )
 		d.execute( 'getsetting', { setting: 'avatar_color' } );
 	} );
 	
-	refreshGroups();
+	refreshGroups( ge( 'groupSearcher' ).value );
 	
 	// Clear / autoregenerate avatar
 	ge( 'ClearAvatar' ).onclick = function( e )
@@ -173,18 +173,37 @@ function refreshGroups( keys )
 		let sw = 2;
 		for( let a = 0; a < d.length; a++ )
 		{
-			let button = !d[a].Admin ? ( '<button type="button" class="Button IconSmall fa-remove NoText IconButton" title="' + i18n( 'i18n_leave_group' ) + '"></button>' ) : '';
+			let button = '<button type="button" class="Button IconSmall fa-remove NoText IconButton" title="' + i18n( 'i18n_leave_group' ) + '" onclick="leaveGroup(\'' + d[a].ID + '\')"></button>';
 			
 			sw = sw == 1 ? 2 : 1;
 			str += '<div class="HRow sw' + sw + '">\
-				<div class="PaddingSmall FloatLeft HContent80">' + d[a].Name + '</div>\
+				<div class="PaddingSmall FloatLeft HContent80">' + d[a].Name + ' (' + d[a].Level + ')</div>\
 				<div class="PaddingSmall FloatLeft HContent20 TextRight">' + button + '</div>\
 			</div>';
 		}
 		str += '</div></div>';
 		ge( 'OtherGroups' ).innerHTML = str;
 	}
-	n.execute( 'listworkgroups', { mode: 'onlymember' } );
+	n.execute( 'listworkgroups', { mode: 'invites' } );
+}
+
+function leaveGroup( gid )
+{
+	Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_leave_warning' ), function( data )
+	{
+		if( data.data == true )
+		{
+			let m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				if( e == 'ok' )
+				{
+					refreshGroups( ge( 'groupSearcher' ).value );
+				}
+			}
+			m.execute( 'leavegroup', { groupId: gid } );
+		}
+	} );
 }
 
 function createGroup()
@@ -360,7 +379,7 @@ Application.receiveMessage = function( msg )
 	switch( msg.command )
 	{
 		case 'refreshgroups':
-			refreshGroups();
+			refreshGroups( ge( 'groupSearcher' ).value );
 			break;
 		case 'addstorage':
 			addStorage( 'quitonclose' );
