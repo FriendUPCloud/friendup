@@ -667,22 +667,25 @@ html #DoorsScreen > .ScreenContent > div > div > .File.Selected .Title
 html #DoorsScreen > .ScreenContent > div > div > .File .Title > span
 {
 	transition: background 0.25s;
+	display: inline-block;
+	color: #f0f0f0;
+	border-radius: 15px;
+	padding: 2px 8px 2px 8px;
 }
 
-html #DoorsScreen > .ScreenContent > div > div > .File:not(.Selected) .Title > span
+html #DoorsScreen > .ScreenContent > div > div > .File .Title
+{
+	overflow: visible !important;
+}
+
+html body.Box #DoorsScreen > .ScreenContent > div > div > .File:not(.Selected) .Title > span
 {
 	background: rgba(0,0,0,0.3);
-	color: #f0f0f0;
-	border-radius: 10px;
-	padding: 2px 10px 3px 10px;
 }
 
 html #DoorsScreen > .ScreenContent > div > div > .File.Selected .Title > span
 {
 	background: rgba(0,0,0,0.8);
-	color: #f0f0f0;
-	border-radius: 10px;
-	padding: 2px 10px 3px 10px;
 }
 
 .ToolbarBackground
@@ -780,12 +783,6 @@ html > body > div button, html > body > div .Button
 	color: #2a2a2a;
 	padding: 5px 10px;
 	font-size: 0.9em;
-}
-
-html body button.IconButton:not(:hover), 
-html body .Button.IconButton:not(:hover)
-{
-	border: 1px solid rgba(0,0,0,0) !important;
 }
 
 html body .BigButton

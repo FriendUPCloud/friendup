@@ -193,3 +193,7 @@ i18n_fnetAskOnlyToCommunity			 : Ask only to your main community
 i18n_fnetAskOnlyToFriends			 : Ask only to friends
 i18n_fnetSharingPower				 : Share your power
 i18n_fnetAskForPower				 : Ask for power
+
+i18n_leave_group                        : Leave group.
+i18n_other_groups                       : Group memberships
+

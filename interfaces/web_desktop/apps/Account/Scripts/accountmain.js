@@ -156,6 +156,35 @@ function refreshGroups( keys )
 		ge( 'GroupList' ).innerHTML = str;
 	}
 	m.execute( 'listworkgroups' );
+	
+	let n = new Module( 'system' );
+	n.onExecuted = function( e, d )
+	{
+		if( e != 'ok' ) { ge( 'OtherGroups' ).innerHTML = ''; return; }
+		try
+		{
+			d = JSON.parse( d );
+		}
+		catch( e ){ ge( 'OtherGroups' ).innerHTML = ''; return; }
+		
+		let str = '<hr class="Divider"/>';
+		
+		str += '<div class="Padding"><h2>' + i18n( 'i18n_other_groups' ) + '</h2><div class="List">';
+		let sw = 2;
+		for( let a = 0; a < d.length; a++ )
+		{
+			let button = !d[a].Admin ? ( '<button type="button" class="Button IconSmall fa-remove NoText IconButton" title="' + i18n( 'i18n_leave_group' ) + '"></button>' ) : '';
+			
+			sw = sw == 1 ? 2 : 1;
+			str += '<div class="HRow sw' + sw + '">\
+				<div class="PaddingSmall FloatLeft HContent80">' + d[a].Name + '</div>\
+				<div class="PaddingSmall FloatLeft HContent20 TextRight">' + button + '</div>\
+			</div>';
+		}
+		str += '</div></div>';
+		ge( 'OtherGroups' ).innerHTML = str;
+	}
+	n.execute( 'listworkgroups', { mode: 'onlymember' } );
 }
 
 function createGroup()
