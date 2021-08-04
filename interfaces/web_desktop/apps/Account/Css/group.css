@@ -1,7 +1,12 @@
 #groupDescription
 {
-	height: 150px;
+	height: 70px;
 	resize: none;
+}
+
+button.Invite
+{
+	height: 30px;
 }
 
 #Relations

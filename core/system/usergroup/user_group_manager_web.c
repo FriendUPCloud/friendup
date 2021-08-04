@@ -1879,7 +1879,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			int tmpsize = 0;
 			BufString *retString = BufStringNew();
 			BufStringAddSize( retString, "ok<!--separate-->{", 18 );
-			UserGroup *ug = UGMGetGroupByID( l->sl_UGM, groupID );
+			UserGroup *ug = UGMGetGroupByIDDB( l->sl_UGM, groupID );
 			if( ug != NULL )
 			{
 				tmpsize = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"uuid\":\"%s\",\"userid\":%lu,\"name\":\"%s\",\"parentid\":%lu,\"type\":\"%s\",\"status\":%d,\"users\":[", groupID, ug->ug_UUID, ug->ug_UserID, ug->ug_Name, ug->ug_ParentID, ug->ug_Type, ug->ug_Status );
@@ -1934,6 +1934,10 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			
 			retString->bs_Buffer = NULL;
 			BufStringDelete( retString );
+			if( ug != NULL )
+			{
+				UserGroupDeleteAll( l, ug );
+			}
 		}
 		else	// if user is not admin, get user groups by permission module call
 		{
@@ -2097,6 +2101,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 
 							FFree( rmEntry );
 						} // while ugroups
+						
+						UserGroupDeleteAll( l, ug );
 					} // ug != NULL
 				}
 				else
@@ -2290,125 +2296,214 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				
 				if( ug == NULL )
 				{
-					itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"userids\":[", groupID );
-				}
-				else
-				{
-					itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"uuid\":\"%s\",\"userids\":[", groupID, ug->ug_UUID );
-				}
-				BufStringAddSize( retString, tmp, itmp );
-				BufStringAddSize( retExtString, tmp, itmp );
-				
-				// get required information for external servers
-			
-				SQLLibrary *sqlLib = l->LibrarySQLGet( l );
-				if( sqlLib != NULL )
-				{
-					char tmpQuery[ 512 ];
-					snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.UniqueID,u.Status FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserID in(%s) AND ug.UserGroupID=%lu", usersSQL, groupID );
-					void *result = sqlLib->Query(  sqlLib, tmpQuery );
-					if( result != NULL )
+					ug = UGMGetGroupByIDDB( l->sl_UGM, groupID );
+					
+					if( ug == NULL )
 					{
-						int pos = 0;
-						char **row;
-						while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
-						{
-							char *end;
-
-							if( pos == 0 )
-							{
-								itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"status\":\"%s\"}", (char *)row[ 0 ], (char *)row[ 1 ] );
-							}
-							else
-							{
-								itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"status\":\"%s\"}", (char *)row[ 0 ], (char *)row[ 1 ] );
-							}
-							BufStringAddSize( retString, tmp, itmp );
-							
-							if( pos == 0 )
-							{
-								itmp = snprintf( tmp, sizeof(tmp), "\"%s\"", (char *)row[ 0 ] );
-							}
-							else
-							{
-								itmp = snprintf( tmp, sizeof(tmp), ",\"%s\"", (char *)row[ 0 ] );
-							}
-							BufStringAddSize( retExtString, tmp, itmp );
-							
-							pos++;
-						}
-						
-						sqlLib->FreeResult( sqlLib, result );
+						itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"userids\":[", groupID );
 					}
-
-					l->LibrarySQLDrop( l, sqlLib );
-				}
-				
-				//
-				
-				if( ug != NULL )
-				{
-					// go through all elements and find proper users
-					
-					IntListEl *el = ILEParseString( users );
-					
-					while( el != NULL )
+					else
 					{
-						IntListEl *rmEntry = el;
-						
-						el = (IntListEl *)el->node.mln_Succ;
-						
-						FBOOL isInGroup = FALSE;
-						FBOOL isInMemory = FALSE;
-						// get user from memory first
-						User *usr = UMGetUserByID( l->sl_UM, (FULONG)rmEntry->i_Data );
-						if( usr != NULL )
+						itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"uuid\":\"%s\",\"userids\":[", groupID, ug->ug_UUID );
+					}
+					BufStringAddSize( retString, tmp, itmp );
+					BufStringAddSize( retExtString, tmp, itmp );
+				
+					// get required information for external servers
+			
+					SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+					if( sqlLib != NULL )
+					{
+						char tmpQuery[ 512 ];
+						snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.UniqueID,u.Status FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserID in(%s) AND ug.UserGroupID=%lu", usersSQL, groupID );
+						void *result = sqlLib->Query(  sqlLib, tmpQuery );
+						if( result != NULL )
 						{
-							if( UserGroupRemoveUser( ug, usr ) == 0 )	// 1 - user is in group, no need to add him twice
+							int pos = 0;
+							char **row;
+							while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 							{
-								isInGroup = TRUE;
+								char *end;
+
+								if( pos == 0 )
+								{
+									itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"status\":\"%s\"}", (char *)row[ 0 ], (char *)row[ 1 ] );
+								}
+								else
+								{
+									itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"status\":\"%s\"}", (char *)row[ 0 ], (char *)row[ 1 ] );
+								}
+								BufStringAddSize( retString, tmp, itmp );
+							
+								if( pos == 0 )
+								{
+									itmp = snprintf( tmp, sizeof(tmp), "\"%s\"", (char *)row[ 0 ] );
+								}
+								else
+								{
+									itmp = snprintf( tmp, sizeof(tmp), ",\"%s\"", (char *)row[ 0 ] );
+								}
+								BufStringAddSize( retExtString, tmp, itmp );
+							
+								pos++;
 							}
-							isInMemory = TRUE;
+							sqlLib->FreeResult( sqlLib, result );
 						}
-						//else // to be sure that entry is removed from DB
+						l->LibrarySQLDrop( l, sqlLib );
+					}
+				
+					//
+				
+					if( ug != NULL )
+					{
+						// go through all elements and find proper users
+					
+						IntListEl *el = ILEParseString( users );
+					
+						while( el != NULL )
 						{
-							// there is need to check and update DB
-							//FBOOL exist = UGMUserToGroupISConnectedDB( l->sl_UGM, groupID, User *u );
+							IntListEl *rmEntry = el;
+						
+							el = (IntListEl *)el->node.mln_Succ;
+
 							FBOOL exist = UGMUserToGroupISConnectedByUIDDB( l->sl_UGM, groupID, rmEntry->i_Data );
 							if( exist == TRUE )
 							{
 								UGMRemoveUserFromGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
 							}
+						
+							// remove drive from user from memory
+						
+							FFree( rmEntry );
 						}
-						
-						// remove drive from user from memory
-						
-						if( isInMemory == TRUE )
-						{
-							int error = 0;
-							// wait till drive is removed/detached
-							do
-							{
-								error = 0; // set error to 0 and check if OPS is in progress
-								
-								File *remDrive = UserRemDeviceByGroupID( usr, groupID, &error );
-								if( remDrive != NULL )
-								{
-									FHandler *fsys = (FHandler *)remDrive->f_FSys;
-									fsys->Release( fsys, remDrive );	// release drive data
-								}
-								usleep( 500 );
-							}while( error == FSys_Error_OpsInProgress );
-							
-							// if device was detached from not current user
-							//if( usr != loggedSession->us_User )
-							{
-								UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
-							}
-						}
-						
-						FFree( rmEntry );
+					} // ug = NULL
+					
+					// remove from mem, entries were loaded from DB
+					
+					UserGroupDeleteAll( l, ug );
+				}
+				else	// group found in memory, so we can move forward
+				{
+				
+					if( ug == NULL )
+					{
+						itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"userids\":[", groupID );
 					}
+					else
+					{
+						itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"uuid\":\"%s\",\"userids\":[", groupID, ug->ug_UUID );
+					}
+					BufStringAddSize( retString, tmp, itmp );
+					BufStringAddSize( retExtString, tmp, itmp );
+				
+					// get required information for external servers
+			
+					SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+					if( sqlLib != NULL )
+					{
+						char tmpQuery[ 512 ];
+						snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.UniqueID,u.Status FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserID in(%s) AND ug.UserGroupID=%lu", usersSQL, groupID );
+						void *result = sqlLib->Query(  sqlLib, tmpQuery );
+						if( result != NULL )
+						{
+							int pos = 0;
+							char **row;
+							while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+							{
+								char *end;
+
+								if( pos == 0 )
+								{
+									itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"status\":\"%s\"}", (char *)row[ 0 ], (char *)row[ 1 ] );
+								}
+								else
+								{
+									itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"status\":\"%s\"}", (char *)row[ 0 ], (char *)row[ 1 ] );
+								}
+								BufStringAddSize( retString, tmp, itmp );
+							
+								if( pos == 0 )
+								{
+									itmp = snprintf( tmp, sizeof(tmp), "\"%s\"", (char *)row[ 0 ] );
+								}
+								else
+								{
+									itmp = snprintf( tmp, sizeof(tmp), ",\"%s\"", (char *)row[ 0 ] );
+								}
+								BufStringAddSize( retExtString, tmp, itmp );
+							
+								pos++;
+							}
+							sqlLib->FreeResult( sqlLib, result );
+						}
+						l->LibrarySQLDrop( l, sqlLib );
+					}
+				
+					//
+				
+					if( ug != NULL )
+					{
+						// go through all elements and find proper users
+					
+						IntListEl *el = ILEParseString( users );
+					
+						while( el != NULL )
+						{
+							IntListEl *rmEntry = el;
+						
+							el = (IntListEl *)el->node.mln_Succ;
+						
+							FBOOL isInGroup = FALSE;
+							FBOOL isInMemory = FALSE;
+							// get user from memory first
+							User *usr = UMGetUserByID( l->sl_UM, (FULONG)rmEntry->i_Data );
+							if( usr != NULL )
+							{
+								if( UserGroupRemoveUser( ug, usr ) == 0 )	// 1 - user is in group, no need to add him twice
+								{
+									isInGroup = TRUE;
+								}
+								isInMemory = TRUE;
+							}
+							//else // to be sure that entry is removed from DB
+							{
+								// there is need to check and update DB
+								//FBOOL exist = UGMUserToGroupISConnectedDB( l->sl_UGM, groupID, User *u );
+								FBOOL exist = UGMUserToGroupISConnectedByUIDDB( l->sl_UGM, groupID, rmEntry->i_Data );
+								if( exist == TRUE )
+								{
+									UGMRemoveUserFromGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
+								}
+							}
+						
+							// remove drive from user from memory
+						
+							if( isInMemory == TRUE )
+							{
+								int error = 0;
+								// wait till drive is removed/detached
+								do
+								{
+									error = 0; // set error to 0 and check if OPS is in progress
+								
+									File *remDrive = UserRemDeviceByGroupID( usr, groupID, &error );
+									if( remDrive != NULL )
+									{
+										FHandler *fsys = (FHandler *)remDrive->f_FSys;
+										fsys->Release( fsys, remDrive );	// release drive data
+									}
+									usleep( 500 );
+								}while( error == FSys_Error_OpsInProgress );
+							
+								// if device was detached from not current user
+								//if( usr != loggedSession->us_User )
+								{
+									UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
+								}
+							}
+							FFree( rmEntry );
+						}
+					} // ug = NULL
 				}
 				
 				BufStringAddSize( retString, "]", 1 );

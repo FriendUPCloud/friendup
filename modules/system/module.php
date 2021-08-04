@@ -274,6 +274,9 @@ if( isset( $args->command ) )
 			if( isset( $User ) )
 				require( 'modules/system/include/invites.php' );
 			break;
+		case 'leavegroup':
+			require( 'modules/system/include/leavegroup.php' );
+			break;
 		case 'ping':
 			if( isset( $UserSession ) && isset( $UserSession->UserID ) )
 			{

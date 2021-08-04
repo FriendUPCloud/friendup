@@ -3438,8 +3438,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	title = document.createElement( 'a' );
 	title.className = 'Title';
 	let tl = ( fileInfo.Title ? fileInfo.Title :
-		( fileInfo.Filename ? fileInfo.Filename : 'Uten navn' ) );
-	title.innerHTML = tl;
+		( fileInfo.Filename ? fileInfo.Filename : 'Unnamed' ) );
+	title.innerHTML = '<span>' + tl + '</span>';
 	title.title = tl;
 	file.title = title.title;
 	file.titleElement = title;

@@ -194,3 +194,10 @@ i18n_fnetAskOnlyToFriends			 : Spør bare til venner
 i18n_fnetSharingPower				 : Del strømmen din
 i18n_fnetAskForPower				 : Be om kraft
 
+i18n_leave_group                        : Forlat gruppe.
+i18n_other_groups                       : Medlemsgrupper
+i18n_leave_warning                      : Hvis du forlater gruppen, da mister du kanskje funksjonalitet tilknyttet den.
+i18n_group_name                         : Gruppe navn
+i18n_invite                             : Inviter bruker
+i18n_owner                              : Eier
+

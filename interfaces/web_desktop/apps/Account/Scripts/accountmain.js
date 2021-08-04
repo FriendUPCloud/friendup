@@ -38,7 +38,7 @@ Application.run = function( msg, iface )
 		d.execute( 'getsetting', { setting: 'avatar_color' } );
 	} );
 	
-	refreshGroups();
+	refreshGroups( ge( 'groupSearcher' ).value );
 	
 	// Clear / autoregenerate avatar
 	ge( 'ClearAvatar' ).onclick = function( e )
@@ -156,6 +156,60 @@ function refreshGroups( keys )
 		ge( 'GroupList' ).innerHTML = str;
 	}
 	m.execute( 'listworkgroups' );
+	
+	let n = new Module( 'system' );
+	n.onExecuted = function( e, d )
+	{
+		if( e != 'ok' ) { ge( 'OtherGroups' ).innerHTML = ''; return; }
+		try
+		{
+			d = JSON.parse( d );
+		}
+		catch( e ){ ge( 'OtherGroups' ).innerHTML = ''; return; }
+		
+		let str = '<hr class="Divider"/>';
+		
+		str += '<div class="Padding"><h2>' + i18n( 'i18n_other_groups' ) + '</h2><div class="List">';
+		str += '<div class="HRow">\
+				<div class="PaddingSmall FloatLeft HContent40"><strong>' + i18n( 'i18n_group_name' ) + ':</strong></div>\
+				<div class="PaddingSmall FloatLeft HContent40"><strong>' + i18n( 'i18n_owner' ) + ':</strong></div>\
+				<div class="PaddingSmall FloatLeft HContent20 TextRight"></div>\
+			</div>';
+		let sw = 2;
+		for( let a = 0; a < d.length; a++ )
+		{
+			let button = '<button type="button" class="Button IconSmall fa-remove NoText IconButton" title="' + i18n( 'i18n_leave_group' ) + '" onclick="leaveGroup(\'' + d[a].ID + '\')"></button>';
+			
+			sw = sw == 1 ? 2 : 1;
+			str += '<div class="HRow sw' + sw + '">\
+				<div class="PaddingSmall FloatLeft HContent40">' + d[a].Name + '</div>\
+				<div class="PaddingSmall FloatLeft HContent40">' + d[a].Invitor + '</div>\
+				<div class="PaddingSmall FloatLeft HContent20 TextRight">' + button + '</div>\
+			</div>';
+		}
+		str += '</div></div>';
+		ge( 'OtherGroups' ).innerHTML = str;
+	}
+	n.execute( 'listworkgroups', { mode: 'invites' } );
+}
+
+function leaveGroup( gid )
+{
+	Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_leave_warning' ), function( data )
+	{
+		if( data.data == true )
+		{
+			let m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				if( e == 'ok' )
+				{
+					refreshGroups( ge( 'groupSearcher' ).value );
+				}
+			}
+			m.execute( 'leavegroup', { groupId: gid } );
+		}
+	} );
 }
 
 function createGroup()
@@ -331,7 +385,7 @@ Application.receiveMessage = function( msg )
 	switch( msg.command )
 	{
 		case 'refreshgroups':
-			refreshGroups();
+			refreshGroups( ge( 'groupSearcher' ).value );
 			break;
 		case 'addstorage':
 			addStorage( 'quitonclose' );
