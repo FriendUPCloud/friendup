@@ -678,7 +678,7 @@ html #DoorsScreen > .ScreenContent > div > div > .File .Title
 	overflow: visible !important;
 }
 
-html #DoorsScreen > .ScreenContent > div > div > .File:not(.Selected) .Title > span
+html body.Box #DoorsScreen > .ScreenContent > div > div > .File:not(.Selected) .Title > span
 {
 	background: rgba(0,0,0,0.3);
 }
