@@ -5,10 +5,13 @@
 			<div class="HContent30 FloatLeft">
 				<p class="Layout"><strong>{i18n_name}:</strong></p>
 			</div>
-			<div class="HContent70 FloatLeft">
-				<p class="Layout">
+			<div class="HContent45 FloatLeft">
+				<p class="Layout Relative">
 					<input type="text" id="groupName" class="FullWidth InputHeight" value="{Name}"/>
 				</p>
+			</div>
+			<div class="HContent25 FloatLeft PaddingLeft">
+				<p class="Layout"><button type="button" class="IconSmall fa-user-plus Invite Button FullWidth">{i18n_invite}</button></p>
 			</div>
 			<div class="HRow">
 				<div class="HContent30 FloatLeft">
@@ -16,7 +19,7 @@
 				</div>
 				<div class="HContent70 FloatLeft">
 					<p class="Layout">
-						<textarea id="groupDescription" class="FullWidth" size="8">{Description}</textarea>
+						<textarea id="groupDescription" class="FullWidth" size="3">{Description}</textarea>
 					</p>
 				</div>
 			</div>
@@ -42,7 +45,7 @@
 			{i18n_save}
 		</button>
 		<button type="button" class="Button IconSmall fa-remove FloatLeft" onclick="CloseView()">
-			{i18n_cancel}
+			{i18n_close}
 		</button>
 		<button type="button" id="dGroup" class="Button IconSmall fa-trash FloatLeft{DeleteCl}" onclick="deleteGroup()">
 			{i18n_delete}

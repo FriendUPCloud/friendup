@@ -198,5 +198,6 @@ i18n_leave_group                        : Leave group.
 i18n_other_groups                       : Group memberships
 i18n_leave_warning                      : If you leave, you may lose access to functionality that is connected to this group.
 i18n_group_name                         : Group name
+i18n_invite                             : Invite users
 i18n_owner                              : Owner
 
