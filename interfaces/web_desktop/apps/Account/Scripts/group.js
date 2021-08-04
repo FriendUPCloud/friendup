@@ -1,3 +1,13 @@
+/*©agpl*************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
+*                                                                              *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
+*                                                                              *
+*****************************************************************************©*/
+
 Application.run = function()
 {
 	groupUsers( function(){ listConnectedUsers(); } );
@@ -156,6 +166,25 @@ function groupUsers( callback )
 		if( callback ) callback();
 	}
 	m.execute( 'listconnectedusers', { groupId: gid, limit: 11 } );
+}
+
+function doInvite()
+{
+	if( !ge( 'groupId' ).value ) return;
+	
+	let v = new View( {
+		title: i18n( 'i18n_invite_user' ),
+		width: 500,
+		height: 140
+	} );
+	
+	let t = new File( 'Progdir:Templates/invite_user.html' );
+	t.i18n();
+	t.onLoad = function( data )
+	{
+		v.setContent( data );
+	}
+	t.load();
 }
 
 // Invite a user to participate in group
