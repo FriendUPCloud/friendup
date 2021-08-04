@@ -154,9 +154,7 @@
 	box-sizing: border-box;
 	padding: 10px;
 	margin-bottom: 5px;
-	line-height: 76px;
 	border: 2px solid rgba(0,0,0,0.25);
-	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;
 }
@@ -171,6 +169,20 @@
 .Collections > .Collection > .Name.sw2
 {
 	background-color: rgba(0,0,0,0.1);
+}
+
+.Collections > .Collection > .Name > span
+{
+	margin: 25px 0 0 0;
+	background-color: rgba(0,0,0,0.5);
+	display: inline-block;
+	border-radius: 15px;
+	color: white;
+	text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+	max-width: 85%;
+	text-overflow: ellipsis;
+	overflow-x: hidden;
+	padding: 2px 8px;
 }
 
 .Collection .Buttons

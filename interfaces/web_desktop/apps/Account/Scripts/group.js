@@ -1,3 +1,13 @@
+/*©agpl*************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
+*                                                                              *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
+*                                                                              *
+*****************************************************************************©*/
+
 Application.run = function()
 {
 	groupUsers( function(){ listConnectedUsers(); } );
@@ -32,7 +42,7 @@ function listConnectedUsers( limit, pos, keyw )
 					' + list[a].Fullname + '\
 				</div>\
 				<div class="HContent40 FloatLeft PaddingSmall TextRight">\
-					<button type="button" class="Button IconSmall NoText fa-user-plus" onclick="inviteUser(' + list[a].ID + ')" title="' + i18n( 'i18n_invite_user_to_group' ) + '"></button>\
+					<button type="button" class="Button IconSmall NoText fa-user-plus IconButton" onclick="inviteUser(' + list[a].ID + ')" title="' + i18n( 'i18n_invite_user_to_group' ) + '"></button>\
 				</div>\
 			</div>';
 			sw = sw == 1 ? 2 : 1;
@@ -67,7 +77,7 @@ function listConnectedUsers( limit, pos, keyw )
 					' + list[a].Fullname + '\
 				</div>\
 				<div class="HContent20 FloatLeft Ellipsis PaddingSmall TextRight">\
-					<button class="Button IconSmall fa-remove NoText" onclick="removeInvite(\'' + list[a].EventID + '\')"></button>\
+					<button class="Button IconSmall fa-remove NoText IconButton" onclick="removeInvite(\'' + list[a].EventID + '\')"></button>\
 				</div>\
 			</div>';
 			sw = sw == 1 ? 2 : 1;
@@ -97,6 +107,19 @@ function searchUser( keyw )
 function groupUsers( callback )
 {
 	let gid = ge( 'groupId' ).value ? ge( 'groupId' ).value : '0';
+	
+	if( parseInt( gid ) > 0 )
+	{
+		ge( 'InviteColumn' ).style.display = '';
+		ge( 'NameColumn' ).classList.remove( 'HContent70' );
+		ge( 'NameColumn' ).classList.add( 'HContent45' );
+	}
+	else
+	{
+		ge( 'InviteColumn' ).style.display = 'none';
+		ge( 'NameColumn' ).classList.add( 'HContent70' );
+		ge( 'NameColumn' ).classList.remove( 'HContent45' );
+	}
 	
 	let m = new Module( 'system' );
 	m.onExecuted = function( e, d )
@@ -131,7 +154,7 @@ function groupUsers( callback )
 					' + list[a].Fullname + me + '\
 				</div>\
 				' + ( me == '' ? ( '<div class="HContent40 FloatLeft PaddingSmall TextRight">\
-					<button type="button" class="Button IconSmall NoText fa-remove" onclick="removeUser(' + list[a].ID + ')" title="' + i18n( 'i18n_remove_from_group' ) + '"></button>\
+					<button type="button" class="Button IconSmall NoText fa-remove IconButton" onclick="removeUser(' + list[a].ID + ')" title="' + i18n( 'i18n_remove_from_group' ) + '"></button>\
 				</div>' ) : '' ) + '\
 			</div>';
 			sw = sw == 1 ? 2 : 1;
@@ -143,6 +166,25 @@ function groupUsers( callback )
 		if( callback ) callback();
 	}
 	m.execute( 'listconnectedusers', { groupId: gid, limit: 11 } );
+}
+
+function doInvite()
+{
+	if( !ge( 'groupId' ).value ) return;
+	
+	let v = new View( {
+		title: i18n( 'i18n_invite_user' ),
+		width: 500,
+		height: 140
+	} );
+	
+	let t = new File( 'Progdir:Templates/invite_user.html' );
+	t.i18n();
+	t.onLoad = function( data )
+	{
+		v.setContent( data );
+	}
+	t.load();
 }
 
 // Invite a user to participate in group
@@ -267,6 +309,9 @@ function saveGroup()
 			{
 			
 				let t = JSON.parse( d );
+				
+				Application.sendMessage( { command: 'resizeGroupWindow', viewId: Application.viewId } );
+				
 				ge( 'groupId' ).value = t.id;
 				joinGroup( t.id, function()
 				{

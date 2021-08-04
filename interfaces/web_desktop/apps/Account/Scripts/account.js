@@ -186,6 +186,9 @@ Application.receiveMessage = function( msg )
 	
 	switch( msg.command )
 	{
+		case 'resizeGroupWindow':
+			Application.mainView.sendMessage( { command: 'resizeGroupWindow', viewId: msg.viewId } );
+			break;
 		case 'refreshgroups':
 			Application.mainView.sendMessage( { command: 'refreshgroups' } );
 			break;

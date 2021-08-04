@@ -126,7 +126,7 @@ function refreshGroups( keys )
 			if( !list[a].description )
 				list[a].description = '';
 			str += '<div class="sw' + sw + ' Collection">\
-				<div class="Name" title="' + list[a].Name + '">' + list[a].Name + '</div>\
+				<div class="Name" title="' + list[a].Name + '"><span>' + list[a].Name + '</span></div>\
 				<div class="Buttons">\
 					<button type="button" class="Button IconSmall fa-edit NoText" title="' + i18n( 'i18n_edit_group' ) + '" onclick="editGroup(\'' + list[a].ID + '\')"></button>\
 				</div>\
@@ -212,13 +212,19 @@ function leaveGroup( gid )
 	} );
 }
 
+let mviews = {};
+
 function createGroup()
 {
 	let v = new View( {
 		title: i18n( 'i18n_create_group' ),
 		width: 500,
-		height: 500
+		height: 200
 	} );
+	
+	let vid = v.getViewId()
+	
+	mviews[ vid ] = v;
 	
 	let f = new File( 'Progdir:Templates/group.html' );
 	f.replacements = {
@@ -234,6 +240,16 @@ function createGroup()
 		v.setContent( d );
 	}
 	f.load();
+	
+	v.onClose = function()
+	{
+		let out = {};
+		for( let a in mviews )
+		{
+			if( a != vid ) out[ a ] = mviews[ a ];
+		}
+		mviews = out;
+	}
 }
 
 function editGroup( id )
@@ -384,6 +400,12 @@ Application.receiveMessage = function( msg )
 	
 	switch( msg.command )
 	{
+		case 'resizeGroupWindow':
+			if( mviews[ msg.viewId ] )
+			{
+				mviews[ msg.viewId ].setFlag( 'height', 500 );
+			}
+			break;
 		case 'refreshgroups':
 			refreshGroups( ge( 'groupSearcher' ).value );
 			break;
