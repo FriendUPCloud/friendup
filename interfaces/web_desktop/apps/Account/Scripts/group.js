@@ -98,6 +98,19 @@ function groupUsers( callback )
 {
 	let gid = ge( 'groupId' ).value ? ge( 'groupId' ).value : '0';
 	
+	if( parseInt( gid ) > 0 )
+	{
+		ge( 'InviteColumn' ).style.display = '';
+		ge( 'NameColumn' ).classList.remove( 'HContent70' );
+		ge( 'NameColumn' ).classList.add( 'HContent45' );
+	}
+	else
+	{
+		ge( 'InviteColumn' ).style.display = 'none';
+		ge( 'NameColumn' ).classList.add( 'HContent70' );
+		ge( 'NameColumn' ).classList.remove( 'HContent45' );
+	}
+	
 	let m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
@@ -267,6 +280,9 @@ function saveGroup()
 			{
 			
 				let t = JSON.parse( d );
+				
+				Application.sendMessage( { command: 'resizeGroupWindow', viewId: Application.viewId } );
+				
 				ge( 'groupId' ).value = t.id;
 				joinGroup( t.id, function()
 				{
