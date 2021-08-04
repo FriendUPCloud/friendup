@@ -6390,8 +6390,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					if( window.applicationStarted ) return;
 					window.applicationStarted = true;
-					if ( !Application.authId )
-						Friend.renewAuthId();
 					if( packet.state ) Application.sessionStateSet( packet.state );
 					for( let a = 0; a < activat.length; a++ )
 						ExecuteScript( activat[a] );

@@ -167,14 +167,12 @@ var FriendLibrary = function ( library, encryption )
 					return t.onExecuted( json );
 				}
 				// No json then..
-				console.log( 'no json then ????', d );
 				t.onExecuted( rc, d );
 				t.destroy();
 			}
 			// No, it's not that
 			catch( e )
 			{
-				console.log( 'FriendLibrary, couldnt parse', d );
 				// Used for localization of responses etc
 				if( d && d.length && t.replacements )
 				{

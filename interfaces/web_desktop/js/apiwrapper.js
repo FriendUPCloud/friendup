@@ -2423,9 +2423,6 @@ function apiWrapper( event, force )
 				break;
 			// Module ----------------------------------------------------------
 			case 'module':
-				const msgStr = JSON.stringify( msg );
-				const msgCpy = JSON.parse( msgStr );
-				console.log( 'apiwrapper - module', msgCpy );
 				var fileId = msg.fileId;
 
 				// Perhaps do error?

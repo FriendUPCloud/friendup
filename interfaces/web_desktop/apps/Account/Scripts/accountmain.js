@@ -1645,12 +1645,13 @@ ns.TabTokens.prototype.getReadableStatus = function( statusNum )
 		return 'ur nan';
 	
 	const status = self.statuses[ index ];
-	console.log( 'getReadableStatus', [ statusNum, index, status ]);
 	if ( null == status )
 		return 'no u';
 	
 	const tail = status.split( '_' )[ 3 ];
-	return tail;
+	const i18str = 'i18n_' + tail;
+	const plain = i18n( i18str );
+	return plain;
 }
 
 ns.TabTokens.prototype.setStatusOptions = function( selectEl, select )
