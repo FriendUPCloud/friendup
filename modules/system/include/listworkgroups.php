@@ -45,7 +45,7 @@ else if( $args->args->mode == 'invites' )
 	// And join in the level of the owner of the group you are member of
 	if( $rows = $SqlDatabase->fetchObjects( '
 		SELECT 
-			g.*, q.Status, qu.Fullname
+			g.*, q.Status, qu.Fullname AS Invitor
 		FROM 
 			FUserGroup g, FQueuedEvent q, FUser qu
 		WHERE 

@@ -177,7 +177,8 @@ function refreshGroups( keys )
 			
 			sw = sw == 1 ? 2 : 1;
 			str += '<div class="HRow sw' + sw + '">\
-				<div class="PaddingSmall FloatLeft HContent80">' + d[a].Name + ' (' + d[a].Level + ')</div>\
+				<div class="PaddingSmall FloatLeft HContent40">' + d[a].Name + '</div>\
+				<div class="PaddingSmall FloatLeft HContent40">' + d[a].Invitor + '</div>\
 				<div class="PaddingSmall FloatLeft HContent20 TextRight">' + button + '</div>\
 			</div>';
 		}
