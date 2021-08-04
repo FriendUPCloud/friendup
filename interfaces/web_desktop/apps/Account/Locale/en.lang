@@ -175,3 +175,6 @@ i18n_host                            : Host
 i18n_add_host                        : Add host
 i18n_status                          : Status
 i18n_remove                          : Remove
+i18n_NONE                            : None
+i18n_ALLOWED                         : Allowed
+i18n_BLOCKED                         : Blocked
