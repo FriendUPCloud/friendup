@@ -118,8 +118,6 @@ Friend.User = {
     		this.lastLogin.currentRequest.destroy();
     	}
     	
-    	let self = this;
-    	
     	// Create a new library call object
 		let m = new FriendLibrary( 'system' );
 		this.lastLogin = m;
@@ -127,9 +125,11 @@ Friend.User = {
 		if( info.username && info.password )
 		{
 			Workspace.sessionId = '';
+			this.refreshToken = '';
 			m.addVar( 'username', info.username );
 			m.addVar( 'password', info.hashedPassword ? info.password : ( 'HASHED' + Sha256.hash( info.password ) ) );
 			
+			/*
 			try
 			{
 				let enc = parent.Workspace.encryption;
@@ -142,10 +142,15 @@ Friend.User = {
 				Workspace.loginPassword = enc.encrypt( info.password, enc.getKeys().publickey );
 				Workspace.loginHashed = info.hashedPassword;
 			}
+			*/
 		}
 		else if( info.sessionid )
 		{
 			m.addVar( 'sessionid', info.sessionid );
+		}
+		else if ( info.refreshtoken )
+		{
+			m.addVar( 'refreshtoken', info.refreshtoken );
 		}
 		else
 		{
@@ -155,31 +160,45 @@ Friend.User = {
 		}
 		
 		m.addVar( 'deviceid', GetDeviceId() );
-		m.onExecuted = function( json, serveranswer )
+		m.onExecuted = function( conf, serveranswer )
 		{
-			Friend.User.lastLogin = null;
+			console.log( 'SendLoginCall - response', {
+				conf         : conf,
+				serveranswer : serveranswer,
+			});
+			if( conf == null )
+			{
+				Friend.User.ReLogin();
+				return;
+			}
+			
+			if ( !conf.refreshtoken ) {
+				console.log( 'login response', conf );
+				throw new Error( 'Login response does not have a refreshtoken' );
+			}
+			
+			this.refreshToken = conf.refreshtoken;
+			this.lastLogin = null;
 			
 			// We got a real error
-			if( json == null )
-			{
-				return Friend.User.ReLogin();
-			}
+			
 			try
 			{
 				let enc = Workspace.encryption;
 				
-				if( json.username || json.loginid )
+				if( conf.username || conf.loginid )
 				{
-					Workspace.sessionId = json.sessionid;
-					if( json.username )
-						Workspace.loginUsername = json.username;
-					Workspace.loginUserId = json.userid;
-					Workspace.loginid = json.loginid;
-					Workspace.userLevel = json.level;
-					Workspace.fullName = json.fullname;
+					Workspace.sessionId = conf.sessionid;
+					
+					if( conf.username )
+						Workspace.loginUsername = conf.username;
+					Workspace.loginUserId = conf.userid;
+					Workspace.loginid = conf.loginid;
+					Workspace.userLevel = conf.level;
+					Workspace.fullName = conf.fullname;
 					
 					// If we have inviteHash, verify and add relationship between the inviter and the invitee.
-					if( info.inviteHash ) json.inviteHash = info.inviteHash;
+					if( info.inviteHash ) conf.inviteHash = info.inviteHash;
 					
 					// We are now online!
 					Friend.User.SetUserConnectionState( 'online' );
@@ -187,7 +206,7 @@ Friend.User = {
 					if( !Workspace.userWorkspaceInitialized )
 					{
                 		// Init workspace
-						Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
+						Workspace.initUserWorkspace( conf, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
 					}
 					else
 					{
@@ -232,8 +251,9 @@ Friend.User = {
     	if( !event ) event = window.event;
     	
     	let self = this;
-    	let info = {};
+    	const info = {};
     	
+    	/*
     	if( Workspace.loginUsername && Workspace.loginPassword )
     	{
     		info.username = Workspace.loginUsername;
@@ -241,10 +261,10 @@ Friend.User = {
     		info.password = enc.decrypt( Workspace.loginPassword, enc.getKeys().privatekey );
     		info.hashedPassword = Workspace.loginHashed;
     	}
-    	else if( Workspace.sessionId )
-    	{
-    		info.sessionid = Workspace.sessionId;
-    	}
+    	*/
+    	
+    	info.sessionid = Workspace.sessionId;
+    	info.refreshtoken = Friend.User.refreshToken;
 		
 		// Close conn here - new login regenerates sessionid
 		if( Workspace.conn )
@@ -263,7 +283,7 @@ Friend.User = {
 		// Reset cajax http connections (because we lost connection)
 		_cajax_http_connections = 0;
 		
-		if( info.username || info.sessionid )
+		if( info.refreshtoken || info.sessionid )
 		{
 			this.SendLoginCall( info, callback, 'relogin' );
 		}
