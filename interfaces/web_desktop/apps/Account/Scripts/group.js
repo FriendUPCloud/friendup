@@ -144,7 +144,7 @@ function groupUsers( callback )
 					' + list[a].Fullname + me + '\
 				</div>\
 				' + ( me == '' ? ( '<div class="HContent40 FloatLeft PaddingSmall TextRight">\
-					<button type="button" class="Button IconSmall NoText fa-remove" onclick="removeUser(' + list[a].ID + ')" title="' + i18n( 'i18n_remove_from_group' ) + '"></button>\
+					<button type="button" class="Button IconSmall NoText fa-remove IconButton" onclick="removeUser(' + list[a].ID + ')" title="' + i18n( 'i18n_remove_from_group' ) + '"></button>\
 				</div>' ) : '' ) + '\
 			</div>';
 			sw = sw == 1 ? 2 : 1;
