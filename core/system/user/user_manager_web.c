@@ -848,7 +848,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						
 						sqllib->QueryWithoutResults( sqllib, tmpQuery );
 						
-						sprintf( tmpQuery, "DELETE FROM `FUserToGroup` WHERE UserID=%lu", usr->u_ID );
+						sprintf( tmpQuery, "DELETE FROM `FUserToGroup` WHERE UserID=%lu", id );
 						
 						sqllib->QueryWithoutResults( sqllib, tmpQuery );
 						
