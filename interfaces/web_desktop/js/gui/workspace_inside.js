@@ -360,15 +360,15 @@ var WorkspaceInside = {
 		}
 		else
 		{
-			var f = new File( 'System:templates/invite.html' );
+			var f = new File( 'System:templates/invite_gui.html' );
 		}
 		f.i18n();
 		f.onLoad = function( data )
 		{
 			let v = new View( {
 				title: i18n( 'i18n_invite_friend' ),
-				width: ( version == 1 ? 470 : 700 ),
-				height: ( version == 1 ? 204 : 700 )
+				width: ( version == 1 ? 470 : 580 ),
+				height: ( version == 1 ? 204 : 600 )
 			} );
 			self.inviteView = v;
 			v.onClose = function()
@@ -376,9 +376,10 @@ var WorkspaceInside = {
 				self.inviteView = null;
 			}
 			v.setContent( data );
-			if( version == 1 ) self.addInvite();
+			self.addInvite();
 			self.inviteLoadWorkgroups( '', self.getInviteCallback( 'workgroups' ) );
-			self.invitesGet( self.getInviteCallback( 'invites' ) );
+			self.invitesGet( '', self.getInviteCallback( 'invites' ) );
+			self.pendingInvitesGet( '', self.getInviteCallback( 'pending' ) );
 		}
 		f.load();
 	},
@@ -392,33 +393,107 @@ var WorkspaceInside = {
 		{
 			return function( data )
 			{
-				if( self.inviteView && self.inviteView.content.querySelector( '.MulSelect' ) )
+				if( version == 2 )
 				{
-					try
+					if( self.inviteView && self.inviteView.content.querySelector( '.GroupList' ) )
 					{
-						let str = data;
-						let ostr = '';
-						if( !str.length )
+						try
+						{
+							if( !data ) data = [];
+							
+							data.push( { ID: 0, Name : 'None' } );
+							
+							let str = '<div class="Collections">';
+							let sw = 1;
+							let count = 0;
+							for( let a in data )
+							{
+								str += '<div class="sw' + sw + ' Collection">\
+									<div class="Name' + ( data[a].ID == 0 ? ' Selected' : '' ) + '" title="' + data[a].Name + '">' + data[a].Name + '</div>\
+									<div class="Buttons">\
+										<input type="radio" name="groupid" value="' + data[a].ID + '"/>\
+									</div>\
+								</div>';
+								sw = sw == 1 ? 2 : 1;
+								count++;
+							}
+							
+							str += '</div>';
+							
+							self.inviteView.content.querySelector( '.GroupList' ).innerHTML = str;
+							
+							var inps = self.inviteView.content.querySelector( '.Collections' ).getElementsByTagName( 'input' );
+							
+							if( inps.length > 0 )
+							{
+								for( var i in inps )
+								{
+									if( inps[i] )
+									{
+										inps[i].onclick = ( function (  )
+										{
+											var divs = self.inviteView.content.querySelector( '.Collections' ).getElementsByTagName( 'div' );
+											
+											if( divs.length > 0 )
+											{
+												for( var i in divs )
+												{
+													if( divs[i] && divs[i].className && divs[i].className.indexOf( 'Selected' ) >= 0 )
+													{
+														divs[i].className = divs[i].className.split( ' Selected' ).join( '' );
+													}
+												}
+											}
+											
+											var div = this.parentNode.parentNode.getElementsByTagName( 'div' )[0];
+											
+											div.className = div.className.split( ' Selected' ).join( '' ) + ' Selected';
+											
+											self.addInvite( this.value );
+											self.invitesGet( this.value, self.getInviteCallback( 'invites' ) );
+											self.pendingInvitesGet( this.value, self.getInviteCallback( 'pending' ) );
+											
+										} );
+									}
+								}
+							}
+						}
+						catch( e )
+						{
+							self.inviteView.content.querySelector( '.GroupList' ).innerHTML = '<p class="TextCenter">' + i18n( 'i18n_no_groups_available' ) + '</p>';
+						}
+					}
+				}
+				else
+				{
+					if( self.inviteView && self.inviteView.content.querySelector( '.MulSelect' ) )
+					{
+						try
+						{
+							let str = data;
+							let ostr = '';
+							if( !str.length )
+							{
+								self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = '<option value="0">' + i18n( 'i18n_no_workgroups' ) + '</option>';
+								return;
+							}
+							for( let a = 0; a < str.length; a++ )
+							{
+								ostr += '<option value="' + str[a].ID + '">' + str[a].Name + '</option>';
+							}
+							self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = ostr;
+						}
+						catch( e )
 						{
 							self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = '<option value="0">' + i18n( 'i18n_no_workgroups' ) + '</option>';
-							return;
 						}
-						for( let a = 0; a < str.length; a++ )
-						{
-							ostr += '<option value="' + str[a].ID + '">' + str[a].Name + '</option>';
-						}
-						self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = ostr;
-					}
-					catch( e )
-					{
-						self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = '<option value="0">' + i18n( 'i18n_no_workgroups' ) + '</option>';
 					}
 				}
 			};
 		}
 		else if( type == 'invites' )
 		{
-			return function( data )
+			return function( data, gid )
 			{
 				if( !data )
 				{
@@ -455,13 +530,19 @@ var WorkspaceInside = {
 						details += '<div class="Rounded BackgroundNegative Negative FloatLeft PaddingSmall MarginRight">' + data[a].Workgroups[b].Name + '</div>';
 					}
 					
-					if( version == 1 )
+					if( version == 1 || version == 2 )
 					{
+						if( version == 2 && data[a].Workgroups && ( !gid || gid == 0 ) )
+						{
+							continue;
+						}
+						
 						str += '<div class="InviteBlock MarginBottom Rounded BackgroundLists Padding">\
 							<div class="HRow">\
 								<div class="FloatLeft Link HContent70"><input type="text" class="FullWidth LinkField" style="background: transparent; border: 0" value="' + data[a].Link + '"/></div><div class="Buttons HContent30 FloatLeft TextRight">\
+									<button type="button" class="ImageButton IconSmall fa-send" onclick="alert(\'soon\')"></button>\
 									<button type="button" class="ImageButton IconSmall fa-clipboard" onclick="let sp = this.parentNode.parentNode.querySelector( \'.LinkField\' ); sp.select(); sp.setSelectionRange(0,9999999); document.execCommand(\'copy\');"></button>\
-									<button type="button" class="ImageButton IconSmall fa-refresh" onclick="Workspace.refreshInvite(' + data[a].ID + ')"></button>\
+									<button type="button" class="ImageButton IconSmall fa-refresh" onclick="Workspace.refreshInvite(' + gid + ', ' + data[a].ID + ')"></button>\
 								</div>\
 							</div>\
 						</div>';
@@ -473,7 +554,7 @@ var WorkspaceInside = {
 								<div class="FloatLeft Link HContent70"><input type="text" class="FullWidth LinkField" style="background: transparent; border: 0" value="' + data[a].Link + '"/></div><div class="Buttons HContent30 FloatLeft TextRight">\
 									<button type="button" class="ImageButton IconSmall fa-clipboard" onclick="let sp = this.parentNode.parentNode.querySelector( \'.LinkField\' ); sp.select(); sp.setSelectionRange(0,9999999); document.execCommand(\'copy\');"></button>\
 									<button type="button" class="ImageButton IconSmall fa-eye" onclick="let p = this.parentNode.parentNode.parentNode; if( p.classList.contains( \'Show\' ) ) { p.classList.remove( \'Show\' ); } else { p.classList.add( \'Show\' ); }"></button>\
-									<button type="button" class="ImageButton IconSmall fa-trash" onclick="Workspace.removeInvite(' + data[a].ID + ')"></button>\
+									<button type="button" class="ImageButton IconSmall fa-trash" onclick="Workspace.removeInvite(' + gid + ', ' + data[a].ID + ')"></button>\
 								</div>\
 							</div>\
 							<div class="HiddenDetails NoPadding\">\
@@ -486,27 +567,67 @@ var WorkspaceInside = {
 				self.inviteView.content.querySelector( '.InviteList' ).innerHTML = str;
 			}
 		}
+		else if( type == 'pending' )
+		{
+			return function( data )
+			{
+				
+				let str = '';
+				
+				if( data )
+				{
+					str += '<hr class="Divider"/><h2>' + i18n( 'i18n_pending_invites' ) + '</h2><div>';
+					
+					let sw = 1;
+					
+					for( let a in data )
+					{
+						if( data[a] && data[a].EventID )
+						{
+							str += '<div class="HRow sw' + sw + '">\
+								<div class="HContent80 FloatLeft Ellipsis PaddingSmall">\
+									' + data[a].Fullname + '\
+								</div>\
+								<div class="HContent20 FloatLeft Ellipsis PaddingSmall TextRight">\
+									<button class="Button IconSmall fa-remove NoText" onclick="Workspace.removePendingInvite(\'' + data[a].EventID + '\')"></button>\
+								</div>\
+							</div>';
+							sw = sw == 1 ? 2 : 1;
+						}
+					}
+					
+					str += '</div>';
+				}
+				
+				self.inviteView.content.querySelector( '.PendingList' ).innerHTML = str;
+			}
+		}
 		return null;
 	},
 	// Re-generate a new refresh token
-	refreshInvite( id )
+	refreshInvite( gid, id )
 	{
 		let self = this;
 		
-		self.removeInvite( id, true, function(  )
+		self.removeInvite( gid, id, false, function(  )
 		{
 			
-			self.addInvite();
+			self.addInvite( gid );
 			
 		} );
 	},
 	// Generate a invite
-	addInvite: function()
+	addInvite: function( gid )
 	{
 		let self = this;
 		
 
 		let workgroups = [];
+		
+		if( gid > 0 )
+		{
+			workgroups.push( gid );
+		}
 		
 		if( self.inviteView && self.inviteView.content.querySelector( '.MulSelect' ) )
 		{
@@ -530,7 +651,7 @@ var WorkspaceInside = {
 		{
 			if( e == 'ok' )
 			{
-				self.invitesGet( self.getInviteCallback( 'invites' ) );
+				self.invitesGet( gid, self.getInviteCallback( 'invites' ) );
 			}
 			else
 			{
@@ -542,8 +663,10 @@ var WorkspaceInside = {
 		m.execute( 'generateinvite', { workgroups: ( workgroups ? workgroups.join( ',' ) : '' ) } );
 	},
 	// Remove an invite
-	removeInvite: function( id, force, callback )
+	removeInvite: function( gid, id, force, callback )
 	{
+		if( !id || !callback ) return;
+		
 		let self = this;
 		
 		if( force )
@@ -577,7 +700,12 @@ var WorkspaceInside = {
 					{
 						if( e == 'ok' )
 						{
-							self.invitesGet( self.getInviteCallback( 'invites' ) );
+							if( callback )
+							{
+								callback( e, d );
+							}
+							
+							self.invitesGet( gid, self.getInviteCallback( 'invites' ) );
 						}
 						else
 						{
@@ -587,6 +715,21 @@ var WorkspaceInside = {
 					m.execute( 'removeinvite', { ids: id } );
 				}
 			} );
+		}
+	},
+	// Remove pending invite
+	removePendingInvite: function( gid, eventId )
+	{
+		if( eventId > 0 )
+		{
+			let self = this;
+			
+			let b = new Module( 'system' );
+			b.onExecuted = function( e, d )
+			{
+				self.pendingInvitesGet( gid, self.getInviteCallback( 'pending' ) );
+			}
+			b.execute( 'removependinginvite', { eventId: eventId } );
 		}
 	},
 	// Load workgroups for invite
@@ -628,15 +771,44 @@ var WorkspaceInside = {
 			catch( e ){};
 			callback( false );
 		}
-		m.execute( 'workgroups' );
+		m.execute( 'listworkgroups' );
 	},
 	// Get existing invites
-	invitesGet: function( callback )
+	invitesGet: function( gid, callback )
 	{
 		if( !callback ) return;
 		
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
+		{
+			if( e != 'ok' )
+			{
+				return callback( false, gid );
+			}
+			try
+			{
+				let data = JSON.parse( d );
+				return callback( data, gid );
+			}
+			catch(e){};
+			callback( false, gid );
+		}
+		if( gid > 0 )
+		{
+			m.execute( 'getinvites', { groupId: gid } );
+		}
+		else
+		{
+			m.execute( 'getinvites' );
+		}
+	},
+	// Get pending invites by group
+	pendingInvitesGet: function( gid, callback )
+	{
+		if( !callback ) return;
+		
+		let p = new Module( 'system' );
+		p.onExecuted = function( e, d )
 		{
 			if( e != 'ok' )
 			{
@@ -650,7 +822,7 @@ var WorkspaceInside = {
 			catch(e){};
 			callback( false );
 		}
-		m.execute( 'getinvites' );
+		p.execute( 'getpendinginvites', { groupId: ( gid ? gid : 0 ) } );
 	},
 	// Initialize virtual workspaces
 	initWorkspaces: function()
