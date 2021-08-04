@@ -1845,19 +1845,17 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					{
 						while( sessions != NULL )
 						{
-							UserSession *us = (UserSession *) sessions->us;
-							if( us == NULL )
+							if( sessions->us == NULL )
 							{
 								DEBUG("ERR\n");
 								sessions = (UserSessListEntry *) sessions->node.mln_Succ;
 								continue;
 							}
+							UserSession *us = (UserSession *) sessions->us;
 
-							//if( (us->us_LastActionTime - t) > LOGOUT_TIME )
-							//if( us->us_WSClients != NULL )
 							time_t timestamp = time(NULL);
 							
-							if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+							//if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 							{
 								if( us->us_WSD != NULL && ( (timestamp - us->us_LastActionTime) < l->sl_RemoveSessionsAfterTime ) )
 								{
@@ -1874,7 +1872,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							
 									pos++;
 								}
-								FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+								//FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 							}
 							
 							sessions = (UserSessListEntry *) sessions->node.mln_Succ;
