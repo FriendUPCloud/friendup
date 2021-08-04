@@ -12,11 +12,23 @@
 
 /* List User's own workgroups */
 
-if( $rows = $SqlDatabase->fetchObjects( '
-	SELECT g.* FROM FUserGroup g WHERE g.UserID=\'' . $User->ID . '\' ORDER BY g.Name ASC
-' ) )
+if( !isset( $args->args->mode ) || $args->args->mode == 'own' )
 {
-	die( 'ok<!--separate-->' . json_encode( $rows ) );
+	if( $rows = $SqlDatabase->fetchObjects( '
+		SELECT g.* FROM FUserGroup g WHERE g.UserID=\'' . $User->ID . '\' ORDER BY g.Name ASC
+	' ) )
+	{
+		die( 'ok<!--separate-->' . json_encode( $rows ) );
+	}
+}
+else if( $args->args->mode == 'onlymember' )
+{
+	if( $rows = $SqlDatabase->fetchObjects( '
+		SELECT g.* FROM FUserGroup g WHERE g.UserID !=\'' . $User->ID . '\' ORDER BY g.Name ASC
+	' ) )
+	{
+		die( 'ok<!--separate-->' . json_encode( $rows ) );
+	}
 }
 
 die( 'fail' );

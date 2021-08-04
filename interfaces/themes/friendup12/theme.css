@@ -785,12 +785,6 @@ html > body > div button, html > body > div .Button
 	font-size: 0.9em;
 }
 
-html body button.IconButton:not(:hover), 
-html body .Button.IconButton:not(:hover)
-{
-	border: 1px solid rgba(0,0,0,0) !important;
-}
-
 html body .BigButton
 {
 	border-radius: 3px;
