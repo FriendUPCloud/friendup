@@ -355,6 +355,7 @@ if( $args->command )
 					$s = new stdClass();
 					$s->EventID = $e->ID;
 					$s->UserID = $e->TargetUserID;
+					$s->TargetGroupID = $e->TargetGroupID;
 					$out[] = $s;
 				}
 				if( $rows = $SqlDatabase->fetchObjects( 'SELECT ID, Fullname FROM FUser WHERE ID IN ( ' . implode( ',', $userInfo ) . ' )' ) )
