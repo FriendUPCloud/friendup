@@ -47,13 +47,15 @@ else if( $args->args->mode == 'invites' )
 		SELECT 
 			g.*, q.Status, qu.Fullname AS Invitor
 		FROM 
-			FUserGroup g, FQueuedEvent q, FUser qu
+			FUserGroup g, utg FUserToGroup FQueuedEvent q, FUser qu
 		WHERE 
 			g.ID = q.TargetGroupID AND
 			q.UserID != \'' . $User->ID . '\' AND
 			qu.ID = q.UserID AND
 			q.TargetUserID = \'' . $User->ID . '\' AND
-			q.Type = \'interaction\'
+			q.Type = \'interaction\' AND
+			utg.UserID = \'' . $User->ID . '\' AND
+			utg.UserGroupID = g.ID
 		ORDER BY g.Name ASC
 	' ) )
 	{
