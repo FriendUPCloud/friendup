@@ -126,7 +126,7 @@ function refreshGroups( keys )
 			if( !list[a].description )
 				list[a].description = '';
 			str += '<div class="sw' + sw + ' Collection">\
-				<div class="Name" title="' + list[a].Name + '">' + list[a].Name + '</div>\
+				<div class="Name" title="' + list[a].Name + '"><span>' + list[a].Name + '</span></div>\
 				<div class="Buttons">\
 					<button type="button" class="Button IconSmall fa-edit NoText" title="' + i18n( 'i18n_edit_group' ) + '" onclick="editGroup(\'' + list[a].ID + '\')"></button>\
 				</div>\
