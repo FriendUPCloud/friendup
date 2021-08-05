@@ -15,7 +15,7 @@ Application.run = function()
 
 function sendInvite()
 {
-	let gid = ge( 'groupid' ).value
+	let gid = ge( 'groupid' ).value;
 	
 	let email = ge( 'recipient' ).value;
 	let tname = ge( 'recipientname' ).value;
