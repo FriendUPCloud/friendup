@@ -25,66 +25,83 @@ function listConnectedUsers( limit, pos, keyw )
 	
 	let gid = ge( 'groupId' ).value;
 	
-	let m = new Module( 'system' );
-	m.onExecuted = function( e, d )
-	{
-		if( e != 'ok' )
-		{
-			return ge( 'Usersearch' ).innerHTML = '<p>' + i18n( 'i18n_no_users_connected_to_you' ) + '</p>';
-		}
-		let list = JSON.parse( d );
-		let str = '<div class="List">';
-		let sw = 1;
-		for( let a = 0; a < 10 && a < list.length; a++ )
-		{
-			str += '<div class="HRow sw' + sw + '">\
-				<div class="HContent60 FloatLeft Ellipsis PaddingSmall">\
-					' + list[a].Fullname + '\
-				</div>\
-				<div class="HContent40 FloatLeft PaddingSmall TextRight">\
-					<button type="button" class="Button IconSmall NoText fa-user-plus IconButton" onclick="inviteUser(' + list[a].ID + ')" title="' + i18n( 'i18n_invite_user_to_group' ) + '"></button>\
-				</div>\
-			</div>';
-			sw = sw == 1 ? 2 : 1;
-		}
-		str += '</div>';
-		
-		ge( 'Usersearch' ).innerHTML = str;
-	}
-	let o = { limit: 11 };
-	if( groupUsersList.length > 0 )
-		o.except = groupUsersList;
-	if( keyw )
-		o.keywords = keyw;
-	m.execute( 'listconnectedusers', o );
-	
 	let p = new Module( 'system' );
 	p.onExecuted = function( e, d )
 	{
-		if( e != 'ok' ) { ge( 'Pending' ).innerHTML = ''; return; };
+		let skip = false;
+		if( e != 'ok' ) { ge( 'Pending' ).innerHTML = ''; skip = true; };
 		
 		let list = JSON.parse( d );
 		
-		if( !list.length ) { ge( 'Pending' ).innerHTML = ''; return; };
+		if( !list.length ) { ge( 'Pending' ).innerHTML = ''; skip = true; };
 		
-		let str = '<hr class="Divider"/><p><strong>' + i18n( 'i18n_pending_invites' ) + '</strong></p>';
-		str += '<div class="List">';
-		let sw = 1;
-		for( let a = 0; a < list.length; a++ )
+		if( !skip )
 		{
-			str += '<div class="HRow sw' + sw + '">\
-				<div class="HContent80 FloatLeft Ellipsis PaddingSmall">\
-					' + list[a].Fullname + '\
-				</div>\
-				<div class="HContent20 FloatLeft Ellipsis PaddingSmall TextRight">\
-					<button class="Button IconSmall fa-remove NoText IconButton" onclick="removeInvite(\'' + list[a].EventID + '\')"></button>\
-				</div>\
-			</div>';
-			sw = sw == 1 ? 2 : 1;
-		}
-		str += '</div>';
+			let str = '<hr class="Divider"/><p><strong>' + i18n( 'i18n_pending_invites' ) + '</strong></p>';
+			str += '<div class="List">';
+			let sw = 1;
+			for( let a = 0; a < list.length; a++ )
+			{
+				str += '<div class="HRow sw' + sw + '">\
+					<div class="HContent80 FloatLeft Ellipsis PaddingSmall">\
+						' + list[a].Fullname + '\
+					</div>\
+					<div class="HContent20 FloatLeft Ellipsis PaddingSmall TextRight">\
+						<button class="Button IconSmall fa-remove NoText IconButton" onclick="removeInvite(\'' + list[a].EventID + '\')"></button>\
+					</div>\
+				</div>';
+				sw = sw == 1 ? 2 : 1;
+			}
+			str += '</div>';
 		
-		ge( 'Pending' ).innerHTML = str;
+			ge( 'Pending' ).innerHTML = str;
+		}
+		
+		// List others
+		let m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e != 'ok' )
+			{
+				return ge( 'Usersearch' ).innerHTML = '<p>' + i18n( 'i18n_no_users_connected_to_you' ) + '</p>';
+			}
+			let mlist = JSON.parse( d );
+			str = '<div class="List">';
+			sw = 1;
+			for( let a = 0; a < 10 && a < mlist.length; a++ )
+			{
+				skip = false;
+				// Skip pending invites users
+				for( let b = 0; b < list.length; b++ )
+				{
+					if( list[b].UserID == mlist[a].ID )
+					{
+						skip = true;
+						continue;
+					}
+				}
+				if( skip ) continue;
+				str += '<div class="HRow sw' + sw + '">\
+					<div class="HContent60 FloatLeft Ellipsis PaddingSmall">\
+						' + mlist[a].Fullname + '\
+					</div>\
+					<div class="HContent40 FloatLeft PaddingSmall TextRight">\
+						<button type="button" class="Button IconSmall NoText fa-user-plus IconButton" onclick="inviteUser(' + mlist[a].ID + ')" title="' + i18n( 'i18n_invite_user_to_group' ) + '"></button>\
+					</div>\
+				</div>';
+				sw = sw == 1 ? 2 : 1;
+			}
+			str += '</div>';
+		
+			ge( 'Usersearch' ).innerHTML = str;
+		}
+		let o = { limit: 11 };
+		if( groupUsersList.length > 0 )
+			o.except = groupUsersList;
+		if( keyw )
+			o.keywords = keyw;
+		m.execute( 'listconnectedusers', o );
+		
 	}
 	p.execute( 'getpendinginvites', { groupId: gid } );
 }

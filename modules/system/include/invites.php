@@ -337,15 +337,19 @@ if( $args->command )
 			
 			if( !isset( $args->args->groupId ) )
 				die( 'fail<!--separate-->' );
+				
 			$n = new dbIO( 'FQueuedEvent' );
-			$n->UserID = $User->ID;
-			$n->TargetGroupID = $args->args->groupId;
-			$n->Type = 'interaction';
-			$n->Status = 'unseen';
-			
 			$reason = new stdClass();
 			
-			if( $events = $n->find() )
+			if( $events = $n->find( '
+				SELECT * FROM 
+					FQueuedEvent 
+				WHERE 
+					UserID=\'' . $User->ID . '\' AND 
+					TargetGroupID=\'' . intval( $args->args->groupId, 10 ) . '\' AND 
+					`Type`=\'interaction\' AND
+					( `Status`=\'unseen\' OR `Status`=\'seen\' )
+			' ) )
 			{
 				$out = [];
 				$userInfo = [];
