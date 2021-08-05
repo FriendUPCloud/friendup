@@ -512,7 +512,7 @@ if( $args->command )
 							}
 						}
 					}
-				
+					
 					// Send a notification message			
 					$n = new dbIO( 'FQueuedEvent' );
 					$n->UserID = $usr->ID;
@@ -521,7 +521,7 @@ if( $args->command )
 					$n->Title = ( isset( $args->args->title ) ? $args->args->title : ( $gname ? 'Invitation to join' : 'Invitation to connect' ) );
 					$n->Type = 'interaction';
 					$n->Status = 'unseen';
-					$n->Message = ( isset( $args->args->message ) ?$args->args->message : ( $usr->FullName . ( $gname ? ' invited you to join ' . $gname : ' invites to you connect on Friend Chat.' ) ) );
+					$n->Message = ( isset( $args->args->message ) ? $args->args->message : ( $usr->FullName . ( $gname ? ' invited you to join ' . $gname : ' invites to you connect on Friend Chat.' ) ) );
 					$n->ActionAccepted = '{"module":"system","command":"verifyinvite","args":{"hash":"'.$hash.'"},"skip":"true"}';
 					$n->ActionRejected = '{"module":"system","command":"removeinvite","args":{"hash":"'.$hash.'"},"skip":"true"}';
 					if( !$n->Load() )
@@ -566,8 +566,6 @@ if( $args->command )
 					
 					$cnt = doReplacements( $cnt, $baserepl );
 					
-					// TODO: Divide mail template into invite for user and invite for group ...
-					
 					// Notify the user!
 					$mail = new Mailer(  );
 					$mail->isHTML = true;
@@ -575,7 +573,7 @@ if( $args->command )
 					$mail->setReplyTo( $Conf[ 'FriendMail' ][ 'friendmail_user' ], ( isset( $Conf[ 'FriendMail' ][ 'friendmail_name' ] ) ? $Conf[ 'FriendMail' ][ 'friendmail_name' ] : 'Friend Software Corporation' ) );
 					$mail->setFrom( $Conf[ 'FriendMail' ][ 'friendmail_user' ] );
 					$mail->setSubject( utf8_decode( $usr->FullName ) . ( $gname ? ' invited you to join ' . utf8_decode( $gname ) : ' invites you to connect on ' . $repl->sitename ) );
-					$mail->addRecipient( $contact->Email, $contact->FullName );
+					$mail->addRecipient( $contact->Email, ( $contact->FullName ? $contact->FullName : false ) );
 					$mail->setContent( utf8_decode( $cnt ) );
 					if( !$mail->send() )
 					{
@@ -588,7 +586,7 @@ if( $args->command )
 					
 				}
 				
-				die( 'ok<!--separate-->{"Response":"Invitation notification registered in database id: ' . $n->ID . '"}' );
+				die( 'ok<!--separate-->{"Response":"Invitation notification registered in database id: ' . ( $n->ID ? $n->ID : 0 ) . '"}' );
 				
 			}
 			

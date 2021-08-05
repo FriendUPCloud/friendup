@@ -833,7 +833,7 @@ var WorkspaceInside = {
 			height: 140
 		} );
 		
-		let t = new File( 'Templates/invite_user.html' );
+		let t = new File( 'templates/invite_user.html' );
 		t.replacements = {
 			gid : ( gid ? gid : 0 )
 		}
