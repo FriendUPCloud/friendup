@@ -132,11 +132,7 @@ if( $args->command )
 					if( $f && $f->Source && $f->Hash )
 					{
 						if( $json = json_decode( decodeUrl( $f->Source ) ) )
-						{	
-							$obj = new stdClass();
-							$obj->ID         = $f->ID;
-							$obj->Link       = buildUrl( $f->Hash, $Conf, $ConfShort );
-							
+						{
 							// Filter by group ID
 							if( isset( $args->args->groupId ) )
 							{
@@ -155,9 +151,17 @@ if( $args->command )
 								if( !$found )
 									continue;
 							}
+							
+							// Skip the personal invites ... unless listall is defined
+							if( isset( $json->contact ) && $json->contact && !isset( $args->args->listall ) )
+							{
+								continue;
+							}
+							
 							$obj = new stdClass();
 							$obj->ID         = $f->ID;
 							$obj->Link       = buildUrl( $f->Hash, $Conf, $ConfShort );
+							$obj->Contact    = ( isset( $json->contact          ) ? $json->contact          : false );
 							$obj->Workgroups = ( isset( $json->data->workgroups ) ? $json->data->workgroups : false );
 							$obj->UserID     = ( isset( $json->data->userid     ) ? $json->data->userid     : null  );
 							$obj->UniqueID   = ( isset( $json->data->uniqueid   ) ? $json->data->uniqueid   : null  );
@@ -187,8 +191,13 @@ if( $args->command )
 			
 			if( isset( $args->args->ids ) && $args->args->ids )
 			{
-				if( $SqlDatabase->Query( 'DELETE FROM FTinyUrl WHERE ID IN (' . $args->args->ids . ') ' ) )
+				if( $SqlDatabase->Query( 'DELETE FROM FTinyUrl WHERE ID IN (' . intval( $args->args->ids, 10 ) . ') ' ) )
 				{
+					$SqlDatabase->query( '
+						DELETE FROM FQueuedEvent
+						WHERE InviteLinkID IN (' . intval( $args->args->ids, 10 ) . ') 
+					' );
+					
 					if( !$args->skip ) die( 'ok<!--separate-->{"Response":"Invite link with ids: ' . $args->args->ids . ' was successfully deleted"}' );
 				}
 			}
@@ -214,15 +223,34 @@ if( $args->command )
 		case 'removependinginvite':
 			
 			$eventId = intval( $args->args->eventId, 10 );
-			$SqlDatabase->query( '
-				DELETE FROM FQueuedEvent
-				WHERE ID = \'' . $eventId . '\'
-			' );
+			
+			$n = new dbIO( 'FQueuedEvent' );
+			$n->ID = $eventId;
+			if( $eventId && $n->Load() )
+			{
+				if( $n->InviteLinkID > 0 )
+				{
+					$SqlDatabase->query( '
+						DELETE FROM FTinyUrl 
+						WHERE ID = \'' . $n->InviteLinkID . '\' 
+					' );
+				}
+				
+				$SqlDatabase->query( '
+					DELETE FROM FQueuedEvent
+					WHERE ID = \'' . $eventId . '\'
+				' );
+				
+				// TODO: die ok or fail ?
+			}
+			
 			break;
 		
 		case 'verifyinvite':
 			
 			// verifyinvite (args: hash=123d4h)
+			
+			// TODO: Verify and remove personal invites, keep the general invites ...
 			
 			if( isset( $args->args->hash ) && $args->args->hash )
 			{
@@ -288,7 +316,21 @@ if( $args->command )
 											'contactids' => json_encode( [ $relation->ContactUniqueID ] )
 										] ) )
 										{
+											if( strstr( $result, 'ok<!--separate-->' ) )
+											{
+												// TODO: Delete certain invite links when invite is complete ...
+											
+												if( isset( $json->contact ) && $json->contact && $f->ID > 0 )
+												{
+													$SqlDatabase->query( '
+														DELETE FROM FTinyUrl 
+														WHERE ID = \'' . $f->ID . '\' 
+													' );
+												}
+											}
+											
 											if( !$args->skip ) die( $result );
+											
 										}
 										else
 										{
@@ -343,22 +385,25 @@ if( $args->command )
 			$n->Type = 'interaction';
 			$n->Status = 'unseen';
 			
+			$invids = []; $out = [];
+			
 			$reason = new stdClass();
 			
 			if( $events = $n->find() )
 			{
-				$out = [];
 				$userInfo = [];
 				foreach( $events as $e )
 				{
 					$userInfo[] = $e->TargetUserID;
 					$s = new stdClass();
 					$s->EventID = $e->ID;
+					$s->InviteLinkID = $e->InviteLinkID;
 					$s->UserID = $e->TargetUserID;
 					$s->TargetGroupID = $e->TargetGroupID;
 					$out[] = $s;
+					$invids[$s->InviteLinkID] = $s->InviteLinkID;
 				}
-				if( $rows = $SqlDatabase->fetchObjects( 'SELECT ID, Fullname FROM FUser WHERE ID IN ( ' . implode( ',', $userInfo ) . ' )' ) )
+				if( $rows = $SqlDatabase->fetchObjects( 'SELECT ID, Fullname, Email FROM FUser WHERE ID IN ( ' . implode( ',', $userInfo ) . ' )' ) )
 				{
 					foreach( $rows as $row )
 					{
@@ -367,19 +412,78 @@ if( $args->command )
 							if( $v->UserID == $row->ID )
 							{
 								$out[$k]->Fullname = $row->Fullname;
+								$out[$k]->Email = $row->Email;
 								break;
 							}
 						}
 					}
 				}
-				if( count( $out ) )
-				{
-					die( 'ok<!--separate-->' . json_encode( $out ) );
-				}
-				$reason->response = -1;
-				$reason->message = 'Failed to find any queued events that were pending.';
-				die( 'fail<!--separate-->' . json_encode( $reason ) );
+				// 
+				//if( count( $out ) )
+				//{
+				//	die( 'ok<!--separate-->' . json_encode( $out ) );
+				//}
+				//$reason->response = -1;
+				//$reason->message = 'Failed to find any queued events that were pending.';
+				//die( 'fail<!--separate-->' . json_encode( $reason ) );
 			}
+			
+			if( isset( $args->args->listall ) )
+			{
+				if( $links = $SqlDatabase->FetchObjects( '
+					SELECT * FROM FTinyUrl 
+					WHERE ' . ( count( $invids ) ? 'ID NOT IN ( ' . implode( ',', $invids ) . ' ) AND ' : '' ) . '
+					UserID = ' . $User->ID . ' AND Source LIKE "%/system.library/user/addrelationship%" AND Source LIKE "%&contact=%" 
+					ORDER BY ID ASC 
+				' ) )
+				{
+					foreach( $links as $f )
+					{
+						if( $f && $f->Source && $f->Hash )
+						{
+							if( $json = json_decode( decodeUrl( $f->Source ) ) )
+							{
+								if( !$json->data || !$json->contact ) continue;
+							
+								$groupid = []; $found = false;
+							
+								if( isset( $json->data->workgroups ) )
+								{
+									foreach( $json->data->workgroups as $w )
+									{
+										$groupid[$w->ID] = $w->ID;
+									
+										// Filter by group ID
+										if( isset( $args->args->groupId ) && $w->ID == $args->args->groupId )
+										{
+											$found = true;
+											break;
+										}
+									}
+								}
+							
+								if( isset( $args->args->groupId ) && !$found ) continue;
+							
+								$obj = new stdClass();
+								$obj->EventID       = 0;
+								$obj->InviteLinkID  = $f->ID;
+								$obj->UserID        = ( isset( $json->contact->ID       ) ? $json->contact->ID       : false                                );
+								$obj->TargetGroupID = ( isset( $args->args->groupId     ) ? $args->args->groupId     : ( count( $groupid ) ? $groupid : 0 ) );
+								$obj->Fullname      = ( isset( $json->contact->FullName ) ? $json->contact->FullName : false                                );
+								$obj->Email         = ( isset( $json->contact->Email    ) ? $json->contact->Email    : false                                );
+							
+								$out[] = $obj;
+							}
+						}
+					}
+				}
+			}
+			
+			if( count( $out ) )
+			{
+				die( 'ok<!--separate-->' . json_encode( $out ) );
+			}
+			
 			$reason->response = -1;
 			$reason->message = 'Failed to find any queued events.';
 			die( 'fail<!--separate-->' . json_encode( $reason ) );
@@ -387,6 +491,11 @@ if( $args->command )
 			break;
 		
 		case 'sendinvite':
+			
+			if( !isset( $args->args->userid ) && !$args->args->userid && !isset( $args->args->email ) && !$args->args->email )
+			{
+				die( 'fail<!--separate-->{"Response":"userid or email is required ..."}' );
+			}
 			
 			$contact = new stdClass(); $gname = ''; $gid = 0;
 			
@@ -414,7 +523,7 @@ if( $args->command )
 				}
 			}
 			
-			// TODO: Make support for sending invites by email to users who doesn't exists yet ... $args->email / $args->fullname then perhaps?
+			
 			
 			if( isset( $args->args->userid ) && $args->args->userid )
 			{
@@ -429,8 +538,7 @@ if( $args->command )
 					die( 'fail<!--separate-->{"Response":"Could not find user: ' . $args->args->userid . '"}' );
 				}
 			}
-			
-			if( isset( $args->args->email ) && $args->args->email )
+			else if( isset( $args->args->email ) && $args->args->email )
 			{
 				$contact = new stdClass();
 				$contact->Email = $args->args->email;
@@ -456,15 +564,13 @@ if( $args->command )
 				$data->username   = $usr->Name;
 				$data->fullname   = $usr->FullName;
 				
-				// TODO: See if we need to include $args->args->email (including fullname) or $args->args->userid (contact uniqueid) here ...
 				
-				// TODO: Change this to online once support for only sending emails to users not created is ready in the gui ...
 				
-				$hash = false; $online = false;
+				$hash = false; $online = false; $found = false;
 				
 				
 				$f = new dbIO( 'FTinyUrl' );
-				$f->Source = ( $baseUrl . '/system.library/user/addrelationship?data=' . urlencode( json_encode( $data ) ) );
+				$f->Source = ( $baseUrl . '/system.library/user/addrelationship?data=' . urlencode( json_encode( $data ) ) . '&contact=' . urlencode( json_encode( $contact ) ) );
 				if( !$f->Load() )
 				{
 					$f->UserID = $User->ID;
@@ -477,6 +583,10 @@ if( $args->command )
 					
 					$f->DateCreated = strtotime( date( 'Y-m-d H:i:s' ) );
 					$f->Save();
+				}
+				else
+				{
+					$found = true;
 				}
 				if( $f->ID > 0 )
 				{
@@ -513,11 +623,15 @@ if( $args->command )
 						}
 					}
 					
+					// TODO: Remove this once all old databases that is missing this column is updated.
+					$SqlDatabase->query( 'ALTER TABLE `FQueuedEvent` ADD `InviteLinkID` bigint(20) NOT NULL DEFAULT \'0\';' );
+					
 					// Send a notification message			
 					$n = new dbIO( 'FQueuedEvent' );
 					$n->UserID = $usr->ID;
 					$n->TargetUserID = $contact->ID;
 					$n->TargetGroupID = $gid;
+					$n->InviteLinkID = $f->ID;
 					$n->Title = ( isset( $args->args->title ) ? $args->args->title : ( $gname ? 'Invitation to join' : 'Invitation to connect' ) );
 					$n->Type = 'interaction';
 					$n->Status = 'unseen';
@@ -530,15 +644,30 @@ if( $args->command )
 						if( !$n->Save() )
 						{
 							// 
+							
+							// Delete personal invite link on fail and try again ...
+							
+							if( $f->ID > 0 )
+							{
+								$f->Delete();
+							}
+							
 							die( 'fail<!--separate-->{"response":-1,"message":"Could not register Invitation notification in database ..."}' );
 						}
 					}
 				}
 				
-				// Send email if not online or if user doesn't exist ...
+				
+				
+				// Send email if not online or if email is specified ...
 				
 				if( !$online )
 				{
+					
+					if( $found )
+					{
+						die( 'fail<!--separate-->{"response":-1,"message":"Invitation already sent, try removing the pending invite and resend."}' );
+					}
 					
 					$invitelink = buildUrl( $hash, $Conf, $ConfShort );
 					
@@ -550,9 +679,6 @@ if( $args->command )
 					$repl->baseUrl = $baserepl->baseUrl = $baseUrl;
 				
 					$repl->url = ( $baseUrl . '/webclient/index.html#invite=' . $hash . 'BASE64' . base64_encode( '{"user":"' . utf8_decode( $usr->FullName ) . '","hash":"' . $hash . '"}' ) );
-					
-					// TODO: Check this ...
-					$baserepl->unsubscribe = ''/*$baseUrl . '/unsubscribe/' . base64_encode( '{"id":"' . $contact->QuarantineID . '","email":"' . $contact->Email . '","userid":"' . $contact->ID . '","username":"' . $contact->Name . '"}' )*/;
 					
 					$repl->sitename = ( isset( $Conf[ 'Registration' ][ 'reg_sitename' ] ) ? $Conf[ 'Registration' ][ 'reg_sitename' ] : 'Friend Sky' );
 					$repl->user     = $usr->FullName;
@@ -578,6 +704,13 @@ if( $args->command )
 					if( !$mail->send() )
 					{
 						// ...
+						
+						// Delete personal invite link on fail and try again ...
+						
+						if( $f->ID > 0 )
+						{
+							$f->Delete();
+						}
 						
 						die( 'fail<!--separate-->{"response":-1,"message":"Could not send e-mail."}' );
 					}

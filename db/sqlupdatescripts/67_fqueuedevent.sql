@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS `FQueuedEvent` (
   `UserID` bigint(20) DEFAULT 0,
   `TargetGroupID` bigint(20) DEFAULT 0,
   `TargetUserID` bigint(20) DEFAULT 0,
+  `InviteLinkID` bigint(20) DEFAULT 0,
   `Type` varchar(255) NOT NULL,
   `Date` datetime,
   `Status` varchar(255) NOT NULL DEFAULT '',

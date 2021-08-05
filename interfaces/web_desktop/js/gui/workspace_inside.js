@@ -569,7 +569,7 @@ var WorkspaceInside = {
 		}
 		else if( type == 'pending' )
 		{
-			return function( data )
+			return function( data, gid )
 			{
 				
 				let str = '';
@@ -582,17 +582,32 @@ var WorkspaceInside = {
 					
 					for( let a in data )
 					{
-						if( data[a] && data[a].EventID )
+						if( data[a] )
 						{
-							str += '<div class="HRow sw' + sw + '">\
-								<div class="HContent80 FloatLeft Ellipsis PaddingSmall">\
-									' + data[a].Fullname + '\
-								</div>\
-								<div class="HContent20 FloatLeft Ellipsis PaddingSmall TextRight">\
-									<button class="Button IconSmall fa-remove NoText" onclick="Workspace.removePendingInvite(\'' + data[a].EventID + '\')"></button>\
-								</div>\
-							</div>';
-							sw = sw == 1 ? 2 : 1;
+							if( data[a].EventID )
+							{
+								str += '<div class="HRow sw' + sw + '">\
+									<div class="HContent80 FloatLeft Ellipsis PaddingSmall">\
+										' + ( data[a].Fullname ? data[a].Fullname : data[a].Email ) + '\
+									</div>\
+									<div class="HContent20 FloatLeft Ellipsis PaddingSmall TextRight">\
+										<button class="Button IconSmall fa-remove NoText" onclick="Workspace.removePendingInvite(\'' + gid + '\',\'' + data[a].EventID + '\')"></button>\
+									</div>\
+								</div>';
+								sw = sw == 1 ? 2 : 1;
+							}
+							else if( data[a].InviteLinkID )
+							{
+								str += '<div class="HRow sw' + sw + '">\
+									<div class="HContent80 FloatLeft Ellipsis PaddingSmall">\
+										' + ( data[a].Fullname ? data[a].Fullname : data[a].Email ) + '\
+									</div>\
+									<div class="HContent20 FloatLeft Ellipsis PaddingSmall TextRight">\
+										<button class="Button IconSmall fa-remove NoText" onclick="Workspace.removePendingInvite(\'' + gid + '\',false,\'' + data[a].InviteLinkID + '\')"></button>\
+									</div>\
+								</div>';
+								sw = sw == 1 ? 2 : 1;
+							}
 						}
 					}
 					
@@ -718,18 +733,27 @@ var WorkspaceInside = {
 		}
 	},
 	// Remove pending invite
-	removePendingInvite: function( gid, eventId )
+	removePendingInvite: function( gid, eventId, inviteId )
 	{
+		let self = this;
+		
 		if( eventId > 0 )
 		{
-			let self = this;
-			
 			let b = new Module( 'system' );
 			b.onExecuted = function( e, d )
 			{
 				self.pendingInvitesGet( gid, self.getInviteCallback( 'pending' ) );
 			}
 			b.execute( 'removependinginvite', { eventId: eventId } );
+		}
+		else if( inviteId > 0 )
+		{
+			self.removeInvite( gid, inviteId, true, function (  )
+			{
+				
+				self.pendingInvitesGet( gid, self.getInviteCallback( 'pending' ) );
+				
+			} );
 		}
 	},
 	// Load workgroups for invite
@@ -812,17 +836,17 @@ var WorkspaceInside = {
 		{
 			if( e != 'ok' )
 			{
-				return callback( false );
+				return callback( false, gid );
 			}
 			try
 			{
 				let data = JSON.parse( d );
-				return callback( data );
+				return callback( data, gid );
 			}
 			catch(e){};
-			callback( false );
+			callback( false, gid );
 		}
-		p.execute( 'getpendinginvites', { groupId: ( gid ? gid : 0 ) } );
+		p.execute( 'getpendinginvites', { groupId: ( gid ? gid : 0 ), listall: true } );
 	},
 	// Get pending invites by group
 	inviteByEmail: function( gid )
