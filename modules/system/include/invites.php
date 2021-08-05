@@ -494,41 +494,44 @@ if( $args->command )
 				
 				
 				
-				// Check if user is online ...
-				
-				if( !$online && ( $res1 = FriendCoreQuery( '/system.library/user/activewslist',
-				[
-					'usersonly' => true,
-					'userid' => $contact->ID
-				] ) ) )
+				if( $contact->ID > 0 )
 				{
-					if( $dat = json_decode( $res1 ) )
+					// Check if user is online ...
+					
+					if( !$online && ( $res1 = FriendCoreQuery( '/system.library/user/activewslist',
+					[
+						'usersonly' => true,
+						'userid' => $contact->ID
+					] ) ) )
 					{
-						if( isset( $dat->userlist[0]->username ) && $dat->userlist[0]->username == $contact->Name )
+						if( $dat = json_decode( $res1 ) )
 						{
-							$online = true;
+							if( isset( $dat->userlist[0]->username ) && $dat->userlist[0]->username == $contact->Name )
+							{
+								$online = true;
+							}
 						}
 					}
-				}
 				
-				// Send a notification message			
-				$n = new dbIO( 'FQueuedEvent' );
-				$n->UserID = $usr->ID;
-				$n->TargetUserID = $contact->ID;
-				$n->TargetGroupID = $gid;
-				$n->Title = ( isset( $args->args->title ) ? $args->args->title : ( $gname ? 'Invitation to join' : 'Invitation to connect' ) );
-				$n->Type = 'interaction';
-				$n->Status = 'unseen';
-				$n->Message = ( isset( $args->args->message ) ?$args->args->message : ( $usr->FullName . ( $gname ? ' invited you to join ' . $gname : ' invites to you connect on Friend Chat.' ) ) );
-				$n->ActionAccepted = '{"module":"system","command":"verifyinvite","args":{"hash":"'.$hash.'"},"skip":"true"}';
-				$n->ActionRejected = '{"module":"system","command":"removeinvite","args":{"hash":"'.$hash.'"},"skip":"true"}';
-				if( !$n->Load() )
-				{
-					$n->Date = date( 'Y-m-d H:i' );
-					if( !$n->Save() )
+					// Send a notification message			
+					$n = new dbIO( 'FQueuedEvent' );
+					$n->UserID = $usr->ID;
+					$n->TargetUserID = $contact->ID;
+					$n->TargetGroupID = $gid;
+					$n->Title = ( isset( $args->args->title ) ? $args->args->title : ( $gname ? 'Invitation to join' : 'Invitation to connect' ) );
+					$n->Type = 'interaction';
+					$n->Status = 'unseen';
+					$n->Message = ( isset( $args->args->message ) ?$args->args->message : ( $usr->FullName . ( $gname ? ' invited you to join ' . $gname : ' invites to you connect on Friend Chat.' ) ) );
+					$n->ActionAccepted = '{"module":"system","command":"verifyinvite","args":{"hash":"'.$hash.'"},"skip":"true"}';
+					$n->ActionRejected = '{"module":"system","command":"removeinvite","args":{"hash":"'.$hash.'"},"skip":"true"}';
+					if( !$n->Load() )
 					{
-						// 
-						die( 'fail<!--separate-->{"response":-1,"message":"Could not register Invitation notification in database ..."}' );
+						$n->Date = date( 'Y-m-d H:i' );
+						if( !$n->Save() )
+						{
+							// 
+							die( 'fail<!--separate-->{"response":-1,"message":"Could not register Invitation notification in database ..."}' );
+						}
 					}
 				}
 				

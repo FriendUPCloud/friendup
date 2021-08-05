@@ -540,7 +540,7 @@ var WorkspaceInside = {
 						str += '<div class="InviteBlock MarginBottom Rounded BackgroundLists Padding">\
 							<div class="HRow">\
 								<div class="FloatLeft Link HContent70"><input type="text" class="FullWidth LinkField" style="background: transparent; border: 0" value="' + data[a].Link + '"/></div><div class="Buttons HContent30 FloatLeft TextRight">\
-									<button type="button" class="ImageButton IconSmall fa-send" onclick="alert(\'soon\')"></button>\
+									<button type="button" class="ImageButton IconSmall fa-send" onclick="Workspace.inviteByEmail(' + gid + ')"></button>\
 									<button type="button" class="ImageButton IconSmall fa-clipboard" onclick="let sp = this.parentNode.parentNode.querySelector( \'.LinkField\' ); sp.select(); sp.setSelectionRange(0,9999999); document.execCommand(\'copy\');"></button>\
 									<button type="button" class="ImageButton IconSmall fa-refresh" onclick="Workspace.refreshInvite(' + gid + ', ' + data[a].ID + ')"></button>\
 								</div>\
@@ -823,6 +823,26 @@ var WorkspaceInside = {
 			callback( false );
 		}
 		p.execute( 'getpendinginvites', { groupId: ( gid ? gid : 0 ) } );
+	},
+	// Get pending invites by group
+	inviteByEmail: function( gid )
+	{
+		let v = new View( {
+			title: i18n( 'i18n_invite_user' ),
+			width: 500,
+			height: 140
+		} );
+		
+		let t = new File( 'Templates/invite_user.html' );
+		t.replacements = {
+			gid : ( gid ? gid : 0 )
+		}
+		t.i18n();
+		t.onLoad = function( data )
+		{
+			v.setContent( data );
+		}
+		t.load();
 	},
 	// Initialize virtual workspaces
 	initWorkspaces: function()
