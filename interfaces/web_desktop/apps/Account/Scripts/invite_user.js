@@ -15,6 +15,8 @@ Application.run = function()
 
 function sendInvite()
 {
+	let gid = ge( 'groupid' ).value;
+	
 	let email = ge( 'recipient' ).value;
 	let tname = ge( 'recipientname' ).value;
 	
@@ -30,14 +32,14 @@ function sendInvite()
 		return false;
 	}
 	
-	let msg = {};
-	
 	let m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
+		console.log( { e:e, d:d } );
+		
 		if( e == 'ok' )
 		{
-			CloseWindow();
+			Application.quit( /*true*/ );
 		}
 		else
 		{
@@ -45,5 +47,5 @@ function sendInvite()
 			return false;
 		}
 	}
-	m.execute( 'invite', msg );
+	m.execute( 'sendinvite', { workgroups: gid, email: email, fullname: tname } );
 }

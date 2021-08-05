@@ -179,6 +179,9 @@ function doInvite()
 	} );
 	
 	let t = new File( 'Progdir:Templates/invite_user.html' );
+	t.replacements = {
+		gid : ge( 'groupId' ).value
+	}
 	t.i18n();
 	t.onLoad = function( data )
 	{
