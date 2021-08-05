@@ -522,6 +522,7 @@ if( $args->command )
 					$n->UserID = $usr->ID;
 					$n->TargetUserID = $contact->ID;
 					$n->TargetGroupID = $gid;
+					$n->Load();
 					$n->Title = ( isset( $args->args->title ) ? $args->args->title : ( $gname ? 'Invitation to join' : 'Invitation to connect' ) );
 					$n->Type = 'interaction';
 					$n->Status = 'unseen';
