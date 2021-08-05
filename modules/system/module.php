@@ -101,7 +101,7 @@ if( !function_exists( 'checkDesktopEvents' ) )
 		{
 			while( $file = readdir( $f ) )
 			{
-				if( $file{0} == '.' ) continue;
+				if( $file[0] == '.' ) continue;
 				$files[] = $file;
 			}
 			closedir( $f );
@@ -177,12 +177,12 @@ if( !function_exists( 'curl_exec_follow' ) )
 								if ( strstr( $oldurl, 'https://' ) )
 								{
 									$parts = explode( '/', str_replace( 'https://', '', $oldurl ) );
-									$newurl = ( 'https://' . reset( $parts ) . ( $newurl{0} != '/' ? '/' : '' ) . $newurl );
+									$newurl = ( 'https://' . reset( $parts ) . ( $newurl[0] != '/' ? '/' : '' ) . $newurl );
 								}
 								if ( strstr( $oldurl, 'http://' ) )
 								{
 									$parts = explode( '/', str_replace( 'http://', '', $oldurl ) );
-									$newurl = ( 'http://' . reset( $parts ) . ( $newurl{0} != '/' ? '/' : '' ) . $newurl );
+									$newurl = ( 'http://' . reset( $parts ) . ( $newurl[0] != '/' ? '/' : '' ) . $newurl );
 								}
 
 							}
@@ -719,7 +719,7 @@ if( isset( $args->command ) )
 				$str = '';
 				while( $f = readdir( $dir ) )
 				{
-					if( $f{0} == '.' ) continue;
+					if( $f[0] == '.' ) continue;
 					if( file_exists( $g = 'devices/DOSDrivers/' . $f . '/door.js' ) )
 						$str .= file_get_contents( $g ) . "\n";
 				}
@@ -862,7 +862,7 @@ if( isset( $args->command ) )
 			{
 				while( $file = readdir( $dir ) )
 				{
-					if( $file{0} == '.' ) continue;
+					if( $file[0] == '.' ) continue;
 					if( !is_dir( 'modules/' . $file ) ) continue;
 					if( file_exists( 'modules/' . $file . '/calendarmodule.php' ) )
 					{
