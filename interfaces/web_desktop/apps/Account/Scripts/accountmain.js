@@ -171,8 +171,8 @@ function refreshGroups( keys )
 		
 		str += '<div class="Padding"><h2>' + i18n( 'i18n_other_groups' ) + '</h2><div class="List">';
 		str += '<div class="HRow">\
-				<div class="PaddingSmall FloatLeft HContent40"><strong>' + i18n( 'i18n_group_name' ) + ':</strong></div>\
-				<div class="PaddingSmall FloatLeft HContent40"><strong>' + i18n( 'i18n_owner' ) + ':</strong></div>\
+				<div class="PaddingSmall FloatLeft HContent40"><strong>' + i18n( 'i18n_group_name' ) + '</strong></div>\
+				<div class="PaddingSmall FloatLeft HContent40"><strong>' + i18n( 'i18n_owner' ) + '</strong></div>\
 				<div class="PaddingSmall FloatLeft HContent20 TextRight"></div>\
 			</div>';
 		let sw = 2;
