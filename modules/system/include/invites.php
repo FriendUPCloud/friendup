@@ -379,17 +379,21 @@ if( $args->command )
 			
 			if( !isset( $args->args->groupId ) )
 				die( 'fail<!--separate-->' );
-			$n = new dbIO( 'FQueuedEvent' );
-			$n->UserID = $User->ID;
-			$n->TargetGroupID = $args->args->groupId;
-			$n->Type = 'interaction';
-			$n->Status = 'unseen';
 			
 			$invids = []; $out = [];
 			
 			$reason = new stdClass();
 			
-			if( $events = $n->find() )
+			$n = new dbIO( 'FQueuedEvent' );
+			if( $events = $n->find( '
+				SELECT * FROM 
+					FQueuedEvent 
+				WHERE 
+					UserID=\'' . $User->ID . '\' AND 
+					TargetGroupID=\'' . intval( $args->args->groupId, 10 ) . '\' AND 
+					`Type`=\'interaction\' AND
+					( `Status`=\'unseen\' OR `Status`=\'seen\' )
+			' ) )
 			{
 				$userInfo = [];
 				foreach( $events as $e )
@@ -632,6 +636,7 @@ if( $args->command )
 					$n->TargetUserID = $contact->ID;
 					$n->TargetGroupID = $gid;
 					$n->InviteLinkID = $f->ID;
+					$n->Load();
 					$n->Title = ( isset( $args->args->title ) ? $args->args->title : ( $gname ? 'Invitation to join' : 'Invitation to connect' ) );
 					$n->Type = 'interaction';
 					$n->Status = 'unseen';
