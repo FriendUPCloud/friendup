@@ -2249,6 +2249,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		char *args = NULL;
 		char *authid = NULL;
 		HashmapElement *el = NULL;
+		FBOOL canUpdateUsers = FALSE;
+		FBOOL normalUserUpdate = FALSE;
 		
 		el = HttpGetPOSTParameter( request, "args" );
 		if( el != NULL )
@@ -2262,9 +2264,48 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			authid = el->hme_Data;
 		}
 		
-		response = HttpNewSimple( HTTP_200_OK,  tags );
+		el = HttpGetPOSTParameter( request, "id" );
+		if( el != NULL )
+		{
+			char *end;
+			groupID = strtol( (char *)el->hme_Data, &end, 0 );
+		}
 		
 		if( IS_SESSION_ADMIN( loggedSession ) || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
+		{	// user cannot create any groups without permissions
+			canUpdateUsers = TRUE;
+		}
+		else
+		{
+			// We need to check if user owns group
+			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			if( sqllib != NULL )
+			{
+				normalUserUpdate = TRUE;
+				char *qery = FMalloc( 1048 );
+				
+				qery[ 1024 ] = 0;
+				
+				sqllib->SNPrintF( sqllib, qery, 1024, "SELECT * FROM FUserGroup WHERE UserID=%ld AND ID=%ld", loggedSession->us_UserID, groupID );
+				void *res = sqllib->Query( sqllib, qery );
+				if( res != NULL )
+				{
+					char **row;
+					if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+					{
+						canUpdateUsers = TRUE;
+					}
+					sqllib->FreeResult( sqllib, res );
+				}
+				l->LibrarySQLDrop( l, sqllib );
+				
+				FFree( qery );
+			}
+		}
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		if( canUpdateUsers == TRUE )
 		{
 			el = HttpGetPOSTParameter( request, "users" );
 			if( el != NULL )
@@ -2272,13 +2313,6 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				users = UrlDecodeToMem( (char *)el->hme_Data );
 				usersSQL = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[UMWebRequest] removeusers users %s!!\n", users );
-			}
-		
-			el = HttpGetPOSTParameter( request, "id" );
-			if( el != NULL )
-			{
-				char *end;
-				groupID = strtol( (char *)el->hme_Data, &end, 0 );
 			}
 			
 			BufString *retString = BufStringNew();
@@ -2294,7 +2328,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				UserGroup *ug = NULL;
 				ug = UGMGetGroupByID( l->sl_UGM, groupID );
 				
-				if( ug == NULL )
+				if( normalUserUpdate == TRUE ) // update in DB only
 				{
 					ug = UGMGetGroupByIDDB( l->sl_UGM, groupID );
 					
@@ -2323,8 +2357,6 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 							char **row;
 							while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 							{
-								char *end;
-
 								if( pos == 0 )
 								{
 									itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"status\":\"%s\"}", (char *)row[ 0 ], (char *)row[ 1 ] );
