@@ -756,6 +756,54 @@ var WorkspaceInside = {
 			} );
 		}
 	},
+	// Send invites by email
+	sendInvite: function(  )
+	{
+		let self = this;
+		
+		let gid = ge( 'groupid' ).value;
+		
+		let email = ge( 'recipient' ).value;
+		let tname = ge( 'recipientname' ).value;
+		
+		if( email.indexOf( '@' ) <= 0 )
+		{
+			Alert( i18n( 'i18n_failed_to_send' ), i18n( 'i18n_email_error' ) );
+			return false;
+		}
+	
+		if( email.indexOf( '.' ) <= email.indexOf( '@' ) )
+		{
+			Alert( i18n( 'i18n_failed_to_send' ), i18n( 'i18n_email_error' ) );
+			return false;
+		}
+	
+		let m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			console.log( { e:e, d:d } );
+			
+			if( e == 'ok' )
+			{
+				CloseWindow();
+				self.pendingInvitesGet( gid, self.getInviteCallback( 'pending' ) );
+			}
+			else
+			{
+				Alert( i18n( 'i18n_failed_to_send' ), i18n( 'i18n_unknown_error' ) );
+				return false;
+			}
+		}
+		
+		if( gid > 0 )
+		{
+			m.execute( 'sendinvite', { workgroups: gid, email: email, fullname: tname } );
+		}
+		else
+		{
+			m.execute( 'sendinvite', { email: email, fullname: tname } );
+		}
+	},
 	// Load workgroups for invite
 	inviteLoadWorkgroups: function( keywords, callback )
 	{
