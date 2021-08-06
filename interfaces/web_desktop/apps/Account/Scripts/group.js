@@ -42,14 +42,28 @@ function listConnectedUsers( limit, pos, keyw )
 			let sw = 1;
 			for( let a = 0; a < list.length; a++ )
 			{
-				str += '<div class="HRow sw' + sw + '">\
-					<div class="HContent80 FloatLeft Ellipsis PaddingSmall">\
-						' + list[a].Fullname + '\
-					</div>\
-					<div class="HContent20 FloatLeft Ellipsis PaddingSmall TextRight">\
-						<button class="Button IconSmall fa-remove NoText IconButton" onclick="removeInvite(\'' + list[a].EventID + '\')"></button>\
-					</div>\
-				</div>';
+				if( list[a].EventID )
+				{
+					str += '<div class="HRow sw' + sw + '">\
+						<div class="HContent80 FloatLeft Ellipsis PaddingSmall">\
+							' + ( list[a].Fullname ? list[a].Fullname : list[a].Email ) + '\
+						</div>\
+						<div class="HContent20 FloatLeft Ellipsis PaddingSmall TextRight">\
+							<button class="Button IconSmall fa-remove NoText IconButton" onclick="removeInvite(\'' + list[a].EventID + '\')"></button>\
+						</div>\
+					</div>';
+				}
+				else if( list[a].InviteLinkID )
+				{
+					str += '<div class="HRow sw' + sw + '">\
+						<div class="HContent80 FloatLeft Ellipsis PaddingSmall">\
+							' + ( list[a].Fullname ? list[a].Fullname : list[a].Email ) + '\
+						</div>\
+						<div class="HContent20 FloatLeft Ellipsis PaddingSmall TextRight">\
+							<button class="Button IconSmall fa-remove NoText IconButton" onclick="removeInvite(null,\'' + list[a].InviteLinkID + '\')"></button>\
+						</div>\
+					</div>';
+				}
 				sw = sw == 1 ? 2 : 1;
 			}
 			str += '</div>';
@@ -103,17 +117,29 @@ function listConnectedUsers( limit, pos, keyw )
 		m.execute( 'listconnectedusers', o );
 		
 	}
-	p.execute( 'getpendinginvites', { groupId: gid } );
+	p.execute( 'getpendinginvites', { groupId: gid, listall: true } );
 }
 
-function removeInvite( eventId )
+function removeInvite( eventId, inviteId )
 {
-	let b = new Module( 'system' );
-	b.onExecuted = function( e, d )
+	if( inviteId )
 	{
-		groupUsers( function(){ listConnectedUsers(); } );
+		let p = new Module( 'system' );
+		p.onExecuted = function( e, d )
+		{
+			groupUsers( function(){ listConnectedUsers(); } );
+		}
+		p.execute( 'removeinvite', { ids: inviteId } );
 	}
-	b.execute( 'removependinginvite', { eventId: eventId } );
+	else
+	{
+		let b = new Module( 'system' );
+		b.onExecuted = function( e, d )
+		{
+			groupUsers( function(){ listConnectedUsers(); } );
+		}
+		b.execute( 'removependinginvite', { eventId: eventId } );
+	}
 }
 
 function searchUser( keyw )
