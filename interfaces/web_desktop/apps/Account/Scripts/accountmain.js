@@ -269,6 +269,10 @@ function editGroup( id )
 			height: 500
 		} );
 		
+		let vid = v.getViewId()
+	
+		mviews[ vid ] = v;
+		
 		let f = new File( 'Progdir:Templates/group.html' );
 		f.replacements = {
 			ID: id,
@@ -404,6 +408,18 @@ Application.receiveMessage = function( msg )
 			if( mviews[ msg.viewId ] )
 			{
 				mviews[ msg.viewId ].setFlag( 'height', 500 );
+			}
+			break;
+		case 'refreshInvites':
+			if( mviews )
+			{
+				for( var i in mviews )
+				{
+					if( mviews[i] )
+					{
+						mviews[i].sendMessage( { command: 'refreshInvites' } );
+					}
+				}
 			}
 			break;
 		case 'refreshgroups':

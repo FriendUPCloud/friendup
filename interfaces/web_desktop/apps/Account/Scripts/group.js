@@ -395,3 +395,19 @@ function saveGroup()
 	}	
 }
 
+Application.receiveMessage = function( msg )
+{
+	
+	if( !msg.command ) return;
+	
+	switch( msg.command )
+	{
+		case 'refreshInvites':
+			
+			groupUsers( function(){ listConnectedUsers(); } );
+			
+			break;
+	}
+	
+}
+

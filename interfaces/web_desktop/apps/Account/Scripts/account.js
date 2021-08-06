@@ -186,6 +186,11 @@ Application.receiveMessage = function( msg )
 	
 	switch( msg.command )
 	{
+		case 'closeView':
+			CloseView( msg.viewId );
+			Application.mainView.sendMessage( { command: 'refreshInvites', parentViewId: msg.parentViewId } );
+			break;
+		
 		case 'resizeGroupWindow':
 			Application.mainView.sendMessage( { command: 'resizeGroupWindow', viewId: msg.viewId } );
 			break;

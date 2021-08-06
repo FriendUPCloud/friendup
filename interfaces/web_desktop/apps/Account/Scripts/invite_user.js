@@ -39,7 +39,7 @@ function sendInvite()
 		
 		if( e == 'ok' )
 		{
-			Application.quit( /*true*/ );
+			Application.sendMessage( { command: 'closeView' } );	
 		}
 		else
 		{
