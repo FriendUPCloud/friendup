@@ -2264,6 +2264,13 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			authid = el->hme_Data;
 		}
 		
+		el = HttpGetPOSTParameter( request, "id" );
+		if( el != NULL )
+		{
+			char *end;
+			groupID = strtol( (char *)el->hme_Data, &end, 0 );
+		}
+		
 		if( IS_SESSION_ADMIN( loggedSession ) || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 		{	// user cannot create any groups without permissions
 			canUpdateUsers = TRUE;
@@ -2306,13 +2313,6 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				users = UrlDecodeToMem( (char *)el->hme_Data );
 				usersSQL = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[UMWebRequest] removeusers users %s!!\n", users );
-			}
-		
-			el = HttpGetPOSTParameter( request, "id" );
-			if( el != NULL )
-			{
-				char *end;
-				groupID = strtol( (char *)el->hme_Data, &end, 0 );
 			}
 			
 			BufString *retString = BufStringNew();
