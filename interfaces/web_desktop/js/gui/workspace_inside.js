@@ -985,11 +985,7 @@ var WorkspaceInside = {
 			this.conn.on( 'sasid-request', handleSASRequest ); // Shared Application Session
 			this.conn.on( 'server-notice', handleServerNotice );
 			this.conn.on( 'server-msg', handleServerMessage );
-			this.conn.on( 'refresh', function( msg )
-			{
-				// Do a deep refresh
-				Workspace.refreshDesktop( false, true );
-			} );
+			this.conn.on( 'refresh', m => Workspace.refreshDesktop( false, true )); // Do a deep refresh
 			this.conn.on( 'icon-change', handleIconChange );
 			this.conn.on( 'filesystem-change', handleFilesystemChange );
 			this.conn.on( 'notification', handleNotifications );

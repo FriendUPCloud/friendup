@@ -177,6 +177,7 @@ SystemBase *SystemInit( void )
 	
 	LIBXML_TEST_VERSION;
 	
+	l->sl_RemoveOldSessionTimeout = 0;
 	l->sl_RemoveSessionsAfterTime = 10800;
 	
 	//
@@ -342,8 +343,6 @@ SystemBase *SystemInit( void )
 	strcpy( l->RSA_CLIENT_KEY_PEM, "/home/stefkos/development/friendup/build/testkeys/client.pem" );
 	l->RSA_CLIENT_KEY_PEM[ 0 ] = 0;
 	
-	l->sl_RemoveOldSessionTimeout = 0;
-	
 	// use deflate compression as default for http calls
 	l->l_HttpCompressionContent |= HTTP_COMPRESSION_DEFLATE;
 	
@@ -417,7 +416,9 @@ SystemBase *SystemInit( void )
 			options = plib->ReadStringNCS( prop, "databaseuser:options", NULL );
 			DEBUG("[SystemBase] options %s\n",options );
 			
-			l->sl_RemoveOldSessionTimeout = plib->ReadIntNCS( prop, "user:timeout", MINS60 );
+			//l->sl_RemoveOldSessionTimeout = plib->ReadIntNCS( prop, "user:timeout", MINS60 );
+			l->sl_RemoveSessionsAfterTime = plib->ReadIntNCS( prop, "user:timeout", MINS60 );
+			DEBUG("[SystemBase] user:timeout %d\n", l->sl_RemoveSessionsAfterTime );
 			
 			l->sl_CacheFiles = plib->ReadIntNCS( prop, "Options:CacheFiles", 1 );
 			l->sl_UnMountDevicesInDB = plib->ReadIntNCS( prop, "Options:UnmountInDB", 1 );

@@ -234,7 +234,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 					
 						bytesSent += WebSocketSendMessageInt( locses, sndbuffer, lenmsg );
 						FFree( sndbuffer );
-					
+						
 						// add NotificationSent to Notification
 						lns->node.mln_Succ = (MinNode *)notif->n_NotificationsSent;
 						notif->n_NotificationsSent = lns;

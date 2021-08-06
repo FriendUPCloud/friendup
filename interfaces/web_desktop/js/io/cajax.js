@@ -453,8 +453,10 @@ cAjax.prototype.destroySilent = function()
 }
 cAjax.prototype.destroy = function()
 {
-	this.destroy = function(){};
+	const self = this;
+	self.destroy = function(){};
 	
+	console.log( 'cajax.destroy', [ self.url, self.vars ]);
 	// We can use this for tracing
 	if( this.ondestroy )
 	{
@@ -489,6 +491,12 @@ cAjax.prototype.setAuthToken = function()
 	const self = this;
 	delete self.vars[ 'sessionid' ];
 	delete self.vars[ 'authid' ];
+	if ( self.vars[ 'refreshtoken' ]) {
+		console.log( 'setAuthToken - found refresher', self.vars );
+		return true;
+	}
+	
+	/*
 	console.log( 'cAjax.setAuthToken', {
 		url       : self.url,
 		vars      : self.vars,
@@ -499,7 +507,7 @@ cAjax.prototype.setAuthToken = function()
 		winApp    : !!window.Application,
 		winAppId  : !!window.Application ? window.Application.authId : null,
 	});
-	
+	*/
 	const app = self.application || window.Application;
 	const work = window.Workspace;
 	
@@ -552,7 +560,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	
 	// Try websockets!!
 	if( 
-		false &&
+		//false &&
 		!this.forceHTTP &&
 		window.Workspace &&
 		Workspace.conn && 

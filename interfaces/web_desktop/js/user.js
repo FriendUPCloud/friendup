@@ -31,12 +31,13 @@ Friend.User = {
     // Log into Friend Core
     Login: function( username, password, remember, callback, event, flags )
     {
+    	const self = this;
     	if( this.State == 'online' ) return;
     	this.State = 'login';
     	
     	if( !event ) event = window.event;
     	
-    	let self = this;
+    	//let self = this;
 		
 		// Close conn here - new login regenerates sessionid
 		if( Workspace.conn )
@@ -73,12 +74,13 @@ Friend.User = {
     // Login using a session id
     LoginWithSessionId: function( sessionid, callback, event )
     {
+    	const self = this;
     	if( this.State == 'online' ) return;
     	this.State = 'login';
     	
     	if( !event ) event = window.event;
     	
-    	let self = this;
+    	//let self = this;
 		
 		// Close conn here - new login regenerates sessionid
 		if( Workspace.conn )
@@ -110,17 +112,50 @@ Friend.User = {
     // Send the actual login call
     SendLoginCall: function( info, callback )
     {
+    	const self = this;
     	// Already logging in
+    	const infoStr = JSON.stringify( info );
+    	const infoCpy = JSON.parse( infoStr );
+    	console.log( 'SendLoginCall', {
+    		info         : infoCpy,
+    		callback     : callback,
+    		loginTimeout : self.loginTimeout,
+    		state        : self.State,
+    		sessId       : window.Workspace.sessionId,
+    		reftok       : self.refreshToken,
+    		self         : self,
+    	});
     	this.State = 'login';
+    	if ( null != self.loginTimeout ) {
+    		console.log( 'login timeout, queue' );
+    		this.queueLogin = {
+    			info     : info,
+    			callback : callback,
+    		};
+    		return;
+    	}
     	
-    	if( this.lastLogin && this.lastLogin.currentRequest )
+    	self.loginTimeout = window.setTimeout( tryNowMaybe, 1000 * 2 );
+    	function tryNowMaybe() {
+    		self.loginTimeout = null;
+    		const ql = self.queueLogin;
+    		console.log( 'tryNowMaybe', ql );
+    		if ( null == ql )
+    			return;
+    		
+    		self.queueLogin = null;
+    		self.SendLoginCall( ql.info, ql.callback );
+    	}
+    	
+    	if( self.lastLogin && self.lastLogin.currentRequest )
     	{
-    		this.lastLogin.currentRequest.destroy();
+    		self.lastLogin.currentRequest.destroy();
+    		self.lastLogin = null;
     	}
     	
     	// Create a new library call object
 		let m = new FriendLibrary( 'system' );
-		this.lastLogin = m;
+		self.lastLogin = m;
 		
 		if( info.username && info.password )
 		{
@@ -144,31 +179,50 @@ Friend.User = {
 			}
 			*/
 		}
-		else if( info.sessionid )
+		else if( window.Workspace.sessionId )
 		{
-			m.addVar( 'sessionid', info.sessionid );
+			m.addVar( 'sessionid', window.Workspace.sessionId );
 		}
-		else if ( info.refreshtoken )
+		else if ( self.refreshToken )
 		{
-			m.addVar( 'refreshtoken', info.refreshtoken );
+			m.addVar( 'refreshtoken', self.refreshToken );
 		}
 		else
 		{
 			this.State = 'offline'; 
-			this.lastLogin = null;
+			self.lastLogin = null;
 			return false;
 		}
 		
 		m.addVar( 'deviceid', GetDeviceId() );
 		m.onExecuted = function( conf, serveranswer )
 		{
+			self.lastLogin = null;
+			
+			let response = null;
+			try {
+				response = JSON.parse( serveranswer );
+			} catch( ex ) {
+				console.log( 'could not parse serveranswer', serveranswer );
+			}
+			
 			console.log( 'SendLoginCall - response', {
 				conf         : conf,
-				serveranswer : serveranswer,
+				serveranswer : response,
+				lastLogin    : !!self.lastLogin,
 			});
-			if( conf == null )
+			if( conf == null || 'error' == conf )
 			{
 				Friend.User.ReLogin();
+				return;
+			}
+			
+			if ( 'fail' == conf ) {
+				console.log( 'send login call response fail', response );
+				if ( response && 10 == response.code )
+					window.Workspace.sessionId = null;
+				
+				self.ReLogin();
 				return;
 			}
 			
@@ -177,10 +231,7 @@ Friend.User = {
 				throw new Error( 'Login response does not have a refreshtoken' );
 			}
 			
-			this.refreshToken = conf.refreshtoken;
-			this.lastLogin = null;
-			
-			// We got a real error
+			window.Friend.User.refreshToken = conf.refreshtoken;
 			
 			try
 			{
@@ -214,7 +265,7 @@ Friend.User = {
 							callback( true, serveranswer );
 						// Make sure we didn't lose websocket!
 					}
-				
+					
 					// Remember login info for next login
 					// But removed for security
 					// TODO: Figure out a better way!
@@ -243,14 +294,19 @@ Friend.User = {
 	// When session times out, use log in again...
 	ReLogin: function( callback )
 	{
-    	if( this.lastLogin ) return;
+		const self = this;
+		console.log( 'ReLogin', {
+			lastLogin   : self.lastLogin,
+			FUlastlogin : Friend.User.lastLogin,
+			selflogn    : self.lastLogin,
+		});
+    	if( self.lastLogin ) return;
     	
     	this.State = 'login';
     	
     	
     	if( !event ) event = window.event;
     	
-    	let self = this;
     	const info = {};
     	
     	/*
@@ -263,9 +319,11 @@ Friend.User = {
     	}
     	*/
     	
+    	/*
     	info.sessionid = Workspace.sessionId;
     	info.refreshtoken = Friend.User.refreshToken;
-		
+		*/
+		//console.log( 'relogin info', info );
 		// Close conn here - new login regenerates sessionid
 		if( Workspace.conn )
 		{
@@ -283,14 +341,10 @@ Friend.User = {
 		// Reset cajax http connections (because we lost connection)
 		_cajax_http_connections = 0;
 		
-		if( info.refreshtoken || info.sessionid )
-		{
-			this.SendLoginCall( info, callback, 'relogin' );
-		}
-		else
-		{
+		if( null == self.refreshToken )
 			Workspace.showLoginPrompt();
-		}
+		else
+			self.SendLoginCall( info, callback, 'relogin' );
 		
 		return 0;
     },
@@ -395,6 +449,7 @@ Friend.User = {
 	FlushSession: function()
 	{
 		// Clear Workspace session
+		console.log( 'flushSession' );
 		Workspace.sessionId = '';
 	},
 	// Initialize this object
@@ -409,6 +464,11 @@ Friend.User = {
 	// Check if the server is alive
 	CheckServerConnection: function( useAjax )
 	{
+		
+		console.log( 'CheckServerConnection', {
+			loginPromp : Workspace.loginPrompt,
+			state      : Friend.User.State,
+		});
 		if( Workspace && Workspace.loginPrompt ) return;
 		if( typeof( Library ) == 'undefined' ) return;
 		if( typeof( MD5 ) == 'undefined' ) return;
@@ -424,6 +484,7 @@ Friend.User = {
 				let serverCheck = new Library( 'system' );
 				serverCheck.onExecuted = function( q, s )
 				{
+					console.log( 'server.execed', [ q, s ]);
 					// Dont need this now
 					clearTimeout( checkTimeo );
 					
@@ -482,6 +543,7 @@ Friend.User = {
 	// Set the user state (offline / online etc)
 	SetUserConnectionState: function( mode, force )
 	{
+		console.trace( 'SetUserConnectionState', [ mode, force ]);
 		if( mode == 'offline' )
 		{
 			if( this.State != 'offline' )
