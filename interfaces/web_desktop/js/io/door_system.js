@@ -28,7 +28,6 @@ var SystemEvents = {};
 DoorSystem = function( path )
 {
 	this.icons = [];
-	let door = this;
 	this.handler = 'system';
 	this.dosdriver = 'System';
 	this.ready = false;
@@ -47,7 +46,7 @@ DoorSystem.prototype = new Door();
 DoorSystem.prototype.get = function( path )
 {
 	let vol = path.split( ':' )[0] + ':';
-	for( var a = 0; a < Doors.icons.length; a++ )
+	for( let a = 0; a < Doors.icons.length; a++ )
 	{
 		if( Doors.icons[a].Volume.toLowerCase() == vol.toLowerCase() )
 		{
@@ -61,6 +60,8 @@ DoorSystem.prototype.get = function( path )
 // Return an array of icons!
 DoorSystem.prototype.getIcons = function( fileInfo, callback )
 {
+	let self = this;
+	
 	if( !fileInfo )
 	{
 		fileInfo = {
@@ -285,7 +286,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 			let u = 0;
 
 			// Loop through and make icons
-			for( var dev in devs )
+			for( let dev in devs )
 			{
 				let icon = icons[dev];
 				output.push( {
@@ -587,7 +588,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				if( list.length )
 				{
 					let pth = list[0].Path.substr( 0, path.length );
-					return callback( JSON.parse( data ), pth );
+					return callback( self.flushDuplicate( JSON.parse( data ) ), pth );
 				}
 				else callback( false, { response: 'Empty directory.' } );
 			}

@@ -173,7 +173,7 @@ Application.handlePipe = function( packet )
 								let ok = false;
 								if ( !Application.friendNetworkClient && Application.friendNetworkHosts )
 								{
-									for ( var key in Application.friendNetworkHosts )
+									for( let key in Application.friendNetworkHosts )
 									{
 										if ( Application.friendNetworkHosts[ key ].name == packet.returnMessage.name )
 										{
@@ -213,7 +213,7 @@ Application.handlePipe = function( packet )
 										userName = hostName.substring(p + 1);
 										hostName = hostName.substring(0, p);
 									}
-									for ( var key in Application.friendNetworkHosts )
+									for( let key in Application.friendNetworkHosts )
 									{
 										let name = Application.friendNetworkHosts[ key ].name;
 										if ( !userName )
@@ -268,7 +268,7 @@ Application.handlePipe = function( packet )
 		// Only count this if its an objects
 		if( typeof( packet.data ) == 'object' )
 		{
-			for( var a in packet.data )
+			for( let a in packet.data )
 			{
 				members++;
 				fmem = a;
@@ -546,7 +546,7 @@ Application.setupTerminalKeys = function()
 	let t = this;
 	let f = this.terminal.getElementsByTagName( 'div' );
 	let o = false;
-	for ( var a = f.length - 1; a > 0; a-- )
+	for( let a = f.length - 1; a > 0; a-- )
 	{
 		if ( f[a].className == 'Cli' )
 		{
@@ -649,7 +649,7 @@ Application.setupTerminalKeys = function()
 							rd.push( {
 								Name: 'System'
 							} );
-							for( var a = 0; a < rd.length; a++ )
+							for( let a = 0; a < rd.length; a++ )
 							{
 								if( rd[a].Name.substr( 0, lcmd.length ).toLowerCase() == lcmd.toLowerCase() )
 								{
@@ -667,7 +667,7 @@ Application.setupTerminalKeys = function()
 						{
 							if( lcmd && lcmd.toLowerCase && lcmd.length )
 							{
-								for( var a = 0; a < data.length; a++ )
+								for( let a = 0; a < data.length; a++ )
 								{
 									let fn = data[a].Filename ? data[a].Filename : data[a].Title;
 									if( !fn ) continue;
@@ -746,7 +746,7 @@ Application.generateOutputFromObjects = function( objects )
 	if( isNaN( acount ) )
 	{
 		let o = [];
-		for( var a in objects ) o.push( objects[a] );
+		for( let a in objects ) o.push( objects[a] );
 		objects = o;
 		acount = o.length;
 	}
@@ -758,7 +758,7 @@ Application.generateOutputFromObjects = function( objects )
 	// Go through the icons
 	let icons = '';
 	let trash = 0; // how many bad icons were found
-	for( var a = 0; a < acount; a++ )
+	for( let a = 0; a < acount; a++ )
 	{
 		let row = objects[a];
 		if( !output[column] ) output[column] = '';
@@ -776,7 +776,7 @@ Application.generateOutputFromObjects = function( objects )
 		{
 			itm = '<div class="File">';
 			let f = false;
-			for( var b in row )
+			for( let b in row )
 			{
 				if( b == 'ID' )
 				{
@@ -807,7 +807,7 @@ Application.generateOutputFromObjects = function( objects )
 	acount -= trash;
 	
 	icons += '<table style="border-collapse: collapse; border-spacing: 0"><tr>';
-	for( var a = 0; a < output.length; a++ )
+	for( let a = 0; a < output.length; a++ )
 	{
 		let c = output[a];
 		icons += '<td style="vertical-align: top; padding-right: 20px">' + c + '</td>';
@@ -946,7 +946,7 @@ Application.receiveMessage = function( object )
 					{
 						this.friendNetworkHosts[object.hostKey] = false;
 						let temp = [];
-						for ( var key in this.friendNetworkHosts )
+						for( let key in this.friendNetworkHosts )
 						{
 							if ( this.friendNetworkHosts[ key ])
 								temp[ key ] = this.friendNetworkHosts[ key ];
@@ -1050,15 +1050,15 @@ Application.receiveMessage = function( object )
 					if ( object.connected )
 					{
 						out += '<br />Connected';
-						for ( var a = 0; a < object.hosts.length; a++ )
+						for( let a = 0; a < object.hosts.length; a++ )
 						{
 							out += '<br />Host: ' + object.hosts[ a ].name + '\n';
-							for ( var b = 0; b < object.hosts[ a ].hosting.length; b++ )
+							for( let b = 0; b < object.hosts[ a ].hosting.length; b++ )
 							{
 								out += '<br />    Hosting: ' + object.hosts[ a ].hosting[ b ].distantName + '\n';
 							}
 						}
-						for ( var a = 0; a < object.clients.length; a++ )
+						for( let a = 0; a < object.clients.length; a++ )
 						{
 							out += '<br />Client: of ' + object.clients[a].hostName +'\n';
 						}
@@ -1170,7 +1170,7 @@ function newStack( arr, newArr, index )
 	let i = 0;    // Index in newArr
 	let ai = 0;   // Index in arr
 	let whole = arr.length + newArr.length;
-	for( var a = 0; a < whole; a++ )
+	for( let a = 0; a < whole; a++ )
 	{
 		// Insert the first part up to index
 		if( a <= index )
@@ -1199,7 +1199,7 @@ function addOnEventTrigger( app, trigger, variable, newList )
 	function callback( data )
 	{
 		let script = "input off\n";
-		for( var a in newList ) script += newList[a] + "\n";
+		for( let a in newList ) script += newList[a] + "\n";
 		Application.variables[ variable ] = data;
 		Application.evaluateInput( [ script ], 0 );
 	}
