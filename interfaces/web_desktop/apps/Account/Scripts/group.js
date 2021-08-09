@@ -18,7 +18,7 @@ let groupUsersList = [];
 let existing = [];
 let currentSearch = '';
 
-function listConnectedUsers( limit, pos, keyw )
+function listConnectedUsers( limit, pos, keyw, skipOthers )
 {
 	if( !limit ) limit = 10;
 	if( !pos ) pos = 0;
@@ -55,7 +55,7 @@ function listConnectedUsers( limit, pos, keyw )
 							' + ( list[a].Fullname ? list[a].Fullname : list[a].Email ) + '\
 						</div>\
 						<div class="HContent20 FloatLeft Ellipsis PaddingSmall TextRight">\
-							<button class="Button IconSmall fa-remove NoText IconButton" onclick="removeInvite(\'' + list[a].EventID + '\')"></button>\
+							<button class="Button IconSmall fa-remove NoText IconButton" onclick="removeInvite(\'' + list[a].EventID + '\',false, \'' + list[a].ID + '\')"></button>\
 						</div>\
 					</div>';
 				}
@@ -66,7 +66,7 @@ function listConnectedUsers( limit, pos, keyw )
 							' + ( list[a].Fullname ? list[a].Fullname : list[a].Email ) + '\
 						</div>\
 						<div class="HContent20 FloatLeft Ellipsis PaddingSmall TextRight">\
-							<button class="Button IconSmall fa-remove NoText IconButton" onclick="removeInvite(null,\'' + list[a].InviteLinkID + '\')"></button>\
+							<button class="Button IconSmall fa-remove NoText IconButton" onclick="removeInvite(null,\'' + list[a].InviteLinkID + '\',\'' + list[a].TargetUserID + '\')"></button>\
 						</div>\
 					</div>';
 				}
@@ -77,7 +77,7 @@ function listConnectedUsers( limit, pos, keyw )
 			ge( 'Pending' ).innerHTML = str;
 		}
 		
-		if( pos == 0 )
+		if( pos == 0 && !skipOthers )
 			connectedOthers( limit, pos, keyw );
 		
 	}
@@ -108,7 +108,7 @@ function connectedOthers( limit, pos, keyw)
 			sw = hr[ hr.length - 1 ].classList.contains( 'sw1' ) ? 2 : 1;
 		
 		let listed = 0;
-		for( let a = 0; a < 10 && a < mlist.length && ( !keyw && a < limit ); a++ )
+		for( let a = 0; a < 10 && a < mlist.length && ( ( keyw && keyw.length ) || a < limit ); a++ )
 		{
 			let skip = false;
 			// Skip pending invites users
@@ -121,7 +121,7 @@ function connectedOthers( limit, pos, keyw)
 				}
 			}
 			if( skip ) continue;
-			str += '<div class="HRow sw' + sw + '">\
+			str += '<div class="HRow sw' + sw + '" rowid="' + mlist[a].ID + '">\
 				<div class="HContent60 FloatLeft Ellipsis PaddingSmall">\
 					' + mlist[a].Fullname + '\
 				</div>\
@@ -171,14 +171,22 @@ function loadMoreConnected( pos, keys )
 	connectedOthers( 10, pos, keys );
 }
 
-function removeInvite( eventId, inviteId )
+function removeInvite( eventId, inviteId, userid )
 {
 	if( inviteId )
 	{
 		let p = new Module( 'system' );
 		p.onExecuted = function( e, d )
 		{
-			groupUsers( function(){ listConnectedUsers(); } );
+			groupUsers( function(){ listConnectedUsers( false, false, false, true ); } );
+			let eles = ge( 'Pending' ).getElementsByClassName( 'HRow' );
+			for( let a = 0; a < eles.length; a++ )
+			{
+				if( eles[a].getAttribute( 'rowid' ) == userid )
+				{	
+					eles[a].style.display = 'none';
+				}
+			}
 		}
 		p.execute( 'removeinvite', { ids: inviteId } );
 	}
@@ -322,7 +330,18 @@ function inviteUser( uid )
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			groupUsers( function(){ listConnectedUsers(); } );
+			// Do not update search, but everything else
+			groupUsers( function(){ listConnectedUsers( false, false, false, true  ); } );
+			
+			// Hide row
+			let eles = ge( 'Usersearch' ).getElementsByClassName( 'HRow' );
+			for( let a = 0; a < eles.length; a++ )
+			{
+				if( eles[a].getAttribute( 'rowid' ) == uid )
+				{	
+					eles[a].style.display = 'none';
+				}
+			}
 		}
 		m.execute( 'sendinvite', {
 			userid: uid,
