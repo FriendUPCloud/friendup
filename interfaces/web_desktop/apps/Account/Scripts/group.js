@@ -40,7 +40,7 @@ function listConnectedUsers( limit, pos, keyw )
 			let str = '<hr class="Divider"/><p><strong>' + i18n( 'i18n_pending_invites' ) + '</strong></p>';
 			str += '<div class="List">';
 			let sw = 1;
-			for( let a = 0; a < list.length; a++ )
+			for( let a = 0; a < list.length && a < limit; a++ )
 			{
 				if( list[a].EventID )
 				{
@@ -82,11 +82,11 @@ function listConnectedUsers( limit, pos, keyw )
 			let mlist = JSON.parse( d );
 			str = '<div class="List">';
 			sw = 1;
-			for( let a = 0; a < 10 && a < mlist.length; a++ )
+			for( let a = 0; a < 10 && a < mlist.length && a < limit; a++ )
 			{
 				skip = false;
 				// Skip pending invites users
-				for( let b = 0; b < list.length; b++ )
+				for( let b = 0; b < list.length && b < limit; b++ )
 				{
 					if( list[b].UserID == mlist[a].ID )
 					{
@@ -106,10 +106,10 @@ function listConnectedUsers( limit, pos, keyw )
 				sw = sw == 1 ? 2 : 1;
 			}
 			str += '</div>';
-		
+			
 			ge( 'Usersearch' ).innerHTML = str;
 		}
-		let o = { limit: 11 };
+		let o = { limit: limit, pos: pos };
 		if( groupUsersList.length > 0 )
 			o.except = groupUsersList;
 		if( keyw )
