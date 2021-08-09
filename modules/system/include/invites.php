@@ -716,12 +716,14 @@ if( $args->command )
 					{
 						// ...
 						
+						// TODO: Look at this, if email fails still have the notification active ....
+						
 						// Delete personal invite link on fail and try again ...
 						
-						if( $f->ID > 0 )
-						{
-							$f->Delete();
-						}
+						//if( $f->ID > 0 )
+						//{
+						//	$f->Delete();
+						//}
 						
 						die( 'fail<!--separate-->{"response":-1,"message":"Could not send e-mail."}' );
 					}
