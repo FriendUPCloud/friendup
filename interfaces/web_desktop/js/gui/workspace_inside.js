@@ -472,7 +472,7 @@ var WorkspaceInside = {
 										btns[i].onclick = ( function (  )
 										{
 											
-											Workspace.shell.execute(  'Launch Account' );
+											Workspace.shell.execute( 'Launch Account' );
 											
 										} );
 									}
