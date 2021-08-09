@@ -178,13 +178,8 @@ SystemBase *SystemInit( void )
 	
 	LIBXML_TEST_VERSION;
 	
-<<<<<<< HEAD
 	l->sl_RemoveOldSessionTimeout = MINS60;
 	l->sl_RemoveSessionsAfterTime = 10800;
-=======
-	//l->sl_RemoveOldSessionTimeout = 0; Old
-	l->sl_RemoveSessionsAfterTime = HOURS3;
->>>>>>> 43a0106abb8725d54e100f617fe5254326d0c050
 	
 	//
 	// sl_Autotask
