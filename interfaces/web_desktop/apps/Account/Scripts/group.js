@@ -46,7 +46,7 @@ function listConnectedUsers( limit, pos, keyw )
 			existing = list;
 			currentSearch = keyw;
 			
-			for( let a = 0; a < list.length && a < limit; a++ )
+			for( let a = 0; a < list.length; a++ )
 			{
 				if( list[a].EventID )
 				{
