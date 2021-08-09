@@ -61,8 +61,6 @@ DoorSystem.prototype.get = function( path )
 // Return an array of icons!
 DoorSystem.prototype.getIcons = function( fileInfo, callback )
 {
-	console.log( 'Getting icons.', fileInfo );
-	
 	if( !fileInfo )
 	{
 		fileInfo = {
@@ -450,7 +448,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 		found = true;
 	else
 	{
-		for( var a in dirList )
+		for( let a in dirList )
 		{
 			// Match insensitive
 			if( spath.toLowerCase() == a.toLowerCase() )
@@ -870,10 +868,12 @@ var WorkspaceDormant = {
 	},
 	getDirectory( path, callback )
 	{
+		console.log( 'Get it.' );
 		return Friend.DoorSystem.getIcons( path, callback );
 	},
 	getIcons( path, callback )
 	{
+		console.log( 'What it.' );
 		return this.getDirectory( path, callback );
 	}
 }
