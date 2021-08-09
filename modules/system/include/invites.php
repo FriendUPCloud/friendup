@@ -364,7 +364,7 @@ if( $args->command )
 				}
 				else
 				{
-					die( 'fail<!--separate-->{"Response":"Invite hash is not valid."}' );
+					die( 'fail<!--separate-->{"Response":"Invite hash: ' . $args->args->hash . ' is not valid."}' );
 				}
 			}
 			
