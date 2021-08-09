@@ -71,6 +71,7 @@ if( isset( $args->args->groupId ) )
 
 if( isset( $args->args->limit ) )
 {
+	// Herer we have limit + 1 to always load the next page (to check if there is an extra page)
 	$limit = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->limit + 1 );
 	$pos = '0';
 	if( isset( $args->args->pos ) )
@@ -84,6 +85,6 @@ if( $rows = $SqlDatabase->FetchObjects( $query ) )
 {
 	die( 'ok<!--separate-->' . json_encode( $rows ) );
 }
-die( 'fail<!--separate-->{"response":-1,"message":"No workgroup related users connected to you."}' );
+die( 'fail<!--separate-->{"response":-1,"message":"No workgroup related users connected to you."}' . $query );
 
 ?>
