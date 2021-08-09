@@ -2117,6 +2117,10 @@ void libClose( struct SQLLibrary *l )
 int GetStatus( struct SQLLibrary *l )
 {
 	MYSQL *sql_Con = (MYSQL *)l->con.sql_Con;
+	if( l->con.sql_Con == NULL )
+	{
+		return SQL_STATUS_BUSY;
+	}
 	if( sql_Con->status == MYSQL_STATUS_READY )
 	{
 		return SQL_STATUS_READY;
