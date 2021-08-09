@@ -107,13 +107,14 @@ function connectedOthers( limit, pos, keyw)
 		if( hr.length )
 			sw = hr[ hr.length - 1 ].classList.contains( 'sw1' ) ? 2 : 1;
 		
-		for( let a = 0; a < 10 && a < mlist.length && a < limit; a++ )
+		let listed = 0;
+		for( let a = 0; a < 10 && a < mlist.length && ( !keyw && a < limit ); a++ )
 		{
 			let skip = false;
 			// Skip pending invites users
-			for( let b = 0; b < list.length && b < limit; b++ )
+			for( let b = 0; b < list.length; b++ )
 			{
-				if( list[b].UserID == mlist[a].ID )
+				if( parseInt( list[b].UserID ) == parseInt( mlist[a].ID ) )
 				{
 					skip = true;
 					continue;
@@ -129,10 +130,11 @@ function connectedOthers( limit, pos, keyw)
 				</div>\
 			</div>';
 			sw = sw == 1 ? 2 : 1;
+			listed++;
 		}
 		str += '</div>';
 		
-		if( mlist.length >= limit )
+		if( listed > 0 && mlist.length >= limit && !keyw )
 		{
 			str += '<p><em><span class="MousePointer" onclick="loadMoreConnected(' + ( pos + limit ) + ')">' + i18n( 'i18n_more' ) + '</span></em></p>';
 		}
@@ -232,6 +234,7 @@ function groupUsers( callback, pos, limit )
 		if( hr.length )
 			sw = hr[ hr.length - 1 ].classList.contains( 'sw1' ) ? 2 : 1;
 		
+		let listed = 0;
 		for( let a = 0; a < 10 && a < list.length && a < limit; a++ )
 		{
 			// Add to a global list
@@ -258,10 +261,11 @@ function groupUsers( callback, pos, limit )
 				</div>' ) : '' ) + '\
 			</div>';
 			sw = sw == 1 ? 2 : 1;
+			listed++;
 		}
 		str += '</div>';
 		
-		if( list.length >= limit )
+		if( list.length >= limit && listed > 0 )
 		{
 			str += '<p><em><span class="MousePointer" onclick="groupUsers(null,' + ( pos + limit ) + ')">' + i18n( 'i18n_more' ) + '</span></em></p>';
 		}
