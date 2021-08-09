@@ -868,12 +868,10 @@ var WorkspaceDormant = {
 	},
 	getDirectory( path, callback )
 	{
-		console.log( 'Get it.' );
 		return Friend.DoorSystem.getIcons( path, callback );
 	},
 	getIcons( path, callback )
 	{
-		console.log( 'What it.' );
 		return this.getDirectory( path, callback );
 	}
 }
