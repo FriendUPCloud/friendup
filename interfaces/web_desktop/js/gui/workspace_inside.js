@@ -1736,11 +1736,11 @@ var WorkspaceInside = {
 	// Handle an interaction event on a queued event
 	handleNotificationInteraction: function( eventId, response, uniqueId )
 	{
-		let debug = true;
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			if( debug ) console.log( {e:e,d:d} );
+			console.log( {e:e,d:d} );
+			if( e != 'ok' ) Alert( 'Error', d );
 			if( e == 'ok' )
 			{
 				RemoveNotificationEvent( uniqueId );
