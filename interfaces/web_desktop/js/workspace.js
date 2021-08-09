@@ -855,7 +855,11 @@ Workspace = {
 	},
 	initUserWorkspace: function( json, callback, ev )
 	{
-		// console.log( 'Test2: Init user workspace.' );
+		console.log( 'Test2: Init user workspace.', {
+			json     : json,
+			callback : callback,
+			ev       : ev,
+		});
 		
 		var _this = Workspace;
 

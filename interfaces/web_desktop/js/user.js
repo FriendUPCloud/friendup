@@ -25,6 +25,10 @@ Friend.User = {
     Username: '',               // Holds the user's username
     AccessToken: null,          // Holds the user's access token
     ConnectionAttempts: 0,         // How many relogin attempts were made
+    loginCallback : null,
+    loginInfo     : null,
+    loginTimeout  : null,
+    queuedLogin   : false,
     
     // Methods -----------------------------------------------------------------
     
@@ -53,23 +57,41 @@ Friend.User = {
 			delete Workspace.conn;
 		}
 		
+		if ( !username || !password ) {
+			Workspace.showLoginPrompt();
+			return;
+		}
+		
+		const info = {
+			username       : username,
+			password       : password,
+			remember       : remember,
+			flags          : flags,
+		};
+		
+		/*	
+		info.hashedPassword = flags.hashedPassword,
+		inviteHash     : flags.inviteHash
+		*/
+		
+		self.SendLoginCall( info, callback );
+		
+		/*
+		
 		if( username && password )
 		{
-			Workspace.encryption.setKeys( username, password );
+			//Workspace.encryption.setKeys( username, password );
 			this.SendLoginCall( {
-				username: username,
-				password: password,
-				remember: remember,
-				hashedPassword: flags.hashedPassword,
-				inviteHash: flags.inviteHash
+				
 			}, callback );
 		}
 		else
 		{
-			Workspace.showLoginPrompt();
+			
 		}
 		
 		return 0;
+		*/
     },
     // Login using a session id
     LoginWithSessionId: function( sessionid, callback, event )
@@ -81,6 +103,7 @@ Friend.User = {
     	if( !event ) event = window.event;
     	
     	//let self = this;
+    	Workspace.sessionId = sessionid;
 		
 		// Close conn here - new login regenerates sessionid
 		if( Workspace.conn )
@@ -96,11 +119,12 @@ Friend.User = {
 			delete Workspace.conn;
 		}
 		
+		self.SendLoginCall( null, callback );
+		
+		/*
 		if( sessionid )
 		{
-			this.SendLoginCall( {
-				sessionid: sessionid
-			}, callback );
+			
 		}
 		else
 		{
@@ -108,76 +132,62 @@ Friend.User = {
 		}
 		
 		return 0;
+		*/
     },
     // Send the actual login call
     SendLoginCall: function( info, callback )
     {
     	const self = this;
     	// Already logging in
-    	const infoStr = JSON.stringify( info );
-    	const infoCpy = JSON.parse( infoStr );
+    	let infoCpy = null;
+    	if ( info ) {
+    		const infoStr = JSON.stringify( info );
+    		infoCpy = JSON.parse( infoStr );
+    	}
     	console.log( 'SendLoginCall', {
-    		info         : infoCpy,
+    		info         : infoCpy || info,
     		callback     : callback,
     		loginTimeout : self.loginTimeout,
     		state        : self.State,
-    		sessId       : window.Workspace.sessionId,
+    		sssId        : window.Workspace.sessionId,
     		reftok       : self.refreshToken,
     		self         : self,
     	});
     	this.State = 'login';
+    	if ( info && self.lastLogin )
+    		clearCurrent();
+    	
+    	if ( info )
+    		self.loginInfo = info;
+    	if ( callback )
+    		self.loginCallback = callback;
+    	
     	if ( null != self.loginTimeout ) {
     		console.log( 'login timeout, queue' );
-    		this.queueLogin = {
-    			info     : info,
-    			callback : callback,
-    		};
+    		this.queuedLogin = true;
     		return;
     	}
     	
     	self.loginTimeout = window.setTimeout( tryNowMaybe, 1000 * 2 );
     	function tryNowMaybe() {
     		self.loginTimeout = null;
-    		const ql = self.queueLogin;
-    		console.log( 'tryNowMaybe', ql );
-    		if ( null == ql )
+    		if ( !self.queuedLogin )
     			return;
     		
-    		self.queueLogin = null;
-    		self.SendLoginCall( ql.info, ql.callback );
+    		self.queuedLogin = false;
+    		self.SendLoginCall();
     	}
     	
-    	if( self.lastLogin && self.lastLogin.currentRequest )
-    	{
-    		self.lastLogin.currentRequest.destroy();
-    		self.lastLogin = null;
-    	}
-    	
-    	// Create a new library call object
 		let m = new FriendLibrary( 'system' );
 		self.lastLogin = m;
 		
+		info = self.loginInfo || {};
 		if( info.username && info.password )
 		{
 			Workspace.sessionId = '';
 			this.refreshToken = '';
 			m.addVar( 'username', info.username );
 			m.addVar( 'password', info.hashedPassword ? info.password : ( 'HASHED' + Sha256.hash( info.password ) ) );
-			
-			/*
-			try
-			{
-				let enc = parent.Workspace.encryption;
-				parent.Workspace.loginPassword = enc.encrypt( info.password, enc.getKeys().publickey );
-				parent.Workspace.loginHashed = info.hashedPassword;
-			}
-			catch( e )
-			{
-				let enc = Workspace.encryption;
-				Workspace.loginPassword = enc.encrypt( info.password, enc.getKeys().publickey );
-				Workspace.loginHashed = info.hashedPassword;
-			}
-			*/
 		}
 		else if( window.Workspace.sessionId )
 		{
@@ -191,29 +201,39 @@ Friend.User = {
 		{
 			this.State = 'offline'; 
 			self.lastLogin = null;
+			respond( 'offline', null );
 			return false;
 		}
 		
+		console.log( 'sending login with', m.vars );
 		m.addVar( 'deviceid', GetDeviceId() );
 		m.onExecuted = function( conf, serveranswer )
 		{
+			const info = self.loginInfo || {};
 			self.lastLogin = null;
-			
+			self.loginInfo = null;
 			let response = null;
 			try {
 				response = JSON.parse( serveranswer );
-			} catch( ex ) {
-				console.log( 'could not parse serveranswer', serveranswer );
-			}
+			} catch( ex ) {}
 			
-			console.log( 'SendLoginCall - response', {
+			console.trace( 'SendLoginCall - response', {
+				info         : info,
 				conf         : conf,
 				serveranswer : response,
 				lastLogin    : !!self.lastLogin,
 			});
-			if( conf == null || 'error' == conf )
+			if( conf == null || '' == conf )
 			{
-				Friend.User.ReLogin();
+				console.log( 'login weird')
+				respond( false );
+				//self.ReLogin();
+				return;
+			}
+			
+			if ( 'error' == conf ) {
+				console.log( 'login error' );
+				self.ReLogin();
 				return;
 			}
 			
@@ -222,7 +242,8 @@ Friend.User = {
 				if ( response && 10 == response.code )
 					window.Workspace.sessionId = null;
 				
-				self.ReLogin();
+				respond( 'fail', serveranswer );
+				//self.ReLogin();
 				return;
 			}
 			
@@ -231,7 +252,7 @@ Friend.User = {
 				throw new Error( 'Login response does not have a refreshtoken' );
 			}
 			
-			window.Friend.User.refreshToken = conf.refreshtoken;
+			self.refreshToken = conf.refreshtoken;
 			
 			try
 			{
@@ -252,33 +273,34 @@ Friend.User = {
 					if( info.inviteHash ) conf.inviteHash = info.inviteHash;
 					
 					// We are now online!
-					Friend.User.SetUserConnectionState( 'online' );
+					self.SetUserConnectionState( 'online' );
 					
 					if( !Workspace.userWorkspaceInitialized )
 					{
                 		// Init workspace
-						Workspace.initUserWorkspace( conf, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
+                		const res = respond( true, serveranswer );
+						Workspace.initUserWorkspace(
+							conf,
+							res,
+							//( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ),
+							event
+						);
 					}
 					else
 					{
+						respond( true, serveranswer );
+						/*
 						if( typeof( callback ) == 'function' )
 							callback( true, serveranswer );
+						*/
 						// Make sure we didn't lose websocket!
-					}
-					
-					// Remember login info for next login
-					// But removed for security
-					// TODO: Figure out a better way!
-					if( info.remember )
-					{
-						// Nothing
 					}
 				}
 				else
 				{
-					Friend.User.SetUserConnectionState( 'offline' );
-					
-					if( typeof( callback ) == 'function' ) callback( false, serveranswer );
+					self.SetUserConnectionState( 'offline' );
+					respond( false, serveranswer );
+					//if( typeof( callback ) == 'function' ) callback( false, serveranswer );
 				}
 			}	
 			catch( e )
@@ -290,24 +312,41 @@ Friend.User = {
 		m.forceHTTP = true;
 		m.forceSend = true;
 		m.execute( 'login' );
+		
+		function clearCurrent() {
+			self.loginCallback = null;
+    		if ( null == self.lastLogin )
+    			return;
+    		
+    		self.lastLogin.currentRequest.destroy();
+    		self.lastLogin = null;
+    	}
+    	
+    	function respond( status, data ) {
+    		console.log( 'respond', {
+    			status   : status,
+    			data     : data,
+    			callback : self.loginCallback,
+    		});
+    		const cb = self.loginCallback;
+    		delete self.loginCallback;
+    		if ( null == cb )
+    			return;
+    		
+    		return cb( status, data );
+    	}
     },
 	// When session times out, use log in again...
 	ReLogin: function( callback )
 	{
 		const self = this;
-		console.log( 'ReLogin', {
-			lastLogin   : self.lastLogin,
-			FUlastlogin : Friend.User.lastLogin,
-			selflogn    : self.lastLogin,
-		});
+		console.log( 'ReLogin', self.lastLogin );
     	if( self.lastLogin ) return;
     	
     	this.State = 'login';
     	
-    	
     	if( !event ) event = window.event;
     	
-    	const info = {};
     	
     	/*
     	if( Workspace.loginUsername && Workspace.loginPassword )
@@ -344,7 +383,7 @@ Friend.User = {
 		if( null == self.refreshToken )
 			Workspace.showLoginPrompt();
 		else
-			self.SendLoginCall( info, callback, 'relogin' );
+			self.SendLoginCall( null, callback );
 		
 		return 0;
     },
@@ -394,6 +433,7 @@ Friend.User = {
 				return;
 			}
 			Workspace.sessionId = ''; 
+			self.refreshToken = null;
 			document.location.href = window.location.href.split( '?' )[0].split( '#' )[0]; //document.location.reload();
 		}
 		dologt = setTimeout( doLogout, 750 );
@@ -543,7 +583,12 @@ Friend.User = {
 	// Set the user state (offline / online etc)
 	SetUserConnectionState: function( mode, force )
 	{
-		console.trace( 'SetUserConnectionState', [ mode, force ]);
+		console.log( 'SetUserConnectionState', {
+			mode    : mode, 
+			force   : force,
+			current : self.State,
+		});
+		
 		if( mode == 'offline' )
 		{
 			if( this.State != 'offline' )

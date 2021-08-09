@@ -560,7 +560,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	
 	// Try websockets!!
 	if( 
-		//false &&
+		false &&
 		!this.forceHTTP &&
 		window.Workspace &&
 		Workspace.conn && 
