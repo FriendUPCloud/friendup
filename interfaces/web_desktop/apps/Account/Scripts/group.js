@@ -193,7 +193,7 @@ function removeInvite( eventId, inviteId )
 
 function searchUser( keyw )
 {
-	listConnectedUsers( null, null, keyw );
+	listConnectedUsers( false, false, keyw );
 }
 
 function groupUsers( callback, pos, limit )
