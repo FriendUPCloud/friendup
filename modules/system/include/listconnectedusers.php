@@ -71,6 +71,7 @@ if( isset( $args->args->groupId ) )
 
 if( isset( $args->args->limit ) )
 {
+	// Herer we have limit + 1 to always load the next page (to check if there is an extra page)
 	$limit = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->limit + 1 );
 	$pos = '0';
 	if( isset( $args->args->pos ) )
