@@ -2477,7 +2477,9 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						}
 						else
 						{
+							DEBUG("[SystembaseWEB] authentication, user do not exist in memory\n");
 							loggedSession = l->sl_ActiveAuthModule->Authenticate( l->sl_ActiveAuthModule, *request, NULL, usrname, pass, deviceid, NULL, &blockedTime );
+							DEBUG("[SystembaseWEB] authentication, user do not exist in memory, session: %p\n", loggedSession );
 							
 							// this is first login, we must create RefreshToken
 							
@@ -2523,6 +2525,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						}
 						else
 						{
+							DEBUG("[SystembaseWEB] authentication, session not found, time to load it. appname: %s\n", appname );
+							
 							if( appname == NULL )
 							{
 								loggedSession = l->sl_ActiveAuthModule->Authenticate( l->sl_ActiveAuthModule, *request, dstusrsess, usrname, pass, deviceid, NULL, &blockedTime );
@@ -2531,6 +2535,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							{
 								loggedSession = l->sl_ActiveAuthModule->Authenticate( l->sl_ActiveAuthModule, *request, dstusrsess, usrname, pass, deviceid, "remote", &blockedTime );
 							}
+							DEBUG("[SystembaseWEB] authentication, session not found, time to load it. appname: %s session: %p\n", appname, loggedSession );
 							
 							RefreshToken *tok = SecurityManagerCreateRefreshTokenByUserNameDB( l->sl_SecurityManager, deviceid, usrname );
 							if( tok != NULL )

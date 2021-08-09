@@ -177,7 +177,7 @@ SystemBase *SystemInit( void )
 	
 	LIBXML_TEST_VERSION;
 	
-	l->sl_RemoveOldSessionTimeout = 0;
+	l->sl_RemoveOldSessionTimeout = MINS60;
 	l->sl_RemoveSessionsAfterTime = 10800;
 	
 	//
@@ -416,7 +416,7 @@ SystemBase *SystemInit( void )
 			options = plib->ReadStringNCS( prop, "databaseuser:options", NULL );
 			DEBUG("[SystemBase] options %s\n",options );
 			
-			//l->sl_RemoveOldSessionTimeout = plib->ReadIntNCS( prop, "user:timeout", MINS60 );
+			l->sl_RemoveOldSessionTimeout = plib->ReadIntNCS( prop, "user:timeout", MINS60 );
 			l->sl_RemoveSessionsAfterTime = plib->ReadIntNCS( prop, "user:timeout", MINS60 );
 			DEBUG("[SystemBase] user:timeout %d\n", l->sl_RemoveSessionsAfterTime );
 			
