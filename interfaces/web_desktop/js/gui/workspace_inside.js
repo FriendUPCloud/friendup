@@ -1739,6 +1739,8 @@ var WorkspaceInside = {
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
+			console.log( {e:e,d:d} );
+			if( e != 'ok' ) Alert( 'Error', d );
 			if( e == 'ok' )
 			{
 				RemoveNotificationEvent( uniqueId );
