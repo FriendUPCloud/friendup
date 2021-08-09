@@ -160,6 +160,7 @@ function refreshGroups( keys )
 	let n = new Module( 'system' );
 	n.onExecuted = function( e, d )
 	{
+		
 		if( e != 'ok' ) { ge( 'OtherGroups' ).innerHTML = ''; return; }
 		try
 		{

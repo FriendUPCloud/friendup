@@ -43,7 +43,20 @@ else if( $args->args->mode == 'onlymember' )
 else if( $args->args->mode == 'invites' )
 {
 	// And join in the level of the owner of the group you are member of
+	// NOTE: FQueuedEvent entry is removed when users completes invitation...
 	if( $rows = $SqlDatabase->fetchObjects( '
+		SELECT 
+			ug.*, qu.Fullname Invitor 
+		FROM 
+			FUser qu, FUserToGroup mygroups, FUserGroup ug 
+		WHERE 
+				qu.ID           = ug.UserID 
+			AND ug.ID           = mygroups.UserGroupID 
+			AND mygroups.UserID = \'' . $User->ID . '\' 
+			AND ug.UserID      != mygroups.UserID
+		ORDER BY 
+			ug.Name ASC 
+		'/*'
 		SELECT 
 			g.*, q.Status, qu.Fullname AS Invitor
 		FROM 
@@ -57,7 +70,7 @@ else if( $args->args->mode == 'invites' )
 			utg.UserID = \'' . $User->ID . '\' AND
 			utg.UserGroupID = g.ID
 		ORDER BY g.Name ASC
-	' ) )
+	'*/ ) )
 	{
 		die( 'ok<!--separate-->' . json_encode( $rows ) );
 	}
