@@ -67,11 +67,12 @@
 #define CONFIG_DIRECTORY	"cfg/"
 
 #define MINS1 60
-#define MINS5 300
-#define MINS6 460
-#define MINS30 1800
+#define MINS5 MINS1*5
+#define MINS6 MINS1*6
+#define MINS30 MINS1*30
 #define MINS60 MINS6*10
 #define MINS360 6*MINS60
+#define HOURS3 MINS60*3
 #define HOUR12 12*MINS60
 #define DAYS1 24*MINS60
 #define DAYS5 5*24*MINS60
@@ -177,8 +178,8 @@ SystemBase *SystemInit( void )
 	
 	LIBXML_TEST_VERSION;
 	
-	l->sl_RemoveOldSessionTimeout = 0;
-	l->sl_RemoveSessionsAfterTime = 10800;
+	//l->sl_RemoveOldSessionTimeout = 0; Old
+	l->sl_RemoveSessionsAfterTime = HOURS3;
 	
 	//
 	// sl_Autotask
@@ -417,7 +418,7 @@ SystemBase *SystemInit( void )
 			DEBUG("[SystemBase] options %s\n",options );
 			
 			//l->sl_RemoveOldSessionTimeout = plib->ReadIntNCS( prop, "user:timeout", MINS60 );
-			l->sl_RemoveSessionsAfterTime = plib->ReadIntNCS( prop, "user:timeout", MINS60 );
+			l->sl_RemoveSessionsAfterTime = plib->ReadIntNCS( prop, "user:timeout", HOURS3 );
 			DEBUG("[SystemBase] user:timeout %d\n", l->sl_RemoveSessionsAfterTime );
 			
 			l->sl_CacheFiles = plib->ReadIntNCS( prop, "Options:CacheFiles", 1 );
