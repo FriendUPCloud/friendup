@@ -44,7 +44,7 @@ $query =  '
 		theyg.ID            =   theirgroup.UserGroupID AND
 		myg.ID              =   mygroup.UserGroupID' . $ecpt . $keyz . '
 	GROUP BY u.ID
-	ORDER BY u.Fullname ASC
+	ORDER BY ( u.ID != \'' . $User->ID . '\' ), u.Fullname ASC
 ';
 
 // Get members of a group I am connected to
@@ -65,13 +65,13 @@ if( isset( $args->args->groupId ) )
 			mygroup.UserGroupID = theygroup.UserGroupID AND
 			( mygroup.UserID = \'' . $User->ID . '\' OR ug.UserID = \'' . $User->ID . '\' ) ' . $ecpt . $keyz . '
 		GROUP BY u.ID
-		ORDER BY u.Fullname ASC
+		ORDER BY ( u.ID != \'' . $User->ID . '\' ), u.Fullname ASC
 	';
 }
 
 if( isset( $args->args->limit ) )
 {
-	$limit = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->limit );
+	$limit = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->limit + 1 );
 	$pos = '0';
 	if( isset( $args->args->pos ) )
 		$pos = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->pos );
