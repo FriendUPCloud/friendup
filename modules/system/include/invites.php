@@ -547,6 +547,12 @@ if( $args->command )
 				$contact = new stdClass();
 				$contact->Email = $args->args->email;
 				$contact->FullName = $args->args->fullname;
+				
+				$mx = new Mailer(  );
+				if( !$mx->validateMX( $contact->Email ) )
+				{
+					die( 'fail<!--separate-->{"Response":"Email is not valid: MX was not found."}' );
+				}
 			}
 			
 			

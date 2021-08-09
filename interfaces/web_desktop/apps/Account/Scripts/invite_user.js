@@ -20,13 +20,7 @@ function sendInvite()
 	let email = ge( 'recipient' ).value;
 	let tname = ge( 'recipientname' ).value;
 	
-	if( email.indexOf( '@' ) <= 0 )
-	{
-		Alert( i18n( 'i18n_failed_to_send' ), i18n( 'i18n_email_error' ) );
-		return false;
-	}
-	
-	if( email.indexOf( '.' ) <= email.indexOf( '@' ) )
+	if( email.indexOf( '@' ) <= 0 || email.indexOf( '.' ) <= 0 || !validateEmail( email ) )
 	{
 		Alert( i18n( 'i18n_failed_to_send' ), i18n( 'i18n_email_error' ) );
 		return false;
@@ -49,3 +43,10 @@ function sendInvite()
 	}
 	m.execute( 'sendinvite', { workgroups: gid, email: email, fullname: tname } );
 }
+
+function validateEmail( email )
+{
+	const re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+	return re.test( email );
+}
+
