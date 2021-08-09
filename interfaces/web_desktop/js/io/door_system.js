@@ -611,6 +611,7 @@ DoorSystem.prototype.flushDuplicate = function( output )
 	for( let a = 0; a < output.length; a++ )
 	{
 		let found = false;
+		console.log( 'Checking duplicate: ' + output[a].Path );
 		for( let b = 0; b < out.length; b++ )
 		{
 			if( output[a].Path == out[b].Path )
