@@ -42,6 +42,15 @@
 	box-sizing: border-box;
 }
 
+.FileBrowserContainer.FileBrowser.Bookmarks:after
+{
+	content: " ";
+	display: block;
+	position: relative;
+	height: 100px;
+	width: 100%;
+}
+
 /* Busy busy */
 
 .IconWindow .Content .DirectoryRefresh
