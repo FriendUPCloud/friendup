@@ -24,6 +24,8 @@ i18n_delete_disk                     : Delete disk
 
 i18n_storage                         : Storage
 
+i18n_more                            : more...
+
 i18n_key_type              			 : Key type
 i18n_key_name              			 : Key name
 i18n_key_password             	     : Key password

@@ -160,6 +160,7 @@ function refreshGroups( keys )
 	let n = new Module( 'system' );
 	n.onExecuted = function( e, d )
 	{
+		
 		if( e != 'ok' ) { ge( 'OtherGroups' ).innerHTML = ''; return; }
 		try
 		{
@@ -179,6 +180,9 @@ function refreshGroups( keys )
 		for( let a = 0; a < d.length; a++ )
 		{
 			let button = '<button type="button" class="Button IconSmall fa-remove NoText IconButton" title="' + i18n( 'i18n_leave_group' ) + '" onclick="leaveGroup(\'' + d[a].ID + '\')"></button>';
+			// Cannot remove yourself from Admin administrated groups
+			if( d[a].Level == 'Admin' )
+				button = '';
 			
 			sw = sw == 1 ? 2 : 1;
 			str += '<div class="HRow sw' + sw + '">\

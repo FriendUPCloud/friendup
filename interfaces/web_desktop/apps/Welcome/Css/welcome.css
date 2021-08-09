@@ -37,7 +37,7 @@ html > body:not(.Inside):not(.Loading)
 	padding: 20px;
 }
 
-.BottomInfo .ImageLink
+.BottomInfo .ImageLink, .ExtendedInfo .ImageLink
 {
 	width: 400px;
 	height: 260px;
@@ -49,7 +49,7 @@ html > body:not(.Inside):not(.Loading)
 	border-radius: 3px;
 }
 
-.BottomInfo .ImageLink > iframe
+.BottomInfo .ImageLink > iframe, .ExtendedInfo .ImageLink > iframe
 {
 	position: absolute;
 	top: 0;
@@ -58,7 +58,7 @@ html > body:not(.Inside):not(.Loading)
 	height: 100%;
 }
 
-.BottomInfo .ImageDescription
+.BottomInfo .ImageDescription, .ExtendedInfo .ImageDescription
 {
 	width: calc(100% - 440px);
 	margin: 0;
@@ -71,14 +71,14 @@ html > body:not(.Inside):not(.Loading)
 	padding: 10px 20px 10px 0px;
 }
 
-.BottomInfo .ImageDescription .Smaller
+.BottomInfo .ImageDescription .Smaller, .ExtendedInfo .ImageDescription .Smaller
 {
 	font-size: 75%;
 }
 
 
 
-.BottomInfo .ImageDescription h2
+.BottomInfo .ImageDescription h2, .ExtendedInfo .ImageDescription h2
 {
 	color: #0e2656;
 }
@@ -289,6 +289,11 @@ html > body:not(.Inside):not(.Loading)
 
 @media (max-width: 460px)
 {
+	html .ExtendedInfo
+	{
+		display: none !important;
+	}
+	
 	html .WelcomeHeading
 	{
 		display: none;
@@ -375,4 +380,39 @@ html > body:not(.Inside):not(.Loading)
 		background-size: cover;
 	}
 	
+}
+@media (max-height: 743px)
+{
+	.ExtendedInfo
+	{
+		display: block;
+	}
+	.ImageContent
+	{
+		margin-bottom: 10px;
+	}
+	.BottomInfo
+	{
+		display: none;
+	}
+	.WelPages
+	{
+		min-height: calc(100% - 260px);
+	}
+	.WelPage.Active
+	{
+		overflow: auto;
+		padding-bottom: 20px;
+	}
+}
+@media (min-height: 744px)
+{
+	.ExtendedInfo
+	{
+		display: none;
+	}
+	.BottomInfo
+	{
+		display: block;
+	}
 }

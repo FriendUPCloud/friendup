@@ -24,6 +24,8 @@ i18n_delete_disk                     : Slett
 
 i18n_storage                         : Lagringsmedia
 
+i18n_more                            : flere...
+
 i18n_key_type              			 : Nøkkel type
 i18n_key_name              			 : Nøkkel navn
 i18n_key_password             	     : Nøkkel passord

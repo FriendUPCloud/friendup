@@ -349,6 +349,7 @@ var WorkspaceInside = {
 	// Invite a friend to the Workspace
 	inviteFriend: function()
 	{
+		
 		let version = 2;
 		
 		let self = this;
@@ -418,6 +419,8 @@ var WorkspaceInside = {
 								count++;
 							}
 							
+							str += '<p class="BorderTop BorderBottom PaddingTop PaddingBottom MarginTop"><button type="button" class="Button IconSmall fa-plus">Manage groups</button></p>';
+							
 							str += '</div>';
 							
 							self.inviteView.content.querySelector( '.GroupList' ).innerHTML = str;
@@ -457,6 +460,25 @@ var WorkspaceInside = {
 									}
 								}
 							}
+							
+							var btns = self.inviteView.content.querySelector( '.Collections' ).getElementsByTagName( 'button' );
+							
+							if( btns.length > 0 )
+							{
+								for( var i in btns )
+								{
+									if( btns[i] )
+									{
+										btns[i].onclick = ( function (  )
+										{
+											
+											Workspace.shell.execute( 'Launch Account' );
+											
+										} );
+									}
+								}
+							}
+							
 						}
 						catch( e )
 						{
@@ -1739,6 +1761,8 @@ var WorkspaceInside = {
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
+			console.log( {e:e,d:d} );
+			if( e != 'ok' ) Alert( 'Error', d );
 			if( e == 'ok' )
 			{
 				RemoveNotificationEvent( uniqueId );
