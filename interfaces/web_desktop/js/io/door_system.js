@@ -61,6 +61,8 @@ DoorSystem.prototype.get = function( path )
 // Return an array of icons!
 DoorSystem.prototype.getIcons = function( fileInfo, callback )
 {
+	console.log( 'Getting icons.', fileInfo );
+	
 	if( !fileInfo )
 	{
 		fileInfo = {
@@ -93,8 +95,6 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 		dirRepositories: 'System:' + i18n( 'i18n_directory_Repositories' ) + '/',
 		dirFunctions: 'System:' + i18n( 'i18n_directory_Functions' ) + '/'
 	};
-	
-	console.log( 'Getting icons...' );
 	
 	let dirList = {
 		'System:Preferences/': function()
