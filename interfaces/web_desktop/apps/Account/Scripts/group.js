@@ -15,9 +15,12 @@ Application.run = function()
 
 let groupUsersList = [];
 
+let existing = [];
+let currentSearch = '';
+
 function listConnectedUsers( limit, pos, keyw )
 {
-	if( !limit ) limit = 11;
+	if( !limit ) limit = 10;
 	if( !pos ) pos = 0;
 	
 	if( !keyw && ge( 'findUsers' ).value.length > 0 )
@@ -40,6 +43,9 @@ function listConnectedUsers( limit, pos, keyw )
 			let str = '<hr class="Divider"/><p><strong>' + i18n( 'i18n_pending_invites' ) + '</strong></p>';
 			str += '<div class="List">';
 			let sw = 1;
+			existing = list;
+			currentSearch = keyw;
+			
 			for( let a = 0; a < list.length && a < limit; a++ )
 			{
 				if( list[a].EventID )
@@ -78,8 +84,12 @@ function listConnectedUsers( limit, pos, keyw )
 	p.execute( 'getpendinginvites', { groupId: gid, listall: true } );
 }
 
-function connectedOthers( limit, pos, keyw )
+function connectedOthers( limit, pos, keyw)
 {
+	let list = existing;
+	if( !keyw && currentSearch )
+		keyw = currentSearch;
+	
 	// List others
 	let m = new Module( 'system' );
 	m.onExecuted = function( e, d )
@@ -89,11 +99,17 @@ function connectedOthers( limit, pos, keyw )
 			return ge( 'Usersearch' ).innerHTML = '<p>' + i18n( 'i18n_no_users_connected_to_you' ) + '</p>';
 		}
 		let mlist = JSON.parse( d );
-		str = '<div class="List">';
+		let str = '<div class="List">';
 		sw = 1;
+		
+		// Pick from the last
+		let hr = ge( 'Usersearch' ).getElementsByClassName( 'HRow' );
+		if( hr.length )
+			sw = hr[ hr.length - 1 ].classList.contains( 'sw1' ) ? 2 : 1;
+		
 		for( let a = 0; a < 10 && a < mlist.length && a < limit; a++ )
 		{
-			skip = false;
+			let skip = false;
 			// Skip pending invites users
 			for( let b = 0; b < list.length && b < limit; b++ )
 			{
@@ -129,21 +145,28 @@ function connectedOthers( limit, pos, keyw )
 				ge( 'Usersearch' ).removeChild( more[a] );
 		}
 		
-		ge( 'Usersearch' ).innerHTML = str;
+		if( pos > 0 )
+		{
+			ge( 'Usersearch' ).innerHTML += str;
+		}
+		else
+		{
+			ge( 'Usersearch' ).innerHTML = str;
+		}
 	}
 	let o = { limit: limit, pos: pos };
 	if( groupUsersList.length > 0 )
 		o.except = groupUsersList;
 	if( keyw )
 		o.keywords = keyw;
-		m.execute( 'listconnectedusers', o );
+	m.execute( 'listconnectedusers', o );
 }
 
 
 // Load more connected users
 function loadMoreConnected( pos, keys )
 {
-	connectedOthers( 11, pos, keys );
+	connectedOthers( 10, pos, keys );
 }
 
 function removeInvite( eventId, inviteId )
@@ -176,7 +199,7 @@ function searchUser( keyw )
 function groupUsers( callback, pos, limit )
 {
 	let gid = ge( 'groupId' ).value ? ge( 'groupId' ).value : '0';
-	if( !limit ) limit = 11;
+	if( !limit ) limit = 10;
 	if( !pos ) pos = 0;
 	
 	if( parseInt( gid ) > 0 )
@@ -203,6 +226,12 @@ function groupUsers( callback, pos, limit )
 		let list = JSON.parse( d );
 		let str = '<div class="List">';
 		let sw = 1;
+		
+		// Pick from the last
+		let hr = ge( 'Userlist' ).getElementsByClassName( 'HRow' );
+		if( hr.length )
+			sw = hr[ hr.length - 1 ].classList.contains( 'sw1' ) ? 2 : 1;
+		
 		for( let a = 0; a < 10 && a < list.length && a < limit; a++ )
 		{
 			// Add to a global list

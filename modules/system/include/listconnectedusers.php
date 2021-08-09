@@ -85,6 +85,6 @@ if( $rows = $SqlDatabase->FetchObjects( $query ) )
 {
 	die( 'ok<!--separate-->' . json_encode( $rows ) );
 }
-die( 'fail<!--separate-->{"response":-1,"message":"No workgroup related users connected to you."}' );
+die( 'fail<!--separate-->{"response":-1,"message":"No workgroup related users connected to you."}' . $query );
 
 ?>
