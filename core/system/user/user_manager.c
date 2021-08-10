@@ -292,12 +292,10 @@ User * UMUserGetByNameDB( UserManager *um, const char *name )
 
 	if( user != NULL )
 	{
-		{
-			DEBUG("[UMUserGetByNameDB] User found %s  id %ld\n", user->u_Name, user->u_ID );
-			UGMAssignGroupToUser( sb->sl_UGM, user );
-			UMAssignApplicationsToUser( um, user );
-			user->u_MountedDevs = NULL;
-		}
+		DEBUG("[UMUserGetByNameDB] User found %s  id %ld\n", user->u_Name, user->u_ID );
+		UGMAssignGroupToUser( sb->sl_UGM, user );
+		UMAssignApplicationsToUser( um, user );
+		user->u_MountedDevs = NULL;
 	}
 	
 	DEBUG("[UMUserGetByNameDB] END\n");
