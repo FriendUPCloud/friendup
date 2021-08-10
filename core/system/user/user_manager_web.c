@@ -1860,7 +1860,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 
 							time_t timestamp = time(NULL);
 							
-							//if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+							if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 							{
 								us->us_InUseCounter++;
 								FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
