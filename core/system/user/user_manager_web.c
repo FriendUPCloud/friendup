@@ -1113,7 +1113,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			else
 			{
 				// if you are not admin, you can change only own password
-				if( strcmp( loggedSession->us_User->u_Name, usrname ) == 0 )
+				if( loggedSession->us_User != NULL && strcmp( loggedSession->us_User->u_Name, usrname ) == 0 )
 				{
 					access = TRUE;
 				}
