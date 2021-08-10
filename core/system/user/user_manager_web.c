@@ -1106,7 +1106,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			int err = 0;
 			
 			// if you are admin you can change every user password
-			if( loggedSession->us_User->u_IsAdmin == TRUE )
+			if( IS_ADMIN_SESSION( loggedSession ) )
 			{
 				access = TRUE;
 			}
