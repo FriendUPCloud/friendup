@@ -592,9 +592,9 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							}
 							else
 							{
-								loggedSession->us_UserID = usr->u_ID;
 								UserAddSession( usr, loggedSession );
 							}
+							loggedSession->us_UserID = usr->u_ID;
 							loggedSession->us_LastActionTime = time( NULL );
 							
 							UGMAssignGroupToUser( l->sl_UGM, usr );
