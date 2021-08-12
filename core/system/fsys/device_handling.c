@@ -2108,7 +2108,7 @@ int UnMountFS( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *lo
 		File *remdev = UserRemDeviceByName( usr, name, &errors );
 		
 		// check if user want to remove his group drive
-		
+		/*
 		if( remdev == NULL )
 		{
 			int i;
@@ -2123,17 +2123,7 @@ int UnMountFS( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *lo
 				{
 					File *f = ugl->ugl_Group->ug_MountedDevs;
 					File *fprev = ugl->ugl_Group->ug_MountedDevs;
-			/*
-			for( i=0 ; i < usr->u_GroupsNr ; i++ )
-			{
-				if( usr->u_Groups[ i ] != NULL )
-				{
-					DEBUG("[UnMountFS] --remdev grpname %s\n", usr->u_Groups[ i ]->ug_Name );
-				
-					File *f = usr->u_Groups[ i ]->ug_MountedDevs;
-					File *fprev = usr->u_Groups[ i ]->ug_MountedDevs;
-					UserGroup *ug = usr->u_Groups[ i ];
-					*/
+
 					while( f != NULL )
 					{
 						DEBUG("[UnMountFS] --file\n");
@@ -2158,6 +2148,7 @@ int UnMountFS( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *lo
 				ugl = (UserGroupLink *) ugl->node.mln_Succ;
 			}
 		}
+		*/
 		
 		// release drive resources
 		
@@ -3340,6 +3331,7 @@ File *GetRootDeviceByName( User *usr, UserSession *ses, char *devname )
 		FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 	}
 	
+	/*
 	if( actDev == NULL )
 	{
 		//int i;
@@ -3376,6 +3368,7 @@ File *GetRootDeviceByName( User *usr, UserSession *ses, char *devname )
 			ugl = (UserGroupLink *)ugl->node.mln_Succ;
 		}
 	}
+	*/
 	
 	if( actDev == NULL )
 	{

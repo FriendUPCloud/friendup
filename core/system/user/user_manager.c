@@ -1513,6 +1513,7 @@ int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details )
 					rootDev = (File *)rootDev->node.mln_Succ;
 				}
 				
+				/*
 				UserGroupLink *ugl = usr->u_UserGroupLinks;
 				while( ugl != NULL )
 				{
@@ -1520,6 +1521,7 @@ int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details )
 					uglCounterBytes += sizeof( UserGroupLink );
 					ugl = (UserGroupLink *)ugl->node.mln_Succ;
 				}
+				*/
 				
 				if( nr == 0 )
 				{

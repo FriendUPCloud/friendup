@@ -83,7 +83,7 @@ int UserGroupDelete( void *sb, UserGroup *ug )
 	if( ug != NULL )
 	{
 		// remove connection to users
-		
+		/*
 		if( FRIEND_MUTEX_LOCK( &(ug->ug_Mutex) ) == 0 )
 		{
 			GroupUserLink *au = ug->ug_UserList;
@@ -97,6 +97,7 @@ int UserGroupDelete( void *sb, UserGroup *ug )
 			}
 			FRIEND_MUTEX_UNLOCK( &(ug->ug_Mutex) );
 		}
+		*/
 		
 		// Remove all mounted devices
 		File *lf = ug->ug_MountedDevs;
@@ -264,6 +265,7 @@ int UserGroupAddUser( UserGroup *ug, void *u )
 	//DEBUG("[UserGroupAddUser] User: %s will be added to group: %s\n", locu->u_Name, ug->ug_Name );
 	if( FRIEND_MUTEX_LOCK( &locu->u_Mutex ) == 0 )
 	{
+		/*
 		GroupUserLink *au = ug->ug_UserList;
 		while( au != NULL )
 		{
@@ -275,12 +277,15 @@ int UserGroupAddUser( UserGroup *ug, void *u )
 			}
 			au = (GroupUserLink *)au->node.mln_Succ;
 		}
+		*/
 		FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
 	
 		// add link from group to user
+		/*
 		if( ( au = (GroupUserLink *) FCalloc( 1, sizeof( GroupUserLink ) ) ) != NULL )
 		{
 			// add link from user to group
+			
 			UserGroupLink *ugl = (UserGroupLink *)FCalloc( 1, sizeof(UserGroupLink ) );
 			if( ugl != NULL )
 			{
@@ -299,6 +304,7 @@ int UserGroupAddUser( UserGroup *ug, void *u )
 				}
 			}
 			
+			
 			au->ugau_UserID = locu->u_ID;
 			au->ugau_User = locu;
 			
@@ -309,18 +315,21 @@ int UserGroupAddUser( UserGroup *ug, void *u )
 				FRIEND_MUTEX_UNLOCK( &(ug->ug_Mutex) );
 			}
 			else
-			{
+			{*/
+				/*
 				if( ugl != NULL )
 				{
 					FFree( ugl );
 				}
-				FFree( au );
-			}
+				*/
+				//FFree( au );
+		/*	}
 		}
 		else
 		{
 			return 2;
 		}
+		*/
 		
 	}
 	//DEBUG("[UserGroupAddUser] end\n");
@@ -343,7 +352,7 @@ int UserGroupRemoveUser( UserGroup *ug, void *u )
 		return 3;
 	}
 	User *locu = (User *)u;
-	
+	/*
 	//DEBUG("[UserGroupRemoveUser] user: %s will be removed from: %s\n", locu->u_Name, ug->ug_Name );
 	if( FRIEND_MUTEX_LOCK( &ug->ug_Mutex ) == 0 )
 	{
@@ -400,6 +409,8 @@ int UserGroupRemoveUser( UserGroup *ug, void *u )
 		
 		FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
 	}
+	*/
+	
 	//DEBUG("[UserGroupRemoveUser] end\n");
 	return 0;
 }
@@ -423,6 +434,7 @@ int UserGroupRemoveUserFromAll( UserGroup *ug, void *u )
 	// remove user->group link
 	if( FRIEND_MUTEX_LOCK( &locu->u_Mutex ) == 0 )
 	{
+		/*
 		// go through all groups connected to user
 		// and remove user from them
 		UserGroupLink *ull = locu->u_UserGroupLinks;
@@ -473,6 +485,7 @@ int UserGroupRemoveUserFromAll( UserGroup *ug, void *u )
 			
 			FRIEND_MUTEX_UNLOCK( &ug->ug_Mutex );
 		}
+		*/
 	}
 	
 	//DEBUG("[UserGroupRemoveUser] end\n");

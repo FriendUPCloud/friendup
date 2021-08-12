@@ -54,13 +54,13 @@ void UGMDelete( UserGroupManager *smgr );
 // add group to UserGroupManager
 //
 
-int UGMAddGroup( UserGroupManager *smgr, UserGroup *ug );
+//int UGMAddGroup( UserGroupManager *smgr, UserGroup *ug );
 
 //
 // remove(disable) group from UserGroupManager
 //
 
-int UGMRemoveGroup( UserGroupManager *smgr, UserGroup *ug );
+//int UGMRemoveGroup( UserGroupManager *smgr, UserGroup *ug );
 
 //
 // Get UserGroup by ID

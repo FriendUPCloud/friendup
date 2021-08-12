@@ -1055,6 +1055,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					
 					DEBUG("[DeviceMWebRequest] ldevname: %s\n", ldevname );
 				
+					/*
 					// check also device attached to groups
 					if( ldevname == NULL )
 					{
@@ -1090,6 +1091,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 							ugl = (UserGroupLink *)ugl->node.mln_Succ;
 						}
 					}
+					*/
 				
 					struct TagItem tags[] = {
 						{FSys_Mount_ID, (FULONG)fid },
@@ -1649,6 +1651,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					// get information about shared group drives
 					//
 				
+				/*
 					UserGroupLink *ugl = loggedSession->us_User->u_UserGroupLinks;
 					while( ugl != NULL )
 					//int gr = 0;
@@ -1713,6 +1716,10 @@ AND LOWER(f.Name) = LOWER('%s')",
 								}
 								BufStringAddSize( bsMountedDrives, inttmp, addlen );
 							}
+							*/
+				
+				
+				// something really old
 					/*
 						if( devnr == 0 )
 						{
@@ -1749,6 +1756,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 						}
 						*/
 					
+					/*
 						if( executeCmd )
 						{
 							FFree( executeCmd );
@@ -1788,6 +1796,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					}
 						ugl = (UserGroupLink *)ugl->node.mln_Succ;
 					}
+					*/
 					FFree( tmp );
 				}
 				

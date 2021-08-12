@@ -225,10 +225,10 @@ void UserDelete( User *usr )
 			RemoteUserDeleteAll( usr->u_RemoteUsers );
 			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 		}
-			
+		
+		/*
 		UserGroupLink *ugl = usr->u_UserGroupLinks;
 		while( ugl != NULL )
-		//for( i=0 ; i < usr->u_GroupsNr ; i++ )
 		{
 			UserGroupLink *n = (UserGroupLink *)ugl->node.mln_Succ;
 			//UserGroupRemoveUser( usr->u_Groups[i], usr );
@@ -238,7 +238,8 @@ void UserDelete( User *usr )
 
 		UserDeleteGroupLinkAll( usr->u_UserGroupLinks );
 		usr->u_UserGroupLinks = NULL;
-
+		*/
+		
 		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 		{
 			if( usr->u_Email ){ FFree( usr->u_Email );}
@@ -740,7 +741,7 @@ int UserRegenerateSessionID( User *usr, char *newsess )
  *
  * @param ugl pointer to UserGroupLink
  */
-
+/*
 void UserDeleteGroupLink( UserGroupLink *ugl )
 {
 	if( ugl != NULL )
@@ -748,12 +749,15 @@ void UserDeleteGroupLink( UserGroupLink *ugl )
 		FFree( ugl );
 	}
 }
+*/
 
 /**
  * Delete All UserGRoupLinkEntry's
  *
  * @param ugl pointer to UserGroupLink root entry
  */
+
+/*
 void UserDeleteGroupLinkAll( UserGroupLink *ugl )
 {
 	while( ugl != NULL )
@@ -764,6 +768,7 @@ void UserDeleteGroupLinkAll( UserGroupLink *ugl )
 		UserDeleteGroupLink( re );
 	}
 }
+*/
 
 /**
  * Remove user from all groups
@@ -816,7 +821,6 @@ void UserRemoveFromGroups( User *u )
 		}
 		ugl = (UserGroupLink *)ugl->node.mln_Succ;
 	}
-	*/
 	
 	DEBUG("[UserRemoveFromGroups] remove before links delete\n");
 	// remove all links to group
@@ -826,6 +830,7 @@ void UserRemoveFromGroups( User *u )
 		u->u_UserGroupLinks = NULL;
 		FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
 	}
+	*/
 	DEBUG("[UserRemoveFromGroups] remove end\n");
 }
 
@@ -836,6 +841,7 @@ void UserRemoveFromGroups( User *u )
  * @param gid group id 
  * @return TRUE if user is in group, otherwise FALSE
  */
+/*
 FBOOL UserIsInGroup( User *usr, FULONG gid )
 {
 	if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
@@ -855,6 +861,7 @@ FBOOL UserIsInGroup( User *usr, FULONG gid )
 	}
 	return FALSE;
 }
+*/
 
 /**
  * Release User drives

@@ -132,7 +132,7 @@ UserGroup *UGMGetGroupByID( UserGroupManager *um, FULONG id )
  * @param name name of the group
  * @return UserGroup structure if it exist, otherwise NULL
  */
-
+/*
 UserGroup *UGMGetGroupByName( UserGroupManager *ugm, const char *name )
 {
 	if( FRIEND_MUTEX_LOCK( &ugm->ugm_Mutex ) == 0 )
@@ -151,6 +151,7 @@ UserGroup *UGMGetGroupByName( UserGroupManager *ugm, const char *name )
 	}
 	return NULL;
 }
+*/
 
 /**
  * Get UserGroup by Name from DB
@@ -190,6 +191,7 @@ UserGroup *UGMGetGroupByNameDB( UserGroupManager *ugm, const char *name )
  * return 0 when success, otherwise error number
  */
 
+/*
 int UGMAddGroup( UserGroupManager *ugm, UserGroup *ug )
 {
 	if( ugm == NULL )
@@ -213,6 +215,7 @@ int UGMAddGroup( UserGroupManager *ugm, UserGroup *ug )
 	}
 	return 0;
 }
+*/
 
 /**
  * Remove (diable) UserGroup on list of groups
@@ -222,6 +225,7 @@ int UGMAddGroup( UserGroupManager *ugm, UserGroup *ug )
  * @return 0 when success, otherwise error number
  */
 
+/*
 int UGMRemoveGroup( UserGroupManager *ugm, UserGroup *ug )
 {
 	SystemBase *l = (SystemBase *)ugm->ugm_SB;
@@ -314,6 +318,7 @@ int UGMRemoveGroup( UserGroupManager *ugm, UserGroup *ug )
 	}
 	return 0;
 }
+*/
 
 /**
  * Remove device from UserGroup
