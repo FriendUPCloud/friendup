@@ -15,9 +15,11 @@ Application.run = function()
 
 let groupUsersList = [];
 
-let existing = [];
-let currentSearch = '';
+let existing = [];       // Keeps the last generated list of pending invites
+let currentSearch = '';  // Keeps last tracked search keywords
 
+// List pending invites to users for this group
+// Will also load users who are connected to this group (unless skipOthers)
 function listConnectedUsers( limit, pos, keyw, skipOthers )
 {
 	if( !limit ) limit = 10;
@@ -84,6 +86,7 @@ function listConnectedUsers( limit, pos, keyw, skipOthers )
 	p.execute( 'getpendinginvites', { groupId: gid, listall: true } );
 }
 
+// List users who are connected to this group - by limit, position or keywords
 function connectedOthers( limit, pos, keyw)
 {
 	let list = existing;
@@ -165,12 +168,13 @@ function connectedOthers( limit, pos, keyw)
 }
 
 
-// Load more connected users
+// Load more connected users - starting frmo position (with optional keys)
 function loadMoreConnected( pos, keys )
 {
 	connectedOthers( 10, pos, keys );
 }
 
+// Remove invite from pending list
 function removeInvite( eventId, inviteId, userid )
 {
 	if( inviteId )
@@ -201,11 +205,13 @@ function removeInvite( eventId, inviteId, userid )
 	}
 }
 
+// Search for user who can be connected to group
 function searchUser( keyw )
 {
 	listConnectedUsers( false, false, keyw );
 }
 
+// Show users who are connected to this group
 function groupUsers( callback, pos, limit )
 {
 	let gid = ge( 'groupId' ).value ? ge( 'groupId' ).value : '0';
@@ -300,6 +306,7 @@ function groupUsers( callback, pos, limit )
 	m.execute( 'listconnectedusers', { groupId: gid, limit: limit, pos: pos } );
 }
 
+// Invite GUI for new users (via e-mail)
 function doInvite()
 {
 	if( !ge( 'groupId' ).value ) return;
@@ -382,12 +389,14 @@ function removeUser( uid )
 	}
 }
 
-function reveilUIComponents()
+// Show GUI components other than description and name of group
+function revealUIComponents()
 {
 	ge( 'dGroup' ).classList.remove( 'Hidden' );
 	ge( 'Relations' ).classList.remove( 'Hidden' );
 }
 
+// Delete this group!
 function deleteGroup()
 {
 	let groupId = ge( 'groupId' ).value;
@@ -461,7 +470,7 @@ function saveGroup()
 				ge( 'groupId' ).value = t.id;
 				joinGroup( t.id, function()
 				{
-					reveilUIComponents();
+					revealUIComponents();
 					groupUsers( function(){ listConnectedUsers(); } );
 				} );
 			}
@@ -495,6 +504,7 @@ function saveGroup()
 	}	
 }
 
+// Receives messages
 Application.receiveMessage = function( msg )
 {
 	
