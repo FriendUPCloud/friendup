@@ -42,8 +42,6 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	// Just nothing.
 	if( !app ) return;
 	
-	console.log( 'Hvada?', app, args );
-	
 	// If we don't have any cached basics, wait a bit
 	if( typeof( _applicationBasics ) == 'undefined' || !_applicationBasics.js )
 	{
@@ -205,8 +203,6 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	}
 	args = aout.join( ' ' );
 
-	console.log( 'Executing application: ' + app );
-
 	// TODO: Make this safe!
 	if( app.indexOf( ':' ) > 0 && app.indexOf( '.jsx' ) > 0 )
 	{
@@ -223,8 +219,6 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	let m = new Module( 'system' );
 	m.onExecuted = function( r, d )
 	{	
-		console.log( 'What info do we have?', r, d );
-	
 		// Get data from Friend Core
 		var conf = false;
 		try
