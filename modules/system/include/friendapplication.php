@@ -252,8 +252,6 @@ else if( $row = $SqlDatabase->FetchObject( '
 			$confStr = file_get_contents( $conf->Path . 'Config.conf' );
 			$new = json_decode( $confStr );
 			
-			die( 'fail<!--separate-->Testing ' . $numVersion . ' to new ' . makeNumericalVersion( $new->Version ) );
-			
 			// We got a new version! Install it immediately
 			if( makeNumericalVersion( $new->Version ) > $numVersion )
 			{
@@ -262,13 +260,16 @@ else if( $row = $SqlDatabase->FetchObject( '
 				{
 					$o->Config = $confStr;
 					$o->Save();
+					
+					// Get the new object
 					$conf = $new;
+					
+					// Assign path again
+					if( $path = findInSearchPaths( $args->args->application ) )
+						$conf->Path = str_replace( '../resources', '', $path ) . '/';
+					else $conf->Path = str_replace( '../resources', '', $conf->Path );
 				}
 			}
-		}
-		else
-		{
-			die( 'fail<!--separate-->File does not exist. ' . $conf->Path . 'Config.conf' );
 		}
 		
 		$conf->Permissions = json_decode( $ur->Permissions );
