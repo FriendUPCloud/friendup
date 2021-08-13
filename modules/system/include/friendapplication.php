@@ -240,6 +240,10 @@ else if( $row = $SqlDatabase->FetchObject( '
 		$fn = $retObject ? $retObject->ConfFilename : false;
 		$conf = json_decode( $row->Config );
 		
+		if( $path = findInSearchPaths( $args->args->application ) )
+			$conf->Path = str_replace( '../resources', '', $path ) . '/';
+		else $conf->Path = str_replace( '../resources', '', $conf->Path );
+		
 		$numVersion = makeNumericalVersion( $conf->Version );
 		
 		// Find current installed (on disk) version
@@ -247,6 +251,8 @@ else if( $row = $SqlDatabase->FetchObject( '
 		{
 			$confStr = file_get_contents( $conf->Path . 'Config.conf' );
 			$new = json_decode( $confStr );
+			
+			die( 'fail<!--separate-->Testing ' . $numVersion . ' to new ' . makeNumericalVersion( $new->Version ) );
 			
 			// We got a new version! Install it immediately
 			if( makeNumericalVersion( $new->Version ) > $numVersion )
@@ -260,6 +266,10 @@ else if( $row = $SqlDatabase->FetchObject( '
 				}
 			}
 		}
+		else
+		{
+			die( 'fail<!--separate-->File does not exist. ' . $conf->Path . 'Config.conf' );
+		}
 		
 		$conf->Permissions = json_decode( $ur->Permissions );
 		$conf->AuthID = $ur->AuthID;
@@ -271,10 +281,6 @@ else if( $row = $SqlDatabase->FetchObject( '
 		{
 			$conf->$ko = $vo;
 		}
-		
-		if( $path = findInSearchPaths( $args->args->application ) )
-			$conf->Path = str_replace( '../resources', '', $path ) . '/';
-		else $conf->Path = str_replace( '../resources', '', $conf->Path );
 		
 		// Icons, normal app icon, icon for dormant disk, dock icon
 		if( file_exists( 'resources/' . $conf->Path . 'icon.svg' ) )
