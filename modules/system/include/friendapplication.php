@@ -17,7 +17,7 @@ function makeNumericalVersion( $versionString )
 	{
 		$out .= str_pad( $ver, 4, '0', STR_PAD_LEFT );
 	}
-	return intval( $out, 10 );
+	return intval( 1 . $out, 10 );
 }
 
 function storeRecentApps( $name )
