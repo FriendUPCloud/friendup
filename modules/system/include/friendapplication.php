@@ -9,6 +9,17 @@
 *                                                                              *
 *****************************************************************************©*/
 
+function makeNumericalVersion( $versionString )
+{
+	$vers = explode( '.', $versionString );
+	$out = '';
+	foreach( $vers as $ver )
+	{
+		$out .= str_pad( $ver, 4, '0', STR_PAD_LEFT );
+	}
+	return intval( $out, 10 );
+}
+
 function storeRecentApps( $name )
 {
 	global $User, $Logger;
@@ -228,6 +239,28 @@ else if( $row = $SqlDatabase->FetchObject( '
 	{
 		$fn = $retObject ? $retObject->ConfFilename : false;
 		$conf = json_decode( $row->Config );
+		
+		$numVersion = makeNumericalVersion( $conf->Version );
+		
+		// Find current installed (on disk) version
+		if( file_exists( $conf->Path . 'Config.conf' ) )
+		{
+			$confStr = file_get_contents( $conf->Path . 'Config.conf' );
+			$new = json_decode( $confStr );
+			
+			// We got a new version! Install it immediately
+			if( makeNumericalVersion( $new->Version ) > $numVersion )
+			{
+				$o = new dbIO( 'FApplication' );
+				if( $o->Load( $row->ID ) )
+				{
+					$o->Config = $confStr;
+					$o->Save();
+					$conf = $new;
+				}
+			}
+		}
+		
 		$conf->Permissions = json_decode( $ur->Permissions );
 		$conf->AuthID = $ur->AuthID;
 		$conf->State = json_decode( $ur->Data );
