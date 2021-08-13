@@ -203,6 +203,8 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	}
 	args = aout.join( ' ' );
 
+	console.log( 'Executing application: ' + app );
+
 	// TODO: Make this safe!
 	if( app.indexOf( ':' ) > 0 && app.indexOf( '.jsx' ) > 0 )
 	{
@@ -216,9 +218,11 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	}
 
 	// 1. Ask about application.................................................
-	var m = new Module( 'system' );
+	let m = new Module( 'system' );
 	m.onExecuted = function( r, d )
 	{	
+		console.log( 'What info do we have?', r, d );
+	
 		// Get data from Friend Core
 		var conf = false;
 		try
@@ -359,8 +363,6 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			{
 				return str;
 			}
-
-			console.log( 'Executing application: ' + app );
 			
 			// Correct filepath can be a resource file (i.e. in a repository) or a local file
 			let filepath = '/system.library/module/?module=system&command=resource&authid=' + conf.AuthID + '&file=' + app + '/';
