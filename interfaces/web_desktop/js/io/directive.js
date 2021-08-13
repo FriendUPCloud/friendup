@@ -360,6 +360,8 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				return str;
 			}
 
+			console.log( 'Executing application: ' + app );
+			
 			// Correct filepath can be a resource file (i.e. in a repository) or a local file
 			let filepath = '/system.library/module/?module=system&command=resource&authid=' + conf.AuthID + '&file=' + app + '/';
 			// Here's the local file..
