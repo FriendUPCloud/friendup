@@ -307,7 +307,11 @@ cAjax = function( app )
 						const r = JSON.parse( jax.returnData );
 						const res = r ? r.response.toLowerCase() : '';
 						const code = r.code;
-						console.log( 'fail res', r );
+						console.log( 'fail res', {
+							r    : r,
+							vars : self.vars,
+							url  : self.url,
+						});
 						if( res == 'user not found' || res.toLowerCase() == 'user session not found' )
 						{
 							if( window.Workspace && res.toLowerCase() == 'user session not found' ) 

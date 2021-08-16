@@ -36,8 +36,11 @@ Friend.User = {
     Login: function( username, password, remember, callback, event, flags )
     {
     	const self = this;
-    	if( this.State == 'online' ) return;
-    	this.State = 'login';
+    	if( this.State == 'online' )
+    		return;
+    	
+    	self.setState( 'login' );
+    	//this.State = 'login';
     	
     	if( !event ) event = window.event;
     	
@@ -97,10 +100,14 @@ Friend.User = {
     LoginWithSessionId: function( sessionid, callback, event )
     {
     	const self = this;
-    	if( this.State == 'online' ) return;
-    	this.State = 'login';
+    	if( this.State == 'online' )
+    		return;
     	
-    	if( !event ) event = window.event;
+    	self.setState( 'login' );
+    	//this.State = 'login';
+    	
+    	if( !event )
+    		event = window.event;
     	
     	//let self = this;
     	Workspace.sessionId = sessionid;
@@ -153,7 +160,9 @@ Friend.User = {
     		reftok       : self.refreshToken,
     		self         : self,
     	});
-    	this.State = 'login';
+    	self.setState( 'login' );
+    	//this.State = 'login';
+    	
     	if ( info && self.lastLogin )
     		clearCurrent();
     	
@@ -178,36 +187,37 @@ Friend.User = {
     		self.SendLoginCall();
     	}
     	
-		let m = new FriendLibrary( 'system' );
-		self.lastLogin = m;
+		let req = new FriendLibrary( 'system' );
+		self.lastLogin = req;
 		
 		info = self.loginInfo || {};
 		if( info.username && info.password )
 		{
 			Workspace.sessionId = '';
 			this.refreshToken = '';
-			m.addVar( 'username', info.username );
-			m.addVar( 'password', info.hashedPassword ? info.password : ( 'HASHED' + Sha256.hash( info.password ) ) );
+			req.addVar( 'username', info.username );
+			req.addVar( 'password', info.hashedPassword ? info.password : ( 'HASHED' + Sha256.hash( info.password ) ) );
 		}
 		else if( window.Workspace.sessionId )
 		{
-			m.addVar( 'sessionid', window.Workspace.sessionId );
+			req.addVar( 'sessionid', window.Workspace.sessionId );
 		}
 		else if ( self.refreshToken )
 		{
-			m.addVar( 'refreshtoken', self.refreshToken );
+			req.addVar( 'refreshtoken', self.refreshToken );
 		}
 		else
 		{
-			this.State = 'offline'; 
+			self.setState( 'offline' );
+			//this.State = 'offline'; 
 			self.lastLogin = null;
 			respond( 'offline', null );
 			return false;
 		}
 		
-		console.log( 'sending login with', m.vars );
-		m.addVar( 'deviceid', GetDeviceId() );
-		m.onExecuted = function( conf, serveranswer )
+		console.log( 'sending login with', req.vars );
+		req.addVar( 'deviceid', GetDeviceId() );
+		req.onExecuted = function( conf, serveranswer )
 		{
 			const info = self.loginInfo || {};
 			self.lastLogin = null;
@@ -309,9 +319,9 @@ Friend.User = {
 				if( callback ) callback( false, serveranswer );
 			};
 		}
-		m.forceHTTP = true;
-		m.forceSend = true;
-		m.execute( 'login' );
+		req.forceHTTP = true;
+		req.forceSend = true;
+		req.execute( 'login' );
 		
 		function clearCurrent() {
 			self.loginCallback = null;
@@ -341,12 +351,14 @@ Friend.User = {
 	{
 		const self = this;
 		console.log( 'ReLogin', self.lastLogin );
-    	if( self.lastLogin ) return;
+    	if( self.lastLogin )
+    		return;
     	
-    	this.State = 'login';
+    	self.setState( 'login' );
+    	//this.State = 'login';
     	
-    	if( !event ) event = window.event;
-    	
+    	if( !event )
+    		event = window.event;
     	
     	/*
     	if( Workspace.loginUsername && Workspace.loginPassword )
@@ -509,9 +521,16 @@ Friend.User = {
 			loginPromp : Workspace.loginPrompt,
 			state      : Friend.User.State,
 		});
-		if( Workspace && Workspace.loginPrompt ) return;
-		if( typeof( Library ) == 'undefined' ) return;
-		if( typeof( MD5 ) == 'undefined' ) return;
+		
+		if( Workspace && Workspace.loginPrompt )
+			return;
+		
+		if( typeof( Library ) == 'undefined' )
+			return;
+		
+		if( typeof( MD5 ) == 'undefined' )
+			return;
+		
 		let exf = function()
 		{
 			Friend.User.serverCheck = null;
@@ -583,8 +602,10 @@ Friend.User = {
 	// Set the user state (offline / online etc)
 	SetUserConnectionState: function( mode, force )
 	{
+		const self = this;
 		console.log( 'SetUserConnectionState', {
-			mode    : mode, 
+			current : self.state,
+			mode    : mode,
 			force   : force,
 			current : self.State,
 		});
@@ -594,7 +615,8 @@ Friend.User = {
 			if( this.State != 'offline' )
 			{
 				this.ServerIsThere = false;
-				this.State = 'offline';
+				self.setState( 'offline' );
+				//this.State = 'offline';
 				Workspace.workspaceIsDisconnected = true;
 				document.body.classList.add( 'Offline' );
 				if( Workspace.screen )
@@ -641,7 +663,8 @@ Friend.User = {
 			if( this.State != 'online' || force || !Workspace.conn )
 			{
 				this.ServerIsThere = true;
-				this.State = 'online';
+				self.setState( 'online' );
+				//this.State = 'online';
 				document.body.classList.remove( 'Offline' );
 				if( Workspace.screen )
 					Workspace.screen.hideOfflineMessage();
@@ -664,7 +687,19 @@ Friend.User = {
 		}
 		else
 		{
-			this.State = mode;
+			self.setState( mode );
+			//this.State = mode;
 		}
+	},
+	
+	setState: function( state ) {
+		const self = this;
+		console.log( 'setState', {
+			current : self.State,
+			set     : state,
+			self    : self,
+		});
+		
+		self.State = state;
 	}
 };
