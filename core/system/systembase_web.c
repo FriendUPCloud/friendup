@@ -593,7 +593,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						
 						time_t acttime = time( NULL );
 						
-						if( ( acttime - locas->as_CreateTime ) > l->sl_AppSessionManager->asm_SessionTimeout )
+						if( ( acttime - locas->as_CreateTime ) > l->sl_RemoveAppSessionsAfterTime )
 						{
 							struct TagItem tags[] = {
 								{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },

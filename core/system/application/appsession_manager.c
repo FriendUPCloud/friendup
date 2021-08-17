@@ -45,31 +45,6 @@ AppSessionManager *AppSessionManagerNew( void *sb )
 		pthread_mutex_init( &(asm->asm_Mutex), NULL );
 		
 		asm->asm_SessionsHT = AllocateHashTable( sizeof( AppSession *), 0);
-		
-		SystemBase *lsb = (SystemBase *)sb;
-		
-		asm->asm_SessionTimeout = DEFAULT_APPSESSION_TIMEOUT;	// one hour by default
-		
-		Props *prop = NULL;
-		PropertiesInterface *plib = &(lsb->sl_PropertiesInterface);
-		{
-			char *ptr, path[ 1024 ];
-			path[ 0 ] = 0;
-			
-			ptr = getenv("FRIEND_HOME");
-			
-			if( ptr != NULL )
-			{
-				sprintf( path, "%scfg/cfg.ini", ptr );
-			}
-
-			prop = plib->Open( path );
-			if( prop != NULL)
-			{
-				asm->asm_SessionTimeout = plib->ReadIntNCS( prop, "core:appsessiontimeout", DEFAULT_APPSESSION_TIMEOUT );
-				plib->Close( prop );
-			}
-		}
 
 		return asm;
 	}
@@ -631,7 +606,7 @@ int AppSessionManagerRemoveOldAppSessions( void *lsb )
 			as = (AppSession *)as->node.mln_Succ;
 			
 			// timeout
-			if( ( acttime - oldEntry->as_CreateTime ) > asmgr->asm_SessionTimeout )
+			if( ( acttime - oldEntry->as_CreateTime ) > sb->sl_RemoveAppSessionsAfterTime )
 			{
 #ifdef DB_SESSIONID_HASH
 				DEBUG("[USMRemoveOldAppSessions] entry removed: %s\n", oldEntry->as_HashedAuthID );
