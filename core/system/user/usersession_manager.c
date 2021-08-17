@@ -1111,7 +1111,7 @@ int USMRemoveOldSessions( void *lsb )
 				actSession = (UserSession *)actSession->node.mln_Succ;
 				
 				// we delete session
-				if( canDelete == TRUE && ( ( acttime -  remSession->us_LastActionTime ) > sb->sl_RemoveSessionsAfterTime ) )
+				if( canDelete == TRUE && ( ( acttime -  remSession->us_LastActionTime ) > sb->sl_RemoveUserSessionsAfterTime ) )
 				{
 					if( remSession != (UserSession *) smgr->usm_SessionsToBeRemoved )
 					{
@@ -1160,7 +1160,7 @@ int USMRemoveOldSessionsinDB( void *lsb )
 		char temp[ 1024 ];
 	 
 		// we remove old entries older then sl_RemoveSessionsAfterTime (look in systembase.c)
-		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` WHERE LastActionTime>0 AND (%lu-LastActionTime)>%lu", acttime, sb->sl_RemoveSessionsAfterTime );
+		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` WHERE LastActionTime>0 AND (%lu-LastActionTime)>%lu", acttime, sb->sl_RemoveUserSessionsAfterTime );
 		DEBUG("USMRemoveOldSessionsDB launched SQL: %s\n", temp );
 	 
 		sqllib->QueryWithoutResults( sqllib, temp );

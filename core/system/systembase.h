@@ -295,10 +295,11 @@ typedef struct SystemBase
 	List                            *sl_AvailableModules;   // available modules with extension
 	char 							*sl_ActiveModuleName;	// name of active module
 	char							*sl_DefaultDBLib;		// default DB library name
-	time_t							sl_RemoveSessionsAfterTime;	// time after which session will be removed
+	time_t							sl_RemoveUserSessionsAfterTime;	// time after which session will be removed
 	int								sl_MaxLogsInMB;			// Maximum size of logs in log folder in MB ( if > then old ones will be removed)
 	char							*sl_MasterServer;		// FriendCore master server
-	int								sl_RemoveOldSessionTimeout;	// Time in seconds after which old sessions will be removed
+	int								sl_EventRemoveOldUserSessionTimeout;	// Time in seconds after which old sessions will be removed
+	int								sl_EventRemoveOldAppSessionTimeout;	// Time in seconds after which old app sessions will be removed
 	
 	//
 	// 60 seconds

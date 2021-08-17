@@ -484,10 +484,10 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 			// session is valid
 			//
 		
-			if( (timestamp - uses->us_LastActionTime ) < sb->sl_RemoveSessionsAfterTime )
+			if( (timestamp - uses->us_LastActionTime ) < sb->sl_RemoveUserSessionsAfterTime )
 			{	// session timeout
 	
-				DEBUG("[FCDB] checking login time %ld < LOGOUTTIME %lu\n", timestamp - uses->us_LastActionTime, sb->sl_RemoveSessionsAfterTime );
+				DEBUG("[FCDB] checking login time %ld < LOGOUTTIME %lu\n", timestamp - uses->us_LastActionTime, sb->sl_RemoveUserSessionsAfterTime );
 	
 				// same session, update login time
 				
@@ -600,7 +600,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 				//
 				// user was not logged out
 				//
-				if(  (timestamp - uses->us_LastActionTime) < sb->sl_RemoveSessionsAfterTime )
+				if(  (timestamp - uses->us_LastActionTime) < sb->sl_RemoveUserSessionsAfterTime )
 				{
 					DEBUG("User was not logged out\n");
 					
@@ -642,7 +642,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 					{
 						DEBUG("============================================================\n \
 							user name %s current timestamp %ld login time %ld logout time %lu\n\
-								============================================================\n", tmpusr->u_Name, timestamp, uses->us_LastActionTime , sb->sl_RemoveSessionsAfterTime);
+								============================================================\n", tmpusr->u_Name, timestamp, uses->us_LastActionTime , sb->sl_RemoveUserSessionsAfterTime);
 						
 						char *hashBase = MakeString( 255 );
 						sprintf( hashBase, "%ld%s%d", timestamp, tmpusr->u_FullName, ( rand() % 999 ) + ( rand() % 999 ) + ( rand() % 999 ) );
@@ -755,7 +755,7 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r __attribute__((unused)),
 
 	// we check if user is already logged in
 
-	if( ( timestamp - users->us_LastActionTime ) < sb->sl_RemoveSessionsAfterTime )
+	if( ( timestamp - users->us_LastActionTime ) < sb->sl_RemoveUserSessionsAfterTime )
 	{	// session timeout
 		// we set timeout
 

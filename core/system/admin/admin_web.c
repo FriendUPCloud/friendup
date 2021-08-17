@@ -559,7 +559,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 								{
 									DEBUG("[AdminWebRequest] Going through sessions, device: %s\n", locses->us_DeviceIdentity );
 						
-									if( ( (timestamp - locses->us_LastActionTime) < l->sl_RemoveSessionsAfterTime ) )
+									if( ( (timestamp - locses->us_LastActionTime) < l->sl_RemoveUserSessionsAfterTime ) )
 									{
 										char tmp[ 512 ];
 										int tmpsize = 0;
