@@ -154,17 +154,16 @@ if( !class_exists( 'Door' ) )
 			return false;
 		}
 	
-		// Gets the correct identifier to extract a filesystem
-		function getQuery( $path = false )
+		// Get relevant user's session
+		function getUserSession()
 		{
 			global $args, $User, $Logger, $SqlDatabase, $UserSession;
+			
 			if( !isset( $User->ID ) && !isset( $this->_user ) ) 
 			{
 				return false;
 			}
-		
-			// For whom are we calling?
-			$activeUser = isset( $this->_user ) ? $this->_user : $User;
+			
 			$activeUserSession = isset( $this->_usersession ) ? $this->_usersession : $UserSession;
 			
 			// Check for server token and pick session from there
@@ -180,6 +179,22 @@ if( !class_exists( 'Door' ) )
 					}
 				}
 			}
+			
+			return $activeUserSession;
+		}
+	
+		// Gets the correct identifier to extract a filesystem
+		function getQuery( $path = false )
+		{
+			global $args, $User, $Logger, $SqlDatabase, $UserSession;
+			if( !isset( $User->ID ) && !isset( $this->_user ) ) 
+			{
+				return false;
+			}
+		
+			// For whom are we calling?
+			$activeUser = isset( $this->_user ) ? $this->_user : $User;
+			$activeUserSession = $this->getUserSession();
 		
 			$identifier = false;
 		
@@ -281,7 +296,7 @@ if( !class_exists( 'Door' ) )
 			global $Config, $User, $SqlDatabase, $Logger, $UserSession;
 		
 			$activeUser = isset( $this->_user ) ? $this->user : $User;
-			$activeUserSession = isset( $this->_userSession ) ? $this->userSession : $UserSession;
+			$activeUserSession = $this->getUserSession();
 		
 			// Support auth context
 			if( isset( $this->_authdata ) )
@@ -671,7 +686,7 @@ if( !class_exists( 'Door' ) )
 			global $User, $Logger, $UserSession;
 		
 			$activeUser = isset( $this->_user ) ? $this->_user : $User;
-			$activeUserSession = isset( $this->_usersession ) ? $this->_usersession : $UserSession;
+			$activeUserSession = $this->getUserSession();
 		
 			// 1. Get the filesystem objects
 			$ph = explode( ':', $delpath );
@@ -748,7 +763,7 @@ if( !class_exists( 'Door' ) )
 			global $User, $Logger, $UserSession;
 		
 			$activeUser = isset( $this->_user ) ? $this->_user : $User;
-			$activeUserSession = isset( $this->_usersession ) ? $this->_usersession : $UserSession;
+			$activeUserSession = $this->getUserSession();
 		
 			// 1. Get the filesystem objects
 			$from = explode( ':', $pathFrom ); $from = $from[0];
