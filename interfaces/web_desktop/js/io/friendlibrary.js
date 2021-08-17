@@ -13,7 +13,7 @@ var FriendLibrary = function ( library, encryption )
 {
 	// Get cleaned library
 	if ( null == library )
-		library = 'system.library';
+		library = 'system';
 	
 	this.encryption = encryption ? true : false;
 	this.library = library.split( '.library' ).join ( '' ).toLowerCase();

@@ -249,10 +249,12 @@ Friend.User = {
 			
 			if ( 'fail' == conf ) {
 				console.log( 'send login call response fail', response );
-				if ( response && 10 == response.code )
+				if ( response && 10 == response.code ) {
 					window.Workspace.sessionId = null;
-				
-				respond( 'fail', serveranswer );
+					self.ReLogin();
+				} else
+					respond( 'fail', serveranswer );
+					
 				//self.ReLogin();
 				return;
 			}
@@ -516,10 +518,11 @@ Friend.User = {
 	// Check if the server is alive
 	CheckServerConnection: function( useAjax )
 	{
-		
+		const self = this;
 		console.log( 'CheckServerConnection', {
 			loginPromp : Workspace.loginPrompt,
 			state      : Friend.User.State,
+			State      : self.State,
 		});
 		
 		if( Workspace && Workspace.loginPrompt )
@@ -531,79 +534,116 @@ Friend.User = {
 		if( typeof( MD5 ) == 'undefined' )
 			return;
 		
-		let exf = function()
+		
+		//let exf = function()
+		//{
+		if ( null != self.serverCheck ) {
+			self.serverCheck.destroy();
+			self.serverCheck = null;
+		}
+		
+		if ( null != self.checkTimeout ) {
+			window.clearTimeout( self.checkTimeout );
+			self.checkTimeout = null;
+		}
+		
+		//self.serverCheck = null;
+		if ( 'offline' == self.State ) {
+			self.ReLogin();
+			return;
+		}
+		
+		//if( self.State != 'offline' )
+		//{
+		self.checkTimeout = setTimeout( function()
 		{
-			Friend.User.serverCheck = null;
-			if( Friend.User.State != 'offline' )
+			self.SetUserConnectionState( 'offline' );
+		}, 1500 );
+		
+		let req = new Library( 'system' );
+		self.serverCheck = req;
+		self.serverCheck.onExecuted = function( q, s )
+		{
+			console.log( 'server check result', [ q, s ]);
+			// Dont need this now
+			if ( null != self.checkTimeout )
+				clearTimeout( self.checkTimeout );
+			
+			self.checkTimeout = null;
+			self.serverCheck = null;
+			
+			//
+			if (( q == null ) && ( s == null ))
+				return;
+			
+			// Check missing session
+			let missSess = ( s && s.indexOf( 'sessionid or authid parameter is missing' ) > 0 );
+			if( !missSess && ( s && s.indexOf( 'User session not found' ) > 0 ) )
+				missSess = true;
+			
+			if( !missSess && q == null && s == null )
+				missSess = true;
+			
+			if( ( q == 'fail' && !s ) || ( !q && !s ) || ( q == 'error' && !s ) || missSess )
 			{
-				let checkTimeo = setTimeout( function()
+				if( missSess )
 				{
-					Friend.User.SetUserConnectionState( 'offline' );
-				}, 1500 );
-				let serverCheck = new Library( 'system' );
-				serverCheck.onExecuted = function( q, s )
-				{
-					console.log( 'server.execed', [ q, s ]);
-					// Dont need this now
-					clearTimeout( checkTimeo );
-					
-					// Check missing session
-					let missSess = ( s && s.indexOf( 'sessionid or authid parameter is missing' ) > 0 );
-					if( !missSess && ( s && s.indexOf( 'User session not found' ) > 0 ) )
-						missSess = true;
-					if( !missSess && q == null && s == null )
-						missSess = true;
-			
-					if( ( q == 'fail' && !s ) || ( !q && !s ) || ( q == 'error' && !s ) || missSess )
-					{
-						if( missSess )
-						{
-							Friend.User.ReLogin();
-						}
-						Friend.User.SetUserConnectionState( 'offline' );
-					}
-					else
-					{
-						if( !Friend.User.ServerIsThere )
-						{
-							Friend.User.SetUserConnectionState( 'online', true );
-						}
-						Friend.User.ConnectionAttempts = 0;
-					}
-				};
-			
-				if( !useAjax )
-					serverCheck.forceHTTP = true;
-				serverCheck.forceSend = true;
-			
-				try
-				{
-					// Cancel previous call if it's still in pipe
-					if( Friend.User.serverCheck && Friend.User.serverCheck.currentRequest )
-					{
-						Friend.User.serverCheck.currentRequest.destroy();
-					}
-					serverCheck.execute( 'validate' );
-					Friend.User.serverCheck = serverCheck;
+					self.ReLogin();
 				}
-				catch( e )
-				{
-					Friend.User.SetUserConnectionState( 'offline' );
-				}
+				self.SetUserConnectionState( 'offline' );
 			}
 			else
 			{
-				Friend.User.ReLogin();
+				if( !self.ServerIsThere )
+				{
+					self.SetUserConnectionState( 'online', true );
+				}
+				self.ConnectionAttempts = 0;
 			}
 		};
+		
+		if( !useAjax )
+			self.serverCheck.forceHTTP = true;
+		
+		self.serverCheck.forceSend = true;
+		self.serverCheck.execute( 'validate' );
+		
+		/*
+		try
+		{
+			// Cancel previous call if it's still in pipe
+			if( self.serverCheck && self.serverCheck.currentRequest )
+			{
+				self.serverCheck.destroy();
+			}
+			console.log( 'server check request start' );
+			self.serverCheck.execute( 'validate' );
+			self.serverCheck = serverCheck;
+		}
+		catch( e )
+		{
+			self.SetUserConnectionState( 'offline' );
+		}
+		*/
+		
+		/*
+		}
+		else
+		{
+			self.ReLogin();
+		}
+		*/
+			
+			
+		//};
 		// Check now!
-		exf();
+		//exf();
 	},
 	// Set the user state (offline / online etc)
 	SetUserConnectionState: function( mode, force )
 	{
 		const self = this;
-		console.log( 'SetUserConnectionState', {
+		console.trace( 'SetUserConnectionState', {
 			current : self.state,
 			mode    : mode,
 			force   : force,
