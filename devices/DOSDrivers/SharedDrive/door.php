@@ -525,7 +525,7 @@ if( !class_exists( 'SharedDrive' ) )
 					{
 						die( 'fail<!--separate-->{"message":"Failed to unshare file.","response":"-1"}' );
 					}				
-				
+					
 					// Select groupshares that has been shared in where I am member
 					// First in union is; Get folders by other users or groups
 					// Second one is: Select usershares where I am shared with
@@ -587,6 +587,21 @@ if( !class_exists( 'SharedDrive' ) )
 							$out[] = $s;
 						}
 					}
+					
+					// Make a folder for content you shared with others
+					$others = new stdClass();
+					$others->Filename = 'i18n_you_shared';
+					$others->Path = 'You shared';
+					$others->Title = 'i18n_you_shared';
+					$others->OwnerUserID = $User->ID;
+					$others->Type = 'Directory';
+					$others->MetaType = 'Directory';
+					$others->IconLabel = 'GroupShare';
+					$others->DateCreated = $others->DateModified = date( 'Y-m-d H:i:s' );
+					$others->Shared = $others->SharedLink = '';
+					$others->Filesize = 0;
+					$others->ServerToken = $User->ServerToken;
+					$out[] = $others;
 				}
 				
 				// Use multi!

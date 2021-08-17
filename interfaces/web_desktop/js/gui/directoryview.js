@@ -847,7 +847,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		let eles = this.getElementsByTagName( 'div' );
 		let selectedCount = 0;
 
-		for( var a = 0; a < eles.length; a++ )
+		for( let a = 0; a < eles.length; a++ )
 		{
 			if( !eles[a].classList || !eles[a].classList.contains( 'Selected' ) )
 				continue;
@@ -1074,11 +1074,18 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		
 		if( this.icons )
 		{
-			for( var a = 0; a < this.icons.length; a++ )
+			for( let a = 0; a < this.icons.length; a++ )
 			{
 				let i = this.icons[a];
+				
+				// Translations
+				if( i.Path.indexOf( 'Shared:' ) == 0 && i.Title && i.Title.substr( 0, 5 ) == 'i18n_' )
+				{
+					this.icons[a].Title = i18n( i.Title );
+				}
+				
 				let o = {};
-				for( var t in i )
+				for( let t in i )
 				{
 					switch( t )
 					{
@@ -1102,6 +1109,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						o.SortPriority = 1;
 					else o.SortPriority = 0;
 				}
+				
 				if( i.Filename )
 				{
 					if( i.Filename.indexOf( '.' ) > 0 )
@@ -1297,7 +1305,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				d.cancelId = winobj.directoryview.cancelId;
 				d.getIcons( 'Home:', function( items )
 				{
-					for( var a = 0; a < items.length; a++ )
+					for( let a = 0; a < items.length; a++ )
 					{
 						if( items[a].Path == 'Home:Downloads/' )
 						{
@@ -1418,7 +1426,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 
 					function countItems( items )
 					{
-						for ( var i = 0, l = items.length; i < l; i++ )
+						for ( let i = 0, l = items.length; i < l; i++ )
 						{
 							countItem( items[ i ] );
 						}
@@ -1454,7 +1462,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 									sendItem( entry, 'directory' );
 									if( results.length )
 									{
-										for( var a = 0; a < results.length; a++ )
+										for( let a = 0; a < results.length; a++ )
 										{
 											countEntry( results[ a ] );
 										}
@@ -1483,7 +1491,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 									sendItem( entry, 'directory' );
 									if( results.length )
 									{
-										for( var a = 0; a < results.length; a++ )
+										for( let a = 0; a < results.length; a++ )
 										{
 											countEntry( results[ a ] );
 										}
@@ -1538,12 +1546,12 @@ DirectoryView.prototype.InitWindow = function( winobj )
 
 						// Setup progress bar
 						let eled = w.getWindowElement().getElementsByTagName( 'div' );
-						for( var a = 0; a < eled.length; a++ )
+						for( let a = 0; a < eled.length; a++ )
 						{
 							if( eled[a].className )
 							{
 								let types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'Info', 'Progress' ];
-								for( var b = 0; b < types.length; b++ )
+								for( let b = 0; b < types.length; b++ )
 								{
 									if( eled[a].className.indexOf( types[b] ) == 0 )
 									{
@@ -1963,7 +1971,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		
 		let orphanInfoFile = {};
 
-		for( var a = 0; a < icons.length; a++ )
+		for( let a = 0; a < icons.length; a++ )
 		{
 			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
 			
@@ -2013,7 +2021,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 
 		let heightAttrs = [ 'height', 'paddingTop', 'paddingBottom' ];
 		let infoIcons = {};
-		for( var a = 0; a < icons.length; a++ )
+		for( let a = 0; a < icons.length; a++ )
 		{
 			let fn = icons[a].Filename ? icons[a].Filename : icons[a].Title;
 			
@@ -2048,7 +2056,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		
 		// Draw icons
 		let iterations = 0;
-		for( var a = 0; a < icons.length; a++ )
+		for( let a = 0; a < icons.length; a++ )
 		{
 			// Special mode
 			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
@@ -2093,7 +2101,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 
 			// Skip duplicates
 			let fnd = false;
-			for( var z = 0; z < filenameBuf.length; z++ )
+			for( let z = 0; z < filenameBuf.length; z++ )
 			{
 				if( filenameBuf[z].Filename == fn.Filename && filenameBuf[z].Type == fn.Type )
 				{
@@ -2169,13 +2177,13 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 				{
 					let t = document.createElement ( 'div' );
 					t.className = 'Toolbar';
-					for( var q = 0; q < icons[a].Toolbar.length; q++ )
+					for( let q = 0; q < icons[a].Toolbar.length; q++ )
 					{
 						let barP = icons[a].Toolbar[q];
 						let bar = document.createElement( 'div' );
 						let icon = document.createElement( 'img' );
 						let label = document.createElement( 'span' );
-						for( var v in barP )
+						for( let v in barP )
 						{
 							switch( v )
 							{
@@ -2409,7 +2417,7 @@ DirectoryView.prototype.SelectAll = function()
 	if( this.multiple )
 	{
 		let ics = this.window.icons;
-		for( var a = 0; a < ics.length; a++ )
+		for( let a = 0; a < ics.length; a++ )
 		{
 			ics[a].selected = 'multiple';
 			if( ics[a].domNode )
@@ -2456,7 +2464,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 	if( typeof( icons[0] ) == 'object' )
 	{
 		// TODO: Lets try to make directories first optional
-		for( var a = 0; a < icons.length; a++ )
+		for( let a = 0; a < icons.length; a++ )
 		{
 			if( icons[a].Type == 'Directory' ) dirs.push( icons[a] );
 			else files.push( icons[a] );
@@ -2473,7 +2481,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 	if( !this.changed && obj.iconsCache && obj.iconsCache.length )
 	{
 		changed = false;
-		for( var a = 0; a < obj.iconsCache.length; a++ )
+		for( let a = 0; a < obj.iconsCache.length; a++ )
 		{
 			if(
 				obj.iconsCache[a].Filename != icons[a].Filename ||
@@ -2528,7 +2536,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 		
 			let head = document.createElement( 'div' );
 			head.className = 'Headers';
-			for( var a in headers )
+			for( let a in headers )
 			{
 				let d = document.createElement( 'div' );
 				d.className = 'Header Ellipsis MousePointer';
@@ -2600,7 +2608,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 		
 		let orphanInfoFile = {};
 
-		for( var a = 0; a < icons.length; a++ )
+		for( let a = 0; a < icons.length; a++ )
 		{
 			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
 			
@@ -2638,7 +2646,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 
 		let listed = 0;
 
-		for( var a = 0; a < icons.length; a++ )
+		for( let a = 0; a < icons.length; a++ )
 		{
 			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
 			
@@ -2671,7 +2679,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 
 			r = document.createElement ( 'div' );
 			r.className = 'Row MousePointer';
-			for( var b in headers )
+			for( let b in headers )
 			{
 				let c = document.createElement ( 'div' );
 				switch( b )
@@ -2709,7 +2717,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 							let perms = ['-','-','-','-','-'];
 							for( let g = 0; g < p.length; g++ )
 							{
-								for( var cc = 0; cc < p[ g ].length; cc++ )
+								for( let cc = 0; cc < p[ g ].length; cc++ )
 								{
 									if( p[ g ].substr( cc, 1 ) != '-' && perms[cc] == '-' )
 									{
@@ -2837,7 +2845,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						// Find range from to
 						if( dv.lastListItem && dv.lastListItem.classList.contains( 'Selected' ) )
 						{
-							for( var c = 0; c < p.childNodes.length; c++ )
+							for( let c = 0; c < p.childNodes.length; c++ )
 							{
 								if( p.childNodes[c] == dv.lastListItem )
 								{
@@ -2854,7 +2862,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 
 						if( other >= 0 && self >= 0 )
 						{
-							for( var b = top; b <= bottom; b++ )
+							for( let b = top; b <= bottom; b++ )
 							{
 								if( !p.childNodes[b] ) continue;
 								p.childNodes[b].classList.add( 'Selected' );
@@ -3068,7 +3076,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 		// Position the rows
 		let t = 0;
 		let ds = icnt.getElementsByTagName ( 'div' );
-		for( var a = 0; a < ds.length; a++ )
+		for( let a = 0; a < ds.length; a++ )
 		{
 			if( ds[a].className.substr ( 0, 3 ) == 'Row' )
 			{
@@ -3084,7 +3092,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 	{
 		// Find last row
 		r = icnt.getElementsByTagName( 'div' );
-		for( var a = r.length - 1; a > 0; a-- )
+		for( let a = r.length - 1; a > 0; a-- )
 		{
 			if( r[a].classList.contains( 'Row' ) )
 			{
@@ -3103,7 +3111,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 	{
 		let childr = icnt.childNodes[icnt.childNodes.length - 1].childNodes;
 		let wh = head.offsetWidth;
-		for( var b = 0; b < head.childNodes.length; b++ )
+		for( let b = 0; b < head.childNodes.length; b++ )
 		{
 			if( r.childNodes[b].nodeName != 'DIV' ) continue;
 
@@ -3550,7 +3558,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 								let files = [];
 								let eles = found.fileInfo.directoryview.window.getElementsByTagName( 'div' );
 								let selectedCount = 0;
-								for( var a = 0; a < eles.length; a++ )
+								for( let a = 0; a < eles.length; a++ )
 								{
 									if( !eles[a].classList.contains( 'File' ) )
 										continue;
@@ -3695,10 +3703,10 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 					ext = '.' + ext[ext.length-1].toLowerCase();
 
 					// Check mimetypes
-					for( var a in Workspace.mimeTypes )
+					for( let a in Workspace.mimeTypes )
 					{
 						let mt = Workspace.mimeTypes[a];
-						for( var b in mt.types )
+						for( let b in mt.types )
 						{
 							// Make sure we have a valid executable
 							if( ext == mt.types[b].toLowerCase() && mt.executable.length )
@@ -3736,7 +3744,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				if( obj.fileInfo.Type == 'Directory' )
 				{
 					let o = {};
-					for( var a in obj.fileInfo )
+					for( let a in obj.fileInfo )
 						o[ a ] = obj.fileInfo[ a ];
 					o.MetaType = 'Directory';
 					OpenWindowByFileinfo( o, event, false, uniqueView );	
@@ -4076,7 +4084,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 {
 	// Make a copy of fileinfo
 	let fileInfo = {};
-	for( var a in oFileInfo )
+	for( let a in oFileInfo )
 		fileInfo[ a ] = oFileInfo[ a ];
 
 	if( !iconObject )
@@ -4472,7 +4480,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 						if( icons )
 						{
 							// Assign door to each icon
-							for( var t in icons )
+							for( let t in icons )
 							{
 								if( winDoor.instantiate )
 								{
@@ -4617,7 +4625,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					{
 						// Fix missing path! Paths come back with "[missing volume:]Documents/file.txt"
 						// TODO: This is wrong at the call level
-						for( var a = 0; a < content.length; a++ )
+						for( let a = 0; a < content.length; a++ )
 						{
 							if( content[ a ].Path.indexOf( ':' ) < 0 )
 							{
@@ -4839,7 +4847,7 @@ function CheckDoorsKeys( e )
 			case 13:
 				if( dirMode )
 				{
-					for( var a = 0; a < window.regionWindow.icons.length; a++ )
+					for( let a = 0; a < window.regionWindow.icons.length; a++ )
 					{
 						if( window.regionWindow.icons[a].selected )
 						{
@@ -4867,7 +4875,7 @@ function CheckDoorsKeys( e )
 						// Find active
 						if( window.regionWindow.icons )
 						{
-							for( var a = 0; a < window.regionWindow.icons.length; a++ )
+							for( let a = 0; a < window.regionWindow.icons.length; a++ )
 							{
 								if( window.regionWindow.icons[a].selected )
 								{
@@ -4905,7 +4913,7 @@ function CheckDoorsKeys( e )
 			{
 				let scroll = false;
 				let found = false;
-				for( var a = 0; a < rw.length; a++ )
+				for( let a = 0; a < rw.length; a++ )
 				{
 					if( rw[ a ].selected )
 					{
@@ -4938,7 +4946,7 @@ function CheckDoorsKeys( e )
 			{
 				let out = [];
 				let found = false;
-				for( var a = 0; a < rw.length; a++ )
+				for( let a = 0; a < rw.length; a++ )
 				{
 					let f = rw[a].Title ? rw[a].Title : rw[a].Filename;
 					if( f.toUpperCase().charCodeAt(0) == k )
@@ -4958,7 +4966,7 @@ function CheckDoorsKeys( e )
 							out[0].domNode.onmousedown( e );
 						return;
 					}
-					for( var a = 0; a < out.length; a++ )
+					for( let a = 0; a < out.length; a++ )
 					{
 						if( out[a].selected && a < out.length - 1 )
 						{
@@ -5020,7 +5028,7 @@ Frameloader = function( auth, pelement )
 		let u = this.url;
 		let s = '?';
 		if ( u.indexOf( '?' ) > 0 ) s = '&';
-		for( var a in this.vars )
+		for( let a in this.vars )
 		{
 			u += s+a+'='+encodeURIComponent( this.vars[a] );
 			s = '&';
@@ -5054,7 +5062,7 @@ Imageloader = function( auth, pelement )
 		let u = this.url;
 		let s = '?';
 		if ( u.indexOf( '?' ) > 0 ) s = '&';
-		for( var a in this.vars )
+		for( let a in this.vars )
 		{
 			u += s+a+'='+encodeURIComponent( this.vars[a] );
 			s = '&';
@@ -5353,7 +5361,7 @@ Friend.startImageViewer = function( iconObject, extra )
 		';
 		eparent.appendChild( d );
 		let eles = d.getElementsByTagName( 'div' );
-		for( var a = 0; a < eles.length; a++ )
+		for( let a = 0; a < eles.length; a++ )
 		{
 			if( eles[a].classList.contains( 'Fullscreen' ) )
 			{
@@ -5480,14 +5488,14 @@ Friend.startImageViewer = function( iconObject, extra )
 				return;
 			}
 			let path = iconObject.Path.substr( 0, iconObject.Path.length - iconObject.Filename.length );
-			let f = {}; for( var a in iconObject ) f[a] = iconObject[a];
+			let f = {}; for( let a in iconObject ) f[a] = iconObject[a];
 			f.Path = path;
 			d.getIcons( f, function( data )
 			{
 				let prev = '';
 				let curr = '';
 				let prevPath = currPath = '';
-				for( var a = 0; a < data.length; a++ )
+				for( let a = 0; a < data.length; a++ )
 				{
 					// Skip directories
 					if( data[ a ].Type == 'Directory' ) continue;
