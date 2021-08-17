@@ -216,6 +216,97 @@ if( !class_exists( 'SharedDrive' ) )
 					$out = [];
 					$rows = $own = $groupShare = false;
 					
+					// My own stash!
+					if( $path[1] == 'You shared' )
+					{
+						// Get my shared data
+						if( $rows = $SqlDatabase->fetchObjects( '
+							SELECT DISTINCT(`Data`) FROM FShared WHERE OwnerUserID=\'' . intval( $User->ID, 10 ) . '\' GROUP BY `Data`
+						' ) )
+						{
+							foreach( $rows as $row )
+							{
+								if( $delete || $read || $getinfo || $write )
+								{
+									$fn = explode( ':', $row->Data );
+									if( strstr( $fn[1], '/' ) )
+									{
+										$fn = explode( '/', $fn[1] );
+										$fn = $fn[ count( $fn ) - 1 ];
+									}
+									else $fn = $fn[1];
+								}
+								
+								if( $delete )
+								{
+									if( $fn == $pth )
+									{
+										$SqlDatabase->Query( '
+											DELETE FROM FShared WHERE 
+												OwnerUserID=\'' . intval( $User->ID, 10 ) . '\' AND 
+												`Data`="' . mysqli_real_escape_string( $SqlDatabase->_link, $row->Data ) . '"
+										' );
+										die( 'ok<!--separate-->{"message":"Unshared file.","response":"1"}' );
+									}
+								}
+								// We want to get info!
+								if( isset( $getinfo ) && $pth == $fn )
+								{
+									$d = new File( $row->Data );
+									if( $info = $d->GetFileInfo() )
+									{
+										die( 'ok<!--separate-->' . json_encode( $info ) );
+									}
+									die( 'fail<!--separate-->' );
+								}
+								// Read mode intercepts here
+								else if( isset( $read ) && $pth == $fn ) 
+								{
+									$d = new File( $row->Data );
+									$d->LoadRaw();
+								}
+								else if( isset( $write ) && $pth == $fn )
+								{
+									$s->ExternServerToken = $row->ServerToken;
+
+									if( $info = $this->doWrite( $s, $args->tmpfile, $args->data ) )
+									{
+										die( 'ok<!--separate-->' . $info->Len . '<!--separate-->' );
+									}
+									die( 'fail<!--separate-->{"response":"-1","message":"Could not write file."}' );
+								}
+								
+								$path = $row->Data;
+								$filename = explode( ':', $path ); 
+								$filename = $filename[1];
+								if( strstr( $filename, '/' ) )
+								{
+									$filename = explode( '/', $filename );
+									$filename = $filename[ count( $filename ) - 1 ];
+								}
+								$s = new stdClass();
+								$s->Filename = $filename;
+								$s->Path = 'You shared/' . $filename;
+								$s->Type = 'File';
+								$s->MetaType = 'File';
+								$s->Permissions = '-RWED-RWED-RWED';
+								$s->Shared = '';
+								$s->SharedLink = '';
+								$s->Filesize = 0;
+								$s->Owner = $User->ID;
+								$s->ExternPath = $row->Data;
+								$s->ExternServerToken = $User->ServerToken;
+								$out[] = $s;
+							}
+						}
+						// In delete mode, we got this far - return false
+						if( $delete )
+						{
+							die( 'fail<!--separate-->{"message":"Failed to unshare file.","response":"-1"}' );
+						}	
+						die( 'ok<!--separate-->' . json_encode( $out ) );
+					}
+					
 					// Get data shared by other users directly
 					if( !( $rows = $SqlDatabase->fetchObjects( '
 						SELECT s.ID, s.Data, s.OwnerUserID, u.ServerToken FROM FShared s, FUser u 
@@ -369,6 +460,7 @@ if( !class_exists( 'SharedDrive' ) )
 						}
 						
 						// Wait for curl to finish
+						// TODO: This is the slowdown!
 						if( count( $multiArray ) )
 						{
 							do
@@ -470,62 +562,6 @@ if( !class_exists( 'SharedDrive' ) )
 				// This is the root path
 				else
 				{
-					$out = [];
-					// Get my shared data
-					if( $rows = $SqlDatabase->fetchObjects( '
-						SELECT DISTINCT(`Data`) FROM FShared WHERE OwnerUserID=\'' . intval( $User->ID, 10 ) . '\' GROUP BY `Data`
-					' ) )
-					{
-						foreach( $rows as $row )
-						{
-							if( $delete )
-							{
-								$fn = explode( ':', $row->Data );
-								if( strstr( $fn[1], '/' ) )
-								{
-									$fn = explode( '/', $fn[1] );
-									$fn = $fn[ count( $fn ) - 1 ];
-								}
-								else $fn = $fn[1];
-								if( $fn == $pth )
-								{
-									$SqlDatabase->Query( '
-										DELETE FROM FShared WHERE 
-											OwnerUserID=\'' . intval( $User->ID, 10 ) . '\' AND 
-											`Data`="' . mysqli_real_escape_string( $SqlDatabase->_link, $row->Data ) . '"
-									' );
-									die( 'ok<!--separate-->{"message":"Unshared file.","response":"1"}' );
-								}
-							}
-							$path = $row->Data;
-							$filename = explode( ':', $path ); 
-							$filename = $filename[1];
-							if( strstr( $filename, '/' ) )
-							{
-								$filename = explode( '/', $filename );
-								$filename = $filename[ count( $filename ) - 1 ];
-							}
-							$s = new stdClass();
-							$s->Filename = $filename;
-							$s->Path = $filename;
-							$s->Type = 'File';
-							$s->MetaType = 'File';
-							$s->Permissions = '-RWED-RWED-RWED';
-							$s->Shared = '';
-							$s->SharedLink = '';
-							$s->Filesize = 0;
-							$s->Owner = $User->ID;
-							$s->ExternPath = $row->Data;
-							$s->ExternServerToken = $User->ServerToken;
-							$out[] = $s;
-						}
-					}
-					// In delete mode, we got this far - return false
-					if( $delete )
-					{
-						die( 'fail<!--separate-->{"message":"Failed to unshare file.","response":"-1"}' );
-					}				
-					
 					// Select groupshares that has been shared in where I am member
 					// First in union is; Get folders by other users or groups
 					// Second one is: Select usershares where I am shared with
@@ -590,13 +626,13 @@ if( !class_exists( 'SharedDrive' ) )
 					
 					// Make a folder for content you shared with others
 					$others = new stdClass();
-					$others->Filename = 'i18n_you_shared';
+					$others->Filename = 'You shared';
 					$others->Path = 'You shared';
 					$others->Title = 'i18n_you_shared';
 					$others->OwnerUserID = $User->ID;
 					$others->Type = 'Directory';
 					$others->MetaType = 'Directory';
-					$others->IconLabel = 'GroupShare';
+					$others->IconLabel = 'YouShare';
 					$others->DateCreated = $others->DateModified = date( 'Y-m-d H:i:s' );
 					$others->Shared = $others->SharedLink = '';
 					$others->Filesize = 0;
