@@ -37,7 +37,6 @@ typedef struct AppSessionManager
 	FHashTable						*asm_SessionsHT;						// Hashmap of sessions
 
 	int								asm_SessionCounter;
-	time_t							asm_SessionTimeout;						// time in seconds after which session is removed
 	
 	pthread_mutex_t					asm_Mutex;		// mutex
 } AppSessionManager;

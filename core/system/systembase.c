@@ -421,6 +421,7 @@ SystemBase *SystemInit( void )
 			l->sl_EventRemoveOldUserSessionTimeout = plib->ReadIntNCS( prop, "options:eventusersessiontimeout", MINS60 );
 			l->sl_EventRemoveOldAppSessionTimeout = plib->ReadIntNCS( prop, "options:eventappsessiontimeout", MINS360 );
 			l->sl_RemoveUserSessionsAfterTime = plib->ReadIntNCS( prop, "options:usersessiontimeout", MINS60 );
+			l->sl_RemoveAppSessionsAfterTime = plib->ReadIntNCS( prop, "options:appsessiontimeout", MINS360 );
 
 			DEBUG("[SystemBase] options:usersessiontimeout %d\n", l->sl_RemoveUserSessionsAfterTime );
 			DEBUG("[SystemBase] options:eventappsessiontimeout %d\n", l->sl_EventRemoveOldAppSessionTimeout );
