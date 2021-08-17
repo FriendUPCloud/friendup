@@ -487,7 +487,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 								
 								if( $len > 0 )
 								{
-									$Logger->log( '[SQLDrive] Ugly workaround to "fix" base64 support...' );
+									//$Logger->log( '[SQLDrive] Ugly workaround to "fix" base64 support...' );
 									// TODO: UGLY WORKAROUND, FIX IT!
 									//       We need to support base64 streams
 									if( $fr = fopen( $args->tmpfile, 'r' ) )
@@ -497,7 +497,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 										if( substr( urldecode( $string ), 0, strlen( '<!--BASE64-->' ) ) == '<!--BASE64-->' )
 										{
 											// TODO: Add filesize limit!
-											$Logger->log( '[SqlDrive] Trying to read the temp file! May crash!' );
+											//$Logger->log( '[SqlDrive] Trying to read the temp file! May crash!' );
 											$fr = file_get_contents( $args->tmpfile );
 											$fr = base64_decode( end( explode( '<!--BASE64-->', urldecode( $fr ) ) ) );
 											if( $fo = fopen( $args->tmpfile, 'w' ) )

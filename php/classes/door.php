@@ -382,7 +382,7 @@ if( !class_exists( 'Door' ) )
 		
 			$debug = [];
 		
-			$Logger->log( 'Starting to sync here: ' . $pathFrom . ' to ' . $pathTo );
+			//$Logger->log( 'Starting to sync here: ' . $pathFrom . ' to ' . $pathTo );
 		
 			//$Logger->log( 'From ' . $pathFrom );
 			//$Logger->log( 'To   ' . $pathTo );
@@ -476,7 +476,7 @@ if( !class_exists( 'Door' ) )
 					$v->Destination = ( trim( $pathTo ) . trim( $v->Filename ) . ( $v->Type == 'Directory' ? '/' : '' ) );
 					if( !trim( $v->Destination ) )
 					{
-						$Logger->log( 'No desination in object!' ); //, print_r( $v, 1 ) );
+						//$Logger->log( 'No desination in object!' ); //, print_r( $v, 1 ) );
 						//die();
 					}
 			
@@ -628,7 +628,7 @@ if( !class_exists( 'Door' ) )
 						}
 						else if( !trim( $des->Path ) )
 						{
-							$Logger->log( $des->Filename . ' has no path. Skipping... ' . json_encode( $des ) );
+							//$Logger->log( $des->Filename . ' has no path. Skipping... ' . json_encode( $des ) );
 							continue;
 						}
 					
@@ -735,7 +735,7 @@ if( !class_exists( 'Door' ) )
 						return true;
 					}
 				
-					$Logger->log( 'couldn\'t deleteFolder... ' . $delpath );
+					//$Logger->log( 'couldn\'t deleteFolder... ' . $delpath );
 				
 					return false;
 				}
@@ -859,7 +859,7 @@ if( !class_exists( 'Door' ) )
 						{
 							return true;
 						}
-						$Logger->log('Couldn\'t create folder (createFolder)... ' . $folderName . ' :: ' . $tpath);
+						//$Logger->log('Couldn\'t create folder (createFolder)... ' . $folderName . ' :: ' . $tpath);
 						return false;
 					}
 				}
@@ -878,7 +878,7 @@ if( !class_exists( 'Door' ) )
 						//$Logger->log('couldn\'t putFile... ' . $pathTo . ' :: ');
 					}
 				}
-				$Logger->log('how did we even get here... ' . $pathFrom . ' :: ' . $pathTo);
+				//$Logger->log('how did we even get here... ' . $pathFrom . ' :: ' . $pathTo);
 				return false;
 			}
 		}
