@@ -433,11 +433,12 @@ if( !class_exists( 'SharedDrive' ) )
 							$s->SharedLink = '';
 							$s->Filesize = 0;
 							$s->Owner = $row->OwnerUserID;
+							$s->row = $row;
 							
 							// Own files and others' files have different paths
 							if( $s->Owner == $User->ID )
 							{
-								$s->ExternPath = $vol[0] . ':' . $filename;
+								$s->ExternPath = $row->Data; //$vol[0] . ':' . $filename; (old nonsensical!)
 								$subPath = $filename;
 							}
 							// Other user's file
@@ -449,6 +450,7 @@ if( !class_exists( 'SharedDrive' ) )
 							}							
 							
 							$url = ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/';
+							
 							$s->multi = FriendCall( $url . 'file/info?servertoken=' . $row->ServerToken, false,
 								array( 
 									'devname'   => $vol[0],
@@ -511,18 +513,28 @@ if( !class_exists( 'SharedDrive' ) )
 										);
 									
 										// Don't timeout!
-										set_time_limit( 0 );
-										ob_end_clean();
-										if( $fp = fopen( $url . 'file/read?servertoken=' . $row->ServerToken . '&path=' . urlencode( $s->ExternPath ) . '&mode=rb', 'rb', false, $context ) )
+										$wholeUrl = $url . 'file/read?servertoken=' . $file->row->ServerToken . '&path=' . urlencode( $s->ExternPath ) . '&mode=rb';
+										$str = false;
+										if( $fp = fopen( $wholeUrl, 'rb', false, $context ) )
 										{
+											$str = fread( $fp, 5 );
+											// Failed attempt
+											if( $str == 'fail<' )
+											{
+												continue;
+											}
+											// Success
+											set_time_limit( 0 );
+											ob_end_clean();
+											echo( $str ); // output first 5 chars
 											fpassthru( $fp );
 											fclose( $fp );
+											die();
 										}
-										die();
 									}
 									else if( isset( $write ) && $pth == $s->Filename )
 									{
-										$s->ExternServerToken = $row->ServerToken;
+										$s->ExternServerToken = $file->row->ServerToken;
 
 										if( $info = $this->doWrite( $s, $args->tmpfile, $args->data ) )
 										{
@@ -540,7 +552,7 @@ if( !class_exists( 'SharedDrive' ) )
 								// This file does not exist!
 								else
 								{
-									$SqlDatabase->query( 'DELETE FROM FShared WHERE ID=\'' . $row->ID . '\' AND OwnerUserID=\'' . $User->ID . '\'' );
+									$SqlDatabase->query( 'DELETE FROM FShared WHERE ID=\'' . $file->row->ID . '\' AND OwnerUserID=\'' . $User->ID . '\'' );
 									continue;
 								}
 							}
