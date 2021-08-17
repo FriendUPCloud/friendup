@@ -419,7 +419,7 @@ SystemBase *SystemInit( void )
 			
 			l->sl_RemoveOldSessionTimeout = plib->ReadIntNCS( prop, "user:timeout", MINS60 );
 			l->sl_RemoveSessionsAfterTime = plib->ReadIntNCS( prop, "user:timeout", MINS60 );
-
+			
 			//DEBUG("[SystemBase] user:timeout %d\n", l->sl_RemoveSessionsAfterTime );
 			
 			l->sl_CacheFiles = plib->ReadIntNCS( prop, "Options:CacheFiles", 1 );
