@@ -418,8 +418,8 @@ SystemBase *SystemInit( void )
 			options = plib->ReadStringNCS( prop, "databaseuser:options", NULL );
 			DEBUG("[SystemBase] options %s\n",options );
 			
-			l->sl_EventRemoveOldUserSessionTimeout = plib->ReadIntNCS( prop, "options:eventusersessiontimeout", MINS60 );
-			l->sl_EventRemoveOldAppSessionTimeout = plib->ReadIntNCS( prop, "options:eventappsessiontimeout", MINS360 );
+			l->sl_EventRemoveOldUserSessionTimeout = plib->ReadIntNCS( prop, "options:cleanupusersessioninterval", MINS60 );
+			l->sl_EventRemoveOldAppSessionTimeout = plib->ReadIntNCS( prop, "options:cleanupappsessioninterval", MINS360 );
 			l->sl_RemoveUserSessionsAfterTime = plib->ReadIntNCS( prop, "options:usersessiontimeout", MINS60 );
 			l->sl_RemoveAppSessionsAfterTime = plib->ReadIntNCS( prop, "options:appsessiontimeout", MINS360 );
 
