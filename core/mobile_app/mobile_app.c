@@ -201,9 +201,9 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						FRIEND_MUTEX_UNLOCK( &locses->us_Mutex );
 					}
 					
-					DEBUG("[AdminWebRequest] Send Message through websockets: %s clients: %p timestamptrue: %d\n", locses->us_DeviceIdentity, locses->us_WSD, ( ( (timestamp - locses->us_LastActionTime) < sb->sl_RemoveSessionsAfterTime ) ) );
+					DEBUG("[AdminWebRequest] Send Message through websockets: %s clients: %p timestamptrue: %d\n", locses->us_DeviceIdentity, locses->us_WSD, ( ( (timestamp - locses->us_LastActionTime) < sb->sl_RemoveUserSessionsAfterTime ) ) );
 				
-					if( ( ( (timestamp - locses->us_LastActionTime) < sb->sl_RemoveSessionsAfterTime ) ) && locses->us_WSD != NULL )
+					if( ( ( (timestamp - locses->us_LastActionTime) < sb->sl_RemoveUserSessionsAfterTime ) ) && locses->us_WSD != NULL )
 					{
 						int msgLen = 0;
 						NotificationSent *lns = NotificationSentNew();

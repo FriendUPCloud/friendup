@@ -320,7 +320,7 @@ int FriendCoreManagerInit( FriendCoreManager *fcm )
 		Log(FLOG_INFO, "-----SQL SECUREDB connections: %d\n", SLIB->sqlpoolInternalConnections );
 		Log(FLOG_INFO, "-----UserFileShareCache (per drive): %ld\n", SLIB->sl_USFCacheMax );
 		Log(FLOG_INFO, "-----Cluster Master: %d\n", fcm->fcm_ClusterMaster );
-		Log(FLOG_INFO, "-----UserSession timeout: %d\n", SLIB->sl_RemoveSessionsAfterTime );
+		Log(FLOG_INFO, "-----UserSession timeout: %d\n", SLIB->sl_RemoveUserSessionsAfterTime );
 		
 		Log(FLOG_INFO, "-----WSPort: %d\n", fcm->fcm_WSPort );
 		Log(FLOG_INFO, "-----WS ka_time: %d\n", fcm->fcm_WSka_time );

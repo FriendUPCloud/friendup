@@ -178,8 +178,9 @@ SystemBase *SystemInit( void )
 	
 	LIBXML_TEST_VERSION;
 	
-	l->sl_RemoveOldSessionTimeout = MINS60;
-	l->sl_RemoveSessionsAfterTime = 10800;
+	l->sl_EventRemoveOldUserSessionTimeout = MINS60;
+	l->sl_EventRemoveOldAppSessionTimeout = MINS360;
+	l->sl_RemoveUserSessionsAfterTime = 10800;
 	
 	//
 	// sl_Autotask
@@ -417,10 +418,12 @@ SystemBase *SystemInit( void )
 			options = plib->ReadStringNCS( prop, "databaseuser:options", NULL );
 			DEBUG("[SystemBase] options %s\n",options );
 			
-			l->sl_RemoveOldSessionTimeout = plib->ReadIntNCS( prop, "user:timeout", MINS60 );
-			l->sl_RemoveSessionsAfterTime = plib->ReadIntNCS( prop, "user:timeout", MINS60 );
+			l->sl_EventRemoveOldUserSessionTimeout = plib->ReadIntNCS( prop, "options:eventusersessiontimeout", MINS60 );
+			l->sl_EventRemoveOldAppSessionTimeout = plib->ReadIntNCS( prop, "options:eventappsessiontimeout", MINS360 );
+			l->sl_RemoveUserSessionsAfterTime = plib->ReadIntNCS( prop, "options:usersessiontimeout", MINS60 );
 
-			//DEBUG("[SystemBase] user:timeout %d\n", l->sl_RemoveSessionsAfterTime );
+			DEBUG("[SystemBase] options:usersessiontimeout %d\n", l->sl_RemoveUserSessionsAfterTime );
+			DEBUG("[SystemBase] options:eventappsessiontimeout %d\n", l->sl_EventRemoveOldAppSessionTimeout );
 			
 			l->sl_CacheFiles = plib->ReadIntNCS( prop, "Options:CacheFiles", 1 );
 			l->sl_UnMountDevicesInDB = plib->ReadIntNCS( prop, "Options:UnmountInDB", 1 );
@@ -701,11 +704,11 @@ SystemBase *SystemInit( void )
 				FLONG tmp = atol( row[ 2 ] );
 				if( tmp > 30 )
 				{
-					l->sl_RemoveSessionsAfterTime = tmp;
+					l->sl_RemoveUserSessionsAfterTime = tmp;
 				}
 				else
 				{
-					l->sl_RemoveSessionsAfterTime = 30;
+					l->sl_RemoveUserSessionsAfterTime = 30;
 				}
 			}
 			lsqllib->FreeResult( lsqllib, res );
@@ -1187,8 +1190,8 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 
 	EventAdd( l->sl_EventManager, "DoorNotificationRemoveEntries", DoorNotificationRemoveEntries, l, time( NULL )+MINS30, MINS30, -1 );
-	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+l->sl_RemoveOldSessionTimeout, l->sl_RemoveOldSessionTimeout, -1 );	// default 60mins
-	EventAdd( l->sl_EventManager, "AppSessionManagerRemoveOldAppSessions", AppSessionManagerRemoveOldAppSessions, l, time( NULL )+MINS360, MINS360, -1 );
+	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+l->sl_EventRemoveOldUserSessionTimeout, l->sl_EventRemoveOldUserSessionTimeout, -1 );	// default 60mins
+	EventAdd( l->sl_EventManager, "AppSessionManagerRemoveOldAppSessions", AppSessionManagerRemoveOldAppSessions, l, time( NULL )+l->sl_EventRemoveOldAppSessionTimeout, l->sl_EventRemoveOldAppSessionTimeout, -1 );
 	// test, to remove
 	EventAdd( l->sl_EventManager, "PIDThreadManagerRemoveThreads", PIDThreadManagerRemoveThreads, l->sl_PIDTM, time( NULL )+MINS60, MINS60, -1 );
 	EventAdd( l->sl_EventManager, "CacheUFManagerRefresh", CacheUFManagerRefresh, l->sl_CacheUFM, time( NULL )+DAYS5, DAYS5, -1 );
@@ -1739,7 +1742,7 @@ int SystemInitExternal( SystemBase *l )
 		//
 	
 		/*
-		l->sl_USM->usm_Sessions = USMGetSessionsByTimeout( l->sl_USM, l->sl_RemoveSessionsAfterTime );
+		l->sl_USM->usm_Sessions = USMGetSessionsByTimeout( l->sl_USM, l->sl_RemoveUserSessionsAfterTime );
 		UserSession *usess = l->sl_USM->usm_Sessions;
 		DEBUG("[SystemBase] Got users by timeout\n");
 		
@@ -1896,7 +1899,7 @@ int SystemInitExternal( SystemBase *l )
 			// regenerate sessionid for User
 			//
 			
-			if(  (timestamp - l->sl_Sentinel->s_User->u_LastActionTime) > l->sl_RemoveSessionsAfterTime )
+			if(  (timestamp - l->sl_Sentinel->s_User->u_LastActionTime) > l->sl_RemoveUserSessionsAfterTime )
 			{
 				UserRegenerateSessionID( l, l->sl_Sentinel->s_User, NULL );
 			}
