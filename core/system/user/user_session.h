@@ -118,9 +118,9 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 //
 //
 
-#define IS_ADMIN_SESSION( ses ) \
-	(ses->us_User != NULL && ses->us_User->u_IsAdmin == TRUE)
-
+#ifndef IS_SESSION_ADMIN
+#define IS_SESSION_ADMIN( us ) ( us->us_User != NULL && us->us_User->u_IsAdmin == TRUE )
+#endif
 
 static FULONG UserSessionDesc[] = { 
     SQLT_TABNAME, (FULONG)"FUserSession",       

@@ -254,12 +254,18 @@ int UMInitUsers( UserManager *um );
 //
 //
 
+int UMGetActiveUsersWSList( UserManager *um, BufString *bs, FULONG userid, FBOOL usersOnly );
+
+//
+//
+//
+
 int UMGetAllActiveUsers( UserManager *um, BufString *bs, FBOOL usersOnly );
 
 //
 //
 //
 
-int UMGetAllActiveWSUsers( UserManager *um, BufString *bs, FBOOL usersOnly );
+int UMSendMessageToUserOrSession( UserManager *um, BufString *bs, UserSession *ses, FULONG userid, char *message );
 
 #endif //__SYSTEM_USER_USER_MANAGER_H__

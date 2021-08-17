@@ -106,9 +106,8 @@
 
 #AvatarArea #Avatar
 {
-	width: 256px;
-	height: 256px;
-	zoom: 0.5;
+	width: 128px;
+	height: 128px;
 }
 
 #UserAccImage
@@ -126,5 +125,185 @@
 	{
 		display: none;
 	}
+}
+
+/* Groups */
+
+.Collections
+{
+	text-align: center;
+}
+
+.Collections > .Collection
+{
+	position: relative;
+	width: 128px;
+	height: 128px;
+	display: inline-block;
+	margin: 10px 10px 0 0;
+	text-align: center;
+}
+
+.Collections > .Collection > .Name
+{
+	width: 128px;
+	height: 128px;
+	background-color: rgba(0,0,0,0.15);
+	text-align: center;
+	border-radius: 100%;
+	box-sizing: border-box;
+	padding: 10px;
+	margin-bottom: 5px;
+	border: 2px solid rgba(0,0,0,0.25);
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.Collections > .Collection button
+{
+	border-radius: 100%;
+	width: 30px;
+	height: 30px;
+}
+
+.Collections > .Collection > .Name.sw2
+{
+	background-color: rgba(0,0,0,0.1);
+}
+
+.Collections > .Collection > .Name > span
+{
+	margin: 25px 0 0 0;
+	background-color: rgba(0,0,0,0.5);
+	display: inline-block;
+	border-radius: 15px;
+	color: white;
+	text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+	max-width: 85%;
+	text-overflow: ellipsis;
+	overflow-x: hidden;
+	padding: 2px 8px;
+}
+
+.Collection .Buttons
+{
+	margin-top: -65px;
+}
+
+html #GroupSearch input
+{
+	height: 25px;
+	vertical-align: middle;
+	box-sizing: border-box;
+	width: 100%;
+}
+
+html #GroupSearch .Searcher
+{
+	margin: 10px auto 15px auto;
+	width: 340px;
+	position: relative;
+	height: 25px;
+}
+
+html #GroupSearch .Searcher:after
+{
+	content: "\f002";
+	font-family: fontawesome;
+	display: block;
+	position: absolute;
+	right: 8px;
+	top: 5px;
+	pointer-events: none;
+}
+
+/* Labels */
+
+#StorageList .Disk:after,
+#StorageListUnmounted .Disk:after
+{
+	position: relative;
+	display: block;
+	content: ' ';
+	background-size: 16px 16px;
+	background-position: center;
+	background-repeat: no-repeat;
+	width: 100%;
+	height: calc(100% - 8px);
+	text-align: center;
+}
+
+.Disk.SQLDrive:after
+{
+	background-image: url('/iconthemes/friendup15/DriveLabels/FriendDisk.svg');
+}
+
+.Disk.Home:after
+{
+	
+	background-image: url('/iconthemes/friendup15/DriveLabels/Home.svg');
+}
+html div > .Disk.SQLWorkgroupDrive:after
+{
+	font-family: fontawesome;
+	content: '\f0c0' !important;
+	line-height: 32px;
+	color: #222222;
+}
+
+html div > .Disk.Local:after
+{
+	font-family: fontawesome;
+	content: '\f17c' !important;
+	line-height: 32px;
+	color: #222222;
+}
+
+html div > .Disk.GoogleDrive:after
+{
+	font-family: fontawesome;
+	content: '\f1a0' !important;
+	line-height: 32px;
+	color: #222222;
+}
+
+html div > .Disk.DropboxDrive:after
+{
+	font-family: fontawesome;
+	content: '\f16b' !important;
+	line-height: 32px;
+	color: #222222;
+}
+
+html div > .Disk.Remote:after
+{
+	font-family: fontawesome;
+	content: '\f0c2' !important;
+	line-height: 32px;
+	color: #222222;
+}
+
+html div > .Disk.SFTP:after
+{
+	font-family: fontawesome;
+	content: '\f120' !important;
+	line-height: 32px;
+	color: #222222;
+}
+
+html div > .Disk.Wordpress:after
+{
+	font-family: fontawesome;
+	content: '\f19a' !important;
+	line-height: 32px;
+	color: #222222;
+}
+
+html div > .Disk.Assign:after
+{
+	font-family: fontawesome;
+	content: '\f115' !important;
+	line-height: 32px;
+	color: #222222;
 }
 

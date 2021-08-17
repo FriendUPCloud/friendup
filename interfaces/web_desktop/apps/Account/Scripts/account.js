@@ -186,6 +186,17 @@ Application.receiveMessage = function( msg )
 	
 	switch( msg.command )
 	{
+		case 'closeView':
+			CloseView( msg.viewId );
+			Application.mainView.sendMessage( { command: 'refreshInvites', parentViewId: msg.parentViewId } );
+			break;
+		
+		case 'resizeGroupWindow':
+			Application.mainView.sendMessage( { command: 'resizeGroupWindow', viewId: msg.viewId } );
+			break;
+		case 'refreshgroups':
+			Application.mainView.sendMessage( { command: 'refreshgroups' } );
+			break;
 		case 'publickey': 
 			Application.sendMessage( { type: 'encryption', command: 'publickey', args: { encoded: false } }, function( res, data )
 			{

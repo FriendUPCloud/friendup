@@ -70,7 +70,7 @@ void UserSessionInit( UserSession *us )
 		
 		us->us_WSReqManager = WebsocketReqManagerNew();
 		
-		FQDeInit( &(us->us_MsgQueue) );
+		FQInit( &(us->us_MsgQueue) );
 	}
 }
 

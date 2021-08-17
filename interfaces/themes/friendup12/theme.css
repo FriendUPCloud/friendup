@@ -334,6 +334,11 @@ html #DoorsScreen .Left > .VirtualWorkspaces > div:hover
 	background: rgba(0,0,0,0.8);
 }
 
+html #DoorsScreen .Left > .VirtualWorkspaces > div:hover > span
+{
+	color: rgba(255,255,255,0.6);
+}
+
 html #DoorsScreen .Left > .VirtualWorkspaces > div.Active:hover
 {
 	background: rgba(0,0,0,0.9);
@@ -654,11 +659,33 @@ html #Screens .File.Selected .Title
 
 html #DoorsScreen > .ScreenContent > div > div > .File.Selected .Title
 {
+	background: none;
 	border: 0;
-	background: rgba(0,0,0,0.5);
-	color: #f0f0f0;
 	box-shadow: none;
-	border-radius: 1px;
+}
+
+html #DoorsScreen > .ScreenContent > div > div > .File .Title > span
+{
+	transition: background 0.25s;
+	display: inline-block;
+	color: #f0f0f0;
+	border-radius: 15px;
+	padding: 2px 8px 2px 8px;
+}
+
+html #DoorsScreen > .ScreenContent > div > div > .File .Title
+{
+	overflow: visible !important;
+}
+
+html body.Box #DoorsScreen > .ScreenContent > div > div > .File:not(.Selected) .Title > span
+{
+	background: rgba(0,0,0,0.3);
+}
+
+html #DoorsScreen > .ScreenContent > div > div > .File.Selected .Title > span
+{
+	background: rgba(0,0,0,0.8);
 }
 
 .ToolbarBackground
@@ -758,12 +785,6 @@ html > body > div button, html > body > div .Button
 	font-size: 0.9em;
 }
 
-html body button.IconButton:not(:hover), 
-html body .Button.IconButton:not(:hover)
-{
-	border: 1px solid rgba(0,0,0,0) !important;
-}
-
 html body .BigButton
 {
 	border-radius: 3px;
@@ -774,7 +795,7 @@ html > body > div button:last-child, html > body > div .Button:last-child
 	margin-right: 0;
 }
 
-html > body > div button:hover, html > body > div .Button:hover
+html > body > div button:not(.Disabled):hover, html > body > div .Button:not(.Disabled):hover
 {
 	background-color: #343c4b;
 }

@@ -364,24 +364,22 @@ button, .Button
 	font-size: inherit;
 }
 
+.Button.NoText:after, .Button.NoText:before
+{
+	margin: 0;
+}
+
 button, .ButtonAlt
 {
 	color: $ColorButton;
 	background-color: $ColorBgButtonAlt;
 }
 
-body button.IconButton:not(:hover),
-body .Button.IconButton:not(:hover)
+body button.IconButton,
+body .Button.IconButton
 {
 	background-color: transparent !important;
-	border: 1px solid rgba(0,0,0,0) !important;
-	padding: 5px 5px;
-}
-
-body button.IconButton:hover,
-body .Button.IconButton:hover
-{
-	padding: 5px 5px;
+	border: 0 !important;
 }
 
 .Button.Glue, 
@@ -405,10 +403,15 @@ button.Glue:last-child
 	border-bottom-right-radius: $ButtonBorderRadius;
 }
 
-button:hover, .Button:hover
+button:not(.Disabled):not(.IconButton):hover, .Button:not(.Disabled):not(.IconButton):hover
 {
 	color: $ColorButtonHover;
 	background-color: $ColorBgButtonHover;
+}
+
+button:not(.Disabled).IconButton:hover, .Button:not(.Disabled).IconButton:hover
+{
+	color: $ColorBgButton;
 }
 
 button.Recessed, .Button.Recessed

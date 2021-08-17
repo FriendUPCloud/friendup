@@ -163,11 +163,28 @@ function PollTray()
 					let tdi = StrPad( tim.getMinutes(), 2, '0' );
 					let timStr = tdy + '/' + tdm + '/' + tdd + ', ' + tdh + ':' + tdi;
 					
+					let interactions = '';
+					if( notties[a].type == 'interaction' && notties[a].eventId )
+					{
+						interactions = '\
+							<hr class="Divider"/>\
+							<p class="Layout">\
+								<button class="Accept FloatRight" type="button" ' +
+								'onmousedown="Workspace.handleNotificationInteraction(\'' + notties[a].eventId + '\', true, \'' + notties[a].uniqueId + '\')">\
+									' + i18n( 'i18n_accept' ) + '\
+								</button>\
+								<button class="Reject FloatLeft" type="button" ' +
+								'onmousedown="Workspace.handleNotificationInteraction(\'' + notties[a].eventId + '\', false, \'' + notties[a].uniqueId + '\')">\
+									' + i18n( 'i18n_reject' ) + '\
+								</button>\
+							</p>';
+					}
+					
 					d.innerHTML = '\
 						<div>\
 							<div class="NotificationClose FloatRight fa-remove IconSmall"></div>\
 							<p class="Layout"><strong>' + notties[a].title + '<br><span class="DateStamp">' + timStr + '</span></strong></p>\
-							<p class="Layout">' + notties[a].text + '</p>\
+							<p class="Layout">' + notties[a].text + '</p>' + interactions + '\
 						</div>';
 					d.onmousedown = function( ev )
 					{
@@ -457,7 +474,15 @@ function PollMobileTray()
 // Add notification event for safe keeping
 function AddNotificationEvent( evt )
 {
-	var uniqueId = CryptoJS.SHA1( 
+	// Check duplicates
+	if( evt.eventId )
+	{
+		for( let b = 0; b < Workspace.notificationEvents.length; b++ )
+		{
+			if( Workspace.notificationEvents[b].eventId == evt.eventId ) return;
+		}
+	}
+	let uniqueId = CryptoJS.SHA1( 
 		'evt' + 
 		( new Date() ).getTime() + 
 		( Math.random() * 999 ) + 
@@ -469,7 +494,7 @@ function AddNotificationEvent( evt )
 		evt.externNotificationId = evt.notificationId;
 	if( evt.notificationId )
 	{
-		for( var b = 0; b < Workspace.notificationEvents.length; b++ )
+		for( let b = 0; b < Workspace.notificationEvents.length; b++ )
 		{
 			if( !Workspace.notificationEvents[ b ].externNotificationId )
 				continue;

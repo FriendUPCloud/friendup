@@ -2684,6 +2684,9 @@ void UserNotifyFSEvent2( DeviceManager *dm, User *u, char *evt, char *path )
 		
 		if( FRIEND_MUTEX_LOCK( &(u->u_Mutex) ) == 0 )
 		{
+			u->u_InUse++;
+			FRIEND_MUTEX_UNLOCK( &(u->u_Mutex) );
+		}
 			UserSessListEntry *list = u->u_SessionsList;
 			while( list != NULL )
 			{
@@ -2700,6 +2703,10 @@ void UserNotifyFSEvent2( DeviceManager *dm, User *u, char *evt, char *path )
 				}
 				list = (UserSessListEntry *)list->node.mln_Succ;
 			}
+			
+		if( FRIEND_MUTEX_LOCK( &(u->u_Mutex) ) == 0 )
+		{
+			u->u_InUse--;
 			FRIEND_MUTEX_UNLOCK( &(u->u_Mutex) );
 		}
 	}

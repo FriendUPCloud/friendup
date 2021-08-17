@@ -1369,23 +1369,24 @@ User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus,
 
 int countSessionSize( UserSession *us )
 {
+	int size = 0;
 	if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 	{
-		us->us_InUseCounter++;
-		FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-	}
+		//us->us_InUseCounter++;
+	//	FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+	//}
 		
-	int size = USERSESSION_SIZE + 255;	// approx 255 for sessionid
-	FQEntry *fqe = us->us_MsgQueue.fq_First;
-	while( fqe != NULL )
-	{
-		size += fqe->fq_Size + sizeof( FQEntry );
-		fqe = (FQEntry *)fqe->node.mln_Succ;
-	}
+		size = USERSESSION_SIZE + 255;	// approx 255 for sessionid
+		FQEntry *fqe = us->us_MsgQueue.fq_First;
+		while( fqe != NULL )
+		{
+			size += fqe->fq_Size + sizeof( FQEntry );
+			fqe = (FQEntry *)fqe->node.mln_Succ;
+		}
 	
-	if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-	{
-		us->us_InUseCounter--;
+		//if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+		//{
+		//us->us_InUseCounter--;
 		FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 	}
 	

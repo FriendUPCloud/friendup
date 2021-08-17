@@ -349,7 +349,8 @@ var WorkspaceInside = {
 	// Invite a friend to the Workspace
 	inviteFriend: function()
 	{
-		var version = 1;
+		
+		let version = 2;
 		
 		let self = this;
 		if( this.inviteView ) return this.inviteView.activate();
@@ -360,15 +361,15 @@ var WorkspaceInside = {
 		}
 		else
 		{
-			var f = new File( 'System:templates/invite.html' );
+			var f = new File( 'System:templates/invite_gui.html' );
 		}
 		f.i18n();
 		f.onLoad = function( data )
 		{
 			let v = new View( {
 				title: i18n( 'i18n_invite_friend' ),
-				width: ( version == 1 ? 470 : 700 ),
-				height: ( version == 1 ? 204 : 700 )
+				width: ( version == 1 ? 470 : 580 ),
+				height: ( version == 1 ? 204 : 600 )
 			} );
 			self.inviteView = v;
 			v.onClose = function()
@@ -376,49 +377,145 @@ var WorkspaceInside = {
 				self.inviteView = null;
 			}
 			v.setContent( data );
-			if( version == 1 ) self.addInvite();
+			self.addInvite();
 			self.inviteLoadWorkgroups( '', self.getInviteCallback( 'workgroups' ) );
-			self.invitesGet( self.getInviteCallback( 'invites' ) );
+			self.invitesGet( '', self.getInviteCallback( 'invites' ) );
+			self.pendingInvitesGet( '', self.getInviteCallback( 'pending' ) );
 		}
 		f.load();
 	},
 	// Get the invite callback wanted
 	getInviteCallback: function( type )
 	{
-		var version = 1;
+		let version = 2;
 		
 		let self = this;
 		if( type == 'workgroups' )
 		{
 			return function( data )
 			{
-				if( self.inviteView && self.inviteView.content.querySelector( '.MulSelect' ) )
+				if( version == 2 )
 				{
-					try
+					if( self.inviteView && self.inviteView.content.querySelector( '.GroupList' ) )
 					{
-						let str = data;
-						let ostr = '';
-						if( !str.length )
+						try
+						{
+							if( !data ) data = [];
+							
+							data.push( { ID: 0, Name : 'None' } );
+							
+							let str = '<div class="Collections">';
+							let sw = 1;
+							let count = 0;
+							for( let a in data )
+							{
+								str += '<div class="sw' + sw + ' Collection">\
+									<div class="Name' + ( data[a].ID == 0 ? ' Selected' : '' ) + '" title="' + data[a].Name + '">' + data[a].Name + '</div>\
+									<div class="Buttons">\
+										<input type="radio" name="groupid" value="' + data[a].ID + '"/>\
+									</div>\
+								</div>';
+								sw = sw == 1 ? 2 : 1;
+								count++;
+							}
+							
+							str += '<p class="BorderTop BorderBottom PaddingTop PaddingBottom MarginTop"><button type="button" class="Button IconSmall fa-plus">Manage groups</button></p>';
+							
+							str += '</div>';
+							
+							self.inviteView.content.querySelector( '.GroupList' ).innerHTML = str;
+							
+							var inps = self.inviteView.content.querySelector( '.Collections' ).getElementsByTagName( 'input' );
+							
+							if( inps.length > 0 )
+							{
+								for( var i in inps )
+								{
+									if( inps[i] )
+									{
+										inps[i].onclick = ( function (  )
+										{
+											var divs = self.inviteView.content.querySelector( '.Collections' ).getElementsByTagName( 'div' );
+											
+											if( divs.length > 0 )
+											{
+												for( var i in divs )
+												{
+													if( divs[i] && divs[i].className && divs[i].className.indexOf( 'Selected' ) >= 0 )
+													{
+														divs[i].className = divs[i].className.split( ' Selected' ).join( '' );
+													}
+												}
+											}
+											
+											var div = this.parentNode.parentNode.getElementsByTagName( 'div' )[0];
+											
+											div.className = div.className.split( ' Selected' ).join( '' ) + ' Selected';
+											
+											self.addInvite( this.value );
+											self.invitesGet( this.value, self.getInviteCallback( 'invites' ) );
+											self.pendingInvitesGet( this.value, self.getInviteCallback( 'pending' ) );
+											
+										} );
+									}
+								}
+							}
+							
+							var btns = self.inviteView.content.querySelector( '.Collections' ).getElementsByTagName( 'button' );
+							
+							if( btns.length > 0 )
+							{
+								for( var i in btns )
+								{
+									if( btns[i] )
+									{
+										btns[i].onclick = ( function (  )
+										{
+											
+											Workspace.shell.execute( 'Launch Account' );
+											
+										} );
+									}
+								}
+							}
+							
+						}
+						catch( e )
+						{
+							self.inviteView.content.querySelector( '.GroupList' ).innerHTML = '<p class="TextCenter">' + i18n( 'i18n_no_groups_available' ) + '</p>';
+						}
+					}
+				}
+				else
+				{
+					if( self.inviteView && self.inviteView.content.querySelector( '.MulSelect' ) )
+					{
+						try
+						{
+							let str = data;
+							let ostr = '';
+							if( !str.length )
+							{
+								self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = '<option value="0">' + i18n( 'i18n_no_workgroups' ) + '</option>';
+								return;
+							}
+							for( let a = 0; a < str.length; a++ )
+							{
+								ostr += '<option value="' + str[a].ID + '">' + str[a].Name + '</option>';
+							}
+							self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = ostr;
+						}
+						catch( e )
 						{
 							self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = '<option value="0">' + i18n( 'i18n_no_workgroups' ) + '</option>';
-							return;
 						}
-						for( let a = 0; a < str.length; a++ )
-						{
-							ostr += '<option value="' + str[a].ID + '">' + str[a].Name + '</option>';
-						}
-						self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = ostr;
-					}
-					catch( e )
-					{
-						self.inviteView.content.querySelector( '.MulSelect' ).innerHTML = '<option value="0">' + i18n( 'i18n_no_workgroups' ) + '</option>';
 					}
 				}
 			};
 		}
 		else if( type == 'invites' )
 		{
-			return function( data )
+			return function( data, gid )
 			{
 				if( !data )
 				{
@@ -455,13 +552,19 @@ var WorkspaceInside = {
 						details += '<div class="Rounded BackgroundNegative Negative FloatLeft PaddingSmall MarginRight">' + data[a].Workgroups[b].Name + '</div>';
 					}
 					
-					if( version == 1 )
+					if( version == 1 || version == 2 )
 					{
+						if( version == 2 && data[a].Workgroups && ( !gid || gid == 0 ) )
+						{
+							continue;
+						}
+						
 						str += '<div class="InviteBlock MarginBottom Rounded BackgroundLists Padding">\
 							<div class="HRow">\
 								<div class="FloatLeft Link HContent70"><input type="text" class="FullWidth LinkField" style="background: transparent; border: 0" value="' + data[a].Link + '"/></div><div class="Buttons HContent30 FloatLeft TextRight">\
+									<button type="button" class="ImageButton IconSmall fa-send" onclick="Workspace.inviteByEmail(' + gid + ')"></button>\
 									<button type="button" class="ImageButton IconSmall fa-clipboard" onclick="let sp = this.parentNode.parentNode.querySelector( \'.LinkField\' ); sp.select(); sp.setSelectionRange(0,9999999); document.execCommand(\'copy\');"></button>\
-									<button type="button" class="ImageButton IconSmall fa-refresh" onclick="Workspace.refreshInvite(' + data[a].ID + ')"></button>\
+									<button type="button" class="ImageButton IconSmall fa-refresh" onclick="Workspace.refreshInvite(' + gid + ', ' + data[a].ID + ')"></button>\
 								</div>\
 							</div>\
 						</div>';
@@ -473,7 +576,7 @@ var WorkspaceInside = {
 								<div class="FloatLeft Link HContent70"><input type="text" class="FullWidth LinkField" style="background: transparent; border: 0" value="' + data[a].Link + '"/></div><div class="Buttons HContent30 FloatLeft TextRight">\
 									<button type="button" class="ImageButton IconSmall fa-clipboard" onclick="let sp = this.parentNode.parentNode.querySelector( \'.LinkField\' ); sp.select(); sp.setSelectionRange(0,9999999); document.execCommand(\'copy\');"></button>\
 									<button type="button" class="ImageButton IconSmall fa-eye" onclick="let p = this.parentNode.parentNode.parentNode; if( p.classList.contains( \'Show\' ) ) { p.classList.remove( \'Show\' ); } else { p.classList.add( \'Show\' ); }"></button>\
-									<button type="button" class="ImageButton IconSmall fa-trash" onclick="Workspace.removeInvite(' + data[a].ID + ')"></button>\
+									<button type="button" class="ImageButton IconSmall fa-trash" onclick="Workspace.removeInvite(' + gid + ', ' + data[a].ID + ')"></button>\
 								</div>\
 							</div>\
 							<div class="HiddenDetails NoPadding\">\
@@ -486,31 +589,106 @@ var WorkspaceInside = {
 				self.inviteView.content.querySelector( '.InviteList' ).innerHTML = str;
 			}
 		}
+		else if( type == 'pending' )
+		{
+			return function( data, gid )
+			{
+				
+				let str = '';
+				
+				if( data )
+				{
+					str += '<hr class="Divider"/><h2>' + i18n( 'i18n_pending_invites' ) + '</h2><div>';
+					
+					let sw = 1;
+					
+					for( let a in data )
+					{
+						if( data[a] )
+						{
+							if( data[a].EventID )
+							{
+								str += '<div class="HRow sw' + sw + '">\
+									<div class="HContent80 FloatLeft Ellipsis PaddingSmall">\
+										' + ( data[a].Fullname ? data[a].Fullname : data[a].Email ) + '\
+									</div>\
+									<div class="HContent20 FloatLeft Ellipsis PaddingSmall TextRight">\
+										<button class="Button IconSmall fa-remove NoText" onclick="Workspace.removePendingInvite(\'' + gid + '\',\'' + data[a].EventID + '\')"></button>\
+									</div>\
+								</div>';
+								sw = sw == 1 ? 2 : 1;
+							}
+							else if( data[a].InviteLinkID )
+							{
+								str += '<div class="HRow sw' + sw + '">\
+									<div class="HContent80 FloatLeft Ellipsis PaddingSmall">\
+										' + ( data[a].Fullname ? data[a].Fullname : data[a].Email ) + '\
+									</div>\
+									<div class="HContent20 FloatLeft Ellipsis PaddingSmall TextRight">\
+										<button class="Button IconSmall fa-remove NoText" onclick="Workspace.removePendingInvite(\'' + gid + '\',false,\'' + data[a].InviteLinkID + '\')"></button>\
+									</div>\
+								</div>';
+								sw = sw == 1 ? 2 : 1;
+							}
+						}
+					}
+					
+					str += '</div>';
+				}
+				
+				self.inviteView.content.querySelector( '.PendingList' ).innerHTML = str;
+			}
+		}
 		return null;
 	},
 	// Re-generate a new refresh token
-	refreshInvite( id )
+	refreshInvite( gid, id )
 	{
 		let self = this;
 		
-		self.removeInvite( id, true, function(  )
+		self.removeInvite( gid, id, false, function(  )
 		{
 			
-			self.addInvite();
+			self.addInvite( gid );
 			
 		} );
 	},
 	// Generate a invite
-	addInvite: function()
+	addInvite: function( gid )
 	{
 		let self = this;
 		
+
+		let workgroups = [];
+		
+		if( gid > 0 )
+		{
+			workgroups.push( gid );
+		}
+		
+		if( self.inviteView && self.inviteView.content.querySelector( '.MulSelect' ) )
+		{
+			var opts = self.inviteView.content.querySelector( '.MulSelect' ).getElementsByTagName( 'option' );
+			
+			if( opts.length > 0 )
+			{
+				for( let v in opts )
+				{
+					if( opts[v] && opts[v].selected && opts[v].value )
+					{
+						workgroups.push( opts[v].value );
+					}
+				}
+			}
+		}
+		
+
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
 			if( e == 'ok' )
 			{
-				self.invitesGet( self.getInviteCallback( 'invites' ) );
+				self.invitesGet( gid, self.getInviteCallback( 'invites' ) );
 			}
 			else
 			{
@@ -518,11 +696,14 @@ var WorkspaceInside = {
 			}
 		}
 		// TODO: Make support for workgroups ...
-		m.execute( 'generateinvite'/*, { workgroups: '' }*/ );
+
+		m.execute( 'generateinvite', { workgroups: ( workgroups ? workgroups.join( ',' ) : '' ) } );
 	},
 	// Remove an invite
-	removeInvite: function( id, force, callback )
+	removeInvite: function( gid, id, force, callback )
 	{
+		if( !id || !callback ) return;
+		
 		let self = this;
 		
 		if( force )
@@ -546,7 +727,8 @@ var WorkspaceInside = {
 		}
 		else
 		{
-			Confirm( 'i18n_are_you_sure', 'i18n_confirm_delete', function( data )
+
+			Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_confirm_delete' ), function( data )
 			{
 				if( data == true )
 				{
@@ -555,7 +737,12 @@ var WorkspaceInside = {
 					{
 						if( e == 'ok' )
 						{
-							self.invitesGet( self.getInviteCallback( 'invites' ) );
+							if( callback )
+							{
+								callback( e, d );
+							}
+							
+							self.invitesGet( gid, self.getInviteCallback( 'invites' ) );
 						}
 						else
 						{
@@ -565,6 +752,79 @@ var WorkspaceInside = {
 					m.execute( 'removeinvite', { ids: id } );
 				}
 			} );
+		}
+	},
+	// Remove pending invite
+	removePendingInvite: function( gid, eventId, inviteId )
+	{
+		let self = this;
+		
+		if( eventId > 0 )
+		{
+			let b = new Module( 'system' );
+			b.onExecuted = function( e, d )
+			{
+				self.pendingInvitesGet( gid, self.getInviteCallback( 'pending' ) );
+			}
+			b.execute( 'removependinginvite', { eventId: eventId } );
+		}
+		else if( inviteId > 0 )
+		{
+			self.removeInvite( gid, inviteId, true, function (  )
+			{
+				
+				self.pendingInvitesGet( gid, self.getInviteCallback( 'pending' ) );
+				
+			} );
+		}
+	},
+	// Send invites by email
+	sendInvite: function(  )
+	{
+		
+		function validateEmail( email )
+		{
+			const re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+			return re.test( email );
+		}
+		
+		let self = this;
+		
+		let gid = ge( 'groupid' ).value;
+		
+		let email = ge( 'recipient' ).value;
+		let tname = ge( 'recipientname' ).value;
+		
+		if( email.indexOf( '@' ) <= 0 || email.indexOf( '.' ) <= 0 || !validateEmail( email ) )
+		{
+			Alert( i18n( 'i18n_failed_to_send' ), i18n( 'i18n_email_error' ) );
+			return false;
+		}
+		
+		let m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			console.log( { e:e, d:d } );
+			
+			if( e == 'ok' )
+			{
+				CloseWindow();
+				self.pendingInvitesGet( gid, self.getInviteCallback( 'pending' ) );
+			}
+			else
+			{
+				Alert( i18n( 'i18n_failed_to_send' ), i18n( 'i18n_unknown_error' ) );
+				return false;
+			}
+		}
+		
+		if( gid > 0 )
+		{
+			m.execute( 'sendinvite', { workgroups: gid, email: email, fullname: tname } );
+		}
+		else
+		{
+			m.execute( 'sendinvite', { email: email, fullname: tname } );
 		}
 	},
 	// Load workgroups for invite
@@ -591,8 +851,11 @@ var WorkspaceInside = {
 					{
 						for( let b = 0; b < str.length; b++ )
 						{
-							if( str[b].Name.toLowerCase() == Trim( keywords[a] ).toLowerCase() )
+							//if( str[b].Name.toLowerCase() == Trim( keywords[a] ).toLowerCase() )
+							if( str[b].Name.toLowerCase().indexOf( Trim( keywords[a] ).toLowerCase() ) >= 0 )
+							{
 								end.push( str[b] );
+							}
 						}
 					}
 					return callback( end.length ? end : false );
@@ -603,10 +866,10 @@ var WorkspaceInside = {
 			catch( e ){};
 			callback( false );
 		}
-		m.execute( 'workgroups' );
+		m.execute( 'listworkgroups' );
 	},
 	// Get existing invites
-	invitesGet: function( callback )
+	invitesGet: function( gid, callback )
 	{
 		if( !callback ) return;
 		
@@ -615,17 +878,66 @@ var WorkspaceInside = {
 		{
 			if( e != 'ok' )
 			{
-				return callback( false );
+				return callback( false, gid );
 			}
 			try
 			{
 				let data = JSON.parse( d );
-				return callback( data );
+				return callback( data, gid );
 			}
 			catch(e){};
-			callback( false );
+			callback( false, gid );
 		}
-		m.execute( 'getinvites' );
+		if( gid > 0 )
+		{
+			m.execute( 'getinvites', { groupId: gid } );
+		}
+		else
+		{
+			m.execute( 'getinvites' );
+		}
+	},
+	// Get pending invites by group
+	pendingInvitesGet: function( gid, callback )
+	{
+		if( !callback ) return;
+		
+		let p = new Module( 'system' );
+		p.onExecuted = function( e, d )
+		{
+			if( e != 'ok' )
+			{
+				return callback( false, gid );
+			}
+			try
+			{
+				let data = JSON.parse( d );
+				return callback( data, gid );
+			}
+			catch(e){};
+			callback( false, gid );
+		}
+		p.execute( 'getpendinginvites', { groupId: ( gid ? gid : 0 ), listall: true } );
+	},
+	// Get pending invites by group
+	inviteByEmail: function( gid )
+	{
+		let v = new View( {
+			title: i18n( 'i18n_invite_user' ),
+			width: 500,
+			height: 140
+		} );
+		
+		let t = new File( 'templates/invite_user.html' );
+		t.replacements = {
+			gid : ( gid ? gid : 0 )
+		}
+		t.i18n();
+		t.onLoad = function( data )
+		{
+			v.setContent( data );
+		}
+		t.load();
 	},
 	// Initialize virtual workspaces
 	initWorkspaces: function()
@@ -1443,6 +1755,25 @@ var WorkspaceInside = {
 		} );
 		return cancelBubble( e );
 	},
+	// Handle an interaction event on a queued event
+	handleNotificationInteraction: function( eventId, response, uniqueId )
+	{
+		let m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			console.log( {e:e,d:d} );
+			if( e != 'ok' ) Alert( 'Error', d );
+			if( e == 'ok' )
+			{
+				RemoveNotificationEvent( uniqueId );
+				PollTray();
+			}
+		}
+		m.execute( 'queuedeventresponse', {
+			eventid: eventId,
+			response: response
+		} );
+	},
 	refreshExtraWidgetContents: function()
 	{
 		if( this.mode == 'vr' ) return;
@@ -1505,6 +1836,33 @@ var WorkspaceInside = {
 		    this.refreshEWCTime = cand;
 		    
 		    Workspace.getAnnouncements();
+		    
+		    let no = new Module( 'system' );
+		    no.onExecuted = function( e, d )
+		    {
+		    	if( e == 'ok' )
+		    	{
+		    		let list = false;
+		    		try
+		    		{
+		    			list = JSON.parse( d );
+		    		}
+		    		catch( e ){};
+		    		if( !list ) return;
+		    		for( let a = 0; a < list.length; a++ )
+		    		{
+		    			AddNotificationEvent( {
+		    				title: list[a].Title,
+		    				text: list[a].Message,
+		    				time: list[a].Date,
+		    				type: list[a].Type,
+		    				eventId: list[a].ID,
+		    				seen: false
+		    			} );
+		    		}
+		    	}
+		    }
+		    no.execute( 'getqueuedevents' );
 		    
 		    let mo = new Library( 'system.library' );
 		    mo.onExecuted = function( rc, sessionList )
@@ -1746,11 +2104,20 @@ var WorkspaceInside = {
 			document.getElementsByTagName( 'head' )[0].appendChild( this.themeStyleElement );
 		}
 		
-		var shades = [ 'dark', 'charcoal', 'synthwave' ];
-		for( var c in shades )
+		let shades = [ 'dark', 'charcoal', 'synthwave' ];
+		for( let c in shades )
 		{
-			var uf = shades[c].charAt( 0 ).toUpperCase() + shades[c].substr( 1, shades[c].length - 1 );
+			let uf = shades[c].charAt( 0 ).toUpperCase() + shades[c].substr( 1, shades[c].length - 1 );
 			if( this.themeData[ 'colorSchemeText' ] == shades[c] )
+				document.body.classList.add( uf );
+			else document.body.classList.remove( uf );
+		}
+		
+		let iconeffect = [ 'shadow', 'box' ];
+		for( let c in iconeffect )
+		{
+			let uf = iconeffect[c].charAt( 0 ).toUpperCase() + iconeffect[c].substr( 1, iconeffect[c].length - 1 );
+			if( this.themeData[ 'iconEffectText' ] == iconeffect[c] )
 				document.body.classList.add( uf );
 			else document.body.classList.remove( uf );
 		}
