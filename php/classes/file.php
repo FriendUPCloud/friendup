@@ -199,7 +199,7 @@ class File
 		$d = new dbIO( 'FFileInfo' );
 		$d->Path = $this->path;
 		$d->FilesystemID = $fd->ID;
-		$Logger->log( '[File.class] GetFileInfo: ' . $fd->ID . '(' . $fd->Volume . ')' );
+		$Logger->log( '[File.class] GetFileInfo: ' . $fd->ID );
 		if( $d->Load() )
 		{
 			$this->_fileinfo = $d->Data;

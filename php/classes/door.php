@@ -166,6 +166,20 @@ if( !class_exists( 'Door' ) )
 			// For whom are we calling?
 			$activeUser = isset( $this->_user ) ? $this->_user : $User;
 			$activeUserSession = isset( $this->_usersession ) ? $this->_usersession : $UserSession;
+			
+			// Check for server token and pick session from there
+			if( isset( $this->_user ) && isset( $this->_authcontext ) && $this->_authcontext == 'servertoken' )
+			{
+				if( isset( $this->_authdata ) )
+				{
+					$Sess = new dbIO( 'FUserSession' );
+					$Sess->UserID = $this->_user->ID;
+					if( $Sess->Load() && $Sess->UserID = $this->_user->ID )
+					{
+						$activeUserSession = $Sess;
+					}
+				}
+			}
 		
 			$identifier = false;
 		
