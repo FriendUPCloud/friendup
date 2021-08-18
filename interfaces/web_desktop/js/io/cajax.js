@@ -326,8 +326,8 @@ cAjax = function( app )
 						}
 						
 						// response : "Authid is expired"
-						if ( '84' == code ) {
-							console.log( 'code 84', {
+						if ( '84' == code || '79' == code ) {
+							console.log( 'code 84/79', {
 								vars : self.vars,
 								app  : self.application,
 								url  : self.url,
