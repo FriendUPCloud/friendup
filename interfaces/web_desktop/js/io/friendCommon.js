@@ -51,11 +51,10 @@ Friend.renewAuthId = async function( appId )
 	}
 	*/
 	const appName = app.applicationName;
-	const oldAuthId = app.authId;
+	//const oldAuthId = app.authId;
 	app.authId = null;
 	const args = {
 		appname : appName,
-		oldid   : oldAuthId,
 	};
 	
 	let authId = null;

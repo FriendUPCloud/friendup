@@ -230,6 +230,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			console.log( 'directive.js, mod call friendapplication - JSON error', e );
 		}
 		
+		console.log( 'app things', [ conf, r , d ]);
 		if( r == 'activate' )
 		{
 			ActivateApplication( app, conf );
@@ -359,7 +360,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			{
 				return str;
 			}
-
+			
 			// Correct filepath can be a resource file (i.e. in a repository) or a local file
 			let filepath = '/system.library/module/?module=system&command=resource&authid=' + conf.AuthID + '&file=' + app + '/';
 			// Here's the local file..
@@ -441,7 +442,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				// Same domain
 				ifr.src = sdomain + filepath + 'index.html?friendup=' + sdomain;
 			}
-
+			
 			// Register name and ID
 			//ifr.applicationName = app.indexOf( ' ' ) > 0 ? app.split( ' ' )[0] : app;
 			ifr.applicationName = conf.Name;

@@ -238,7 +238,7 @@ cAjax = function( app )
 				}
 				else
 				{
-					//console.log( 'no separator found', this.responseText );
+					console.log( 'no separator found', this.responseText );
 					let responseObj = null;
 					try {
 						responseObj = JSON.parse( this.responseText );
@@ -246,7 +246,7 @@ cAjax = function( app )
 						//console.log( 'opps', ex );
 					}
 					
-					//console.log( 'responseObj', responseObj );
+					console.log( 'responseObj', responseObj );
 					
 					jax.returnData = false;
 					if ( null != responseObj )
