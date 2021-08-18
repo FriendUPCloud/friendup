@@ -211,7 +211,7 @@ if( !class_exists( 'SharedDrive' ) )
 				{
 					// No need for trailing
 					if( substr( $path[ 1 ], -1, 1 ) == '/' )
-						$path[ 1 ] = trim( substr( $path[ 1 ], 0, strlen( $path[ 1 ] ) - 1 ) );
+						$path[ 1 ] = substr( $path[ 1 ], 0, strlen( $path[ 1 ] ) - 1 );
 					
 					$out = [];
 					$rows = $own = $groupShare = false;
@@ -330,10 +330,10 @@ if( !class_exists( 'SharedDrive' ) )
 								WHERE 
 									g.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
 									s.OwnerUserID != \'' . $User->ID . '\' AND
+									s.OwnerUserID = ug.UserID AND
 									s.SharedType = \'group\' AND 
-									s.SharedID = g.ID AND 
+									s.SharedID = ug.UserGroupID AND 
 									ug.UserGroupID = g.ID AND
-									ug.UserID = s.OwnerUserID AND
 									ug2.UserGroupID = g.ID AND
 									ug2.UserID = \'' . $User->ID . '\' AND
 									u.ID = ug.UserID AND
@@ -348,12 +348,12 @@ if( !class_exists( 'SharedDrive' ) )
 								WHERE 
 									g.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
 									s.OwnerUserID = \'' . $User->ID . '\' AND
+									s.OwnerUserID = u.ID AND
 									s.SharedType = \'group\' AND 
-									s.SharedID = g.ID AND 
+									s.SharedID = ug.UserGroupID AND 
 									ug.UserGroupID = g.ID AND
 									ug.UserID = u.ID AND
-									u.ServerToken != "" AND 
-									u.ID = s.OwnerUserID
+									u.ServerToken != ""
 							)
 						' ) )
 						{
