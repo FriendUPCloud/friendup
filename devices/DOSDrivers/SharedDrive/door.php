@@ -474,7 +474,7 @@ if( !class_exists( 'SharedDrive' ) )
 					
 							for( $a = 0; $a < count( $multiArray ); $a++ )
 							{
-								$file = $multiArray[ $a ];
+								$file = $s = $multiArray[ $a ];
 						
 								$res = curl_multi_getcontent( $file->multi );
 						
