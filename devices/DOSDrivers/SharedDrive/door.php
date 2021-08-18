@@ -319,8 +319,9 @@ if( !class_exists( 'SharedDrive' ) )
 							u.ID = s.OwnerUserID
 					' ) ) )
 					{
-						// Shared through groups by others
-						// Second in union is own files
+						// Shared through groups (by others)
+						// Second in union is own files (your files!)
+						$Logger->log( 'WHAT IS THE NAME: ' . $path[1] );
 						if( $rows = $SqlDatabase->fetchObjects( '
 							(
 								SELECT 
@@ -390,9 +391,6 @@ if( !class_exists( 'SharedDrive' ) )
 						
 						foreach( $rows as $row )
 						{
-							$Logger->log( 'Found file ' . $row->Data );
-							
-							
 							if( $delete )
 							{
 								$fn = explode( ':', $row->Data );
@@ -572,7 +570,6 @@ if( !class_exists( 'SharedDrive' ) )
 						
 						die( 'ok<!--separate-->' . json_encode( $out ) );
 					}
-					$Logger->log( 'No files returned!' );
 					die( 'ok<!--separate-->[]' );
 				}
 				// This is the root path
