@@ -211,7 +211,7 @@ if( !class_exists( 'SharedDrive' ) )
 				{
 					// No need for trailing
 					if( substr( $path[ 1 ], -1, 1 ) == '/' )
-						$path[ 1 ] = substr( $path[ 1 ], 0, strlen( $path[ 1 ] ) - 1 );
+						$path[ 1 ] = trim( substr( $path[ 1 ], 0, strlen( $path[ 1 ] ) - 1 ) );
 					
 					$out = [];
 					$rows = $own = $groupShare = false;
