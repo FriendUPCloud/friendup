@@ -329,7 +329,17 @@ if( !class_exists( 'SharedDrive' ) )
 									FShared s, FUserGroup g, FUserToGroup ug, FUserToGroup ug2, FUser u
 								WHERE 
 									g.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
+									
 									s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
+									s.SharedType = \'group\' AND
+									s.SharedID = ug.UserGroupID AND
+									g.ID = ug.UserGroupID AND
+									g.ID = ug2.UserGroupID AND
+									ug2.UserID = \'' . $User->ID . '\' AND
+									u.ID = ug.UserID AND
+									u.ServerToken != ""
+									
+									' . /*s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
 									s.SharedType = \'group\' AND 
 									s.SharedID = g.ID AND 
 									ug.UserGroupID = g.ID AND
@@ -337,7 +347,7 @@ if( !class_exists( 'SharedDrive' ) )
 									ug2.UserGroupID = g.ID AND
 									ug2.UserID = \'' . $User->ID . '\' AND
 									u.ID = ug.UserID AND
-									u.ServerToken != ""
+									u.ServerToken != ""*/ '' . '
 							)
 							UNION
 							(
@@ -347,13 +357,24 @@ if( !class_exists( 'SharedDrive' ) )
 									FShared s, FUserGroup g, FUserToGroup ug, FUser u
 								WHERE 
 									g.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
+									
+									s.OwnerUserID = \'' . intval( $User->ID, 10 ) . '\' AND
+									s.SharedType = \'group\' AND
+									s.SharedID = ug.UserGroupID AND
+									g.ID = ug.UserGroupID AND
+									g.ID = ug2.UserGroupID AND
+									ug2.UserID != \'' . $User->ID . '\' AND
+									u.ID = ug.UserID AND
+									u.ServerToken != ""
+									
+									' . /*
 									s.OwnerUserID = \'' . intval( $User->ID, 10 ) . '\' AND
 									s.SharedType = \'group\' AND 
 									s.SharedID = g.ID AND 
 									ug.UserGroupID = g.ID AND
 									ug.UserID = u.ID AND
 									u.ServerToken != "" AND 
-									u.ID = s.OwnerUserID
+									u.ID = s.OwnerUserID*/ '' . '
 							)
 						' ) )
 						{
@@ -631,7 +652,6 @@ if( !class_exists( 'SharedDrive' ) )
 						$out2 = [];
 						foreach( $rows as $row )
 						{
-							$Logger->log( 'Found share :: ' . $row->Name . ' (' . $row->ShareID . ')' );
 							if( !isset( $out2[ $row->Name . '-' . $row->Type ] ) )
 								$out2[ $row->Name . '-' . $row->Type ] = $row;
 						}
