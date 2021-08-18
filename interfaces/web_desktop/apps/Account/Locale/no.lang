@@ -51,7 +51,7 @@ i18n_groups                          : Dine grupper
 i18n_no_apps                         : Status
 i18n_no_apps_desc                    : Ingen installert.
 
-i18n_no_groups_available             : Du er ikke medlem av noen grupper.
+i18n_no_groups_available             : Du er ikke eier av noen grupper.
 i18n_failed_reading_groups           : Kunne ikke lese gruppene.
 i18n_create_group                    : Ny gruppe
 i18n_create_group_disabled           : Makimum av grupper nådd
