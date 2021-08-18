@@ -2209,7 +2209,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					{
 						HttpFree( response );
 					}
-					response = HttpNewSimple( HTTP_404_NOT_FOUND,  tags );
+					response = HttpNewSimple( HTTP_200_OK,  tags );
 		
 					char buffer[ 256 ];
 					snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_REFRESHTOKEN_DO_NOT_EXIST] , DICT_REFRESHTOKEN_DO_NOT_EXIST );
