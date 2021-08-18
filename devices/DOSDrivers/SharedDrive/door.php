@@ -332,8 +332,8 @@ if( !class_exists( 'SharedDrive' ) )
 									s.SharedType = \'group\' AND 
 									s.SharedID = ug.UserGroupID AND 
 									s.OwnerUserID != \'' . $User->ID . '\' AND
-									ug.UserGroupID = g.ID AND
-									ug2.UserGroupID = g.ID AND
+									g.ID = ug.UserGroupID AND
+									g.ID = ug2.UserGroupID AND
 									ug2.UserID = \'' . $User->ID . '\' AND
 									u.ID = ug.UserID AND
 									u.ServerToken != ""
@@ -346,11 +346,11 @@ if( !class_exists( 'SharedDrive' ) )
 									FShared s, FUserGroup g, FUserToGroup ug, FUser u
 								WHERE 
 									g.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
+									s.OwnerUserID = \'' . $User->ID . '\' AND
 									s.SharedType = \'group\' AND 
 									s.SharedID = ug.UserGroupID AND 
-									s.OwnerUserID = \'' . $User->ID . '\' AND
+									g.ID = ug.UserGroupID AND
 									s.OwnerUserID = u.ID AND
-									ug.UserGroupID = g.ID AND
 									ug.UserID = u.ID AND
 									u.ServerToken != ""
 							)
