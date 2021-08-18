@@ -31,7 +31,7 @@ var WorkspaceInside = {
 		{
 			let b = 0;
 			let wsp = eles[0].childNodes;
-			for( var a = 0; a < wsp.length; a++ )
+			for( let a = 0; a < wsp.length; a++ )
 			{
 				if( !wsp[a].classList ) continue;
 				if( wsp[a].classList.contains( 'Workspace' ) )
@@ -87,7 +87,7 @@ var WorkspaceInside = {
 	addTrayIcon: function( struct )
 	{
 		if( !struct.name ) return false;
-		for( var a in this.trayIcons )
+		for( let a in this.trayIcons )
 		{
 			if( this.trayIcons[ a ].name == struct.name ) return false;
 		}
@@ -154,7 +154,7 @@ var WorkspaceInside = {
 			ele.onmouseover = function( e )
 			{
 				// Check if other elements are sticky
-				for( var a = 0; a < this.childNodes.length; a++ )
+				for( let a = 0; a < this.childNodes.length; a++ )
 				{
 					if( this.childNodes[a].sticky )
 						return;
@@ -247,7 +247,7 @@ var WorkspaceInside = {
 			return false;
 		}
 		let ele = {};
-		for( var a in this.trayIcons )
+		for( let a in this.trayIcons )
 		{
 			if( a == uniqueId ) 
 			{
@@ -263,7 +263,7 @@ var WorkspaceInside = {
 	clearWorkspaceWallpapers: function()
 	{
 		if( !this.workspaceWallpapers ) return;
-		for( var a = 0; a < this.workspaceWallpapers.length; a++ )
+		for( let a = 0; a < this.workspaceWallpapers.length; a++ )
 		{
 			this.workspaceWallpapers[a].parentNode.removeChild( this.workspaceWallpapers[a] );
 		}
@@ -1098,7 +1098,7 @@ var WorkspaceInside = {
 		let d = workspaceButtons;
 		if( d )
 		{
-			for( var z = 0; z < d.childNodes.length; z++ )
+			for( let z = 0; z < d.childNodes.length; z++ )
 			{
 				if( d.childNodes[z].className && d.childNodes[z].classList.contains( 'Workspace' ) )
 				{
@@ -1129,7 +1129,7 @@ var WorkspaceInside = {
 		// Activate next window on next screen
 		if( !foundActive )
 		{
-			for( var c in movableWindows )
+			for( let c in movableWindows )
 			{
 				if( !movableWindows[c].windowObject ) continue;
 			
@@ -1162,7 +1162,7 @@ var WorkspaceInside = {
 			let oh = eled[0].offsetHeight + 'px';
 			let own = ge( 'DoorsScreen' ).offsetWidth;
 			let ow = own + 'px';
-			for( var a = 0; a < eles.length; a++ )
+			for( let a = 0; a < eles.length; a++ )
 			{
 				eles[a].style.left = pos + 'px';
 				eles[a].style.width = ow;
@@ -1568,7 +1568,7 @@ var WorkspaceInside = {
 					
 						// Find application
 						let apps = Workspace.applications;
-						for( var a = 0; a < apps.length; a++ )
+						for( let a = 0; a < apps.length; a++ )
 						{
 							// Found the application
 							if( apps[a].applicationName == appName )
@@ -1597,7 +1597,7 @@ var WorkspaceInside = {
 						function appMessage()
 						{
 							let app = false;
-							for( var a = 0; a < apps.length; a++ )
+							for( let a = 0; a < apps.length; a++ )
 							{
 								// Found the application
 								if( apps[ a ].applicationName == appName )
@@ -1671,7 +1671,7 @@ var WorkspaceInside = {
 			state: flags.state
 		};
 		let apps = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
-		for( var a = 0; a < apps.length; a++ )
+		for( let a = 0; a < apps.length; a++ )
 		{
 			// TODO: Have per application permissions here..
 			// Not all applications should be able to send messages to
@@ -1888,7 +1888,7 @@ var WorkspaceInside = {
 					    try
 					    {
 						    var exists = [];
-						    for( var b = 0; b < sessionList.length; b++ )
+						    for( let b = 0; b < sessionList.length; b++ )
 						    {
 							    if( sessionList[b].sessionid == Workspace.sessionId ) continue;
 							    var sn = sessionList[b].deviceidentity.split( '_' );
@@ -1914,7 +1914,7 @@ var WorkspaceInside = {
 							    }
 							    var num = 0;
 							    var found = false;
-							    for( var c = 0; c < exists.length; c++ )
+							    for( let c = 0; c < exists.length; c++ )
 							    {
 								    if( exists[c] == svn )
 								    {
@@ -2129,7 +2129,7 @@ var WorkspaceInside = {
 		
 		let str = '';
 		
-		for( var a in this.themeData )
+		for( let a in this.themeData )
 		{
 			if( !this.themeData[a] ) continue;
 			let v = this.themeData[a];
@@ -2472,7 +2472,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 													let appName = appString.split( ' ' )[0];
 													let args = appString.substr( appName.length + 1, appString.length - appName.length + 1 );
 													let found = false;
-													for( var b = 0; b < Workspace.applications.length; b++ )
+													for( let b = 0; b < Workspace.applications.length; b++ )
 													{
 														if( Workspace.applications[ b ].applicationName == appName )
 														{
@@ -2666,9 +2666,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				this.smenu.dom.parentNode.removeChild( this.smenu.dom );
 			this.smenu.currentItem = false;
 			
+			let d = null;
+			
 			if( Workspace.mainDock )
 			{
-				let d = document.createElement( 'div' );
+				d = document.createElement( 'div' );
 				d.className = 'DockMenu';
 			
 				Workspace.mainDock.dom.appendChild( d );
@@ -2691,7 +2693,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			let delayedBuildFunc = false;
 
 			// Add menu items
-			function buildMenu( path, parent, depth )
+			function buildMenu( path, dparent, depth )
 			{
 				if( !depth ) depth = 1;
 				
@@ -2701,7 +2703,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					// Create container
 					let dd = document.createElement( 'div' );
 					dd.className = 'DockSubMenu';
-					parent.appendChild( dd );
+					dparent.appendChild( dd );
 
 					// Calculate header
 					let p = path.split( ':' );
@@ -2738,7 +2740,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 					let menuHeader = document.createElement( 'div' );
 					menuHeader.className = 'DockMenuHeader';
-					menuHeader.innerHTML = parent.classList.contains( 'DockMenu' ) && Workspace.fullName ? Workspace.fullName : p;
+					menuHeader.innerHTML = dparent.classList.contains( 'DockMenu' ) && Workspace.fullName ? Workspace.fullName : p;
 					dd.appendChild( menuHeader );
 
 					let topInfo = null;
@@ -2759,11 +2761,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 
 					// Add favorites
-					if( parent.classList.contains( 'DockMenu' ) && ge( 'desklet_0' ) )
+					if( dparent.classList.contains( 'DockMenu' ) && ge( 'desklet_0' ) )
 					{
 						let eles = ge( 'desklet_0' ).getElementsByClassName( 'Launcher' );
 						let out = [];
-						for( var b = 0; b < eles.length; b++ )
+						for( let b = 0; b < eles.length; b++ )
 						{
 							if( eles[b].classList.contains( 'Startmenu' ) ) continue;
 
@@ -2793,7 +2795,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							out = ( [ { Title: i18n( 'i18n_favorites' ) + ':', Path: 'Mountlist:', Type: 'Header' } ] ).concat( out );
 							out.push( { Title: i18n( 'i18n_menu' ) + ':', Path: 'Mountlist:', Type: 'Header' } );
-							for( var a = 0; a < data.length; a++ )
+							for( let a = 0; a < data.length; a++ )
 							{
 								out.push( data[a] );
 							}
@@ -2812,7 +2814,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						let end = [];
 						let filter = [ 'Software', 'Preferences', 'Settings' ];
 						let i = 0;
-						for( var a = 0; i < filter.length && a < data.length; a++ )
+						for( let a = 0; i < filter.length && a < data.length; a++ )
 						{
 							let pth = data[a].Path + '';
 							if( pth.substr( pth.length - 1, 1 ) == '/' )
@@ -2825,10 +2827,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								a = 0;
 							}
 						}
-						for( var a = 0; a < data.length; a++ )
+						for( let a = 0; a < data.length; a++ )
 						{
 							let found = false;
-							for( var b = 0; b < filter.length; b++ )
+							for( let b = 0; b < filter.length; b++ )
 							{
 								if( filter[ b ] == data[ a ].Title )
 								{
@@ -2850,7 +2852,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					let ss = [];
 					
 					// Menu items
-					for( var a = 0; a < data.length; a++ )
+					for( let a = 0; a < data.length; a++ )
 					{
 						if( data[a].Type == 'Header' )
 						{
@@ -2880,7 +2882,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							let self = this;
 							this.classList.add( 'Over' );
 							let eles = this.parentNode.getElementsByClassName( 'DockMenuItem' );
-							for( var z = 0; z < eles.length; z++ )
+							for( let z = 0; z < eles.length; z++ )
 							{
 								if( eles[z].parentNode != this.parentNode )
 									continue;
@@ -2966,7 +2968,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							// Skip if we already added
 							let found = false;
-							for( var b = 0; b < dupTest.length; b++ )
+							for( let b = 0; b < dupTest.length; b++ )
 							{
 								if( dupTest[b] == data[a].Path )
 								{
@@ -2983,7 +2985,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								let self = this;
 								this.classList.add( 'Over' );
 								let eles = this.parentNode.getElementsByClassName( 'DockMenuItem' );
-								for( var z = 0; z < eles.length; z++ )
+								for( let z = 0; z < eles.length; z++ )
 								{
 									if( eles[z].parentNode != this.parentNode )
 										continue;
@@ -3048,7 +3050,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										if( t[0].indexOf( ':' ) == -1)
 										{
 											args = '';
-											for( var a = 1; a < t.length; a++ )
+											for( let a = 1; a < t.length; a++ )
 											{
 												args += t[a];
 												if( a < t.length - 1 )
@@ -3101,7 +3103,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						ss.push( s );
 					}
 
-					if( parent.classList.contains( 'DockMenu' ) )
+					if( dparent.classList.contains( 'DockMenu' ) )
 					{
 						let s2 = document.createElement( 'div' );
 						s2.className = 'DockMenuItem MousePointer Executable';
@@ -3124,18 +3126,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						}
 						delayedBuildTime = setTimeout( function(){ delayedBuildFunc(); }, 25 );
 
-						if( parent.classList.contains( 'DockMenu' ) )
+						if( dparent.classList.contains( 'DockMenu' ) )
 						{
 							if( topInfo == 'Right' || topInfo == 'Left' )
 							{
-								parent.style.top = 0;
+								dparent.style.top = 0;
 								if( topInfo == 'Right' )
 								{
-									parent.style.left = 0 - dd.offsetWidth + 'px';
+									dparent.style.left = 0 - dd.offsetWidth + 'px';
 								}
 								else
 								{
-									parent.style.left = parent.parentNode.offsetWidth + 'px';
+									dparent.style.left = dparent.parentNode.offsetWidth + 'px';
 								}
 							}
 							else if( topInfo == 'Top' )
@@ -3149,13 +3151,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							else
 							{
-								parent.style.top = 0 - dd.offsetHeight + 'px';
+								dparent.style.top = 0 - dd.offsetHeight + 'px';
 							}
-							parent.style.height = dd.offsetHeight + 'px';
+							dparent.style.height = dd.offsetHeight + 'px';
 						}
 						else if( ss )
 						{
-							for( var a = 0; a < ss.length; a++ )
+							for( let a = 0; a < ss.length; a++ )
 							{
 								let s = ss[ a ];
 								
@@ -3360,7 +3362,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Add desktop shortcuts too for mobile
 		if( window.isMobile )
 		{
-			for( var a = 0; a < Workspace.icons.length; a++ )
+			for( let a = 0; a < Workspace.icons.length; a++ )
 			{
 				if( Workspace.icons[a].Type == 'Executable' && Workspace.icons[a].MetaType == 'ExecutableShortcut' )
 				{
@@ -3431,7 +3433,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 
 			let inps = ge( 'ConnectionBoxGui' ).getElementsByTagName( '*' );
-			for( var a = 0; a < inps.length; a++ )
+			for( let a = 0; a < inps.length; a++ )
 			{
 				// TODO: Support more input TYPES
 				if( inps[a].nodeName == 'INPUT' )
@@ -3545,7 +3547,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( fname.substr( fname.length - 1, 1 ) != '/' )
 		{
 			let o = ''; var mod = 0;
-			for( var b = fname.length - 1; b >= 0; b-- )
+			for( let b = fname.length - 1; b >= 0; b-- )
 			{
 				if( mod == 0 && ( fname.substr( b, 1 ) == '/' || fname.substr( b, 1 ) == ':' ) )
 				{
@@ -3629,7 +3631,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 
 		// Check movable windows
-		for( var a in movableWindows )
+		for( let a in movableWindows )
 		{
 			let mw = movableWindows[a];
 
@@ -3654,7 +3656,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// We need this in case we copy to a sub path
 		let p = path + '';
 		let o = ''; var mod = 0;
-		for( var b = p.length - 2; b >= 0; b-- )
+		for( let b = p.length - 2; b >= 0; b-- )
 		{
 			if( mod == 0 && ( p.substr( b, 1 ) == '/' || p.substr( b, 1 ) == ':' ) )
 			{
@@ -3685,7 +3687,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Also refresh parent first...
 		let p = path + '';
 		let o = ''; var mod = 0;
-		for( var b = p.length - 2; b >= 0; b-- )
+		for( let b = p.length - 2; b >= 0; b-- )
 		{
 			if( mod == 0 && ( p.substr( b, 1 ) == '/' || p.substr( b, 1 ) == ':' ) )
 			{
@@ -3702,7 +3704,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			Workspace.refreshWindowByPath( o, 1 );
 		}
 
-		for( var a in movableWindows )
+		for( let a in movableWindows )
 		{
 			if( !movableWindows[a] || !movableWindows[a].content ) continue;
 			if( movableWindows[a].content.fileInfo )
@@ -3765,7 +3767,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 					// Remove old one
 					let l = h.getElementsByTagName( 'link' );
-					for( var b = 0; b < l.length; b++ )
+					for( let b = 0; b < l.length; b++ )
 					{
 						if( l[b].parentNode != h ) continue;
 						l[b].href = '';
@@ -3773,7 +3775,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					// Remove scrollbars
 					l = document.body.getElementsByTagName( 'link' );
-					for( var b = 0; b < l.length; b++ )
+					for( let b = 0; b < l.length; b++ )
 					{
 						if( l[b].href.indexOf( '/scrollbars.css' ) > 0 )
 						{
@@ -3912,7 +3914,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 				// Update running applications
 				let taskIframes = ge( 'Tasks' ).getElementsByClassName( 'AppSandbox' );
-				for( var a = 0; a < taskIframes.length; a++ )
+				for( let a = 0; a < taskIframes.length; a++ )
 				{
 					let msg = {
 						type: 'system',
@@ -3945,7 +3947,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Should only be run once!
 			if( !data ) return;
 			let events = JSON.parse( data );
-			for( var a in events )
+			for( let a in events )
 			{
 				let jdata = events[a];
 				if( a == 'Import' )
@@ -3963,7 +3965,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						if( !Workspace.importWindow ) return;
 
 						let doorOptions = '';
-						for( var ad = 0; ad < Workspace.icons.length; ad++ )
+						for( let ad = 0; ad < Workspace.icons.length; ad++ )
 						{
 							doorOptions += '<option value="' + Workspace.icons[ad].Door.Volume + '">' + Workspace.icons[ad].Door.Volume + '</option>';
 						}
@@ -3973,7 +3975,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 						w.setContent( data.split( '{partitions}' ).join( doorOptions ) );
 						let ml = '';
-						for( var p = 0; p < jdata.length; p++ )
+						for( let p = 0; p < jdata.length; p++ )
 						{
 							ml += '<div class="Padding MarginBottom Box"><div class="IconSmall fa-file"><div class="FloatRight"><input type="checkbox" file="' + jdata[p] + '"/></div>&nbsp;&nbsp;' + jdata[p] + '</div></div>';
 						}
@@ -3992,7 +3994,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		let inps = ge('import_files').getElementsByTagName( 'input' );
 		let target = false;
 		let files = [];
-		for( var a = 0; a < sels.length; a++ )
+		for( let a = 0; a < sels.length; a++ )
 		{
 			if( sels[a].selected )
 			{
@@ -4000,7 +4002,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				break;
 			}
 		}
-		for( var a  = 0; a < inps.length; a++ )
+		for( let a  = 0; a < inps.length; a++ )
 		{
 			if( inps[a].checked )
 			{
@@ -4082,13 +4084,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 			// Remove apps that are gone
 			let out = [];
-			for( var a = 0; a < Workspace.applications.length; a++ )
+			for( let a = 0; a < Workspace.applications.length; a++ )
 			{
 				// Skip normal apps
 				if( !Workspace.applications[a].pid ) continue;
 
 				let f = false;
-				for( var b = 0; b < data.length; b++ )
+				for( let b = 0; b < data.length; b++ )
 				{
 					if( data[b].pid && data[b].pid == Workspace.applications[a].pid )
 					{
@@ -4107,7 +4109,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( clear )
 			{
 				out = [];
-				for( var a = 0; a < Workspace.applications.length; a++ )
+				for( let a = 0; a < Workspace.applications.length; a++ )
 				{
 					if( !Workspace.applications[a].pid )
 						out.push( Workspace.applications[a] );
@@ -4417,7 +4419,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			let disks = DormantMaster.getDoors();
 			let found = [];
-			for( var a in disks )
+			for( let a in disks )
 			{
 				if( disks[ a ].Filename != 'System:' ) found.push( disks[ a ] );
 			}
@@ -4431,7 +4433,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( tray )
 		{
 			let eles = tray.getElementsByTagName( 'div' );
-			for( var a = 0; a < eles.length; a++ )
+			for( let a = 0; a < eles.length; a++ )
 			{
 				if( eles[a].classList && eles[a].classList.contains( 'Disks' ) )
 				{
@@ -4468,7 +4470,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// List
 		let d = document.createElement( 'div' );
 		let str = ''; var sw = 2;
-		for( var a = 0; a < found.length; a++ )
+		for( let a = 0; a < found.length; a++ )
 		{
 			if( found[a].Filename == 'System:' ) continue;
 			sw = sw == 1 ? 2 : 1;
@@ -4511,7 +4513,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					let types = JSON.parse( dat );
 					Friend.dosDrivers = {};
-					for( var a = 0; a < types.length; a++ )
+					for( let a = 0; a < types.length; a++ )
 					{
 						Friend.dosDrivers[ types[ a ].type ] = types[a];
 					}
@@ -4584,7 +4586,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							// Check shortcuts and add them to the desktop
 							let shorts = JSON.parse( shortcuts );
-							for( var a = 0; a < shorts.length; a++ )
+							for( let a = 0; a < shorts.length; a++ )
 							{
 								if( !shorts[ a ] )
 								{
@@ -4626,7 +4628,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									let pair = shorts[a].split( ':' );
 									// Shift camelcase
 									let literal = '';
-									for( var c = 0; c < pair[0].length; c++ )
+									for( let c = 0; c < pair[0].length; c++ )
 									{
 										if( c > 0 && pair[0].charAt(c).toUpperCase() == pair[0].charAt(c) )
 										{
@@ -4657,7 +4659,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 						// Add DormantDrives to the list (automount)
 						let dormantDoors = DormantMaster.getDoors();
-						for ( var d = 0; d < dormantDoors.length; d++ )
+						for ( let d = 0; d < dormantDoors.length; d++ )
 						{
 							let dormantDoor = dormantDoors[ d ];
 							if ( dormantDoor.AutoMount )
@@ -4740,7 +4742,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						// Check the friend disks
 						if( rows && rows.length )
 						{
-							for ( var a = 0; a < rows.length; a++ )
+							for ( let a = 0; a < rows.length; a++ )
 							{
 								let r = rows[a];
 								if( r.Config.indexOf( '{' ) >= 0 )
@@ -4803,11 +4805,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						// Check new icons with old icons
 						let hasNew = false;
 						let checks = [];
-						for( var a = 0; a < newIcons.length; a++ )
+						for( let a = 0; a < newIcons.length; a++ )
 						{
 							let ni = newIcons[ a ];
 							let found = false;
-							for( var b = 0; b < t.icons.length; b++ )
+							for( let b = 0; b < t.icons.length; b++ )
 							{
 								let ti = t.icons[ b ];
 							
@@ -4850,7 +4852,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							t.redrawIcons();
 							if( checks.length )
 							{
-								for( var a = 0; a < checks.length; a++ )
+								for( let a = 0; a < checks.length; a++ )
 								{
 									let check = checks[ a ];
 									if( t.icons[ check ].Execute )
@@ -4913,7 +4915,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		// Cleanup windows of filesystems that are unmounted
 		let close = [];
-		for( var a in movableWindows )
+		for( let a in movableWindows )
 		{
 			let w = movableWindows[a];
 			if( w.content ) w = w.content;
@@ -4927,7 +4929,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				let pureVol = vol.split( ':' )[0];
 				let found = false;
-				for( var b in this.icons )
+				for( let b in this.icons )
 				{
 					// TODO: The colon thing... :)
 					if( vol && pureVol == this.icons[b].Title.split( ':' )[0] )
@@ -4937,7 +4939,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 				}
 				// Check dormant
-				for( var b in dormants )
+				for( let b in dormants )
 				{
 					// TODO: The colon thing... :)
 					if( vol && pureVol == dormants[b].Title.split( ':' )[0] )
@@ -4958,7 +4960,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Close windows that are destined for it
 		if( close.length )
 		{
-			for( var a = 0; a < close.length; a++ )
+			for( let a = 0; a < close.length; a++ )
 			{
 				CloseWindow( close[a] );
 			}
@@ -4987,7 +4989,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			f.replacements = { val_name: '', val_link: '', val_notes: '', val_path: p };
 			if( data )
 			{
-				for( var a in data )
+				for( let a in data )
 				{
 					f.replacements[ 'val_' + a ] = data[a];
 				}
@@ -5026,10 +5028,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		let eles = [];
 		let inp = pele.getElementsByTagName( 'input' );
 		let txt = pele.getElementsByTagName( 'textarea' );
-		for( var a = 0; a < inp.length; a++ ) eles.push( inp[a] );
-		for( var a = 0; a < txt.length; a++ ) eles.push( txt[a] );
+		for( let a = 0; a < inp.length; a++ ) eles.push( inp[a] );
+		for( let a = 0; a < txt.length; a++ ) eles.push( txt[a] );
 		let f = {};
-		for( var a = 0; a < eles.length; a++ )
+		for( let a = 0; a < eles.length; a++ )
 		{
 			if( !eles[a].getAttribute( 'name' ) ) continue;
 			f[ eles[a].getAttribute( 'name' ) ] = eles[a].value;
@@ -5211,7 +5213,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			let rwin = window.currentMovable;
 			let eles = rwin.content.getElementsByTagName( 'div' );
 			let sele = false;
-			for( var a = 0; a < eles.length; a++ )
+			for( let a = 0; a < eles.length; a++ )
 			{
 				if( eles[a].className.indexOf( ' Selected' ) < 0 )
 					continue;
@@ -5227,7 +5229,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Find out which type it is
 			let icons = rwin.content.icons;
 			let icon = false;
-			for( var a = 0; a < icons.length; a++ )
+			for( let a = 0; a < icons.length; a++ )
 			{
 				if( ( icons[a].Title && icons[a].Title == nam ) || ( icons[a].Filename && icons[a].Filename == nam ) )
 				{
@@ -5358,7 +5360,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			let eles = rwin.content.getElementsByTagName( 'div' );
 			let selected = [];
 
-			for( var a = 0; a < eles.length; a++ )
+			for( let a = 0; a < eles.length; a++ )
 			{
 				if( eles[a].className.indexOf( ' Selected' ) < 0 )
 					continue;
@@ -5655,9 +5657,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 
 			// Add needed
-			for( var b = 0; b < permissionPool.length; b++ )
+			for( let b = 0; b < permissionPool.length; b++ )
 			{
-				for( var a = 0; a < conf.permissions.length; a++ )
+				for( let a = 0; a < conf.permissions.length; a++ )
 				{
 					if( permissionPool[b] == conf.permissions[a][0] )
 					{
@@ -5667,7 +5669,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 
 			// List out options for permissions
-			for( var a = 0; a < permissionPool.length; a++ )
+			for( let a = 0; a < permissionPool.length; a++ )
 			{
 				let row = Trim( permissionPool[a] ).split( ' ' );
 				let ch = hasPermissions[a] == true ? ' checked="checked"' : '';
@@ -5721,7 +5723,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				let s = document.createElement( 'select' );
 				s.innerHTML = '';
-				for( var a = 0; a < domains.length; a++ )
+				for( let a = 0; a < domains.length; a++ )
 				{
 					let o = document.createElement( 'option' );
 					if( Trim( domains[a] ) == conf.domain )
@@ -5819,12 +5821,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			prot += '</div></div>';
 
 			// Gui
-			for( var z in bits )
+			for( let z in bits )
 			{
 				prot += '<div class="HRow">';
 				prot += '<div class="FloatLeft HContent30">' + i18n( z ) + ':</div>';
 				prot += '<div class="FloatLeft HContent70">';
-				for( var oz in [ 'self', 'group', 'others' ] )
+				for( let oz in [ 'self', 'group', 'others' ] )
 				{
 					prot += '<div class="FloatLeft HContent30 TextCenter"><input type="checkbox" name="' + z + '_' + oz + '"/></div>';
 				}
@@ -5900,7 +5902,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				let fdt_out = '';
 				let sel = '';
 				let i = 0;
-				for( var a in fdt )
+				for( let a in fdt )
 				{
 					if( !fdt[a].Title ) fdt[a].Title = a;
 					fdt_out += '<option value="' + a + '" encoding="' + fdt[a].Encoding + '" type="' + fdt[a].Type + '">' + fdt[a].Title + '</option>';
@@ -6008,7 +6010,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 						let eles = w.getWindowElement().getElementsByTagName( 'div' );
 						let da = false;
-						for( var a = 0; a < eles.length; a++ )
+						for( let a = 0; a < eles.length; a++ )
 						{
 							if( eles[a].classList.contains( 'DropArea' ) )
 							{
@@ -6027,7 +6029,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								visval = vsettings.Visibility;
 						}
 						
-						for( var a = 0; a < inp.length; a++ )
+						for( let a = 0; a < inp.length; a++ )
 						{
 							if( inp[a].name == 'visibility' )
 							{
@@ -6101,7 +6103,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						// Hide form elements that are not ment for normal files
 						let isFile = icon.Type.toLowerCase() != 'directory';
 						eles = w.getElementsByTagName( 'div' );
-						for( var a = 0; a < eles.length; a++ )
+						for( let a = 0; a < eles.length; a++ )
 						{
 							if( eles[a].className.indexOf( 'FileInfo' ) >= 0 && !isFile )
 							{
@@ -6121,7 +6123,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							others: ''
 						};
 						let permOrder = { 'a': 0, 'r': 1, 'w': 2, 'e': 3, 'd': 4 };
-						for( var an = 0; an < rd.length; an++ )
+						for( let an = 0; an < rd.length; an++ )
 						{
 							// First time
 							if( rd[an].type && !permSettings[rd[an].type] )
@@ -6132,7 +6134,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							else
 							{
 								let slot = permSettings[rd[an].type];
-								for( var az = 0; az < rd[an].access.length; az++ )
+								for( let az = 0; az < rd[an].access.length; az++ )
 								{
 									if( slot[az] == '-' && rd[an].access[az] != '-' )
 										slot[az] = rd[an].access[az];
@@ -6146,12 +6148,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						let inps = w.getElementsByTagName( 'input' );
 						let sels = w.getElementsByTagName( 'select' );
 						eles = [];
-						for( var n = 0; n < inps.length; n++ )
+						for( let n = 0; n < inps.length; n++ )
 							eles.push( inps[n] );
-						for( var n = 0; n < sels.length; n++ )
+						for( let n = 0; n < sels.length; n++ )
 							eles.push( sels[n] );
 						
-						for( var a in eles )
+						for( let a in eles )
 						{
 							// Skip non numeric element keys!
 							if( isNaN( parseInt( a ) ) ) continue;
@@ -6182,9 +6184,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 											let extension = icon.Filename.split( '.' );
 											extension = '.' + extension[ extension.length - 1 ].toLowerCase();
 											let apps = JSON.parse( rd );
-											for( var mi = 0; mi < apps.length; mi++ )
+											for( let mi = 0; mi < apps.length; mi++ )
 											{
-												for( var ty = 0; ty < apps[mi].types.length; ty++ )
+												for( let ty = 0; ty < apps[mi].types.length; ty++ )
 												{
 													if( apps[mi].types[ty] == extension )
 													{
@@ -6202,7 +6204,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 													{
 														let apps = JSON.parse( d );
 														let str = '<option value="">Friend Workspace</option>';
-														for( var j = 0; j < apps.length; j++ )
+														for( let j = 0; j < apps.length; j++ )
 														{
 															let ex = '';
 															if( apps[j].Name == appForMimetype )
@@ -6361,7 +6363,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						// Check buttons
 						let btn = ge( 'IconInfo_' + Workspace.seed ).getElementsByTagName( 'button' );
 						let sharingOptions = null;
-						for( var aa = 0; aa < btn.length; aa++ )
+						for( let aa = 0; aa < btn.length; aa++ )
 						{
 							if( btn[aa].getAttribute( 'name' ) == 'sharingOptions' )
 							{
@@ -6400,7 +6402,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				let fnd = false;
 				if( selement.length )
 				{
-					for( var z = 0; z < selement.length; z++ )
+					for( let z = 0; z < selement.length; z++ )
 					{
 						// Found the correct select element
 						if( selement[z].classList && selement[z].classList.contains( 'IconInfoSelect' ) )
@@ -6423,7 +6425,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		let part = selement.parentNode.parentNode.parentNode;
 		let targ = false;
 		let eles = part.getElementsByTagName( 'div' );
-		for( var a = 0; a < eles.length; a++ )
+		for( let a = 0; a < eles.length; a++ )
 		{
 			if( eles[a].classList && eles[a].classList.contains( 'FieldInfo' ) )
 			{
@@ -6435,7 +6437,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Find the current element
 		let opts = selement.getElementsByTagName( 'option' );
 		let opt = false;
-		for( var a = 0; a < opts.length; a++ )
+		for( let a = 0; a < opts.length; a++ )
 		{
 			if( opts[a].selected || ( find && a == 0 ) )
 			{
@@ -6513,8 +6515,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		let inps = ele.getElementsByTagName( 'input' );
 		let texts = ele.getElementsByTagName( 'textarea' );
 		let out = [];
-		for( var b in texts ) out.push( texts[b] );
-		for( var b in inps )
+		for( let b in texts ) out.push( texts[b] );
+		for( let b in inps )
 		{
 			if( isNaN( parseInt( b ) ) ) continue;
 			if( inps[b].onSave ) inps[b].onSave();
@@ -6522,7 +6524,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 
 		// Add arguments
-		for( var a = 0; a < out.length; a++ )
+		for( let a = 0; a < out.length; a++ )
 		{
 			// Skip permission inputs
 			if( out[a].getAttribute && out[a].getAttribute( 'permission' ) )
@@ -6544,7 +6546,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( permissions && ( perms = permissions.getElementsByTagName( 'input' ) ) )
 		{
 			let permopts = [];
-			for( var a = 0; a < perms.length; a++ )
+			for( let a = 0; a < perms.length; a++ )
 			{
 				if( !perms[ a ].checked ) continue;
 				let par = perms[a].parentNode.nodeName;
@@ -6565,7 +6567,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Now we're ready to find these permissions!
 
 			// Setup public / private file
-			for( var h in inps )
+			for( let h in inps )
 			{
 				// Skip non numeric element keys!
 				if( !inps[h].getAttribute ) continue;
@@ -6606,7 +6608,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			let doors = DormantMaster.getDoors();
 			if( doors )
 			{
-				for( var d in doors )
+				for( let d in doors )
 				{
 					let door = doors[ d ];
 					if( door.Title == drive )
@@ -6674,7 +6676,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if ( w.content ) w = w.content;
 			if ( w.icons )
 			{
-				for( var a = 0; a < w.icons.length; a++ )
+				for( let a = 0; a < w.icons.length; a++ )
 				{
 					if( w.icons[a].selected )
 					{
@@ -6687,7 +6689,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		else if( this.directoryView )
 		{
 			let eles = this.screen.contentDiv.icons;
-			for( var a = 0; a < eles.length; a++ )
+			for( let a = 0; a < eles.length; a++ )
 			{
 				if( eles[a].selected )
 				{
@@ -6761,7 +6763,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						if( ee == 'ok' )
 						{
-							for( var a in movableWindows )
+							for( let a in movableWindows )
 							{
 								let w = movableWindows[a];
 								if( w.content ) w = w.content;
@@ -6830,7 +6832,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( fi )
 			{
 				let eles = w.getElementsByTagName( 'input' );
-				for( var v = 0; v < eles.length; v++ )
+				for( let v = 0; v < eles.length; v++ )
 				{
 					if( eles[v].name && eles[v].name == 'path' )
 					{
@@ -6870,7 +6872,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		let inps = currentMovable.content.getElementsByTagName( 'input' );
 		let path = 'Home:Downloads/';
-		for( var a = 0; a < inps.length; a++ )
+		for( let a = 0; a < inps.length; a++ )
 		{
 			if( inps[a].name == 'path' )
 			{
@@ -7020,7 +7022,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				return;
 			}
 		}
-		for( var a = 0; a < Friend.GUI.view.viewHistory.length; a++ )
+		for( let a = 0; a < Friend.GUI.view.viewHistory.length; a++ )
 		{
 			let fg = Friend.GUI.view.viewHistory[ a ];
 			let pg = Friend.GUI.view.viewHistory[ a - 1 ];
@@ -7039,7 +7041,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	listApplications: function()
 	{
 		let out = [];
-		for( var a = 0; a < this.applications.length; a++ )
+		for( let a = 0; a < this.applications.length; a++ )
 		{
 			out.push( {
 				name: this.applications[a].applicationName,
@@ -7061,7 +7063,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			ic = Workspace.screen.contentDiv.icons;
 		}
-		for( var a = 0; a < ic.length; a++ )
+		for( let a = 0; a < ic.length; a++ )
 		{
 			let t = ic[a].Filename ? ic[a].Filename : ic[a].Title;
 			if( t )
@@ -7085,7 +7087,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		let f = [];
 		let dest = false;
 		let icon;
-		for( var a = 0; a < ic.length; a++ )
+		for( let a = 0; a < ic.length; a++ )
 		{
 			if( ic[a].domNode && ic[a].domNode.classList.contains( 'Selected' ) )
 			{
@@ -7134,7 +7136,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		let ic = currentMovable.content.icons;
 		let f = [];
 		let dest = false;
-		for( var a = 0; a < ic.length; a++ )
+		for( let a = 0; a < ic.length; a++ )
 		{
 			if( ic[a].domNode && ic[a].domNode.classList.contains( 'Selected' ) )
 			{
@@ -7214,7 +7216,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		let ic = currentMovable.content.icons;
 		let f = [];
-		for( var a = 0; a < ic.length; a++ )
+		for( let a = 0; a < ic.length; a++ )
 		{
 			if( ic[a].domNode && ic[a].domNode.classList.contains( 'Selected' ) )
 			{
@@ -7224,7 +7226,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( f.length )
 		{
 			Notify( { title: i18n( 'i18n_unzip_start' ), text: i18n( 'i18n_unzip_startdesc' ) } );
-			for( var a = 0; a < f.length; a++ )
+			for( let a = 0; a < f.length; a++ )
 			{
 				let s = new Library( 'system.library' );
 				s.file = f[a].Path;
@@ -7302,7 +7304,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			canUnmount = true;
 			
 			let ics = currentMovable && currentMovable.content ? currentMovable.content.icons : currentScreen.screen._screen.icons;
-			for( var a in ics )
+			for( let a in ics )
 			{
 				if( ics[a].domNode && ics[a].domNode.classList )
 				{
@@ -7381,7 +7383,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		// We got windows?
 		let windowsOpened = false;
-		for( var a in movableWindows )
+		for( let a in movableWindows )
 		{
 			windowsOpened = true;
 			break;
@@ -7419,7 +7421,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						command: function()
 						{ 
 							let d = false;
-							for( var a = 0; a < Workspace.icons.length; a++ )
+							for( let a = 0; a < Workspace.icons.length; a++ )
 							{
 								if( Workspace.icons[a].Volume == 'System:' )
 								{
@@ -7585,7 +7587,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							if( s && s.screen && s.screen._screen.icons )
 							{
 								let ics = s.screen._screen.icons;
-								for( var a = 0; a < ics.length; a++ )
+								for( let a = 0; a < ics.length; a++ )
 								{
 									if( ics[a].domNode.className.indexOf( ' Selected' ) > 0 )
 									{
@@ -7638,7 +7640,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							if( DeepestField && DeepestField.connections )
 							{
 								let df = DeepestField;
-								for( var a in df.connections )
+								for( let a in df.connections )
 								{
 									let d = df.connections[a];
 									d.object.close(); // Close connection
@@ -7672,7 +7674,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								let dv = currentMovable.content;
 								if( dv )
 								{
-									for( var a = 0; a < dv.icons.length; a++ )
+									for( let a = 0; a < dv.icons.length; a++ )
 									{
 										let ic = dv.icons[a];
 										if( ic.domNode && ic.domNode.fileInfo && ic.domNode.fileInfo.Type == 'File' && ic.selected )
@@ -7872,7 +7874,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				s.style.transition = '';
 			}, 550 );
 		}
-		for( var a = 0; a < screens.length; a++ )
+		for( let a = 0; a < screens.length; a++ )
 		{
 			screens[a].style.transition = 'transform 0.5s';
 			screens[a].style.transform = 'translate3d(0,' + ( window.innerHeight - 32 + 'px' ) + ',0)';
@@ -7981,7 +7983,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// For multiple workspaces
 			if( globalConfig.workspacecount > 1 )
 			{
-				for( var a = 0; a < globalConfig.workspacecount; a++ )
+				for( let a = 0; a < globalConfig.workspacecount; a++ )
 				{
 					addWSMenuItem( menu, a );
 				}
@@ -8048,7 +8050,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			
 			Workspace.refreshMenu( true );
-			for( var z = 0; z < Workspace.menu.length; z++ )
+			for( let z = 0; z < Workspace.menu.length; z++ )
 			{
 				if( Workspace.menu[z].name == i18n( 'menu_icons' ) )
 				{
@@ -8108,7 +8110,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				// Position and open
 				let lch = menuout.childNodes;
 				let cand = menuout.lastChild;
-				for( var z = 0; z < lch.length; z++ )
+				for( let z = 0; z < lch.length; z++ )
 				{
 					if( !lch[ z ].classList.contains( 'Disabled' ) )
 						cand = lch[ z ];
@@ -8470,7 +8472,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		this.searchMatches = [];
 		let keyz = ge( 'WorkspaceSearchKeywords' ).value.split( ',' ).join( ' ' ).split( ' ' );
 		this.searchKeywords = [];
-		for( var a = 0; a < keyz.length; a++ )
+		for( let a = 0; a < keyz.length; a++ )
 		{
 			if( !Trim( keyz[a] ) ) continue;
 			this.searchKeywords.push( Trim( keyz[a] ) );
@@ -8498,7 +8500,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 
 			// Don't search this twice
-			for( var y = 0; y < Workspace.searchPaths.length; y++ )
+			for( let y = 0; y < Workspace.searchPaths.length; y++ )
 			{
 				if( Workspace.searchPaths[y] == path )
 				{
@@ -8539,14 +8541,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					return;
 				}
-				for( var u = 0; u < data.length; u++ )
+				for( let u = 0; u < data.length; u++ )
 				{
 					// Don't search hidden files, Don't register them twice
 					let idnt = data[u].Filename ? data[u].Filename : data[u].Title;
 					if( idnt.substr( 0, 1 ) == '.' ) continue;
 					
 					// Match all keywords
-					for( var b = 0; b < Workspace.searchKeywords.length; b++ )
+					for( let b = 0; b < Workspace.searchKeywords.length; b++ )
 					{
 						let found = false;
 
@@ -8561,7 +8563,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 						if( idnt.indexOf( searchKey ) >= 0 )
 						{
-							for( var y = 0; y < Workspace.searchPaths.length; y++ )
+							for( let y = 0; y < Workspace.searchPaths.length; y++ )
 							{
 								if( Workspace.searchPaths[y] == data[u].Path )
 								{
@@ -8641,7 +8643,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 		}
 
-		for( var a = 0; a < this.searchMatches.length; a++ )
+		for( let a = 0; a < this.searchMatches.length; a++ )
 		{
 			let m = this.searchMatches[a];
 			if( !m || !m.Path ) continue;
@@ -8688,7 +8690,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				DateCreated: false,
 				added: false
 			};
-			for( var b in m )
+			for( let b in m )
 				if( !o[b] && !( o[b] === false ) ) o[b] = m[b];
 			
 			let ext = ( fname ? fname : title ).split( '.' ); ext = ext[ ext.length - 1 ];
@@ -8757,14 +8759,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( reason && reason == 'check' && Workspace.queuedSearches.length > 0 )
 		{
 			let copy = [];
-			for( var a = 0; a < Workspace.queuedSearches.length; a++ )
+			for( let a = 0; a < Workspace.queuedSearches.length; a++ )
 			{
 				copy.push( Workspace.queuedSearches[a] );
 			}
 			Workspace.queuedSearches = [];
 			if( copy.length > 0 )
 			{
-				for( var a = 0; a < copy.length; a++ )
+				for( let a = 0; a < copy.length; a++ )
 					callback( copy[ a ] );
 				return;
 			}
@@ -8797,7 +8799,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			app = app.split( ' ' );
 			args = '';
-			for( var a = 0; a < app.length; a++ )
+			for( let a = 0; a < app.length; a++ )
 				args += ( a > 0 ? ' ' : '' ) + app[a];
 			app = app[0];
 		}
@@ -8842,7 +8844,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			try
 			{
 				let js = JSON.parse( d );
-				for( var a = 0; a < js.length; a++ )
+				for( let a = 0; a < js.length; a++ )
 				{
 					if( js[a].Name.toLowerCase() == app.toLowerCase() )
 					{
@@ -8925,7 +8927,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	hideAllViews: function()
 	{
-		for( var a in movableWindows )
+		for( let a in movableWindows )
 		{
 			if( movableWindows[ a ].minimize )
 				movableWindows[ a ].minimize.onclick();
@@ -8938,7 +8940,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	hideInactiveViews: function()
 	{
 		let v = currentMovable;
-		for( var a in movableWindows )
+		for( let a in movableWindows )
 		{
 			if( movableWindows[ a ] != v )
 			{
@@ -8988,7 +8990,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 			// Create fileinfo
 			let d = {};
-			for( var a in p ) d[a] = p[a];
+			for( let a in p ) d[a] = p[a];
 			d.Path = path;
 
 			// Open the window
@@ -9080,7 +9082,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	handlePasteEvent: function( evt )
 	{
 		let pastedItems = ( evt.clipboardData || evt.originalEvent.clipboardData ).items;
-		for( var i in pastedItems )
+		for( let i in pastedItems )
 		{
 			let item = pastedItems[i];
 			if( item.kind === 'file' )
@@ -9261,12 +9263,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 			// Setup progress bar
 			let eled = w.getWindowElement().getElementsByTagName( 'div' );
-			for( var a = 0; a < eled.length; a++ )
+			for( let a = 0; a < eled.length; a++ )
 			{
 				if( eled[a].className )
 				{
 					let types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'Info', 'Progress' ];
-					for( var b = 0; b < types.length; b++ )
+					for( let b = 0; b < types.length; b++ )
 					{
 						if( eled[a].className.indexOf( types[b] ) == 0 )
 						{
@@ -9471,7 +9473,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( window.friendApp )
 			{
 				let appsNotified = {};
-				for( var a in movableWindows )
+				for( let a in movableWindows )
 				{
 					let win = movableWindows[ a ];
 					if( win.applicationId )
@@ -9485,7 +9487,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						// Notify application too
 						if( !appsNotified[ win.applicationId ] )
 						{
-							for( var b = 0; b < Workspace.applications.length; b++ )
+							for( let b = 0; b < Workspace.applications.length; b++ )
 							{
 								if( Workspace.applications[ b ].applicationId == win.applicationId )
 								{
@@ -9557,7 +9559,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				return Workspace.receivePush( false, true );
 			};
 			
-			for( var a = 0; a < this.onReadyList.length; a++ )
+			for( let a = 0; a < this.onReadyList.length; a++ )
 			{
 				this.onReadyList[ a ]();
 			}
@@ -9644,11 +9646,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			let current = listArea.getElementsByClassName( 'ListTask' );
 			// Add new
 			let adders = [];
-			for( var a in Workspace.applications )
+			for( let a in Workspace.applications )
 			{
 				let tid = Workspace.applications[ a ].id;
 				found = false;
-				for( var b = 0; b < current.length; b++ )
+				for( let b = 0; b < current.length; b++ )
 				{
 					if( current[ b ].getAttribute( 'TaskID' ) == tid )
 					{
@@ -9662,7 +9664,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 			}
 			let sw = 2;
-			for( var a = 0; a < adders.length; a++ )
+			for( let a = 0; a < adders.length; a++ )
 			{
 				sw = sw == 1 ? 2 : 1;
 				let d = document.createElement( 'div' );
@@ -9679,10 +9681,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Remove non existent
 			let removers = [];
 			current = listArea.getElementsByClassName( 'ListTask' );
-			for( var a = 0; a < current.length; a++ )
+			for( let a = 0; a < current.length; a++ )
 			{
 				let found = false;
-				for( var b in Workspace.applications )
+				for( let b in Workspace.applications )
 				{
 					if( current[ a ].getAttribute( 'TaskID' ) == Workspace.applications[ b ].id )
 					{
@@ -9695,7 +9697,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					removers.push( current[ a ] );
 				}
 			}
-			for( var a = 0; a < removers.length; a++ )
+			for( let a = 0; a < removers.length; a++ )
 			{
 				listArea.removeChild( removers[ a ] );
 			}
@@ -9709,7 +9711,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	killByTaskId: function( id )
 	{
 		let self = this;
-		for( var a in Workspace.applications )
+		for( let a in Workspace.applications )
 			if( Workspace.applications[ a ].id == id )
 				Workspace.applications[ a ].quit();
 		setTimeout( function()
@@ -9726,7 +9728,7 @@ ApplicationMessagingNexus = {
 	open: function( appid, callback )
 	{
 		let fapp = false;
-		for( var a = 0; a < Workspace.applications.length; a++ )
+		for( let a = 0; a < Workspace.applications.length; a++ )
 		{
 			if( Workspace.applications[ a ].applicationId == appid )
 			{
@@ -9752,7 +9754,7 @@ ApplicationMessagingNexus = {
 	{
 		let found = false;
 		let newl = {};
-		for( var a in this.ports )
+		for( let a in this.ports )
 		{
 			if( a == appid )
 			{
@@ -9879,7 +9881,7 @@ function DoorsKeyDown( e )
 				let itms = cm.getElementsByClassName( 'DockMenuItem' );
 				if( move == 'up' )
 				{
-					for( var a = 0; a < itms.length; a++ )
+					for( let a = 0; a < itms.length; a++ )
 					{
 						if( itms[a].parentNode != cm ) continue;
 					}
@@ -9901,7 +9903,7 @@ function DoorsKeyDown( e )
 				else if( move == 'left' )
 				{
 					let ts = m.currentItem.getElementsByClassName( 'DockMenuItem' );
-					for( var a = 0; a < ts.length; a++ )
+					for( let a = 0; a < ts.length; a++ )
 					{
 						if( ts[a].parentNode != ts[0].parentNode ) continue;
 						m.currentItem = ts[a];
@@ -9914,13 +9916,13 @@ function DoorsKeyDown( e )
 				else if( move == 'up' )
 				{
 					let sameLevel = [];
-					for( var a = 0; a < itms.length; a++ )
+					for( let a = 0; a < itms.length; a++ )
 					{
 						if( itms[a].parentNode != m.currentItem.parentNode )
 							continue;
 						sameLevel.push( itms[a] );
 					}
-					for( var a = 0; a < sameLevel.length; a++ )
+					for( let a = 0; a < sameLevel.length; a++ )
 					{
 						if( sameLevel[a] == m.currentItem )
 						{
@@ -9940,13 +9942,13 @@ function DoorsKeyDown( e )
 				else if( move == 'down' )
 				{
 					let sameLevel = [];
-					for( var a = 0; a < itms.length; a++ )
+					for( let a = 0; a < itms.length; a++ )
 					{
 						if( itms[a].parentNode != m.currentItem.parentNode )
 							continue;
 						sameLevel.push( itms[a] );
 					}
-					for( var a = 0; a < sameLevel.length; a++ )
+					for( let a = 0; a < sameLevel.length; a++ )
 					{
 						if( sameLevel[a] == m.currentItem )
 						{
@@ -9967,7 +9969,7 @@ function DoorsKeyDown( e )
 			if( m.currentItem )
 			{
 				let itms = Workspace.smenu.dom.getElementsByTagName( '*' );
-				for( var a = 0; a < itms.length; a++ )
+				for( let a = 0; a < itms.length; a++ )
 				{
 					if( itms[a] != m.currentItem )
 					{
@@ -9992,14 +9994,14 @@ function DoorsKeyDown( e )
 		{
 			let icons = currentMovable.content.icons;
 			let dvi = currentMovable.content.directoryview;
-			for( var a = 0; a < icons.length; a++ )
+			for( let a = 0; a < icons.length; a++ )
 			{
 				if( icons[a].domNode && icons[a].domNode.classList.contains( 'Selected' ) )
 				{
 					// Abort editing
 					if( w == 27 )
 					{
-						for( var b = 0; b < icons.length; b++ )
+						for( let b = 0; b < icons.length; b++ )
 						{
 							if( icons[b].domNode )
 							{
@@ -10247,7 +10249,7 @@ function WindowResizeFunc()
 	Workspace.repositionWorkspaceWallpapers();
 	if( isMobile && Workspace.widget )
 		Workspace.widget.setFlag( 'width', window.innerWidth );
-	for( var a in movableWindows )
+	for( let a in movableWindows )
 	{
 		if( movableWindows[a].content && movableWindows[a].content.redrawIcons )
 			movableWindows[a].content.redrawIcons();
@@ -10428,7 +10430,7 @@ function ShowEula( accept, cbk )
 			if( e == 'ok' )
 			{
 				let eles = document.getElementsByTagName( 'div' );
-				for( var a = 0; a < eles.length; a++ )
+				for( let a = 0; a < eles.length; a++ )
 				{
 					if( eles[a].className == 'Eula' )
 						eles[a].parentNode.removeChild( eles[a] );
@@ -10549,7 +10551,7 @@ function handleServerMessage( e )
 	if( e.message && e.appname )
 	{
 		let apps = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
-		for( var a = 0; a < apps.length; a++ )
+		for( let a = 0; a < apps.length; a++ )
 		{
 			// TODO: Have per application permissions here..
 			// Not all applications should be able to send messages to
@@ -10622,7 +10624,7 @@ function handleNotificationMessage( msg )
 	{
 		case 'applicationmessage':
 			let w=false;
-			for( var a in movableWindows )
+			for( let a in movableWindows )
 			{
 				w = movableWindows[a].windowObject;
 				if( w && w.viewId && w.viewId == msg.targetapp )
@@ -10635,7 +10637,7 @@ function handleNotificationMessage( msg )
 	}
 }
 
-for( var a in WorkspaceInside )
+for( let a in WorkspaceInside )
 	Workspace[a] = WorkspaceInside[a];
 delete WorkspaceInside;
 checkForFriendApp();
