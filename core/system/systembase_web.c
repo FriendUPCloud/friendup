@@ -639,6 +639,23 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							}
 						}	// timeout
 					}
+					else	// authid do not exist
+					{
+						struct TagItem tags[] = {
+								{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
+								{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+								{ TAG_DONE, TAG_DONE }
+							};
+
+							response = HttpNewSimple( HTTP_200_OK, tags );
+			
+							char buffer[ 256 ];
+							snprintf( buffer, sizeof( buffer ), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_AUTHID_IS_MISSING] , DICT_AUTHID_IS_MISSING );
+							HttpAddTextContent( response, buffer );
+							FERROR( "AuthID expired\n" );
+							FFree( sessionid );
+							return response;
+					}
 					DEBUG("Application session end\n");
 				}
 				else

@@ -561,7 +561,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			oldid = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
-		if( appname != NULL && oldid != NULL )
+		if( appname != NULL ) //&& oldid != NULL )
 		{
 			SQLLibrary *sqllib = l->GetDBConnection( l );
 			
@@ -573,35 +573,39 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				char respMsg[ 1024 ];
 				int err = 0;
 				
-				// we must get application id from database
+				// if oldid is passed, otherwise generate new authid
+				if( oldid != NULL )
+				{
+					// we must get application id from database
 		
 #ifdef DB_SESSIONID_HASH
-				char *tmpSessionID = l->sl_UtilInterface.DatabaseEncodeString( oldid );
-				if( tmpSessionID != NULL )
-				{
-					sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT ass.ID, a.ID FROM `FApplication` a inner join `FUserApplication` ua on a.ID=ua.ApplicationID inner join `FAppSession` ass on ua.ID=ass.UserApplicationID WHERE a.Name='%s' AND ass.AuthID='%s' LIMIT 1", appname, tmpSessionID );
+					char *tmpSessionID = l->sl_UtilInterface.DatabaseEncodeString( oldid );
+					if( tmpSessionID != NULL )
+					{
+						sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT ass.ID, a.ID FROM `FApplication` a inner join `FUserApplication` ua on a.ID=ua.ApplicationID inner join `FAppSession` ass on ua.ID=ass.UserApplicationID WHERE a.Name='%s' AND ass.AuthID='%s' LIMIT 1", appname, tmpSessionID );
 			
-					FFree( tmpSessionID );
-				}
+						FFree( tmpSessionID );
+					}
 #else
-				sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT ass.ID, a.ID FROM `FApplication` a inner join `FUserApplication` ua on a.ID=ua.ApplicationID inner join `FAppSession` ass on ua.ID=ass.UserApplicationID WHERE a.Name='%s' AND ass.AuthID='%s' LIMIT 1", appname, oldid );
+					sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT ass.ID, a.ID FROM `FApplication` a inner join `FUserApplication` ua on a.ID=ua.ApplicationID inner join `FAppSession` ass on ua.ID=ass.UserApplicationID WHERE a.Name='%s' AND ass.AuthID='%s' LIMIT 1", appname, oldid );
 #endif
 		
-				void *result = sqllib->Query( sqllib, query );
-				if( result != NULL )
-				{
-					char **row;
-					if( ( row = sqllib->FetchRow( sqllib, result ) ) )	// getting AppSession ID
+					void *result = sqllib->Query( sqllib, query );
+					if( result != NULL )
 					{
-						char *end;
-						asID = strtoull( row[ 0 ], &end, 0 );
+						char **row;
+						if( ( row = sqllib->FetchRow( sqllib, result ) ) )	// getting AppSession ID
+						{
+							char *end;
+							asID = strtoull( row[ 0 ], &end, 0 );
+						}
+						if( ( row = sqllib->FetchRow( sqllib, result ) ) )	// getting App ID
+						{
+							char *end;
+							appID = strtoull( row[ 1 ], &end, 0 );
+						}
+						sqllib->FreeResult( sqllib, result );
 					}
-					if( ( row = sqllib->FetchRow( sqllib, result ) ) )	// getting App ID
-					{
-						char *end;
-						appID = strtoull( row[ 1 ], &end, 0 );
-					}
-					sqllib->FreeResult( sqllib, result );
 				}
 				
 				DEBUG("Regen authid. AsID %ld AppID %ld\n", asID, appID );
@@ -680,7 +684,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		{
 			char dictmsgbuf[ 256 ];
 			char dictmsgbuf1[ 196 ];
-			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "appname, oldid" );
+			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "appname" );
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
 		}
