@@ -2242,6 +2242,21 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				
 				if( us != NULL )
 				{
+					// if sessionid exist and refreshtoken is equal to null we should get it
+					
+					if( newRefreshToken == NULL )
+					{
+						DEBUG("[Login] RefreshToken is empty. Time to regeneate it\n");
+						
+						RefreshToken *rt = SecurityManagerCreateRefreshTokenDB( l->sl_SecurityManager, deviceid, us->us_UserID );
+						//RefreshToken *rt = SecurityManagerGetRefreshTokenAndRecreateDB( l->sl_SecurityManager, el->hme_Data, deviceid, &newRefreshToken );
+						if( rt != NULL )
+						{
+							newRefreshToken = StringDuplicate( rt->rt_Token );
+							RefreshTokenDelete( rt );
+						}
+					}
+					
 					loggedSession = us;
 					
 					// add session to global users session listt
