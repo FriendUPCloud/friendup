@@ -200,7 +200,21 @@
 					</div>
 					{friendNetwork2}
 				</div>
-				<script> InitTabs( 'MTabs' ); </script>
+				<script> 
+					InitTabs( 'MTabs' );
+					let tabs = ge( 'MTabs' ).getElementsByClassName( 'Tab' );
+					if( ge( 'activeTab' ).value != 'null' )
+					{
+						for( let a = 0; a < tabs.length; a++ )
+						{
+							if( tabs[a].classList.contains( 'fa-' + ge( 'activeTab' ).value ) )
+							{
+								tabs[a].click();
+								break;
+							}
+						}
+					}
+				</script>
 			</div>
 		</div>
 		<div class="VContentBottom BorderTop Padding BackgroundDefault" style="height: 50px">
@@ -209,6 +223,8 @@
 			</button>
 		</div>
 	</div>
+	
+	<input type="hidden" id="activeTab" value="{activeTab}"/>
 	
 	<link rel="stylesheet" href="Progdir:Css/main.css"/>
 
