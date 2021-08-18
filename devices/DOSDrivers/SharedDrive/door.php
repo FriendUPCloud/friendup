@@ -390,6 +390,9 @@ if( !class_exists( 'SharedDrive' ) )
 						
 						foreach( $rows as $row )
 						{
+							$Logger->log( 'Found file ' . $row->Data );
+							
+							
 							if( $delete )
 							{
 								$fn = explode( ':', $row->Data );
@@ -521,7 +524,6 @@ if( !class_exists( 'SharedDrive' ) )
 											// Failed attempt
 											if( $str == 'fail<' )
 											{
-												$Logger->log( 'Failed to read file ' . $file->row->Data );
 												continue;
 											}
 											// Success
@@ -549,13 +551,10 @@ if( !class_exists( 'SharedDrive' ) )
 									$file->DateModified = $info->DateModified;
 									$file->multi = null;
 									$out[] = $file;
-									
-									$Logger->log( 'Found it: ' . $file->row->Data );
 								}
 								// This file does not exist!
 								else
 								{
-									$Logger->log( 'We found shared ( ' . $file->row->Data .  ' that didn\'t check out!' );
 									$SqlDatabase->query( 'DELETE FROM FShared WHERE ID=\'' . $file->row->ID . '\'' );
 									continue;
 								}
