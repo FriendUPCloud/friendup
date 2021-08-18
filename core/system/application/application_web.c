@@ -530,7 +530,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param appname - (required) application name
-	* @param oldid - (required) previous authid
+	* @param oldid - previous authid
 
 	* @return { "response":"success", "authid":"<XYZ>" } otherwise information about error
 	*/
