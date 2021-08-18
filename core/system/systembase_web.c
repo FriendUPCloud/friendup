@@ -2196,6 +2196,26 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							HttpAddTextContent( response, buffer );
 						}
 					}
+				}	// refreshToken == NULL
+				else
+				{
+					// If token doesnt exist information should be returned to client
+					struct TagItem tags[] = {
+						{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+						{ TAG_DONE, TAG_DONE}
+					};
+		
+					if( response != NULL )
+					{
+						HttpFree( response );
+					}
+					response = HttpNewSimple( HTTP_404_NOT_FOUND,  tags );
+		
+					char buffer[ 256 ];
+					snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_REFRESHTOKEN_DO_NOT_EXIST] , DICT_REFRESHTOKEN_DO_NOT_EXIST );
+					HttpAddTextContent( response, buffer );
+	
+					goto error;
 				}
 			}
 			else
