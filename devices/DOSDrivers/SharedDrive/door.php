@@ -595,6 +595,21 @@ if( !class_exists( 'SharedDrive' ) )
 					)
 					UNION
 					(
+						SELECT s.ID AS ShareID, "" as FullName, g.Name, g.ID, u.ID AS OwnerID, u.ServerToken, DateTouched AS DateModified, DateCreated, "group" AS `Type`
+							FROM 
+								FShared s, FUserGroup g, FUserToGroup ug, FUserToGroup ug2, FUser u
+							WHERE 
+								s.OwnerUserID = \'' . intval( $User->ID, 10 ) . '\' AND
+								s.SharedType = \'group\' AND
+								s.SharedID = ug.UserGroupID AND
+								g.ID = ug.UserGroupID AND
+								g.ID = ug2.UserGroupID AND
+								ug2.UserID != \'' . $User->ID . '\' AND
+								u.ID = ug.UserID AND
+								u.ServerToken != ""
+					)
+					UNION
+					(
 						SELECT s.ID AS ShareID, u.FullName, u.Name, u.ID, u.ID AS OwnerID, u.ServerToken, DateTouched AS DateModified, DateCreated, "user" AS `Type`
 							FROM 
 								FShared s, FUser u 
