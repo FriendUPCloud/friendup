@@ -433,7 +433,7 @@ int generateConnectedUsersIDByID( SystemBase *l, FULONG groupID, BufString *retS
 //
 //
 
-inline FBOOL CanUserCreateWorkgroup( SystemBase *l, FQUAD userid, char *groupname )
+FBOOL CanUserCreateWorkgroup( SystemBase *l, FQUAD userid, char *groupname )
 {
 	FBOOL change = FALSE;
 	
@@ -482,7 +482,7 @@ inline FBOOL CanUserCreateWorkgroup( SystemBase *l, FQUAD userid, char *groupnam
 //
 //
 
-inline void SetUserAdminOrAPI( SystemBase *l, User *usr )
+void SetUserAdminOrAPI( SystemBase *l, User *usr )
 {
 	// We need to check how many groups were created by the user before
 	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
@@ -496,7 +496,7 @@ inline void SetUserAdminOrAPI( SystemBase *l, User *usr )
 		usr->u_IsAdmin = FALSE;
 		usr->u_IsAPI = FALSE;
 		
-		sqllib->SNPrintF( sqllib, qery, 1024, "SELECT Name FROM FUserToGroup WHERE UserID=%ld AND (Name='Admin' OR Name='API')", usr->u_ID );
+		sqllib->SNPrintF( sqllib, qery, 1024, "SELECT ug.Name FROM FUserToGroup utg inner join FUserGroup ug on utg.UserGroupID=ug.ID WHERE utg.UserID=%ld AND (ug.Name='Admin' OR ug.Name='API')", usr->u_ID );
 		void *res = sqllib->Query( sqllib, qery );
 		if( res != NULL )
 		{
@@ -524,7 +524,7 @@ inline void SetUserAdminOrAPI( SystemBase *l, User *usr )
 	}
 }
 
-inline FBOOL CanUserChangeDeleteWorkgroup( SystemBase *l, FQUAD userid, FULONG groupID )
+FBOOL CanUserChangeDeleteWorkgroup( SystemBase *l, FQUAD userid, FULONG groupID )
 {
 	FBOOL change = FALSE;
 	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
@@ -780,7 +780,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				{
 					// get information from DB if group already exist
 
-					UserGroup *ug = UGMGetGroupByName( l->sl_UGM, groupname );
+					UserGroup *ug = UGMGetGroupByNameDB( l->sl_UGM, groupname );
 					FBOOL groupUpdate = FALSE;
 					DEBUG("[UMWebRequest] GroupCreate: pointer to group from memory: %p\n", ug );
 				
@@ -788,7 +788,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					{
 						if( ug->ug_Status == USER_GROUP_STATUS_DISABLED )
 						{
-							ug->ug_Status = USER_GROUP_STATUS_ACTIVE;
+							ug->ug_Status = USER_GROUP_STATUS_ACTIVE;	// we can probably remove that
 						
 							char buffer[ 1024 ];
 							snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"sucess\",\"id\":%lu}", ug->ug_ID );
@@ -806,6 +806,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_USER_GROUP_ALREADY_EXIST] , DICT_USER_GROUP_ALREADY_EXIST );
 							HttpAddTextContent( response, buffer );
 						}
+						
+						UserGroupDeleteAll( l, ug );
 					}
 					else	// group do not exist in db
 					{
@@ -1591,7 +1593,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			{
 				// get information from DB if group already exist
 				
-				UserGroup *fg = UGMGetGroupByID( l->sl_UGM, groupID );
+				UserGroup *fg = UGMGetGroupByIDDB( l->sl_UGM, groupID );
 				DEBUG("[UMWebRequest] Group/Update pointer to group from memory: %p\n", fg );
 				
 				if( fg != NULL )	// group already exist, there is no need to create double
@@ -1620,6 +1622,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 					char buffer[ 256 ];
 					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"sucess\",\"id\":%lu,\"status\":%d}", fg->ug_ID, status );
 					HttpAddTextContent( response, buffer );
+					
+					UserGroupDelete( l, fg );
 				}
 				else	// group do not exist in memory
 				{
@@ -2006,39 +2010,50 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				UserGroup *ug = NULL;
 				char tmp[ 512 ];
 				int itmp = 0;
-				ug = UGMGetGroupByID( l->sl_UGM, groupID );
 				
-				if( ug == NULL )	// if group is not in memory then it is user group
+				ug = UGMGetGroupByIDDB( l->sl_UGM, groupID );
+				if( ug != NULL )
 				{
-					ug = UGMGetGroupByIDDB( l->sl_UGM, groupID );
+					FBOOL levelType = FALSE;
 					
-					if( ug == NULL )
+					if( strcmp( ug->ug_Type, "Level" ) == 0 )
 					{
-						itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"userids\":[", groupID );
+						levelType = TRUE;
 					}
-					else
-					{
-						itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"uuid\":\"%s\",\"userids\":[", groupID, ug->ug_UUID );
-					}
+					
+					itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"uuid\":\"%s\",\"userids\":[", groupID, ug->ug_UUID );
 					BufStringAddSize( retString, tmp, itmp );
 				
 					BufStringAddSize( retServiceString, tmp, itmp );
-				
-					if( ug != NULL )
+
+					// go through all elements and find proper users
+					
+					IntListEl *el = ILEParseString( users );
+					
+					DEBUG("String parsed\n");
+					
+					while( el != NULL )
 					{
-						// go through all elements and find proper users
+						IntListEl *rmEntry = el;
 					
-						IntListEl *el = ILEParseString( users );
+						el = (IntListEl *)el->node.mln_Succ;
 					
-						DEBUG("[add user to group] user/String parsed\n");
-					
-						while( el != NULL )
+						FBOOL isInMemory = FALSE;
+						// get user from memory first
+						User *usr = UMGetUserByID( l->sl_UM, (FULONG)rmEntry->i_Data );
+						DEBUG("Got user from FC memory, pointer: %p\n", usr );
+						if( usr != NULL )
 						{
-							IntListEl *rmEntry = el;
-						
-							el = (IntListEl *)el->node.mln_Succ;
-							
-							DEBUG("[add user to group] user/Getting entry from DB\n");
+							isInMemory = TRUE;
+							if( levelType == TRUE )
+							{
+								SetUserAdminOrAPI( l, usr );
+							}
+						}
+						// just to be sure that stuff is deleted
+						//else
+						{
+							DEBUG("Getting entry from DB\n");
 							// there is need to check and update DB
 							//FBOOL exist = UGMUserToGroupISConnectedDB( l->sl_UGM, groupID, User *u );
 							FBOOL exist = UGMUserToGroupISConnectedByUIDDB( l->sl_UGM, groupID, rmEntry->i_Data );
@@ -2046,91 +2061,41 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 							{
 								UGMAddUserToGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
 							}
+						}
+					
+						// if user is in memory we must mount group drives for him + send notification
+						if( isInMemory == TRUE )
+						{
+							SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+							if( sqlLib != NULL )
+							{
+								char *errorStr = NULL;
 
-							FFree( rmEntry );
-						} // while ugroups
-						
-						UserGroupDeleteAll( l, ug );
-					} // ug != NULL
+								UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, loggedSession, groupID );
+							
+								if( UserGroupDeviceMount( l->sl_DeviceManager, sqlLib, ug, usr, loggedSession, &errorStr ) != 0 )
+								{
+									//INFO( "[MountFS] -- Could not mount device for user %s. Drive was %s.\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--" );
+								}
+
+								// Tell user!
+								UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
+
+								l->LibrarySQLDrop( l, sqlLib );
+							}
+						}
+						FFree( rmEntry );
+					} // while ugroups
+					
+ 					UserGroupDeleteAll( l, ug );
 				}
-				else
+				else	// ug != NULL
 				{
-					if( ug == NULL )
-					{
-						itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"userids\":[", groupID );
-					}
-					else
-					{
-						itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"uuid\":\"%s\",\"userids\":[", groupID, ug->ug_UUID );
-					}
+					itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"userids\":[", groupID );
+					
 					BufStringAddSize( retString, tmp, itmp );
 				
 					BufStringAddSize( retServiceString, tmp, itmp );
-				
-					if( ug != NULL )
-					{
-						// go through all elements and find proper users
-					
-						IntListEl *el = ILEParseString( users );
-					
-						DEBUG("String parsed\n");
-					
-						while( el != NULL )
-						{
-							IntListEl *rmEntry = el;
-						
-							el = (IntListEl *)el->node.mln_Succ;
-						
-							FBOOL isInGroup = FALSE;
-							FBOOL isInMemory = FALSE;
-							// get user from memory first
-							User *usr = UMGetUserByID( l->sl_UM, (FULONG)rmEntry->i_Data );
-							DEBUG("Got user from FC memory, pointer: %p\n", usr );
-							if( usr != NULL )
-							{
-								if( UserGroupAddUser( ug, usr ) == 1 )	// 1 - user is in group, no need to add him twice
-								{
-									isInGroup = TRUE;
-								}
-								isInMemory = TRUE;
-							}
-							// just to be sure that stuff is deleted
-							//else
-							{
-								DEBUG("Getting entry from DB\n");
-								// there is need to check and update DB
-								//FBOOL exist = UGMUserToGroupISConnectedDB( l->sl_UGM, groupID, User *u );
-								FBOOL exist = UGMUserToGroupISConnectedByUIDDB( l->sl_UGM, groupID, rmEntry->i_Data );
-								if( exist == FALSE )
-								{
-									UGMAddUserToGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
-								}
-							}
-						
-							// if user is in memory we must mount group drives for him + send notification
-							if( isInMemory == TRUE )
-							{
-								SQLLibrary *sqlLib = l->LibrarySQLGet( l );
-								if( sqlLib != NULL )
-								{
-									char *errorStr = NULL;
-
-									UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, loggedSession, groupID );
-								
-									if( UserGroupDeviceMount( l->sl_DeviceManager, sqlLib, ug, usr, loggedSession, &errorStr ) != 0 )
-									{
-										//INFO( "[MountFS] -- Could not mount device for user %s. Drive was %s.\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--" );
-									}
-
-									// Tell user!
-									UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
-
-									l->LibrarySQLDrop( l, sqlLib );
-								}
-							}
-							FFree( rmEntry );
-						} // while ugroups
-					} // ug != NULL
 				}
 				
 				// get required information for external servers
@@ -2274,7 +2239,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				char tmp[ 512 ];
 				int itmp = 0;
 				UserGroup *ug = NULL;
-				ug = UGMGetGroupByID( l->sl_UGM, groupID );
+				//ug = UGMGetGroupByID( l->sl_UGM, groupID );
 				
 				if( normalUserUpdate == TRUE ) // update in DB only
 				{
@@ -2362,8 +2327,9 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 					
 					UserGroupDeleteAll( l, ug );
 				}
-				else	// group found in memory, so we can move forward
+				else	// admin user
 				{
+					ug = UGMGetGroupByIDDB( l->sl_UGM, groupID );
 				
 					if( ug == NULL )
 					{
@@ -2423,6 +2389,12 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				
 					if( ug != NULL )
 					{
+						FBOOL levelType = FALSE;
+					
+						if( strcmp( ug->ug_Type, "Level" ) == 0 )
+						{
+							levelType = TRUE;
+						}
 						// go through all elements and find proper users
 					
 						IntListEl *el = ILEParseString( users );
@@ -2439,11 +2411,12 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 							User *usr = UMGetUserByID( l->sl_UM, (FULONG)rmEntry->i_Data );
 							if( usr != NULL )
 							{
-								if( UserGroupRemoveUser( ug, usr ) == 0 )	// 1 - user is in group, no need to add him twice
-								{
-									isInGroup = TRUE;
-								}
 								isInMemory = TRUE;
+								
+								if( levelType == TRUE )
+								{
+									SetUserAdminOrAPI( l, usr );
+								}
 							}
 							//else // to be sure that entry is removed from DB
 							{
@@ -2484,6 +2457,11 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 							FFree( rmEntry );
 						}
 					} // ug = NULL
+				}
+				
+				if( ug != NULL )
+				{
+					UserGroupDeleteAll( l, ug );
 				}
 				
 				BufStringAddSize( retString, "]", 1 );
@@ -2569,7 +2547,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			{
 				// get information from DB if group already exist
 				
-				UserGroup *fg = UGMGetGroupByID( l->sl_UGM, groupID );
+				UserGroup *fg = UGMGetGroupByIDDB( l->sl_UGM, groupID );
 				DEBUG("[UMGWebRequest] pointer to group from memory: %p\n", fg );
 				
 				if( fg != NULL )	// group already exist
@@ -2646,6 +2624,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 					char buffer[ 256 ];
 					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"sucess\",\"id\":%lu}", fg->ug_ID );
 					HttpAddTextContent( response, buffer );
+					
+					UserGroupDeleteAll( l, fg );
 				}
 				else	// group do not exist in memory
 				{

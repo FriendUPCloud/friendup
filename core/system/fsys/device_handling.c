@@ -963,6 +963,7 @@ AND f.Name = '%s'",
 		
 		if( notify == TRUE )
 		{
+			/*
 			if( usrgrp != NULL )
 			{
 				GroupUserLink * ugu = usrgrp->ug_UserList;
@@ -973,6 +974,7 @@ AND f.Name = '%s'",
 					ugu = (GroupUserLink *)ugu->node.mln_Succ;
 				}
 			}
+			*/
 		}
 		
 		//if( FRIEND_MUTEX_LOCK( &dm->dm_Mutex ) == 0 )
@@ -1636,6 +1638,7 @@ AND f.Name = '%s'",
 		
 		if( notify == TRUE )
 		{
+			/*
 			if( usrgrp != NULL )
 			{
 				GroupUserLink * ugu = usrgrp->ug_UserList;
@@ -1646,6 +1649,7 @@ AND f.Name = '%s'",
 					ugu = (GroupUserLink *)ugu->node.mln_Succ;
 				}
 			}
+			*/
 		}
 		
 		//if( FRIEND_MUTEX_LOCK( &dm->dm_Mutex ) == 0 )

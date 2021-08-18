@@ -1380,7 +1380,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 			
 			user = UMGetUserByName( l->sl_UM, username );
 			
-			usergroup = UGMGetGroupByName( l->sl_UGM, usergroupname );
+			usergroup = UGMGetGroupByNameDB( l->sl_UGM, usergroupname );
 			
 			if( user == NULL )
 			{
@@ -1470,6 +1470,11 @@ AND LOWER(f.Name) = LOWER('%s')",
 				char dictmsgbuf[ 256 ];
 				snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_USER_OR_DEVICE_NOT_EXIST] , DICT_USER_OR_DEVICE_NOT_EXIST );
 				HttpAddTextContent( response, dictmsgbuf );
+			}
+			
+			if( usergroup != NULL )
+			{
+				UserGroupDeleteAll( l, usergroup );
 			}
 			
 			//char tmp[ 100 ];

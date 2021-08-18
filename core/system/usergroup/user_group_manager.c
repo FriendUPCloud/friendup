@@ -530,9 +530,13 @@ int UGMAssignGroupToUser( UserGroupManager *ugm, User *usr )
 		return 1;
 	}
 	
-	tmpQuery = (char *)FCalloc( QUERY_SIZE, sizeof(char) );
+	//tmpQuery = (char *)FCalloc( QUERY_SIZE, sizeof(char) );
 	
 	SystemBase *sb = (SystemBase *)ugm->ugm_SB;
+	
+	SetUserAdminOrAPI( sb, usr );
+	
+	/*
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 
 	if( sqlLib != NULL )
@@ -571,6 +575,8 @@ int UGMAssignGroupToUser( UserGroupManager *ugm, User *usr )
 				
 					DEBUG("[UMAssignGroupToUser] User is in group %lu\n", gid  );
 				
+					*/
+					/*
 					if( FRIEND_MUTEX_LOCK( &(ugm->ugm_Mutex) ) == 0 )
 					{
 						UserGroup *g = ugm->ugm_UserGroups;
@@ -595,6 +601,8 @@ int UGMAssignGroupToUser( UserGroupManager *ugm, User *usr )
 						}
 						FRIEND_MUTEX_UNLOCK( &(ugm->ugm_Mutex) );
 					}
+					*/
+					/*
 				}
 			}
 		}
@@ -606,8 +614,8 @@ int UGMAssignGroupToUser( UserGroupManager *ugm, User *usr )
 
 		sb->LibrarySQLDrop( sb, sqlLib );
 	}
-	
-	FFree( tmpQuery );
+	*/
+	//FFree( tmpQuery );
 	
 	return 0;
 }
