@@ -326,16 +326,22 @@ if( !class_exists( 'SharedDrive' ) )
 								SELECT 
 									s.ID, s.Data, s.OwnerUserID, u.ServerToken
 								FROM 
-									FShared s, FUserGroup g, FUserToGroup ug, FUserToGroup ug2, FUser u
+									FShared s, FUserGroup g, FUserToGroup me_ug, FUserToGroup oth_ug, FUser u
 								WHERE 
 									g.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
 									s.SharedType = \'group\' AND 
-									s.SharedID = ug.UserGroupID AND 
+									s.SharedID = g.ID AND 
+									
 									s.OwnerUserID != \'' . $User->ID . '\' AND
-									g.ID = ug.UserGroupID AND
-									g.ID = ug2.UserGroupID AND
-									ug2.UserID = \'' . $User->ID . '\' AND
-									u.ID = ug.UserID AND
+									s.OwnerUserID = oth_ug.UserID AND
+									
+									me_ug.UserGroupID = g.ID AND
+									oth_ug.UserGroupID = g.ID AND
+									
+									me_ug.UserID = \'' . $User->ID . '\' AND
+									
+									u.ID = oth_ug.UserID AND
+									
 									u.ServerToken != ""
 							)
 							UNION
@@ -343,20 +349,21 @@ if( !class_exists( 'SharedDrive' ) )
 								SELECT 
 									s.ID, s.Data, s.OwnerUserID, u.ServerToken
 								FROM 
-									FShared s, FUserGroup g, FUserToGroup ug, FUser u
+									FShared s, FUserGroup g, FUserToGroup me_ug, FUser u
 								WHERE 
 									g.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
-									s.OwnerUserID = \'' . $User->ID . '\' AND
 									s.SharedType = \'group\' AND 
-									s.SharedID = ug.UserGroupID AND 
-									g.ID = ug.UserGroupID AND
+									s.SharedID = g.ID AND 
+									
+									s.OwnerUserID = \'' . $User->ID . '\' AND
 									s.OwnerUserID = u.ID AND
-									ug.UserID = u.ID AND
+									me_ug.UserGroupID = g.ID AND
+									me_ug.UserID = u.ID AND
+									
 									u.ServerToken != ""
 							)
 						' ) )
 						{
-							//$Logger->log( 'We got ' . count( $rows ) . ' rows.' );
 							$groupShare = true;
 						}
 						else
@@ -406,7 +413,7 @@ if( !class_exists( 'SharedDrive' ) )
 								if( $fn == $pth )
 								{
 									$SqlDatabase->Query( '
-										DELETE FROM FShared WHERE ID=\'' . intval( $row->ID, 10 ) . '\'
+										DELETE FROM FShared WHERE ID=\'' . intval( $row->ID, 10 ) . '\' AND OwnerUserID=\'' . $User->ID . '\'
 									' );
 									die( 'ok<!--separate-->{"message":"Unshared file.","response":"1"}' );
 								}
@@ -556,7 +563,7 @@ if( !class_exists( 'SharedDrive' ) )
 								// This file does not exist!
 								else
 								{
-									$SqlDatabase->query( 'DELETE FROM FShared WHERE ID=\'' . $file->row->ID . '\'' );
+									$SqlDatabase->query( 'DELETE FROM FShared WHERE ID=\'' . $file->row->ID . '\' AND OwnerUserID=\'' . $User->ID . '\'' );
 									continue;
 								}
 							}
@@ -579,37 +586,46 @@ if( !class_exists( 'SharedDrive' ) )
 				else
 				{
 					// Select groupshares that has been shared in where I am member
-					// First in union is; Get folders by other users or groups
-					// Second one is: Select usershares where I am shared with
+					// Unions joints:
+					// 1: Get folders by others who shared in my member groups
+					// 2: Get folders by my shares in my member groups
+					// 3: Get other peoples specific shares with me
+					// 4: Get my shares to other users
 					
 					if( $rows = $SqlDatabase->fetchObjects( '
 					(
 						SELECT s.ID AS ShareID, "" as FullName, g.Name, g.ID, u.ID AS OwnerID, u.ServerToken, DateTouched AS DateModified, DateCreated, "group" AS `Type`
 							FROM 
-								FShared s, FUserGroup g, FUserToGroup ug, FUserToGroup ug2, FUser u
+								FShared s, FUserGroup g, FUserToGroup me_ug, FUserToGroup oth_ug, FUser u
 							WHERE 
 								s.OwnerUserID != \'' . $User->ID . '\' AND
 								s.SharedType = \'group\' AND
-								s.SharedID = ug.UserGroupID AND
-								g.ID = ug.UserGroupID AND
-								g.ID = ug2.UserGroupID AND
-								ug2.UserID = \'' . $User->ID . '\' AND
-								u.ID = ug.UserID AND
+								s.SharedID = g.ID AND
+								s.OwnerUserID = oth_ug.UserID AND
+								
+								g.ID = me_ug.UserGroupID AND
+								g.ID = oth_ug.UserGroupID AND
+								
+								me_ug.UserID = \'' . $User->ID . '\' AND
+								oth_ug.UserID = u.ID AND
+								
 								u.ServerToken != ""
 					)
 					UNION
 					(
 						SELECT s.ID AS ShareID, "" as FullName, g.Name, g.ID, u.ID AS OwnerID, u.ServerToken, DateTouched AS DateModified, DateCreated, "group" AS `Type`
 							FROM 
-								FShared s, FUserGroup g, FUserToGroup ug, FUserToGroup ug2, FUser u
+								FShared s, FUserGroup g, FUserToGroup me_ug, FUser u
 							WHERE 
 								s.OwnerUserID = \'' . $User->ID . '\' AND
 								s.SharedType = \'group\' AND
-								s.SharedID = ug.UserGroupID AND
-								g.ID = ug.UserGroupID AND
-								g.ID = ug2.UserGroupID AND
-								ug2.UserID != \'' . $User->ID . '\' AND
-								u.ID = ug.UserID AND
+								s.SharedID = g.ID AND
+								
+								g.ID = me_ug.UserGroupID AND
+								
+								me_ug.UserID = \'' . $User->ID . '\' AND
+								me_ug.UserID = u.ID AND
+
 								u.ServerToken != ""
 					)
 					UNION
@@ -624,13 +640,24 @@ if( !class_exists( 'SharedDrive' ) )
 								s.SharedID = \'' . $User->ID . '\' AND
 								u.ServerToken != ""
 					)
+					UNION
+					(
+						SELECT s.ID AS ShareID, u.FullName, u.Name, u.ID, u.ID AS OwnerID, u.ServerToken, DateTouched AS DateModified, DateCreated, "user" AS `Type`
+							FROM 
+								FShared s, FUser u 
+							WHERE
+								u.ID = s.SharedID AND 
+								s.OwnerUserID = \'' . $User->ID . '\' AND
+								s.SharedType = \'user\' AND
+								s.SharedID != \'' . $User->ID . '\' AND
+								u.ServerToken != ""
+					)
 					' ) )
 					{
 						// Remove duplicates
 						$out2 = [];
 						foreach( $rows as $row )
 						{
-							$Logger->log( 'Found share :: ' . $row->Name . ' (' . $row->ShareID . ')' );
 							if( !isset( $out2[ $row->Name . '-' . $row->Type ] ) )
 								$out2[ $row->Name . '-' . $row->Type ] = $row;
 						}
