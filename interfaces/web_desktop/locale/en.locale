@@ -193,6 +193,7 @@ i18n_recipient                          : Recipient
 i18n_invite_user                        : Invite user
 i18n_optional                           : optional
 i18n_full_name                          : Full name
+i18n_manage_groups                      : Manage groups
 
 i18n_failed_to_send                     : Failed to send invite
 i18n_email_error                        : Could not send email. Please check the e-mail address.

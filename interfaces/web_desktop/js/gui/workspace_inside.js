@@ -419,7 +419,7 @@ var WorkspaceInside = {
 								count++;
 							}
 							
-							str += '<p class="BorderTop BorderBottom PaddingTop PaddingBottom MarginTop"><button type="button" class="Button IconSmall fa-plus">Manage groups</button></p>';
+							str += '<p class="BorderTop BorderBottom PaddingTop PaddingBottom MarginTop"><button type="button" class="Button IconSmall fa-plus">' + i18n( 'i18n_manage_groups' ) + '</button></p>';
 							
 							str += '</div>';
 							
