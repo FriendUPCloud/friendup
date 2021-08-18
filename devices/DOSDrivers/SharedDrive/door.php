@@ -572,6 +572,7 @@ if( !class_exists( 'SharedDrive' ) )
 						
 						die( 'ok<!--separate-->' . json_encode( $out ) );
 					}
+					$Logger->log( 'No files returned!' );
 					die( 'ok<!--separate-->[]' );
 				}
 				// This is the root path
