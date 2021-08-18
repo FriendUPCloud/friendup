@@ -321,7 +321,6 @@ if( !class_exists( 'SharedDrive' ) )
 					{
 						// Shared through groups (by others)
 						// Second in union is own files (your files!)
-						$Logger->log( 'WHAT IS THE NAME: ' . $path[1] );
 						if( $rows = $SqlDatabase->fetchObjects( '
 							(
 								SELECT 
@@ -358,6 +357,7 @@ if( !class_exists( 'SharedDrive' ) )
 							)
 						' ) )
 						{
+							$Logger->log( 'We got ' . count( $rows ) . ' rows.' );
 							$groupShare = true;
 						}
 					}
