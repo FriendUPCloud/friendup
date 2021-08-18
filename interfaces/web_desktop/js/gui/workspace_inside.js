@@ -429,17 +429,17 @@ var WorkspaceInside = {
 							
 							if( inps.length > 0 )
 							{
-								for( var i in inps )
+								for( let i in inps )
 								{
 									if( inps[i] )
 									{
-										inps[i].onclick = ( function (  )
+										inps[i].onclick = ( function()
 										{
-											var divs = self.inviteView.content.querySelector( '.Collections' ).getElementsByTagName( 'div' );
+											let divs = self.inviteView.content.querySelector( '.Collections' ).getElementsByTagName( 'div' );
 											
 											if( divs.length > 0 )
 											{
-												for( var i in divs )
+												for( let i in divs )
 												{
 													if( divs[i] && divs[i].className && divs[i].className.indexOf( 'Selected' ) >= 0 )
 													{
@@ -465,14 +465,14 @@ var WorkspaceInside = {
 							
 							if( btns.length > 0 )
 							{
-								for( var i in btns )
+								for( let i in btns )
 								{
 									if( btns[i] )
 									{
-										btns[i].onclick = ( function (  )
+										btns[i].onclick = ( function()
 										{
 											
-											Workspace.shell.execute( 'Launch Account' );
+											Workspace.shell.execute( 'Launch Account tab=groups' );
 											
 										} );
 									}
