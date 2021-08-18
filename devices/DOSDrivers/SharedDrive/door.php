@@ -631,6 +631,7 @@ if( !class_exists( 'SharedDrive' ) )
 						$out2 = [];
 						foreach( $rows as $row )
 						{
+							$Logger->log( 'Found share :: ' . $row->Name . ' (' . $row->ShareID . ')' );
 							if( !isset( $out2[ $row->Name . '-' . $row->Type ] ) )
 								$out2[ $row->Name . '-' . $row->Type ] = $row;
 						}
