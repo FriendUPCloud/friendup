@@ -820,6 +820,9 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 		// Support both API scope and Workspace scope
 		let func = function( path, flags, cb )
 		{
+			// Don't do translations here!
+			flags.translations = false;
+		
 			if( window.Workspace )
 			{
 				Friend.DOS.getDirectory( path, flags, function( response, msg )
@@ -934,6 +937,13 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						let ext = msg.list[a].Filename.split( '.' ).pop().toLowerCase();
 						let icon = d.className == 'FolderItem' ? 'IconFolder' : ( 'IconFile ' + ext );
 						let title = msg.list[a].Title ? msg.list[a].Title : msg.list[a].Filename;
+						
+						// Translations
+						if( msg.list[a].Path.indexOf( 'Shared:' ) == 0 && title.substr( 0, 5 ) == 'i18n_' )
+						{
+							title = i18n( title );
+						}
+						
 						d.id = 'fileitem_' + msg.list[a].Filename.split( ' ' ).join( '' );
 						d.innerHTML = '<div style="padding-left: ' + ( d13 ) + 'px" class="Name IconSmall ' + icon + '"><span> ' + title + '</span></div><div class="SubItems"></div>';
 						rootElement.appendChild( d );

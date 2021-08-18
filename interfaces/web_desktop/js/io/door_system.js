@@ -614,7 +614,7 @@ DoorSystem.prototype.flushDuplicate = function( output )
 		let found = false;
 		for( let b = 0; b < out.length; b++ )
 		{
-			if( output[a].Path == out[b].Path )
+			if( output[a].Path == out[b].Path && output[a].Filename == out[b].Filename )
 			{
 				found = true;
 				break;
