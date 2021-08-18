@@ -356,12 +356,12 @@ if( !class_exists( 'SharedDrive' ) )
 							)
 						' ) )
 						{
-							$Logger->log( 'We got ' . count( $rows ) . ' rows.' );
+							//$Logger->log( 'We got ' . count( $rows ) . ' rows.' );
 							$groupShare = true;
 						}
 						else
 						{
-							$Logger->log( 'Err! ' . mysqli_error( $SqlDatabase->_link ) );
+							//$Logger->log( 'Err! ' . mysqli_error( $SqlDatabase->_link ) );
 						}
 					}
 					// Add own files shared with other user (we're not in group)
