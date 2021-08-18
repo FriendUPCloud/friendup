@@ -552,6 +552,7 @@ if( !class_exists( 'SharedDrive' ) )
 								// This file does not exist!
 								else
 								{
+									$Logger->log( 'We found shared ( ' . $file->row->Data .  ' that didn\'t check out!' );
 									$SqlDatabase->query( 'DELETE FROM FShared WHERE ID=\'' . $file->row->ID . '\'' );
 									continue;
 								}
