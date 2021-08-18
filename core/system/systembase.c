@@ -1191,6 +1191,7 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 
 	EventAdd( l->sl_EventManager, "DoorNotificationRemoveEntries", DoorNotificationRemoveEntries, l, time( NULL )+MINS30, MINS30, -1 );
+
 	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+l->sl_EventRemoveOldUserSessionTimeout, l->sl_EventRemoveOldUserSessionTimeout, -1 );	// default 60mins
 	EventAdd( l->sl_EventManager, "AppSessionManagerRemoveOldAppSessions", AppSessionManagerRemoveOldAppSessions, l, time( NULL )+l->sl_EventRemoveOldAppSessionTimeout, l->sl_EventRemoveOldAppSessionTimeout, -1 );
 	// test, to remove

@@ -230,7 +230,8 @@ Friend.User = {
 			console.trace( 'SendLoginCall - response', {
 				info         : info,
 				conf         : conf,
-				serveranswer : response,
+				response     : response,
+				serveranswer : serveranswer,
 				lastLogin    : !!self.lastLogin,
 			});
 			if( conf == null || '' == conf )

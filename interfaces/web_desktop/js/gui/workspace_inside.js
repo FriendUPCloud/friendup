@@ -1574,8 +1574,11 @@ var WorkspaceInside = {
 
 			    doItCal( sessions );
 		    }
-		    // FRANCOIS: get unique device IDs...
-		    mo.execute( 'user/sessionlist', { username: Workspace.loginUsername } );
+		    // get unique device IDs... ???
+		    
+		    // username argument is for admins to check other peoples sessions
+		    //mo.execute( 'user/sessionlist', { username: Workspace.loginUsername } );
+		    mo.execute( 'user/sessionlist', );
 		}
 		else
 		{
