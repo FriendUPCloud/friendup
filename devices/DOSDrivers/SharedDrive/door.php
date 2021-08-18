@@ -552,7 +552,7 @@ if( !class_exists( 'SharedDrive' ) )
 								// This file does not exist!
 								else
 								{
-									$SqlDatabase->query( 'DELETE FROM FShared WHERE ID=\'' . $file->row->ID . '\' AND OwnerUserID=\'' . $User->ID . '\'' );
+									$SqlDatabase->query( 'DELETE FROM FShared WHERE ID=\'' . $file->row->ID . '\'' );
 									continue;
 								}
 							}
