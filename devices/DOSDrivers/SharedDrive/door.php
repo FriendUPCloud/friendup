@@ -521,6 +521,7 @@ if( !class_exists( 'SharedDrive' ) )
 											// Failed attempt
 											if( $str == 'fail<' )
 											{
+												$Logger->log( 'Failed to read file ' . $file->row->Data );
 												continue;
 											}
 											// Success
