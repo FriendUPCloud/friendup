@@ -548,6 +548,8 @@ if( !class_exists( 'SharedDrive' ) )
 									$file->DateModified = $info->DateModified;
 									$file->multi = null;
 									$out[] = $file;
+									
+									$Logger->log( 'Found it: ' . $file->row->Data );
 								}
 								// This file does not exist!
 								else
