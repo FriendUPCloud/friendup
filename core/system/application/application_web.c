@@ -443,7 +443,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				// we must get application id from database
 				
 				sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT ua.ID FROM `FApplication` a inner join `FUserApplication` ua on a.ID=ua.ApplicationID WHERE a.Name='%s' AND ua.UserID=%ld LIMIT 1", appname, uid );
-		
+				
 				void *result = sqllib->Query( sqllib, query );
 				if( result != NULL )
 				{
@@ -538,8 +538,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	else if( strcmp( urlpath[ 0 ], "authidrenew" ) == 0 )
 	{
 		char *appname = NULL;
-		char *oldid = NULL;
-		FQUAD uid= 0;
+		FQUAD uid = 0;
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
@@ -549,160 +548,108 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
+		SQLLibrary *sqllib = l->GetDBConnection( l );
+		if ( sqllib == NULL )
+		{
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
+			HttpAddTextContent( response, dictmsgbuf );
+			return;
+		}
+		
 		HashmapElement *el = HashmapGet( request->http_ParsedPostContent, "appname" );
 		if( el != NULL )
 		{
 			appname = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
-		/*
-		el = HashmapGet( request->http_ParsedPostContent, "oldid" );
-		if( el != NULL )
-		{
-			oldid = UrlDecodeToMem( ( char *)el->hme_Data );
-		}
-		*/
-		
-		if( appname != NULL ) //&& oldid != NULL )
-		{
-			SQLLibrary *sqllib = l->GetDBConnection( l );
-			
-			if( sqllib != NULL )
-			{
-				FQUAD asID = 0;
-				FQUAD appID = 0;
-				char query[ 1024 ];
-				char respMsg[ 1024 ];
-				int err = 0;
-				
-				// if oldid is passed, otherwise generate new authid
-				if( oldid != NULL )
-				{
-					// we must get application id from database
-				
-#ifdef DB_SESSIONID_HASH
-					char *tmpSessionID = l->sl_UtilInterface.DatabaseEncodeString( oldid );
-					if( tmpSessionID != NULL )
-					{
-						sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT ass.ID, a.ID FROM `FApplication` a inner join `FUserApplication` ua on a.ID=ua.ApplicationID inner join `FAppSession` ass on ua.ID=ass.UserApplicationID WHERE a.Name='%s' AND ass.AuthID='%s' LIMIT 1", appname, tmpSessionID );
-					
-						FFree( tmpSessionID );
-					}
-#else
-					sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT ass.ID, a.ID FROM `FApplication` a inner join `FUserApplication` ua on a.ID=ua.ApplicationID inner join `FAppSession` ass on ua.ID=ass.UserApplicationID WHERE a.Name='%s' AND ass.AuthID='%s' LIMIT 1", appname, oldid );
-#endif
-					
-					void *result = sqllib->Query( sqllib, query );
-					if( result != NULL )
-					{
-						char **row;
-						if( ( row = sqllib->FetchRow( sqllib, result ) ) )	// getting AppSession ID
-						{
-							char *end;
-							asID = strtoull( row[ 0 ], &end, 0 );
-						}
-						if( ( row = sqllib->FetchRow( sqllib, result ) ) )	// getting App ID
-						{
-							char *end;
-							appID = strtoull( row[ 1 ], &end, 0 );
-						}
-						sqllib->FreeResult( sqllib, result );
-					}
-				}
-				
-				// get appid from appname
-				
-				// set userid
-				
-				DEBUG("Regen authid. AsID %ld AppID %ld UserId %ld\n ", asID, appID, uid );
-			
-				// entry found so we have to update it
-			
-				if( asID > 0 )
-				{
-					AppSession *locas = AppSessionManagerGetSessionByAuthID( l->sl_AppSessionManager, oldid );
-					if( locas != NULL )
-					{
-						DEBUG("Regenerate by update\n");
-						AppSessionRegenerateAuthID( locas, l );
-						
-#ifdef DB_SESSIONID_HASH
-						sqllib->SNPrintF( sqllib, query, sizeof(query), "UPDATE `FAppSession` Set AuthID='%s' where ID=%ld", locas->as_HashedAuthID, asID );
-#else
-						sqllib->SNPrintF( sqllib, query, sizeof(query), "UPDATE `FAppSession` Set AuthID='%s' where ID=%ld", locas->as_AuthID, asID );
-#endif
-						sqllib->QueryWithoutResults( sqllib, query );	// update database
-						
-						snprintf( respMsg, sizeof(respMsg), "{\"result\":\"success\",\"id\":%lu,\"authid\":\"%s\"}", locas->as_ID, locas->as_AuthID );
-						HttpAddTextContent( response, respMsg );
-					}
-					else
-					{
-						char dictmsgbuf[ 256 ];
-						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_APPLICATION_SESSION_NOT_FOUND] , DICT_APPLICATION_SESSION_NOT_FOUND );
-					}
-				}
-				else	// entry not found, will be generated
-				{
-					DEBUG("Regenerate by creating new entry\n");
-					AppSession *las = AppSessionNew( l, appID, uid, NULL );
-					
-					User *setUser = NULL;
-						
-					if( uid == loggedSession->us_UserID )
-					{
-						setUser = loggedSession->us_User;
-					}
-					else
-					{
-						setUser = UMGetUserByID( l->sl_UM, uid );
-					}
-					las->as_User = setUser;
-					
-					DEBUG("[AuthID regen] pointer to user: %p\n", setUser );
-					
-					if( las != NULL )
-					{
-						err = sqllib->Save( sqllib, AppSessionDesc, las );
-						if( err == 0 )
-						{
-							snprintf( respMsg, sizeof(respMsg), "{\"result\":\"success\",\"id\":%lu,\"authid\":\"%s\"}", las->as_ID, las->as_AuthID );
-						
-							AppSessionManagerAppSessionAdd( l->sl_AppSessionManager, las );
-						}
-						else
-						{
-							AppSessionDelete( las );
-						}
-					}
-					HttpAddTextContent( response, respMsg );
-				}
-				
-				l->DropDBConnection( l, sqllib );
-			}
-			else
-			{
-				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
-			}
-		}
-		else
+		if ( appname == NULL )
 		{
 			char dictmsgbuf[ 256 ];
 			char dictmsgbuf1[ 196 ];
 			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "appname" );
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
+			return;
 		}
 		
-		if( appname != NULL )
+		FQUAD appID = 0;
+		char query[ 1024 ];
+		char respMsg[ 1024 ];
+		int err = 0;
+		
+		// set userid
+		uid = loggedSession->us_UserID;
+		
+		// get appid from appname, uid
+		sqllib->SNPrintF( 
+			sqllib,
+			query,
+			sizeof(query),
+			"SELECT ua.ID FROM `FApplication` a "
+				"inner join `FUserApplication` ua on a.ID=ua.ApplicationID "
+				"WHERE a.Name='%s' AND ua.UserID=%ld LIMIT 1", 
+			appname,
+			uid
+		);
+		
+		void *result = sqllib->Query( sqllib, query );
+		if( result != NULL )
 		{
-			FFree( appname );
+			char **row;
+			if( ( row = sqllib->FetchRow( sqllib, result ) ) )
+			{
+				char *end;
+				appID = strtoull( row[ 0 ], &end, 0 );
+			}
+			sqllib->FreeResult( sqllib, result );
 		}
+		
+		 // YEP
+		DEBUG("Regen authid: UserId %ld AppName %s AppID %ld\n ", uid, appname, appID );
+		AppSession *las = AppSessionNew( l, appID, uid, NULL );
+		
+		User *setUser = NULL;
+			
+		if( uid == loggedSession->us_UserID )
+		{
+			setUser = loggedSession->us_User;
+		}
+		else
+		{
+			setUser = UMGetUserByID( l->sl_UM, uid );
+		}
+		las->as_User = setUser;
+		
+		DEBUG("[AuthID regen] pointer to user: %p\n", setUser );
+		
+		if( las != NULL )
+		{
+			err = sqllib->Save( sqllib, AppSessionDesc, las );
+			if( err == 0 )
+			{
+				snprintf( respMsg, sizeof(respMsg), "{\"result\":\"success\",\"id\":%lu,\"authid\":\"%s\"}", las->as_ID, las->as_AuthID );
+			
+				AppSessionManagerAppSessionAdd( l->sl_AppSessionManager, las );
+			}
+			else
+			{
+				AppSessionDelete( las );
+			}
+		}
+		HttpAddTextContent( response, respMsg );
+		
+		
+		l->DropDBConnection( l, sqllib );
+		
+		FFree( appname );
+		
+		/*
 		if( oldid != NULL )
 		{
 			FFree( oldid );
 		}
+		*/
 	}
 	
 	/// @cond WEB_CALL_DOCUMENTATION
