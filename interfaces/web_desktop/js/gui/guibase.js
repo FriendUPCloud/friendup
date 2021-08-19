@@ -2752,6 +2752,12 @@ function CheckScreenTitle( screen, force )
 	{
 		setTitleAndMoveMenu();
 	}
+	
+	// Give grace period.. Workspace changes may take time.
+	setTimeout( function()
+	{
+		Workspace.refreshMenu();
+	}, 250 );
 
 	// Delayed
 	function setTitleAndMoveMenu( obj, tit )

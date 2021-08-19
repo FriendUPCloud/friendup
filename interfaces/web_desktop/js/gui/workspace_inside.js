@@ -7255,7 +7255,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	// Refresh Doors menu recursively ------------------------------------------
 	refreshMenu: function( prohibitworkspaceMenu )
-	{
+	{	
 		// Current has icons?
 		let iconsAvailable = currentMovable && currentMovable.content && currentMovable.content.directoryview ? true : false;
 		let volumeIcon = false;
@@ -7265,6 +7265,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			currentScreen.screen.contentDiv.checkSelected();
 
 		let iconsSelected = Friend.iconsSelectedCount > 0;
+		
 		let iconsInClipboard = ( Friend.workspaceClipBoard && Friend.workspaceClipBoard.length > 0 );
 
 		let canUnmount = false;
