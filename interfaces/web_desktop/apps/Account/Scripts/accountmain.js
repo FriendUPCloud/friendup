@@ -117,7 +117,7 @@ function refreshGroups( keys )
 			list = out;
 		}
 		
-		let str = '<div class="Collections">';
+		let str = '<div class="Collections PaddingSmall">';
 		let sw = 1;
 		let count = 0;
 		for( let a in list )
@@ -126,6 +126,7 @@ function refreshGroups( keys )
 			if( !list[a].description )
 				list[a].description = '';
 			str += '<div class="sw' + sw + ' Collection">\
+				<div class="Image"></div>\
 				<div class="Name" title="' + list[a].Name + '"><span>' + list[a].Name + '</span></div>\
 				<div class="Buttons">\
 					<button type="button" class="Button IconSmall fa-edit NoText" title="' + i18n( 'i18n_edit_group' ) + '" onclick="editGroup(\'' + list[a].ID + '\')"></button>\
@@ -134,6 +135,8 @@ function refreshGroups( keys )
 			sw = sw == 1 ? 2 : 1;
 			count++;
 		}
+		
+		str += '</div>';
 		
 		if( Application.getUserLevel() != 'admin' && count >= 3 )
 		{
@@ -151,8 +154,7 @@ function refreshGroups( keys )
 				</button>\
 			</p>';
 		}
-		
-		str += '</div>';
+	
 		ge( 'GroupList' ).innerHTML = str;
 	}
 	m.execute( 'listworkgroups' );
