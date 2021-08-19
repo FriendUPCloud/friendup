@@ -1079,7 +1079,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				let i = this.icons[a];
 				
 				// Translations
-				if( i.Path.indexOf( 'Shared:' ) == 0 && i.Title && i.Title.substr( 0, 5 ) == 'i18n_' )
+				if( i.Path && i.Path.indexOf( 'Shared:' ) == 0 && i.Title && i.Title.substr( 0, 5 ) == 'i18n_' )
 				{
 					this.icons[a].Title = i18n( i.Title );
 				}
