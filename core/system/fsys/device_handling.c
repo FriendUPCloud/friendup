@@ -2698,14 +2698,11 @@ void UserNotifyFSEvent2( DeviceManager *dm, User *u, char *evt, char *path )
 			{
 				if( list->us != NULL )
 				{
-					if( list->us != NULL )
-					{
-						WebSocketSendMessage( l, list->us, message, mlen );
-					}
-					else
-					{
-						INFO("Cannot send WS message: %s\n", message );
-					}
+					WebSocketSendMessage( l, list->us, message, mlen );
+				}
+				else
+				{
+					INFO("Cannot send WS message: %s\n", message );
 				}
 				list = (UserSessListEntry *)list->node.mln_Succ;
 			}
