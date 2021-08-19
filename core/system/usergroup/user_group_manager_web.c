@@ -481,7 +481,7 @@ FBOOL CanUserCreateWorkgroup( SystemBase *l, FQUAD userid, char *groupname )
 //
 //
 //
-
+/*
 void SetUserAdminOrAPI( SystemBase *l, User *usr )
 {
 	// We need to check how many groups were created by the user before
@@ -523,6 +523,7 @@ void SetUserAdminOrAPI( SystemBase *l, User *usr )
 		FFree( qery );
 	}
 }
+*/
 
 FBOOL CanUserChangeDeleteWorkgroup( SystemBase *l, FQUAD userid, FULONG groupID )
 {
@@ -1474,7 +1475,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 										
 										if( levelType == TRUE )
 										{
-											SetUserAdminOrAPI( l, usr );
+											UGMAssignGroupToUser( l->sl_UGM, usr );
 										}
 									}
 
@@ -2047,7 +2048,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 							isInMemory = TRUE;
 							if( levelType == TRUE )
 							{
-								SetUserAdminOrAPI( l, usr );
+								UGMAssignGroupToUser( l->sl_UGM, usr );
 							}
 						}
 						// just to be sure that stuff is deleted
@@ -2303,7 +2304,11 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 					{
 						// go through all elements and find proper users
 					
-						IntListEl *el = ILEParseString( users );
+						IntListEl *el = NULL;
+						if( users != NULL )
+						{
+							el = ILEParseString( users );
+						}
 					
 						while( el != NULL )
 						{
@@ -2397,7 +2402,11 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 						}
 						// go through all elements and find proper users
 					
-						IntListEl *el = ILEParseString( users );
+						IntListEl *el = NULL;
+						if( users != NULL )	// users should be checked
+						{
+							el = ILEParseString( users );
+						}
 					
 						while( el != NULL )
 						{
@@ -2415,7 +2424,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 								
 								if( levelType == TRUE )
 								{
-									SetUserAdminOrAPI( l, usr );
+									UGMAssignGroupToUser( l->sl_UGM, usr );
 								}
 							}
 							//else // to be sure that entry is removed from DB

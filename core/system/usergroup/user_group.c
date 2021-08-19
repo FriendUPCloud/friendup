@@ -82,6 +82,7 @@ int UserGroupDelete( void *sb, UserGroup *ug )
 {
 	if( ug != NULL )
 	{
+		DEBUG("[UserGroupDelete] pointer to sb: %p\n", sb );
 		// remove connection to users
 		/*
 		if( FRIEND_MUTEX_LOCK( &(ug->ug_Mutex) ) == 0 )
@@ -99,6 +100,7 @@ int UserGroupDelete( void *sb, UserGroup *ug )
 		}
 		*/
 		
+		SystemBase *lsb = (SystemBase *)sb;
 		// Remove all mounted devices
 		File *lf = ug->ug_MountedDevs;
 		File *remdev = lf;
@@ -109,7 +111,7 @@ int UserGroupDelete( void *sb, UserGroup *ug )
 			
 			if( remdev != NULL )
 			{
-				DeviceRelease( sb, remdev );
+				DeviceRelease( lsb->sl_DeviceManager, remdev );	// this could be our bug
 
 				FileDelete( remdev );
 				remdev = NULL;
@@ -263,7 +265,7 @@ int UserGroupAddUser( UserGroup *ug, void *u )
 	User *locu = (User *)u;
 	
 	//DEBUG("[UserGroupAddUser] User: %s will be added to group: %s\n", locu->u_Name, ug->ug_Name );
-	if( FRIEND_MUTEX_LOCK( &locu->u_Mutex ) == 0 )
+	//if( FRIEND_MUTEX_LOCK( &locu->u_Mutex ) == 0 )
 	{
 		/*
 		GroupUserLink *au = ug->ug_UserList;
@@ -278,7 +280,9 @@ int UserGroupAddUser( UserGroup *ug, void *u )
 			au = (GroupUserLink *)au->node.mln_Succ;
 		}
 		*/
-		FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
+		
+		
+		//FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
 	
 		// add link from group to user
 		/*

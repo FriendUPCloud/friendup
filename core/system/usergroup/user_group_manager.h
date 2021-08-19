@@ -93,6 +93,12 @@ UserGroup *UGMGetGroupByName( UserGroupManager *smgr, const char *name );
 UserGroup *UGMGetGroupByNameDB( UserGroupManager *ugm, const char *name );
 
 //
+// Get UserGroup by Name and Type from database
+//
+
+UserGroup *UGMGetGroupByNameAndTypeDB( UserGroupManager *ugm, const char *name, const char *type );
+
+//
 // Remove drive from UserGroup
 //
 
