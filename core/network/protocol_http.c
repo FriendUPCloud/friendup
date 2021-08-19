@@ -1690,7 +1690,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 											if( (SLIB->l_HttpCompressionContent&HTTP_COMPRESSION_DEFLATE) == HTTP_COMPRESSION_DEFLATE )
 											{
 												char *comprFromHeader = HttpGetHeaderFromTable( request, HTTP_HEADER_ACCEPT_ENCODING );
-												DEBUG("\n\n\n\n\n\nCompression %s\n\n\n\n\n\n", comprFromHeader );
+												//DEBUG("\n\n\n\n\n\nCompression %s\n\n\n\n\n\n", comprFromHeader );
 												
 												if( comprFromHeader != NULL && strstr( comprFromHeader, "deflate" ) != NULL )
 												{
