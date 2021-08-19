@@ -120,7 +120,7 @@ function refreshGroups( keys )
 		let sw = 1;
 		let count = 0;
 		
-		let str = '<h2>' + i18n( 'i18n_your_groups' ) + '</h2>';
+		let str = '<h2 class="PaddingLeft MarginTop">' + i18n( 'i18n_your_groups' ) + '</h2>';
 		str += '<div class="Collections PaddingSmall">';
 		
 		for( let a in list )
