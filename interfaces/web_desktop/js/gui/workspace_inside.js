@@ -403,7 +403,7 @@ var WorkspaceInside = {
 						{
 							if( !data ) data = [];
 							
-							data.push( { ID: 0, Name : 'None' } );
+							data.push( { ID: 0, Name : 'None', Description: i18n( 'i18n_invite_to_no_group' ) } );
 							
 							let str = '<div class="Collections">';
 							let sw = 1;

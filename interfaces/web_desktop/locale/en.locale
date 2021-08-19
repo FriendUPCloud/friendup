@@ -586,6 +586,7 @@ i18n_nothing_shared                     : No share target(s) selected
 i18n_please_select_users_groups         : Did not share because no user(s) or group(s) were selected.
 i18n_you_shared                         : You shared
 i18n_no_description_on_group            : This group lacks a description.
+i18n_invite_to_no_group                 : Invite user without assigning to group.
 
 i18n_paste_error                        : Paste error
 i18n_could_not_create_downloads:        : Could not create Downloads folder in your Home: drive
