@@ -297,7 +297,6 @@ int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, UserSession *se
 		char *name = NULL;
 		char *config = NULL;
 		char *ctype = NULL, *type = NULL;
-		char *execute = NULL;
 		FULONG id, storedBytes;
 		int j = 0;
 		char temptext[ 612 ]; memset( temptext, 0, sizeof(temptext) );
@@ -320,6 +319,8 @@ int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, UserSession *se
 			
 			while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
 			{
+				char *execute = NULL;
+				
 				DEBUG("Inside while\n");
 				if( type != NULL ){FFree( type );}
 				if( row[ 0 ] != NULL ) type = StringDuplicate( row[ 0 ] );
@@ -436,6 +437,8 @@ int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, UserSession *se
 						FFree( mountError );
 					}
 				} // sameDevError == 0
+				
+				if( execute != NULL ){ FFree( execute ); }
 			}	// while
 			DEBUG("[UserGroupMountWorkgroupDrives]After while\n");
 			sqllib->FreeResult( sqllib, res );
@@ -453,7 +456,6 @@ int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, UserSession *se
 		if( config != NULL ){ FFree( config ); }
 		if( ctype != NULL ){ FFree( ctype ); }
 		if( type != NULL ){ FFree( type ); }
-		if( execute != NULL ){ FFree( execute ); }
 	}
 	DEBUG("[UserGroupMountWorkgroupDrives] Return with error %d\n", error );
 	
