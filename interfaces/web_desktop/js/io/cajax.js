@@ -235,10 +235,17 @@ cAjax = function( app )
 				{
 					jax.returnCode = this.responseText.substr( 0, this.responseText.indexOf( sep ) );
 					jax.returnData = this.responseText.substr( this.responseText.indexOf( sep ) + sep.length );
+					/*
+					console.log( 'with separator', {
+						response : this.responseText,
+						code     : jax.returnCode,
+						data     : jax.returnData,
+					});
+					*/
 				}
 				else
 				{
-					console.log( 'no separator found', this.responseText );
+					//console.log( 'no separator found', this.responseText );
 					let responseObj = null;
 					try {
 						responseObj = JSON.parse( this.responseText );
@@ -246,7 +253,7 @@ cAjax = function( app )
 						//console.log( 'opps', ex );
 					}
 					
-					console.log( 'responseObj', responseObj );
+					//console.log( 'responseObj', responseObj );
 					
 					jax.returnData = false;
 					if ( null != responseObj )
@@ -326,8 +333,8 @@ cAjax = function( app )
 						}
 						
 						// response : "Authid is expired"
-						if ( '84' == code || '79' == code ) {
-							console.log( 'code 84/79', {
+						if ( '84' == code || '81' == code ) {
+							console.log( 'code 84/81', {
 								vars : self.vars,
 								app  : self.application,
 								url  : self.url,
@@ -564,7 +571,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	
 	// Try websockets!!
 	if( 
-		false &&
+		//false &&
 		!this.forceHTTP &&
 		window.Workspace &&
 		Workspace.conn && 

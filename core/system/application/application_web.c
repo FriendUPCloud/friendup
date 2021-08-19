@@ -555,11 +555,13 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			appname = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
+		/*
 		el = HashmapGet( request->http_ParsedPostContent, "oldid" );
 		if( el != NULL )
 		{
 			oldid = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
+		*/
 		
 		if( appname != NULL ) //&& oldid != NULL )
 		{
@@ -577,19 +579,19 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				if( oldid != NULL )
 				{
 					// we must get application id from database
-		
+				
 #ifdef DB_SESSIONID_HASH
 					char *tmpSessionID = l->sl_UtilInterface.DatabaseEncodeString( oldid );
 					if( tmpSessionID != NULL )
 					{
 						sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT ass.ID, a.ID FROM `FApplication` a inner join `FUserApplication` ua on a.ID=ua.ApplicationID inner join `FAppSession` ass on ua.ID=ass.UserApplicationID WHERE a.Name='%s' AND ass.AuthID='%s' LIMIT 1", appname, tmpSessionID );
-			
+					
 						FFree( tmpSessionID );
 					}
 #else
 					sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT ass.ID, a.ID FROM `FApplication` a inner join `FUserApplication` ua on a.ID=ua.ApplicationID inner join `FAppSession` ass on ua.ID=ass.UserApplicationID WHERE a.Name='%s' AND ass.AuthID='%s' LIMIT 1", appname, oldid );
 #endif
-		
+					
 					void *result = sqllib->Query( sqllib, query );
 					if( result != NULL )
 					{
@@ -608,7 +610,11 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 					}
 				}
 				
-				DEBUG("Regen authid. AsID %ld AppID %ld\n", asID, appID );
+				// get appid from appname
+				
+				// set userid
+				
+				DEBUG("Regen authid. AsID %ld AppID %ld UserId %ld\n ", asID, appID, uid );
 			
 				// entry found so we have to update it
 			

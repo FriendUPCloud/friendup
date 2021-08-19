@@ -116,9 +116,14 @@
 					parent.Friend.User.Init();
 					let us = Trim( ge( 'Username' ).value );
 					let pw = Trim( ge( 'Password' ).value )
-					parent.Friend.User.Login( us, pw, false /*ge( 'remember' ).checked */, function( result, answer )
+					parent.Friend.User.Login(
+						us,
+						pw,
+						false /*ge( 'remember' ).checked */,
+						function( result, answer )
 					{
 						let tmp = null;
+						console.log( 'Login res', [ result, answer ]);
 						if( answer )
 						{
 							// Try to parse response answer

@@ -250,13 +250,35 @@ Friend.User = {
 			
 			if ( 'fail' == conf ) {
 				console.log( 'send login call response fail', response );
-				if ( response && 10 == response.code ) {
+				if ( null == response ) {
+					respond( 'fail', serveranswer );
+					return;
+				}
+				
+				const code = response.code;
+				
+				// invalid session
+				if ( '10' == code ) {
+					if ( null != self.checkInterval )
+						window.clearInterval( self.checkInterval );
+					
 					window.Workspace.sessionId = null;
 					self.ReLogin();
-				} else
-					respond( 'fail', serveranswer );
+					return;
+				}
+				
+				// invalid refresh token
+				if ( '85' == code ) {
+					console.log( 'CODE 85! THIS IT NOT A DRILL CODE EJTIFAJV!!' );
+					if ( null != self.checkInterval )
+						window.clearInterval( self.checkInterval );
 					
-				//self.ReLogin();
+					self.refreshToken = null;
+					window.Workspace.showLoginPrompt();
+					return;
+				}
+				
+				respond( false, serveranswer );
 				return;
 			}
 			
@@ -681,10 +703,12 @@ Friend.User = {
 					console.log( 'Removed websocket.' );
 				}
 				
-				if( this.checkInterval )
+				if( null != this.checkInterval )
 					clearInterval( this.checkInterval );
-				this.checkInterval = setInterval( 'Friend.User.CheckServerConnection()', 2500 );
+				
+				this.checkInterval = setInterval( () => { self.CheckServerConnection(); }, 2500 );
 			}
+			
 			// Remove dirlisting cache!
 			if( window.DoorCache )
 			{
