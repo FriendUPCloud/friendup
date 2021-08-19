@@ -2424,7 +2424,7 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 			if( usersession->us_WSD != NULL )
 			{
 				WSCData *data = (WSCData *)usersession->us_WSD;
-				if( data->wsc_UserSession != NULL && data->wsc_Wsi != NULL )
+				if( data != NULL && data->wsc_UserSession != NULL && data->wsc_Wsi != NULL )
 				{
 					bytes += UserSessionWebsocketWrite( usersession, buf , len, LWS_WRITE_TEXT );
 				}

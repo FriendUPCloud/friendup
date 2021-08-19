@@ -1852,12 +1852,19 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 								continue;
 							}
 							UserSession *us = (UserSession *) sessions->us;
+							
+							if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+							{
+								us->us_InUseCounter++;
+								FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+							}
 
 							time_t timestamp = time(NULL);
 							
-							//if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+							if( us->us_WSD != NULL && ( (timestamp - us->us_LastActionTime) < l->sl_RemoveSessionsAfterTime ) )
 							{
-								if( us->us_WSD != NULL && ( (timestamp - us->us_LastActionTime) < l->sl_RemoveSessionsAfterTime ) )
+								WSCData *data = (WSCData *)us->us_WSD;
+								if( data != NULL && data->wsc_UserSession != NULL && data->wsc_Wsi != NULL )
 								{
 									int size = 0;
 									if( pos == 0 )
@@ -1869,10 +1876,14 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 										size = snprintf( temp, 2047, ",{\"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LastActionTime );
 									}
 									BufStringAddSize( bs, temp, size );
-							
 									pos++;
 								}
-								//FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+							}
+							
+							if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+							{
+								us->us_InUseCounter--;
+								FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 							}
 							
 							sessions = (UserSessListEntry *) sessions->node.mln_Succ;
