@@ -408,10 +408,13 @@ var WorkspaceInside = {
 							let str = '<div class="Collections">';
 							let sw = 1;
 							let count = 0;
+							
 							for( let a in data )
 							{
-								str += '<div class="sw' + sw + ' Collection">\
-									<div class="Name' + ( data[a].ID == 0 ? ' Selected' : '' ) + '" title="' + data[a].Name + '">' + data[a].Name + '</div>\
+								str += '<div class="MousePointer sw' + sw + ' Collection' + ( data[a].ID == 0 ? ' Selected' : '' ) + '" value="' + data[a].ID + '">\
+									<div class="Image"></div>\
+									<div class="Name" title="' + data[a].Name + '">' + data[a].Name + '</div>\
+									<div class="Description">' + ( data[a].Description ? data[a].Description : i18n( 'i18n_no_description_on_group' ) ) + '</div>\
 									<div class="Buttons">\
 										<input type="radio" name="groupid" value="' + data[a].ID + '"/>\
 									</div>\
@@ -420,70 +423,42 @@ var WorkspaceInside = {
 								count++;
 							}
 							
-							str += '<p class="BorderTop BorderBottom PaddingTop PaddingBottom MarginTop"><button type="button" class="Button IconSmall fa-plus">' + i18n( 'i18n_manage_groups' ) + '</button></p>';
-							
 							str += '</div>';
+							
+							str += '<p class="BorderTop BorderBottom PaddingTop PaddingBottom MarginTop"><button type="button" class="Button IconSmall fa-plus manageGroups">' + i18n( 'i18n_manage_groups' ) + '</button></p>';
+							
 							
 							self.inviteView.content.querySelector( '.GroupList' ).innerHTML = str;
 							
-							let inps = self.inviteView.content.querySelector( '.Collections' ).getElementsByTagName( 'input' );
+							let collections = self.inviteView.content.getElementsByClassName( 'Collection' );
 							
-							if( inps.length > 0 )
+							if( collections.length > 0 )
 							{
-								for( let i in inps )
+								for( let i = 0; i < collections.length; i++ )
 								{
-									if( inps[i] )
+									collections[i].onclick = function()
 									{
-										inps[i].onclick = ( function()
-										{
-											let divs = self.inviteView.content.querySelector( '.Collections' ).getElementsByTagName( 'div' );
-											
-											if( divs.length > 0 )
-											{
-												for( let i in divs )
-												{
-													if( divs[i] && divs[i].className && divs[i].className.indexOf( 'Selected' ) >= 0 )
-													{
-														divs[i].className = divs[i].className.split( ' Selected' ).join( '' );
-													}
-												}
-											}
-											
-											let div = this.parentNode.parentNode.getElementsByTagName( 'div' )[0];
-											
-											div.className = div.className.split( ' Selected' ).join( '' ) + ' Selected';
-											
-											self.addInvite( this.value );
-											self.invitesGet( this.value, self.getInviteCallback( 'invites' ) );
-											self.pendingInvitesGet( this.value, self.getInviteCallback( 'pending' ) );
-											
-										} );
+										let val = this.getAttribute( 'value' );
+										for( let o = 0; o < collections.length; o++ )
+											if( collections[o] != this )
+												collections[o].classList.remove( 'Selected' );
+										this.classList.add( 'Selected' );
+										self.addInvite( val );
+										self.invitesGet( val, self.getInviteCallback( 'invites' ) );
+										self.pendingInvitesGet( val, self.getInviteCallback( 'pending' ) );	
 									}
 								}
 							}
 							
-							let btns = self.inviteView.content.querySelector( '.Collections' ).getElementsByTagName( 'button' );
-							
-							if( btns.length > 0 )
-							{
-								for( let i in btns )
-								{
-									if( btns[i] )
-									{
-										btns[i].onclick = ( function()
-										{
-											
-											Workspace.shell.execute( 'Launch Account tab=group' );
-											
-										} );
-									}
-								}
+							self.inviteView.content.getElementsByClassName( 'manageGroups' )[0].onclick = function()
+							{	
+								Workspace.shell.execute( 'Launch Account tab=group' );	
 							}
-							
 						}
 						catch( e )
 						{
 							self.inviteView.content.querySelector( '.GroupList' ).innerHTML = '<p class="TextCenter">' + i18n( 'i18n_no_groups_available' ) + '</p>';
+							console.log( e );
 						}
 					}
 				}
@@ -855,6 +830,10 @@ var WorkspaceInside = {
 							//if( str[b].Name.toLowerCase() == Trim( keywords[a] ).toLowerCase() )
 							if( str[b].Name.toLowerCase().indexOf( Trim( keywords[a] ).toLowerCase() ) >= 0 )
 							{
+								if( !str[b].Description )
+								{
+									str[b].Description = i18n( 'i18n_no_description_on_group' );
+								}
 								end.push( str[b] );
 							}
 						}

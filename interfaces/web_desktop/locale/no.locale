@@ -563,6 +563,7 @@ i18n_no_users_or_groups                 : Ingen brukere eller grupper å dele me
 i18n_nothing_shared                     : Ingen brukere eller grupper valgt
 i18n_please_select_users_groups         : Ingenting ble delt da du ikke valgte brukere eller grupper.
 i18n_you_shared                         : Du delte
+i18n_no_description_on_group            : Denne gruppen har ikke beskrivelse.
 
 
 i18n_pasted_file                        : Limer inn innhold
