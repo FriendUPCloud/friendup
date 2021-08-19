@@ -35,6 +35,8 @@
 	transition: background-color 0.25s;
 	box-sizing: border-box;
 	border-radius: 3px;
+	max-height: 78px;
+	overflow: hidden;
 }
 
 .Collections > .Collection.Selected
