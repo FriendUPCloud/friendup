@@ -21,6 +21,7 @@ i18n_deleting_desc                   : Når du sletter en gruppe vil alle tilkny
 i18n_this_will_remove                : Dette vil fjerne disken fra listen.
 
 i18n_no_description                  : Denne gruppen mangler beskrivelse.
+i18n_your_groups                     : Dine grupper
 
 i18n_delete_disk                     : Slett
 

@@ -117,9 +117,12 @@ function refreshGroups( keys )
 			list = out;
 		}
 		
-		let str = '<div class="Collections PaddingSmall">';
 		let sw = 1;
 		let count = 0;
+		
+		let str = '<h2>' + i18n( 'i18n_your_groups' ) + '</h2>';
+		str += '<div class="Collections PaddingSmall">';
+		
 		for( let a in list )
 		{
 			// TODO: Make sure we can get our descriptions!
