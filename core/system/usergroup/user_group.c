@@ -98,6 +98,8 @@ int UserGroupDelete( void *sb, UserGroup *ug )
 			FRIEND_MUTEX_UNLOCK( &(ug->ug_Mutex) );
 		}
 		
+		SystemBase *lsb = (SystemBase *)sb;
+		
 		// Remove all mounted devices
 		File *lf = ug->ug_MountedDevs;
 		File *remdev = lf;
@@ -108,7 +110,7 @@ int UserGroupDelete( void *sb, UserGroup *ug )
 			
 			if( remdev != NULL )
 			{
-				DeviceRelease( sb, remdev );
+				DeviceRelease( lsb->sl_DeviceManager, remdev );
 
 				FileDelete( remdev );
 				remdev = NULL;
