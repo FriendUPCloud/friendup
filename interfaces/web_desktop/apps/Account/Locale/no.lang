@@ -20,6 +20,8 @@ i18n_are_you_sure                    : Er du sikker?
 i18n_deleting_desc                   : Når du sletter en gruppe vil alle tilknyttede medlemmer og annen data oppløses.
 i18n_this_will_remove                : Dette vil fjerne disken fra listen.
 
+i18n_no_description                  : Denne gruppen mangler beskrivelse.
+
 i18n_delete_disk                     : Slett
 
 i18n_storage                         : Lagringsmedia

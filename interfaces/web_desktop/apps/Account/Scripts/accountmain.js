@@ -125,12 +125,10 @@ function refreshGroups( keys )
 			// TODO: Make sure we can get our descriptions!
 			if( !list[a].description )
 				list[a].description = '';
-			str += '<div class="sw' + sw + ' Collection">\
+			str += '<div class="MousePointer sw' + sw + ' Collection" onclick="editGroup(\'' + list[a].ID + '\')">\
 				<div class="Image"></div>\
 				<div class="Name" title="' + list[a].Name + '"><span>' + list[a].Name + '</span></div>\
-				<div class="Buttons">\
-					<button type="button" class="Button IconSmall fa-edit NoText" title="' + i18n( 'i18n_edit_group' ) + '" onclick="editGroup(\'' + list[a].ID + '\')"></button>\
-				</div>\
+				<div class="Description">' + ( list[a].Description ? list[a].Description : i18n( 'i18n_no_description' ) ) + '</div>\
 			</div>';
 			sw = sw == 1 ? 2 : 1;
 			count++;

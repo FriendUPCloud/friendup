@@ -133,6 +133,7 @@
 {
 	padding-top: 20px;
 	text-align: left;
+	box-sizing: border-box;
 }
 
 .Collections + p
@@ -150,14 +151,29 @@
 .Collections > .Collection
 {
 	position: relative;
-	width: 160px;
-	height: 70px;
+	width: 50%;
+	height: 78px;
 	display: block;
 	float: left;
-	margin: 10px 10px 0 0;
+	margin: 0 0 10px 0;
 	text-align: left;
+	padding: 4px;
+	background-color: rgba(0,0,0,0);
+	transition: background-color 0.25s;
+	box-sizing: border-box;
+	border-radius: 3px;
 }
 
+.Collections > .Collection:hover
+{
+	background-color: rgba(0,0,0,0.1);
+}
+
+.Collections > .Collection > .Name
+{
+	font-size: 110%;
+	font-weight: bold;
+}
 
 .Collections > .Collection > .Image
 {
@@ -169,13 +185,6 @@
 	float: left;
 	box-sizing: border-box;
 	margin: 0 10px 20px 0;
-}
-
-.Collections > .Collection button
-{
-	border-radius: 100%;
-	width: 30px;
-	height: 30px;
 }
 
 html #GroupSearch input
