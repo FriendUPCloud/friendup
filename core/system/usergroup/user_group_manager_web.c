@@ -1185,6 +1185,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		//if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 		if( canUpdateWorkgroup == TRUE )
 		{
+			int emptyDescription = 0;
+			
 			el = HttpGetPOSTParameter( request, "groupname" );
 			if( el != NULL )
 			{
@@ -1207,6 +1209,10 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			if( el != NULL )
 			{
 				description = UrlDecodeToMem( (char *)el->hme_Data );
+				if( !description )
+				{
+					emptyDescription = 1;
+				}
 				DEBUG( "[UMWebRequest] Group/Update Update description %s!!\n", description );
 			}
 			
@@ -1277,11 +1283,11 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						int len = 0;
 						if( globlen == 0 )
 						{
-							len = snprintf( tmp, sizeof(tmp), " Name=%s", groupname );
+							len = snprintf( tmp, sizeof(tmp), " Name=\"%s\"", groupname );
 						}
 						else
 						{
-							len = snprintf( tmp, sizeof(tmp), " ,Name=%s", groupname );
+							len = snprintf( tmp, sizeof(tmp), " ,Name=\"%s\"", groupname );
 						}
 						globlen += len;
 						BufStringAddSize( bs, tmp, len );
@@ -1293,11 +1299,11 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						int len = 0;
 						if( globlen == 0 )
 						{
-							len = snprintf( tmp, sizeof(tmp), " Description=%s", description );
+							len = snprintf( tmp, sizeof(tmp), " Description=\"%s\"", description );
 						}
 						else
 						{
-							len = snprintf( tmp, sizeof(tmp), " ,Description=%s", description );
+							len = snprintf( tmp, sizeof(tmp), " ,Description=\"%s\"", description );
 						}
 						globlen += len;
 						BufStringAddSize( bs, tmp, len );
@@ -1309,17 +1315,17 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						int len = 0;
 						if( globlen == 0 )
 						{
-							len = snprintf( tmp, sizeof(tmp), " Type=%s", type );
+							len = snprintf( tmp, sizeof(tmp), " Type=\"%s\"", type );
 						}
 						else
 						{
-							len = snprintf( tmp, sizeof(tmp), " ,Type=%s", type );
+							len = snprintf( tmp, sizeof(tmp), " ,Type=\"%s\"", type );
 						}
 						globlen += len;
 						BufStringAddSize( bs, tmp, len );
 					}
 					
-					if( type != NULL )
+					//if( type != NULL )
 					{
 						char tmp[ 256 ];
 						int len = snprintf( tmp, sizeof(tmp), " WHERE ID=%lu", groupID );
