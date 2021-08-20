@@ -1279,7 +1279,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			
 			if( IS_SESSION_ADMIN( loggedSession )|| PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 			{
-				DEBUG("Is user admin: %d\n", loggedSession->us_User->u_IsAdmin );
+				DEBUG("Is user admin: %d\n", IS_SESSION_ADMIN( loggedSession ) );
 				haveAccess = TRUE;
 				
 				logusr = UMGetUserByID( l->sl_UM, id );
@@ -2351,7 +2351,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		
 		if( sourceID != NULL && contactIDs != NULL && mode != NULL )
 		{
-			if( (loggedSession->us_User != NULL) && (( loggedSession->us_User->u_UUID != NULL && strcmp( sourceID, loggedSession->us_User->u_UUID ) == 0 ) || loggedSession->us_User->u_IsAdmin == TRUE ) )
+			if( (loggedSession->us_User != NULL) && (( loggedSession->us_User->u_UUID != NULL && strcmp( sourceID, loggedSession->us_User->u_UUID ) == 0 ) || IS_SESSION_ADMIN( loggedSession ) ) )
 			{
 				if( strcmp( mode, "presence" ) == 0 )
 				{
