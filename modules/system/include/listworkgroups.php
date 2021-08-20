@@ -43,43 +43,49 @@ else if( $args->args->mode == 'onlymember' )
 else if( $args->args->mode == 'invites' )
 {
 	if( $rows = $SqlDatabase->fetchObjects( $q = '
-		SELECT * FROM
 		(
 			SELECT 
 				g.*, qu.Fullname AS Invitor, g.ID AS TargetGroupID,
 				levg.Name AS Level
 			FROM 
-				FUser qu, FUserToGroup mygroups, FUserGroup g,
-				FUserGroup levg, FUserToGroup levutg
+				FUser qu, 
+				FUserToGroup mygroups, 
+				FUserGroup g,
+				FUserGroup levg, 
+				FUserToGroup levutg
 			WHERE 
-				qu.ID           = g.UserID AND
-				g.ID            = mygroups.UserGroupID AND
-				mygroups.UserID = \'' . $User->ID . '\' AND
-				g.UserID       != mygroups.UserID AND
-				levg.Type = \'Level\' AND
-				levutg.UserID = g.UserID AND
+				qu.ID              = g.UserID AND
+				g.ID               = mygroups.UserGroupID AND
+				mygroups.UserID    = \'' . $User->ID . '\' AND
+				g.UserID          != \'' . $User->ID . '\' AND
+				levg.Type          = \'Level\' AND
+				levutg.UserID      = g.UserID AND
 				levutg.UserGroupID = levg.ID
 			ORDER BY 
 				g.Name ASC
-		) z
+		) 
 		UNION
 		(
 			SELECT 
 				g.*, qu.Fullname AS Invitor, g.ID AS TargetGroupID,
 				levg.Name AS Level
 			FROM 
-				FUserGroup g, FUserToGroup utg, FQueuedEvent q, FUser qu,
-				FUserGroup levg, FUserToGroup levutg
+				FUserGroup g, 
+				FUserToGroup utg, 
+				FQueuedEvent q, 
+				FUser qu,
+				FUserGroup levg, 
+				FUserToGroup levutg
 			WHERE 
-				g.ID = q.TargetGroupID AND
-				q.UserID != \'' . $User->ID . '\' AND
-				qu.ID = q.UserID AND
-				q.TargetUserID = \'' . $User->ID . '\' AND
-				q.Type = \'interaction\' AND
-				utg.UserID = \'' . $User->ID . '\' AND
-				utg.UserGroupID = g.ID AND
-				levg.Type = \'Level\' AND
-				levutg.UserID = q.UserID AND
+				g.ID               = q.TargetGroupID AND
+				q.UserID          != \'' . $User->ID . '\' AND
+				qu.ID              = q.UserID AND
+				q.TargetUserID     = \'' . $User->ID . '\' AND
+				q.Type             = \'interaction\' AND
+				utg.UserID         = \'' . $User->ID . '\' AND
+				utg.UserGroupID    = g.ID AND
+				levg.Type          = \'Level\' AND
+				levutg.UserID      = q.UserID AND
 				levutg.UserGroupID = levg.ID
 			ORDER BY g.Name ASC
 		)
