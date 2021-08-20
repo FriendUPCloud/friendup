@@ -62,3 +62,19 @@
 	margin: 0 10px 20px 0;
 }
 
+.Collections > .Collection > .Image:after
+{
+	position: absolute;
+	top: 10px;
+	width: 57px;
+	left: 10px;
+	height: 60px;
+	line-height: 57px;
+	font-size: 22px;
+	font-family: fontawesome;
+	content: "\f0c0";
+	color: white;
+	text-align: Center;
+}
+
+
