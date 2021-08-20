@@ -411,8 +411,11 @@ var WorkspaceInside = {
 							
 							for( let a in data )
 							{
+								let cl = '';
+								if( data[a].ID == 0 )
+									cl = ' None';
 								str += '<div class="MousePointer sw' + sw + ' Collection' + ( data[a].ID == 0 ? ' Selected' : '' ) + '" value="' + data[a].ID + '">\
-									<div class="Image"></div>\
+									<div class="Image' + cl + '"></div>\
 									<div class="Name" title="' + data[a].Name + '">' + data[a].Name + '</div>\
 									<div class="Description">' + ( data[a].Description ? data[a].Description : i18n( 'i18n_no_description_on_group' ) ) + '</div>\
 									<div class="Buttons">\

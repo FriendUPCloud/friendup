@@ -77,4 +77,9 @@
 	text-align: Center;
 }
 
+.Collections > .Collection > .Image.None:after
+{
+	content: "\f10c";
+}
+
 
