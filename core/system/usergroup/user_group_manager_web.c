@@ -1226,7 +1226,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						if( status >= 0 )
 						{
 							char tmp[ 256 ];
-							int len = snprintf( tmp, sizeof(tmp), " Status=%d", status );
+							int len = snprintf( tmp, sizeof(tmp), " `Status`=%d", status );
 							globlen += len;
 							BufStringAddSize( bs, tmp, len );
 						}
@@ -1237,11 +1237,11 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							int len = 0;
 							if( globlen == 0 )
 							{
-								len = snprintf( tmp, sizeof(tmp), " ParentID=%lu", parentID );
+								len = snprintf( tmp, sizeof(tmp), " `ParentID`=%lu", parentID );
 							}
 							else
 							{
-								len = snprintf( tmp, sizeof(tmp), " ,ParentID=%lu", parentID );
+								len = snprintf( tmp, sizeof(tmp), " ,`ParentID`=%lu", parentID );
 							}
 							globlen += len;
 							BufStringAddSize( bs, tmp, len );
@@ -1253,11 +1253,11 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							int len = 0;
 							if( globlen == 0 )
 							{
-								len = snprintf( tmp, sizeof(tmp), " Name=\"%s\"", groupname );
+								len = snprintf( tmp, sizeof(tmp), " `Name`=\"%s\"", groupname );
 							}
 							else
 							{
-								len = snprintf( tmp, sizeof(tmp), " ,Name=\"%s\"", groupname );
+								len = snprintf( tmp, sizeof(tmp), " ,`Name`=\"%s\"", groupname );
 							}
 							globlen += len;
 							BufStringAddSize( bs, tmp, len );
@@ -1269,11 +1269,11 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							int len = 0;
 							if( globlen == 0 )
 							{
-								len = snprintf( tmp, sizeof(tmp), " Description=\"%s\"", description );
+								len = snprintf( tmp, sizeof(tmp), " `Description`=\"%s\"", description );
 							}
 							else
 							{
-								len = snprintf( tmp, sizeof(tmp), " ,Description=\"%s\"", description );
+								len = snprintf( tmp, sizeof(tmp), " ,`Description`=\"%s\"", description );
 							}
 							globlen += len;
 							BufStringAddSize( bs, tmp, len );
@@ -1285,20 +1285,19 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							int len = 0;
 							if( globlen == 0 )
 							{
-								len = snprintf( tmp, sizeof(tmp), " Type=\"%s\"", type );
+								len = snprintf( tmp, sizeof(tmp), " `Type`=\"%s\"", type );
 							}
 							else
 							{
-								len = snprintf( tmp, sizeof(tmp), " ,Type=\"%s\"", type );
+								len = snprintf( tmp, sizeof(tmp), " ,`Type`=\"%s\"", type );
 							}
 							globlen += len;
 							BufStringAddSize( bs, tmp, len );
 						}
 						
-						// Add most important part
-						char itmp[ 256 ];
-						int len = snprintf( itmp, sizeof(itmp), " WHERE ID=%lu", groupID );
-						BufStringAddSize( bs, itmp, len );
+						char tmp[ 256 ];
+						int len = snprintf( tmp, sizeof(tmp), " WHERE `ID`=%lu LIMIT 1", groupID );
+						BufStringAddSize( bs, tmp, len );
 
 						SQLLibrary *sqlLib = l->LibrarySQLGet( l );
 
