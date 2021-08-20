@@ -193,6 +193,7 @@ i18n_recipient                          : Recipient
 i18n_invite_user                        : Invite user
 i18n_optional                           : optional
 i18n_full_name                          : Full name
+i18n_manage_groups                      : Manage groups
 
 i18n_failed_to_send                     : Failed to send invite
 i18n_email_error                        : Could not send email. Please check the e-mail address.
@@ -583,7 +584,9 @@ i18n_ok                                 : Ok
 i18n_no_users_or_groups                 : No users or groups to share with.
 i18n_nothing_shared                     : No share target(s) selected
 i18n_please_select_users_groups         : Did not share because no user(s) or group(s) were selected.
-
+i18n_you_shared                         : You shared
+i18n_no_description_on_group            : This group lacks a description.
+i18n_invite_to_no_group                 : Invite user without assigning to group.
 
 i18n_paste_error                        : Paste error
 i18n_could_not_create_downloads:        : Could not create Downloads folder in your Home: drive

@@ -36,16 +36,16 @@ Friend.DOS = Friend.DOS || {};
  */
 Friend.DOS.getDisks = function( options, callback, extra )
 {
-	var out = [];
-	for( var a = 0; a < Workspace.icons.length; a++ )
+	let out = [];
+	for( let a = 0; a < Workspace.icons.length; a++ )
 	{
-		var disk = Workspace.icons[ a ];
+		let disk = Workspace.icons[ a ];
 		if( disk.Type != 'Door' ) continue;
 		 
 		if ( options.type )
 		{
-			var found = false;
-			for ( var t = 0; t < options.type.length; t++ )
+			let found = false;
+			for ( let t = 0; t < options.type.length; t++ )
 			{
 				if ( options.types[ t ] == disk.type )
 				{
@@ -106,21 +106,21 @@ Friend.DOS.getDisks = function( options, callback, extra )
 Friend.DOS.getDirectory = function( path, options, callback, extra )
 {
 	// Remove flags that could interfere with the door 
-	var flags = {};
-	for ( var f in options )
+	let flags = {};
+	for ( let f in options )
 	{
 		if ( f == 'recursive' || f == 'sort' )
 			flags[ f ] = options[ f ];
 	}
 
 	// Star recursion
-	var list = [];
-	var depth = 0;
+	let list = [];
+	let depth = 0;
 	getDir( list, path, flags );
 
 	// Watchdog for the end of recursion
-	var response = true;
-	var handle = setInterval( function()
+	let response = true;
+	let handle = setInterval( function()
 	{
 		if ( depth <= 0 )
 		{
@@ -133,7 +133,7 @@ Friend.DOS.getDirectory = function( path, options, callback, extra )
 	function getDir( listDir, path, flags )
 	{
 		depth++;
-		var door = ( new Door().get( path ) );
+		let door = ( new Door().get( path ) );
 		if( door )
 		{
 			door.getIcons( null, function( icons, path, pth )
@@ -146,8 +146,8 @@ Friend.DOS.getDirectory = function( path, options, callback, extra )
 					if( !options.noDirectories )
 					{
 						// Look for directories
-						var icon;
-						for( var i = 0; i < icons.length; i++ )
+						let icon;
+						for( let i = 0; i < icons.length; i++ )
 						{
 							icon = icons[ i ];
 							if ( icon.Type == 'Directory' )
@@ -169,10 +169,10 @@ Friend.DOS.getDirectory = function( path, options, callback, extra )
 					}
 
 					// Look for files
-					var listTemp = [];
+					let listTemp = [];
 					if( !options.noFiles )
 					{
-						for( var i = 0; i < icons.length; i++ )
+						for( let i = 0; i < icons.length; i++ )
 						{
 							icon = icons[ i ];
 							if( icon.Type == 'File' )
@@ -276,8 +276,8 @@ Friend.DOS.executeJSX = function( path, options, callback, extra )
 Friend.DOS.getServerPath = function( applicationId, path, options )
 {
 	// Get the application path
-	var aPath;
-	for( var a = 0; a < Workspace.applications.length; a++ )
+	let aPath;
+	for( let a = 0; a < Workspace.applications.length; a++ )
 	{
 		if( Workspace.applications[ a ].applicationId == applicationId )
 		{
@@ -319,19 +319,19 @@ Friend.DOS.getServerPath = function( applicationId, path, options )
 Friend.DOS.isFriendNetworkDrive = function( path, options )
 {
 	// Is the path on a Friend Network drive?
-	var drive;
-	var pos = path.indexOf( ':' );
+	let drive;
+	let pos = path.indexOf( ':' );
 	if ( pos >= 0 )
 		drive = path.substring( 0, pos + 1 );
 	if ( drive )
 	{
-		var friendNetwork = false;
-		var doors = DormantMaster.getDoors();
+		let friendNetwork = false;
+		let doors = DormantMaster.getDoors();
 		if( doors )
 		{
-			for( var d in doors )
+			for( let d in doors )
 			{
-				var door = doors[ d ];
+				let door = doors[ d ];
 				if( door.Title == drive )
 				{
 					return true;
@@ -364,10 +364,10 @@ Friend.DOS.loadHTML = function( applicationId, path, options, callback, extra )
 	{
 		if ( response )
 		{
-			var isFriendNetwork = Friend.DOS.isFriendNetworkDrive( path );
+			let isFriendNetwork = Friend.DOS.isFriendNetworkDrive( path );
 			if ( isFriendNetwork )
 			{
-				var drive = path.substring( 0, path.indexOf( ':' ) + 1 );
+				let drive = path.substring( 0, path.indexOf( ':' ) + 1 );
 
 				// Relocates the file
 				FriendNetworkDoor.relocateHTML( html, drive, '', '', function( response, html )
@@ -401,7 +401,7 @@ Friend.DOS.loadHTML = function( applicationId, path, options, callback, extra )
  */
 Friend.DOS.loadFile = function( path, options, callback, extra )
 {
-	var file = new File( path );
+	let file = new File( path );
 	file.onLoad = function( data )
 	{
 		// Check for error
@@ -415,7 +415,7 @@ Friend.DOS.loadFile = function( path, options, callback, extra )
 			callback( true, data, extra );
 		}		
 	};
-	var mode = '';
+	let mode = '';
 	if ( options && options.binary )
 		mode = 'rb';
 	file.load( mode );
@@ -442,8 +442,8 @@ Friend.DOS.getDriveInfo = function( path, options, callback, extra )
 	{
 		path += ':';
 	}
-	var icon = false;
-	for( var a = 0; a < Workspace.icons.length; a++ )
+	let icon = false;
+	for( let a = 0; a < Workspace.icons.length; a++ )
 	{
 		if( Workspace.icons[a].Volume == path )
 		{
@@ -476,11 +476,11 @@ Friend.DOS.getDriveInfo = function( path, options, callback, extra )
  */
 Friend.DOS.getFileAccess = function( path, options, callback, extra )
 {
-	var sn = new Library( 'system.library' );
+	let sn = new Library( 'system.library' );
 	sn.onExecuted = function( returnCode, returnData )
 	{						
 		// If we got an OK result, then parse the return data (json data)
-		var rd = false;
+		let rd = false;
 		if( returnCode == 'ok' )
 		{
 			rd = JSON.parse( returnData );
@@ -526,12 +526,12 @@ Friend.DOS.getFileAccess = function( path, options, callback, extra )
 Friend.DOS.getFileInfo = function( path, options, callback, extra )
 {
 	// FRANCOIS: TODO! handle Dormant drives!
-	var l = new Library( 'system.library' );
+	let l = new Library( 'system.library' );
 	l.onExecuted = function( e, d )
 	{
 		if ( e == 'ok' )
 		{
-			var fileinfo;
+			let fileinfo;
 			try
 			{
 				fileinfo = JSON.parse( d );
@@ -553,9 +553,9 @@ Friend.DOS.getFileInfo = function( path, options, callback, extra )
 
 Friend.DOS.getServerURL = function( path, options, callback, extra )
 {
-	var path = getImageUrl( path );
-	callback( true, path, extra );
-	return path;
+	let gpath = getImageUrl( path );
+	callback( true, gpath, extra );
+	return gpath;
 };
 
 
@@ -597,8 +597,6 @@ Friend.DOS.openWindowByFilename = function( fileInfo, ext )
 		Type         : ( fileInfo.Type         ? fileInfo.Type         : 'File' ),
 		downloadhref : ( fileInfo.downloadhref ? fileInfo.downloadhref : ''     )
 	};
-	
-	console.log( 'Opening: ', fileInfo );
 	
 	return OpenWindowByFileinfo( fileInfo );
 }

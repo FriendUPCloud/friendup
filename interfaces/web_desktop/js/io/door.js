@@ -107,7 +107,7 @@ Door.prototype.get = function( path )
 	let vol = path.split( ':' )[0] + ':';
 	
 	// First case sensitive
-	for( var a = 0; a < Workspace.icons.length; a++ )
+	for( let a = 0; a < Workspace.icons.length; a++ )
 	{
 		if( Workspace.icons[a].Volume == vol )
 		{
@@ -124,7 +124,7 @@ Door.prototype.get = function( path )
 	
 	// Then insensitive
 	let invol = vol.toLowerCase();
-	for( var a = 0; a < Workspace.icons.length; a++ )
+	for( let a = 0; a < Workspace.icons.length; a++ )
 	{
 		if( Workspace.icons[a].Volume && Workspace.icons[a].Volume.toLowerCase() == invol )
 		{
@@ -266,7 +266,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 					
 					let parsed = '';
 					// Clear last bit
-					for( var tries = 0; tries < 2; tries++ )
+					for( let tries = 0; tries < 2; tries++ )
 					{
 						// Remove newlines
 						// TODO: Handle in server! This is a bug
@@ -295,7 +295,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 						// Fix paths
 						let sef = this;
 						let sharedCheck = [];
-						for( var a = 0; a < list.length; a++ )
+						for( let a = 0; a < list.length; a++ )
 						{
 							if( list[a].Path.indexOf( ':' ) < 0 )
 								list[a].Path = deviceName + list[a].Path;
@@ -362,7 +362,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 			if( dirs && typeof( dirs ) == 'object' )
 			{
 				let o = [];
-				for( var a in dirs ) o.push( dirs[a] );
+				for( let a in dirs ) o.push( dirs[a] );
 				dirs = o;
 			}
 			let pth;
@@ -393,7 +393,7 @@ Door.prototype.checkDormantDoors = function( path, callback )
 		if( doors )
 		{
 			// Case sensitive
-			for( var a in doors )
+			for( let a in doors )
 			{
 				let t = doors[a].Title + ':';		// HOGNE I lost so much time on ':' in Title, sometimes used, sometimes not... argh.
 				if( t == p )
@@ -408,7 +408,7 @@ Door.prototype.checkDormantDoors = function( path, callback )
 				}
 			}
 			// Case insensitive
-			for( var a in doors )
+			for( let a in doors )
 			{
 				let t = doors[a].Title + ':';
 				if( t.toLowerCase() == p.toLowerCase() )
@@ -507,7 +507,7 @@ Door.prototype.write = function( filename, data, mode, extraData )
 	j.addVar( 'mode', 'w' );
 	if( this.vars )
 	{
-		for( var a in this.vars )
+		for( let a in this.vars )
 		{
 			j.addVar( a, this.vars[a] );
 		}
@@ -571,7 +571,7 @@ Door.prototype.read = function( filename, mode, extraData )
 
 	if( this.vars )
 	{
-		for( var a in this.vars )
+		for( let a in this.vars )
 		{
 			j.addVar( a, this.vars[a] );
 		}
@@ -630,7 +630,7 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 		let doors = DormantMaster.getDoors();
 		if( doors )
 		{
-			for( var d in doors )
+			for( let d in doors )
 			{
 				let door = doors[ d ];
 				let title = door.Title.split( ':' )[ 0 ] + ':';
@@ -698,7 +698,7 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 	// Since FC doesn't have full JSON support yet, let's do this too
 	if( args && ( typeof( args ) == 'object' || typeof( args ) == 'array' ) )
 	{
-		for( var a in args )
+		for( let a in args )
 		{
 			j.addVar( a, args[a] );
 		}
@@ -726,7 +726,7 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 	function refresh()
 	{
 		let possibilities = [ 'from', 'From', 'to', 'To', 'path', 'Path' ];
-		for( var b = 0; b < possibilities.length; b++ )
+		for( let b = 0; b < possibilities.length; b++ )
 		{
 			if( args[possibilities[b]] )
 			{
@@ -816,7 +816,7 @@ function IsPathOnDormantDoor( path )
 	let doors = DormantMaster.getDoors();
 	if( doors )
 	{
-		for( var d in doors )
+		for( let d in doors )
 		{
 			let door = doors[ d ];
 			let title = door.Title.split( ':' )[ 0 ] + ':';

@@ -297,7 +297,7 @@ int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, UserSession *se
 		char *name = NULL;
 		char *config = NULL;
 		char *ctype = NULL, *type = NULL;
-		
+
 		FULONG id, storedBytes;
 		int j = 0;
 		char temptext[ 612 ]; memset( temptext, 0, sizeof(temptext) );
@@ -457,7 +457,6 @@ int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, UserSession *se
 		if( config != NULL ){ FFree( config ); }
 		if( ctype != NULL ){ FFree( ctype ); }
 		if( type != NULL ){ FFree( type ); }
-		//if( execute != NULL ){ FFree( execute ); }
 	}
 	DEBUG("[UserGroupMountWorkgroupDrives] Return with error %d\n", error );
 	
@@ -2700,14 +2699,11 @@ void UserNotifyFSEvent2( DeviceManager *dm, User *u, char *evt, char *path )
 			{
 				if( list->us != NULL )
 				{
-					if( list->us != NULL )
-					{
-						WebSocketSendMessage( l, list->us, message, mlen );
-					}
-					else
-					{
-						INFO("Cannot send WS message: %s\n", message );
-					}
+					WebSocketSendMessage( l, list->us, message, mlen );
+				}
+				else
+				{
+					INFO("Cannot send WS message: %s\n", message );
 				}
 				list = (UserSessListEntry *)list->node.mln_Succ;
 			}

@@ -493,7 +493,8 @@ html .File.Tiny, html .File.Tiny .Icon, html .File.Tiny .Icon > div
 {
 }
 
-.File .Icon .Directory.GroupShare:after
+.File .Icon .Directory.GroupShare:after,
+.File .Icon .Directory.YouShare:after
 {
 	font-family: fontawesome;
 	content: "\f0c0";
@@ -503,7 +504,10 @@ html .File.Tiny, html .File.Tiny .Icon, html .File.Tiny .Icon > div
 	width: 100%;
 	text-align: center;
 }
-
+.File .Icon .Directory.YouShare:after
+{
+	content: "\f1e1";
+}
 .File .Icon > .FileShared:before,
 .File .Icon > .Shared:after
 {
@@ -518,8 +522,10 @@ html .File.Tiny, html .File.Tiny .Icon, html .File.Tiny .Icon > div
 }
 
 div.Columnview .File .Directory.GroupShare:after,
+div.Columnview .File .Directory.YouShare:after,
 div.Columnview .File .Directory.UserShare:after,
 div.Listview .File .Directory.GroupShare:after,
+div.Listview .File .Directory.YouShare:after,
 div.Listview .File .Directory.UserShare:after
 {
 	top: 10px;
@@ -527,6 +533,7 @@ div.Listview .File .Directory.UserShare:after
 }
 
 div .File.ZoomX3 .Icon .Directory.GroupShare:after,
+div .File.ZoomX3 .Icon .Directory.YouShare:after,
 div .File.ZoomX3 .Icon .Directory.UserShare:after
 {
 	top: 62px;

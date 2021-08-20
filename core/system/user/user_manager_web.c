@@ -1279,7 +1279,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			
 			if( IS_SESSION_ADMIN( loggedSession )|| PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 			{
-				DEBUG("Is user admin: %d\n", loggedSession->us_User->u_IsAdmin );
+				DEBUG("Is user admin: %d\n", IS_SESSION_ADMIN( loggedSession ) );
 				haveAccess = TRUE;
 				
 				logusr = UMGetUserByID( l->sl_UM, id );
@@ -1857,6 +1857,12 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 								continue;
 							}
 							UserSession *us = (UserSession *) sessions->us;
+							
+							if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+							{
+								us->us_InUseCounter++;
+								FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+							}
 
 							time_t timestamp = time(NULL);
 							
@@ -1865,7 +1871,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 								us->us_InUseCounter++;
 								FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 							}
-								if( us->us_WSD != NULL && ( (timestamp - us->us_LastActionTime) < l->sl_RemoveSessionsAfterTime ) )
+							
+							if( us->us_WSD != NULL && ( (timestamp - us->us_LastActionTime) < l->sl_RemoveSessionsAfterTime ) )
+							{
+								WSCData *data = (WSCData *)us->us_WSD;
+								if( data != NULL && data->wsc_UserSession != NULL && data->wsc_Wsi != NULL )
 								{
 									int size = 0;
 									if( pos == 0 )
@@ -1877,10 +1887,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 										size = snprintf( temp, 2047, ",{\"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LastActionTime );
 									}
 									BufStringAddSize( bs, temp, size );
-							
 									pos++;
 								}
-								
+
+							}
+							
 							if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 							{
 								us->us_InUseCounter--;
@@ -2340,7 +2351,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		
 		if( sourceID != NULL && contactIDs != NULL && mode != NULL )
 		{
-			if( (loggedSession->us_User != NULL) && (( loggedSession->us_User->u_UUID != NULL && strcmp( sourceID, loggedSession->us_User->u_UUID ) == 0 ) || loggedSession->us_User->u_IsAdmin == TRUE ) )
+			if( (loggedSession->us_User != NULL) && (( loggedSession->us_User->u_UUID != NULL && strcmp( sourceID, loggedSession->us_User->u_UUID ) == 0 ) || IS_SESSION_ADMIN( loggedSession ) ) )
 			{
 				if( strcmp( mode, "presence" ) == 0 )
 				{

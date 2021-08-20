@@ -234,7 +234,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					} );
 				}
 				
-				if( callback ) callback( this.flushDuplicate( output ), translations.dirPrefs );
+				if( callback ) callback( self.flushDuplicate( output ), translations.dirPrefs );
 			}
 			m.execute( 'userlevel' );
 			return;
@@ -302,7 +302,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				} );
 			}
 			if( callback )
-				return callback( this.flushDuplicate( output ), translations.dirDevices );
+				return callback( self.flushDuplicate( output ), translations.dirDevices );
 			return output;
 		},
 		/*'System:Documentation/': function()
@@ -363,7 +363,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				}
 			];
 			if( callback )
-				return callback( this.flushDuplicate( output ), translations.dirRepositories );
+				return callback( self.flushDuplicate( output ), translations.dirRepositories );
 			return output;
 		},
 		'System:Functions/': function()
@@ -614,7 +614,7 @@ DoorSystem.prototype.flushDuplicate = function( output )
 		let found = false;
 		for( let b = 0; b < out.length; b++ )
 		{
-			if( output[a].Path == out[b].Path )
+			if( output[a].Path == out[b].Path && output[a].Filename == out[b].Filename )
 			{
 				found = true;
 				break;
