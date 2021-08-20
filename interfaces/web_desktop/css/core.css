@@ -3483,7 +3483,7 @@ body.Offline #OfflineMessage
 	right: 0;
 	height: 32px;
 	background: white;
-	z-index: 2147483647;
+	z-index: 2147483646;
 	box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	box-shadow: 0px 0px 8px 1px rgba(0,0,0,0.5);
@@ -3493,6 +3493,7 @@ body.Offline #OfflineMessage
 	background-repeat: no-repeat;
 	background-position: 5px 5px;
 	padding-left: 30px;
+	overflow: hidden;
 }
 
 /* Show indicator when hovering over titlebar */
@@ -4351,6 +4352,7 @@ html #Tray
 	position: relative;
 	position: absolute;
 	top: 0;
+	z-index: 2147483647;
 }
 
 html #Tray > div
