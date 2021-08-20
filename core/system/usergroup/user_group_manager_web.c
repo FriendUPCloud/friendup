@@ -1221,7 +1221,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					{
 						int globlen = 0;
 						
-						BufStringAdd( bs, "UPDATE 'FUserGroup' SET ");
+						BufStringAdd( bs, "UPDATE `FUserGroup` SET ");
 						
 						if( status >= 0 )
 						{
