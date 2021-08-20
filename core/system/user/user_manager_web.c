@@ -1865,12 +1865,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							}
 
 							time_t timestamp = time(NULL);
-							
+							/*
 							if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 							{
 								us->us_InUseCounter++;
 								FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 							}
+							*/
 							
 							if( us->us_WSD != NULL && ( (timestamp - us->us_LastActionTime) < l->sl_RemoveSessionsAfterTime ) )
 							{
