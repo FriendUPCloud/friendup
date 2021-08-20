@@ -1295,12 +1295,10 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							BufStringAddSize( bs, tmp, len );
 						}
 						
-						if( type != NULL )
-						{
-							char tmp[ 256 ];
-							int len = snprintf( tmp, sizeof(tmp), " WHERE ID=%lu", groupID );
-							BufStringAddSize( bs, tmp, len );
-						}
+						// Add most important part
+						char itmp[ 256 ];
+						int len = snprintf( itmp, sizeof(itmp), " WHERE ID=%lu", groupID );
+						BufStringAddSize( bs, itmp, len );
 
 						SQLLibrary *sqlLib = l->LibrarySQLGet( l );
 
