@@ -42,6 +42,7 @@ UserGroupManager *UGMNew( void *sb )
 		sm->ugm_SB = sb;
 		Log( FLOG_INFO,  "[UGMNew] Loading groups from DB\n");
 	
+		/*
 		SQLLibrary *sqlLib = lsb->LibrarySQLGet( lsb );
 		if( sqlLib != NULL )
 		{
@@ -81,6 +82,7 @@ UserGroupManager *UGMNew( void *sb )
 			}
 			g = (UserGroup *)g->node.mln_Succ;
 		}
+		*/
 		
 		pthread_mutex_init( &sm->ugm_Mutex, NULL );
 
@@ -250,6 +252,19 @@ UserGroup *UGMGetGroupByNameAndTypeDB( UserGroupManager *ugm, const char *name, 
 		if( ug != NULL )
 		{
 			ug->ug_Status = USER_GROUP_STATUS_ACTIVE;
+			if( ug->ug_Type != NULL )
+			{
+				if( strcmp( ug->ug_Name, "Admin" ) == 0 )
+				{
+					ug->ug_IsAdmin = TRUE;
+				}
+				if( strcmp( ug->ug_Name, "API" ) == 0 )
+				{
+					ug->ug_IsAPI = TRUE;
+				}
+				
+				DEBUG("Group name: %s type: %s\n", ug->ug_Name, ug->ug_Type );
+			}
 		}
 		l->LibrarySQLDrop( l, sqlLib );
 	}
@@ -756,6 +771,9 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 		}
 		else
 		{
+			//usr->u_IsAdmin = FALSE;
+			//usr->u_IsAPI = FALSE;
+				
 			UserGroup *rootug = UGMGetGroupByNameAndTypeDB( ugm, level, "Level" );
 			if( rootug != NULL )
 			{
@@ -766,6 +784,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 					DEBUG("User is in level: %s\n", level );
 					if( ug->ug_IsAdmin == TRUE ) isAdmin = TRUE;
 					if( ug->ug_IsAPI == TRUE ) isAPI = TRUE;
+					DEBUG("User is in level admin: %d api %d\n", isAdmin, isAPI );
 				
 					char loctmp[ 256 ];
 					int loctmplen;
@@ -829,6 +848,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 		
 			usr->u_IsAdmin = isAdmin;
 			usr->u_IsAPI = isAPI;
+			DEBUG("User: %s isAdmin %d isAPI %d\n", usr->u_Name, usr->u_IsAdmin, usr->u_IsAPI );
 		}
 		
 		// removeing old group conections from DB
