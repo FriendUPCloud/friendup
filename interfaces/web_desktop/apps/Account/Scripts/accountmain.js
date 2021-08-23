@@ -184,7 +184,7 @@ function refreshGroups( keys )
 		{
 			let button = '<button type="button" class="Button IconSmall fa-remove NoText IconButton" title="' + i18n( 'i18n_leave_group' ) + '" onclick="leaveGroup(\'' + d[a].ID + '\')"></button>';
 			// Cannot remove yourself from Admin administrated groups
-			if( d[a].Level == 'Admin' )
+			if( d[a].Level == 'Admin' && d[a].IsInvite == 0 )
 				button = '';
 			
 			sw = sw == 1 ? 2 : 1;

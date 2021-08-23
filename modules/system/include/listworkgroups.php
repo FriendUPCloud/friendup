@@ -46,7 +46,7 @@ else if( $args->args->mode == 'invites' )
 		(
 			SELECT 
 				g.*, qu.Fullname AS Invitor, g.ID AS TargetGroupID,
-				levg.Name AS Level
+				levg.Name AS Level, \'0\' AS `IsInvite`
 			FROM 
 				FUser qu, 
 				FUserToGroup mygroups, 
@@ -68,7 +68,7 @@ else if( $args->args->mode == 'invites' )
 		(
 			SELECT 
 				g.*, qu.Fullname AS Invitor, g.ID AS TargetGroupID,
-				levg.Name AS Level
+				levg.Name AS Level, q.ID AS IsInvite
 			FROM 
 				FUserGroup g, 
 				FUserToGroup utg, 
