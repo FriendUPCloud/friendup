@@ -98,11 +98,14 @@ else if( $args->args->mode == 'invites' )
 			$found = false;
 			if( count( $out ) )
 			{
-				foreach( $out as $o )
+				foreach( $out as $k=>$o )
 				{
 					if( $o->ID == $row->ID )
 					{
 						$found = true;
+						// Invites has presedense
+						if( $row->IsInvite )
+							$out[ $k ] = $row;
 						break;
 					}
 				}
