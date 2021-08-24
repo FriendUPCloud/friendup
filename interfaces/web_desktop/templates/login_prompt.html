@@ -250,7 +250,10 @@
 									}
 								}
 							}
-							catch {  }
+							catch ( e )
+							{
+								console.log( 'Error caught?', e );
+							}
 							
 							console.log( 'What is it: ' + Application.inviteHash );
 							
