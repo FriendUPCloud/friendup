@@ -75,7 +75,7 @@
 //
 //
 
-extern int UserDeviceMount( SystemBase *l, User *usr, UserSession *us, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
+extern int UserDeviceMount( SystemBase *l, UserSession *us, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
 
 
 /**
@@ -731,7 +731,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				{
 					loggedSession->us_User = tmpusr;
 					char *err = NULL;
-					UserDeviceMount( l, loggedSession->us_User, loggedSession, 0, TRUE, &err, TRUE );
+					UserDeviceMount( l, loggedSession, 0, TRUE, &err, TRUE );
 					if( err != NULL )
 					{
 						Log( FLOG_ERROR, "Login mount error. UserID: %lu Error: %s\n", loggedSession->us_User->u_ID, err );
@@ -1953,7 +1953,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								DEBUG("[SysWebRequest] New user and session added\n");
 							
 								char *err = NULL;
-								UserDeviceMount( l, loggedSession->us_User, loggedSession, 0, TRUE, &err, TRUE );
+								UserDeviceMount( l, loggedSession, 0, TRUE, &err, TRUE );
 								if( err != NULL )
 								{
 									Log( FLOG_ERROR, "Login mount error. UserID: %lu Error: %s\n", loggedSession->us_User->u_ID, err );
@@ -2244,7 +2244,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								UMAddUser( l->sl_UM, loggedSession->us_User );
 
 								char *err = NULL;
-								UserDeviceMount( l, loggedSession->us_User, loggedSession, 0, TRUE, &err, TRUE );
+								UserDeviceMount( l, loggedSession, 0, TRUE, &err, TRUE );
 								if( err != NULL )
 								{
 									Log( FLOG_ERROR, "Login1 mount error. UserID: %lu Error: %s\n", loggedSession->us_User->u_ID, err );
