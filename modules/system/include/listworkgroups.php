@@ -91,7 +91,25 @@ else if( $args->args->mode == 'invites' )
 		)
 		' ) )
 	{
-		die( 'ok<!--separate-->' . json_encode( $rows ) );
+		// Remove dups
+		foreach( $rows as $row )
+		{
+			$found = false;
+			if( count( $out ) )
+			{
+				foreach( $out as $o )
+				{
+					if( $o->ID == $row->ID )
+					{
+						$found = true;
+						break;
+					}
+				}
+			}
+			if( !$found ) $out[] = $row;
+		}
+		$out = [];
+		die( 'ok<!--separate-->' . json_encode( $row ) );
 	}
 	else
 	{
