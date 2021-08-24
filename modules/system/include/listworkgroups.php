@@ -109,7 +109,7 @@ else if( $args->args->mode == 'invites' )
 			if( !$found ) $out[] = $row;
 		}
 		$out = [];
-		die( 'ok<!--separate-->' . json_encode( $row ) );
+		die( 'ok<!--separate-->' . json_encode( $out ) );
 	}
 	else
 	{
