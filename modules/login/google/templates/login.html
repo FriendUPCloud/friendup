@@ -1124,10 +1124,7 @@
 									json = JSON.parse( decoded );
 								}
 							}
-							catch( e )
-							{
-								console.log( 'This was trouble:', invite, decoded, e );
-							}
+							catch {  }
 							
 							invite = invite.split( 'BASE64' )[0];
 						}
