@@ -548,29 +548,48 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		SQLLibrary *sqllib = l->GetDBConnection( l );
-		if ( sqllib == NULL )
-		{
-			char dictmsgbuf[ 256 ];
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
-			HttpAddTextContent( response, dictmsgbuf );
-			return;
-		}
-		
 		HashmapElement *el = HashmapGet( request->http_ParsedPostContent, "appname" );
 		if( el != NULL )
 		{
 			appname = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
+		// missing appname
 		if ( appname == NULL )
 		{
 			char dictmsgbuf[ 256 ];
 			char dictmsgbuf1[ 196 ];
-			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "appname" );
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			snprintf(
+				dictmsgbuf1,
+				sizeof(dictmsgbuf1),
+				l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING],
+				"appname"
+			);
+			snprintf(
+				dictmsgbuf,
+				sizeof(dictmsgbuf),
+				"{\"response\":\"%s\",\"code\":\"%d\"}",
+				dictmsgbuf1 ,
+				DICT_PARAMETERS_MISSING
+			);
 			HttpAddTextContent( response, dictmsgbuf );
-			return;
+			return response;
+		}
+		
+		SQLLibrary *sqllib = l->GetDBConnection( l );
+		// no db available
+		if ( sqllib == NULL )
+		{
+			char dictmsgbuf[ 256 ];
+			snprintf(
+				dictmsgbuf,
+				sizeof(dictmsgbuf),
+				"fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}",
+				l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] ,
+				DICT_SQL_LIBRARY_NOT_FOUND
+			);
+			HttpAddTextContent( response, dictmsgbuf );
+			return response;
 		}
 		
 		FQUAD appID = 0;
@@ -587,7 +606,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			query,
 			sizeof(query),
 			"SELECT ua.ID FROM `FApplication` a "
-				"inner join `FUserApplication` ua on a.ID=ua.ApplicationID "
+				"INNER JOIN `FUserApplication` ua ON a.ID=ua.ApplicationID "
 				"WHERE a.Name='%s' AND ua.UserID=%ld LIMIT 1", 
 			appname,
 			uid
@@ -605,8 +624,37 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			sqllib->FreeResult( sqllib, result );
 		}
 		
-		 // YEP
-		DEBUG("Regen authid: UserId %ld AppName %s AppID %ld\n ", uid, appname, appID );
+		DEBUG( "Regen authid: UserId %ld AppName %s AppID %ld\n ",
+			uid,
+			appname,
+			appID
+		);
+		
+		
+		// could not find app
+		if ( 0 == appID ) {
+			DEBUG("[AuthID regen] no app found %s\n", appname );
+			char responseMsg[ 256 ];
+			char appNotFound[ 196 ];
+			snprintf(
+				appNotFound,
+				sizeof(appNotFound),
+				l->sl_Dictionary->d_Msg[DICT_APPLICATION_NOT_FOUND],
+				appname
+			);
+			snprintf(
+				responseMsg,
+				sizeof(responseMsg),
+				"{\"response\":\"%s\",\"code\":\"%d\"}",
+				appNotFound ,
+				DICT_APPLICATION_NOT_FOUND
+			);
+			HttpAddTextContent( response, responseMsg );
+			l->DropDBConnection( l, sqllib );
+			FFree( appname );
+			return response;
+		}
+		
 		AppSession *las = AppSessionNew( l, appID, uid, NULL );
 		
 		User *setUser = NULL;
@@ -628,7 +676,12 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			err = sqllib->Save( sqllib, AppSessionDesc, las );
 			if( err == 0 )
 			{
-				snprintf( respMsg, sizeof(respMsg), "{\"result\":\"success\",\"id\":%lu,\"authid\":\"%s\"}", las->as_ID, las->as_AuthID );
+				snprintf(
+					respMsg,
+					sizeof(respMsg),
+					"{\"result\":\"success\",\"id\":%lu,\"authid\":\"%s\"}",
+					las->as_ID, las->as_AuthID
+				);
 			
 				AppSessionManagerAppSessionAdd( l->sl_AppSessionManager, las );
 			}
@@ -637,11 +690,10 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				AppSessionDelete( las );
 			}
 		}
+		
 		HttpAddTextContent( response, respMsg );
 		
-		
 		l->DropDBConnection( l, sqllib );
-		
 		FFree( appname );
 		
 		/*

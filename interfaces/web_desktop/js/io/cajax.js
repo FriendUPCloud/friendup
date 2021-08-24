@@ -526,7 +526,9 @@ cAjax.prototype.setAuthToken = function()
 	{
 		if ( null == app.authId )
 		{
-			console.log( 'no authid :(' );
+			console.log( 'no authid :(', {
+				
+			});
 			return false;
 		}
 		
