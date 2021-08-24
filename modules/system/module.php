@@ -299,6 +299,9 @@ if( isset( $args->command ) )
 		case 'repoappimage':
 			require( 'modules/system/include/repoappimage.php' );
 			break;
+		case 'sampleconfig':
+			require( 'modules/system/include/sampleconfig.php' );
+			break;
 		case 'getsecuritysettings':
 			if( isset( $configfilesettings[ 'Security' ] ) )
 			{

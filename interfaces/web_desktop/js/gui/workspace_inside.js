@@ -2205,6 +2205,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// NB: Start of workspace_inside.js ----------------------------------------
 	refreshUserSettings: function( callback )
 	{
+		let b = new Module( 'system' );
+		b.onExecuted = function( e, d )
+		{
+			if( e == 'ok' )
+			{
+				Workspace.serverConfig = JSON.parse( d );
+			}
+		}
+		b.execute( 'sampleconfig' );
+		
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
