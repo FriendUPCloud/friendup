@@ -220,7 +220,6 @@
 				}
 			};
 			
-			// Get the invite hash from url
 			function getInviteHash(  )
 			{
 				if( document.location.href && document.location.href.indexOf( 'invite=' ) >= 0 )
@@ -229,8 +228,6 @@
 					
 					if( invite )
 					{
-						console.log( 'Here we got invite: ' + invite );
-						
 						let json = false;
 						
 						if( invite.indexOf( 'BASE64' ) >= 0 )
@@ -251,12 +248,7 @@
 									}
 								}
 							}
-							catch ( e )
-							{
-								console.log( 'Error caught?', e );
-							}
-							
-							console.log( 'What is it: ' + Application.inviteHash );
+							catch {  }
 							
 							invite = invite.split( 'BASE64' )[0];
 						}
@@ -264,7 +256,6 @@
 						if( !Application.inviteHash )
 						{
 							Application.inviteHash = invite;
-							console.log( 'finally setting: ' + invite );
 						}
 					}
 				}
