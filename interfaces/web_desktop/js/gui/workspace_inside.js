@@ -349,7 +349,8 @@ var WorkspaceInside = {
 	// Invite a friend to the Workspace
 	inviteFriend: function()
 	{
-		
+		if( !Workspace.serverConfig || !Workspace.serverConfig.invitesEnabled )
+			return;
 		let version = 2;
 		
 		let self = this;
@@ -7389,6 +7390,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			currentMovable.content;
 			if( cnt ) systemDrive = cnt && cnt.fileInfo && cnt.fileInfo.Volume == 'System:';
 		}
+		
+		let sConf = Workspace.serverConfig;
 
 		// Setup Doors menu
 		this.menu = [
@@ -7405,10 +7408,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						name:	i18n( 'my_account' ),
 						command: function(){ Workspace.accountSetup(); }
 					},
-					{
+					( sConf && sConf.invitesEnabled ? {
 						name:	i18n( 'invite_a_friend' ),
 						command: function(){ Workspace.inviteFriend(); }
-					},
+					} : false ),
 					{
 						name:	i18n( 'menu_examine_system' ),
 						command: function()
