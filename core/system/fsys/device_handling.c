@@ -249,7 +249,7 @@ int RescanDOSDrivers( DeviceManager *dm )
 //
 // internal function to lock
 //
-
+/*
 inline static int MountLock( DeviceManager *dm, User *usr )
 {
 	if( usr != NULL )
@@ -269,6 +269,7 @@ inline static int MountUnlock( DeviceManager *dm, User *usr )
 
 	return FRIEND_MUTEX_UNLOCK( &(dm->dm_Mutex) );
 }
+*/
 
 /**
  * 
@@ -351,24 +352,25 @@ int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, UserSession *se
 				int sameDevError = 0;
 				File *fentry = NULL;
 		
-				if( MountLock( dm, usr ) == 0 )
+				if( usr != NULL )
 				{
-					if( usr != NULL )
+					if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 					{
 						fentry = usr->u_MountedDevs;
-					}
-					while( fentry != NULL )
-					{
-						DEBUG("[UserGroupMountWorkgroupDrives] Going through all user drives. Name %s UserID %lu\n", fentry->f_Name, usr->u_ID );
-						if( strcmp( name, fentry->f_Name ) == 0 ) //id == fentry->f_ID )
+					
+						while( fentry != NULL )
 						{
-							DEBUG("[UserGroupMountWorkgroupDrives] Device is already mounted. Name: %s ID %lu\n", fentry->f_Name, fentry->f_ID );
-							sameDevError = 1;
-							break;
+							DEBUG("[UserGroupMountWorkgroupDrives] Going through all user drives. Name %s UserID %lu\n", fentry->f_Name, usr->u_ID );
+							if( strcmp( name, fentry->f_Name ) == 0 ) //id == fentry->f_ID )
+							{
+								DEBUG("[UserGroupMountWorkgroupDrives] Device is already mounted. Name: %s ID %lu\n", fentry->f_Name, fentry->f_ID );
+								sameDevError = 1;
+								break;
+							}
+							fentry = (File *) fentry->node.mln_Succ;
 						}
-						fentry = (File *) fentry->node.mln_Succ;
+						FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 					}
-					MountUnlock( dm, usr );
 				}
 			
 				DEBUG("[UserGroupMountWorkgroupDrives] mount shared, same dev error %d device name: %s\n", sameDevError, name );
@@ -795,45 +797,46 @@ AND f.Name = '%s'",
 		int sameDevError = 0;
 		File *fentry = NULL;
 		
-		if( MountLock( dm, usr ) == 0 )
+		if( usr != NULL )
 		{
-			if( usr != NULL )
+			if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 			{
 				fentry = usr->u_MountedDevs;
-			}
-			while( fentry != NULL )
-			{
-				DEBUG("Going through all user drives. Name %s UserID %lu\n", fentry->f_Name, usr->u_ID );
-				if( id == fentry->f_ID )
-				{
-					*mfile = fentry;
-					DEBUG("Device is already mounted. Name: %s ID %lu\n", fentry->f_Name, fentry->f_ID );
-					sameDevError = 1;
-					break;
-				}
-				fentry = (File *) fentry->node.mln_Succ;
-			}
-		
-			//
-			// checking if drive is available for group
-			//
-		
-			if( sameDevError == 0 && usrgrp != NULL )
-			{
-				File *fentry = usrgrp->ug_MountedDevs;
+			
 				while( fentry != NULL )
 				{
-					if( id == fentry->f_ID || strcmp( name, fentry->f_Name ) == 0 )
+					DEBUG("Going through all user drives. Name %s UserID %lu\n", fentry->f_Name, usr->u_ID );
+					if( id == fentry->f_ID )
 					{
 						*mfile = fentry;
-						DEBUG("Device is already mounted2. Name: %s\n", fentry->f_Name );
+						DEBUG("Device is already mounted. Name: %s ID %lu\n", fentry->f_Name, fentry->f_ID );
 						sameDevError = 1;
 						break;
 					}
 					fentry = (File *) fentry->node.mln_Succ;
 				}
+		
+				//
+				// checking if drive is available for group
+				//
+		
+				if( sameDevError == 0 && usrgrp != NULL )
+				{
+					File *fentry = usrgrp->ug_MountedDevs;
+					while( fentry != NULL )
+					{
+						if( id == fentry->f_ID || strcmp( name, fentry->f_Name ) == 0 )
+						{
+							*mfile = fentry;
+							DEBUG("Device is already mounted2. Name: %s\n", fentry->f_Name );
+							sameDevError = 1;
+							break;
+						}
+						fentry = (File *) fentry->node.mln_Succ;
+					}
+				}
+				FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 			}
-			MountUnlock( dm, usr );
 		}
 		
 		if( sameDevError == 1 )
@@ -861,10 +864,10 @@ AND f.Name = '%s'",
 
 		File *f = NULL;
 	
-		if( MountLock( dm, usr ) == 0 )
+		if( id > 0 && usr != NULL && usr->u_MountedDevs != NULL )
 		{
-			// super user feauture	
-			if( id > 0 && usr != NULL && usr->u_MountedDevs != NULL )
+			// super user feauture
+			if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 			{
 				DEBUG("[MountFS] %s - Starting to check mounted devs!\n", usr->u_Name );
 		
@@ -887,15 +890,13 @@ AND f.Name = '%s'",
 						if( mfile ){ *mfile = f; }
 
 						error = l->sl_Error = FSys_Error_DeviceAlreadyMounted;
-					
-						//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
-						MountUnlock( dm, usr );
+
+						FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 						goto merror;
 					}
 				}
+				FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 			}
-			//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
-			MountUnlock( dm, usr );
 		}
 		//
 		// If FHandler not found return NULL
@@ -944,8 +945,6 @@ AND f.Name = '%s'",
 			{TAG_DONE, TAG_DONE}
 		};
 		
-		//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
-	
 		// Using sentinel?
 		User *mountUser = usr;
 		if( usingSentinel == 1 )
@@ -976,11 +975,10 @@ AND f.Name = '%s'",
 				}
 			}
 		}
-		
-		//if( FRIEND_MUTEX_LOCK( &dm->dm_Mutex ) == 0 )
-		if( MountLock( dm, usr ) == 0 )
+
+		if( retFile != NULL )
 		{
-			if( retFile != NULL )
+			if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 			{
 				// Check again in lock if device is already mounted
 				
@@ -998,7 +996,7 @@ AND f.Name = '%s'",
 				{
 					error = l->sl_Error = FSys_Error_DeviceAlreadyMounted;
 					FERROR("[MountSubFS] %s - Device is already mounted, name %s type %s\n", usr->u_Name, name, type );
-					MountUnlock( dm, usr );
+					FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 					goto merror;
 				}
 				
@@ -1071,19 +1069,17 @@ AND f.Name = '%s'",
 			{
 				error = l->sl_Error = FSys_Error_CustomError;
 				FERROR("[MountFS] %s - Device not mounted name %s type %s\n", usr->u_Name, name, type );
-				MountUnlock( dm, usr );
+				FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 				goto merror;
 			}
-			MountUnlock( dm, usr );
-		}
+			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+		}	// retfile
 		
-		//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 		// Send notify to user and all his sessions
 		if( notify == TRUE )
 		{
 			UserNotifyFSEvent2( dm, usr, "refresh", "Mountlist:" );
 		}
-		//FRIEND_MUTEX_LOCK( &dm->dm_Mutex );
 		
 		DEBUG("[MountFS] %s - Mount device END\n", usr->u_Name );
 	}
@@ -1164,7 +1160,6 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 		DEBUG("[MountFS] %s: Start - MountFS before lock for user..\n", usr->u_Name );
 	}
 	
-	//if( FRIEND_MUTEX_LOCK( &dm->dm_Mutex ) == 0 )
 	{
 		DOSDriver *filedd = NULL;
 		struct TagItem *ltl = tl;
@@ -1463,46 +1458,47 @@ AND f.Name = '%s'",
 		int sameDevError = 0;
 		File *fentry = NULL;
 		
-		if( MountLock( dm, usr ) == 0 )
+		if( usr != NULL )
 		{
-			if( usr != NULL )
+			if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 			{
 				fentry = usr->u_MountedDevs;
-			}
-			while( fentry != NULL )
-			{
-				DEBUG("Going through all user drives. Name %s UserID %lu\n", fentry->f_Name, usr->u_ID );
-				if( id == fentry->f_ID )
-				{
-					*mfile = fentry;
-					DEBUG("Device is already mounted. Name: %s ID %lu\n", fentry->f_Name, fentry->f_ID );
-					sameDevError = 1;
-					break;
-				}
-				fentry = (File *) fentry->node.mln_Succ;
-			}
-		
-			//
-			// checking if drive is available for group
-			//
-		
-			if( sameDevError == 0 && usrgrp != NULL )
-			{
-				File *fentry = usrgrp->ug_MountedDevs;
+
 				while( fentry != NULL )
 				{
-					if( id == fentry->f_ID || strcmp( name, fentry->f_Name ) == 0 )
+					DEBUG("Going through all user drives. Name %s UserID %lu\n", fentry->f_Name, usr->u_ID );
+					if( id == fentry->f_ID )
 					{
 						*mfile = fentry;
-						DEBUG("Device is already mounted2. Name: %s\n", fentry->f_Name );
+						DEBUG("Device is already mounted. Name: %s ID %lu\n", fentry->f_Name, fentry->f_ID );
 						sameDevError = 1;
 						break;
 					}
 					fentry = (File *) fentry->node.mln_Succ;
 				}
-			}
-			MountUnlock( dm, usr );
-		}
+		
+				//
+				// checking if drive is available for group
+				//
+		
+				if( sameDevError == 0 && usrgrp != NULL )
+				{
+					File *fentry = usrgrp->ug_MountedDevs;
+					while( fentry != NULL )
+					{
+						if( id == fentry->f_ID || strcmp( name, fentry->f_Name ) == 0 )
+						{
+							*mfile = fentry;
+							DEBUG("Device is already mounted2. Name: %s\n", fentry->f_Name );
+							sameDevError = 1;
+							break;
+						}
+						fentry = (File *) fentry->node.mln_Succ;
+					}
+				}
+				FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+			}	// lock
+		} // usr != NULL
 		
 		if( sameDevError == 1 )
 		{
@@ -1529,10 +1525,11 @@ AND f.Name = '%s'",
 
 		File *f = NULL;
 	
-		if( MountLock( dm, usr ) == 0 )
+		if( id > 0 && usr != NULL && usr->u_MountedDevs != NULL )
 		{
 			// super user feauture	
-			if( id > 0 && usr != NULL && usr->u_MountedDevs != NULL )
+			
+			if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 			{
 				DEBUG("[MountFS] %s - Starting to check mounted devs!\n", usr->u_Name );
 		
@@ -1556,15 +1553,13 @@ AND f.Name = '%s'",
 
 						error = l->sl_Error = FSys_Error_DeviceAlreadyMounted;
 					
-						//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
-						MountUnlock( dm, usr );
+						FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 						goto merror;
 					}
 				}
-			}
-			//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
-			MountUnlock( dm, usr );
-		}
+				FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+			}	// mutex
+		}	// id > 0 and usr != NULL
 		//
 		// If FHandler not found return NULL
 	
@@ -1650,10 +1645,9 @@ AND f.Name = '%s'",
 			}
 		}
 		
-		//if( FRIEND_MUTEX_LOCK( &dm->dm_Mutex ) == 0 )
-		if( MountLock( dm, usr ) == 0 )
+		if( usr != NULL && retFile != NULL )
 		{
-			if( retFile != NULL )
+			if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 			{
 				// Check again in lock if device is already mounted
 				
@@ -1670,7 +1664,7 @@ AND f.Name = '%s'",
 				{
 					error = l->sl_Error = FSys_Error_DeviceAlreadyMounted;
 					FERROR("[MountFS] %s - Device is already mounted, name %s type %s\n", usr->u_Name, name, type );
-					MountUnlock( dm, usr );
+					FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 					goto merror;
 				}
 				
@@ -1772,7 +1766,7 @@ AND f.Name = '%s'",
 						{
 							// Try to mount the device with all privileges
 
-							MountUnlock( dm, usr );
+							FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 							File *dstFile = NULL;
 							if( MountFSNoSubMount( dm, tl, &dstFile, tmpUser, mountError, us, notify ) != 0 )
 							{
@@ -1782,7 +1776,7 @@ AND f.Name = '%s'",
 									//filesys->Release( filesys, dstFile );
 								}
 							}
-							MountLock( dm, usr );
+							FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
 							
 							// Tell user!
 							if( notify == TRUE )
@@ -1799,18 +1793,16 @@ AND f.Name = '%s'",
 						}
 						tmpUser = (User *)tmpUser->node.mln_Succ;
 					}
-				}
-		
+				}	// workgroup drive
 				INFO( "[MountFS] %s - Device '%s' mounted successfully\n", usr->u_Name, name );
-			}
-			else
-			{
-				error = l->sl_Error = FSys_Error_CustomError;
-				FERROR("[MountFS] %s - Device not mounted name %s type %s\n", usr->u_Name, name, type );
-				MountUnlock( dm, usr );
-				goto merror;
-			}
-			MountUnlock( dm, usr );
+				FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+			}	// mutex
+		} // usr != NULL and retFile != NULL
+		else
+		{
+			error = l->sl_Error = FSys_Error_CustomError;
+			FERROR("[MountFS] %s - Device not mounted name %s type %s\n", usr->u_Name, name, type );
+			goto merror;
 		}
 		
 		// Send notify to user and all his sessions

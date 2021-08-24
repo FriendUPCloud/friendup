@@ -1937,10 +1937,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 							BufStringAddSize( retString, tmp, itmp );
 							pos++;
 						}
-						
 						sqlLib->FreeResult( sqlLib, result );
 					}
-
 					l->LibrarySQLDrop( l, sqlLib );
 				}
 			}
