@@ -1591,7 +1591,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			len += strlen( args );
 		}
 		
-		if( loggedSession->us_User->u_IsAdmin  == TRUE )
+		if( IS_ADMIN_SESSION( loggedSession ) )
 		{
 			char tmp[ 1024 ];
 			int tmpsize = 0;
@@ -1636,10 +1636,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 							BufStringAddSize( retString, tmp, itmp );
 							pos++;
 						}
-						
 						sqlLib->FreeResult( sqlLib, result );
 					}
-
 					l->LibrarySQLDrop( l, sqlLib );
 				}
 			}

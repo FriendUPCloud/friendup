@@ -341,18 +341,21 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					User *usr = loggedSession->us_User;
 					if( usr != NULL )
 					{
-						FRIEND_MUTEX_LOCK( &usr->u_Mutex );
-						UserSessListEntry *ses = usr->u_SessionsList;
-						while( ses != NULL )
+						if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
 						{
-							UserSession *uses = (UserSession *) ses->us;
-							if( strcmp( sessionid, uses->us_SessionID ) == 0 )
+							UserSessListEntry *ses = usr->u_SessionsList;
+							while( ses != NULL )
 							{
-								nameSet = TRUE;
+								UserSession *uses = (UserSession *) ses->us;
+								if( strcmp( sessionid, uses->us_SessionID ) == 0 )
+								{
+									nameSet = TRUE;
+									break;
+								}
+								ses = (UserSessListEntry *)ses->node.mln_Succ;
 							}
-							ses = (UserSessListEntry *)ses->node.mln_Succ;
+							FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 						}
-						FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 					}
 				}
 				else
@@ -446,7 +449,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			
 			User *u = loggedSession->us_User;
 		
-			if( msg != NULL )
+			if( msg != NULL && loggedSession->us_User != NULL )
 			{
 				int msgsndsize = 0;
 				DEBUG("[UMWebRequest] Send message session by sessionid\n");
@@ -486,43 +489,58 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						}
 					}
 
-					UserSessListEntry *ses = u->u_SessionsList;
-					while( ses != NULL )
+					if( loggedSession->us_User != NULL )
 					{
-						FBOOL sendMsg = FALSE;
-						UserSession *uses = (UserSession *) ses->us;
-			
-						if( sessionid != NULL )
+						if( FRIEND_MUTEX_LOCK( &(u->u_Mutex) ) == 0 )
 						{
-							if( strcmp( sessionid, uses->us_SessionID ) == 0 )
-							{
-								sendMsg = TRUE;
-							}
+							u->u_InUse++;
+							FRIEND_MUTEX_UNLOCK( &(u->u_Mutex) );
 						}
-						else
-						{
-							sendMsg = TRUE;
-						}
-				
-						if( sendMsg == TRUE ) //&& uses != loggedSession )	// do not send message to same session
-						{
-							int lenmsg = 0;
 						
-							if( appname != NULL )
+						UserSessListEntry *ses = u->u_SessionsList;
+						while( ses != NULL )
+						{
+							FBOOL sendMsg = FALSE;
+							UserSession *uses = (UserSession *) ses->us;
+			
+							if( sessionid != NULL )
 							{
-								lenmsg = snprintf( tmpmsg, msgsize, "{\"type\":\"msg\",\"data\":{\"type\":\"server-msg\",\"session\":{\"message\":%s,\"appname\":\"%s\"}}}", msg, appname );
+								if( strcmp( sessionid, uses->us_SessionID ) == 0 )
+								{
+									sendMsg = TRUE;
+								}
 							}
 							else
 							{
-								lenmsg = snprintf( tmpmsg, msgsize, "{\"type\":\"msg\",\"data\":{\"type\":\"server-msg\",\"session\":{\"message\":%s}}}", msg );
+								sendMsg = TRUE;
 							}
+				
+							if( sendMsg == TRUE ) //&& uses != loggedSession )	// do not send message to same session
+							{
+								int lenmsg = 0;
+						
+								if( appname != NULL )
+								{
+									lenmsg = snprintf( tmpmsg, msgsize, "{\"type\":\"msg\",\"data\":{\"type\":\"server-msg\",\"session\":{\"message\":%s,\"appname\":\"%s\"}}}", msg, appname );
+								}
+								else
+								{
+									lenmsg = snprintf( tmpmsg, msgsize, "{\"type\":\"msg\",\"data\":{\"type\":\"server-msg\",\"session\":{\"message\":%s}}}", msg );
+								}
 			
-							msgsndsize += WebSocketSendMessageInt( uses, tmpmsg, lenmsg );
+								msgsndsize += WebSocketSendMessageInt( uses, tmpmsg, lenmsg );
 			
-							DEBUG("[UMWebRequest] messagee sent. Bytes: %d\n", msgsndsize );
+								DEBUG("[UMWebRequest] messagee sent. Bytes: %d\n", msgsndsize );
+							}
+							ses = (UserSessListEntry *)ses->node.mln_Succ;
 						}
-						ses = (UserSessListEntry *)ses->node.mln_Succ;
-					}
+						
+						if( FRIEND_MUTEX_LOCK( &(u->u_Mutex) ) == 0 )
+						{
+							u->u_InUse--;
+							FRIEND_MUTEX_UNLOCK( &(u->u_Mutex) );
+						}//lock
+					}	// if user != NULL
 					FFree( tmpmsg );
 				}
 
@@ -1333,7 +1351,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						if( sqlLib != NULL )
 						{
 							entries = sqlLib->NumberOfRecords( sqlLib, UserDesc,  query );
-
+							
 							l->LibrarySQLDrop( l, sqlLib );
 						}
 

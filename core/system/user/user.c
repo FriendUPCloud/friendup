@@ -76,6 +76,7 @@ int UserInit( User *u )
  */
 int UserAddSession( User *usr, void *ls )
 {
+	int del = 10;
 	if( usr == NULL || ls == NULL )
 	{
 		FERROR("User %p or session %p are empty\n", usr, ls );
@@ -84,6 +85,16 @@ int UserAddSession( User *usr, void *ls )
 	UserSession *s = (UserSession *)ls;
 	UserSessListEntry *us = NULL;
 	
+	// test
+	
+	while( usr->u_InUse > 0 )
+	{
+		DEBUG("[UserAddSession] in loop : %d\n", usr->u_InUse );
+		usleep( 5000 );
+		
+		if( ( del-- ) <= 0 ) break;
+	}
+	
 	if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
 	{
 		UserSessListEntry *exses = (UserSessListEntry *)usr->u_SessionsList;
@@ -91,7 +102,7 @@ int UserAddSession( User *usr, void *ls )
 		{
 			if( exses != NULL && exses->us == ls )
 			{
-				DEBUG("Session was already added to user\n");
+				DEBUG("[UserAddSession] Session was already added to user\n");
 				FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 				return 0;
 			}
@@ -106,7 +117,7 @@ int UserAddSession( User *usr, void *ls )
 		
 			us->node.mln_Succ = (MinNode *)usr->u_SessionsList;
 			usr->u_SessionsList = us;
-			DEBUG("LIST OVERWRITEN: %p\n", usr->u_SessionsList );
+			DEBUG("[UserAddSession] LIST OVERWRITEN: %p\n", usr->u_SessionsList );
 		
 			usr->u_SessionsNr++;
 		}
