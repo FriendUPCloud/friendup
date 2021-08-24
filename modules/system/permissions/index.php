@@ -36,7 +36,7 @@ if( isset( $args->args->authid ) && ( !isset( $args->authid ) || !$args->authid 
 	$args->authid = $args->args->authid;
 }
 
-if( file_exists( 'modules/system/permissions/' . $args->args->type . '.php' ) )
+if( isset( $args->args ) && isset( $args->args->type ) && file_exists( 'modules/system/permissions/' . $args->args->type . '.php' ) )
 {
 	include( 'modules/system/permissions/' . $args->args->type . '.php' );
 }

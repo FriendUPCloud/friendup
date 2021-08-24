@@ -170,6 +170,14 @@ body > #FocusGrabber
 {
 	color: $ColorStGreenLight;
 }
+.BackgroundStBlue
+{
+	background-color: $ColorBgStBlue;
+}
+.ColorStBlue
+{
+	color: $ColorStBlue;
+}
 .BackgroundStBlueLight
 {
 	background-color: $ColorBgStBlueLight;
@@ -364,24 +372,22 @@ button, .Button
 	font-size: inherit;
 }
 
+.Button.NoText:after, .Button.NoText:before
+{
+	margin: 0;
+}
+
 button, .ButtonAlt
 {
 	color: $ColorButton;
 	background-color: $ColorBgButtonAlt;
 }
 
-body button.IconButton:not(:hover),
-body .Button.IconButton:not(:hover)
+body button.IconButton,
+body .Button.IconButton
 {
 	background-color: transparent !important;
-	border: 1px solid rgba(0,0,0,0) !important;
-	padding: 5px 5px;
-}
-
-body button.IconButton:hover,
-body .Button.IconButton:hover
-{
-	padding: 5px 5px;
+	border: 0 !important;
 }
 
 .Button.Glue, 
@@ -405,10 +411,15 @@ button.Glue:last-child
 	border-bottom-right-radius: $ButtonBorderRadius;
 }
 
-button:hover, .Button:hover
+button:not(.Disabled):not(.IconButton):hover, .Button:not(.Disabled):not(.IconButton):hover
 {
 	color: $ColorButtonHover;
 	background-color: $ColorBgButtonHover;
+}
+
+button:not(.Disabled).IconButton:hover, .Button:not(.Disabled).IconButton:hover
+{
+	color: $ColorBgButton;
 }
 
 button.Recessed, .Button.Recessed
@@ -1289,9 +1300,9 @@ table.Calendar td:hover { background: #333333; color: #ffffff; }
 	padding: 0;	
 	display: block;
 	color: black;
-	box-shadow: 0px 0px 1px 2px rgba(0,0,0,0.2);
-	-moz-box-shadow: 0px 0px 1px 2px rgba(0,0,0,0.2);
-	-webkit-box-shadow: 0px 0px 1px 2px rgba(0,0,0,0.2);
+	box-shadow: 0px 0px 1px 2px rgb(0 0 0 / 10%);
+	-moz-box-shadow: 0px 0px 1px 2px rgb(0 0 0 / 10%);
+	-webkit-box-shadow: 0px 0px 1px 2px rgb(0 0 0 / 10%);
 }
 #WorkspaceMenu .Open ul > li
 {
@@ -1331,7 +1342,6 @@ html #WorkspaceMenu .Menu li.Disabled:hover,
 html #WorkspaceMenu .Menu li.Disabled *
 {
 	opacity: 0.5;
-	font-style: oblique;
 	cursor: default;
 }
 
@@ -3473,7 +3483,7 @@ body.Offline #OfflineMessage
 	right: 0;
 	height: 32px;
 	background: white;
-	z-index: 2147483647;
+	z-index: 2147483646;
 	box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	box-shadow: 0px 0px 8px 1px rgba(0,0,0,0.5);
@@ -3483,6 +3493,7 @@ body.Offline #OfflineMessage
 	background-repeat: no-repeat;
 	background-position: 5px 5px;
 	padding-left: 30px;
+	overflow: hidden;
 }
 
 /* Show indicator when hovering over titlebar */
@@ -4341,6 +4352,7 @@ html #Tray
 	position: relative;
 	position: absolute;
 	top: 0;
+	z-index: 2147483647;
 }
 
 html #Tray > div

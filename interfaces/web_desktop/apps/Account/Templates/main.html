@@ -13,6 +13,9 @@
 					<div class="Tab IconSmall fa-key">
 						{i18n_key_management}
 					</div>
+					<div class="Tab IconSmall fa-group">
+						{i18n_groups}
+					</div>
 					{friendNetwork1}
 					<div class="Page ScrollBarSmall">
 						<div class="PageScroll">
@@ -23,7 +26,7 @@
 								<div class="AvatarRect MarginTop MarginBottom HRow">
 									<div class="FloatLeft TextCenter Relative HContent50">
 										<div id="AvatarArea">
-											<canvas id="Avatar" width="256" height="256"></canvas>
+											<canvas id="Avatar" width="128" height="128"></canvas>
 										</div>
 										<button type="button" style="vertical-align:top" class="fa-image Button IconSmall" onclick="changeAvatar()">
 											{i18n_changeavatar}
@@ -186,9 +189,32 @@
 						<div class="HRow Padding PageScroll" id="KeysList"></div>
 						
 					</div>
+					<div class="Page">
+						<div id="GroupSearch" class="BorderBottom">
+							<p class="TextCenter Searcher">
+								<input type="text" id="groupSearcher" class="InputHeight" placeholder="{i18n_find_groups}" onkeyup="findGroups()"/>
+							</p>
+						</div>
+						<div id="GroupList"></div>
+						<div id="OtherGroups"></div>
+					</div>
 					{friendNetwork2}
 				</div>
-				<script> InitTabs( 'MTabs' ); </script>
+				<script> 
+					InitTabs( 'MTabs' );
+					let tabs = ge( 'MTabs' ).getElementsByClassName( 'Tab' );
+					if( ge( 'activeTab' ).value != 'null' )
+					{
+						for( let a = 0; a < tabs.length; a++ )
+						{
+							if( tabs[a].classList.contains( 'fa-' + ge( 'activeTab' ).value ) )
+							{
+								tabs[a].click();
+								break;
+							}
+						}
+					}
+				</script>
 			</div>
 		</div>
 		<div class="VContentBottom BorderTop Padding BackgroundDefault" style="height: 50px">
@@ -197,6 +223,8 @@
 			</button>
 		</div>
 	</div>
+	
+	<input type="hidden" id="activeTab" value="{activeTab}"/>
 	
 	<link rel="stylesheet" href="Progdir:Css/main.css"/>
 

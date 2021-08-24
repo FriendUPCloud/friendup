@@ -1755,7 +1755,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	else if( strcmp( urlpath[ 0 ], "pid" ) == 0 )
 	{
 		DEBUG("[SysWebRequest] PIDThread functions\n");
-		if( loggedSession->us_User->u_IsAdmin == TRUE )
+		if( IS_SESSION_ADMIN( loggedSession ) )
 		{
 			response = PIDThreadWebRequest( l, urlpath, *request, loggedSession );
 		}

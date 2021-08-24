@@ -93,7 +93,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	{
 		FriendDOS.getFileInfo( path, function( e, d )
 		{
-			console.log( 'Testing: ' + path, e, d );
 			if( e == true )
 			{
 				init();

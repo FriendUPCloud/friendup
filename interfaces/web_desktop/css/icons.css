@@ -310,13 +310,6 @@ Just so that we can keep the outputted HTML smaller by using CSS classes :)
 	display: inline;
 }
 
-.File .Title span:after
-{
-	content: '.';
-	display: inline;
-	color: transparent;
-}
-
 /* Specific icons */
 
 .File > .Icon > div

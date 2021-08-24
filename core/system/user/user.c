@@ -285,38 +285,38 @@ void UserRemoveConnectedSessions( User *usr, FBOOL release )
 	if( FRIEND_MUTEX_LOCK(&usr->u_Mutex) == 0 )
 	{
 		usr->u_InUse++;
-		FRIEND_MUTEX_UNLOCK(&usr->u_Mutex);
-	}
-	UserSessListEntry *us = (UserSessListEntry *)usr->u_SessionsList;
-	UserSessListEntry *delus = us;
+		//FRIEND_MUTEX_UNLOCK(&usr->u_Mutex);
+		//}
+		UserSessListEntry *us = (UserSessListEntry *)usr->u_SessionsList;
+		UserSessListEntry *delus = us;
 	
-	if( release )
-	{
-		while( us != NULL )
+		if( release )
 		{
-			delus = us;
-			us = (UserSessListEntry *)us->node.mln_Succ;
+			while( us != NULL )
+			{
+				delus = us;
+				us = (UserSessListEntry *)us->node.mln_Succ;
 		
-			UserSession *locses = (UserSession *)delus->us;
-			locses->us_User = NULL;
-			FFree( delus );
+				UserSession *locses = (UserSession *)delus->us;
+				locses->us_User = NULL;
+				FFree( delus );
+			}
+			usr->u_SessionsList = NULL;
 		}
-		usr->u_SessionsList = NULL;
-	}
-	else
-	{
-		while( us != NULL )
+		else
 		{
-			delus = us;
-			us = (UserSessListEntry *)us->node.mln_Succ;
+			while( us != NULL )
+			{
+				delus = us;
+				us = (UserSessListEntry *)us->node.mln_Succ;
 		
-			UserSession *locses = (UserSession *)delus->us;
-			locses->us_User = NULL;
+				UserSession *locses = (UserSession *)delus->us;
+				locses->us_User = NULL;
+			}
 		}
-	}
 	
-	if( FRIEND_MUTEX_LOCK(&usr->u_Mutex) == 0 )
-	{
+		//if( FRIEND_MUTEX_LOCK(&usr->u_Mutex) == 0 )
+		//{
 		usr->u_InUse--;
 		FRIEND_MUTEX_UNLOCK(&usr->u_Mutex);
 	}

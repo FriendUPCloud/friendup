@@ -106,9 +106,8 @@
 
 #AvatarArea #Avatar
 {
-	width: 256px;
-	height: 256px;
-	zoom: 0.5;
+	width: 128px;
+	height: 128px;
 }
 
 #UserAccImage
@@ -126,5 +125,200 @@
 	{
 		display: none;
 	}
+}
+
+/* Groups */
+
+.Collections
+{
+	padding-top: 20px;
+	text-align: left;
+	box-sizing: border-box;
+}
+
+.Collections + p
+{
+	text-align: center;
+}
+
+.Collections:after
+{
+	content: " ";
+	display: block;
+	clear: both;
+}
+
+.Collections > .Collection
+{
+	position: relative;
+	width: 50%;
+	height: 78px;
+	display: block;
+	float: left;
+	margin: 0 0 10px 0;
+	text-align: left;
+	padding: 4px;
+	background-color: rgba(0,0,0,0);
+	transition: background-color 0.25s;
+	box-sizing: border-box;
+	border-radius: 3px;
+	max-height: 78px;
+	overflow: hidden;
+}
+
+.Collections > .Collection:hover
+{
+	background-color: rgba(0,0,0,0.1);
+}
+
+.Collections > .Collection > .Name
+{
+	font-size: 110%;
+	font-weight: bold;
+}
+
+.Collections > .Collection > .Image
+{
+	width: 70px;
+	height: 70px;
+	background-color: #06609A;
+	border-radius: 4px;
+	border: 2px solid rgba(0,0,0,0.25);
+	float: left;
+	box-sizing: border-box;
+	margin: 0 10px 20px 0;
+}
+
+
+.Collections > .Collection > .Image:after
+{
+	position: absolute;
+	top: 10px;
+	width: 57px;
+	left: 10px;
+	height: 60px;
+	line-height: 57px;
+	font-size: 22px;
+	font-family: fontawesome;
+	content: "\f0c0";
+	color: white;
+	text-align: Center;
+}
+
+html #GroupSearch input
+{
+	height: 25px;
+	vertical-align: middle;
+	box-sizing: border-box;
+	width: 100%;
+}
+
+html #GroupSearch .Searcher
+{
+	margin: 10px auto 15px auto;
+	width: 340px;
+	position: relative;
+	height: 25px;
+}
+
+html #GroupSearch .Searcher:after
+{
+	content: "\f002";
+	font-family: fontawesome;
+	display: block;
+	position: absolute;
+	right: 8px;
+	top: 5px;
+	pointer-events: none;
+}
+
+/* Labels */
+
+#StorageList .Disk:after,
+#StorageListUnmounted .Disk:after
+{
+	position: relative;
+	display: block;
+	content: ' ';
+	background-size: 16px 16px;
+	background-position: center;
+	background-repeat: no-repeat;
+	width: 100%;
+	height: calc(100% - 8px);
+	text-align: center;
+}
+
+.Disk.SQLDrive:after
+{
+	background-image: url('/iconthemes/friendup15/DriveLabels/FriendDisk.svg');
+}
+
+.Disk.Home:after
+{
+	
+	background-image: url('/iconthemes/friendup15/DriveLabels/Home.svg');
+}
+html div > .Disk.SQLWorkgroupDrive:after
+{
+	font-family: fontawesome;
+	content: '\f0c0' !important;
+	line-height: 32px;
+	color: #222222;
+}
+
+html div > .Disk.Local:after
+{
+	font-family: fontawesome;
+	content: '\f17c' !important;
+	line-height: 32px;
+	color: #222222;
+}
+
+html div > .Disk.GoogleDrive:after
+{
+	font-family: fontawesome;
+	content: '\f1a0' !important;
+	line-height: 32px;
+	color: #222222;
+}
+
+html div > .Disk.DropboxDrive:after
+{
+	font-family: fontawesome;
+	content: '\f16b' !important;
+	line-height: 32px;
+	color: #222222;
+}
+
+html div > .Disk.Remote:after
+{
+	font-family: fontawesome;
+	content: '\f0c2' !important;
+	line-height: 32px;
+	color: #222222;
+}
+
+html div > .Disk.SFTP:after
+{
+	font-family: fontawesome;
+	content: '\f120' !important;
+	line-height: 32px;
+	color: #222222;
+}
+
+html div > .Disk.Wordpress:after
+{
+	font-family: fontawesome;
+	content: '\f19a' !important;
+	line-height: 32px;
+	color: #222222;
+}
+
+html div > .Disk.Assign:after
+{
+	font-family: fontawesome;
+	content: '\f115' !important;
+	line-height: 32px;
+	color: #222222;
 }
 
