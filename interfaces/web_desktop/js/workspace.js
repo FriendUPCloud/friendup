@@ -1052,7 +1052,7 @@ Workspace = {
 				// Invites
 				if( json.inviteHash )
 				{
-					var m = new Module( 'system' );
+					let m = new Module( 'system' );
 					m.onExecuted = function( e, d )
 					{
 						// TODO: Make some better error handling ...
@@ -1063,13 +1063,13 @@ Workspace = {
 				
 				// Language
 				_this.locale = 'en';
-				var l = new Module( 'system' );
+				let l = new Module( 'system' );
 				l.onExecuted = function( e, d )
 				{
 					// New translations
 					i18n_translations = [];
 					
-					var decoded = false;
+					let decoded = false;
 					try
 					{
 						decoded = JSON.parse( d );
@@ -1120,11 +1120,11 @@ Workspace = {
 				LoadWindowStorage();
 
 				// Set up a shell instance for the workspace
-				var uid = FriendDOS.addSession( _this );
+				let uid = FriendDOS.addSession( _this );
 				_this.shell = FriendDOS.getSession( uid );
 				
 				// We're getting the theme set in an url var
-				var th = '';
+				let th = '';
 				if( ( th = GetUrlVar( 'theme' ) ) )
 				{
 					_this.refreshTheme( th, false );
@@ -1139,10 +1139,10 @@ Workspace = {
 				else
 				{
 					// Check eula
-					var m = new Module( 'system' );
+					let m = new Module( 'system' );
 					m.onExecuted = function( e, d )
 					{	
-						var m = new Module( 'system' );
+						let m = new Module( 'system' );
 						m.onExecuted = function( ee, dd )
 						{
 					        if( ee != 'ok' )
@@ -1170,7 +1170,7 @@ Workspace = {
 						{
 							if( e == 'ok' )
 							{
-								var s = {};
+								let s = {};
 								try
 								{
 									s = JSON.parse( d );

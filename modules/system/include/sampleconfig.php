@@ -10,10 +10,11 @@
 *                                                                              *
 *****************************************************************************©*/
 
-$SqlDatabase->query( '
-	DELETE FROM FSetting WHERE `Key`="themedata_friendup12" AND UserID=\'' . $User->ID . '\'
-' );
+$object = new stdClass();
 
-die( 'ok' );
+$i = isset( $configfilesettings[ 'Security' ] ) && $configfilesettings[ 'Security' ][ 'InvitesEnabled' ] ? true : false;
+$object->invitesEnabled = $i;
+
+die( 'ok<!--separate-->' . json_encode( $object ) );
 
 ?>
