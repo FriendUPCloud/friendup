@@ -92,6 +92,7 @@ else if( $args->args->mode == 'invites' )
 		' ) )
 	{
 		// Remove dups
+		$out = [];
 		foreach( $rows as $row )
 		{
 			$found = false;
@@ -108,7 +109,6 @@ else if( $args->args->mode == 'invites' )
 			}
 			if( !$found ) $out[] = $row;
 		}
-		$out = [];
 		die( 'ok<!--separate-->' . json_encode( $out ) );
 	}
 	else
