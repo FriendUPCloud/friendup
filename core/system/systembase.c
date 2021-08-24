@@ -1834,7 +1834,7 @@ typedef struct DevNode
 
 int UserDeviceMount( SystemBase *l, UserSession *usrses, int force, FBOOL unmountIfFail, char **mountError, FBOOL notify )
 {	
-	Log( FLOG_INFO,  "[UserDeviceMount] Mount user device from Database\n");
+	Log( FLOG_INFO, "[UserDeviceMount] Mount user device from Database\n");
 	SQLLibrary *sqllib;
 	
 	if( usrses == NULL || usrses->us_User == NULL )
@@ -1897,7 +1897,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 		{
 			// Id, UserId, Name, Type, ShrtDesc, Server, Port, Path, Username, Password, Mounted
 
-			DEBUG("[UserDeviceMount] \tFound database -> Name '%s' Type '%s', Server '%s', Port '%s', Path '%s', Mounted '%s'\n", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
+			Log( FLOG_INFO, "[UserDeviceMount] \tFound database -> Name '%s' Type '%s', Server '%s', Port '%s', Path '%s', Mounted '%s'\n", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
 		
 			// make a list of devices
 			DevNode *ne = FCalloc( 1, sizeof(DevNode ) );
