@@ -228,6 +228,8 @@
 					
 					if( invite )
 					{
+						console.log( 'Here we got invite: ' + invite );
+						
 						let json = false;
 						
 						if( invite.indexOf( 'BASE64' ) >= 0 )
@@ -250,12 +252,15 @@
 							}
 							catch {  }
 							
+							console.log( 'What is it: ' + Application.inviteHash );
+							
 							invite = invite.split( 'BASE64' )[0];
 						}
 						
 						if( !Application.inviteHash )
 						{
 							Application.inviteHash = invite;
+							console.log( 'finally setting: ' + invite );
 						}
 					}
 				}
