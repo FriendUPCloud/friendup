@@ -254,7 +254,7 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 						dbentries[ pos ].number = position;
 
 						DEBUG(
-							"[SystemBase] Found script in position %d "
+							"[SystemBase] Found script at index %d "
 								"with number %d, script added: %s\n", 
 							pos,
 							position,

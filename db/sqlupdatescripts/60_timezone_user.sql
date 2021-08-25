@@ -1,1 +1,1 @@
-ALTER TABLE FUser ADD `Timezone` varchar(255) DEFAULT "UTC" AFTER Email;
+ALTER TABLE FUser CHANGE `Timezone` `Timezone` varchar(255) DEFAULT "UTC";

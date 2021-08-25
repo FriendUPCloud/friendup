@@ -426,9 +426,10 @@ INSERT INTO `FUserToGroup` (`UserID`,`UserGroupID`) VALUES ( 2,2 );
 
  CREATE TABLE IF NOT EXISTS `FDictionary` ( 
    `ID` bigint(20) NOT NULL AUTO_INCREMENT,
-   `CategoryID` bigint(20),
-   `Message` text DEFAULT NULL,
-   `Language` varchar(10) DEFAULT NULL,
+   # DB patcher will add these, correctly
+   #`CategoryID` bigint(20),
+   #`Message` text DEFAULT NULL,
+   #`Language` varchar(10) DEFAULT NULL,
    PRIMARY KEY (`ID`)
  ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
  
