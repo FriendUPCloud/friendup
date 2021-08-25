@@ -12,8 +12,14 @@
 
 $object = new stdClass();
 
-$i = isset( $configfilesettings[ 'Security' ] ) && $configfilesettings[ 'Security' ][ 'InvitesEnabled' ] ? true : false;
-$object->invitesEnabled = $i;
+$confsec = isset( $configfilesettings[ 'Security' ] ) ? 
+	$configfilesettings[ 'Security' ] : false;
+
+if( $confsec )
+{
+	$i = isset( $confsec[ 'InvitesEnabled' ] ) ? true : false;
+	$object->invitesEnabled = $i;
+}
 
 die( 'ok<!--separate-->' . json_encode( $object ) );
 
