@@ -999,13 +999,16 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						{
 							time_t tm = 0;
 							time_t tm_now = time( NULL );
-							FBOOL access = UMGetLoginPossibilityLastLogins( l->sl_UM, usr->u_Name, usr->u_Password, l->sl_ActiveAuthModule->am_BlockAccountAttempts, &tm );
-							
-							// if access is disabled and user should be enabled, we remove last login fail
-							if( access == FALSE )
+							if( usr != NULL )
 							{
-								sqllib->SNPrintF( sqllib, tmpQuery, sizeof(tmpQuery), "DELETE from `FUserLogin` where UserID=%lu AND Failed is not null AND LoginTime>%lu", id, (tm_now-l->sl_ActiveAuthModule->am_BlockAccountTimeout) );
-								sqllib->QueryWithoutResults( sqllib, tmpQuery );
+								FBOOL access = UMGetLoginPossibilityLastLogins( l->sl_UM, usr->u_Name, usr->u_Password, l->sl_ActiveAuthModule->am_BlockAccountAttempts, &tm );
+							
+								// if access is disabled and user should be enabled, we remove last login fail
+								if( access == FALSE )
+								{
+									sqllib->SNPrintF( sqllib, tmpQuery, sizeof(tmpQuery), "DELETE from `FUserLogin` where UserID=%lu AND Failed is not null AND LoginTime>%lu", id, (tm_now-l->sl_ActiveAuthModule->am_BlockAccountTimeout) );
+									sqllib->QueryWithoutResults( sqllib, tmpQuery );
+								}
 							}
 						}
 						
@@ -1014,25 +1017,29 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 
 							char msg[ 512 ];
 							int msize = 0;
-							if( status == USER_STATUS_DISABLED )
+							
+							if( usr != NULL )
 							{
-								msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
-								// send calls to all users that they must log-off themselfs
-								
-								User *u = UMGetUserByID( l->sl_UM, id );
-								if( u != NULL )
+								if( status == USER_STATUS_DISABLED )
 								{
-									DEBUG("[UMWebRequest] user sessions will be removed\n");
-									killUserSessionByUser( l, u, NULL );
+									msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
+									// send calls to all users that they must log-off themselfs
+								
+									User *u = UMGetUserByID( l->sl_UM, id );
+									if( u != NULL )
+									{
+										DEBUG("[UMWebRequest] user sessions will be removed\n");
+										killUserSessionByUser( l, u, NULL );
+									}
+									msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
 								}
-								msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
+								else
+								{
+									msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
+								}
+								BufStringAddSize( bs, msg, msize );
+								UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
 							}
-							else
-							{
-								msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
-							}
-							BufStringAddSize( bs, msg, msize );
-							UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
 							BufStringAddSize( bs, "]}", 2 );
 							
 							DEBUG("Updatestatus - send information to 3rd party services\n");
