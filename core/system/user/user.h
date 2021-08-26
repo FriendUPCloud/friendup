@@ -293,6 +293,12 @@ void UserRemoveConnectedSessions( User *usr, FBOOL release );
 // SQL structure
 //
 
+void UserListSessions( User* usr, BufString *bs, void *sb );
+
+//
+//
+//
+
 static FULONG UserDesc[] = { 
     SQLT_TABNAME, (FULONG)"FUser",       
     SQLT_STRUCTSIZE, sizeof( struct User ), 
