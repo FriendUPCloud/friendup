@@ -198,7 +198,13 @@ int  UMAddUser( UserManager *um,  User *usr );
 //
 //
 
-int UMRemoveUser(UserManager *um, User *usr, UserSessionManager *user_session_manager);
+void UMRemoveUserFromList( UserManager *um,  User *usr );
+
+//
+//
+//
+
+int UMRemoveAndDeleteUser(UserManager *um, User *usr, UserSessionManager *user_session_manager);
 
 //
 //
@@ -253,5 +259,23 @@ int UMInitUsers( UserManager *um );
 //
 
 FBOOL UMUserExistInDBByID( UserManager *um, FQUAD id );
+
+//
+//
+//
+
+int UMGetActiveUsersWSList( UserManager *um, BufString *bs, FULONG userid, FBOOL usersOnly );
+
+//
+//
+//
+
+int UMGetAllActiveUsers( UserManager *um, BufString *bs, FBOOL usersOnly );
+
+//
+//
+//
+
+int UMSendMessageToUserOrSession( UserManager *um, BufString *bs, UserSession *ses, FULONG userid, char *message );
 
 #endif //__SYSTEM_USER_USER_MANAGER_H__

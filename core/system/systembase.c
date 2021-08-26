@@ -1955,7 +1955,6 @@ typedef struct DevNode
  * Load and mount all user doors
  *
  * @param l pointer to SystemBase
- * @param u pointer to user to which device will be assigned
  * @param usrses pointer to usersession to which doors belong
  * @param force integer 0 = don't force 1 = force
  * @param unmountIfFail should be device unmounted in DB if mount will fail
@@ -1964,9 +1963,9 @@ typedef struct DevNode
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserDeviceMount( SystemBase *l, User *u, UserSession *usrses, int force, FBOOL unmountIfFail, char **mountError, FBOOL notify )
+int UserDeviceMount( SystemBase *l, UserSession *usrses, int force, FBOOL unmountIfFail, char **mountError, FBOOL notify )
 {	
-	Log( FLOG_INFO,  "[UserDeviceMount] Mount user device from Database\n");
+	Log( FLOG_INFO, "[UserDeviceMount] Mount user device from Database\n");
 	SQLLibrary *sqllib;
 	
 	if( usrses == NULL || usrses->us_User == NULL )
@@ -2029,7 +2028,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 		{
 			// Id, UserId, Name, Type, ShrtDesc, Server, Port, Path, Username, Password, Mounted
 
-			DEBUG("[UserDeviceMount] \tFound database -> Name '%s' Type '%s', Server '%s', Port '%s', Path '%s', Mounted '%s'\n", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
+			Log( FLOG_INFO, "[UserDeviceMount] \tFound database -> Name '%s' Type '%s', Server '%s', Port '%s', Path '%s', Mounted '%s'\n", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
 		
 			// make a list of devices
 			DevNode *ne = FCalloc( 1, sizeof(DevNode ) );
@@ -2159,7 +2158,8 @@ int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses )
 				
 				DeviceUnMount( l->sl_DeviceManager, remdev, usr, ses );
 				
-				FFree( remdev );
+				//FFree( remdev );
+				FileDelete( remdev );
 			}
 		}
 		
@@ -2664,7 +2664,11 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 		{
 			if( usersession->us_WSD != NULL )
 			{
-				bytes += UserSessionWebsocketWrite( usersession, buf , len, LWS_WRITE_TEXT );
+				WSCData *data = (WSCData *)usersession->us_WSD;
+				if( data != NULL && data->wsc_UserSession != NULL && data->wsc_Wsi != NULL )
+				{
+					bytes += UserSessionWebsocketWrite( usersession, buf , len, LWS_WRITE_TEXT );
+				}
 			}
 			else
 			{

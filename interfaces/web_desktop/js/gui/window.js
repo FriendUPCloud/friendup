@@ -3293,6 +3293,15 @@ var View = function( args )
 			
 			function executeClose()
 			{
+				// Clean movableWindows.. brute force
+				let out = {};
+				for( let a in movableWindows )
+				{
+					if( movableWindows[a] != div )
+						out[ a ] = movableWindows[ a ];
+				}
+				movableWindows = out;
+				
 				viewContainer.classList.add( 'Closing' );
 				if( div.windowObject )
 				{

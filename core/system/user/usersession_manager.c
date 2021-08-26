@@ -71,7 +71,11 @@ void USMDelete( UserSessionManager *smgr )
 			
 				DEBUG("[USMDelete] \t\tRemove session : %s uid %lu\n", rem->us_SessionID, rem->us_UserID );
 			
+#ifdef DB_SESSIONID_HASH
 				USMSessionsDeleteDB( smgr, rem->us_HashedSessionID );
+#else
+				USMSessionsDeleteDB( smgr, rem->us_SessionID );
+#endif
 				UserSessionDelete( rem );
 			}
 		
@@ -83,7 +87,11 @@ void USMDelete( UserSessionManager *smgr )
 			
 				DEBUG("[USMDelete] \t\tRemove session from remove list: %s uid %lu\n", rem->us_SessionID, rem->us_UserID );
 			
+#ifdef DB_SESSIONID_HASH
 				USMSessionsDeleteDB( smgr, rem->us_HashedSessionID );
+#else
+				USMSessionsDeleteDB( smgr, rem->us_SessionID );
+#endif
 				UserSessionDelete( rem );
 			}
 		
@@ -882,7 +890,11 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 	
 	if( sessionRemoved == TRUE )
 	{
+#ifdef DB_SESSIONID_HASH
 		USMSessionsDeleteDB( smgr, remsess->us_HashedSessionID );
+#else
+		USMSessionsDeleteDB( smgr, remsess->us_SessionID );
+#endif
 		
 		// we do not delete session, untill it is used
 		if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
@@ -1470,23 +1482,24 @@ User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus,
 
 int countSessionSize( UserSession *us )
 {
+	int size = 0;
 	if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 	{
-		us->us_InUseCounter++;
-		FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-	}
+		//us->us_InUseCounter++;
+	//	FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+	//}
 		
-	int size = USERSESSION_SIZE + 255;	// approx 255 for sessionid
-	FQEntry *fqe = us->us_MsgQueue.fq_First;
-	while( fqe != NULL )
-	{
-		size += fqe->fq_Size + sizeof( FQEntry );
-		fqe = (FQEntry *)fqe->node.mln_Succ;
-	}
+		size = USERSESSION_SIZE + 255;	// approx 255 for sessionid
+		FQEntry *fqe = us->us_MsgQueue.fq_First;
+		while( fqe != NULL )
+		{
+			size += fqe->fq_Size + sizeof( FQEntry );
+			fqe = (FQEntry *)fqe->node.mln_Succ;
+		}
 	
-	if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-	{
-		us->us_InUseCounter--;
+		//if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+		//{
+		//us->us_InUseCounter--;
 		FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 	}
 	

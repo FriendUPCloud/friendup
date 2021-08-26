@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ALTER TABLE `FUser` ADD COLUMN `PublicKey` text AFTER `Password`;
 
 INSERT INTO `FUserGroup` (`UserID`,`Name`,`Type`) VALUES (0,'API','Level');
@@ -7,3 +8,5 @@ INSERT INTO `FUser` ( `Name`, `Password`, `PublicKey`, `FullName`, `Email`, `Log
 
 INSERT INTO `FUserToGroup` (`UserID`,`UserGroupID`) VALUES (( SELECT `ID` FROM `FUser` WHERE `Name` = 'apiuser' LIMIT 1),(SELECT `ID` FROM `FUserGroup` WHERE `Name` = 'API' AND `Type` = 'Level' LIMIT 1));
 
+=======
+>>>>>>> release/1.2.6

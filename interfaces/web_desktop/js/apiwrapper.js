@@ -334,15 +334,16 @@ function apiWrapper( event, force )
 				break;
 			// DOS -------------------------------------------------------------
 			case 'dos':
-				var win = ( app && app.windows ) ? app.windows[ msg.viewId ] : false;
-				var tar = win ? app.windows[ msg.targetViewId ] : false; // Target for postmessage
-				var cbk = msg.callback;
+			{
+				let win = ( app && app.windows ) ? app.windows[ msg.viewId ] : false;
+				let tar = win ? app.windows[ msg.targetViewId ] : false; // Target for postmessage
+				let cbk = msg.callback;
 				switch ( msg.method )
 				{
 					case 'getDisks':
 						Friend.DOS.getDisks( msg.flags, function( response, list, extra )
 						{
-							var nmsg = 
+							let nmsg = 
 							{
 								viewId: msg.viewId,
 								applicationId: msg.applicationId,
@@ -359,7 +360,7 @@ function apiWrapper( event, force )
 					case 'getDirectory':
 						Friend.DOS.getDirectory( msg.path, msg.flags, function( response, list, extra )
 						{
-							var nmsg = 
+							let nmsg = 
 							{
 								viewId: msg.viewId,
 								applicationId: msg.applicationId,
@@ -378,7 +379,7 @@ function apiWrapper( event, force )
 					case 'executeJSX':
 						Friend.DOS.executeJSX( msg.path, msg.args, function( response, message, iframe, extra )
 						{
-							var nmsg = 
+							let nmsg = 
 							{
 								viewId: msg.viewId,
 								applicationId: msg.applicationId,
@@ -402,7 +403,7 @@ function apiWrapper( event, force )
 					case 'loadHTML':
 						Friend.DOS.loadHTML( msg.applicationId, msg.path, function( response, html, extra )
 						{
-							var nmsg = 
+							let nmsg = 
 							{
 								viewId: msg.viewId,
 								applicationId: msg.applicationId,
@@ -420,7 +421,7 @@ function apiWrapper( event, force )
 					case 'getDriveInfo':
 						Friend.DOS.getDriveInfo( msg.path, false, function( response, icon, extra )
 						{
-							var nmsg = 
+							let nmsg = 
 							{
 								viewId: msg.viewId,
 								applicationId: msg.applicationId,
@@ -439,7 +440,7 @@ function apiWrapper( event, force )
 					case 'getFileInfo':
 						Friend.DOS.getFileInfo( msg.path, function( response, icon, extra )
 						{
-							var nmsg = 
+							let nmsg = 
 							{
 								viewId: msg.viewId,
 								applicationId: msg.applicationId,
@@ -459,7 +460,7 @@ function apiWrapper( event, force )
 						Friend.DOS.getFileAccess( msg.path, function( response, permissions, extra )
 						{
 							// Setup the callback message
-							var nmsg = 
+							let nmsg = 
 							{
 								viewId: msg.viewId,
 								applicationId: msg.applicationId,
@@ -484,6 +485,7 @@ function apiWrapper( event, force )
 				}
 				msg.callback = null;
 				break;
+			}
 			// Virtual Reality -------------------------------------------------
 			case 'friendvr':
 				if( Friend.VRWrapper )
@@ -2301,7 +2303,7 @@ function apiWrapper( event, force )
 			case 'shell':
 				if( msg.command )
 				{
-					var shell = false;
+					let shell = false;
 					if( msg.shellSession )
 					{
 						shell = FriendDOS.getSession( msg.shellSession );
