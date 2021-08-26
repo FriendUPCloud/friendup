@@ -216,7 +216,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	}
 
 	// 1. Ask about application.................................................
-	var m = new Module( 'system' );
+	let m = new Module( 'system' );
 	m.onExecuted = function( r, d )
 	{	
 		// Get data from Friend Core

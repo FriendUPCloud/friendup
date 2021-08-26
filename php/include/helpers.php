@@ -11,7 +11,7 @@
 *****************************************************************************©*/
 
 // Connects to friend core and builds the query at the same time
-function FriendCoreQuery( $command = '', $args = false, $method = 'POST', $headers = false, $sconf = false )
+function FriendCoreQuery( $command = '', $args = false, $method = 'POST', $headers = false, $sconf = false, $plainpostargs = false )
 {
 	global $Config;
 	
@@ -127,7 +127,11 @@ function FriendCoreQuery( $command = '', $args = false, $method = 'POST', $heade
 	
 	if( $args )
 	{
+<<<<<<< HEAD
 		if( !isset( $conf ) || !isset( $conf->argtype ) )
+=======
+		if( !$plainpostargs )
+>>>>>>> release/1.2.6
 		{
 			if( is_object( $args ) )
 			{

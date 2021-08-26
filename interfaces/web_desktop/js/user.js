@@ -400,6 +400,7 @@ Friend.User = {
     	info.refreshtoken = Friend.User.refreshToken;
 		*/
 		//console.log( 'relogin info', info );
+		
 		// Close conn here - new login regenerates sessionid
 		if( Workspace.conn )
 		{

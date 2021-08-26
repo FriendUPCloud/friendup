@@ -1,6 +1,6 @@
 /* Dark --------------------------------------------------------------------- */
 
-*
+html > body.Dark, html > body.Dark *
 {
     scrollbar-color: #34495E #030507 !important;
 }

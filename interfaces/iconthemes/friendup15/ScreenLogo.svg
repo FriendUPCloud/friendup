@@ -11,7 +11,7 @@
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    id="svg5926"
    version="1.1"
-   inkscape:version="0.91 r13725"
+   inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)"
    xml:space="preserve"
    width="100"
    height="100"
@@ -19,7 +19,7 @@
    sodipodi:docname="ScreenLogo.svg"><metadata
      id="metadata5932"><rdf:RDF><cc:Work
          rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
-           rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title /></cc:Work></rdf:RDF></metadata><defs
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
      id="defs5930"><filter
        style="color-interpolation-filters:sRGB;"
        inkscape:label="Drop Shadow"
@@ -55,7 +55,7 @@
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:window-width="1920"
-     inkscape:window-height="1022"
+     inkscape:window-height="998"
      id="namedview5928"
      showgrid="false"
      fit-margin-top="0"
@@ -63,17 +63,17 @@
      fit-margin-right="0"
      fit-margin-bottom="0"
      inkscape:zoom="2.8284271"
-     inkscape:cx="49.991102"
+     inkscape:cx="44.157471"
      inkscape:cy="15.945548"
      inkscape:window-x="0"
-     inkscape:window-y="30"
+     inkscape:window-y="28"
      inkscape:window-maximized="1"
      inkscape:current-layer="g5934" /><g
      id="g5934"
      inkscape:groupmode="layer"
      inkscape:label="ink_ext_XXXXXX"
      transform="matrix(1.25,0,0,-1.25,-7.6842707,103.92222)"><path
-       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#0f85d1;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.30000001;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;filter:url(#filter5834);color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
+       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#07507f;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.30000001;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;filter:url(#filter5834);color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
        d="M 46.147416,81.320818 A 38.183682,38.183682 0 0 1 7.9632291,43.136631 38.183682,38.183682 0 0 1 46.147416,4.9547337 38.183682,38.183682 0 0 1 84.331604,43.136631 38.183682,38.183682 0 0 1 46.147416,81.320818 Z"
        id="path5747"
        inkscape:connector-curvature="0"

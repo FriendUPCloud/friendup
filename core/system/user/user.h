@@ -263,6 +263,12 @@ int UserAddDevice( User *usr, File *file );
 //
 //
 
+void UserReleaseDrives( User *usr, void *sb );
+
+//
+//
+//
+
 File *UserRemDeviceByName( User *usr, const char *name, int *error );
 
 //
@@ -308,7 +314,19 @@ void UserRemoveFromGroups( User *u );
 FBOOL UserIsInGroup( User *usr, FULONG gid );
 
 //
+//
+//
+
+void UserRemoveConnectedSessions( User *usr, FBOOL release );
+
+//
 // SQL structure
+//
+
+void UserListSessions( User* usr, BufString *bs, void *sb );
+
+//
+//
 //
 
 static FULONG UserDesc[] = { 

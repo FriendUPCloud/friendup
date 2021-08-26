@@ -452,8 +452,6 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						$fn = explode( '/', $fn );
 						$fn = $fn[1];
 					}
-
-					$Logger->log( 'Before write file' );
 	
 					// Write the file
 				
@@ -474,27 +472,22 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							else $fn .= rand(0,99999); 
 						}
 					}
-
-					$Logger->log( 'Before w+' );
 				
 					if( $file = fopen( $wname . $fn, 'w+' ) )
 					{
 						// Delete existing file
 						if( $deletable ) unlink( $deletable );
 					
-						$Logger->log( 'is test' );
 						if( isset( $args->tmpfile ) )
 						{
-							$Logger->log( 'exist?' );
 							if( file_exists( $args->tmpfile ) )
 							{
-								$Logger->log( 'exist!' );
 								fclose( $file );
 								$len = filesize( $args->tmpfile );
 								
 								if( $len > 0 )
 								{
-									$Logger->log( 'workaround?' );
+									//$Logger->log( '[SQLDrive] Ugly workaround to "fix" base64 support...' );
 									// TODO: UGLY WORKAROUND, FIX IT!
 									//       We need to support base64 streams
 									if( $fr = fopen( $args->tmpfile, 'r' ) )
@@ -504,7 +497,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 										if( substr( urldecode( $string ), 0, strlen( '<!--BASE64-->' ) ) == '<!--BASE64-->' )
 										{
 											// TODO: Add filesize limit!
-											$Logger->log( '[SqlDrive] Trying to read the temp file! May crash!' );
+											//$Logger->log( '[SqlDrive] Trying to read the temp file! May crash!' );
 											$fr = file_get_contents( $args->tmpfile );
 											$fr = base64_decode( end( explode( '<!--BASE64-->', urldecode( $fr ) ) ) );
 											if( $fo = fopen( $args->tmpfile, 'w' ) )

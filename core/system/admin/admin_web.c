@@ -306,7 +306,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		
 		BufStringAddSize( bs, "ok<!--separate-->[", 18 );
 		
-		if( loggedSession->us_User->u_IsAdmin == TRUE )
+		if( IS_SESSION_ADMIN( loggedSession ) )
 		{
 			uiadmin = TRUE;
 		}
@@ -539,7 +539,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		{
 			msgsize += strlen( msg )+1024;
 		
-			if( usersession == NULL && loggedSession->us_User->u_IsAdmin == TRUE )
+			if( usersession == NULL && IS_SESSION_ADMIN( loggedSession ) )
 			{
 				BufStringAdd( bs, "{\"userlist\":[");
 			
@@ -692,7 +692,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "restartws" ) == 0 )
 	{
-		if( loggedSession->us_User->u_IsAdmin == TRUE )
+		if( IS_SESSION_ADMIN( loggedSession ) )
 		{
 			Log( FLOG_INFO, "Websocket thread will be restarted\n");
 			
@@ -734,7 +734,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	else if( strcmp( urlpath[ 1 ], "uptime" ) == 0 )
 	{
 		//ok<!--separate-->{"result":1,"uptime":unixtime_number}
-		if( loggedSession->us_User->u_IsAdmin == TRUE )
+		if( IS_SESSION_ADMIN( loggedSession ) )
 		{
 			char dictmsgbuf[ 512 ];
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "ok<!--separate-->{\"result\":1,\"uptime\":%lu}", (time( NULL ) - l->l_UptimeStart) );
@@ -829,7 +829,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	{
 		DEBUG("getinfousersessions\n");
 		//ok<!--separate-->{"result":1,"uptime":unixtime_number}
-		if( loggedSession->us_User->u_IsAdmin == TRUE )
+		if( IS_SESSION_ADMIN( loggedSession ) )
 		{
 			HashmapElement *el = NULL;
 			FBOOL details = FALSE;
@@ -881,7 +881,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	else if( strcmp( urlpath[ 1 ], "getinfousers" ) == 0 )
 	{
 		//ok<!--separate-->{"result":1,"uptime":unixtime_number}
-		if( loggedSession->us_User->u_IsAdmin == TRUE )
+		if( IS_SESSION_ADMIN( loggedSession ) )
 		{
 			HashmapElement *el = NULL;
 			FBOOL details = FALSE;
