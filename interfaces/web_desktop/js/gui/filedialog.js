@@ -672,6 +672,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 					switch( ds[a].getAttribute ( 'name' ) )
 					{
 						case 'open':      open = ds[a]; break;
+						case 'select':    open = ds[a]; break;
 						case 'save':      save = ds[a]; break;
 						case 'cancel':    cacl = ds[a]; break;
 					}
