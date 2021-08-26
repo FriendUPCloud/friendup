@@ -76,6 +76,7 @@ int UserInit( User *u )
  */
 int UserAddSession( User *usr, void *ls )
 {
+	int del = 10;
 	if( usr == NULL || ls == NULL )
 	{
 		FERROR("User %p or session %p are empty\n", usr, ls );
@@ -84,6 +85,16 @@ int UserAddSession( User *usr, void *ls )
 	UserSession *s = (UserSession *)ls;
 	UserSessListEntry *us = NULL;
 	
+	// test
+	
+	while( usr->u_InUse > 0 )
+	{
+		DEBUG("[UserAddSession] in loop : %d\n", usr->u_InUse );
+		usleep( 5000 );
+		
+		if( ( del-- ) <= 0 ) break;
+	}
+	
 	if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
 	{
 		UserSessListEntry *exses = (UserSessListEntry *)usr->u_SessionsList;
@@ -91,7 +102,7 @@ int UserAddSession( User *usr, void *ls )
 		{
 			if( exses != NULL && exses->us == ls )
 			{
-				DEBUG("Session was already added to user\n");
+				DEBUG("[UserAddSession] Session was already added to user\n");
 				FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 				return 0;
 			}
@@ -106,7 +117,7 @@ int UserAddSession( User *usr, void *ls )
 		
 			us->node.mln_Succ = (MinNode *)usr->u_SessionsList;
 			usr->u_SessionsList = us;
-			DEBUG("LIST OVERWRITEN: %p\n", usr->u_SessionsList );
+			DEBUG("[UserAddSession] LIST OVERWRITEN: %p\n", usr->u_SessionsList );
 		
 			usr->u_SessionsNr++;
 		}
@@ -891,3 +902,84 @@ void UserReleaseDrives( User* usr, void *lsb )
 	usr->u_MountedDevs = NULL;
 }
 
+/**
+ * Return information about user sessions
+ *
+ * @param usr User
+ * @param bs pointer to BufString where result will be stored
+ * @param sb pointer to SystemBase
+ */
+void UserListSessions( User* usr, BufString *bs, void *sb )
+{
+	SystemBase *l = (SystemBase *)sb;
+	char *temp = FCalloc( 2048, 1 );
+	
+	if( temp != NULL )
+	{
+		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
+		{
+			usr->u_InUse++;
+			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+		}
+		
+		UserSessListEntry *sessions = usr->u_SessionsList;
+		
+		int pos = 0;
+
+		if( usr->u_SessionsNr > 0 )
+		{
+			while( sessions != NULL )
+			{
+				if( sessions->us == NULL )
+				{
+					DEBUG("ERR\n");
+					sessions = (UserSessListEntry *) sessions->node.mln_Succ;
+					continue;
+				}
+				UserSession *us = (UserSession *) sessions->us;
+				
+				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+				{
+					us->us_InUseCounter++;
+					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+				}
+
+				time_t timestamp = time(NULL);
+
+				if( us->us_WSD != NULL && ( (timestamp - us->us_LastActionTime) < l->sl_RemoveSessionsAfterTime ) )
+				{
+					WSCData *data = (WSCData *)us->us_WSD;
+					if( data != NULL && data->wsc_UserSession != NULL && data->wsc_Wsi != NULL )
+					{
+						int size = 0;
+						if( pos == 0 )
+						{
+							size = snprintf( temp, 2047, "{\"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LastActionTime );
+						}
+						else
+						{
+							size = snprintf( temp, 2047, ",{\"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LastActionTime );
+						}
+						BufStringAddSize( bs, temp, size );
+						pos++;
+					}
+				}
+				
+				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+				{
+					us->us_InUseCounter--;
+					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+				}
+				
+				sessions = (UserSessListEntry *) sessions->node.mln_Succ;
+			}
+		}
+		
+		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
+		{
+			usr->u_InUse--;
+			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+		}
+		FFree( temp );
+	}
+}

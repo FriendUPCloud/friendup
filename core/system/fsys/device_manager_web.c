@@ -1418,7 +1418,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					{
 						DEBUG("[DeviceMWebRequest] Devices were not mounted for user. They will be mounted now\n");
 					
-						UserDeviceMount( l, user, loggedSession, 0, TRUE, &error, TRUE );
+						UserDeviceMount( l, loggedSession, 0, TRUE, &error, TRUE );
 
 					}
 				

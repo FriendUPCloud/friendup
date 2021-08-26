@@ -315,7 +315,7 @@ function PollTray()
 			tray.notifications.num = null;
 		}
 		// Add numbers bubble
-		if( !tray.notifications.num && nots.length > 1 )
+		if( !tray.notifications.num && nots.length >= 1 )
 		{
 			tray.notifications.num = document.createElement( 'span' );
 			tray.notifications.num.className = 'NumberOfNotifications';

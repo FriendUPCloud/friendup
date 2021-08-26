@@ -1616,7 +1616,7 @@ int UMInitUsers( UserManager *um )
 				session->us_UserID = tmpUser->u_ID;
 				session->us_User = tmpUser;
 				
-				UserDeviceMount( sb, tmpUser, session, 1, TRUE, &err, FALSE );
+				UserDeviceMount( sb, session, 1, TRUE, &err, FALSE );
 				if( err != NULL )
 				{
 					Log( FLOG_ERROR, "Initial system mount error. UserID: %lu Error: %s\n", tmpUser->u_ID, err );

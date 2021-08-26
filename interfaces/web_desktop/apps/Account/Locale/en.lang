@@ -54,6 +54,8 @@ i18n_groups                          : Groups
 i18n_no_apps                         : Status
 i18n_no_apps_desc                    : None installed.
 
+i18n_added_by_admin                  : Added by admin
+i18n_reason                          : Info
 i18n_no_groups_available             : You don't own any groups.
 i18n_failed_reading_groups           : Failed to read groups.
 i18n_create_group                    : Create new group

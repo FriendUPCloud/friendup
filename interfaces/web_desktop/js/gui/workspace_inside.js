@@ -349,7 +349,8 @@ var WorkspaceInside = {
 	// Invite a friend to the Workspace
 	inviteFriend: function()
 	{
-		
+		if( !Workspace.serverConfig || !Workspace.serverConfig.invitesEnabled )
+			return;
 		let version = 2;
 		
 		let self = this;
@@ -411,8 +412,11 @@ var WorkspaceInside = {
 							
 							for( let a in data )
 							{
+								let cl = '';
+								if( data[a].ID == 0 )
+									cl = ' None';
 								str += '<div class="MousePointer sw' + sw + ' Collection' + ( data[a].ID == 0 ? ' Selected' : '' ) + '" value="' + data[a].ID + '">\
-									<div class="Image"></div>\
+									<div class="Image' + cl + '"></div>\
 									<div class="Name" title="' + data[a].Name + '">' + data[a].Name + '</div>\
 									<div class="Description">' + ( data[a].Description ? data[a].Description : i18n( 'i18n_no_description_on_group' ) ) + '</div>\
 									<div class="Buttons">\
@@ -2202,6 +2206,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// NB: Start of workspace_inside.js ----------------------------------------
 	refreshUserSettings: function( callback )
 	{
+		let b = new Module( 'system' );
+		b.onExecuted = function( e, d )
+		{
+			if( e == 'ok' )
+			{
+				Workspace.serverConfig = JSON.parse( d );
+			}
+		}
+		b.execute( 'sampleconfig' );
+		
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
@@ -7376,6 +7390,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			currentMovable.content;
 			if( cnt ) systemDrive = cnt && cnt.fileInfo && cnt.fileInfo.Volume == 'System:';
 		}
+		
+		let sConf = Workspace.serverConfig;
 
 		// Setup Doors menu
 		this.menu = [
@@ -7392,10 +7408,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						name:	i18n( 'my_account' ),
 						command: function(){ Workspace.accountSetup(); }
 					},
-					{
+					( sConf && sConf.invitesEnabled ? {
 						name:	i18n( 'invite_a_friend' ),
 						command: function(){ Workspace.inviteFriend(); }
-					},
+					} : false ),
 					{
 						name:	i18n( 'menu_examine_system' ),
 						command: function()

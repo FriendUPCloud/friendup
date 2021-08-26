@@ -342,18 +342,21 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					User *usr = loggedSession->us_User;
 					if( usr != NULL )
 					{
-						FRIEND_MUTEX_LOCK( &usr->u_Mutex );
-						UserSessListEntry *ses = usr->u_SessionsList;
-						while( ses != NULL )
+						if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
 						{
-							UserSession *uses = (UserSession *) ses->us;
-							if( strcmp( sessionid, uses->us_SessionID ) == 0 )
+							UserSessListEntry *ses = usr->u_SessionsList;
+							while( ses != NULL )
 							{
-								nameSet = TRUE;
+								UserSession *uses = (UserSession *) ses->us;
+								if( strcmp( sessionid, uses->us_SessionID ) == 0 )
+								{
+									nameSet = TRUE;
+									break;
+								}
+								ses = (UserSessListEntry *)ses->node.mln_Succ;
 							}
-							ses = (UserSessListEntry *)ses->node.mln_Succ;
+							FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 						}
-						FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 					}
 				}
 				else
@@ -447,7 +450,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			
 			User *u = loggedSession->us_User;
 		
-			if( msg != NULL )
+			if( msg != NULL && loggedSession->us_User != NULL )
 			{
 				int msgsndsize = 0;
 				DEBUG("[UMWebRequest] Send message session by sessionid\n");
@@ -487,43 +490,58 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						}
 					}
 
-					UserSessListEntry *ses = u->u_SessionsList;
-					while( ses != NULL )
+					if( loggedSession->us_User != NULL )
 					{
-						FBOOL sendMsg = FALSE;
-						UserSession *uses = (UserSession *) ses->us;
-			
-						if( sessionid != NULL )
+						if( FRIEND_MUTEX_LOCK( &(u->u_Mutex) ) == 0 )
 						{
-							if( strcmp( sessionid, uses->us_SessionID ) == 0 )
-							{
-								sendMsg = TRUE;
-							}
+							u->u_InUse++;
+							FRIEND_MUTEX_UNLOCK( &(u->u_Mutex) );
 						}
-						else
-						{
-							sendMsg = TRUE;
-						}
-				
-						if( sendMsg == TRUE ) //&& uses != loggedSession )	// do not send message to same session
-						{
-							int lenmsg = 0;
 						
-							if( appname != NULL )
+						UserSessListEntry *ses = u->u_SessionsList;
+						while( ses != NULL )
+						{
+							FBOOL sendMsg = FALSE;
+							UserSession *uses = (UserSession *) ses->us;
+			
+							if( sessionid != NULL )
 							{
-								lenmsg = snprintf( tmpmsg, msgsize, "{\"type\":\"msg\",\"data\":{\"type\":\"server-msg\",\"session\":{\"message\":%s,\"appname\":\"%s\"}}}", msg, appname );
+								if( strcmp( sessionid, uses->us_SessionID ) == 0 )
+								{
+									sendMsg = TRUE;
+								}
 							}
 							else
 							{
-								lenmsg = snprintf( tmpmsg, msgsize, "{\"type\":\"msg\",\"data\":{\"type\":\"server-msg\",\"session\":{\"message\":%s}}}", msg );
+								sendMsg = TRUE;
 							}
+				
+							if( sendMsg == TRUE ) //&& uses != loggedSession )	// do not send message to same session
+							{
+								int lenmsg = 0;
+						
+								if( appname != NULL )
+								{
+									lenmsg = snprintf( tmpmsg, msgsize, "{\"type\":\"msg\",\"data\":{\"type\":\"server-msg\",\"session\":{\"message\":%s,\"appname\":\"%s\"}}}", msg, appname );
+								}
+								else
+								{
+									lenmsg = snprintf( tmpmsg, msgsize, "{\"type\":\"msg\",\"data\":{\"type\":\"server-msg\",\"session\":{\"message\":%s}}}", msg );
+								}
 			
-							msgsndsize += WebSocketSendMessageInt( uses, tmpmsg, lenmsg );
+								msgsndsize += WebSocketSendMessageInt( uses, tmpmsg, lenmsg );
 			
-							DEBUG("[UMWebRequest] messagee sent. Bytes: %d\n", msgsndsize );
+								DEBUG("[UMWebRequest] messagee sent. Bytes: %d\n", msgsndsize );
+							}
+							ses = (UserSessListEntry *)ses->node.mln_Succ;
 						}
-						ses = (UserSessListEntry *)ses->node.mln_Succ;
-					}
+						
+						if( FRIEND_MUTEX_LOCK( &(u->u_Mutex) ) == 0 )
+						{
+							u->u_InUse--;
+							FRIEND_MUTEX_UNLOCK( &(u->u_Mutex) );
+						}//lock
+					}	// if user != NULL
 					FFree( tmpmsg );
 				}
 
@@ -1338,7 +1356,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						if( sqlLib != NULL )
 						{
 							entries = sqlLib->NumberOfRecords( sqlLib, UserDesc,  query );
-
+							
 							l->LibrarySQLDrop( l, sqlLib );
 						}
 
@@ -1830,81 +1848,14 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		}
 
 		DEBUG(" username: %s\n", usrname );
-		char *temp = FCalloc( 2048, 1 );
-		int numberOfSessions = 0;
 		
-		if( temp != NULL )
-		{
 			if( logusr != NULL )
 			{
 				DEBUG("Loop: loguser->name: %s\n", logusr->u_Name );
 				BufString *bs = BufStringNew();
+				BufStringAdd( bs, "ok<!--separate-->[" );
 				
-				if( FRIEND_MUTEX_LOCK( &(logusr->u_Mutex) ) == 0 )
-				{
-					UserSessListEntry *sessions = logusr->u_SessionsList;
-					BufStringAdd( bs, "ok<!--separate-->[" );
-					int pos = 0;
-
-					if( logusr->u_SessionsNr > 0 )
-					{
-						while( sessions != NULL )
-						{
-							if( sessions->us == NULL )
-							{
-								DEBUG("ERR\n");
-								sessions = (UserSessListEntry *) sessions->node.mln_Succ;
-								continue;
-							}
-							UserSession *us = (UserSession *) sessions->us;
-							
-							if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-							{
-								us->us_InUseCounter++;
-								FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-							}
-
-							time_t timestamp = time(NULL);
-							/*
-							if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-							{
-								us->us_InUseCounter++;
-								FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-							}
-							*/
-							
-							if( us->us_WSD != NULL && ( (timestamp - us->us_LastActionTime) < l->sl_RemoveSessionsAfterTime ) )
-							{
-								WSCData *data = (WSCData *)us->us_WSD;
-								if( data != NULL && data->wsc_UserSession != NULL && data->wsc_Wsi != NULL )
-								{
-									int size = 0;
-									if( pos == 0 )
-									{
-										size = snprintf( temp, 2047, "{\"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LastActionTime );
-									}
-									else
-									{
-										size = snprintf( temp, 2047, ",{\"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LastActionTime );
-									}
-									BufStringAddSize( bs, temp, size );
-									pos++;
-								}
-
-							}
-							
-							if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-							{
-								us->us_InUseCounter--;
-								FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-							}
-							
-							sessions = (UserSessListEntry *) sessions->node.mln_Succ;
-							numberOfSessions++;
-						}
-					}
-					FRIEND_MUTEX_UNLOCK( &(logusr->u_Mutex) );
-				}
+				UserListSessions( logusr, bs, l );
 			
 				BufStringAdd( bs, "]" );
 				
@@ -1915,11 +1866,10 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				
 				BufStringDelete( bs );
 			}
-			FFree( temp );
-		}
+			
 			
 		// only if user is not found, no need to count sessions
-		if( logusr == NULL ) //&& numberOfSessions == 0 )
+		if( logusr == NULL )
 		{
 			FERROR("[ERROR] User not found\n" );
 			char buffer[ 256 ];

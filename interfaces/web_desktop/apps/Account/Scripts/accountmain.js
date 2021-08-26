@@ -175,23 +175,29 @@ function refreshGroups( keys )
 		
 		str += '<div class="Padding"><h2>' + i18n( 'i18n_other_groups' ) + '</h2><div class="List">';
 		str += '<div class="HRow">\
-				<div class="PaddingSmall FloatLeft HContent40"><strong>' + i18n( 'i18n_group_name' ) + '</strong></div>\
-				<div class="PaddingSmall FloatLeft HContent40"><strong>' + i18n( 'i18n_owner' ) + '</strong></div>\
-				<div class="PaddingSmall FloatLeft HContent20 TextRight"></div>\
+				<div class="PaddingSmall FloatLeft HContent35"><strong>' + i18n( 'i18n_group_name' ) + '</strong></div>\
+				<div class="PaddingSmall FloatLeft HContent35"><strong>' + i18n( 'i18n_owner' ) + '</strong></div>\
+				<div class="PaddingSmall FloatLeft HContent20"><strong>' + i18n( 'i18n_reason' ) + '</strong></div>\
+				<div class="PaddingSmall FloatLeft HContent10 TextRight"></div>\
 			</div>';
 		let sw = 2;
 		for( let a = 0; a < d.length; a++ )
 		{
 			let button = '<button type="button" class="Button IconSmall fa-remove NoText IconButton" title="' + i18n( 'i18n_leave_group' ) + '" onclick="leaveGroup(\'' + d[a].ID + '\')"></button>';
+			let reason = '';
 			// Cannot remove yourself from Admin administrated groups
-			if( d[a].Level == 'Admin' )
+			if( d[a].Level == 'Admin' && d[a].IsInvite == 0 )
+			{
 				button = '';
+				reason = i18n( 'i18n_added_by_admin' );
+			}
 			
 			sw = sw == 1 ? 2 : 1;
 			str += '<div class="HRow sw' + sw + '">\
-				<div class="PaddingSmall FloatLeft HContent40">' + d[a].Name + '</div>\
-				<div class="PaddingSmall FloatLeft HContent40">' + d[a].Invitor + '</div>\
-				<div class="PaddingSmall FloatLeft HContent20 TextRight">' + button + '</div>\
+				<div class="PaddingSmall FloatLeft HContent35 Ellipsis">' + d[a].Name + '</div>\
+				<div class="PaddingSmall FloatLeft HContent35 Ellipsis">' + d[a].Invitor + '</div>\
+				<div class="PaddingSmall FloatLeft HContent20 Ellipsis">' + reason + '</div>\
+				<div class="PaddingSmall FloatLeft HContent10 TextRight">' + button + '</div>\
 			</div>';
 		}
 		str += '</div></div>';
