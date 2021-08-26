@@ -549,6 +549,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			'file_save'  : i18n( 'file_save'  ),
 			'file_abort' : i18n( 'file_abort' )
 		};
+		f.i18n();
 		f.onLoad = function ( d )
 		{
 			w.setContent( d );
