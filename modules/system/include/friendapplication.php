@@ -9,9 +9,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
-<<<<<<< HEAD
 require_once( 'php/include/helpers.php' );
-=======
+
 function makeNumericalVersion( $versionString )
 {
 	$vers = explode( '.', $versionString );
@@ -22,7 +21,6 @@ function makeNumericalVersion( $versionString )
 	}
 	return intval( 1 . $out, 10 );
 }
->>>>>>> release/1.2.6
 
 function storeRecentApps( $name )
 {

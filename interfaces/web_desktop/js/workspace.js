@@ -872,11 +872,12 @@ Workspace = {
 			_this.sessionId = json.sessionid ? json.sessionid : null;
 			_this.userId    = json.userid;
 			_this.fullName  = json.fullname;
-			if( json.username ) _this.loginUsername = json.username;
+			if( json.username )
+				_this.loginUsername = json.username;
 
 			// Relogin fix
 			document.body.classList.remove( 'Loading' );
-
+			
 			// After a user has logged in we want to prepare the workspace for him.
 			
 			// Store user data in localstorage for later verification encrypted
@@ -1024,10 +1025,9 @@ Workspace = {
 					// console.log( 'Test2: Got in sessionid error.', json );
 					return false;
 				}
-
-                // Just get it done!
+				
 				InitWorkspaceNetwork();
-
+				
 				// Reset some options
 				if( ev && ev.shiftKey )
 				{

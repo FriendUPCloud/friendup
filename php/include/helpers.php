@@ -127,11 +127,8 @@ function FriendCoreQuery( $command = '', $args = false, $method = 'POST', $heade
 	
 	if( $args )
 	{
-<<<<<<< HEAD
-		if( !isset( $conf ) || !isset( $conf->argtype ) )
-=======
+		//if( !isset( $conf ) || !isset( $conf->argtype ) )
 		if( !$plainpostargs )
->>>>>>> release/1.2.6
 		{
 			if( is_object( $args ) )
 			{

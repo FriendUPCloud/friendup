@@ -1197,7 +1197,25 @@ var WorkspaceInside = {
 	},
 	initWebSocket: function( callback )
 	{
-		let self = this;
+		const self = this;
+		console.trace( 'initWebSocket', {
+			state    : Workspace.websocketState,
+			callback : callback,
+			FConn    : FriendConnection,
+			FWS      : FriendWebSocket,
+		});
+		
+		if( null == FriendConnection )
+		{
+			return setTimeout(
+				function(){
+					Workspace.initWebSocket( callback );
+				},
+				250
+			);
+		}
+		
+		/*
 		function closeConn()
 		{
 			// Clean up previous
@@ -1209,19 +1227,21 @@ var WorkspaceInside = {
 				}
 				catch( ez )
 				{
-					console.log( 'Conn is dead.', ez, ez2 );
+					console.log( 'Conn is dead.', ez );
 				}
 				delete self.conn;
 			}
 		}
+		*/
 	
 		// We're already open or connecting
-		if( Workspace.websocketState == 'open' ) return;
+		if( Workspace.websocketState == 'open' )
+			return;
 		
 		if( window.Friend && Friend.User && Friend.User.State != 'online' ) 
 		{
 			console.log( 'Cannot initialize web socket - user is offline.' );
-			closeConn();
+			//closeConn();
 			return;
 		}
 		
@@ -1234,6 +1254,7 @@ var WorkspaceInside = {
 		}
 		
 		// Not ready
+		/*
 		if( !Workspace.sessionId )
 		{
 			if( this.initWSTimeout )
@@ -1241,9 +1262,10 @@ var WorkspaceInside = {
 			this.initWSTimeout = setTimeout( function(){ Workspace.initWebSocket( callback ); }, 1000 );
 			return this.initWSTimeout;
 		}
+		*/
 		
 		// Not needed here
-		if( this.initWSTimeout )
+		if( null != this.initWSTimeout )
 		{
 			clearTimeout( this.initWSTimeout );
 			this.initWSTimeout = null;
@@ -1251,12 +1273,12 @@ var WorkspaceInside = {
 		
 		// Force connecting ws state (we will close it!)
 		Workspace.websocketState = 'connecting';
-
+		
 		let conf = {
-			onstate: onState,
-			onend  : onEnd
+			onstate : onState,
+			onend   : onEnd
 		};
-
+		
         //we assume we are being proxied - set the websocket to use the same port as we do
         if( document.location.port == '')
         {
@@ -1265,18 +1287,15 @@ var WorkspaceInside = {
         }
 		
 		// Reconnect if we already exist
+		/*
 		if( this.conn )
 		{
-			this.conn.connectWebSocket();
+			
 			console.log( '[initWebSocket] Reconnecting websocket.' );
 		}
-		else
+		*/
+		if ( null == this.conn )
 		{
-			if( typeof FriendConnection == 'undefined' )
-			{
-				return setTimeout( function(){ Workspace.initWebSocket( callback ); }, 250 );
-			}
-		
 			this.conn = new FriendConnection( conf );
 			this.conn.on( 'sasid-request', handleSASRequest ); // Shared Application Session
 			this.conn.on( 'server-notice', handleServerNotice );
@@ -1287,27 +1306,16 @@ var WorkspaceInside = {
 			this.conn.on( 'notification', handleNotifications );
 		}
 		
+		this.conn.connect( Workspace.sessionId );
+		
 		// Reference for handler
-		let selfConn = this.conn;
+		//let selfConn = this.conn;
 
 		function onState( e )
 		{
-			//console.log( 'Worspace.conn.onState', e, 'State: ' + Workspace.websocketState );
-			
-			if( e.type == 'error' || e.type == 'close' )
-			{
-				if( e.type == 'close' )
-				{
-					console.log( '[onState] The ws closed.' );
-					Workspace.websocketState = 'closed';
-				}
-				else if( e.type == 'error' )
-				{
-					console.log( '[onState] We got an error.' );
-					Workspace.websocketState = 'error';
-				}
-			}
-			else if( e.type == 'ping' )
+			console.log( 'Worspace.conn.onState', e.type );
+			const type = e.type;
+			if( type == 'ping' )
 			{
 				if( Workspace.websocketState != 'open' )
 				{
@@ -1315,44 +1323,53 @@ var WorkspaceInside = {
 					Workspace.websocketState = 'open';
 					Workspace.refreshDesktop( false, true );
 				}
-
+				
 				if( Friend.User )
 					Friend.User.SetUserConnectionState( 'online' );
 				
-				// Reattach
-				if( !Workspace.conn && selfConn )
-				{
-					Workspace.conn = selfConn;
-				}
+				return;
 			}
-			else
+			
+			if ( type == 'error' || type == 'close' )
 			{
-				if( e.type == 'open' )
-				{
-					if( callback )
-					{
-						callback();
-						callback = null;
-					}
-				}
-				else if( e.type == 'connecting' )
-				{
-					Workspace.websocketState = 'connecting';
-				}
-				if( e.type != 'connecting' && e.type != 'open' )
-				{
-					console.log( 'Strange onState: ', e );
-				}
+				console.log( '[onState] The ws closed.' );
+				Workspace.websocketState = 'closed';
+				Friend.User.CheckServerNow();
+				return;
 			}
+			
+			if( type == 'open' )
+			{
+				if( callback )
+				{
+					callback();
+					callback = null;
+				}
+				return;
+			}
+			
+			if( type == 'connecting' )
+			{
+				Workspace.websocketState = 'connecting';
+				return;
+			}
+			
+			if( 'disconnect' == type )
+			{
+				Workspace.websocketState = 'disconnect';
+				return;
+			}
+			
+			console.log( 'Strange onState: ', e );
 		}
-
+		
 		function onEnd( e )
 		{
 			//console.log( 'Workspace.conn.onEnd', e );
 			Workspace.websocketState = 'closed';
 			Friend.User.SetUserConnectionState( 'offline' );
 		}
-
+		
 		function handleIconChange( e ){ console.log( 'icon-change event', e ); }
 		function handleFilesystemChange( msg )
 		{	
@@ -9511,7 +9528,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			document.body.classList.remove( 'ViewStateActive' );
 			document.body.classList.remove( 'Activating' );
 			
-			if( !Workspace.conn || !Workspace.conn.ws )
+			if( 'open' != Workspace.websocketState )
 			{
 				Workspace.initWebSocket();
 			}
@@ -10282,7 +10299,10 @@ function InitWorkspaceEvents()
 
 function InitWorkspaceNetwork()
 {
+	console.log( 'InitworkspaceNetwork - ws state', Workspace.websocketState );
 	let wsp = Workspace;
+	if ( 'open' != Workspace.websocketState )
+		wsp.initWebSocket();
 	
 	if( wsp.workspaceNetworkInitialized ) return;
 	wsp.workspaceNetworkInitialized = true;
@@ -10290,7 +10310,7 @@ function InitWorkspaceNetwork()
 	// Establish a websocket connection to the core
 	if( !wsp.conn && wsp.sessionId && window.FriendConnection )
 	{
-		wsp.initWebSocket();
+		
 	}
 
 	wsp.checkFriendNetwork();

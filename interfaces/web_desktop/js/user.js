@@ -46,20 +46,6 @@ Friend.User = {
     	
     	//let self = this;
 		
-		// Close conn here - new login regenerates sessionid
-		if( Workspace.conn )
-		{
-			try
-			{
-				Workspace.conn.ws.cleanup();
-			}
-			catch( e )
-			{
-				console.log( 'Could not close conn.' );
-			}
-			delete Workspace.conn;
-		}
-		
 		if ( !username || !password ) {
 			Workspace.showLoginPrompt();
 			return;
@@ -72,29 +58,8 @@ Friend.User = {
 			flags          : flags,
 		};
 		
-		/*	
-		info.hashedPassword = flags.hashedPassword,
-		inviteHash     : flags.inviteHash
-		*/
-		
 		self.SendLoginCall( info, callback );
 		
-		/*
-		
-		if( username && password )
-		{
-			//Workspace.encryption.setKeys( username, password );
-			this.SendLoginCall( {
-				
-			}, callback );
-		}
-		else
-		{
-			
-		}
-		
-		return 0;
-		*/
     },
     // Login using a session id
     LoginWithSessionId: function( sessionid, callback, event )
@@ -112,40 +77,13 @@ Friend.User = {
     	//let self = this;
     	Workspace.sessionId = sessionid;
 		
-		// Close conn here - new login regenerates sessionid
-		if( Workspace.conn )
-		{
-			try
-			{
-				Workspace.conn.ws.cleanup();
-			}
-			catch( e )
-			{
-				console.log( 'Could not close conn.' );
-			}
-			delete Workspace.conn;
-		}
-		
 		self.SendLoginCall( null, callback );
 		
-		/*
-		if( sessionid )
-		{
-			
-		}
-		else
-		{
-			Workspace.showLoginPrompt();
-		}
-		
-		return 0;
-		*/
     },
     // Send the actual login call
     SendLoginCall: function( info, callback )
     {
     	const self = this;
-    	// Already logging in
     	let infoCpy = null;
     	if ( info ) {
     		const infoStr = JSON.stringify( info );
@@ -161,6 +99,7 @@ Friend.User = {
     		self         : self,
     	});
     	self.setState( 'login' );
+    	
     	//this.State = 'login';
     	
     	if ( info && self.lastLogin )
@@ -171,14 +110,16 @@ Friend.User = {
     	if ( callback )
     		self.loginCallback = callback;
     	
-    	if ( null != self.loginTimeout ) {
+    	if ( null != self.loginTimeout )
+    	{
     		console.log( 'login timeout, queue' );
     		this.queuedLogin = true;
     		return;
     	}
     	
     	self.loginTimeout = window.setTimeout( tryNowMaybe, 1000 * 2 );
-    	function tryNowMaybe() {
+    	function tryNowMaybe()
+    	{
     		self.loginTimeout = null;
     		if ( !self.queuedLogin )
     			return;
@@ -186,6 +127,11 @@ Friend.User = {
     		self.queuedLogin = false;
     		self.SendLoginCall();
     	}
+    	
+    	if( Workspace.conn )
+		{
+			Workspace.conn.disconnect();
+		}
     	
 		let req = new FriendLibrary( 'system' );
 		self.lastLogin = req;
@@ -209,7 +155,6 @@ Friend.User = {
 		else
 		{
 			self.setState( 'offline' );
-			//this.State = 'offline'; 
 			self.lastLogin = null;
 			respond( 'offline', null );
 			return false;
@@ -236,7 +181,7 @@ Friend.User = {
 			});
 			if( conf == null || '' == conf )
 			{
-				console.log( 'login weird')
+				console.log( 'login weird, see response ^^^^')
 				respond( false );
 				//self.ReLogin();
 				return;
@@ -305,11 +250,24 @@ Friend.User = {
 					Workspace.fullName = conf.fullname;
 					
 					// If we have inviteHash, verify and add relationship between the inviter and the invitee.
-					if( info.inviteHash ) conf.inviteHash = info.inviteHash;
+					if( info.inviteHash )
+						conf.inviteHash = info.inviteHash;
 					
 					// We are now online!
 					self.SetUserConnectionState( 'online' );
 					
+					
+					const res = respond( true, serveranswer );
+					if ( Workspace.userWorkspaceInitialized )
+						Workspace.initWebSocket();
+					else
+						Workspace.initUserWorkspace(
+							conf,
+							res,
+							event
+						);
+					
+					/*
 					if( !Workspace.userWorkspaceInitialized )
 					{
                 		// Init workspace
@@ -324,12 +282,8 @@ Friend.User = {
 					else
 					{
 						respond( true, serveranswer );
-						/*
-						if( typeof( callback ) == 'function' )
-							callback( true, serveranswer );
-						*/
-						// Make sure we didn't lose websocket!
 					}
+					*/
 				}
 				else
 				{
@@ -385,36 +339,6 @@ Friend.User = {
     	if( !event )
     		event = window.event;
     	
-    	/*
-    	if( Workspace.loginUsername && Workspace.loginPassword )
-    	{
-    		info.username = Workspace.loginUsername;
-    		let enc = Workspace.encryption;
-    		info.password = enc.decrypt( Workspace.loginPassword, enc.getKeys().privatekey );
-    		info.hashedPassword = Workspace.loginHashed;
-    	}
-    	*/
-    	
-    	/*
-    	info.sessionid = Workspace.sessionId;
-    	info.refreshtoken = Friend.User.refreshToken;
-		*/
-		//console.log( 'relogin info', info );
-		
-		// Close conn here - new login regenerates sessionid
-		if( Workspace.conn )
-		{
-			try
-			{
-				Workspace.conn.ws.cleanup();
-			}
-			catch( e )
-			{
-				console.log( 'Could not close conn.' );
-			}
-			delete Workspace.conn;
-		}
-		
 		// Reset cajax http connections (because we lost connection)
 		_cajax_http_connections = 0;
 		
@@ -692,16 +616,7 @@ Friend.User = {
 				// Try to close the websocket
 				if( Workspace.conn )
 				{
-					try
-					{
-						Workspace.conn.ws.cleanup();
-					}
-					catch( e )
-					{
-						console.log( 'Could not close conn.' );
-					}
-					delete Workspace.conn;
-					console.log( 'Removed websocket.' );
+					delete Workspace.conn.disconnect();
 				}
 				
 				if( null != this.checkInterval )
