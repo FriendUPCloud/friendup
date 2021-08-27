@@ -1733,56 +1733,68 @@ AND f.Name = '%s'",
 
 				if( type && strcmp( type, "SQLWorkgroupDrive" ) == 0 )
 				{
+					//
+					// 'lock' User Manager
+					//
+					
 					if( FRIEND_MUTEX_LOCK( &(l->sl_UM->um_Mutex ) ) == 0 )
 					{
-						User *tmpUser = l->sl_UM->um_Users;
-						while( tmpUser != NULL )
-						{
-							// Skip current user
-							if( tmpUser->u_ID == usr->u_ID )
-							{
-								tmpUser = (User *)tmpUser->node.mln_Succ;
-								continue;
-							}
-						
-							// Test if this user already has this disk
-							File *search = tmpUser->u_MountedDevs;
-							while( search != NULL )
-							{
-								if( search->f_ID == id )
-								{
-									DEBUG( "[MountFS] -- Found user.\n" );
-									search->f_Mounted = retFile->f_Mounted; // mount if it isn't
-									break;
-								}
-								search = (File *)search->node.mln_Succ;
-							}
-						
-							// User doesn't have this disk, add it!
-							if( search == NULL )
-							{
-								// Try to mount the device with all privileges
-
-								File *dstFile = NULL;
-								if( MountFSNoSubMount( dm, tl, &dstFile, tmpUser, mountError, us, notify ) != 0 )
-								{
-									Log( FLOG_INFO, "[MountFS] -- Could not mount device for user %s. Drive was %s. Pointer to dstFile: %p\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--", dstFile );
-									if( dstFile != NULL )
-									{
-										//filesys->Release( filesys, dstFile );
-									}
-								}
-							
-								// Tell user!
-								if( notify == TRUE )
-								{
-									UserNotifyFSEvent2( dm, tmpUser, "refresh", "Mountlist:" );
-								}
-							}
-							tmpUser = (User *)tmpUser->node.mln_Succ;
-						}
+						l->sl_UM->un_InUse++;
 						FRIEND_MUTEX_UNLOCK( &(l->sl_UM->um_Mutex ) );
-					}	// mutex
+					}
+					
+					User *tmpUser = l->sl_UM->um_Users;
+					while( tmpUser != NULL )
+					{
+						// Skip current user
+						if( tmpUser->u_ID == usr->u_ID )
+						{
+							tmpUser = (User *)tmpUser->node.mln_Succ;
+							continue;
+						}
+						
+						// Test if this user already has this disk
+						File *search = tmpUser->u_MountedDevs;
+						while( search != NULL )
+						{
+							if( search->f_ID == id )
+							{
+								DEBUG( "[MountFS] -- Found user.\n" );
+								search->f_Mounted = retFile->f_Mounted; // mount if it isn't
+								break;
+							}
+							search = (File *)search->node.mln_Succ;
+						}
+						
+						// User doesn't have this disk, add it!
+						if( search == NULL )
+						{
+							// Try to mount the device with all privileges
+
+							File *dstFile = NULL;
+							if( MountFSNoSubMount( dm, tl, &dstFile, tmpUser, mountError, us, notify ) != 0 )
+							{
+								Log( FLOG_INFO, "[MountFS] -- Could not mount device for user %s. Drive was %s. Pointer to dstFile: %p\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--", dstFile );
+								if( dstFile != NULL )
+								{
+									//filesys->Release( filesys, dstFile );
+								}
+							}
+							
+							// Tell user!
+							if( notify == TRUE )
+							{
+								UserNotifyFSEvent2( dm, tmpUser, "refresh", "Mountlist:" );
+							}
+						}
+						tmpUser = (User *)tmpUser->node.mln_Succ;
+					}
+					
+					if( FRIEND_MUTEX_LOCK( &(l->sl_UM->um_Mutex ) ) == 0 )
+					{
+						l->sl_UM->un_InUse--;
+						FRIEND_MUTEX_UNLOCK( &(l->sl_UM->um_Mutex ) );
+					}
 				}	// workgroup drive
 				INFO( "[MountFS] %s - Device '%s' mounted successfully\n", usr->u_Name, name );
 				
@@ -2579,7 +2591,6 @@ int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile, char **m
 		File *retFile = NULL;
 		struct TagItem *ltl = tl;
 		char *type = NULL;
-		char *path = NULL;
 		char *name = NULL;
 		UserSession *us = NULL;
 		FULONG dbid = 0;

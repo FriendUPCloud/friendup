@@ -1019,6 +1019,17 @@ int UMAddUser( UserManager *um,  User *usr )
 	User *lu =  UMGetUserByID( um, usr->u_ID );
 	if( lu == NULL  )
 	{
+		int tr = 20;
+		// do not add any user till list in use
+		while( um->un_InUse > 0 )
+		{
+			usleep( 1000 );
+			if( (tr--) <= 0 )
+			{
+				break;
+			}
+		}
+		
 		if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
 		{
 			usr->node.mln_Succ  = (MinNode *) um->um_Users;
@@ -1083,6 +1094,17 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 
 	unsigned int n = 0;
 	FBOOL found = FALSE;
+	
+	int tr = 20;
+	// do not add any user till list in use
+	while( um->un_InUse > 0 )
+	{
+		usleep( 1000 );
+		if( (tr--) <= 0 )
+		{
+			break;
+		}
+	}
 	
 	if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
 	{

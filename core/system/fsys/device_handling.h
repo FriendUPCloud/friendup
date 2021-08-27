@@ -31,6 +31,7 @@ typedef struct DeviceManager
 {
 	void				*dm_SB;
 	pthread_mutex_t		dm_Mutex;
+	int					dm_InUse;
 }DeviceManager;
 
 //
