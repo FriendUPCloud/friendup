@@ -229,9 +229,9 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 						*/
 					{
 						DEBUG("Delete old entries\n");
-						snprintf( query, sizeof(query), "DELETE from `FUserMobileApp` where AppToken='%s' AND UserID=%lu", apptoken, uid );
+						snprintf( query, sizeof(query), "DELETE from `FUserMobileApp` where `AppToken`=\"%s\" AND UserID=%lu", apptoken, uid );
 						sqllib->QueryWithoutResults( sqllib, query );
-						snprintf( query, sizeof(query), "DELETE from `FUserMobileApp` where DeviceID='%s' AND UserID=%lu", deviceID, uid );
+						snprintf( query, sizeof(query), "DELETE from `FUserMobileApp` where `DeviceID`=\"%s\" AND UserID=%lu", deviceID, uid );
 						sqllib->QueryWithoutResults( sqllib, query );
 					}
 					

@@ -617,7 +617,7 @@ OR \
 			if( permissionid > 0 )
 			{
 				DEBUG("[FSManagerProtect3] Found permission, remove old entries\n");
-				sqllib->SNPrintF( sqllib, tmpQuery, querysize, "DELETE FROM `FPermLink` WHERE PermissionID in( SELECT ID FROM `FFilePermission` WHERE Path='%s'  AND DeviceID=%lu)", path, devid );
+				sqllib->SNPrintF( sqllib, tmpQuery, querysize, "DELETE FROM `FPermLink` WHERE PermissionID in( SELECT ID FROM `FFilePermission` WHERE `Path`=\"%s\" AND DeviceID=%lu)", path, devid );
 			
 				sqllib->QueryWithoutResults( sqllib, tmpQuery );
 			}
