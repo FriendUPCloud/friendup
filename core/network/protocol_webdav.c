@@ -943,7 +943,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 					USMUserSessionAddToList( sb->sl_USM, loggedSession );
 				}
 				char *err = NULL;
-				sb->UserDeviceMount( sb, usr, loggedSession, 0, TRUE, &err, TRUE );
+				sb->UserDeviceMount( sb, loggedSession, 0, TRUE, &err, TRUE );
 				if( err != NULL )
 				{
 					FERROR("[HandleWebDav] UserDeviceMount returned: %s\n", err );
@@ -973,7 +973,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 				return resp;
 			}
 			char *err = NULL;
-			sb->UserDeviceMount( sb, usr, loggedSession, 0, TRUE, &err, TRUE );
+			sb->UserDeviceMount( sb, loggedSession, 0, TRUE, &err, TRUE );
 			if( err != NULL )
 			{
 				FERROR("[HandleWebDav] UserDeviceMount returned: %s\n", err );
@@ -1005,7 +1005,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	else
 	{
 		char *err = NULL;
-		sb->UserDeviceMount( sb, usr, loggedSession, 0, TRUE, &err, TRUE );
+		sb->UserDeviceMount( sb, loggedSession, 0, TRUE, &err, TRUE );
 		if( err != NULL )
 		{
 			FERROR("[HandleWebDav] UserDeviceMount returned: %s\n", err );

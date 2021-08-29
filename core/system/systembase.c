@@ -281,7 +281,7 @@ SystemBase *SystemInit( void )
 	l->LibraryZDrop = LibraryZDrop;
 	l->LibraryImageGet = LibraryImageGet;
 	l->LibraryImageDrop = LibraryImageDrop;
-	l->WebSocketSendMessage = WebSocketSendMessage;
+	l->UserSessionWebsocketWrite = UserSessionWebsocketWrite;
 	l->WebSocketSendMessageInt = WebSocketSendMessageInt;
 	l->WebsocketWrite = UserSessionWebsocketWrite;
 	l->SendProcessMessage = SendProcessMessage;
@@ -2407,7 +2407,7 @@ Sentinel* GetSentinelUser( SystemBase* l )
  * @param len length of the message
  * @return 0 if message was sent otherwise error number
  */
-
+/*
 int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *usersession, char *msg, int len )
 {
 	unsigned char *buf;
@@ -2447,6 +2447,7 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 	
 	return bytes;
 }
+*/
 
 /**
  * Send message via websockets
@@ -2516,7 +2517,8 @@ int SendProcessMessage( Http *request, char *data, int len )
 			
 			DEBUG("[SystemBase] SendProcessMessage message '%s'\n", sendbuf );
 			
-			WebSocketSendMessage( sb, pidt->pt_UserSession, sendbuf, newmsglen );
+			UserSessionWebsocketWrite( pidt->pt_UserSession, (unsigned char *)sendbuf, newmsglen, LWS_WRITE_TEXT);
+			//WebSocketSendMessage( sb, pidt->pt_UserSession, sendbuf, newmsglen );
 			
 			FFree( sendbuf );
 		}

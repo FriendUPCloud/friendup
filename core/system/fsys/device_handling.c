@@ -3409,7 +3409,8 @@ void UserNotifyFSEvent2( DeviceManager *dm, User *u, char *evt, char *path )
 			{
 				if( list->us != NULL )
 				{
-					WebSocketSendMessage( l, list->us, message, mlen );
+					UserSessionWebsocketWrite( list->us, (unsigned char *)message, mlen, LWS_WRITE_TEXT);
+					//WebSocketSendMessage( l, list->us, message, mlen );
 				}
 				else
 				{
@@ -3485,9 +3486,13 @@ void UserNotifyFSEvent( DeviceManager *dm, char *evt, char *path )
 			{
 				for( i = 0; i < userlength; i++ )
 				{
-					if( !userlist[i] ) break;
+					if( !userlist[i] )
+					{
+						break;
+					}
 					UserSession *u = userlist[i];
-					WebSocketSendMessage( l, u, message, msglen );
+					UserSessionWebsocketWrite( u, (unsigned char *)message, msglen, LWS_WRITE_TEXT);
+					//WebSocketSendMessage( l, u, message, msglen );
 				}
 			}
 			FFree( message );

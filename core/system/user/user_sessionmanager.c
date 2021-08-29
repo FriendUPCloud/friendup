@@ -1123,11 +1123,12 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 			
 							if( sendNotif == TRUE )
 							{
-								DEBUG("[USMSendDoorNotification] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->WebSocketSendMessage, sb, uses->us_DeviceIdentity );
+								DEBUG("[USMSendDoorNotification] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->UserSessionWebsocketWrite, sb, uses->us_DeviceIdentity );
 				
 						
 								//FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
-								WebSocketSendMessage( sb, uses, tmpmsg, len );
+								UserSessionWebsocketWrite( uses, (unsigned char *)tmpmsg, len, LWS_WRITE_TEXT );
+								//WebSocketSendMessage( sb, uses, tmpmsg, len );
 								//FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
 
 								// send message to all remote users

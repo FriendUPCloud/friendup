@@ -382,7 +382,7 @@ typedef struct SystemBase
 
 	void							(*LibraryImageDrop)( struct SystemBase *sb, ImageLibrary *pl );
 	
-	int								(*UserDeviceMount)( struct SystemBase *l, User *usr, UserSession *us, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
+	int								(*UserDeviceMount)( struct SystemBase *l, UserSession *us, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
 	
 	int								(*UserDeviceUnMount)( struct SystemBase *l, User *usr, UserSession *ses );
 	
@@ -390,7 +390,7 @@ typedef struct SystemBase
 	
 	Sentinel						*(*GetSentinelUser)( struct SystemBase *l );
 
-	int								(*WebSocketSendMessage)( struct SystemBase *l, UserSession *usersession, char *msg, int len );
+	int								(*UserSessionWebsocketWrite)( UserSession *usersession, unsigned char *msg, int len, int type );
 	
 	int								(*WebSocketSendMessageInt)( UserSession *usersession, char *msg, int len );
 	
