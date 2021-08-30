@@ -350,7 +350,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	// This part of code check required information
 	//
 	
-	char *sessionid = FCalloc( DEFAULT_SESSION_ID_SIZE + 1, sizeof(char) );
+	char *sessionid = FCalloc( DEFAULT_SESSION_ID_SIZE + 16, sizeof(char) );
 	char userName[ 256 ];
 	//char sessionid[ DEFAULT_SESSION_ID_SIZE ];
 	//sessionid[ 0 ] = 0;

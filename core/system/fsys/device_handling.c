@@ -3386,31 +3386,38 @@ WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where User
 
 void UserNotifyFSEvent2( DeviceManager *dm, User *u, char *evt, char *path )
 {
-	SystemBase *l = (SystemBase *)dm->dm_SB;
-	//return; //test
 	DEBUG("[UserNotifyFSEvent2] start\n");
+	
+	if( evt == NULL || path == NULL )
+	{
+		DEBUG("[UserNotifyFSEvent2] end. Event or path = NULL\n");
+		return;
+	}
+	
 	// Produce message
 	char *prototype = "{\"type\":\"msg\",\"data\":{\"type\":\"\",\"path\":\"\"}}";
 	int globmlen = strlen( prototype ) + strlen( path ) + strlen( evt ) + 128;
 	char *message = FCalloc( globmlen, sizeof(char) );
 
-	if( message != NULL && u != NULL )
+	if( message != NULL )
 	{
-		DEBUG("[UserNotifyFSEvent2] Send notification to user: %s id: %lu\n", u->u_Name, u->u_ID );
-		int mlen = snprintf( message, globmlen, "{\"type\":\"msg\",\"data\":{\"type\":\"%s\",\"data\":{\"path\":\"%s\"}}}", evt, path );
-		
-		if( FRIEND_MUTEX_LOCK( &(u->u_Mutex) ) == 0 )
+		if( u != NULL )
 		{
-			u->u_InUse++;
-			FRIEND_MUTEX_UNLOCK( &(u->u_Mutex) );
-		}
+			DEBUG("[UserNotifyFSEvent2] Send notification to user: %s id: %lu\n", u->u_Name, u->u_ID );
+			int mlen = snprintf( message, globmlen, "{\"type\":\"msg\",\"data\":{\"type\":\"%s\",\"data\":{\"path\":\"%s\"}}}", evt, path );
+		
+			if( FRIEND_MUTEX_LOCK( &(u->u_Mutex) ) == 0 )
+			{
+				u->u_InUse++;
+				FRIEND_MUTEX_UNLOCK( &(u->u_Mutex) );
+			}
+			
 			UserSessListEntry *list = u->u_SessionsList;
 			while( list != NULL )
 			{
 				if( list->us != NULL )
 				{
 					UserSessionWebsocketWrite( list->us, (unsigned char *)message, mlen, LWS_WRITE_TEXT);
-					//WebSocketSendMessage( l, list->us, message, mlen );
 				}
 				else
 				{
@@ -3419,15 +3426,12 @@ void UserNotifyFSEvent2( DeviceManager *dm, User *u, char *evt, char *path )
 				list = (UserSessListEntry *)list->node.mln_Succ;
 			}
 			
-		if( FRIEND_MUTEX_LOCK( &(u->u_Mutex) ) == 0 )
-		{
-			u->u_InUse--;
-			FRIEND_MUTEX_UNLOCK( &(u->u_Mutex) );
-		}
-	}
-	
-	if( message != NULL )
-	{
+			if( FRIEND_MUTEX_LOCK( &(u->u_Mutex) ) == 0 )
+			{
+				u->u_InUse--;
+				FRIEND_MUTEX_UNLOCK( &(u->u_Mutex) );
+			}
+		}	// user != NULL
 		FFree( message );
 	}
 	
