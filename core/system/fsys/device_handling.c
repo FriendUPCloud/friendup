@@ -592,24 +592,27 @@ static inline int MountFSNoSubMount( DeviceManager *dm, struct TagItem *tl, File
 		SQLLibrary *sqllib = l->LibrarySQLGet( l );
 		if( sqllib != NULL )
 		{
-			char temptext[ 612 ]; memset( temptext, 0, sizeof(temptext) );
+			//char temptext[ 1024 ]; memset( temptext, 0, sizeof(temptext) );
+			char *temptext = FCalloc( sizeof(char), 1024 );
 			
 			// for UserGroup there is different SQL
 			if( usrgrp != NULL )
 			{
-				sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
+				//sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
+				snprintf( temptext, 1024,
 "SELECT \
 `Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,f.`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate`, f.`KeysID`, f.`GroupID`, f.`UserID` \
 FROM `Filesystem` f left outer join `FilesystemActivity` fsa on f.ID = fsa.FilesystemID and CURDATE() <= fsa.ToDate \
 WHERE \
 f.GroupID = '%ld' \
-AND f.Name = '%s'",
+AND f.Name='%s'",
 				usrgrp->ug_ID , name
 				);
 			}
 			else		// SQL for User
 			{
-				sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
+				//sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
+				snprintf( temptext, 1024,
 "SELECT \
 `Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,f.`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate`, f.`KeysID`, f.`GroupID`, f.`UserID` \
 FROM `Filesystem` f left outer join `FilesystemActivity` fsa on f.ID = fsa.FilesystemID and CURDATE() <= fsa.ToDate \
@@ -620,10 +623,10 @@ f.GroupID IN (\
 SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g \
 WHERE \
 g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND \
-ug.UserID = '%ld' \
+ug.UserID='%ld' \
 ) \
 ) \
-AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
+AND f.Name='%s' and (f.Owner='0' OR f.Owner IS NULL)",
 				userID , userID, name
 				);
 			}
@@ -712,6 +715,8 @@ AND f.Name = '%s'",
 			{
 				DEBUG( "[MountFS] %s - We are using sentinel!\n", usr->u_Name );
 			}
+			
+			FFree( temptext );
 	
 			while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
 			{
