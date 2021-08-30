@@ -4502,7 +4502,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	getMountlist: function( callback, forceRefresh, addDormant )
 	{
 		let t = this; // Reference to workspace
-		
+		console.log( 'getMountList', {
+			callback         : callback,
+			forceRefresh     : forceRefresh,
+			addDormant       : addDormant,
+			SID              : Workspace.sessionId,
+			Frienddosdrivers : !!Friend.dosDrivers,
+		});
 		// Just in case
 		if( window.friendApp )
 			window.friendApp.reveal();
@@ -4572,6 +4578,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					m.onExecuted = function( e, dat )
 					{
 						// New icons to list
+						console.log( 'device/list res', {
+							e   : e,
+							dat : dat,
+						});
 						let newIcons = [];
 					
 						// Add system on top (after Ram: if it exists)
@@ -4881,9 +4891,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						// Do the callback thing
 						if( callback && typeof( callback ) == 'function' )
 						{
+							console.log( 'callback with ticons', t.icons );
 							callback( t.icons );
 						}
-
+						
 						// Check for new events
 						t.checkDesktopEvents();
 					}
@@ -4895,7 +4906,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			//mo.forceSend = true;
 			mo.execute( 'workspaceshortcuts' );
 		}
-
+		
 		return true;
 	},
 	redrawIcons: function()

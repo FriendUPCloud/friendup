@@ -1539,8 +1539,10 @@ AND LOWER(f.Name) = LOWER('%s')",
 				
 					if( FRIEND_MUTEX_LOCK( &( curusr->u_Mutex ) ) == 0 )
 					{
+						DEBUG( "\nLook for drives\n\n" );
 						while( dev != NULL )
 						{
+							DEBUG( "\nWHILE\n\n" );
 							FHandler *sys = (FHandler *)dev->f_FSys;
 							char *sysname = NULL;
 							if( sys != NULL )
@@ -1548,11 +1550,11 @@ AND LOWER(f.Name) = LOWER('%s')",
 								sysname = sys->Name;
 							}
 							Filesystem *fsys = ( Filesystem *)dev->f_DOSDriver;
-					
+							
 							EscapeConfigFromString( dev->f_Config, &configEscaped, &executeCmd );
-					
+							
 							memset( tmp, '\0', TMP_SIZE );
-					
+							
 							FBOOL isLimited = FALSE;
 					
 							if( loggedSession->us_User->u_IsAdmin == FALSE )
@@ -1562,9 +1564,9 @@ AND LOWER(f.Name) = LOWER('%s')",
 									isLimited = TRUE;
 								}
 							}
-					
+							
 							FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, dev->f_Mounted, dev->f_Name, dev->f_FSysName, dev->f_Path, sysname, configEscaped, dev->f_Visible, executeCmd, isLimited, dev->f_DevServer, dev->f_DevPort, dev->f_UserGroupID );
-					
+							
 							{
 								char inttmp[ 256 ];
 								int addlen = 0;
@@ -1633,6 +1635,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 					}
 					else
 					{
+						DEBUG( "\nUser is locked i guess\n\n" );
+						BufStringAdd( bs, "'LOCKEDLOL'," );
 						if( executeCmd )
 						{
 							FFree( executeCmd );
@@ -1660,7 +1664,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 						{
 							dev = ugl->ugl_Group->ug_MountedDevs;
 						}
-					
+						
 						while( dev != NULL )
 						{
 							// if this is shared drive and user want details we must point to original drive
@@ -1697,9 +1701,9 @@ AND LOWER(f.Name) = LOWER('%s')",
 									isLimited = TRUE;
 								}
 							}
-					
+							
 							FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, dev->f_Mounted, dev->f_Name, dev->f_FSysName, dev->f_Path, sysname, configEscaped, dev->f_Visible, executeCmd, isLimited, dev->f_DevServer, dev->f_DevPort, dev->f_UserGroupID );
-						
+							
 							{
 								char inttmp[ 256 ];
 								int addlen = 0;
@@ -1748,7 +1752,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 							);
 						}
 						*/
-					
+						
 						if( executeCmd )
 						{
 							FFree( executeCmd );

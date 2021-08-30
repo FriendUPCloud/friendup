@@ -2172,6 +2172,23 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								}
 							}
 							USMSessionSaveDB( l->sl_USM, loggedSession );
+							
+							//loggedSession->us_MobileAppID = umaID;
+							//UMAddUser( l->sl_UM, loggedSession->us_User );
+
+							char *err = NULL;
+							UserDeviceMount( l, loggedSession, 0, TRUE, &err, TRUE );
+							if( err != NULL )
+							{
+								Log( FLOG_ERROR, 
+									"Login1 mount error. UserID: %lu Error: %s\n", 
+									loggedSession->us_User->u_ID,
+									err
+								);
+								FFree( err );
+							}
+								
+							//
 						}
 						else
 						{
