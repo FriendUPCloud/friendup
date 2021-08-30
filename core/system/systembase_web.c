@@ -817,16 +817,22 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				if( tmpQuery )
 				{
 					DEBUG("[SystembaseWeb] memory allocated\n");
+					
+					snprintf( tmpQuery, 1024, "UPDATE FUserSession SET `LastActionTime`='%ld' WHERE `SessionID`=\"%s\"", timestamp, sessionid );
+					DEBUG("[SystembaseWeb] query: %s\n", tmpQuery );
+					sqllib->QueryWithoutResults( sqllib, tmpQuery );
+					
+					/*
 					char *esc = sqllib->MakeEscapedString( sqllib, sessionid );
 					if( esc != NULL )
 					{
-						snprintf( tmpQuery, 1024, "UPDATE FUserSession SET `LastActionTime`='%ld' WHERE `SessionID`='%s'", timestamp, esc );
+						//snprintf( tmpQuery, 1024, "UPDATE FUserSession SET `LastActionTime`='%ld' WHERE `SessionID`='%s'", timestamp, esc );
 						DEBUG("[SystembaseWeb] query: %s\n", tmpQuery );
 						sqllib->QueryWithoutResults( sqllib, tmpQuery );
 						FFree( esc );
 					}
 					INFO("Logged time updated: %lu\n", timestamp );
-				
+					*/
 					FFree( tmpQuery );
 				}
 				l->LibrarySQLDrop( l, sqllib );
