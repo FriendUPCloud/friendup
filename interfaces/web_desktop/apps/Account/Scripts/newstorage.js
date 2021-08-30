@@ -57,17 +57,18 @@ Application.refresh = function()
 		var str = '';
 		var list = JSON.parse( d );
 		
-		for( var a = 0; a < list.length; a++ )
+		for( let a = 0; a < list.length; a++ )
 		{
-			var style = '';
+			if( list[a].type == 'SharedDrive' ) continue;
+			let style = '';
 			if( list[a].hasIcon == 'true' )
 			{
-				var image = '/system.library/module/?module=system&command=getdosdrivericon&dosdriver=' + list[a].type + '&authid=' + Application.authId;
+				let image = '/system.library/module/?module=system&command=getdosdrivericon&dosdriver=' + list[a].type + '&authid=' + Application.authId;
 				style = ' style="background-image: url(' + image + ')"';
 			}
 			else
 			{
-				var image = '/iconthemes/friendup/beta-disk.png';
+				let image = '/iconthemes/friendup/beta-disk.png';
 				style = ' style="background-position: center; background-image: url(' + image + ')"';
 			}
 			str += '<div class="MousePointer DosDriverContainer" onclick="storageForm(\'' + list[a].type + '\',false)"><div class="DosDriver Rounded"' + style + '><div class="Label Ellipsis">' + ( list[a].short ? list[a].short : list[a].type ) + '</div></div></div>';
