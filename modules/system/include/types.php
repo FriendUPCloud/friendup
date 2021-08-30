@@ -69,9 +69,6 @@ if( $dir = opendir( 'devices/DOSDrivers' ) )
 			continue;
 		$o = file_get_contents( $fn );
 		if( !( $o = json_decode( $o ) ) ) continue;
-	
-		// Not a "real" disk
-		if( $f == 'SharedDrive' ) continue;
 
 		// If we're listing all, don't check level (can't add admin file systems anyway)
 		if( $mode != 'all' )
