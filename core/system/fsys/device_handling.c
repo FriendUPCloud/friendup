@@ -1257,12 +1257,13 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 		SQLLibrary *sqllib = l->LibrarySQLGet( l );
 		if( sqllib != NULL )
 		{
-			char temptext[ 612 ]; memset( temptext, 0, sizeof(temptext) );
+			//char temptext[ 612 ]; memset( temptext, 0, sizeof(temptext) );
+			char *temptext = FCalloc( sizeof(char), 1024 );
 			
 			// for UserGroup there is different SQL
 			if( usrgrp != NULL )
 			{
-				sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
+				sqllib->SNPrintF( sqllib, temptext, 1024, //sizeof( temptext ), 
 "SELECT \
 `Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,f.`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate`, f.`KeysID`, f.`GroupID`, f.`UserID` \
 FROM `Filesystem` f left outer join `FilesystemActivity` fsa on f.ID = fsa.FilesystemID and CURDATE() <= fsa.ToDate \
@@ -1274,7 +1275,7 @@ AND f.Name = '%s'",
 			}
 			else		// SQL for User
 			{
-				sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
+				sqllib->SNPrintF( sqllib, temptext, 1024, //sizeof( temptext ), 
 "SELECT \
 `Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,f.`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate`, f.`KeysID`, f.`GroupID`, f.`UserID` \
 FROM `Filesystem` f left outer join `FilesystemActivity` fsa on f.ID = fsa.FilesystemID and CURDATE() <= fsa.ToDate \
@@ -1377,6 +1378,8 @@ AND f.Name = '%s'",
 			{
 				DEBUG( "[MountFS] %s - We are using sentinel!\n", usr->u_Name );
 			}
+			
+			FFree( temptext );
 	
 			while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
 			{
