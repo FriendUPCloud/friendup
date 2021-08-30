@@ -1,7 +1,0 @@
-{
-	"type":    "Samba",
-	"literal": "Samba filesystem",
-	"group":   "User",
-	"sharing":  "0",
-	"icon":     "logo.png"
-}
