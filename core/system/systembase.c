@@ -2015,6 +2015,12 @@ int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses )
 	DEBUG("UserDeviceUnMount\n");
 	if( usr != NULL )
 	{
+		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex ) ) == 0 )
+		{
+			usr->u_InUse++;
+			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex ) );
+		}
+		
 		if( usr->u_MountedDevs != NULL )
 		{
 			File *dev = usr->u_MountedDevs;
@@ -2030,6 +2036,12 @@ int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses )
 				//FFree( remdev );
 				FileDelete( remdev );
 			}
+		}
+		
+		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex ) ) == 0 )
+		{
+			usr->u_InUse--;
+			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex ) );
 		}
 		
 		//TODO
