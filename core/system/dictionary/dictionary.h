@@ -68,14 +68,16 @@ enum {
 	DICT_CATEGORY_USER_STATUS
 };
 
-static FULONG DictionaryDesc[] = { SQLT_TABNAME, (FULONG)"FDictionary", SQLT_STRUCTSIZE, sizeof( struct DictEntry ),
+static FULONG DictionaryDesc[] = {
+	SQLT_TABNAME, (FULONG)"FDictionary", SQLT_STRUCTSIZE, sizeof( struct DictEntry ),
 	SQLT_IDINT, (FULONG)"ID", offsetof( DictEntry, de_ID ),
 	SQLT_INT, (FULONG)"DictID", offsetof( DictEntry, de_CategoryID ),
 	SQLT_INT, (FULONG)"CategoryID", offsetof( DictEntry, de_CategoryID ),
 	SQLT_STR, (FULONG)"Message", offsetof( DictEntry, de_Message ),
 	SQLT_STR, (FULONG)"Language", offsetof( DictEntry, de_Lang ),
 	SQLT_NODE, (FULONG)"node", offsetof( struct DictEntry, node ),
-	SQLT_END };
+	SQLT_END
+};
 	
 //
 // Dictionary

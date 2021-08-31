@@ -1,1 +1,1 @@
-ALTER TABLE `FUserRolePermission` ADD Column `Data` text;
+ALTER TABLE `FUserRolePermission` CHANGE `Data` `Data` text;

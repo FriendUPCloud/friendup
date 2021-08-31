@@ -154,6 +154,35 @@ if( !class_exists( 'Door' ) )
 			return false;
 		}
 	
+		// Get relevant user's session
+		function getUserSession()
+		{
+			global $args, $User, $Logger, $SqlDatabase, $UserSession;
+			
+			if( !isset( $User->ID ) && !isset( $this->_user ) ) 
+			{
+				return false;
+			}
+			
+			$activeUserSession = isset( $this->_usersession ) ? $this->_usersession : $UserSession;
+			
+			// Check for server token and pick session from there
+			if( isset( $this->_user ) && isset( $this->_authcontext ) && $this->_authcontext == 'servertoken' )
+			{
+				if( isset( $this->_authdata ) )
+				{
+					$Sess = new dbIO( 'FUserSession' );
+					$Sess->UserID = $this->_user->ID;
+					if( $Sess->Load() && $Sess->UserID = $this->_user->ID )
+					{
+						$activeUserSession = $Sess;
+					}
+				}
+			}
+			
+			return $activeUserSession;
+		}
+	
 		// Gets the correct identifier to extract a filesystem
 		function getQuery( $path = false )
 		{
@@ -165,7 +194,7 @@ if( !class_exists( 'Door' ) )
 		
 			// For whom are we calling?
 			$activeUser = isset( $this->_user ) ? $this->_user : $User;
-			$activeUserSession = isset( $this->_usersession ) ? $this->_usersession : $UserSession;
+			$activeUserSession = $this->getUserSession();
 		
 			$identifier = false;
 		
@@ -267,7 +296,7 @@ if( !class_exists( 'Door' ) )
 			global $Config, $User, $SqlDatabase, $Logger, $UserSession;
 		
 			$activeUser = isset( $this->_user ) ? $this->user : $User;
-			$activeUserSession = isset( $this->_userSession ) ? $this->userSession : $UserSession;
+			$activeUserSession = $this->getUserSession();
 		
 			// Support auth context
 			if( isset( $this->_authdata ) )
@@ -353,7 +382,7 @@ if( !class_exists( 'Door' ) )
 		
 			$debug = [];
 		
-			$Logger->log( 'Starting to sync here: ' . $pathFrom . ' to ' . $pathTo );
+			//$Logger->log( 'Starting to sync here: ' . $pathFrom . ' to ' . $pathTo );
 		
 			//$Logger->log( 'From ' . $pathFrom );
 			//$Logger->log( 'To   ' . $pathTo );
@@ -447,7 +476,7 @@ if( !class_exists( 'Door' ) )
 					$v->Destination = ( trim( $pathTo ) . trim( $v->Filename ) . ( $v->Type == 'Directory' ? '/' : '' ) );
 					if( !trim( $v->Destination ) )
 					{
-						$Logger->log( 'No desination in object!' ); //, print_r( $v, 1 ) );
+						//$Logger->log( 'No desination in object!' ); //, print_r( $v, 1 ) );
 						//die();
 					}
 			
@@ -599,7 +628,7 @@ if( !class_exists( 'Door' ) )
 						}
 						else if( !trim( $des->Path ) )
 						{
-							$Logger->log( $des->Filename . ' has no path. Skipping... ' . json_encode( $des ) );
+							//$Logger->log( $des->Filename . ' has no path. Skipping... ' . json_encode( $des ) );
 							continue;
 						}
 					
@@ -657,7 +686,7 @@ if( !class_exists( 'Door' ) )
 			global $User, $Logger, $UserSession;
 		
 			$activeUser = isset( $this->_user ) ? $this->_user : $User;
-			$activeUserSession = isset( $this->_usersession ) ? $this->_usersession : $UserSession;
+			$activeUserSession = $this->getUserSession();
 		
 			// 1. Get the filesystem objects
 			$ph = explode( ':', $delpath );
@@ -706,7 +735,7 @@ if( !class_exists( 'Door' ) )
 						return true;
 					}
 				
-					$Logger->log( 'couldn\'t deleteFolder... ' . $delpath );
+					//$Logger->log( 'couldn\'t deleteFolder... ' . $delpath );
 				
 					return false;
 				}
@@ -734,7 +763,7 @@ if( !class_exists( 'Door' ) )
 			global $User, $Logger, $UserSession;
 		
 			$activeUser = isset( $this->_user ) ? $this->_user : $User;
-			$activeUserSession = isset( $this->_usersession ) ? $this->_usersession : $UserSession;
+			$activeUserSession = $this->getUserSession();
 		
 			// 1. Get the filesystem objects
 			$from = explode( ':', $pathFrom ); $from = $from[0];
@@ -830,7 +859,7 @@ if( !class_exists( 'Door' ) )
 						{
 							return true;
 						}
-						$Logger->log('Couldn\'t create folder (createFolder)... ' . $folderName . ' :: ' . $tpath);
+						//$Logger->log('Couldn\'t create folder (createFolder)... ' . $folderName . ' :: ' . $tpath);
 						return false;
 					}
 				}
@@ -849,7 +878,7 @@ if( !class_exists( 'Door' ) )
 						//$Logger->log('couldn\'t putFile... ' . $pathTo . ' :: ');
 					}
 				}
-				$Logger->log('how did we even get here... ' . $pathFrom . ' :: ' . $pathTo);
+				//$Logger->log('how did we even get here... ' . $pathFrom . ' :: ' . $pathTo);
 				return false;
 			}
 		}

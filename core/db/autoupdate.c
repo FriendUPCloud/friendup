@@ -231,7 +231,7 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 						continue;
 					}
 				
-					DEBUG("[SystemBase] get number from name\n");
+					//DEBUG("[SystemBase] get number from name\n");
 					// we must extract number from filename
 					strcpy( number, dptr->d_name );
 					for( i=0 ; i < strlen( number ) ; i++ )
@@ -243,17 +243,23 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 						}
 					}
 					
-					DEBUG("[SystemBase] number found: '%s'\n", number );
 					
 					//
 					// get all entries and their numbers
 					
-					position = atoi( number )-1;
+					position = atoi( number );
+					//DEBUG("[SystemBase] number: '%s' position: %d\n", number, position );
 					if( position > 0 )
 					{
-						dbentries[ pos ].number = position+1;
+						dbentries[ pos ].number = position;
 
-						DEBUG("[SystemBase] Found script with number %d, script added: %s\n", pos, dptr->d_name );
+						DEBUG(
+							"[SystemBase] Found script at index %d "
+								"with number %d, script added: %s\n", 
+							pos,
+							position,
+							 dptr->d_name
+						);
 						strcpy( dbentries[ pos ].name, dptr->d_name );
 						pos++;
 					}

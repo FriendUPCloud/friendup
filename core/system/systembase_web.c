@@ -77,7 +77,7 @@
 //
 //
 
-extern int UserDeviceMount( SystemBase *l, User *usr, UserSession *us, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
+extern int UserDeviceMount( SystemBase *l, UserSession *us, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
 
 
 inline static void ReplaceSessionToHashed( char *out, char *in )
@@ -787,18 +787,18 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 											UMAddUser( l->sl_UM, usr );
 										}
 									}
-									else
-									{
-										loggedSession->us_UserID = usr->u_ID;
-										UserAddSession( usr, loggedSession );
-									}
-									loggedSession->us_LastActionTime = time( NULL );
-							
-									UGMAssignGroupToUser( l->sl_UGM, usr );
-							
-									USMSessionSaveDB( l->sl_USM, loggedSession );
-									USMUserSessionAddToList( l->sl_USM, loggedSession );
 								}
+								else
+								{
+									UserAddSession( usr, loggedSession );
+								}
+								loggedSession->us_UserID = usr->u_ID;
+								loggedSession->us_LastActionTime = time( NULL );
+								
+								UGMAssignGroupToUser( l->sl_UGM, usr );
+								
+								USMSessionSaveDB( l->sl_USM, loggedSession );
+								USMUserSessionAddToList( l->sl_USM, loggedSession );
 							}
 						}
 					}
@@ -972,7 +972,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				{
 					loggedSession->us_User = tmpusr;
 					char *err = NULL;
-					UserDeviceMount( l, loggedSession->us_User, loggedSession, 0, TRUE, &err, TRUE );
+					UserDeviceMount( l, loggedSession, 0, TRUE, &err, TRUE );
 					if( err != NULL )
 					{
 						Log( FLOG_ERROR, "Login mount error. UserID: %lu Error: %s\n", loggedSession->us_User->u_ID, err );
@@ -2014,7 +2014,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	else if( strcmp( urlpath[ 0 ], "pid" ) == 0 )
 	{
 		DEBUG("[SysWebRequest] PIDThread functions\n");
-		if( loggedSession->us_User->u_IsAdmin == TRUE )
+		if( IS_SESSION_ADMIN( loggedSession ) )
 		{
 			response = PIDThreadWebRequest( l, urlpath, *request, loggedSession );
 		}
@@ -2276,7 +2276,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								DEBUG("[SysWebRequest] New user and session added\n");
 							
 								char *err = NULL;
-								UserDeviceMount( l, loggedSession->us_User, loggedSession, 0, TRUE, &err, TRUE );
+								UserDeviceMount( l, loggedSession, 0, TRUE, &err, TRUE );
 								if( err != NULL )
 								{
 									Log( FLOG_ERROR, "Login mount error. UserID: %lu Error: %s\n", loggedSession->us_User->u_ID, err );
@@ -2647,7 +2647,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								UMAddUser( l->sl_UM, loggedSession->us_User );
 
 								char *err = NULL;
-								UserDeviceMount( l, loggedSession->us_User, loggedSession, 0, TRUE, &err, TRUE );
+								UserDeviceMount( l, loggedSession, 0, TRUE, &err, TRUE );
 								if( err != NULL )
 								{
 									Log( FLOG_ERROR, "Login1 mount error. UserID: %lu Error: %s\n", loggedSession->us_User->u_ID, err );

@@ -151,6 +151,33 @@ class File
 		return $url;
 	}
 	
+	function LoadRaw( $path = false, $userInfo = false )
+	{
+		// Don't require verification on localhost
+		$context = stream_context_create(
+			array(
+				'ssl'=>array(
+					'verify_peer' => false,
+					'verify_peer_name' => false,
+					'allow_self_signed' => true,
+				) 
+			) 
+		);
+	
+		// Don't timeout!
+		set_time_limit( 0 );
+		ob_end_clean();
+		
+		$url = str_replace( 'mode=rb&', 'mode=rs&', $this->GetUrl( $path, $userInfo ) );
+		
+		if( $fp = fopen( $url, 'rb', false, $context ) )
+		{
+			fpassthru( $fp );
+			fclose( $fp );
+		}
+		die();
+	}
+	
 	function Load( $path = false, $userInfo = false )
 	{
 		global $Config, $User, $Logger;
@@ -195,10 +222,11 @@ class File
 		global $Config, $User, $Logger;
 		
 		$fd = new Door( reset( explode( ':', $this->path ) ) . ':', $this->_authcontext, $this->_authdata );
-		//$Logger->log( '[File.class] ' . $this->_authcontext . ' -> ' . $this->_authdata );
+		//$Logger->log( '[File.class] GetFileInfo: ' . $this->_authcontext . ' -> ' . $this->_authdata );
 		$d = new dbIO( 'FFileInfo' );
 		$d->Path = $this->path;
 		$d->FilesystemID = $fd->ID;
+		//$Logger->log( '[File.class] GetFileInfo: ' . $fd->ID );
 		if( $d->Load() )
 		{
 			$this->_fileinfo = $d->Data;
@@ -304,7 +332,7 @@ class File
 		
 		$url .= '&' . $this->GetAuthContextComponent();
 
-		$Logger->log( 'Sending DELETE ' . $url );
+		//$Logger->log( 'Sending DELETE ' . $url );
 
 		$c = curl_init();
 		

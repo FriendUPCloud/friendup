@@ -77,7 +77,7 @@ void UserSessionInit( UserSession *us, void *sb )
 #endif
 		us->us_WSReqManager = WebsocketReqManagerNew();
 		
-		FQDeInit( &(us->us_MsgQueue) );
+		FQInit( &(us->us_MsgQueue) );
 	}
 }
 
@@ -101,21 +101,7 @@ void UserSessionDelete( UserSession *us )
 			{
 				break;
 			}
-			/*
-			else
-			{
-				count++;
-				if( count > 50 )
-				{
-					//Log( FLOG_INFO, "UserSessionDelete: number of working functions on user session: %d  sessionid: %s\n", us->us_InUseCounter, us->us_SessionID );
-#ifdef USE_WORKERS
-					WorkerManagerDebug( SLIB );
-#endif
-					count = 0;
-					break;
-				}
-			}
-			*/
+
 			DEBUG( "[UserSessionDelete] Trying to wait for use counter to be <= 0\n" );
 			usleep( 1000 );
 		}
@@ -127,16 +113,17 @@ void UserSessionDelete( UserSession *us )
 			dosToken->ct_UserSessionID = 0;
 		}
 		
-		if( count > 50 )
-		{
-			Log( FLOG_DEBUG, "UserRemoveSession will be called\n");
-		}
+		//if( count > 50 )
+		//{
+		//	Log( FLOG_DEBUG, "UserRemoveSession will be called\n");
+		//}
 		
 		if( us->us_User != NULL )
 		{
-			
-			nrOfSessionsAttached = UserRemoveSession( us->us_User, us );
+			User *userToClean = us->us_User;
 			us->us_User = NULL;
+			DEBUG("[UserSessionDelete] detach session from user\n");
+			nrOfSessionsAttached = UserRemoveSession( userToClean, us );
 		}
 		SystemBase *lsb = (SystemBase *)us->us_SB;
 
@@ -218,7 +205,7 @@ void UserSessionDelete( UserSession *us )
 			WebsocketReqManagerDelete( wrm );
 		}
 		pthread_mutex_destroy( &(us->us_Mutex) );
-		
+
 		// lets remove application sessions from system
 		if( nrOfSessionsAttached <= 0 && us->us_UserID > 0 )
 		{

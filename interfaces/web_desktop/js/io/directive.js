@@ -216,7 +216,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	}
 
 	// 1. Ask about application.................................................
-	var m = new Module( 'system' );
+	let m = new Module( 'system' );
 	m.onExecuted = function( r, d )
 	{	
 		// Get data from Friend Core
@@ -359,7 +359,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			{
 				return str;
 			}
-
+			
 			// Correct filepath can be a resource file (i.e. in a repository) or a local file
 			let filepath = '/system.library/module/?module=system&command=resource&authid=' + conf.AuthID + '&file=' + app + '/';
 			// Here's the local file..

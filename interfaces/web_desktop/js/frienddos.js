@@ -2028,7 +2028,7 @@ window.Shell = function( appObject )
 								type: 'dormantmaster',
 								method: 'execute',
 								executable: dirs[a].Path + command,
-								doorId: dirs[a].Dormant.doorId,
+								doorId: dirs[a].Dormant ? dirs[a].Dormant.doorId : null,
 								dormantCommand: command,
 								dormantArgs: args,
 								callback: cid

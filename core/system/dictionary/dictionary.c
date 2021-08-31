@@ -127,38 +127,40 @@ Dictionary * DictionaryNew( SQLLibrary *mysqllib )
 	
 	Dictionary *d = FCalloc( 1, sizeof( Dictionary ) );
 	
-	if( d != NULL )
-	{
-		FULONG i;
-		int entry = 0;
-		DictEntry *locdic = d->d_DictList = mysqllib->Load( mysqllib, DictionaryDesc, " Language='ENG' ORDER BY DictID", &(d->d_Entries) );
+	if ( d == NULL )
+		return d;
 	
-		d->d_Msg = FCalloc( DICT_MAX, sizeof(char *) );
+	FULONG i;
+	int entry = 0;
+	DictEntry *locdic = d->d_DictList = mysqllib->Load( mysqllib, DictionaryDesc, " Language='ENG' ORDER BY DictID", &(d->d_Entries) );
+
+	d->d_Msg = FCalloc( DICT_MAX, sizeof(char *) );
+	
+	for( i = 0 ; i < DICT_MAX ; i++ )
+	{
+		locdic = d->d_DictList;
+		char *msg = NULL;
 		
-		for( i = 0 ; i < DICT_MAX ; i++ )
+		DEBUG( "cheking index %lu\n", i );
+		while( locdic != NULL )
 		{
-			locdic = d->d_DictList;
-			char *msg = NULL;
-			
-			while( locdic != NULL )
+			if( i == locdic->de_DictID )
 			{
-				if( i == locdic->de_DictID )
-				{
-					msg = locdic->de_Message;
-				}
-			
-				locdic = (DictEntry *)locdic->node.mln_Succ;
+				msg = locdic->de_Message;
 			}
-			
-			if( msg != NULL )
-			{
-				d->d_Msg[ i ] = msg;
-			}
-			else
-			{
-				DEBUG("Message with ID %lu not found\n", i );
-				d->d_Msg[ i ] = (char *)DefaultDictionaryMessages[ i ];
-			}
+		
+			locdic = (DictEntry *)locdic->node.mln_Succ;
+		}
+		
+		//DEBUG( "DICK i %d, id %d, msg %s\n", i, locdic->de_DictID, msg );
+		if( msg != NULL )
+		{
+			d->d_Msg[ i ] = msg;
+		}
+		else
+		{
+			DEBUG("Message with ID %lu not found\n", i );
+			d->d_Msg[ i ] = (char *)DefaultDictionaryMessages[ i ];
 		}
 	}
 	
