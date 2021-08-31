@@ -1321,11 +1321,11 @@ var WorkspaceInside = {
 				{
 					// Refresh mountlist
 					Workspace.websocketState = 'open';
-					Workspace.refreshDesktop( false, true );
+					Friend.User.CheckServerConnection();
+					//Workspace.refreshDesktop( false, true );
 				}
 				
-				if( Friend.User )
-					Friend.User.SetUserConnectionState( 'online' );
+				
 				
 				return;
 			}
@@ -1340,6 +1340,7 @@ var WorkspaceInside = {
 			
 			if( type == 'open' )
 			{
+				//Workspace.websocketState = 'open';
 				if( callback )
 				{
 					callback();
@@ -1367,7 +1368,7 @@ var WorkspaceInside = {
 		{
 			//console.log( 'Workspace.conn.onEnd', e );
 			Workspace.websocketState = 'closed';
-			Friend.User.SetUserConnectionState( 'offline' );
+			Friend.User.CheckServerConnection();
 		}
 		
 		function handleIconChange( e ){ console.log( 'icon-change event', e ); }
@@ -4502,7 +4503,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	getMountlist: function( callback, forceRefresh, addDormant )
 	{
 		let t = this; // Reference to workspace
-		console.log( 'getMountList', {
+		console.trace( 'getMountList', {
 			callback         : callback,
 			forceRefresh     : forceRefresh,
 			addDormant       : addDormant,
