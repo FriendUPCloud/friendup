@@ -1,0 +1,5 @@
+app/register - 
+	* @param sessionid - (required) session id of logged user
+	* @param authid - (required) authentication id (provided by application)
+	* @param type - type of application session 'close'(default), 'open' for everyone
+	* @param sasid - if passed then it will be used to join already created SAS
