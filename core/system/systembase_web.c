@@ -744,7 +744,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				
 				if( host != NULL )
 				{
-					SQLLibrary *sqllib = l->GetDBConnection( l );
+					SQLLibrary *sqllib = l->GetInternalDBConnection( l );
 					FULONG uid = 0;
 					
 					DEBUG("[SysWebRequest] entry from x-forwarded-for: %s\n", host );
@@ -771,7 +771,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							DEBUG("[SysWebRequest] servertoken entry: %s host %s\n", (char *)serverTokenElement->hme_Data, host ); 
 							
 							// Check user server token and access to it
-							sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT u.ID,u.Name FROM FUser u inner join FSecuredHost sh on u.ID=sh.UserID WHERE u.ServerToken=\"%s\" AND sh.Status=1 AND sh.IP='%s' LIMIT 1",( char *)serverTokenElement->hme_Data, host );
+
+							sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT sh.UserID FROM FSecuredHost sh WHERE u.ServerToken=\"%s\" AND sh.Status=1 AND sh.IP='%s' LIMIT 1",( char *)serverTokenElement->hme_Data, host );
 					
 							void *res = sqllib->Query( sqllib, qery );
 							if( res != NULL )
@@ -785,10 +786,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 										char *next;
 										uid = strtol ( (char *) row[ 0 ], &next, 0);
 									}
-									if( row[ 1 ] != NULL )
-									{
-										snprintf( userName, 256, "%s", (char *)row[ 1 ] );
-									}
 								}
 								sqllib->FreeResult( sqllib, res );
 							}
@@ -796,27 +793,29 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							DEBUG("[SysWebRequest] was sessionid found? '%s'\n", sessionid );
 						}
 					}
-					l->DropDBConnection( l, sqllib );
+					l->DropInternalDBConnection( l, sqllib );
 
 					DEBUG("[SysWebRequest] userid: %ld\n", uid );
 					
 					if( uid > 0 )
 					{
-						loggedSession = USMGetSessionByUserID( l->sl_USM, uid );
-						if( loggedSession == NULL && userName[ 0 ] != 0 )	// only if user exist and it has servertoken
+						User *usr = UMGetUserByID( l->sl_UM, uid );
+						if( usr != NULL )
 						{
-							DEBUG("[SysWebRequest] logged session is null! servertoken session will be created. Username : %s\n", userName );
-						
-							loggedSession = UserSessionNew( l, NULL, "servertoken" );
-							if( loggedSession != NULL )
+							loggedSession = (UserSession *)usr->u_SessionsList->us;
+							if( loggedSession == NULL )
 							{
-								User *usr = UMUserGetByName( l->sl_UM, userName );
-								if( usr == NULL )
+								loggedSession = UserSessionNew( l, NULL, "servertoken" );
+								if( loggedSession != NULL )
 								{
-									usr = UMUserGetByNameDB( l->sl_UM, userName );
-									if( usr != NULL )
+									User *usr = UMUserGetByName( l->sl_UM, userName );
+									if( usr == NULL )
 									{
-										UMAddUser( l->sl_UM, usr );
+										usr = UMUserGetByNameDB( l->sl_UM, userName );
+										if( usr != NULL )
+										{
+											UMAddUser( l->sl_UM, usr );
+										}
 									}
 								}
 								else
@@ -825,9 +824,9 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								}
 								loggedSession->us_UserID = usr->u_ID;
 								loggedSession->us_LastActionTime = time( NULL );
-							
+								
 								UGMAssignGroupToUser( l->sl_UGM, usr );
-							
+								
 								USMSessionSaveDB( l->sl_USM, loggedSession );
 								USMUserSessionAddToList( l->sl_USM, loggedSession );
 							}

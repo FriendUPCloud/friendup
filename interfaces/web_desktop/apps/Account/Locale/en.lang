@@ -90,8 +90,8 @@ i18n_toggle_public_key_visibility    : Public key
 i18n_password                        : Password
 i18n_edit_password                   : Change password
 
-i18n_descheading : Add more storage to your system
-i18n_description : Please choose which disk type you want to add to your system. Some providers may ask you to register an account.
+i18n_descheading                     : Add more storage to your system
+i18n_description                     : Please choose which disk type you want to add to your system. Some providers may ask you to register an account.
 
 i18n_disk                            : disk
 i18n_add_a                           : Add a
@@ -209,6 +209,7 @@ i18n_remove                          : Remove
 i18n_NONE                            : None
 i18n_ALLOWED                         : Allowed
 i18n_BLOCKED                         : Blocked
+
 i18n_leave_group                        : Leave group.
 i18n_other_groups                       : Group memberships
 i18n_leave_warning                      : If you leave, you may lose access to functionality that is connected to this group.

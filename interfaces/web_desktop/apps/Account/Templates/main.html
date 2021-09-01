@@ -205,7 +205,7 @@
 									placeholder="{i18n_IP}"
 								>
 							</div>
-							<div class="flexnes">
+							<div class="flexnes hidden">
 								<div class="InputHeight">
 									{i18n_status}: 
 								</div>
@@ -263,6 +263,7 @@
 	<input type="hidden" id="activeTab" value="{activeTab}"/>
 	
 	<link rel="stylesheet" href="Progdir:Css/main.css"/>
+	<link rel="stylesheet" href="/webclient/css/toggle.css"/>
 
 	<script src="Progdir:Scripts/accountmain.js"></script>
 	<style>
@@ -352,13 +353,20 @@
 		}
 		
 		.hidden {
-			display : none;
+			display : none !important;
 		}
 		
 		.flexnes {
 			display         : flex;
 			justify-content : space-between;
 			align-items     : center;
+		}
+		
+		.ServerTokenStatus {
+			justify-content : center;
+		}
+		.allowToggle {
+			margin-left : 0.5em;
 		}
 		
 		.ServerTokenActions {

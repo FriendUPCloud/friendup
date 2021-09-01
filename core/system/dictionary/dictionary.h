@@ -170,6 +170,7 @@ enum {
 	DICT_USER_DO_NOT_EXIST,
 	DICT_AUTHID_EXPIRED,
 	DICT_REFRESHTOKEN_DO_NOT_EXIST,
+	DICT_AUTHID_PASSED,
 	DICT_MAX
 };
 /*
@@ -282,7 +283,11 @@ INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) 
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'User do not exist', 'ENG', '81');
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Authid is expired', 'ENG', '82');
 
+<<<<<<< HEAD
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'RefreshToken do not exist', 'ENG', '83');
+=======
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Authid found', 'ENG', '83');
+>>>>>>> feature/move_to_sec_database
 */
 
 // User status

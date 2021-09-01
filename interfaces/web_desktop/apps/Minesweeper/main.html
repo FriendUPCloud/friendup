@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Minesweeper | Guilherme Balog Gardino</title>
+
+    <meta
+      name="description"
+      content="Jogue o clássico campo minado nessa versão web!"
+    />
+
+    <meta itemprop="name" content="Minesweeper | Guilherme Balog" />
+    <meta
+      itemprop="description"
+      content="Jogue o clássico campo minado nessa versão web!"
+    />
+    <meta
+      itemprop="image"
+      content="https://guilhermebalog.ga/minesweeper/screenshot.png"
+    />
+
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:title" content="Minesweeper" />
+    <meta property="og:site_name" content="Guilherme Balog" />
+    <meta
+      property="og:description"
+      content="Jogue o clássico campo minado nessa versão web!"
+    />
+    <meta property="og:url" content="https://guilhermebalog.ga/minesweeper" />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:image"
+      content="https://guilhermebalog.ga/minesweeper/screenshot.png"
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Minesweeper | Guilherme Balog" />
+    <meta
+      name="twitter:description"
+      content="Jogue o clássico campo minado nessa versão web!"
+    />
+    <meta
+      name="twitter:image"
+      content="https://guilhermebalog.ga/minesweeper/screenshot.png"
+    />
+
+    <link rel="stylesheet" href="Progdir:main.css" />
+  </head>
+  <body>
+    <div id="root">
+      <nav>
+        <h1>Minesweeper</h1>
+        <div class="row">
+          <div class="input-block">
+            <label for="rows">Rows</label>
+            <input type="number" name="rows" id="rows" value="8" />
+          </div>
+          <div class="input-block">
+            <label for="columns">Columns</label>
+            <input type="number" name="columns" id="columns" value="10" />
+          </div>
+          <div class="input-block">
+            <label for="bombs">Bombs</label>
+            <input type="number" name="bombs" id="bombs" value="10" />
+          </div>
+          <div class="button-container">
+            <button onclick="updateSettings()">Reset game board</button>
+          </div>
+        </div>
+      </nav>
+      <canvas></canvas>
+      <footer>
+        <a href="https://guilhermebalog.ga">
+          <img src="https://guilhermebalog.ga/favicon.ico" />
+          Guilherme Balog Gardino
+        </a>
+      </footer>
+    </div>
+
+    <script src="Progdir:/main.js"></script>
+  </body>
+</html>

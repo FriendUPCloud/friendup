@@ -1875,7 +1875,6 @@ ns.TabTokens.prototype.refresh = function()
 // Pri<ate
 
 ns.TabTokens.prototype.statuses = [
-	'SECURED_HOST_STATUS_NONE',
 	'SECURED_HOST_STATUS_ALLOWED',
 	'SECURED_HOST_STATUS_BLOCKED',
 ]
@@ -1912,6 +1911,20 @@ ns.TabTokens.prototype.getReadableStatus = function( statusNum )
 	const i18str = 'i18n_' + tail;
 	const plain = i18n( i18str );
 	return plain;
+}
+
+ns.TabTokens.prototype.getIsWhitelisted = function( statusNum )
+{
+	const self = this;
+	console.log( 'getIsWhitelisted', statusNum );
+	const status = window.parseInt( statusNum, 10 );
+	if ( status !== status ) // NaN test
+		return false;
+	
+	if ( 1 == status )
+		return true;
+	else
+		return false;
 }
 
 ns.TabTokens.prototype.setStatusOptions = function( selectEl, select )
@@ -1990,6 +2003,24 @@ ns.TabTokens.prototype.handleRemoveClick = async function( hostId )
 	const res = await self.removeHost( hostId );
 	console.log( 'remove res', res );
 	self.remove( hostId );
+}
+
+ns.TabTokens.prototype.handleAllowClick = async function( hostId )
+{
+	const self = this;
+	const conf = self.items[ hostId ];
+	console.log( 'handleAllowClick', [ hostId, conf ]);
+	const el = conf.el;
+	const allowInput = el.querySelector( '.ServerTokenStatus input' );
+	console.log( 'allowInput', allowInput );
+	const allow = allowInput.checked;
+	console.log( 'allow', allow );
+	let status = 2;
+	if ( allow )
+		status = 1;
+	
+	const res = await self.updateHost( hostId, status );
+	console.log( 'res', res );
 }
 
 ns.TabTokens.prototype.handleEditClick = async function( hostId )
@@ -2098,23 +2129,34 @@ ns.TabTokens.prototype.insertRow = function( insertEl, beforeEl ) {
 	self.list.insertBefore( insertEl, beforeEl );
 }
 
-ns.TabTokens.prototype.buildDisplayRow = function( conf ) {
+ns.TabTokens.prototype.buildDisplayRow = function( conf, onClick ) {
 	const self = this;
 	console.log( 'buildRow', conf );
-	const status = self.getReadableStatus( conf.status );
+	//const status = self.getReadableStatus( conf.status );
+	const checked = self.getIsWhitelisted( conf.status );
+	const toggleId = 'toggle_' + conf.id;
+	const toggle = buildToggle(
+		toggleId,
+		'allowToggle',
+		conf.ip,
+		onClick,
+		checked,
+		'string',
+	);
+	console.log( 'buildDispRow - toggle', toggle );
 	const html = '<div id="'
 		+ conf.id
 		+ '" class="TokenRow Padding flexnes">'
 			+ '<div class="ServerTokenIP">'
 				+ conf.ip
 			+ '</div>'
-			+ '<div class="ServerTokenStatus">'
-				+ i18n( 'i18n_status' )
-				+ ': '
-				+ status
+			+ '<div class="ServerTokenStatus flexnes">'
+				+ i18n( 'i18n_ALLOWED' )
+				+ ' '
+				+ toggle
 			+ '</div>'
 			+ '<div class="ServerTokenActions flexnes">'
-				+ '<button class="ServerTokenEdit">'
+				+ '<button class="ServerTokenEdit hidden">'
 					+ '<i class="fa fa-fw fa-edit"></i>'
 				+ '</button>'
 				+ '<button class="ServerTokenRemove">'
@@ -2163,8 +2205,15 @@ ns.TabTokens.prototype.bindDisplayRow = function( el ) {
 	const self = this;
 	const id = el.id;
 	console.log( 'bindDisplay', [ el, id ]);
+	const allowToggle = el.querySelector( '.ServerTokenStatus input' );
 	const editBtn = el.querySelector( '.ServerTokenEdit' );
 	const remBtn = el.querySelector( '.ServerTokenRemove' );
+	
+	allowToggle.addEventListener(
+		'click',
+		e => self.handleAllowClick( id ),
+		false
+	);
 	
 	editBtn.addEventListener(
 		'click',
@@ -2349,4 +2398,81 @@ ns.TabTokens.prototype.removeHost = async function( hostId )
 				resolve( false );
 		}
 	});
+}
+
+
+// returns a toggle checkbox
+// id        : dom ID
+// className : optional class name if something specific is needed
+// name      : input name
+// onclick   : callback for click events
+// checked   : initial state
+// mode      : 'string' to have the widged returned as a string instead of a DOM element
+function buildToggle( id, className, name, onclick, checked, mode )
+{
+	console.log( 'buildToggle', [
+		id,
+		className,
+		name,
+		onclick,
+		checked,
+		mode
+	]);
+	
+	className = className || '';
+	if ( 'string' == mode )
+		return buildString();
+	else
+		return buildElement();
+	
+	function buildElement() {
+		const d = document.createElement( 'label' );
+		d.className = className;
+		
+		const i = document.createElement( 'input' );
+		i.type = 'checkbox';
+		i.className = 'CustomToggleInput ';
+		i.id = id;
+		if( name )
+			i.name = name;
+		
+		if( checked )
+			i.checked = true;
+		
+		if( onclick )
+			i.onclick = onclick;
+		
+		/*
+		if( value )
+			i.value = value;
+		*/
+		d.appendChild( i );
+		
+		const l = document.createElement( 'label' );
+		l.className = 'CustomToggleLabel';
+		l.setAttribute( 'for', id );
+		
+		d.appendChild( l );
+		
+		return d;
+	}
+	
+	function buildString()
+	{
+		name = name || '';
+		checked = checked || '';
+		const str = 
+			'<label class="' + className + '">'
+				+ '<input type="checkbox"'
+					+ 'class="CustomToggleInput"'
+					+ 'id="' + id + '"'
+					+ 'name="' + name + '"'
+					+ ( onclick ? ' onclick="' + onclick + '"':'')
+					+ ( checked ? 'checked' : '' )
+				+'>'
+				+ '<label class="CustomToggleLabel" for="' + id + '"></label>';
+			+ '</label>';
+		
+		return str;
+	}
 }

@@ -109,6 +109,7 @@ static const char *DefaultDictionaryMessages[] =
 "User do not exist",
 "Authid is expired",
 "RefreshToken do not exist"
+"Authid found"
 };
 
 /**
