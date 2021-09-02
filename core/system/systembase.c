@@ -2031,7 +2031,11 @@ int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses )
 				remdev = dev;
 				dev = (File *)dev->node.mln_Succ;
 				
+				DEBUG("Pointer to remdev: %p\n", remdev );
+				
 				DeviceUnMount( l->sl_DeviceManager, remdev, usr, ses );
+				
+				DEBUG("Pointer to remdev2: %p\n", remdev );
 				
 				//FFree( remdev );
 				FileDelete( remdev );
