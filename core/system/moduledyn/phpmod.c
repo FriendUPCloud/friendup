@@ -214,7 +214,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 
 	while( TRUE )
 	{
-		DEBUG("[PHPmod] in loop\n");
+		//DEBUG("[PHPmod] in loop\n");
 		
 		ret = poll( fds, 2, 250 ); // HT - set it to 250 ms..
 
@@ -285,7 +285,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 			break;
 		}
 		FD_SET( pofd.np_FD[ NPOPEN_CONSOLE ], &set);
-		DEBUG("[PHPmod] in loop\n");
+		//DEBUG("[PHPmod] in loop\n");
 		
 		int ret = select( pofd.np_FD[ NPOPEN_CONSOLE ]+1, &set, NULL, NULL, &timeout );
 		// Make a new buffer and read
