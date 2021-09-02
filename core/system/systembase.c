@@ -2072,7 +2072,7 @@ char *RunMod( SystemBase *l, const char *type, const char *path, const char *arg
 	EModule *lmod = l->sl_Modules;
 	EModule *workmod = NULL;
 
-	DEBUG("[SystemBase] Run module '%s'\n", type );
+	//DEBUG("[SystemBase] Run module '%s'\n", type );
 
 	while( lmod != NULL )
 	{
