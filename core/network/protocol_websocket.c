@@ -747,8 +747,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 			
 				FFree( jsontemp );
 			}
-			DEBUG1("[WS] SysWebRequest return\n"  );
-			Log( FLOG_INFO, "WS messages sent LOCKTEST\n");
+			Log( FLOG_INFO, "[WS] SysWebRequest return\n");
 		}	// respcode == -666
 	}
 	else
@@ -780,7 +779,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 		Log( FLOG_INFO, "WS no response end LOCKTEST\n");
 	}
 	
-	Log( FLOG_INFO, "WS END mutexes unlocked\n");
+	//Log( FLOG_INFO, "WS END mutexes unlocked\n");
 	return 0;
 }
 
@@ -1004,7 +1003,7 @@ void *ParseAndCall( WSThreadData *wstd )
 									FFree( idc );
 								}
 								
-								DEBUG("[WS] Found proper chunk message\n");
+								//DEBUG("[WS] Found proper chunk message\n");
 							}
 							else
 							{
@@ -1049,7 +1048,7 @@ void *ParseAndCall( WSThreadData *wstd )
 									unsigned char *buf;
 									//int len = strlen( answer );
 									buf = (unsigned char *)FCalloc( len + 256, sizeof( char ) );
-									INFO("[WS] Buf assigned: %p\n", buf );
+									//INFO("[WS] Buf assigned: %p\n", buf );
 									if( buf != NULL )
 									{
 										memcpy( buf, answer,  len );
@@ -1087,7 +1086,7 @@ void *ParseAndCall( WSThreadData *wstd )
 										//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
 										memcpy( buf, answer,  len );
 
-										DEBUG("[WS] Writeline1 %p\n", locus );
+										//DEBUG("[WS] Writeline1 %p\n", locus );
 										
 										UserSessionWebsocketWrite( locus, buf, len, LWS_WRITE_TEXT );
 										
@@ -1138,8 +1137,6 @@ void *ParseAndCall( WSThreadData *wstd )
 					{
 						if( strncmp( "request",  in + t[ 6 ].start, t[ 6 ].end-t[ 6 ].start ) == 0 )
 						{
-							//WSThreadData *wstdata = FCalloc( 1, sizeof(WSThreadData) );
-							
 							if( locus != NULL && wstd != NULL )
 							{
 								DEBUG("[WS] Request received\n");
