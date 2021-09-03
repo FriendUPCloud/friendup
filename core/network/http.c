@@ -1940,6 +1940,7 @@ void HttpFree( Http* http )
 		remFile = curFile;
 		curFile = ( HttpFile * )curFile->node.mln_Succ;
 		HttpFileDelete( remFile );
+		remFile = NULL;
 	}
 	
 	//if( http->http_PartDivider )
@@ -2061,6 +2062,7 @@ void HttpFreeRequest( Http* http )
 		remFile = curFile;
 		curFile = (HttpFile *)curFile->node.mln_Succ;
 		HttpFileDelete( remFile );
+		remFile = NULL;
 	}
 	//DEBUG("Free http\n");
 

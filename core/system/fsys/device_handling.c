@@ -2945,6 +2945,7 @@ ug.UserID = '%ld' \
 				UserNotifyFSEvent2( usr, "refresh", "Mountlist:" );
 
 				FileDelete( remdev );
+				remdev = NULL;
 
 				int unmID = 0;
 				char *unmType = NULL;
@@ -3002,6 +3003,7 @@ ug.UserID = '%ld' \
 									//fsys->UnMount( search->f_FSys, search, usr );
 								
 									FileDelete( search );
+									search = NULL;
 
 									int doBreak = 0;
 								

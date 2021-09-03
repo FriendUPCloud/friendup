@@ -28,6 +28,10 @@
 
 static inline void EscapeConfigFromString( char *str, char **configEscaped, char **executeCmd )
 {
+	if( str == NULL )
+	{
+		return;
+	}
 	// Escape config
 	int len = str ? strlen( str ) : 0, k = 0;
 	//dev->f_Visible = 1; // Special case, default is visible
