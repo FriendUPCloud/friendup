@@ -2039,6 +2039,7 @@ int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses )
 				
 				//FFree( remdev );
 				FileDelete( remdev );
+				remdev = NULL;
 			}
 		}
 		

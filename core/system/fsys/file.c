@@ -93,6 +93,7 @@ void FileDelete( File *f )
 		if( f->f_DevServer != NULL )
 		{
 			FFree( f->f_DevServer );
+			f->f_DevServer = NULL;
 		}
 		
 		FFree( f );
