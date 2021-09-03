@@ -3949,10 +3949,10 @@ int DeviceUnMount( DeviceManager *dm, File *rootDev, User *usr, UserSession *ses
 		char *temptext = FMalloc( 512 );
 		if( temptext != NULL )
 		{
-			snprintf( temptext, sizeof(temptext), "UPDATE `Filesystem` SET `StoredBytes`=%ld WHERE `ID`=%lu", rootDev->f_BytesStored, rootDev->f_ID );
+			snprintf( temptext, 512, "UPDATE `Filesystem` SET `StoredBytes`=%ld WHERE `ID`=%lu", rootDev->f_BytesStored, rootDev->f_ID );
 			sqllib->QueryWithoutResults( sqllib, temptext );
 		
-			snprintf( temptext, sizeof(temptext), "UPDATE `FilesystemActivity` SET `StoredBytesLeft`=%ld,`ReadedBytesLeft`=%ld WHERE `ID`=%lu", rootDev->f_Activity.fsa_StoredBytesLeft, rootDev->f_Activity.fsa_ReadBytesLeft, rootDev->f_Activity.fsa_ID );
+			snprintf( temptext, 512, "UPDATE `FilesystemActivity` SET `StoredBytesLeft`=%ld,`ReadedBytesLeft`=%ld WHERE `ID`=%lu", rootDev->f_Activity.fsa_StoredBytesLeft, rootDev->f_Activity.fsa_ReadBytesLeft, rootDev->f_Activity.fsa_ID );
 			sqllib->QueryWithoutResults( sqllib, temptext );
 		
 			Log( FLOG_INFO, "DeviceUnMount: %s\n", temptext );
