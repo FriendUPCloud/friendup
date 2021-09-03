@@ -2982,6 +2982,12 @@ ug.UserID = '%ld' \
 					{
 						if( tmpUser->u_ID != usr->u_ID )
 						{
+							if( FRIEND_MUTEX_LOCK( &(tmpUser->u_Mutex ) ) == 0 )
+							{
+								tmpUser->u_InUse++;
+								FRIEND_MUTEX_UNLOCK( &(tmpUser->u_Mutex ) );
+							}
+							
 							// Add also to this user
 							File *search = tmpUser->u_MountedDevs;
 							File *prev = NULL;
@@ -3047,6 +3053,12 @@ ug.UserID = '%ld' \
 								}
 								prev = search;
 								search = (File *) search->node.mln_Succ;
+							}
+							
+							if( FRIEND_MUTEX_LOCK( &(tmpUser->u_Mutex ) ) == 0 )
+							{
+								tmpUser->u_InUse--;
+								FRIEND_MUTEX_UNLOCK( &(tmpUser->u_Mutex ) );
 							}
 						}
 						tmpUser = (User *)tmpUser->node.mln_Succ;
