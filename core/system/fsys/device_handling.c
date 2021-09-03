@@ -3995,6 +3995,8 @@ int DeviceUnMount( DeviceManager *dm, File *rootDev, User *usr, UserSession *ses
 			sqllib->QueryWithoutResults( sqllib, temptext );
 		
 			Log( FLOG_INFO, "DeviceUnMount: %s\n", temptext );
+			
+			FFree( temptext );
 		}
 		
 		FHandler *fsys = (FHandler *)rootDev->f_FSys;
