@@ -299,6 +299,12 @@ void UserListSessions( User* usr, BufString *bs, void *sb );
 //
 //
 
+void UserNotifyFSEvent2( User *u, char *evt, char *path );
+
+//
+//
+//
+
 static FULONG UserDesc[] = { 
     SQLT_TABNAME, (FULONG)"FUser",       
     SQLT_STRUCTSIZE, sizeof( struct User ), 
