@@ -3890,6 +3890,10 @@ ug.UserID = '%lu' \
  */
 int DeviceRelease( DeviceManager *dm, File *rootDev )
 {
+	if( rootDev == NULL )
+	{
+		return 3;
+	}
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	int errRet = 0;
 	
