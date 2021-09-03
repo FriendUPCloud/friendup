@@ -122,7 +122,7 @@ char* StringDuplicateN( char* str, int len )
 		return NULL;
 	}
 	//copy = FMallocAlign( len + 1 );
-	copy = FCallocAlign( len + 1, 1 );
+	copy = FCallocAlign( (len + 16), 1 );
 	if( copy == NULL )
 	{
 		FERROR("Cannot allocate memory in StringDuplicateN\n");

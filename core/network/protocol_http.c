@@ -1947,7 +1947,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 													if( cntype != NULL )
 													{
-														phpResp->bs_Size = StripEmbeddedHeaders( &phpResp->bs_Buffer, phpResp->bs_Size );
+														phpResp->bs_Size = StripEmbeddedHeaders( &(phpResp->bs_Buffer), phpResp->bs_Size );
 													}
 
 													struct TagItem tags[] = {
