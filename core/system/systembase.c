@@ -2024,6 +2024,9 @@ int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses )
 		if( usr->u_MountedDevs != NULL )
 		{
 			File *dev = usr->u_MountedDevs;
+			
+			usr->u_MountedDevs = NULL; // set it to NULL
+			
 			File *remdev = dev;
 			
 			while( dev != NULL )
@@ -2040,7 +2043,6 @@ int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses )
 				//FFree( remdev );
 				FileDelete( remdev );
 			}
-			usr->u_MountedDevs = NULL;
 		}
 		
 		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex ) ) == 0 )
