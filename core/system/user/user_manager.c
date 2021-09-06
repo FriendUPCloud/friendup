@@ -1108,20 +1108,22 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 	
 	if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
 	{
-		userCurrent = um->um_Users;
-		while( userCurrent != NULL )
-		{
-			if( userCurrent == usr )
-			{
-				DEBUG("%s removing user at %p, place in list %d\n", __func__, userCurrent, n);
-				found = true;
-				n++;
-				break;
-			}
-			userPrevious = userCurrent;
-			userCurrent = (User *)userCurrent->node.mln_Succ; //this is the next element in the linked list
-		}
+		um->un_InUse++;
 		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+	}
+	
+	userCurrent = um->um_Users;
+	while( userCurrent != NULL )
+	{
+		if( userCurrent == usr )
+		{
+			DEBUG("%s removing user at %p, place in list %d\n", __func__, userCurrent, n);
+			found = true;
+			n++;
+			break;
+		}
+		userPrevious = userCurrent;
+		userCurrent = (User *)userCurrent->node.mln_Succ; //this is the next element in the linked list
 	}
 	
 	if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
@@ -1147,7 +1149,21 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 		
 		UserDelete( userCurrent );
 		
+		// we dont allow to change list when we work with it
+		
+		if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
+		{
+			um->un_InUse--;
+			FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+		}
+		
 		return 0;
+	}
+	
+	if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
+	{
+		um->un_InUse--;
+		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
 	}
 	
 	return -1;
