@@ -76,6 +76,7 @@ void FileDelete( File *f )
 		if( f->f_Execute != NULL)
 		{
 			FFree( f->f_Execute );
+			f->f_Execute = NULL;
 		}
 		
 		if( f->f_Config != NULL )
