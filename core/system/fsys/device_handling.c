@@ -685,6 +685,7 @@ AND f.Name = '%s'",
 						if( type != NULL ){ FFree( type );}
 						l->sl_Error = FSys_Error_SelectFail;
 						l->LibrarySQLDrop( l, sqllib );
+						FFree( temptext );
 						return FSys_Error_SelectFail;
 					}
 					usingSentinel = 1;
@@ -696,7 +697,7 @@ AND f.Name = '%s'",
 					if( type != NULL ){ FFree( type );}
 					l->sl_Error = FSys_Error_SelectFail;
 					l->LibrarySQLDrop( l, sqllib );
-				
+					FFree( temptext );
 					return FSys_Error_SelectFail;
 				}
 			}
