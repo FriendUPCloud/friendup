@@ -485,6 +485,7 @@ UserSession *USMUserSessionAddToList( UserSessionManager *smgr, UserSession *s )
 	while( smgr->usm_InUse > 0 )
 	{
 		usleep( 2000 );
+		Log( FLOG_INFO, "USMserSEssionAddToList\n");
 	}
 	
 	if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
@@ -563,6 +564,7 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 	while( smgr->usm_InUse > 0 )
 	{
 		usleep( 2000 );
+		Log( FLOG_INFO, "USMUserSessionAdd\n");
 	}
 	
 	DEBUG("[USMUserSessionAdd] CHECK8\n");
@@ -759,6 +761,7 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 	while( smgr->usm_InUse > 0 )
 	{
 		usleep( 2000 );
+		Log( FLOG_INFO, "USMUserSessionRemove\n");
 	}
 	
 	DEBUG("CHECK9\n");
@@ -1495,35 +1498,35 @@ UserSession *USMGetSessionByUserName( UserSessionManager *usm, char *name, FBOOL
 {
 	// We will take only first session of that user
 	// protect in mutex
-	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
+	SESSION_MANAGER_USE( usm );
+	
+	if( caseSensitive == TRUE )
 	{
-		if( caseSensitive == TRUE )
+		UserSession *us = usm->usm_Sessions;
+		while( us != NULL )
 		{
-			UserSession *us = usm->usm_Sessions;
-			while( us != NULL )
+			if( us->us_User != NULL  && strcmp( us->us_User->u_Name, name ) == 0 )
 			{
-				if( us->us_User != NULL  && strcmp( us->us_User->u_Name, name ) == 0 )
-				{
-					FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
-					return us;
-				}
-				us = (UserSession *) us->node.mln_Succ;
+				SESSION_MANAGER_RELEASE( usm );
+				return us;
 			}
+			us = (UserSession *) us->node.mln_Succ;
 		}
-		else // case sensitive = FALSE
-		{
-			UserSession *us = usm->usm_Sessions;
-			while( us != NULL )
-			{
-				if( us->us_User != NULL  && strcasecmp( us->us_User->u_Name, name ) == 0 )
-				{
-					FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
-					return us;
-				}
-				us = (UserSession *) us->node.mln_Succ;
-			}
-		}
-		FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	}
+	else // case sensitive = FALSE
+	{
+		UserSession *us = usm->usm_Sessions;
+		while( us != NULL )
+		{
+			if( us->us_User != NULL  && strcasecmp( us->us_User->u_Name, name ) == 0 )
+			{
+				SESSION_MANAGER_RELEASE( usm );
+				return us;
+			}
+			us = (UserSession *) us->node.mln_Succ;
+		}
+	}
+	
+	SESSION_MANAGER_RELEASE( usm );
 	return NULL;
 }
