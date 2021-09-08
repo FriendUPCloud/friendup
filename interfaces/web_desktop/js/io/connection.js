@@ -40,8 +40,8 @@ FriendConnection.prototype.connect = function( sessionId )
 	if ( null == sessionId )
 		throw new Error( 'FriendConnection.connect - no sessionId' );
 	
-	self.SID = sessionId;
 	console.log( 'FriendConnection.connect', sessionId );
+	self.SID = sessionId;
 	self.connectWebSocket();
 }
 
