@@ -845,7 +845,19 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						User * usr = UMGetUserByID( l->sl_UM, id );
 						if( usr != NULL )
 						{
-							UserDeviceUnMount( l, usr, loggedSession );
+							if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
+							{
+								usr->u_InUse++;
+								FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+							}
+							l->UserDeviceUnMount( l, usr, loggedSession );
+							
+							if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
+							{
+								usr->u_InUse--;
+								FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+							}
+							
 							DEBUG( "[UMWebRequest] UMRemoveAndDeleteUser!!\n" );
 							UMRemoveAndDeleteUser( l->sl_UM, usr, ((SystemBase*)m)->sl_USM);
 						}

@@ -2015,9 +2015,18 @@ int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses )
 	DEBUG("UserDeviceUnMount\n");
 	if( usr != NULL )
 	{
+		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex ) ) == 0 )
+		{
+			usr->u_InUse++;
+			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex ) );
+		}
+		
 		if( usr->u_MountedDevs != NULL )
 		{
 			File *dev = usr->u_MountedDevs;
+			
+			usr->u_MountedDevs = NULL; // set it to NULL
+			
 			File *remdev = dev;
 			
 			while( dev != NULL )
@@ -2025,11 +2034,21 @@ int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses )
 				remdev = dev;
 				dev = (File *)dev->node.mln_Succ;
 				
+				DEBUG("Pointer to remdev: %p\n", remdev );
+				
 				DeviceUnMount( l->sl_DeviceManager, remdev, usr, ses );
+				
+				DEBUG("Pointer to remdev2: %p\n", remdev );
 				
 				//FFree( remdev );
 				FileDelete( remdev );
 			}
+		}
+		
+		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex ) ) == 0 )
+		{
+			usr->u_InUse--;
+			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex ) );
 		}
 		
 		//TODO
@@ -2060,7 +2079,7 @@ char *RunMod( SystemBase *l, const char *type, const char *path, const char *arg
 	EModule *lmod = l->sl_Modules;
 	EModule *workmod = NULL;
 
-	DEBUG("[SystemBase] Run module '%s'\n", type );
+	//DEBUG("[SystemBase] Run module '%s'\n", type );
 
 	while( lmod != NULL )
 	{

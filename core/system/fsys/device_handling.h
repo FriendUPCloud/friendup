@@ -117,12 +117,6 @@ void UserNotifyFSEvent( DeviceManager *dm, char *evt, char *path );
 //
 //
 
-void UserNotifyFSEvent2( DeviceManager *dm, User *u, char *evt, char *path );
-
-//
-//
-//
-
 int MountDoorByRow( DeviceManager *dm, User *usr, char **row, User *mountUser );
 
 //

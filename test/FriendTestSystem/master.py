@@ -201,8 +201,10 @@ def on_message(ws, message):
     print('on message: ' + message )
     try:
         # check connection message
-        CONMSGFOUND = message.find('"type":"con", "data" : { "type": "pong", "data"')
-        if CONMSGFOUND > 0:
+        msg = message.replace('\"','')
+        #print('------- ' + msg )
+        CONMSGFOUND = msg.find('{type:con,data:{type:pong,data:')
+        if CONMSGFOUND > -1:
             TEST_MSG_RETURNED_OK += 1
 
         # get requestid to match it with incoming message

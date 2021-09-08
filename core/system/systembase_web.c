@@ -175,10 +175,8 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 				add = 11;
 			}
 			
-			DEBUG("Sessptr !NULL\n");
-			{
-				memcpy( allArgsNew, allArgs, fullsize );
-			}
+			//DEBUG("Sessptr !NULL\n");
+			memcpy( allArgsNew, allArgs, fullsize );
 			
 			//fprintf( log, "\n\n\n\n\n\n\n\nSIZE ALLAGRS %lu  ALLARGSNEW %lu\n\n\n\n\n\n", strlen( allArgs ), strlen( allArgsNew ) );
 		}
@@ -235,12 +233,12 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 					}
 				}
 			}
-			DEBUG("After for\n");
+			//DEBUG("After for\n");
 		}
 		FFree( allArgs );
 	}
 	//fclose( log );
-	DEBUG("Before fullsize>3096\n");
+	//DEBUG("Before fullsize>3096\n");
 	
 	if( fullsize > 3096 )
 	{

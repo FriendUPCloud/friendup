@@ -57,11 +57,13 @@ void FileDelete( File *f )
 		if( f->f_Name != NULL )
 		{
 			FFree( f->f_Name );
+			f->f_Name = NULL;
 		}
 		
 		if( f->f_Path != NULL)
 		{
 			FFree( f->f_Path );
+			f->f_Path = NULL;
 		}
 		
 		/*  THIS IS POINTER ONLY, SHOULD NEVER BE RELEASED HERE
@@ -74,21 +76,25 @@ void FileDelete( File *f )
 		if( f->f_Execute != NULL)
 		{
 			FFree( f->f_Execute );
+			f->f_Execute = NULL;
 		}
 		
 		if( f->f_Config != NULL )
 		{
 			FFree( f->f_Config );
+			f->f_Config = NULL;
 		}
 		
 		if( f->f_FSysName != NULL )
 		{
 			FFree( f->f_FSysName );
+			f->f_FSysName = NULL;
 		}
 		
 		if( f->f_DevServer != NULL )
 		{
 			FFree( f->f_DevServer );
+			f->f_DevServer = NULL;
 		}
 		
 		FFree( f );

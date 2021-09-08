@@ -117,9 +117,9 @@ void WSThreadPing( WSThreadData *data )
 					{
 						FFree( data->wstd_Requestid );
 					}
-					FRIEND_MUTEX_UNLOCK( &(data->wstd_WSD->wsc_Mutex) );
 					FFree( data );
 				}
+				FRIEND_MUTEX_UNLOCK( &(data->wstd_WSD->wsc_Mutex) );
 				
 				// Decrease counter
 				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
@@ -208,37 +208,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 
 	char *in = NULL;
 
-	//TK-1220 - sometimes there is junk at the end of the string.
-	//The string is not guaranteed to be null terminated where it supposed to.
-	/*
-	char *c = in;
-	if ( reason == LWS_CALLBACK_RECEIVE && len>0)
-	{
-		// no need to allocate memory for other functions then RECEIVE
-		if( tin != NULL && len > 0 )
-		{
-			if( ( in = FMalloc( len+128 ) ) != NULL )	// 16 should be ok
-			{
-				memcpy( in, tin, len );
-				in[ len ] = '\0';
-			}
-		}
-		
-		//DEBUG("[WS] reason==receive and len>0\n");
-		// No in!
-		if( in == NULL )
-		{
-			DEBUG( "[WS] Seems we have a null message (length: %d)\n", (int)len );
-			
-			if( in != NULL )
-			{
-				FFree( in );
-			}
-			return 0;
-		}
-		DEBUG("[WS] set end to 0\n");
-	}
-	*/
 	DEBUG("[WS] before switch\n");
 	
 	switch( reason )
@@ -368,16 +337,16 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					}
 					
 					pthread_t t;
-					memset( &t, 0, sizeof( pthread_t ) );
+					//memset( &t, 0, sizeof( pthread_t ) );
 					
 					if( pthread_create( &t, NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
-					//memset( &(wstd->wstd_Thread), 0, sizeof( pthread_t ) );
-					//if( pthread_create( &(wstd->wstd_Thread), NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
 					{
 						// Failed!
 						FFree( wstd );
-						if( us != NULL )
+						if( wsd->wsc_UserSession != NULL )
 						{
+							us = (UserSession *)wsd->wsc_UserSession;
+							
 							if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 							{
 								us->us_InUseCounter--;
@@ -429,12 +398,15 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				
 				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 				{
+					us->us_InUseCounter++;
+					
 					FQueue *q = &(us->us_MsgQueue);
 					
 					if( q->fq_First != NULL )
 					{
 						e = FQPop( q );
 						
+						us->us_InUseCounter--;
 						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 						unsigned char *t = e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING;
 						
@@ -464,6 +436,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					}
 					else
 					{
+						us->us_InUseCounter--;
 						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 					}
 					
@@ -774,8 +747,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 			
 				FFree( jsontemp );
 			}
-			DEBUG1("[WS] SysWebRequest return\n"  );
-			Log( FLOG_INFO, "WS messages sent LOCKTEST\n");
+			Log( FLOG_INFO, "[WS] SysWebRequest return\n");
 		}	// respcode == -666
 	}
 	else
@@ -807,7 +779,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 		Log( FLOG_INFO, "WS no response end LOCKTEST\n");
 	}
 	
-	Log( FLOG_INFO, "WS END mutexes unlocked\n");
+	//Log( FLOG_INFO, "WS END mutexes unlocked\n");
 	return 0;
 }
 
@@ -1031,7 +1003,7 @@ void *ParseAndCall( WSThreadData *wstd )
 									FFree( idc );
 								}
 								
-								DEBUG("[WS] Found proper chunk message\n");
+								//DEBUG("[WS] Found proper chunk message\n");
 							}
 							else
 							{
@@ -1076,7 +1048,7 @@ void *ParseAndCall( WSThreadData *wstd )
 									unsigned char *buf;
 									//int len = strlen( answer );
 									buf = (unsigned char *)FCalloc( len + 256, sizeof( char ) );
-									INFO("[WS] Buf assigned: %p\n", buf );
+									//INFO("[WS] Buf assigned: %p\n", buf );
 									if( buf != NULL )
 									{
 										memcpy( buf, answer,  len );
@@ -1114,7 +1086,7 @@ void *ParseAndCall( WSThreadData *wstd )
 										//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
 										memcpy( buf, answer,  len );
 
-										DEBUG("[WS] Writeline1 %p\n", locus );
+										//DEBUG("[WS] Writeline1 %p\n", locus );
 										
 										UserSessionWebsocketWrite( locus, buf, len, LWS_WRITE_TEXT );
 										
@@ -1152,6 +1124,12 @@ void *ParseAndCall( WSThreadData *wstd )
 			
 			else if( strncmp( "msg",  in + t[ 2 ].start, 3 ) == 0 )
 			{
+				//
+				// To catch nasty bug with WS
+				//
+				
+				Log( FLOG_INFO, "[WS] Incoming message: '%.*s'\n" , 200, in );
+				
 				// type object
 				if( t[4].type == JSMN_OBJECT)
 				{
@@ -1159,8 +1137,6 @@ void *ParseAndCall( WSThreadData *wstd )
 					{
 						if( strncmp( "request",  in + t[ 6 ].start, t[ 6 ].end-t[ 6 ].start ) == 0 )
 						{
-							//WSThreadData *wstdata = FCalloc( 1, sizeof(WSThreadData) );
-							
 							if( locus != NULL && wstd != NULL )
 							{
 								DEBUG("[WS] Request received\n");

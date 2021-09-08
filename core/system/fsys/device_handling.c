@@ -974,7 +974,7 @@ AND f.Name = '%s'",
 				GroupUserLink * ugu = usrgrp->ug_UserList;
 				while( ugu != NULL )
 				{
-					UserNotifyFSEvent2( dm, ugu->ugau_User, "refresh", "Mountlist:" );
+					UserNotifyFSEvent2( ugu->ugau_User, "refresh", "Mountlist:" );
 					
 					ugu = (GroupUserLink *)ugu->node.mln_Succ;
 				}
@@ -1080,11 +1080,12 @@ AND f.Name = '%s'",
 			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 		}	// retfile
 		
+		// we probably do not need it, because notification call is done outside
 		// Send notify to user and all his sessions
-		if( notify == TRUE )
-		{
-			UserNotifyFSEvent2( dm, usr, "refresh", "Mountlist:" );
-		}
+		//if( notify == TRUE )
+		//{
+		//	UserNotifyFSEvent2( usr, "refresh", "Mountlist:" );
+		//}
 		
 		DEBUG("[MountFS] %s - Mount device END\n", usr->u_Name );
 	}
@@ -1639,7 +1640,7 @@ AND f.Name = '%s'",
 				GroupUserLink * ugu = usrgrp->ug_UserList;
 				while( ugu != NULL )
 				{
-					UserNotifyFSEvent2( dm, ugu->ugau_User, "refresh", "Mountlist:" );
+					UserNotifyFSEvent2( ugu->ugau_User, "refresh", "Mountlist:" );
 					
 					ugu = (GroupUserLink *)ugu->node.mln_Succ;
 				}
@@ -1741,6 +1742,7 @@ AND f.Name = '%s'",
 
 				if( type && strcmp( type, "SQLWorkgroupDrive" ) == 0 )
 				{
+					NotifUser *rootNotifyUser = NULL;
 					//
 					// 'lock' User Manager
 					//
@@ -1792,10 +1794,36 @@ AND f.Name = '%s'",
 							// Tell user!
 							if( notify == TRUE )
 							{
-								UserNotifyFSEvent2( dm, tmpUser, "refresh", "Mountlist:" );
+								// build a list of users which should get notification and deliver it when all drives are mounted
+								NotifUser *nu = FCalloc( 1, sizeof( NotifUser ) );
+								if( nu != NULL )
+								{
+									nu->nu_User = tmpUser;
+									nu->node.mln_Succ = (MinNode *) rootNotifUser;
+									rootNotifUser = nu;
+								}
+								//Log( FLOG_INFO, "[MountFS] notify user: %s about changes\n", tmpUser->u_Name );
+								//UserNotifyFSEvent2( tmpUser, "refresh", "Mountlist:" );
 							}
 						}
 						tmpUser = (User *)tmpUser->node.mln_Succ;
+					}
+					
+					//
+					// for test I moved notifications to different loop
+					//
+					
+					{
+						NotifUser *nu = rootNotifyUser;
+						while( nu != NULL )
+						{
+							NotifUser *du = nu;
+							nu = (NotifUser *)nu->node.mln_Succ;
+							
+							Log( FLOG_INFO, "[MountFS] notify user: %s about changes\n", du->nu_User->u_Name );
+							UserNotifyFSEvent2( du->nu_User, "refresh", "Mountlist:" );
+							FFree( du );
+						}
 					}
 					
 					if( FRIEND_MUTEX_LOCK( &(l->sl_UM->um_Mutex ) ) == 0 )
@@ -1818,7 +1846,7 @@ AND f.Name = '%s'",
 		// Send notify to user and all his sessions
 		if( notify == TRUE )
 		{
-			UserNotifyFSEvent2( dm, usr, "refresh", "Mountlist:" );
+			UserNotifyFSEvent2( usr, "refresh", "Mountlist:" );
 		}
 		
 		DEBUG("[MountFS] %s - Mount device END\n", usr->u_Name );
@@ -2905,7 +2933,6 @@ ug.UserID = '%ld' \
 ", name, usr->u_ID, usr->u_ID );
 
 				if( DeviceUnMount( dm, remdev, usr, loggedSession ) != 0 )
-				//if( fsys->UnMount( remdev->f_FSys, remdev, usr ) != 0 )
 				{
 					FERROR("[UnMountFS] ERROR: Cannot unmount device\n");
 			
@@ -2915,19 +2942,11 @@ ug.UserID = '%ld' \
 				}
 			
 				// Notify user and his sessions
-				UserNotifyFSEvent2( dm, usr, "refresh", "Mountlist:" );
+				UserNotifyFSEvent2( usr, "refresh", "Mountlist:" );
 
 				FileDelete( remdev );
-				// Free up some
-				/*
-				//if( remdev->f_SessionID ) FFree( remdev->f_SessionID );
-				if( remdev->f_Config ) FFree( remdev->f_Config );
-				if( remdev->f_FSysName ) FFree( remdev->f_FSysName );
-				if( remdev->f_Execute ) FFree( remdev->f_Execute );
-				FFree( remdev );
-				*/
-			
-				//int numberEntries = 0;
+				remdev = NULL;
+
 				int unmID = 0;
 				char *unmType = NULL;
 				
@@ -2963,6 +2982,12 @@ ug.UserID = '%ld' \
 					{
 						if( tmpUser->u_ID != usr->u_ID )
 						{
+							if( FRIEND_MUTEX_LOCK( &(tmpUser->u_Mutex ) ) == 0 )
+							{
+								tmpUser->u_InUse++;
+								FRIEND_MUTEX_UNLOCK( &(tmpUser->u_Mutex ) );
+							}
+							
 							// Add also to this user
 							File *search = tmpUser->u_MountedDevs;
 							File *prev = NULL;
@@ -2984,6 +3009,7 @@ ug.UserID = '%ld' \
 									//fsys->UnMount( search->f_FSys, search, usr );
 								
 									FileDelete( search );
+									search = NULL;
 
 									int doBreak = 0;
 								
@@ -3021,12 +3047,18 @@ ug.UserID = '%ld' \
 									if( doBreak == 1 )
 									{
 										// Tell user!
-										UserNotifyFSEvent2( dm, tmpUser, "refresh", "Mountlist:" );
+										UserNotifyFSEvent2( tmpUser, "refresh", "Mountlist:" );
 										break;
 									}
 								}
 								prev = search;
 								search = (File *) search->node.mln_Succ;
+							}
+							
+							if( FRIEND_MUTEX_LOCK( &(tmpUser->u_Mutex ) ) == 0 )
+							{
+								tmpUser->u_InUse--;
+								FRIEND_MUTEX_UNLOCK( &(tmpUser->u_Mutex ) );
 							}
 						}
 						tmpUser = (User *)tmpUser->node.mln_Succ;
@@ -3381,69 +3413,6 @@ WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where User
 	DEBUG( "[GetUserDeviceByUserID] Successfully freed.\n" );
 	
 	return device;
-}
-
-/**
- * Send notification to users when filesystem event will happen
- *
- * @param dm pointer to DeviceManager
- * @param u user
- * @param evt event type (char *)
- * @param path path to file
- */
-
-void UserNotifyFSEvent2( DeviceManager *dm, User *u, char *evt, char *path )
-{
-	DEBUG("[UserNotifyFSEvent2] start\n");
-	
-	if( evt == NULL || path == NULL )
-	{
-		DEBUG("[UserNotifyFSEvent2] end. Event or path = NULL\n");
-		return;
-	}
-	
-	// Produce message
-	char *prototype = "{\"type\":\"msg\",\"data\":{\"type\":\"\",\"path\":\"\"}}";
-	int globmlen = strlen( prototype ) + strlen( path ) + strlen( evt ) + 128;
-	char *message = FCalloc( globmlen, sizeof(char) );
-
-	if( message != NULL )
-	{
-		if( u != NULL )
-		{
-			DEBUG("[UserNotifyFSEvent2] Send notification to user: %s id: %lu\n", u->u_Name, u->u_ID );
-			int mlen = snprintf( message, globmlen, "{\"type\":\"msg\",\"data\":{\"type\":\"%s\",\"data\":{\"path\":\"%s\"}}}", evt, path );
-		
-			if( FRIEND_MUTEX_LOCK( &(u->u_Mutex) ) == 0 )
-			{
-				u->u_InUse++;
-				FRIEND_MUTEX_UNLOCK( &(u->u_Mutex) );
-			}
-			
-			UserSessListEntry *list = u->u_SessionsList;
-			while( list != NULL )
-			{
-				if( list->us != NULL )
-				{
-					UserSessionWebsocketWrite( list->us, (unsigned char *)message, mlen, LWS_WRITE_TEXT);
-				}
-				else
-				{
-					INFO("Cannot send WS message: %s\n", message );
-				}
-				list = (UserSessListEntry *)list->node.mln_Succ;
-			}
-			
-			if( FRIEND_MUTEX_LOCK( &(u->u_Mutex) ) == 0 )
-			{
-				u->u_InUse--;
-				FRIEND_MUTEX_UNLOCK( &(u->u_Mutex) );
-			}
-		}	// user != NULL
-		FFree( message );
-	}
-	
-	DEBUG("[UserNotifyFSEvent2] end\n");
 }
 
 /**
@@ -3935,6 +3904,10 @@ ug.UserID = '%lu' \
  */
 int DeviceRelease( DeviceManager *dm, File *rootDev )
 {
+	if( rootDev == NULL )
+	{
+		return 3;
+	}
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	int errRet = 0;
 	
@@ -3985,15 +3958,19 @@ int DeviceUnMount( DeviceManager *dm, File *rootDev, User *usr, UserSession *ses
 	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 	if( sqllib != NULL )
 	{
-		char temptext[ 256 ];
-	
-		snprintf( temptext, sizeof(temptext), "UPDATE `Filesystem` SET `StoredBytes`='%ld' WHERE `ID`='%lu'", rootDev->f_BytesStored, rootDev->f_ID );
-		sqllib->QueryWithoutResults( sqllib, temptext );
+		char *temptext = FMalloc( 512 );
+		if( temptext != NULL )
+		{
+			snprintf( temptext, 512, "UPDATE `Filesystem` SET `StoredBytes`=%ld WHERE `ID`=%lu", rootDev->f_BytesStored, rootDev->f_ID );
+			sqllib->QueryWithoutResults( sqllib, temptext );
 		
-		snprintf( temptext, sizeof(temptext), "UPDATE `FilesystemActivity` SET `StoredBytesLeft`='%ld',`ReadedBytesLeft`='%ld' WHERE `ID`='%lu'", rootDev->f_Activity.fsa_StoredBytesLeft, rootDev->f_Activity.fsa_ReadBytesLeft, rootDev->f_Activity.fsa_ID );
-		sqllib->QueryWithoutResults( sqllib, temptext );
-
-		Log( FLOG_INFO, "DeviceUnMount: %s\n", temptext );
+			snprintf( temptext, 512, "UPDATE `FilesystemActivity` SET `StoredBytesLeft`=%ld,`ReadedBytesLeft`=%ld WHERE `ID`=%lu", rootDev->f_Activity.fsa_StoredBytesLeft, rootDev->f_Activity.fsa_ReadBytesLeft, rootDev->f_Activity.fsa_ID );
+			sqllib->QueryWithoutResults( sqllib, temptext );
+		
+			Log( FLOG_INFO, "DeviceUnMount: %s\n", temptext );
+			
+			FFree( temptext );
+		}
 		
 		FHandler *fsys = (FHandler *)rootDev->f_FSys;
 

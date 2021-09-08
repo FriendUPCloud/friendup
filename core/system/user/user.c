@@ -976,3 +976,65 @@ void UserListSessions( User* usr, BufString *bs, void *sb )
 		FFree( temp );
 	}
 }
+
+/**
+ * Send notification to users when filesystem event will happen
+ *
+ * @param u user
+ * @param evt event type (char *)
+ * @param path path to file
+ */
+
+void UserNotifyFSEvent2( User *u, char *evt, char *path )
+{
+	DEBUG("[UserNotifyFSEvent2] start\n");
+	
+	if( evt == NULL || path == NULL )
+	{
+		DEBUG("[UserNotifyFSEvent2] end. Event or path = NULL\n");
+		return;
+	}
+	
+	// Produce message
+	char *prototype = "{\"type\":\"msg\",\"data\":{\"type\":\"\",\"path\":\"\"}}";
+	int globmlen = strlen( prototype ) + strlen( path ) + strlen( evt ) + 128;
+	char *message = FCalloc( globmlen, sizeof(char) );
+
+	if( message != NULL )
+	{
+		if( u != NULL )
+		{
+			DEBUG("[UserNotifyFSEvent2] Send notification to user: %s id: %lu\n", u->u_Name, u->u_ID );
+			int mlen = snprintf( message, globmlen, "{\"type\":\"msg\",\"data\":{\"type\":\"%s\",\"data\":{\"path\":\"%s\"}}}", evt, path );
+		
+			if( FRIEND_MUTEX_LOCK( &(u->u_Mutex) ) == 0 )
+			{
+				u->u_InUse++;
+				FRIEND_MUTEX_UNLOCK( &(u->u_Mutex) );
+			}
+			
+			UserSessListEntry *list = u->u_SessionsList;
+			while( list != NULL )
+			{
+				if( list->us != NULL )
+				{
+					UserSessionWebsocketWrite( list->us, (unsigned char *)message, mlen, LWS_WRITE_TEXT);
+				}
+				else
+				{
+					INFO("Cannot send WS message: %s\n", message );
+				}
+				list = (UserSessListEntry *)list->node.mln_Succ;
+			}
+			
+			if( FRIEND_MUTEX_LOCK( &(u->u_Mutex) ) == 0 )
+			{
+				u->u_InUse--;
+				FRIEND_MUTEX_UNLOCK( &(u->u_Mutex) );
+			}
+		}	// user != NULL
+		FFree( message );
+	}
+	
+	DEBUG("[UserNotifyFSEvent2] end\n");
+}
