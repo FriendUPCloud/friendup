@@ -39,10 +39,16 @@ function RemoveFromExecutionQueue( app )
 // Load a javascript application into a sandbox
 function ExecuteApplication( app, args, callback, retries, flags )
 {
+	console.log( 'ExecuteApplication', [
+		app,
+		args,
+		callback,
+		retries,
+		flags,
+	]);
 	// Just nothing.
 	if( !app ) return;
 	
-	console.log( 'ExecuteApplication', app );
 	// If we don't have any cached basics, wait a bit
 	if( typeof( _applicationBasics ) == 'undefined' || !_applicationBasics.js )
 	{
