@@ -10808,8 +10808,8 @@ Workspace.receivePush = function( jsonMsg, ready )
 				}
 			
 				mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
-				console.log( 'push to app', [ msg, app ]);
 				let app = Workspace.applications[a];
+				console.log( 'push to app', [ msg, app ]);
 				app.contentWindow.postMessage( JSON.stringify( { 
 					type: 'system',
 					method: 'pushnotification',
