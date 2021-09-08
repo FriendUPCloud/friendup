@@ -10720,6 +10720,7 @@ Workspace.receiveLive = function( viewId, jsonEvent ) {
 // Receive push notification (when a user clicks native push notification on phone)
 Workspace.receivePush = function( jsonMsg, ready )
 {
+	console.log( 'Workspace.receivePush', jsonMsg );
 	if( !isMobile ) return 'mobile';
 	let msg = jsonMsg ? jsonMsg : ( window.friendApp && typeof friendApp.get_notification == 'function' ? friendApp.get_notification() : false );
 
@@ -10766,6 +10767,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 	
 	function handleClick()
 	{
+		console.log( 'handleClick ??' );
 		if( !msg.application || msg.application == 'null' ) 
 		{
 			if( !ready && Workspace.onReady ) Workspace.onReady();
@@ -10806,7 +10808,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 				}
 			
 				mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
-			
+				console.log( 'push to app', [ msg, app ]);
 				let app = Workspace.applications[a];
 				app.contentWindow.postMessage( JSON.stringify( { 
 					type: 'system',
@@ -10856,7 +10858,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 					break;
 				}
 			}
-		
+			
 			// No application? Alert the user
 			// TODO: Localize response!
 			if( !app )
@@ -10947,6 +10949,7 @@ else
 var mobileDebugTime = null;
 function mobileDebug( str, clear )
 {
+	console.log( 'mobileDebug', str );
 	if( !isMobile ) return;
 	if( !window.debugDiv ) return;
 	if( mobileDebugTime ) clearTimeout( mobileDebugTime );

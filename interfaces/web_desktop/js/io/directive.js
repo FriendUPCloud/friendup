@@ -42,6 +42,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	// Just nothing.
 	if( !app ) return;
 	
+	console.log( 'ExecuteApplication', app );
 	// If we don't have any cached basics, wait a bit
 	if( typeof( _applicationBasics ) == 'undefined' || !_applicationBasics.js )
 	{
@@ -230,6 +231,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			//
 		}
 	
+		console.log( 'ExecuteApplication.onExecuted', conf );
 		if( r == 'activate' )
 		{
 			ActivateApplication( app, conf );
