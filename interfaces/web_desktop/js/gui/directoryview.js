@@ -4507,6 +4507,10 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 								} );
 								
 							}
+							else
+							{
+								console.log( 'What happened?', self );	
+							}
 						}
 						// empty, go back
 						else
