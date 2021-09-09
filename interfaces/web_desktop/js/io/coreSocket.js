@@ -776,7 +776,9 @@ FriendWebSocket.prototype.startKeepAlive = function()
 FriendWebSocket.prototype.sendPing = function( msg )
 {
 	let self = this;
-	if ( !self.keepAlive )
+	if( !self.keepAlive )
+		return;
+	if( self.pingCheck )
 		return;
 	
 	let timestamp = Date.now();
@@ -789,12 +791,12 @@ FriendWebSocket.prototype.sendPing = function( msg )
 	if( self.pingCheck )
 		clearTimeout( self.pingCheck );
 	self.pingCheck = setTimeout( checkPing, self.maxPingWait );
-	console.log( 'Ping is sent (max wait: ' + ( self.maxPingWait/1000 ) + ' secs.) (' + self.uniqueName + ')' );
 
 	function checkPing()
 	{
 		self.wsClose( 1000, 'ping never got its pong' );
 		self.reconnect();
+		self.pingCheck = null;
 	}
 	
 	self.sendCon( ping );
