@@ -365,6 +365,17 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				{
 					lws_callback_on_writable( wsi );
 				}
+				
+				UserSession *locus = NULL;
+	
+				locus = wstd->wstd_WSD->wsc_UserSession;
+				if( locus != NULL )
+				{
+					if( locus->us_WSD == NULL )
+					{
+						locus->us_WSD = wsd;
+					}
+				}
 			}
 			
 #ifndef INPUT_QUEUE
@@ -811,7 +822,7 @@ void *ParseAndCall( WSThreadData *wstd )
 			// This error is happening pretty random!
 			// This one leads to websocket errors...
 			
-			FERROR("[ParseAndCall] There is no WS connection attached to mutex!\n");
+			FERROR("[ParseAndCall] There is no WS connection attached to user session!\n");
 			// Decrease use for external call
 			if( FRIEND_MUTEX_LOCK( &(orig->us_Mutex) ) == 0 )
 			{
