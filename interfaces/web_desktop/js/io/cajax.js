@@ -667,7 +667,7 @@ cAjax.prototype.send = function( data, callback )
 				{
 					if( self.onload )
 					{
-						//console.log( 'This error.' );
+						console.log( 'This error could be.' );
 						self.onload( false, false );
 						self.destroy();
 					}
