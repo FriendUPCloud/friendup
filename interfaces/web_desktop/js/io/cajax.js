@@ -796,7 +796,11 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		self.life = false;
 	}, 15000 );
 	
-	if( !self.onload ) return;
+	if( !self.onload ) 
+	{
+		console.log( '[cajax] No onload.' );
+		return;
+	}
 	
 	// The data just failed - which means the websocket went away!
 	if( typeof( wsdata ) == 'undefined' )
