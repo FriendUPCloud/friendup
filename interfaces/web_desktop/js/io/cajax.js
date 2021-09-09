@@ -635,7 +635,6 @@ cAjax.prototype.send = function( data, callback )
         }
         else if( typeof( reqID ) == 'undefined' )
         {
-        	console.log( 'No reqid!' );
         }
         
         self.wsRequestID = reqID;
@@ -802,7 +801,8 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	// The data just failed - which means the websocket went away!
 	if( typeof( wsdata ) == 'undefined' )
 	{
-		if( Workspace )
+		console.log( '[cajax] Got undefined error...' );
+		if( window.Workspace )
 		{
 			// Add to queue
 			//console.log( 'We got strange ws data!' );
@@ -812,9 +812,9 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		self.destroy();
 		return;
 	}
-	
-	if( typeof( wsdata ) == 'object' && wsdata.response )
+	else if( typeof( wsdata ) == 'object' && wsdata.response )
 	{
+		console.log( '[cajax] Got error...' );
 		self.rawData = 'error';
 		if( self.proxy )
 			self.proxy.responseText = self.rawData;
