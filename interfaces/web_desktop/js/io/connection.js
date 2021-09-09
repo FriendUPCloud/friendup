@@ -254,6 +254,8 @@ FriendConnection.prototype.onWsMessage = function( msg )
 	}
 	
 	function handleResponse( msg ) {
+		console.log( 'Handle response: ', msg );
+		
 		let id = msg.requestid;
 		let handler = self.listenerMap[ id ];
 		if ( !id || !handler ) {

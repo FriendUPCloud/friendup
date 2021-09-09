@@ -628,6 +628,8 @@ cAjax.prototype.send = function( data, callback )
         
         let reqID = Workspace.conn.request( req, bindSingleParameterMethod( self, 'handleWebSocketResponse' ) );
         
+        console.log( 'We got request id!: ' + reqID );
+        
         if( typeof( reqID ) != 'undefined' && !reqID )
         {
         	AddToCajaxQueue( self );
