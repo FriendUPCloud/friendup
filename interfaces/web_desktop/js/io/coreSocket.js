@@ -17,13 +17,13 @@ FriendWebSocket = function( conf )
 	
 	let self = this;
 	
-	/*let uniqueWords = [ 'Ball', 'Jacket', 'Fish', 'Origon', 'Nelson', 'Blue', 'Red', 'Slash' ];
+	let uniqueWords = [ 'Ball', 'Jacket', 'Fish', 'Origon', 'Nelson', 'Blue', 'Red', 'Slash' ];
 	let ustr = '';
 	for( let a = 0; a < 4; a++ )
 	{
 		ustr += uniqueWords[ Math.floor( Math.random() * uniqueWords.length ) ];
 	}
-	self.uniqueName = ustr;*/
+	self.uniqueName = ustr;
 	
 	// REQUIRED CONFIG
 	self.pConf = conf;
@@ -789,7 +789,7 @@ FriendWebSocket.prototype.sendPing = function( msg )
 	if( self.pingCheck )
 		clearTimeout( self.pingCheck );
 	self.pingCheck = setTimeout( checkPing, self.maxPingWait );
-	console.log( 'Ping is sent (max wait: ' + ( self.maxPingWait/1000 ) + ' secs.)', self );
+	console.log( 'Ping is sent (max wait: ' + ( self.maxPingWait/1000 ) + ' secs.) (' + self.uniqueName + ')' );
 
 	function checkPing()
 	{
