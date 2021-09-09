@@ -47,11 +47,15 @@ function ExecuteApplication( app, args, callback, retries, flags )
 		flags,
 	]);
 	// Just nothing.
-	if( !app ) return;
+	if( !app ) {
+		console.log( 'just nothing things', app );
+		return;
+	}
 	
 	// If we don't have any cached basics, wait a bit
 	if( typeof( _applicationBasics ) == 'undefined' || !_applicationBasics.js )
 	{
+		console.log( 'ExecuteApplication - retries', retries );
 		if( retries == 3 ) return console.log( 'Could not execute app: ' + app );
 		loadApplicationBasics( function()
 		{
@@ -84,6 +88,10 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	// You need to wait with opening apps until they are loaded by app name
 	if( _executionQueue[ appName ] )
 	{
+		console.log( 'ExecuteApplication - app found in execution queue', {
+			app   : app,
+			queue : _executionQueue,
+		});
 		if( callback )
 			callback( false, { response: false, message: 'Already run.', data: 'executed' } );
 		return;
@@ -216,6 +224,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	if( app.indexOf( ':' ) > 0 && app.indexOf( '.jsx' ) > 0 )
 	{
 		// Remove from execution queue
+		console.log( 'ExecuteApplication - jsx things maybe', app );
 		RemoveFromExecutionQueue( appName );
 		return ExecuteJSXByPath( app, args, callback, undefined, flags );
 	}
@@ -239,9 +248,10 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			//
 		}
 	
-		console.log( 'ExecuteApplication.onExecuted', conf );
+		console.log( 'ExecuteApplication.onExecuted', [ r, conf ]);
 		if( r == 'activate' )
 		{
+			console.log( 'ExecuteApplication - active', app );
 			ActivateApplication( app, conf );
 			// Remove blocker
 			RemoveFromExecutionQueue( appName );
@@ -252,7 +262,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 		else if( r != 'ok' )
 		{
 			// console.log( 'Test2: Executing app Was not ok.' );
-			
+			console.log( 'ExecuteApplication - onExecuted not ok', r );
 			if( r == 'notinstalled' || ( conf && conf.response == 'not installed' ) )
 			{
 				var hideView = false;
@@ -329,7 +339,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				Ac2Alert( i18n( 'application_not_found' ) );
 			}
 			if( callback ) callback( false );
-			// console.log( 'Test2: Dead.' );
+			console.log( 'ExecuteApplication Dead.' );
 			
 			// Clean up single instance
 			var o = {};
@@ -341,7 +351,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			KillApplication( appName );
 			
 			// Remove blocker
-			RemoveFromExecutionQueue( appName );		
+			RemoveFromExecutionQueue( appName );
 			return false;
 		}
 
@@ -350,6 +360,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 		{
 			if( typeof( conf.API ) == 'undefined' )
 			{
+				console.log( 'ExecuteApplication - onExecuted, no API in conf', conf );
 				if( callback )
 				{
 					// Remove blocker
@@ -424,6 +435,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				if( conf.Init.indexOf( ':' ) > 0 && conf.Init.indexOf( '.jsx' ) > 0 )
 				{
 					// Remove blocker
+					console.log( 'ExecuteApplication - onExecuted, more jsx things', conf );
 					RemoveFromExecutionQueue( appName );
 					return ExecuteJSXByPath( conf.Init, args, callback, conf, flags );
 				}
