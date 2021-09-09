@@ -635,6 +635,7 @@ cAjax.prototype.send = function( data, callback )
         }
         else if( typeof( reqID ) == 'undefined' )
         {
+        	console.log( 'No reqid!' );
         }
         
         self.wsRequestID = reqID;
