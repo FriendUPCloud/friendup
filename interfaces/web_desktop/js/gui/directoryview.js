@@ -872,7 +872,6 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	// When resizing the window
 	winobj.redrawIcons = function( icons, direction, callback )
 	{
-		console.log( 'Do we do it?', icons );
 		let dirv = this.directoryview;
 		
 		// Assign icons now
@@ -914,6 +913,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					}
 					if( !changed ) 
 					{
+						console.log( 'Nothing changed. Bye.' );
 						return;
 					}
 				}
@@ -1219,6 +1219,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					case 'imageview':
 					case 'iconview':
 					{
+						console.log( 'Yeah, icon view.' );
 						setTimeout( function(){ self.completeRedraw(); }, 250 );
 						CheckScreenTitle();
 						let res = self.directoryview.RedrawIconView( self.directoryview.filearea, self.icons, direction, lm );
@@ -1229,6 +1230,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					}
 					case 'listview':
 					{
+						console.log( 'Yeah, list view.' );
 						setTimeout( function(){ self.completeRedraw(); }, 25 ); // to help with column resizing, lower resize timeout
 						CheckScreenTitle();
 						let res = self.directoryview.RedrawListView( self.directoryview.filearea, self.icons, direction );
@@ -1239,6 +1241,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					}
 					case 'columnview':
 					{
+						console.log( 'Yeah, column view.' );
 						setTimeout( function(){ self.completeRedraw(); }, 250 );
 						CheckScreenTitle();
 						let res = self.directoryview.RedrawColumnView( self, self.icons, direction );
