@@ -57,8 +57,6 @@ FriendWebSocket = function( conf )
 	self.allowReconnect = true;
 	self.pingInterval = 1000 * 10;
 	self.maxPingWait = 1000 * 10;
-	//self.pingInterval = 1000 * 40;
-	//self.maxPingWait = 1000 * 30;
 	self.pingCheck = 0;
 	self.reconnectDelay = 200; // ms
 	self.reconnectMaxDelay = 1000 * 30; // 30 sec max delay between reconnect attempts
@@ -791,6 +789,7 @@ FriendWebSocket.prototype.sendPing = function( msg )
 	if( self.pingCheck )
 		clearTimeout( self.pingCheck );
 	self.pingCheck = setTimeout( checkPing, self.maxPingWait );
+	console.log( 'Ping is sent (max wait: ' + ( self.maxPingWait/1000 ) + ' secs.)' );
 
 	function checkPing()
 	{
