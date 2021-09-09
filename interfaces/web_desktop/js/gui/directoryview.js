@@ -4475,76 +4475,93 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					let fi = self.fileInfo;
 					
 					// TODO: Figure out something..
-					dr.getIcons( fi, function( icons, something, response )
+					let getIconsWorked = false; // 
+					function getIcons()
 					{
-						if( icons )
+						dr.getIcons( fi, function( icons, something, response )
 						{
-							// Assign door to each icon
-							for( let t in icons )
+							getIconsWorked = true;
+							if( icons )
 							{
-								if( winDoor.instantiate )
+								// Assign door to each icon
+								for( let t in icons )
 								{
-									icons[t].Door = winDoor.instantiate();
+									if( winDoor.instantiate )
+									{
+										icons[t].Door = winDoor.instantiate();
+									}
+									else
+									{
+										// TODO: What happened? No instantiation?
+										console.log( 'Failed to make door.' );
+										console.log( winDoor );
+									}
+								}
+							
+								// Check, might be reinstantiated..
+								if( typeof( self.redrawIcons ) != 'undefined' )
+								{
+									console.log( 'Redrawing icons for: ' + something + '(' + response + ')' );
+									self.redrawIcons( icons, self.direction );
+									if( w.revent ) w.removeEvent( 'resize', w.revent );
+									w.revent = w.addEvent( 'resize', function( cbk )
+									{
+										dv.toChange = true;
+										self.redrawIcons( false, self.direction, cbk );
+									} );
+								
 								}
 								else
 								{
-									// TODO: What happened? No instantiation?
-									console.log( 'Failed to make door.' );
-									console.log( winDoor );
+									console.log( 'What happened?', self );	
 								}
 							}
-							
-							// Check, might be reinstantiated..
-							if( typeof( self.redrawIcons ) != 'undefined' )
-							{
-								console.log( 'Redrawing icons for: ' + something + '(' + response + ')' );
-								self.redrawIcons( icons, self.direction );
-								if( w.revent ) w.removeEvent( 'resize', w.revent );
-								w.revent = w.addEvent( 'resize', function( cbk )
-								{
-									dv.toChange = true;
-									self.redrawIcons( false, self.direction, cbk );
-								} );
-								
-							}
+							// empty, go back
 							else
 							{
-								console.log( 'What happened?', self );	
-							}
-						}
-						// empty, go back
-						else
-						{
-							try
-							{
-								let dw = self.directoryview;
-								Notify( {
-									title: i18n( 'i18n_illegal_path' ),
-									text: i18n( 'i18n_illegal_path_desc' )
-								} );
-								// If we're not at the top of the history array, go back
-								if( dw.pathHistoryIndex > 0 )
+								try
 								{
-									let fin = dw.pathHistoryRewind();
-									dw.window.fileInfo = fin;
-				
-									if( !isMobile && dw.window.fileBrowser )
+									let dw = self.directoryview;
+									Notify( {
+										title: i18n( 'i18n_illegal_path' ),
+										text: i18n( 'i18n_illegal_path_desc' )
+									} );
+									// If we're not at the top of the history array, go back
+									if( dw.pathHistoryIndex > 0 )
 									{
-										dw.window.fileBrowser.setPath( fin.Path, false, { lockHistory: true, passive: true } );
+										let fin = dw.pathHistoryRewind();
+										dw.window.fileInfo = fin;
+				
+										if( !isMobile && dw.window.fileBrowser )
+										{
+											dw.window.fileBrowser.setPath( fin.Path, false, { lockHistory: true, passive: true } );
+										}
+										dw.window.refresh();
 									}
-									dw.window.refresh();
+								}
+								catch( e )
+								{
+									console.log( '[Directoryview] No content.' );
 								}
 							}
-							catch( e )
-							{
-								console.log( '[Directoryview] No content.' );
-							}
-						}
-						if( callback ) callback();
+							if( callback ) callback();
 						
-						// Release refresh timeout
-						self.refreshTimeout = null;
-						w.refreshing = false;
+							// Release refresh timeout
+							self.refreshTimeout = null;
+							w.refreshing = false;
+						} );
+					}
+					// Try to get icons, with an additional retry...
+					getIcons( function()
+					{
+						setTimeout( function()
+						{
+							if( !getIconsWorked )
+							{
+								// Final try...
+								getIcons();
+							}
+						}, 1600 );
 					} );
 				}, timer );
 			}
