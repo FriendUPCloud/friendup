@@ -667,7 +667,7 @@ cAjax.prototype.send = function( data, callback )
 				{
 					if( self.onload )
 					{
-						//console.log( 'This error.' );
+						console.log( 'This error could be.' );
 						self.onload( false, false );
 						self.destroy();
 					}
@@ -742,6 +742,7 @@ cAjax.prototype.send = function( data, callback )
 		{
 			if( self.mode == 'websocket' )
 			{
+				console.log( 'Destroy on life.' );
 				self.destroySilent();
 			}
 			else
@@ -796,12 +797,17 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		self.life = false;
 	}, 15000 );
 	
-	if( !self.onload ) return;
+	if( !self.onload ) 
+	{
+		//console.log( '[cajax] No onload.' );
+		return;
+	}
 	
 	// The data just failed - which means the websocket went away!
 	if( typeof( wsdata ) == 'undefined' )
 	{
-		if( Workspace )
+		//console.log( '[cajax] Got undefined error...' );
+		if( window.Workspace )
 		{
 			// Add to queue
 			//console.log( 'We got strange ws data!' );
@@ -811,9 +817,9 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		self.destroy();
 		return;
 	}
-	
-	if( typeof( wsdata ) == 'object' && wsdata.response )
+	else if( typeof( wsdata ) == 'object' && wsdata.response )
 	{
+		//console.log( '[cajax] Got error...' );
 		self.rawData = 'error';
 		if( self.proxy )
 			self.proxy.responseText = self.rawData;

@@ -913,6 +913,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					}
 					if( !changed ) 
 					{
+						console.log( 'Nothing changed. Bye.' );
 						return;
 					}
 				}
@@ -1218,6 +1219,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					case 'imageview':
 					case 'iconview':
 					{
+						console.log( 'Yeah, icon view.' );
 						setTimeout( function(){ self.completeRedraw(); }, 250 );
 						CheckScreenTitle();
 						let res = self.directoryview.RedrawIconView( self.directoryview.filearea, self.icons, direction, lm );
@@ -1228,6 +1230,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					}
 					case 'listview':
 					{
+						console.log( 'Yeah, list view.' );
 						setTimeout( function(){ self.completeRedraw(); }, 25 ); // to help with column resizing, lower resize timeout
 						CheckScreenTitle();
 						let res = self.directoryview.RedrawListView( self.directoryview.filearea, self.icons, direction );
@@ -1238,6 +1241,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					}
 					case 'columnview':
 					{
+						console.log( 'Yeah, column view.' );
 						setTimeout( function(){ self.completeRedraw(); }, 250 );
 						CheckScreenTitle();
 						let res = self.directoryview.RedrawColumnView( self, self.icons, direction );
@@ -4475,8 +4479,10 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					let fi = self.fileInfo;
 					
 					// TODO: Figure out something..
+					console.log( 'Refreshing icons for view.' );
 					dr.getIcons( fi, function( icons, something, response )
 					{
+						console.log( '> Done refreshing ' + something );
 						if( icons )
 						{
 							// Assign door to each icon
@@ -4497,6 +4503,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 							// Check, might be reinstantiated..
 							if( typeof( self.redrawIcons ) != 'undefined' )
 							{
+								console.log( 'Redrawing icons for: ' + something + '(' + response + ')' );
 								self.redrawIcons( icons, self.direction );
 								if( w.revent ) w.removeEvent( 'resize', w.revent );
 								w.revent = w.addEvent( 'resize', function( cbk )
@@ -4505,6 +4512,10 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 									self.redrawIcons( false, self.direction, cbk );
 								} );
 								
+							}
+							else
+							{
+								console.log( 'What happened?', self );	
 							}
 						}
 						// empty, go back

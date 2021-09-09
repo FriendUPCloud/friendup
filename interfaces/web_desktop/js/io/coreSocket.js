@@ -56,9 +56,7 @@ FriendWebSocket = function( conf )
 	self.chunks = {};
 	self.allowReconnect = true;
 	self.pingInterval = 1000 * 10;
-	self.maxPingWait = 1000 * 10;
-	//self.pingInterval = 1000 * 40;
-	//self.maxPingWait = 1000 * 30;
+	self.maxPingWait = Math.floor( 1000 * 1.5 );
 	self.pingCheck = 0;
 	self.reconnectDelay = 200; // ms
 	self.reconnectMaxDelay = 1000 * 30; // 30 sec max delay between reconnect attempts
@@ -778,7 +776,9 @@ FriendWebSocket.prototype.startKeepAlive = function()
 FriendWebSocket.prototype.sendPing = function( msg )
 {
 	let self = this;
-	if ( !self.keepAlive )
+	if( !self.keepAlive )
+		return;
+	if( self.pingCheck )
 		return;
 	
 	let timestamp = Date.now();
@@ -796,6 +796,7 @@ FriendWebSocket.prototype.sendPing = function( msg )
 	{
 		self.wsClose( 1000, 'ping never got its pong' );
 		self.reconnect();
+		self.pingCheck = null;
 	}
 	
 	self.sendCon( ping );
