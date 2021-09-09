@@ -788,7 +788,6 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		//console.log( '[cajax] Defunct ajax object destroying self after five seconds. 2' );
 		if( self.mode == 'websocket' )
 		{
-			console.log( 'DESTROY on life.' );
 			self.destroySilent();
 		}
 		else

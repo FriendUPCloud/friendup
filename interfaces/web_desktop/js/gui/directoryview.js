@@ -872,6 +872,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	// When resizing the window
 	winobj.redrawIcons = function( icons, direction, callback )
 	{
+		console.log( 'Do we do it?', icons );
 		let dirv = this.directoryview;
 		
 		// Assign icons now
