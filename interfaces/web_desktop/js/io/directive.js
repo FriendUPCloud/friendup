@@ -117,6 +117,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	// Check if the app called is found in the singleInstanceApps array
 	if( Friend.singleInstanceApps[ appName ] )
 	{
+		console.log( 'ExecuteApplication - found in singleInstanceApps', appName );
 		// Clean blocker
 		RemoveFromExecutionQueue( appName );
 		
@@ -151,6 +152,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			if( Workspace.applications[ a ].applicationName == appName )
 			{
 				var app = Workspace.applications[ a ];
+				console.log( 'ExecuteApplication, app found on mobile', [ appName, app ]);
 				for( var z in app.windows )
 				{
 					_ActivateWindow( app.windows[ z ]._window.parentNode );
@@ -451,7 +453,14 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				// Same domain
 				ifr.src = sdomain + filepath + 'index.html?friendup=' + sdomain;
 			}
-
+			
+			console.log( 'ExecuteApplication - opening app', {
+				ifr    : ifr,
+				conf   : conf,
+				flags  : flags,
+				silent : flags.openSilent,
+			});
+			
 			// Register name and ID
 			ifr.applicationName = app.indexOf( ' ' ) > 0 ? app.split( ' ' )[0] : app;
 			ifr.userId = Workspace.userId;
