@@ -798,14 +798,14 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	
 	if( !self.onload ) 
 	{
-		console.log( '[cajax] No onload.' );
+		//console.log( '[cajax] No onload.' );
 		return;
 	}
 	
 	// The data just failed - which means the websocket went away!
 	if( typeof( wsdata ) == 'undefined' )
 	{
-		console.log( '[cajax] Got undefined error...' );
+		//console.log( '[cajax] Got undefined error...' );
 		if( window.Workspace )
 		{
 			// Add to queue
@@ -818,7 +818,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	}
 	else if( typeof( wsdata ) == 'object' && wsdata.response )
 	{
-		console.log( '[cajax] Got error...' );
+		//console.log( '[cajax] Got error...' );
 		self.rawData = 'error';
 		if( self.proxy )
 			self.proxy.responseText = self.rawData;

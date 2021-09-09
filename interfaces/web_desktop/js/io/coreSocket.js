@@ -17,13 +17,13 @@ FriendWebSocket = function( conf )
 	
 	let self = this;
 	
-	let uniqueWords = [ 'Ball', 'Jacket', 'Fish', 'Origon', 'Nelson', 'Blue', 'Red', 'Slash' ];
+	/*let uniqueWords = [ 'Ball', 'Jacket', 'Fish', 'Origon', 'Nelson', 'Blue', 'Red', 'Slash' ];
 	let ustr = '';
 	for( let a = 0; a < 4; a++ )
 	{
 		ustr += uniqueWords[ Math.floor( Math.random() * uniqueWords.length ) ];
 	}
-	self.uniqueName = ustr;
+	self.uniqueName = ustr;*/
 	
 	// REQUIRED CONFIG
 	self.pConf = conf;
