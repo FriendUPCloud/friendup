@@ -4477,6 +4477,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					// TODO: Figure out something..
 					dr.getIcons( fi, function( icons, something, response )
 					{
+						console.log( 'Ok, response: ', icons, something, response );
 						if( icons )
 						{
 							// Assign door to each icon
