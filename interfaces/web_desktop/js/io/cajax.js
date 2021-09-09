@@ -628,8 +628,6 @@ cAjax.prototype.send = function( data, callback )
         
         let reqID = Workspace.conn.request( req, bindSingleParameterMethod( self, 'handleWebSocketResponse' ) );
         
-        console.log( 'We got request id!: ' + reqID );
-        
         if( typeof( reqID ) != 'undefined' && !reqID )
         {
         	AddToCajaxQueue( self );
@@ -744,11 +742,11 @@ cAjax.prototype.send = function( data, callback )
 		{
 			if( self.mode == 'websocket' )
 			{
+				console.log( 'Destroy on life.' );
 				self.destroySilent();
 			}
 			else
 			{
-				console.log( 'Destroying object on "life"' );
 				self.destroy();
 			}
 		}, 15000 );
@@ -759,7 +757,7 @@ cAjax.prototype.send = function( data, callback )
 		//console.log( '[cajax] No openfunc!' );
 	}
 	// We were not successful!
-	console.log( '[cajax] Just destroying.' );
+	//console.log( '[cajax] Just destroying.' );
 	this.destroy();
 }
 
@@ -790,11 +788,11 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		//console.log( '[cajax] Defunct ajax object destroying self after five seconds. 2' );
 		if( self.mode == 'websocket' )
 		{
+			console.log( 'DESTROY on life.' );
 			self.destroySilent();
 		}
 		else
 		{
-			console.log( 'Close on life.' );
 			self.destroy();
 		}
 		self.life = false;
@@ -809,11 +807,11 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	// The data just failed - which means the websocket went away!
 	if( typeof( wsdata ) == 'undefined' )
 	{
-		console.log( '[cajax] Got undefined error...' );
+		//console.log( '[cajax] Got undefined error...' );
 		if( window.Workspace )
 		{
 			// Add to queue
-			console.log( 'We got strange ws data!' );
+			//console.log( 'We got strange ws data!' );
 			AddToCajaxQueue( self );
 			return Friend.User.CheckServerConnection();
 		}
@@ -822,11 +820,11 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	}
 	else if( typeof( wsdata ) == 'object' && wsdata.response )
 	{
-		console.log( '[cajax] Got error...' );
+		//console.log( '[cajax] Got error...' );
 		self.rawData = 'error';
 		if( self.proxy )
 			self.proxy.responseText = self.rawData;
-		else console.log( 'No more proxy 1..', wsdata, self.onload );
+		//else console.log( 'No more proxy 1..', wsdata, self.onload );
 		self.returnCode = 'error';
 		self.destroy();
 		return false;
