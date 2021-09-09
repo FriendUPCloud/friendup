@@ -366,6 +366,8 @@ cAjax.prototype.destroySilent = function()
 }
 cAjax.prototype.destroy = function()
 {
+	console.log( 'Destroying object!' );
+	
 	this.destroy = function(){};
 	
 	// We can use this for tracing
@@ -377,7 +379,7 @@ cAjax.prototype.destroy = function()
 	// Terminate with onload
 	if( this.onload )
 	{
-		//console.log( 'Should never happen.' );
+		console.log( 'Should never happen.' );
 		this.onload( null, null );
 		this.onload = null;
 		if( this.proxy )
