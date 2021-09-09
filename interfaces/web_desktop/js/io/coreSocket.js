@@ -789,7 +789,7 @@ FriendWebSocket.prototype.sendPing = function( msg )
 	if( self.pingCheck )
 		clearTimeout( self.pingCheck );
 	self.pingCheck = setTimeout( checkPing, self.maxPingWait );
-	console.log( 'Ping is sent (max wait: ' + ( self.maxPingWait/1000 ) + ' secs.)' );
+	console.log( 'Ping is sent (max wait: ' + ( self.maxPingWait/1000 ) + ' secs.)', self );
 
 	function checkPing()
 	{
