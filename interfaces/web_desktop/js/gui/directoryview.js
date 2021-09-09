@@ -4477,7 +4477,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					// TODO: Figure out something..
 					dr.getIcons( fi, function( icons, something, response )
 					{
-						console.log( 'Ok, response: ', icons, something, response );
 						if( icons )
 						{
 							// Assign door to each icon
@@ -4498,6 +4497,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 							// Check, might be reinstantiated..
 							if( typeof( self.redrawIcons ) != 'undefined' )
 							{
+								console.log( 'Redrawing icons for: ' + something + '(' + response + ')' );
 								self.redrawIcons( icons, self.direction );
 								if( w.revent ) w.removeEvent( 'resize', w.revent );
 								w.revent = w.addEvent( 'resize', function( cbk )
