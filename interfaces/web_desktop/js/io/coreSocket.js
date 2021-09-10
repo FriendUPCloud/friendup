@@ -553,12 +553,14 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 	let self = this;
 	if( self.state != 'open' )
 	{
+		console.log( 'State isn\'t open.' );
 		queue( msg );
 		return false;
 	}
 	
 	if ( !wsReady() )
 	{
+		console.log( 'Socket isn\'t ready.' );
 		queue( msg );
 		self.doReconnect();
 		return false;
