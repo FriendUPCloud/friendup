@@ -8,7 +8,6 @@ var WorkspaceInside = {
 	workspaceInside: true,
 	refreshDesktopIconsRetries: 0,
 	websocketDisconnectTime: 0,
-	websocketState: null,
 	currentViewState: 'inactive',
 	// Did we load the wallpaper?
 	wallpaperLoaded: false,
@@ -1192,7 +1191,7 @@ var WorkspaceInside = {
 	},
 	getWebSocketsState: function()
 	{
-		if( Workspace.readyToRun ) return Workspace.websocketState;
+		if( Workspace.readyToRun ) return ( Workspace.conn && Workspace.conn.ws ) ? Workspace.conn.ws.ready : 'false';
 		return 'false';
 	},
 	initWebSocket: function( callback )
@@ -1216,7 +1215,7 @@ var WorkspaceInside = {
 		}
 	
 		// We're already open or connecting
-		if( Workspace.websocketState == 'open' ) return;
+		if( Workspace.conn && Workspace.conn.ws && Workspace.conn.ws.ready ) return;
 		
 		if( window.Friend && Friend.User && Friend.User.State != 'online' ) 
 		{
@@ -1224,9 +1223,6 @@ var WorkspaceInside = {
 			closeConn();
 			return;
 		}
-		
-		if( Workspace.websocketState == 'connecting' )
-			return;
 		
 		if( !Workspace.sessionId && Workspace.userLevel )
 		{
@@ -1249,9 +1245,6 @@ var WorkspaceInside = {
 			this.initWSTimeout = null;
 		}
 		
-		// Force connecting ws state (we will close it!)
-		Workspace.websocketState = 'connecting';
-
 		let conf = {
 			onstate: onState,
 			onend  : onEnd
@@ -1295,31 +1288,20 @@ var WorkspaceInside = {
 		let selfConn = this.conn;
 
 		function onState( e )
-		{
-			//console.log( 'Worspace.conn.onState', e, 'State: ' + Workspace.websocketState );
-			
+		{	
 			if( e.type == 'error' || e.type == 'close' )
 			{
 				if( e.type == 'close' )
 				{
 					console.log( '[onState] The ws closed.' );
-					Workspace.websocketState = 'closed';
 				}
 				else if( e.type == 'error' )
 				{
 					console.log( '[onState] We got an error.' );
-					Workspace.websocketState = 'error';
 				}
 			}
 			else if( e.type == 'ping' )
 			{
-				if( Workspace.websocketState != 'open' )
-				{
-					// Refresh mountlist
-					Workspace.websocketState = 'open';
-					Workspace.refreshDesktop( false, true );
-				}
-
 				if( Friend.User )
 					Friend.User.SetUserConnectionState( 'online' );
 				
@@ -1341,7 +1323,7 @@ var WorkspaceInside = {
 				}
 				else if( e.type == 'connecting' )
 				{
-					Workspace.websocketState = 'connecting';
+					// ... we are connecting
 				}
 				if( e.type != 'connecting' && e.type != 'open' )
 				{
@@ -1353,7 +1335,7 @@ var WorkspaceInside = {
 		function onEnd( e )
 		{
 			//console.log( 'Workspace.conn.onEnd', e );
-			Workspace.websocketState = 'closed';
+			// We closed connection
 			Friend.User.SetUserConnectionState( 'offline' );
 		}
 
@@ -9541,7 +9523,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		// If we are in a connecting state, wait with startup sequence
 		// TODO: Make sure cAjax also does this check
-		if( Workspace.websocketState == 'connecting' ) 
+		if( !( Workspace.conn && Workspace.conn.ws && Workspace.conn.ws.ready ) ) 
 		{
 			Workspace.onReadyTemp = Workspace.onReady;
 			Workspace.onReady = function(){};

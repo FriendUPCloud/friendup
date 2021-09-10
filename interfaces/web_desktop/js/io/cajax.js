@@ -417,7 +417,6 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		Workspace.conn && 
 		Workspace.conn.ws && 
 		Workspace.conn.ws.ready &&
-		Workspace.websocketState == 'open' &&
 		( this.proxy && this.proxy.responseType != 'arraybuffer' ) &&
 		typeof( url ) == 'string' && 
 		url.indexOf( 'http' ) != 0 && 
@@ -599,7 +598,7 @@ cAjax.prototype.send = function( data, callback )
 	}
 
 	// Check if we can use websockets
-	if( self.mode == 'websocket' && window.Workspace && Workspace.conn && Workspace.conn.ws && Workspace.websocketState == 'open' )
+	if( self.mode == 'websocket' && window.Workspace && Workspace.conn && Workspace.conn.ws && Workspace.conn.ws.ready )
 	{
         let u = self.url.split( '?' );
         let wsdata = ( data ? data : {} );
