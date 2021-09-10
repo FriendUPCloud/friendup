@@ -188,9 +188,6 @@ FriendWebSocket.prototype.connect = function()
 		
 	self.setState( 'connecting' );
 	
-	
-	console.log( 'Starting connection.' );
-	
 	if( self.ws )
 	{
 		self.cleanup();
