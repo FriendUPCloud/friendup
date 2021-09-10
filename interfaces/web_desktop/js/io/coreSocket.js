@@ -551,7 +551,7 @@ FriendWebSocket.prototype.sendCon = function( msg )
 FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 {
 	let self = this;
-	if( !self.state != 'open' )
+	if( self.state != 'open' )
 	{
 		queue( msg );
 		return false;
