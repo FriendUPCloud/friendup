@@ -359,6 +359,8 @@ FriendWebSocket.prototype.setState = function( type, data )
 
 FriendWebSocket.prototype.handleOpen = function( e )
 {
+	console.log( 'We are open!' );
+	
 	this.reconnectAttempt = 0;
 	this.setSession();
 	
@@ -527,6 +529,7 @@ FriendWebSocket.prototype.setSession = function()
 
 FriendWebSocket.prototype.setReady = function()
 {
+	console.log( 'We are ready.' );
 	this.ready = true;
 	this.executeSendQueue();
 }
