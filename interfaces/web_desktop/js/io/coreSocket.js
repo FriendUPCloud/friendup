@@ -553,17 +553,16 @@ FriendWebSocket.prototype.sendCon = function( msg )
 FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 {
 	let self = this;
-	console.log( 'What is?', self.state );
+
 	if( self.state.type == 'connecting'|| self.state.type == 'close' || self.state.type == 'error' || self.state.type == 'reconnect' )
 	{
-		console.log( 'State isn\'t open.' );
 		queue( msg );
 		return false;
 	}
 	
 	if ( !wsReady() )
 	{
-		console.log( 'Socket isn\'t ready.' );
+		//console.log( 'Socket isn\'t ready.' );
 		queue( msg );
 		self.doReconnect();
 		return false;
@@ -589,8 +588,6 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 		self.reconnect();
 		return false;
 	}
-
-	console.log( 'Did send.' );
 	
 	return success;
 	
@@ -811,7 +808,6 @@ FriendWebSocket.prototype.sendPing = function( msg )
 		self.pingCheck = null;
 	}
 	
-	console.log( 'Sending ping!: ', ping );
 	self.sendCon( ping );
 }
 
