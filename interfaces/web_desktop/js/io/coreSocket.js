@@ -364,7 +364,6 @@ FriendWebSocket.prototype.setState = function( type, data )
 		type: type,
 		data: data,
 	};
-	console.log( 'State: ', this.state );
 	if( this.onstate ) this.onstate( this.state );
 }
 
@@ -741,9 +740,10 @@ FriendWebSocket.prototype.wsSend = function( str )
         return false;
     }
 	let self = this;
+	let res = false;
 	try
 	{
-		let res = self.ws.send( str );
+		res = self.ws.send( str );
 	}
 	catch( e )
 	{
@@ -753,6 +753,8 @@ FriendWebSocket.prototype.wsSend = function( str )
 		} );
 		return false;
 	}
+	
+	console.log( 'What is res?', res );
 	
 	return true;
 }
