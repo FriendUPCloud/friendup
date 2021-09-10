@@ -169,13 +169,13 @@ FriendWebSocket.prototype.connect = function()
 		throw new Error( 'no url provided for socket' );
 	}
 	
-	if( self.state == 'open' ) 
+	if( self.state.type == 'open' ) 
 	{
 		// console.log( 'We are already open.' );
 		return;
 	}
 	
-	if( self.state == 'connecting' ) 
+	if( self.state.type == 'connecting' ) 
 	{
 		// console.log('ongoing connect. we will wait for this to finish.');
 		return;
@@ -552,7 +552,7 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 {
 	console.log( 'Trying to send on socket.' );
 	let self = this;
-	if( self.state != 'open' )
+	if( self.state.type != 'open' )
 	{
 		console.log( 'State isn\'t open.' );
 		queue( msg );
