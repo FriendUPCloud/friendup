@@ -4487,7 +4487,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 								console.log( '[gettheicons] Abort because of success.' );
 								return;
 							}
-							if( !w._window || !w._window.parentNode ) 
+							if( !w._window || !w._window.parentNode || !w._window.parentNode.parentNode ) 
 							{
 								console.log( '[gettheicons] Abort because window was closed.' );
 								return;
