@@ -1193,8 +1193,7 @@ var WorkspaceInside = {
 	{
 		if( Workspace.readyToRun )
 		{
-			let res = ( Workspace.conn && Workspace.conn.ws ) ? Workspace.conn.ws.ready : 'false';
-			console.log( 'Getting websocket state: ' + res );
+			let res = ( Workspace.conn && Workspace.conn.ws && Workspace.conn.ws.ready ) ? 'open' : 'false';
 			return res;
 		}
 		return 'false';
