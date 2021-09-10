@@ -368,10 +368,9 @@ FriendWebSocket.prototype.handleOpen = function( e )
 	console.log( 'We are open!' );
 	
 	this.reconnectAttempt = 0;
-	this.setSession();
-	
 	// We are open
 	this.setState( 'open' );
+	this.setSession();
 	this.startKeepAlive();
 }
 
