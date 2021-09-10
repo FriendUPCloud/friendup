@@ -550,6 +550,7 @@ FriendWebSocket.prototype.sendCon = function( msg )
 
 FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 {
+	console.log( 'Trying to send on socket.' );
 	let self = this;
 	if( self.state != 'open' )
 	{
