@@ -169,18 +169,21 @@ FriendWebSocket.prototype.connect = function()
 		throw new Error( 'no url provided for socket' );
 	}
 	
-	if( self.state.type == 'open' ) 
+	if( self.state && self.state.type )
 	{
-		// console.log( 'We are already open.' );
-		return;
+		if( self.state.type == 'open' ) 
+		{
+			// console.log( 'We are already open.' );
+			return;
+		}
+		
+		if( self.state.type == 'connecting' ) 
+		{
+			// console.log('ongoing connect. we will wait for this to finish.');
+			return;
+		}
 	}
-	
-	if( self.state.type == 'connecting' ) 
-	{
-		// console.log('ongoing connect. we will wait for this to finish.');
-		return;
-	}
-	
+		
 	self.setState( 'connecting' );
 	
 	
