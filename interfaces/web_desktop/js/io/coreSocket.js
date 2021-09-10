@@ -735,6 +735,13 @@ FriendWebSocket.prototype.chunkSend = function( str )
 
 FriendWebSocket.prototype.wsSend = function( str )
 {
+    if( !navigator.onLine )
+    {
+    	console.log( 'We are offline!' );
+    	self.close();
+    	return false;
+    }
+    
     if( !this.onstate ) 
     {
         return false;
@@ -753,8 +760,6 @@ FriendWebSocket.prototype.wsSend = function( str )
 		} );
 		return false;
 	}
-	
-	console.log( 'What is res?', res );
 	
 	return true;
 }
