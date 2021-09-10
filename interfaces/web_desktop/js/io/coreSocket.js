@@ -184,6 +184,8 @@ FriendWebSocket.prototype.connect = function()
 	self.setState( 'connecting' );
 	
 	
+	console.log( 'Starting connection.' );
+	
 	if( self.ws )
 	{
 		self.cleanup();
@@ -192,6 +194,7 @@ FriendWebSocket.prototype.connect = function()
 	{
 		try
 		{
+			console.log( 'Making websocket.' );
 			self.ws = new window.WebSocket( self.url, 'FC-protocol' );
 			self.ws.onerror = function()
 			{
@@ -208,6 +211,7 @@ FriendWebSocket.prototype.connect = function()
 	{
 		if( err == 'error' )
 		{
+			console.log( 'Failed with error.' );
 			self.cleanup();
 		}
 		else
