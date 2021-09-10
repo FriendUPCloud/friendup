@@ -368,9 +368,8 @@ FriendWebSocket.prototype.setState = function( type, data )
 
 FriendWebSocket.prototype.handleOpen = function( e )
 {
-	console.log( 'We are open!' );
-	
 	this.reconnectAttempt = 0;
+	
 	// We are open
 	this.setState( 'open' );
 	this.setSession();
