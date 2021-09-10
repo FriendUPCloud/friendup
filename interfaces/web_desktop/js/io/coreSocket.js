@@ -364,7 +364,7 @@ FriendWebSocket.prototype.setState = function( type, data )
 		type: type,
 		data: data,
 	};
-	//console.log( 'State: ', this.state );
+	console.log( 'State: ', this.state );
 	if( this.onstate ) this.onstate( this.state );
 }
 
