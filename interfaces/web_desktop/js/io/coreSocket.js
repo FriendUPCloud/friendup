@@ -537,7 +537,6 @@ FriendWebSocket.prototype.setSession = function()
 
 FriendWebSocket.prototype.setReady = function()
 {
-	console.log( 'We are ready.' );
 	this.ready = true;
 	this.executeSendQueue();
 }
