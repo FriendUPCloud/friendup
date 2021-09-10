@@ -85,6 +85,7 @@ FriendWebSocket.prototype.reconnect = function()
 {
 	let self = this;
 	
+	self.ready = false;
 	self.allowReconnect = true;
 	
 	// We're pre reconnect - wait..
@@ -102,6 +103,7 @@ FriendWebSocket.prototype.reconnect = function()
 FriendWebSocket.prototype.close = function( code, reason )
 {
 	let self = this;
+	self.ready = false;
 	self.allowReconnect = false;
 	self.url = null;
 	self.sessionId = null;
