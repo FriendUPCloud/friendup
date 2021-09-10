@@ -171,7 +171,6 @@ FriendWebSocket.prototype.connect = function()
 	
 	if( self.state && self.state.type )
 	{
-		console.log( 'What is?', self.state );
 		if( self.state.type == 'open' ) 
 		{
 			// console.log( 'We are already open.' );
@@ -553,8 +552,8 @@ FriendWebSocket.prototype.sendCon = function( msg )
 
 FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 {
-	console.log( 'Trying to send on socket.' );
 	let self = this;
+	console.log( 'What is?', self.state );
 	if( self.state.type != 'open' )
 	{
 		console.log( 'State isn\'t open.' );
