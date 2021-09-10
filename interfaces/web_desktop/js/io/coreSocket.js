@@ -554,7 +554,7 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 {
 	let self = this;
 	console.log( 'What is?', self.state );
-	if( self.state.type != 'open' )
+	if( self.state.type == 'connecting'|| self.state.type == 'close' || self.state.type == 'error' || self.state.type == 'reconnect' )
 	{
 		console.log( 'State isn\'t open.' );
 		queue( msg );
