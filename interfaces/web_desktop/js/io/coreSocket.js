@@ -233,6 +233,8 @@ FriendWebSocket.prototype.attachHandlers = function()
 	self.ws.onerror = onError;
 	self.ws.onmessage = onMessage;
 	
+	console.log( 'Attaching handlers.' );
+	
 	function onOpen( e ) { self.handleOpen( e ); }
 	function onClose( e ) { self.handleClose( e ); }
 	function onError( e ) { self.handleError( e ); }
