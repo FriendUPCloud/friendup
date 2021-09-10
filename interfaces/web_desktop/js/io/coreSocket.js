@@ -737,7 +737,6 @@ FriendWebSocket.prototype.wsSend = function( str )
 {
     if( !navigator.onLine )
     {
-    	console.log( 'We are offline!' );
     	self.close();
     	return false;
     }
