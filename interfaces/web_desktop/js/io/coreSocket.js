@@ -199,7 +199,6 @@ FriendWebSocket.prototype.connect = function()
 	{
 		try
 		{
-			console.log( 'Making websocket.' );
 			self.ws = new window.WebSocket( self.url, 'FC-protocol' );
 			self.ws.onerror = function()
 			{
@@ -241,8 +240,6 @@ FriendWebSocket.prototype.attachHandlers = function()
 	self.ws.onclose = onClose;
 	self.ws.onerror = onError;
 	self.ws.onmessage = onMessage;
-	
-	console.log( 'Attaching handlers.' );
 	
 	function onOpen( e ) { self.handleOpen( e ); }
 	function onClose( e ) { self.handleClose( e ); }
