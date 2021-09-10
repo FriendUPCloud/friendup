@@ -366,7 +366,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				{
 					lws_callback_on_writable( wsi );
 				}
-				
+				/*
 				UserSession *locus = NULL;
 	
 				locus = wstd->wstd_WSD->wsc_UserSession;
@@ -377,6 +377,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						locus->us_WSD = wsd;
 					}
 				}
+				*/
 			}
 			
 #ifndef INPUT_QUEUE
