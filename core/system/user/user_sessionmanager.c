@@ -1037,11 +1037,15 @@ int USMRemoveOldSessions( void *lsb )
 		// we delete session
 		if( canDelete == TRUE && ( ( acttime -  remSession->us_LastActionTime ) > sb->sl_RemoveSessionsAfterTime ) )
 		{
+			USMSessionsDeleteDB( smgr, remSession->us_SessionID );
+			UserSessionDelete( remSession );
+			/*
 			if( remSession != (UserSession *) smgr->usm_SessionsToBeRemoved )
 			{
 				remSession->node.mln_Succ = (MinNode *) smgr->usm_SessionsToBeRemoved;
 				smgr->usm_SessionsToBeRemoved = remSession;
 			}
+			*/
 		}
 		else // or create new root of working sessions
 		{
