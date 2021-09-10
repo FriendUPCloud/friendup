@@ -361,9 +361,6 @@ FriendWebSocket.prototype.handleOpen = function( e )
 {
 	this.reconnectAttempt = 0;
 	this.setSession();
-	this.setReady();
-	
-	
 }
 
 FriendWebSocket.prototype.handleClose = function( e )
@@ -833,6 +830,9 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 		// Reinit user! (sets => server is there)
 		Friend.User.Init();
 	}
+	
+	// We're ready with pong!
+	this.setReady();
 }
 
 FriendWebSocket.prototype.handleChunk = function( chunk )
