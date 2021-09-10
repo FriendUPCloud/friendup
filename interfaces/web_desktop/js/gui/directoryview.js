@@ -4481,12 +4481,24 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					{
 						let tt = setTimeout( function()
 						{
-							if( doneGetting ) return;
-							if( !dr.windowObject ) return;
+							console.log( '[gettheicons] Attempting to retry icon view!' );
+							if( doneGetting ) 
+							{
+								console.log( '[gettheicons] Abort because of success.' );
+								return;
+							}
+							if( !dr.windowObject ) 
+							{
+								console.log( '[gettheicons] Abort because window was closed.' );
+								return;
+							}
+							console.log( '[gettheicons] Try redraw again!' );
 							getTheIconsAndRedraw();
 						}, 1000 );
+						console.log( 'Get it!!' );
 						dr.getIcons( fi, function( icons, something, response )
 						{
+							console.log( 'Success: ', icons );
 							clearTimeout( tt );
 							doneGetting = true;
 							if( icons )
