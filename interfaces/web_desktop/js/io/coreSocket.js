@@ -882,6 +882,20 @@ FriendWebSocket.prototype.handleChunk = function( chunk )
 FriendWebSocket.prototype.stopKeepAlive = function()
 {
 	let self = this;
+	
+	// Clear timeouts
+	if( self.pingCheck )
+	{
+		clearTimeout( self.pingCheck );
+		self.pingCheck = null;
+	}
+	if( self.reconnectTimer )
+	{
+		clearTimeout( self.reconnectTimer );
+		self.reconnectTimer = null;
+	}
+	
+	// Clear intervals
 	if ( !self.keepAlive )
 		return;
 	
