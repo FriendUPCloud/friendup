@@ -780,6 +780,8 @@ FriendWebSocket.prototype.startKeepAlive = function()
 	{
 		self.sendPing();
 	}
+	// Do it now!
+	ping();
 }
 FriendWebSocket.prototype.sendPing = function( msg )
 {
