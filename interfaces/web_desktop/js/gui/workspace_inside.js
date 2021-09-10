@@ -1,16 +1,6 @@
 // Apps on startup
 Friend.startupApps = {};
 
-// Handle network change!
-navigator.connection.onchange = function( e )
-{
-	console.log( 'Network changed?', e );
-	if( Workspace.conn && Workspace.conn.ws )
-	{
-		Workspace.conn.ws.close();
-	}
-}
-
 // Added to workspace
 var WorkspaceInside = {
 	// Tray icons
