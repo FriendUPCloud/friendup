@@ -551,7 +551,7 @@ FriendWebSocket.prototype.sendCon = function( msg )
 FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 {
 	let self = this;
-	if( !socketReady( force ) )
+	if( !self.state != 'open' )
 	{
 		queue( msg );
 		return false;
@@ -592,12 +592,6 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 			self.sendQueue = [];
 		
 		self.sendQueue.push( msg );
-	}
-	
-	function socketReady( force )
-	{
-		let ready = !!( self.ready && !force );
-		return ready;
 	}
 	
 	function wsReady()
@@ -809,6 +803,7 @@ FriendWebSocket.prototype.sendPing = function( msg )
 		self.pingCheck = null;
 	}
 	
+	console.log( 'Sending ping!: ', ping );
 	self.sendCon( ping );
 }
 
@@ -838,14 +833,15 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 	
 	self.setState( 'ping', pingTime );
 	
+	// We're ready with pong!
+	self.setReady();
+	
 	if( Friend.User )
 	{
 		// Reinit user! (sets => server is there)
 		Friend.User.Init();
 	}
 	
-	// We're ready with pong!
-	this.setReady();
 }
 
 FriendWebSocket.prototype.handleChunk = function( chunk )
