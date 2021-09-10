@@ -1191,7 +1191,12 @@ var WorkspaceInside = {
 	},
 	getWebSocketsState: function()
 	{
-		if( Workspace.readyToRun ) return ( Workspace.conn && Workspace.conn.ws ) ? Workspace.conn.ws.ready : 'false';
+		if( Workspace.readyToRun )
+		{
+			let res = ( Workspace.conn && Workspace.conn.ws ) ? Workspace.conn.ws.ready : 'false';
+			console.log( 'Getting websocket state: ' + res );
+			return res;
+		}
 		return 'false';
 	},
 	initWebSocket: function( callback )
