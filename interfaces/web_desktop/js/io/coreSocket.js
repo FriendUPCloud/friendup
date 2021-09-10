@@ -153,7 +153,7 @@ FriendWebSocket.prototype.connect = function()
 {
 	if( window.Friend && Friend.User && Friend.User.State == 'offline' )
 	{
-		// console.log( 'Friend says the user is offline. Bye.' );
+		console.log( 'Friend says the user is offline. Bye.' );
 		return;
 	}
 	
