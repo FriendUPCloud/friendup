@@ -900,9 +900,13 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 	
 	try {
 		console.log( 'closing websocket', code, reason );
+		if( self.ws.close )
+			self.ws.close( code, reason );
+		else console.log( 'Couldn\'t close websocket because close method was null and void.' );
 		if( window.Friend && Friend.User )
+		{
 			Friend.User.CheckServerNow();
-		self.ws.close( code, reason );
+		}
 	} catch (e)
 	{
 		self.logEx( e, 'close' );
