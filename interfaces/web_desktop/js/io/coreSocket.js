@@ -581,10 +581,13 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 	const success = self.wsSend( msgStr );
 	if( !success )
 	{
+		console.log( 'Could not send!' );
 		queue( msg );
 		self.reconnect();
 		return false;
 	}
+
+	console.log( 'Did send.' );
 	
 	return success;
 	
