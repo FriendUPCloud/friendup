@@ -1612,6 +1612,10 @@ void *ParseAndCall( WSThreadData *wstd )
 		releaseWSData( wstd );
 	}
 	
+	if( in != NULL )
+	{
+		FFree( in );
+	}
 	
 	FFree( t );
 	
