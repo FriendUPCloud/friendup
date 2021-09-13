@@ -108,25 +108,6 @@ WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, i
 			DEBUG("[WebsocketReqPutData] pointer to last chunk %p\n", oreq );
 			if( oreq != NULL )
 			{
-				//FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) );
-				// chunks were connected to one message
-				// message is removed from Waiting messages
-				
-				// we must be sure we are working on current list (lock)
-				/*
-				prevreq = NULL;
-				req = wrm->wrm_WRWaiting;
-				while( req != NULL )
-				{
-					if( strcmp( id, req->wr_ID ) == 0 )
-					{
-						break;
-					}
-					prevreq = req;
-					req = (WebsocketReq *)req->node.mln_Succ;
-				}
-				*/
-				
 				if( oreq == wrm->wrm_WRWaiting )
 				{
 					wrm->wrm_WRWaiting = (WebsocketReq *)oreq->node.mln_Succ;
@@ -135,24 +116,9 @@ WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, i
 				{
 					prevreq->node.mln_Succ = oreq->node.mln_Succ;
 				}
-				
-				/*
-				// IN CURRENT SOLUTION AFTER WHOLE MESSAGE IS COLLECTED IT IS PASSED AGAIN TO CALLBACK
-				// add to queue, to last place
-				if( wrm->wrm_WRLastInQueue != NULL )
-				{
-					wrm->wrm_WRLastInQueue->node.mln_Succ = (MinNode *)oreq;
-				}
-				else
-				{
-					wrm->wrm_WRQueue = oreq;
-				}
-				wrm->wrm_WRLastInQueue = oreq;
-				*/
+
 				FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
-				
-				//DEBUG("[WebsocketReqPutData] Request message %s  \n\n%d\n", req->wr_Message, req->wr_MessageSize );
-				
+
 				return oreq;
 			}
 			else

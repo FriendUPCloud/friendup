@@ -82,7 +82,7 @@ int UserAddSession( User *usr, void *ls )
 		FERROR("User %p or session %p are empty\n", usr, ls );
 		return 1;
 	}
-	UserSession *s = (UserSession *)ls;
+	UserSession *newSession = (UserSession *)ls;
 	UserSessListEntry *us = NULL;
 	
 	// test
@@ -100,7 +100,8 @@ int UserAddSession( User *usr, void *ls )
 		UserSessListEntry *exses = (UserSessListEntry *)usr->u_SessionsList;
 		while( exses != NULL )
 		{
-			if( exses != NULL && exses->us == ls )
+			UserSession *locSession = (UserSession *)exses->us;
+			if( exses->us == ls || (locSession->us_DeviceIdentity != NULL && newSession->us_DeviceIdentity != NULL && strcmp( locSession->us_DeviceIdentity, newSession->us_DeviceIdentity ) == 0 ) )
 			{
 				DEBUG("[UserAddSession] Session was already added to user\n");
 				FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
@@ -111,9 +112,9 @@ int UserAddSession( User *usr, void *ls )
 	
 		if( ( us = FCalloc( 1, sizeof( UserSessListEntry ) ) ) != NULL )
 		{
-			us->us = s;
-			s->us_User = usr;	// assign user to session
-			s->us_UserID = usr->u_ID;
+			us->us = newSession;
+			newSession->us_User = usr;	// assign user to session
+			newSession->us_UserID = usr->u_ID;
 		
 			us->node.mln_Succ = (MinNode *)usr->u_SessionsList;
 			usr->u_SessionsList = us;

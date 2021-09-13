@@ -84,6 +84,7 @@ void releaseWSData( WSThreadData *data )
 	if( data->wstd_Msg != NULL )
 	{
 		FFree( data->wstd_Msg );
+		data->wstd_Msg = NULL;
 	}
 	
 	FFree( data->wstd_Requestid );
@@ -365,6 +366,18 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				{
 					lws_callback_on_writable( wsi );
 				}
+				/*
+				UserSession *locus = NULL;
+	
+				locus = wstd->wstd_WSD->wsc_UserSession;
+				if( locus != NULL )
+				{
+					if( locus->us_WSD == NULL )
+					{
+						locus->us_WSD = wsd;
+					}
+				}
+				*/
 			}
 			
 #ifndef INPUT_QUEUE
@@ -797,6 +810,7 @@ void *ParseAndCall( WSThreadData *wstd )
 	jsmntok_t *t;
 	
 	char *in = wstd->wstd_Msg;
+	wstd->wstd_Msg = NULL;			// we do not hold message in wstd anymore
 	size_t len = wstd->wstd_Len;
 	
 	UserSession *locus = NULL;
@@ -811,7 +825,7 @@ void *ParseAndCall( WSThreadData *wstd )
 			// This error is happening pretty random!
 			// This one leads to websocket errors...
 			
-			FERROR("[ParseAndCall] There is no WS connection attached to mutex!\n");
+			FERROR("[ParseAndCall] There is no WS connection attached to user session!\n");
 			// Decrease use for external call
 			if( FRIEND_MUTEX_LOCK( &(orig->us_Mutex) ) == 0 )
 			{
@@ -903,8 +917,8 @@ void *ParseAndCall( WSThreadData *wstd )
 							{
 								//DEBUG("[WS] Got chunked message: %d\n\n\n%.*s\n\n\n", t[ data ].end-t[ data ].start, t[ data ].end-t[ data ].start, (char *)(in + t[ data ].start) );
 								char *idc = StringDuplicateN( in + t[ id ].start,    (int)(t[ id ].end - t[ id ].start) );
-								part = StringNToInt(          in + t[ part ].start,  (int)(t[ part ].end - t[ part ].start) );
-								total = StringNToInt(         in + t[ total ].start, (int)(t[ total ].end - t[ total ].start) );
+								part = StringNToInt( in + t[ part ].start,  (int)(t[ part ].end - t[ part ].start) );
+								total = StringNToInt( in + t[ total ].start, (int)(t[ total ].end - t[ total ].start) );
 								
 								//if( us != NULL )
 								{
@@ -915,6 +929,7 @@ void *ParseAndCall( WSThreadData *wstd )
 										if( wsreq->wr_Message != NULL && wsreq->wr_MessageSize > 0 && wsreq->wr_IsBroken == 0 )
 										{
 											DEBUG("[WS] Callback will be called again!\n");
+
 											if( wstd->wstd_Msg != NULL )
 											{
 												FFree( wstd->wstd_Msg );
@@ -962,6 +977,8 @@ void *ParseAndCall( WSThreadData *wstd )
 												}
 											}
 											
+											// We dont want to do anything on pointer which points to old data (released)
+											in = NULL;
 											// Run in thread
 											pthread_t t;
 											memset( &t, 0, sizeof( pthread_t ) );
@@ -979,6 +996,7 @@ void *ParseAndCall( WSThreadData *wstd )
 												}
 											}
 											wstd = NULL;
+											
 											
 											//FC_Callback( wsi, reason, user, wsreq->wr_Message, wsreq->wr_MessageSize );
 											DEBUG("[WS] Callback was called again!\n");
@@ -1097,7 +1115,7 @@ void *ParseAndCall( WSThreadData *wstd )
 						}	// for through parameters
 					}	// next type of message
 				
-					if( strncmp( "type",  in + t[ 5 ].start, t[ 5 ].end-t[ 5 ].start ) == 0 )
+					if( in != NULL && strncmp( "type",  in + t[ 5 ].start, t[ 5 ].end-t[ 5 ].start ) == 0 )
 					{
 						int tsize = t[ 6 ].end-t[ 6 ].start;
 						// simple PING
@@ -1590,7 +1608,9 @@ void *ParseAndCall( WSThreadData *wstd )
 	}
 	
 	if( wstd != NULL )
+	{
 		releaseWSData( wstd );
+	}
 	
 	
 	FFree( t );

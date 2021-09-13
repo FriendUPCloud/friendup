@@ -33,6 +33,7 @@ typedef struct UserSessionManager
 	UserSession						*usm_Sessions;							// user sessions
 	UserSession						*usm_SessionsToBeRemoved;				// sessions which must be removed
 	int								usm_SessionCounter;
+	int								usm_InUse;								// if something is using it value is increased
 	void 							*usm_UM;
 	
 	pthread_mutex_t					usm_Mutex;		// mutex

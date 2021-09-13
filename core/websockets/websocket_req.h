@@ -38,7 +38,7 @@
 typedef struct WebsocketReq
 {
 	struct MinNode 					node;
-	char							wr_ID[ WSREQ_ID_SIZE ];
+	char							wr_ID[ (WSREQ_ID_SIZE*2) ];
 	int								wr_Chunks;		// number of chunks
 	int								wr_ChunkSize;	// one chunk size
 	int								wr_Total;		// total number of chunks

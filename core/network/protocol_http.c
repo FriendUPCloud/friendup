@@ -1263,7 +1263,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							if( fs_Path != NULL ) FFree( fs_Path );
 							
 							// if temporary session was generated, we must remove it
-							if( sessionIDGenerated == TRUE )
+							//if( sessionIDGenerated == TRUE )
 							{
 								USMDestroyTemporarySession( SLIB->sl_USM, sqllib, session );
 							}

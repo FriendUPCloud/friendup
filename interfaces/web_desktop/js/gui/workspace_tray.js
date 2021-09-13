@@ -867,3 +867,73 @@ function CloseNotification( notification )
 // Buffer for click callbacks
 var _oldNotifyClickCallbacks = [];
 
+// System messages -------------------------------------------------------------
+
+SystemMessageWidget = function( flags )
+{
+	this.flags = flags;
+};
+
+SystemMessageWidget.prototype.init = function( data )
+{
+	let self = this;
+	
+	if( !this.dom )
+	{
+		this.dom = document.createElement( 'div' );
+		this.dom.className = 'SystemMessageWidget';
+		if( window.Workspace )
+		{
+			this.screen = window.Workspace.screen;
+		}
+	
+		this.dom.style.width = '350px';
+		this.dom.style.height = '200px';
+	
+		let cnt = document.createElement( 'div' );
+		cnt.className = 'Content';
+		this.dom.appendChild( cnt );
+	
+		if( self.flags.x )
+		{
+			if( self.flags.x == 'right' )
+			{
+				this.dom.style.left = document.body.offsetWidth - 390 + 'px';
+			}
+			if( self.flags.y == 'bottom' )
+			{
+				this.dom.style.top = document.body.offsetHeight - 240 + 'px';
+			}
+		}
+	
+		cnt.innerHTML = atob( data.data );
+		this.screen.div.appendChild( this.dom );
+		
+		setTimeout( function()
+		{
+			self.dom.classList.add( 'Showing' );
+			self.dom.style.height = cnt.scrollHeight + 10 + 'px';
+			self.dom.style.top = document.body.offsetHeight - cnt.scrollHeight - 50 + 'px';
+		}, 5 );
+	}
+};
+
+SystemMessageWidget.prototype.refresh = function()
+{
+	
+};
+
+SystemMessageWidget.prototype.close = function()
+{
+	let self = this;
+	if( this.dom )
+	{
+		this.dom.classList.remove( 'Showing' );
+		setTimeout( function()
+		{
+			self.dom.parentNode.removeChild( self.dom );
+		}, 750 );
+	}
+}
+
+
