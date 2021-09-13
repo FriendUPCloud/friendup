@@ -1219,7 +1219,6 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					case 'imageview':
 					case 'iconview':
 					{
-						console.log( 'Yeah, icon view.' );
 						setTimeout( function(){ self.completeRedraw(); }, 250 );
 						CheckScreenTitle();
 						let res = self.directoryview.RedrawIconView( self.directoryview.filearea, self.icons, direction, lm );
@@ -1230,7 +1229,6 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					}
 					case 'listview':
 					{
-						console.log( 'Yeah, list view.' );
 						setTimeout( function(){ self.completeRedraw(); }, 25 ); // to help with column resizing, lower resize timeout
 						CheckScreenTitle();
 						let res = self.directoryview.RedrawListView( self.directoryview.filearea, self.icons, direction );
@@ -1241,7 +1239,6 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					}
 					case 'columnview':
 					{
-						console.log( 'Yeah, column view.' );
 						setTimeout( function(){ self.completeRedraw(); }, 250 );
 						CheckScreenTitle();
 						let res = self.directoryview.RedrawColumnView( self, self.icons, direction );
@@ -4479,79 +4476,100 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					let fi = self.fileInfo;
 					
 					// TODO: Figure out something..
-					console.log( 'Refreshing icons for view.' );
-					dr.getIcons( fi, function( icons, something, response )
+					let doneGetting = false;
+					function getTheIconsAndRedraw()
 					{
-						console.log( '> Done refreshing ' + something );
-						if( icons )
+						let tt = setTimeout( function()
 						{
-							// Assign door to each icon
-							for( let t in icons )
+							//console.log( '[gettheicons] Attempting to retry icon view!' );
+							if( doneGetting ) 
 							{
-								if( winDoor.instantiate )
+								//console.log( '[gettheicons] Abort because of success.' );
+								return;
+							}
+							if( !w._window || !w._window.parentNode || !w._window.parentNode.parentNode ) 
+							{
+								//console.log( '[gettheicons] Abort because window was closed.' );
+								return;
+							}
+							//console.log( '[gettheicons] Try redraw again!' );
+							getTheIconsAndRedraw();
+						}, 1000 );
+						dr.getIcons( fi, function( icons, something, response )
+						{
+							clearTimeout( tt );
+							doneGetting = true;
+							if( icons )
+							{
+								// Assign door to each icon
+								for( let t in icons )
 								{
-									icons[t].Door = winDoor.instantiate();
+									if( winDoor.instantiate )
+									{
+										icons[t].Door = winDoor.instantiate();
+									}
+									else
+									{
+										// TODO: What happened? No instantiation?
+										console.log( 'Failed to make door.' );
+										console.log( winDoor );
+									}
+								}
+								
+								// Check, might be reinstantiated..
+								if( typeof( self.redrawIcons ) != 'undefined' )
+								{
+									self.redrawIcons( icons, self.direction );
+									if( w.revent ) w.removeEvent( 'resize', w.revent );
+									w.revent = w.addEvent( 'resize', function( cbk )
+									{
+										dv.toChange = true;
+										self.redrawIcons( false, self.direction, cbk );
+									} );
+									
 								}
 								else
 								{
-									// TODO: What happened? No instantiation?
-									console.log( 'Failed to make door.' );
-									console.log( winDoor );
+									console.log( 'What happened?', self );	
 								}
 							}
-							
-							// Check, might be reinstantiated..
-							if( typeof( self.redrawIcons ) != 'undefined' )
-							{
-								console.log( 'Redrawing icons for: ' + something + '(' + response + ')' );
-								self.redrawIcons( icons, self.direction );
-								if( w.revent ) w.removeEvent( 'resize', w.revent );
-								w.revent = w.addEvent( 'resize', function( cbk )
-								{
-									dv.toChange = true;
-									self.redrawIcons( false, self.direction, cbk );
-								} );
-								
-							}
+							// empty, go back
 							else
 							{
-								console.log( 'What happened?', self );	
-							}
-						}
-						// empty, go back
-						else
-						{
-							try
-							{
-								let dw = self.directoryview;
-								Notify( {
-									title: i18n( 'i18n_illegal_path' ),
-									text: i18n( 'i18n_illegal_path_desc' )
-								} );
-								// If we're not at the top of the history array, go back
-								if( dw.pathHistoryIndex > 0 )
+								try
 								{
-									let fin = dw.pathHistoryRewind();
-									dw.window.fileInfo = fin;
-				
-									if( !isMobile && dw.window.fileBrowser )
+									let dw = self.directoryview;
+									Notify( {
+										title: i18n( 'i18n_illegal_path' ),
+										text: i18n( 'i18n_illegal_path_desc' )
+									} );
+									// If we're not at the top of the history array, go back
+									if( dw.pathHistoryIndex > 0 )
 									{
-										dw.window.fileBrowser.setPath( fin.Path, false, { lockHistory: true, passive: true } );
+										let fin = dw.pathHistoryRewind();
+										dw.window.fileInfo = fin;
+					
+										if( !isMobile && dw.window.fileBrowser )
+										{
+											dw.window.fileBrowser.setPath( fin.Path, false, { lockHistory: true, passive: true } );
+										}
+										dw.window.refresh();
 									}
-									dw.window.refresh();
+								}
+								catch( e )
+								{
+									console.log( '[Directoryview] No content.' );
 								}
 							}
-							catch( e )
-							{
-								console.log( '[Directoryview] No content.' );
-							}
-						}
-						if( callback ) callback();
-						
-						// Release refresh timeout
-						self.refreshTimeout = null;
-						w.refreshing = false;
-					} );
+							if( callback ) callback();
+							
+							// Release refresh timeout
+							self.refreshTimeout = null;
+							w.refreshing = false;
+						} );
+					}
+					// Get icons and redraw. Try again in 1 sec
+					getTheIconsAndRedraw();
 				}, timer );
 			}
 		}

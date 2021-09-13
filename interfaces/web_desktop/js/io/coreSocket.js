@@ -85,6 +85,7 @@ FriendWebSocket.prototype.reconnect = function()
 {
 	let self = this;
 	
+	self.ready = false;
 	self.allowReconnect = true;
 	
 	// We're pre reconnect - wait..
@@ -102,6 +103,7 @@ FriendWebSocket.prototype.reconnect = function()
 FriendWebSocket.prototype.close = function( code, reason )
 {
 	let self = this;
+	self.ready = false;
 	self.allowReconnect = false;
 	self.url = null;
 	self.sessionId = null;
@@ -153,7 +155,7 @@ FriendWebSocket.prototype.connect = function()
 {
 	if( window.Friend && Friend.User && Friend.User.State == 'offline' )
 	{
-		// console.log( 'Friend says the user is offline. Bye.' );
+		console.log( 'Friend says the user is offline. Bye.' );
 		return;
 	}
 	
@@ -169,20 +171,22 @@ FriendWebSocket.prototype.connect = function()
 		throw new Error( 'no url provided for socket' );
 	}
 	
-	if( self.state == 'open' ) 
+	if( self.state && self.state.type )
 	{
-		// console.log( 'We are already open.' );
-		return;
+		if( self.state.type == 'open' ) 
+		{
+			// console.log( 'We are already open.' );
+			return;
+		}
+		
+		if( self.state.type == 'connecting' ) 
+		{
+			// console.log('ongoing connect. we will wait for this to finish.');
+			return;
+		}
 	}
-	
-	if( self.state == 'connecting' ) 
-	{
-		// console.log('ongoing connect. we will wait for this to finish.');
-		return;
-	}
-	
+		
 	self.setState( 'connecting' );
-	
 	
 	if( self.ws )
 	{
@@ -208,6 +212,7 @@ FriendWebSocket.prototype.connect = function()
 	{
 		if( err == 'error' )
 		{
+			console.log( 'Failed with error.' );
 			self.cleanup();
 		}
 		else
@@ -353,17 +358,17 @@ FriendWebSocket.prototype.setState = function( type, data )
 		type: type,
 		data: data,
 	};
-	//console.log( 'State: ', this.state );
 	if( this.onstate ) this.onstate( this.state );
 }
 
 FriendWebSocket.prototype.handleOpen = function( e )
 {
 	this.reconnectAttempt = 0;
+	
+	// We are open
+	this.setState( 'open' );
 	this.setSession();
-	this.setReady();
-	
-	
+	this.startKeepAlive();
 }
 
 FriendWebSocket.prototype.handleClose = function( e )
@@ -527,8 +532,6 @@ FriendWebSocket.prototype.setSession = function()
 FriendWebSocket.prototype.setReady = function()
 {
 	this.ready = true;
-	this.setState( 'open' );
-	this.startKeepAlive();
 	this.executeSendQueue();
 }
 
@@ -543,7 +546,8 @@ FriendWebSocket.prototype.sendCon = function( msg )
 FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 {
 	let self = this;
-	if( !socketReady( force ) )
+
+	if( self.state.type == 'connecting'|| self.state.type == 'close' || self.state.type == 'error' || self.state.type == 'reconnect' )
 	{
 		queue( msg );
 		return false;
@@ -551,6 +555,7 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 	
 	if ( !wsReady() )
 	{
+		//console.log( 'Socket isn\'t ready.' );
 		queue( msg );
 		self.doReconnect();
 		return false;
@@ -571,6 +576,7 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 	const success = self.wsSend( msgStr );
 	if( !success )
 	{
+		console.log( 'Could not send!' );
 		queue( msg );
 		self.reconnect();
 		return false;
@@ -584,12 +590,6 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 			self.sendQueue = [];
 		
 		self.sendQueue.push( msg );
-	}
-	
-	function socketReady( force )
-	{
-		let ready = !!( self.ready && !force );
-		return ready;
 	}
 	
 	function wsReady()
@@ -729,14 +729,21 @@ FriendWebSocket.prototype.chunkSend = function( str )
 
 FriendWebSocket.prototype.wsSend = function( str )
 {
+    if( !navigator.onLine )
+    {
+    	self.close();
+    	return false;
+    }
+    
     if( !this.onstate ) 
     {
         return false;
     }
 	let self = this;
+	let res = false;
 	try
 	{
-		let res = self.ws.send( str );
+		res = self.ws.send( str );
 	}
 	catch( e )
 	{
@@ -772,6 +779,8 @@ FriendWebSocket.prototype.startKeepAlive = function()
 	{
 		self.sendPing();
 	}
+	// Do it now!
+	ping();
 }
 FriendWebSocket.prototype.sendPing = function( msg )
 {
@@ -828,11 +837,15 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 	
 	self.setState( 'ping', pingTime );
 	
+	// We're ready with pong!
+	self.setReady();
+	
 	if( Friend.User )
 	{
 		// Reinit user! (sets => server is there)
 		Friend.User.Init();
 	}
+	
 }
 
 FriendWebSocket.prototype.handleChunk = function( chunk )
@@ -882,6 +895,20 @@ FriendWebSocket.prototype.handleChunk = function( chunk )
 FriendWebSocket.prototype.stopKeepAlive = function()
 {
 	let self = this;
+	
+	// Clear timeouts
+	if( self.pingCheck )
+	{
+		clearTimeout( self.pingCheck );
+		self.pingCheck = null;
+	}
+	if( self.reconnectTimer )
+	{
+		clearTimeout( self.reconnectTimer );
+		self.reconnectTimer = null;
+	}
+	
+	// Clear intervals
 	if ( !self.keepAlive )
 		return;
 	
@@ -900,9 +927,13 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 	
 	try {
 		console.log( 'closing websocket', code, reason );
+		if( self.ws.close )
+			self.ws.close( code, reason );
+		else console.log( 'Couldn\'t close websocket because close method was null and void.' );
 		if( window.Friend && Friend.User )
+		{
 			Friend.User.CheckServerNow();
-		self.ws.close( code, reason );
+		}
 	} catch (e)
 	{
 		self.logEx( e, 'close' );
@@ -916,8 +947,6 @@ FriendWebSocket.prototype.cleanup = function()
 	self.stopKeepAlive();
 	self.clearHandlers();
 	self.wsClose();
-	if( window.Workspace )
-		Workspace.websocketState = 'offline';
 	delete self.ws;
 }
 
