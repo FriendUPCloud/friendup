@@ -1748,11 +1748,7 @@ AND f.Name = '%s'",
 					// 'lock' User Manager
 					//
 					
-					if( FRIEND_MUTEX_LOCK( &(l->sl_UM->um_Mutex ) ) == 0 )
-					{
-						l->sl_UM->un_InUse++;
-						FRIEND_MUTEX_UNLOCK( &(l->sl_UM->um_Mutex ) );
-					}
+					USER_MANAGER_USE( l->sl_UM );
 					
 					User *tmpUser = l->sl_UM->um_Users;
 					while( tmpUser != NULL )
@@ -1810,6 +1806,8 @@ AND f.Name = '%s'",
 						tmpUser = (User *)tmpUser->node.mln_Succ;
 					}
 					
+					USER_MANAGER_RELEASE( l->sl_UM );
+					
 					//
 					// for test I moved notifications to different loop
 					//
@@ -1827,11 +1825,7 @@ AND f.Name = '%s'",
 						}
 					}
 					
-					if( FRIEND_MUTEX_LOCK( &(l->sl_UM->um_Mutex ) ) == 0 )
-					{
-						l->sl_UM->un_InUse--;
-						FRIEND_MUTEX_UNLOCK( &(l->sl_UM->um_Mutex ) );
-					}
+					//USER_MANAGER_RELEASE( l->sl_UM );
 				}	// workgroup drive
 				INFO( "[MountFS] %s - Device '%s' mounted successfully\n", usr->u_Name, name );
 				

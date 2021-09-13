@@ -34,6 +34,7 @@ typedef struct UserSessionManager
 	UserSession						*usm_SessionsToBeRemoved;				// sessions which must be removed
 	int								usm_SessionCounter;
 	int								usm_InUse;								// if something is using it value is increased
+	FBOOL							usm_ChangeState;						// change state
 	void 							*usm_UM;
 	
 	pthread_mutex_t					usm_Mutex;		// mutex
@@ -165,12 +166,6 @@ int USMRemoveOldSessions( void *lsb );
 //
 
 int USMRemoveOldSessionsinDB( void *lsb );
-
-//
-//
-//
-
-FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notification, UserSession *ses, File *device, char *path );
 
 //
 // get user by auth id

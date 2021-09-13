@@ -181,6 +181,23 @@ typedef struct User
 	int							u_InUse;						// usage counter
 } User;
 
+#ifndef USER_LOCK
+#define USER_LOCK( USR ) \
+if( FRIEND_MUTEX_LOCK( &(USR->u_Mutex) ) == 0 ){ \
+	USR->u_InUse++; \
+FRIEND_MUTEX_UNLOCK( &(USR->u_Mutex) ); \
+} 
+#endif
+
+#ifndef USER_UNLOCK
+#define USER_UNLOCK( USR ) \
+if( FRIEND_MUTEX_LOCK( &(USR->u_Mutex) ) == 0 ){ \
+	USR->u_InUse--; \
+FRIEND_MUTEX_UNLOCK( &(USR->u_Mutex) ); \
+} 
+#endif
+
+
 //
 //
 //

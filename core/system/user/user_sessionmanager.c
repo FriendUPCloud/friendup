@@ -25,7 +25,21 @@
 #include <system/fsys/door_notification.h>
 #include <util/session_id.h>
 
+#define SESSION_MANAGER_CHANGE_ON( MGR ) \
+while( MGR->usm_InUse > 0 ){ usleep( 2000 ); } \
+if( FRIEND_MUTEX_LOCK( &(MGR->usm_Mutex) ) == 0 ){ \
+	MGR->usm_ChangeState = TRUE; \
+	FRIEND_MUTEX_UNLOCK( &(MGR->usm_Mutex) ); \
+}
+
+#define SESSION_MANAGER_CHANGE_OFF( MGR ) \
+if( FRIEND_MUTEX_LOCK( &(MGR->usm_Mutex) ) == 0 ){ \
+	MGR->usm_ChangeState = FALSE; \
+	FRIEND_MUTEX_UNLOCK( &(MGR->usm_Mutex) ); \
+}
+
 #define SESSION_MANAGER_USE( MGR ) \
+while( MGR->usm_ChangeState != FALSE ){ usleep( 2000 ); } \
 if( FRIEND_MUTEX_LOCK( &(MGR->usm_Mutex) ) == 0 ){ \
 	MGR->usm_InUse++; \
 	FRIEND_MUTEX_UNLOCK( &(MGR->usm_Mutex) ); \
@@ -67,46 +81,45 @@ void USMDelete( UserSessionManager *smgr )
 {
 	if( smgr != NULL )
 	{
-		while( smgr->usm_InUse > 0 )
+		//while( smgr->usm_InUse > 0 )
+		//{
+		//	sleep( 1 );
+		//}
+		
+		SESSION_MANAGER_CHANGE_ON( smgr );
+
+		DEBUG("[USMDelete] Remove sessions\n");
+		UserSession  *ls = smgr->usm_Sessions;
+		while( ls != NULL )
 		{
-			sleep( 1 );
+			UserSession *rem =  ls;
+			ls = (UserSession *) ls->node.mln_Succ;
+			
+			DEBUG("[USMDelete] \t\tRemove session : %s uid %lu\n", rem->us_SessionID, rem->us_UserID );
+		
+			USMSessionsDeleteDB( smgr, rem->us_SessionID );
+			UserSessionDelete( rem );
 		}
 		
-		if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
+		ls = smgr->usm_SessionsToBeRemoved;
+		while( ls != NULL )
 		{
-			DEBUG("[USMDelete] Remove sessions\n");
-			UserSession  *ls = smgr->usm_Sessions;
-			while( ls != NULL )
-			{
-				UserSession *rem =  ls;
-				ls = (UserSession *) ls->node.mln_Succ;
+			UserSession *rem =  ls;
+			ls = (UserSession *) ls->node.mln_Succ;
 			
-				DEBUG("[USMDelete] \t\tRemove session : %s uid %lu\n", rem->us_SessionID, rem->us_UserID );
+			DEBUG("[USMDelete] \t\tRemove session from remove list: %s uid %lu\n", rem->us_SessionID, rem->us_UserID );
 			
-				USMSessionsDeleteDB( smgr, rem->us_SessionID );
-				UserSessionDelete( rem );
-			}
-		
-			ls = smgr->usm_SessionsToBeRemoved;
-			while( ls != NULL )
-			{
-				UserSession *rem =  ls;
-				ls = (UserSession *) ls->node.mln_Succ;
-			
-				DEBUG("[USMDelete] \t\tRemove session from remove list: %s uid %lu\n", rem->us_SessionID, rem->us_UserID );
-			
-				USMSessionsDeleteDB( smgr, rem->us_SessionID );
-				UserSessionDelete( rem );
-			}
-		
-			smgr->usm_Sessions = NULL;
-		
-			FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
-			
-			pthread_mutex_destroy( &(smgr->usm_Mutex) );
-		
-			FFree( smgr );
+			USMSessionsDeleteDB( smgr, rem->us_SessionID );
+			UserSessionDelete( rem );
 		}
+		
+		smgr->usm_Sessions = NULL;
+		
+		SESSION_MANAGER_CHANGE_OFF( smgr );
+		
+		pthread_mutex_destroy( &(smgr->usm_Mutex) );
+		
+		FFree( smgr );
 	}
 }
 
@@ -488,45 +501,39 @@ UserSession *USMUserSessionAddToList( UserSessionManager *smgr, UserSession *s )
 		Log( FLOG_INFO, "USMserSEssionAddToList\n");
 	}
 	
-	if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
-	{
-		if( smgr->usm_Sessions == s )
-		{
-			DEBUG("[USMUserSessionAddToList] stop adding same session!\n");
-			FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
-			return s;
-		}
-		// Add next usersession
-		s->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
-		smgr->usm_Sessions = s;
-		smgr->usm_SessionCounter++;
+	SESSION_MANAGER_CHANGE_ON( smgr );
 	
-		FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
-	}
-	else
+	if( smgr->usm_Sessions == s )
 	{
-		return NULL;
+		DEBUG("[USMUserSessionAddToList] stop adding same session!\n");
+		SESSION_MANAGER_CHANGE_OFF( smgr );
+		return s;
 	}
+	// Add next usersession
+	s->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
+	smgr->usm_Sessions = s;
+	smgr->usm_SessionCounter++;
+	
+	SESSION_MANAGER_CHANGE_OFF( smgr );
 	
 	//
-	if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
+	SESSION_MANAGER_CHANGE_ON( smgr );
+	
+	UserSession *actSess = smgr->usm_SessionsToBeRemoved;
+	UserSession *remSess = smgr->usm_SessionsToBeRemoved;
+	smgr->usm_SessionsToBeRemoved = NULL;
+	
+	SESSION_MANAGER_CHANGE_OFF( smgr );
+		
+	while( actSess != NULL )
 	{
-		UserSession *actSess = smgr->usm_SessionsToBeRemoved;
-		UserSession *remSess = smgr->usm_SessionsToBeRemoved;
-		smgr->usm_SessionsToBeRemoved = NULL;
+		remSess = actSess;
+		actSess = (UserSession *)actSess->node.mln_Succ;
 		
-		FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
+		//UserRemoveSession( remSess->us_User, remSess );
 		
-		while( actSess != NULL )
-		{
-			remSess = actSess;
-			actSess = (UserSession *)actSess->node.mln_Succ;
-			
-			//UserRemoveSession( remSess->us_User, remSess );
-			
-			USMSessionsDeleteDB( smgr, remSess->us_SessionID );
-			UserSessionDelete( remSess );
-		}
+		USMSessionsDeleteDB( smgr, remSess->us_SessionID );
+		UserSessionDelete( remSess );
 	}
 	
 	DEBUG("[USMUserSessionAddToList] end\n");
@@ -560,98 +567,91 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 		us->us_InUseCounter++;
 		FRIEND_MUTEX_UNLOCK( &us->us_Mutex );
 	}
-	
-	while( smgr->usm_InUse > 0 )
-	{
-		usleep( 2000 );
-		Log( FLOG_INFO, "USMUserSessionAdd\n");
-	}
-	
+
 	DEBUG("[USMUserSessionAdd] CHECK8\n");
-	if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
-	{
-		DEBUG("[USMUserSessionAdd] CHECK8 LOCKED\n");
-		UserSession *ses =  smgr->usm_Sessions;
-		while( ses != NULL )
-		{
-			FBOOL quit = FALSE;
-			DEBUG("[USMUserSessionAdd] inside session\n");
-			
-			DEBUG("[USMUserSessionAdd] Session locked, compare: %s vs %s\n", us->us_SessionID, ses->us_SessionID );
-			
-			if( us->us_SessionID != NULL && ses->us_SessionID != NULL && strncmp( us->us_SessionID, ses->us_SessionID, 256 ) == 0 )
-			{
-				DEBUG("Found session with same sessionID, return!\n");
-				
-				FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
-				
-				if( FRIEND_MUTEX_LOCK( &us->us_Mutex ) == 0 )
-				{
-					us->us_InUseCounter--;
-					FRIEND_MUTEX_UNLOCK( &us->us_Mutex );
-				}
-				return ses;
-			}
-			
-			if( ses->us_DeviceIdentity != NULL )
-			{
-				if( us->us_UserID == ses->us_UserID && strcmp( us->us_DeviceIdentity, ses->us_DeviceIdentity ) ==  0 )
-				{
-					DEBUG("[USMUserSessionAdd] Session found, no need to create new  one %lu devid %s\n", ses->us_UserID, ses->us_DeviceIdentity );
-					quit = TRUE;
-				}
-			}
-			else
-			{
-				if( ses->us_DeviceIdentity == us->us_DeviceIdentity )
-				{
-					DEBUG("[USMUserSessionAdd] Found session with empty deviceid\n");
-					quit = TRUE;
-				}
-			}
-
-			if( quit == TRUE )
-			{
-				DEBUG("[USMUserSessionAdd] Break\n");
-				break;
-			}
-		
-			DEBUG("[USMUserSessionAdd] inside session 2 id: %s\n", us->us_SessionID );
-			ses = (UserSession *)ses->node.mln_Succ;
-		}
-		DEBUG("[USMUserSessionAdd] CHECK8 after while\n");
-
-		// if session doesnt exist in memory we must add it to the list
 	
-		if( ses ==  NULL )
+	SESSION_MANAGER_CHANGE_ON( smgr );
+	
+	DEBUG("[USMUserSessionAdd] CHECK8 LOCKED\n");
+	UserSession *ses =  smgr->usm_Sessions;
+	while( ses != NULL )
+	{
+		FBOOL quit = FALSE;
+		DEBUG("[USMUserSessionAdd] inside session\n");
+		
+		DEBUG("[USMUserSessionAdd] Session locked, compare: %s vs %s\n", us->us_SessionID, ses->us_SessionID );
+		
+		if( us->us_SessionID != NULL && ses->us_SessionID != NULL && strncmp( us->us_SessionID, ses->us_SessionID, 256 ) == 0 )
 		{
-			INFO("[USMUserSessionAdd] Add UserSession to User. SessionID: %s usptr: %p\n", us->us_SessionID, us );
-
-			UserSession *sessPtr =  smgr->usm_Sessions;
-			while( sessPtr != NULL )
-			{
-				if( sessPtr == us )
-				{
-					break;
-				}
-				sessPtr = (UserSession *)sessPtr->node.mln_Succ;
-			}
+			DEBUG("Found session with same sessionID, return!\n");
 			
-			if( sessPtr == NULL )
+			SESSION_MANAGER_CHANGE_OFF( smgr );
+			
+			if( FRIEND_MUTEX_LOCK( &us->us_Mutex ) == 0 )
 			{
-				us->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
-				smgr->usm_Sessions = us;
+				us->us_InUseCounter--;
+				FRIEND_MUTEX_UNLOCK( &us->us_Mutex );
+			}
+			return ses;
+		}
+		
+		if( ses->us_DeviceIdentity != NULL )
+		{
+			if( us->us_UserID == ses->us_UserID && strcmp( us->us_DeviceIdentity, ses->us_DeviceIdentity ) ==  0 )
+			{
+				DEBUG("[USMUserSessionAdd] Session found, no need to create new  one %lu devid %s\n", ses->us_UserID, ses->us_DeviceIdentity );
+				quit = TRUE;
 			}
 		}
 		else
 		{
-			duplicateMasterSession = TRUE;
-			us = ses;
-			DEBUG("[USMUserSessionAdd] User session was overwritten, ptr %p\n", us );
+			if( ses->us_DeviceIdentity == us->us_DeviceIdentity )
+			{
+				DEBUG("[USMUserSessionAdd] Found session with empty deviceid\n");
+				quit = TRUE;
+			}
 		}
-		DEBUG("[USMUserSessionAdd] CHECK8END\n");
-		FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
+		if( quit == TRUE )
+		{
+			DEBUG("[USMUserSessionAdd] Break\n");
+			break;
+		}
+		
+		DEBUG("[USMUserSessionAdd] inside session 2 id: %s\n", us->us_SessionID );
+		ses = (UserSession *)ses->node.mln_Succ;
 	}
+	DEBUG("[USMUserSessionAdd] CHECK8 after while\n");
+
+	// if session doesnt exist in memory we must add it to the list
+	
+	if( ses ==  NULL )
+	{
+		INFO("[USMUserSessionAdd] Add UserSession to User. SessionID: %s usptr: %p\n", us->us_SessionID, us );
+		UserSession *sessPtr =  smgr->usm_Sessions;
+		while( sessPtr != NULL )
+		{
+			if( sessPtr == us )
+			{
+				break;
+			}
+			sessPtr = (UserSession *)sessPtr->node.mln_Succ;
+		}
+		
+		if( sessPtr == NULL )
+		{
+			us->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
+			smgr->usm_Sessions = us;
+		}
+	}
+	else
+	{
+		duplicateMasterSession = TRUE;
+		us = ses;
+		DEBUG("[USMUserSessionAdd] User session was overwritten, ptr %p\n", us );
+	}
+	DEBUG("[USMUserSessionAdd] CHECK8END\n");
+	
+	SESSION_MANAGER_CHANGE_OFF( smgr );
 	
 	DEBUG("[USMUserSessionAdd] Checking session id %lu\n", us->us_UserID );
 	
@@ -758,55 +758,48 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 	
 	DEBUG("[USMUserSessionRemove] UserSessionRemove\n");
 	
-	while( smgr->usm_InUse > 0 )
+	DEBUG("CHECK9\n");
+	
+	SESSION_MANAGER_CHANGE_ON( smgr );
+	
+	if( remsess == smgr->usm_Sessions )
 	{
-		usleep( 2000 );
-		Log( FLOG_INFO, "USMUserSessionRemove\n");
+		smgr->usm_Sessions = (UserSession *)smgr->usm_Sessions->node.mln_Succ;
+		sessionRemoved = TRUE;
+		smgr->usm_SessionCounter--;
+		INFO("[USMUserSessionRemove] Session removed from list\n");
+	}
+	else
+	{
+		while( sess != NULL )
+		{
+			prev = sess;
+			sess = (UserSession *)sess->node.mln_Succ;
+		
+			if( sess != NULL && sess == remsess )
+			{
+				// Remove usersession from list
+				prev->node.mln_Succ = sess->node.mln_Succ;
+				DEBUG("[USMUserSessionRemove] Session removed from list\n");
+				sessionRemoved = TRUE;
+				break;
+			}
+		}
+		smgr->usm_SessionCounter--;
 	}
 	
-	DEBUG("CHECK9\n");
-	if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
-	{
-		if( remsess == smgr->usm_Sessions )
-		{
-			smgr->usm_Sessions = (UserSession *)smgr->usm_Sessions->node.mln_Succ;
-			sessionRemoved = TRUE;
-			smgr->usm_SessionCounter--;
-			INFO("[USMUserSessionRemove] Session removed from list\n");
-		}
-		else
-		{
-			while( sess != NULL )
-			{
-				prev = sess;
-				sess = (UserSession *)sess->node.mln_Succ;
-			
-				if( sess != NULL && sess == remsess )
-				{
-					// Remove usersession from list
-					prev->node.mln_Succ = sess->node.mln_Succ;
-					DEBUG("[USMUserSessionRemove] Session removed from list\n");
-					sessionRemoved = TRUE;
-					break;
-				}
-				
-			}
-			smgr->usm_SessionCounter--;
-		}
-		FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
-	}
+	SESSION_MANAGER_CHANGE_OFF( smgr );
 	
 	if( sessionRemoved == TRUE )
 	{
 		USMSessionsDeleteDB( smgr, remsess->us_SessionID );
 		
 		// we do not delete session, untill it is used
-		if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
-		{
-			remsess->node.mln_Succ = (MinNode *) smgr->usm_SessionsToBeRemoved;
-			smgr->usm_SessionsToBeRemoved = remsess;
-			FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
-		}
+		SESSION_MANAGER_CHANGE_ON( smgr );
+		remsess->node.mln_Succ = (MinNode *) smgr->usm_SessionsToBeRemoved;
+		smgr->usm_SessionsToBeRemoved = remsess;
+		
+		SESSION_MANAGER_CHANGE_OFF( smgr );
 	}
 
 	return 0;
@@ -1039,13 +1032,6 @@ int USMRemoveOldSessions( void *lsb )
 		{
 			USMSessionsDeleteDB( smgr, remSession->us_SessionID );
 			UserSessionDelete( remSession );
-			/*
-			if( remSession != (UserSession *) smgr->usm_SessionsToBeRemoved )
-			{
-				remSession->node.mln_Succ = (MinNode *) smgr->usm_SessionsToBeRemoved;
-				smgr->usm_SessionsToBeRemoved = remSession;
-			}
-			*/
 		}
 		else // or create new root of working sessions
 		{
@@ -1095,158 +1081,6 @@ int USMRemoveOldSessionsinDB( void *lsb )
 		sb->LibrarySQLDrop( sb, sqllib );
 	}
 	return 0;
-}
-
-/**
- * Send door notification
- *
- * @param usm pointer to UserSessionManager
- * @param notif pointer to DoorNotification
- * @param ses UserSession
- * @param device pointer to RootDevice
- * @param path path to file/folder
- * @return TRUE if user can procced with login procedure or FALSE if error appear
- */
-FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession *ses, File *device, char *path )
-{
-	//return FALSE;
-	
-	SystemBase *sb = (SystemBase *)usm->usm_SB;
-	DoorNotification *notification = (DoorNotification *)notif;
-	
-	char *tmpmsg = FCalloc( 2048, 1 );
-	if( tmpmsg == NULL )
-	{
-		FERROR("Cannot allocate memory for buffer\n");
-		return FALSE;
-	}
-    
-	//
-	// Go through logged users
-	//
-    
-	DEBUG("CHECK11\n");
-	SESSION_MANAGER_USE( usm );
-	
-	User *usr = sb->sl_UM->um_Users;
-	while( usr != NULL )
-	{
-		// if notification should be addressed to user
-		DEBUG("[USMSendDoorNotification] going through users, user: %lu\n", usr->u_ID );
-		if( usr->u_ID == notification->dn_OwnerID )
-		{
-			char *uname = usr->u_Name;
-			int len = snprintf( tmpmsg, 2048, "{\"type\":\"msg\",\"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%lu\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\"}}}", device->f_ID, device->f_Name, path, uname  );
-			
-			DEBUG("[USMSendDoorNotification] found ownerid %lu\n", usr->u_ID );
-			
-			if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
-			{
-				usr->u_InUse++;
-				FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
-			}
-			
-			// go through all User Sessions and send message
-			UserSessListEntry *le = usr->u_SessionsList;
-			while( le != NULL )
-			{
-				UserSession *uses = (UserSession *)le->us;
-					
-				// do not send message to sender
-				FBOOL sendNotif = TRUE;
-				if( uses == NULL )
-				{
-					sendNotif = FALSE;
-				}
-			
-				if( sendNotif == TRUE )
-				{
-					DEBUG("[USMSendDoorNotification] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->UserSessionWebsocketWrite, sb, uses->us_DeviceIdentity );
-				
-					UserSessionWebsocketWrite( uses, (unsigned char *)tmpmsg, len, LWS_WRITE_TEXT );
-
-					// send message to all remote users
-					RemoteUser *ruser = usr->u_RemoteUsers;
-					while( ruser != NULL )
-					{
-						DEBUG("[USMSendDoorNotification] Remote user connected: %s\n", ruser->ru_Name );
-						RemoteDrive *rdrive = ruser->ru_RemoteDrives;
-				
-						while( rdrive != NULL )
-						{
-							DEBUG("[USMSendDoorNotification] Remote drive connected: %s %lu\n", rdrive->rd_LocalName, rdrive->rd_DriveID );
-					
-							if( rdrive->rd_DriveID == device->f_ID )
-							{
-								int fnamei;
-								int fpathi;
-								int funamei;
-								int fdriveid;
-					
-								char *fname =  createParameter( "devname", rdrive->rd_RemoteName, &fnamei );
-								char *fpath =  createParameter( "path", path, &fpathi );
-								char *funame =  createParameter( "usrname", ruser->ru_Name, &funamei );
-								char *fdeviceid = createParameterFULONG( "deviceid", rdrive->rd_RemoteID, &fdriveid );
-						
-								MsgItem tags[] = {
-									{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
-									{ ID_FCID,  (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)sb->fcm->fcm_ID },
-									{ ID_FRID, (FULONG)0 , MSG_INTEGER_VALUE },
-									{ ID_CMMD, (FULONG)0, MSG_INTEGER_VALUE },
-									{ ID_FNOT, (FULONG)0 , MSG_INTEGER_VALUE },
-									{ ID_PARM, (FULONG)0, MSG_GROUP_START },
-									{ ID_PRMT, (FULONG) fnamei, (FULONG)fname },
-									{ ID_PRMT, (FULONG) fpathi, (FULONG)fpath },
-									{ ID_PRMT, (FULONG) funamei, (FULONG)funame },
-									{ ID_PRMT, (FULONG) fdriveid, (FULONG)fdeviceid },
-									{ MSG_GROUP_END, 0,  0 },
-									{ TAG_DONE, TAG_DONE, TAG_DONE }
-								};
-						
-								DataForm *df = DataFormNew( tags );
-								if( df != NULL )
-								{
-									//DEBUG("[USMSendDoorNotification] Register device, send notification\n");
-							
-									BufString *result = SendMessageAndWait( ruser->ru_Connection, df );
-									if( result != NULL )
-									{
-										//DEBUG("[USMSendDoorNotification] Received response\n");
-										BufStringDelete( result );
-									}
-									DataFormDelete( df );
-								}
-				
-								FFree( fdeviceid );
-								FFree( fname );
-								FFree( fpath );
-								FFree( funame );
-								break;
-							} // if driveID = deviceID
-							rdrive = (RemoteDrive *)rdrive->node.mln_Succ;
-						} // while remote drives
-						ruser = (RemoteUser *)ruser->node.mln_Succ;
-					} // while remote users
-				} // sendNotif == TRUE
-				le = (UserSessListEntry *)le->node.mln_Succ;
-			} // while loop, session
-			
-			DEBUG("unlock user\n");
-			
-			if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
-			{
-				usr->u_InUse--;
-				FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
-			} 
-			DEBUG("CHECK12\n");
-		}
-		usr = (User *)usr->node.mln_Succ;
-	}
-	
-	SESSION_MANAGER_RELEASE( usm );
-	
-	FFree( tmpmsg );
-	return TRUE;
 }
 
 /**
