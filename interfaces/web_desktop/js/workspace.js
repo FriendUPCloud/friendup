@@ -1049,18 +1049,6 @@ Workspace = {
 
 				setupWorkspaceData( json );
 				
-				// Invites
-				if( json.inviteHash )
-				{
-					let m = new Module( 'system' );
-					m.onExecuted = function( e, d )
-					{
-						// TODO: Make some better error handling ...
-						if( e != 'ok' ) console.log( '[ERROR] verifyinvite: ' + ( d ? d : e ) );
-					}
-					m.execute( 'verifyinvite', { hash: json.inviteHash } );
-				}
-				
 				// Language
 				_this.locale = 'en';
 				let l = new Module( 'system' );
@@ -1168,6 +1156,18 @@ Workspace = {
 						// When eula is displayed or not
 						function afterEula( e )
 						{
+							// Invites
+							if( json.inviteHash )
+							{
+								let inv = new Module( 'system' );
+								inv.onExecuted = function( err, dat )
+								{
+									// TODO: Make some better error handling ...
+									if( err != 'ok' ) console.log( '[ERROR] verifyinvite: ' + ( dat ? dat : err ) );
+								}
+								inv.execute( 'verifyinvite', { hash: json.inviteHash } );
+							}
+							
 							if( e == 'ok' )
 							{
 								let s = {};
