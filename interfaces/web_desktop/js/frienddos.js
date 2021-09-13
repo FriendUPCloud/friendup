@@ -3626,6 +3626,12 @@ window.Shell = function( appObject )
 			{
 				return callback( false, { response: 'Syntax error. Usage:<br>unmount [disk:]<br>' } );
 			}
+			
+			if( args[ 1 ] == 'Home:' || args[ 1 ] == 'Shared:' )
+			{
+				return callback( false, { response: 'Could not unmount disk ' + args[ 1 ] + ', the disk is protected from unmounting.<br>' } );
+			}
+			
 			let l = new Library( 'system.library' );
 			l.onExecuted = function( e, d )
 			{
