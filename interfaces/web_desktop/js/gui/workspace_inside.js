@@ -4719,6 +4719,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						}
 					
 						// Check the friend disks
+						let foundHome   = false;
+						let foundShared = false;
+						let fixCount = 0;
+						
 						if( rows && rows.length )
 						{
 							for ( let a = 0; a < rows.length; a++ )
@@ -4734,6 +4738,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									{
 										console.log( r.Title + ' config did not parse.' );
 									}
+								}
+							
+								// Check if these drives are found
+								if( rows[a].Name == 'Home' )
+								{
+									foundHome = true;
+									fixCount++;
+								}
+								else if( rows[a].Name == 'Shared' )
+								{
+									foundShared = true;
+									fixCount++;
 								}
 							
 								// Doesn't exist, go on
@@ -4856,6 +4872,23 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 						// Check for new events
 						t.checkDesktopEvents();
+						
+						function checkIt()
+						{
+							fixCount--;
+							if( fixCount == 0 )
+							{
+								t.redrawIcons( true );
+							}
+						}
+						if( !foundHome )
+						{
+							t.mountDrive( 'Home', checkIt );
+						}
+						if( !foundShared )
+						{
+							t.mountDrive( 'Shared', checkIt );
+						}
 					}
 					m.execute( 'device/list' );
 				}
@@ -4867,6 +4900,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 
 		return true;
+	},
+	// Mount a drive
+	mountDrive: function( deviceName, cbk )
+	{
+		let l = new Library( 'system.library' );
+		l.onExecuted = function( e, d )
+		{
+			cbk( e, d );
+		};
+		l.execute( 'device/mount', { devname: deviceName } );
 	},
 	redrawIcons: function()
 	{
@@ -7254,7 +7297,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 	},
 	// Refresh Doors menu recursively ------------------------------------------
-	refreshMenu: function( prohibitworkspaceMenu )
+	refreshMenu: function( prohibitworkspaceMenu, activeElement = false )
 	{	
 		// Current has icons?
 		let iconsAvailable = currentMovable && currentMovable.content && currentMovable.content.directoryview ? true : false;
@@ -7279,6 +7322,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		let sharedVolume = false;
 		let fileIcon = false;
 		let shareCount = 0;
+		let finf = activeElement ? activeElement.fileInfo : false;
+		let isHomeDrive = finf && finf.Volume && finf.Volume == 'Home:' ? true : false;
+		let isSharedDrive = finf && finf.Volume && finf.Volume == 'Shared:' ? true : false;
+		
 		if( iconsSelected )
 		{
 			canUnmount = true;
@@ -7353,6 +7400,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		if ( shareCount > 1 )
 			canBeShared = false;
+		
+		// This will override these things
+		if( isHomeDrive || isSharedDrive )
+		{
+			canUnmount = false;
+		}
 
 		// Init menu -----------------------------------------------------------
 		let tools = '';
@@ -7378,7 +7431,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		
 		let sConf = Workspace.serverConfig;
-
+		
 		// Setup Doors menu
 		this.menu = [
 			{
@@ -7901,6 +7954,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		// Check if we need to activate
 		let iconWindow = false;
+		let isFileMenu = false;
 		if( tr )
 		{
 			let p = tr.parentNode.parentNode;
@@ -7916,6 +7970,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					if( p.content && p.content.directoryview )
 						iconWindow = p.content;
 				}
+			}
+		}
+		
+		// Always refresh menu when we have a targtt
+		if( e && e.target )
+		{
+			let tmp = e.target;
+			while( tmp != document.body )
+			{
+				if( tmp.classList && tmp.classList.contains( 'File' ) )
+					break;
+				tmp = tmp.parentNode;
+			}
+			if( tmp != document.body && tmp.classList.contains( 'File' ) )
+			{
+				isFileMenu = true;
+				Workspace.refreshMenu( true, tmp );
+				menu = Workspace.menu;
 			}
 		}
 		
@@ -8012,7 +8084,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 			];
 		}
-		else if( !menu )
+		else if( !menu || isFileMenu )
 		{
 			// Make sure the menu is up to date
 			let t = tr;
@@ -8031,7 +8103,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					t.checkSelected();
 			}
 			
-			Workspace.refreshMenu( true );
 			for( let z = 0; z < Workspace.menu.length; z++ )
 			{
 				if( Workspace.menu[z].name == i18n( 'menu_icons' ) )
@@ -10706,6 +10777,7 @@ Workspace.receiveLive = function( viewId, jsonEvent ) {
 // Receive push notification (when a user clicks native push notification on phone)
 Workspace.receivePush = function( jsonMsg, ready )
 {
+	console.log( 'Workspace.receivePush', jsonMsg );
 	if( !isMobile ) return 'mobile';
 	let msg = jsonMsg ? jsonMsg : ( window.friendApp && typeof friendApp.get_notification == 'function' ? friendApp.get_notification() : false );
 
@@ -10752,6 +10824,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 	
 	function handleClick()
 	{
+		console.log( 'handleClick ??' );
 		if( !msg.application || msg.application == 'null' ) 
 		{
 			if( !ready && Workspace.onReady ) Workspace.onReady();
@@ -10792,8 +10865,8 @@ Workspace.receivePush = function( jsonMsg, ready )
 				}
 			
 				mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
-			
 				let app = Workspace.applications[a];
+				console.log( 'push to app', [ msg, app ]);
 				app.contentWindow.postMessage( JSON.stringify( { 
 					type: 'system',
 					method: 'pushnotification',
@@ -10842,7 +10915,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 					break;
 				}
 			}
-		
+			
 			// No application? Alert the user
 			// TODO: Localize response!
 			if( !app )
@@ -10933,6 +11006,7 @@ else
 var mobileDebugTime = null;
 function mobileDebug( str, clear )
 {
+	console.log( 'mobileDebug', str );
 	if( !isMobile ) return;
 	if( !window.debugDiv ) return;
 	if( mobileDebugTime ) clearTimeout( mobileDebugTime );

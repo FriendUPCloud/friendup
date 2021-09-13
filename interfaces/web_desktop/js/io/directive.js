@@ -39,6 +39,13 @@ function RemoveFromExecutionQueue( app )
 // Load a javascript application into a sandbox
 function ExecuteApplication( app, args, callback, retries, flags )
 {
+	console.log( 'ExecuteApplication', [
+		app,
+		args,
+		callback,
+		retries,
+		flags,
+	]);
 	// Just nothing.
 	if( !app ) return;
 	
@@ -230,6 +237,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			//
 		}
 	
+		console.log( 'ExecuteApplication.onExecuted', conf );
 		if( r == 'activate' )
 		{
 			ActivateApplication( app, conf );
