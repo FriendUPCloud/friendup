@@ -16,6 +16,7 @@ Application.run = function( msg )
 	if( devname == 'Home' )
 	{
 		ge( 'mounter' ).parentNode.innerHTML = '&nbsp';
+		ge( 'deleter' ).style.display = 'none';
 	}
 	else
 	{
