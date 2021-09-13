@@ -848,11 +848,7 @@ char *USMUserGetFirstActiveSessionID( UserSessionManager *smgr, User *usr )
 	{
 		char *sessionid = NULL;
 		
-		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
-		{
-			usr->u_InUse++;
-			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex ) );
-		}
+		USER_LOCK( usr );
 		
 		UserSessListEntry *us  = usr->u_SessionsList;
 		while( us != NULL )
@@ -862,22 +858,14 @@ char *USMUserGetFirstActiveSessionID( UserSessionManager *smgr, User *usr )
 				UserSession *s = (UserSession *) us->us;
 				if( s->us_SessionID != NULL )
 				{
-					if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
-					{
-						usr->u_InUse--;
-						FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex ) );
-					}
+					USER_UNLOCK( usr );
 					return s->us_SessionID;
 				}
 			}
 			us = (UserSessListEntry *)us->node.mln_Succ;
 		}
 		
-		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
-		{
-			usr->u_InUse--;
-			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex ) );
-		}
+		USER_UNLOCK( usr );
 		
 		return sessionid;
 	}

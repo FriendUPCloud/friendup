@@ -1152,79 +1152,70 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		userID = usr->u_ID;
 		time_t timestamp = time( NULL );
 		//
-		if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
-		{
-			usr->u_InUse++;
-			FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
-		}
 		
+		USER_LOCK( usr );
+		
+		UserSessListEntry  *usl = usr->u_SessionsList;
+		while( usl != NULL )
 		{
-			UserSessListEntry  *usl = usr->u_SessionsList;
-			while( usl != NULL )
+			UserSession *locses = (UserSession *)usl->us;
+			if( locses != NULL )
 			{
-				UserSession *locses = (UserSession *)usl->us;
-				if( locses != NULL )
+				if( FRIEND_MUTEX_LOCK( &locses->us_Mutex ) == 0 )
 				{
-					if( FRIEND_MUTEX_LOCK( &locses->us_Mutex ) == 0 )
-					{
-						locses->us_InUseCounter++;
-						FRIEND_MUTEX_UNLOCK( &locses->us_Mutex );
-					}
-					
-					DEBUG("[AdminWebRequest] Send Message through websockets: %s clients: %p timestamptrue: %d\n", locses->us_DeviceIdentity, locses->us_WSD, ( ( (timestamp - locses->us_LastActionTime) < sb->sl_RemoveSessionsAfterTime ) ) );
+					locses->us_InUseCounter++;
+					FRIEND_MUTEX_UNLOCK( &locses->us_Mutex );
+				}
 				
-					if( ( ( (timestamp - locses->us_LastActionTime) < sb->sl_RemoveSessionsAfterTime ) ) && locses->us_WSD != NULL )
-					{
-						int msgLen = 0;
-						NotificationSent *lns = NotificationSentNew();
-						lns->ns_NotificationID = notif->n_ID;
-						lns->ns_RequestID = locses->us_ID;
-						lns->ns_Target = MOBILE_APP_TYPE_NONE;	// none means WS
-						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
-						
-						// store notification for user session in database
-						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
+				DEBUG("[AdminWebRequest] Send Message through websockets: %s clients: %p timestamptrue: %d\n", locses->us_DeviceIdentity, locses->us_WSD, ( ( (timestamp - locses->us_LastActionTime) < sb->sl_RemoveSessionsAfterTime ) ) );
+				
+				if( ( ( (timestamp - locses->us_LastActionTime) < sb->sl_RemoveSessionsAfterTime ) ) && locses->us_WSD != NULL )
+				{
+					int msgLen = 0;
+					NotificationSent *lns = NotificationSentNew();
+					lns->ns_NotificationID = notif->n_ID;
+					lns->ns_RequestID = locses->us_ID;
+					lns->ns_Target = MOBILE_APP_TYPE_NONE;	// none means WS
+					lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 					
-						if( notif->n_Extra )
-						{ //TK-1039
-							msgLen = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu, \"source\":\"ws\"}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
-						}
-						else
-						{
-							msgLen = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu, \"source\":\"ws\"}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
-						}
+					// store notification for user session in database
+					NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 					
-						int msgsize = reqLengith + msgLen;
-						char *sndbuffer = FMalloc( msgsize );
-					
-						DEBUG("\t\t\t\t\t\t\t jsonMessage '%s' len %d \n", jsonMessage, reqLengith );
-						int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"notification\",\"data\":{\"id\":\"%lu\",\"notificationData\":%s}}}", lns->ns_ID , jsonMessage );
-					
-						Log( FLOG_INFO, "Send notification through Websockets: '%s' len %d \n", sndbuffer, msgsize );
-					
-						bytesSent += WebSocketSendMessageInt( locses, sndbuffer, lenmsg );
-						FFree( sndbuffer );
-					
-						// add NotificationSent to Notification
-						lns->node.mln_Succ = (MinNode *)notif->n_NotificationsSent;
-						notif->n_NotificationsSent = lns;
+					if( notif->n_Extra )
+					{ //TK-1039
+						msgLen = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu, \"source\":\"ws\"}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
 					}
-					
-					if( FRIEND_MUTEX_LOCK( &locses->us_Mutex ) == 0 )
+					else
 					{
-						locses->us_InUseCounter--;
-						FRIEND_MUTEX_UNLOCK( &locses->us_Mutex );
+						msgLen = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu, \"source\":\"ws\"}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 					}
-				} // locses = NULL
-				usl = (UserSessListEntry *)usl->node.mln_Succ;
-			}
+				
+					int msgsize = reqLengith + msgLen;
+					char *sndbuffer = FMalloc( msgsize );
+					
+					DEBUG("\t\t\t\t\t\t\t jsonMessage '%s' len %d \n", jsonMessage, reqLengith );
+					int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"notification\",\"data\":{\"id\":\"%lu\",\"notificationData\":%s}}}", lns->ns_ID , jsonMessage );
+					
+					Log( FLOG_INFO, "Send notification through Websockets: '%s' len %d \n", sndbuffer, msgsize );
+					
+					bytesSent += WebSocketSendMessageInt( locses, sndbuffer, lenmsg );
+					FFree( sndbuffer );
+				
+					// add NotificationSent to Notification
+					lns->node.mln_Succ = (MinNode *)notif->n_NotificationsSent;
+					notif->n_NotificationsSent = lns;
+				}
+				
+				if( FRIEND_MUTEX_LOCK( &locses->us_Mutex ) == 0 )
+				{
+					locses->us_InUseCounter--;
+					FRIEND_MUTEX_UNLOCK( &locses->us_Mutex );
+				}
+			} // locses = NULL
+			usl = (UserSessListEntry *)usl->node.mln_Succ;
 		}
-		
-		if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
-		{
-			usr->u_InUse--;
-			FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
-		}
+
+		USER_UNLOCK( usr );
 	}	// usr != NULL
 	else
 	{

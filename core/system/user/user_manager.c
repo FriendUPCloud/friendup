@@ -1691,11 +1691,8 @@ int UMGetActiveUsersWSList( UserManager *um, BufString *bs, FULONG userid, FBOOL
 		{
 			DEBUG("[UMWebRequest] Going through users, user: %s\n", usr->u_Name );
 		
-			if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
-			{
-				usr->u_InUse++;
-				FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
-			}
+			USER_LOCK( usr );
+			
 			UserSessListEntry  *usl = usr->u_SessionsList;
 			while( usl != NULL )
 			{
@@ -1741,11 +1738,7 @@ int UMGetActiveUsersWSList( UserManager *um, BufString *bs, FULONG userid, FBOOL
 				usl = (UserSessListEntry *)usl->node.mln_Succ;
 			}
 			
-			if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
-			{
-				usr->u_InUse--;
-				FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
-			}
+			USER_UNLOCK( usr );
 			
 			usr = (User *)usr->node.mln_Succ;
 		}
@@ -1781,30 +1774,30 @@ int UMSendMessageToUserOrSession( UserManager *um, BufString *bs, UserSession *l
 	
 	if( usr != NULL )
 	{
-		if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
+		USER_LOCK( usr );
+		
+		UserSessListEntry *usle = (UserSessListEntry *)usr->u_SessionsList;
+		int msgsndsize = 0;
+		while( usle != NULL )
 		{
-			UserSessListEntry *usle = (UserSessListEntry *)usr->u_SessionsList;
-			int msgsndsize = 0;
-			while( usle != NULL )
+			UserSession *ls = (UserSession *)usle->us;
+			if( ls != NULL )
 			{
-				UserSession *ls = (UserSession *)usle->us;
-				if( ls != NULL )
-				{
-					DEBUG("Found same session, sending msg\n");
-					char tmp[ 512 ];
-					int tmpsize = 0;
-					
-					tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, ls->us_DeviceIdentity );
-					
-					int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":{\"username\":\"%s\",\"message\":\"%s\"}}}", 
-					loggedSession->us_User->u_Name , message );
-					
-					msgsndsize = WebSocketSendMessageInt( ls, sndbuffer, lenmsg );
-				}
-				usle = (UserSessListEntry *)usle->node.mln_Succ;
+				DEBUG("Found same session, sending msg\n");
+				char tmp[ 512 ];
+				int tmpsize = 0;
+				
+				tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, ls->us_DeviceIdentity );
+				
+				int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":{\"username\":\"%s\",\"message\":\"%s\"}}}", 
+				loggedSession->us_User->u_Name , message );
+				
+				msgsndsize = WebSocketSendMessageInt( ls, sndbuffer, lenmsg );
 			}
-			FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+			usle = (UserSessListEntry *)usle->node.mln_Succ;
 		}
+		
+		USER_UNLOCK( usr );
 		
 		if( msgsndsize > 0 )
 		{

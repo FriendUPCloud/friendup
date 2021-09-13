@@ -179,22 +179,45 @@ typedef struct User
 	char						*u_UUID;						// unique ID
 	char						*u_Timezone;					// timezone
 	int							u_InUse;						// usage counter
+	FBOOL						u_ChangeState;					// if user session list is in change state
 } User;
+
+//
+//
+//
+
+#ifndef USER_CHANGE_ON
+#define USER_CHANGE_ON( USR ) \
+while( USR->u_InUse > 0 ){ usleep( 2000 ); } \
+if( FRIEND_MUTEX_LOCK( &(USR->u_Mutex) ) == 0 ){ \
+	USR->u_ChangeState = TRUE; \
+	FRIEND_MUTEX_UNLOCK( &(USR->u_Mutex) ); \
+}
+#endif
+
+#ifndef USER_CHANGE_OFF
+#define USER_CHANGE_OFF( USR ) \
+if( FRIEND_MUTEX_LOCK( &(USR->u_Mutex) ) == 0 ){ \
+	USR->u_ChangeState = FALSE; \
+	FRIEND_MUTEX_UNLOCK( &(USR->u_Mutex) ); \
+}
+#endif
 
 #ifndef USER_LOCK
 #define USER_LOCK( USR ) \
+while( USR->u_ChangeState != FALSE ){ usleep( 2000 ); } \
 if( FRIEND_MUTEX_LOCK( &(USR->u_Mutex) ) == 0 ){ \
 	USR->u_InUse++; \
-FRIEND_MUTEX_UNLOCK( &(USR->u_Mutex) ); \
-} 
+	FRIEND_MUTEX_UNLOCK( &(USR->u_Mutex) ); \
+}
 #endif
 
 #ifndef USER_UNLOCK
 #define USER_UNLOCK( USR ) \
 if( FRIEND_MUTEX_LOCK( &(USR->u_Mutex) ) == 0 ){ \
 	USR->u_InUse--; \
-FRIEND_MUTEX_UNLOCK( &(USR->u_Mutex) ); \
-} 
+	FRIEND_MUTEX_UNLOCK( &(USR->u_Mutex) ); \
+}
 #endif
 
 
