@@ -684,9 +684,6 @@ cAjax.prototype.send = function( data, callback )
 					if( !navigator.onLine )
 					{
 						reject( 'error' );
-						if( Workspace.conn && Workspace.conn.ws )
-							Workspace.conn.ws.close();
-						Workspace.conn = null;
 						return;
 					}
 					try
