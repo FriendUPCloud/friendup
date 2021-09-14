@@ -729,17 +729,20 @@ FriendWebSocket.prototype.chunkSend = function( str )
 
 FriendWebSocket.prototype.wsSend = function( str )
 {
+	let self = this;
+	
     if( !navigator.onLine )
     {
-    	this.close();
-    	return false;
+    	if ( !self.sendQueue )
+			self.sendQueue = [];
+		self.sendQueue.push( msg );
+		self.handleClose();
     }
     
     if( !this.onstate ) 
     {
         return false;
     }
-	let self = this;
 	let res = false;
 	try
 	{
