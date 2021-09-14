@@ -913,7 +913,6 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					}
 					if( !changed ) 
 					{
-						console.log( 'Nothing changed. Bye.' );
 						return;
 					}
 				}
