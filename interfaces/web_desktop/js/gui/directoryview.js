@@ -4496,7 +4496,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 							// TODO: Fix websockets
 							// This is to kill websocket when call fails
 							getretries++;
-							if( getretries > 2 )
+							if( getretries > 1 )
 							{
 								getretries = 0;
 								if( Workspace.conn && Workspace.conn.ws )
