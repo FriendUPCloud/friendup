@@ -494,7 +494,7 @@ Friend.User = {
 			}
 			
 			// Try to close the websocket
-			if( Workspace.conn )
+			if( Workspace.conn && Workspace.conn.ws )
 			{
 				try
 				{
@@ -504,6 +504,8 @@ Friend.User = {
 				{
 					console.log( 'Could not close conn.' );
 				}
+				delete Workspace.conn.ws;
+				Workspace.conn.ws = null;
 				delete Workspace.conn;
 				Workspace.conn = null;
 				console.log( 'Removed websocket.' );
