@@ -396,6 +396,11 @@ Friend.User = {
 	// Check if the server is alive
 	CheckServerConnection: function( useAjax )
 	{
+		if( !navigator.onLine )
+		{
+			Friend.User.SetUserConnectionState( 'offline' );
+			return false;
+		}
 		if( Workspace && Workspace.loginPrompt ) return;
 		if( typeof( Library ) == 'undefined' ) return;
 		if( typeof( MD5 ) == 'undefined' ) return;
