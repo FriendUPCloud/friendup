@@ -706,6 +706,10 @@ cAjax.prototype.send = function( data, callback )
 							console.log( 'Other error' );
 							callback( false, false );
 						}
+						else
+						{
+							console.log( 'No callback.' );
+						}
 					}
 					else if( err == 'success' );
 					{
