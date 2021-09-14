@@ -821,6 +821,8 @@ FriendWebSocket.prototype.handlePing = function( data )
 		data : data,
 	};
 
+	console.log( 'GOT PONG' );
+	
 	self.sendCon( msg );
 }
 
