@@ -496,6 +496,7 @@ Friend.User = {
 			// Try to close the websocket
 			if( Workspace.conn && Workspace.conn.ws )
 			{
+				console.log( 'Doing the close!' );
 				try
 				{
 					Workspace.conn.ws.close();
