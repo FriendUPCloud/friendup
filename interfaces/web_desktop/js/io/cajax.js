@@ -685,7 +685,8 @@ cAjax.prototype.send = function( data, callback )
 					{
 						reject( 'error' );
 						if( Workspace.conn && Workspace.conn.ws )
-							Workspace.conn.ws.cleanup();
+							Workspace.conn.ws.close();
+						Workspace.conn = null;
 						return;
 					}
 					try
