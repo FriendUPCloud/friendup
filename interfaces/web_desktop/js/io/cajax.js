@@ -681,6 +681,13 @@ cAjax.prototype.send = function( data, callback )
 				
 				new Promise( function( resolve, reject )
 				{
+					if( !navigator.onLine )
+					{
+						reject( 'error' );
+						if( Workspace.conn && Workspace.conn.ws )
+							Workspace.conn.ws.cleanup();
+						return;
+					}
 					try
 					{
 						res = self.proxy.send( out.join ( '&' ) );
