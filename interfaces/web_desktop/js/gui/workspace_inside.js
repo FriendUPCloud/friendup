@@ -1277,7 +1277,6 @@ var WorkspaceInside = {
 				return setTimeout( function(){ Workspace.initWebSocket( callback ); }, 250 );
 			}
 		
-			console.log( 'Setting a new conn!' );
 			this.conn = new FriendConnection( conf );
 			this.conn.on( 'sasid-request', handleSASRequest ); // Shared Application Session
 			this.conn.on( 'server-notice', handleServerNotice );
@@ -1293,7 +1292,6 @@ var WorkspaceInside = {
 		}
 		
 		// Reference for handler
-		console.log( 'Attaching conn again!' );
 		let selfConn = this.conn;
 
 		function onState( e )
