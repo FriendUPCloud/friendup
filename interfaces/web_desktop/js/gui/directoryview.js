@@ -4495,6 +4495,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 							//console.log( '[gettheicons] Try redraw again!' );
 							getTheIconsAndRedraw();
 						}, 1000 );
+						if( !navigator.onLine ) return;
 						dr.getIcons( fi, function( icons, something, response )
 						{
 							clearTimeout( tt );

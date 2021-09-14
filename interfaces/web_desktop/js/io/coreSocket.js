@@ -747,8 +747,6 @@ FriendWebSocket.prototype.wsSend = function( str )
 	try
 	{
 		res = self.ws.send( str );
-		console.log( 'Sending: ', str );
-		console.trace();
 	}
 	catch( e )
 	{
