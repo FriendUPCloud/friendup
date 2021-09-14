@@ -763,6 +763,7 @@ FriendWebSocket.prototype.wsSend = function( str )
 FriendWebSocket.prototype.executeSendQueue = function()
 {
 	let self = this;
+	console.log( 'Executing send send queue...' );
 	self.sendQueue.forEach( send );
 	self.sendQueue = [];
 	function send( msg )
