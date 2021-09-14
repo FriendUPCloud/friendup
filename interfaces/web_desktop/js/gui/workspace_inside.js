@@ -1200,6 +1200,9 @@ var WorkspaceInside = {
 	},
 	initWebSocket: function( callback )
 	{
+		// Not online!!
+		if( !navigator.onLine ) return;
+		
 		let self = this;
 		function closeConn()
 		{
