@@ -731,7 +731,7 @@ FriendWebSocket.prototype.wsSend = function( str )
 {
     if( !navigator.onLine )
     {
-    	self.close();
+    	this.close();
     	return false;
     }
     
