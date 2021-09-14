@@ -799,8 +799,6 @@ FriendWebSocket.prototype.sendPing = function( msg )
 		data : timestamp,
 	};
 
-	console.log( 'SENDING PING!' );
-
 	// Should always clear previous checkping so it doesn't suddenly fire as an orphan
 	self.pingCheck = setTimeout( checkPing, self.maxPingWait );
 
@@ -829,6 +827,10 @@ FriendWebSocket.prototype.handlePing = function( data )
 FriendWebSocket.prototype.handlePong = function( timeSent )
 {
 	let self = this;
+	
+	// No double handling
+	if( this.state && this.state.type == 'ping' ) return;
+	
 	let now = Date.now();
 	let pingTime = now - timeSent;
 
