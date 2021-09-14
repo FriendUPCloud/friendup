@@ -800,8 +800,6 @@ FriendWebSocket.prototype.sendPing = function( msg )
 	};
 
 	// Should always clear previous checkping so it doesn't suddenly fire as an orphan
-	if( self.pingCheck )
-		clearTimeout( self.pingCheck );
 	self.pingCheck = setTimeout( checkPing, self.maxPingWait );
 
 	function checkPing()
@@ -835,7 +833,7 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 	if( self.pingCheck )
 	{ 
 		clearTimeout( self.pingCheck ); 
-		self.pingCheck = 0;
+		self.pingCheck = null;
 	}
 	
 	self.setState( 'ping', pingTime );
