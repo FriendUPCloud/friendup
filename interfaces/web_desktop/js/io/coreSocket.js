@@ -799,6 +799,8 @@ FriendWebSocket.prototype.sendPing = function( msg )
 		data : timestamp,
 	};
 
+	console.log( 'SENDING PING!' );
+
 	// Should always clear previous checkping so it doesn't suddenly fire as an orphan
 	self.pingCheck = setTimeout( checkPing, self.maxPingWait );
 
@@ -836,6 +838,7 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 		self.pingCheck = null;
 	}
 	
+	console.log( 'PING!!!!' );
 	self.setState( 'ping', pingTime );
 	
 	// We're ready with pong!
