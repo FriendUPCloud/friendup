@@ -1292,6 +1292,7 @@ var WorkspaceInside = {
 		}
 		
 		// Reference for handler
+		console.log( 'Attaching conn again!' );
 		let selfConn = this.conn;
 
 		function onState( e )
@@ -1315,6 +1316,7 @@ var WorkspaceInside = {
 				// Reattach
 				if( !Workspace.conn && selfConn )
 				{
+					console.log( 'Reattaching conn!' );
 					Workspace.conn = selfConn;
 				}
 			}
