@@ -541,7 +541,12 @@ Friend.User = {
 				// Try to reboot the websocket
 				if( !Workspace.conn && Workspace.initWebSocket )
 				{
+					console.log( 'Reinitializing websocket.' );
 					Workspace.initWebSocket();
+				}
+				else
+				{
+					console.log( 'We have a kind of conn: ', Workspace.conn, Workspace.conn ? Workspace.conn.ws : false );
 				}
 				// Clear execution queue
 				_executionQueue = {};
