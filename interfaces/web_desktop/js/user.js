@@ -491,29 +491,29 @@ Friend.User = {
 				if( this.checkInterval )
 					clearInterval( this.checkInterval );
 				this.checkInterval = setInterval( 'Friend.User.CheckServerConnection()', 2500 );
-			}
-			
-			// Try to close the websocket
-			if( Workspace.conn && Workspace.conn.ws )
-			{
-				try
+				
+				// Try to close the websocket
+				if( Workspace.conn && Workspace.conn.ws )
 				{
-					Workspace.conn.ws.close();
+					try
+					{
+						Workspace.conn.ws.close();
+					}
+					catch( e )
+					{
+						console.log( 'Could not close conn.' );
+					}
+					delete Workspace.conn.ws;
+					Workspace.conn.ws = null;
+					delete Workspace.conn;
+					Workspace.conn = null;
 				}
-				catch( e )
-				{
-					console.log( 'Could not close conn.' );
-				}
-				delete Workspace.conn.ws;
-				Workspace.conn.ws = null;
-				delete Workspace.conn;
-				Workspace.conn = null;
-			}
 			
-			// Remove dirlisting cache!
-			if( window.DoorCache )
-			{
-			    DoorCache.dirListing = {};
+				// Remove dirlisting cache!
+				if( window.DoorCache )
+				{
+					DoorCache.dirListing = {};
+				}
 			}
 		}
 		else if( mode == 'online' )
