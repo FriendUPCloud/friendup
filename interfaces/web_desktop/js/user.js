@@ -488,29 +488,30 @@ Friend.User = {
 				if( Workspace.nudgeWorkspacesWidget )
 					Workspace.nudgeWorkspacesWidget();
 				
-				// Try to close the websocket
-				if( Workspace.conn )
-				{
-					try
-					{
-						Workspace.conn.ws.cleanup();
-					}
-					catch( e )
-					{
-						console.log( 'Could not close conn.' );
-					}
-					delete Workspace.conn;
-					console.log( 'Removed websocket.' );
-				}
-				
 				if( this.checkInterval )
 					clearInterval( this.checkInterval );
 				this.checkInterval = setInterval( 'Friend.User.CheckServerConnection()', 2500 );
 			}
+			
+			// Try to close the websocket
+			if( Workspace.conn )
+			{
+				try
+				{
+					Workspace.conn.ws.close();
+				}
+				catch( e )
+				{
+					console.log( 'Could not close conn.' );
+				}
+				delete Workspace.conn;
+				Workspace.conn = null;
+				console.log( 'Removed websocket.' );
+			}
+			
 			// Remove dirlisting cache!
 			if( window.DoorCache )
 			{
-			    console.log( 'Nulling out dirlisting!' );
 			    DoorCache.dirListing = {};
 			}
 		}
@@ -541,7 +542,6 @@ Friend.User = {
 				// Try to reboot the websocket
 				if( !Workspace.conn && Workspace.initWebSocket )
 				{
-					console.log( 'Reinitializing websocket.' );
 					Workspace.initWebSocket();
 				}
 				else
