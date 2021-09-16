@@ -224,7 +224,7 @@ Friend.User = {
 	// When session times out, use log in again...
 	ReLogin: function( callback )
 	{
-    	if( this.lastLogin ) return;
+    	if( this.lastLogin ) return false;
     	
     	this.State = 'login';
     	
@@ -503,8 +503,11 @@ Friend.User = {
 					{
 						console.log( 'Could not close conn.' );
 					}
-					delete Workspace.conn.ws;
-					Workspace.conn.ws = null;
+					if( Workspace.conn && Workspace.conn.ws )
+					{
+						delete Workspace.conn.ws;
+						Workspace.conn.ws = null;
+					}
 					delete Workspace.conn;
 					Workspace.conn = null;
 				}
