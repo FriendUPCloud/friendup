@@ -156,6 +156,8 @@ FriendWebSocket.prototype.init = function()
 
 FriendWebSocket.prototype.connect = function()
 {
+	let self = this;
+	
 	// Reset
 	self.ready = false;
 	self.pongCount = 0;
@@ -166,7 +168,6 @@ FriendWebSocket.prototype.connect = function()
 		return;
 	}
 	
-	let self = this;
 	if ( !self.url || !self.url.length )
 	{
 		if( self.pConf )
