@@ -429,6 +429,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		this.mode = 'websocket';
 		this.url = url;
 		this.hasReturnCode = hasReturnCode;
+		console.log( 'WebSocket call: ' + url );
 		return true;
 	}
 	else
