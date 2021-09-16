@@ -824,12 +824,11 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 	let self = this;
 	
 	// No double handling (already received pong!)
-	/*if( self.keepAliveState == 'pong' ) 
+	if( self.keepAliveState != 'ping' ) 
 	{
-		console.log( 'Cannot handle pong all over again.' );
-		self.lastWSPing = null; // We need to make sure this is set
+		console.log( 'Pong with no ping!' );
 		return;
-	}*/
+	}
 	
 	let now = Date.now();
 	let pingTime = now - timeSent;
