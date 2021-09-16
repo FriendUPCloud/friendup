@@ -6154,7 +6154,7 @@ function Alert( title, string, cancelstring, callback )
 	{
 		v.setContent( data );
 		let eles = v._window.getElementsByTagName( 'button' );
-		if( eles.length )
+		if( eles && eles.length )
 		{
 			eles[0].onclick = function()
 			{
