@@ -417,6 +417,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		Workspace.conn && 
 		Workspace.conn.ws && 
 		Workspace.conn.ws.ready &&
+		Workspace.conn.ws.ws &&
 		( this.proxy && this.proxy.responseType != 'arraybuffer' ) &&
 		typeof( url ) == 'string' && 
 		url.indexOf( 'http' ) != 0 && 
