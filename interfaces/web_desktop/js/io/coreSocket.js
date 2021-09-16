@@ -56,6 +56,7 @@ FriendWebSocket = function( conf )
 	self.chunks = {};
 	self.allowReconnect = true;
 	self.pingInterval = 1000 * 10;
+	self.pongCount = 0;
 	self.maxPingWait = Math.floor( 1000 * 1.5 ); // Wait 1.5 secs
 	self.pingCheck = 0;
 	self.reconnectDelay = 200; // ms
@@ -824,14 +825,6 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 {
 	let self = this;
 	
-	// No double handling (already received pong!)
-	// In setsession mode - we have just connected and expect pong...
-	if( self.keepAliveState != 'ping' && self.keepAliveState != 'setsession' ) 
-	{
-		console.log( 'Pong with no ping!' );
-		return;
-	}
-	
 	let now = Date.now();
 	let pingTime = now - timeSent;
 
@@ -851,14 +844,12 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 	
 	// We are receiving pong
 	if( self.keepAliveState != 'setsession' )
-	{
-		console.log( 'What is our status? ' + self.keepAliveState );
-		console.trace();
-		// We're ready with pong!
-		self.setReady();
-	}
+	
 	self.keepAliveState = 'pong';
 	
+	// We're ready with pong!
+	if( this.pongCount++ > 2 )
+		self.setReady();
 	
 	if( Friend.User )
 	{
