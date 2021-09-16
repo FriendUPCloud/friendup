@@ -1201,7 +1201,7 @@ var WorkspaceInside = {
 	initWebSocket: function( callback )
 	{
 		// Not online!!
-		if( !navigator.onLine ) return;
+		if( !navigator.onLine ) return false;
 		
 		let self = this;
 		function closeConn()
@@ -1211,11 +1211,12 @@ var WorkspaceInside = {
 			{
 				try
 				{
-					self.conn.ws.cleanup();
+					if( self.conn.ws )
+						self.conn.ws.cleanup();
 				}
 				catch( ez )
 				{
-					console.log( 'Conn is dead.', ez, ez2 );
+					console.log( 'Conn is dead.', ez );
 				}
 				delete self.conn;
 			}
@@ -1228,7 +1229,7 @@ var WorkspaceInside = {
 		{
 			console.log( 'Cannot initialize web socket - user is offline.' );
 			closeConn();
-			return;
+			return false;
 		}
 		
 		if( !Workspace.sessionId && Workspace.userLevel )
@@ -1301,6 +1302,17 @@ var WorkspaceInside = {
 				if( e.type == 'close' )
 				{
 					console.log( '[onState] The ws closed.' );
+					if( !Workspace.wsChecker )
+					{
+						Workspace.wsChecker = setInterval( function()
+						{
+							if( !Workspace.conn || !Workspace.conn.ws || !Workspace.conn.ws.ws )
+							{
+								console.log( 'Looks like we do not have any websocket. Trying to create it.' );
+								Workspace.initWebSocket();
+							}
+						}, 1600 );
+					}
 				}
 				else if( e.type == 'error' )
 				{
@@ -1311,6 +1323,12 @@ var WorkspaceInside = {
 			{
 				if( Friend.User )
 					Friend.User.SetUserConnectionState( 'online' );
+				
+				if( Workspace.wsChecker )
+				{
+					clearInterval( Workspace.wsChecker )
+					Workspace.wsChecker = null;
+				}
 				
 				// Reattach
 				if( !Workspace.conn && selfConn )
