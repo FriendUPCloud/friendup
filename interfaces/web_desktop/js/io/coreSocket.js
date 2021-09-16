@@ -523,7 +523,6 @@ FriendWebSocket.prototype.setSession = function()
 
 FriendWebSocket.prototype.setReady = function()
 {
-	console.trace();
 	this.ready = true;
 	this.executeSendQueue();
 }
@@ -830,7 +829,6 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 	if( self.keepAliveState != 'ping' && self.keepAliveState != 'setsession' ) 
 	{
 		console.log( 'Pong with no ping!' );
-		
 		return;
 	}
 	
@@ -852,10 +850,13 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 	}
 	
 	// We are receiving pong
+	if( self.keepAliveState != 'setsession' )
+	{
+		// We're ready with pong!
+		self.setReady();
+	}
 	self.keepAliveState = 'pong';
 	
-	// We're ready with pong!
-	self.setReady();
 	
 	if( Friend.User )
 	{
