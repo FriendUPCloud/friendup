@@ -1299,24 +1299,17 @@ var WorkspaceInside = {
 		{	
 			if( e.type == 'error' || e.type == 'close' )
 			{
-				if( e.type == 'close' )
+				console.log( '[onState] The ws closed.' );
+				if( !Workspace.wsChecker )
 				{
-					console.log( '[onState] The ws closed.' );
-					if( !Workspace.wsChecker )
+					Workspace.wsChecker = setInterval( function()
 					{
-						Workspace.wsChecker = setInterval( function()
+						if( !Workspace.conn || !Workspace.conn.ws || !Workspace.conn.ws.ws )
 						{
-							if( !Workspace.conn || !Workspace.conn.ws || !Workspace.conn.ws.ws )
-							{
-								console.log( 'Looks like we do not have any websocket. Trying to create it.' );
-								Workspace.initWebSocket();
-							}
-						}, 1600 );
-					}
-				}
-				else if( e.type == 'error' )
-				{
-					console.log( '[onState] We got an error.' );
+							console.log( 'Looks like we do not have any websocket. Trying to create it.' );
+							Workspace.initWebSocket();
+						}
+					}, 1600 );
 				}
 			}
 			else if( e.type == 'ping' )
