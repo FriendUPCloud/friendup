@@ -821,12 +821,6 @@ FriendWebSocket.prototype.handlePing = function( data )
 
 FriendWebSocket.prototype.handlePong = function( timeSent )
 {
-	if( !this.ws )
-	{
-		consol.log( 'Pong, but no websocket active, terminate!' );
-		return this.wsClose();
-	}
-	
 	let self = this;
 	
 	// No double handling (already received pong!)
@@ -847,6 +841,12 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 	}
 
 	self.setState( 'ping', pingTime );
+	
+	if( !this.ws )
+	{
+		consol.log( 'Pong, but no websocket active, terminate!' );
+		return this.wsClose();
+	}
 	
 	// We are receiving pong
 	self.keepAliveState = 'pong';
