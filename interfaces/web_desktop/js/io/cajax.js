@@ -431,6 +431,10 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		this.hasReturnCode = hasReturnCode;
 		return true;
 	}
+	else
+	{
+		console.log( 'HTTP call: ' + url );
+	}
 	
 	// If we are running this on friendup recreate url to support old method
 	if ( typeof AjaxUrl == 'function' )
