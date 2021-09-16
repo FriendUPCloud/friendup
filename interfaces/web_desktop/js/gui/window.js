@@ -6154,16 +6154,24 @@ function Alert( title, string, cancelstring, callback )
 	{
 		v.setContent( data );
 		let eles = v._window.getElementsByTagName( 'button' );
-		eles[0].onclick = function()
+		if( eles.length )
+		{
+			eles[0].onclick = function()
+			{
+				v.close();
+				if( callback ) callback();
+			}
+		
+			if( !window.isMobile )
+			{
+				_ActivateWindow( v._window.parentNode );
+				_WindowToFront( v._window.parentNode );
+			}
+		}
+		else
 		{
 			v.close();
-			if( callback ) callback();
-		}
-		
-		if( !window.isMobile )
-		{
-			_ActivateWindow( v._window.parentNode );
-			_WindowToFront( v._window.parentNode );
+			console.log( '[Alert] Could not process alert dialog template.' );
 		}
 	}
 	f.load();
