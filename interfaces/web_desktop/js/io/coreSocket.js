@@ -840,7 +840,6 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 		self.pingCheck = null;
 	}
 	
-	//console.log( 'PING!!!!' );
 	self.setState( 'ping', pingTime );
 	
 	// We're ready with pong!
