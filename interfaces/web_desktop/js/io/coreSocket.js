@@ -501,8 +501,8 @@ FriendWebSocket.prototype.unsetSession = function()
 {
 	this.sessionId = false;
 	let msg = {
-		type : 'session',
-		data : this.sessionId,
+		type: 'session',
+		data: this.sessionId
 	};
 	this.sendOnSocket( msg );
 }
@@ -517,6 +517,7 @@ FriendWebSocket.prototype.setSession = function()
 			authId: this.authId || undefined,
 		},
 	};
+	this.keepAliveState = 'setsession';
 	this.sendOnSocket( sess );
 }
 
@@ -824,7 +825,8 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 	let self = this;
 	
 	// No double handling (already received pong!)
-	if( self.keepAliveState != 'ping' ) 
+	// In setsession mode - we have just connected and expect pong...
+	if( self.keepAliveState != 'ping' && self.keepAliveState != 'setsession' ) 
 	{
 		console.log( 'Pong with no ping!' );
 		return;
