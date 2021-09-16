@@ -87,6 +87,7 @@ FriendWebSocket.prototype.reconnect = function()
 	let self = this;
 	
 	self.ready = false;
+	self.pongCount = 0;
 	self.allowReconnect = true;
 	
 	// We're pre reconnect - wait..
@@ -155,6 +156,10 @@ FriendWebSocket.prototype.init = function()
 
 FriendWebSocket.prototype.connect = function()
 {
+	// Reset
+	self.ready = false;
+	self.pongCount = 0;
+	
 	if( window.Friend && Friend.User && Friend.User.State == 'offline' )
 	{
 		console.log( 'Friend says the user is offline. Bye.' );
