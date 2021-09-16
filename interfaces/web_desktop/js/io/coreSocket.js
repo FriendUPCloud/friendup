@@ -852,6 +852,8 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 	// We are receiving pong
 	if( self.keepAliveState != 'setsession' )
 	{
+		console.log( 'What is our status? ' + self.keepAliveState );
+		console.trace();
 		// We're ready with pong!
 		self.setReady();
 	}
