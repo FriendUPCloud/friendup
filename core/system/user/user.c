@@ -922,6 +922,8 @@ void UserListSessions( User* usr, BufString *bs, void *sb )
 				}
 				UserSession *us = (UserSession *) sessions->us;
 				
+				DEBUG("[UserListSessions] sessionid: %s\n", us->us_SessionID );
+				
 				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 				{
 					us->us_InUseCounter++;
