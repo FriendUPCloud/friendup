@@ -716,7 +716,7 @@ int DetachWebsocketFromSession( void *d, void *wsi )
 			us = (UserSession *)data->wsc_UserSession;
 			
 			WSCData *ldata = (WSCData *)us->us_WSD; 
-			if( data != NULL && wsi != ldata->wsc_Wsi )
+			if( ldata != NULL && wsi != ldata->wsc_Wsi )
 			{
 				DEBUG("[DetachWebsocketFromSession] we cannot detach this session. Wrong WSI pointer\n");
 				FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
