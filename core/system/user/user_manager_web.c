@@ -1844,31 +1844,34 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			// only when you are admin you can change stuff on other user accounts
 			if( usrname != NULL )
 			{
-				logusr = UMGetUserByName( l->sl_UM, usrname );
+				if( strcmp( usrname, logusr->u_Name ) != 0 )
+				{
+					logusr = UMGetUserByName( l->sl_UM, usrname );
+				}
 			}
 		}
 
 		DEBUG(" username: %s\n", usrname );
 		
-			if( logusr != NULL )
-			{
-				DEBUG("Loop: loguser->name: %s\n", logusr->u_Name );
-				BufString *bs = BufStringNew();
-				BufStringAdd( bs, "ok<!--separate-->[" );
-				
-				UserListSessions( logusr, bs, l );
+		if( logusr != NULL )
+		{
+			DEBUG("Loop: loguser->name: %s\n", logusr->u_Name );
+			BufString *bs = BufStringNew();
+			BufStringAdd( bs, "ok<!--separate-->[" );
 			
-				BufStringAdd( bs, "]" );
-				
-				HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
-				
-				DEBUG("[UMWebRequest] Sessions %s\n", bs->bs_Buffer );
-				bs->bs_Buffer = NULL;
-				
-				BufStringDelete( bs );
-			}
+			UserListSessions( logusr, bs, l );
+		
+			BufStringAdd( bs, "]" );
 			
+			HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
 			
+			DEBUG("[UMWebRequest] Sessions %s\n", bs->bs_Buffer );
+			bs->bs_Buffer = NULL;
+			
+			BufStringDelete( bs );
+		}
+		
+		
 		// only if user is not found, no need to count sessions
 		if( logusr == NULL )
 		{
