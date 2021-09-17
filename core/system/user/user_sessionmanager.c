@@ -1018,6 +1018,7 @@ int USMRemoveOldSessions( void *lsb )
 		// we delete session
 		if( canDelete == TRUE && ( ( acttime -  remSession->us_LastActionTime ) > sb->sl_RemoveSessionsAfterTime ) )
 		{
+			UserRemoveSession( remSession->us_User, remSession );	// we want to remove it from user first
 			USMSessionsDeleteDB( smgr, remSession->us_SessionID );
 			UserSessionDelete( remSession );
 		}

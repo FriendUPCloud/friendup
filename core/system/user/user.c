@@ -181,6 +181,7 @@ int UserRemoveSession( User *usr, void *ls )
 	usr->u_SessionsList = newRoot;
 	
 	retVal = usr->u_SessionsNr;
+	remses->us_User = NULL;
 	
 	USER_CHANGE_OFF( usr );
 	
