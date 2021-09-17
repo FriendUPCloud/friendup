@@ -255,7 +255,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						break;
 					}
 				}
-				DetachWebsocketFromSession( wsd );
+				DetachWebsocketFromSession( wsd, wsi );
 			
 				if( wsd->wsc_Buffer != NULL )
 				{
@@ -510,7 +510,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				DEBUG("[WS] Closing WS, number: %d\n", wsd->wsc_InUseCounter );
 				sleep( 1 );
 			}
-			DetachWebsocketFromSession( wsd );
+			DetachWebsocketFromSession( wsd, wsi );
 	
 			if( wsd->wsc_Buffer != NULL )
 			{
