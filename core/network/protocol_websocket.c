@@ -269,7 +269,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			
 				Log( FLOG_DEBUG, "[WS] Callback session closed\n");
 				
-				FERROR("\n\n\nREMOVE\n\nwsi: %p\n\nuser: %p\n\n", wsi, user );
+				//FERROR("\n\n\nREMOVE\n\nwsi: %p\n\nuser: %p\n\n", wsi, user );
 			}
 		break;
 		
@@ -342,7 +342,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					pthread_t t;
 					//memset( &t, 0, sizeof( pthread_t ) );
 					
-					FERROR("\n\n\nRECEIVE\n\nwsi: %p\n\nuser: %p\n\n", wsi, user );
+					//FERROR("\n\n\nRECEIVE\n\nwsi: %p\n\nuser: %p\n\n", wsi, user );
 					
 					if( pthread_create( &t, NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
 					{
