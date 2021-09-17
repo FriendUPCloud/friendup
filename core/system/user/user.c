@@ -922,7 +922,7 @@ void UserListSessions( User* usr, BufString *bs, void *sb )
 				}
 				UserSession *us = (UserSession *) sessions->us;
 				
-				DEBUG("[UserListSessions] sessionid: %s\n", us->us_SessionID );
+				DEBUG("[UserListSessions] sessionid: %p\n", us );
 				
 				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 				{
