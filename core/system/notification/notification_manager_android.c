@@ -83,9 +83,17 @@ void NotificationAndroidSendingThread( FThread *data )
 							char *pos = strstr( bs->bs_Buffer, "\r\n\r\n" );
 							if( pos != NULL )
 							{
-								Log( FLOG_INFO, "Response from firebase : %s\n", pos );
+								Log( FLOG_INFO, "[NotificationAndroidSendingThread]: Response from firebase : %s\n", pos );
+							}
+							else
+							{
+								Log( FLOG_ERROR, "[NotificationAndroidSendingThread]: Response receieved: %s\n", bs->bs_Buffer );
 							}
 							BufStringDelete( bs );
+						}
+						else
+						{
+							Log( FLOG_ERROR, "[NotificationAndroidSendingThread]: Timeout\n" );
 						}
 						c->hc_Content = NULL;	//must be set to NULL becaouse we overwrite point to send messages (e->fq_Data)
 						HttpClientDelete( c );
