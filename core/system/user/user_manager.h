@@ -51,7 +51,7 @@ typedef struct UserManager
 
 #ifndef USER_MANAGER_CHANGE_ON
 #define USER_MANAGER_CHANGE_ON( MGR ) \
-while( (MGR->um_InUse > 0 && um_ChangeState == TRUE ) ){ usleep( 2000 ); } \
+while( (MGR->um_InUse > 0 && MGR->um_ChangeState == TRUE ) ){ usleep( 2000 ); } \
 if( FRIEND_MUTEX_LOCK( &(MGR->um_Mutex) ) == 0 ){ \
 	MGR->um_ChangeState = TRUE; \
 	FRIEND_MUTEX_UNLOCK( &(MGR->um_Mutex) ); \

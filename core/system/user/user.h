@@ -188,7 +188,7 @@ typedef struct User
 
 #ifndef USER_CHANGE_ON
 #define USER_CHANGE_ON( USR ) \
-while( ( USR->u_InUse > 0 && u_ChangeState == TRUE ) ){ usleep( 2000 ); } \
+while( ( USR->u_InUse > 0 && USR->u_ChangeState == TRUE ) ){ usleep( 2000 ); } \
 if( FRIEND_MUTEX_LOCK( &(USR->u_Mutex) ) == 0 ){ \
 	USR->u_ChangeState = TRUE; \
 	FRIEND_MUTEX_UNLOCK( &(USR->u_Mutex) ); \
