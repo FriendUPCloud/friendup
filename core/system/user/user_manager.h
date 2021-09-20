@@ -186,7 +186,7 @@ User *UMGetUserByName( UserManager *um, const char *name );
 //
 //
 
-FULONG UMGetUserIDByName( UserManager *um, const char *name );
+FULONG UMGetUserIDByNameDB( UserManager *um, const char *name );
 
 //
 //
@@ -313,5 +313,11 @@ int UMSendMessageToUserOrSession( UserManager *um, BufString *bs, UserSession *s
 //
 
 FBOOL UMSendDoorNotification( UserManager *usm, void *notif, UserSession *ses, File *device, char *path );
+
+//
+//
+//
+
+int UMRemoveOldSessions( void *lsb );
 
 #endif //__SYSTEM_USER_USER_MANAGER_H__

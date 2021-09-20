@@ -197,6 +197,8 @@ void UserDelete( User *usr )
 {
 	if( usr != NULL )
 	{
+		Log( FLOG_INFO, "User removed from memory: %s\n", usr->u_Name );
+		
 		// Do not release User resources when structure is used
 		while( usr->u_InUse > 0 )
 		{

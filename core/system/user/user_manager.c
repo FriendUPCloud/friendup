@@ -795,7 +795,7 @@ User *UMGetUserByNameDBCon( UserManager *um, SQLLibrary *sqlLib, const char *nam
  * @param name name of the user
  * @return User or NULL when error will appear
  */
-FULONG UMGetUserIDByName( UserManager *um, const char *name )
+FULONG UMGetUserIDByNameDB( UserManager *um, const char *name )
 {
 	User *usr = UMGetUserByName( um, name );
 	if( usr == NULL )
@@ -1959,12 +1959,12 @@ FBOOL UMSendDoorNotification( UserManager *um, void *notif, UserSession *ses, Fi
 		DEBUG("[USMSendDoorNotification] going through users, user: %lu\n", usr->u_ID );
 		if( usr->u_ID == notification->dn_OwnerID )
 		{
+			USER_LOCK( usr );
+			
 			char *uname = usr->u_Name;
 			int len = snprintf( tmpmsg, 2048, "{\"type\":\"msg\",\"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%lu\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\"}}}", device->f_ID, device->f_Name, path, uname  );
 			
 			DEBUG("[USMSendDoorNotification] found ownerid %lu\n", usr->u_ID );
-			
-			USER_LOCK( usr );
 			
 			// go through all User Sessions and send message
 			UserSessListEntry *le = usr->u_SessionsList;
@@ -2064,4 +2064,138 @@ FBOOL UMSendDoorNotification( UserManager *um, void *notif, UserSession *ses, Fi
 	
 	FFree( tmpmsg );
 	return TRUE;
+}
+
+typedef struct RemoveEntry
+{
+	UserSession *ses;
+	MinNode node;
+}RemoveEntry;
+
+/**
+ * Remove old User Sessions
+ *
+ * @param lsb pointer to SystemBase
+ * @return 0 when success, otherwise error number
+ */
+int UMRemoveOldSessions( void *lsb )
+{
+	SystemBase *sb = (SystemBase *)lsb;
+	UserManager *um = (UserManager *)sb->sl_UM;
+
+	time_t acttime = time( NULL );
+	
+	Log( FLOG_INFO, "[UMRemoveOldSessions] start\n" );
+
+	USER_MANAGER_USE( um );
+	
+	User *usr = um->um_Users;
+	while( usr != NULL )
+	{
+		USER_LOCK( usr );
+		RemoveEntry *rootEntries = NULL;
+		
+		DEBUG("[UMRemoveOldSessions] found ownerid %lu\n", usr->u_ID );
+		
+		// go through all User Sessions and send message
+		UserSessListEntry *le = usr->u_SessionsList;
+		while( le != NULL )
+		{
+			UserSession *uses = (UserSession *)le->us;
+			
+			if( ( ( acttime - uses->us_LastActionTime ) > sb->sl_RemoveSessionsAfterTime ) )
+			{
+				RemoveEntry *re = FCalloc( 1, sizeof( RemoveEntry ) );
+				re->ses = uses;
+				re->node.mln_Succ = (MinNode *)rootEntries;
+				rootEntries = re;
+			}
+			
+			le = (UserSessListEntry *)le->node.mln_Succ;
+		}
+		
+		USER_UNLOCK( usr );
+		
+		while( rootEntries != NULL )
+		{
+			RemoveEntry *old = rootEntries;
+			rootEntries = (RemoveEntry *)rootEntries->node.mln_Succ;
+			
+			USMUserSessionRemove( sb->sl_USM, old->ses );
+			UserRemoveSession( usr, old );	// we want to remove it from user first
+			USMSessionsDeleteDB( sb->sl_USM, old->ses->us_SessionID );
+			UserSessionDelete( old->ses );
+			FFree( old );
+		}
+		
+		usr = (User *)usr->node.mln_Succ;
+	}
+	
+	USER_MANAGER_RELEASE( um );
+	
+	Log( FLOG_INFO, "[UMRemoveOldSessions] end\n" );
+	
+	/*
+	
+	// remove sessions from memory
+	UserSessionManager *smgr = sb->sl_USM;
+	// int nr = 0;
+	// we are conting maximum number of sessions
+
+	DEBUG("[USMRemoveOldSessions] CHECK10\n");
+
+	SESSION_MANAGER_USE( smgr );
+	
+	UserSession *actSession = smgr->usm_Sessions;
+	UserSession *remSession = actSession;
+	UserSession *newRoot = NULL;
+	
+	while( actSession != NULL )
+	{
+		FBOOL canDelete = TRUE;
+		remSession = actSession;
+		
+		if( sb->sl_Sentinel != NULL )
+		{
+			if( remSession->us_User == sb->sl_Sentinel->s_User && strcmp( remSession->us_DeviceIdentity, "remote" ) == 0 )
+			{
+				DEBUG("Sentinel REMOTE session I cannot remove it\n");
+				canDelete = FALSE;
+			}
+		}
+		
+		if( actSession == (UserSession *)actSession->node.mln_Succ )
+		{
+			DEBUG( "DOUBLE ACTSESSION\n" );
+			break;
+		}
+		
+		actSession = (UserSession *)actSession->node.mln_Succ;
+		
+		// we delete session
+		if( canDelete == TRUE && ( ( acttime -  remSession->us_LastActionTime ) > sb->sl_RemoveSessionsAfterTime ) )
+		{
+			UserRemoveSession( remSession->us_User, remSession );	// we want to remove it from user first
+			USMSessionsDeleteDB( smgr, remSession->us_SessionID );
+			UserSessionDelete( remSession );
+		}
+		else // or create new root of working sessions
+		{
+			remSession->node.mln_Succ = (MinNode *)newRoot;
+			newRoot = remSession;
+		}
+	}
+	
+	smgr->usm_Sessions = newRoot;
+
+	SESSION_MANAGER_RELEASE( smgr );
+	
+	//
+	// now remove unused application sessions
+	//
+	
+	ApplicationManagerRemoveDetachedApplicationSession( sb->sl_ApplicationManager );
+	*/
+	
+	return 0;
 }

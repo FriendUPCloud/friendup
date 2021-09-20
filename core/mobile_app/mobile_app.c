@@ -1146,14 +1146,104 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	// then send him notification via mobile devices
 	
 	int bytesSent = 0;
+	
+	USER_MANAGER_USE( sb->sl_UM );
+	User *usr = sb->sl_UM->um_Users;
+	while( usr != NULL )
+	{
+		USER_LOCK( usr );
+		
+		if( usr->u_Name != NULL && strcmp( usr->u_Name, username ) == 0 )
+		{
+			userID = usr->u_ID;
+			time_t timestamp = time( NULL );
+		
+			//
+		
+			UserSessListEntry  *usl = usr->u_SessionsList;
+			while( usl != NULL )
+			{
+				UserSession *locses = (UserSession *)usl->us;
+				if( locses != NULL )
+				{
+					if( FRIEND_MUTEX_LOCK( &locses->us_Mutex ) == 0 )
+					{
+						locses->us_InUseCounter++;
+						FRIEND_MUTEX_UNLOCK( &locses->us_Mutex );
+					}
+				
+					DEBUG("[AdminWebRequest] Send Message through websockets: %s clients: %p timestamptrue: %d\n", locses->us_DeviceIdentity, locses->us_WSD, ( ( (timestamp - locses->us_LastActionTime) < sb->sl_RemoveSessionsAfterTime ) ) );
+				
+					if( ( ( (timestamp - locses->us_LastActionTime) < sb->sl_RemoveSessionsAfterTime ) ) && locses->us_WSD != NULL )
+					{
+						int msgLen = 0;
+						NotificationSent *lns = NotificationSentNew();
+						lns->ns_NotificationID = notif->n_ID;
+						lns->ns_RequestID = locses->us_ID;
+						lns->ns_Target = MOBILE_APP_TYPE_NONE;	// none means WS
+						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
+					
+						// store notification for user session in database
+						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
+					
+						if( notif->n_Extra )
+						{ //TK-1039
+							msgLen = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu, \"source\":\"ws\"}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
+						}
+						else
+						{
+							msgLen = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu, \"source\":\"ws\"}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
+						}
+				
+						int msgsize = reqLengith + msgLen;
+						char *sndbuffer = FMalloc( msgsize );
+					
+						DEBUG("\t\t\t\t\t\t\t jsonMessage '%s' len %d \n", jsonMessage, reqLengith );
+						int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"notification\",\"data\":{\"id\":\"%lu\",\"notificationData\":%s}}}", lns->ns_ID , jsonMessage );
+						
+						Log( FLOG_INFO, "Send notification through Websockets: '%s' len %d \n", sndbuffer, msgsize );
+						
+						bytesSent += WebSocketSendMessageInt( locses, sndbuffer, lenmsg );
+						FFree( sndbuffer );
+					
+						// add NotificationSent to Notification
+						lns->node.mln_Succ = (MinNode *)notif->n_NotificationsSent;
+						notif->n_NotificationsSent = lns;
+					}
+				
+					if( FRIEND_MUTEX_LOCK( &locses->us_Mutex ) == 0 )
+					{
+						locses->us_InUseCounter--;
+						FRIEND_MUTEX_UNLOCK( &locses->us_Mutex );
+					}
+				} // locses = NULL
+				usl = (UserSessListEntry *)usl->node.mln_Succ;
+			}
+			USER_UNLOCK( usr );
+			
+			// entry found
+			break;
+		}	// user found by name
+	
+		usr = (User *)usr->node.mln_Succ;
+	}
+	USER_MANAGER_RELEASE( sb->sl_UM );
+	
+	if( usr == NULL )
+	{
+		userID = UMGetUserIDByNameDB( sb->sl_UM, username );
+	}
+	
+	/*
 	User *usr = UMGetUserByName( sb->sl_UM, username );
 	if( usr != NULL )
 	{
+		USER_LOCK( usr );
+		
 		userID = usr->u_ID;
 		time_t timestamp = time( NULL );
-		//
 		
-		USER_LOCK( usr );
+		//
 		
 		UserSessListEntry  *usl = usr->u_SessionsList;
 		while( usl != NULL )
@@ -1221,6 +1311,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	{
 		userID = UMGetUserIDByName( sb->sl_UM, username );
 	}
+	*/
 	
 	Log( FLOG_INFO, "User: %s userid: %lu will get content: %s\n", username, userID, content );
 	
@@ -1414,7 +1505,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 		return 1;
 	}
 
-	FULONG userID = UMGetUserIDByName( sb->sl_UM, username );
+	FULONG userID = UMGetUserIDByNameDB( sb->sl_UM, username );
 	
 #ifdef USE_ONLY_FIREBASE
 	BufString *bs = MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
