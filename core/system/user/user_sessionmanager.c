@@ -26,7 +26,7 @@
 #include <util/session_id.h>
 
 #define SESSION_MANAGER_CHANGE_ON( MGR ) \
-while( MGR->usm_InUse > 0 ){ usleep( 2000 ); } \
+while( (MGR->usm_InUse > 0 && MGR->usm_ChangeState == TRUE ) ){ usleep( 2000 ); } \
 if( FRIEND_MUTEX_LOCK( &(MGR->usm_Mutex) ) == 0 ){ \
 	MGR->usm_ChangeState = TRUE; \
 	FRIEND_MUTEX_UNLOCK( &(MGR->usm_Mutex) ); \
