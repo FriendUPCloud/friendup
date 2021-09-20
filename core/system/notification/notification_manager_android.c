@@ -114,6 +114,7 @@ void NotificationAndroidSendingThread( FThread *data )
 					else
 					{
 						FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidQueueMutex) );
+						Log( FLOG_INFO, "[NotificationAndroidSendingThread]: no more messages\n" );
 						break;
 					}
 				}
@@ -125,8 +126,10 @@ void NotificationAndroidSendingThread( FThread *data )
 				}
 				*/
 			}
+			Log( FLOG_INFO, "[NotificationAndroidSendingThread]: while quit\n" );
 		}
 	}
+	Log( FLOG_INFO, "[NotificationAndroidSendingThread]: thread closed\n" );
 	
 	data->t_Launched = FALSE;
 	pthread_exit( NULL );
