@@ -2122,7 +2122,7 @@ int UMRemoveOldSessions( void *lsb )
 			rootEntries = (RemoveEntry *)rootEntries->node.mln_Succ;
 			
 			USMUserSessionRemove( sb->sl_USM, old->ses );
-			UserRemoveSession( usr, old );	// we want to remove it from user first
+			UserRemoveSession( usr, old->ses );	// we want to remove it from user first
 			USMSessionsDeleteDB( sb->sl_USM, old->ses->us_SessionID );
 			UserSessionDelete( old->ses );
 			FFree( old );
