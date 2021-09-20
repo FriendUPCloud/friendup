@@ -68,6 +68,7 @@ typedef struct NotificationManager
 	FThread						*nm_AndroidSendThread;
 	pthread_mutex_t				nm_AndroidSendMutex;
 	pthread_cond_t				nm_AndroidSendCond;
+	pthread_mutex_t				nm_AndroidQueueMutex;
 	FQueue						nm_AndroidSendMessages;
 	int							nm_AndroidSendInUse;
 	HttpClient					*nm_AndroidSendHttpClient;

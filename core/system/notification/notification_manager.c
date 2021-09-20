@@ -99,6 +99,7 @@ NotificationManager *NotificationManagerNew( void *sb )
 			// run android/ios send thread
 			
 			pthread_mutex_init( &(nm->nm_AndroidSendMutex), NULL );
+			pthread_mutex_init( &(nm->nm_AndroidQueueMutex), NULL );
 			pthread_cond_init( &(nm->nm_AndroidSendCond), NULL );
 			FQInit( &(nm->nm_AndroidSendMessages) );
 			
@@ -161,7 +162,8 @@ void NotificationManagerDelete( NotificationManager *nm )
 			while( TRUE )
 			{
 				DEBUG("[NotificationManagerDelete] killing android in use: %d\n", nm->nm_AndroidSendInUse );
-				if( (nm->nm_AndroidSendInUse <= 0 && nm->nm_AndroidSendThread->t_Launched == FALSE ) || ((tr++)> 30 ) )
+				if( (nm->nm_AndroidSendMessages.fq_First == NULL && nm->nm_AndroidSendThread->t_Launched == FALSE ) || ((tr++)> 30 ) )
+				//if( (nm->nm_AndroidSendInUse <= 0 && nm->nm_AndroidSendThread->t_Launched == FALSE ) || ((tr++)> 30 ) )
 				{
 					break;
 				}
@@ -180,6 +182,7 @@ void NotificationManagerDelete( NotificationManager *nm )
 		
 		pthread_cond_destroy( &(nm->nm_AndroidSendCond) );
 		pthread_mutex_destroy( &(nm->nm_AndroidSendMutex) );
+		pthread_mutex_destroy( &(nm->nm_AndroidQueueMutex) );
 		FQDeInit( &(nm->nm_AndroidSendMessages) );
 		
 		DEBUG("[NotificationManagerDelete] delete android all stuff released\n");

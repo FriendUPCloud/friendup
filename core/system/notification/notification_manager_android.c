@@ -59,14 +59,20 @@ void NotificationAndroidSendingThread( FThread *data )
 			
 			while( TRUE )
 			{
+				/*
 				if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
 				{
 					nm->nm_AndroidSendInUse++;
-					
+					FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+				}
+				*/
+				
+				if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidQueueMutex) ) == 0 )
+				{
 					FQueue *q = &( nm->nm_AndroidSendMessages );
 					if( q && ( e = FQPop( q ) ) != NULL )
 					{
-						FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+						FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidQueueMutex) );
 					
 						//Log( FLOG_INFO, "Send message to android device: %s<\n", nm->nm_AndroidSendHttpClient->hc_Content );
 						
@@ -107,17 +113,17 @@ void NotificationAndroidSendingThread( FThread *data )
 					}
 					else
 					{
-						nm->nm_AndroidSendInUse--;
-						FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+						FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidQueueMutex) );
 						break;
 					}
-					
-					if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
-					{
-						nm->nm_AndroidSendInUse--;
-						FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
-					}
 				}
+				/*
+				if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
+				{
+					nm->nm_AndroidSendInUse--;
+					FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+				}
+				*/
 			}
 		}
 	}
@@ -239,11 +245,15 @@ int NotificationManagerNotificationSendAndroidQueue( NotificationManager *nm, No
 			en->fq_Data = (void *)msg;
 			en->fq_Size = len;
 			
-			if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
+			if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidQueueMutex) ) == 0 )
 			{
 				FQPushFIFO( &(nm->nm_AndroidSendMessages), en );
 				
+				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidQueueMutex) );
+				
 				DEBUG("[NotificationManagerNotificationSendAndroidQueue] signal triggered\n");
+				
+				FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) );
 				pthread_cond_signal( &(nm->nm_AndroidSendCond) );
 				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
 			}
