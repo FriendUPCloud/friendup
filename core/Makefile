@@ -116,7 +116,7 @@ ifeq ($(WS_COMPRESSION),1)
 CFLAGS					+=	-DWS_COMPRESSION
 endif
 
-C_FILES := $(wildcard main.c core/*.c system/cache/*.c network/*.c system/services/*.c util/*.c class/*.c ssh/*.c hardware/*.c system/*.c \
+C_FILES := $(wildcard main.c core/*.c system/cache/*.c network/*.c system/services/*.c util/*.c ssh/*.c hardware/*.c system/*.c \
 			system/dictionary/*.c system/module/*.c system/fsys/*.c system/json/*.c system/user/*.c util/log/*.c system/inram/*.c system/invar/*.c system/application/*.c system/auth/*.c \
 			hardware/usb/*.c hardware/printer/*.c system/datatypes/images/*.c system/log/*.c system/admin/*.c communication/*.c system/autotask/*.c system/token/*.c \
 			websockets/*.c security/*.c webdav/*.c system/connection/*.c mobile_app/*.c mutex/*.c system/usa/*.c system/mobile/*.c system/calendar/*.c config/*.c system/notification/*.c system/usergroup/*.c system/permission/*.c system/roles/*.c system/security/*.c system/sas/*.c system/service/*.c system/support/*.c db/*.c system/mitra/*.c system/externalservice/*.c)
@@ -260,10 +260,6 @@ obj/%.o: communication/%.c communication/*.h communication/%.d
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: util/%.c util/*.h util/%.d
-	@echo "\033[34mCompile ...\033[0m"
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-obj/%.o: class/%.c class/*.h class/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(CC) $(CFLAGS) -c -o $@ $<
 
