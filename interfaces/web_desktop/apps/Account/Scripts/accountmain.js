@@ -2151,7 +2151,7 @@ ns.TabTokens.prototype.buildDisplayRow = function( conf, onClick ) {
 				+ conf.ip
 			+ '</div>'
 			+ '<div class="ServerTokenStatus flexnes">'
-				+ i18n( 'i18n_ALLOWED' )
+				+ i18n( 'i18n_allow' )
 				+ ' '
 				+ toggle
 			+ '</div>'

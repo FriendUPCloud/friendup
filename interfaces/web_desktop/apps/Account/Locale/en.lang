@@ -209,6 +209,7 @@ i18n_remove                          : Remove
 i18n_NONE                            : None
 i18n_ALLOWED                         : Allowed
 i18n_BLOCKED                         : Blocked
+i18n_allow                           : Allow
 
 i18n_leave_group                        : Leave group.
 i18n_other_groups                       : Group memberships

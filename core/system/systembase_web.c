@@ -553,7 +553,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			FFree( sessionid );
 			return response;
 		}
-		// Ah, we got our session
 		
 		DEBUG("\n\nauthidelement pointer %p\n\n\n", authIDElement );
 		
@@ -744,18 +743,63 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				
 				if( host != NULL )
 				{
-					SQLLibrary *sqllib = l->GetInternalDBConnection( l );
+					SQLLibrary *fDB  = l->GetDBConnection( l );
+					SQLLibrary *internalDB = l->GetInternalDBConnection( l );
 					FULONG uid = 0;
+					FBOOL isValid = FALSE;
 					
 					DEBUG("[SysWebRequest] entry from x-forwarded-for: %s\n", host );
-
-					// Get authid from mysql
-					if( sqllib != NULL )
+					
+					if(( fDB == NULL ) || ( internalDB == NULL ))
 					{
-						char qery[ 1024 ];
-
-						if( serverTokenElement->hme_Data != NULL && strlen( (char *)serverTokenElement->hme_Data ) > 0 )
-						{
+						DEBUG("[SysWebRequest] fDB or internalDB is null" );
+					} else {
+						
+						char userQuery[ 1024 ];
+						char hostQuery[ 1024 ];
+						
+						if( serverTokenElement->hme_Data != NULL 
+							&& strlen( (char *)serverTokenElement->hme_Data ) > 0 
+						) {
+							
+							// get user id from servertoken
+							fDB->SNPrintF(
+								fDB,
+								userQuery,
+								sizeof( userQuery ),
+								"SELECT u.ID FROM FUser AS u "
+									"WHERE u.ServerToken=\"%s\"",
+								( char *)serverTokenElement->hme_Data
+							);
+							
+							void *fRes = fDB->Query( fDB, userQuery );
+							if ( fRes != NULL )
+							{
+								char **fRow;
+								//fRow = fDB->FetchRow( fDB, fRes );
+								//if ( fRow != NULL )
+								if (( fRow = fDB->FetchRow( fDB, fRes )))
+								{
+									if ( fRow == NULL ) {
+										DEBUG( "Theres no row\n" );
+									} else {
+										char *uidStr = fRow[ 0 ];
+										if ( uidStr != NULL )
+										{
+											char *end;
+											uid = strtol(
+												uidStr,
+												//(char *)fRow[ 0 ],
+												&end,
+												0
+											);
+										}
+										DEBUG( "Theres is a row %s\n", uidStr );
+									}
+								}
+								//fDB->FreeResult( fDB, fRes );
+							}
+							
 							char *p = host;
 							// we have to remove end of the line
 							while( TRUE )
@@ -768,36 +812,61 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								p++;
 							}
 							
-							DEBUG("[SysWebRequest] servertoken entry: %s host %s\n", (char *)serverTokenElement->hme_Data, host ); 
+							
+							// check that user has whitelisted host
+							DEBUG("[SysWebRequest] servertoken: %s userid: %ld host: %s\n",
+								(char *)serverTokenElement->hme_Data,
+								uid,
+								host
+							); 
+							
 							
 							// Check user server token and access to it
-
-							sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT sh.UserID FROM FSecuredHost sh WHERE u.ServerToken=\"%s\" AND sh.Status=1 AND sh.IP='%s' LIMIT 1",( char *)serverTokenElement->hme_Data, host );
-					
-							void *res = sqllib->Query( sqllib, qery );
-							if( res != NULL )
+							
+							internalDB->SNPrintF(
+								internalDB,
+								hostQuery,
+								sizeof( hostQuery ),
+								"SELECT sh.CreateTime FROM FSecuredHost AS sh "
+									"WHERE sh.UserID=\"%s\" "
+									"AND sh.Status=1 "
+									"AND sh.IP=\"%s\" "
+									"LIMIT 1",
+								&uid,
+								host
+							);
+							
+							DEBUG( "?????\n" );
+							
+							void *iRes = internalDB->Query( internalDB, hostQuery );
+							if( iRes != NULL )
 							{
-								char **row;
-								if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+								char **iRow;
+								if( ( iRow = internalDB->FetchRow( internalDB, iRes ) ) )
 								{
-									if( row[ 0 ] != NULL )
+									if( iRow[ 0 ] != NULL )
 									{
+										DEBUG( "[SysWebRequest] servertoken, found the thing" );
+										isValid = TRUE;
 										//snprintf( sessionid, DEFAULT_SESSION_ID_SIZE,"%s", (char *)row[ 0 ] );
-										char *next;
-										uid = strtol ( (char *) row[ 0 ], &next, 0);
+										//char *next;
+										//uid = strtol ( (char *) row[ 0 ], &next, 0);
 									}
 								}
-								sqllib->FreeResult( sqllib, res );
+								internalDB->FreeResult( internalDB, iRes );
 							}
 							
-							DEBUG("[SysWebRequest] was sessionid found? '%s'\n", sessionid );
+							DEBUG("[SysWebRequest] was a valid host entry found? %d\n",
+								isValid
+							);
 						}
 					}
-					l->DropInternalDBConnection( l, sqllib );
-
-					DEBUG("[SysWebRequest] userid: %ld\n", uid );
+					l->DropDBConnection( l, fDB );
+					l->DropInternalDBConnection( l, internalDB );
 					
-					if( uid > 0 )
+					DEBUG("[SysWebRequest] userid: %ld isValid %d\n", uid, isValid );
+					
+					if( isValid == TRUE )
 					{
 						User *usr = UMGetUserByID( l->sl_UM, uid );
 						if( usr != NULL )
