@@ -1804,6 +1804,11 @@ int UMSendMessageToUserOrSession( UserManager *um, BufString *bs, UserSession *l
 			BufStringAdd( bs, usr->u_Name );
 		}
 	}
+	
+	if( sndbuffer != NULL )
+	{
+		FFree( sndbuffer );
+	}
 	return 0;
 }
 
@@ -2106,8 +2111,11 @@ int UMRemoveOldSessions( void *lsb )
 			if( ( ( acttime - uses->us_LastActionTime ) > sb->sl_RemoveSessionsAfterTime ) )
 			{
 				RemoveEntry *re = FCalloc( 1, sizeof( RemoveEntry ) );
-				re->ses = uses;
-				re->node.mln_Succ = (MinNode *)rootEntries;
+				if( re != NULL )
+				{
+					re->ses = uses;
+					re->node.mln_Succ = (MinNode *)rootEntries;
+				}
 				rootEntries = re;
 			}
 			

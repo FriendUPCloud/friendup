@@ -101,6 +101,7 @@ void USMDelete( UserSessionManager *smgr )
 			UserSessionDelete( rem );
 		}
 		
+		/*
 		ls = smgr->usm_SessionsToBeRemoved;
 		while( ls != NULL )
 		{
@@ -112,6 +113,7 @@ void USMDelete( UserSessionManager *smgr )
 			USMSessionsDeleteDB( smgr, rem->us_SessionID );
 			UserSessionDelete( rem );
 		}
+		*/
 		
 		smgr->usm_Sessions = NULL;
 		
@@ -517,6 +519,7 @@ UserSession *USMUserSessionAddToList( UserSessionManager *smgr, UserSession *s )
 	SESSION_MANAGER_CHANGE_OFF( smgr );
 	
 	//
+	/*
 	SESSION_MANAGER_CHANGE_ON( smgr );
 	
 	UserSession *actSess = smgr->usm_SessionsToBeRemoved;
@@ -535,6 +538,7 @@ UserSession *USMUserSessionAddToList( UserSessionManager *smgr, UserSession *s )
 		USMSessionsDeleteDB( smgr, remSess->us_SessionID );
 		UserSessionDelete( remSess );
 	}
+	*/
 	
 	DEBUG("[USMUserSessionAddToList] end\n");
 	
@@ -790,6 +794,7 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 	
 	SESSION_MANAGER_CHANGE_OFF( smgr );
 	
+	/*
 	if( sessionRemoved == TRUE )
 	{
 		USMSessionsDeleteDB( smgr, remsess->us_SessionID );
@@ -801,6 +806,7 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 		
 		SESSION_MANAGER_CHANGE_OFF( smgr );
 	}
+	*/
 
 	return 0;
 }
@@ -1283,6 +1289,7 @@ int USMGetUserSessionStatistic( UserSessionManager *usm, BufString *bs, FBOOL de
 			actSession = (UserSession *)actSession->node.mln_Succ;
 		}
 	
+		/*
 		actSession = usm->usm_SessionsToBeRemoved;
 		while( actSession != NULL )
 		{
@@ -1290,6 +1297,7 @@ int USMGetUserSessionStatistic( UserSessionManager *usm, BufString *bs, FBOOL de
 			nonActiveSessionBytes += countSessionSize( actSession );
 			actSession = (UserSession *)actSession->node.mln_Succ;
 		}
+		*/
 		
 		int len = snprintf( tmp, sizeof(tmp), "\"usersessions\":{\"active\":%d,\"activebtes\":%ld,\"toberemoved\":%d,\"toberemovedbytes\":%ld},\"averagesize\":%d", activeSessionCounter, activeSessionBytes, nonActiveSessionCounter, nonActiveSessionBytes, (int)USERSESSION_SIZE );
 		BufStringAddSize( bs, tmp, len );
@@ -1303,12 +1311,14 @@ int USMGetUserSessionStatistic( UserSessionManager *usm, BufString *bs, FBOOL de
 			actSession = (UserSession *)actSession->node.mln_Succ;
 		}
 	
+		/*
 		actSession = usm->usm_SessionsToBeRemoved;
 		while( actSession != NULL )
 		{
 			nonActiveSessionCounter++;
 			actSession = (UserSession *)actSession->node.mln_Succ;
 		}
+		*/
 
 		// average size of 
 		

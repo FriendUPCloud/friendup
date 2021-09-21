@@ -110,7 +110,7 @@ void WSThreadPing( WSThreadData *data )
 	
 		if( FRIEND_MUTEX_LOCK( &(data->wstd_WSD->wsc_Mutex) ) == 0 )
 		{
-			if( data == NULL || us->us_WSD == NULL || data->wstd_WSD->wsc_UserSession == NULL )
+			if( us->us_WSD == NULL || data->wstd_WSD->wsc_UserSession == NULL )
 			{
 				if( data != NULL )
 				{
@@ -118,9 +118,9 @@ void WSThreadPing( WSThreadData *data )
 					{
 						FFree( data->wstd_Requestid );
 					}
+					FRIEND_MUTEX_UNLOCK( &(data->wstd_WSD->wsc_Mutex) );
 					FFree( data );
 				}
-				FRIEND_MUTEX_UNLOCK( &(data->wstd_WSD->wsc_Mutex) );
 				
 				// Decrease counter
 				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )

@@ -1329,6 +1329,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			}
 		}
 		
+		if( logusr != NULL )
+		{
+			USER_LOCK( logusr );
+		}
+		
 		if( haveAccess == TRUE )
 		{
 			// only when user asked for another user and have access
@@ -1339,7 +1344,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
 				HttpAddTextContent( response, buffer );
 			}
-			else
+			else if( logusr != NULL )
 			{
 				el = HttpGetPOSTParameter( request, "username" );
 				if( el != NULL )
@@ -1506,6 +1511,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			char buffer[ 256 ];
 			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
 			HttpAddTextContent( response, buffer );
+		}
+		
+		if( logusr != NULL )
+		{
+			USER_UNLOCK( logusr );
 		}
 		
 		if( level != NULL )

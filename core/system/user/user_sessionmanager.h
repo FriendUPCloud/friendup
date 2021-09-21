@@ -31,7 +31,7 @@ typedef struct UserSessionManager
 {
 	void							*usm_SB;
 	UserSession						*usm_Sessions;							// user sessions
-	UserSession						*usm_SessionsToBeRemoved;				// sessions which must be removed
+	//UserSession						*usm_SessionsToBeRemoved;				// sessions which must be removed
 	int								usm_SessionCounter;
 	int								usm_InUse;								// if something is using it value is increased
 	FBOOL							usm_ChangeState;						// change state

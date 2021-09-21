@@ -2264,6 +2264,12 @@ inline static void compressDataDeflate( Http *http, unsigned char *storePtr, FQU
 {
 	FQUAD compressedLength = 0;
 	
+	if( http->http_SizeOfContent <= 0 )
+	{
+		*outputLen = compressedLength;
+		return;
+	}
+	
 	z_stream strm;
 	strm.zalloc = Z_NULL;
 	strm.zfree  = Z_NULL;
