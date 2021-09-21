@@ -1442,16 +1442,23 @@ int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm, N
 			en->fq_Data = (void *)msg;
 			en->fq_Size = len;
 			
-			if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
+			if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidQueueMutex) ) == 0 )
 			{
 				FQPushFIFO( &(nm->nm_AndroidSendMessages), en );
-				
-				pthread_cond_signal( &(nm->nm_AndroidSendCond) );
-				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidQueueMutex) );
 			}
 			else
 			{
 				FFree( en );
+			}
+			
+			if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
+			{
+				if( nm->nm_AndroidSendInUse <= 0 )	// there is no need to trigger thread if its in "sending state"
+				{
+					pthread_cond_signal( &(nm->nm_AndroidSendCond) );
+				}
+				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
 			}
 		}
 		else

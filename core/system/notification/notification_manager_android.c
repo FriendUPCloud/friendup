@@ -57,16 +57,14 @@ void NotificationAndroidSendingThread( FThread *data )
 			
 			FQEntry *e = NULL;
 			
+			if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
+			{
+				nm->nm_AndroidSendInUse++;
+				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+			}
+			
 			while( TRUE )
 			{
-				/*
-				if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
-				{
-					nm->nm_AndroidSendInUse++;
-					FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
-				}
-				*/
-				
 				if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidQueueMutex) ) == 0 )
 				{
 					FQueue *q = &( nm->nm_AndroidSendMessages );
@@ -118,14 +116,14 @@ void NotificationAndroidSendingThread( FThread *data )
 						break;
 					}
 				}
-				/*
-				if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
-				{
-					nm->nm_AndroidSendInUse--;
-					FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
-				}
-				*/
 			}
+			
+			if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
+			{
+				nm->nm_AndroidSendInUse--;
+				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+			}
+			
 			Log( FLOG_INFO, "[NotificationAndroidSendingThread]: while quit\n" );
 		}
 	}
