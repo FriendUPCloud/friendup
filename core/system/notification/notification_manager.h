@@ -54,6 +54,16 @@ typedef struct ExternalServerConnection
 }ExternalServerConnection;
 
 //
+// Notifications which should go to firebase
+//
+
+typedef struct DelListEntry
+{
+	Notification *dle_NotificationPtr;
+	MinNode node;
+}DelListEntry;
+
+//
 // Notification Manager structure
 //
 
@@ -126,7 +136,11 @@ int NotificationManagerNotificationSendAndroid( NotificationManager *nm, Notific
 
 int NotificationManagerNotificationSendAndroidQueue( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens );
 
-int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens, int type );
+int NotificationManagerNotificationAddFirebaseMessage( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens, int type, FBOOL send );
+
+int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm );
+
+//int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens, int type );
 
 NotificationSent *NotificationManagerGetNotificationsSentByStatusPlatformAndUMAIDDB( NotificationManager *nm, int status, int platform, FULONG umaID );
 

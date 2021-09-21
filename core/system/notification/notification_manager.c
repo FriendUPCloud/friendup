@@ -1163,12 +1163,6 @@ Notification *NotificationManagerRemoveNotification( NotificationManager *nm, FU
 //
 //
 
-typedef struct DelListEntry
-{
-	Notification *dle_NotificationPtr;
-	MinNode node;
-}DelListEntry;
-
 typedef struct SendNotifThreadData
 {
 	DelListEntry				*sntd_RootNotification;
@@ -1183,6 +1177,13 @@ void NotificationSendThread( FThread *data )
 {
 	SendNotifThreadData *nstd = (SendNotifThreadData *)data->t_Data;
 	NotificationManager *nm = nstd->sntd_NM;
+	
+	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )
+	{
+		nm->nm_NumberOfLaunchedThreads++;
+		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+	}
+	
 	DelListEntry *le = nstd->sntd_RootNotification;
 	while( le != NULL )
 	{
@@ -1205,7 +1206,11 @@ void NotificationSendThread( FThread *data )
 	}
 	FFree( nstd );
 	
-	nm->nm_NumberOfLaunchedThreads--;
+	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )
+	{
+		nm->nm_NumberOfLaunchedThreads--;
+		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+	}
 }
 
 //
@@ -1318,11 +1323,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 				}
 				else if( data->t_Quit != TRUE )
 				{
-					if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )
-					{
-						nm->nm_NumberOfLaunchedThreads++;
-						FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
-					}
+					
 					FThread *t = ThreadNew( NotificationSendThread, sntd, TRUE, NULL );
 				}
 
@@ -1362,7 +1363,36 @@ void NotificationManagerTimeoutThread( FThread *data )
  * @return 0 when success, otherwise error number
  */
 
-int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens, int type )
+int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm )
+{
+	SystemBase *sb = (SystemBase *)nm->nm_SB;
+
+	if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
+	{
+		if( nm->nm_AndroidSendInUse <= 0 )	// there is no need to trigger thread if its in "sending state"
+		{
+			pthread_cond_signal( &(nm->nm_AndroidSendCond) );
+		}
+		FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+	}
+	
+	return 0;
+}
+
+/**
+ * Add notification to Firebase Queue
+ * 
+ * @param nm pointer to NotificationManager
+ * @param notif Notification structure
+ * @param ID NotificationSent  ID
+ * @param action actions after which messages were sent
+ * @param tokens device tokens separated by coma
+ * @param type notification type android/ios
+ * @param send if set to TRUE then message will be send
+ * @return 0 when success, otherwise error number
+ */
+
+int NotificationManagerNotificationAddFirebaseMessage( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens, int type, FBOOL send )
 {
 	SystemBase *sb = (SystemBase *)nm->nm_SB;
 	char *host = FIREBASE_HOST;
@@ -1452,13 +1482,16 @@ int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm, N
 				FFree( en );
 			}
 			
-			if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
+			if( send == TRUE )
 			{
-				if( nm->nm_AndroidSendInUse <= 0 )	// there is no need to trigger thread if its in "sending state"
+				if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
 				{
-					pthread_cond_signal( &(nm->nm_AndroidSendCond) );
+					if( nm->nm_AndroidSendInUse <= 0 )	// there is no need to trigger thread if its in "sending state"
+					{
+						pthread_cond_signal( &(nm->nm_AndroidSendCond) );
+					}
+					FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
 				}
-				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
 			}
 		}
 		else

@@ -1198,22 +1198,30 @@ User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus,
 	while( tusers != NULL )
 	{
 		tuser = tusers->us_User;
-		// Check both username and password
-
-		if( tuser != NULL && strcmp( tuser->u_Name, username ) == 0 )
+		Sentinel *sent = sb->GetSentinelUser( sb );
+		if( tuser != NULL && sent != NULL && sent->s_User == tuser )
 		{
-			FBOOL isUserSentinel = FALSE;
-			
-			Sentinel *sent = sb->GetSentinelUser( sb );
-			if( sent != NULL )
-			{
-				if( tuser == sent->s_User )
-				{
-					isUserSentinel = TRUE;
-				}
-			}
-			*rus = tusers;
+			isUserSentinel = TRUE;
 			break;
+			/*
+			// Check both username and password
+
+			if( tuser != NULL && strcmp( tuser->u_Name, username ) == 0 )
+			{
+				FBOOL isUserSentinel = FALSE;
+			
+				Sentinel *sent = sb->GetSentinelUser( sb );
+				if( sent != NULL )
+				{
+					if( tuser == sent->s_User )
+					{
+						isUserSentinel = TRUE;
+					}
+				}
+				*rus = tusers;
+				break;
+			}
+			*/
 		}
 		tusers = (UserSession *)tusers->node.mln_Succ;
 	}
