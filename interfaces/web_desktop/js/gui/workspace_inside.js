@@ -2517,12 +2517,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										}
 										// We are done. Empty startup apps!
 										Friend.startupApps = {};
-										
-										// Tell app we can show ourselves!
-										if( window.friendApp && window.friendApp.reveal )
-										{
-											friendApp.reveal();
-										}
 									}
 								}
 								l.func();
@@ -2533,6 +2527,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								ScreenOverlay.hide();
 								PollTray();
 								PollTaskbar();
+								// Tell app we can show ourselves!
+								if( window.friendApp && window.friendApp.reveal )
+								{
+									friendApp.reveal();
+								}
 							}
 						} );
 					}
