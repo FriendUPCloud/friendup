@@ -776,28 +776,21 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							if ( fRes != NULL )
 							{
 								char **fRow;
-								//fRow = fDB->FetchRow( fDB, fRes );
-								//if ( fRow != NULL )
-								if (( fRow = fDB->FetchRow( fDB, fRes )))
+								fRow = fDB->FetchRow( fDB, fRes );
+								if ( fRow != NULL )
 								{
-									if ( fRow == NULL ) {
-										DEBUG( "Theres no row\n" );
-									} else {
-										char *uidStr = fRow[ 0 ];
-										if ( uidStr != NULL )
-										{
-											char *end;
-											uid = strtol(
-												uidStr,
-												//(char *)fRow[ 0 ],
-												&end,
-												0
-											);
-										}
-										DEBUG( "Theres is a row %s\n", uidStr );
+									char *uidStr = fRow[ 0 ];
+									if ( uidStr != NULL )
+									{
+										char *end;
+										uid = strtol(
+											uidStr,
+											&end,
+											0
+										);
 									}
 								}
-								//fDB->FreeResult( fDB, fRes );
+								fDB->FreeResult( fDB, fRes );
 							}
 							
 							char *p = host;
@@ -812,7 +805,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								p++;
 							}
 							
-							
 							// check that user has whitelisted host
 							DEBUG("[SysWebRequest] servertoken: %s userid: %ld host: %s\n",
 								(char *)serverTokenElement->hme_Data,
@@ -820,23 +812,18 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								host
 							); 
 							
-							
-							// Check user server token and access to it
-							
 							internalDB->SNPrintF(
 								internalDB,
 								hostQuery,
 								sizeof( hostQuery ),
 								"SELECT sh.CreateTime FROM FSecuredHost AS sh "
-									"WHERE sh.UserID=\"%s\" "
+									"WHERE sh.UserID=%ld "
 									"AND sh.Status=1 "
 									"AND sh.IP=\"%s\" "
 									"LIMIT 1",
-								&uid,
+								uid,
 								host
 							);
-							
-							DEBUG( "?????\n" );
 							
 							void *iRes = internalDB->Query( internalDB, hostQuery );
 							if( iRes != NULL )
@@ -864,19 +851,23 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					l->DropDBConnection( l, fDB );
 					l->DropInternalDBConnection( l, internalDB );
 					
-					DEBUG("[SysWebRequest] userid: %ld isValid %d\n", uid, isValid );
+					DEBUG("[SysWebRequest] userid: %ld isValid: %d\n", uid, isValid );
 					
 					if( isValid == TRUE )
 					{
+						DEBUG( "try the thing\n" );
 						User *usr = UMGetUserByID( l->sl_UM, uid );
 						if( usr != NULL )
 						{
+							DEBUG( "found a user\n" );
 							loggedSession = (UserSession *)usr->u_SessionsList->us;
 							if( loggedSession == NULL )
 							{
+								DEBUG( "no sesssion\n" );
 								loggedSession = UserSessionNew( l, NULL, "servertoken" );
 								if( loggedSession != NULL )
 								{
+									DEBUG( "made a session\n" );
 									User *usr = UMUserGetByName( l->sl_UM, userName );
 									if( usr == NULL )
 									{
@@ -898,7 +889,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								
 								USMSessionSaveDB( l->sl_USM, loggedSession );
 								USMUserSessionAddToList( l->sl_USM, loggedSession );
-							}
+							} else
+								DEBUG( "found a session" );
 						}
 					}
 				}
@@ -2239,11 +2231,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									UserAddSession( lusr, loggedSession );
 								}
 							}
-							USMSessionSaveDB( l->sl_USM, loggedSession );
 							
-							//loggedSession->us_MobileAppID = umaID;
-							//UMAddUser( l->sl_UM, loggedSession->us_User );
-
+							USMSessionSaveDB( l->sl_USM, loggedSession );
+							UMAddUser( l->sl_UM, loggedSession->us_User );
+							
 							char *err = NULL;
 							UserDeviceMount( l, loggedSession, 0, TRUE, &err, TRUE );
 							if( err != NULL )
@@ -2405,7 +2396,20 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								char *locSessionID = loggedSession->us_SessionID;
 #endif
 							
-								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LastActionTime = %lld,DeviceIdentity='%s',UMA_ID=%lu WHERE `SessionID`='%s'", (long long)loggedSession->us_LastActionTime, deviceid, umaID, locSessionID );
+								sqlLib->SNPrintF( 
+									sqlLib, 
+									tmpQuery, 
+									sizeof(tmpQuery), 
+									"UPDATE `FUserSession` "
+										"SET LastActionTime = %lld, "
+										"DeviceIdentity='%s', "
+										"UMA_ID=%lu "
+										"WHERE `SessionID`='%s'", 
+									(long long)loggedSession->us_LastActionTime, 
+									deviceid, 
+									umaID, 
+									locSessionID 
+								);
 								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
 								{ 
 								
@@ -2421,11 +2425,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								
 								}
 								l->DropDBConnection( l, sqlLib );
-							
+								
 								UMAddUser( l->sl_UM, loggedSession->us_User );
-							
+								
 								DEBUG("[SysWebRequest] New user and session added\n");
-							
+								
 								char *err = NULL;
 								UserDeviceMount( l, loggedSession, 0, TRUE, &err, TRUE );
 								if( err != NULL )

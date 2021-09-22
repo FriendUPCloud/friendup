@@ -610,7 +610,7 @@ User *UMGetUserByName( UserManager *um, const char *name )
 User *UMGetUserByID( UserManager *um, FULONG id )
 {
 	User *tuser = NULL;
-	
+	DEBUG( "UMGetUserByID: %ld\n", id );
 	if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
 	{
 		tuser = um->um_Users;
