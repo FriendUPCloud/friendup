@@ -9614,17 +9614,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( this.onReadyList.length )
 		{
-			// Don't run it twice
-			Workspace.onReady = function(){
-				return Workspace.receivePush( false, true );
-			};
-			
 			for( let a = 0; a < this.onReadyList.length; a++ )
 			{
 				this.onReadyList[ a ]();
 			}
 			this.onReadyList = [];
 		}
+		
+		// Don't  run it twice
+		Workspace.onReady = function(){
+			return Workspace.receivePush( false, true );
+		};
 
 		//
 		//if we dont have a sessionid we will need to wait a bit here...
