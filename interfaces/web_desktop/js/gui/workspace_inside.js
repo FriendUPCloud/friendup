@@ -9614,17 +9614,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( this.onReadyList.length )
 		{
+			// Don't  run it twice
+			Workspace.onReady = function(){
+				return Workspace.receivePush( false, true );
+			};
+			
 			for( let a = 0; a < this.onReadyList.length; a++ )
 			{
 				this.onReadyList[ a ]();
 			}
 			this.onReadyList = [];
 		}
-		
-		// Don't  run it twice
-		Workspace.onReady = function(){
-			return Workspace.receivePush( false, true );
-		};
 
 		//
 		//if we dont have a sessionid we will need to wait a bit here...
@@ -10781,6 +10781,8 @@ Workspace.receiveLive = function( viewId, jsonEvent ) {
 	chat.contentWindow.postMessage( msg, '*' );
 }
 
+Workspace.pushTrashcan = {};
+
 // Receive push notification (when a user clicks native push notification on phone)
 Workspace.receivePush = function( jsonMsg, ready )
 {
@@ -10807,6 +10809,16 @@ Workspace.receivePush = function( jsonMsg, ready )
 	{
 		if( !ready && this.onReady ) this.onReady();
 		return 'nomsg';
+	}
+	
+	if( msg.notifid )
+	{
+		if( this.pushTrashcan[ msg.notifid ] )
+		{
+			console.log( 'Already processed notifid ' + msg.notifid );
+			return;
+		}
+		this.pushTrashcan[ msg.notifid ] = true;
 	}
 		
 	// Clear the notifications now... (race cond?)
