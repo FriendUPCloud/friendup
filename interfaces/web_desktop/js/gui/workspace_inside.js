@@ -10811,6 +10811,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 		return 'nomsg';
 	}
 	
+	// Disregard already handled notifications.
 	if( msg.notifid )
 	{
 		if( this.pushTrashcan[ msg.notifid ] )
