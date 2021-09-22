@@ -10856,23 +10856,23 @@ Workspace.receivePush = function( jsonMsg, ready )
 			{
 				// Need a "message id" to be able to update notification
 				// on the Friend Core side
-				if( msg.id )
+				if( msg.notifid )
 				{
 					if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
 					{
-						console.log( '[receivePush] We are updating push notification with Friend Core with ' + msg.id + ' it was seen...' );
+						console.log( '[receivePush] We are updating push notification with Friend Core with ' + msg.notifid + ' it was seen...' );
 						// Function to set the notification as read...
 						let l = new Library( 'system.library' );
 						l.onExecuted = function(){};
 						l.execute( 'mobile/updatenotification', { 
-							notifid: msg.id, 
+							notifid: msg.notifid, 
 							action: 1,
 							pawel: 1
 						} );
 					}
 					else
 					{
-						console.log( '[receivePush] We are azleep! Server may push us again with this ' + msg.id );
+						console.log( '[receivePush] We are azleep! Server may push us again with this ' + msg.notifid );
 					}
 				}
 				else
@@ -10905,7 +10905,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 				let l = new Library( 'system.library' );
 				l.onExecuted = function(){};
 				l.execute( 'mobile/updatenotification', { 
-					notifid: msg.id, 
+					notifid: msg.notifid, 
 					action: 1,
 					pawel: 2
 				} );
