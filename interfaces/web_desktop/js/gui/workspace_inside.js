@@ -6525,6 +6525,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						targ.innerHTML = i18n( 'i18n_no_field_information' );
 					}
 				}
+				m.forceHTTP = true;
 				m.execute( 'file/infoget', { key: opt.getAttribute( 'value' ), path: opt.parentNode.getAttribute( 'path' ) } );
 			}
 			else
