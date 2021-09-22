@@ -10859,6 +10859,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 				{
 					if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
 					{
+						console.log( '[receivePush] We are updating push notification with Friend Core with ' + msg.id + ' it was seen...' );
 						// Function to set the notification as read...
 						let l = new Library( 'system.library' );
 						l.onExecuted = function(){};
@@ -10868,6 +10869,14 @@ Workspace.receivePush = function( jsonMsg, ready )
 							pawel: 1
 						} );
 					}
+					else
+					{
+						console.log( '[receivePush] We are azleep! Server may push us again with this ' + msg.id );
+					}
+				}
+				else
+				{
+					console.log( 'No message id...', msg );
 				}
 			
 				mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
