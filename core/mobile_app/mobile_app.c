@@ -1603,18 +1603,12 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 /**
  * Notify user update
  *
- * @param username pointer to string with user name
  * @param root root of notifications which will go to firebase and will be deleted
  * @param action id of action
  * @return 0 when message was send, otherwise error number
  */
-int MobileAppNotifyUsersUpdate( void *lsb, const char *username, DelListEntry *root, int action )
+int MobileAppNotifyUsersUpdate( void *lsb, DelListEntry *root, int action )
 {
-	if( username == NULL )
-	{
-		Log( FLOG_ERROR, "[MobileAppNotifyUserUpdate]: Username is NULL!\n");
-		return 1;
-	}
 	SystemBase *sb = (SystemBase *)lsb;
 	unsigned int reqLengith = LWS_PRE + 512;
 	
@@ -1665,7 +1659,7 @@ int MobileAppNotifyUsersUpdate( void *lsb, const char *username, DelListEntry *r
 					reqLengith += strlen( dnotif->n_Extra );
 				}
 				
-				FULONG userID = UMGetUserIDByNameDB( sb->sl_UM, username );
+				FULONG userID = UMGetUserIDByNameDB( sb->sl_UM, dnotif->n_UserName );
 				if( userID != 0 )
 				{
 					BufString *bs = MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, dnotif->n_ID );

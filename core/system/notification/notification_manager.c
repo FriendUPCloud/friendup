@@ -1184,6 +1184,12 @@ void NotificationSendThread( FThread *data )
 		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
 	}
 	
+	DelListEntry *entryToDelete = nstd->sntd_RootNotification;
+	nstd->sntd_RootNotification = NULL;
+	
+	MobileAppNotifyUsersUpdate( nstd->sntd_NM->nm_SB, entryToDelete, NOTIFY_ACTION_TIMEOUT );
+	
+	/*
 	DelListEntry *le = nstd->sntd_RootNotification;
 	while( le != NULL )
 	{
@@ -1205,6 +1211,7 @@ void NotificationSendThread( FThread *data )
 		le = nextentry;
 	}
 	FFree( nstd );
+	*/
 	
 	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )
 	{
@@ -1369,6 +1376,7 @@ int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm )
 
 	if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
 	{
+		Log( FLOG_INFO, "[NotificationManagerNotificationSendFirebaseQueue] is sending in use: %d\n", nm->nm_AndroidSendInUse );
 		if( nm->nm_AndroidSendInUse <= 0 )	// there is no need to trigger thread if its in "sending state"
 		{
 			pthread_cond_signal( &(nm->nm_AndroidSendCond) );
