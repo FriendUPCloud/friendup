@@ -783,7 +783,7 @@ var WorkspaceInside = {
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d } );
+			//console.log( { e:e, d:d } );
 			
 			if( e == 'ok' )
 			{
@@ -1538,7 +1538,7 @@ var WorkspaceInside = {
 								messageRead = true;
 								let l = new Library( 'system.library' );
 								l.onExecuted = function( e, d ){
-									console.log( 'Did we tell fc that we read the notification?', e, d );
+									//console.log( 'Did we tell fc that we read the notification?', e, d );
 								};
 								l.execute( 'mobile/updatenotification', { 
 									notifid: msg.notificationData.id, 
@@ -1687,7 +1687,7 @@ var WorkspaceInside = {
 			}
 			else
 			{
-				console.log( 'friend network not enabled' );
+				//console.log( 'friend network not enabled' );
 			}
 		}
 		m.execute( 'checkfriendnetwork' );
@@ -1746,7 +1746,7 @@ var WorkspaceInside = {
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( {e:e,d:d} );
+			//console.log( {e:e,d:d} );
 			if( e != 'ok' ) Alert( 'Error', d );
 			if( e == 'ok' )
 			{
@@ -9656,7 +9656,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				deviceID = friendApp.get_deviceid();
 			}
 
-			console.log('onReady called a bunch of friendApp functions with our sessionid ' + Workspace.sessionId );
+			//console.log('onReady called a bunch of friendApp functions with our sessionid ' + Workspace.sessionId );
 
 			if( appToken != null )	// old applications which do not have appToken will skip this part
 			{
@@ -10785,7 +10785,7 @@ Workspace.pushTrashcan = {};
 // Receive push notification (when a user clicks native push notification on phone)
 Workspace.receivePush = function( jsonMsg, ready )
 {
-	console.log( 'Workspace.receivePush', jsonMsg );
+	//console.log( 'Workspace.receivePush', jsonMsg );
 	if( !isMobile ) return 'mobile';
 	let msg = jsonMsg ? jsonMsg : ( window.friendApp && typeof friendApp.get_notification == 'function' ? friendApp.get_notification() : false );
 
@@ -10815,7 +10815,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 	{
 		if( this.pushTrashcan[ msg.notifid ] )
 		{
-			console.log( 'Already processed notifid ' + msg.notifid );
+			//console.log( 'Already processed notifid ' + msg.notifid );
 			return;
 		}
 		this.pushTrashcan[ msg.notifid ] = true;
@@ -10843,7 +10843,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 	
 	function handleClick()
 	{
-		console.log( 'handleClick ??' );
+		//console.log( 'handleClick ??' );
 		if( !msg.application || msg.application == 'null' ) 
 		{
 			if( !ready && Workspace.onReady ) Workspace.onReady();
@@ -10872,7 +10872,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 				{
 					if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
 					{
-						console.log( '[receivePush] We are updating push notification with Friend Core with ' + msg.notifid + ' it was seen...' );
+						//console.log( '[receivePush] We are updating push notification with Friend Core with ' + msg.notifid + ' it was seen...' );
 						// Function to set the notification as read...
 						let l = new Library( 'system.library' );
 						l.onExecuted = function(){};
@@ -10884,17 +10884,17 @@ Workspace.receivePush = function( jsonMsg, ready )
 					}
 					else
 					{
-						console.log( '[receivePush] We are azleep! Server may push us again with this ' + msg.notifid );
+						//console.log( '[receivePush] We are azleep! Server may push us again with this ' + msg.notifid );
 					}
 				}
 				else
 				{
-					console.log( 'No message id...', msg );
+					//console.log( 'No message id...', msg );
 				}
 			
 				mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
 				let app = Workspace.applications[a];
-				console.log( 'push to app', [ msg, app ]);
+				//console.log( 'push to app', [ msg, app ]);
 				app.contentWindow.postMessage( JSON.stringify( { 
 					type: 'system',
 					method: 'pushnotification',
@@ -11034,7 +11034,7 @@ else
 var mobileDebugTime = null;
 function mobileDebug( str, clear )
 {
-	console.log( 'mobileDebug', str );
+	//console.log( 'mobileDebug', str );
 	if( !isMobile ) return;
 	if( !window.debugDiv ) return;
 	if( mobileDebugTime ) clearTimeout( mobileDebugTime );
@@ -11042,7 +11042,7 @@ function mobileDebug( str, clear )
 	{
 		window.debugDiv.innerHTML = '';
 	}
-	console.log( '[mobileDebug] ' + str );
+	//console.log( '[mobileDebug] ' + str );
 	window.debugDiv.innerHTML += str + '<br>';
 	mobileDebugTime = setTimeout( function()
 	{
