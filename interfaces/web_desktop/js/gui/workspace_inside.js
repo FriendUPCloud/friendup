@@ -783,7 +783,7 @@ var WorkspaceInside = {
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d } );
+			//console.log( { e:e, d:d } );
 			
 			if( e == 'ok' )
 			{
@@ -1538,7 +1538,7 @@ var WorkspaceInside = {
 								messageRead = true;
 								let l = new Library( 'system.library' );
 								l.onExecuted = function( e, d ){
-									console.log( 'Did we tell fc that we read the notification?', e, d );
+									//console.log( 'Did we tell fc that we read the notification?', e, d );
 								};
 								l.execute( 'mobile/updatenotification', { 
 									notifid: msg.notificationData.id, 
@@ -1687,7 +1687,7 @@ var WorkspaceInside = {
 			}
 			else
 			{
-				console.log( 'friend network not enabled' );
+				//console.log( 'friend network not enabled' );
 			}
 		}
 		m.execute( 'checkfriendnetwork' );
@@ -1746,7 +1746,7 @@ var WorkspaceInside = {
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( {e:e,d:d} );
+			//console.log( {e:e,d:d} );
 			if( e != 'ok' ) Alert( 'Error', d );
 			if( e == 'ok' )
 			{
@@ -2517,12 +2517,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										}
 										// We are done. Empty startup apps!
 										Friend.startupApps = {};
-										
-										// Tell app we can show ourselves!
-										if( window.friendApp && window.friendApp.reveal )
-										{
-											friendApp.reveal();
-										}
 									}
 								}
 								l.func();
@@ -2533,6 +2527,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								ScreenOverlay.hide();
 								PollTray();
 								PollTaskbar();
+								// Tell app we can show ourselves!
+								if( window.friendApp && window.friendApp.reveal )
+								{
+									friendApp.reveal();
+								}
 							}
 						} );
 					}
@@ -6525,6 +6524,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						targ.innerHTML = i18n( 'i18n_no_field_information' );
 					}
 				}
+				m.forceHTTP = true;
 				m.execute( 'file/infoget', { key: opt.getAttribute( 'value' ), path: opt.parentNode.getAttribute( 'path' ) } );
 			}
 			else
@@ -9613,7 +9613,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( this.onReadyList.length )
 		{
-			// Don't run it twice
+			// Don't  run it twice
 			Workspace.onReady = function(){
 				return Workspace.receivePush( false, true );
 			};
@@ -9656,7 +9656,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				deviceID = friendApp.get_deviceid();
 			}
 
-			console.log('onReady called a bunch of friendApp functions with our sessionid ' + Workspace.sessionId );
+			//console.log('onReady called a bunch of friendApp functions with our sessionid ' + Workspace.sessionId );
 
 			if( appToken != null )	// old applications which do not have appToken will skip this part
 			{
@@ -10780,10 +10780,12 @@ Workspace.receiveLive = function( viewId, jsonEvent ) {
 	chat.contentWindow.postMessage( msg, '*' );
 }
 
+Workspace.pushTrashcan = {};
+
 // Receive push notification (when a user clicks native push notification on phone)
 Workspace.receivePush = function( jsonMsg, ready )
 {
-	console.log( 'Workspace.receivePush', jsonMsg );
+	//console.log( 'Workspace.receivePush', jsonMsg );
 	if( !isMobile ) return 'mobile';
 	let msg = jsonMsg ? jsonMsg : ( window.friendApp && typeof friendApp.get_notification == 'function' ? friendApp.get_notification() : false );
 
@@ -10806,6 +10808,17 @@ Workspace.receivePush = function( jsonMsg, ready )
 	{
 		if( !ready && this.onReady ) this.onReady();
 		return 'nomsg';
+	}
+	
+	// Disregard already handled notifications.
+	if( msg.notifid )
+	{
+		if( this.pushTrashcan[ msg.notifid ] )
+		{
+			//console.log( 'Already processed notifid ' + msg.notifid );
+			return;
+		}
+		this.pushTrashcan[ msg.notifid ] = true;
 	}
 		
 	// Clear the notifications now... (race cond?)
@@ -10830,7 +10843,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 	
 	function handleClick()
 	{
-		console.log( 'handleClick ??' );
+		//console.log( 'handleClick ??' );
 		if( !msg.application || msg.application == 'null' ) 
 		{
 			if( !ready && Workspace.onReady ) Workspace.onReady();
@@ -10855,24 +10868,33 @@ Workspace.receivePush = function( jsonMsg, ready )
 			{
 				// Need a "message id" to be able to update notification
 				// on the Friend Core side
-				if( msg.id )
+				if( msg.notifid )
 				{
 					if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
 					{
+						//console.log( '[receivePush] We are updating push notification with Friend Core with ' + msg.notifid + ' it was seen...' );
 						// Function to set the notification as read...
 						let l = new Library( 'system.library' );
 						l.onExecuted = function(){};
 						l.execute( 'mobile/updatenotification', { 
-							notifid: msg.id, 
+							notifid: msg.notifid, 
 							action: 1,
 							pawel: 1
 						} );
 					}
+					else
+					{
+						//console.log( '[receivePush] We are azleep! Server may push us again with this ' + msg.notifid );
+					}
+				}
+				else
+				{
+					//console.log( 'No message id...', msg );
 				}
 			
 				mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
 				let app = Workspace.applications[a];
-				console.log( 'push to app', [ msg, app ]);
+				//console.log( 'push to app', [ msg, app ]);
 				app.contentWindow.postMessage( JSON.stringify( { 
 					type: 'system',
 					method: 'pushnotification',
@@ -10895,7 +10917,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 				let l = new Library( 'system.library' );
 				l.onExecuted = function(){};
 				l.execute( 'mobile/updatenotification', { 
-					notifid: msg.id, 
+					notifid: msg.notifid, 
 					action: 1,
 					pawel: 2
 				} );
@@ -11012,7 +11034,7 @@ else
 var mobileDebugTime = null;
 function mobileDebug( str, clear )
 {
-	console.log( 'mobileDebug', str );
+	//console.log( 'mobileDebug', str );
 	if( !isMobile ) return;
 	if( !window.debugDiv ) return;
 	if( mobileDebugTime ) clearTimeout( mobileDebugTime );
@@ -11020,7 +11042,7 @@ function mobileDebug( str, clear )
 	{
 		window.debugDiv.innerHTML = '';
 	}
-	console.log( '[mobileDebug] ' + str );
+	//console.log( '[mobileDebug] ' + str );
 	window.debugDiv.innerHTML += str + '<br>';
 	mobileDebugTime = setTimeout( function()
 	{
