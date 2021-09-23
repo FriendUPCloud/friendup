@@ -91,4 +91,11 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 //
 //
 
-int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *notif, int action );
+int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *notif, int action );
+
+//
+//
+//
+
+int MobileAppNotifyUsersUpdate( void *lsb, DelListEntry *root, int action );
+
