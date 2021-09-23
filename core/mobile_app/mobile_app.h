@@ -82,6 +82,16 @@ typedef struct MobileAppNotif
 }MobileAppNotif;
 
 //
+// Notifications which should go to firebase
+//
+
+typedef struct DelListEntry
+{
+	Notification *dle_NotificationPtr;
+	MinNode node;
+}DelListEntry;
+
+//
 //
 //
 

@@ -54,16 +54,6 @@ typedef struct ExternalServerConnection
 }ExternalServerConnection;
 
 //
-// Notifications which should go to firebase
-//
-
-typedef struct DelListEntry
-{
-	Notification *dle_NotificationPtr;
-	MinNode node;
-}DelListEntry;
-
-//
 // Notification Manager structure
 //
 
