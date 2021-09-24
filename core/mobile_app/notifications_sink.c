@@ -162,6 +162,7 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 					FQInit( &(locd->d_Queue) );
 					locd->d_Authenticated = TRUE;
 					man->man_Data = locd;
+					man->man_BufString = NULL;
 				}
 			}
 		}
