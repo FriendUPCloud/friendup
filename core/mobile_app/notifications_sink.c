@@ -277,7 +277,12 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 			
 			const size_t remaining = lws_remaining_packet_payload( wsi );
 			// if nothing left and this is last message
-			if( !remaining && lws_is_final_fragment( wsi ) )
+			
+			int isFinal = lws_is_final_fragment( wsi );
+			
+			Log( FLOG_DEBUG, "[LWS_CALLBACK_RECEIVE] remaining: %d isFinal: %d\n", remaining, isFinal );
+			
+			if( !remaining && isFinal )
 			{
 				BufStringAddSize( man->man_BufString, buf, len );
 				
@@ -295,7 +300,7 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 			}
 			else // only fragment was received
 			{
-				DEBUG1("[WS] Only received: %s\n", (char *)buf );
+				Log( FLOG_DEBUG, "[LWS_CALLBACK_RECEIVE] Only received: %s\n", (char *)buf );
 				BufStringAddSize( man->man_BufString, buf, len );
 			}
 			/*
