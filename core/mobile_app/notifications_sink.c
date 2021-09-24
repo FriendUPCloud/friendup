@@ -291,7 +291,7 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 					DataQWSIM *d = (DataQWSIM *)man->man_Data;
 					ProcessIncomingRequest( d, man->man_BufString->bs_Buffer, man->man_BufString->bs_Size, user );
 				
-					//man->man_BufString->bs_Buffer = NULL;
+					man->man_BufString->bs_Buffer = NULL;
 					BufStringDelete( man->man_BufString );
 					man->man_BufString = NULL;
 				}
