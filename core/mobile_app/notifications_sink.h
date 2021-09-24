@@ -44,6 +44,19 @@ enum {
 	WS_NOTIF_SINK_ERROR_TOKENS_NOT_FOUND
 };
 
+const char *errorMsg[] =
+{
+	"Success",
+	"Json cannot be parsed",
+	"Websockets were not authenticated",
+	"Notification type not found",
+	"Authentication failed",
+	"No authentication elements in message",
+	"Parameters not found",
+	"JSON Tokens not found (request is not in JSON format probably)"
+	
+};
+
 //
 // Data Queue WSI Mutex
 //
