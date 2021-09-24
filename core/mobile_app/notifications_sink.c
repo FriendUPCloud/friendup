@@ -302,7 +302,10 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 			else // only fragment was received
 			{
 				Log( FLOG_DEBUG, "[LWS_CALLBACK_RECEIVE] Only received: %s\n", (char *)buf );
-				BufStringAddSize( man->man_BufString, buf, len );
+				if( man != NULL && man->man_BufString != NULL )
+				{
+					BufStringAddSize( man->man_BufString, buf, len );
+				}
 			}
 			/*
 			MobileAppNotif *man = (MobileAppNotif *)user;
