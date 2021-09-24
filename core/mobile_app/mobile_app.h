@@ -79,6 +79,7 @@ typedef struct MobileAppNotif
 	int						man_Type;
 	void					*man_Data;
 	int						man_InUse;
+	BufString				*man_BufString;
 }MobileAppNotif;
 
 //
