@@ -617,7 +617,7 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 					$o->Filesize = $this->accountinfo['storageStatus']['allocation']['allocated'];
 					die( 'ok<!--separate-->' . json_encode( $o ) );
 				}
-	
+				
 				die( 'fail<!--separate-->volumeinfo failed' );
 			}
 			else if( $args->command == 'dosaction' )
