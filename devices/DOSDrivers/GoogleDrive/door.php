@@ -64,6 +64,52 @@ if( !class_exists( 'GoogleDrive' ) )
 			$this->fileInfo = isset( $args->fileInfo ) ? $args->fileInfo : new stdClass();
 		}
 		
+		function GetByCurl( $url, $args = false, $method = 'POST', $headers = false )
+		{
+			global $Logger;
+			
+			if( !$url ) return;
+			
+			$agent = ( isset( $_SERVER['HTTP_USER_AGENT'] ) ? $_SERVER['HTTP_USER_AGENT'] : 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:33.0) Gecko/20100101 Firefox/33.0' );
+			
+			if( function_exists( 'curl_init' ) )
+			{
+
+				// Get data
+				$ch = curl_init();
+				curl_setopt( $ch, CURLOPT_URL, $url );
+				//curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, 1 );
+				curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
+				curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'Accept-charset: UTF-8' ) );
+				curl_setopt( $ch, CURLOPT_ENCODING, 'UTF-8' );
+				//curl_setopt( $ch, CURLOPT_ENCODING, 1 );
+				curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
+				
+				if( $headers )
+				{
+					curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
+				}
+		
+				if( $method != 'POST' )
+				{
+					curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, $method );
+				}
+		
+				if( $args )
+				{
+					curl_setopt( $ch, CURLOPT_POST, true );
+					curl_setopt( $ch, CURLOPT_POSTFIELDS, $args );
+				}
+		
+				curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+				
+				return ( curl_exec( $ch ) );
+				
+			}
+			
+			return 'fail<!separate-->curl unavailable';
+		}
+		
 		//small helper to get config from safe place..
 		function parseSysinfo()
 		{
@@ -766,8 +812,8 @@ if( !class_exists( 'GoogleDrive' ) )
 				{
 					$o = new stdClass();
 					$o->Volume = $this->Name . ':';
-					$o->Used = 0;
-					$o->Filesize = 0;
+					$o->Used = ( isset( $this->accountinfo->storageQuota->usage ) ? $this->accountinfo->storageQuota->usage : 0 );
+					$o->Filesize = ( isset( $this->accountinfo->storageQuota->limit ) ? $this->accountinfo->storageQuota->limit : 0 );
 					die( 'ok<!--separate-->' . json_encode( $o ) );
 				}
 	
@@ -1284,12 +1330,10 @@ if( !class_exists( 'GoogleDrive' ) )
 		
 		function updateAccountInfo()
 		{
-			global $Logger;
+			global $Logger, $Config;
 			if( $this->state != self::UNAUTHORIZED && $this->connectClient() )
 			{
-				$account = $this->gdx->getCurrentAccount();
-				$this->accountinfo = $account->getData();
-				$this->accountinfo['storageStatus'] = $this->gdx->getSpaceUsage();
+				// Updates happen in connectClient() ...
 			}
 		}
 		
@@ -1388,6 +1432,21 @@ if( !class_exists( 'GoogleDrive' ) )
 				if ( !$client->isAccessTokenExpired() )
 				{
 					$this->gdx = $client;
+					
+					if( $confjson && $confjson['access'] && $confjson['access']['access_token'] )
+					{
+						
+						if( $res = $this->GetByCurl( 'https://www.googleapis.com/drive/v3/about?fields=storageQuota', false, 'GET', [ 'Authorization: Bearer ' . $confjson['access']['access_token'] ] ) )
+						{
+							if( $json = json_decode( $res ) )
+							{
+								$this->accountinfo = $json;
+							}
+						}
+						
+					}
+
+					
 					return true;					
 				}
 			}
