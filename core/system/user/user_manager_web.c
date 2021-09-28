@@ -1474,6 +1474,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, level, workgroups );
 					
 						RefreshUserDrives( l->sl_DeviceManager, loggedSession, NULL, &error );
+						
+						DEBUG("[update/user] before notification\n");
 					
 						NotifyExtServices( l, request, logusr, "update" );
 					
@@ -1487,6 +1489,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						{
 							FFree( error );
 						}
+						
+						DEBUG("[update/user] after notification\n");
 					
 						HttpAddTextContent( response, "ok<!--separate-->{\"update\":\"success!\"}" );
 					}
