@@ -1033,13 +1033,17 @@ if( !class_exists( 'GoogleDrive' ) )
 							$o->Command = $gfile->getMimeType();
 							break;
 						case 'application/vnd.google-apps.spreadsheet':
-							$o->IconClass = 'TypeGoogleDocs';
+							$o->IconClass = 'TypeGoogleSheets';
+							$o->Command = $gfile->getMimeType();
+							break;
+						case 'application/vnd.google-apps.presentation':
+							$o->IconClass = 'TypeGooglePresentation';
 							$o->Command = $gfile->getMimeType();
 							break;
 						default:
 							break;
 					}
-
+					
 					$o->Filesize = ( $gfile->getSize() != null ? $gfile->getSize() : '16' );
 					$o->ID = $gfile->getId();
 					$cleanpath = ($subPath != '' ? $subPath . '/' : '' ) . $o->Filename; 

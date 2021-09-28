@@ -3147,7 +3147,17 @@ html .File .Icon .TypeEPS
 
 html .File .Icon .TypeGoogleDocs
 {
-	background-image: url(/iconthemes/friendup15/File_Word.svg);
+	background-image: url(/iconthemes/friendup15/File_GoogleDocs.png);
+}
+
+html .File .Icon .TypeGoogleSheets
+{
+	background-image: url(/iconthemes/friendup15/File_GoogleSheets.png);
+}
+
+html .File .Icon .TypeGooglePresentation
+{
+	background-image: url(/iconthemes/friendup15/File_GooglePresentation.png);
 }
 
 html .File .Icon .TypeWebUrl
