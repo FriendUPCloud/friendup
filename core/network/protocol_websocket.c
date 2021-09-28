@@ -110,7 +110,7 @@ void WSThreadPing( WSThreadData *data )
 	
 		if( FRIEND_MUTEX_LOCK( &(data->wstd_WSD->wsc_Mutex) ) == 0 )
 		{
-			if( data == NULL || us->us_WSD == NULL || data->wstd_WSD->wsc_UserSession == NULL )
+			if( us->us_WSD == NULL || data->wstd_WSD->wsc_UserSession == NULL )
 			{
 				if( data != NULL )
 				{
@@ -118,9 +118,9 @@ void WSThreadPing( WSThreadData *data )
 					{
 						FFree( data->wstd_Requestid );
 					}
+					FRIEND_MUTEX_UNLOCK( &(data->wstd_WSD->wsc_Mutex) );
 					FFree( data );
 				}
-				FRIEND_MUTEX_UNLOCK( &(data->wstd_WSD->wsc_Mutex) );
 				
 				// Decrease counter
 				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
@@ -255,7 +255,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						break;
 					}
 				}
-				DetachWebsocketFromSession( wsd );
+				DetachWebsocketFromSession( wsd, wsi );
 			
 				if( wsd->wsc_Buffer != NULL )
 				{
@@ -268,6 +268,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				pthread_mutex_destroy( &(wsd->wsc_Mutex) );
 			
 				Log( FLOG_DEBUG, "[WS] Callback session closed\n");
+				
+				//FERROR("\n\n\nREMOVE\n\nwsi: %p\n\nuser: %p\n\n", wsi, user );
 			}
 		break;
 		
@@ -339,6 +341,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					
 					pthread_t t;
 					//memset( &t, 0, sizeof( pthread_t ) );
+					
+					//FERROR("\n\n\nRECEIVE\n\nwsi: %p\n\nuser: %p\n\n", wsi, user );
 					
 					if( pthread_create( &t, NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
 					{
@@ -506,7 +510,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				DEBUG("[WS] Closing WS, number: %d\n", wsd->wsc_InUseCounter );
 				sleep( 1 );
 			}
-			DetachWebsocketFromSession( wsd );
+			DetachWebsocketFromSession( wsd, wsi );
 	
 			if( wsd->wsc_Buffer != NULL )
 			{
@@ -1612,6 +1616,10 @@ void *ParseAndCall( WSThreadData *wstd )
 		releaseWSData( wstd );
 	}
 	
+	if( in != NULL )
+	{
+		FFree( in );
+	}
 	
 	FFree( t );
 	

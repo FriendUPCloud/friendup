@@ -417,6 +417,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		Workspace.conn && 
 		Workspace.conn.ws && 
 		Workspace.conn.ws.ready &&
+		Workspace.conn.ws.ws &&
 		( this.proxy && this.proxy.responseType != 'arraybuffer' ) &&
 		typeof( url ) == 'string' && 
 		url.indexOf( 'http' ) != 0 && 
@@ -428,7 +429,12 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		this.mode = 'websocket';
 		this.url = url;
 		this.hasReturnCode = hasReturnCode;
+		console.log( 'WebSocket call: ' + url );
 		return true;
+	}
+	else
+	{
+		console.log( 'HTTP call: ' + url );
 	}
 	
 	// If we are running this on friendup recreate url to support old method
@@ -681,6 +687,11 @@ cAjax.prototype.send = function( data, callback )
 				
 				new Promise( function( resolve, reject )
 				{
+					if( !navigator.onLine )
+					{
+						reject( 'error' );
+						return;
+					}
 					try
 					{
 						res = self.proxy.send( out.join ( '&' ) );
@@ -705,6 +716,10 @@ cAjax.prototype.send = function( data, callback )
 						{
 							console.log( 'Other error' );
 							callback( false, false );
+						}
+						else
+						{
+							console.log( 'No callback.' );
 						}
 					}
 					else if( err == 'success' );

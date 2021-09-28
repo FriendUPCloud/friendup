@@ -26,6 +26,8 @@
 #include <system/fsys/device_handling.h>
 #include <util/session_id.h>
 #include <strings.h>
+#include <system/notification/notification.h>
+#include <system/fsys/door_notification.h>
 
 /**
  * Create UserManager
@@ -164,7 +166,7 @@ int UMUserUpdateDB( UserManager *um, User *usr )
 int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
 {
 	return 0;	//disabled for test
-	
+	/*
 	char tmpQuery[ 255 ];
 
 	SystemBase *sb = (SystemBase *)smgr->um_SB;
@@ -205,16 +207,16 @@ int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
 				FULONG rid = atol( row[ 0 ] );
 				FULONG uid = atol( row[ 1 ] );
 				FULONG aid = atol( row[ 2 ] );
-				/*
+				
 				// Get single user application structure
-				UserApplication *ap = UserAppNew( rid, aid, row[3], row[4] );
+				//UserApplication *ap = UserAppNew( rid, aid, row[3], row[4] );
 			
-				if( ap != NULL )
-				{
-					ap->node.mln_Succ = (MinNode *) usr->u_Applications;
-					usr->u_Applications = ap;
-				}
-				*/
+				//if( ap != NULL )
+				//{
+				//	ap->node.mln_Succ = (MinNode *) usr->u_Applications;
+				//	usr->u_Applications = ap;
+				//}
+				
 			} 
 			j++;
 		}
@@ -227,6 +229,7 @@ int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
 		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	return actapp;
+	*/
 }
 
 /**
@@ -238,16 +241,8 @@ int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
  */
 User *UMUserGetByName( UserManager *um, const char *name )
 {
-	SystemBase *sb = (SystemBase *)um->um_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
-	
-	if( sqlLib == NULL )
-	{
-		FERROR("Cannot get user, mysql.library was not open\n");
-		return NULL;
-	}
-
-	User *user = sb->sl_UM->um_Users;
+	USER_MANAGER_USE( um );
+	User *user = um->um_Users;
 	while( user != NULL )
 	{
 		if( strcmp( user->u_Name, name ) == 0 )
@@ -256,9 +251,8 @@ User *UMUserGetByName( UserManager *um, const char *name )
 		}
 		user = (User *)user->node.mln_Succ;
 	}
-	
-	sb->LibrarySQLDrop( sb, sqlLib );
-	
+	USER_MANAGER_RELEASE( um );
+
 	return user;
 }
 
@@ -572,38 +566,23 @@ User *UMGetUserByName( UserManager *um, const char *name )
 	{
 		return NULL;
 	}
-	
-	User *tuser = NULL;
-	if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
+
+	USER_MANAGER_USE( um );
+
+	User *tuser = um->um_Users;
+	while( tuser != NULL )
 	{
-		User *tuser = um->um_Users;
-		while( tuser != NULL )
+		// Check both username and password
+		if( strcmp( name, tuser->u_Name ) == 0 )
 		{
-			// Check both username and password
-			if( strcmp( name, tuser->u_Name ) == 0 )
-			{
-				FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
-				return tuser;
-			}
-			tuser = (User *)tuser->node.mln_Succ;
+			USER_MANAGER_RELEASE( um );
+			return tuser;
 		}
-		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+		tuser = (User *)tuser->node.mln_Succ;
 	}
-	
-	/*
-	// user is not in memory, load it
-	
-	tuser = UMGetUserByNameDB( um, name );
-	if( tuser != NULL )
-	{
-		if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
-		{
-			tuser->node.mln_Succ = (MinNode *)um->um_Users;
-			um->um_Users = tuser;
-			FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
-		}
-	}
-	*/
+
+	USER_MANAGER_RELEASE( um );
+
 	return tuser;
 }
 
@@ -618,36 +597,22 @@ User *UMGetUserByID( UserManager *um, FULONG id )
 {
 	User *tuser = NULL;
 	
-	if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
+	USER_MANAGER_USE( um );
+	
+	tuser = um->um_Users;
+	while( tuser != NULL )
 	{
-		tuser = um->um_Users;
-		while( tuser != NULL )
+		// Check both username and password
+		if( tuser->u_ID == id )
 		{
-			// Check both username and password
-			if( tuser->u_ID == id )
-			{
-				FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
-				return tuser;
-			}
-			tuser = (User *)tuser->node.mln_Succ;
+			USER_MANAGER_RELEASE( um );
+			return tuser;
 		}
-		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+		tuser = (User *)tuser->node.mln_Succ;
 	}
 	
-	/*
-	// user is not in memory, load it
-	
-	tuser = UMGetUserByIDDB( um, id );
-	if( tuser != NULL )
-	{
-		if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
-		{
-			tuser->node.mln_Succ = (MinNode *)um->um_Users;
-			um->um_Users = tuser;
-			FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
-		}
-	}
-	*/
+	USER_MANAGER_RELEASE( um );
+
 	return tuser;
 }
 
@@ -830,7 +795,7 @@ User *UMGetUserByNameDBCon( UserManager *um, SQLLibrary *sqlLib, const char *nam
  * @param name name of the user
  * @return User or NULL when error will appear
  */
-FULONG UMGetUserIDByName( UserManager *um, const char *name )
+FULONG UMGetUserIDByNameDB( UserManager *um, const char *name )
 {
 	User *usr = UMGetUserByName( um, name );
 	if( usr == NULL )
@@ -1020,26 +985,15 @@ int UMAddUser( UserManager *um,  User *usr )
 	if( lu == NULL  )
 	{
 		int tr = 20;
-		// do not add any user till list in use
-		while( um->un_InUse > 0 )
-		{
-			usleep( 1000 );
-			if( (tr--) <= 0 )
-			{
-				break;
-			}
-		}
 		
-		if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
+		USER_MANAGER_CHANGE_ON( um );
+		usr->node.mln_Succ  = (MinNode *) um->um_Users;
+		if( um->um_Users != NULL )
 		{
-			usr->node.mln_Succ  = (MinNode *) um->um_Users;
-			if( um->um_Users != NULL )
-			{
-				um->um_Users->node.mln_Pred = (MinNode *)usr;
-			}
-			um->um_Users = usr;
-			FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+			um->um_Users->node.mln_Pred = (MinNode *)usr;
 		}
+		um->um_Users = usr;
+		USER_MANAGER_CHANGE_OFF( um );
 	}
 	else
 	{
@@ -1065,11 +1019,7 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 	User *userPrevious = NULL; //previous element of the linked list
 	SystemBase *sb = (SystemBase *)um->um_SB;
 
-	if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
-	{
-		usr->u_InUse++;
-		FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
-	}
+	USER_LOCK( usr );
 	
 	DEBUG("[UMRemoveAndDeleteUser] remove user\n");
 	
@@ -1095,22 +1045,7 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 	unsigned int n = 0;
 	FBOOL found = FALSE;
 	
-	int tr = 20;
-	// do not add any user till list in use
-	while( um->un_InUse > 0 )
-	{
-		usleep( 1000 );
-		if( (tr--) <= 0 )
-		{
-			break;
-		}
-	}
-	
-	if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
-	{
-		um->un_InUse++;
-		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
-	}
+	USER_MANAGER_CHANGE_ON( um );
 	
 	userCurrent = um->um_Users;
 	while( userCurrent != NULL )
@@ -1126,11 +1061,7 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 		userCurrent = (User *)userCurrent->node.mln_Succ; //this is the next element in the linked list
 	}
 	
-	if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
-	{
-		usr->u_InUse--;
-		FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
-	}
+	USER_UNLOCK( usr );
 	
 	if( found == TRUE )
 	{
@@ -1151,20 +1082,12 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 		
 		// we dont allow to change list when we work with it
 		
-		if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
-		{
-			um->un_InUse--;
-			FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
-		}
+		USER_MANAGER_CHANGE_OFF( um );
 		
 		return 0;
 	}
 	
-	if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
-	{
-		um->un_InUse--;
-		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
-	}
+	USER_MANAGER_CHANGE_OFF( um );
 	
 	return -1;
 }
@@ -1520,107 +1443,106 @@ int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details )
 {
 	BufStringAddSize( bs, "\"users\":[", 9 );
 	
-	if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
+	USER_MANAGER_USE( um );
+	
+	int nr = 0;
+	int userCounter = 0;
+	char tmp[ 512 ];
+	int len = 0;
+	
+	if( details == TRUE )
 	{
-		int nr = 0;
-		int userCounter = 0;
-		char tmp[ 512 ];
-		int len = 0;
+		User *usr = um->um_Users;
+		while( usr != NULL )
+		{
+			int sesCounter = 0;
+			int devCounter = 0;
+			int uglCounter = 0;
+			int sesCounterBytes = 0;
+			int devCounterBytes = 0;
+			int uglCounterBytes = 0;
+			
+			userCounter++;
 		
-		if( details == TRUE )
-		{
-			User *usr = um->um_Users;
-			while( usr != NULL )
+			UserSessListEntry *sesentr = usr->u_SessionsList;
+			while( sesentr != NULL )
 			{
-				int sesCounter = 0;
-				int devCounter = 0;
-				int uglCounter = 0;
-				int sesCounterBytes = 0;
-				int devCounterBytes = 0;
-				int uglCounterBytes = 0;
-				
-				userCounter++;
-			
-				UserSessListEntry *sesentr = usr->u_SessionsList;
-				while( sesentr != NULL )
-				{
-					sesCounter++;
-					sesCounterBytes += sizeof( UserSessListEntry );
-					sesentr = (UserSessListEntry *)sesentr->node.mln_Succ;
-				}
-				
-				File *rootDev = usr->u_MountedDevs;
-				while( rootDev != NULL )
-				{
-					devCounter++;
-					devCounterBytes += sizeof( File );
-					rootDev = (File *)rootDev->node.mln_Succ;
-				}
-				
-				UserGroupLink *ugl = usr->u_UserGroupLinks;
-				while( ugl != NULL )
-				{
-					uglCounter++;
-					uglCounterBytes += sizeof( UserGroupLink );
-					ugl = (UserGroupLink *)ugl->node.mln_Succ;
-				}
-				
-				if( nr == 0 )
-				{
-					len = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"size\":%d,\"sessions\":%d,\"sessionsbytes\":%d,\"volumesinmem\":%d,\"volumesinmembytes\":%d,\"groups\":%d,\"groupsbytes\":%d}", usr->u_Name, (int)sizeof(User), sesCounter, sesCounterBytes, devCounter, devCounterBytes, uglCounter, uglCounterBytes );
-				}
-				else
-				{
-					len = snprintf( tmp, sizeof(tmp), ",{\"name\":\"%s\",\"size\":%d,\"sessions\":%d,\"sessionsbytes\":%d,\"volumesinmem\":%d,\"volumesinmembytes\":%d,\"groups\":%d,\"groupsbytes\":%d}", usr->u_Name, (int)sizeof(User), sesCounter, sesCounterBytes, devCounter, devCounterBytes, uglCounter, uglCounterBytes );
-				}
-				BufStringAddSize( bs, tmp, len );
-			
-				nr++;
-				usr = (User *)usr->node.mln_Succ;
+				sesCounter++;
+				sesCounterBytes += sizeof( UserSessListEntry );
+				sesentr = (UserSessListEntry *)sesentr->node.mln_Succ;
 			}
 			
-			BufStringAddSize( bs, "],", 2 );
-			
-			len = snprintf( tmp, sizeof(tmp), "\"usersnumber\":%d", userCounter );
-			BufStringAddSize( bs, tmp, len );
-		}
-		else
-		{
-			User *usr = um->um_Users;
-			while( usr != NULL )
+			File *rootDev = usr->u_MountedDevs;
+			while( rootDev != NULL )
 			{
-				int sesCounter = 0;
-				userCounter++;
-			
-				UserSessListEntry *sesentr = usr->u_SessionsList;
-				while( sesentr != NULL )
-				{
-					sesCounter++;
-					sesentr = (UserSessListEntry *)sesentr->node.mln_Succ;
-				}
-				
-				if( nr == 0 )
-				{
-					len = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"sessions\":%d}", usr->u_Name, sesCounter );
-				}
-				else
-				{
-					len = snprintf( tmp, sizeof(tmp), ",{\"name\":\"%s\",\"sessions\":%d}", usr->u_Name, sesCounter );
-				}
-				BufStringAddSize( bs, tmp, len );
-			
-				nr++;
-				usr = (User *)usr->node.mln_Succ;
+				devCounter++;
+				devCounterBytes += sizeof( File );
+				rootDev = (File *)rootDev->node.mln_Succ;
 			}
 			
-			BufStringAddSize( bs, "],", 2 );
+			UserGroupLink *ugl = usr->u_UserGroupLinks;
+			while( ugl != NULL )
+			{
+				uglCounter++;
+				uglCounterBytes += sizeof( UserGroupLink );
+				ugl = (UserGroupLink *)ugl->node.mln_Succ;
+			}
 			
-			len = snprintf( tmp, sizeof(tmp), "\"usersnumber\":%d", userCounter );
+			if( nr == 0 )
+			{
+				len = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"size\":%d,\"sessions\":%d,\"sessionsbytes\":%d,\"volumesinmem\":%d,\"volumesinmembytes\":%d,\"groups\":%d,\"groupsbytes\":%d}", usr->u_Name, (int)sizeof(User), sesCounter, sesCounterBytes, devCounter, devCounterBytes, uglCounter, uglCounterBytes );
+			}
+			else
+			{
+				len = snprintf( tmp, sizeof(tmp), ",{\"name\":\"%s\",\"size\":%d,\"sessions\":%d,\"sessionsbytes\":%d,\"volumesinmem\":%d,\"volumesinmembytes\":%d,\"groups\":%d,\"groupsbytes\":%d}", usr->u_Name, (int)sizeof(User), sesCounter, sesCounterBytes, devCounter, devCounterBytes, uglCounter, uglCounterBytes );
+			}
 			BufStringAddSize( bs, tmp, len );
-			
+		
+			nr++;
+			usr = (User *)usr->node.mln_Succ;
 		}
-		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+		
+		BufStringAddSize( bs, "],", 2 );
+		
+		len = snprintf( tmp, sizeof(tmp), "\"usersnumber\":%d", userCounter );
+		BufStringAddSize( bs, tmp, len );
 	}
+	else
+	{
+		User *usr = um->um_Users;
+		while( usr != NULL )
+		{
+			int sesCounter = 0;
+			userCounter++;
+		
+			UserSessListEntry *sesentr = usr->u_SessionsList;
+			while( sesentr != NULL )
+			{
+				sesCounter++;
+				sesentr = (UserSessListEntry *)sesentr->node.mln_Succ;
+			}
+			
+			if( nr == 0 )
+			{
+				len = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"sessions\":%d}", usr->u_Name, sesCounter );
+			}
+			else
+			{
+				len = snprintf( tmp, sizeof(tmp), ",{\"name\":\"%s\",\"sessions\":%d}", usr->u_Name, sesCounter );
+			}
+			BufStringAddSize( bs, tmp, len );
+		
+			nr++;
+			usr = (User *)usr->node.mln_Succ;
+		}
+	
+		BufStringAddSize( bs, "],", 2 );
+		
+		len = snprintf( tmp, sizeof(tmp), "\"usersnumber\":%d", userCounter );
+		BufStringAddSize( bs, tmp, len );
+	}
+	
+	USER_MANAGER_RELEASE( um );
 	return 0;
 }
 
@@ -1693,84 +1615,74 @@ int UMGetActiveUsersWSList( UserManager *um, BufString *bs, FULONG userid, FBOOL
 	time_t  timestamp = time( NULL );
 	
 	int pos = 0;
+	
+	USER_MANAGER_USE( um );
+	
 	User *usr = um->um_Users;
 	
 	if( userid > 0 )
 	{
-		if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
+		usr = um->um_Users;
+		while( usr != NULL )
 		{
-			usr = um->um_Users;
-			while( usr != NULL )
+			DEBUG("[UMWebRequest] Going through users, user: %s\n", usr->u_Name );
+	
+			if( usr->u_ID == userid )
 			{
-				DEBUG("[UMWebRequest] Going through users, user: %s\n", usr->u_Name );
-		
-				if( usr->u_ID == userid )
+				USER_LOCK( usr );
+			
+				UserSessListEntry  *usl = usr->u_SessionsList;
+				while( usl != NULL )
 				{
-					if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
+					UserSession *locses = (UserSession *)usl->us;
+					if( locses != NULL )
 					{
-						usr->u_InUse++;
-						FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
-					}
+						FBOOL add = FALSE;
+						//DEBUG("[UMWebRequest] Going through sessions, device: %s time %lu timeout time %lu WS ptr %p\n", locses->us_DeviceIdentity, (long unsigned int)(timestamp - locses->us_LoggedTime), l->sl_RemoveSessionsAfterTime, locses->us_WSClients );
 				
-					UserSessListEntry  *usl = usr->u_SessionsList;
-					while( usl != NULL )
-					{
-						UserSession *locses = (UserSession *)usl->us;
-						if( locses != NULL )
+						if( ( (timestamp - locses->us_LastActionTime) < l->sl_RemoveSessionsAfterTime ) && locses->us_WSD != NULL )
 						{
-							FBOOL add = FALSE;
-							//DEBUG("[UMWebRequest] Going through sessions, device: %s time %lu timeout time %lu WS ptr %p\n", locses->us_DeviceIdentity, (long unsigned int)(timestamp - locses->us_LoggedTime), l->sl_RemoveSessionsAfterTime, locses->us_WSClients );
+							add = TRUE;
+						}
 				
-							if( ( (timestamp - locses->us_LastActionTime) < l->sl_RemoveSessionsAfterTime ) && locses->us_WSD != NULL )
-							{
-								add = TRUE;
-							}
-				
-							if( usersOnly == TRUE )
-							{
-								char newuser[ 255 ];
-								sprintf( newuser, "\"%s\"", usr->u_Name );
+						if( usersOnly == TRUE )
+						{
+							char newuser[ 255 ];
+							sprintf( newuser, "\"%s\"", usr->u_Name );
 					
-								if( strstr( bs->bs_Buffer, newuser ) != NULL )
-								{
-									add = FALSE;
-								}
-							}
-				
-							if( add == TRUE )
+							if( strstr( bs->bs_Buffer, newuser ) != NULL )
 							{
-								char tmp[ 512 ];
-								int tmpsize = 0;
-					
-								if( pos == 0 )
-								{
-									tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
-								}
-								else
-								{
-									tmpsize = snprintf( tmp, sizeof(tmp), ",{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
-								}
-					
-								BufStringAddSize( bs, tmp, tmpsize );
-						
-								pos++;
+								add = FALSE;
 							}
 						}
-						usl = (UserSessListEntry *)usl->node.mln_Succ;
-					}
 				
-					if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
-					{
-						usr->u_InUse--;
-						FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+						if( add == TRUE )
+						{
+							char tmp[ 512 ];
+							int tmpsize = 0;
+					
+							if( pos == 0 )
+							{
+								tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
+							}
+							else
+							{
+								tmpsize = snprintf( tmp, sizeof(tmp), ",{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
+							}
+					
+							BufStringAddSize( bs, tmp, tmpsize );
+						
+							pos++;
+						}
 					}
+					usl = (UserSessListEntry *)usl->node.mln_Succ;
+				}
 				
-					break; // we need information only about one user
-				}	// userid
+				USER_UNLOCK( usr );
 			
-				usr = (User *)usr->node.mln_Succ;
-			}
-			FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+				break; // we need information only about one user
+			}	// userid
+			usr = (User *)usr->node.mln_Succ;
 		}
 	}
 	else	// return information about all users
@@ -1779,11 +1691,8 @@ int UMGetActiveUsersWSList( UserManager *um, BufString *bs, FULONG userid, FBOOL
 		{
 			DEBUG("[UMWebRequest] Going through users, user: %s\n", usr->u_Name );
 		
-			if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
-			{
-				usr->u_InUse++;
-				FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
-			}
+			USER_LOCK( usr );
+			
 			UserSessListEntry  *usl = usr->u_SessionsList;
 			while( usl != NULL )
 			{
@@ -1829,15 +1738,13 @@ int UMGetActiveUsersWSList( UserManager *um, BufString *bs, FULONG userid, FBOOL
 				usl = (UserSessListEntry *)usl->node.mln_Succ;
 			}
 			
-			if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
-			{
-				usr->u_InUse--;
-				FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
-			}
+			USER_UNLOCK( usr );
 			
 			usr = (User *)usr->node.mln_Succ;
 		}
 	}
+	USER_MANAGER_USE( um );
+	
 	return 0;
 }
 
@@ -1867,35 +1774,40 @@ int UMSendMessageToUserOrSession( UserManager *um, BufString *bs, UserSession *l
 	
 	if( usr != NULL )
 	{
-		if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
+		USER_LOCK( usr );
+		
+		UserSessListEntry *usle = (UserSessListEntry *)usr->u_SessionsList;
+		int msgsndsize = 0;
+		while( usle != NULL )
 		{
-			UserSessListEntry *usle = (UserSessListEntry *)usr->u_SessionsList;
-			int msgsndsize = 0;
-			while( usle != NULL )
+			UserSession *ls = (UserSession *)usle->us;
+			if( ls != NULL )
 			{
-				UserSession *ls = (UserSession *)usle->us;
-				if( ls != NULL )
-				{
-					DEBUG("Found same session, sending msg\n");
-					char tmp[ 512 ];
-					int tmpsize = 0;
-					
-					tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, ls->us_DeviceIdentity );
-					
-					int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":{\"username\":\"%s\",\"message\":\"%s\"}}}", 
-					loggedSession->us_User->u_Name , message );
-					
-					msgsndsize = WebSocketSendMessageInt( ls, sndbuffer, lenmsg );
-				}
-				usle = (UserSessListEntry *)usle->node.mln_Succ;
+				DEBUG("Found same session, sending msg\n");
+				char tmp[ 512 ];
+				int tmpsize = 0;
+				
+				tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, ls->us_DeviceIdentity );
+				
+				int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":{\"username\":\"%s\",\"message\":\"%s\"}}}", 
+				loggedSession->us_User->u_Name , message );
+				
+				msgsndsize = WebSocketSendMessageInt( ls, sndbuffer, lenmsg );
 			}
-			FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+			usle = (UserSessListEntry *)usle->node.mln_Succ;
 		}
+		
+		USER_UNLOCK( usr );
 		
 		if( msgsndsize > 0 )
 		{
 			BufStringAdd( bs, usr->u_Name );
 		}
+	}
+	
+	if( sndbuffer != NULL )
+	{
+		FFree( sndbuffer );
 	}
 	return 0;
 }
@@ -1914,64 +1826,63 @@ int UMGetAllActiveUsers( UserManager *um, BufString *bs, FBOOL usersOnly )
 	SystemBase *sb = (SystemBase *)um->um_SB;
 	time_t  timestamp = time( NULL );
 	
-	if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
+	USER_MANAGER_USE( um );
+	
+	int pos = 0;
+	User *usr = um->um_Users;
+	while( usr != NULL )
 	{
-		int pos = 0;
-		User *usr = um->um_Users;
-		while( usr != NULL )
+		//DEBUG("[UMWebRequest] Going through users, user: %s\n", usr->u_Name );
+		
+		UserSessListEntry *usl = usr->u_SessionsList;
+		while( usl != NULL )
 		{
-			//DEBUG("[UMWebRequest] Going through users, user: %s\n", usr->u_Name );
-			
-			UserSessListEntry *usl = usr->u_SessionsList;
-			while( usl != NULL )
+			UserSession *locses = (UserSession *)usl->us;
+			if( locses != NULL )
 			{
-				UserSession *locses = (UserSession *)usl->us;
-				if( locses != NULL )
+				FBOOL add = FALSE;
+				DEBUG("[UMWebRequest] Going through sessions, device: %s\n", locses->us_DeviceIdentity );
+				
+				if( ( (timestamp - locses->us_LastActionTime) < sb->sl_RemoveSessionsAfterTime ) && locses->us_WSD != NULL )
 				{
-					FBOOL add = FALSE;
-					DEBUG("[UMWebRequest] Going through sessions, device: %s\n", locses->us_DeviceIdentity );
+					add = TRUE;
+				}
+				
+				if( usersOnly == TRUE )
+				{
+					char newuser[ 255 ];
+					snprintf( newuser, 254, "\"%s\"", usr->u_Name );
 					
-					if( ( (timestamp - locses->us_LastActionTime) < sb->sl_RemoveSessionsAfterTime ) && locses->us_WSD != NULL )
+					if( strstr( bs->bs_Buffer, newuser ) != NULL )
 					{
-						add = TRUE;
-					}
-					
-					if( usersOnly == TRUE )
-					{
-						char newuser[ 255 ];
-						snprintf( newuser, 254, "\"%s\"", usr->u_Name );
-						
-						if( strstr( bs->bs_Buffer, newuser ) != NULL )
-						{
-							add = FALSE;
-						}
-					}
-					
-					if( add == TRUE )
-					{
-						char tmp[ 512 ];
-						int tmpsize = 0;
-
-						if( pos == 0 )
-						{
-							tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
-						}
-						else
-						{
-							tmpsize = snprintf( tmp, sizeof(tmp), ",{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
-						}
-						
-						BufStringAddSize( bs, tmp, tmpsize );
-						
-						pos++;
+						add = FALSE;
 					}
 				}
-				usl = (UserSessListEntry *)usl->node.mln_Succ;
+				
+				if( add == TRUE )
+				{
+					char tmp[ 512 ];
+					int tmpsize = 0;
+					if( pos == 0 )
+					{
+						tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
+					}
+					else
+					{
+						tmpsize = snprintf( tmp, sizeof(tmp), ",{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
+					}
+					
+					BufStringAddSize( bs, tmp, tmpsize );
+					
+					pos++;
+				}
 			}
-			usr = (User *)usr->node.mln_Succ;
+			usl = (UserSessListEntry *)usl->node.mln_Succ;
 		}
-		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+		usr = (User *)usr->node.mln_Succ;
 	}
+	
+	USER_MANAGER_RELEASE( um );
 	return 0;
 }
 
@@ -1987,29 +1898,312 @@ void UMRemoveUserFromList( UserManager *um,  User *usr )
 	{
 		return;
 	}
-	if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
+	
+	USER_MANAGER_CHANGE_ON( um );
+	
+	if( usr == um->um_Users )
 	{
-		if( usr == um->um_Users )
-		{
-			
-		}
-		else
-		{
-			User *prevUsr = um->um_Users;
-			User *actUsr = (User *)um->um_Users->node.mln_Succ;
 		
-			while( actUsr != NULL )
-			{
-				if( actUsr == usr )
-				{
-					prevUsr->node.mln_Succ = actUsr->node.mln_Succ;
-					break;
-				}
-				prevUsr = actUsr;
-				actUsr = (User *)actUsr->node.mln_Succ;
-			}
-		}
-		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
 	}
+	else
+	{
+		User *prevUsr = um->um_Users;
+		User *actUsr = (User *)um->um_Users->node.mln_Succ;
+		
+		while( actUsr != NULL )
+		{
+			if( actUsr == usr )
+			{
+				prevUsr->node.mln_Succ = actUsr->node.mln_Succ;
+				break;
+			}
+			prevUsr = actUsr;
+			actUsr = (User *)actUsr->node.mln_Succ;
+		}
+	}
+	USER_MANAGER_CHANGE_OFF( um );
 }
 
+
+
+/**
+ * Send door notification
+ *
+ * @param um pointer to UserManager
+ * @param notif pointer to DoorNotification
+ * @param ses UserSession
+ * @param device pointer to RootDevice
+ * @param path path to file/folder
+ * @return TRUE if user can procced with login procedure or FALSE if error appear
+ */
+FBOOL UMSendDoorNotification( UserManager *um, void *notif, UserSession *ses, File *device, char *path )
+{
+	//return FALSE;
+	
+	SystemBase *sb = (SystemBase *)um->um_SB;
+	DoorNotification *notification = (DoorNotification *)notif;
+	
+	char *tmpmsg = FCalloc( 2048, 1 );
+	if( tmpmsg == NULL )
+	{
+		FERROR("Cannot allocate memory for buffer\n");
+		return FALSE;
+	}
+    
+	//
+	// Go through logged users
+	//
+    
+	DEBUG("CHECK11\n");
+	USER_MANAGER_USE( um );
+	
+	User *usr = um->um_Users;
+	while( usr != NULL )
+	{
+		// if notification should be addressed to user
+		DEBUG("[USMSendDoorNotification] going through users, user: %lu\n", usr->u_ID );
+		if( usr->u_ID == notification->dn_OwnerID )
+		{
+			USER_LOCK( usr );
+			
+			char *uname = usr->u_Name;
+			int len = snprintf( tmpmsg, 2048, "{\"type\":\"msg\",\"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%lu\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\"}}}", device->f_ID, device->f_Name, path, uname  );
+			
+			DEBUG("[USMSendDoorNotification] found ownerid %lu\n", usr->u_ID );
+			
+			// go through all User Sessions and send message
+			UserSessListEntry *le = usr->u_SessionsList;
+			while( le != NULL )
+			{
+				UserSession *uses = (UserSession *)le->us;
+					
+				// do not send message to sender
+				FBOOL sendNotif = TRUE;
+				if( uses == NULL )
+				{
+					sendNotif = FALSE;
+				}
+			
+				if( sendNotif == TRUE )
+				{
+					DEBUG("[USMSendDoorNotification] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->UserSessionWebsocketWrite, sb, uses->us_DeviceIdentity );
+				
+					UserSessionWebsocketWrite( uses, (unsigned char *)tmpmsg, len, LWS_WRITE_TEXT );
+
+					// send message to all remote users
+					RemoteUser *ruser = usr->u_RemoteUsers;
+					while( ruser != NULL )
+					{
+						DEBUG("[USMSendDoorNotification] Remote user connected: %s\n", ruser->ru_Name );
+						RemoteDrive *rdrive = ruser->ru_RemoteDrives;
+				
+						while( rdrive != NULL )
+						{
+							DEBUG("[USMSendDoorNotification] Remote drive connected: %s %lu\n", rdrive->rd_LocalName, rdrive->rd_DriveID );
+					
+							if( rdrive->rd_DriveID == device->f_ID )
+							{
+								int fnamei;
+								int fpathi;
+								int funamei;
+								int fdriveid;
+					
+								char *fname =  createParameter( "devname", rdrive->rd_RemoteName, &fnamei );
+								char *fpath =  createParameter( "path", path, &fpathi );
+								char *funame =  createParameter( "usrname", ruser->ru_Name, &funamei );
+								char *fdeviceid = createParameterFULONG( "deviceid", rdrive->rd_RemoteID, &fdriveid );
+						
+								MsgItem tags[] = {
+									{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
+									{ ID_FCID,  (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)sb->fcm->fcm_ID },
+									{ ID_FRID, (FULONG)0 , MSG_INTEGER_VALUE },
+									{ ID_CMMD, (FULONG)0, MSG_INTEGER_VALUE },
+									{ ID_FNOT, (FULONG)0 , MSG_INTEGER_VALUE },
+									{ ID_PARM, (FULONG)0, MSG_GROUP_START },
+									{ ID_PRMT, (FULONG) fnamei, (FULONG)fname },
+									{ ID_PRMT, (FULONG) fpathi, (FULONG)fpath },
+									{ ID_PRMT, (FULONG) funamei, (FULONG)funame },
+									{ ID_PRMT, (FULONG) fdriveid, (FULONG)fdeviceid },
+									{ MSG_GROUP_END, 0,  0 },
+									{ TAG_DONE, TAG_DONE, TAG_DONE }
+								};
+						
+								DataForm *df = DataFormNew( tags );
+								if( df != NULL )
+								{
+									//DEBUG("[USMSendDoorNotification] Register device, send notification\n");
+							
+									BufString *result = SendMessageAndWait( ruser->ru_Connection, df );
+									if( result != NULL )
+									{
+										//DEBUG("[USMSendDoorNotification] Received response\n");
+										BufStringDelete( result );
+									}
+									DataFormDelete( df );
+								}
+				
+								FFree( fdeviceid );
+								FFree( fname );
+								FFree( fpath );
+								FFree( funame );
+								break;
+							} // if driveID = deviceID
+							rdrive = (RemoteDrive *)rdrive->node.mln_Succ;
+						} // while remote drives
+						ruser = (RemoteUser *)ruser->node.mln_Succ;
+					} // while remote users
+				} // sendNotif == TRUE
+				le = (UserSessListEntry *)le->node.mln_Succ;
+			} // while loop, session
+			
+			DEBUG("unlock user\n");
+			
+			USER_UNLOCK( usr );
+
+			DEBUG("CHECK12\n");
+		}
+		usr = (User *)usr->node.mln_Succ;
+	}
+	
+	USER_MANAGER_RELEASE( um );
+	
+	FFree( tmpmsg );
+	return TRUE;
+}
+
+typedef struct RemoveEntry
+{
+	UserSession *ses;
+	MinNode node;
+}RemoveEntry;
+
+/**
+ * Remove old User Sessions
+ *
+ * @param lsb pointer to SystemBase
+ * @return 0 when success, otherwise error number
+ */
+int UMRemoveOldSessions( void *lsb )
+{
+	SystemBase *sb = (SystemBase *)lsb;
+	UserManager *um = (UserManager *)sb->sl_UM;
+
+	time_t acttime = time( NULL );
+	
+	Log( FLOG_INFO, "[UMRemoveOldSessions] start\n" );
+
+	USER_MANAGER_USE( um );
+	
+	User *usr = um->um_Users;
+	while( usr != NULL )
+	{
+		USER_LOCK( usr );
+		RemoveEntry *rootEntries = NULL;
+		
+		DEBUG("[UMRemoveOldSessions] found ownerid %lu\n", usr->u_ID );
+		
+		// go through all User Sessions and send message
+		UserSessListEntry *le = usr->u_SessionsList;
+		while( le != NULL )
+		{
+			UserSession *uses = (UserSession *)le->us;
+			
+			if( ( ( acttime - uses->us_LastActionTime ) > sb->sl_RemoveSessionsAfterTime ) )
+			{
+				RemoveEntry *re = FCalloc( 1, sizeof( RemoveEntry ) );
+				if( re != NULL )
+				{
+					re->ses = uses;
+					re->node.mln_Succ = (MinNode *)rootEntries;
+				}
+				rootEntries = re;
+			}
+			
+			le = (UserSessListEntry *)le->node.mln_Succ;
+		}
+		
+		USER_UNLOCK( usr );
+		
+		while( rootEntries != NULL )
+		{
+			RemoveEntry *old = rootEntries;
+			rootEntries = (RemoveEntry *)rootEntries->node.mln_Succ;
+			
+			USMUserSessionRemove( sb->sl_USM, old->ses );
+			UserRemoveSession( usr, old->ses );	// we want to remove it from user first
+			USMSessionsDeleteDB( sb->sl_USM, old->ses->us_SessionID );
+			UserSessionDelete( old->ses );
+			FFree( old );
+		}
+		
+		usr = (User *)usr->node.mln_Succ;
+	}
+	
+	USER_MANAGER_RELEASE( um );
+	
+	Log( FLOG_INFO, "[UMRemoveOldSessions] end\n" );
+	
+	/*
+	
+	// remove sessions from memory
+	UserSessionManager *smgr = sb->sl_USM;
+	// int nr = 0;
+	// we are conting maximum number of sessions
+
+	DEBUG("[USMRemoveOldSessions] CHECK10\n");
+
+	SESSION_MANAGER_USE( smgr );
+	
+	UserSession *actSession = smgr->usm_Sessions;
+	UserSession *remSession = actSession;
+	UserSession *newRoot = NULL;
+	
+	while( actSession != NULL )
+	{
+		FBOOL canDelete = TRUE;
+		remSession = actSession;
+		
+		if( sb->sl_Sentinel != NULL )
+		{
+			if( remSession->us_User == sb->sl_Sentinel->s_User && strcmp( remSession->us_DeviceIdentity, "remote" ) == 0 )
+			{
+				DEBUG("Sentinel REMOTE session I cannot remove it\n");
+				canDelete = FALSE;
+			}
+		}
+		
+		if( actSession == (UserSession *)actSession->node.mln_Succ )
+		{
+			DEBUG( "DOUBLE ACTSESSION\n" );
+			break;
+		}
+		
+		actSession = (UserSession *)actSession->node.mln_Succ;
+		
+		// we delete session
+		if( canDelete == TRUE && ( ( acttime -  remSession->us_LastActionTime ) > sb->sl_RemoveSessionsAfterTime ) )
+		{
+			UserRemoveSession( remSession->us_User, remSession );	// we want to remove it from user first
+			USMSessionsDeleteDB( smgr, remSession->us_SessionID );
+			UserSessionDelete( remSession );
+		}
+		else // or create new root of working sessions
+		{
+			remSession->node.mln_Succ = (MinNode *)newRoot;
+			newRoot = remSession;
+		}
+	}
+	
+	smgr->usm_Sessions = newRoot;
+
+	SESSION_MANAGER_RELEASE( smgr );
+	
+	//
+	// now remove unused application sessions
+	//
+	
+	ApplicationManagerRemoveDetachedApplicationSession( sb->sl_ApplicationManager );
+	*/
+	
+	return 0;
+}

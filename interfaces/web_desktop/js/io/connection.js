@@ -157,7 +157,10 @@ FriendConnection.prototype.connectWebSocket = function()
 {
 	let self = this;
 	if ( self.ws )
+	{
+		console.log( 'FriendConnection: Releasing existing websocket.' );
 		self.releaseWebSocket();
+	}
 	
 	let url = self.wsProtocol + self.host;
 	if ( self.wsPort )

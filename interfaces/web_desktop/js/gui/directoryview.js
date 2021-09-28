@@ -913,7 +913,6 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					}
 					if( !changed ) 
 					{
-						console.log( 'Nothing changed. Bye.' );
 						return;
 					}
 				}
@@ -4468,6 +4467,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					timer = 250;
 				}
 				
+				let getretries = 0;
+				
 				this.refreshTimeout = setTimeout( function()
 				{
 					let wt = self.fileInfo.Path ? self.fileInfo.Path : ( self.fileInfo.Title ? self.fileInfo.Title : self.fileInfo.Volume );
@@ -4492,7 +4493,15 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 								//console.log( '[gettheicons] Abort because window was closed.' );
 								return;
 							}
-							//console.log( '[gettheicons] Try redraw again!' );
+							// TODO: Fix websockets
+							// This is to kill websocket when call fails
+							getretries++;
+							if( getretries > 1 )
+							{
+								getretries = 0;
+								if( Workspace.conn && Workspace.conn.ws )
+									Workspace.conn.ws.cleanup();
+							}
 							getTheIconsAndRedraw();
 						}, 1000 );
 						dr.getIcons( fi, function( icons, something, response )
