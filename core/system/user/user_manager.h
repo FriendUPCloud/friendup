@@ -41,8 +41,47 @@ typedef struct UserManager
 	RemoteUser							*um_RemoteUsers;		// remote users and their connections
 	User								*um_APIUser;			// API user
 	pthread_mutex_t						um_Mutex;
-	int									un_InUse;				// if its in use
+	int									um_ChangeState;			// is in change state add/remove new entry
+	int									um_InUse;				// is in use
 } UserManager;
+
+//
+//
+//
+
+#ifndef USER_MANAGER_CHANGE_ON
+#define USER_MANAGER_CHANGE_ON( MGR ) \
+while( (MGR->um_InUse > 0 && MGR->um_ChangeState == TRUE ) ){ usleep( 2000 ); } \
+if( FRIEND_MUTEX_LOCK( &(MGR->um_Mutex) ) == 0 ){ \
+	MGR->um_ChangeState = TRUE; \
+	FRIEND_MUTEX_UNLOCK( &(MGR->um_Mutex) ); \
+}
+#endif
+
+#ifndef USER_MANAGER_CHANGE_OFF
+#define USER_MANAGER_CHANGE_OFF( MGR ) \
+if( FRIEND_MUTEX_LOCK( &(MGR->um_Mutex) ) == 0 ){ \
+	MGR->um_ChangeState = FALSE; \
+	FRIEND_MUTEX_UNLOCK( &(MGR->um_Mutex) ); \
+}
+#endif
+
+#ifndef USER_MANAGER_USE
+#define USER_MANAGER_USE( MGR ) \
+while( MGR->um_ChangeState != FALSE ){ usleep( 2000 ); } \
+if( FRIEND_MUTEX_LOCK( &(MGR->um_Mutex) ) == 0 ){ \
+	MGR->um_InUse++; \
+	FRIEND_MUTEX_UNLOCK( &(MGR->um_Mutex) ); \
+}
+#endif
+
+#ifndef USER_MANAGER_RELEASE
+#define USER_MANAGER_RELEASE( MGR ) \
+if( FRIEND_MUTEX_LOCK( &(MGR->um_Mutex) ) == 0 ){ \
+	MGR->um_InUse--; \
+	FRIEND_MUTEX_UNLOCK( &(MGR->um_Mutex) ); \
+}
+#endif
 
 
 //
@@ -147,7 +186,7 @@ User *UMGetUserByName( UserManager *um, const char *name );
 //
 //
 
-FULONG UMGetUserIDByName( UserManager *um, const char *name );
+FULONG UMGetUserIDByNameDB( UserManager *um, const char *name );
 
 //
 //
@@ -268,5 +307,17 @@ int UMGetAllActiveUsers( UserManager *um, BufString *bs, FBOOL usersOnly );
 //
 
 int UMSendMessageToUserOrSession( UserManager *um, BufString *bs, UserSession *ses, FULONG userid, char *message );
+
+//
+//
+//
+
+FBOOL UMSendDoorNotification( UserManager *usm, void *notif, UserSession *ses, File *device, char *path );
+
+//
+//
+//
+
+int UMRemoveOldSessions( void *lsb );
 
 #endif //__SYSTEM_USER_USER_MANAGER_H__

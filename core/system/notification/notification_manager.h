@@ -68,6 +68,7 @@ typedef struct NotificationManager
 	FThread						*nm_AndroidSendThread;
 	pthread_mutex_t				nm_AndroidSendMutex;
 	pthread_cond_t				nm_AndroidSendCond;
+	pthread_mutex_t				nm_AndroidQueueMutex;
 	FQueue						nm_AndroidSendMessages;
 	int							nm_AndroidSendInUse;
 	HttpClient					*nm_AndroidSendHttpClient;
@@ -125,7 +126,11 @@ int NotificationManagerNotificationSendAndroid( NotificationManager *nm, Notific
 
 int NotificationManagerNotificationSendAndroidQueue( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens );
 
-int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens, int type );
+int NotificationManagerNotificationAddFirebaseMessage( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens, int type, FBOOL send );
+
+int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm );
+
+//int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens, int type );
 
 NotificationSent *NotificationManagerGetNotificationsSentByStatusPlatformAndUMAIDDB( NotificationManager *nm, int status, int platform, FULONG umaID );
 

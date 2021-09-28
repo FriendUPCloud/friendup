@@ -546,11 +546,13 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 				char *sndbuffer = FCalloc( msgsize, sizeof(char) );
 				if( sndbuffer != NULL )
 				{
+					USER_MANAGER_USE( l->sl_UM );
+					
 					User *usr = l->sl_UM->um_Users;
 					while( usr != NULL )
 					{
-						if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
-						{
+						USER_LOCK( usr );
+						
 							UserSessListEntry  *usl = usr->u_SessionsList;
 							while( usl != NULL )
 							{
@@ -592,11 +594,13 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 								}
 								usl = (UserSessListEntry *)usl->node.mln_Succ;
 							}
-							FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
-						}
+							USER_UNLOCK( usr );
 						
 						usr = (User *)usr->node.mln_Succ;
 					}
+					
+					USER_MANAGER_RELEASE( l->sl_UM );
+					
 					FFree( sndbuffer );
 				}
 				BufStringAdd( bs, "]}");
@@ -614,34 +618,33 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 					User *usr = (User *)loggedSession->us_User;
 					if( usr != NULL )
 					{
-						if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
+						USER_LOCK( usr );
+						
+						UserSessListEntry *usle = (UserSessListEntry *)usr->u_SessionsList;
+						int msgsndsize = 0;
+						while( usle != NULL )
 						{
-							UserSessListEntry *usle = (UserSessListEntry *)usr->u_SessionsList;
-							int msgsndsize = 0;
-							while( usle != NULL )
+							UserSession *ls = (UserSession *)usle->us;
+							if( ls != NULL )
 							{
-								UserSession *ls = (UserSession *)usle->us;
-								if( ls != NULL )
+								DEBUG("[AdminWebRequest] Going through all usersessions: %p, compare %s vs %s\n", ls->us_SessionID, usersession, ls->us_SessionID );
+								if( strcmp( usersession, ls->us_SessionID ) == 0 )
 								{
-									DEBUG("[AdminWebRequest] Going through all usersessions: %p, compare %s vs %s\n", ls->us_SessionID, usersession, ls->us_SessionID );
-									if( strcmp( usersession, ls->us_SessionID ) == 0 )
-									{
-										DEBUG("[AdminWebRequest] Found same session, sending msg\n");
-										char tmp[ 512 ];
-										int tmpsize = 0;
+									DEBUG("[AdminWebRequest] Found same session, sending msg\n");
+									char tmp[ 512 ];
+									int tmpsize = 0;
 						
-										tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, ls->us_DeviceIdentity );
+									tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, ls->us_DeviceIdentity );
 							
-										int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":{\"username\":\"%s\",\"message\":\"%s\"}}}", 
-										loggedSession->us_User->u_Name , msg );
+									int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":{\"username\":\"%s\",\"message\":\"%s\"}}}", 
+									loggedSession->us_User->u_Name , msg );
 						
-										msgsndsize = WebSocketSendMessageInt( ls, sndbuffer, lenmsg );
-									}
+									msgsndsize = WebSocketSendMessageInt( ls, sndbuffer, lenmsg );
 								}
-								usle = (UserSessListEntry *)usle->node.mln_Succ;
 							}
-							FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+							usle = (UserSessListEntry *)usle->node.mln_Succ;
 						}
+						USER_UNLOCK( usr );
 					}
 
 					if( msgsndsize > 0 )

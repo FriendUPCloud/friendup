@@ -1085,7 +1085,9 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 
 	EventAdd( l->sl_EventManager, "DoorNotificationRemoveEntries", DoorNotificationRemoveEntries, l, time( NULL )+MINS30, MINS30, -1 );
-	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+l->sl_RemoveOldSessionTimeout, l->sl_RemoveOldSessionTimeout, -1 );	// default 60mins
+	
+	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", UMRemoveOldSessions, l, time( NULL )+l->sl_RemoveOldSessionTimeout, l->sl_RemoveOldSessionTimeout, -1 );	// default 60mins
+	//EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+l->sl_RemoveOldSessionTimeout, l->sl_RemoveOldSessionTimeout, -1 );	// default 60mins
 	// test, to remove
 	EventAdd( l->sl_EventManager, "PIDThreadManagerRemoveThreads", PIDThreadManagerRemoveThreads, l->sl_PIDTM, time( NULL )+MINS60, MINS60, -1 );
 	EventAdd( l->sl_EventManager, "CacheUFManagerRefresh", CacheUFManagerRefresh, l->sl_CacheUFM, time( NULL )+DAYS5, DAYS5, -1 );
@@ -2015,17 +2017,15 @@ int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses )
 	DEBUG("UserDeviceUnMount\n");
 	if( usr != NULL )
 	{
-		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex ) ) == 0 )
-		{
-			usr->u_InUse++;
-			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex ) );
-		}
+		USER_CHANGE_ON( usr );
 		
 		if( usr->u_MountedDevs != NULL )
 		{
 			File *dev = usr->u_MountedDevs;
 			
 			usr->u_MountedDevs = NULL; // set it to NULL
+			
+			USER_CHANGE_OFF( usr );
 			
 			File *remdev = dev;
 			
@@ -2044,11 +2044,9 @@ int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses )
 				FileDelete( remdev );
 			}
 		}
-		
-		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex ) ) == 0 )
+		else
 		{
-			usr->u_InUse--;
-			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex ) );
+			USER_CHANGE_OFF( usr );
 		}
 		
 		//TODO

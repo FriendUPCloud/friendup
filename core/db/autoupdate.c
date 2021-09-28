@@ -281,7 +281,7 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 			for( i=0 ; i < numberOfFiles ; i++ )
 			{
 				int entries;
-				char where[ 512 ];
+				char where[ 612 ];
 				DBUpdate *dbu = NULL;
 				FBOOL rerun = FALSE;
 				time_t currTime = time( NULL );

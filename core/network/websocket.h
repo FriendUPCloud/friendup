@@ -149,7 +149,7 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 //
 //
 
-int DetachWebsocketFromSession( void *us );
+int DetachWebsocketFromSession( void *d, void *wsi );
 
 #endif // __NETWORK_WEBSOCKET_H__
 

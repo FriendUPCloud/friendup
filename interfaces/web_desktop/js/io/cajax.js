@@ -416,7 +416,8 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		window.Workspace &&
 		Workspace.conn && 
 		Workspace.conn.ws && 
-		Workspace.websocketState == 'open' &&
+		Workspace.conn.ws.ready &&
+		Workspace.conn.ws.ws &&
 		( this.proxy && this.proxy.responseType != 'arraybuffer' ) &&
 		typeof( url ) == 'string' && 
 		url.indexOf( 'http' ) != 0 && 
@@ -428,7 +429,12 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		this.mode = 'websocket';
 		this.url = url;
 		this.hasReturnCode = hasReturnCode;
+		console.log( 'WebSocket call: ' + url );
 		return true;
+	}
+	else
+	{
+		console.log( 'HTTP call: ' + url );
 	}
 	
 	// If we are running this on friendup recreate url to support old method
@@ -598,7 +604,7 @@ cAjax.prototype.send = function( data, callback )
 	}
 
 	// Check if we can use websockets
-	if( self.mode == 'websocket' && window.Workspace && Workspace.conn && Workspace.conn.ws && Workspace.websocketState == 'open' )
+	if( self.mode == 'websocket' && window.Workspace && Workspace.conn && Workspace.conn.ws && Workspace.conn.ws.ready )
 	{
         let u = self.url.split( '?' );
         let wsdata = ( data ? data : {} );
@@ -667,7 +673,7 @@ cAjax.prototype.send = function( data, callback )
 				{
 					if( self.onload )
 					{
-						//console.log( 'This error.' );
+						console.log( 'This error could be.' );
 						self.onload( false, false );
 						self.destroy();
 					}
@@ -681,6 +687,11 @@ cAjax.prototype.send = function( data, callback )
 				
 				new Promise( function( resolve, reject )
 				{
+					if( !navigator.onLine )
+					{
+						reject( 'error' );
+						return;
+					}
 					try
 					{
 						res = self.proxy.send( out.join ( '&' ) );
@@ -705,6 +716,10 @@ cAjax.prototype.send = function( data, callback )
 						{
 							console.log( 'Other error' );
 							callback( false, false );
+						}
+						else
+						{
+							console.log( 'No callback.' );
 						}
 					}
 					else if( err == 'success' );
@@ -742,6 +757,7 @@ cAjax.prototype.send = function( data, callback )
 		{
 			if( self.mode == 'websocket' )
 			{
+				console.log( 'Destroy on life.' );
 				self.destroySilent();
 			}
 			else
@@ -796,12 +812,17 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		self.life = false;
 	}, 15000 );
 	
-	if( !self.onload ) return;
+	if( !self.onload ) 
+	{
+		//console.log( '[cajax] No onload.' );
+		return;
+	}
 	
 	// The data just failed - which means the websocket went away!
 	if( typeof( wsdata ) == 'undefined' )
 	{
-		if( Workspace )
+		//console.log( '[cajax] Got undefined error...' );
+		if( window.Workspace )
 		{
 			// Add to queue
 			//console.log( 'We got strange ws data!' );
@@ -811,9 +832,9 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		self.destroy();
 		return;
 	}
-	
-	if( typeof( wsdata ) == 'object' && wsdata.response )
+	else if( typeof( wsdata ) == 'object' && wsdata.response )
 	{
+		//console.log( '[cajax] Got error...' );
 		self.rawData = 'error';
 		if( self.proxy )
 			self.proxy.responseText = self.rawData;

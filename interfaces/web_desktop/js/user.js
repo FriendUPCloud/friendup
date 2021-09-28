@@ -224,7 +224,7 @@ Friend.User = {
 	// When session times out, use log in again...
 	ReLogin: function( callback )
 	{
-    	if( this.lastLogin ) return;
+    	if( this.lastLogin ) return false;
     	
     	this.State = 'login';
     	
@@ -396,6 +396,11 @@ Friend.User = {
 	// Check if the server is alive
 	CheckServerConnection: function( useAjax )
 	{
+		if( !navigator.onLine )
+		{
+			Friend.User.SetUserConnectionState( 'offline' );
+			return false;
+		}
 		if( Workspace && Workspace.loginPrompt ) return;
 		if( typeof( Library ) == 'undefined' ) return;
 		if( typeof( MD5 ) == 'undefined' ) return;
@@ -483,30 +488,35 @@ Friend.User = {
 				if( Workspace.nudgeWorkspacesWidget )
 					Workspace.nudgeWorkspacesWidget();
 				
+				if( this.checkInterval )
+					clearInterval( this.checkInterval );
+				this.checkInterval = setInterval( 'Friend.User.CheckServerConnection()', 2500 );
+				
 				// Try to close the websocket
-				if( Workspace.conn )
+				if( Workspace.conn && Workspace.conn.ws )
 				{
 					try
 					{
-						Workspace.conn.ws.cleanup();
+						Workspace.conn.ws.close();
 					}
 					catch( e )
 					{
 						console.log( 'Could not close conn.' );
 					}
+					if( Workspace.conn && Workspace.conn.ws )
+					{
+						delete Workspace.conn.ws;
+						Workspace.conn.ws = null;
+					}
 					delete Workspace.conn;
-					console.log( 'Removed websocket.' );
+					Workspace.conn = null;
 				}
-				
-				if( this.checkInterval )
-					clearInterval( this.checkInterval );
-				this.checkInterval = setInterval( 'Friend.User.CheckServerConnection()', 2500 );
-			}
-			// Remove dirlisting cache!
-			if( window.DoorCache )
-			{
-			    console.log( 'Nulling out dirlisting!' );
-			    DoorCache.dirListing = {};
+			
+				// Remove dirlisting cache!
+				if( window.DoorCache )
+				{
+					DoorCache.dirListing = {};
+				}
 			}
 		}
 		else if( mode == 'online' )
@@ -537,6 +547,10 @@ Friend.User = {
 				if( !Workspace.conn && Workspace.initWebSocket )
 				{
 					Workspace.initWebSocket();
+				}
+				else
+				{
+					console.log( 'We have a kind of conn: ', Workspace.conn, Workspace.conn ? Workspace.conn.ws : false );
 				}
 				// Clear execution queue
 				_executionQueue = {};

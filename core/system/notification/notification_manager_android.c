@@ -57,16 +57,20 @@ void NotificationAndroidSendingThread( FThread *data )
 			
 			FQEntry *e = NULL;
 			
+			if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
+			{
+				nm->nm_AndroidSendInUse++;
+				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+			}
+			
 			while( TRUE )
 			{
-				if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
+				if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidQueueMutex) ) == 0 )
 				{
-					nm->nm_AndroidSendInUse++;
-					
 					FQueue *q = &( nm->nm_AndroidSendMessages );
 					if( q && ( e = FQPop( q ) ) != NULL )
 					{
-						FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+						FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidQueueMutex) );
 					
 						//Log( FLOG_INFO, "Send message to android device: %s<\n", nm->nm_AndroidSendHttpClient->hc_Content );
 						
@@ -83,9 +87,17 @@ void NotificationAndroidSendingThread( FThread *data )
 							char *pos = strstr( bs->bs_Buffer, "\r\n\r\n" );
 							if( pos != NULL )
 							{
-								Log( FLOG_INFO, "Response from firebase : %s\n", pos );
+								Log( FLOG_INFO, "[NotificationAndroidSendingThread]: Response from firebase : %s\n", pos );
+							}
+							else
+							{
+								Log( FLOG_ERROR, "[NotificationAndroidSendingThread]: Response receieved: %s\n", bs->bs_Buffer );
 							}
 							BufStringDelete( bs );
+						}
+						else
+						{
+							Log( FLOG_ERROR, "[NotificationAndroidSendingThread]: Timeout\n" );
 						}
 						c->hc_Content = NULL;	//must be set to NULL becaouse we overwrite point to send messages (e->fq_Data)
 						HttpClientDelete( c );
@@ -99,20 +111,23 @@ void NotificationAndroidSendingThread( FThread *data )
 					}
 					else
 					{
-						nm->nm_AndroidSendInUse--;
-						FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+						FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidQueueMutex) );
+						Log( FLOG_INFO, "[NotificationAndroidSendingThread]: no more messages\n" );
 						break;
-					}
-					
-					if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
-					{
-						nm->nm_AndroidSendInUse--;
-						FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
 					}
 				}
 			}
+			
+			if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
+			{
+				nm->nm_AndroidSendInUse--;
+				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+			}
+			
+			Log( FLOG_INFO, "[NotificationAndroidSendingThread]: while quit\n" );
 		}
 	}
+	Log( FLOG_INFO, "[NotificationAndroidSendingThread]: thread closed\n" );
 	
 	data->t_Launched = FALSE;
 	pthread_exit( NULL );
@@ -231,11 +246,15 @@ int NotificationManagerNotificationSendAndroidQueue( NotificationManager *nm, No
 			en->fq_Data = (void *)msg;
 			en->fq_Size = len;
 			
-			if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
+			if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidQueueMutex) ) == 0 )
 			{
 				FQPushFIFO( &(nm->nm_AndroidSendMessages), en );
 				
+				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidQueueMutex) );
+				
 				DEBUG("[NotificationManagerNotificationSendAndroidQueue] signal triggered\n");
+				
+				FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) );
 				pthread_cond_signal( &(nm->nm_AndroidSendCond) );
 				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
 			}
