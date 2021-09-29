@@ -319,7 +319,7 @@ if( $args->command )
 											if( strstr( $result, 'ok<!--separate-->' ) )
 											{
 												// TODO: Delete certain invite links when invite is complete ...
-											
+												
 												if( isset( $json->contact ) && $json->contact && $f->ID > 0 )
 												{
 													$SqlDatabase->query( '

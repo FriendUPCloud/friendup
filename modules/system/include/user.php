@@ -703,10 +703,14 @@ function _fcquery( $command = '', $args = false, $method = 'POST', $headers = fa
 	if( function_exists( 'curl_init' ) )
 	{
 		$curl = curl_init();
-
+		
+		$conf = parse_ini_file( 'cfg/cfg.ini', true );
+		
+		$debug = ( isset( $conf['Options']['debugmodules'] ) && strstr( $conf['Options']['debugmodules'], 'system/user' ) ? $conf['Options']['debugmodules'] : false );
+		
 		$usePort = ( $Config->FCHost == 'localhost' || $Config->FCOnLocalhost ) && $Config->FCPort;
 		$server = ( $Config->SSLEnable ? 'https://' : 'http://' ) . $Config->FCHost . ( $usePort ? ( ':' . $Config->FCPort ) : '' );
-	
+		
 		$url = ( $server . $command );
 	
 		if( $url && strstr( $url, '?' ) )
@@ -793,13 +797,13 @@ function _fcquery( $command = '', $args = false, $method = 'POST', $headers = fa
 
 		// TODO: Disable logging on production servers, perhaps from cfg, because args and results are exposed ...
 		
-		$Logger->log( date( 'Y-m-d H:i' ).' CURL: ['.( $method ? $method : 'POST' ).'] URL: '.$url.( $headers ? ' HEADERS: '.json_encode( $headers ) : '' ).( $args ? ' ARGS: '.json_encode( $args ) : '' ).' FILE: /modules/system/include/user.php'."\r\n" );
+		if( $debug ) $Logger->log( date( 'Y-m-d H:i' ).' CURL: ['.( $method ? $method : 'POST' ).'] URL: '.$url.( $headers ? ' HEADERS: '.json_encode( $headers ) : '' ).( $args ? ' ARGS: '.json_encode( $args ) : '' ).' FILE: /modules/system/include/user.php'."\r\n" );
 		
 		$output = curl_exec( $curl );
 
 		$httpCode = curl_getinfo( $curl, CURLINFO_HTTP_CODE );
 		
-		$Logger->log( date( 'Y-m-d H:i' ).' CURL: ['.$httpCode.'] URL: '.$url.' RESULT: '.$output."\r\n" );
+		if( $debug ) $Logger->log( date( 'Y-m-d H:i' ).' CURL: ['.$httpCode.'] URL: '.$url.' RESULT: '.$output."\r\n" );
 		
 		curl_close( $curl );
 		
@@ -1720,7 +1724,7 @@ function _applySetup( $userid, $id )
 													"UserID"        : "'.$a->UserID.'",
 													"Name"          : "'.$a->Name.'",
 													"DateInstalled" : "'.$a->DateInstalled.'",
-													"Config"        : "'.( $a->Config ? '[JSON] string' : 'false' ).'",
+													"Config"        : '.$a->Config.',
 													"Permissions"   : "'.$a->Permissions.'",
 													"DateModified"  : "'.$a->DateModified.'"
 												}' );
@@ -1786,8 +1790,8 @@ function _applySetup( $userid, $id )
 																"ApplicationID" : "'.$app->ApplicationID.'",
 																"UserID"        : "'.$app->UserID.'",
 																"AuthID"        : "'.$app->AuthID.'",
-																"Permissions"   : "'.( $app->Permissions ? '[JSON] string' : 'false' ).'",
-																"Data"          : "'.( $app->Data ? '[JSON] string' : 'false' ).'"
+																"Permissions"   : "'.( $app->Permissions ? 'true' : 'false' ).'",
+																"Data"          : "'.( $app->Data ? 'true' : 'false' ).'"
 															}' );
 														}
 													}
