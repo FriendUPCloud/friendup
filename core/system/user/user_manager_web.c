@@ -1501,11 +1501,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
 						HttpAddTextContent( response, buffer );
 					}
-				
-					if( userFromSession == FALSE )
-					{
-						UserDelete( logusr );
-					}
 				}
 			}
 		}
@@ -1520,6 +1515,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		if( logusr != NULL )
 		{
 			USER_UNLOCK( logusr );
+		}
+		
+		if( userFromSession == FALSE )
+		{
+			UserDelete( logusr );
 		}
 		
 		if( level != NULL )
