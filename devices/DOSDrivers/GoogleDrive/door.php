@@ -1031,14 +1031,26 @@ if( !class_exists( 'GoogleDrive' ) )
 						case 'application/vnd.google-apps.document':
 							$o->IconClass = 'TypeGoogleDocs';
 							$o->Command = $gfile->getMimeType();
+							$o->ExportFormat = 'pdf';
+							//$o->Filename = ( $o->Filename . '.docx' );
 							break;
 						case 'application/vnd.google-apps.spreadsheet':
 							$o->IconClass = 'TypeGoogleSheets';
 							$o->Command = $gfile->getMimeType();
+							$o->ExportFormat = 'pdf';
+							//$o->Filename = ( $o->Filename . '.xlsx' );
 							break;
 						case 'application/vnd.google-apps.presentation':
 							$o->IconClass = 'TypeGooglePresentation';
 							$o->Command = $gfile->getMimeType();
+							$o->ExportFormat = 'pdf';
+							//$o->Filename = ( $o->Filename . '.odp' );
+							break;
+						case 'application/vnd.google-apps.form':
+							$o->IconClass = 'TypeGooglePresentation';
+							$o->Command = $gfile->getMimeType();
+							$o->ExportFormat = 'pdf';
+							//$o->Filename = ( $o->Filename . '.form' );
 							break;
 						default:
 							break;
@@ -1110,6 +1122,15 @@ if( !class_exists( 'GoogleDrive' ) )
 			$drivefiles = new Google_Service_Drive( $this->gdx );
 			
 			$gfile = $this->getGoogleFileObject( $path );
+			
+			if( !$gfile || !$gfile->getMimeType() )
+			{
+				$pathdata = pathinfo( $path );
+				
+				$gfile = $this->getGoogleFileObject( $pathdata['dirname'] . '/' . str_replace( '.' . $pathdata['extension'], $pathdata['filename'] ) );
+				
+				$Logger->log( $pathdata['dirname'] . '/' . str_replace( '.' . $pathdata['extension'], $pathdata['filename'] ) );
+			}
 			
 			/*
 				special handler for google file types...
