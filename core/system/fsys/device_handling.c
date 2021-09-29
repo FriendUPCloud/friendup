@@ -3321,8 +3321,8 @@ WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where User
 	
 	int j = 0;
 	
-	//while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
-	if( ( row = sqllib->FetchRow( sqllib, res ) ) != NULL )
+	while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
+	//if( ( row = sqllib->FetchRow( sqllib, res ) ) != NULL )
 	{
 		// Id, UserId, Name, Type, ShrtDesc, Server, Port, Path, Username, Password, Mounted
 		//row = res->row[ j ];
@@ -3394,14 +3394,14 @@ WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where User
 		if( type != NULL ) FFree( type );
 		if( name != NULL ) FFree( name );
 	}	// going through all rows
-	else
-	{
+	//else
+	//{
 		// remember to release sql if local one was used
 		if( gotGlobalSQL == FALSE )
 		{
 			l->LibrarySQLDrop( l, sqllib );
 		}
-	}
+	//}
 	
 	DEBUG( "[GetUserDeviceByUserID] Successfully freed.\n" );
 	
