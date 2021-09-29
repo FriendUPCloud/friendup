@@ -8,6 +8,15 @@
 *                                                                              *
 *****************************************************************************©*/
 
+let initdebug = false;
+
+function debug ( pretty )
+{
+	return ( initdebug = ( pretty ? 'pretty' : true ) );
+}
+
+console.log( '///// debug( true ); for pretty print ... /////' );
+
 // Main User Settings function to set up the whole user "module"
 var UsersSettings = function ( setting, set )
 {
@@ -11665,7 +11674,9 @@ function _saveUser( uid, callback )
 		let d = ( server && server.data   ? server.data   : {} );
 		
 		if( ShowLog ) console.log( '_saveUser( uid, callback, newuser ) ', { e:e, d:d, args: args, server: server } );
-				
+		
+		if( initdebug ) console.log( initdebug == 'pretty' ? JSON.stringify( server, null, 4 ) : server );
+		
 		if( e == 'ok' )
 		{
 			
