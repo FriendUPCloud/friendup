@@ -1878,9 +1878,12 @@ g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND \
 ug.UserID = '%ld' \
 ) \
 ) \
-)AND ( (f.Owner='0' OR f.Owner IS NULL) AND f.Mounted=\'1\')", 
+)AND (f.Mounted=\'1\')", 
 usr->u_ID , usr->u_ID, usr->u_ID
 	);
+
+//)AND ( (f.Owner='0' OR f.Owner IS NULL) AND f.Mounted=\'1\')", 
+
 		DEBUG("[UserDeviceMount] Finding drives in DB\n");
 		void *res = sqllib->Query( sqllib, temptext );
 		if( res == NULL )
