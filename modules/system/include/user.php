@@ -706,7 +706,7 @@ function _fcquery( $command = '', $args = false, $method = 'POST', $headers = fa
 		
 		$conf = parse_ini_file( 'cfg/cfg.ini', true );
 		
-		$debug = ( isset( $conf['Options']['debugmodules'] ) && strstr( $conf['Options']['debugmodules'], 'system/user' ) ? $conf['Options']['debugmodules'] : false );
+		$debug = ( isset( $conf['options']['debugmodules'] ) && strstr( $conf['options']['debugmodules'], 'system/user' ) ? $conf['options']['debugmodules'] : false );
 		
 		$usePort = ( $Config->FCHost == 'localhost' || $Config->FCOnLocalhost ) && $Config->FCPort;
 		$server = ( $Config->SSLEnable ? 'https://' : 'http://' ) . $Config->FCHost . ( $usePort ? ( ':' . $Config->FCPort ) : '' );
