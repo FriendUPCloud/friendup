@@ -157,7 +157,10 @@ FriendConnection.prototype.connectWebSocket = function()
 {
 	let self = this;
 	if ( self.ws )
+	{
+		console.log( 'FriendConnection: Releasing existing websocket.' );
 		self.releaseWebSocket();
+	}
 	
 	let url = self.wsProtocol + self.host;
 	if ( self.wsPort )
@@ -262,6 +265,12 @@ FriendConnection.prototype.onWsMessage = function( msg )
 				if( !handler && self != Workspace.conn )
 				{
 					console.log( '[FriendConnection] We\'re an orphan ws. Kill.' );
+					self.onWsEnd();
+					delete self;
+				}
+				else if( !handler )
+				{
+					console.log( '[FriendConnection] This websocket is defunct. Kill.' );
 					self.onWsEnd();
 					delete self;
 				}

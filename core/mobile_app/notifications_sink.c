@@ -47,6 +47,20 @@ typedef struct SinkProcessMessage{
 	void *udata;
 }SinkProcessMessage;
 
+
+const char *errorMsg[] =
+{
+	"Success",
+	"Json cannot be parsed",
+	"Websockets were not authenticated",
+	"Notification type not found",
+	"Authentication failed",
+	"No authentication elements in message",
+	"Parameters not found",
+	"JSON Tokens not found (request is not in JSON format probably)"
+	
+};
+
 int globalServerEntriesNr = 0;
 char **globalServerEntries = NULL;
 
@@ -984,12 +998,12 @@ void WebsocketNotificationsSetAuthKey( const char *key )
 static int ReplyError( DataQWSIM *d, int error_code )
 {
 #ifdef WEBSOCKET_SEND_QUEUE
-	char response[ LWS_PRE+64 ];
-	int size = snprintf(response, sizeof(response), "{\"type\":\"error\",\"data\":{\"status\":%d}}", error_code);
+	char response[ LWS_PRE+128 ];
+	int size = snprintf(response, sizeof(response), "{\"type\":\"error\",\"data\":{\"status\":%d,\"message\":\"%s\"}}", error_code, errorMsg[ error_code ] );
 	WriteMessageSink( d, (unsigned char *)response, size );
 #else
 	char response[ LWS_PRE+64 ];
-	snprintf(response+LWS_PRE, sizeof(response)-LWS_PRE, "{\"type\":\"error\",\"data\":{\"status\":%d}}", error_code);
+	snprintf(response+LWS_PRE, sizeof(response)-LWS_PRE, "{\"type\":\"error\",\"data\":{\"status\":%d,\"message\":\"%s\"}}", error_code, errorMsg[ error_code ] );
 	DEBUG("Error response: %s\n", response+LWS_PRE);
 
 	DEBUG("WSI %p\n", wsi);

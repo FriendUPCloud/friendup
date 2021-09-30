@@ -13,9 +13,17 @@ Application.run = function( msg )
 	var mode = ge( 'mode' ).value;
 	var devname = ge( 'devname' ).value;
 	
-	if( ge( 'mountedDisk' ).value == 'mounted' )
+	if( devname == 'Home' )
 	{
-		ge( 'mounter' ).innerHTML = '&nbsp;' + i18n( 'i18n_unmount_disk' );
+		ge( 'mounter' ).parentNode.innerHTML = '&nbsp';
+		ge( 'deleter' ).style.display = 'none';
+	}
+	else
+	{
+		if( ge( 'mountedDisk' ).value == 'mounted' )
+		{
+			ge( 'mounter' ).innerHTML = '&nbsp;' + i18n( 'i18n_unmount_disk' );
+		}
 	}
 	
 	if( typeof( mode ) != 'undefined' && mode == 'edit' )

@@ -15,7 +15,7 @@ ini_set( 'display_errors', 1 );
 
 require_once( 'php/include/permissions.php' );
 
-
+global $Config;
 
 // For some reason $args->args are now urlencoded so they have to be run through urldecode();
 
@@ -98,6 +98,13 @@ if( isset( $args->args->setup ) )
 	// TODO: Add check if it's correct format if not return back ...
 }
 
+// Check if FCUpload is defined before moving forward ...
+
+if( !isset( $Config->FCUpload ) || !$Config->FCUpload || trim( $Config->FCUpload ) == getcwd() || trim( $Config->FCUpload ) == ( getcwd() . '/' ) )
+{
+	die( '{"result":"fail","data":{"response":"FCUpload in cfg/cfg.ini require a storage path, root level is not allowed ..."}}' );
+}
+
 
 
 if( $args->command )
@@ -136,7 +143,7 @@ if( $args->command )
 				
 				// Specific for Pawel's code ... He just wants to forward json ...
 				
-				$data['args'] = '{
+				$data['args'] = json_encode( json_decode( '{
 					"type"    : "write", 
 					"context" : "application", 
 					"name"    : "\'System\',\'Admin\'",
@@ -148,7 +155,7 @@ if( $args->command )
 							"PERM_USER_WORKGROUP" 
 						]
 					} 
-				}';
+				}' ) );
 				
 				if( !isset( $data['level'] ) && !$data['level'] )
 				{
@@ -266,8 +273,8 @@ if( $args->command )
 																{
 																	$res->debug = [];
 																}
-												
-																$res->debug['2: Add extra field'] = 'true';
+																
+																$res->debug['2: Add extra field'] = $ret;
 															}
 														}
 													}
@@ -287,10 +294,10 @@ if( $args->command )
 																$res->debug = [];
 															}
 											
-															$res->debug['3: First login'] = 'true';
+															$res->debug['3: First login'] = $ret;
 														}
 													}
-									
+													
 													// 4: Save avatar image
 									
 													if( isset( $extr['avatar'] ) && $extr['avatar'] )
@@ -308,7 +315,7 @@ if( $args->command )
 																	$res->debug = [];
 																}
 												
-																$res->debug['4: Save avatar image'] = 'true';
+																$res->debug['4: Save avatar image'] = $ret;
 															}
 														}
 													}
@@ -352,7 +359,7 @@ if( $args->command )
 																	$res->debug = [];
 																}
 												
-																$res->debug['6: Save language setting'] = 'true';
+																$res->debug['6: Save language setting'] = $ret;
 															}
 														}
 													}
@@ -436,7 +443,7 @@ if( $args->command )
 				
 				// Specific for Pawel's code ... He just wants to forward json ...
 				
-				$data['args'] = '{
+				$data['args'] = json_encode( json_decode( '{
 					"type"    : "write", 
 					"context" : "application", 
 					"name"    : "\'System\',\'Admin\'", 
@@ -450,7 +457,7 @@ if( $args->command )
 					}, 
 					"object"   : "user", 
 					"objectid" : ' . $data['id'] . ' 
-				}';
+				}' ) );
 				
 				if( $res = _fcquery( '/system.library/user/update', $data ) )
 				{
@@ -505,7 +512,7 @@ if( $args->command )
 												$res->debug = [];
 											}
 											
-											$res->debug['2: Add extra field'] = 'true';
+											$res->debug['2: Add extra field'] = $ret;
 										}
 									}
 								}
@@ -527,7 +534,7 @@ if( $args->command )
 												$res->debug = [];
 											}
 											
-											$res->debug['3: Save avatar image'] = 'true';
+											$res->debug['3: Save avatar image'] = $ret;
 										}
 									}
 								}
@@ -571,7 +578,7 @@ if( $args->command )
 												$res->debug = [];
 											}
 											
-											$res->debug['5: Save language setting'] = 'true';
+											$res->debug['5: Save language setting'] = $ret;
 										}
 									}
 								}
@@ -624,7 +631,7 @@ if( $args->command )
 				
 				// Specific for Pawel's code ... He just wants to forward json ...
 				
-				$data['args'] = '{
+				$data['args'] = json_encode( json_decode( '{
 					"type"    : "delete", 
 					"context" : "application", 
 					"name"    : "\'System\',\'Admin\'", 
@@ -638,7 +645,7 @@ if( $args->command )
 					}, 
 					"object"   : "user", 
 					"objectid" : ' . $data['id'] . ' 
-				}';
+				}' ) );
 				
 				if( $res = _fcquery( '/system.library/user/delete', $data ) )
 				{
@@ -666,6 +673,9 @@ if( $args->command )
 										$res->debug['1: Delete extra fields'] = 'true';
 									}
 								}
+								
+								// TODO: See if there is more that needs to be deleted that friendcore doesn't take care of ...
+								
 							}
 							
 						}
@@ -695,15 +705,19 @@ if( $args->command )
 // Helper functions ...
 function _fcquery( $command = '', $args = false, $method = 'POST', $headers = false )
 {
-	global $Config;	
+	global $Config, $Logger;	
 	
 	if( function_exists( 'curl_init' ) )
 	{
 		$curl = curl_init();
-
+		
+		$conf = parse_ini_file( 'cfg/cfg.ini', true );
+		
+		$debug = ( isset( $conf['options']['debugmodules'] ) && strstr( $conf['options']['debugmodules'], 'system/user' ) ? $conf['options']['debugmodules'] : false );
+		
 		$usePort = ( $Config->FCHost == 'localhost' || $Config->FCOnLocalhost ) && $Config->FCPort;
 		$server = ( $Config->SSLEnable ? 'https://' : 'http://' ) . $Config->FCHost . ( $usePort ? ( ':' . $Config->FCPort ) : '' );
-	
+		
 		$url = ( $server . $command );
 	
 		if( $url && strstr( $url, '?' ) )
@@ -762,7 +776,7 @@ function _fcquery( $command = '', $args = false, $method = 'POST', $headers = fa
 		{
 			curl_setopt( $curl, CURLOPT_CUSTOMREQUEST, $method );
 		}
-	
+		
 		// TODO: Turn this off when SSL is working ...
 		curl_setopt( $curl, CURLOPT_SSL_VERIFYHOST, false );
 		curl_setopt( $curl, CURLOPT_SSL_VERIFYPEER, false );
@@ -788,10 +802,16 @@ function _fcquery( $command = '', $args = false, $method = 'POST', $headers = fa
 	
 		curl_setopt( $curl, CURLOPT_RETURNTRANSFER, true );
 
+		// TODO: Disable logging on production servers, perhaps from cfg, because args and results are exposed ...
+		
+		if( $debug ) $Logger->log( date( 'Y-m-d H:i' ).' CURL: ['.( $method ? $method : 'POST' ).'] URL: '.$url.( $headers ? ' HEADERS: '.json_encode( $headers ) : '' ).( $args ? ' ARGS: '.json_encode( $args ) : '' ).' FILE: /modules/system/include/user.php'."\r\n" );
+		
 		$output = curl_exec( $curl );
 
 		$httpCode = curl_getinfo( $curl, CURLINFO_HTTP_CODE );
-	
+		
+		if( $debug ) $Logger->log( date( 'Y-m-d H:i' ).' CURL: ['.$httpCode.'] URL: '.$url.' RESULT: '.$output."\r\n" );
+		
 		curl_close( $curl );
 		
 		if( trim( $output ) )
@@ -837,6 +857,8 @@ function _addToWorkgroups( $userid, $workgroups, $token, $perms )
 		
 		if( $wgr = explode( ',', $workgroups ) )
 		{
+			$debug = []; $debug[$userid] = [];
+			
 			foreach( $wgr as $gid )
 			{
 				
@@ -845,7 +867,7 @@ function _addToWorkgroups( $userid, $workgroups, $token, $perms )
 					
 					// Specific for Pawel's code ... He just wants to forward json ...
 				
-					$data['args'] = '{
+					$data['args'] = json_encode( json_decode( '{
 						"type"    : "write", 
 						"context" : "application", 
 						"name"    : "\'System\',\'Admin\'", 
@@ -854,7 +876,7 @@ function _addToWorkgroups( $userid, $workgroups, $token, $perms )
 						}, 
 						"object"   : "workgroup", 
 						"objectid" : ' . $gid . ' 
-					}';
+					}' ) );
 				
 					if( $token )
 					{
@@ -881,7 +903,15 @@ function _addToWorkgroups( $userid, $workgroups, $token, $perms )
 							}
 							else
 							{
-								$success[] = json_encode( [ $data, $res ] );
+								$data['args'] = json_decode( $data['args'] );
+								$debug[$userid][] = json_decode( '{
+									"url"    : "/system.library/group/addusers",
+									"args"   : '.json_encode( $data ).',
+									"result" : '.json_encode( $res->result ).',
+									"result" : '.json_encode( $res->data ).'
+								}' );
+								
+								$success[] = [ $data, $res ];
 							}
 						}
 					}
@@ -892,7 +922,7 @@ function _addToWorkgroups( $userid, $workgroups, $token, $perms )
 			
 			if( $success )
 			{
-				return $success;
+				return ( $debug ? $debug : $success );
 			}
 			
 		}
@@ -924,6 +954,7 @@ function _addExtraFields( $userid, $fields )
 	
 	if( $userid > 0 && $fields )
 	{
+		$debug = []; $debug[$userid] = [];
 		
 		foreach( $fields as $key => $value )
 		{
@@ -937,11 +968,20 @@ function _addExtraFields( $userid, $fields )
 				$fm->Load();
 				$fm->ValueString = trim( $value );
 				$fm->Save();
+				
+				$debug[$userid][] = json_decode( '{
+					"DBName"      : "FMetaData",
+					"ID"          : "'.$fm->ID.'",
+					"DataTable"   : "'.$fm->DataTable.'",
+					"DataID"      : "'.$fm->DataID.'",
+					"Key"         : "'.$fm->Key.'",
+					"ValueString" : "'.$fm->ValueString.'"
+				}' );
 			}
 			
 		}
 		
-		return true;
+		return ( $debug ? $debug : false );
 	}
 	
 	return false;
@@ -966,8 +1006,7 @@ function _deleteExtraFields( $userid )
 			ORDER BY 
 				fm.ID ASC 
 		' ) )
-		{
-			
+		{	
 			foreach( $fields as $field )
 			{
 				
@@ -1003,6 +1042,8 @@ function _firstLogin( $userid )
 		if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE UserID=\'' . $userid . '\'' ) ) )
 		{
 			
+			$debug = []; $debug[$userid] = new stdClass();
+			
 			// 3. Setup a standard disk
 			$o = new dbIO( 'Filesystem' );
 			$o->UserID = $userid;
@@ -1015,6 +1056,16 @@ function _firstLogin( $userid )
 	
 			if( $o->Save() )
 			{
+				$debug[$userid]->HomeFolder = json_decode( '{
+					"DbName"           : "Filesystem",
+					"ID"               : "'.$o->ID.'",
+					"UserID"           : "'.$o->UserID.'",
+					"Name"             : "'.$o->Name.'",
+					"Type"             : "'.$o->Type.'",
+					"ShortDescription" : "'.$o->ShortDescription.'",
+					"Server"           : "'.$o->Server.'",
+					"Mounted"          : "'.$o->Mounted.'"
+				}' );
 				
 				// 4. Wallpaper images directory
 				$f2 = new dbIO( 'FSFolder' );
@@ -1028,6 +1079,16 @@ function _firstLogin( $userid )
 					$f2->Save();
 				}
 				
+				$debug[$userid]->WallpaperFolder = json_decode( '{
+					"DbName"       : "FSFolder",
+					"ID"           : "'.$f2->ID.'",
+					"FilesystemID" : "'.$f2->FilesystemID.'",
+					"UserID"       : "'.$f2->UserID.'",
+					"Name"         : "'.$f2->Name.'",
+					"DateCreated"  : "'.$f2->DateCreated.'",
+					"DateModified" : "'.$f2->DateModified.'"
+				}' );
+				
 				// 5. Some example documents
 				$f = new dbIO( 'FSFolder' );
 				$f->FilesystemID = $o->ID;
@@ -1040,6 +1101,16 @@ function _firstLogin( $userid )
 					$f->Save();
 				}
 				
+				$debug[$userid]->DocumentsFolder = json_decode( '{
+					"DbName"       : "FSFolder",
+					"ID"           : "'.$f->ID.'",
+					"FilesystemID" : "'.$f->FilesystemID.'",
+					"UserID"       : "'.$f->UserID.'",
+					"Name"         : "'.$f->Name.'",
+					"DateCreated"  : "'.$f->DateCreated.'",
+					"DateModified" : "'.$f->DateModified.'"
+				}' );
+				
 				$fdownloadfolder = new dbIO( 'FSFolder' );
 				$fdownloadfolder->FilesystemID = $o->ID;
 				$fdownloadfolder->UserID = $userid;
@@ -1050,6 +1121,16 @@ function _firstLogin( $userid )
 					$fdownloadfolder->DateModified = $f->DateCreated;
 					$fdownloadfolder->Save();
 				}
+				
+				$debug[$userid]->DownloadsFolder = json_decode( '{
+					"DbName"       : "FSFolder",
+					"ID"           : "'.$fdownloadfolder->ID.'",
+					"FilesystemID" : "'.$fdownloadfolder->FilesystemID.'",
+					"UserID"       : "'.$fdownloadfolder->UserID.'",
+					"Name"         : "'.$fdownloadfolder->Name.'",
+					"DateCreated"  : "'.$fdownloadfolder->DateCreated.'",
+					"DateModified" : "'.$fdownloadfolder->DateModified.'"
+				}' );
 				
 				/*$f1 = new dbIO( 'FSFolder' );
 				$f1->FilesystemID = $o->ID;
@@ -1067,6 +1148,8 @@ function _firstLogin( $userid )
 				// This was disabled to conserve space when many user accounts are created
 				if( isset( $Config ) && isset( $Config->copydefaultwallpapers ) )
 				{
+					$debug[$userid]->Wallpapers = [];
+					
 					$prefix = "resources/webclient/theme/wallpaper/";
 					$files = array(
 						"Autumn",
@@ -1116,6 +1199,19 @@ function _firstLogin( $userid )
 							$wallpaperstring .= $wallpaperseperator . '"Home:Wallpaper/' . $file . '.jpg"';
 							$wallpaperseperator = ',';
 						}
+						
+						$debug[$userid]->Wallpapers[] = json_decode( '{
+							"DBName"       : "FSFile",
+							"ID"           : "'.$fl->ID.'",
+							"Filename"     : "'.$fl->Filename.'",
+							"FolderID"     : "'.$fl->FolderID.'",
+							"FilesystemID" : "'.$fl->FilesystemID.'", 
+							"UserID"       : "'.$fl->UserID.'",
+							"DiskFilename" : "'.$fl->DiskFilename.'",
+							"Filesize"     : "'.$fl->Filesize.'",
+							"DateCreated"  : "'.$fl->DateCreated.'",
+							"DateModified" : "'.$fl->DateModified.'"
+						}' );
 					}
 				
 					// 7. Copy some other files
@@ -1162,6 +1258,15 @@ function _firstLogin( $userid )
 					$wp->Save();
 				}
 				
+				$debug[$userid]->WallpaperSettings = json_decode( '{
+					"DbName" : "FSetting",
+					"Type"   : "system",
+					"Key"    : "imagesdoors",
+					"ID"     : "'.$wp->ID.'",
+					"UserID" : "'.$wp->UserID.'",
+					"Data"   : '.( $wp->Data ? $wp->Data : '""' ).'
+				}' );
+				
 				$wp = new dbIO( 'FSetting' );
 				$wp->UserID = $userid;
 				$wp->Type = 'system';
@@ -1172,7 +1277,16 @@ function _firstLogin( $userid )
 					$wp->Save();
 				}
 				
-				return true;
+				$debug[$userid]->WallpaperTemplate = json_decode( '{
+					"DbName" : "FSetting",
+					"Type"   : "system",
+					"Key"    : "wallpaperdoors",
+					"ID"     : "'.$wp->ID.'",
+					"UserID" : "'.$wp->UserID.'",
+					"Data"   : '.( $wp->Data ? $wp->Data : '""' ).'
+				}' );
+				
+				return ( $debug ? $debug : false );
 			}
 		}
 	}
@@ -1193,6 +1307,8 @@ function _saveAvatar( $userid, $base64 )
 			die( 'fail not base64 string ...' );
 		}
 		
+		$debug = []; $debug[$userid] = [];
+		
 		$o = new dbIO( 'FSetting' );
 		$o->UserID = $userid;
 		$o->Type = 'system';
@@ -1200,6 +1316,8 @@ function _saveAvatar( $userid, $base64 )
 		$o->Load();
 		$o->Data = /*urldecode(*/ trim( $base64 )/* )*/;
 		$o->Save();
+		
+		$debug[$userid][] = json_decode( '{"DBName":"FSetting","ID":"'.$o->ID.'","UserID":"'.$o->UserID.'","Type":"'.$o->Type.'","Key":"'.$o->Key.'","Data":"'.( $o->Data ? '[BASE64] string' : '' ).'"}' );
 		
 		// Save image blob as filename hash on user
 		if( $o->ID > 0 && $o->Data && $o->UserID > 0 )
@@ -1211,7 +1329,9 @@ function _saveAvatar( $userid, $base64 )
 				$u->Image = md5( $o->Data );
 				$u->Save();
 				
-				return true;
+				$debug[$userid][] = json_decode( '{"DBName":"FUser","ID":"'.$u->ID.'","Image":"'.$u->Image.'"}' );
+				
+				return $debug;
 			}
 		}
 	}
@@ -1273,6 +1393,14 @@ function _applySetup( $userid, $id )
 				{
 					$debug[$uid] = new stdClass();
 					
+					$debug[$uid]->TemplateSetup = json_decode( '{
+						"DBName" : "FSetting",
+						"ID"     : "'.$ug->ID.'",
+						"Type"   : "setup",
+						"Key"    : "usergroup",
+						"Data"   : '.( $ug->Data ? json_encode( $ug->Data ) : '' ).'
+					}' );
+					
 					// Make sure the user exists!
 					$theUser = new dbIO( 'FUser' );
 					$theUser->load( $uid );
@@ -1295,7 +1423,14 @@ function _applySetup( $userid, $id )
 							$lang->Data = $ug->Data->language;
 							$lang->Save();
 							
-							$debug[$uid]->language = ( $lang->ID > 0 ? $lang->Data : false );
+							$debug[$uid]->Language = json_decode( '{
+								"DBName" : "FSetting",
+								"ID"     : "'.$lang->ID.'",
+								"UserID" : "'.$lang->UserID.'",
+								"Type"   : "'.$lang->Type.'",
+								"Key"    : "'.$lang->Key.'",
+								"Data"   : "'.$lang->Data.'"
+							}' );
 						}
 		
 						// Wallpaper -----------------------------------------------
@@ -1303,7 +1438,7 @@ function _applySetup( $userid, $id )
 					
 						if( $wallpaper )
 						{
-							$debug[$uid]->wallpaper = new stdClass();
+							//$debug[$uid]->wallpaper = new stdClass();
 							
 							$fnam = $wallpaper->ValueString;
 							$fnam = explode( '/', $fnam );
@@ -1312,7 +1447,14 @@ function _applySetup( $userid, $id )
 							$fnam = $ext[0];
 							$ext  = $ext[1];
 							
-							$debug[$uid]->wallpaper->filename = $wallpaper->ValueString;
+							$debug[$uid]->WallpaperTemplate = json_decode( '{
+								"DBName"           : "FMetaData",
+								"DataID"           : "'.$wallpaper->DataID.'",
+								"DataTable"        : "'.$wallpaper->DataTable.'",
+								"Key"              : "'.$wallpaper->Key.'",
+								"ValueString"      : "'.$wallpaper->ValueString.'",
+								"WallpaperContent" : "'.( $wallpaperContent ? 'true' : 'false' ).'" 
+							}' );
 							
 							$f = new dbIO( 'Filesystem' );
 							$f->UserID = $uid;
@@ -1339,6 +1481,25 @@ function _applySetup( $userid, $id )
 									$fl->Save();
 								}
 								
+								$debug[$uid]->WallpaperFolder = json_decode( '{
+									"DBName"       : "FSFolder",
+									"ID"           : "'.$fl->ID.'",
+									"FilesystemID" : "'.$fl->FilesystemID.'",
+									"UserID"       : "'.$fl->UserID.'",
+									"Name"         : "'.$fl->Name.'",
+									"FolderID"     : "'.$fl->FolderID.'",
+									"DateCreated"  : "'.$fl->DateCreated.'",
+									"DateModified" : "'.$fl->DateModified.'"
+								}' );
+								
+								// Check if FCUpload is defined before moving forward ...
+								if( !isset( $Config->FCUpload ) || !$Config->FCUpload || trim( $Config->FCUpload ) == getcwd() || trim( $Config->FCUpload ) == ( getcwd() . '/' ) )
+								{
+									die( '{"result":"fail","data":{"response":"FCUpload in cfg/cfg.ini require a storage path, root level is not allowed ..."}}' );
+								}
+								
+								$unlinked = false;
+								
 								$fi = new dbIO( 'FSFile' );
 								$fi->Filename = ( 'default_wallpaper_' . $fl->FilesystemID . '_' . $fl->UserID . '.jpg' );
 								$fi->FolderID = $fl->ID;
@@ -1349,14 +1510,18 @@ function _applySetup( $userid, $id )
 									if( file_exists( $Config->FCUpload . $fi->DiskFilename ) )
 									{
 										unlink( $Config->FCUpload . $fi->DiskFilename );
+										$unlinked = true;
 									}
 								}
+								
+								$madeDir = false;
 								
 								// Find disk filename
 								$uname = str_replace( array( '..', '/', ' ' ), '_', $theUser->Name );
 								if( !file_exists( $Config->FCUpload . $uname ) )
 								{
 									mkdir( $Config->FCUpload . $uname );
+									$madeDir = ( $Config->FCUpload . $uname );
 								}
 							
 								$tempName = $fnam;
@@ -1370,16 +1535,33 @@ function _applySetup( $userid, $id )
 									fwrite( $fp, $wallpaperContent );
 									fclose( $fp );
 									
-									$debug[$uid]->wallpaper->diskfilename = ( $uname . '/' . $fnam . '.' . $ext );
-									$debug[$uid]->wallpaper->content = ( $wallpaperContent ? true : false );
+									//$debug[$uid]->wallpaper->diskfilename = ( $uname . '/' . $fnam . '.' . $ext );
+									//$debug[$uid]->wallpaper->content = ( $wallpaperContent ? true : false );
 									
 									$fi->DiskFilename = ( $uname . '/' . $fnam . '.' . $ext );
 									$fi->Filesize = filesize( $wallpaper->ValueString );
 									$fi->DateCreated = date( 'Y-m-d H:i:s' );
 									$fi->DateModified = $fi->DateCreated;
 									$fi->Save();
-								
-									$debug[$uid]->wallpaper->id = ( $fi->ID > 0 ? $fi->ID : false );
+									
+									$debug[$uid]->WallpaperFile = json_decode( '{
+										"DBName"       : "FSFile",
+										"ID"           : "'.$fi->ID.'",
+										"Filename"     : "'.$fi->Filename.'",
+										"FolderID"     : "'.$fi->FolderID.'",
+										"FilesystemID" : "'.$fi->FilesystemID.'",
+										"UserID"       : "'.$fi->UserID.'",
+										"DiskFilename" : "'.$fi->DiskFilename.'",
+										"Filesize"     : "'.$fi->Filesize.'",
+										"DateCreated"  : "'.$fi->DateCreated.'",
+										"DateModified" : "'.$fi->DateModified.'",
+										"'.( $Config->FCUpload . $fi->DiskFilename ).'" : "'.( $unlinked ? 'found file and unlinked before recreated' : 'didn\'t find existing file no need for unlink' ).'",
+										"MadeDir"          : "'.$madeDir.'",
+										"FullDiskFilePath" : "'.( $Config->FCUpload . $uname . '/' . $fnam . '.' . $ext ).'", 
+										"WallpaperContent" : "'.( $wallpaperContent ? 'true' : 'false' ).'"
+									}' );
+									
+									//$debug[$uid]->wallpaper->id = ( $fi->ID > 0 ? $fi->ID : false );
 								
 									// Set the wallpaper in config
 									$s = new dbIO( 'FSetting' );
@@ -1390,8 +1572,17 @@ function _applySetup( $userid, $id )
 									$s->Data = '"Home:Wallpaper/' . $fi->Filename . '"';
 									$s->Save();
 								
-									$debug[$uid]->wallpaper->wallpaperdoors = ( $s->ID > 0 ? $s->Data : false );
-								
+									//$debug[$uid]->wallpaper->wallpaperdoors = ( $s->ID > 0 ? $s->Data : false );
+									
+									$debug[$uid]->WallpaperSettings = json_decode( '{
+										"DBName" : "FSetting",
+										"ID"     : "'.$s->ID.'",
+										"UserID" : "'.$s->UserID.'",
+										"Type"   : "'.$s->Type.'",
+										"Key"    : "'.$s->Key.'",
+										"Data"   : '.$s->Data.'
+									}' );
+									
 									// Before, we added the wallpaper to the collection. Removed here..
 								}
 							
@@ -1413,7 +1604,17 @@ function _applySetup( $userid, $id )
 							$star->Data = ( $ug->Data->startups ? json_encode( $ug->Data->startups ) : '[]' );
 							$star->Save();
 							
-							$debug[$uid]->startup = ( $star->ID > 0 ? $star->Data : false );
+							//$debug[$uid]->startup = ( $star->ID > 0 ? $star->Data : false );
+							
+							$debug[$uid]->Startup = json_decode( '{
+								"DBName" : "FSetting",
+								"ID"     : "'.$star->ID.'",
+								"UserID" : "'.$star->UserID.'",
+								"Type"   : "'.$star->Type.'",
+								"Key"    : "'.$star->Key.'",
+								"Data"   : '.$star->Data.'
+							}' );
+							
 						}
 		
 						// Theme -------------------------------------------------------------------------------------------
@@ -1430,7 +1631,16 @@ function _applySetup( $userid, $id )
 							$them->Data = $ug->Data->theme;
 							$them->Save();
 							
-							$debug[$uid]->theme = ( $them->ID > 0 ? $them->Data : false );
+							//$debug[$uid]->theme = ( $them->ID > 0 ? $them->Data : false );
+							
+							$debug[$uid]->Theme = json_decode( '{
+								"DBName" : "FSetting",
+								"ID"     : "'.$them->ID.'",
+								"UserID" : "'.$them->UserID.'",
+								"Type"   : "'.$them->Type.'",
+								"Key"    : "'.$them->Key.'",
+								"Data"   : "'.$them->Data.'"
+							}' );
 						}
 					
 						if( $ug->Data->themeconfig && $ug->Data->theme )
@@ -1445,7 +1655,16 @@ function _applySetup( $userid, $id )
 							$them->Data = json_encode( $ug->Data->themeconfig );
 							$them->Save(); 
 							
-							$debug[$uid]->themedata = ( $them->ID > 0 ? $them->Data : false );
+							//$debug[$uid]->themedata = ( $them->ID > 0 ? $them->Data : false );
+							
+							$debug[$uid]->ThemeData = json_decode( '{
+								"DBName" : "FSetting",
+								"ID"     : "'.$them->ID.'",
+								"UserID" : "'.$them->UserID.'",
+								"Type"   : "'.$them->Type.'",
+								"Key"    : "'.$them->Key.'",
+								"Data"   : '.$them->Data.'
+							}' );
 						}
 					
 						if( $ug->Data->workspacecount )
@@ -1460,7 +1679,16 @@ function _applySetup( $userid, $id )
 							$them->Data = $ug->Data->workspacecount;
 							$them->Save(); 
 							
-							$debug[$uid]->workspacecount = ( $them->ID > 0 ? $them->Data : false );
+							//$debug[$uid]->workspacecount = ( $them->ID > 0 ? $them->Data : false );
+							
+							$debug[$uid]->WorkspaceCount = json_decode( '{
+								"DBName" : "FSetting",
+								"ID"     : "'.$them->ID.'",
+								"UserID" : "'.$them->UserID.'",
+								"Type"   : "'.$them->Type.'",
+								"Key"    : "'.$them->Key.'",
+								"Data"   : "'.$them->Data.'"
+							}' );
 						}
 					
 						// Software ----------------------------------------------------------------------------------------
@@ -1479,7 +1707,9 @@ function _applySetup( $userid, $id )
 							if( 1==1 || !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'' . $uid . '\'' ) ) )
 							{
 								$i = 0;
-		
+								
+								$debug[$uid]->Software = [];
+								
 								foreach( $ug->Data->software as $r )
 								{
 									if( $r[0] )
@@ -1490,6 +1720,8 @@ function _applySetup( $userid, $id )
 										{
 											if( file_exists( $path . '/Config.conf' ) )
 											{
+												$debug[$uid]->Software[$r[0]] = new stdClass();
+											
 												$f = file_get_contents( $path . '/Config.conf' );
 												// Path is dynamic!
 												$f = preg_replace( '/\"Path[^,]*?\,/i', '"Path": "' . $path . '/",', $f );
@@ -1506,7 +1738,18 @@ function _applySetup( $userid, $id )
 													$a->DateModified = $a->DateInstalled;
 													$a->Save();
 												}
-						
+												
+												$debug[$uid]->Software[$r[0]]->Application = json_decode( '{
+													"DBName"        : "FApplication",
+													"ID"            : "'.$a->ID.'",
+													"UserID"        : "'.$a->UserID.'",
+													"Name"          : "'.$a->Name.'",
+													"DateInstalled" : "'.$a->DateInstalled.'",
+													"Config"        : '.$a->Config.',
+													"Permissions"   : "'.$a->Permissions.'",
+													"DateModified"  : "'.$a->DateModified.'"
+												}' );
+												
 												// 6. Setup dock items
 						
 												if( $r[1] )
@@ -1521,8 +1764,17 @@ function _applySetup( $userid, $id )
 														$d->SortOrder = $i++;
 														$d->Save();
 													}
+													
+													$debug[$uid]->Software[$r[0]]->Dock = json_decode( '{
+														"DBName"      : "DockItem",
+														"ID"          : "'.$d->ID.'",
+														"Application" : "'.$d->Application.'",
+														"UserID"      : "'.$d->UserID.'",
+														"Parent"      : "'.$d->Parent.'",
+														"SortOrder"   : "'.$d->SortOrder.'"
+													}' );
 												}
-							
+												
 												// 7. Pre-install applications
 						
 												if( $ug->Data->preinstall != '0' && $a->ID > 0 )
@@ -1552,6 +1804,16 @@ function _applySetup( $userid, $id )
 																$app->Data = json_encode( $da );
 																$app->Save();
 															}
+															
+															$debug[$uid]->Software[$r[0]]->UserApplication = json_decode( '{
+																"DBName"        : "FUserApplication",
+																"ID"            : "'.$app->ID.'",
+																"ApplicationID" : "'.$app->ApplicationID.'",
+																"UserID"        : "'.$app->UserID.'",
+																"AuthID"        : "'.$app->AuthID.'",
+																"Permissions"   : "'.( $app->Permissions ? 'true' : 'false' ).'",
+																"Data"          : "'.( $app->Data ? 'true' : 'false' ).'"
+															}' );
 														}
 													}
 												}
@@ -1614,7 +1876,7 @@ function _applySetup( $userid, $id )
 				}
 			}
 			
-			return ( $ug->Data ? json_encode( [ $ug->Data, $debug ] ) : 'false' );
+			return ( $ug->Data ? ( $debug ? $debug : $ug->Data ) : false );
 		}
 	}
 	else if( $userid > 0 && ( !$id || $id == 0 ) )
@@ -1666,6 +1928,8 @@ function _updateLanguages( $userid, $lang )
 	
 	if( $userid > 0 && trim( $lang ) )
 	{
+		$debug = []; $debug[$userid] = [];
+	
 		// Find right language for speech
 		$langs = [ 'en', 'fr', 'no', 'fi', 'pl' ]; //speechSynthesis.getVoices();
 	
@@ -1691,7 +1955,16 @@ function _updateLanguages( $userid, $lang )
 		$lo->Load();
 		$lo->Data = $lang;
 		$lo->Save();
-	
+		
+		$debug[$userid][] = json_decode( '{
+			"DBName" : "FSetting",
+			"ID"     : "'.$lo->ID.'",
+			"UserID" : "'.$lo->UserID.'",
+			"Type"   : "'.$lo->Type.'",
+			"Key"    : "'.$lo->Key.'",
+			"Data"   : "'.$lo->Data.'"
+		}' );
+		
 		if( $lo->ID > 0 )
 		{
 			$lo = new dbIO( 'FSetting' );
@@ -1702,7 +1975,16 @@ function _updateLanguages( $userid, $lang )
 			$lo->Data = $voice;
 			$lo->Save();
 			
-			return true;
+			$debug[$userid][] = json_decode( '{
+				"DBName" : "FSetting",
+				"ID"     : "'.$lo->ID.'",
+				"UserID" : "'.$lo->UserID.'",
+				"Type"   : "'.$lo->Type.'",
+				"Key"    : "'.$lo->Key.'",
+				"Data"   : '.$lo->Data.'
+			}' );
+			
+			return $debug;
 		}
 	}
 	

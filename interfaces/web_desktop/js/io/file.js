@@ -102,6 +102,7 @@ File = function( filename )
 
 		var t = this;
 		var jax = new cAjax ();
+		jax.forceHTTP = true;
 		if( this.cancelId )
 			jax.cancelId = this.cancelId;
 
@@ -149,6 +150,7 @@ File = function( filename )
 	{
 		var t = this;
 		var jax = new cAjax ();
+		jax.forceHTTP = true;
 		
 		if( t.ondestroy ) jax.ondestroy = t.ondestroy;
 		
@@ -530,6 +532,7 @@ File = function( filename )
 		else
 		{
 			var jax = new cAjax();
+			jax.forceHTTP = true;
 			if( this.cancelId )
 				jax.cancelId = this.cancelId;
 			jax.open( 'post', '/system.library', true, true );
