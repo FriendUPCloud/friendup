@@ -15,7 +15,7 @@ ini_set( 'display_errors', 1 );
 
 require_once( 'php/include/permissions.php' );
 
-
+global $Config;
 
 // For some reason $args->args are now urlencoded so they have to be run through urldecode();
 
@@ -96,6 +96,13 @@ if( isset( $args->args->setup ) )
 	$extr['setup'] = /*urldecode( */trim( $args->args->setup )/* )*/;
 	
 	// TODO: Add check if it's correct format if not return back ...
+}
+
+// Check if FCUpload is defined before moving forward ...
+
+if( !isset( $Config->FCUpload ) || !$Config->FCUpload || trim( $Config->FCUpload ) == getcwd() || trim( $Config->FCUpload ) == ( getcwd() . '/' ) )
+{
+	die( '{"result":"fail","data":{"response":"FCUpload in cfg/cfg.ini require a storage path, root level is not allowed ..."}}' );
 }
 
 
@@ -1251,13 +1258,13 @@ function _firstLogin( $userid )
 					$wp->Save();
 				}
 				
-				$debug[$userid]->Wallpapers = json_decode( '{
+				$debug[$userid]->WallpaperSettings = json_decode( '{
 					"DbName" : "FSetting",
 					"Type"   : "system",
 					"Key"    : "imagesdoors",
 					"ID"     : "'.$wp->ID.'",
 					"UserID" : "'.$wp->UserID.'",
-					"Data"   : "'.$wp->Data.'"
+					"Data"   : '.( $wp->Data ? $wp->Data : '""' ).'
 				}' );
 				
 				$wp = new dbIO( 'FSetting' );
@@ -1270,13 +1277,13 @@ function _firstLogin( $userid )
 					$wp->Save();
 				}
 				
-				$debug[$userid]->Wallpaper = json_decode( '{
+				$debug[$userid]->WallpaperTemplate = json_decode( '{
 					"DbName" : "FSetting",
 					"Type"   : "system",
 					"Key"    : "wallpaperdoors",
 					"ID"     : "'.$wp->ID.'",
 					"UserID" : "'.$wp->UserID.'",
-					"Data"   : "'.$wp->Data.'"
+					"Data"   : '.( $wp->Data ? $wp->Data : '""' ).'
 				}' );
 				
 				return ( $debug ? $debug : false );
@@ -1386,6 +1393,14 @@ function _applySetup( $userid, $id )
 				{
 					$debug[$uid] = new stdClass();
 					
+					$debug[$uid]->TemplateSetup = json_decode( '{
+						"DBName" : "FSetting",
+						"ID"     : "'.$ug->ID.'",
+						"Type"   : "setup",
+						"Key"    : "usergroup",
+						"Data"   : '.( $ug->Data ? json_encode( $ug->Data ) : '' ).'
+					}' );
+					
 					// Make sure the user exists!
 					$theUser = new dbIO( 'FUser' );
 					$theUser->load( $uid );
@@ -1476,6 +1491,12 @@ function _applySetup( $userid, $id )
 									"DateCreated"  : "'.$fl->DateCreated.'",
 									"DateModified" : "'.$fl->DateModified.'"
 								}' );
+								
+								// Check if FCUpload is defined before moving forward ...
+								if( !isset( $Config->FCUpload ) || !$Config->FCUpload || trim( $Config->FCUpload ) == getcwd() || trim( $Config->FCUpload ) == ( getcwd() . '/' ) )
+								{
+									die( '{"result":"fail","data":{"response":"FCUpload in cfg/cfg.ini require a storage path, root level is not allowed ..."}}' );
+								}
 								
 								$unlinked = false;
 								
