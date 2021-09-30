@@ -2114,6 +2114,25 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 							if( exist == FALSE )
 							{
 								UGMAddUserToGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
+								
+								char *errorStr = NULL;
+
+								User *usr = UMGetUserByID( l->sl_UM, (FULONG)rmEntry->i_Data );
+								if( usr != NULL )
+								{
+									if( usr->u_SessionsList != NULL && usr->u_SessionsList->us != NULL )
+									{
+										UserSession *locus = usr->u_SessionsList->us;
+										UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, locus, groupID );
+									}
+									//if( UserGroupDeviceMount( l->sl_DeviceManager, sqlLib, ug, usr, loggedSession, &errorStr ) != 0 )
+									//{
+									//INFO( "[MountFS] -- Could not mount device for user %s. Drive was %s.\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--" );
+									//}
+
+									// Tell user!
+									UserNotifyFSEvent2( usr, "refresh", "Mountlist:" );
+								}
 							}
 
 							FFree( rmEntry );
