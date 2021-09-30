@@ -1251,13 +1251,13 @@ function _firstLogin( $userid )
 					$wp->Save();
 				}
 				
-				$debug[$userid]->Wallpapers = json_decode( '{
+				$debug[$userid]->WallpaperSettings = json_decode( '{
 					"DbName" : "FSetting",
 					"Type"   : "system",
 					"Key"    : "imagesdoors",
 					"ID"     : "'.$wp->ID.'",
 					"UserID" : "'.$wp->UserID.'",
-					"Data"   : "'.$wp->Data.'"
+					"Data"   : '.( $wp->Data ? $wp->Data : '""' ).'
 				}' );
 				
 				$wp = new dbIO( 'FSetting' );
@@ -1270,13 +1270,13 @@ function _firstLogin( $userid )
 					$wp->Save();
 				}
 				
-				$debug[$userid]->Wallpaper = json_decode( '{
+				$debug[$userid]->WallpaperTemplate = json_decode( '{
 					"DbName" : "FSetting",
 					"Type"   : "system",
 					"Key"    : "wallpaperdoors",
 					"ID"     : "'.$wp->ID.'",
 					"UserID" : "'.$wp->UserID.'",
-					"Data"   : "'.$wp->Data.'"
+					"Data"   : '.( $wp->Data ? $wp->Data : '""' ).'
 				}' );
 				
 				return ( $debug ? $debug : false );
@@ -1385,6 +1385,14 @@ function _applySetup( $userid, $id )
 				foreach( $users as $uid )
 				{
 					$debug[$uid] = new stdClass();
+					
+					$debug[$uid]->TemplateSetup = json_decode( '{
+						"DBName" : "FSetting",
+						"ID"     : "'.$ug->ID.'",
+						"Type"   : "setup",
+						"Key"    : "usergroup",
+						"Data"   : '.( $ug->Data ? json_encode( $ug->Data ) : '' ).'
+					}' );
 					
 					// Make sure the user exists!
 					$theUser = new dbIO( 'FUser' );
