@@ -15,7 +15,7 @@ ini_set( 'display_errors', 1 );
 
 require_once( 'php/include/permissions.php' );
 
-
+global $Config;
 
 // For some reason $args->args are now urlencoded so they have to be run through urldecode();
 
@@ -96,6 +96,13 @@ if( isset( $args->args->setup ) )
 	$extr['setup'] = /*urldecode( */trim( $args->args->setup )/* )*/;
 	
 	// TODO: Add check if it's correct format if not return back ...
+}
+
+// Check if FCUpload is defined before moving forward ...
+
+if( !isset( $Config->FCUpload ) || !$Config->FCUpload || trim( $Config->FCUpload ) == getcwd() || trim( $Config->FCUpload ) == ( getcwd() . '/' ) )
+{
+	die( '{"result":"fail","data":{"response":"FCUpload in cfg/cfg.ini require a storage path, root level is not allowed ..."}}' );
 }
 
 
@@ -1484,6 +1491,12 @@ function _applySetup( $userid, $id )
 									"DateCreated"  : "'.$fl->DateCreated.'",
 									"DateModified" : "'.$fl->DateModified.'"
 								}' );
+								
+								// Check if FCUpload is defined before moving forward ...
+								if( !isset( $Config->FCUpload ) || !$Config->FCUpload || trim( $Config->FCUpload ) == getcwd() || trim( $Config->FCUpload ) == ( getcwd() . '/' ) )
+								{
+									die( '{"result":"fail","data":{"response":"FCUpload in cfg/cfg.ini require a storage path, root level is not allowed ..."}}' );
+								}
 								
 								$unlinked = false;
 								
