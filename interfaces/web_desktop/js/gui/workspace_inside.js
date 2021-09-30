@@ -8,7 +8,6 @@ var WorkspaceInside = {
 	workspaceInside: true,
 	refreshDesktopIconsRetries: 0,
 	websocketDisconnectTime: 0,
-	websocketState: null,
 	currentViewState: 'inactive',
 	// Did we load the wallpaper?
 	wallpaperLoaded: false,
@@ -784,7 +783,7 @@ var WorkspaceInside = {
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d } );
+			//console.log( { e:e, d:d } );
 			
 			if( e == 'ok' )
 			{
@@ -1192,11 +1191,18 @@ var WorkspaceInside = {
 	},
 	getWebSocketsState: function()
 	{
-		if( Workspace.readyToRun ) return Workspace.websocketState;
+		if( Workspace.readyToRun )
+		{
+			let res = ( Workspace.conn && Workspace.conn.ws && Workspace.conn.ws.ready ) ? 'open' : 'false';
+			return res;
+		}
 		return 'false';
 	},
 	initWebSocket: function( callback )
 	{
+		// Not online!!
+		if( !navigator.onLine ) return false;
+		
 		let self = this;
 		function closeConn()
 		{
@@ -1205,28 +1211,26 @@ var WorkspaceInside = {
 			{
 				try
 				{
-					self.conn.ws.cleanup();
+					if( self.conn.ws )
+						self.conn.ws.cleanup();
 				}
 				catch( ez )
 				{
-					console.log( 'Conn is dead.', ez, ez2 );
+					console.log( 'Conn is dead.', ez );
 				}
 				delete self.conn;
 			}
 		}
 	
 		// We're already open or connecting
-		if( Workspace.websocketState == 'open' ) return;
+		if( Workspace.conn && Workspace.conn.ws && Workspace.conn.ws.ready ) return;
 		
 		if( window.Friend && Friend.User && Friend.User.State != 'online' ) 
 		{
 			console.log( 'Cannot initialize web socket - user is offline.' );
 			closeConn();
-			return;
+			return false;
 		}
-		
-		if( Workspace.websocketState == 'connecting' )
-			return;
 		
 		if( !Workspace.sessionId && Workspace.userLevel )
 		{
@@ -1249,9 +1253,6 @@ var WorkspaceInside = {
 			this.initWSTimeout = null;
 		}
 		
-		// Force connecting ws state (we will close it!)
-		Workspace.websocketState = 'connecting';
-
 		let conf = {
 			onstate: onState,
 			onend  : onEnd
@@ -1295,37 +1296,37 @@ var WorkspaceInside = {
 		let selfConn = this.conn;
 
 		function onState( e )
-		{
-			//console.log( 'Worspace.conn.onState', e, 'State: ' + Workspace.websocketState );
-			
+		{	
 			if( e.type == 'error' || e.type == 'close' )
 			{
-				if( e.type == 'close' )
+				console.log( '[onState] The ws closed.' );
+				if( !Workspace.wsChecker )
 				{
-					console.log( '[onState] The ws closed.' );
-					Workspace.websocketState = 'closed';
-				}
-				else if( e.type == 'error' )
-				{
-					console.log( '[onState] We got an error.' );
-					Workspace.websocketState = 'error';
+					Workspace.wsChecker = setInterval( function()
+					{
+						if( !Workspace.conn || !Workspace.conn.ws || !Workspace.conn.ws.ws )
+						{
+							console.log( 'Looks like we do not have any websocket. Trying to create it.' );
+							Workspace.initWebSocket();
+						}
+					}, 1600 );
 				}
 			}
 			else if( e.type == 'ping' )
 			{
-				if( Workspace.websocketState != 'open' )
-				{
-					// Refresh mountlist
-					Workspace.websocketState = 'open';
-					Workspace.refreshDesktop( false, true );
-				}
-
 				if( Friend.User )
 					Friend.User.SetUserConnectionState( 'online' );
+				
+				if( Workspace.wsChecker )
+				{
+					clearInterval( Workspace.wsChecker )
+					Workspace.wsChecker = null;
+				}
 				
 				// Reattach
 				if( !Workspace.conn && selfConn )
 				{
+					console.log( 'Reattaching conn!' );
 					Workspace.conn = selfConn;
 				}
 			}
@@ -1341,7 +1342,7 @@ var WorkspaceInside = {
 				}
 				else if( e.type == 'connecting' )
 				{
-					Workspace.websocketState = 'connecting';
+					// ... we are connecting
 				}
 				if( e.type != 'connecting' && e.type != 'open' )
 				{
@@ -1353,7 +1354,7 @@ var WorkspaceInside = {
 		function onEnd( e )
 		{
 			//console.log( 'Workspace.conn.onEnd', e );
-			Workspace.websocketState = 'closed';
+			// We closed connection
 			Friend.User.SetUserConnectionState( 'offline' );
 		}
 
@@ -1537,7 +1538,7 @@ var WorkspaceInside = {
 								messageRead = true;
 								let l = new Library( 'system.library' );
 								l.onExecuted = function( e, d ){
-									console.log( 'Did we tell fc that we read the notification?', e, d );
+									//console.log( 'Did we tell fc that we read the notification?', e, d );
 								};
 								l.execute( 'mobile/updatenotification', { 
 									notifid: msg.notificationData.id, 
@@ -1686,7 +1687,7 @@ var WorkspaceInside = {
 			}
 			else
 			{
-				console.log( 'friend network not enabled' );
+				//console.log( 'friend network not enabled' );
 			}
 		}
 		m.execute( 'checkfriendnetwork' );
@@ -1745,7 +1746,7 @@ var WorkspaceInside = {
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( {e:e,d:d} );
+			//console.log( {e:e,d:d} );
 			if( e != 'ok' ) Alert( 'Error', d );
 			if( e == 'ok' )
 			{
@@ -2516,12 +2517,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										}
 										// We are done. Empty startup apps!
 										Friend.startupApps = {};
-										
-										// Tell app we can show ourselves!
-										if( window.friendApp && window.friendApp.reveal )
-										{
-											friendApp.reveal();
-										}
 									}
 								}
 								l.func();
@@ -2532,6 +2527,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								ScreenOverlay.hide();
 								PollTray();
 								PollTaskbar();
+								// Tell app we can show ourselves!
+								if( window.friendApp && window.friendApp.reveal )
+								{
+									friendApp.reveal();
+								}
 							}
 						} );
 					}
@@ -4733,6 +4733,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						}
 					
 						// Check the friend disks
+						let foundHome   = false;
+						let foundShared = false;
+						let fixCount = 0;
+						
 						if( rows && rows.length )
 						{
 							for ( let a = 0; a < rows.length; a++ )
@@ -4748,6 +4752,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									{
 										console.log( r.Title + ' config did not parse.' );
 									}
+								}
+							
+								// Check if these drives are found
+								if( rows[a].Name == 'Home' )
+								{
+									foundHome = true;
+									fixCount++;
+								}
+								else if( rows[a].Name == 'Shared' )
+								{
+									foundShared = true;
+									fixCount++;
 								}
 							
 								// Doesn't exist, go on
@@ -4870,6 +4886,23 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 						// Check for new events
 						t.checkDesktopEvents();
+						
+						function checkIt()
+						{
+							fixCount--;
+							if( fixCount == 0 )
+							{
+								t.redrawIcons( true );
+							}
+						}
+						if( !foundHome )
+						{
+							t.mountDrive( 'Home', checkIt );
+						}
+						if( !foundShared )
+						{
+							t.mountDrive( 'Shared', checkIt );
+						}
 					}
 					m.execute( 'device/list' );
 				}
@@ -4881,6 +4914,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 
 		return true;
+	},
+	// Mount a drive
+	mountDrive: function( deviceName, cbk )
+	{
+		let l = new Library( 'system.library' );
+		l.onExecuted = function( e, d )
+		{
+			cbk( e, d );
+		};
+		l.execute( 'device/mount', { devname: deviceName } );
 	},
 	redrawIcons: function()
 	{
@@ -6481,6 +6524,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						targ.innerHTML = i18n( 'i18n_no_field_information' );
 					}
 				}
+				m.forceHTTP = true;
 				m.execute( 'file/infoget', { key: opt.getAttribute( 'value' ), path: opt.parentNode.getAttribute( 'path' ) } );
 			}
 			else
@@ -7268,7 +7312,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 	},
 	// Refresh Doors menu recursively ------------------------------------------
-	refreshMenu: function( prohibitworkspaceMenu )
+	refreshMenu: function( prohibitworkspaceMenu, activeElement = false )
 	{	
 		// Current has icons?
 		let iconsAvailable = currentMovable && currentMovable.content && currentMovable.content.directoryview ? true : false;
@@ -7293,6 +7337,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		let sharedVolume = false;
 		let fileIcon = false;
 		let shareCount = 0;
+		let finf = activeElement ? activeElement.fileInfo : false;
+		let isHomeDrive = finf && finf.Volume && finf.Volume == 'Home:' ? true : false;
+		let isSharedDrive = finf && finf.Volume && finf.Volume == 'Shared:' ? true : false;
+		
 		if( iconsSelected )
 		{
 			canUnmount = true;
@@ -7367,6 +7415,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		if ( shareCount > 1 )
 			canBeShared = false;
+		
+		// This will override these things
+		if( isHomeDrive || isSharedDrive )
+		{
+			canUnmount = false;
+		}
 
 		// Init menu -----------------------------------------------------------
 		let tools = '';
@@ -7392,7 +7446,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		
 		let sConf = Workspace.serverConfig;
-
+		
 		// Setup Doors menu
 		this.menu = [
 			{
@@ -7915,6 +7969,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		// Check if we need to activate
 		let iconWindow = false;
+		let isFileMenu = false;
 		if( tr )
 		{
 			let p = tr.parentNode.parentNode;
@@ -7930,6 +7985,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					if( p.content && p.content.directoryview )
 						iconWindow = p.content;
 				}
+			}
+		}
+		
+		// Always refresh menu when we have a targtt
+		if( e && e.target )
+		{
+			let tmp = e.target;
+			while( tmp != document.body )
+			{
+				if( tmp.classList && tmp.classList.contains( 'File' ) )
+					break;
+				tmp = tmp.parentNode;
+			}
+			if( tmp != document.body && tmp.classList.contains( 'File' ) )
+			{
+				isFileMenu = true;
+				Workspace.refreshMenu( true, tmp );
+				menu = Workspace.menu;
 			}
 		}
 		
@@ -8026,7 +8099,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 			];
 		}
-		else if( !menu )
+		else if( !menu || isFileMenu )
 		{
 			// Make sure the menu is up to date
 			let t = tr;
@@ -8045,7 +8118,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					t.checkSelected();
 			}
 			
-			Workspace.refreshMenu( true );
 			for( let z = 0; z < Workspace.menu.length; z++ )
 			{
 				if( Workspace.menu[z].name == i18n( 'menu_icons' ) )
@@ -9539,18 +9611,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Execute when everything is ready
 	onReady: function()
 	{
-		// If we are in a connecting state, wait with startup sequence
-		// TODO: Make sure cAjax also does this check
-		if( Workspace.websocketState == 'connecting' ) 
-		{
-			Workspace.onReadyTemp = Workspace.onReady;
-			Workspace.onReady = function(){};
-			return setTimeout( function(){ Workspace.onReady = Workspace.onReadyTemp; Workspace.onReady(); }, 50 );
-		}
-
 		if( this.onReadyList.length )
 		{
-			// Don't run it twice
+			// Don't  run it twice
 			Workspace.onReady = function(){
 				return Workspace.receivePush( false, true );
 			};
@@ -9593,7 +9656,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				deviceID = friendApp.get_deviceid();
 			}
 
-			console.log('onReady called a bunch of friendApp functions with our sessionid ' + Workspace.sessionId );
+			//console.log('onReady called a bunch of friendApp functions with our sessionid ' + Workspace.sessionId );
 
 			if( appToken != null )	// old applications which do not have appToken will skip this part
 			{
@@ -10717,9 +10780,12 @@ Workspace.receiveLive = function( viewId, jsonEvent ) {
 	chat.contentWindow.postMessage( msg, '*' );
 }
 
+Workspace.pushTrashcan = {};
+
 // Receive push notification (when a user clicks native push notification on phone)
 Workspace.receivePush = function( jsonMsg, ready )
 {
+	//console.log( 'Workspace.receivePush', jsonMsg );
 	if( !isMobile ) return 'mobile';
 	let msg = jsonMsg ? jsonMsg : ( window.friendApp && typeof friendApp.get_notification == 'function' ? friendApp.get_notification() : false );
 
@@ -10742,6 +10808,17 @@ Workspace.receivePush = function( jsonMsg, ready )
 	{
 		if( !ready && this.onReady ) this.onReady();
 		return 'nomsg';
+	}
+	
+	// Disregard already handled notifications.
+	if( msg.notifid )
+	{
+		if( this.pushTrashcan[ msg.notifid ] )
+		{
+			//console.log( 'Already processed notifid ' + msg.notifid );
+			return;
+		}
+		this.pushTrashcan[ msg.notifid ] = true;
 	}
 		
 	// Clear the notifications now... (race cond?)
@@ -10766,6 +10843,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 	
 	function handleClick()
 	{
+		//console.log( 'handleClick ??' );
 		if( !msg.application || msg.application == 'null' ) 
 		{
 			if( !ready && Workspace.onReady ) Workspace.onReady();
@@ -10790,24 +10868,33 @@ Workspace.receivePush = function( jsonMsg, ready )
 			{
 				// Need a "message id" to be able to update notification
 				// on the Friend Core side
-				if( msg.id )
+				if( msg.notifid )
 				{
 					if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
 					{
+						//console.log( '[receivePush] We are updating push notification with Friend Core with ' + msg.notifid + ' it was seen...' );
 						// Function to set the notification as read...
 						let l = new Library( 'system.library' );
 						l.onExecuted = function(){};
 						l.execute( 'mobile/updatenotification', { 
-							notifid: msg.id, 
+							notifid: msg.notifid, 
 							action: 1,
 							pawel: 1
 						} );
 					}
+					else
+					{
+						//console.log( '[receivePush] We are azleep! Server may push us again with this ' + msg.notifid );
+					}
+				}
+				else
+				{
+					//console.log( 'No message id...', msg );
 				}
 			
 				mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
-			
 				let app = Workspace.applications[a];
+				//console.log( 'push to app', [ msg, app ]);
 				app.contentWindow.postMessage( JSON.stringify( { 
 					type: 'system',
 					method: 'pushnotification',
@@ -10830,7 +10917,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 				let l = new Library( 'system.library' );
 				l.onExecuted = function(){};
 				l.execute( 'mobile/updatenotification', { 
-					notifid: msg.id, 
+					notifid: msg.notifid, 
 					action: 1,
 					pawel: 2
 				} );
@@ -10856,7 +10943,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 					break;
 				}
 			}
-		
+			
 			// No application? Alert the user
 			// TODO: Localize response!
 			if( !app )
@@ -10947,6 +11034,7 @@ else
 var mobileDebugTime = null;
 function mobileDebug( str, clear )
 {
+	//console.log( 'mobileDebug', str );
 	if( !isMobile ) return;
 	if( !window.debugDiv ) return;
 	if( mobileDebugTime ) clearTimeout( mobileDebugTime );
@@ -10954,7 +11042,7 @@ function mobileDebug( str, clear )
 	{
 		window.debugDiv.innerHTML = '';
 	}
-	console.log( '[mobileDebug] ' + str );
+	//console.log( '[mobileDebug] ' + str );
 	window.debugDiv.innerHTML += str + '<br>';
 	mobileDebugTime = setTimeout( function()
 	{

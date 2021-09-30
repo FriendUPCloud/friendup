@@ -175,10 +175,8 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 				add = 11;
 			}
 			
-			DEBUG("Sessptr !NULL\n");
-			{
-				memcpy( allArgsNew, allArgs, fullsize );
-			}
+			//DEBUG("Sessptr !NULL\n");
+			memcpy( allArgsNew, allArgs, fullsize );
 			
 			//fprintf( log, "\n\n\n\n\n\n\n\nSIZE ALLAGRS %lu  ALLARGSNEW %lu\n\n\n\n\n\n", strlen( allArgs ), strlen( allArgsNew ) );
 		}
@@ -235,12 +233,12 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 					}
 				}
 			}
-			DEBUG("After for\n");
+			//DEBUG("After for\n");
 		}
 		FFree( allArgs );
 	}
 	//fclose( log );
-	DEBUG("Before fullsize>3096\n");
+	//DEBUG("Before fullsize>3096\n");
 	
 	if( fullsize > 3096 )
 	{
@@ -350,7 +348,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	// This part of code check required information
 	//
 	
-	char *sessionid = FCalloc( DEFAULT_SESSION_ID_SIZE + 1, sizeof(char) );
+	char *sessionid = FCalloc( DEFAULT_SESSION_ID_SIZE + 16, sizeof(char) );
 	char userName[ 256 ];
 	//char sessionid[ DEFAULT_SESSION_ID_SIZE ];
 	//sessionid[ 0 ] = 0;
@@ -817,16 +815,22 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				if( tmpQuery )
 				{
 					DEBUG("[SystembaseWeb] memory allocated\n");
+					
+					snprintf( tmpQuery, 1024, "UPDATE FUserSession SET `LastActionTime`='%ld' WHERE `SessionID`=\"%s\"", timestamp, sessionid );
+					DEBUG("[SystembaseWeb] query: %s\n", tmpQuery );
+					sqllib->QueryWithoutResults( sqllib, tmpQuery );
+					
+					/*
 					char *esc = sqllib->MakeEscapedString( sqllib, sessionid );
 					if( esc != NULL )
 					{
-						snprintf( tmpQuery, 1024, "UPDATE FUserSession SET `LastActionTime`='%ld' WHERE `SessionID`='%s'", timestamp, esc );
+						//snprintf( tmpQuery, 1024, "UPDATE FUserSession SET `LastActionTime`='%ld' WHERE `SessionID`='%s'", timestamp, esc );
 						DEBUG("[SystembaseWeb] query: %s\n", tmpQuery );
 						sqllib->QueryWithoutResults( sqllib, tmpQuery );
 						FFree( esc );
 					}
 					INFO("Logged time updated: %lu\n", timestamp );
-				
+					*/
 					FFree( tmpQuery );
 				}
 				l->LibrarySQLDrop( l, sqllib );
@@ -2170,6 +2174,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							if( loggedSession->us_User == NULL )
 							{
 								DEBUG("[SysWebRequest] User is not attached to session %lu\n", loggedSession->us_UserID );
+								
+								USER_MANAGER_USE( l->sl_UM );
 								User *lusr = l->sl_UM->um_Users;
 								while( lusr != NULL )
 								{
@@ -2180,6 +2186,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									}
 									lusr = (User *)lusr->node.mln_Succ;
 								}
+								USER_MANAGER_RELEASE( l->sl_UM );
 							}
 						
 							//

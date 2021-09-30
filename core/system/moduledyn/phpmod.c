@@ -154,10 +154,10 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	FilterPHPVar( epath );
 
 	sprintf( command, "php '%s' '%s'", path, args != NULL ? args : "" );
-	DEBUG("First command: %s\n", command );
+	//DEBUG("First command: %s\n", command );
 	// Make the commandline string with the safe, escaped arguments, and check for buffer overflows.
 	int cx = snprintf( command, escapedSize, "php '%s' '%s'", epath, earg );
-	DEBUG("Second command: %s\n", command );
+	//DEBUG("Second command: %s\n", command );
 	if( !( cx >= 0 && cx < escapedSize ) )
 	{
 		FERROR( "[PHPmod] snprintf fail\n" );
@@ -190,7 +190,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 		return NULL;
 	}
 	
-	DEBUG("[PHPmod] command launched\n");
+	//DEBUG("[PHPmod] command launched\n");
 
 	int size = 0;
 	int errCounter = 0;
@@ -214,7 +214,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 
 	while( TRUE )
 	{
-		DEBUG("[PHPmod] in loop\n");
+		//DEBUG("[PHPmod] in loop\n");
 		
 		ret = poll( fds, 2, 250 ); // HT - set it to 250 ms..
 
@@ -285,7 +285,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 			break;
 		}
 		FD_SET( pofd.np_FD[ NPOPEN_CONSOLE ], &set);
-		DEBUG("[PHPmod] in loop\n");
+		//DEBUG("[PHPmod] in loop\n");
 		
 		int ret = select( pofd.np_FD[ NPOPEN_CONSOLE ]+1, &set, NULL, NULL, &timeout );
 		// Make a new buffer and read

@@ -28,6 +28,10 @@
 
 static inline void EscapeConfigFromString( char *str, char **configEscaped, char **executeCmd )
 {
+	if( str == NULL )
+	{
+		return;
+	}
 	// Escape config
 	int len = str ? strlen( str ) : 0, k = 0;
 	//dev->f_Visible = 1; // Special case, default is visible
@@ -1524,8 +1528,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 			
 			if( curusr != NULL )
 			{
-				File *dev = curusr->u_MountedDevs;
-				
 				BufString *bsMountedDrives = BufStringNew();	// we need information about not mounted drives
 				
 				BufString *bs = BufStringNew();
@@ -1544,47 +1546,49 @@ AND LOWER(f.Name) = LOWER('%s')",
 					// get information about user drives
 					//
 				
-					if( FRIEND_MUTEX_LOCK( &( curusr->u_Mutex ) ) == 0 )
+					USER_LOCK( curusr );
+					
+					File *dev = curusr->u_MountedDevs;
+					
+					while( dev != NULL )
 					{
-						while( dev != NULL )
+						FHandler *sys = (FHandler *)dev->f_FSys;
+						char *sysname = NULL;
+						if( sys != NULL )
 						{
-							FHandler *sys = (FHandler *)dev->f_FSys;
-							char *sysname = NULL;
-							if( sys != NULL )
+							sysname = sys->Name;
+						}
+						Filesystem *fsys = ( Filesystem *)dev->f_DOSDriver;
+				
+						EscapeConfigFromString( dev->f_Config, &configEscaped, &executeCmd );
+					
+						memset( tmp, '\0', TMP_SIZE );
+					
+						FBOOL isLimited = FALSE;
+					
+						if( loggedSession->us_User->u_IsAdmin == FALSE )
+						{
+							if( strcmp( dev->f_FSysName, "Local" ) == 0 )
 							{
-								sysname = sys->Name;
+								isLimited = TRUE;
 							}
-							Filesystem *fsys = ( Filesystem *)dev->f_DOSDriver;
+						}
 					
-							EscapeConfigFromString( dev->f_Config, &configEscaped, &executeCmd );
+						FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, dev->f_Mounted, dev->f_Name, dev->f_FSysName, dev->f_Path, sysname, configEscaped, dev->f_Visible, executeCmd, isLimited, dev->f_DevServer, dev->f_DevPort, dev->f_UserGroupID );
 					
-							memset( tmp, '\0', TMP_SIZE );
-					
-							FBOOL isLimited = FALSE;
-					
-							if( loggedSession->us_User->u_IsAdmin == FALSE )
+						{
+							char inttmp[ 256 ];
+							int addlen = 0;
+							if( bsMountedDrives->bs_Size == 0 )
 							{
-								if( strcmp( dev->f_FSysName, "Local" ) == 0 )
-								{
-									isLimited = TRUE;
-								}
+								addlen = snprintf( inttmp, sizeof( inttmp ), "%lu", dev->f_ID );
 							}
-					
-							FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, dev->f_Mounted, dev->f_Name, dev->f_FSysName, dev->f_Path, sysname, configEscaped, dev->f_Visible, executeCmd, isLimited, dev->f_DevServer, dev->f_DevPort, dev->f_UserGroupID );
-					
+							else
 							{
-								char inttmp[ 256 ];
-								int addlen = 0;
-								if( bsMountedDrives->bs_Size == 0 )
-								{
-									addlen = snprintf( inttmp, sizeof( inttmp ), "%lu", dev->f_ID );
-								}
-								else
-								{
-									addlen = snprintf( inttmp, sizeof( inttmp ), ",%lu", dev->f_ID );
-								}
-								BufStringAddSize( bsMountedDrives, inttmp, addlen );
+								addlen = snprintf( inttmp, sizeof( inttmp ), ",%lu", dev->f_ID );
 							}
+							BufStringAddSize( bsMountedDrives, inttmp, addlen );
+						}
 						/*
 						if( devnr == 0 )
 						{
@@ -1620,24 +1624,26 @@ AND LOWER(f.Name) = LOWER('%s')",
 						}
 						*/
 					
-							if( executeCmd )
-							{
-								FFree( executeCmd );
-								executeCmd = NULL;
-							}
-							if( configEscaped )
-							{
-								FFree( configEscaped );
-								configEscaped = NULL;
-							}
-						
-							BufStringAdd( bs, tmp );
-					
-							devnr++;
-							dev = (File *)dev->node.mln_Succ;
+						if( executeCmd )
+						{
+							FFree( executeCmd );
+							executeCmd = NULL;
 						}
-						FRIEND_MUTEX_UNLOCK( &( curusr->u_Mutex ) );
+						if( configEscaped )
+						{
+							FFree( configEscaped );
+							configEscaped = NULL;
+						}
+					
+						BufStringAdd( bs, tmp );
+				
+						devnr++;
+						dev = (File *)dev->node.mln_Succ;
 					}
+
+					USER_UNLOCK( curusr );
+						
+					/*
 					else
 					{
 						if( executeCmd )
@@ -1651,6 +1657,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 							configEscaped = NULL;
 						}
 					}
+					*/
 				
 					//
 					// get information about shared group drives
@@ -1663,7 +1670,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					//for( gr = 0 ; gr < curusr->u_GroupsNr ; gr++ )
 					{
 						//DEBUG("\n\n\n\nGROUP: %s\n\n\n\n\n", curusr->u_Groups[ gr ]->ug_Name );
-						dev = NULL;
+						File *dev = NULL;
 						if( ugl->ugl_Group != NULL )
 						{
 							dev = ugl->ugl_Group->ug_MountedDevs;

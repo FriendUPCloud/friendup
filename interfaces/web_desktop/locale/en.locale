@@ -455,7 +455,7 @@ i18n_list_header_user                   : Users
 #File dialogs ------------------------------------------------------------------
 
 file_load                               : Load
-file_abort                              : Close
+file_abort                              : Cancel
 file_save                               : Save
 file_open_title                         : Load a file
 file_open_path                          : Select path

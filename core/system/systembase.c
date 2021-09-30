@@ -281,7 +281,7 @@ SystemBase *SystemInit( void )
 	l->LibraryZDrop = LibraryZDrop;
 	l->LibraryImageGet = LibraryImageGet;
 	l->LibraryImageDrop = LibraryImageDrop;
-	l->WebSocketSendMessage = WebSocketSendMessage;
+	l->UserSessionWebsocketWrite = UserSessionWebsocketWrite;
 	l->WebSocketSendMessageInt = WebSocketSendMessageInt;
 	l->WebsocketWrite = UserSessionWebsocketWrite;
 	l->SendProcessMessage = SendProcessMessage;
@@ -1085,7 +1085,9 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 
 	EventAdd( l->sl_EventManager, "DoorNotificationRemoveEntries", DoorNotificationRemoveEntries, l, time( NULL )+MINS30, MINS30, -1 );
-	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+l->sl_RemoveOldSessionTimeout, l->sl_RemoveOldSessionTimeout, -1 );	// default 60mins
+	
+	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", UMRemoveOldSessions, l, time( NULL )+l->sl_RemoveOldSessionTimeout, l->sl_RemoveOldSessionTimeout, -1 );	// default 60mins
+	//EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+l->sl_RemoveOldSessionTimeout, l->sl_RemoveOldSessionTimeout, -1 );	// default 60mins
 	// test, to remove
 	EventAdd( l->sl_EventManager, "PIDThreadManagerRemoveThreads", PIDThreadManagerRemoveThreads, l->sl_PIDTM, time( NULL )+MINS60, MINS60, -1 );
 	EventAdd( l->sl_EventManager, "CacheUFManagerRefresh", CacheUFManagerRefresh, l->sl_CacheUFM, time( NULL )+DAYS5, DAYS5, -1 );
@@ -1876,9 +1878,12 @@ g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND \
 ug.UserID = '%ld' \
 ) \
 ) \
-)AND ( (f.Owner='0' OR f.Owner IS NULL) AND f.Mounted=\'1\')", 
+)AND (f.Mounted=\'1\')", 
 usr->u_ID , usr->u_ID, usr->u_ID
 	);
+
+//)AND ( (f.Owner='0' OR f.Owner IS NULL) AND f.Mounted=\'1\')", 
+
 		DEBUG("[UserDeviceMount] Finding drives in DB\n");
 		void *res = sqllib->Query( sqllib, temptext );
 		if( res == NULL )
@@ -2015,9 +2020,16 @@ int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses )
 	DEBUG("UserDeviceUnMount\n");
 	if( usr != NULL )
 	{
+		USER_CHANGE_ON( usr );
+		
 		if( usr->u_MountedDevs != NULL )
 		{
 			File *dev = usr->u_MountedDevs;
+			
+			usr->u_MountedDevs = NULL; // set it to NULL
+			
+			USER_CHANGE_OFF( usr );
+			
 			File *remdev = dev;
 			
 			while( dev != NULL )
@@ -2025,11 +2037,19 @@ int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses )
 				remdev = dev;
 				dev = (File *)dev->node.mln_Succ;
 				
+				DEBUG("Pointer to remdev: %p\n", remdev );
+				
 				DeviceUnMount( l->sl_DeviceManager, remdev, usr, ses );
+				
+				DEBUG("Pointer to remdev2: %p\n", remdev );
 				
 				//FFree( remdev );
 				FileDelete( remdev );
 			}
+		}
+		else
+		{
+			USER_CHANGE_OFF( usr );
 		}
 		
 		//TODO
@@ -2060,7 +2080,7 @@ char *RunMod( SystemBase *l, const char *type, const char *path, const char *arg
 	EModule *lmod = l->sl_Modules;
 	EModule *workmod = NULL;
 
-	DEBUG("[SystemBase] Run module '%s'\n", type );
+	//DEBUG("[SystemBase] Run module '%s'\n", type );
 
 	while( lmod != NULL )
 	{
@@ -2407,7 +2427,7 @@ Sentinel* GetSentinelUser( SystemBase* l )
  * @param len length of the message
  * @return 0 if message was sent otherwise error number
  */
-
+/*
 int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *usersession, char *msg, int len )
 {
 	unsigned char *buf;
@@ -2447,6 +2467,7 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 	
 	return bytes;
 }
+*/
 
 /**
  * Send message via websockets
@@ -2516,7 +2537,8 @@ int SendProcessMessage( Http *request, char *data, int len )
 			
 			DEBUG("[SystemBase] SendProcessMessage message '%s'\n", sendbuf );
 			
-			WebSocketSendMessage( sb, pidt->pt_UserSession, sendbuf, newmsglen );
+			UserSessionWebsocketWrite( pidt->pt_UserSession, (unsigned char *)sendbuf, newmsglen, LWS_WRITE_TEXT);
+			//WebSocketSendMessage( sb, pidt->pt_UserSession, sendbuf, newmsglen );
 			
 			FFree( sendbuf );
 		}

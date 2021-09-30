@@ -997,7 +997,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 	// update external services about changes
 	//NotificationManagerSendEventToConnections( sb->sl_NotificationManager, NULL, NULL, NULL, "service", "user", "update", bsGroups->bs_Buffer );
 	// update user about changes
-	UserNotifyFSEvent2( sb->sl_DeviceManager, usr, "refresh", "Mountlist:" );
+	UserNotifyFSEvent2( usr, "refresh", "Mountlist:" );
 	
 	if( bsInsert != NULL )
 	{

@@ -1464,7 +1464,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 											//UserGroupAddUser( fg, usr );
 											UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, loggedSession, groupID );
 										
-											UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
+											UserNotifyFSEvent2( usr, "refresh", "Mountlist:" );
 										}
 										// user is in group, we can remove him
 										else
@@ -1476,7 +1476,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 										
 											//UserGroupRemoveUser( fg, usr );
 											
-											UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
+											UserNotifyFSEvent2( usr, "refresh", "Mountlist:" );
 										}
 										
 										if( levelType == TRUE )
@@ -2065,6 +2065,25 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 							if( exist == FALSE )
 							{
 								UGMAddUserToGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
+								
+								char *errorStr = NULL;
+
+								User *usr = UMGetUserByID( l->sl_UM, (FULONG)rmEntry->i_Data );
+								if( usr != NULL )
+								{
+									if( usr->u_SessionsList != NULL && usr->u_SessionsList->us != NULL )
+									{
+										UserSession *locus = usr->u_SessionsList->us;
+										UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, locus, groupID );
+									}
+									//if( UserGroupDeviceMount( l->sl_DeviceManager, sqlLib, ug, usr, loggedSession, &errorStr ) != 0 )
+									//{
+									//INFO( "[MountFS] -- Could not mount device for user %s. Drive was %s.\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--" );
+									//}
+
+									// Tell user!
+									UserNotifyFSEvent2( usr, "refresh", "Mountlist:" );
+								}
 							}
 						}
 					
@@ -2084,7 +2103,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 								}
 
 								// Tell user!
-								UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
+								UserNotifyFSEvent2( usr, "refresh", "Mountlist:" );
 
 								l->LibrarySQLDrop( l, sqlLib );
 							}
@@ -2464,7 +2483,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 								// if device was detached from not current user
 								//if( usr != loggedSession->us_User )
 								{
-									UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
+									UserNotifyFSEvent2( usr, "refresh", "Mountlist:" );
 								}
 							}
 							FFree( rmEntry );

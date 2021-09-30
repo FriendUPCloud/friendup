@@ -698,7 +698,7 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
  * @return 0 if connection was deleted without problems otherwise error number
  */
 
-int DetachWebsocketFromSession( void *d )
+int DetachWebsocketFromSession( void *d, void *wsi )
 {
 	WSCData *data = (WSCData *)d;
 	
@@ -714,6 +714,14 @@ int DetachWebsocketFromSession( void *d )
 		if( data->wsc_UserSession != NULL )
 		{
 			us = (UserSession *)data->wsc_UserSession;
+			
+			WSCData *ldata = (WSCData *)us->us_WSD; 
+			if( ldata != NULL && wsi != ldata->wsc_Wsi )
+			{
+				DEBUG("[DetachWebsocketFromSession] we cannot detach this session. Wrong WSI pointer\n");
+				FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
+				return 0;
+			}
 		}
 		
 		//data->wsc_UserSession = NULL;
