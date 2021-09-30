@@ -47,6 +47,20 @@ typedef struct SinkProcessMessage{
 	void *udata;
 }SinkProcessMessage;
 
+
+const char *errorMsg[] =
+{
+	"Success",
+	"Json cannot be parsed",
+	"Websockets were not authenticated",
+	"Notification type not found",
+	"Authentication failed",
+	"No authentication elements in message",
+	"Parameters not found",
+	"JSON Tokens not found (request is not in JSON format probably)"
+	
+};
+
 int globalServerEntriesNr = 0;
 char **globalServerEntries = NULL;
 

@@ -429,12 +429,12 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		this.mode = 'websocket';
 		this.url = url;
 		this.hasReturnCode = hasReturnCode;
-		console.log( 'WebSocket call: ' + url );
+		//console.log( 'WebSocket call: ' + url );
 		return true;
 	}
 	else
 	{
-		console.log( 'HTTP call: ' + url );
+		//console.log( 'HTTP call: ' + url );
 	}
 	
 	// If we are running this on friendup recreate url to support old method

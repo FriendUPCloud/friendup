@@ -1474,6 +1474,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, level, workgroups );
 					
 						RefreshUserDrives( l->sl_DeviceManager, loggedSession, NULL, &error );
+						
+						DEBUG("[update/user] before notification\n");
 					
 						NotifyExtServices( l, request, logusr, "update" );
 					
@@ -1487,6 +1489,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						{
 							FFree( error );
 						}
+						
+						DEBUG("[update/user] after notification\n");
 					
 						HttpAddTextContent( response, "ok<!--separate-->{\"update\":\"success!\"}" );
 					}
@@ -1496,11 +1500,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						char buffer[ 256 ];
 						snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
 						HttpAddTextContent( response, buffer );
-					}
-				
-					if( userFromSession == FALSE )
-					{
-						UserDelete( logusr );
 					}
 				}
 			}
@@ -1516,6 +1515,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		if( logusr != NULL )
 		{
 			USER_UNLOCK( logusr );
+		}
+		
+		if( userFromSession == FALSE )
+		{
+			UserDelete( logusr );
 		}
 		
 		if( level != NULL )
