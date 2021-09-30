@@ -10,6 +10,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+global $configfilesettings;
+
 if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {
 	$args->authid = $args->args->authid;
@@ -54,10 +56,25 @@ if( isset( $args->authid ) )
 }
 
 
+$blacklist = isset( $configfilesettings[ 'FriendCore' ][ 'dosdriverblacklist' ] ) ?
+	$configfilesettings[ 'FriendCore' ][ 'dosdriverblacklist' ] : false;
+if( $blacklist )
+{
+	$blacklist = explode( ',', $blacklist );
+}
+$out = new stdClass();
+foreach( $blacklist as $bl )
+{
+	$bl = trim( $bl );
+	$out->{$bl} = true;
+}
+$blacklist = $out;
+unset( $out );
+
 
 $out = [];
 $mode = 'default';
-if( $args->args->mode )
+if( isset( $args->args ) && isset( $args->args->mode ) )
 	$mode = $args->args->mode;
 if( $dir = opendir( 'devices/DOSDrivers' ) )
 {
@@ -67,6 +84,13 @@ if( $dir = opendir( 'devices/DOSDrivers' ) )
 
 		if( !file_exists( $fn = 'devices/DOSDrivers/' . $f . '/sysinfo.json' ) )
 			continue;
+		
+		// Skip entries found in blacklist
+		if( $blacklist && isset( $blacklist->{$f} ) )
+		{
+			continue;
+		}
+		
 		$o = file_get_contents( $fn );
 		if( !( $o = json_decode( $o ) ) ) continue;
 
@@ -102,6 +126,5 @@ if( count( $out ) > 0 )
 	die( 'ok<!--separate-->' . json_encode( $out ) );
 }
 die( 'fail<!--separate-->{"response":"types failed"}' );
-//die( 'ok<!--separate-->[{"type":"treeroot","literal":"Treeroot"},{"type":"local","literal":"Local filesystem"},{"type":"corvo","literal":"MySQL Based Filesystem"},{"type":"website","literal":"Mount websites as doors"}]' );
 
 ?>
