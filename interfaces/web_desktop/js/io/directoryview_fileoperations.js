@@ -1050,6 +1050,18 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 					{
 						fl = this.files[ i ];
 						
+						// NOTE: If we have a special case like "ExportFormat" from the source Door Drive we need to overwrite file extension to the export format.
+						if( fl.fileInfo.ExportFormat && fl.fileInfo.Extension == 'diskhandled' )
+						{
+							var ext = ( fl.fileInfo.Filename.indexOf( '.' ) >= 0 ? fl.fileInfo.Filename.split( '.' ).pop(  ) : false );
+							
+							if( !ext )
+							{
+								fl.fileInfo.NewPath = ( ( fl.fileInfo.NewPath ? fl.fileInfo.NewPath : fl.fileInfo.Path ) + '.' + fl.fileInfo.ExportFormat );
+								console.log( 'Converting extension to fl.fileInfo.ExportFormat. NewPath is: ' + fl.fileInfo.NewPath );
+							}
+						}
+						
 						// Could be we have a just in time modified new path instead of path (in case of overwriting etc)
 						var destPath = fl.fileInfo.NewPath ? fl.fileInfo.NewPath : fl.fileInfo.Path;
 						
