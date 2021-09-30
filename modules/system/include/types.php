@@ -62,15 +62,17 @@ if( $blacklist )
 {
 	$blacklist = explode( ',', $blacklist );
 }
-$out = new stdClass();
-foreach( $blacklist as $bl )
+if( count( $blacklist ) )
 {
-	$bl = trim( $bl );
-	$out->{$bl} = true;
+	$out = new stdClass();
+	foreach( $blacklist as $bl )
+	{
+		$bl = trim( $bl );
+		$out->{$bl} = true;
+	}
+	$blacklist = $out;
+	unset( $out );
 }
-$blacklist = $out;
-unset( $out );
-
 
 $out = [];
 $mode = 'default';
