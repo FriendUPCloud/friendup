@@ -263,30 +263,24 @@ function ExecuteApplication( app, args, callback, retries, flags )
 		{
 			// console.log( 'Test2: Executing app Was not ok.' );
 			console.log( 'ExecuteApplication - onExecuted not ok', r );
-			console.log( 'Trying again: "' + r + '"' );
 			if( r == 'notinstalled' || ( conf && conf.response == 'not installed' ) )
 			{
-				console.log( 'It is!' );
 				let hideView = false;
 				if( d.toLowerCase().indexOf('"trusted":"yes"') > 0 )
 				{
 					hideView = true;
 				}
 
-				console.log( 'Blubb' );
 				// Just use callback
-				if( callback )
+				if( callback && !hideView )
 				{
 					if( !callback( { error: 2, errorMessage: i18n( 'install_question_title' ) } ) )
 					{
 						// Remove blocker
-						console.log( 'Blobb' );
 						RemoveFromExecutionQueue( appName );
 						return;
 					}
 				}
-				
-				console.log( 'Opening a window: hidden? ' + ( hideView ? ' true ' : ' not true' ) );
 				
 				let title = i18n( 'install_question_mintitle' ) + ': ' + app;
 				let w = new View( {
@@ -300,7 +294,6 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				let f = new File( 'System:templates/install.html' );
 				f.onLoad = function( data )
 				{
-					console.log( 'Are we checking deeper?' );
 					let repl = [ 'install_question_desc', 'install_question_title',
 								 'install_button', 'install_cancel' ];
 					for( let a in repl ) data = data.split( '{' + repl[a] + '}' ).join ( i18n( repl[a] ) );
@@ -308,8 +301,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					w.setContent( data );
 					if( hideView )
 					{
-						console.log( 'Install it!' );
-						InstallApplication( app );
+						InstallApplication( app, callback );
 					}
 				}
 				f.load();
@@ -979,7 +971,7 @@ function ActivateApplication( app, conf )
 	f.load();
 }
 
-function InstallApplication( app )
+function InstallApplication( app, callback )
 {
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
@@ -1002,11 +994,16 @@ function InstallApplication( app )
 				}
 				
 				w.close();
+				
 			}
+			if( callback )
+				callback( true );
 		}
 		else
 		{
 			Ac2Alert( 'Failed to install application...' );
+			if( callback )
+				callback( false );
 		}
 	}
 	m.execute( 'installapplication', { application: app } );
