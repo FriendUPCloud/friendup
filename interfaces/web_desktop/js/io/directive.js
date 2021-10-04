@@ -263,8 +263,10 @@ function ExecuteApplication( app, args, callback, retries, flags )
 		{
 			// console.log( 'Test2: Executing app Was not ok.' );
 			console.log( 'ExecuteApplication - onExecuted not ok', r );
+			console.log( 'Trying again: "' + r + '"' );
 			if( r == 'notinstalled' || ( conf && conf.response == 'not installed' ) )
 			{
+				console.log( 'It is!' );
 				let hideView = false;
 				if( d.toLowerCase().indexOf('"trusted":"yes"') > 0 )
 				{
