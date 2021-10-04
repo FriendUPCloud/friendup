@@ -1215,7 +1215,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		
 		FBOOL have = TRUE;
 
-		if( req->http_RequestSource == HTTP_SOURCE_FC && sb->sl_Sentinel != NULL && usr == sb->sl_Sentinel->s_User )
+		if( req->http_RequestSource == HTTP_SOURCE_FC )
 		{
 			have = FALSE;
 		}
@@ -1362,7 +1362,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		resp = HttpNewSimple( HTTP_200_OK,  tags );
 		
 		FBOOL have = TRUE;
-		if( req->http_RequestSource == HTTP_SOURCE_FC && sb->sl_Sentinel != NULL && usr == sb->sl_Sentinel->s_User )
+		if( req->http_RequestSource == HTTP_SOURCE_FC )
 		{
 			have = FALSE;
 		}
@@ -1405,7 +1405,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		
 		FBOOL have = TRUE;
 		FHandler *actFS = (FHandler *)rootDev->f_FSys;
-		if( req->http_RequestSource == HTTP_SOURCE_FC && sb->sl_Sentinel != NULL && usr == sb->sl_Sentinel->s_User )
+		if( req->http_RequestSource == HTTP_SOURCE_FC )
 		{
 			have = FALSE;
 		}
@@ -1535,7 +1535,7 @@ Host: 192.168.153.138:6502
 
 		FBOOL have = TRUE;
 		FHandler *actFS = (FHandler *)rootDev->f_FSys;
-		if( req->http_RequestSource == HTTP_SOURCE_FC && sb->sl_Sentinel != NULL && usr == sb->sl_Sentinel->s_User )
+		if( req->http_RequestSource == HTTP_SOURCE_FC )
 		{
 			have = FALSE;
 		}
@@ -1570,7 +1570,7 @@ Host: 192.168.153.138:6502
 
 		FBOOL have = TRUE;
 		FHandler *actFS = (FHandler *)rootDev->f_FSys;
-		if( req->http_RequestSource == HTTP_SOURCE_FC && sb->sl_Sentinel != NULL && usr == sb->sl_Sentinel->s_User )
+		if( req->http_RequestSource == HTTP_SOURCE_FC )
 		{
 			have = FALSE;
 		}

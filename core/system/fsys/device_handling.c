@@ -583,10 +583,6 @@ static inline int MountFSNoSubMount( DeviceManager *dm, struct TagItem *tl, File
 		
 		Log( FLOG_DEBUG, "Mount device\n");
 		
-		// Setup the sentinel
-		Sentinel *sent = l->GetSentinelUser( l );
-		int usingSentinel = 0;
-		
 		// New way of finding type of device
 		SQLLibrary *sqllib = l->LibrarySQLGet( l );
 		if( sqllib != NULL )
@@ -636,69 +632,14 @@ AND f.Name='%s' and (f.Owner='0' OR f.Owner IS NULL)",
 			if( ( res == NULL || sqllib->NumberOfRows( sqllib, res ) <= 0 ) && usrgrp == NULL )
 			{
 				FERROR("[MountFS] %s - GetUserDevice fail: database results = NULL\n", usr->u_Name );
-				if( sent != NULL && sent->s_User != NULL )
-				{
-					sqllib->FreeResult( sqllib, res );
-					
-					DEBUG( "[MountFS] Trying to mount device using sentinel!\n" );
-					memset( temptext, '\0', 512 );
-					
-					if( usrgrp != NULL )
-					{
-						sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
-"SELECT \
-`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate`, f.`KeysID`, f.`GroupID`, f.`UserID` \
-FROM `Filesystem` f left outer join `FilesystemActivity` fsa on f.ID = fsa.FilesystemID and CURDATE() <= fsa.ToDate \
-WHERE \
-( \
-f.GroupID = '%ld' \
-) \
-AND f.Name = '%s'",
-						usrgrp->ug_ID, name 
-						);
-					}
-					else
-					{
-						sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
-"SELECT \
-`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate`, f.`KeysID`, f.`GroupID`, f.`UserID` \
-FROM `Filesystem` f left outer join `FilesystemActivity` fsa on f.ID = fsa.FilesystemID and CURDATE() <= fsa.ToDate \
-WHERE \
-( \
-f.UserID = '%ld' OR \
-f.GroupID IN ( \
-SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g \
-WHERE \
-g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND \
-ug.UserID = '%ld' \
-)\
-) \
-AND f.Name = '%s'",
-						sent->s_User->u_ID, sent->s_User->u_ID, name 
-						);
-						
-					}
-					if( ( res = sqllib->Query( sqllib, temptext ) ) == NULL )
-					{
-						//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
-						if( type != NULL ){ FFree( type );}
-						l->sl_Error = FSys_Error_SelectFail;
-						l->LibrarySQLDrop( l, sqllib );
-						FFree( temptext );
-						return FSys_Error_SelectFail;
-					}
-					usingSentinel = 1;
-				}
-				else
-				{
-					sqllib->FreeResult( sqllib, res );
-					//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
-					if( type != NULL ){ FFree( type );}
-					l->sl_Error = FSys_Error_SelectFail;
-					l->LibrarySQLDrop( l, sqllib );
-					FFree( temptext );
-					return FSys_Error_SelectFail;
-				}
+				
+				sqllib->FreeResult( sqllib, res );
+
+				if( type != NULL ){ FFree( type );}
+				l->sl_Error = FSys_Error_SelectFail;
+				l->LibrarySQLDrop( l, sqllib );
+				FFree( temptext );
+				return FSys_Error_SelectFail;
 			}
 			else
 			{
@@ -711,11 +652,6 @@ AND f.Name = '%s'",
 			char **row;
 			int j = 0;
 	
-			if( usingSentinel == 1 )
-			{
-				DEBUG( "[MountFS] %s - We are using sentinel!\n", usr->u_Name );
-			}
-			
 			FFree( temptext );
 	
 			while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
@@ -951,10 +887,6 @@ AND f.Name = '%s'",
 		
 		// Using sentinel?
 		User *mountUser = usr;
-		if( usingSentinel == 1 )
-		{
-			mountUser = sent->s_User;
-		}
 		
 		DEBUG( "[MountFS] Filesystem to mount now.\n" );
 		
@@ -1248,11 +1180,7 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 		}
 		
 		Log( FLOG_DEBUG, "Mount device\n");
-		
-		// Setup the sentinel
-		Sentinel *sent = l->GetSentinelUser( l );
-		int usingSentinel = 0;
-		
+
 		// New way of finding type of device
 		SQLLibrary *sqllib = l->LibrarySQLGet( l );
 		if( sqllib != NULL )
@@ -1299,69 +1227,14 @@ AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 			void *res = sqllib->Query( sqllib, temptext );
 			if( ( res == NULL || sqllib->NumberOfRows( sqllib, res ) <= 0 ) && usrgrp == NULL )
 			{
-				FERROR("[MountFS] %s - GetUserDevice fail: database results = NULL\n", usr->u_Name );
-				if( sent != NULL && sent->s_User != NULL )
-				{
-					sqllib->FreeResult( sqllib, res );
-					
-					DEBUG( "[MountFS] Trying to mount device using sentinel!\n" );
-					memset( temptext, '\0', 512 );
-					
-					if( usrgrp != NULL )
-					{
-						sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
-"SELECT \
-`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate`, f.`KeysID`, f.`GroupID`, f.`UserID` \
-FROM `Filesystem` f left outer join `FilesystemActivity` fsa on f.ID = fsa.FilesystemID and CURDATE() <= fsa.ToDate \
-WHERE \
-( \
-f.GroupID = '%ld' \
-) \
-AND f.Name = '%s'",
-						usrgrp->ug_ID, name 
-						);
-					}
-					else
-					{
-						sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
-"SELECT \
-`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate`, f.`KeysID`, f.`GroupID`, f.`UserID` \
-FROM `Filesystem` f left outer join `FilesystemActivity` fsa on f.ID = fsa.FilesystemID and CURDATE() <= fsa.ToDate \
-WHERE \
-( \
-f.UserID = '%ld' OR \
-f.GroupID IN ( \
-SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g \
-WHERE \
-g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND \
-ug.UserID = '%ld' \
-)\
-) \
-AND f.Name = '%s'",
-						sent->s_User->u_ID, sent->s_User->u_ID, name 
-						);
-						
-					}
-					if( ( res = sqllib->Query( sqllib, temptext ) ) == NULL )
-					{
-						//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
-						if( type != NULL ){ FFree( type );}
-						l->sl_Error = FSys_Error_SelectFail;
-						l->LibrarySQLDrop( l, sqllib );
-						return FSys_Error_SelectFail;
-					}
-					usingSentinel = 1;
-				}
-				else
-				{
-					sqllib->FreeResult( sqllib, res );
-					//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
-					if( type != NULL ){ FFree( type );}
-					l->sl_Error = FSys_Error_SelectFail;
-					l->LibrarySQLDrop( l, sqllib );
 				
-					return FSys_Error_SelectFail;
-				}
+				sqllib->FreeResult( sqllib, res );
+
+				if( type != NULL ){ FFree( type );}
+				l->sl_Error = FSys_Error_SelectFail;
+				l->LibrarySQLDrop( l, sqllib );
+				
+				return FSys_Error_SelectFail;
 			}
 			else
 			{
@@ -1373,11 +1246,6 @@ AND f.Name = '%s'",
 	
 			char **row;
 			int j = 0;
-	
-			if( usingSentinel == 1 )
-			{
-				DEBUG( "[MountFS] %s - We are using sentinel!\n", usr->u_Name );
-			}
 			
 			FFree( temptext );
 	
@@ -1617,11 +1485,7 @@ AND f.Name = '%s'",
 
 		// Using sentinel?
 		User *mountUser = usr;
-		if( usingSentinel == 1 )
-		{
-			mountUser = sent->s_User;
-		}
-		
+
 		DEBUG( "[MountFS] Filesystem to mount now.\n" );
 		
 		//

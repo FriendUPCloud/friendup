@@ -369,26 +369,7 @@ UserSession *USMGetSessionsByTimeout( UserSessionManager *smgr, const FULONG tim
 		return NULL;
 	}
 	
-	/*
-	if( fc_sentinel != NULL && fc_sentinel->UserObject != NULL )
-	{
-		DEBUG( "[USMGetSessionsByTimeout] Creating query part.\n" );
-		sentinelQuery = FCalloc( 256, sizeof( char ) );
-		sprintf( sentinelQuery, " OR ( `Name`=\"%s\" AND `Password`=SHA2(CONCAT(\"HASHED\",SHA2(\"%s\",256)),256) )",
-			fc_sentinel->Username, fc_sentinel->Password );
-	}*/
-	// There is only one user in DB which have name  Sentinel, there is no need to check Password
-	
-	Sentinel *sent = NULL;
-
-	if( ( sent = sb->GetSentinelUser( sb ) ) != NULL )
-	{
-		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), " (LastActionTime>%lld OR `UserID` in( SELECT ID FROM `FUser` WHERE `Name`='%s'))", (long long int)(timestamp - timeout), sent->s_ConfigUsername );
-	}
-	else
-	{
-		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), " (LastActionTime>%lld)", (long long int)(timestamp - timeout) );
-	}
+	sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), " (LastActionTime>%lld)", (long long int)(timestamp - timeout) );
 	
 	DEBUG( "[USMGetSessionsByTimeout] Sending query: %s...\n", tmpQuery );
 	
@@ -1004,15 +985,6 @@ int USMRemoveOldSessions( void *lsb )
 		FBOOL canDelete = TRUE;
 		remSession = actSession;
 		
-		if( sb->sl_Sentinel != NULL )
-		{
-			if( remSession->us_User == sb->sl_Sentinel->s_User && strcmp( remSession->us_DeviceIdentity, "remote" ) == 0 )
-			{
-				DEBUG("Sentinel REMOTE session I cannot remove it\n");
-				canDelete = FALSE;
-			}
-		}
-		
 		if( actSession == (UserSession *)actSession->node.mln_Succ )
 		{
 			DEBUG( "DOUBLE ACTSESSION\n" );
@@ -1182,61 +1154,6 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, U
 		UserSessionDelete( ses );
 	}
 }
-
-/**
- * Check if UserSession is attached to Sentinel
- *
- * @param usm pointer to UserSessionManager
- * @param username name of the User
- * @param isSentinel set flag to TRUE if user is Sentinel user
- * @return User to which session is attached or NULL
- */
-User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus, FBOOL *isSentinel )
-{
-	User *tuser = NULL;
-	SystemBase *sb = (SystemBase *)usm->usm_SB;
-	FBOOL isUserSentinel = FALSE;
-	
-	SESSION_MANAGER_USE( usm );
-	
-	UserSession *tusers = usm->usm_Sessions;
-
-	while( tusers != NULL )
-	{
-		tuser = tusers->us_User;
-		Sentinel *sent = sb->GetSentinelUser( sb );
-		if( tuser != NULL && sent != NULL && sent->s_User == tuser )
-		{
-			isUserSentinel = TRUE;
-			break;
-			/*
-			// Check both username and password
-
-			if( tuser != NULL && strcmp( tuser->u_Name, username ) == 0 )
-			{
-				FBOOL isUserSentinel = FALSE;
-			
-				Sentinel *sent = sb->GetSentinelUser( sb );
-				if( sent != NULL )
-				{
-					if( tuser == sent->s_User )
-					{
-						isUserSentinel = TRUE;
-					}
-				}
-				*rus = tusers;
-				break;
-			}
-			*/
-		}
-		tusers = (UserSession *)tusers->node.mln_Succ;
-	}
-	
-	SESSION_MANAGER_RELEASE( usm );
-	
-	return tuser;
-}
-
 
 #define USERSESSION_SIZE (sizeof(WebsocketReqManager) + sizeof(struct UserSession) + sizeof(struct FQueue) )
 

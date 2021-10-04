@@ -1021,7 +1021,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					
 					FBOOL have = TRUE;
 					
-					if( request->http_RequestSource == HTTP_SOURCE_FC && l->sl_Sentinel != NULL &&  loggedSession->us_User == l->sl_Sentinel->s_User )
+					if( request->http_RequestSource == HTTP_SOURCE_FC )
 					{
 						have = FALSE;
 					}
@@ -1142,7 +1142,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						int i, lastChar = 0;
 						int plen = strlen( lpath );
 						
-						if( request->http_RequestSource == HTTP_SOURCE_FC && l->sl_Sentinel != NULL &&  loggedSession->us_User == l->sl_Sentinel->s_User )
+						if( request->http_RequestSource == HTTP_SOURCE_FC )
 						{
 							have = FALSE;
 						}

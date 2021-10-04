@@ -288,7 +288,6 @@ SystemBase *SystemInit( void )
 	l->GetRootDeviceByName = GetRootDeviceByName;
 	l->SystemInitExternal = SystemInitExternal;
 	l->RunMod = RunMod;
-	l->GetSentinelUser = GetSentinelUser;
 	l->UserDeviceMount = UserDeviceMount;
 	l->UserDeviceUnMount = UserDeviceUnMount;
 	l->GetError = GetError;
@@ -1319,22 +1318,7 @@ void SystemClose( SystemBase *l )
 	{
 		MitraManagerDelete( l->sl_MitraManager );
 	}
-	
-	// Remove sentinel from active memory
-	if( l->sl_Sentinel != NULL )
-	{
-		if( l->sl_Sentinel->s_ConfigUsername != NULL )
-		{
-			FFree( l->sl_Sentinel->s_ConfigUsername );
-		}
-		if( l->sl_Sentinel->s_ConfigPassword != NULL )
-		{
-			FFree( l->sl_Sentinel->s_ConfigPassword );
-		}
-		FFree( l->sl_Sentinel );
-		l->sl_Sentinel = NULL;
-	}
-	
+
 	Log( FLOG_INFO, "[SystemBase] Release dosdrivers\n");
 	// release dosdrivers
 	DOSDriver *ldd = l->sl_DOSDrivers;
@@ -1555,54 +1539,6 @@ int SystemInitExternal( SystemBase *l )
 		time_t timestamp = time ( NULL );
 		
 		//
-		// get sentinel
-		//
-		
-		// Initialize sentinel structure in active memory
-		
-		if( l->sl_Sentinel == NULL )
-		{
-			DEBUG( "[SystemBase] Creating sentinel.\n" );
-			PropertiesInterface *plib = &(SLIB->sl_PropertiesInterface);
-			Props *prop = plib->Open( "cfg/cfg.ini" );
-			if( prop != NULL )
-			{
-				// Do we even want a sentinel?
-				char *userTest = plib->ReadStringNCS( prop, "Core:SentinelUsername", NULL );
-				if( userTest != NULL )
-				{
-					l->sl_Sentinel = FCalloc( 1, sizeof( Sentinel ) );
-					if( l->sl_Sentinel != NULL )
-					{
-						l->sl_Sentinel->s_ConfigUsername = StringDuplicate( userTest );
-						l->sl_Sentinel->s_ConfigPassword = StringDuplicate( plib->ReadStringNCS( prop, "Core:SentinelPassword", NULL ) );
-					
-						memcpy( l->sl_Sentinel->s_FCID, l->fcm->fcm_ID, FRIEND_CORE_MANAGER_ID_SIZE );
-					}
-				}
-				plib->Close( prop );
-			}
-			
-			if( l->sl_Sentinel != NULL )
-			{
-				if( l->sl_Sentinel->s_ConfigUsername == NULL || l->sl_Sentinel->s_ConfigPassword == NULL )
-				{
-					if( l->sl_Sentinel->s_ConfigUsername == NULL )
-					{
-						FFree( l->sl_Sentinel->s_ConfigUsername );
-					}
-					if( l->sl_Sentinel->s_ConfigPassword == NULL )
-					{
-						FFree( l->sl_Sentinel->s_ConfigPassword );
-					}
-					FFree( l->sl_Sentinel );
-					l->sl_Sentinel = NULL;
-				}
-			}
-			// PS: Sentinel is logged in in user_sessionmanager.c!
-		}
-		
-		//
 		// get all user sessions from DB
 		//
 	
@@ -1642,16 +1578,6 @@ int SystemInitExternal( SystemBase *l )
 			
 					UserAddSession( usr, usess );
 					usess->us_User = usr;
-					
-					// Find the sentinel!
-					if( l->sl_Sentinel != NULL )
-					{
-						if( strcmp( usr->u_Name, l->sl_Sentinel->s_ConfigUsername ) == 0 )
-						{
-							l->sl_Sentinel->s_User = usr;
-							DEBUG("[SystemBase] Sentinel user found: %s\n", usr->u_Name );
-						}
-					}
 				}
 			}
 		
@@ -1661,112 +1587,6 @@ int SystemInitExternal( SystemBase *l )
 			}
 		
 			usess = (UserSession *)usess->node.mln_Succ;
-		}
-		
-		//
-		// attach sentinel user
-		//
-		
-		if( l->sl_Sentinel != NULL && l->sl_Sentinel->s_User == NULL )
-		{
-			DEBUG("[SystemBase] Sentinel!= NULL\n");
-			FBOOL fromMem = FALSE;
-			User *sentuser = UMGetUserByName( l->sl_UM, l->sl_Sentinel->s_ConfigUsername );
-			if( sentuser == NULL )
-			{
-				sentuser = UMGetUserByNameDB( l->sl_UM, l->sl_Sentinel->s_ConfigUsername );
-			}
-			else
-			{
-				fromMem = TRUE;
-			}
-			
-			if( sentuser != NULL )
-			{
-				// add user to list
-				if( fromMem == FALSE )
-				{
-					sentuser->node.mln_Succ = (MinNode *)l->sl_UM->um_Users;
-					l->sl_UM->um_Users = sentuser;
-				}
-				
-				DEBUG("[SystemBase] Sentinel user is avaiable\n");
-				l->sl_Sentinel->s_User = sentuser;
-			}
-			else
-			{
-				DEBUG("[SystemBase] Sentinel user is not avaiable\n");
-			}
-		}
-		
-		//
-		// Sentinel is set in config but FC cannot find it (user do not exist)
-		//
-		
-		if( l->sl_Sentinel != NULL && l->sl_Sentinel->s_User == NULL )
-		{
-			if( l->sl_Sentinel->s_ConfigUsername == NULL || l->sl_Sentinel->s_ConfigPassword == NULL )
-			{
-				if( l->sl_Sentinel->s_ConfigUsername == NULL )
-				{
-					FFree( l->sl_Sentinel->s_ConfigUsername );
-				}
-				if( l->sl_Sentinel->s_ConfigPassword == NULL )
-				{
-					FFree( l->sl_Sentinel->s_ConfigPassword );
-				}
-				FFree( l->sl_Sentinel );
-				l->sl_Sentinel = NULL;
-			}
-		}
-		
-		//
-		// add remote sentinel session
-		//
-		
-		if( l->sl_Sentinel != NULL && l->sl_Sentinel->s_User != NULL )
-		{
-			FBOOL foundRemoteSession = FALSE;
-			UserSessListEntry *sl = l->sl_Sentinel->s_User->u_SessionsList;
-			while( sl != NULL )
-			{
-				UserSession *locses = sl->us;
-				if( strcmp( locses->us_DeviceIdentity, "remote" ) == 0 )
-				{
-					foundRemoteSession = TRUE;
-				}
-				sl = (UserSessListEntry *) sl->node.mln_Succ;
-			}
-			
-			// remote session is missing, we are adding it
-			
-			if( foundRemoteSession == FALSE )
-			{
-				char *newSessionId = SessionIDGenerate();
-				DEBUG("[SystemBase] Remote session will be created for Sentinel\n");
-				
-				UserSession *ses = UserSessionNew( newSessionId, "remote" );
-				//UserSession *ses = UserSessionNew( "remote", "remote" );
-				if( ses != NULL )
-				{
-					ses->us_UserID = l->sl_Sentinel->s_User->u_ID;
-					ses->us_LastActionTime = timestamp;
-					
-					UserAddSession( l->sl_Sentinel->s_User, ses );
-					
-					USMUserSessionAddToList( l->sl_USM, ses );
-				}
-				FFree( newSessionId );
-			}
-			
-			//
-			// regenerate sessionid for User
-			//
-			
-			if(  (timestamp - l->sl_Sentinel->s_User->u_LastActionTime) > l->sl_RemoveSessionsAfterTime )
-			{
-				UserRegenerateSessionID( l->sl_Sentinel->s_User, NULL );
-			}
 		}
 		
 		UMCheckAndLoadAPIUser( l->sl_UM );
@@ -2401,73 +2221,6 @@ void LibraryImageDrop( SystemBase *l, ImageLibrary *closelib __attribute__((unus
 		LibraryClose( (struct Library *)l->ilib );
 	}
 }
-
-/**
- * Get Sentinel User from System
- * 
- * @param l pointer to SystemBase
- * @return Sentinel user
- */
-
-Sentinel* GetSentinelUser( SystemBase* l )
-{
-	if( l != NULL )
-	{
-		return l->sl_Sentinel;
-	}
-	return NULL;
-}
-
-/**
- * Send message via websockets
- *
- * @param l pointer to SystemBase
- * @param usersession recipient of 
- * @param msg message which will be send
- * @param len length of the message
- * @return 0 if message was sent otherwise error number
- */
-/*
-int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *usersession, char *msg, int len )
-{
-	unsigned char *buf;
-	int bytes = 0;
-	buf = (unsigned char *)FCalloc( len + 128, sizeof( unsigned char ) );
-	if( buf != NULL )
-	{
-		memcpy( buf, msg, len );
-	
-		DEBUG("[SystemBase] Writing to websockets, string '%s' size %d\n",msg, len );
-		//if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
-		{
-			if( usersession->us_WSD != NULL )
-			{
-				WSCData *data = (WSCData *)usersession->us_WSD;
-				if( data != NULL && data->wsc_UserSession != NULL && data->wsc_Wsi != NULL )
-				{
-					bytes += UserSessionWebsocketWrite( usersession, buf , len, LWS_WRITE_TEXT );
-				}
-			}
-			else
-			{
-				FERROR("Cannot write to WS, WSI is NULL!\n");
-			}
-			//FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
-		}
-		DEBUG("[SystemBase] Writing to websockets done, stuff released\n");
-		
-		FFree( buf );
-	}
-	else
-	{
-		Log( FLOG_ERROR,"Cannot allocate memory for message\n");
-		return 0;
-	}
-	DEBUG("[SystemBase] WebSocketSendMessage end, wrote %d bytes\n", bytes );
-	
-	return bytes;
-}
-*/
 
 /**
  * Send message via websockets

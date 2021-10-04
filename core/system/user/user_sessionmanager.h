@@ -210,12 +210,6 @@ UserSession *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sq
 void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, UserSession *ses );
 
 //
-// Check if User Session is attached to Sentinel User
-//
-
-User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus, FBOOL *isSentinel );
-
-//
 //
 //
 

@@ -649,14 +649,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							User *curusr = locus->us_User;
 							if( curusr != NULL )
 							{
-								FBOOL isSentinel = FALSE;
-								Sentinel *sent = l->GetSentinelUser( l );
-								if( sent != NULL && sent->s_User != NULL && sent->s_User == curusr )
-								{
-									isSentinel = TRUE;
-								}
-								
-								if( isSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, curusr, (char *)passwd->hme_Data, &blockedTime, "remote" ) == TRUE )
+								// sentinel was checked here before if( sentinel && checkpassword
+								if( l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, curusr, (char *)passwd->hme_Data, &blockedTime, "remote" ) == TRUE )
 								{
 									loggedSession = locus;
 									userAdded = TRUE;		// there is no need to free resources
@@ -2053,69 +2047,9 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					UserSession *dstusrsess = NULL;
 					UserSession *tusers = NULL;
 					
-					FBOOL isUserSentinel = FALSE;
-					
-					if( deviceid == NULL )
-					{
-						User *tuser = USMIsSentinel( l->sl_USM, usrname, &tusers, &isUserSentinel );
-						
-						if( tuser != NULL )
-						{
-							if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, tuser, pass, &blockedTime, deviceid ) == TRUE )
-							{
-								dstusrsess = tusers;
-								DEBUG("Found user session  id %s\n", tusers->us_SessionID );
-							}
-						}
-					}
-					else	// deviceid != NULL
-					{
-						User *tuser = USMIsSentinel( l->sl_USM, usrname, &tusers, &isUserSentinel );
-					
-						if( tuser != NULL )
-						{
-							if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, tuser, pass, &blockedTime, deviceid ) == TRUE )
-							{
-								dstusrsess = tusers;
-								if( tusers != NULL )
-								{
-									DEBUG("Found user session  id %s\n", tusers->us_SessionID );
-								}
-							}
-						}
-					}
-					
 					if( dstusrsess == NULL )
 					{
-						Sentinel *sent = l->GetSentinelUser( l );
-						if( sent != NULL && sent->s_User != NULL )
-						{
-							DEBUG("Sent %p\n", sent->s_User );
-							if( strcmp( sent->s_User->u_Name, usrname ) == 0 )
-							{
-								isUserSentinel = TRUE;
-							}
-						}
-						
-						DEBUG("Authenticate dstusrsess == NULL is user sentinel %d\n", isUserSentinel );
-						if( isUserSentinel == TRUE && strcmp( deviceid, "remote" ) == 0 )
-						{
-							User *tmpusr = UMUserGetByNameDB( l->sl_UM, usrname );
-							if( tmpusr != NULL )
-							{
-								loggedSession = UserSessionNew( "remote", deviceid );
-								if( loggedSession != NULL )
-								{
-									loggedSession->us_UserID = tmpusr->u_ID;
-								}
-								
-								UserDelete( tmpusr );
-							}
-						}
-						else
-						{
-							loggedSession = l->sl_ActiveAuthModule->Authenticate( l->sl_ActiveAuthModule, *request, NULL, usrname, pass, deviceid, NULL, &blockedTime );
-						}
+						loggedSession = l->sl_ActiveAuthModule->Authenticate( l->sl_ActiveAuthModule, *request, NULL, usrname, pass, deviceid, NULL, &blockedTime );
 						
 						//
 						// user not logged in previously, we must add it to list
@@ -2140,20 +2074,13 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					{
 						DEBUG("[SysWebRequest] Call authenticate by %s\n", l->sl_ActiveAuthModule->am_Name );
 
-						if( isUserSentinel == TRUE )
+						if( appname == NULL )
 						{
-							loggedSession = dstusrsess;
+							loggedSession = l->sl_ActiveAuthModule->Authenticate( l->sl_ActiveAuthModule, *request, dstusrsess, usrname, pass, deviceid, NULL, &blockedTime );
 						}
 						else
 						{
-							if( appname == NULL )
-							{
-								loggedSession = l->sl_ActiveAuthModule->Authenticate( l->sl_ActiveAuthModule, *request, dstusrsess, usrname, pass, deviceid, NULL, &blockedTime );
-							}
-							else
-							{
-								loggedSession = l->sl_ActiveAuthModule->Authenticate( l->sl_ActiveAuthModule, *request, dstusrsess, usrname, pass, deviceid, "remote", &blockedTime );
-							}
+							loggedSession = l->sl_ActiveAuthModule->Authenticate( l->sl_ActiveAuthModule, *request, dstusrsess, usrname, pass, deviceid, "remote", &blockedTime );
 						}
 					}
 					

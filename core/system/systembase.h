@@ -154,19 +154,6 @@ typedef struct Device
 } Device;
 
 //
-// Sentinel
-//
-
- typedef struct Sentinel
- {
- char				*s_ConfigUsername;
- char				*s_ConfigPassword;
- char				s_FCID[ FRIEND_CORE_MANAGER_ID_SIZE ];
- User				*s_User;
- } Sentinel;
-
-
-//
 // Mount parameters
 //
 
@@ -348,54 +335,31 @@ typedef struct SystemBase
 	FBOOL							sl_UnMountDevicesInDB;
 	char							*sl_XFrameOption;
 	FLONG							sl_USFCacheMax; // User Shared File Manager cache max (per device)
-	Sentinel 						*sl_Sentinel;
-
+	
 	void							(*SystemClose)( struct SystemBase *l );
-
 	Http							*(*SysWebRequest)( struct SystemBase *l, char **path, Http **request, UserSession *loggedSession, int *result );
-
 	int								(*InitSystem)( struct SystemBase *l );
-
 	int								(*MountFS)( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError, UserSession *us, FBOOL notify );
-
 	int								(*UnMountFS)( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *loggedSession );
 
 // "Global" functions
 
 	struct AuthMod					*(*AuthModuleGet)( struct SystemBase *l );
-
 	void							(*AuthModuleDrop)( struct SystemBase *l, struct AuthMod * );
-
 	struct SQLLibrary				*(*LibrarySQLGet)( struct SystemBase *l );
-
 	void							(*LibrarySQLDrop)( struct SystemBase *l, struct SQLLibrary * );
-
 	struct ApplicationLibrary		*(*LibraryApplicationGet)( struct SystemBase *l );
-
 	void							(*LibraryApplicationDrop)( struct SystemBase *l, struct ApplicationLibrary * );
-
 	struct ZLibrary					*(*LibraryZGet)( struct SystemBase *sb );
-
 	void							(*LibraryZDrop)( struct SystemBase *sb, ZLibrary *pl );
-	
 	struct ImageLibrary				*(*LibraryImageGet)( struct SystemBase *sb );
-
 	void							(*LibraryImageDrop)( struct SystemBase *sb, ImageLibrary *pl );
-	
 	int								(*UserDeviceMount)( struct SystemBase *l, UserSession *us, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
-	
 	int								(*UserDeviceUnMount)( struct SystemBase *l, User *usr, UserSession *ses );
-	
 	int								(*SystemInitExternal)( struct SystemBase *l );
-	
-	Sentinel						*(*GetSentinelUser)( struct SystemBase *l );
-
 	int								(*UserSessionWebsocketWrite)( UserSession *usersession, unsigned char *msg, int len, int type );
-	
 	int								(*WebSocketSendMessageInt)( UserSession *usersession, char *msg, int len );
-	
 	int								(*WebsocketWrite)( UserSession *wscl, unsigned char *msgptr, int msglen, int type );
-	
 	int								(*SendProcessMessage)( Http *request, char *data, int len );
 
 	char							*(*RunMod)( struct SystemBase *l, const char *mime, const char *path, const char *args, unsigned long *length );
@@ -534,12 +498,6 @@ char *RunMod( struct SystemBase *l, const char *mime, const char *path, const ch
 //
 
 int GetError( struct SystemBase *l );
-
-//
-//
-//
-
-Sentinel *GetSentinelUser( SystemBase *l );
 
 //
 //

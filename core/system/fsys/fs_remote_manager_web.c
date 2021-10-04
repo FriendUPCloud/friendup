@@ -174,6 +174,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
 					// checking remote write access for Sentinel user
+					/*
 					if( l->sl_Sentinel != NULL &&  loggedSession->us_User == l->sl_Sentinel->s_User && mode[0] == 'w' )
 					{
 						char buffer[ 256 ];
@@ -181,6 +182,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 						HttpAddTextContent( response, buffer );
 					}
 					else
+						*/
 					{
 						//actDev->f_SessionIDPTR = loggedSession->us_SessionID;
 						FileFillSessionID( actDev, loggedSession );
