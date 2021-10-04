@@ -271,17 +271,20 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					hideView = true;
 				}
 
-				
+				console.log( 'Blubb' );
 				// Just use callback
 				if( callback )
 				{
 					if( !callback( { error: 2, errorMessage: i18n( 'install_question_title' ) } ) )
 					{
 						// Remove blocker
+						console.log( 'Blobb' );
 						RemoveFromExecutionQueue( appName );
 						return;
 					}
 				}
+				
+				console.log( 'Opening a window: hidden? ' + ( hideView ? ' true ' : ' not true' ) );
 				
 				let title = i18n( 'install_question_mintitle' ) + ': ' + app;
 				let w = new View( {
