@@ -635,41 +635,30 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				
 				if( uname != NULL && uname->hme_Data != NULL  )
 				{
-					if( FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) ) == 0 )
+					UserSession *locus = USMGetSessionByUserName( l->sl_USM, (char *)uname->hme_Data, FALSE );
+					
+					SESSION_MANAGER_USE( l->sl_USM );
+					
+					if( locus != NULL )
 					{
-						UserSession *locus = USMGetSessionByUserName( l->sl_USM, (char *)uname->hme_Data, FALSE );
-						if( locus != NULL )
+						User *curusr = locus->us_User;
+						if( curusr != NULL )
 						{
-							if( FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
+							FBOOL isSentinel = FALSE;
+							Sentinel *sent = l->GetSentinelUser( l );
+							if( sent != NULL && sent->s_User != NULL && sent->s_User == curusr )
 							{
-								locus->us_InUseCounter++;
-								FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
+								isSentinel = TRUE;
 							}
 							
-							User *curusr = locus->us_User;
-							if( curusr != NULL )
+							if( isSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, curusr, (char *)passwd->hme_Data, &blockedTime, "remote" ) == TRUE )
 							{
-								FBOOL isSentinel = FALSE;
-								Sentinel *sent = l->GetSentinelUser( l );
-								if( sent != NULL && sent->s_User != NULL && sent->s_User == curusr )
-								{
-									isSentinel = TRUE;
-								}
-								
-								if( isSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, curusr, (char *)passwd->hme_Data, &blockedTime, "remote" ) == TRUE )
-								{
-									loggedSession = locus;
-									userAdded = TRUE;		// there is no need to free resources
-								}
-							}
-							
-							if( FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
-							{
-								locus->us_InUseCounter--;
-								FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
+								loggedSession = locus;
+								userAdded = TRUE;		// there is no need to free resources
 							}
 						}
 					}
+					SESSION_MANAGER_RELEASE( l->sl_USM );
 				}
 			}
 			else
@@ -2061,19 +2050,24 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						
 						if( tuser != NULL )
 						{
+							USER_LOCK( tuser );
+							
 							if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, tuser, pass, &blockedTime, deviceid ) == TRUE )
 							{
 								dstusrsess = tusers;
 								DEBUG("Found user session  id %s\n", tusers->us_SessionID );
 							}
+							USER_UNLOCK( tuser );
 						}
 					}
 					else	// deviceid != NULL
 					{
 						User *tuser = USMIsSentinel( l->sl_USM, usrname, &tusers, &isUserSentinel );
-					
+
 						if( tuser != NULL )
 						{
+							USER_LOCK( tuser );
+							
 							if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, tuser, pass, &blockedTime, deviceid ) == TRUE )
 							{
 								dstusrsess = tusers;
@@ -2082,6 +2076,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									DEBUG("Found user session  id %s\n", tusers->us_SessionID );
 								}
 							}
+							USER_UNLOCK( tuser );
 						}
 					}
 					
