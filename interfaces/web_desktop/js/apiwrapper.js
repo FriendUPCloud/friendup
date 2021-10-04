@@ -2671,6 +2671,7 @@ function apiWrapper( event, force )
 						if( msg.args )
 						{
 							var key = ( typeof msg.args != 'object' ? msg.args : msg.args.key );
+							var publickey = ( typeof msg.args == 'object' && msg.args.server ? Workspace.encryption.keys.server.publickey : Workspace.encryption.keys.client.publickey );
 							
 							var nmsg = {};
 							
@@ -2679,15 +2680,15 @@ function apiWrapper( event, force )
 								nmsg[b] = msg[b];
 							}
 							
-							var encrypted = ( key ? Workspace.encryption.encrypt( key ) : false );
+							var encrypted = ( key ? Workspace.encryption.encrypt( key, publickey ) : false );
 							
-							if( encrypted && Workspace.encryption.keys.client.publickey )
+							if( encrypted && publickey )
 							{
 								nmsg.type = 'callback';
 								nmsg.resp = 'ok';
 								nmsg.data = { 
 									encrypted: encrypted,
-									publickey: Workspace.encryption.keys.client.publickey
+									publickey: publickey
 								};
 								
 								app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
@@ -3231,7 +3232,7 @@ function apiWrapper( event, force )
 							var m = new Module( 'system' );
 							m.onExecuted = function( e, d )
 							{
-								//console.log( { e: e, d: JSON.parse( d ) } );
+								//console.log( 'keys', { e: e, d: JSON.parse( d ) } );
 								
 								if( e && e == 'ok' && d )
 								{
@@ -3313,25 +3314,40 @@ function apiWrapper( event, force )
 							
 							try 
 							{
+								var server = {
+									data: null,
+									publickey: null
+								};
+								
 								if( !msg.systemWide && msg.appPath && msg.appPath.indexOf( ':' ) >= 0 && Workspace.encryption.keys.server.publickey )
 								{
-									var encryption_key = Workspace.encryption.keys.server.publickey;
-								}
-								else
-								{
-									var encryption_key = Workspace.encryption.keys.client.publickey;
+									var encryption_server_key = Workspace.encryption.keys.server.publickey;
+									
+									if( msg.args.encrypt && msg.args.data && encryption_server_key )
+									{
+										var encrypted = Workspace.encryption.encrypt( msg.args.data, encryption_server_key );
+										
+										if( encrypted )
+										{
+											server.data = encrypted;
+											server.publickey = encryption_server_key;
+										}
+									}
 								}
 								
-								if( msg.args.encrypt && msg.args.data && encryption_key )
+								var encryption_client_key = Workspace.encryption.keys.client.publickey;
+								
+								if( msg.args.encrypt && msg.args.data && encryption_client_key )
 								{
-									var encrypted = Workspace.encryption.encrypt( msg.args.data, encryption_key );
+									var encrypted = Workspace.encryption.encrypt( msg.args.data, encryption_client_key );
 												
 									if( encrypted )
 									{
-										msg.args.data = encrypted;
-										msg.args.publickey = encryption_key;
+										msg.args.data = ( server.data ? ( server.data + '<!--fc_server_data-->' + encrypted ) : encrypted );
+										msg.args.publickey = encryption_client_key;
 									}
 								}
+								
 							}
 							catch( e ) {  }
 							
@@ -3361,7 +3377,7 @@ function apiWrapper( event, force )
 							var m = new Module( 'system' );
 							m.onExecuted = function( e, d )
 							{
-								//console.log( { e:e, d:d, o: args } );
+								//console.log( 'userkeysupdate', { e:e, d:d, o: args } );
 								
 								if( nmsg.callback )
 								{

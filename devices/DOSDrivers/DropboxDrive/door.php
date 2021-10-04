@@ -192,6 +192,17 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 								}
 							}
 							
+							if( strstr( $data, '<!--fc_server_data-->' ) )
+							{
+								if( $parts = explode( '<!--fc_server_data-->', $data ) )
+								{
+									if( $parts[0] )
+									{
+										$data = $parts[0];
+									}
+								}
+							}
+							
 							if( $privatekey && ( $decrypted = $fcrypt->decryptString( $data, $privatekey ) ) )
 							{
 								if( $plaintext = $decrypted->plaintext )

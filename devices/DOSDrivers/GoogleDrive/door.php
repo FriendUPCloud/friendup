@@ -190,6 +190,17 @@ if( !class_exists( 'GoogleDrive' ) )
 								}
 							}
 							
+							if( strstr( $data, '<!--fc_server_data-->' ) )
+							{
+								if( $parts = explode( '<!--fc_server_data-->', $data ) )
+								{
+									if( $parts[0] )
+									{
+										$data = $parts[0];
+									}
+								}
+							}
+							
 							if( $privatekey && ( $decrypted = $fcrypt->decryptString( $data, $privatekey ) ) )
 							{
 								if( $plaintext = $decrypted->plaintext )
@@ -265,8 +276,30 @@ if( !class_exists( 'GoogleDrive' ) )
 								
 								if( $encrypt && ( $encrypted = $fcrypt->encryptString( $data, $publickey ) ) )
 								{
-									$data = $encrypted->cipher;
+									$data_client = false;
+									
+									$data_server = $encrypted->cipher;
 									$pubkey = $publickey;
+									
+									$usr = new dbIO( 'FUser' );
+									$usr->ID = $User->ID;
+									if( $usr->Load() && $usr->PublicKey )
+									{
+										if( $encrypted = $fcrypt->encryptString( $data, $usr->PublicKey ) )
+										{
+											$data_client = $encrypted->cipher;
+											$pubkey = $usr->PublicKey;
+										}
+									}
+									
+									if( $data_client )
+									{
+										$data = ( $data_server . '<!--fc_server_data-->' . $data_client );
+									}
+									else
+									{
+										$data = $data_server;
+									}
 								}
 							}
 						}
@@ -1111,7 +1144,7 @@ if( !class_exists( 'GoogleDrive' ) )
 		*/
 		function getFile( $path, $returnGDocURL=false )
 		{
-			global $User, $args, $Logger;
+			global $User, $SqlDatabase, $Config, $args, $Logger;
 		
 			// TODO: Need to change this because you are forced to be logged in client side on only one account to view files, dropbox is even better then this shit lol ...
 			
@@ -1137,7 +1170,48 @@ if( !class_exists( 'GoogleDrive' ) )
 			*/
 			if( strpos($gfile->getMimeType(),'google') > 0 && $returnGDocURL )
 			{
-				$dataset = (object)['url'=>$gfile->getWebViewLink(),'title'=>$gfile->getName()];
+				
+				$confjson = json_decode( $this->Config, 1 );
+				
+				$rs = $SqlDatabase->FetchObject( 'SELECT fs.Data FROM FSetting fs WHERE fs.UserID=\'-1\' AND fs.Type = \'system\' AND fs.Key=\'googledrive\'' );
+				
+				if( !$rs )
+				{
+					$rs = $SqlDatabase->FetchObject( 'SELECT fs.Data FROM FSetting fs WHERE fs.UserID=\'-1\' AND fs.Type = \'google\' AND fs.Key=\'settings\'' );
+				}		
+				
+				
+				if( $rs ) $dconf = json_decode( $rs->Data, 1 );
+				
+				$redirect_uri = ( $Config->SSLEnable ? 'https://' : 'http://' ) . $Config->FCHost . ( $Config->FCHost == 'localhost' ? ( $Config->FCPort ? ':'.$Config->FCPort : ':6502' ) : '' ) . '/loginprompt/oauth';
+				
+				$encrypted = null;
+				
+				$fcrypt = new fcrypto();
+				
+				if( $confjson['access'] )
+				{
+					if( $data = json_encode( $confjson['access'] ) )
+					{
+						$usr = new dbIO( 'FUser' );
+						$usr->ID = $User->ID;
+						if( $usr->Load() && $usr->PublicKey )
+						{
+							if( $encrypted = $fcrypt->encryptString( $data, $usr->PublicKey ) )
+							{
+								$encrypted = $encrypted->cipher;
+							}
+						}
+					}
+				}
+				
+				$dataset = (object)[ 
+					'url'          => $gfile->getWebViewLink(), 
+					'title'        => $gfile->getName(), 
+					'client_id'    => $this->sysinfo['client_id'],
+					'redirect_uri' => ( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : $redirect_uri ),
+					'encrypted'    => $encrypted
+				];
 				//$Logger->log( '[[[ getFile ]]]: $dataset: ' . json_encode($dataset) . "\r\n" );
 				return 'ok###' . json_encode($dataset);
 			}

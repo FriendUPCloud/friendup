@@ -955,7 +955,7 @@ function editKey( id )
 			}
 		}
 		
-		//console.log( { e:e, data:data } );
+		//console.log( 'keys', { e:e, data:(data?data:d) } );
 		
 		var str = '' + 
 		'<div class="HRow PaddingBottom">' + 
@@ -1015,25 +1015,78 @@ function saveKey( id )
 {
 	if( ge( 'KeyName' ) && ge( 'KeyApplication' ) && ge( 'KeyData' ) && ge( 'KeyPublic' ) )
 	{
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
+		// If it's a special case we need to create server data
+		if( ge( 'KeyApplication' ).value == '-1' && ge( 'KeyData' ).value )
 		{
-			//console.log( { e: e, d: d } );
-		
-			if( e == 'ok' )
+			
+			var data_client = ge( 'KeyData' ).value;
+			
+			Application.encryption.decrypt( data_client, function( e, d )
 			{
-				refreshUserKeys();
-			}
+				//console.log( { e:e, d:d } );
+				
+				if( e == 'ok' && d.decrypted )
+				{
+					
+					Application.encryption.encrypt( { key: d.decrypted, server: true }, function( ee, dd )
+					{
+						//console.log( { e:ee, d:dd } );
+						
+						if( ee == 'ok' && dd.encrypted && dd.publickey )
+						{
+							
+							var data = ( dd.encrypted + '<!--fc_server_data-->' + data_client );
+							
+							var m = new Module( 'system' );
+							m.onExecuted = function( eee, ddd )
+							{
+								//console.log( { e: eee, d: ddd } );
+		
+								if( eee == 'ok' )
+								{
+									refreshUserKeys();
+								}
+							}
+							m.execute( 'userkeysupdate', { 
+								id: ( id ? id : '' ), 
+								type: ( ge( 'KeyType' ).value ? ge( 'KeyType' ).value : '' ),
+								name: ge( 'KeyName' ).value, 
+								app: ge( 'KeyApplication' ).value,  
+								key: data, 
+								publickey: ge( 'KeyPublic' ).value, 
+								signature: '' 
+							} );
+							
+						}
+						
+					} );
+					
+				}
+			} );
+			
 		}
-		m.execute( 'userkeysupdate', { 
-			id: ( id ? id : '' ), 
-			type: ( ge( 'KeyType' ).value ? ge( 'KeyType' ).value : '' ),
-			name: ge( 'KeyName' ).value, 
-			app: ge( 'KeyApplication' ).value,  
-			key: ge( 'KeyData' ).value, 
-			publickey: ge( 'KeyPublic' ).value, 
-			signature: '' 
-		} );
+		else
+		{
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				//console.log( { e: e, d: d } );
+		
+				if( e == 'ok' )
+				{
+					refreshUserKeys();
+				}
+			}
+			m.execute( 'userkeysupdate', { 
+				id: ( id ? id : '' ), 
+				type: ( ge( 'KeyType' ).value ? ge( 'KeyType' ).value : '' ),
+				name: ge( 'KeyName' ).value, 
+				app: ge( 'KeyApplication' ).value,  
+				key: ge( 'KeyData' ).value, 
+				publickey: ge( 'KeyPublic' ).value, 
+				signature: '' 
+			} );
+		}
 	}
 }
 

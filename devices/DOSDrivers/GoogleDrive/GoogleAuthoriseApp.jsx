@@ -18,7 +18,16 @@ Application.run = function( msg, interface )
 	var w = new View( { title: 'Google Drive Authorisation', width: 500, height: 340 } );
 	w.setFlag('allowPopups', true);
 	w.setContent('<div style="padding:25px;"><h1>Google Drive authorisation needed</h1><p>To enable FriendUP to access your Google Drive you need to grant access once. You can revoke that access at any given time in your Google Drive settings</p><p><a href="javascript:void(0)" onclick="'+ Application.getLoginCode() +'" class="Button fa-google IconSmall"> &nbsp; Click to go enable Google Drive access</a></p></div>');
-
+	
+	//oauth2Window( function ( data )
+	//{
+		
+	//	console.log( data );
+		
+	//} );
+	
+	//test();
+	
 }
 
 Application.getLoginCode = function()
@@ -66,3 +75,4 @@ Application.getLoginCode = function()
 	return ret;
 	
 }
+

@@ -810,6 +810,17 @@ if( isset( $args->command ) )
 			{
 				foreach( $keys as $key )
 				{
+					if( $key && $key->Data && strstr( $key->Data, '<!--fc_server_data-->' ) )
+					{
+						if( $data = explode( '<!--fc_server_data-->', $key->Data ) )
+						{
+							if( $data[1] )
+							{
+								$key->Data = $data[1];
+							}
+						}
+					}
+					
 					$out[] = $key;
 				}
 			}
@@ -1481,6 +1492,19 @@ if( isset( $args->command ) )
 				$key->PublicKey     = $args->args->publickey;
 				$key->DateModified  = date( 'Y-m-d H:i:s' );
 				$key->Save();
+				
+				// Update the user's PublicKey field if it's empty ...
+				// TODO: Make sure it's not the server's PublicKey
+				if( $key->PublicKey && $key->ID > 0 && $UserSession->UserID > 0 )
+				{
+					$usr = new dbIO( 'FUser' );
+					$usr->ID = $UserSession->UserID;
+					if( $usr->Load() && !$usr->PublicKey )
+					{
+						$usr->PublicKey = $key->PublicKey;
+						$usr->Save();
+					}
+				}
 				
 				if( $fsysid && $key->ID > 0 )
 				{
