@@ -295,6 +295,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				let f = new File( 'System:templates/install.html' );
 				f.onLoad = function( data )
 				{
+					console.log( 'Are we checking deeper?' );
 					let repl = [ 'install_question_desc', 'install_question_title',
 								 'install_button', 'install_cancel' ];
 					for( let a in repl ) data = data.split( '{' + repl[a] + '}' ).join ( i18n( repl[a] ) );
@@ -302,6 +303,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					w.setContent( data );
 					if( hideView )
 					{
+						console.log( 'Install it!' );
 						InstallApplication( app );
 					}
 				}
