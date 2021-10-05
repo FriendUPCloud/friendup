@@ -26,7 +26,8 @@ if( file_exists( $f ) )
 			FriendHeader( 'Content-Type: text/css' );
 			break;
 	}
-	die( file_get_contents( $f ) );
+	readfile( $f );
+	die();
 }
 die( 'fail<!--separate-->{"response":"resource not found"}' . $f );
 
