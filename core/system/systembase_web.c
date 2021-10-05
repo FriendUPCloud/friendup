@@ -500,7 +500,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 
 					//inner join FUserSession us on u.ID=us.UserID 
 					//sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT * FROM ( ( SELECT us.SessionID FROM FUserSession us, FUserApplication a WHERE a.AuthID=\"%s\" AND a.UserID=us.UserID LIMIT 1 ) UNION ( SELECT us2.SessionID FROM FUserSession us2, Filesystem f WHERE f.Config LIKE \"%s%s%s\" AND us2.UserID=f.UserID LIMIT 1 ) ) z LIMIT 1",( char *)ast->hme_Data, "%", ( char *)ast->hme_Data, "%");
-					sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT * FROM ( ( SELECT us.UserID FROM FUserSession us, FUserApplication a WHERE a.AuthID=\"%s\" AND a.UserID=us.UserID LIMIT 1 ) UNION ( SELECT us2.UserID FROM FUserSession us2, Filesystem f WHERE f.Config LIKE \"%s%s%s\" AND us2.UserID=f.UserID LIMIT 1 ) ) z LIMIT 1",( char *)ast->hme_Data, "%", ( char *)ast->hme_Data, "%");
+					sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT us.UserID FROM FUserSession us, FUserApplication a WHERE a.AuthID=\"%s\" AND a.UserID=us.UserID LIMIT 1",( char *)ast->hme_Data );
 					
 					void *res = sqllib->Query( sqllib, qery );
 					if( res != NULL )
