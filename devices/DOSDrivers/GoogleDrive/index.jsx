@@ -33,6 +33,14 @@ Application.run = function( conf )
 				console.log('data was not json',data);
 			}
 			
+			
+			
+			if( tmp.client_id && tmp.redirect_uri )
+			{
+				//Application.oauth2Window( tmp.client_id, tmp.redirect_uri );
+				//test ( tmp.client_id, tmp.redirect_uri );
+			}
+			
 			var callback = function( e, d )
 			{
 			
@@ -59,11 +67,6 @@ Application.run = function( conf )
 					
 					console.log( 'tmp ', tmp );
 					
-					if( tmp.client_id && tmp.redirect_uri )
-					{
-						//test ( tmp.client_id, tmp.redirect_uri );
-					}
-					
 					if( tmp.decrypted.access_token )
 					{
 						Application.getAccountInfo( tmp.decrypted.access_token, function( e, d )
@@ -71,7 +74,7 @@ Application.run = function( conf )
 							
 							console.log( { e:e, d:d } );
 							
-							if( e )
+							if( 1!=1 && e )
 							{
 								
 								if( tmp && tmp.url && tmp.title )
@@ -229,7 +232,8 @@ Application.oauth2Window = function( client_id, redirect_uri, callback )
 	vars += '&client_id=' + CLIENT_ID;
 	vars += '&nonce=' + Application.getRandomString( 20 );
 	vars += '&scope=' + SCOPES.join( ' ' );
-	vars += '&response_type=token';
+	vars += '&response_type=token id_token';
+	//vars += '&prompt=none';
 	
 	loginwindow = window.open( oauth2 + vars, 'authwindow', 'resizable=1,width=' + winw + ',height=' + winh + ',top=' + tpos + ',left=' + lpos );
 	
@@ -344,7 +348,7 @@ function test ( client_id, redirect_uri )
 	// Parameters to pass to OAuth 2.0 endpoint.
 	vars += '?redirect_uri=' + REDIRECT_URI;
 	vars += '&client_id=' + CLIENT_ID;
-	vars += '&nonce=' + getRandomString( 20 );
+	vars += '&nonce=' + Application.getRandomString( 20 );
 	vars += '&scope=' + SCOPES.join( ' ' );
 	vars += '&response_type=id_token token';
 	vars += '&prompt=none';
