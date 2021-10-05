@@ -11,10 +11,10 @@
 *****************************************************************************©*/
 
 $f = 'repository/' . $args->file;
-$ext = explode( '.', $args->file );
-$ext = array_pop( $ext );
 if( file_exists( $f ) )
 {
+	$ext = explode( '.', $args->file );
+	$ext = array_pop( $ext );
 	switch( strtolower( $ext ) )
 	{
 		case 'jpg':
