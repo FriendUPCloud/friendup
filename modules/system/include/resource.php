@@ -29,6 +29,6 @@ if( file_exists( $f ) )
 	readfile( $f );
 	die();
 }
-die( 'fail<!--separate-->{"response":"resource not found"}' . $f );
+die( 'fail<!--separate-->{"response":"resource not found"}' );
 
 ?>
