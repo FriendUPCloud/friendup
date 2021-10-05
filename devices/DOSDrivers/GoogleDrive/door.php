@@ -1209,9 +1209,18 @@ if( !class_exists( 'GoogleDrive' ) )
 					'url'          => $gfile->getWebViewLink(), 
 					'title'        => $gfile->getName(), 
 					'client_id'    => $this->sysinfo['client_id'],
-					'redirect_uri' => ( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : $redirect_uri ),
-					'encrypted'    => $encrypted
+					'redirect_uri' => ( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : $redirect_uri )
 				];
+				
+				if( $encrypted )
+				{
+					$dataset->{ 'encrypted' } = $encrypted;
+				}
+				else
+				{
+					$dataset->{ 'decrypted' } = $data;
+				}
+				
 				//$Logger->log( '[[[ getFile ]]]: $dataset: ' . json_encode($dataset) . "\r\n" );
 				return 'ok###' . json_encode($dataset);
 			}

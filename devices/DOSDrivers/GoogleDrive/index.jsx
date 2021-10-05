@@ -12,6 +12,8 @@ Application.run = function( conf )
 		var f = new File( conf.args );
 		f.onLoad = function( data )
 		{
+			console.log( data );
+			
 			var tmp = false;
 			
 			//<!--separate-->
@@ -31,7 +33,7 @@ Application.run = function( conf )
 				console.log('data was not json',data);
 			}
 			
-			Application.encryption.decrypt( ( tmp && tmp.encrypted ? tmp.encrypted : false ), function( e, d )
+			var callback = function( e, d )
 			{
 			
 				//console.log( { e:e, d:d } );
@@ -107,8 +109,21 @@ Application.run = function( conf )
 					}
 					
 				}
+				else
+				{
+					console.log( { e:e, d:d } );
+				}
 				
-			} );
+			};
+			
+			if( tmp && tmp.encrypted )
+			{
+				Application.encryption.decrypt( tmp.encrypted, callback );
+			}
+			else
+			{
+				callback( 'ok', ( tmp && tmp.decrypted ? tmp.decrypted : false ) );
+			}
 			
 			return;
 			
