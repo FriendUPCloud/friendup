@@ -251,16 +251,17 @@ if( !class_exists( 'Door' ) )
 				}
 				if( $identifier )
 				{
+					// TODO: Look at this had to add haccypatchy method to check for $User->ID first in order to view other users Filesystem as Admin server side ...
 					return '
 					SELECT * FROM `Filesystem` f 
 					WHERE 
 						(
-							f.UserID=\'' . $activeUserSession->UserID . '\' OR
+							f.UserID=\'' . ( isset( $User->ID ) ? $User->ID :$activeUserSession->UserID ) . '\' OR
 							f.GroupID IN (
 								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
 								WHERE 
 									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-									ug.UserID = \'' . $activeUserSession->UserID . '\'
+									ug.UserID = \'' . ( isset( $User->ID ) ? $User->ID :$activeUserSession->UserID ) . '\'
 							)
 						)
 						AND ' . $identifier . ' LIMIT 1';
@@ -271,16 +272,17 @@ if( !class_exists( 'Door' ) )
 			{
 				$op = explode( ':', $path );
 				$name = mysqli_real_escape_string( $SqlDatabase->_link, reset( $op ) );
+				// TODO: Look at this had to add haccypatchy method to check for $User->ID first in order to view other users Filesystem as Admin server side ...
 				return '
 					SELECT * FROM `Filesystem` f 
 					WHERE 
 						(
-							f.UserID=\'' . $activeUserSession->UserID . '\' OR
+							f.UserID=\'' . ( isset( $User->ID ) ? $User->ID :$activeUserSession->UserID ) . '\' OR
 							f.GroupID IN (
 								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
 								WHERE 
 									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-									ug.UserID = \'' . $activeUserSession->UserID . '\'
+									ug.UserID = \'' . ( isset( $User->ID ) ? $User->ID :$activeUserSession->UserID ) . '\'
 							)
 						)
 						AND

@@ -1119,6 +1119,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 			
 			data.authid = Application.authId;
 			
+			var skip = false;
+			
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, dat )
 			{
@@ -1131,7 +1133,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				}
 				else
 				{
-					Notify( { title: i18n( 'i18n_disk_success' ), text: i18n( 'i18n_disk_edited' ) } );
+					Notify( { title: i18n( 'i18n_disk_success' ), text: ( dat ? dat : i18n( 'i18n_disk_edited' ) ) } );
 				}
 				
 				if( !data.ID || ( elems[ 'Name' ].hasAttribute('data-mount-state') && elems[ 'Name' ].getAttribute('data-mount-state') == '1' ) )
@@ -1140,11 +1142,12 @@ Sections.accounts_workgroups = function( cmd, extra )
 					{
 						// Refresh init.refresh();
 						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+						
 						if( callback )
 						{
 							callback();
 						}
-					} );					
+					}, skip );					
 				}
 				else if( callback )
 				{
@@ -1159,6 +1162,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			{
 				unmountDisk( elems[ 'Name' ].getAttribute('data-stored-value'), userid, function( e, d )
 				{
+					skip = true;
 					data.ID = diskid;
 					m.execute( 'editfilesystem', data );
 				});
@@ -1185,7 +1189,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				unmountDisk( devname, userid, function( e, d )
 				{
 					if( ShowLog ) console.log( 'unmountDrive( '+devname+', '+( userid ? userid : '0' )+' ) ', { e:e, d:d } );
-				
+					
 					if( e == 'ok' )
 					{
 						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
@@ -1205,7 +1209,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					}
 					else
 					{
-						Notify( { title: i18n( 'i18n_fail_unmount' ), text: i18n( 'i18n_fail_unmount_more' ) } );
+						Notify( { title: i18n( 'i18n_fail_unmount' ), text: ( d ? d : i18n( 'i18n_fail_unmount_more' ) ) } );
 					}
 				
 				} );
@@ -1235,7 +1239,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					}
 					else
 					{
-						Notify( { title: i18n( 'i18n_fail_mount' ), text: i18n( 'i18n_fail_mount_more' ) } );
+						Notify( { title: i18n( 'i18n_fail_mount' ), text: ( d ? d : i18n( 'i18n_fail_mount_more' ) ) } );
 					}
 				
 				} );
@@ -1285,7 +1289,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 			f.onExecuted = function( e, d )
 			{
-				if( ShowLog ) console.log( 'mountDisk ( device/mount ) ', { vars: vars, e:e, d:d } );
+				if( ShowLog || e != 'ok' ) console.log( 'mountDisk ( device/mount ) ', { vars: vars, e:e, d:d } );
 			
 				if( callback ) callback( e, d );
 			}
@@ -1336,7 +1340,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 			f.onExecuted = function( e, d )
 			{
-				if( ShowLog ) console.log( 'unmountDisk ( device/unmount ) ', { vars: vars, e:e, d:d } );
+				if( ShowLog || e != 'ok' ) console.log( 'unmountDisk ( device/unmount ) ', { vars: vars, e:e, d:d } );
 			
 				if( callback ) callback( e, d );
 			}
@@ -1345,21 +1349,48 @@ Sections.accounts_workgroups = function( cmd, extra )
 		}
 	}
 	
-	function remountDisk( oldname, newname, userid, callback )
+	function remountDisk( oldname, newname, userid, callback, skip )
 	{
 		if( oldname && newname )
 		{
-			unmountDisk( oldname, userid, function( e, d )
+			if( skip )
 			{
-			
 				mountDisk( newname, userid, function( e, d )
 				{
 				
-					if( callback ) callback( e, d );
+					if( e != 'ok' )
+					{
+						Notify( { title: i18n( 'i18n_fail_mount' ), text: ( d ? d : i18n( 'i18n_fail_mount_more' ) ) } );
+					}
 				
-				} );
+					if( callback ) callback( e, d );
 			
-			} );
+				} );
+			}
+			else
+			{
+				unmountDisk( oldname, userid, function( e, d )
+				{
+				
+					if( e != 'ok' )
+					{
+						Notify( { title: i18n( 'i18n_fail_unmount' ), text: ( d ? d : i18n( 'i18n_fail_unmount_more' ) ) } );
+					}
+				
+					mountDisk( newname, userid, function( e, d )
+					{
+					
+						if( e != 'ok' )
+						{
+							Notify( { title: i18n( 'i18n_fail_mount' ), text: ( d ? d : i18n( 'i18n_fail_mount_more' ) ) } );
+						}
+					
+						if( callback ) callback( e, d );
+				
+					} );
+			
+				} );
+			}
 		}
 	}
 	
@@ -4020,12 +4051,12 @@ Sections.accounts_workgroups = function( cmd, extra )
 															+ '		</div>'
 															+ '	</div>'
 															+ '	<div class="Col2 FloatLeft HContent100 Name Ellipsis" id="StorageInfo_' + storage.id + '">'
-															+ '		<div class="name" title="' + storage.name + '">' + storage.name + ':</div>'
-															+ '		<div class="type" title="' + i18n( 'i18n_' + storage.type ) + '">' + i18n( 'i18n_' + storage.type ) + '</div>'
+															+ '		<div class="name Ellipsis" title="' + storage.name + '">' + storage.name + ':</div>'
+															+ '		<div class="type Ellipsis" title="' + i18n( 'i18n_' + storage.type ) + '">' + i18n( 'i18n_' + storage.type ) + '</div>'
 															+ '		<div class="rectangle" title="' + storage.used + ' used">'
 															+ '			<div style="width:' + storage.prog + '%"></div>'
 															+ '		</div>'
-															+ '		<div class="bytes" title="' + storage.free  + ' free of ' + storage.size + '">' + storage.free  + ' free of ' + storage.size + '</div>'
+															+ '		<div class="bytes Ellipsis" title="' + storage.free  + ' free of ' + storage.size + '">' + storage.free  + ' free of ' + storage.size + '</div>'
 															+ '	<div>';
 															return d;
 														}( this, storage, workgroup.groupid )

@@ -575,21 +575,20 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							$sbytes = 0;
 							if( $sum = $SqlDatabase->FetchObject( '
 								SELECT SUM(u.Filesize) z FROM FSFile u 
-								WHERE u.UserID=\'' . $User->ID . '\' AND FilesystemID = \'' . $this->ID . '\'
+								WHERE u.FilesystemID = \'' . $this->ID . '\'
 							' ) )
 							{
 								$sbytes = intval( $sum->z, 10 );
+							}
 							
-								$fs = new dbIO( 'Filesystem' );
-								$fs->ID     = $this->ID;
-								$fs->UserID = $User->ID;
-								if( $fs->Load() && $sbytes > 0 )
-								{
-									$Logger->log( '[SQLDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
-									
-									$fs->StoredBytes = $sbytes;
-									$fs->Save();
-								}
+							$fs = new dbIO( 'Filesystem' );
+							$fs->ID = $this->ID;
+							if( $fs->Load() )
+							{
+								$Logger->log( '[SQLDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
+						
+								$fs->StoredBytes = $sbytes;
+								$fs->Save();
 							}
 						}
 						
@@ -739,6 +738,30 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						}
 					}
 					closedir( $dir );
+					
+					// Update latest StoredBytes for this Filesystem
+					if( $this->ID > 0 && $User->ID > 0 )
+					{
+						$sbytes = 0;
+						if( $sum = $SqlDatabase->FetchObject( '
+							SELECT SUM(u.Filesize) z FROM FSFile u 
+							WHERE u.FilesystemID = \'' . $this->ID . '\'
+						' ) )
+						{
+							$sbytes = intval( $sum->z, 10 );
+						}
+						
+						$fs = new dbIO( 'Filesystem' );
+						$fs->ID = $this->ID;
+						if( $fs->Load() )
+						{
+							$Logger->log( '[SQLDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
+					
+							$fs->StoredBytes = $sbytes;
+							$fs->Save();
+						}
+					}
+					
 					if( $fcount > 0 )
 					{
 						die( 'ok<!--separate-->' . $fcount );
@@ -949,30 +972,6 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						{
 							if( $this->deleteFile( $path, true ) )
 							{
-								// Update latest StoredBytes for this Filesystem
-								if( $this->ID > 0 && $User->ID > 0 )
-								{
-									$sbytes = 0;
-									if( $sum = $SqlDatabase->FetchObject( '
-										SELECT SUM(u.Filesize) z FROM FSFile u 
-										WHERE u.UserID=\'' . $User->ID . '\' AND FilesystemID = \'' . $this->ID . '\'
-									' ) )
-									{
-										$sbytes = intval( $sum->z, 10 );
-									}
-									
-									$fs = new dbIO( 'Filesystem' );
-									$fs->ID     = $this->ID;
-									$fs->UserID = $User->ID;
-									if( $fs->Load() )
-									{
-										$Logger->log( '[SQLDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
-								
-										$fs->StoredBytes = $sbytes;
-										$fs->Save();
-									}
-								}
-								
 								return 'ok';
 							}
 						}
@@ -1186,7 +1185,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 		*/
 		public function putFile( $path, $fileObject )
 		{
-			global $Config, $User, $Logger;
+			global $Config, $SqlDatabase, $User, $Logger;
 			
 			// Sanitized username
 			$uname = str_replace( array( '..', '/', ' ' ), '_', $User->Name );
@@ -1224,7 +1223,30 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				$fi->Filesize = filesize( $Config->FCUpload . $fi->DiskFilename );
 			
 				$fi->Save();
-			
+				
+				// Update latest StoredBytes for this Filesystem
+				if( $this->ID > 0 && $User->ID > 0 )
+				{
+					$sbytes = 0;
+					if( $sum = $SqlDatabase->FetchObject( '
+						SELECT SUM(u.Filesize) z FROM FSFile u 
+						WHERE u.FilesystemID = \'' . $this->ID . '\'
+					' ) )
+					{
+						$sbytes = intval( $sum->z, 10 );
+					}
+					
+					$fs = new dbIO( 'Filesystem' );
+					$fs->ID = $this->ID;
+					if( $fs->Load() )
+					{
+						$Logger->log( '[SQLDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
+				
+						$fs->StoredBytes = $sbytes;
+						$fs->Save();
+					}
+				}
+				
 				return true;
 			}
 		
@@ -1336,7 +1358,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 		*/
 		public function deleteFile( $path, $recursive = false )
 		{
-			global $Config, $User, $Logger;
+			global $Config, $SqlDatabase, $User, $Logger;
 		
 			// If it's a folder
 			if( substr( $path, -1, 1 ) == '/' )
@@ -1360,6 +1382,29 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				}
 				$Logger->log( '[SQLDRIVE] Deleting file entry.' );
 				$fi->Delete();
+				
+				// Update latest StoredBytes for this Filesystem
+				if( $this->ID > 0 && $User->ID > 0 )
+				{
+					$sbytes = 0;
+					if( $sum = $SqlDatabase->FetchObject( '
+						SELECT SUM(u.Filesize) z FROM FSFile u 
+						WHERE u.FilesystemID = \'' . $this->ID . '\'
+					' ) )
+					{
+						$sbytes = intval( $sum->z, 10 );
+					}
+					
+					$fs = new dbIO( 'Filesystem' );
+					$fs->ID = $this->ID;
+					if( $fs->Load() )
+					{
+						$Logger->log( '[SQLDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
+				
+						$fs->StoredBytes = $sbytes;
+						$fs->Save();
+					}
+				}
 			}
 			return $fileExists;
 		}
@@ -1534,7 +1579,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 		// Not to be used outside! Not public!
 		private function _deleteFolder( $fo, $recursive = true )
 		{
-			global $Config, $User, $Logger;
+			global $Config, $SqlDatabase, $User, $Logger;
 		
 			// Also delete all sub folders!
 			if( $recursive )
@@ -1572,6 +1617,30 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			}
 			$Logger->log( 'Deleting database entry of folder ' . $fo->Name . '/ (' . $fo->ID . ')' );
 			$fo->Delete();
+			
+			// Update latest StoredBytes for this Filesystem
+			if( $this->ID > 0 && $User->ID > 0 )
+			{
+				$sbytes = 0;
+				if( $sum = $SqlDatabase->FetchObject( '
+					SELECT SUM(u.Filesize) z FROM FSFile u 
+					WHERE u.FilesystemID = \'' . $this->ID . '\'
+				' ) )
+				{
+					$sbytes = intval( $sum->z, 10 );
+				}
+				
+				$fs = new dbIO( 'Filesystem' );
+				$fs->ID = $this->ID;
+				if( $fs->Load() )
+				{
+					$Logger->log( '[SQLDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
+			
+					$fs->StoredBytes = $sbytes;
+					$fs->Save();
+				}
+			}
+			
 			return true;
 		}
 	}
