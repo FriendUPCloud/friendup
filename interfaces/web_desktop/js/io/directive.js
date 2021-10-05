@@ -55,7 +55,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	// If we don't have any cached basics, wait a bit
 	if( typeof( _applicationBasics ) == 'undefined' || !_applicationBasics.js )
 	{
-		console.log( 'ExecuteApplication - retries', retries );
+		//console.log( 'ExecuteApplication - retries', retries );
 		if( retries == 3 ) return console.log( 'Could not execute app: ' + app );
 		loadApplicationBasics( function()
 		{
@@ -265,15 +265,14 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			console.log( 'ExecuteApplication - onExecuted not ok', r );
 			if( r == 'notinstalled' || ( conf && conf.response == 'not installed' ) )
 			{
-				var hideView = false;
+				let hideView = false;
 				if( d.toLowerCase().indexOf('"trusted":"yes"') > 0 )
 				{
 					hideView = true;
 				}
 
-				
 				// Just use callback
-				if( callback )
+				if( callback && !hideView )
 				{
 					if( !callback( { error: 2, errorMessage: i18n( 'install_question_title' ) } ) )
 					{
@@ -283,8 +282,8 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					}
 				}
 				
-				var title = i18n( 'install_question_mintitle' ) + ': ' + app;
-				var w = new View( {
+				let title = i18n( 'install_question_mintitle' ) + ': ' + app;
+				let w = new View( {
 					title:  title,
 					width:  480,
 					height: 140,
@@ -292,17 +291,17 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					hidden: hideView
 				} );
 
-				var f = new File( 'System:templates/install.html' );
+				let f = new File( 'System:templates/install.html' );
 				f.onLoad = function( data )
 				{
-					var repl = [ 'install_question_desc', 'install_question_title',
+					let repl = [ 'install_question_desc', 'install_question_title',
 								 'install_button', 'install_cancel' ];
-					for( var a in repl ) data = data.split( '{' + repl[a] + '}' ).join ( i18n( repl[a] ) );
+					for( let a in repl ) data = data.split( '{' + repl[a] + '}' ).join ( i18n( repl[a] ) );
 					data = data.split( '{app}' ).join ( app );
 					w.setContent( data );
 					if( hideView )
 					{
-						InstallApplication( app );
+						InstallApplication( app, callback );
 					}
 				}
 				f.load();
@@ -342,8 +341,8 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			console.log( 'ExecuteApplication Dead.' );
 			
 			// Clean up single instance
-			var o = {};
-			for( var a in Friend.singleInstanceApps )
+			let o = {};
+			for( let a in Friend.singleInstanceApps )
 				if( a != appName )
 					o[ a ] = Friend.singleInstanceApps[ a ];
 			Friend.singleInstanceApps = o;
@@ -972,7 +971,7 @@ function ActivateApplication( app, conf )
 	f.load();
 }
 
-function InstallApplication( app )
+function InstallApplication( app, callback )
 {
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
@@ -995,11 +994,16 @@ function InstallApplication( app )
 				}
 				
 				w.close();
+				
 			}
+			if( callback )
+				callback( true );
 		}
 		else
 		{
 			Ac2Alert( 'Failed to install application...' );
+			if( callback )
+				callback( false );
 		}
 	}
 	m.execute( 'installapplication', { application: app } );

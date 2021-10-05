@@ -10378,7 +10378,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	let v = new View( {
-		title: i18n( 'i18n_title_about_friendos' ) + ' Hydrogen³',
+		title: i18n( 'i18n_title_about_friendos' ) + ' Hydrogen4',
 		width: 540,
 		height: 560,
 		id: 'about_friendup'
