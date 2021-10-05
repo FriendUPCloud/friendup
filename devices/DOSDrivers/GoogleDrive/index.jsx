@@ -122,7 +122,7 @@ Application.run = function( conf )
 			}
 			else
 			{
-				callback( 'ok', ( tmp && tmp.decrypted ? tmp.decrypted : false ) );
+				callback( 'ok', ( tmp && tmp.decrypted ? tmp : false ) );
 			}
 			
 			return;
