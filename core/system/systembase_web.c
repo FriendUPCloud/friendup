@@ -2165,6 +2165,12 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							{
 								DEBUG("[SysWebRequest] User is not attached to session %lu\n", loggedSession->us_UserID );
 								
+								User *locusr = UMGetUserByID( l->sl_UM, loggedSession->us_UserID );
+								if( locusr != NULL )
+								{
+									UserAddSession( locusr, loggedSession );
+								}
+								/*
 								USER_MANAGER_USE( l->sl_UM );
 								User *lusr = l->sl_UM->um_Users;
 								while( lusr != NULL )
@@ -2177,6 +2183,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									lusr = (User *)lusr->node.mln_Succ;
 								}
 								USER_MANAGER_RELEASE( l->sl_UM );
+								*/
 							}
 						
 							//
