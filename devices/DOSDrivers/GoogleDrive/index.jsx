@@ -69,12 +69,13 @@ Application.run = function( conf )
 					
 					if( tmp.decrypted.access_token )
 					{
-						Application.getAccountInfo( tmp.decrypted.access_token, function( e, d )
+						//Application.getAccountInfo( tmp.decrypted.access_token, function( e, d )
+						Application.oauth2Window( tmp.client_id, tmp.redirect_uri, function ( e, d )
 						{
 							
 							console.log( { e:e, d:d } );
 							
-							if( 1!=1 && e )
+							if( e )
 							{
 								
 								if( tmp && tmp.url && tmp.title )
@@ -108,7 +109,7 @@ Application.run = function( conf )
 								
 							}
 							
-						} );
+						}, true );
 					}
 					
 				}
@@ -209,7 +210,7 @@ Application.decodeIDToken = function( params )
 	return params;
 }
 
-Application.oauth2Window = function( client_id, redirect_uri, callback )
+Application.oauth2Window = function( client_id, redirect_uri, callback, noprompt )
 {
 	var CLIENT_ID    = client_id;
 	var REDIRECT_URI = redirect_uri;
@@ -233,7 +234,11 @@ Application.oauth2Window = function( client_id, redirect_uri, callback )
 	vars += '&nonce=' + Application.getRandomString( 20 );
 	vars += '&scope=' + SCOPES.join( ' ' );
 	vars += '&response_type=token id_token';
-	//vars += '&prompt=none';
+	
+	if( noprompt )
+	{
+		vars += '&prompt=none';
+	}
 	
 	loginwindow = window.open( oauth2 + vars, 'authwindow', 'resizable=1,width=' + winw + ',height=' + winh + ',top=' + tpos + ',left=' + lpos );
 	
@@ -268,7 +273,14 @@ Application.oauth2Window = function( client_id, redirect_uri, callback )
 			
 			if( loginwindow ) loginwindow.close();
 			
-			if( callback && typeof( callback ) == 'function' ) return callback( params );
+			if( params.access_token )
+			{
+				if( callback && typeof( callback ) == 'function' ) return callback( true, params );
+			}
+			else
+			{
+				if( callback && typeof( callback ) == 'function' ) return callback( false, params );
+			}
 					
 			return params;
 			
