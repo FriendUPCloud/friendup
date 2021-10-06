@@ -43,7 +43,7 @@ Application.getLoginCode = function()
 	ret+= '			    loginwindow = window.open(\'{googleurl}\',\'authwindow\',\'width=\'+ ( winwidth )  +\',height=\' + ( winheight ) +\',top=\' + ( toppos ) + \',left=\' + ( leftpos ) + \'\'); ';						
 	
 	ret+= '             window.addEventListener( \'message\', function( msg ) { if( msg && msg.data.url ){ ';
-	//ret+= '			console.log( \'oauth msg: \', msg.data.url ); ';
+	ret+= '				console.log( \'oauth msg: \', msg.data.url ); ';
 	
 	// https://developers.google.com/identity/protocols/oauth2/openid-connect
 	

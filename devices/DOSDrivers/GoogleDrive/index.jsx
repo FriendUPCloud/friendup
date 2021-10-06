@@ -41,6 +41,8 @@ Application.run = function( conf )
 				//test ( tmp.client_id, tmp.redirect_uri );
 			}
 			
+			
+			
 			var callback = function( e, d )
 			{
 			
@@ -67,35 +69,40 @@ Application.run = function( conf )
 					
 					console.log( 'tmp ', tmp );
 					
+					if( tmp.decrypted.refresh_token && tmp.client_id && tmp.client_secret )
+					{
+						//test_3( tmp.decrypted.refresh_token, tmp.client_id, tmp.client_secret );
+					}
+					
+					if( tmp.decrypted.id_token )
+					{
+						//test_2( tmp.decrypted.id_token );
+					}
+					
 					if( tmp.decrypted.access_token )
 					{
-						//Application.getAccountInfo( tmp.decrypted.access_token, function( e, d )
-						Application.oauth2Window( tmp.client_id, tmp.redirect_uri, function ( e, d )
+						var sub = false;
+						
+						if( tmp.decrypted && tmp.decrypted.id_token_content && tmp.decrypted.id_token_content.payload && tmp.decrypted.id_token_content.payload )
 						{
-							
-							console.log( { e:e, d:d } );
-							
-							if( e )
+							//sub = tmp.decrypted.id_token_content.payload.email;
+						}
+						
+						Application.getAccountInfo( tmp.decrypted.access_token, function( e, d )
+						{
+							if( e && d && d.user && d.user.emailAddress )
 							{
-								
-								if( tmp && tmp.url && tmp.title )
-								{
-									Application.displayEditor( tmp.title, tmp.url );
-									return;
-								}
-			
-								Notify({'title':'Error','description':'Could not open file!'});
-								Application.quit();
-								
+								sub = d.user.emailAddress;
 							}
-							else
+							
+							Application.oauth2Window( tmp.client_id, tmp.redirect_uri, sub, function ( ee, dd )
 							{
-								
-								Application.oauth2Window( tmp.client_id, tmp.redirect_uri, function ( data )
+							
+								console.log( { e:ee, d:dd } );
+							
+								if( ee )
 								{
-									
-									console.log( data );
-									
+								
 									if( tmp && tmp.url && tmp.title )
 									{
 										Application.displayEditor( tmp.title, tmp.url );
@@ -104,12 +111,31 @@ Application.run = function( conf )
 			
 									Notify({'title':'Error','description':'Could not open file!'});
 									Application.quit();
-									
-								} );
 								
-							}
+								}
+								else
+								{
+								
+									Application.oauth2Window( tmp.client_id, tmp.redirect_uri, sub, function ( data )
+									{
+									
+										console.log( data );
+									
+										if( tmp && tmp.url && tmp.title )
+										{
+											Application.displayEditor( tmp.title, tmp.url );
+											return;
+										}
+			
+										Notify({'title':'Error','description':'Could not open file!'});
+										Application.quit();
+									
+									} );
+								
+								}
 							
-						}, true );
+							}, true );
+						} );
 					}
 					
 				}
@@ -210,7 +236,7 @@ Application.decodeIDToken = function( params )
 	return params;
 }
 
-Application.oauth2Window = function( client_id, redirect_uri, callback, noprompt )
+Application.oauth2Window = function( client_id, redirect_uri, google_id, callback, noprompt )
 {
 	var CLIENT_ID    = client_id;
 	var REDIRECT_URI = redirect_uri;
@@ -235,10 +261,17 @@ Application.oauth2Window = function( client_id, redirect_uri, callback, noprompt
 	vars += '&scope=' + SCOPES.join( ' ' );
 	vars += '&response_type=token id_token';
 	
+	if( google_id )
+	{
+		vars += '&login_hint=' + google_id;
+	}
+	
 	if( noprompt )
 	{
 		vars += '&prompt=none';
 	}
+	
+	console.log( 'args: ' + vars );
 	
 	loginwindow = window.open( oauth2 + vars, 'authwindow', 'resizable=1,width=' + winw + ',height=' + winh + ',top=' + tpos + ',left=' + lpos );
 	
@@ -313,7 +346,18 @@ Application.getAccountInfo = function( access_token, callback )
 			{
 				console.log( xhr.response );
 				
-				if( callback && typeof( callback ) == 'function' ) return callback( true, xhr.response );
+				var data = xhr.response;
+				
+				try
+				{
+					data = JSON.parse( data );
+				}
+				catch( e )
+				{
+					
+				}
+				
+				if( callback && typeof( callback ) == 'function' ) return callback( true, data );
 			} 
 			else if ( xhr.readyState === 4 && xhr.status === 401 ) 
 			{
@@ -381,5 +425,33 @@ function test ( client_id, redirect_uri )
 
 	//} );
     
+}
+
+function test_2( user_id_token )
+{
+	
+	request = new XMLHttpRequest();
+	request.open( 'POST', 'https://www.googleapis.com/oauth2/v3/tokeninfo' );
+	request.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
+	request.onload = function() 
+	{
+		console.log( request.responseText );
+	};
+	request.send( 'id_token=' + user_id_token );
+	
+}
+
+function test_3( refresh_token, client_id, client_secret )
+{
+	
+	request = new XMLHttpRequest();
+	request.open( 'POST', 'https://www.googleapis.com/oauth2/v3/token' );
+	request.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
+	request.onload = function() 
+	{
+		console.log( 'test_3 ' + request.responseText );
+	};
+	request.send( 'grant_type=refresh_token&refresh_token=' + refresh_token + '&client_id=' + client_id + '&client_secret=' + client_secret );
+	
 }
 

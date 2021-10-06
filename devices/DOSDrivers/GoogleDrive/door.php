@@ -714,7 +714,7 @@ if( !class_exists( 'GoogleDrive' ) )
 							$client->setDeveloperKey($this->sysinfo['key']);
 							$client->setIncludeGrantedScopes(true);
 							$client->addScope(Google_Service_Drive::DRIVE);
-							$client->setAccessType('offline');
+							$client->setAccessType('offline'/*'online'*/);
 							$client->setApprovalPrompt('force');
 							
 							/*if( isset( $dconf['interfaceurl'] ) && $dconf['interfaceurl'] )
@@ -740,6 +740,13 @@ if( !class_exists( 'GoogleDrive' ) )
 								The response from the server should trigger a directory refresh...
 							*/
 							$targetURL = $client->createAuthUrl();
+							
+							if( strstr( $targetURL, 'response_type=code' ) )
+							{
+								//$targetURL = str_replace( 'response_type=code', 'response_type=code id_token', $targetURL );
+							}
+							
+							$Logger->log( $targetURL );
 							
 							if( file_exists(self::LOGINAPP) ) 
 							{
@@ -1206,10 +1213,11 @@ if( !class_exists( 'GoogleDrive' ) )
 				}
 				
 				$dataset = (object)[ 
-					'url'          => $gfile->getWebViewLink(), 
-					'title'        => $gfile->getName(), 
-					'client_id'    => $this->sysinfo['client_id'],
-					'redirect_uri' => ( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : $redirect_uri )
+					'url'           => $gfile->getWebViewLink(), 
+					'title'         => $gfile->getName(), 
+					'client_id'     => $this->sysinfo['client_id'],
+					'redirect_uri'  => ( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : $redirect_uri ),
+					'client_secret' => $this->sysinfo['client_secret']
 				];
 				
 				if( $encrypted )
@@ -1466,10 +1474,10 @@ if( !class_exists( 'GoogleDrive' ) )
 				$client->setIncludeGrantedScopes(true);
 				$client->addScope(Google_Service_Drive::DRIVE_METADATA);
 				$client->addScope(Google_Service_Drive::DRIVE);
-				$client->setAccessType('offline');
+				$client->setAccessType(/*'online'*/'offline');
 				$client->setApprovalPrompt('force');
 				
-				
+				// TODO: See if we can use online auth instead ...
 				
 				try
 				{
@@ -1485,6 +1493,7 @@ if( !class_exists( 'GoogleDrive' ) )
 					//return 'fail<!--separate-->could not authenticate';
 				}
 				
+				//$Logger->log( 'Trying online status ... ' . print_r( $args,1 ) . ' || ' . print_r( $client,1 ) );
 				
 				/*
 					if access token is expired... create new one. as we have asked for offline access we can do that ithout the user needing to approve us once more :)
