@@ -1831,13 +1831,18 @@ AND f.Name = '%s'",
 		} // usr != NULL and retFile != NULL
 		else
 		{
+			char *uname = NULL;
+			if( usr != NULL )
+			{
+				uname = usr->u_Name;
+			}
 			error = l->sl_Error = FSys_Error_CustomError;
-			FERROR("[MountFS] %s - Device not mounted name %s type %s\n", usr->u_Name, name, type );
+			FERROR("[MountFS] %s - Device not mounted name %s type %s\n", uname, name, type );
 			goto merror;
 		}
 		
 		// Send notify to user and all his sessions
-		if( notify == TRUE )
+		if( notify == TRUE && usr != NULL )
 		{
 			UserNotifyFSEvent2( usr, "refresh", "Mountlist:" );
 		}
