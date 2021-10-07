@@ -285,6 +285,14 @@ if( $args->command )
 											}
 											else
 											{
+												$o = new dbIO( 'FMetaData' );
+												$o->Key = 'ResolvedUserInvite';
+												$o->ValueString = $args->args->hash . '|' . $f->UserID;
+												$o->DataTable = 'FUserGroup';
+												$o->DataID = $group->ID;
+												$o->ValueNumber = $User->ID;
+												$o->Save();
+												
 												$SqlDatabase->query( '
 													DELETE FROM FQueuedEvent q
 													WHERE q.TargetUserID = \'' . $User->ID . '\' AND q.TargetGroupID = \'' . $group->ID . '\' AND q.Status = \'unseen\'
@@ -322,6 +330,14 @@ if( $args->command )
 												
 												if( isset( $json->contact ) && $json->contact && $f->ID > 0 )
 												{
+													$o = new dbIO( 'FMetaData' );
+													$o->Key = 'ResolvedUserInvite';
+													$o->ValueString = $args->args->hash . '|' . $f->UserID;
+													$o->DataTable = 'FUser';
+													$o->DataID = $json->data->userid;
+													$o->ValueNumber = $User->ID;
+													$o->Save();
+													
 													$SqlDatabase->query( '
 														DELETE FROM FTinyUrl 
 														WHERE ID = \'' . $f->ID . '\' 
