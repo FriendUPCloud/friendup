@@ -287,11 +287,20 @@ if( $args->command )
 											{
 												$o = new dbIO( 'FMetaData' );
 												$o->Key = 'ResolvedUserInvite';
-												$o->ValueString = $args->args->hash . '|' . $f->UserID;
+												$o->ValueString = $args->args->hash;
 												$o->DataTable = 'FUserGroup';
 												$o->DataID = $group->ID;
 												$o->ValueNumber = $User->ID;
 												$o->Save();
+												
+												// Extended
+												$u = new dbIO( 'FMetaData' );
+												$u->Key = 'ResolvedUserData';
+												$u->ValueString = date( 'Y-m-d H:i:s' );
+												$u->DataTable = 'FMetaData';
+												$u->DataID = $o->ID;
+												$u->ValueNumber = $f->UserID;
+												$u->Save();
 												
 												$SqlDatabase->query( '
 													DELETE FROM FQueuedEvent q
@@ -332,11 +341,20 @@ if( $args->command )
 												{
 													$o = new dbIO( 'FMetaData' );
 													$o->Key = 'ResolvedUserInvite';
-													$o->ValueString = $args->args->hash . '|' . $f->UserID;
+													$o->ValueString = $args->args->hash;
 													$o->DataTable = 'FUser';
 													$o->DataID = $json->data->userid;
 													$o->ValueNumber = $User->ID;
 													$o->Save();
+													
+													// Extended
+													$u = new dbIO( 'FMetaData' );
+													$u->Key = 'ResolvedUserData';
+													$u->ValueString = date( 'Y-m-d H:i:s' );
+													$u->DataTable = 'FMetaData';
+													$u->DataID = $o->ID;
+													$u->ValueNumber = $f->UserID;
+													$u->Save();
 													
 													$SqlDatabase->query( '
 														DELETE FROM FTinyUrl 
