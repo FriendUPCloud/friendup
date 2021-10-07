@@ -72,6 +72,7 @@ Application.run = function( conf )
 					if( tmp.decrypted.refresh_token && tmp.client_id && tmp.client_secret )
 					{
 						//test_3( tmp.decrypted.refresh_token, tmp.client_id, tmp.client_secret );
+						test_4( tmp.code, tmp.client_id, tmp.client_secret, tmp.redirect_uri );
 					}
 					
 					if( tmp.decrypted.id_token )
@@ -100,7 +101,7 @@ Application.run = function( conf )
 							
 								console.log( { e:ee, d:dd } );
 							
-								if( ee )
+								if( ee && dd && dd.access_token )
 								{
 								
 									if( tmp && tmp.url && tmp.title )
@@ -119,7 +120,7 @@ Application.run = function( conf )
 									Application.oauth2Window( tmp.client_id, tmp.redirect_uri, sub, function ( data )
 									{
 									
-										console.log( data );
+										/*console.log( data );
 									
 										if( tmp && tmp.url && tmp.title )
 										{
@@ -128,7 +129,7 @@ Application.run = function( conf )
 										}
 			
 										Notify({'title':'Error','description':'Could not open file!'});
-										Application.quit();
+										Application.quit();*/
 									
 									} );
 								
@@ -243,11 +244,11 @@ Application.oauth2Window = function( client_id, redirect_uri, google_id, callbac
 	
 	var SCOPES = [ 'profile', 'email' ];
 	
-	var winw  = Math.min( 600, screen.availWidth );
+	var winw = Math.min( 600, screen.availWidth );
 	var winh = Math.min( 750, screen.availHeight );
 	
 	var lpos = Math.floor( ( screen.availWidth - winw ) / 2  );
-	var tpos  = Math.floor( ( screen.availHeight - winh ) / 2  );
+	var tpos = Math.floor( ( screen.availHeight - winh ) / 2  );
 	
 	// Google's OAuth 2.0 endpoint for requesting an access token
 	var oauth2 = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -269,11 +270,17 @@ Application.oauth2Window = function( client_id, redirect_uri, google_id, callbac
 	if( noprompt )
 	{
 		vars += '&prompt=none';
+		
+		winw = 1;
+		winh = 1;
+		
+		lpos = 0;
+		tpos = 0;
 	}
 	
 	console.log( 'args: ' + vars );
 	
-	loginwindow = window.open( oauth2 + vars, 'authwindow', 'resizable=1,width=' + winw + ',height=' + winh + ',top=' + tpos + ',left=' + lpos );
+	let loginwindow = window.open( oauth2 + vars, 'authwindow', 'resizable=1,width=' + winw + ',height=' + winh + ',top=' + tpos + ',left=' + lpos );
 	
 	window.addEventListener( 'message', function( msg ) 
 	{
@@ -314,8 +321,10 @@ Application.oauth2Window = function( client_id, redirect_uri, google_id, callbac
 			{
 				if( callback && typeof( callback ) == 'function' ) return callback( false, params );
 			}
-					
-			return params;
+			
+			return false;
+				
+			//return params;
 			
 		}
 		
@@ -452,6 +461,26 @@ function test_3( refresh_token, client_id, client_secret )
 		console.log( 'test_3 ' + request.responseText );
 	};
 	request.send( 'grant_type=refresh_token&refresh_token=' + refresh_token + '&client_id=' + client_id + '&client_secret=' + client_secret );
+	
+}
+
+function test_4( code, client_id, client_secret, redirect_uri )
+{
+	
+	//code=4/P7q7W91a-oMsCeLvIaQm6bTrgtp7&
+	//client_id=your_client_id&
+	//client_secret=your_client_secret&
+	//redirect_uri=https%3A//oauth2.example.com/code&
+	//grant_type=authorization_code
+	
+	request = new XMLHttpRequest();
+	request.open( 'POST', 'https://oauth2.googleapis.com/token' );
+	request.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
+	request.onload = function() 
+	{
+		console.log( 'test_4 ' + request.responseText );
+	};
+	request.send( 'grant_type=authorization_code&code=' + code + '&client_id=' + client_id + '&client_secret=' + client_secret + '&redirect_uri=' + redirect_uri );
 	
 }
 

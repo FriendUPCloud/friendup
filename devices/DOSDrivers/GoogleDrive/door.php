@@ -805,7 +805,7 @@ if( !class_exists( 'GoogleDrive' ) )
 					return 'fail<!--seperate-->Could not find Google file interface ' . strtolower( $args->path );
 						
 				}
-				else if( $this->connectClient() )
+				else if( $this->connectClient( 'online' ) )
 				{
 					//we want a file stream here
 					return $this->getFile( $args->path );
@@ -1217,7 +1217,8 @@ if( !class_exists( 'GoogleDrive' ) )
 					'title'         => $gfile->getName(), 
 					'client_id'     => $this->sysinfo['client_id'],
 					'redirect_uri'  => ( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : $redirect_uri ),
-					'client_secret' => $this->sysinfo['client_secret']
+					'client_secret' => $this->sysinfo['client_secret'],
+					'code'          => $confjson['code']
 				];
 				
 				if( $encrypted )
@@ -1453,7 +1454,7 @@ if( !class_exists( 'GoogleDrive' ) )
 			}
 		}
 		
-		function connectClient()
+		function connectClient( $status = 'offline' )
 		{
 			global $User, $SqlDatabase, $Config, $Logger, $args;
 
@@ -1474,7 +1475,7 @@ if( !class_exists( 'GoogleDrive' ) )
 				$client->setIncludeGrantedScopes(true);
 				$client->addScope(Google_Service_Drive::DRIVE_METADATA);
 				$client->addScope(Google_Service_Drive::DRIVE);
-				$client->setAccessType(/*'online'*/'offline');
+				$client->setAccessType($status);
 				$client->setApprovalPrompt('force');
 				
 				// TODO: See if we can use online auth instead ...
