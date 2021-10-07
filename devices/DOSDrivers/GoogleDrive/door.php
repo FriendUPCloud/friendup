@@ -805,7 +805,7 @@ if( !class_exists( 'GoogleDrive' ) )
 					return 'fail<!--seperate-->Could not find Google file interface ' . strtolower( $args->path );
 						
 				}
-				else if( $this->connectClient( 'online' ) )
+				else if( $this->connectClient( /*'online'*/ ) )
 				{
 					//we want a file stream here
 					return $this->getFile( $args->path );
@@ -1216,9 +1216,9 @@ if( !class_exists( 'GoogleDrive' ) )
 					'url'           => $gfile->getWebViewLink(), 
 					'title'         => $gfile->getName(), 
 					'client_id'     => $this->sysinfo['client_id'],
-					'redirect_uri'  => ( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : $redirect_uri ),
+					'redirect_uri'  => ( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : $redirect_uri )/*,
 					'client_secret' => $this->sysinfo['client_secret'],
-					'code'          => $confjson['code']
+					'code'          => $confjson['code']*/
 				];
 				
 				if( $encrypted )
@@ -1229,6 +1229,43 @@ if( !class_exists( 'GoogleDrive' ) )
 				{
 					$dataset->{ 'decrypted' } = $data;
 				}
+				
+				// TODO: Check if it's possible to find out if a user is logged in to the browser, from the server side ...
+				/*if( $res1 = $this->GetByCurl( 'https://www.googleapis.com/drive/v3/about?fields=user', false, 'GET', [ 'Authorization: Bearer ' . $confjson['access']['access_token'] ] ) )
+				{
+					
+					$Logger->log( $res1 );
+					
+					if( $json = json_decode( $res1 ) )
+					{
+						
+						function RandomString( $length = 10 )
+						{
+							$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+							$randstring = '';
+							for ($i = 0; $i < $length; $i++) {
+								$randstring = $characters[rand(0, strlen($characters))];
+							}
+							return $randstring;
+						}
+						
+						$vars = '';
+						
+						$vars .= '?redirect_uri=' . ( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : $redirect_uri );
+						$vars .= '&client_id=' . $this->sysinfo['client_id'];
+						$vars .= '&nonce=' . RandomString( 20 );
+						$vars .= '&scope=' . 'profile email';
+						$vars .= '&response_type=token id_token';
+						$vars .= '&login_hint=' . $json->user->emailAddress;
+						$vars .= '&prompt=none';
+						
+						if( $res2 = $this->GetByCurl( 'https://accounts.google.com/o/oauth2/v2/auth' . $vars, false, 'GET' ) )
+						{
+							$Logger->log( $vars . "\r\n" . $res2 );
+						}
+						
+					}
+				}*/
 				
 				//$Logger->log( '[[[ getFile ]]]: $dataset: ' . json_encode($dataset) . "\r\n" );
 				return 'ok###' . json_encode($dataset);

@@ -12,7 +12,7 @@ Application.run = function( conf )
 		var f = new File( conf.args );
 		f.onLoad = function( data )
 		{
-			console.log( data );
+			//console.log( data );
 			
 			var tmp = false;
 			
@@ -72,7 +72,7 @@ Application.run = function( conf )
 					if( tmp.decrypted.refresh_token && tmp.client_id && tmp.client_secret )
 					{
 						//test_3( tmp.decrypted.refresh_token, tmp.client_id, tmp.client_secret );
-						test_4( tmp.code, tmp.client_id, tmp.client_secret, tmp.redirect_uri );
+						//test_4( tmp.code, tmp.client_id, tmp.client_secret, tmp.redirect_uri );
 					}
 					
 					if( tmp.decrypted.id_token )
@@ -96,7 +96,7 @@ Application.run = function( conf )
 								sub = d.user.emailAddress;
 							}
 							
-							Application.oauth2Window( tmp.client_id, tmp.redirect_uri, sub, function ( ee, dd )
+							/*Application.oauth2Window( tmp.client_id, tmp.redirect_uri, sub, function ( ee, dd )
 							{
 							
 								console.log( { e:ee, d:dd } );
@@ -115,12 +115,12 @@ Application.run = function( conf )
 								
 								}
 								else
-								{
+								{*/
 								
 									Application.oauth2Window( tmp.client_id, tmp.redirect_uri, sub, function ( data )
 									{
 									
-										/*console.log( data );
+										console.log( data );
 									
 										if( tmp && tmp.url && tmp.title )
 										{
@@ -129,13 +129,13 @@ Application.run = function( conf )
 										}
 			
 										Notify({'title':'Error','description':'Could not open file!'});
-										Application.quit();*/
+										Application.quit();
 									
 									} );
 								
-								}
+								/*}
 							
-							}, true );
+							}, true );*/
 						} );
 					}
 					
