@@ -1247,6 +1247,13 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 			return FSys_Error_NOUser;
 		}
 		
+		if( usr->u_Status == USER_STATUS_TO_BE_REMOVED )
+		{
+			return FSys_Error_UserNotLoggedIn;
+		}
+		
+		USER_LOCK( usr );
+		
 		Log( FLOG_DEBUG, "Mount device\n");
 		
 		// Setup the sentinel
@@ -1344,10 +1351,12 @@ AND f.Name = '%s'",
 					}
 					if( ( res = sqllib->Query( sqllib, temptext ) ) == NULL )
 					{
-						//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 						if( type != NULL ){ FFree( type );}
 						l->sl_Error = FSys_Error_SelectFail;
 						l->LibrarySQLDrop( l, sqllib );
+						
+						USER_UNLOCK( usr );
+						
 						return FSys_Error_SelectFail;
 					}
 					usingSentinel = 1;
@@ -1355,10 +1364,11 @@ AND f.Name = '%s'",
 				else
 				{
 					sqllib->FreeResult( sqllib, res );
-					//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 					if( type != NULL ){ FFree( type );}
 					l->sl_Error = FSys_Error_SelectFail;
 					l->LibrarySQLDrop( l, sqllib );
+					
+					USER_UNLOCK( usr );
 				
 					return FSys_Error_SelectFail;
 				}
@@ -1850,6 +1860,8 @@ AND f.Name = '%s'",
 		DEBUG("[MountFS] %s - Mount device END\n", usr->u_Name );
 	}
 	
+	USER_UNLOCK( usr );
+	
 	if( type != NULL ) FFree( type );
 	if( port != NULL ) FFree( port );
 	if( server != NULL ) FFree( server );
@@ -1869,6 +1881,8 @@ merror:
 		FileDelete( retFile );
 		*mfile = NULL;	// do not return anything
 	}
+	
+	USER_UNLOCK( usr );
 
 	if( type != NULL ) FFree( type );
 	if( port != NULL ) FFree( port );
