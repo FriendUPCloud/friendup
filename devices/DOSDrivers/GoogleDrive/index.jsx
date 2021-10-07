@@ -172,8 +172,8 @@ Application.run = function( conf )
 Application.displayEditor = function(title,url)
 {
 		var v = new View({
-			width:640,
-			height:480,
+			width:1000,
+			height:850,
 			title: title
 		});
 		
