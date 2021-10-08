@@ -607,7 +607,7 @@ if( !class_exists( 'GoogleDrive' ) )
 							  'data' => file_get_contents( $args->tmpfile ),
 							  'mimeType' => 'application/octet-stream',
 							  'uploadType' => 'multipart'
-							));							
+							));				
 						}
 
 						return 'ok<!--separate-->' . $filesize;
@@ -629,7 +629,7 @@ if( !class_exists( 'GoogleDrive' ) )
 						}
 						else
 						{
-							$request = $drivefiles->files->create($file);	
+							$request = $drivefiles->files->create($file);
 						}
 						
 						
@@ -1101,6 +1101,7 @@ if( !class_exists( 'GoogleDrive' ) )
 					$cleanpath = ($subPath != '' ? $subPath . '/' : '' ) . $o->Filename; 
 					$cleanpath .= ( $o->Type == 'Directory' && substr( $cleanpath , -1) != '/' ? '/' : '' ) ;
 					$o->Path = $cleanpath;
+					$o->Driver = 'GoogleDrive';
 					$ret[] = $o;
 				}
 				//$Logger->log('LKisting files' . print_r( $ret,1 ));
@@ -1216,9 +1217,7 @@ if( !class_exists( 'GoogleDrive' ) )
 					'url'           => $gfile->getWebViewLink(), 
 					'title'         => $gfile->getName(), 
 					'client_id'     => $this->sysinfo['client_id'],
-					'redirect_uri'  => ( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : $redirect_uri )/*,
-					'client_secret' => $this->sysinfo['client_secret'],
-					'code'          => $confjson['code']*/
+					'redirect_uri'  => ( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : $redirect_uri )
 				];
 				
 				if( $encrypted )

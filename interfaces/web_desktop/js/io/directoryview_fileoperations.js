@@ -1051,7 +1051,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						fl = this.files[ i ];
 						
 						// NOTE: If we have a special case like "ExportFormat" from the source Door Drive we need to overwrite file extension to the export format.
-						if( fl.fileInfo.ExportFormat && fl.fileInfo.Extension == 'diskhandled' )
+						if( fl.fileInfo.ExportFormat && fl.fileInfo.Extension == 'diskhandled'/* && cfo.Driver != fl.fileInfo.Driver*/ )
 						{
 							var ext = ( fl.fileInfo.Filename.indexOf( '.' ) >= 0 ? fl.fileInfo.Filename.split( '.' ).pop(  ) : false );
 							
@@ -1068,7 +1068,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						toPath = cfo.Path + p + destPath.split( dPath ).join( '' );
 						door = Workspace.getDoorByPath( fl.fileInfo.Path );
 						door.cancelId = series;
-
+						
 						// Sanitation
 						while( toPath.indexOf( '//' ) >= 0 ) toPath = toPath.split( '//' ).join ( '/' );
 

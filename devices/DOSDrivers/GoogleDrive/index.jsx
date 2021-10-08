@@ -7,14 +7,12 @@ Application.run = function( conf )
 	if( conf.args )
 	{
 			
-		var tmp = conf.args.split(':');
+		this.tmp = conf.args.split(':');
 		
 		var f = new File( conf.args );
 		f.onLoad = function( data )
 		{
-			//console.log( data );
-			
-			var tmp = false;
+			this.tmp = false;
 			
 			//<!--separate-->
 			if( data.indexOf('###') > 0 )
@@ -23,119 +21,71 @@ Application.run = function( conf )
 				data = tmp[1];
 			}
 			
-			tmp = false;
+			this.tmp = false;
 			
 			try{
-				tmp = JSON.parse( data )
+				this.tmp = JSON.parse( data )
 			}
 			catch(e)
 			{
 				console.log('data was not json',data);
 			}
 			
-			
-			
-			if( tmp.client_id && tmp.redirect_uri )
-			{
-				//Application.oauth2Window( tmp.client_id, tmp.redirect_uri );
-				//test ( tmp.client_id, tmp.redirect_uri );
-			}
-			
-			
-			
+			var self = this;
+						
 			var callback = function( e, d )
 			{
-			
-				//console.log( { e:e, d:d } );
 				
 				if( e == 'ok' && d && d.decrypted )
 				{
 					
 					try
 					{
-						tmp.decrypted = JSON.parse( d.decrypted );
+						self.tmp.decrypted = JSON.parse( d.decrypted );
 						
-						if( tmp.decrypted && tmp.decrypted.id_token )
+						if( self.tmp.decrypted && self.tmp.decrypted.id_token )
 						{
-							var decoded = Application.decodeIDToken( tmp.decrypted );
+							var decoded = Application.decodeIDToken( self.tmp.decrypted );
 							
 							if( decoded )
 							{
-								tmp.decrypted = decoded;
+								self.tmp.decrypted = decoded;
 							}
 						}
 					}
 					catch( e ) {  }
 					
-					console.log( 'tmp ', tmp );
+					console.log( 'tmp ', self.tmp );
 					
-					if( tmp.decrypted.refresh_token && tmp.client_id && tmp.client_secret )
+					if( self.tmp.decrypted.access_token )
 					{
-						//test_3( tmp.decrypted.refresh_token, tmp.client_id, tmp.client_secret );
-						//test_4( tmp.code, tmp.client_id, tmp.client_secret, tmp.redirect_uri );
-					}
-					
-					if( tmp.decrypted.id_token )
-					{
-						//test_2( tmp.decrypted.id_token );
-					}
-					
-					if( tmp.decrypted.access_token )
-					{
-						var sub = false;
-						
-						if( tmp.decrypted && tmp.decrypted.id_token_content && tmp.decrypted.id_token_content.payload && tmp.decrypted.id_token_content.payload )
+												
+						Application.getAccountInfo( self.tmp.decrypted.access_token, function( e, d )
 						{
-							//sub = tmp.decrypted.id_token_content.payload.email;
-						}
-						
-						Application.getAccountInfo( tmp.decrypted.access_token, function( e, d )
-						{
+							
 							if( e && d && d.user && d.user.emailAddress )
 							{
-								sub = d.user.emailAddress;
+								self.tmp.google_id = d.user.emailAddress;
 							}
 							
-							/*Application.oauth2Window( tmp.client_id, tmp.redirect_uri, sub, function ( ee, dd )
+							function closeThisWindow()
 							{
+								
+								setTimeout( function(){ Application.quit(); }, 1000 );
+								
+							}
 							
-								console.log( { e:ee, d:dd } );
+							// TODO: Load in template with javascript instead for file ...
 							
-								if( ee && dd && dd.access_token )
-								{
-								
-									if( tmp && tmp.url && tmp.title )
-									{
-										Application.displayEditor( tmp.title, tmp.url );
-										return;
-									}
-			
-									Notify({'title':'Error','description':'Could not open file!'});
-									Application.quit();
-								
-								}
-								else
-								{*/
-								
-									Application.oauth2Window( tmp.client_id, tmp.redirect_uri, sub, function ( data )
-									{
-									
-										console.log( data );
-									
-										if( tmp && tmp.url && tmp.title )
-										{
-											Application.displayEditor( tmp.title, tmp.url );
-											return;
-										}
-			
-										Notify({'title':'Error','description':'Could not open file!'});
-										Application.quit();
-									
-									} );
-								
-								/*}
+							var w = new View( { title: 'Google Editor', width: 350, height: 100 } );
+							w.setFlag('allowPopups', true);
+							w.setContent('<div style="padding:25px;"><p><a href="javascript:void(0)" onclick="' + Application.oauth2Window( self.tmp, Application, w, closeThisWindow ) + '" class="Button fa-google IconSmall"> &nbsp; open in google editor</a> or <a href="javascript:void(0)" onclick="Application.quit();" class="Button fa-google IconSmall"> &nbsp; view as pdf</a></p></div>');
 							
-							}, true );*/
+							w.onClose = function()
+							{
+								Application.quit();
+							}
+							
 						} );
 					}
 					
@@ -147,13 +97,13 @@ Application.run = function( conf )
 				
 			};
 			
-			if( tmp && tmp.encrypted )
+			if( self.tmp && self.tmp.encrypted )
 			{
-				Application.encryption.decrypt( tmp.encrypted, callback );
+				Application.encryption.decrypt( self.tmp.encrypted, callback );
 			}
 			else
 			{
-				callback( 'ok', ( tmp && tmp.decrypted ? tmp : false ) );
+				callback( 'ok', ( self.tmp && self.tmp.decrypted ? self.tmp : false ) );
 			}
 			
 			return;
@@ -184,6 +134,19 @@ Application.displayEditor = function(title,url)
 		};
 		v.setRichContentUrl( url );
 				
+}
+
+Application.initEditor = function( title, url )
+{
+	if( url && title )
+	{
+		Application.displayEditor( title, url );
+		return true;
+	}
+
+	Notify({'title':'Error','description':'Could not open file!'});
+	Application.quit();
+	return false;
 }
 
 Application.receiveMessage = function( msg )
@@ -237,98 +200,97 @@ Application.decodeIDToken = function( params )
 	return params;
 }
 
-Application.oauth2Window = function( client_id, redirect_uri, google_id, callback, noprompt )
+Application.oauth2Window = function( tmp, Application, w, closeThisWindow )
 {
-	var CLIENT_ID    = client_id;
-	var REDIRECT_URI = redirect_uri;
+	var ret = "";
 	
-	var SCOPES = [ 'profile', 'email' ];
+	console.log( w );
 	
-	var winw = Math.min( 600, screen.availWidth );
-	var winh = Math.min( 750, screen.availHeight );
+	ret+= " var Application = { displayEditor: "+Application.displayEditor+", initEditor: "+Application.initEditor+", quit: "+Application.quit+" }; ";
 	
-	var lpos = Math.floor( ( screen.availWidth - winw ) / 2  );
-	var tpos = Math.floor( ( screen.availHeight - winh ) / 2  );
+	ret+= " var w = { close: "+w.close+" }; ";
+	
+	ret+= " var closeThisWindow = "+closeThisWindow+"; ";
+	
+	ret+= " var CLIENT_ID    = '"+tmp.client_id+"'; ";
+	ret+= " var REDIRECT_URI = '"+tmp.redirect_uri+"'; ";
+	ret+= " var GOOGLE_ID    = '"+(tmp.google_id?tmp.google_id:null)+"'; "
+	
+	ret+= " var SCOPES = [ 'profile', 'email' ]; ";
+	
+	ret+= " var winw = Math.min( 600, screen.availWidth ); ";
+	ret+= " var winh = Math.min( 750, screen.availHeight ); ";
+	
+	ret+= " var lpos = Math.floor( ( screen.availWidth - winw ) / 2  ); ";
+	ret+= " var tpos = Math.floor( ( screen.availHeight - winh ) / 2  ); ";
 	
 	// Google's OAuth 2.0 endpoint for requesting an access token
-	var oauth2 = 'https://accounts.google.com/o/oauth2/v2/auth';
+	ret+= " var oauth2 = 'https://accounts.google.com/o/oauth2/v2/auth'; ";
 	
-	var vars = '';
+	ret+= " var vars = ''; ";
 	
 	// Parameters to pass to OAuth 2.0 endpoint.
-	vars += '?redirect_uri=' + REDIRECT_URI;
-	vars += '&client_id=' + CLIENT_ID;
-	vars += '&nonce=' + Application.getRandomString( 20 );
-	vars += '&scope=' + SCOPES.join( ' ' );
-	vars += '&response_type=token id_token';
+	ret+= " vars += '?redirect_uri=' + REDIRECT_URI; ";
+	ret+= " vars += '&client_id=' + CLIENT_ID; ";
+	ret+= " vars += '&nonce=' + '"+Application.getRandomString( 20 )+"'; ";
+	ret+= " vars += '&scope=' + SCOPES.join( ' ' ); ";
+	ret+= " vars += '&response_type=token id_token'; ";
 	
-	if( google_id )
-	{
-		vars += '&login_hint=' + google_id;
-	}
+	ret+= " if( GOOGLE_ID ) ";
+	ret+= " { ";
+	ret+= " 	vars += '&login_hint=' + GOOGLE_ID; ";
+	ret+= " } ";
 	
-	if( noprompt )
-	{
-		vars += '&prompt=none';
+	ret+= " console.log( 'args: ' + vars ); ";
+	
+	ret+= " let loginwindow = window.open( oauth2 + vars, 'authwindow', 'resizable=1,width=' + winw + ',height=' + winh + ',top=' + tpos + ',left=' + lpos ); ";
+	
+	ret+= " window.addEventListener( 'message', function( msg )  ";
+	ret+= " { ";
 		
-		winw = 1;
-		winh = 1;
-		
-		lpos = 0;
-		tpos = 0;
-	}
+	ret+= " 	if( msg && msg.data.url ) ";
+	ret+= " 	{ ";
+	ret+= " 		var params = {}; var args = false; ";
+			
+	ret+= " 		console.log( 'oauth msg: ', msg.data.url ); ";
+			
+	ret+= " 		if( msg.data.url.split( '#' )[1] ) ";
+	ret+= " 		{ ";
+	ret+= " 		    args = msg.data.url.split( '#' )[1].split( '&' ); ";
+	ret+= " 		} ";
+	ret+= " 		else if( msg.data.url.split( '?' )[1] ) ";
+	ret+= " 		{ ";
+	ret+= " 		    args = msg.data.url.split( '?' )[1].split( '&' ); ";
+	ret+= " 		} ";
+			
+	ret+= " 	    if( args && args.length > 0 ) ";
+	ret+= " 	    { ";
+	ret+= " 	        for( var key in args ) ";
+	ret+= " 	        { ";
+	ret+= " 	            if( args[key] && args[key].split( '=' )[1] ) ";
+	ret+= " 	            { ";
+	ret+= " 	                params[ args[key].split( '=' )[0] ] = args[key].split( '=' )[1]; ";
+	ret+= " 	            } ";
+	ret+= " 	        } ";
+	ret+= " 	    } ";
+			
+	ret+= " 		if( loginwindow ) loginwindow.close(); ";
 	
-	console.log( 'args: ' + vars );
+	ret+= "			console.log( '"+w.getViewId()+"' ); ";
+	ret+= " 		closeThisWindow(); ";
 	
-	let loginwindow = window.open( oauth2 + vars, 'authwindow', 'resizable=1,width=' + winw + ',height=' + winh + ',top=' + tpos + ',left=' + lpos );
+	ret+= " 		if( params.access_token ) ";
+	ret+= " 		{ ";
+	ret+= " 			return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"' ); ";
+	ret+= " 		} ";
+			
+	ret+= " 		return false; ";
+			
+	ret+= " 	} ";
+		
+	ret+= " } ); ";
 	
-	window.addEventListener( 'message', function( msg ) 
-	{
-		
-		if( msg && msg.data.url )
-		{
-			var params = {}; var args = false;
-			
-			if( Application.showLog || 1==1 ) console.log( 'oauth msg: ', msg.data.url );
-			
-			if( msg.data.url.split( '#' )[1] )
-			{
-			    args = msg.data.url.split( '#' )[1].split( '&' );
-			}
-			else if( msg.data.url.split( '?' )[1] )
-			{
-			    args = msg.data.url.split( '?' )[1].split( '&' );
-			}
-			
-		    if( args && args.length > 0 )
-		    {
-		        for( var key in args )
-		        {
-		            if( args[key] && args[key].split( '=' )[1] )
-		            {
-		                params[ args[key].split( '=' )[0] ] = args[key].split( '=' )[1];
-		            }
-		        }
-		    }
-			
-			if( loginwindow ) loginwindow.close();
-			
-			if( params.access_token )
-			{
-				if( callback && typeof( callback ) == 'function' ) return callback( true, params );
-			}
-			else
-			{
-				if( callback && typeof( callback ) == 'function' ) return callback( false, params );
-			}
-			
-			return false;
-				
-			//return params;
-			
-		}
-		
-	} );
+	return ret;
 	
 }
 
