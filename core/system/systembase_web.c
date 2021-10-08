@@ -2280,55 +2280,58 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						
 							loggedUser = loggedSession->us_User;
 						
-							Log( FLOG_INFO, "User authenticated %s sessionid %s \n", loggedUser->u_Name, loggedSession->us_SessionID );
-						
-							if( appname == NULL )
+							if( loggedUser != NULL )
 							{
-								if( loggedSession->us_User != NULL && (loggedSession->us_User->u_Status == USER_STATUS_DISABLED || loggedSession->us_User->u_Status == USER_STATUS_BLOCKED ) )
+								Log( FLOG_INFO, "User authenticated %s sessionid %s \n", loggedUser->u_Name, loggedSession->us_SessionID );
+						
+								if( appname == NULL )
 								{
-									char buffer[ 256 ];
-									snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ACCOUNT_BLOCKED] , DICT_ACCOUNT_BLOCKED );
+									if( loggedSession->us_User != NULL && (loggedSession->us_User->u_Status == USER_STATUS_DISABLED || loggedSession->us_User->u_Status == USER_STATUS_BLOCKED ) )
+									{
+										char buffer[ 256 ];
+										snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ACCOUNT_BLOCKED] , DICT_ACCOUNT_BLOCKED );
+									}
+									else
+									{
+										snprintf( tmp, sizeof(tmp) ,
+											"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"username\":\"%s\"}",
+											loggedUser->u_Error, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedUser->u_ID, loggedUser->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_Name );	// check user.library to display errors
+										tmpset++;
+									}
 								}
 								else
 								{
-									snprintf( tmp, sizeof(tmp) ,
-										"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"username\":\"%s\"}",
-										loggedUser->u_Error, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedUser->u_ID, loggedUser->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_Name );	// check user.library to display errors
-									tmpset++;
-								}
-							}
-							else
-							{
-								SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+									SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 
-								// Get authid from mysql
-								if( sqllib != NULL )
-								{
-									char authid[ 512 ];
-									authid[ 0 ] = 0;
-								
-									char qery[ 1024 ];
-									sqllib->SNPrintF( sqllib, qery, sizeof( qery ),"select `AuthID` from `FUserApplication` where `UserID` = %lu and `ApplicationID` = (select ID from `FApplication` where `Name` = '%s' and `UserID` = %ld)",loggedUser->u_ID, appname, loggedUser->u_ID);
-								
-									void *res = sqllib->Query( sqllib, qery );
-									if( res != NULL )
+									// Get authid from mysql
+									if( sqllib != NULL )
 									{
-										char **row;
-										if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+										char authid[ 512 ];
+										authid[ 0 ] = 0;
+								
+										char qery[ 1024 ];
+										sqllib->SNPrintF( sqllib, qery, sizeof( qery ),"select `AuthID` from `FUserApplication` where `UserID` = %lu and `ApplicationID` = (select ID from `FApplication` where `Name` = '%s' and `UserID` = %ld)",loggedUser->u_ID, appname, loggedUser->u_ID);
+								
+										void *res = sqllib->Query( sqllib, qery );
+										if( res != NULL )
 										{
-											snprintf( authid, sizeof(authid), "%s", row[ 0 ] );
+											char **row;
+											if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+											{
+												snprintf( authid, sizeof(authid), "%s", row[ 0 ] );
+											}
+											sqllib->FreeResult( sqllib, res );
 										}
-										sqllib->FreeResult( sqllib, res );
+
+										l->LibrarySQLDrop( l, sqllib );
+
+										snprintf( tmp, sizeof(tmp), "{\"response\":\"%d\",\"sessionid\":\"%s\",\"authid\":\"%s\"}",
+										loggedUser->u_Error, loggedSession->us_SessionID, authid
+										);
+										tmpset++;
 									}
-
-									l->LibrarySQLDrop( l, sqllib );
-
-									snprintf( tmp, sizeof(tmp), "{\"response\":\"%d\",\"sessionid\":\"%s\",\"authid\":\"%s\"}",
-									loggedUser->u_Error, loggedSession->us_SessionID, authid
-									);
-									tmpset++;
-								}
-							}	// else to appname
+								}	// else to appname
+							}	// loggedUser = NULL
 						} //else to logginsession == NULL
 						else
 						{
