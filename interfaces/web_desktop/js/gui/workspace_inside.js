@@ -5500,6 +5500,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			
 			Workspace.menuContext = null;
 			
+			// Get files in dest path
 			let d = new Door( destPath );
 			d.getIcons( destFinf, function( items )
 			{
