@@ -411,6 +411,9 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				// Can we get sub folder?
 				$fo = false;
 				
+				// Later filename
+				$fn = '';
+				
 				// Get by path (subfolder)
 				$subPath = $testPath = false;
 				if( is_string( $path ) && strstr( $path, ':' ) )
