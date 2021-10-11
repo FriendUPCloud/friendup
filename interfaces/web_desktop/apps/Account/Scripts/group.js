@@ -542,9 +542,7 @@ function saveGroup()
                         {
                             connectFriendChatRoom( t.id, server.roomId, function ( ee, dd )
                             {
-							
-									console.log( { e:ee, d:dd } );		
-							
+									
                                     if( ee == 'fail' )
                                     {
                                     	console.log( dd );

@@ -29,7 +29,8 @@ if( $fmd = $SqlDatabase->fetchObject( 'SELECT * FROM FMetaData md WHERE md.DataT
 {
 	if( $fmd->ValueString )
 	{
-		$SqlDatabase->query( 'DELETE FROM FMetaData WHERE `DataTable` = "FUserGroup" AND `Key` = "presence-roomId" AND `DataID` = \'' . $g->ID . '\' AND `ValueString` = \'' . ( $roomId = $fmd->ValueString ) . '\'' );
+		$roomId = $fmd->ValueString;
+		$SqlDatabase->query( 'DELETE FROM FMetaData WHERE `DataTable` = "FUserGroup" AND `Key` = "presence-roomId" AND `DataID` = \'' . $g->ID . '\' AND `ValueString` = \'' . $roomId . '\'' );
 	}
 }
 
