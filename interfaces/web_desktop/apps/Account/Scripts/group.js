@@ -436,17 +436,14 @@ function deleteGroup()
 							if( d.roomId )
 							{
 								var json = {
-									path : '/room/remove',
-									data : {
-									    roomId : d.roomId
-									}
+									roomId : d.roomId
 								};
-					
+								
 								let dp = new Library( 'system.library' );
 								dp.onExecuted = function( ee, dd )
 								{
 									
-									console.log( { args: { msg: json, servername: null }, ee: ee, dd:dd } );
+									console.log( { type: 0, path: '/room/remove', params: json, servername: null, ee: ee, dd:dd } );
 									
 									if( ee == 'fail' )
 									{
@@ -454,10 +451,13 @@ function deleteGroup()
 									}
 						
 								}
-								dp.execute( 'notification/notify-server', {
-									msg: json,
-									servername: null
-								} );
+								dp.execute( 'service/request', {
+						                type: 0,
+						                path: '/room/remove',
+						                params: json,
+						                servername: null
+						        } );
+								
 							}
 							
 						}
@@ -528,54 +528,52 @@ function saveGroup()
 				{
 					
 					var json = {
-						path : '/room/create',
-						data : {
-						    name : ge( 'groupName' ).value + ' [' + Application.fullName + ']',
-						    workgroups : [ t.uuid ],
+                            name : ge( 'groupName' ).value + ' [' + Application.fullName + ']',
+                            workgroups : [ t.uuid ]
+                    };
 
-						}
-					};
-					
-					let cp = new Library( 'system.library' );
-					cp.onExecuted = function( ee, dd )
-					{
-						
-						console.log( { args: { msg: json, servername: null }, ee: ee, dd:dd } );
-						
-						try
-						{
-						
-							dd = JSON.parse( dd );
-							
-							if( ee == 'ok' && dd.roomId )
-							{
-								connectFriendChatRoom( t.id, dd.roomId, function ( eee, ddd )
-								{
-						
-									if( eee == 'fail' )
-									{
-										console.log( ddd );
-									}
-						
-								} );
-							}
-							else
-							{
-								console.log( dd );
-							}
-					
-						}
-						catch( e )
-						{
-						
-						}
-						
-						
-					}
-					cp.execute( 'notification/notify-server', {
-						msg: json,
-						servername: null
-					} );
+                    let cp = new Library( 'system.library' );
+                    cp.onExecuted = function( ee, dd )
+                    {
+
+                            console.log( { type: 0, path: '/room/create', params: json, servername: null, ee: ee, dd:dd } );
+
+                            try
+                            {
+
+                                    dd = JSON.parse( dd );
+
+                                    if( ee == 'ok' && dd.roomId )
+                                    {
+                                            connectFriendChatRoom( t.id, dd.roomId, function ( eee, ddd )
+                                            {
+
+                                                    if( eee == 'fail' )
+                                                    {
+                                                            console.log( ddd );
+                                                    }
+
+                                            } );
+                                    }
+                                    else
+                                    {
+                                            console.log( dd );
+                                    }
+
+                            }
+                            catch( e )
+                            {
+
+                            }
+
+
+                    }
+                    cp.execute( 'service/request', {
+                            type: 0,
+                            path: '/room/create',
+                            params: json,
+                            servername: null
+                    } );
 					
 				}
 			}
