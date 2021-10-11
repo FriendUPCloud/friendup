@@ -1222,6 +1222,12 @@ void *ParseAndCall( WSThreadData *wstd )
 									{
 										i1 = i + 1;
 										
+										if( i1 >= r )
+										{
+											FERROR("[WS] Parse message error. No data provided\n");
+											break;
+										}
+										
 										if( jsoneqin( in, &t[i], "requestid") == 0) 
 										{
 											// threads
@@ -1242,7 +1248,7 @@ void *ParseAndCall( WSThreadData *wstd )
 											if( path == NULL )
 											{
 												// threads
-												wstd->wstd_Path = StringDuplicateN(  in + t[i1].start,t[i1].end-t[i1].start );
+												wstd->wstd_Path = StringDuplicateN( in + t[i1].start,t[i1].end-t[i1].start );
 												path = wstd->wstd_Path;//in + t[i1].start;
 												paths = t[i1].end-t[i1].start;
 												
