@@ -540,7 +540,7 @@ function saveGroup()
 						
                         try
                         {
-							
+							console.log( [server, server.roomId] );
 	                        if( server && server.roomId )
 	                        {
 	                            connectFriendChatRoom( t.id, server.roomId, function ( ee, dd )
@@ -563,7 +563,7 @@ function saveGroup()
                         }
                         catch( e )
                         {
-
+							console.log( server );
                         }
 
                     }
