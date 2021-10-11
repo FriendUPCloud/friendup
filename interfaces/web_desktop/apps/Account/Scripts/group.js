@@ -429,14 +429,14 @@ function deleteGroup()
 						try
 						{
 							
-							console.log( { e:e, d:d } );
+							var data = JSON.parse( d );
 							
-							d = JSON.parse( d );
+							console.log( { e:e, d:(data?data:d) } );
 							
-							if( d.roomId )
+							if( data.roomId )
 							{
 								var json = {
-									roomId : d.roomId
+									roomId : data.roomId
 								};
 								
 								let dp = new Library( 'system.library' );
