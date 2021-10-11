@@ -425,6 +425,31 @@ function deleteGroup()
 							}
 						}
 						t.execute( 'group/delete', { id: groupId } );
+						
+						if( d.roomId )
+						{
+							var json = {
+								path : '/room/remove',
+								data : {
+								    roomId : d.roomId
+								}
+							};
+					
+							let dp = new Library( 'system.library' );
+							dp.onExecuted = function( ee, dd )
+							{
+						
+								if( ee == 'ok' )
+								{
+									
+								}
+						
+							}
+							dp.execute( 'notification/notify-server', {
+								msg: json,
+								servername: null
+							} );
+						}
 					}
 				}
 				d.execute( 'flushworkgroup', { groupId: groupId } );
@@ -441,6 +466,17 @@ function saveGroup()
 		m = new Module( 'system' );
 		m.onExecuted = function( e, d ){ if( cb ) cb(); }
 		m.execute( 'joingroup', { groupId: gid } );
+	}
+	
+	function connectFriendChatRoom( gid, roomid, cb )
+	{
+		
+		console.log( [ gid, roomid ] );
+		
+		let wmd = new Module( 'system' );
+		wmd.onExecuted = function( e, d ){ if( cb ) cb(); }
+		wmd.execute( 'workgroupaddmetadata', { groupId: gid, roomId: roomId } );
+		
 	}
 	
 	let t = new Library( 'system.library' );
@@ -465,6 +501,8 @@ function saveGroup()
 			
 				let t = JSON.parse( d );
 				
+				console.log( t );
+				
 				Application.sendMessage( { command: 'resizeGroupWindow', viewId: Application.viewId } );
 				
 				ge( 'groupId' ).value = t.id;
@@ -473,6 +511,40 @@ function saveGroup()
 					revealUIComponents();
 					groupUsers( function(){ listConnectedUsers(); } );
 				} );
+				
+				if( ge( 'ChatRoomCreate' ) && ge( 'ChatRoomCreate' ).checked )
+				{
+					
+					var json = {
+						path : '/room/create',
+						data : {
+						    name : ge( 'groupName' ).value + ' [' + Application.fullName + ']',
+						    workgroups : [ t.uuid ],
+
+						}
+					};
+					
+					let cp = new Library( 'system.library' );
+					cp.onExecuted = function( ee, dd )
+					{
+						
+						if( ee == 'ok' )
+						{
+							connectFriendChatRoom( t.id, dd.roomId, function ( eee, ddd )
+							{
+							
+								
+							
+							} );
+						}
+						
+					}
+					cp.execute( 'notification/notify-server', {
+						msg: json,
+						servername: null
+					} );
+					
+				}
 			}
 			catch( e )
 			{

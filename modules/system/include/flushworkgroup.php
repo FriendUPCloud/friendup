@@ -24,6 +24,9 @@ if( !$g->Load() )
 	die( 'fail<!--separate-->' . json_encode( $res ) );
 }
 
+// Delete metadata for friendchat conferance rooms connected to this group
+
+
 // Delete queued events
 $SqlDatabase->query( 'DELETE FROM FQueuedEvent WHERE TargetGroupID=\'' . $g->ID . '\'' );
 

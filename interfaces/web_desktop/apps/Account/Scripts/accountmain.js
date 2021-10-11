@@ -232,7 +232,7 @@ function createGroup()
 	let v = new View( {
 		title: i18n( 'i18n_create_group' ),
 		width: 500,
-		height: 200
+		height: 210
 	} );
 	
 	let vid = v.getViewId()
@@ -245,7 +245,8 @@ function createGroup()
 		Description: '',
 		Name: '',
 		Hidden: 'Hidden',
-		DeleteCl: ' Hidden'
+		DeleteCl: ' Hidden',
+		ChatRoomCheck: ''
 	};
 	f.i18n();
 	f.onLoad = function( d )
@@ -292,7 +293,8 @@ function editGroup( id )
 			Description: gr.Description ? gr.Description : '',
 			Name: gr.Name,
 			Hidden: 'Showing',
-			DeleteCl: ' Showing'
+			DeleteCl: ' Showing',
+			ChatRoomCheck: 'style="display:none;"'
 		};
 		f.i18n();
 		f.onLoad = function( d )

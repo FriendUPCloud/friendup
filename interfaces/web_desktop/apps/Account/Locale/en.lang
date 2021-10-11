@@ -62,6 +62,7 @@ i18n_create_group                    : Create new group
 i18n_create_group_disabled           : Maximum number of groups reached
 i18n_name                            : Name
 i18n_group_description               : Group description
+i18n_create_chat_room                : Create chat room
 i18n_find_users                      : Find users
 i18n_group_members                   : Group members
 i18n_no_users_connected_to_you       : No (other) users are connected to your account.
