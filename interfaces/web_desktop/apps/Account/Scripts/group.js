@@ -426,30 +426,46 @@ function deleteGroup()
 						}
 						t.execute( 'group/delete', { id: groupId } );
 						
-						if( d.roomId )
+						try
 						{
-							var json = {
-								path : '/room/remove',
-								data : {
-								    roomId : d.roomId
-								}
-							};
-					
-							let dp = new Library( 'system.library' );
-							dp.onExecuted = function( ee, dd )
+							
+							console.log( { e:e, d:d } );
+							
+							d = JSON.parse( d );
+							
+							if( d.roomId )
 							{
-						
-								if( ee == 'ok' )
+								var json = {
+									path : '/room/remove',
+									data : {
+									    roomId : d.roomId
+									}
+								};
+					
+								let dp = new Library( 'system.library' );
+								dp.onExecuted = function( ee, dd )
 								{
 									
-								}
+									console.log( { args: { msg: json, servername: null }, ee: ee, dd:dd } );
+									
+									if( ee == 'fail' )
+									{
+										console.log( dd );
+									}
 						
+								}
+								dp.execute( 'notification/notify-server', {
+									msg: json,
+									servername: null
+								} );
 							}
-							dp.execute( 'notification/notify-server', {
-								msg: json,
-								servername: null
-							} );
+							
 						}
+						catch( e )
+						{
+						
+						}
+						
 					}
 				}
 				d.execute( 'flushworkgroup', { groupId: groupId } );
@@ -471,10 +487,8 @@ function saveGroup()
 	function connectFriendChatRoom( gid, roomid, cb )
 	{
 		
-		console.log( [ gid, roomid ] );
-		
 		let wmd = new Module( 'system' );
-		wmd.onExecuted = function( e, d ){ if( cb ) cb(); }
+		wmd.onExecuted = function( e, d ){ if( cb ) cb( e, d ); }
 		wmd.execute( 'workgroupaddmetadata', { groupId: gid, roomId: roomId } );
 		
 	}
@@ -501,8 +515,6 @@ function saveGroup()
 			
 				let t = JSON.parse( d );
 				
-				console.log( t );
-				
 				Application.sendMessage( { command: 'resizeGroupWindow', viewId: Application.viewId } );
 				
 				ge( 'groupId' ).value = t.id;
@@ -512,7 +524,7 @@ function saveGroup()
 					groupUsers( function(){ listConnectedUsers(); } );
 				} );
 				
-				if( ge( 'ChatRoomCreate' ) && ge( 'ChatRoomCreate' ).checked )
+				if( t.id && t.uuid && ge( 'ChatRoomCreate' ) && ge( 'ChatRoomCreate' ).checked )
 				{
 					
 					var json = {
@@ -528,15 +540,36 @@ function saveGroup()
 					cp.onExecuted = function( ee, dd )
 					{
 						
-						if( ee == 'ok' )
+						console.log( { args: { msg: json, servername: null }, ee: ee, dd:dd } );
+						
+						try
 						{
-							connectFriendChatRoom( t.id, dd.roomId, function ( eee, ddd )
+						
+							dd = JSON.parse( dd );
+							
+							if( ee == 'ok' && dd.roomId )
 							{
-							
-								
-							
-							} );
+								connectFriendChatRoom( t.id, dd.roomId, function ( eee, ddd )
+								{
+						
+									if( eee == 'fail' )
+									{
+										console.log( ddd );
+									}
+						
+								} );
+							}
+							else
+							{
+								console.log( dd );
+							}
+					
 						}
+						catch( e )
+						{
+						
+						}
+						
 						
 					}
 					cp.execute( 'notification/notify-server', {
