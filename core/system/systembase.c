@@ -1846,6 +1846,12 @@ int UserDeviceMount( SystemBase *l, UserSession *usrses, int force, FBOOL unmoun
 	}
 	User *usr = usrses->us_User;
 	
+	if( usr == NULL || usr->u_Status == USER_STATUS_TO_BE_REMOVED )
+	{
+		DEBUG("[UserDeviceMount] User is NULL or will be removed\n");
+		return -2;
+	}
+	
 	if( usr->u_MountedDevs != NULL && force == 0 )
 	{
 		DEBUG("[UserDeviceMount] Devices are already mounted\n");
