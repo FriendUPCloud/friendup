@@ -426,8 +426,8 @@ function deleteGroup()
 						}
 						t.execute( 'group/delete', { id: groupId } );
 						
-						try
-						{
+						//try
+						//{
 							
 							var data = JSON.parse( d );
 							
@@ -439,11 +439,13 @@ function deleteGroup()
 									roomId : data.roomId
 								};
 								
+								console.log( '[1]', { type: 0, path: '/room/remove', params: json, servername: null } );
+								
 								var dp = new Library( 'system.library' );
 								dp.onExecuted = function( ee, dd )
 								{
 									
-									console.log( { type: 0, path: '/room/remove', params: json, servername: null, ee: ee, dd:dd } );
+									console.log( '[2]', { type: 0, path: '/room/remove', params: json, servername: null, ee: ee, dd:dd } );
 									
 									if( ee == 'fail' )
 									{
@@ -464,11 +466,11 @@ function deleteGroup()
 								console.log( { e:e, d:d } );
 							}
 							
-						}
-						catch( e )
-						{
-							console.log( e );
-						}
+						//}
+						//catch( e )
+						//{
+						//	console.log( e );
+						//}
 						
 					}
 				}
