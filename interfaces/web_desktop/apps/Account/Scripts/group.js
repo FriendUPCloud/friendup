@@ -538,33 +538,25 @@ function saveGroup()
 			
                         console.log( { type: 0, path: '/room/create', params: json, servername: null, server:server } );
 						
-                        try
+                        if( server && server.roomId )
                         {
-							console.log( [server, server.roomId] );
-	                        if( server && server.roomId )
-	                        {
-	                            connectFriendChatRoom( t.id, server.roomId, function ( ee, dd )
-	                            {
-								
-										console.log( { e:ee, d:dd } );		
-								
-	                                    if( ee == 'fail' )
-	                                    {
-	                                    	console.log( dd );
-	                                    }
-
-	                            } );
-	                        }
-	                        else
-	                        {
-	                        	console.log( server );
-	                        }
+                            connectFriendChatRoom( t.id, server.roomId, function ( ee, dd )
+                            {
 							
+									console.log( { e:ee, d:dd } );		
+							
+                                    if( ee == 'fail' )
+                                    {
+                                    	console.log( dd );
+                                    }
+
+                            } );
                         }
-                        catch( e )
+                        else
                         {
-							console.log( server );
+                        	console.log( server );
                         }
+							
 
                     }
                     cp.execute( 'service/request', {
