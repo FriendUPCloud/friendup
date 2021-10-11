@@ -489,7 +489,7 @@ function saveGroup()
 		
 		let wmd = new Module( 'system' );
 		wmd.onExecuted = function( e, d ){ if( cb ) cb( e, d ); }
-		wmd.execute( 'workgroupaddmetadata', { groupId: gid, roomId: roomId } );
+		wmd.execute( 'workgroupaddmetadata', { groupId: gid, roomId: roomid } );
 		
 	}
 	
