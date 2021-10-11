@@ -18,7 +18,7 @@ if( $args->args->groupId && $args->args->roomId )
 		// It belongs to you!
 		if( $g->UserID == $User->ID )
 		{
-			if( !$SqlDatabase->fetchObject( 'SELECT * FROM `FMetaData` WHERE `DataTable` = "FUserGroup" `Key` = "presence-roomId" AND `DataID` = \'' . intval( $args->args->groupId, 10 ) . '\' AND `ValueString` = \'' . $args->args->roomId . '\'' ) )
+			if( !$SqlDatabase->fetchObject( 'SELECT * FROM `FMetaData` WHERE `DataTable` = "FUserGroup" AND `Key` = "presence-roomId" AND `DataID` = \'' . intval( $args->args->groupId, 10 ) . '\' AND `ValueString` = \'' . $args->args->roomId . '\'' ) )
 			{
 				if( $SqlDatabase->query( 'INSERT INTO FMetaData ( `DataTable`, `Key`, `DataID`, `ValueString` ) VALUES ( "FUserGroup", "presence-roomId", \'' . intval( $args->args->groupId, 10 ) . '\', \'' . $args->args->roomId . '\' )' ) )
 				{

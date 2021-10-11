@@ -25,7 +25,7 @@ if( !$g->Load() )
 }
 
 // Delete metadata for friendchat conferance rooms connected to this group
-if( $fmd = $SqlDatabase->fetchObject( 'SELECT * FROM `FMetaData` WHERE `DataTable` = "FUserGroup" `Key` = "presence-roomId" AND `DataID` = \'' . $g->ID . '\' ' ) )
+if( $fmd = $SqlDatabase->fetchObject( 'SELECT * FROM `FMetaData` WHERE `DataTable` = "FUserGroup" AND `Key` = "presence-roomId" AND `DataID` = \'' . $g->ID . '\' ' ) )
 {
 	if( $fmd->ValueString )
 	{

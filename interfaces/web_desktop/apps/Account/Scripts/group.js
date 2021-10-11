@@ -463,7 +463,7 @@ function deleteGroup()
 						}
 						catch( e )
 						{
-						
+							console.log( e );
 						}
 						
 					}
