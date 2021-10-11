@@ -439,7 +439,7 @@ function deleteGroup()
 									roomId : data.roomId
 								};
 								
-								let dp = new Library( 'system.library' );
+								var dp = new Library( 'system.library' );
 								dp.onExecuted = function( ee, dd )
 								{
 									
@@ -458,6 +458,10 @@ function deleteGroup()
 						                servername: null
 						        } );
 								
+							}
+							else
+							{
+								console.log( { e:e, d:d } );
 							}
 							
 						}
