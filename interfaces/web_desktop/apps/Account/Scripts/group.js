@@ -535,35 +535,36 @@ function saveGroup()
                     let cp = new Library( 'system.library' );
                     cp.onExecuted = function( server )
                     {
-
-                            console.log( { type: 0, path: '/room/create', params: json, servername: null, server:server } );
+			
+                        console.log( { type: 0, path: '/room/create', params: json, servername: null, server:server } );
+						
+                        try
+                        {
 							
-                            try
-                            {
+	                        if( server && server.roomId )
+	                        {
+	                            connectFriendChatRoom( t.id, server.roomId, function ( ee, dd )
+	                            {
+								
+										console.log( { e:ee, d:dd } );		
+								
+	                                    if( ee == 'fail' )
+	                                    {
+	                                    	console.log( dd );
+	                                    }
 
-                                    if( server && server.roomId )
-                                    {
-                                            connectFriendChatRoom( t.id, server.roomId, function ( eee, ddd )
-                                            {
+	                            } );
+	                        }
+	                        else
+	                        {
+	                        	console.log( server );
+	                        }
+							
+                        }
+                        catch( e )
+                        {
 
-                                                    if( eee == 'fail' )
-                                                    {
-                                                    	console.log( ddd );
-                                                    }
-
-                                            } );
-                                    }
-                                    else
-                                    {
-                                    	console.log( dd );
-                                    }
-
-                            }
-                            catch( e )
-                            {
-
-                            }
-
+                        }
 
                     }
                     cp.execute( 'service/request', {
