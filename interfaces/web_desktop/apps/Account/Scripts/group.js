@@ -533,31 +533,29 @@ function saveGroup()
                     };
 
                     let cp = new Library( 'system.library' );
-                    cp.onExecuted = function( ee, dd )
+                    cp.onExecuted = function( server )
                     {
 
-                            console.log( { type: 0, path: '/room/create', params: json, servername: null, ee: ee, dd:dd } );
-
+                            console.log( { type: 0, path: '/room/create', params: json, servername: null, server:server } );
+							
                             try
                             {
 
-                                    dd = JSON.parse( dd );
-
-                                    if( ee == 'ok' && dd.roomId )
+                                    if( server && server.roomId )
                                     {
-                                            connectFriendChatRoom( t.id, dd.roomId, function ( eee, ddd )
+                                            connectFriendChatRoom( t.id, server.roomId, function ( eee, ddd )
                                             {
 
                                                     if( eee == 'fail' )
                                                     {
-                                                            console.log( ddd );
+                                                    	console.log( ddd );
                                                     }
 
                                             } );
                                     }
                                     else
                                     {
-                                            console.log( dd );
+                                    	console.log( dd );
                                     }
 
                             }
