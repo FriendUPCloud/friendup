@@ -432,8 +432,15 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		//console.log( 'WebSocket call: ' + url );
 		return true;
 	}
+	// HTTP call, sanitize
 	else
 	{
+		// Repair websocket
+		if( Workspace.conn && Workspace.conn.ws && !Workspace.conn.ws.ws )
+		{
+			console.log( 'Repairing websocket.' );
+			Workspace.initWebSocket();
+		}
 		//console.log( 'HTTP call: ' + url );
 	}
 	
