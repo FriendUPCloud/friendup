@@ -436,12 +436,13 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	else
 	{
 		// Repair websocket
-		if( window.Workspace && Workspace.conn && Workspace.conn.ws && !Workspace.conn.ws.ws )
+		// TODO: Remove completely after real fix found
+		/*if( window.Workspace && Workspace.conn && Workspace.conn.ws && !Workspace.conn.ws.ws )
 		{
 			console.log( 'Repairing websocket.' );
 			Workspace.initWebSocket();
-		}
-		//console.log( 'HTTP call: ' + url );
+		}*/
+		console.log( 'HTTP call: ' + url );
 	}
 	
 	// If we are running this on friendup recreate url to support old method

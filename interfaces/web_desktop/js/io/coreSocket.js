@@ -227,10 +227,21 @@ FriendWebSocket.prototype.attachHandlers = function()
 	self.ws.onerror = onError;
 	self.ws.onmessage = onMessage;
 	
-	function onOpen( e ) { if( self.ws == this ) self.handleOpen( e ); }
-	function onClose( e ) { if( self.ws == this ) self.handleClose( e ); }
-	function onError( e ) { if( self.ws == this ) self.handleError( e ); }
-	function onMessage( e ) { if( self.ws == this ) self.handleSocketMessage( e ); }
+	function onOpen( e ){ if( self.ws == this ) self.handleOpen( e ); }
+	function onClose( e )
+	{ 
+		if( self.ws == this )
+		{
+			self.handleClose( e );
+			console.log( 'Handling closing of websocket.' );
+		}
+		else
+		{
+			console.log( 'Could not handle close. Panic.' );
+		}
+	}
+	function onError( e ){ if( self.ws == this ) self.handleError( e ); }
+	function onMessage( e ){ if( self.ws == this ) self.handleSocketMessage( e ); }
 }
 
 FriendWebSocket.prototype.clearHandlers = function()
@@ -547,15 +558,16 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 {
 	let self = this;
 
-	if( self.state.type == 'connecting'|| self.state.type == 'close' || self.state.type == 'error' || self.state.type == 'reconnect' )
+	if( self.state.type == 'connecting' || self.state.type == 'close' || self.state.type == 'error' || self.state.type == 'reconnect' )
 	{
 		queue( msg );
+		console.log( 'Going nowhere because of state is: ' + self.state.type );
 		return false;
 	}
 	
 	if ( !wsReady() )
 	{
-		//console.log( 'Socket isn\'t ready.' );
+		console.log( 'Socket isn\'t ready.' );
 		queue( msg );
 		self.doReconnect();
 		return false;
