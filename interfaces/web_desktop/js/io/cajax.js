@@ -436,7 +436,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	else
 	{
 		// Repair websocket
-		if( Workspace.conn && Workspace.conn.ws && !Workspace.conn.ws.ws )
+		if( window.Workspace && Workspace.conn && Workspace.conn.ws && !Workspace.conn.ws.ws )
 		{
 			console.log( 'Repairing websocket.' );
 			Workspace.initWebSocket();
