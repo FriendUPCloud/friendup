@@ -201,7 +201,8 @@ FriendWebSocket.prototype.connect = function()
 		console.log( 'Reconnecting..' );
 		let ws = self.ws;
 		self.ws = null;
-		ws.cleanup();
+		if( ws && ws.cleanup )
+			ws.cleanup();
 		return;
 	}
 		
