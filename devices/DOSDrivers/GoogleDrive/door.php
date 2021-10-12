@@ -672,10 +672,12 @@ if( !class_exists( 'GoogleDrive' ) )
 			// ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### 			
 			else if( $args->command == 'call' )
 			{
-				if( $this->connectClient() && $args->args->query == 'execute' )
+				if( $this->connectClient() )
 				{
+					$edit = ( $args->args->query == 'execute' ? true : false );
+					
 					//we want to open a doc for editing here
-					return $this->getFile( $args->path, true );
+					return $this->getFile( $args->path, $edit );
 				}
 				return 'fail<!--separate-->unauthorized or unknown call not allowed';
 			}
@@ -1156,22 +1158,25 @@ if( !class_exists( 'GoogleDrive' ) )
 		
 			// TODO: Need to change this because you are forced to be logged in client side on only one account to view files, dropbox is even better then this shit lol ...
 			
-			$googlepath = end( explode(':', $path) );
+			if( strstr( $path, ':DiskHandled/mode-custom/' ) && strstr( $path, '.pdf' ) )
+			{
+				$path = str_replace( [ 'DiskHandled/mode-custom/', '.pdf' ], '', $path );
+				$args->mode = 'custom';
+			}
+			if( strstr( $path, ':DiskHandled/' ) && strstr( $path, '.pdf' ) )
+			{
+				$path = str_replace( [ 'DiskHandled/', '.pdf' ], '', $path );
+			}
+			
+			$Logger->log( print_r( $args,1 ) );
+			
+			$googlepath = end( explode( ':', $path ) );
 			
 			$parentID = 'root';
 			$filepointer= false;
 			$drivefiles = new Google_Service_Drive( $this->gdx );
 			
 			$gfile = $this->getGoogleFileObject( $path );
-			
-			if( !$gfile || !$gfile->getMimeType() )
-			{
-				$pathdata = pathinfo( $path );
-				
-				$gfile = $this->getGoogleFileObject( $pathdata['dirname'] . '/' . str_replace( '.' . $pathdata['extension'], $pathdata['filename'] ) );
-				
-				$Logger->log( $pathdata['dirname'] . '/' . str_replace( '.' . $pathdata['extension'], $pathdata['filename'] ) );
-			}
 			
 			/*
 				special handler for google file types...
@@ -1187,7 +1192,6 @@ if( !class_exists( 'GoogleDrive' ) )
 				{
 					$rs = $SqlDatabase->FetchObject( 'SELECT fs.Data FROM FSetting fs WHERE fs.UserID=\'-1\' AND fs.Type = \'google\' AND fs.Key=\'settings\'' );
 				}		
-				
 				
 				if( $rs ) $dconf = json_decode( $rs->Data, 1 );
 				
@@ -1213,8 +1217,14 @@ if( !class_exists( 'GoogleDrive' ) )
 					}
 				}
 				
+				//args: {"query":"execute","path":"GoogleDrive:Tulladokumentet"}
+				//query: execute
+				//path: GoogleDrive:Tulladokumentet
+				
 				$dataset = (object)[ 
 					'url'           => $gfile->getWebViewLink(), 
+					'file_url'      => '/system.library/file/read?mode=rs&path=' . urlencode( str_replace( ':', ':DiskHandled/', $args->path ) . '.pdf' ),
+					//'file_url'      => '/system.library/file/call?path=' . urlencode( str_replace( ':', ':DiskHandled/mode-custom/', $args->path ) . '.pdf' ),
 					'title'         => $gfile->getName(), 
 					'client_id'     => $this->sysinfo['client_id'],
 					'redirect_uri'  => ( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : $redirect_uri )
@@ -1290,9 +1300,35 @@ if( !class_exists( 'GoogleDrive' ) )
 			else if( $args->mode == 'rs' )
 			{
 				while( $data = fread( $fp, 4096 ) )
+				{
 					print( $data );
-				
+				}
 				die();
+			}
+			else if( $args->mode == 'custom' )
+			{
+				
+				ob_clean();
+				
+				//FriendHeader( 'Content-Type: image/svg+xml' );
+				/*die( file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' ) );
+				
+				switch( strtolower( end( explode( '.', $args->path ) ) ) )
+				{
+					case 'pdf':
+						FriendHeader( "Content-Type: application/pdf" );
+						break;
+					default:
+						FriendHeader( "Content-Type: application/octet-stream" );
+						break;
+				}*/
+				
+				while( $data = fread( $fp, 4096 ) )
+				{
+					print( $data );
+				}
+				
+				die(  );
 			}
 			else
 			{

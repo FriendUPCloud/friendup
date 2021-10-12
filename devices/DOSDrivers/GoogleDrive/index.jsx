@@ -32,7 +32,12 @@ Application.run = function( conf )
 			}
 			
 			var self = this;
-						
+			
+			if( self.tmp.file_url )
+			{
+				self.tmp.file_url = ( self.tmp.file_url.split( 'path=' ).join( 'sessionid=' + Application.sessionId + '&path=' ) );
+			}
+			
 			var callback = function( e, d )
 			{
 				
@@ -77,9 +82,11 @@ Application.run = function( conf )
 							
 							// TODO: Load in template with javascript instead for file ...
 							
+							// TODO: THIS CRAP NEEDS TO BE DONE SIMPLER, LOAD JS FILES PROPERLY TO A TEMPLATE AND OR EVAL ....
+							
 							var w = new View( { title: 'Google Editor', width: 350, height: 100 } );
 							w.setFlag('allowPopups', true);
-							w.setContent('<div style="padding:25px;"><p><a href="javascript:void(0)" onclick="' + Application.oauth2Window( self.tmp, Application, w, closeThisWindow ) + '" class="Button fa-google IconSmall"> &nbsp; open in google editor</a> or <a href="javascript:void(0)" onclick="Application.quit();" class="Button fa-google IconSmall"> &nbsp; view as pdf</a></p></div>');
+							w.setContent('<div style="padding:25px;"><p><a href="javascript:void(0)" onclick="' + Application.oauth2Window( self.tmp, Application, w, closeThisWindow ) + '" class="Button fa-google IconSmall"> &nbsp; open in google editor</a> or <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp ) + '" class="Button fa-google IconSmall"> &nbsp; view as pdf</a></p></div>');
 							
 							w.onClose = function()
 							{
@@ -198,6 +205,16 @@ Application.decodeIDToken = function( params )
 	}
 	
 	return params;
+}
+
+Application.initJS = function( application, tmp )
+{
+	var str = "";
+	
+	str += " var Application = { displayEditor: "+Application.displayEditor+", quit: "+Application.quit+" }; ";
+	str += " return Application.displayEditor( '"+tmp.title+"', '"+tmp.file_url+"' ); ";
+	
+	return str;
 }
 
 Application.oauth2Window = function( tmp, Application, w, closeThisWindow )
