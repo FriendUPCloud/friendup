@@ -834,9 +834,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						User * usr = UMGetUserByID( l->sl_UM, id );
 						if( usr != NULL )
 						{
+							DEBUG( "[UMWebRequest] UMRemoveAndDeleteUser %d! before unmount\n", usr->u_InUse );
+							
 							l->UserDeviceUnMount( l, usr, loggedSession );
-
-							DEBUG( "[UMWebRequest] UMRemoveAndDeleteUser!!\n" );
+							
+							DEBUG( "[UMWebRequest] UMRemoveAndDeleteUser %d!\n", usr->u_InUse );
 							UMRemoveAndDeleteUser( l->sl_UM, usr, ((SystemBase*)m)->sl_USM);
 						}
 
