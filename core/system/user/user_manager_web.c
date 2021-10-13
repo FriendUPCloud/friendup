@@ -69,6 +69,12 @@ int killUserSession( SystemBase *l, UserSession *ses, FBOOL remove )
 		usleep( 1000 );
 	}
 	
+	// test
+	USMUserSessionRemove( l->sl_USM, ses );
+	USMSessionsDeleteDB( l->sl_USM, ses->us_SessionID );
+	WSCData *dat = (WSCData *)ses->us_WSD;
+	dat->wsc_UserSession = NULL;
+	
 	if( remove == TRUE  )
 	{
 		ses->us_Status = USER_SESSION_STATUS_TO_REMOVE;
@@ -112,8 +118,8 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 				
 				int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
 				
-				USMUserSessionRemove( l->sl_USM, s );
-				USMSessionsDeleteDB( l->sl_USM, s->us_SessionID );
+				//USMUserSessionRemove( l->sl_USM, s );
+				//USMSessionsDeleteDB( l->sl_USM, s->us_SessionID );
 
 				DEBUG("[killUserSessionByUser] Bytes send: %d\n", msgsndsize );
 			
@@ -136,8 +142,8 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 			
 				int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
 				
-				USMUserSessionRemove( l->sl_USM, s );
-				USMSessionsDeleteDB( l->sl_USM, s->us_SessionID );
+				//USMUserSessionRemove( l->sl_USM, s );
+				//USMSessionsDeleteDB( l->sl_USM, s->us_SessionID );
 
 				DEBUG("[killUserSessionByUser] Bytes send: %d\n", msgsndsize );
 			}
