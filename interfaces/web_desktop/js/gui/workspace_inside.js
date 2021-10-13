@@ -1761,7 +1761,6 @@ var WorkspaceInside = {
 	},
 	refreshExtraWidgetContents: function()
 	{
-		console.log( 'Doing, refresh' );
 		if( this.mode == 'vr' ) return;
 
 		let self = this;
@@ -1783,7 +1782,7 @@ var WorkspaceInside = {
 			    return;
 		    }
 		    
-			let closeBtn = '<div class="HRow"><p class="Layout"><button type="button" class="FloatRight Button fa-close IconSmall">' + i18n( 'i18n_close' ) + '</button></p></div>';
+		   let closeBtn = '<div class="HRow"><p class="Layout"><button type="button" class="FloatRight Button fa-close IconSmall">' + i18n( 'i18n_close' ) + '</button></p></div>';
 
 		    // Mobile launches calendar in a different way, so this 
 		    // functionality is only for desktops
@@ -1819,7 +1818,7 @@ var WorkspaceInside = {
 		
 		if( !Workspace.cachedSessionList || cand - this.refreshEWCTime > 30 )
 		{
-		    this.refreshEWCTime = cand;
+			this.refreshEWCTime = cand;
 		    
 		    Workspace.getAnnouncements();
 		    
@@ -2419,8 +2418,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							if( window.friendApp && window.friendApp.reveal )
 							{
 								friendApp.reveal();
-							}
-													
+							}						
 							return;
 						}
 						
@@ -2481,7 +2479,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 														if( ScreenOverlay.debug )
 															slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );											
 														ScreenOverlay.addDebug( 'Executing ' + cmd );
-
+														
 														Workspace.shell.execute( cmd, function( res )
 														{
 															if( ScreenOverlay.debug )
