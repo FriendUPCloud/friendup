@@ -70,10 +70,10 @@ int killUserSession( SystemBase *l, UserSession *ses, FBOOL remove )
 	}
 	
 	// test
-	USMUserSessionRemove( l->sl_USM, ses );
-	USMSessionsDeleteDB( l->sl_USM, ses->us_SessionID );
-	WSCData *dat = (WSCData *)ses->us_WSD;
-	dat->wsc_UserSession = NULL;
+	//USMUserSessionRemove( l->sl_USM, ses );
+	//USMSessionsDeleteDB( l->sl_USM, ses->us_SessionID );
+	//WSCData *dat = (WSCData *)ses->us_WSD;
+	//dat->wsc_UserSession = NULL;
 	
 	if( remove == TRUE  )
 	{
