@@ -442,7 +442,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 			console.log( 'Repairing websocket.' );
 			Workspace.initWebSocket();
 		}*/
-		console.log( 'HTTP call: ' + url );
+		//console.log( 'HTTP call: ' + url );
 	}
 	
 	// If we are running this on friendup recreate url to support old method
