@@ -736,8 +736,6 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 	
 	DEBUG("[USMUserSessionRemove] UserSessionRemove\n");
 	
-	DEBUG("CHECK9\n");
-	
 	SESSION_MANAGER_CHANGE_ON( smgr );
 	
 	if( remsess == smgr->usm_Sessions )
