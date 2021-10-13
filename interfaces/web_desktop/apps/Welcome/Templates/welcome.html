@@ -11,6 +11,7 @@
 			<div class="WelTabs" id="AppsPane">
 				<div class="WelTab"><span class="Welcome"></span>Getting<span class="Space"> </span>started</div>
 				<div class="WelTab"><span class="Office"></span>Friend<span class="Space"> </span>Office</div>
+				<div class="WelTab"><span class="Games"></span>Games & Fun</div>
 				<!--<div class="WelTab"><span class="Mail"></span>Friend Mail & Calendar</div>-->
 				<div class="WelTab"><span class="Chat"></span>Friend<span class="Space"> </span>Chat</div>
 				<div class="WelTab"><span class="Conference"></span>Friend Conference</div>
@@ -31,9 +32,11 @@
 					</p>
 					<p>
 						Friend is a social platform. As such, you are able to 
-						interact with others in real time. Why don't you 
-						<strong><a href="javascript:void(0)" onclick="Application.sendMessage( { type: 'system', command: 'invite' } )">invite 
-						some of your friends</a></strong> to participate? It's free!
+						interact with others in real time. Why don't you;
+					</p>
+					<p>
+						<a class="ButtonBox" href="javascript:void(0)" onclick="Application.sendMessage( { type: 'system', command: 'invite' } )">invite 
+						some of your friends</a>
 					</p>
 				</div>
 				<div class="ImageContent"></div>
@@ -69,6 +72,59 @@
 					</p>
 				</div>
 				<div class="ImageContent">
+				</div>
+			</div>
+			<div class="WelPage Games">
+				<div class="TextContent">
+					<div class="Flexi">
+						<div class="FlexiContent">
+							<p>
+								<span style="background-image: url(Progdir:Gfx/game_bb.png)"></span>
+							</p>
+							<p>
+								<a href="#" onclick="javascript:launch('bulletbonanza')">Bullet Bonanza</a>
+							</p>
+						</div>
+						<div class="FlexiContent">
+							<p>
+								<span style="background-image: url(Progdir:Gfx/game_crosswords.png)"></span>
+							</p>
+							<p>
+								<a href="#" onclick="javascript:launch('CrossWordsArena')">Crosswords Arena</a>
+							</p>
+						</div>
+						<div class="FlexiContent">
+							<p>
+								<span style="background-image: url(Progdir:Gfx/game_venge.png)"></span>
+							</p>
+							<p>
+								<a href="#" onclick="javascript:launch('Venge')">Venge</a>
+							</p>
+						</div>
+						<div class="FlexiContent">
+							<p>
+								<span style="background-image: url(Progdir:Gfx/game_flappy.png)"></span>
+							</p>
+							<p>
+								<a href="#" onclick="javascript:launch('FlappyBird')">Flappy Bird</a>
+							</p>
+						</div>
+						<div class="FlexiContent">
+							<p>
+								<span style="background-image: url(Progdir:Gfx/game_swoop.png)"></span>
+							</p>
+							<p>
+								<a href="#" onclick="javascript:launch('Swooop')">Swooop</a>
+							</p>
+						</div>
+					</div>
+				</div>
+				<div class="ExtraContent">
+					<h2>Get some fun into your day!</h2>
+					<p>
+						Friend is a great games platform, with several fun titles
+						for you to try. Check the list of wonderful games below!
+					</p>
 				</div>
 			</div>
 			<!--<div class="WelPage Mail">
@@ -259,6 +315,8 @@
 		{ background-image: url('Progdir:Gfx/icon_photopea.png'); }
 		.WelTab > span.Mail:after
 		{ background-image: url('Progdir:Gfx/icon_mail.png'); }
+		.WelTab > span.Games:after
+		{ background-image: url('Progdir:Gfx/icon_games.png'); }
 		.WelTab > span.Office:after
 		{ background-image: url('Progdir:Gfx/icon_office.png'); 
 		  background-size: 101%;
@@ -285,5 +343,55 @@
 		{ background-image: url('Progdir:Gfx/app_more.png'); }
 		.WelPage.Welcome .ImageContent
 		{ background-image: url('Progdir:Gfx/app_welcome.png'); }
+		
+		.Flexi
+		{
+			display: flex;
+			gap: 15px;
+		}
+
+		.FlexiContent
+		{
+			flex: wrap;
+		}
+		
+		.FlexiContent p
+		{
+			text-align: center;
+		}
+		
+		.FlexiContent span
+		{
+			display: inline-block;
+			width: 72px;
+			height: 72px;
+			border-radius: 100%;
+			background-size: cover;
+			background-position: center;
+			border: 2px solid #002239;
+		}
+		
+		a.ButtonBox
+		{
+			display: block;
+			background-color: #2980B9;
+			color: white;
+			text-transform: uppercase;
+			font-weight: bold;
+			padding: 5px 10px;
+			border-radius: 15px;
+			text-align: center;
+			
+		}
+		
+		@media (min-width: 640px)
+		{
+			a.ButtonBox
+			{
+				display: inline-block;
+			}
+		}
+		
 	</style>
+	
 

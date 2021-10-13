@@ -55,7 +55,12 @@ Application.run = function( msg )
 
 function launch( app )
 {
-	
+	let s = new Shell();
+	s.execute( 'launch ' + app, function()
+	{
+		s.close();
+		delete s;
+	} );
 };
 
 function nevershow()
