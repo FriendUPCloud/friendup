@@ -23,7 +23,19 @@ if( isset( $args->args->groupId ) )
 		$q->TargetUserID = $User->ID;
 		if( $q->load() )
 		{
-			$SqlDatabase->query( 'DELETE FROM FUserToGroup WHERE UserID=\'' . $User->ID . '\' AND UserGroupID=\'' . $groupId . '\'' );
+			if( FriendCoreQuery( '/system.library/group/removeusers', 
+			[
+				'id'    => $groupId,
+				'users' => $User->ID
+			] ) )
+			{
+				//
+			}
+			else
+			{
+				// If FriendCore didn't wanna do this, just do it! ...
+				$SqlDatabase->query( 'DELETE FROM FUserToGroup WHERE UserID=\'' . $User->ID . '\' AND UserGroupID=\'' . $groupId . '\'' );
+			}
 			$SqlDatabase->query( 'DELETE FROM FQueuedEvent WHERE TargetGroupID=\'' . $groupId . '\' AND TargetUserID=\'' . $User->ID . '\'' );
 			die( 'ok<!--separate-->' );
 		}
