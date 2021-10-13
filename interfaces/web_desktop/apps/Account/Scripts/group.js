@@ -425,6 +425,53 @@ function deleteGroup()
 							}
 						}
 						t.execute( 'group/delete', { id: groupId } );
+						
+						//try
+						//{
+							
+							var data = JSON.parse( d );
+							
+							console.log( { e:e, d:(data?data:d) } );
+							
+							if( data.roomId )
+							{
+								var json = {
+									roomId : data.roomId
+								};
+								
+								console.log( '[1]', { type: 0, path: '/room/remove', params: json, servername: null } );
+								
+								var dp = new Library( 'system.library' );
+								dp.onExecuted = function( ee, dd )
+								{
+									
+									console.log( '[2]', { type: 0, path: '/room/remove', params: json, servername: null, ee: ee, dd:dd } );
+									
+									if( ee == 'fail' )
+									{
+										console.log( dd );
+									}
+						
+								}
+								dp.execute( 'service/request', {
+						                type: 0,
+						                path: '/room/remove',
+						                params: json,
+						                servername: null
+						        } );
+								
+							}
+							else
+							{
+								console.log( { e:e, d:d } );
+							}
+							
+						//}
+						//catch( e )
+						//{
+						//	console.log( e );
+						//}
+						
 					}
 				}
 				d.execute( 'flushworkgroup', { groupId: groupId } );
@@ -441,6 +488,15 @@ function saveGroup()
 		m = new Module( 'system' );
 		m.onExecuted = function( e, d ){ if( cb ) cb(); }
 		m.execute( 'joingroup', { groupId: gid } );
+	}
+	
+	function connectFriendChatRoom( gid, roomid, cb )
+	{
+		
+		let wmd = new Module( 'system' );
+		wmd.onExecuted = function( e, d ){ if( cb ) cb( e, d ); }
+		wmd.execute( 'workgroupaddmetadata', { groupId: gid, roomId: roomid } );
+		
 	}
 	
 	let t = new Library( 'system.library' );
@@ -473,6 +529,48 @@ function saveGroup()
 					revealUIComponents();
 					groupUsers( function(){ listConnectedUsers(); } );
 				} );
+				
+				if( t.id && t.uuid && ge( 'ChatRoomCreate' ) && ge( 'ChatRoomCreate' ).checked )
+				{
+					
+					var json = {
+                            name : ge( 'groupName' ).value + ' [' + Application.fullName + ']',
+                            workgroups : [ t.uuid ]
+                    };
+
+                    let cp = new Library( 'system.library' );
+                    cp.onExecuted = function( server )
+                    {
+			
+                        console.log( { type: 0, path: '/room/create', params: json, servername: null, server:server } );
+						
+                        if( server && server.roomId )
+                        {
+                            connectFriendChatRoom( t.id, server.roomId, function ( ee, dd )
+                            {
+									
+                                    if( ee == 'fail' )
+                                    {
+                                    	console.log( dd );
+                                    }
+
+                            } );
+                        }
+                        else
+                        {
+                        	console.log( server );
+                        }
+							
+
+                    }
+                    cp.execute( 'service/request', {
+                            type: 0,
+                            path: '/room/create',
+                            params: json,
+                            servername: null
+                    } );
+					
+				}
 			}
 			catch( e )
 			{
