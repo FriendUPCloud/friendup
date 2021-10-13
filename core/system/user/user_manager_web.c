@@ -1973,6 +1973,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		{
 			DEBUG("[UMWebRequest] Remove session by sessionid\n");
 			UserSession *ses = USMGetSessionBySessionID( l->sl_USM, sessionid );
+			DEBUG("[UMWebRequest] Session found under pointer: %p\n", ses );
 			if( ses != NULL )
 			{
 				killUserSession( l, ses, TRUE );

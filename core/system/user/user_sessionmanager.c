@@ -176,13 +176,13 @@ UserSession *USMGetSessionBySessionID( UserSessionManager *usm, char *sessionid 
 	{
 		if( strcmp( sessionid, us->us_SessionID ) == 0 )
 		{
-			DEBUG("CHECK4END\n");
+			DEBUG("CHECK4END found\n");
 			SESSION_MANAGER_RELEASE( usm );
 			return us;
 		}
 		us = (UserSession *) us->node.mln_Succ;
 	}
-	DEBUG("CHECK4END\n");
+	DEBUG("[USMGetSessionBySessionID] session not found: %s\n", sessionid );
 	
 	SESSION_MANAGER_RELEASE( usm );
 	
