@@ -201,7 +201,8 @@ FriendWebSocket.prototype.connect = function()
 		console.log( 'Reconnecting..' );
 		let ws = self.ws;
 		self.ws = null;
-		ws.cleanup();
+		if( ws && ws.cleanup )
+			ws.cleanup();
 		return;
 	}
 		
@@ -226,10 +227,21 @@ FriendWebSocket.prototype.attachHandlers = function()
 	self.ws.onerror = onError;
 	self.ws.onmessage = onMessage;
 	
-	function onOpen( e ) { if( self.ws == this ) self.handleOpen( e ); }
-	function onClose( e ) { if( self.ws == this ) self.handleClose( e ); }
-	function onError( e ) { if( self.ws == this ) self.handleError( e ); }
-	function onMessage( e ) { if( self.ws == this ) self.handleSocketMessage( e ); }
+	function onOpen( e ){ if( self.ws == this ) self.handleOpen( e ); }
+	function onClose( e )
+	{ 
+		if( self.ws == this )
+		{
+			self.handleClose( e );
+			console.log( 'Handling closing of websocket.' );
+		}
+		else
+		{
+			console.log( 'Could not handle close. Panic.' );
+		}
+	}
+	function onError( e ){ if( self.ws == this ) self.handleError( e ); }
+	function onMessage( e ){ if( self.ws == this ) self.handleSocketMessage( e ); }
 }
 
 FriendWebSocket.prototype.clearHandlers = function()
@@ -546,15 +558,16 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 {
 	let self = this;
 
-	if( self.state.type == 'connecting'|| self.state.type == 'close' || self.state.type == 'error' || self.state.type == 'reconnect' )
+	if( self.state.type == 'connecting' || self.state.type == 'close' || self.state.type == 'error' || self.state.type == 'reconnect' )
 	{
 		queue( msg );
+		console.log( 'Going nowhere because of state is: ' + self.state.type );
 		return false;
 	}
 	
 	if ( !wsReady() )
 	{
-		//console.log( 'Socket isn\'t ready.' );
+		console.log( 'Socket isn\'t ready.' );
 		queue( msg );
 		self.doReconnect();
 		return false;
@@ -945,6 +958,7 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 	console.log( 'Detatching native websocket from object.' );
 	
 	let wsHere = self.ws;
+	delete self.ws;
 	self.ws = null;
 	self.ready = false;
 	
@@ -958,20 +972,23 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 		}
 		else console.log( 'Couldn\'t close websocket because close method was null and void.' );
 		
-		// We were disconnected, remove delayed handler
-		if( !navigator.onLine )
-		{
-			console.log( 'We are disconnected. Strange things can happen.' );
-		}
-		
-		if( window.Friend && Friend.User )
-		{
-			Friend.User.CheckServerNow();
-		}
 	}
-	catch (e)
+	catch( e )
 	{
 		self.logEx( e, 'close' );
+		console.log( 'Could not check online state.' );
+	}
+	
+	// We were disconnected, remove delayed handler
+	if( !navigator.onLine )
+	{
+		console.log( 'We are disconnected. Strange things can happen.' );
+	}
+	
+	// Check server and online state!
+	if( window.Friend && Friend.User )
+	{
+		Friend.User.CheckServerNow();
 	}
 }
 
@@ -983,8 +1000,6 @@ FriendWebSocket.prototype.cleanup = function()
 	self.stopKeepAlive();
 	self.clearHandlers();
 	self.wsClose();
-	delete self.ws;
-	self.ws = null;
 }
 
 FriendWebSocket.prototype.logEx = function( e, fnName )

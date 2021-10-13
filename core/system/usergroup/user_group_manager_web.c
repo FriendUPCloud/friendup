@@ -770,7 +770,20 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					}
 					
 					char msg[ 512 ];
-					snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"parentid\":%lu}", ug->ug_ID, ug->ug_Name, ug->ug_ParentID );
+					snprintf(
+						msg, 
+						sizeof(msg), 
+						"{"
+							"\"id\":%lu,"
+							"\"uuid\":\"%s\","
+							"\"name\":\"%s\","
+							"\"parentid\":%lu"
+						"}", 
+						ug->ug_ID, 
+						ug->ug_UUID,
+						ug->ug_Name, 
+						ug->ug_ParentID
+					);
 					NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", msg );
 					
 					char buffer[ 1024 ];
@@ -844,9 +857,43 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 								}
 							
 								l->LibrarySQLDrop( l, sqlLib );
+								addUsers = TRUE;
+
+								char msg[ 512 ];
+								snprintf(
+									msg, 
+									sizeof(msg), 
+									"{"
+										"\"id\":%lu,"
+										"\"uuid\":\"%s\","
+										"\"name\":\"%s\","
+										"\"parentid\":%lu"
+									"}", 
+									ug->ug_ID, 
+									ug->ug_UUID,
+									ug->ug_Name, 
+									ug->ug_ParentID
+								);
+								NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", msg );
+					
+								char buffer[ 1024 ];
+								snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"success\",\"id\":%lu,\"uuid\":\"%s\"}", groupID, ug->ug_UUID );
+								HttpAddTextContent( response, buffer );
 							}
+							/*
+							else
+							{
+								char buffer[ 512 ];
+								char buffer1[ 256 ];
+								snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "UGMUserGroupCreate", error );
+								snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_FUNCTION_RETURNED );
+								HttpAddTextContent( response, buffer );
+							}
+							*/
 							groupID = ug->ug_ID;
-						
+						/*
+						 * OLD CODE
+						 * 
 							addUsers = TRUE;
 
 							char msg[ 512 ];
@@ -856,6 +903,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							char buffer[ 1024 ];
 							snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"success\",\"id\":%lu,\"uuid\":\"%s\"}", groupID, ug->ug_UUID );
 							HttpAddTextContent( response, buffer );
+							*/
 						}
 						else
 						{

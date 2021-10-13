@@ -546,7 +546,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 		stime = GetCurrentTimestampD();
 #endif
 				
-		Log( FLOG_DEBUG, "[ProtocolHttp] Request parsed without problems.\n");
+		//Log( FLOG_DEBUG, "[ProtocolHttp] Request parsed without problems.\n");
 		Uri *uri = request->http_Uri;
 		Path *path = NULL;
 		if( uri->uri_Path->p_Raw )
@@ -1305,7 +1305,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 						// We don't allow directory traversals..
 						if( flaw == 0 )
 						{
-							Log( FLOG_DEBUG, "[ProtocolHttp] read static file %s path size %d\n", path->p_Raw, path->p_RawSize );
+							//Log( FLOG_DEBUG, "[ProtocolHttp] read static file %s path size %d\n", path->p_Raw, path->p_RawSize );
 
 							for( i = 0; i < path->p_RawSize; i++ )
 							{
@@ -1764,7 +1764,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 											response->http_WriteType = FREE_ONLY;
 
-											Log( FLOG_DEBUG, "[ProtocolHttp] File returned to caller, fsize %lu\n", file->lf_FileSize );
+											//Log( FLOG_DEBUG, "[ProtocolHttp] File returned to caller, fsize %lu\n", file->lf_FileSize );
 
 											//INFO("--------------------------------------------------------------%d\n", freeFile );
 											if( freeFile == TRUE )

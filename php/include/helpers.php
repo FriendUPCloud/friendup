@@ -111,6 +111,7 @@ function FriendCoreQuery( $command = '', $args = false, $method = 'POST', $heade
 	}
 
 	curl_setopt( $curl, CURLOPT_URL, $url );
+	curl_setopt( $curl, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 
 	if( $headers )
 	{

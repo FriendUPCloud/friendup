@@ -5500,6 +5500,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			
 			Workspace.menuContext = null;
 			
+			// Get files in dest path
 			let d = new Door( destPath );
 			d.getIcons( destFinf, function( items )
 			{
@@ -5535,6 +5536,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									clip[ b ].fileInfo.NewPath = p;
 								}
 								
+								
 								// Set the safe new filename
 								clip[ b ].fileInfo.NewFilename = str;
 							
@@ -5558,13 +5560,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				for( let b = 0; b < clip.length; b++ )
 				{	
 					let spath = clip[b].fileInfo.Path;
+					
 					let lastChar = spath.substr( -1, 1 );
 					let sh = new Shell( 0 );
 					let source = spath.split( ' ' ).join( '\\ ' );
 					let destin = ( destPath ).split( ' ' ).join( '\\ ' );
 					let fn = ( clip[b].fileInfo.NewFilename ? clip[b].fileInfo.NewFilename : clip[b].fileInfo.Filename );
 					fn = fn.split( ' ' ).join( '\\ ' );
+					
+					// Remove slash when copying a dir
+					if( clip[b].fileInfo.Type == 'Directory' )
+					{
+						if( source.substr( -1, 1 ) == '/' )
+							source = 'all ' + source.substr( 0, source.length - 1 );
+						fn = '';
+					}
+					
 					let copyStr = 'copy ' + source + ' to ' + destin + fn;
+					
 					sh.parseScript( copyStr, function()
 					{
 						if( cliplen-- == 0 )
@@ -10378,7 +10391,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	let v = new View( {
-		title: i18n( 'i18n_title_about_friendos' ) + ' Hydrogen³',
+		title: i18n( 'i18n_title_about_friendos' ) + ' Hydrogen4',
 		width: 540,
 		height: 560,
 		id: 'about_friendup'
