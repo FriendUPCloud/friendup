@@ -24,13 +24,23 @@ if( !$g->Load() )
 	die( 'fail<!--separate-->' . json_encode( $res ) );
 }
 
+// Delete metadata for friendchat conferance rooms connected to this group
+if( $fmd = $SqlDatabase->fetchObject( 'SELECT * FROM `FMetaData` WHERE `DataTable` = "FUserGroup" AND `Key` = "presence-roomId" AND `DataID` = \'' . $g->ID . '\' ' ) )
+{
+	if( $fmd->ValueString )
+	{
+		$roomId = $fmd->ValueString;
+		$SqlDatabase->query( 'DELETE FROM FMetaData WHERE `DataTable` = "FUserGroup" AND `Key` = "presence-roomId" AND `DataID` = \'' . $g->ID . '\' AND `ValueString` = \'' . $roomId . '\'' );
+	}
+}
+
 // Delete queued events
 $SqlDatabase->query( 'DELETE FROM FQueuedEvent WHERE TargetGroupID=\'' . $g->ID . '\'' );
 
 // Delete group user relations
 $SqlDatabase->query( 'DELETE FROM FUserToGroup WHERE UserGroupID=\'' . $g->ID . '\'' );
 
-die( 'ok' );
+die( 'ok<!--separate-->{"groupId":' . $args->args->groupId . ( isset( $roomId ) && $roomId ? ',"roomId":"' . $roomId . '"' : '' ) . '}' );
 
 
 ?>
