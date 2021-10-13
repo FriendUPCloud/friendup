@@ -111,6 +111,9 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 				int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
 				
 				int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
+				
+				USMUserSessionRemove( l->sl_USM, s );
+				USMSessionsDeleteDB( l->sl_USM, s->us_SessionID );
 
 				DEBUG("[killUserSessionByUser] Bytes send: %d\n", msgsndsize );
 			
@@ -132,6 +135,9 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 				int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
 			
 				int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
+				
+				USMUserSessionRemove( l->sl_USM, s );
+				USMSessionsDeleteDB( l->sl_USM, s->us_SessionID );
 
 				DEBUG("[killUserSessionByUser] Bytes send: %d\n", msgsndsize );
 			}
