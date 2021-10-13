@@ -10,6 +10,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+include_once( 'php/include/helpers.php' );
+
 $g = new dbIO( 'FUserGroup' );
 if( $g->Load( intval( $args->args->groupId, 10 ) ) )
 {

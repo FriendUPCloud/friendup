@@ -10,6 +10,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+include_once( 'php/include/helpers.php' );
+
 if( isset( $args->args->groupId ) )
 {
 	$groupId = intval( $args->args->groupId, 10 );
