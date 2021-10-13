@@ -71,7 +71,8 @@ int killUserSession( SystemBase *l, UserSession *ses, FBOOL remove )
 	
 	if( remove == TRUE  )
 	{
-		error = USMUserSessionRemove( l->sl_USM, ses );	
+		ses->us_Status = USER_SESSION_STATUS_TO_REMOVE;
+		//error = USMUserSessionRemove( l->sl_USM, ses );	
 	}
 	return error;
 }
