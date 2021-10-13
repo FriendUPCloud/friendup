@@ -10,6 +10,9 @@
 *                                                                              *
 *****************************************************************************©*/
 
+error_reporting( E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_WARNING );
+ini_set( 'display_errors', '1' );
+
 include_once( 'php/include/helpers.php' );
 
 if( isset( $args->args->groupId ) )
@@ -41,6 +44,14 @@ if( isset( $args->args->groupId ) )
 			$SqlDatabase->query( 'DELETE FROM FQueuedEvent WHERE TargetGroupID=\'' . $groupId . '\' AND TargetUserID=\'' . $User->ID . '\'' );
 			die( 'ok<!--separate-->' );
 		}
+		else
+		{
+			die( 'fail<!--separate-->Couldn\'t find group: ' . $groupId . ' and userid: ' . $User->ID . ' in "FQueuedEvent" ...' );
+		}
+	}
+	else
+	{
+		die( 'fail<!--separate-->Couldn\'t find group: ' . $groupId . ' in "FUserGroup" ...' );
 	}
 }
 die( 'fail' );

@@ -219,6 +219,10 @@ function leaveGroup( gid )
 				{
 					refreshGroups( ge( 'groupSearcher' ).value );
 				}
+				else
+				{
+					console.log( { args: { groupId: gid }, e:e, d:d } );
+				}
 			}
 			m.execute( 'leavegroup', { groupId: gid } );
 		}
