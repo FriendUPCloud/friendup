@@ -907,12 +907,16 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 			// Deprecate from 1.0 beta 2 "no user!"
 			if( t && ( t.response.toLowerCase() == 'user not found' || t.response.toLowerCase() == 'user session not found' ) )
 			{
-				if( window.Workspace && t.response.toLowerCase() == 'user session not found' ) 
+				if( window.Workspace && t.response.toLowerCase() == 'user session not found' )
+				{ 
 					Workspace.flushSession();
+					console.log( 'KILLED WHO!?' );
+				}
 				if( Workspace )
 				{
 					// Add to queue
 					AddToCajaxQueue( self );
+					console.log( 'KILLED WHO, YOU!?' );
 					return Friend.User.CheckServerConnection();
 				}
 			}
