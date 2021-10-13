@@ -269,6 +269,23 @@ html > body:not(.Inside):not(.Loading)
 	border-radius: 3px;
 }
 
+.WelPage .TextContent.Games
+{
+	width: calc(100% - 394px);
+}
+
+.WelPage .ExtraContent
+{
+	width: 394px;
+	min-height: 170px;
+	background-color: #efefef;
+	box-sizing: border-box;
+	padding: 20px;
+	float: right;
+	position: relative;
+	border-radius: 3px;
+}
+
 .WelPage table ul
 {
 	margin: 0;
@@ -416,4 +433,53 @@ html > body:not(.Inside):not(.Loading)
 		display: block;
 	}
 }
+
+.Flexi
+{
+	display: flex;
+	gap: 15px;
+}
+
+.FlexiContent
+{
+	flex: 1;
+}
+
+.FlexiContent p
+{
+	text-align: center;
+}
+
+.FlexiContent span
+{
+	display: inline-block;
+	width: 72px;
+	height: 72px;
+	border-radius: 100%;
+	background-size: cover;
+	background-position: center;
+	border: 2px solid #002239;
+}
+
+a.ButtonBox
+{
+	display: block;
+	background-color: #2980B9;
+	color: white;
+	text-transform: uppercase;
+	font-weight: bold;
+	padding: 5px 10px;
+	border-radius: 15px;
+	text-align: center;
+	
+}
+
+@media (min-width: 640px)
+{
+	a.ButtonBox
+	{
+		display: inline-block;
+	}
+}
+
 
