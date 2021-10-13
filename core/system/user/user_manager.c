@@ -1019,7 +1019,7 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 	User *userPrevious = NULL; //previous element of the linked list
 	SystemBase *sb = (SystemBase *)um->um_SB;
 
-	USER_LOCK( usr );
+	//USER_LOCK( usr );
 	
 	DEBUG("[UMRemoveAndDeleteUser] remove user\n");
 	
@@ -1061,7 +1061,7 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 		userCurrent = (User *)userCurrent->node.mln_Succ; //this is the next element in the linked list
 	}
 	
-	USER_UNLOCK( usr );
+	//USER_UNLOCK( usr );
 	
 	if( found == TRUE )
 	{
