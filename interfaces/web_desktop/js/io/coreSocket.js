@@ -422,10 +422,10 @@ FriendWebSocket.prototype.handleSocketMessage = function( e )
 			console.log( 'Test3: Session was killed!' );
 			self.wsClose();
 			
-			setTimeout( function()
+			/*setTimeout( function()
 			{
 				Workspace.logout();
-			}, 500 );
+			}, 500 );*/
 			return;
 		}
 		else if( msg.data.data == 'session timeout' )
