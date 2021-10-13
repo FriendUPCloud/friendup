@@ -1217,10 +1217,6 @@ if( !class_exists( 'GoogleDrive' ) )
 					}
 				}
 				
-				//args: {"query":"execute","path":"GoogleDrive:Tulladokumentet"}
-				//query: execute
-				//path: GoogleDrive:Tulladokumentet
-				
 				$dataset = (object)[ 
 					'url'           => $gfile->getWebViewLink(), 
 					'file_url'      => '/system.library/file/read?mode=rs&path=' . urlencode( str_replace( ':', ':DiskHandled/', $args->path ) . '.pdf' ),
