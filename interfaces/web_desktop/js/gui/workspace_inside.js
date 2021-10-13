@@ -1761,6 +1761,7 @@ var WorkspaceInside = {
 	},
 	refreshExtraWidgetContents: function()
 	{
+		console.log( 'Doing, refresh' );
 		if( this.mode == 'vr' ) return;
 
 		let self = this;
@@ -1778,7 +1779,7 @@ var WorkspaceInside = {
 			    m = ge( 'DoorsScreen' ).screenTitle.getElementsByClassName( 'Extra' )[0];
 		    if( !m )
 		    {
-			    //console.log( 'Can not find widget!' );
+			    console.log( 'Can not find widget!' );
 			    return;
 		    }
 		    
