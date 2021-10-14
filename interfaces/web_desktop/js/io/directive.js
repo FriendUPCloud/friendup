@@ -268,14 +268,17 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			if( r == 'notinstalled' || ( conf && conf.response == 'not installed' ) )
 			{
 				let hideView = false;
+				console.log( '[] Install it?' );
 				if( d.toLowerCase().indexOf('"trusted":"yes"') > 0 )
 				{
 					hideView = true;
+					console.log( 'Hide' );
 				}
 
 				// Just use callback
 				if( callback && !hideView )
 				{
+					console.log( 'Tmgmdf.' );
 					if( !callback( { error: 2, errorMessage: i18n( 'install_question_title' ) } ) )
 					{
 						// Remove blocker
@@ -283,7 +286,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 						return;
 					}
 				}
-				
+				console.log( 'Tes' );
 				let title = i18n( 'install_question_mintitle' ) + ': ' + app;
 				let w = new View( {
 					title:  title,
