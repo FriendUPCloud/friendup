@@ -277,6 +277,7 @@ menu_share								: Share
 menu_unshare                            : Unshare
 menu_share_info                         : Share info
 menu_download                           : Download
+menu_download_as                        : Download as
 i18n_could_not_download                 : Could not download
 i18n_file_cannot_be_downloaded          : The file is not of the correct type to download
 menu_close_idle_connections             : Close idle connections

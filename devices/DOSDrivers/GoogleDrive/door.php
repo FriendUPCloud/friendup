@@ -1067,33 +1067,53 @@ if( !class_exists( 'GoogleDrive' ) )
 					$o->Permissions = ''; //TODO: is this correct
 					$o->DateModified = $dm->format( 'Y-m-d H:i:s' );
 					$o->DateCreated = $dc->format( 'Y-m-d H:i:s' );
-
+					
 					switch( $gfile->getMimeType() )
 					{
 						case 'application/vnd.google-apps.document':
 							$o->IconClass = 'TypeGoogleDocs';
 							$o->Command = $gfile->getMimeType();
 							$o->ExportFormat = 'pdf';
-							//$o->Filename = ( $o->Filename . '.docx' );
+							$o->ExportFormats = json_decode( '[
+								{ "Name": "HTML", "Type": "text/html" },
+								{ "Name": "HTML (zipped)", "Type": "application/zip" },
+								{ "Name": "Plain text", "Type": "text/plain" },
+								{ "Name": "Rich text", "Type": "application/rtf" },
+								{ "Name": "Open Office", "Type": "application/vnd.oasis.opendocument.text" },
+								{ "Name": "PDF", "Type": "application/pdf" },
+								{ "Name": "MS Word", "Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+								{ "Name": "EPUB", "Type": "application/epub+zip" }
+							]' );
 							break;
 						case 'application/vnd.google-apps.spreadsheet':
 							$o->IconClass = 'TypeGoogleSheets';
 							$o->Command = $gfile->getMimeType();
 							$o->ExportFormat = 'pdf';
-							//$o->Filename = ( $o->Filename . '.xlsx' );
+							$o->ExportFormats = json_decode( '[
+								{ "Name": "MS Excel", "Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
+								{ "Name": "Open Office sheet", "Type": "application/x-vnd.oasis.opendocument.spreadsheet" },
+								{ "Name": "PDF", "Type": "application/pdf" },
+								{ "Name": "CSV (first sheet)", "Type": "text/csv" },
+								{ "Name": "(sheet only)", "Type": "text/tab-separated-values" },
+								{ "Name": "HTML (zipped)", "Type": "HTML (zipped)" }
+							]' );
 							break;
 						case 'application/vnd.google-apps.presentation':
 							$o->IconClass = 'TypeGooglePresentation';
 							$o->Command = $gfile->getMimeType();
 							$o->ExportFormat = 'pdf';
-							//$o->Filename = ( $o->Filename . '.odp' );
+							$o->ExportFormats = json_decode( '[
+								{ "Name": "MS PowerPoint", "Type": "application/vnd.openxmlformats-officedocument.presentationml.presentation" },
+								{ "Name": "Open Office presentation", "Type": "application/vnd.oasis.opendocument.presentation" },
+								{ "Name": "PDF", "Type": "application/pdf" },
+								{ "Name": "Plain text", "Type": "text/plain" }
+							]' );
 							break;
-						case 'application/vnd.google-apps.form':
-							$o->IconClass = 'TypeGooglePresentation';
-							$o->Command = $gfile->getMimeType();
-							$o->ExportFormat = 'pdf';
-							//$o->Filename = ( $o->Filename . '.form' );
-							break;
+						//case 'application/vnd.google-apps.form':
+						//	$o->IconClass = 'TypeGoogleForms';
+						//	$o->Command = $gfile->getMimeType();
+						//	$o->ExportFormat = 'pdf';
+						//	break;
 						default:
 							break;
 					}

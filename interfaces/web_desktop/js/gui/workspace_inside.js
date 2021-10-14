@@ -7880,7 +7880,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		} );*/
 	},
 	// Downloads a file by path to the client computer
-	download: function( path )
+	download: function( path, format )
 	{
 		let lastChar = path.substr( path.length - 1, 1 );
 		if( lastChar == ':' || lastChar == '/' )
@@ -7891,7 +7891,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( fn.indexOf( '/' ) > 0 )
 			fn = fn.split( '/' ).pop();
 		
-		let dowloadURI = document.location.protocol +'//'+ document.location.host +'/system.library/file/read/' + fn + '?mode=rs&sessionid=' + Workspace.sessionId + '&path='+ encodeURIComponent( path ) + '&download=1';
+		let dowloadURI = document.location.protocol +'//'+ document.location.host +'/system.library/file/read/' + fn + '?mode=rs&sessionid=' + Workspace.sessionId + '&path='+ encodeURIComponent( path );
+		
+		if( format )
+		{
+			dowloadURI += '&download=' + encodeURIComponent( format );
+		}
+		else
+		{
+			dowloadURI += '&download=1';
+		}
 		
 		//check if we are inside one of our apps with a custom download handler....
 		if( typeof( friendApp ) != 'undefined' && typeof friendApp.download == 'function' )
@@ -8248,6 +8257,34 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									}
 								} );
 							}
+							else if( thisicon.fileInfo.ExportFormats )
+							{
+								if( thisicon.fileInfo.ExportFormats.length > 0 )
+								{
+									
+									menu.push( {
+										divider: true
+									} );
+									
+									for( var i in thisicon.fileInfo.ExportFormats )
+									{
+										
+										if( thisicon.fileInfo.ExportFormats[i] && thisicon.fileInfo.ExportFormats[i].Name && thisicon.fileInfo.ExportFormats[i].Type )
+										{
+											menu.push( {
+												name: i18n( 'menu_download_as' ) + ' ' + thisicon.fileInfo.ExportFormats[i].Name,
+												args: { Type: thisicon.fileInfo.ExportFormats[i].Type },
+												command: function( e, args )
+												{
+													Workspace.download( thisicon.fileInfo.Path, args.Type );
+												}
+											} );
+										}
+									
+									}
+									
+								}
+							}
 							else
 							{
 								let ext = thisicon.fileInfo.Filename.split( '.' ).pop();
@@ -8336,6 +8373,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						p.cmd = menu[z].command;
 					}
+					if( menu[z].args )
+					{
+						p.args = menu[z].args;
+					}
 					p.onclick = function( event )
 					{
 						if( !v.shown ) return;
@@ -8345,7 +8386,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							// Give a small timeout to allow for mouseup
 							setTimeout( function()
 							{
-								self.cmd( event );
+								if( self.args )
+								{
+									self.cmd( event, self.args );
+								}
+								else
+								{
+									self.cmd( event );
+								}
 							}, 50 );
 						}
 						menuout.classList.add( 'Closing' );
