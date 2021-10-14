@@ -205,7 +205,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			switch( pair[0] )
 			{
 				case 'workspace':
-					workspace = parseInt( pair[1] ) - 1;
+					workspace = parseInt( pair[1] );
 					if( !flags ) flags = {};
 					if( !flags.workspace )
 						flags.workspace = workspace;
