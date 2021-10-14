@@ -441,15 +441,9 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		{
 			console.log( 'Repairing websocket.' );
 			Workspace.initWebSocket();
-<<<<<<< HEAD
-		}*/
-		//console.log( 'HTTP call: ' + url );
-	}
-=======
 		}
-		console.log( 'HTTP call: ' + url );
+		//console.log( 'HTTP call: ' + url );
 	}*/
->>>>>>> 58e4deee8362a3ab9678255a07346f6768dcd6d4
 	
 	// If we are running this on friendup recreate url to support old method
 	if ( typeof AjaxUrl == 'function' )
