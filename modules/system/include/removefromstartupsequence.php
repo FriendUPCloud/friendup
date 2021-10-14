@@ -18,7 +18,12 @@ if( $s->Load() )
 	$json = false;
 	$list = [];
 	
-	if( $d = json_decode( $s->Data ) )
+	$data = $s->Data;
+	if( substr( $data, 0, 1 ) == '"' && substr( $data, -1, 1 ) == '"' )
+	{
+		$data = substr( $data, 1, strlen( $data ) - 2 );
+	}
+	if( $d = json_decode( $data ) )
 	{
 		$list = $d;
 	
@@ -41,6 +46,10 @@ if( $s->Load() )
 			
 			die( 'ok<!--separate-->{"response":1,"message":"Startup sequence was saved"}' );
 		}
+	}
+	else
+	{
+		die( 'fail<!--separate-->{"response":0,"message":"Could not decode startup sequence data."}<!--separate-->' . $data );
 	}
 }
 die( 'fail<!--separate-->{"response":0,"message":"Startup sequence was not saved due to error"}' );
