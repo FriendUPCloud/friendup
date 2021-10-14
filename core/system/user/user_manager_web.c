@@ -69,9 +69,16 @@ int killUserSession( SystemBase *l, UserSession *ses, FBOOL remove )
 		usleep( 1000 );
 	}
 	
+	// test
+	//USMUserSessionRemove( l->sl_USM, ses );
+	//USMSessionsDeleteDB( l->sl_USM, ses->us_SessionID );
+	//WSCData *dat = (WSCData *)ses->us_WSD;
+	//dat->wsc_UserSession = NULL;
+	
 	if( remove == TRUE  )
 	{
-		error = USMUserSessionRemove( l->sl_USM, ses );	
+		ses->us_Status = USER_SESSION_STATUS_TO_REMOVE;
+		//error = USMUserSessionRemove( l->sl_USM, ses );	
 	}
 	return error;
 }
@@ -1964,6 +1971,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		{
 			DEBUG("[UMWebRequest] Remove session by sessionid\n");
 			UserSession *ses = USMGetSessionBySessionID( l->sl_USM, sessionid );
+			DEBUG("[UMWebRequest] Session found under pointer: %p\n", ses );
 			if( ses != NULL )
 			{
 				killUserSession( l, ses, TRUE );

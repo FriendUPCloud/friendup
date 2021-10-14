@@ -751,7 +751,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				HttpFree( response );
 				FERROR("RESPONSE no user\n");
 			}
-			response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
+			//response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
+			response = HttpNewSimple( HTTP_200_OK, tags );
 			
 			char buffer[ 512 ];
 			char *lsessidstring = NULL;
