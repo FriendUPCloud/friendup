@@ -832,7 +832,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
 					{
 						User * usr = UMGetUserByID( l->sl_UM, id );
-						if( usr != NULL )
+						if( usr != NULL && usr->u_Status != USER_STATUS_TO_BE_REMOVED )
 						{
 							DEBUG( "[UMWebRequest] UMRemoveAndDeleteUser %d! before unmount\n", usr->u_InUse );
 							
