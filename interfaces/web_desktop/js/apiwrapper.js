@@ -2315,10 +2315,8 @@ function apiWrapper( event, force )
 					switch( msg.command )
 					{
 						case 'execute':
-							console.log( 'Execute.' );
 							shell.execute( msg.commandLine, function( rmsg, returnMessage )
 							{
-								console.log( 'What: ', rmsg, returnMessage );
 								// TODO: Finish the test if rmsg has become safe!
 								if( app && app.contentWindow )
 								{

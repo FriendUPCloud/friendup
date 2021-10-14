@@ -234,11 +234,9 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	}
 
 	// 1. Ask about application.................................................
-	console.log( '[] Trying to execute application' );
 	let m = new Module( 'system' );
 	m.onExecuted = function( r, d )
 	{	
-		console.log( '[] Res: ' + r, d );
 		// Get data from Friend Core
 		let conf = false;
 		try
@@ -268,13 +266,13 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			if( r == 'notinstalled' || ( conf && conf.response == 'not installed' ) )
 			{
 				let hideView = false;
-				console.log( '[] Install it?' );
 				if( d.toLowerCase().indexOf('"trusted":"yes"') > 0 )
 				{
 					hideView = true;
-					console.log( 'Hide' );
 				}
 
+				/*
+				// TODO: Remove this - because we should in this case show install menu - which happens now.
 				// Just use callback
 				if( callback && typeof( callback ) == 'function' && !hideView )
 				{
@@ -285,8 +283,8 @@ function ExecuteApplication( app, args, callback, retries, flags )
 						RemoveFromExecutionQueue( appName );
 						return;
 					}
-				}
-				console.log( 'Tes' );
+				}*/
+				
 				let title = i18n( 'install_question_mintitle' ) + ': ' + app;
 				let w = new View( {
 					title:  title,
