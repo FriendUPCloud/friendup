@@ -234,9 +234,11 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	}
 
 	// 1. Ask about application.................................................
+	console.log( '[] Trying to execute application' );
 	let m = new Module( 'system' );
 	m.onExecuted = function( r, d )
 	{	
+		console.log( '[] Res: ' + r, d );
 		// Get data from Friend Core
 		let conf = false;
 		try
