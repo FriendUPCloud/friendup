@@ -534,7 +534,7 @@ function saveGroup()
 				{
 					
 					var json = {
-                            name : ge( 'groupName' ).value + ' [' + Application.fullName + ']',
+                            name : ge( 'groupName' ).value + ' (' + Application.fullName + ')',
                             workgroups : [ t.uuid ]
                     };
 
