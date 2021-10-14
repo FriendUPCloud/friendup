@@ -432,18 +432,24 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		//console.log( 'WebSocket call: ' + url );
 		return true;
 	}
-	// HTTP call, sanitize
+	/*// HTTP call, sanitize
 	else
 	{
 		// Repair websocket
 		// TODO: Remove completely after real fix found
-		/*if( window.Workspace && Workspace.conn && Workspace.conn.ws && !Workspace.conn.ws.ws )
+		if( window.Workspace && Workspace.conn && Workspace.conn.ws && !Workspace.conn.ws.ws )
 		{
 			console.log( 'Repairing websocket.' );
 			Workspace.initWebSocket();
+<<<<<<< HEAD
 		}*/
 		//console.log( 'HTTP call: ' + url );
 	}
+=======
+		}
+		console.log( 'HTTP call: ' + url );
+	}*/
+>>>>>>> 58e4deee8362a3ab9678255a07346f6768dcd6d4
 	
 	// If we are running this on friendup recreate url to support old method
 	if ( typeof AjaxUrl == 'function' )

@@ -853,6 +853,10 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 		self.pingCheck = null;
 	}
 
+	// Register pong time
+	if( window.Workspace )
+		Workspace.lastWSPong = ( new Date() ).getTime();
+
 	self.setState( 'ping', pingTime );
 	
 	if( !this.ws )
