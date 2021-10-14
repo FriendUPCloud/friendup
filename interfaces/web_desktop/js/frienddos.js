@@ -1609,6 +1609,7 @@ window.Shell = function( appObject )
 	// Parse a command
 	this.execute = function( cmd, ecallback )
 	{
+		console.log( 'Executing app: ' + cmd );
 		if( !cmd ) 
 		{
 			ecallback( false );
