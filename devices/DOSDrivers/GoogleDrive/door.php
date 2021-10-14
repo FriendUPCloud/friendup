@@ -1075,14 +1075,14 @@ if( !class_exists( 'GoogleDrive' ) )
 							$o->Command = $gfile->getMimeType();
 							$o->ExportFormat = 'pdf';
 							$o->ExportFormats = json_decode( '[
-								{ "Name": "HTML", "Type": "text/html" },
-								{ "Name": "HTML (zipped)", "Type": "application/zip" },
-								{ "Name": "Plain text", "Type": "text/plain" },
-								{ "Name": "Rich text", "Type": "application/rtf" },
-								{ "Name": "Open Office", "Type": "application/vnd.oasis.opendocument.text" },
-								{ "Name": "PDF", "Type": "application/pdf" },
-								{ "Name": "MS Word", "Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
-								{ "Name": "EPUB", "Type": "application/epub+zip" }
+								{ "Name": "HTML", "Type": "text/html", "Extension": "html" },
+								{ "Name": "HTML (zipped)", "Type": "application/zip", "Extension": "zip" },
+								{ "Name": "Plain text", "Type": "text/plain", "Extension": "txt" },
+								{ "Name": "Rich text", "Type": "application/rtf", "Extension": "rtf" },
+								{ "Name": "Open Office", "Type": "application/vnd.oasis.opendocument.text", "Extension": "docx" },
+								{ "Name": "PDF", "Type": "application/pdf", "Extension": "pdf" },
+								{ "Name": "MS Word", "Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Extension": "doc" },
+								{ "Name": "EPUB", "Type": "application/epub+zip", "Extension": "zipx" }
 							]' );
 							break;
 						case 'application/vnd.google-apps.spreadsheet':
@@ -1090,12 +1090,12 @@ if( !class_exists( 'GoogleDrive' ) )
 							$o->Command = $gfile->getMimeType();
 							$o->ExportFormat = 'pdf';
 							$o->ExportFormats = json_decode( '[
-								{ "Name": "MS Excel", "Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
-								{ "Name": "Open Office sheet", "Type": "application/x-vnd.oasis.opendocument.spreadsheet" },
-								{ "Name": "PDF", "Type": "application/pdf" },
-								{ "Name": "CSV (first sheet)", "Type": "text/csv" },
-								{ "Name": "(sheet only)", "Type": "text/tab-separated-values" },
-								{ "Name": "HTML (zipped)", "Type": "HTML (zipped)" }
+								{ "Name": "MS Excel", "Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Extension": "xls" },
+								{ "Name": "Open Office sheet", "Type": "application/x-vnd.oasis.opendocument.spreadsheet", "Extension": "xlsx" },
+								{ "Name": "PDF", "Type": "application/pdf", "Extension": "pdf" },
+								{ "Name": "CSV (first sheet)", "Type": "text/csv", "Extension": "csv" },
+								{ "Name": "(sheet only)", "Type": "text/tab-separated-values", "Extension": "csvx" },
+								{ "Name": "HTML (zipped)", "Type": "application/zip", "Extension": "zip" }
 							]' );
 							break;
 						case 'application/vnd.google-apps.presentation':
@@ -1103,10 +1103,10 @@ if( !class_exists( 'GoogleDrive' ) )
 							$o->Command = $gfile->getMimeType();
 							$o->ExportFormat = 'pdf';
 							$o->ExportFormats = json_decode( '[
-								{ "Name": "MS PowerPoint", "Type": "application/vnd.openxmlformats-officedocument.presentationml.presentation" },
-								{ "Name": "Open Office presentation", "Type": "application/vnd.oasis.opendocument.presentation" },
-								{ "Name": "PDF", "Type": "application/pdf" },
-								{ "Name": "Plain text", "Type": "text/plain" }
+								{ "Name": "MS PowerPoint", "Type": "application/vnd.openxmlformats-officedocument.presentationml.presentation", "Extension": "ppt" },
+								{ "Name": "Open Office presentation", "Type": "application/vnd.oasis.opendocument.presentation", "Extension": "pptx" },
+								{ "Name": "PDF", "Type": "application/pdf", "Extension": "pdf" },
+								{ "Name": "Plain text", "Type": "text/plain", "Extension": "txt" }
 							]' );
 							break;
 						//case 'application/vnd.google-apps.form':
@@ -1122,6 +1122,10 @@ if( !class_exists( 'GoogleDrive' ) )
 					$o->ID = $gfile->getId();
 					$cleanpath = ($subPath != '' ? $subPath . '/' : '' ) . $o->Filename; 
 					$cleanpath .= ( $o->Type == 'Directory' && substr( $cleanpath , -1) != '/' ? '/' : '' ) ;
+					if( $o->MetaType == 'DiskHandled' )
+					{
+						$cleanpath = ( 'DiskHandled/' . $cleanpath );
+					}
 					$o->Path = $cleanpath;
 					$o->Driver = 'GoogleDrive';
 					$ret[] = $o;
@@ -1178,6 +1182,31 @@ if( !class_exists( 'GoogleDrive' ) )
 		
 			// TODO: Need to change this because you are forced to be logged in client side on only one account to view files, dropbox is even better then this shit lol ...
 			
+			// TODO: Move this export formats to it's own fucntion ...
+			
+			$format = false;
+			
+			$export = json_decode( '{
+			
+				"html" : { "Name": "HTML", "Type": "text/html", "Extension": "html" },
+				"zip"  : { "Name": "HTML (zipped)", "Type": "application/zip", "Extension": "zip" },
+				"txt"  : { "Name": "Plain text", "Type": "text/plain", "Extension": "txt" },
+				"rtf"  : { "Name": "Rich text", "Type": "application/rtf", "Extension": "rtf" },
+				"docx" : { "Name": "Open Office", "Type": "application/vnd.oasis.opendocument.text", "Extension": "docx" },
+				"pdf"  : { "Name": "PDF", "Type": "application/pdf", "Extension": "pdf" },
+				"doc"  : { "Name": "MS Word", "Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Extension": "doc" },
+				"zipx" : { "Name": "EPUB", "Type": "application/epub+zip", "Extension": "zipx" },
+				
+				"xls"  : { "Name": "MS Excel", "Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Extension": "xls" },
+				"xlsx" : { "Name": "Open Office sheet", "Type": "application/x-vnd.oasis.opendocument.spreadsheet", "Extension": "xlsx" },
+				"csv"  : { "Name": "CSV (first sheet)", "Type": "text/csv", "Extension": "csv" },
+				"csvx" : { "Name": "(sheet only)", "Type": "text/tab-separated-values", "Extension": "csvx" },
+				
+				"ppt"  : { "Name": "MS PowerPoint", "Type": "application/vnd.openxmlformats-officedocument.presentationml.presentation", "Extension": "ppt" },
+				"pptx" : { "Name": "Open Office presentation", "Type": "application/vnd.oasis.opendocument.presentation", "Extension": "pptx" }
+				
+			}' );
+			
 			if( strstr( $path, ':DiskHandled/mode-custom/' ) && strstr( $path, '.pdf' ) )
 			{
 				$path = str_replace( [ 'DiskHandled/mode-custom/', '.pdf' ], '', $path );
@@ -1187,8 +1216,24 @@ if( !class_exists( 'GoogleDrive' ) )
 			{
 				$path = str_replace( [ 'DiskHandled/', '.pdf' ], '', $path );
 			}
+			if( strstr( $path, ':DiskHandled/' ) )
+			{
+				$path = str_replace( 'DiskHandled/', '', $path );
+				
+				if( strstr( $path, '.' ) )
+				{
+					if( $ext = array_pop( explode( '.', $path ) ) )
+					{
+						if( $export->{ strtolower( $ext ) } && $export->{ strtolower( $ext ) }->Type )
+						{
+							$format = $export->{ strtolower( $ext ) }->Type;
+						}
+						$path = str_replace( ( '.' . $ext ), '', $path );
+					}
+				}
+			}
 			
-			$Logger->log( print_r( $args,1 ) );
+			$Logger->log( print_r( $args,1 ) . ' || ' . $path );
 			
 			$googlepath = end( explode( ':', $path ) );
 			
@@ -1297,7 +1342,7 @@ if( !class_exists( 'GoogleDrive' ) )
 			}
 			else if( strpos($gfile->getMimeType(),'google') > 0 )
 			{
-				$filepointer = $drivefiles->files->export($gfile->getId(), 'application/pdf', array('alt' => 'media' ));
+				$filepointer = $drivefiles->files->export($gfile->getId(), ( $format ? $format : 'application/pdf' ), array('alt' => 'media' ));
 			}
 			else
 			{

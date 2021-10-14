@@ -8269,14 +8269,26 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									for( var i in thisicon.fileInfo.ExportFormats )
 									{
 										
-										if( thisicon.fileInfo.ExportFormats[i] && thisicon.fileInfo.ExportFormats[i].Name && thisicon.fileInfo.ExportFormats[i].Type )
+										if( thisicon.fileInfo.ExportFormats[i] && thisicon.fileInfo.ExportFormats[i].Name && thisicon.fileInfo.ExportFormats[i].Type && thisicon.fileInfo.ExportFormats[i].Extension )
 										{
 											menu.push( {
 												name: i18n( 'menu_download_as' ) + ' ' + thisicon.fileInfo.ExportFormats[i].Name,
-												args: { Type: thisicon.fileInfo.ExportFormats[i].Type },
+												args: thisicon.fileInfo.ExportFormats[i],
 												command: function( e, args )
 												{
-													Workspace.download( thisicon.fileInfo.Path, args.Type );
+													if( args && args.Extension )
+													{
+														if( thisicon.fileInfo.Filename.indexOf( '.' ) >= 0 && thisicon.fileInfo.Filename.split( '.' ).pop(  ) )
+														{
+															var path = ( thisicon.fileInfo.Path.split( thisicon.fileInfo.Filename.split( '.' ).pop(  ) ).join( args.Extension ) );
+														}
+														else
+														{
+															var path = ( thisicon.fileInfo.Path + '.' + args.Extension );
+														}
+														
+														Workspace.download( path );
+													}
 												}
 											} );
 										}
