@@ -276,7 +276,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				}
 
 				// Just use callback
-				if( callback && !hideView )
+				if( callback && typeof( callback ) == 'function' && !hideView )
 				{
 					console.log( 'Tmgmdf.', callback );
 					if( !callback( { error: 2, errorMessage: i18n( 'install_question_title' ) } ) )
