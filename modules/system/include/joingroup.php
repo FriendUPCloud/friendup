@@ -10,6 +10,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+include_once( 'php/include/helpers.php' );
+
 $g = new dbIO( 'FUserGroup' );
 if( $g->Load( intval( $args->args->groupId, 10 ) ) )
 {
@@ -18,9 +20,21 @@ if( $g->Load( intval( $args->args->groupId, 10 ) ) )
 	{
 		if( !$SqlDatabase->fetchObject( 'SELECT * FROM FUserToGroup ug WHERE ug.UserGroupID = \'' . intval( $args->args->groupId, 10 ) . '\' AND ug.UserID=\'' . $User->ID . '\'' ) )
 		{
-			if( $SqlDatabase->query( 'INSERT INTO FUserToGroup ( UserGroupID, UserID ) VALUES ( \'' . intval( $args->args->groupId, 10 ) . '\', \'' . $User->ID . '\' )' ) )
+			if( FriendCoreQuery( '/system.library/group/addusers', 
+			[
+				'id'    => intval( $args->args->groupId, 10 ),
+				'users' => $User->ID
+			] ) )
 			{
 				die( 'ok<!--separate-->' );
+			}
+			else
+			{
+				// If FriendCore didn't wanna do this, just do it! ...
+				if( $SqlDatabase->query( 'INSERT INTO FUserToGroup ( UserGroupID, UserID ) VALUES ( \'' . intval( $args->args->groupId, 10 ) . '\', \'' . $User->ID . '\' )' ) )
+				{
+					die( 'ok<!--separate-->' );
+				}
 			}
 			die( 'fail<!--separate-->{"response":-1,"message":"Could not save group membership."}' );
 		}

@@ -244,7 +244,7 @@ if( isset( $args->command ) )
 				'userinfoset',  'useradd', 'user/create', 'user/update', 'user/delete', 'checkuserbyname', 'userbetamail', 'listbetausers', 'listconnectedusers',
 				'usersetup', 'usersetupadd', 'usersetupapply', 'usersetupsave', 'usersetupdelete',
 				'usersetupget', 'userwallpaperset', 'workgroups', 'listworkgroups', 'workgroupadd', 'workgroupupdate', 'workgroupdelete',
-				'workgroupget', 'setsetting', 'getsetting', 'getavatar', 'listlibraries', 'listmodules',
+				'workgroupget', 'workgroupaddmetadata', 'setsetting', 'getsetting', 'getavatar', 'listlibraries', 'listmodules',
 				'listuserapplications', 'adduserapplication', 'removeuserapplication', 'getmimetypes',  'setmimetype', 'setmimetypes', 'deletemimetypes',
 				'deletecalendarevent', 'getcalendarevents', 'addcalendarevent',
 				'listappcategories', 'systempath', 'listthemes', 'settheme', /* DEPRECATED - look for comment below 'userdelete',*/'userunblock',
@@ -1733,7 +1733,10 @@ if( isset( $args->command ) )
 		case 'workgroupget':
 			require( 'modules/system/include/workgroupget.php' );
 			break;
-
+		// Add metadata to a workgroup
+		case 'workgroupaddmetadata':
+			require( 'modules/system/include/workgroupaddmetadata.php' );
+			break;
 		case 'setsetting':
 			require( 'modules/system/include/setsetting.php' );
 			break;

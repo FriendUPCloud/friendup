@@ -1846,6 +1846,12 @@ int UserDeviceMount( SystemBase *l, UserSession *usrses, int force, FBOOL unmoun
 	}
 	User *usr = usrses->us_User;
 	
+	if( usr == NULL || usr->u_Status == USER_STATUS_TO_BE_REMOVED )
+	{
+		DEBUG("[UserDeviceMount] User is NULL or will be removed\n");
+		return -2;
+	}
+	
 	if( usr->u_MountedDevs != NULL && force == 0 )
 	{
 		DEBUG("[UserDeviceMount] Devices are already mounted\n");
@@ -2037,11 +2043,11 @@ int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses )
 				remdev = dev;
 				dev = (File *)dev->node.mln_Succ;
 				
-				DEBUG("Pointer to remdev: %p\n", remdev );
+				DEBUG("Pointer to remdev: %p in use %d\n", remdev, usr->u_InUse );
 				
 				DeviceUnMount( l->sl_DeviceManager, remdev, usr, ses );
 				
-				DEBUG("Pointer to remdev2: %p\n", remdev );
+				DEBUG("Pointer to remdev2: %p in use %d\n", remdev, usr->u_InUse );
 				
 				//FFree( remdev );
 				FileDelete( remdev );

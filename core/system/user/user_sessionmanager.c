@@ -25,32 +25,6 @@
 #include <system/fsys/door_notification.h>
 #include <util/session_id.h>
 
-#define SESSION_MANAGER_CHANGE_ON( MGR ) \
-while( (MGR->usm_InUse > 0 && MGR->usm_ChangeState == TRUE ) ){ usleep( 2000 ); } \
-if( FRIEND_MUTEX_LOCK( &(MGR->usm_Mutex) ) == 0 ){ \
-	MGR->usm_ChangeState = TRUE; \
-	FRIEND_MUTEX_UNLOCK( &(MGR->usm_Mutex) ); \
-}
-
-#define SESSION_MANAGER_CHANGE_OFF( MGR ) \
-if( FRIEND_MUTEX_LOCK( &(MGR->usm_Mutex) ) == 0 ){ \
-	MGR->usm_ChangeState = FALSE; \
-	FRIEND_MUTEX_UNLOCK( &(MGR->usm_Mutex) ); \
-}
-
-#define SESSION_MANAGER_USE( MGR ) \
-while( MGR->usm_ChangeState != FALSE ){ usleep( 2000 ); } \
-if( FRIEND_MUTEX_LOCK( &(MGR->usm_Mutex) ) == 0 ){ \
-	MGR->usm_InUse++; \
-	FRIEND_MUTEX_UNLOCK( &(MGR->usm_Mutex) ); \
-}
-
-#define SESSION_MANAGER_RELEASE( MGR ) \
-if( FRIEND_MUTEX_LOCK( &(MGR->usm_Mutex) ) == 0 ){ \
-	MGR->usm_InUse--; \
-	FRIEND_MUTEX_UNLOCK( &(MGR->usm_Mutex) ); \
-}
-
 /**
  * Create new User Session Manager
  *
@@ -92,7 +66,7 @@ void USMDelete( UserSessionManager *smgr )
 		UserSession  *ls = smgr->usm_Sessions;
 		while( ls != NULL )
 		{
-			UserSession *rem =  ls;
+			UserSession *rem = ls;
 			ls = (UserSession *) ls->node.mln_Succ;
 			
 			DEBUG("[USMDelete] \t\tRemove session : %s uid %lu\n", rem->us_SessionID, rem->us_UserID );
@@ -176,13 +150,13 @@ UserSession *USMGetSessionBySessionID( UserSessionManager *usm, char *sessionid 
 	{
 		if( strcmp( sessionid, us->us_SessionID ) == 0 )
 		{
-			DEBUG("CHECK4END\n");
+			DEBUG("CHECK4END found\n");
 			SESSION_MANAGER_RELEASE( usm );
 			return us;
 		}
 		us = (UserSession *) us->node.mln_Succ;
 	}
-	DEBUG("CHECK4END\n");
+	DEBUG("[USMGetSessionBySessionID] session not found: %s\n", sessionid );
 	
 	SESSION_MANAGER_RELEASE( usm );
 	
@@ -761,8 +735,6 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 	FBOOL sessionRemoved = FALSE;
 	
 	DEBUG("[USMUserSessionRemove] UserSessionRemove\n");
-	
-	DEBUG("CHECK9\n");
 	
 	SESSION_MANAGER_CHANGE_ON( smgr );
 	

@@ -1778,11 +1778,11 @@ var WorkspaceInside = {
 			    m = ge( 'DoorsScreen' ).screenTitle.getElementsByClassName( 'Extra' )[0];
 		    if( !m )
 		    {
-			    //console.log( 'Can not find widget!' );
+			    console.log( 'Can not find widget!' );
 			    return;
 		    }
 		    
-			let closeBtn = '<div class="HRow"><p class="Layout"><button type="button" class="FloatRight Button fa-close IconSmall">' + i18n( 'i18n_close' ) + '</button></p></div>';
+		   let closeBtn = '<div class="HRow"><p class="Layout"><button type="button" class="FloatRight Button fa-close IconSmall">' + i18n( 'i18n_close' ) + '</button></p></div>';
 
 		    // Mobile launches calendar in a different way, so this 
 		    // functionality is only for desktops
@@ -1818,7 +1818,7 @@ var WorkspaceInside = {
 		
 		if( !Workspace.cachedSessionList || cand - this.refreshEWCTime > 30 )
 		{
-		    this.refreshEWCTime = cand;
+			this.refreshEWCTime = cand;
 		    
 		    Workspace.getAnnouncements();
 		    
@@ -2418,8 +2418,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							if( window.friendApp && window.friendApp.reveal )
 							{
 								friendApp.reveal();
-							}
-													
+							}						
 							return;
 						}
 						
@@ -2480,7 +2479,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 														if( ScreenOverlay.debug )
 															slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );											
 														ScreenOverlay.addDebug( 'Executing ' + cmd );
-
+														
 														Workspace.shell.execute( cmd, function( res )
 														{
 															if( ScreenOverlay.debug )
@@ -5500,6 +5499,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			
 			Workspace.menuContext = null;
 			
+			// Get files in dest path
 			let d = new Door( destPath );
 			d.getIcons( destFinf, function( items )
 			{
@@ -5535,6 +5535,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									clip[ b ].fileInfo.NewPath = p;
 								}
 								
+								
 								// Set the safe new filename
 								clip[ b ].fileInfo.NewFilename = str;
 							
@@ -5558,13 +5559,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				for( let b = 0; b < clip.length; b++ )
 				{	
 					let spath = clip[b].fileInfo.Path;
+					
 					let lastChar = spath.substr( -1, 1 );
 					let sh = new Shell( 0 );
 					let source = spath.split( ' ' ).join( '\\ ' );
 					let destin = ( destPath ).split( ' ' ).join( '\\ ' );
 					let fn = ( clip[b].fileInfo.NewFilename ? clip[b].fileInfo.NewFilename : clip[b].fileInfo.Filename );
 					fn = fn.split( ' ' ).join( '\\ ' );
+					
+					// Remove slash when copying a dir
+					if( clip[b].fileInfo.Type == 'Directory' )
+					{
+						if( source.substr( -1, 1 ) == '/' )
+							source = 'all ' + source.substr( 0, source.length - 1 );
+						fn = '';
+					}
+					
 					let copyStr = 'copy ' + source + ' to ' + destin + fn;
+					
 					sh.parseScript( copyStr, function()
 					{
 						if( cliplen-- == 0 )
@@ -9563,6 +9575,31 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	updateViewState: function( newState )
 	{
 		let self = this;
+
+		// Check for forced websocket renewal (sleepover)
+		if( newState == 'active' )
+		{
+			let now = ( new Date() ).getTime();
+			let interval = 18000000; // 1000 * 60 * 60 * 5;
+			
+			if( this.lastWSPong > 0 && ( now - this.lastWSPong ) > interval )
+			{
+				console.log( 'Timed initializing websocket due to sleepover.' );
+				this.initWebSocket();
+				this.lastWSPong = -1;
+			}
+			// Queue new try!
+			else if( this.lastWSPong == -1 )
+			{
+				setTimeout( function()
+				{
+					if( this.lastWSPong == -1 )
+					{
+						this.lastWSPong = 0;
+					}
+				}, 500 );
+			}
+		}
 
 		// Don't update if not changed
 		if( this.currentViewState == newState )

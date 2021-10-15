@@ -1019,7 +1019,7 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 	User *userPrevious = NULL; //previous element of the linked list
 	SystemBase *sb = (SystemBase *)um->um_SB;
 
-	USER_LOCK( usr );
+	//USER_LOCK( usr );
 	
 	DEBUG("[UMRemoveAndDeleteUser] remove user\n");
 	
@@ -1030,17 +1030,27 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 	UserSession *sessionToDelete;
 	while( ( sessionToDelete = USMGetSessionByUserID( userSessionManager, userId ) ) != NULL )
 	{
+		DEBUG("[UMRemoveAndDeleteUser] user in use1 %d\n", usr->u_InUse );
+		
 		USMUserSessionRemove( sb->sl_USM, sessionToDelete );
+		
+		DEBUG("[UMRemoveAndDeleteUser] user in use2 %d\n", usr->u_InUse );
 		
 		killUserSession( um->um_SB, sessionToDelete, FALSE );
 		
+		DEBUG("[UMRemoveAndDeleteUser] user in use3 %d\n", usr->u_InUse );
+		
 		// we must remove session from user otherwise it will go into infinite loop
 		UserRemoveSession( usr, sessionToDelete );
+		
+		DEBUG("[UMRemoveAndDeleteUser] user in use4 %d\n", usr->u_InUse );
 		
 		//int status = USMUserSessionRemove( userSessionManager, sessionToDelete );
 		//DEBUG("%s removing session at %p, status %d\n", __func__, sessionToDelete, status);
 	}
 	UserRemoveConnectedSessions( usr, FALSE );
+	
+	DEBUG("[UMRemoveAndDeleteUser] user in use5 %d\n", usr->u_InUse );
 
 	unsigned int n = 0;
 	FBOOL found = FALSE;
@@ -1061,7 +1071,7 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 		userCurrent = (User *)userCurrent->node.mln_Succ; //this is the next element in the linked list
 	}
 	
-	USER_UNLOCK( usr );
+	//USER_UNLOCK( usr );
 	
 	if( found == TRUE )
 	{
@@ -1078,11 +1088,11 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 			um->um_Users = (User *)userCurrent->node.mln_Succ; //set the global start pointer of the list
 		}
 		
-		UserDelete( userCurrent );
-		
 		// we dont allow to change list when we work with it
 		
 		USER_MANAGER_CHANGE_OFF( um );
+		
+		UserDelete( userCurrent );
 		
 		return 0;
 	}
