@@ -635,41 +635,30 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				
 				if( uname != NULL && uname->hme_Data != NULL  )
 				{
-					if( FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) ) == 0 )
+					UserSession *locus = USMGetSessionByUserName( l->sl_USM, (char *)uname->hme_Data, FALSE );
+					
+					SESSION_MANAGER_USE( l->sl_USM );
+					
+					if( locus != NULL )
 					{
-						UserSession *locus = USMGetSessionByUserName( l->sl_USM, (char *)uname->hme_Data, FALSE );
-						if( locus != NULL )
+						User *curusr = locus->us_User;
+						if( curusr != NULL )
 						{
-							if( FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
+							FBOOL isSentinel = FALSE;
+							Sentinel *sent = l->GetSentinelUser( l );
+							if( sent != NULL && sent->s_User != NULL && sent->s_User == curusr )
 							{
-								locus->us_InUseCounter++;
-								FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
+								isSentinel = TRUE;
 							}
 							
-							User *curusr = locus->us_User;
-							if( curusr != NULL )
+							if( isSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, curusr, (char *)passwd->hme_Data, &blockedTime, "remote" ) == TRUE )
 							{
-								FBOOL isSentinel = FALSE;
-								Sentinel *sent = l->GetSentinelUser( l );
-								if( sent != NULL && sent->s_User != NULL && sent->s_User == curusr )
-								{
-									isSentinel = TRUE;
-								}
-								
-								if( isSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, curusr, (char *)passwd->hme_Data, &blockedTime, "remote" ) == TRUE )
-								{
-									loggedSession = locus;
-									userAdded = TRUE;		// there is no need to free resources
-								}
-							}
-							
-							if( FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
-							{
-								locus->us_InUseCounter--;
-								FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
+								loggedSession = locus;
+								userAdded = TRUE;		// there is no need to free resources
 							}
 						}
 					}
+					SESSION_MANAGER_RELEASE( l->sl_USM );
 				}
 			}
 			else
@@ -762,7 +751,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				HttpFree( response );
 				FERROR("RESPONSE no user\n");
 			}
-			response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
+			//response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
+			response = HttpNewSimple( HTTP_200_OK, tags );
 			
 			char buffer[ 512 ];
 			char *lsessidstring = NULL;
@@ -2066,19 +2056,24 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						
 						if( tuser != NULL )
 						{
+							USER_LOCK( tuser );
+							
 							if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, tuser, pass, &blockedTime, deviceid ) == TRUE )
 							{
 								dstusrsess = tusers;
 								DEBUG("Found user session  id %s\n", tusers->us_SessionID );
 							}
+							USER_UNLOCK( tuser );
 						}
 					}
 					else	// deviceid != NULL
 					{
 						User *tuser = USMIsSentinel( l->sl_USM, usrname, &tusers, &isUserSentinel );
-					
+
 						if( tuser != NULL )
 						{
+							USER_LOCK( tuser );
+							
 							if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, tuser, pass, &blockedTime, deviceid ) == TRUE )
 							{
 								dstusrsess = tusers;
@@ -2087,6 +2082,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									DEBUG("Found user session  id %s\n", tusers->us_SessionID );
 								}
 							}
+							USER_UNLOCK( tuser );
 						}
 					}
 					
@@ -2175,6 +2171,12 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							{
 								DEBUG("[SysWebRequest] User is not attached to session %lu\n", loggedSession->us_UserID );
 								
+								User *locusr = UMGetUserByID( l->sl_UM, loggedSession->us_UserID );
+								if( locusr != NULL )
+								{
+									UserAddSession( locusr, loggedSession );
+								}
+								/*
 								USER_MANAGER_USE( l->sl_UM );
 								User *lusr = l->sl_UM->um_Users;
 								while( lusr != NULL )
@@ -2187,6 +2189,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									lusr = (User *)lusr->node.mln_Succ;
 								}
 								USER_MANAGER_RELEASE( l->sl_UM );
+								*/
 							}
 						
 							//
@@ -2283,55 +2286,58 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						
 							loggedUser = loggedSession->us_User;
 						
-							Log( FLOG_INFO, "User authenticated %s sessionid %s \n", loggedUser->u_Name, loggedSession->us_SessionID );
-						
-							if( appname == NULL )
+							if( loggedUser != NULL )
 							{
-								if( loggedSession->us_User != NULL && (loggedSession->us_User->u_Status == USER_STATUS_DISABLED || loggedSession->us_User->u_Status == USER_STATUS_BLOCKED ) )
+								Log( FLOG_INFO, "User authenticated %s sessionid %s \n", loggedUser->u_Name, loggedSession->us_SessionID );
+						
+								if( appname == NULL )
 								{
-									char buffer[ 256 ];
-									snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ACCOUNT_BLOCKED] , DICT_ACCOUNT_BLOCKED );
+									if( loggedSession->us_User != NULL && (loggedSession->us_User->u_Status == USER_STATUS_DISABLED || loggedSession->us_User->u_Status == USER_STATUS_BLOCKED ) )
+									{
+										char buffer[ 256 ];
+										snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ACCOUNT_BLOCKED] , DICT_ACCOUNT_BLOCKED );
+									}
+									else
+									{
+										snprintf( tmp, sizeof(tmp) ,
+											"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"username\":\"%s\"}",
+											loggedUser->u_Error, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedUser->u_ID, loggedUser->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_Name );	// check user.library to display errors
+										tmpset++;
+									}
 								}
 								else
 								{
-									snprintf( tmp, sizeof(tmp) ,
-										"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"username\":\"%s\"}",
-										loggedUser->u_Error, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedUser->u_ID, loggedUser->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_Name );	// check user.library to display errors
-									tmpset++;
-								}
-							}
-							else
-							{
-								SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+									SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 
-								// Get authid from mysql
-								if( sqllib != NULL )
-								{
-									char authid[ 512 ];
-									authid[ 0 ] = 0;
-								
-									char qery[ 1024 ];
-									sqllib->SNPrintF( sqllib, qery, sizeof( qery ),"select `AuthID` from `FUserApplication` where `UserID` = %lu and `ApplicationID` = (select ID from `FApplication` where `Name` = '%s' and `UserID` = %ld)",loggedUser->u_ID, appname, loggedUser->u_ID);
-								
-									void *res = sqllib->Query( sqllib, qery );
-									if( res != NULL )
+									// Get authid from mysql
+									if( sqllib != NULL )
 									{
-										char **row;
-										if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+										char authid[ 512 ];
+										authid[ 0 ] = 0;
+								
+										char qery[ 1024 ];
+										sqllib->SNPrintF( sqllib, qery, sizeof( qery ),"select `AuthID` from `FUserApplication` where `UserID` = %lu and `ApplicationID` = (select ID from `FApplication` where `Name` = '%s' and `UserID` = %ld)",loggedUser->u_ID, appname, loggedUser->u_ID);
+								
+										void *res = sqllib->Query( sqllib, qery );
+										if( res != NULL )
 										{
-											snprintf( authid, sizeof(authid), "%s", row[ 0 ] );
+											char **row;
+											if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+											{
+												snprintf( authid, sizeof(authid), "%s", row[ 0 ] );
+											}
+											sqllib->FreeResult( sqllib, res );
 										}
-										sqllib->FreeResult( sqllib, res );
+
+										l->LibrarySQLDrop( l, sqllib );
+
+										snprintf( tmp, sizeof(tmp), "{\"response\":\"%d\",\"sessionid\":\"%s\",\"authid\":\"%s\"}",
+										loggedUser->u_Error, loggedSession->us_SessionID, authid
+										);
+										tmpset++;
 									}
-
-									l->LibrarySQLDrop( l, sqllib );
-
-									snprintf( tmp, sizeof(tmp), "{\"response\":\"%d\",\"sessionid\":\"%s\",\"authid\":\"%s\"}",
-									loggedUser->u_Error, loggedSession->us_SessionID, authid
-									);
-									tmpset++;
-								}
-							}	// else to appname
+								}	// else to appname
+							}	// loggedUser = NULL
 						} //else to logginsession == NULL
 						else
 						{

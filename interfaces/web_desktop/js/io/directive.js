@@ -39,13 +39,13 @@ function RemoveFromExecutionQueue( app )
 // Load a javascript application into a sandbox
 function ExecuteApplication( app, args, callback, retries, flags )
 {
-	console.log( 'ExecuteApplication', [
+	/*console.log( 'ExecuteApplication', [
 		app,
 		args,
 		callback,
 		retries,
 		flags,
-	]);
+	]);*/
 	// Just nothing.
 	if( !app ) {
 		console.log( 'just nothing things', app );
@@ -192,12 +192,12 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	// Args should be arguments to application in string form! for example filename
 	if( typeof( args ) != 'string' ) args = '';
 
-	var workspace = 0; // Default workspace
+	let workspace = 0; // Default workspace
 
 	// Filter arguments
-	var aout = [];
+	let aout = [];
 	args = args.split( ' ' );
-	for( var a = 0; a < args.length; a++ )
+	for( let a = 0; a < args.length; a++ )
 	{
 		var pair = args[a].split( '=' );
 		if( pair.length > 1 )
@@ -224,7 +224,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	if( app.indexOf( ':' ) > 0 && app.indexOf( '.jsx' ) > 0 )
 	{
 		// Remove from execution queue
-		console.log( 'ExecuteApplication - jsx things maybe', app );
+		//console.log( 'ExecuteApplication - jsx things maybe', app );
 		RemoveFromExecutionQueue( appName );
 		return ExecuteJSXByPath( app, args, callback, undefined, flags );
 	}
@@ -238,7 +238,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	m.onExecuted = function( r, d )
 	{	
 		// Get data from Friend Core
-		var conf = false;
+		let conf = false;
 		try
 		{
 			conf = JSON.parse( d );
@@ -248,10 +248,10 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			//
 		}
 	
-		console.log( 'ExecuteApplication.onExecuted', [ r, conf ]);
+		//console.log( 'ExecuteApplication.onExecuted', [ r, conf ]);
 		if( r == 'activate' )
 		{
-			console.log( 'ExecuteApplication - active', app );
+			//console.log( 'ExecuteApplication - active', app );
 			ActivateApplication( app, conf );
 			// Remove blocker
 			RemoveFromExecutionQueue( appName );
@@ -262,7 +262,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 		else if( r != 'ok' )
 		{
 			// console.log( 'Test2: Executing app Was not ok.' );
-			console.log( 'ExecuteApplication - onExecuted not ok', r );
+			//console.log( 'ExecuteApplication - onExecuted not ok', r );
 			if( r == 'notinstalled' || ( conf && conf.response == 'not installed' ) )
 			{
 				let hideView = false;
@@ -271,16 +271,19 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					hideView = true;
 				}
 
+				/*
+				// TODO: Remove this - because we should in this case show install menu - which happens now.
 				// Just use callback
-				if( callback && !hideView )
+				if( callback && typeof( callback ) == 'function' && !hideView )
 				{
+					console.log( 'Tmgmdf.', callback );
 					if( !callback( { error: 2, errorMessage: i18n( 'install_question_title' ) } ) )
 					{
 						// Remove blocker
 						RemoveFromExecutionQueue( appName );
 						return;
 					}
-				}
+				}*/
 				
 				let title = i18n( 'install_question_mintitle' ) + ': ' + app;
 				let w = new View( {
@@ -338,7 +341,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				Ac2Alert( i18n( 'application_not_found' ) );
 			}
 			if( callback ) callback( false );
-			console.log( 'ExecuteApplication Dead.' );
+			//console.log( 'ExecuteApplication Dead.' );
 			
 			// Clean up single instance
 			let o = {};
@@ -359,7 +362,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 		{
 			if( typeof( conf.API ) == 'undefined' )
 			{
-				console.log( 'ExecuteApplication - onExecuted, no API in conf', conf );
+				//console.log( 'ExecuteApplication - onExecuted, no API in conf', conf );
 				if( callback )
 				{
 					// Remove blocker
@@ -434,7 +437,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				if( conf.Init.indexOf( ':' ) > 0 && conf.Init.indexOf( '.jsx' ) > 0 )
 				{
 					// Remove blocker
-					console.log( 'ExecuteApplication - onExecuted, more jsx things', conf );
+					//console.log( 'ExecuteApplication - onExecuted, more jsx things', conf );
 					RemoveFromExecutionQueue( appName );
 					return ExecuteJSXByPath( conf.Init, args, callback, conf, flags );
 				}
@@ -465,12 +468,12 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				ifr.src = sdomain + filepath + 'index.html?friendup=' + sdomain;
 			}
 			
-			console.log( 'ExecuteApplication - opening app', {
+			/*console.log( 'ExecuteApplication - opening app', {
 				ifr    : ifr,
 				conf   : conf,
 				flags  : flags,
 				silent : flags.openSilent,
-			});
+			});*/
 			
 			// Register name and ID
 			ifr.applicationName = app.indexOf( ' ' ) > 0 ? app.split( ' ' )[0] : app;

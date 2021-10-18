@@ -1282,7 +1282,7 @@ void *ParseAndCall( WSThreadData *wstd )
 												
 												if( http->http_Uri != NULL )
 												{
-													http->http_Uri->uri_QueryRaw = StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start );
+													http->http_Uri->uri_QueryRaw = StringDuplicateN( in + t[i1].start, t[i1].end-t[i1].start );
 												}
 											
 												path[ paths ] = 0;

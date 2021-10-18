@@ -197,7 +197,14 @@ void UserDelete( User *usr )
 {
 	if( usr != NULL )
 	{
+		if( usr->u_Status == USER_STATUS_TO_BE_REMOVED )
+		{
+			Log( FLOG_INFO, "Cannot remove user. It will be removed: %s\n", usr->u_Name );
+			return;
+		}
 		Log( FLOG_INFO, "User removed from memory: %s\n", usr->u_Name );
+		
+		usr->u_Status = USER_STATUS_TO_BE_REMOVED;
 		
 		// Do not release User resources when structure is used
 		while( usr->u_InUse > 0 )
@@ -1005,10 +1012,10 @@ void UserNotifyFSEvent2( User *u, char *evt, char *path )
 	{
 		if( u != NULL )
 		{
+			USER_LOCK( u );
+			
 			DEBUG("[UserNotifyFSEvent2] Send notification to user: %s id: %lu\n", u->u_Name, u->u_ID );
 			int mlen = snprintf( message, globmlen, "{\"type\":\"msg\",\"data\":{\"type\":\"%s\",\"data\":{\"path\":\"%s\"}}}", evt, path );
-		
-			USER_LOCK( u );
 			
 			UserSessListEntry *list = u->u_SessionsList;
 			while( list != NULL )

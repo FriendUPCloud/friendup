@@ -419,7 +419,7 @@ FriendWebSocket.prototype.handleSocketMessage = function( e )
 		if( msg.data.data == 'session killed' )
 		{
 			Notify( { title: i18n( 'i18n_session_killed' ), text: i18n( 'i18n_session_killed_desc' ) } );
-			console.log( 'Test3: Session was killed!' );
+			//console.log( 'Test3: Session was killed!' );
 			self.wsClose();
 			
 			setTimeout( function()
@@ -567,7 +567,7 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 	
 	if ( !wsReady() )
 	{
-		console.log( 'Socket isn\'t ready.' );
+		//console.log( 'Socket isn\'t ready.' );
 		queue( msg );
 		self.doReconnect();
 		return false;
@@ -588,7 +588,7 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 	const success = self.wsSend( msgStr );
 	if( !success )
 	{
-		console.log( 'Could not send!' );
+		//console.log( 'Could not send!' );
 		queue( msg );
 		self.reconnect();
 		return false;
@@ -853,6 +853,10 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 		self.pingCheck = null;
 	}
 
+	// Register pong time
+	if( window.Workspace )
+		Workspace.lastWSPong = ( new Date() ).getTime();
+
 	self.setState( 'ping', pingTime );
 	
 	if( !this.ws )
@@ -955,7 +959,7 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 	code = code || 1000;
 	reason = reason || 'WS connection closed';
 	
-	console.log( 'Detatching native websocket from object.' );
+	//console.log( 'Detatching native websocket from object.' );
 	
 	let wsHere = self.ws;
 	delete self.ws;

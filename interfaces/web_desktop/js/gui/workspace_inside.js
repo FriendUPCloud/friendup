@@ -1778,11 +1778,11 @@ var WorkspaceInside = {
 			    m = ge( 'DoorsScreen' ).screenTitle.getElementsByClassName( 'Extra' )[0];
 		    if( !m )
 		    {
-			    //console.log( 'Can not find widget!' );
+			    console.log( 'Can not find widget!' );
 			    return;
 		    }
 		    
-			let closeBtn = '<div class="HRow"><p class="Layout"><button type="button" class="FloatRight Button fa-close IconSmall">' + i18n( 'i18n_close' ) + '</button></p></div>';
+		   let closeBtn = '<div class="HRow"><p class="Layout"><button type="button" class="FloatRight Button fa-close IconSmall">' + i18n( 'i18n_close' ) + '</button></p></div>';
 
 		    // Mobile launches calendar in a different way, so this 
 		    // functionality is only for desktops
@@ -1818,7 +1818,7 @@ var WorkspaceInside = {
 		
 		if( !Workspace.cachedSessionList || cand - this.refreshEWCTime > 30 )
 		{
-		    this.refreshEWCTime = cand;
+			this.refreshEWCTime = cand;
 		    
 		    Workspace.getAnnouncements();
 		    
@@ -2418,8 +2418,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							if( window.friendApp && window.friendApp.reveal )
 							{
 								friendApp.reveal();
-							}
-													
+							}						
 							return;
 						}
 						
@@ -2480,7 +2479,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 														if( ScreenOverlay.debug )
 															slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );											
 														ScreenOverlay.addDebug( 'Executing ' + cmd );
-
+														
 														Workspace.shell.execute( cmd, function( res )
 														{
 															if( ScreenOverlay.debug )
@@ -9516,6 +9515,31 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	updateViewState: function( newState )
 	{
 		let self = this;
+
+		// Check for forced websocket renewal (sleepover)
+		if( newState == 'active' )
+		{
+			let now = ( new Date() ).getTime();
+			let interval = 18000000; // 1000 * 60 * 60 * 5;
+			
+			if( this.lastWSPong > 0 && ( now - this.lastWSPong ) > interval )
+			{
+				console.log( 'Timed initializing websocket due to sleepover.' );
+				this.initWebSocket();
+				this.lastWSPong = -1;
+			}
+			// Queue new try!
+			else if( this.lastWSPong == -1 )
+			{
+				setTimeout( function()
+				{
+					if( this.lastWSPong == -1 )
+					{
+						this.lastWSPong = 0;
+					}
+				}, 500 );
+			}
+		}
 
 		// Don't update if not changed
 		if( this.currentViewState == newState )
