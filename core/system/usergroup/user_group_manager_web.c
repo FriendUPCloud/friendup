@@ -1711,7 +1711,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			BufStringAddSize( retString, "ok<!--separate-->{", 18 );
 			BufStringAdd( retString, "\"groups\":[" );
 
-			UGMGetGroups( l->sl_UGM, 0, retString, type, parentID, status, fParentID );
+			UGMGetGroupsDB( l->sl_UGM, 0, retString, type, parentID, status );//, fParentID );
 		
 			BufStringAddSize( retString, "]}", 2 );
 		

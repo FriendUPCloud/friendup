@@ -1170,6 +1170,9 @@ FBOOL UGMUserToGroupISConnectedDB( UserGroupManager *um, FULONG ugroupid, FULONG
  * @param um pointer to UserGroupManager
  * @param uid User ID
  * @param bs pointer to BufString where data will be stored
+ * @param type type of group (filter)
+ * @param parentID parentID (filter)
+ * @param status group status (filter)
  * @return TRUE when entry exist, otherwise FALSE
  */
 FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const char *type, FULONG parentID, int status )
