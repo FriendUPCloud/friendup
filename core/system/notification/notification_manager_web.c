@@ -95,6 +95,8 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param msg - (required) message
+	* @param path - (required) endpoint
+	* @param reqid - request ID
 	* @param servername - name of the server to which message will be send or put NULL if to all
 	* @return { result: 0 } when success, otherwise error with code
 	*/
@@ -105,14 +107,15 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
 		char *msg = NULL;
 		char *servername = NULL;
-		
+		char *reqID = NULL;
+		char *path = NULL;
 		
 		DEBUG( "[NMWebRequest] notify-server!!\n" );
 		
@@ -134,12 +137,37 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 				DEBUG( "[NMWebRequest] servername %s!!\n", servername );
 			}
 			
+			el = HttpGetPOSTParameter( request, "reqid" );
+			if( el != NULL )
+			{
+				reqID = UrlDecodeToMem( (char *)el->hme_Data );
+				DEBUG( "[NMWebRequest] reqID %s!!\n", reqID );
+			}
+			
 			if( msg != NULL )
 			{
-				int error = NotificationManagerSendInformationToConnections( l->sl_NotificationManager, servername, msg, strlen(msg) );
+				int nmsglen = strlen( msg )+256;
+				char *nmsg = FCalloc( nmsglen, sizeof(char) );
+				int error = 0;
+				int dstsize = 0;
 				
-				DEBUG("[NMWebRequest] Send notification to server, error: %d\n", error );
+				if( nmsg != NULL )
+				{
+					if( reqID != NULL )
+					{
+						dstsize = snprintf( nmsg, nmsglen, "{\"path\":\"service/%s\",\"requestId\":\"%s\",\"originUserId\":\"%s\",\"data\":{%s}}", path, reqID, loggedSession->us_User->u_UUID, msg );
+					}
+					else
+					{
+						dstsize = snprintf( nmsg, nmsglen, "{\"path\":\"service/%s\",\"originUserId\":\"%s\",\"data\":{%s}}", path, loggedSession->us_User->u_UUID, msg );
+					}
 				
+					error = NotificationManagerSendInformationToConnections( l->sl_NotificationManager, servername, msg, strlen(msg) );
+				
+					DEBUG("[NMWebRequest] Send notification to server, error: %d\n", error );
+					
+					FFree( nmsg );
+				}
 				char buf[ 256 ];
 				snprintf( buf, sizeof(buf), "ok<!--separate-->{\"result\":%d}", error );
 				HttpAddTextContent( response, buf );
@@ -162,6 +190,16 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			HttpAddTextContent( response, buffer );
 		}
 		*/
+		
+		if( path != NULL )
+		{
+			FFree( path );
+		}
+		
+		if( reqID != NULL )
+		{
+			FFree( reqID );
+		}
 		
 		if( msg != NULL )
 		{
