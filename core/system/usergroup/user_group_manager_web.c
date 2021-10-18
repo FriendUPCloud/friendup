@@ -766,29 +766,30 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							l->LibrarySQLDrop( l, sqlLib );
 						}
 						groupID = ug->ug_ID;
+						
+						char msg[ 512 ];
+						snprintf(
+							msg, 
+							sizeof(msg), 
+							"{"
+								"\"id\":%lu,"
+								"\"uuid\":\"%s\","
+								"\"name\":\"%s\","
+								"\"parentid\":%lu"
+							"}", 
+							ug->ug_ID, 
+							ug->ug_UUID,
+							ug->ug_Name, 
+							ug->ug_ParentID
+						);
+						NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", msg );
+					
+						char buffer[ 1024 ];
+						snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"success\",\"id\":%lu,\"uuid\":\"%s\"}", groupID, ug->ug_UUID );
+					
+						HttpAddTextContent( response, buffer );
 						UserGroupDelete( l, ug );
 					}
-					
-					char msg[ 512 ];
-					snprintf(
-						msg, 
-						sizeof(msg), 
-						"{"
-							"\"id\":%lu,"
-							"\"uuid\":\"%s\","
-							"\"name\":\"%s\","
-							"\"parentid\":%lu"
-						"}", 
-						ug->ug_ID, 
-						ug->ug_UUID,
-						ug->ug_Name, 
-						ug->ug_ParentID
-					);
-					NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", msg );
-					
-					char buffer[ 1024 ];
-					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"success\",\"id\":%lu,\"uuid\":\"%s\"}", groupID, ug->ug_UUID );
-					HttpAddTextContent( response, buffer );
 				}
 				else
 				{
