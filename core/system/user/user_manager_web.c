@@ -1899,20 +1899,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
 			HttpAddTextContent( response, buffer );
 		}
-		
-		
-		/*	if there is no parameter current user sessions should be returned
-		else
-		{
-			FERROR("[ERROR] username parameter is missing\n" );
-			char buffer[ 256 ];
-			char buffer1[ 256 ];
-			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_USER_DEV_REQUIRED], "username" );
-			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_USER_DEV_REQUIRED );
-			HttpAddTextContent( response, buffer );
-		}
-		*/
-		
+
 		if( usrname != NULL )
 		{
 			FFree( usrname );

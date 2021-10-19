@@ -771,9 +771,6 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 		}
 		else
 		{
-			//usr->u_IsAdmin = FALSE;
-			//usr->u_IsAPI = FALSE;
-				
 			UserGroup *rootug = UGMGetGroupByNameAndTypeDB( ugm, level, "Level" );
 			if( rootug != NULL )
 			{
@@ -805,46 +802,6 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 					ug = (UserGroup *) ug->node.mln_Succ;
 				}
 			}
-			/*
-			// set proper user level
-			if( FRIEND_MUTEX_LOCK( &(ugm->ugm_Mutex) ) == 0 )
-			{
-				UserGroup *gr = ugm->ugm_UserGroups;
-				while( gr != NULL )
-				{
-					if( strcmp( gr->ug_Name, level ) == 0 )
-					{
-						DEBUG("User is in level: %s\n", level );
-						if( gr->ug_IsAdmin == TRUE ) isAdmin = TRUE;
-						if( gr->ug_IsAPI == TRUE ) isAPI = TRUE;
-			
-						UserGroupAddUser( gr, usr );
-			
-						DEBUG("[UMAssignGroupToUserByStringDB] Group found %s will be added to user %s\n", gr->ug_Name, usr->u_Name );
-			
-						char loctmp[ 256 ];
-						int loctmplen;
-						// insert to database
-						if( pos == 0 )
-						{
-							loctmplen = snprintf( loctmp, sizeof( loctmp ),  "(%lu, %lu) ", usr->u_ID, gr->ug_ID );
-							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
-						}
-						else
-						{
-							loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",(%lu, %lu) ", usr->u_ID, gr->ug_ID ); 
-							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
-						}
-						BufStringAdd( bsInsert, loctmp );
-						
-						pos++;
-						break;
-					}
-					gr = (UserGroup *) gr->node.mln_Succ;
-				}
-				FRIEND_MUTEX_UNLOCK( &(ugm->ugm_Mutex) );
-			}
-			*/
 		
 			usr->u_IsAdmin = isAdmin;
 			usr->u_IsAPI = isAPI;
@@ -861,7 +818,8 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 	
 	if( workgroups != NULL )
 	{
-		UserRemoveFromGroups( usr );
+		// we clear current user assigns to groups
+		UserRemoveFromGroupsDB( sb, usr );
 		
 		if( strcmp( "false", workgroups ) == 0 )
 		{
@@ -877,103 +835,24 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 				DEBUG("[UMAssignGroupToUserByStringDB] Memory for groups allocated, pos: %d\n", pos );
 		
 				DEBUG("[UMAssignGroupToUserByStringDB] in loop %d\n", pos );
-		
-				UserGroup *gr = UGMGetGroupByIDDB( ugm, rmEntry->i_Data );
-				
-				if( gr != NULL )
-				{
-					DEBUG("[UMAssignGroupToUserByStringDB] compare %s - %s\n", gr->ug_Name, gr->ug_Name );
-				
-					char loctmp[ 256 ];
-					int loctmplen;
-						
-					// insert to database
-					if( pos == 0 )
-					{
-						loctmplen = snprintf( loctmp, sizeof( loctmp ),  "(%lu, %lu) ", usr->u_ID, gr->ug_ID );
-						tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
-					}
-					else
-					{
-						loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",(%lu, %lu) ", usr->u_ID, gr->ug_ID ); 
-						tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
-					}
-					BufStringAdd( bsInsert, loctmp );
-					pos++;
+			
+				char loctmp[ 256 ];
+				int loctmplen;
 					
-					UserGroupDeleteAll( sb, gr );
+				// insert to database
+				if( pos == 0 )
+				{
+					loctmplen = snprintf( loctmp, sizeof( loctmp ),  "(%lu, %lu) ", usr->u_ID, rmEntry->i_Data );
+					tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", rmEntry->i_Data );
 				}
+				else
+				{
+					loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",(%lu, %lu) ", usr->u_ID, rmEntry->i_Data ); 
+					tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", rmEntry->i_Data );
+				}
+				BufStringAdd( bsInsert, loctmp );
+				pos++;
 			}
-			
-			/*
-			while( el != NULL )
-			{
-				UIntListEl *rmEntry = el;
-				el = (UIntListEl *)el->node.mln_Succ;
-		
-				DEBUG("[UMAssignGroupToUserByStringDB] Memory for groups allocated, pos: %d\n", pos );
-		
-				DEBUG("[UMAssignGroupToUserByStringDB] in loop %d\n", pos );
-		
-				if( FRIEND_MUTEX_LOCK( &(ugm->ugm_Mutex) ) == 0 )
-				{
-					UTGEntry *root = NULL;
-					
-					UserGroup *gr = ugm->ugm_UserGroups;
-					while( gr != NULL )
-					{
-						DEBUG("[UMAssignGroupToUserByStringDB] compare %s - %s\n", gr->ug_Name, gr->ug_Name );
-			
-						if( gr->ug_ID == rmEntry->i_Data )
-						{
-							UTGEntry *ne = FCalloc( 1, sizeof( UTGEntry ) );
-							if( ne != NULL )
-							{
-								ne->ug = gr;
-								ne->user = usr;
-								ne->node.mln_Succ = (MinNode *)root;
-								root = ne;
-							}
-				
-							DEBUG("[UMAssignGroupToUserByStringDB] Group found %s will be added to user %s\n", gr->ug_Name, usr->u_Name );
-				
-							char loctmp[ 256 ];
-							int loctmplen;
-						
-							// insert to database
-							if( pos == 0 )
-							{
-								loctmplen = snprintf( loctmp, sizeof( loctmp ),  "(%lu, %lu) ", usr->u_ID, gr->ug_ID );
-								tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
-							}
-							else
-							{
-								loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",(%lu, %lu) ", usr->u_ID, gr->ug_ID ); 
-								tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
-							}
-							BufStringAdd( bsInsert, loctmp );
-							
-				
-							pos++;
-							break;
-						}
-						gr = (UserGroup *) gr->node.mln_Succ;
-					} // while group
-					FRIEND_MUTEX_UNLOCK( &(ugm->ugm_Mutex) );
-					
-					UTGEntry *ce = root;
-					UTGEntry *re = root;
-					while( ce != NULL )
-					{
-						re = ce;
-						ce = (UTGEntry *)ce->node.mln_Succ;
-						
-						UserGroupAddUser( re->ug, re->user );
-						FFree( re );
-					}
-				}
-				FFree( rmEntry );
-			}*/
 		}	// workgroups != "none"
 		
 		// removeing old group conections from DB
@@ -992,10 +871,6 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 	}
 	sb->LibrarySQLDrop( sb, sqlLib );
 
-	//BufStringAddSize( bsGroups, "]}", 2 );
-	
-	// update external services about changes
-	//NotificationManagerSendEventToConnections( sb->sl_NotificationManager, NULL, NULL, NULL, "service", "user", "update", bsGroups->bs_Buffer );
 	// update user about changes
 	UserNotifyFSEvent2( usr, "refresh", "Mountlist:" );
 	

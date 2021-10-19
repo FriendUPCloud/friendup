@@ -790,7 +790,7 @@ void UserDeleteGroupLinkAll( UserGroupLink *ugl )
  * 
  * @param u pointer to User
  */
-
+/*
 void UserRemoveFromGroups( User *u )
 {
 	if( u == NULL )
@@ -800,7 +800,7 @@ void UserRemoveFromGroups( User *u )
 	
 	DEBUG("[UserRemoveFromGroups] remove start\n");
 	// remove user from group first
-	/*
+	
 	UserGroupLink *ugl = u->u_UserGroupLinks;
 	while( ugl != NULL )
 	{
@@ -844,9 +844,84 @@ void UserRemoveFromGroups( User *u )
 	UserDeleteGroupLinkAll( u->u_UserGroupLinks );
 	u->u_UserGroupLinks = NULL;
 	USER_CHANGE_OFF( u );
-	*/
 
 	DEBUG("[UserRemoveFromGroups] remove end\n");
+}
+*/
+
+/**
+ * Remove user from all groups
+ * 
+ * @param sb pointer to SystemBase
+ * @param u pointer to User
+ */
+
+void UserRemoveFromGroupsDB( void *sb, User *u )
+{
+	if( u == NULL )
+	{
+		return;
+	}
+	
+	DEBUG("[UserRemoveFromGroupsDB] remove start\n");
+	
+	SystemBase *lsb = (SystemBase *)sb;
+	SQLLibrary *sqlLib = lsb->LibrarySQLGet( lsb );
+	
+	if( sqlLib != NULL )
+	{
+		char query[ 256 ];
+		sqlLib->SNPrintF( sqlLib, query, sizeof(query), "DELETE FROM FUserToGroup WHERE UserID='%ld", u->u_ID );
+		
+		sqlLib->QueryWithoutResults( sqlLib, query );
+
+		lsb->LibrarySQLDrop( lsb, sqlLib );
+	}
+
+	DEBUG("[UserRemoveFromGroupsDB] remove end\n");
+}
+
+/**
+ * Check if user is in group
+ *
+ * @param sb pointer to SystemBase
+ * @param usr User
+ * @param gid group id 
+ * @return TRUE if user is in group, otherwise FALSE
+ */
+
+FBOOL UserIsInGroupDB( void *sb, User *usr, FULONG gid )
+{
+	DEBUG("[UserIsInGroupDB] remove start\n");
+	FBOOL isInGroup = FALSE;
+	
+	SystemBase *lsb = (SystemBase *)sb;
+	SQLLibrary *sqlLib = lsb->LibrarySQLGet( lsb );
+	
+	if( sqlLib != NULL )
+	{
+		char query[ 1024 ];
+		sqlLib->SNPrintF( sqlLib, query, sizeof(query), "SELECT count(*) from FUserToGroup WHERE UserID=%ld AND UserGroupID=%ld", usr->u_ID, gid );
+		
+		void *result = sqlLib->Query( sqlLib, query );
+		if( result != NULL )
+		{ 
+			char **row;
+			if( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+			{
+				if( atol( row[ 0 ] ) > 0 )
+				{
+					isInGroup = TRUE;
+				}
+			}
+			sqlLib->FreeResult( sqlLib, result );
+		}
+		lsb->LibrarySQLDrop( lsb, sqlLib );
+	}
+
+	DEBUG("[UserIsInGroupDB] remove end\n");
+
+	return isInGroup;
 }
 
 /**

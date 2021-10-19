@@ -318,13 +318,25 @@ int UserRegenerateSessionID( User *usr, char *newsess );
 //
 //
 
-void UserRemoveFromGroups( User *u );
+//void UserRemoveFromGroups( User *u );
 
 //
 //
 //
 
-FBOOL UserIsInGroup( User *usr, FULONG gid );
+void UserRemoveFromGroupsDB( void *sb, User *u );
+
+//
+//
+//
+
+//FBOOL UserIsInGroup( User *usr, FULONG gid );
+
+//
+//
+//
+
+FBOOL UserIsInGroupDB( void *sb, User *usr, FULONG gid );
 
 //
 //
