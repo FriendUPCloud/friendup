@@ -745,6 +745,8 @@ inline static int GenerateServiceMessage(
 )
 {
 	int dstsize = 0;
+	//if ( NULL == reqID )
+	reqID = "null";
 	
 	if( reqID != NULL )
 	{
