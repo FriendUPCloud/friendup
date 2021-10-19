@@ -736,19 +736,50 @@ OR
 // internal funciton
 //
 
-inline static int GenerateServiceMessage( char *dstMsg, char *reqID, char *path, char *params, UserSession *us )
+inline static int GenerateServiceMessage( 
+	char *dstMsg, 
+	char *reqID, 
+	char *path, 
+	char *params, 
+	UserSession *us 
+)
 {
 	int dstsize = 0;
 	
 	if( reqID != NULL )
 	{
 		snprintf( reqID, 128, "EXTSER_%lu%d_ID", time(NULL), rand()%999999 );
-		dstsize = sprintf( dstMsg, "{\"path\":\"service%s\",\"requestId\":\"%s\",\"data\":", path, reqID );
+		dstsize = sprintf(
+			dstMsg,
+			"{"
+				"\"originUserId\":\"%s\","
+				"\"path\":\"service/%s\","
+				"\"requestId\":\"%s\","
+				"\"data\":\"%s" 
+			"}",
+			us->us_User->u_UUID,
+			path, 
+			reqID,
+			params
+		);
 	}
 	else
 	{
-		dstsize = sprintf( dstMsg, "{\"path\":\"service%s\",\"data\":", path );
+		dstsize = sprintf( 
+			dstMsg, 
+			"{"
+				"\"originUserId\":\"%s\","
+				"\"path\":\"service/%s\","
+				"\"data\":"
+			"}",
+			us->us_User->u_UUID,
+			path 
+		);
 	}
+	
+	return dstsize;
+	
+	/*
 	
 	int perLen = strlen( params );
 	int afterBracePos = 0;
@@ -785,6 +816,7 @@ inline static int GenerateServiceMessage( char *dstMsg, char *reqID, char *path,
 	}
 	
 	return dstsize;
+	*/
 }
 
 /**
