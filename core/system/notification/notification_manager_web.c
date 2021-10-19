@@ -161,9 +161,14 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 					{
 						dstsize = snprintf( nmsg, nmsglen, "{\"path\":\"service/%s\",\"originUserId\":\"%s\",\"data\":{%s}}", path, loggedSession->us_User->u_UUID, msg );
 					}
-				
-					error = NotificationManagerSendInformationToConnections( l->sl_NotificationManager, servername, msg, strlen(msg) );
-				
+					
+					error = NotificationManagerSendInformationToConnections( 
+						l->sl_NotificationManager, 
+						servername, 
+						nmsg, 
+						strlen( nmsg ) 
+					);
+					
 					DEBUG("[NMWebRequest] Send notification to server, error: %d\n", error );
 					
 					FFree( nmsg );
