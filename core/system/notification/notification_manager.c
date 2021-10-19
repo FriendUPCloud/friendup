@@ -755,7 +755,7 @@ inline static int GenerateServiceMessage(
 				"\"originUserId\":\"%s\","
 				"\"path\":\"service/%s\","
 				"\"requestId\":\"%s\","
-				"\"data\":\"%s" 
+				"\"data\":%s" 
 			"}",
 			us->us_User->u_UUID,
 			path, 
@@ -770,10 +770,11 @@ inline static int GenerateServiceMessage(
 			"{"
 				"\"originUserId\":\"%s\","
 				"\"path\":\"service/%s\","
-				"\"data\":"
+				"\"data\":%s"
 			"}",
 			us->us_User->u_UUID,
-			path 
+			path,
+			params
 		);
 	}
 	
