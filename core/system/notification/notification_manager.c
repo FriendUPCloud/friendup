@@ -745,8 +745,8 @@ inline static int GenerateServiceMessage(
 )
 {
 	int dstsize = 0;
-	//if ( NULL == reqID )
-	reqID = "null";
+	
+	DEBUG("GenerateServiceMessage - params: %s\n", params );
 	
 	if( reqID != NULL )
 	{
@@ -835,7 +835,15 @@ inline static int GenerateServiceMessage(
  * @return response as BufString
  */
 
-BufString *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http *req, UserSession *us, char *sername, int type, const char *path, const char *params )
+BufString *NotificationManagerSendRequestToConnections( 
+	NotificationManager *nm, 
+	Http *req, 
+	UserSession *us, 
+	char *sername, 
+	int type, 
+	const char *path, 
+	const char *params
+)
 {
 	//char *retMessage = NULL;
 	BufString *retMsg = BufStringNew();
