@@ -100,6 +100,12 @@ if( isset( $obj->ID ) && $obj->ID > 0 )
 			$config->$key = $v;
 		}
 	}
+	
+	// No diskspace??
+	if( !isset( $config->DiskSize ) || !$config->DiskSize || !trim( $config->DiskSize ) )
+	{
+		die( 'fail<!--separate-->{"response":-1,"message":"Could not save disk with zero diskspace."}' );
+	}
 
 	$SqlDatabase->query( $q = '
 	UPDATE Filesystem
