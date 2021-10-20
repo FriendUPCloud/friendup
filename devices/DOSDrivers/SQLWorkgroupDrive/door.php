@@ -557,6 +557,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 						{
 							if( $total + strlen( $args->data ) < SQLWORKGROUPDRIVE_FILE_LIMIT )
 							{
+								$Logger->log( '[SQLWORKGROUPDRIVE] Writing content to file. (limit etc: ' . ( $total + strlen( $args->data ) ) . ' < ' . SQLWORKGROUPDRIVE_FILE_LIMIT );
 								$len = fwrite( $file, $args->data );
 								fclose( $file );
 							}
