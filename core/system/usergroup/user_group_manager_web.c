@@ -2343,7 +2343,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 					
 					// remove from mem, entries were loaded from DB
 					
-					UserGroupDeleteAll( l, ug );
+					//UserGroupDeleteAll( l, ug );
 				}
 				else	// admin user
 				{
