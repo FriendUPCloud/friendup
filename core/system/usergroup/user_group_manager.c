@@ -1061,7 +1061,7 @@ FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const cha
 		int arg = 0;
 		BufString *sqlbs = BufStringNew();
 		
-		BufStringAdd( sqlbs, "SELECT g.ID,g.UserID,g.ParentID,g.Name,g.Type.g.Status FROM FGroup g inner join FUserToGroup utg on g.ID=utg.UserGroupID" );
+		BufStringAdd( sqlbs, "SELECT g.ID,g.UserID,g.ParentID,g.Name,g.Type,g.Status FROM FGroup g inner join FUserToGroup utg on g.ID=utg.UserGroupID" );
 		
 		if( uid > 0 || type != NULL || parentID > 0 || status > 0 )
 		{
