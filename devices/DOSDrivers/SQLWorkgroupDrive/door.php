@@ -996,6 +996,21 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 						return 'fail';
 					// Move files and folders or a whole volume to another door
 					case 'copy':
+						
+						// Must not break filesize limit!
+						$total = 0;
+						if( $sum = $SqlDatabase->FetchObject( '
+							SELECT SUM(u.Filesize) z FROM FSFile u
+							WHERE FilesystemID = \'' . $this->ID . '\'
+						' ) )
+						{
+							$total = intval( $sum->z, 10 );
+						}
+						if( $total >= SQLWORKGROUPDRIVE_FILE_LIMIT )
+						{
+							return 'fail';
+						}
+						
 						$from = isset( $args->from ) ? $args->from : ( isset( $args->args->from ) ? $args->args->from : false );
 						$to   = isset( $args->to )   ? $args->to   : ( isset( $args->args->to )   ? $args->args->to   : false );
 						
