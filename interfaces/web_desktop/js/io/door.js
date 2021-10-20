@@ -520,10 +520,15 @@ Door.prototype.write = function( filename, data, mode, extraData )
 			// Do the refreshing
 			Workspace.refreshWindowByPath( filename );
 			dat = ( JSON.parse( d ) ).FileDataStored;
+			if( dr.onWrite )
+			{
+				dr.onWrite( r, d );
+			}
 		}
-
-		if( dr.onWrite )
-			dr.onWrite( dat, extraData );
+		else if( dr.onWrite )
+		{
+			dr.onWrite( false, false );
+		}
 	}
 	j.send();
 }
