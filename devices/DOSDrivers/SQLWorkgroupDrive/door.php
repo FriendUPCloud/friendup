@@ -491,9 +491,6 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 					}
 					if( $file = fopen( $Config->FCUpload . $fn, 'w+' ) )
 					{
-						// Delete existing file
-						if( $deletable ) unlink( $deletable );
-						
 						if( isset( $args->tmpfile ) )
 						{
 							if( file_exists( $args->tmpfile ) )
@@ -529,6 +526,9 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 									if( $total + $len < SQLWORKGROUPDRIVE_FILE_LIMIT )
 									{
 										$Logger->log( '[SQLWORKGROUPDRIVE] Moving tmp file ' . $args->tmpfile . ' to ' . $Config->FCUpload . $fn . ' because ' . ( $total + $len ) . ' < ' . SQLDRIVE_FILE_LIMIT );
+										// Delete existing file
+										if( $deletable ) unlink( $deletable );
+										
 										$res = rename( $args->tmpfile, $Config->FCUpload . $fn );
 										
 										if( !$res )

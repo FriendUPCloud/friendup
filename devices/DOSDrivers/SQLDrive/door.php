@@ -478,9 +478,6 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				
 					if( $file = fopen( $wname . $fn, 'w+' ) )
 					{
-						// Delete existing file
-						if( $deletable ) unlink( $deletable );
-					
 						if( isset( $args->tmpfile ) )
 						{
 							if( file_exists( $args->tmpfile ) )
@@ -518,6 +515,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 									if( $total + $len < SQLDRIVE_FILE_LIMIT )
 									{
 										$Logger->log( '[SqlDrive] Moving tmp file ' . $args->tmpfile . ' to ' . $wname . $fn . ' because ' . ( $total + $len ) . ' < ' . SQLDRIVE_FILE_LIMIT );
+										
+										// Delete existing file
+										if( $deletable ) unlink( $deletable );
 										
 										$res = rename( $args->tmpfile, $wname . $fn );
 										
