@@ -417,7 +417,10 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				// Get by path (subfolder)
 				$subPath = $testPath = false;
 				if( is_string( $path ) && strstr( $path, ':' ) )
-					$testPath = $subPath = end( explode( ':', $path ) );
+				{
+					$exp = explode( ':', $path );
+					$testPath = $subPath = end( $exp );
+				}
 				
 				// Remove filename
 				if( substr( $subPath, -1, 1 ) != '/' && strstr( $subPath, '/' ) )
