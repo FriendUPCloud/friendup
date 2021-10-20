@@ -133,13 +133,7 @@ if( $row = $SqlDatabase->FetchObject( '
 	
 	//$Logger->log( '[1.0] [volumeinfo] : devices/DOSDrivers/' . $row->Type . '/door.php args: ' . print_r( $args,1 ) );
 	
-	if( $userid == $User->ID && file_exists( $f = ( 'devices/Storage/' . $row->Type . '/door.php' ) ) )
-	{
-		//$Logger->log( '[1.2] [volumeinfo] : devices/Storage/' . $row->Type . '/door.php ' );
-		
-		include( $f ); $door->dosAction( $args );
-	}
-	else if( $userid == $User->ID && file_exists( $f = ( 'devices/DOSDrivers/' . $row->Type . '/door.php' ) ) )
+	if( $userid == $User->ID && file_exists( $f = ( 'devices/DOSDrivers/' . $row->Type . '/door.php' ) ) )
 	{
 		//$Logger->log( '[1.1] [volumeinfo] : devices/DOSDrivers/' . $row->Type . '/door.php ' );
 		
