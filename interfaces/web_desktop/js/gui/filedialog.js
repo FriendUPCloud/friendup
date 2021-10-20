@@ -320,7 +320,13 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				let m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
-					console.log( 'Volume info: ' + e, d );
+					let dn = JSON.parse( d );
+					if( parseFloat( dn.Filesize ) - parseFloat( dn.Used ) < 0 )
+					{
+						Alert( i18n( 'i18n_disk_full' ), i18n( 'i18n_disk_full_desc' ) );
+						return;
+					}
+					w.choose( ele, 2 );
 				}
 				m.execute( 'volumeinfo', { path: dialog.path.split( ':' )[0] + ':' } );
 				return;
