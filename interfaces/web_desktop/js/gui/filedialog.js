@@ -305,12 +305,25 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		}
 
 		// Take a selected file entry and use the trigger function on it
-		w.choose = function( ele )
+		w.choose = function( ele, stage )
 		{
 			if( !dialog.path )
 			{
 				Alert( i18n( 'i18n_no_path' ), i18n( 'i18n_please_choose_a_path' ) );
 				return false;
+			}
+		
+			// Check if the storage space is there, and that the volume
+			// is writable
+			if( !stage && dialog.type == 'save' )
+			{
+				let m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					console.log( 'Volume info: ' + e, d );
+				}
+				m.execute( 'volumeinfo', { path: dialog.path.split( ':' )[0] + ':' } );
+				return;
 			}
 		
 			// No element, try to find it
