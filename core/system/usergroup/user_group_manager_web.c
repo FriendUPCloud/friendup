@@ -829,7 +829,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", msg );
 					
 							char buffer[ 1024 ];
-							snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"success\",\"id\":%lu,\"uuid\":\"%s\"}", groupID, ug->ug_UUID );
+							snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"success\",\"id\":%lu,\"uuid\":\"%s\"}", ug->ug_ID, ug->ug_UUID );
 							HttpAddTextContent( response, buffer );
 						}
 
