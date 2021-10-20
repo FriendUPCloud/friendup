@@ -162,7 +162,7 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type );
 //
 //
 
-FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const char *type, FULONG parentID, int status );
+FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const char *type, FULONG parentID, int status, FBOOL fParentID );
 
 //
 //

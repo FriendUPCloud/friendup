@@ -897,6 +897,8 @@ int UGMAddUserToGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID )
 	SystemBase *sb = (SystemBase *)um->ugm_SB;
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	
+	DEBUG("[UGMAddUserToGroupDB] Add user: %ld to group %ld\n", userID, groupID );
+	
 	if( sqlLib != NULL )
 	{
 		char tmpQuery[256];
@@ -1048,9 +1050,10 @@ FBOOL UGMUserToGroupISConnectedDB( UserGroupManager *um, FULONG ugroupid, FULONG
  * @param type type of group (filter)
  * @param parentID parentID (filter)
  * @param status group status (filter)
+ * @param fParentID if parentID was passed as argument
  * @return TRUE when entry exist, otherwise FALSE
  */
-FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const char *type, FULONG parentID, int status )
+FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const char *type, FULONG parentID, int status, FBOOL fParentID )
 {
 	SystemBase *sb = (SystemBase *)um->ugm_SB;
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );

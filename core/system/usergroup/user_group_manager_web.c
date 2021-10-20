@@ -1711,7 +1711,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			BufStringAddSize( retString, "ok<!--separate-->{", 18 );
 			BufStringAdd( retString, "\"groups\":[" );
 
-			UGMGetGroupsDB( l->sl_UGM, 0, retString, type, parentID, status );//, fParentID );
+			UGMGetGroupsDB( l->sl_UGM, 0, retString, type, parentID, status, fParentID );
 		
 			BufStringAddSize( retString, "]}", 2 );
 		
@@ -2048,7 +2048,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 						// just to be sure that stuff is deleted
 						//else
 						{
-							DEBUG("Getting entry from DB\n");
+							DEBUG("Getting entry from DB before: UGMUserToGroupISConnectedByUIDDB\n");
 							// there is need to check and update DB
 							//FBOOL exist = UGMUserToGroupISConnectedDB( l->sl_UGM, groupID, User *u );
 							FBOOL exist = UGMUserToGroupISConnectedByUIDDB( l->sl_UGM, groupID, rmEntry->i_Data );
