@@ -489,14 +489,16 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 							else $fn .= rand(0,99999); 
 						}
 					}
-					if( $file = fopen( $Config->FCUpload . $fn, 'w+' ) )
+					
+					// If the file exists, check it, if not, make a new writable file
+					if( ( $f->ID > 0 && file_exists( $Config->FCUpload . $fn ) ) || true )
 					{
 						if( isset( $args->tmpfile ) )
 						{
 							if( file_exists( $args->tmpfile ) )
 							{
-								fclose( $file );
 								$len = filesize( $args->tmpfile );
+								
 								if( $len > 0 )
 								{
 									// TODO: UGLY WORKAROUND, FIX IT!
