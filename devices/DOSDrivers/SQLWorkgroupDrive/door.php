@@ -555,7 +555,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 								die( 'fail<!--separate-->{"response","-1","message":"Tempfile does not exist"}' );
 							}
 						}
-						else
+						else if( $file = fopen( $Config->FCUpload . $fn, 'w+' ) )
 						{
 							if( $total + strlen( $args->data ) < SQLWORKGROUPDRIVE_FILE_LIMIT )
 							{

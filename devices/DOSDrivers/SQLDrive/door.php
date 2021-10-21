@@ -551,7 +551,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 								die( 'fail<!--separate-->{"response","-1","message":"Tempfile does not exist"}' );
 							}
 						}
-						else
+						else if( $file = fopen( $wname . $fn, 'w+' ) )
 						{
 							if( $total + strlen( $args->data ) < SQLDRIVE_FILE_LIMIT )
 							{
