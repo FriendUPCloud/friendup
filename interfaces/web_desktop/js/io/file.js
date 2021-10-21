@@ -51,7 +51,7 @@ File = function( filename )
 	// Execute replacements
 	this.doReplacements = function( data )
 	{
-		var str = data ? data : this.data;
+		let str = data ? data : this.data;
 		if( !str ) return '';
 		for( var a in this.replacements )
 		{
@@ -100,8 +100,8 @@ File = function( filename )
 
 		if( !args ) args = {};
 
-		var t = this;
-		var jax = new cAjax ();
+		let t = this;
+		let jax = new cAjax ();
 		jax.forceHTTP = true;
 		if( this.cancelId )
 			jax.cancelId = this.cancelId;
@@ -116,7 +116,7 @@ File = function( filename )
 		}
 
 		// Get the correct door and load data
-		var theDoor = Workspace.getDoorByPath( filename );
+		let theDoor = Workspace.getDoorByPath( filename );
 		if( theDoor )
 		{
 			// Copy vars
@@ -148,8 +148,8 @@ File = function( filename )
 	// Load data
 	this.load = function( mode )
 	{
-		var t = this;
-		var jax = new cAjax ();
+		let t = this;
+		let jax = new cAjax ();
 		jax.forceHTTP = true;
 		
 		if( t.ondestroy ) jax.ondestroy = t.ondestroy;
@@ -157,7 +157,7 @@ File = function( filename )
 		if( this.cancelId )
 			jax.cancelId = this.cancelId;
 
-		var noRelocatePath = false;
+		let noRelocatePath = false;
 		for( var a in this.vars )
 		{
 			jax.addVar( a, this.vars[a] );
@@ -172,7 +172,7 @@ File = function( filename )
 		}
 
 		// Get the correct door and load data
-		var theDoor = Workspace.getDoorByPath( filename );
+		let theDoor = Workspace.getDoorByPath( filename );
 		if( theDoor )
 		{
 			if( this.cancelId )
@@ -315,21 +315,21 @@ File = function( filename )
 	{
 		if( !filePath ) filePath = this.path;
 
-		var t = this;
+		let t = this;
 		if( filePath && content )
 		{
-			var files = [ content ];
+			let files = [ content ];
 
-			var uworker = new Worker( 'js/io/filetransfer.js' );
+			let uworker = new Worker( 'js/io/filetransfer.js' );
 
 			// Open window
-			var w = new View( {
+			let w = new View( {
 				title:  i18n( 'i18n_copying_files' ),
 				width:  320,
 				height: 100
 			} );
 
-			var uprogress = new File( 'templates/file_operation.html' );
+			let uprogress = new File( 'templates/file_operation.html' );
 			
 			if( this.cancelId )
 				uprogress.cancelId = this.cancelId;
@@ -354,13 +354,13 @@ File = function( filename )
 				uprogress.myview = w;
 
 				// Setup progress bar
-				var eled = w.getWindowElement().getElementsByTagName( 'div' );
-				var groove = false, bar = false, frame = false, progressbar = false;
+				let eled = w.getWindowElement().getElementsByTagName( 'div' );
+				let groove = false, bar = false, frame = false, progressbar = false;
 				for( var a = 0; a < eled.length; a++ )
 				{
 					if( eled[a].className )
 					{
-						var types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'Info' ];
+						let types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'Info' ];
 						for( var b = 0; b < types.length; b++ )
 						{
 							if( eled[a].className.indexOf( types[b] ) == 0 )
@@ -381,7 +381,7 @@ File = function( filename )
 
 
 				//activate cancel button... we assume we only hav eone button in the template
-				var cb = w.getWindowElement().getElementsByTagName( 'button' )[0];
+				let cb = w.getWindowElement().getElementsByTagName( 'button' )[0];
 
 				cb.mywindow = w;
 				cb.onclick = function( e )
@@ -482,8 +482,8 @@ File = function( filename )
 			uprogress.load();
 
 			// Do the hustle!
-			var vol = filePath.split( ':' )[0];
-			var path = filePath;
+			let vol = filePath.split( ':' )[0];
+			let path = filePath;
 			uworker.postMessage( {
 				'session': Workspace.sessionId,
 				'targetPath': path,
@@ -510,7 +510,7 @@ File = function( filename )
 
 		t = this;
 		// Get the correct door and load data
-		var theDoor = Workspace.getDoorByPath( filename );
+		let theDoor = Workspace.getDoorByPath( filename );
 		if( theDoor )
 		{
 			if( this.cancelId )
@@ -521,23 +521,25 @@ File = function( filename )
 				theDoor.addVar( a, this.vars[a] );
 			if( ( mode && mode == 'wb' ) || this.vars['mode'] == 'wb' )
 				theDoor.mode = 'wb';
-			theDoor.onWrite = function( data )
+			theDoor.onWrite = function( data, moreData )
 			{
 				if( typeof ( t.onSave ) != 'undefined' )
-					t.onSave( data );
+				{
+					t.onSave( data, moreData );
+				}
 			}
 			theDoor.write( filename, content );
 		}
 		// Old fallback (should never happen)
 		else
 		{
-			var jax = new cAjax();
+			let jax = new cAjax();
 			jax.forceHTTP = true;
 			if( this.cancelId )
 				jax.cancelId = this.cancelId;
 			jax.open( 'post', '/system.library', true, true );
 
-			for( var a in this.vars )
+			for( let a in this.vars )
 			{
 				//console.log( 'Adding extra var ' + a, this.vars[a] );
 				jax.addVar( a, this.vars[a] );
@@ -549,7 +551,7 @@ File = function( filename )
 			jax.addVar( 'path', filename );
 			jax.addVar( 'mode', 'save' );
 			jax.addVar( 'content', content );
-			var t = this;
+			let t = this;
 			jax.onload = function ()
 			{
 				if ( this.returnCode == 'ok' )
@@ -557,7 +559,7 @@ File = function( filename )
 					t.written = parseInt ( this.returnData );
 					if ( typeof ( t.onSave ) != 'undefined' )
 					{
-						t.onSave ();
+						t.onSave();
 					}
 				}
 				else
@@ -579,7 +581,7 @@ File = function( filename )
 		if ( !( this instanceof ns.File ))
 			return new ns.File( conf, callback );
 
-		var self = this;
+		let self = this;
 		self.filePath = conf.filePath;
 		self.callback = callback;
 
@@ -588,8 +590,8 @@ File = function( filename )
 
 	ns.File.prototype.init = function()
 	{
-		var self = this;
-		var request = new friendUP.io.Request({
+		let self = this;
+		let request = new friendUP.io.Request({
 			url : self.filePath,
 			args : {
 				path : self.filePath
@@ -604,7 +606,7 @@ File = function( filename )
 
 	ns.File.prototype.done = function( data )
 	{
-		var self = this;
+		let self = this;
 
 		if ( !data )
 		{
@@ -632,10 +634,10 @@ function getImageUrl( path )
 	}
 
 
-	var sid = Workspace.sessionId && Workspace.sessionId != 'undefined';
-	var type = sid ? 'sessionid' : 'authid';
-	var valu = sid ? Workspace.sessionId : ( Workspace.conf && Workspace.conf.authid ? Workspace.conf.authid : '' );
-	var auth = type + '=' + valu;
-	var u = '/system.library/file/read?' + auth + '&path=' + encodeURIComponent( path ) + '&mode=rs';
+	let sid = Workspace.sessionId && Workspace.sessionId != 'undefined';
+	let type = sid ? 'sessionid' : 'authid';
+	let valu = sid ? Workspace.sessionId : ( Workspace.conf && Workspace.conf.authid ? Workspace.conf.authid : '' );
+	let auth = type + '=' + valu;
+	let u = '/system.library/file/read?' + auth + '&path=' + encodeURIComponent( path ) + '&mode=rs';
 	return u;
 }

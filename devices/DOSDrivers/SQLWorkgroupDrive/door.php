@@ -417,7 +417,10 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				// Get by path (subfolder)
 				$subPath = $testPath = false;
 				if( is_string( $path ) && strstr( $path, ':' ) )
-					$testPath = $subPath = end( explode( ':', $path ) );
+				{
+					$exp = explode( ':', $path );
+					$testPath = $subPath = end( $exp );
+				}
 				
 				// Remove filename
 				if( substr( $subPath, -1, 1 ) != '/' && strstr( $subPath, '/' ) )
@@ -486,17 +489,16 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 							else $fn .= rand(0,99999); 
 						}
 					}
-					if( $file = fopen( $Config->FCUpload . $fn, 'w+' ) )
+					
+					// If the file exists, check it, if not, make a new writable file
+					if( ( $f->ID > 0 && file_exists( $Config->FCUpload . $fn ) ) || true )
 					{
-						// Delete existing file
-						if( $deletable ) unlink( $deletable );
-						
 						if( isset( $args->tmpfile ) )
 						{
 							if( file_exists( $args->tmpfile ) )
 							{
-								fclose( $file );
 								$len = filesize( $args->tmpfile );
+								
 								if( $len > 0 )
 								{
 									// TODO: UGLY WORKAROUND, FIX IT!
@@ -526,6 +528,9 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 									if( $total + $len < SQLWORKGROUPDRIVE_FILE_LIMIT )
 									{
 										$Logger->log( '[SQLWORKGROUPDRIVE] Moving tmp file ' . $args->tmpfile . ' to ' . $Config->FCUpload . $fn . ' because ' . ( $total + $len ) . ' < ' . SQLDRIVE_FILE_LIMIT );
+										// Delete existing file
+										if( $deletable ) unlink( $deletable );
+										
 										$res = rename( $args->tmpfile, $Config->FCUpload . $fn );
 										
 										if( !$res )
@@ -550,10 +555,11 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 								die( 'fail<!--separate-->{"response","-1","message":"Tempfile does not exist"}' );
 							}
 						}
-						else
+						else if( $file = fopen( $Config->FCUpload . $fn, 'w+' ) )
 						{
 							if( $total + strlen( $args->data ) < SQLWORKGROUPDRIVE_FILE_LIMIT )
 							{
+								$Logger->log( '[SQLWORKGROUPDRIVE] Writing content to file. (limit etc: ' . ( $total + strlen( $args->data ) ) . ' < ' . SQLWORKGROUPDRIVE_FILE_LIMIT );
 								$len = fwrite( $file, $args->data );
 								fclose( $file );
 							}
@@ -992,6 +998,21 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 						return 'fail';
 					// Move files and folders or a whole volume to another door
 					case 'copy':
+						
+						// Must not break filesize limit!
+						$total = 0;
+						if( $sum = $SqlDatabase->FetchObject( '
+							SELECT SUM(u.Filesize) z FROM FSFile u
+							WHERE FilesystemID = \'' . $this->ID . '\'
+						' ) )
+						{
+							$total = intval( $sum->z, 10 );
+						}
+						if( $total >= SQLWORKGROUPDRIVE_FILE_LIMIT )
+						{
+							return 'fail';
+						}
+						
 						$from = isset( $args->from ) ? $args->from : ( isset( $args->args->from ) ? $args->args->from : false );
 						$to   = isset( $args->to )   ? $args->to   : ( isset( $args->args->to )   ? $args->args->to   : false );
 						
