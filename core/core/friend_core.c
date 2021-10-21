@@ -719,7 +719,6 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 				*/
 
 				srl = SSL_set_fd( s_Ssl, fd );
-				SSL_set_accept_state( s_Ssl );
 				if( srl != 1 )
 				{
 					int error = SSL_get_error( s_Ssl, srl );
@@ -730,9 +729,10 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 
 				int err = 0;
 				// we must be sure that SSL Accept is working
-				while( 1 )
+				while( TRUE )
 				{
 					DEBUG("[FriendCoreAcceptPhase2] before accept\n");
+					SSL_set_accept_state( s_Ssl );
 					if( ( err = SSL_accept( s_Ssl ) ) == 1 )
 					{
 						lbreak = 1;
@@ -1938,7 +1938,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					continue;
 				}
 
-				SSL_CTX_get_read_ahead( fc->fci_Sockets->s_Ctx );
+				//SSL_CTX_get_read_ahead( fc->fci_Sockets->s_Ctx );
 				SSL_CTX_set_session_cache_mode( fc->fci_Sockets->s_Ctx, SSL_SESS_CACHE_CLIENT | SSL_SESS_CACHE_NO_INTERNAL_STORE);
 
 				if( SocketListen( fc->fci_Sockets ) != 0 )
