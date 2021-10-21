@@ -114,7 +114,6 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		
 		char *msg = NULL;
 		char *servername = NULL;
-		char *reqID = NULL;
 		char *path = NULL;
 		
 		DEBUG( "[NMWebRequest] notify-server!!\n" );
@@ -137,11 +136,11 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 				DEBUG( "[NMWebRequest] servername %s!!\n", servername );
 			}
 			
-			el = HttpGetPOSTParameter( request, "reqid" );
+			el = HttpGetPOSTParameter( request, "path" );
 			if( el != NULL )
 			{
-				reqID = UrlDecodeToMem( (char *)el->hme_Data );
-				DEBUG( "[NMWebRequest] reqID %s!!\n", reqID );
+				path = UrlDecodeToMem( (char *)el->hme_Data );
+				DEBUG( "[NMWebRequest] path %s!!\n", path );
 			}
 			
 			if( msg != NULL )
@@ -153,17 +152,26 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 				
 				if( nmsg != NULL )
 				{
-					if( reqID != NULL )
-					{
-						dstsize = snprintf( nmsg, nmsglen, "{\"path\":\"service/%s\",\"requestId\":\"%s\",\"originUserId\":\"%s\",\"data\":{%s}}", path, reqID, loggedSession->us_User->u_UUID, msg );
-					}
-					else
-					{
-						dstsize = snprintf( nmsg, nmsglen, "{\"path\":\"service/%s\",\"originUserId\":\"%s\",\"data\":{%s}}", path, loggedSession->us_User->u_UUID, msg );
-					}
-				
-					error = NotificationManagerSendInformationToConnections( l->sl_NotificationManager, servername, msg, strlen(msg) );
-				
+					dstsize = snprintf( 
+						nmsg, 
+						nmsglen, 
+						"{"
+							"\"originUserId\":\"%s\","
+							"\"path\":\"service/%s\","
+							"\"data\":%s"
+						"}", 
+						loggedSession->us_User->u_UUID, 
+						path, 
+						msg 
+					);
+					
+					error = NotificationManagerSendInformationToConnections( 
+						l->sl_NotificationManager, 
+						servername, 
+						nmsg, 
+						strlen( nmsg ) 
+					);
+					
 					DEBUG("[NMWebRequest] Send notification to server, error: %d\n", error );
 					
 					FFree( nmsg );
@@ -194,11 +202,6 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		if( path != NULL )
 		{
 			FFree( path );
-		}
-		
-		if( reqID != NULL )
-		{
-			FFree( reqID );
 		}
 		
 		if( msg != NULL )
