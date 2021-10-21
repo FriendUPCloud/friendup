@@ -637,8 +637,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 	{
 		if( ele.views )
 		{
-			var cnt = 0;
-			for( var a in ele.views )
+			let cnt = 0;
+			for( let a in ele.views )
 				cnt++;
 			if( cnt > 0 )
 			{
@@ -646,9 +646,9 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				else ele.state = ele.state == 'hidden' ? 'visible' : 'hidden';
 				
 				var elementCount = 0;
-				for( var i in ele.views )
+				for( let i in ele.views )
 				{
-					var s = ele.views[i].windowObject.getFlag( 'screen' );
+					let s = ele.views[i].windowObject.getFlag( 'screen' );
 					if( s.div.id != 'DoorsScreen' ) continue;
 					if( ele.views[i].windowObject.getFlag( 'invisible' ) ) continue;
 					ele.views[i].windowObject.setFlag( 'hidden', ele.state == 'hidden' ? true : false );
@@ -664,7 +664,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					}
 					else
 					{
-						var d = document.createElement( 'div' );
+						let d = document.createElement( 'div' );
 						d.className = 'ElementCount';
 						d.innerHTML = '<span>' + ( elementCount > 0 ? elementCount : '' ) + '</span>';
 						ele.appendChild( d );
@@ -689,7 +689,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 	{
 		if( typeof( ele ) != 'object' )
 		{
-			for( var a = 0; a < this.dom.childNodes.length; a++ )
+			for( let a = 0; a < this.dom.childNodes.length; a++ )
 			{
 				if( this.dom.childNodes[a].executable && this.dom.childNodes[a].executable == ele )
 				{
@@ -698,10 +698,10 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				}
 			}
 		}
-		var found = false;
-		var elementCount = 0;
+		let found = false;
+		let elementCount = 0;
 		
-		for( var a = 0; a < Workspace.applications.length; a++ )
+		for( let a = 0; a < Workspace.applications.length; a++ )
 		{
 			let ap = Workspace.applications[a];
 			if( ap.applicationId != ele.uniqueId )
@@ -711,9 +711,9 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			// TODO: Animation before hiding!
 			let st = 'idle';
 			let wsSet = false;
-			for( var w in ap.windows )
+			for( let w in ap.windows )
 			{
-				var s = ap.windows[ w ].getFlag( 'screen' );
+				let s = ap.windows[ w ].getFlag( 'screen' );
 				if( s.div.id != 'DoorsScreen' ) continue;
 				
 				elementCount++; // Count app windows
@@ -721,7 +721,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				st = ap.windows[ w ].flags.hidden;
 				if( ap.windows[ w ].getFlag( 'invisible' ) ) continue;
 				// Just minimize
-				var ws = ap.windows[ w ].workspace;
+				let ws = ap.windows[ w ].workspace;
 				
 				if( !wsSet && ws != globalConfig.workspaceCurrent )
 				{
@@ -731,7 +731,6 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				
 				if( st || wsSet )
 				{
-				    
 					if( ele.classList.contains( 'Minimized' ) )
 					{
     					ele.classList.remove( 'Minimized' );
@@ -753,12 +752,11 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
     					ele.classList.add( 'Minimized' );
     			    }
 					ap.windows[ w ].setFlag( 'hidden', true );
-					console.log( 'We set this as hidden: ', ap.windows[ w ] );
 				}
 			}
 			if( !ele.elementCount )
 			{
-				var d = document.createElement( 'div' );
+				let d = document.createElement( 'div' );
 				d.className = 'ElementCount';
 				d.innerHTML = '<span>' + ( elementCount > 0 ? elementCount : '' ) + '</span>';
 				ele.elementCount = d;
@@ -781,25 +779,44 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 	
 	this.addLauncher = function( o )
 	{
-		var dk = this;
+		let dk = this;
 		if ( o.src && ( o.click || o.exe ) )
 		{
-			var div = document.createElement ( 'div' );
+			let div = document.createElement ( 'div' );
 			div.className = 'Launcher MousePointer';
 			if( o.className ) div.className += ' ' + o.className;
 			div.style.width = this.width - ( this.margin * 2 ) + 'px';
 			div.style.backgroundSize = 'contain';
 			div.style.height = this.width - ( this.margin * 2 ) + 'px';
 			div.executable = o.exe;
-			div.uniqueId = UniqueHash( o.exe + ' ' + o.displayname );
 			
-			// Running apps
-			for( var a in Workspace.applications )
+			// Try to find existing applicationId
+			if( div.executable )
 			{
-				if( Workspace.applications[ a ].applicationId == div.uniqueId )
+				for( let a in Workspace.applications )
 				{
-					div.classList.add( 'Running' );
-					break;
+					if( Workspace.applications[ a ].applicationName == o.exe )
+					{
+						div.classList.add( 'Running' );
+						div.uniqueId = Workspace.applications[a].applicationId;
+						break;
+					}
+				}
+			}
+			
+			if( !div.uniqueId )
+			{
+				div.uniqueId = UniqueHash( o.exe + ' ' + o.displayname );
+			
+				// Running apps (obsolete?)
+				// TODO: Check...
+				for( let a in Workspace.applications )
+				{
+					if( Workspace.applications[ a ].applicationId == div.uniqueId )
+					{
+						div.classList.add( 'Running' );
+						break;
+					}
 				}
 			}
 			
@@ -877,7 +894,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				}
 			}
 			
-			function clickFunc( e )
+			function deskletClickFunc( e )
 			{
 				if( e.button != 0 && e.type != 'touchend' ) return;
 				if( div.helpBubble ) div.helpBubble.close();
@@ -890,13 +907,13 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				// We got views? Just manage them
 				if( !isMobile )
 				{
-					if( dk.toggleViewVisibility( this ) ) 
+					if( dk.toggleViewVisibility( div ) ) 
 					{
 						return;
 					}
 				}
 
-				var rememberCurrent = false;
+				let rememberCurrent = false;
 				
 				// If we have a non silent launch, and a current movable, deactivate current
 				if( currentMovable && o.opensilent === false )
@@ -905,8 +922,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					_DeactivateWindow( currentMovable );
 				}
 			
-				var args = '';
-				var executable = o.exe + '';
+				let args = '';
+				let executable = o.exe + '';
 
 				if( executable.indexOf( ' ' ) > 0 )
 				{
@@ -914,7 +931,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					if( t[0].indexOf( ':' ) == -1)
 					{
 						args = '';
-						for( var a = 1; a < t.length; a++ )
+						for( let a = 1; a < t.length; a++ )
 						{
 							args += t[a];
 							if( a < t.length - 1 )
@@ -930,7 +947,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				// Extension
 				if( executable.indexOf( ':' ) > 0 )
 				{
-					var l = executable.split( ':' )[1];
+					let l = executable.split( ':' )[1];
 					if( l.indexOf( '/' ) > 0 )
 					{
 						l = l.split('/');
@@ -939,15 +956,15 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				
 					if( l.length > 1 )
 					{
-						var ext = l;
+						let ext = l;
 						ext = '.' + ext[ ext.length - 1 ].toLowerCase();
 	
 						// Check mimetypes
-						for( var a in Workspace.mimeTypes )
+						for( let a in Workspace.mimeTypes )
 						{
 							var mt = Workspace.mimeTypes[ a ];
 
-							for( var b in mt.types )
+							for( let b in mt.types )
 							{
 								if( ext == mt.types[ b ].toLowerCase() )
 								{
@@ -996,13 +1013,13 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					{
 						// Find application window
 						// TODO: Find the last active
-						for( var a = 0; a < Workspace.applications.length; a++ )
+						for( let a = 0; a < Workspace.applications.length; a++ )
 						{
 							if( Workspace.applications[a].applicationId == div.uniqueId )
 							{
 								if( Workspace.applications[a].windows )
 								{
-									for( var c in Workspace.applications[a].windows )
+									for( let c in Workspace.applications[a].windows )
 									{
 										Workspace.applications[a].windows[ c ].flags.minimized = false;
 										Workspace.applications[a].windows[ c ].activate();
@@ -1091,7 +1108,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					var t = e.target ? e.target : e.srcElement;
 					if( t && t != div ) return;
 					if( window.isMobile && !dk.open ) return;
-					clickFunc( e );
+					deskletClickFunc( e );
 					if( div.helpBubble ) div.helpBubble.close();
 				}
 			}

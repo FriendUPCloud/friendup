@@ -10,12 +10,13 @@
 		<div class="WelTabsWrapper">
 			<div class="WelTabs" id="AppsPane">
 				<div class="WelTab"><span class="Welcome"></span>Getting<span class="Space"> </span>started</div>
-				<div class="WelTab"><span class="Office"></span>Friend<span class="Space"> </span>Office</div>
-				<div class="WelTab"><span class="Mail"></span>Friend Mail & Calendar</div>
 				<div class="WelTab"><span class="Chat"></span>Friend<span class="Space"> </span>Chat</div>
 				<div class="WelTab"><span class="Conference"></span>Friend Conference</div>
-				<div class="WelTab"><span class="Photopea"></span>Photopea</div>
+				<div class="WelTab"><span class="Office"></span>Friend<span class="Space"> </span>Office</div>
+				<div class="WelTab"><span class="Games"></span>Games</div>
+				<!--<div class="WelTab"><span class="Mail"></span>Friend Mail & Calendar</div>-->
 				<div class="WelTab"><span class="Drawio"></span>DrawIO</div>
+				<div class="WelTab"><span class="Photopea"></span>Photopea</div>
 				<div class="WelTab"><span class="More"></span>And much more!</div>
 			</div>
 		</div>
@@ -31,9 +32,11 @@
 					</p>
 					<p>
 						Friend is a social platform. As such, you are able to 
-						interact with others in real time. Why don't you 
-						<strong><a href="javascript:void(0)" onclick="Application.sendMessage( { type: 'system', command: 'invite' } )">invite 
-						some of your friends</a></strong> to participate? It's free!
+						interact with others in real time. Why don't you;
+					</p>
+					<p>
+						<a class="ButtonBox" href="javascript:void(0)" onclick="Application.sendMessage( { type: 'system', command: 'invite' } )">Invite 
+						a friend</a>
 					</p>
 				</div>
 				<div class="ImageContent"></div>
@@ -52,43 +55,6 @@
 							our end-user documentation here: <a href="https://docs.friendos.com/docs/end-user-documentation/" target="_blank">Read documentation</a>.
 						</p>
 					</div>
-				</div>
-			</div>
-			<div class="WelPage Office">
-				<div class="TextContent">
-					<h2>Your multitasking office workflow</h2>
-					<p>
-						As a complete office suite for working online, Friend Office
-						gives you all the tools you need for authoring documents,
-						spreadsheets and visual presentations.
-					</p>
-					<p>
-						With Friend's multitasking Workspace, you may enjoy the 
-						efficiency of working on multiple documents at the same time,
-						side-by-side on your screen.
-					</p>
-				</div>
-				<div class="ImageContent">
-				</div>
-			</div>
-			<div class="WelPage Mail">
-				<div class="TextContent">
-					<h2>
-						Friend Mail and Calendar
-					</h2>
-					<p>
-						The Friend Workspace gives you the entire workflow for
-						communicating with others. With Friend Mail, you get 
-						e-mail correspondence and calendar management in one
-						app.
-					</p>
-					<p>
-						Friend Mail is integrated with Friend storage folders,
-						which allows you to manage attachment upload and download
-						without placing files on your local machine.
-					</p>
-				</div>
-				<div class="ImageContent">
 				</div>
 			</div>
 			<div class="WelPage Chat">
@@ -134,26 +100,96 @@
 				<div class="ImageContent">
 				</div>
 			</div>
-			<div class="WelPage Photopea">
+			<div class="WelPage Office">
 				<div class="TextContent">
-					<h2>
-						Edit photos, design graphical layouts
-					</h2>
+					<h2>Your multitasking office workflow</h2>
 					<p>
-						Photopea gives you most of the features found in applications
-						like PhotoShop, Sketch and The Gimp. It even supports
-						popular image file formats.
+						As a complete office suite for working online, Friend Office
+						gives you all the tools you need for authoring documents,
+						spreadsheets and visual presentations.
 					</p>
 					<p>
-						Photopea is integrated in Friend OS, and supports
-						Friend storage folders as well as drag & drop. This means
-						that you can manage and work on your projects right inside
-						of the Friend Workspace.
+						With Friend's multitasking Workspace, you may enjoy the 
+						efficiency of working on multiple documents at the same time,
+						side-by-side on your screen.
 					</p>
 				</div>
 				<div class="ImageContent">
 				</div>
 			</div>
+			<div class="WelPage Games">
+				<div class="TextContent Games">
+					<div class="Flexi">
+						<div class="FlexiContent">
+							<p>
+								<a href="javascript:void(0)" onclick="launchApp('bulletbonanza')"><span style="background-image: url(Progdir:Gfx/game_bb.png)"></span></a>
+							</p>
+							<p>
+								<a href="javascript:void(0)" onclick="launchApp('bulletbonanza')">Bullet Bonanza</a>
+							</p>
+						</div>
+						<div class="FlexiContent">
+							<p>
+								<a href="javascript:void(0)" onclick="launchApp('CrossWordsArena')"><span style="background-image: url(Progdir:Gfx/game_crosswords.png)"></span></a>
+							</p>
+							<p>
+								<a href="javascript:void(0)" onclick="launchApp('CrossWordsArena')">Crosswords Arena</a>
+							</p>
+						</div>
+						<div class="FlexiContent">
+							<p>
+								<a href="javascript:void(0)" onclick="launchApp('Venge')"><span style="background-image: url(Progdir:Gfx/game_venge.png)"></span></a>
+							</p>
+							<p>
+								<a href="javascript:void(0)" onclick="launchApp('Venge')">Venge</a>
+							</p>
+						</div>
+						<div class="FlexiContent">
+							<p>
+								<a href="javascript:void(0)" onclick="launchApp('FlappyBird')"><span style="background-image: url(Progdir:Gfx/game_flappy.png)"></span></a>
+							</p>
+							<p>
+								<a href="javascript:void(0)" onclick="launchApp('FlappyBird')">Flappy Bird</a>
+							</p>
+						</div>
+						<div class="FlexiContent">
+							<p>
+								<a href="javascript:void(0)" onclick="launchApp('Swooop')"><span style="background-image: url(Progdir:Gfx/game_swoop.png)"></span></a>
+							</p>
+							<p>
+								<a href="javascript:void(0)" onclick="launchApp('Swooop')">Swooop</a>
+							</p>
+						</div>
+					</div>
+				</div>
+				<div class="ExtraContent">
+					<h2>Get some fun into your day!</h2>
+					<p>
+						Friend is a great games platform, with several fun titles
+						for you to try. Check the list of wonderful games!
+					</p>
+				</div>
+			</div>
+			<!--<div class="WelPage Mail">
+				<div class="TextContent">
+					<h2>
+						Friend Mail and Calendar
+					</h2>
+					<p>
+						The Friend Workspace gives you the entire workflow for
+						communicating with others. With Friend Mail, you get 
+						e-mail correspondence and calendar management in one
+						app.
+					</p>
+					<p>
+						Friend Mail is integrated with Friend storage folders,
+						which allows you to manage attachment upload and download
+						without placing files on your local machine.
+					</p>
+				</div>
+				<div class="ImageContent">
+				</div>
+			</div>-->
 			<div class="WelPage Drawio">
 				<div class="TextContent">
 					<h2>
@@ -170,6 +206,26 @@
 						able to store and open .drawio files from Friend storage
 						folders - it can autosave, allowing you to concentrate
 						on your work.
+					</p>
+				</div>
+				<div class="ImageContent">
+				</div>
+			</div>
+			<div class="WelPage Photopea">
+				<div class="TextContent">
+					<h2>
+						Edit photos, design graphical layouts
+					</h2>
+					<p>
+						Photopea gives you most of the features found in applications
+						like PhotoShop, Sketch and The Gimp. It even supports
+						popular image file formats.
+					</p>
+					<p>
+						Photopea is integrated in Friend OS, and supports
+						Friend storage folders as well as drag & drop. This means
+						that you can manage and work on your projects right inside
+						of the Friend Workspace.
 					</p>
 				</div>
 				<div class="ImageContent">
@@ -259,6 +315,8 @@
 		{ background-image: url('Progdir:Gfx/icon_photopea.png'); }
 		.WelTab > span.Mail:after
 		{ background-image: url('Progdir:Gfx/icon_mail.png'); }
+		.WelTab > span.Games:after
+		{ background-image: url('Progdir:Gfx/icon_games.png'); }
 		.WelTab > span.Office:after
 		{ background-image: url('Progdir:Gfx/icon_office.png'); 
 		  background-size: 101%;
@@ -286,4 +344,5 @@
 		.WelPage.Welcome .ImageContent
 		{ background-image: url('Progdir:Gfx/app_welcome.png'); }
 	</style>
+	
 

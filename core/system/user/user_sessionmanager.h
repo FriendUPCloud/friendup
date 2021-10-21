@@ -40,6 +40,39 @@ typedef struct UserSessionManager
 	pthread_mutex_t					usm_Mutex;		// mutex
 } UserSessionManager;
 
+#ifndef SESSION_MANAGER_CHANGE_ON
+#define SESSION_MANAGER_CHANGE_ON( MGR ) \
+while( (MGR->usm_InUse > 0 && MGR->usm_ChangeState == TRUE ) ){ usleep( 2000 ); } \
+if( FRIEND_MUTEX_LOCK( &(MGR->usm_Mutex) ) == 0 ){ \
+	MGR->usm_ChangeState = TRUE; \
+	FRIEND_MUTEX_UNLOCK( &(MGR->usm_Mutex) ); \
+}
+#endif
+
+#ifndef SESSION_MANAGER_CHANGE_OFF
+#define SESSION_MANAGER_CHANGE_OFF( MGR ) \
+if( FRIEND_MUTEX_LOCK( &(MGR->usm_Mutex) ) == 0 ){ \
+	MGR->usm_ChangeState = FALSE; \
+	FRIEND_MUTEX_UNLOCK( &(MGR->usm_Mutex) ); \
+}
+#endif
+
+#ifndef SESSION_MANAGER_USE
+#define SESSION_MANAGER_USE( MGR ) \
+while( MGR->usm_ChangeState != FALSE ){ usleep( 2000 ); } \
+if( FRIEND_MUTEX_LOCK( &(MGR->usm_Mutex) ) == 0 ){ \
+	MGR->usm_InUse++; \
+	FRIEND_MUTEX_UNLOCK( &(MGR->usm_Mutex) ); \
+}
+#endif
+
+#ifndef SESSION_MANAGER_RELEASE
+#define SESSION_MANAGER_RELEASE( MGR ) \
+if( FRIEND_MUTEX_LOCK( &(MGR->usm_Mutex) ) == 0 ){ \
+	MGR->usm_InUse--; \
+	FRIEND_MUTEX_UNLOCK( &(MGR->usm_Mutex) ); \
+}
+#endif
 
 //
 // Create new UserSessionManager

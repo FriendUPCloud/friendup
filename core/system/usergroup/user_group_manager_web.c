@@ -663,7 +663,20 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					groupID = ug->ug_ID;
 				
 					char msg[ 512 ];
-					snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"parentid\":%lu}", ug->ug_ID, ug->ug_Name, ug->ug_ParentID );
+					snprintf(
+						msg, 
+						sizeof(msg), 
+						"{"
+							"\"id\":%lu,"
+							"\"uuid\":\"%s\","
+							"\"name\":\"%s\","
+							"\"parentid\":%lu"
+						"}", 
+						ug->ug_ID, 
+						ug->ug_UUID,
+						ug->ug_Name, 
+						ug->ug_ParentID
+					);
 					NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", msg );
 					
 					char buffer[ 1024 ];
@@ -758,7 +771,20 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 								addUsers = TRUE;
 
 								char msg[ 512 ];
-								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"parentid\":%lu}", ug->ug_ID, ug->ug_Name, ug->ug_ParentID );
+								snprintf(
+									msg, 
+									sizeof(msg), 
+									"{"
+										"\"id\":%lu,"
+										"\"uuid\":\"%s\","
+										"\"name\":\"%s\","
+										"\"parentid\":%lu"
+									"}", 
+									ug->ug_ID, 
+									ug->ug_UUID,
+									ug->ug_Name, 
+									ug->ug_ParentID
+								);
 								NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", msg );
 					
 								char buffer[ 1024 ];

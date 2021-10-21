@@ -943,7 +943,7 @@ function _ActivateWindowOnly( div )
 				( function( dd ) {
 					function deal()
 					{
-						if( currentMovable && ( 
+						if( currentMovable && currentMovable.classList && ( 
 							currentMovable.parentNode.classList.contains( 'Redrawing' ) || 
 							currentMovable.parentNode.classList.contains( 'DoneActivating' ) || 
 							currentMovable.parentNode.classList.contains( 'Activated' ) 
@@ -951,10 +951,13 @@ function _ActivateWindowOnly( div )
 						{
 							return setTimeout( function(){ deal() }, 300 );
 						}
-						dd.parentNode.classList.remove( 'DelayedDeactivation' );
-						_DeactivateWindow( dd );
+						if( dd && dd.parentNode )
+						{
+							dd.parentNode.classList.remove( 'DelayedDeactivation' );
+							_DeactivateWindow( dd );
+						}
 					}
-					if( delayedDeactivation && div.applicationId == dd.applicationId )
+					if( delayedDeactivation && div.applicationId == dd.applicationId && dd.parentNode )
 					{
 						dd.parentNode.classList.add( 'DelayedDeactivation' );
 						setTimeout( function(){ deal() }, 300 );
@@ -962,7 +965,7 @@ function _ActivateWindowOnly( div )
 					else deal();
 				} )( m );
 			}
-			else if( m.classList.contains( 'Active' ) )
+			else if( m && m.classList.contains( 'Active' ) )
 			{
 				_DeactivateWindow( m );
 			}
