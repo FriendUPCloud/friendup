@@ -118,8 +118,11 @@ scrollengine = {
 			// Manage keystrokes
 			window.addEventListener( 'keydown', function( e )
 			{ 
-				//console.log( e.which, e.target ); 
-				
+				// Ignore input and textarea fields
+				if( e.target && ( e.target.tagName == 'INPUT' || e.target.tagName == 'TEXTAREA' ) )
+				{
+					return;
+				}
 				switch( e.which )
 				{
 					// Page Up
