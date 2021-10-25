@@ -264,6 +264,7 @@ typedef struct CommService
 	FConnection						*s_Connections;							///< FCConnections incoming
 	int 							s_NumberConnections;
 	pthread_mutex_t					s_Mutex;
+	pthread_mutex_t					s_CondMutex;
 	
 	CommRequest						*s_Requests;
 	pthread_cond_t 					s_DataReceivedCond;
