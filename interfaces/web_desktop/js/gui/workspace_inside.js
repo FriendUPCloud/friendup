@@ -8290,13 +8290,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 												{
 													if( args && args.Extension )
 													{
+														var path = ( thisicon.fileInfo.ExportPath ? thisicon.fileInfo.ExportPath : thisicon.fileInfo.Path );
+														
 														if( thisicon.fileInfo.Filename.indexOf( '.' ) >= 0 && thisicon.fileInfo.Filename.split( '.' ).pop(  ) )
 														{
-															var path = ( thisicon.fileInfo.Path.split( thisicon.fileInfo.Filename.split( '.' ).pop(  ) ).join( args.Extension ) );
+															path = ( path.split( thisicon.fileInfo.Filename.split( '.' ).pop(  ) ).join( args.Extension ) );
 														}
 														else
 														{
-															var path = ( thisicon.fileInfo.Path + '.' + args.Extension );
+															path = ( path + '.' + args.Extension );
 														}
 														
 														Workspace.download( path );

@@ -548,6 +548,12 @@ if( !class_exists( 'GoogleDrive' ) )
 				if( $this->state != self::UNAUTHORIZED && isset( $args->tmpfile ) && $this->connectClient()) 
 				{
 					$googlepath = end( explode(':', $args->path) );
+					
+					if( strstr( $googlepath, 'DiskHandled/' ) )
+					{
+						$googlepath = str_replace( 'DiskHandled/', '', $googlepath );
+					}
+					
 					if( substr($googlepath,-1) == '/' ) $googlepath = rtrim($googlepath,'/');
 	
 					$filesize = filesize( $args->tmpfile  );
@@ -881,6 +887,12 @@ if( !class_exists( 'GoogleDrive' ) )
 						{
 
 							$googlepath = end( explode( ':', $args->path ) );
+							
+							if( strstr( $googlepath, 'DiskHandled/' ) )
+							{
+								$googlepath = str_replace( 'DiskHandled/', '', $googlepath );
+							}
+							
                             if( substr($googlepath,-1) == '/' ) $googlepath = rtrim($googlepath,'/');
 							
 							$tmp = explode('/', $googlepath);
@@ -909,6 +921,12 @@ if( !class_exists( 'GoogleDrive' ) )
                             $google_directory_metatype = 'application/vnd.google-apps.folder';
                             
                             $googlepath = end( explode(':', $args->path ) );
+                            
+                            if( strstr( $googlepath, 'DiskHandled/' ) )
+							{
+								$googlepath = str_replace( 'DiskHandled/', '', $googlepath );
+							}
+                            
                             if( substr($googlepath,-1) == '/' ) $googlepath = rtrim($googlepath,'/');
 
                             
@@ -962,6 +980,12 @@ if( !class_exists( 'GoogleDrive' ) )
 
 						if( strlen( $googlepath ) && $this->connectClient() )
 						{
+							
+							if( strstr( $googlepath, 'DiskHandled/' ) )
+							{
+								$googlepath = str_replace( 'DiskHandled/', '', $googlepath );
+							}
+							
 							$gfile = $this->getGoogleFileObject( $googlepath );
 							if( $gfile && $gfile->getID() )
 							{
@@ -993,6 +1017,11 @@ if( !class_exists( 'GoogleDrive' ) )
 		{
 			global $Logger, $args;
 
+			if( strstr( $subPath, 'DiskHandled/' ) )
+			{
+				$subPath = str_replace( 'DiskHandled/', '', $subPath );
+			}
+			
 			if( substr( $subPath, -1 ) == '/' ) $subPath = rtrim($subPath, '/');
 			
 			//we need our mountname to prefix it to pathes from google			
@@ -1068,6 +1097,12 @@ if( !class_exists( 'GoogleDrive' ) )
 					$o->DateModified = $dm->format( 'Y-m-d H:i:s' );
 					$o->DateCreated = $dc->format( 'Y-m-d H:i:s' );
 					
+					if( $o->Type != 'Directory' && strstr( $o->Filename, '/' ) )
+					{
+						$o->Filename = str_replace( '/', '&#47;', $o->Filename );
+						//$Logger->log( '$results[4]: ' . json_encode( $gfile ) );
+					}
+					
 					switch( $gfile->getMimeType() )
 					{
 						case 'application/vnd.google-apps.document':
@@ -1122,9 +1157,9 @@ if( !class_exists( 'GoogleDrive' ) )
 					$o->ID = $gfile->getId();
 					$cleanpath = ($subPath != '' ? $subPath . '/' : '' ) . $o->Filename; 
 					$cleanpath .= ( $o->Type == 'Directory' && substr( $cleanpath , -1) != '/' ? '/' : '' ) ;
-					if( $o->MetaType == 'DiskHandled' )
+					if( $o->MetaType == 'DiskHandled' && $o->ExportFormat )
 					{
-						$cleanpath = ( 'DiskHandled/' . $cleanpath );
+						$o->ExportPath = $this->Name . ':' . ( 'DiskHandled/' . urlencode( $cleanpath ) );
 					}
 					$o->Path = $cleanpath;
 					$o->Driver = 'GoogleDrive';
@@ -1232,6 +1267,8 @@ if( !class_exists( 'GoogleDrive' ) )
 					}
 				}
 			}
+			
+			$path = urldecode( $path );
 			
 			$Logger->log( print_r( $args,1 ) . ' || ' . $path );
 			
@@ -1419,6 +1456,11 @@ if( !class_exists( 'GoogleDrive' ) )
 				$tmp = explode('/',$googlepath);
 				for( $i = 0; $i < count( $tmp ); $i++ )
 				{
+					if( strstr( $tmp[$i], '&#47;' ) )
+					{
+						$tmp[$i] = str_replace( '&#47;', '/', $tmp[$i] );
+					}
+					
 					$lastParentID = $parentID;
 					$rs = $this->getSingleFolderContents( $parentID, "name='" . $tmp[$i] . "'" );
 					foreach ($rs->getFiles() as $gfile)
@@ -1440,6 +1482,11 @@ if( !class_exists( 'GoogleDrive' ) )
 			}
 			else
 			{
+				if( strstr( $googlepath, '&#47;' ) )
+				{
+					$googlepath = str_replace( '&#47;', '/', $googlepath );
+				}
+				
 				$rs = $this->getSingleFolderContents( $parentID, "name = '{$googlepath}'");
 				foreach ($rs->getFiles() as $gfile)
 				{
