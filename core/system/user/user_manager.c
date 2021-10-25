@@ -233,6 +233,31 @@ int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
 }
 
 /**
+ * Get User structure from by ID
+ *
+ * @param um pointer to UserManager
+ * @param ID user id
+ * @return User structure or NULL value when problem appear
+ */
+User *UMUserGetByID( UserManager *um, FQUAD id )
+{
+	USER_MANAGER_USE( um );
+	User *user = um->um_Users;
+	while( user != NULL )
+	{
+		if( user->u_ID == id )
+		{
+			break;
+		}
+		user = (User *)user->node.mln_Succ;
+	}
+	USER_MANAGER_RELEASE( um );
+
+	return user;
+}
+
+
+/**
  * Get User structure from by his name
  *
  * @param um pointer to UserManager
