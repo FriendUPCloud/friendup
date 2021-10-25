@@ -127,27 +127,54 @@ Application.run = function( conf )
 
 }
 
-Application.displayEditor = function(title,url)
+Application.displayEditor = function(title,url,popup)
 {
-		var v = new View({
-			width:1000,
-			height:850,
-			title: title
-		});
+		// TODO: Set iframe options ...		
 		
-		v.onClose = function()
+		if( !popup )
 		{
-			Application.quit();
-		};
-		v.setRichContentUrl( url );
-				
+			var v = new View({
+				width:1000,
+				height:850,
+				title: title
+			});
+		
+			//v.limitless = true;
+		
+			v.onClose = function()
+			{
+				Application.quit();
+			};
+			v.setRichContentUrl( url );
+		
+			//var ifr = document.createElement( 'iframe' );
+			//ifr.src = url;
+		
+			//ifr.setAttribute( 'sandbox', 'allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts allow-top-navigation allow-top-navigation-by-user-activation' );
+		
+			//document.body.appendChild( ifr );
+		
+			//console.log( ifr );
+		}
+		else
+		{
+			// NOTE: Can't use iframes Google refuses access for it ... will have to use popup window to show editor ...
+		
+			var winw = Math.min( 1000, screen.availWidth );
+			var winh = Math.min( 850, screen.availHeight );
+		
+			var lpos = Math.floor( ( screen.availWidth - winw ) / 2  );
+			var tpos = Math.floor( ( screen.availHeight - winh ) / 2  );
+		
+			window.open( url, title, 'resizable=1,width=' + winw + ',height=' + winh + ',top=' + tpos + ',left=' + lpos );
+		}
 }
 
-Application.initEditor = function( title, url )
+Application.initEditor = function( title, url, popup )
 {
 	if( url && title )
 	{
-		Application.displayEditor( title, url );
+		Application.displayEditor( title, url, popup );
 		return true;
 	}
 
@@ -211,8 +238,10 @@ Application.initJS = function( application, tmp )
 {
 	var str = "";
 	
+	// TODO: Fix the problem viewing pdf inside iframe from friendcore, until then using popup window for now ...
+	
 	str += " var Application = { displayEditor: "+Application.displayEditor+", quit: "+Application.quit+" }; ";
-	str += " return Application.displayEditor( '"+tmp.title+"', '"+tmp.file_url+"' ); ";
+	str += " return Application.displayEditor( '"+tmp.title+"', '"+tmp.file_url+"', true ); ";
 	
 	return str;
 }
@@ -221,7 +250,7 @@ Application.oauth2Window = function( tmp, Application, w, closeThisWindow )
 {
 	var ret = "";
 	
-	console.log( w );
+	//console.log( w );
 	
 	ret+= " var Application = { displayEditor: "+Application.displayEditor+", initEditor: "+Application.initEditor+", quit: "+Application.quit+" }; ";
 	
@@ -258,7 +287,7 @@ Application.oauth2Window = function( tmp, Application, w, closeThisWindow )
 	ret+= " 	vars += '&login_hint=' + GOOGLE_ID; ";
 	ret+= " } ";
 	
-	ret+= " console.log( 'args: ' + vars ); ";
+	//ret+= " console.log( 'args: ' + vars ); ";
 	
 	ret+= " let loginwindow = window.open( oauth2 + vars, 'authwindow', 'resizable=1,width=' + winw + ',height=' + winh + ',top=' + tpos + ',left=' + lpos ); ";
 	
@@ -269,7 +298,7 @@ Application.oauth2Window = function( tmp, Application, w, closeThisWindow )
 	ret+= " 	{ ";
 	ret+= " 		var params = {}; var args = false; ";
 			
-	ret+= " 		console.log( 'oauth msg: ', msg.data.url ); ";
+	//ret+= " 		console.log( 'oauth msg: ', msg.data.url ); ";
 			
 	ret+= " 		if( msg.data.url.split( '#' )[1] ) ";
 	ret+= " 		{ ";
@@ -294,11 +323,11 @@ Application.oauth2Window = function( tmp, Application, w, closeThisWindow )
 	ret+= " 		if( loginwindow ) loginwindow.close(); ";
 	
 	ret+= "			console.log( '"+w.getViewId()+"' ); ";
-	ret+= " 		closeThisWindow(); ";
+	//ret+= " 		closeThisWindow(); ";
 	
 	ret+= " 		if( params.access_token ) ";
 	ret+= " 		{ ";
-	ret+= " 			return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"' ); ";
+	ret+= " 			return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"', true ); ";
 	ret+= " 		} ";
 			
 	ret+= " 		return false; ";
