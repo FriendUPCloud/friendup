@@ -82,6 +82,10 @@ if( $rows = $SqlDatabase->FetchObjects( '
 		'resources/webclient/apps/',
 		'repository/'
 	);
+	if( isset( $args->args->onlyrepo ) )
+	{
+		$basepaths = [ 'repository/' ];
+	}
 	foreach( $rows as $k=>$v )
 	{
 		// Include image preview
