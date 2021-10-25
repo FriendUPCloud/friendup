@@ -1191,8 +1191,19 @@ function initTest()
 function checkKeys( e )
 {
 	if ( !e ) e = window.event;
-	var targ = e.srcElement ? e.srcElement : e.target;
-	var keycode = e.which ? e.which : e.keyCode;
+	let targ = e.srcElement ? e.srcElement : e.target;
+	let keycode = e.which ? e.which : e.keyCode;
+	
+	// Ignore some cases
+	switch( keycode )
+	{
+		case 16:
+		case 17:
+			return;
+			break;
+	}
+	// Done ignore
+	
 	if( Application.closeAllEditModes )
 	{
 		Application.closeAllEditModes( { keycode : keycode } );

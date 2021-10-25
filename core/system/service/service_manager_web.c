@@ -104,7 +104,16 @@ Http *SMWebRequest( void *lsb, char **urlpath, Http* request, UserSession *logge
 		
 		if( params != NULL && path != NULL )
 		{
-			BufString *serresp = NotificationManagerSendRequestToConnections( l->sl_NotificationManager, request, loggedSession, servername, type, path, params ); // 0 - type request, 1 - event
+			BufString *serresp = NotificationManagerSendRequestToConnections( 
+				l->sl_NotificationManager, 
+				request, 
+				loggedSession, 
+				servername, 
+				type, 
+				path, 
+				params 
+			); // 0 - type request, 1 - event
+			
 			if( serresp != NULL )
 			{
 				HttpSetContent( response, serresp->bs_Buffer, serresp->bs_Size );
