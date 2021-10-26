@@ -1768,23 +1768,33 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									size = actFS->FileWrite( fp, fdata, (int) dataSize );
 									actDev->f_BytesStored += size;
 								
+									char final[ 256 ];
+									
 									if( size > 0 )
 									{
-										char tmp[ 128 ];
-										sprintf( tmp, "ok<!--separate-->{\"FileDataStored\":\"%ld\"}", size );
-										HttpAddTextContent( response, tmp );
+										snprintf( final, sizeof( final ), "ok<!--separate-->{\"FileDataStored\":\"%ld\"}", size );
 									}
 									else
 									{
-										char dictmsgbuf[ 256 ];
-										snprintf( dictmsgbuf, sizeof( dictmsgbuf ), 
+										snprintf( final, sizeof( final ), 
 											ERROR_STRING_TEMPLATE, 
 											l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , 
 											DICT_CANNOT_ALLOCATE_MEMORY 
 										);
-										HttpAddTextContent( response, dictmsgbuf );
+										
 									}
-									actFS->FileClose( actDev, fp );
+									
+									int resp = actFS->FileClose( actDev, fp );
+									
+									// If we fail
+									if( resp != 0 )
+									{
+										snprintf( 
+											final, sizeof( final ),
+											"fail<!--separate-->{\"response\":-1,\"message\":\"Failed to write.\"}" 
+										);
+									}
+									HttpAddTextContent( response, final );
 							
 									if( notify == TRUE )
 									{
@@ -2241,18 +2251,27 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									
 									int closeResponse = actFS->FileClose( actDev, fp );
 								
-									int addSize = 0;
-									if( uploadedFiles == 0 )
+									// Error!
+									if( closeResponse != 0 )
 									{
-										addSize = snprintf( tmpFileData, sizeof( tmpFileData ), "{\"name\":\"%s\",\"bytesexpected\":%ld,\"bytesstored\":%ld,\"responseCode\":%d}", file->hf_FileName, file->hf_FileSize, storedBytes, closeResponse );
+										// Failed!
+										Log( FLOG_ERROR, "Got a file write error\n" );
 									}
 									else
 									{
-										addSize = snprintf( tmpFileData, sizeof( tmpFileData ), ",{\"name\":\"%s\",\"bytesexpected\":%ld,\"bytesstored\":%ld}", file->hf_FileName, file->hf_FileSize, storedBytes );
-									}
-									BufStringAddSize( uploadedFilesBS, tmpFileData, addSize );
+										int addSize = 0;
+										if( uploadedFiles == 0 )
+										{
+											addSize = snprintf( tmpFileData, sizeof( tmpFileData ), "{\"name\":\"%s\",\"bytesexpected\":%ld,\"bytesstored\":%ld,\"responseCode\":%d}", file->hf_FileName, file->hf_FileSize, storedBytes, closeResponse );
+										}
+										else
+										{
+											addSize = snprintf( tmpFileData, sizeof( tmpFileData ), ",{\"name\":\"%s\",\"bytesexpected\":%ld,\"bytesstored\":%ld}", file->hf_FileName, file->hf_FileSize, storedBytes );
+										}
+										BufStringAddSize( uploadedFilesBS, tmpFileData, addSize );
 								
-									uploadedFiles++;
+										uploadedFiles++;
+									}
 								}
 								else
 								{
