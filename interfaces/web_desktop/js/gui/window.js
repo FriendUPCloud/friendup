@@ -3306,7 +3306,6 @@ var View = function( args )
 				}
 				movableWindows = out;
 				
-				console.log( 'Execute close!' );
 				viewContainer.classList.add( 'Closing' );
 				if( div.windowObject )
 				{
@@ -3329,7 +3328,10 @@ var View = function( args )
 					wo.close();
 				}
 			}
-			executeClose();
+			if( div.windowObject.close() === true )
+			{
+				executeClose();
+			}
 		}
 
 		// Add all
@@ -4842,11 +4844,12 @@ var View = function( args )
 		if( this.onClose ) this.onClose();
 		if( this.eventSystemClose ) // <- system call
 		{
-			for( var a = 0; a < this.eventSystemClose.length; a++ )
+			for( let a = 0; a < this.eventSystemClose.length; a++ )
 			{
 				this.eventSystemClose[a]();
 			}
 		}
+		return true;
 	}
 	// Put a loading animation on window
 	this.loadingAnimation = function ()
