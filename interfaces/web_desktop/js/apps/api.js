@@ -457,6 +457,7 @@ var Application =
 	// Send quit up in hierarchy
 	quit: function( skipSendMessage )
 	{
+		console.log( 'Doing the quit!' );
 		if( this.hasQuit )
 			return;
 		this.hasQuit = true;
@@ -2656,6 +2657,7 @@ function View( flags )
 		if( this.closed ) return;
 		if( this.onClose )
 		{
+			console.log( 'Executing onclose.' );
 			this.onClose();
 		}
 
