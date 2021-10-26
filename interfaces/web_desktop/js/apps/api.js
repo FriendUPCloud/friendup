@@ -5804,8 +5804,8 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 	}
 
 	// Disable debugging now
-	if( packet.workspaceMode == 'normal' || packet.workspaceMode == 'gamified' )
-		console.log = function(){};
+	//if( packet.workspaceMode == 'normal' || packet.workspaceMode == 'gamified' )
+	//	console.log = function(){};
 	Application.workspaceMode = packet.workspaceMode ? packet.workspaceMode : 'developer';
 
 	if( packet.userLevel )
