@@ -1210,6 +1210,7 @@ function receiveEvent( event, queued )
 					case 'closewindow':
 					case 'closeview':
 						// Close an exact window
+						console.log( 'The view is closing!!!' );
 						if( dataPacket.viewId && Application.windows && Application.windows[dataPacket.viewId] )
 						{
 							console.log( 'Closing vierw!!!', dataPacket );
@@ -1242,6 +1243,7 @@ function receiveEvent( event, queued )
 						// Ah, sub window! Channel to all sub windows then (unknown id?)
 						else if( dataPacket.viewId )
 						{
+							console.log( 'This is where' );
 							// Try view windows
 							for( let a in Application.windows )
 							{
@@ -1259,6 +1261,7 @@ function receiveEvent( event, queued )
 						// FIXME: Might not be what we want
 						else if( Application.windows.length )
 						{
+							console.log( 'No this!' );
 							for( let a in Application.windows )
 							{
 								let w = Application.windows[a];
