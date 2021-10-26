@@ -2658,7 +2658,6 @@ function View( flags )
 		if( this.closed ) return;
 		if( this.onClose )
 		{
-			console.log( 'Executing onclose.' );
 			this.onClose();
 		}
 
