@@ -1753,6 +1753,7 @@ function CloseView( win, delayed )
 		if( !win.parentNode.parentNode ) return;
 		if( win.parentNode.classList.contains( 'View' ) )
 		{
+			console.log( 'Adding stuff!' );
 			win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
 		}
 		
@@ -3305,6 +3306,7 @@ var View = function( args )
 				}
 				movableWindows = out;
 				
+				console.log( 'Execute close!' );
 				viewContainer.classList.add( 'Closing' );
 				if( div.windowObject )
 				{
