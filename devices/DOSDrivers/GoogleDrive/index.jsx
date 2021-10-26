@@ -38,11 +38,11 @@ Application.run = function( conf )
 				self.tmp.file_url = ( self.tmp.file_url.split( 'path=' ).join( 'sessionid=' + Application.sessionId + '&path=' ) );
 			}
 			
-			Application.authWindow( self.tmp );
+			//Application.authWindow( self.tmp );
 			
-			console.log( 'init auth popup ...' );
+			//console.log( 'init auth popup ...' );
 			
-			return;
+			//return;
 			
 			var callback = function( e, d )
 			{
@@ -81,25 +81,25 @@ Application.run = function( conf )
 							
 							//Application.authWindow( self.tmp );
 							
-							//function closeThisWindow()
-							//{
+							function closeThisWindow()
+							{
 								
-							//	setTimeout( function(){ Application.quit(); }, 1000 );
+								setTimeout( function(){ Application.quit(); }, 1000 );
 								
-							//}
+							}
 							
 							// TODO: Load in template with javascript instead for file ...
 							
 							// TODO: THIS CRAP NEEDS TO BE DONE SIMPLER, LOAD JS FILES PROPERLY TO A TEMPLATE AND OR EVAL ....
 							
-							//var w = new View( { title: 'Google Editor', width: 350, height: 100 } );
-							//w.setFlag('allowPopups', true);
-							//w.setContent('<div style="padding:25px;"><p><a href="javascript:void(0)" onclick="' + Application.oauth2Window( self.tmp, Application, w, closeThisWindow ) + '" class="Button fa-google IconSmall"> &nbsp; open in google editor</a> or <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp ) + '" class="Button fa-google IconSmall"> &nbsp; view as pdf</a></p></div>');
+							var w = new View( { title: 'Google Editor', width: 350, height: 100 } );
+							w.setFlag('allowPopups', true);
+							w.setContent('<div style="padding:25px;"><p><a href="javascript:void(0)" onclick="' + Application.oauth2Window( self.tmp, Application, w, closeThisWindow ) + '" class="Button fa-google IconSmall"> &nbsp; open in google editor</a> or <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp ) + '" class="Button fa-google IconSmall"> &nbsp; view as pdf</a></p></div>');
 							
-							//w.onClose = function()
-							//{
-							//	Application.quit();
-							//}
+							w.onClose = function()
+							{
+								Application.quit();
+							}
 							
 						} );
 					}
@@ -151,7 +151,7 @@ Application.displayEditor = function(title,url,popup)
 		
 			v.onClose = function()
 			{
-				Application.quit();
+				//Application.quit();
 			};
 			v.setRichContentUrl( url );
 		
@@ -271,7 +271,7 @@ Application.oauth2Window = function( tmp, Application, w, closeThisWindow )
 	
 	//console.log( w );
 	
-	ret+= " var Application = { displayEditor: "+Application.displayEditor+", initEditor: "+Application.initEditor+", quit: "+Application.quit+" }; ";
+	ret+= " var Application = { displayEditor: "+Application.displayEditor+", initEditor: "+Application.initEditor+", quit: "+Application.quit+", setSingleInstance: "+Application.setSingleInstance+", sendMessage: "+Application.sendMessage+" }; ";
 	
 	ret+= " var w = { close: "+w.close+" }; ";
 	
@@ -346,7 +346,7 @@ Application.oauth2Window = function( tmp, Application, w, closeThisWindow )
 	
 	ret+= " 		if( params.access_token ) ";
 	ret+= " 		{ ";
-	ret+= " 			return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"', true ); ";
+	ret+= " 			return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"' ); ";
 	ret+= " 		} ";
 			
 	ret+= " 		return false; ";
