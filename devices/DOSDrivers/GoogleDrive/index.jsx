@@ -134,19 +134,19 @@ Application.displayEditor = function(title,url,popup,viewId)
 		
 		if( !popup )
 		{
-			Application.globalView = new View({
+			w = new View({
 				width:1000,
 				height:850,
 				title: title
 			});
 		
 			//v.limitless = true;
-		
-			Application.globalView.onClose = function()
+			
+			w.onClose = function()
 			{
 				//Application.quit();
 			};
-			Application.globalView.setRichContentUrl( url );
+			w.setRichContentUrl( url );
 			
 			//var ifr = document.createElement( 'iframe' );
 			//ifr.src = url;
@@ -156,7 +156,7 @@ Application.displayEditor = function(title,url,popup,viewId)
 			//document.body.appendChild( ifr );
 		
 			//console.log( ifr );
-			
+			console.log( viewId );
 			if( viewId )
 			{
 				CloseView( viewId );
@@ -252,15 +252,15 @@ Application.initJS = function( application, tmp, edit, w )
 	str += " var Application = { initEditor: "+Application.initEditor+", displayEditor: "+Application.displayEditor+", quit: "+Application.quit+" }; ";
 	
 	//str += " CloseView( '"+w.getViewId()+"' ); ";
-	var viewId = ( w ? w.getViewId() : false );
+	var viewId = ( w ? ( "'" + w.getViewId() + "'" ) : false );
 	
 	if( edit )
 	{
-		str += " return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"', true, '"+viewId+"' ); ";
+		str += " return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"', true, "+viewId+" ); ";
 	}
 	else
 	{
-		str += " return Application.displayEditor( '"+tmp.title+"', '"+tmp.file_url+"', true, '"+viewId+"' ); ";
+		str += " return Application.displayEditor( '"+tmp.title+"', '"+tmp.file_url+"', true, "+viewId+" ); ";
 	}
 	
 	return str;
