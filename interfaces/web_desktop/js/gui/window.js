@@ -4837,7 +4837,7 @@ var View = function( args )
 		}
 		else
 		{
-			console.log( 'Why?' );
+			console.log( 'Why?', this._window );
 		}
 		CloseView( this._window );
 		if( this.onClose ) this.onClose();
