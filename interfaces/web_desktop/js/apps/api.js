@@ -1209,6 +1209,8 @@ function receiveEvent( event, queued )
 						break;
 					case 'closewindow':
 					case 'closeview':
+						console.log( 'Got CLOSE VIEW' );
+						
 						// Close an exact window
 						if( dataPacket.viewId && Application.windows && Application.windows[dataPacket.viewId] )
 						{
@@ -2702,6 +2704,8 @@ function View( flags )
 // To close a view
 function CloseView( id )
 {
+	console.log( 'CLOSE VIEW?' );
+	
 	// No id? Get the actual view we're in
 	if( !id && Application.viewId )
 		id = Application.viewId;
