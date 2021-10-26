@@ -4835,10 +4835,7 @@ var View = function( args )
 				return;
 			}
 		}
-		else
-		{
-			console.log( 'Why?', this._window );
-		}
+		console.log( 'Doing closeview!' );
 		CloseView( this._window );
 		if( this.onClose ) this.onClose();
 		if( this.eventSystemClose ) // <- system call
