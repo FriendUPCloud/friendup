@@ -4746,7 +4746,6 @@ var View = function( args )
 	// Close a view window
 	this.close = function ( force )
 	{
-		console.log( 'CLOSE 1' );
 		if( isMobile )
 			Workspace.exitMobileMenu();
 		
@@ -4768,12 +4767,10 @@ var View = function( args )
 
 		if( !force && this._window && this._window.applicationId )
 		{
-			console.log( 'CLOSE 2' );
 			// Send directly to the view
 			let app = this._window.applicationId ? findApplication( this._window.applicationId ) : false;
 			if( c.getElementsByTagName( _viewType ).length )
 			{
-				console.log( 'CLOSE 3' );
 				let twindow = this;
 
 				// Notify application
@@ -4807,7 +4804,6 @@ var View = function( args )
 			}
 			else if( this.parentViewId )
 			{
-				console.log( 'CLOSE 4' );
 				let v = GetWindowById( this.parentViewId );
 				if( v && v.windowObject )
 				{
@@ -4824,7 +4820,6 @@ var View = function( args )
 			}
 			else if( app )
 			{
-				console.log( 'CLOSE 5' );
 				// Notify application
 				let msg = {
 					type: 'system',

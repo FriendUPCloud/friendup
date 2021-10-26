@@ -1171,6 +1171,7 @@ function receiveEvent( event, queued )
 			break;
 		// TODO: Never gets here?
 		case 'notify':
+			console.log( 'Notify then: ', dataPacket );
 			if( dataPacket.method )
 			{
 				switch( dataPacket.method )
