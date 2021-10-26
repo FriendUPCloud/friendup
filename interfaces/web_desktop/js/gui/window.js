@@ -1784,7 +1784,7 @@ function CloseView( win, delayed )
 
 		// Clear view that is closed from view history
 		let out = [];
-		for( var a  = 0; a < Friend.GUI.view.viewHistory.length; a++ )
+		for( let a = 0; a < Friend.GUI.view.viewHistory.length; a++ )
 		{
 			if( Friend.GUI.view.viewHistory[a] != win )
 				out.push( Friend.GUI.view.viewHistory[a] );
@@ -1825,7 +1825,7 @@ function CloseView( win, delayed )
 			{
 				if( app.mainView == div.windowObject )
 				{
-					for( var a in app.windows )
+					for( let a in app.windows )
 					{
 						if( app.windows[ a ] != div.windowObject )
 						{
@@ -1885,7 +1885,7 @@ function CloseView( win, delayed )
 				// Only activate last view in the same app
 				if( appId )
 				{
-					for( var a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
+					for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 					{
 						if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
 						{
@@ -1904,7 +1904,7 @@ function CloseView( win, delayed )
 				}
 				else
 				{
-					for( var a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
+					for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 					{
 						if( Friend.GUI.view.viewHistory[ a ].windowObject.workspace == globalConfig.workspaceCurrent )
 						{
@@ -1928,7 +1928,7 @@ function CloseView( win, delayed )
 		{
 			// Clean up ids
 			let o = [];
-			for( var b in movableWindows )
+			for( let b in movableWindows )
 			{
 				if( movableWindows[b] != div && movableWindows[b].parentNode )
 				{
@@ -4765,8 +4765,11 @@ var View = function( args )
 			this._window.blocker.close();
 		}
 
+		console.log( 'The closing' );
+
 		if( !force && this._window && this._window.applicationId )
 		{
+			console.log( 'Sending msgs' );
 			// Send directly to the view
 			let app = this._window.applicationId ? findApplication( this._window.applicationId ) : false;
 			if( c.getElementsByTagName( _viewType ).length )
@@ -4830,6 +4833,10 @@ var View = function( args )
 				};
 				app.sendMessage( msg );
 			}
+		}
+		else
+		{
+			console.log( 'Why?' );
 		}
 		CloseView( this._window );
 		if( this.onClose ) this.onClose();
