@@ -38,12 +38,6 @@ Application.run = function( conf )
 				self.tmp.file_url = ( self.tmp.file_url.split( 'path=' ).join( 'sessionid=' + Application.sessionId + '&path=' ) );
 			}
 			
-			//Application.authWindow( self.tmp );
-			
-			//console.log( 'init auth popup ...' );
-			
-			//return;
-			
 			var callback = function( e, d )
 			{
 				
@@ -68,7 +62,7 @@ Application.run = function( conf )
 					
 					console.log( 'tmp ', self.tmp );
 					
-					if( self.tmp.decrypted.access_token )
+					if( self.tmp.decrypted )
 					{
 												
 						Application.getAccountInfo( self.tmp.decrypted.access_token, function( e, d )
@@ -78,23 +72,20 @@ Application.run = function( conf )
 							{
 								self.tmp.google_id = d.user.emailAddress;
 							}
+							else if( self.tmp.decrypted.user && self.tmp.decrypted.user.emailAddress )
+							{
+								self.tmp.google_id = self.tmp.decrypted.user.emailAddress;
+							}
 							
 							//Application.authWindow( self.tmp );
-							
-							function closeThisWindow()
-							{
-								
-								setTimeout( function(){ Application.quit(); }, 1000 );
-								
-							}
 							
 							// TODO: Load in template with javascript instead for file ...
 							
 							// TODO: THIS CRAP NEEDS TO BE DONE SIMPLER, LOAD JS FILES PROPERLY TO A TEMPLATE AND OR EVAL ....
 							
-							var w = new View( { title: 'Google Editor', width: 350, height: 100 } );
+							var w = new View( { title: 'Google file', width: 355, height: 110 } );
 							w.setFlag('allowPopups', true);
-							w.setContent('<div style="padding:25px;"><p><a href="javascript:void(0)" onclick="' + Application.oauth2Window( self.tmp, Application, w, closeThisWindow ) + '" class="Button fa-google IconSmall"> &nbsp; open in google editor</a> or <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp ) + '" class="Button fa-google IconSmall"> &nbsp; view as pdf</a></p></div>');
+							w.setContent('<div style="padding-left:20px;padding-right:20px;padding-bottom:15px;"><p>This is a Google native file, and can only be edited in Google\'s online suite.</p><p><a href="javascript:void(0)" onclick="' + Application.oauth2Window( self.tmp, Application ) + '" class="Button">Open with Google</a> <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp ) + '" class="Button">View as pdf</a></p></div>');
 							
 							w.onClose = function()
 							{
@@ -267,17 +258,11 @@ Application.initJS = function( application, tmp, edit )
 	return str;
 }
 
-Application.oauth2Window = function( tmp, Application, w, closeThisWindow )
+Application.oauth2Window = function( tmp, Application )
 {
 	var ret = "";
 	
-	//console.log( w );
-	
 	ret+= " var Application = { displayEditor: "+Application.displayEditor+", initEditor: "+Application.initEditor+", globalView: "+Application.globalView+" }; ";
-	
-	ret+= " var w = { close: "+w.close+" }; ";
-	
-	ret+= " var closeThisWindow = "+closeThisWindow+"; ";
 	
 	ret+= " var CLIENT_ID    = '"+tmp.client_id+"'; ";
 	ret+= " var REDIRECT_URI = '"+tmp.redirect_uri+"'; ";
@@ -343,11 +328,9 @@ Application.oauth2Window = function( tmp, Application, w, closeThisWindow )
 			
 	ret+= " 		if( loginwindow ) loginwindow.close(); ";
 	
-	ret+= "			console.log( '"+w.getViewId()+"' ); ";
-	//ret+= " 		closeThisWindow(); ";
-	
 	ret+= " 		if( params.access_token ) ";
 	ret+= " 		{ ";
+	ret+= " 			CloseView(); ";
 	ret+= " 			return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"' ); ";
 	ret+= " 		} ";
 			
@@ -496,6 +479,8 @@ Application.getAccountInfo = function( access_token, callback )
 		xhr.send( null );
 		
 	}
+	
+	if( callback && typeof( callback ) == 'function' ) return callback( false );
 }
 
 function test ( client_id, redirect_uri )

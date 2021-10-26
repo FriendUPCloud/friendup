@@ -1110,14 +1110,14 @@ if( !class_exists( 'GoogleDrive' ) )
 							$o->Command = $gfile->getMimeType();
 							$o->ExportFormat = 'pdf';
 							$o->ExportFormats = json_decode( '[
+								{ "Name": "EPUB", "Type": "application/epub+zip", "Extension": "zipx" },
 								{ "Name": "HTML", "Type": "text/html", "Extension": "html" },
 								{ "Name": "HTML (zipped)", "Type": "application/zip", "Extension": "zip" },
-								{ "Name": "Plain text", "Type": "text/plain", "Extension": "txt" },
-								{ "Name": "Rich text", "Type": "application/rtf", "Extension": "rtf" },
+								{ "Name": "MS Word", "Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Extension": "doc" },
 								{ "Name": "Open Office", "Type": "application/vnd.oasis.opendocument.text", "Extension": "docx" },
 								{ "Name": "PDF", "Type": "application/pdf", "Extension": "pdf" },
-								{ "Name": "MS Word", "Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Extension": "doc" },
-								{ "Name": "EPUB", "Type": "application/epub+zip", "Extension": "zipx" }
+								{ "Name": "Plain text", "Type": "text/plain", "Extension": "txt" },
+								{ "Name": "Rich text", "Type": "application/rtf", "Extension": "rtf" }
 							]' );
 							break;
 						case 'application/vnd.google-apps.spreadsheet':
@@ -1125,12 +1125,12 @@ if( !class_exists( 'GoogleDrive' ) )
 							$o->Command = $gfile->getMimeType();
 							$o->ExportFormat = 'pdf';
 							$o->ExportFormats = json_decode( '[
-								{ "Name": "MS Excel", "Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Extension": "xls" },
-								{ "Name": "Open Office sheet", "Type": "application/x-vnd.oasis.opendocument.spreadsheet", "Extension": "xlsx" },
-								{ "Name": "PDF", "Type": "application/pdf", "Extension": "pdf" },
 								{ "Name": "CSV (first sheet)", "Type": "text/csv", "Extension": "csv" },
-								{ "Name": "(sheet only)", "Type": "text/tab-separated-values", "Extension": "csvx" },
-								{ "Name": "HTML (zipped)", "Type": "application/zip", "Extension": "zip" }
+								{ "Name": "HTML (zipped)", "Type": "application/zip", "Extension": "zip" },
+								{ "Name": "MS Excel", "Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Extension": "xls" },
+								{ "Name": "Open Office", "Type": "application/x-vnd.oasis.opendocument.spreadsheet", "Extension": "xlsx" },
+								{ "Name": "PDF", "Type": "application/pdf", "Extension": "pdf" },
+								{ "Name": "(sheet only)", "Type": "text/tab-separated-values", "Extension": "csvx" }
 							]' );
 							break;
 						case 'application/vnd.google-apps.presentation':
@@ -1139,7 +1139,7 @@ if( !class_exists( 'GoogleDrive' ) )
 							$o->ExportFormat = 'pdf';
 							$o->ExportFormats = json_decode( '[
 								{ "Name": "MS PowerPoint", "Type": "application/vnd.openxmlformats-officedocument.presentationml.presentation", "Extension": "ppt" },
-								{ "Name": "Open Office presentation", "Type": "application/vnd.oasis.opendocument.presentation", "Extension": "pptx" },
+								{ "Name": "Open Office", "Type": "application/vnd.oasis.opendocument.presentation", "Extension": "pptx" },
 								{ "Name": "PDF", "Type": "application/pdf", "Extension": "pdf" },
 								{ "Name": "Plain text", "Type": "text/plain", "Extension": "txt" }
 							]' );
@@ -1159,7 +1159,7 @@ if( !class_exists( 'GoogleDrive' ) )
 					$cleanpath .= ( $o->Type == 'Directory' && substr( $cleanpath , -1) != '/' ? '/' : '' ) ;
 					if( $o->MetaType == 'DiskHandled' && $o->ExportFormat )
 					{
-						$o->ExportPath = $this->Name . ':' . ( 'DiskHandled/' . urlencode( $cleanpath ) );
+						$o->ExportPath = $this->Name . ':' . ( 'DiskHandled/' . ( strstr( $cleanpath, '&#47;' ) ? urlencode( $cleanpath ) : $cleanpath ) );
 					}
 					$o->Path = $cleanpath;
 					$o->Driver = 'GoogleDrive';
@@ -1299,7 +1299,7 @@ if( !class_exists( 'GoogleDrive' ) )
 				
 				$redirect_uri = ( $Config->SSLEnable ? 'https://' : 'http://' ) . $Config->FCHost . ( $Config->FCHost == 'localhost' ? ( $Config->FCPort ? ':'.$Config->FCPort : ':6502' ) : '' ) . '/loginprompt/oauth';
 				
-				$encrypted = null;
+				/*$encrypted = null;
 				
 				$fcrypt = new fcrypto();
 				
@@ -1317,7 +1317,7 @@ if( !class_exists( 'GoogleDrive' ) )
 							}
 						}
 					}
-				}
+				}*/
 				
 				$dataset = (object)[ 
 					'url'           => $gfile->getWebViewLink(), 
@@ -1328,22 +1328,26 @@ if( !class_exists( 'GoogleDrive' ) )
 					'redirect_uri'  => ( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : $redirect_uri )
 				];
 				
-				if( $encrypted )
+				/*if( $encrypted )
 				{
 					$dataset->{ 'encrypted' } = $encrypted;
 				}
 				else
 				{
 					$dataset->{ 'decrypted' } = $data;
-				}
+				}*/
+				
+				// TODO: Perhaps user info can be fetched on the server first, no need to get it on the client side, then we don't need to send access_token ...
 				
 				// TODO: Check if it's possible to find out if a user is logged in to the browser, from the server side ...
-				/*if( $res1 = $this->GetByCurl( 'https://www.googleapis.com/drive/v3/about?fields=user', false, 'GET', [ 'Authorization: Bearer ' . $confjson['access']['access_token'] ] ) )
+				if( $res1 = $this->GetByCurl( 'https://www.googleapis.com/drive/v3/about?fields=user', false, 'GET', [ 'Authorization: Bearer ' . $confjson['access']['access_token'] ] ) )
 				{
 					
-					$Logger->log( $res1 );
+					$dataset->{ 'decrypted' } = $res1;
 					
-					if( $json = json_decode( $res1 ) )
+					//$Logger->log( $res1 );
+					
+					/*if( $json = json_decode( $res1 ) )
 					{
 						
 						function RandomString( $length = 10 )
@@ -1371,8 +1375,8 @@ if( !class_exists( 'GoogleDrive' ) )
 							$Logger->log( $vars . "\r\n" . $res2 );
 						}
 						
-					}
-				}*/
+					}*/
+				}
 				
 				//$Logger->log( '[[[ getFile ]]]: $dataset: ' . json_encode($dataset) . "\r\n" );
 				return 'ok###' . json_encode($dataset);
