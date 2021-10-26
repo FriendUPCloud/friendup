@@ -1232,6 +1232,7 @@ function receiveEvent( event, queued )
 								if( res === false )
 								{
 									w.onClose = onc;
+									console.log( 'Abort close!', dataPacket );
 									return;
 								}
 							}
