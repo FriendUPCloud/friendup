@@ -4800,6 +4800,7 @@ var View = function( args )
 						this.eventSystemClose[a]();
 					}
 				}
+				console.log( 'Returning..' );
 				return;
 			}
 			else if( this.parentViewId )
@@ -4816,6 +4817,7 @@ var View = function( args )
 					};
 					v.windowObject.sendMessage( msg );
 				}
+				console.log( 'Returning.. 2' );
 				return false;
 			}
 			else if( app )
@@ -4840,6 +4842,7 @@ var View = function( args )
 				this.eventSystemClose[a]();
 			}
 		}
+		console.log( 'Got to end..' );
 	}
 	// Put a loading animation on window
 	this.loadingAnimation = function ()
