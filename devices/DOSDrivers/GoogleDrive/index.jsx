@@ -73,25 +73,27 @@ Application.run = function( conf )
 								self.tmp.google_id = d.user.emailAddress;
 							}
 							
-							function closeThisWindow()
-							{
+							Application.authWindow( self.tmp );
+							
+							//function closeThisWindow()
+							//{
 								
-								setTimeout( function(){ Application.quit(); }, 1000 );
+							//	setTimeout( function(){ Application.quit(); }, 1000 );
 								
-							}
+							//}
 							
 							// TODO: Load in template with javascript instead for file ...
 							
 							// TODO: THIS CRAP NEEDS TO BE DONE SIMPLER, LOAD JS FILES PROPERLY TO A TEMPLATE AND OR EVAL ....
 							
-							var w = new View( { title: 'Google Editor', width: 350, height: 100 } );
-							w.setFlag('allowPopups', true);
-							w.setContent('<div style="padding:25px;"><p><a href="javascript:void(0)" onclick="' + Application.oauth2Window( self.tmp, Application, w, closeThisWindow ) + '" class="Button fa-google IconSmall"> &nbsp; open in google editor</a> or <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp ) + '" class="Button fa-google IconSmall"> &nbsp; view as pdf</a></p></div>');
+							//var w = new View( { title: 'Google Editor', width: 350, height: 100 } );
+							//w.setFlag('allowPopups', true);
+							//w.setContent('<div style="padding:25px;"><p><a href="javascript:void(0)" onclick="' + Application.oauth2Window( self.tmp, Application, w, closeThisWindow ) + '" class="Button fa-google IconSmall"> &nbsp; open in google editor</a> or <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp ) + '" class="Button fa-google IconSmall"> &nbsp; view as pdf</a></p></div>');
 							
-							w.onClose = function()
-							{
-								Application.quit();
-							}
+							//w.onClose = function()
+							//{
+							//	Application.quit();
+							//}
 							
 						} );
 					}
@@ -165,8 +167,9 @@ Application.displayEditor = function(title,url,popup)
 		
 			var lpos = Math.floor( ( screen.availWidth - winw ) / 2  );
 			var tpos = Math.floor( ( screen.availHeight - winh ) / 2  );
-		
+			
 			window.open( url, title, 'resizable=1,width=' + winw + ',height=' + winh + ',top=' + tpos + ',left=' + lpos );
+			
 		}
 }
 
@@ -234,14 +237,24 @@ Application.decodeIDToken = function( params )
 	return params;
 }
 
-Application.initJS = function( application, tmp )
+Application.initJS = function( application, tmp, edit )
 {
 	var str = "";
 	
 	// TODO: Fix the problem viewing pdf inside iframe from friendcore, until then using popup window for now ...
 	
-	str += " var Application = { displayEditor: "+Application.displayEditor+", quit: "+Application.quit+" }; ";
-	str += " return Application.displayEditor( '"+tmp.title+"', '"+tmp.file_url+"', true ); ";
+	//console.log( tmp );
+	
+	str += " var Application = { initEditor: "+Application.initEditor+", displayEditor: "+Application.displayEditor+", quit: "+Application.quit+" }; ";
+	
+	if( edit )
+	{
+		str += " return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"', true ); ";
+	}
+	else
+	{
+		str += " return Application.displayEditor( '"+tmp.title+"', '"+tmp.file_url+"', true ); ";
+	}
 	
 	return str;
 }
@@ -289,7 +302,7 @@ Application.oauth2Window = function( tmp, Application, w, closeThisWindow )
 	
 	//ret+= " console.log( 'args: ' + vars ); ";
 	
-	ret+= " let loginwindow = window.open( oauth2 + vars, 'authwindow', 'resizable=1,width=' + winw + ',height=' + winh + ',top=' + tpos + ',left=' + lpos ); ";
+	ret+= " var loginwindow = window.open( oauth2 + vars, 'google', 'resizable=1,width=' + winw + ',height=' + winh + ',top=' + tpos + ',left=' + lpos ); ";
 	
 	ret+= " window.addEventListener( 'message', function( msg )  ";
 	ret+= " { ";
@@ -337,6 +350,96 @@ Application.oauth2Window = function( tmp, Application, w, closeThisWindow )
 	ret+= " } ); ";
 	
 	return ret;
+	
+}
+
+Application.authWindow = function( tmp )
+{
+	
+	var CLIENT_ID    = tmp.client_id;
+	var REDIRECT_URI = tmp.redirect_uri;
+	var GOOGLE_ID    = ( tmp.google_id ? tmp.google_id : null );
+	
+	var SCOPES = [ 'profile', 'email' ];
+	
+	var winw = Math.min( 600, screen.availWidth );
+	var winh = Math.min( 750, screen.availHeight );
+	
+	var lpos = Math.floor( ( screen.availWidth - winw ) / 2  );
+	var tpos = Math.floor( ( screen.availHeight - winh ) / 2  );
+	
+	// Google's OAuth 2.0 endpoint for requesting an access token
+	var oauth2 = 'https://accounts.google.com/o/oauth2/v2/auth';
+	
+	var vars = '';
+	
+	// Parameters to pass to OAuth 2.0 endpoint.
+	vars += '?redirect_uri=' + REDIRECT_URI;
+	vars += '&client_id=' + CLIENT_ID;
+	vars += '&nonce=' + Application.getRandomString( 20 );
+	vars += '&scope=' + SCOPES.join( ' ' );
+	vars += '&response_type=token id_token';
+	
+	if( GOOGLE_ID )
+	{
+		vars += '&login_hint=' + GOOGLE_ID;
+	}
+	
+	//console.log( 'args: ' + vars );
+	
+	var loginwindow = window.open( oauth2 + vars, 'oauth', 'resizable=1,width=' + winw + ',height=' + winh + ',top=' + tpos + ',left=' + lpos );
+	
+	window.addEventListener( 'message', function( msg ) 
+	{
+		
+		if( msg && msg.data.url )
+		{
+			var params = {}; var args = false;
+			
+			//console.log( 'oauth msg: ', msg.data.url );
+			
+			if( msg.data.url.split( '#' )[1] )
+			{
+			    args = msg.data.url.split( '#' )[1].split( '&' );
+			}
+			else if( msg.data.url.split( '?' )[1] )
+			{
+			    args = msg.data.url.split( '?' )[1].split( '&' );
+			}
+			
+		    if( args && args.length > 0 )
+		    {
+		        for( var key in args )
+		        {
+		            if( args[key] && args[key].split( '=' )[1] )
+		            {
+		                params[ args[key].split( '=' )[0] ] = args[key].split( '=' )[1];
+		            }
+		        }
+		    }
+			
+			if( loginwindow ) loginwindow.close();
+			
+			if( params.access_token )
+			{
+				
+				var w = new View( { title: 'Google Editor', width: 350, height: 100 } );
+				w.setFlag('allowPopups', true);
+				w.setContent('<div style="padding:25px;"><p><a href="javascript:void(0)" onclick="' + Application.initJS( Application, tmp, true ) + '" class="Button fa-google IconSmall"> &nbsp; open in google editor</a> or <a href="javascript:void(0)" onclick="' + Application.initJS( Application, tmp ) + '" class="Button fa-google IconSmall"> &nbsp; view as pdf</a></p></div>');
+				
+				w.onClose = function()
+				{
+					Application.quit();
+				}
+				
+				//return Application.initEditor( tmp.title, tmp.url, true );
+			}
+			
+			return false;
+			
+		}
+		
+	} );
 	
 }
 
