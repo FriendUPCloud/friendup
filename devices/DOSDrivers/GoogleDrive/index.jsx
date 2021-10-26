@@ -85,7 +85,7 @@ Application.run = function( conf )
 							
 							var w = new View( { title: 'Google file', width: 355, height: 110 } );
 							w.setFlag('allowPopups', true);
-							w.setContent('<div style="padding-left:20px;padding-right:20px;padding-bottom:15px;"><p>This is a Google native file, and can only be edited in Google\'s online suite.</p><p><a href="javascript:void(0)" onclick="' + Application.oauth2Window( self.tmp, Application ) + '" class="Button">Open with Google</a> <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp ) + '" class="Button">View as pdf</a></p></div>');
+							w.setContent('<div style="padding-left:20px;padding-right:20px;padding-bottom:15px;"><p>This is a Google native file, and can only be edited in Google\'s online suite.</p><p><a href="javascript:void(0)" onclick="' + Application.oauth2Window( self.tmp, Application, w ) + '" class="Button">Open with Google</a> <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, false, w ) + '" class="Button">View as pdf</a></p></div>');
 							
 							w.onClose = function()
 							{
@@ -236,7 +236,7 @@ Application.decodeIDToken = function( params )
 	return params;
 }
 
-Application.initJS = function( application, tmp, edit )
+Application.initJS = function( application, tmp, edit, w )
 {
 	var str = "";
 	
@@ -245,6 +245,11 @@ Application.initJS = function( application, tmp, edit )
 	//console.log( tmp );
 	
 	str += " var Application = { initEditor: "+Application.initEditor+", displayEditor: "+Application.displayEditor+", quit: "+Application.quit+" }; ";
+	
+	if( w )
+	{
+		str += " CloseView( '"+w.getViewId()+"' ); ";
+	}
 	
 	if( edit )
 	{
@@ -258,7 +263,7 @@ Application.initJS = function( application, tmp, edit )
 	return str;
 }
 
-Application.oauth2Window = function( tmp, Application )
+Application.oauth2Window = function( tmp, Application, w )
 {
 	var ret = "";
 	
@@ -328,9 +333,10 @@ Application.oauth2Window = function( tmp, Application )
 			
 	ret+= " 		if( loginwindow ) loginwindow.close(); ";
 	
+	ret+= " 		CloseView( '"+w.getViewId()+"' ); ";
+	
 	ret+= " 		if( params.access_token ) ";
 	ret+= " 		{ ";
-	ret+= " 			CloseView(); ";
 	ret+= " 			return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"' ); ";
 	ret+= " 		} ";
 			
