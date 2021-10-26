@@ -827,6 +827,7 @@ function queuedEventTimer()
 
 function receiveEvent( event, queued )
 {
+	console.log( 'receiveEvent: Received a message: ', event );
 	// TODO: Do security stuff...
 	//
 	if( !window.eventQueue )
