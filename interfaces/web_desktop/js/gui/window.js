@@ -1753,7 +1753,6 @@ function CloseView( win, delayed )
 		if( !win.parentNode.parentNode ) return;
 		if( win.parentNode.classList.contains( 'View' ) )
 		{
-			console.log( 'Adding stuff!' );
 			win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
 		}
 		
@@ -3328,6 +3327,7 @@ var View = function( args )
 					wo.close();
 				}
 			}
+			// Only if we can!
 			if( div.windowObject.close() === true )
 			{
 				executeClose();
@@ -4769,11 +4769,8 @@ var View = function( args )
 			this._window.blocker.close();
 		}
 
-		console.log( 'The closing' );
-
 		if( !force && this._window && this._window.applicationId )
 		{
-			console.log( 'Sending msgs' );
 			// Send directly to the view
 			let app = this._window.applicationId ? findApplication( this._window.applicationId ) : false;
 			if( c.getElementsByTagName( _viewType ).length )
@@ -4839,7 +4836,6 @@ var View = function( args )
 				return;
 			}
 		}
-		console.log( 'Doing closeview!' );
 		CloseView( this._window );
 		if( this.onClose ) this.onClose();
 		if( this.eventSystemClose ) // <- system call
