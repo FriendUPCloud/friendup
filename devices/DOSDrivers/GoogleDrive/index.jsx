@@ -256,11 +256,11 @@ Application.initJS = function( application, tmp, edit, w )
 	
 	if( edit )
 	{
-		str += " return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"', true, "+viewId+" ); ";
+		str += " return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"', true, '"+viewId+"' ); ";
 	}
 	else
 	{
-		str += " return Application.displayEditor( '"+tmp.title+"', '"+tmp.file_url+"', true, "+viewId+" ); ";
+		str += " return Application.displayEditor( '"+tmp.title+"', '"+tmp.file_url+"', true, '"+viewId+"' ); ";
 	}
 	
 	return str;
@@ -340,7 +340,7 @@ Application.oauth2Window = function( tmp, Application, w )
 	
 	ret+= " 		if( params.access_token ) ";
 	ret+= " 		{ ";
-	ret+= " 			return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"', false, "+w.getViewId()+" ); ";
+	ret+= " 			return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"', false, '"+w.getViewId()+"' ); ";
 	ret+= " 		} ";
 			
 	ret+= " 		return false; ";
