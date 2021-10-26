@@ -2658,7 +2658,11 @@ function View( flags )
 			this.onClose();
 		}
 
-		if( this.preventClosing ) return;
+		if( this.preventClosing ) 
+		{
+			console.log( 'Preventing close!' );
+			return;
+		}
 		
 		this.closed = true;
 
