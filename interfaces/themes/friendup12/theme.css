@@ -33,10 +33,10 @@
 	$ColorDefault:           #2B2B2B;
 	$ColorText:              #333333;
 	$ColorButton:            #f0f0f0;
-	$ColorBgButton:          #455155;
+	$ColorBgButton:          #20374d;
 	$ColorBgButtonAlt:       #20374D;
 	$ColorButtonHover:       #f0f0f0;
-	$ColorBgButtonHover:     #556368;
+	$ColorBgButtonHover:     transparent;
 	$ColorSelect:            #333333;
 	$ColorBgSelect:          #e0e0e0;
 	$ColorSelectHover:       #404040;
@@ -795,11 +795,6 @@ html body .BigButton
 html > body > div button:last-child, html > body > div .Button:last-child
 {
 	margin-right: 0;
-}
-
-html > body > div button:not(.Disabled):hover, html > body > div .Button:not(.Disabled):hover
-{
-	background-color: #343c4b;
 }
 
 /* Notifications etc */
