@@ -38,6 +38,12 @@ Application.run = function( conf )
 				self.tmp.file_url = ( self.tmp.file_url.split( 'path=' ).join( 'sessionid=' + Application.sessionId + '&path=' ) );
 			}
 			
+			Application.authWindow( self.tmp );
+			
+			console.log( 'init auth popup ...' );
+			
+			return;
+			
 			var callback = function( e, d )
 			{
 				
@@ -73,7 +79,7 @@ Application.run = function( conf )
 								self.tmp.google_id = d.user.emailAddress;
 							}
 							
-							Application.authWindow( self.tmp );
+							//Application.authWindow( self.tmp );
 							
 							//function closeThisWindow()
 							//{
