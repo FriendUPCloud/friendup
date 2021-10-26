@@ -4785,13 +4785,11 @@ var View = function( args )
 				if( app )
 				{
 					app.contentWindow.postMessage( JSON.stringify( msg ), '*' );
-					console.log( 'Sending to app: ', msg, app );
 				}
 				// Post directly to the window
 				else
 				{
 					this.sendMessage( msg );
-					console.log( 'Sending to window.', );
 				}
 				// Execute any ambient onClose method
 				if( this.onClose ) this.onClose();

@@ -457,7 +457,6 @@ var Application =
 	// Send quit up in hierarchy
 	quit: function( skipSendMessage )
 	{
-		console.log( 'Doing the quit!' );
 		if( this.hasQuit )
 			return;
 		this.hasQuit = true;
@@ -828,7 +827,6 @@ function queuedEventTimer()
 
 function receiveEvent( event, queued )
 {
-	console.log( 'receiveEvent: Received a message: ', event );
 	// TODO: Do security stuff...
 	//
 	if( !window.eventQueue )
@@ -1211,8 +1209,6 @@ function receiveEvent( event, queued )
 						break;
 					case 'closewindow':
 					case 'closeview':
-						console.log( 'Got CLOSE VIEW' );
-						
 						// Close an exact window
 						if( dataPacket.viewId && Application.windows && Application.windows[dataPacket.viewId] )
 						{
@@ -1236,6 +1232,7 @@ function receiveEvent( event, queued )
 								if( res === false )
 								{
 									w.onClose = onc;
+									console.log( 'Got CLOSE VIEW - right?' );
 									return;
 								}
 							}
@@ -2707,8 +2704,6 @@ function View( flags )
 // To close a view
 function CloseView( id )
 {
-	console.log( 'CLOSE VIEW?' );
-	
 	// No id? Get the actual view we're in
 	if( !id && Application.viewId )
 		id = Application.viewId;
@@ -2718,7 +2713,6 @@ function CloseView( id )
 	{
 		if( id.close )
 		{
-			console.log( ' -> Closing object.' );
 			return id.close();
 		}
 		return false;
@@ -3135,7 +3129,6 @@ WebAudioLoader = function( filePath, callback )
 					schBuf.connect( this.context.destination );
 					schBuf.connect( this.gainNode );
 					schBuf.start( this.bufferArrayTimeOffset );
-					console.log( 'Starting next at ' + ( this.bufferArrayTimeOffset ) );
 					this.bufferArrayTimeOffset += schBuf.buffer.duration;
 				}
 			}
@@ -8686,7 +8679,6 @@ GuiDesklet = function()
 			j.open( 'get', updateurl, true, true );
 			j.onload = function ()
 			{
-				console.log( 'The response was: ' + this.returnCode, this.returnData );
 				let content;
 				// New mode
 				if ( this.returnCode == 'ok' )
