@@ -135,13 +135,15 @@ Application.run = function( conf )
 
 }
 
+Application.globalView = false;
+
 Application.displayEditor = function(title,url,popup)
 {
 		// TODO: Set iframe options ...		
 		
 		if( !popup )
 		{
-			var v = new View({
+			Application.globalView = new View({
 				width:1000,
 				height:850,
 				title: title
@@ -149,12 +151,12 @@ Application.displayEditor = function(title,url,popup)
 		
 			//v.limitless = true;
 		
-			v.onClose = function()
+			Application.globalView.onClose = function()
 			{
 				//Application.quit();
 			};
-			v.setRichContentUrl( url );
-		
+			Application.globalView.setRichContentUrl( url );
+			
 			//var ifr = document.createElement( 'iframe' );
 			//ifr.src = url;
 		
@@ -271,7 +273,7 @@ Application.oauth2Window = function( tmp, Application, w, closeThisWindow )
 	
 	//console.log( w );
 	
-	ret+= " var Application = { displayEditor: "+Application.displayEditor+", initEditor: "+Application.initEditor+", quit: "+Application.quit+", setSingleInstance: "+Application.setSingleInstance+", sendMessage: "+Application.sendMessage+" }; ";
+	ret+= " var Application = { displayEditor: "+Application.displayEditor+", initEditor: "+Application.initEditor+", globalView: "+Application.globalView+" }; ";
 	
 	ret+= " var w = { close: "+w.close+" }; ";
 	
