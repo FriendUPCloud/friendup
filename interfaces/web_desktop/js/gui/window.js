@@ -4832,6 +4832,7 @@ var View = function( args )
 					viewId: self.viewId
 				};
 				app.sendMessage( msg );
+				return;
 			}
 		}
 		else
