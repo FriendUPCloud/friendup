@@ -1212,6 +1212,7 @@ function receiveEvent( event, queued )
 						// Close an exact window
 						if( dataPacket.viewId && Application.windows && Application.windows[dataPacket.viewId] )
 						{
+							console.log( 'Closing vierw!!!', dataPacket );
 							let w = Application.windows[dataPacket.viewId];
 							if( w.onClose )
 							{
