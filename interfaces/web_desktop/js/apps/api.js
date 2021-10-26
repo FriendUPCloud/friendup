@@ -1232,7 +1232,11 @@ function receiveEvent( event, queued )
 								if( res === false )
 								{
 									w.onClose = onc;
-									console.log( 'Got CLOSE VIEW - right?' );
+									Application.sendMessage( {
+										type: 'view',
+										method: 'cancelclose',
+										viewId: dataPacket.viewId
+									} );
 									return;
 								}
 							}
