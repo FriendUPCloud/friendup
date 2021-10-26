@@ -4785,22 +4785,23 @@ var View = function( args )
 				if( app )
 				{
 					app.contentWindow.postMessage( JSON.stringify( msg ), '*' );
+					console.log( 'Sending to app: ', msg );
 				}
 				// Post directly to the window
 				else
 				{
 					this.sendMessage( msg );
+					console.log( 'Sending to window.', msg );
 				}
 				// Execute any ambient onClose method
 				if( this.onClose ) this.onClose();
 				if( this.eventSystemClose ) // <- system call
 				{
-					for( var a = 0; a < this.eventSystemClose.length; a++ )
+					for( let a = 0; a < this.eventSystemClose.length; a++ )
 					{
 						this.eventSystemClose[a]();
 					}
 				}
-				console.log( 'Returning..' );
 				return;
 			}
 			else if( this.parentViewId )
@@ -4817,7 +4818,6 @@ var View = function( args )
 					};
 					v.windowObject.sendMessage( msg );
 				}
-				console.log( 'Returning.. 2' );
 				return false;
 			}
 			else if( app )
@@ -4842,7 +4842,6 @@ var View = function( args )
 				this.eventSystemClose[a]();
 			}
 		}
-		console.log( 'Got to end..' );
 	}
 	// Put a loading animation on window
 	this.loadingAnimation = function ()
