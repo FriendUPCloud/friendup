@@ -36,7 +36,7 @@
 	$ColorBgButton:          #20374d;
 	$ColorBgButtonAlt:       #20374D;
 	$ColorButtonHover:       #f0f0f0;
-	$ColorBgButtonHover:     transparent;
+	$ColorBgButtonHover:     #20374d;
 	$ColorSelect:            #333333;
 	$ColorBgSelect:          #e0e0e0;
 	$ColorSelectHover:       #404040;
