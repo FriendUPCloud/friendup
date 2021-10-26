@@ -128,7 +128,7 @@ Application.run = function( conf )
 
 Application.globalView = false;
 
-Application.displayEditor = function(title,url,popup)
+Application.displayEditor = function(title,url,popup,viewId)
 {
 		// TODO: Set iframe options ...		
 		
@@ -156,6 +156,11 @@ Application.displayEditor = function(title,url,popup)
 			//document.body.appendChild( ifr );
 		
 			//console.log( ifr );
+			
+			if( viewId )
+			{
+				CloseView( viewId );
+			}
 		}
 		else
 		{
@@ -172,11 +177,11 @@ Application.displayEditor = function(title,url,popup)
 		}
 }
 
-Application.initEditor = function( title, url, popup )
+Application.initEditor = function( title, url, popup, viewId )
 {
 	if( url && title )
 	{
-		Application.displayEditor( title, url, popup );
+		Application.displayEditor( title, url, popup, viewId );
 		return true;
 	}
 
@@ -246,18 +251,16 @@ Application.initJS = function( application, tmp, edit, w )
 	
 	str += " var Application = { initEditor: "+Application.initEditor+", displayEditor: "+Application.displayEditor+", quit: "+Application.quit+" }; ";
 	
-	if( w )
-	{
-		str += " CloseView( '"+w.getViewId()+"' ); ";
-	}
+	//str += " CloseView( '"+w.getViewId()+"' ); ";
+	var viewId = ( w ? w.getViewId() : false );
 	
 	if( edit )
 	{
-		str += " return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"', true ); ";
+		str += " return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"', true, "+viewId+" ); ";
 	}
 	else
 	{
-		str += " return Application.displayEditor( '"+tmp.title+"', '"+tmp.file_url+"', true ); ";
+		str += " return Application.displayEditor( '"+tmp.title+"', '"+tmp.file_url+"', true, "+viewId+" ); ";
 	}
 	
 	return str;
@@ -333,11 +336,11 @@ Application.oauth2Window = function( tmp, Application, w )
 			
 	ret+= " 		if( loginwindow ) loginwindow.close(); ";
 	
-	ret+= " 		CloseView( '"+w.getViewId()+"' ); ";
+	//ret+= " 		CloseView( '"+w.getViewId()+"' ); ";
 	
 	ret+= " 		if( params.access_token ) ";
 	ret+= " 		{ ";
-	ret+= " 			return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"' ); ";
+	ret+= " 			return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"', false, "+w.getViewId()+" ); ";
 	ret+= " 		} ";
 			
 	ret+= " 		return false; ";
