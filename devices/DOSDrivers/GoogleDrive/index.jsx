@@ -134,7 +134,7 @@ Application.displayEditor = function(title,url,popup,viewId)
 		
 		if( !popup )
 		{
-			w = new View({
+			var w = new View({
 				width:1000,
 				height:850,
 				title: title
@@ -156,11 +156,7 @@ Application.displayEditor = function(title,url,popup,viewId)
 			//document.body.appendChild( ifr );
 		
 			//console.log( ifr );
-			console.log( viewId );
-			if( viewId )
-			{
-				CloseView( viewId );
-			}
+			
 		}
 		else
 		{
@@ -173,6 +169,13 @@ Application.displayEditor = function(title,url,popup,viewId)
 			var tpos = Math.floor( ( screen.availHeight - winh ) / 2  );
 			
 			window.open( url, title, 'resizable=1,width=' + winw + ',height=' + winh + ',top=' + tpos + ',left=' + lpos );
+			
+			console.log( viewId );
+			
+			if( viewId )
+			{
+				CloseView( viewId );
+			}
 			
 		}
 }
