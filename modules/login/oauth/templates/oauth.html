@@ -35,7 +35,7 @@
 					
 					try
 					{
-						decoded = atob( hash[ 'state' ].split( 'BASE64' )[1] );
+						decoded = atob( decodeURIComponent( hash[ 'state' ].split( 'BASE64' )[1] ) );
 						
 						if( decoded )
 						{
