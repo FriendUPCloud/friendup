@@ -85,8 +85,8 @@ Application.run = function( conf )
 							
 							var w = new View( { title: 'Google file', width: 355, height: 110 } );
 							w.setFlag('allowPopups', true);
-							//w.setContent('<div style="padding-left:20px;padding-right:20px;padding-bottom:15px;"><p>This is a Google native file, and can only be edited in Google\'s online suite.</p><p><a href="javascript:void(0)" onclick="' + Application.oauth2Window( self.tmp, Application, w ) + '" class="Button">Open with Google</a> <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, false, w ) + '" class="Button">View as pdf</a></p></div>');
-							w.setContent('<div style="padding-left:20px;padding-right:20px;padding-bottom:15px;"><p>This is a Google native file, and can only be edited in Google\'s online suite.</p><p><a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, true, w ) + '" class="Button">Open with Google</a> <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, false, w ) + '" class="Button">View as pdf</a></p></div>');
+							w.setContent('<div style="padding-left:20px;padding-right:20px;padding-bottom:15px;"><p>This is a Google native file, and can only be edited in Google\'s online suite.</p><p><a href="javascript:void(0)" onclick="' + Application.oauth2Window( self.tmp, Application, w ) + '" class="Button">Open with Google</a> <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, false, w ) + '" class="Button">View as pdf</a></p></div>');
+							//w.setContent('<div style="padding-left:20px;padding-right:20px;padding-bottom:15px;"><p>This is a Google native file, and can only be edited in Google\'s online suite.</p><p><a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, true, w ) + '" class="Button">Open with Google</a> <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, false, w ) + '" class="Button">View as pdf</a></p></div>');
 							w.onClose = function()
 							{
 								Application.quit();
@@ -266,7 +266,7 @@ Application.initJS = function( application, tmp, edit, w )
 	
 	if( edit )
 	{
-		str += " return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"&client="+tmp.google_id+"', true, "+viewId+" ); ";
+		str += " return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"', true, "+viewId+" ); ";
 	}
 	else
 	{
@@ -284,7 +284,8 @@ Application.oauth2Window = function( tmp, Application, w )
 	
 	ret+= " var CLIENT_ID    = '"+tmp.client_id+"'; ";
 	ret+= " var REDIRECT_URI = '"+tmp.redirect_uri+"'; ";
-	ret+= " var GOOGLE_ID    = '"+(tmp.google_id?tmp.google_id:null)+"'; "
+	ret+= " var GOOGLE_ID    = '"+(tmp.google_id?tmp.google_id:null)+"'; ";
+	ret+= " var STATE_VAR    = '"+(tmp.state_var?tmp.state_var:null)+"'; ";
 	
 	ret+= " var SCOPES = [ 'profile', 'email' ]; ";
 	
@@ -306,6 +307,11 @@ Application.oauth2Window = function( tmp, Application, w )
 	ret+= " vars += '&scope=' + SCOPES.join( ' ' ); ";
 	ret+= " vars += '&response_type=token id_token'; ";
 	
+	ret+= " if( STATE_VAR ) ";
+	ret+= " { ";
+	ret+= " 	vars += '&state=' + STATE_VAR; ";
+	ret+= " } ";
+	
 	ret+= " if( GOOGLE_ID ) ";
 	ret+= " { ";
 	ret+= " 	vars += '&login_hint=' + GOOGLE_ID; ";
@@ -322,7 +328,7 @@ Application.oauth2Window = function( tmp, Application, w )
 	ret+= " 	{ ";
 	ret+= " 		var params = {}; var args = false; ";
 			
-	//ret+= " 		console.log( 'oauth msg: ', msg.data.url ); ";
+	ret+= " 		console.log( 'oauth msg: ', msg.data.url ); ";
 			
 	ret+= " 		if( msg.data.url.split( '#' )[1] ) ";
 	ret+= " 		{ ";
@@ -343,14 +349,14 @@ Application.oauth2Window = function( tmp, Application, w )
 	ret+= " 	            } ";
 	ret+= " 	        } ";
 	ret+= " 	    } ";
-			
-	ret+= " 		if( loginwindow ) loginwindow.close(); ";
+	
+	ret+= " 		if( loginwindow && !params[ 'open' ] ) loginwindow.close(); ";
 	
 	//ret+= " 		CloseView( '"+w.getViewId()+"' ); ";
 	
 	ret+= " 		if( params.access_token ) ";
 	ret+= " 		{ ";
-	ret+= " 			return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"', false, '"+w.getViewId()+"' ); ";
+	//ret+= " 			return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"', false, '"+w.getViewId()+"' ); ";
 	ret+= " 		} ";
 			
 	ret+= " 		return false; ";
