@@ -364,12 +364,10 @@ if( !class_exists( 'SharedDrive' ) )
 									$file->DateModified = $info->DateModified;
 									unset( $file->multi );
 									$out[] = $file;
-									$Logger->log( '[ShareDrive] The file was added: ' . $file->Filename );
 								}
 								// This file does not exist!
 								else
 								{
-									$Logger->log( '[ShareDrive] DELETE FROM FShared WHERE `Data`=\'' . $file->ExternPath . '\' AND OwnerUserID=\'' . $User->ID . '\'' );
 									$SqlDatabase->query( 'DELETE FROM FShared WHERE `Data`=\'' . $file->ExternPath . '\' AND OwnerUserID=\'' . $User->ID . '\'' );
 								}
 							}
