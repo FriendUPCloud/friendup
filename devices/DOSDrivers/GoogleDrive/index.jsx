@@ -270,7 +270,7 @@ Application.initJS = function( application, tmp, edit, w )
 	}
 	else
 	{
-		str += " return Application.displayEditor( '"+tmp.title+"', '"+tmp.file_url+"', true, "+viewId+" ); ";
+		str += " return Application.displayEditor( '"+tmp.title+"', '"+tmp.file_url+"', false, "+viewId+" ); ";
 	}
 	
 	return str;
