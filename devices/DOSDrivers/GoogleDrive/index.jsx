@@ -85,8 +85,8 @@ Application.run = function( conf )
 							
 							var w = new View( { title: 'Google file', width: 355, height: 110 } );
 							w.setFlag('allowPopups', true);
-							w.setContent('<div style="padding-left:20px;padding-right:20px;padding-bottom:15px;"><p>This is a Google native file, and can only be edited in Google\'s online suite.</p><p><a href="javascript:void(0)" onclick="' + Application.oauth2Window( self.tmp, Application, w ) + '" class="Button">Open with Google</a> <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, false, w ) + '" class="Button">View as pdf</a></p></div>');
-							
+							//w.setContent('<div style="padding-left:20px;padding-right:20px;padding-bottom:15px;"><p>This is a Google native file, and can only be edited in Google\'s online suite.</p><p><a href="javascript:void(0)" onclick="' + Application.oauth2Window( self.tmp, Application, w ) + '" class="Button">Open with Google</a> <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, false, w ) + '" class="Button">View as pdf</a></p></div>');
+							w.setContent('<div style="padding-left:20px;padding-right:20px;padding-bottom:15px;"><p>This is a Google native file, and can only be edited in Google\'s online suite.</p><p><a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, true, w ) + '" class="Button">Open with Google</a> <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, false, w ) + '" class="Button">View as pdf</a></p></div>');
 							w.onClose = function()
 							{
 								Application.quit();
