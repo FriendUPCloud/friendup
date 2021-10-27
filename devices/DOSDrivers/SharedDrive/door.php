@@ -366,10 +366,9 @@ if( !class_exists( 'SharedDrive' ) )
 									$out[] = $file;
 								}
 								// This file does not exist!
-								else if( isset( $file->row ) && isset( $file->row->ID ) )
+								else if( isset( $file->ExternPath ) )
 								{
-									$SqlDatabase->query( 'DELETE FROM FShared WHERE ID=\'' . $file->row->ID . '\' AND OwnerUserID=\'' . $User->ID . '\'' );
-									continue;
+									$SqlDatabase->query( 'DELETE FROM FShared WHERE `Data`=\'' . $file->ExternPath . '\' AND OwnerUserID=\'' . $User->ID . '\'' );
 								}
 							}
 						}
