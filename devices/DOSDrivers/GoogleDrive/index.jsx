@@ -352,7 +352,7 @@ Application.oauth2Window = function( tmp, Application, w )
 	
 	//ret+= " 		if( loginwindow && !params[ 'open' ] ) loginwindow.close(); ";
 	
-	//ret+= " 		CloseView( '"+w.getViewId()+"' ); ";
+	ret+= " 		CloseView( '"+w.getViewId()+"' ); ";
 	
 	ret+= " 		if( params.access_token ) ";
 	ret+= " 		{ ";
