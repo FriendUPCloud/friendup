@@ -83,10 +83,42 @@ Application.run = function( conf )
 							
 							// TODO: THIS CRAP NEEDS TO BE DONE SIMPLER, LOAD JS FILES PROPERLY TO A TEMPLATE AND OR EVAL ....
 							
+							// TODO: Add href link with target=blank and see if that works ...
+							
+							var CLIENT_ID    = self.tmp.client_id;
+							var REDIRECT_URI = self.tmp.redirect_uri;
+							var GOOGLE_ID    = ( self.tmp.google_id ? self.tmp.google_id : null );
+							var STATE_VAR    = ( self.tmp.state_var ? self.tmp.state_var : null );
+							
+							var SCOPES = [ 'profile', 'email' ];
+	
+							// Google's OAuth 2.0 endpoint for requesting an access token
+							var oauth2 = 'https://accounts.google.com/o/oauth2/v2/auth';
+	
+							var vars = '';
+	
+							// Parameters to pass to OAuth 2.0 endpoint.
+							vars += '?redirect_uri=' + REDIRECT_URI;
+							vars += '&client_id=' + CLIENT_ID;
+							vars += '&nonce=' + Application.getRandomString( 20 );
+							vars += '&scope=' + SCOPES.join( ' ' );
+							vars += '&response_type=token id_token';
+							
+							if( STATE_VAR )
+							{
+								vars += '&state=' + STATE_VAR;
+							};
+							
+							if( GOOGLE_ID )
+							{
+								vars += '&login_hint=' + GOOGLE_ID;
+							}
+							
 							var w = new View( { title: 'Google file', width: 355, height: 110 } );
 							w.setFlag('allowPopups', true);
-							w.setContent('<div style="padding-left:20px;padding-right:20px;padding-bottom:15px;"><p>This is a Google native file, and can only be edited in Google\'s online suite.</p><p><a href="javascript:void(0)" onclick="' + Application.oauth2Window( self.tmp, Application, w ) + '" class="Button">Open with Google</a> <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, false, w ) + '" class="Button">View as pdf</a></p></div>');
+							//w.setContent('<div style="padding-left:20px;padding-right:20px;padding-bottom:15px;"><p>This is a Google native file, and can only be edited in Google\'s online suite.</p><p><a href="javascript:void(0)" onclick="' + Application.oauth2Window( self.tmp, Application, w ) + '" class="Button">Open with Google</a> <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, false, w ) + '" class="Button">View as pdf</a></p></div>');
 							//w.setContent('<div style="padding-left:20px;padding-right:20px;padding-bottom:15px;"><p>This is a Google native file, and can only be edited in Google\'s online suite.</p><p><a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, true, w ) + '" class="Button">Open with Google</a> <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, false, w ) + '" class="Button">View as pdf</a></p></div>');
+							w.setContent('<div style="padding-left:20px;padding-right:20px;padding-bottom:15px;"><p>This is a Google native file, and can only be edited in Google\'s online suite.</p><p><a target="_blank" href="' + oauth2 + vars + '" class="Button">Open with Google</a> <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, false, w ) + '" class="Button">View as pdf</a></p></div>');
 							w.onClose = function()
 							{
 								Application.quit();

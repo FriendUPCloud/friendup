@@ -1272,7 +1272,8 @@ if( !class_exists( 'GoogleDrive' ) )
 			
 			$Logger->log( print_r( $args,1 ) . ' || ' . $path );
 			
-			$googlepath = end( explode( ':', $path ) );
+			$googlepath = explode( ':', $path );
+			$googlepath = end( $googlepath );
 			
 			$parentID = 'root';
 			$filepointer= false;
@@ -1343,6 +1344,8 @@ if( !class_exists( 'GoogleDrive' ) )
 				// TODO: Check if it's possible to find out if a user is logged in to the browser, from the server side ...
 				if( $res1 = $this->GetByCurl( 'https://www.googleapis.com/drive/v3/about?fields=user', false, 'GET', [ 'Authorization: Bearer ' . $confjson['access']['access_token'] ] ) )
 				{
+					
+					// TODO: Get this from config data instead to speed up ... Look at how storage is retrieved ...
 					
 					$dataset->{ 'decrypted' } = $res1;
 					
@@ -1448,7 +1451,8 @@ if( !class_exists( 'GoogleDrive' ) )
 		{
 			global $Logger;
 			
-			$googlepath = end( explode(':', $friendpath) );
+			$googlepath = explode(':', $friendpath);
+			$googlepath = end( $googlepath );
 			if( substr($googlepath,-1) == '/' ) $googlepath = rtrim($googlepath,'/');
 						
 			$parentID = 'root';
