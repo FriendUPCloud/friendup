@@ -296,6 +296,7 @@ if( !class_exists( 'SharedDrive' ) )
 								$s->Owner = $User->ID;
 								$s->ExternPath = $row->Data;
 								$s->ExternServerToken = $User->ServerToken;
+								$s->row = $row;
 								$out[] = $s;
 							}
 						}
@@ -304,6 +305,76 @@ if( !class_exists( 'SharedDrive' ) )
 						{
 							die( 'fail<!--separate-->{"message":"Failed to unshare file.","response":"-1"}' );
 						}	
+						
+						// Use multi!
+						$multiArray = array();
+						$master = curl_multi_init();
+						foreach( $out as $row )
+						{
+							$volume = explode( ':', $row->ExternPath );
+							$volume = $volume[0] . ':';
+							
+							$url = ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/';
+							
+							$ch = FriendCall( $url . 'file/info?servertoken=' . $row->ExternServerToken, false,
+								array( 
+									'devname'   => $volume,
+									'path'      => $row->ExternPath
+								), true
+							);
+							
+							$row->multi = $ch;
+							
+							$multiArray[] = $row;
+							
+							curl_multi_add_handle( $master, $ch );
+						}
+						$out = [];
+						
+						// Wait for curl to finish
+						// TODO: This is the slowdown!
+						if( count( $multiArray ) )
+						{
+							$active = 0;
+							do
+							{
+								$status = curl_multi_exec( $master, $active );
+								if( $active )
+								{
+									// Wait a short time for more activity
+									curl_multi_select( $master );
+								}
+							}
+							while ( $active && $status == CURLM_OK );
+							
+							$out = [];
+							
+							foreach( $multiArray as $a => $file )
+							{
+								$res = curl_multi_getcontent( $file->multi );
+								curl_multi_remove_handle( $master, $file->multi );
+						
+								$code = explode( '<!--separate-->', $res );
+							
+								if( $code[0] == 'ok' )
+								{
+									$info = json_decode( $code[1] );
+									$file->Filesize = $info->Filesize;
+									$file->DateCreated = $info->DateCreated;
+									$file->DateModified = $info->DateModified;
+									unset( $file->multi );
+									$out[] = $file;
+								}
+								// This file does not exist!
+								else if( isset( $file->row ) && isset( $file->row->ID ) )
+								{
+									$SqlDatabase->query( 'DELETE FROM FShared WHERE ID=\'' . $file->row->ID . '\' AND OwnerUserID=\'' . $User->ID . '\'' );
+									continue;
+								}
+							}
+						}
+						//...
+						
 						die( 'ok<!--separate-->' . json_encode( $out ) );
 					}
 					
