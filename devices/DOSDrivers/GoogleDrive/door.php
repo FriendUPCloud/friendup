@@ -1321,7 +1321,7 @@ if( !class_exists( 'GoogleDrive' ) )
 				
 				$dataset = (object)[ 
 					'url'           => $gfile->getWebViewLink(), 
-					'state_var'     => ( 'BASE64' . base64_encode( '{"location_href":"' . $gfile->getWebViewLink() . '"}' ) ),
+					'state_var'     => ( 'BASE64' . str_replace( '=', '', base64_encode( '{"location_href":"' . $gfile->getWebViewLink() . '"}' ) ) ),
 					'file_url'      => '/system.library/file/read?mode=rs&path=' . urlencode( str_replace( ':', ':DiskHandled/', $args->path ) . '.pdf' ),
 					//'file_url'      => '/system.library/file/call?path=' . urlencode( str_replace( ':', ':DiskHandled/mode-custom/', $args->path ) . '.pdf' ),
 					'title'         => $gfile->getName(), 
