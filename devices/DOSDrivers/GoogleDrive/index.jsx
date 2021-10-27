@@ -266,7 +266,7 @@ Application.initJS = function( application, tmp, edit, w )
 	
 	if( edit )
 	{
-		str += " return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"', true, "+viewId+" ); ";
+		str += " return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"&client="+tmp.google_id+"', true, "+viewId+" ); ";
 	}
 	else
 	{
@@ -350,7 +350,7 @@ Application.oauth2Window = function( tmp, Application, w )
 	
 	ret+= " 		if( params.access_token ) ";
 	ret+= " 		{ ";
-	ret+= " 			return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"', 'tab', '"+w.getViewId()+"' ); ";
+	ret+= " 			return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"', false, '"+w.getViewId()+"' ); ";
 	ret+= " 		} ";
 			
 	ret+= " 		return false; ";
