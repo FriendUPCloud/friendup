@@ -5,10 +5,15 @@
 		<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
 		<script> 
 			
-			if( typeof window.opener !== 'undefined' ) 
+			if( typeof window.opener !== 'undefined' && window.opener.postMessage ) 
 			{
 				window.opener.postMessage( { 'url' : window.location.href + '{data}' }, '*' ); 
 			} 
+			
+			if( typeof window.parent !== 'undefined' && window.parent.postMessage ) 
+			{
+				window.parent.postMessage( { 'url' : window.location.href + '{data}' }, '*' ); 
+			}
 			
 			if( window.location.hash && window.location.hash.split( '#' )[1] && window.location.hash.split( '#' )[1].indexOf( 'state=' ) >= 0 )
 			{
