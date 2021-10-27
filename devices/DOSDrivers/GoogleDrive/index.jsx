@@ -289,8 +289,8 @@ Application.oauth2Window = function( tmp, Application, w )
 	
 	ret+= " var SCOPES = [ 'profile', 'email' ]; ";
 	
-	ret+= " var winw = Math.min( 600, screen.availWidth ); ";
-	ret+= " var winh = Math.min( 750, screen.availHeight ); ";
+	ret+= " var winw = Math.min( 1000, screen.availWidth ); ";
+	ret+= " var winh = Math.min( 850, screen.availHeight ); ";
 	
 	ret+= " var lpos = Math.floor( ( screen.availWidth - winw ) / 2  ); ";
 	ret+= " var tpos = Math.floor( ( screen.availHeight - winh ) / 2  ); ";
