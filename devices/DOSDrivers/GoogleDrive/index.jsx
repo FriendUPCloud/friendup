@@ -168,7 +168,14 @@ Application.displayEditor = function(title,url,popup,viewId)
 			var lpos = Math.floor( ( screen.availWidth - winw ) / 2  );
 			var tpos = Math.floor( ( screen.availHeight - winh ) / 2  );
 			
-			window.open( url, title, 'resizable=1,width=' + winw + ',height=' + winh + ',top=' + tpos + ',left=' + lpos );
+			if( popup == 'tab' )
+			{
+				window.open( url, '_blank' ).focus();
+			}
+			else
+			{
+				window.open( url, title, 'resizable=1,width=' + winw + ',height=' + winh + ',top=' + tpos + ',left=' + lpos );
+			}
 			
 			console.log( viewId );
 			
@@ -343,7 +350,7 @@ Application.oauth2Window = function( tmp, Application, w )
 	
 	ret+= " 		if( params.access_token ) ";
 	ret+= " 		{ ";
-	ret+= " 			return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"', false, '"+w.getViewId()+"' ); ";
+	ret+= " 			return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"', 'tab', '"+w.getViewId()+"' ); ";
 	ret+= " 		} ";
 			
 	ret+= " 		return false; ";
