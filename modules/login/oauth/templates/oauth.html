@@ -41,11 +41,13 @@
 						{
 							json = JSON.parse( decoded );
 						}
+						else
+						{
+							console.log( 'couldn\'t decode: ' + hash[ 'state' ].split( 'BASE64' )[1] );
+						}
 						
 					}
 					catch {  }
-					
-					console.log( json );
 					
 					if( json[ 'location_href' ] )
 					{
