@@ -1,6 +1,6 @@
 <?php
 
-$data = ''; $redirect = '';
+$data = '';
 
 if( isset( $GLOBALS['argv'][2] ) && $GLOBALS['argv'][2] )
 {
@@ -43,11 +43,6 @@ if( isset( $GLOBALS['argv'][2] ) && $GLOBALS['argv'][2] )
 			$obj->friend_sessionid = $t2[2];
 			$obj->friend_serverurl = $t2[3];
 			$obj->friend_drive     = $t2[4];
-			
-			if( isset( $t2[5] ) )
-			{
-				$obj->location_href = $t2[5];
-			}
 		}
 	}
 	
@@ -121,12 +116,6 @@ if( isset( $GLOBALS['argv'][2] ) && $GLOBALS['argv'][2] )
 		}
 	}
 	
-	if( isset( $obj->location_href ) )
-	{
-		$redirect = 'location.href = ' . $obj->location_href . ';';
-		$data .= '&open=true';
-	}
-	
 	if( isset( $obj->debug ) )
 	{
 		die( print_r( $obj,1 ) );
@@ -135,7 +124,7 @@ if( isset( $GLOBALS['argv'][2] ) && $GLOBALS['argv'][2] )
 
 if( file_exists( dirname(__FILE__) . '/templates/oauth.html' ) )
 {
-	die( str_replace( [ '{data}', '{redirect}' ], [ $data, $redirect ], file_get_contents( dirname(__FILE__) . '/templates/oauth.html' ) ) );
+	die( str_replace( '{data}', $data, file_get_contents( dirname(__FILE__) . '/templates/oauth.html' ) ) );
 }
 
 die();

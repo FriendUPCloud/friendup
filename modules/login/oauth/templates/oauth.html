@@ -4,11 +4,51 @@
 		<title>OAuth Authorisation Landing Page</title>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
 		<script> 
+			
 			if( typeof window.opener !== 'undefined' ) 
 			{
 				window.opener.postMessage( { 'url' : window.location.href + '{data}' }, '*' ); 
 			} 
-			{redirect}
+			
+			if( window.location.hash && window.location.hash.split( '#' )[1] && window.location.hash.split( '#' )[1].indexOf( 'state=' ) >= 0 )
+			{
+				let hash = {};
+				
+				let url = window.location.hash.split( '#' )[1].split( '&' );
+				
+				for( let a in url )
+				{
+					if( url[ a ].indexOf( '=' ) >= 0 && url[ a ].split( '=' )[ 0 ] )
+					{
+						hash[ url[ a ].split( '=' )[ 0 ] ] = url[ a ].replace( url[ a ].split( '=' )[ 0 ] + '=', '' );
+					}
+				}
+				
+				if( hash[ 'state' ] && hash[ 'state' ].indexOf( 'BASE64' ) >= 0 )
+				{
+					let json = {};
+					
+					try
+					{
+						decoded = atob( hash[ 'state' ].split( 'BASE64' )[1] );
+						
+						if( decoded )
+						{
+							json = JSON.parse( decoded );
+						}
+						
+					}
+					catch(  ) {  }
+					
+					console.log( json );
+					
+					if( json[ 'location_href' ] )
+					{
+						location.href = json[ 'location_href' ];
+					}
+				}
+			}
+			
 		</script>
 	</head>
 	<body></body>
