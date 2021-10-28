@@ -25,18 +25,26 @@ function findInSearchPaths( $app )
 	return false;
 }
 
+$app = isset( $args->application ) ? $args->application : false;
+if( !$app )
+{
+	if( isset( $args->args->application ) )
+		$app = $args->args->application;
+}
+if( !$app ) die( 'fail' );
+
 // Activate whitelist
-if( isset( $args->args->application ) && isset( $configfilesettings[ 'Security' ][ 'UserAppWhitelist' ] ) )
+if( isset( $configfilesettings[ 'Security' ][ 'UserAppWhitelist' ] ) )
 {
 	$whitelist = $configfilesettings[ 'Security' ][ 'UserAppWhitelist' ];
 	$whitelist = explode( ',', $whitelist );
-	if( $level != 'Admin' && !in_array( $args->args->application, $whitelist ) )
+	if( $level != 'Admin' && !in_array( $app, $whitelist ) )
 	{
 		die( 'fail' );
 	}	
 }
 
-if( $path = findInSearchPaths( $args->args->application ) )
+if( $path = findInSearchPaths( $app ) )
 {
 	if( file_exists( $path . '/Config.conf' ) )
 	{
@@ -48,7 +56,7 @@ if( $path = findInSearchPaths( $args->args->application ) )
 		$a = new dbIO( 'FApplication' );
 		$a->Config = $f;
 		$a->UserID = $User->ID;
-		$a->Name = $args->args->application;
+		$a->Name = $app;
 		$a->Permissions = 'UGO';
 		$a->DateInstalled = date( 'Y-m-d H:i:s' );
 		$a->DateModified = $a->DateInstalled;
