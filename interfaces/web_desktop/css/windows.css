@@ -162,6 +162,23 @@ html body[mobile] .View .FileDialog .FileBrowser .FileBrowserItemImage
 	opacity: 0.8;
 }
 
+.FileBrowser .IconFolder, .FileBrowser .DiskItem
+{
+	cursor: pointer;
+}
+
+.FileBrowser .FolderItem > .Name, 
+.FileBrowser .DiskItem > .Name
+{
+	transition: opacity 0.25s;
+}
+
+.FileBrowser .FolderItem > .Name:hover, 
+.FileBrowser .DiskItem > .Name:hover
+{
+	opacity: 0.8;
+}
+
 
 .View > .ImageViewerToolbar
 {

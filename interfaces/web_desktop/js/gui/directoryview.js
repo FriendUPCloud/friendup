@@ -353,7 +353,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 		// Go up a level
 		{
 			element: 'button',
-			className: 'Up IconSmall ' + ( isMobile ? 'fa-arrow-left' : 'fa-arrow-up' ),
+			className: 'IconButton Up IconSmall ' + ( isMobile ? 'fa-arrow-left' : 'fa-arrow-up' ),
 			content: i18n( 'i18n_dir_btn_up' ),
 			onclick: function( e )
 			{
@@ -458,7 +458,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 		},
 		!isMobile ? {
 			element: 'button',
-			className: 'Back IconSmall fa-arrow-left',
+			className: 'IconButton  Back IconSmall fa-arrow-left',
 			content: i18n( 'i18n_dir_btn_back' ),
 			onclick: function( e )
 			{
@@ -478,7 +478,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 		}: false,
 		!isMobile ? {
 			element: 'button',
-			className: 'Forward IconSmall fa-arrow-right',
+			className: 'IconButton Forward IconSmall fa-arrow-right',
 			content: i18n( 'i18n_dir_btn_forward' ),
 			onclick: function( e )
 			{
@@ -498,7 +498,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 		}: false,
 		{
 			element: 'button',
-			className: 'Reload IconSmall fa-refresh',
+			className: 'IconButton Reload IconSmall fa-refresh',
 			content: i18n( 'i18n_dir_btn_reload' ),
 			onclick: function( e )
 			{
@@ -513,7 +513,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				{
 					element: 'button',
 					value: 'iconview',
-					className: 'IconView IconSmall fa-th-large' + ( lmode == 'iconview' ? ' Active' : '' ),
+					className: 'IconButton IconView IconSmall fa-th-large' + ( lmode == 'iconview' ? ' Active' : '' ),
 					content: i18n( 'i18n_dir_btn_iconview' ),
 					onclick: function( e )
 					{
@@ -530,7 +530,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				{
 					element: 'button',
 					value: 'iconview',
-					className: 'IconView IconSmall fa-picture-o' + ( lmode == 'imageview' ? ' Active' : '' ),
+					className: 'IconButton IconView IconSmall fa-picture-o' + ( lmode == 'imageview' ? ' Active' : '' ),
 					content: i18n( 'i18n_dir_btn_imageview' ),
 					onclick: function( e )
 					{
@@ -547,7 +547,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				{
 					element: 'button',
 					value: 'compact',
-					className: 'IconCompact IconSmall fa-th' + ( lmode == 'compact' ? ' Active' : '' ),
+					className: 'IconButton IconCompact IconSmall fa-th' + ( lmode == 'compact' ? ' Active' : '' ),
 					content: i18n( 'i18n_dir_btn_compact' ),
 					onclick: function( e )
 					{
@@ -564,7 +564,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				{
 					element: 'button',
 					value: 'listview',
-					className: 'ListView IconSmall fa-list' + ( lmode == 'listview' ? ' Active' : '' ),
+					className: 'IconButton ListView IconSmall fa-list' + ( lmode == 'listview' ? ' Active' : '' ),
 					content: i18n( 'i18n_dir_btn_listview' ),
 					onclick: function( e )
 					{
@@ -582,7 +582,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 		},
 		{
 			element: 'button',
-			className: 'DriveGauge FloatRight IconSmall fa-hdd',
+			className: 'IconButton DriveGauge FloatRight IconSmall fa-hdd',
 			content: i18n( 'i18n_diskspace' ),
 			onclick: function( e ){}
 		}
@@ -595,7 +595,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 	{
 		buttons.push( {
 			element: 'button',
-			className: 'Makedir FloatRight IconSmall',
+			className: 'IconButton Makedir FloatRight IconSmall',
 			content: i18n( 'i18n_create_container' ),
 			onclick: function( e )
 			{
@@ -606,7 +606,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 	
 	buttons.push( {
 		element: 'button',
-		className: 'Search FloatRight IconSmall',
+		className: 'IconButton Search FloatRight IconSmall',
 		content: i18n( 'i18n_search' ),
 		onclick: function( e )
 		{
