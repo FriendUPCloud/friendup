@@ -9,6 +9,8 @@ Application.run = function( conf )
 			
 		this.tmp = conf.args.split(':');
 		
+		//Application.initWindow();
+		
 		var f = new File( conf.args );
 		f.onLoad = function( data )
 		{
@@ -71,7 +73,8 @@ Application.run = function( conf )
 			
 			var w = new View( { title: 'Google file', width: 355, height: 110 } );
 			w.setFlag( 'allowPopups', true );
-			w.setContent('<div style="padding-left:20px;padding-right:20px;padding-bottom:15px;"><p>This is a Google native file, and can only be edited in Google\'s online suite.</p><p><a target="_blank" href="' + oauth2 + vars + '" onclick="CloseView()" class="Button">Open with Google</a> <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, false, w ) + '" class="Button">View as pdf</a></p></div>');
+			//w.setContent('<div style="padding-left:20px;padding-right:20px;padding-bottom:15px;"><p>This is a Google native file, and can only be edited in Google\'s online suite.</p><p><a target="_blank" href="' + oauth2 + vars + '" onclick="CloseView()" class="Button">Open with Google</a> <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, false, w ) + '" class="Button">View as pdf</a></p></div>');
+			w.setContent('<div style="padding-left:20px;padding-right:20px;padding-bottom:15px;"><p>This is a Google native file, and can only be edited in Google\'s online suite.</p><p><a target="_blank" href="' + oauth2 + vars + '" onclick="CloseView()" class="Button">Open with Google</a> <a href="javascript:void(0)" onclick="' + Application.initJSCode( self.tmp, w ) + '" class="Button">View as pdf</a></p></div>');
 			w.onClose = function()
 			{
 				Application.quit();
@@ -89,6 +92,42 @@ Application.run = function( conf )
 		Application.quit();
 	}
 
+}
+
+// TODO: Add sendMessage functionality ...
+
+Application.initWindow = function()
+{
+	var w = new View( { title: 'Google file', width: 355, height: 110 } );
+	w.setFlag( 'allowPopups', true );
+	w.setContent('<div style="padding-left:20px;padding-right:20px;padding-bottom:15px;"><p>This is a Google native file, and can only be edited in Google\'s online suite.</p><p><a target="_blank" href="javascript:void(0)" onclick="CloseView()" class="Button">Open with Google</a> <a href="javascript:void(0)" onclick="console.log(\'jalla\')" class="Button">View as pdf</a></p></div>');
+	w.onClose = function()
+	{
+		Application.quit();
+	}
+}
+
+Application.displayPdf = function( title, url )
+{
+	
+	var w = new View( { title: title, width: 1000, height: 850 } );
+	w.setContent( '<iframe style=\'width:100%;height:100%;margin:0;border-radius:0;\' src=\'' + url + '\'></iframe>' );
+	w.onClose = function(  )
+	{
+		//Application.quit();
+	}
+	
+}
+
+Application.initJSCode = function( tmp, w )
+{
+	var str = "";
+	//str += " var w = "+w+"; ";
+	//str += " CloseView( w ); ";
+	str += " var Application = { displayPdf: "+Application.displayPdf+" }; ";	
+	str += " return Application.displayPdf( '"+tmp.title+"', '"+tmp.file_url+"' ); ";
+	
+	return str;
 }
 
 Application.displayEditor = function( title, url, popup, viewId )
