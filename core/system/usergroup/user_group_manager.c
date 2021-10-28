@@ -42,47 +42,22 @@ UserGroupManager *UGMNew( void *sb )
 		sm->ugm_SB = sb;
 		Log( FLOG_INFO,  "[UGMNew] Loading groups from DB\n");
 	
-		/*
 		SQLLibrary *sqlLib = lsb->LibrarySQLGet( lsb );
 		if( sqlLib != NULL )
 		{
 			int entries;
 			char where[ 512 ];
+
+			// get groups which have shared drives
 			
-			// get only groups created by admins
-			//strcpy( where, "(UserID=0)");
-			strcpy( where, "(UserID=0 OR UserID in(select u.ID from FUser u left join FUserToGroup utg on u.ID=utg.UserID left join FUserGroup ug on utg.UserGroupID=ug.id where ug.Name='Admin' and (ug.Type='Workgroup' or ug.Type='Level')) ) AND Type in('Workgroup','Level')");
-			//strcpy( where, " Type in('Workgroup','Level')" );
-			//select * from FUser u left join FUserToGroup utg on u.ID=utg.UserID left join FUserGroup ug on utg.UserGroupID=ug.id where ug.Name='Admin' and (ug.Type='Workgroup' or ug.Type='Level')
+			//strcpy( where, "(UserID=0 OR UserID in(select u.ID from FUser u left join FUserToGroup utg on u.ID=utg.UserID left join FUserGroup ug on utg.UserGroupID=ug.id where ug.Name='Admin' and (ug.Type='Workgroup' or ug.Type='Level')) ) AND Type in('Workgroup','Level')");
+			
+			strcpy( where, "ID in (SELECT GroupID FROM Filesystem)");
 			
 			sm->ugm_UserGroups = sqlLib->Load( sqlLib, UserGroupDesc, where, &entries );
-			
-			// DEBUG
-			UserGroup *locug = sm->ugm_UserGroups;
-			while( locug != NULL )
-			{
-				DEBUG("[UMGNew] Group loaded: %s uuid: %s type: %s\n", locug->ug_Name, locug->ug_UUID, locug->ug_Type );
-				locug = (UserGroup *)locug->node.mln_Succ;
-			}
-			
+
 			lsb->LibrarySQLDrop( lsb, sqlLib );
 		}
-		
-		UserGroup *g = sm->ugm_UserGroups;
-		while( g != NULL )
-		{
-			if( strcmp( g->ug_Name, "Admin" ) == 0 )
-			{
-				g->ug_IsAdmin = TRUE;
-			}
-			
-			if( strcmp( g->ug_Name, "API" ) == 0 )
-			{
-				g->ug_IsAPI = TRUE;
-			}
-			g = (UserGroup *)g->node.mln_Succ;
-		}
-		*/
 		
 		pthread_mutex_init( &sm->ugm_Mutex, NULL );
 
@@ -92,9 +67,9 @@ UserGroupManager *UGMNew( void *sb )
 }
 
 /**
- * Delete UserManager
+ * Delete UserGroupManager
  *
- * @param um pointer to UserManager structure which will be deleted
+ * @param um pointer to UserGroupManager structure which will be deleted
  */
 
 void UGMDelete( UserGroupManager *um )
@@ -111,6 +86,87 @@ void UGMDelete( UserGroupManager *um )
 	pthread_mutex_destroy( &um->ugm_Mutex );
 	
 	FFree( um );
+}
+
+/**
+ * Mount group drives
+ *
+ * @param um pointer to UserGroupManager structure which will be deleted
+ */
+
+void UGMMountGroupDrives( UserGroupManager *um )
+{
+	SystemBase *sb = (SystemBase *)um->ugm_SB;
+	UserSession *apiSession = (UserSession *)sb->sl_UM->um_APIUser->u_SessionsList->us;
+	
+	UserGroup *locug = um->ugm_UserGroups;
+	while( locug != NULL )
+	{
+		DEBUG("[UMGNew] Group loaded: %s uuid: %s type: %s. Now lets mount devices\n", locug->ug_Name, locug->ug_UUID, locug->ug_Type );
+		
+		// lets mount drives
+		
+		MountFSWorkgroupDrive( sb->sl_DeviceManager, locug, apiSession, TRUE );
+		
+		locug = (UserGroup *)locug->node.mln_Succ;
+	}
+	
+	FFree( um );
+}
+
+
+/**
+ * Get all user groups
+ *
+ * @param um pointer to UserGroupManager
+ * @param usr pointer to user
+ * @return 0 when ssuccess, otherwise error number
+ */
+int UGMGetAllUserGroups( UserGroupManager *um, User *usr )
+{
+	SystemBase *sb = (SystemBase *)um->ugm_SB;
+	
+	/*
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	
+	DEBUG("[UGMAddUserToGroupDB] Add user: %ld to group %ld\n", userID, groupID );
+	
+	if( sqlLib != NULL )
+	{
+		char tmpQuery[256];
+		
+		if( usr->u_GroupIDs != NULL )
+		{
+			FFree( usr->u_GroupIDs );
+			usr->u_GroupIDs = NULL;
+		}
+		
+		// now get all user groups
+		
+		sqlLib->SNPrintF( sqlLib, tmpQuery, 256, "SELECT group_concat( distinct UserGroupID) FROM FUserToGroup WHERE UserID=%ld", usr->u_ID );
+		void *res = sqlLib->Query( sqlLib, tmpQuery );
+		if( res != NULL )
+		{
+			char **row;
+			while( ( row = sqlLib->FetchRow( sqlLib, res ) ) )
+			{
+				if( row[ 0 ] != NULL )
+				{
+					usr->u_GroupIDs = StringDuplicate( row[ 0 ] );
+				}
+			}
+			sqlLib->FreeResult( sqlLib, res );
+		}
+		
+		sb->LibrarySQLDrop( sb, sqlLib );
+	}
+	else
+	{
+		FERROR("[UGMAddUserToGroupDB] DBConnection fail!\n");
+		return 1;
+	}
+	*/
+	return 0;
 }
 
 /**
@@ -617,90 +673,6 @@ int UGMAssignGroupToUser( UserGroupManager *ugm, User *usr )
 		
 		FFree( qery );
 	}
-	
-	//SetUserAdminOrAPI( sb, usr );
-	
-	/*
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
-
-	if( sqlLib != NULL )
-	{
-		sqlLib->SNPrintF( sqlLib, tmpQuery, QUERY_SIZE, "SELECT UserGroupID FROM FUserToGroup WHERE UserID='%lu'", usr->u_ID );
-
-		void *result = sqlLib->Query( sqlLib, tmpQuery );
-	
-		if ( result == NULL ) 
-		{
-			FERROR("SQL query result is empty!\n");
-			sb->LibrarySQLDrop( sb, sqlLib );
-			return 2;
-		}
-		
-		FBOOL isAdmin = FALSE;
-		FBOOL isAPI = FALSE;
-
-		char **row;
-		int j = 0;
-
-		// remove user from group and then assign to new ones
-
-		UserRemoveFromGroups( usr );
-	
-		DEBUG("[UMAssignGroupToUser] Memory for groups allocated\n" );
-	
-		//if( usr->u_Groups != NULL )
-		{
-			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
-			{
-				DEBUG("[UMAssignGroupToUser] Going through loaded rows %d -> %s\n", j, row[ 0 ] );
-				{
-					char *end;
-					FULONG gid = strtol( (char *)row[0], &end, 0 );
-				
-					DEBUG("[UMAssignGroupToUser] User is in group %lu\n", gid  );
-				
-					*/
-					/*
-					if( FRIEND_MUTEX_LOCK( &(ugm->ugm_Mutex) ) == 0 )
-					{
-						UserGroup *g = ugm->ugm_UserGroups;
-						while( g != NULL )
-						{
-							if( g->ug_ID == gid )
-							{
-								if( g->ug_IsAdmin == TRUE )
-								{
-									isAdmin = g->ug_IsAdmin;
-								}
-								if( g->ug_IsAPI == TRUE )
-								{
-									isAPI = g->ug_IsAPI;
-								}
-							
-								UserGroupAddUser( g, usr );
-								DEBUG("[UMAssignGroupToUser] Added group %s to user %s\n", g->ug_Name, usr->u_Name );
-								//usr->u_Groups[ pos++ ] = g;
-							}
-							g  = (UserGroup *) g->node.mln_Succ;
-						}
-						FRIEND_MUTEX_UNLOCK( &(ugm->ugm_Mutex) );
-					}
-					*/
-					/*
-				}
-			}
-		}
-		
-		usr->u_IsAdmin = isAdmin;
-		usr->u_IsAPI = isAPI;
-	
-		sqlLib->FreeResult( sqlLib, result );
-
-		sb->LibrarySQLDrop( sb, sqlLib );
-	}
-	*/
-	//FFree( tmpQuery );
-	
 	return 0;
 }
 

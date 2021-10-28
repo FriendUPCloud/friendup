@@ -1780,7 +1780,9 @@ int SystemInitExternal( SystemBase *l )
 			sentUser = l->sl_Sentinel->s_User;
 		}*/
 		
-		UGMMountDrives( l->sl_UGM );
+		UGMMountGroupDrives( l->sl_UGM );
+		
+		//UGMMountDrives( l->sl_UGM );	// previous function which was mounting all group drives without SQLWorkgroup
 	}
 	
 	// mount INRAM drive

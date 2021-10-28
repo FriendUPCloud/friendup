@@ -33,7 +33,7 @@ typedef struct UserGroupManager
 {
 	void								*ugm_SB;
 
-	UserGroup							*ugm_UserGroups;			// all user groups
+	UserGroup							*ugm_UserGroups;			// this will contain usergroups which have drives
 	pthread_mutex_t						ugm_Mutex;
 } UserGroupManager;
 
@@ -51,19 +51,13 @@ UserGroupManager *UGMNew( void *sb );
 void UGMDelete( UserGroupManager *smgr );
 
 //
-// add group to UserGroupManager
+// Mount UserGroup drives
 //
 
-//int UGMAddGroup( UserGroupManager *smgr, UserGroup *ug );
+void UGMMountGroupDrives( UserGroupManager *um );
 
 //
-// remove(disable) group from UserGroupManager
-//
-
-//int UGMRemoveGroup( UserGroupManager *smgr, UserGroup *ug );
-
-//
-//
+// Remove UserGroup from database
 //
 
 int UGMRemoveGroupDB( UserGroupManager *ugm, UserGroup *ug );
@@ -175,6 +169,20 @@ void UGMGetGroups( UserGroupManager *um, FULONG uid, BufString *bs, const char *
 //
 
 int UGMGetUserGroupsDB( UserGroupManager *um, FULONG userID, BufString *bs );
+
+// This code is releated to groups and drives connected to them. This stuff must be in memory
+
+//
+// add group to UserGroupManager
+//
+
+int UGMAddGroup( UserGroupManager *smgr, UserGroup *ug );
+
+//
+// remove(disable) group from UserGroupManager
+//
+
+int UGMRemoveGroup( UserGroupManager *smgr, UserGroup *ug );
 
 
 #endif //__SYSTEM_USER_USER_GROUP_MANAGER_H__

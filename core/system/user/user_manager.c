@@ -1354,7 +1354,7 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 				user->u_MountedDevs = NULL;
 				
 				UMAddUser( sb->sl_UM, user );
-				tuser = user;
+				um->um_APIUser = tuser = user;
 			
 				// API user have only one session
 				if( user->u_SessionsList == NULL )
