@@ -794,3 +794,15 @@ i18n_logging_in                         : Logger inn
 i18n_erroneous_filename                 : Feil filnavn
 i18n_please_set_a_valid_filename        : Vennligst velg et filnavn med riktig filendelse.
 
+#Image viewer ------------------------------------------------------------------
+
+menu_window                             : Vindu
+menu_fullscreen                         : Fullskjerm
+menu_close_window                       : Lukk vindu
+menu_display                            : Bilde
+menu_display_grid                       : Rutete bakgrunn
+menu_display_white                      : Hvit bakgrunn
+menu_display_black                      : Svart bakgrunn
+menu_display_rotate_cw                  : Roter med klokken
+menu_display_rotate_ccw                 : Roter mot klokken
+
