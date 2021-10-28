@@ -11,18 +11,19 @@
 // Delete selected files
 Workspace.deleteFile = function( mode )
 {
-	var self = this;
+	let self = this;
 	
-	var w = window.currentMovable.content;
 	if( !window.currentMovable || ( window.currentMovable && !window.currentMovable.content.refresh ) )
 		return;
 
 	// Detached refresh object
-	var rObj = {
+	let rObj = {
 		refresh: window.currentMovable.content.refresh,
 		fileInfo: window.currentMovable.content.fileInfo,
 		icons: window.currentMovable.content.allIcons
 	};
+	
+	let w = window.currentMovable ? window.currentMovable.content : false;
 
 	if( w )
 	{

@@ -176,6 +176,7 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 					FQInit( &(locd->d_Queue) );
 					locd->d_Authenticated = TRUE;
 					man->man_Data = locd;
+					man->man_BufString = NULL;
 				}
 			}
 		}
@@ -213,6 +214,13 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 					FFree( d );
 				}	
 				man->man_Data = NULL;
+				
+				if( man->man_BufString != NULL )
+				{
+					BufStringDelete( man->man_BufString );
+					man->man_BufString = NULL;
+				}
+				
 				DEBUG("[NotificationSink] CLOSE, connection closed\n");
 			}
 		}
@@ -277,6 +285,43 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 		
 		case LWS_CALLBACK_RECEIVE:
 		{
+			if( man->man_BufString == NULL )
+			{
+				man->man_BufString = BufStringNew();
+			}
+			
+			const size_t remaining = lws_remaining_packet_payload( wsi );
+			// if nothing left and this is last message
+			
+			int isFinal = lws_is_final_fragment( wsi );
+			
+			Log( FLOG_DEBUG, "[LWS_CALLBACK_RECEIVE] remaining: %d isFinal: %d\n", remaining, isFinal );
+			
+			if( !remaining && isFinal )
+			{
+				BufStringAddSize( man->man_BufString, buf, len );
+				
+				if( man->man_BufString->bs_Size > 0 )
+				{
+					DataQWSIM *d = (DataQWSIM *)man->man_Data;
+					ProcessIncomingRequest( d, man->man_BufString->bs_Buffer, man->man_BufString->bs_Size, user );
+				
+					man->man_BufString->bs_Buffer = NULL;
+					BufStringDelete( man->man_BufString );
+					man->man_BufString = NULL;
+				}
+
+				//DEBUG1("[WS] Callback receive (no remaining): %s\n", in );
+			}
+			else // only fragment was received
+			{
+				Log( FLOG_DEBUG, "[LWS_CALLBACK_RECEIVE] Only received: %s\n", (char *)buf );
+				if( man != NULL && man->man_BufString != NULL )
+				{
+					BufStringAddSize( man->man_BufString, buf, len );
+				}
+			}
+			/*
 			MobileAppNotif *man = (MobileAppNotif *)user;
 			if( man != NULL && man->man_Data != NULL )
 			{
@@ -284,6 +329,7 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 				ProcessIncomingRequest( d, buf, len, user );
 				buf = NULL;
 			}
+			*/
 		}
 		break;
 	}

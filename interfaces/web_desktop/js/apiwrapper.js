@@ -1545,6 +1545,12 @@ function apiWrapper( event, force )
 					var twin = app.windows[ msg.targetViewId ? msg.targetViewId : msg.viewId ];
 					switch( msg.method )
 					{
+						case 'cancelclose':
+							if( win )
+							{
+								console.log( 'What to do here?', win );
+							}
+							break;
 						case 'opencamera':
 							if( win )
 							{
