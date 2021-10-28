@@ -5,12 +5,12 @@
 		<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
 		<script> 
 			
-			if( typeof window.opener !== 'undefined' && typeof window.opener.postMessage !== 'undefined' ) 
+			if( window && window.opener && window.opener.postMessage ) 
 			{
 				window.opener.postMessage( { 'url' : window.location.href + '{data}' }, '*' ); 
 			} 
 			
-			if( typeof window.parent !== 'undefined' && typeof window.parent.postMessage !== 'undefined' ) 
+			if( window && window.parent && window.parent.postMessage ) 
 			{
 				window.parent.postMessage( { 'url' : window.location.href + '{data}' }, '*' ); 
 			}
