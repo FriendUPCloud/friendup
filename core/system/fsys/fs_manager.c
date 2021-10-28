@@ -1169,3 +1169,36 @@ OR \
 	
 	return bsres;
 }
+
+/**
+ * Delete entry from FShared table
+ *
+ * @param fm pointer to FSManager structure
+ * @param path path to shared file which will be removed from DB
+ * @param uid user id which point to user which shared entry will be removed
+*  @return 0 when success otherwise error number
+ */
+int FSManagerDeleteSharedEntry( FSManager *fm, char *path, FQUAD uid )
+{
+	SystemBase *sb = (SystemBase *)fm->fm_SB;
+
+	SQLLibrary *sqllib  = sb->LibrarySQLGet( sb );
+	if( sqllib != NULL )
+	{
+		char *tmpQuery = NULL;
+		int querysize = ( SHIFT_LEFT(strlen( path ), 1) ) + 512;
+
+		if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
+		{
+			sqllib->SNPrintF( sqllib, tmpQuery, querysize, "DELETE FROM FShared WHERE Data=`%s` AND OwnerUserID=%ld", path, uid );
+			//sprintf( tmpQuery, "DELETE FROM FShared WHERE Data=`%s` AND OwnerUserID=%ld", path, uid );
+		
+			sqllib->QueryWithoutResults( sqllib, tmpQuery );
+
+			
+			FFree( tmpQuery );
+		}
+		sb->LibrarySQLDrop( sb, sqllib );
+	}
+	return 0;
+}

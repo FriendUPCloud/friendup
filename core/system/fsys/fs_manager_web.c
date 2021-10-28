@@ -1078,6 +1078,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								}
 								FFree( command );
 							}
+							
+							FSManagerDeleteSharedEntry( l->sl_FSM, origDecodedPath, loggedSession->us_UserID );
 						}
 						else
 						{
