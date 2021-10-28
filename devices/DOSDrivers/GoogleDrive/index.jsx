@@ -29,6 +29,7 @@ Application.run = function( conf )
 			catch(e)
 			{
 				console.log('data was not json',data);
+				return;
 			}
 			
 			var self = this;
@@ -38,110 +39,42 @@ Application.run = function( conf )
 				self.tmp.file_url = ( self.tmp.file_url.split( 'path=' ).join( 'sessionid=' + Application.sessionId + '&path=' ) );
 			}
 			
-			var callback = function( e, d )
+			console.log( self.tmp );
+			
+			var CLIENT_ID    = self.tmp.client_id;
+			var REDIRECT_URI = self.tmp.redirect_uri;
+			var GOOGLE_ID    = ( self.tmp.user && self.tmp.user.emailAddress ? self.tmp.user.emailAddress : null );
+			var STATE_VAR    = ( self.tmp.state_var ? self.tmp.state_var : null );
+			
+			var SCOPES = [ 'profile', 'email' ];
+
+			// Google's OAuth 2.0 endpoint for requesting an access token
+			var oauth2 = 'https://accounts.google.com/o/oauth2/v2/auth';
+
+			var vars = '';
+
+			// Parameters to pass to OAuth 2.0 endpoint.
+			vars += '?redirect_uri=' + REDIRECT_URI;
+			vars += '&client_id=' + CLIENT_ID;
+			vars += '&scope=' + SCOPES.join( ' ' );
+			vars += '&response_type=token';
+			
+			if( STATE_VAR )
 			{
-				
-				if( e == 'ok' && d && d.decrypted )
-				{
-					
-					try
-					{
-						self.tmp.decrypted = JSON.parse( d.decrypted );
-						
-						if( self.tmp.decrypted && self.tmp.decrypted.id_token )
-						{
-							var decoded = Application.decodeIDToken( self.tmp.decrypted );
-							
-							if( decoded )
-							{
-								self.tmp.decrypted = decoded;
-							}
-						}
-					}
-					catch( e ) {  }
-					
-					console.log( 'tmp ', self.tmp );
-					
-					if( self.tmp.decrypted )
-					{
-												
-						Application.getAccountInfo( self.tmp.decrypted.access_token, function( e, d )
-						{
-							
-							if( e && d && d.user && d.user.emailAddress )
-							{
-								self.tmp.google_id = d.user.emailAddress;
-							}
-							else if( self.tmp.decrypted.user && self.tmp.decrypted.user.emailAddress )
-							{
-								self.tmp.google_id = self.tmp.decrypted.user.emailAddress;
-							}
-							
-							//Application.authWindow( self.tmp );
-							
-							// TODO: Load in template with javascript instead for file ...
-							
-							// TODO: THIS CRAP NEEDS TO BE DONE SIMPLER, LOAD JS FILES PROPERLY TO A TEMPLATE AND OR EVAL ....
-							
-							// TODO: Add href link with target=blank and see if that works ...
-							
-							var CLIENT_ID    = self.tmp.client_id;
-							var REDIRECT_URI = self.tmp.redirect_uri;
-							var GOOGLE_ID    = ( self.tmp.google_id ? self.tmp.google_id : null );
-							var STATE_VAR    = ( self.tmp.state_var ? self.tmp.state_var : null );
-							
-							var SCOPES = [ 'profile', 'email' ];
-	
-							// Google's OAuth 2.0 endpoint for requesting an access token
-							var oauth2 = 'https://accounts.google.com/o/oauth2/v2/auth';
-	
-							var vars = '';
-	
-							// Parameters to pass to OAuth 2.0 endpoint.
-							vars += '?redirect_uri=' + REDIRECT_URI;
-							vars += '&client_id=' + CLIENT_ID;
-							vars += '&nonce=' + Application.getRandomString( 20 );
-							vars += '&scope=' + SCOPES.join( ' ' );
-							vars += '&response_type=token id_token';
-							
-							if( STATE_VAR )
-							{
-								vars += '&state=' + STATE_VAR;
-							};
-							
-							if( GOOGLE_ID )
-							{
-								vars += '&login_hint=' + GOOGLE_ID;
-							}
-							
-							var w = new View( { title: 'Google file', width: 355, height: 110 } );
-							w.setFlag('allowPopups', true);
-							//w.setContent('<div style="padding-left:20px;padding-right:20px;padding-bottom:15px;"><p>This is a Google native file, and can only be edited in Google\'s online suite.</p><p><a href="javascript:void(0)" onclick="' + Application.oauth2Window( self.tmp, Application, w ) + '" class="Button">Open with Google</a> <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, false, w ) + '" class="Button">View as pdf</a></p></div>');
-							//w.setContent('<div style="padding-left:20px;padding-right:20px;padding-bottom:15px;"><p>This is a Google native file, and can only be edited in Google\'s online suite.</p><p><a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, true, w ) + '" class="Button">Open with Google</a> <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, false, w ) + '" class="Button">View as pdf</a></p></div>');
-							w.setContent('<div style="padding-left:20px;padding-right:20px;padding-bottom:15px;"><p>This is a Google native file, and can only be edited in Google\'s online suite.</p><p><a target="_blank" href="' + oauth2 + vars + '" class="Button">Open with Google</a> <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, false, w ) + '" class="Button">View as pdf</a></p></div>');
-							w.onClose = function()
-							{
-								Application.quit();
-							}
-							
-						} );
-					}
-					
-				}
-				else
-				{
-					console.log( { e:e, d:d } );
-				}
-				
+				vars += '&state=' + STATE_VAR;
 			};
 			
-			if( self.tmp && self.tmp.encrypted )
+			if( GOOGLE_ID )
 			{
-				Application.encryption.decrypt( self.tmp.encrypted, callback );
+				vars += '&login_hint=' + GOOGLE_ID;
 			}
-			else
+			
+			var w = new View( { title: 'Google file', width: 355, height: 110 } );
+			w.setFlag( 'allowPopups', true );
+			w.setContent('<div style="padding-left:20px;padding-right:20px;padding-bottom:15px;"><p>This is a Google native file, and can only be edited in Google\'s online suite.</p><p><a target="_blank" href="' + oauth2 + vars + '" onclick="CloseView()" class="Button">Open with Google</a> <a href="javascript:void(0)" onclick="' + Application.initJS( Application, self.tmp, false, w ) + '" class="Button">View as pdf</a></p></div>');
+			w.onClose = function()
 			{
-				callback( 'ok', ( self.tmp && self.tmp.decrypted ? self.tmp : false ) );
+				Application.quit();
 			}
 			
 			return;
@@ -158,84 +91,52 @@ Application.run = function( conf )
 
 }
 
-Application.globalView = false;
-
-Application.displayEditor = function(title,url,popup,viewId)
+Application.displayEditor = function( title, url, popup, viewId )
 {
-		// TODO: Set iframe options ...		
 		
-		if( !popup )
+		console.log( viewId );
+		
+		if( viewId )
 		{
-			var w = new View({
-				width:1000,
-				height:850,
-				title: title
-			});
-		
-			//v.limitless = true;
-			
-			w.onClose = function()
-			{
-				//Application.quit();
-			};
-			w.setRichContentUrl( url );
-			
-			//var ifr = document.createElement( 'iframe' );
-			//ifr.src = url;
-		
-			//ifr.setAttribute( 'sandbox', 'allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts allow-top-navigation allow-top-navigation-by-user-activation' );
-		
-			//document.body.appendChild( ifr );
-		
-			//console.log( ifr );
-			
+			//CloseView( viewId );
 		}
-		else
+		
+		var ww = new View({
+			width:1000,
+			height:850,
+			title: title
+		});
+	
+		//v.limitless = true;
+		
+		ww.onClose = function()
 		{
-			// NOTE: Can't use iframes Google refuses access for it ... will have to use popup window to show editor ...
+			//Application.quit();
+		};
+		ww.setRichContentUrl( url );
 		
-			var winw = Math.min( 1000, screen.availWidth );
-			var winh = Math.min( 850, screen.availHeight );
-		
-			var lpos = Math.floor( ( screen.availWidth - winw ) / 2  );
-			var tpos = Math.floor( ( screen.availHeight - winh ) / 2  );
+		//var ifr = document.createElement( 'iframe' );
+		//ifr.src = url;
+	
+		//ifr.setAttribute( 'sandbox', 'allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts allow-top-navigation allow-top-navigation-by-user-activation' );
+	
+		//document.body.appendChild( ifr );
+	
+		//console.log( ifr );
 			
-			if( popup == 'tab' )
-			{
-				window.open( url, '_blank' ).focus();
-			}
-			else
-			{
-				window.open( url, title, 'resizable=1,width=' + winw + ',height=' + winh + ',top=' + tpos + ',left=' + lpos );
-			}
-			
-			console.log( viewId );
-			
-			if( viewId )
-			{
-				CloseView( viewId );
-			}
-			
-		}
 }
 
 Application.initEditor = function( title, url, popup, viewId )
 {
 	if( url && title )
 	{
-		Application.displayEditor( title, url, popup, viewId );
+		displayEditor( title, url, popup, viewId );
 		return true;
 	}
-
+	
 	Notify({'title':'Error','description':'Could not open file!'});
 	Application.quit();
 	return false;
-}
-
-Application.receiveMessage = function( msg )
-{
-	//console.log( 'got a message',msg );
-	if( !msg.cmd ) return;
 }
 
 Application.decodeIDToken = function( params )
@@ -289,11 +190,8 @@ Application.initJS = function( application, tmp, edit, w )
 	
 	// TODO: Fix the problem viewing pdf inside iframe from friendcore, until then using popup window for now ...
 	
-	//console.log( tmp );
-	
 	str += " var Application = { initEditor: "+Application.initEditor+", displayEditor: "+Application.displayEditor+", quit: "+Application.quit+" }; ";
 	
-	//str += " CloseView( '"+w.getViewId()+"' ); ";
 	var viewId = ( w ? ( "'" + w.getViewId() + "'" ) : false );
 	
 	if( edit )
@@ -306,99 +204,6 @@ Application.initJS = function( application, tmp, edit, w )
 	}
 	
 	return str;
-}
-
-Application.oauth2Window = function( tmp, Application, w )
-{
-	var ret = "";
-	
-	ret+= " var Application = { displayEditor: "+Application.displayEditor+", initEditor: "+Application.initEditor+", globalView: "+Application.globalView+" }; ";
-	
-	ret+= " var CLIENT_ID    = '"+tmp.client_id+"'; ";
-	ret+= " var REDIRECT_URI = '"+tmp.redirect_uri+"'; ";
-	ret+= " var GOOGLE_ID    = '"+(tmp.google_id?tmp.google_id:null)+"'; ";
-	ret+= " var STATE_VAR    = '"+(tmp.state_var?tmp.state_var:null)+"'; ";
-	
-	ret+= " var SCOPES = [ 'profile', 'email' ]; ";
-	
-	ret+= " var winw = Math.min( 1000, screen.availWidth ); ";
-	ret+= " var winh = Math.min( 850, screen.availHeight ); ";
-	
-	ret+= " var lpos = Math.floor( ( screen.availWidth - winw ) / 2  ); ";
-	ret+= " var tpos = Math.floor( ( screen.availHeight - winh ) / 2  ); ";
-	
-	// Google's OAuth 2.0 endpoint for requesting an access token
-	ret+= " var oauth2 = 'https://accounts.google.com/o/oauth2/v2/auth'; ";
-	
-	ret+= " var vars = ''; ";
-	
-	// Parameters to pass to OAuth 2.0 endpoint.
-	ret+= " vars += '?redirect_uri=' + REDIRECT_URI; ";
-	ret+= " vars += '&client_id=' + CLIENT_ID; ";
-	ret+= " vars += '&nonce=' + '"+Application.getRandomString( 20 )+"'; ";
-	ret+= " vars += '&scope=' + SCOPES.join( ' ' ); ";
-	ret+= " vars += '&response_type=token id_token'; ";
-	
-	ret+= " if( STATE_VAR ) ";
-	ret+= " { ";
-	ret+= " 	vars += '&state=' + STATE_VAR; ";
-	ret+= " } ";
-	
-	ret+= " if( GOOGLE_ID ) ";
-	ret+= " { ";
-	ret+= " 	vars += '&login_hint=' + GOOGLE_ID; ";
-	ret+= " } ";
-	
-	//ret+= " console.log( 'args: ' + vars ); ";
-	
-	ret+= " var loginwindow = window.open( oauth2 + vars, 'google', 'resizable=1,width=' + winw + ',height=' + winh + ',top=' + tpos + ',left=' + lpos ); ";
-	
-	ret+= " window.addEventListener( 'message', function( msg )  ";
-	ret+= " { ";
-		
-	ret+= " 	if( msg && msg.data.url ) ";
-	ret+= " 	{ ";
-	ret+= " 		var params = {}; var args = false; ";
-			
-	ret+= " 		console.log( 'oauth msg: ', msg.data.url ); ";
-			
-	ret+= " 		if( msg.data.url.split( '#' )[1] ) ";
-	ret+= " 		{ ";
-	ret+= " 		    args = msg.data.url.split( '#' )[1].split( '&' ); ";
-	ret+= " 		} ";
-	ret+= " 		else if( msg.data.url.split( '?' )[1] ) ";
-	ret+= " 		{ ";
-	ret+= " 		    args = msg.data.url.split( '?' )[1].split( '&' ); ";
-	ret+= " 		} ";
-			
-	ret+= " 	    if( args && args.length > 0 ) ";
-	ret+= " 	    { ";
-	ret+= " 	        for( var key in args ) ";
-	ret+= " 	        { ";
-	ret+= " 	            if( args[key] && args[key].split( '=' )[1] ) ";
-	ret+= " 	            { ";
-	ret+= " 	                params[ args[key].split( '=' )[0] ] = args[key].split( '=' )[1]; ";
-	ret+= " 	            } ";
-	ret+= " 	        } ";
-	ret+= " 	    } ";
-	
-	//ret+= " 		if( loginwindow && !params[ 'open' ] ) loginwindow.close(); ";
-	
-	ret+= " 		CloseView( '"+w.getViewId()+"' ); ";
-	
-	ret+= " 		if( params.access_token ) ";
-	ret+= " 		{ ";
-	//ret+= " 			return Application.initEditor( '"+tmp.title+"', '"+tmp.url+"', false, '"+w.getViewId()+"' ); ";
-	ret+= " 		} ";
-			
-	ret+= " 		return false; ";
-			
-	ret+= " 	} ";
-		
-	ret+= " } ); ";
-	
-	return ret;
-	
 }
 
 Application.authWindow = function( tmp )
@@ -470,17 +275,7 @@ Application.authWindow = function( tmp )
 			
 			if( params.access_token )
 			{
-				
-				var w = new View( { title: 'Google Editor', width: 350, height: 100 } );
-				w.setFlag('allowPopups', true);
-				w.setContent('<div style="padding:25px;"><p><a href="javascript:void(0)" onclick="' + Application.initJS( Application, tmp, true ) + '" class="Button fa-google IconSmall"> &nbsp; open in google editor</a> or <a href="javascript:void(0)" onclick="' + Application.initJS( Application, tmp ) + '" class="Button fa-google IconSmall"> &nbsp; view as pdf</a></p></div>');
-				
-				w.onClose = function()
-				{
-					Application.quit();
-				}
-				
-				//return Application.initEditor( tmp.title, tmp.url, true );
+				return Application.initEditor( tmp.title, tmp.url, true );
 			}
 			
 			return false;

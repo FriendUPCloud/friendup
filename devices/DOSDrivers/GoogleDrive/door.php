@@ -27,8 +27,6 @@ include_once( 'php/3rdparty/fcrypto/fcrypto.class.php' );
 
 // TODO: Make this work for localhost ...
 
-// TODO: Handle the auth of google from here ... see oauth login module ...
-
 if( !class_exists( 'GoogleDrive' ) )
 {
 	class GoogleDrive extends Door
@@ -129,10 +127,6 @@ if( !class_exists( 'GoogleDrive' ) )
 			{
 				$this->sysinfo = [];
 			}
-			
-			
-			//$this->getKeyData()
-			
 			
 			if( $fs = $SqlDatabase->FetchObject( '
 				SELECT 
@@ -244,7 +238,6 @@ if( !class_exists( 'GoogleDrive' ) )
 						}
 					}
 					
-					//$Logger->log( ' $this->Config ' . $this->Config . "\r\n" );
 				}
 			}
 			
@@ -305,8 +298,6 @@ if( !class_exists( 'GoogleDrive' ) )
 						}
 					}
 				}
-				
-				
 				
 				$key = new dbIO( 'FKeys' );
 				$key->IsDeleted = '0';
@@ -411,8 +402,8 @@ if( !class_exists( 'GoogleDrive' ) )
 			}
 			
 			
-			$Logger->log('Google file request ' . json_encode( $args )/* . ' [] ' . json_encode( $Config,1 )*/ . "\r\n");
-		
+			$Logger->log('Google file request ' . json_encode( $args ) . "\r\n");
+			
 			// ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### 
 			// Do a directory listing
 			// TODO: Make it uniform! Not to methods! use command == dir
@@ -459,7 +450,6 @@ if( !class_exists( 'GoogleDrive' ) )
 						}
 						
 						die('ok<!--separate-->' . json_encode( $this->loginFile( $this->Name . ':' ) ) );
-						//die('could not connect client');	
 					}	
 				}
 				else
@@ -471,7 +461,6 @@ if( !class_exists( 'GoogleDrive' ) )
 					else
 					{
 						die('ok<!--separate-->' . json_encode( $this->loginFile( $this->Name . ':' ) ) );
-						//die('fail<!--separate-->GoogleDrive connect failed');
 					}
 				}
 				if( $fo === false )
@@ -547,7 +536,8 @@ if( !class_exists( 'GoogleDrive' ) )
 			{
 				if( $this->state != self::UNAUTHORIZED && isset( $args->tmpfile ) && $this->connectClient()) 
 				{
-					$googlepath = end( explode(':', $args->path) );
+					$googlepath = explode(':', $args->path );
+					$googlepath = end( $googlepath );
 					
 					if( strstr( $googlepath, 'DiskHandled/' ) )
 					{
@@ -575,7 +565,6 @@ if( !class_exists( 'GoogleDrive' ) )
 					    $parents = [ 'root' ];
 					}			
 					if( !$parents ) return 'fail<!--separate-->could not determine target directory';
-
 
 					$fileId = false;
 					// check if file exists... update if it does
@@ -704,83 +693,45 @@ if( !class_exists( 'GoogleDrive' ) )
 							$rs = $SqlDatabase->FetchObject('SELECT fs.Data FROM FSetting fs WHERE fs.UserID=\'-1\' AND fs.Type = \'google\' AND fs.Key=\'settings\'');
 						}		
 						
-						
 						if( $rs ) $dconf=json_decode($rs->Data,1);
 						
-						if( 1==1/*$rs && json_last_error() == JSON_ERROR_NONE && ( $dconf['interfaceurl'] || $dconf['redirect_uri'] )*/ )
+						// we want to use token... but as we do not have SSL yet we need to work with the code
+						// our state info must contain user id and our mountname so that we can update the database...
+						// we will also tell our google answer which server to redirect the google request to.
+						
+						$redirect_uri = ( $Config->SSLEnable ? 'https://' : 'http://' ) . $Config->FCHost . ( $Config->FCHost == 'localhost' ? ( $Config->FCPort ? ':'.$Config->FCPort : ':6502' ) : '' ) . '/loginprompt/oauth';
+						
+						$client = new Google_Client();
+						$client->setApplicationName($this->sysinfo['project_id']);
+						$client->setClientId($this->sysinfo['client_id']);
+						$client->setClientSecret($this->sysinfo['client_secret']);	
+						$client->setDeveloperKey($this->sysinfo['key']);
+						$client->setIncludeGrantedScopes(true);
+						$client->addScope(Google_Service_Drive::DRIVE);
+						$client->setAccessType('offline');
+						$client->setApprovalPrompt('force');
+						
+						$statevar = $User->ID . '::' . $this->Name . '::' . $args->sessionid . '::' . ( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] :  $redirect_uri ) . '::' . $this->Type;
+						
+						$client->setState( rawurlencode( bin2hex( $statevar ) ) );
+						$client->setRedirectUri( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : $redirect_uri );
+						
+						/*
+							Google will even create a nice complete target url for us with all parameters included....
+							
+							The response from the server should trigger a directory refresh...
+						*/
+						$targetURL = $client->createAuthUrl();
+						
+						if( file_exists(self::LOGINAPP) ) 
 						{
-							// we want to use token... but as we do not have SSL yet we need to work with the code
-							// our state info must contain user id and our mountname so that we can update the database...
-							// we will also tell our google answer which server to redirect the google request to.
+							$loginapp = file_get_contents(self::LOGINAPP);		
+							$loginapp = str_replace('{googleurl}', $targetURL,$loginapp);
+							$loginapp = str_replace('{path}', $this->Name .':',$loginapp);
 							
-							$redirect_uri = ( $Config->SSLEnable ? 'https://' : 'http://' ) . $Config->FCHost . ( $Config->FCHost == 'localhost' ? ( $Config->FCPort ? ':'.$Config->FCPort : ':6502' ) : '' ) . '/loginprompt/oauth';
-							
-							$client = new Google_Client();
-							$client->setApplicationName($this->sysinfo['project_id']);
-							$client->setClientId($this->sysinfo['client_id']);
-							$client->setClientSecret($this->sysinfo['client_secret']);	
-							$client->setDeveloperKey($this->sysinfo['key']);
-							$client->setIncludeGrantedScopes(true);
-							$client->addScope(Google_Service_Drive::DRIVE);
-							$client->setAccessType('offline'/*'online'*/);
-							$client->setApprovalPrompt('force');
-							
-							/*if( isset( $dconf['interfaceurl'] ) && $dconf['interfaceurl'] )
-							{
-								$statevar = $User->ID . '::' . $this->Name . '::' . $args->sessionid . '::' . $dconf['interfaceurl'] . '::' . $this->Type;
-								
-								$client->setState( rawurlencode( bin2hex( $statevar ) ) );
-								$client->setRedirectUri($this->sysinfo['redirect_uri']);
-							}
-							else
-							{*/
-								$statevar = $User->ID . '::' . $this->Name . '::' . $args->sessionid . '::' . ( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] :  $redirect_uri ) . '::' . $this->Type;
-								
-								$client->setState( rawurlencode( bin2hex( $statevar ) ) );
-								$client->setRedirectUri( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : $redirect_uri );
-							/*}*/
-
-							
-							
-							/*
-								Google will even create a nice complete target url for us with all parameters included....
-								
-								The response from the server should trigger a directory refresh...
-							*/
-							$targetURL = $client->createAuthUrl();
-							
-							if( strstr( $targetURL, 'response_type=code' ) )
-							{
-								//$targetURL = str_replace( 'response_type=code', 'response_type=code id_token', $targetURL );
-							}
-							
-							$Logger->log( $targetURL );
-							
-							if( file_exists(self::LOGINAPP) ) 
-							{
-								$loginapp = file_get_contents(self::LOGINAPP);		
-								$loginapp = str_replace('{googleurl}', $targetURL,$loginapp);
-								$loginapp = str_replace('{path}', $this->Name .':',$loginapp);
-								
-								//$loginapp = str_replace('{authid}', $args->sessionid,$loginapp);
-								//$loginapp = str_replace('{googleinterface}', $this->sysinfo['redirect_uri'],$loginapp);
-								//$loginapp = str_replace('{path}', $this->Name .':Authorized.html',$loginapp);
-								
-								ob_clean();
-								return 'ok<!--separate-->' . $loginapp;
-								die();
-							}
-							else
-							{
-								$errapp = '';
-								$errapp.= '';
-								$errapp.= 'Application.run = function( msg, interface )';
-								$errapp.= '{';
-								$errapp.= 'Notify({"title":"Google Drive system error","text":"Login app not found!"}); Application.quit();';
-								$errapp.= '}';							
-								
-								return 'ok<!--separate-->' . $errapp;
-							}
+							ob_clean();
+							return 'ok<!--separate-->' . $loginapp;
+							die();
 						}
 						else
 						{
@@ -788,13 +739,12 @@ if( !class_exists( 'GoogleDrive' ) )
 							$errapp.= '';
 							$errapp.= 'Application.run = function( msg, interface )';
 							$errapp.= '{';
-							$errapp.= 'Notify({"title":"Google system error","text":"Incomplete system configuration. Please notify your Administrator!"}); Application.quit();';
+							$errapp.= 'Notify({"title":"Google Drive system error","text":"Login app not found!"}); Application.quit();';
 							$errapp.= '}';							
 							
 							return 'ok<!--separate-->' . $errapp;
 						}
 						
-
 					}
 					else
 					{
@@ -813,12 +763,11 @@ if( !class_exists( 'GoogleDrive' ) )
 					return 'fail<!--seperate-->Could not find Google file interface ' . strtolower( $args->path );
 						
 				}
-				else if( $this->connectClient( /*'online'*/ ) )
+				else if( $this->connectClient(  ) )
 				{
 					//we want a file stream here
 					return $this->getFile( $args->path );
 				}
-				
 				
 				return( 'fail<!--separate-->Could not connect to Google Drive for file read ::' . $this->state );
 				die();
@@ -885,8 +834,8 @@ if( !class_exists( 'GoogleDrive' ) )
 						if( !isset( $args->path ) || !isset( $args->newname ) ) return('fail<!--separate-->Cannot rename without proper arguments');
 						if( $this->connectClient() )
 						{
-
-							$googlepath = end( explode( ':', $args->path ) );
+							$googlepath = explode(':', $args->path );
+							$googlepath = end( $googlepath );
 							
 							if( strstr( $googlepath, 'DiskHandled/' ) )
 							{
@@ -907,7 +856,6 @@ if( !class_exists( 'GoogleDrive' ) )
 							$drivefiles->files->update( $gfile->getID(),$tmpfile );							
 							
 							return 'ok<!--separate-->File moved.';
-							
 						}
 						else
 						{
@@ -920,7 +868,8 @@ if( !class_exists( 'GoogleDrive' ) )
                         {
                             $google_directory_metatype = 'application/vnd.google-apps.folder';
                             
-                            $googlepath = end( explode(':', $args->path ) );
+                            $googlepath = explode(':', $args->path );
+							$googlepath = end( $googlepath );
                             
                             if( strstr( $googlepath, 'DiskHandled/' ) )
 							{
@@ -929,7 +878,6 @@ if( !class_exists( 'GoogleDrive' ) )
                             
                             if( substr($googlepath,-1) == '/' ) $googlepath = rtrim($googlepath,'/');
 
-                            
 							$tmp = explode('/', $googlepath);
 							$foldername = array_pop($tmp);
 							$parentpath = implode('/',$tmp);                  
@@ -975,12 +923,11 @@ if( !class_exists( 'GoogleDrive' ) )
                         return 'fail<!--separate-->Could not create folder at GoogleDrive target';
 						break;
 					case 'delete':
-						$googlepath = end( explode(':', $args->path ) );
-
+						$googlepath = explode(':', $args->path );
+						$googlepath = end( $googlepath );
 
 						if( strlen( $googlepath ) && $this->connectClient() )
 						{
-							
 							if( strstr( $googlepath, 'DiskHandled/' ) )
 							{
 								$googlepath = str_replace( 'DiskHandled/', '', $googlepath );
@@ -1075,14 +1022,10 @@ if( !class_exists( 'GoogleDrive' ) )
 				}
 			}
 			
-			//$Logger->log( '$results[2]: ' . ( $results ? json_encode( $results ) : '' ) );
-			
 			//organize our return values; we might want to add some kind of sorting here in the future
 			if( $results )
 			{
 				$ret = [];
-				
-				//$Logger->log( '$results[3]: ' . json_encode( $results->getFiles() ) );
 				
 				foreach ($results->getFiles() as $gfile)
 				{
@@ -1100,7 +1043,6 @@ if( !class_exists( 'GoogleDrive' ) )
 					if( $o->Type != 'Directory' && strstr( $o->Filename, '/' ) )
 					{
 						$o->Filename = str_replace( '/', '&#47;', $o->Filename );
-						//$Logger->log( '$results[4]: ' . json_encode( $gfile ) );
 					}
 					
 					switch( $gfile->getMimeType() )
@@ -1214,8 +1156,6 @@ if( !class_exists( 'GoogleDrive' ) )
 		function getFile( $path, $returnGDocURL=false )
 		{
 			global $User, $SqlDatabase, $Config, $args, $Logger;
-		
-			// TODO: Need to change this because you are forced to be logged in client side on only one account to view files, dropbox is even better then this shit lol ...
 			
 			// TODO: Move this export formats to it's own fucntion ...
 			
@@ -1270,8 +1210,6 @@ if( !class_exists( 'GoogleDrive' ) )
 			
 			$path = urldecode( $path );
 			
-			$Logger->log( print_r( $args,1 ) . ' || ' . $path );
-			
 			$googlepath = explode( ':', $path );
 			$googlepath = end( $googlepath );
 			
@@ -1299,27 +1237,7 @@ if( !class_exists( 'GoogleDrive' ) )
 				if( $rs ) $dconf = json_decode( $rs->Data, 1 );
 				
 				$redirect_uri = ( $Config->SSLEnable ? 'https://' : 'http://' ) . $Config->FCHost . ( $Config->FCHost == 'localhost' ? ( $Config->FCPort ? ':'.$Config->FCPort : ':6502' ) : '' ) . '/loginprompt/oauth';
-				
-				/*$encrypted = null;
-				
-				$fcrypt = new fcrypto();
-				
-				if( $confjson['access'] )
-				{
-					if( $data = json_encode( $confjson['access'] ) )
-					{
-						$usr = new dbIO( 'FUser' );
-						$usr->ID = $User->ID;
-						if( $usr->Load() && $usr->PublicKey )
-						{
-							if( $encrypted = $fcrypt->encryptString( $data, $usr->PublicKey ) )
-							{
-								$encrypted = $encrypted->cipher;
-							}
-						}
-					}
-				}*/
-				
+								
 				$dataset = (object)[ 
 					'url'           => $gfile->getWebViewLink(), 
 					'state_var'     => ( 'BASE64' . str_replace( '=', '', base64_encode( '{"location_href":"' . $gfile->getWebViewLink() . '"}' ) ) ),
@@ -1327,62 +1245,10 @@ if( !class_exists( 'GoogleDrive' ) )
 					//'file_url'      => '/system.library/file/call?path=' . urlencode( str_replace( ':', ':DiskHandled/mode-custom/', $args->path ) . '.pdf' ),
 					'title'         => $gfile->getName(), 
 					'client_id'     => $this->sysinfo['client_id'],
-					'redirect_uri'  => ( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : $redirect_uri )
+					'redirect_uri'  => ( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : $redirect_uri ),
+					'user'          => ( isset( $this->accountinfo->user ) ? $this->accountinfo->user : null )
 				];
 				
-				/*if( $encrypted )
-				{
-					$dataset->{ 'encrypted' } = $encrypted;
-				}
-				else
-				{
-					$dataset->{ 'decrypted' } = $data;
-				}*/
-				
-				// TODO: Perhaps user info can be fetched on the server first, no need to get it on the client side, then we don't need to send access_token ...
-				
-				// TODO: Check if it's possible to find out if a user is logged in to the browser, from the server side ...
-				if( $res1 = $this->GetByCurl( 'https://www.googleapis.com/drive/v3/about?fields=user', false, 'GET', [ 'Authorization: Bearer ' . $confjson['access']['access_token'] ] ) )
-				{
-					
-					// TODO: Get this from config data instead to speed up ... Look at how storage is retrieved ...
-					
-					$dataset->{ 'decrypted' } = $res1;
-					
-					//$Logger->log( $res1 );
-					
-					/*if( $json = json_decode( $res1 ) )
-					{
-						
-						function RandomString( $length = 10 )
-						{
-							$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-							$randstring = '';
-							for ($i = 0; $i < $length; $i++) {
-								$randstring = $characters[rand(0, strlen($characters))];
-							}
-							return $randstring;
-						}
-						
-						$vars = '';
-						
-						$vars .= '?redirect_uri=' . ( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : $redirect_uri );
-						$vars .= '&client_id=' . $this->sysinfo['client_id'];
-						$vars .= '&nonce=' . RandomString( 20 );
-						$vars .= '&scope=' . 'profile email';
-						$vars .= '&response_type=token id_token';
-						$vars .= '&login_hint=' . $json->user->emailAddress;
-						$vars .= '&prompt=none';
-						
-						if( $res2 = $this->GetByCurl( 'https://accounts.google.com/o/oauth2/v2/auth' . $vars, false, 'GET' ) )
-						{
-							$Logger->log( $vars . "\r\n" . $res2 );
-						}
-						
-					}*/
-				}
-				
-				//$Logger->log( '[[[ getFile ]]]: $dataset: ' . json_encode($dataset) . "\r\n" );
 				return 'ok###' . json_encode($dataset);
 			}
 			else if( strpos($gfile->getMimeType(),'google') > 0 )
@@ -1417,7 +1283,7 @@ if( !class_exists( 'GoogleDrive' ) )
 				ob_clean();
 				
 				//FriendHeader( 'Content-Type: image/svg+xml' );
-				/*die( file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' ) );
+				//die( file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' ) );
 				
 				switch( strtolower( end( explode( '.', $args->path ) ) ) )
 				{
@@ -1427,7 +1293,7 @@ if( !class_exists( 'GoogleDrive' ) )
 					default:
 						FriendHeader( "Content-Type: application/octet-stream" );
 						break;
-				}*/
+				}
 				
 				while( $data = fread( $fp, 4096 ) )
 				{
@@ -1576,7 +1442,6 @@ if( !class_exists( 'GoogleDrive' ) )
 		function getTmpFile( $path )
 		{
 			global $Config, $User;
-	
 			return false;
 		}
 	
@@ -1584,8 +1449,6 @@ if( !class_exists( 'GoogleDrive' ) )
 		function putFile( $path, $fileObject )
 		{
 			global $Config, $User;
-
-		
 			return false;
 		}
 	
@@ -1595,8 +1458,6 @@ if( !class_exists( 'GoogleDrive' ) )
 			global $Config, $User, $Logger;
 			return false;
 		}
-	
-		
 	
 		// Not to be used outside! Not public!
 		function _deleteFolder( $fo, $recursive = true )
@@ -1622,7 +1483,6 @@ if( !class_exists( 'GoogleDrive' ) )
 		/* connect to google */
 		function connectToGoogleDrive()
 		{
-			
 			global $args, $Logger, $User;
 
 			//nothing to do if we have never been there and need oauth approval from user			
@@ -1630,19 +1490,8 @@ if( !class_exists( 'GoogleDrive' ) )
 			
 			if( $this->connectClient() ) return 'ok';
 			return( 'fail<!--separate-->Could not connect client' );
-			
-			
 		}
-		
-		function updateAccountInfo()
-		{
-			global $Logger, $Config;
-			if( $this->state != self::UNAUTHORIZED && $this->connectClient() )
-			{
-				// Updates happen in connectClient() ...
-			}
-		}
-		
+				
 		function connectClient( $status = 'offline' )
 		{
 			global $User, $SqlDatabase, $Config, $Logger, $args;
@@ -1667,8 +1516,6 @@ if( !class_exists( 'GoogleDrive' ) )
 				$client->setAccessType($status);
 				$client->setApprovalPrompt('force');
 				
-				// TODO: See if we can use online auth instead ...
-				
 				try
 				{
 					if( $confjson['access'] )
@@ -1680,10 +1527,7 @@ if( !class_exists( 'GoogleDrive' ) )
 				{
 					$Logger->log('something went bust'. $e->getMessage() . json_encode( $e ) . json_encode( $client ));
 					return false;
-					//return 'fail<!--separate-->could not authenticate';
 				}
-				
-				//$Logger->log( 'Trying online status ... ' . print_r( $args,1 ) . ' || ' . print_r( $client,1 ) );
 				
 				/*
 					if access token is expired... create new one. as we have asked for offline access we can do that ithout the user needing to approve us once more :)
@@ -1705,8 +1549,6 @@ if( !class_exists( 'GoogleDrive' ) )
 					{
 						$Logger->log('token expired .... ' . print_r( $confjson['access'],1 ) . ' [] $refreshToken: ' . print_r( $refreshToken,1 ) );
 						
-						//$this->error = '{"title":"Google system error","text":"application refresh_token is missing. Please notify your Administrator!"}';
-						
 						return false;
 						
 						unset( $confjson['access'] );
@@ -1718,8 +1560,6 @@ if( !class_exists( 'GoogleDrive' ) )
 						$this->saveKeyData( strtolower( $this->Name ), $confjson, true );
 					}
 					
-					//$mountname = reset( explode( ':', $args->path ? $args->path : $args->args->path) );
-					//$SqlDatabase->Query('UPDATE Filesystem SET Config=\''. mysqli_real_escape_string( $SqlDatabase->_link, json_encode($confjson) ) .'\' WHERE Name="'. mysqli_real_escape_string( $SqlDatabase->_link, $mountname ) .'" AND UserID = ' . intval( $User->ID ) );
 				}
 				
 				if( !isset( $confjson['access'] ) ) return false;
@@ -1733,7 +1573,6 @@ if( !class_exists( 'GoogleDrive' ) )
 
 					$Logger->log('something went bust '. $e->getMessage() . json_encode( $e ) . json_encode( $client ));
 					return false;
-					//return 'fail<!--separate-->could not authenticate';
 				}
 				
 				if ( !$client->isAccessTokenExpired() )
@@ -1742,17 +1581,14 @@ if( !class_exists( 'GoogleDrive' ) )
 					
 					if( $confjson && $confjson['access'] && $confjson['access']['access_token'] )
 					{
-						
-						if( $res = $this->GetByCurl( 'https://www.googleapis.com/drive/v3/about?fields=storageQuota', false, 'GET', [ 'Authorization: Bearer ' . $confjson['access']['access_token'] ] ) )
+						if( $res = $this->GetByCurl( 'https://www.googleapis.com/drive/v3/about?fields=storageQuota,user', false, 'GET', [ 'Authorization: Bearer ' . $confjson['access']['access_token'] ] ) )
 						{
 							if( $json = json_decode( $res ) )
 							{
 								$this->accountinfo = $json;
 							}
 						}
-						
 					}
-
 					
 					return true;					
 				}
