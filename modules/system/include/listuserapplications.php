@@ -82,43 +82,33 @@ if( $rows = $SqlDatabase->FetchObjects( '
 		'resources/webclient/apps/',
 		'repository/'
 	);
-	if( isset( $args->args->onlyrepo ) )
-	{
-		$basepaths = [ 'repository/' ];
-	}
-	foreach( $rows as $k=>$v )
-	{
-		// Include image preview
-		$fnd = false;
-		foreach( $basepaths as $path )
-		{
-			// For repositories
-			if( $path == 'repository/' )
-			{
-				// TODO: implement dir listing with $file
-				/*if( file_exists( $path . $file . '/Signature.sig' ) )
-				{
-					if( !( $d = file_get_contents( 'repository/' . $file . '/Signature.sig' ) ) )
-						continue;
-					if( !( $js = json_decode( $d ) ) )
-						continue;
-					if( !isset( $js->validated ) )
-						continue;
-				}*/
-			}
-			if( file_exists( $path . '/' . $v->Name . '/preview.png' ) )
-			{
-				$fnd = $path . '/' . $v->Name . '/preview.png';
-				break;
-			}
-		}
-		if( $fnd )
-		{
-			$rows[ $k ]->Preview = true;
-		}
-		$rows[ $k ]->Config = json_decode( $rows[ $k ]->Config );
-	}
-	die( 'ok<!--separate-->' . json_encode( $rows ) );
+	if( isset( $args->onlyrepo ) )
+    {
+            $basepaths = array( 'repository/' );
+    }
+    $out = [];
+    foreach( $rows as $k=>$v )
+    {
+            // Include image preview
+            $fnd = false;
+            foreach( $basepaths as $path )
+            {
+                    if( file_exists( $path . $v->Name . '/preview.png' ) )
+                    {
+                            $fnd = $path . $v->Name . '/preview.png';
+                            break;
+                    }
+            }
+            if( !file_exists( $path . $v->Name ) ) continue;
+
+            if( $fnd )
+            {
+                    $rows[ $k ]->Preview = true;
+            }
+            $rows[ $k ]->Config = json_decode( $rows[ $k ]->Config );
+            $out[] = $rows[ $k ];
+    }
+    die( 'ok<!--separate-->' . json_encode( $out ) );
 }
 die( 'fail<!--separate-->{"response":"fatal error in listuserapplications"}' );
 
