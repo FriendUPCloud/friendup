@@ -466,12 +466,16 @@ int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, UserSession *se
 	return error;
 }
 
-//
-//
-// usrgrp - group to which drive will be assigned
-// us - user session API usr
-
-int MountFSWorkgroupDrive( DeviceManager *dm, UserGroup *usrgrp, UserSession *us, FBOOL notify )
+/**
+ * Mount door for UserGroup in FC
+ *
+ * @param dm pointer to DeviceManager
+ * @param usrgrp pointer to UserGroup to which drive will be added
+ * @param notify set to TRUE if you want to notify all users
+ * @param devname if provided then only this device will be mounted (if exist)
+ * @return success (0) or fail value (not equal to 0)
+ */
+int MountFSWorkgroupDrive( DeviceManager *dm, UserGroup *usrgrp, FBOOL notify, char *devname )
 {
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	int error = 0;
@@ -484,6 +488,7 @@ int MountFSWorkgroupDrive( DeviceManager *dm, UserGroup *usrgrp, UserSession *us
 	char *config = NULL;
 	char *type = NULL;
 	char *execute = NULL;
+	char *userName = NULL;
 	FULONG id = 0, factivityID = 0, keysid = 0, userID = 0, userGroupID = 0;
 	FLONG storedBytes = 0;
 	FLONG storedBytesLeft = 0;
@@ -509,43 +514,50 @@ int MountFSWorkgroupDrive( DeviceManager *dm, UserGroup *usrgrp, UserSession *us
 		
 		// for UserGroup there is different SQL
 
-		snprintf( temptext, 1024,
+		if( devname == NULL )
+		{
+			snprintf( temptext, 1024,
 "SELECT \
-`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,f.`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate`, f.`KeysID`, f.`GroupID`, f.`UserID`,f.`Name` \
-FROM `Filesystem` f left outer join `FilesystemActivity` fsa on f.ID = fsa.FilesystemID and CURDATE() <= fsa.ToDate \
+f.`Type`,f.`Server`,f.`Path`,f.`Port`,f.`Username`,f.`Password`,f.`Config`,f.`ID`,f.`Execute`,f.`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate`, f.`KeysID`, f.`GroupID`, f.`UserID`,f.`Name`,u.Name \
+FROM `Filesystem` f left outer join `FilesystemActivity` fsa on f.ID = fsa.FilesystemID and CURDATE() <= fsa.ToDate inner join `FUser` u on f.UserID=u.ID \
 WHERE \
-f.GroupID = '%ld'",
+f.GroupID='%ld'",
 			usrgrp->ug_ID );
-
+		}
+		else	// specified device
+		{
+			snprintf( temptext, 1024,
+"SELECT \
+f.`Type`,f.`Server`,f.`Path`,f.`Port`,f.`Username`,f.`Password`,f.`Config`,f.`ID`,f.`Execute`,f.`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate`, f.`KeysID`, f.`GroupID`, f.`UserID`,f.`Name`,u.Name \
+FROM `Filesystem` f left outer join `FilesystemActivity` fsa on f.ID = fsa.FilesystemID and CURDATE() <= fsa.ToDate inner join `FUser` u on f.UserID=u.ID \
+WHERE \
+f.GroupID='%ld' AND f.Name='%s'",
+			usrgrp->ug_ID, devname );
+		}
 		
 		DEBUG("SQL : '%s'\n", temptext );
 	
 		void *res = sqllib->Query( sqllib, temptext );
 		char **row;
 	
-		while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
+		if( res != NULL )
 		{
+			while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
+			{
 			// Id, UserId, Name, Type, ShrtDesc, Server, Port, Path, Username, Password, Mounted
 
-			if( type != NULL ){FFree( type );}
 			if( row[ 0 ] != NULL ) type = StringDuplicate( row[ 0 ] );
 			
-			if( server != NULL ){FFree( server );}
 			if( row[ 1 ] != NULL ) server = StringDuplicate( row[  1 ] );
 			
-			if( path != NULL ){FFree( path );}
 			if( row[ 2 ] != NULL ) path = StringDuplicate( row[  2 ] );
 			
-			if( port != NULL ){FFree( port );}
 			if( row[ 3 ] != NULL ) port = StringDuplicate( row[  3 ] );
 			
-			if( uname != NULL ){FFree( uname );}
 			if( row[ 4 ] != NULL ) uname = StringDuplicate( row[  4 ] );
 			
-			if( passwd != NULL ){FFree( passwd );}
 			if( row[ 5 ] != NULL ) passwd = StringDuplicate( row[  5 ] );
 			
-			if( config != NULL ){FFree( config );}
 			if( row[ 6 ] != NULL ) config = StringDuplicate( row[ 6 ] );
 			
 			if( row[ 7 ] != NULL ){ char *end; id = strtoul( (char *)row[ 7 ],  &end, 0 ); }
@@ -575,6 +587,8 @@ f.GroupID = '%ld'",
 			if( row[ 16 ] != NULL ){ char *end;dbUserID = strtoul( (char *)row[ 16 ],  &end, 0 ); }
 			
 			if( row[ 17 ] != NULL ) name = StringDuplicate( row[ 17 ] );
+			
+			if( row[ 18 ] != NULL ) userName = StringDuplicate( row[ 18 ] );
 
 			DEBUG("[MountFSWorkgroupDrive] Mount drive: %s type: %s\n", name, type );
 			
@@ -618,80 +632,89 @@ f.GroupID = '%ld'",
 							ddrive = (DOSDriver *)ddrive->node.mln_Succ;
 						}
 						
-						if( filesys != NULL )
+						//
+						// now we have to setup user and create temporary session
+						//
+						
+						UserSession *session = USMCreateTemporarySession( l->sl_USM, NULL, dbUserID, 0 );
+						
+						if( session != NULL )
 						{
-							char *mountError = NULL;
-							struct TagItem tags[] = {
-								{FSys_Mount_Path, (FULONG)path},
-								{FSys_Mount_Server, (FULONG)server},
-								{FSys_Mount_Port, (FULONG)port},
-								{FSys_Mount_Type, (FULONG)type},
-								{FSys_Mount_Name, (FULONG)name},
-								{FSys_Mount_Owner,(FULONG)us->us_User},
-								{FSys_Mount_LoginUser,(FULONG)uname},
-								{FSys_Mount_LoginPass,(FULONG)passwd},
-								{FSys_Mount_SysBase,(FULONG)l},
-								{FSys_Mount_Config,(FULONG)config},
-								{FSys_Mount_Visible,(FULONG)visible},
-								{FSys_Mount_UserName,(FULONG)us->us_User->u_Name},
-								{FSys_Mount_UserGroup, (FULONG)usrgrp},
-								{FSys_Mount_ID, (FULONG)id},
-								{FSys_Mount_UserSession,(FULONG)us},
-								{TAG_DONE, TAG_DONE}
-							};
-							
-							//
-							// Mount
-							// 
-	
-							retFile = filesys->Mount( filesys, tags, us->us_User, &mountError );
-							
-							if( retFile != NULL )
+							if( filesys != NULL )
 							{
-								retFile->f_UserID = dbUserID;
-								FileFillSessionID( retFile, us ); 
-								retFile->f_UserGroupID = userGroupID;
-								retFile->f_ID = id;
-								retFile->f_Mounted = mount;
-								retFile->f_Config = StringDuplicate( config );
-								retFile->f_Visible = visible ? 1 : 0;
-								retFile->f_Execute = StringDuplicate( execute );
-								retFile->f_FSysName = StringDuplicate( type );
-								retFile->f_BytesStored = storedBytes;
-								if( port != NULL )
+								char *mountError = NULL;
+								struct TagItem tags[] = {
+									{FSys_Mount_Path, (FULONG)path},
+									{FSys_Mount_Server, (FULONG)server},
+									{FSys_Mount_Port, (FULONG)port},
+									{FSys_Mount_Type, (FULONG)type},
+									{FSys_Mount_Name, (FULONG)name},
+									//{FSys_Mount_Owner,(FULONG)us->us_User},
+									{FSys_Mount_LoginUser,(FULONG)uname},
+									{FSys_Mount_LoginPass,(FULONG)passwd},
+									{FSys_Mount_SysBase,(FULONG)l},
+									{FSys_Mount_Config,(FULONG)config},
+									{FSys_Mount_Visible,(FULONG)visible},
+									{FSys_Mount_UserName,(FULONG)userName},
+									{FSys_Mount_UserGroup, (FULONG)usrgrp},
+									{FSys_Mount_ID, (FULONG)id},
+									{FSys_Mount_UserSession,(FULONG)session},
+									{TAG_DONE, TAG_DONE}
+								};
+							
+								//
+								// Mount
+								// 
+	
+								retFile = filesys->Mount( filesys, tags, us->us_User, &mountError );
+							
+								if( retFile != NULL )
 								{
-									retFile->f_DevPort = atoi( port );
-								}
-								retFile->f_DevServer = StringDuplicate( server );
-				
-								retFile->f_Activity.fsa_ReadBytesLeft = readBytesLeft;
-								retFile->f_Activity.fsa_StoredBytesLeft = storedBytesLeft;
-								retFile->f_Activity.fsa_FilesystemID = retFile->f_ID;
-								retFile->f_Activity.fsa_ID = factivityID;
-								memcpy( &(retFile->f_Activity.fsa_ToDate), &activityTime, sizeof( struct tm ) );
-								activityTime.tm_year -= 1900;
-								retFile->f_Activity.fsa_ToDateTimeT = mktime( &activityTime );
-								retFile->f_KeysID = keysid;
-				
-								// if user group is passed then drive is shared drive
-								if( usrgrp != NULL )
-								{
-									DEBUG("Device will be added to usergroup list\n");
-									if( usrgrp->ug_MountedDevs != NULL )
+									retFile->f_UserID = dbUserID;
+									FileFillSessionID( retFile, session ); 
+									retFile->f_UserGroupID = userGroupID;
+									retFile->f_ID = id;
+									retFile->f_Mounted = mount;
+									retFile->f_Config = StringDuplicate( config );
+									retFile->f_Visible = visible ? 1 : 0;
+									retFile->f_Execute = StringDuplicate( execute );
+									retFile->f_FSysName = StringDuplicate( type );
+									retFile->f_BytesStored = storedBytes;
+									if( port != NULL )
 									{
-										File *t = usrgrp->ug_MountedDevs;
-										usrgrp->ug_MountedDevs = retFile;
-										t->node.mln_Pred = ( void *)retFile;
-										retFile->node.mln_Succ = ( void *)t;
+										retFile->f_DevPort = atoi( port );
 									}
-									else
+									retFile->f_DevServer = StringDuplicate( server );
+				
+									retFile->f_Activity.fsa_ReadBytesLeft = readBytesLeft;
+									retFile->f_Activity.fsa_StoredBytesLeft = storedBytesLeft;
+									retFile->f_Activity.fsa_FilesystemID = retFile->f_ID;
+									retFile->f_Activity.fsa_ID = factivityID;
+									memcpy( &(retFile->f_Activity.fsa_ToDate), &activityTime, sizeof( struct tm ) );
+									activityTime.tm_year -= 1900;
+									retFile->f_Activity.fsa_ToDateTimeT = mktime( &activityTime );
+									retFile->f_KeysID = keysid;
+				
+									// if user group is passed then drive is shared drive
+									if( usrgrp != NULL )
 									{
-										usrgrp->ug_MountedDevs = retFile;
+										DEBUG("Device will be added to usergroup list\n");
+										if( usrgrp->ug_MountedDevs != NULL )
+										{
+											File *t = usrgrp->ug_MountedDevs;
+											usrgrp->ug_MountedDevs = retFile;
+											t->node.mln_Pred = ( void *)retFile;
+											retFile->node.mln_Succ = ( void *)t;
+										}
+										else
+										{
+											usrgrp->ug_MountedDevs = retFile;
+										}
 									}
 								}
-								
-							}
-						}	// filesys != NULL
+							}	// filesys != NULL
+							USMDestroyTemporarySession( l->sl_USM, NULL, session );
+						}
 						
 					}	// drive not found
 				}	// usergrp is not NULL
@@ -708,10 +731,12 @@ f.GroupID = '%ld'",
 			if( config != NULL ) FFree( config );
 			if( execute != NULL ) FFree( execute );
 			if( name != NULL ) FFree( name );
+			if( userName != NULL ) FFree( userName );
 			
 		}	// going through all of group drives
 		
 		sqllib->FreeResult( sqllib, res );
+		}
 
 		l->LibrarySQLDrop( l, sqllib );
 	}

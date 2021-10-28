@@ -97,7 +97,6 @@ void UGMDelete( UserGroupManager *um )
 void UGMMountGroupDrives( UserGroupManager *um )
 {
 	SystemBase *sb = (SystemBase *)um->ugm_SB;
-	UserSession *apiSession = (UserSession *)sb->sl_UM->um_APIUser->u_SessionsList->us;
 	
 	UserGroup *locug = um->ugm_UserGroups;
 	while( locug != NULL )
@@ -106,12 +105,12 @@ void UGMMountGroupDrives( UserGroupManager *um )
 		
 		// lets mount drives
 		
-		MountFSWorkgroupDrive( sb->sl_DeviceManager, locug, apiSession, TRUE );
+		MountFSWorkgroupDrive( sb->sl_DeviceManager, locug, TRUE, NULL );
+		
+		DEBUG("Mount end\n\n\n\n");
 		
 		locug = (UserGroup *)locug->node.mln_Succ;
 	}
-	
-	FFree( um );
 }
 
 
