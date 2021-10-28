@@ -5163,6 +5163,7 @@ Friend.startImageViewer = function( iconObject, extra )
 		}
 	}
 	
+	// Set up menu items on image viewer
 	win.setMenuItems( [
 		{
 			name: i18n( 'menu_window' ),
