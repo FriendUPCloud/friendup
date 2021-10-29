@@ -5149,7 +5149,11 @@ Friend.startImageViewer = function( iconObject, extra )
 		fullscreenenabled: true
 	} );
 	
-	win.parentView = extra.parentView;
+	let owin = win;
+	let bgMode = 'grid';
+	let rotate = 0;
+	
+	win.parentView = extra ? extra.parentView : false;
 	
 	win.onClose = function()
 	{
@@ -5159,10 +5163,100 @@ Friend.startImageViewer = function( iconObject, extra )
 		}
 	}
 	
+	// Set up menu items on image viewer
+	win.setMenuItems( [
+		{
+			name: i18n( 'menu_window' ),
+			items: [
+				{
+					name: i18n( 'menu_fullscreen' ),
+					command: function()
+					{
+						Workspace.fullscreen( currentMovable.content );
+						setTimeout( function()
+						{
+							repositionElement( owin, position );
+						}, 100 );
+					}
+				},
+				{
+					name: i18n( 'menu_close_window' ),
+					command: function()
+					{
+						CloseView( win );
+					}
+				}
+			]
+		},
+		{
+			name: i18n( 'menu_display' ),
+			items: [
+				{
+					name: i18n( 'menu_display_grid' ),
+					command: function()
+					{
+						bgMode = 'grid';
+						let o = owin._window.getElementsByClassName( 'DefaultContextMenu' );
+						if( o ) 
+						{
+							o[0].style.backgroundImage = 'url(\'/webclient/gfx/checkers.png\')';
+							o[0].style.backgroundColor = '';
+							o[0].style.filter = 'brightness(0.3)';
+						}
+					}
+				},
+				{
+					name: i18n( 'menu_display_white' ),
+					command: function()
+					{
+						bgMode = 'white';
+						let o = owin._window.getElementsByClassName( 'DefaultContextMenu' );
+						if( o ) 
+						{
+							o[0].style.backgroundImage = '';
+							o[0].style.backgroundColor = 'white';
+							o[0].style.filter = '';
+						}
+					}
+				},
+				{
+					name: i18n( 'menu_display_black' ),
+					command: function()
+					{
+						bgMode = 'black';
+						let o = owin._window.getElementsByClassName( 'DefaultContextMenu' );
+						if( o ) 
+						{
+							o[0].style.backgroundImage = '';
+							o[0].style.backgroundColor = 'black';
+							o[0].style.filter = '';
+						}
+					}
+				},
+				{
+					name: i18n( 'menu_display_rotate_cw' ),
+					command: function()
+					{
+						let im = owin._window.getElementsByTagName( 'img' )[0];
+						rotate++;
+						im.style.transform = 'rotate(' + ( rotate * 90 ) + 'deg)';
+					}
+				},
+				{
+					name: i18n( 'menu_display_rotate_ccw' ),
+					command: function()
+					{
+						let im = owin._window.getElementsByTagName( 'img' )[0];
+						rotate--;
+						im.style.transform = 'rotate(' + ( rotate * 90 ) + 'deg)';
+					}
+				}
+			]
+		}
+	] );
+	
 	// Use system default
 	win.content.defaultContextMenu = true;
-	
-	let owin = win;
 
 	let zoomLevel = 1;
 	let zoomImage = null;
