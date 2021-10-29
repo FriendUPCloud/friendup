@@ -1190,7 +1190,7 @@ int FSManagerDeleteSharedEntry( FSManager *fm, char *path, FQUAD uid )
 
 		if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
 		{
-			sqllib->SNPrintF( sqllib, tmpQuery, querysize, "DELETE FROM FShared WHERE Data=`%s` AND OwnerUserID=%ld", path, uid );
+			sqllib->SNPrintF( sqllib, tmpQuery, querysize, "DELETE FROM FShared WHERE Data='%s' AND OwnerUserID=%ld", path, uid );
 			//sprintf( tmpQuery, "DELETE FROM FShared WHERE Data=`%s` AND OwnerUserID=%ld", path, uid );
 		
 			sqllib->QueryWithoutResults( sqllib, tmpQuery );
