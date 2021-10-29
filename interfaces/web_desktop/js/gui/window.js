@@ -1784,7 +1784,7 @@ function CloseView( win, delayed )
 
 		// Clear view that is closed from view history
 		let out = [];
-		for( var a  = 0; a < Friend.GUI.view.viewHistory.length; a++ )
+		for( let a = 0; a < Friend.GUI.view.viewHistory.length; a++ )
 		{
 			if( Friend.GUI.view.viewHistory[a] != win )
 				out.push( Friend.GUI.view.viewHistory[a] );
@@ -1825,7 +1825,7 @@ function CloseView( win, delayed )
 			{
 				if( app.mainView == div.windowObject )
 				{
-					for( var a in app.windows )
+					for( let a in app.windows )
 					{
 						if( app.windows[ a ] != div.windowObject )
 						{
@@ -1885,7 +1885,7 @@ function CloseView( win, delayed )
 				// Only activate last view in the same app
 				if( appId )
 				{
-					for( var a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
+					for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 					{
 						if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
 						{
@@ -1904,7 +1904,7 @@ function CloseView( win, delayed )
 				}
 				else
 				{
-					for( var a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
+					for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 					{
 						if( Friend.GUI.view.viewHistory[ a ].windowObject.workspace == globalConfig.workspaceCurrent )
 						{
@@ -1928,7 +1928,7 @@ function CloseView( win, delayed )
 		{
 			// Clean up ids
 			let o = [];
-			for( var b in movableWindows )
+			for( let b in movableWindows )
 			{
 				if( movableWindows[b] != div && movableWindows[b].parentNode )
 				{
@@ -3327,7 +3327,11 @@ var View = function( args )
 					wo.close();
 				}
 			}
-			executeClose();
+			// Only if we can!
+			if( div.windowObject.close() === true )
+			{
+				executeClose();
+			}
 		}
 
 		// Add all
@@ -4795,7 +4799,7 @@ var View = function( args )
 				if( this.onClose ) this.onClose();
 				if( this.eventSystemClose ) // <- system call
 				{
-					for( var a = 0; a < this.eventSystemClose.length; a++ )
+					for( let a = 0; a < this.eventSystemClose.length; a++ )
 					{
 						this.eventSystemClose[a]();
 					}
@@ -4829,17 +4833,19 @@ var View = function( args )
 					viewId: self.viewId
 				};
 				app.sendMessage( msg );
+				return;
 			}
 		}
 		CloseView( this._window );
 		if( this.onClose ) this.onClose();
 		if( this.eventSystemClose ) // <- system call
 		{
-			for( var a = 0; a < this.eventSystemClose.length; a++ )
+			for( let a = 0; a < this.eventSystemClose.length; a++ )
 			{
 				this.eventSystemClose[a]();
 			}
 		}
+		return true;
 	}
 	// Put a loading animation on window
 	this.loadingAnimation = function ()

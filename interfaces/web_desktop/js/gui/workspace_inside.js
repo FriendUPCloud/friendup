@@ -8001,7 +8001,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		
 		// Always refresh menu when we have a targtt
-		if( e && e.target )
+		if( e && e.target && !menu )
 		{
 			let tmp = e.target;
 			while( tmp != document.body )

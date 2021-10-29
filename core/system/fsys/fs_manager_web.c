@@ -1078,6 +1078,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								}
 								FFree( command );
 							}
+							
+							FSManagerDeleteSharedEntry( l->sl_FSM, origDecodedPath, loggedSession->us_UserID );
 						}
 						else
 						{
@@ -2251,18 +2253,27 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									
 									int closeResponse = actFS->FileClose( actDev, fp );
 								
-									int addSize = 0;
-									if( uploadedFiles == 0 )
+									// Error!
+									if( closeResponse != 0 )
 									{
-										addSize = snprintf( tmpFileData, sizeof( tmpFileData ), "{\"name\":\"%s\",\"bytesexpected\":%ld,\"bytesstored\":%ld,\"responseCode\":%d}", file->hf_FileName, file->hf_FileSize, storedBytes, closeResponse );
+										// Failed!
+										Log( FLOG_ERROR, "Got a file write error\n" );
 									}
 									else
 									{
-										addSize = snprintf( tmpFileData, sizeof( tmpFileData ), ",{\"name\":\"%s\",\"bytesexpected\":%ld,\"bytesstored\":%ld}", file->hf_FileName, file->hf_FileSize, storedBytes );
-									}
-									BufStringAddSize( uploadedFilesBS, tmpFileData, addSize );
+										int addSize = 0;
+										if( uploadedFiles == 0 )
+										{
+											addSize = snprintf( tmpFileData, sizeof( tmpFileData ), "{\"name\":\"%s\",\"bytesexpected\":%ld,\"bytesstored\":%ld,\"responseCode\":%d}", file->hf_FileName, file->hf_FileSize, storedBytes, closeResponse );
+										}
+										else
+										{
+											addSize = snprintf( tmpFileData, sizeof( tmpFileData ), ",{\"name\":\"%s\",\"bytesexpected\":%ld,\"bytesstored\":%ld}", file->hf_FileName, file->hf_FileSize, storedBytes );
+										}
+										BufStringAddSize( uploadedFilesBS, tmpFileData, addSize );
 								
-									uploadedFiles++;
+										uploadedFiles++;
+									}
 								}
 								else
 								{
