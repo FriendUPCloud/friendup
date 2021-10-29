@@ -2536,6 +2536,17 @@ var View = function( args )
 					Friend.previousWindowHover = Friend.currentWindowHover;
 				Friend.currentWindowHover = div;
 			
+				if( !div.classList.contains( 'Active' ) )
+				{
+					// Reactivate all iframes
+					let fr = div.windowObject.content.getElementsByTagName( 'iframe' );
+					for( let a = 0; a < fr.length; a++ )
+					{
+						if( fr[ a ].oldSandbox && typeof( fr[ a ].oldSandbox ) == 'string' )
+							fr[ a ].setAttribute( 'sandbox', fr[ a ].oldSandbox );
+					}
+				}
+			
 				// Focus on desktop if we're not over a window.
 				if( Friend.previousWindowHover && Friend.previousWindowHover != div )
 				{
@@ -2552,6 +2563,16 @@ var View = function( args )
 			} );
 			div.addEventListener( 'mouseout', function()
 			{
+				if( !div.classList.contains( 'Active' ) )
+				{
+					// Reactivate all iframes
+					let fr = div.windowObject.content.getElementsByTagName( 'iframe' );
+					for( let a = 0; a < fr.length; a++ )
+					{
+						fr[ a ].setAttribute( 'sandbox', 'allow-scripts' );
+					}
+				}
+				
 				// Keep track of the previous
 				if( Friend.currentWindowHover )
 					Friend.previousWindowHover = Friend.currentWindowHover;
