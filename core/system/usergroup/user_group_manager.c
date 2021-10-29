@@ -196,6 +196,33 @@ UserGroup *UGMGetGroupByID( UserGroupManager *um, FULONG id )
 }
 
 /**
+ * Get UserGroup by user id and group name
+ *
+ * @param um pointer to UserManager structure
+ * @param userID UserGroupID
+ * @return UserGroup structure if it exist, otherwise NULL
+ */
+
+UserGroup *UGMGetGroupByUserIDAndName( UserGroupManager *um, FQUAD userID, char *name )
+{
+	if( FRIEND_MUTEX_LOCK( &um->ugm_Mutex ) == 0 )
+	{
+		UserGroup *ug = um->ugm_UserGroups;
+		while( ug != NULL )
+		{
+			if( ug->ug_UserID == userID && strcmp( name, ug->ug_Name ) == 0 )
+			{
+				FRIEND_MUTEX_UNLOCK( &um->ugm_Mutex );
+				return ug;
+			}
+			ug = (UserGroup *)ug->node.mln_Succ;
+		}
+		FRIEND_MUTEX_UNLOCK( &um->ugm_Mutex );
+	}
+	return NULL;
+}
+
+/**
  * Get UserGroup by ID from DB
  *
  * @param ugm pointer to UserManager structure
@@ -330,12 +357,12 @@ UserGroup *UGMGetGroupByNameAndTypeDB( UserGroupManager *ugm, const char *name, 
  * Add UserGroup to list of groups
  *
  * @param ugm pointer to UserManager structure
- * @param ug pointer to new group which will be added to list
+ * @param userID Id of user which own group
+ * @param name group name
  * return 0 when success, otherwise error number
  */
 
-/*
-int UGMAddGroup( UserGroupManager *ugm, UserGroup *ug )
+int UGMAddGroup( UserGroupManager *ugm, FQUAD userID, char *name )
 {
 	if( ugm == NULL )
 	{
@@ -343,11 +370,36 @@ int UGMAddGroup( UserGroupManager *ugm, UserGroup *ug )
 		return 1;
 	}
 	
-	UserGroup *locg = UGMGetGroupByName( ugm, ug->ug_Name );
+	UserGroup *locg = UGMGetGroupByUserIDAndName( ugm, userID, name );
 	if( locg != NULL )
 	{
 		FERROR("[UGMAddGroup] Cannot add same group to list: %s\n", ug->ug_Name );
 		return 2;
+	}
+	
+	if( FRIEND_MUTEX_LOCK( &ugm->ugm_Mutex ) == 0 )
+	{
+		ug->node.mln_Succ = (MinNode *) ugm->ugm_UserGroups;
+		ugm->ugm_UserGroups = ug;
+		FRIEND_MUTEX_UNLOCK( &ugm->ugm_Mutex );
+	}
+	return 0;
+}
+
+/**
+ * Add UserGroup to list of groups
+ *
+ * @param ugm pointer to UserManager structure
+ * @param ug pointer to new group which will be added to list
+ * return 0 when success, otherwise error number
+ */
+/*
+int UGMAddGroup( UserGroupManager *ugm, UserGroup *ug )
+{
+	if( ugm == NULL )
+	{
+		FERROR("[UGMAddGroup] Cannot add NULL to group!\n");
+		return 1;
 	}
 	
 	if( FRIEND_MUTEX_LOCK( &ugm->ugm_Mutex ) == 0 )

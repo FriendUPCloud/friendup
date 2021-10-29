@@ -69,6 +69,12 @@ int UGMRemoveGroupDB( UserGroupManager *ugm, UserGroup *ug );
 UserGroup *UGMGetGroupByID( UserGroupManager *smgr, FULONG id );
 
 //
+// Get group by user id and group name
+//
+
+UserGroup *UGMGetGroupByUserIDAndName( UserGroupManager *um, FQUAD userID, char *name );
+
+//
 // Get UserGroup by ID
 //
 
@@ -176,7 +182,8 @@ int UGMGetUserGroupsDB( UserGroupManager *um, FULONG userID, BufString *bs );
 // add group to UserGroupManager
 //
 
-int UGMAddGroup( UserGroupManager *smgr, UserGroup *ug );
+int UGMAddGroup( UserGroupManager *ugm, FQUAD userID, char *name );
+//int UGMAddGroup( UserGroupManager *smgr, UserGroup *ug );
 
 //
 // remove(disable) group from UserGroupManager
