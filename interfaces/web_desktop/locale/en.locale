@@ -859,3 +859,15 @@ i18n_logging_in                         : Logging in
 i18n_erroneous_filename                 : Wrong filename
 i18n_please_set_a_valid_filename        : Please choose a valid filename with the correct filename extension.
 
+#Image viewer ------------------------------------------------------------------
+
+menu_window                             : Window
+menu_fullscreen                         : Fullscreen
+menu_close_window                       : Close window
+menu_display                            : Display
+menu_display_grid                       : Grid background
+menu_display_white                      : White background
+menu_display_black                      : Black background
+menu_display_rotate_cw                  : Rotate clockwise
+menu_display_rotate_ccw                 : Rotate counter clockwise
+
