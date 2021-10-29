@@ -1159,6 +1159,14 @@ function _ActivateWindow( div, nopoll, e )
 		return;
 	}
 	
+	// Reactivate all iframes
+	let fr = div.windowObject.content.getElementsByTagName( 'iframe' );
+	for( let a = 0; a < fr.length; a++ )
+	{
+		if( fr[ a ].oldSandbox )
+			fr[ a ].setAttribute( 'sandbox', fr[ a ].oldSandbox );
+	}
+	
 	// Reserve this div for activation
 	_activationTarget = div;
 	
@@ -1413,7 +1421,7 @@ function _DeactivateWindow( m, skipCleanUp )
 			
 			// Deactivate all iframes
 			let fr = m.windowObject.content.getElementsByTagName( 'iframe' );
-			for( var a = 0; a < fr.length; a++ )
+			for( let a = 0; a < fr.length; a++ )
 			{
 				fr[ a ].oldSandbox = fr[ a ].getAttribute( 'sandbox' );
 				fr[ a ].setAttribute( 'sandbox', 'allow-scripts' );
