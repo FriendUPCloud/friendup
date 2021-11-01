@@ -536,18 +536,20 @@ if( !class_exists( 'GoogleDrive' ) )
 			{
 				if( $this->state != self::UNAUTHORIZED && isset( $args->tmpfile ) && $this->connectClient()) 
 				{
+					$diskhandled = false;
+					
 					$googlepath = explode(':', $args->path );
 					$googlepath = end( $googlepath );
 					
 					if( strstr( $googlepath, 'DiskHandled/' ) )
 					{
-						$googlepath = str_replace( 'DiskHandled/', '', $googlepath );
+						$googlepath = str_replace( 'DiskHandled/', '', $googlepath ); $diskhandled = true;
 					}
 					
 					if( substr($googlepath,-1) == '/' ) $googlepath = rtrim($googlepath,'/');
 	
-					$filesize = filesize( $args->tmpfile  );
-
+					$filesize = filesize( $args->tmpfile );
+					
 					$tmp = explode('/', $googlepath);
 					$filename = array_pop($tmp);
 					$parentpath = implode('/',$tmp);    
@@ -565,7 +567,9 @@ if( !class_exists( 'GoogleDrive' ) )
 					    $parents = [ 'root' ];
 					}			
 					if( !$parents ) return 'fail<!--separate-->could not determine target directory';
-
+					
+					// TODO: So here we need to update parent if file exists ... Maybe we can get metadata if it's a google file ...
+					
 					$fileId = false;
 					// check if file exists... update if it does
                 	$results = $this->getSingleFolderContents( $parents[0], "mimeType != 'application/vnd.google-apps.folder'" );
@@ -578,6 +582,34 @@ if( !class_exists( 'GoogleDrive' ) )
 					}					
 					
 					$drivefiles = new Google_Service_Drive( $this->gdx );
+					
+					/*
+						just move the file to a different folder within the same drive.
+					*/
+					if( $filesize && $diskhandled )
+					{
+						$fn = fopen( $args->tmpfile, 'r' );
+ 						$data = fgets( $fn, 1024 );
+ 						fclose( $fn );
+ 						if( strstr( $data, '"MetaType":"DiskHandled"' ) )
+ 						{
+ 							if( $jsfile = json_decode( trim( $data ) ) )
+ 							{
+ 								if( $jsfile->ID )
+ 								{
+ 									$tmpfile = new Google_Service_Drive_DriveFile();
+ 									$result = $drivefiles->files->update( $jsfile->ID, $tmpfile, [
+										'addParents' => implode( ',', $parents ),
+										'removeParents' => '',
+										'fields' => 'name, parents'
+									] );
+		 							return 'ok<!--separate-->' . $filesize;
+	 							}
+	 							$Logger->log( json_encode( $jsfile ) );
+ 							}
+ 							return 'fail<!--separate-->could not move file ...';
+ 						}
+ 					}
 					
 					/*
 						files under 1MB are send in one chunk... bigger files are split up.
@@ -642,7 +674,7 @@ if( !class_exists( 'GoogleDrive' ) )
 						// Upload the various chunks. $status will be false until the process is
 						// complete.
 						$status = false;
-						$handle = fopen( $args->tmpfile , 'rb');
+						$handle = fopen( $args->tmpfile, 'rb');
 						while (!$status && !feof($handle)) {
 						  $chunk = fread($handle, $chunkSize);
 						  $status = $media->nextChunk($chunk);
@@ -853,8 +885,8 @@ if( !class_exists( 'GoogleDrive' ) )
 							$tmpfile = new Google_Service_Drive_DriveFile();
 							$tmpfile->setName( $args->newname );
 							$drivefiles = new Google_Service_Drive( $this->gdx );
-							$drivefiles->files->update( $gfile->getID(),$tmpfile );							
-							
+							$result = $drivefiles->files->update( $gfile->getID(),$tmpfile );							
+							$Logger->log( json_encode( $result ) );
 							return 'ok<!--separate-->File moved.';
 						}
 						else
@@ -1159,7 +1191,7 @@ if( !class_exists( 'GoogleDrive' ) )
 			
 			// TODO: Move this export formats to it's own fucntion ...
 			
-			$format = false;
+			$format = false; $diskhandled = false;
 			
 			$export = json_decode( '{
 			
@@ -1182,14 +1214,10 @@ if( !class_exists( 'GoogleDrive' ) )
 				
 			}' );
 			
-			if( strstr( $path, ':DiskHandled/mode-custom/' ) && strstr( $path, '.pdf' ) )
-			{
-				$path = str_replace( [ 'DiskHandled/mode-custom/', '.pdf' ], '', $path );
-				$args->mode = 'custom';
-			}
 			if( strstr( $path, ':DiskHandled/' ) && strstr( $path, '.pdf' ) )
 			{
-				$path = str_replace( [ 'DiskHandled/', '.pdf' ], '', $path );
+				$path = str_replace( [ 'DiskHandled/', '.pdf' ], '', $path ); 
+				$diskhandled = true;
 			}
 			if( strstr( $path, ':DiskHandled/' ) )
 			{
@@ -1206,6 +1234,8 @@ if( !class_exists( 'GoogleDrive' ) )
 						$path = str_replace( ( '.' . $ext ), '', $path );
 					}
 				}
+				
+				$diskhandled = true;
 			}
 			
 			$path = urldecode( $path );
@@ -1218,6 +1248,8 @@ if( !class_exists( 'GoogleDrive' ) )
 			$drivefiles = new Google_Service_Drive( $this->gdx );
 			
 			$gfile = $this->getGoogleFileObject( $path );
+			
+			$googlefile = false;
 			
 			/*
 				special handler for google file types...
@@ -1242,7 +1274,6 @@ if( !class_exists( 'GoogleDrive' ) )
 					'url'           => $gfile->getWebViewLink(), 
 					'state_var'     => ( 'BASE64' . str_replace( '=', '', base64_encode( '{"location_href":"' . $gfile->getWebViewLink() . '"}' ) ) ),
 					'file_url'      => '/system.library/file/read?mode=rs&path=' . urlencode( str_replace( ':', ':DiskHandled/', $args->path ) . '.pdf' ),
-					//'file_url'      => '/system.library/file/call?path=' . urlencode( str_replace( ':', ':DiskHandled/mode-custom/', $args->path ) . '.pdf' ),
 					'title'         => $gfile->getName(), 
 					'client_id'     => $this->sysinfo['client_id'],
 					'redirect_uri'  => ( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : $redirect_uri ),
@@ -1254,6 +1285,7 @@ if( !class_exists( 'GoogleDrive' ) )
 			else if( strpos($gfile->getMimeType(),'google') > 0 )
 			{
 				$filepointer = $drivefiles->files->export($gfile->getId(), ( $format ? $format : 'application/pdf' ), array('alt' => 'media' ));
+				$googlefile = true;
 			}
 			else
 			{
@@ -1267,7 +1299,32 @@ if( !class_exists( 'GoogleDrive' ) )
 			
 			if( $args->mode == 'rb' )
 			{
-				return stream_get_contents( $fp );
+				if( $googlefile && $diskhandled )
+				{
+					$dm = new DateTime( $gfile->getModifiedTime() );
+					$dc = new DateTime( $gfile->getCreatedTime() );
+				
+					$o = new stdClass();
+					$o->Type = $gfile->getMimeType() == 'application/vnd.google-apps.folder' ? 'Directory' : 'File';
+					$o->Filename = $gfile->getName() . ( $o->Type == 'Directory' ? '' : $gfile->getFileExtension() );
+					$o->MetaType = ( strpos($gfile->getMimeType(),'google') == false && $o->Type != 'Directory' ? $o->Type : 'DiskHandled'); //
+					$o->Permissions = ''; //TODO: is this correct
+					$o->DateModified = $dm->format( 'Y-m-d H:i:s' );
+					$o->DateCreated = $dc->format( 'Y-m-d H:i:s' );
+					
+					$o->Filesize = ( $gfile->getSize() != null ? $gfile->getSize() : '16' );
+					$o->ID = $gfile->getID();
+					$cleanpath = ( $path != '' ? $path . '/' : '' ) . $o->Filename; 
+					$cleanpath .= ( $o->Type == 'Directory' && substr( $cleanpath , -1) != '/' ? '/' : '' ) ;
+					$o->Path = $cleanpath;
+					$o->Driver = 'GoogleDrive';
+					
+					return json_encode( $o );
+				}
+				else
+				{
+					return stream_get_contents( $fp );
+				}
 			}
 			else if( $args->mode == 'rs' )
 			{
@@ -1276,31 +1333,6 @@ if( !class_exists( 'GoogleDrive' ) )
 					print( $data );
 				}
 				die();
-			}
-			else if( $args->mode == 'custom' )
-			{
-				
-				ob_clean();
-				
-				//FriendHeader( 'Content-Type: image/svg+xml' );
-				//die( file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' ) );
-				
-				switch( strtolower( end( explode( '.', $args->path ) ) ) )
-				{
-					case 'pdf':
-						FriendHeader( "Content-Type: application/pdf" );
-						break;
-					default:
-						FriendHeader( "Content-Type: application/octet-stream" );
-						break;
-				}
-				
-				while( $data = fread( $fp, 4096 ) )
-				{
-					print( $data );
-				}
-				
-				die(  );
 			}
 			else
 			{

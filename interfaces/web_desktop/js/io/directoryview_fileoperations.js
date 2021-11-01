@@ -914,6 +914,13 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 					// Eles now contain directories, info files and normal files
 					for( a = 0; a < eles.length; a++ )
 					{
+						// If we are copying or moving a file that is diskhandled in the same drive, add DiskHandled/ to the path
+						if( cfo.Driver == eles[a].fileInfo.Driver && eles[a].fileInfo.Path.indexOf( eles[a].fileInfo.Driver + ':DiskHandled/' ) < 0 )
+						{
+							eles[a].fileInfo.Path = eles[a].fileInfo.Path.split( eles[a].fileInfo.Driver + ':' ).join( eles[a].fileInfo.Driver + ':DiskHandled/' );
+							console.log( 'DiskHandled files moved or copied within the drive are handled by the driver, adding :DiskHandled/ to filepath.' );
+						}
+						
 						var d = Workspace.getDoorByPath( eles[a].fileInfo.Path );
 						if( d )
 						{
@@ -1051,13 +1058,20 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						fl = this.files[ i ];
 						
 						// NOTE: If we have a special case like "ExportFormat" from the source Door Drive we need to overwrite file extension to the export format.
-						if( fl.fileInfo.ExportFormat && fl.fileInfo.Extension == 'diskhandled'/* && cfo.Driver != fl.fileInfo.Driver*/ )
+						if( fl.fileInfo.ExportFormat && fl.fileInfo.Extension == 'diskhandled' )
 						{
 							var ext = ( fl.fileInfo.Filename.indexOf( '.' ) >= 0 ? fl.fileInfo.Filename.split( '.' ).pop(  ) : false );
 							
 							if( !ext )
 							{
 								fl.fileInfo.NewPath = ( ( fl.fileInfo.NewPath ? fl.fileInfo.NewPath : fl.fileInfo.Path ) + '.' + fl.fileInfo.ExportFormat );
+								
+								// If we are copying or moving a file that is diskhandled in the same drive, add DiskHandled/ to the path
+								if( cfo.Driver == fl.fileInfo.Driver && fl.fileInfo.NewPath.indexOf( fl.fileInfo.Driver + ':DiskHandled/' ) < 0 )
+								{
+									fl.fileInfo.NewPath = fl.fileInfo.NewPath.split( fl.fileInfo.Driver + ':' ).join( fl.fileInfo.Driver + ':DiskHandled/' );
+								}
+								
 								console.log( 'Converting extension to fl.fileInfo.ExportFormat. NewPath is: ' + fl.fileInfo.NewPath );
 							}
 						}
