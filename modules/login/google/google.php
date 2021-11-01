@@ -119,7 +119,7 @@ if( $args = getArgs() )
 				
 				case 'verification':
 					
-					if( $ret = verifyFriendAuth( $json->username, $json->publickey, $json->nounce, $json->deviceid, $json->invite ) )
+					if( $ret = verifyFriendAuth( $json->username, $json->publickey, $json->nounce, $json->deviceid ) )
 					{
 						if( $ret[0] == 'ok' )
 						{

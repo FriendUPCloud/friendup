@@ -470,6 +470,16 @@
 	background-color: #e3e7e8;
 }
 
+#Admin .Hidden
+{
+	display: none;
+}
+
+#Admin .Visible .Hidden
+{
+	display: block;
+}
+
 html body button.IconButton:not(:hover), html body .Button.IconButton:not(:hover)
 {
 	border: 1px solid rgba(0,0,0,0) !important;

@@ -46,11 +46,24 @@ UserGroupManager *UGMNew( void *sb )
 		if( sqlLib != NULL )
 		{
 			int entries;
-			char where[ 256 ];
+			char where[ 512 ];
 			
-			strcpy( where, " Type in('Workgroup','Level')" );
+			// get only groups created by admins
+			//strcpy( where, "(UserID=0)");
+			strcpy( where, "(UserID=0 OR UserID in(select u.ID from FUser u left join FUserToGroup utg on u.ID=utg.UserID left join FUserGroup ug on utg.UserGroupID=ug.id where ug.Name='Admin' and (ug.Type='Workgroup' or ug.Type='Level')) ) AND Type in('Workgroup','Level')");
+			//strcpy( where, " Type in('Workgroup','Level')" );
+			//select * from FUser u left join FUserToGroup utg on u.ID=utg.UserID left join FUserGroup ug on utg.UserGroupID=ug.id where ug.Name='Admin' and (ug.Type='Workgroup' or ug.Type='Level')
 			
 			sm->ugm_UserGroups = sqlLib->Load( sqlLib, UserGroupDesc, where, &entries );
+			
+			// DEBUG
+			UserGroup *locug = sm->ugm_UserGroups;
+			while( locug != NULL )
+			{
+				DEBUG("[UMGNew] Group loaded: %s uuid: %s type: %s\n", locug->ug_Name, locug->ug_UUID, locug->ug_Type );
+				locug = (UserGroup *)locug->node.mln_Succ;
+			}
+			
 			lsb->LibrarySQLDrop( lsb, sqlLib );
 		}
 		
@@ -123,6 +136,36 @@ UserGroup *UGMGetGroupByID( UserGroupManager *um, FULONG id )
 		FRIEND_MUTEX_UNLOCK( &um->ugm_Mutex );
 	}
 	return NULL;
+}
+
+/**
+ * Get UserGroup by ID from DB
+ *
+ * @param ugm pointer to UserManager structure
+ * @param id unique group identifier
+ * @return UserGroup structure if it exist, otherwise NULL
+ */
+
+UserGroup *UGMGetGroupByIDDB( UserGroupManager *ugm, FQUAD id )
+{
+	SystemBase *l = (SystemBase *)ugm->ugm_SB;
+	UserGroup *ug = NULL;
+	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	if( sqlLib != NULL )
+	{
+		// try to find if group is in DB, skip templates and roles
+		char where[ 512 ];
+		int size = snprintf( where, sizeof(where), "ID='%ld' AND Type in('Workgroup','Level')", id );
+		int entries;
+	
+		ug = sqlLib->Load( sqlLib, UserGroupDesc, where, &entries );
+		if( ug != NULL )
+		{
+			ug->ug_Status = USER_GROUP_STATUS_ACTIVE;
+		}
+		l->LibrarySQLDrop( l, sqlLib );
+	}
+	return ug;
 }
 
 /**
@@ -778,7 +821,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 	// update external services about changes
 	//NotificationManagerSendEventToConnections( sb->sl_NotificationManager, NULL, NULL, NULL, "service", "user", "update", bsGroups->bs_Buffer );
 	// update user about changes
-	UserNotifyFSEvent2( sb->sl_DeviceManager, usr, "refresh", "Mountlist:" );
+	UserNotifyFSEvent2( usr, "refresh", "Mountlist:" );
 	
 	if( bsInsert != NULL )
 	{

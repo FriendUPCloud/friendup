@@ -53,6 +53,7 @@ i18n_yes                             : Yes
 i18n_cancel                          : Cancel
 i18n_back                            : Back
 i18n_accept                          : Accept
+i18n_reject                          : Reject
 i18n_understood                      : Understood
 i18n_your_devices                    : Disks
 i18n_quit                            : Quit
@@ -165,7 +166,38 @@ i18n_file_not_shared                    : This file is not shared.
 i18n_workgroups                         : Workgroups
 i18n_users                              : Users
 my_account                              : My account
+invite_a_friend                         : Invite a friend
+i18n_invite_friend                      : Invites
 i18n_account_setup                      : My account - setup
+
+#Invites
+i18n_add_invite                         : Add a new invite
+i18n_current_invites                    : Existing invites
+i18n_current_invite                     : Your invite link
+i18n_invites                            : Invites
+i18n_invite_link                        : Invite link
+i18n_pending_invites                    : Pending invites
+i18n_select_invite_group                : Select group to find invite information
+i18n_invite_desc                        : Invites are created as links that can be sent to individuals that you want to interact with. Your new invites will be active until you delete them.
+i18n_current_invite_desc                : You may invite your friends, partners or colleagues to use Friend OS by sending them your invite link. When they use it, they will get their own Friend account and appear on your contact list in Friend Chat.
+i18n_no_workgroups                      : You have no workgroups
+i18n_confirm_delete_invite              : When deleting an invite, it will not be possible to use that invite link to sign up for a Friend account.
+i18n_failed_remove_invite               : Failed to remove invite
+i18n_failed_remove_invite_desc          : Please contact your administrator if this problem persists.
+
+i18n_are_you_sure                       : Are you sure?
+i18n_confirm_delete                     : This will remove the invite link from the database.
+
+i18n_send_invite                        : Send invite
+i18n_recipient                          : Recipient
+i18n_invite_user                        : Invite user
+i18n_optional                           : optional
+i18n_full_name                          : Full name
+i18n_manage_groups                      : Manage groups
+
+i18n_failed_to_send                     : Failed to send invite
+i18n_email_error                        : Could not send email. Please check the e-mail address.
+i18n_unknown_error                      : An unexpected server error occured.
 
 #Default directorys for applications
 i18n_directory_Games                    : Games
@@ -423,7 +455,7 @@ i18n_list_header_user                   : Users
 #File dialogs ------------------------------------------------------------------
 
 file_load                               : Load
-file_abort                              : Close
+file_abort                              : Cancel
 file_save                               : Save
 file_open_title                         : Load a file
 file_open_path                          : Select path
@@ -474,6 +506,8 @@ i18n_makedir_operation                  : New directory
 i18n_could_not_make_dir                 : Could not create new directory.
 i18n_volume_information                 : Disk information
 i18n_volume_permissions                 : Disk permissions
+i18n_disk_full                          : The disk is full
+i18n_disk_full_desc                     : Your disk is full, and cannot fit any more content. Please contact your administrator to remedy this.
 i18n_drag_to_download_file              : Click or drag to desktop to download.
 i18n_drag_files_to_download             : Drop files to download.
 i18n_add_calendar_event                 : Add calendar event.
@@ -552,7 +586,9 @@ i18n_ok                                 : Ok
 i18n_no_users_or_groups                 : No users or groups to share with.
 i18n_nothing_shared                     : No share target(s) selected
 i18n_please_select_users_groups         : Did not share because no user(s) or group(s) were selected.
-
+i18n_you_shared                         : You shared
+i18n_no_description_on_group            : This group lacks a description.
+i18n_invite_to_no_group                 : Invite user without assigning to group.
 
 i18n_paste_error                        : Paste error
 i18n_could_not_create_downloads:        : Could not create Downloads folder in your Home: drive
@@ -821,4 +857,16 @@ i18n_logging_in                         : Logging in
 
 i18n_erroneous_filename                 : Wrong filename
 i18n_please_set_a_valid_filename        : Please choose a valid filename with the correct filename extension.
+
+#Image viewer ------------------------------------------------------------------
+
+menu_window                             : Window
+menu_fullscreen                         : Fullscreen
+menu_close_window                       : Close window
+menu_display                            : Display
+menu_display_grid                       : Grid background
+menu_display_white                      : White background
+menu_display_black                      : Black background
+menu_display_rotate_cw                  : Rotate clockwise
+menu_display_rotate_ccw                 : Rotate counter clockwise
 

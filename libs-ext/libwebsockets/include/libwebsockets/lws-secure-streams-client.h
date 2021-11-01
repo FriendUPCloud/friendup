@@ -41,18 +41,23 @@
  */
 
 #if defined(LWS_SS_USE_SSPC)
-#define lws_ss_handle lws_sspc_handle
-#define lws_ss_create lws_sspc_create
-#define lws_ss_destroy lws_sspc_destroy
-#define lws_ss_request_tx lws_sspc_request_tx
-#define lws_ss_client_connect lws_sspc_client_connect
-#define lws_ss_get_sequencer lws_sspc_get_sequencer
-#define lws_ss_proxy_create lws_sspc_proxy_create
-#define lws_ss_get_context lws_sspc_get_context
-#define lws_ss_rideshare lws_sspc_rideshare
-#define lws_ss_set_metadata lws_sspc_set_metadata
-#define lws_ss_add_peer_tx_credit lws_sspc_add_peer_tx_credit
-#define lws_ss_get_est_peer_tx_credit lws_sspc_get_est_peer_tx_credit
+#define lws_ss_handle			lws_sspc_handle
+#define lws_ss_create			lws_sspc_create
+#define lws_ss_destroy			lws_sspc_destroy
+#define lws_ss_request_tx		lws_sspc_request_tx
+#define lws_ss_request_tx_len		lws_sspc_request_tx_len
+#define lws_ss_client_connect		lws_sspc_client_connect
+#define lws_ss_get_sequencer		lws_sspc_get_sequencer
+#define lws_ss_proxy_create		lws_sspc_proxy_create
+#define lws_ss_get_context		lws_sspc_get_context
+#define lws_ss_rideshare		lws_sspc_rideshare
+#define lws_ss_set_metadata		lws_sspc_set_metadata
+#define lws_ss_add_peer_tx_credit	lws_sspc_add_peer_tx_credit
+#define lws_ss_get_est_peer_tx_credit	lws_sspc_get_est_peer_tx_credit
+#define lws_ss_start_timeout		lws_sspc_start_timeout
+#define lws_ss_cancel_timeout		lws_sspc_cancel_timeout
+#define lws_ss_to_user_object		lws_sspc_to_user_object
+#define lws_ss_change_handlers		lws_sspc_change_handlers
 #endif
 
 
@@ -60,8 +65,8 @@ struct lws_sspc_handle;
 
 LWS_VISIBLE LWS_EXTERN int
 lws_sspc_create(struct lws_context *context, int tsi, const lws_ss_info_t *ssi,
-	      void *opaque_user_data, struct lws_sspc_handle **ppss,
-	      struct lws_sequencer *seq_owner, const char **ppayload_fmt);
+		void *opaque_user_data, struct lws_sspc_handle **ppss,
+		struct lws_sequencer *seq_owner, const char **ppayload_fmt);
 
 /**
  * lws_sspc_destroy() - Destroy secure stream
@@ -82,8 +87,28 @@ lws_sspc_destroy(struct lws_sspc_handle **ppss);
  * write on this stream, the *tx callback will occur with an empty buffer for
  * the stream owner to fill in.
  */
-LWS_VISIBLE LWS_EXTERN void
+LWS_VISIBLE LWS_EXTERN lws_ss_state_return_t
 lws_sspc_request_tx(struct lws_sspc_handle *pss);
+
+/**
+ * lws_sspc_request_tx_len() - Schedule stream for tx with length hint
+ *
+ * \param h: pointer to handle representing stream that wants to transmit
+ * \param len: the length of the write in bytes
+ *
+ * Schedules a write on the stream represented by \p pss.  When it's possible to
+ * write on this stream, the *tx callback will occur with an empty buffer for
+ * the stream owner to fill in.
+ *
+ * This api variant should be used when it's possible the payload will go out
+ * over h1 with x-web-form-urlencoded or similar Content-Type.
+ *
+ * The serialized, sspc type api actually serializes and forwards the length
+ * hint to its upstream proxy, where it's available for use to produce the
+ * internet-capable protocol framing.
+ */
+LWS_VISIBLE LWS_EXTERN lws_ss_state_return_t
+lws_sspc_request_tx_len(struct lws_sspc_handle *h, unsigned long len);
 
 /**
  * lws_sspc_client_connect() - Attempt the client connect
@@ -163,10 +188,31 @@ lws_sspc_rideshare(struct lws_sspc_handle *h);
  */
 LWS_VISIBLE LWS_EXTERN int
 lws_sspc_set_metadata(struct lws_sspc_handle *h, const char *name,
-		      void *value, size_t len);
+		      const void *value, size_t len);
 
 LWS_VISIBLE LWS_EXTERN int
 lws_sspc_add_peer_tx_credit(struct lws_sspc_handle *h, int32_t add);
 
 LWS_VISIBLE LWS_EXTERN int
 lws_sspc_get_est_peer_tx_credit(struct lws_sspc_handle *h);
+
+LWS_VISIBLE LWS_EXTERN void
+lws_sspc_start_timeout(struct lws_sspc_handle *h, unsigned int timeout_ms);
+
+LWS_VISIBLE LWS_EXTERN void
+lws_sspc_cancel_timeout(struct lws_sspc_handle *h);
+
+LWS_VISIBLE LWS_EXTERN void *
+lws_sspc_to_user_object(struct lws_sspc_handle *h);
+
+LWS_VISIBLE LWS_EXTERN void
+lws_sspc_change_handlers(struct lws_sspc_handle *h,
+	lws_ss_state_return_t (*rx)(void *userobj, const uint8_t *buf,
+				    size_t len, int flags),
+	lws_ss_state_return_t (*tx)(void *userobj, lws_ss_tx_ordinal_t ord,
+				    uint8_t *buf, size_t *len, int *flags),
+	lws_ss_state_return_t (*state)(void *userobj, void *h_src
+					/* ss handle type */,
+				       lws_ss_constate_t state,
+				       lws_ss_tx_ordinal_t ack));
+

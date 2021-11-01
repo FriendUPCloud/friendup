@@ -45,6 +45,7 @@
 	`Information` TEXT DEFAULT NULL,
 	`LoginTime` bigint(32) NOT NULL,
 	`Device` varchar(255) DEFAULT NULL,
+	`Password' varchar(255) DEFAULT NULL,
 	PRIMARY KEY (`ID`)
  ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 	 */
@@ -62,6 +63,7 @@ typedef struct UserLogin
 	char						*ul_Failed;
 	char						*ul_Information;
 	char						*ul_Device;
+	char						*ul_Password;
 	time_t						ul_LoginTime;
 }UserLogin;
 
@@ -79,6 +81,7 @@ static FULONG UserLoginDesc[] = {
 	SQLT_STR,     (FULONG)"Information",    offsetof( struct UserLogin, ul_Information ),
 	SQLT_INT,     (FULONG)"LoginTime", offsetof( struct UserLogin, ul_LoginTime ),
 	SQLT_STR,     (FULONG)"Device",    offsetof( struct UserLogin, ul_Device ),
+	SQLT_STR,     (FULONG)"Password",    offsetof( struct UserLogin, ul_Password ),
 	SQLT_NODE,    (FULONG)"node",        offsetof( struct UserLogin, node ),
 	SQLT_END 
 };
@@ -121,7 +124,8 @@ typedef struct UserSessListEntry
 enum {
 USER_STATUS_ENABLED = 0,
 USER_STATUS_DISABLED,
-USER_STATUS_BLOCKED
+USER_STATUS_BLOCKED,
+USER_STATUS_TO_BE_REMOVED
 };
 
 //
@@ -176,7 +180,47 @@ typedef struct User
 	char						*u_UUID;						// unique ID
 	char						*u_Timezone;					// timezone
 	int							u_InUse;						// usage counter
+	FBOOL						u_ChangeState;					// if user session list is in change state
 } User;
+
+//
+//
+//
+
+#ifndef USER_CHANGE_ON
+#define USER_CHANGE_ON( USR ) \
+while( ( USR->u_InUse > 0 && USR->u_ChangeState == TRUE ) ){ usleep( 2000 ); } \
+if( FRIEND_MUTEX_LOCK( &(USR->u_Mutex) ) == 0 ){ \
+	USR->u_ChangeState = TRUE; \
+	FRIEND_MUTEX_UNLOCK( &(USR->u_Mutex) ); \
+}
+#endif
+
+#ifndef USER_CHANGE_OFF
+#define USER_CHANGE_OFF( USR ) \
+if( FRIEND_MUTEX_LOCK( &(USR->u_Mutex) ) == 0 ){ \
+	USR->u_ChangeState = FALSE; \
+	FRIEND_MUTEX_UNLOCK( &(USR->u_Mutex) ); \
+}
+#endif
+
+#ifndef USER_LOCK
+#define USER_LOCK( USR ) \
+while( USR->u_ChangeState != FALSE ){ usleep( 2000 ); } \
+if( FRIEND_MUTEX_LOCK( &(USR->u_Mutex) ) == 0 ){ \
+	USR->u_InUse++; \
+	FRIEND_MUTEX_UNLOCK( &(USR->u_Mutex) ); \
+}
+#endif
+
+#ifndef USER_UNLOCK
+#define USER_UNLOCK( USR ) \
+if( FRIEND_MUTEX_LOCK( &(USR->u_Mutex) ) == 0 ){ \
+	USR->u_InUse--; \
+	FRIEND_MUTEX_UNLOCK( &(USR->u_Mutex) ); \
+}
+#endif
+
 
 //
 //
@@ -230,6 +274,12 @@ int UserAddDevice( User *usr, File *file );
 //
 //
 
+void UserReleaseDrives( User *usr, void *sb );
+
+//
+//
+//
+
 File *UserRemDeviceByName( User *usr, const char *name, int *error );
 
 //
@@ -275,7 +325,25 @@ void UserRemoveFromGroups( User *u );
 FBOOL UserIsInGroup( User *usr, FULONG gid );
 
 //
+//
+//
+
+void UserRemoveConnectedSessions( User *usr, FBOOL release );
+
+//
 // SQL structure
+//
+
+void UserListSessions( User* usr, BufString *bs, void *sb );
+
+//
+//
+//
+
+void UserNotifyFSEvent2( User *u, char *evt, char *path );
+
+//
+//
 //
 
 static FULONG UserDesc[] = { 

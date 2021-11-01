@@ -50,11 +50,11 @@ lws_prepare_access_log_info(struct lws *wsi, char *uri_ptr, int uri_len, int met
 	int l = 256, m;
 	struct tm *tmp;
 
-	if (!wsi->vhost)
+	if (!wsi->a.vhost)
 		return;
 
 	/* only worry about preparing it if we store it */
-	if (wsi->vhost->log_fd == (int)LWS_INVALID_FILE)
+	if (wsi->a.vhost->log_fd == (int)LWS_INVALID_FILE)
 		return;
 
 	if (wsi->access_log_pending)
@@ -70,10 +70,13 @@ lws_prepare_access_log_info(struct lws *wsi, char *uri_ptr, int uri_len, int met
 	else
 		strcpy(da, "01/Jan/1970:00:00:00 +0000");
 
+#if defined(LWS_ROLE_H2)
 	if (wsi->mux_substream)
 		me = lws_hdr_simple_ptr(wsi, WSI_TOKEN_HTTP_COLON_METHOD);
 	else
+#endif
 		me = method_names[meth];
+
 	if (!me)
 		me = "(null)";
 
@@ -138,10 +141,10 @@ lws_access_log(struct lws *wsi)
 	     *p1 = wsi->http.access_log.referrer;
 	int l;
 
-	if (!wsi->vhost)
+	if (!wsi->a.vhost)
 		return 0;
 
-	if (wsi->vhost->log_fd == (int)LWS_INVALID_FILE)
+	if (wsi->a.vhost->log_fd == (int)LWS_INVALID_FILE)
 		return 0;
 
 	if (!wsi->access_log_pending)
@@ -173,7 +176,7 @@ lws_access_log(struct lws *wsi)
 
 	ass[sizeof(ass) - 1] = '\0';
 
-	if (write(wsi->vhost->log_fd, ass, l) != l)
+	if (write(wsi->a.vhost->log_fd, ass, l) != l)
 		lwsl_err("Failed to write log\n");
 
 	if (wsi->http.access_log.header_log) {

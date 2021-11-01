@@ -31,6 +31,7 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 	const char *local = i->protocol;
 	struct lws *wsi, *safe = NULL;
 	const struct lws_protocols *p;
+	size_t s = sizeof(struct lws);
 	const char *cisin[CIS_COUNT];
 	int tid = 0, n, m;
 	size_t size;
@@ -54,13 +55,30 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 
 	/* PHASE 1: create a bare wsi */
 
-	wsi = lws_zalloc(sizeof(struct lws), "client wsi");
+#if defined(LWS_WITH_EVENT_LIBS)
+	s += i->context->event_loop_ops->evlib_size_wsi;
+#endif
+
+	wsi = lws_zalloc(s, "client wsi");
 	if (wsi == NULL)
 		goto bail;
 
+#if defined(LWS_WITH_EVENT_LIBS)
+	wsi->evlib_wsi = (uint8_t *)wsi + sizeof(*wsi);
+#endif
 
+	/*
+	 * Until we exit, we can report connection failure directly to the
+	 * caller without needing to call through to protocol CONNECTION_ERROR.
+	 */
+	wsi->client_suppress_CONNECTION_ERROR = 1;
 
-	wsi->context = i->context;
+	if (i->keep_warm_secs)
+		wsi->keep_warm_secs = i->keep_warm_secs;
+	else
+		wsi->keep_warm_secs = 5;
+
+	wsi->a.context = i->context;
 	wsi->desc.sockfd = LWS_SOCK_INVALID;
 	wsi->seq = i->seq;
 	wsi->flags = i->ssl_connection;
@@ -74,23 +92,31 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 		wsi->detlat.earliest_write_req_pre_write = lws_now_usecs();
 #endif
 
-	wsi->vhost = NULL;
+	if (i->ssl_connection & LCCSCF_WAKE_SUSPEND__VALIDITY)
+		wsi->conn_validity_wakesuspend = 1;
+
+	wsi->a.vhost = NULL;
 	if (!i->vhost) {
 		struct lws_vhost *v = i->context->vhost_list;
-		if (v && !strcmp(v->name, "system"))
+
+		if (!v) { /* coverity */
+			lwsl_err("%s: no vhost\n", __func__);
+			goto bail;
+		}
+		if (!strcmp(v->name, "system"))
 			v = v->vhost_next;
 		lws_vhost_bind_wsi(v, wsi);
 	} else
 		lws_vhost_bind_wsi(i->vhost, wsi);
 
-	if (!wsi->vhost) {
+	if (!wsi->a.vhost) {
 		lwsl_err("%s: No vhost in the context\n", __func__);
 
 		goto bail;
 	}
 
 #if LWS_MAX_SMP > 1
-	tid = wsi->vhost->protocols[0].callback(wsi, LWS_CALLBACK_GET_THREAD_ID,
+	tid = wsi->a.vhost->protocols[0].callback(wsi, LWS_CALLBACK_GET_THREAD_ID,
 						NULL, NULL, 0);
 #endif
 
@@ -152,7 +178,7 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 	wsi->txc.manual_initial_tx_credit = (int32_t)i->manual_initial_tx_credit;
 #endif
 
-	wsi->protocol = &wsi->vhost->protocols[0];
+	wsi->a.protocol = &wsi->a.vhost->protocols[0];
 	wsi->client_pipeline = !!(i->ssl_connection & LCCSCF_PIPELINE);
 	wsi->client_no_follow_redirect = !!(i->ssl_connection &
 					    LCCSCF_HTTP_NO_FOLLOW_REDIRECT);
@@ -168,16 +194,16 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 	}
 
 	if (local) {
-		lwsl_info("%s: protocol binding to %s\n", __func__, local);
-		p = lws_vhost_name_to_protocol(wsi->vhost, local);
+		lwsl_info("%s: vh %s protocol binding to %s\n", __func__, wsi->a.vhost->name, local);
+		p = lws_vhost_name_to_protocol(wsi->a.vhost, local);
 		if (p)
 			lws_bind_protocol(wsi, p, __func__);
 		else
-			lwsl_err("%s: unknown protocol %s\n", __func__, local);
+			lwsl_info("%s: unknown protocol %s\n", __func__, local);
 
 		lwsl_info("%s: wsi %p: %s %s entry\n",
 			    __func__, wsi, wsi->role_ops->name,
-			    wsi->protocol ? wsi->protocol->name : "none");
+			    wsi->a.protocol ? wsi->a.protocol->name : "none");
 	}
 
 	/*
@@ -237,7 +263,7 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 	/* all the pointers default to NULL, but no need to zero the args */
 	memset(wsi->stash, 0, sizeof(*wsi->stash));
 
-	wsi->opaque_user_data = wsi->stash->opaque_user_data =
+	wsi->a.opaque_user_data = wsi->stash->opaque_user_data =
 		i->opaque_user_data;
 	pc = (char *)&wsi->stash[1];
 
@@ -301,9 +327,9 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 	     !strcmp(i->local_protocol_name, "raw-proxy"))) {
 		lwsl_debug("%s: wsi %p: adoption cb %d to %s %s\n", __func__,
 			   wsi, wsi->role_ops->adoption_cb[0],
-			   wsi->role_ops->name, wsi->protocol->name);
+			   wsi->role_ops->name, wsi->a.protocol->name);
 
-		wsi->protocol->callback(wsi, wsi->role_ops->adoption_cb[0],
+		wsi->a.protocol->callback(wsi, wsi->role_ops->adoption_cb[0],
 				wsi->user_space, NULL, 0);
 	}
 
@@ -347,10 +373,18 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 		}
 #endif
 
+
 		/* fallthru */
 
-		lws_http_client_connect_via_info2(wsi);
+		wsi = lws_http_client_connect_via_info2(wsi);
 	}
+
+	if (wsi)
+		/*
+		 * If it subsequently fails, report CONNECTION_ERROR,
+		 * because we're going to return a non-error return now.
+		 */
+		wsi->client_suppress_CONNECTION_ERROR = 0;
 
 	return wsi;
 
@@ -370,8 +404,10 @@ bail:
 bail2:
 #endif
 
+#if defined(LWS_WITH_TLS)
 	if (i->ssl_connection & LCCSCF_USE_SSL)
 		lws_tls_restrict_return(i->context);
+#endif
 
 	if (i->pwsi)
 		*i->pwsi = NULL;

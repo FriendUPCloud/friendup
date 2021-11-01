@@ -30,8 +30,14 @@ rops_handle_POLLIN_pipe(struct lws_context_per_thread *pt, struct lws *wsi,
 {
 #if defined(LWS_HAVE_EVENTFD)
 	eventfd_t value;
-	if (eventfd_read(wsi->desc.sockfd, &value) < 0)
+	int n;
+
+	n = eventfd_read(wsi->desc.sockfd, &value);
+	if (n < 0) {
+		lwsl_notice("%s: eventfd read %d bailed errno %d\n", __func__,
+				wsi->desc.sockfd, LWS_ERRNO);
 		return LWS_HPI_RET_PLEASE_CLOSE_ME;
+	}
 #elif !defined(WIN32) && !defined(_WIN32)
 	char s[100];
 	int n;
@@ -56,6 +62,30 @@ rops_handle_POLLIN_pipe(struct lws_context_per_thread *pt, struct lws *wsi,
 	 * from the correct service thread context
 	 */
 	lws_threadpool_tsi_context(pt->context, pt->tid);
+#endif
+
+#if LWS_MAX_SMP > 1
+
+	/*
+	 * Other pts need to take care of their own wsi bound to a vhost that
+	 * is going down
+	 */
+
+	if (pt->context->owner_vh_being_destroyed.head) {
+
+		lws_start_foreach_dll_safe(struct lws_dll2 *, d, d1,
+				      pt->context->owner_vh_being_destroyed.head) {
+			struct lws_vhost *v =
+				lws_container_of(d, struct lws_vhost,
+						 vh_being_destroyed_list);
+
+			lws_vhost_lock(v); /* -------------- vh { */
+			__lws_vhost_destroy_pt_wsi_dieback_start(v);
+			lws_vhost_unlock(v); /* } vh -------------- */
+
+		} lws_end_foreach_dll_safe(d, d1);
+	}
+
 #endif
 
 	/*

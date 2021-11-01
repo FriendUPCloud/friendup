@@ -38,6 +38,8 @@ Workspace = {
 	themeOverride: false,
 	systemInfo: false,
 	lastfileSystemChangeMessage: false,
+	userSettingsLoaded: false, // Tell when user settings loaded
+	desktopFirstRefresh: false, // Tell when workspace first refreshed
 	serverIsThere: false,
 	runLevels: [
 		{
@@ -741,7 +743,7 @@ Workspace = {
 			return ( vars.length > 0 ? ( '?' + vars.join( '&' ) ) : '' );
 		}
 		
-		var lp = new View( {
+		let lp = new View( {
 			id: 'Login',
 			width: 432,
 			'min-width': 290,
@@ -754,6 +756,65 @@ Workspace = {
 			login: true,
 			theme: 'login'
 		} );
+		lp.limitless = true;
+		lp.onMessage = function( msg )
+		{
+			if( msg && msg.type && msg.src && msg.action == 'openWindow' )
+			{
+				switch( msg.type )
+				{
+					
+					case 'eula':
+					{
+						let v = new View( {
+							title: 'LoginPopup',
+							width: 432,
+							height: 480,
+							resize: false
+						} );
+						
+						let f = new XMLHttpRequest();
+						f.open( 'POST', '/webclient/templates/EULA.html', true, true );
+						f.onload = function()
+						{
+							let t = this.responseText + '';
+							t += '<hr class="Divider"/>\
+								<div class="ContractAcceptReject">\
+									<button type="button" class="IconSmall fa-remove" onclick="CloseView()"> Close</button>\
+								</div>';
+							v.setContent( t );
+						}
+						f.send();
+					}
+					break;
+						
+					case 'privacypolicy':
+					{
+						let v = new View( {
+							title: 'LoginPopup',
+							width: 432,
+							height: 480,
+							resize: false
+						} );
+						
+						let f = new XMLHttpRequest();
+						f.open( 'POST', '/webclient/templates/PrivacyPolicy.html', true, true );
+						f.onload = function()
+						{
+							let t = this.responseText + '';
+							t += '<hr class="Divider"/>\
+								<div class="ContractAcceptReject">\
+									<button type="button"  class="IconSmall fa-remove" onclick="CloseView()"> Close</button>\
+								</div>';
+							v.setContent( t );
+						}
+						f.send();
+					}
+					break;
+					
+				}
+			}
+		}
 		lp.setRichContentUrl( '/loginprompt' + allowedHashVars() );
 		Workspace.loginPrompt = lp;
 
@@ -987,16 +1048,16 @@ Workspace = {
 				}
 
 				setupWorkspaceData( json );
-
+				
 				// Language
 				_this.locale = 'en';
-				var l = new Module( 'system' );
+				let l = new Module( 'system' );
 				l.onExecuted = function( e, d )
 				{
 					// New translations
 					i18n_translations = [];
 					
-					var decoded = false;
+					let decoded = false;
 					try
 					{
 						decoded = JSON.parse( d );
@@ -1047,11 +1108,11 @@ Workspace = {
 				LoadWindowStorage();
 
 				// Set up a shell instance for the workspace
-				var uid = FriendDOS.addSession( _this );
+				let uid = FriendDOS.addSession( _this );
 				_this.shell = FriendDOS.getSession( uid );
 				
 				// We're getting the theme set in an url var
-				var th = '';
+				let th = '';
 				if( ( th = GetUrlVar( 'theme' ) ) )
 				{
 					_this.refreshTheme( th, false );
@@ -1066,10 +1127,10 @@ Workspace = {
 				else
 				{
 					// Check eula
-					var m = new Module( 'system' );
+					let m = new Module( 'system' );
 					m.onExecuted = function( e, d )
 					{	
-						var m = new Module( 'system' );
+						let m = new Module( 'system' );
 						m.onExecuted = function( ee, dd )
 						{
 					        if( ee != 'ok' )
@@ -1095,9 +1156,21 @@ Workspace = {
 						// When eula is displayed or not
 						function afterEula( e )
 						{
+							// Invites
+							if( json.inviteHash )
+							{
+								let inv = new Module( 'system' );
+								inv.onExecuted = function( err, dat )
+								{
+									// TODO: Make some better error handling ...
+									if( err != 'ok' ) console.log( '[ERROR] verifyinvite: ' + ( dat ? dat : err ) );
+								}
+								inv.execute( 'verifyinvite', { hash: json.inviteHash } );
+							}
+							
 							if( e == 'ok' )
 							{
-								var s = {};
+								let s = {};
 								try
 								{
 									s = JSON.parse( d );

@@ -47,6 +47,20 @@ typedef struct SinkProcessMessage{
 	void *udata;
 }SinkProcessMessage;
 
+
+const char *errorMsg[] =
+{
+	"Success",
+	"Json cannot be parsed",
+	"Websockets were not authenticated",
+	"Notification type not found",
+	"Authentication failed",
+	"No authentication elements in message",
+	"Parameters not found",
+	"JSON Tokens not found (request is not in JSON format probably)"
+	
+};
+
 int globalServerEntriesNr = 0;
 char **globalServerEntries = NULL;
 
@@ -162,6 +176,7 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 					FQInit( &(locd->d_Queue) );
 					locd->d_Authenticated = TRUE;
 					man->man_Data = locd;
+					man->man_BufString = NULL;
 				}
 			}
 		}
@@ -199,6 +214,13 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 					FFree( d );
 				}	
 				man->man_Data = NULL;
+				
+				if( man->man_BufString != NULL )
+				{
+					BufStringDelete( man->man_BufString );
+					man->man_BufString = NULL;
+				}
+				
 				DEBUG("[NotificationSink] CLOSE, connection closed\n");
 			}
 		}
@@ -263,6 +285,43 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 		
 		case LWS_CALLBACK_RECEIVE:
 		{
+			if( man->man_BufString == NULL )
+			{
+				man->man_BufString = BufStringNew();
+			}
+			
+			const size_t remaining = lws_remaining_packet_payload( wsi );
+			// if nothing left and this is last message
+			
+			int isFinal = lws_is_final_fragment( wsi );
+			
+			Log( FLOG_DEBUG, "[LWS_CALLBACK_RECEIVE] remaining: %d isFinal: %d\n", remaining, isFinal );
+			
+			if( !remaining && isFinal )
+			{
+				BufStringAddSize( man->man_BufString, buf, len );
+				
+				if( man->man_BufString->bs_Size > 0 )
+				{
+					DataQWSIM *d = (DataQWSIM *)man->man_Data;
+					ProcessIncomingRequest( d, man->man_BufString->bs_Buffer, man->man_BufString->bs_Size, user );
+				
+					man->man_BufString->bs_Buffer = NULL;
+					BufStringDelete( man->man_BufString );
+					man->man_BufString = NULL;
+				}
+
+				//DEBUG1("[WS] Callback receive (no remaining): %s\n", in );
+			}
+			else // only fragment was received
+			{
+				Log( FLOG_DEBUG, "[LWS_CALLBACK_RECEIVE] Only received: %s\n", (char *)buf );
+				if( man != NULL && man->man_BufString != NULL )
+				{
+					BufStringAddSize( man->man_BufString, buf, len );
+				}
+			}
+			/*
 			MobileAppNotif *man = (MobileAppNotif *)user;
 			if( man != NULL && man->man_Data != NULL )
 			{
@@ -270,6 +329,7 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 				ProcessIncomingRequest( d, buf, len, user );
 				buf = NULL;
 			}
+			*/
 		}
 		break;
 	}
@@ -884,6 +944,7 @@ void ProcessSinkMessage( void *locd )
 						if( strncmp( data + t[6].start, "room", msize) == 0) 
 						{
 							char *reqid = NULL;
+							char *resp = NULL;
 							//{"type":"service","data":{"type":"room","data":{"type":"create","requestid":"EXTSER_1581518992698024_ID","data":{"ownerUserId":"df0499e006056004359160d3041d95b0","name":"blabla"}}}}
 							
 							
@@ -898,7 +959,16 @@ void ProcessSinkMessage( void *locd )
 								reqid = StringDuplicateN( data + t[10].start, t[10].end - t[10].start );
 							}
 							
-							if( NotificationManagerAddIncomingRequestES( SLIB->sl_NotificationManager, reqid, StringDuplicate( data ) ) != 0 )
+							if( strncmp( data + t[11].start, "response", t[11].end - t[11].start) == 0) 
+							{
+								resp = StringDuplicateN( data + t[12].start, t[12].end - t[12].start );
+							}
+							
+							/*
+							{"type":"service","data":{"type":"room","data":{"requestId":"EXTSER_1582796558924629_ID","response":{"roomId":"room-a9796bc3-6003-45d2-a019-e28d93e8aa6e","ownerId":"acc-688bf91c-97e5-4669-93a3-72e19a1f0fd0","name":"boop","invite":{"type":"public","data":{"token":"pub-9ecca629-17ab-4851-9b3d-0e072e643fb9","host":"yelena.friendup.vm:27970"}}},"error":null}}}
+							 */
+							
+							if( NotificationManagerAddIncomingRequestES( SLIB->sl_NotificationManager, reqid, resp ) != 0 )
 							{
 								FERROR("Notification from external service could not be added to queue!\n");
 							}
@@ -974,12 +1044,12 @@ void WebsocketNotificationsSetAuthKey( const char *key )
 static int ReplyError( DataQWSIM *d, int error_code )
 {
 #ifdef WEBSOCKET_SEND_QUEUE
-	char response[ LWS_PRE+64 ];
-	int size = snprintf(response, sizeof(response), "{\"type\":\"error\",\"data\":{\"status\":%d}}", error_code);
+	char response[ LWS_PRE+128 ];
+	int size = snprintf(response, sizeof(response), "{\"type\":\"error\",\"data\":{\"status\":%d,\"message\":\"%s\"}}", error_code, errorMsg[ error_code ] );
 	WriteMessageSink( d, (unsigned char *)response, size );
 #else
 	char response[ LWS_PRE+64 ];
-	snprintf(response+LWS_PRE, sizeof(response)-LWS_PRE, "{\"type\":\"error\",\"data\":{\"status\":%d}}", error_code);
+	snprintf(response+LWS_PRE, sizeof(response)-LWS_PRE, "{\"type\":\"error\",\"data\":{\"status\":%d,\"message\":\"%s\"}}", error_code, errorMsg[ error_code ] );
 	DEBUG("Error response: %s\n", response+LWS_PRE);
 
 	DEBUG("WSI %p\n", wsi);

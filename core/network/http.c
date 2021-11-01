@@ -1940,6 +1940,7 @@ void HttpFree( Http* http )
 		remFile = curFile;
 		curFile = ( HttpFile * )curFile->node.mln_Succ;
 		HttpFileDelete( remFile );
+		remFile = NULL;
 	}
 	
 	//if( http->http_PartDivider )
@@ -2061,6 +2062,7 @@ void HttpFreeRequest( Http* http )
 		remFile = curFile;
 		curFile = (HttpFile *)curFile->node.mln_Succ;
 		HttpFileDelete( remFile );
+		remFile = NULL;
 	}
 	//DEBUG("Free http\n");
 
@@ -2261,6 +2263,12 @@ void HttpAddTextContent( Http* http, char* content )
 inline static void compressDataDeflate( Http *http, unsigned char *storePtr, FQUAD *outputLen )
 {
 	FQUAD compressedLength = 0;
+	
+	if( http->http_SizeOfContent <= 0 )
+	{
+		*outputLen = compressedLength;
+		return;
+	}
 	
 	z_stream strm;
 	strm.zalloc = Z_NULL;

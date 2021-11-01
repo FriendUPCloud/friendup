@@ -98,7 +98,7 @@ static const char *DefaultDictionaryMessages[] =
 "User Mobile App entry not found",
 "File uncompress problem: %d",
 "Application not found: %s",
-"Application Session not found"
+"Application Session not found",
 "USB Remote device cannot be created",
 "USB Remote device cannot be removed",
 "Cannot remove group with 'Level' type",

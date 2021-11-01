@@ -84,12 +84,14 @@ typedef struct ss_proxy_onward {
 
 /* secure streams payload interface */
 
-static int
+static lws_ss_state_return_t
 ss_proxy_onward_rx(void *userobj, const uint8_t *buf, size_t len, int flags)
 {
 	ss_proxy_t *m = (ss_proxy_t *)userobj;
 	const char *rsp = NULL;
 	int n;
+
+	// lwsl_notice("%s: len %d\n", __func__, (int)len);
 
 	/*
 	 * The onward secure stream connection has received something.
@@ -114,7 +116,7 @@ ss_proxy_onward_rx(void *userobj, const uint8_t *buf, size_t len, int flags)
  * we are transmitting buffered payload originally from the client on to the ss
  */
 
-static int
+static lws_ss_state_return_t
 ss_proxy_onward_tx(void *userobj, lws_ss_tx_ordinal_t ord, uint8_t *buf,
 		   size_t *len, int *flags)
 {
@@ -122,7 +124,7 @@ ss_proxy_onward_tx(void *userobj, lws_ss_tx_ordinal_t ord, uint8_t *buf,
 	void *p;
 	size_t si;
 
-	if (!m->conn->ss || m->conn->state != LPCS_OPERATIONAL) {
+	if (!m->conn->ss || m->conn->state != LPCSPROX_OPERATIONAL) {
 		lwsl_notice("%s: ss not ready\n", __func__);
 		*len = 0;
 
@@ -159,7 +161,7 @@ ss_proxy_onward_tx(void *userobj, lws_ss_tx_ordinal_t ord, uint8_t *buf,
 	return 0;
 }
 
-static int
+static lws_ss_state_return_t
 ss_proxy_onward_state(void *userobj, void *sh,
 		      lws_ss_constate_t state, lws_ss_tx_ordinal_t ack)
 {
@@ -225,7 +227,7 @@ static int
 callback_ss_proxy(struct lws *wsi, enum lws_callback_reasons reason,
 		  void *user, void *in, size_t len)
 {
-	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
+	struct lws_context_per_thread *pt = &wsi->a.context->pt[(int)wsi->tsi];
 	struct raw_pss *pss = (struct raw_pss *)user;
 	const lws_ss_policy_t *rsp;
 	struct conn *conn = NULL;
@@ -270,7 +272,7 @@ callback_ss_proxy(struct lws *wsi, enum lws_callback_reasons reason,
 		}
 
 		pss->conn->wsi = wsi;
-		pss->conn->state = LPCS_WAIT_INITIAL_TX;
+		pss->conn->state = LPCSPROX_WAIT_INITIAL_TX;
 
 		/*
 		 * Client is expected to follow the unix domain socket
@@ -284,20 +286,35 @@ callback_ss_proxy(struct lws *wsi, enum lws_callback_reasons reason,
 	case LWS_CALLBACK_RAW_CLOSE:
 		lwsl_info("LWS_CALLBACK_RAW_CLOSE:\n");
 
-		/*
-		 * the client unix domain socket connection has closed...
-		 * eg, client has exited or otherwise has definitively finished
-		 * with the proxying and onward connection
-		 */
-
 		if (!conn)
 			break;
 
+		/*
+		 * the client unix domain socket connection (wsi / conn->wsi)
+		 * has closed... eg, client has exited or otherwise has
+		 * definitively finished with the proxying and onward connection
+		 *
+		 * But right now, the SS and possibly the SS onward wsi are
+		 * still live...
+		 */
+
 		if (conn->ss) {
-			lwsl_info("%s: destroying ss\n", __func__);
+			struct lws *cw = conn->ss->wsi;
+			/*
+			 * The onward connection is around
+			 */
+			lwsl_info("%s: destroying ss.h=%p, ss.wsi=%p\n",
+					__func__, conn->ss, conn->ss->wsi);
 			/* sever relationship with ss about to be deleted */
 			lws_set_opaque_user_data(wsi, NULL);
-
+			if (wsi != cw)
+				/*
+				 * The wsi doing the onward connection can no
+				 * longer relate to the conn... otherwise when
+				 * he gets callbacks he wants to bind to
+				 * the ss we are about to delete
+				 */
+				lws_wsi_close(cw, LWS_TO_KILL_ASYNC);
 			conn->wsi = NULL;
 
 
@@ -306,7 +323,7 @@ callback_ss_proxy(struct lws *wsi, enum lws_callback_reasons reason,
 			break;
 		}
 
-		if (conn->state == LPCS_DESTROYED || !conn->ss) {
+		if (conn->state == LPCSPROX_DESTROYED || !conn->ss) {
 			/*
 			 * There's no onward secure stream and our client
 			 * connection is closing.  Destroy the conn.
@@ -320,6 +337,9 @@ callback_ss_proxy(struct lws *wsi, enum lws_callback_reasons reason,
 		break;
 
 	case LWS_CALLBACK_RAW_RX:
+		/*
+		 * ie, the proxy is receiving something from a client
+		 */
 		lwsl_info("%s: RX: rx %d\n", __func__, (int)len);
 
 		if (!conn || !conn->wsi) {
@@ -330,7 +350,7 @@ callback_ss_proxy(struct lws *wsi, enum lws_callback_reasons reason,
 
 		// lwsl_hexdump_info(in, len);
 
-		if (conn->state == LPCS_WAIT_INITIAL_TX) {
+		if (conn->state == LPCSPROX_WAIT_INITIAL_TX) {
 			memset(&ssi, 0, sizeof(ssi));
 			ssi.user_alloc = sizeof(ss_proxy_t);
 			ssi.handle_offset = offsetof(ss_proxy_t, ss);
@@ -338,18 +358,26 @@ callback_ss_proxy(struct lws *wsi, enum lws_callback_reasons reason,
 					offsetof(ss_proxy_t, conn);
 			ssi.rx = ss_proxy_onward_rx;
 			ssi.tx = ss_proxy_onward_tx;
-			ssi.state = ss_proxy_onward_state;
 		}
+		ssi.state = ss_proxy_onward_state;
+		ssi.flags = 0;
 
-		if (lws_ss_deserialize_parse(&conn->parser,
+		n = lws_ss_deserialize_parse(&conn->parser,
 				lws_get_context(wsi), conn->dsh, in, len,
-				&conn->state, conn, &conn->ss, &ssi, 0)) {
-			lwsl_err("%s: RAW_RX: deserialize_parse fail\n", __func__);
+				&conn->state, conn, &conn->ss, &ssi, 0);
+		switch (n) {
+		case LWSSSSRET_OK:
+			break;
+		case LWSSSSRET_DISCONNECT_ME:
+			return -1;
+		case LWSSSSRET_DESTROY_ME:
+			if (conn->ss)
+				lws_ss_destroy(&conn->ss);
 			return -1;
 		}
 
-		if (conn->state == LPCS_REPORTING_FAIL ||
-		    conn->state == LPCS_REPORTING_OK)
+		if (conn->state == LPCSPROX_REPORTING_FAIL ||
+		    conn->state == LPCSPROX_REPORTING_OK)
 			lws_callback_on_writable(conn->wsi);
 
 		break;
@@ -370,10 +398,10 @@ callback_ss_proxy(struct lws *wsi, enum lws_callback_reasons reason,
 		s[3] = 0;
 		cp = (const uint8_t *)s;
 		switch (conn->state) {
-		case LPCS_REPORTING_FAIL:
+		case LPCSPROX_REPORTING_FAIL:
 			s[3] = 1;
 			/* fallthru */
-		case LPCS_REPORTING_OK:
+		case LPCSPROX_REPORTING_OK:
 			s[0] = LWSSS_SER_RXPRE_CREATE_RESULT;
 			s[1] = 0;
 			s[2] = 1;
@@ -385,21 +413,23 @@ callback_ss_proxy(struct lws *wsi, enum lws_callback_reasons reason,
 			 * first 4 bytes or the create result, comma-separated
 			 */
 
-			rsp = conn->ss->policy;
+			if (conn->ss) {
+				rsp = conn->ss->policy;
 
-			while (rsp) {
-				if (n != 4 && n < (int)sizeof(s) - 2)
-					s[n++] = ',';
-				n += lws_snprintf(&s[n], sizeof(s) - n,
-						"%s", rsp->streamtype);
-				rsp = lws_ss_policy_lookup(wsi->context,
-					rsp->rideshare_streamtype);
+				while (rsp) {
+					if (n != 4 && n < (int)sizeof(s) - 2)
+						s[n++] = ',';
+					n += lws_snprintf(&s[n], sizeof(s) - n,
+							"%s", rsp->streamtype);
+					rsp = lws_ss_policy_lookup(wsi->a.context,
+						rsp->rideshare_streamtype);
+				}
 			}
 			s[2] = n - 3;
-			conn->state = LPCS_OPERATIONAL;
+			conn->state = LPCSPROX_OPERATIONAL;
 			lws_set_timeout(wsi, 0, 0);
 			break;
-		case LPCS_OPERATIONAL:
+		case LPCSPROX_OPERATIONAL:
 			if (lws_dsh_get_head(conn->dsh, KIND_SS_TO_P,
 					     (void **)&p, &si))
 				break;
@@ -407,7 +437,7 @@ callback_ss_proxy(struct lws *wsi, enum lws_callback_reasons reason,
 
 #if defined(LWS_WITH_DETAILED_LATENCY)
 			if (cp[0] == LWSSS_SER_RXPRE_RX_PAYLOAD &&
-			    wsi->context->detailed_latency_cb) {
+			    wsi->a.context->detailed_latency_cb) {
 
 				/*
 				 * we're fulfilling rx that came in on ss
@@ -453,9 +483,9 @@ again:
 		}
 
 		switch (conn->state) {
-		case LPCS_REPORTING_FAIL:
+		case LPCSPROX_REPORTING_FAIL:
 			goto hangup;
-		case LPCS_OPERATIONAL:
+		case LPCSPROX_OPERATIONAL:
 			if (pay)
 				lws_dsh_free((void **)&p);
 			if (!lws_dsh_get_head(conn->dsh, KIND_SS_TO_P,
@@ -482,7 +512,7 @@ again:
 
 hangup:
 	//lws_ss_destroy(&conn->ss);
-	//conn->state = LPCS_DESTROYED;
+	//conn->state = LPCSPROX_DESTROYED;
 
 	/* hang up on him */
 	return -1;

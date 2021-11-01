@@ -87,7 +87,8 @@ lws_ssl_capable_write(struct lws *wsi, unsigned char *buf, int len);
 LWS_EXTERN int LWS_WARN_UNUSED_RESULT
 lws_ssl_pending(struct lws *wsi);
 LWS_EXTERN int LWS_WARN_UNUSED_RESULT
-lws_server_socket_service_ssl(struct lws *new_wsi, lws_sockfd_type accept_fd);
+lws_server_socket_service_ssl(struct lws *new_wsi, lws_sockfd_type accept_fd,
+				char is_pollin);
 LWS_EXTERN int
 lws_ssl_close(struct lws *wsi);
 LWS_EXTERN void
@@ -101,7 +102,7 @@ lws_ssl_remove_wsi_from_buffered_list(struct lws *wsi);
 LWS_EXTERN int
 lws_ssl_client_bio_create(struct lws *wsi);
 LWS_EXTERN int
-lws_ssl_client_connect1(struct lws *wsi);
+lws_ssl_client_connect1(struct lws *wsi, char *errbuf, int len);
 LWS_EXTERN int
 lws_ssl_client_connect2(struct lws *wsi, char *errbuf, int len);
 LWS_EXTERN int
@@ -157,7 +158,7 @@ LWS_EXTERN enum lws_ssl_capable_status
 __lws_tls_shutdown(struct lws *wsi);
 
 LWS_EXTERN enum lws_ssl_capable_status
-lws_tls_client_connect(struct lws *wsi);
+lws_tls_client_connect(struct lws *wsi, char *errbuf, int len);
 LWS_EXTERN int
 lws_tls_client_confirm_peer_cert(struct lws *wsi, char *ebuf, int ebuf_len);
 LWS_EXTERN int
@@ -170,7 +171,10 @@ lws_tls_client_create_vhost_context(struct lws_vhost *vh,
 			    const char *cert_filepath,
 			    const void *cert_mem,
 			    unsigned int cert_mem_len,
-			    const char *private_key_filepath);
+			    const char *private_key_filepath,
+			    const void *key_mem,
+			    unsigned int key_mem_len);
+
 
 LWS_EXTERN lws_tls_ctx *
 lws_tls_ctx_from_wsi(struct lws *wsi);

@@ -1,7 +1,7 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2020 Andy Green <andy@warmcat.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -32,17 +32,61 @@ lws_struct_schema_only_lejp_cb(struct lejp_ctx *ctx, char reason)
 {
 	lws_struct_args_t *a = (lws_struct_args_t *)ctx->user;
 	const lws_struct_map_t *map = a->map_st[ctx->pst_sp];
-	size_t n = a->map_entries_st[ctx->pst_sp];
+	size_t n = a->map_entries_st[ctx->pst_sp], imp = 0;
 	lejp_callback cb = map->lejp_cb;
+
+	if (reason == LEJPCB_PAIR_NAME && strcmp(ctx->path, "schema")) {
+		/*
+		 * If not "schema", the schema is implicit rather than
+		 * explicitly given, ie, he just goes ahead and starts using
+		 * member names that imply a particular type.  For example, he
+		 * may have an implicit type normally, and a different one for
+		 * exceptions that just starts using "error-message" or whatever
+		 * and we can understand that's the exception type now.
+		 *
+		 * Let's look into each of the maps in the top level array
+		 * and match the first one that mentions the name he gave here,
+		 * and bind to the associated type / create a toplevel object
+		 * of that type.
+		 */
+
+		while (n--) {
+			int m, child_members = (int)map->child_map_size;
+
+			for (m = 0; m < child_members; m++) {
+				const lws_struct_map_t *child = &map->child_map[m];
+				if (!strcmp(ctx->path, child->colname)) {
+					/*
+					 * We matched on him... map is pointing
+					 * to the right toplevel type, let's
+					 * just pick up from there as if we
+					 * matched the explicit schema name...
+					 */
+					ctx->path_match = 1;
+					imp = 1;
+					goto matched;
+				}
+			}
+			map++;
+		}
+		lwsl_notice("%s: can't match implicit schema %s\n",
+			    __func__, ctx->path);
+
+		return -1;
+	}
 
 	if (reason != LEJPCB_VAL_STR_END || ctx->path_match != 1)
 		return 0;
+
+	/* If "schema", then look for a matching name in the map array */
 
 	while (n--) {
 		if (strcmp(ctx->buf, map->colname)) {
 			map++;
 			continue;
 		}
+
+matched:
 
 		a->dest = lwsac_use_zero(&a->ac, map->aux, a->ac_block_size);
 		if (!a->dest) {
@@ -61,6 +105,12 @@ lws_struct_schema_only_lejp_cb(struct lejp_ctx *ctx, char reason)
 				 (uint8_t)map->child_map_size, cb);
 		a->map_st[ctx->pst_sp] = map->child_map;
 		a->map_entries_st[ctx->pst_sp] = map->child_map_size;
+
+		// lwsl_notice("%s: child map ofs_clist %d\n", __func__,
+		// 		(int)a->map_st[ctx->pst_sp]->ofs_clist);
+
+		if (imp)
+			return cb(ctx, reason);
 
 		return 0;
 	}
@@ -104,6 +154,8 @@ lws_struct_default_lejp_cb(struct lejp_ctx *ctx, char reason)
 	}
 
 	if (reason == LEJPCB_ARRAY_START) {
+		if (!ctx->path_match)
+			lwsl_err("%s: ARRAY_START with ctx->path_match 0\n", __func__);
 		map = &args->map_st[ctx->pst_sp][ctx->path_match - 1];
 
 		if (map->type == LSMT_LIST)
@@ -115,12 +167,19 @@ lws_struct_default_lejp_cb(struct lejp_ctx *ctx, char reason)
 	if (ctx->pst_sp)
 		pmap = &args->map_st[ctx->pst_sp - 1]
 	                 [ctx->pst[ctx->pst_sp - 1].path_match - 1];
-	map = &args->map_st[ctx->pst_sp][ctx->path_match - 1];
-	n = args->map_entries_st[ctx->pst_sp];
 
 	if (reason == LEJPCB_OBJECT_START) {
 
-		if (map->type != LSMT_CHILD_PTR) {
+		if (!ctx->path_match) {
+			ctx->pst[ctx->pst_sp].user = NULL;
+
+			return 0;
+		}
+
+		map = &args->map_st[ctx->pst_sp][ctx->path_match - 1];
+		n = args->map_entries_st[ctx->pst_sp];
+
+		if (map->type != LSMT_CHILD_PTR && map->type != LSMT_LIST) {
 			ctx->pst[ctx->pst_sp].user = NULL;
 
 			return 0;
@@ -128,17 +187,27 @@ lws_struct_default_lejp_cb(struct lejp_ctx *ctx, char reason)
 		pmap = map;
 
 		lws_struct_lejp_push(ctx, args, map, NULL);
-		map = &args->map_st[ctx->pst_sp][ctx->path_match - 1];
-		n = args->map_entries_st[ctx->pst_sp];
 	}
 
-	if (reason == LEJPCB_OBJECT_END && pmap && pmap->type == LSMT_CHILD_PTR)
-		lejp_parser_pop(ctx);
+	if (reason == LEJPCB_OBJECT_END && pmap) {
+		if (pmap->type == LSMT_CHILD_PTR)
+			lejp_parser_pop(ctx);
+
+		if (ctx->pst_sp)
+			pmap = &args->map_st[ctx->pst_sp - 1]
+		                 [ctx->pst[ctx->pst_sp - 1].path_match - 1];
+	}
+
+	if (!ctx->path_match)
+		return 0;
+
+	map = &args->map_st[ctx->pst_sp][ctx->path_match - 1];
+	n = args->map_entries_st[ctx->pst_sp];
 
 	if (map->type == LSMT_SCHEMA) {
 
 		while (n--) {
-			if (strcmp(map->colname, ctx->buf)) {
+			if (strncmp(map->colname, ctx->buf, ctx->npos)) {
 				map++;
 				continue;
 			}
@@ -157,7 +226,9 @@ lws_struct_default_lejp_cb(struct lejp_ctx *ctx, char reason)
 
 			return 0;
 		}
-		lwsl_notice("%s: unknown schema\n", __func__);
+		lwsl_notice("%s: unknown schema %.*s, tried %d\n", __func__,
+				ctx->npos, ctx->buf,
+				(int)args->map_entries_st[ctx->pst_sp]);
 
 		goto cleanup;
 	}
@@ -173,6 +244,9 @@ lws_struct_default_lejp_cb(struct lejp_ctx *ctx, char reason)
 
 		map = &args->map_st[ctx->pst_sp - 1][ctx->path_match - 1];
 		n = args->map_entries_st[ctx->pst_sp - 1];
+
+		if (!ctx->pst_sp)
+			return 0;
 
 		if (pmap->type != LSMT_LIST && pmap->type != LSMT_CHILD_PTR)
 			return 1;
@@ -193,12 +267,13 @@ lws_struct_default_lejp_cb(struct lejp_ctx *ctx, char reason)
 
 			return 1;
 		}
-		lwsl_notice("%s: created child object size %d\n", __func__,
-				(int)pmap->aux);
+		lwsl_info("%s: created '%s' object size %d\n", __func__,
+				pmap->colname, (int)pmap->aux);
 
 		if (pmap->type == LSMT_LIST) {
-			list = (struct lws_dll2 *)((char *)ctx->pst[ctx->pst_sp].user +
-				map->ofs_clist);
+			list = (struct lws_dll2 *)
+				 ((char *)ctx->pst[ctx->pst_sp].user +
+				 pmap->ofs_clist);
 
 			lws_dll2_add_tail(list, owner);
 		}
@@ -395,6 +470,10 @@ static const char * schema[] = { "schema" };
 int
 lws_struct_json_init_parse(struct lejp_ctx *ctx, lejp_callback cb, void *user)
 {
+	/*
+	 * By default we are looking to match on a toplevel member called
+	 * "schema", against an LSM_SCHEMA
+	 */
 	if (!cb)
 		cb = lws_struct_schema_only_lejp_cb;
 	lejp_construct(ctx, cb, user, schema, 1);
@@ -478,6 +557,10 @@ lws_struct_json_serialize(lws_struct_serialize_t *js, uint8_t *buf,
 		/* early check if the entry should be elided */
 
 		switch (map->type) {
+		case LSMT_STRING_CHAR_ARRAY:
+			if (!q)
+				goto up;
+			break;
 		case LSMT_STRING_PTR:
 		case LSMT_CHILD_PTR:
 			q = (char *)*(char **)q;
@@ -491,6 +574,9 @@ lws_struct_json_serialize(lws_struct_serialize_t *js, uint8_t *buf,
 			if (!p)
 				goto up;
 			break;
+
+		case LSMT_BLOB_PTR:
+			goto up;
 
 		default:
 			break;
@@ -627,13 +713,15 @@ lws_struct_json_serialize(lws_struct_serialize_t *js, uint8_t *buf,
 			len--;
 			j = &js->st[++js->sp];
 			lws_struct_pretty(js, &buf, &len);
-			budget = lws_snprintf(dbuf, 15, "\"schema\":");
-			if (js->flags & LSSERJ_FLAG_PRETTY)
-				dbuf[budget++] = ' ';
+			if (!(js->flags & LSSERJ_FLAG_OMIT_SCHEMA)) {
+				budget = lws_snprintf(dbuf, 15, "\"schema\":");
+				if (js->flags & LSSERJ_FLAG_PRETTY)
+					dbuf[budget++] = ' ';
 
-			budget += lws_snprintf(dbuf + budget,
-					       sizeof(dbuf) - budget,
-					      "\"%s\"", map->colname);
+				budget += lws_snprintf(dbuf + budget,
+						       sizeof(dbuf) - budget,
+						       "\"%s\"", map->colname);
+			}
 
 
 			if (js->sp != 1)
@@ -645,9 +733,12 @@ lws_struct_json_serialize(lws_struct_serialize_t *js, uint8_t *buf,
 			j->map_entry = 0;
 			j->obj = js->st[js->sp - 1].obj;
 			j->dllpos = NULL;
-			/* we're actually at the same level */
-			j->subsequent = 1;
+			if (!(js->flags & LSSERJ_FLAG_OMIT_SCHEMA))
+				/* we're actually at the same level */
+				j->subsequent = 1;
 			j->idt = 1;
+			break;
+		default:
 			break;
 		}
 
@@ -671,7 +762,7 @@ lws_struct_json_serialize(lws_struct_serialize_t *js, uint8_t *buf,
 			 * in "used".
 			 */
 
-			lws_json_purify((char *)buf, q, len, &used);
+			lws_json_purify((char *)buf, q, (int)len, &used);
 			m = strlen((const char *)buf);
 			buf += m;
 			len -= m;

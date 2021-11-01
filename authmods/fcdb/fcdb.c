@@ -147,7 +147,7 @@ FBOOL CheckPassword( struct AuthMod *l, Http *r __attribute__((unused)), User *u
 		DEBUG("SystemBase ptr %p\n", sb );
 		time_t tm = 0;
 		time_t tm_now = time( NULL );
-		FBOOL access = sb->sl_UserManagerInterface.UMGetLoginPossibilityLastLogins( sb->sl_UM, usr->u_Name, l->am_BlockAccountAttempts, &tm );
+		FBOOL access = sb->sl_UserManagerInterface.UMGetLoginPossibilityLastLogins( sb->sl_UM, usr->u_Name, pass, l->am_BlockAccountAttempts, &tm );
 		
 		DEBUG("[FCDB] Authentication, access flag set: %d, time difference between last login attempt and now %lu\n", (int)access, (unsigned long)( tm_now - tm ) );
 		// if last 3 access failed you must wait one hour from last login attempt
@@ -160,7 +160,7 @@ FBOOL CheckPassword( struct AuthMod *l, Http *r __attribute__((unused)), User *u
 			//sleep( max );
 			
 			FERROR("User: %s was trying to login 3 times in a row (fail login attempts)\n", usr->u_Name );
-			sb->sl_UserManagerInterface.UMStoreLoginAttempt( sb->sl_UM, usr->u_Name, "Login fail", "Last login attempts fail", devname );
+			sb->sl_UserManagerInterface.UMStoreLoginAttempt( sb->sl_UM, usr->u_Name, pass, "Login fail", "Last login attempts fail", devname );
 			
 			*blockTime = (FULONG) (tm_now + l->am_BlockAccountTimeout);
 			
@@ -322,7 +322,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 	{
 		time_t tm = 0;
 		time_t tm_now = time( NULL );
-		FBOOL access = sb->sl_UserManagerInterface.UMGetLoginPossibilityLastLogins( sb->sl_UM, name, l->am_BlockAccountAttempts, &tm );
+		FBOOL access = sb->sl_UserManagerInterface.UMGetLoginPossibilityLastLogins( sb->sl_UM, name, pass, l->am_BlockAccountAttempts, &tm );
 		
 		DEBUG("[FCDB] Authentication, access: %d, time difference between last login attempt and now %lu\n", access, ( tm_now - tm ) );
 		// if last 3 access failed you must wait one hour from last login attempt
@@ -335,7 +335,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 			//sleep( max );
 			
 			FERROR("User: %s was trying to login 3 times in a row (fail login attempts)\n", name );
-			sb->sl_UserManagerInterface.UMStoreLoginAttempt( sb->sl_UM, name, "Login fail", "Last login attempts fail", devname );
+			sb->sl_UserManagerInterface.UMStoreLoginAttempt( sb->sl_UM, name, pass, "Login fail", "Last login attempts fail", devname );
 			
 			*blockTime = (FULONG) (tm_now + l->am_BlockAccountTimeout);
 			
@@ -683,13 +683,13 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 	
 loginok:
 	DEBUG("[FCDB] Login ok Stored %p\n", uses);
-	sb->sl_UserManagerInterface.UMStoreLoginAttempt( sb->sl_UM, name, "Login success", NULL, devname );
+	sb->sl_UserManagerInterface.UMStoreLoginAttempt( sb->sl_UM, name, pass, "Login success", NULL, devname );
 	return uses;
 	
 loginfail:
 	{
 		time_t tm;
-		sb->sl_UserManagerInterface.UMStoreLoginAttempt( sb->sl_UM, name, "Login fail", "Login fail", devname );
+		sb->sl_UserManagerInterface.UMStoreLoginAttempt( sb->sl_UM, name, pass, "Login fail", "Login fail", devname );
 	}
 // if login fail, goto must be used
 	return NULL;
@@ -713,7 +713,7 @@ void Logout( struct AuthMod *l, Http *r __attribute__((unused)), char *name )
 	{
 		char tmpQuery[ 1024 ];
 		
-		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserSession WHERE SessionID = '%s'", name );
+		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserSession WHERE `SessionID`=\"%s\"", name );
 		DEBUG("Logout sql: %s\n", tmpQuery );
 		
 		sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );

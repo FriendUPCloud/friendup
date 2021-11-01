@@ -139,6 +139,17 @@ function renderReplacements( $template, $args = false )
 		}
 	}
 	
+	if( $args && isset( $args->invite ) )
+	{
+		if( $args->invite && strstr( $args->invite, 'BASE64' ) )
+		{
+			if( $parts = explode( 'BASE64', $args->invite ) )
+			{
+				$args->invite = trim( $parts[0] );
+			}
+		}
+	}
+	
 	if( $server && $server->friend_register_uri )
 	{
 		$friend_register_uri = $server->friend_register_uri . ( $args && isset( $args->invite ) ? '?invite=' . $args->invite : '' );
@@ -671,6 +682,7 @@ function sendFriendMail( $user )
 		$qua->Email    = $user->Email;
 		if( !$qua->Load() )
 		{
+			$qua->Verified = 1;
 			$qua->DateCreated = time();
 		}
 		
@@ -694,7 +706,7 @@ function sendFriendMail( $user )
 	return false;
 }
 
-function verifyFriendAuth( $username, $publickey, $nonce = false, $deviceid = '', $invitehash = false )
+function verifyFriendAuth( $username, $publickey, $nonce = false, $deviceid = '' )
 {
 	
 	$error = false; $data = false;
@@ -704,7 +716,7 @@ function verifyFriendAuth( $username, $publickey, $nonce = false, $deviceid = ''
 		$dbo = initDBO();
 		
 		if( $creds = $dbo->fetchObject( '
-			SELECT fu.ID, fu.UniqueID, fu.Name, fu.Password, fu.Status FROM FUser fu 
+			SELECT fu.ID, fu.UniqueID, fu.Name, fu.FullName, fu.Password, fu.Status FROM FUser fu 
 			WHERE 
 					fu.Name      = \'' . mysqli_real_escape_string( $dbo->_link, $username  ) . '\' 
 				AND fu.PublicKey = \'' . mysqli_real_escape_string( $dbo->_link, $publickey ) . '\' 
@@ -741,11 +753,6 @@ function verifyFriendAuth( $username, $publickey, $nonce = false, $deviceid = ''
 						
 						if( $ses->sessionid )
 						{
-							
-							if( $invitehash )
-							{
-								createFriendRelation( $ses, $creds, $invitehash );
-							}
 								
 							if( !remoteAuth( '/system.library/user/update?sessionid=' . $ses->sessionid, 
 							[
@@ -803,56 +810,6 @@ function verifyFriendAuth( $username, $publickey, $nonce = false, $deviceid = ''
 	else
 	{
 		return [ 'fail', $error ];
-	}
-	
-}
-
-function createFriendRelation( $data, $user, $invitehash )
-{
-	
-	if( $data && $user && $invitehash )
-	{
-		
-		if( $res = remoteAuth( 
-			'/system.library/module/?sessionid=' . $data->sessionid . '&module=system&command=tinyurldata&args={"hash":"'.$invitehash.'"}', 
-			false, 'POST', [ 'Content-Type: application/x-www-form-urlencoded' ] 
-		) )
-		{
-			if( strstr( $res, '<!--separate-->' ) )
-			{
-				if( $ret = explode( '<!--separate-->', $res ) )
-				{
-					if( isset( $ret[1] ) )
-					{
-						if( $json = json_decode( $ret[1] ) )
-						{
-							
-							if( isset( $json->source->data->mode ) && isset( $json->source->data->contactids ) && $user->UniqueID )
-							{
-								// TODO: Could potentially make support for cross node invites based on the url field.
-								
-								$result = remoteAuth( '/system.library/user/addrelationship?sessionid=' . $data->sessionid, 
-								[
-									'mode'       => $json->source->data->mode,
-									'contactids' => $json->source->data->contactids,
-									'sourceid'   => $user->UniqueID
-								] );
-							
-								die( $result . ' -- ' . print_r( $json,1 ) );
-							}
-							
-						}
-					}
-				}
-			}
-			
-			die( $res );
-		}
-		
-		die( 'NO DATA ??? FRIENDCORE !!! ...' );
-		
-		return false;
-		
 	}
 	
 }

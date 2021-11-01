@@ -33,6 +33,7 @@ secstream_h2(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 	     void *in, size_t len)
 {
 	lws_ss_handle_t *h = (lws_ss_handle_t *)lws_get_opaque_user_data(wsi);
+	lws_ss_state_return_t r;
 	int n;
 
 	switch (reason) {
@@ -63,11 +64,13 @@ secstream_h2(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 
 	case LWS_CALLBACK_COMPLETED_CLIENT_HTTP:
 		// lwsl_err("%s: h2 COMPLETED_CLIENT_HTTP\n", __func__);
-		h->info.rx(ss_to_userobj(h), NULL, 0, LWSSS_FLAG_EOM);
+		r = h->info.rx(ss_to_userobj(h), NULL, 0, LWSSS_FLAG_EOM);
+		/* decouple the fates of the wsi and the ss */
 		h->wsi = NULL;
 		h->txn_ok = 1;
-		//bad = status != 200;
 		lws_cancel_service(lws_get_context(wsi)); /* abort poll wait */
+		if (r != LWSSSSRET_OK)
+			return _lws_ss_handle_state_ret(r, wsi, &h);
 		break;
 
 	case LWS_CALLBACK_WSI_TX_CREDIT_GET:
@@ -112,6 +115,15 @@ secstream_connect_munge_h2(lws_ss_handle_t *h, char *buf, size_t len,
 			   struct lws_client_connect_info *i,
 			   union lws_ss_contemp *ct)
 {
+	const char *pbasis = h->policy->u.http.url;
+	size_t used_in, used_out;
+	lws_strexp_t exp;
+
+	/* i.path on entry is used to override the policy urlpath if not "" */
+
+	if (i->path[0])
+		pbasis = i->path;
+
 	if (h->policy->flags & LWSSSPOLF_QUIRK_NGHTTP2_END_STREAM)
 		i->ssl_connection |= LCCSCF_H2_QUIRK_NGHTTP2_END_STREAM;
 
@@ -137,13 +149,19 @@ secstream_connect_munge_h2(lws_ss_handle_t *h, char *buf, size_t len,
 				i->manual_initial_tx_credit);
 	}
 
-	if (!h->policy->u.http.url)
+	if (!pbasis)
 		return 0;
 
 	/* protocol aux is the path part */
 
 	i->path = buf;
-	lws_snprintf(buf, len, "/%s", h->policy->u.http.url);
+	buf[0] = '/';
+
+	lws_strexp_init(&exp, (void *)h, lws_ss_exp_cb_metadata, buf + 1, len - 1);
+
+	if (lws_strexp_expand(&exp, pbasis, strlen(pbasis),
+			      &used_in, &used_out) != LSTRX_DONE)
+		return 1;
 
 	return 0;
 }
@@ -176,7 +194,7 @@ secstream_tx_credit_est_h2(lws_ss_handle_t *h)
 const struct ss_pcols ss_pcol_h2 = {
 	"h2",
 	NULL,
-	"lws-secstream-h2",
+	&protocol_secstream_h2,
 	secstream_connect_munge_h2,
 	secstream_tx_credit_add_h2,
 	secstream_tx_credit_est_h2

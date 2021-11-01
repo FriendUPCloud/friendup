@@ -38,6 +38,8 @@ Application.run = function( msg, iface )
 		d.execute( 'getsetting', { setting: 'avatar_color' } );
 	} );
 	
+	refreshGroups( ge( 'groupSearcher' ).value );
+	
 	// Clear / autoregenerate avatar
 	ge( 'ClearAvatar' ).onclick = function( e )
 	{
@@ -70,6 +72,244 @@ Application.run = function( msg, iface )
 		m.execute( 'getsetting', { setting: 'avatar', mode: 'reset' } );
 	}
 }
+
+
+function findGroups()
+{
+	refreshGroups( ge( 'groupSearcher' ).value );
+}
+
+function refreshGroups( keys )
+{
+	if( !keys ) keys = '';
+	
+	let m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		let list = null;
+		if( e != 'ok' )
+		{
+			return ge( 'GroupList' ).innerHTML = '<p class="TextCenter">' + i18n( 'i18n_no_groups_available' ) + '</p>\
+			<p class="BorderTop PaddingTop MarginTop TextCenter">\
+				<button type="button" class="Button IconSmall fa-plus" onclick="createGroup()">\
+					' + i18n( 'i18n_create_group' ) + '\
+				</button>\
+			</p>';
+		}
+		try
+		{
+			list = JSON.parse( d );
+		}
+		catch( e )
+		{
+			return ge( 'GroupList' ).innerHTML = '<p class="TextCenter">' + i18n( 'i18n_failed_reading_groups' ) + '</p>';
+		}
+		
+		// Filter on keywords
+		if( keys.length )
+		{
+			let out = {};
+			for( let a in list )
+			{
+				if( list[a].Name.toLowerCase().indexOf( keys.toLowerCase() ) >= 0 )
+					out[a] = list[a];
+			}
+			list = out;
+		}
+		
+		let sw = 1;
+		let count = 0;
+		
+		let str = '<h2 class="PaddingLeft MarginTop">' + i18n( 'i18n_your_groups' ) + '</h2>';
+		str += '<div class="Collections PaddingSmall">';
+		
+		for( let a in list )
+		{
+			// TODO: Make sure we can get our descriptions!
+			if( !list[a].description )
+				list[a].description = '';
+			str += '<div class="MousePointer sw' + sw + ' Collection" onclick="editGroup(\'' + list[a].ID + '\')">\
+				<div class="Image"></div>\
+				<div class="Name" title="' + list[a].Name + '"><span>' + list[a].Name + '</span></div>\
+				<div class="Description">' + ( list[a].Description ? list[a].Description : i18n( 'i18n_no_description' ) ) + '</div>\
+			</div>';
+			sw = sw == 1 ? 2 : 1;
+			count++;
+		}
+		
+		str += '</div>';
+		
+		if( Application.getUserLevel() != 'admin' && count >= 3 )
+		{
+			str += '<p class="BorderTop PaddingTop MarginTop">\
+				<button type="button" class="Button IconSmall fa-plus Disabled" disabled="disabled">\
+					' + i18n( 'i18n_create_group_disabled' ) + '\
+				</button>\
+			</p>';
+		}
+		else
+		{
+			str += '<p class="BorderTop PaddingTop MarginTop">\
+				<button type="button" class="Button IconSmall fa-plus" onclick="createGroup()">\
+					' + i18n( 'i18n_create_group' ) + '\
+				</button>\
+			</p>';
+		}
+	
+		ge( 'GroupList' ).innerHTML = str;
+	}
+	m.execute( 'listworkgroups' );
+	
+	let n = new Module( 'system' );
+	n.onExecuted = function( e, d )
+	{
+		
+		if( e != 'ok' ) { ge( 'OtherGroups' ).innerHTML = ''; return; }
+		try
+		{
+			d = JSON.parse( d );
+		}
+		catch( e ){ ge( 'OtherGroups' ).innerHTML = ''; return; }
+		
+		let str = '<hr class="Divider"/>';
+		
+		str += '<div class="Padding"><h2>' + i18n( 'i18n_other_groups' ) + '</h2><div class="List">';
+		str += '<div class="HRow">\
+				<div class="PaddingSmall FloatLeft HContent35"><strong>' + i18n( 'i18n_group_name' ) + '</strong></div>\
+				<div class="PaddingSmall FloatLeft HContent35"><strong>' + i18n( 'i18n_owner' ) + '</strong></div>\
+				<div class="PaddingSmall FloatLeft HContent20"><strong>' + i18n( 'i18n_reason' ) + '</strong></div>\
+				<div class="PaddingSmall FloatLeft HContent10 TextRight"></div>\
+			</div>';
+		let sw = 2;
+		for( let a = 0; a < d.length; a++ )
+		{
+			let button = '<button type="button" class="Button IconSmall fa-remove NoText IconButton" title="' + i18n( 'i18n_leave_group' ) + '" onclick="leaveGroup(\'' + d[a].ID + '\')"></button>';
+			let reason = '';
+			// Cannot remove yourself from Admin administrated groups
+			if( d[a].Level == 'Admin' && d[a].IsInvite == 0 )
+			{
+				button = '';
+				reason = i18n( 'i18n_added_by_admin' );
+			}
+			
+			sw = sw == 1 ? 2 : 1;
+			str += '<div class="HRow sw' + sw + '">\
+				<div class="PaddingSmall FloatLeft HContent35 Ellipsis">' + d[a].Name + '</div>\
+				<div class="PaddingSmall FloatLeft HContent35 Ellipsis">' + d[a].Invitor + '</div>\
+				<div class="PaddingSmall FloatLeft HContent20 Ellipsis">' + reason + '</div>\
+				<div class="PaddingSmall FloatLeft HContent10 TextRight">' + button + '</div>\
+			</div>';
+		}
+		str += '</div></div>';
+		ge( 'OtherGroups' ).innerHTML = str;
+	}
+	n.execute( 'listworkgroups', { mode: 'invites' } );
+}
+
+function leaveGroup( gid )
+{
+	Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_leave_warning' ), function( data )
+	{
+		if( data.data == true )
+		{
+			let m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				if( e == 'ok' )
+				{
+					refreshGroups( ge( 'groupSearcher' ).value );
+				}
+				else
+				{
+					console.log( { args: { groupId: gid }, e:e, d:d } );
+				}
+			}
+			m.execute( 'leavegroup', { groupId: gid } );
+		}
+	} );
+}
+
+let mviews = {};
+
+function createGroup()
+{
+	let v = new View( {
+		title: i18n( 'i18n_create_group' ),
+		width: 500,
+		height: 210
+	} );
+	
+	let vid = v.getViewId()
+	
+	mviews[ vid ] = v;
+	
+	let f = new File( 'Progdir:Templates/group.html' );
+	f.replacements = {
+		ID: '',
+		Description: '',
+		Name: '',
+		Hidden: 'Hidden',
+		DeleteCl: ' Hidden',
+		ChatRoomCheck: ''
+	};
+	f.i18n();
+	f.onLoad = function( d )
+	{
+		v.setContent( d );
+	}
+	f.load();
+	
+	v.onClose = function()
+	{
+		let out = {};
+		for( let a in mviews )
+		{
+			if( a != vid ) out[ a ] = mviews[ a ];
+		}
+		mviews = out;
+	}
+}
+
+function editGroup( id )
+{
+	let m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		if( e != 'ok' )
+		{
+			return;
+		}
+		let gr = JSON.parse( d );
+		
+		let v = new View( {
+			title: i18n( 'i18n_edit_group' ),
+			width: 500,
+			height: 500
+		} );
+		
+		let vid = v.getViewId()
+	
+		mviews[ vid ] = v;
+		
+		let f = new File( 'Progdir:Templates/group.html' );
+		f.replacements = {
+			ID: id,
+			Description: gr.Description ? gr.Description : '',
+			Name: gr.Name,
+			Hidden: 'Showing',
+			DeleteCl: ' Showing',
+			ChatRoomCheck: 'style="display:none;"'
+		};
+		f.i18n();
+		f.onLoad = function( d )
+		{
+			v.setContent( d );
+		}
+		f.load();
+	}
+	m.execute( 'workgroupget', { id: id } );
+}
+
 
 var palette = [ '#1ABC9C', '#2ECC71', '#3498DB', '#9B59B6', 
 				'#34495E', '#E67E22', '#E74C3C', '#95A5A6' ];
@@ -169,7 +409,7 @@ function refreshAvatar()
 				avSrc.onload = function()
 				{
 					var ctx = avatar.getContext( '2d' );
-					ctx.drawImage( avSrc, 0, 0, 256, 256 );
+					ctx.drawImage( avSrc, 0, 0, 128, 128 );
 				}
 			}
 		}
@@ -183,6 +423,27 @@ Application.receiveMessage = function( msg )
 	
 	switch( msg.command )
 	{
+		case 'resizeGroupWindow':
+			if( mviews[ msg.viewId ] )
+			{
+				mviews[ msg.viewId ].setFlag( 'height', 500 );
+			}
+			break;
+		case 'refreshInvites':
+			if( mviews )
+			{
+				for( var i in mviews )
+				{
+					if( mviews[i] )
+					{
+						mviews[i].sendMessage( { command: 'refreshInvites' } );
+					}
+				}
+			}
+			break;
+		case 'refreshgroups':
+			refreshGroups( ge( 'groupSearcher' ).value );
+			break;
 		case 'addstorage':
 			addStorage( 'quitonclose' );
 			break;
@@ -452,7 +713,7 @@ function changeAvatar()
 					// Resizes the image
 					var canvas = ge( 'Avatar' );
 					var context = canvas.getContext( '2d' );
-					context.drawImage( image, 0, 0, 256, 256 );
+					context.drawImage( image, 0, 0, 128, 128 );
 				}
 				image.src = getImageUrl( item[ 0 ].Path );
 			}
@@ -1409,7 +1670,9 @@ function getUnmounted()
 		var str = '';
 		for( var a = 0; a < js.length; a++ )
 		{
-			str += '<div class="FloatLeft Disk MousePointer" onclick="editStorage(\'' + js[a].Name + '\')"><div class="Label Ellipsis">' + js[a].Name + '</div></div>';
+			if( js[a].Name == 'Home' )
+				js[a].Type = 'Home';
+			str += '<div class="FloatLeft Disk MousePointer ' + js[a].Type + '" onclick="editStorage(\'' + js[a].Name + '\')"><div class="Label Ellipsis">' + js[a].Name + '</div></div>';
 		}
 		ge( 'StorageListUnmounted' ).innerHTML = str;
 	}
@@ -1434,10 +1697,13 @@ function getStorage()
 			{
 				//console.log('storage device', JSON.stringify(js[a]));
 				//dont let non-admins manage workgroup drives.
+				if( js[a].Name == 'Home' )
+					js[a].Type = 'Home';
+				if( js[a].Name == 'Shared' ) continue;
 				if( js[a].Type == 'SQLWorkgroupDrive' && userLevel != 'admin')
-					str += '<div class="FloatLeft Disk MousePointer NonEditableDisk" onclick="Notify({\'title\':\''+ i18n('i18n_account') + '\',\'text\':\'' + i18n('i18n_admin_managed_drive') + '\'})"><div class="Label Ellipsis">' + js[a].Name + '</div></div>';
+					str += '<div class="FloatLeft Disk MousePointer NonEditableDisk ' + js[a].Type + '" onclick="Notify({\'title\':\''+ i18n('i18n_account') + '\',\'text\':\'' + i18n('i18n_admin_managed_drive') + '\'})"><div class="Label Ellipsis">' + js[a].Name + '</div></div>';
 				else if( js[a].Mounted != '0' )
-					str += '<div class="FloatLeft Disk MousePointer" onclick="editStorage(\'' + js[a].Name + '\', false, \'mounted\' )"><div class="Label Ellipsis">' + js[a].Name + '</div></div>';
+					str += '<div class="FloatLeft Disk MousePointer ' + js[a].Type + '" onclick="editStorage(\'' + js[a].Name + '\', false, \'mounted\' )"><div class="Label Ellipsis">' + js[a].Name + '</div></div>';
 			}
 			str += '<div onclick="addStorage()" class="MousePointer FloatLeft BigButton IconSmall fa-plus"><div class="Label Ellipsis">' + i18n( 'i18n_add_storage' ) + '</div></div>';
 			ge( 'StorageList' ).innerHTML = str;

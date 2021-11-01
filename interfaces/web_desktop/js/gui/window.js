@@ -943,7 +943,7 @@ function _ActivateWindowOnly( div )
 				( function( dd ) {
 					function deal()
 					{
-						if( currentMovable && ( 
+						if( currentMovable && currentMovable.classList && ( 
 							currentMovable.parentNode.classList.contains( 'Redrawing' ) || 
 							currentMovable.parentNode.classList.contains( 'DoneActivating' ) || 
 							currentMovable.parentNode.classList.contains( 'Activated' ) 
@@ -951,10 +951,13 @@ function _ActivateWindowOnly( div )
 						{
 							return setTimeout( function(){ deal() }, 300 );
 						}
-						dd.parentNode.classList.remove( 'DelayedDeactivation' );
-						_DeactivateWindow( dd );
+						if( dd && dd.parentNode )
+						{
+							dd.parentNode.classList.remove( 'DelayedDeactivation' );
+							_DeactivateWindow( dd );
+						}
 					}
-					if( delayedDeactivation && div.applicationId == dd.applicationId )
+					if( delayedDeactivation && div.applicationId == dd.applicationId && dd.parentNode )
 					{
 						dd.parentNode.classList.add( 'DelayedDeactivation' );
 						setTimeout( function(){ deal() }, 300 );
@@ -962,7 +965,7 @@ function _ActivateWindowOnly( div )
 					else deal();
 				} )( m );
 			}
-			else if( m.classList.contains( 'Active' ) )
+			else if( m && m.classList.contains( 'Active' ) )
 			{
 				_DeactivateWindow( m );
 			}
@@ -1154,6 +1157,14 @@ function _ActivateWindow( div, nopoll, e )
 		if( globalConfig.focusMode == 'clicktofront' )
 			_WindowToFront( div );
 		return;
+	}
+	
+	// Reactivate all iframes
+	let fr = div.windowObject.content.getElementsByTagName( 'iframe' );
+	for( let a = 0; a < fr.length; a++ )
+	{
+		if( fr[ a ].oldSandbox && typeof( fr[ a ].oldSandbox ) == 'string' )
+			fr[ a ].setAttribute( 'sandbox', fr[ a ].oldSandbox );
 	}
 	
 	// Reserve this div for activation
@@ -1410,7 +1421,7 @@ function _DeactivateWindow( m, skipCleanUp )
 			
 			// Deactivate all iframes
 			let fr = m.windowObject.content.getElementsByTagName( 'iframe' );
-			for( var a = 0; a < fr.length; a++ )
+			for( let a = 0; a < fr.length; a++ )
 			{
 				fr[ a ].oldSandbox = fr[ a ].getAttribute( 'sandbox' );
 				fr[ a ].setAttribute( 'sandbox', 'allow-scripts' );
@@ -1781,7 +1792,7 @@ function CloseView( win, delayed )
 
 		// Clear view that is closed from view history
 		let out = [];
-		for( var a  = 0; a < Friend.GUI.view.viewHistory.length; a++ )
+		for( let a = 0; a < Friend.GUI.view.viewHistory.length; a++ )
 		{
 			if( Friend.GUI.view.viewHistory[a] != win )
 				out.push( Friend.GUI.view.viewHistory[a] );
@@ -1822,7 +1833,7 @@ function CloseView( win, delayed )
 			{
 				if( app.mainView == div.windowObject )
 				{
-					for( var a in app.windows )
+					for( let a in app.windows )
 					{
 						if( app.windows[ a ] != div.windowObject )
 						{
@@ -1882,7 +1893,7 @@ function CloseView( win, delayed )
 				// Only activate last view in the same app
 				if( appId )
 				{
-					for( var a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
+					for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 					{
 						if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
 						{
@@ -1901,7 +1912,7 @@ function CloseView( win, delayed )
 				}
 				else
 				{
-					for( var a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
+					for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 					{
 						if( Friend.GUI.view.viewHistory[ a ].windowObject.workspace == globalConfig.workspaceCurrent )
 						{
@@ -1925,7 +1936,7 @@ function CloseView( win, delayed )
 		{
 			// Clean up ids
 			let o = [];
-			for( var b in movableWindows )
+			for( let b in movableWindows )
 			{
 				if( movableWindows[b] != div && movableWindows[b].parentNode )
 				{
@@ -2007,7 +2018,7 @@ function CloseView( win, delayed )
 	// Check window
 	CheckScreenTitle();
 	
-	if( isMobile )
+	if( isMobile && Workspace.redrawIcons )
 		Workspace.redrawIcons();
 }
 // Obsolete!!!
@@ -2525,6 +2536,17 @@ var View = function( args )
 					Friend.previousWindowHover = Friend.currentWindowHover;
 				Friend.currentWindowHover = div;
 			
+				if( !div.classList.contains( 'Active' ) )
+				{
+					// Reactivate all iframes
+					let fr = div.windowObject.content.getElementsByTagName( 'iframe' );
+					for( let a = 0; a < fr.length; a++ )
+					{
+						if( fr[ a ].oldSandbox && typeof( fr[ a ].oldSandbox ) == 'string' )
+							fr[ a ].setAttribute( 'sandbox', fr[ a ].oldSandbox );
+					}
+				}
+			
 				// Focus on desktop if we're not over a window.
 				if( Friend.previousWindowHover && Friend.previousWindowHover != div )
 				{
@@ -2541,6 +2563,16 @@ var View = function( args )
 			} );
 			div.addEventListener( 'mouseout', function()
 			{
+				if( !div.classList.contains( 'Active' ) )
+				{
+					// Reactivate all iframes
+					let fr = div.windowObject.content.getElementsByTagName( 'iframe' );
+					for( let a = 0; a < fr.length; a++ )
+					{
+						fr[ a ].setAttribute( 'sandbox', 'allow-scripts' );
+					}
+				}
+				
 				// Keep track of the previous
 				if( Friend.currentWindowHover )
 					Friend.previousWindowHover = Friend.currentWindowHover;
@@ -3293,6 +3325,15 @@ var View = function( args )
 			
 			function executeClose()
 			{
+				// Clean movableWindows.. brute force
+				let out = {};
+				for( let a in movableWindows )
+				{
+					if( movableWindows[a] != div )
+						out[ a ] = movableWindows[ a ];
+				}
+				movableWindows = out;
+				
 				viewContainer.classList.add( 'Closing' );
 				if( div.windowObject )
 				{
@@ -3315,7 +3356,11 @@ var View = function( args )
 					wo.close();
 				}
 			}
-			executeClose();
+			// Only if we can!
+			if( div.windowObject.close() === true )
+			{
+				executeClose();
+			}
 		}
 
 		// Add all
@@ -4089,6 +4134,7 @@ var View = function( args )
 		ifr.authId = self.authId;
 		ifr.applicationName = self.applicationName;
 		ifr.applicationDisplayName = self.applicationDisplayName;
+		ifr.setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
 		ifr.view = this._window;
 		ifr.className = 'Content Loading';
 		
@@ -4223,7 +4269,7 @@ var View = function( args )
 		iframe.authId = self.authId;
 		iframe.applicationName = self.applicationName;
 		iframe.applicationDisplayName = self.applicationDisplayName;
-		if( typeof friendApp == 'undefined' ) iframe.sandbox = DEFAULT_SANDBOX_ATTRIBUTES; // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
+		if( typeof friendApp == 'undefined' ) iframe.setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES ); // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
 		iframe.referrerPolicy = 'origin';
 
 		self._window.applicationId = conf.applicationId; // needed for View.close to work
@@ -4274,6 +4320,7 @@ var View = function( args )
 		ifr.applicationId = self.applicationId;
 		ifr.applicationName = self.applicationName;
 		ifr.applicationDisplayName = self.applicationDisplayName;
+		ifr.setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
 		ifr.authId = self.authId;
 		ifr.onload = function()
 		{
@@ -4392,7 +4439,8 @@ var View = function( args )
 		ifr.applicationName = self.applicationName;
 		ifr.applicationDisplayName = self.applicationDisplayName;
 		ifr.authId = self.authId;
-
+		ifr.setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
+		
 		let conf = this.flags || {};
 		if( this.flags && this.flags.allowScrolling )
 		{
@@ -4445,7 +4493,7 @@ var View = function( args )
 		friendU = Trim( friendU );
 		
 		if( typeof friendApp == 'undefined'  && ( friendU.length || friendU != targetU || !targetU ) )
-			ifr.sandbox = DEFAULT_SANDBOX_ATTRIBUTES;
+			ifr.setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
 
 		// Allow sandbox flags
 		let sbx = ifr.getAttribute( 'sandbox' ) ? ifr.getAttribute( 'sandbox' ) : '';
@@ -4461,7 +4509,16 @@ var View = function( args )
 				}
 			}
 			if( !found ) sbx.push( 'allow-popups' );
-			if( typeof friendApp == 'undefined' )  ifr.sandbox = sbx.join( ' ' );
+			if( typeof friendApp == 'undefined' )  ifr.setAttribute( 'sandbox', sbx.join( ' ' ) );
+		}
+		
+		// Special insecure mode (use with caution!)
+		if( this.limitless && this.limitless === true )
+		{
+			let sb = ifr.getAttribute( 'sandbox' );
+			if( !sb ) sb = DEFAULT_SANDBOX_ATTRIBUTES;
+			sb += ' allow-top-navigation';
+			ifr.setAttribute( 'sandbox', sb );
 		}
 
 		ifr.onload = function( e )
@@ -4490,7 +4547,9 @@ var View = function( args )
 
 				try
 				{
-					ifr.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
+					// TODO: Why we used protocol was for security domains - may be deprecated
+					//ifr.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
+					ifr.contentWindow.postMessage( JSON.stringify( msg ), '*' );
 				}
 				catch(e)
 				{
@@ -4521,7 +4580,8 @@ var View = function( args )
 		
 		// Add after options set
 		if( !eles[0] ) this._window.appendChild( ifr );
-
+		
+		this.initOnMessageCallback();
 	}
 	
 	this.showBackButton = function( visible, cbk )
@@ -4588,6 +4648,27 @@ var View = function( args )
 			this.sendQueue.push( dataObject );
 		}
 		return true;
+	}
+	// Receive a message specifically for this view.
+	this.initOnMessageCallback = function()
+	{
+		if( self.onMessage && self.iframe && !window.onmessage )
+		{
+			let b = self.iframe.getAttribute( 'sandbox' );
+			window.onmessage = function( msg ) 
+			{
+				if( msg && msg.isTrusted && msg.data && msg.data.type )
+				{
+					if( self.iframe.contentWindow == msg.source )
+					{
+						self.onMessage( msg.data );
+						
+						// Enforce prevailing sandbox attributes
+						self.iframe.setAttribute( 'sandbox', b );
+					}
+				}
+			};
+		}
 	}
 	// Send messages to window that hasn't been sent because iframe was not loaded
 	this.executeSendQueue = function()
@@ -4750,7 +4831,7 @@ var View = function( args )
 				if( this.onClose ) this.onClose();
 				if( this.eventSystemClose ) // <- system call
 				{
-					for( var a = 0; a < this.eventSystemClose.length; a++ )
+					for( let a = 0; a < this.eventSystemClose.length; a++ )
 					{
 						this.eventSystemClose[a]();
 					}
@@ -4784,17 +4865,19 @@ var View = function( args )
 					viewId: self.viewId
 				};
 				app.sendMessage( msg );
+				return;
 			}
 		}
 		CloseView( this._window );
 		if( this.onClose ) this.onClose();
 		if( this.eventSystemClose ) // <- system call
 		{
-			for( var a = 0; a < this.eventSystemClose.length; a++ )
+			for( let a = 0; a < this.eventSystemClose.length; a++ )
 			{
 				this.eventSystemClose[a]();
 			}
 		}
+		return true;
 	}
 	// Put a loading animation on window
 	this.loadingAnimation = function ()
@@ -6112,16 +6195,24 @@ function Alert( title, string, cancelstring, callback )
 	{
 		v.setContent( data );
 		let eles = v._window.getElementsByTagName( 'button' );
-		eles[0].onclick = function()
+		if( eles && eles.length )
+		{
+			eles[0].onclick = function()
+			{
+				v.close();
+				if( callback ) callback();
+			}
+		
+			if( !window.isMobile )
+			{
+				_ActivateWindow( v._window.parentNode );
+				_WindowToFront( v._window.parentNode );
+			}
+		}
+		else
 		{
 			v.close();
-			if( callback ) callback();
-		}
-		
-		if( !window.isMobile )
-		{
-			_ActivateWindow( v._window.parentNode );
-			_WindowToFront( v._window.parentNode );
+			console.log( '[Alert] Could not process alert dialog template.' );
 		}
 	}
 	f.load();

@@ -28,7 +28,6 @@ var SystemEvents = {};
 DoorSystem = function( path )
 {
 	this.icons = [];
-	var door = this;
 	this.handler = 'system';
 	this.dosdriver = 'System';
 	this.ready = false;
@@ -46,8 +45,8 @@ DoorSystem.prototype = new Door();
 
 DoorSystem.prototype.get = function( path )
 {
-	var vol = path.split( ':' )[0] + ':';
-	for( var a = 0; a < Doors.icons.length; a++ )
+	let vol = path.split( ':' )[0] + ':';
+	for( let a = 0; a < Doors.icons.length; a++ )
 	{
 		if( Doors.icons[a].Volume.toLowerCase() == vol.toLowerCase() )
 		{
@@ -61,6 +60,8 @@ DoorSystem.prototype.get = function( path )
 // Return an array of icons!
 DoorSystem.prototype.getIcons = function( fileInfo, callback )
 {
+	let self = this;
+	
 	if( !fileInfo )
 	{
 		fileInfo = {
@@ -83,7 +84,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 	}
 	
 	// Translations
-	var translations = {
+	let translations = {
 		dirPrefs: 'System:' + i18n( 'i18n_directory_Prefs' ) + '/',
 		dirModules: 'System:' + i18n( 'i18n_directory_Modules' ) + '/',
 		dirDocApps: 'System:' + i18n( 'i18n_directory_DocApps' ) + '/',
@@ -94,14 +95,14 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 		dirFunctions: 'System:' + i18n( 'i18n_directory_Functions' ) + '/'
 	};
 	
-	var dirList = {
+	let dirList = {
 		'System:Preferences/': function()
 		{
-			var m = new Module( 'system' );
+			let m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
 				if( e != 'ok' ) return;
-				var prefs = {}, icons = {}, locales = {};
+				let prefs = {}, icons = {}, locales = {};
 				if( d == 'User' )
 				{
 					// Get available preferences applications
@@ -211,12 +212,12 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				}
 
 				// Output array
-				var output = [];
+				let output = [];
 
 				// Loop through and make icons
 				for( var pref in prefs )
 				{
-					var icon = icons[pref];
+					let icon = icons[pref];
 					output.push( {
 						MetaType: 'File',
 						Title: prefs[pref],
@@ -232,7 +233,8 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 						Type: 'Executable'
 					} );
 				}
-				if( callback ) callback( output, translations.dirPrefs );
+				
+				if( callback ) callback( self.flushDuplicate( output ), translations.dirPrefs );
 			}
 			m.execute( 'userlevel' );
 			return;
@@ -240,7 +242,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 		'System:Modules/': function()
 		{
 			// Get all modules listed out
-			var m = new Module( 'system' );
+			let m = new Module( 'system' );
 			m.onExecuted = function( r, data )
 			{
 				callback( JSON.parse( data ), translations.dirModules );
@@ -250,7 +252,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 		},
 		'System:Libraries/': function()
 		{
-			var m = new Module( 'system' );
+			let m = new Module( 'system' );
 			m.onExecuted = function( r, data )
 			{
 				callback( JSON.parse( data ), translations.dirLibraries );
@@ -260,19 +262,19 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 		},
 		'System:Devices/': function()
 		{
-			var devs = {
+			let devs = {
 				dosdrivers     : i18n( 'i18n_dosdrivers' ),
 				cores        : i18n( 'i18n_cores' ),
 				sessions       : i18n( 'i18n_sessions' ),
 				printers       : i18n( 'i18n_printers' )
 			};
-			var icons = {
+			let icons = {
 				dosdrivers     : 'places/folder-grey.png',
 				cores        : 'places/folder-grey.png',
 				sessions       : 'places/folder-grey.png',
 				printers       : 'places/folder-print.png'
 			};
-			var types = [
+			let types = [
 				'DOSDrivers',
 				'Cores',
 				'Sessions',
@@ -280,13 +282,13 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 			];
 			
 			// Output array
-			var output = [];
-			var u = 0;
+			let output = [];
+			let u = 0;
 
 			// Loop through and make icons
-			for( var dev in devs )
+			for( let dev in devs )
 			{
-				var icon = icons[dev];
+				let icon = icons[dev];
 				output.push( {
 					MetaType: 'Directory',
 					Title: devs[dev],
@@ -300,16 +302,16 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				} );
 			}
 			if( callback )
-				return callback( output, translations.dirDevices );
+				return callback( self.flushDuplicate( output ), translations.dirDevices );
 			return output;
 		},
 		/*'System:Documentation/': function()
 		{
-			var files = [ 'Documentation.pdf', 'Programmer\'s Manual.pdf', 'Friend DOS and CLI Manual.pdf', 'FriendUP API Manual.pdf' ]; // not complete yet, 'User\'s guide.pdf' ]; 
-//			var files = [ 'Developer\'s manual.pdf', 'DOS manual.pdf' ]; // not complete yet, 'User\'s guide.pdf' ]; 
+			let files = [ 'Documentation.pdf', 'Programmer\'s Manual.pdf', 'Friend DOS and CLI Manual.pdf', 'FriendUP API Manual.pdf' ]; // not complete yet, 'User\'s guide.pdf' ]; 
+//			let files = [ 'Developer\'s manual.pdf', 'DOS manual.pdf' ]; // not complete yet, 'User\'s guide.pdf' ]; 
 				//'Workspace', 'FriendScript', 'FriendDOS', 'Dormant', 'Programming', 'VoiceCommand' ];
-			var dirs = []; //'Applications', 'Modules', 'Libraries', 'Repositories', 'Devices' ];
-			var eles = [];
+			let dirs = []; //'Applications', 'Modules', 'Libraries', 'Repositories', 'Devices' ];
+			let eles = [];
 			for( var a = 0; a < files.length; a++ )
 			{
 				eles.push( {
@@ -347,7 +349,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 		},*/
 		'System:Repositories/': function()
 		{
-			var output = [
+			let output = [
 				{
 					MetaType: 'Directory',
 					Title: 'FriendUP',
@@ -361,16 +363,16 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				}
 			];
 			if( callback )
-				return callback( output, translations.dirRepositories );
+				return callback( self.flushDuplicate( output ), translations.dirRepositories );
 			return output;
 		},
 		'System:Functions/': function()
 		{
-			var funcs = [ 
+			let funcs = [ 
 				'ViewOpen', 'ViewClose', 'FullScreen', 'ScreenOpen', 'ScreenActivate', 'ScreenClose', 'ScreenList', 'SetMenu', 
 				'GraphicsAdd', 'GraphicsRemove', 'GraphicsSet', 'GraphicsMode'
 			];
-			var eles = [];
+			let eles = [];
 			for( var a = 0; a < funcs.length; a++ )
 			{
 				eles.push( {
@@ -393,12 +395,12 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 		},
 		'System:DocApps/': function()
 		{
-			var m = new Module( 'system' );
+			let m = new Module( 'system' );
 			m.onExecuted = function( e, data )
 			{
 				if( e == 'ok' )
 				{
-					var files = JSON.parse( data );
+					let files = JSON.parse( data );
 					for( var a = 0; a < files.length; a++ )
 					{
 						files[a].Dormant = WorkspaceDormant;
@@ -424,30 +426,30 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 	
 	
 	if( !this.getPath() && fileInfo.Path ) this.path = fileInfo.Path;
-	var path = fileInfo.Path ? fileInfo.Path : this.getPath();
+	let path = fileInfo.Path ? fileInfo.Path : this.getPath();
 	
 	// Strip a filename after path
-	var lastChar = path.substr( path.length - 1, 1 );
-	var orphanFilename = null;
+	let lastChar = path.substr( path.length - 1, 1 );
+	let orphanFilename = null;
 	if( lastChar != ':' && lastChar != '/' )
 	{
 		path += '/';
 	}
 	
-	var dateh = new Date();
+	let dateh = new Date();
 	dateh = dateh.getFullYear() + '-' + StrPad( dateh.getMonth()+1, 2, '0' ) + '-' + 
 		StrPad( dateh.getDate(), 2, '0' ) + ' ' + StrPad( dateh.getHours(), 2, '0' ) + ':' + StrPad( dateh.getMinutes(), 2, '0' ) + 
 		':' + StrPad( dateh.getSeconds(), 2, '0' );
 	
 	// Case sensitive, then case insensitive
-	var found = false;
-	var spath = path;
+	let found = false;
+	let spath = path;
 	// Match sensitive
 	if( typeof( dirList[ spath ] ) != 'undefined' )
 		found = true;
 	else
 	{
-		for( var a in dirList )
+		for( let a in dirList )
 		{
 			// Match insensitive
 			if( spath.toLowerCase() == a.toLowerCase() )
@@ -577,16 +579,16 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 	// Undefined system path
 	else if( path && path.toLowerCase().indexOf( 'system:' ) == 0 )
 	{
-		var m = new Module( 'system' );
+		let m = new Module( 'system' );
 		m.onExecuted = function( r, data )
 		{
 			if( r == 'ok' ) 
 			{
-				var list = JSON.parse( data );
+				let list = JSON.parse( data );
 				if( list.length )
 				{
-					var pth = list[0].Path.substr( 0, path.length );
-					return callback( JSON.parse( data ), pth );
+					let pth = list[0].Path.substr( 0, path.length );
+					return callback( self.flushDuplicate( JSON.parse( data ) ), pth );
 				}
 				else callback( false, { response: 'Empty directory.' } );
 			}
@@ -597,10 +599,31 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 	}
 	if( callback && this.icons && this.icons.length && this.icons[0].Path ) 
 	{
-		var pth = this.icons[0].Path.substr( 0, path.length );
+		let pth = this.icons[0].Path.substr( 0, path.length );
 		callback( this.icons, pth );
 	}
 	return typeof( icons ) != 'undefined' ? icons : this.icons; 
+}
+
+// Remove duplicate paths
+DoorSystem.prototype.flushDuplicate = function( output )
+{
+	let out = [];
+	for( let a = 0; a < output.length; a++ )
+	{
+		let found = false;
+		for( let b = 0; b < out.length; b++ )
+		{
+			if( output[a].Path == out[b].Path && output[a].Filename == out[b].Filename )
+			{
+				found = true;
+				break;
+			}
+		}
+		if( !found )
+			out.push( output[a] );
+	}
+	return out;
 }
 
 DoorSystem.prototype.getDirectory = DoorSystem.prototype.getIcons;
@@ -647,7 +670,8 @@ var WorkspaceDormant = {
 				Workspace.fullscreen();
 				break;
 			case 'graphicsadd':
-				var d = document.createElement( 'div' );
+			{
+				let d = document.createElement( 'div' );
 				if( args )
 				{
 					// First argument is graphic id
@@ -663,10 +687,11 @@ var WorkspaceDormant = {
 					currentScreen.screenObject._screen.appendChild( d );
 				}
 				break;
+			}
 			case 'graphicsremove':
 				if( args )
 				{
-					var s = ge( args[0] );
+					let s = ge( args[0] );
 					if( !s ) return false;
 					s.parentNode.removeChild( s );
 					return true;
@@ -676,7 +701,7 @@ var WorkspaceDormant = {
 				if( args )
 				{
 					// First arg is graphic id
-					var s = ge( args[0] );
+					let s = ge( args[0] );
 					if( !s ) return false;
 					
 					switch( args[1].toLowerCase() )
@@ -696,7 +721,7 @@ var WorkspaceDormant = {
 				if( args && args.length == 3 )
 				{
 					// First arg, gr id
-					var s = ge( args[0] );
+					let s = ge( args[0] );
 					if( !s ) return false;
 					// Next, prop, then val
 					switch( args[1].toLowerCase() )
@@ -742,8 +767,9 @@ var WorkspaceDormant = {
 				}
 				break;
 			case 'screenlist':
-				var arOut = [];
-				var screens = ge( 'Screens' ).childNodes;
+			{
+				let arOut = [];
+				let screens = ge( 'Screens' ).childNodes;
 				for( var a = 0; a < screens.length; a++ )
 				{
 					if( screens[a].id && screens[a].className && screens[a].className.indexOf( 'Screen' ) >= 0 )
@@ -753,10 +779,11 @@ var WorkspaceDormant = {
 				}
 				return arOut;
 				break;
+			}
 			case 'screenactivate':
 				if( args )
 				{
-					var s = ge( args[0] );
+					let s = ge( args[0] );
 					if( s )
 					{
 						_DeactivateWindows();
@@ -776,11 +803,12 @@ var WorkspaceDormant = {
 					args[1] = 'unnamed';
 				}
 				// TODO: support more flags!
-				var f = new Screen( { title: args[0], id: args[1] } );
+				let f = new Screen( { title: args[0], id: args[1] } );
 				return f.id;
 			case 'screenclose':
+			{
 				if( !args ) return false;
-				var screens = ge( 'Screens' ).childNodes;
+				let screens = ge( 'Screens' ).childNodes;
 				for( var a = 0; a < screens.length; a++ )
 				{
 					if( screens[a].id && screens[a].id == args[0] )
@@ -790,12 +818,13 @@ var WorkspaceDormant = {
 					}
 				}
 				return false;
+			}
 			// TODO: Case insensitive?
 			default:
 				
 				if( func.indexOf( '.pdf' ) > 0 )
 				{
-					var v = new View( {
+					let v = new View( {
 						title: func.split( '.pdf' )[0],
 						width: 600,
 						height: 800
@@ -856,7 +885,7 @@ var sysDocStack = [];
 function SystemDocumentViewer( doc, modulecall )
 {
 	if( sysDocStack[doc] ) return;
-	var w = new View( {
+	let w = new View( {
 		title: i18n( 'documentation_on' ) + ' ' + doc,
 		width: 700,
 		height: 500,
@@ -865,7 +894,7 @@ function SystemDocumentViewer( doc, modulecall )
 	// Clean house
 	w.onClose = function()
 	{
-		var d = [];
+		let d = [];
 		for( var a in sysDocStack )
 			if( a != doc )
 				d.push( sysDocStack[a] );
@@ -875,7 +904,7 @@ function SystemDocumentViewer( doc, modulecall )
 	// TODO: Move these
 	if( !modulecall )
 	{	
-		var f = new cAjax();
+		let f = new cAjax();
 		f.open( 'get', '/webclient/templates/sysdoc_' + doc + '.html', true, true );
 		f.onload = function( r, data )
 		{
@@ -885,7 +914,7 @@ function SystemDocumentViewer( doc, modulecall )
 	}
 	else
 	{
-		var m = new Module( modulecall );
+		let m = new Module( modulecall );
 		m.onExecuted = function( e, d )
 		{
 			if( e == 'ok' )

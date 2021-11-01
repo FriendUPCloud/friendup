@@ -114,7 +114,13 @@ void UserSessionInit( UserSession *us );
 
 int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msglen, int type );
 
+//
+//
+//
 
+#ifndef IS_SESSION_ADMIN
+#define IS_SESSION_ADMIN( us ) ( us->us_User != NULL && us->us_User->u_IsAdmin == TRUE )
+#endif
 
 static FULONG UserSessionDesc[] = { 
     SQLT_TABNAME, (FULONG)"FUserSession",       

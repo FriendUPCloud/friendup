@@ -44,6 +44,8 @@ enum {
 	WS_NOTIF_SINK_ERROR_TOKENS_NOT_FOUND
 };
 
+const char *errorMsg[];
+
 //
 // Data Queue WSI Mutex
 //

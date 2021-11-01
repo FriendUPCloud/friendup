@@ -283,7 +283,7 @@ static int lws_frag_append(struct lws *wsi, unsigned char c)
 	ah->data[ah->pos++] = c;
 	ah->frags[ah->nfrag].len++;
 
-	return (int)ah->pos >= wsi->context->max_http_header_data;
+	return (int)ah->pos >= wsi->a.context->max_http_header_data;
 }
 
 static int lws_frag_end(struct lws *wsi)
@@ -333,9 +333,11 @@ static void lws_dump_header(struct lws *wsi, int hdr)
 		strcpy(s, "(too big to show)");
 	else
 		s[len] = '\0';
+#if defined(_DEBUG)
 	p = lws_token_to_string(hdr);
 	lwsl_header("  hdr tok %d (%s) = '%s' (len %d)\n", hdr,
 		   p ? (char *)p : (char *)"null", s, len);
+#endif
 }
 
 /*
@@ -403,7 +405,7 @@ lws_token_from_index(struct lws *wsi, int index, const char **arg, int *len,
 	}
 
 	index -= (int)LWS_ARRAY_SIZE(static_token);
-	index = (dyn->pos - 1 - index) % dyn->num_entries;
+	index = lws_safe_modulo(dyn->pos - 1 - index, dyn->num_entries);
 	if (index < 0)
 		index += dyn->num_entries;
 
@@ -441,7 +443,7 @@ lws_h2_dynamic_table_dump(struct lws *wsi)
 		    dyn->virtual_payload_usage, dyn->virtual_payload_max);
 
 	for (n = 0; n < dyn->used_entries; n++) {
-		m = (dyn->pos - 1 - n) % dyn->num_entries;
+		m = lws_safe_modulo(dyn->pos - 1 - n, dyn->num_entries);
 		if (m < 0)
 			m += dyn->num_entries;
 		if (dyn->entries[m].lws_hdr_idx != LWS_HPACK_IGNORE_ENTRY)
@@ -506,7 +508,7 @@ lws_dynamic_token_insert(struct lws *wsi, int hdr_len,
 	}
 	lws_h2_dynamic_table_dump(wsi);
 
-	new_index = (dyn->pos) % dyn->num_entries;
+	new_index = lws_safe_modulo(dyn->pos, dyn->num_entries);
 	if (dyn->num_entries && dyn->used_entries == dyn->num_entries) {
 		if (dyn->virtual_payload_usage < dyn->virtual_payload_max)
 			lwsl_err("Dropping header content before limit!\n");
@@ -524,7 +526,8 @@ lws_dynamic_token_insert(struct lws *wsi, int hdr_len,
 	       dyn->used_entries &&
 	       dyn->virtual_payload_usage + hdr_len + len >
 				dyn->virtual_payload_max + 1024) {
-		int n = (dyn->pos - dyn->used_entries) % dyn->num_entries;
+		int n = lws_safe_modulo(dyn->pos - dyn->used_entries,
+						dyn->num_entries);
 		if (n < 0)
 			n += dyn->num_entries;
 		lws_dynamic_free(dyn, n);
@@ -559,7 +562,7 @@ lws_dynamic_token_insert(struct lws *wsi, int hdr_len,
 		  lws_hdr_index, hdr_len, dyn->entries[new_index].value ?
 				 dyn->entries[new_index].value : "null", len);
 
-	dyn->pos = (dyn->pos + 1) % dyn->num_entries;
+	dyn->pos = lws_safe_modulo(dyn->pos + 1, dyn->num_entries);
 
 	lws_h2_dynamic_table_dump(wsi);
 
@@ -597,27 +600,27 @@ lws_hpack_dynamic_size(struct lws *wsi, int size)
 	dyn = &nwsi->h2.h2n->hpack_dyn_table;
 	lwsl_info("%s: from %d to %d, lim %u\n", __func__,
 		  (int)dyn->num_entries, size,
-		  (unsigned int)nwsi->vhost->h2.set.s[H2SET_HEADER_TABLE_SIZE]);
+		  (unsigned int)nwsi->a.vhost->h2.set.s[H2SET_HEADER_TABLE_SIZE]);
 
 	if (!size) {
 		size = dyn->num_entries * 8;
 		lws_hpack_destroy_dynamic_header(wsi);
 	}
 
-	if (size > (int)nwsi->vhost->h2.set.s[H2SET_HEADER_TABLE_SIZE]) {
+	if (size > (int)nwsi->a.vhost->h2.set.s[H2SET_HEADER_TABLE_SIZE]) {
 		lwsl_info("rejecting hpack dyn size %u vs %u\n", size,
-			  (unsigned int)nwsi->vhost->h2.set.s[H2SET_HEADER_TABLE_SIZE]);
+			  (unsigned int)nwsi->a.vhost->h2.set.s[H2SET_HEADER_TABLE_SIZE]);
 
 		// this seems necessary to work with some browsers
 
-		if (nwsi->vhost->h2.set.s[H2SET_HEADER_TABLE_SIZE] == 65536 &&
+		if (nwsi->a.vhost->h2.set.s[H2SET_HEADER_TABLE_SIZE] == 65536 &&
 				size == 65537) { /* h2spec */
 			lws_h2_goaway(nwsi, H2_ERR_COMPRESSION_ERROR,
 				  "Asked for header table bigger than we told");
 			goto bail;
 		}
 
-		size = nwsi->vhost->h2.set.s[H2SET_HEADER_TABLE_SIZE];
+		size = nwsi->a.vhost->h2.set.s[H2SET_HEADER_TABLE_SIZE];
 	}
 
 	dyn->virtual_payload_max = size;
@@ -641,7 +644,7 @@ lws_hpack_dynamic_size(struct lws *wsi, int size)
 
 	while (dyn->virtual_payload_usage && dyn->used_entries &&
 	       dyn->virtual_payload_usage > dyn->virtual_payload_max) {
-		n = (dyn->pos - dyn->used_entries) % dyn->num_entries;
+		n = lws_safe_modulo(dyn->pos - dyn->used_entries, dyn->num_entries);
 		if (n < 0)
 			n += dyn->num_entries;
 		lws_dynamic_free(dyn, n);
@@ -666,7 +669,7 @@ lws_hpack_dynamic_size(struct lws *wsi, int size)
 	dyn->num_entries = size;
 	dyn->used_entries = min;
 	if (size)
-		dyn->pos = min % size;
+		dyn->pos = lws_safe_modulo(min, size);
 	else
 		dyn->pos = 0;
 
@@ -754,46 +757,47 @@ lws_hpack_use_idx_hdr(struct lws *wsi, int idx, int known_token)
 	return 0;
 }
 
-#if !defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) && !defined(LWS_ROLE_WS) && !defined(LWS_ROLE_H2)
+#if !defined(LWS_HTTP_HEADERS_ALL) && !defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) && !defined(LWS_ROLE_WS) && !defined(LWS_ROLE_H2)
 static uint8_t lws_header_implies_psuedoheader_map[] = {
 	0x03,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 };
 #endif
-#if  defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) && !defined(LWS_ROLE_WS) && !defined(LWS_ROLE_H2)
+#if !defined(LWS_HTTP_HEADERS_ALL) &&  defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) && !defined(LWS_ROLE_WS) && !defined(LWS_ROLE_H2)
 static uint8_t lws_header_implies_psuedoheader_map[] = {
 	0x07,0x00,0x00,0x00,0x00,0x00,0x00,0x0e,0x04,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 };
 #endif
-#if !defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) &&  defined(LWS_ROLE_WS) && !defined(LWS_ROLE_H2)
+#if !defined(LWS_HTTP_HEADERS_ALL) && !defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) &&  defined(LWS_ROLE_WS) && !defined(LWS_ROLE_H2)
 static uint8_t lws_header_implies_psuedoheader_map[] = {
 	0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 };
 #endif
-#if  defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) &&  defined(LWS_ROLE_WS) && !defined(LWS_ROLE_H2)
+#if !defined(LWS_HTTP_HEADERS_ALL) &&  defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) &&  defined(LWS_ROLE_WS) && !defined(LWS_ROLE_H2)
 static uint8_t lws_header_implies_psuedoheader_map[] = {
 	0x07,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x38,0x10,0x00,0x00,0x00,0x00,0x00,0x00,
 };
 #endif
-#if !defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) && !defined(LWS_ROLE_WS) &&  defined(LWS_ROLE_H2)
+#if !defined(LWS_HTTP_HEADERS_ALL) && !defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) && !defined(LWS_ROLE_WS) &&  defined(LWS_ROLE_H2)
 static uint8_t lws_header_implies_psuedoheader_map[] = {
-	0x03,0x00,0x80,0x0f,0x00,0x00,0x00,0x00,0x02,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x03,0x00,0x80,0x0f,0x00,0x00,0x00,0x00,0x12,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 };
 #endif
-#if  defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) && !defined(LWS_ROLE_WS) &&  defined(LWS_ROLE_H2)
+#if !defined(LWS_HTTP_HEADERS_ALL) &&  defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) && !defined(LWS_ROLE_WS) &&  defined(LWS_ROLE_H2)
 static uint8_t lws_header_implies_psuedoheader_map[] = {
-	0x07,0x00,0x00,0x3e,0x00,0x00,0x00,0x80,0x03,0x01,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x07,0x00,0x00,0x3e,0x00,0x00,0x00,0x80,0x03,0x09,0x00,0x00,0x00,0x00,0x00,0x00,
 };
 #endif
-#if !defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) &&  defined(LWS_ROLE_WS) &&  defined(LWS_ROLE_H2)
+#if !defined(LWS_HTTP_HEADERS_ALL) && !defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) &&  defined(LWS_ROLE_WS) &&  defined(LWS_ROLE_H2)
 static uint8_t lws_header_implies_psuedoheader_map[] = {
-	0x03,0x00,0x00,0x00,0x3e,0x00,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x03,0x00,0x00,0x00,0x3e,0x00,0x00,0x00,0x00,0x48,0x00,0x00,0x00,0x00,0x00,0x00,
 };
 #endif
-#if  defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) &&  defined(LWS_ROLE_WS) &&  defined(LWS_ROLE_H2)
+#if defined(LWS_HTTP_HEADERS_ALL) || ( defined(LWS_WITH_HTTP_UNCOMMON_HEADERS) &&  defined(LWS_ROLE_WS) &&  defined(LWS_ROLE_H2))
 static uint8_t lws_header_implies_psuedoheader_map[] = {
-	0x07,0x00,0x00,0x00,0xf8,0x00,0x00,0x00,0x00,0x0e,0x04,0x00,0x00,0x00,0x00,0x00,
+	0x07,0x00,0x00,0x00,0xf8,0x00,0x00,0x00,0x00,0x0e,0x24,0x00,0x00,0x00,0x00,0x00,
 };
 #endif
+
 
 static int
 lws_hpack_handle_pseudo_rules(struct lws *nwsi, struct lws *wsi, int m)
@@ -1250,8 +1254,6 @@ fin:
 			}
 		}
 
-		n = 8;
-
 		/* we have the header */
 		if (!h2n->value) {
 			h2n->value = 1;
@@ -1276,6 +1278,13 @@ fin:
 			/* header length is determined by known index */
 			m = lws_token_from_index(wsi, h2n->hdr_idx, NULL, NULL,
 					&h2n->hpack_hdr_len);
+			if (m < 0)
+				/*
+				 * The peer may only send known 6-bit indexes,
+				 * there's still the possibility it sends an unset
+				 * dynamic index that we can't succeed to look up
+				 */
+				return 1;
 			goto add_it;
 		/* NEW literal hdr with value */
 		case HPKT_LITERAL_HDR_VALUE_INCR:
@@ -1391,8 +1400,15 @@ int lws_add_http2_header_by_name(struct lws *wsi, const unsigned char *name,
 {
 	int len;
 
-	lwsl_header("%s: %p  %s:%s (len %d)\n", __func__, *p, name, value,
-					length);
+#if defined(_DEBUG)
+	/* value does not have to be NUL-terminated... %.*s not available on
+	 * all platforms */
+	lws_strnncpy((char *)*p, (const char *)value, length,
+			lws_ptr_diff(end, (*p)));
+
+	lwsl_header("%s: %p  %s:%s (len %d)\n", __func__, *p, name,
+			(const char *)*p, length);
+#endif
 
 	len = (int)strlen((char *)name);
 	if (len)

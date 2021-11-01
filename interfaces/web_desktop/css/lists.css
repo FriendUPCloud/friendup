@@ -238,3 +238,19 @@ ul.Negative.List > li:nth-child(even)
 	background-color: rgba(180,180,180,0.15);
 }
 
+/* Hidden details */
+
+.HiddenDetails
+{
+	position: relative;
+	max-height: 0px;
+	overflow: hidden;
+	transition: max-height 0.25s;
+}
+
+
+.Show > .HiddenDetails
+{
+	max-height: 400px;
+}
+

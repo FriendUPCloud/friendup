@@ -497,3 +497,30 @@ ALTER TABLE `Filesystem` ADD `Execute` VARCHAR( 512 );
   `ValueString` varchar(255) NOT NULL DEFAULT '',
   PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+CREATE TABLE `FQueuedEvent` (
+  `ID` bigint(20) NOT NULL AUTO_INCREMENT,
+  `UserID` bigint(20) DEFAULT 0,
+  `TargetUserID` bigint(20) DEFAULT 0,
+  `TargetGroupID` bigint(20) DEFAULT 0,
+  `Type` varchar(255) NOT NULL,
+  `Date` datetime,
+  `Status` varchar(255) NOT NULL DEFAULT '',
+  `Title` varchar(32) NOT NULL DEFAULT '',
+  `Message` varchar(255) NOT NULL DEFAULT '',
+  `ActionSeen` varchar(255) NOT NULL DEFAULT '',
+  `ActionAccepted` varchar(255) NOT NULL DEFAULT '',
+  `ActionRejected` varchar(255) NOT NULL DEFAULT '',
+  PRIMARY KEY (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+ALTER TABLE `FUser` ADD COLUMN `PublicKey` text AFTER `Password`;
+
+INSERT INTO `FUserGroup` (`UserID`,`Name`,`Type`) VALUES (0,'API','Level');
+
+INSERT INTO `FUser` ( `Name`, `Password`, `PublicKey`, `FullName`, `Email`, `SessionID`, `LoggedTime`, `CreatedTime`, `Image`, `LoginTime`, `MaxStoredBytes`, `MaxReadedBytes`) VALUES
+('apiuser', '{S6}3a294fec6996cdea157ed88839469eb29c597494d1132ea154528c131263c6f0', '', 'API', NULL, '', 0, 0, '', 0, 0, 0);
+
+INSERT INTO `FUserToGroup` (`UserID`,`UserGroupID`) VALUES (( SELECT `ID` FROM `FUser` WHERE `Name` = 'apiuser' LIMIT 1),(SELECT `ID` FROM `FUserGroup` WHERE `Name` = 'API' AND `Type` = 'Level' LIMIT 1));
+
+

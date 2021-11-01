@@ -31,7 +31,8 @@ IntListEl *ILEParseString( char *str )
 	
 	IntListEl *rootEl = NULL;
 	
-	while( TRUE )
+	//while( TRUE )
+	for( i=0 ; i < (strlen( str )+1) ; i++ )
 	{
 		//printf("'%c'-'%d'   ===== ", *curToken, *curToken );
 		if( *curToken == 0 || *curToken == ',' )

@@ -20,6 +20,11 @@ body:not([mobile]) .ViewContainer
 	opacity: 1;
 }
 
+.ViewContainer.Closing, .ViewContainer.Closing *
+{
+	pointer-events: none;
+}
+
 .View
 {
 	position: absolute;
@@ -145,6 +150,33 @@ html body[mobile] .View .FileDialog .FileBrowser .FileBrowserItemImage
 	display: inline-block;
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+.FileBrowser .DiskItem > .Name span.fa-remove
+{
+	cursor: pointer;
+	transition: opacity 0.25s;
+}
+
+.FileBrowser .DiskItem > .Name span.fa-remove:hover
+{
+	opacity: 0.8;
+}
+
+.FileBrowser .IconFolder, .FileBrowser .DiskItem
+{
+	cursor: pointer;
+}
+
+.FileBrowser .FolderItem > .Name, 
+.FileBrowser .DiskItem > .Name
+{
+	transition: opacity 0.25s;
+}
+
+.FileBrowser .FolderItem > .Name:hover, 
+.FileBrowser .DiskItem > .Name:hover
+{
+	opacity: 0.8;
 }
 
 
@@ -529,6 +561,11 @@ body:not([mobile]) .View[created=created]
 	-ms-transform: scale(1,0.1) !important;
 	-o-transform: scale(1,0.1) !important;
 	transform: scale(1,0.1) !important;
+}
+
+.ViewContainer.Closing, .ViewContainer.Closing *
+{
+	pointer-events: none;
 }
 
 .View > .Toolbar

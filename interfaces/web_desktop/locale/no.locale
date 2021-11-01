@@ -55,6 +55,7 @@ i18n_startup_sequence                : Oppstartsekvens
 i18n_cancel                          : Avbryt
 i18n_back                            : Tilbake
 i18n_accept                          : Aksepter
+i18n_reject                          : Avslå
 i18n_understood                      : Forstått
 i18n_your_devices                    : Disker
 i18n_quit                            : Avslutt
@@ -163,7 +164,32 @@ i18n_file_not_shared                    : Denne filen er ikke delt.
 i18n_workgroups                         : Arbeidsgrupper
 i18n_users                              : Brukere
 my_account                              : Min konto
+invite_a_friend                         : Inviter en venn
+i18n_invite_friend                      : Invitasjoner
 i18n_account_setup                      : Min konto - oppsett
+
+#Invites
+i18n_add_invite                         : Legg til en invitasjon
+i18n_current_invites                    : Eksisterende invitasjoner
+i18n_invite_desc                        : Invitasjoner blir lagret som lenker du kan dele med dem du ønsker å samhandle med. Invitasjonene vil forbli aktive inntil du sletter dem.
+i18n_no_workgroups                      : Du er ikke i noen arbeidsgrupper
+i18n_confirm_delete_invite              : Når du sletter en invitasjon, så vil ikke nye brukere kunne anvende invitasjonslenken for å få seg en Friend konto.
+i18n_failed_remove_invite               : Kunne ikke slette invitasjonen
+i18n_failed_remove_invite_desc          : Vennligst ta kontakt med administratoren din hvis dette problemet fortsetter.
+
+i18n_are_you_sure                       : Er du sikker?
+i18n_confirm_delete                     : Dette vil fjerne invitasjonslenken fra databasenThis will remove the invite link from the database.
+
+i18n_send_invite                        : Send invitasjon
+i18n_recipient                          : Mottaker
+i18n_invite_user                        : Invitér bruker
+i18n_optional                           : valgfri
+i18n_full_name                          : Fullt navn
+i18n_manage_groups                      : Administrer grupper
+
+i18n_failed_to_send                     : Kunne ikke sende invitasjon
+i18n_email_error                        : E-posten ble ikke sendt. Vennligst sjekk adressen.
+i18n_unknown_error                      : Un uventet hendelse oppsto på serveren.
 
 #Default directorys for applications
 i18n_directory_Games                    : Spill
@@ -468,6 +494,8 @@ i18n_makedir_operation                  : Oppretting av mappe
 i18n_could_not_make_dir                 : Kunne ikke opprette mappen.
 i18n_volume_information                 : Enhetsinformasjon
 i18n_volume_permissions                 : Enhetsrettigheter
+i18n_disk_full                          : Disken er full
+i18n_disk_full_desc                     : Du prøver å lagre i en disk som er full. Vennligst kontakt administratoren din for å løse problemet.
 i18n_drag_to_download_file              : Clikk eller dra og slipp på din desktop.
 i18n_drag_files_to_download             : Slipp filer for nedlastning.
 i18n_add_calendar_event                 : Ny kalenderhendelse.
@@ -536,6 +564,9 @@ i18n_ok                                 : Ok
 i18n_no_users_or_groups                 : Ingen brukere eller grupper å dele med.
 i18n_nothing_shared                     : Ingen brukere eller grupper valgt
 i18n_please_select_users_groups         : Ingenting ble delt da du ikke valgte brukere eller grupper.
+i18n_you_shared                         : Du delte
+i18n_no_description_on_group            : Denne gruppen har ikke beskrivelse.
+i18n_invite_to_no_group                 : Inviter bruker uten å legge inn i gruppe.
 
 
 i18n_pasted_file                        : Limer inn innhold
@@ -762,4 +793,16 @@ i18n_logging_in                         : Logger inn
 
 i18n_erroneous_filename                 : Feil filnavn
 i18n_please_set_a_valid_filename        : Vennligst velg et filnavn med riktig filendelse.
+
+#Image viewer ------------------------------------------------------------------
+
+menu_window                             : Vindu
+menu_fullscreen                         : Fullskjerm
+menu_close_window                       : Lukk vindu
+menu_display                            : Bilde
+menu_display_grid                       : Rutete bakgrunn
+menu_display_white                      : Hvit bakgrunn
+menu_display_black                      : Svart bakgrunn
+menu_display_rotate_cw                  : Roter med klokken
+menu_display_rotate_ccw                 : Roter mot klokken
 

@@ -147,6 +147,10 @@ typedef unsigned long long lws_intptr_t;
 #endif
 #endif
 
+#if defined(__FreeBSD__)
+#include <sys/signal.h>
+#endif
+
 #if defined(__GNUC__)
 
 /* warn_unused_result attribute only supported by GCC 3.4 or later */
@@ -173,22 +177,6 @@ typedef unsigned long long lws_intptr_t;
 
 #endif
 
-#if defined(LWS_WITH_LIBEV)
-#include <ev.h>
-#endif /* LWS_WITH_LIBEV */
-#ifdef LWS_WITH_LIBUV
-#include <uv.h>
-#ifdef LWS_HAVE_UV_VERSION_H
-#include <uv-version.h>
-#endif
-#ifdef LWS_HAVE_NEW_UV_VERSION_H
-#include <uv/version.h>
-#endif
-#endif /* LWS_WITH_LIBUV */
-#if defined(LWS_WITH_LIBEVENT)
-#include <event2/event.h>
-#endif /* LWS_WITH_LIBEVENT */
-
 #ifndef LWS_EXTERN
 #define LWS_EXTERN extern
 #endif
@@ -199,6 +187,18 @@ typedef unsigned long long lws_intptr_t;
 #if !defined(LWS_PLAT_OPTEE)
 #include <sys/time.h>
 #include <unistd.h>
+#endif
+#endif
+
+#if defined(LWS_WITH_LIBUV_INTERNAL)
+#include <uv.h>
+
+#ifdef LWS_HAVE_UV_VERSION_H
+#include <uv-version.h>
+#endif
+
+#ifdef LWS_HAVE_NEW_UV_VERSION_H
+#include <uv/version.h>
 #endif
 #endif
 
@@ -243,9 +243,11 @@ typedef unsigned long long lws_intptr_t;
 #define MBEDTLS_CONFIG_FILE <mbedtls/esp_config.h>
 #endif
 #endif
+#if defined(LWS_WITH_TLS)
 #include <mbedtls/ssl.h>
 #include <mbedtls/entropy.h>
 #include <mbedtls/ctr_drbg.h>
+#endif
 #else
 #include <openssl/ssl.h>
 #if !defined(LWS_WITH_MBEDTLS)
@@ -343,23 +345,17 @@ struct lws_pollfd {
 	lws_sockfd_type fd; /**< file descriptor */
 	SHORT events; /**< which events to respond to */
 	SHORT revents; /**< which events happened */
+	uint8_t write_blocked;
 };
 #define LWS_POLLHUP (FD_CLOSE)
 #define LWS_POLLIN (FD_READ | FD_ACCEPT)
 #define LWS_POLLOUT (FD_WRITE)
-
-#if !defined(pid_t)
-#define pid_t int
-#endif
 
 #else
 
 
 #if defined(LWS_PLAT_FREERTOS)
 #include <libwebsockets/lws-freertos.h>
-#if defined(LWS_WITH_ESP32)
-#include <libwebsockets/lws-esp32.h>
-#endif
 #else
 typedef int lws_sockfd_type;
 typedef int lws_filefd_type;
@@ -535,6 +531,9 @@ struct lws;
 
 #include <libwebsockets/lws-dll2.h>
 #include <libwebsockets/lws-timeout-timer.h>
+#if defined(LWS_WITH_SYS_SMD)
+#include <libwebsockets/lws-smd.h>
+#endif
 #include <libwebsockets/lws-state.h>
 #include <libwebsockets/lws-retry.h>
 #include <libwebsockets/lws-adopt.h>
@@ -546,8 +545,9 @@ struct lws;
 #include <libwebsockets/lws-ws-state.h>
 #include <libwebsockets/lws-ws-ext.h>
 #include <libwebsockets/lws-protocols-plugins.h>
-#include <libwebsockets/lws-plugin-generic-sessions.h>
+
 #include <libwebsockets/lws-context-vhost.h>
+
 #if defined(LWS_ROLE_MQTT)
 #include <libwebsockets/lws-mqtt.h>
 #endif
@@ -608,6 +608,21 @@ struct lws;
 #include <libwebsockets/lws-jwe.h>
 
 #endif
+
+#include <libwebsockets/lws-eventlib-exports.h>
+#include <libwebsockets/lws-i2c.h>
+#include <libwebsockets/lws-spi.h>
+#include <libwebsockets/lws-gpio.h>
+#include <libwebsockets/lws-bb-i2c.h>
+#include <libwebsockets/lws-bb-spi.h>
+#include <libwebsockets/lws-button.h>
+#include <libwebsockets/lws-led.h>
+#include <libwebsockets/lws-pwm.h>
+#include <libwebsockets/lws-display.h>
+#include <libwebsockets/lws-ssd1306-i2c.h>
+#include <libwebsockets/lws-ili9341-spi.h>
+#include <libwebsockets/lws-settings.h>
+#include <libwebsockets/lws-netdev.h>
 
 #ifdef __cplusplus
 }

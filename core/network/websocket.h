@@ -125,7 +125,7 @@ typedef struct WSCData
 //
 //
 
-WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extDebug );
+WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extDebug, int timeout, int katime, int kaprobes, int kainterval );
 
 //
 //
@@ -149,7 +149,7 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 //
 //
 
-int DetachWebsocketFromSession( void *us );
+int DetachWebsocketFromSession( void *d, void *wsi );
 
 #endif // __NETWORK_WEBSOCKET_H__
 

@@ -281,7 +281,7 @@ SystemBase *SystemInit( void )
 	l->LibraryZDrop = LibraryZDrop;
 	l->LibraryImageGet = LibraryImageGet;
 	l->LibraryImageDrop = LibraryImageDrop;
-	l->WebSocketSendMessage = WebSocketSendMessage;
+	l->UserSessionWebsocketWrite = UserSessionWebsocketWrite;
 	l->WebSocketSendMessageInt = WebSocketSendMessageInt;
 	l->WebsocketWrite = UserSessionWebsocketWrite;
 	l->SendProcessMessage = SendProcessMessage;
@@ -1085,7 +1085,9 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 
 	EventAdd( l->sl_EventManager, "DoorNotificationRemoveEntries", DoorNotificationRemoveEntries, l, time( NULL )+MINS30, MINS30, -1 );
-	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+l->sl_RemoveOldSessionTimeout, l->sl_RemoveOldSessionTimeout, -1 );	// default 60mins
+	
+	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", UMRemoveOldSessions, l, time( NULL )+l->sl_RemoveOldSessionTimeout, l->sl_RemoveOldSessionTimeout, -1 );	// default 60mins
+	//EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+l->sl_RemoveOldSessionTimeout, l->sl_RemoveOldSessionTimeout, -1 );	// default 60mins
 	// test, to remove
 	EventAdd( l->sl_EventManager, "PIDThreadManagerRemoveThreads", PIDThreadManagerRemoveThreads, l->sl_PIDTM, time( NULL )+MINS60, MINS60, -1 );
 	EventAdd( l->sl_EventManager, "CacheUFManagerRefresh", CacheUFManagerRefresh, l->sl_CacheUFM, time( NULL )+DAYS5, DAYS5, -1 );
@@ -1824,7 +1826,6 @@ typedef struct DevNode
  * Load and mount all user doors
  *
  * @param l pointer to SystemBase
- * @param u pointer to user to which device will be assigned
  * @param usrses pointer to usersession to which doors belong
  * @param force integer 0 = don't force 1 = force
  * @param unmountIfFail should be device unmounted in DB if mount will fail
@@ -1833,9 +1834,9 @@ typedef struct DevNode
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserDeviceMount( SystemBase *l, User *u, UserSession *usrses, int force, FBOOL unmountIfFail, char **mountError, FBOOL notify )
+int UserDeviceMount( SystemBase *l, UserSession *usrses, int force, FBOOL unmountIfFail, char **mountError, FBOOL notify )
 {	
-	Log( FLOG_INFO,  "[UserDeviceMount] Mount user device from Database\n");
+	Log( FLOG_INFO, "[UserDeviceMount] Mount user device from Database\n");
 	SQLLibrary *sqllib;
 	
 	if( usrses == NULL || usrses->us_User == NULL )
@@ -1844,6 +1845,12 @@ int UserDeviceMount( SystemBase *l, User *u, UserSession *usrses, int force, FBO
 		return -1;
 	}
 	User *usr = usrses->us_User;
+	
+	if( usr == NULL || usr->u_Status == USER_STATUS_TO_BE_REMOVED )
+	{
+		DEBUG("[UserDeviceMount] User is NULL or will be removed\n");
+		return -2;
+	}
 	
 	if( usr->u_MountedDevs != NULL && force == 0 )
 	{
@@ -1877,9 +1884,12 @@ g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND \
 ug.UserID = '%ld' \
 ) \
 ) \
-)AND ( (f.Owner='0' OR f.Owner IS NULL) AND f.Mounted=\'1\')", 
+)AND (f.Mounted=\'1\')", 
 usr->u_ID , usr->u_ID, usr->u_ID
 	);
+
+//)AND ( (f.Owner='0' OR f.Owner IS NULL) AND f.Mounted=\'1\')", 
+
 		DEBUG("[UserDeviceMount] Finding drives in DB\n");
 		void *res = sqllib->Query( sqllib, temptext );
 		if( res == NULL )
@@ -1898,7 +1908,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 		{
 			// Id, UserId, Name, Type, ShrtDesc, Server, Port, Path, Username, Password, Mounted
 
-			DEBUG("[UserDeviceMount] \tFound database -> Name '%s' Type '%s', Server '%s', Port '%s', Path '%s', Mounted '%s'\n", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
+			Log( FLOG_INFO, "[UserDeviceMount] \tFound database -> Name '%s' Type '%s', Server '%s', Port '%s', Path '%s', Mounted '%s'\n", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
 		
 			// make a list of devices
 			DevNode *ne = FCalloc( 1, sizeof(DevNode ) );
@@ -2016,9 +2026,16 @@ int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses )
 	DEBUG("UserDeviceUnMount\n");
 	if( usr != NULL )
 	{
+		USER_CHANGE_ON( usr );
+		
 		if( usr->u_MountedDevs != NULL )
 		{
 			File *dev = usr->u_MountedDevs;
+			
+			usr->u_MountedDevs = NULL; // set it to NULL
+			
+			USER_CHANGE_OFF( usr );
+			
 			File *remdev = dev;
 			
 			while( dev != NULL )
@@ -2026,10 +2043,19 @@ int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses )
 				remdev = dev;
 				dev = (File *)dev->node.mln_Succ;
 				
+				DEBUG("Pointer to remdev: %p in use %d\n", remdev, usr->u_InUse );
+				
 				DeviceUnMount( l->sl_DeviceManager, remdev, usr, ses );
 				
-				FFree( remdev );
+				DEBUG("Pointer to remdev2: %p in use %d\n", remdev, usr->u_InUse );
+				
+				//FFree( remdev );
+				FileDelete( remdev );
 			}
+		}
+		else
+		{
+			USER_CHANGE_OFF( usr );
 		}
 		
 		//TODO
@@ -2060,7 +2086,7 @@ char *RunMod( SystemBase *l, const char *type, const char *path, const char *arg
 	EModule *lmod = l->sl_Modules;
 	EModule *workmod = NULL;
 
-	DEBUG("[SystemBase] Run module '%s'\n", type );
+	//DEBUG("[SystemBase] Run module '%s'\n", type );
 
 	while( lmod != NULL )
 	{
@@ -2407,7 +2433,7 @@ Sentinel* GetSentinelUser( SystemBase* l )
  * @param len length of the message
  * @return 0 if message was sent otherwise error number
  */
-
+/*
 int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *usersession, char *msg, int len )
 {
 	unsigned char *buf;
@@ -2422,7 +2448,11 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 		{
 			if( usersession->us_WSD != NULL )
 			{
-				bytes += UserSessionWebsocketWrite( usersession, buf , len, LWS_WRITE_TEXT );
+				WSCData *data = (WSCData *)usersession->us_WSD;
+				if( data != NULL && data->wsc_UserSession != NULL && data->wsc_Wsi != NULL )
+				{
+					bytes += UserSessionWebsocketWrite( usersession, buf , len, LWS_WRITE_TEXT );
+				}
 			}
 			else
 			{
@@ -2443,6 +2473,7 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 	
 	return bytes;
 }
+*/
 
 /**
  * Send message via websockets
@@ -2512,7 +2543,8 @@ int SendProcessMessage( Http *request, char *data, int len )
 			
 			DEBUG("[SystemBase] SendProcessMessage message '%s'\n", sendbuf );
 			
-			WebSocketSendMessage( sb, pidt->pt_UserSession, sendbuf, newmsglen );
+			UserSessionWebsocketWrite( pidt->pt_UserSession, (unsigned char *)sendbuf, newmsglen, LWS_WRITE_TEXT);
+			//WebSocketSendMessage( sb, pidt->pt_UserSession, sendbuf, newmsglen );
 			
 			FFree( sendbuf );
 		}

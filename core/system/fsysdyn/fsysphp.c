@@ -592,7 +592,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 		{
 			if( strlen( path ) < 1 )
 			{
-				dev->f_Path = calloc( 2, sizeof(char) );
+				dev->f_Path = FCalloc( 2, sizeof(char) );
 			}
 			else
 			{

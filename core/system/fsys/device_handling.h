@@ -31,6 +31,7 @@ typedef struct DeviceManager
 {
 	void				*dm_SB;
 	pthread_mutex_t		dm_Mutex;
+	int					dm_InUse;
 }DeviceManager;
 
 //
@@ -111,12 +112,6 @@ File *GetUserDeviceByFSysUserIDDevName( DeviceManager *dm, SQLLibrary *sqllib, F
 //
 
 void UserNotifyFSEvent( DeviceManager *dm, char *evt, char *path );
-
-//
-//
-//
-
-void UserNotifyFSEvent2( DeviceManager *dm, User *u, char *evt, char *path );
 
 //
 //

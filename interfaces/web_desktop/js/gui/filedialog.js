@@ -13,17 +13,17 @@ var _dialogStorage = {};
 // Opens a file dialog connected to an application
 Filedialog = function( object, triggerfunction, path, type, filename, title )
 {	
-	var self = this;
-	var mainview = false;
-	var suffix = false;
-	var multiSelect = true;
-	var defaultPath = 'Home:';
-	var keyboardNavigation = false;
-	var ignoreFiles = false;
-	var rememberPath = false;
+	let self = this;
+	let mainview = false;
+	let suffix = false;
+	let multiSelect = true;
+	let defaultPath = 'Home:';
+	let keyboardNavigation = false;
+	let ignoreFiles = false;
+	let rememberPath = false;
 	
 	// Sanitize paths
-	var lastChar;
+	let lastChar;
 	if( path )
 	{
 		lastChar = path.substr( -1, 1 );
@@ -93,7 +93,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	{
 		FriendDOS.getFileInfo( path, function( e, d )
 		{
-			console.log( 'Testing: ' + path, e, d );
 			if( e == true )
 			{
 				init();
@@ -124,7 +123,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		// We have flags
 		if( object )
 		{
-			for( var a in object )
+			for( let a in object )
 			{
 				switch( a )
 				{
@@ -193,12 +192,12 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			}
 		}
 
-		var dialog = self;
+		let dialog = self;
 		dialog.suffix = suffix;
 		if( !filename ) filename = '';
 
 		// Grab title for later.....................................................
-		var ftitle = '';
+		let ftitle = '';
 	
 		switch ( type )
 		{
@@ -213,21 +212,21 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		if( title ) ftitle = title;
 
 		// Generate dialog ID.......................................................
-		var ds = null; // <- main container for session based storage
+		let ds = null; // <- main container for session based storage
 		if( mainview )
 		{
 			// Create application collection
 			if( !_dialogStorage[ mainview.applicationName ] )
 				_dialogStorage[ mainview.applicationName ] = {};
-			var dialogID = CryptoJS.SHA1( ftitle + '-' + type ).toString();
+			let dialogID = CryptoJS.SHA1( ftitle + '-' + type ).toString();
 			if( !_dialogStorage[ mainview.applicationName ][ dialogID ] )
 				_dialogStorage[ mainview.applicationName ][ dialogID ] = {};
 			ds = _dialogStorage[ mainview.applicationName ][ dialogID ];
 		}
 
-		var wantedWidth = 800;
+		let wantedWidth = 800;
 
-		var fl = {
+		let fl = {
 			'title' : i18n ( ftitle ),
 			'width' : wantedWidth,
 			'min-width' : 480,
@@ -241,7 +240,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			fl.screen = mainview.getFlag( 'screen' );
 		}
 
-		var w = new View( fl );
+		let w = new View( fl );
 
 		self.dialogWindow = w;
 		w.dialog = self;
@@ -264,9 +263,9 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		// Select an element
 		w.select = function( ele )
 		{
-			var cont = this.getContainer ();
-			var eles = cont.getElementsByTagName( 'div' );
-			for( var a = 0; a < eles.length; a++ )
+			let cont = this.getContainer ();
+			let eles = cont.getElementsByTagName( 'div' );
+			for( let a = 0; a < eles.length; a++ )
 			{
 				if ( eles[a].parentNode != cont )
 					continue;
@@ -277,7 +276,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			}
 		
 			// Second pass, color
-			for( var a = 0; a < eles.length; a++ )
+			for( let a = 0; a < eles.length; a++ )
 			{
 				if ( eles[a].parentNode != cont )
 					continue;
@@ -306,12 +305,31 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		}
 
 		// Take a selected file entry and use the trigger function on it
-		w.choose = function( ele )
+		w.choose = function( ele, stage )
 		{
 			if( !dialog.path )
 			{
 				Alert( i18n( 'i18n_no_path' ), i18n( 'i18n_please_choose_a_path' ) );
 				return false;
+			}
+		
+			// Check if the storage space is there, and that the volume
+			// is writable
+			if( !stage && dialog.type == 'save' )
+			{
+				let m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					let dn = JSON.parse( d );
+					if( parseFloat( dn.Filesize ) - parseFloat( dn.Used ) < 0 )
+					{
+						Alert( i18n( 'i18n_disk_full' ), i18n( 'i18n_disk_full_desc' ) );
+						return;
+					}
+					w.choose( ele, 2 );
+				}
+				m.execute( 'volumeinfo', { path: dialog.path.split( ':' )[0] + ':' } );
+				return;
 			}
 		
 			// No element, try to find it
@@ -320,7 +338,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				if( w.content.icons )
 				{
 					// TODO: Check multiple
-					for( var a = 0; a < w.content.icons.length; a++ )
+					for( let a = 0; a < w.content.icons.length; a++ )
 					{
 						if( w.content.icons[a].selected )
 						{
@@ -340,9 +358,9 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 					if( dialog.saveinput ) dialog.saveinput.focus ();
 					return;
 				}
-				var p = dialog.path;
+				let p = dialog.path;
 				p = p.split ( ':/' ).join ( ':' );
-				var fname = dialog.saveinput.value + "";
+				let fname = dialog.saveinput.value + "";
 				if ( p.substr ( p.length - 1, 1 ) == ':' )
 					p += fname;
 				else if ( p.substr ( p.length - 1, 1 ) != '/' )
@@ -355,15 +373,15 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 					// Check if the suffix matches
 					if( !dialog.checkSuffix( p ) )
 					{
-						var filename = '';
+						let filename = '';
 						if( p.indexOf( '/' ) > 0 )
 							filename = ( p.split( '/' ) ).pop();
 						else if( p.indexOf( ':' ) > 0 )
 							filename = ( p.split( ':' ) ).pop();
 						else filename = p;
 							
-						var suf = typeof( w.dialog.suffix ) == 'string' ? w.dialog.suffix : w.dialog.suffix[0];
-						var fix = w.dialog.saveinput.value.split( '.' );
+						let suf = typeof( w.dialog.suffix ) == 'string' ? w.dialog.suffix : w.dialog.suffix[0];
+						let fix = w.dialog.saveinput.value.split( '.' );
 						fix.pop();
 						fix.push( suf );
 						fix = fix.join( '.' );
@@ -375,9 +393,9 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				}
 			
 				// Check if file exists
-				var ic = w._window.icons;
-				var found = false;
-				for( var a = 0; a < ic.length; a++ )
+				let ic = w._window.icons;
+				let found = false;
+				for( let a = 0; a < ic.length; a++ )
 				{
 					if( ic[a].Path == p )
 					{
@@ -405,7 +423,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			}
 		
 			// Get the file object
-			var fobj = ele && ele.obj ? ele.obj : false;
+			let fobj = ele && ele.obj ? ele.obj : false;
 		
 			// Try to recreate the file object from the file info
 			if( ele && !fobj )
@@ -428,15 +446,15 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				return;
 			}
 		
-			var cont = this.getContainer();
-			var eles = cont.getElementsByTagName ( 'div' );
-			var out = [];
-			for( var a = 0; a < eles.length; a++ )
+			let cont = this.getContainer();
+			let eles = cont.getElementsByTagName ( 'div' );
+			let out = [];
+			for( let a = 0; a < eles.length; a++ )
 			{
 				if( eles[a].classList.contains( 'Selected' ) )
 				{
-					var fi = eles[a].fileInfo;
-					var ele = {
+					let fi = eles[a].fileInfo;
+					let ele = {
 						Path: fi.Path,
 						Filename: fi.Filename,
 						MetaType: fi.MetaType,
@@ -475,16 +493,16 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			if( !this.suffix ) return true;
 			if( typeof( this.suffix ) == 'string' )
 			{
-				var suf = '.' + this.suffix;
+				let suf = '.' + this.suffix;
 				if( fn.toLowerCase().substr( fn.length - suf.length, suf.length ) != suf )
 					return false;
 			}
 			else
 			{
-				var found = false;
-				for( var a in this.suffix )
+				let found = false;
+				for( let a in this.suffix )
 				{
-					var suf = '.' + this.suffix[a];
+					let suf = '.' + this.suffix[a];
 					if( fn.toLowerCase().substr( fn.length - suf.length, suf.length ) == suf )
 					{
 						found = true;
@@ -515,7 +533,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 
 		w.getContainer = function()
 		{
-			var s = this._window.getElementsByTagName( 'div' );
+			let s = this._window.getElementsByTagName( 'div' );
 			for ( var a = 0; a < s.length; a++ )
 			{
 				if( s[a].getAttribute( 'name' ) && s[a].getAttribute( 'name' ) == 'ContentBox' )
@@ -538,23 +556,26 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			triggerfunction( false );
 		} );
 	
-		if( type != 'open' && type != 'save' )
+		if( type != 'open' && type != 'save' && type != 'path' )
+		{
 			type = 'open';
+		}
 
 		// Get template
-		var f = new File( 'System:templates/filedialog' + ( '_' + type + '.html' ) );
+		let f = new File( 'System:templates/filedialog' + ( '_' + type + '.html' ) );
 		f.replacements = {
 			'file_load'  : i18n( 'file_load'  ),
 			'file_save'  : i18n( 'file_save'  ),
 			'file_abort' : i18n( 'file_abort' )
 		};
+		f.i18n();
 		f.onLoad = function ( d )
 		{
 			w.setContent( d );
 
 			// Get sidebar element
-			var eles = w.getElementsByTagName( 'div' );
-			for( var u = 0; u < eles.length; u++ )
+			let eles = w.getElementsByTagName( 'div' );
+			for( let u = 0; u < eles.length; u++ )
 			{
 				if( !eles[u].classList ) continue;
 				if( eles[u].classList.contains( 'Sidebar' ) )
@@ -593,8 +614,8 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			// Insert filename (if save)
 			if( type == 'save' )
 			{
-				var inps = w.getElementsByTagName( 'input' );
-				for( var a = 0; a < inps.length; a++ )
+				let inps = w.getElementsByTagName( 'input' );
+				for( let a = 0; a < inps.length; a++ )
 				{
 					if( inps[a].getAttribute( 'name' ) == 'filename' )
 					{
@@ -628,7 +649,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 						dialog.saveinput = inps[a];
 						inps[a].onkeydown = function( e )
 						{
-							var k = e.which ? e.which : e.keyCode;
+							let k = e.which ? e.which : e.keyCode;
 							if( k == 13 )
 							{
 								if( dialog.suffix )
@@ -637,8 +658,8 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 									if( !dialog.checkSuffix( this.value ) )
 									{
 										val = this.value;
-										var suf = typeof( dialog.suffix ) == 'string' ? dialog.suffix : dialog.suffix[0];
-										var fix = dialog.saveinput.value.split( '.' );
+										let suf = typeof( dialog.suffix ) == 'string' ? dialog.suffix : dialog.suffix[0];
+										let fix = dialog.saveinput.value.split( '.' );
 										fix.pop();
 										fix.push( suf );
 										fix = fix.join( '.' );
@@ -657,19 +678,20 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			}
 
 			// Set default buttons . . . . . . . . . . . . . . . . . . . . . . . . .
-			var inpu = false;
-			var open = false;
-			var save = false;
-			var cacl = false;
-			var fold = false;
-			var ds = w.getElementsByTagName ( 'button' );
-			for( var a = 0; a < ds.length; a++ )
+			let inpu = false;
+			let open = false;
+			let save = false;
+			let cacl = false;
+			let fold = false;
+			let ds = w.getElementsByTagName ( 'button' );
+			for( let a = 0; a < ds.length; a++ )
 			{
 				if( ds[a].getAttribute ( 'name' ) )
 				{
 					switch( ds[a].getAttribute ( 'name' ) )
 					{
 						case 'open':      open = ds[a]; break;
+						case 'select':    open = ds[a]; break;
 						case 'save':      save = ds[a]; break;
 						case 'cancel':    cacl = ds[a]; break;
 					}
@@ -677,7 +699,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			}
 			// Get the path string gadget mapped to window object. . . . . . . . . .
 			ds = w.getElementsByTagName ( 'input' );
-			for( var a = 0; a < ds.length; a++ )
+			for( let a = 0; a < ds.length; a++ )
 			{
 				if( ds[a].getAttribute( 'name' ) )
 				{
@@ -718,7 +740,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				w.inpu = inpu;
 				inpu.onkeyup = function( e )
 				{
-					var k = e.which ? e.which : e.keyCode;
+					let k = e.which ? e.which : e.keyCode;
 					// Submit on enter
 					if ( k && k == 13 )
 					{
@@ -742,7 +764,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			}
 			else
 			{
-				var lp = dialog.path.substr( dialog.path.length - 1, 1 );
+				let lp = dialog.path.substr( dialog.path.length - 1, 1 );
 				if( lp != '/' && lp != ':' )
 					dialog.path += '/';
 			
@@ -756,7 +778,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			}
 		
 			// Set up directoryview
-			var dir = new DirectoryView( w._window, {
+			let dir = new DirectoryView( w._window, {
 				filedialog:          true,
 				rightpanel:          dialog.contentbox,
 				leftpanel:           dialog.sidebar,
@@ -771,7 +793,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				{
 					if( dialog.saveinput && element.fileInfo.Type == 'File' )
 					{
-						var cand = element.fileInfo.Filename;
+						let cand = element.fileInfo.Filename;
 						if( dialog.suffix )
 						{
 							if( !dialog.checkSuffix( cand ) )
@@ -801,18 +823,18 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		
 			w._window.refresh = function( cb )
 			{
-				var f = w._window.fileInfo;
-				var d = new Door( f.Path );
+				let f = w._window.fileInfo;
+				let d = new Door( f.Path );
 				dialog.path = f.Path;
 			
-				var fin = {
+				let fin = {
 					Path: f.Path,
 					Volume: f.Volume,
 					MetaType: 'Directory',
 					Type: 'Directory'
 				};
 			
-				var dr = new Door( f.Path );
+				let dr = new Door( f.Path );
 				dr.getIcons( f.Path, function( icons )
 				{
 					w._window.directoryview.addToHistory( fin );
@@ -840,7 +862,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 // Get a path from fileinfo and return it
 function FiledialogPath( fileinfo )
 {
-	var path = fileinfo.Path ? fileinfo.Path : fileinfo.Title;
+	let path = fileinfo.Path ? fileinfo.Path : fileinfo.Title;
 	path = path.split( '/' );
 	path.pop();
 	path = path.join( '/' );
