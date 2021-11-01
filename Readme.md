@@ -1,4 +1,4 @@
-Friend OS v1.2.6, "Hydrogen 3"
+Friend OS v1.2.8, "Hydrogen 5"
 ==============================
 
 *NB*: For extended functionality and related Friend projects such as the Android app refer [here](https://github.com/FriendSoftwareLabs).
