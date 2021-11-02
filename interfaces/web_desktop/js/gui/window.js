@@ -4542,8 +4542,11 @@ var View = function( args )
 			let sb = ifr.getAttribute( 'sandbox' );
 			if( !sb && xflags ) sb = xflags;
 			else if( !sb ) sb = '';
-			sb += ' allow-top-navigation';
-			ifr.setAttribute( 'sandbox', sb );
+			if( sb )
+			{
+				sb += ' allow-top-navigation';
+				ifr.setAttribute( 'sandbox', sb );
+			}
 		}
 
 		ifr.onload = function( e )
