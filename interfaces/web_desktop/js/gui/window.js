@@ -1174,7 +1174,7 @@ function _ActivateWindow( div, nopoll, e )
 	if( div.windowObject.content )
 	{
 		let flags = this.getFlag( 'sandbox' );
-		if( !flags ) flags = DEFAULT_SANDBOX_ATTRIBUTES;
+		if( !flags && flags != '' ) flags = DEFAULT_SANDBOX_ATTRIBUTES;
 	
 		let fr = div.windowObject.content.getElementsByTagName( 'iframe' );
 		for( var a = 0; a < fr.length; a++ )
@@ -4134,7 +4134,7 @@ var View = function( args )
 		}
 		
 		let flags = this.getFlag( 'sandbox' );
-		if( !flags ) flags = DEFAULT_SANDBOX_ATTRIBUTES;
+		if( !flags && flags != '' ) flags = DEFAULT_SANDBOX_ATTRIBUTES;
 		
 		let ifr = document.createElement( _viewType );
 		ifr.applicationId = self.applicationId;
@@ -4278,7 +4278,7 @@ var View = function( args )
 		iframe.applicationDisplayName = self.applicationDisplayName;
 		
 		let flags = this.getFlag( 'sandbox' );
-		if( !flags ) flags = DEFAULT_SANDBOX_ATTRIBUTES;
+		if( !flags && flags != '' ) flags = DEFAULT_SANDBOX_ATTRIBUTES;
 		
 		if( typeof friendApp == 'undefined' ) iframe.setAttribute( 'sandbox', flags ); // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
 		iframe.referrerPolicy = 'origin';
@@ -4330,7 +4330,7 @@ var View = function( args )
 		}
 		
 		let flags = this.getFlag( 'sandbox' );
-		if( !flags ) flags = DEFAULT_SANDBOX_ATTRIBUTES;
+		if( !flags && flags != '' ) flags = DEFAULT_SANDBOX_ATTRIBUTES;
 		
 		ifr.applicationId = self.applicationId;
 		ifr.applicationName = self.applicationName;
@@ -4456,7 +4456,7 @@ var View = function( args )
 		ifr.authId = self.authId;
 		
 		let flags = this.getFlag( 'sandbox' );
-		if( !flags ) flags = DEFAULT_SANDBOX_ATTRIBUTES;
+		if( !flags && flags != '' ) flags = DEFAULT_SANDBOX_ATTRIBUTES;
 		
 		ifr.setAttribute( 'sandbox', flags );
 		
@@ -4512,7 +4512,7 @@ var View = function( args )
 		friendU = Trim( friendU );
 		
 		let flags = this.getFlag( 'sandbox' );
-		if( !flags ) flags = DEFAULT_SANDBOX_ATTRIBUTES;
+		if( !flags && flags != '' ) flags = DEFAULT_SANDBOX_ATTRIBUTES;
 		
 		if( typeof friendApp == 'undefined'  && ( friendU.length || friendU != targetU || !targetU ) )
 			ifr.setAttribute( 'sandbox', flags );
