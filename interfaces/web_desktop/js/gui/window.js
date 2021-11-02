@@ -6224,9 +6224,10 @@ function getSandboxFlags( win, defaultFlags )
 	let flags = win.getFlag( 'sandbox' );
 	if( flags === false && flags !== '' )
 	{
-		return defaultFlags;
+		flags = defaultFlags;
 	}
-	if( flags === false ) return '';
+	if( flags === false ) flags = '';
+	console.log( 'We ended up with flags: ', flags, 'dbg: ' + win.getFlags( 'sandbox' ) );
 	return flags;
 }
 
