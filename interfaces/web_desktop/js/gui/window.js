@@ -6226,6 +6226,7 @@ function getSandboxFlags( win, defaultFlags )
 	{
 		return defaultFlags;
 	}
+	if( flags == false ) return '';
 	return flags;
 }
 
