@@ -1173,7 +1173,7 @@ function _ActivateWindow( div, nopoll, e )
 	// Activate all iframes
 	if( div.windowObject.content )
 	{
-		let xflags = this.getFlag( 'sandbox' );
+		let xflags = div.windowObject.getFlag( 'sandbox' );
 		if( !xflags && xflags != '' ) xflags = DEFAULT_SANDBOX_ATTRIBUTES;
 	
 		let fr = div.windowObject.content.getElementsByTagName( 'iframe' );
