@@ -4511,9 +4511,6 @@ var View = function( args )
 		}
 		friendU = Trim( friendU );
 		
-		let xflags = this.getFlag( 'sandbox' );
-		if( !xflags && xflags != '' ) xflags = DEFAULT_SANDBOX_ATTRIBUTES;
-		
 		if( typeof friendApp == 'undefined'  && ( friendU.length || friendU != targetU || !targetU ) )
 			ifr.setAttribute( 'sandbox', xflags );
 
