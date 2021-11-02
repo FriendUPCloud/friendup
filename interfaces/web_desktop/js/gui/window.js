@@ -4141,7 +4141,7 @@ var View = function( args )
 		ifr.authId = self.authId;
 		ifr.applicationName = self.applicationName;
 		ifr.applicationDisplayName = self.applicationDisplayName;
-		ifr.setAttribute( 'sandbox', xflags );
+		if( xflags !== false ) ifr.setAttribute( 'sandbox', xflags );
 		ifr.view = this._window;
 		ifr.className = 'Content Loading';
 		
@@ -4335,7 +4335,7 @@ var View = function( args )
 		ifr.applicationId = self.applicationId;
 		ifr.applicationName = self.applicationName;
 		ifr.applicationDisplayName = self.applicationDisplayName;
-		ifr.setAttribute( 'sandbox', xflags );
+		if( xflags !== false ) ifr.setAttribute( 'sandbox', xflags );
 		ifr.authId = self.authId;
 		ifr.onload = function()
 		{
@@ -4458,7 +4458,7 @@ var View = function( args )
 		let xflags = this.getFlag( 'sandbox' );
 		if( !xflags && xflags != '' ) xflags = DEFAULT_SANDBOX_ATTRIBUTES;
 		
-		ifr.setAttribute( 'sandbox', xflags );
+		if( xflags !== false ) ifr.setAttribute( 'sandbox', xflags );
 		
 		let conf = this.flags || {};
 		if( this.flags && this.flags.allowScrolling )
@@ -4512,7 +4512,7 @@ var View = function( args )
 		friendU = Trim( friendU );
 		
 		if( typeof friendApp == 'undefined'  && ( friendU.length || friendU != targetU || !targetU ) )
-			ifr.setAttribute( 'sandbox', xflags );
+			if( xflags !== false ) ifr.setAttribute( 'sandbox', xflags );
 
 		// Allow sandbox flags
 		let sbx = ifr.getAttribute( 'sandbox' ) ? ifr.getAttribute( 'sandbox' ) : '';
