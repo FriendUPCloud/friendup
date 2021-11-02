@@ -6229,7 +6229,7 @@ function getSandboxFlags( win, defaultFlags )
 	}
 	if( flags === false ) flags = '';
 	if( flags === '' )
-		flags = 'allow-scripts';
+		flags = 'allow-scripts allow-same-origin';
 	return flags;
 }
 
