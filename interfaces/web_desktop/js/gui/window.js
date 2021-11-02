@@ -1170,27 +1170,6 @@ function _ActivateWindow( div, nopoll, e )
 	// Reserve this div for activation
 	_activationTarget = div;
 	
-	// Activate all iframes
-	if( div.windowObject.content )
-	{
-		let xflags = div.windowObject.getFlag( 'sandbox' );
-		if( !xflags && xflags != '' ) xflags = DEFAULT_SANDBOX_ATTRIBUTES;
-		else xflags = false;
-	
-		let fr = div.windowObject.content.getElementsByTagName( 'iframe' );
-		for( var a = 0; a < fr.length; a++ )
-		{
-			if( fr[ a ].oldSandbox )
-			{
-				if( typeof friendApp == 'undefined' ) fr[ a ].setAttribute( 'sandbox', fr[ a ].oldSandbox );
-			}
-			else if( xflags )
-			{
-				if( typeof friendApp == 'undefined' ) fr[ a ].setAttribute( 'sandbox', xflags );
-			}
-		}
-	}
-	
 	if( isMobile )
 	{
 		window.focus();
