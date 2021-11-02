@@ -6222,11 +6222,11 @@ function Alert( title, string, cancelstring, callback )
 function getSandboxFlags( win, defaultFlags )
 {
 	let flags = win.getFlag( 'sandbox' );
-	if( !flags && flags != '' )
+	if( flags === false && flags !== '' )
 	{
 		return defaultFlags;
 	}
-	if( flags == false ) return '';
+	if( flags === false ) return '';
 	return flags;
 }
 
