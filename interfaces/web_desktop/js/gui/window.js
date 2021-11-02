@@ -1173,6 +1173,9 @@ function _ActivateWindow( div, nopoll, e )
 	// Activate all iframes
 	if( div.windowObject.content )
 	{
+		let flags = this.getFlag( 'sandbox' );
+		if( !flags ) flags = DEFAULT_SANDBOX_ATTRIBUTES;
+	
 		let fr = div.windowObject.content.getElementsByTagName( 'iframe' );
 		for( var a = 0; a < fr.length; a++ )
 		{
@@ -1182,7 +1185,7 @@ function _ActivateWindow( div, nopoll, e )
 			}
 			else
 			{
-				if( typeof friendApp == 'undefined' ) fr[ a ].setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
+				if( typeof friendApp == 'undefined' ) fr[ a ].setAttribute( 'sandbox', flags );
 			}
 		}
 	}
@@ -4129,12 +4132,16 @@ var View = function( args )
 		{
 			c.innerHTML = '';
 		}
+		
+		let flags = this.getFlag( 'sandbox' );
+		if( !flags ) flags = DEFAULT_SANDBOX_ATTRIBUTES;
+		
 		let ifr = document.createElement( _viewType );
 		ifr.applicationId = self.applicationId;
 		ifr.authId = self.authId;
 		ifr.applicationName = self.applicationName;
 		ifr.applicationDisplayName = self.applicationDisplayName;
-		ifr.setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
+		ifr.setAttribute( 'sandbox', flags );
 		ifr.view = this._window;
 		ifr.className = 'Content Loading';
 		
@@ -4269,7 +4276,11 @@ var View = function( args )
 		iframe.authId = self.authId;
 		iframe.applicationName = self.applicationName;
 		iframe.applicationDisplayName = self.applicationDisplayName;
-		if( typeof friendApp == 'undefined' ) iframe.setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES ); // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
+		
+		let flags = this.getFlag( 'sandbox' );
+		if( !flags ) flags = DEFAULT_SANDBOX_ATTRIBUTES;
+		
+		if( typeof friendApp == 'undefined' ) iframe.setAttribute( 'sandbox', flags ); // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
 		iframe.referrerPolicy = 'origin';
 
 		self._window.applicationId = conf.applicationId; // needed for View.close to work
@@ -4317,10 +4328,14 @@ var View = function( args )
 			ifr.setAttribute( 'allowtransparency', 'true' );
 			ifr.style.backgroundColor = 'transparent';
 		}
+		
+		let flags = this.getFlag( 'sandbox' );
+		if( !flags ) flags = DEFAULT_SANDBOX_ATTRIBUTES;
+		
 		ifr.applicationId = self.applicationId;
 		ifr.applicationName = self.applicationName;
 		ifr.applicationDisplayName = self.applicationDisplayName;
-		ifr.setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
+		ifr.setAttribute( 'sandbox', flags );
 		ifr.authId = self.authId;
 		ifr.onload = function()
 		{
@@ -4439,7 +4454,11 @@ var View = function( args )
 		ifr.applicationName = self.applicationName;
 		ifr.applicationDisplayName = self.applicationDisplayName;
 		ifr.authId = self.authId;
-		ifr.setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
+		
+		let flags = this.getFlag( 'sandbox' );
+		if( !flags ) flags = DEFAULT_SANDBOX_ATTRIBUTES;
+		
+		ifr.setAttribute( 'sandbox', flags );
 		
 		let conf = this.flags || {};
 		if( this.flags && this.flags.allowScrolling )
@@ -4492,8 +4511,11 @@ var View = function( args )
 		}
 		friendU = Trim( friendU );
 		
+		let flags = this.getFlag( 'sandbox' );
+		if( !flags ) flags = DEFAULT_SANDBOX_ATTRIBUTES;
+		
 		if( typeof friendApp == 'undefined'  && ( friendU.length || friendU != targetU || !targetU ) )
-			ifr.setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
+			ifr.setAttribute( 'sandbox', flags );
 
 		// Allow sandbox flags
 		let sbx = ifr.getAttribute( 'sandbox' ) ? ifr.getAttribute( 'sandbox' ) : '';
@@ -4516,7 +4538,7 @@ var View = function( args )
 		if( this.limitless && this.limitless === true )
 		{
 			let sb = ifr.getAttribute( 'sandbox' );
-			if( !sb ) sb = DEFAULT_SANDBOX_ATTRIBUTES;
+			if( !sb ) sb = flags;
 			sb += ' allow-top-navigation';
 			ifr.setAttribute( 'sandbox', sb );
 		}
