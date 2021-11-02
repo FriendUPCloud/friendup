@@ -6219,6 +6219,7 @@ function Alert( title, string, cancelstring, callback )
 	return v; // the window
 }
 
+// Get final sandbox scripts
 function getSandboxFlags( win, defaultFlags )
 {
 	let flags = win.getFlag( 'sandbox' );
