@@ -1184,7 +1184,7 @@ function _ActivateWindow( div, nopoll, e )
 			{
 				if( typeof friendApp == 'undefined' ) fr[ a ].setAttribute( 'sandbox', fr[ a ].oldSandbox );
 			}
-			else
+			else if( xflags )
 			{
 				if( typeof friendApp == 'undefined' ) fr[ a ].setAttribute( 'sandbox', xflags );
 			}
