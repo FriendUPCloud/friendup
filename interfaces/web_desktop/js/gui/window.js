@@ -1175,6 +1175,7 @@ function _ActivateWindow( div, nopoll, e )
 	{
 		let xflags = div.windowObject.getFlag( 'sandbox' );
 		if( !xflags && xflags != '' ) xflags = DEFAULT_SANDBOX_ATTRIBUTES;
+		else xflags = false;
 	
 		let fr = div.windowObject.content.getElementsByTagName( 'iframe' );
 		for( var a = 0; a < fr.length; a++ )
@@ -4135,6 +4136,7 @@ var View = function( args )
 		
 		let xflags = this.getFlag( 'sandbox' );
 		if( !xflags && xflags != '' ) xflags = DEFAULT_SANDBOX_ATTRIBUTES;
+		else xflags = false;
 		
 		let ifr = document.createElement( _viewType );
 		ifr.applicationId = self.applicationId;
@@ -4279,6 +4281,7 @@ var View = function( args )
 		
 		let xflags = this.getFlag( 'sandbox' );
 		if( !xflags && xflags != '' ) xflags = DEFAULT_SANDBOX_ATTRIBUTES;
+		else xflags = false;
 		
 		if( typeof friendApp == 'undefined' ) iframe.setAttribute( 'sandbox', xflags ); // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
 		iframe.referrerPolicy = 'origin';
@@ -4331,6 +4334,7 @@ var View = function( args )
 		
 		let xflags = this.getFlag( 'sandbox' );
 		if( !xflags && xflags != '' ) xflags = DEFAULT_SANDBOX_ATTRIBUTES;
+		else xflags = false;
 		
 		ifr.applicationId = self.applicationId;
 		ifr.applicationName = self.applicationName;
@@ -4457,6 +4461,7 @@ var View = function( args )
 		
 		let xflags = this.getFlag( 'sandbox' );
 		if( !xflags && xflags != '' ) xflags = DEFAULT_SANDBOX_ATTRIBUTES;
+		else xflags = false;
 		
 		if( xflags !== false ) ifr.setAttribute( 'sandbox', xflags );
 		
