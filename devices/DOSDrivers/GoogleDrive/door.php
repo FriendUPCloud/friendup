@@ -504,11 +504,11 @@ if( !class_exists( 'GoogleDrive' ) )
 				// Ok, it's a file
 				else
 				{
-					if( strstr( $path, '.' ) )
+					if( strstr( $path, '.' ) || substr( $path, -1 ) != '/' )
 					{
 						$fldInfo = new stdClass();
 						$fldInfo->Type = 'File';
-						$fldInfo->MetaType = 'File';
+						$fldInfo->MetaType = 'DiskHandled';
 						$fldInfo->Path = $path;
 						$fldInfo->Filesize = 0;
 						$fldInfo->Filename = end( explode( '/', end( explode( ':', $path ) ) ) );
@@ -593,16 +593,20 @@ if( !class_exists( 'GoogleDrive' ) )
  						fclose( $fn );
  						if( strstr( $data, '"MetaType":"DiskHandled"' ) )
  						{
+ 							$Logger->log( $data );
+ 							
  							if( $jsfile = json_decode( trim( $data ) ) )
  							{
  								if( $jsfile->ID )
  								{
- 									$tmpfile = new Google_Service_Drive_DriveFile();
+ 									$tmpfile = new Google_Service_Drive_DriveFile();	
+ 									// TODO: Perhaps get a list of parents and remove only on move but keep and add on copy ...
  									$result = $drivefiles->files->update( $jsfile->ID, $tmpfile, [
 										'addParents' => implode( ',', $parents ),
 										'removeParents' => '',
 										'fields' => 'name, parents'
 									] );
+		 							//$Logger->log( 'Success? ' . json_encode( $jsfile ) . ' [] ' . json_encode( $result ) );
 		 							return 'ok<!--separate-->' . $filesize;
 	 							}
 	 							$Logger->log( json_encode( $jsfile ) );
@@ -995,7 +999,7 @@ if( !class_exists( 'GoogleDrive' ) )
 		function listFolderContents( $subPath )
 		{
 			global $Logger, $args;
-
+			
 			if( strstr( $subPath, 'DiskHandled/' ) )
 			{
 				$subPath = str_replace( 'DiskHandled/', '', $subPath );
@@ -1318,7 +1322,7 @@ if( !class_exists( 'GoogleDrive' ) )
 					$cleanpath .= ( $o->Type == 'Directory' && substr( $cleanpath , -1) != '/' ? '/' : '' ) ;
 					$o->Path = $cleanpath;
 					$o->Driver = 'GoogleDrive';
-					
+					$Logger->log( json_encode( $o ) );
 					return json_encode( $o );
 				}
 				else

@@ -4103,7 +4103,7 @@ window.FriendDOS =
    			{
     			depth = 0;
    			}
-
+			
 			// Get door objects
 			let doorSrc = ( new Door() ).get( src );
 			let doorDst = ( new Door() ).get( dest );
@@ -4219,9 +4219,32 @@ window.FriendDOS =
 								d.getIcons( p, function( subs )
 								{
 									copyObject.completed++;
-									function CopyAndCallback( dcp, dfn, move )
+									function CopyAndCallback( dcp, dfn, move, exf )
 									{
 										copyObject.processes++;
+										
+										// If we are copying a file that is diskhandled in the same drive, add DiskHandled/ to the path
+										if( doorSrc.deviceName == doorDst.deviceName && data[a].MetaType == 'DiskHandled' && dcp.indexOf( ':DiskHandled/' ) < 0 && dfn.indexOf( '.' ) < 0 )
+										{
+											dcp = dcp.split( doorSrc.deviceName + ':' ).join( doorSrc.deviceName + ':DiskHandled/' );
+											destination = destination.split( doorDst.deviceName + ':' ).join( doorDst.deviceName + ':DiskHandled/' );
+										
+											console.log( 'DiskHandled files copied within the drive are handled by the driver, adding :DiskHandled/ to filepath.', { from: dcp, to: destination + dfn, data: data[a] } );
+										}
+										
+										// NOTE: If we have a special case like "ExportFormat" from the source Door Drive we need to overwrite file extension to the export format.
+										if( doorSrc.deviceName != doorDst.deviceName && data[a].MetaType == 'DiskHandled' && dfn && exf )
+										{
+											var ext = ( dfn.indexOf( '.' ) >= 0 ? dfn.split( '.' ).pop(  ) : false );
+											
+											if( !ext )
+											{
+												dfn += '.' + exf;
+												
+												console.log( 'Converting extension to subs[c].ExportFormat. destination is: ' + destination + dfn );
+											}
+										}
+										
 										doorSrc.dosAction( 'copy', { from: dcp, to: destination + dfn }, function( result )
 										{
 											copyObject.completed++;
@@ -4252,7 +4275,7 @@ window.FriendDOS =
 											{
 												copyObject.copyTotal++;
 												copyObject.processes++;
-												CopyAndCallback( subs[c].Path, subs[c].Filename, move );
+												CopyAndCallback( subs[c].Path, subs[c].Filename, move, subs[c].ExportFormat ? subs[c].ExportFormat : null );
 											}
 											else
 											{
@@ -4305,6 +4328,29 @@ window.FriendDOS =
 										callback( 'Failed to ' + ( move ? 'move' : 'copy' ) + ' file...', { done: true } );
 									}
 								}
+								
+								// If we are copying a file that is diskhandled in the same drive, add DiskHandled/ to the path
+								if( doorSrc.deviceName == doorDst.deviceName && data[a].MetaType == 'DiskHandled' && finalSrc.indexOf( ':DiskHandled/' ) < 0 )
+								{
+									finalSrc = finalSrc.split( doorSrc.deviceName + ':' ).join( doorSrc.deviceName + ':DiskHandled/' );
+									destination = dest.split( doorDst.deviceName + ':' ).join( doorDst.deviceName + ':DiskHandled/' );
+									
+									console.log( 'DiskHandled files copied within the drive are handled by the driver, adding :DiskHandled/ to filepath.', { from: finalSrc, to: destination, data: data[a] } );
+								}
+								
+								// NOTE: If we have a special case like "ExportFormat" from the source Door Drive we need to overwrite file extension to the export format.
+								if( doorSrc.deviceName != doorDst.deviceName && data[a].MetaType == 'DiskHandled' && data[a].ExportFormat )
+								{
+									var ext = ( data[a].Filename.indexOf( '.' ) >= 0 ? data[a].Filename.split( '.' ).pop(  ) : false );
+							
+									if( !ext )
+									{
+										destination += '.' + data[a].ExportFormat;
+										
+										console.log( 'Converting extension to data[a].ExportFormat. destination is: ' + destination );
+									}
+								}
+								
 								doorSrc.dosAction( 'copy', { from: finalSrc, to: destination }, function( result )
 								{
 									if( move )

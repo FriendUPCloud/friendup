@@ -914,11 +914,12 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 					// Eles now contain directories, info files and normal files
 					for( a = 0; a < eles.length; a++ )
 					{
-						// If we are copying or moving a file that is diskhandled in the same drive, add DiskHandled/ to the path
-						if( cfo.Driver == eles[a].fileInfo.Driver && eles[a].fileInfo.Path.indexOf( eles[a].fileInfo.Driver + ':DiskHandled/' ) < 0 )
+						// If we are moving a file that is diskhandled in the same drive, add DiskHandled/ to the path
+						if( cfo.Path.split( ':' )[0] == eles[a].fileInfo.Path.split( ':' )[0] && cfo.MetaType == 'DiskHandled' && eles[a].fileInfo.Type == 'File' && eles[a].fileInfo.Path.indexOf( ':DiskHandled/' ) < 0 
+						&& ( ( !eles[a].fileInfo.Extension && eles[a].fileInfo.Filename.indexOf( '.' ) < 0 ) || eles[a].fileInfo.Extension == 'diskhandled' ) )
 						{
-							eles[a].fileInfo.Path = eles[a].fileInfo.Path.split( eles[a].fileInfo.Driver + ':' ).join( eles[a].fileInfo.Driver + ':DiskHandled/' );
-							console.log( 'DiskHandled files moved or copied within the drive are handled by the driver, adding :DiskHandled/ to filepath.' );
+							eles[a].fileInfo.Path = eles[a].fileInfo.Path.split( ':' ).join( ':DiskHandled/' );
+							console.log( 'DiskHandled files moved within the drive are handled by the driver, adding :DiskHandled/ to filepath.', { cfo: cfo, fileInfo: eles[a].fileInfo } );
 						}
 						
 						var d = Workspace.getDoorByPath( eles[a].fileInfo.Path );
@@ -965,7 +966,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 					}
 					
 					d.cancelId = series; // Register file operation id
-
+					
 					// Get icons on path
 					d.getIcons( folder.ele.fileInfo, function( result )
 					{
@@ -1001,6 +1002,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 								files.push( result[z] );
 							}
 						}
+						
 						// Put the files in the right order!
 						o.checkFiles( files );
 						// Done counting!
@@ -1058,13 +1060,13 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						fl = this.files[ i ];
 						
 						// NOTE: If we have a special case like "ExportFormat" from the source Door Drive we need to overwrite file extension to the export format.
-						if( fl.fileInfo.ExportFormat && fl.fileInfo.Extension == 'diskhandled' )
+						if( fl.ExportFormat && fl.MetaType == 'DiskHandled' || fl.fileInfo.ExportFormat && fl.fileInfo.MetaType == 'DiskHandled' )
 						{
 							var ext = ( fl.fileInfo.Filename.indexOf( '.' ) >= 0 ? fl.fileInfo.Filename.split( '.' ).pop(  ) : false );
 							
 							if( !ext )
 							{
-								fl.fileInfo.NewPath = ( ( fl.fileInfo.NewPath ? fl.fileInfo.NewPath : fl.fileInfo.Path ) + '.' + fl.fileInfo.ExportFormat );
+								fl.fileInfo.NewPath = ( ( fl.fileInfo.NewPath ? fl.fileInfo.NewPath : fl.fileInfo.Path ) + '.' + ( fl.ExportFormat ? fl.ExportFormat : fl.fileInfo.ExportFormat ) );
 								
 								// If we are copying or moving a file that is diskhandled in the same drive, add DiskHandled/ to the path
 								if( cfo.Driver == fl.fileInfo.Driver && fl.fileInfo.NewPath.indexOf( fl.fileInfo.Driver + ':DiskHandled/' ) < 0 )
@@ -1079,13 +1081,27 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						// Could be we have a just in time modified new path instead of path (in case of overwriting etc)
 						var destPath = fl.fileInfo.NewPath ? fl.fileInfo.NewPath : fl.fileInfo.Path;
 						
-						toPath = cfo.Path + p + destPath.split( dPath ).join( '' );
+						var newdPath = null;
+						
+						if( destPath.indexOf( ':DiskHandled/' ) >= 0 && dPath.indexOf( ':DiskHandled/' ) < 0 )
+						{
+							newdPath = dPath.split( ':' ).join( ':DiskHandled/' );
+						}
+						
+						var ddPath = newdPath ? newdPath : dPath;
+						
+						toPath = cfo.Path + p + destPath.split( ddPath ).join( '' );
 						door = Workspace.getDoorByPath( fl.fileInfo.Path );
 						door.cancelId = series;
 						
 						// Sanitation
 						while( toPath.indexOf( '//' ) >= 0 ) toPath = toPath.split( '//' ).join ( '/' );
-
+						
+						if( fl.fileInfo.Path.indexOf( ':DiskHandled/' ) >= 0 && toPath.indexOf( ':DiskHandled/' ) < 0 )
+						{
+							toPath = toPath.split( ':' ).join( ':DiskHandled/' );
+						}
+						
 						if( i + 1 == stopAt ) initNextBatch = true;
 
 						//console.log( 'Copying from: ' + fl.fileInfo.Path + ', to: ' + toPath );

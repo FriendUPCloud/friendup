@@ -735,6 +735,12 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 		{
 			if( args[possibilities[b]] )
 			{
+				// If path has a special case flag called DiskHandled correct path in order to refresh correctly
+				if( args[possibilities[b]].indexOf( ':DiskHandled/' ) )
+				{
+					args[possibilities[b]] = args[possibilities[b]].split( ':DiskHandled/' ).join( ':' );
+				}
+				
 				if( func.indexOf('delete') > -1 )
 					Workspace.closeWindowByPath( args[possibilities[b]] );
 				else Workspace.refreshWindowByPath( args[possibilities[b]] );
