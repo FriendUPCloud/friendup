@@ -428,11 +428,22 @@ void ProcessSinkMessage( void *locd )
 	jsmn_parser parser;
 	jsmn_init( &parser );
 	
-	jsmntok_t *t = FMalloc( 10240*sizeof(jsmntok_t) );
+	int nrElements = 128;
+	// we have to figure out how many json elements are in string
+	int z;
+	for( z=1 ; z < len ; z++ )
+	{
+		if( data[ z ] == ',' || data[ z ] == ':' )
+		{
+			nrElements += 8;
+		}
+	}
+	
+	jsmntok_t *t = FMalloc( nrElements*sizeof(jsmntok_t) );
 	
 	//jsmntok_t t[512]; //should be enough
 
-	int tokens_found = jsmn_parse( &parser, data, len, t, 10240 );
+	int tokens_found = jsmn_parse( &parser, data, len, t, nrElements );
 	
 	DEBUG( "Token found: %d", tokens_found );
 	if( tokens_found < 1 )
