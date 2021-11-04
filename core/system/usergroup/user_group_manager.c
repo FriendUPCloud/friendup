@@ -74,7 +74,7 @@ UserGroupManager *UGMNew( void *sb )
 
 void UGMDelete( UserGroupManager *um )
 {
-	Log( FLOG_INFO, "UGMDelete release groups\n");
+	Log( FLOG_INFO, "[UGMDelete] release groups\n");
 
 	if( FRIEND_MUTEX_LOCK( &um->ugm_Mutex ) == 0 )
 	{
@@ -98,6 +98,8 @@ void UGMMountGroupDrives( UserGroupManager *um )
 {
 	SystemBase *sb = (SystemBase *)um->ugm_SB;
 	
+	DEBUG("[UGMMountGroupDrives] Start\n");
+	
 	UserGroup *locug = um->ugm_UserGroups;
 	while( locug != NULL )
 	{
@@ -111,6 +113,8 @@ void UGMMountGroupDrives( UserGroupManager *um )
 		
 		locug = (UserGroup *)locug->node.mln_Succ;
 	}
+	
+	DEBUG("[UGMMountGroupDrives] End\n");
 }
 
 
@@ -361,9 +365,10 @@ UserGroup *UGMGetGroupByNameAndTypeDB( UserGroupManager *ugm, const char *name, 
  * @param name group name
  * return 0 when success, otherwise error number
  */
-
+/*
 int UGMAddGroup( UserGroupManager *ugm, FQUAD userID, char *name )
 {
+	SystemBase *sb = (SystemBase *)ugm->ugm_SB;
 	if( ugm == NULL )
 	{
 		FERROR("[UGMAddGroup] Cannot add NULL to group!\n");
@@ -373,18 +378,33 @@ int UGMAddGroup( UserGroupManager *ugm, FQUAD userID, char *name )
 	UserGroup *locg = UGMGetGroupByUserIDAndName( ugm, userID, name );
 	if( locg != NULL )
 	{
-		FERROR("[UGMAddGroup] Cannot add same group to list: %s\n", ug->ug_Name );
+		FERROR("[UGMAddGroup] Cannot add same group to list: %s\n", name );
 		return 2;
 	}
 	
-	if( FRIEND_MUTEX_LOCK( &ugm->ugm_Mutex ) == 0 )
+	// looks like group is not loaded into memory
+	
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	if( sqlLib != NULL )
 	{
-		ug->node.mln_Succ = (MinNode *) ugm->ugm_UserGroups;
-		ugm->ugm_UserGroups = ug;
-		FRIEND_MUTEX_UNLOCK( &ugm->ugm_Mutex );
+		char where[ 512 ];
+		int entries = 0;
+		snprintf( where, sizeof(where), "UserID=%ld AND Name='%s'", userID, name );
+	
+		UserGroup *ug = sqlLib->Load( sqlLib, UserGroupDesc, where, &entries );
+
+		if( FRIEND_MUTEX_LOCK( &ugm->ugm_Mutex ) == 0 )
+		{
+			ug->node.mln_Succ = (MinNode *) ugm->ugm_UserGroups;
+			ugm->ugm_UserGroups = ug;
+			FRIEND_MUTEX_UNLOCK( &ugm->ugm_Mutex );
+		}
+		
+		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	return 0;
 }
+*/
 
 /**
  * Add UserGroup to list of groups
@@ -393,7 +413,7 @@ int UGMAddGroup( UserGroupManager *ugm, FQUAD userID, char *name )
  * @param ug pointer to new group which will be added to list
  * return 0 when success, otherwise error number
  */
-/*
+
 int UGMAddGroup( UserGroupManager *ugm, UserGroup *ug )
 {
 	if( ugm == NULL )
@@ -410,7 +430,6 @@ int UGMAddGroup( UserGroupManager *ugm, UserGroup *ug )
 	}
 	return 0;
 }
-*/
 
 /**
  * Remove (diable) UserGroup on list of groups
@@ -674,7 +693,6 @@ int UGMMountDrives( UserGroupManager *sm )
 
 int UGMAssignGroupToUser( UserGroupManager *ugm, User *usr )
 {
-	char *tmpQuery;
 	DEBUG("[UMAssignGroupToUser] Assign group to user\n");
 
 	if( ugm == NULL )
@@ -682,18 +700,13 @@ int UGMAssignGroupToUser( UserGroupManager *ugm, User *usr )
 		return 1;
 	}
 	
-	//tmpQuery = (char *)FCalloc( QUERY_SIZE, sizeof(char) );
-	
 	SystemBase *l = (SystemBase *)ugm->ugm_SB;
+	char *qery = FMalloc( 1048 );
 	
 	// We need to check how many groups were created by the user before
 	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 	if( sqllib != NULL )
 	{
-		char *qery = FMalloc( 1048 );
-
-		qery[ 1024 ] = 0;
-		
 		// set default
 		usr->u_IsAdmin = FALSE;
 		usr->u_IsAPI = FALSE;
@@ -702,7 +715,6 @@ int UGMAssignGroupToUser( UserGroupManager *ugm, User *usr )
 		void *res = sqllib->Query( sqllib, qery );
 		if( res != NULL )
 		{
-			
 			char **row;
 			while( ( row = sqllib->FetchRow( sqllib, res ) ) )
 			{
@@ -720,10 +732,72 @@ int UGMAssignGroupToUser( UserGroupManager *ugm, User *usr )
 			}
 			sqllib->FreeResult( sqllib, res );
 		}
-		l->LibrarySQLDrop( l, sqllib );
 		
-		FFree( qery );
+		DEBUG("[UMAssignGroupToUser] user: %s is admin %d is api %d\n", usr->u_Name, usr->u_IsAdmin, usr->u_IsAPI );
+		
+		USER_CHANGE_ON( usr );
+		
+		//
+		// Remove all links to groups. This gives us assureance that user will not be assigned to any other group 
+		//
+	
+		UserGroupLink *ugl = usr->u_UserGroupLinks;
+		usr->u_UserGroupLinks = NULL;
+		while( ugl != NULL )
+		{
+			UserGroupLink *uglrem = ugl;
+			ugl = (UserGroupLink *)ugl->node.mln_Succ;
+			FFree( uglrem );
+		}
+		
+		DEBUG("[UMAssignGroupToUser] all groups released\n");
+		
+		// getting all groups which already have shared drive.
+	
+		sqllib->SNPrintF( sqllib, qery, 1024, "SELECT DISTINCT ug.ID FROM FUserToGroup utg inner join FUserGroup ug on utg.UserGroupID=ug.ID inner join Filesystem f on ug.ID=f.GroupID WHERE utg.UserID=%ld", usr->u_ID );
+		res = sqllib->Query( sqllib, qery );
+		if( res != NULL )
+		{
+			char **row;
+			while( ( row = sqllib->FetchRow( sqllib, res ) ) )
+			{
+				if( row[ 0 ] != NULL )
+				{
+					char *end;
+					FQUAD id = strtoll( row[ 0 ], &end, 0 );
+					if( id > 0 )
+					{
+						// we got valid ID so we can get group from list
+						UserGroup *ug = UGMGetGroupByID( l->sl_UGM, id );
+						if( ug != NULL )
+						{
+							UserGroupLink *nugl = FCalloc( 1, sizeof( UserGroupLink ) );
+							if( nugl != NULL )
+							{
+								nugl->ugl_Group = ug;
+								nugl->ugl_GroupID = id;
+								
+								// add new entry to list
+								nugl->node.mln_Succ = (MinNode *)usr->u_UserGroupLinks;
+								usr->u_UserGroupLinks = nugl;
+								
+								DEBUG("[UMAssignGroupToUser] User: %s assigned to group %ld\n", usr->u_Name, id );
+							}
+						}
+					}
+				}
+			}
+			sqllib->FreeResult( sqllib, res );
+		}
+		USER_CHANGE_OFF( usr );
+
+		l->LibrarySQLDrop( l, sqllib );
 	}
+	
+	FFree( qery );
+	
+	DEBUG("[UMAssignGroupToUser] Assign group to user END\n");
+	
 	return 0;
 }
 

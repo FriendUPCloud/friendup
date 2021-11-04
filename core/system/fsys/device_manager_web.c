@@ -1033,33 +1033,18 @@ AND LOWER(f.Name) = LOWER('%s')",
 					{
 						if( strcmp( devname, f->f_Name ) == 0 )
 						{
-							// if this is shared drive only admin or owner can unmount it
-							if( strcmp( f->f_FSysName, "SQLWorkgroupDrive" ) == 0 && ( activeUser->u_ID == f->f_UserID || activeUser->u_IsAdmin ) )
-							{
-								mountError = 0;
-								f->f_Mounted = FALSE;
-								fid = f->f_ID; // Need the ID too!
-								type = ( char *) f->f_FSysName;//   f->f_Type; // Copy the type, we need it
-								ldevname = f->f_Name;
-								// please check Types next time
-								break;
-							}
-							else
-							{
-								mountError = 0;
-								f->f_Mounted = FALSE;
-								fid = f->f_ID; // Need the ID too!
-								type = ( char *) f->f_FSysName;//   f->f_Type; // Copy the type, we need it
-								ldevname = f->f_Name;
-								// please check Types next time
-								break;
-							}
+							mountError = 0;
+							f->f_Mounted = FALSE;
+							fid = f->f_ID; // Need the ID too!
+							type = ( char *) f->f_FSysName;//   f->f_Type; // Copy the type, we need it
+							ldevname = f->f_Name;
+							
+							break;
 						}
 					}
 					
 					DEBUG("[DeviceMWebRequest] ldevname: %s\n", ldevname );
 				
-					/*
 					// check also device attached to groups
 					if( ldevname == NULL )
 					{
@@ -1095,7 +1080,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 							ugl = (UserGroupLink *)ugl->node.mln_Succ;
 						}
 					}
-					*/
 				
 					struct TagItem tags[] = {
 						{FSys_Mount_ID, (FULONG)fid },
@@ -1589,40 +1573,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 							}
 							BufStringAddSize( bsMountedDrives, inttmp, addlen );
 						}
-						/*
-						if( devnr == 0 )
-						{
-							snprintf( tmp, TMP_SIZE_MIN1, "{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
-								dev->f_Name ? dev->f_Name : "", 
-								dev->f_FSysName ? dev->f_FSysName : "", 
-								dev->f_Path ? dev->f_Path : "",
-								sys && sys->Name ? sys->Name : "",
-								configEscaped ? configEscaped: "{}",
-								dev->f_Visible == 1 ? "true" : "false",
-								executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "", 
-								isLimited,
-								dev->f_DevServer ? dev->f_DevServer : "",
-								dev->f_DevPort,
-								dev->f_UserGroupID
-							);
-						}
-						else
-						{
-							snprintf( tmp, TMP_SIZE_MIN1, ",{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
-								dev->f_Name ? dev->f_Name : "",
-								dev->f_FSysName ? dev->f_FSysName : "", 
-								dev->f_Path ? dev->f_Path : "",
-								sys && sys->Name ? sys->Name : "",
-								configEscaped ? configEscaped: "{}",
-								dev->f_Visible == 1 ? "true" : "false",
-								executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "",
-								isLimited,
-								dev->f_DevServer ? dev->f_DevServer : "",
-								dev->f_DevPort,
-								dev->f_UserGroupID
-							);
-						}
-						*/
 					
 						if( executeCmd )
 						{
@@ -1642,34 +1592,15 @@ AND LOWER(f.Name) = LOWER('%s')",
 					}
 
 					USER_UNLOCK( curusr );
-						
-					/*
-					else
-					{
-						if( executeCmd )
-						{
-							FFree( executeCmd );
-							executeCmd = NULL;
-						}
-						if( configEscaped )
-						{
-							FFree( configEscaped );
-							configEscaped = NULL;
-						}
-					}
-					*/
-				
+
 					//
 					// get information about shared group drives
 					//
-				
-				/*
+
 					UserGroupLink *ugl = loggedSession->us_User->u_UserGroupLinks;
 					while( ugl != NULL )
-					//int gr = 0;
-					//for( gr = 0 ; gr < curusr->u_GroupsNr ; gr++ )
 					{
-						//DEBUG("\n\n\n\nGROUP: %s\n\n\n\n\n", curusr->u_Groups[ gr ]->ug_Name );
+						DEBUG("\n\n\n\nGROUP: %s\n\n\n\n\n", ugl->ugl_Group->ug_Name );
 						File *dev = NULL;
 						if( ugl->ugl_Group != NULL )
 						{
@@ -1678,6 +1609,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					
 						while( dev != NULL )
 						{
+							DEBUG("Going through all group drives. Drive: %s\n", dev->f_Name );
 							// if this is shared drive and user want details we must point to original drive
 							if( dev->f_SharedFile != NULL )
 							{
@@ -1728,91 +1660,53 @@ AND LOWER(f.Name) = LOWER('%s')",
 								}
 								BufStringAddSize( bsMountedDrives, inttmp, addlen );
 							}
-							*/
-				
-				
-				// something really old
-					/*
-						if( devnr == 0 )
-						{
-							snprintf( tmp, TMP_SIZE_MIN1, "{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
-								dev->f_Name ? dev->f_Name : "", 
-								dev->f_FSysName ? dev->f_FSysName : "", 
-								dev->f_Path ? dev->f_Path : "",
-								sys && sys->Name ? sys->Name : "",
-								configEscaped ? configEscaped: "{}",
-								dev->f_Visible == 1 ? "true" : "false",
-								executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "", 
-								isLimited,
-								dev->f_DevServer ? dev->f_DevServer : "",
-								dev->f_DevPort,
-								dev->f_UserGroupID
-							);
-						
-						}
-						else
-						{
-							snprintf( tmp, TMP_SIZE_MIN1, ",{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
-								dev->f_Name ? dev->f_Name : "",
-								dev->f_FSysName ? dev->f_FSysName : "", 
-								dev->f_Path ? dev->f_Path : "",
-								sys && sys->Name ? sys->Name : "",
-								configEscaped ? configEscaped: "{}",
-								dev->f_Visible == 1 ? "true" : "false",
-								executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "",
-								isLimited,
-								dev->f_DevServer ? dev->f_DevServer : "",
-								dev->f_DevPort,
-								dev->f_UserGroupID
-							);
-						}
-						*/
 					
-					/*
-						if( executeCmd )
-						{
-							FFree( executeCmd );
-							executeCmd = NULL;
-						}
-						if( configEscaped )
-						{
-							FFree( configEscaped );
-							configEscaped = NULL;
-						}
-						
-						// remove private user data
-						int size = strlen( tmp );
-
-						{
-							char *lockey = strstr( tmp, "PublicKey" );
-							if( lockey != NULL )
+							if( executeCmd )
 							{
-								// add  PublicKey"="
-								lockey += 13;
-								while( *lockey != '"' )
+								FFree( executeCmd );
+								executeCmd = NULL;
+							}
+							if( configEscaped )
+							{
+								FFree( configEscaped );
+								configEscaped = NULL;
+							}
+						
+							// remove private user data
+							int size = strlen( tmp );
+
+							{
+								char *lockey = strstr( tmp, "PublicKey" );
+								if( lockey != NULL )
 								{
-									if( *lockey == 0 || *lockey == ',' )
+									// add  PublicKey"="
+									lockey += 13;
+									while( *lockey != '"' )
 									{
-										break;
+										if( *lockey == 0 || *lockey == ',' )
+										{
+											break;
+										}
+										*lockey = ' ';
+										lockey++;
 									}
-									*lockey = ' ';
-									lockey++;
 								}
 							}
+					
+							BufStringAddSize( bs, tmp, size );
+					
+							devnr++;
+							dev = (File *)dev->node.mln_Succ;
 						}
-					
-						BufStringAddSize( bs, tmp, size );
-					
-						devnr++;
-						dev = (File *)dev->node.mln_Succ;
-					}
 						ugl = (UserGroupLink *)ugl->node.mln_Succ;
-					}
-					*/
+					}	// while
+					
 					FFree( tmp );
 				}
 				
 				BufStringAdd( bs, "]" );
+				
+				DEBUG("Devicelist -> %s\n", bs->bs_Buffer );
 				
 				HttpAddTextContent( response, bs->bs_Buffer );
 				

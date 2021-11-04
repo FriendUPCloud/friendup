@@ -234,6 +234,7 @@ void UserDelete( User *usr )
 		// remove all sessions connected to user
 		
 		UserSessListEntry *us = (UserSessListEntry *)usr->u_SessionsList;
+		usr->u_SessionsList = NULL;
 		UserSessListEntry *delus = us;
 		while( us != NULL )
 		{
@@ -243,9 +244,6 @@ void UserDelete( User *usr )
 			FFree( delus );
 		}
 
-		/*
-		usr->u_SessionsList = NULL;
-	
 		// remove all remote users and drives
 	
 		RemoteUserDeleteAll( usr->u_RemoteUsers );
@@ -257,13 +255,14 @@ void UserDelete( User *usr )
 		{
 			UserGroupLink *n = (UserGroupLink *)ugl->node.mln_Succ;
 			//UserGroupRemoveUser( usr->u_Groups[i], usr );
-			UserGroupRemoveUser( ugl->ugl_Group, usr );
+			//UserGroupRemoveUser( ugl->ugl_Group, usr );
+			FFree( ugl );
 			ugl = n;
 		}
 
-		UserDeleteGroupLinkAll( usr->u_UserGroupLinks );
+		//UserDeleteGroupLinkAll( usr->u_UserGroupLinks );
 		usr->u_UserGroupLinks = NULL;
-		*/
+		
 		
 		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 		{
@@ -414,6 +413,7 @@ File *UserRemDeviceByName( User *usr, const char *name, int *error )
 	{
 		File *remdev = NULL;
 		File *lastone = NULL;
+		UserGroupLink *groupLink = NULL;
 		
 		USER_CHANGE_ON( usr );
 		
@@ -431,44 +431,118 @@ File *UserRemDeviceByName( User *usr, const char *name, int *error )
 			lastone = lf;
 			lf = (File *)lf->node.mln_Succ;
 		}
+		
+		if( remdev == NULL )
+		{
+			lastone = NULL;
+			
+			UserGroupLink *ugl = usr->u_UserGroupLinks;
+			while( ugl != NULL )
+			{
+				lf = ugl->ugl_Group->ug_MountedDevs;
+		
+				while( lf != NULL )
+				{
+					// now we must check if user created drive or if he is admin
+					if( lf->f_UserID == usr->u_ID || usr->u_IsAdmin == TRUE )
+					{
+						DEBUG( "[UserRemDeviceByName] Checking in group fs in list %s == %s...\n", lf->f_Name, name );
+						if( strcmp( lf->f_Name, name ) == 0 )
+						{
+							DEBUG( "[UserRemDeviceByName] Found one in group (%s == %s)\n", lf->f_Name, name );
+							remdev = lf;
+							groupLink = ugl;
+							break;
+						}
+					}
+					lastone = lf;
+					lf = (File *)lf->node.mln_Succ;
+				}
+				
+				if( groupLink == NULL )
+				{
+					break;
+				}
+				
+				ugl = (UserGroupLink *)ugl->node.mln_Succ;
+			}
+		}
+		
 		USER_CHANGE_OFF( usr );
 		
 		if( remdev != NULL )
 		{
-			if( remdev->f_Operations <= 0 )
+			int retry = 50;
+			while( remdev->f_Operations > 0 )
+			{
+				usleep( 5000 );
+				if( retry-- <= 0 ) break;	// quit in case
+			}
+			
+			USER_CHANGE_ON( usr );
+			
 			{
 				DEBUG("[UserRemDeviceByName] Remove device from list\n");
 				
-				USER_CHANGE_ON( usr );
+				// first we check if device was removed from user group
 				
-				usr->u_MountedDevsNr--;
-			
-				if( usr->u_MountedDevs == remdev )		// checking if its our first entry
+				if( groupLink != NULL )
 				{
-					File *next = (File*)remdev->node.mln_Succ;
-					usr->u_MountedDevs = (File *)next;
-					if( next != NULL )
+					// remove device from list
+					
+					lf = groupLink->ugl_Group->ug_MountedDevs;
+					
+					// remove device from list
+		
+					if( groupLink->ugl_Group->ug_MountedDevs == remdev )		// checking if its our first entry
 					{
-						next->node.mln_Pred = NULL;
+						File *next = (File*)remdev->node.mln_Succ;
+						groupLink->ugl_Group->ug_MountedDevs = (File *)next;
+						if( next != NULL )
+						{
+							next->node.mln_Pred = NULL;
+						}
 					}
-				}
+					else
+					{
+						File *next = (File *)remdev->node.mln_Succ;
+						//next->node.mln_Pred = (struct MinNode *)prev;
+						if( lastone != NULL )
+						{
+							lastone->node.mln_Succ = (struct MinNode *)next;
+						}
+					}
+					
+					// we have to check if group have device mounted, if not it should be removed
+					
+					//TODO remove group if its empty
+
+				} // seems device was user device
 				else
 				{
-					File *next = (File *)remdev->node.mln_Succ;
-					//next->node.mln_Pred = (struct MinNode *)prev;
-					if( lastone != NULL )
+					usr->u_MountedDevsNr--;
+			
+					if( usr->u_MountedDevs == remdev )		// checking if its our first entry
 					{
-						lastone->node.mln_Succ = (struct MinNode *)next;
+						File *next = (File*)remdev->node.mln_Succ;
+						usr->u_MountedDevs = (File *)next;
+						if( next != NULL )
+						{
+							next->node.mln_Pred = NULL;
+						}
+					}
+					else
+					{
+						File *next = (File *)remdev->node.mln_Succ;
+						//next->node.mln_Pred = (struct MinNode *)prev;
+						if( lastone != NULL )
+						{
+							lastone->node.mln_Succ = (struct MinNode *)next;
+						}
 					}
 				}
 				USER_CHANGE_OFF( usr );
 				
-				return remdev;
-			}
-			else
-			{
-				DEBUG("[UserRemDeviceByName] Cannot unmount device, operation in progress\n");
-				*error = FSys_Error_OpsInProgress;
 				return remdev;
 			}
 		}
@@ -498,7 +572,6 @@ File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error )
 {
 	if( usr != NULL )
 	{
-		
 		USER_CHANGE_ON( usr );
 		
 		File *lf = usr->u_MountedDevs;
@@ -689,6 +762,28 @@ File *UserGetDeviceByName( User *usr, const char *name )
 		}
 		lfile = (File *)lfile->node.mln_Succ;
 	}
+	
+	// file not found, we have to try to check if drive is workgroup drive
+	
+	UserGroupLink *ugl = usr->u_UserGroupLinks;
+	while( ugl != NULL )
+	{
+		UserGroup *ug = (UserGroup *) ugl->ugl_Group;
+		lfile = ug->ug_MountedDevs;
+	
+		while( lfile != NULL )
+		{
+			if( strcmp( name, lfile->f_Name ) == 0 )
+			{
+				DEBUG("Device found: %s\n", name );
+				USER_UNLOCK( usr );
+				return lfile;
+			}
+			lfile = (File *)lfile->node.mln_Succ;
+		}
+		ugl = (UserGroupLink *)ugl->node.mln_Succ;
+	}
+	
 	USER_UNLOCK( usr );
 	
 	return NULL;

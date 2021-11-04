@@ -182,8 +182,8 @@ int UGMGetUserGroupsDB( UserGroupManager *um, FULONG userID, BufString *bs );
 // add group to UserGroupManager
 //
 
-int UGMAddGroup( UserGroupManager *ugm, FQUAD userID, char *name );
-//int UGMAddGroup( UserGroupManager *smgr, UserGroup *ug );
+//int UGMAddGroup( UserGroupManager *ugm, FQUAD userID, char *name );
+int UGMAddGroup( UserGroupManager *smgr, UserGroup *ug );
 
 //
 // remove(disable) group from UserGroupManager

@@ -862,10 +862,12 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	// SECURITY SECTION END
 	//
 	
+	/*
 	if( loggedSession != NULL )
 	{
 		DEBUG("\n\n\nIS ADMIN: %d\n\n\n\n", IS_SESSION_ADMIN( loggedSession ) );
 	}
+	*/
 	
 	//
 	// Check dos token

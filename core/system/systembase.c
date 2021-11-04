@@ -1773,13 +1773,6 @@ int SystemInitExternal( SystemBase *l )
 		
 		UMInitUsers( l->sl_UM );
 
-		/*
-		User *sentUser = NULL;
-		if( l->sl_Sentinel != NULL )
-		{
-			sentUser = l->sl_Sentinel->s_User;
-		}*/
-		
 		UGMMountGroupDrives( l->sl_UGM );
 		
 		//UGMMountDrives( l->sl_UGM );	// previous function which was mounting all group drives without SQLWorkgroup

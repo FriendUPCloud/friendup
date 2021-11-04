@@ -500,11 +500,11 @@ int MountFSWorkgroupDrive( DeviceManager *dm, UserGroup *usrgrp, FBOOL notify, c
 	memset( &activityTime, 0, sizeof( struct tm ) );
 	
 	DOSDriver *filedd = NULL;
-	FULONG visible = 0;
+	FULONG visible = 1;
 	FULONG dbid = 0;
 	FBOOL mount = FALSE;
 	
-	Log( FLOG_DEBUG, "Mount Group device [MountFSWorkgroupDrive]\n");
+	Log( FLOG_DEBUG, "[MountFSWorkgroupDrive] Mount Group device\n");
 	
 	// New way of finding type of device
 	SQLLibrary *sqllib = l->LibrarySQLGet( l );
@@ -606,7 +606,7 @@ f.GroupID='%ld' AND f.Name='%s'",
 					{
 						if( id == fentry->f_ID || strcmp( name, fentry->f_Name ) == 0 )
 						{
-							DEBUG("Device is already mounted2. Name: %s\n", fentry->f_Name );
+							DEBUG("[MountFSWorkgroupDrive] Device is already mounted2. Name: %s\n", fentry->f_Name );
 							break;
 						}
 						fentry = (File *) fentry->node.mln_Succ;
@@ -666,7 +666,7 @@ f.GroupID='%ld' AND f.Name='%s'",
 								// Mount
 								// 
 	
-								retFile = filesys->Mount( filesys, tags, us->us_User, &mountError );
+								retFile = filesys->Mount( filesys, tags, NULL, &mountError );
 							
 								if( retFile != NULL )
 								{
@@ -698,7 +698,7 @@ f.GroupID='%ld' AND f.Name='%s'",
 									// if user group is passed then drive is shared drive
 									if( usrgrp != NULL )
 									{
-										DEBUG("Device will be added to usergroup list\n");
+										DEBUG("[MountFSWorkgroupDrive]\t\t\t\tDevice %s will be added to usergroup %s\n", name, usrgrp->ug_Name );
 										if( usrgrp->ug_MountedDevs != NULL )
 										{
 											File *t = usrgrp->ug_MountedDevs;
@@ -1180,6 +1180,25 @@ AND f.Name = '%s'",
 					fentry = (File *) fentry->node.mln_Succ;
 				}
 			}
+			else if( userGroupID > 0 )	// user group was not passed as a parameter, so we must get disk from group
+			{
+				usrgrp = UGMGetGroupByID( l->sl_UGM, userGroupID );
+				if( usrgrp != NULL )
+				{
+					File *fentry = usrgrp->ug_MountedDevs;
+					while( fentry != NULL )
+					{
+						if( id == fentry->f_ID || strcmp( name, fentry->f_Name ) == 0 )
+						{
+							*mfile = fentry;
+							DEBUG("Device is already mounted2. Name: %s\n", fentry->f_Name );
+							sameDevError = 1;
+							break;
+						}
+						fentry = (File *) fentry->node.mln_Succ;
+					}
+				}
+			}
 			
 			
 		} // usr != NULL
@@ -1305,22 +1324,34 @@ AND f.Name = '%s'",
 			retFile->f_Activity.fsa_ToDateTimeT = mktime( &activityTime );
 			retFile->f_KeysID = keysid;
 			
-			if( isWorkgroupDrive == TRUE && usrgrp != NULL )
+			if( isWorkgroupDrive == TRUE )
 			{
-				// if user group is passed then drive is shared drive
-				DEBUG("Device will be added to usergroup list\n");
-				if( usrgrp->ug_MountedDevs != NULL )
+				// group do not exist in memory. We have to load it and add to global list
+				if( usrgrp == NULL )
 				{
-					File *t = usrgrp->ug_MountedDevs;
-					usrgrp->ug_MountedDevs = retFile;
-					t->node.mln_Pred = ( void *)retFile;
-					retFile->node.mln_Succ = ( void *)t;
-					
-					retFile->f_WorkgroupDrive = TRUE;
+					usrgrp = UGMGetGroupByIDDB( l->sl_UGM, userGroupID );
+					if( usrgrp != NULL )
+					{
+						UGMAddGroup( l->sl_UGM, usrgrp );
+					}
 				}
-				else
+				if( usrgrp != NULL )
 				{
-					usrgrp->ug_MountedDevs = retFile;
+					// if user group is passed then drive is shared drive
+					DEBUG("Device will be added to usergroup list\n");
+					if( usrgrp->ug_MountedDevs != NULL )
+					{
+						File *t = usrgrp->ug_MountedDevs;
+						usrgrp->ug_MountedDevs = retFile;
+						t->node.mln_Pred = ( void *)retFile;
+						retFile->node.mln_Succ = ( void *)t;
+					
+						retFile->f_WorkgroupDrive = TRUE;
+					}
+					else
+					{
+						usrgrp->ug_MountedDevs = retFile;
+					}
 				}
 			}
 			else if( usr != NULL && isWorkgroupDrive == FALSE )
@@ -1352,7 +1383,6 @@ AND f.Name = '%s'",
 			}
 
 			INFO( "[MountFS] %s - Device '%s' mounted successfully of type %s\n", usr->u_Name, name, type );
-				INFO( "[MountFS] %s - Device '%s' mounted successfully\n", usr->u_Name, name );
 		} // usr != NULL and retFile != NULL
 		else
 		{
@@ -1769,6 +1799,7 @@ ug.UserID = '%ld' \
 				
 				DEBUG("UNMID: %d Type: %s user ID %lu usrparID %lu isAdmin %d\n", unmID,unmType,usr->u_ID, userID, loggedSession->us_User->u_IsAdmin );
 				
+				/*
 				if( unmID > 0 && unmType != NULL && strcmp( unmType, "SQLWorkgroupDrive" ) == 0 && ( usr->u_ID == userID || loggedSession->us_User->u_IsAdmin ) )
 				{
 					DEBUG("[UnMountFS] Refreshing all user drives for unmount.\n" );
@@ -1859,6 +1890,7 @@ ug.UserID = '%ld' \
 						tmpUser = (User *)tmpUser->node.mln_Succ;
 					}
 				}
+				*/
 				if( unmType ) FFree( unmType );
 			}
 			else
