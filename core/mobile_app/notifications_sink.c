@@ -1005,7 +1005,7 @@ error_point:
 		FFree( spm->data );
 	}
 	FFree( spm );
-	pthread_exit( NULL );
+	//pthread_exit( NULL );
 #else	
 	if( data )
 	{
