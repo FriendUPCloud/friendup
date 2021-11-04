@@ -434,6 +434,7 @@ void ProcessSinkMessage( void *locd )
 	DEBUG( "Token found: %d", tokens_found );
 	if( tokens_found < 1 )
 	{
+		Log( FLOG_ERROR, "Messages from 3rd server corrupted: %s\n", data );
 		ReplyError( d, WS_NOTIF_SINK_ERROR_TOKENS_NOT_FOUND );
 		goto error_point;
 	}
