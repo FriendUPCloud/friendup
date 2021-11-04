@@ -427,9 +427,12 @@ void ProcessSinkMessage( void *locd )
 
 	jsmn_parser parser;
 	jsmn_init( &parser );
-	jsmntok_t t[512]; //should be enough
+	
+	jsmntok_t *t = FMalloc( 10240*sizeof(jsmntok_t) );
+	
+	//jsmntok_t t[512]; //should be enough
 
-	int tokens_found = jsmn_parse( &parser, data, len, t, sizeof(t)/sizeof(t[0]) );
+	int tokens_found = jsmn_parse( &parser, data, len, t, 10240 );
 	
 	DEBUG( "Token found: %d", tokens_found );
 	if( tokens_found < 1 )
@@ -992,6 +995,12 @@ void ProcessSinkMessage( void *locd )
 	}	// JSON OBJECT
 	
 error_point:
+
+	if( t != NULL )
+	{
+		FFree( t );
+		t = NULL;
+	}
 
 #ifndef DISABLE_NOTIFICATION_THREADING
 	if( FRIEND_MUTEX_LOCK( &(spm->d->d_Mutex) ) == 0 )
