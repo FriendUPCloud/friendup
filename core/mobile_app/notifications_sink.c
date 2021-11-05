@@ -615,8 +615,10 @@ void ProcessSinkMessage( void *locd )
 							char *extra = NULL;
 							FULONG timecreated = 0;
 							
-							UMsg *ulistroot = NULL;
+							//UMsg *ulistroot = NULL;
 							//List *usersList = ListNew(); // list of users
+							char **userNameList = NULL;	// we want to have one array with user names
+							int userNameListLen = 0;
 							
 							// 8 -> 25
 							for( p = 8 ; p < tokens_found ; p++ )
@@ -642,10 +644,44 @@ void ProcessSinkMessage( void *locd )
 								
 								else if( strncmp( data + t[p].start, "users", size) == 0) 
 								{
+									// we have to filter user with devices by using this call
+									// SELECT DISTINCT u.Name FROM `FUser` u inner join `FUserMobileApp` uma on u.ID = uma.UserID WHERE Name in( "stefkos" )
+									
 									DEBUG("Found array of users\n");
 									p++;
 									if( t[p].type == JSMN_ARRAY ) 
 									{
+										SQLLibrary *sqllib = SLIB->LibrarySQLGet( SLIB );
+										if( sqllib != NULL )
+										{
+											int queryLen = 128 + (int)(t[p].end - t[p].start);
+											char *query = FCalloc( queryLen, sizeof(char) );
+											
+											snprintf( query, queryLen, "SELECT DISTINCT u.Name FROM `FUser` u inner join `FUserMobileApp` uma on u.ID = uma.UserID WHERE Name in(%.*s)", (int)(t[p].end - t[p].start), (char *)(data + t[p].start) );
+
+											void *res = sqllib->Query( sqllib, query );
+											char **row;
+	
+											if( res != NULL )
+											{
+												userNameList = FCalloc( ((int)(t[p].end - t[p].start)/3), sizeof( char *) );
+												
+												while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
+												{
+													if( row[ 0 ] != NULL )
+													{
+														userNameList[ userNameListLen ] = StringDuplicate( row[ 0 ] );
+														userNameListLen++;
+													}
+													p++;
+												}
+												sqllib->FreeResult( sqllib, res );
+											}
+											
+											Log( FLOG_INFO, "This users will get notifications: %.*s\n", (int)(t[p].end - t[p].start), (char *)(data + t[p].start) );
+
+										
+										/*
 										int j;
 										int locsize = t[p].size;
 										p++;
@@ -664,6 +700,9 @@ void ProcessSinkMessage( void *locd )
 											p++;
 										}
 										p--;
+										*/
+										SLIB->LibrarySQLDrop( SLIB, sqllib );
+										}
 									}
 								}
 								else if( strncmp( data + t[p].start, "channel_id", size) == 0) 
@@ -707,9 +746,10 @@ void ProcessSinkMessage( void *locd )
 							
 							if( notification_type >= 0 )
 							{
-								if( ulistroot == NULL || channel_id == NULL || title == NULL || content == NULL )
+								if( userNameList == NULL || channel_id == NULL || title == NULL || content == NULL )
 								{
 									DEBUG( "channel_id: %s title: %s content: %s\n", channel_id, title , content );
+									/*
 									UMsg *le = ulistroot;
 									while( le != NULL )
 									{
@@ -722,6 +762,13 @@ void ProcessSinkMessage( void *locd )
 										}
 										FFree( dme );
 									}
+									*/
+									
+									if( userNameList != NULL )
+									{
+										FFree( userNameList );
+									}
+									
 									if( channel_id != NULL ){ FFree( channel_id ); channel_id = NULL; }
 									if( title != NULL ){ FFree( title ); title = NULL; }
 									if( content != NULL ){ FFree( content ); content = NULL; }
@@ -731,6 +778,7 @@ void ProcessSinkMessage( void *locd )
 									goto error_point;
 								}
 								
+								/*
 								// debug purpose
 								BufString *debugUserList = BufStringNew();
 								UMsg *le = ulistroot;
@@ -750,8 +798,10 @@ void ProcessSinkMessage( void *locd )
 									Log( FLOG_ERROR, "Notification Error! No users in recipients list\n");
 								}
 								BufStringDelete( debugUserList );
+								*/
 								
 								int returnStatus = 0;
+								/*
 								le = ulistroot;
 								while( le != NULL )
 								{
@@ -766,6 +816,26 @@ void ProcessSinkMessage( void *locd )
 									}
 									le = (UMsg *)le->node.mln_Succ;
 								}
+								*/
+								
+								for( z=0 ; z < userNameListLen ;z++ )
+								{
+									int status = 0;
+									
+									if( userNameList[ z ] != NULL )
+									{
+										status = MobileAppNotifyUserRegister( SLIB, (char *)userNameList[ z ], channel_id, application, title, content, (MobileNotificationTypeT)notification_type, extra, timecreated );
+										
+										FFree( userNameList[ z ] );
+									}
+
+									if( status != 0 )
+									{
+										returnStatus = status;
+									}
+								}
+								
+								FFree( userNameList );
 								
 								char reply[256];
 								int msize = sprintf(reply + LWS_PRE, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", returnStatus );
@@ -782,6 +852,7 @@ void ProcessSinkMessage( void *locd )
 								goto error_point;
 							}
 							
+							/*
 							UMsg *le = ulistroot;
 							while( le != NULL )
 							{
@@ -794,6 +865,7 @@ void ProcessSinkMessage( void *locd )
 								}
 								FFree( dme );
 							}
+							*/
 							
 							if( channel_id != NULL ) FFree( channel_id );
 							if( title != NULL ) FFree( title );
