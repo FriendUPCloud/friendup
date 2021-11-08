@@ -500,8 +500,6 @@ int MountFSWorkgroupDrive( DeviceManager *dm, UserGroup *usrgrp, FBOOL notify, c
 	memset( &activityTime, 0, sizeof( struct tm ) );
 	
 	DOSDriver *filedd = NULL;
-	FULONG visible = 1;
-	FULONG dbid = 0;
 	FBOOL mount = FALSE;
 	
 	Log( FLOG_DEBUG, "[MountFSWorkgroupDrive] Mount Group device\n");
@@ -510,6 +508,7 @@ int MountFSWorkgroupDrive( DeviceManager *dm, UserGroup *usrgrp, FBOOL notify, c
 	SQLLibrary *sqllib = l->LibrarySQLGet( l );
 	if( sqllib != NULL )
 	{
+		FBOOL visible = TRUE;
 		char *temptext = FCalloc( sizeof(char), 1024 );
 		
 		// for UserGroup there is different SQL
@@ -558,7 +557,28 @@ f.GroupID='%ld' AND f.Name='%s'",
 			
 			if( row[ 5 ] != NULL ) passwd = StringDuplicate( row[  5 ] );
 			
-			if( row[ 6 ] != NULL ) config = StringDuplicate( row[ 6 ] );
+			if( row[ 6 ] != NULL )
+			{
+				config = StringDuplicate( row[ 6 ] );
+				if( row[ 6 ] != NULL )
+				{
+					char *visiblePtr = NULL;
+					config = StringDuplicate( row[ 6 ] );
+					if( config != NULL && ( visiblePtr = strstr( config, "\"Visible\"" ) ) != NULL )
+					{
+						// "Visible":"on"
+						visiblePtr+= 9 + 2;	// name + quote + :
+						if( strcmp( visiblePtr, "on" ) != 0 )
+						{
+							visible = FALSE;
+						}
+						else
+						{
+							visible = TRUE;
+						}
+					}
+				}
+			}
 			
 			if( row[ 7 ] != NULL ){ char *end; id = strtoul( (char *)row[ 7 ],  &end, 0 ); }
 			
@@ -654,7 +674,6 @@ f.GroupID='%ld' AND f.Name='%s'",
 									{FSys_Mount_LoginPass,(FULONG)passwd},
 									{FSys_Mount_SysBase,(FULONG)l},
 									{FSys_Mount_Config,(FULONG)config},
-									{FSys_Mount_Visible,(FULONG)visible},
 									{FSys_Mount_UserName,(FULONG)userName},
 									{FSys_Mount_UserGroup, (FULONG)usrgrp},
 									{FSys_Mount_ID, (FULONG)id},
@@ -676,7 +695,7 @@ f.GroupID='%ld' AND f.Name='%s'",
 									retFile->f_ID = id;
 									retFile->f_Mounted = mount;
 									retFile->f_Config = StringDuplicate( config );
-									retFile->f_Visible = visible ? 1 : 0;
+									retFile->f_Visible = visible;
 									retFile->f_Execute = StringDuplicate( execute );
 									retFile->f_FSysName = StringDuplicate( type );
 									retFile->f_BytesStored = storedBytes;
@@ -809,7 +828,7 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 	{
 		DOSDriver *filedd = NULL;
 		struct TagItem *ltl = tl;
-		FULONG visible = 0;
+		FBOOL visible = TRUE;
 		FULONG dbid = 0;
 		FBOOL mount = FALSE;
 	
@@ -835,9 +854,6 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 					break;
 				case FSys_Mount_Mount:
 					mount = (FULONG)ltl->ti_Data;
-					break;
-				case FSys_Mount_Visible:
-					visible = (FULONG)ltl->ti_Data;
 					break;
 				case FSys_Mount_UserID:
 					userID = (FULONG)ltl->ti_Data;
@@ -1055,7 +1071,24 @@ AND f.Name = '%s'",
 				if( row[ 5 ] != NULL ) passwd = StringDuplicate( row[  5 ] );
 				
 				if( config != NULL ){FFree( config );}
-				if( row[ 6 ] != NULL ) config = StringDuplicate( row[ 6 ] );
+				if( row[ 6 ] != NULL )
+				{
+					char *visiblePtr = NULL;
+					config = StringDuplicate( row[ 6 ] );
+					if( config != NULL && ( visiblePtr = strstr( config, "\"Visible\"" ) ) != NULL )
+					{
+						// "Visible":"on"
+						visiblePtr+= 9 + 2;	// name + quote + :
+						if( strcmp( visiblePtr, "on" ) != 0 )
+						{
+							visible = FALSE;
+						}
+						else
+						{
+							visible = TRUE;
+						}
+					}
+				}
 				
 				if( row[ 7 ] != NULL ){ char *end; id = strtoul( (char *)row[ 7 ],  &end, 0 ); }
 				
@@ -1255,7 +1288,6 @@ AND f.Name = '%s'",
 			{FSys_Mount_LoginPass,(FULONG)passwd},
 			{FSys_Mount_SysBase,(FULONG)l},
 			{FSys_Mount_Config,(FULONG)config},
-			{FSys_Mount_Visible,(FULONG)visible},
 			{FSys_Mount_UserName,(FULONG)pname},
 			//{FSys_Mount_Execute,(FULONG)execute},
 			{FSys_Mount_UserGroup, (FULONG)usrgrp},
@@ -1305,7 +1337,7 @@ AND f.Name = '%s'",
 			retFile->f_ID = id;
 			retFile->f_Mounted = mount;
 			retFile->f_Config = StringDuplicate( config );
-			retFile->f_Visible = visible ? 1 : 0;
+			retFile->f_Visible = visible;
 			retFile->f_Execute = StringDuplicate( execute );
 			retFile->f_FSysName = StringDuplicate( type );
 			retFile->f_BytesStored = storedBytes;
@@ -1644,6 +1676,7 @@ int UnMountFS( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *lo
 
 		//
 		// Get FSys Type to mount
+		//
 	
 		while( ltl->ti_Tag != TAG_DONE )
 		{
@@ -2345,7 +2378,28 @@ int MountDoorByRow( DeviceManager *dm, User *usr, char **row, User *mountUser __
 		if( row[ 3 ] != NULL ){ port = StringDuplicate( row[  3 ] ); }
 		if( row[ 4 ] != NULL ){ uname = StringDuplicate( row[  4 ] ); }
 		if( row[ 5 ] != NULL ){ passwd = StringDuplicate( row[  5 ] ); }
-		if( row[ 6 ] != NULL ){ config = StringDuplicate( row[ 6 ] ); }
+		if( row[ 6 ] != NULL )
+		{
+			config = StringDuplicate( row[ 6 ] );
+			if( row[ 6 ] != NULL )
+			{
+				char *visiblePtr = NULL;
+				config = StringDuplicate( row[ 6 ] );
+				if( config != NULL && ( visiblePtr = strstr( config, "\"Visible\"" ) ) != NULL )
+				{
+					// "Visible":"on"
+					visiblePtr+= 9 + 2;	// name + quote + :
+					if( strcmp( visiblePtr, "on" ) != 0 )
+					{
+						visible = 0;
+					}
+					else
+					{
+						visible = 1;
+					}
+				}
+			}
+		}
 		if( row[ 7 ] != NULL )
 		{
 			char *end;
@@ -2429,7 +2483,7 @@ int MountDoorByRow( DeviceManager *dm, User *usr, char **row, User *mountUser __
 				{FSys_Mount_LoginPass,(FULONG)passwd},
 				{FSys_Mount_SysBase,(FULONG)l},
 				{FSys_Mount_Config,(FULONG)config},
-				{FSys_Mount_Visible,(FULONG)visible},
+				//{FSys_Mount_Visible,(FULONG)visible},
 				{FSys_Mount_UserName, (FULONG)usr->u_Name },
 				{FSys_Mount_ID, (FULONG)id},
 				{TAG_DONE, TAG_DONE}
@@ -2567,7 +2621,6 @@ ug.UserID = '%lu' \
 								{ FSys_Mount_Mount,				(FULONG)TRUE },
 								{ FSys_Mount_SysBase,			(FULONG)l },
 								{ FSys_Mount_UserName,			(FULONG)u->u_Name },
-								{ FSys_Mount_Visible,			visible == NULL ? (FULONG)1 : (FULONG)0 },
 								{ TAG_DONE, TAG_DONE }
 							};
 					
@@ -3016,8 +3069,7 @@ usrgrp->ug_ID
 				{ FSys_Mount_ID,				(FULONG)id },
 				{ FSys_Mount_Mount,				(FULONG)mount },
 				{ FSys_Mount_SysBase,			(FULONG)SLIB },
-				{ FSys_Mount_UserSession,		(FULONG)us },
-				{ FSys_Mount_Visible,			(FULONG)1 },     // Assume visible
+				{ FSys_Mount_UserSession,		(FULONG)us },    // Assume visible
 				{ TAG_DONE, TAG_DONE }
 			};
 

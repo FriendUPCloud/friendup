@@ -475,7 +475,6 @@ f.Name ASC";
 		char *devname = NULL;
 		char *path = NULL;
 		char *type = NULL;
-		char *visible = NULL;
 		char *execute = NULL;
 		char *enc = NULL; // if enc = 'yes' the whole transmission is encoded by private key
 		UserGroup *usrgrp = NULL;
@@ -588,9 +587,6 @@ f.Name ASC";
 			
 			el = HttpGetPOSTParameter( request, "execute" );
 			if( el != NULL ) execute = ( char *)el->hme_Data;
-			
-			el = HttpGetPOSTParameter( request, "visible" );
-			if( el != NULL ) visible = ( char *)el->hme_Data;
 			
 			el = HttpGetPOSTParameter( request, "Server" );
 			if( el != NULL )
@@ -711,7 +707,6 @@ f.Name ASC";
 					{ FSys_Mount_Mount,				(FULONG)TRUE },
 					{ FSys_Mount_SysBase,			(FULONG)l },
 					{ FSys_Mount_UserGroup,			(FULONG)usrgrp },
-					{ FSys_Mount_Visible,			visible == NULL ? (FULONG)1 : (FULONG)0 },
 					{ FSys_Mount_UserID,			userID },
 					//{ FSys_Mount_Execute,        execute == NULL ? (FULONG)NULL : (FULONG)execute },
 					{ TAG_DONE, TAG_DONE }
