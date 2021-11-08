@@ -239,7 +239,7 @@ int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
  * @param ID user id
  * @return User structure or NULL value when problem appear
  */
-User *UMUserGetByID( UserManager *um, FQUAD id )
+User *UMUserGetByID( UserManager *um, FUQUAD id )
 {
 	USER_MANAGER_USE( um );
 	User *user = um->um_Users;
@@ -2241,4 +2241,58 @@ int UMRemoveOldSessions( void *lsb )
 	*/
 	
 	return 0;
+}
+
+/**
+ * Remove all users from group
+ *
+ * @param um pointer to UserManager
+ * @param groupid id of group from which users will be removed
+ */
+void UMRemoveUsersFromGroup( UserManager *um, FUQUAD groupid )
+{
+	USER_MANAGER_USE( um );
+
+	User *tuser = um->um_Users;
+	while( tuser != NULL )
+	{
+		USER_LOCK( tuser );
+		
+		if( tuser->u_UserGroupLinks != NULL )
+		{
+			// if group is first, lets just remove it quickly
+			if( tuser->u_UserGroupLinks->ugl_GroupID == groupid )
+			{
+				UserGroupLink *uglrem = tuser->u_UserGroupLinks;
+				tuser->u_UserGroupLinks = (UserGroupLink *)tuser->u_UserGroupLinks->node.mln_Succ;
+				FFree( uglrem );
+			}
+			else
+			{
+				UserGroupLink *prevugl = tuser->u_UserGroupLinks;
+				UserGroupLink *ugl = (UserGroupLink *)tuser->u_UserGroupLinks->node.mln_Succ;
+				while( ugl != NULL )
+				{
+					// seems current group is group which we wanted to find
+					if( ugl->ugl_GroupID == groupid )
+					{
+						// so previous group will get next pointer from current group
+						// becaouse current pointer will be released
+						prevugl->node.mln_Succ = ugl->node.mln_Succ;
+						FFree( ugl );
+						break;
+					}
+					
+					prevugl = ugl;
+					ugl = (UserGroupLink *)ugl->node.mln_Succ;
+				}
+			}
+		}
+		
+		USER_UNLOCK( tusr );
+		
+		tuser = (User *)tuser->node.mln_Succ;
+	}
+
+	USER_MANAGER_RELEASE( um );
 }

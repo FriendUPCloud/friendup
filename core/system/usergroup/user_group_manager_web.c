@@ -429,9 +429,14 @@ int generateConnectedUsersIDByID( SystemBase *l, FULONG groupID, BufString *retS
 	return 0;
 }
 
-//
-//
-//
+/**
+ * Check if user can create Workgroup
+ *
+ * @param l pointer to SystemBase
+ * @param userid id of user which rights will be checked
+ * @param groupname name of group to which user access will be checked
+ * @return TRUE when user can create a group
+ */
 
 FBOOL CanUserCreateWorkgroup( SystemBase *l, FQUAD userid, char *groupname )
 {
@@ -478,52 +483,14 @@ FBOOL CanUserCreateWorkgroup( SystemBase *l, FQUAD userid, char *groupname )
 	return change;
 }
 
-//
-//
-//
-/*
-void SetUserAdminOrAPI( SystemBase *l, User *usr )
-{
-	// We need to check how many groups were created by the user before
-	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-	if( sqllib != NULL )
-	{
-		char *qery = FMalloc( 1048 );
-
-		qery[ 1024 ] = 0;
-		
-		// set default
-		usr->u_IsAdmin = FALSE;
-		usr->u_IsAPI = FALSE;
-		
-		sqllib->SNPrintF( sqllib, qery, 1024, "SELECT ug.Name FROM FUserToGroup utg inner join FUserGroup ug on utg.UserGroupID=ug.ID WHERE utg.UserID=%ld AND (ug.Name='Admin' OR ug.Name='API')", usr->u_ID );
-		void *res = sqllib->Query( sqllib, qery );
-		if( res != NULL )
-		{
-			
-			char **row;
-			while( ( row = sqllib->FetchRow( sqllib, res ) ) )
-			{
-				if( row[ 0 ] != NULL )
-				{
-					if( strcmp( "Admin", (char *)row[ 0 ] ) == 0 )
-					{
-						usr->u_IsAdmin = TRUE;
-					}
-					if( strcmp( "API", (char *)row[ 0 ] ) == 0 )
-					{
-						usr->u_IsAPI = TRUE;
-					}
-				}
-			}
-			sqllib->FreeResult( sqllib, res );
-		}
-		l->LibrarySQLDrop( l, sqllib );
-		
-		FFree( qery );
-	}
-}
-*/
+/**
+ * Check if user can change or delete Workgroup
+ *
+ * @param l pointer to SystemBase
+ * @param userid id of user which rights will be checked
+ * @param groupid id of group to which user access will be checked
+ * @return TRUE when user have access to change or delete group
+ */
 
 FBOOL CanUserChangeDeleteWorkgroup( SystemBase *l, FQUAD userid, FULONG groupID )
 {
@@ -834,19 +801,6 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						}
 
 						groupID = ug->ug_ID;
-						/*
-						 * OLD CODE
-						 * 
-							addUsers = TRUE;
-
-							char msg[ 512 ];
-							snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"parentid\":%lu}", ug->ug_ID, ug->ug_Name, ug->ug_ParentID );
-							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", msg );
-				
-							char buffer[ 1024 ];
-							snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"success\",\"id\":%lu,\"uuid\":\"%s\"}", groupID, ug->ug_UUID );
-							HttpAddTextContent( response, buffer );
-							*/
 					}
 					else
 					{
@@ -875,17 +829,10 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					
 						el = (IntListEl *)el->node.mln_Succ;
 						
-						/*
-						User *usr = UMGetUserByID( l->sl_UM, (FULONG)rmEntry->i_Data );
-						if( usr != NULL )
-						{
-							UserGroupAddUser( ug, usr );
-						}
-						*/
 						FBOOL exist = UGMUserToGroupISConnectedByUIDDB( l->sl_UGM, groupID, rmEntry->i_Data );
 						if( exist == FALSE )
 						{
-							UGMAddUserToGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
+							UGMAddUserToGroup( l->sl_UGM, groupID, rmEntry->i_Data );
 						}
 					
 						FFree( rmEntry );
@@ -1039,7 +986,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 								{
 									char msg[ 1024 ];
 									snprintf( msg, sizeof(msg), "{\"id\":%lu,\"uuid\":\"%s\",\"name\":\"%s\"}", fg->ug_ID, fg->ug_UUID, fg->ug_Name );
-									UGMRemoveGroupDB( l->sl_UGM, fg );
+									
+									UGMRemoveGroup( l->sl_UGM, fg->ug_ID );
 
 									NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "delete", msg );
 						

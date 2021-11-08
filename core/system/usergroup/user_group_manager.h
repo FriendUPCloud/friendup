@@ -60,7 +60,13 @@ void UGMMountGroupDrives( UserGroupManager *um );
 // Remove UserGroup from database
 //
 
-int UGMRemoveGroupDB( UserGroupManager *ugm, UserGroup *ug );
+int UGMRemoveGroupDB( UserGroupManager *ugm, FUQUAD groupid );
+
+//
+// Remove UserGroup
+//
+
+int UGMRemoveGroup( UserGroupManager *ugm, FUQUAD groupid );
 
 //
 // Get UserGroup by ID
@@ -72,7 +78,7 @@ UserGroup *UGMGetGroupByID( UserGroupManager *smgr, FULONG id );
 // Get group by user id and group name
 //
 
-UserGroup *UGMGetGroupByUserIDAndName( UserGroupManager *um, FQUAD userID, char *name );
+UserGroup *UGMGetGroupByUserIDAndName( UserGroupManager *um, FUQUAD userID, char *name );
 
 //
 // Get UserGroup by ID
@@ -132,7 +138,19 @@ int UGMAddUserToGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID );
 //
 //
 
+int UGMAddUserToGroup( UserGroupManager *um, FULONG groupID, FULONG userID );
+
+//
+//
+//
+
 int UGMRemoveUserFromGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID );
+
+//
+//
+//
+
+int UGMRemoveUserFromGroup( UserGroupManager *um, FULONG groupID, FULONG userID );
 
 //
 //
@@ -184,12 +202,5 @@ int UGMGetUserGroupsDB( UserGroupManager *um, FULONG userID, BufString *bs );
 
 //int UGMAddGroup( UserGroupManager *ugm, FQUAD userID, char *name );
 int UGMAddGroup( UserGroupManager *smgr, UserGroup *ug );
-
-//
-// remove(disable) group from UserGroupManager
-//
-
-int UGMRemoveGroup( UserGroupManager *smgr, UserGroup *ug );
-
 
 #endif //__SYSTEM_USER_USER_GROUP_MANAGER_H__

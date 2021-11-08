@@ -1105,7 +1105,7 @@ void UserListSessions( User* usr, BufString *bs, void *sb )
 			{
 				if( sessions->us == NULL )
 				{
-					DEBUG("ERR\n");
+					DEBUG("[UserListSessions] ERR\n");
 					sessions = (UserSessListEntry *) sessions->node.mln_Succ;
 					continue;
 				}

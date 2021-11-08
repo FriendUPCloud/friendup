@@ -1949,7 +1949,6 @@ usr->u_ID , usr->u_ID, usr->u_ID
 				{ FSys_Mount_Mount,   (FULONG)mount },
 				{ FSys_Mount_SysBase, (FULONG)SLIB },
 				{ FSys_Mount_UserSession, (FULONG)usrses },
-				{ FSys_Mount_Visible, (FULONG)1 },     // Assume visible
 				{TAG_DONE, TAG_DONE}
 			};
 

@@ -187,7 +187,7 @@ typedef struct Device
 #define FSys_Mount_Config				(FSys_Mount_Dummy + 14 ) // configuration
 //#define FSys_Mount_User_SessionID		(FSys_Mount_Dummy + 15 ) // user session id
 #define FSys_Mount_UserSession			(FSys_Mount_Dummy + 15 ) 
-#define FSys_Mount_Visible				(FSys_Mount_Dummy + 16 ) // Is the drive visible?
+//#define FSys_Mount_Visible				(FSys_Mount_Dummy + 16 ) // Is the drive visible?
 #define FSys_Mount_Execute				(FSys_Mount_Dummy + 17 ) // Can we execute something on mount?
 #define FSys_Mount_UserName				(FSys_Mount_Dummy+19)		// name of device
 #define FSys_Mount_UserID				(FSys_Mount_Dummy+20)		// userID - this will allow admin to mount drives to other users

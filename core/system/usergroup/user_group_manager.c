@@ -207,7 +207,7 @@ UserGroup *UGMGetGroupByID( UserGroupManager *um, FULONG id )
  * @return UserGroup structure if it exist, otherwise NULL
  */
 
-UserGroup *UGMGetGroupByUserIDAndName( UserGroupManager *um, FQUAD userID, char *name )
+UserGroup *UGMGetGroupByUserIDAndName( UserGroupManager *um, FUQUAD userID, char *name )
 {
 	if( FRIEND_MUTEX_LOCK( &um->ugm_Mutex ) == 0 )
 	{
@@ -538,11 +538,11 @@ int UGMRemoveGroup( UserGroupManager *ugm, UserGroup *ug )
  * Remove UserGroup from database
  *
  * @param ugm pointer to UserManager structure
- * @param ug pointer to new group which will be disabled
+ * @param groupid id of group which will be removed
  * @return 0 when success, otherwise error number
  */
 
-int UGMRemoveGroupDB( UserGroupManager *ugm, UserGroup *ug )
+int UGMRemoveGroupDB( UserGroupManager *ugm, FUQUAD groupid )
 {
 	SystemBase *l = (SystemBase *)ugm->ugm_SB;
 	
@@ -553,13 +553,45 @@ int UGMRemoveGroupDB( UserGroupManager *ugm, UserGroup *ug )
 		DEBUG("[UGMRemoveGroup] Remove users from group\n");
 
 		// remove connections between users and group
-		snprintf( tmpQuery, sizeof(tmpQuery), "delete FROM FUserToGroup WHERE UserGroupID=%lu", ug->ug_ID );
+		snprintf( tmpQuery, sizeof(tmpQuery), "delete FROM FUserToGroup WHERE UserGroupID=%lu", groupid );
 		sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
 		// remove entry from FUserGroup
-		snprintf( tmpQuery, sizeof(tmpQuery), "delete FROM FUserGroup WHERE ID=%lu", ug->ug_ID );
+		snprintf( tmpQuery, sizeof(tmpQuery), "delete FROM FUserGroup WHERE ID=%lu", groupid );
 		sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
 		
 		l->LibrarySQLDrop( l, sqlLib );
+	}
+	return 0;
+}
+
+/**
+ * Remove UserGroup
+ *
+ * @param ugm pointer to UserManager structure
+ * @param ug pointer to new group which will be disabled
+ * @return 0 when success, otherwise error number
+ */
+
+int UGMRemoveGroup( UserGroupManager *ugm, FUQUAD groupid )
+{
+	SystemBase *l = (SystemBase *)ugm->ugm_SB;
+	
+	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	if( sqlLib != NULL )
+	{
+		char tmpQuery[ 256 ];
+		DEBUG("[UGMRemoveGroup] Remove users from group\n");
+
+		// remove connections between users and group
+		snprintf( tmpQuery, sizeof(tmpQuery), "delete FROM FUserToGroup WHERE UserGroupID=%lu", groupid );
+		sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
+		// remove entry from FUserGroup
+		snprintf( tmpQuery, sizeof(tmpQuery), "delete FROM FUserGroup WHERE ID=%lu", groupid );
+		sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
+		
+		l->LibrarySQLDrop( l, sqlLib );
+		
+		UMRemoveUsersFromGroup( l->sl_UM, groupid );
 	}
 	return 0;
 }
@@ -1017,6 +1049,143 @@ int UGMAddUserToGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID )
 }
 
 /**
+ * Add user to UserGroup users list
+ *
+ * @param um pointer to UserGroupManager
+ * @param groupID ID of group to which user will be added
+ * @param userID ID of user which will be assigned to group
+ * @return 0 when ssuccess, otherwise error number
+ */
+int UGMAddUserToGroup( UserGroupManager *um, FULONG groupID, FULONG userID )
+{
+	SystemBase *sb = (SystemBase *)um->ugm_SB;
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	
+	DEBUG("[UGMAddUserToGroup] Add user: %ld to group %ld\n", userID, groupID );
+	
+	if( sqlLib != NULL )
+	{
+		char tmpQuery[256];
+		snprintf( tmpQuery, sizeof(tmpQuery), "INSERT INTO FUserToGroup (UserID, UserGroupID ) VALUES (%lu,%lu)", userID, groupID );
+		
+		if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) !=  0 )
+		{
+			FERROR("[UGMAddUserToGroup] Cannot call query: '%s'\n", tmpQuery );
+		}
+		
+		sb->LibrarySQLDrop( sb, sqlLib );
+		
+		User *usr = UMGetUserByID( sb->sl_UM, userID );
+		if( usr != NULL )
+		{
+			USER_CHANGE_ON( usr );
+			UserGroupLink *ugl = usr->u_UserGroupLinks;
+			while( ugl != NULL )
+			{
+				if( ugl->ugl_GroupID == groupID )
+				{
+					break;
+				}
+				ugl = (UserGroupLink *) ugl->node.mln_Succ;
+			}
+			
+			// seems user is not assigned to group, its time to do it
+			
+			if( ugl == NULL )
+			{
+				UserGroup *ug = UGMGetGroupByID( sb->sl_UGM, groupID );
+				if( ug != NULL )
+				{
+					UserGroupLink *ugl = (UserGroupLink *)FCalloc( 1, sizeof(UserGroupLink ) );
+					if( ugl != NULL )
+					{
+						ugl->ugl_Group = ug;
+						ugl->ugl_GroupID = ug->ug_ID;
+						
+						ugl->node.mln_Succ = (MinNode *) usr->u_UserGroupLinks;
+						usr->u_UserGroupLinks = ugl;
+					}
+				}
+			}
+			
+			USER_CHANGE_OFF( usr );
+		}
+	}
+	else
+	{
+		FERROR("[UGMAddUserToGroup] DBConnection fail!\n");
+		return 1;
+	}
+	return 0;
+}
+
+/**
+ * Remove user from UserGroup in DB
+ *
+ * @param um pointer to UserGroupManager
+ * @param groupID ID of group from which User will be removed
+ * @param userID ID of user which will be removed from group
+ * @return 0 when ssuccess, otherwise error number
+ */
+int UGMRemoveUserFromGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID )
+{
+	SystemBase *sb = (SystemBase *)um->ugm_SB;
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	
+	if( sqlLib != NULL )
+	{
+		char tmpQuery[256];
+		snprintf( tmpQuery, sizeof(tmpQuery), "DELETE from `FUserToGroup` where `UserID`=%lu AND `UserGroupID`=%lu", userID, groupID );
+		
+		if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) !=  0 )
+		{
+			FERROR("[UGMRemoveUserFromGroupDB] Cannot call query: '%s'\n", tmpQuery );
+		}
+		
+		sb->LibrarySQLDrop( sb, sqlLib );
+	}
+	else
+	{
+		FERROR("[UGMRemoveUserFromGroupDB] DBConnection fail!\n");
+		return 1;
+	}
+	return 0;
+}
+
+/**
+ * Remove user from UserGroup
+ *
+ * @param um pointer to UserGroupManager
+ * @param groupID ID of group from which User will be removed
+ * @param userID ID of user which will be removed from group
+ * @return 0 when ssuccess, otherwise error number
+ */
+int UGMRemoveUserFromGroup( UserGroupManager *um, FULONG groupID, FULONG userID )
+{
+	SystemBase *sb = (SystemBase *)um->ugm_SB;
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	
+	if( sqlLib != NULL )
+	{
+		char tmpQuery[256];
+		snprintf( tmpQuery, sizeof(tmpQuery), "DELETE from `FUserToGroup` where `UserID`=%lu AND `UserGroupID`=%lu", userID, groupID );
+		
+		if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) !=  0 )
+		{
+			FERROR("[UGMRemoveUserFromGroup] Cannot call query: '%s'\n", tmpQuery );
+		}
+		
+		sb->LibrarySQLDrop( sb, sqlLib );
+	}
+	else
+	{
+		FERROR("[UGMRemoveUserFromGroup] DBConnection fail!\n");
+		return 1;
+	}
+	return 0;
+}
+
+/**
  * Get all groups where user belong
  *
  * @param um pointer to UserGroupManager
@@ -1056,39 +1225,6 @@ int UGMGetUserGroupsDB( UserGroupManager *um, FULONG userID, BufString *bs )
 	else
 	{
 		FERROR("[UGMGetUserGroupsDB] DBConnection fail!\n");
-		return 1;
-	}
-	return 0;
-}
-
-/**
- * Remove user from UserGroup in DB
- *
- * @param um pointer to UserGroupManager
- * @param groupID ID of group from which User will be removed
- * @param userID ID of user which will be removed from group
- * @return 0 when ssuccess, otherwise error number
- */
-int UGMRemoveUserFromGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID )
-{
-	SystemBase *sb = (SystemBase *)um->ugm_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
-	
-	if( sqlLib != NULL )
-	{
-		char tmpQuery[256];
-		snprintf( tmpQuery, sizeof(tmpQuery), "DELETE from `FUserToGroup` where `UserID`=%lu AND `UserGroupID`=%lu", userID, groupID );
-		
-		if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) !=  0 )
-		{
-			FERROR("[UGMRemoveUserFromGroupDB] Cannot call query: '%s'\n", tmpQuery );
-		}
-		
-		sb->LibrarySQLDrop( sb, sqlLib );
-	}
-	else
-	{
-		FERROR("[UGMRemoveUserFromGroupDB] DBConnection fail!\n");
 		return 1;
 	}
 	return 0;

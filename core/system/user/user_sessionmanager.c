@@ -25,6 +25,8 @@
 #include <system/fsys/door_notification.h>
 #include <util/session_id.h>
 
+#include <strings.h>
+
 /**
  * Create new User Session Manager
  *
