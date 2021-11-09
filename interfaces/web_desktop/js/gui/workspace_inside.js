@@ -5257,10 +5257,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			if( !sele )
 				return;
-
-			// Get name of file
-			let nam = EntityDecode( sele.fileInfo.Filename );
-
+			
+			let nam = null;
+			
+			// Note: For now keep ' converted to &apos; because it creates to many problems in the system ...
+			if( sele.fileInfo.Filename.indexOf( "&apos;" ) >= 0 )
+			{
+				// Get name of file
+				nam = sele.fileInfo.Filename;
+			}
+			else
+			{
+				// Get name of file
+				nam = EntityDecode( sele.fileInfo.Filename );
+			}
+			
 			// Find out which type it is
 			let icons = rwin.content.icons;
 			let icon = false;
@@ -5591,7 +5602,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	// Use a door and execute a filesystem function, rename
 	executeRename: function( nam, icon, win )
-	{	
+	{
+		// TODO: Perhaps we need to handle htmlspecialchars that is user input here at some point ...
+		// Note: For now convert ' to &apos; because it creates to many problems in the system ...
+		if( nam && nam.indexOf( "'" ) >= 0 )
+		{
+			nam = nam.split( "'" ).join( "&apos;" );
+		}	
+		
 		let ic = new FileIcon();
 		
 		let target = icon.Path;

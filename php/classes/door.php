@@ -32,7 +32,25 @@ if( !class_exists( 'Door' ) )
 		function __construct( $path = false, $authcontext = false, $authdata = false )
 		{
 			global $SqlDatabase, $Logger;
-		
+			
+			// TODO: Perhaps we need to handle htmlspecialchars that is user input here at some point ...
+			//if( $path && $path->path )
+			//{
+				//if( strstr( $path->path, "&apos;" ) )
+				//{
+					//$path->path = str_replace( "&apos;", "'", $path->path );
+					
+					//if( $decoded = htmlspecialchars_decode( $path->path ) )
+					//{
+					//	$path->path = $decoded;
+					//}
+					//if( $decoded = html_entity_decode( $path->path ) )
+					//{
+					//	$path->path = $decoded;
+					//}
+				//}
+			//}
+			
 			$this->dbTable( 'Filesystem' );
 		
 			// We may wanna do this in the constructor

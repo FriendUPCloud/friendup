@@ -593,7 +593,7 @@ if( !class_exists( 'GoogleDrive' ) )
  						fclose( $fn );
  						if( strstr( $data, '"MetaType":"DiskHandled"' ) )
  						{
- 							$Logger->log( $data );
+ 							//$Logger->log( $data );
  							
  							if( $jsfile = json_decode( trim( $data ) ) )
  							{
@@ -609,7 +609,7 @@ if( !class_exists( 'GoogleDrive' ) )
 		 							//$Logger->log( 'Success? ' . json_encode( $jsfile ) . ' [] ' . json_encode( $result ) );
 		 							return 'ok<!--separate-->' . $filesize;
 	 							}
-	 							$Logger->log( json_encode( $jsfile ) );
+	 							//$Logger->log( json_encode( $jsfile ) );
  							}
  							return 'fail<!--separate-->could not move file ...';
  						}
@@ -890,7 +890,7 @@ if( !class_exists( 'GoogleDrive' ) )
 							$tmpfile->setName( $args->newname );
 							$drivefiles = new Google_Service_Drive( $this->gdx );
 							$result = $drivefiles->files->update( $gfile->getID(),$tmpfile );							
-							$Logger->log( json_encode( $result ) );
+							//$Logger->log( json_encode( $result ) );
 							return 'ok<!--separate-->File moved.';
 						}
 						else
@@ -1022,8 +1022,8 @@ if( !class_exists( 'GoogleDrive' ) )
 					
 					try
 					{
-						$rs = $this->getSingleFolderContents( $parentID, "name='" . $tmp[$i] . "'" );
-					
+						$rs = $this->getSingleFolderContents( $parentID, "name='" . addslashes( $tmp[$i] ) . "'" );
+						
 						foreach ($rs->getFiles() as $gfile)
 						{
 							if( $gfile->getName() == $tmp[$i] )
@@ -1043,7 +1043,10 @@ if( !class_exists( 'GoogleDrive' ) )
 					}
 					catch ( Exception $e ){  }
 					
-					if( $results== false && $lastParentID == $parentID ) die('fail<!--separate-->could not list folder contents');					
+					if( $results== false && $lastParentID == $parentID )
+					{
+						die('fail<!--separate-->could not list folder contents');
+					}				
 				}
 			}
 			else
@@ -1322,7 +1325,7 @@ if( !class_exists( 'GoogleDrive' ) )
 					$cleanpath .= ( $o->Type == 'Directory' && substr( $cleanpath , -1) != '/' ? '/' : '' ) ;
 					$o->Path = $cleanpath;
 					$o->Driver = 'GoogleDrive';
-					$Logger->log( json_encode( $o ) );
+					//$Logger->log( json_encode( $o ) );
 					return json_encode( $o );
 				}
 				else

@@ -616,7 +616,14 @@ Door.prototype.read = function( filename, mode, extraData )
 Door.prototype.dosAction = function( ofunc, args, callback )
 {
 	let func = ofunc;
-
+	
+	// TODO: Perhaps we need to handle htmlspecialchars that is user input here at some point ...
+	// Note: For now convert ' to &apos; because it creates to many problems in the system ...
+	if( args && args.path && args.path.indexOf( "'" ) >= 0 )
+	{
+		args.path = args.path.split( "'" ).join( "&apos;" );
+	}
+	
 	if ( this.dormantDosAction )
 	{
 		return this.dormantDosAction( ofunc, args, function( responseText )
@@ -626,7 +633,7 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 				callback( responseText );
 		} );
 	}
-
+	
 	// Special case for 'copy' if destination is a Dormant drive
 	let dr = this;
 	if( ofunc == 'copy' )
