@@ -1208,3 +1208,91 @@ void UserNotifyFSEvent2( User *u, char *evt, char *path )
 	
 	DEBUG("[UserNotifyFSEvent2] end\n");
 }
+
+/**
+ * Add UserGroup to user
+ *
+ * @param u user
+ * @param evt event type (char *)
+ * @param path path to file
+ */
+
+int UserAddToGroup( User *usr, UserGroup *ug )
+{
+	if( usr != NULL && ug != NULL )
+	{
+		USER_CHANGE_ON( usr );
+		UserGroupLink *ugl = usr->u_UserGroupLinks;
+		while( ugl != NULL )
+		{
+			if( ugl->ugl_GroupID == ug->ug_ID )
+			{
+				break;
+			}
+			ugl = (UserGroupLink *) ugl->node.mln_Succ;
+		}
+		
+		// seems user is not assigned to group, its time to do it
+		
+		if( ugl == NULL )
+		{
+			UserGroupLink *ugl = (UserGroupLink *)FCalloc( 1, sizeof(UserGroupLink ) );
+			if( ugl != NULL )
+			{
+				ugl->ugl_Group = ug;
+				ugl->ugl_GroupID = ug->ug_ID;
+				
+				ugl->node.mln_Succ = (MinNode *) usr->u_UserGroupLinks;
+				usr->u_UserGroupLinks = ugl;
+			}
+		}
+		
+		USER_CHANGE_OFF( usr );
+	}
+	return 0;
+}
+
+//
+//
+//
+
+int UserRemoveFromGroup( User *usr, FUQUAD groupid )
+{
+	if( usr != NULL )
+	{
+		USER_CHANGE_ON( usr );
+		
+		if( usr->u_UserGroupLinks != NULL )
+		{
+			// if group is first, lets just remove it quickly
+			if( usr->u_UserGroupLinks->ugl_GroupID == groupid )
+			{
+				UserGroupLink *uglrem = usr->u_UserGroupLinks;
+				usr->u_UserGroupLinks = (UserGroupLink *)usr->u_UserGroupLinks->node.mln_Succ;
+				FFree( uglrem );
+			}
+			else
+			{
+				UserGroupLink *prevugl = usr->u_UserGroupLinks;
+				UserGroupLink *ugl = (UserGroupLink *)usr->u_UserGroupLinks->node.mln_Succ;
+				while( ugl != NULL )
+				{
+					// seems current group is group which we wanted to find
+					if( ugl->ugl_GroupID == groupid )
+					{
+						// so previous group will get next pointer from current group
+						// becaouse current pointer will be released
+						prevugl->node.mln_Succ = ugl->node.mln_Succ;
+						FFree( ugl );
+						break;
+					}
+				
+					prevugl = ugl;
+					ugl = (UserGroupLink *)ugl->node.mln_Succ;
+				}
+			}
+		}
+		USER_CHANGE_OFF( usr );
+	}
+	return 0;
+}

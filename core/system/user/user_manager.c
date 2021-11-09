@@ -2289,7 +2289,7 @@ void UMRemoveUsersFromGroup( UserManager *um, FUQUAD groupid )
 			}
 		}
 		
-		USER_UNLOCK( tusr );
+		USER_UNLOCK( tuser );
 		
 		tuser = (User *)tuser->node.mln_Succ;
 	}

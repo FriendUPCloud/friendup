@@ -1078,37 +1078,11 @@ int UGMAddUserToGroup( UserGroupManager *um, FULONG groupID, FULONG userID )
 		User *usr = UMGetUserByID( sb->sl_UM, userID );
 		if( usr != NULL )
 		{
-			USER_CHANGE_ON( usr );
-			UserGroupLink *ugl = usr->u_UserGroupLinks;
-			while( ugl != NULL )
+			UserGroup *ug = UGMGetGroupByID( sb->sl_UGM, groupID );
+			if( ug != NULL )
 			{
-				if( ugl->ugl_GroupID == groupID )
-				{
-					break;
-				}
-				ugl = (UserGroupLink *) ugl->node.mln_Succ;
+				UserAddToGroup( usr, ug );
 			}
-			
-			// seems user is not assigned to group, its time to do it
-			
-			if( ugl == NULL )
-			{
-				UserGroup *ug = UGMGetGroupByID( sb->sl_UGM, groupID );
-				if( ug != NULL )
-				{
-					UserGroupLink *ugl = (UserGroupLink *)FCalloc( 1, sizeof(UserGroupLink ) );
-					if( ugl != NULL )
-					{
-						ugl->ugl_Group = ug;
-						ugl->ugl_GroupID = ug->ug_ID;
-						
-						ugl->node.mln_Succ = (MinNode *) usr->u_UserGroupLinks;
-						usr->u_UserGroupLinks = ugl;
-					}
-				}
-			}
-			
-			USER_CHANGE_OFF( usr );
 		}
 	}
 	else
@@ -1176,6 +1150,12 @@ int UGMRemoveUserFromGroup( UserGroupManager *um, FULONG groupID, FULONG userID 
 		}
 		
 		sb->LibrarySQLDrop( sb, sqlLib );
+		
+		User *tuser = UMGetUserByID( sb->sl_UM, userID );
+		if( tuser != NULL )
+		{
+			UserRemoveFromGroup( tuser, groupID );
+		}
 	}
 	else
 	{

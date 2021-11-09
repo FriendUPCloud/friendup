@@ -1383,7 +1383,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 
 									if( el->ugid == 0 ) // user is not in group we must add him
 									{
-										UGMAddUserToGroupDB( l->sl_UGM, groupID, el->uid );
+										UGMAddUserToGroup( l->sl_UGM, groupID, el->uid );
 									}
 									// user is in group, we can remove him
 									else

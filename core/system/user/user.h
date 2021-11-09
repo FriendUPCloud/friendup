@@ -304,6 +304,18 @@ int UserRegenerateSessionID( User *usr, char *newsess );
 //
 //
 
+int UserAddToGroup( User *usr, UserGroup *ug );
+
+//
+//
+//
+
+int UserRemoveFromGroup( User *usr, FUQUAD groupid );
+
+//
+//
+//
+
 //void UserDeleteGroupLink( UserGroupLink *ugl );
 
 //
