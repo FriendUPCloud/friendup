@@ -695,7 +695,8 @@ cAjax.prototype.send = function( data, callback )
 				
 				new Promise( function( resolve, reject )
 				{
-					if( !navigator.onLine )
+				    // Will throw an error unless we are forcing http for testing!
+					if( window.Friend && Friend.User && Friend.User.State != 'online' && !self.forceHTTP )
 					{
 						reject( 'error' );
 						return;

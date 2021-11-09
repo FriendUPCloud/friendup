@@ -758,7 +758,7 @@ FriendWebSocket.prototype.wsSend = function( str )
 {
 	let self = this;
 	
-    if( !navigator.onLine )
+    if( window.Friend && Friend.User && Friend.User.State != 'online' )
     {
     	if ( !self.sendQueue )
 			self.sendQueue = [];
@@ -999,7 +999,7 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 	}
 	
 	// We were disconnected, remove delayed handler
-	if( !navigator.onLine )
+	if( window.Friend && Friend.User && Friend.User.State != 'online' )
 	{
 		console.log( 'We are disconnected. Strange things can happen.' );
 	}
