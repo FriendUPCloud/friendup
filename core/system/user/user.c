@@ -156,7 +156,7 @@ int UserRemoveSession( User *usr, void *ls )
 	}
 	*/
 	
-	DEBUG("[UserRemoveSession] after in use\n");
+	DEBUG("[UserRemoveSession] after in use, %d\n", usr->u_InUse );
 	
 	USER_CHANGE_ON( usr );
 	
