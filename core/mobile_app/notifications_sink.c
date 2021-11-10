@@ -400,7 +400,8 @@ void NotifyUsers( NotificationMessage *nm )
 		FFree( nm->userNameList );
 	
 		char reply[256];
-		int msize = sprintf(reply + LWS_PRE, "{\"type\":\"service\",\"data\":{\"type\":\"notification\",\"requestid\":\"%s\",\"data\":{\"status\":%d}}}", nm->requestId, returnStatus );
+		int msize = sprintf(reply + LWS_PRE, "{\"type\":\"reply\",\"data\":{\"requestId\":\"%s\",\"result\":\"ok\",\"error\":%d}}", nm->requestId, returnStatus );
+		//int msize = sprintf(reply + LWS_PRE, "{\"type\":\"service\",\"data\":{\"type\":\"notification\",\"requestid\":\"%s\",\"data\":{\"status\":%d}}}", nm->requestId, returnStatus );
 #ifdef WEBSOCKET_SEND_QUEUE
 		WriteMessageSink( nm->d, (unsigned char *)reply+LWS_PRE, msize );
 #else
