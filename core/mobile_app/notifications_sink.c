@@ -427,13 +427,28 @@ void ProcessSinkMessage( void *locd )
 
 	jsmn_parser parser;
 	jsmn_init( &parser );
-	jsmntok_t t[512]; //should be enough
+	
+	int nrElements = 128;
+	// we have to figure out how many json elements are in string
+	int z;
+	for( z=1 ; z < len ; z++ )
+	{
+		if( data[ z ] == ',' || data[ z ] == ':' )
+		{
+			nrElements += 8;
+		}
+	}
+	
+	jsmntok_t *t = FMalloc( nrElements*sizeof(jsmntok_t) );
+	
+	//jsmntok_t t[512]; //should be enough
 
-	int tokens_found = jsmn_parse( &parser, data, len, t, sizeof(t)/sizeof(t[0]) );
+	int tokens_found = jsmn_parse( &parser, data, len, t, nrElements );
 	
 	DEBUG( "Token found: %d", tokens_found );
 	if( tokens_found < 1 )
 	{
+		Log( FLOG_ERROR, "Messages from 3rd server corrupted: %s\n", data );
 		ReplyError( d, WS_NOTIF_SINK_ERROR_TOKENS_NOT_FOUND );
 		goto error_point;
 	}
@@ -992,6 +1007,12 @@ void ProcessSinkMessage( void *locd )
 	
 error_point:
 
+	if( t != NULL )
+	{
+		FFree( t );
+		t = NULL;
+	}
+
 #ifndef DISABLE_NOTIFICATION_THREADING
 	if( FRIEND_MUTEX_LOCK( &(spm->d->d_Mutex) ) == 0 )
 	{
@@ -1005,7 +1026,7 @@ error_point:
 		FFree( spm->data );
 	}
 	FFree( spm );
-	pthread_exit( NULL );
+	//pthread_exit( NULL );
 #else	
 	if( data )
 	{
