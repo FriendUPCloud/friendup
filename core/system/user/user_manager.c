@@ -107,6 +107,8 @@ void UMDelete( UserManager *smgr )
 			*/
 			UserReleaseDrives( remusr, smgr->um_SB );
 			
+			DEBUG("[UMDelete] Free user %s inuse %d\n", remusr->u_Name, remusr->u_InUse );
+			
 			UserDelete( remusr );
 			
 			remusr = NULL;
