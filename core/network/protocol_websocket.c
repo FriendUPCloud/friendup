@@ -841,6 +841,11 @@ void *ParseAndCall( WSThreadData *wstd )
 	jsmn_parser p;
 	jsmntok_t *t;
 	
+	if( wstd == NULL )
+	{
+		return NULL;
+	}
+	
 	char *in = wstd->wstd_Msg;
 	wstd->wstd_Msg = NULL;			// we do not hold message in wstd anymore
 	size_t len = wstd->wstd_Len;
@@ -848,7 +853,10 @@ void *ParseAndCall( WSThreadData *wstd )
 	UserSession *locus = NULL;
 	UserSession *orig;
 	
-	locus = wstd->wstd_WSD->wsc_UserSession;
+	if( wstd->wstd_WSD != NULL )
+	{
+		locus = wstd->wstd_WSD->wsc_UserSession;
+	}
 	orig = locus;
 	if( orig != NULL )
 	{
