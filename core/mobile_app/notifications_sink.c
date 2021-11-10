@@ -703,7 +703,7 @@ void ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 											int queryLen = 128 + (int)(t[p].end - t[p].start);
 											char *query = FCalloc( queryLen, sizeof(char) );
 											
-											snprintf( query, queryLen, "SELECT DISTINCT u.Name FROM `FUser` u inner join `FUserMobileApp` uma on u.ID = uma.UserID WHERE Name in(%.*s)", (int)(t[p].end - t[p].start), (char *)(data + t[p].start) );
+											snprintf( query, queryLen, "SELECT DISTINCT u.Name FROM `FUser` u inner join `FUserMobileApp` uma on u.ID = uma.UserID WHERE Name in(%.*s)", (int)((t[p].end - t[p].start)-2), (char *)(data + t[p].start + 1) );
 
 											void *res = sqllib->Query( sqllib, query );
 											char **row;
