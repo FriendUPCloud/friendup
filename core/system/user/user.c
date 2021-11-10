@@ -880,6 +880,8 @@ void UserReleaseDrives( User* usr, void *lsb )
 	
 	USER_CHANGE_ON( usr );
 	
+	DEBUG("[UserReleaseDrives] START inuse: %d\n", usr->u_InUse );
+	
 	File *lf = usr->u_MountedDevs;
 	File *remdev = lf;
 	while( lf != NULL )
@@ -896,6 +898,8 @@ void UserReleaseDrives( User* usr, void *lsb )
 		}
 	}
 	usr->u_MountedDevs = NULL;
+	
+	DEBUG("[UserReleaseDrives] END inuse: %d\n", usr->u_InUse );
 	
 	USER_CHANGE_OFF( usr );
 }

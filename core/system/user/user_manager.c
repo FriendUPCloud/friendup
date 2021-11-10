@@ -70,7 +70,7 @@ void UMDelete( UserManager *smgr )
 	}
 	
 	User *remusr = usr;
-	Log( FLOG_INFO,  "Release users\n");
+	Log( FLOG_INFO, "[UMDelete] Release users\n");
 	
 	//
 	// we must release all users from memory
