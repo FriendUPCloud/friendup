@@ -34,6 +34,12 @@ class SqlDatabase
 		$this->_type = 'mysql';
 	}
 	
+	// On destruction
+	function __destruct()
+	{
+	    $this->Close();
+	}
+	
 	// Initialize cache
 	function InitCache()
 	{
