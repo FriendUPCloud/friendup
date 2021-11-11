@@ -71,8 +71,11 @@ class SqlDatabase
 		if( $this->_link )
 		{
 			$this->Flush();
-			return mysqli_close( $this->_link );
+			$res = mysqli_close( $this->_link );
+			$this->_link = false;
+			return $res;
 		}
+		return false;
 	}
 
 	// Select a database
