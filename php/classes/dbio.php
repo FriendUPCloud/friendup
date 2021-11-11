@@ -52,7 +52,12 @@ class SqlDatabase
 	// Open a connection to a database
 	function Open( $host, $user, $pass )
 	{
-		if( $this->_link = mysqli_connect( $host, $user, $pass ) )
+	    $retries = 0;
+		while( !( $this->_link = @mysqli_connect( $host, $user, $pass ) ) && $retries++ < 10 )
+		{
+		    usleep( 20000 );
+		}
+		if( $this->_link )
 		{
 			mysqli_set_charset( $this->_link, 'utf8' );
 			return true;
