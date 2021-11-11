@@ -55,7 +55,7 @@ class SqlDatabase
 	    $retries = 0;
 		while( !( $this->_link = @mysqli_connect( $host, $user, $pass ) ) && $retries++ < 10 )
 		{
-		    usleep( 20000 );
+		    usleep( 25000 );
 		}
 		if( $this->_link )
 		{
