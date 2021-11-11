@@ -4496,11 +4496,11 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 							// TODO: Fix websockets
 							// This is to kill websocket when call fails
 							getretries++;
-							if( getretries > 1 )
+							if( getretries > 4 )
 							{
 								getretries = 0;
 								if( Workspace.conn && Workspace.conn.ws )
-									Workspace.conn.ws.cleanup();
+									Workspace.initWebSocket();
 							}
 							getTheIconsAndRedraw();
 						}, 1000 );
