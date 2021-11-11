@@ -108,6 +108,12 @@ UserSession *USMGetSessionBySessionIDFromDB( UserSessionManager *usm, char *id )
 //
 //
 
+FBOOL USMIsSessionInDB( UserSessionManager *usm, char *id );
+
+//
+//
+//
+
 UserSession *USMGetSessionByDeviceIDandUser( UserSessionManager *usm, char *devid, FULONG uid );
 
 //

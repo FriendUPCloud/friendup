@@ -923,6 +923,53 @@ int USMSessionSaveDB( UserSessionManager *smgr, UserSession *ses )
 }
 
 /**
+ * Check if User session exist in database
+ *
+ * @param usm pointer to UserSessionManager
+ * @param id sessionid bt which session will be searched
+ * @return TRUE if session exist in DB, otherwise return FALSE
+ */
+FBOOL USMIsSessionInDB( UserSessionManager *usm, char *id )
+{
+	FBOOL exist = FALSE;
+	
+	SystemBase *sb = (SystemBase *) usm->usm_SB;
+	SQLLibrary *sqllib  = sb->LibrarySQLGet( sb );
+	
+	DEBUG("[USMIsSessionInDB] start\n");
+	if( sqllib != NULL )
+	{
+		//
+		// checking if entry exist in db
+		//
+		
+		int TEMPSIZE = 512 + strlen( id );
+		
+		char *temptext = FMalloc( TEMPSIZE );
+		
+		sqllib->SNPrintF( sqllib, temptext, TEMPSIZE, "SELECT ID FROM `FUserSession` WHERE `SessionID`='%s'", id );
+
+		void *res = sqllib->Query( sqllib, temptext );
+		char **row;
+	
+		if( res != NULL )
+		{
+			while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
+			{
+				exist = TRUE;
+			}
+			sqllib->FreeResult( sqllib, res );
+		}
+		
+		FFree( temptext );
+		
+		sb->LibrarySQLDrop( sb, sqllib );
+	}
+	
+	return exist;
+}
+
+/**
  * Print information about user sessions in debug console
  *
  * @param smgr pointer to UserSessionManager
