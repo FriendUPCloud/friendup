@@ -828,6 +828,16 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 	return 0;
 }
 
+int debug01( int  a )
+{
+	return a+1;
+}
+
+int debug02( int  a )
+{
+	return a+1;
+}
+
 int debug1( int  a )
 {
 	return a+1;
@@ -1233,6 +1243,8 @@ void *ParseAndCall( WSThreadData *wstd )
 								Http *http = HttpNew( );
 								if( http != NULL )
 								{
+									debug01( 2 );
+									
 									http->http_RequestSource = HTTP_SOURCE_WS;
 									http->http_ParsedPostContent = HashmapNew();
 									http->http_Uri = UriNew();
