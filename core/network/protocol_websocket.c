@@ -664,15 +664,16 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 						}
 						else
 						{
-						// now lets check if user was authenticated
-						// if not then this mean that his session in DB was removed
+							// now lets check if user was authenticated
+							// if not then this mean that his session in DB was removed
 						
-						if( strncmp( code, "fail<!--separate-->{\"response\":\"user did not authenticate", 55 ) == 0 )
-						{
-							if( USMIsSessionInDB( SLIB->sl_USM, locus->us_SessionID ) == FALSE )
+							if( strncmp( code, "fail<!--separate-->{\"response\":\"user did not authenticate", 55 ) == 0 )
 							{
-								DEBUG("[WS] Looks like session do not exist in DB, we will remove it. SessionID %s\n", locus->us_SessionID );
-								locus->us_Status = USER_SESSION_STATUS_TO_REMOVE;
+								if( USMIsSessionInDB( SLIB->sl_USM, locus->us_SessionID ) == FALSE )
+								{
+									DEBUG("[WS] Looks like session do not exist in DB, we will remove it. SessionID %s\n", locus->us_SessionID );
+									locus->us_Status = USER_SESSION_STATUS_TO_REMOVE;
+								}
 							}
 						}
 					}
