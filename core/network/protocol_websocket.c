@@ -1212,7 +1212,7 @@ void *ParseAndCall( WSThreadData *wstd )
 				//
 				
 				//Log( FLOG_INFO, "[WS] Incoming message: '%.*s'\n" , 200, in );
-				Log( FLOG_INFO, "[WS] Incoming message: '*s'\n" , in );	// for debug
+				Log( FLOG_INFO, "[WS] Incoming message: '%s'\n" , in );	// for debug
 				
 				// type object
 				if( t[4].type == JSMN_OBJECT)
