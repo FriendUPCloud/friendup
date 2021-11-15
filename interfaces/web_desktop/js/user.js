@@ -41,13 +41,14 @@ Friend.User = {
 		{
 			try
 			{
-				Workspace.conn.ws.cleanup();
+				Workspace.conn.ws.close();
 			}
 			catch( e )
 			{
 				console.log( 'Could not close conn.' );
 			}
 			delete Workspace.conn;
+			Workspace.conn = null;
 		}
 		
 		if( username && password )
@@ -60,6 +61,11 @@ Friend.User = {
 				hashedPassword: flags.hashedPassword,
 				inviteHash: flags.inviteHash
 			}, callback );
+		}
+		// Relogin - as we do have an unflushed login
+		else if( Workspace.sessionId )
+		{
+		    return this.ReLogin();
 		}
 		else
 		{
@@ -156,7 +162,6 @@ Friend.User = {
 		m.onExecuted = function( json, serveranswer )
 		{
 			Friend.User.lastLogin = null;
-			
 			// We got a real error
 			if( json == null )
 			{
@@ -256,6 +261,7 @@ Friend.User = {
 				console.log( 'Could not close conn.' );
 			}
 			delete Workspace.conn;
+			Workspace.conn = null;
 		}
 		
 		// Reset cajax http connections (because we lost connection)
