@@ -1137,7 +1137,7 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, U
 	{
 		char temp[ 1024 ];
 	 
-		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` where 'SessionID'='%s' AND 'DeviceIdentity'='tempsession'", ses->us_SessionID );
+		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` where SessionID='%s' AND DeviceIdentity='tempsession'", ses->us_SessionID );
 
 		DEBUG("[USMDestroyTemporarySession] launched SQL: %s\n", temp );
 	
