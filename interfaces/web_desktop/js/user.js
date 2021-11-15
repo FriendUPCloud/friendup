@@ -222,6 +222,7 @@ Friend.User = {
 		}
 		m.forceHTTP = true;
 		m.forceSend = true;
+		m.loginCall = true;
 		m.execute( 'login' );
     },
 	// When session times out, use log in again...

@@ -57,6 +57,8 @@ var FriendLibrary = function ( library, encryption )
 			j.forceHTTP = true;
 		if( this.forceSend )
 			j.forceSend = true;
+		if( this.loginCall )
+		    j.loginCall = true;
 		
 		var ex = '';
 		
