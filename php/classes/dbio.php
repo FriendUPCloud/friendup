@@ -34,6 +34,12 @@ class SqlDatabase
 		$this->_type = 'mysql';
 	}
 	
+	// On destruction
+	function __destruct()
+	{
+	    $this->Close();
+	}
+	
 	// Initialize cache
 	function InitCache()
 	{
@@ -46,7 +52,12 @@ class SqlDatabase
 	// Open a connection to a database
 	function Open( $host, $user, $pass )
 	{
-		if( $this->_link = mysqli_connect( $host, $user, $pass ) )
+	    $retries = 0;
+		while( !( $this->_link = @mysqli_connect( $host, $user, $pass ) ) && $retries++ < 10 )
+		{
+		    usleep( 25000 );
+		}
+		if( $this->_link )
 		{
 			mysqli_set_charset( $this->_link, 'utf8' );
 			return true;
@@ -60,8 +71,11 @@ class SqlDatabase
 		if( $this->_link )
 		{
 			$this->Flush();
-			return mysqli_close( $this->_link );
+			$res = mysqli_close( $this->_link );
+			$this->_link = false;
+			return $res;
 		}
+		return false;
 	}
 
 	// Select a database
