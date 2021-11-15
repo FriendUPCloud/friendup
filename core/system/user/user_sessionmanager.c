@@ -274,7 +274,7 @@ UserSession *USMGetSessionByDeviceIDandUserDB( UserSessionManager *smgr, char *d
  */
 UserSession *USMGetSessionByUserID( UserSessionManager *usm, FULONG id )
 {
-	DEBUG("CHECK6\n");
+	DEBUG("[USMGetSessionByUserID] start\n");
 	// We will take only first session of that user
 	// protect in mutex
 	SESSION_MANAGER_USE( usm );
