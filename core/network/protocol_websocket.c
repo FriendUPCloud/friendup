@@ -662,7 +662,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 						{
 							returnError = -1;
 						}
-						else
+						else if( code != NULL )
 						{
 							// now lets check if user was authenticated
 							// if not then this mean that his session in DB was removed
