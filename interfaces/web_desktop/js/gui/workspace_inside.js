@@ -1213,9 +1213,11 @@ var WorkspaceInside = {
 				}
 				catch( ez )
 				{
+				    // Try to initialize a new one
 					console.log( 'Conn is dead.', ez );
 				}
-				delete self.conn;
+			    delete self.conn;
+			    self.conn = null;
 			}
 		}
 	
@@ -1226,6 +1228,7 @@ var WorkspaceInside = {
 		{
 			console.log( 'Cannot initialize web socket - user is offline.' );
 			closeConn();
+			//Friend.User.ReLogin();
 			return false;
 		}
 		
