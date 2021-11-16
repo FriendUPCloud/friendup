@@ -19,9 +19,8 @@ Friend = window.Friend || {};
 Friend.User = {
     
     // Vars --------------------------------------------------------------------
-    
-    State: 'offline', 			// online, offline, login
-    ServerIsThere: false,
+    State: 'online', 			// online, offline, login
+    ServerIsThere: true,
     Username: '',               // Holds the user's username
     AccessToken: null,          // Holds the user's access token
     ConnectionAttempts: 0,         // How many relogin attempts were made
@@ -31,7 +30,6 @@ Friend.User = {
     // Log into Friend Core
     Login: function( username, password, remember, callback, event, flags )
     {
-    	if( this.State == 'online' ) return;
     	this.State = 'login';
     	
     	if( !event ) event = window.event;
@@ -43,13 +41,14 @@ Friend.User = {
 		{
 			try
 			{
-				Workspace.conn.ws.cleanup();
+				Workspace.conn.ws.close();
 			}
 			catch( e )
 			{
 				console.log( 'Could not close conn.' );
 			}
 			delete Workspace.conn;
+			Workspace.conn = null;
 		}
 		
 		if( username && password )
@@ -62,6 +61,11 @@ Friend.User = {
 				hashedPassword: flags.hashedPassword,
 				inviteHash: flags.inviteHash
 			}, callback );
+		}
+		// Relogin - as we do have an unflushed login
+		else if( Workspace.sessionId )
+		{
+		    return this.ReLogin();
 		}
 		else
 		{
@@ -158,7 +162,6 @@ Friend.User = {
 		m.onExecuted = function( json, serveranswer )
 		{
 			Friend.User.lastLogin = null;
-			
 			// We got a real error
 			if( json == null )
 			{
@@ -219,6 +222,7 @@ Friend.User = {
 		}
 		m.forceHTTP = true;
 		m.forceSend = true;
+		m.loginCall = true;
 		m.execute( 'login' );
     },
 	// When session times out, use log in again...
@@ -258,6 +262,7 @@ Friend.User = {
 				console.log( 'Could not close conn.' );
 			}
 			delete Workspace.conn;
+			Workspace.conn = null;
 		}
 		
 		// Reset cajax http connections (because we lost connection)
@@ -396,11 +401,6 @@ Friend.User = {
 	// Check if the server is alive
 	CheckServerConnection: function( useAjax )
 	{
-		if( !navigator.onLine )
-		{
-			Friend.User.SetUserConnectionState( 'offline' );
-			return false;
-		}
 		if( Workspace && Workspace.loginPrompt ) return;
 		if( typeof( Library ) == 'undefined' ) return;
 		if( typeof( MD5 ) == 'undefined' ) return;
@@ -443,7 +443,6 @@ Friend.User = {
 						Friend.User.ConnectionAttempts = 0;
 					}
 				};
-			
 				if( !useAjax )
 					serverCheck.forceHTTP = true;
 				serverCheck.forceSend = true;
@@ -478,8 +477,6 @@ Friend.User = {
 		{
 			if( this.State != 'offline' )
 			{
-				this.ServerIsThere = false;
-				this.State = 'offline';
 				Workspace.workspaceIsDisconnected = true;
 				document.body.classList.add( 'Offline' );
 				if( Workspace.screen )
@@ -518,6 +515,8 @@ Friend.User = {
 					DoorCache.dirListing = {};
 				}
 			}
+			this.ServerIsThere = false;
+			this.State = 'offline';
 		}
 		else if( mode == 'online' )
 		{

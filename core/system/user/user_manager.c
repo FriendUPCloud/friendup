@@ -70,7 +70,7 @@ void UMDelete( UserManager *smgr )
 	}
 	
 	User *remusr = usr;
-	Log( FLOG_INFO,  "Release users\n");
+	Log( FLOG_INFO, "[UMDelete] Release users\n");
 	
 	//
 	// we must release all users from memory
@@ -106,6 +106,8 @@ void UMDelete( UserManager *smgr )
 			DEBUG("[UMDelete] Free user %s\n", remusr->u_Name );
 			*/
 			UserReleaseDrives( remusr, smgr->um_SB );
+			
+			DEBUG("[UMDelete] Free user %s inuse %d\n", remusr->u_Name, remusr->u_InUse );
 			
 			UserDelete( remusr );
 			
