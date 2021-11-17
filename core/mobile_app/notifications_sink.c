@@ -249,7 +249,7 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 
 					//INFO("\t\t\t\t\t\t\t\t\t\t\tSENDMESSSAGE\n<%s> size: %d\n\n\n\n", e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size );
 					int res = lws_write( wsi, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
-					DEBUG("[websocket_app_callback] message sent: %s len %d\n", e->fq_Data, res );
+					DEBUG("[websocket_app_callback] message sent: %s len %d\n", e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, res );
 
 					int v = lws_send_pipe_choked( wsi );
 				
