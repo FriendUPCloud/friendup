@@ -121,7 +121,8 @@ FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User 
 						}
 					}
 				
-					sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
+					//sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where 
+					snprintf( tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
 PermissionID in( \
 SELECT ID FROM `FFilePermission` WHERE \
 ( Path = '%s' OR Path = '%s' ) \
@@ -140,7 +141,8 @@ OR \
 				}
 				else
 				{
-					sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
+					//sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where 
+					snprintf( tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
 PermissionID in( \
 SELECT ID FROM `FFilePermission` WHERE \
 Path = '%s' \

@@ -23,7 +23,7 @@ $f->UserID = $User->ID;
 
 do
 {
-	$hash = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) );
+	$hash = rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . '_' . md5( $User->ID . '_' . mktime() );
 	$f->Hash = substr( $hash, 0, 8 );
 }
 while( $f->Load() );
