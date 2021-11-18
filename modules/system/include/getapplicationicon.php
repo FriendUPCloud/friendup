@@ -19,6 +19,6 @@ foreach( $places as $place )
 	}
 }
 
-die( 'fail' );
+die( 'fail<!--separate-->{"response":-1,"message":"Could not find application icon for application ' . $args->application . '."}' );
 
 ?>

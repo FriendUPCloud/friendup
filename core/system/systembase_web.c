@@ -498,13 +498,12 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					char qery[ 1024 ];
 					FULONG uid = 0;
 
-					//inner join FUserSession us on u.ID=us.UserID 
+					// Fetch authid from either FUserApplication or Filesystem
 					sqllib->SNPrintF( 
 					    sqllib, qery, sizeof(qery), 
-					    "SELECT * FROM ( ( SELECT us.SessionID FROM FUserSession us, FUserApplication a WHERE a.AuthID=\"%s\" AND a.UserID = us.UserID LIMIT 1 ) UNION ( SELECT us2.SessionID FROM FUserSession us2, Filesystem f WHERE f.AuthID = \"%s\" AND us2.UserID=f.UserID LIMIT 1 ) ) z LIMIT 1", 
+					    "SELECT * FROM ( ( SELECT us.SessionID FROM FUserSession us, FUserApplication a WHERE a.AuthID=\"%s\" AND a.UserID = us.UserID LIMIT 1 ) UNION ( SELECT us2.SessionID FROM FUserSession us2, Filesystem f WHERE f.AuthID = \"%s\" AND us2.UserID = f.UserID LIMIT 1 ) ) z LIMIT 1", 
 					    ( char *)ast->hme_Data, ( char *)ast->hme_Data 
 					);
-					//sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT a.UserID FROM FUserApplication a WHERE a.AuthID=\"%s\" LIMIT 1",( char *)ast->hme_Data );
 					
 					void *res = sqllib->Query( sqllib, qery );
 					if( res != NULL )
@@ -544,13 +543,16 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								{
 									UserAddSession( usr, loggedSession );
 								}
-								loggedSession->us_UserID = usr->u_ID;
-								loggedSession->us_LastActionTime = time( NULL );
+								if( usr != NULL )
+								{
+								    loggedSession->us_UserID = usr->u_ID;
+								    loggedSession->us_LastActionTime = time( NULL );
 							
-								UGMAssignGroupToUser( l->sl_UGM, usr );
+								    UGMAssignGroupToUser( l->sl_UGM, usr );
 							
-								USMSessionSaveDB( l->sl_USM, loggedSession );
-								USMUserSessionAddToList( l->sl_USM, loggedSession );
+								    USMSessionSaveDB( l->sl_USM, loggedSession );
+								    USMUserSessionAddToList( l->sl_USM, loggedSession );
+								}
 							}
 						}
 					}
