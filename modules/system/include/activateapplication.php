@@ -42,6 +42,7 @@ if( strstr( $args->args->application, ':' ) )
 			$data->permissions = $perms;
 			$data->authid = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . $o->ID . $o->Name );
 			$o->Config = json_encode( $data );
+			$o->AuthID = $data->authid;
 			$o->Save();
 			
 			// Remount disk
