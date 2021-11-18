@@ -2341,7 +2341,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 										authid[ 0 ] = 0;
 								
 										char qery[ 1024 ];
-										sqllib->SNPrintF( sqllib, qery, sizeof( qery ),"select `AuthID` from `FUserApplication` where `UserID` = %lu and `ApplicationID` = (select ID from `FApplication` where `Name` = '%s' and `UserID` = %ld)",loggedUser->u_ID, appname, loggedUser->u_ID);
+										sqllib->SNPrintF( 
+										    sqllib, qery, sizeof( qery ),
+										    "SELECT `AuthID` FROM `FUserApplication` WHERE `UserID` = '%lu' and `ApplicationID` = ( SELECT ID FROM `FApplication` WHERE `Name` = \"%s\" AND `UserID` = '%ld' LIMIT 1 )",
+										    loggedUser->u_ID, appname, loggedUser->u_ID
+										);
 								
 										void *res = sqllib->Query( sqllib, qery );
 										if( res != NULL )
