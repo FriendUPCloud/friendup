@@ -298,6 +298,12 @@ File *UserGetDeviceByName( User *usr, const char *name );
 //
 //
 
+File *UserGetDeviceByPath( User *usr, char **dstpath, const char *path );
+
+//
+//
+//
+
 int UserRegenerateSessionID( User *usr, char *newsess );
 
 //

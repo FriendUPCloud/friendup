@@ -900,6 +900,10 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 		}
 		else
 		{
+			//
+			// This functionality is used only to assign User to Admin or API groups
+			//
+			
 			UserGroup *rootug = UGMGetGroupByNameAndTypeDB( ugm, level, "Level" );
 			if( rootug != NULL )
 			{
@@ -930,6 +934,8 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 					pos++;
 					ug = (UserGroup *) ug->node.mln_Succ;
 				}
+				
+				UserGroupDeleteAll( sb, rootug );
 			}
 		
 			usr->u_IsAdmin = isAdmin;
@@ -950,6 +956,21 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 		// we clear current user assigns to groups
 		UserRemoveFromGroupsDB( sb, usr );
 		
+		USER_CHANGE_ON( usr );
+		
+		//
+		// Remove all links to groups. This gives us assureance that user will not be assigned to any other group 
+		//
+	
+		UserGroupLink *ugl = usr->u_UserGroupLinks;
+		usr->u_UserGroupLinks = NULL;
+		while( ugl != NULL )
+		{
+			UserGroupLink *uglrem = ugl;
+			ugl = (UserGroupLink *)ugl->node.mln_Succ;
+			FFree( uglrem );
+		}
+		
 		if( strcmp( "false", workgroups ) == 0 )
 		{
 		
@@ -960,10 +981,10 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 			{
 				UIntListEl *rmEntry = el;
 				el = (UIntListEl *)el->node.mln_Succ;
+				
+				UGMAddUserToGroup( ugm, rmEntry->i_Data, usr->u_ID );
 		
 				DEBUG("[UMAssignGroupToUserByStringDB] Memory for groups allocated, pos: %d\n", pos );
-		
-				DEBUG("[UMAssignGroupToUserByStringDB] in loop %d\n", pos );
 			
 				char loctmp[ 256 ];
 				int loctmplen;
@@ -983,6 +1004,8 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 				pos++;
 			}
 		}	// workgroups != "none"
+		
+		USER_CHANGE_OFF( usr );
 		
 		// removeing old group conections from DB
 		snprintf( tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserToGroup WHERE `UserID` = %lu AND `UserGroupID` IN (SELECT ID FROM FUserGroup where Type<>'Level')", usr->u_ID ) ;

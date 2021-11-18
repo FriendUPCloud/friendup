@@ -1388,7 +1388,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 									// user is in group, we can remove him
 									else
 									{
-										UGMRemoveUserFromGroupDB( l->sl_UGM, groupID, el->uid );
+										UGMRemoveUserFromGroup( l->sl_UGM, groupID, el->uid );
 									}
 							
 									User *usr = UMGetUserByID( l->sl_UM, (FULONG)el->uid );
@@ -1400,7 +1400,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 										if( el->ugid == 0 ) // user is not in group we must add him
 										{
 											//UserGroupAddUser( fg, usr );
-											UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, loggedSession, groupID );
+											//UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, loggedSession, groupID );
 										
 											UserNotifyFSEvent2( usr, "refresh", "Mountlist:" );
 										}
@@ -2009,15 +2009,6 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 								User *usr = UMGetUserByID( l->sl_UM, (FULONG)rmEntry->i_Data );
 								if( usr != NULL )
 								{
-									if( usr->u_SessionsList != NULL && usr->u_SessionsList->us != NULL )
-									{
-										UserSession *locus = usr->u_SessionsList->us;
-										UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, locus, groupID );
-									}
-									//if( UserGroupDeviceMount( l->sl_DeviceManager, sqlLib, ug, usr, loggedSession, &errorStr ) != 0 )
-									//{
-									//INFO( "[MountFS] -- Could not mount device for user %s. Drive was %s.\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--" );
-									//}
 
 									// Tell user!
 									UserNotifyFSEvent2( usr, "refresh", "Mountlist:" );
@@ -2033,8 +2024,6 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 							{
 								char *errorStr = NULL;
 
-								UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, loggedSession, groupID );
-							
 								if( UserGroupDeviceMount( l->sl_DeviceManager, sqlLib, ug, usr, loggedSession, &errorStr ) != 0 )
 								{
 									//INFO( "[MountFS] -- Could not mount device for user %s. Drive was %s.\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--" );
@@ -2562,7 +2551,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 						IntListEl *rmEntry = el;
 						el = (IntListEl *)el->node.mln_Succ;
 					
-						UGMAddUserToGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
+						UGMAddUserToGroup( l->sl_UGM, groupID, rmEntry->i_Data );
 						
 						// set user
 						if( isAPIGroup == TRUE || isAdminGroup == TRUE )

@@ -80,12 +80,6 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 //
 //
 
-int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, UserSession *ses, FULONG groupID );
-
-//
-//
-//
-
 int UserGroupDeviceMount( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr, UserSession *ses, char **mountError );
 
 //
@@ -93,12 +87,6 @@ int UserGroupDeviceMount( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrg
 //
 
 int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile, char **mountError );
-
-//
-//
-//
-
-File *GetFileByPath( User *usr, char **dstpath, const char *path );
 
 //
 //

@@ -332,4 +332,10 @@ int UMRemoveOldSessions( void *lsb );
 
 void UMRemoveUsersFromGroup( UserManager *um, FUQUAD groupid );
 
+//
+//
+//
+
+void UMNotifyAllUsersInGroup( UserManager *um, FQUAD groupid, int type );
+
 #endif //__SYSTEM_USER_USER_MANAGER_H__

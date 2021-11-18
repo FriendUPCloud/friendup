@@ -1991,7 +1991,7 @@ FBOOL UMSendDoorNotification( UserManager *um, void *notif, UserSession *ses, Fi
 	// Go through logged users
 	//
     
-	DEBUG("CHECK11\n");
+	DEBUG("[UMSendDoorNotification] CHECK11\n");
 	USER_MANAGER_USE( um );
 	
 	User *usr = um->um_Users;
@@ -2093,11 +2093,11 @@ FBOOL UMSendDoorNotification( UserManager *um, void *notif, UserSession *ses, Fi
 				le = (UserSessListEntry *)le->node.mln_Succ;
 			} // while loop, session
 			
-			DEBUG("unlock user\n");
+			DEBUG("[UMSendDoorNotification] unlock user\n");
 			
 			USER_UNLOCK( usr );
 
-			DEBUG("CHECK12\n");
+			DEBUG("[UMSendDoorNotification] CHECK12\n");
 		}
 		usr = (User *)usr->node.mln_Succ;
 	}
@@ -2297,4 +2297,78 @@ void UMRemoveUsersFromGroup( UserManager *um, FUQUAD groupid )
 	}
 
 	USER_MANAGER_RELEASE( um );
+}
+
+
+/**
+ * Notify all users in group about changes
+ *
+ * @param um pointer to UserManager
+ * @param groupid id of group which users 
+ * @param type type of notification : 0 -mountlist changed
+ */
+
+#define UMNOTIFY_REQ_MSG_LEN 2048
+
+void UMNotifyAllUsersInGroup( UserManager *um, FQUAD groupid, int type )
+{
+	SystemBase *sb = (SystemBase *)um->um_SB;
+
+	char *tmpmsg = FCalloc( UMNOTIFY_REQ_MSG_LEN, 1 );
+	if( tmpmsg == NULL )
+	{
+		FERROR("Cannot allocate memory for buffer\n");
+		return;
+	}
+    
+	//
+	// Go through logged users
+	//
+
+	USER_MANAGER_USE( um );
+	
+	SystemBase *l = (SystemBase *)um->um_SB;
+	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	if( sqlLib != NULL )
+	{
+		snprintf( tmpmsg, UMNOTIFY_REQ_MSG_LEN, "SELECT DISTINCT UserID from FUserToGroup WHERE UserGroupID=%ld", groupid );
+		
+		void *result = sqlLib->Query(  sqlLib, tmpmsg );
+		if( result != NULL )
+		{
+			char **row;
+
+			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+			{
+				char *end;
+				FQUAD id = 0;
+				if( row[ 0 ] != NULL )
+				{
+					id = strtoll( row[ 0 ], &end, 0 );
+					if( id > 0 )
+					{
+						User *usr = um->um_Users;
+						while( usr != NULL )
+						{
+							if( usr->u_ID == id && usr->u_SessionsList != NULL )	// if this is user which we trying to find
+							{
+								if( type == 0 )
+								{
+									UserNotifyFSEvent2( usr, "refresh", "Mountlist:" );
+								}
+							}
+							usr = (User *)usr->node.mln_Succ;
+						}
+					}
+				}
+				
+			}
+			sqlLib->FreeResult( sqlLib, result );
+		}
+		l->LibrarySQLDrop( l, sqlLib );
+	}
+	
+	USER_MANAGER_RELEASE( um );
+	
+	FFree( tmpmsg );
 }
