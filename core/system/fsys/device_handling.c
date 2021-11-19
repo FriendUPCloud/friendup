@@ -209,7 +209,7 @@ int RescanDOSDrivers( DeviceManager *dm )
 	
 		if( d == NULL )
 		{
-			FERROR("RescanDOSDrivers: Cannot open directory %s\n", ddrivedirectory );
+			FERROR("[RescanDOSDrivers] Cannot open directory %s\n", ddrivedirectory );
 			FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 			return 1;
 		}
@@ -599,12 +599,7 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 	memset( &activityTime, 0, sizeof( struct tm ) );
 	NotifUser *rootNotifUser = NULL;
 	FBOOL isWorkgroupDrive = FALSE;			// if drive is workgroup drive, it is set to TRUE
-	
-	if( usr != NULL )
-	{
-		DEBUG("[MountFS] %s: Start - MountFS before lock for user..\n", usr->u_Name );
-	}
-	
+
 	{
 		DOSDriver *filedd = NULL;
 		struct TagItem *ltl = tl;
@@ -1347,7 +1342,6 @@ int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile, char **m
 		
 		User *usr = NULL;
 	
-		// usr->u_SessionID[0] != '0' && usr->u_SessionID[1] != 0
 		// super user feauture
 		
 		if( usr != NULL && usr->u_MountedDevs != NULL )
@@ -1408,8 +1402,6 @@ int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile, char **m
 				}
 			}
 		
-		//	char *prefix = filesys->GetPrefix();
-	//		retFile->f_FSysName = StringDuplicateN( prefix, strlen( prefix ) );
 			retFile->f_FSysName = StringDuplicate( ddrive->dd_Name );
 		
 			if( mfile )
@@ -1422,7 +1414,7 @@ int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile, char **m
 		else
 		{
 			l->sl_Error = FSys_Error_NOFSAvaiable;
-			FERROR("Device not mounted name %s type %s\n", name, type );
+			FERROR("[MountFSNoUser] Device not mounted name %s type %s\n", name, type );
 			FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 			return FSys_Error_NOFSAvaiable;
 		}
@@ -1628,7 +1620,7 @@ int DeviceMountDB( DeviceManager *dm, File *rootDev, FBOOL mount )
 		
 		if( sqllib == NULL )
 		{
-			FERROR("Cannot get mysql.library slot!\n");
+			FERROR("[DeviceMountDB] Cannot get mysql.library slot!\n");
 			FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 			return -10;
 		}
@@ -1662,11 +1654,11 @@ AND LOWER(f.Name) = LOWER('%s') \
 		
 			if( ( error = sqllib->Save( sqllib, FilesystemDesc, filesys ) ) != 0 )
 			{
-				FERROR("Cannot update entry to database, code %d\n", error );
+				FERROR("[DeviceMountDB] Cannot update entry to database, code %d\n", error );
 			}
 			else
 			{
-				INFO("Filesystem %s updated in database\n", rootDev->f_Name );
+				INFO("[DeviceMountDB] Filesystem %s updated in database\n", rootDev->f_Name );
 			}
 		
 			FilesystemDelete( filesys );
@@ -1686,11 +1678,11 @@ AND LOWER(f.Name) = LOWER('%s') \
 			
 				if( ( error = sqllib->Save( sqllib, FilesystemDesc, filesys ) ) != 0 )
 				{
-					FERROR("Cannot add entry to database, code %d\n", error );
+					FERROR("[DeviceMountDB] Cannot add entry to database, code %d\n", error );
 				}
 				else
 				{
-					INFO("Filesystem %s added to database\n", rootDev->f_Name );
+					INFO("[DeviceMountDB] Filesystem %s added to database\n", rootDev->f_Name );
 				}
 			
 				FFree( filesys );
@@ -1846,7 +1838,7 @@ WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where User
 				}
 				else
 				{
-					FERROR("Cannot mount device, device '%s' will be unmounted. ERROR %d\n", name, err );
+					FERROR("[GetUserDeviceByUserID] Cannot mount device, device '%s' will be unmounted. ERROR %d\n", name, err );
 				}
 			}
 			else
@@ -1856,7 +1848,7 @@ WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where User
 		}
 		else
 		{
-			FERROR("User do not exist, cannot mount drive\n");
+			FERROR("[GetUserDeviceByUserID] User do not exist, cannot mount drive\n");
 		}
 		
 		if( path != NULL ) FFree( path );
@@ -1935,189 +1927,12 @@ void UserNotifyFSEvent( DeviceManager *dm, char *evt, char *path )
 					}
 					UserSession *u = userlist[i];
 					UserSessionWebsocketWrite( u, (unsigned char *)message, msglen, LWS_WRITE_TEXT);
-					//WebSocketSendMessage( l, u, message, msglen );
 				}
 			}
 			FFree( message );
 		}
 		FFree( devName );
 	}
-}
-
-/**
- * Mount door in FC by table row
- *
- * @param dm pointer to DeviceManager
- * @param usr pointer to user which call this function
- * @param row database row entryf
- * @param mountUser pointer to user which is mounting device
- * @return success (0) or fail value (not equal to 0)
- */
-int MountDoorByRow( DeviceManager *dm, User *usr, char **row, User *mountUser __attribute__((unused)))
-{
-	SystemBase *l = (SystemBase *)dm->dm_SB;
-	l->sl_Error = 0;
-	
-	if( usr != NULL && row != NULL )
-	{
-		char *type = NULL;
-		char *server = NULL;
-		char *path = NULL;
-		char *port = NULL;
-		char *uname = NULL;
-		char *passwd = NULL;
-		char *config = NULL;
-		char *name = NULL;
-		char *execute = NULL;
-		FULONG id = 0;
-		File *mount = NULL;
-		FHandler *filesys = NULL;
-		FBOOL visible = TRUE;
-		
-		if( row[ 0 ] != NULL ) { type = StringDuplicate( row[ 0 ] ); }
-		if( row[ 1 ] != NULL ){ server = StringDuplicate( row[  1 ] ); }
-		if( row[ 2 ] != NULL ){ path = StringDuplicate( row[  2 ] ); }
-		if( row[ 3 ] != NULL ){ port = StringDuplicate( row[  3 ] ); }
-		if( row[ 4 ] != NULL ){ uname = StringDuplicate( row[  4 ] ); }
-		if( row[ 5 ] != NULL ){ passwd = StringDuplicate( row[  5 ] ); }
-		if( row[ 6 ] != NULL )
-		{
-			config = StringDuplicate( row[ 6 ] );
-			if( row[ 6 ] != NULL )
-			{
-				char *visiblePtr = NULL;
-				config = StringDuplicate( row[ 6 ] );
-				if( config != NULL && ( visiblePtr = strstr( config, "\"Visible\"" ) ) != NULL )
-				{
-					// "Visible":"on"
-					visiblePtr+= 9 + 2;	// name + quote + :
-					if( strcmp( visiblePtr, "on" ) != 0 )
-					{
-						visible = 0;
-					}
-					else
-					{
-						visible = 1;
-					}
-				}
-			}
-		}
-		if( row[ 7 ] != NULL )
-		{
-			char *end;
-			id = strtoul( (char *)row[ 7 ],  &end, 0 );
-		}
-		
-		if( row[ 8 ] != NULL ){ name = StringDuplicate( row[ 8 ] ); }
-		if( row[ 9 ] != NULL ){ execute = StringDuplicate( row[ 9 ] ); }
-		
-		if( type !=NULL && id != 0 )
-		{
-			File *fentry = usr->u_MountedDevs;
-			while( fentry != NULL )
-			{
-				if( id == fentry->f_ID )
-				{
-					l->sl_Error = FSys_Error_DeviceAlreadyMounted;
-					
-					goto mfeerror;
-				}
-				fentry = (File *) fentry->node.mln_Succ;
-			}
-			
-			DEBUG("[MountDoorByRow] %s - User is not null!\n", usr->u_Name );
-			
-			//INFO("Mount Checking avaiable filesystem(%s)\n", name );
-			
-			//
-			// Find installed filesystems by type
-			DOSDriver *ddrive = (DOSDriver *)l->sl_DOSDrivers;
-			// FHandler *efsys = NULL;
-			while( ddrive != NULL )
-			{
-				DEBUG("[MountDoorByRow] %s - Mount check DOSDRIVERS FIND TYPE %s ddrivename %s\n", usr->u_Name, type, ddrive->dd_Name );
-				if( strcmp( type, ddrive->dd_Name ) == 0 )
-				{
-					filesys = ddrive->dd_Handler;
-					break;
-				}
-				ddrive = (DOSDriver *)ddrive->node.mln_Succ;
-			}
-			
-			
-			if( filesys == NULL )
-			{
-				FERROR("[ERROR]: %s - Cannot find FSys fdor device: %s\n", usr->u_Name, name );
-				l->sl_Error = FSys_Error_NOFSAvaiable;
-				goto mfeerror;
-			}
-			
-			//
-			// No drive from SQL? 
-			
-			if( id <= 0 )
-			{
-				FERROR("[ERROR]: %s - Could not find file system!: %s\n", usr->u_Name, name );
-				l->sl_Error = FSys_Error_NOFSAvaiable;
-				goto mfeerror;
-			}
-			
-			//
-			// parse config string
-			//
-			
-			if( config != NULL )
-			{
-				
-			}
-			
-			//INFO("[MountFS] %s - Localtype %s DDriverType %s\n", usr->u_Name, type, filedd->dd_Type );
-			
-			struct TagItem tags[] = {
-				{FSys_Mount_Path, (FULONG)path},
-				{FSys_Mount_Server, (FULONG)server},
-				{FSys_Mount_Port, (FULONG)port},
-				{FSys_Mount_Type, (FULONG)type},
-				{FSys_Mount_Name, (FULONG)name},
-				//{FSys_Mount_User, (FULONG)usr},
-				{FSys_Mount_Owner,(FULONG)usr},
-				{FSys_Mount_LoginUser,(FULONG)uname},
-				{FSys_Mount_LoginPass,(FULONG)passwd},
-				{FSys_Mount_SysBase,(FULONG)l},
-				{FSys_Mount_Config,(FULONG)config},
-				//{FSys_Mount_Visible,(FULONG)visible},
-				{FSys_Mount_UserName, (FULONG)usr->u_Name },
-				{FSys_Mount_ID, (FULONG)id},
-				{TAG_DONE, TAG_DONE}
-			};
-
-			// Using sentinel?
-			/*
-			User *mountUser = usr;
-			if( usingSentinel == 1 )
-			{
-				mountUser = sent->s_User;
-			}
-			
-			retFile = filesys->Mount( filesys, tags, mountUser );
-			*/
-		}
-		
-		DEBUG("[MountDoorByRow] %s - found row type %s server %s path %s port %s\n", usr->u_Name, row[0], row[1], row[2], row[3] );
-		
-		mfeerror:
-		
-		if( type != NULL ) FFree( type );
-		if( port != NULL ) FFree( port );
-		if( server != NULL ) FFree( server );
-		if( path != NULL ) FFree( path );
-		if( passwd != NULL ) FFree( passwd );
-		if( uname != NULL ) FFree( uname );
-		if( config != NULL ) FFree( config );
-		if( execute != NULL ) FFree( execute );
-	}
-	
-	return l->sl_Error;
 }
 
 /**
@@ -2492,7 +2307,7 @@ File *GetRootDeviceByName( User *usr, UserSession *ses, char *devname )
 	
 	if( usr == NULL )
 	{
-		FERROR("GetRootDEviceByName: user == NULL\n");
+		FERROR("[GetRootDEviceByName] user == NULL\n");
 		return NULL;
 	}
 
@@ -2505,7 +2320,7 @@ File *GetRootDeviceByName( User *usr, UserSession *ses, char *devname )
 	
 	if( usr->u_MountedDevs == NULL )
 	{
-		FERROR( "Looks like we have NO mounted devs..\n" );
+		FERROR( "[GetRootDEviceByName]Looks like we have NO mounted devs..\n" );
 	}
 	
 	while( lDev != NULL )
@@ -2521,7 +2336,7 @@ File *GetRootDeviceByName( User *usr, UserSession *ses, char *devname )
 			{
 				actDev = lDev->f_SharedFile;
 			}
-			INFO("Found file name '%s' path '%s' (%s)\n", actDev->f_Name, actDev->f_Path, actDev->f_FSysName );
+			INFO("[GetRootDEviceByName]Found file name '%s' path '%s' (%s)\n", actDev->f_Name, actDev->f_Path, actDev->f_FSysName );
 			break;
 		}
 		lDev = (File *)lDev->node.mln_Succ;
@@ -2564,7 +2379,7 @@ File *GetRootDeviceByName( User *usr, UserSession *ses, char *devname )
 	
 	if( actDev == NULL )
 	{
-		FERROR( "Cannot find mounted device by name: %s\n", devname );
+		FERROR( "[GetRootDEviceByName]Cannot find mounted device by name: %s\n", devname );
 	}
 	else if( ses != NULL )
 	{
@@ -2620,7 +2435,7 @@ usrgrp->ug_ID
 	void *res = sqllib->Query( sqllib, temptext );
 	if( res == NULL )
 	{
-		Log( FLOG_ERROR,  "[UserGroupDeviceMount] fail: database results = NULL\n");
+		Log( FLOG_ERROR, "[UserGroupDeviceMount] fail: database results = NULL\n");
 		return 0;
 	}
 	DEBUG("[UserGroupDeviceMount] Finding drives in DB no error during select:\n\n");

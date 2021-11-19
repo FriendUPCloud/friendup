@@ -111,12 +111,6 @@ void UserNotifyFSEvent( DeviceManager *dm, char *evt, char *path );
 //
 //
 
-int MountDoorByRow( DeviceManager *dm, User *usr, char **row, User *mountUser );
-
-//
-//
-//
-
 int CheckAndMountWorkgroupDrive( DeviceManager *dm, char *type, User *usr, FUQUAD id, int mounted );
 
 //

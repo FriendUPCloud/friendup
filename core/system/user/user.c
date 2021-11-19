@@ -876,68 +876,11 @@ File *UserGetDeviceByPath( User *usr, char **dstpath, const char *path )
 }
 
 /**
- * Regenerate sessionid for user (DEPRICATED)
- *
- * @param lsb pointer to SystemBase
- * @param usr pointer to User which will have new sessionid
- * @param newsess new session hash. If passed value is equal to NULL new hash will be generated
- * @return 0 when success, otherwise error number
- */
-int UserRegenerateSessionID( User *usr, char *newsess )
-{
-/*
-	if( usr != NULL )
-	{
-		//pthread_mutex_lock( &(usr->) );
-		// Remove old one and update
-		if( usr->u_MainSessionID )
-		{
-			FFree( usr->u_MainSessionID );
-		}
-		
-		if( newsess != NULL )
-		{
-			usr->u_MainSessionID = StringDuplicate( newsess );
-		}
-		else
-		{
-			time_t timestamp = time ( NULL );
-	
-			char *hashBase = MakeString( 255 );
-			sprintf( hashBase, "%ld%s%d", timestamp, usr->u_FullName, ( rand() % 999 ) + ( rand() % 999 ) + ( rand() % 999 ) );
-			HashedString( &hashBase );
-
-			usr->u_MainSessionID = hashBase;
-		}
-	
-		// UPDATE file systems
-		File *lDev = usr->u_MountedDevs;
-		if( lDev != NULL )
-		{
-			while( lDev != NULL )
-			{
-
-				//lDev->f_SessionID = StringDuplicate( usr->u_MainSessionID );
-				lDev->f_SessionIDPTR = usr->u_MainSessionID;
-				lDev = (File *)lDev->node.mln_Succ;
-			}
-		}
-	}
-	else
-	{
-		DEBUG("User structure = NULL\n");
-		return 1;
-	}
-*/
-	return 0;
-}
-
-/**
  * Delete UserGRoupLinkEntry
  *
  * @param ugl pointer to UserGroupLink
  */
-/*
+
 void UserDeleteGroupLink( UserGroupLink *ugl )
 {
 	if( ugl != NULL )
@@ -945,7 +888,6 @@ void UserDeleteGroupLink( UserGroupLink *ugl )
 		FFree( ugl );
 	}
 }
-*/
 
 /**
  * Delete All UserGRoupLinkEntry's
@@ -953,7 +895,6 @@ void UserDeleteGroupLink( UserGroupLink *ugl )
  * @param ugl pointer to UserGroupLink root entry
  */
 
-/*
 void UserDeleteGroupLinkAll( UserGroupLink *ugl )
 {
 	while( ugl != NULL )
@@ -964,7 +905,6 @@ void UserDeleteGroupLinkAll( UserGroupLink *ugl )
 		UserDeleteGroupLink( re );
 	}
 }
-*/
 
 /**
  * Remove user from all groups
@@ -1104,34 +1044,6 @@ FBOOL UserIsInGroupDB( void *sb, User *usr, FULONG gid )
 
 	return isInGroup;
 }
-
-/**
- * Check if user is in group
- *
- * @param usr User
- * @param gid group id 
- * @return TRUE if user is in group, otherwise FALSE
- */
-/*
-FBOOL UserIsInGroup( User *usr, FULONG gid )
-{
-	USER_LOCK( usr );
-
-	UserGroupLink *ugl = usr->u_UserGroupLinks;
-	while( ugl != NULL )
-	{
-		if( ugl->ugl_GroupID == gid )
-		{
-			USER_UNLOCK( usr );
-			return TRUE;
-		}
-		ugl = (UserGroupLink *)ugl->node.mln_Succ;
-	}
-		
-	USER_UNLOCK( usr );
-	return FALSE;
-}
-*/
 
 /**
  * Release User drives
@@ -1286,7 +1198,7 @@ void UserNotifyFSEvent2( User *u, char *evt, char *path )
 				}
 				else
 				{
-					INFO("Cannot send WS message: %s\n", message );
+					INFO("[UserNotifyFSEvent2] Cannot send WS message: %s\n", message );
 				}
 				list = (UserSessListEntry *)list->node.mln_Succ;
 			}
@@ -1309,6 +1221,7 @@ void UserNotifyFSEvent2( User *u, char *evt, char *path )
 
 int UserAddToGroup( User *usr, UserGroup *ug )
 {
+	DEBUG("[UserAddToGroup] start\n" );
 	if( usr != NULL && ug != NULL )
 	{
 		USER_CHANGE_ON( usr );
@@ -1339,6 +1252,7 @@ int UserAddToGroup( User *usr, UserGroup *ug )
 		
 		USER_CHANGE_OFF( usr );
 	}
+	DEBUG("[UserAddToGroup] end\n" );
 	return 0;
 }
 
@@ -1348,6 +1262,7 @@ int UserAddToGroup( User *usr, UserGroup *ug )
 
 int UserRemoveFromGroup( User *usr, FUQUAD groupid )
 {
+	DEBUG("[UserRemoveFromGroup] start. GroupID %ld\n", groupid );
 	if( usr != NULL )
 	{
 		USER_CHANGE_ON( usr );
@@ -1384,5 +1299,6 @@ int UserRemoveFromGroup( User *usr, FUQUAD groupid )
 		}
 		USER_CHANGE_OFF( usr );
 	}
+	DEBUG("[UserRemoveFromGroup] end. GroupID %ld\n", groupid );
 	return 0;
 }

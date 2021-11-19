@@ -304,12 +304,6 @@ File *UserGetDeviceByPath( User *usr, char **dstpath, const char *path );
 //
 //
 
-int UserRegenerateSessionID( User *usr, char *newsess );
-
-//
-//
-//
-
 int UserAddToGroup( User *usr, UserGroup *ug );
 
 //
@@ -322,13 +316,13 @@ int UserRemoveFromGroup( User *usr, FUQUAD groupid );
 //
 //
 
-//void UserDeleteGroupLink( UserGroupLink *ugl );
+void UserDeleteGroupLink( UserGroupLink *ugl );
 
 //
 //
 //
 
-//void UserDeleteGroupLinkAll( UserGroupLink *ugl );
+void UserDeleteGroupLinkAll( UserGroupLink *ugl );
 
 //
 //
@@ -341,12 +335,6 @@ int UserRemoveFromGroup( User *usr, FUQUAD groupid );
 //
 
 void UserRemoveFromGroupsDB( void *sb, User *u );
-
-//
-//
-//
-
-//FBOOL UserIsInGroup( User *usr, FULONG gid );
 
 //
 //

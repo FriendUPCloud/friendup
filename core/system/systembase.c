@@ -1758,15 +1758,6 @@ int SystemInitExternal( SystemBase *l )
 				}
 				FFree( newSessionId );
 			}
-			
-			//
-			// regenerate sessionid for User
-			//
-			
-			if(  (timestamp - l->sl_Sentinel->s_User->u_LastActionTime) > l->sl_RemoveSessionsAfterTime )
-			{
-				UserRegenerateSessionID( l->sl_Sentinel->s_User, NULL );
-			}
 		}
 		
 		UMCheckAndLoadAPIUser( l->sl_UM );
