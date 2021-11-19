@@ -501,7 +501,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					// Fetch authid from either FUserApplication or Filesystem
 					sqllib->SNPrintF( 
 					    sqllib, qery, sizeof(qery), 
-					    "SELECT us.SessionID FROM FUserSession us, FUserApplication a WHERE a.AuthID=\"%s\" AND a.UserID = us.UserID LIMIT 1",
+					    "SELECT a.UserID FROM FUserApplication a WHERE a.AuthID=\"%s\" LIMIT 1",
 					    ( char *)ast->hme_Data
 					);
 					// Hognes AuthID FIX fix this!
