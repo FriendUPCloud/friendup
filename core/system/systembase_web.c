@@ -2353,7 +2353,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 										char qery[ 1024 ];
 										sqllib->SNPrintF( 
 										    sqllib, qery, sizeof( qery ),
-										    "SELECT `AuthID` FROM `FUserApplication` WHERE `UserID` = '%lu' and `ApplicationID` = ( SELECT ID FROM `FApplication` WHERE `Name` = \"%s\" AND `UserID` = '%ld' LIMIT 1 )",
+										    "SELECT `AuthID` FROM `FUserApplication` WHERE `UserID` = '%lu' and `ApplicationID` = ( SELECT ID FROM `FApplication` WHERE `Name` = \"%s\" AND `UserID` = '%lu' LIMIT 1 )",
 										    loggedUser->u_ID, appname, loggedUser->u_ID
 										);
 								
