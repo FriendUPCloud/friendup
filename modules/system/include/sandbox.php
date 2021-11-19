@@ -32,7 +32,7 @@ if( isset( $args->conf ) )
 			$vol = explode( ':', $conf );
 			if( $vol && ( !isset( $vol[1] ) || !trim( $vol[1] ) ) )
 			{
-				if( $f = $SqlDatabase->fetchObject( $q = '
+				/*if( $f = $SqlDatabase->fetchObject( $q = '
 				SELECT f.* FROM Filesystem f
 				WHERE
 					(
@@ -61,7 +61,7 @@ if( isset( $args->conf ) )
 						}
 					}
 				}
-				else die( 'fail<!--separate-->{"response":"Could not find file system."}' );
+				else*/ die( 'fail<!--separate-->{"response":"Could not find file system."}' );
 			}
 			// No it's actually a path
 			else
