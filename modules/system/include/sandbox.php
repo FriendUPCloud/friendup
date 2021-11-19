@@ -32,7 +32,7 @@ if( isset( $args->conf ) )
 			$vol = explode( ':', $conf );
 			if( $vol && ( !isset( $vol[1] ) || !trim( $vol[1] ) ) )
 			{
-				if( $f = $SqlDatabase->fetchRow( $q = '
+				if( $f = $SqlDatabase->fetchObject( $q = '
 				SELECT f.* FROM Filesystem f
 				WHERE
 					(
@@ -53,6 +53,14 @@ if( isset( $args->conf ) )
 					if( isset( $f->Config ) )
 					{
 						$conf = json_decode( $f->Config );
+					    /*
+					    TODO: Hognes AuthID FIX - make it work
+					    // Make sure we have auth id!
+					    if( !isset( $f->AuthID ) ) $f->AuthID = '';
+						if( !$f->AuthID && isset( $conf->authid ) )
+						{
+						    $SqlDatabase->query( 'UPDATE Filesystem f SET f.AuthID="' . $conf->authid . '" WHERE f.ID = \'' . $f->ID . '\'' );
+						}*/
 					}
 				}
 				else die( 'fail<!--separate-->{"response":"Could not find file system."}' );

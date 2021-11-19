@@ -498,9 +498,16 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					char qery[ 1024 ];
 					FULONG uid = 0;
 
-					//inner join FUserSession us on u.ID=us.UserID 
-					//sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT * FROM ( ( SELECT us.SessionID FROM FUserSession us, FUserApplication a WHERE a.AuthID=\"%s\" AND a.UserID=us.UserID LIMIT 1 ) UNION ( SELECT us2.SessionID FROM FUserSession us2, Filesystem f WHERE f.Config LIKE \"%s%s%s\" AND us2.UserID=f.UserID LIMIT 1 ) ) z LIMIT 1",( char *)ast->hme_Data, "%", ( char *)ast->hme_Data, "%");
-					sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT a.UserID FROM FUserApplication a WHERE a.AuthID=\"%s\" LIMIT 1",( char *)ast->hme_Data );
+					// Fetch authid from either FUserApplication or Filesystem
+					sqllib->SNPrintF( 
+					    sqllib, qery, sizeof(qery), 
+					    "SELECT us.SessionID FROM FUserSession us, FUserApplication a WHERE a.AuthID=\"%s\" AND a.UserID = us.UserID LIMIT 1",
+					    ( char *)ast->hme_Data
+					);
+					// Hognes AuthID FIX fix this!
+					    //"SELECT * FROM ( ( SELECT us.SessionID FROM FUserSession us, FUserApplication a WHERE a.AuthID=\"%s\" AND a.UserID = us.UserID LIMIT 1 ) UNION ( SELECT us2.SessionID FROM FUserSession us2, Filesystem f WHERE f.AuthID = \"%s\" AND us2.UserID = f.UserID LIMIT 1 ) ) z LIMIT 1", 
+					//    ( char *)ast->hme_Data, ( char *)ast->hme_Data 
+					//);
 					
 					void *res = sqllib->Query( sqllib, qery );
 					if( res != NULL )
@@ -540,13 +547,16 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								{
 									UserAddSession( usr, loggedSession );
 								}
-								loggedSession->us_UserID = usr->u_ID;
-								loggedSession->us_LastActionTime = time( NULL );
+								if( usr != NULL )
+								{
+								    loggedSession->us_UserID = usr->u_ID;
+								    loggedSession->us_LastActionTime = time( NULL );
 							
-								UGMAssignGroupToUser( l->sl_UGM, usr );
+								    UGMAssignGroupToUser( l->sl_UGM, usr );
 							
-								USMSessionSaveDB( l->sl_USM, loggedSession );
-								USMUserSessionAddToList( l->sl_USM, loggedSession );
+								    USMSessionSaveDB( l->sl_USM, loggedSession );
+								    USMUserSessionAddToList( l->sl_USM, loggedSession );
+								}
 							}
 						}
 					}
@@ -2341,7 +2351,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 										authid[ 0 ] = 0;
 								
 										char qery[ 1024 ];
-										sqllib->SNPrintF( sqllib, qery, sizeof( qery ),"select `AuthID` from `FUserApplication` where `UserID` = %lu and `ApplicationID` = (select ID from `FApplication` where `Name` = '%s' and `UserID` = %ld)",loggedUser->u_ID, appname, loggedUser->u_ID);
+										sqllib->SNPrintF( 
+										    sqllib, qery, sizeof( qery ),
+										    "SELECT `AuthID` FROM `FUserApplication` WHERE `UserID` = '%lu' and `ApplicationID` = ( SELECT ID FROM `FApplication` WHERE `Name` = \"%s\" AND `UserID` = '%ld' LIMIT 1 )",
+										    loggedUser->u_ID, appname, loggedUser->u_ID
+										);
 								
 										void *res = sqllib->Query( sqllib, qery );
 										if( res != NULL )

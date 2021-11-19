@@ -42,6 +42,7 @@ if( strstr( $args->args->application, ':' ) )
 			$data->permissions = $perms;
 			$data->authid = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . $o->ID . $o->Name );
 			$o->Config = json_encode( $data );
+			//$o->AuthID = $data->authid; // TODO: Fix authid
 			$o->Save();
 			
 			// Remount disk
@@ -89,7 +90,8 @@ else if( $row = $SqlDatabase->FetchObject( '
 		$app = new dbIO( 'FUserApplication' );
 		$app->ApplicationID = $row->ID;
 		$app->UserID = $User->ID;
-		$app->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . $row->ID );
+		// TODO: Fix auth id
+		// $app->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . $row->ID );
 		$app->Permissions = json_encode( $perms );
 		$app->Data = json_encode( $data );
 		$app->Save();

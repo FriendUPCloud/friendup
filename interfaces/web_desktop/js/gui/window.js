@@ -989,6 +989,13 @@ function _ActivateWindowOnly( div )
 			
 			m.classList.add( 'Active' );
 			m.viewContainer.classList.add( 'Active' );
+			
+			// Set active window
+			if( m.windowObject.getFlag( 'windowActive' ) )
+			{
+				m.style.backgroundColor = m.windowObject.getFlag( 'windowActive' );
+				m.titleDiv.style.backgroundColor = m.style.backgroundColor;
+			}
 
 			let app = _getAppByAppId( div.applicationId );
 
@@ -1070,6 +1077,13 @@ function _ActivateWindowOnly( div )
 var _activationTarget = null;
 function _ActivateWindow( div, nopoll, e )
 {
+	// Check window color
+	if( div.windowObject.getFlag( 'windowActive' ) )
+	{
+		div.style.backgroundColor = div.windowObject.getFlag( 'windowActive' );
+		div.titleDiv.style.backgroundColor = div.style.backgroundColor;
+	}
+	
 	if( Workspace.contextMenuShowing && Workspace.contextMenuShowing.shown )
 	{
 		return;
@@ -1397,6 +1411,13 @@ function _DeactivateWindow( m, skipCleanUp )
 	{
 		m.classList.remove( 'Active' );
 		m.viewContainer.classList.remove( 'Active' );
+		
+		// Check inactive window color
+		if( m.windowObject.getFlag( 'windowInactive' ) )
+		{
+			m.style.backgroundColor = m.windowObject.getFlag( 'windowInactive' );
+			m.titleDiv.style.backgroundColor = m.style.backgroundColor;
+		}
 		
 		CheckMaximizedView();
 		
@@ -3993,15 +4014,15 @@ var View = function( args )
 		if( window.friend && Friend.currentWindowHover )
 			Friend.currentWindowHover = false;
 		
+		// Reparse! We may have forgotten some things
+		self.parseFlags( flags );
+		
 		// Only activate if needed
 		if( !flags.minimized && !flags.openSilent )
 		{
 			_ActivateWindow( div );
 			_WindowToFront( div );
 		}
-		
-		// Reparse! We may have forgotten some things
-		self.parseFlags( flags );
 		
 		// Move workspace to designated position	
 		if( !flags.screen || flags.screen == Workspace.screen )
@@ -5147,6 +5168,11 @@ var View = function( args )
 			// Allow for dropping files in a secure manner
 			case 'securefiledrop':
 				this.flags.securefiledrop = value;
+				break;
+			case 'windowInactive':
+			case 'windowActive':
+				// Check window color
+				this.flags[ flag ] = value;
 				break;
 			// Takes all flags
 			default:
