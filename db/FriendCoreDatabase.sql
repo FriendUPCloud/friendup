@@ -136,7 +136,7 @@ CREATE TABLE IF NOT EXISTS `Filesystem` (
   `Mounted` tinyint(4) NOT NULL DEFAULT '0',
   `Authorized` tinyint(4) NOT NULL default '0',
   `Owner` bigint(20) DEFAULT NULL,
-  `Filesystem` ADD COLUMN `AuthID` varchar(255),
+  `AuthID` varchar(255) NOT NULL,
   PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
