@@ -1133,6 +1133,7 @@ AND f.Name = '%s'",
 			
 			if( isWorkgroupDrive == TRUE )
 			{
+				FBOOL groupCreated = FALSE;
 				// group do not exist in memory. We have to load it and add to global list
 				if( usrgrp == NULL )
 				{
@@ -1140,6 +1141,7 @@ AND f.Name = '%s'",
 					if( usrgrp != NULL )
 					{
 						UGMAddGroup( l->sl_UGM, usrgrp );
+						groupCreated = TRUE;	// if group is created it is a signal to FC that all users should be connected to it
 					}
 				}
 				if( usrgrp != NULL )
@@ -1161,6 +1163,10 @@ AND f.Name = '%s'",
 					}
 					
 					// lets notify users about changes which happened in his group
+					if( groupCreated == TRUE )
+					{
+						UMAddExistingUsersToGroup( l->sl_UM, usrgrp );
+					}
 					UMNotifyAllUsersInGroup( l->sl_UM, userGroupID, 0 );
 				}
 			}

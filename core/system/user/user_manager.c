@@ -2312,8 +2312,6 @@ void UMRemoveUsersFromGroup( UserManager *um, FUQUAD groupid )
 
 void UMNotifyAllUsersInGroup( UserManager *um, FQUAD groupid, int type )
 {
-	SystemBase *sb = (SystemBase *)um->um_SB;
-
 	char *tmpmsg = FCalloc( UMNOTIFY_REQ_MSG_LEN, 1 );
 	if( tmpmsg == NULL )
 	{
@@ -2356,6 +2354,75 @@ void UMNotifyAllUsersInGroup( UserManager *um, FQUAD groupid, int type )
 								{
 									UserNotifyFSEvent2( usr, "refresh", "Mountlist:" );
 								}
+								break;	// user found. There is no need to search for him
+							}
+							usr = (User *)usr->node.mln_Succ;
+						}
+					}
+				}
+				
+			}
+			sqlLib->FreeResult( sqlLib, result );
+		}
+		l->LibrarySQLDrop( l, sqlLib );
+	}
+	
+	USER_MANAGER_RELEASE( um );
+	
+	FFree( tmpmsg );
+}
+
+/**
+ * Add existing users to new groups
+ *
+ * @param um pointer to UserManager
+ * @param groupid id of group which users 
+ */
+
+#define LOCAL_SQL_LEN 256
+
+void UMAddExistingUsersToGroup( UserManager *um, UserGroup *ug )
+{
+	char *tmpmsg = FCalloc( LOCAL_SQL_LEN, 1 );
+	if( tmpmsg == NULL )
+	{
+		FERROR("Cannot allocate memory for buffer\n");
+		return;
+	}
+    
+	//
+	// Go through logged users and add them to a group
+	//
+
+	USER_MANAGER_USE( um );
+	
+	SystemBase *l = (SystemBase *)um->um_SB;
+	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	if( sqlLib != NULL )
+	{
+		snprintf( tmpmsg, LOCAL_SQL_LEN, "SELECT DISTINCT UserID from FUserToGroup WHERE UserGroupID=%ld", ug->ug_ID );
+		
+		void *result = sqlLib->Query(  sqlLib, tmpmsg );
+		if( result != NULL )
+		{
+			char **row;
+
+			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+			{
+				char *end;
+				FQUAD id = 0;
+				if( row[ 0 ] != NULL )
+				{
+					id = strtoll( row[ 0 ], &end, 0 );
+					if( id > 0 )
+					{
+						User *usr = um->um_Users;
+						while( usr != NULL )
+						{
+							if( usr->u_ID == id )	// if this is user which we trying to find
+							{
+								UserAddToGroup( usr, ug );
+								break;		// we found user, we can stop
 							}
 							usr = (User *)usr->node.mln_Succ;
 						}
