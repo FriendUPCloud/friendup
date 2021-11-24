@@ -2002,7 +2002,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 							FBOOL exist = UGMUserToGroupISConnectedByUIDDB( l->sl_UGM, groupID, rmEntry->i_Data );
 							if( exist == FALSE )
 							{
-								UGMAddUserToGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
+								UGMAddUserToGroup( l->sl_UGM, groupID, rmEntry->i_Data );
 								
 								char *errorStr = NULL;
 
