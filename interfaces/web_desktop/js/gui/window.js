@@ -337,7 +337,6 @@ function ResizeWindow( div, wi, he, mode, depth )
 	{
 		maxVWidt = cl ? div.windowObject.flags.screen.getMaxViewWidth() : GetWindowWidth();
 		maxVHeig = cl ? div.windowObject.flags.screen.getMaxViewHeight() : GetWindowHeight();
-		console.log( 'Max view dims: ' + maxVWidt + 'x' + maxVHeig );
 	}
 	else
 	{
@@ -351,12 +350,14 @@ function ResizeWindow( div, wi, he, mode, depth )
 	if ( !wi || wi == 'false' ) wi = div.content ? div.content.offsetWidth  : div.offsetWidth;
 	if ( !he || he == 'false' ) he = div.content ? div.content.offsetHeight : div.offsetHeight;
 
+    console.log( '3) ' + wi + 'x' + he );
+
 	wi = parseInt( wi );
 	he = parseInt( he );
 
 	let divs = div.getElementsByTagName ( 'div' );
 	let cnt  = false;
-	for( var a = 0; a < divs.length; a++ )
+	for( let a = 0; a < divs.length; a++ )
 	{
 		if( !cnt && divs[a].classList && divs[a].classList.contains( 'Content' ) )
 		{
@@ -364,6 +365,9 @@ function ResizeWindow( div, wi, he, mode, depth )
 			break;
 		}
 	}
+	
+	
+	console.log( '3b) ' + wi + 'x' + he );
 
 
 	// TODO: Let a central resize code handle this (this one?)
@@ -376,7 +380,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 	maxWidth -= margins.left + margins.right;
 	maxHeight -= margins.top + margins.bottom;
 	
-	console.log( 'Parent window', 
+	console.log( '3c) Parent window', 
 	    div.parentWindow ? div.parentWindow.getWindowElement() : maxVWidt,
 	    div.parentWindow ? div.parentWindow.getWindowElement() : maxVHeig
 	);
