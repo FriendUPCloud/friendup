@@ -406,7 +406,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 	{
 		l = div.offsetLeft;
 		t = div.offsetTop;
-		console.log( 'The top of the view is: ' + t.div.offsetTop );
+		console.log( 'The top of the view is: ' + div.offsetTop );
 	}
 	else
 	{
