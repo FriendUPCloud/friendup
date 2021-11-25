@@ -2151,6 +2151,8 @@ var View = function( args )
 		}
 	}
 	
+	console.log( '1) Here are the args: ', args );
+	
 	// Start off
 	if( !args )
 		args = {};
@@ -5762,6 +5764,8 @@ var View = function( args )
 		args.top = 0;
 		args.resize = false;
 	}
+	
+	console.log( 'Creating with args: ', args );
 	
 	this.createDomElements( 'CREATE', args.title, args.width, args.height, args.id, args, args.applicationId );
 
