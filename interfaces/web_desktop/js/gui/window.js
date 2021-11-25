@@ -406,9 +406,11 @@ function ResizeWindow( div, wi, he, mode, depth )
 	{
 		l = div.offsetLeft;
 		t = div.offsetTop;
+		console.log( 'The top of the view is: ' + t.div.offsetTop );
 	}
 	else
 	{
+	    console.log( 'We have no parent noo!' );
 		l = div.windowObject.flags.left;
 		t = div.windowObject.flags.top;
 		if( !l ) l = isWorkspaceScreen ? div.windowObject.workspace * window.innerWidth : 0;
