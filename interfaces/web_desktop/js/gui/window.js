@@ -402,7 +402,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 	
 	// Make sure we don't go past screen limits
 	let l = t = 0;
-	if( div.parentNode )
+	if( div.parentNode && div.offsetTop < window.innerHeight )
 	{
 		l = div.offsetLeft;
 		t = div.offsetTop;
