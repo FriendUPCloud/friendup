@@ -297,6 +297,8 @@ function ResizeWindow( div, wi, he, mode, depth )
 		// mode, check also borders around the content and add those to get
 		// the correct width and height
 		frameWidth = ele.rightbar.offsetWidth + ele.leftbar.offsetWidth;
+		console.log( 'Checking frame ' + frameWidth + ' (' + ele.rightbar.offsetWidth + ', ' + ele.leftbar.offsetWidth + ')' );
+		console.log( ele.rightbar, ele.leftbar );
 		if( !wi ) 
 		{
 			wi = parseInt( flags.width );
@@ -341,17 +343,11 @@ function ResizeWindow( div, wi, he, mode, depth )
 	let maximized = div.getAttribute( 'maximized' ) == 'true' || 
 		div.windowObject.flags.maximized;
 
-    console.log( '3) wi/he ' + wi + 'x' + he );
-
 	if ( !wi || wi == 'false' ) wi = div.content ? div.content.offsetWidth  : div.offsetWidth;
 	if ( !he || he == 'false' ) he = div.content ? div.content.offsetHeight : div.offsetHeight;
 
-    console.log( '4) wi/he ' + wi + 'x' + he );
-
 	wi = parseInt( wi );
 	he = parseInt( he );
-
-    console.log( '5) wi/he ' + wi + 'x' + he );
 
 	let divs = div.getElementsByTagName ( 'div' );
 	let cnt  = false;
@@ -379,14 +375,11 @@ function ResizeWindow( div, wi, he, mode, depth )
 	{
 		wi = maxWidth;
 		he = maxHeight;
-		
-		console.log( '5a) wi/he ' + wi + 'x' + he );
 	}
 	// We will not go past max height
 	else
 	{
 		if( he > maxHeight ) he = maxHeight;
-		console.log( '5b) wi/he ' + wi + 'x' + he );
 	}
 	
 	// Make sure we don't go past screen limits
@@ -418,12 +411,10 @@ function ResizeWindow( div, wi, he, mode, depth )
 	if( l + wi > maxWidth + skewx + margins.left )
 	{
 		wi = maxWidth + skewx - l + margins.left;
-		console.log( '6w) wi/he ' + wi + 'x' + he );
 	}
 	if( t + he > maxHeight + margins.top )
 	{
 		he = maxHeight - t + margins.top;
-		console.log( '6h) wi/he ' + wi + 'x' + he );
 	}
 	// Done limits
 	
@@ -446,8 +437,6 @@ function ResizeWindow( div, wi, he, mode, depth )
 	else if( wi >= fmaxw ) wi = fmaxw;
 	if( he    < fminh ) he = fminh;
 	else if( he >= fmaxh ) he = fmaxh;
-
-    console.log( '7) constrain wi/he ' + wi + 'x' + he );
 
 	// Absolute minimum windows
 	if( wi < 160 ) wi = 160;
