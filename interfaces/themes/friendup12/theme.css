@@ -295,6 +295,8 @@ html body
 	color: #333333;
 	height: 100vh;
 	width: 100vw;
+	max-height: 100vh;
+	max-width: 100vh;
 	-webkit-font-smoothing: antialiased;
 }
 
