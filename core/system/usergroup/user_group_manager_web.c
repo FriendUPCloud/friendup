@@ -2269,7 +2269,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 							FBOOL exist = UGMUserToGroupISConnectedByUIDDB( l->sl_UGM, groupID, rmEntry->i_Data );
 							if( exist == TRUE )
 							{
-								UGMRemoveUserFromGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
+								UGMRemoveUserFromGroup( l->sl_UGM, groupID, rmEntry->i_Data );
 							}
 						
 							// remove drive from user from memory
@@ -2384,7 +2384,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 								FBOOL exist = UGMUserToGroupISConnectedByUIDDB( l->sl_UGM, groupID, rmEntry->i_Data );
 								if( exist == TRUE )
 								{
-									UGMRemoveUserFromGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
+									UGMRemoveUserFromGroup( l->sl_UGM, groupID, rmEntry->i_Data );
 								}
 							}
 						
