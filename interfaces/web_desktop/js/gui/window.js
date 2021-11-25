@@ -296,9 +296,9 @@ function ResizeWindow( div, wi, he, mode, depth )
 		// When getting width and height from flags, and not in borderless
 		// mode, check also borders around the content and add those to get
 		// the correct width and height
-		frameWidth = ele.rightbar.offsetWidth + ele.leftbar.offsetWidth;
+		/*frameWidth = ele.rightbar.offsetWidth + ele.leftbar.offsetWidth;
 		console.log( 'Checking frame ' + frameWidth + ' (' + ele.rightbar.offsetWidth + ', ' + ele.leftbar.offsetWidth + ')' );
-		console.log( ele.rightbar, ele.leftbar );
+		console.log( ele.rightbar, ele.leftbar );*/
 		if( !wi ) 
 		{
 			wi = parseInt( flags.width );
