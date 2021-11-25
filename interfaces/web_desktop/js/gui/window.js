@@ -426,6 +426,8 @@ function ResizeWindow( div, wi, he, mode, depth )
 	let skewx = div.windowObject.workspace * window.innerWidth;
 	if( !isWorkspaceScreen ) skewx = 0;
 	
+	console.log( '5-6) constrain wi/he ' + wi + 'x' + he );
+	
 	if( l + wi > maxWidth + skewx + margins.left )
 	{
 		wi = maxWidth + skewx - l + margins.left;
