@@ -307,7 +307,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 			}
 		}
 		frameHeight = ele.titleBar.offsetHeight;
-		console.log( 'What is the titlebar height? ' + frameHeight );
+		
 		// TODO: Bottom bar does not exist, remove it
 		/*if( isWorkspaceScreen )
 		{
