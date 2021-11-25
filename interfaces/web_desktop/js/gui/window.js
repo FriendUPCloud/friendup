@@ -260,6 +260,14 @@ function ResizeWindow( div, wi, he, mode, depth )
 	if( !mode ) mode = false;
 	
 	console.trace();
+	if( !wi || wi == 'undefined' || wi == undefined )
+	{
+	    wi = div.windowObject.getFlag( 'width' );
+	}
+	if( !he || he == 'undefined' || he == undefined )
+	{
+	    he = div.windowObject.getFlag( 'height' );
+	}
 	console.log( '2) wi/he ' + wi + 'x' + he );
 	
 	// Find window div
