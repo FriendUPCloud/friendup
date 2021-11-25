@@ -166,8 +166,8 @@ Screen = function ( flags, initObject )
 		ge( 'Screens' ).appendChild( div );
 		
 		// FIXME: Hack - this should be better calculated, and it's not resize friendly
-		var cnt = false;
-		var divs = div.getElementsByTagName( 'div' );
+		let cnt = false;
+		let divs = div.getElementsByTagName( 'div' );
 		for( var a = 0; a < divs.length; a++ )
 		{
 			if( divs[a].className == 'ScreenContent' )
@@ -183,7 +183,7 @@ Screen = function ( flags, initObject )
 		}
 		
 		// Screen size aware!
-		var self = this;
+		let self = this;
 		function resizeScreen()
 		{
 			let cnt = self.contentDiv;
