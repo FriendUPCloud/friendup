@@ -330,11 +330,15 @@ function ResizeWindow( div, wi, he, mode, depth )
 	let maximized = div.getAttribute( 'maximized' ) == 'true' || 
 		div.windowObject.flags.maximized;
 
+	console.log( '1) Early: ' + wi + 'x' + he );
+	
 	if ( !wi || wi == 'false' ) wi = div.content ? div.content.offsetWidth  : div.offsetWidth;
 	if ( !he || he == 'false' ) he = div.content ? div.content.offsetHeight : div.offsetHeight;
 
 	wi = parseInt( wi );
 	he = parseInt( he );
+
+    console.log( '2) After parse: ' + wi + 'x' + he );
 
 	let divs = div.getElementsByTagName ( 'div' );
 	let cnt  = false;
@@ -401,6 +405,8 @@ function ResizeWindow( div, wi, he, mode, depth )
 		he = maxHeight - t + margins.top;
 	// Done limits
 	
+	console.log( '3) Test: ' + wi + 'x' + he );
+	
 	// Flag constraints
 	let fminw = div.windowObject.flags['min-width']  ? div.windowObject.flags['min-width']  : 0;
 	let fminh = div.windowObject.flags['min-height'] ? div.windowObject.flags['min-height'] : 0;
@@ -422,6 +428,9 @@ function ResizeWindow( div, wi, he, mode, depth )
 	// Absolute minimum windows
 	if( wi < 160 ) wi = 160;
 	if( he < 60 ) he = 60;
+	
+	
+	console.log( '4) Setting the actual size: ' + wi + 'x' + he );
 	
 	// Set the width and height
 	div.style.width  = wi + 'px';
@@ -721,8 +730,6 @@ function ConstrainWindow( div, l, t, depth, caller )
 		div.style.maxHeight = maxHeight + 'px';
 		div.parentNode.style.maxHeight = maxHeight + 'px';
 	}
-	
-	console.log( 'Final dimensions: ' + maxWidth + 'x' + maxHeight );
 
 	let mt = margins.top;
 	let ml = margins.left; // min left
