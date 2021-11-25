@@ -39,11 +39,7 @@ Screen = function ( flags, initObject )
 	{
 		if( this.contentDiv )
 		{
-		    if( !this.initialized )
-		    {
-		        this.initialized = true;
-		        document.body.style.height = document.body.offsetHeight + 'px !important';
-		    }
+		    document.body.style.maxHeight = window.innerHeight + 'px';
 		    console.log( 'document.body: ' + document.body.offsetHeight );
 		    console.log( 'window: ' + window.innerHeight );
 		    console.log( 'Current content div height: ' + this.contentDiv.offsetHeight );
