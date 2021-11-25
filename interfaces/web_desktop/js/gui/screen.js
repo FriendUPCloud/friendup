@@ -37,8 +37,9 @@ Screen = function ( flags, initObject )
 	// Maximum height available for view windows
 	this.getMaxViewHeight = function()
 	{
-		if( this.div )
+		if( this.contentDiv )
 		{
+		    console.log( 'Current content div height: ' + this.contentDiv.offsetHeight );
 			return this.contentDiv.offsetHeight;
 		}
 		return 0;

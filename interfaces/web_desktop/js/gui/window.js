@@ -333,17 +333,16 @@ function ResizeWindow( div, wi, he, mode, depth )
 	let cl = document.body.classList.contains( 'Inside' );
 	
 	let maxVWidt, maxVHeig;
-	// TODO: *IMPORTANT* allow for variable sized screens later
-	/*if( Workspace.mode != 'vr' )
+	if( Workspace.mode != 'vr' )
 	{
 		maxVWidt = cl ? div.windowObject.flags.screen.getMaxViewWidth() : GetWindowWidth();
 		maxVHeig = cl ? div.windowObject.flags.screen.getMaxViewHeight() : GetWindowHeight();
 	}
 	else
-	{*/
+	{
 		maxVWidt = window.innerWidth;
 		maxVHeig = window.innerHeight;
-	//}
+	}
 
 	let maximized = div.getAttribute( 'maximized' ) == 'true' || 
 		div.windowObject.flags.maximized;
