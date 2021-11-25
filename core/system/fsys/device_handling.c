@@ -1498,7 +1498,16 @@ int UnMountFS( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *lo
 		}
 		
 		int errors = 0;
-		File *remdev = UserRemDeviceByName( usr, name, &errors );
+		File *remdev = NULL;
+		
+		if( IS_SESSION_ADMIN( loggedSession ) == TRUE )
+		{
+			
+		}
+		else
+		{
+			remdev = UserRemDeviceByName( usr, name, &errors );
+		}
 		
 		// release drive resources
 		
