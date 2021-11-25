@@ -1897,8 +1897,9 @@ function apiWrapper( event, force )
 						}
 					}
 					
-					var v = new View( msg.data );
-					var win = msg.parentViewId && app.windows ? app.windows[ msg.parentViewId ] : false;
+					console.log( '-1) From the app: ', msg.data );
+					let v = new View( msg.data );
+					let win = msg.parentViewId && app.windows ? app.windows[ msg.parentViewId ] : false;
 					if( win )
 					{
 						v.parentViewId = msg.parentViewId;
@@ -1917,7 +1918,7 @@ function apiWrapper( event, force )
 						// This is the external id
 						v.externViewId = viewId;
 						
-						var nmsg = {
+						let nmsg = {
 							applicationId: msg.applicationId,
 							viewId:        msg.id ? msg.id : viewId,
 							type:          'callback',
