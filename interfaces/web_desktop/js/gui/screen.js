@@ -228,12 +228,10 @@ Screen = function ( flags, initObject )
 					{
 						let rows = parseInt( self._flags['vrows'] );
 						if( rows <= 0 ) rows = 1;
-						cnt.style.minHeight = '100%';
 						cnt.style.height = '100%';
 					}
 					else
 					{
-						cnt.style.minHeight = '100%';
 						cnt.style.height = '100%';
 					}
 				}
