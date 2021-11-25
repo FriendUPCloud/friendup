@@ -195,6 +195,7 @@ function RefreshWindow( div, noresize )
 	{
 		if( d = RememberWindowDimensions( div ) )
 		{
+			console.log( 'Using memory: ' + d.width + 'x' + d.height );
 			ResizeWindow( div, d.width, d.height );
 		}
 		else
@@ -269,7 +270,6 @@ function ResizeWindow( div, wi, he, mode, depth )
 	// If it isn't found, escape!
 	if ( div == document.body ) return;
 	
-	console.trace();
 	console.log( '0) Starting to get width/height ' + wi + 'x' + he );
 	
 	let margins = GetViewDisplayMargins( div );
@@ -3628,6 +3628,7 @@ var View = function( args )
 				{
 					height = wp.height;
 					width = wp.width;
+					console.log( '[Memorize] What is it: ' + width + 'x' + height );
 					ResizeWindow( div, width, height );
 					windowResized = true;
 				}
@@ -3741,7 +3742,8 @@ var View = function( args )
 			{
 				width += FUI_WINDOW_MARGIN << 1;
 				height += parseInt( GetThemeInfo( 'ViewTitle' ).height ) + parseInt( GetThemeInfo( 'ViewBottom' ).height );
-			}					
+			}	
+			console.log( 'Not resized: ' + width + 'x' + height );				
 			ResizeWindow( div, width, height );
 		}
 		
@@ -5060,6 +5062,7 @@ var View = function( args )
 				if( viewdiv )
 				{
 					viewdiv.style.minWidth = value;
+					console.log( 'Setting min width.' );
 					ResizeWindow( viewdiv, ( flag == 'width' ? value : null ), ( flag == 'height' ? value : null ) );
 					RefreshWindow( viewdiv );
 				}
@@ -5069,6 +5072,7 @@ var View = function( args )
 				if( viewdiv )
 				{
 					viewdiv.style.minHeight = value;
+					console.log( 'Setting min height.' );
 					ResizeWindow( viewdiv, ( flag == 'width' ? value : null ), ( flag == 'height' ? value : null ) );
 					RefreshWindow( viewdiv );
 				}
