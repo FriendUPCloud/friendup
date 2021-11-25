@@ -308,8 +308,12 @@ function ResizeWindow( div, wi, he, mode, depth )
 			}
 		}
 		frameHeight = ele.titleBar.offsetHeight;
+		console.log( 'What is the titlebar height? ' + frameHeight );
 		if( isWorkspaceScreen )
+		{
 			frameHeight += ele.bottombar.offsetHeight;
+			console.log( 'And the bottombar: ' + frameHeight + ' (' + ele.bottombar.offsetHeight + ')' );
+		}
 		if( !he )
 		{
 			he = flags.height;
