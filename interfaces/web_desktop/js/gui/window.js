@@ -379,11 +379,14 @@ function ResizeWindow( div, wi, he, mode, depth )
 	{
 		wi = maxWidth;
 		he = maxHeight;
+		
+		console.log( '5a) wi/he ' + wi + 'x' + he );
 	}
 	// We will not go past max height
 	else
 	{
 		if( he > maxHeight ) he = maxHeight;
+		console.log( '5b) wi/he ' + wi + 'x' + he );
 	}
 	
 	// Make sure we don't go past screen limits
@@ -413,9 +416,15 @@ function ResizeWindow( div, wi, he, mode, depth )
 	if( !isWorkspaceScreen ) skewx = 0;
 	
 	if( l + wi > maxWidth + skewx + margins.left )
+	{
 		wi = maxWidth + skewx - l + margins.left;
+		console.log( '6w) wi/he ' + wi + 'x' + he );
+	}
 	if( t + he > maxHeight + margins.top )
+	{
 		he = maxHeight - t + margins.top;
+		console.log( '6h) wi/he ' + wi + 'x' + he );
+	}
 	// Done limits
 	
 	// Flag constraints
@@ -436,6 +445,8 @@ function ResizeWindow( div, wi, he, mode, depth )
 	if( he    < fminh ) he = fminh;
 	else if( he >= fmaxh ) he = fmaxh;
 
+    console.log( '7) constrain wi/he ' + wi + 'x' + he );
+
 	// Absolute minimum windows
 	if( wi < 160 ) wi = 160;
 	if( he < 60 ) he = 60;
@@ -444,7 +455,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 	div.style.width  = wi + 'px';
 	div.style.height = he + 'px';
 
-    console.log( '3) Suddenly it was this: ' + wi + 'x' + he );
+    console.log( '8) Suddenly it was this: ' + wi + 'x' + he );
 
 	div.marginHoriz = FUI_WINDOW_MARGIN;
 	div.marginVert  = 0;
