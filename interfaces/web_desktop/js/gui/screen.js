@@ -186,17 +186,17 @@ Screen = function ( flags, initObject )
 		var self = this;
 		function resizeScreen()
 		{
-			var cnt = self.contentDiv;
+			let cnt = self.contentDiv;
 			if( cnt )
 			{
 				// Resize view windows
-				for( var a in movableWindows )
+				for( let a in movableWindows )
 				{
-					var w = movableWindows[ a ].windowObject;
+					let w = movableWindows[ a ].windowObject;
 					
 					if( w.flags.maximized || w.flags.width == 'max' || ( movableWindows[ a ].zoom && movableWindows[ a ].zoom.mode == 'maximized' ) )
 					{
-						var v = w._window.parentNode;
+						let v = w._window.parentNode;
 						v.setAttribute( 'moving', 'moving' );
 						v.style.width = self.getMaxViewWidth() + 'px';
 						v.style.height = self.getMaxViewHeight() + 'px';
@@ -208,11 +208,11 @@ Screen = function ( flags, initObject )
 				// Mindful of columns!
 				if( typeof( self._flags['vcolumns'] ) != 'undefined' )
 				{
-					var columns = parseInt( self._flags['vcolumns'] );
+					let columns = parseInt( self._flags['vcolumns'] );
 					if( columns <= 0 ) columns = 1;
 					
 					// Set width with workaround.
-					var newWidth = GetWindowWidth() * columns;
+					let newWidth = GetWindowWidth() * columns;
 					cnt.style.width = newWidth + 'px';
 				}
 				else
@@ -221,17 +221,19 @@ Screen = function ( flags, initObject )
 				}
 				
 				// Mindful of rows!
-				var cntTop = parseInt( GetThemeInfo( 'ScreenTitle' ).height );
+				let cntTop = parseInt( GetThemeInfo( 'ScreenTitle' ).height );
 				if( !isNaN( cntTop ) )
 				{
 					if( typeof( self._flags['vrows'] ) != 'undefined' )
 					{
-						var rows = parseInt( self._flags['vrows'] );
+						let rows = parseInt( self._flags['vrows'] );
 						if( rows <= 0 ) rows = 1;
+						cnt.style.minHeight = '100%';
 						cnt.style.height = '100%';
 					}
 					else
 					{
+						cnt.style.minHeight = '100%';
 						cnt.style.height = '100%';
 					}
 				}
