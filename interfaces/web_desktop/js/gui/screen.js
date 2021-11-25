@@ -39,6 +39,8 @@ Screen = function ( flags, initObject )
 	{
 		if( this.contentDiv )
 		{
+		    console.log( 'document.body: ' + document.body.offsetHeight );
+		    console.log( 'window: ' + window.innerHeight );
 		    console.log( 'Current content div height: ' + this.contentDiv.offsetHeight );
 			return this.contentDiv.offsetHeight;
 		}
