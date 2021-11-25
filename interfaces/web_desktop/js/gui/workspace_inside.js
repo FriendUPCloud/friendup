@@ -3792,6 +3792,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
         						if( !isMobile && window.outerHeight > 480 && document.body.offsetHeight < 480 )
         						    return;
         						
+        						if( parseInt( GetThemeInfo( 'ScreenTitle' ).height ) <= 0 )
+        						    return;
+        						
 								// If we're in VR, just immediately go in, or when wallpaper loaded or when we waited 5 secs
 								if( Workspace.mode == 'vr' || Workspace.wallpaperLoaded || retries++ > 100 )
 								{
