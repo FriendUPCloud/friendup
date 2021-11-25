@@ -259,7 +259,6 @@ function ResizeWindow( div, wi, he, mode, depth )
 	else if( depth > 4 ) return;
 	if( !mode ) mode = false;
 	
-	console.trace();
 	if( !wi || wi == 'undefined' || wi == undefined )
 	{
 	    wi = div.windowObject.getFlag( 'width' );
@@ -268,6 +267,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 	{
 	    he = div.windowObject.getFlag( 'height' );
 	}
+	
 	console.log( '2) wi/he ' + wi + 'x' + he );
 	
 	// Find window div
@@ -341,11 +341,17 @@ function ResizeWindow( div, wi, he, mode, depth )
 	let maximized = div.getAttribute( 'maximized' ) == 'true' || 
 		div.windowObject.flags.maximized;
 
+    console.log( '3) wi/he ' + wi + 'x' + he );
+
 	if ( !wi || wi == 'false' ) wi = div.content ? div.content.offsetWidth  : div.offsetWidth;
 	if ( !he || he == 'false' ) he = div.content ? div.content.offsetHeight : div.offsetHeight;
 
+    console.log( '4) wi/he ' + wi + 'x' + he );
+
 	wi = parseInt( wi );
 	he = parseInt( he );
+
+    console.log( '5) wi/he ' + wi + 'x' + he );
 
 	let divs = div.getElementsByTagName ( 'div' );
 	let cnt  = false;
