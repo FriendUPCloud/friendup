@@ -269,6 +269,8 @@ function ResizeWindow( div, wi, he, mode, depth )
 	// If it isn't found, escape!
 	if ( div == document.body ) return;
 	
+	console.log( '0) Starting to get width/height ' + wi + 'x' + he );
+	
 	let margins = GetViewDisplayMargins( div );
 	
 	// Extra width height to calculate with
