@@ -1538,11 +1538,11 @@ function apiWrapper( event, force )
 				break;
 				// View ------------------------------------------------------------
 			case 'view':
-				var viewId = msg.viewId;
+				let viewId = msg.viewId;
 				if( msg.method && app.windows && app.windows[ msg.viewId ] )
 				{
-					var win = app.windows[ msg.viewId ];
-					var twin = app.windows[ msg.targetViewId ? msg.targetViewId : msg.viewId ];
+					let win = app.windows[ msg.viewId ];
+					let twin = app.windows[ msg.targetViewId ? msg.targetViewId : msg.viewId ];
 					switch( msg.method )
 					{
 						case 'cancelclose':
@@ -1554,13 +1554,13 @@ function apiWrapper( event, force )
 						case 'opencamera':
 							if( win )
 							{
-								var cbk = null;
+								let cbk = null;
 								if( msg.callback )
 								{
-									var cid = msg.callback;
+									let cid = msg.callback;
 									cbk = function( data )
 									{
-										var nmsg = {
+										let nmsg = {
 											command: 'callback',
 											callback: cid,
 											data: data
@@ -1580,10 +1580,10 @@ function apiWrapper( event, force )
 						case 'showbackbutton':
 							if( win )
 							{
-								var cbk = null;
+								let cbk = null;
 								if( msg.callback )
 								{
-									var cid = msg.callback;
+									let cid = msg.callback;
 									cbk = function( e )
 									{
 										if( win.viewId == msg.targetViewId )
@@ -1636,7 +1636,7 @@ function apiWrapper( event, force )
 						case 'close':
 							if( win )
 							{
-								var out = [];
+								let out = [];
 								for( let c in app.windows )
 								{
 									if( c != msg.viewId )
@@ -1660,18 +1660,18 @@ function apiWrapper( event, force )
 						case 'getWindowElement':
 							if( win )
 							{
-								var cb = false;
+								let cb = false;
 								msg.data = false;
 								msg.resp = 'fail';
 								
-								var elev = msg.destination ? app.windows[ msg.destination ] : app;
+								let elev = msg.destination ? app.windows[ msg.destination ] : app;
 								if( elev && elev.iframe ) elev = elev.iframe;
 								if( elev )
 								{
 									// TODO: Support this in security domains
 									if( win.applicationId == msg.applicationId )
 									{
-										var i = win.iframe;
+										let i = win.iframe;
 										if( !i ) i = win.content ? win.content.getElementsByTagName( 'iframe' )[0] : false;
 										if( i )
 										{
@@ -1679,7 +1679,7 @@ function apiWrapper( event, force )
 											{
 												try
 												{
-													var identifier = 'view_' + win._window.parentNode.id;
+													let identifier = 'view_' + win._window.parentNode.id;
 													if( !elev.contentWindow.Application.windowElements )
 													{
 														elev.contentWindow.Application.windowElements = {};
@@ -1721,12 +1721,12 @@ function apiWrapper( event, force )
 							if( win )
 							{
 								// Create a new callback dispatch here..
-								var cb = false;
+								let cb = false;
 								if( msg.callback )
 									cb = makeAppCallbackFunction( app, msg, event.source );
 
 								// Do the setting!
-								var domain = GetDomainFromConf( app.config, msg.applicationId );
+								let domain = GetDomainFromConf( app.config, msg.applicationId );
 								win.setContentIframed( msg.data, domain, msg, cb );
 								
 								// Remove callback here - it will be handled by setcontentiframed
@@ -1738,7 +1738,7 @@ function apiWrapper( event, force )
 							if( win )
 							{
 								// Remember callback
-								var cb = false;
+								let cb = false;
 								if( msg.callback )
 									cb = makeAppCallbackFunction( app, msg, event.source );
 
@@ -1776,7 +1776,7 @@ function apiWrapper( event, force )
 						case 'getContentById':
 							if( win )
 							{
-								var c = win.getContentById( msg.identifier, msg.flag );
+								let c = win.getContentById( msg.identifier, msg.flag );
 								if( c )
 								{
 									app.contentWindow.postMessage( JSON.stringify( {
@@ -1884,7 +1884,7 @@ function apiWrapper( event, force )
 						msg.data.screen = null;
 					}
 
-					var postTarget = app;
+					let postTarget = app;
 					
 					// Startup sequence apps need to be deactivated
 					if( app.startupsequence )
@@ -1933,7 +1933,7 @@ function apiWrapper( event, force )
 					// Call back to say the window was not correctly opened
 					else
 					{
-						var nmsg = {
+						let nmsg = {
 							applicationId: msg.applicationId,
 							viewId:        msg.id ? msg.id : viewId,
 							type:          'callback',
