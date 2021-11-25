@@ -677,8 +677,15 @@ function ConstrainWindow( div, l, t, depth, caller )
 	}
 	if( !sc ) sc = Workspace.screen;
 	
-	let screenMaxWidth = sc ? sc.getMaxViewWidth() : window.innerWidth;
-	let screenMaxHeight = sc ? sc.getMaxViewHeight() : window.innerHeight;
+	let screenMaxWidth = sc ? sc.getMaxViewWidth() : 0;
+	let screenMaxHeight = sc ? sc.getMaxViewHeight() : 0;
+	
+	// TODO: IMPORTANT Once we figure out how to make variable screen sizes, fix
+	// TODO: and remove this!
+	if( screenMaxWidth == 0 || screenMaxWidth < window.innerWidth )
+	    screenMaxWidth = window.innerWidth;
+	if( screenMaxHeight == 0 || screenMaxHeight < window.innerHeight )
+	    screenMaxHeight = window.innerHeight;
 	
 	console.log( 'Here is max dims: ' + screenMaxWidth + 'x' + screenMaxHeight );
 	console.log( 'Here is phys: ' + window.innerWidth + 'x' + window.innerHeight );
