@@ -2231,6 +2231,9 @@ var View = function( args )
 		// This needs to be set immediately!
 		self.parseFlags( flags, filter );
 		
+		console.log( 'IN THE START' );
+		console.log( width + 'x' + height, flags );
+		
 		let app = false;
 		if( window._getAppByAppId )
 		{
