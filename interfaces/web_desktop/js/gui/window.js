@@ -259,6 +259,9 @@ function ResizeWindow( div, wi, he, mode, depth )
 	else if( depth > 4 ) return;
 	if( !mode ) mode = false;
 	
+	console.trace();
+	console.log( '2) wi/he ' + wi + 'x' + he );
+	
 	// Find window div
 	if ( !div.content )
 	{
