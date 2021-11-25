@@ -2166,8 +2166,6 @@ var View = function( args )
 		}
 	}
 	
-	console.log( '1) Here are the args: ', args );
-	
 	// Start off
 	if( !args )
 		args = {};
