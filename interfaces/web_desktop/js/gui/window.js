@@ -438,6 +438,8 @@ function ResizeWindow( div, wi, he, mode, depth )
 	div.style.width  = wi + 'px';
 	div.style.height = he + 'px';
 
+    console.log( '3) Suddenly it was this: ' + wi + 'x' + he );
+
 	div.marginHoriz = FUI_WINDOW_MARGIN;
 	div.marginVert  = 0;
 
