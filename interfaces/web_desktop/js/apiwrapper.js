@@ -1950,6 +1950,10 @@ function apiWrapper( event, force )
 					{
 						//
 					}
+					
+					delete msg.data;
+					delete msg;
+					msg = null;
 				}
 				break;
 			// Native view ( mobile app / ios ) --------------------------------------------
