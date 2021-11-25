@@ -3738,12 +3738,14 @@ var View = function( args )
 		// Add the borders here
 		if( !windowResized )
 		{
+		    console.log( 'Not resized before changes: ' + width + 'x' + height );
 			if( !self.flags[ 'borderless' ] && GetThemeInfo( 'ViewTitle' ) )
 			{
 				width += FUI_WINDOW_MARGIN << 1;
 				height += parseInt( GetThemeInfo( 'ViewTitle' ).height ) + parseInt( GetThemeInfo( 'ViewBottom' ).height );
 			}	
-			console.log( 'Not resized: ' + width + 'x' + height );				
+			console.log( 'Not resized: ' + width + 'x' + height );		
+			console.log( 'Testing flags: ', self.flags );		
 			ResizeWindow( div, width, height );
 		}
 		
