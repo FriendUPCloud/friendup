@@ -27,11 +27,8 @@ Screen = function ( flags, initObject )
 	// Maximum width available for view windows
 	this.getMaxViewWidth = function()
 	{
-		return window.innerWidth;
-		
 		if( this.div )
 		{
-		    // TODO: Support variable size width
 			return this.div.offsetWidth;
 		}
 		return 0;
@@ -40,11 +37,8 @@ Screen = function ( flags, initObject )
 	// Maximum height available for view windows
 	this.getMaxViewHeight = function()
 	{
-	    return window.innerHeight;
-	    
 		if( this.div )
 		{
-			// TODO: Support variable size height
 			return this.contentDiv.offsetHeight;
 		}
 		return 0;
