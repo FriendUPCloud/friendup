@@ -434,6 +434,8 @@ function ResizeWindow( div, wi, he, mode, depth )
 	}
 	if( t + he > maxHeight + margins.top )
 	{
+	    console.log( 'he = ' + maxHeight + ' - ' + t + ' + ' + margins.top );
+	    console.log( 'he = maxHeight - t + margins.top' );
 		he = maxHeight - t + margins.top;
 	}
 	// Done limits
