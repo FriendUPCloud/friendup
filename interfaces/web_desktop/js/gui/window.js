@@ -2150,6 +2150,8 @@ var View = function( args )
 {
 	let self = this;
 	
+	console.log( 'START - OPEN VIEW', args );
+	
 	// Windows on own screen ignores the virtual workspaces
 	if( args.screen && args.screen != Workspace.screen )
 	{
