@@ -721,6 +721,8 @@ function ConstrainWindow( div, l, t, depth, caller )
 		div.style.maxHeight = maxHeight + 'px';
 		div.parentNode.style.maxHeight = maxHeight + 'px';
 	}
+	
+	console.log( 'Final dimensions: ' + maxWidth + 'x' + maxHeight );
 
 	let mt = margins.top;
 	let ml = margins.left; // min left
