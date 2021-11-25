@@ -5778,8 +5778,6 @@ var View = function( args )
 		args.resize = false;
 	}
 	
-	console.log( 'Creating with args: ', args );
-	
 	this.createDomElements( 'CREATE', args.title, args.width, args.height, args.id, args, args.applicationId );
 
 	if( !self._window || !self._window.parentNode ) return false;
