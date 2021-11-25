@@ -337,6 +337,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 	{
 		maxVWidt = cl ? div.windowObject.flags.screen.getMaxViewWidth() : GetWindowWidth();
 		maxVHeig = cl ? div.windowObject.flags.screen.getMaxViewHeight() : GetWindowHeight();
+		console.log( 'Max view dims: ' + maxVWidt + 'x' + maxVHeig );
 	}
 	else
 	{
