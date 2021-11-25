@@ -402,13 +402,11 @@ function ResizeWindow( div, wi, he, mode, depth )
 	
 	// Make sure we don't go past screen limits
 	let l = t = 0;
-	// We are not doing it this way if the offsetTop of the div is higher 
-	// than the innerheight of the physical window
-	if( div.parentNode && div.offsetTop < window.innerHeight )
+	if( div.parentNode )
 	{
 		l = div.offsetLeft;
 		t = div.offsetTop;
-		console.log( 'The top of the view is: ' + div.offsetTop );
+		console.log( 'The top of the view is: ' + t.div.offsetTop );
 	}
 	else
 	{

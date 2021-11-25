@@ -1897,7 +1897,6 @@ function apiWrapper( event, force )
 						}
 					}
 					
-					console.log( '-1) From the app: ', msg.data );
 					let v = new View( msg.data );
 					let win = msg.parentViewId && app.windows ? app.windows[ msg.parentViewId ] : false;
 					if( win )
