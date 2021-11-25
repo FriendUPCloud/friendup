@@ -3795,7 +3795,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								// If we're in VR, just immediately go in, or when wallpaper loaded or when we waited 5 secs
 								if( Workspace.mode == 'vr' || Workspace.wallpaperLoaded || retries++ > 100 )
 								{
-									clearInterval( Workspace.insideInterval );
+								    clearInterval( Workspace.insideInterval );
 									Workspace.insideInterval = null;
 								
 									// Set right classes

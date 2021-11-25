@@ -677,8 +677,8 @@ function ConstrainWindow( div, l, t, depth, caller )
 	}
 	if( !sc ) sc = Workspace.screen;
 	
-	let screenMaxWidth = sc ? sc.getMaxViewWidth() : document.body.offsetWidth;
-	let screenMaxHeight = sc ? sc.getMaxViewHeight() : document.body.offsetHeight;
+	let screenMaxWidth = sc ? sc.getMaxViewWidth() : window.innerWidth;
+	let screenMaxHeight = sc ? sc.getMaxViewHeight() : window.innerHeight;
 	
 	// If the view is inside another container (special case)
 	let specialNesting = div.content ? div : div.parentNode;
