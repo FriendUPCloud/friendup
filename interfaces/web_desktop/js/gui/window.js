@@ -5171,6 +5171,7 @@ var View = function( args )
 				break;
 			case 'windowInactive':
 			case 'windowActive':
+			    if( isMobile ) return false;
 				// Check window color
 				this.flags[ flag ] = value;
 				break;

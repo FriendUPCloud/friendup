@@ -42,7 +42,7 @@ if( strstr( $args->args->application, ':' ) )
 			$data->permissions = $perms;
 			$data->authid = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . $o->ID . $o->Name );
 			$o->Config = json_encode( $data );
-			//$o->AuthID = $data->authid; // TODO: Fix authid
+			$o->AuthID = $data->authid;
 			$o->Save();
 			
 			// Remount disk
@@ -51,9 +51,6 @@ if( strstr( $args->args->application, ':' ) )
 			{
 				$Logger->log( '[ActivateApplication] Refreshing drive permissions.' );
 				$d = new Door( $deviceName . ':' );
-				/*$t1 = $d->dosQuery( '/system.library/device/unmount?devname=' . $deviceName );
-				$t2 = $d->dosQuery( '/system.library/device/mount?devname=' . $deviceName );
-				$t3 = $d->dosQuery( '/system.library/device/refresh?devname=' . $deviceName );*/
 			}
 			else
 			{
