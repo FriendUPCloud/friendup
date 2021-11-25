@@ -268,8 +268,6 @@ function ResizeWindow( div, wi, he, mode, depth )
 	    he = div.windowObject.getFlag( 'height' );
 	}
 	
-	console.log( '2) wi/he ' + wi + 'x' + he );
-	
 	// Find window div
 	if ( !div.content )
 	{
@@ -296,6 +294,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 		// When getting width and height from flags, and not in borderless
 		// mode, check also borders around the content and add those to get
 		// the correct width and height
+		// TODO: leftbar and rightbar does not exist, remove it
 		/*frameWidth = ele.rightbar.offsetWidth + ele.leftbar.offsetWidth;
 		console.log( 'Checking frame ' + frameWidth + ' (' + ele.rightbar.offsetWidth + ', ' + ele.leftbar.offsetWidth + ')' );
 		console.log( ele.rightbar, ele.leftbar );*/
@@ -309,11 +308,12 @@ function ResizeWindow( div, wi, he, mode, depth )
 		}
 		frameHeight = ele.titleBar.offsetHeight;
 		console.log( 'What is the titlebar height? ' + frameHeight );
-		if( isWorkspaceScreen )
+		// TODO: Bottom bar does not exist, remove it
+		/*if( isWorkspaceScreen )
 		{
 			frameHeight += ele.bottombar.offsetHeight;
 			console.log( 'And the bottombar: ' + frameHeight + ' (' + ele.bottombar.offsetHeight + ')' );
-		}
+		}*/
 		if( !he )
 		{
 			he = flags.height;
@@ -324,10 +324,12 @@ function ResizeWindow( div, wi, he, mode, depth )
 		}
 		
 		// Window gauge
+		// TODO: Volume gauge does not exist, remove it
+		/*
 		if( div.windowObject.flags.volume && div.volumeGauge )
 		{
 			div.content.style.left = GetElementWidth( div.volumeGauge.parentNode ) + 'px';
-		}
+		}*/
 	}
 	
 	let cl = document.body.classList.contains( 'Inside' );
@@ -350,8 +352,6 @@ function ResizeWindow( div, wi, he, mode, depth )
 	if ( !wi || wi == 'false' ) wi = div.content ? div.content.offsetWidth  : div.offsetWidth;
 	if ( !he || he == 'false' ) he = div.content ? div.content.offsetHeight : div.offsetHeight;
 
-    console.log( '3) ' + wi + 'x' + he );
-
 	wi = parseInt( wi );
 	he = parseInt( he );
 
@@ -366,10 +366,6 @@ function ResizeWindow( div, wi, he, mode, depth )
 		}
 	}
 	
-	
-	console.log( '3b) ' + wi + 'x' + he );
-
-
 	// TODO: Let a central resize code handle this (this one?)
 	// Maximum dimensions
 	let pheight = div.parentNode ? div.parentNode.offsetHeight : GetWindowHeight();
@@ -379,13 +375,6 @@ function ResizeWindow( div, wi, he, mode, depth )
 	// Add margins
 	maxWidth -= margins.left + margins.right;
 	maxHeight -= margins.top + margins.bottom;
-	
-	console.log( '3c) Parent window', 
-	    div.parentWindow ? div.parentWindow.getWindowElement() : maxVWidt,
-	    div.parentWindow ? div.parentWindow.getWindowElement() : maxVHeig
-	);
-	
-	console.log( '4) wi/he ' + wi + 'x' + he + ' (' + maxWidth + 'x' + maxHeight + ')' );
 	
 	if( div.windowObject && maximized )
 	{
@@ -398,19 +387,15 @@ function ResizeWindow( div, wi, he, mode, depth )
 		if( he > maxHeight ) he = maxHeight;
 	}
 	
-	console.log( '5) wi/he ' + wi + 'x' + he );
-	
 	// Make sure we don't go past screen limits
 	let l = t = 0;
 	if( div.parentNode )
 	{
 		l = div.offsetLeft;
 		t = div.offsetTop;
-		console.log( 'The top of the view is: ' + div.offsetTop );
 	}
 	else
 	{
-	    console.log( 'We have no parent noo!' );
 		l = div.windowObject.flags.left;
 		t = div.windowObject.flags.top;
 		if( !l ) l = isWorkspaceScreen ? div.windowObject.workspace * window.innerWidth : 0;
@@ -428,16 +413,12 @@ function ResizeWindow( div, wi, he, mode, depth )
 	let skewx = div.windowObject.workspace * window.innerWidth;
 	if( !isWorkspaceScreen ) skewx = 0;
 	
-	console.log( '5-6) constrain wi/he ' + wi + 'x' + he );
-	
 	if( l + wi > maxWidth + skewx + margins.left )
 	{
 		wi = maxWidth + skewx - l + margins.left;
 	}
 	if( t + he > maxHeight + margins.top )
 	{
-	    console.log( 'he = ' + maxHeight + ' - ' + t + ' + ' + margins.top );
-	    console.log( 'he = maxHeight - t + margins.top' );
 		he = maxHeight - t + margins.top;
 	}
 	// Done limits
@@ -451,8 +432,6 @@ function ResizeWindow( div, wi, he, mode, depth )
 	fminh += frameHeight;
 
 	// Constrain
-	console.log( '6-7) ' + fminw + 'x ' + fminh + ' ' + frameWidth + 'x' + frameHeight + ' | constrain wi/he ' + wi + 'x' + he );
-	
 	if( fmaxh < fminh ) fmaxh = fminh;
 	if( fmaxw < fminw ) fmaxw = fminw;
 	if( fminh > fmaxh ) fminh = fmaxh;
@@ -469,8 +448,6 @@ function ResizeWindow( div, wi, he, mode, depth )
 	// Set the width and height
 	div.style.width  = wi + 'px';
 	div.style.height = he + 'px';
-
-    console.log( '8) Suddenly it was this: ' + wi + 'x' + he );
 
 	div.marginHoriz = FUI_WINDOW_MARGIN;
 	div.marginVert  = 0;
