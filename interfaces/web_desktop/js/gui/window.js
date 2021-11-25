@@ -375,6 +375,8 @@ function ResizeWindow( div, wi, he, mode, depth )
 	maxWidth -= margins.left + margins.right;
 	maxHeight -= margins.top + margins.bottom;
 	
+	console.log( '4) wi/he ' + wi + 'x' + he + ' (' + maxWidth + 'x' + maxHeight + ')' );
+	
 	if( div.windowObject && maximized )
 	{
 		wi = maxWidth;
@@ -385,6 +387,8 @@ function ResizeWindow( div, wi, he, mode, depth )
 	{
 		if( he > maxHeight ) he = maxHeight;
 	}
+	
+	console.log( '5) wi/he ' + wi + 'x' + he );
 	
 	// Make sure we don't go past screen limits
 	let l = t = 0;
