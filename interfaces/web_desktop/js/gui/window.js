@@ -375,6 +375,11 @@ function ResizeWindow( div, wi, he, mode, depth )
 	maxWidth -= margins.left + margins.right;
 	maxHeight -= margins.top + margins.bottom;
 	
+	console.log( 'Parent window', 
+	    div.parentWindow ? div.parentWindow.getWindowElement() : maxVWidt,
+	    div.parentWindow ? div.parentWindow.getWindowElement() : maxVHeig
+	);
+	
 	console.log( '4) wi/he ' + wi + 'x' + he + ' (' + maxWidth + 'x' + maxHeight + ')' );
 	
 	if( div.windowObject && maximized )
