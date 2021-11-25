@@ -436,6 +436,8 @@ function ResizeWindow( div, wi, he, mode, depth )
 	fminh += frameHeight;
 
 	// Constrain
+	console.log( '6-7) ' + fminw + 'x ' + fminh + ' ' + frameWidth + 'x' + frameHeight + ' | constrain wi/he ' + wi + 'x' + he );
+	
 	if( fmaxh < fminh ) fmaxh = fminh;
 	if( fmaxw < fminw ) fmaxw = fminw;
 	if( fminh > fmaxh ) fminh = fmaxh;
