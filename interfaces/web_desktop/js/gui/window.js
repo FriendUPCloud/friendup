@@ -195,7 +195,6 @@ function RefreshWindow( div, noresize )
 	{
 		if( d = RememberWindowDimensions( div ) )
 		{
-			console.log( 'Using memory: ' + d.width + 'x' + d.height );
 			ResizeWindow( div, d.width, d.height );
 		}
 		else
@@ -270,8 +269,6 @@ function ResizeWindow( div, wi, he, mode, depth )
 	// If it isn't found, escape!
 	if ( div == document.body ) return;
 	
-	console.log( '0) Starting to get width/height ' + wi + 'x' + he );
-	
 	let margins = GetViewDisplayMargins( div );
 	
 	// Extra width height to calculate with
@@ -333,15 +330,11 @@ function ResizeWindow( div, wi, he, mode, depth )
 	let maximized = div.getAttribute( 'maximized' ) == 'true' || 
 		div.windowObject.flags.maximized;
 
-	console.log( '1) Early: ' + wi + 'x' + he );
-	
 	if ( !wi || wi == 'false' ) wi = div.content ? div.content.offsetWidth  : div.offsetWidth;
 	if ( !he || he == 'false' ) he = div.content ? div.content.offsetHeight : div.offsetHeight;
 
 	wi = parseInt( wi );
 	he = parseInt( he );
-
-    console.log( '2) After parse: ' + wi + 'x' + he );
 
 	let divs = div.getElementsByTagName ( 'div' );
 	let cnt  = false;
@@ -408,8 +401,6 @@ function ResizeWindow( div, wi, he, mode, depth )
 		he = maxHeight - t + margins.top;
 	// Done limits
 	
-	console.log( '3) Test: ' + wi + 'x' + he );
-	
 	// Flag constraints
 	let fminw = div.windowObject.flags['min-width']  ? div.windowObject.flags['min-width']  : 0;
 	let fminh = div.windowObject.flags['min-height'] ? div.windowObject.flags['min-height'] : 0;
@@ -431,9 +422,6 @@ function ResizeWindow( div, wi, he, mode, depth )
 	// Absolute minimum windows
 	if( wi < 160 ) wi = 160;
 	if( he < 60 ) he = 60;
-	
-	
-	console.log( '4) Setting the actual size: ' + wi + 'x' + he );
 	
 	// Set the width and height
 	div.style.width  = wi + 'px';
@@ -2150,8 +2138,6 @@ var View = function( args )
 {
 	let self = this;
 	
-	console.log( 'START - OPEN VIEW', args );
-	
 	// Windows on own screen ignores the virtual workspaces
 	if( args.screen && args.screen != Workspace.screen )
 	{
@@ -2232,9 +2218,6 @@ var View = function( args )
 
 		// This needs to be set immediately!
 		self.parseFlags( flags, filter );
-		
-		console.log( 'IN THE START' );
-		console.log( width + 'x' + height, flags );
 		
 		let app = false;
 		if( window._getAppByAppId )
@@ -3633,7 +3616,6 @@ var View = function( args )
 				{
 					height = wp.height;
 					width = wp.width;
-					console.log( '[Memorize] What is it: ' + width + 'x' + height );
 					ResizeWindow( div, width, height );
 					windowResized = true;
 				}
@@ -3743,14 +3725,11 @@ var View = function( args )
 		// Add the borders here
 		if( !windowResized )
 		{
-		    console.log( 'Not resized before changes: ' + width + 'x' + height );
 			if( !self.flags[ 'borderless' ] && GetThemeInfo( 'ViewTitle' ) )
 			{
 				width += FUI_WINDOW_MARGIN << 1;
 				height += parseInt( GetThemeInfo( 'ViewTitle' ).height ) + parseInt( GetThemeInfo( 'ViewBottom' ).height );
-			}	
-			console.log( 'Not resized: ' + width + 'x' + height );		
-			console.log( 'Testing flags: ', self.flags );		
+			}					
 			ResizeWindow( div, width, height );
 		}
 		
@@ -5069,7 +5048,6 @@ var View = function( args )
 				if( viewdiv )
 				{
 					viewdiv.style.minWidth = value;
-					console.log( 'Setting min width.' );
 					ResizeWindow( viewdiv, ( flag == 'width' ? value : null ), ( flag == 'height' ? value : null ) );
 					RefreshWindow( viewdiv );
 				}
@@ -5079,7 +5057,6 @@ var View = function( args )
 				if( viewdiv )
 				{
 					viewdiv.style.minHeight = value;
-					console.log( 'Setting min height.' );
 					ResizeWindow( viewdiv, ( flag == 'width' ? value : null ), ( flag == 'height' ? value : null ) );
 					RefreshWindow( viewdiv );
 				}
