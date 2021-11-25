@@ -3116,6 +3116,8 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
 {
 	pointer-events: none;
 	visibility: hidden;
+	max-height: 1px;
+	max-width: 1px;
 }
 
 /* Tasks overlay ------------------------------------------------------------ */
