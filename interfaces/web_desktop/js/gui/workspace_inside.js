@@ -941,8 +941,8 @@ var WorkspaceInside = {
 				
 				setInterval( function()
 				{
-					console.log( 'The height of body: ' + document.body.offsetHeight );
-					console.log( 'The height of window: ' + window.innerHeight );
+					console.log( 'The height of screens: ' + Workspace.screen.div.offsetHeight );
+					console.log( 'The height of screen content: ' + Workspace.screen.contentDiv.offsetHeight );
 				}, 100 );
 				
 				let w = document.createElement( 'div' );
