@@ -1507,9 +1507,12 @@ int UnMountFS( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *lo
 		{
 			int error = 0;
 			
+			DEBUG("[UnMountFS] Getting group drive by group ID: %ld\n", userGroupID );
+			
 			UserGroup *ug = UGMGetGroupByID( l->sl_UGM, userGroupID );
 			if( ug != NULL )
 			{
+				DEBUG("[UnMountFS] Group found: %ld . Lets remove drive: %s\n", userGroupID, name );
 				remdev = UserGroupRemDeviceByName( ug, name, &error );
 			}
 		}
