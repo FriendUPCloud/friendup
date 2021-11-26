@@ -1004,8 +1004,12 @@ AND LOWER(f.Name) = LOWER('%s')",
 						// user is not in memory, we can remove his entries in DB only
 						if( locusr == NULL )
 						{
-							deviceUnmounted = TRUE;
-							mountError = 0;
+							// we want to remove group drive, so there is no need to get it from user
+							if( groupID <= 0 )
+							{
+								deviceUnmounted = TRUE;
+								mountError = 0;
+							}
 						}
 						else
 						{
