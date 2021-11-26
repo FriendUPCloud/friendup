@@ -22,6 +22,7 @@ Workspace = {
 	{
 		return false;
 	},
+	staticVersion: 'v1.2.8',
 	icons: [],
 	menuMode: 'pear', // 'miga', 'fensters' (alternatives) -> other menu behaviours
 	mode: 'default',

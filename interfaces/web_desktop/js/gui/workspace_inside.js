@@ -3846,15 +3846,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									// New version of Friend?
 									if( Workspace.loginUsername != 'go' )
 									{
-										if( !Workspace.friendVersion )
+										if( !Workspace.friendVersion || Workspace.friendVersion != Workspace.staticVersion )
 										{
 											Workspace.upgradeWorkspaceSettings( function(){
 												setTimeout( function()
 												{
 													let n = Notify( 
 														{ 
-															title: 'Your Workspace has been upgraded', 
-															text: 'We have updated your settings to match the default profile of the latest update of Friend. This only happens on each major upgrade of the Friend Workspace.', 
+															title: 'Workspace was upgraded', 
+															text: 'Your Workspace and settings were upgraded to ' + Workspace.staticVersion + '.', 
 															sticky: true
 														}, 
 														false, 

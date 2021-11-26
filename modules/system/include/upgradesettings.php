@@ -6,11 +6,14 @@ $s->Type = 'system';
 $s->Key = 'friendversion';
 if( $s->load() )
 {
-	die( 'ok<!--separate-->{"response":"2","message":"Already at current version."}' );
+	if( $s->Data == FRIEND_VERSION )
+	{
+		die( 'ok<!--separate-->{"response":"2","message":"Already at current version."}' );
+	}
 }
 
-// We need to upgrade - NOW version 1.2rc1
-$s->Data = 'v1.2rc1';
+// We need to upgrade
+$s->Data = FRIEND_VERSION;
 $s->save();
 if( $s->ID > 0 )
 {
