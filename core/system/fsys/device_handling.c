@@ -1470,6 +1470,9 @@ int UnMountFS( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *lo
 				case FSys_Mount_Type:
 					type = ( char *)ltl->ti_Data;
 					break;
+				case FSys_Mount_UserGroupID:
+					userGroupID = (FQUAD)ltl->ti_Data;
+					break;
 			}
 		
 			ltl++;
@@ -1500,9 +1503,15 @@ int UnMountFS( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *lo
 		int errors = 0;
 		File *remdev = NULL;
 		
-		if( IS_SESSION_ADMIN( loggedSession ) == TRUE )
+		if( IS_SESSION_ADMIN( loggedSession ) == TRUE && userGroupID > 0 )
 		{
+			int error = 0;
 			
+			UserGroup *ug = UGMGetGroupByID( l->sl_UGM, userGroupID );
+			if( ug != NULL )
+			{
+				remdev = UserGroupRemDeviceByName( ug, name, &error );
+			}
 		}
 		else
 		{

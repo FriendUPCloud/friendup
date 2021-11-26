@@ -863,6 +863,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param devname - (required) device name which system will try unmount.
+	* @param groupid - id of group to which drive belong
 	* @return { Response: Successfully unmounted } when success, otherwise error code
 	*/
 	/// @endcond
@@ -871,6 +872,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 		char *devname = NULL;
 		int mountError = 0;
 		FULONG userID = 0;
+		FQUAD groupID = 0;
 
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( DEFAULT_CONTENT_TYPE ) },
@@ -903,6 +905,13 @@ AND LOWER(f.Name) = LOWER('%s')",
 		else
 		{
 			userID = loggedSession->us_UserID;
+		}
+		
+		el = HttpGetPOSTParameter( request, "groupid" );
+		if( el != NULL )
+		{
+			char *next;
+			groupID = (FLONG)strtol(( char *)el->hme_Data, &next, 0);
 		}
 		
 		el = HttpGetPOSTParameter( request, "devname" );
@@ -1041,8 +1050,41 @@ AND LOWER(f.Name) = LOWER('%s')",
 					DEBUG("[DeviceMWebRequest] ldevname: %s\n", ldevname );
 				
 					// check also device attached to groups
-					if( ldevname == NULL )
+					if( ldevname == NULL && groupID > 0 )
 					{
+						UserGroup *ug = UGMGetGroupByID( l->sl_UGM, groupID );
+						if( ug != NULL )
+						{
+							File *f = NULL;
+							LIST_FOR_EACH( ug->ug_MountedDevs, f, File * )
+							{
+								FBOOL owner = FALSE;
+								if( f->f_User != NULL )
+								{
+									User *u = (User *)f->f_User;
+									if( u->u_ID == activeUser->u_ID )
+									{
+										owner = TRUE;
+									}
+								}
+								
+								if( IS_SESSION_ADMIN( loggedSession ) == TRUE )
+								{
+									owner = TRUE;
+								}
+							
+								if( owner == TRUE && strcmp( devname, f->f_Name ) == 0 )
+								{
+									mountError = 0;
+									f->f_Mounted = FALSE;
+									fid = f->f_ID; // Need the ID too!
+									type = ( char *) f->f_FSysName;//   f->f_Type; // Copy the type, we need it
+									ldevname = f->f_Name;
+								}
+							}
+						}
+						
+						/*
 						UserGroupLink *ugl = activeUser->u_UserGroupLinks;
 						while( ugl != NULL )
 						{
@@ -1073,14 +1115,15 @@ AND LOWER(f.Name) = LOWER('%s')",
 								}
 							}
 							ugl = (UserGroupLink *)ugl->node.mln_Succ;
-						}
+						}*/
 					}
 				
 					struct TagItem tags[] = {
-						{FSys_Mount_ID, (FULONG)fid },
-						{FSys_Mount_Name, (FULONG)devname },
-						{FSys_Mount_Type, (FULONG)type },
-						{TAG_DONE, TAG_DONE }
+						{ FSys_Mount_ID, (FULONG)fid },
+						{ FSys_Mount_Name, (FULONG)devname },
+						{ FSys_Mount_Type, (FULONG)type },
+						{ FSys_Mount_UserGroupID, (FULONG)groupID },
+						{ TAG_DONE, TAG_DONE }
 					};
 					DEBUG("[DeviceMWebRequest] call UnMountFS\n");
 				
@@ -1103,7 +1146,22 @@ AND LOWER(f.Name) = LOWER('%s')",
 					SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 					if( sqllib != NULL )
 					{
-						sqllib->SNPrintF( sqllib,  temptext, sizeof(temptext),"\
+						if( IS_SESSION_ADMIN( loggedSession ) == TRUE && groupID > 0 )
+						{
+							snprintf( temptext, sizeof(temptext),"\
+UPDATE `Filesystem` f SET f.Mounted = '0' \
+WHERE \
+( \
+`UserID` = '%ld' OR \
+f.GroupID = '%ld' \
+) \
+AND LOWER(f.Name) = LOWER('%s')", 
+							userID, groupID, devname 
+							);
+						}
+						else
+						{
+							snprintf( temptext, sizeof(temptext),"\
 UPDATE `Filesystem` f SET f.Mounted = '0' \
 WHERE \
 ( \
@@ -1117,7 +1175,8 @@ ug.UserID = '%ld' \
 ) \
 AND LOWER(f.Name) = LOWER('%s')", 
 							userID, userID, devname 
-						);
+							);
+						}
 						
 						Log( FLOG_INFO, "Device was unmounted with success: %s!\n", devname );
 						

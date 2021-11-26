@@ -235,9 +235,8 @@ File *UserGroupRemDeviceByName( UserGroup *ugrlist, const char *name, int *error
 					*error = FSys_Error_OpsInProgress;
 					return remdev;
 				}
-			
-				ugrlist = (UserGroup *)ugrlist->node.mln_Succ;
 			}
+			ugrlist = (UserGroup *)ugrlist->node.mln_Succ;
 		}
 	}
 	else
