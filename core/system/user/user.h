@@ -181,6 +181,7 @@ typedef struct User
 	char						*u_Timezone;					// timezone
 	int							u_InUse;						// usage counter
 	FBOOL						u_ChangeState;					// if user session list is in change state
+	FBOOL						u_MountDriveInProgress;			// if something is trying to mount device on user
 } User;
 
 //

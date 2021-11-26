@@ -684,6 +684,23 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 			return FSys_Error_UserNotLoggedIn;
 		}
 		
+		// check if something is trying to mount drive on user
+		
+		while( TRUE )
+		{
+			if( usr->u_MountDriveInProgress == FALSE )
+			{
+				break;
+			}
+			usleep( 5000 );
+			if( error ++ > 10 )
+			{
+				break;
+			}// using variable which exist
+		}
+		usr->u_MountDriveInProgress = TRUE;
+		error = 0;
+		
 		USER_LOCK( usr );
 		
 		Log( FLOG_DEBUG, "Mount device\n");
@@ -787,6 +804,7 @@ AND f.Name = '%s'",
 						l->sl_Error = FSys_Error_SelectFail;
 						l->LibrarySQLDrop( l, sqllib );
 						
+						usr->u_MountDriveInProgress = FALSE;
 						USER_UNLOCK( usr );
 						
 						return FSys_Error_SelectFail;
@@ -800,6 +818,7 @@ AND f.Name = '%s'",
 					l->sl_Error = FSys_Error_SelectFail;
 					l->LibrarySQLDrop( l, sqllib );
 					
+					usr->u_MountDriveInProgress = FALSE;
 					USER_UNLOCK( usr );
 				
 					return FSys_Error_SelectFail;
@@ -1221,6 +1240,7 @@ AND f.Name = '%s'",
 		DEBUG("[MountFS] %s - Mount device END\n", usr->u_Name );
 	}
 	
+	usr->u_MountDriveInProgress = FALSE;
 	USER_UNLOCK( usr );
 	
 	if( type != NULL ) FFree( type );
@@ -1243,6 +1263,7 @@ merror:
 		*mfile = NULL;	// do not return anything
 	}
 	
+	usr->u_MountDriveInProgress = FALSE;
 	USER_UNLOCK( usr );
 
 	if( type != NULL ) FFree( type );
