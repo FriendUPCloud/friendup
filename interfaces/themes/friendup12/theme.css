@@ -408,6 +408,12 @@ html body[mobile=mobile]:not(.HasMenu).ViewMaximized #Screens > div.Screen > .Sc
 	min-height: calc(100vh - 40px) !important;
 }
 
+html .Screen > .ScreenContent
+{
+	perspective: 1000px;
+	perspective-origin: center;
+}
+
 html body .Screen > .TitleBar.Busy:after 
 {
     /*clip-path: ellipse(9px 9px at 10px 10px);
