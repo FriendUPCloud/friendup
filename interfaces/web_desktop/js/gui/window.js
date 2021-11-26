@@ -6038,6 +6038,7 @@ function _kresize( e, depth )
 	// Resize screens
 	if( Workspace && Workspace.screenList )
 	{
+		console.log( 'Everything resized: ' + this.contentDivHeight );
 		for( let a = 0; a < Workspace.screenList.length; a++ )
 		{
 			Workspace.screenList[a].resized = true;

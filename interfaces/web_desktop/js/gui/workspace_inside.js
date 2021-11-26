@@ -939,12 +939,6 @@ var WorkspaceInside = {
 				document.body.classList.remove( 'Login' );
 				Workspace.showWelcome = true;
 				
-				setInterval( function()
-				{
-					console.log( 'The height of screens: ' + Workspace.screen.div.offsetHeight );
-					console.log( 'The height of screen content: ' + Workspace.screen.contentDiv.offsetHeight );
-				}, 100 );
-				
 				let w = document.createElement( 'div' );
 				w.className = 'WelcomeGraphic';
 				document.body.appendChild( w );
