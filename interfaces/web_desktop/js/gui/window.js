@@ -647,7 +647,7 @@ function GetViewDisplayMargins( div )
 	if( Workspace.mainDock )
 	{
 		let dockDom = Workspace.mainDock.dom;
-		if( !parseInt( docDom.style.height ) ) return margins;
+		if( !parseInt( dockDom.style.height ) ) return margins;
 		
 		if( dockDom.classList.contains( 'Top' ) )
 			dockPosition = 'Top';
