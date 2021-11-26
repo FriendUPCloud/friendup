@@ -399,8 +399,8 @@ function ResizeWindow( div, wi, he, mode, depth )
 	let l = t = 0;
 	if( div.parentNode )
 	{
-		l = div.offsetLeft;
-		t = div.offsetTop;
+		l = parseInt( div.style.left );
+		t = parseInt( div.style.top );
 	}
 	else
 	{
@@ -417,8 +417,6 @@ function ResizeWindow( div, wi, he, mode, depth )
 		t = 0;
 	}
 	
-	console.log( '1) Here is wihe: ' + wi + 'x' + he );
-	
 	// Skew for calculating beyond workspace 1
 	let skewx = div.windowObject.workspace * window.innerWidth;
 	if( !isWorkspaceScreen ) skewx = 0;
@@ -429,9 +427,6 @@ function ResizeWindow( div, wi, he, mode, depth )
 	}
 	if( t + he > maxHeight + margins.top )
 	{
-		console.log( 'Check raw top: ' + div.offsetTop + ' ' + div.style.top );
-		console.log( div );
-		console.log( 'Check top: ' + maxHeight + ' -> ' + t + ' -> ' + margins.top );
 		he = maxHeight - t + margins.top;
 	}
 	// Done limits
