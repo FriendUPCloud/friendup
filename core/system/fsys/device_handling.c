@@ -1623,6 +1623,12 @@ ug.UserID = '%ld' \
 	
 		DEBUG("[UnMountFS] UnMount device END\n");
 		FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
+		
+		if( userGroupID > 0 )
+		{
+			UMNotifyAllUsersInGroup( l->sl_UM, userGroupID, 0 );
+		}
+		
 		return result;
 	}
 	FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
