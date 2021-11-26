@@ -647,6 +647,8 @@ function GetViewDisplayMargins( div )
 	if( Workspace.mainDock )
 	{
 		let dockDom = Workspace.mainDock.dom;
+		if( !parseInt( docDom.style.height ) ) return margins;
+		
 		if( dockDom.classList.contains( 'Top' ) )
 			dockPosition = 'Top';
 		else if( dockDom.classList.contains( 'Left' ) )
@@ -659,22 +661,22 @@ function GetViewDisplayMargins( div )
 		switch( dockPosition )
 		{
 			case 'Top':
-				margins.top += dockDom.offsetHeight;
+				margins.top += parseInt( dockDom.style.height );
 				break;
 			case 'Left':
-				margins.left += dockDom.offsetWidth;
+				margins.left += parseInt( dockDom.style.width );
 				break;
 			case 'Right':
-				margins.right += dockDom.offsetWidth;
+				margins.right += parseInt( dockDom.style.width );
 				break;
 			case 'Bottom':
-				margins.bottom += dockDom.offsetHeight;
+				margins.bottom += parseInt( dockDom.style.height );
 				break;
 		}
 	}
 	
 	if( dockPosition != 'Bottom' && ge( 'Tray' ) && ge( 'Taskbar' ).offsetHeight )
-		margins.bottom += ge( 'Tray' ).offsetHeight;
+		margins.bottom += parseInt( ge( 'Tray' ).style.height );
 	
 	let inf = GetThemeInfo( 'ScreenContentMargins' );
 	if( inf && inf.top )
