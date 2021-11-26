@@ -87,6 +87,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 	
 	// Create dom node
 	this.dom = document.createElement ( 'div' );
+	this.dom.style.width = '10px';
+	this.dom.style.height = '10px';
 	this.dom.className = 'Desklet Initializing';
 	this.dom.id = this.makeUniqueId ();
 	this.desktop.appendChild ( this.dom );
