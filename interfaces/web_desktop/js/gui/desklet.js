@@ -537,7 +537,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			}
 			this.dom.style.width = marginWidth + Math.floor( cols * ( itemWidth + marginWidth ) ) + 'px';
 			this.dom.style.height = this.pixelHeight + 'px';
-			console.log( 'Vert: ' + this.pixelHeight );
+			console.log( 'Vert: ' + this.pixelHeight + ' ' + sh + ' ' + ( itemHeight + marginHeight ) );
 		}
 		else
 		{
