@@ -944,6 +944,9 @@ var WorkspaceInside = {
 				// Animate
 				setTimeout( function(){ 
 					w.classList.add( 'Animate' ); 
+					setTimeout( function(){
+						Workspace.initWorkspaces( cbk, 1 );
+					}, 750 );
 					// Remove animate after 2 secs
 					setTimeout( function(){ 
 						w.classList.add( 'Done' );
@@ -952,7 +955,6 @@ var WorkspaceInside = {
 							// We have faded, now remove element and init workspaces
 							document.body.removeChild( w );
 							Workspace.showWelcome = false;
-							Workspace.initWorkspaces( cbk, 1 );
 						}, 750 );
 					}, 2000 );
 				}, 50 );
