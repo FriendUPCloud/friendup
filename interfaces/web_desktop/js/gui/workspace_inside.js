@@ -347,6 +347,7 @@ var WorkspaceInside = {
 			Workspace.wallpaperLoaded = true;
 			
 			// Tell app we can show ourselves!
+			document.body.classList.add( 'Revealed' );
 			if( window.friendApp && window.friendApp.reveal )
 			{
 				friendApp.reveal();
@@ -2597,8 +2598,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						i.onload = function()
 						{
 							// Tell app we can show ourselves!
+							document.body.classList.add( 'Revealed' );
 							friendApp.reveal();
 						}
+					}
+					else
+					{
+						document.body.classList.add( 'Revealed' );
 					}
 				}
 				if( callback && typeof( callback ) == 'function' ) callback();
@@ -4550,6 +4556,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		let t = this; // Reference to workspace
 		
 		// Just in case
+		document.body.classList.add( 'Revealed' );
 		if( window.friendApp )
 		{
 			window.friendApp.reveal();
@@ -10646,6 +10653,7 @@ function ShowEula( accept, cbk )
 		</div>\
 	</div>';
 				// Tell app we can show ourselves!
+				document.body.classList.add( 'Revealed' );
 				if( window.friendApp && window.friendApp.reveal )
 				{
 					friendApp.reveal();
@@ -10662,6 +10670,7 @@ function ShowEula( accept, cbk )
 		{
 			d.innerHTML = data;
 			// Tell app we can show ourselves!
+			document.body.classList.add( 'Revealed' );
 			if( window.friendApp && window.friendApp.reveal )
 			{
 				friendApp.reveal();

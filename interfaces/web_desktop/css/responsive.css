@@ -3,6 +3,17 @@ html, body
 	position: relative;
 }
 
+document.body #Screens
+{
+	transition: opacity 0.25s;
+	opacity: 0;
+}
+
+document.body.Revealed #Screens
+{
+	opacity: 1;
+}
+
 /* Preload images */
 body.Inside > img
 {
