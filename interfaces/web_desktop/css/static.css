@@ -11,7 +11,7 @@ body > .WelcomeGraphic
 	opacity: 0;
 	background-image: url(/graphics/welcome.jpg);
 	background-size: auto;
-	background-color: #011D40;
+	background-color: #023368;
 	background-repeat: no-repeat;
 	background-position: center 54%;
 	z-index: 2147483647;
