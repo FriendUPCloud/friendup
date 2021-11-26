@@ -401,6 +401,8 @@ function ResizeWindow( div, wi, he, mode, depth )
 	{
 		l = parseInt( div.style.left );
 		t = parseInt( div.style.top );
+		if( isNaN( l ) ) l = 0;
+		if( isNaN( t ) ) t = 0;
 		console.log( 'Style top: ' + t + ' (' + div.style.top + ')' );
 	}
 	else
