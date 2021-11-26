@@ -417,6 +417,8 @@ function ResizeWindow( div, wi, he, mode, depth )
 		t = 0;
 	}
 	
+	console.log( '1) Here is wihe: ' + wi + 'x' + he );
+	
 	// Skew for calculating beyond workspace 1
 	let skewx = div.windowObject.workspace * window.innerWidth;
 	if( !isWorkspaceScreen ) skewx = 0;
@@ -430,6 +432,8 @@ function ResizeWindow( div, wi, he, mode, depth )
 		he = maxHeight - t + margins.top;
 	}
 	// Done limits
+	
+	console.log( '2) Here is wihe: ' + wi + 'x' + he );
 	
 	// Flag constraints
 	let fminw = div.windowObject.flags['min-width']  ? div.windowObject.flags['min-width']  : 0;
@@ -448,6 +452,8 @@ function ResizeWindow( div, wi, he, mode, depth )
 	else if( wi >= fmaxw ) wi = fmaxw;
 	if( he    < fminh ) he = fminh;
 	else if( he >= fmaxh ) he = fmaxh;
+
+	console.log( '3) Here is wihe: ' + wi + 'x' + he );
 
 	// Absolute minimum windows
 	if( wi < 160 ) wi = 160;
