@@ -41,7 +41,7 @@
 		</script>
 		<meta name="apple-mobile-web-app-capable" content="yes">
 	</head>
-	<body onload="Workspace.preinit()" class="Loading" onunload="if( window.Workspace ) Workspace.doLeave();" onbeforeunload="if( window.Workspace ) Workspace.leave(); if( window.doLogout ) window.doLogout();">
+	<body onload="if( window.Workspace ) Workspace.preinit(); else document.location.reload();" class="Loading" onunload="if( window.Workspace ) Workspace.doLeave();" onbeforeunload="if( window.Workspace ) Workspace.leave(); if( window.doLogout ) window.doLogout();">
 		<div id="Screens"></div>
 		<div id="Tasks"></div>
 		<div id="TaskSwitcher"></div>

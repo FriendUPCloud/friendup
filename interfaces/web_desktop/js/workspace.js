@@ -113,6 +113,8 @@ Workspace = {
 	{
 		if( this.postInitialized ) return;
 		
+		let self = this;
+		
 		// Everything must be ready
 		if( typeof( ge ) == 'undefined' )
 		{
@@ -123,7 +125,7 @@ Workspace = {
 		}
 
 		// We passed!
-		this.postInitialized = true;
+		self.postInitialized = true;
 
 		// Do the init!
 		window.addEventListener( 'beforeunload', Workspace.leave, true );
@@ -132,14 +134,14 @@ Workspace = {
 		InitWorkspaceEvents();
 		InitGuibaseEvents();
 
-		var dapis = document.createElement( 'script' );
+		let dapis = document.createElement( 'script' );
 		dapis.src = '/system.library/module/?module=system&command=doorsupport&sessionid=' + this.sessionId;
 		document.getElementsByTagName( 'head' )[0].appendChild( dapis );
 
 		// Add event listeners
-		for( var a = 0; a < this.runLevels.length; a++ )
+		for( let a = 0; a < this.runLevels.length; a++ )
 		{
-			var listener = this.runLevels[a].listener;
+			let listener = this.runLevels[a].listener;
 
 			if ( !listener )
 				continue;
@@ -153,7 +155,7 @@ Workspace = {
 		this.baseUrl = document.location.href.split( 'index.html' )[0];
 
 		// Setup default Doors screen
-		var wbscreen = new Screen( {
+		let wbscreen = new Screen( {
 			title: 'Friend Workspace',
 			id:	'DoorsScreen',
 			extra: Workspace.fullName,
@@ -165,7 +167,7 @@ Workspace = {
 		this.screen = wbscreen;
 		this.screenDiv = wbscreen.div;
 		
-		var tray = document.createElement( 'div' );
+		let tray = document.createElement( 'div' );
 		tray.id = 'Tray';
 		this.screenDiv.appendChild( tray );
 
@@ -177,7 +179,7 @@ Workspace = {
 		// Key grabber
 		if( !ge( 'InputGrabber' ) )
 		{
-			var i = document.createElement( 'input' );
+			let i = document.createElement( 'input' );
 			i.type = 'text';
 			i.id = 'InputGrabber';
 			i.style.position = 'absolute';
@@ -186,11 +188,9 @@ Workspace = {
 			ge( 'DoorsScreen' ).appendChild( i );
 		}
 
-		this.initWorkspaces();
-
 		wbscreen.div.addEventListener( 'mousedown', function( e )
 		{
-			var wd = wbscreen.div.screenTitle.getElementsByClassName( 'Extra' )[0].widget;
+			let wd = wbscreen.div.screenTitle.getElementsByClassName( 'Extra' )[0].widget;
 			if( wd )
 			{
 				if( wd.shown )
@@ -213,7 +213,7 @@ Workspace = {
 		// In desktop mode, show the calendar
 		if( !window.isMobile )
 		{
-			var ex = wbscreen.div.screenTitle.getElementsByClassName( 'Extra' )[0];
+			let ex = wbscreen.div.screenTitle.getElementsByClassName( 'Extra' )[0];
 			Workspace.calendarClickEvent = function( e )
 			{
 				if( !ex.widget )
@@ -230,29 +230,29 @@ Workspace = {
 					ex.widget.dom.style.transition = 'height 0.25s';
 					ex.widget.showWidget = function()
 					{
-						var self = this;
+						let sself = this;
 						this.dom.style.height = '0px';
 						Workspace.refreshExtraWidgetContents();
 						CoverScreens();
 						ge( 'DoorsScreen' ).classList.add( 'HasWidget' );
 						setTimeout( function()
 						{
-							self.show();
-							self.raise();
+							sself.show();
+							sself.raise();
 							ExposeScreens();
 						}, 100 );
 					}
 					ex.widget.hideWidget = function()
 					{
-						var self = this;
+						let sself = this;
 						ge( 'DoorsScreen' ).classList.add( 'HidingCalendar' );
 						setTimeout( function()
 						{
 							ge( 'DoorsScreen' ).classList.remove( 'HasWidget' );
 							ge( 'DoorsScreen' ).classList.remove( 'HidingCalendar' );
-							self.shown = false;
-							self.hide();
-							self.lower();
+							sself.shown = false;
+							sself.hide();
+							sself.lower();
 							ExposeScreens();
 						}, 250 );
 					}
@@ -277,14 +277,14 @@ Workspace = {
 		// Setup clock
 		if( !isMobile )
 		{
-			var ex = ge( 'DoorsScreen' ).screenObject._titleBar;
+			let ex = ge( 'DoorsScreen' ).screenObject._titleBar;
 			ex = ex.getElementsByClassName( 'Extra' )[0];
 			function clock()
 			{
-				var d = new Date();
+				let d = new Date();
 				if( !ex.time )
 				{
-					var t = document.createElement( 'div' );
+					let t = document.createElement( 'div' );
 					t.className = 'Time';
 					ex.appendChild( t );
 					ex.time = t;
@@ -293,7 +293,7 @@ Workspace = {
 				{
 					if( !ex.offline )
 					{
-						var o = document.createElement( 'div' );
+						let o = document.createElement( 'div' );
 						o.className = 'Offline';
 						o.innerHTML = i18n( 'i18n_ws_disconnected' );
 						if( ex.time )
@@ -314,7 +314,7 @@ Workspace = {
 				}
 
 				// Set the clock
-				var e = '';
+				let e = '';
 				e +=    StrPad( d.getHours(), 2, '0' ) + ':' +
 						   StrPad( d.getMinutes(), 2, '0' ); /* + ':' +
 						   StrPad( d.getSeconds(), 2, '0' );*/
@@ -329,107 +329,132 @@ Workspace = {
 			this.clockInterval = setInterval( clock, 1000 );
 		}
 
-		// Recall wallpaper from settings
-		this.refreshUserSettings( function(){ 
-			// Refresh desktop for the first time
-			Workspace.refreshDesktop( false, true );
-		} );
-
-		// Create desktop
-		this.directoryView = new DirectoryView( wbscreen.contentDiv );
-
-		// Create default desklet
-		var mainDesklet = CreateDesklet( this.screenDiv, 64, 480, 'right' );
-
-		// Add desklet to dock
-		this.mainDock = mainDesklet;
-		if( !isMobile )
+		// Start the workspace session!
+		this.initializingWorkspaces = true;
+		this.initWorkspaces( function( returnValue )
 		{
-			this.mainDock.dom.oncontextmenu = function( e )
-			{
-				var tar = e.target ? e.target : e.srcElement;
-				if( tar.classList && tar.classList.contains( 'Task' ) )
-				{
-					return Workspace.showContextMenu( false, e );
-				}
+			// Recall wallpaper from settings
+			self.refreshUserSettings( function(){ 
+				// Refresh desktop for the first time
+				Workspace.refreshDesktop( false, true );
+			} );
 
-				var men = [
+			// Create desktop
+			self.directoryView = new DirectoryView( wbscreen.contentDiv );
+
+			// Create default desklet
+			let mainDesklet = CreateDesklet( self.screenDiv, 64, 480, 'right' );
+
+			// Add desklet to dock
+			self.mainDock = mainDesklet;
+			if( !isMobile )
+			{
+				self.mainDock.dom.oncontextmenu = function( e )
+				{
+					let tar = e.target ? e.target : e.srcElement;
+					if( tar.classList && tar.classList.contains( 'Task' ) )
 					{
-						name: i18n( 'i18n_edit_dock' ),
-						command: function()
-						{
-							ExecuteApplication( 'Dock' );
-						}
+						return Workspace.showContextMenu( false, e );
 					}
-				];
 
-				if( tar.classList && tar.classList.contains( 'Launcher' ) )
-				{
-					men.push( {
-						name: i18n( 'i18n_remove_from_dock' ),
-						command: function()
+					let men = [
 						{
-							Workspace.removeFromDock( tar.executable );
-						}
-					} );
-				}
-			
-				if( movableWindowCount > 0 )
-				{
-					men.push( {
-						name: i18n( 'i18n_minimize_all_windows' ),
-						command: function( e )
-						{
-							var t = GetTaskbarElement();
-							var lW = null;
-							for( var a = 0; a < t.childNodes.length; a++ )
+							name: i18n( 'i18n_edit_dock' ),
+							command: function()
 							{
-								if( t.childNodes[a].view && !t.childNodes[a].view.parentNode.getAttribute( 'minimized' ) )
-								{
-									t.childNodes[a].view.parentNode.setAttribute( 'minimized', 'minimized' );
-								}
+								ExecuteApplication( 'Dock' );
 							}
-							_DeactivateWindows();
 						}
-					} );
-					men.push( {
-						name: i18n( 'i18n_show_all_windows' ),
-						command: function( e )
-						{
-							var t = GetTaskbarElement();
-							for( var a = 0; a < t.childNodes.length; a++ )
-							{
-								if( t.childNodes[a].view && t.childNodes[a].view.parentNode.getAttribute( 'minimized' ) == 'minimized' )
-								{
-									t.childNodes[a].view.parentNode.removeAttribute( 'minimized' );
-								}
-							}
-							_ActivateWindow( t.childNodes[t.childNodes.length-1].view );
-						}
-					} );
-				}
+					];
 
-				Workspace.showContextMenu( men, e );
+					if( tar.classList && tar.classList.contains( 'Launcher' ) )
+					{
+						men.push( {
+							name: i18n( 'i18n_remove_from_dock' ),
+							command: function()
+							{
+								Workspace.removeFromDock( tar.executable );
+							}
+						} );
+					}
+				
+					if( movableWindowCount > 0 )
+					{
+						men.push( {
+							name: i18n( 'i18n_minimize_all_windows' ),
+							command: function( e )
+							{
+								let t = GetTaskbarElement();
+								let lW = null;
+								for( let a = 0; a < t.childNodes.length; a++ )
+								{
+									if( t.childNodes[a].view && !t.childNodes[a].view.parentNode.getAttribute( 'minimized' ) )
+									{
+										t.childNodes[a].view.parentNode.setAttribute( 'minimized', 'minimized' );
+									}
+								}
+								_DeactivateWindows();
+							}
+						} );
+						men.push( {
+							name: i18n( 'i18n_show_all_windows' ),
+							command: function( e )
+							{
+								let t = GetTaskbarElement();
+								for( let a = 0; a < t.childNodes.length; a++ )
+								{
+									if( t.childNodes[a].view && t.childNodes[a].view.parentNode.getAttribute( 'minimized' ) == 'minimized' )
+									{
+										t.childNodes[a].view.parentNode.removeAttribute( 'minimized' );
+									}
+								}
+								_ActivateWindow( t.childNodes[t.childNodes.length-1].view );
+							}
+						} );
+					}
+
+					Workspace.showContextMenu( men, e );
+				}
 			}
-		}
-		// For mobiles
-		else
-		{
-			this.mainDock.dom.oncontextmenu = function( e )
+			// For mobiles
+			else
 			{
-				var tar = e.target ? e.target : e.srcElement;
-				if( window.MobileContextMenu )
+				self.mainDock.dom.oncontextmenu = function( e )
 				{
-					MobileContextMenu.show( tar );
+					let tar = e.target ? e.target : e.srcElement;
+					if( window.MobileContextMenu )
+					{
+						MobileContextMenu.show( tar );
+					}
 				}
 			}
-		}
-		this.reloadDocks();
+			self.reloadDocks();
+		} );
 
 		// Init security subdomains
 		SubSubDomains.initSubSubDomains();
 		
 		// console.log( 'Test2: Done post init.' );
+	},
+	setLoading: function( isLoading )
+	{
+		if( isLoading )
+		{
+			document.body.classList.add( 'Login' );
+			document.body.classList.add( 'Loading' );
+			document.body.classList.remove( 'Inside' );
+			document.body.classList.remove( 'Loaded' );
+		}
+		else
+		{
+			if( !this.initializingWorkspaces )
+			{
+				document.body.classList.add( 'Inside' );
+				document.body.classList.add( 'Loaded' );
+				document.body.classList.remove( 'Login' );
+				document.body.classList.remove( 'Loading' );
+			}
+		}
 	},
 	// Just a stub - this isn't used anymore
 	rememberKeys: function() {
@@ -858,10 +883,10 @@ Workspace = {
 	{
 		// console.log( 'Test2: Init user workspace.' );
 		
-		var _this = Workspace;
+		let _this = Workspace;
 
 		// Once we are done
-		function setupWorkspaceData( json, cb )
+		function SetupWorkspaceData( json, cb )
 		{
 			// console.log( 'Test2: Set it up.', json );
 			
@@ -871,13 +896,10 @@ Workspace = {
 			_this.fullName  = json.fullname;
 			if( json.username ) _this.loginUsername = json.username;
 
-			// Relogin fix
-			document.body.classList.remove( 'Loading' );
-
 			// After a user has logged in we want to prepare the workspace for him.
 			
 			// Store user data in localstorage for later verification encrypted
-			var userdata = ApplicationStorage.load( { applicationName : 'Workspace' } );
+			let userdata = ApplicationStorage.load( { applicationName : 'Workspace' } );
 
 			if( userdata )
 			{
@@ -953,7 +975,7 @@ Workspace = {
 			this.userWorkspaceInitialized = true;
 
 			// Loading remaining scripts
-			var s = document.createElement( 'script' );
+			let s = document.createElement( 'script' );
 			s.src = '/webclient/js/gui/workspace_inside.js;' +
 				'webclient/3rdparty/adapter.js;' +
 				'webclient/js/utils/speech-input.js;' +
@@ -1048,56 +1070,8 @@ Workspace = {
 					_this.noLeaveAlert = true;
 				}
 
-				setupWorkspaceData( json );
+				SetupWorkspaceData( json );
 				
-				// Language
-				_this.locale = 'en';
-				let l = new Module( 'system' );
-				l.onExecuted = function( e, d )
-				{
-					// New translations
-					i18n_translations = [];
-					
-					let decoded = false;
-					try
-					{
-						decoded = JSON.parse( d );
-					}
-					catch( e )
-					{
-						//console.log( 'This: ', d );
-					}
-
-					// Add it!
-					i18nClearLocale();
-					if( e == 'ok' )
-					{
-						if( decoded && typeof( decoded.locale ) != 'undefined' )
-							_this.locale = decoded.locale;
-						//load english first and overwrite with localised values afterwards :)
-						i18nAddPath( 'locale/en.locale', function(){
-							if( _this.locale != 'en' ) i18nAddPath( 'locale/' + _this.locale + '.locale' );
-						} );
-					}
-					else
-					{
-						i18nAddPath( 'locale/en.locale' );
-					}
-
-					try
-					{
-						if( decoded.response == 'Failed to load user.' )
-						{
-							_this.logout();
-						}
-					}
-					catch( e ){};
-					
-					// Current stored Friend version
-					Workspace.friendVersion = decoded.friendversion;
-				}
-				l.execute( 'getsetting', { settings: [ 'locale', 'friendversion' ] } );
-
 				if( !_this.workspaceHasLoadedOnceBefore )
 				{
 					document.body.classList.add( 'Loading' );
@@ -1202,8 +1176,65 @@ Workspace = {
 					}
 					m.execute( 'usersettings' );
 				}
-				if( callback && typeof( callback ) == 'function' ) callback();
-				Workspace.postInit();
+				
+				// Language
+				_this.locale = 'en';
+				let l = new Module( 'system' );
+				l.onExecuted = function( e, d )
+				{
+					// New translations
+					i18n_translations = [];
+					
+					let decoded = false;
+					try
+					{
+						decoded = JSON.parse( d );
+					}
+					catch( e )
+					{
+						//console.log( 'This: ', d );
+					}
+
+					// Add it!
+					i18nClearLocale();
+					if( e == 'ok' )
+					{
+						if( decoded && typeof( decoded.locale ) != 'undefined' )
+							_this.locale = decoded.locale;
+						//load english first and overwrite with localised values afterwards :)
+						i18nAddPath( 'locale/en.locale', function(){
+							if( _this.locale != 'en' ) i18nAddPath( 'locale/' + _this.locale + '.locale' );
+						} );
+					}
+					else
+					{
+						i18nAddPath( 'locale/en.locale' );
+					}
+
+					try
+					{
+						if( decoded.response == 'Failed to load user.' )
+						{
+							_this.logout();
+						}
+					}
+					catch( e ){};
+					
+					// Current stored Friend version
+					if( typeof( decoded.friendversion ) == 'undefined' || decoded.friendversion == 'undefined' )
+					{
+						Workspace.friendVersion = false;
+					}
+					else
+					{
+						Workspace.friendVersion = decoded.friendversion;
+					}
+					
+					if( callback && typeof( callback ) == 'function' ) callback();
+					Workspace.postInit();
+				}
+				l.execute( 'getsetting', { settings: [ 'locale', 'friendversion' ] } );
+				
 				return 1;
 			}
 			document.body.appendChild( s );

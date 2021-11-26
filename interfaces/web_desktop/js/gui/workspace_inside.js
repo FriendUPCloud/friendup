@@ -923,9 +923,34 @@ var WorkspaceInside = {
 		t.load();
 	},
 	// Initialize virtual workspaces
-	initWorkspaces: function()
+	initWorkspaces: function( cbk, counter )
 	{
-		if( this.mode == 'vr' || isMobile || Workspace.isSingleTask ) return;
+		if( !counter ) counter = 0;
+		if( this.mode == 'vr' || isMobile || Workspace.isSingleTask ) 
+			return cbk ? cbk( false ) : null;
+		
+		// Welcome screen
+		if( cbk )
+		{
+			if( !Workspace.friendVersion && counter == 0 )
+			{
+				let w = document.createElement( 'div' );
+				w.className = 'WelcomeGraphic';
+				document.body.appendChild( w );
+				setTimeout( function(){ w.classList.add( 'Animate' ); }, 5 );
+				return setTimeout( function()
+				{
+					w.classList.remove( 'Animate' );
+					setTimeout( function()
+					{
+						document.body.removeChild( w );
+					} );
+					Workspace.initWorkspaces( cbk, 1 );
+				}, 5000 );
+			}
+			// Say we now have initialized workspaces
+			this.initializingWorkspaces = false;
+		}
 		
 		if( globalConfig.workspacesInitialized )
 		{
@@ -938,7 +963,7 @@ var WorkspaceInside = {
 		}
 		if( !globalConfig.workspacesInitialized )
 		{
-			if( !this.screen ) return;
+			if( !this.screen ) return cbk( false );
 			
 			this.screen.setFlag( 'vcolumns', globalConfig.workspacecount );
 			if( globalConfig.workspacecount > 1 )
@@ -1048,6 +1073,13 @@ var WorkspaceInside = {
 		}
 		// Refresh our dynamic classes now..
 		RefreshDynamicClasses();
+		
+		// Run callback
+		if( cbk )
+			cbk( true );
+		
+		// Try to show workspace
+		Workspace.setLoading( false );
 	},
 	setWorkspace: function( index, workspaceButtons, e )
 	{
@@ -3802,10 +3834,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									Workspace.insideInterval = null;
 								
 									// Set right classes
-									document.body.classList.add( 'Inside' );
-									document.body.classList.add( 'Loaded' );
-									document.body.classList.remove( 'Login' );
-									document.body.classList.remove( 'Loading' );
+									if( !Workspace.initializingWorkspaces )
+									{
+										Workspace.setLoading( false );
+									}
 									
 									document.title = Friend.windowBaseString;
 									
