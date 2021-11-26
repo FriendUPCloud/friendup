@@ -2318,6 +2318,7 @@ void UMNotifyAllUsersInGroup( UserManager *um, FQUAD groupid, int type )
 		FERROR("Cannot allocate memory for buffer\n");
 		return;
 	}
+	DEBUG("[UMNotifyAllUsersInGroup] START\n" );
     
 	//
 	// Go through logged users
@@ -2345,6 +2346,8 @@ void UMNotifyAllUsersInGroup( UserManager *um, FQUAD groupid, int type )
 					id = strtoll( row[ 0 ], &end, 0 );
 					if( id > 0 )
 					{
+						DEBUG("[UMNotifyAllUsersInGroup] find and notify user by id: %ld\n", id );
+						
 						User *usr = um->um_Users;
 						while( usr != NULL )
 						{
