@@ -384,6 +384,8 @@ function ResizeWindow( div, wi, he, mode, depth )
 	maxWidth -= margins.left + margins.right;
 	maxHeight -= margins.top + margins.bottom;
 	
+	console.log( '1) Here is wihe: ' + wi + 'x' + he );
+	
 	if( div.windowObject && maximized )
 	{
 		wi = maxWidth;
@@ -394,6 +396,8 @@ function ResizeWindow( div, wi, he, mode, depth )
 	{
 		if( he > maxHeight ) he = maxHeight;
 	}
+	
+	console.log( '2) Here is wihe: ' + wi + 'x' + he );
 	
 	// Make sure we don't go past screen limits
 	let l = t = 0;
@@ -420,7 +424,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 		t = 0;
 	}
 	
-	console.log( '1) Here is wihe: ' + wi + 'x' + he );
+	console.log( '3) Here is wihe: ' + wi + 'x' + he );
 	
 	// Skew for calculating beyond workspace 1
 	let skewx = div.windowObject.workspace * window.innerWidth;
