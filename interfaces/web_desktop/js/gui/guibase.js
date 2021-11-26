@@ -4014,6 +4014,37 @@ function FixWindowDimensions( mw )
 	SetWindowFlag( mw, 'max-width', mw.parentNode.offsetWidth );
 }
 
+function doReveal()
+{
+	if( window.friendApp && window.friendApp.reveal )
+	{
+		if( Workspace.wallpaperImage )
+		{
+			if( !Workspace.wallpaperLoaded )
+			{
+				let i = new Image();
+				i.src = Workspace.wallpaperImage;
+				i.onload = function()
+				{
+					// Tell app we can show ourselves!
+					document.body.classList.add( 'Revealed' );
+					friendApp.reveal();
+				}
+			}
+			else
+			{
+				// Tell app we can show ourselves!
+				document.body.classList.add( 'Revealed' );
+				friendApp.reveal();
+			}
+		}
+		else
+		{
+			setTimeout( function(){ doReveal(); }, 50 );
+		}
+	}
+}
+
 function ElementWindow ( ele )
 {
 	// Check if this element is in a window
