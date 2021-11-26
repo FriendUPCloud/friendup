@@ -1182,13 +1182,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 		}
 	}
 	
-	function mountStorage( devname, userid, _this, callback )
+	function mountStorage( devname, userid, groupid, _this, callback )
 	{
 		if( devname && _this )
 		{
 			if( _this.innerHTML.toLowerCase().indexOf( 'unmount' ) >= 0 )
 			{
-				unmountDisk( devname, userid, 0, function( e, d )
+				unmountDisk( devname, userid, groupid, function( e, d )
 				{
 					if( ShowLog ) console.log( 'unmountDrive( '+devname+', '+( userid ? userid : '0' )+' ) ', { e:e, d:d } );
 					
@@ -1218,7 +1218,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			}
 			else
 			{
-				mountDisk( devname, userid, 0, function( e, d )
+				mountDisk( devname, userid, groupid, function( e, d )
 				{
 					if( ShowLog ) console.log( 'mountDrive( '+devname+', '+( userid ? userid : '0' )+' ) ', { e:e, d:d } );
 				
@@ -4725,7 +4725,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																	d.onclick = function ()
 																	{
 																	
-																		mountStorage( storage.name, storage.user, this, function()
+																		mountStorage( storage.name, storage.user, groupid, this, function()
 																		{
 																		
 																			listStorage( function( res, js )
