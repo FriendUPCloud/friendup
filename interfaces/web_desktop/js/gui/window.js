@@ -6038,8 +6038,9 @@ function _kresize( e, depth )
 	// Resize screens
 	if( Workspace && Workspace.screenList )
 	{
-		for( var a = 0; a < Workspace.screenList.length; a++ )
+		for( let a = 0; a < Workspace.screenList.length; a++ )
 		{
+			Workspace.screenList[a].resized = true;
 			Workspace.screenList[a].resize();
 		}
 		Workspace.initWorkspaces();
@@ -6052,7 +6053,7 @@ function _kresize( e, depth )
 	}
 	
 	// Resize windows
-	for( var a in movableWindows )
+	for( let a in movableWindows )
 	{
 		ConstrainWindow( movableWindows[a] );
 	}
