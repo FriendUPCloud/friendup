@@ -401,7 +401,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 	{
 		l = parseInt( div.style.left );
 		t = parseInt( div.style.top );
-		console.log( 'Style top: ' + t + ' (' + div.style.top + ')' );
+		//console.log( 'Style top: ' + t + ' (' + div.style.top + ')' );
 	}
 	else
 	{
@@ -418,7 +418,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 		t = 0;
 	}
 	
-	console.log( '1) Here is wihe: ' + wi + 'x' + he );
+	//console.log( '1) Here is wihe: ' + wi + 'x' + he );
 	
 	// Skew for calculating beyond workspace 1
 	let skewx = div.windowObject.workspace * window.innerWidth;
@@ -434,7 +434,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 	}
 	// Done limits
 	
-	console.log( '2) Here is wihe: ' + wi + 'x' + he );
+	//console.log( '2) Here is wihe: ' + wi + 'x' + he );
 	
 	// Flag constraints
 	let fminw = div.windowObject.flags['min-width']  ? div.windowObject.flags['min-width']  : 0;
