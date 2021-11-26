@@ -535,7 +535,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				this.pixelHeight = sh;
 			}
 			this.dom.style.width = marginWidth + Math.floor( cols * ( itemWidth + marginWidth ) ) + 'px';
-			this.dom.style.height = this.pixelHeight + 'px';
+			this.dom.style.height = marginHeight * 2 + itemHeight + 'px';
 		}
 		else
 		{
@@ -547,7 +547,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			{
 				this.pixelWidth = document.body.offsetWidth;
 			}
-			this.dom.style.width = this.pixelWidth + 'px';
+			this.dom.style.width = marginWidth * 2 + itemWidth + 'px';
 			this.dom.style.height = marginHeight + Math.floor( rows * ( itemHeight + marginHeight ) ) + 'px';
 		}
 		
