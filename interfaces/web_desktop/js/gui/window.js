@@ -381,7 +381,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 	let maxWidth  = maxVWidt;
 	let maxHeight = maxVHeig;
 	
-	console.log( '0) Max height first ' + maxVHeig );
+	console.log( '0) Max height first ' + maxVHeig + ' ' + margins.top + ' ' + margins.bottom );
 	
 	// Add margins
 	maxWidth -= margins.left + margins.right;
