@@ -532,6 +532,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			// We need a full dock here
 			if( globalConfig.viewList == 'dockedlist' )
 			{
+				this.pixelWidth = document.body.offsetWidth;
 				this.pixelHeight = sh;
 			}
 			this.dom.style.width = marginWidth + Math.floor( cols * ( itemWidth + marginWidth ) ) + 'px';
@@ -547,6 +548,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			if( globalConfig.viewList == 'dockedlist' )
 			{
 				this.pixelWidth = document.body.offsetWidth;
+				this.pixelHeight = sh;
 			}
 			this.dom.style.width = this.pixelWidth + 'px';
 			this.dom.style.height = marginHeight + Math.floor( rows * ( itemHeight + marginHeight ) ) + 'px';
