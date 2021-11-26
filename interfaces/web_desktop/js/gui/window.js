@@ -398,6 +398,8 @@ function ResizeWindow( div, wi, he, mode, depth )
 		if( he > maxHeight ) he = maxHeight;
 	}
 	
+	console.log( 'Max height: ' + maxHeight );
+	
 	console.log( '2) Here is wihe: ' + wi + 'x' + he );
 	
 	// Make sure we don't go past screen limits
