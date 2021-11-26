@@ -43,6 +43,8 @@ Screen = function ( flags, initObject )
 			if( this.resized || this.resized == 'uninitialized' )
 			{
 				this.contentDivHeight = window.innerHeight - this.div.screenTitle.offsetHeight;
+				console.log( 'Outputting ' +(  window.innerHeight - this.div.screenTitle.offsetHeight ) );
+				console.log( 'Window: ' + window.innerHeight );
 				this.resized = false;
 			}
 		    console.log( 'Current content div height: ' + this.contentDivHeight );
