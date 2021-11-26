@@ -401,6 +401,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 	{
 		l = parseInt( div.style.left );
 		t = parseInt( div.style.top );
+		console.log( 'Style top: ' + t + ' (' + div.style.top + ')' );
 	}
 	else
 	{
@@ -416,6 +417,8 @@ function ResizeWindow( div, wi, he, mode, depth )
 		l = l = isWorkspaceScreen ? ( div.windowObject.workspace * window.innerWidth ) : 0;
 		t = 0;
 	}
+	
+	console.log( '1) Here is wihe: ' + wi + 'x' + he );
 	
 	// Skew for calculating beyond workspace 1
 	let skewx = div.windowObject.workspace * window.innerWidth;

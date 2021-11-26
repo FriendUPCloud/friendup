@@ -45,6 +45,7 @@ Screen = function ( flags, initObject )
 				this.contentDivHeight = window.innerHeight - this.div.screenTitle.offsetHeight;
 				this.resized = false;
 			}
+		    console.log( 'Current content div height: ' + this.contentDivHeight );
 			return this.contentDivHeight;
 		}
 		return 0;
