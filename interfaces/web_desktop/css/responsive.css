@@ -996,6 +996,7 @@ html body[mobile=mobile] #DoorsScreen > .ScreenContent,
 html body[mobile=mobile]:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
 {
 	height: calc(100% - 80px) !important;
+	min-height: calc(100% - 80px) !important;
 }
 
 /* Subscreens */
