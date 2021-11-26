@@ -429,6 +429,8 @@ function ResizeWindow( div, wi, he, mode, depth )
 	}
 	if( t + he > maxHeight + margins.top )
 	{
+		console.log( 'Check raw top: ' + div.offsetTop );
+		console.log( 'Check top: ' + maxHeight + ' -> ' + t + ' -> ' + margins.top );
 		he = maxHeight - t + margins.top;
 	}
 	// Done limits
@@ -452,8 +454,6 @@ function ResizeWindow( div, wi, he, mode, depth )
 	else if( wi >= fmaxw ) wi = fmaxw;
 	if( he    < fminh ) he = fminh;
 	else if( he >= fmaxh ) he = fmaxh;
-
-	console.log( '3) Here is wihe: ' + wi + 'x' + he );
 
 	// Absolute minimum windows
 	if( wi < 160 ) wi = 160;
