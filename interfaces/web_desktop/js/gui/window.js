@@ -430,6 +430,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 	if( t + he > maxHeight + margins.top )
 	{
 		console.log( 'Check raw top: ' + div.offsetTop + ' ' + div.style.top );
+		console.log( div );
 		console.log( 'Check top: ' + maxHeight + ' -> ' + t + ' -> ' + margins.top );
 		he = maxHeight - t + margins.top;
 	}
