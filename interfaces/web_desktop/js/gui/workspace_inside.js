@@ -3846,7 +3846,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									// New version of Friend?
 									if( Workspace.loginUsername != 'go' )
 									{
-										if( !Workspace.friendVersion || Workspace.friendVersion != Workspace.staticVersion )
+										if( !Workspace.friendVersion || Workspace.friendVersion != Workspace.systemInfo.FriendCoreVersion )
 										{
 											Workspace.upgradeWorkspaceSettings( function(){
 												setTimeout( function()
@@ -3854,7 +3854,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 													let n = Notify( 
 														{ 
 															title: 'Workspace was upgraded', 
-															text: 'Your Workspace and settings were upgraded to ' + Workspace.staticVersion + '.', 
+															text: 'Your Workspace and settings were upgraded to ' + Workspace.systemInfo.FriendCoreVersion + '.', 
 															sticky: true
 														}, 
 														false, 
@@ -10422,7 +10422,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	let v = new View( {
-		title: i18n( 'i18n_title_about_friendos' ) + ' Hydrogen4',
+		title: i18n( 'i18n_title_about_friendos' ) + ' ' + Workspace.staticBranch,
 		width: 540,
 		height: 560,
 		id: 'about_friendup'

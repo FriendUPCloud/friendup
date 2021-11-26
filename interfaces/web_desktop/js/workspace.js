@@ -22,7 +22,7 @@ Workspace = {
 	{
 		return false;
 	},
-	staticVersion: 'v1.2.8',
+	staticBranch: 'Hydrogen 4',
 	icons: [],
 	menuMode: 'pear', // 'miga', 'fensters' (alternatives) -> other menu behaviours
 	mode: 'default',
