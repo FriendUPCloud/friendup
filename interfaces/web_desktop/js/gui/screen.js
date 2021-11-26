@@ -42,7 +42,7 @@ Screen = function ( flags, initObject )
 		{
 			if( this.resized || this.resized == 'uninitialized' )
 			{
-				this.contentDivHeight = this.contentDiv.offsetHeight;
+				this.contentDivHeight = parseInt( getComputedStyle( this.contentDiv ).height );
 				this.resized = false;
 			}
 		    console.log( 'Current content div height: ' + this.contentDivHeight );
