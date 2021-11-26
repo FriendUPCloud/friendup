@@ -540,7 +540,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			}
 			this.dom.style.width = marginWidth + Math.floor( cols * ( itemWidth + marginWidth ) ) + 'px';
 			this.dom.style.height = this.pixelHeight + 'px';
-			console.log( 'Vert: ' + this.pixelHeight + ' ' + sh + ' ' + ( itemHeight + marginHeight ) );
+			//console.log( 'Vert: ' + this.pixelHeight + ' ' + sh + ' ' + ( itemHeight + marginHeight ) );
 		}
 		else
 		{
@@ -555,7 +555,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			}
 			this.dom.style.width = this.pixelWidth + 'px';
 			this.dom.style.height = marginHeight + Math.floor( rows * ( itemHeight + marginHeight ) ) + 'px';
-			console.log( 'Horiz: ' + this.pixelHeight );
+			//console.log( 'Horiz: ' + this.pixelHeight );
 		}
 		
 		// Position of container

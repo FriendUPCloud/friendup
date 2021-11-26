@@ -381,13 +381,13 @@ function ResizeWindow( div, wi, he, mode, depth )
 	let maxWidth  = maxVWidt;
 	let maxHeight = maxVHeig;
 	
-	console.log( '0) Max height first ' + maxVHeig + ' ' + margins.top + ' ' + margins.bottom );
+	//console.log( '0) Max height first ' + maxVHeig + ' ' + margins.top + ' ' + margins.bottom );
 	
 	// Add margins
 	maxWidth -= margins.left + margins.right;
 	maxHeight -= margins.top + margins.bottom;
 	
-	console.log( '1) Here is wihe: ' + wi + 'x' + he );
+	//console.log( '1) Here is wihe: ' + wi + 'x' + he );
 	
 	if( div.windowObject && maximized )
 	{
@@ -400,9 +400,9 @@ function ResizeWindow( div, wi, he, mode, depth )
 		if( he > maxHeight ) he = maxHeight;
 	}
 	
-	console.log( 'Max height: ' + maxHeight );
+	//console.log( 'Max height: ' + maxHeight );
 	
-	console.log( '2) Here is wihe: ' + wi + 'x' + he );
+	//console.log( '2) Here is wihe: ' + wi + 'x' + he );
 	
 	// Make sure we don't go past screen limits
 	let l = t = 0;
@@ -412,7 +412,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 		t = parseInt( div.style.top );
 		if( isNaN( l ) ) l = 0;
 		if( isNaN( t ) ) t = 0;
-		console.log( 'Style top: ' + t + ' (' + div.style.top + ')' );
+		//console.log( 'Style top: ' + t + ' (' + div.style.top + ')' );
 	}
 	else
 	{
@@ -429,7 +429,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 		t = 0;
 	}
 	
-	console.log( '3) Here is wihe: ' + wi + 'x' + he );
+	//console.log( '3) Here is wihe: ' + wi + 'x' + he );
 	
 	// Skew for calculating beyond workspace 1
 	let skewx = div.windowObject.workspace * window.innerWidth;
@@ -445,7 +445,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 	}
 	// Done limits
 	
-	console.log( '2) Here is wihe: ' + wi + 'x' + he );
+	//console.log( '2) Here is wihe: ' + wi + 'x' + he );
 	
 	// Flag constraints
 	let fminw = div.windowObject.flags['min-width']  ? div.windowObject.flags['min-width']  : 0;
@@ -6056,7 +6056,7 @@ function _kresize( e, depth )
 	// Resize screens
 	if( Workspace && Workspace.screenList )
 	{
-		console.log( 'Everything resized.' );
+		//console.log( 'Everything resized.' );
 		for( let a = 0; a < Workspace.screenList.length; a++ )
 		{
 			Workspace.screenList[a].resized = true;
