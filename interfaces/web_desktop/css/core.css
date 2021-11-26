@@ -3237,7 +3237,7 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 	position: absolute;
 	top: 32px !important;
 	width: 100%;
-	bottom: 0px;
+	height: 100%;
 	overflow: auto;
 	background-size: cover;
 	background-position: center;
@@ -4530,6 +4530,7 @@ html #Tray > div
 	top: 0;
 	left: 0;
 	width: 100vw;
+	min-height: 100vh;
 	height: 100vh;
 	overflow: hidden;
 	background: #2F669F;

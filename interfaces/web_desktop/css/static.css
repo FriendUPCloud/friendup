@@ -43,3 +43,12 @@ html > body
 	margin: 0;
 	padding: 0;
 }
+
+
+/* Fix for screens */
+
+html .Screen > .ScreenContent
+{
+	perspective: 1000px;
+	perspective-origin: center;
+}

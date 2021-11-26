@@ -397,6 +397,7 @@ html body:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
 {
 	top: 26px !important;
 	height: calc(100vh - 26px) !important;
+	min-height: calc(100vh - 26px) !important;
 }
 
 html body[mobile=mobile] #DoorsScreen > .ScreenContent,
@@ -404,12 +405,7 @@ html body[mobile=mobile]:not(.HasMenu).ViewMaximized #Screens > div.Screen > .Sc
 {
 	top: 40px !important;
 	height: calc(100vh - 40px) !important;
-}
-
-html .Screen > .ScreenContent
-{
-	perspective: 1000px;
-	perspective-origin: center;
+	min-height: calc(100vh - 40px) !important;
 }
 
 html body .Screen > .TitleBar.Busy:after 
