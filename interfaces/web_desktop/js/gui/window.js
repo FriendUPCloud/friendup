@@ -377,8 +377,9 @@ function ResizeWindow( div, wi, he, mode, depth )
 	// TODO: Let a central resize code handle this (this one?)
 	// Maximum dimensions
 	let pheight = div.parentNode ? div.parentNode.offsetHeight : GetWindowHeight();
-	let maxWidth  = div.parentWindow ? div.parentWindow.getWindowElement().offsetWidth : maxVWidt;
-	let maxHeight = div.parentWindow ? div.parentWindow.getWindowElement().offsetHeight : maxVHeig;
+	// TODO: Support parent windows
+	let maxWidth  = maxVWidt;
+	let maxHeight = maxVHeig;
 	
 	// Add margins
 	maxWidth -= margins.left + margins.right;
