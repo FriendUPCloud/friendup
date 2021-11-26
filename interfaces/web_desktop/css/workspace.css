@@ -3,6 +3,13 @@
  * @author Hogne Titlestad
  */
 
+/* Container tweaks --------------------------------------------------------- */
+
+body.Loading > .ViewContainer
+{
+	opacity: 0;
+}
+
 /* Eula --------------------------------------------------------------------- */
 
 body > .Eula
@@ -57,23 +64,5 @@ body > .Eula > div.EulaInfo button
 body > .Eula > div.EulaInfo button + button
 {
 	float: right;
-}
-
-/* Welcome graphic ---------------------------------------------------------- */
-
-body > .WelcomeGraphic
-{
-	transition: opacity 0.25s;
-	opacity: 0;
-	background-image: url(/graphics/welcome.jpg);
-	background-size: cover;
-	background-color: #ffffff;
-	background-repeat: no-repeat;
-	background-position: center;
-}
-
-body > .WelcomeGraphic.Animating
-{
-	opacity: 1;
 }
 

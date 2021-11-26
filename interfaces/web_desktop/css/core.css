@@ -2451,7 +2451,7 @@ div.Loading:after
 	border-radius: 60px;
 	animation: bodyLoading 0.1s;
 	-webkit-animation: bodyLoading 0.1s;
-	z-index: 99999999999;
+	z-index: 2147483646;
 }
 
 body[mobile].Loading:after, body[mobile].LoadingForm:after

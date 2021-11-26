@@ -934,19 +934,30 @@ var WorkspaceInside = {
 		{
 			if( !Workspace.friendVersion && counter == 0 )
 			{
+				if( Workspace.showWelcome )
+					return;
+				document.body.classList.remove( 'Login' );
+				Workspace.showWelcome = true;
 				let w = document.createElement( 'div' );
 				w.className = 'WelcomeGraphic';
 				document.body.appendChild( w );
-				setTimeout( function(){ w.classList.add( 'Animate' ); }, 5 );
-				return setTimeout( function()
-				{
-					w.classList.remove( 'Animate' );
-					setTimeout( function()
-					{
-						document.body.removeChild( w );
-					} );
-					Workspace.initWorkspaces( cbk, 1 );
-				}, 5000 );
+				// Animate
+				setTimeout( function(){ 
+					w.classList.add( 'Animate' ); 
+					// Remove animate after 2 secs
+					setTimeout( function(){ 
+						w.classList.add( 'Done' );
+						setTimeout( function()
+						{
+							// We have faded, now remove element and init workspaces
+							document.body.removeChild( w );
+							Workspace.showWelcome = false;
+							Workspace.initWorkspaces( cbk, 1 );
+						}, 750 );
+					}, 2000 );
+				}, 50 );
+				return;
+				
 			}
 			// Say we now have initialized workspaces
 			this.initializingWorkspaces = false;
@@ -3763,7 +3774,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		if( Workspace.themeOverride ) themeName = Workspace.themeOverride.toLowerCase();
 
-		document.body.classList.add( 'Loading' );
+		// Setting loading
+		Workspace.setLoading( true );
 
 		if( !themeName ) themeName = 'friendup12';
 		if( themeName == 'friendup' ) themeName = 'friendup12';

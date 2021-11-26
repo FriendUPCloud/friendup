@@ -337,8 +337,16 @@ function ResizeWindow( div, wi, he, mode, depth )
 	let maxVWidt, maxVHeig;
 	if( Workspace.mode != 'vr' )
 	{
-		maxVWidt = cl ? div.windowObject.flags.screen.getMaxViewWidth() : GetWindowWidth();
-		maxVHeig = cl ? div.windowObject.flags.screen.getMaxViewHeight() : GetWindowHeight();
+		if( div.windowObject.flags.screen )
+		{
+			maxVWidt = cl ? div.windowObject.flags.screen.getMaxViewWidth() : GetWindowWidth();
+			maxVHeig = cl ? div.windowObject.flags.screen.getMaxViewHeight() : GetWindowHeight();
+		}
+		else
+		{
+			maxVWidt = window.innerWidth;
+			maxVHeig = window.innerHeight;
+		}
 	}
 	else
 	{

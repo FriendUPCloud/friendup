@@ -126,6 +126,9 @@ Workspace = {
 
 		// We passed!
 		self.postInitialized = true;
+		
+		if( this.loginPrompt )
+			this.loginPrompt.setFlag( 'hidden', 1 );
 
 		// Do the init!
 		window.addEventListener( 'beforeunload', Workspace.leave, true );
@@ -440,18 +443,15 @@ Workspace = {
 	{
 		if( isLoading )
 		{
-			document.body.classList.add( 'Login' );
 			document.body.classList.add( 'Loading' );
-			document.body.classList.remove( 'Inside' );
-			document.body.classList.remove( 'Loaded' );
 		}
 		else
 		{
 			if( !this.initializingWorkspaces )
 			{
-				document.body.classList.add( 'Inside' );
+				document.body.classList.add( 'Inside' ); // If not exists
 				document.body.classList.add( 'Loaded' );
-				document.body.classList.remove( 'Login' );
+				document.body.classList.remove( 'Login' ); // If exists
 				document.body.classList.remove( 'Loading' );
 			}
 		}
@@ -870,7 +870,7 @@ Workspace = {
 	showDesktop: function()
 	{
 		// View desktop
-		document.body.style.visibility = 'visible';
+		// May be deprecated
 	},
 	// Stubs
 	leave: function()
@@ -1074,7 +1074,7 @@ Workspace = {
 				
 				if( !_this.workspaceHasLoadedOnceBefore )
 				{
-					document.body.classList.add( 'Loading' );
+					Workspace.setLoading( true );
 					_this.workspaceHasLoadedOnceBefore = true;
 				}
 
