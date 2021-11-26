@@ -938,6 +938,13 @@ var WorkspaceInside = {
 					return;
 				document.body.classList.remove( 'Login' );
 				Workspace.showWelcome = true;
+				
+				setInterval( function()
+				{
+					console.log( 'The height of body: ' + document.body.offsetHeight );
+					console.log( 'The height of window: ' + window.innerHeight );
+				}, 100 );
+				
 				let w = document.createElement( 'div' );
 				w.className = 'WelcomeGraphic';
 				document.body.appendChild( w );
