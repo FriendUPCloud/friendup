@@ -248,6 +248,8 @@ Screen = function ( flags, initObject )
 		// Do a scroll hack!
 		div.onscroll = function(){ this.scrollLeft = 0; this.scrollTop = 0; };
 		if( cnt ) cnt.onscroll = function(){ this.scrollLeft = 0; this.scrollTop = 0; }
+		
+		_kresize();
 	}
 	
 	if( typeof( this._flags['id'] ) != 'undefined' )
@@ -330,7 +332,7 @@ Screen = function ( flags, initObject )
 	
 	var btncycle = false;
 	var scroverl = false;
-	for ( var a = 0; a < divs.length; a++ )
+	for ( let a = 0; a < divs.length; a++ )
 	{
 		if ( divs[a].className && divs[a].classList.contains( 'ScreenList' ) )
 			btncycle = divs[a];
