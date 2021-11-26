@@ -396,14 +396,14 @@ html #DoorsScreen > .ScreenContent,
 html body:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
 {
 	top: 26px !important;
-	height: calc(100% - 26px) !important;
+	height: calc(100vh - 26px) !important;
 }
 
 html body[mobile=mobile] #DoorsScreen > .ScreenContent,
 html body[mobile=mobile]:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
 {
 	top: 40px !important;
-	height: calc(100% - 40px) !important;
+	height: calc(100vh - 40px) !important;
 }
 
 html .Screen > .ScreenContent
