@@ -343,7 +343,15 @@ var WorkspaceInside = {
 		this.workspaceWallpapers = o;
 		
 		if( loaded )
+		{
 			Workspace.wallpaperLoaded = true;
+			
+			// Tell app we can show ourselves!
+			if( window.friendApp && window.friendApp.reveal )
+			{
+				friendApp.reveal();
+			}
+		}
 	},
 	// Invite a friend to the Workspace
 	inviteFriend: function()
@@ -2463,12 +2471,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							ScreenOverlay.hide();
 							PollTray();
-							PollTaskbar();
-							// Tell app we can show ourselves!
-							if( window.friendApp && window.friendApp.reveal )
-							{
-								friendApp.reveal();
-							}						
+							PollTaskbar();					
 							return;
 						}
 						
@@ -2576,11 +2579,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								ScreenOverlay.hide();
 								PollTray();
 								PollTaskbar();
-								// Tell app we can show ourselves!
-								if( window.friendApp && window.friendApp.reveal )
-								{
-									friendApp.reveal();
-								}
 							}
 						} );
 					}
@@ -2590,10 +2588,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 					Workspace.windowWallpaperImage = '';
 					document.body.classList.add( 'DefaultWallpaper' );
+					
 					// Tell app we can show ourselves!
 					if( window.friendApp && window.friendApp.reveal )
 					{
-						friendApp.reveal();
+						let i = new Image();
+						i.src = Workspace.wallpaperImage;
+						i.onload = function()
+						{
+							// Tell app we can show ourselves!
+							friendApp.reveal();
+						}
 					}
 				}
 				if( callback && typeof( callback ) == 'function' ) callback();
@@ -4546,7 +4551,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		// Just in case
 		if( window.friendApp )
+		{
 			window.friendApp.reveal();
+		}
 		
 		if( !Friend.dosDrivers )
 		{
