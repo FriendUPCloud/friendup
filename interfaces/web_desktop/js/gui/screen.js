@@ -14,6 +14,7 @@ var _viewType = 'iframe'; //window.friendBook ? 'webview' : 'iframe';
 Screen = function ( flags, initObject )
 {
 	var self = this;
+	this.resized = 'uninitialized';
 	this._flags = new Object ();
 	
 	if( typeof( flags ) == 'object' )
@@ -39,7 +40,7 @@ Screen = function ( flags, initObject )
 	{
 		if( this.contentDiv )
 		{
-			if( this.resized )
+			if( this.resized || this.resized == 'uninitialized' )
 			{
 				this.contentDivHeight = this.contentDiv.offsetHeight;
 				this.resized = false;
