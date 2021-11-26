@@ -4530,7 +4530,7 @@ html #Tray > div
 	top: 0;
 	left: 0;
 	width: 100%;
-	bottom: 0;
+	height: 100%;
 	overflow: hidden;
 	background: #2F669F;
 }
