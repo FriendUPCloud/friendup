@@ -204,37 +204,6 @@ Screen = function ( flags, initObject )
 						w.setFlag( 'left', 0 );
 					}
 				}
-				
-				// Mindful of columns!
-				if( typeof( self._flags['vcolumns'] ) != 'undefined' )
-				{
-					let columns = parseInt( self._flags['vcolumns'] );
-					if( columns <= 0 ) columns = 1;
-					
-					// Set width with workaround.
-					let newWidth = GetWindowWidth() * columns;
-					cnt.style.width = newWidth + 'px';
-				}
-				else
-				{
-					cnt.style.width = '100%';
-				}
-				
-				// Mindful of rows!
-				let cntTop = parseInt( GetThemeInfo( 'ScreenTitle' ).height );
-				if( !isNaN( cntTop ) )
-				{
-					if( typeof( self._flags['vrows'] ) != 'undefined' )
-					{
-						let rows = parseInt( self._flags['vrows'] );
-						if( rows <= 0 ) rows = 1;
-						cnt.style.height = '100%';
-					}
-					else
-					{
-						cnt.style.height = '100%';
-					}
-				}
 			}
 		}
 		this.resize = function(){ resizeScreen(); }

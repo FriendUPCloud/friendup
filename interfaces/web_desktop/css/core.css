@@ -4531,6 +4531,7 @@ html #Tray > div
 	left: 0;
 	width: 100vw;
 	min-height: 100vh;
+	max-height: 100vh;
 	height: 100vh;
 	overflow: hidden;
 	background: #2F669F;
