@@ -927,7 +927,10 @@ var WorkspaceInside = {
 	{
 		if( !counter ) counter = 0;
 		if( this.mode == 'vr' || isMobile || Workspace.isSingleTask ) 
+		{
+			Workspace.setLoading( false );
 			return cbk ? cbk( false ) : null;
+		}
 		
 		// Welcome screen
 		if( cbk )
