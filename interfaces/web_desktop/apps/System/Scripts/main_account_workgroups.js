@@ -991,6 +991,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 		let uuid = (groupid?'_'+groupid:'');
 		
+		if( !groupid ) groupid = 0;
+		
 		var elems = {};
 		
 		var inputs = ge( 'StorageGui'+uuid ).getElementsByTagName( 'input' );
@@ -1138,7 +1140,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 				if( !data.ID || ( elems[ 'Name' ].hasAttribute('data-mount-state') && elems[ 'Name' ].getAttribute('data-mount-state') == '1' ) )
 				{
-					remountDisk( ( elems[ 'Name' ] && elems[ 'Name' ].current ? elems[ 'Name' ].current : data.Name ), data.Name, data.userid, function()
+					remountDisk( ( elems[ 'Name' ] && elems[ 'Name' ].current ? elems[ 'Name' ].current : data.Name ), data.Name, data.userid, groupid, function()
 					{
 						// Refresh init.refresh();
 						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
@@ -1160,7 +1162,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			// if the disk is mounted, we need to unmount it based on its old name first.
 			if( elems[ 'Name' ].hasAttribute('data-stored-value') && elems[ 'Name' ].hasAttribute('data-mount-state') && elems[ 'Name' ].getAttribute('data-mount-state') == '1' )
 			{
-				unmountDisk( elems[ 'Name' ].getAttribute('data-stored-value'), userid, function( e, d )
+				unmountDisk( elems[ 'Name' ].getAttribute('data-stored-value'), userid, groupid, function( e, d )
 				{
 					skip = true;
 					data.ID = diskid;
@@ -1186,7 +1188,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		{
 			if( _this.innerHTML.toLowerCase().indexOf( 'unmount' ) >= 0 )
 			{
-				unmountDisk( devname, userid, function( e, d )
+				unmountDisk( devname, userid, 0, function( e, d )
 				{
 					if( ShowLog ) console.log( 'unmountDrive( '+devname+', '+( userid ? userid : '0' )+' ) ', { e:e, d:d } );
 					
@@ -1216,7 +1218,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			}
 			else
 			{
-				mountDisk( devname, userid, function( e, d )
+				mountDisk( devname, userid, 0, function( e, d )
 				{
 					if( ShowLog ) console.log( 'mountDrive( '+devname+', '+( userid ? userid : '0' )+' ) ', { e:e, d:d } );
 				
@@ -1247,7 +1249,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		}
 	}
 	
-	function mountDisk( devname, userid, callback )
+	function mountDisk( devname, userid, groupid, callback )
 	{
 		if( devname )
 		{
@@ -1263,6 +1265,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 				{
 					vars.userid = ( userid ? userid : '0' );
 				}
+				
+				if( groupid > 0 ) vars.groupid = groupid;
 				
 				vars.authid = Application.authId;
 			
@@ -1298,8 +1302,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 		}
 	}
 
-	function unmountDisk( devname, userid, callback )
+	function unmountDisk( devname, userid, groupid, callback )
 	{
+		if( !groupid ) groupid = 0;
+		
 		if( devname )
 		{
 			var vars = { devname: devname };
@@ -1314,6 +1320,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 				{
 					vars.userid = ( userid ? userid : '0' );
 				}
+				
+				if( groupid > 0 )
+					vars.groupid = groupid;
 				
 				vars.authid = Application.authId;
 				
@@ -1349,13 +1358,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 		}
 	}
 	
-	function remountDisk( oldname, newname, userid, callback, skip )
+	function remountDisk( oldname, newname, userid, groupid, callback, skip )
 	{
 		if( oldname && newname )
 		{
 			if( skip )
 			{
-				mountDisk( newname, userid, function( e, d )
+				mountDisk( newname, userid, groupid, function( e, d )
 				{
 				
 					if( e != 'ok' )
@@ -1369,7 +1378,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			}
 			else
 			{
-				unmountDisk( oldname, userid, function( e, d )
+				unmountDisk( oldname, userid, groupid, function( e, d )
 				{
 				
 					if( e != 'ok' )
@@ -1377,7 +1386,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						Notify( { title: i18n( 'i18n_fail_unmount' ), text: ( d ? d : i18n( 'i18n_fail_unmount_more' ) ) } );
 					}
 				
-					mountDisk( newname, userid, function( e, d )
+					mountDisk( newname, userid, groupid, function( e, d )
 					{
 					
 						if( e != 'ok' )
@@ -1510,7 +1519,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 					if( ShowLog ) console.log( { diskid: diskid, userid: ( userid ? userid : '0' ), devname: devname } );
 					
-					unmountDrive( devname, false, function()
+					unmountDrive( devname, false, false, function()
 					{
 						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 						
