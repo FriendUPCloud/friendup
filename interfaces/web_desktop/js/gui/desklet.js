@@ -321,6 +321,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		}
 		
 		let horizontal = this.direction == 'horizontal' ? true : false;
+		console.log( 'Trying to render desklet with direction: ' + this.direction );
 		if( !this.direction ) return false;
 		
 		let itemWidth = this.conf && this.conf.size ? this.conf.size : 56;
