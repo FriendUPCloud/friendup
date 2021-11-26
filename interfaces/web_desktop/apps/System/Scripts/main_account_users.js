@@ -11288,7 +11288,7 @@ Sections.user_disk_save = function( userid, did )
 			{
 				Notify( { title: i18n( 'i18n_disk_success' ), text: i18n( 'i18n_disk_edited' ) } );
 			}
-			remountDrive( ( elems[ 'Name' ] && elems[ 'Name' ].current ? elems[ 'Name' ].current : data.Name ), data.Name, data.userid, function()
+			remountDrive( ( elems[ 'Name' ] && elems[ 'Name' ].current ? elems[ 'Name' ].current : data.Name ), data.Name, data.userid, 0, function()
 			{
 				
 				let u = new Module( 'system' );
@@ -11335,7 +11335,7 @@ Sections.user_disk_mount = function( devname, userid, _this )
 	{
 		if( _this.innerHTML.toLowerCase().indexOf( 'unmount' ) >= 0 )
 		{
-			unmountDrive( devname, userid, function( e, d )
+			unmountDrive( devname, userid, 0, function( e, d )
 			{
 				//console.log( 'unmountDrive( '+devname+', '+userid+' ) ', { e:e, d:d } );
 				
@@ -11375,7 +11375,7 @@ Sections.user_disk_mount = function( devname, userid, _this )
 		}
 		else
 		{
-			mountDrive( devname, userid, function( e, d )
+			mountDrive( devname, userid, 0, function( e, d )
 			{
 				//console.log( 'mountDrive( '+devname+', '+userid+' ) ', { e:e, d:d } );
 				
@@ -11417,8 +11417,9 @@ Sections.user_disk_mount = function( devname, userid, _this )
 
 // TODO: Check why it doesn't work to mount / unmount for other users as admin or with rights ...
 
-function mountDrive( devname, userid, callback )
+function mountDrive( devname, userid, groupid, callback )
 {
+	if( !groupid ) groupid = 0;
 	if( devname )
 	{
 		let vars = { devname: devname };
@@ -11429,6 +11430,7 @@ function mountDrive( devname, userid, callback )
 		{
 			vars.userid = userid;
 			vars.authid = Application.authId;
+			if( groupid > 0 ) vars.groupid = groupid;
 			
 			vars.args = JSON.stringify( {
 				'type'    : 'write', 
@@ -11460,8 +11462,10 @@ function mountDrive( devname, userid, callback )
 	}
 }
 
-function unmountDrive( devname, userid, callback )
+function unmountDrive( devname, userid, groupid, callback )
 {
+	if( !groupid ) groupid = 0;
+	
 	if( devname )
 	{
 		let vars = { devname: devname };
@@ -11472,6 +11476,8 @@ function unmountDrive( devname, userid, callback )
 		{
 			vars.userid = userid;
 			vars.authid = Application.authId;
+			
+			if( groupid > 0 ) vars.groupid = groupid;
 			
 			vars.args = JSON.stringify( {
 				'type'    : 'write', 
@@ -11503,14 +11509,14 @@ function unmountDrive( devname, userid, callback )
 	}
 }
 
-function remountDrive( oldname, newname, userid, callback )
+function remountDrive( oldname, newname, userid, groupid, callback )
 {
 	if( oldname && newname )
 	{
-		unmountDrive( oldname, userid, function( e, d )
+		unmountDrive( oldname, userid, groupid, function( e, d )
 		{
 			
-			mountDrive( newname, userid, function( e, d )
+			mountDrive( newname, userid, groupid, function( e, d )
 			{
 				
 				if( callback ) callback( e, d );
@@ -11853,7 +11859,7 @@ Sections.user_disk_remove = function( devname, did, userid )
 			{
 				// This is the hard delete method, used by admins ...
 				
-				unmountDrive( devname, userid, function()
+				unmountDrive( devname, userid, 0, function()
 				{
 					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 					
