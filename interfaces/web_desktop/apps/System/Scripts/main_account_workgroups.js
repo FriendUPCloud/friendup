@@ -1304,6 +1304,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 
 	function unmountDisk( devname, userid, groupid, callback )
 	{
+		console.log( 'Are we unmounting? dev: ' + devname + ' userid: ' + userid + ' groupid: ' + groupid );
 		if( !groupid ) groupid = 0;
 		
 		if( devname )
