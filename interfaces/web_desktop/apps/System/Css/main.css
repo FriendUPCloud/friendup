@@ -610,7 +610,8 @@ body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent .Selected
 	color: #20374D;
 }
 
-html #Admin .IconButton:hover
+html body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent button.Positive:hover, 
+html body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent .Button.Positive:hover
 {
 	color: inherit;
 	opacity: 0.8;
