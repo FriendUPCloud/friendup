@@ -4031,6 +4031,10 @@ function doReveal()
 					document.body.classList.add( 'Revealed' );
 					friendApp.reveal();
 				}
+				if( i.width && i.width > 0 )
+				{
+					i.onload();
+				}
 			}
 			else
 			{
