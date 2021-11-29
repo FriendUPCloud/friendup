@@ -137,12 +137,17 @@ if( isset( $args->args->application ) && $args->args->application )
 						
 						die( 'ok' );
 					}
+					die( 'fail<!--separate-->{"message":"Could not find permissions in application config."}' );
 				}
+				die( 'fail<!--separate-->{"message":"Could not decode JSON config."}' );
 			}
+			die( 'fail<!--separate-->{"message":"Could not find application ID."}' );
 		}
+		die( 'fail<!--separate-->{"message":"Could not find application config."}' );
 	}
+	die( 'fail<!--separate-->{"message":"Could not find application in search paths."}' );
 }
 
-die( 'fail' );
+die( 'fail<!--separate-->{"message":"Could not find application name."}' );
 
 ?>
