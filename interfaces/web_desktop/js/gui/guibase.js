@@ -4016,28 +4016,36 @@ function FixWindowDimensions( mw )
 
 function doReveal()
 {
-	console.log( 'Doreveal test.' );
 	if( window.friendApp && window.friendApp.reveal )
 	{
 		if( Workspace.wallpaperImage )
 		{
 			if( !Workspace.wallpaperLoaded )
 			{
-				let i = new Image();
-				i.src = getImageUrl( Workspace.wallpaperImage );
-				i.onload = function()
+				if( Workspace.wallpaperImage == 'color' )
 				{
-					// Tell app we can show ourselves!
-					document.body.removeChild( i );
 					document.body.classList.add( 'Revealed' );
 					friendApp.reveal();
-					console.log( '1) Doreveal executed.' );
 				}
-				i.style.visibility = 'hidden';
-				document.body.appendChild( i );
-				if( i.width && i.width > 0 )
+				else
 				{
-					i.onload();
+					let i = new Image();
+					if( Workspace.wallpaperImageDecoded )
+						i.src = Workspace.wallpaperImageDecoded;
+					else i.src = getImageUrl( Workspace.wallpaperImage );
+					i.onload = function()
+					{
+						// Tell app we can show ourselves!
+						document.body.removeChild( i );
+						document.body.classList.add( 'Revealed' );
+						friendApp.reveal();
+					}
+					i.style.visibility = 'hidden';
+					document.body.appendChild( i );
+					if( i.width && i.width > 0 )
+					{
+						i.onload();
+					}
 				}
 			}
 			else
@@ -4045,14 +4053,12 @@ function doReveal()
 				// Tell app we can show ourselves!
 				document.body.classList.add( 'Revealed' );
 				friendApp.reveal();
-				console.log( '2) Doreveal executed.' );
 			}
 		}
 		else
 		{
 			setTimeout( function(){ 
 				doReveal(); 
-				console.log( '3) Doreveal executed.' );
 			}, 50 );
 		}
 	}

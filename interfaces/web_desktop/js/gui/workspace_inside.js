@@ -2291,12 +2291,20 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						if( dat.wallpaperdoors.substr(0,5) == 'color' )
 						{
 							Workspace.wallpaperImage = 'color';
+							Workspace.wallpaperImageDecoded = false;
 							document.body.classList.remove( 'NoWallpaper' );
 							document.body.classList.remove( 'DefaultWallpaper' );
 						}
 						else if( dat.wallpaperdoors.length )
 						{
 							Workspace.wallpaperImage = dat.wallpaperdoors;
+							if( 
+								dat.wallpaperdoors.indexOf( ':' ) > 0 && 
+								( dat.wallpaperdoors.indexOf( 'http://' ) != 0 || dat.wallpaperdoors.indexOf( 'https://' ) ) 
+							)
+							{
+								Workspace.wallpaperImageDecoded = getImageUrl( Workspace.wallpaperImage );
+							}
 							document.body.classList.remove( 'NoWallpaper' );
 							document.body.classList.remove( 'DefaultWallpaper' );
 						}
@@ -2304,6 +2312,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							document.body.classList.add( 'DefaultWallpaper' );
 							Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
+							Workspace.wallpaperImageDecoded = false;
 						}
 					}
 					else
@@ -2338,6 +2347,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					if( !Workspace.wallpaperImage || Workspace.wallpaperImage == '""' || Workspace.wallpaperImage === '' )
 					{
 						Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
+						Workspace.wallpaperImageDecoded = false;
 					}
 					
 					if( dat.wallpaperwindows )
@@ -2583,6 +2593,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				else
 				{
 					Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
+					Workspace.wallpaperImageDecoded = false;
 					Workspace.windowWallpaperImage = '';
 					document.body.classList.add( 'DefaultWallpaper' );
 					doReveal();
@@ -8327,6 +8338,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 													m.onExecuted = function()
 													{
 														Workspace.wallpaperImage = thisicon.fileInfo.Path;
+														Workspace.wallpaperImageDecoded = getImageUrl( thisicon.fileInfo.Path );
 														Workspace.refreshDesktop();
 													}
 													m.execute( 'setsetting', { setting: 'wallpaperdoors', data: thisicon.fileInfo.Path } );
