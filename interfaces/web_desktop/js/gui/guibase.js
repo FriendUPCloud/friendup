@@ -4016,7 +4016,7 @@ function FixWindowDimensions( mw )
 
 function doReveal()
 {
-	console.log( 'Doreveal executed.' );
+	console.log( 'Doreveal test.' );
 	if( window.friendApp && window.friendApp.reveal )
 	{
 		if( Workspace.wallpaperImage )
@@ -4030,6 +4030,7 @@ function doReveal()
 					// Tell app we can show ourselves!
 					document.body.classList.add( 'Revealed' );
 					friendApp.reveal();
+					console.log( '1) Doreveal executed.' );
 				}
 				if( i.width && i.width > 0 )
 				{
@@ -4041,11 +4042,15 @@ function doReveal()
 				// Tell app we can show ourselves!
 				document.body.classList.add( 'Revealed' );
 				friendApp.reveal();
+				console.log( '2) Doreveal executed.' );
 			}
 		}
 		else
 		{
-			setTimeout( function(){ doReveal(); }, 50 );
+			setTimeout( function(){ 
+				doReveal(); 
+				console.log( '3) Doreveal executed.' );
+			}, 50 );
 		}
 	}
 }
