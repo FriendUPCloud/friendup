@@ -7904,7 +7904,7 @@ function applications( callback, id )
 				
 						if( json )
 						{
-							console.log( 'Listuserapplications: ', json );
+							//console.log( 'Listuserapplications: ', json );
 							
 							return callback( true, json );
 						}
@@ -7930,8 +7930,7 @@ function applications( callback, id )
 						
 						if( json )
 						{
-							console.log( 'Software: ', json );
-							if( ShowLog ) console.log( 'software ', { e:e, d:json } );
+							//console.log( 'Software: ', json );
 							
 							return callback( true, json );
 						}
