@@ -456,9 +456,16 @@ function ExecuteApplication( app, args, callback, retries, flags )
 						app + '&friendup=' + escape( Doors.runLevels[0].domain ), true );
 					j.onload = function()
 					{	
-						let ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
+						let ws;
+						if( _applicationBasics && _applicationBasics.apiV1 )
+						{
+							ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
+						}
+						else
+						{
+							ws = this.rawData;
+						}
 						ifr.src = URL.createObjectURL(new Blob([ws],{type:'text/html'}));
-						console.log( 'Completelaunch 2: ' + this.rawData );
 					}
 					j.send();
 				}
@@ -1323,10 +1330,17 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 					'&conf=' + conf + '&' + ( args ? ( 'args=' + args ) : '' ) + extra, true );
 				j.onload = function()
 				{
-					ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
+					let ws;
+					if( _applicationBasics.apiV1 )
+					{
+						ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
+					}
+					else
+					{
+						ws = this.rawData;
+					}
 					ifr.onload = ifronload;
 					ifr.src = URL.createObjectURL( new Blob([ ws ],{ type: 'text/html' } ) );
-					console.log( 'Completelaunch 1: ' + this.rawData );
 				}
 				j.send();
 
