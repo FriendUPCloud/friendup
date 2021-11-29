@@ -36,7 +36,7 @@ function doListUsers( userList, clearFilter )
 			var extr = '';
 			if( clearFilter )
 			{
-				extr = '<button style="position: absolute; right: 0;" class="ButtonSmall IconButton IconSmall fa-remove"/>&nbsp;</button>';
+				extr = '<button style="position: absolute; right: 0;" class="ButtonSmall IconSmall fa-remove"/>&nbsp;</button>';
 			}
 			
 			tr.innerHTML = '\
@@ -48,7 +48,7 @@ function doListUsers( userList, clearFilter )
 					<input type="text" class="FullWidth" placeholder="' + i18n( 'i18n_find_users' ) + '"/>\
 				</div>\
 				<div class="HContent10 FloatLeft TextRight InActive">\
-					<button id="AdminUsersBtn" class="IconButton IconSmall Negative fa-bars"></button>\
+					<button id="AdminUsersBtn" class="IconSmall Negative fa-bars"></button>\
 					<div class="submenu_wrapper"><ul id="AdminUsersSubMenu" class="Positive"></ul></div>\
 				</div>\
 			';

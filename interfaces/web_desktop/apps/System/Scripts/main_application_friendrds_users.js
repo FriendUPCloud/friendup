@@ -522,7 +522,7 @@ Sections.applications_friendrds_users = function( cmd, extra )
 																	else
 																	{
 																		var b = document.createElement( 'button' );
-																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																		b.className = 'IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																		b.onclick = function(  )
 																		{
 																
@@ -772,7 +772,7 @@ Sections.applications_friendrds_users = function( cmd, extra )
 																	else
 																	{
 																		var b = document.createElement( 'button' );
-																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
+																		b.className = 'IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
 																		b.onclick = function(  )
 																		{
 																
@@ -1251,18 +1251,18 @@ Sections.applications_friendrds_users = function( cmd, extra )
 			str += '<div id="AdminUsersContainer">';
 			str += '	<div class="HRow BackgroundNegative Negative Padding">';
 			str += '		<div class="PaddingSmall HContent40 FloatLeft">';
-			str += '			<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="UsersEditBack"></button>';
+			str += '			<button class="IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="UsersEditBack"></button>';
 			str += '			<h3 class="NoMargin FloatLeft">';
 			str += '				<strong>' + i18n( 'i18n_users' ) + ' </strong>';
 			str += '				<span id="AdminUsersCount">(0)</span>';
 			str += '			</h3>';
 			str += '		</div>';
 			str += '		<div class="PaddingSmall HContent45 FloatLeft Relative">';
-			str += '			<button class="IconButton IconSmall ButtonSmall fa-times-circle Closed" style="position:absolute;right:0;margin-top:-2px;margin-right:-2px;" id="UsersSearchCancelBtn"></button>';
+			str += '			<button class="IconSmall ButtonSmall fa-times-circle Closed" style="position:absolute;right:0;margin-top:-2px;margin-right:-2px;" id="UsersSearchCancelBtn"></button>';
 			str += '			<input type="text" class="FullWidth" placeholder="' + i18n( 'i18n_search' ) + '" style="padding-right:21px">';
 			str += '		</div>';
 			str += '		<div class="PaddingSmall HContent15 FloatLeft Relative">';
-			str += '			<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle Open" id="UsersEdit"></button>';
+			str += '			<button class="IconSmall ButtonSmall Negative FloatRight fa-plus-circle Open" id="UsersEdit"></button>';
 			str += '		</div>';
 			str += '	</div>';
 			str += '	<div id="UsersGui"></div>';

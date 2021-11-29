@@ -365,7 +365,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
 									] ) )
 									{
-										//wstr += '	<button wid="' + wids[b].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+										//wstr += '	<button wid="' + wids[b].ID + '" class="IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
 										
 										wstr += CustomToggle( 'wid_' + wids[b].ID, 'FloatRight', null, function (  )
 										{
@@ -502,7 +502,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									'PERM_ROLE_GLOBAL',        'PERM_ROLE_WORKGROUP' 
 								] ) )
 								{
-									//rstr += '<button onclick="Sections.userrole_update('+uroles[a].ID+','+userInfo.ID+',this)" class="IconButton IconSmall IconToggle ButtonSmall FloatRight' + ( uroles[a].UserID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+									//rstr += '<button onclick="Sections.userrole_update('+uroles[a].ID+','+userInfo.ID+',this)" class="IconSmall IconToggle ButtonSmall FloatRight' + ( uroles[a].UserID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
 									
 									rstr += CustomToggle( 'rid_'+uroles[a].ID, 'FloatRight', null, 'Sections.userrole_update('+uroles[a].ID+','+userInfo.ID+',this)', ( uroles[a].UserID ? true : false ) );
 									
@@ -598,7 +598,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									}
 									if( keyz[ k ] == 'Dock' )
 									{
-										value = '<button class="IconButton IconSmall IconToggle ButtonSmall FloatRight' + ( apps[ a ].DockStatus ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+										value = '<button class="IconSmall IconToggle ButtonSmall FloatRight' + ( apps[ a ].DockStatus ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
 										ex = ' TextCenter';
 									}
 									apl += '<div class="PaddingSmall HContent30 FloatLeft Ellipsis' + ex + '"' + st + '>' + value + '</div>';
@@ -1437,7 +1437,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
 												] ) )
 												{
-													//str += '		<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
+													//str += '		<button wid="' + groups[a].ID + '" class="IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
 													
 													str += CustomToggle( 'wid_' + groups[a].ID, 'FloatRight', null, function (  )
 													{
@@ -1560,7 +1560,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 															'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
 														] ) )
 														{
-															//str += '<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
+															//str += '<button wid="' + groups[a].groups[aa].ID + '" class="IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
 															
 															str += CustomToggle( 'wid_' + groups[a].groups[aa].ID, 'FloatRight', null, function (  )
 															{
@@ -1683,7 +1683,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																	'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
 																] ) )
 																{
-																	//str += '		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
+																	//str += '		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
 																	
 																	str += CustomToggle( 'wid_' + groups[a].groups[aa].groups[aaa].ID, 'FloatRight', null, function (  )
 																	{
@@ -2128,7 +2128,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 															'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
 														] ) )
 														{
-															//wstr += '		<button wid="' + groups[b].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+															//wstr += '		<button wid="' + groups[b].ID + '" class="IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
 															wstr += CustomToggle( 'wid_' + groups[b].ID, 'FloatRight', null, function (  )
 															{
 							
@@ -2220,7 +2220,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
 																	] ) )
 																	{
-																		//wstr += '		<button wid="' + groups[b].groups[k].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+																		//wstr += '		<button wid="' + groups[b].groups[k].ID + '" class="IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
 																		
 																		wstr += CustomToggle( 'wid_' + groups[b].groups[k].ID, 'FloatRight', null, function (  )
 																		{
@@ -2313,7 +2313,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																					'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
 																				] ) )
 																				{
-																					//wstr += '		<button wid="' + groups[b].groups[k].groups[i].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+																					//wstr += '		<button wid="' + groups[b].groups[k].groups[i].ID + '" class="IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
 																					
 																					wstr += CustomToggle( 'wid_' + groups[b].groups[k].groups[i].ID, 'FloatRight', null, function (  )
 																					{
@@ -3494,7 +3494,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																					] ) )
 																					{
 																						let b = document.createElement( 'button' );
-																						b.className = 'IconButton IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																						b.className = 'IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																						b.onclick = function(  )
 																						{
 																			
@@ -4310,7 +4310,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																					] ) )
 																					{
 																						let b = document.createElement( 'button' );
-																						b.className = 'IconButton IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
+																						b.className = 'IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
 																						b.onclick = function(  )
 																						{
 																			
@@ -4341,7 +4341,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																					] ) )
 																					{
 																						let b = document.createElement( 'button' );
-																						b.className = 'IconButton IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
+																						b.className = 'IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
 																						b.onclick = function()
 																						{
 																			
@@ -4384,7 +4384,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																					] ) )
 																					{
 																						let b = document.createElement( 'button' );
-																						b.className = 'IconButton IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																						b.className = 'IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																						b.onclick = function(  )
 																						{
 																			
@@ -5305,7 +5305,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																				'element' : function( order, _this ) 
 																				{
 																					var b = document.createElement( 'button' );
-																					b.className = 'IconButton IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
+																					b.className = 'IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
 																					b.onclick = function(  )
 																					{
 																		
@@ -5326,7 +5326,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																				'element' : function( order, _this ) 
 																				{
 																					var b = document.createElement( 'button' );
-																					b.className = 'IconButton IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
+																					b.className = 'IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
 																					b.onclick = function()
 																					{
 																		
@@ -5359,7 +5359,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																				'element' : function( ids, name, func ) 
 																				{
 																					var b = document.createElement( 'button' );
-																					b.className = 'IconButton IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																					b.className = 'IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																					b.onclick = function(  )
 																					{
 																		
@@ -6387,7 +6387,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										{
 											let del = document.createElement( 'button' );
 											del.id = 'AdminWallpaperDeleteBtn';
-											del.className = 'IconButton IconSmall ButtonSmall Negative FloatRight fa-remove';
+											del.className = 'IconSmall ButtonSmall Negative FloatRight fa-remove';
 											del.onclick = function( e )
 											{
 												Confirm( 'Are you sure?', 'This will delete the wallpaper from this template.', function( r )
@@ -6584,7 +6584,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							dark : function ()
 							{
 								
-								//return '<button class="IconButton IconSmall IconToggle ButtonSmall fa-toggle-' + ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? 'on' : 'off' ) + '" id="theme_dark_button"></button>';
+								//return '<button class="IconSmall IconToggle ButtonSmall fa-toggle-' + ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? 'on' : 'off' ) + '" id="theme_dark_button"></button>';
 								
 								return CustomToggle( 'theme_dark_button', null, null, null, ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? true : false ) );
 								
@@ -7565,7 +7565,7 @@ function initUserlist( userList  )
 								'element' : function() 
 								{
 									let btn = document.createElement( 'button' );
-									btn.className = 'IconButton IconMedium Negative fa-bars';
+									btn.className = 'IconMedium Negative fa-bars';
 									btn.id = 'AdminUsersBtn';
 									btn.onclick = function(  )
 									{
@@ -8636,7 +8636,7 @@ function NewUser( _this )
 						str += '	<div class="PaddingSmall HContent60 InputHeight FloatLeft Ellipsis">' + groups[a].Name + (groups[a].Owner?' (by '+groups[a].Owner+')':'') + '</div>';
 						
 						str += '	<div class="PaddingSmall HContent15 FloatRight Ellipsis">';
-						//str += '		<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
+						//str += '		<button wid="' + groups[a].ID + '" class="IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
 						str += CustomToggle( 'wid_' + groups[a].ID, 'FloatRight', null, function (  )
 						{
 							
@@ -8739,7 +8739,7 @@ function NewUser( _this )
 								str += '	<div class="PaddingSmall HContent55 InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].Name + (groups[a].groups[aa].Owner?' (by '+groups[a].groups[aa].Owner+')':'') + '</div>';
 								
 								str += '<div class="PaddingSmall HContent15 FloatRight Ellipsis">';
-								//str += '<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
+								//str += '<button wid="' + groups[a].groups[aa].ID + '" class="IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
 								
 								str += CustomToggle( 'wid_' + groups[a].groups[aa].ID, 'FloatRight', null, function (  )
 								{
@@ -8843,7 +8843,7 @@ function NewUser( _this )
 										str += '	<div class="PaddingSmall HContent55 InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + (groups[a].groups[aa].groups[aaa].Owner?' (by '+groups[a].groups[aa].groups[aaa].Owner+')':'') + '</div>';
 										
 										str += '	<div class="PaddingSmall HContent15 FloatRight Ellipsis">';
-										//str += '		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
+										//str += '		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
 										
 										str += CustomToggle( 'wid_' + groups[a].groups[aa].groups[aaa].ID, 'FloatRight', null, function (  )
 										{
@@ -12031,7 +12031,6 @@ function removeBtn( _this, args, callback )
 			innerHTML: _this.innerHTML, 
 			onclick: ( _this.onclick ? _this.onclick : function () {} ) 
 		}
-		_this.classList.remove( 'IconButton' );
 		_this.classList.remove( 'IconToggle' );
 		_this.classList.remove( 'ButtonSmall' );
 		_this.classList.remove( 'ColorStGrayLight' );

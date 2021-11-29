@@ -768,7 +768,6 @@ Sections.accounts_templates = function( cmd, extra )
 				innerHTML: _this.innerHTML, 
 				onclick: ( _this.onclick ? _this.onclick : function () {} ) 
 			}
-			_this.classList.remove( 'IconButton' );
 			_this.classList.remove( 'IconToggle' );
 			_this.classList.remove( 'ButtonSmall' );
 			_this.classList.remove( 'ColorStGrayLight' );
@@ -1126,7 +1125,7 @@ Sections.accounts_templates = function( cmd, extra )
 				// TODO: look for a solution so there is no need for two different ways to handle one thing before and after template file load ...
 				
 				/*var b = document.createElement( 'button' );
-				b.className = 'IconButton IconSmall IconToggle ButtonSmall fa-toggle-off';
+				b.className = 'IconSmall IconToggle ButtonSmall fa-toggle-off';
 				b.onclick = function(  )
 				{
 					
@@ -1144,7 +1143,7 @@ Sections.accounts_templates = function( cmd, extra )
 				};
 				return b;*/
 				
-				//return '<button class="IconButton IconSmall IconToggle ButtonSmall fa-toggle-' + ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? 'on' : 'off' ) + '" id="theme_dark_button" value="' + ( themeData.colorSchemeText ? themeData.colorSchemeText : 'light' ) + '"></button>';
+				//return '<button class="IconSmall IconToggle ButtonSmall fa-toggle-' + ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? 'on' : 'off' ) + '" id="theme_dark_button" value="' + ( themeData.colorSchemeText ? themeData.colorSchemeText : 'light' ) + '"></button>';
 				
 				return CustomToggle( 
 					'theme_dark_button', null, null, null, 
@@ -1771,7 +1770,7 @@ Sections.accounts_templates = function( cmd, extra )
 																		'element' : function( ids, name, func ) 
 																		{
 																			var b = document.createElement( 'button' );
-																			b.className = 'IconButton IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																			b.className = 'IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																			b.onclick = function(  )
 																			{
 																			
@@ -2554,7 +2553,7 @@ Sections.accounts_templates = function( cmd, extra )
 																		'element' : function( order, _this ) 
 																		{
 																			var b = document.createElement( 'button' );
-																			b.className = 'IconButton IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
+																			b.className = 'IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
 																			b.onclick = function(  )
 																			{
 																			
@@ -2573,7 +2572,7 @@ Sections.accounts_templates = function( cmd, extra )
 																		'element' : function( order, _this ) 
 																		{
 																			var b = document.createElement( 'button' );
-																			b.className = 'IconButton IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
+																			b.className = 'IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
 																			b.onclick = function()
 																			{
 																			
@@ -2604,7 +2603,7 @@ Sections.accounts_templates = function( cmd, extra )
 																		'element' : function( ids, name, func ) 
 																		{
 																			var b = document.createElement( 'button' );
-																			b.className = 'IconButton IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																			b.className = 'IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																			b.onclick = function(  )
 																			{
 																			
@@ -3520,7 +3519,7 @@ Sections.accounts_templates = function( cmd, extra )
 																		'element' : function( order, _this ) 
 																		{
 																			var b = document.createElement( 'button' );
-																			b.className = 'IconButton IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
+																			b.className = 'IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
 																			b.onclick = function(  )
 																			{
 																			
@@ -3541,7 +3540,7 @@ Sections.accounts_templates = function( cmd, extra )
 																		'element' : function( order, _this ) 
 																		{
 																			var b = document.createElement( 'button' );
-																			b.className = 'IconButton IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
+																			b.className = 'IconMedium IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
 																			b.onclick = function()
 																			{
 																			
@@ -3574,7 +3573,7 @@ Sections.accounts_templates = function( cmd, extra )
 																		'element' : function( ids, name, func ) 
 																		{
 																			var b = document.createElement( 'button' );
-																			b.className = 'IconButton IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																			b.className = 'IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																			b.onclick = function(  )
 																			{
 																			
@@ -4477,7 +4476,7 @@ Sections.accounts_templates = function( cmd, extra )
 							function wallpaperdelete()
 							{
 								var del = document.createElement( 'button' );
-								del.className = 'IconButton IconSmall ButtonSmall Negative FloatRight fa-remove';
+								del.className = 'IconSmall ButtonSmall Negative FloatRight fa-remove';
 								del.onclick = function( e )
 								{
 									Confirm( 'Are you sure?', 'This will delete the wallpaper from this template.', function( r )
@@ -4649,7 +4648,7 @@ Sections.accounts_templates = function( cmd, extra )
 												{
 													var b = document.createElement( 'button' );
 													b.id = 'TemplateEditBack';
-													b.className = 'IconButton IconMedium ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed';
+													b.className = 'IconMedium ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed';
 													return b;
 												}()
 											},
@@ -4678,7 +4677,7 @@ Sections.accounts_templates = function( cmd, extra )
 												{
 													var b = document.createElement( 'button' );
 													b.id = 'TemplateSearchCancelBtn';
-													b.className = 'IconButton IconSmall ButtonSmall fa-times-circle Closed';
+													b.className = 'IconSmall ButtonSmall fa-times-circle Closed';
 													b.style = 'position:absolute;right:0;margin-top:-2px;';
 													b.onclick = function(  )
 													{
@@ -4724,7 +4723,7 @@ Sections.accounts_templates = function( cmd, extra )
 													] ) )
 													{
 														var b = document.createElement( 'button' );
-														b.className = 'IconButton IconMedium ButtonSmall Negative FloatRight fa-plus-circle Open';
+														b.className = 'IconMedium ButtonSmall Negative FloatRight fa-plus-circle Open';
 														b.onclick = function()
 														{
 															edit(  );

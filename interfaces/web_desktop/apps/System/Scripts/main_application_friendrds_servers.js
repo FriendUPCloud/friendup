@@ -2129,7 +2129,6 @@ Sections.applications_friendrds_servers = function( cmd, extra )
 				innerHTML: _this.innerHTML, 
 				onclick: ( _this.onclick ? _this.onclick : function () {} ) 
 			}
-			_this.classList.remove( 'IconButton' );
 			_this.classList.remove( 'IconToggle' );
 			_this.classList.remove( 'ButtonSmall' );
 			_this.classList.remove( 'ColorStGrayLight' );
@@ -2762,7 +2761,7 @@ Sections.applications_friendrds_servers = function( cmd, extra )
 																		'element' : function( ids, name, func ) 
 																		{
 																			var b = document.createElement( 'button' );
-																			b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																			b.className = 'IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																			b.onclick = function(  )
 																			{
 																			
@@ -3387,7 +3386,7 @@ Sections.applications_friendrds_servers = function( cmd, extra )
 																	'element' : function( ids, app, _this ) 
 																	{
 																		var b = document.createElement( 'button' );
-																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' );
+																		b.className = 'IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' );
 																		b.onclick = function(  )
 																		{
 																			
@@ -3949,7 +3948,7 @@ Sections.applications_friendrds_servers = function( cmd, extra )
 												'element' : function() 
 												{
 													var b = document.createElement( 'button' );
-													b.className = 'IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle';
+													b.className = 'IconSmall ButtonSmall Negative FloatRight fa-plus-circle';
 													b.onclick = function () { edit(); };
 													return b;
 												}()

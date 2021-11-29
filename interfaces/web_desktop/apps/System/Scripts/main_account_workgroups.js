@@ -1644,7 +1644,6 @@ Sections.accounts_workgroups = function( cmd, extra )
 				innerHTML : _this.innerHTML, 
 				onclick   : ( _this.onclick ? _this.onclick : function () {} ) 
 			}
-			_this.classList.remove( 'IconButton' );
 			_this.classList.remove( 'IconToggle' );
 			_this.classList.remove( 'ButtonSmall' );
 			_this.classList.remove( 'ColorStGrayLight' );
@@ -2010,7 +2009,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					'PERM_ROLE_GLOBAL',        'PERM_ROLE_WORKGROUP' 
 				] ) )
 				{
-					//rstr += '<button onclick="Sections.accounts_workgroups(\'update_role\',{rid:'+roles[a].ID+',groupid:'+workgroup.groupid+',_this:this})" class="IconButton IconSmall ButtonSmall FloatRight' + ( roles[a].WorkgroupID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+					//rstr += '<button onclick="Sections.accounts_workgroups(\'update_role\',{rid:'+roles[a].ID+',groupid:'+workgroup.groupid+',_this:this})" class="IconSmall ButtonSmall FloatRight' + ( roles[a].WorkgroupID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
 					
 					rstr += CustomToggle( 'rid'+uuid+'_'+roles[a].ID, 'FloatRight', null, 'Sections.accounts_workgroups(\'update_role\',{rid:'+roles[a].ID+',groupid:'+workgroup.groupid+',_this:this})', ( roles[a].WorkgroupID ? true : false ) );
 					
@@ -2026,14 +2025,14 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 		if( !psub )
 		{
-			gbackbtn += '<button class="IconButton IconMedium ButtonSmall FloatLeft fa-arrow-circle-left" id="GroupBackBtn'+uuid+'"></button>';
+			gbackbtn += '<button class="IconMedium ButtonSmall FloatLeft fa-arrow-circle-left" id="GroupBackBtn'+uuid+'"></button>';
 			gbackbtn += '<h3 class="NoMargin FloatLeft">';
 			gbackbtn += '	<strong>' + i18n( 'i18n_workgroup_list' ) + '</strong>';
 			gbackbtn += '</h3>';
 		}
 		else
 		{
-			gbackbtn += '<button class="IconButton IconMedium ButtonSmall FloatLeft">&nbsp;</button>';
+			gbackbtn += '<button class="IconMedium ButtonSmall FloatLeft">&nbsp;</button>';
 			gbackbtn += '<h3 class="NoMargin FloatLeft">';
 			gbackbtn += '	<strong>&nbsp;</strong>';
 			gbackbtn += '</h3>';
@@ -3199,7 +3198,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																		] ) )
 																		{
 																			var b = document.createElement( 'button' );
-																			b.className = 'IconButton IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																			b.className = 'IconMedium IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																			b.onclick = function(  )
 																			{
 																			
@@ -5295,7 +5294,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent90 InputHeight FloatLeft Ellipsis">' + groups[a].Name + (groups[a].Owner?' (by '+groups[a].Owner+')':'') + '</div>';
 						
 						//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
-						//str += '		<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
+						//str += '		<button wid="' + groups[a].ID + '" class="IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
 						//str += '	</div>';
 						str += '</div>';
 						
@@ -5323,7 +5322,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent80 InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].Name + (groups[a].groups[aa].Owner?' (by '+groups[a].groups[aa].Owner+')':'') + '</div>';
 								
 								//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
-								//str += '		<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
+								//str += '		<button wid="' + groups[a].groups[aa].ID + '" class="IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
 								//str += '	</div>';
 								str += '</div>';
 								
@@ -5351,7 +5350,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent70 InputHeight FloatLeft Ellipsis" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + groups[a].groups[aa].groups[aaa].Name + (groups[a].groups[aa].groups[aaa].Owner?' (by '+groups[a].groups[aa].groups[aaa].Owner+')':'') + '</div>';
 										
 										//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
-										//str += '		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
+										//str += '		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
 										//str += '	</div>';
 										str += '</div>';
 										
@@ -5407,7 +5406,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												{
 													var b = document.createElement( 'button' );
 													b.id = 'WorkgroupEditBack';
-													b.className = 'IconButton IconMedium ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed';
+													b.className = 'IconMedium ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed';
 													return b;
 												}()
 											},
@@ -5436,7 +5435,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												{
 													var b = document.createElement( 'button' );
 													b.id = 'WorkgroupSearchCancelBtn';
-													b.className = 'IconButton IconSmall ButtonSmall fa-times-circle Closed';
+													b.className = 'IconSmall ButtonSmall fa-times-circle Closed';
 													b.style = 'position:absolute;right:0;margin-top:-2px;';
 													b.onclick = function(  )
 													{
@@ -5483,7 +5482,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 													{
 														var b = document.createElement( 'button' );
 														b.id = 'WorkgroupEdit';
-														b.className = 'IconButton IconMedium ButtonSmall Negative FloatRight fa-plus-circle Open';
+														b.className = 'IconMedium ButtonSmall Negative FloatRight fa-plus-circle Open';
 														b.onclick = function()
 														{
 															edit(  );
@@ -5909,7 +5908,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				{
 					var d = document.createElement( 'div' );
 					d.className = 'HContent' + '10' + ' TextCenter FloatLeft Ellipsis';
-					d.innerHTML = '<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle"></button>';
+					d.innerHTML = '<button class="IconSmall ButtonSmall Negative FloatRight fa-plus-circle"></button>';
 					d.onclick = function()
 					{
 						//Sections.accounts_workgroups( 'create' );

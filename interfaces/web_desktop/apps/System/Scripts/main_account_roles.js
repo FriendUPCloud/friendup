@@ -178,9 +178,9 @@ Sections.accounts_roles = function( cmd, extra )
 				var d = document.createElement( 'div' );
 				d.className = 'PaddingSmall HContent' + '10' + ' TextCenter FloatLeft Ellipsis';
 			
-				d.innerHTML = '<button type="button" class="FullWidth IconSmall fa-plus NoBorders NoPadding IconButton Negative"> </button>';
+				d.innerHTML = '<button type="button" class="FullWidth IconSmall fa-plus NoBorders NoPadding Negative"> </button>';
 			
-				//d.innerHTML = '<button class="IconButton IconSmall ButtonSmall fa-plus-circle"></button>';
+				//d.innerHTML = '<button class="IconSmall ButtonSmall fa-plus-circle"></button>';
 		
 				d.onclick = function(){ Sections.userroleadd( 'Unnamed role' ) };
 				headRow.appendChild( d );

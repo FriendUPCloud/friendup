@@ -140,7 +140,7 @@ function initRoleDetails( info )
 				apl += '<div class="HRow">';
 				apl += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis"><strong>' + perm[a].Name + '</strong></div>';
 				apl += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
-				apl += '<button onclick="Expand(this,3)" class="IconButton IconSmall ButtonSmall FloatRight fa-chevron-right"></button>';
+				apl += '<button onclick="Expand(this,3)" class="IconSmall ButtonSmall FloatRight fa-chevron-right"></button>';
 				apl += '</div>';
 				apl += '</div>';
 				
@@ -176,7 +176,7 @@ function initRoleDetails( info )
 					apl += '<div class="HRow">';
 					apl += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis">' + i18n( 'i18n_' + obj.id ) + '</div>';
 					apl += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
-					apl += '<button onclick="Sections.updatepermission('+rid+',\''+pem+'\',\''+key+'\','+null+',this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( obj.data ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+					apl += '<button onclick="Sections.updatepermission('+rid+',\''+pem+'\',\''+key+'\','+null+',this)" class="IconSmall ButtonSmall FloatRight' + ( obj.data ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
 					apl += '</div>';
 					apl += '</div>';
 				}
@@ -205,7 +205,7 @@ function initRoleDetails( info )
 				apl += '<div class="HRow">';
 				apl += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis"><strong>' + perm[a].Name + '</strong></div>';
 				apl += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
-				//apl += '<button onclick="Expand(this,3)" class="IconButton IconSmall ButtonSmall FloatRight fa-chevron-right"></button>';
+				//apl += '<button onclick="Expand(this,3)" class="IconSmall ButtonSmall FloatRight fa-chevron-right"></button>';
 				apl += '</div>';
 				apl += '</div>';
 				
@@ -322,9 +322,9 @@ function initRoleDetails( info )
 						//apl += '</select></div>';
 						apl += '</div>';
 						apl += '<div class="PaddingSmall HContent10 TextCenter FloatLeft Ellipsis">';
-						//apl += '<button onclick="javascript:void(0)" class="IconButton IconSmall ButtonSmall FloatRight fa-toggle-off"></button>';
+						//apl += '<button onclick="javascript:void(0)" class="IconSmall ButtonSmall FloatRight fa-toggle-off"></button>';
 						//apl += '<strong>(-)</strong>';
-						apl += '<button class="IconButton IconSmall ButtonSmall FloatRight fa-minus-circle" onclick="Sections.removepermission('+rid+',\''+pem+'\',\''+key+'\',\''+data+'\',this)"></button>';
+						apl += '<button class="IconSmall ButtonSmall FloatRight fa-minus-circle" onclick="Sections.removepermission('+rid+',\''+pem+'\',\''+key+'\',\''+data+'\',this)"></button>';
 						apl += '</div>';
 						apl += '</div>';
 				
@@ -389,9 +389,9 @@ function initRoleDetails( info )
 				apl += '</select>';
 				apl += '<input id="RoleParameterInput_' + key + '" class="FullWidth" placeholder="Ex. [1,2,3] or {1:1,2:2,3:3}" style="display:none">';
 				apl += '</div><div class="PaddingSmall HContent10 TextCenter FloatLeft Ellipsis">';
-				//apl += '<button onclick="javascript:void(0)" class="IconButton IconSmall ButtonSmall FloatRight fa-toggle-off"></button>';
+				//apl += '<button onclick="javascript:void(0)" class="IconSmall ButtonSmall FloatRight fa-toggle-off"></button>';
 				//apl += '<strong>(+)</strong>';
-				apl += '<button class="IconButton IconSmall ButtonSmall FloatRight fa-plus-circle" onclick="Sections.addpermission('+rid+',\''+key+'\',this)"></button>';
+				apl += '<button class="IconSmall ButtonSmall FloatRight fa-plus-circle" onclick="Sections.addpermission('+rid+',\''+key+'\',this)"></button>';
 				apl += '</div>';
 				apl += '</div>';
 				
@@ -401,7 +401,7 @@ function initRoleDetails( info )
 				
 				apl += '<div class="HRow">';
 				//apl += '<button onclick="javascript:void(0)" class="IconSmall FloatRight">Save</button>';
-				//apl += '<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit" onclick=""></button>';
+				//apl += '<button class="IconSmall ButtonSmall FloatRight fa-edit" onclick=""></button>';
 				apl += '</div>';
 				
 				
