@@ -56,7 +56,8 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	if( typeof( _applicationBasics ) == 'undefined' || !_applicationBasics.js )
 	{
 		//console.log( 'ExecuteApplication - retries', retries );
-		if( retries == 3 ) return console.log( 'Could not execute app: ' + app );
+		if( retries == 3 ) 
+			return console.log( 'Could not execute app: ' + app );
 		loadApplicationBasics( function()
 		{
 			ExecuteApplication( app, args, callback, !retries ? 3 : retries++, flags );

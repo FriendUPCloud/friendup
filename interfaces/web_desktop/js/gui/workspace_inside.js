@@ -11147,65 +11147,76 @@ function mobileDebug( str, clear )
 // TODO: Test loading different themes
 
 _applicationBasics = {};
+var _applicationBasicsLoading = false;
 function loadApplicationBasics( callback )
 {
-	// Don't do in login
-	if( Workspace.loginPrompt )
+	if( _applicationBasicsLoading ) 
 	{
-		if( callback )
-			callback();
-		return;
+		clearTimeout( _applicationBasicsLoading );
 	}
-	
-	// Preload basic scripts
-	let a_ = new File( '/webclient/js/apps/api.js' );
-	a_.onLoad = function( data )
+	_applicationBasicsLoading = setTimeout( function()
 	{
-		_applicationBasics.apiV1 = URL.createObjectURL( new Blob( [ data ], { type: 'text/javascript' } ) );
-	}
-	a_.load();
-	let sb_ = new File( '/themes/friendup12/scrollbars.css' );
-	sb_.onLoad = function( data )
-	{
-		if( _applicationBasics.css )
-			_applicationBasics.css += data;
-		else _applicationBasics.css = data;
-	}
-	sb_.load();
-	// Preload basic scripts
-	let c_ = new File( '/system.library/module/?module=system&command=theme&args=%7B%22theme%22%3A%22friendup12%22%7D&sessionid=' + Workspace.sessionId );
-	c_.onLoad = function( data )
-	{
-		if( _applicationBasics.css )
-			_applicationBasics.css += data;
-		else _applicationBasics.css = data;
-	}
-	c_.load();
-	
-	let js = '/webclient/' + [ 'js/oo.js',
-	'js/api/friendappapi.js',
-	'js/utils/engine.js',
-	'js/utils/tool.js',
-	'js/utils/json.js',
-	'js/io/cajax.js',
-	'js/io/appConnection.js',
-	'js/io/coreSocket.js',
-	'js/gui/treeview.js' ].join( ';/webclient/' );
-	let j_ = new File( js );
-	j_.onLoad = function( data )
-	{
-		_applicationBasics.js = data;
-		if( callback )
+		_applicationBasicsLoading = null;
+		
+		// Don't do in login
+		if( Workspace.loginPrompt )
 		{
-			try
-			{
+			if( callback )
 				callback();
-			}
-			catch( e )
+			return;
+		}
+		
+		// Preload basic scripts
+		let a_ = new File( '/webclient/js/apps/api.js' );
+		a_.onLoad = function( data )
+		{
+			_applicationBasics.apiV1 = URL.createObjectURL( new Blob( [ data ], { type: 'text/javascript' } ) );
+		}
+		a_.load();
+		let sb_ = new File( '/themes/friendup12/scrollbars.css' );
+		sb_.onLoad = function( data )
+		{
+			if( _applicationBasics.css )
+				_applicationBasics.css += data;
+			else _applicationBasics.css = data;
+		}
+		sb_.load();
+		// Preload basic scripts
+		let c_ = new File( '/system.library/module/?module=system&command=theme&args=%7B%22theme%22%3A%22friendup12%22%7D&sessionid=' + Workspace.sessionId );
+		c_.onLoad = function( data )
+		{
+			if( _applicationBasics.css )
+				_applicationBasics.css += data;
+			else _applicationBasics.css = data;
+		}
+		c_.load();
+		
+		let js = '/webclient/' + [ 'js/oo.js',
+		'js/api/friendappapi.js',
+		'js/utils/engine.js',
+		'js/utils/tool.js',
+		'js/utils/json.js',
+		'js/io/cajax.js',
+		'js/io/appConnection.js',
+		'js/io/coreSocket.js',
+		'js/gui/treeview.js' ].join( ';/webclient/' );
+		let j_ = new File( js );
+		j_.onLoad = function( data )
+		{
+			console.log( 'BASICS LOADED: ' + data );
+			_applicationBasics.js = data;
+			if( callback )
 			{
+				try
+				{
+					callback();
+				}
+				catch( e )
+				{
+				}
 			}
 		}
-	}
-	j_.load();
+		j_.load();
+	}, 2 );
 };
 
