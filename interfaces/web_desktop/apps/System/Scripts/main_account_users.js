@@ -7904,15 +7904,13 @@ function applications( callback, id )
 				
 						if( json )
 						{
-							if( ShowLog ) console.log( 'listuserapplications ', { e:e, d:json } );
+							console.log( 'Listuserapplications: ', json );
 							
 							return callback( true, json );
 						}
 					} 
 					catch( e ){ } 
 				}
-				
-				if( ShowLog ) console.log( 'listuserapplications ', { e:e, d:d } );
 				
 				return callback( false, false );
 			}
@@ -7929,8 +7927,10 @@ function applications( callback, id )
 					{
 						let json = JSON.parse( d );
 				
+						
 						if( json )
 						{
+							console.log( 'Software: ', json );
 							if( ShowLog ) console.log( 'software ', { e:e, d:json } );
 							
 							return callback( true, json );
@@ -7938,8 +7938,6 @@ function applications( callback, id )
 					} 
 					catch( e ){ } 
 				}
-				
-				if( ShowLog ) console.log( 'software ', { e:e, d:d } );
 				
 				return callback( false, false );
 			}
