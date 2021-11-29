@@ -137,7 +137,7 @@ if( isset( $args->args->application ) && $args->args->application )
 						
 						die( 'ok' );
 					}
-					die( 'fail<!--separate-->{"message":"Could not find permissions in application config."}' );
+					die( 'fail<!--separate-->{"message":"Could not find permissions in application config."}<!--separate-->' . $a->Config );
 				}
 				die( 'fail<!--separate-->{"message":"Could not decode JSON config."}' );
 			}
