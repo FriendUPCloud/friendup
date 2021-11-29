@@ -610,3 +610,9 @@ body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent .Selected
 	color: #20374D;
 }
 
+html #Admin .IconButton:hover
+{
+	color: inherit;
+	opacity: 0.8;
+}
+
