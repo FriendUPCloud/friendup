@@ -138,6 +138,12 @@ int UGMAddUserToGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID );
 //
 //
 
+UserGroup *UGMGetGroupByNameAndUserIDDB( UserGroupManager *ugm, const char *name, FQUAD userid );
+
+//
+//
+//
+
 int UGMAddUserToGroup( UserGroupManager *um, FULONG groupID, FULONG userID );
 
 //

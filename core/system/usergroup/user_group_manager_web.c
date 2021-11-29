@@ -717,7 +717,17 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				
 				// get information from DB if group already exist
 
-				UserGroup *ug = UGMGetGroupByNameDB( l->sl_UGM, groupname );
+				UserGroup *ug = NULL;
+				
+				if( groupCreatedByUser == TRUE )
+				{
+					ug = UGMGetGroupByNameAndUserIDDB( l->sl_UGM, groupname, loggedSession->us_UserID );
+				}
+				else
+				{
+					ug = UGMGetGroupByNameDB( l->sl_UGM, groupname );
+				}
+				
 				FBOOL groupUpdate = FALSE;
 				DEBUG("[UMWebRequest] GroupCreate: pointer to group from memory: %p\n", ug );
 				
