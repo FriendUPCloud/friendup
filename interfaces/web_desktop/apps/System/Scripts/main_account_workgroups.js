@@ -2267,6 +2267,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 					};
 					
+					if( workgroup )
+						console.log( 'Workgroup STATUS: ' + workgroup.status );
 					if( workgroup && workgroup.status == 2 )
 					{
 						bg4.style.display = 'none';
