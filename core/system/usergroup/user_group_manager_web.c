@@ -665,6 +665,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			}
 		}
 		
+		DEBUG("[UMWebRequest] can create workgroup: %d group created by user %d\n", canCreateWorkgroup, groupCreatedByUser );
+		
 		if( canCreateWorkgroup == TRUE )
 		{
 			el = HttpGetPOSTParameter( request, "description" );
