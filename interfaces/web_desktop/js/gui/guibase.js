@@ -4024,7 +4024,7 @@ function doReveal()
 			if( !Workspace.wallpaperLoaded )
 			{
 				let i = new Image();
-				i.src = Workspace.wallpaperImage;
+				i.src = getImageUrl( Workspace.wallpaperImage );
 				i.onload = function()
 				{
 					// Tell app we can show ourselves!
