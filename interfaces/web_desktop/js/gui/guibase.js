@@ -4028,10 +4028,13 @@ function doReveal()
 				i.onload = function()
 				{
 					// Tell app we can show ourselves!
+					document.body.removeChild( i );
 					document.body.classList.add( 'Revealed' );
 					friendApp.reveal();
 					console.log( '1) Doreveal executed.' );
 				}
+				i.style.visibility = 'hidden';
+				document.body.appendChild( i );
 				if( i.width && i.width > 0 )
 				{
 					i.onload();
