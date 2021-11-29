@@ -135,7 +135,11 @@ if( isset( $args->args->application ) && $args->args->application )
 							$app->Save();
 						}
 						
-						die( 'ok' );
+						if( $app->ID > 0 )
+						{
+							die( 'ok<!--separate-->{"message":"Successfully added application to user."}' );
+						}
+						die( 'fail<!--separate-->{"message":"Failed to load and/or save user application instance."}' );
 					}
 					die( 'fail<!--separate-->{"message":"Could not find permissions in application config."}<!--separate-->' . $a->Config );
 				}
