@@ -4016,6 +4016,7 @@ function FixWindowDimensions( mw )
 
 function doReveal()
 {
+	console.log( 'Doreveal executed.' );
 	if( window.friendApp && window.friendApp.reveal )
 	{
 		if( Workspace.wallpaperImage )
