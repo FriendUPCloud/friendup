@@ -458,6 +458,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					{	
 						let ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
 						ifr.src = URL.createObjectURL(new Blob([ws],{type:'text/html'}));
+						console.log( 'Completelaunch 2: ' + this.rawData );
 					}
 					j.send();
 				}
@@ -1325,6 +1326,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 					ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
 					ifr.onload = ifronload;
 					ifr.src = URL.createObjectURL( new Blob([ ws ],{ type: 'text/html' } ) );
+					console.log( 'Completelaunch 1: ' + this.rawData );
 				}
 				j.send();
 
