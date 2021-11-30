@@ -523,7 +523,6 @@ ALTER TABLE `FUser` ADD COLUMN `MaxStoredBytes` bigint(32) NOT NULL DEFAULT '0';
 
 ALTER TABLE `FUser` ADD COLUMN `MaxReadedBytes` bigint(32) NOT NULL DEFAULT '0';
 
-
 INSERT INTO `FUserGroup` (`UserID`,`Name`,`Type`) VALUES (0,'API','Level');
 
 INSERT INTO `FUser` ( `Name`, `Password`, `PublicKey`, `FullName`, `Email`, `SessionID`, `LoggedTime`, `CreatedTime`, `Image`, `LoginTime`, `MaxStoredBytes`, `MaxReadedBytes`) VALUES
