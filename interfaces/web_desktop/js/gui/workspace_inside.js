@@ -11203,7 +11203,7 @@ function loadApplicationBasics( callback )
 		let j_ = new File( js );
 		j_.onLoad = function( data )
 		{
-			console.log( 'BASICS LOADED: ' + data );
+			//console.log( 'BASICS LOADED: ' + data );
 			_applicationBasics.js = data;
 			if( callback )
 			{
