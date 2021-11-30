@@ -1708,12 +1708,14 @@ function apiWrapper( event, force )
 						case 'setFlag':
 							if( win )
 							{
+								console.log( 'Setting flag ' + msg.data.flag + ' on window ' + win.getFlag( 'title' ) + ' to ' + msg.data.value );
 								win.setFlag( msg.data.flag, msg.data.value );
 							}
 							break;
 						case 'setFlags':
 							if( win )
 							{
+								console.log( 'Setting flags on window ' + win.getFlag( 'title' ) + ' to: ', msg.data );
 								win.setFlags( msg.data );
 							}
 							break;
