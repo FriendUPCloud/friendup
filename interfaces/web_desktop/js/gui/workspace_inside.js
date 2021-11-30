@@ -10976,7 +10976,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 					}
 					else
 					{
-						//console.log( '[receivePush] We are azleep! Server may push us again with this ' + msg.notifid );
+						console.log( '[receivePush] We are azleep! Server may push us again with this ' + msg.notifid );
 					}
 				}
 				else
@@ -11076,6 +11076,18 @@ Workspace.receivePush = function( jsonMsg, ready )
 		}
 	
 		mobileDebug( 'Start app ' + msg.application + ' and ' + _executionQueue[ msg.application ], true );
+		if( Friend.startupApps[ msg.application ] )
+		{
+			console.log( 'The app ' + msg.application + ' is already running. Killing it.' );
+			for( let b in Workspace.applications )
+			{
+				if( Workspace.application[ b ].applicationName == msg.application )
+				{
+					console.log( 'Killed ' + msg.application );
+					Workspace.killByTaskId( b );
+				}
+			}
+		}
 		Friend.startupApps[ msg.application ] = true;
 		ExecuteApplication( msg.application, '', appMessage );
 	}
