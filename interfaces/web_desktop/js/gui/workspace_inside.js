@@ -10986,7 +10986,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 			
 				mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
 				let app = Workspace.applications[a];
-				//console.log( 'push to app', [ msg, app ]);
+				console.log( 'push to app', [ msg, app ]);
 				app.contentWindow.postMessage( JSON.stringify( { 
 					type: 'system',
 					method: 'pushnotification',
@@ -11059,7 +11059,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 				data: msg
 			};
 		
-			mobileDebug( ' Sendtoapp: ' + JSON.stringify( msg ) );
+			console.log( ' Sendtoapp: ' + JSON.stringify( msg ) );
 		
 			app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 		
