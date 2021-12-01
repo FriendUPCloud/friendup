@@ -1743,6 +1743,9 @@ if( isset( $args->command ) )
 		case 'getapplicationpreview':
 			require( 'modules/system/include/getapplicationpreview.php' );
 			break;
+		case 'getapplicationicon':
+			require( 'modules/system/include/getapplicationicon.php' );
+			break;
 		case 'getmimetypes':
 			require( 'modules/system/include/getmimetypes.php' );
 			break;

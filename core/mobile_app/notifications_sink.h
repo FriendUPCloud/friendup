@@ -45,7 +45,6 @@ enum {
 	WS_NOTIF_SINK_ERROR_MAX
 };
 
-const char *errorMsg[ WS_NOTIF_SINK_ERROR_MAX ];
 
 //
 // Data Queue WSI Mutex

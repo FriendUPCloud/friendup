@@ -52,7 +52,7 @@ UserGroupManager *UGMNew( void *sb )
 			
 			//strcpy( where, "(UserID=0 OR UserID in(select u.ID from FUser u left join FUserToGroup utg on u.ID=utg.UserID left join FUserGroup ug on utg.UserGroupID=ug.id where ug.Name='Admin' and (ug.Type='Workgroup' or ug.Type='Level')) ) AND Type in('Workgroup','Level')");
 			
-			strcpy( where, "ID in (SELECT GroupID FROM Filesystem)");
+			strcpy( where, "ID in (SELECT DISTINCT GroupID FROM Filesystem WHERE Mounted=1)");
 			
 			sm->ugm_UserGroups = sqlLib->Load( sqlLib, UserGroupDesc, where, &entries );
 
