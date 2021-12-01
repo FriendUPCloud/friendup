@@ -1427,6 +1427,8 @@ FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const cha
 					tmpi = snprintf( tmp, sizeof(tmp), ",{\"id\":%s,\"userid\":%s,\"parentid\":%s,\"name\":\"%s\",\"type\":\"%s\",\"status\":%s}", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
 				}
 				rownr++;
+				
+				BufStringAddSize( bs, tmp, tmpi );
 			}
 			sqlLib->FreeResult( sqlLib, result );
 		}
