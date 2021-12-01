@@ -1331,7 +1331,7 @@ FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const cha
 		int arg = 0;
 		BufString *sqlbs = BufStringNew();
 		
-		BufStringAdd( sqlbs, "SELECT g.ID,g.UserID,g.ParentID,g.Name,g.Type,g.Status FROM FUserGroup g inner join FUserToGroup utg on g.ID=utg.UserGroupID" );
+		BufStringAdd( sqlbs, "SELECT g.ID,g.UserID,g.ParentID,g.Name,g.Type,g.Status FROM FUserGroup g" );
 		
 		if( uid > 0 || type != NULL || parentID > 0 || status > 0 )
 		{
@@ -1342,7 +1342,7 @@ FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const cha
 		{
 			char tmp[ 256 ];
 			int tmpi = 0;
-			tmpi = snprintf( tmp, sizeof(tmp), " utg.UserID=%lu", uid );
+			tmpi = snprintf( tmp, sizeof(tmp), " inner join FUserToGroup utg on g.ID=utg.UserGroupID utg.UserID=%lu", uid );
 			
 			BufStringAddSize( sqlbs, tmp, tmpi );
 			arg++;
@@ -1401,6 +1401,8 @@ FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const cha
 			BufStringAddSize( sqlbs, tmp, tmpi );
 			arg++;
 		}
+		
+		DEBUG("[UGMGetGroupsDB] Call SQL: %s\n", sqlbs->bs_Buffer );
 		
 		//snprintf( tmpQuery, sizeof(tmpQuery), "SELECT * FROM FUserToGroup WHERE `UserID`=%lu AND `UserGroupID`=%lu", uid, ugroupid );
 		
