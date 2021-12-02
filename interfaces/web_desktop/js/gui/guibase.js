@@ -4064,7 +4064,7 @@ function doReveal()
 	}
 	else
 	{
-		console.log( 'window.friendApp does not exist, or reveal does not exist on the object.' );
+		//console.log( 'window.friendApp does not exist, or reveal does not exist on the object.' );
 	}
 }
 
