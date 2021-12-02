@@ -109,7 +109,7 @@ static inline void FillDeviceInfo( int devnr, char *tmp, int tmplen, int mounted
 {
 	if( devnr == 0 )
 	{
-		snprintf( tmp, tmplen, "{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\",\"Mounted\":%d}\n", 
+		snprintf( tmp, tmplen, "{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\",\"Mounted\":%d}", 
 			fname ? fname : "", 
 			fsysname ? fsysname : "", 
 			path ? path : "",
@@ -126,7 +126,7 @@ static inline void FillDeviceInfo( int devnr, char *tmp, int tmplen, int mounted
 	}
 	else
 	{
-		snprintf( tmp, tmplen, ",{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\",\"Mounted\":%d}\n", 
+		snprintf( tmp, tmplen, ",{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\",\"Mounted\":%d}", 
 			fname ? fname : "",
 			fsysname ? fsysname : "", 
 			path ? path : "",
