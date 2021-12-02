@@ -1331,7 +1331,8 @@ FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const cha
 		int arg = 0;
 		BufString *sqlbs = BufStringNew();
 		
-		BufStringAdd( sqlbs, "SELECT g.ID,g.UserID,g.ParentID,g.Name,g.Type,g.Status,g.UniqueID FROM FUserGroup g" );
+		// {\"name\":\"Testers\",\"ID\":24,\"parentid\":0,\"level\":\"Workgroup\",\"status\":0,\"uuid\":\"a33d00704d86fd08b55cce6d036d475f\"}
+		BufStringAdd( sqlbs, "SELECT g.Name,g.ID,g.ParentID,g.Type,g.Status,g.UniqueID FROM FUserGroup g" );
 		
 		if( uid > 0 || type != NULL || parentID > 0 || status > 0 )
 		{
@@ -1412,6 +1413,10 @@ FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const cha
 			int rownr = 0;
 			char **row;
 			// g.ID,g.UserID,g.ParentID,g.Name,g.Type.g.Status
+			
+			/*
+			ok<!--separate-->{\"groups\":[{\"name\":\"Testers\",\"ID\":24,\"parentid\":0,\"level\":\"Workgroup\",\"status\":0,\"uuid\":\"a33d00704d86fd08b55cce6d036d475f\"},{\"name\":\"FriendUP\",\"ID\":51,\"parentid\":102,\"level\":\"Workgroup\",\"status\":0,\"uuid\":\"a0eb3d4ef1e318c9ff15e56733be1b90\"},{\"name\":\"Administrators\",\"ID\":102,\"parentid\":0,\"level\":\"Workgroup\",\"status\":0,\"uuid\":\"2ff9d98694551abe9e64e68eb4758f7b\"},{\"name\":\"Friend Sky\",\"ID\":248,\"parentid\":0,\"level\":\"Workgroup\",\"status\":2,\"uuid\":\"5d6520ddfd4874050bf7882af94d1388b35ee0f849ef52816766266c4ca95fac\"},{\"name\":\"Lounge\",\"ID\":261,\"parentid\":0,\"level\":\"Workgroup\",\"status\":2,\"uuid\":\"0581c802ceda8151ca6dd815fa3ab64cecfa1defda702e9bdb8f78cea84169be\"},{\"name\":\"29November2021\",\"ID\":549,\"parentid\":0,\"level\":\"Workgroup\",\"status\":2,\"uuid\":\"798ff05116b7b9bb2439a8c0383ec9e7404464e15c0e9453c6bbdb0f936293ed\"}]}
+			 */
 
 			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 			{
@@ -1422,11 +1427,11 @@ FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const cha
 				
 				if( rownr == 0 )
 				{
-					tmpi = snprintf( tmp, sizeof(tmp), "{\"ID\":%s,\"userid\":%s,\"parentid\":%s,\"name\":\"%s\",\"level\":\"%s\",\"status\":%s,\"uuid\":\"%s\"}", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ], row[ 6 ] );
+					tmpi = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"ID\":%s,\"parentid\":%s,\"level\":\"%s\",\"status\":%s,\"uuid\":\"%s\"}", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
 				}
 				else
 				{
-					tmpi = snprintf( tmp, sizeof(tmp), ",{\"ID\":%s,\"userid\":%s,\"parentid\":%s,\"name\":\"%s\",\"level\":\"%s\",\"status\":%s,\"uuid\":\"%s\"}", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ], row[ 6 ] );
+					tmpi = snprintf( tmp, sizeof(tmp), ",{\"name\":\"%s\",\"ID\":%s,\"parentid\":%s,\"level\":\"%s\",\"status\":%s,\"uuid\":\"%s\"}", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
 				}
 				rownr++;
 				
