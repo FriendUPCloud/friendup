@@ -1331,7 +1331,7 @@ FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const cha
 		int arg = 0;
 		BufString *sqlbs = BufStringNew();
 		
-		BufStringAdd( sqlbs, "SELECT g.ID,g.UserID,g.ParentID,g.Name,g.Type,g.Status FROM FUserGroup g" );
+		BufStringAdd( sqlbs, "SELECT g.ID,g.UserID,g.ParentID,g.Name,g.Type,g.Status,g.UniqueID FROM FUserGroup g" );
 		
 		if( uid > 0 || type != NULL || parentID > 0 || status > 0 )
 		{
@@ -1418,13 +1418,15 @@ FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const cha
 				char tmp[ 512 ];
 				int tmpi = 0;
 				
+				//"{\"name\":\"%s\",\"ID\":%lu,\"parentid\":%lu,\"level\":\"%s\",\"status\":%d,\"uuid\":\"%s\"}"
+				
 				if( rownr == 0 )
 				{
-					tmpi = snprintf( tmp, sizeof(tmp), "{\"id\":%s,\"userid\":%s,\"parentid\":%s,\"name\":\"%s\",\"type\":\"%s\",\"status\":%s}", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
+					tmpi = snprintf( tmp, sizeof(tmp), "{\"ID\":%s,\"userid\":%s,\"parentid\":%s,\"name\":\"%s\",\"level\":\"%s\",\"status\":%s,\"uuid\":\"%s\"}", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ], row[ 6 ] );
 				}
 				else
 				{
-					tmpi = snprintf( tmp, sizeof(tmp), ",{\"id\":%s,\"userid\":%s,\"parentid\":%s,\"name\":\"%s\",\"type\":\"%s\",\"status\":%s}", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
+					tmpi = snprintf( tmp, sizeof(tmp), ",{\"ID\":%s,\"userid\":%s,\"parentid\":%s,\"name\":\"%s\",\"level\":\"%s\",\"status\":%s,\"uuid\":\"%s\"}", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ], row[ 6 ] );
 				}
 				rownr++;
 				
