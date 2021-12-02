@@ -122,7 +122,7 @@ if( $rows = $SqlDatabase->FetchObjects( '
 	' . ( isset( $args->args->workgroups ) ? '
 	AND ( g.ID IN (' . $args->args->workgroups . ') OR g.ParentID IN (' . $args->args->workgroups . ') ) 
 	' : '' ) . '
-	GROUP BY g.ID ORDER BY g.Name ASC 
+	ORDER BY g.Name ASC 
 ' ) )
 {
 	foreach( $rows as $row )
