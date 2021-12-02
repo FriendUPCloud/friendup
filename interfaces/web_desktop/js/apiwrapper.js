@@ -3515,10 +3515,12 @@ function apiWrapper( event, force )
 
 					// Update login and tell apps
 					case 'updatelogin':
+					    Workspace.loginUsername = null;
+					    Workspace.loginPassword = null;
 						Workspace.login( msg.username, msg.password, true );
 						for( let a = 0; a < Workspace.applications.length; a++ )
 						{
-							var nmsg = {
+							let nmsg = {
 								command: 'userupdate',
 								applicationId: msg.applicationId
 							};

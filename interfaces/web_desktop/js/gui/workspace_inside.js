@@ -1361,7 +1361,7 @@ var WorkspaceInside = {
 					{
 						if( !Workspace.conn || !Workspace.conn.ws || !Workspace.conn.ws.ws )
 						{
-							console.log( 'Looks like we do not have any websocket. Trying to create it.' );
+							//console.log( 'Looks like we do not have any websocket. Trying to create it.' );
 							Workspace.initWebSocket();
 						}
 					}, 1600 );
@@ -1381,7 +1381,7 @@ var WorkspaceInside = {
 				// Reattach
 				if( !Workspace.conn && selfConn )
 				{
-					console.log( 'Reattaching conn!' );
+					//console.log( 'Reattaching conn!' );
 					Workspace.conn = selfConn;
 				}
 			}
