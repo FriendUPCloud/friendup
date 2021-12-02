@@ -259,6 +259,15 @@ function ResizeWindow( div, wi, he, mode, depth )
 	else if( depth > 4 ) return;
 	if( !mode ) mode = false;
 	
+	if( !wi || wi == 'undefined' || wi == undefined )
+	{
+	    wi = div.windowObject.getFlag( 'width' );
+	}
+	if( !he || he == 'undefined' || he == undefined )
+	{
+	    he = div.windowObject.getFlag( 'height' );
+	}
+	
 	// Find window div
 	if ( !div.content )
 	{
@@ -285,7 +294,10 @@ function ResizeWindow( div, wi, he, mode, depth )
 		// When getting width and height from flags, and not in borderless
 		// mode, check also borders around the content and add those to get
 		// the correct width and height
-		frameWidth = ele.rightbar.offsetWidth + ele.leftbar.offsetWidth;
+		// TODO: leftbar and rightbar does not exist, remove it
+		/*frameWidth = ele.rightbar.offsetWidth + ele.leftbar.offsetWidth;
+		console.log( 'Checking frame ' + frameWidth + ' (' + ele.rightbar.offsetWidth + ', ' + ele.leftbar.offsetWidth + ')' );
+		console.log( ele.rightbar, ele.leftbar );*/
 		if( !wi ) 
 		{
 			wi = parseInt( flags.width );
@@ -295,8 +307,13 @@ function ResizeWindow( div, wi, he, mode, depth )
 			}
 		}
 		frameHeight = ele.titleBar.offsetHeight;
-		if( isWorkspaceScreen )
+		
+		// TODO: Bottom bar does not exist, remove it
+		/*if( isWorkspaceScreen )
+		{
 			frameHeight += ele.bottombar.offsetHeight;
+			console.log( 'And the bottombar: ' + frameHeight + ' (' + ele.bottombar.offsetHeight + ')' );
+		}*/
 		if( !he )
 		{
 			he = flags.height;
@@ -307,10 +324,12 @@ function ResizeWindow( div, wi, he, mode, depth )
 		}
 		
 		// Window gauge
+		// TODO: Volume gauge does not exist, remove it
+		/*
 		if( div.windowObject.flags.volume && div.volumeGauge )
 		{
 			div.content.style.left = GetElementWidth( div.volumeGauge.parentNode ) + 'px';
-		}
+		}*/
 	}
 	
 	let cl = document.body.classList.contains( 'Inside' );
@@ -318,8 +337,16 @@ function ResizeWindow( div, wi, he, mode, depth )
 	let maxVWidt, maxVHeig;
 	if( Workspace.mode != 'vr' )
 	{
-		maxVWidt = cl ? div.windowObject.flags.screen.getMaxViewWidth() : GetWindowWidth();
-		maxVHeig = cl ? div.windowObject.flags.screen.getMaxViewHeight() : GetWindowHeight();
+		if( div.windowObject.flags.screen )
+		{
+			maxVWidt = cl ? div.windowObject.flags.screen.getMaxViewWidth() : GetWindowWidth();
+			maxVHeig = cl ? div.windowObject.flags.screen.getMaxViewHeight() : GetWindowHeight();
+		}
+		else
+		{
+			maxVWidt = window.innerWidth;
+			maxVHeig = window.innerHeight;
+		}
 	}
 	else
 	{
@@ -338,7 +365,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 
 	let divs = div.getElementsByTagName ( 'div' );
 	let cnt  = false;
-	for( var a = 0; a < divs.length; a++ )
+	for( let a = 0; a < divs.length; a++ )
 	{
 		if( !cnt && divs[a].classList && divs[a].classList.contains( 'Content' ) )
 		{
@@ -346,17 +373,21 @@ function ResizeWindow( div, wi, he, mode, depth )
 			break;
 		}
 	}
-
-
+	
 	// TODO: Let a central resize code handle this (this one?)
 	// Maximum dimensions
 	let pheight = div.parentNode ? div.parentNode.offsetHeight : GetWindowHeight();
-	let maxWidth  = div.parentWindow ? div.parentWindow.getWindowElement().offsetWidth : maxVWidt;
-	let maxHeight = div.parentWindow ? div.parentWindow.getWindowElement().offsetHeight : maxVHeig;
+	// TODO: Support parent windows
+	let maxWidth  = maxVWidt;
+	let maxHeight = maxVHeig;
+	
+	//console.log( '0) Max height first ' + maxVHeig + ' ' + margins.top + ' ' + margins.bottom );
 	
 	// Add margins
 	maxWidth -= margins.left + margins.right;
 	maxHeight -= margins.top + margins.bottom;
+	
+	//console.log( '1) Here is wihe: ' + wi + 'x' + he );
 	
 	if( div.windowObject && maximized )
 	{
@@ -369,12 +400,19 @@ function ResizeWindow( div, wi, he, mode, depth )
 		if( he > maxHeight ) he = maxHeight;
 	}
 	
+	//console.log( 'Max height: ' + maxHeight );
+	
+	//console.log( '2) Here is wihe: ' + wi + 'x' + he );
+	
 	// Make sure we don't go past screen limits
 	let l = t = 0;
 	if( div.parentNode )
 	{
-		l = div.offsetLeft;
-		t = div.offsetTop;
+		l = parseInt( div.style.left );
+		t = parseInt( div.style.top );
+		if( isNaN( l ) ) l = 0;
+		if( isNaN( t ) ) t = 0;
+		//console.log( 'Style top: ' + t + ' (' + div.style.top + ')' );
 	}
 	else
 	{
@@ -391,15 +429,23 @@ function ResizeWindow( div, wi, he, mode, depth )
 		t = 0;
 	}
 	
+	//console.log( '3) Here is wihe: ' + wi + 'x' + he );
+	
 	// Skew for calculating beyond workspace 1
 	let skewx = div.windowObject.workspace * window.innerWidth;
 	if( !isWorkspaceScreen ) skewx = 0;
 	
 	if( l + wi > maxWidth + skewx + margins.left )
+	{
 		wi = maxWidth + skewx - l + margins.left;
+	}
 	if( t + he > maxHeight + margins.top )
+	{
 		he = maxHeight - t + margins.top;
+	}
 	// Done limits
+	
+	//console.log( '2) Here is wihe: ' + wi + 'x' + he );
 	
 	// Flag constraints
 	let fminw = div.windowObject.flags['min-width']  ? div.windowObject.flags['min-width']  : 0;
@@ -601,6 +647,8 @@ function GetViewDisplayMargins( div )
 	if( Workspace.mainDock )
 	{
 		let dockDom = Workspace.mainDock.dom;
+		if( !parseInt( dockDom.style.height ) ) return margins;
+		
 		if( dockDom.classList.contains( 'Top' ) )
 			dockPosition = 'Top';
 		else if( dockDom.classList.contains( 'Left' ) )
@@ -613,22 +661,22 @@ function GetViewDisplayMargins( div )
 		switch( dockPosition )
 		{
 			case 'Top':
-				margins.top += dockDom.offsetHeight;
+				margins.top += parseInt( dockDom.style.height );
 				break;
 			case 'Left':
-				margins.left += dockDom.offsetWidth;
+				margins.left += parseInt( dockDom.style.width );
 				break;
 			case 'Right':
-				margins.right += dockDom.offsetWidth;
+				margins.right += parseInt( dockDom.style.width );
 				break;
 			case 'Bottom':
-				margins.bottom += dockDom.offsetHeight;
+				margins.bottom += parseInt( dockDom.style.height );
 				break;
 		}
 	}
 	
 	if( dockPosition != 'Bottom' && ge( 'Tray' ) && ge( 'Taskbar' ).offsetHeight )
-		margins.bottom += ge( 'Tray' ).offsetHeight;
+		margins.bottom += parseInt( ge( 'Tray' ).style.height );
 	
 	let inf = GetThemeInfo( 'ScreenContentMargins' );
 	if( inf && inf.top )
@@ -6008,8 +6056,10 @@ function _kresize( e, depth )
 	// Resize screens
 	if( Workspace && Workspace.screenList )
 	{
-		for( var a = 0; a < Workspace.screenList.length; a++ )
+		//console.log( 'Everything resized.' );
+		for( let a = 0; a < Workspace.screenList.length; a++ )
 		{
+			Workspace.screenList[a].resized = true;
 			Workspace.screenList[a].resize();
 		}
 		Workspace.initWorkspaces();
@@ -6022,7 +6072,7 @@ function _kresize( e, depth )
 	}
 	
 	// Resize windows
-	for( var a in movableWindows )
+	for( let a in movableWindows )
 	{
 		ConstrainWindow( movableWindows[a] );
 	}
