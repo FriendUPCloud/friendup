@@ -99,6 +99,7 @@ CommService *CommServiceNew( int port, int secured, void *sb, int maxev, int buf
 		service->s_SB = sb;
 		
 		pthread_mutex_init( &service->s_Mutex, NULL );
+		pthread_mutex_init( &service->s_CondMutex, NULL );
 		pthread_cond_init( &service->s_DataReceivedCond, NULL );
 	}
 	else
@@ -128,7 +129,11 @@ void CommServiceDelete( CommService *s )
 			sleep( 1 );
 		}
 		
-		pthread_cond_broadcast( &s->s_DataReceivedCond );
+		if( FRIEND_MUTEX_LOCK( &s->s_CondMutex ) == 0 )
+		{
+			pthread_cond_broadcast( &s->s_DataReceivedCond );
+			FRIEND_MUTEX_UNLOCK( &s->s_CondMutex );
+		}
 		FRIEND_MUTEX_LOCK( &s->s_Mutex );
 
 		CommRequest *cr = s->s_Requests;
@@ -139,10 +144,13 @@ void CommServiceDelete( CommService *s )
 			
 			cr = (CommRequest *) cr->node.mln_Succ;
 		}
-		
-		pthread_cond_broadcast( &s->s_DataReceivedCond );
-		
 		FRIEND_MUTEX_UNLOCK( &s->s_Mutex );
+		
+		if( FRIEND_MUTEX_LOCK( &s->s_CondMutex ) == 0 )
+		{
+			pthread_cond_broadcast( &s->s_DataReceivedCond );
+			FRIEND_MUTEX_UNLOCK( &s->s_CondMutex );
+		}
 		
 		DEBUG2("[COMMSERV] : Quit set to TRUE, sending signal\n");
 		
@@ -211,6 +219,7 @@ void CommServiceDelete( CommService *s )
 		DEBUG2("[COMMSERV] : pipes closed\n");
 		
 		pthread_mutex_destroy( &s->s_Mutex );
+		pthread_mutex_destroy( &s->s_CondMutex );
 		pthread_cond_destroy( &s->s_DataReceivedCond );
 		
 		if( s->s_Buffer )
@@ -673,11 +682,11 @@ int CommServiceThreadServer( FThread *ptr )
 				
 				if( eventCount == 0 )
 				{
-					if( FRIEND_MUTEX_LOCK( &service->s_Mutex ) == 0 )
+					if( FRIEND_MUTEX_LOCK( &service->s_CondMutex ) == 0 )
 					{
 						pthread_cond_broadcast( &service->s_DataReceivedCond );
 						
-						FRIEND_MUTEX_UNLOCK( &service->s_Mutex );
+						FRIEND_MUTEX_UNLOCK( &service->s_CondMutex );
 					}
 					continue;
 				}
@@ -845,10 +854,10 @@ int CommServiceThreadServer( FThread *ptr )
 							char incomingFriendCoreID[ FRIEND_CORE_MANAGER_ID_SIZE + 32 ];
 							memset( incomingFriendCoreID, 0, FRIEND_CORE_MANAGER_ID_SIZE + 32 );
 							
-							unsigned int z;
-							for( z=0 ; z < bs->bs_Size ; z++ )
-								printf("_%c_ ", bs->bs_Buffer[ z ] );
-							printf("\n");
+							//unsigned int z;
+							//for( z=0 ; z < bs->bs_Size ; z++ )
+							//	printf("_%c_ ", bs->bs_Buffer[ z ] );
+							//printf("\n");
 							
 							int j = 0;
 							if( df->df_ID == ID_FCRE && count > 24 )
@@ -870,25 +879,36 @@ int CommServiceThreadServer( FThread *ptr )
 								
 								if( df->df_ID == ID_FCRI )
 								{
+									CommRequest *cr = NULL;
 									DEBUG("[COMMSERV] Response received!\n");
 									
 									if( FRIEND_MUTEX_LOCK( &service->s_Mutex ) == 0 )
 									{
 										DEBUG("[COMMSERV] lock set\n");
 										CommRequest *cr = service->s_Requests;
+										
 										while( cr != NULL )
 										{
 											DEBUG("[COMMSERV] Going through requests %ld find %ld\n", df->df_Size, cr->cr_RequestID );
 											if( cr->cr_RequestID == df->df_Size )
 											{
 												cr->cr_Bs = bs;
+
 												DEBUG("[COMMSERV] Message found by id\n");
-												pthread_cond_broadcast( &service->s_DataReceivedCond );
 												break;
 											}
 											cr = (CommRequest *) cr->node.mln_Succ;
 										}
 										FRIEND_MUTEX_UNLOCK( &service->s_Mutex );
+									}
+									
+									if( cr != NULL )
+									{
+										if( FRIEND_MUTEX_LOCK( &service->s_CondMutex ) == 0 )
+										{
+											pthread_cond_broadcast( &service->s_DataReceivedCond );
+											FRIEND_MUTEX_UNLOCK( &service->s_CondMutex );
+										}
 									}
 								}
 								

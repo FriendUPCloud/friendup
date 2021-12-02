@@ -23,9 +23,15 @@ class File
 	var $_authcontext = null; // authentication key (e.g. sessionid)
 	var $_authdata = null; // authentication data (e.g. a sessionid hash)
 
-	function File( $path )
+	function File( $path, $authcontext = false, $authdata = false )
 	{
 		$this->path = urldecode( $path );
+		
+		// We may wanna do this in the constructor
+		if( isset( $authcontext ) && isset( $authdata ) )
+		{
+			$this->SetAuthContext( $authcontext, $authdata );
+		}
 		
 		$this->GetAuthContextComponent();
 	}
@@ -61,8 +67,16 @@ class File
 				$this->_authdata = $authdata;
 				return true;
 			case 'servertoken':
-				$this->_authcontext = 'servertoken';
-				$this->_authdata = $authdata;
+				$u = new dbIO( 'FUser' );
+				$u->ServerToken = $authdata;
+				// Only succeed if we can load the user
+				if( $u->Load() )
+				{
+					$this->_user = $u;
+					$this->_authcontext = 'servertoken';
+					$this->_authdata = $authdata;
+					return true;
+				}
 				return true;
 			case 'user':
 				$this->_authcontext = 'user';

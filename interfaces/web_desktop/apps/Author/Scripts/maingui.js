@@ -788,12 +788,19 @@ Application.saveFile = function( path, content )
 			break;
 		default:
 			var f = new File();
-			f.onSave = function()
+			f.onSave = function( e, d )
 			{
-				Application.fileSaved = true;
-				Application.lastSaved = ( new Date() ).getTime();
-				Application.statusMessage(  i18n('i18n_written') );
-				Application.currentDocument = path;
+				if( e == 'ok' )
+				{
+					Application.fileSaved = true;
+					Application.lastSaved = ( new Date() ).getTime();
+					Application.statusMessage( i18n('i18n_written') );
+					Application.currentDocument = path;
+				}
+				else
+				{
+					Application.statusMessage( i18n( 'i18n_failed_to_write' ) );
+				}
 			}
 			f.save( content, path );
 			break;

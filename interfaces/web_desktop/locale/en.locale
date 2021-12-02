@@ -506,6 +506,8 @@ i18n_makedir_operation                  : New directory
 i18n_could_not_make_dir                 : Could not create new directory.
 i18n_volume_information                 : Disk information
 i18n_volume_permissions                 : Disk permissions
+i18n_disk_full                          : The disk is full
+i18n_disk_full_desc                     : Your disk is full, and cannot fit any more content. Please contact your administrator to remedy this.
 i18n_drag_to_download_file              : Click or drag to desktop to download.
 i18n_drag_files_to_download             : Drop files to download.
 i18n_add_calendar_event                 : Add calendar event.
@@ -855,4 +857,16 @@ i18n_logging_in                         : Logging in
 
 i18n_erroneous_filename                 : Wrong filename
 i18n_please_set_a_valid_filename        : Please choose a valid filename with the correct filename extension.
+
+#Image viewer ------------------------------------------------------------------
+
+menu_window                             : Window
+menu_fullscreen                         : Fullscreen
+menu_close_window                       : Close window
+menu_display                            : Display
+menu_display_grid                       : Grid background
+menu_display_white                      : White background
+menu_display_black                      : Black background
+menu_display_rotate_cw                  : Rotate clockwise
+menu_display_rotate_ccw                 : Rotate counter clockwise
 

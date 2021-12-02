@@ -256,12 +256,12 @@ if( !class_exists( 'Door' ) )
 					SELECT * FROM `Filesystem` f 
 					WHERE 
 						(
-							f.UserID=\'' . ( isset( $User->ID ) ? $User->ID :$activeUserSession->UserID ) . '\' OR
+							f.UserID=\'' . ( isset( $activeUser->ID ) ? $activeUser->ID : $activeUserSession->UserID ) . '\' OR
 							f.GroupID IN (
 								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
 								WHERE 
 									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-									ug.UserID = \'' . ( isset( $User->ID ) ? $User->ID :$activeUserSession->UserID ) . '\'
+									ug.UserID = \'' . ( isset( $activeUser->ID ) ? $activeUser->ID : $activeUserSession->UserID ) . '\'
 							)
 						)
 						AND ' . $identifier . ' LIMIT 1';
@@ -277,12 +277,12 @@ if( !class_exists( 'Door' ) )
 					SELECT * FROM `Filesystem` f 
 					WHERE 
 						(
-							f.UserID=\'' . ( isset( $User->ID ) ? $User->ID :$activeUserSession->UserID ) . '\' OR
+							f.UserID=\'' . ( isset( $activeUser->ID ) ? $activeUser->ID :$activeUserSession->UserID ) . '\' OR
 							f.GroupID IN (
 								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
 								WHERE 
 									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-									ug.UserID = \'' . ( isset( $User->ID ) ? $User->ID :$activeUserSession->UserID ) . '\'
+									ug.UserID = \'' . ( isset( $activeUser->ID ) ? $activeUser->ID : $activeUserSession->UserID ) . '\'
 							)
 						)
 						AND

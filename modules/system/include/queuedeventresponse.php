@@ -57,6 +57,7 @@ if( $o->Load() )
 			}
 		}
 	}
+	// TODO: Make sure you don't overwrite $o in the files that is included ...
 	if( $o->Save() ) 
 	{
 		$response->response = 1;

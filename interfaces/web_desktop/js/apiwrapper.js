@@ -1545,6 +1545,12 @@ function apiWrapper( event, force )
 					var twin = app.windows[ msg.targetViewId ? msg.targetViewId : msg.viewId ];
 					switch( msg.method )
 					{
+						case 'cancelclose':
+							if( win )
+							{
+								console.log( 'What to do here?', win );
+							}
+							break;
 						case 'opencamera':
 							if( win )
 							{
@@ -2265,13 +2271,13 @@ function apiWrapper( event, force )
 				else if( msg.method == 'save' )
 				{
 					// Respond with save data notification
-					f.onSave = function()
+					f.onSave = function( resCode, data )
 					{
 						// File saves should remain in their view context
-						var cw = GetContentWindowByAppMessage( app, msg );
+						let cw = GetContentWindowByAppMessage( app, msg );
 						if( app && cw )
 						{
-							var nmsg = { command: 'filesave', fileId: fileId };
+							let nmsg = { command: 'filesave', fileId: fileId };
 							// Pass window id down
 							if( msg.viewId )
 							{
@@ -2283,6 +2289,8 @@ function apiWrapper( event, force )
 								nmsg.screenId = msg.screenId;
 								nmsg.type = 'callback';
 							}
+							nmsg.responseCode = resCode ? resCode : 'fail';
+							nmsg.responseData = data ? data : '';
 							cw.postMessage( JSON.stringify( nmsg ), '*' );
 						}
 					}
@@ -2291,7 +2299,7 @@ function apiWrapper( event, force )
 					var mode = '';
 					if( msg.dataFormat == 'string' )
 					{
-						var data = ConvertStringToArrayBuffer( msg.data.data, 'base64' );
+						let data = ConvertStringToArrayBuffer( msg.data.data, 'base64' );
 						mode = 'wb';
 						msg.data.data = data;
 					}

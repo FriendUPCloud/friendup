@@ -271,16 +271,19 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					hideView = true;
 				}
 
+				/*
+				// TODO: Remove this - because we should in this case show install menu - which happens now.
 				// Just use callback
-				if( callback && !hideView )
+				if( callback && typeof( callback ) == 'function' && !hideView )
 				{
+					console.log( 'Tmgmdf.', callback );
 					if( !callback( { error: 2, errorMessage: i18n( 'install_question_title' ) } ) )
 					{
 						// Remove blocker
 						RemoveFromExecutionQueue( appName );
 						return;
 					}
-				}
+				}*/
 				
 				let title = i18n( 'install_question_mintitle' ) + ': ' + app;
 				let w = new View( {
@@ -1245,8 +1248,8 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 	// Only run jsx after refreshing desktop to get mounted drives
 	Workspace.refreshDesktop( function()
 	{
-		var drive = path.split( ':' )[0] + ':';
-		var d = ( new Door( drive ) ).get( drive );
+		let drive = path.split( ':' )[0] + ':';
+		let d = ( new Door( drive ) ).get( drive );
 
 		// Running system with a drive config..
 		if( d )
@@ -1268,7 +1271,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 		}
 
 		// Load application into a sandboxed iframe
-		var ifr = document.createElement( 'iframe' );
+		let ifr = document.createElement( 'iframe' );
 		ifr.setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
 		ifr.path = '/webclient/jsx/';
 
@@ -1279,12 +1282,13 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 		function completeLaunch( data, app, args, path, callback, conf, html )
 		{
 			// Special case, we have a conf
-			var sid = false;
-			var confObject = false;
-			var applicationId = ( flags && flags.uniqueId ) ? flags.uniqueId : UniqueHash();
+			let sid = false;
+			let ifronload;
+			let confObject = false;
+			let applicationId = ( flags && flags.uniqueId ) ? flags.uniqueId : UniqueHash();
 			if( conf )
 			{
-				var dom = GetDomainFromConf( conf, applicationId );
+				let dom = GetDomainFromConf( conf, applicationId );
 
 				if( args ) conf.args = args;
 
@@ -1299,20 +1303,20 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 				}
 				
 				sid = confObject && confObject.authid ? true : false;
-				var svalu = sid ? confObject.authid : Workspace.sessionId;
-				var stype = sid ? 'authid' : 'sessionid';
+				let svalu = sid ? confObject.authid : Workspace.sessionId;
+				let stype = sid ? 'authid' : 'sessionid';
 				if( stype == 'sessionid' ) ifr.sessionId = svalu;
 
 				// Use path to figure out config
 				if( !d.dormantDoor && conf.indexOf( '{' ) >= 0 )
 					conf = encodeURIComponent( path.split( ':' )[0] + ':' );
 
-				var extra = '';
+				let extra = '';
 				if( stype == 'authid')
 					extra = '&theme=borderless';
 
 				// Quicker ajax implementation
-				var j = new cAjax();
+				let j = new cAjax();
 				j.open( 'POST', '/system.library/module/?module=system&command=sandbox' +
 					'&' + stype + '=' + svalu +
 					'&conf=' + conf + '&' + ( args ? ( 'args=' + args ) : '' ) + extra, true );
@@ -1361,21 +1365,21 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 			{
 				if( this.windows )
 				{
-					for( var a in this.windows )
+					for( let a in this.windows )
 					{
 						this.windows[a].close( level );
 					}
 				}
 				if( this.screens )
 				{
-					for( var a in this.screens )
+					for( let a in this.screens )
 					{
 						this.screens[a].close( level );
 					}
 				}
 				if( this.widgets )
 				{
-					for( var a in this.widgets )
+					for( let a in this.widgets )
 					{
 						this.widgets[a].close( level );
 					}
@@ -1384,8 +1388,8 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 				// If this is a forced kill, just fck the thing
 				if( level )
 				{
-					var out = [];
-					for( var a = 0; a < Workspace.applications.length; a++ )
+					let out = [];
+					for( let a = 0; a < Workspace.applications.length; a++ )
 					{
 						if( Workspace.applications[a] != this )
 							out.push( Workspace.applications[a] );
@@ -1409,7 +1413,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 				else
 				{
 					// Tell the jsx application to clean up first
-					var o = {
+					let o = {
 						command: 'quit',
 						filePath: '/webclient/jsx/',
 						domain:   typeof( sdomain ) != 'undefined' ? sdomain : ''
@@ -1454,17 +1458,17 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 			}
 
 			// Register application
-			var ifronload = function()
+			ifronload = function()
 			{
 				try
 				{
 					// Get document
-					var doc = ifr.contentWindow.document;
+					let doc = ifr.contentWindow.document;
 
-					var jsx = doc.createElement( 'script' );
+					let jsx = doc.createElement( 'script' );
 
 					// Path replacements
-					var dpath = '';
+					let dpath = '';
 
 					if( path )
 					{
@@ -1479,7 +1483,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 					ifr.contentWindow.document.getElementsByTagName( 'head' )[0].appendChild( jsx );
 					ifr.appPath = dpath;
 
-					var cid = addWrapperCallback( function()
+					let cid = addWrapperCallback( function()
 					{
 						if( callback )
 						{
@@ -1488,7 +1492,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 					} );
 
 					// Send initiator to app
-					var msg = {
+					let msg = {
 						command:          'initappframe',
 						base:             '/',
 						applicationId:    ifr.applicationId,
@@ -1518,7 +1522,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 					msg = JSON.stringify( msg );
 
 					// Get JSON data from url
-					var vdata = GetUrlVar( 'data' ); if( vdata ) msg.data = vdata;
+					let vdata = GetUrlVar( 'data' ); if( vdata ) msg.data = vdata;
 
 					ifr.contentWindow.postMessage( msg, Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
 				}
@@ -1529,7 +1533,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 			}
 
 			// Add application iframe to body
-			var iconPath = path;
+			let iconPath = path;
 			if( iconPath.substr( -4, 4 ).toLowerCase() == '.jsx' )
 			{
 				iconPath = iconPath.split( '/' );

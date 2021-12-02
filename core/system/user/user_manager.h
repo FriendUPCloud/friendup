@@ -143,6 +143,12 @@ User * UMUserGetByNameDB( UserManager *smgr, const char *name );
 //
 //
 
+User *UMUserGetByID( UserManager *um, FQUAD id );
+
+//
+//
+//
+
 User * UMUserGetByIDDB( UserManager *um, FULONG id );
 
 

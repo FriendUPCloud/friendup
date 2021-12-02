@@ -95,6 +95,8 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param msg - (required) message
+	* @param path - (required) endpoint
+	* @param reqid - request ID
 	* @param servername - name of the server to which message will be send or put NULL if to all
 	* @return { result: 0 } when success, otherwise error with code
 	*/
@@ -105,14 +107,14 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
 		char *msg = NULL;
 		char *servername = NULL;
-		
+		char *path = NULL;
 		
 		DEBUG( "[NMWebRequest] notify-server!!\n" );
 		
@@ -134,12 +136,46 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 				DEBUG( "[NMWebRequest] servername %s!!\n", servername );
 			}
 			
+			el = HttpGetPOSTParameter( request, "path" );
+			if( el != NULL )
+			{
+				path = UrlDecodeToMem( (char *)el->hme_Data );
+				DEBUG( "[NMWebRequest] path %s!!\n", path );
+			}
+			
 			if( msg != NULL )
 			{
-				int error = NotificationManagerSendInformationToConnections( l->sl_NotificationManager, servername, msg, strlen(msg) );
+				int nmsglen = strlen( msg )+256;
+				char *nmsg = FCalloc( nmsglen, sizeof(char) );
+				int error = 0;
+				int dstsize = 0;
 				
-				DEBUG("[NMWebRequest] Send notification to server, error: %d\n", error );
-				
+				if( nmsg != NULL )
+				{
+					dstsize = snprintf( 
+						nmsg, 
+						nmsglen, 
+						"{"
+							"\"originUserId\":\"%s\","
+							"\"path\":\"service/%s\","
+							"\"data\":%s"
+						"}", 
+						loggedSession->us_User->u_UUID, 
+						path, 
+						msg 
+					);
+					
+					error = NotificationManagerSendInformationToConnections( 
+						l->sl_NotificationManager, 
+						servername, 
+						nmsg, 
+						strlen( nmsg ) 
+					);
+					
+					DEBUG("[NMWebRequest] Send notification to server, error: %d\n", error );
+					
+					FFree( nmsg );
+				}
 				char buf[ 256 ];
 				snprintf( buf, sizeof(buf), "ok<!--separate-->{\"result\":%d}", error );
 				HttpAddTextContent( response, buf );
@@ -162,6 +198,11 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			HttpAddTextContent( response, buffer );
 		}
 		*/
+		
+		if( path != NULL )
+		{
+			FFree( path );
+		}
 		
 		if( msg != NULL )
 		{

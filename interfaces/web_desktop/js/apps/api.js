@@ -1232,6 +1232,11 @@ function receiveEvent( event, queued )
 								if( res === false )
 								{
 									w.onClose = onc;
+									Application.sendMessage( {
+										type: 'view',
+										method: 'cancelclose',
+										viewId: dataPacket.viewId
+									} );
 									return;
 								}
 							}
@@ -1604,7 +1609,7 @@ function receiveEvent( event, queued )
 				{
 					if( f.onSave )
 					{
-						f.onSave();
+						f.onSave( dataPacket.responseCode, dataPacket.responseData );
 					}
 					else
 					{
@@ -2711,7 +2716,6 @@ function CloseView( id )
 	{
 		if( id.close )
 		{
-			console.log( ' -> Closing object.' );
 			return id.close();
 		}
 		return false;
@@ -3128,7 +3132,6 @@ WebAudioLoader = function( filePath, callback )
 					schBuf.connect( this.context.destination );
 					schBuf.connect( this.gainNode );
 					schBuf.start( this.bufferArrayTimeOffset );
-					console.log( 'Starting next at ' + ( this.bufferArrayTimeOffset ) );
 					this.bufferArrayTimeOffset += schBuf.buffer.duration;
 				}
 			}
@@ -5797,8 +5800,8 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 	}
 
 	// Disable debugging now
-	if( packet.workspaceMode == 'normal' || packet.workspaceMode == 'gamified' )
-		console.log = function(){};
+	//if( packet.workspaceMode == 'normal' || packet.workspaceMode == 'gamified' )
+	//	console.log = function(){};
 	Application.workspaceMode = packet.workspaceMode ? packet.workspaceMode : 'developer';
 
 	if( packet.userLevel )
@@ -8679,7 +8682,6 @@ GuiDesklet = function()
 			j.open( 'get', updateurl, true, true );
 			j.onload = function ()
 			{
-				console.log( 'The response was: ' + this.returnCode, this.returnData );
 				let content;
 				// New mode
 				if ( this.returnCode == 'ok' )
