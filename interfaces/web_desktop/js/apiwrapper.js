@@ -3513,7 +3513,7 @@ function apiWrapper( event, force )
 						m.execute( 'updateapppermissions', { application: msg.application, data: msg.data, permissions: JSON.stringify( msg.permissions ) } );
 						break;
 
-					// Update login and tell apps
+					// Update login, kill old info, and tell apps
 					case 'updatelogin':
 					    Workspace.loginUsername = null;
 					    Workspace.loginPassword = null;
