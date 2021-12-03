@@ -2424,7 +2424,7 @@ body.Loaded > #Screens > #DeepestField
 	opacity: 1;
 }
 
-body.Loading > #Screens
+body.Loading:not(.Inside) > #Screens
 {
 	opacity: 0;
 }
