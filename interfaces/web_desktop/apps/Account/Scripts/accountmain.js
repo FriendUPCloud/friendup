@@ -1535,6 +1535,7 @@ function saveDia()
 			if( '{S6}' + Sha256.hash ( 'HASHED' + Sha256.hash(ge( 'UserCurrentPassword' ).value) ) == Application.userInfo.Password )
 			{
 				obj.password = '{S6}' + Sha256.hash ( 'HASHED' + Sha256.hash(ge( 'UserAccPassword' ).value) );
+				obj.passwordClearText = ge( 'UserAccPassword' ).value;
 				Application.userInfo.Password = obj.password;
 				ge('PassError').innerHTML = '';
 			}
@@ -1557,7 +1558,6 @@ function saveDia()
 	f.onExecuted = function( e, d )
 	{
 		ge( 'UserAccPasswordConfirm' ).value = ge( 'UserAccPassword' ).value = ge( 'UserCurrentPassword' ).value = '';
-		console.log( 'Sending info to workspace: ', obj );
 		Application.sendMessage( { command: 'saveresult', result: e, data: obj } );		
 		
 		if( nuserCredentials != userCredentials )

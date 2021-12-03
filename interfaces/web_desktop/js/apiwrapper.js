@@ -3515,19 +3515,12 @@ function apiWrapper( event, force )
 
 					// Update login, kill old info, and tell apps
 					case 'updatelogin':
-						if( msg.username && ( msg.password || msg.hashedPassword ) )
+						if( msg.username && msg.password )
 						{
 							Friend.User.Logout( function()
 							{
-								console.log( 'Doing the login again!' );
-								if( msg.hashedPassword )
-								{
-									Friend.User.Login( msg.username, msg.hashedPassword, true, false, false, { hashedPassword: true } );
-								}
-								else
-								{
-									Friend.User.Login( msg.username, msg.password, true );
-								}
+								Friend.User.Login( msg.username, msg.password, true );
+								
 								for( let a = 0; a < Workspace.applications.length; a++ )
 								{
 									let nmsg = {

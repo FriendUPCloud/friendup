@@ -51,12 +51,9 @@ Friend.User = {
 			Workspace.conn = null;
 		}
 		
-		console.log( 'Logging in with username and password: ' + username + ' : ' + password );
-		
 		if( username && password )
 		{
 			Workspace.encryption.setKeys( username, password );
-			console.log( 'Logging in with ' + username + ' and ' + password );
 			this.SendLoginCall( {
 				username: username,
 				password: password,
