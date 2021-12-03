@@ -305,7 +305,7 @@ Friend.User = {
 		SaveWindowStorage( function()
 		{
 			
-			if( !callback )
+			if( !cbk )
 			{
 				if( dologt != null )
 					clearTimeout( dologt );
