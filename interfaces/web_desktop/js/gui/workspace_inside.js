@@ -3944,6 +3944,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					
 						// Redraw icons if they are delayed
 						Workspace.redrawIcons();
+						
+						// Make sure screen dimensions are read
+						_kresize();
 					}
 
 					if( themeName && themeName != 'default' )
