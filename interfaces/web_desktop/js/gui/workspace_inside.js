@@ -7014,9 +7014,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		return;
 	},
 	// Simple logout..
-	logout: function()
+	logout: function( cbk )
 	{
-		Friend.User.Logout();
+		Friend.User.Logout( cbk );
 	},
 	externalLogout: function()
 	{

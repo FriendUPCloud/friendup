@@ -284,10 +284,7 @@ Friend.User = {
     {
     	if( !cbk ) cbk = false;
     	
-    	console.log( 'Logout happened ' + ( cbk ? 'with callback' : 'with no callback' ) );
-    	console.trace();
-    	
-        // FIXME: Remove this - it is not used anymore
+    	// FIXME: Remove this - it is not used anymore
 		window.localStorage.removeItem( 'WorkspaceUsername' );
 		window.localStorage.removeItem( 'WorkspacePassword' );
 		window.localStorage.removeItem( 'WorkspaceSessionID' );
@@ -343,9 +340,7 @@ Friend.User = {
 				return;
 			}
 			Workspace.sessionId = '';
-			console.log( 'WE ARE LOGGING OUT WITH REDIRECT' );
-			console.trace(); 
-			//document.location.href = window.location.href.split( '?' )[0].split( '#' )[0]; //document.location.reload();
+			document.location.href = window.location.href.split( '?' )[0].split( '#' )[0]; //document.location.reload();
 		}
 		if( !cbk )
 		{

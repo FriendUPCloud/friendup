@@ -1544,7 +1544,7 @@ function receiveEvent( event, queued )
 					}
 					else
 					{
-						console.log( 'No callback?' );
+						//console.log( 'No callback?' );
 					}
 				}
 				// TODO: This should be removed, it's a double right? Like the first if. . . Goes further down to a window
