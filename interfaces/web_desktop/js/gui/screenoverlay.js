@@ -8,6 +8,16 @@
 *                                                                              *
 *****************************************************************************©*/
 
+let pcl = '';
+setInterval( function()
+{
+	if( document.body.className != pcl )
+	{
+		pcl = document.body.className;
+		console.log( 'Current class: ' + pcl );
+	}
+}, 25 );
+
 // This is an object!
 var ScreenOverlay = {
 	visibility: false,
