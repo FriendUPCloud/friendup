@@ -3835,7 +3835,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					styles.type = 'text/css';
 					styles.onload = function()
 					{
-						console.log( 'THE CSS HAS LOADED!!' );
+						document.body.classList.add( 'ThemeLoaded' );
 						// We are inside (wait for wallpaper) - watchdog
 						if( !Workspace.insideInterval )
 						{
