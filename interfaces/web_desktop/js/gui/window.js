@@ -6127,6 +6127,7 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 
 	v.onClose = function()
 	{
+		if( okcallback ) okcallback( false )
 	}
 
 	v.setSticky();
