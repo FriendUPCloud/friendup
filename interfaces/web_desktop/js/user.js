@@ -145,7 +145,7 @@ Friend.User = {
 		{
 			Workspace.sessionId = '';
 			
-			let hashed = info.hashedPassword ? info.hashedPassword : ( 'HASHED' + Sha256.hash( info.password ) );
+			let hashed = info.hashedPassword ? info.password : ( 'HASHED' + Sha256.hash( info.password ) );
 			if( !info.hashedPassword )
 				info.hashedPassword = hashed;
 			
