@@ -497,11 +497,12 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				{
 					char qery[ 1024 ];
 					FULONG uid = 0;
+					char *usessid = NULL;
 
 					// Fetch authid from either FUserApplication or Filesystem
 					sqllib->SNPrintF( 
 					    sqllib, qery, sizeof( qery ),
-					    "SELECT * FROM ( SELECT a.UserID FROM FUserApplication a WHERE a.AuthID=\"%s\" LIMIT 1 ) z UNION ( SELECT f.UserID FROM Filesystem f WHERE f.AuthID=\"%s\" LIMIT 1 )",
+					    "SELECT * FROM ( SELECT a.UserID, us.SessionID FROM FUserApplication a, FUserSession us WHERE a.UserID = us.UserID AND a.AuthID=\"%s\" LIMIT 1 ) z UNION ( SELECT f.UserID, fus.SessionID FROM Filesystem f, FUserSession fus WHERE fus.UserID = f.UserID AND f.AuthID=\"%s\" LIMIT 1 )",
 					    ( char *)ast->hme_Data, ( char *)ast->hme_Data
 					);
 					
@@ -517,14 +518,20 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								char *next;
 								uid = strtol ( (char *) row[ 0 ], &next, 10);
 							}
+							if( row[ 1 ] != NULL )
+							{
+								usessid = StringDuplicate( row[ 1 ] ); 
+							}
 						}
 						sqllib->FreeResult( sqllib, res );
 					}
 					l->LibrarySQLDrop( l, sqllib );
 					
-					if( uid > 0 )
+					if( uid > 0 && usessid != NULL )
 					{
-						loggedSession = USMGetSessionByUserID( l->sl_USM, uid );
+						//loggedSession = USMGetSessionByUserID( l->sl_USM, uid );
+						loggedSession = USMGetSessionBySessionID( l->sl_USM, usessid );
+						
 						if( loggedSession == NULL )	// authid was found so user is authenticated but session was not found
 						{
 							loggedSession = UserSessionNew( NULL, "authid" );
@@ -556,6 +563,9 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							}
 						}
 					}
+					
+					// Free
+					if( usessid != NULL ) free( usessid );
 				}
 			}
 		}
