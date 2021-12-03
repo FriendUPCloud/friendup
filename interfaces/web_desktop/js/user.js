@@ -145,9 +145,7 @@ Friend.User = {
 		{
 			Workspace.sessionId = '';
 			
-			let hashed = info.hashedPassword ? info.hashedPassword : ( 'HASHED' + Sha256.hash( info.password ) );
-			if( !info.hashedPassword )
-				info.hashedPassword = hashed;
+			let hashed = info.hashedPassword ? info.password : ( 'HASHED' + Sha256.hash( info.password ) );
 			
 			m.addVar( 'username', info.username );
 			m.addVar( 'password', hashed );
@@ -156,13 +154,13 @@ Friend.User = {
 			{
 				let enc = parent.Workspace.encryption;
 				parent.Workspace.loginPassword = enc.encrypt( info.password, enc.getKeys().publickey );
-				parent.Workspace.loginHashed = info.hashedPassword;
+				parent.Workspace.loginHashed = hashed;
 			}
 			catch( e )
 			{
 				let enc = Workspace.encryption;
 				Workspace.loginPassword = enc.encrypt( info.password, enc.getKeys().publickey );
-				Workspace.loginHashed = info.hashedPassword;
+				Workspace.loginHashed = hashed;
 			}
 		}
 		else if( info.sessionid )
@@ -262,7 +260,7 @@ Friend.User = {
     		info.username = Workspace.loginUsername;
     		let enc = Workspace.encryption;
     		info.password = enc.decrypt( Workspace.loginPassword, enc.getKeys().privatekey );
-    		info.hashedPassword = Workspace.loginHashed;
+    		info.hashedPassword = false;
     	}
     	else if( Workspace.sessionId )
     	{

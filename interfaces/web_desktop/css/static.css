@@ -42,5 +42,11 @@ html > body
 	overflow: hidden;
 	margin: 0;
 	padding: 0;
+	transition: background-color 0.25s;
+}
+
+body:not(.Offline) #OfflineMessage
+{
+	display: none;
 }
 
