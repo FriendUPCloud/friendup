@@ -129,6 +129,8 @@ Friend.User = {
 		let m = new FriendLibrary( 'system' );
 		this.lastLogin = m;
 		
+		console.log( 'Loggin in with info: ', info );
+		
 		if( info.username && info.password )
 		{
 			Workspace.sessionId = '';
