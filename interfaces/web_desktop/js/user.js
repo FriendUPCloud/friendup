@@ -56,6 +56,7 @@ Friend.User = {
 			Workspace.encryption.setKeys( username, password );
 			if( flags && flags.hashedPassword )
 			{
+				console.log( 'Sending hashed password: ' + password );
 				this.SendLoginCall( {
 					username: username,
 					password: password,
@@ -66,6 +67,7 @@ Friend.User = {
 			}
 			else
 			{
+				console.log( 'Sending clean password: ' + password );
 				this.SendLoginCall( {
 					username: username,
 					password: password,
