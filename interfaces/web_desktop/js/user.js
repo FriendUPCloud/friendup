@@ -54,7 +54,7 @@ Friend.User = {
 		if( username && password )
 		{
 			Workspace.encryption.setKeys( username, password );
-			if( flags )
+			if( flags && flags.hashedPassword )
 			{
 				this.SendLoginCall( {
 					username: username,
@@ -140,8 +140,6 @@ Friend.User = {
     	// Create a new library call object
 		let m = new FriendLibrary( 'system' );
 		this.lastLogin = m;
-		
-		console.log( 'Loggin in with info: ', info );
 		
 		if( info.username && info.password )
 		{

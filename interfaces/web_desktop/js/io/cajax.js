@@ -744,7 +744,7 @@ cAjax.prototype.send = function( data, callback )
 						}
 						else
 						{
-							console.log( 'No callback.' );
+							//console.log( 'No callback.' );
 						}
 					}
 					else if( err == 'success' );
