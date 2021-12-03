@@ -304,14 +304,17 @@ Friend.User = {
 
 		SaveWindowStorage( function()
 		{
-			if( dologt != null )
-				clearTimeout( dologt );
 			
-			// Do external logout and then our internal one.
-			if( Workspace.logoutURL )
+			if( !callback )
 			{
-				Workspace.externalLogout();
-				return;
+				if( dologt != null )
+					clearTimeout( dologt );
+				// Do external logout and then our internal one.
+				if( Workspace.logoutURL )
+				{
+					Workspace.externalLogout();
+					return;
+				}
 			}
 
 			let m = new cAjax();
