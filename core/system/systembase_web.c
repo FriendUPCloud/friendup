@@ -566,7 +566,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						}
 						else
 						{
-							DEBUG( "Found sessionid by type authid: %s\n", usessid );
+							DEBUG( "Found sessionid by type authid: %s - address %p\n", usessid, loggedSession->us_User );
 						}
 					}
 					
