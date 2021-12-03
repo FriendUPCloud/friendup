@@ -44,3 +44,7 @@ html > body
 	padding: 0;
 }
 
+html body:not(.Inside) #OfflineMessage
+{
+	display: none;
+}
