@@ -3522,7 +3522,7 @@ function apiWrapper( event, force )
 								console.log( 'Doing the login again!' );
 								if( msg.hashedPassword )
 								{
-									Friend.User.Login( msg.username, false, true, false, false, msg );
+									Friend.User.Login( msg.username, msg.hashedPassword, true, false, false, { hashedPassword: true } );
 								}
 								else
 								{
