@@ -3515,7 +3515,7 @@ function apiWrapper( event, force )
 
 					// Update login, kill old info, and tell apps
 					case 'updatelogin':
-					    Workspace.logout( function()
+					    Friend.User.Logout( function()
 						{
 							Workspace.login( msg.username, msg.password, true );
 							for( let a = 0; a < Workspace.applications.length; a++ )
