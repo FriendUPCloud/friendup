@@ -49,3 +49,8 @@ html body.Login #OfflineMessage
 {
 	display: none;
 }
+
+html > body
+{
+	visibility: visible;
+}
