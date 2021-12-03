@@ -88,6 +88,12 @@ FriendWebSocket.prototype.reconnect = function()
 {
 	let self = this;
 	
+	if( window.Workspace && !Window.workspace.sessionId )
+	{
+		console.log( 'Not reconnecting websocket due to no sessionId.' );
+		return;
+	}
+	
 	self.ready = false;
 	self.pongCount = 0;
 	self.allowReconnect = true;
