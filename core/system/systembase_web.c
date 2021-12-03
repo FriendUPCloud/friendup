@@ -534,7 +534,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						
 						if( loggedSession == NULL )	// authid was found so user is authenticated but session was not found
 						{
-							DEBUG( "Making a new session with this sessionid by type authid: %s\n", usessid );
+							//DEBUG( "Making a new session with this sessionid by type authid: %s\n", usessid );
 							
 							loggedSession = UserSessionNew( usessid, "authid" );
 							if( loggedSession != NULL )
@@ -566,7 +566,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						}
 						else
 						{
-							DEBUG( "Found sessionid by type authid: %s - address %p\n", usessid, loggedSession->us_User );
+							//DEBUG( "Found sessionid by type authid: %s - address %p\n", usessid, loggedSession->us_User );
 						}
 					}
 					
