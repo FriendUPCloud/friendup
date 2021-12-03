@@ -25,6 +25,7 @@ var ScreenOverlay = {
 	// Show self
 	show: function()
 	{
+		console.log( 'Screenoverlay Showing now!' );
 		var self = this;
 		if( this.visibility || !this.div ) return;
 		this.visibility = true;
@@ -43,6 +44,7 @@ var ScreenOverlay = {
 	invisible: function()
 	{
 		if( this.debug ) return;
+		console.log( 'Trick hide!' );
 		var self = this;
 		if( !this.visibility ) return;
 		this.div.classList.add( 'Hiding' );
@@ -67,7 +69,9 @@ var ScreenOverlay = {
 	{
 		if( this.debug ) return;
 		var self = this;
-
+		
+		console.log( 'Screenoverlay Hiding now!' );
+		
 		// Reload the docks
 		Workspace.reloadDocks();
 		
