@@ -525,7 +525,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						sqllib->FreeResult( sqllib, res );
 					}
 					// Try the Filesystem table
-					else
+					if( !uid || usessid == NULL )
 					{
 						sqllib->SNPrintF( 
 							sqllib, qery, sizeof( qery ),
