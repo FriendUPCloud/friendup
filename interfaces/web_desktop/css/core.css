@@ -2395,15 +2395,8 @@ body:not([mobile]):not([tablet]) .Widget .MenuItems .MenuItem:hover
 
 /* Non logged in state */
 
-body.Inside
-{
-	background: #222222;
-}
-
 body #Screens
 {
-	opacity: 0;
-	transition: opacity 0.25s;
 }
 
 body.Login > img
