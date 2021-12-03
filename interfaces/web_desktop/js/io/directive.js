@@ -56,7 +56,8 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	if( typeof( _applicationBasics ) == 'undefined' || !_applicationBasics.js )
 	{
 		//console.log( 'ExecuteApplication - retries', retries );
-		if( retries == 3 ) return console.log( 'Could not execute app: ' + app );
+		if( retries == 3 ) 
+			return console.log( 'Could not execute app: ' + app );
 		loadApplicationBasics( function()
 		{
 			ExecuteApplication( app, args, callback, !retries ? 3 : retries++, flags );
@@ -456,7 +457,15 @@ function ExecuteApplication( app, args, callback, retries, flags )
 						app + '&friendup=' + escape( Doors.runLevels[0].domain ), true );
 					j.onload = function()
 					{	
-						let ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
+						let ws;
+						if( _applicationBasics && _applicationBasics.apiV1 )
+						{
+							ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
+						}
+						else
+						{
+							ws = this.rawData;
+						}
 						ifr.src = URL.createObjectURL(new Blob([ws],{type:'text/html'}));
 					}
 					j.send();
@@ -1322,7 +1331,15 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 					'&conf=' + conf + '&' + ( args ? ( 'args=' + args ) : '' ) + extra, true );
 				j.onload = function()
 				{
-					ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
+					let ws;
+					if( _applicationBasics.apiV1 )
+					{
+						ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
+					}
+					else
+					{
+						ws = this.rawData;
+					}
 					ifr.onload = ifronload;
 					ifr.src = URL.createObjectURL( new Blob([ ws ],{ type: 'text/html' } ) );
 				}

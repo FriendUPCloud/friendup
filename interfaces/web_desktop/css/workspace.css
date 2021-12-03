@@ -3,6 +3,13 @@
  * @author Hogne Titlestad
  */
 
+/* Container tweaks --------------------------------------------------------- */
+
+body.Loading > .ViewContainer
+{
+	opacity: 0;
+}
+
 /* Eula --------------------------------------------------------------------- */
 
 body > .Eula

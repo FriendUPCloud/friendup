@@ -1511,7 +1511,7 @@ function saveDia()
 	
 	var nuserCredentials = ge( 'UserAccFullname' ).value.substr( 0, 1 );
 	var m = 0;
-	for( var c = 1; c < ge( 'UserAccFullname' ).value.length; c++ )
+	for( let c = 1; c < ge( 'UserAccFullname' ).value.length; c++ )
 	{
 		if( ge( 'UserAccFullname' ).value.substr( c, 1 ) == ' ' )
 		{

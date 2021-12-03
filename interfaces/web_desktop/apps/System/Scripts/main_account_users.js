@@ -7904,15 +7904,13 @@ function applications( callback, id )
 				
 						if( json )
 						{
-							if( ShowLog ) console.log( 'listuserapplications ', { e:e, d:json } );
+							//console.log( 'Listuserapplications: ', json );
 							
 							return callback( true, json );
 						}
 					} 
 					catch( e ){ } 
 				}
-				
-				if( ShowLog ) console.log( 'listuserapplications ', { e:e, d:d } );
 				
 				return callback( false, false );
 			}
@@ -7929,17 +7927,16 @@ function applications( callback, id )
 					{
 						let json = JSON.parse( d );
 				
+						
 						if( json )
 						{
-							if( ShowLog ) console.log( 'software ', { e:e, d:json } );
+							//console.log( 'Software: ', json );
 							
 							return callback( true, json );
 						}
 					} 
 					catch( e ){ } 
 				}
-				
-				if( ShowLog ) console.log( 'software ', { e:e, d:d } );
 				
 				return callback( false, false );
 			}
