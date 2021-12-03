@@ -89,24 +89,35 @@ if( $rows = $SqlDatabase->FetchObjects( '
     $out = [];
     foreach( $rows as $k=>$v )
     {
-            // Include image preview
-            $fnd = false;
-            foreach( $basepaths as $path )
+        // Include image preview
+        $fnd = false;
+        $exists = false;
+        foreach( $basepaths as $path )
+        {
+            if( !file_exists( $path . $v->Name ) )
             {
-                    if( file_exists( $path . $v->Name . '/preview.png' ) )
-                    {
-                            $fnd = $path . $v->Name . '/preview.png';
-                            break;
-                    }
+            	continue;
             }
-            if( !file_exists( $path . $v->Name ) ) continue;
-
-            if( $fnd )
+            else
             {
-                    $rows[ $k ]->Preview = true;
-            }
-            $rows[ $k ]->Config = json_decode( $rows[ $k ]->Config );
-            $out[] = $rows[ $k ];
+            	$exists = true;
+		        if( file_exists( $path . $v->Name . '/preview.png' ) )
+		        {
+		            $fnd = $path . $v->Name . '/preview.png';
+		            break;
+		        }
+		    }
+        }
+        
+        if( $exists )
+        {
+		    if( $fnd )
+		    {
+		        $rows[ $k ]->Preview = true;
+		    }
+		    $rows[ $k ]->Config = json_decode( $rows[ $k ]->Config );
+		    $out[] = $rows[ $k ];
+		}
     }
     die( 'ok<!--separate-->' . json_encode( $out ) );
 }

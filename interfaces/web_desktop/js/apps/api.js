@@ -6100,7 +6100,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					document.body.appendChild( d );
 					wait = true;
 					removes.push( scripts[a] );
-
+				}
+				else
+				{
+				    let d = document.createElement( 'script' );
+				    d.innerHTML = scripts[a].innerHTML.split( /\&nbsp\;/ ).join( ' ' );
+				    document.body.appendChild( d );
 				}
 			}
 			// Clear friendscripts
