@@ -6170,8 +6170,9 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 				{
 					itm.onclick = function()
 					{
+						let k = okcallback; okcallback = null;
 						v.close();
-						okcallback( true );
+						k( true );
 					}
 					itm.focus();
 				}
@@ -6179,8 +6180,9 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 				{
 					itm.onclick = function()
 					{
+						let k = okcallback; okcallback = null;
 						v.close();
-						okcallback( false );
+						k( false );
 					}
 				}
 				else
@@ -6195,6 +6197,7 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 						{
 							okcallback( e );
 						}
+						okcallback = null;
 						v.close();
 					}
 				}
