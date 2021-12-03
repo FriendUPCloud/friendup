@@ -342,7 +342,9 @@ Friend.User = {
 				friendApp.exit();
 				return;
 			}
-			Workspace.sessionId = ''; 
+			Workspace.sessionId = '';
+			console.log( 'WE ARE LOGGING OUT WITH REDIRECT' );
+			console.trace(); 
 			document.location.href = window.location.href.split( '?' )[0].split( '#' )[0]; //document.location.reload();
 		}
 		if( !cbk )
