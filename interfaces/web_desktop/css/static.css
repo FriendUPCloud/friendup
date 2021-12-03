@@ -44,7 +44,8 @@ html > body
 	padding: 0;
 }
 
-html body:not(.Inside) #OfflineMessage
+html body:not(.Inside) #OfflineMessage,
+html body.Login #OfflineMessage
 {
 	display: none;
 }
