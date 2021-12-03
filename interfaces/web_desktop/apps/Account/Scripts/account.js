@@ -190,8 +190,8 @@ Application.receiveMessage = function( msg )
 			Application.sendMessage( {
 				type: 'system',
 				command: 'updatelogin',
-				username: msg.data.Name,
-				password: msg.data.Password
+				username: msg.data.name,
+				password: msg.data.password
 			} );
 		}
 	}
