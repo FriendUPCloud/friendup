@@ -1557,6 +1557,7 @@ function saveDia()
 	f.onExecuted = function( e, d )
 	{
 		ge( 'UserAccPasswordConfirm' ).value = ge( 'UserAccPassword' ).value = ge( 'UserCurrentPassword' ).value = '';
+		console.log( 'Sending info to workspace: ', obj );
 		Application.sendMessage( { command: 'saveresult', result: e, data: obj } );		
 		
 		if( nuserCredentials != userCredentials )
