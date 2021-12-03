@@ -427,6 +427,7 @@ FriendWebSocket.prototype.handleSocketMessage = function( e )
 			
 			setTimeout( function()
 			{
+				console.log( 'SESSION KILLED' );
 				Workspace.logout();
 			}, 500 );
 			return;

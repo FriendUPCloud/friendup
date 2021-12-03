@@ -284,6 +284,9 @@ Friend.User = {
     {
     	if( !cbk ) cbk = false;
     	
+    	console.log( 'Logout happened ' + ( cbk ? 'with callback' : 'with no callback' ) );
+    	console.trace();
+    	
         // FIXME: Remove this - it is not used anymore
 		window.localStorage.removeItem( 'WorkspaceUsername' );
 		window.localStorage.removeItem( 'WorkspacePassword' );
@@ -304,11 +307,10 @@ Friend.User = {
 
 		SaveWindowStorage( function()
 		{
-			
+			if( dologt != null )
+				clearTimeout( dologt );
 			if( !cbk )
 			{
-				if( dologt != null )
-					clearTimeout( dologt );
 				// Do external logout and then our internal one.
 				if( Workspace.logoutURL )
 				{
