@@ -1535,6 +1535,7 @@ function saveDia()
 			if( '{S6}' + Sha256.hash ( 'HASHED' + Sha256.hash(ge( 'UserCurrentPassword' ).value) ) == Application.userInfo.Password )
 			{
 				obj.password = '{S6}' + Sha256.hash ( 'HASHED' + Sha256.hash(ge( 'UserAccPassword' ).value) );
+				obj.passwordClearText = ge( 'UserAccPassword' ).value;
 				Application.userInfo.Password = obj.password;
 				ge('PassError').innerHTML = '';
 			}

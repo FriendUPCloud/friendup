@@ -3515,16 +3515,28 @@ function apiWrapper( event, force )
 
 					// Update login, kill old info, and tell apps
 					case 'updatelogin':
-					    Workspace.loginUsername = null;
-					    Workspace.loginPassword = null;
-						Workspace.login( msg.username, msg.password, true );
-						for( let a = 0; a < Workspace.applications.length; a++ )
+						if( msg.username && msg.password )
 						{
-							let nmsg = {
-								command: 'userupdate',
-								applicationId: msg.applicationId
-							};
-							Workspace.applications[a].contentWindow.postMessage( nmsg, '*' );
+							Friend.User.Logout( function()
+							{
+								Friend.User.Login( msg.username, msg.password, true );
+								
+								for( let a = 0; a < Workspace.applications.length; a++ )
+								{
+									let nmsg = {
+										command: 'userupdate',
+										applicationId: msg.applicationId
+									};
+									Workspace.applications[a].contentWindow.postMessage( nmsg, '*' );
+								}
+							} );
+						}
+						else
+						{
+							Notify( {
+								title: 'Could not update login', 
+								text: 'Missing username and password data to log in.' 
+							} );
 						}
 						break;
 					case 'reloadmimetypes':

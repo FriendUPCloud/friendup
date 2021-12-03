@@ -54,13 +54,26 @@ Friend.User = {
 		if( username && password )
 		{
 			Workspace.encryption.setKeys( username, password );
-			this.SendLoginCall( {
-				username: username,
-				password: password,
-				remember: remember,
-				hashedPassword: flags.hashedPassword,
-				inviteHash: flags.inviteHash
-			}, callback );
+			if( flags && flags.hashedPassword )
+			{
+				this.SendLoginCall( {
+					username: username,
+					password: password,
+					remember: remember,
+					hashedPassword: flags.hashedPassword,
+					inviteHash: flags.inviteHash
+				}, callback );
+			}
+			else
+			{
+				this.SendLoginCall( {
+					username: username,
+					password: password,
+					remember: remember,
+					hashedPassword: false,
+					inviteHash: false
+				}, callback );
+			}
 		}
 		// Relogin - as we do have an unflushed login
 		else if( Workspace.sessionId )
@@ -131,8 +144,13 @@ Friend.User = {
 		if( info.username && info.password )
 		{
 			Workspace.sessionId = '';
+			
+			let hashed = info.hashedPassword ? info.password : ( 'HASHED' + Sha256.hash( info.password ) );
+			if( !info.hashedPassword )
+				info.hashedPassword = hashed;
+			
 			m.addVar( 'username', info.username );
-			m.addVar( 'password', info.hashedPassword ? info.password : ( 'HASHED' + Sha256.hash( info.password ) ) );
+			m.addVar( 'password', hashed );
 			
 			try
 			{
@@ -161,6 +179,7 @@ Friend.User = {
 		m.addVar( 'deviceid', GetDeviceId() );
 		m.onExecuted = function( json, serveranswer )
 		{
+			console.log( 'Login answers: ', json, serveranswer );
 			Friend.User.lastLogin = null;
 			// We got a real error
 			if( json == null )
@@ -280,12 +299,16 @@ Friend.User = {
 		return 0;
     },
     // Log out
-    Logout: function()
+    Logout: function( cbk )
     {
-        // FIXME: Remove this - it is not used anymore
+    	if( !cbk ) cbk = false;
+    	
+    	// FIXME: Remove this - it is not used anymore
 		window.localStorage.removeItem( 'WorkspaceUsername' );
 		window.localStorage.removeItem( 'WorkspacePassword' );
 		window.localStorage.removeItem( 'WorkspaceSessionID' );
+		Workspace.loginUsername = null;
+	    Workspace.loginPassword = null;
 
 		let keys = parent.ApplicationStorage.load( { applicationName : 'Workspace' } );
 
@@ -303,18 +326,45 @@ Friend.User = {
 			if( dologt != null )
 				clearTimeout( dologt );
 			
-			// Do external logout and then our internal one.
-			if( Workspace.logoutURL )
+			if( !cbk )
 			{
-				Workspace.externalLogout();
-				return;
+				// Do external logout and then our internal one.
+				if( Workspace.logoutURL )
+				{
+					Workspace.externalLogout();
+					return;
+				}
 			}
 
 			let m = new cAjax();
 			m.open( 'get', '/system.library/user/logout/?sessionid=' + Workspace.sessionId, true );
 			m.forceHTTP = true;
 			m.send();
-			setTimeout( doLogout, 500 );
+			
+			if( !cbk )
+			{
+				setTimeout( doLogout, 500 );
+			}
+			else
+			{
+				console.log( 'Killing websocket in advance.' );
+				if( Workspace.conn )
+				{
+					try
+					{
+						Workspace.conn.ws.close();
+					}
+					catch( e )
+					{
+						console.log( 'Could not close conn.' );
+					}
+					delete Workspace.conn;
+					Workspace.conn = null;
+				}
+				Workspace.sessionId = '';
+				console.log( 'Logging IN!' );
+				cbk();
+			}
 		} );
 		// Could be there will be no connection..
 		function doLogout()
@@ -324,10 +374,13 @@ Friend.User = {
 				friendApp.exit();
 				return;
 			}
-			Workspace.sessionId = ''; 
+			Workspace.sessionId = '';
 			document.location.href = window.location.href.split( '?' )[0].split( '#' )[0]; //document.location.reload();
 		}
-		dologt = setTimeout( doLogout, 750 );
+		if( !cbk )
+		{
+			dologt = setTimeout( doLogout, 750 );
+		}
 		return true;
     },
     // Remember keys
