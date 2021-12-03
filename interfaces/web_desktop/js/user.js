@@ -262,7 +262,8 @@ Friend.User = {
     		info.username = Workspace.loginUsername;
     		let enc = Workspace.encryption;
     		info.password = enc.decrypt( Workspace.loginPassword, enc.getKeys().privatekey );
-    		info.hashedPassword = Workspace.loginHashed;
+    		console.log( 'Relogging in with pass: ' + info.password );
+    		info.hashedPassword = false;
     	}
     	else if( Workspace.sessionId )
     	{
