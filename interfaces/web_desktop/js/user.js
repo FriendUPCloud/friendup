@@ -306,6 +306,7 @@ Friend.User = {
 		{
 			if( dologt != null )
 				clearTimeout( dologt );
+			
 			if( !cbk )
 			{
 				// Do external logout and then our internal one.
@@ -327,7 +328,22 @@ Friend.User = {
 			}
 			else
 			{
+				console.log( 'Killing websocket in advance.' );
+				if( Workspace.conn )
+				{
+					try
+					{
+						Workspace.conn.ws.close();
+					}
+					catch( e )
+					{
+						console.log( 'Could not close conn.' );
+					}
+					delete Workspace.conn;
+					Workspace.conn = null;
+				}
 				Workspace.sessionId = '';
+				console.log( 'Logging IN!' );
 				cbk();
 			}
 		} );
