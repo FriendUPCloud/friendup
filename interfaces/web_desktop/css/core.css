@@ -2402,6 +2402,8 @@ body.Inside
 
 body #Screens
 {
+	opacity: 0;
+	transition: opacity 0.25s;
 }
 
 body.Login > img
