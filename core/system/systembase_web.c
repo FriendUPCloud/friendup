@@ -529,7 +529,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					
 					if( uid > 0 && usessid != NULL )
 					{
-						//loggedSession = USMGetSessionByUserID( l->sl_USM, uid );
+						//loggedSession = USMGetSessionByUserID( l->sl_USM, uid ); // Was removed because we always get a session now
 						loggedSession = USMGetSessionBySessionID( l->sl_USM, usessid );
 						
 						if( loggedSession == NULL )	// authid was found so user is authenticated but session was not found
