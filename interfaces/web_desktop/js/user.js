@@ -54,6 +54,7 @@ Friend.User = {
 		if( username && password )
 		{
 			Workspace.encryption.setKeys( username, password );
+			console.log( 'Logging in with ' + username + ' and ' + password );
 			this.SendLoginCall( {
 				username: username,
 				password: password,
@@ -161,6 +162,7 @@ Friend.User = {
 		m.addVar( 'deviceid', GetDeviceId() );
 		m.onExecuted = function( json, serveranswer )
 		{
+			console.log( 'Login answers: ', json, serveranswer );
 			Friend.User.lastLogin = null;
 			// We got a real error
 			if( json == null )
