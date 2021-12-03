@@ -499,13 +499,12 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					FULONG uid = 0;
 					char *usessid = NULL;
 
-					// Fetch authid from either FUserApplication or Filesystem
+					// Fetch authid from either FUserApplication
 					sqllib->SNPrintF( 
 					    sqllib, qery, sizeof( qery ),
-					    "SELECT * FROM ( SELECT a.UserID, us.SessionID FROM FUserApplication a, FUserSession us WHERE a.UserID = us.UserID AND a.AuthID=\"%s\" LIMIT 1 ) z UNION ( SELECT f.UserID, fus.SessionID FROM Filesystem f, FUserSession fus WHERE fus.UserID = f.UserID AND f.AuthID=\"%s\" LIMIT 1 )",
-					    ( char *)ast->hme_Data, ( char *)ast->hme_Data
+					    "SELECT a.UserID, us.SessionID FROM FUserApplication a, FUserSession us WHERE a.UserID = us.UserID AND a.AuthID=\"%s\" LIMIT 1",
+					    ( char *)ast->hme_Data
 					);
-					
 					void *res = sqllib->Query( sqllib, qery );
 					if( res != NULL )
 					{
@@ -525,6 +524,35 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						}
 						sqllib->FreeResult( sqllib, res );
 					}
+					// Try the Filesystem table
+					else
+					{
+						sqllib->SNPrintF( 
+							sqllib, qery, sizeof( qery ),
+							"SELECT f.UserID, fus.SessionID FROM Filesystem f, FUserSession fus WHERE fus.UserID = f.UserID AND f.AuthID=\"%s\" LIMIT 1",
+							( char *)ast->hme_Data
+						);
+						res = sqllib->Query( sqllib, qery );
+						if( res != NULL )
+						{
+							char **row;
+							if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+							{
+								if( row[ 0 ] != NULL )
+								{
+									//snprintf( sessionid, DEFAULT_SESSION_ID_SIZE,"%s", row[ 0 ] );
+									char *next;
+									uid = strtol ( (char *) row[ 0 ], &next, 10);
+								}
+								if( row[ 1 ] != NULL )
+								{
+									usessid = StringDuplicate( row[ 1 ] ); 
+								}
+							}
+							sqllib->FreeResult( sqllib, res );
+						}
+					}
+					
 					l->LibrarySQLDrop( l, sqllib );
 					
 					if( uid > 0 && usessid != NULL )
