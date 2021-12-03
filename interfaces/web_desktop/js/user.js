@@ -70,8 +70,8 @@ Friend.User = {
 					username: username,
 					password: password,
 					remember: remember,
-					hashedPassword: flags.hashedPassword,
-					inviteHash: flags.inviteHash
+					hashedPassword: false,
+					inviteHash: false
 				}, callback );
 			}
 		}
