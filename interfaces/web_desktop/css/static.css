@@ -44,11 +44,6 @@ html > body
 	padding: 0;
 }
 
-body:not(.Inside.Loaded) #Screens
-{
-	visibility: hidden;
-}
-
 body:not(.Offline) #OfflineMessage
 {
 	display: none;

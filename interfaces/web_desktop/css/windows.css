@@ -1597,7 +1597,7 @@ html body.Loading #FriendScreenOverlay
 	color: white;
 	overflow: hidden;
 	font-size: 1em;
-	z-index: 99999999999;
+	z-index: 2147483643;
 	opacity: 0;
 	box-sizing: border-box;
 	transition: opacity 0.25s;

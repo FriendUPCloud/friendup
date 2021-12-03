@@ -11,9 +11,10 @@
 let pcl = '';
 setInterval( function()
 {
-	if( document.body.className != pcl )
+	if( !window.ScreenOverlay || !ScreenOverlay.div ) return;
+	if( ScreenOverlay.div.className != pcl )
 	{
-		pcl = document.body.className;
+		pcl = ScreenOverlay.div.className;
 		console.log( 'Current class: ' + pcl );
 	}
 }, 25 );
