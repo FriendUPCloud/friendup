@@ -54,13 +54,26 @@ Friend.User = {
 		if( username && password )
 		{
 			Workspace.encryption.setKeys( username, password );
-			this.SendLoginCall( {
-				username: username,
-				password: password,
-				remember: remember,
-				hashedPassword: flags.hashedPassword,
-				inviteHash: flags.inviteHash
-			}, callback );
+			if( flags )
+			{
+				this.SendLoginCall( {
+					username: username,
+					password: password,
+					remember: remember,
+					hashedPassword: flags.hashedPassword,
+					inviteHash: flags.inviteHash
+				}, callback );
+			}
+			else
+			{
+				this.SendLoginCall( {
+					username: username,
+					password: password,
+					remember: remember,
+					hashedPassword: flags.hashedPassword,
+					inviteHash: flags.inviteHash
+				}, callback );
+			}
 		}
 		// Relogin - as we do have an unflushed login
 		else if( Workspace.sessionId )
@@ -133,8 +146,13 @@ Friend.User = {
 		if( info.username && info.password )
 		{
 			Workspace.sessionId = '';
+			
+			let hashed = info.hashedPassword ? info.password : ( 'HASHED' + Sha256.hash( info.password ) );
+			if( !info.hashedPassword )
+				info.hashedPassword = hashed;
+			
 			m.addVar( 'username', info.username );
-			m.addVar( 'password', info.hashedPassword ? info.password : ( 'HASHED' + Sha256.hash( info.password ) ) );
+			m.addVar( 'password', hashed );
 			
 			try
 			{
