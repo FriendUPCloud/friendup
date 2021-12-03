@@ -3518,7 +3518,7 @@ function apiWrapper( event, force )
 					    Friend.User.Logout( function()
 						{
 							console.log( 'Doing the login again!' );
-							Workspace.login( msg.username, msg.password, true );
+							Friend.User.login( msg.username, msg.password, true );
 							for( let a = 0; a < Workspace.applications.length; a++ )
 							{
 								let nmsg = {
