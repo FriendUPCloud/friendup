@@ -3515,7 +3515,7 @@ function apiWrapper( event, force )
 
 					// Update login, kill old info, and tell apps
 					case 'updatelogin':
-						if( msg.username && msg.password )
+						if( msg.username && ( msg.password || msg.hashedPassword ) )
 						{
 							Friend.User.Logout( function()
 							{
