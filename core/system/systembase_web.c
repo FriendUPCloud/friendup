@@ -534,7 +534,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						
 						if( loggedSession == NULL )	// authid was found so user is authenticated but session was not found
 						{
-							loggedSession = UserSessionNew( NULL, "authid" );
+							loggedSession = UserSessionNew( usessid, "authid" );
 							if( loggedSession != NULL )
 							{
 								User *usr = UMUserGetByID( l->sl_UM, uid );
