@@ -185,14 +185,16 @@ Application.receiveMessage = function( msg )
 		// Update login in Workspace!
 		if( msg.result == 'ok' )
 		{
-			console.log( 'OK - passing up to apiwrapper: ', msg.data, msg );
 			Notify({'title':i18n('i18_account2'),'text':i18n('i18n_settings_saved')});
-			Application.sendMessage( {
-				type: 'system',
-				command: 'updatelogin',
-				username: msg.data.name,
-				password: msg.data.passwordClearText
-			} );
+			if( msg.data && msg.data.name && msg.data.passwordClearText )
+			{
+				Application.sendMessage( {
+					type: 'system',
+					command: 'updatelogin',
+					username: msg.data.name,
+					password: msg.data.passwordClearText
+				} );
+			}
 		}
 	}
 	
