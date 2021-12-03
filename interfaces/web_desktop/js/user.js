@@ -280,12 +280,16 @@ Friend.User = {
 		return 0;
     },
     // Log out
-    Logout: function()
+    Logout: function( cbk )
     {
+    	if( !cbk ) cbk = false;
+    	
         // FIXME: Remove this - it is not used anymore
 		window.localStorage.removeItem( 'WorkspaceUsername' );
 		window.localStorage.removeItem( 'WorkspacePassword' );
 		window.localStorage.removeItem( 'WorkspaceSessionID' );
+		Workspace.loginUsername = null;
+	    Workspace.loginPassword = null;
 
 		let keys = parent.ApplicationStorage.load( { applicationName : 'Workspace' } );
 
@@ -314,7 +318,16 @@ Friend.User = {
 			m.open( 'get', '/system.library/user/logout/?sessionid=' + Workspace.sessionId, true );
 			m.forceHTTP = true;
 			m.send();
-			setTimeout( doLogout, 500 );
+			
+			if( !cbk )
+			{
+				setTimeout( doLogout, 500 );
+			}
+			else
+			{
+				Workspace.sessionId = '';
+				cbk();
+			}
 		} );
 		// Could be there will be no connection..
 		function doLogout()
@@ -327,7 +340,10 @@ Friend.User = {
 			Workspace.sessionId = ''; 
 			document.location.href = window.location.href.split( '?' )[0].split( '#' )[0]; //document.location.reload();
 		}
-		dologt = setTimeout( doLogout, 750 );
+		if( !cbk )
+		{
+			dologt = setTimeout( doLogout, 750 );
+		}
 		return true;
     },
     // Remember keys

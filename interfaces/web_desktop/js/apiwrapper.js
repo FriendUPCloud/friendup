@@ -3515,17 +3515,18 @@ function apiWrapper( event, force )
 
 					// Update login, kill old info, and tell apps
 					case 'updatelogin':
-					    Workspace.loginUsername = null;
-					    Workspace.loginPassword = null;
-						Workspace.login( msg.username, msg.password, true );
-						for( let a = 0; a < Workspace.applications.length; a++ )
+					    Workspace.logout( function()
 						{
-							let nmsg = {
-								command: 'userupdate',
-								applicationId: msg.applicationId
-							};
-							Workspace.applications[a].contentWindow.postMessage( nmsg, '*' );
-						}
+							Workspace.login( msg.username, msg.password, true );
+							for( let a = 0; a < Workspace.applications.length; a++ )
+							{
+								let nmsg = {
+									command: 'userupdate',
+									applicationId: msg.applicationId
+								};
+								Workspace.applications[a].contentWindow.postMessage( nmsg, '*' );
+							}
+						} );
 						break;
 					case 'reloadmimetypes':
 						Workspace.reloadMimeTypes();
