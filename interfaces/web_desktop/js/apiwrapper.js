@@ -3520,7 +3520,14 @@ function apiWrapper( event, force )
 							Friend.User.Logout( function()
 							{
 								console.log( 'Doing the login again!' );
-								Friend.User.Login( msg.username, msg.password, true );
+								if( msg.hashedPassword )
+								{
+									Friend.User.Login( msg.username, false, true, false, false, msg );
+								}
+								else
+								{
+									Friend.User.Login( msg.username, msg.password, true );
+								}
 								for( let a = 0; a < Workspace.applications.length; a++ )
 								{
 									let nmsg = {

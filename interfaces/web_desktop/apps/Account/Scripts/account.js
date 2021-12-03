@@ -191,7 +191,7 @@ Application.receiveMessage = function( msg )
 				type: 'system',
 				command: 'updatelogin',
 				username: msg.data.name,
-				password: msg.data.password
+				hashedPassword: msg.data.password
 			} );
 		}
 	}
