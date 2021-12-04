@@ -8,17 +8,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-let pcl = '';
-setInterval( function()
-{
-	if( !window.ScreenOverlay || !ScreenOverlay.div ) return;
-	if( ScreenOverlay.div.className != pcl )
-	{
-		pcl = ScreenOverlay.div.className;
-		console.log( 'Current class: ' + pcl );
-	}
-}, 25 );
-
 // This is an object!
 var ScreenOverlay = {
 	visibility: false,
