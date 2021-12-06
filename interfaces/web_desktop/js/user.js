@@ -145,7 +145,16 @@ Friend.User = {
 		{
 			Workspace.sessionId = '';
 			
+			console.log( 'Tracing relogin.' );
+			
+			console.trace();
+			
+			console.log( 'We are looking at a' + ( info.hashedPassword ? ' hashed' : 'n unhashed' ) + ' password.' );
+			console.log( 'Raw: ' + info.password );
+			
 			let hashed = info.hashedPassword ? info.password : ( 'HASHED' + Sha256.hash( info.password ) );
+			
+			console.log( 'Final pw: ' + hashed );
 			
 			m.addVar( 'username', info.username );
 			m.addVar( 'password', hashed );
@@ -345,7 +354,6 @@ Friend.User = {
 			}
 			else
 			{
-				console.log( 'Killing websocket in advance.' );
 				if( Workspace.conn )
 				{
 					try
@@ -360,7 +368,6 @@ Friend.User = {
 					Workspace.conn = null;
 				}
 				Workspace.sessionId = '';
-				console.log( 'Logging IN!' );
 				cbk();
 			}
 		} );
