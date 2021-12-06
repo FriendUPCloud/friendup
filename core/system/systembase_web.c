@@ -2074,6 +2074,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					snprintf( tmp, sizeof(tmp), "fail<!--separate-->{\"result\":\"-1\",\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_USERSESSION_OR_USER_NOT_FOUND] , DICT_USERSESSION_OR_USER_NOT_FOUND );
 				}
 				
+				DEBUG("---->[SysWebRequest] logincall answer: %s\n", tmp );
+				
 				HttpAddTextContent( response, tmp );
 			}
 			// Public key mode
@@ -2424,8 +2426,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							char buffer[ 256 ];
 							snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
 						}
-						if( tmpset != 0 )
+						
+						//if( tmpset != 0 )
+						{
 							HttpAddTextContent( response, tmp );
+						}
 					}
 					else
 					{
