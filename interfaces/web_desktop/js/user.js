@@ -56,8 +56,10 @@ Friend.User = {
 			console.log( 'Logging in with u/p: ' + username, password );
 			
 			Workspace.encryption.setKeys( username, password );
+			
 			if( flags && flags.hashedPassword )
 			{
+				console.log( 'Logging in with hashed password.' );
 				this.SendLoginCall( {
 					username: username,
 					password: password,
@@ -68,6 +70,7 @@ Friend.User = {
 			}
 			else
 			{
+				console.log( 'Logging in with unhashed password.' );
 				this.SendLoginCall( {
 					username: username,
 					password: password,
