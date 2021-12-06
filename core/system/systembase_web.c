@@ -2352,7 +2352,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						}
 
 						char tmp[ 768 ];
-						int tmpset = 0;
+						
 						User *loggedUser = NULL;
 						if( loggedSession != NULL )
 						{
@@ -2371,15 +2371,14 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								{
 									if( loggedSession->us_User != NULL && (loggedSession->us_User->u_Status == USER_STATUS_DISABLED || loggedSession->us_User->u_Status == USER_STATUS_BLOCKED ) )
 									{
-										char buffer[ 256 ];
-										snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ACCOUNT_BLOCKED] , DICT_ACCOUNT_BLOCKED );
+										//char buffer[ 256 ];
+										snprintf( tmp, sizeof(tmp), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_ACCOUNT_BLOCKED] , DICT_ACCOUNT_BLOCKED );
 									}
 									else
 									{
 										snprintf( tmp, sizeof(tmp) ,
 											"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"username\":\"%s\"}",
 											loggedUser->u_Error, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedUser->u_ID, loggedUser->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_Name );	// check user.library to display errors
-										tmpset++;
 									}
 								}
 								else
@@ -2415,7 +2414,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 										snprintf( tmp, sizeof(tmp), "{\"response\":\"%d\",\"sessionid\":\"%s\",\"authid\":\"%s\"}",
 										loggedUser->u_Error, loggedSession->us_SessionID, authid
 										);
-										tmpset++;
 									}
 								}	// else to appname
 							}	// loggedUser = NULL
@@ -2423,14 +2421,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						else
 						{
 							FERROR("[SysWebRequest] User session was not added to list!\n" );
-							char buffer[ 256 ];
-							snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
+							snprintf( tmp, sizeof(tmp), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_USER_SESSION_NOT_FOUND] , DICT_USER_SESSION_NOT_FOUND );
 						}
 						
-						//if( tmpset != 0 )
-						{
-							HttpAddTextContent( response, tmp );
-						}
+						HttpAddTextContent( response, tmp );
 					}
 					else
 					{
