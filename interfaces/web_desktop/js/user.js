@@ -53,6 +53,8 @@ Friend.User = {
 		
 		if( username && password )
 		{
+			console.log( 'Logging in with u/p: ' + username, password );
+			
 			Workspace.encryption.setKeys( username, password );
 			if( flags && flags.hashedPassword )
 			{
@@ -269,6 +271,11 @@ Friend.User = {
     		info.username = Workspace.loginUsername;
     		let enc = Workspace.encryption;
     		info.password = enc.decrypt( Workspace.loginPassword, enc.getKeys().privatekey );
+    		
+    		console.log( 'Using from Workspace object: ' );
+    		console.log( 'user: ' + info.username );
+    		console.log( 'pass: ' + info.password );
+    		
     		info.hashedPassword = false;
     	}
     	else if( Workspace.sessionId )
