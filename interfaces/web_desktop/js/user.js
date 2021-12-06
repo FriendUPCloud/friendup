@@ -150,6 +150,11 @@ Friend.User = {
 		{
 			Workspace.sessionId = '';
 			
+			if( window.Workspace && !Workspace.originalLogin )
+			{
+				Workspace.originalLogin = info.password;
+			}
+			
 			console.log( 'Tracing relogin.' );
 			
 			console.trace();
@@ -160,6 +165,8 @@ Friend.User = {
 			let hashed = info.hashedPassword ? info.password : ( 'HASHED' + Sha256.hash( info.password ) );
 			
 			console.log( 'Final pw: ' + hashed );
+			
+			console.log( 'Original password: ' + Workspace.originalLogin );
 			
 			m.addVar( 'username', info.username );
 			m.addVar( 'password', hashed );
