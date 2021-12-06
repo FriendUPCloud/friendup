@@ -52,14 +52,11 @@ Friend.User = {
 		}
 		
 		if( username && password )
-		{
-			console.log( 'Logging in with u/p: ' + username, password );
-			
+		{	
 			Workspace.encryption.setKeys( username, password );
 			
 			if( flags && flags.hashedPassword )
 			{
-				console.log( 'Logging in with hashed password.' );
 				this.SendLoginCall( {
 					username: username,
 					password: password,
@@ -70,7 +67,6 @@ Friend.User = {
 			}
 			else
 			{
-				console.log( 'Logging in with unhashed password.' );
 				this.SendLoginCall( {
 					username: username,
 					password: password,
@@ -155,18 +151,7 @@ Friend.User = {
 				Workspace.originalLogin = info.password;
 			}
 			
-			console.log( 'Tracing relogin.' );
-			
-			console.trace();
-			
-			console.log( 'We are looking at a' + ( info.hashedPassword ? ' hashed' : 'n unhashed' ) + ' password.' );
-			console.log( 'Raw: ' + info.password );
-			
 			let hashed = info.hashedPassword ? info.password : ( 'HASHED' + Sha256.hash( info.password ) );
-			
-			console.log( 'Final pw: ' + hashed );
-			
-			console.log( 'Original password: ' + Workspace.originalLogin );
 			
 			m.addVar( 'username', info.username );
 			m.addVar( 'password', hashed );
@@ -198,7 +183,6 @@ Friend.User = {
 		m.addVar( 'deviceid', GetDeviceId() );
 		m.onExecuted = function( json, serveranswer )
 		{
-			console.log( 'Login answers: ', json, serveranswer );
 			Friend.User.lastLogin = null;
 			// We got a real error
 			if( json == null )
@@ -281,10 +265,6 @@ Friend.User = {
     		info.username = Workspace.loginUsername;
     		let enc = Workspace.encryption;
     		info.password = enc.decrypt( Workspace.loginPassword, enc.getKeys().privatekey );
-    		
-    		console.log( 'Using from Workspace object: ' );
-    		console.log( 'user: ' + info.username );
-    		console.log( 'pass: ' + info.password );
     		
     		info.hashedPassword = false;
     	}
