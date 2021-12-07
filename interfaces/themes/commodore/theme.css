@@ -1,5 +1,20 @@
 @import url(/themes/friendup12/theme_compiled.css);
 
+/* About */
+
+#FTheoryCanvasContainer + #content #logo > img
+{
+	display: none;
+}
+
+#FTheoryCanvasContainer + #content #logo
+{
+	background-image: url(/themes/commodore/gfx/aboutimage_bw.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: auto;
+}
+
 /* Window management controls */
 
 html > body div .View > .Title > div > .Zoom,

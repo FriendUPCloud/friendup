@@ -10491,7 +10491,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	let v = new View( {
-		title: i18n( 'i18n_title_about_friendos' ) + ' ' + Workspace.staticBranch,
+		title: Workspace.osName + ' ' + Workspace.staticBranch,
 		width: 540,
 		height: 560,
 		id: 'about_friendup'

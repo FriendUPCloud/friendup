@@ -23,6 +23,7 @@ Workspace = {
 		return false;
 	},
 	environmentName: 'Workspace',
+	osName: 'CommodoreOS',
 	staticBranch: 'Hydrogen 4',
 	icons: [],
 	menuMode: 'pear', // 'miga', 'fensters' (alternatives) -> other menu behaviours
