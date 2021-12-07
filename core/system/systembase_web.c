@@ -2436,6 +2436,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							User *u = UMGetUserByName( l->sl_UM, usrname );
 							if( u != NULL )
 							{
+								DEBUG("\n\n\n\n\nI will block user: %s\n\n\n\n", u->u_Name );
+								
 								u->u_Status = USER_STATUS_BLOCKED;
 							}
 						}
