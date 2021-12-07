@@ -2,8 +2,8 @@
 
 /* Window management controls */
 
-body.AMIW div .View > .Title > div > .Zoom,
-body.AMIW[focusmode=clicktofront] div .View > .Title > div > .Zoom
+body div .View > .Title > div > .Zoom,
+body[focusmode=clicktofront] div .View > .Title > div > .Zoom
 {
 	top: 0;
 	right: 10px;
@@ -11,8 +11,8 @@ body.AMIW[focusmode=clicktofront] div .View > .Title > div > .Zoom
 	margin: 0;
 }
 
-body.AMIW div .View > .Title > div > .Minimize,
-body.AMIW[focusmode=clicktofront] div .View > .Title > div > .Minimize
+body div .View > .Title > div > .Minimize,
+body[focusmode=clicktofront] div .View > .Title > div > .Minimize
 {
 	top: 0;
 	right: 35px;
@@ -20,8 +20,8 @@ body.AMIW[focusmode=clicktofront] div .View > .Title > div > .Minimize
 	margin: 0;
 }
 
-html body.AMIW .View > .Title.NoResize > div > .Minimize,
-html body.AMIW[focusmode=clicktofront] .View > .Title.NoResize > div > .Minimize
+html body .View > .Title.NoResize > div > .Minimize,
+html body[focusmode=clicktofront] .View > .Title.NoResize > div > .Minimize
 {
 	top: 0;
 	left: auto;
@@ -29,9 +29,9 @@ html body.AMIW[focusmode=clicktofront] .View > .Title.NoResize > div > .Minimize
 	margin: 0;
 }
 
-html body.AMIW .View.Active > .Title > div > .Close:hover, 
-html body.AMIW .View.Active > .Title > div > .Close, 
-html body.AMIW .View > .Title > div > .Close
+html body .View.Active > .Title > div > .Close:hover, 
+html body .View.Active > .Title > div > .Close, 
+html body .View > .Title > div > .Close
 {
 	left: 10px
 }
