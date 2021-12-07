@@ -2163,8 +2163,20 @@ var WorkspaceInside = {
 		}
 		
 		if( this.themeData[ 'buttonSchemeText' ] == 'windows' )
+		{
 			document.body.classList.add( 'MSW' );
-		else document.body.classList.remove( 'MSW' );
+			document.body.classList.remove( 'AMIW' );
+		}
+		else if( this.themeData[ 'buttonSchemeText' ] == 'amiga' )
+		{
+			document.body.classList.add( 'AMIW' );
+			document.body.classList.remove( 'MSW' );
+		}
+		else
+		{ 
+			document.body.classList.remove( 'MSW' );
+			document.body.classList.remove( 'AMIW' );
+		}
 		
 		let str = '';
 		
@@ -6314,7 +6326,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 													try
 													{
 														let apps = JSON.parse( d );
-														let str = '<option value="">Friend Workspace</option>';
+														let str = '<option value="">' + Workspace.environmentName + '</option>';
 														for( let j = 0; j < apps.length; j++ )
 														{
 															let ex = '';

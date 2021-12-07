@@ -22,6 +22,7 @@ Workspace = {
 	{
 		return false;
 	},
+	environmentName: 'Workspace',
 	staticBranch: 'Hydrogen 4',
 	icons: [],
 	menuMode: 'pear', // 'miga', 'fensters' (alternatives) -> other menu behaviours
@@ -159,7 +160,7 @@ Workspace = {
 
 		// Setup default Doors screen
 		let wbscreen = new Screen( {
-			title: 'Friend Workspace',
+			title: Workspace.environmentName,
 			id:	'DoorsScreen',
 			extra: Workspace.fullName,
 			taskbar: true,

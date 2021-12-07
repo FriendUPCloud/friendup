@@ -1,5 +1,112 @@
 @import url(/themes/friendup12/theme_compiled.css);
 
+/* Window management controls */
 
+body.AMIW div .View > .Title > div > .Zoom,
+body.AMIW[focusmode=clicktofront] div .View > .Title > div > .Zoom
+{
+	top: 0;
+	right: 10px;
+	left: auto;
+	margin: 0;
+}
 
+body.AMIW div .View > .Title > div > .Minimize,
+body.AMIW[focusmode=clicktofront] div .View > .Title > div > .Minimize
+{
+	top: 0;
+	right: 35px;
+	left: auto;
+	margin: 0;
+}
+
+html body.AMIW .View > .Title.NoResize > div > .Minimize,
+html body.AMIW[focusmode=clicktofront] .View > .Title.NoResize > div > .Minimize
+{
+	top: 0;
+	left: auto;
+	right: 10px;
+	margin: 0;
+}
+
+html body.AMIW .View.Active > .Title > div > .Close:hover, 
+html body.AMIW .View.Active > .Title > div > .Close, 
+html body.AMIW .View > .Title > div > .Close
+{
+	left: 10px
+}
+
+html .View > .Title
+{
+	background-color: #dedede;
+}
+
+html .View > .Title > div > span
+{
+	color: black;
+}
+
+html .View.Active > .Title, 
+html body[mobile] .View > .Title
+{
+	background-color: #6688cc;
+}
+
+html .View.Active > .Title > div > span
+{
+	color: white;
+}
+
+.View.Active > .Title > div > .Close:hover, 
+.View.Active > .Title > div > .Close, 
+html .View > .Title > div > .Close
+{
+	background-position: 0 center;
+	background-image: url(/themes/commodore/gfx/bitmap.png);
+}
+.View.Active > .Title > div > .Close:hover, 
+.View.Active > .Title > div > .Close
+{
+	filter: invert(1);
+}
+
+.View.Active > .Title > div > .Zoom:hover, 
+.View.Active > .Title > div > .Zoom, 
+html .View > .Title > div > .Zoom,
+.View.Active[maximized=true] > .Title > div > .Zoom:hover, 
+.View.Active[maximized=true] > .Title > div > .Zoom
+{
+	background-position: -48px center;
+	background-image: url(/themes/commodore/gfx/bitmap.png);
+}
+.View.Active > .Title > div > .Zoom:hover, 
+.View.Active > .Title > div > .Zoom
+{
+	filter: invert(1);
+}
+
+html .View.Active > .Title > div > .Minimize:hover,
+html .View > .Title > div > .Minimize:hover,
+html .View > .Title > div > .Minimize, 
+html body[focusmode=clicktofront] .View > .Title > div > .Minimize
+{
+	background-position: -22px center;
+	background-image: url(/themes/commodore/gfx/bitmap.png);
+}
+html .View.Active > .Title > div > .Minimize
+{
+	filter: invert(1);
+}
+
+/* Done window management controls */
+
+/* Screen */
+
+html .Screen > .TitleBar:after
+{
+	background-image: url(/themes/commodore/gfx/logo.png);
+	border-radius: 100%;
+}
+
+/* Done screen */
 
