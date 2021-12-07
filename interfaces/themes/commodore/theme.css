@@ -36,6 +36,12 @@ html > body .View > .Title > div > .Close
 	left: 10px
 }
 
+html #Screens .View
+{
+	background-color: transparent;
+	overflow: hidden;
+}
+
 html .View > .Title
 {
 	background-color: #dedede;
