@@ -70,7 +70,8 @@ if( $s->ID > 0 )
 	$vc->Type = 'system';
 	$vc->Key = 'theme';
 	$vc->load();
-	$vc->Data = 'friendup12';
+	$vc->Data = getDefaultTheme();
+	
 	$vc->save();
 
 	// Dock

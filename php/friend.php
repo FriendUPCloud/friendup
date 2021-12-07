@@ -191,6 +191,20 @@ function AuthenticateApplication( $appName, $UserID, $searchGroups = false )
 	return 'fail<!--separate-->{"Error":"Can not understand query."}';
 }
 
+// Get the default theme, based on override
+function getDefaultTheme()
+{
+	if( isset( $configfilesettings[ 'FriendCore' ] ) && isset( $configfilesettings[ 'FriendCore' ][ 'friendTheme' ] ) )
+	{
+		$th = $configfilesettings[ 'FriendCore' ][ 'friendTheme' ];
+		if( file_exists( 'resources/themes/' . $th ) )
+		{
+			return $th;
+		}
+	}
+	return 'friendup12';
+}
+
 // Find apps and search path..
 function FindAppInSearchPaths( $app )
 {
