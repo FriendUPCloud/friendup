@@ -57,6 +57,7 @@ Friend.User = {
 			
 			if( flags && flags.hashedPassword )
 			{
+				console.log( 'Sending login with hashed password.' );
 				this.SendLoginCall( {
 					username: username,
 					password: password,
@@ -67,6 +68,7 @@ Friend.User = {
 			}
 			else
 			{
+				console.log( 'Sending login with unhashed password' );
 				this.SendLoginCall( {
 					username: username,
 					password: password,
@@ -128,6 +130,8 @@ Friend.User = {
     // Send the actual login call
     SendLoginCall: function( info, callback )
     {
+    	console.log( 'Login call: ', info );
+    	
     	// Already logging in
     	this.State = 'login';
     	
@@ -159,12 +163,14 @@ Friend.User = {
 			try
 			{
 				let enc = parent.Workspace.encryption;
+				console.log( 'Encrypting password into Workspace.loginPassword: ' + info.password );
 				parent.Workspace.loginPassword = enc.encrypt( info.password, enc.getKeys().publickey );
 				parent.Workspace.loginHashed = hashed;
 			}
 			catch( e )
 			{
 				let enc = Workspace.encryption;
+				console.log( 'Encrypting(2) password into Workspace.loginPassword: ' + info.password );
 				Workspace.loginPassword = enc.encrypt( info.password, enc.getKeys().publickey );
 				Workspace.loginHashed = hashed;
 			}
@@ -262,9 +268,13 @@ Friend.User = {
     	
     	if( Workspace.loginUsername && Workspace.loginPassword )
     	{
+    		console.log( 'Trying to log in with: ' + Workspace.loginUsername + ' AND ' + Workspace.loginPassword );
+    		
     		info.username = Workspace.loginUsername;
     		let enc = Workspace.encryption;
     		info.password = enc.decrypt( Workspace.loginPassword, enc.getKeys().privatekey );
+    		
+    		console.log( 'Unhashed, decrypted password (Workspace.loginPassword): ' + info.password );
     		
     		info.hashedPassword = false;
     	}
