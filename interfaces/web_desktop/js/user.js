@@ -155,6 +155,7 @@ Friend.User = {
 				Workspace.originalLogin = info.password;
 			}
 			
+			// TODO: Fix hash detector by making sure hasing doesn't occur without hashedPassword flag set.
 			let hashDetector = info.password.length > 20 && info.password.substr( 0, 6 ) == 'HASHED' ? true : false;
 			if( !info.hashedPassword && hashDetector )
 				info.hashedPassword = true;
