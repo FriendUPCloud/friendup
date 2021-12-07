@@ -57,7 +57,7 @@ Friend.User = {
 			
 			if( flags && flags.hashedPassword )
 			{
-				console.log( 'Sending login with hashed password.' );
+				//console.log( 'Sending login with hashed password.' );
 				this.SendLoginCall( {
 					username: username,
 					password: password,
@@ -68,7 +68,7 @@ Friend.User = {
 			}
 			else
 			{
-				console.log( 'Sending login with unhashed password' );
+				//console.log( 'Sending login with unhashed password' );
 				this.SendLoginCall( {
 					username: username,
 					password: password,
@@ -155,6 +155,10 @@ Friend.User = {
 				Workspace.originalLogin = info.password;
 			}
 			
+			let hashDetector = info.password.length > 20 && info.password.substr( 0, 6 ) == 'HASHED' ? true : false;
+			if( !info.hashedPassword && hashDetector )
+				info.hashedPassword = true;
+			
 			let hashed = info.hashedPassword ? info.password : ( 'HASHED' + Sha256.hash( info.password ) );
 			
 			m.addVar( 'username', info.username );
@@ -163,14 +167,14 @@ Friend.User = {
 			try
 			{
 				let enc = parent.Workspace.encryption;
-				console.log( 'Encrypting password into Workspace.loginPassword: ' + info.password );
+				//console.log( 'Encrypting password into Workspace.loginPassword: ' + info.password );
 				parent.Workspace.loginPassword = enc.encrypt( info.password, enc.getKeys().publickey );
 				parent.Workspace.loginHashed = hashed;
 			}
 			catch( e )
 			{
 				let enc = Workspace.encryption;
-				console.log( 'Encrypting(2) password into Workspace.loginPassword: ' + info.password );
+				//console.log( 'Encrypting(2) password into Workspace.loginPassword: ' + info.password );
 				Workspace.loginPassword = enc.encrypt( info.password, enc.getKeys().publickey );
 				Workspace.loginHashed = hashed;
 			}
@@ -268,13 +272,13 @@ Friend.User = {
     	
     	if( Workspace.loginUsername && Workspace.loginPassword )
     	{
-    		console.log( 'Trying to log in with: ' + Workspace.loginUsername + ' AND ' + Workspace.loginPassword );
+    		//console.log( 'Trying to log in with: ' + Workspace.loginUsername + ' AND ' + Workspace.loginPassword );
     		
     		info.username = Workspace.loginUsername;
     		let enc = Workspace.encryption;
     		info.password = enc.decrypt( Workspace.loginPassword, enc.getKeys().privatekey );
     		
-    		console.log( 'Unhashed, decrypted password (Workspace.loginPassword): ' + info.password );
+    		//console.log( 'Unhashed, decrypted password (Workspace.loginPassword): ' + info.password );
     		
     		info.hashedPassword = false;
     	}
