@@ -223,10 +223,12 @@ Friend.User = {
 					if( !Workspace.userWorkspaceInitialized )
 					{
                 		// Init workspace
+                		console.log( 'Initializing with json: ', json );
 						Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
 					}
 					else
 					{
+						cvonsole.log( 'Not initializing with json: ', json );
 						if( typeof( callback ) == 'function' )
 							callback( true, serveranswer );
 						// Make sure we didn't lose websocket!
