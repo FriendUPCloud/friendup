@@ -1134,7 +1134,6 @@ Workspace = {
 							// Invites
 							if( json.inviteHash )
 							{
-								console.log( 'Verifying invite: ', json );
 								let inv = new Module( 'system' );
 								inv.onExecuted = function( err, dat )
 								{
