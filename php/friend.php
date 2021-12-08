@@ -194,6 +194,7 @@ function AuthenticateApplication( $appName, $UserID, $searchGroups = false )
 // Get the default theme, based on override
 function getDefaultTheme()
 {
+	global $configfilesettings;
 	if( isset( $configfilesettings[ 'FriendCore' ] ) && isset( $configfilesettings[ 'FriendCore' ][ 'friendTheme' ] ) )
 	{
 		$th = $configfilesettings[ 'FriendCore' ][ 'friendTheme' ];
