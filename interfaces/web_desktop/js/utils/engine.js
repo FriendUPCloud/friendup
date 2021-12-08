@@ -358,8 +358,8 @@ function MakeArray ( objs )
  */
 Friend.HTMLEntities = {
 	"'": "&apos;",
-	"&lt;": "&lt;",
-	"&gt;": "&gt;",
+	"<": "&lt;",
+	">": "&gt;",
 	" ": "&nbsp;",
 	"¡": "&iexcl;",
 	"¢": "&cent;",
@@ -609,11 +609,11 @@ Friend.HTMLEntities = {
  */
 function EntityEncode( string )
 {
-	var output = [];
-	for( var a = string.length - 1; a >= 0; a-- )
+	let output = [];
+	for( let a = string.length - 1; a >= 0; a-- )
 	{
-		var k = string[a];
-		for( var b in Friend.HTMLEntities )
+		let k = string[a];
+		for( let b in Friend.HTMLEntities )
 		{
 			if( b == string[a] )
 			{
@@ -632,15 +632,11 @@ function EntityEncode( string )
  */
 function EntityDecode( string )
 {
-	return string.replace( /(\&[^;]*?\;)/g, function( m, decoded )
+	for( let b in Friend.HTMLEntities )
 	{
-		for( var b in Friend.HTMLEntities )
-		{
-			if( Friend.HTMLEntities[b] == decoded )
-				return b; 
-		}
-		return decoded;
-	} );
+		string = string.split( Friend.HTMLEntities[b] ).join( b );
+	}
+	return string;
 }
 
 // Get a translated string
