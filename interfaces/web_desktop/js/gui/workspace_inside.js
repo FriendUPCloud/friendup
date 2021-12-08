@@ -3765,7 +3765,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		console.log( 'Disk notification!', windowList, type );
 	},
-	refreshTheme: function( themeName, update, themeConfig )
+	refreshTheme: function( themeName, update, themeConfig, initpass )
 	{
 		let self = this;
 		
@@ -3773,6 +3773,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( this.themeRefreshed && !update )
 		{
 			return;
+		}
+
+		if( !initpass )
+		{
+			document.body.classList.add( 'ThemeRefreshing' );
+			return setTimeout( function()
+			{
+				Workspace.refreshTheme( themeName, update, themeConfig, true );
+			}, 150 );
 		}
 
 		// Check url var
@@ -3836,6 +3845,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					styles.onload = function()
 					{
 						document.body.classList.add( 'ThemeLoaded' );
+						setTimeout( function()
+						{
+							document.body.classList.remove( 'ThemeRefreshing' );
+						}, 150 );
 						// We are inside (wait for wallpaper) - watchdog
 						if( !Workspace.insideInterval )
 						{
