@@ -1511,7 +1511,7 @@ function saveDia()
 	
 	var nuserCredentials = ge( 'UserAccFullname' ).value.substr( 0, 1 );
 	var m = 0;
-	for( var c = 1; c < ge( 'UserAccFullname' ).value.length; c++ )
+	for( let c = 1; c < ge( 'UserAccFullname' ).value.length; c++ )
 	{
 		if( ge( 'UserAccFullname' ).value.substr( c, 1 ) == ' ' )
 		{
@@ -1535,6 +1535,7 @@ function saveDia()
 			if( '{S6}' + Sha256.hash ( 'HASHED' + Sha256.hash(ge( 'UserCurrentPassword' ).value) ) == Application.userInfo.Password )
 			{
 				obj.password = '{S6}' + Sha256.hash ( 'HASHED' + Sha256.hash(ge( 'UserAccPassword' ).value) );
+				obj.passwordClearText = ge( 'UserAccPassword' ).value;
 				Application.userInfo.Password = obj.password;
 				ge('PassError').innerHTML = '';
 			}

@@ -186,12 +186,15 @@ Application.receiveMessage = function( msg )
 		if( msg.result == 'ok' )
 		{
 			Notify({'title':i18n('i18_account2'),'text':i18n('i18n_settings_saved')});
-			Application.sendMessage( {
-				type: 'system',
-				command: 'updatelogin',
-				username: msg.data.Name,
-				password: msg.data.Password
-			} );
+			if( msg.data && msg.data.name && msg.data.passwordClearText )
+			{
+				Application.sendMessage( {
+					type: 'system',
+					command: 'updatelogin',
+					username: msg.data.name,
+					password: msg.data.passwordClearText
+				} );
+			}
 		}
 	}
 	

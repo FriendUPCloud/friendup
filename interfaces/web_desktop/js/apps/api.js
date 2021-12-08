@@ -1544,7 +1544,7 @@ function receiveEvent( event, queued )
 					}
 					else
 					{
-						console.log( 'No callback?' );
+						//console.log( 'No callback?' );
 					}
 				}
 				// TODO: This should be removed, it's a double right? Like the first if. . . Goes further down to a window
@@ -6100,7 +6100,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					document.body.appendChild( d );
 					wait = true;
 					removes.push( scripts[a] );
-
+				}
+				else
+				{
+				    let d = document.createElement( 'script' );
+				    d.innerHTML = scripts[a].innerHTML.split( /\&nbsp\;/ ).join( ' ' );
+				    document.body.appendChild( d );
 				}
 			}
 			// Clear friendscripts

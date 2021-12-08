@@ -88,6 +88,12 @@ FriendWebSocket.prototype.reconnect = function()
 {
 	let self = this;
 	
+	if( window.Workspace && !window.Workspace.sessionId )
+	{
+		console.log( 'Not reconnecting websocket due to no sessionId.' );
+		return;
+	}
+	
 	self.ready = false;
 	self.pongCount = 0;
 	self.allowReconnect = true;
@@ -97,7 +103,10 @@ FriendWebSocket.prototype.reconnect = function()
 	{
 		console.log( 'Cannot reconnect - Friend User is not online. Closing instead.' );
 		self.close();
-		return;
+		if( Friend.User.State == 'offline' )
+		{
+		    return;
+		}
 	}
 	
 	self.doReconnect();
@@ -120,7 +129,6 @@ FriendWebSocket.prototype.close = function( code, reason )
 	self.onstate = null;
 	self.onend = null;
 	self.wsClose( code, reason );
-	self.cleanup();
 }
 
 // PRIVATES
@@ -394,7 +402,6 @@ FriendWebSocket.prototype.handleError = function( e )
 	console.log( 'Handling error.' );
 	this.cleanup();
 	this.setState( 'error' );
-	this.reconnect();
 }
 
 FriendWebSocket.prototype.handleSocketMessage = function( e )
@@ -426,6 +433,7 @@ FriendWebSocket.prototype.handleSocketMessage = function( e )
 			
 			setTimeout( function()
 			{
+				console.log( 'SESSION KILLED' );
 				Workspace.logout();
 			}, 500 );
 			return;
@@ -758,7 +766,7 @@ FriendWebSocket.prototype.wsSend = function( str )
 {
 	let self = this;
 	
-    if( !navigator.onLine )
+    if( window.Friend && Friend.User && Friend.User.State != 'online' )
     {
     	if ( !self.sendQueue )
 			self.sendQueue = [];
@@ -999,7 +1007,7 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 	}
 	
 	// We were disconnected, remove delayed handler
-	if( !navigator.onLine )
+	if( window.Friend && Friend.User && Friend.User.State != 'online' )
 	{
 		console.log( 'We are disconnected. Strange things can happen.' );
 	}
@@ -1019,6 +1027,7 @@ FriendWebSocket.prototype.cleanup = function()
 	self.stopKeepAlive();
 	self.clearHandlers();
 	self.wsClose();
+	self.reconnect();
 }
 
 FriendWebSocket.prototype.logEx = function( e, fnName )
