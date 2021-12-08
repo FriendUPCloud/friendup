@@ -1570,7 +1570,7 @@ function saveDia()
 			}
 			else if( retries-- > 0 )
 			{
-				setTimeout( function(){ updateWithResult(); }, 250 );
+				setTimeout( function(){ updateWithResult(); }, 350 );
 			}
 		}
 		updateWithResult();
