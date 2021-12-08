@@ -6104,7 +6104,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				else
 				{
 				    let d = document.createElement( 'script' );
-				    d.innerHTML = scripts[a].innerHTML.split( /\&nbsp\;/ ).join( ' ' );
+				    d.innerHTML = EntityDecode( scripts[a].innerHTML );
 				    document.body.appendChild( d );
 				}
 			}
