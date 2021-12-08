@@ -1,5 +1,12 @@
 @import url(/themes/friendup12/theme_compiled.css);
 
+/* Welcome */
+
+body > .WelcomeGraphic
+{
+	background-image: url(/themes/commodore/gfx/welcomeimage.png);
+}
+
 /* About */
 
 #FTheoryCanvasContainer + #content #logo > img
@@ -135,6 +142,7 @@ html .Screen > .TitleBar:after
 
 html .File .Icon .Drive > .Label
 {
+	border-top: 5px solid #78909c;
 	background-color: #78909c;
 }
 

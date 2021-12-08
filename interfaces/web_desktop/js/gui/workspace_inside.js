@@ -3798,7 +3798,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Setting loading
 		Workspace.setLoading( true );
 
-		if( !themeName ) themeName = 'friendup12';
+		if( !themeName ) themeName = Workspace.theme ? Workspace.theme : 'friendup12';
 		if( themeName == 'friendup' ) themeName = 'friendup12';
 		
 		themeName = themeName.toLowerCase();
