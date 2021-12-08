@@ -2161,22 +2161,22 @@ var WorkspaceInside = {
 				document.body.classList.add( uf );
 			else document.body.classList.remove( uf );
 		}
-		
+		/*
 		if( this.themeData[ 'buttonSchemeText' ] == 'windows' )
 		{
 			document.body.classList.add( 'MSW' );
 			document.body.classList.remove( 'AMIW' );
 		}
 		else if( this.themeData[ 'buttonSchemeText' ] == 'amiga' )
-		{
+		{*/
 			document.body.classList.add( 'AMIW' );
 			document.body.classList.remove( 'MSW' );
-		}
+		/*}
 		else
 		{ 
 			document.body.classList.remove( 'MSW' );
 			document.body.classList.remove( 'AMIW' );
-		}
+		}*/
 		
 		let str = '';
 		
