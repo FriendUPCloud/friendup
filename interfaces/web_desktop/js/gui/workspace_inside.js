@@ -7077,9 +7077,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					command: 'mobilebackbutton'
 				} );
 				// Check with standard functionality
+				let app = null;
 				if( window._getAppByAppId )
 				{
-					let app = _getAppByAppId( cm.applicationId );
+					app = _getAppByAppId( cm.applicationId );
 					if( app.mainView == cm.windowObject )
 					{
 						if( !cm.windowObject.mobileBack.classList.contains( 'Showing' ) )
@@ -7099,7 +7100,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					cm.windowObject.parentView.activate();
 					return;
 				}
-				if( app.mainView )
+				if( app && app.mainView )
 				{
 					app.mainView.activate();
 					return;
