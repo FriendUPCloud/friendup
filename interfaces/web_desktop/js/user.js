@@ -74,7 +74,7 @@ Friend.User = {
 					password: password,
 					remember: remember,
 					hashedPassword: false,
-					inviteHash: flags.inviteHash ? flags.inviteHash : false
+					inviteHash: flags && flags.inviteHash ? flags.inviteHash : false
 				}, callback );
 			}
 		}
