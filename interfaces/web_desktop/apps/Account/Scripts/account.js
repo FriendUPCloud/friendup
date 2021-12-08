@@ -206,6 +206,14 @@ Application.receiveMessage = function( msg )
 					} );
 				}
 			}
+			else
+			{
+				Application.sendMessage( {
+					type: 'system',
+					command: 'userupdate',
+					reason: 'poke'
+				} );
+			}
 		}
 	}
 	
