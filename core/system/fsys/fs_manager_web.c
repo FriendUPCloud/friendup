@@ -1594,6 +1594,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 											HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
 											bs->bs_Buffer = NULL; // we cannot release memory, it is assigned now to response
 										}
+										
+										DEBUG("[FSMWebRequest] response : %s\n", response->http_Content );
 									}
 									else
 									{
@@ -1616,7 +1618,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								}
 
 								BufStringDelete( bs );
-								DEBUG("[FSMWebRequest] cannot open ok\n");
+								DEBUG("[FSMWebRequest] cannot open file\n");
 							}
 							else
 							{
