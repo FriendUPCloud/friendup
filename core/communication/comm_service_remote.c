@@ -46,6 +46,23 @@
 #define FLAGS S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
 #define MAX_MSG 50
 
+//
+// structure used to pass parameters from network thread to single accepted socket thread
+//
+
+/**
+* Thread to handle incoming connections!!!
+*/
+struct acceptThreadInstance 
+{ 
+	CommServiceRemote		*srv;
+	pthread_t				thread;
+	struct epoll_event		*event;
+	Socket					*sock;
+	// Incoming from accept
+	struct AcceptPair		*acceptPair;
+};
+
 /**
  * Create remote communication service
  *
@@ -833,6 +850,66 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 					else if( currentEvent.data.fd == service->csr_Socket->fd )
 					{
 						// We have a notification on the listening socket, which means one or more incoming connections.
+						
+						struct acceptThreadInstance *pre = FCalloc( 1, sizeof( struct acceptThreadInstance ) );
+						if( pre != NULL )
+						{
+							pre->srv = service;
+					
+							int fd = 0;
+							struct sockaddr_in6 client;
+							socklen_t clientLen = sizeof( client );
+					
+							while( ( fd = accept4( service->csr_Socket->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) != -1 )
+					{
+						DEBUG( "[FriendCoreEpoll] Adding the damned thing %d.\n", fd );
+						
+						AcceptStruct *as = FCalloc( 1, sizeof( AcceptStruct ) );
+						if( as != NULL )
+						{
+							as->fd = fd;
+							as->node.mln_Succ = (MinNode *)pre->afd;
+						}
+						pre->afd = as;
+						
+						// We are now in use!
+						if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+						{
+							fc->FDCount++;
+							FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+						}
+					}
+					
+					DEBUG("[FriendCoreEpoll] Thread create pointer: %p friendcore: %p\n", pre, fc );
+					
+					if( pthread_create( &pre->thread, NULL, &FriendCoreAcceptPhase2, ( void *)pre ) != 0 )
+					{
+						DEBUG("[FriendCoreEpoll] Pthread create fail\n");
+						//if( pre->fds )
+						if( pre->afd )
+						{
+							AcceptStruct *act = pre->afd;
+							AcceptStruct *rem = pre->afd;
+							while( act != NULL )
+							{
+								rem = act;
+								act = (AcceptStruct *)act->node.mln_Succ;
+								
+								shutdown( rem->fd, SHUT_RDWR );
+								close( rem->fd );
+								
+								// We are not in use!
+								if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+								{
+									fc->FDCount--;
+									FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+								}
+							}
+						}
+						FFree( pre );
+					}
+						
+						/*
 						while( TRUE )
 						{
 							FERROR("-=================RECEIVED========================-\n");
@@ -868,6 +945,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 								return 1;
 							}
 						}
+						*/
 						
 						//
 						// checking internal pipe
