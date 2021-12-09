@@ -11,6 +11,8 @@ The FriendOS liberates you from Big Tech:  It gives you control to create, colla
 
 ![Friend OS Hydrogen](https://friendos.com/wp-content/uploads/2020/07/hydrogen-fulldesktop.jpg "Friend OS Hydrogen")
 
+Get a free account on our production environment: https://friendsky.cloud/
+
 Across devices
 --------------
 
