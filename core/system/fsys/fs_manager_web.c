@@ -1556,12 +1556,17 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									}
 								}	// end of reading part or whole file
 							
+								DEBUG( "[FSMWebRequest] before file close\n");
+							
 								// Close the file
 								actFS->FileClose( actDev, fp );
+								
+								DEBUG( "[FSMWebRequest] size of msg: %ld\n", bs->bs_Size );
 							
 								if( bs->bs_Size > 0 )
 								{
 									// Combine all parts into one buffer
+									DEBUG( "[FSMWebRequest] response size: %ld\n", bs->bs_Size );
 
 									if( bs->bs_Buffer != NULL )
 									{
@@ -1578,6 +1583,10 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 											{
 												strncpy( outputBuf, bs->bs_Buffer + headerlength, totalBytes );
 												HttpSetContent( response, outputBuf, totalBytes );
+											}
+											else
+											{
+												DEBUG( "[FSMWebRequest] Cannot allocate memory for output buffer\n");
 											}
 										}
 										else
