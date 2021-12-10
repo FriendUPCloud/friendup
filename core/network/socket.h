@@ -75,6 +75,17 @@ enum {
 };
 
 //
+// Accept socket structure
+//
+
+typedef struct AcceptSocketStruct
+{
+	int fd;
+	MinNode node;
+}AcceptSocketStruct;
+
+
+//
 //
 //
 
