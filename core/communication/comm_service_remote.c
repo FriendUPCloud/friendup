@@ -719,8 +719,7 @@ void *RemoteSocketProcessSockBlock( void *fcv )
 
 	DEBUG("[CommServiceRemote] Wait for message on socket\n");
 	
-	//SocketSetBlocking( sock, TRUE );
-	
+
 	BufString *bs = NULL;
 	if( th->sock != NULL )
 	{
@@ -728,7 +727,7 @@ void *RemoteSocketProcessSockBlock( void *fcv )
 		int tr = 5;
 		char locBuffer[ bufferSize ];
 		
-		//SocketSetBlocking( th->sock, TRUE );
+		SocketSetBlocking( th->sock, TRUE );
 		//bs = SocketReadPackage( sock );
 		//bs = LocalSocketRead( th->sock, 0, 15 );
 		bs = th->sock->s_Interface->SocketReadTillEnd( th->sock, 0, 3 );
