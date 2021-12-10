@@ -739,7 +739,7 @@ void *RemoteSocketProcessSockBlock( void *fcv )
 			// Only increases timeouts in retries
 			//if( retryContentNotFull == 1 )
 			{
-			//	th->sock->s_SocketBlockTimeout = 100;
+				th->sock->s_SocketBlockTimeout = 1000;
 			}
 			
 			// Read from socket
