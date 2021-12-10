@@ -561,6 +561,135 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 // Handle socket accept
 //
 
+#define READ_TILL_END_BUFFER_SIZE_RFS 40096	//8192
+
+BufString *LocalSocketRead( Socket* sock, unsigned int pass __attribute__((unused)), int sec )
+{
+	if( sock == NULL )
+	{
+		FERROR("[SocketReadTillEndSSL] Cannot read from socket, socket = NULL!\n");
+		return NULL;
+	}
+
+	DEBUG2("[SocketReadTillEndSSL] Socket wait for message, blocked %d\n", sock->s_Blocked );
+
+	struct timeval tv;
+
+	struct pollfd fds;
+
+	// watch stdin for input 
+	fds.fd = sock->fd;// STDIN_FILENO;
+	fds.events = POLLIN;
+
+	tv.tv_sec = sec;
+	tv.tv_usec = 0;
+	FBOOL quit = FALSE;
+	
+	char *locbuffer = FMalloc( READ_TILL_END_BUFFER_SIZE_RFS );
+	if( locbuffer != NULL )
+	{
+		int fullPackageSize = 0;
+		FQUAD read = 0;
+		int retries = 0;
+		
+		BufString *bs = BufStringNew();
+		
+		while( quit != TRUE )
+		{
+			int ret = poll( &fds, 1, READ_TILL_END_BUFFER_SIZE_RFS );
+			
+			DEBUG("[SocketReadTillEndSSL] Before select, ret: %d\n", ret );
+			if( ret == 0 )
+			{
+				DEBUG("[SocketReadTillEndSSL] Timeout!\n");
+				BufStringDelete( bs );
+				FFree( locbuffer );
+				return NULL;
+			}
+			else if( ret < 0 )
+			{
+				DEBUG("[SocketReadTillEndSSL] Error\n");
+				BufStringDelete( bs );
+				FFree( locbuffer );
+				return NULL;
+			}
+
+			int res = 0, err = 0;//, buf = length;
+		
+			DEBUG("[SocketReadTillEndSSL] SSL enabled\n");
+
+			if( fds.revents & EPOLLIN )
+			{
+				DEBUG("[SocketReadTillEndSSL] Before read\n");
+				//if( read + buf > length ) buf = length - read;
+				if( ( res = SSL_read( sock->s_Ssl, locbuffer, READ_TILL_END_BUFFER_SIZE_RFS ) ) >= 0 )
+				{
+					read += (FQUAD)res;
+					
+					DEBUG("[SocketReadTillEndSSL] Read: %d fullpackage: %d\n", res, fullPackageSize );
+				
+					FULONG *rdat = (FULONG *)locbuffer;
+					if( ID_FCRE == rdat[ 0 ] )
+					{
+						fullPackageSize = rdat[ 1 ];
+					}
+					BufStringAddSize( bs, locbuffer, res );
+
+					if( fullPackageSize > 0 && read >= (FQUAD) fullPackageSize )
+					{
+						FFree( locbuffer );
+						return bs;
+					}
+				}
+				DEBUG("[SocketReadTillEndSSL] res2 : %d fullpackagesize %d\n", res, fullPackageSize );
+
+				if( res < 0 )
+				{
+					err = SSL_get_error( sock->s_Ssl, res );
+					DEBUG("[SocketReadTillEndSSL] err: %d\n", err );
+					switch( err )
+					{
+					// The TLS/SSL I/O operation completed.
+					case SSL_ERROR_NONE:
+						FERROR( "[SocketReadTillEndSSL] Completed successfully.\n" );
+						return bs;
+						// The TLS/SSL connection has been closed. Goodbye!
+					case SSL_ERROR_ZERO_RETURN:
+						FERROR( "[SocketReadTillEndSSL] The connection was closed, return %ld\n", read );
+						return bs;
+						// The operation did not complete. Call again.
+					case SSL_ERROR_WANT_READ:
+						break;
+					case SSL_ERROR_WANT_WRITE:
+						return bs;
+					case SSL_ERROR_SYSCALL:
+						return bs;
+					default:
+						DEBUG("[SocketReadTillEndSSL] default error\n");
+						usleep( 50 );
+						if( retries++ > 15 )
+						{
+							FFree( locbuffer );
+							return bs;
+						}
+					}
+				}
+				else if( res == 0 )
+				{
+					DEBUG("[SocketReadTillEndSSL] res = 0\n");
+					if( retries++ > 15 )
+					{
+						FFree( locbuffer );
+						return bs;
+					}
+				}
+			}	// if EPOLLIN
+		}	// QUIT != TRUE
+		FFree( locbuffer );
+	}
+	return NULL;
+}
+
 //
 //
 //
@@ -595,8 +724,35 @@ void *RemoteSocketProcessSockBlock( void *fcv )
 	BufString *bs = NULL;
 	if( th->sock != NULL )
 	{
+		int bufferSize = 40960;
+		char locBuffer[ bufferSize ];
+		
+		SocketSetBlocking( th->sock, TRUE );
 		//bs = SocketReadPackage( sock );
-		bs = th->sock->s_Interface->SocketReadTillEnd( th->sock, 0, 15 );
+		//bs = LocalSocketRead( th->sock, 0, 15 );
+		//bs = th->sock->s_Interface->SocketReadTillEnd( th->sock, 0, 15 );
+		
+		bs = BufStringNew();
+		while( TRUE )
+		{
+			DEBUG( "Waiting!!\n" );
+			// Only increases timeouts in retries
+			//if( retryContentNotFull == 1 )
+			{
+			//	th->sock->s_SocketBlockTimeout = 100;
+			}
+			
+			// Read from socket
+			int res = th->sock->s_Interface->SocketReadBlocked( th->sock, locBuffer, bufferSize, bufferSize );
+			if( res > 0 )
+			{
+				BufStringAddSize( bs, locBuffer, res );
+			}
+			else
+			{
+				break;
+			}
+		}
 	}
 	else
 	{
