@@ -863,7 +863,7 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 		}
 
 		SocketSetBlocking( sock, blocked );
-
+		/*
 		cert = SSL_get_peer_certificate( sock->s_Ssl );
 		if (cert == NULL)
 		{
@@ -881,6 +881,7 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 			free( line );
 			X509_free( cert );
 		}
+		*/
 		// ---------------------------------------------------------- *
 		// extract various certificate information                    *
 		// -----------------------------------------------------------
