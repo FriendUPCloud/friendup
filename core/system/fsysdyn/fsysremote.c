@@ -255,7 +255,7 @@ DataForm *SendMessageRFS( SpecialData *sd, DataForm *df )
 	FBYTE *lsdata = NULL;
 	FULONG sockReadSize = 0;
 
-	Socket *newsock = sd->sb->sl_SocketInterface.SocketConnectHost( sd->sb, sd->secured, sd->address, sd->port );
+	Socket *newsock = sd->sb->sl_SocketInterface.SocketConnectHost( sd->sb, sd->secured, sd->address, sd->port, TRUE );
 	if( newsock != NULL )
 	{
 		DEBUG("[SendMessageRFS] Connection created, message will be send: %lu\n", df->df_Size );
@@ -339,7 +339,7 @@ DataForm *SendMessageRFSRelogin( SpecialData *sd, DataForm *df )
 	FBYTE *lsdata = NULL;
 	FULONG sockReadSize = 0;
 
-	Socket *newsock = sd->sb->sl_SocketInterface.SocketConnectHost( sd->sb, sd->secured, sd->address, sd->port );
+	Socket *newsock = sd->sb->sl_SocketInterface.SocketConnectHost( sd->sb, sd->secured, sd->address, sd->port, TRUE );
 	if( newsock != NULL )
 	{
 		DEBUG("[SendMessageRFSRelogin] Connection created, message will be send: %lu\n", df->df_Size );
@@ -454,7 +454,7 @@ FConnection *ConnectToServerRFS( SpecialData *sd, char *conname )
 		
 		int port = fcm->fcm_CommService->s_port;// FRIEND_COMMUNICATION_PORT;
 		//con = CommServiceAddConnection( fcm->fcm_CommServiceClient, con->cfcc_Address, address, id, SERVICE_TYPE_CLIENT );
-		newsock = sd->sb->sl_SocketInterface.SocketConnectHost( sd->sb, fcm->fcm_CommService->s_secured, con->fc_Address, port );
+		newsock = sd->sb->sl_SocketInterface.SocketConnectHost( sd->sb, fcm->fcm_CommService->s_secured, con->fc_Address, port, TRUE );
 		
 		if( newsock != NULL )
 		{
@@ -495,7 +495,7 @@ FConnection *ConnectToServerRFS( SpecialData *sd, char *conname )
 			}
 		}
 		
-		newsock = sd->sb->sl_SocketInterface.SocketConnectHost( sd->sb, fcm->fcm_CommService->s_secured, address, port );
+		newsock = sd->sb->sl_SocketInterface.SocketConnectHost( sd->sb, fcm->fcm_CommService->s_secured, address, port, TRUE );
 		
 		sd->address = StringDuplicate( address );
 		sd->port = port;
@@ -1035,7 +1035,7 @@ DataForm *SendMessageWithReconnection( SpecialData *sd, DataForm *df )
 	if( recvdf == NULL || recvdf->df_Size == 0 || recvdf->df_ID != ID_FCRE )
 	{
 		DEBUG("Create new socket\n");
-		Socket *newsock = sd->sb->sl_SocketInterface.SocketConnectHost( sd->sb, sd->secured, sd->address, sd->port );
+		Socket *newsock = sd->sb->sl_SocketInterface.SocketConnectHost( sd->sb, sd->secured, sd->address, sd->port, TRUE );
 		if( newsock != NULL )
 		{
 			sd->con->fc_Socket = newsock;

@@ -219,7 +219,7 @@ int SocketConnectSSL( Socket* sock, const char *host );
 // Open new connection to host + create socket
 //
 
-Socket* SocketConnectHost( void *systembase, FBOOL ssl, char *host, unsigned short port );
+Socket* SocketConnectHost( void *systembase, FBOOL ssl, char *host, unsigned short port, FBOOL blocked );
 
 //
 // Enable or disable blocking for socket write functions

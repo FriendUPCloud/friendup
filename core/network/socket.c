@@ -689,10 +689,11 @@ int SocketConnectSSL( Socket* sock, const char *host )
  * @param ssl set to TRUE if you want to setup secured conne
  * @param host internet address
  * @param port internet port number
+ * @param blocked set connection to blocked
  * @return pointer to new Socket object or NULL when error appear
  */
 
-Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port )
+Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port, FBOOL blocked )
 {
 	Socket *sock = NULL;
 	SystemBase *lsb = (SystemBase *)SLIB;
@@ -780,11 +781,11 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 
 		SSL_set_fd( sock->s_Ssl, sock->fd );
 
-		X509                *cert = NULL;
-		X509_NAME       *certname = NULL;
+		//X509                *cert = NULL;
+		//X509_NAME       *certname = NULL;
 
-		FBOOL blocked = sock->s_Blocked;
-		SocketSetBlocking( sock, TRUE );
+		//FBOOL blocked = sock->s_Blocked;
+		SocketSetBlocking( sock, blocked );
 		int n=0;
 
 		//n = SSL_connect( sock->s_Ssl );
@@ -864,7 +865,7 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 		
 		DEBUG("[SocketConnectHost] SSLConnect SSL before block\n");
 
-		SocketSetBlocking( sock, blocked );
+		//SocketSetBlocking( sock, blocked );
 		/*
 		cert = SSL_get_peer_certificate( sock->s_Ssl );
 		if (cert == NULL)
