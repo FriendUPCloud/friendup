@@ -743,7 +743,7 @@ void *RemoteSocketProcessSockBlock( void *fcv )
 			}
 			
 			// Read from socket
-			int res = SSL_read( th->sock->s_Ssl, locbuffer, bufferSize );
+			int res = SSL_read( th->sock->s_Ssl, locBuffer, bufferSize );
 
 			//int res = th->sock->s_Interface->SocketReadBlocked( th->sock, locBuffer, bufferSize, bufferSize );
 			if( res > 0 )
