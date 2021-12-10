@@ -2319,7 +2319,7 @@ BufString *SocketReadTillEndSSL( Socket* sock, unsigned int pass __attribute__((
 		{
 			DEBUG("[SocketReadTillEndSSL] poll?\n");
 			
-			int ret = poll( &fds, 1, 500 );// READ_TILL_END_SOCKET_TIMEOUT );
+			int ret = poll( &fds, 1, READ_TILL_END_SOCKET_TIMEOUT );
 			
 			DEBUG("[SocketReadTillEndSSL] Before select, ret: %d\n", ret );
 			if( ret == 0 )
