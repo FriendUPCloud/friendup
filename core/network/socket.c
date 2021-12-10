@@ -2313,8 +2313,12 @@ BufString *SocketReadTillEndSSL( Socket* sock, unsigned int pass __attribute__((
 		
 		BufString *bs = BufStringNew();
 		
+		DEBUG("[SocketReadTillEndSSL] Before quite != TRUE\n");
+		
 		while( quit != TRUE )
 		{
+			DEBUG("[SocketReadTillEndSSL] poll?\n");
+			
 			int ret = poll( &fds, 1, 500 );// READ_TILL_END_SOCKET_TIMEOUT );
 			
 			DEBUG("[SocketReadTillEndSSL] Before select, ret: %d\n", ret );
