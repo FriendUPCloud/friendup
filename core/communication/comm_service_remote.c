@@ -725,6 +725,7 @@ void *RemoteSocketProcessSockBlock( void *fcv )
 	if( th->sock != NULL )
 	{
 		int bufferSize = 40960;
+		int tr = 5;
 		char locBuffer[ bufferSize ];
 		
 		SocketSetBlocking( th->sock, TRUE );
@@ -746,7 +747,7 @@ void *RemoteSocketProcessSockBlock( void *fcv )
 			int res = SSL_read( th->sock->s_Ssl, locBuffer, bufferSize );
 
 			//int res = th->sock->s_Interface->SocketReadBlocked( th->sock, locBuffer, bufferSize, bufferSize );
-			if( res > 0 )
+			if( res >= 0 )
 			{
 				BufStringAddSize( bs, locBuffer, res );
 			}
@@ -754,6 +755,7 @@ void *RemoteSocketProcessSockBlock( void *fcv )
 			{
 				break;
 			}
+			if( tr-- <= 0 ){ break; }
 		}
 		
 	}
