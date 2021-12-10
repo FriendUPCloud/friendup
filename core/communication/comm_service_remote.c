@@ -729,9 +729,9 @@ void *RemoteSocketProcessSockBlock( void *fcv )
 		
 		SocketSetBlocking( th->sock, TRUE );
 		//bs = SocketReadPackage( sock );
-		//bs = LocalSocketRead( th->sock, 0, 15 );
+		bs = LocalSocketRead( th->sock, 0, 15 );
 		//bs = th->sock->s_Interface->SocketReadTillEnd( th->sock, 0, 15 );
-		
+		/*
 		bs = BufStringNew();
 		while( TRUE )
 		{
@@ -753,6 +753,7 @@ void *RemoteSocketProcessSockBlock( void *fcv )
 				break;
 			}
 		}
+		*/
 	}
 	else
 	{
