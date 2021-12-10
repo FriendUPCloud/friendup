@@ -648,6 +648,7 @@ int SocketConnectSSL( Socket* sock, const char *host )
 		}
 	}
 
+	/*
 	cert = SSL_get_peer_certificate( sock->s_Ssl );
 	if (cert == NULL)
 	{
@@ -665,6 +666,7 @@ int SocketConnectSSL( Socket* sock, const char *host )
 		free( line );
 		X509_free( cert );
 	}
+	*/
 	// ---------------------------------------------------------- *
 	// extract various certificate information                    *
 	// -----------------------------------------------------------
