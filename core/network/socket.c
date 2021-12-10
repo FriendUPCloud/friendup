@@ -784,7 +784,7 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 		X509_NAME       *certname = NULL;
 
 		FBOOL blocked = sock->s_Blocked;
-		SocketSetBlocking( sock, FALSE );
+		SocketSetBlocking( sock, TRUE );
 		int n=0;
 
 		//n = SSL_connect( sock->s_Ssl );
@@ -861,6 +861,8 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 				break;
 			}
 		}
+		
+		DEBUG("[SocketConnectHost] SSLConnect SSL before block\n");
 
 		SocketSetBlocking( sock, blocked );
 		/*
