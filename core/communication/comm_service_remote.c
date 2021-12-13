@@ -717,7 +717,7 @@ void *RemoteSocketProcessSockBlock( void *fcv )
 
 	FBYTE *tempBuffer = NULL;
 
-	DEBUG("[CommServiceRemote] Wait for message on socket\n");
+	DEBUG("[RemoteSocketProcessSockBlock] Wait for message on socket\n");
 	
 
 	BufString *bs = NULL;
@@ -761,14 +761,14 @@ void *RemoteSocketProcessSockBlock( void *fcv )
 	}
 	else
 	{
-		FERROR("Sock == NULL!\n");
+		FERROR("[RemoteSocketProcessSockBlock] Sock == NULL!\n");
 	}
 	
 	if( bs != NULL )
 	{
 		int count = (int)bs->bs_Size;
 	
-		DEBUG2("[CommServiceRemote] PROCESSING RECEIVED CALL, DATA READ %d\n", (int)count );
+		DEBUG2("[RemoteSocketProcessSockBlock] PROCESSING RECEIVED CALL, DATA READ %d\n", (int)count );
 		int dcount = count;
 		DataForm *df = (DataForm *)bs->bs_Buffer;
 		
@@ -791,16 +791,16 @@ void *RemoteSocketProcessSockBlock( void *fcv )
 				DataForm *recvDataForm = NULL;
 				FBOOL isStream = FALSE;
 				
-				DEBUG("[CommServiceRemote] All data received, processing bytes %d-------------------------------------------PROCESSING ANSWER\n", dcount );
+				DEBUG("[RemoteSocketProcessSockBlock] All data received, processing bytes %d-------------------------------------------PROCESSING ANSWER\n", dcount );
 				
 				recvDataForm = ParseMessageCSR( th->srv, th->sock, (FBYTE *)bs->bs_Buffer, (int *)&dcount, &isStream );
 				
-				DEBUG2("[CommServiceRemote] Data processed-----------------------------------------\n");
+				DEBUG2("[RemoteSocketProcessSockBlock] Data processed-----------------------------------------\n");
 				
 				// return information
 				if( recvDataForm != NULL )
 				{
-					DEBUG2("[CommServiceRemote] Data received-----------------------------------------%lu\n", recvDataForm->df_Size);
+					DEBUG2("[RemoteSocketProcessSockBlock] Data received-----------------------------------------%lu\n", recvDataForm->df_Size);
 
 					int wrote = 0;
 					
@@ -808,7 +808,7 @@ void *RemoteSocketProcessSockBlock( void *fcv )
 					{
 						wrote = th->sock->s_Interface->SocketWrite( th->sock, (char *)recvDataForm, (FLONG)recvDataForm->df_Size );
 					}
-					DEBUG2("[CommServiceRemote] Wrote bytes %d\n", wrote );
+					DEBUG2("[RemoteSocketProcessSockBlock] Wrote bytes %d\n", wrote );
 					
 					// remove data form
 					DataFormDelete( recvDataForm );
@@ -828,7 +828,7 @@ void *RemoteSocketProcessSockBlock( void *fcv )
 					strcpy( (char *)&tdata[ 8 ], "No response" );
 					DataFormAdd( &tmpfrm, tdata, 20 );
 					
-					DEBUG2("[CommServiceRemote] Service, send message to socket, size %lu\n", tmpfrm->df_Size );
+					DEBUG2("[RemoteSocketProcessSockBlock] Service, send message to socket, size %lu\n", tmpfrm->df_Size );
 					
 					th->sock->s_Interface->SocketWrite( th->sock, (char *)tmpfrm, (FLONG)tmpfrm->df_Size );
 					
@@ -837,12 +837,12 @@ void *RemoteSocketProcessSockBlock( void *fcv )
 			}
 			else if( df[ 2 ].df_ID == ID_FCON )
 			{
-				INFO("[CommServiceRemote] New connection was set\n");
+				INFO("[RemoteSocketProcessSockBlock] New connection was set\n");
 				BufStringDelete( bs );
 			}
 			else
 			{
-				FERROR("[CommServiceRemote] Message uknown!\n");
+				FERROR("[RemoteSocketProcessSockBlock] Message uknown!\n");
 				BufStringDelete( bs );
 			}
 
@@ -858,7 +858,7 @@ void *RemoteSocketProcessSockBlock( void *fcv )
 	close_fcp:
 	
 	
-	DEBUG( "[FriendCoreProcessSockBlock] Closing socket %d.\n", th->sock->fd );
+	DEBUG( "[RemoteSocketProcessSockBlock] Closing socket %d.\n", th->sock->fd );
 	
 	if( th->sock )
 	{
@@ -893,12 +893,12 @@ static inline int RemoteSocketAcceptPhase3( int fd, CommServiceRemote *csr )
 	int err = poll( &lfds, 1, 250 );
 	if( err == 0 )
 	{
-		FERROR("[FriendCoreProcessSockBlock] want read TIMEOUT....\n");
+		FERROR("[RemoteAcceptPhase3] want read TIMEOUT....\n");
 		goto accerror3;
 	}
 	else if( err < 0 )
 	{
-		FERROR("[FriendCoreProcessSockBlock] other....\n");
+		FERROR("[RemoteAcceptPhase3] other....\n");
 		goto accerror3;
 	}
 	
@@ -908,27 +908,27 @@ static inline int RemoteSocketAcceptPhase3( int fd, CommServiceRemote *csr )
 		switch( errno )
 		{
 			case EAGAIN: break;
-			case EBADF:DEBUG( "[FriendCoreAcceptPhase3] The socket argument is not a valid file descriptor.\n" );
+			case EBADF:DEBUG( "[RemoteAcceptPhase3] The socket argument is not a valid file descriptor.\n" );
 				goto accerror3;
-			case ECONNABORTED:DEBUG( "[FriendCoreAcceptPhase3] A connection has been aborted.\n" );
+			case ECONNABORTED:DEBUG( "[RemoteAcceptPhase3] A connection has been aborted.\n" );
 				goto accerror3;
-			case EINTR:DEBUG( "[FriendCoreAcceptPhase3] The accept() function was interrupted by a signal that was caught before a valid connection arrived.\n" );
+			case EINTR:DEBUG( "[RemoteAcceptPhase3] The accept() function was interrupted by a signal that was caught before a valid connection arrived.\n" );
 				goto accerror3;
-			case EINVAL:DEBUG( "[FriendCoreAcceptPhase3] The socket is not accepting connections.\n" );
+			case EINVAL:DEBUG( "[RemoteAcceptPhase3] The socket is not accepting connections.\n" );
 				goto accerror3;
-			case ENFILE:DEBUG( "[FriendCoreAcceptPhase3] The maximum number of file descriptors in the system are already open.\n" );
+			case ENFILE:DEBUG( "[RemoteAcceptPhase3] The maximum number of file descriptors in the system are already open.\n" );
 				goto accerror3;
-			case ENOTSOCK:DEBUG( "[FriendCoreAcceptPhase3] The socket argument does not refer to a socket.\n" );
+			case ENOTSOCK:DEBUG( "[RemoteAcceptPhase3] The socket argument does not refer to a socket.\n" );
 				goto accerror3;
-			case EOPNOTSUPP:DEBUG( "[FriendCoreAcceptPhase3] The socket type of the specified socket does not support accepting connections.\n" );
+			case EOPNOTSUPP:DEBUG( "[RemoteAcceptPhase3] The socket type of the specified socket does not support accepting connections.\n" );
 				goto accerror3;
-			default: DEBUG("[FriendCoreAcceptPhase3] Accept return bad fd\n");
+			default: DEBUG("[RemoteAcceptPhase3] Accept return bad fd\n");
 				goto accerror3;
 		}
 		return -1;
 	}
 
-	DEBUG( "[FriendCoreAcceptPhase3] Using file descr: %d\n", fd );
+	DEBUG( "[RemoteAcceptPhase3] Using file descr: %d\n", fd );
 
 	struct sockaddr_in6 client;
 	socklen_t           clientLen = sizeof( client );
@@ -952,14 +952,14 @@ static inline int RemoteSocketAcceptPhase3( int fd, CommServiceRemote *csr )
 
 		if( s_Ssl == NULL )
 		{
-			FERROR("[FriendCoreAcceptPhase3] Cannot accept SSL connection\n");
+			FERROR("[RemoteAcceptPhase3] Cannot accept SSL connection\n");
 			goto accerror3;
 		}
 
 		BIO *bio = SSL_get_rbio( s_Ssl );
 		if( bio != NULL )
 		{
-			DEBUG("[FriendCoreAcceptPhase3] Read buffer will be changed!\n");
+			DEBUG("[RemoteAcceptPhase3] Read buffer will be changed!\n");
 			BIO_set_read_buffer_size( bio, 81920 );
 		}
 
@@ -968,7 +968,7 @@ static inline int RemoteSocketAcceptPhase3( int fd, CommServiceRemote *csr )
 		if( srl != 1 )
 		{
 			int error = SSL_get_error( s_Ssl, srl );
-			FERROR( "[FriendCoreAcceptPhase3] Could not set fd, error: %d fd: %d\n", error, fd );
+			FERROR( "[RemoteAcceptPhase3] Could not set fd, error: %d fd: %d\n", error, fd );
 			
 			goto accerror3;
 		}
@@ -977,7 +977,7 @@ static inline int RemoteSocketAcceptPhase3( int fd, CommServiceRemote *csr )
 		// we must be sure that SSL Accept is working
 		while( 1 )
 		{
-			DEBUG("[FriendCoreAcceptPhase3] before accept\n");
+			DEBUG("[RemoteAcceptPhase3] before accept\n");
 			if( ( err = SSL_accept( s_Ssl ) ) == 1 )
 			{
 				break;
@@ -990,11 +990,11 @@ static inline int RemoteSocketAcceptPhase3( int fd, CommServiceRemote *csr )
 				{
 					case SSL_ERROR_NONE:
 						// NO error..
-						FERROR( "[FriendCoreAcceptPhase3] No error\n" );
+						FERROR( "[RemoteAcceptPhase3] No error\n" );
 						lbreak = 1;
 					break;
 					case SSL_ERROR_ZERO_RETURN:
-						FERROR("[FriendCoreAcceptPhase3] SSL_ACCEPT error: Socket closed.\n" );
+						FERROR("[RemoteAcceptPhase3] SSL_ACCEPT error: Socket closed.\n" );
 						goto accerror3;
 					case SSL_ERROR_WANT_READ:
 						lbreak = 2;
@@ -1003,20 +1003,20 @@ static inline int RemoteSocketAcceptPhase3( int fd, CommServiceRemote *csr )
 						lbreak = 2;
 					break;
 					case SSL_ERROR_WANT_ACCEPT:
-						FERROR( "[FriendCoreAcceptPhase3] Want accept\n" );
+						FERROR( "[RemoteAcceptPhase3] Want accept\n" );
 						goto accerror3;
 					case SSL_ERROR_WANT_X509_LOOKUP:
-						FERROR( "[FriendCoreAcceptPhase3] Want 509 lookup\n" );
+						FERROR( "[RemoteAcceptPhase3] Want 509 lookup\n" );
 						goto accerror3;
 					case SSL_ERROR_SYSCALL:
-						FERROR( "[FriendCoreAcceptPhase3] Error syscall. Goodbye! %s.\n", ERR_error_string( ERR_get_error(), NULL ) );
+						FERROR( "[RemoteAcceptPhase3] Error syscall. Goodbye! %s.\n", ERR_error_string( ERR_get_error(), NULL ) );
 						//goto accerror;
 						lbreak = 2;
 						break;
 					case SSL_ERROR_SSL:
 					{
 						int enume = ERR_get_error();
-						FERROR( "[FriendCoreAcceptPhase3] SSL_ERROR_SSL: %s.\n", ERR_error_string( enume, NULL ) );
+						FERROR( "[RemoteAcceptPhase3] SSL_ERROR_SSL: %s.\n", ERR_error_string( enume, NULL ) );
 						lbreak = 2;
 				
 						// HTTP to HTTPS redirection code
@@ -1040,13 +1040,13 @@ static inline int RemoteSocketAcceptPhase3( int fd, CommServiceRemote *csr )
 	
 			//if( csr->fci_Shutdown == TRUE )
 			//{
-			//	FINFO("[FriendCoreAcceptPhase3] Accept socket process will be stopped, becaouse Shutdown is in progress\n");
+			//	FINFO("[RemoteAcceptPhase3] Accept socket process will be stopped, becaouse Shutdown is in progress\n");
 			//	break;
 			//}
 		}
 	}
 
-	DEBUG("[FriendCoreAcceptPhase3] before getting incoming: fd %d\n", fd );
+	DEBUG("[RemoteAcceptPhase3] before getting incoming: fd %d\n", fd );
 	/*
 	if( fc->fci_Shutdown == TRUE )
 	{
@@ -1079,7 +1079,7 @@ static inline int RemoteSocketAcceptPhase3( int fd, CommServiceRemote *csr )
 			}
 			else
 			{
-				FERROR("[FriendCoreAcceptPhase3] Cannot allocate memory for socket!\n");
+				FERROR("[RemoteAcceptPhase3] Cannot allocate memory for socket!\n");
 				goto accerror3;
 			}
 	
@@ -1097,7 +1097,7 @@ static inline int RemoteSocketAcceptPhase3( int fd, CommServiceRemote *csr )
 				pthread_attr_setstacksize( &attr, stacksize );
 				
 				// Make sure we keep the number of threads under the limit
-				DEBUG("[FriendCoreAcceptPhase3] create process friendcoreprocessosckblock\n");
+				DEBUG("[RemoteAcceptPhase3] create process friendcoreprocessosckblock\n");
 				//change NULL to &attr
 				if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&RemoteSocketProcessSockBlock, ( void *)pre ) != 0 )
 				{
@@ -1107,12 +1107,12 @@ static inline int RemoteSocketAcceptPhase3( int fd, CommServiceRemote *csr )
 		}
 	}
 	
-	DEBUG("[FriendCoreAcceptPhase3] in accept loop - success\n");
+	DEBUG("[RemoteAcceptPhase3] in accept loop - success\n");
 	
 	return 0;
 	
 	accerror3:
-	DEBUG("[FriendCoreAcceptPhase3] ERROR\n");
+	DEBUG("[RemoteAcceptPhase3] ERROR\n");
 	
 	
 	if( fd >= 0 )
@@ -1142,7 +1142,7 @@ void *SocketAcceptPhase2( void *d )
 	// Accept
 	int fd = 0;
 	
-	DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
+	DEBUG("[RemoteAcceptPhase2] before accept4\n");
 	
 	AcceptSocketStruct *act = pre->afd;
 	AcceptSocketStruct *rem = pre->afd;
