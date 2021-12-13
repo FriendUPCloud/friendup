@@ -51,7 +51,7 @@
 void SocketFree( Socket *sock );
 
 #define SOCKET_STATE_MAX_ACCEPTED_TIME_s 15 //socket has N seconds to send the first byte
-#define READ_TILL_END_BUFFER_SIZE 4096	//8192
+#define READ_TILL_END_BUFFER_SIZE 4096*8	//8192
 #define READ_TILL_END_SOCKET_TIMEOUT (10000)
 #define READ_PACKAGE_BUFFER_SIZE 128000
 
