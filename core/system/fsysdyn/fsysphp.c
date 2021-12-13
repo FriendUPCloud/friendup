@@ -1260,7 +1260,7 @@ int FileClose( struct File *s, void *fp )
 							
 							if( result->bsd_Buffer[0] == 'f' && result->bsd_Buffer[1] == 'a' && result->bsd_Buffer[2] == 'i' && result->bsd_Buffer[3] == 'l' )
 							{
-								closeerr = 2;
+								closeerr = -2;
 							}
 							
 							DEBUG( "[fsysphp] Closed file using PHP call.\n" );
