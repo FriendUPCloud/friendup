@@ -1008,6 +1008,7 @@ Workspace = {
 				'webclient/js/io/directoryview_fileoperations.js;' +
 				'webclient/js/gui/menufactory.js;' +
 				'webclient/js/gui/workspace_menu.js;' +
+				'webclient/js/gui/tabletdashboard.js;' +
 				'webclient/js/gui/deepestfield.js;' +
 				'webclient/js/gui/filedialog.js;' +
 				'webclient/js/gui/printdialog.js;' +

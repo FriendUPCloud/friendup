@@ -6,6 +6,7 @@ var WorkspaceInside = {
 	// Tray icons
 	trayIcons: {},
 	workspaceInside: true,
+	tabletMode: false,
 	refreshDesktopIconsRetries: 0,
 	websocketDisconnectTime: 0,
 	currentViewState: 'inactive',
@@ -2155,7 +2156,19 @@ var WorkspaceInside = {
 		// Support input paradigms
 		if( typeof( this.themeData[ 'inputParadigmText' ] ) != 'undefined' )
 		{
-			document.body.classList.add( 'inputparadigm-' + this.themeData[ 'inputParadigmText' ] );
+			let p = this.themeData[ 'inputParadigmText' ];
+			p = p.substr( 0, 1 ).toUpperCase() + p.substr( 1, p.length - 1 );
+			document.body.classList.add( 'InputParadigm' + p );
+			
+			// Tablet type is special
+			if( p == 'Tablet' )
+			{
+				Workspace.tabletMode = true;
+			}
+			else
+			{
+				Workspace.tabletMode = false;
+			}
 		}
 		
 		let iconeffect = [ 'shadow', 'box' ];
@@ -2411,19 +2424,23 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						globalConfig.scrolldesktopicons = dat.scrolldesktopicons;
 					}
 					else globalConfig.scrolldesktopicons = 0;
-					if( dat.hidedesktopicons == 1 )
+					if( dat.hidedesktopicons == 1 || Workspace.tabletMode == true )
 					{
 						globalConfig.hidedesktopicons = dat.scrolldesktopicons;
 						document.body.classList.add( 'DesktopIconsHidden' );
+						if( !Workspace.dashboard && typeof( window.TabletDashboard ) != 'undefined' )
+							Workspace.dashboard = new TabletDashboard();
 					}
 					else
 					{
 						globalConfig.hidedesktopicons = 0;
 						document.body.classList.remove( 'DesktopIconsHidden' );
+						if( Workspace.dashboard )
+							Workspace.dashboard.destroy();
 					}
 					// Can only have workspaces on mobile
 					// TODO: Implement dynamic workspace count for mobile (one workspace per app)
-					if( dat.workspacecount >= 0 && !window.isMobile )
+					if( dat.workspacecount >= 0 && !window.isMobile && !Workspace.tabletMode )
 					{
 						globalConfig.workspacecount = dat.workspacecount;
 					}

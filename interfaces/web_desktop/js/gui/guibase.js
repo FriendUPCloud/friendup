@@ -2654,6 +2654,10 @@ var _screenTitleTimeout = null;
 var prevScreen = prevWindow = false;
 function CheckScreenTitle( screen, force )
 {	
+	// Dashboard
+	if( window.Workspace && Workspace.dashboard )
+		Workspace.dashboard.refresh();
+	
 	let testObject = screen ? screen : window.currentScreen;
 	if( !testObject && !force ) return;
 	

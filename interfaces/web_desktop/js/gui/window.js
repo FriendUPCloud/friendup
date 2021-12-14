@@ -978,7 +978,7 @@ function _ActivateWindowOnly( div )
 	
 	// we use this one to calculate the max-height of the active window once its switched....
 	let newOffsetY = 0;
-	for( var a in movableWindows )
+	for( let a in movableWindows )
 	{
 		let m = movableWindows[a];
 
@@ -5232,13 +5232,17 @@ var View = function( args )
 		// Some values are not set on application
 		if( flag == 'screen' ) return;
 
+		// Support dashboard
+		if( window.Workspace && Workspace.dashboard )
+			Workspace.dashboard.refresh();
+		
 		// Finally set the value on application
 
 		// Notify window if possible
 		// TODO: Real value after its evaluated
 		if( !Workspace.applications )
 			return;
-		for( var a = 0; a < Workspace.applications.length; a++ )
+		for( let a = 0; a < Workspace.applications.length; a++ )
 		{
 			let app = Workspace.applications[a];
 			if( app.applicationId == viewdiv.applicationId )
