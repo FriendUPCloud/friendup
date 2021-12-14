@@ -9,10 +9,9 @@ body > .WelcomeGraphic
 	height: 100%;
 	transition: opacity,background-position 0.75s,0.45s;
 	opacity: 0;
-	background-image: url(/themes/commodore/gfx/welcomeimage.png);
-	/*background-image: url(/graphics/welcome.jpg);*/
+	background-image: url(/graphics/welcome.jpg);
 	background-size: auto;
-	background-color: #9fa0cb; /*#023368;*/
+	background-color: #023368;
 	background-repeat: no-repeat;
 	background-position: center 54%;
 	z-index: 2147483647;
