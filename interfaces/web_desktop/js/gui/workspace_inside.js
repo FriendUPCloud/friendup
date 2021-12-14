@@ -2152,6 +2152,11 @@ var WorkspaceInside = {
 				document.body.classList.add( uf );
 			else document.body.classList.remove( uf );
 		}
+		// Support input paradigms
+		if( typeof( this.themeData[ 'inputParadigmText' ] ) != 'undefined' )
+		{
+			document.body.classList.add( 'inputparadigm-' + this.themeData[ 'inputParadigmText' ] );
+		}
 		
 		let iconeffect = [ 'shadow', 'box' ];
 		for( let c in iconeffect )
@@ -2161,22 +2166,25 @@ var WorkspaceInside = {
 				document.body.classList.add( uf );
 			else document.body.classList.remove( uf );
 		}
-		/*
-		if( this.themeData[ 'buttonSchemeText' ] == 'windows' )
+		
+		if( typeof( this.themeData[ 'buttonSchemeText' ] ) != 'undefined' )
 		{
-			document.body.classList.add( 'MSW' );
-			document.body.classList.remove( 'AMIW' );
+			if( this.themeData[ 'buttonSchemeText' ] == 'windows' )
+			{
+				document.body.classList.add( 'MSW' );
+				document.body.classList.remove( 'AMIW' );
+			}
+			else if( this.themeData[ 'buttonSchemeText' ] == 'amiga' )
+			{
+				document.body.classList.add( 'AMIW' );
+				document.body.classList.remove( 'MSW' );
+			}
+			else
+			{ 
+				document.body.classList.remove( 'MSW' );
+				document.body.classList.remove( 'AMIW' );
+			}
 		}
-		else if( this.themeData[ 'buttonSchemeText' ] == 'amiga' )
-		{*/
-			document.body.classList.add( 'AMIW' );
-			document.body.classList.remove( 'MSW' );
-		/*}
-		else
-		{ 
-			document.body.classList.remove( 'MSW' );
-			document.body.classList.remove( 'AMIW' );
-		}*/
 		
 		let str = '';
 		
