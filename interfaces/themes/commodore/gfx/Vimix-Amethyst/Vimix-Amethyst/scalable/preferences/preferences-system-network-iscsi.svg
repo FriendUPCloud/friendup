@@ -1,0 +1,36 @@
+<svg width="512" height="512" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="c" x="-.027273" y="-.021429" width="1.0545" height="1.0429" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="4"/>
+  </filter>
+  <filter id="d" x="-.06" y="-.06" width="1.12" height="1.12" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="6"/>
+  </filter>
+ </defs>
+ <linearGradient id="a">
+  <stop stop-color="#292c2f" offset="0"/>
+  <stop stop-opacity="0" offset="1"/>
+ </linearGradient>
+ <linearGradient id="b" x1="388.42" x2="388.42" y1="557.8" y2="505.8" gradientTransform="matrix(.58696 0 0 .53846 -273.55 -235.91)" gradientUnits="userSpaceOnUse">
+  <stop stop-color="#7f8c8d" offset="0"/>
+  <stop stop-color="#afb0b3" offset="1"/>
+ </linearGradient>
+ <use transform="translate(27,470)" width="100%" height="100%" fill="#1a1a1a" fill-rule="evenodd" xlink:href="#a"/>
+ <use transform="translate(27.003,470.01)" width="100%" height="100%" fill="#ffffff" fill-rule="evenodd" opacity=".1" xlink:href="#b"/>
+ <rect transform="matrix(0,-1,-1,0,-208,228)" x="-256" y="-640" width="448" height="352" rx="24" ry="24" filter="url(#c)" opacity=".1" stroke="#000" stroke-width="8"/>
+ <rect transform="matrix(0,-1,-1,0,-208,228)" x="-256" y="-640" width="448" height="352" rx="24" ry="24" filter="url(#c)" opacity=".2"/>
+ <rect transform="matrix(0,-1,-1,0,0,0)" x="-480" y="-432" width="448" height="352" rx="24" ry="24" fill="#78909c"/>
+ <path d="m104 482c-13.296 0-24-10.704-24-24v-2c0 13.296 10.704 24 24 24h304c13.296 0 24-10.704 24-24v2c0 13.296-10.704 24-24 24z" opacity=".2"/>
+ <path d="m104 32c-13.296 0-24 10.704-24 24v2c0-13.296 10.704-24 24-24h304c13.296 0 24 10.704 24 24v-2c0-13.296-10.704-24-24-24z" fill="#fff" opacity=".2"/>
+ <path d="m256 98c61.856 0 112 50.144 112 112s-50.144 112-112 112h-112v-112c0-61.856 50.144-112 112-112zm0 56c-30.928 0-56 25.072-56 56s25.072 56 56 56 56-25.072 56-56-25.072-56-56-56z" enable-background="new" fill="#fff" opacity=".2"/>
+ <path d="m256 96c61.856 0 112 50.144 112 112s-50.144 112-112 112h-112v-112c0-61.856 50.144-112 112-112zm0 56c-30.928 0-56 25.072-56 56s25.072 56 56 56 56-25.072 56-56-25.072-56-56-56z" enable-background="new" fill="#455a64"/>
+ <circle cx="376" cy="384" r="120" enable-background="new" filter="url(#d)" opacity=".5"/>
+ <rect transform="matrix(0,-1,-1,0,0,0)" x="-496" y="-496" width="240" height="240" rx="120" ry="120" fill="#3f51b5" stroke-width=".53571"/>
+ <g fill="none" stroke="#fff">
+  <circle cx="376" cy="376" r="81.428" stroke-linecap="round" stroke-linejoin="round" stroke-width="8.5714"/>
+  <path d="m294.57 376h162.86" stroke-width="8.5714"/>
+  <path d="m376.03 294.59a82.213 82.213 0 0 0-62.848 29.217c15.081 8.3403 37.632 13.643 62.848 13.643 25.176 0 47.695-5.286 62.775-13.604a82.213 82.213 0 0 0-62.775-29.256zm0 120c-25.689 0-48.619 5.5026-63.695 14.115a82.213 82.213 0 0 0 63.695 30.309 82.213 82.213 0 0 0 63.689-30.312c-15.076-8.6105-38.004-14.111-63.689-14.111z" stroke-linecap="round" stroke-linejoin="round" stroke-width="8.5715"/>
+  <path d="m376 294.57v164.42" stroke-width="8.5714"/>
+  <path d="m333.14 376c0-44.971 18.642-81.428 42.857-81.428 24.215 0 42.857 36.457 42.857 81.428s-18.641 81.428-42.857 81.428c-24.215 0-42.857-36.456-42.857-81.428z" stroke-linecap="round" stroke-linejoin="round" stroke-width="8.5714"/>
+ </g>
+</svg>

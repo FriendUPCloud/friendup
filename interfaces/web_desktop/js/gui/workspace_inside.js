@@ -2161,10 +2161,22 @@ var WorkspaceInside = {
 				document.body.classList.add( uf );
 			else document.body.classList.remove( uf );
 		}
-		
+		/*
 		if( this.themeData[ 'buttonSchemeText' ] == 'windows' )
+		{
 			document.body.classList.add( 'MSW' );
-		else document.body.classList.remove( 'MSW' );
+			document.body.classList.remove( 'AMIW' );
+		}
+		else if( this.themeData[ 'buttonSchemeText' ] == 'amiga' )
+		{*/
+			document.body.classList.add( 'AMIW' );
+			document.body.classList.remove( 'MSW' );
+		/*}
+		else
+		{ 
+			document.body.classList.remove( 'MSW' );
+			document.body.classList.remove( 'AMIW' );
+		}*/
 		
 		let str = '';
 		
@@ -3795,7 +3807,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Setting loading
 		Workspace.setLoading( true );
 
-		if( !themeName ) themeName = 'friendup12';
+		if( !themeName ) themeName = Workspace.theme ? Workspace.theme : 'friendup12';
 		if( themeName == 'friendup' ) themeName = 'friendup12';
 		
 		themeName = themeName.toLowerCase();
@@ -6327,7 +6339,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 													try
 													{
 														let apps = JSON.parse( d );
-														let str = '<option value="">Friend Workspace</option>';
+														let str = '<option value="">' + Workspace.environmentName + '</option>';
 														for( let j = 0; j < apps.length; j++ )
 														{
 															let ex = '';
@@ -10493,7 +10505,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	let v = new View( {
-		title: i18n( 'i18n_title_about_friendos' ) + ' ' + Workspace.staticBranch,
+		title: Workspace.osName + ' ' + Workspace.staticBranch,
 		width: 540,
 		height: 560,
 		id: 'about_friendup'
