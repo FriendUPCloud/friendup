@@ -389,7 +389,7 @@ DataForm *SendMessageRFSRelogin( SpecialData *sd, MsgItem *msg )
 					char *pntToSessionID = sd->id;
 					int locerr = FSRemoteLogin( sd );
 
-					DEBUG2("[SendMessageRFSRelogin] Relogin error: %d\n", locerr );
+					DEBUG2("[SendMessageRFSRelogin] Relogin error: %d sptr %p session %s\n", locerr, pntToSessionID, pntToSessionID );
 					
 					if( locerr == 0 )
 					{
@@ -407,6 +407,7 @@ DataForm *SendMessageRFSRelogin( SpecialData *sd, MsgItem *msg )
 						// read till end and overwrite existing sessionid
 						while( tags[ i ].mi_Tag  != TAG_DONE )
 						{
+							DEBUG("ptr %p\n", ( void *)tags[ i ].mi_Data );
 							// it is previous sessionid
 							if( ( void *)tags[ i ].mi_Data == pntToSessionID )
 							{
