@@ -387,9 +387,12 @@ DataForm *SendMessageRFSRelogin( SpecialData *sd, MsgItem *msg )
 				if( code != NULL && 0 == strncmp( code, "\"code\":\"11\"", 11 ) )
 				{
 					char *pntToSessionID = sd->id;
+					
+					DEBUG2("[SendMessageRFSRelogin] Relogin error BEFORE : %d sptr %p session %s\n", locerr, sd->id, sd->id );
+					
 					int locerr = FSRemoteLogin( sd );
 
-					DEBUG2("[SendMessageRFSRelogin] Relogin error: %d sptr %p session %s\n", locerr, pntToSessionID, pntToSessionID );
+					DEBUG2("[SendMessageRFSRelogin] Relogin error AFTER: %d sptr %p session %s\n", locerr, sd->id, sd->id );
 					
 					if( locerr == 0 )
 					{
