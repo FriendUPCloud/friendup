@@ -4,7 +4,7 @@ TabletDashboard = function()
 	
 	// Create dom element
 	this.dom = document.createElement( 'div' );
-	this.dom.className = 'TabletDashboard';
+	this.dom.className = 'TabletDashboard SmoothScrolling ScrollArea';
 	setTimeout( function()
 	{
 		self.dom.classList.add( 'Showing' );
@@ -140,6 +140,9 @@ TabletDashboard.prototype.refresh = function()
 			this.elements[a].dom = d;
 			
 			self.tasks.appendChild( d );
+			
+			d.querySelector( '.Icon' ).style.backgroundImage = this.elements[a].icon;
+			
 			d.getElementsByClassName( 'Close' )[0].onclick = function( e )
 			{
 				e.stopPropagation();
@@ -205,11 +208,27 @@ TabletDashboard.prototype.fetchWindowElements = function()
 		}
 		if( !found )
 		{
-			this.elements.push( {
+			let wel = {
 				type: 'view',
 				original: movableWindows[ a ],
 				label: movableWindows[ a ].windowObject.getFlag( 'title' )
-			} );
+			};
+			if( movableWindows[ a ].applicationId )
+			{
+				let appid = movableWindows[ a ].applicationId;
+				for( let o = 0; o < Workspace.applications.length; o++ )
+				{
+					if( Workspace.applications[o].applicationId == appid )
+					{
+						wel.icon = 'url(' + Workspace.applications[o].icon + ')';
+					}
+				}
+			}
+			if( !wel.icon )
+			{
+				wel.icon = movableWindows[a].viewIcon.style.backgroundImage;
+			}
+			this.elements.push( wel );
 		}
 	}
 	

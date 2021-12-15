@@ -204,4 +204,14 @@ html > body.InputParadigmTablet .TabletDashboard .ViewWindow .Close:hover
 	filter: brightness(1.5);
 }
 
+/* TODO: May not need this */
+html > body.InputParadigmTablet .TabletDashboard.Showing:after
+{
+	display: block;
+    clear: both;
+    content: " ";
+    height: 27px;
+}
+
+
 
