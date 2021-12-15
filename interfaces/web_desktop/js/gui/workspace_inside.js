@@ -2158,16 +2158,24 @@ var WorkspaceInside = {
 		{
 			let p = this.themeData[ 'inputParadigmText' ];
 			p = p.substr( 0, 1 ).toUpperCase() + p.substr( 1, p.length - 1 );
-			document.body.classList.add( 'InputParadigm' + p );
 			
 			// Tablet type is special
 			if( p == 'Tablet' )
 			{
 				Workspace.tabletMode = true;
+				document.body.classList.add( 'InputParadigm' + p );
 			}
 			else
 			{
 				Workspace.tabletMode = false;
+				let classes = ( document.body.classList + '' ).split( ' ' );
+				let out = [];
+				for( let a = 0; a < classes.length; a++ )
+				{
+					if( classes[a].indexOf( 'InputParadigm' ) < 0 )
+						out.push( classes[ a ] );
+				}
+				document.body.classList = out.join( ' ' );
 			}
 		}
 		
