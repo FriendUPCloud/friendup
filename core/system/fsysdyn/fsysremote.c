@@ -388,7 +388,7 @@ DataForm *SendMessageRFSRelogin( SpecialData *sd, MsgItem *msg )
 				{
 					char *pntToSessionID = sd->id;
 					
-					DEBUG2("[SendMessageRFSRelogin] Relogin error BEFORE : %d sptr %p session %s\n", locerr, sd->id, sd->id );
+					DEBUG2("[SendMessageRFSRelogin] Relogin error BEFORE : sptr %p session %s\n", sd->id, sd->id );
 					
 					int locerr = FSRemoteLogin( sd );
 
