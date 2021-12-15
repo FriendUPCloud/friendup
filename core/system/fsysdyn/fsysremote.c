@@ -87,7 +87,7 @@ typedef struct SpecialData
 // definition
 //
 
-DataForm *SendMessageRFS( SpecialData *sd, DataForm *df );
+DataForm *SendMessageRFS( SpecialData *sd, MsgItem *msg );
 
 #define ANSWER_POSITION 3
 #define HEADER_POSITION (ANSWER_POSITION*COMM_MSG_HEADER_SIZE)
@@ -147,14 +147,13 @@ int FSRemoteLogin( SpecialData *sd )
 					{ MSG_END, MSG_END, MSG_END }
 	};
 
-	DataForm *df = DataFormNew( tags );
+	//DataForm *df = DataFormNew( tags );
 	
 	DEBUG("[FSRemoteLogin] Message will be send\n");
 	
 	DataForm *recvdf = NULL;
 	
-	recvdf = SendMessageRFS( sd, df );
-	DataFormDelete( df );
+	recvdf = SendMessageRFS( sd, tags );
 	
 	DEBUG("[FSRemoteLogin] Response received\n");
 
@@ -218,6 +217,9 @@ int FSRemoteLogin( SpecialData *sd )
 					{
 						error = 0;
 					}
+					
+					DEBUG("[FSRemoteLogin] new session found: %s\n", authidc );
+					
 					FFree( tmpses );
 					break;
 				}
@@ -239,7 +241,7 @@ int FSRemoteLogin( SpecialData *sd )
 // connect macro
 //
 
-DataForm *SendMessageRFS( SpecialData *sd, DataForm *df )
+DataForm *SendMessageRFS( SpecialData *sd, MsgItem *msg )
 {
 	MsgItem tags[] = {
 		{ ID_FCRE, (FULONG)0,  (FULONG)NULL },
@@ -248,7 +250,9 @@ DataForm *SendMessageRFS( SpecialData *sd, DataForm *df )
 	};
 
 	DEBUG("[SendMessageRFS] message to targetDirect\n");
-		
+	
+	DataForm *df = DataFormNew( msg );
+	
 	DataForm *ldf = DataFormNew( tags );
 		
 	BufString *bs = NULL;
@@ -311,10 +315,14 @@ DataForm *SendMessageRFS( SpecialData *sd, DataForm *df )
 		
 		DEBUG("[SendMessageRFS] got reponse\n");
 		
+		DataFormDelete( df );
+		
 		return ldf;
 	}
 	
 	DataFormDelete( ldf );
+	
+	DataFormDelete( df );
 	
 	return NULL;
 }
@@ -323,7 +331,7 @@ DataForm *SendMessageRFS( SpecialData *sd, DataForm *df )
 // send message and try to relogin when call will fail
 //
 
-DataForm *SendMessageRFSRelogin( SpecialData *sd, DataForm *df )
+DataForm *SendMessageRFSRelogin( SpecialData *sd, MsgItem *msg )
 {
 	MsgItem tags[] = {
 		{ ID_FCRE, (FULONG)0,  (FULONG)NULL },
@@ -332,7 +340,9 @@ DataForm *SendMessageRFSRelogin( SpecialData *sd, DataForm *df )
 	};
 
 	DEBUG("[SendMessageRFSRelogin] message to targetDirect\n");
-		
+	
+	DataForm *df = DataFormNew( msg );
+	
 	DataForm *ldf = DataFormNew( tags );
 		
 	BufString *bs = NULL;
@@ -376,12 +386,15 @@ DataForm *SendMessageRFSRelogin( SpecialData *sd, DataForm *df )
 
 				if( code != NULL && 0 == strncmp( code, "\"code\":\"11\"", 11 ) )
 				{
+					char *pntToSessionID = sd->id;
 					int locerr = FSRemoteLogin( sd );
 
 					DEBUG2("[SendMessageRFSRelogin] Relogin error: %d\n", locerr );
 					
 					if( locerr == 0 )
 					{
+						int i = 0;
+						
 						if( ldf != NULL )
 						{
 							DataFormDelete( ldf );
@@ -389,9 +402,26 @@ DataForm *SendMessageRFSRelogin( SpecialData *sd, DataForm *df )
 						
 						BufStringDelete( bs );
 						
+						//{ ID_PRMT, (FULONG) rsd->idi,  (FULONG)rsd->id },
+						
+						// read till end and overwrite existing sessionid
+						while( tags[ i ].mi_Tag  != TAG_DONE )
+						{
+							// it is previous sessionid
+							if( ( void *)tags[ i ].mi_Data == pntToSessionID )
+							{
+								DEBUG("[SendMessageRFSRelogin] msg with sessionid found, will be overwriten\n");
+								tags[ i ].mi_Data = (FULONG) sd->id;
+								tags[ i ].mi_Size = (FULONG) sd->idi;
+							}
+							i++;
+						}
+						
 						newsock->s_Interface->SocketDelete( newsock );
 						
-						return SendMessageRFS( sd, df );
+						DEBUG("[SendMessageRFSRelogin] resend request\n");
+						
+						return SendMessageRFS( sd, tags );
 					}
 				}
 			}
@@ -410,10 +440,14 @@ DataForm *SendMessageRFSRelogin( SpecialData *sd, DataForm *df )
 		
 		DEBUG("[SendMessageRFSRelogin] got reponse\n");
 		
+		DataFormDelete( df );
+		
 		return ldf;
 	}
 	
 	DataFormDelete( ldf );
+	
+	DataFormDelete( df );
 	
 	return NULL;
 }
@@ -877,14 +911,14 @@ int Release( struct FHandler *s, void *f )
 					{ MSG_END, MSG_END, MSG_END }
 				};
 				
-				DataForm *df = DataFormNew( tags );
+				//DataForm *df = DataFormNew( tags );
 				
 				DEBUG("[RemoteUnmount] Message will be send\n");
 				
 				DataForm *recvdf = NULL;
 				
-				recvdf = SendMessageRFSRelogin( sdat, df );
-				DataFormDelete( df );
+				recvdf = SendMessageRFSRelogin( sdat, tags );
+				//DataFormDelete( df );
 
 				DEBUG("[RemoteUnmount] Response received\n");
 				int error = 1;
@@ -960,14 +994,14 @@ int UnMount( struct FHandler *s, void *f )
 					{ MSG_END, MSG_END, MSG_END }
 				};
 				
-				DataForm *df = DataFormNew( tags );
+				//DataForm *df = DataFormNew( tags );
 				
 				DEBUG("[RemoteUnmount] Message will be send\n");
 				
 				DataForm *recvdf = NULL;
 				
-				recvdf = SendMessageRFSRelogin( sdat, df );
-				DataFormDelete( df );
+				recvdf = SendMessageRFSRelogin( sdat, tags );
+				//DataFormDelete( df );
 
 				DEBUG("[RemoteUnmount] Response received\n");
 				int error = 1;
@@ -1146,11 +1180,11 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 				{ MSG_END, MSG_END, MSG_END }
 			};
 			
-			DataForm *df = DataFormNew( tags );
+			//DataForm *df = DataFormNew( tags );
 
 			DataForm *recvdf = NULL;
 			
-			recvdf = SendMessageRFSRelogin( sd, df );
+			recvdf = SendMessageRFSRelogin( sd, tags );
 //			recvdf = SendMessageWithReconnection( sd, df );
 		
 			DEBUG("[RemoteOpen] Response received %p\n", recvdf );
@@ -1229,7 +1263,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 									DEBUG("[RemoteOpen] FileOpened, memory allocated for reading.\n" );
 									
 									DataFormDelete( recvdf );
-									DataFormDelete( df );
+									//DataFormDelete( df );
 									FFree( tmpremotepath );
 								
 									return locfil;
@@ -1245,7 +1279,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 			}
 			
 			if( recvdf != NULL ) DataFormDelete( recvdf );
-			DataFormDelete( df );
+			//DataFormDelete( df );
 			FFree( tmpremotepath );
 		}
 		
@@ -1288,11 +1322,11 @@ int FileClose( struct File *root, void *fp )
 			{ MSG_END, MSG_END, MSG_END }
 		};
 			
-		DataForm *df = DataFormNew( tags );
+		//DataForm *df = DataFormNew( tags );
 
 		DataForm *recvdf = NULL; 
 			
-		recvdf = SendMessageRFSRelogin( rsd, df );
+		recvdf = SendMessageRFSRelogin( rsd, tags );
 
 		DEBUG("[RemoteClose] Response received %p\n", recvdf );
 		
@@ -1306,13 +1340,13 @@ int FileClose( struct File *root, void *fp )
 			if( strcmp( d, "{\"rb\":\"-1\"}" ) == 0 )
 			{
 				DataFormDelete( recvdf );
-				DataFormDelete( df );
+				//DataFormDelete( df );
 				return -1;
 			}
 		}
 		
 		if( recvdf != NULL ) DataFormDelete( recvdf );
-		DataFormDelete( df );
+		//DataFormDelete( df );
 		
 		if( sd->host != NULL ) FFree( sd->host );
 		if( sd->id != NULL ) FFree( sd->id );
@@ -1375,11 +1409,11 @@ int FileRead( struct File *f, char *buffer, int rsize )
 			{ MSG_END, MSG_END, MSG_END }
 		};
 			
-		DataForm *df = DataFormNew( tags );
+		//DataForm *df = DataFormNew( tags );
 
 		DataForm *recvdf = NULL;
 		
-		recvdf = SendMessageRFSRelogin( rsd, df );
+		recvdf = SendMessageRFSRelogin( rsd, tags );
 
 		DEBUG2("Response received %p\n", recvdf );
 		
@@ -1394,7 +1428,7 @@ int FileRead( struct File *f, char *buffer, int rsize )
 			if( strncmp( d, "{\"rb\":\"-1\"}", 11 ) == 0 )
 			{
 				DataFormDelete( recvdf );
-				DataFormDelete( df );
+				//DataFormDelete( df );
 				return -1;
 			}
 			
@@ -1411,7 +1445,7 @@ int FileRead( struct File *f, char *buffer, int rsize )
 		}
 		
 		if( recvdf != NULL ) DataFormDelete( recvdf );
-		DataFormDelete( df );
+		//DataFormDelete( df );
 	} // sd != NULL
 	
 	return result;
@@ -1465,11 +1499,11 @@ int FileWrite( struct File *f, char *buffer, int wsize )
 			
 			DEBUG("[RemoteWrite] bytes %d and message %.10s\n", wsize, data );
 			
-			DataForm *df = DataFormNew( tags );
+			//DataForm *df = DataFormNew( tags );
 
 			DataForm *recvdf = NULL;
 			
-			recvdf = SendMessageRFSRelogin( rsd, df );
+			recvdf = SendMessageRFSRelogin( rsd, tags );
 
 			DEBUG("[RemoteWrite] Response received %p\n", recvdf );
 		
@@ -1486,7 +1520,7 @@ int FileWrite( struct File *f, char *buffer, int wsize )
 				if( strcmp( d, "{\"rb\":\"-1\"}" ) == 0 )
 				{
 					DataFormDelete( recvdf );
-					DataFormDelete( df );
+					//DataFormDelete( df );
 					return -1;
 				}
 				else
@@ -1526,7 +1560,7 @@ int FileWrite( struct File *f, char *buffer, int wsize )
 				DataFormDelete( recvdf );
 			}
 			
-			DataFormDelete( df );
+			//DataFormDelete( df );
 			FFree( data );
 		}
 		else
@@ -1585,11 +1619,11 @@ int GetDiskInfo( struct File *s, int64_t *used, int64_t *size )
 		{ MSG_END, MSG_END, MSG_END }
 	};
 
-	DataForm *df = DataFormNew( tags );
+	//DataForm *df = DataFormNew( tags );
 
 	DataForm *recvdf = NULL;
 	
-	recvdf = SendMessageRFSRelogin( rsd, df );
+	recvdf = SendMessageRFSRelogin( rsd, tags );
 
 	DEBUG("[RemoteWrite] Response received %p\n", recvdf );
 	
@@ -1642,7 +1676,7 @@ int GetDiskInfo( struct File *s, int64_t *used, int64_t *size )
 		DataFormDelete( recvdf );
 	}
 	
-	DataFormDelete( df );
+	//DataFormDelete( df );
 	
 	return 0;
 }
@@ -1706,13 +1740,13 @@ int MakeDir( struct File *s, const char *path )
 			{ MSG_END, MSG_END, MSG_END }
 		};
 		
-		DataForm *df = DataFormNew( tags );
+		//DataForm *df = DataFormNew( tags );
 		
 		DEBUG("[RemoteMakedir] Message will be send\n");
 
 		DataForm *recvdf = NULL;
 
-		recvdf = SendMessageRFSRelogin( sd, df );
+		recvdf = SendMessageRFSRelogin( sd, tags );
 
 		DEBUG("[RemoteMakedir] Response received\n");
 		
@@ -1727,7 +1761,7 @@ int MakeDir( struct File *s, const char *path )
 			error = 1;
 		}
 		
-		DataFormDelete( df );
+		//DataFormDelete( df );
 		DataFormDelete( recvdf );
 		
 		FFree( comm );
@@ -1795,13 +1829,13 @@ FLONG Delete( struct File *s, const char *path )
 			{ MSG_END, MSG_END, MSG_END }
 		};
 		
-		DataForm *df = DataFormNew( tags );
+		//DataForm *df = DataFormNew( tags );
 		
 		DEBUG("[RemoteDelete] Message will be send\n");
 
 		DataForm *recvdf = NULL;
 			
-		recvdf = SendMessageRFSRelogin( sd, df );
+		recvdf = SendMessageRFSRelogin( sd, tags );
 		
 		DEBUG("[RemoteDelete] Response received\n");
 		
@@ -1814,7 +1848,7 @@ FLONG Delete( struct File *s, const char *path )
 
 		}
 		
-		DataFormDelete( df );
+		//DataFormDelete( df );
 		DataFormDelete( recvdf );
 		
 		FFree( comm );
@@ -1892,13 +1926,13 @@ int Rename( struct File *s, const char *path, const char *nname )
 		
 		DEBUG("[RemoteRename] Before creating DataForm  comm %s login %s  pass %s session %s passsize %d\n", comm, sd->login, sd->passwd, sd->id, sd->passwdi );
 
-		DataForm *df = DataFormNew( tags );
+		//DataForm *df = DataFormNew( tags );
 		
 		DEBUG("[RemoteRename] Message will be send\n");
 
 		DataForm *recvdf = NULL;
 		
-		recvdf = SendMessageRFSRelogin( sd, df );
+		recvdf = SendMessageRFSRelogin( sd, tags );
 
 		if( recvdf != NULL)
 		{
@@ -1911,7 +1945,7 @@ int Rename( struct File *s, const char *path, const char *nname )
 		}
 		
 		DataFormDelete( recvdf );
-		DataFormDelete( df );
+		//DataFormDelete( df );
 		
 		FFree( comm );
 	}
@@ -2101,11 +2135,11 @@ FLONG GetChangeTimestamp( struct File *s, const char *path )
 		
 		DataForm *recvdf = NULL;
 		
-		DataForm *df = DataFormNew( tags );
+		//DataForm *df = DataFormNew( tags );
 		
 		DEBUG("[RemoteGetChangeTimestamp] Message will be send\n");
 			
-		recvdf = SendMessageRFSRelogin( sd, df );
+		recvdf = SendMessageRFSRelogin( sd, tags );
 		
 		if( recvdf != NULL && recvdf->df_Size > 0 && recvdf->df_ID == ID_FCRE )
 		{
@@ -2147,7 +2181,7 @@ FLONG GetChangeTimestamp( struct File *s, const char *path )
 		}
 		
 		DataFormDelete( recvdf );
-		DataFormDelete( df );
+		//DataFormDelete( df );
 		
 		FFree( comm );
 	}
@@ -2183,7 +2217,8 @@ BufString *Call( File *f, const char *path, char *args )
 		pathp = FCalloc( pathi + 30, sizeof(char) );
 		argsp = FCalloc( argsi + 30, sizeof(char) );
 		
-		DataForm *df = NULL;
+		DataForm *recvdf = NULL;
+		//DataForm *df = NULL;
 		
 		if( pathp != NULL && argsp != NULL )
 		{
@@ -2210,7 +2245,8 @@ BufString *Call( File *f, const char *path, char *args )
 				{ MSG_GROUP_END, 0,  0 },
 				{ MSG_END, MSG_END, MSG_END }
 			};
-			df = DataFormNew( tags );
+			//df = DataFormNew( tags );
+			recvdf = SendMessageRFSRelogin( sd, tags );
 		}
 		else
 		{
@@ -2230,12 +2266,10 @@ BufString *Call( File *f, const char *path, char *args )
 				{ MSG_GROUP_END, 0,  0 },
 				{ MSG_END, MSG_END, MSG_END }
 			};
-			df = DataFormNew( tags );
+			//df = DataFormNew( tags );
+			recvdf = SendMessageRFSRelogin( sd, tags );
 		}
 
-		DataForm *recvdf = NULL;
-
-		recvdf = SendMessageRFSRelogin( sd, df );
 
 		DEBUG("[RemoteCall] Response received %p\n", recvdf );
 		
@@ -2255,7 +2289,7 @@ BufString *Call( File *f, const char *path, char *args )
 			BufStringAdd( bs, "fail<!--separate-->{\"result\":\"reponse message is not FC message\"}" );
 		}
 			
-		DataFormDelete( df );
+		//DataFormDelete( df );
 		
 		if( pathp != NULL ) FFree( pathp );
 		if( argsp != NULL ) FFree( argsp );
@@ -2328,9 +2362,9 @@ BufString *Info( File *s, const char *path )
 		
 		DataForm *recvdf = NULL;
 		
-		DataForm *df = DataFormNew( tags );
+		//DataForm *df = DataFormNew( tags );
 		
-		recvdf = SendMessageRFSRelogin( sd, df );
+		recvdf = SendMessageRFSRelogin( sd, tags );
 
 		DEBUG("[RemoteInfo] Response received\n");
 		
@@ -2347,7 +2381,7 @@ BufString *Info( File *s, const char *path )
 		}
 		
 		DataFormDelete( recvdf );
-		DataFormDelete( df );
+		//DataFormDelete( df );
 		
 		FFree( comm );
 	}
@@ -2418,11 +2452,11 @@ BufString *Dir( File *s, const char *path )
 		
 		DEBUG("[RemoteDir] Before creating DataForm  comm %s login %s  pass %s session %s passsize %d\n", comm, sd->login, sd->passwd, sd->id, sd->passwdi );
 
-		DataForm *df = DataFormNew( tags );
+		//DataForm *df = DataFormNew( tags );
 		
 		DataForm *recvdf = NULL;
 			
-		recvdf = SendMessageRFSRelogin( sd, df );
+		recvdf = SendMessageRFSRelogin( sd, tags );
 
 		if( recvdf != NULL && recvdf->df_ID == ID_FCRE )
 		{
@@ -2445,7 +2479,7 @@ BufString *Dir( File *s, const char *path )
 		}
 		
 		DataFormDelete( recvdf );
-		DataFormDelete( df );
+		//DataFormDelete( df );
 		
 		FFree( comm );
 	}
@@ -2520,13 +2554,13 @@ char *InfoGet( struct File *s, const char *path, const char *key )
 				{ MSG_END, MSG_END, MSG_END }
 			};
 			
-			DataForm *df = DataFormNew( tags );
+			//DataForm *df = DataFormNew( tags );
 		
 			DEBUG("[RemoteInfoGet] Message will be send\n");
 		
 			DataForm *recvdf = NULL;
 		
-			recvdf = SendMessageRFSRelogin( sd, df );
+			recvdf = SendMessageRFSRelogin( sd, tags );
 
 			DEBUG("[RemoteInfoGet] Response received\n");
 		
@@ -2543,7 +2577,7 @@ char *InfoGet( struct File *s, const char *path, const char *key )
 			}
 			
 			DataFormDelete( recvdf );
-			DataFormDelete( df );
+			//DataFormDelete( df );
 			FFree( keyparam );
 		}
 		
@@ -2630,13 +2664,13 @@ int InfoSet( File *s, const char *path, const char *key, const char *value )
 				{ MSG_END, MSG_END, MSG_END }
 			};
 
-			DataForm *df = DataFormNew( tags );
+			//DataForm *df = DataFormNew( tags );
 		
 			DEBUG("[RemoteInfoSet] Message will be send\n");
 		
 			DataForm *recvdf = NULL;
 		
-			recvdf = SendMessageRFSRelogin( sd, df );
+			recvdf = SendMessageRFSRelogin( sd, tags );
 
 			DEBUG("[RemoteInfoSet] Response received\n");
 		
@@ -2654,7 +2688,7 @@ int InfoSet( File *s, const char *path, const char *key, const char *value )
 			}
 		
 			DataFormDelete( recvdf );
-			DataFormDelete( df );
+			//DataFormDelete( df );
 		}
 		
 		if( keyparam != NULL )
