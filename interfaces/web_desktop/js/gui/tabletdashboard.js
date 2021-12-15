@@ -10,19 +10,33 @@ TabletDashboard = function()
 		self.dom.classList.add( 'Showing' );
 	}, 5 );
 	
+	// Create favorites container
+	let f = document.createElement( 'div' );
+	f.className = 'Label';
+	f.innerHTML = i18n( 'i18n_dashboard_favorites' ) + ':';
+	this.dom.appendChild( f );
+	
+	// Create favorites container
+	let g = document.createElement( 'div' );
+	g.className = 'Favorites DivContainer';
+	this.dom.appendChild( g );
+	this.favcontainer = g;
+	
 	// Create tasks container
 	let w = document.createElement( 'div' );
-	w.className = 'TasksLabel';
-	w.innerHTML = 'Tasks:';
+	w.className = 'Label';
+	w.innerHTML = i18n( 'i18n_dashboard_tasks' ) + ':';
 	this.dom.appendChild( w );
+	
 	this.tasks = document.createElement( 'div' );
-	this.tasks.className = 'Tasks';
+	this.tasks.className = 'Tasks DivContainer';
 	this.dom.appendChild( this.tasks );
 	
 	document.querySelector( '.Screen' ).appendChild( this.dom );
 	
 	// Dashboard elements are empty
 	this.elements = [];
+	this.favorites = [];
 }
 TabletDashboard.prototype.destroy = function()
 {
@@ -69,6 +83,45 @@ TabletDashboard.prototype.refresh = function()
 		}
 	}
 	
+	this.fetchDockElements();
+	
+	for( let a = 0; a < this.favorites.length; a++ )
+	{
+		let d = this.favorites[a].dom;
+		let f = this.favorites[a];
+		if( !d )
+		{
+			if( !f.exe ) continue;
+			d = document.createElement( 'div' );
+			d.className = 'Application';
+			d.innerHTML = '<div class="Icon"></div><div class="Label">' + f.name + '</div>';
+			if( f.exe )
+			{
+				( function( executable )
+				{
+					d.onclick = function()
+					{
+						// Files..
+						if( executable == 'undefined' )
+						{
+							OpenWindowByFileinfo( 
+								{ Title: 'Home', Path: 'Home:', Type: 'Directory', MetaType: 'Directory' },
+								false, false, 0
+							);
+						}
+						else
+						{
+							ExecuteApplication( executable );
+						}
+					}
+				} )( f.exe );
+			}
+			f.dom = d;
+			self.favcontainer.appendChild( d );
+			d.querySelector( '.Icon' ).style.backgroundImage = f.icon;
+		}
+	}
+	
 	this.fetchWindowElements();
 	
 	for( let a = 0; a < this.elements.length; a++ )
@@ -105,6 +158,32 @@ TabletDashboard.prototype.refresh = function()
 		else
 		{
 			d.classList.add( 'Inactive' );
+		}
+	}
+}
+TabletDashboard.prototype.fetchDockElements = function()
+{
+	let self = this;
+	if( window.Workspace && Workspace.mainDock )
+	{
+		// TODO: Also when it changes
+		if( !this.favorites.length )
+		{
+			let n = Workspace.mainDock.dom.childNodes;
+			for( let a = 0; a < n.length; a++ )
+			{
+				if( n[a].classList && n[a].classList.contains( 'Launcher' ) && !n[a].classList.contains( 'Startmenu' ) )
+				{
+					( function( ele )
+					{
+						self.favorites.push( {
+							name: ele.getAttribute( 'data-displayname' ),
+							icon: ele.style.backgroundImage,
+							exe: ele.getAttribute( 'data-exename' )
+						} );
+					} )( n[ a ] );
+				}
+			}
 		}
 	}
 }
