@@ -410,7 +410,7 @@ DataForm *SendMessageRFSRelogin( SpecialData *sd, MsgItem *msg )
 						// read till end and overwrite existing sessionid
 						while( tags[ i ].mi_Tag  != TAG_DONE )
 						{
-							DEBUG("ptr %p\n", ( void *)tags[ i ].mi_Data );
+							DEBUG("tag %p data %p size %p\n", ( void *)tags[ i ].mi_Tag, ( void *)tags[ i ].mi_Data, ( void *)tags[ i ].mi_Size );
 							// it is previous sessionid
 							if( ( void *)tags[ i ].mi_Data == pntToSessionID )
 							{
