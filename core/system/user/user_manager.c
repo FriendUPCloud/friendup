@@ -70,7 +70,7 @@ void UMDelete( UserManager *smgr )
 	}
 	
 	User *remusr = usr;
-	Log( FLOG_INFO,  "Release users\n");
+	Log( FLOG_INFO, "[UMDelete] Release users\n");
 	
 	//
 	// we must release all users from memory
@@ -106,6 +106,8 @@ void UMDelete( UserManager *smgr )
 			DEBUG("[UMDelete] Free user %s\n", remusr->u_Name );
 			*/
 			UserReleaseDrives( remusr, smgr->um_SB );
+			
+			DEBUG("[UMDelete] Free user %s inuse %d\n", remusr->u_Name, remusr->u_InUse );
 			
 			UserDelete( remusr );
 			
@@ -1252,6 +1254,9 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, char *
 			char **row;
 			int i = 0;
 			FBOOL goodLogin = FALSE;
+			int wasSamePasswordTimes = 0;
+			
+			char *lastPassword = StringDuplicate( password );
 			
 			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 			{
@@ -1269,22 +1274,50 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, char *
 					break;
 				}
 				
-				DEBUG("row2: %s\n", row[ 2 ] );
-				if( row[ 2 ] != NULL && ( strcmp( row[ 2 ], password) == 0 ) )
+				// we do this check only to last password
+				DEBUG("[UMGetLoginPossibilityLastLogins] row2: %s  -  %s\n", row[ 2 ], password );
+				if( row[ 2 ] != NULL )
+				{
+					if( strcmp( lastPassword, row[ 2 ] ) == 0 )
+					{
+						DEBUG("[UMGetLoginPossibilityLastLogins] same password\n");
+						wasSamePasswordTimes++;
+					}
+					
+					if( lastPassword != NULL )
+					{
+						FFree( lastPassword );
+					}
+					lastPassword = StringDuplicate( row[ 2 ] );
+				}
+				/*
+				if( i == 0 && row[ 2 ] != NULL && ( strcmp( row[ 2 ], password) == 0 ) )
 				{
 					goodLogin = TRUE;
 					DEBUG("[UMGetLoginPossibilityLastLogins] previous and current password are same\n" );
 					break;
 				}
+				*/
 				
 				i++;
 				if( i >= numberOfFail )
 				{
+					if( wasSamePasswordTimes >= (numberOfFail-1) )
+					{
+						goodLogin = TRUE;
+					}
 					DEBUG("[UMGetLoginPossibilityLastLogins] number of fail login exceed\n" );
 					break;
 				}
 			}
 			sqlLib->FreeResult( sqlLib, result );
+			
+			if( lastPassword != NULL )
+			{
+				FFree( lastPassword );
+			}
+			
+			DEBUG("[UMGetLoginPossibilityLastLogins] wasSamePasswordTimes: %d\n", wasSamePasswordTimes );
 			
 			if( i < numberOfFail )
 			{

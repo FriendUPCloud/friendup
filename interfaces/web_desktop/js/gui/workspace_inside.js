@@ -343,7 +343,12 @@ var WorkspaceInside = {
 		this.workspaceWallpapers = o;
 		
 		if( loaded )
+		{
 			Workspace.wallpaperLoaded = true;
+			
+			// Tell app we can show ourselves!
+			doReveal();
+		}
 	},
 	// Invite a friend to the Workspace
 	inviteFriend: function()
@@ -923,9 +928,52 @@ var WorkspaceInside = {
 		t.load();
 	},
 	// Initialize virtual workspaces
-	initWorkspaces: function()
+	initWorkspaces: function( cbk, counter )
 	{
-		if( this.mode == 'vr' || isMobile || Workspace.isSingleTask ) return;
+		if( !counter ) counter = 0;
+		if( this.mode == 'vr' || isMobile || Workspace.isSingleTask ) 
+		{
+			this.initializingWorkspaces = false;
+			Workspace.setLoading( false );
+			return cbk ? cbk( false ) : null;
+		}
+		
+		// Welcome screen
+		if( cbk )
+		{
+			if( !Workspace.friendVersion && counter == 0 )
+			{
+				if( Workspace.showWelcome )
+					return;
+				document.body.classList.remove( 'Login' );
+				Workspace.showWelcome = true;
+				
+				let w = document.createElement( 'div' );
+				w.className = 'WelcomeGraphic';
+				document.body.appendChild( w );
+				// Animate
+				setTimeout( function(){ 
+					w.classList.add( 'Animate' ); 
+					setTimeout( function(){
+						Workspace.initWorkspaces( cbk, 1 );
+					}, 750 );
+					// Remove animate after 2 secs
+					setTimeout( function(){ 
+						w.classList.add( 'Done' );
+						setTimeout( function()
+						{
+							// We have faded, now remove element and init workspaces
+							document.body.removeChild( w );
+							Workspace.showWelcome = false;
+						}, 750 );
+					}, 2000 );
+				}, 50 );
+				return;
+				
+			}
+			// Say we now have initialized workspaces
+			this.initializingWorkspaces = false;
+		}
 		
 		if( globalConfig.workspacesInitialized )
 		{
@@ -938,7 +986,7 @@ var WorkspaceInside = {
 		}
 		if( !globalConfig.workspacesInitialized )
 		{
-			if( !this.screen ) return;
+			if( !this.screen ) return cbk( false );
 			
 			this.screen.setFlag( 'vcolumns', globalConfig.workspacecount );
 			if( globalConfig.workspacecount > 1 )
@@ -1048,6 +1096,13 @@ var WorkspaceInside = {
 		}
 		// Refresh our dynamic classes now..
 		RefreshDynamicClasses();
+		
+		// Run callback
+		if( cbk )
+			cbk( true );
+		
+		// Try to show workspace
+		Workspace.setLoading( false );
 	},
 	setWorkspace: function( index, workspaceButtons, e )
 	{
@@ -1200,9 +1255,6 @@ var WorkspaceInside = {
 	},
 	initWebSocket: function( callback )
 	{
-		// Not online!!
-		if( !navigator.onLine ) return false;
-		
 		let self = this;
 		function closeConn()
 		{
@@ -1216,9 +1268,11 @@ var WorkspaceInside = {
 				}
 				catch( ez )
 				{
+				    // Try to initialize a new one
 					console.log( 'Conn is dead.', ez );
 				}
-				delete self.conn;
+			    delete self.conn;
+			    self.conn = null;
 			}
 		}
 	
@@ -1229,6 +1283,7 @@ var WorkspaceInside = {
 		{
 			console.log( 'Cannot initialize web socket - user is offline.' );
 			closeConn();
+			//Friend.User.ReLogin();
 			return false;
 		}
 		
@@ -1306,7 +1361,7 @@ var WorkspaceInside = {
 					{
 						if( !Workspace.conn || !Workspace.conn.ws || !Workspace.conn.ws.ws )
 						{
-							console.log( 'Looks like we do not have any websocket. Trying to create it.' );
+							//console.log( 'Looks like we do not have any websocket. Trying to create it.' );
 							Workspace.initWebSocket();
 						}
 					}, 1600 );
@@ -1326,7 +1381,7 @@ var WorkspaceInside = {
 				// Reattach
 				if( !Workspace.conn && selfConn )
 				{
-					console.log( 'Reattaching conn!' );
+					//console.log( 'Reattaching conn!' );
 					Workspace.conn = selfConn;
 				}
 			}
@@ -2236,12 +2291,20 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						if( dat.wallpaperdoors.substr(0,5) == 'color' )
 						{
 							Workspace.wallpaperImage = 'color';
+							Workspace.wallpaperImageDecoded = false;
 							document.body.classList.remove( 'NoWallpaper' );
 							document.body.classList.remove( 'DefaultWallpaper' );
 						}
 						else if( dat.wallpaperdoors.length )
 						{
 							Workspace.wallpaperImage = dat.wallpaperdoors;
+							if( 
+								dat.wallpaperdoors.indexOf( ':' ) > 0 && 
+								( dat.wallpaperdoors.indexOf( 'http://' ) != 0 || dat.wallpaperdoors.indexOf( 'https://' ) ) 
+							)
+							{
+								Workspace.wallpaperImageDecoded = getImageUrl( Workspace.wallpaperImage );
+							}
 							document.body.classList.remove( 'NoWallpaper' );
 							document.body.classList.remove( 'DefaultWallpaper' );
 						}
@@ -2249,6 +2312,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							document.body.classList.add( 'DefaultWallpaper' );
 							Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
+							Workspace.wallpaperImageDecoded = false;
 						}
 					}
 					else
@@ -2283,6 +2347,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					if( !Workspace.wallpaperImage || Workspace.wallpaperImage == '""' || Workspace.wallpaperImage === '' )
 					{
 						Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
+						Workspace.wallpaperImageDecoded = false;
 					}
 					
 					if( dat.wallpaperwindows )
@@ -2413,12 +2478,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							ScreenOverlay.hide();
 							PollTray();
-							PollTaskbar();
-							// Tell app we can show ourselves!
-							if( window.friendApp && window.friendApp.reveal )
-							{
-								friendApp.reveal();
-							}						
+							PollTaskbar();					
 							return;
 						}
 						
@@ -2526,11 +2586,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								ScreenOverlay.hide();
 								PollTray();
 								PollTaskbar();
-								// Tell app we can show ourselves!
-								if( window.friendApp && window.friendApp.reveal )
-								{
-									friendApp.reveal();
-								}
 							}
 						} );
 					}
@@ -2538,13 +2593,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				else
 				{
 					Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
+					Workspace.wallpaperImageDecoded = false;
 					Workspace.windowWallpaperImage = '';
 					document.body.classList.add( 'DefaultWallpaper' );
-					// Tell app we can show ourselves!
-					if( window.friendApp && window.friendApp.reveal )
-					{
-						friendApp.reveal();
-					}
+					doReveal();
 				}
 				if( callback && typeof( callback ) == 'function' ) callback();
 			}
@@ -3713,7 +3765,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		console.log( 'Disk notification!', windowList, type );
 	},
-	refreshTheme: function( themeName, update, themeConfig )
+	refreshTheme: function( themeName, update, themeConfig, initpass )
 	{
 		let self = this;
 		
@@ -3721,6 +3773,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( this.themeRefreshed && !update )
 		{
 			return;
+		}
+
+		if( !initpass )
+		{
+			document.body.classList.add( 'ThemeRefreshing' );
+			return setTimeout( function()
+			{
+				Workspace.refreshTheme( themeName, update, themeConfig, true );
+			}, 150 );
 		}
 
 		// Check url var
@@ -3731,7 +3792,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		if( Workspace.themeOverride ) themeName = Workspace.themeOverride.toLowerCase();
 
-		document.body.classList.add( 'Loading' );
+		// Setting loading
+		Workspace.setLoading( true );
 
 		if( !themeName ) themeName = 'friendup12';
 		if( themeName == 'friendup' ) themeName = 'friendup12';
@@ -3782,23 +3844,35 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					styles.type = 'text/css';
 					styles.onload = function()
 					{
+						document.body.classList.add( 'ThemeLoaded' );
+						setTimeout( function()
+						{
+							document.body.classList.remove( 'ThemeRefreshing' );
+						}, 150 );
 						// We are inside (wait for wallpaper) - watchdog
 						if( !Workspace.insideInterval )
 						{
 							let retries = 0;
 							Workspace.insideInterval = setInterval( function()
 							{
+							    // If we're still readjusting, wait a little
+        						if( !isMobile && window.outerHeight > 480 && document.body.offsetHeight < 480 )
+        						    return;
+        						
+        						if( parseInt( GetThemeInfo( 'ScreenTitle' ).height ) <= 0 )
+        						    return;
+        						
 								// If we're in VR, just immediately go in, or when wallpaper loaded or when we waited 5 secs
 								if( Workspace.mode == 'vr' || Workspace.wallpaperLoaded || retries++ > 100 )
 								{
-									clearInterval( Workspace.insideInterval );
+								    clearInterval( Workspace.insideInterval );
 									Workspace.insideInterval = null;
 								
 									// Set right classes
-									document.body.classList.add( 'Inside' );
-									document.body.classList.add( 'Loaded' );
-									document.body.classList.remove( 'Login' );
-									document.body.classList.remove( 'Loading' );
+									if( !Workspace.initializingWorkspaces )
+									{
+										Workspace.setLoading( false );
+									}
 									
 									document.title = Friend.windowBaseString;
 									
@@ -3839,15 +3913,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									// New version of Friend?
 									if( Workspace.loginUsername != 'go' )
 									{
-										if( !Workspace.friendVersion )
+										if( !Workspace.friendVersion || Workspace.friendVersion != Workspace.systemInfo.FriendCoreVersion )
 										{
 											Workspace.upgradeWorkspaceSettings( function(){
 												setTimeout( function()
 												{
 													let n = Notify( 
 														{ 
-															title: 'Your Workspace has been upgraded', 
-															text: 'We have updated your settings to match the default profile of the latest update of Friend. This only happens on each major upgrade of the Friend Workspace.', 
+															title: 'Workspace was upgraded', 
+															text: 'Your Workspace and settings were upgraded to ' + Workspace.systemInfo.FriendCoreVersion + '.', 
 															sticky: true
 														}, 
 														false, 
@@ -3884,6 +3958,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					
 						// Redraw icons if they are delayed
 						Workspace.redrawIcons();
+						
+						// Make sure screen dimensions are read
+						_kresize();
 					}
 
 					if( themeName && themeName != 'default' )
@@ -4487,8 +4564,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		let t = this; // Reference to workspace
 		
 		// Just in case
-		if( window.friendApp )
-			window.friendApp.reveal();
+		doReveal();
 		
 		if( !Friend.dosDrivers )
 		{
@@ -6955,9 +7031,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		return;
 	},
 	// Simple logout..
-	logout: function()
+	logout: function( cbk )
 	{
-		Friend.User.Logout();
+		Friend.User.Logout( cbk );
 	},
 	externalLogout: function()
 	{
@@ -7014,9 +7090,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					command: 'mobilebackbutton'
 				} );
 				// Check with standard functionality
+				let app = null;
 				if( window._getAppByAppId )
 				{
-					let app = _getAppByAppId( cm.applicationId );
+					app = _getAppByAppId( cm.applicationId );
 					if( app.mainView == cm.windowObject )
 					{
 						if( !cm.windowObject.mobileBack.classList.contains( 'Showing' ) )
@@ -7036,7 +7113,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					cm.windowObject.parentView.activate();
 					return;
 				}
-				if( app.mainView )
+				if( app && app.mainView )
 				{
 					app.mainView.activate();
 					return;
@@ -8279,6 +8356,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 													m.onExecuted = function()
 													{
 														Workspace.wallpaperImage = thisicon.fileInfo.Path;
+														Workspace.wallpaperImageDecoded = getImageUrl( thisicon.fileInfo.Path );
 														Workspace.refreshDesktop();
 													}
 													m.execute( 'setsetting', { setting: 'wallpaperdoors', data: thisicon.fileInfo.Path } );
@@ -10415,7 +10493,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	let v = new View( {
-		title: i18n( 'i18n_title_about_friendos' ) + ' Hydrogen4',
+		title: i18n( 'i18n_title_about_friendos' ) + ' ' + Workspace.staticBranch,
 		width: 540,
 		height: 560,
 		id: 'about_friendup'
@@ -10581,10 +10659,7 @@ function ShowEula( accept, cbk )
 		</div>\
 	</div>';
 				// Tell app we can show ourselves!
-				if( window.friendApp && window.friendApp.reveal )
-				{
-					friendApp.reveal();
-				}
+				doReveal();
 			}
 		}
 		n.execute( 'geteuladocument' );
@@ -10596,11 +10671,9 @@ function ShowEula( accept, cbk )
 		f.onLoad = function( data )
 		{
 			d.innerHTML = data;
-			// Tell app we can show ourselves!
-			if( window.friendApp && window.friendApp.reveal )
-			{
-				friendApp.reveal();
-			}		
+			
+			// To mobile
+			doReveal();
 		}
 		f.load();
 	}
@@ -10921,7 +10994,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 					}
 					else
 					{
-						//console.log( '[receivePush] We are azleep! Server may push us again with this ' + msg.notifid );
+						console.log( '[receivePush] We are azleep! Server may push us again with this ' + msg.notifid );
 					}
 				}
 				else
@@ -10931,7 +11004,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 			
 				mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
 				let app = Workspace.applications[a];
-				//console.log( 'push to app', [ msg, app ]);
+				console.log( 'push to app', [ msg, app ]);
 				app.contentWindow.postMessage( JSON.stringify( { 
 					type: 'system',
 					method: 'pushnotification',
@@ -11004,7 +11077,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 				data: msg
 			};
 		
-			mobileDebug( ' Sendtoapp: ' + JSON.stringify( msg ) );
+			console.log( ' Sendtoapp: ' + JSON.stringify( msg ) );
 		
 			app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 		
@@ -11021,6 +11094,18 @@ Workspace.receivePush = function( jsonMsg, ready )
 		}
 	
 		mobileDebug( 'Start app ' + msg.application + ' and ' + _executionQueue[ msg.application ], true );
+		if( Friend.startupApps[ msg.application ] )
+		{
+			console.log( 'The app ' + msg.application + ' is already running. Killing it.' );
+			for( let b in Workspace.applications )
+			{
+				if( Workspace.application[ b ].applicationName == msg.application )
+				{
+					console.log( 'Killed ' + msg.application );
+					Workspace.killByTaskId( b );
+				}
+			}
+		}
 		Friend.startupApps[ msg.application ] = true;
 		ExecuteApplication( msg.application, '', appMessage );
 	}
@@ -11092,65 +11177,76 @@ function mobileDebug( str, clear )
 // TODO: Test loading different themes
 
 _applicationBasics = {};
+var _applicationBasicsLoading = false;
 function loadApplicationBasics( callback )
 {
-	// Don't do in login
-	if( Workspace.loginPrompt )
+	if( _applicationBasicsLoading ) 
 	{
-		if( callback )
-			callback();
-		return;
+		clearTimeout( _applicationBasicsLoading );
 	}
-	
-	// Preload basic scripts
-	let a_ = new File( '/webclient/js/apps/api.js' );
-	a_.onLoad = function( data )
+	_applicationBasicsLoading = setTimeout( function()
 	{
-		_applicationBasics.apiV1 = URL.createObjectURL( new Blob( [ data ], { type: 'text/javascript' } ) );
-	}
-	a_.load();
-	let sb_ = new File( '/themes/friendup12/scrollbars.css' );
-	sb_.onLoad = function( data )
-	{
-		if( _applicationBasics.css )
-			_applicationBasics.css += data;
-		else _applicationBasics.css = data;
-	}
-	sb_.load();
-	// Preload basic scripts
-	let c_ = new File( '/system.library/module/?module=system&command=theme&args=%7B%22theme%22%3A%22friendup12%22%7D&sessionid=' + Workspace.sessionId );
-	c_.onLoad = function( data )
-	{
-		if( _applicationBasics.css )
-			_applicationBasics.css += data;
-		else _applicationBasics.css = data;
-	}
-	c_.load();
-	
-	let js = '/webclient/' + [ 'js/oo.js',
-	'js/api/friendappapi.js',
-	'js/utils/engine.js',
-	'js/utils/tool.js',
-	'js/utils/json.js',
-	'js/io/cajax.js',
-	'js/io/appConnection.js',
-	'js/io/coreSocket.js',
-	'js/gui/treeview.js' ].join( ';/webclient/' );
-	let j_ = new File( js );
-	j_.onLoad = function( data )
-	{
-		_applicationBasics.js = data;
-		if( callback )
+		_applicationBasicsLoading = null;
+		
+		// Don't do in login
+		if( Workspace.loginPrompt )
 		{
-			try
-			{
+			if( callback )
 				callback();
-			}
-			catch( e )
+			return;
+		}
+		
+		// Preload basic scripts
+		let a_ = new File( '/webclient/js/apps/api.js' );
+		a_.onLoad = function( data )
+		{
+			_applicationBasics.apiV1 = URL.createObjectURL( new Blob( [ data ], { type: 'text/javascript' } ) );
+		}
+		a_.load();
+		let sb_ = new File( '/themes/friendup12/scrollbars.css' );
+		sb_.onLoad = function( data )
+		{
+			if( _applicationBasics.css )
+				_applicationBasics.css += data;
+			else _applicationBasics.css = data;
+		}
+		sb_.load();
+		// Preload basic scripts
+		let c_ = new File( '/system.library/module/?module=system&command=theme&args=%7B%22theme%22%3A%22friendup12%22%7D&sessionid=' + Workspace.sessionId );
+		c_.onLoad = function( data )
+		{
+			if( _applicationBasics.css )
+				_applicationBasics.css += data;
+			else _applicationBasics.css = data;
+		}
+		c_.load();
+		
+		let js = '/webclient/' + [ 'js/oo.js',
+		'js/api/friendappapi.js',
+		'js/utils/engine.js',
+		'js/utils/tool.js',
+		'js/utils/json.js',
+		'js/io/cajax.js',
+		'js/io/appConnection.js',
+		'js/io/coreSocket.js',
+		'js/gui/treeview.js' ].join( ';/webclient/' );
+		let j_ = new File( js );
+		j_.onLoad = function( data )
+		{
+			//console.log( 'BASICS LOADED: ' + data );
+			_applicationBasics.js = data;
+			if( callback )
 			{
+				try
+				{
+					callback();
+				}
+				catch( e )
+				{
+				}
 			}
 		}
-	}
-	j_.load();
+		j_.load();
+	}, 2 );
 };
 

@@ -140,7 +140,7 @@ int UserRemoveSession( User *usr, void *ls )
 	int retVal = -1;
 	int del = 5;
 	UserSession *remses = (UserSession *)ls;
-	if( usr  == NULL || ls == NULL || remses->us_User == NULL )
+	if( usr  == NULL || ls == NULL )//|| remses->us_User == NULL )
 	{
 		FERROR("Cannot remove user session, its not connected to user\n");
 		return -1;
@@ -156,7 +156,7 @@ int UserRemoveSession( User *usr, void *ls )
 	}
 	*/
 	
-	DEBUG("[UserRemoveSession] after in use\n");
+	DEBUG("[UserRemoveSession] after in use, %d\n", usr->u_InUse );
 	
 	USER_CHANGE_ON( usr );
 	
@@ -880,6 +880,8 @@ void UserReleaseDrives( User* usr, void *lsb )
 	
 	USER_CHANGE_ON( usr );
 	
+	DEBUG("[UserReleaseDrives] START inuse: %d\n", usr->u_InUse );
+	
 	File *lf = usr->u_MountedDevs;
 	File *remdev = lf;
 	while( lf != NULL )
@@ -896,6 +898,8 @@ void UserReleaseDrives( User* usr, void *lsb )
 		}
 	}
 	usr->u_MountedDevs = NULL;
+	
+	DEBUG("[UserReleaseDrives] END inuse: %d\n", usr->u_InUse );
 	
 	USER_CHANGE_OFF( usr );
 }

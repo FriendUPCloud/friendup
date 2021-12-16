@@ -1377,6 +1377,7 @@ function saveDia()
 {
 	// Saves the avatar --------------------------------------------------------
 	
+	let avatarSaved = false;
 	var canvas = ge( 'Avatar' );
 	context = canvas.getContext( '2d' );
 	var base64 = canvas.toDataURL();
@@ -1388,6 +1389,7 @@ function saveDia()
 		{
 			console.log( 'Avatar saving failed.' );
 		}
+		avatarSaved = true;
 		/*else
 		{
 			console.log( 'Saved avatar.' );
@@ -1511,7 +1513,7 @@ function saveDia()
 	
 	var nuserCredentials = ge( 'UserAccFullname' ).value.substr( 0, 1 );
 	var m = 0;
-	for( var c = 1; c < ge( 'UserAccFullname' ).value.length; c++ )
+	for( let c = 1; c < ge( 'UserAccFullname' ).value.length; c++ )
 	{
 		if( ge( 'UserAccFullname' ).value.substr( c, 1 ) == ' ' )
 		{
@@ -1535,6 +1537,7 @@ function saveDia()
 			if( '{S6}' + Sha256.hash ( 'HASHED' + Sha256.hash(ge( 'UserCurrentPassword' ).value) ) == Application.userInfo.Password )
 			{
 				obj.password = '{S6}' + Sha256.hash ( 'HASHED' + Sha256.hash(ge( 'UserAccPassword' ).value) );
+				obj.passwordClearText = ge( 'UserAccPassword' ).value;
 				Application.userInfo.Password = obj.password;
 				ge('PassError').innerHTML = '';
 			}
@@ -1557,7 +1560,20 @@ function saveDia()
 	f.onExecuted = function( e, d )
 	{
 		ge( 'UserAccPasswordConfirm' ).value = ge( 'UserAccPassword' ).value = ge( 'UserCurrentPassword' ).value = '';
-		Application.sendMessage( { command: 'saveresult', result: e, data: obj } );		
+		
+		let retries = 3;
+		function updateWithResult()
+		{
+			if( avatarSaved )
+			{
+				Application.sendMessage( { command: 'saveresult', result: e, data: obj } );		
+			}
+			else if( retries-- > 0 )
+			{
+				setTimeout( function(){ updateWithResult(); }, 350 );
+			}
+		}
+		updateWithResult();
 		
 		if( nuserCredentials != userCredentials )
 		{
