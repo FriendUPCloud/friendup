@@ -177,7 +177,7 @@ SystemBase *SystemInit( void )
 	
 	LIBXML_TEST_VERSION;
 	
-	l->sl_RemoveSessionsAfterTime = 400;//10800;
+	l->sl_RemoveSessionsAfterTime = 10800;
 	
 	//
 	// sl_Autotask

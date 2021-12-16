@@ -408,15 +408,15 @@ DataForm *SendMessageRFSRelogin( SpecialData *sd, MsgItem *msg )
 						//{ ID_PRMT, (FULONG) rsd->idi,  (FULONG)rsd->id },
 						
 						// read till end and overwrite existing sessionid
-						while( tags[ i ].mi_Tag  != TAG_DONE )
+						while( msg[ i ].mi_Tag  != TAG_DONE )
 						{
-							DEBUG("tag %p data %p size %p\n", ( void *)tags[ i ].mi_Tag, ( void *)tags[ i ].mi_Data, ( void *)tags[ i ].mi_Size );
+							DEBUG("tag %p data %p size %p\n", ( void *)msg[ i ].mi_Tag, ( void *)msg[ i ].mi_Data, ( void *)msg[ i ].mi_Size );
 							// it is previous sessionid
-							if( ( void *)tags[ i ].mi_Data == pntToSessionID )
+							if( ( void *)msg[ i ].mi_Data == pntToSessionID )
 							{
 								DEBUG("[SendMessageRFSRelogin] msg with sessionid found, will be overwriten\n");
-								tags[ i ].mi_Data = (FULONG) sd->id;
-								tags[ i ].mi_Size = (FULONG) sd->idi;
+								msg[ i ].mi_Data = (FULONG) sd->id;
+								msg[ i ].mi_Size = (FULONG) sd->idi;
 							}
 							i++;
 						}
@@ -425,7 +425,7 @@ DataForm *SendMessageRFSRelogin( SpecialData *sd, MsgItem *msg )
 						
 						DEBUG("[SendMessageRFSRelogin] resend request\n");
 						
-						return SendMessageRFS( sd, tags );
+						return SendMessageRFS( sd, msg );
 					}
 				}
 			}
