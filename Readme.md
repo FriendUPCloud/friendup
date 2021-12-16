@@ -4,6 +4,10 @@ Friend OS v1.2.8, "Hydrogen 4"
 *NB*: For extended functionality and related Friend projects such as the Android app refer [here](https://github.com/FriendSoftwareLabs).
 
 ---
+**Release notes**
+
+https://github.com/FriendUPCloud/friendup/discussions/153
+---
 
 The Friend OS leverages the computing power of the Internet to offer many of the features and functionalities of Chrome OS, Windows, Linux, Android, macOS or iOS, without the need to choose a specific hardware platform or proprietary software package. If you have a device that is connected to the Internet, you can use the Friend OS.
 
