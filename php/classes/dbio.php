@@ -325,10 +325,12 @@ class DbTable
 						
 					case 'datetime':
 					default:
-						$value = stripslashes( $value );
+						// Old mode look illogical and has issues with 
+						// inserting stringified JSON
+						/*$value = stripslashes( $value );
 						$value = str_replace( '\"', '"', $value );
-						$value = str_replace( '"', '\"', $value );
-						return '"' . $value . '"';
+						$value = str_replace( '"', '\"', $value );*/
+						return '"' . addslashes( $value ) . '"';
 				}
 			}
 		}
