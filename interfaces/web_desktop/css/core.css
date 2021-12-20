@@ -2395,11 +2395,6 @@ body:not([mobile]):not([tablet]) .Widget .MenuItems .MenuItem:hover
 
 /* Non logged in state */
 
-body.Inside
-{
-	background: #222222;
-}
-
 body #Screens
 {
 }
@@ -2424,7 +2419,7 @@ body.Loaded > #Screens > #DeepestField
 	opacity: 1;
 }
 
-body.Loading > #Screens
+body.Loading:not(.Inside) > #Screens
 {
 	opacity: 0;
 }
@@ -2481,6 +2476,7 @@ body #DeepestField
 	opacity: 0;
 	z-index: 0;
 }
+
 
 /* Actiontray --------------------------------------------------------------- */
 

@@ -125,6 +125,8 @@ if( $rows = $SqlDatabase->FetchObjects( '
 }
 $s->Mimetypes = $types;
 
+$s->Theme = getDefaultTheme();
+
 die( 'ok<!--separate-->' . json_encode( $s ) );
 
 ?>

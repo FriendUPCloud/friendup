@@ -3765,7 +3765,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		console.log( 'Disk notification!', windowList, type );
 	},
-	refreshTheme: function( themeName, update, themeConfig )
+	refreshTheme: function( themeName, update, themeConfig, initpass )
 	{
 		let self = this;
 		
@@ -3773,6 +3773,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( this.themeRefreshed && !update )
 		{
 			return;
+		}
+
+		if( !initpass )
+		{
+			document.body.classList.add( 'ThemeRefreshing' );
+			return setTimeout( function()
+			{
+				Workspace.refreshTheme( themeName, update, themeConfig, true );
+			}, 150 );
 		}
 
 		// Check url var
@@ -3835,6 +3844,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					styles.type = 'text/css';
 					styles.onload = function()
 					{
+						document.body.classList.add( 'ThemeLoaded' );
+						setTimeout( function()
+						{
+							document.body.classList.remove( 'ThemeRefreshing' );
+						}, 150 );
 						// We are inside (wait for wallpaper) - watchdog
 						if( !Workspace.insideInterval )
 						{
@@ -3944,6 +3958,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					
 						// Redraw icons if they are delayed
 						Workspace.redrawIcons();
+						
+						// Make sure screen dimensions are read
+						_kresize();
 					}
 
 					if( themeName && themeName != 'default' )
@@ -7014,9 +7031,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		return;
 	},
 	// Simple logout..
-	logout: function()
+	logout: function( cbk )
 	{
-		Friend.User.Logout();
+		Friend.User.Logout( cbk );
 	},
 	externalLogout: function()
 	{
@@ -7073,9 +7090,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					command: 'mobilebackbutton'
 				} );
 				// Check with standard functionality
+				let app = null;
 				if( window._getAppByAppId )
 				{
-					let app = _getAppByAppId( cm.applicationId );
+					app = _getAppByAppId( cm.applicationId );
 					if( app.mainView == cm.windowObject )
 					{
 						if( !cm.windowObject.mobileBack.classList.contains( 'Showing' ) )
@@ -7095,7 +7113,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					cm.windowObject.parentView.activate();
 					return;
 				}
-				if( app.mainView )
+				if( app && app.mainView )
 				{
 					app.mainView.activate();
 					return;

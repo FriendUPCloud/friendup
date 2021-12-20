@@ -1544,7 +1544,7 @@ function receiveEvent( event, queued )
 					}
 					else
 					{
-						console.log( 'No callback?' );
+						//console.log( 'No callback?' );
 					}
 				}
 				// TODO: This should be removed, it's a double right? Like the first if. . . Goes further down to a window
@@ -6104,7 +6104,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				else
 				{
 				    let d = document.createElement( 'script' );
-				    d.innerHTML = scripts[a].innerHTML.split( /\&nbsp\;/ ).join( ' ' );
+				    d.innerHTML = EntityDecode( scripts[a].innerHTML );
 				    document.body.appendChild( d );
 				}
 			}
@@ -6846,6 +6846,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 
 	function _kmousedown( e )
 	{
+		if( !window.Application || !Application.sendMessage ) return;
 		Application.sendMessage( { type: 'system', command: 'registermousedown', x: e.clientX, y: e.clientY } );
 		
 		// Check if an input element has focus
@@ -6853,6 +6854,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 	}
 	function _kmouseup( e )
 	{
+		if( !window.Application || !Application.sendMessage ) return;
 		if( Friend.mouseMoveFunc )
 			Friend.mouseMoveFunc = null;
 		Application.sendMessage( { type: 'system', command: 'registermouseup', x: e.clientX, y: e.clientY } );
