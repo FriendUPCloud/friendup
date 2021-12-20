@@ -1538,23 +1538,29 @@ function apiWrapper( event, force )
 				break;
 				// View ------------------------------------------------------------
 			case 'view':
-				var viewId = msg.viewId;
+				let viewId = msg.viewId;
 				if( msg.method && app.windows && app.windows[ msg.viewId ] )
 				{
-					var win = app.windows[ msg.viewId ];
-					var twin = app.windows[ msg.targetViewId ? msg.targetViewId : msg.viewId ];
+					let win = app.windows[ msg.viewId ];
+					let twin = app.windows[ msg.targetViewId ? msg.targetViewId : msg.viewId ];
 					switch( msg.method )
 					{
+						case 'cancelclose':
+							if( win )
+							{
+								console.log( 'What to do here?', win );
+							}
+							break;
 						case 'opencamera':
 							if( win )
 							{
-								var cbk = null;
+								let cbk = null;
 								if( msg.callback )
 								{
-									var cid = msg.callback;
+									let cid = msg.callback;
 									cbk = function( data )
 									{
-										var nmsg = {
+										let nmsg = {
 											command: 'callback',
 											callback: cid,
 											data: data
@@ -1574,10 +1580,10 @@ function apiWrapper( event, force )
 						case 'showbackbutton':
 							if( win )
 							{
-								var cbk = null;
+								let cbk = null;
 								if( msg.callback )
 								{
-									var cid = msg.callback;
+									let cid = msg.callback;
 									cbk = function( e )
 									{
 										if( win.viewId == msg.targetViewId )
@@ -1630,7 +1636,7 @@ function apiWrapper( event, force )
 						case 'close':
 							if( win )
 							{
-								var out = [];
+								let out = [];
 								for( let c in app.windows )
 								{
 									if( c != msg.viewId )
@@ -1654,18 +1660,18 @@ function apiWrapper( event, force )
 						case 'getWindowElement':
 							if( win )
 							{
-								var cb = false;
+								let cb = false;
 								msg.data = false;
 								msg.resp = 'fail';
 								
-								var elev = msg.destination ? app.windows[ msg.destination ] : app;
+								let elev = msg.destination ? app.windows[ msg.destination ] : app;
 								if( elev && elev.iframe ) elev = elev.iframe;
 								if( elev )
 								{
 									// TODO: Support this in security domains
 									if( win.applicationId == msg.applicationId )
 									{
-										var i = win.iframe;
+										let i = win.iframe;
 										if( !i ) i = win.content ? win.content.getElementsByTagName( 'iframe' )[0] : false;
 										if( i )
 										{
@@ -1673,7 +1679,7 @@ function apiWrapper( event, force )
 											{
 												try
 												{
-													var identifier = 'view_' + win._window.parentNode.id;
+													let identifier = 'view_' + win._window.parentNode.id;
 													if( !elev.contentWindow.Application.windowElements )
 													{
 														elev.contentWindow.Application.windowElements = {};
@@ -1715,12 +1721,12 @@ function apiWrapper( event, force )
 							if( win )
 							{
 								// Create a new callback dispatch here..
-								var cb = false;
+								let cb = false;
 								if( msg.callback )
 									cb = makeAppCallbackFunction( app, msg, event.source );
 
 								// Do the setting!
-								var domain = GetDomainFromConf( app.config, msg.applicationId );
+								let domain = GetDomainFromConf( app.config, msg.applicationId );
 								win.setContentIframed( msg.data, domain, msg, cb );
 								
 								// Remove callback here - it will be handled by setcontentiframed
@@ -1732,7 +1738,7 @@ function apiWrapper( event, force )
 							if( win )
 							{
 								// Remember callback
-								var cb = false;
+								let cb = false;
 								if( msg.callback )
 									cb = makeAppCallbackFunction( app, msg, event.source );
 
@@ -1770,7 +1776,7 @@ function apiWrapper( event, force )
 						case 'getContentById':
 							if( win )
 							{
-								var c = win.getContentById( msg.identifier, msg.flag );
+								let c = win.getContentById( msg.identifier, msg.flag );
 								if( c )
 								{
 									app.contentWindow.postMessage( JSON.stringify( {
@@ -1878,7 +1884,7 @@ function apiWrapper( event, force )
 						msg.data.screen = null;
 					}
 
-					var postTarget = app;
+					let postTarget = app;
 					
 					// Startup sequence apps need to be deactivated
 					if( app.startupsequence )
@@ -1891,8 +1897,8 @@ function apiWrapper( event, force )
 						}
 					}
 					
-					var v = new View( msg.data );
-					var win = msg.parentViewId && app.windows ? app.windows[ msg.parentViewId ] : false;
+					let v = new View( msg.data );
+					let win = msg.parentViewId && app.windows ? app.windows[ msg.parentViewId ] : false;
 					if( win )
 					{
 						v.parentViewId = msg.parentViewId;
@@ -1911,7 +1917,7 @@ function apiWrapper( event, force )
 						// This is the external id
 						v.externViewId = viewId;
 						
-						var nmsg = {
+						let nmsg = {
 							applicationId: msg.applicationId,
 							viewId:        msg.id ? msg.id : viewId,
 							type:          'callback',
@@ -1926,7 +1932,7 @@ function apiWrapper( event, force )
 					// Call back to say the window was not correctly opened
 					else
 					{
-						var nmsg = {
+						let nmsg = {
 							applicationId: msg.applicationId,
 							viewId:        msg.id ? msg.id : viewId,
 							type:          'callback',
@@ -1943,6 +1949,10 @@ function apiWrapper( event, force )
 					{
 						//
 					}
+					
+					delete msg.data;
+					delete msg;
+					msg = null;
 				}
 				break;
 			// Native view ( mobile app / ios ) --------------------------------------------
@@ -2265,13 +2275,13 @@ function apiWrapper( event, force )
 				else if( msg.method == 'save' )
 				{
 					// Respond with save data notification
-					f.onSave = function()
+					f.onSave = function( resCode, data )
 					{
 						// File saves should remain in their view context
-						var cw = GetContentWindowByAppMessage( app, msg );
+						let cw = GetContentWindowByAppMessage( app, msg );
 						if( app && cw )
 						{
-							var nmsg = { command: 'filesave', fileId: fileId };
+							let nmsg = { command: 'filesave', fileId: fileId };
 							// Pass window id down
 							if( msg.viewId )
 							{
@@ -2283,6 +2293,8 @@ function apiWrapper( event, force )
 								nmsg.screenId = msg.screenId;
 								nmsg.type = 'callback';
 							}
+							nmsg.responseCode = resCode ? resCode : 'fail';
+							nmsg.responseData = data ? data : '';
 							cw.postMessage( JSON.stringify( nmsg ), '*' );
 						}
 					}
@@ -2291,7 +2303,7 @@ function apiWrapper( event, force )
 					var mode = '';
 					if( msg.dataFormat == 'string' )
 					{
-						var data = ConvertStringToArrayBuffer( msg.data.data, 'base64' );
+						let data = ConvertStringToArrayBuffer( msg.data.data, 'base64' );
 						mode = 'wb';
 						msg.data.data = data;
 					}
@@ -3501,16 +3513,43 @@ function apiWrapper( event, force )
 						m.execute( 'updateapppermissions', { application: msg.application, data: msg.data, permissions: JSON.stringify( msg.permissions ) } );
 						break;
 
-					// Update login and tell apps
+					// Update login, kill old info, and tell apps
 					case 'updatelogin':
-						Workspace.login( msg.username, msg.password, true );
-						for( let a = 0; a < Workspace.applications.length; a++ )
+						if( msg.username && msg.password )
 						{
-							var nmsg = {
-								command: 'userupdate',
-								applicationId: msg.applicationId
-							};
-							Workspace.applications[a].contentWindow.postMessage( nmsg, '*' );
+							Friend.User.Logout( function()
+							{
+								Friend.User.Login( msg.username, msg.password, true );
+								
+								for( let a = 0; a < Workspace.applications.length; a++ )
+								{
+									let nmsg = {
+										command: 'userupdate',
+										applicationId: msg.applicationId
+									};
+									Workspace.applications[a].contentWindow.postMessage( nmsg, '*' );
+								}
+							} );
+						}
+						else
+						{
+							Notify( {
+								title: 'Could not update login', 
+								text: 'Missing username and password data to log in.' 
+							} );
+						}
+						break;
+					case 'userupdate':
+						if( msg.reason )
+						{
+							for( let a = 0; a < Workspace.applications.length; a++ )
+							{
+								let nmsg = {
+									command: 'userupdate',
+									applicationId: msg.applicationId
+								};
+								Workspace.applications[a].contentWindow.postMessage( nmsg, '*' );
+							}
 						}
 						break;
 					case 'reloadmimetypes':

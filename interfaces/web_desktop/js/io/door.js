@@ -115,7 +115,9 @@ Door.prototype.get = function( path )
 			let d = path.toLowerCase().substr( 0, 7 ) == 'system:' ? new DoorSystem( vol ) : new Door( vol );
 			d.setPath( path );
 			if ( Workspace.icons[ a ].Config )
+			{
 				d.Config = Workspace.icons[a].Config;
+			}
 			else if ( d.dormantGetConfig )
 				d.Config = d.dormantGetConfig();
 			return d;
@@ -520,10 +522,15 @@ Door.prototype.write = function( filename, data, mode, extraData )
 			// Do the refreshing
 			Workspace.refreshWindowByPath( filename );
 			dat = ( JSON.parse( d ) ).FileDataStored;
+			if( dr.onWrite )
+			{
+				dr.onWrite( r, d );
+			}
 		}
-
-		if( dr.onWrite )
-			dr.onWrite( dat, extraData );
+		else if( dr.onWrite )
+		{
+			dr.onWrite( false, false );
+		}
 	}
 	j.send();
 }

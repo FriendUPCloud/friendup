@@ -14,7 +14,7 @@ if( $args->args->setup == 'defaults' )
 	$o->Type = 'system';
 	$o->Key = 'theme';
 	$o->Load();
-	$o->Data = 'friendup12';
+	$o->Data = getDefaultTheme();
 	$o->Save();
 	// 2. Set Dock to window list on the bottom of the screen
 	$o = new dbIO( 'FSetting' );

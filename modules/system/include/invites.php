@@ -285,26 +285,26 @@ if( $args->command )
 											}
 											else
 											{
-												$o = new dbIO( 'FMetaData' );
-												$o->Key = 'ResolvedUserInvite';
-												$o->ValueString = $args->args->hash;
-												$o->DataTable = 'FUserGroup';
-												$o->DataID = $group->ID;
-												$o->ValueNumber = $User->ID;
-												$o->Save();
+												$m = new dbIO( 'FMetaData' );
+												$m->Key = 'ResolvedUserInvite';
+												$m->ValueString = $args->args->hash;
+												$m->DataTable = 'FUserGroup';
+												$m->DataID = $group->ID;
+												$m->ValueNumber = $User->ID;
+												$m->Save();
 												
 												// Extended
 												$u = new dbIO( 'FMetaData' );
 												$u->Key = 'ResolvedUserData';
 												$u->ValueString = date( 'Y-m-d H:i:s' );
 												$u->DataTable = 'FMetaData';
-												$u->DataID = $o->ID;
+												$u->DataID = $m->ID;
 												$u->ValueNumber = $f->UserID;
 												$u->Save();
 												
 												$SqlDatabase->query( '
 													DELETE FROM FQueuedEvent q
-													WHERE q.TargetUserID = \'' . $User->ID . '\' AND q.TargetGroupID = \'' . $group->ID . '\' AND q.Status = \'unseen\'
+													WHERE q.TargetUserID = \'' . $User->ID . '\' AND q.TargetGroupID = \'' . $group->ID . '\' AND q.Status IN ( "unseen" ) 
 												' );
 											}
 										}
@@ -339,20 +339,20 @@ if( $args->command )
 												
 												if( isset( $json->contact ) && $json->contact && $f->ID > 0 )
 												{
-													$o = new dbIO( 'FMetaData' );
-													$o->Key = 'ResolvedUserInvite';
-													$o->ValueString = $args->args->hash;
-													$o->DataTable = 'FUser';
-													$o->DataID = $json->data->userid;
-													$o->ValueNumber = $User->ID;
-													$o->Save();
+													$m = new dbIO( 'FMetaData' );
+													$m->Key = 'ResolvedUserInvite';
+													$m->ValueString = $args->args->hash;
+													$m->DataTable = 'FUser';
+													$m->DataID = $json->data->userid;
+													$m->ValueNumber = $User->ID;
+													$m->Save();
 													
 													// Extended
 													$u = new dbIO( 'FMetaData' );
 													$u->Key = 'ResolvedUserData';
 													$u->ValueString = date( 'Y-m-d H:i:s' );
 													$u->DataTable = 'FMetaData';
-													$u->DataID = $o->ID;
+													$u->DataID = $m->ID;
 													$u->ValueNumber = $f->UserID;
 													$u->Save();
 													

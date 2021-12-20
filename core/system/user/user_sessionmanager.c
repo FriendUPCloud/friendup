@@ -214,7 +214,7 @@ UserSession *USMGetSessionByDeviceIDandUser( UserSessionManager *usm, char *devi
 	while( us != NULL )
 	{
 		DEBUG("[USMGetSessionByDeviceIDandUser] userid >%ld< devidentity >%s< compare to UID %ld and DEVID %s\n", us->us_UserID, us->us_DeviceIdentity, uid, devid );
-		if( us->us_UserID == uid && us->us_DeviceIdentity != NULL && strcmp( devid, us->us_DeviceIdentity ) == 0 )
+		if( us->us_UserID == uid && us->us_DeviceIdentity != NULL && strcmp( devid, us->us_DeviceIdentity ) == 0 && us->us_Status != USER_SESSION_STATUS_TO_REMOVE )
 		{
 			DEBUG("[USMGetSessionByDeviceIDandUser] found user by deviceid: %s sessionID: %s\n", devid, us->us_SessionID );
 			SESSION_MANAGER_RELEASE( usm );
@@ -274,7 +274,7 @@ UserSession *USMGetSessionByDeviceIDandUserDB( UserSessionManager *smgr, char *d
  */
 UserSession *USMGetSessionByUserID( UserSessionManager *usm, FULONG id )
 {
-	DEBUG("CHECK6\n");
+	DEBUG("[USMGetSessionByUserID] start\n");
 	// We will take only first session of that user
 	// protect in mutex
 	SESSION_MANAGER_USE( usm );
@@ -1137,7 +1137,7 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, U
 	{
 		char temp[ 1024 ];
 	 
-		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` where 'SessionID'='%s' AND 'DeviceIdentity'='tempsession'", ses->us_SessionID );
+		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` where SessionID='%s' AND DeviceIdentity='tempsession'", ses->us_SessionID );
 
 		DEBUG("[USMDestroyTemporarySession] launched SQL: %s\n", temp );
 	

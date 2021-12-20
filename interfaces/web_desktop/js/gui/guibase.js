@@ -10,7 +10,7 @@
 
 /* Some important flags for GUI elements ------------------------------------ */
 
-var DEFAULT_SANDBOX_ATTRIBUTES = 'allow-same-origin allow-forms allow-scripts allow-popups allow-popups-to-escape-sandbox';
+var DEFAULT_SANDBOX_ATTRIBUTES = 'allow-same-origin allow-forms allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads allow-modals allow-top-navigation-by-user-activation allow-presentation';
 var FUI_MOUSEDOWN_RESIZE  =  2;
 var FUI_MOUSEDOWN_WINDOW  =  1;
 var FUI_MOUSEDOWN_SCREEN  =  3;
@@ -4012,6 +4012,60 @@ function FixWindowDimensions( mw )
 	SetWindowFlag( mw, 'max-height', mw.parentNode.offsetHeight );
 	SetWindowFlag( mw, 'min-width', mw.parentNode.offsetWidth );
 	SetWindowFlag( mw, 'max-width', mw.parentNode.offsetWidth );
+}
+
+function doReveal()
+{
+	if( window.friendApp && window.friendApp.reveal )
+	{
+		if( Workspace.wallpaperImage )
+		{
+			if( !Workspace.wallpaperLoaded )
+			{
+				if( Workspace.wallpaperImage == 'color' )
+				{
+					document.body.classList.add( 'Revealed' );
+					friendApp.reveal();
+				}
+				else
+				{
+					let i = new Image();
+					if( Workspace.wallpaperImageDecoded )
+						i.src = Workspace.wallpaperImageDecoded;
+					else i.src = getImageUrl( Workspace.wallpaperImage );
+					i.onload = function()
+					{
+						// Tell app we can show ourselves!
+						document.body.removeChild( i );
+						document.body.classList.add( 'Revealed' );
+						friendApp.reveal();
+					}
+					i.style.visibility = 'hidden';
+					document.body.appendChild( i );
+					if( i.width && i.width > 0 )
+					{
+						i.onload();
+					}
+				}
+			}
+			else
+			{
+				// Tell app we can show ourselves!
+				document.body.classList.add( 'Revealed' );
+				friendApp.reveal();
+			}
+		}
+		else
+		{
+			setTimeout( function(){ 
+				doReveal(); 
+			}, 50 );
+		}
+	}
+	else
+	{
+		//console.log( 'window.friendApp does not exist, or reveal does not exist on the object.' );
+	}
 }
 
 function ElementWindow ( ele )

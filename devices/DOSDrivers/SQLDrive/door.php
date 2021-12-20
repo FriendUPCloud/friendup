@@ -448,6 +448,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						$fn = $f->Filename;
 						$f->DiskFilename = '';
 					}
+					
+					$Logger->log( '[SQLDRIVE] 1. Does our previous file exist?' . ( file_get_contents( $deletable ) ) . ' -> ' . $deletable );
+					
 				
 					// Sanitize!
 					if( strstr( $fn, '/' ) )
@@ -476,20 +479,21 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						}
 					}
 				
-					if( $file = fopen( $wname . $fn, 'w+' ) )
+					$Logger->log( '[SQLDRIVE] 2. Does our previous file exist?' . ( file_get_contents( $deletable ) ) . ' -> ' . $deletable );
+				
+					// If the file exists, check it, if not, make a new writable file
+					if( ( $f->ID > 0 && file_exists( $wname . $fn ) ) || true )
 					{
-						// Delete existing file
-						if( $deletable ) unlink( $deletable );
-					
 						if( isset( $args->tmpfile ) )
 						{
 							if( file_exists( $args->tmpfile ) )
 							{
-								fclose( $file );
 								$len = filesize( $args->tmpfile );
 								
 								if( $len > 0 )
 								{
+									$Logger->log( '[SQLDRIVE] 3. Does our previous file exist?' . ( file_get_contents( $deletable ) ) . ' -> ' . $deletable );
+								
 									//$Logger->log( '[SQLDrive] Ugly workaround to "fix" base64 support...' );
 									// TODO: UGLY WORKAROUND, FIX IT!
 									//       We need to support base64 streams
@@ -519,6 +523,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 									{
 										$Logger->log( '[SqlDrive] Moving tmp file ' . $args->tmpfile . ' to ' . $wname . $fn . ' because ' . ( $total + $len ) . ' < ' . SQLDRIVE_FILE_LIMIT );
 										
+										// Delete existing file
+										if( $deletable ) unlink( $deletable );
+										
 										$res = rename( $args->tmpfile, $wname . $fn );
 										
 										if( !$res )
@@ -544,7 +551,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 								die( 'fail<!--separate-->{"response","-1","message":"Tempfile does not exist"}' );
 							}
 						}
-						else
+						else if( $file = fopen( $wname . $fn, 'w+' ) )
 						{
 							if( $total + strlen( $args->data ) < SQLDRIVE_FILE_LIMIT )
 							{
@@ -982,6 +989,21 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						return 'fail';
 					// Move files and folders or a whole volume to another door
 					case 'copy':
+						
+						// Must not break filesize limit!
+						$total = 0;
+						if( $sum = $SqlDatabase->FetchObject( '
+							SELECT SUM(u.Filesize) z FROM FSFile u
+							WHERE FilesystemID = \'' . $this->ID . '\'
+						' ) )
+						{
+							$total = intval( $sum->z, 10 );
+						}
+						if( $total >= SQLWORKGROUPDRIVE_FILE_LIMIT )
+						{
+							return 'fail';
+						}
+						
 						$from = isset( $args->from ) ? $args->from : ( isset( $args->args->from ) ? $args->args->from : false );
 						$to   = isset( $args->to )   ? $args->to   : ( isset( $args->args->to )   ? $args->args->to   : false );
 						

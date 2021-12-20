@@ -121,7 +121,8 @@ FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User 
 						}
 					}
 				
-					sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
+					//sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where 
+					snprintf( tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
 PermissionID in( \
 SELECT ID FROM `FFilePermission` WHERE \
 ( Path = '%s' OR Path = '%s' ) \
@@ -140,7 +141,8 @@ OR \
 				}
 				else
 				{
-					sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
+					//sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where 
+					snprintf( tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
 PermissionID in( \
 SELECT ID FROM `FFilePermission` WHERE \
 Path = '%s' \
@@ -1172,4 +1174,42 @@ OR \
 	BufStringDelete( recv );
 	
 	return bsres;
+}
+
+/**
+ * Delete entry from FShared table
+ *
+ * @param fm pointer to FSManager structure
+ * @param path path to shared file which will be removed from DB
+ * @param uid user id which point to user which shared entry will be removed
+*  @return 0 when success otherwise error number
+ */
+int FSManagerDeleteSharedEntry( FSManager *fm, char *path, FQUAD uid )
+{
+	SystemBase *sb = (SystemBase *)fm->fm_SB;
+
+	SQLLibrary *sqllib  = sb->LibrarySQLGet( sb );
+	if( sqllib != NULL )
+	{
+		char *tmpQuery = NULL;
+		int querysize = ( SHIFT_LEFT(strlen( path ), 1) ) + 512;
+
+		if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
+		{
+			sqllib->SNPrintF( sqllib, tmpQuery, querysize, "DELETE FROM FShared WHERE Data='%s' AND OwnerUserID=%ld", path, uid );
+			//sprintf( tmpQuery, "DELETE FROM FShared WHERE Data=`%s` AND OwnerUserID=%ld", path, uid );
+		
+			sqllib->QueryWithoutResults( sqllib, tmpQuery );
+			
+			//snprintf( where, sizeof(where), " Path = '%s:%s' AND UserID = %ld", devname, path, loggedSession->us_User->u_ID );
+			sqllib->SNPrintF( sqllib, tmpQuery, querysize, "DELETE FROM FFileShared WHERE Path='%s' AND UserID=%ld", path, uid );
+			//sprintf( tmpQuery, "DELETE FROM FShared WHERE Data=`%s` AND OwnerUserID=%ld", path, uid );
+		
+			sqllib->QueryWithoutResults( sqllib, tmpQuery );
+			
+			FFree( tmpQuery );
+		}
+		sb->LibrarySQLDrop( sb, sqllib );
+	}
+	return 0;
 }

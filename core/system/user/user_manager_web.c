@@ -1771,7 +1771,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				if( sess != NULL )
 				{
 					Log( FLOG_INFO, "[UMWebRequest] Logout user, user: %s deviceID: %s\n", sess->us_User->u_Name, sess->us_DeviceIdentity );
-					
+					/*
 					SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
 					if( sqlLib != NULL )
 					{
@@ -1791,8 +1791,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					{
 						l->sl_ActiveAuthModule->Logout( l->sl_ActiveAuthModule, request, sessid );
 					}
+					*/
 					
 					error = USMUserSessionRemove( l->sl_USM, sess );
+					
+					sess->us_Status = USER_SESSION_STATUS_TO_REMOVE;
 					
 					*sessionRemoved = LL_LOGOUT;
 				}

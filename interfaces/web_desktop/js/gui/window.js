@@ -259,6 +259,15 @@ function ResizeWindow( div, wi, he, mode, depth )
 	else if( depth > 4 ) return;
 	if( !mode ) mode = false;
 	
+	if( !wi || wi == 'undefined' || wi == undefined )
+	{
+	    wi = div.windowObject.getFlag( 'width' );
+	}
+	if( !he || he == 'undefined' || he == undefined )
+	{
+	    he = div.windowObject.getFlag( 'height' );
+	}
+	
 	// Find window div
 	if ( !div.content )
 	{
@@ -285,7 +294,10 @@ function ResizeWindow( div, wi, he, mode, depth )
 		// When getting width and height from flags, and not in borderless
 		// mode, check also borders around the content and add those to get
 		// the correct width and height
-		frameWidth = ele.rightbar.offsetWidth + ele.leftbar.offsetWidth;
+		// TODO: leftbar and rightbar does not exist, remove it
+		/*frameWidth = ele.rightbar.offsetWidth + ele.leftbar.offsetWidth;
+		console.log( 'Checking frame ' + frameWidth + ' (' + ele.rightbar.offsetWidth + ', ' + ele.leftbar.offsetWidth + ')' );
+		console.log( ele.rightbar, ele.leftbar );*/
 		if( !wi ) 
 		{
 			wi = parseInt( flags.width );
@@ -295,8 +307,13 @@ function ResizeWindow( div, wi, he, mode, depth )
 			}
 		}
 		frameHeight = ele.titleBar.offsetHeight;
-		if( isWorkspaceScreen )
+		
+		// TODO: Bottom bar does not exist, remove it
+		/*if( isWorkspaceScreen )
+		{
 			frameHeight += ele.bottombar.offsetHeight;
+			console.log( 'And the bottombar: ' + frameHeight + ' (' + ele.bottombar.offsetHeight + ')' );
+		}*/
 		if( !he )
 		{
 			he = flags.height;
@@ -307,10 +324,12 @@ function ResizeWindow( div, wi, he, mode, depth )
 		}
 		
 		// Window gauge
+		// TODO: Volume gauge does not exist, remove it
+		/*
 		if( div.windowObject.flags.volume && div.volumeGauge )
 		{
 			div.content.style.left = GetElementWidth( div.volumeGauge.parentNode ) + 'px';
-		}
+		}*/
 	}
 	
 	let cl = document.body.classList.contains( 'Inside' );
@@ -318,8 +337,16 @@ function ResizeWindow( div, wi, he, mode, depth )
 	let maxVWidt, maxVHeig;
 	if( Workspace.mode != 'vr' )
 	{
-		maxVWidt = cl ? div.windowObject.flags.screen.getMaxViewWidth() : GetWindowWidth();
-		maxVHeig = cl ? div.windowObject.flags.screen.getMaxViewHeight() : GetWindowHeight();
+		if( div.windowObject.flags.screen )
+		{
+			maxVWidt = cl ? div.windowObject.flags.screen.getMaxViewWidth() : GetWindowWidth();
+			maxVHeig = cl ? div.windowObject.flags.screen.getMaxViewHeight() : GetWindowHeight();
+		}
+		else
+		{
+			maxVWidt = window.innerWidth;
+			maxVHeig = window.innerHeight;
+		}
 	}
 	else
 	{
@@ -338,7 +365,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 
 	let divs = div.getElementsByTagName ( 'div' );
 	let cnt  = false;
-	for( var a = 0; a < divs.length; a++ )
+	for( let a = 0; a < divs.length; a++ )
 	{
 		if( !cnt && divs[a].classList && divs[a].classList.contains( 'Content' ) )
 		{
@@ -346,17 +373,21 @@ function ResizeWindow( div, wi, he, mode, depth )
 			break;
 		}
 	}
-
-
+	
 	// TODO: Let a central resize code handle this (this one?)
 	// Maximum dimensions
 	let pheight = div.parentNode ? div.parentNode.offsetHeight : GetWindowHeight();
-	let maxWidth  = div.parentWindow ? div.parentWindow.getWindowElement().offsetWidth : maxVWidt;
-	let maxHeight = div.parentWindow ? div.parentWindow.getWindowElement().offsetHeight : maxVHeig;
+	// TODO: Support parent windows
+	let maxWidth  = maxVWidt;
+	let maxHeight = maxVHeig;
+	
+	//console.log( '0) Max height first ' + maxVHeig + ' ' + margins.top + ' ' + margins.bottom );
 	
 	// Add margins
 	maxWidth -= margins.left + margins.right;
 	maxHeight -= margins.top + margins.bottom;
+	
+	//console.log( '1) Here is wihe: ' + wi + 'x' + he );
 	
 	if( div.windowObject && maximized )
 	{
@@ -369,12 +400,19 @@ function ResizeWindow( div, wi, he, mode, depth )
 		if( he > maxHeight ) he = maxHeight;
 	}
 	
+	//console.log( 'Max height: ' + maxHeight );
+	
+	//console.log( '2) Here is wihe: ' + wi + 'x' + he );
+	
 	// Make sure we don't go past screen limits
 	let l = t = 0;
 	if( div.parentNode )
 	{
-		l = div.offsetLeft;
-		t = div.offsetTop;
+		l = parseInt( div.style.left );
+		t = parseInt( div.style.top );
+		if( isNaN( l ) ) l = 0;
+		if( isNaN( t ) ) t = 0;
+		//console.log( 'Style top: ' + t + ' (' + div.style.top + ')' );
 	}
 	else
 	{
@@ -391,15 +429,23 @@ function ResizeWindow( div, wi, he, mode, depth )
 		t = 0;
 	}
 	
+	//console.log( '3) Here is wihe: ' + wi + 'x' + he );
+	
 	// Skew for calculating beyond workspace 1
 	let skewx = div.windowObject.workspace * window.innerWidth;
 	if( !isWorkspaceScreen ) skewx = 0;
 	
 	if( l + wi > maxWidth + skewx + margins.left )
+	{
 		wi = maxWidth + skewx - l + margins.left;
+	}
 	if( t + he > maxHeight + margins.top )
+	{
 		he = maxHeight - t + margins.top;
+	}
 	// Done limits
+	
+	//console.log( '2) Here is wihe: ' + wi + 'x' + he );
 	
 	// Flag constraints
 	let fminw = div.windowObject.flags['min-width']  ? div.windowObject.flags['min-width']  : 0;
@@ -601,6 +647,8 @@ function GetViewDisplayMargins( div )
 	if( Workspace.mainDock )
 	{
 		let dockDom = Workspace.mainDock.dom;
+		if( !parseInt( dockDom.style.height ) ) return margins;
+		
 		if( dockDom.classList.contains( 'Top' ) )
 			dockPosition = 'Top';
 		else if( dockDom.classList.contains( 'Left' ) )
@@ -613,22 +661,22 @@ function GetViewDisplayMargins( div )
 		switch( dockPosition )
 		{
 			case 'Top':
-				margins.top += dockDom.offsetHeight;
+				margins.top += parseInt( dockDom.style.height );
 				break;
 			case 'Left':
-				margins.left += dockDom.offsetWidth;
+				margins.left += parseInt( dockDom.style.width );
 				break;
 			case 'Right':
-				margins.right += dockDom.offsetWidth;
+				margins.right += parseInt( dockDom.style.width );
 				break;
 			case 'Bottom':
-				margins.bottom += dockDom.offsetHeight;
+				margins.bottom += parseInt( dockDom.style.height );
 				break;
 		}
 	}
 	
 	if( dockPosition != 'Bottom' && ge( 'Tray' ) && ge( 'Taskbar' ).offsetHeight )
-		margins.bottom += ge( 'Tray' ).offsetHeight;
+		margins.bottom += parseInt( ge( 'Tray' ).style.height );
 	
 	let inf = GetThemeInfo( 'ScreenContentMargins' );
 	if( inf && inf.top )
@@ -989,6 +1037,13 @@ function _ActivateWindowOnly( div )
 			
 			m.classList.add( 'Active' );
 			m.viewContainer.classList.add( 'Active' );
+			
+			// Set active window
+			if( m.windowObject.getFlag( 'windowActive' ) )
+			{
+				m.style.backgroundColor = m.windowObject.getFlag( 'windowActive' );
+				m.titleDiv.style.backgroundColor = m.style.backgroundColor;
+			}
 
 			let app = _getAppByAppId( div.applicationId );
 
@@ -1070,6 +1125,13 @@ function _ActivateWindowOnly( div )
 var _activationTarget = null;
 function _ActivateWindow( div, nopoll, e )
 {
+	// Check window color
+	if( div.windowObject.getFlag( 'windowActive' ) )
+	{
+		div.style.backgroundColor = div.windowObject.getFlag( 'windowActive' );
+		div.titleDiv.style.backgroundColor = div.style.backgroundColor;
+	}
+	
 	if( Workspace.contextMenuShowing && Workspace.contextMenuShowing.shown )
 	{
 		return;
@@ -1159,6 +1221,14 @@ function _ActivateWindow( div, nopoll, e )
 		return;
 	}
 	
+	// Reactivate all iframes
+	let fr = div.windowObject.content.getElementsByTagName( 'iframe' );
+	for( let a = 0; a < fr.length; a++ )
+	{
+		if( fr[ a ].oldSandbox && typeof( fr[ a ].oldSandbox ) == 'string' )
+			fr[ a ].setAttribute( 'sandbox', fr[ a ].oldSandbox );
+	}
+	
 	// Reserve this div for activation
 	_activationTarget = div;
 	
@@ -1174,7 +1244,7 @@ function _ActivateWindow( div, nopoll, e )
 			}
 			else
 			{
-				if( typeof friendApp == 'undefined' ) fr[ a ].setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
+				if( typeof friendApp == 'undefined' ) putSandboxFlags( fr[ a ], getSandboxFlags( div.windowObject, DEFAULT_SANDBOX_ATTRIBUTES ) );
 			}
 		}
 	}
@@ -1390,6 +1460,13 @@ function _DeactivateWindow( m, skipCleanUp )
 		m.classList.remove( 'Active' );
 		m.viewContainer.classList.remove( 'Active' );
 		
+		// Check inactive window color
+		if( m.windowObject.getFlag( 'windowInactive' ) )
+		{
+			m.style.backgroundColor = m.windowObject.getFlag( 'windowInactive' );
+			m.titleDiv.style.backgroundColor = m.style.backgroundColor;
+		}
+		
 		CheckMaximizedView();
 		
 		if( m.windowObject && m.notifyActivated )
@@ -1413,7 +1490,7 @@ function _DeactivateWindow( m, skipCleanUp )
 			
 			// Deactivate all iframes
 			let fr = m.windowObject.content.getElementsByTagName( 'iframe' );
-			for( var a = 0; a < fr.length; a++ )
+			for( let a = 0; a < fr.length; a++ )
 			{
 				fr[ a ].oldSandbox = fr[ a ].getAttribute( 'sandbox' );
 				fr[ a ].setAttribute( 'sandbox', 'allow-scripts' );
@@ -1784,7 +1861,7 @@ function CloseView( win, delayed )
 
 		// Clear view that is closed from view history
 		let out = [];
-		for( var a  = 0; a < Friend.GUI.view.viewHistory.length; a++ )
+		for( let a = 0; a < Friend.GUI.view.viewHistory.length; a++ )
 		{
 			if( Friend.GUI.view.viewHistory[a] != win )
 				out.push( Friend.GUI.view.viewHistory[a] );
@@ -1825,7 +1902,7 @@ function CloseView( win, delayed )
 			{
 				if( app.mainView == div.windowObject )
 				{
-					for( var a in app.windows )
+					for( let a in app.windows )
 					{
 						if( app.windows[ a ] != div.windowObject )
 						{
@@ -1885,7 +1962,7 @@ function CloseView( win, delayed )
 				// Only activate last view in the same app
 				if( appId )
 				{
-					for( var a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
+					for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 					{
 						if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
 						{
@@ -1904,7 +1981,7 @@ function CloseView( win, delayed )
 				}
 				else
 				{
-					for( var a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
+					for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 					{
 						if( Friend.GUI.view.viewHistory[ a ].windowObject.workspace == globalConfig.workspaceCurrent )
 						{
@@ -1928,7 +2005,7 @@ function CloseView( win, delayed )
 		{
 			// Clean up ids
 			let o = [];
-			for( var b in movableWindows )
+			for( let b in movableWindows )
 			{
 				if( movableWindows[b] != div && movableWindows[b].parentNode )
 				{
@@ -2528,6 +2605,17 @@ var View = function( args )
 					Friend.previousWindowHover = Friend.currentWindowHover;
 				Friend.currentWindowHover = div;
 			
+				if( !div.classList.contains( 'Active' ) )
+				{
+					// Reactivate all iframes
+					let fr = div.windowObject.content.getElementsByTagName( 'iframe' );
+					for( let a = 0; a < fr.length; a++ )
+					{
+						if( fr[ a ].oldSandbox && typeof( fr[ a ].oldSandbox ) == 'string' )
+							fr[ a ].setAttribute( 'sandbox', fr[ a ].oldSandbox );
+					}
+				}
+			
 				// Focus on desktop if we're not over a window.
 				if( Friend.previousWindowHover && Friend.previousWindowHover != div )
 				{
@@ -2544,6 +2632,16 @@ var View = function( args )
 			} );
 			div.addEventListener( 'mouseout', function()
 			{
+				if( !div.classList.contains( 'Active' ) )
+				{
+					// Reactivate all iframes
+					let fr = div.windowObject.content.getElementsByTagName( 'iframe' );
+					for( let a = 0; a < fr.length; a++ )
+					{
+						fr[ a ].setAttribute( 'sandbox', 'allow-scripts' );
+					}
+				}
+				
 				// Keep track of the previous
 				if( Friend.currentWindowHover )
 					Friend.previousWindowHover = Friend.currentWindowHover;
@@ -3327,7 +3425,11 @@ var View = function( args )
 					wo.close();
 				}
 			}
-			executeClose();
+			// Only if we can!
+			if( div.windowObject.close() === true )
+			{
+				executeClose();
+			}
 		}
 
 		// Add all
@@ -3960,15 +4062,15 @@ var View = function( args )
 		if( window.friend && Friend.currentWindowHover )
 			Friend.currentWindowHover = false;
 		
+		// Reparse! We may have forgotten some things
+		self.parseFlags( flags );
+		
 		// Only activate if needed
 		if( !flags.minimized && !flags.openSilent )
 		{
 			_ActivateWindow( div );
 			_WindowToFront( div );
 		}
-		
-		// Reparse! We may have forgotten some things
-		self.parseFlags( flags );
 		
 		// Move workspace to designated position	
 		if( !flags.screen || flags.screen == Workspace.screen )
@@ -4101,6 +4203,7 @@ var View = function( args )
 		ifr.authId = self.authId;
 		ifr.applicationName = self.applicationName;
 		ifr.applicationDisplayName = self.applicationDisplayName;
+		putSandboxFlags( ifr, getSandboxFlags( this, DEFAULT_SANDBOX_ATTRIBUTES ) );
 		ifr.view = this._window;
 		ifr.className = 'Content Loading';
 		
@@ -4235,7 +4338,7 @@ var View = function( args )
 		iframe.authId = self.authId;
 		iframe.applicationName = self.applicationName;
 		iframe.applicationDisplayName = self.applicationDisplayName;
-		if( typeof friendApp == 'undefined' ) iframe.sandbox = DEFAULT_SANDBOX_ATTRIBUTES; // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
+		if( typeof friendApp == 'undefined' ) putSandboxFlags( iframe, getSandboxFlags( this, DEFAULT_SANDBOX_ATTRIBUTES ) ); // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
 		iframe.referrerPolicy = 'origin';
 
 		self._window.applicationId = conf.applicationId; // needed for View.close to work
@@ -4286,6 +4389,7 @@ var View = function( args )
 		ifr.applicationId = self.applicationId;
 		ifr.applicationName = self.applicationName;
 		ifr.applicationDisplayName = self.applicationDisplayName;
+		putSandboxFlags( ifr, getSandboxFlags( this, DEFAULT_SANDBOX_ATTRIBUTES ) );
 		ifr.authId = self.authId;
 		ifr.onload = function()
 		{
@@ -4404,6 +4508,7 @@ var View = function( args )
 		ifr.applicationName = self.applicationName;
 		ifr.applicationDisplayName = self.applicationDisplayName;
 		ifr.authId = self.authId;
+		putSandboxFlags( ifr, getSandboxFlags( this, DEFAULT_SANDBOX_ATTRIBUTES ) );
 		
 		let conf = this.flags || {};
 		if( this.flags && this.flags.allowScrolling )
@@ -4457,7 +4562,7 @@ var View = function( args )
 		friendU = Trim( friendU );
 		
 		if( typeof friendApp == 'undefined'  && ( friendU.length || friendU != targetU || !targetU ) )
-			ifr.sandbox = DEFAULT_SANDBOX_ATTRIBUTES;
+			putSandboxFlags( ifr, getSandboxFlags( this, DEFAULT_SANDBOX_ATTRIBUTES ) );
 
 		// Allow sandbox flags
 		let sbx = ifr.getAttribute( 'sandbox' ) ? ifr.getAttribute( 'sandbox' ) : '';
@@ -4473,7 +4578,7 @@ var View = function( args )
 				}
 			}
 			if( !found ) sbx.push( 'allow-popups' );
-			if( typeof friendApp == 'undefined' )  ifr.sandbox = sbx.join( ' ' );
+			if( typeof friendApp == 'undefined' )  ifr.setAttribute( 'sandbox', sbx.join( ' ' ) );
 		}
 		
 		// Special insecure mode (use with caution!)
@@ -4795,7 +4900,7 @@ var View = function( args )
 				if( this.onClose ) this.onClose();
 				if( this.eventSystemClose ) // <- system call
 				{
-					for( var a = 0; a < this.eventSystemClose.length; a++ )
+					for( let a = 0; a < this.eventSystemClose.length; a++ )
 					{
 						this.eventSystemClose[a]();
 					}
@@ -4829,17 +4934,19 @@ var View = function( args )
 					viewId: self.viewId
 				};
 				app.sendMessage( msg );
+				return;
 			}
 		}
 		CloseView( this._window );
 		if( this.onClose ) this.onClose();
 		if( this.eventSystemClose ) // <- system call
 		{
-			for( var a = 0; a < this.eventSystemClose.length; a++ )
+			for( let a = 0; a < this.eventSystemClose.length; a++ )
 			{
 				this.eventSystemClose[a]();
 			}
 		}
+		return true;
 	}
 	// Put a loading animation on window
 	this.loadingAnimation = function ()
@@ -5109,6 +5216,12 @@ var View = function( args )
 			// Allow for dropping files in a secure manner
 			case 'securefiledrop':
 				this.flags.securefiledrop = value;
+				break;
+			case 'windowInactive':
+			case 'windowActive':
+			    if( isMobile ) return false;
+				// Check window color
+				this.flags[ flag ] = value;
 				break;
 			// Takes all flags
 			default:
@@ -5943,8 +6056,10 @@ function _kresize( e, depth )
 	// Resize screens
 	if( Workspace && Workspace.screenList )
 	{
-		for( var a = 0; a < Workspace.screenList.length; a++ )
+		//console.log( 'Everything resized.' );
+		for( let a = 0; a < Workspace.screenList.length; a++ )
 		{
+			Workspace.screenList[a].resized = true;
 			Workspace.screenList[a].resize();
 		}
 		Workspace.initWorkspaces();
@@ -5957,7 +6072,7 @@ function _kresize( e, depth )
 	}
 	
 	// Resize windows
-	for( var a in movableWindows )
+	for( let a in movableWindows )
 	{
 		ConstrainWindow( movableWindows[a] );
 	}
@@ -6012,6 +6127,7 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 
 	v.onClose = function()
 	{
+		if( okcallback ) okcallback( false )
 	}
 
 	v.setSticky();
@@ -6054,8 +6170,9 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 				{
 					itm.onclick = function()
 					{
+						let k = okcallback; okcallback = null;
 						v.close();
-						okcallback( true );
+						k( true );
 					}
 					itm.focus();
 				}
@@ -6063,8 +6180,9 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 				{
 					itm.onclick = function()
 					{
+						let k = okcallback; okcallback = null;
 						v.close();
-						okcallback( false );
+						k( false );
 					}
 				}
 				else
@@ -6079,6 +6197,7 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 						{
 							okcallback( e );
 						}
+						okcallback = null;
 						v.close();
 					}
 				}
@@ -6179,6 +6298,24 @@ function Alert( title, string, cancelstring, callback )
 	}
 	f.load();
 	return v; // the window
+}
+
+// Get final sandbox scripts
+function getSandboxFlags( win, defaultFlags )
+{
+	let flags = win.getFlag( 'sandbox' );
+	if( flags === false && flags !== '' )
+	{
+		flags = defaultFlags;
+	}
+	if( flags === false ) flags = '';
+	return flags;
+}
+
+function putSandboxFlags( iframe, flags )
+{
+	if( flags != '' && flags ) iframe.setAttribute( 'sandbox', flags );
+	else iframe.removeAttribute( 'sandbox' );
 }
 
 // Initialize the events
