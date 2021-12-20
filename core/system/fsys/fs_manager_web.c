@@ -2003,7 +2003,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										}
 								
 										char tmp[ 128 ];
-										if( closeError != 0 )
+										if( closeError < 0 )
 										{
 											sprintf( tmp, "fail<!--separate-->{\"response\":\"0\",\"Written\":\"%lu\",\"Error\":\"%d\"}", written, closeError );
 										}
