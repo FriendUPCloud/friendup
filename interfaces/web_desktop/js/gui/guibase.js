@@ -4038,6 +4038,10 @@ function doReveal()
 						// Tell app we can show ourselves!
 						document.body.removeChild( i );
 						document.body.classList.add( 'Revealed' );
+						if( document.body.classList.contains( 'ThemeRefreshing' ) )
+						{
+						    Workspace.refreshTheme();
+						}
 						friendApp.reveal();
 					}
 					i.style.visibility = 'hidden';
@@ -4052,6 +4056,10 @@ function doReveal()
 			{
 				// Tell app we can show ourselves!
 				document.body.classList.add( 'Revealed' );
+				if( document.body.classList.contains( 'ThemeRefreshing' ) )
+				{
+				    Workspace.refreshTheme();
+				}
 				friendApp.reveal();
 			}
 		}
