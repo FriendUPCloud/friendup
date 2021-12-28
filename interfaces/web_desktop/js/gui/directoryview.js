@@ -801,46 +801,54 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	
 	// Add context menu
 	if( !winobj.oldContextMenuEvent ) winobj.oldContextMenuEvent = winobj.oncontextmenu;
-	winobj.addEventListener( 'contextmenu', function( e )
+	if( !isTouchDevice() )
 	{
-		let tr = e.target ? e.target : e.srcObject;
-		// Enable default behavior on the context menu instead
-		if( tr.classList && tr.classList.contains( 'DefaultContextMenu' ) )
+		winobj.addEventListener( 'contextmenu', function( e )
 		{
-			e.defaultBehavior = true;
-			return;
-		}
-		
-		cancelBubble( e );
-		
-		// Cancels previous stuff
-		winobj.touchstartCounter = false;
-		
-		Workspace.showContextMenu( false, e );
-		return;
-	} );
-	
-	winobj.addEventListener( 'touchstart', function( e )
-	{
-		winobj.touchstartCounter = setTimeout( function()
-		{
+			let tr = e.target ? e.target : e.srcObject;
+			// Enable default behavior on the context menu instead
+			if( tr.classList && tr.classList.contains( 'DefaultContextMenu' ) )
+			{
+				e.defaultBehavior = true;
+				return;
+			}
+			
+			cancelBubble( e );
+			
+			// Cancels previous stuff
+			winobj.touchstartCounter = false;
+			
 			Workspace.showContextMenu( false, e );
-			winobj.touchstartCounter = null;
-		}, 800 );
-	} );
-	
-	winobj.addEventListener( 'touchend', function( e )
+			return;
+		} );
+	}
+	else
 	{
-		clearTimeout( winobj.touchstartCounter );
-		winobj.touchstartCounter = null;
-	} );
+		winobj.addEventListener( 'touchstart', function( e )
+		{
+			winobj.touchstartCounter = setTimeout( function()
+			{
+				Workspace.showContextMenu( false, e );
+				winobj.touchstartCounter = null;
+			}, 800 );
+		} );
+		
+		winobj.addEventListener( 'touchend', function( e )
+		{
+			clearTimeout( winobj.touchstartCounter );
+			winobj.touchstartCounter = null;
+		} );
+	}
 
 	// On scrolling, don't do the menu!
 	winobj.addEventListener( 'scroll', function(e)
 	{
-		 window.fileMenuElement = false;
-		 window.clickElement = false;
-		 if( window.menuTimeout )
+		clearTimeout( winobj.touchstartCounter );
+		winobj.touchstartCounter = null;
+		
+		window.fileMenuElement = false;
+		window.clickElement = false;
+		if( window.menuTimeout )
 			clearTimeout( window.menuTimeout );
 	}, true );
 
