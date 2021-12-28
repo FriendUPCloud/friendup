@@ -1613,7 +1613,6 @@ function apiWrapper( event, force )
 							if( win && typeof( win.states[ msg.state ] ) != 'undefined' )
 							{
 								win.states[ msg.state ] = msg.value;
-								console.log( 'Window state: (' + msg.state + ') ' + msg.value );
 							}
 							break;
 						case 'doneloadingbody':

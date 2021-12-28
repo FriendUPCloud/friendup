@@ -1005,6 +1005,7 @@ function receiveEvent( event, queued )
 			let elems = document.getElementsByTagName( '*' );
 			for( let a = 0; a < elems.length; a++ )
 				elems[a].blur();
+			Notify( { title: 'Blur 2', text: 'blurrrr.' } );
 			break;
 		}
 		// Executing an event that is coming in
@@ -9112,11 +9113,13 @@ Friend.GUI.checkInputFocus = function( e )
 	if( focused && response == false )
 	{
 		focused.blur();
+		Notify( { title: 'Blur 1', text: 'blurrrr.' ± );
 	}
 	// Remain focus
 	else if( focused )
 	{
 		focused.focus();
+		Notify( { title: 'Focus 1', text: 'focc.' } );
 	}
 }
 

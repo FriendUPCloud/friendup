@@ -3717,7 +3717,7 @@ movableMouseDown = function ( e )
 		if( active ) anod = active.nodeName;
 		if( active && !( anod == 'TEXTAREA' || anod == 'INPUT' || active.getAttribute( 'contenteditable' ) ) )
 		{
-			console.log( 'Blurring!', anod );
+			Notify( { title: 'Blur 5', text: 'blurrrr.' } );
 			active.blur();
 		}
 	}
@@ -4208,7 +4208,7 @@ function FocusOnNothing()
 		}
 	}
 	
-	console.log( 'Again blurring' );
+	Notify( { title: 'Blur ', text: 'Again blurring' } );
 	
 	let eles = document.getElementsByTagName( '*' );
 	for( var a = 0; a < eles.length; a++ )

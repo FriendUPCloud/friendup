@@ -4227,6 +4227,7 @@ var View = function( args )
 				ifr.blur();
 				window.blur();
 				window.focus();
+				Notify( { title: 'Blur 3', text: 'blurrrr.' } );
 			}
 		}
 
