@@ -9109,9 +9109,9 @@ Friend.GUI.checkInputFocus = function( e )
 			value: response
 		} );
 	}
-	if( response == false )
+	if( focused && response == false )
 	{
-		document.activeElement.blur();
+		focused.blur();
 	}
 }
 

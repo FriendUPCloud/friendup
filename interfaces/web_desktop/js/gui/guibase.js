@@ -3715,7 +3715,7 @@ movableMouseDown = function ( e )
 		let active = document.activeElement;
 		let anod = '';
 		if( active ) anod = active.nodeName;
-		if( active && ( anod == 'TEXTAREA' || anod == 'INPUT' || active.getAttribute( 'contenteditable' ) ) )
+		if( active && !( anod == 'TEXTAREA' || anod == 'INPUT' || active.getAttribute( 'contenteditable' ) ) )
 		{
 			active.blur();
 		}
