@@ -9081,7 +9081,7 @@ if( Friend )
 // Check if Friend has focus on input field
 Friend.GUI.checkInputFocus = function( e )
 {
-	if( !( e.target && ( e.target.value || e.target.type || e.target.nodeName == 'TEXTAREA' ) ) && document.activeElement )
+	if( !( e.target && ( e.target.value || e.target.type || e.target.nodeName == 'TEXTAREA' || e.target.getAttribute( 'contenteditable' ) == true ) ) && document.activeElement )
 	{
 		document.activeElement.blur();
 	}
