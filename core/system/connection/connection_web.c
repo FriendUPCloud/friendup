@@ -327,7 +327,7 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 			
 					DEBUG("[admin/connadd] trying to setup connection to Friend Master Server: %s\n", address );
 			
-					Socket *newsock = SocketConnectHost( l, service->s_secured, address, service->s_port );
+					Socket *newsock = SocketConnectHost( l, service->s_secured, address, service->s_port, TRUE );
 					//if( newsock != NULL )
 					{
 						DEBUG("[connection/add] Connection to Master FriendNode created on port: %d\n", service->s_port);

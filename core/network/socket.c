@@ -51,7 +51,7 @@
 void SocketFree( Socket *sock );
 
 #define SOCKET_STATE_MAX_ACCEPTED_TIME_s 15 //socket has N seconds to send the first byte
-#define READ_TILL_END_BUFFER_SIZE 4096	//8192
+#define READ_TILL_END_BUFFER_SIZE 4096*8	//8192
 #define READ_TILL_END_SOCKET_TIMEOUT (10000)
 #define READ_PACKAGE_BUFFER_SIZE 128000
 
@@ -648,6 +648,7 @@ int SocketConnectSSL( Socket* sock, const char *host )
 		}
 	}
 
+	/*
 	cert = SSL_get_peer_certificate( sock->s_Ssl );
 	if (cert == NULL)
 	{
@@ -665,6 +666,7 @@ int SocketConnectSSL( Socket* sock, const char *host )
 		free( line );
 		X509_free( cert );
 	}
+	*/
 	// ---------------------------------------------------------- *
 	// extract various certificate information                    *
 	// -----------------------------------------------------------
@@ -687,10 +689,11 @@ int SocketConnectSSL( Socket* sock, const char *host )
  * @param ssl set to TRUE if you want to setup secured conne
  * @param host internet address
  * @param port internet port number
+ * @param blocked set connection to blocked
  * @return pointer to new Socket object or NULL when error appear
  */
 
-Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port )
+Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port, FBOOL blocked )
 {
 	Socket *sock = NULL;
 	SystemBase *lsb = (SystemBase *)SLIB;
@@ -778,11 +781,11 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 
 		SSL_set_fd( sock->s_Ssl, sock->fd );
 
-		X509                *cert = NULL;
-		X509_NAME       *certname = NULL;
+		//X509                *cert = NULL;
+		//X509_NAME       *certname = NULL;
 
-		FBOOL blocked = sock->s_Blocked;
-		SocketSetBlocking( sock, FALSE );
+		//FBOOL blocked = sock->s_Blocked;
+		SocketSetBlocking( sock, blocked );
 		int n=0;
 
 		//n = SSL_connect( sock->s_Ssl );
@@ -859,9 +862,11 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 				break;
 			}
 		}
+		
+		DEBUG("[SocketConnectHost] SSLConnect SSL before block\n");
 
-		SocketSetBlocking( sock, blocked );
-
+		//SocketSetBlocking( sock, blocked );
+		/*
 		cert = SSL_get_peer_certificate( sock->s_Ssl );
 		if (cert == NULL)
 		{
@@ -879,6 +884,7 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 			free( line );
 			X509_free( cert );
 		}
+		*/
 		// ---------------------------------------------------------- *
 		// extract various certificate information                    *
 		// -----------------------------------------------------------
@@ -2313,8 +2319,12 @@ BufString *SocketReadTillEndSSL( Socket* sock, unsigned int pass __attribute__((
 		
 		BufString *bs = BufStringNew();
 		
+		DEBUG("[SocketReadTillEndSSL] Before quite != TRUE\n");
+		
 		while( quit != TRUE )
 		{
+			DEBUG("[SocketReadTillEndSSL] poll?\n");
+			
 			int ret = poll( &fds, 1, READ_TILL_END_SOCKET_TIMEOUT );
 			
 			DEBUG("[SocketReadTillEndSSL] Before select, ret: %d\n", ret );

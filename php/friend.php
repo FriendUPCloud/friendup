@@ -22,6 +22,8 @@ flush();
 
 set_time_limit( 10 ); // Replace this one later in the script if you need to!
 
+define( 'FRIEND_VERSION', 'v1.2.8' );
+
 // Separator aware json encode/decode
 function friend_json_encode( $object )
 {
@@ -187,6 +189,21 @@ function AuthenticateApplication( $appName, $UserID, $searchGroups = false )
 		return 'ok<!--separate-->' . json_encode( $conf );
 	}
 	return 'fail<!--separate-->{"Error":"Can not understand query."}';
+}
+
+// Get the default theme, based on override
+function getDefaultTheme()
+{
+	global $configfilesettings;
+	if( isset( $configfilesettings[ 'FriendCore' ] ) && isset( $configfilesettings[ 'FriendCore' ][ 'friendTheme' ] ) )
+	{
+		$th = $configfilesettings[ 'FriendCore' ][ 'friendTheme' ];
+		if( file_exists( 'resources/themes/' . $th ) )
+		{
+			return $th;
+		}
+	}
+	return 'friendup12';
 }
 
 // Find apps and search path..

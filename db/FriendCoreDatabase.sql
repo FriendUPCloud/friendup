@@ -136,6 +136,7 @@ CREATE TABLE IF NOT EXISTS `Filesystem` (
   `Mounted` tinyint(4) NOT NULL DEFAULT '0',
   `Authorized` tinyint(4) NOT NULL default '0',
   `Owner` bigint(20) DEFAULT NULL,
+  `AuthID` varchar(255) NOT NULL,
   PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
@@ -515,6 +516,12 @@ CREATE TABLE `FQueuedEvent` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 ALTER TABLE `FUser` ADD COLUMN `PublicKey` text AFTER `Password`;
+
+ALTER TABLE `FUser` ADD COLUMN `LoginTime` bigint(32) NOT NULL;
+
+ALTER TABLE `FUser` ADD COLUMN `MaxStoredBytes` bigint(32) NOT NULL DEFAULT '0';
+
+ALTER TABLE `FUser` ADD COLUMN `MaxReadedBytes` bigint(32) NOT NULL DEFAULT '0';
 
 INSERT INTO `FUserGroup` (`UserID`,`Name`,`Type`) VALUES (0,'API','Level');
 

@@ -52,15 +52,31 @@ Friend.User = {
 		}
 		
 		if( username && password )
-		{
+		{	
 			Workspace.encryption.setKeys( username, password );
-			this.SendLoginCall( {
-				username: username,
-				password: password,
-				remember: remember,
-				hashedPassword: flags.hashedPassword,
-				inviteHash: flags.inviteHash
-			}, callback );
+			
+			if( flags && flags.hashedPassword )
+			{
+				//console.log( 'Sending login with hashed password.' );
+				this.SendLoginCall( {
+					username: username,
+					password: password,
+					remember: remember,
+					hashedPassword: flags.hashedPassword,
+					inviteHash: flags.inviteHash
+				}, callback );
+			}
+			else
+			{
+				//console.log( 'Sending login with unhashed password' );
+				this.SendLoginCall( {
+					username: username,
+					password: password,
+					remember: remember,
+					hashedPassword: false,
+					inviteHash: flags && flags.inviteHash ? flags.inviteHash : false
+				}, callback );
+			}
 		}
 		// Relogin - as we do have an unflushed login
 		else if( Workspace.sessionId )
@@ -113,7 +129,7 @@ Friend.User = {
     },
     // Send the actual login call
     SendLoginCall: function( info, callback )
-    {
+    {	
     	// Already logging in
     	this.State = 'login';
     	
@@ -131,20 +147,35 @@ Friend.User = {
 		if( info.username && info.password )
 		{
 			Workspace.sessionId = '';
+			
+			if( window.Workspace && !Workspace.originalLogin )
+			{
+				Workspace.originalLogin = info.password;
+			}
+			
+			// TODO: Fix hash detector by making sure hashing doesn't occur without hashedPassword flag set.
+			let hashDetector = info.password.length > 20 && info.password.substr( 0, 6 ) == 'HASHED' ? true : false;
+			if( !info.hashedPassword && hashDetector )
+				info.hashedPassword = true;
+			
+			let hashed = info.hashedPassword ? info.password : ( 'HASHED' + Sha256.hash( info.password ) );
+			
 			m.addVar( 'username', info.username );
-			m.addVar( 'password', info.hashedPassword ? info.password : ( 'HASHED' + Sha256.hash( info.password ) ) );
+			m.addVar( 'password', hashed );
 			
 			try
 			{
 				let enc = parent.Workspace.encryption;
+				//console.log( 'Encrypting password into Workspace.loginPassword: ' + info.password );
 				parent.Workspace.loginPassword = enc.encrypt( info.password, enc.getKeys().publickey );
-				parent.Workspace.loginHashed = info.hashedPassword;
+				parent.Workspace.loginHashed = hashed;
 			}
 			catch( e )
 			{
 				let enc = Workspace.encryption;
+				//console.log( 'Encrypting(2) password into Workspace.loginPassword: ' + info.password );
 				Workspace.loginPassword = enc.encrypt( info.password, enc.getKeys().publickey );
-				Workspace.loginHashed = info.hashedPassword;
+				Workspace.loginHashed = hashed;
 			}
 		}
 		else if( info.sessionid )
@@ -240,10 +271,15 @@ Friend.User = {
     	
     	if( Workspace.loginUsername && Workspace.loginPassword )
     	{
+    		//console.log( 'Trying to log in with: ' + Workspace.loginUsername + ' AND ' + Workspace.loginPassword );
+    		
     		info.username = Workspace.loginUsername;
     		let enc = Workspace.encryption;
     		info.password = enc.decrypt( Workspace.loginPassword, enc.getKeys().privatekey );
-    		info.hashedPassword = Workspace.loginHashed;
+    		
+    		//console.log( 'Unhashed, decrypted password (Workspace.loginPassword): ' + info.password );
+    		
+    		info.hashedPassword = false;
     	}
     	else if( Workspace.sessionId )
     	{
@@ -280,12 +316,16 @@ Friend.User = {
 		return 0;
     },
     // Log out
-    Logout: function()
+    Logout: function( cbk )
     {
-        // FIXME: Remove this - it is not used anymore
+    	if( !cbk ) cbk = false;
+    	
+    	// FIXME: Remove this - it is not used anymore
 		window.localStorage.removeItem( 'WorkspaceUsername' );
 		window.localStorage.removeItem( 'WorkspacePassword' );
 		window.localStorage.removeItem( 'WorkspaceSessionID' );
+		Workspace.loginUsername = null;
+	    Workspace.loginPassword = null;
 
 		let keys = parent.ApplicationStorage.load( { applicationName : 'Workspace' } );
 
@@ -303,18 +343,43 @@ Friend.User = {
 			if( dologt != null )
 				clearTimeout( dologt );
 			
-			// Do external logout and then our internal one.
-			if( Workspace.logoutURL )
+			if( !cbk )
 			{
-				Workspace.externalLogout();
-				return;
+				// Do external logout and then our internal one.
+				if( Workspace.logoutURL )
+				{
+					Workspace.externalLogout();
+					return;
+				}
 			}
 
 			let m = new cAjax();
 			m.open( 'get', '/system.library/user/logout/?sessionid=' + Workspace.sessionId, true );
 			m.forceHTTP = true;
 			m.send();
-			setTimeout( doLogout, 500 );
+			
+			if( !cbk )
+			{
+				setTimeout( doLogout, 500 );
+			}
+			else
+			{
+				if( Workspace.conn )
+				{
+					try
+					{
+						Workspace.conn.ws.close();
+					}
+					catch( e )
+					{
+						console.log( 'Could not close conn.' );
+					}
+					delete Workspace.conn;
+					Workspace.conn = null;
+				}
+				Workspace.sessionId = '';
+				cbk();
+			}
 		} );
 		// Could be there will be no connection..
 		function doLogout()
@@ -324,10 +389,13 @@ Friend.User = {
 				friendApp.exit();
 				return;
 			}
-			Workspace.sessionId = ''; 
+			Workspace.sessionId = '';
 			document.location.href = window.location.href.split( '?' )[0].split( '#' )[0]; //document.location.reload();
 		}
-		dologt = setTimeout( doLogout, 750 );
+		if( !cbk )
+		{
+			dologt = setTimeout( doLogout, 750 );
+		}
 		return true;
     },
     // Remember keys

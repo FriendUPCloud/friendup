@@ -1254,6 +1254,9 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, char *
 			char **row;
 			int i = 0;
 			FBOOL goodLogin = FALSE;
+			int wasSamePasswordTimes = 0;
+			
+			char *lastPassword = StringDuplicate( password );
 			
 			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 			{
@@ -1271,22 +1274,50 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, char *
 					break;
 				}
 				
-				DEBUG("row2: %s\n", row[ 2 ] );
-				if( row[ 2 ] != NULL && ( strcmp( row[ 2 ], password) == 0 ) )
+				// we do this check only to last password
+				DEBUG("[UMGetLoginPossibilityLastLogins] row2: %s  -  %s\n", row[ 2 ], password );
+				if( row[ 2 ] != NULL )
+				{
+					if( strcmp( lastPassword, row[ 2 ] ) == 0 )
+					{
+						DEBUG("[UMGetLoginPossibilityLastLogins] same password\n");
+						wasSamePasswordTimes++;
+					}
+					
+					if( lastPassword != NULL )
+					{
+						FFree( lastPassword );
+					}
+					lastPassword = StringDuplicate( row[ 2 ] );
+				}
+				/*
+				if( i == 0 && row[ 2 ] != NULL && ( strcmp( row[ 2 ], password) == 0 ) )
 				{
 					goodLogin = TRUE;
 					DEBUG("[UMGetLoginPossibilityLastLogins] previous and current password are same\n" );
 					break;
 				}
+				*/
 				
 				i++;
 				if( i >= numberOfFail )
 				{
+					if( wasSamePasswordTimes >= (numberOfFail-1) )
+					{
+						goodLogin = TRUE;
+					}
 					DEBUG("[UMGetLoginPossibilityLastLogins] number of fail login exceed\n" );
 					break;
 				}
 			}
 			sqlLib->FreeResult( sqlLib, result );
+			
+			if( lastPassword != NULL )
+			{
+				FFree( lastPassword );
+			}
+			
+			DEBUG("[UMGetLoginPossibilityLastLogins] wasSamePasswordTimes: %d\n", wasSamePasswordTimes );
 			
 			if( i < numberOfFail )
 			{
@@ -2179,68 +2210,6 @@ int UMRemoveOldSessions( void *lsb )
 	USER_MANAGER_RELEASE( um );
 	
 	Log( FLOG_INFO, "[UMRemoveOldSessions] end\n" );
-	
-	/*
-	
-	// remove sessions from memory
-	UserSessionManager *smgr = sb->sl_USM;
-	// int nr = 0;
-	// we are conting maximum number of sessions
-
-	DEBUG("[USMRemoveOldSessions] CHECK10\n");
-
-	SESSION_MANAGER_USE( smgr );
-	
-	UserSession *actSession = smgr->usm_Sessions;
-	UserSession *remSession = actSession;
-	UserSession *newRoot = NULL;
-	
-	while( actSession != NULL )
-	{
-		FBOOL canDelete = TRUE;
-		remSession = actSession;
-		
-		if( sb->sl_Sentinel != NULL )
-		{
-			if( remSession->us_User == sb->sl_Sentinel->s_User && strcmp( remSession->us_DeviceIdentity, "remote" ) == 0 )
-			{
-				DEBUG("Sentinel REMOTE session I cannot remove it\n");
-				canDelete = FALSE;
-			}
-		}
-		
-		if( actSession == (UserSession *)actSession->node.mln_Succ )
-		{
-			DEBUG( "DOUBLE ACTSESSION\n" );
-			break;
-		}
-		
-		actSession = (UserSession *)actSession->node.mln_Succ;
-		
-		// we delete session
-		if( canDelete == TRUE && ( ( acttime -  remSession->us_LastActionTime ) > sb->sl_RemoveSessionsAfterTime ) )
-		{
-			UserRemoveSession( remSession->us_User, remSession );	// we want to remove it from user first
-			USMSessionsDeleteDB( smgr, remSession->us_SessionID );
-			UserSessionDelete( remSession );
-		}
-		else // or create new root of working sessions
-		{
-			remSession->node.mln_Succ = (MinNode *)newRoot;
-			newRoot = remSession;
-		}
-	}
-	
-	smgr->usm_Sessions = newRoot;
-
-	SESSION_MANAGER_RELEASE( smgr );
-	
-	//
-	// now remove unused application sessions
-	//
-	
-	ApplicationManagerRemoveDetachedApplicationSession( sb->sl_ApplicationManager );
-	*/
 	
 	return 0;
 }

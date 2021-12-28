@@ -1713,6 +1713,22 @@ void *ParseAndCall( WSThreadData *wstd )
 			DEBUG( "[WS] Decreased. %d\n", orig->us_InUseCounter );
 			FRIEND_MUTEX_UNLOCK( &(orig->us_Mutex) );
 		}
+		
+		if( orig->us_Status == USER_SESSION_STATUS_TO_REMOVE )
+		{
+			char *locName = StringDuplicate( orig->us_SessionID );
+			UserSessionDelete( orig );
+
+			if( SLIB->sl_ActiveAuthModule != NULL )
+			{
+				SLIB->sl_ActiveAuthModule->Logout( SLIB->sl_ActiveAuthModule, NULL, locName );
+			}
+			
+			if( locName != NULL )
+			{
+				FFree( locName );
+			}
+		}
 	}
 	
 	if( wstd != NULL )

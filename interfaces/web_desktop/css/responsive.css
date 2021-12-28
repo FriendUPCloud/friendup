@@ -3,6 +3,17 @@ html, body
 	position: relative;
 }
 
+document.body #Screens
+{
+	transition: opacity 0.25s;
+	opacity: 0;
+}
+
+document.body.Revealed #Screens
+{
+	opacity: 1;
+}
+
 /* Preload images */
 body.Inside > img
 {
@@ -996,6 +1007,7 @@ html body[mobile=mobile] #DoorsScreen > .ScreenContent,
 html body[mobile=mobile]:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
 {
 	height: calc(100% - 80px) !important;
+	min-height: calc(100% - 80px) !important;
 }
 
 /* Subscreens */

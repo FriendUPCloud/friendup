@@ -25,6 +25,8 @@ In the Future, Friend OS will be to the cloud users what Linux is for machines.
 Getting started
 ===============
 
+Friend OS can be tested on https://friendsky.cloud - signup is free.
+
 Please follow this guide to install Friend OS:
 
 ```
