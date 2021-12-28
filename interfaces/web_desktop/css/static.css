@@ -71,3 +71,12 @@ body.ThemeRefreshing:before
 	z-index: 2147483646;
 	opacity: 1;
 }
+
+/* Small screens */
+
+@media (max-width: 1280px)
+{
+	body{
+		zoom: 0.8;
+	}
+}
