@@ -1000,6 +1000,7 @@ function receiveEvent( event, queued )
 			}, 250 );
 			break;
 		// Blur all elements!
+		// TODO: Did not work
 		case 'blur':
 		{
 			/*let elems = document.getElementsByTagName( '*' );
@@ -9113,13 +9114,11 @@ Friend.GUI.checkInputFocus = function( e )
 	if( focused && response == false )
 	{
 		focused.blur();
-		Notify( { title: 'Blur 1', text: 'blurrrr.' } );
 	}
 	// Remain focus
 	else if( focused )
 	{
 		focused.focus();
-		Notify( { title: 'Focus 1', text: 'focc.' } );
 	}
 }
 
