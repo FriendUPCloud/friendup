@@ -9081,11 +9081,6 @@ if( Friend )
 // Check if Friend has focus on input field
 Friend.GUI.checkInputFocus = function( e )
 {
-	if( !( e.target && ( e.target.value || e.target.type || e.target.nodeName == 'TEXTAREA' || e.target.getAttribute( 'contenteditable' ) == true ) ) && document.activeElement )
-	{
-		document.activeElement.blur();
-	}
-
 	let focused = document.activeElement;
 	if( !focused || focused == document.body )
 	{
@@ -9113,6 +9108,10 @@ Friend.GUI.checkInputFocus = function( e )
 			state: 'input-focus',
 			value: response
 		} );
+	}
+	if( response == false )
+	{
+		document.activeElement.blur();
 	}
 }
 
