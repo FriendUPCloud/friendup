@@ -1002,6 +1002,7 @@ function receiveEvent( event, queued )
 		// Blur all elements!
 		case 'blur':
 		{
+			console.log( 'Blurring all elements' );
 			let elems = document.getElementsByTagName( '*' );
 			for( let a = 0; a < elems.length; a++ )
 				elems[a].blur();
@@ -9111,6 +9112,7 @@ Friend.GUI.checkInputFocus = function( e )
 	}
 	if( focused && response == false )
 	{
+		console.log( 'Sending blur!' );
 		focused.blur();
 	}
 }

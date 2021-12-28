@@ -3717,6 +3717,7 @@ movableMouseDown = function ( e )
 		if( active ) anod = active.nodeName;
 		if( active && !( anod == 'TEXTAREA' || anod == 'INPUT' || active.getAttribute( 'contenteditable' ) ) )
 		{
+			console.log( 'Blurring!', anod );
 			active.blur();
 		}
 	}
