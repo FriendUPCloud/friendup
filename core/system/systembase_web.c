@@ -2436,6 +2436,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							User *u = UMGetUserByName( l->sl_UM, usrname );
 							if( u != NULL )
 							{
+								DEBUG("\n\n\n\n\nI will block user: %s\n\n\n\n", u->u_Name );
+								
 								u->u_Status = USER_STATUS_BLOCKED;
 							}
 						}
@@ -2555,12 +2557,53 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	
 	DEBUG( "[SysWebRequest] Systembase web request completed: %dms\n", GetUnixTime() - requestStart );
 	
+	// Sessions which are released by WS code should not be released here (mutex lock)
+	if( loggedSession != NULL && (*request)->http_RequestSource != HTTP_SOURCE_WS )
+	{
+		if( loggedSession->us_Status == USER_SESSION_STATUS_TO_REMOVE )
+		{
+			char *locName = StringDuplicate( loggedSession->us_SessionID );
+			UserSessionDelete( loggedSession );
+
+			if( SLIB->sl_ActiveAuthModule != NULL )
+			{
+				SLIB->sl_ActiveAuthModule->Logout( SLIB->sl_ActiveAuthModule, NULL, locName );
+			}
+                       
+			if( locName != NULL )
+			{
+				FFree( locName );
+			}
+		}
+	}
+
+	
 	FFree( sessionid );
 	return response;
 	
 error:
 	
 	Log( FLOG_INFO, "\t\t\tWEB REQUEST FUNCTION func EERROR END: %s\n", urlpath[ 0 ] );
+	
+	// Sessions which are released by WS code should not be released here (mutex lock)
+	if( loggedSession != NULL && (*request)->http_RequestSource != HTTP_SOURCE_WS )
+	{
+		if( loggedSession->us_Status == USER_SESSION_STATUS_TO_REMOVE )
+		{
+			char *locName = StringDuplicate( loggedSession->us_SessionID );
+			UserSessionDelete( loggedSession );
+
+			if( SLIB->sl_ActiveAuthModule != NULL )
+			{
+				SLIB->sl_ActiveAuthModule->Logout( SLIB->sl_ActiveAuthModule, NULL, locName );
+			}
+                       
+			if( locName != NULL )
+			{
+				FFree( locName );
+			}
+		}
+	}
 	
 	FFree( sessionid );
 	return response;

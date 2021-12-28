@@ -316,7 +316,9 @@ ListString *PHPCall( const char *command )
 	
 	ListStringJoin( ls );		//we join all string into one buffer
 
+	//DEBUG( "[fsysphp] Finished PHP call...(%lu length, %s)-\n", ls->ls_Size, ls->ls_Data );
 	DEBUG( "[fsysphp] Finished PHP call...(%lu length, %s)-\n", ls->ls_Size, ls->ls_Data );
+	
 	return ls;
 }
 
@@ -833,6 +835,8 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 	
 	char *comm = NULL;
 	
+	DEBUG("[PHPFsys/FileOpen] start\n");
+	
 	if( strchr( path, ':' ) != NULL )
 	{
 		int l = strlen( path );
@@ -840,8 +844,11 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		{
 			memcpy( comm, path, l );
 		}
-		else return NULL;
-		
+		else
+		{
+			DEBUG("[PHPFsys/FileOpen] Cannot allocate memory when ';' is in path\n");
+			return NULL;
+		}
 	}
 	else
 	{
@@ -849,7 +856,11 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		{
 			sprintf( comm, "%s:%s", s->f_Name, path );
 		}
-		else return NULL;
+		else
+		{
+			DEBUG("[PHPFsys/FileOpen] Cannot allocate memory when ';' is not in path\n");
+			return NULL;
+		}
 	}
 	
 	char *encodedcomm = MarkAndBase64EncodeString( comm );
@@ -884,6 +895,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 	// Memory problem, abort!
 	else
 	{
+		DEBUG("[PHPFsys/FileOpen] Cannot allocate memory for command\n");
 		FFree( encodedcomm );
 		return NULL;
 	}
@@ -902,7 +914,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 			int err = newpopen( command, pofd );
 			if( err != 0 )
 			{
-				FERROR("[PHPCallDisk] cannot open pipe: %s\n", strerror( errno ) );
+				FERROR("[PHPFsys/FileOpen] cannot open pipe: %s\n", strerror( errno ) );
 				return NULL;
 			}
 	
@@ -941,7 +953,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 					//locfil->f_SessionID = StringDup( s->f_SessionID );
 					locfil->f_SessionIDPTR = s->f_SessionIDPTR;
 		
-					DEBUG("[fsysphp] FileOpened, memory allocated for reading.\n" );
+					DEBUG("[PHPFsys/FileOpen] FileOpened, memory allocated for reading.\n" );
 					FFree( command );
 					FFree( encodedcomm );
 					return locfil;
@@ -962,7 +974,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 			
 				FFree( command );
 				FFree( encodedcomm );
-				FERROR("[PHPFsys] cannot alloc memory\n");
+				FERROR("[PHPFsys/FileOpen] cannot alloc memory\n");
 				return NULL;
 			}
 		}	// pofd
@@ -984,15 +996,15 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		// when pointer is used there is no way that something will write to same file
 		snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/Friendup/%s_read_%f%p%d", s->f_SessionIDPTR, timeInMill, sd, rand()%999 );
 		
-		DEBUG( "[fsysphp] Success in locking %s\n", tmpfilename );
+		DEBUG( "[PHPFsys/FileOpen] Success in locking %s\n", tmpfilename );
 
 		// Open the tmp file and get a file lock!
 
 		// Get the data
 		//char command[ 1024 ];	// maybe we should count that...
 
-		DEBUG( "[fsysphp] Getting data for tempfile, seen below as command:\n" );
-		DEBUG( "[fsysphp] %s\n", command );
+		DEBUG( "[PHPFsys/FileOpen] Getting data for tempfile, seen below as command:\n" );
+		DEBUG( "[PHPFsys/FileOpen] %s\n", command );
 		
 		BufStringDisk *result = PHPCallDisk( command );
 
@@ -1001,11 +1013,11 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		{
 			if( result->bsd_Buffer && result->bsd_Size> 0 )
 			{
-				Log( FLOG_DEBUG, "[FileOpen] response rb: '%.*s'\n", 100, result->bsd_Buffer );
+				Log( FLOG_DEBUG, "[PHPFsys/FileOpen] response rb: '%.*s'\n", 100, result->bsd_Buffer );
 				
 				if( strncmp( result->bsd_Buffer, "fail", 4 ) == 0 )
 				{
-					FERROR( "[fsysphp] [FileOpen] Failed to get exclusive lock on lockfile. Fail returned.\n" );
+					FERROR( "[PHPFsys/FileOpen] Failed to get exclusive lock on lockfile. Fail returned.\n" );
 					FFree( command );
 					FFree( encodedcomm );
 					BufStringDiskDelete( result );
@@ -1068,7 +1080,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 							//locfil->f_SessionID = StringDup( s->f_SessionID );
 							locfil->f_SessionIDPTR = s->f_SessionIDPTR;
 		
-							DEBUG("[fsysphp] FileOpened, memory allocated for reading.\n" );
+							DEBUG("[PHPFsys/FileOpen] FileOpened, memory allocated for reading.\n" );
 							FFree( command );
 							FFree( encodedcomm );
 							return locfil;
@@ -1084,18 +1096,19 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 				}
 				else
 				{
-					FERROR("[fsysphp] Cannot open temporary file %s\n", tmpfilename );
+					FERROR("[PHPFsys/FileOpen] Cannot open temporary file %s\n", tmpfilename );
 				}
 			}
 			// Remove result with no data
 			else
 			{
+				DEBUG("[PHPFsys/FileOpen] no data inside\n");
 				BufStringDiskDelete( result );
 			}
 		}
 		else
 		{
-			FERROR("[fsysphp] Cannot create temporary file %s\n", tmpfilename );
+			FERROR("[PHPFsys/FileOpen] Cannot create temporary file %s\n", tmpfilename );
 		}
 
 		unlink( tmpfilename );
@@ -1107,7 +1120,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		// Make sure we can make the tmp file unique
 		snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/Friendup/%s_write_%d%d%d%d", s->f_SessionIDPTR, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
 
-		DEBUG("[fsysphp] WRITE FILE %s\n", tmpfilename );
+		DEBUG("[PHPFsys/FileOpen] WRITE FILE %s\n", tmpfilename );
 
 		FILE *locfp = NULL;
 		if( ( locfp = fopen( tmpfilename, "w+" ) ) != NULL )
@@ -1126,7 +1139,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 					//locfil->f_SessionID = StringDup( s->f_SessionID );
 					locfil->f_SessionIDPTR = s->f_SessionIDPTR;
 
-					DEBUG("[fsysphp] FileOpened, memory allocated.. store to file %s fid %p\n", locsd->fname, locfp );
+					DEBUG("[PHPFsys/FileOpen] FileOpened, memory allocated.. store to file %s fid %p\n", locsd->fname, locfp );
 	
 					FFree( command );
 					FFree( encodedcomm );
@@ -1147,15 +1160,16 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		}
 		else
 		{
-			FERROR("Cannot create temporary file %s\n", tmpfilename );
+			FERROR("[PHPFsys/FileOpen] Cannot create temporary file %s\n", tmpfilename );
 		}
 	}
 	else
 	{
-		FERROR("Mode not supported\n");
+		FERROR("[PHPFsys/FileOpen] Mode not supported\n");
 	}
 	FFree( command );
 	FFree( encodedcomm );
+	DEBUG("[PHPFsys/FileOpen] end of functions\n");
 	
 	return NULL;
 }
@@ -1260,7 +1274,7 @@ int FileClose( struct File *s, void *fp )
 							
 							if( result->bsd_Buffer[0] == 'f' && result->bsd_Buffer[1] == 'a' && result->bsd_Buffer[2] == 'i' && result->bsd_Buffer[3] == 'l' )
 							{
-								closeerr = 2;
+								closeerr = -2;
 							}
 							
 							DEBUG( "[fsysphp] Closed file using PHP call.\n" );

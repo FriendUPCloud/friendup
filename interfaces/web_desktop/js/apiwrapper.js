@@ -3539,6 +3539,19 @@ function apiWrapper( event, force )
 							} );
 						}
 						break;
+					case 'userupdate':
+						if( msg.reason )
+						{
+							for( let a = 0; a < Workspace.applications.length; a++ )
+							{
+								let nmsg = {
+									command: 'userupdate',
+									applicationId: msg.applicationId
+								};
+								Workspace.applications[a].contentWindow.postMessage( nmsg, '*' );
+							}
+						}
+						break;
 					case 'reloadmimetypes':
 						Workspace.reloadMimeTypes();
 						break;

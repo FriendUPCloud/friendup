@@ -186,13 +186,32 @@ Application.receiveMessage = function( msg )
 		if( msg.result == 'ok' )
 		{
 			Notify({'title':i18n('i18_account2'),'text':i18n('i18n_settings_saved')});
-			if( msg.data && msg.data.name && msg.data.passwordClearText )
+			if( msg.data && msg.data.name )
+			{
+				if( msg.data.passwordClearText )
+				{
+					Application.sendMessage( {
+						type: 'system',
+						command: 'updatelogin',
+						username: msg.data.name,
+						password: msg.data.passwordClearText
+					} );
+				}
+				else
+				{
+					Application.sendMessage( {
+						type: 'system',
+						command: 'userupdate',
+						reason: 'poke'
+					} );
+				}
+			}
+			else
 			{
 				Application.sendMessage( {
 					type: 'system',
-					command: 'updatelogin',
-					username: msg.data.name,
-					password: msg.data.passwordClearText
+					command: 'userupdate',
+					reason: 'poke'
 				} );
 			}
 		}

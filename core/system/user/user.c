@@ -140,7 +140,7 @@ int UserRemoveSession( User *usr, void *ls )
 	int retVal = -1;
 	int del = 5;
 	UserSession *remses = (UserSession *)ls;
-	if( usr  == NULL || ls == NULL || remses->us_User == NULL )
+	if( usr  == NULL || ls == NULL )//|| remses->us_User == NULL )
 	{
 		FERROR("Cannot remove user session, its not connected to user\n");
 		return -1;

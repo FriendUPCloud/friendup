@@ -1129,7 +1129,7 @@
 							invite = invite.split( 'BASE64' )[0];
 						}
 						
-						console.log( json ? json : invite );
+						//console.log( json ? json : invite );
 						
 						if( json )
 						{
@@ -1146,6 +1146,10 @@
 						{
 							Application.inviteHash = invite;
 						}
+					}
+					else
+					{
+						//console.log( 'Invite not found..' );
 					}
 					
 					return switchForm( 'invite' );
@@ -1201,7 +1205,7 @@
 						}
 						else
 						{
-							console.log( decoded );
+							//console.log( decoded );
 						}
 					}
 					

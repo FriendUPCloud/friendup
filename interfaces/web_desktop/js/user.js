@@ -74,7 +74,7 @@ Friend.User = {
 					password: password,
 					remember: remember,
 					hashedPassword: false,
-					inviteHash: false
+					inviteHash: flags && flags.inviteHash ? flags.inviteHash : false
 				}, callback );
 			}
 		}
@@ -129,9 +129,7 @@ Friend.User = {
     },
     // Send the actual login call
     SendLoginCall: function( info, callback )
-    {
-    	console.log( 'Login call: ', info );
-    	
+    {	
     	// Already logging in
     	this.State = 'login';
     	
