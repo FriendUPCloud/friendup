@@ -9113,7 +9113,7 @@ Friend.GUI.checkInputFocus = function( e )
 	if( focused && response == false )
 	{
 		focused.blur();
-		Notify( { title: 'Blur 1', text: 'blurrrr.' ± );
+		Notify( { title: 'Blur 1', text: 'blurrrr.' } );
 	}
 	// Remain focus
 	else if( focused )
