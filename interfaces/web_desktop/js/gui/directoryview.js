@@ -810,11 +810,12 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			e.defaultBehavior = true;
 			return;
 		}
-		if( !window.isMobile && !window.isTablet )
-		{
-			Workspace.showContextMenu( false, e );
-		}
-		return cancelBubble( e );
+		
+		cancelBubble( e );
+		
+		Workspace.showContextMenu( false, e );
+		
+		return;
 	} );
 
 	// On scrolling, don't do the menu!

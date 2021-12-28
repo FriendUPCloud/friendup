@@ -8094,6 +8094,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	showContextMenu: function( menu, e, extra )
 	{
+		// Do not do it double
+		if( this.contextMenuShowing ) return;
+		
 		let tr = e.target ? e.target : e.srcElement;
 
 		if( tr == window )
