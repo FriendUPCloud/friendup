@@ -17,7 +17,9 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#if !defined(WIN32)
 #include <unistd.h>
+#endif
 #include <assert.h>
 #include <fcntl.h>
 
@@ -102,7 +104,7 @@ use_buffer_50ms(lws_sorted_usec_list_t *sul)
 	if (n < (sizeof(m->buf) * 2) / 3 && e < (int)(sizeof(m->buf) - 1 - n)) {
 		lwsl_info("%s: requesting additional %d\n", __func__,
 				(int)(sizeof(m->buf) - 1 - e - n));
-		lws_ss_add_peer_tx_credit(m->ss, (sizeof(m->buf) - 1 - e - n));
+		lws_ss_add_peer_tx_credit(m->ss, (int32_t)(sizeof(m->buf) - 1 - e - n));
 	}
 
 	lws_sul_schedule(context, 0, &m->sul, use_buffer_50ms,
@@ -118,7 +120,9 @@ ss_avs_metadata_rx(void *userobj, const uint8_t *buf, size_t len, int flags)
 
 	lwsl_notice("%s: rideshare %s, len %d, flags 0x%x\n", __func__,
 			lws_ss_rideshare(m->ss), (int)len, flags);
-	// lwsl_hexdump_warn(buf, len);
+#if 0
+	lwsl_hexdump_warn(buf, len);
+#endif
 
 	n = sizeof(m->buf) - ((m->head - m->tail) % sizeof(m->buf));
 	lwsl_info("%s: len %d, buf h %d, t %d, space %d\n", __func__,
@@ -221,7 +225,7 @@ ss_avs_metadata_state(void *userobj, void *sh,
 {
 
 	ss_avs_metadata_t *m = (ss_avs_metadata_t *)userobj;
-	struct lws_context *context = (struct lws_context *)m->opaque_data;
+	// struct lws_context *context = (struct lws_context *)m->opaque_data;
 
 	lwsl_user("%s: %s, ord 0x%x\n", __func__, lws_ss_state_name(state),
 		  (unsigned int)ack);
@@ -241,13 +245,11 @@ ss_avs_metadata_state(void *userobj, void *sh,
 		/* for this demo app, we want to exit on fail to connect */
 	case LWSSSCS_DISCONNECTED:
 		/* for this demo app, we want to exit after complete flow */
-		lws_sul_schedule(context, 0, &m->sul, use_buffer_50ms,
-				 LWS_SET_TIMER_USEC_CANCEL);
+		lws_sul_cancel(&m->sul);
 		interrupted = 1;
 		break;
 	case LWSSSCS_DESTROYING:
-		lws_sul_schedule(context, 0, &m->sul, use_buffer_50ms,
-				 LWS_SET_TIMER_USEC_CANCEL);
+		lws_sul_cancel(&m->sul);
 		break;
 	default:
 		break;
@@ -263,12 +265,13 @@ ss_avs_metadata_state(void *userobj, void *sh,
 static int
 ss_avs_event_rx(void *userobj, const uint8_t *buf, size_t len, int flags)
 {
+#if !defined(LWS_WITH_NO_LOGS)
 	ss_avs_event_t *m = (ss_avs_event_t *)userobj;
 	// struct lws_context *context = (struct lws_context *)m->opaque_data;
 
 	lwsl_notice("%s: rideshare %s, len %d, flags 0x%x\n", __func__,
 			lws_ss_rideshare(m->ss), (int)len, flags);
-
+#endif
 //	lwsl_hexdump_warn(buf, len);
 
 	bad = 0; /* for this demo, receiving something here == success */
@@ -280,9 +283,10 @@ static int
 ss_avs_event_tx(void *userobj, lws_ss_tx_ordinal_t ord, uint8_t *buf,
 		      size_t *len, int *flags)
 {
+#if !defined(LWS_WITH_NO_LOGS)
 	ss_avs_event_t *m = (ss_avs_event_t *)userobj;
 	lwsl_notice("%s: rideshare %s\n", __func__, lws_ss_rideshare(m->ss));
-
+#endif
 	return 1; /* don't transmit anything */
 }
 
@@ -387,7 +391,11 @@ avs_example_start(struct lws_context *context)
 
 		goto bail;
 	}
-	if (read(fd, wav, wav_len) != (int)wav_len) {
+	if (read(fd, wav,
+#if defined(WIN32)
+		(unsigned int)
+#endif
+			wav_len) != (int)wav_len) {
 		lwsl_err("%s: failed to read wav\n", __func__);
 
 		goto bail;

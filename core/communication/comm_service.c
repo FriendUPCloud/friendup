@@ -99,6 +99,7 @@ CommService *CommServiceNew( int port, int secured, void *sb, int maxev, int buf
 		service->s_SB = sb;
 		
 		pthread_mutex_init( &service->s_Mutex, NULL );
+		pthread_mutex_init( &service->s_CondMutex, NULL );
 		pthread_cond_init( &service->s_DataReceivedCond, NULL );
 	}
 	else
@@ -128,7 +129,11 @@ void CommServiceDelete( CommService *s )
 			sleep( 1 );
 		}
 		
-		pthread_cond_broadcast( &s->s_DataReceivedCond );
+		if( FRIEND_MUTEX_LOCK( &s->s_CondMutex ) == 0 )
+		{
+			pthread_cond_broadcast( &s->s_DataReceivedCond );
+			FRIEND_MUTEX_UNLOCK( &s->s_CondMutex );
+		}
 		FRIEND_MUTEX_LOCK( &s->s_Mutex );
 
 		CommRequest *cr = s->s_Requests;
@@ -139,10 +144,13 @@ void CommServiceDelete( CommService *s )
 			
 			cr = (CommRequest *) cr->node.mln_Succ;
 		}
-		
-		pthread_cond_broadcast( &s->s_DataReceivedCond );
-		
 		FRIEND_MUTEX_UNLOCK( &s->s_Mutex );
+		
+		if( FRIEND_MUTEX_LOCK( &s->s_CondMutex ) == 0 )
+		{
+			pthread_cond_broadcast( &s->s_DataReceivedCond );
+			FRIEND_MUTEX_UNLOCK( &s->s_CondMutex );
+		}
 		
 		DEBUG2("[COMMSERV] : Quit set to TRUE, sending signal\n");
 		
@@ -211,6 +219,7 @@ void CommServiceDelete( CommService *s )
 		DEBUG2("[COMMSERV] : pipes closed\n");
 		
 		pthread_mutex_destroy( &s->s_Mutex );
+		pthread_mutex_destroy( &s->s_CondMutex );
 		pthread_cond_destroy( &s->s_DataReceivedCond );
 		
 		if( s->s_Buffer )
@@ -464,7 +473,7 @@ Create outgoing connections\n \
 			
 			if( loccon->fc_Type == SERVER_CONNECTION_OUTGOING )
 			{
-				Socket *newsock = SocketConnectHost( service->s_SB, service->s_secured, loccon->fc_Address, service->s_port );
+				Socket *newsock = SocketConnectHost( service->s_SB, service->s_secured, loccon->fc_Address, service->s_port, TRUE );
 				if( newsock != NULL )
 				{
 					DEBUG("[CommServiceSetupOutgoing] Connection reestabilished\n");
@@ -522,7 +531,7 @@ Create outgoing connections\n \
 		{
 			DEBUG("[CommServiceSetupOutgoing] trying to setup connection to Friend Master Server: %s\n", SLIB->sl_MasterServer );
 			
-			Socket *newsock = SocketConnectHost( service->s_SB, service->s_secured, SLIB->sl_MasterServer, service->s_port );
+			Socket *newsock = SocketConnectHost( service->s_SB, service->s_secured, SLIB->sl_MasterServer, service->s_port, TRUE );
 			//if( newsock != NULL ) // master connection must be always avaiable in list
 			{
 				DEBUG("[CommServiceSetupOutgoing] Connection to Master FriendNode created on port: %d\n", service->s_port);
@@ -545,7 +554,7 @@ Create outgoing connections\n \
 			{
 				DEBUG("[CommServiceSetupOutgoing] -------------------------------------------------- trying to setup node connection: %s - node ID: %lu\n", cnode->cn_Address, cnode->cn_ID );
 			
-				Socket *newsock = SocketConnectHost( service->s_SB, service->s_secured, cnode->cn_Address, service->s_port );
+				Socket *newsock = SocketConnectHost( service->s_SB, service->s_secured, cnode->cn_Address, service->s_port, TRUE );
 				//if( newsock != NULL ) // master connection must be always avaiable in list
 				{
 					DEBUG("[CommServiceSetupOutgoing] Connection to '%s' created on port: %d\n", cnode->cn_Address, service->s_port);
@@ -673,11 +682,11 @@ int CommServiceThreadServer( FThread *ptr )
 				
 				if( eventCount == 0 )
 				{
-					if( FRIEND_MUTEX_LOCK( &service->s_Mutex ) == 0 )
+					if( FRIEND_MUTEX_LOCK( &service->s_CondMutex ) == 0 )
 					{
 						pthread_cond_broadcast( &service->s_DataReceivedCond );
 						
-						FRIEND_MUTEX_UNLOCK( &service->s_Mutex );
+						FRIEND_MUTEX_UNLOCK( &service->s_CondMutex );
 					}
 					continue;
 				}
@@ -845,10 +854,10 @@ int CommServiceThreadServer( FThread *ptr )
 							char incomingFriendCoreID[ FRIEND_CORE_MANAGER_ID_SIZE + 32 ];
 							memset( incomingFriendCoreID, 0, FRIEND_CORE_MANAGER_ID_SIZE + 32 );
 							
-							unsigned int z;
-							for( z=0 ; z < bs->bs_Size ; z++ )
-								printf("_%c_ ", bs->bs_Buffer[ z ] );
-							printf("\n");
+							//unsigned int z;
+							//for( z=0 ; z < bs->bs_Size ; z++ )
+							//	printf("_%c_ ", bs->bs_Buffer[ z ] );
+							//printf("\n");
 							
 							int j = 0;
 							if( df->df_ID == ID_FCRE && count > 24 )
@@ -870,25 +879,36 @@ int CommServiceThreadServer( FThread *ptr )
 								
 								if( df->df_ID == ID_FCRI )
 								{
+									CommRequest *cr = NULL;
 									DEBUG("[COMMSERV] Response received!\n");
 									
 									if( FRIEND_MUTEX_LOCK( &service->s_Mutex ) == 0 )
 									{
 										DEBUG("[COMMSERV] lock set\n");
 										CommRequest *cr = service->s_Requests;
+										
 										while( cr != NULL )
 										{
 											DEBUG("[COMMSERV] Going through requests %ld find %ld\n", df->df_Size, cr->cr_RequestID );
 											if( cr->cr_RequestID == df->df_Size )
 											{
 												cr->cr_Bs = bs;
+
 												DEBUG("[COMMSERV] Message found by id\n");
-												pthread_cond_broadcast( &service->s_DataReceivedCond );
 												break;
 											}
 											cr = (CommRequest *) cr->node.mln_Succ;
 										}
 										FRIEND_MUTEX_UNLOCK( &service->s_Mutex );
+									}
+									
+									if( cr != NULL )
+									{
+										if( FRIEND_MUTEX_LOCK( &service->s_CondMutex ) == 0 )
+										{
+											pthread_cond_broadcast( &service->s_DataReceivedCond );
+											FRIEND_MUTEX_UNLOCK( &service->s_CondMutex );
+										}
 									}
 								}
 								
@@ -1564,7 +1584,7 @@ FConnection *CommServiceAddConnectionByAddr( CommService* s, char *addr )
 		con =  (FConnection *)con->node.mln_Succ;
 	}
 	
-	Socket *newsock = SocketConnectHost( s->s_SB, s->s_secured, addr, s->s_port );
+	Socket *newsock = SocketConnectHost( s->s_SB, s->s_secured, addr, s->s_port, TRUE );
 	if( newsock == NULL )
 	{
 		FERROR("Cannot setup connection with host: %s\n", addr );
@@ -1834,12 +1854,15 @@ void *InternalPINGThread( void *d )
 		
 		if( con->fc_Type == SERVER_CONNECTION_OUTGOING )
 		{
-			Socket *newsock = SocketConnectHost( s->s_SB, s->s_secured, con->fc_Address, s->s_port );
+			Socket *newsock = SocketConnectHost( s->s_SB, s->s_secured, con->fc_Address, s->s_port, TRUE );
 			if( newsock != NULL )
 			{
 				//DEBUG("[CommServicePING] Connection reestabilished\n");
 				
-				con->fc_Socket->s_Interface->SocketDelete( con->fc_Socket );
+				if( con->fc_Socket != NULL )
+				{
+					con->fc_Socket->s_Interface->SocketDelete( con->fc_Socket );
+				}
 				con->fc_Socket = newsock;
 				newsock->s_Data = con;
 				

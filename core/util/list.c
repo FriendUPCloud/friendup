@@ -54,39 +54,37 @@ void FreeList( List* list )
 
 void AddToList( List *list, void *data )
 {
-	if( data == NULL )
+	if( data != NULL )
 	{
-		return;
-	}
-	
-	// First data
-	if( list->l_Data == NULL )
-	{
-		list->l_Data = data;
-		list->next = NULL;
-	}
-	// More data
-	else
-	{
-		List *tmp = list;
-	
-		// Go to end of list
-		while( tmp->next )
+		// First data
+		if( list->l_Data == NULL )
 		{
-			tmp = tmp->next;
+			list->l_Data = data;
+			list->next = NULL;
 		}
+		// More data
+		else
+		{
+			List *tmp = list;
+	
+			// Go to end of list
+			while( tmp->next )
+			{
+				tmp = tmp->next;
+			}
 
-		// Make new data
-		tmp->next = FCalloc( 1, sizeof( List ) );
-		if( tmp->next == NULL )
-		{
-			FERROR("Cannot allocate memory in Addtolist\n");
-			return;
-		}
+			// Make new data
+			tmp->next = FCalloc( 1, sizeof( List ) );
+			if( tmp->next == NULL )
+			{
+				FERROR("Cannot allocate memory in Addtolist\n");
+				return;
+			}
 	
-		// add data and set terminator
-		tmp->next->l_Data = data;
-		//tmp->next->next = NULL;
+			// add data and set terminator
+			tmp->next->l_Data = data;
+			//tmp->next->next = NULL;
+		}
 	}
 }
 

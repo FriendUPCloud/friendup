@@ -98,9 +98,24 @@ typedef enum { /* keep system_state_names[] in sync in context.c */
 					  * can operate normally */
 	LWS_SYSTATE_IFACE_COLDPLUG,	 /* existing net ifaces iterated */
 	LWS_SYSTATE_DHCP,		 /* at least one net iface configured */
+	LWS_SYSTATE_CPD_PRE_TIME,	 /* Captive portal detect without valid
+					  * time, good for non-https tests... if
+					  * you care about it, implement and
+					  * call lws_system_ops_t
+					  * .captive_portal_detect_request()
+					  * and move the state forward according
+					  * to the result. */
 	LWS_SYSTATE_TIME_VALID,		 /* ntpclient ran, or hw time valid...
 					  * tls cannot work until we reach here
 					  */
+	LWS_SYSTATE_CPD_POST_TIME,	 /* Captive portal detect after time was
+					  * time, good for https tests... if
+					  * you care about it, implement and
+					  * call lws_system_ops_t
+					  * .captive_portal_detect_request()
+					  * and move the state forward according
+					  * to the result. */
+
 	LWS_SYSTATE_POLICY_VALID,	 /* user code knows how to operate... */
 	LWS_SYSTATE_REGISTERED,		 /* device has an identity... */
 	LWS_SYSTATE_AUTH1,		 /* identity used for main auth token */
@@ -113,6 +128,16 @@ typedef enum { /* keep system_state_names[] in sync in context.c */
 					  * policy, switch to new then enter
 					  * LWS_SYSTATE_POLICY_VALID */
 } lws_system_states_t;
+
+/* Captive Portal Detect -related */
+
+typedef enum {
+	LWS_CPD_UNKNOWN = 0,	/* test didn't happen ince last DHCP acq yet */
+	LWS_CPD_INTERNET_OK,	/* no captive portal: our CPD test passed OK,
+				 * we can go out on the internet */
+	LWS_CPD_CAPTIVE_PORTAL,	/* we inferred we're behind a captive portal */
+	LWS_CPD_NO_INTERNET,	/* we couldn't touch anything */
+} lws_cpd_result_t;
 
 
 typedef void (*lws_attach_cb_t)(struct lws_context *context, int tsi, void *opaque);
@@ -138,7 +163,19 @@ typedef struct lws_system_ops {
 	 * __lws_system_attach() is provided to do the actual work inside the
 	 * system-specific locking.
 	 */
+	int (*captive_portal_detect_request)(struct lws_context *context);
+	/**< Check if we can go out on the internet cleanly, or if we are being
+	 * redirected or intercepted by a captive portal.
+	 * Start the check that proceeds asynchronously, and report the results
+	 * by calling lws_captive_portal_detect_result() api
+	 */
+
+	uint32_t	wake_latency_us;
+	/**< time taken for this device to wake from suspend, in us
+	 */
 } lws_system_ops_t;
+
+#if defined(LWS_WITH_SYS_STATE)
 
 /**
  * lws_system_get_state_manager() - return the state mgr object for system state
@@ -151,7 +188,7 @@ typedef struct lws_system_ops {
 LWS_EXTERN LWS_VISIBLE lws_state_manager_t *
 lws_system_get_state_manager(struct lws_context *context);
 
-
+#endif
 
 /* wrappers handle NULL members or no ops struct set at all cleanly */
 
@@ -168,6 +205,8 @@ lws_system_get_state_manager(struct lws_context *context);
 LWS_EXTERN LWS_VISIBLE const lws_system_ops_t *
 lws_system_get_ops(struct lws_context *context);
 
+#if defined(LWS_WITH_SYS_STATE)
+
 /**
  * lws_system_context_from_system_mgr() - return context from system state mgr
  *
@@ -179,6 +218,7 @@ lws_system_get_ops(struct lws_context *context);
 LWS_EXTERN LWS_VISIBLE struct lws_context *
 lws_system_context_from_system_mgr(lws_state_manager_t *mgr);
 
+#endif
 
 /**
  * __lws_system_attach() - get and set items on context attach list
@@ -231,7 +271,7 @@ typedef int (*dhcpc_cb_t)(void *opaque, int af, uint8_t *ip, int ip_len);
  * Register a network interface as being managed by DHCP.  lws will proceed to
  * try to acquire an IP.  Requires LWS_WITH_SYS_DHCP_CLIENT at cmake.
  */
-int
+LWS_EXTERN LWS_VISIBLE int
 lws_dhcpc_request(struct lws_context *c, const char *i, int af, dhcpc_cb_t cb,
 		void *opaque);
 
@@ -243,7 +283,7 @@ lws_dhcpc_request(struct lws_context *c, const char *i, int af, dhcpc_cb_t cb,
  *
  * Remove handling of the network interface from dhcp.
  */
-int
+LWS_EXTERN LWS_VISIBLE int
 lws_dhcpc_remove(struct lws_context *context, const char *iface);
 
 /**
@@ -255,5 +295,42 @@ lws_dhcpc_remove(struct lws_context *context, const char *iface);
  * Returns 1 if any network interface managed by dhcpc has reached the BOUND
  * state (has acquired an IP, gateway and DNS server), otherwise 0.
  */
-int
+LWS_EXTERN LWS_VISIBLE int
 lws_dhcpc_status(struct lws_context *context, lws_sockaddr46 *sa46);
+
+/**
+ * lws_system_cpd_start() - helper to initiate captive portal detection
+ *
+ * \param context: the lws_context
+ *
+ * Resets the context's captive portal state to LWS_CPD_UNKNOWN and calls the
+ * lws_system_ops_t captive_portal_detect_request() implementation to begin
+ * testing the captive portal state.
+ */
+LWS_EXTERN LWS_VISIBLE int
+lws_system_cpd_start(struct lws_context *context);
+
+
+/**
+ * lws_system_cpd_set() - report the result of the captive portal detection
+ *
+ * \param context: the lws_context
+ * \param result: one of the LWS_CPD_ constants representing captive portal state
+ *
+ * Sets the context's captive portal detection state to result.  User captive
+ * portal detection code would call this once it had a result from its test.
+ */
+LWS_EXTERN LWS_VISIBLE void
+lws_system_cpd_set(struct lws_context *context, lws_cpd_result_t result);
+
+
+/**
+ * lws_system_cpd_state_get() - returns the last tested captive portal state
+ *
+ * \param context: the lws_context
+ *
+ * Returns one of the LWS_CPD_ constants indicating the system's understanding
+ * of the current captive portal situation.
+ */
+LWS_EXTERN LWS_VISIBLE lws_cpd_result_t
+lws_system_cpd_state_get(struct lws_context *context);

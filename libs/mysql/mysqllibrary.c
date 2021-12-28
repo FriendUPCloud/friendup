@@ -36,6 +36,8 @@
 #define LIB_VERSION 1
 #define LIB_REVISION 0
 
+int Reconnect( struct SQLLibrary *l );
+
 // special data
 
 typedef struct SpecialData{
@@ -163,7 +165,7 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 
 	while( ( row = mysql_fetch_row( result ) ) != NULL )
 	{
-		unsigned long *lengths = mysql_fetch_lengths(result);
+		unsigned long *lengths = mysql_fetch_lengths( result );
 		(*entries)++;
 		
 		void *data = FCalloc( 1, descr[ SQL_DATA_STRUCTURE_SIZE ] );
@@ -199,14 +201,17 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 					case SQLT_IDINT:	// primary key
 					case SQLT_INT:
 						{
-							int tmp = 0;
+							FLONG tmp = 0;
 							if( row[ i ] != NULL )
 							{
-								tmp = (int)atol( row[ i ] );
+								char *end;
+								//DEBUG("SQL: get field: %s\n", dptr[ 1 ] );
+								tmp = (FLONG)strtol( row[ i ], &end, 0 );
 							}
-							memcpy( strptr + dptr[ 2 ], &tmp, sizeof( int ) );
+							memcpy( strptr + dptr[ 2 ], &tmp, sizeof( FLONG ) );
 						}
 						break;
+						
 					case SQLT_STR:
 						{
 							if( row[i] != NULL )
@@ -392,7 +397,7 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 		dptr += 3;
 	}
 
-	//"UPDATE %s set SessionID = '%s', LoggedTime = '%lld' where Name = '%s'"
+	//"UPDATE %s set SessionID = '%s', LastActionTime = '%lld' where Name = '%s'"
 	
 	int lsize = sprintf( tmpQuery, "UPDATE %s set ", (char *)descr[ 1 ] );
 	BufStringAddSize( querybs, tmpQuery, lsize );
@@ -869,7 +874,14 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 			if ( mysql_stmt_execute(stmt) )
 			{
 				//FERROR("mysql_stmt_execute failed %s\n", mysql_stmt_error(stmt));
-				sb->sl_UtilInterface.Log( FLOG_ERROR, "Save query error: %s, query: %s\n", mysql_stmt_error(stmt), finalQuery );
+				const char *error = mysql_stmt_error(stmt);
+				sb->sl_UtilInterface.Log( FLOG_ERROR, "Save query error: %s, query: %s\n", error, finalQuery );
+				
+				if( strstr( error, "Lost connection to MySQL server during" ) != NULL )
+				{
+					Reconnect( l );
+				}
+				
 				retValue = 1;
 			}
 		
@@ -950,6 +962,21 @@ void DeleteWhere( struct SQLLibrary *l, FULONG *descr, char *where )
  	}
 
 	mysql_free_result( result );
+}
+
+/**
+ * Return last error
+ *
+ * @param l pointer to mysql.library structure
+ * @return error string or null
+ */
+const char *GetLastError( struct SQLLibrary *l )
+{
+	if( l != NULL &&  l->con.sql_Con != NULL )
+	{
+		return mysql_error( l->con.sql_Con );
+	}
+	return NULL;
 }
 
 /**
@@ -1109,10 +1136,12 @@ int QueryWithoutResults( struct SQLLibrary *l, const char *sel )
 				const char *errstr = mysql_error( l->con.sql_Con );
 				
 				FERROR("mysql_execute failed  SQL: %s error: %s\n", sel, errstr );
-				if( strstr( errstr, "List connection to MySQL server" ) != NULL )
+				if( strstr( errstr, "Lost connection to MySQL server" ) != NULL )
 				{
-					l->con.sql_Recconect = TRUE;
-				}else if( strstr( errstr, "Duplicate column name " ) != NULL )
+					Reconnect( l );
+					//l->con.sql_Recconect = TRUE;
+				}
+				else if( strstr( errstr, "Duplicate column name " ) != NULL )
 				{
 					return 0;
 				}
@@ -1465,6 +1494,7 @@ int SNPrintF( struct SQLLibrary *l, char *str, size_t stringSize, const char *fm
 								
 								if( ( escapedString = FCalloc( (stringArgSize *4 ) + 1, sizeof(char) ) ) != NULL )
 								{
+									DEBUG("MYSQL_REAL_ESCAPE: %s\n", stringArg );
 									stringArgSize = mysql_real_escape_string( l->con.sql_Con, escapedString, stringArg, stringArgSize );
 									stringArg = escapedString;
 								}
@@ -1850,6 +1880,7 @@ int Reconnect( struct SQLLibrary *l )
 	void *connection = mysql_real_connect( l->con.sql_Con, l->con.sql_Host, l->con.sql_DBName, l->con.sql_User, l->con.sql_Pass, l->con.sql_Port, NULL, 0 );
 	if( connection == NULL )
 	{
+		l->con.sql_Con = NULL;
 		FERROR( "[MYSQLLibrary] Failed to connect to database: '%s'.\n", mysql_error(l->con.sql_Con) );
 		return -1;
 	}
@@ -2029,12 +2060,15 @@ void *libInit( void *sb )
 	l->NumberOfRecords = dlsym( l->l_Handle, "NumberOfRecords");
 	l->NumberOfRecordsCustomQuery = dlsym( l->l_Handle, "NumberOfRecordsCustomQuery");
 	l->NumberOfRows = dlsym( l->l_Handle, "NumberOfRows");
+	l->GetLastError = dlsym( l->l_Handle, "GetLastError");
 	l->FetchRow = dlsym ( l->l_Handle, "FetchRow");
 	l->FreeResult = dlsym ( l->l_Handle, "FreeResult");
 	l->DeleteWhere = dlsym ( l->l_Handle, "DeleteWhere");
 	l->QueryWithoutResults = dlsym ( l->l_Handle, "QueryWithoutResults");
+	l->MakeEscapedString = dlsym ( l->l_Handle, "MakeEscapedString");
 	l->GetStatus = dlsym ( l->l_Handle, "GetStatus");
 	l->SetOption = dlsym ( l->l_Handle, "SetOption");
+	l->MakeEscapedString = dlsym ( l->l_Handle, "MakeEscapedString");
 	l->SNPrintF = SNPrintF;
 	l->Connect = Connect;
 	l->Disconnect = Disconnect;
@@ -2083,6 +2117,10 @@ void libClose( struct SQLLibrary *l )
 int GetStatus( struct SQLLibrary *l )
 {
 	MYSQL *sql_Con = (MYSQL *)l->con.sql_Con;
+	if( l->con.sql_Con == NULL )
+	{
+		return SQL_STATUS_BUSY;
+	}
 	if( sql_Con->status == MYSQL_STATUS_READY )
 	{
 		return SQL_STATUS_READY;

@@ -470,7 +470,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		};
 		
 		resp = HttpNewSimple( HTTP_400_BAD_REQUEST,  tags );
-		FERROR("WEBDAV URL is not proper\n");
+		FERROR("[HandleWebDav] URL is not proper\n");
 		
 		HttpAddTextContent( resp, "URL is not proper" );
 
@@ -496,7 +496,6 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		return resp;
 	}
 
-	User *usr = sb->sl_UM->um_Users;
 	File *rootDev = NULL;
 	char *devname = NULL;
 	char *filePath = NULL;
@@ -539,7 +538,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	int pos = 0;
 	int dpos = 0;
 	
-	DEBUG("PATH %s\n", path );
+	DEBUG("[HandleWebDav] PATH %s\n", path );
 	
 	// get devicename and path from URL
 	
@@ -566,7 +565,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		else if( i==(pathSize-1 ) )
 		{
 			filePath[ dpos+1 ] = 0;//':';
-			FERROR("dpos %d devname '%s' filePath '%s'\n", dpos, devname, filePath );
+			FERROR("[HandleWebDav] dpos %d devname '%s' filePath '%s'\n", dpos, devname, filePath );
 		}
 		
 		dpos++;
@@ -575,11 +574,11 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	if( auth == NULL )
 	{
 		auth = HttpGetHeaderFromTable( req, HTTP_HEADER_WWW_AUTHENTICATE );
-		DEBUG("WWW HEADER USED\n");
+		DEBUG("[HandleWebDav] WWW HEADER USED\n");
 	}
 	else
 	{
-		DEBUG("HEADER_AUTH USED\n");
+		DEBUG("[HandleWebDav] HEADER_AUTH USED\n");
 	}
 	lauth = StringDuplicateEOL( auth );
 
@@ -595,7 +594,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		};
 		
 		resp = HttpNewSimple( HTTP_401_UNAUTHORIZED,  tagsauth );
-		FERROR("WEBDAV Call is not proper\n");
+		FERROR("[HandleWebDav] Call is not proper\n");
 		
 		HttpAddTextContent( resp, "ok<!--separate-->{ \"response\":\"device name or sessionid is empty\"}" );
 		
@@ -633,7 +632,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 			userPassword = &(decodedUser[ i+1 ] );
 			//strcpy( tmpBuf, &(decodedUser[ i+1 ] ) );
 			
-			DEBUG("Password before hashed '%s'\n", tmpBuf );
+			DEBUG("[HandleWebDav] Password before hashed '%s'\n", tmpBuf );
 			
 			Sha256Init( &ctx );
 			Sha256Update( &ctx, (unsigned char *) userPassword, (unsigned int)strlen( userPassword ) ); //&(usr->u_Password[4]), strlen( usr->u_Password )-4 );
@@ -664,13 +663,13 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		WebdavToken *tok = WebdavTokenManagerGenerateToken( sb->sl_WDavTokM );
 		int size = snprintf( data, sizeof(data), "Digest realm=\"%s\", nonce=\"%s\", opaque=\"%s\", algorithm=\"MD5\", qop=\"auth,auth-int\"", tok->wt_Realm, tok->wt_Nonce, tok->wt_Opaque );
 		
-		DEBUG("Generated nonce: %32.s\n", tok->wt_Nonce );
+		DEBUG("[HandleWebDav] Generated nonce: %32.s\n", tok->wt_Nonce );
 		
 		struct TagItem tagsauth[] = {
 			{	HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
 			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{	HTTP_HEADER_WWW_AUTHENTICATE, (FULONG)StringDuplicateN( data, size ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		resp = HttpNewSimple( HTTP_401_UNAUTHORIZED,  tagsauth );
@@ -742,7 +741,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	char *anc = NULL;
 	int authlen = strlen( lauth );
 	
-	DEBUG("DEBUG auth %s authlen %d\n", lauth, authlen );
+	DEBUG("[HandleWebDav] auth %s authlen %d\n", lauth, authlen );
 	
 	int p=0;
 	FBOOL firstEntryFound = FALSE;
@@ -858,7 +857,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		}
 	}
 	
-	printf(" uname '%s'\narealm '%s'\nanonce '%s'\nauri '%s'\naresponse '%s'\nalgo '%s'\nacnonce '%s'\naqop '%s'\nanc '%s'\n",userName,arealm,anonce,auri,aresponse,aalgo,acnonce,aqop,anc );
+	//DEBUG("[HandleWebDav] uname '%s'\narealm '%s'\nanonce '%s'\nauri '%s'\naresponse '%s'\nalgo '%s'\nacnonce '%s'\naqop '%s'\nanc '%s'\n",userName,arealm,anonce,auri,aresponse,aalgo,acnonce,aqop,anc );
 	
 	int z=0;
 	for( z = 0 ; z < HTTP_HEADER_END ; z++ )
@@ -890,7 +889,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		};
 
 		resp = HttpNewSimple( HTTP_401_UNAUTHORIZED,  tagsauth );
-		FERROR("WEBDAV Token not found!\n" );
+		FERROR("[HandleWebDav] Token not found!\n" );
 
 		HttpAddTextContent( resp, "ok<!--separate-->{ \"response\":\"token not found\"}" );
 		
@@ -903,6 +902,8 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	// we must split path, to have access to device name, user name
 	AuthMod *ulib = sb->AuthModuleGet( sb );
 
+	User *usr = sb->sl_UM->um_Users;
+	
 	LIST_FOR_EACH( sb->sl_UM->um_Users, usr, User * )
 	{
 		if( strcmp( userName, usr->u_Name ) == 0 )
@@ -914,44 +915,38 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	// user not logged in, we must add it to session
 	// and mount shared device
 	
+	UserSession *loggedSession = NULL;
+	if( usr == NULL )
 	{
-		if( usr == NULL )
-		{
-			DEBUG("User '%s' not found. FC will try to get it from DB\n", userName );
-			// SQL is used to mount  device!
+		DEBUG("[HandleWebDav] User '%s' not found. FC will try to get it from DB\n", userName );
+		// SQL is used to mount  device!
 
-			usr = UMUserGetByNameDB( sb->sl_UM, userName );
-		
-			if( usr != NULL )
+		usr = UMUserGetByNameDB( sb->sl_UM, userName );
+	
+		if( usr != NULL )
+		{
+			UMAddUser( sb->sl_UM, usr );
+			
+			loggedSession = USMGetSessionByDeviceIDandUser( sb->sl_USM, "webdav", usr->u_ID );
+			
+			if( loggedSession == NULL )
 			{
-				LIST_ADD_HEAD( sb->sl_UM->um_Users, usr );
-				
-				UserSession *ses = USMGetSessionByDeviceIDandUser( sb->sl_USM, "webdav", usr->u_ID );
-				
-				if( ses == NULL )
+				loggedSession = UserSessionNew( NULL, "webdav" );
+				if( loggedSession != NULL )
 				{
-					ses = UserSessionNew( "webdav", "webdav" );
-					if( ses != NULL )
-					{
-						ses->us_UserID = usr->u_ID;
-						ses->us_LoggedTime = time( NULL );
-					
-						UserAddSession( usr, ses );
-						USMSessionSaveDB( sb->sl_USM, ses );
-					
-						if( FRIEND_MUTEX_LOCK( &(sb->sl_USM->usm_Mutex) ) == 0 )
-						{
-							ses->node.mln_Succ = (MinNode *) sb->sl_USM->usm_Sessions;
-							sb->sl_USM->usm_Sessions = ses;
-							FRIEND_MUTEX_UNLOCK( &(sb->sl_USM->usm_Mutex) );
-						}
-					}
+					loggedSession->us_UserID = usr->u_ID;
+					loggedSession->us_LastActionTime = time( NULL );
+				
+					UserAddSession( usr, loggedSession );
+					USMSessionSaveDB( sb->sl_USM, loggedSession );
+
+					USMUserSessionAddToList( sb->sl_USM, loggedSession );
 				}
 				char *err = NULL;
-				sb->UserDeviceMount( sb, usr, 0, TRUE, &err, TRUE );
+				sb->UserDeviceMount( sb, loggedSession, 0, TRUE, &err, TRUE );
 				if( err != NULL )
 				{
-					FERROR("UserDeviceMount returned: %s\n", err );
+					FERROR("[HandleWebDav] UserDeviceMount returned: %s\n", err );
 					FFree( err );
 				}
 			}
@@ -960,7 +955,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 				struct TagItem tagsauth[] = {
 					{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
 					{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-					{TAG_DONE, TAG_DONE}
+					{ TAG_DONE, TAG_DONE }
 				};
 
 				resp = HttpNewSimple( HTTP_401_UNAUTHORIZED,  tagsauth );
@@ -968,7 +963,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 				sb->AuthModuleDrop( sb, ulib );
 			
 				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", sb->sl_Dictionary->d_Msg[DICT_BAD_ERROR_OR_PASSWORD] , DICT_BAD_ERROR_OR_PASSWORD );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, sb->sl_Dictionary->d_Msg[DICT_BAD_ERROR_OR_PASSWORD] , DICT_BAD_ERROR_OR_PASSWORD );
 				HttpAddTextContent( resp, dictmsgbuf );
 
 				FFree( path );
@@ -977,35 +972,62 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 			
 				return resp;
 			}
-			sb->AuthModuleDrop( sb, ulib );
+			char *err = NULL;
+			sb->UserDeviceMount( sb, loggedSession, 0, TRUE, &err, TRUE );
+			if( err != NULL )
+			{
+				FERROR("[HandleWebDav] UserDeviceMount returned: %s\n", err );
+				FFree( err );
+			}
 		}
 		else
 		{
-			char *err = NULL;
-			sb->UserDeviceMount( sb, usr, 0, TRUE, &err, TRUE );
-			if( err != NULL )
-			{
-				FERROR("UserDeviceMount returned: %s\n", err );
-				FFree( err );
-			}
+			struct TagItem tagsauth[] = {
+				{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/xml" ) },
+				{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+				{ TAG_DONE, TAG_DONE }
+			};
+				resp = HttpNewSimple( HTTP_401_UNAUTHORIZED,  tagsauth );
+			
+			sb->AuthModuleDrop( sb, ulib );
+		
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", sb->sl_Dictionary->d_Msg[DICT_BAD_ERROR_OR_PASSWORD] , DICT_BAD_ERROR_OR_PASSWORD );
+			HttpAddTextContent( resp, dictmsgbuf );
+			FFree( path );
+			FFree( fpath );
+			if( decodedUser != NULL ){ FFree( decodedUser ); }
+		
+			return resp;
+		}
+		sb->AuthModuleDrop( sb, ulib );
+	}
+	else
+	{
+		char *err = NULL;
+		sb->UserDeviceMount( sb, loggedSession, 0, TRUE, &err, TRUE );
+		if( err != NULL )
+		{
+			FERROR("[HandleWebDav] UserDeviceMount returned: %s\n", err );
+			FFree( err );
 		}
 	}
 	
 	if( usr == NULL )
 	{
 		struct TagItem tagsauth[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/xml" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
 		};
 
 		resp = HttpNewSimple( HTTP_401_UNAUTHORIZED,  tagsauth );
-		FERROR("WEBDAV User not found\n");
+		FERROR("[HandleWebDav] User not found\n");
 		
 		char dictmsgbuf[ 256 ];
 		char dictmsgbuf1[ 196 ];
 		snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), sb->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "devname, sessionid" );
-		snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+		snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 		HttpAddTextContent( resp, dictmsgbuf );
 
 		goto end;
@@ -1018,7 +1040,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	}
 	
 	// we should use flag or u_WebDAVDevs
-	rootDev = GetRootDeviceByName( usr, devname );
+	rootDev = GetRootDeviceByName( usr, NULL, devname );
 	/*
 	LIST_FOR_EACH( usr->u_MountedDevs, rootDev, File * )
 	{
@@ -1032,7 +1054,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	
 	if( rootDev == NULL )
 	{
-		FERROR("Device %s is not mounted\n", devname );
+		FERROR("[HandleWebDav] Device %s is not mounted\n", devname );
 		struct TagItem tagsauth[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
 			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
@@ -1040,14 +1062,14 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		};
 
 		resp = HttpNewSimple( HTTP_404_NOT_FOUND,  tagsauth );
-		FERROR("WEBDAV User not found\n");
+		FERROR("[HandleWebDav] User not found\n");
 
 		goto end;
 	}
 	
 	if( rootDev->f_KeysID == 0 )
 	{
-		FERROR("Key is not assigned to device: %s %lu\n", devname, rootDev->f_KeysID );
+		FERROR("[HandleWebDav] Key is not assigned to device: %s %lu\n", devname, rootDev->f_KeysID );
 		struct TagItem tagsauth[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
 			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
@@ -1055,7 +1077,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		};
 
 		resp = HttpNewSimple( HTTP_401_UNAUTHORIZED,  tagsauth );
-		FERROR("WEBDAV User not found\n");
+		FERROR("[HandleWebDav] User not found\n");
 		goto end;
 	}
 	else
@@ -1068,7 +1090,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	
 	if( tok->wt_Key == NULL )
 	{
-		FERROR("Key doesnt exist in DB: %lu\n", rootDev->f_KeysID );
+		FERROR("[HandleWebDav] Key doesnt exist in DB: %lu\n", rootDev->f_KeysID );
 		struct TagItem tagsauth[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
 			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
@@ -1076,7 +1098,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		};
 
 		resp = HttpNewSimple( HTTP_401_UNAUTHORIZED,  tagsauth );
-		FERROR("WEBDAV User not found\n");
+		FERROR("[HandleWebDav] User not found\n");
 		goto end;
 	}
 	
@@ -1085,10 +1107,10 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	{
 		time_t tm = 0;
 		time_t tm_now = time( NULL );
-		FBOOL access = UMGetLoginPossibilityLastLogins( sb->sl_UM, usr->u_Name, sb->sl_ActiveAuthModule->am_BlockAccountAttempts, &tm );
+		FBOOL access = UMGetLoginPossibilityLastLogins( sb->sl_UM, usr->u_Name, usr->u_Password, sb->sl_ActiveAuthModule->am_BlockAccountAttempts, &tm );
 		if( access == FALSE && ( (tm_now - tm ) < sb->sl_ActiveAuthModule->am_BlockAccountTimeout) )
 		{
-			UMStoreLoginAttempt( sb->sl_UM, usr->u_Name, "Login fail", "Last login attempts fail (WEBDAV)" );
+			UMStoreLoginAttempt( sb->sl_UM, usr->u_Name, usr->u_Password, "Login fail", "Last login attempts fail (WEBDAV)" );
 			
 			struct TagItem tagsauth[] = {
 				{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
@@ -1097,15 +1119,15 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 				{TAG_DONE, TAG_DONE}
 			};
 			
-			DEBUG("Checking access %d time %lu blockedtime %lu\n", access, (tm_now - tm ), sb->sl_ActiveAuthModule->am_BlockAccountTimeout );
+			DEBUG("[HandleWebDav] Checking access %d time %lu blockedtime %lu\n", access, (tm_now - tm ), sb->sl_ActiveAuthModule->am_BlockAccountTimeout );
 		
 			resp = HttpNewSimple( HTTP_403_FORBIDDEN,  tagsauth );
-			FERROR("WEBDAV Your account '%s' is blocked!\n", usr->u_Name );
+			FERROR("[HandleWebDav] Your account '%s' is blocked!\n", usr->u_Name );
 		
 			char dictmsgbuf[ 256 ];
 			char dictmsgbuf1[ 196 ];
 			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), sb->sl_Dictionary->d_Msg[DICT_ACCOUNT_BLOCKED], (tm_now + sb->sl_ActiveAuthModule->am_BlockAccountTimeout) );
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_ACCOUNT_BLOCKED );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_ACCOUNT_BLOCKED );
 			HttpAddTextContent( resp, dictmsgbuf );
 			//HttpAddTextContent( resp, "ok<!--separate-->{\"response\":\"your account is blocked!\"}" );
 		
@@ -1114,7 +1136,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		else
 		{
 			FULONG blockTime = 0;
-			if( ( sb->sl_ActiveAuthModule->CheckPassword( sb->sl_ActiveAuthModule, NULL, usr, userPassword, &blockTime ) ) == FALSE )
+			if( ( sb->sl_ActiveAuthModule->CheckPassword( sb->sl_ActiveAuthModule, NULL, usr, userPassword, &blockTime, "webdav" ) ) == FALSE )
 			{
 				struct TagItem tagsauth[] = {
 					{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
@@ -1125,17 +1147,17 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		
 				//#define HTTP_401_UNAUTHORIZED 
 				resp = HttpNewSimple( HTTP_401_UNAUTHORIZED,  tagsauth );
-				FERROR("WEBDAV Wrong user or password '%s'!\n", usr->u_Name );
+				FERROR("[HandleWebDav] Wrong user or password '%s'!\n", usr->u_Name );
 		
 				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", sb->sl_Dictionary->d_Msg[DICT_BAD_ERROR_OR_PASSWORD] , DICT_BAD_ERROR_OR_PASSWORD );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, sb->sl_Dictionary->d_Msg[DICT_BAD_ERROR_OR_PASSWORD] , DICT_BAD_ERROR_OR_PASSWORD );
 				HttpAddTextContent( resp, dictmsgbuf );
 				//HttpAddTextContent( resp, "ok<!--separate-->{\"response\":\"user or password is wrong\"}" );
 		
 				goto end;
 			}
 			
-			UMStoreLoginAttempt( sb->sl_UM, usr->u_Name, "Login success(WEBDAV)", NULL );
+			UMStoreLoginAttempt( sb->sl_UM, usr->u_Name, usr->u_Password, "Login success(WEBDAV)", NULL );
 		}
 	}
 #else		// AUTH DIGEST
@@ -1143,16 +1165,16 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		DigestCalcHA1( aalgo, userName, arealm, tok->wt_Key->k_Data, anonce, acnonce, HA1);
 		DigestCalcResponse( HA1, anonce, anc, acnonce, aqop, req->http_Method, auri, HA2, Response);
 
-		INFO("COmpare client %s - generated by server %s\n", aresponse, Response );
+		INFO("[HandleWebDav] Compare client %s - generated by server %s\n", aresponse, Response );
 		if( strcmp( aresponse, Response ) != 0 )
 		{
-			FERROR("Passwords doesnt match: %s\n", anonce );
+			FERROR("[HandleWebDav] Passwords doesnt match: %s\n", anonce );
 			char data[ 256 ];
 		
 			WebdavToken *tok = WebdavTokenManagerGenerateToken( sb->sl_WDavTokM );
 			int size = snprintf( data, sizeof(data), "Digest realm=\"%s\", nonce=\"%s\", opaque=\"%s\", algorithm=\"MD5\", qop=\"auth,auth-int\"", tok->wt_Realm, tok->wt_Nonce, tok->wt_Opaque );
 		
-			DEBUG("Generated nonce: %32.s\n", tok->wt_Nonce );
+			DEBUG("[HandleWebDav] Generated nonce: %32.s\n", tok->wt_Nonce );
 		
 			struct TagItem tagsauth[] = {
 				{	HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
@@ -1169,13 +1191,13 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		}
 		
 		// authentication passed, timestamp will be updated
-		tok->wt_CreateTime = time( NULL );
+		tok->wt_CreationTime = time( NULL );
 	}
 #endif
 	
 	strResp = BufStringNew();
 
-	INFO("Webdav devicename %s path %s method: %s\n", devname, filePath, req->http_Method );
+	INFO("[HandleWebDav] devicename %s path %s method: %s\n", devname, filePath, req->http_Method );
 	
 	//
 	// GET
@@ -1184,9 +1206,9 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	if( strcmp( req->http_Method, "GET" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/xml" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		resp = HttpNewSimple( HTTP_200_OK,  tags );
@@ -1205,7 +1227,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		if( have == TRUE )
 		{
 			FHandler *actFS = (FHandler *)rootDev->f_FSys;
-			rootDev->f_SessionIDPTR = usr->u_MainSessionID;
+			FileFillSessionID( rootDev, loggedSession );
 			
 			File *fp = (File *)actFS->FileOpen( rootDev, filePath, "rb" );
 			if( fp != NULL )
@@ -1235,7 +1257,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 						
 						if( futbytes >= req->http_RangeMin && total <= req->http_RangeMax )
 						{
-							DEBUG("RANGE %ld -> %ld , fubytes %ld total %ld\n", req->http_RangeMin, req->http_RangeMax, futbytes, total );
+							DEBUG("[HandleWebDav] RANGE %ld -> %ld , fubytes %ld total %ld\n", req->http_RangeMin, req->http_RangeMax, futbytes, total );
 							if( futbytes >= req->http_RangeMin )
 							{
 								int mindif = futbytes - req->http_RangeMin;
@@ -1248,7 +1270,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 									offset = 0;
 									//storeBytes = mindif;
 									storeBytes = dataread;
-									DEBUG("Store maximum buffer size\n");
+									DEBUG("[HandleWebDav] Store maximum buffer size\n");
 								}
 								else
 								{
@@ -1259,23 +1281,23 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 									}
 									*/
 									storeBytes = (futbytes - req->http_RangeMin);
-									DEBUG("Store part of buffer, offset %ld store bytes %ld\n", offset, storeBytes );
+									DEBUG("[HandleWebDav] Store part of buffer, offset %ld store bytes %ld\n", offset, storeBytes );
 								}
 								
 								if( futbytes > req->http_RangeMax )
 								{
 									storeBytes -= (futbytes-req->http_RangeMax);
-									DEBUG("More bytes read then max\n");
+									DEBUG("[HandleWebDav] More bytes read then max\n");
 								}
 							}
 							
-							DEBUG("Store bytes %ld > offset %ld\n", storeBytes, offset );
+							DEBUG("[HandleWebDav] Store bytes %ld > offset %ld\n", storeBytes, offset );
 							//BufStringAddSize( bs, dataBuffer + offset, storeBytes );
 							ListStringAdd( ls, dataBuffer + offset, storeBytes );
 						}
 						else
 						{
-							DEBUG("Skipped %ld min %ld max %ld total %ld\n", dataread, req->http_RangeMin, req->http_RangeMax, total  );
+							DEBUG("[HandleWebDav] Skipped %ld min %ld max %ld total %ld\n", dataread, req->http_RangeMin, req->http_RangeMax, total  );
 						}
 						total += dataread;
 					}
@@ -1320,7 +1342,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 			}
 			else
 			{
-				FERROR("Cannot open file: %s\n", filePath );
+				FERROR("[HandleWebDav] Cannot open file: %s\n", filePath );
 			}
 		}
 	}
@@ -1352,7 +1374,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		if( have == TRUE )
 		{
 			FHandler *actFS = (FHandler *)rootDev->f_FSys;
-			rootDev->f_SessionIDPTR = usr->u_MainSessionID;
+			FileFillSessionID( rootDev, loggedSession );
 			File *fp = (File *)actFS->FileOpen( rootDev, filePath, "rb" );
 			if( fp != NULL )
 			{
@@ -1360,7 +1382,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 			}
 			else
 			{
-				FERROR("Cannot open file: %s\n", filePath );
+				FERROR("[HandleWebDav] Cannot open file: %s\n", filePath );
 			}
 		}
 	}
@@ -1374,9 +1396,9 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		//DEBUG("\n\n\n-----------------------------------------------------------PUT---------------------------------------------\n\n");
 		
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/xml" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
 		};
 	
 		resp = HttpNewSimple( HTTP_200_OK,  tags );
@@ -1392,13 +1414,13 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 			have = FSManagerCheckAccess( sb->sl_FSM, path, rootDev->f_ID, usr, "--W---" );
 		}
 		
-		DEBUG("PUT access : %d\n", have );
+		DEBUG("[HandleWebDav] PUT access : %d\n", have );
 		
 		if( have == TRUE )
 		{
 			FHandler *actFS = (FHandler *)rootDev->f_FSys;
 			
-			rootDev->f_SessionIDPTR = usr->u_MainSessionID;
+			FileFillSessionID( rootDev, loggedSession );
 			File *fp = (File *)actFS->FileOpen( rootDev, filePath, "wb" );
 			if( fp != NULL )
 			{
@@ -1409,7 +1431,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 					saveSize = req->http_ContentLength;
 				}
 				
-				DEBUG("Save size %d\n", saveSize );
+				DEBUG("[HandleWebDav] Save size %d\n", saveSize );
 				int writelen = 0;
 				
 				if( req->http_Content != NULL )
@@ -1418,9 +1440,9 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 				}
 				else
 				{
-					FERROR("Request content is equal to NULL!\n");
+					FERROR("[HandleWebDav] Request content is equal to NULL!\n");
 				}
-				INFO("File written %s size %d\n", filePath, writelen );
+				INFO("[HandleWebDav] File written %s size %d\n", filePath, writelen );
 			
 				actFS->FileClose( rootDev, fp );
 			
@@ -1428,12 +1450,12 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 			}
 			else
 			{
-				FERROR("Cannot open file: %s\n", filePath );
+				FERROR("[HandleWebDav] Cannot open file: %s\n", filePath );
 			}
 		}
 		else
 		{
-			FERROR("User dont have access to store data\n");
+			FERROR("[HandleWebDav] User dont have access to store data\n");
 		}
 	}
 	
@@ -1456,9 +1478,9 @@ Host: 192.168.153.138:6502
 
 		 */
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/xml" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
 		};
 	
 		resp = HttpNewSimple( HTTP_200_OK,  tags );
@@ -1485,12 +1507,12 @@ Host: 192.168.153.138:6502
 					dstpath = wdavpath + (i+1);
 				}
 			}
-			DEBUG("RENAME, srcname %s dstname %s\n", filePath, dstpath );
+			DEBUG("[HandleWebDav] RENAME, srcname %s dstname %s\n", filePath, dstpath );
 			
-			rootDev->f_SessionIDPTR = usr->u_MainSessionID;
+			FileFillSessionID( rootDev, loggedSession );
 			int err = actFS->Rename( rootDev, filePath, dstpath );
 			
-			DEBUG("RENAME, err %d\n", err );
+			DEBUG("[HandleWebDav] RENAME, err %d\n", err );
 			DoorNotificationCommunicateChanges( sb, NULL, rootDev, filePath );
 			
 			FFree( dstName );
@@ -1504,9 +1526,9 @@ Host: 192.168.153.138:6502
 	else if( strcmp( req->http_Method, "MKCOL" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/xml" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
 		};
 	
 		resp = HttpNewSimple( HTTP_200_OK,  tags );
@@ -1525,7 +1547,7 @@ Host: 192.168.153.138:6502
 		if( have == TRUE )
 		{
 			FHandler *actFS = (FHandler *)rootDev->f_FSys;
-			rootDev->f_SessionIDPTR = usr->u_MainSessionID;
+			FileFillSessionID( rootDev, loggedSession );
 			actFS->MakeDir( rootDev, filePath );
 		}
 		
@@ -1539,9 +1561,9 @@ Host: 192.168.153.138:6502
 	else if( strcmp( req->http_Method, "DELETE" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/xml" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
 		};
 	
 		resp = HttpNewSimple( HTTP_200_OK,  tags );
@@ -1559,7 +1581,7 @@ Host: 192.168.153.138:6502
 		
 		if( have == TRUE )
 		{
-			DEBUG("DELETE WEBDAV FUNCTION: '%s'\n", filePath );
+			DEBUG("[HandleWebDav] DELETE WEBDAV FUNCTION: '%s'\n", filePath );
 			actFS->Delete( rootDev, filePath );
 			
 			//int deleteFiles = 0;
@@ -1576,9 +1598,9 @@ Host: 192.168.153.138:6502
 	else if( strcmp( req->http_Method, "COPY" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/xml" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
 		};
 	
 		resp = HttpNewSimple( HTTP_200_OK,  tags );
@@ -1594,7 +1616,7 @@ Host: 192.168.153.138:6502
 				int read;
 				FHandler *actFS = (FHandler *)rootDev->f_FSys;
 				
-				rootDev->f_SessionIDPTR = usr->u_MainSessionID;
+				FileFillSessionID( rootDev, loggedSession );
 			
 				File *rfp = (File *)actFS->FileOpen( rootDev, filePath, "rb" );
 				if( rfp != NULL )
@@ -1613,7 +1635,7 @@ Host: 192.168.153.138:6502
 						DoorNotificationCommunicateChanges( sb, NULL, rootDev, dstPath );
 					}
 
-					INFO("File written %s size %d\n", filePath, writelen );
+					INFO("[HandleWebDav] File written %s size %d\n", filePath, writelen );
 					actFS->FileClose( rootDev, rfp );
 				}
 			}
@@ -1626,14 +1648,14 @@ Host: 192.168.153.138:6502
 	
 	else if( strcmp( req->http_Method, "PROPFIND" ) == 0 )
 	{
-		DEBUG("PROPFIND found\n");
+		DEBUG("[HandleWebDav] PROPFIND found\n");
 		//resp = HttpNewSimple( HTTP_200_OK,  ltags );
 		//HttpAddTextContent( resp, path );
 		
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/xml" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		FBOOL directory = FALSE;
@@ -1660,7 +1682,7 @@ Host: 192.168.153.138:6502
 			dirresp = actFS->Info( rootDev, filePath );
 		}
 		
-		DEBUG("RECEIVED INFO %s\n", dirresp->bs_Buffer );
+		DEBUG("[HandleWebDav] RECEIVED INFO %s\n", dirresp->bs_Buffer );
 		if( dirresp->bs_Buffer != NULL )
 		{
 			char *code = strstr( dirresp->bs_Buffer, "\"code\":" );
@@ -1675,8 +1697,8 @@ Host: 192.168.153.138:6502
 					
 					BufStringDelete( dirresp );
 					
-					DEBUG("WD->req content '%s'\n", req->http_Content );
-					FERROR("WEBDAV: File not found %s\n", resp->http_Content );
+					DEBUG("[HandleWebDav] WD->req content '%s'\n", req->http_Content );
+					FERROR("[HandleWebDav]: File not found %s\n", resp->http_Content );
 			
 					goto end;
 				}
@@ -1690,8 +1712,8 @@ Host: 192.168.153.138:6502
 				
 				BufStringDelete( dirresp );
 					
-				DEBUG("WD->req content '%s'\n", req->http_Content );
-				FERROR("WEBDAV: File not found %s\n", resp->http_Content );
+				DEBUG("[HandleWebDav] WD->req content '%s'\n", req->http_Content );
+				FERROR("[HandleWebDav]: File not found %s\n", resp->http_Content );
 			
 				goto end;
 			}
@@ -1711,7 +1733,7 @@ Host: 192.168.153.138:6502
 					BufString *locdirresp;
 					
 					//stefkos
-					rootDev->f_SessionIDPTR = usr->u_MainSessionID;
+					FileFillSessionID( rootDev, loggedSession );
 					if( filePath == NULL )
 					{
 						locdirresp = actFS->Dir( rootDev, "" );
@@ -1772,7 +1794,7 @@ Host: 192.168.153.138:6502
 				BufStringDelete( bs );
 			}
 			
-			FERROR("WEBDAV: Problem appear %s\n", resp->http_Content );
+			FERROR("[HandleWebDav]: Problem appear %s\n", resp->http_Content );
 			
 			BufStringDelete( dirresp );
 		}
@@ -1809,7 +1831,7 @@ Host: 192.168.153.138:6502
 	else if( strcmp( req->http_Method, "OPTIONS" ) == 0 )
 	{
 		struct TagItem ltags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
+			{	HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/xml" ) },
 			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{	HTTP_HEADER_ACCEPT_RANGES, (FULONG)StringDuplicate( "none") },
 //			{	HTTP_HEADER_ALLOW, (FULONG)StringDuplicate( "GET, POST, OPTIONS, PUT, PROPFIND" ) },
@@ -1817,7 +1839,7 @@ Host: 192.168.153.138:6502
 			//{	HTTP_HEADER_ALLOW, (FULONG)StringDuplicate( "GET, POST, OPTIONS, HEAD, MKCOL, PUT, PROPFIND, PROPPATCH, DELETE, MOVE, COPY, GETLIB" ) },
 			{	HTTP_HEADER_CACHE_CONTROL, (FULONG)StringDuplicate( "private") },
 			{	HTTP_HEADER_DAV, (FULONG)StringDuplicate( "1, 2") },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		resp = HttpNewSimple( HTTP_200_OK,  ltags );
@@ -1834,9 +1856,9 @@ Host: 192.168.153.138:6502
 	else if( strcmp( req->http_Method, "LOCK" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/xml" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		/*
@@ -1945,7 +1967,7 @@ Host: 192.168.153.138:6502
 		char *respContent = FCalloc( respsize, sizeof(char) );
 		if( respContent != NULL )
 		{
-			DEBUG("Webdav lock!\n");
+			DEBUG("[HandleWebDav] lock!\n");
 			
 			if( owner != NULL && type != NULL && scope != NULL )
 			{
@@ -1968,7 +1990,7 @@ Host: 192.168.153.138:6502
 </d:prop>", fpath );
 				HttpSetContent( resp, respContent, respSize );
 				
-				DEBUG("LOCK! %s\n", respContent );
+				DEBUG("[HandleWebDav] LOCK! %s\n", respContent );
 			}
 			else
 			{
@@ -1993,7 +2015,7 @@ Host: 192.168.153.138:6502
 		
 		char *locktoken = HttpGetHeader( req, "lock-token", 0 );
 		
-		DEBUG("UNLOCK %s\n", locktoken );
+		DEBUG("[HandleWebDav] UNLOCK %s\n", locktoken );
 		/*
 		UNLOCK /public/myfile.doc HTTP/1.1
 Host: www.contoso.com
@@ -2023,12 +2045,12 @@ HTTP/1.1 204 No Content
 
 	 */
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/xml" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
 		};
 		
-		DEBUG("PROPPATCH\n");
+		DEBUG("[HandleWebDav] PROPPATCH\n");
 		
 		BufString *bstr = BufStringNew();
 		BufStringAdd( bstr, "<?xml version=\"1.0\"?>" ); 
@@ -2164,13 +2186,13 @@ end:
 
 #else
 	resp = HttpNewSimple( HTTP_400_BAD_REQUEST,  tags );
-		FERROR("WEBDAV Call is not proper\n");
+		FERROR("[HandleWebDav] Call is not proper\n");
 		
 		HttpAddTextContent( resp, "Hacker!" );
 #endif
 	
 	
-	DEBUG("WDAV code: %d response %.*s\n", resp->http_ErrorCode , (int)resp->http_SizeOfContent, resp->http_Content );
+	DEBUG("[HandleWebDav] code: %d response %.*s\n", resp->http_ErrorCode , (int)resp->http_SizeOfContent, resp->http_Content );
 	
 	return resp;
 }

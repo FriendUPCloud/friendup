@@ -1,70 +1,74 @@
+/*©agpl*************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
+*                                                                              *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
+*                                                                              *
+*****************************************************************************©*/
+
+let tabsConf = {};
+
 Application.run = function( msg )
 {
-	var t = document.getElementsByClassName( 'TheTab' );
-	this.tabs = t;
-	for( var a = 0; a < t.length; a++ )
+	let t = document.getElementsByClassName( 'WelTab' );
+	let p = document.getElementsByClassName( 'WelPage' );
+	for( let a = 0; a < t.length; a++ )
 	{
-		t[a].tabs = t;
+		if( !tabsConf.activeTab )
+		{
+			tabsConf.activeTab = t[ a ];
+			t[ a ].classList.add( 'Active' );
+			p[ a ].classList.add( 'Active' );
+		}
 		t[a].onclick = function()
 		{
-			for( var c = 0; c < this.tabs.length; c++ )
+			for( let c = 0; c < t.length; c++ )
 			{
-				if( this.tabs[c] != this )
+				if( t[c] != this )
 				{
-					this.tabs[c].classList.remove( 'Active' );
-					document.body.classList.remove( 'Tab' + (c+1) );
+					t[c].classList.remove( 'Active' );
+					p[c].classList.remove( 'Active' );
 				}
 				else
 				{
-					document.body.classList.add( 'Tab' + (c+1) );
+					t[c].classList.add( 'Active' );
+					p[c].classList.add( 'Active' );
 				}
 			}
-			this.classList.add( 'Active' );
 		}
 		t[a].ontouchstart = t[a].onclick;
 	}
 	
-	document.body.classList.add( 'Tab1' );
-	
-	/*var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
+	let st = new Module( 'system' );
+	st.onExecuted = function( te, td )
 	{
-		if( e == 'ok' )
+		if( te == 'ok' )
 		{
-			var r = null;
-			var vids = [];
-			while( r = d.match( /\"\/watch\?v\=([^"]*?)\"/i ) )
-			{
-				d = d.split( r[0] ).join( '' );
-				vids.push( r[1] );
-				if( vids.length > 1 ) break;
-			}
-			var str = '';
-			for( var a = 0; a < 2; a++ )
-			{
-				str += '<iframe class="Youtube" allowfullscreen="allowfullscreen" mozallowfullscreen="mozallowfullscreen" gesture="media" src="https://www.youtube.com/embed/' + vids[a] + '"></iframe>';
-			}
-			ge( 'LastUploads' ).innerHTML = str;
+			ge( 'Dontsee' ).classList.add( 'Showing' );
 		}
 	}
-	m.execute( 'proxyget', { url: 'https://www.youtube.com/channel/UCi_8eeLQt9DKJC0xZQsiIDg/videos?shelf_id=1&view=0&sort=dd' } );*/
+	st.execute( 'appmodule', { appName: 'Welcome', command: 'checkstartup' } );
 	
 };
 
-function launch( app )
+function launchApp( app )
 {
-	/* correct and nice, but doesnt work and we want a fix today...
-		Application.sendMessage( {
-		type: 'system',
-		command: 'executeapplication',
-		executable: app
-	} );*/
-	parent.ExecuteApplication( app );
+	let s = new Shell();
+	s.onReady = function()
+	{
+		s.execute( 'launch ' + app, function()
+		{
+			s.close();
+			delete s;
+		} );
+	}
 };
 
 function nevershow()
-{
-	var s = new Module( 'system' );
+{		
+	let s = new Module( 'system' );
 	s.onExecuted = function( e, d )
 	{
 		if( e == 'ok' )
@@ -75,25 +79,5 @@ function nevershow()
 	s.execute( 'removefromstartupsequence', { item: 'launch Welcome' } );
 };
 
-Application.receiveMessage = function( msg )
-{
-	if( !msg.command ) return;
-	console.log( this.tabs );
-	if( msg.command == 'set_welcome' )
-	{
-		this.tabs[0].tabs[0].onclick();
-	}
-	else if( msg.command == 'set_business' )
-	{
-		this.tabs[0].tabs[1].onclick();
-	}
-	else if( msg.command == 'set_entertainment' )
-	{
-		this.tabs[0].tabs[2].onclick();
-	}
-	else if( msg.command == 'set_ten' )
-	{
-		this.tabs[0].tabs[3].onclick();
-	}
-}
+
 

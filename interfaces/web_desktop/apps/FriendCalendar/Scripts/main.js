@@ -328,9 +328,14 @@ Application.receiveMessage = function( msg )
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
-				self.sendMessage( {
-					command: 'refresh_calendar'
-				} );
+				if( e == 'ok' )
+				{
+				    self.sendMessage( {
+					    command: 'refresh_calendar'
+				    } );
+				    
+				    AnnounceCalendarChanges();
+				}
 			}
 			m.execute(
 				ed.id > 0 ? 'savecalendarevent' : 'addcalendarevent',
@@ -442,4 +447,89 @@ function doShare()
 		Application.sharing = null;
 	}
 }
+
+// Server announcements --------------------------------------------------------
+
+function AnnounceCalendarChanges()
+{
+    // Who are we sharing with?
+    // Get connected users
+	let m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		if( e == 'ok' )
+		{
+			let usl = null;
+			try
+			{
+				usl = JSON.parse( d );
+			}
+			catch( e ){};
+			if( usl.length )
+			{
+				return checkWorkgroups( usl );
+			}
+		}
+		checkWorkgroups( false );
+	}
+	m.execute( 'listconnectedusers' );
+	
+	function checkWorkgroups( userList )
+	{
+	    // Get connected workgroups
+	    let g = new Module( 'system' );
+	    g.onExecuted = function( e, d )
+	    {
+		    if( e == 'ok' )
+		    {
+			    let wl = null;
+			    try
+			    {
+				    wl = JSON.parse( d );
+			    }
+			    catch( e ){};
+			    if( wl.length )
+			    {
+				   return dataSift( userList, wl );
+			    }
+		    }
+		    return dataSift( userList, false );
+	    }
+	    g.execute( 'workgroups', { connected: true } );
+	}
+	
+    // Sift through users and workgroups
+	function dataSift( userList, workgroups )
+	{
+	    let outU = [];
+	    let outW = [];
+	    if( userList )
+	    {
+	        for( let a = 0; a < userList.length; a++ )
+	        {
+	            outU.push( userList[ a ].ID );
+	        }
+	    }
+	    if( workgroups )
+	    {
+	        for( let a = 0; a < workgroups.length; a++ )
+	        {
+	            outW.push( workgroups[ a ].ID );
+	        }
+	    }
+        // Place announcement
+        // Payload is important with signifying which application it is. The
+        // event will be sent there
+	    Friend.announce( {
+	        type: 'calendar-event',
+	        users: outU.length ? outU : false,
+	        workgroups: outW.length ? outW : false,
+	        payload: '{"event":"new-calendar-event","application":"FriendCalendar"}'
+	    }, function( response )
+	    {
+	        console.log( 'Response from announcement: ', response );
+	    } );
+	}
+}
+
 

@@ -1,0 +1,18 @@
+
+{
+    "type":"configuration",
+    "data":
+    {
+        "websockets":
+        {
+            "port":1337
+        },
+        "database":
+        {
+            "host": "192.168.86.150",
+            "user":"root",
+            "password":"root",
+            "name": "FriendMaster"
+        }
+    }
+}

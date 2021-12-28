@@ -23,9 +23,15 @@ class File
 	var $_authcontext = null; // authentication key (e.g. sessionid)
 	var $_authdata = null; // authentication data (e.g. a sessionid hash)
 
-	function File( $path )
+	function File( $path, $authcontext = false, $authdata = false )
 	{
 		$this->path = urldecode( $path );
+		
+		// We may wanna do this in the constructor
+		if( isset( $authcontext ) && isset( $authdata ) )
+		{
+			$this->SetAuthContext( $authcontext, $authdata );
+		}
 		
 		$this->GetAuthContextComponent();
 	}
@@ -61,8 +67,16 @@ class File
 				$this->_authdata = $authdata;
 				return true;
 			case 'servertoken':
-				$this->_authcontext = 'servertoken';
-				$this->_authdata = $authdata;
+				$u = new dbIO( 'FUser' );
+				$u->ServerToken = $authdata;
+				// Only succeed if we can load the user
+				if( $u->Load() )
+				{
+					$this->_user = $u;
+					$this->_authcontext = 'servertoken';
+					$this->_authdata = $authdata;
+					return true;
+				}
 				return true;
 			case 'user':
 				$this->_authcontext = 'user';
@@ -151,6 +165,33 @@ class File
 		return $url;
 	}
 	
+	function LoadRaw( $path = false, $userInfo = false )
+	{
+		// Don't require verification on localhost
+		$context = stream_context_create(
+			array(
+				'ssl'=>array(
+					'verify_peer' => false,
+					'verify_peer_name' => false,
+					'allow_self_signed' => true,
+				) 
+			) 
+		);
+	
+		// Don't timeout!
+		set_time_limit( 0 );
+		ob_end_clean();
+		
+		$url = str_replace( 'mode=rb&', 'mode=rs&', $this->GetUrl( $path, $userInfo ) );
+		
+		if( $fp = fopen( $url, 'rb', false, $context ) )
+		{
+			fpassthru( $fp );
+			fclose( $fp );
+		}
+		die();
+	}
+	
 	function Load( $path = false, $userInfo = false )
 	{
 		global $Config, $User, $Logger;
@@ -195,10 +236,11 @@ class File
 		global $Config, $User, $Logger;
 		
 		$fd = new Door( reset( explode( ':', $this->path ) ) . ':', $this->_authcontext, $this->_authdata );
-		//$Logger->log( '[File.class] ' . $this->_authcontext . ' -> ' . $this->_authdata );
+		//$Logger->log( '[File.class] GetFileInfo: ' . $this->_authcontext . ' -> ' . $this->_authdata );
 		$d = new dbIO( 'FFileInfo' );
 		$d->Path = $this->path;
 		$d->FilesystemID = $fd->ID;
+		//$Logger->log( '[File.class] GetFileInfo: ' . $fd->ID );
 		if( $d->Load() )
 		{
 			$this->_fileinfo = $d->Data;
@@ -304,7 +346,7 @@ class File
 		
 		$url .= '&' . $this->GetAuthContextComponent();
 
-		$Logger->log( 'Sending DELETE ' . $url );
+		//$Logger->log( 'Sending DELETE ' . $url );
 
 		$c = curl_init();
 		

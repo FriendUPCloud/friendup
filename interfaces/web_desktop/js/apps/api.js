@@ -1232,6 +1232,11 @@ function receiveEvent( event, queued )
 								if( res === false )
 								{
 									w.onClose = onc;
+									Application.sendMessage( {
+										type: 'view',
+										method: 'cancelclose',
+										viewId: dataPacket.viewId
+									} );
 									return;
 								}
 							}
@@ -1305,6 +1310,7 @@ function receiveEvent( event, queued )
 			Application.filePath      = dataPacket.filePath;
 			Application.applicationId = dataPacket.applicationId;
 			Application.userId        = dataPacket.userId;
+			Application.fullName      = dataPacket.fullName;
 			Application.username      = dataPacket.username;
 
 			// Register screen
@@ -1352,6 +1358,7 @@ function receiveEvent( event, queued )
 						authId:        dataPacket.authId,
 						sessionId:     dataPacket.sessionId,
 						userId:        dataPacket.userId,
+						fullName:      dataPacket.fullName,
 						username:      dataPacket.username
 					} ), event.origin );
 				}
@@ -1381,6 +1388,7 @@ function receiveEvent( event, queued )
 					authId:        dataPacket.authId,
 					sessionId:     dataPacket.sessionId,
 					userId:        dataPacket.userId,
+					fullName:      dataPacket.fullName,
 					username:      dataPacket.username
 				} ), event.origin );
 			}
@@ -1409,6 +1417,7 @@ function receiveEvent( event, queued )
 					authId:        dataPacket.authId,
 					sessionId:     dataPacket.sessionId,
 					userId:        dataPacket.userId,
+					fullName:      dataPacket.fullName,
 					username:      dataPacket.username
 				} ), event.origin );
 			}
@@ -1423,6 +1432,7 @@ function receiveEvent( event, queued )
 			Application.filePath      = dataPacket.filePath;
 			Application.applicationId = dataPacket.applicationId;
 			Application.userId        = dataPacket.userId;
+			Application.fullName      = dataPacket.fullName;
 			Application.username      = dataPacket.username;
 			Application.workspaceMode = dataPacket.workspaceMode;
 			Application.applicationName = dataPacket.applicationName;
@@ -1534,7 +1544,7 @@ function receiveEvent( event, queued )
 					}
 					else
 					{
-						console.log( 'No callback?' );
+						//console.log( 'No callback?' );
 					}
 				}
 				// TODO: This should be removed, it's a double right? Like the first if. . . Goes further down to a window
@@ -1599,7 +1609,7 @@ function receiveEvent( event, queued )
 				{
 					if( f.onSave )
 					{
-						f.onSave();
+						f.onSave( dataPacket.responseCode, dataPacket.responseData );
 					}
 					else
 					{
@@ -2309,6 +2319,16 @@ function View( flags )
 	{
 		msg.parentViewId = Application.viewId;
 	}
+	
+	// Pop out!
+	this.popout = function()
+	{
+		Application.sendMessage( {
+			type:    'view',
+			method:  'popout',
+			viewId: viewId
+		} );
+	}
 
 	// Bring a window to front
 	this.toFront = function()
@@ -2696,7 +2716,6 @@ function CloseView( id )
 	{
 		if( id.close )
 		{
-			console.log( ' -> Closing object.' );
 			return id.close();
 		}
 		return false;
@@ -3113,7 +3132,6 @@ WebAudioLoader = function( filePath, callback )
 					schBuf.connect( this.context.destination );
 					schBuf.connect( this.gainNode );
 					schBuf.start( this.bufferArrayTimeOffset );
-					console.log( 'Starting next at ' + ( this.bufferArrayTimeOffset ) );
 					this.bufferArrayTimeOffset += schBuf.buffer.duration;
 				}
 			}
@@ -5666,6 +5684,10 @@ function setupMessageFunction( dataPacket, origin )
 		{
 			msg.username = dataPacket.username;
 		}
+		if( !msg.fullName )
+		{
+			msg.fullName = dataPacket.fullName;
+		}
 		if( !msg.userLevel )
 		{
 			msg.userLevel = dataPacket.userLevel;
@@ -5778,8 +5800,8 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 	}
 
 	// Disable debugging now
-	if( packet.workspaceMode == 'normal' || packet.workspaceMode == 'gamified' )
-		console.log = function(){};
+	//if( packet.workspaceMode == 'normal' || packet.workspaceMode == 'gamified' )
+	//	console.log = function(){};
 	Application.workspaceMode = packet.workspaceMode ? packet.workspaceMode : 'developer';
 
 	if( packet.userLevel )
@@ -6078,7 +6100,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					document.body.appendChild( d );
 					wait = true;
 					removes.push( scripts[a] );
-
+				}
+				else
+				{
+				    let d = document.createElement( 'script' );
+				    d.innerHTML = EntityDecode( scripts[a].innerHTML );
+				    document.body.appendChild( d );
 				}
 			}
 			// Clear friendscripts
@@ -6364,6 +6391,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Setup application id from message
 	Application.applicationId = packet.applicationId;
 	Application.userId        = packet.userId;
+	Application.fullName      = packet.fullName;
 	Application.username      = packet.username;
 	Application.workspaceMode = packet.workspaceMode;
 	Application.authId        = packet.authId;
@@ -6818,6 +6846,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 
 	function _kmousedown( e )
 	{
+		if( !window.Application || !Application.sendMessage ) return;
 		Application.sendMessage( { type: 'system', command: 'registermousedown', x: e.clientX, y: e.clientY } );
 		
 		// Check if an input element has focus
@@ -6825,6 +6854,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 	}
 	function _kmouseup( e )
 	{
+		if( !window.Application || !Application.sendMessage ) return;
 		if( Friend.mouseMoveFunc )
 			Friend.mouseMoveFunc = null;
 		Application.sendMessage( { type: 'system', command: 'registermouseup', x: e.clientX, y: e.clientY } );
@@ -8659,7 +8689,6 @@ GuiDesklet = function()
 			j.open( 'get', updateurl, true, true );
 			j.onload = function ()
 			{
-				console.log( 'The response was: ' + this.returnCode, this.returnData );
 				let content;
 				// New mode
 				if ( this.returnCode == 'ok' )
@@ -9080,6 +9109,73 @@ Friend.GUI.checkInputFocus = function()
 			value: response
 		} );
 	}
+}
+
+// Announcements
+
+Friend.announceToUser = function( user, type, payload, callback )
+{
+    Application.sendMessage( {
+        type: 'announcement',
+        command: 'announcement',
+        users: [ user ],
+        workgroups: false,
+        announcementType: type,
+        payload: payload,
+        callback: callback ? addCallback( callback ) : false
+    } );
+}
+
+Friend.announceToUsers = function( users, type, payload, callback )
+{
+    Application.sendMessage( {
+        type: 'announcement',
+        command: 'announcement',
+        users: users,
+        workgroups: false,
+        announcementType: type,
+        payload: payload,
+        callback: callback ? addCallback( callback ) : false
+    } );
+}
+
+Friend.announceToWorkgroup = function( workgroup, type, payload, callback )
+{
+    Application.sendMessage( {
+        type: 'announcement',
+        command: 'announcement',
+        users: false,
+        workgroups: [ workgroup ],
+        announcementType: type,
+        payload: payload,
+        callback: callback ? addCallback( callback ) : false
+    } );
+}
+
+Friend.announceToWorkgroups = function( workgroups, type, payload, callback )
+{
+    Application.sendMessage( {
+        type: 'announcement',
+        command: 'announcement',
+        users: false,
+        workgroups: workgroups,
+        announcementType: type,
+        payload: payload,
+        callback: callback ? addCallback( callback ) : false
+    } );
+}
+
+Friend.announce = function( data, callback )
+{
+     Application.sendMessage( {
+        type: 'announcement',
+        command: 'announcement',
+        users: data.users,
+        workgroups: data.workgroups,
+        announcementType: data.type,
+        payload: data.payload,
+        callback: callback ? addCallback( callback ) : false
+    } );
 }
 
 // Responsive layout

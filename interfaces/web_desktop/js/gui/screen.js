@@ -14,6 +14,7 @@ var _viewType = 'iframe'; //window.friendBook ? 'webview' : 'iframe';
 Screen = function ( flags, initObject )
 {
 	var self = this;
+	this.resized = 'uninitialized';
 	this._flags = new Object ();
 	
 	if( typeof( flags ) == 'object' )
@@ -37,9 +38,15 @@ Screen = function ( flags, initObject )
 	// Maximum height available for view windows
 	this.getMaxViewHeight = function()
 	{
-		if( this.div )
+		if( this.contentDiv )
 		{
-			return this.contentDiv.offsetHeight;
+			if( this.resized || this.resized == 'uninitialized' )
+			{
+				this.contentDivHeight = window.innerHeight - this.div.screenTitle.offsetHeight;
+				this.resized = false;
+			}
+		    //console.log( 'Current content div height: ' + this.contentDivHeight );
+			return this.contentDivHeight;
 		}
 		return 0;
 	}
@@ -165,8 +172,8 @@ Screen = function ( flags, initObject )
 		ge( 'Screens' ).appendChild( div );
 		
 		// FIXME: Hack - this should be better calculated, and it's not resize friendly
-		var cnt = false;
-		var divs = div.getElementsByTagName( 'div' );
+		let cnt = false;
+		let divs = div.getElementsByTagName( 'div' );
 		for( var a = 0; a < divs.length; a++ )
 		{
 			if( divs[a].className == 'ScreenContent' )
@@ -182,20 +189,20 @@ Screen = function ( flags, initObject )
 		}
 		
 		// Screen size aware!
-		var self = this;
+		let self = this;
 		function resizeScreen()
 		{
-			var cnt = self.contentDiv;
+			let cnt = self.contentDiv;
 			if( cnt )
 			{
 				// Resize view windows
-				for( var a in movableWindows )
+				for( let a in movableWindows )
 				{
-					var w = movableWindows[ a ].windowObject;
+					let w = movableWindows[ a ].windowObject;
 					
 					if( w.flags.maximized || w.flags.width == 'max' || ( movableWindows[ a ].zoom && movableWindows[ a ].zoom.mode == 'maximized' ) )
 					{
-						var v = w._window.parentNode;
+						let v = w._window.parentNode;
 						v.setAttribute( 'moving', 'moving' );
 						v.style.width = self.getMaxViewWidth() + 'px';
 						v.style.height = self.getMaxViewHeight() + 'px';
@@ -207,11 +214,11 @@ Screen = function ( flags, initObject )
 				// Mindful of columns!
 				if( typeof( self._flags['vcolumns'] ) != 'undefined' )
 				{
-					var columns = parseInt( self._flags['vcolumns'] );
+					let columns = parseInt( self._flags['vcolumns'] );
 					if( columns <= 0 ) columns = 1;
 					
 					// Set width with workaround.
-					var newWidth = GetWindowWidth() * columns;
+					let newWidth = GetWindowWidth() * columns;
 					cnt.style.width = newWidth + 'px';
 				}
 				else
@@ -220,12 +227,12 @@ Screen = function ( flags, initObject )
 				}
 				
 				// Mindful of rows!
-				var cntTop = parseInt( GetThemeInfo( 'ScreenTitle' ).height );
+				let cntTop = parseInt( GetThemeInfo( 'ScreenTitle' ).height );
 				if( !isNaN( cntTop ) )
 				{
 					if( typeof( self._flags['vrows'] ) != 'undefined' )
 					{
-						var rows = parseInt( self._flags['vrows'] );
+						let rows = parseInt( self._flags['vrows'] );
 						if( rows <= 0 ) rows = 1;
 						cnt.style.height = '100%';
 					}
@@ -241,6 +248,8 @@ Screen = function ( flags, initObject )
 		// Do a scroll hack!
 		div.onscroll = function(){ this.scrollLeft = 0; this.scrollTop = 0; };
 		if( cnt ) cnt.onscroll = function(){ this.scrollLeft = 0; this.scrollTop = 0; }
+		
+		_kresize();
 	}
 	
 	if( typeof( this._flags['id'] ) != 'undefined' )
@@ -323,7 +332,7 @@ Screen = function ( flags, initObject )
 	
 	var btncycle = false;
 	var scroverl = false;
-	for ( var a = 0; a < divs.length; a++ )
+	for ( let a = 0; a < divs.length; a++ )
 	{
 		if ( divs[a].className && divs[a].classList.contains( 'ScreenList' ) )
 			btncycle = divs[a];
@@ -855,6 +864,8 @@ Screen = function ( flags, initObject )
 	{	
 		if( !base ) 
 			base = '/';
+		
+		if( !this._screen ) return;
 		
 		var eles = this._screen.getElementsByTagName( _viewType );
 		var ifr = false;

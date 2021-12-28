@@ -358,7 +358,7 @@ window.Shell = function( appObject )
 		let t = this;
 		this.execute( array[index++], function( result, data )
 		{
-			console.log( 'this.queueCommand = function( array, index, buffer, callback ) ', { array: array, index: index, buffer: buffer } );
+			//console.log( 'this.queueCommand = function( array, index, buffer, callback ) ', { array: array, index: index, buffer: buffer } );
 			if( result )
 			{
 				buffer += typeof( result ) == 'object' ? result.response : result;
@@ -1743,6 +1743,7 @@ window.Shell = function( appObject )
 				break;
 		}
 
+		// Make a parsed object
 		let parsedObject = this.parseInput( cmd );
 		cmd = parsedObject.args; // Just the fin_args
 		this.parsedObj = parsedObject;
@@ -2027,7 +2028,7 @@ window.Shell = function( appObject )
 								type: 'dormantmaster',
 								method: 'execute',
 								executable: dirs[a].Path + command,
-								doorId: dirs[a].Dormant.doorId,
+								doorId: dirs[a].Dormant ? dirs[a].Dormant.doorId : null,
 								dormantCommand: command,
 								dormantArgs: args,
 								callback: cid
@@ -2658,14 +2659,25 @@ window.Shell = function( appObject )
 			{
 				shell.terminate = true;
 
-				let start = 1;
+				let start = 0;
 				let recursive = false;
+				let nooverwrite = false;
 
-				// check recursive
-				if( ( args[ 0 ] + ' ' + args[ 1 ] ).toLowerCase() == 'copy all' )
+				// check args
+				for( let u = 0; u < args.length; u++ )
 				{
-					start++;
-					recursive = true;
+					if( args[ u ] == 'copy' || args[ u ] == 'all' || args[ u ] == 'nooverwrite' )
+					{
+						if( args[ u ] == 'all' )
+							recursive = true;
+						else if( args[ u ] == 'nooverwrite' )
+							nooverwrite = true;
+						start++;
+					}
+					else
+					{
+						break;
+					}
 				}
 
 				let src = args[ start ];
@@ -2679,7 +2691,7 @@ window.Shell = function( appObject )
 				// 'all' on the end
 				if( !recursive ) recursive = args[ args.length - 1 ].toLowerCase() == 'all' ? true : false;
 
-				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: false }, function( result, done )
+				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: false, nooverwrite: nooverwrite }, function( result, done )
 				{
 					if( !done ) done = false;
 					callback( false, { response: result, done: done } );
@@ -3614,6 +3626,12 @@ window.Shell = function( appObject )
 			{
 				return callback( false, { response: 'Syntax error. Usage:<br>unmount [disk:]<br>' } );
 			}
+			
+			if( args[ 1 ] == 'Home:' || args[ 1 ] == 'Shared:' )
+			{
+				return callback( false, { response: 'Could not unmount disk ' + args[ 1 ] + ', the disk is protected from unmounting.<br>' } );
+			}
+			
 			let l = new Library( 'system.library' );
 			l.onExecuted = function( e, d )
 			{
@@ -4072,23 +4090,6 @@ window.FriendDOS =
 						else flags = { verifiedDestination: true };
 					}
 					cfcbk( src, dest, flags, callback, depth );
-					/*
-					if( !e ) return callback( 'Failed to copy files.', { done: true } );
-					let f = false;
-					try
-					{
-						f = JSON.parse( d );
-					}
-					catch( e )
-					{
-						return callback( 'Failed to get file info on ' + dest, { done: true } );
-					}
-					if( f && f.Type == 'Directory' && dest.substr( dest.length - 1, 1 ) != '/' )
-						dest += '/';
-					if( flags ) flags.verifiedDestination = true;
-					else flags = { verifiedDestination: true };
-					cfcbk( src, dest, flags, callback, depth );
-					*/
 				} );
 			}
 		}
@@ -4105,7 +4106,7 @@ window.FriendDOS =
 
 			// Get door objects
 			let doorSrc = ( new Door() ).get( src );
-			let doorDst = ( new Door() ).get( src );
+			let doorDst = ( new Door() ).get( dest );
 
 			// Don't copy to self
 			let srcPath = src;
@@ -4275,26 +4276,55 @@ window.FriendDOS =
 						{
 							copyObject.copyTotal++;
 							copyObject.processes++;
-							let destination = dest + data[a].Filename;
-							doorSrc.dosAction( 'copy', { from: finalSrc, to: destination }, function( result )
+							let destination = dest;
+							
+							doorDst = new Door( dest );
+							doorDst.dosAction( 'info', { path: dest }, function( result )
 							{
-								if( move )
+								let lastChar = destination.substr( -1, 1 );
+								if( result.substr( 0, 5 ) != 'fail<' )
 								{
-									callback( 'Moved ' + finalSrc + ' to ' + destination + '..' );
-									// Done moving one
-									doorSrc.dosAction( 'delete', { path: finalSrc, notrash: flags.notrash }, function( result )
+									let res = result.split( '<!--separate-->' );
+									try
 									{
-										console.log( 'Deleted ' + finalSrc + ' ->', result );
-									} );
+										res = JSON.parse( res[1] );
+										if( res.Type == 'Directory' )
+										{
+											if( lastChar == ':' || lastChar == '/' )
+											{
+												destination += data[a].Filename;
+											}
+											else
+											{
+												destination += '/' + data[a].Filename
+											}
+										}
+									}
+									catch( e )
+									{
+										callback( 'Failed to ' + ( move ? 'move' : 'copy' ) + ' file...', { done: true } );
+									}
 								}
-								else
+								doorSrc.dosAction( 'copy', { from: finalSrc, to: destination }, function( result )
 								{
-									callback( 'Copied ' + finalSrc + ' to ' + destination + '..' );
-								}
+									if( move )
+									{
+										callback( 'Moved ' + finalSrc + ' to ' + destination + '..' );
+										// Done moving one
+										doorSrc.dosAction( 'delete', { path: finalSrc, notrash: flags.notrash }, function( result )
+										{
+											console.log( 'Deleted ' + finalSrc + ' ->', result );
+										} );
+									}
+									else
+									{
+										callback( 'Copied ' + finalSrc + ' to ' + destination + '..' );
+									}
 
-								copyObject.copyCounter++; 
-								copyObject.completed++;
-								copyObject.test();
+									copyObject.copyCounter++; 
+									copyObject.completed++;
+									copyObject.test();
+								} );
 							} );
 						}
 					}

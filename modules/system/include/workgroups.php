@@ -85,7 +85,9 @@ if( isset( $args->args->connected ) || $level != 'Admin' )
 
 if( $rows = $SqlDatabase->FetchObjects( '
 	SELECT 
-		g.ID, g.Name, g.ParentID, g.UserID, u.UserID AS WorkgroupUserID, m.ValueNumber, m.ValueString 
+		g.ID, g.Name, g.ParentID, g.UserID, u.UserID AS WorkgroupUserID, m.ValueNumber, m.ValueString '
+		 . ( isset( $args->args->owner ) ? ',f.FullName AS Owner ' : '' ) 
+		 . ( isset( $args->args->level ) ? ',l2.Name AS Level' : '' ) . ' 
 	FROM 
 		FUserGroup g 
 			' . $userConn . ' JOIN FUserToGroup u ON 
@@ -98,6 +100,24 @@ if( $rows = $SqlDatabase->FetchObjects( '
 					m.DataTable = "FUserGroup" 
 				AND m.DataID = g.ID 
 			) 
+			' . ( isset( $args->args->owner ) ? '
+			LEFT JOIN FUser f ON 
+			( 
+				f.ID = g.UserID 
+			) 
+			' : '' ) . ( isset( $args->args->level ) ? '
+			JOIN FUserGroup l2 ON 
+			( 
+					l2.Type = "Level" 
+				AND l2.Name IN ( "Admin", "User" ) 
+			)
+			JOIN FUserToGroup l1 ON 
+			( 
+					l1.UserID = g.UserID 
+				AND l1.UserGroupID = l2.ID 
+			)
+			' : '' ) . '
+			
 	WHERE g.Type = \'Workgroup\' 
 	' . ( isset( $args->args->workgroups ) ? '
 	AND ( g.ID IN (' . $args->args->workgroups . ') OR g.ParentID IN (' . $args->args->workgroups . ') ) 
@@ -108,6 +128,11 @@ if( $rows = $SqlDatabase->FetchObjects( '
 	foreach( $rows as $row )
 	{
 		// TODO: Find out what variables are needed to be able to display when the doormanoffice employee is currently at work showing and hiding workgroups ...
+		
+		if( $User->ID != $row->UserID && ( $row->Level && $row->Level == 'User' ) || ( isset( $args->args->owner ) && !$row->Owner ) )
+		{
+			$row->Hide = true;
+		}
 	}	
 	
 	die( 'ok<!--separate-->' . json_encode( $rows ) );

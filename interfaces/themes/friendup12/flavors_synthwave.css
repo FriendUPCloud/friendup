@@ -1,6 +1,6 @@
 /* Synthwave ---------------------------------------------------------------- */
 
-*
+html > body.Synthwave, html > body.Synthwave *
 {
     scrollbar-color:  #461C64 #000010 !important;
 }

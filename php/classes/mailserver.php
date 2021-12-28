@@ -142,6 +142,48 @@ class Mailer
 		$this->recipients[] = $recipient;
 	}
 	
+	// Validate email domain MX record
+	function validateMX( $emails = false )
+	{
+		if( $emails && !is_array( $emails ) )
+		{
+			$emails = [ $emails ];
+		}
+		
+		if( !$emails && $this->recipients )
+		{
+			$emails = $this->recipients;
+		}
+		
+		if( $emails )
+		{
+			$checked = [];
+			
+			foreach( $emails as $email )
+			{
+				if( filter_var( trim( $email ), FILTER_VALIDATE_EMAIL ) )
+				{
+					$domain = array_pop( explode( "@", trim( $email ) ) );
+					
+					if( !isset( $checked[ $domain ] ) && !checkdnsrr( $domain, "MX" ) )
+					{
+						return false;
+					}
+					
+					$checked[ $domain ] = true;
+				}
+				else
+				{
+					return false;	
+				}
+			}
+		
+			return true;
+		}
+		
+		return false;
+	}
+	
 	// Content is string
 	// filename is string
 	// encoding e.g. base64

@@ -10,7 +10,7 @@
 
 /* Some important flags for GUI elements ------------------------------------ */
 
-var DEFAULT_SANDBOX_ATTRIBUTES = 'allow-same-origin allow-forms allow-scripts allow-popups allow-popups-to-escape-sandbox';
+var DEFAULT_SANDBOX_ATTRIBUTES = 'allow-same-origin allow-forms allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads allow-modals allow-top-navigation-by-user-activation allow-presentation';
 var FUI_MOUSEDOWN_RESIZE  =  2;
 var FUI_MOUSEDOWN_WINDOW  =  1;
 var FUI_MOUSEDOWN_SCREEN  =  3;
@@ -308,7 +308,8 @@ var mousePointer =
 	drop: function ( e )
 	{
 		if ( !e ) e = window.event;
-		let tar = e.target ? e.target : e.srcElement;
+		let tar = e.targetReplacement ? e.targetReplacement : ( e.target ? e.target : e.srcElement );
+		
 		if ( this.elements.length )
 		{
 			let dropper = false;
@@ -382,7 +383,7 @@ var mousePointer =
 			if( !dropper )
 			{
 				let z = 0;
-				for ( var a in ars )
+				for ( let a in ars )
 				{
 					let wn = ars[a];
 					let wnZ = parseInt ( wn.style.zIndex );
@@ -546,6 +547,15 @@ var mousePointer =
 			
 			if( dropper )
 			{
+				// Double check that we didn't get to the filebrowser
+				if( dropper.className && dropper.classList.contains( 'View' ) )
+				{
+					if( e.targetReplacement && e.targetReplacement.classList.contains( 'Bookmarks' ) )
+					{
+						dropper = dropper.content.fileBrowser;
+					}
+				}
+			
 				// Assume the drop was handled correctly
 				let dropResult = true;
 				
@@ -2262,7 +2272,6 @@ function DrawRegionSelector( e )
 	let eh = 0; var ew = 0;
 	let rwc = window.regionWindow.classList;
 	let scrwn = window.regionWindow.directoryview ? window.regionWindow.directoryview.scroller : false;
-	
 	// In icon windows or new screens
 	
 	if ( rwc && ( rwc.contains( 'Content' ) || rwc.contains( 'ScreenContent' ) ) )
@@ -2592,7 +2601,13 @@ movableMouseUp = function( e )
 	
 	ClearSelectRegion();
 	
-	// Execute drop function on mousepointer (and stop moving!)
+	// Make sure
+	if( e.target && e.target.classList.contains( 'MoveOverlay' ) )
+	{
+		e.targetReplacement = document.elementFromPoint( e.clientX, e.clientY );
+	}
+
+	// Execute drop function on mousepointer (and stop moving!)		
 	mousePointer.drop( e );	
 	mousePointer.stopMove( e );
 	RemoveDragTargets();
@@ -3273,7 +3288,7 @@ function PollTaskbar( curr )
 				{
 					curr.taskbarTask.setActive();
 				}
-				for( var c = 0; c < t.tasks.length; c++ )
+				for( let c = 0; c < t.tasks.length; c++ )
 				{
 					let d = t.tasks[ c ].dom;
 					if( d.window != curr )
@@ -3298,18 +3313,18 @@ function PollTaskbar( curr )
 		// Manage running apps -------
 
 		// Just check if the app represented on the desklet is running
-		for( var a = 0; a < __desklets.length; a++ )
+		for( let a = 0; a < __desklets.length; a++ )
 		{
 			let desklet = __desklets[a];
 		
 			// Assume all launchers represent apps that are not running
-			for( var c = 0; c < desklet.dom.childNodes.length; c++ )
+			for( let c = 0; c < desklet.dom.childNodes.length; c++ )
 			{
 				desklet.dom.childNodes[c].running = false;
 			}
 		
 			// Go and check running status
-			for( var b in movableWindows )
+			for( let b in movableWindows )
 			{
 				if( movableWindows[b].windowObject )
 				{
@@ -3317,7 +3332,7 @@ function PollTaskbar( curr )
 					let aid = movableWindows[b].windowObject.applicationId;
 				
 					// Try to find the application if it is an application window
-					for( var c = 0; c < desklet.dom.childNodes.length; c++ )
+					for( let c = 0; c < desklet.dom.childNodes.length; c++ )
 					{
 						if( app && desklet.dom.childNodes[c].uniqueId == aid )
 						{
@@ -3329,7 +3344,7 @@ function PollTaskbar( curr )
 			}
 	
 			// Just check if the app represented on the desklet is running
-			for( var c = 0; c < desklet.dom.childNodes.length; c++ )
+			for( let c = 0; c < desklet.dom.childNodes.length; c++ )
 			{
 				if( desklet.dom.childNodes[c].running == false )
 				{
@@ -3341,7 +3356,7 @@ function PollTaskbar( curr )
 	
 		// Final test, just flush suddenly invisible or hidden view windows
 		let out = [];
-		for( var a = 0; a < t.tasks.length; a++ )
+		for( let a = 0; a < t.tasks.length; a++ )
 		{
 			let v = t.tasks[a].dom;
 			if( v.view.windowObject.flags.hidden || v.view.windowObject.flags.invisible )
@@ -3365,7 +3380,7 @@ function PollDockedTaskbar()
 	
 	PollTray();
 	
-	for( var a = 0; a < __desklets.length; a++ )
+	for( let a = 0; a < __desklets.length; a++ )
 	{	
 		let desklet = __desklets[a];
 		
@@ -3381,26 +3396,26 @@ function PollDockedTaskbar()
 		
 		// Clear existing viewlist items that are removed
 		let remove = [];
-		for( var y = 0; y < desklet.viewList.childNodes.length; y++ )
+		for( let y = 0; y < desklet.viewList.childNodes.length; y++ )
 		{
 			if( !movableWindows[desklet.viewList.childNodes[y].viewId] )
 				remove.push( desklet.viewList.childNodes[y] );
 		}
 		if( remove.length )
 		{
-			for( var y = 0; y < remove.length; y++ )
+			for( let y = 0; y < remove.length; y++ )
 				desklet.viewList.removeChild( remove[y] );
 			changed++;
 		}
 		
 		// Clear views that are managed by launchers
-		for( var y = 0; y < desklet.dom.childNodes.length; y++ )
+		for( let y = 0; y < desklet.dom.childNodes.length; y++ )
 		{
 			let dy = desklet.dom.childNodes[y];
 			if( dy.views )
 			{
 				let out = [];
-				for( var o in dy.views )
+				for( let o in dy.views )
 				{
 					if( movableWindows[o] )
 						out[o] = dy.views[o];
@@ -3412,7 +3427,7 @@ function PollDockedTaskbar()
 		let wl = desklet.viewList;
 		
 		// Just check if the app represented on the desklet is running
-		for( var c = 0; c < desklet.dom.childNodes.length; c++ )
+		for( let c = 0; c < desklet.dom.childNodes.length; c++ )
 		{
 			desklet.dom.childNodes[c].running = false;
 		}
@@ -3508,14 +3523,14 @@ function PollDockedTaskbar()
 					if( app && ge( 'Tasks' ) )
 					{
 						let tk = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
-						for( var a1 = 0; a1 < tk.length; a1++ )
+						for( let a1 = 0; a1 < tk.length; a1++ )
 						{
 							if( tk[a1].applicationName != app ) continue;
 							let f = tk[ a1 ].parentNode;
 							if( f.className && f.className == 'AppSandbox' )
 							{
 								let img = f.getElementsByTagName( 'div' );
-								for( var b1 = 0; b1 < img.length; b1++ )
+								for( let b1 = 0; b1 < img.length; b1++ )
 								{
 									if( img[ b1 ].style.backgroundImage )
 									{
@@ -3605,7 +3620,7 @@ function PollDockedTaskbar()
 		}
 		
 		// Just check if the app represented on the desklet is running
-		for( var c = 0; c < desklet.dom.childNodes.length; c++ )
+		for( let c = 0; c < desklet.dom.childNodes.length; c++ )
 		{
 			if( desklet.dom.childNodes[c].running == false )
 			{
@@ -3801,11 +3816,13 @@ movableMouseDown = function ( e )
 		window.mouseDown = 4;
 		window.regionX = windowMouseX;
 		window.regionY = windowMouseY;
+		
 		if( tar ) window.regionWindow = tar;
 		else window.regionWindow = ge( 'DoorsScreen' );
 		if( clickOnView )
 		{
-			_ActivateWindow( tar.parentNode );
+			// This doesn't seem like it matters?
+			// Before we activated window here
 		}
 		else if( clickonDesktop )
 		{
@@ -3995,6 +4012,60 @@ function FixWindowDimensions( mw )
 	SetWindowFlag( mw, 'max-height', mw.parentNode.offsetHeight );
 	SetWindowFlag( mw, 'min-width', mw.parentNode.offsetWidth );
 	SetWindowFlag( mw, 'max-width', mw.parentNode.offsetWidth );
+}
+
+function doReveal()
+{
+	if( window.friendApp && window.friendApp.reveal )
+	{
+		if( Workspace.wallpaperImage )
+		{
+			if( !Workspace.wallpaperLoaded )
+			{
+				if( Workspace.wallpaperImage == 'color' )
+				{
+					document.body.classList.add( 'Revealed' );
+					friendApp.reveal();
+				}
+				else
+				{
+					let i = new Image();
+					if( Workspace.wallpaperImageDecoded )
+						i.src = Workspace.wallpaperImageDecoded;
+					else i.src = getImageUrl( Workspace.wallpaperImage );
+					i.onload = function()
+					{
+						// Tell app we can show ourselves!
+						document.body.removeChild( i );
+						document.body.classList.add( 'Revealed' );
+						friendApp.reveal();
+					}
+					i.style.visibility = 'hidden';
+					document.body.appendChild( i );
+					if( i.width && i.width > 0 )
+					{
+						i.onload();
+					}
+				}
+			}
+			else
+			{
+				// Tell app we can show ourselves!
+				document.body.classList.add( 'Revealed' );
+				friendApp.reveal();
+			}
+		}
+		else
+		{
+			setTimeout( function(){ 
+				doReveal(); 
+			}, 50 );
+		}
+	}
+	else
+	{
+		//console.log( 'window.friendApp does not exist, or reveal does not exist on the object.' );
+	}
 }
 
 function ElementWindow ( ele )

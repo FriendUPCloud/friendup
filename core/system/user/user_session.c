@@ -22,6 +22,7 @@
 #include <system/systembase.h>
 #include <system/token/dos_token.h>
 #include <system/application/application_manager.h>
+#include <util/session_id.h>
 
 extern SystemBase *SLIB;
 
@@ -37,10 +38,19 @@ UserSession *UserSessionNew( char *sessid, char *devid )
 	UserSession *s;
 	if( ( s = FCalloc( 1, sizeof(UserSession) ) ) != NULL )
 	{
-		s->us_SessionID = StringDuplicate( sessid );
+		if( sessid != NULL )
+		{
+			s->us_SessionID = StringDuplicate( sessid );
+		}
+		else
+		{
+			s->us_SessionID = SessionIDGenerate();
+		}
 		s->us_DeviceIdentity = StringDuplicate( devid );
 		
 		UserSessionInit( s );
+		
+		s->us_CreationTime = time( NULL );		
 		
 		INFO("Mutex initialized\n");
 	}
@@ -60,7 +70,7 @@ void UserSessionInit( UserSession *us )
 		
 		us->us_WSReqManager = WebsocketReqManagerNew();
 		
-		FQDeInit( &(us->us_MsgQueue) );
+		FQInit( &(us->us_MsgQueue) );
 	}
 }
 
@@ -76,6 +86,12 @@ void UserSessionDelete( UserSession *us )
 		Log( FLOG_DEBUG, "\nUserSessionDelete will be removed: %s\n\n", us->us_SessionID );
 		int count = 0;
 		int nrOfSessionsAttached = 0;
+		
+		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+		{
+			us->us_Status = USER_SESSION_STATUS_DELETE_IN_PROGRESS;
+			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+		}
 
 		// we must wait till all tasks will be finished
 		while( TRUE )
@@ -84,21 +100,7 @@ void UserSessionDelete( UserSession *us )
 			{
 				break;
 			}
-			/*
-			else
-			{
-				count++;
-				if( count > 50 )
-				{
-					//Log( FLOG_INFO, "UserSessionDelete: number of working functions on user session: %d  sessionid: %s\n", us->us_InUseCounter, us->us_SessionID );
-#ifdef USE_WORKERS
-					WorkerManagerDebug( SLIB );
-#endif
-					count = 0;
-					break;
-				}
-			}
-			*/
+
 			DEBUG( "[UserSessionDelete] Trying to wait for use counter to be <= 0\n" );
 			usleep( 1000 );
 		}
@@ -110,16 +112,17 @@ void UserSessionDelete( UserSession *us )
 			dosToken->ct_UserSessionID = 0;
 		}
 		
-		if( count > 50 )
-		{
-			Log( FLOG_DEBUG, "UserRemoveSession will be called\n");
-		}
+		//if( count > 50 )
+		//{
+		//	Log( FLOG_DEBUG, "UserRemoveSession will be called\n");
+		//}
 		
 		if( us->us_User != NULL )
 		{
-			
-			nrOfSessionsAttached = UserRemoveSession( us->us_User, us );
+			User *userToClean = us->us_User;
 			us->us_User = NULL;
+			DEBUG("[UserSessionDelete] detach session from user\n");
+			nrOfSessionsAttached = UserRemoveSession( userToClean, us );
 		}
 		SystemBase *lsb = SLIB;
 
@@ -196,9 +199,7 @@ void UserSessionDelete( UserSession *us )
 			WebsocketReqManagerDelete( wrm );
 		}
 		pthread_mutex_destroy( &(us->us_Mutex) );
-		
-		
-		
+
 		// lets remove application sessions from system
 		if( nrOfSessionsAttached <= 0 && us->us_UserID > 0 )
 		{

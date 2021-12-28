@@ -210,7 +210,13 @@ else if ( isset( $args->args->setting ) )
 		// Draw letters
 		$color = imagecolorallocate( $img, 255, 255, 255 );
 		$initials = isset( $args->args->fullname ) ? trim( $args->args->fullname ) : $User->FullName;
-		$initials = mb_convert_encoding( $initials, 'ISO-8859-1', 'UTF-8' );
+		
+		// This function has to be installed as an extension to PHP on the server ... (php7.0-mbstring)
+		if( function_exists( 'mb_convert_encoding' ) )
+		{
+			$initials = mb_convert_encoding( $initials, 'ISO-8859-1', 'UTF-8' );
+		}
+		
 		$initials = explode( ' ', $initials );
 		$initials = strtoupper( count( $initials ) > 1 ? $initials[0]{0} . $initials[1]{0} : substr( $initials[0], 0, 2 ) );
 		$dims = getsetting_calculateTextBox( $initials, $font, 88, 0 );

@@ -27,6 +27,13 @@
 #endif
 #include "private-lib-core.h"
 
+#if defined(LWS_WITH_MBEDTLS)
+#if defined(LWS_HAVE_MBEDTLS_NET_SOCKETS)
+#include "mbedtls/net_sockets.h"
+#else
+#include "mbedtls/net.h"
+#endif
+#endif
 
 int
 lws_send_pipe_choked(struct lws *wsi)
@@ -173,15 +180,15 @@ void
 lws_plat_insert_socket_into_fds(struct lws_context *context, struct lws *wsi)
 {
 	struct lws_context_per_thread *pt = &context->pt[(int)wsi->tsi];
-	int n = LWS_POLLIN | LWS_POLLHUP | FD_CONNECT;
 
 	if (wsi->udp) {
 		lwsl_info("%s: UDP\n", __func__);
-		n = LWS_POLLIN;
+		pt->fds[pt->fds_count].events |= LWS_POLLIN;
 	}
 
 	pt->fds[pt->fds_count++].revents = 0;
-	WSAEventSelect(wsi->desc.sockfd, pt->events, n);
+
+	lws_plat_change_pollfd(context, wsi, &pt->fds[pt->fds_count - 1]);
 }
 
 void
@@ -212,24 +219,26 @@ lws_plat_check_connection_error(struct lws *wsi)
 }
 
 int
-lws_plat_change_pollfd(struct lws_context *context,
-			  struct lws *wsi, struct lws_pollfd *pfd)
+lws_plat_change_pollfd(struct lws_context *context, struct lws *wsi,
+		       struct lws_pollfd *pfd)
 {
 	struct lws_context_per_thread *pt = &context->pt[(int)wsi->tsi];
-	long e = LWS_POLLHUP | FD_CONNECT;
+	long e = LWS_POLLHUP | FD_CONNECT | FD_ACCEPT | FD_CLOSE | FD_WRITE;
 
-	if ((pfd->events & LWS_POLLIN))
-		e |= LWS_POLLIN;
+	/*
+	 * On windows, FD_WRITE is only coming to indicate that we are writable
+	 * again after being choked.  So we must always listen for it.
+	 */
 
-	if ((pfd->events & LWS_POLLOUT))
-		e |= LWS_POLLOUT;
+	if (pfd->events & LWS_POLLIN)
+		e |= FD_READ;
 
-	if (WSAEventSelect(wsi->desc.sockfd, pt->events, e) != SOCKET_ERROR)
-		return 0;
+	if (WSAEventSelect(wsi->desc.sockfd, pt->events[(pfd - pt->fds) + 1], e)) {
+		lwsl_err("WSAEventSelect() failed with error %d\n", LWS_ERRNO);
+		return 1;
+	}
 
-	lwsl_err("WSAEventSelect() failed with error %d\n", LWS_ERRNO);
-
-	return 1;
+	return 0;
 }
 
 const char *
@@ -380,4 +389,50 @@ lws_plat_ifconfig_ip(const char *ifname, int fd, uint8_t *ip, uint8_t *mask_ip,
 
 	return -1;
 }
+
+#if defined(LWS_WITH_MBEDTLS)
+int
+lws_plat_mbedtls_net_send(void *ctx, const uint8_t *buf, size_t len)
+{
+	int fd = ((mbedtls_net_context *) ctx)->fd;
+	int ret;
+
+	if (fd < 0)
+		return MBEDTLS_ERR_NET_INVALID_CONTEXT;
+
+	ret = write(fd, buf, len);
+	if (ret >= 0)
+		return ret;
+
+	if (errno == EAGAIN || errno == EWOULDBLOCK)
+		return MBEDTLS_ERR_SSL_WANT_WRITE;
+
+        if (WSAGetLastError() == WSAECONNRESET )
+            return( MBEDTLS_ERR_NET_CONN_RESET );
+
+	return MBEDTLS_ERR_NET_SEND_FAILED;
+}
+
+int
+lws_plat_mbedtls_net_recv(void *ctx, unsigned char *buf, size_t len)
+{
+	int fd = ((mbedtls_net_context *) ctx)->fd;
+	int ret;
+
+	if (fd < 0)
+		return MBEDTLS_ERR_NET_INVALID_CONTEXT;
+
+	ret = (int)read(fd, buf, len);
+	if (ret >= 0)
+		return ret;
+
+	if (errno == EAGAIN || errno == EWOULDBLOCK)
+		return MBEDTLS_ERR_SSL_WANT_READ;
+
+        if (WSAGetLastError() == WSAECONNRESET)
+            return MBEDTLS_ERR_NET_CONN_RESET;
+
+	return MBEDTLS_ERR_NET_RECV_FAILED;
+}
+#endif
 

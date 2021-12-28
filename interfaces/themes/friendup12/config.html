@@ -89,7 +89,7 @@
 			</p>
 	
 			<form>
-				<div class="HRow">
+				<div class="HRow MarginBottom MarginTop">
 					<div class="FloatLeft" id="ButtonScheme">
 						<input type="radio" name="buttonscheme" id="buttonschememac" onchange="setOption('ButtonScheme', this)" value="mac" checked="checked"/> 
 						Mac
@@ -100,11 +100,11 @@
 				</div>
 			</form>
 			
-			<p>
+			<p class="Layout">
 				<strong id="LabelColorSchemeText"></strong>
 			</p>
 			
-			<div class="HRow">
+			<div class="HRow MarginBottom MarginTop">
 				<div class="FloatLeft" id="ColorScheme">
 					<input type="radio" name="colorscheme" id="colorschemelight" onchange="setOption('ColorScheme', this)" value="light" checked="checked"/> 
 					Light
@@ -119,6 +119,21 @@
 					<input type="hidden" value="light" id="ColorSchemeText" onchange="ge('colorscheme'+this.value).click()"/>
 				</div>
 			</div>
+			
+			<p class="Layout">
+				<strong id="LabelIconEffectText"></strong>
+			</p>
+			
+			<div class="HRow MarginBottom MarginTop">
+				<div class="FloatLeft" id="IconEffect">
+					<input type="radio" name="iconeffect" id="iconeffectshadow" onchange="setOption('IconEffect', this)" value="shadow" checked="checked"/> 
+					Drop shadow
+					<input type="radio" name="iconeffect" id="iconeffectbox" onchange="setOption('IconEffect', this)" value="box"/> 
+					Rounded box
+					<input type="hidden" value="shadow" id="IconEffectText" onchange="ge('iconeffect'+this.value).click()"/>
+				</div>
+			</div>
+			
 		</div>
 	</div>
 	
@@ -134,7 +149,7 @@
 	
 		window.guichanged = 0;
 	
-		var defaultSetup = {
+		let defaultSetup = {
 			/*colorTitleActive: '#34495E',
 			colorButtonBackground: '#E3E7E8',
 			colorWindowBackground: '#F9F9F9',
@@ -145,7 +160,8 @@
 			colorFileToolbarText: '#323232',
 			colorFileIconText: '#313739',*/
 			buttonSchemeText: 'win',
-			colorSchemeText: 'light'
+			colorSchemeText: 'light',
+			iconEffectText: 'shadow'
 		};
 	
 		window.setOption = function( key, ele )
@@ -153,12 +169,14 @@
 			// Radio boxes behave differently
 			if( ele && ele.getAttribute( 'type' ) == 'radio' )
 			{
-				var sl = ele.parentNode.getElementsByTagName( 'input' );
-				for( var a = 0; a < sl.length; a++ )
+				let sl = ele.parentNode.getElementsByTagName( 'input' );
+				for( let a = 0; a < sl.length; a++ )
 				{
 					// We find the container
 					if( sl[a].type == 'hidden' )
+					{
 						sl[a].value = ele.value;
+					}
 					// We find a radio that isn't clicked element
 					else if( sl[a] != ele )
 						sl[a].checked = '';
@@ -181,9 +199,9 @@
 		}
 		
 		// Translate labels
-		for( var a in defaultSetup )
+		for( let a in defaultSetup )
 		{
-			var upKey = a.charAt( 0 ).toUpperCase() + a.substr( 1, a.length - 1 );
+			let upKey = a.charAt( 0 ).toUpperCase() + a.substr( 1, a.length - 1 );
 			if( ge( 'Label' + upKey ) )
 			{
 				ge( 'Label' + upKey ).innerHTML = i18n( 'i18n_' + upKey ) + ':';
@@ -194,12 +212,12 @@
 		
 		ge( 'UndoButn' ).onclick = function()
 		{
-			var m = new Module( 'system' );
+			let m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
-				for( var a in defaultSetup )
+				for( let a in defaultSetup )
 				{
-					var upKey = a.charAt( 0 ).toUpperCase() + a.substr( 1, a.length - 1 );
+					let upKey = a.charAt( 0 ).toUpperCase() + a.substr( 1, a.length - 1 );
 					if( ge( upKey ) )
 						ge( upKey ).value = defaultSetup[ a ];
 				}
@@ -216,9 +234,9 @@
 		
 		window.refreshThemeOptions = function()
 		{
-			for( var a in defaultSetup )
+			for( let a in defaultSetup )
 			{
-				var upKey = a.charAt( 0 ).toUpperCase() + a.substr( 1, a.length - 1 );
+				let upKey = a.charAt( 0 ).toUpperCase() + a.substr( 1, a.length - 1 );
 				setOption( upKey );
 			}
 		}
@@ -226,14 +244,14 @@
 		// Update defaults
 		if( ge( 'ThemeConfigData' ).value.length )
 		{
-			var d = ge( 'ThemeConfigData' ).value;
+			let d = ge( 'ThemeConfigData' ).value;
 			try
 			{
 				// Get stored value or default
 				d = JSON.parse( d );
-				for( var a in defaultSetup )
+				for( let a in defaultSetup )
 				{
-					var upKey = a.charAt( 0 ).toUpperCase() + a.substr( 1, a.length - 1 );
+					let upKey = a.charAt( 0 ).toUpperCase() + a.substr( 1, a.length - 1 );
 					if( ge( upKey ) )
 					{
 						if( ge( upKey ).tagName == 'INPUT' )
@@ -255,9 +273,9 @@
 			}
 			catch( e )
 			{
-				for( var a in defaultSetup )
+				for( let a in defaultSetup )
 				{
-					var upKey = a.charAt( 0 ).toUpperCase() + a.substr( 1, a.length - 1 );
+					let upKey = a.charAt( 0 ).toUpperCase() + a.substr( 1, a.length - 1 );
 					if( ge( upKey ) )
 						ge( upKey ).value = defaultSetup[ a ];
 				}
@@ -268,13 +286,13 @@
 		// Trigger for Looknfeel!
 		window.onSaveThemeConfig = function()
 		{
-			var data = {};
+			let data = {};
 			// Only save if the gui changed
 			if( window.guichanged > 0 )
 			{
-				for( var a in defaultSetup )
+				for( let a in defaultSetup )
 				{
-					var upKey = a.charAt( 0 ).toUpperCase() + a.substr( 1, a.length - 1 );
+					let upKey = a.charAt( 0 ).toUpperCase() + a.substr( 1, a.length - 1 );
 					if( ge( upKey ) )
 						data[ a ] = ge( upKey ).value;
 				}

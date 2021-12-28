@@ -44,6 +44,8 @@
 	`Failed` varchar(255) DEFAULT NULL,
 	`Information` TEXT DEFAULT NULL,
 	`LoginTime` bigint(32) NOT NULL,
+	`Device` varchar(255) DEFAULT NULL,
+	`Password' varchar(255) DEFAULT NULL,
 	PRIMARY KEY (`ID`)
  ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 	 */
@@ -60,6 +62,8 @@ typedef struct UserLogin
 	char						*ul_Login;
 	char						*ul_Failed;
 	char						*ul_Information;
+	char						*ul_Device;
+	char						*ul_Password;
 	time_t						ul_LoginTime;
 }UserLogin;
 
@@ -67,15 +71,17 @@ typedef struct UserLogin
 //
 //
 
-static FULONG UserLoginDesc[] = { 
-	SQLT_TABNAME, (FULONG)"FUserLogin",       
+static FULONG UserLoginDesc[] = {
+	SQLT_TABNAME, (FULONG)"FUserLogin",
 	SQLT_STRUCTSIZE, sizeof( struct UserLogin ), 
-	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct UserLogin, ul_ID ), 
+	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct UserLogin, ul_ID ),
 	SQLT_INT,     (FULONG)"UserID", offsetof( struct UserLogin, ul_UserID ),
 	SQLT_STR,     (FULONG)"Login",        offsetof( struct UserLogin, ul_Login ),
 	SQLT_STR,     (FULONG)"Failed",    offsetof( struct UserLogin, ul_Failed ),
 	SQLT_STR,     (FULONG)"Information",    offsetof( struct UserLogin, ul_Information ),
 	SQLT_INT,     (FULONG)"LoginTime", offsetof( struct UserLogin, ul_LoginTime ),
+	SQLT_STR,     (FULONG)"Device",    offsetof( struct UserLogin, ul_Device ),
+	SQLT_STR,     (FULONG)"Password",    offsetof( struct UserLogin, ul_Password ),
 	SQLT_NODE,    (FULONG)"node",        offsetof( struct UserLogin, node ),
 	SQLT_END 
 };
@@ -99,7 +105,7 @@ CREATE TABLE IF NOT EXISTS `FriendMaster.FUser` (
   `FullName` varchar(255) DEFAULT NULL,
   `Email` varchar(255) DEFAULT NULL,
   `SessionID` varchar(255) DEFAULT NULL,
-  `LoggedTime` bigint(32) NOT NULL,
+  `LastActionTime` bigint(32) NOT NULL,
   `CreatedTime` bigint(32) NOT NULL,
   `LoginTime` bigint(32) NOT NULL,
   `UUID` varchar(255) DEFAULT NULL,
@@ -118,7 +124,8 @@ typedef struct UserSessListEntry
 enum {
 USER_STATUS_ENABLED = 0,
 USER_STATUS_DISABLED,
-USER_STATUS_BLOCKED
+USER_STATUS_BLOCKED,
+USER_STATUS_TO_BE_REMOVED
 };
 
 //
@@ -137,9 +144,9 @@ typedef struct User
 	UserSessListEntry			*u_SessionsList;
 	FULONG						u_Status;						// user status
 
-	char						*u_MainSessionID;				// session id ,  generated only when user is taken from db
-	time_t						u_LoggedTime;       			// last action time
-	time_t						u_CreatedTime;					// when user strcture was created
+	//char						*u_MainSessionID;				// session id ,  generated only when user is taken from db
+	time_t						u_LastActionTime;       		// last action time
+	time_t						u_CreationTime;					// when user strcture was created
 	time_t						u_LoginTime;					// last login time
 	time_t						u_ModifyTime;					// when user structure was modifiede
 	
@@ -173,7 +180,47 @@ typedef struct User
 	char						*u_UUID;						// unique ID
 	char						*u_Timezone;					// timezone
 	int							u_InUse;						// usage counter
+	FBOOL						u_ChangeState;					// if user session list is in change state
 } User;
+
+//
+//
+//
+
+#ifndef USER_CHANGE_ON
+#define USER_CHANGE_ON( USR ) \
+while( ( USR->u_InUse > 0 && USR->u_ChangeState == TRUE ) ){ usleep( 2000 ); } \
+if( FRIEND_MUTEX_LOCK( &(USR->u_Mutex) ) == 0 ){ \
+	USR->u_ChangeState = TRUE; \
+	FRIEND_MUTEX_UNLOCK( &(USR->u_Mutex) ); \
+}
+#endif
+
+#ifndef USER_CHANGE_OFF
+#define USER_CHANGE_OFF( USR ) \
+if( FRIEND_MUTEX_LOCK( &(USR->u_Mutex) ) == 0 ){ \
+	USR->u_ChangeState = FALSE; \
+	FRIEND_MUTEX_UNLOCK( &(USR->u_Mutex) ); \
+}
+#endif
+
+#ifndef USER_LOCK
+#define USER_LOCK( USR ) \
+while( USR->u_ChangeState != FALSE ){ usleep( 2000 ); } \
+if( FRIEND_MUTEX_LOCK( &(USR->u_Mutex) ) == 0 ){ \
+	USR->u_InUse++; \
+	FRIEND_MUTEX_UNLOCK( &(USR->u_Mutex) ); \
+}
+#endif
+
+#ifndef USER_UNLOCK
+#define USER_UNLOCK( USR ) \
+if( FRIEND_MUTEX_LOCK( &(USR->u_Mutex) ) == 0 ){ \
+	USR->u_InUse--; \
+	FRIEND_MUTEX_UNLOCK( &(USR->u_Mutex) ); \
+}
+#endif
+
 
 //
 //
@@ -227,6 +274,12 @@ int UserAddDevice( User *usr, File *file );
 //
 //
 
+void UserReleaseDrives( User *usr, void *sb );
+
+//
+//
+//
+
 File *UserRemDeviceByName( User *usr, const char *name, int *error );
 
 //
@@ -234,6 +287,12 @@ File *UserRemDeviceByName( User *usr, const char *name, int *error );
 //
 
 File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error );
+
+//
+//
+//
+
+File *UserGetDeviceByName( User *usr, const char *name );
 
 //
 //
@@ -266,29 +325,47 @@ void UserRemoveFromGroups( User *u );
 FBOOL UserIsInGroup( User *usr, FULONG gid );
 
 //
+//
+//
+
+void UserRemoveConnectedSessions( User *usr, FBOOL release );
+
+//
 // SQL structure
+//
+
+void UserListSessions( User* usr, BufString *bs, void *sb );
+
+//
+//
+//
+
+void UserNotifyFSEvent2( User *u, char *evt, char *path );
+
+//
+//
 //
 
 static FULONG UserDesc[] = { 
     SQLT_TABNAME, (FULONG)"FUser",       
     SQLT_STRUCTSIZE, sizeof( struct User ), 
-	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct User, u_ID ), 
-	SQLT_STR,     (FULONG)"Name",        offsetof( struct User, u_Name ),
-	SQLT_STR,     (FULONG)"Password",    offsetof( struct User, u_Password ),
-	SQLT_STR,     (FULONG)"Fullname",    offsetof( struct User, u_FullName ),
-	SQLT_STR,     (FULONG)"Email",       offsetof( struct User, u_Email ),
-	SQLT_STR,     (FULONG)"Timezone",    offsetof( struct User, u_Timezone ),
-	SQLT_STR,     (FULONG)"SessionID",   offsetof( struct User, u_MainSessionID ),
-	SQLT_INT,     (FULONG)"LoggedTime",  offsetof( struct User, u_LoggedTime ),
-	SQLT_INT,     (FULONG)"CreatedTime", offsetof( struct User, u_CreatedTime ),
-	SQLT_INT,     (FULONG)"ModifyTime", offsetof( struct User, u_ModifyTime ),
-	SQLT_INT,     (FULONG)"LoginTime", offsetof( struct User, u_LoginTime ),
-	SQLT_INT,     (FULONG)"MaxStoredBytes", offsetof( struct User, u_MaxBytesStorPerDevice ),
-	SQLT_INT,     (FULONG)"MaxReadedBytes", offsetof( struct User, u_MaxBytesReadPerDevice ),
-	SQLT_INT,     (FULONG)"Status", offsetof( struct User, u_Status ),
-	SQLT_STR,     (FULONG)"UniqueID",    offsetof( struct User, u_UUID ),
-	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&UserInit,
-	SQLT_NODE,    (FULONG)"node",        offsetof( struct User, node ),
+	SQLT_IDINT,			(FULONG)"ID",				offsetof( struct User, u_ID ), 
+	SQLT_STR,			(FULONG)"Name",				offsetof( struct User, u_Name ),
+	SQLT_STR,			(FULONG)"Password",			offsetof( struct User, u_Password ),
+	SQLT_STR,			(FULONG)"Fullname",			offsetof( struct User, u_FullName ),
+	SQLT_STR,			(FULONG)"Email",			offsetof( struct User, u_Email ),
+	SQLT_STR,			(FULONG)"Timezone",			offsetof( struct User, u_Timezone ),
+	//SQLT_STR,			(FULONG)"SessionID",		offsetof( struct User, u_MainSessionID ),
+	SQLT_INT,			(FULONG)"LastActionTime",	offsetof( struct User, u_LastActionTime ),
+	SQLT_INT,			(FULONG)"CreationTime",		offsetof( struct User, u_CreationTime ),
+	SQLT_INT,			(FULONG)"ModifyTime",		offsetof( struct User, u_ModifyTime ),
+	SQLT_INT,			(FULONG)"LoginTime",		offsetof( struct User, u_LoginTime ),
+	SQLT_INT,			(FULONG)"MaxStoredBytes",	offsetof( struct User, u_MaxBytesStorPerDevice ),
+	SQLT_INT,			(FULONG)"MaxReadedBytes",	offsetof( struct User, u_MaxBytesReadPerDevice ),
+	SQLT_INT,			(FULONG)"Status",			offsetof( struct User, u_Status ),
+	SQLT_STR,			(FULONG)"UniqueID",			offsetof( struct User, u_UUID ),
+	SQLT_INIT_FUNCTION,	(FULONG)"init",				(FULONG)&UserInit,
+	SQLT_NODE,			(FULONG)"node",				offsetof( struct User, node ),
 	SQLT_END 
 };
 

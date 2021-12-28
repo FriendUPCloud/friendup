@@ -9,6 +9,17 @@
 *                                                                              *
 *****************************************************************************©*/
 
+function makeNumericalVersion( $versionString )
+{
+	$vers = explode( '.', $versionString );
+	$out = '';
+	foreach( $vers as $ver )
+	{
+		$out .= str_pad( $ver, 4, '0', STR_PAD_LEFT );
+	}
+	return intval( 1 . $out, 10 );
+}
+
 function storeRecentApps( $name )
 {
 	global $User, $Logger;
@@ -27,7 +38,7 @@ function storeRecentApps( $name )
 		if( !$list ) $list = [];
 	}
 	
-	$Logger->log( 'Merging? ' . $appHistory->Key );
+	//$Logger->log( 'Merging? ' . $appHistory->Key );
 	
 	$list = array_merge( array( $name ), $list );
 	
@@ -228,6 +239,39 @@ else if( $row = $SqlDatabase->FetchObject( '
 	{
 		$fn = $retObject ? $retObject->ConfFilename : false;
 		$conf = json_decode( $row->Config );
+		
+		if( $path = findInSearchPaths( $args->args->application ) )
+			$conf->Path = str_replace( '../resources', '', $path ) . '/';
+		else $conf->Path = str_replace( '../resources', '', $conf->Path );
+		
+		$numVersion = makeNumericalVersion( $conf->Version );
+		
+		// Find current installed (on disk) version
+		if( file_exists( $conf->Path . 'Config.conf' ) )
+		{
+			$confStr = file_get_contents( $conf->Path . 'Config.conf' );
+			$new = json_decode( $confStr );
+			
+			// We got a new version! Install it immediately
+			if( makeNumericalVersion( $new->Version ) > $numVersion )
+			{
+				$o = new dbIO( 'FApplication' );
+				if( $o->Load( $row->ID ) )
+				{
+					$o->Config = $confStr;
+					$o->Save();
+					
+					// Get the new object
+					$conf = $new;
+					
+					// Assign path again
+					if( $path = findInSearchPaths( $args->args->application ) )
+						$conf->Path = str_replace( '../resources', '', $path ) . '/';
+					else $conf->Path = str_replace( '../resources', '', $conf->Path );
+				}
+			}
+		}
+		
 		$conf->Permissions = json_decode( $ur->Permissions );
 		$conf->AuthID = $ur->AuthID;
 		$conf->State = json_decode( $ur->Data );
@@ -238,10 +282,6 @@ else if( $row = $SqlDatabase->FetchObject( '
 		{
 			$conf->$ko = $vo;
 		}
-		
-		if( $path = findInSearchPaths( $args->args->application ) )
-			$conf->Path = str_replace( '../resources', '', $path ) . '/';
-		else $conf->Path = str_replace( '../resources', '', $conf->Path );
 		
 		// Icons, normal app icon, icon for dormant disk, dock icon
 		if( file_exists( 'resources/' . $conf->Path . 'icon.svg' ) )

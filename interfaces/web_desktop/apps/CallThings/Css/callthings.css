@@ -1,0 +1,50 @@
+#io {
+	flex : 1;
+	overflow: auto;
+}
+
+#action-bar {
+	flex : 0 1 auto;
+}
+
+#input_exec_path {
+	width : 100%;
+}
+
+#ta_args {
+	height : 10em;
+	width  : 100%;
+}
+
+.input-error {
+	border : 2px solid red !important;
+}
+
+.result {
+	flex        : 1 1 auto;
+	min-width   : 3em;
+	word-break  : break-all;
+	user-select : text;
+}
+
+#call-things input,
+#call-things textarea,
+#call-things .result {
+	font-family : monospace;
+	font-size   : 120%;
+}
+
+.flexnes {
+	display         : flex;
+	justify-content : space-between;
+	align-items     : center;
+}
+
+.bortover {
+	flex-direction : row;
+}
+
+.nedover {
+	flex-direction : column;
+	align-items    : stretch;
+}

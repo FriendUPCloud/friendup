@@ -20,7 +20,8 @@ Application.run = function( msg )
 		height : document.body.clientHeight
 	};
 	
-	document.body.setAttribute( 'onresize', 'CheckWindowSize()' );
+	// Is it needed anymore???
+	//document.body.setAttribute( 'onresize', 'CheckWindowSize()' );
 }
 
 // Just initialize the GUI!
@@ -81,6 +82,11 @@ function refreshSidebar( show )
 			}
 		},
 		'Services': {
+			'Guacamole': {
+				icon: 'fa-info-circle',
+				showing: isAdmin,
+				display: true
+			},
 			'Status': {
 				icon: 'fa-info-circle',
 				showing: isAdmin,
@@ -93,10 +99,25 @@ function refreshSidebar( show )
 				showing: isAdmin,
 				display: ( show ? true : false )
 			},
-			'Liberator': {
+			'FriendRDS': {
 				icon: 'fa-info-circle',
+				name: i18n( 'i18n_link_friendrds' ),
 				showing: isAdmin,
-				display: ( show ? true : false )
+				display: false,
+				childs: {
+					'Servers': { 
+						icon: 'fa-info-circle',
+						name: i18n( 'i18n_link_servers' ),
+						showing: isAdmin,
+						display: true
+					},
+					'Users': {
+						icon: 'fa-info-circle',
+						name: i18n( 'i18n_link_users' ),
+						showing: isAdmin,
+						display: true
+					}
+				} 
 			}
 		},
 		'Accounts': {
@@ -145,7 +166,7 @@ function refreshSidebar( show )
 			'Roles': {
 				icon: 'fa-user-secret',
 				showing: isAdmin,
-				display: true,
+				display: false/*true*/,
 				permissions: [ 
 					
 					// Old
@@ -280,17 +301,20 @@ function refreshSidebar( show )
 			headings[ a ].elements.innerHTML = '';
 		
 			var heading_children = 0;
-		
+			
 			// Populate children
 			for( var b in mods[ a ] )
 			{
 				var ch = mods[ a ][ b ];
 				var ptag = document.createElement( 'div' );
+				var wtag = document.createElement( 'div' );
 				var atag = document.createElement( 'a' );
-				atag.innerHTML = b;
+				atag.innerHTML = ( ch.name ? ch.name : b );
 				//ptag.className = 'HRow BackgroundNegativeAlt PaddingLeft PaddingSmallTop PaddingRight PaddingSmallBottom';
+				wtag.className = 'InputHeight';
 				ptag.className = 'HRow BackgroundNegative PaddingLeft PaddingSmallTop PaddingRight PaddingSmallBottom';
-				ptag.appendChild( atag );
+				wtag.appendChild( atag );
+				ptag.appendChild( wtag );
 			
 				if( !ch.display ) continue;
 			
@@ -313,6 +337,7 @@ function refreshSidebar( show )
 					}
 					else continue;
 				}
+				
 				if( ch.icon )
 				{
 					//atag.classList.add( 'IconMedium', ch.icon );
@@ -320,45 +345,141 @@ function refreshSidebar( show )
 					//atag.classList.add( 'Negative', ch.icon );
 					//atag.classList.add( 'PaddingLeft', ch.icon );
 					//atag.classList.add( 'PaddingRight', ch.icon );
-					atag.className = 'IconSmall ' + ch.icon + ' Negative PaddingLeft PaddingRight';
+					atag.className = 'IconMedium ' + ch.icon + ' Negative PaddingLeft PaddingRight';
 					atag.innerHTML = '&nbsp;&nbsp;&nbsp;' + atag.innerHTML;
-					( function( module, sect, ch, ele, act )
+					
+					if( !ch.childs )
 					{
-						ele.onclick = function()
+						( function( module, sect, ch, ele, act )
 						{
-							// Update latest changes to permissions before showing page ...
-							Application.checkAppPermission( false, function()
+							ele.onclick = function()
 							{
-								if( ge( 'GuiSidebar' ) )
+								// Update latest changes to permissions before showing page ...
+								Application.checkAppPermission( false, function()
 								{
-									var list = ge( 'GuiSidebar' ).getElementsByTagName( 'div' );
-								
-									if( list.length > 0 )
+									if( ge( 'GuiSidebar' ) )
 									{
-										for( var a = 0; a < list.length; a++ )
+										var list = ge( 'GuiSidebar' ).getElementsByTagName( 'div' );
+								
+										if( list.length > 0 )
 										{
-											if( list[a] && list[a].className && list[a].className.indexOf( ' Selected' ) >= 0 )
+											for( var a = 0; a < list.length; a++ )
 											{
-												list[a].className = ( list[a].className.split( ' Selected' ).join( '' ) );
+												if( list[a] && list[a].className && list[a].className.indexOf( ' Selected' ) >= 0 )
+												{
+													list[a].className = ( list[a].className.split( ' Selected' ).join( '' ) );
+												}
 											}
 										}
 									}
-								}
 							
-								ele.parentNode.className = ( ele.parentNode.className.split( ' Selected' ).join( '' ) + ' Selected' );
-							
-								setGUISection( module, sect, act );
-							} );
-						}
+									ele.parentNode.parentNode.className = ( ele.parentNode.parentNode.className.split( ' Selected' ).join( '' ) + ' Selected' );
+									
+									setGUISection( module, sect, false, act );
+								} );
+							}
 					
-						if( ch.init )
-						{
-							ele.onclick();
-						}
+							if( ch.init )
+							{
+								ele.onclick();
+							}
 					
-					} )( a, b, ch, atag, ch.action );
+						} )( a, b, ch, atag, ch.action );
+					}
 				}
+				
 				headings[ a ].elements.appendChild( ptag );
+				
+				// Add sub children if found ...
+				if( ch.icon && ch.childs )
+				{
+					
+					for( var c in ch.childs )
+					{
+						var chc = ch.childs[ c ];
+						var ptag = document.createElement( 'div' );
+						var dtag = document.createElement( 'div' );
+						var ctag = document.createElement( 'div' );
+						var atag = document.createElement( 'a' );
+						atag.innerHTML = ( chc.name ? chc.name : c );
+						ptag.className = 'HRow BackgroundNegative PaddingLeft PaddingSmallTop PaddingRight PaddingSmallBottom';
+						dtag.className = 'PaddingLeft BackgroundNegative';
+						ctag.className = 'PaddingLeft BackgroundNegative';
+						dtag.appendChild( atag );
+						ctag.appendChild( dtag );
+						ptag.appendChild( ctag );
+						
+						if( !chc.display ) continue;
+					
+						// If we have no showing check permissions
+						if( !chc.showing )
+						{
+							if( chc.permissions )
+							{
+								var access = false;
+				
+								for( var i in chc.permissions )
+								{
+									if( chc.permissions[i] && Application.checkAppPermission( chc.permissions[i] ) )
+									{
+										access = true;
+									}
+								}
+				
+								if( !access ) continue;
+							}
+							else continue;
+						}
+					
+						if( chc.icon )
+						{
+							atag.className = 'IconMedium ' + chc.icon + ' Negative PaddingLeft PaddingRight';
+							atag.innerHTML = '&nbsp;&nbsp;&nbsp;' + atag.innerHTML;
+							
+							( function( module, sect, child, ch, ele, act )
+							{
+								ele.onclick = function()
+								{
+									// Update latest changes to permissions before showing page ...
+									Application.checkAppPermission( false, function()
+									{
+										if( ge( 'GuiSidebar' ) )
+										{
+											var list = ge( 'GuiSidebar' ).getElementsByTagName( 'div' );
+							
+											if( list.length > 0 )
+											{
+												for( var a = 0; a < list.length; a++ )
+												{
+													if( list[a] && list[a].className && list[a].className.indexOf( ' Selected' ) >= 0 )
+													{
+														list[a].className = ( list[a].className.split( ' Selected' ).join( '' ) );
+													}
+												}
+											}
+										}
+						
+										ele.parentNode.parentNode.className = ( ele.parentNode.parentNode.className.split( ' Selected' ).join( '' ) + ' Selected' );
+						
+										setGUISection( module, sect, child, act );
+									} );
+								}
+				
+								if( chc.init )
+								{
+									ele.onclick();
+								}
+				
+							} )( a, b, c, ch, atag, chc.action );
+							
+						}
+						
+						headings[ a ].elements.appendChild( ptag );
+						
+					}
+					
+				}
+				
 				heading_children++;
 			}
 		
@@ -410,7 +531,7 @@ function refreshStatistics()
 }
 
 // Sets the gui for a section in the app
-function setGUISection( module, section, action )
+function setGUISection( module, section, child, action )
 {
 	var found = false;
 	if( typeof( Application.mods[ module ] ) != 'undefined' )
@@ -454,19 +575,23 @@ function setGUISection( module, section, action )
 	
 	else
 	{
-		var sectPart = module.toLowerCase() + '_' + section.toLowerCase();
+		var sectPart = module.toLowerCase() + '_' + section.toLowerCase() + ( child ? '_' + child.toLowerCase() : '' );
+		
 		var f = new File( 'Progdir:Templates/' + sectPart + '.html' );
 		f.onLoad = function( data )
 		{
 			ge( 'GuiContent' ).innerHTML = data;
 		
 			// Temporary until search is fixed for users ...
-		
+			
 			if( section.toLowerCase() == 'users' || section.toLowerCase() == 'workgroups' ) 
 			{
-				//UsersSettings( 'maxlimit', 99999 );
+				if( typeof UsersSettings != 'undefined' )
+				{
+					//UsersSettings( 'maxlimit', 99999 );
 			
-				UsersSettings( 'reset', true );
+					UsersSettings( 'reset', 'all' );
+				}
 			}
 		
 			Sections[ sectPart ]();
@@ -538,7 +663,73 @@ var Sections = {
 	}
 }
 
-
+function CustomToggle( id, classn, name, onclick, checked, mode, value )
+{
+	if( id )
+	{
+		// TODO: Don't use string ...
+		
+		switch( mode )
+		{
+			
+			case 1:
+				
+				var d = document.createElement( 'label' );
+				if( classn )
+				{
+					d.className = classn;
+				}
+		
+				var i = document.createElement( 'input' );
+				i.type = 'checkbox';
+				i.className = 'CustomToggleInput';
+				i.id = id;
+				if( name )
+				{
+					i.name = name;
+				}
+				if( checked )
+				{
+					i.checked = true;
+				}
+				if( onclick )
+				{
+					i.onclick = onclick;
+				}
+				if( value )
+				{
+					i.value = value;
+				}
+		
+				d.appendChild( i );
+		
+				var l = document.createElement( 'label' );
+				l.className = 'CustomToggleLabel';
+				l.setAttribute( 'for', id );
+				
+				d.appendChild( l );
+		
+				return d;
+				
+				break;
+			
+			default:
+				
+				str  = '<label'+(classn?' class="'+classn+'"':'')+'>';
+				str += '	<input type="checkbox" class="CustomToggleInput" id="'+id+'"'+(name?' name="'+name+'"':'')+(checked?' checked="checked"':'')+(onclick?' onclick="'+onclick+'"':'')+'>';
+				str += '	<label class="CustomToggleLabel" for="'+id+'"></label>';
+				str += '</label>';
+				
+				return str;
+				
+				break;
+				
+		}
+		
+	}
+	
+	return '';
+}
 
 function Toggle( _this, callback, on )
 {
@@ -791,6 +982,112 @@ function CheckWindowSize()
 	CheckUserlistSize();
 }
 
+function RunScripts( data )
+{
+	if( data )
+	{
+		var wholescript = [];
+		
+		while( scripts = data.match( /\<script[^>]*?\>([\w\W]*?)\<\/script[^>]*?\>/i ) )
+		{
+			wholescript.push( scripts[1] );
+			data = data.split( scripts[0] ).join ( '' );
+		}
+		// Run script
+		if( wholescript.length )
+		{
+			eval( wholescript.join ( '' ) );
+		}
+	}
+}
+
+function GetLinks( data, arr, exl )
+{
+	var m = ''; var i = 0;
+	
+	while( m = data.match( /<link.*?href='(.*?)'/i ) )
+	{
+		var href = ResolvePath( 'Progdir:' + m[1] );
+		
+		data = data.split( m[0] ).join( '<link rel="stylesheet" href="' + href + '"' );
+		
+		var sty = href;
+		
+		if( arr.indexOf( sty ) < 0 && exl.indexOf( sty ) < 0 )
+		{
+			arr.push( sty );
+		}
+		
+		i++;
+		
+		if( i >= 1000 ) break;
+	}
+	
+	return data;
+}
+
+function GetScripts( data, arr, exl )
+{
+	var m = ''; var i = 0;
+	
+	while( m = data.match( /<script.*?src='(.*?)'/i ) )
+	{
+		if( m[1] && m[1].indexOf( 'Progdir:' ) < 0 && m[1].indexOf( 'Libs:' ) < 0 )
+		{
+			var src = ResolvePath( 'Progdir:' + m[1] );
+		}
+		else
+		{
+			var src = ResolvePath( m[1] );
+		}
+		
+		data = data.split( m[0] ).join( '<script src="' + src + '"' );
+		
+		var scr = src;
+		
+		if( arr )
+		{
+			if( arr.indexOf( scr ) < 0/* && exl.indexOf( scr ) < 0*/ )
+			{
+				arr.push( scr );
+			}
+		}
+		
+		i++;
+		
+		if( i >= 1000 ) break;
+	}
+	return data;
+}
+
+function ResolvePath( filename )
+{
+	if( filename.toLowerCase().substr( 0, 8 ) == 'progdir:' )
+	{
+		filename = filename.substr( 8, filename.length - 8 );
+		if( Application && Application.filePath )
+			filename = Application.filePath + filename;
+	}
+	// TODO: Remove system: here (we're rollin with Libs:)
+	else if( filename.toLowerCase().substr( 0, 7 ) == 'system:' )
+	{
+		filename = filename.substr( 7, filename.length - 7 );
+		filename = '/webclient/' + filename;
+	}
+	if( filename.toLowerCase().substr( 0, 5 ) == 'libs:' )
+	{
+		filename = filename.substr( 5, filename.length - 5 );
+		filename = '/webclient/' + filename;
+	}
+	// Fix broken paths
+	if( filename.substr( 0, 20 ) == 'resources/webclient/' )
+	{
+		filename = filename.substr( 20, filename.length - 20 );
+	}
+		
+	return filename;
+}
+
 function initTest()
 {
 	
@@ -894,8 +1191,19 @@ function initTest()
 function checkKeys( e )
 {
 	if ( !e ) e = window.event;
-	var targ = e.srcElement ? e.srcElement : e.target;
-	var keycode = e.which ? e.which : e.keyCode;
+	let targ = e.srcElement ? e.srcElement : e.target;
+	let keycode = e.which ? e.which : e.keyCode;
+	
+	// Ignore some cases
+	switch( keycode )
+	{
+		case 16:
+		case 17:
+			return;
+			break;
+	}
+	// Done ignore
+	
 	if( Application.closeAllEditModes )
 	{
 		Application.closeAllEditModes( { keycode : keycode } );

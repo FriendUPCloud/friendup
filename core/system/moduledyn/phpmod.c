@@ -154,13 +154,13 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	FilterPHPVar( epath );
 
 	sprintf( command, "php '%s' '%s'", path, args != NULL ? args : "" );
-	DEBUG("First command: %s\n", command );
+	//DEBUG("First command: %s\n", command );
 	// Make the commandline string with the safe, escaped arguments, and check for buffer overflows.
 	int cx = snprintf( command, escapedSize, "php '%s' '%s'", epath, earg );
-	DEBUG("Second command: %s\n", command );
+	//DEBUG("Second command: %s\n", command );
 	if( !( cx >= 0 && cx < escapedSize ) )
 	{
-		FERROR( "[PHPmod] snprintf\n" );
+		FERROR( "[PHPmod] snprintf fail\n" );
 		FFree( command ); FFree( epath ); FFree( earg );
 		return NULL;
 	}
@@ -169,7 +169,14 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	
 	char *buf = FMalloc( PHP_READ_SIZE+16 );
 	
-	ListString *ls = ListStringNew();
+	//ListString *ls = ListStringNew();
+	BufString *bs = BufStringNew();
+	if( bs == NULL )
+	{
+		FERROR( "[PHPmod] BufStringNew fail\n" );
+		FFree( command ); FFree( epath ); FFree( earg ); FFree( buf );
+		return NULL;
+	}
 	
 #ifdef USE_NPOPEN
 #ifdef USE_NPOPEN_POLL
@@ -183,7 +190,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 		return NULL;
 	}
 	
-	DEBUG("[PHPmod] command launched\n");
+	//DEBUG("[PHPmod] command launched\n");
 
 	int size = 0;
 	int errCounter = 0;
@@ -207,7 +214,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 
 	while( TRUE )
 	{
-		DEBUG("[PHPmod] in loop\n");
+		//DEBUG("[PHPmod] in loop\n");
 		
 		ret = poll( fds, 2, 250 ); // HT - set it to 250 ms..
 
@@ -227,7 +234,8 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 		if( size > 0 )
 		{
 			//DEBUG( "[PHPmod] before adding to list\n");
-			ListStringAdd( ls, buf, size );
+			//ListStringAdd( ls, buf, size );
+			BufStringAddSize( bs, buf, size );
 			//DEBUG( "[PHPmod] after adding to list\n");
 			res += size;
 		}
@@ -277,7 +285,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 			break;
 		}
 		FD_SET( pofd.np_FD[ NPOPEN_CONSOLE ], &set);
-		DEBUG("[PHPmod] in loop\n");
+		//DEBUG("[PHPmod] in loop\n");
 		
 		int ret = select( pofd.np_FD[ NPOPEN_CONSOLE ]+1, &set, NULL, NULL, &timeout );
 		// Make a new buffer and read
@@ -352,11 +360,14 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 		*length = ( unsigned long int )res;
 	}
 
-	ListStringJoin( ls );
+	//ListStringJoin( ls );
 	
-	char *final = ls->ls_Data;
-	ls->ls_Data = NULL;
-	ListStringDelete( ls );
+	//char *final = ls->ls_Data;
+	//ls->ls_Data = NULL;
+	//ListStringDelete( ls );
+	char *final = bs->bs_Buffer;
+	bs->bs_Buffer = NULL;
+	BufStringDelete( bs );
 
 	if( command != NULL )
 	{

@@ -67,10 +67,22 @@ var ScreenOverlay = {
 	{
 		if( this.debug ) return;
 		var self = this;
-		if( !this.visibility ) return;
+		
+		// Reload the docks
+		Workspace.reloadDocks();
+		
+		if( !this.visibility ) 
+		{
+			return;
+		}
+
 		this.div.classList.add( 'Hiding' );
+
 		setTimeout( function()
 		{
+			// Reload the docks
+			Workspace.reloadDocks();
+			
 			self.div.classList.remove( 'Showing' );
 			self.div.classList.remove( 'Hiding' );
 			setTimeout( function()

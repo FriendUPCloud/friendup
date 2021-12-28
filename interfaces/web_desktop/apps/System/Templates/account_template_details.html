@@ -1,92 +1,94 @@
-	
-	<div class="HRow PaddingBottom">
-		<div class="HContent50 FloatLeft">
-			<!--<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left" id="TempBackBtn"></button>-->
-			<h3 class="NoMargin FloatLeft">
-				<strong>{i18n_template_details}</strong>
-			</h3>
-		</div>
-	</div>
-	
-	<!--<div class="HRow BackgroundNegativeAlt Negative Padding">-->
-	<div class="HRow BackgroundNegative Negative Padding">
-		<div class="HContent30 FloatLeft Ellipsis">
-			<!--<div class="BackgroundPositiveAlt NegativeAlt PaddingSmall FloatLeft IconMedium fa-file-text-o"></div>-->
-			<div class="BackgroundPositive Positive PaddingSmall FloatLeft IconMedium fa-file-text-o"></div>
-		</div>
-		<div class="HContent70 FloatLeft Ellipsis">
-			<h2 class="ImageHeading NoMargin">
-				<strong>{template_title}</strong>
-			</h2>
-		</div>
-	</div>
-	
-	<div class="Box Padding" id="TempBasicDetails">
+
+	<div class="OverflowHidden BorderRadius Elevated">
 		
-		<div class="HRow MarginBottom">
+		<div class="HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight">
+			<div class="HContent50 InputHeight FloatLeft">
+				<h3 class="NoMargin FloatLeft">
+					<strong>{i18n_template_details}</strong>
+				</h3>
+			</div>
+		</div>
+	
+		<!--<div class="HRow BackgroundNegativeAlt Negative Padding">-->
+		<div class="HRow BackgroundNegative Negative Padding">
 			<div class="HContent30 FloatLeft Ellipsis">
-				<strong>{i18n_template_name}:</strong>
+				<!--<div class="BackgroundPositiveAlt NegativeAlt PaddingSmall FloatLeft IconMedium fa-file-text"></div>-->
+				<div class="BackgroundPositive Positive PaddingSmall FloatLeft IconMedium fa-file-text"></div>
 			</div>
 			<div class="HContent70 FloatLeft Ellipsis">
-				<input id="TempName" type="text" class="FullWidth" value="{template_name}"/>
+				<h2 class="ImageHeading NoMargin">
+					<strong>{template_title}</strong>
+				</h2>
 			</div>
 		</div>
+	
+		<div class="Box Padding" id="TempBasicDetails">
 		
-		<div class="HRow MarginBottom">
-			<div class="HContent30 FloatLeft Ellipsis">
-				<strong>{i18n_template_description}:</strong>
-			</div>
-			<div class="HContent70 FloatLeft Ellipsis">
-				<textarea id="TempDescription" class="FullWidth" style="resize: none;">{template_description}</textarea>
-			</div>
-		</div>
-		
-		<div class="HRow MarginBottom">
-			<div class="HContent30 FloatLeft Ellipsis">
-				<strong>{i18n_template_language}:</strong>
-			</div>
-			<div class="HContent70 FloatLeft Ellipsis">
-				<select class="InputHeight FullWidth" id="TempLanguages">
-					{template_language}
-				</select>
-			</div>
-		</div>
-		
-		<div id="TempEditContainer">
-			<div class="HRow">
-				<!--<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft NegativeAlt fa-trash" id="TempDeleteBtn"></button>-->
-				<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft Positive fa-trash" id="TempDeleteBtn"></button>
-				<div id="TempEditButtons">
-					<!--<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="TempSaveBtn">-->
-					<button class="Button IconSmall FloatRight MarginLeft" id="TempSaveBtn">
-						{i18n_save}
-					</button>
-					<!--<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="TempCancelBtn">-->
-					<button class="Button IconSmall FloatRight MarginLeft" id="TempCancelBtn">
-						{i18n_cancel}
-					</button>
+			<div class="HRow MarginBottom">
+				<div class="HContent30 InputHeight FloatLeft Ellipsis">
+					<strong>{i18n_template_name}:</strong>
+				</div>
+				<div class="HContent70 FloatLeft Ellipsis">
+					<input id="TempName" type="text" class="FullWidth InputHeight" value="{template_name}"/>
 				</div>
 			</div>
-		</div>
 		
+			<div class="HRow MarginBottom">
+				<div class="HContent30 InputHeight FloatLeft Ellipsis">
+					<strong>{i18n_template_description}:</strong>
+				</div>
+				<div class="HContent70 FloatLeft Ellipsis">
+					<textarea id="TempDescription" class="FullWidth" style="min-height: 100px;resize: none;">{template_description}</textarea>
+				</div>
+			</div>
+		
+			<div class="HRow MarginBottom">
+				<div class="HContent30 InputHeight FloatLeft Ellipsis">
+					<strong>{i18n_template_language}:</strong>
+				</div>
+				<div class="HContent70 FloatLeft Ellipsis">
+					<select class="FullWidth InputHeight" id="TempLanguages">
+						{template_language}
+					</select>
+				</div>
+			</div>
+		
+			<div id="TempEditContainer">
+				<div class="HRow">
+					<!--<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft NegativeAlt fa-trash" id="TempDeleteBtn"></button>-->
+					<button class="IconButton IconMedium IconToggle ButtonSmall FloatLeft Positive fa-trash" id="TempDeleteBtn"></button>
+					<div id="TempEditButtons">
+						<!--<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="TempSaveBtn">-->
+						<button class="Button IconSmall FloatRight MarginLeft" id="TempSaveBtn">
+							{i18n_save}
+						</button>
+						<!--<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="TempCancelBtn">-->
+						<button class="Button IconSmall FloatRight MarginLeft" id="TempCancelBtn">
+							{i18n_cancel}
+						</button>
+					</div>
+				</div>
+			</div>
+		
+		</div>
+	
 	</div>
 	
-	
-	<div id="AdminApplicationContainer" class="Closed">
+	<div id="AdminApplicationContainer" class="MarginTop OverflowHidden BorderRadius Elevated Closed">
 		<!--<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">-->
-		<div class="HRow MarginTop BackgroundNegative Negative Padding">
-			<div class="PaddingSmall HContent40 FloatLeft">
-				<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="ApplicationEditBack"></button>
-				<h3 class="NoMargin FloatLeft">
+		<div class="HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight">
+			<div class="PaddingSmall HContent40 InputHeight FloatLeft">
+				<button class="IconButton IconMedium ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="ApplicationEditBack"></button>
+				<h3 class="NoMargin PaddingSmallLeft PaddingSmallRight FloatLeft">
 					<strong>{i18n_applications}</strong>
 				</h3>
 			</div>
 			<div class="PaddingSmall HContent45 FloatLeft Relative">
-				<button class="IconButton IconSmall ButtonSmall fa-times-circle Closed" style="position:absolute;right:0;margin-top:-2px;margin-right:-2px;" id="ApplicationSearchCancelBtn"></button>
+				<button class="IconButton IconMedium ButtonSmall fa-times-circle Closed" style="position:absolute;right:0;margin-top:-2px;" id="ApplicationSearchCancelBtn"></button>
 				<input type="text" class="FullWidth" placeholder="{i18n_search}" style="padding-right:21px">
 			</div>
-			<div class="PaddingSmall HContent15 FloatLeft Relative">
-				<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle Open" id="ApplicationEdit"></button>
+			<div class="HContent15 FloatLeft Relative">
+				<button class="IconButton IconMedium ButtonSmall Negative FloatRight fa-plus-circle Open" id="ApplicationEdit"></button>
 			</div>
 		</div>
 		<div id="ApplicationGui">
@@ -94,21 +96,21 @@
 		</div>
 	</div>
 	
-	<div id="AdminDockContainer" class="Closed">
+	<div id="AdminDockContainer" class="MarginTop OverflowHidden BorderRadius Elevated Closed">
 		<!--<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">-->
-		<div class="HRow MarginTop BackgroundNegative Negative Padding">
-			<div class="PaddingSmall HContent40 FloatLeft">
-				<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="DockEditBack"></button>
-				<h3 class="NoMargin FloatLeft">
+		<div class="HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight">
+			<div class="PaddingSmall HContent40 InputHeight FloatLeft">
+				<button class="IconButton IconMedium ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="DockEditBack"></button>
+				<h3 class="NoMargin PaddingSmallLeft PaddingSmallRight FloatLeft">
 					<strong>{i18n_dock}</strong>
 				</h3>
 			</div>
 			<div class="PaddingSmall HContent45 FloatLeft Relative">
-				<button class="IconButton IconSmall ButtonSmall fa-times-circle Closed" style="position:absolute;right:0;margin-top:-2px;margin-right:-2px;" id="DockSearchCancelBtn"></button>
+				<button class="IconButton IconMedium ButtonSmall fa-times-circle Closed" style="position:absolute;right:0;margin-top:-2px;" id="DockSearchCancelBtn"></button>
 				<input type="text" class="FullWidth" placeholder="{i18n_search}" style="padding-right:21px">
 			</div>
-			<div class="PaddingSmall HContent15 FloatLeft Relative">
-				<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle Open" id="DockEdit"></button>
+			<div class="HContent15 FloatLeft Relative">
+				<button class="IconButton IconMedium ButtonSmall Negative FloatRight fa-plus-circle Open" id="DockEdit"></button>
 			</div>
 		</div>
 		<div id="DockGui">
@@ -117,21 +119,21 @@
 	</div>
 	
 	
-	<div id="AdminStartupContainer" class="Closed">
+	<div id="AdminStartupContainer" class="MarginTop OverflowHidden BorderRadius Elevated Closed">
 		<!--<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">-->
-		<div class="HRow MarginTop BackgroundNegative Negative Padding">
-			<div class="PaddingSmall HContent40 FloatLeft">
-				<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="StartupEditBack"></button>
-				<h3 class="NoMargin FloatLeft">
+		<div class="HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight">
+			<div class="PaddingSmall HContent40 InputHeight FloatLeft">
+				<button class="IconButton IconMedium ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="StartupEditBack"></button>
+				<h3 class="NoMargin PaddingSmallLeft PaddingSmallRight FloatLeft">
 					<strong>{i18n_startup}</strong>
 				</h3>
 			</div>
 			<div class="PaddingSmall HContent45 FloatLeft Relative">
-				<button class="IconButton IconSmall ButtonSmall fa-times-circle Closed" style="position:absolute;right:0;margin-top:-2px;margin-right:-2px;" id="StartupSearchCancelBtn"></button>
+				<button class="IconButton IconMedium ButtonSmall fa-times-circle Closed" style="position:absolute;right:0;margin-top:-2px;" id="StartupSearchCancelBtn"></button>
 				<input type="text" class="FullWidth" placeholder="{i18n_search}" style="padding-right:21px">
 			</div>
-			<div class="PaddingSmall HContent15 FloatLeft Relative">
-				<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle Open" id="StartupEdit"></button>
+			<div class="HContent15 FloatLeft Relative">
+				<button class="IconButton IconMedium ButtonSmall Negative FloatRight fa-plus-circle Open" id="StartupEdit"></button>
 			</div>
 		</div>
 		<div id="StartupGui">
@@ -140,11 +142,11 @@
 	</div>
 	
 	
-	<div id="AdminLooknfeelContainer" class="Closed">
+	<div id="AdminLooknfeelContainer" class="MarginTop OverflowHidden BorderRadius Elevated Closed">
 		<!--<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">-->
-		<div class="HRow MarginTop BackgroundNegative Negative Padding">
-			<div class="PaddingSmall HContent100 FloatLeft">
-				<h3 class="NoMargin">
+		<div class="HRow BackgroundNegative Negative Padding">
+			<div class="HContent100 InputHeight FloatLeft">
+				<h3 class="NoMargin PaddingSmallLeft PaddingSmallRight">
 					<strong>{i18n_looknfeel}</strong>
 				</h3>
 			</div>
@@ -163,7 +165,7 @@
 					</div>
 					
 					<div class="HRow MarginBottom">
-						<div class="HContent50 FloatLeft Ellipsis">
+						<div class="HContent50 InputHeight FloatLeft Ellipsis">
 							<strong>{i18n_window_controls}:</strong>
 						</div>
 						<div class="HContent50 FloatLeft Ellipsis" id="theme_style">
@@ -172,7 +174,7 @@
 					</div>
 					
 					<div class="HRow MarginBottom">
-						<div class="HContent50 FloatLeft Ellipsis">
+						<div class="HContent50 InputHeight FloatLeft Ellipsis">
 							<strong>{i18n_workspaces}:</strong>
 						</div>
 						<div class="HContent20 FloatLeft Ellipsis" id="workspace_count">

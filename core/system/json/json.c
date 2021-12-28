@@ -754,16 +754,19 @@ json_value * json_parse_ex (json_settings * settings,
 								break;
 
 							case ',':
-
-								if (flags & flag_need_comma)
+								//if( flags & flag_need_comma )
+								// gcc10 warning fix
+								if( (flags & flag_need_comma) > 0 )
 								{
 									flags &= ~ flag_need_comma;
 									break;
 								}
 
 							default:
+							{
 								sprintf (error, "%d:%d: Unexpected `%c` in object", line_and_col, b);
 								goto e_failed;
+							}
 						};
 
 						break;

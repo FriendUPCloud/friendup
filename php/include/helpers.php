@@ -11,23 +11,60 @@
 *****************************************************************************©*/
 
 // Connects to friend core and builds the query at the same time
-function FriendCoreQuery( $command = '', $args = false, $method = 'POST', $headers = false, $conf = false )
+function FriendCoreQuery( $command = '', $args = false, $method = 'POST', $headers = false, $sconf = false, $plainpostargs = false )
 {
 	global $Config;
 	
-	if( !$conf ) $conf = $Config;
+	if( file_exists( 'cfg/cfg.ini' ) )
+	{
+		$fconf = parse_ini_file( 'cfg/cfg.ini', true );
+	}
+	else
+	{
+		$fconf = $Config;
+	}
+	
+	if( !$sconf )
+	{
+		$sconf = new stdClass();
+	}
+	
+	// ShortConfig defined ...
+	
+	$sconf->SSLEnable = ( $sconf->SSLEnable ? $sconf->SSLEnable : $fconf[ 'Core' ][ 'SSLEnable' ]      );
+	$sconf->FCPort    = ( $sconf->FCPort    ? $sconf->FCPort    : $fconf[ 'Core' ][ 'port' ]           );
+	$sconf->FCHost    = ( $sconf->FCHost    ? $sconf->FCHost    : $fconf[ 'FriendCore' ][ 'fchost' ]   );
+	$sconf->FCUpload  = ( $sconf->FCUpload  ? $sconf->FCUpload  : $fconf[ 'FriendCore' ][ 'fcupload' ] );
 	
 	$curl = curl_init();
 	
-	$host = $conf->FCHost;
-	if( isset( $Config[ 'FriendCore' ][ 'fconlocalhost' ] ) && $Config[ 'FriendCore' ][ 'fconlocalhost' ] == 1 )
+	$host = $sconf->FCHost;
+	if( isset( $fconf[ 'FriendCore' ][ 'fconlocalhost' ] ) && $fconf[ 'FriendCore' ][ 'fconlocalhost' ] == 1 )
 	{
 		$host = 'localhost';
 	}
 	
-	$server = ( $conf->SSLEnable ? 'https://' : 'http://' ) . $host . ( $host == 'localhost' && $conf->FCPort ? ( ':' . $conf->FCPort ) : '' );
+	$server = ( $sconf->SSLEnable ? 'https://' : 'http://' ) . $host . ( $host == 'localhost' && $sconf->FCPort ? ( ':' . $sconf->FCPort ) : '' );
 	
 	$url = ( $server . $command );
+	
+	// If sessionid or servertoken is missing in command and args add servertoken with admin privileges from config to communicate with FriendCore internal.
+	
+	if( 
+		!strstr( $url, '?sessionid=' ) && !strstr( $url, '?servertoken=' ) 
+		&& isset( $fconf[ 'ServiceKeys' ][ 'AdminModuleServerToken' ] ) && $fconf[ 'ServiceKeys' ][ 'AdminModuleServerToken' ] 
+	)
+	{
+		if( 
+			!$args 
+			|| ( is_object( $args ) && !isset( $args->sessionid ) && !isset( $args->servertoken ) ) 
+			|| ( is_array( $args  ) && !isset( $args[ 'sessionid' ] ) && !isset( $args[ 'servertoken' ] ) ) 
+			|| ( is_string( $args ) && !strstr( $args, '"sessionid"' ) && !strstr( $args, '"servertoken"' ) )
+		)
+		{
+			$url = ( $url . ( strstr( $url, '?' ) ? '&' : '?' ) . 'servertoken=' . $fconf[ 'ServiceKeys' ][ 'AdminModuleServerToken' ] );
+		}
+	}
 	
 	if( $url && strstr( $url, '?' ) )
 	{
@@ -74,6 +111,7 @@ function FriendCoreQuery( $command = '', $args = false, $method = 'POST', $heade
 	}
 
 	curl_setopt( $curl, CURLOPT_URL, $url );
+	curl_setopt( $curl, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 
 	if( $headers )
 	{
@@ -91,7 +129,7 @@ function FriendCoreQuery( $command = '', $args = false, $method = 'POST', $heade
 	
 	if( $args )
 	{
-		if( !isset( $conf ) || !$conf->argtype )
+		if( !$plainpostargs )
 		{
 			if( is_object( $args ) )
 			{

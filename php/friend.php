@@ -22,6 +22,8 @@ flush();
 
 set_time_limit( 10 ); // Replace this one later in the script if you need to!
 
+define( 'FRIEND_VERSION', 'v1.2.8' );
+
 // Separator aware json encode/decode
 function friend_json_encode( $object )
 {
@@ -189,6 +191,21 @@ function AuthenticateApplication( $appName, $UserID, $searchGroups = false )
 	return 'fail<!--separate-->{"Error":"Can not understand query."}';
 }
 
+// Get the default theme, based on override
+function getDefaultTheme()
+{
+	global $configfilesettings;
+	if( isset( $configfilesettings[ 'FriendCore' ] ) && isset( $configfilesettings[ 'FriendCore' ][ 'friendTheme' ] ) )
+	{
+		$th = $configfilesettings[ 'FriendCore' ][ 'friendTheme' ];
+		if( file_exists( 'resources/themes/' . $th ) )
+		{
+			return $th;
+		}
+	}
+	return 'friendup12';
+}
+
 // Find apps and search path..
 function FindAppInSearchPaths( $app )
 {
@@ -252,7 +269,8 @@ if( isset( $argv ) && isset( $argv[1] ) )
 							{
 								$value[ $k ] = rawurldecode( $v );
 							}
-							$value = implode( '%2B', $value );
+							// %2B also have to be rawurldecoded at the end ...
+							$value = rawurldecode( implode( '%2B', $value ) );
 						}
 						else
 						{
@@ -271,8 +289,8 @@ if( isset( $argv ) && isset( $argv[1] ) )
 				}
 			}
 		}
+		$GLOBALS['args'] = $kvdata;
 	}
-	$GLOBALS['args'] = $kvdata;
 }
 
 $UserAccount = false;
@@ -313,6 +331,8 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	              'WorkspaceShortcuts', 'preventWizard', 'ProxyEnable'
 	);
 
+    // Get access to the database ----------------------------------------------
+    
 	// Shortcuts
 	$dataUser = $configfilesettings[ 'DatabaseUser' ];
 	$dataCore = $configfilesettings[ 'FriendCore' ];
@@ -399,8 +419,6 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		}
 	}
 	
-	//$Logger->log( print_r( $Config, 1 ) );
-	
 	// Don't need these now
 	$dataUser = null;
 	$dataCore = null;
@@ -415,31 +433,63 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	$GLOBALS['Config'] =& $Config;
 	
 	$SqlDatabase = new SqlDatabase();
+	
 	if( !$SqlDatabase->Open( $Config->Hostname, $Config->Username, $Config->Password ) )
 		die( 'fail<!--separate-->Could not connect to database.' );
+	
 	$SqlDatabase->SelectDatabase( $Config->DbName );
 	
 	$GLOBALS['SqlDatabase'] =& $SqlDatabase;
 	
+	// Done with database access -----------------------------------------------
+	
 	// User application info
 	$UserApplication = false;
 	
-	// Get user information, trying first on FUserSession SessionID
+	// Get user information, trying first on FUserSession SessionID ------------
 	$User = new dbIO( 'FUser' );
-	
+	$UserSession = new dbIO( 'FUserSession' );
+
+	// Match sessionid by authid
+	if( isset( $args->authid ) && !isset( $args->sessionid ) && !isset( $args->args->sessionid ) )
+	{
+		$authid = mysqli_real_escape_string( $SqlDatabase->_link, $args->authid );
+		$sess = $SqlDatabase->fetchObject( 'SELECT us.SessionID FROM FUserSession us, FAppSession a1 WHERE a1.AuthID=\'' . $authid . '\' AND us.UserID = a1.UserID LIMIT 1' );
+		if( $sess )
+		{
+			$args->sessionid = $sess->SessionID;
+		}
+	}
+
 	$sudm = false;
 	
-	// TODO: Implement authentication modules!
+	// Use UserAccount object to authenticate directly into the database
 	if( $UserAccount )
 	{
-		if( $mu = $SqlDatabase->fetchObject( '
+		if( $mu = $SqlDatabase->fetchObject( $uq = '
 			SELECT * FROM FUser u
 			WHERE
 				u.Name = \'' . $UserAccount->Username . '\' AND
 				u.Password = \'' . '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $UserAccount->Password ) ) . '\'
 		' ) )
 		{
+			$logger->log('User found');
 			$User = $mu;
+			if( $mus = $SqlDatabase->fetchObject( '
+				SELECT * FROM FUserSession WHERE UserID = \'' . $mu->ID . '\' LIMIT 1
+			' ) )
+			{
+				$logger->log( 'UserSession found' );
+				$UserSession = $mus;
+			}	
+			else
+			{
+				//$logger->log( 'UserSession Not Found: ' . $uq );
+			}
+		}
+		else
+		{
+			//$logger->log( 'UserSession Not Found because query failed: ' . $uq );
 		}
 	}
 	// Try with server token
@@ -447,60 +497,31 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	{
 		$User->ServerToken = $GLOBALS[ 'args' ]->servertoken;
 		$User->Load();
+
+		if( $mus = $SqlDatabase->FetchObject( '
+            SELECT * FROM FUserSession WHERE UserID = \'' . $User->ID . '\' LIMIT 1
+        ' ) )
+        {
+			$Logger->log( 'UserSession found -> servertoken' );
+			$UserSession = $mus;
+        }
 	}
-	
-	// Get the sessionid
-	$sidm = mysqli_real_escape_string( $SqlDatabase->_link, 
-		isset( $User->SessionID ) ? $User->SessionID :
-		( isset( $GLOBALS['args']->sessionid ) ? $GLOBALS['args']->sessionid : '' )
-	);
-	
-	//$logger->log( 'Trying to log in: ' . $sidm . ' ' . print_r( $args, 1 ) );
-	
+	// Load by session id
+	else if( isset( $GLOBALS[ 'args' ]->sessionid ) )
+	{
+	    $UserSession->SessionID = $GLOBALS['args']->sessionid;
+	    if( $UserSession->Load() )
+	    {
+	        $User->Load( $UserSession->UserID );
+	    }
+	}
+
 	// Here we need a union because we are looking for sessionid in both the
 	// FUserSession and FUser tables..
 	if( isset( $User->ID ) && $User->ID > 0 )
 	{
 		$GLOBALS[ 'User' ] =& $User;
-	}
-	// Here we're trying to load it
-	else if(
-		$sidm && 
-		( $User = $SqlDatabase->fetchObject( '
-			SELECT u.* FROM FUser u, FUserSession us
-			WHERE
-				us.UserID = u.ID AND
-				( u.SessionID=\'' . $sidm . '\' OR us.SessionID = \'' . $sidm . '\' )
-		' ) )
-	)
-	{
-		// Login success
-		//$logger->log( 'User logged in with sessionid: (' . $GLOBALS[ 'args' ]->sessionid . ') ' . ( $User ? ( $User->ID . ' ' . $User->SessionID ) : '' ) );
-		$GLOBALS[ 'User' ] =& $User;
-	}
-	else if(
-		$sidm && 
-		( $User = $SqlDatabase->fetchObject( '
-			SELECT u.* FROM FUser u
-			WHERE
-				( u.SessionID=\'' . $sidm . '\' )
-		' ) )
-	)
-	{
-		// Login success
-		//$logger->log( 'User logged in with sessionid: (' . $GLOBALS[ 'args' ]->sessionid . ') ' . ( $User ? ( $User->ID . ' ' . $User->SessionID ) : '' ) );
-		$GLOBALS[ 'User' ] =& $User;
-	}
-	else if(
-		isset( $User->SessionID ) && trim( $User->SessionID ) && 
-		( $User = $SqlDatabase->FetchObject( '
-			SELECT u.* FROM FUser u
-			WHERE u.SessionID=\'' . $User->SessionID . '\'
-		' ) ) 
-	)
-	{
-		//$logger->log( 'User logged in using registered User->SessionID..' );
-		$GLOBALS[ 'User' ] =& $User;
+		$GLOBALS[ 'UserSession' ] =& $UserSession;
 	}
 	else
 	{
@@ -525,9 +546,25 @@ if( file_exists( 'cfg/cfg.ini' ) )
 			' ) )
 			{
 				$User->Load( $row->ID );
-				
+
 				if( $User->ID > 0 )
+				{
 					$GLOBALS[ 'User' ] =& $User;
+					$Logger->log( 'User load by authid NEW' );
+
+					if( $mus = $SqlDatabase->FetchObject( '
+						SELECT * FROM FUserSession WHERE UserID = \'' . $User->ID . '\' LIMIT 1
+						' ) )
+						{
+							$Logger->log( 'UserSession found' );
+							$UserSession = $mus;
+							$GLOBALS['UserSession'] =& $UserSession;
+						}
+				}
+				else
+				{
+					$Logger->log('UserID not found');
+				}
 			}
 		}
 		

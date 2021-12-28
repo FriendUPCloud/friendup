@@ -46,13 +46,21 @@
 						$q = 'INSERT INTO FSetting (`UserID`,`Type`,`Key`,`Data`) VALUES ( '. $rs->ID .',\'system\',\'passwordreset\',\''.  mysqli_real_escape_string($SqlDatabase->_link, $randomhash ) .'\' )';
 						$r = $SqlDatabase->query( $q );
 
-						// we have an email. build a link...
-						$link = 'http';
-						$link.= ( isset($cfg['Core'])&&isset($cfg['Core']['SSLEnable'])&& $cfg['Core']['SSLEnable'] == 1 ? 's' : '' ) . '://';
-						$link.= $cfg['FriendCore']['fchost'] . ':' . $cfg['FriendCore']['fcport'] . '/';
-						$link.= 'forgotpassword/token/';
-						$link.= urlencode( str_replace('{S6}', '', $rs->Password) ) . '/';
-						$link.= urlencode( $rs->Email ) . '/' . urlencode( $randomhash );
+						// Get some vars from config
+						$fcport = $cfg['FriendCore']['fcport'];
+						if( !$fcport ) $fcport = $cfg['Core']['port'];
+						$host = $cfg['FriendCore']['fchost'];
+						$proxy = $cfg['Core']['ProxyEnable'];
+						$ssl = $cfg['Core']['SSLEnable'] ? true : false;
+						// Actually create link
+						$link .= ( $ssl ? 'https://' : 'http://' );
+						$link .= $host;
+						$link .= ( $host == 'localhost' && !$proxy ) ? $fcport : '';
+						$link .= '/';
+						
+						$link .= 'forgotpassword/token/';
+						$link .= urlencode( str_replace('{S6}', '', $rs->Password) ) . '/';
+						$link .= urlencode( $rs->Email ) . '/' . urlencode( $randomhash );
 					}
 					else
 					{
@@ -162,9 +170,19 @@
 					if( $i == 2 ) $pass.= mt_rand( 10, 99 );
 				}
 				
-				$link = 'http';
-				$link.= ( isset($cfg['Core'])&&isset($cfg['Core']['SSLEnable'])&& $cfg['Core']['SSLEnable'] == 1 ? 's' : '' ) . '://';
-				$link.= $cfg['FriendCore']['fchost'] . ':' . $cfg['FriendCore']['fcport'] . '/';
+				// Create link
+				$link = '';
+				// Get some vars from config
+				$fcport = $cfg['FriendCore']['fcport'];
+				if( !$fcport ) $fcport = $cfg['Core']['port'];
+				$host = $cfg['FriendCore']['fchost'];
+				$proxy = $cfg['Core']['ProxyEnable'];
+				$ssl = $cfg['Core']['SSLEnable'] ? true : false;
+				// Actually create link
+				$link .= ( $ssl ? 'https://' : 'http://' );
+				$link .= $host;
+				$link .= ( $host == 'localhost' && !$proxy ) ? $fcport : '';
+				$link .= '/';
 				
 				//now get mail template and out everything together
 				try
@@ -201,35 +219,39 @@
 				$mail->CharSet = 'UTF-8';
 				$mail->isHTML(true); 
 				
-				
-				
-				$mail->Subject = 'FriendUP password recovery - new password';
-				$mail->Body    = $mailtemplate;
-				$mail->AltBody = strip_tags($mailtemplate);
-				
-				$mail->addAddress( $rs->Email );
-				if( $mail->send() )
+				//save it to DB as well
+				if( isset( $cfg['ServiceKeys']['AdminModuleServerToken'] ) )
 				{
-				
-					$q = 'DELETE FROM FSetting WHERE `UserID` = '. $rs->ID .' AND `Type` = \'system\' AND `Key` = \'passwordreset\';';
-					$r = $SqlDatabase->query( $q );
-				
-					//save it to DB as well
-					$updatequery = 'UPDATE  FUser SET Password = \'{S6}'. hash('sha256', 'HASHED' . hash('sha256', $pass) ) .'\' WHERE ID = ' . $rs->ID;
-					$unblockquery = 'INSERT INTO FUserLogin (`UserID`,`Login`,`Information`,`LoginTime`) VALUES ('. $rs->ID .',\''. $rs->Name .'\',\'Passwordreset\',\''. time() .'\')';
-					if( $rs = $SqlDatabase->query( $updatequery ) )
+					require_once( 'php/include/helpers.php' );
+					
+					$d = array();
+					$d[ 'username' ] = $rs->Name;
+					$d[ 'password' ] = '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $pass ) );
+					$result = FriendCoreQuery( '/system.library/user/updatepassword', $d, 'POST', false, false, true );
+					if( $result && substr( $result, 0, 3 ) == 'ok<' )
 					{
-						$rs2 = $SqlDatabase->query( $unblockquery );
-						$result = 'Your password has been changed and sent to you.';
+						$mail->Subject = 'FriendUP password recovery - new password';
+						$mail->Body    = $mailtemplate;
+						$mail->AltBody = strip_tags($mailtemplate);
+				
+						$mail->addAddress( $rs->Email );
+						if( $mail->send() )
+						{
+							$q = 'DELETE FROM FSetting WHERE `UserID` = '. $rs->ID .' AND `Type` = \'system\' AND `Key` = \'passwordreset\';';
+							$r = $SqlDatabase->query( $q );
+				
+							$unblockquery = 'INSERT INTO FUserLogin (`UserID`,`Login`,`Information`,`LoginTime`) VALUES ('. $rs->ID .',\''. $rs->Name .'\',\'Passwordreset\',\''. time() .'\')';
+							$rs2 = $SqlDatabase->query( $unblockquery );
+					
+							// Completion
+							$tpl = file_get_contents( 'php/templates/password_change.html' );
+							die( $tpl );
+						}
+						else
+						{
+							$result = 'Could not send e-mail with new password. Please try again.';
+						}
 					}
-					else
-					{
-						$result = 'Password could not be updated in database. Please delete e-mail and try again.';
-					}
-				}
-				else
-				{
-					$result = 'Could not send e-mail with new password. Please try again.';
 				}				
 				
 				//now get mail template and out everything together
@@ -251,9 +273,10 @@
 				], $output);
 				die($output);
 			}
-			die('no no no.');
+			die('You already renewed your password.');
 			
 		}
-		die('go away');
+		die('You already renewed your password.');
 	}
 	die('fail') ;
+?>

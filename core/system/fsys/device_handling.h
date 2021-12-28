@@ -31,6 +31,7 @@ typedef struct DeviceManager
 {
 	void				*dm_SB;
 	pthread_mutex_t		dm_Mutex;
+	int					dm_InUse;
 }DeviceManager;
 
 //
@@ -67,19 +68,19 @@ int UnMountFS( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *us
 //
 //
 
-int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError, FBOOL calledByAdmin, FBOOL notify );
+int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError, UserSession *ses, FBOOL notify );
 
 //
 //
 //
 
-int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, FULONG groupID );
+int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, UserSession *ses, FULONG groupID );
 
 //
 //
 //
 
-int UserGroupDeviceMount( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr, char **mountError );
+int UserGroupDeviceMount( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr, UserSession *ses, char **mountError );
 
 //
 //
@@ -103,7 +104,7 @@ int DeviceMountDB( DeviceManager *dm, File *rootDev, FBOOL mount );
 //
 //
 
-File *GetUserDeviceByFSysUserIDDevName( DeviceManager *dm, SQLLibrary *sqllib, FULONG fsysid, FULONG uid, const char *devname, char **mountError );
+File *GetUserDeviceByFSysUserIDDevName( DeviceManager *dm, SQLLibrary *sqllib, FULONG fsysid, FULONG uid, UserSession *us, const char *devname, char **mountError );
 //File *GetUserDeviceByUserID( DeviceManager *dm, SQLLibrary *sqllib, FULONG uid, const char *devname, char **mountError );
 
 //
@@ -111,12 +112,6 @@ File *GetUserDeviceByFSysUserIDDevName( DeviceManager *dm, SQLLibrary *sqllib, F
 //
 
 void UserNotifyFSEvent( DeviceManager *dm, char *evt, char *path );
-
-//
-//
-//
-
-void UserNotifyFSEvent2( DeviceManager *dm, User *u, char *evt, char *path );
 
 //
 //
@@ -134,7 +129,7 @@ int CheckAndMountWorkgroupDrive( DeviceManager *dm, char *type, User *usr, FUQUA
 //
 //
 
-int RefreshUserDrives( DeviceManager *dm, User *u, BufString *bs, char **mountError );
+int RefreshUserDrives( DeviceManager *dm, UserSession *us, BufString *bs, char **mountError );
 
 //
 //
@@ -146,7 +141,7 @@ int DeviceRelease( DeviceManager *dm, File *rootDev );
 //
 //
 
-int DeviceUnMount( DeviceManager *dm, File *rootDev, User *usr );
+int DeviceUnMount( DeviceManager *dm, File *rootDev, User *usr, UserSession *ses );
 
 //
 // find comma and return position
@@ -172,6 +167,6 @@ static inline int ColonPosition( const char *c )
 //
 //
 
-File *GetRootDeviceByName( User *usr, char *devname );
+File *GetRootDeviceByName( User *usr, UserSession *ses, char *devname );
 
 #endif // __SYSTEM_FSYS_DEVICE_HANDLING_H__

@@ -71,30 +71,29 @@ static inline char *GetFileNamePtr( char *path, int len )
  */
 static inline int LocFileRead( LocFile* file, FILE *fp, long long offset, long long size )
 {
-	if( file == NULL )
+	int result = 0;
+	if( file != NULL )
 	{
-		FERROR("Cannot read file which doesnt exist!\n");
-		return -1;
-	}
-
-	file->lf_Buffer = (char *)FMalloc( size + 1 );
-	if( file->lf_Buffer != NULL )
-	{
-		file->lf_Buffer[ size ] = 0;
-	
-		file->lf_FileSize = size;
-		fseeko( fp, offset, SEEK_SET );
-		int result = fread( file->lf_Buffer, size, 1, fp );
-		if( result < size )
+		file->lf_Buffer = (char *)FMalloc( (size + 1) );
+		if( file->lf_Buffer != NULL )
 		{
-			return result; 
+			file->lf_Buffer[ size ] = 0;
+	
+			file->lf_FileSize = size;
+			fseeko( fp, offset, SEEK_SET );
+			result = fread( file->lf_Buffer, size, 1, fp );
+		}
+		else
+		{
+			DEBUG("Cannot allocate memory for file\n");
 		}
 	}
 	else
 	{
-		DEBUG("Cannot allocate memory for file\n");
+		FERROR("Cannot read file which doesnt exist!\n");
+		return -1;
 	}
-	return 0;
+	return result;
 }
 #endif
 
@@ -248,29 +247,31 @@ int LocFileReload( LocFile *file, char *path )
 	}
 	
 	FILE* fp = fopen( path, "rb" );
-	if( fp == NULL )
+	if( fp != NULL )
+	{
+		struct stat st;
+		if( stat( path, &st ) < 0 )
+		{
+			FERROR("Cannot run stat on file: %s!\n", path);
+			fclose( fp );
+			return -2;
+		}
+		memcpy(  &(file->lf_Info),  &st, sizeof(stat) );
+	
+		fseek( fp, 0, SEEK_END );
+		long fsize = ftell( fp );
+		fseek( fp, 0, SEEK_SET );  //same as rewind(f);
+		file->lf_FileSize = fsize;
+
+		LocFileRead( file, fp, 0, file->lf_FileSize );
+	
+		fclose( fp );
+	}
+	else
 	{
 		FERROR("Cannot open file %s (file does not exist?)..\n", path );
 		return -1;
 	}
-	
-	struct stat st;
-	if( stat( path, &st ) < 0 )
-	{
-		FERROR("Cannot run stat on file: %s!\n", path);
-		fclose( fp );
-		return -2;
-	}
-	memcpy(  &(file->lf_Info),  &st, sizeof(stat) );
-	
-	fseek( fp, 0, SEEK_END );
-	long fsize = ftell( fp );
-	fseek( fp, 0, SEEK_SET );  //same as rewind(f);
-	file->lf_FileSize = fsize;
-
-	LocFileRead( file, fp, 0, file->lf_FileSize );
-	
-	fclose( fp );
 	
 	return 0;
 }

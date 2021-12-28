@@ -13,6 +13,9 @@
 					<div class="Tab IconSmall fa-key">
 						{i18n_key_management}
 					</div>
+					<div class="Tab IconSmall fa-group">
+						{i18n_groups}
+					</div>
 					{friendNetwork1}
 					<div class="Page ScrollBarSmall">
 						<div class="PageScroll">
@@ -23,7 +26,7 @@
 								<div class="AvatarRect MarginTop MarginBottom HRow">
 									<div class="FloatLeft TextCenter Relative HContent50">
 										<div id="AvatarArea">
-											<canvas id="Avatar" width="256" height="256"></canvas>
+											<canvas id="Avatar" width="128" height="128"></canvas>
 										</div>
 										<button type="button" style="vertical-align:top" class="fa-image Button IconSmall" onclick="changeAvatar()">
 											{i18n_changeavatar}
@@ -65,7 +68,7 @@
 											<div class="FloatLeft HContent30">
 												<label class="InputHeight">{i18n_password}:</label>
 											</div>
-											<div class="FloatLeft HContent70">
+											<div class="FloatLeft HContent70" id="UserAccPasswordButton">
 												<button class="fa-edit IconSmall Button" onclick="toggleChangePass()" id="passToggle">
 													{i18n_edit_password}
 												</button>
@@ -101,16 +104,6 @@
 											</div>
 										</div>
 								
-										<hr class="Divider"/>
-								
-										<div class="HRow MarginBottom">
-											<div class="FloatLeft HContent30">
-												<label class="InputHeight">{i18n_email_address}:</label>
-											</div>
-											<div class="FloatLeft HContent70">
-												<input type="email" class="InputHeight FullWidth" value="" id="UserAccEmail" value="{email}"/>
-											</div>
-										</div>
 									</div>
 									<div class="FloatLeft HContent50">
 										<div class="FloatLeft HContent5">
@@ -119,10 +112,10 @@
 										<div class="FloatLeft HContent95">
 										
 											<div class="HRow MarginBottom">
-												<div class="FloatLeft HContent30">
+												<div class="FloatLeft HContent35">
 													<label class="InputHeight">{i18n_timezone}:</label>
 												</div>
-												<div class="FloatLeft HContent70">
+												<div class="FloatLeft HContent65">
 													<div id="TimezoneSelect">
 														<div id="TimeZoneSelectA"></div><div id="TimeZoneSelectB"></div>
 													</div>
@@ -133,6 +126,18 @@
 											<hr class="Divider"/>
 										
 											<div class="HRow MarginBottom">
+												<div class="FloatLeft HContent35">
+													<label class="InputHeight">{i18n_email_address}:</label>
+												</div>
+												<div class="FloatLeft HContent65">
+													<input type="email" class="InputHeight FullWidth" value="" id="UserAccEmail" value="{email}"/>
+												</div>
+											</div>
+											
+											<input type="hidden" id="UserLanguage" value="en"/>
+											<input type="hidden" id="UserMode" value="normal"/>
+										
+											<!--<div class="HRow MarginBottom">
 												<div class="FloatLeft HContent45">
 													<label class="InputHeight">{i18n_language}:</label>
 												</div>
@@ -153,7 +158,7 @@
 														{modes}
 													</select>
 												</p>
-											</div>
+											</div>-->
 										</div>
 									</div>
 								</div>
@@ -184,9 +189,32 @@
 						<div class="HRow Padding PageScroll" id="KeysList"></div>
 						
 					</div>
+					<div class="Page">
+						<div id="GroupSearch" class="BorderBottom">
+							<p class="TextCenter Searcher">
+								<input type="text" id="groupSearcher" class="InputHeight" placeholder="{i18n_find_groups}" onkeyup="findGroups()"/>
+							</p>
+						</div>
+						<div id="GroupList"></div>
+						<div id="OtherGroups"></div>
+					</div>
 					{friendNetwork2}
 				</div>
-				<script> InitTabs( 'MTabs' ); </script>
+				<script> 
+					InitTabs( 'MTabs' );
+					let tabs = ge( 'MTabs' ).getElementsByClassName( 'Tab' );
+					if( ge( 'activeTab' ).value != 'null' )
+					{
+						for( let a = 0; a < tabs.length; a++ )
+						{
+							if( tabs[a].classList.contains( 'fa-' + ge( 'activeTab' ).value ) )
+							{
+								tabs[a].click();
+								break;
+							}
+						}
+					}
+				</script>
 			</div>
 		</div>
 		<div class="VContentBottom BorderTop Padding BackgroundDefault" style="height: 50px">
@@ -195,6 +223,8 @@
 			</button>
 		</div>
 	</div>
+	
+	<input type="hidden" id="activeTab" value="{activeTab}"/>
 	
 	<link rel="stylesheet" href="Progdir:Css/main.css"/>
 

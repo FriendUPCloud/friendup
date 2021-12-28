@@ -182,6 +182,10 @@ FriendCoreManager *FriendCoreManagerNew()
 		fcm->fcm_DisableMobileWS = 0;
 		fcm->fcm_DisableExternalWS = 0;
 		fcm->fcm_WSExtendedDebug = 0;
+		fcm->fcm_WSTimeout = 30;
+		fcm->fcm_WSka_time = 0;
+		fcm->fcm_WSka_probes = 0;
+		fcm->fcm_WSka_interval = 0;
 		
 		Props *prop = NULL;
 		PropertiesInterface *plib = &(SLIB->sl_PropertiesInterface);
@@ -223,6 +227,10 @@ FriendCoreManager *FriendCoreManagerNew()
 				fcm->fcm_DisableMobileWS = plib->ReadIntNCS( prop, "core:disablemobilews", 0 );
 				fcm->fcm_DisableExternalWS = plib->ReadIntNCS( prop, "core:disableexternalws", 0 );
 				fcm->fcm_WSExtendedDebug = plib->ReadIntNCS( prop, "core:wsextendeddebug", 0 );
+				fcm->fcm_WSTimeout = plib->ReadIntNCS( prop, "core:wstimeout", 30 );
+				fcm->fcm_WSka_time = plib->ReadIntNCS( prop, "core:katime", 0 );
+				fcm->fcm_WSka_probes = plib->ReadIntNCS( prop, "core:kaprobes", 0 );
+				fcm->fcm_WSka_interval = plib->ReadIntNCS( prop, "core:kainterval", 0 );
 				
 				char *tptr  = plib->ReadStringNCS( prop, "LoginModules:modules", "" );
 				if( tptr != NULL )
@@ -301,7 +309,7 @@ int FriendCoreManagerInit( FriendCoreManager *fcm )
 		Log(FLOG_INFO, "-----WS SSL enabled: %d\n", fcm->fcm_WSSSLEnabled );
 		Log(FLOG_INFO, "-----Communication SSL enabled: %d\n", fcm->fcm_SSLEnabledCommuncation );
 		Log(FLOG_INFO, "-----FCPort: %d\n", fcm->fcm_FCPort );
-		Log(FLOG_INFO, "-----WSPort: %d\n", fcm->fcm_WSPort );
+		
 		Log(FLOG_INFO, "-----WSNotificationPort: %d\n", fcm->fcm_WSNotificationPort );
 		Log(FLOG_INFO, "-----CommPort: %d\n", fcm->fcm_ComPort );
 		Log(FLOG_INFO, "-----CommRemotePort: %d\n", fcm->fcm_ComRemotePort );
@@ -310,6 +318,20 @@ int FriendCoreManagerInit( FriendCoreManager *fcm )
 		Log(FLOG_INFO, "-----UserFileShareCache (per drive): %ld\n", SLIB->sl_USFCacheMax );
 		Log(FLOG_INFO, "-----Cluster Master: %d\n", fcm->fcm_ClusterMaster );
 		Log(FLOG_INFO, "-----UserSession timeout: %d\n", SLIB->sl_RemoveSessionsAfterTime );
+		
+		Log(FLOG_INFO, "-----WSPort: %d\n", fcm->fcm_WSPort );
+		Log(FLOG_INFO, "-----WS ka_time: %d\n", fcm->fcm_WSka_time );
+		Log(FLOG_INFO, "-----WS ka_probes: %d\n", fcm->fcm_WSka_probes );
+		Log(FLOG_INFO, "-----WS ka_interval: %d\n", fcm->fcm_WSka_interval );
+		
+		if( (SLIB->l_HttpCompressionContent & HTTP_COMPRESSION_DEFLATE ) == HTTP_COMPRESSION_DEFLATE )
+		{
+			Log(FLOG_INFO, "-----Http deflate compression: on\n" );
+		}
+		if( (SLIB->l_HttpCompressionContent & HTTP_COMPRESSION_BZIP ) == HTTP_COMPRESSION_BZIP )
+		{
+			Log(FLOG_INFO, "-----Http bzip compression: on\n" );
+		}
 		/*
 		if( SLIB != NULL && SLIB->sl_ActiveAuthModule != NULL )
 		{
@@ -350,7 +372,7 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 {
 	if( fcm->fcm_DisableWS != TRUE )
 		{
-			if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled, 0, fcm->fcm_WSExtendedDebug ) ) != NULL )
+			if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled, WEBSOCKET_TYPE_BROWSER, fcm->fcm_WSExtendedDebug, fcm->fcm_WSTimeout, fcm->fcm_WSka_time, fcm->fcm_WSka_probes, fcm->fcm_WSka_interval ) ) != NULL )
 			{
 				WebSocketStart( fcm->fcm_WebSocket );
 			}
@@ -362,7 +384,7 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 			
 			if( fcm->fcm_DisableExternalWS == 0 )
 			{
-				if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, FALSE, 2, fcm->fcm_WSExtendedDebug ) ) != NULL )
+				if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, FALSE, WEBSOCKET_TYPE_EXTERNAL, fcm->fcm_WSExtendedDebug, fcm->fcm_WSTimeout, fcm->fcm_WSka_time, fcm->fcm_WSka_probes, fcm->fcm_WSka_interval ) ) != NULL )
 				{
 					WebSocketStart( fcm->fcm_WebSocketNotification );
 				}

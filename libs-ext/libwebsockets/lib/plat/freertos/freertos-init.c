@@ -33,7 +33,7 @@ lws_plat_context_early_init(void)
 void
 lws_plat_context_early_destroy(struct lws_context *context)
 {
-#if defined(LWS_AMAZON_RTOS)
+#if defined(LWS_AMAZON_RTOS) && defined(LWS_WITH_MBEDTLS)
 	mbedtls_ctr_drbg_free(&context->mcdc);
 	mbedtls_entropy_free(&context->mec);
 #endif
@@ -73,7 +73,7 @@ int
 lws_plat_init(struct lws_context *context,
 	      const struct lws_context_creation_info *info)
 {
-#if defined(LWS_AMAZON_RTOS)
+#if defined(LWS_AMAZON_RTOS) && defined(LWS_WITH_MBEDTLS)
 	int n;
 
 	/* initialize platform random through mbedtls */
@@ -109,6 +109,10 @@ lws_plat_init(struct lws_context *context,
 #if defined(LWS_WITH_HTTP2)
 	/* override settings */
 	context->set = lws_h2_defaults_esp32;
+#endif
+
+#if defined(LWS_ESP_PLATFORM)
+	gpio_install_isr_service(0);
 #endif
 
 	return 0;

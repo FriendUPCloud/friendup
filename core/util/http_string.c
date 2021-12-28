@@ -39,10 +39,9 @@ HttpString *HttpStringNew( int bufsize )
 		{
 			
 		}
-		return str;
 	}
 	
-	return NULL;
+	return str;
 }
 
 //

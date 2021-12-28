@@ -1,0 +1,37 @@
+<div class="ContentFull LayoutButtonbarBottom">
+	<div class="VContentTop Padding ScrollArea SmoothScrolling">
+		<div class="HRow">
+			<div class="HContent30 FloatLeft">
+				<p class="Layout">
+					<strong>{i18n_recipient}:</strong>
+				</p>
+			</div>
+			<div class="HContent70 FloatLeft">
+				<p class="Layout">
+					<input type="text" class="InputHeight FullWidth" id="recipient" placeholder="email@address.com"/>
+				</p>
+			</div>
+			<div class="HContent30 FloatLeft">
+				<p class="Layout">
+					<strong>{i18n_full_name}:</strong> ({i18n_optional})
+				</p>
+			</div>
+			<div class="HContent70 FloatLeft">
+				<p class="Layout">
+					<input type="text" class="InputHeight FullWidth" id="recipientname" placeholder="John Doe"/>
+				</p>
+			</div>
+			<input type="hidden" id="groupid" value="{gid}"/>
+		</div>
+	</div>
+	<div class="VContentBottom Padding BackgroundDefault BorderTop">
+		<button type="button" class="Button IconSmall fa-send FloatRight" onclick="sendInvite()">
+			{i18n_send_invite}
+		</button>
+		<button type="button" class="Button IconSmall fa-remove FloatLeft" onclick="CloseView()">
+			{i18n_close}
+		</button>
+	</div>
+</div>
+<script src="Progdir:Scripts/invite_user.js"></script>
+<link rel="stylesheet" href="Progdir:Css/invite_user.css"/>

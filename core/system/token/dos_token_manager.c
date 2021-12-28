@@ -191,7 +191,7 @@ DOSToken *DOSTokenManagerGetDOSToken( DOSTokenManager *d, const char *tokenID )
 				if( us != NULL )
 				{
 					us->us_SessionID = SessionIDGenerate();
-					us->us_LoggedTime = time( NULL );
+					us->us_LastActionTime = time( NULL );
 					us->us_SB = d->dtm_SB;
 					
 					SystemBase *sb = (SystemBase *) us->us_SB;

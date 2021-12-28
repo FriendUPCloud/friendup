@@ -60,7 +60,7 @@ void INVARManagerDelete( INVARManager *nm )
 			INVAREntry *ne, *de;
 			ne = de = ng->ng_Entries;
 			
-			DEBUG("Delete Entry\n");
+			DEBUG("[INVARManagerAddGroup] Delete Entry\n");
 			
 			while( ne != NULL )
 			{
@@ -96,11 +96,11 @@ int INVARManagerAddGroup( INVARManager *nm, INVARGroup *ng )
 	{
 		ng->node.mln_Succ = (MinNode *) nm->nm_Groups;
 		nm->nm_Groups = ng;
-		DEBUG("Group added to list %p next ptr %p\n", ng, ng->node.mln_Succ );
+		DEBUG("[INVARManagerAddGroup] Group added to list %p next ptr %p\n", ng, ng->node.mln_Succ );
 	}
 	else
 	{
-		FERROR( "Group and Entry are empty\n");
+		FERROR( "[INVARManagerAddGroup] Group and Entry are empty\n");
 		return 1;
 	}
 	return 0;
@@ -150,7 +150,7 @@ int INVARManagerAddEntry( INVARManager *nm, FULONG grid, INVAREntry *ne )
 	{
 		//INVARGroup *ng = (INVARGroup *)grid;
 		INVARGroup *ng = INVARManagerGetGroupByPtr( nm, grid );
-		DEBUG("Group found under pointer %p\n", ng );
+		DEBUG("[INVARManagerAddEntry] Group found under pointer %p\n", ng );
 		
 		if( ng != NULL && ng->ng_Pointer == grid )
 		{
@@ -159,7 +159,7 @@ int INVARManagerAddEntry( INVARManager *nm, FULONG grid, INVAREntry *ne )
 		}
 		else
 		{
-			FERROR("Cannot add new entry, group under pointer %ld not found\n", grid );
+			FERROR("[INVARManagerAddEntry] Cannot add new entry, group under pointer %ld not found\n", grid );
 			return 1;
 		}
 	}
@@ -200,11 +200,11 @@ INVARGroup *INVARManagerGetGroupByPtr( INVARManager *nm, FULONG ptr )
 	}
 	return ng;
 	*/
-	DEBUG("GetGroup by ptr %lu\n", ptr );
+	DEBUG("[INVARManagerGetGroupByPtr] GetGroup by ptr %lu\n", ptr );
 	INVARGroup *ng = nm->nm_Groups;
 	while( ng != NULL )
 	{
-		DEBUG("Checking group %p\n", ng );
+		DEBUG("[INVARManagerGetGroupByPtr] Checking group %p\n", ng );
 		if( ng->ng_Pointer == ptr )
 		{
 			return ng;

@@ -21,6 +21,7 @@
 #include <core/types.h>
 #include <core/nodes.h>
 #include <system/dictionary/dictionary.h>
+#include <system/user/user_session.h>
 
 //
 // Permission Manager
@@ -40,7 +41,7 @@ void PermissionManagerDelete( PermissionManager *pm );
 
 FBOOL PermissionManagerCheckAppPermission( PermissionManager *pm, char *key,char *appname );
 
-FBOOL PermissionManagerCheckPermission( PermissionManager *pm, const char *sessionid, const char *authid, const char *args );
+FBOOL PermissionManagerCheckPermission( PermissionManager *pm, UserSession *ses, const char *authid, const char *args );
 //FBOOL PermissionManagerCheckPermission( PermissionManager *pm, UserSession *us, const char *auth, FULONG obid, const char *obtype, char *type );
 
 #endif //__SYSTEM_PERMISSION_PERMISSION_MANAGER_H__

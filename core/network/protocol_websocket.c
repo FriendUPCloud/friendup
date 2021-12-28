@@ -84,6 +84,7 @@ void releaseWSData( WSThreadData *data )
 	if( data->wstd_Msg != NULL )
 	{
 		FFree( data->wstd_Msg );
+		data->wstd_Msg = NULL;
 	}
 	
 	FFree( data->wstd_Requestid );
@@ -109,7 +110,7 @@ void WSThreadPing( WSThreadData *data )
 	
 		if( FRIEND_MUTEX_LOCK( &(data->wstd_WSD->wsc_Mutex) ) == 0 )
 		{
-			if( data == NULL || us->us_WSD == NULL || data->wstd_WSD->wsc_UserSession == NULL )
+			if( us->us_WSD == NULL || data->wstd_WSD->wsc_UserSession == NULL )
 			{
 				if( data != NULL )
 				{
@@ -134,8 +135,54 @@ void WSThreadPing( WSThreadData *data )
 	
 		if( ( answer = FMalloc( 1024 ) ) != NULL )
 		{
-			int answersize = snprintf( (char *)answer, 1024, "{\"type\":\"con\",\"data\" :{\"type\":\"pong\",\"data\":\"%s\"}}", data->wstd_Requestid );
-			UserSessionWebsocketWrite( us, answer, answersize, LWS_WRITE_TEXT );	
+			FBOOL userSessionLocked = FALSE;
+			if( FRIEND_MUTEX_LOCK( &(data->wstd_WSD->wsc_Mutex) ) == 0 )
+			{
+				data->wstd_WSD->wsc_UpdateLoggedTimeCounter++;
+				if( data->wstd_WSD->wsc_UpdateLoggedTimeCounter > SLIB->l_UpdateLoggedTimeOnUserMax )
+				{
+					char tmpQuery[ 64 ];
+					us->us_LastActionTime = time(NULL);
+					snprintf( tmpQuery, sizeof(tmpQuery), "UPDATE FUser Set LastActionTime=%ld where ID=%ld", us->us_LastActionTime, us->us_UserID );
+				
+					SQLLibrary *sqlLib = SLIB->LibrarySQLGet( SLIB );
+					if( sqlLib != NULL )
+					{
+						sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
+	
+						SLIB->LibrarySQLDrop( SLIB, sqlLib );
+					}
+				
+					data->wstd_WSD->wsc_UpdateLoggedTimeCounter = 0;
+				}
+				
+				if( data->wstd_WSD->wsc_UserSession != NULL )
+				{
+					us = data->wstd_WSD->wsc_UserSession;
+					if( us != NULL )
+					{
+						if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+						{
+							us->us_InUseCounter++;
+							userSessionLocked = TRUE;
+							FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+						}
+					}
+				}
+				FRIEND_MUTEX_UNLOCK( &(data->wstd_WSD->wsc_Mutex) );
+			}
+			
+			if( userSessionLocked == TRUE )
+			{
+				int answersize = snprintf( (char *)answer, 1024, "{\"type\":\"con\",\"data\":{\"type\":\"pong\",\"data\":\"%s\"}}", data->wstd_Requestid );
+				UserSessionWebsocketWrite( us, answer, answersize, LWS_WRITE_TEXT );
+				
+				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+				{
+					us->us_InUseCounter--;
+					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+				}
+			}
 			FFree( answer );
 		}
 		releaseWSData( data );
@@ -190,49 +237,25 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 
 	char *in = NULL;
 
-	//TK-1220 - sometimes there is junk at the end of the string.
-	//The string is not guaranteed to be null terminated where it supposed to.
-	/*
-	char *c = in;
-	if ( reason == LWS_CALLBACK_RECEIVE && len>0)
-	{
-		// no need to allocate memory for other functions then RECEIVE
-		if( tin != NULL && len > 0 )
-		{
-			if( ( in = FMalloc( len+128 ) ) != NULL )	// 16 should be ok
-			{
-				memcpy( in, tin, len );
-				in[ len ] = '\0';
-			}
-		}
-		
-		//DEBUG("[WS] reason==receive and len>0\n");
-		// No in!
-		if( in == NULL )
-		{
-			DEBUG( "[WS] Seems we have a null message (length: %d)\n", (int)len );
-			
-			if( in != NULL )
-			{
-				FFree( in );
-			}
-			return 0;
-		}
-		DEBUG("[WS] set end to 0\n");
-	}
-	*/
 	DEBUG("[WS] before switch\n");
 	
 	switch( reason )
 	{
 		case LWS_CALLBACK_ESTABLISHED:
 			pthread_mutex_init( &(wsd->wsc_Mutex), NULL );
+			
+			#ifdef WS_COMPRESSION
+			lws_set_extension_option( wsi, "permessage-deflate", "rx_buf_size", "16");
+			lws_set_extension_option( wsi, "permessage-deflate", "tx_buf_size", "16");
+			#endif
 		break;
 		
 		case LWS_CALLBACK_WS_PEER_INITIATED_CLOSE:
 			INFO("[WS] Callback peer session closed wsiptr %p\n", wsi);
 		break;
 		
+		//case LWS_CALLBACK_CLIENT_CLOSED:
+		    //DEBUG("[WS] Callback client closed!\n");
 		case LWS_CALLBACK_CLOSED:
 			{
 				int tr = 8;
@@ -260,7 +283,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						break;
 					}
 				}
-				DetachWebsocketFromSession( wsd );
+				DetachWebsocketFromSession( wsd, wsi );
 			
 				if( wsd->wsc_Buffer != NULL )
 				{
@@ -273,6 +296,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				pthread_mutex_destroy( &(wsd->wsc_Mutex) );
 			
 				Log( FLOG_DEBUG, "[WS] Callback session closed\n");
+				
+				//FERROR("\n\n\nREMOVE\n\nwsi: %p\n\nuser: %p\n\n", wsi, user );
 			}
 		break;
 		
@@ -343,16 +368,18 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					}
 					
 					pthread_t t;
-					memset( &t, 0, sizeof( pthread_t ) );
+					//memset( &t, 0, sizeof( pthread_t ) );
+					
+					//FERROR("\n\n\nRECEIVE\n\nwsi: %p\n\nuser: %p\n\n", wsi, user );
 					
 					if( pthread_create( &t, NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
-					//memset( &(wstd->wstd_Thread), 0, sizeof( pthread_t ) );
-					//if( pthread_create( &(wstd->wstd_Thread), NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
 					{
 						// Failed!
 						FFree( wstd );
-						if( us != NULL )
+						if( wsd->wsc_UserSession != NULL )
 						{
+							us = (UserSession *)wsd->wsc_UserSession;
+							
 							if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 							{
 								us->us_InUseCounter--;
@@ -371,6 +398,18 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				{
 					lws_callback_on_writable( wsi );
 				}
+				/*
+				UserSession *locus = NULL;
+	
+				locus = wstd->wstd_WSD->wsc_UserSession;
+				if( locus != NULL )
+				{
+					if( locus->us_WSD == NULL )
+					{
+						locus->us_WSD = wsd;
+					}
+				}
+				*/
 			}
 			
 #ifndef INPUT_QUEUE
@@ -404,12 +443,15 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				
 				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 				{
+					us->us_InUseCounter++;
+					
 					FQueue *q = &(us->us_MsgQueue);
 					
 					if( q->fq_First != NULL )
 					{
 						e = FQPop( q );
 						
+						us->us_InUseCounter--;
 						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 						unsigned char *t = e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING;
 						
@@ -439,6 +481,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					}
 					else
 					{
+						us->us_InUseCounter--;
 						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 					}
 					
@@ -495,7 +538,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				DEBUG("[WS] Closing WS, number: %d\n", wsd->wsc_InUseCounter );
 				sleep( 1 );
 			}
-			DetachWebsocketFromSession( wsd );
+			DetachWebsocketFromSession( wsd, wsi );
 	
 			if( wsd->wsc_Buffer != NULL )
 			{
@@ -691,7 +734,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 						//Log( FLOG_INFO, "[WS] NO JSON - Passed memcpy..\n" );
 						DEBUG("[WS] user session ptr %p message len %d\n", locus, msgLen );
 
-						locus->us_LoggedTime = time( NULL );
+						locus->us_LastActionTime = time( NULL );
 						UserSessionWebsocketWrite( locus, buf, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
 					
 						FFree( buf );
@@ -708,7 +751,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 					
 						int END_CHAR_SIGNS = response->http_SizeOfContent > 0 ? 2 : 4;
 						char *end = response->http_SizeOfContent > 0 ? "}}" : "\"\"}}";
-						int jsonsize = sprintf( jsontemp, "{\"type\":\"msg\",\"data\":{ \"type\":\"response\",\"requestid\":\"%s\",\"data\":", wstd->wstd_Requestid );
+						int jsonsize = sprintf( jsontemp, "{\"type\":\"msg\",\"data\":{\"type\":\"response\",\"requestid\":\"%s\",\"data\":", wstd->wstd_Requestid );
 					
 						buf = (unsigned char *)FCalloc( jsonsize + response->http_SizeOfContent + END_CHAR_SIGNS + 128, sizeof( char ) );
 						if( buf != NULL )
@@ -749,8 +792,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 			
 				FFree( jsontemp );
 			}
-			DEBUG1("[WS] SysWebRequest return\n"  );
-			Log( FLOG_INFO, "WS messages sent LOCKTEST\n");
+			Log( FLOG_INFO, "[WS] SysWebRequest return\n");
 		}	// respcode == -666
 	}
 	else
@@ -782,8 +824,43 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 		Log( FLOG_INFO, "WS no response end LOCKTEST\n");
 	}
 	
-	Log( FLOG_INFO, "WS END mutexes unlocked\n");
+	//Log( FLOG_INFO, "WS END mutexes unlocked\n");
 	return 0;
+}
+
+int debug01( int  a )
+{
+	return a+1;
+}
+
+int debug02( int  a )
+{
+	return a+1;
+}
+
+int debug1( int  a )
+{
+	return a+1;
+}
+
+int debug2( int  a )
+{
+	return a+2;
+}
+
+int debug3( int  a )
+{
+	return a+3;
+}
+
+int debug4( int  a )
+{
+	return a+4;
+}
+
+int debug5( int  a )
+{
+	return a+5;
 }
 
 //
@@ -799,19 +876,31 @@ void *ParseAndCall( WSThreadData *wstd )
 	jsmn_parser p;
 	jsmntok_t *t;
 	
+	if( wstd == NULL )
+	{
+		return NULL;
+	}
+	
 	char *in = wstd->wstd_Msg;
+	wstd->wstd_Msg = NULL;			// we do not hold message in wstd anymore
 	size_t len = wstd->wstd_Len;
 	
 	UserSession *locus = NULL;
 	UserSession *orig;
 	
-	locus = wstd->wstd_WSD->wsc_UserSession;
+	if( wstd->wstd_WSD != NULL )
+	{
+		locus = wstd->wstd_WSD->wsc_UserSession;
+	}
 	orig = locus;
 	if( orig != NULL )
 	{
 		if( orig->us_WSD == NULL )
 		{
-			FERROR("[ParseAndCall] There is no WS connection attached to mutex!\n");
+			// This error is happening pretty random!
+			// This one leads to websocket errors...
+			
+			FERROR("[ParseAndCall] There is no WS connection attached to user session!\n");
 			// Decrease use for external call
 			if( FRIEND_MUTEX_LOCK( &(orig->us_Mutex) ) == 0 )
 			{
@@ -903,8 +992,8 @@ void *ParseAndCall( WSThreadData *wstd )
 							{
 								//DEBUG("[WS] Got chunked message: %d\n\n\n%.*s\n\n\n", t[ data ].end-t[ data ].start, t[ data ].end-t[ data ].start, (char *)(in + t[ data ].start) );
 								char *idc = StringDuplicateN( in + t[ id ].start,    (int)(t[ id ].end - t[ id ].start) );
-								part = StringNToInt(          in + t[ part ].start,  (int)(t[ part ].end - t[ part ].start) );
-								total = StringNToInt(         in + t[ total ].start, (int)(t[ total ].end - t[ total ].start) );
+								part = StringNToInt( in + t[ part ].start,  (int)(t[ part ].end - t[ part ].start) );
+								total = StringNToInt( in + t[ total ].start, (int)(t[ total ].end - t[ total ].start) );
 								
 								//if( us != NULL )
 								{
@@ -915,6 +1004,7 @@ void *ParseAndCall( WSThreadData *wstd )
 										if( wsreq->wr_Message != NULL && wsreq->wr_MessageSize > 0 && wsreq->wr_IsBroken == 0 )
 										{
 											DEBUG("[WS] Callback will be called again!\n");
+
 											if( wstd->wstd_Msg != NULL )
 											{
 												FFree( wstd->wstd_Msg );
@@ -962,6 +1052,8 @@ void *ParseAndCall( WSThreadData *wstd )
 												}
 											}
 											
+											// We dont want to do anything on pointer which points to old data (released)
+											in = NULL;
 											// Run in thread
 											pthread_t t;
 											memset( &t, 0, sizeof( pthread_t ) );
@@ -979,6 +1071,7 @@ void *ParseAndCall( WSThreadData *wstd )
 												}
 											}
 											wstd = NULL;
+											
 											
 											//FC_Callback( wsi, reason, user, wsreq->wr_Message, wsreq->wr_MessageSize );
 											DEBUG("[WS] Callback was called again!\n");
@@ -1003,7 +1096,7 @@ void *ParseAndCall( WSThreadData *wstd )
 									FFree( idc );
 								}
 								
-								DEBUG("[WS] Found proper chunk message\n");
+								//DEBUG("[WS] Found proper chunk message\n");
 							}
 							else
 							{
@@ -1048,7 +1141,7 @@ void *ParseAndCall( WSThreadData *wstd )
 									unsigned char *buf;
 									//int len = strlen( answer );
 									buf = (unsigned char *)FCalloc( len + 256, sizeof( char ) );
-									INFO("[WS] Buf assigned: %p\n", buf );
+									//INFO("[WS] Buf assigned: %p\n", buf );
 									if( buf != NULL )
 									{
 										memcpy( buf, answer,  len );
@@ -1086,7 +1179,7 @@ void *ParseAndCall( WSThreadData *wstd )
 										//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
 										memcpy( buf, answer,  len );
 
-										DEBUG("[WS] Writeline1 %p\n", locus );
+										//DEBUG("[WS] Writeline1 %p\n", locus );
 										
 										UserSessionWebsocketWrite( locus, buf, len, LWS_WRITE_TEXT );
 										
@@ -1097,7 +1190,7 @@ void *ParseAndCall( WSThreadData *wstd )
 						}	// for through parameters
 					}	// next type of message
 				
-					if( strncmp( "type",  in + t[ 5 ].start, t[ 5 ].end-t[ 5 ].start ) == 0 )
+					if( in != NULL && strncmp( "type",  in + t[ 5 ].start, t[ 5 ].end-t[ 5 ].start ) == 0 )
 					{
 						int tsize = t[ 6 ].end-t[ 6 ].start;
 						// simple PING
@@ -1107,9 +1200,9 @@ void *ParseAndCall( WSThreadData *wstd )
 
 							if( locus != NULL )
 							{
-								locus->us_LoggedTime = time( NULL );
+								locus->us_LastActionTime = time( NULL );
 								
-								//sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_SessionID, umaID, deviceid,  loggedSession->us_UserID );
+								//sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LastActionTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_SessionID, umaID, deviceid,  loggedSession->us_UserID );
 								WSThreadPing( wstd );
 								wstd = NULL;
 							}
@@ -1124,6 +1217,13 @@ void *ParseAndCall( WSThreadData *wstd )
 			
 			else if( strncmp( "msg",  in + t[ 2 ].start, 3 ) == 0 )
 			{
+				//
+				// To catch nasty bug with WS
+				//
+				
+				//Log( FLOG_INFO, "[WS] Incoming message: '%.*s'\n" , 200, in );
+				Log( FLOG_INFO, "[WS] Incoming message: '%s'\n" , in );	// for debug
+				
 				// type object
 				if( t[4].type == JSMN_OBJECT)
 				{
@@ -1131,8 +1231,6 @@ void *ParseAndCall( WSThreadData *wstd )
 					{
 						if( strncmp( "request",  in + t[ 6 ].start, t[ 6 ].end-t[ 6 ].start ) == 0 )
 						{
-							//WSThreadData *wstdata = FCalloc( 1, sizeof(WSThreadData) );
-							
 							if( locus != NULL && wstd != NULL )
 							{
 								DEBUG("[WS] Request received\n");
@@ -1145,6 +1243,8 @@ void *ParseAndCall( WSThreadData *wstd )
 								Http *http = HttpNew( );
 								if( http != NULL )
 								{
+									debug01( 2 );
+									
 									http->http_RequestSource = HTTP_SOURCE_WS;
 									http->http_ParsedPostContent = HashmapNew();
 									http->http_Uri = UriNew();
@@ -1196,8 +1296,15 @@ void *ParseAndCall( WSThreadData *wstd )
 									{
 										i1 = i + 1;
 										
+										if( i1 >= r )
+										{
+											FERROR("[WS] Parse message error. No data provided\n");
+											break;
+										}
+										
 										if( jsoneqin( in, &t[i], "requestid") == 0) 
 										{
+											debug1(1);
 											// threads
 											wstd->wstd_Requestid = StringDuplicateN(  (char *)(in + t[i1].start), (int)(t[i1].end-t[i1].start) );
 											requestid = wstd->wstd_Requestid;
@@ -1215,14 +1322,15 @@ void *ParseAndCall( WSThreadData *wstd )
 											
 											if( path == NULL )
 											{
+												debug2(2);
 												// threads
-												wstd->wstd_Path = StringDuplicateN(  in + t[i1].start,t[i1].end-t[i1].start );
+												wstd->wstd_Path = StringDuplicateN( in + t[i1].start,t[i1].end-t[i1].start );
 												path = wstd->wstd_Path;//in + t[i1].start;
 												paths = t[i1].end-t[i1].start;
 												
 												if( http->http_Uri != NULL )
 												{
-													http->http_Uri->uri_QueryRaw = StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start );
+													http->http_Uri->uri_QueryRaw = StringDuplicateN( in + t[i1].start, t[i1].end-t[i1].start );
 												}
 											
 												path[ paths ] = 0;
@@ -1245,6 +1353,7 @@ void *ParseAndCall( WSThreadData *wstd )
 											}
 											else
 											{
+												debug2(3);
 												// this is path parameter
 												if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 												{
@@ -1256,6 +1365,8 @@ void *ParseAndCall( WSThreadData *wstd )
 										{
 											authid = in + t[i1].start;
 											authids = t[i1].end-t[i1].start;
+											
+											debug4(4);
 											
 											if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 											{
@@ -1279,6 +1390,8 @@ void *ParseAndCall( WSThreadData *wstd )
 
 											if(( i1) < r && t[ i ].type != JSMN_ARRAY )
 											{
+												debug5(5);
+												
 												if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN( in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN( in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 												{
 													//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", (int)(t[i].end-t[i].start), (char *)(in + t[i].start), (int)(t[i1].end-t[i1].start), (char *)(in + t[i1].start) );
@@ -1383,23 +1496,26 @@ void *ParseAndCall( WSThreadData *wstd )
 												
 													if( http->http_Uri != NULL )
 													{
-														http->http_Uri->uri_QueryRaw = StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start );
+														http->http_Uri->uri_QueryRaw = StringDuplicateN( path, paths );
 													}
 												
-													http->http_RawRequestPath = StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start );
-													path[ paths ] = 0;
-													int j = 1;
-												
-													pathParts[ 0 ] = path;
-												
-													int selpart = 1;
-													
-													for( j = 1 ; j < paths ; j++ )
+													http->http_RawRequestPath = StringDuplicateN( path, paths );
+													if( paths > 0 )
 													{
-														if( path[ j ] == '/' )
+														path[ paths ] = 0;
+														int j = 1;
+													
+														pathParts[ 0 ] = path;
+												
+														int selpart = 1;
+													
+														for( j = 1 ; j < paths ; j++ )
 														{
-															pathParts[ selpart++ ] = &path[ j + 1 ];
-															path[ j ] = 0;
+															if( path[ j ] == '/' )
+															{
+																pathParts[ selpart++ ] = &path[ j + 1 ];
+																path[ j ] = 0;
+															}
 														}
 													}
 													i++;
@@ -1419,12 +1535,12 @@ void *ParseAndCall( WSThreadData *wstd )
 												authid = in + t[i1].start;
 												authids = t[i1].end-t[i1].start;
 											
-												if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
+												if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN( authid, authids ) ) == MAP_OK )
 												{
 													//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, in + t[i].start, t[i+1].end-t[i+1].start, in + t[i+1].start );
 												}
 											
-												if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN(  "authid", 6 ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
+												if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN(  "authid", 6 ), StringDuplicateN( authid, authids ) ) == MAP_OK )
 												{
 
 												}
@@ -1583,11 +1699,33 @@ void *ParseAndCall( WSThreadData *wstd )
 			DEBUG( "[WS] Decreased. %d\n", orig->us_InUseCounter );
 			FRIEND_MUTEX_UNLOCK( &(orig->us_Mutex) );
 		}
+		
+		if( orig->us_Status == USER_SESSION_STATUS_TO_REMOVE )
+		{
+			char *locName = StringDuplicate( orig->us_SessionID );
+			UserSessionDelete( orig );
+
+			if( SLIB->sl_ActiveAuthModule != NULL )
+			{
+				SLIB->sl_ActiveAuthModule->Logout( SLIB->sl_ActiveAuthModule, NULL, locName );
+			}
+			
+			if( locName != NULL )
+			{
+				FFree( locName );
+			}
+		}
 	}
 	
 	if( wstd != NULL )
+	{
 		releaseWSData( wstd );
+	}
 	
+	if( in != NULL )
+	{
+		FFree( in );
+	}
 	
 	FFree( t );
 	

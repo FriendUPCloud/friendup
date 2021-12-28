@@ -1,0 +1,45 @@
+
+input.CustomToggleInput 
+{
+	display: none;
+}
+
+label.CustomToggleLabel
+{
+	cursor: pointer;
+	display: block;
+	border: 1px solid #ADADAD;
+	border-radius: 5px;
+	background-color: #DDD;
+	width: 32px;
+	height: 16px;
+	position: relative;
+	transition: all 0.2s;
+}
+
+label.CustomToggleLabel:after
+{
+	content: '';
+	background-color: #FFF;
+	border: 1px solid #ABABAB;
+	border-radius: 6px;
+	width: 14px;
+	height: 14px;
+	position: absolute;
+	top: 0;
+	left: 0;
+	transition: all 0.2s;
+}
+
+input.CustomToggleInput:checked + label.CustomToggleLabel
+{
+	background-color: #27AE60;
+	border-color: #27AE60;
+}
+
+input.CustomToggleInput:checked + label.CustomToggleLabel:after
+{
+	left: 16px;
+	border-color: #27AE60;
+}
+

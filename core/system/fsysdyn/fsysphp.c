@@ -316,7 +316,9 @@ ListString *PHPCall( const char *command )
 	
 	ListStringJoin( ls );		//we join all string into one buffer
 
+	//DEBUG( "[fsysphp] Finished PHP call...(%lu length, %s)-\n", ls->ls_Size, ls->ls_Data );
 	DEBUG( "[fsysphp] Finished PHP call...(%lu length, %s)-\n", ls->ls_Size, ls->ls_Data );
+	
 	return ls;
 }
 
@@ -517,7 +519,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 	char *name = NULL;
 	char *module = NULL;
 	char *type = NULL;
-	char *userSession = NULL;
+	UserSession *us = NULL;
 	char *empty = "";
 	
 	SystemBase *sb = NULL;
@@ -569,8 +571,8 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 				case FSys_Mount_SysBase:
 					sb = (SystemBase *)lptr->ti_Data;
 					break;
-				case FSys_Mount_User_SessionID:
-					userSession = (char *)lptr->ti_Data;
+				case FSys_Mount_UserSession:
+					us = (UserSession *)lptr->ti_Data;
 					break;
 			}
 			lptr++;
@@ -592,7 +594,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 		{
 			if( strlen( path ) < 1 )
 			{
-				dev->f_Path = calloc( 2, sizeof(char) );
+				dev->f_Path = FCalloc( 2, sizeof(char) );
 			}
 			else
 			{
@@ -613,20 +615,10 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 		if( sd != NULL )
 		{
 			sd->module = StringDup( module );
-			if( usr != NULL && usr->u_MainSessionID != NULL )
-			{
-				userSession = usr->u_MainSessionID;
-			}
-			else
-			{
-				if( userSession == NULL )
-				{
-					userSession = empty;
-				}
-			}
-			DEBUG( "[fsysphp] Copying session: %s\n", userSession );
-			//dev->f_SessionID = StringDup( usr->u_MainSessionID );
-			dev->f_SessionIDPTR = userSession;
+			
+			DEBUG( "[fsysphp] Copying session normal: %s - hashed %s\n", us->us_SessionID, us->us_SessionID );
+			
+			FileFillSessionID( dev, us );
 			sd->type = StringDup( type );
 			dev->f_SpecialData = sd;
 			sd->sb = sb;
@@ -637,7 +629,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 				( name ? strlen( name ) : 0 ) + 
 				( path ? strlen( path ) : 0 ) + 
 				( module ? strlen( module ) : strlen( "files" ) ) + 
-				( strlen( userSession ) ) + 1;
+				( strlen( us->us_SessionID ) ) + 1;
 			
 			
 			// Whole command
@@ -656,7 +648,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 						name ? name : "", 
 						path ? path : "", 
 						module ? module : "files", 
-						userSession  );
+						us->us_SessionID );
 					sprintf( command, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 					FFree( commandCnt );
 			
@@ -672,13 +664,12 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 						if( strncmp( result->ls_Data, "ok", 2 ) != 0 )
 						{
 							DEBUG( "[fsysphp] Failed to mount device %s..\n", name );
-							//DEBUG( "[fsysphp] Output was: %s\n", result->ls_Data );
-							if( sd->module ) FFree( sd->module );
-							//if( dev->f_SessionID ) FFree( dev->f_SessionID );
-							if( sd->type ) FFree( sd->type );
-							if( dev->f_Name ) FFree( dev->f_Name );
-							if( dev->f_Path ) FFree( dev->f_Path );
-							if( dev->f_DevServer ) FFree( dev->f_DevServer );
+
+							if( sd->module ){ FFree( sd->module ); sd->module = NULL; }
+							if( sd->type ){ FFree( sd->type ); sd->type = NULL; }
+							if( dev->f_Name ){ FFree( dev->f_Name ); dev->f_Name = NULL; }
+							if( dev->f_Path ){ FFree( dev->f_Path ); dev->f_Path = NULL; }
+							if( dev->f_DevServer ){ FFree( dev->f_DevServer ); dev->f_DevServer = NULL; }
 							FFree( sd );
 							FFree( dev );
 							
@@ -696,12 +687,11 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 					else
 					{
 						DEBUG( "[fsysphp] Error mounting device %s..\n", name );
-						if( sd->module ) FFree( sd->module );
-						//if( dev->f_SessionID ) FFree( dev->f_SessionID );
-						if( sd->type ) FFree( sd->type );
-						if( dev->f_Name ) FFree( dev->f_Name );
-						if( dev->f_Path ) FFree( dev->f_Path );
-						if( dev->f_DevServer ) FFree( dev->f_DevServer );
+						if( sd->module ){ FFree( sd->module ); sd->module = NULL; }
+						if( sd->type ){ FFree( sd->type ); sd->type = NULL; }
+						if( dev->f_Name ){ FFree( dev->f_Name ); dev->f_Name = NULL; }
+						if( dev->f_Path ){ FFree( dev->f_Path ); dev->f_Path = NULL; }
+						if( dev->f_DevServer ){ FFree( dev->f_DevServer ); dev->f_DevServer = NULL; }
 						FFree( sd );
 						FFree( dev );
 						
@@ -749,8 +739,8 @@ int Release( struct FHandler *s, void *f )
 			SpecialData *sd = (SpecialData *)lf->f_SpecialData;
 		
 			// Free up active device information
-			if( sd->module ){ FFree( sd->module ); }
-			if( sd->type ){ FFree( sd->type ); }
+			if( sd->module ){ FFree( sd->module ); sd->module = NULL; }
+			if( sd->type ){ FFree( sd->type ); sd->type = NULL; }
 			FFree( lf->f_SpecialData );
 			lf->f_SpecialData = NULL;
 		}
@@ -821,8 +811,9 @@ int UnMount( struct FHandler *s, void *f )
 			// TODO: we should parse result to get information about success
 			
 			// Free up active device information
-			if( sd->module ) FFree( sd->module );
-			if( sd->type ) FFree( sd->type ); 
+			if( sd->module ){ FFree( sd->module ); sd->module = NULL; }
+			if( sd->type ){ FFree( sd->type ); sd->type = NULL; }
+
 			FFree( lf->f_SpecialData );
 			lf->f_SpecialData = NULL;
 		}
@@ -844,6 +835,8 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 	
 	char *comm = NULL;
 	
+	DEBUG("[PHPFsys/FileOpen] start\n");
+	
 	if( strchr( path, ':' ) != NULL )
 	{
 		int l = strlen( path );
@@ -851,8 +844,11 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		{
 			memcpy( comm, path, l );
 		}
-		else return NULL;
-		
+		else
+		{
+			DEBUG("[PHPFsys/FileOpen] Cannot allocate memory when ';' is in path\n");
+			return NULL;
+		}
 	}
 	else
 	{
@@ -860,7 +856,11 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		{
 			sprintf( comm, "%s:%s", s->f_Name, path );
 		}
-		else return NULL;
+		else
+		{
+			DEBUG("[PHPFsys/FileOpen] Cannot allocate memory when ';' is not in path\n");
+			return NULL;
+		}
 	}
 	
 	char *encodedcomm = MarkAndBase64EncodeString( comm );
@@ -895,6 +895,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 	// Memory problem, abort!
 	else
 	{
+		DEBUG("[PHPFsys/FileOpen] Cannot allocate memory for command\n");
 		FFree( encodedcomm );
 		return NULL;
 	}
@@ -913,7 +914,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 			int err = newpopen( command, pofd );
 			if( err != 0 )
 			{
-				FERROR("[PHPCallDisk] cannot open pipe: %s\n", strerror( errno ) );
+				FERROR("[PHPFsys/FileOpen] cannot open pipe: %s\n", strerror( errno ) );
 				return NULL;
 			}
 	
@@ -952,7 +953,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 					//locfil->f_SessionID = StringDup( s->f_SessionID );
 					locfil->f_SessionIDPTR = s->f_SessionIDPTR;
 		
-					DEBUG("[fsysphp] FileOpened, memory allocated for reading.\n" );
+					DEBUG("[PHPFsys/FileOpen] FileOpened, memory allocated for reading.\n" );
 					FFree( command );
 					FFree( encodedcomm );
 					return locfil;
@@ -973,7 +974,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 			
 				FFree( command );
 				FFree( encodedcomm );
-				FERROR("[PHPFsys] cannot alloc memory\n");
+				FERROR("[PHPFsys/FileOpen] cannot alloc memory\n");
 				return NULL;
 			}
 		}	// pofd
@@ -995,15 +996,15 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		// when pointer is used there is no way that something will write to same file
 		snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/Friendup/%s_read_%f%p%d", s->f_SessionIDPTR, timeInMill, sd, rand()%999 );
 		
-		DEBUG( "[fsysphp] Success in locking %s\n", tmpfilename );
+		DEBUG( "[PHPFsys/FileOpen] Success in locking %s\n", tmpfilename );
 
 		// Open the tmp file and get a file lock!
 
 		// Get the data
 		//char command[ 1024 ];	// maybe we should count that...
 
-		DEBUG( "[fsysphp] Getting data for tempfile, seen below as command:\n" );
-		DEBUG( "[fsysphp] %s\n", command );
+		DEBUG( "[PHPFsys/FileOpen] Getting data for tempfile, seen below as command:\n" );
+		DEBUG( "[PHPFsys/FileOpen] %s\n", command );
 		
 		BufStringDisk *result = PHPCallDisk( command );
 
@@ -1011,12 +1012,12 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		if( result )
 		{
 			if( result->bsd_Buffer && result->bsd_Size> 0 )
-			//if( result->ls_Data )
 			{
-				//if( strncmp( result->ls_Data, "fail", 4 ) == 0 )
+				Log( FLOG_DEBUG, "[PHPFsys/FileOpen] response rb: '%.*s'\n", 100, result->bsd_Buffer );
+				
 				if( strncmp( result->bsd_Buffer, "fail", 4 ) == 0 )
 				{
-					FERROR( "[fsysphp] [FileOpen] Failed to get exclusive lock on lockfile. Fail returned.\n" );
+					FERROR( "[PHPFsys/FileOpen] Failed to get exclusive lock on lockfile. Fail returned.\n" );
 					FFree( command );
 					FFree( encodedcomm );
 					BufStringDiskDelete( result );
@@ -1079,7 +1080,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 							//locfil->f_SessionID = StringDup( s->f_SessionID );
 							locfil->f_SessionIDPTR = s->f_SessionIDPTR;
 		
-							DEBUG("[fsysphp] FileOpened, memory allocated for reading.\n" );
+							DEBUG("[PHPFsys/FileOpen] FileOpened, memory allocated for reading.\n" );
 							FFree( command );
 							FFree( encodedcomm );
 							return locfil;
@@ -1095,18 +1096,19 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 				}
 				else
 				{
-					FERROR("[fsysphp] Cannot open temporary file %s\n", tmpfilename );
+					FERROR("[PHPFsys/FileOpen] Cannot open temporary file %s\n", tmpfilename );
 				}
 			}
 			// Remove result with no data
 			else
 			{
+				DEBUG("[PHPFsys/FileOpen] no data inside\n");
 				BufStringDiskDelete( result );
 			}
 		}
 		else
 		{
-			FERROR("[fsysphp] Cannot create temporary file %s\n", tmpfilename );
+			FERROR("[PHPFsys/FileOpen] Cannot create temporary file %s\n", tmpfilename );
 		}
 
 		unlink( tmpfilename );
@@ -1118,7 +1120,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		// Make sure we can make the tmp file unique
 		snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/Friendup/%s_write_%d%d%d%d", s->f_SessionIDPTR, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
 
-		DEBUG("[fsysphp] WRITE FILE %s\n", tmpfilename );
+		DEBUG("[PHPFsys/FileOpen] WRITE FILE %s\n", tmpfilename );
 
 		FILE *locfp = NULL;
 		if( ( locfp = fopen( tmpfilename, "w+" ) ) != NULL )
@@ -1137,7 +1139,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 					//locfil->f_SessionID = StringDup( s->f_SessionID );
 					locfil->f_SessionIDPTR = s->f_SessionIDPTR;
 
-					DEBUG("[fsysphp] FileOpened, memory allocated.. store to file %s fid %p\n", locsd->fname, locfp );
+					DEBUG("[PHPFsys/FileOpen] FileOpened, memory allocated.. store to file %s fid %p\n", locsd->fname, locfp );
 	
 					FFree( command );
 					FFree( encodedcomm );
@@ -1158,15 +1160,16 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		}
 		else
 		{
-			FERROR("Cannot create temporary file %s\n", tmpfilename );
+			FERROR("[PHPFsys/FileOpen] Cannot create temporary file %s\n", tmpfilename );
 		}
 	}
 	else
 	{
-		FERROR("Mode not supported\n");
+		FERROR("[PHPFsys/FileOpen] Mode not supported\n");
 	}
 	FFree( command );
 	FFree( encodedcomm );
+	DEBUG("[PHPFsys/FileOpen] end of functions\n");
 	
 	return NULL;
 }
@@ -1271,7 +1274,7 @@ int FileClose( struct File *s, void *fp )
 							
 							if( result->bsd_Buffer[0] == 'f' && result->bsd_Buffer[1] == 'a' && result->bsd_Buffer[2] == 'i' && result->bsd_Buffer[3] == 'l' )
 							{
-								closeerr = 2;
+								closeerr = -2;
 							}
 							
 							DEBUG( "[fsysphp] Closed file using PHP call.\n" );
@@ -1334,7 +1337,7 @@ int FileRead( struct File *f, char *buffer, int rsize )
 			// Make a new buffer and read
 			if( sd->pofd )
 			{
-				DEBUG( "[fsysphp] Reading from pofd!\n" );
+				//DEBUG( "[fsysphp] Reading from pofd!\n" );
 				int size = 0, readSize = 0, ret = 0, errCounter = 0;
 				
 				int amountToRead = 0, wholeSize = rsize;

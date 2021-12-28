@@ -31,12 +31,19 @@ int
 lws_issue_raw(struct lws *wsi, unsigned char *buf, size_t len)
 {
 	struct lws_context *context = lws_get_context(wsi);
-	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
+	struct lws_context_per_thread *pt = &wsi->a.context->pt[(int)wsi->tsi];
 	size_t real_len = len;
 	unsigned int n, m;
 
-	// lwsl_notice("%s: len %d\n", __func__, (int)len);
-	// lwsl_hexdump_level(LLL_NOTICE, buf, len);
+	/*
+	 * If you're looking to dump data being sent down the tls tunnel, see
+	 * lws_ssl_capable_write() in lib/tls/mbedtls/mbedtls-ssl.c or
+	 * lib/tls/openssl/openssl-ssl.c.
+	 *
+	 * There's also a corresponding lws_ssl_capable_read() in those files
+	 * where you can enable a dump of decrypted data as soon as it was
+	 * read.
+	 */
 
 	/*
 	 * Detect if we got called twice without going through the
@@ -47,8 +54,8 @@ lws_issue_raw(struct lws *wsi, unsigned char *buf, size_t len)
 		lwsl_hexdump_level(LLL_INFO, buf, len);
 		lwsl_info("** %p: vh: %s, prot: %s, role %s: "
 			  "Inefficient back-to-back write of %lu detected...\n",
-			  wsi, wsi->vhost ? wsi->vhost->name : "no vhost",
-			  wsi->protocol->name, wsi->role_ops->name,
+			  wsi, wsi->a.vhost ? wsi->a.vhost->name : "no vhost",
+			  wsi->a.protocol->name, wsi->role_ops->name,
 			  (unsigned long)len);
 	}
 
@@ -65,8 +72,8 @@ lws_issue_raw(struct lws *wsi, unsigned char *buf, size_t len)
 
 	if (buf && lws_has_buffered_out(wsi)) {
 		lwsl_info("** %p: vh: %s, prot: %s, incr buflist_out by %lu\n",
-			  wsi, wsi->vhost ? wsi->vhost->name : "no vhost",
-			  wsi->protocol->name, (unsigned long)len);
+			  wsi, wsi->a.vhost ? wsi->a.vhost->name : "no vhost",
+			  wsi->a.protocol->name, (unsigned long)len);
 
 		/*
 		 * already buflist ahead of this, add it on the tail of the
@@ -97,10 +104,10 @@ lws_issue_raw(struct lws *wsi, unsigned char *buf, size_t len)
 		lwsl_err("%s: invalid sock %p\n", __func__, wsi);
 
 	/* limit sending */
-	if (wsi->protocol->tx_packet_size)
-		n = (int)wsi->protocol->tx_packet_size;
+	if (wsi->a.protocol->tx_packet_size)
+		n = (int)wsi->a.protocol->tx_packet_size;
 	else {
-		n = (int)wsi->protocol->rx_buffer_size;
+		n = (int)wsi->a.protocol->rx_buffer_size;
 		if (!n)
 			n = context->pt_serv_buf_size;
 	}
@@ -228,7 +235,7 @@ int
 lws_write(struct lws *wsi, unsigned char *buf, size_t len,
 	  enum lws_write_protocol wp)
 {
-	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
+	struct lws_context_per_thread *pt = &wsi->a.context->pt[(int)wsi->tsi];
 #if defined(LWS_WITH_DETAILED_LATENCY)
 	lws_usec_t us;
 #endif
@@ -248,8 +255,8 @@ lws_write(struct lws *wsi, unsigned char *buf, size_t len,
 	wsi->http.access_log.sent += len;
 #endif
 #if defined(LWS_WITH_SERVER_STATUS)
-	if (wsi->vhost)
-		wsi->vhost->conn_stats.tx += len;
+	if (wsi->a.vhost)
+		wsi->a.vhost->conn_stats.tx += len;
 #endif
 #if defined(LWS_WITH_DETAILED_LATENCY)
 	us = lws_now_usecs();
@@ -264,7 +271,7 @@ lws_write(struct lws *wsi, unsigned char *buf, size_t len,
 		return m;
 
 #if defined(LWS_WITH_DETAILED_LATENCY)
-	if (wsi->context->detailed_latency_cb) {
+	if (wsi->a.context->detailed_latency_cb) {
 		wsi->detlat.req_size = len;
 		wsi->detlat.acc_size = m;
 		wsi->detlat.type = LDLT_WRITE;
@@ -274,7 +281,7 @@ lws_write(struct lws *wsi, unsigned char *buf, size_t len,
 		else
 			wsi->detlat.latencies[LAT_DUR_PROXY_PROXY_REQ_TO_WRITE] = 0;
 		wsi->detlat.latencies[LAT_DUR_USERCB] = lws_now_usecs() - us;
-		lws_det_lat_cb(wsi->context, &wsi->detlat);
+		lws_det_lat_cb(wsi->a.context, &wsi->detlat);
 
 	}
 #endif
@@ -285,7 +292,7 @@ lws_write(struct lws *wsi, unsigned char *buf, size_t len,
 int
 lws_ssl_capable_read_no_ssl(struct lws *wsi, unsigned char *buf, int len)
 {
-	struct lws_context *context = wsi->context;
+	struct lws_context *context = wsi->a.context;
 	struct lws_context_per_thread *pt = &context->pt[(int)wsi->tsi];
 	int n = 0;
 
@@ -314,8 +321,8 @@ lws_ssl_capable_read_no_ssl(struct lws *wsi, unsigned char *buf, int len)
 			return LWS_SSL_CAPABLE_ERROR;
 
 #if defined(LWS_WITH_SERVER_STATUS)
-		if (wsi->vhost)
-			wsi->vhost->conn_stats.rx += n;
+		if (wsi->a.vhost)
+			wsi->a.vhost->conn_stats.rx += n;
 #endif
 		lws_stats_bump(pt, LWSSTATS_B_READ, n);
 
@@ -341,15 +348,15 @@ lws_ssl_capable_write_no_ssl(struct lws *wsi, unsigned char *buf, int len)
 
 #if defined(LWS_WITH_UDP)
 	if (lws_wsi_is_udp(wsi)) {
-		if (wsi->context->udp_loss_sim_tx_pc) {
+		if (wsi->a.context->udp_loss_sim_tx_pc) {
 			uint16_t u16;
 			/*
 			 * We should randomly drop some of these
 			 */
 
-			if (lws_get_random(wsi->context, &u16, 2) == 2 &&
+			if (lws_get_random(wsi->a.context, &u16, 2) == 2 &&
 			    ((u16 * 100) / 0xffff) <=
-				    wsi->context->udp_loss_sim_tx_pc) {
+				    wsi->a.context->udp_loss_sim_tx_pc) {
 				lwsl_warn("%s: dropping udp tx\n", __func__);
 				/* pretend it was sent */
 				n = len;
@@ -366,7 +373,7 @@ lws_ssl_capable_write_no_ssl(struct lws *wsi, unsigned char *buf, int len)
 	} else
 #endif
 		if (wsi->role_ops->file_handle)
-			n = write((int)(long long)wsi->desc.filefd, buf, len);
+			n = write((int)(lws_intptr_t)wsi->desc.filefd, buf, len);
 		else
 			n = send(wsi->desc.sockfd, (char *)buf, len, MSG_NOSIGNAL);
 //	lwsl_info("%s: sent len %d result %d", __func__, len, n);

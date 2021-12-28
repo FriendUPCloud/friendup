@@ -1,0 +1,29 @@
+#groupDescription
+{
+	height: 70px;
+	resize: none;
+}
+
+button.Invite
+{
+	height: 30px;
+}
+
+#Relations
+{
+	position: relative;
+	max-height: 10000px;
+	transition: max-height,opacity 0.25s,0.25s;
+	overflow: hidden;
+}
+
+#Relations.Hidden
+{
+	opacity: 0;
+	max-height: 0px;
+}
+
+button.Hidden
+{
+	display: none;
+}

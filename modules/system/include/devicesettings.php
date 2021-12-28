@@ -12,7 +12,7 @@
 
 /* Gets the device settings from FMetaData and returns it in a JSON structure */
 
-global $SqlDatabase, $User, $Config;
+global $SqlDatabase, $User, $Config, $UserSession;
 
 // Make sure the user has a shared disk
 $sh = new dbIO( 'Filesystem' );
@@ -25,7 +25,7 @@ if( !$sh->Load() )
 }
 if( $sh->Mounted != 1 )
 {
-	$res = FriendCall( ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/device/mount?sessionid=' . $User->SessionID, false,
+	$res = FriendCall( ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/device/mount?sessionid=' . $UserSession->SessionID, false,
 		array( 
 			'devname'   => $sh->Name
 		)

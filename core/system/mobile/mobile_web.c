@@ -110,7 +110,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -127,7 +127,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		
 		HashmapElement *el = NULL;
 		
-		//if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+		//if( loggedSession->us_User->u_IsAdmin  == TRUE )
 		{
 			el = HttpGetPOSTParameter( request, "userid" );
 			if( el != NULL )
@@ -229,9 +229,9 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 						*/
 					{
 						DEBUG("Delete old entries\n");
-						snprintf( query, sizeof(query), "DELETE from `FUserMobileApp` where AppToken='%s' AND UserID=%lu", apptoken, uid );
+						snprintf( query, sizeof(query), "DELETE from `FUserMobileApp` where `AppToken`=\"%s\" AND UserID=%lu", apptoken, uid );
 						sqllib->QueryWithoutResults( sqllib, query );
-						snprintf( query, sizeof(query), "DELETE from `FUserMobileApp` where DeviceID='%s' AND UserID=%lu", deviceID, uid );
+						snprintf( query, sizeof(query), "DELETE from `FUserMobileApp` where `DeviceID`=\"%s\" AND UserID=%lu", deviceID, uid );
 						sqllib->QueryWithoutResults( sqllib, query );
 					}
 					
@@ -284,7 +284,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 				char buffer[ 512 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "userid, apptoken, deviceid" );
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", buffer1 , DICT_PARAMETERS_MISSING );
+				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
 		}
@@ -404,14 +404,14 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 					else
 					{
 						char buffer[ 256 ];
-						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+						snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
 						HttpAddTextContent( response, buffer );
 					}
 				}
 				else
 				{
 					char buffer[ 256 ];
-					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_UMA_ENTRY_NOT_FOUND] , DICT_UMA_ENTRY_NOT_FOUND );
+					snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_UMA_ENTRY_NOT_FOUND] , DICT_UMA_ENTRY_NOT_FOUND );
 					HttpAddTextContent( response, buffer );
 				}
 				l->LibrarySQLDrop( l, sqllib );
@@ -421,7 +421,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 				char buffer[ 512 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id or deviceid" );
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", buffer1 , DICT_PARAMETERS_MISSING );
+				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
 		}	// no DB connection
@@ -585,18 +585,18 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 				}
 				else
 				{
-					//snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+					//snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
 					err = 2;
 				}
 				
 				if( err == 0 )
 				{
-					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"0\", \"updated\":\"%lu\" }", ma->uma_ID );
+					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"0\",\"updated\":\"%lu\"}", ma->uma_ID );
 					HttpAddTextContent( response, buffer );
 				}
 				else
 				{
-					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"1\", \"updated\":\"%d\" }" , err );
+					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"1\",\"updated\":\"%d\"}" , err );
 					HttpAddTextContent( response, buffer );
 				}
 				
@@ -606,7 +606,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 				char buffer[ 512 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id" );
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
 		}
@@ -722,7 +722,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 				}
 				else
 				{
-					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"1\", \"updated\":\"%d\" }" , err );
+					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"1\",\"updated\":\"%d\"}" , err );
 					HttpAddTextContent( response, buffer );
 				}
 				
@@ -736,7 +736,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 				char buffer[ 512 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "userid" );
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
 		}
@@ -831,7 +831,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			char buffer[ 512 ];
 			char buffer1[ 256 ];
 			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "notifid, action" );
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, buffer );
 		}
 	}
@@ -918,7 +918,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			char buffer[ 512 ];
 			char buffer1[ 256 ];
 			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "status" );
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, buffer );
 		}
 	}

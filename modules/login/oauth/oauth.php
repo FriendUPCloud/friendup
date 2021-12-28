@@ -56,9 +56,13 @@ if( isset( $GLOBALS['argv'][2] ) && $GLOBALS['argv'][2] )
 				
 				$cfg = file_exists( 'cfg/cfg.ini' ) ? parse_ini_file( 'cfg/cfg.ini', true ) : [];
 				
-				if( is_array( $cfg ) && isset( $cfg['GoogleDriveAPI'] ) )
+				if( is_array($cfg) && isset( $cfg['GoogleDriveAPI']['client_id'] ) )
 				{
 					$sysinfo = $cfg['GoogleDriveAPI'];
+				}
+				else if( is_array($cfg) && isset( $cfg['GoogleAPI']['client_id'] ) )
+				{
+					$sysinfo = $cfg['GoogleAPI'];
 				}
 				else
 				{
@@ -91,6 +95,14 @@ if( isset( $GLOBALS['argv'][2] ) && $GLOBALS['argv'][2] )
 						{
 							$data = ( '&access=' . urlencode( json_encode( $token ) ) );
 						}
+						else
+						{
+							$obj->error = 'couldn\'t get access_token ... ';
+						}
+					}
+					else
+					{
+						$obj->error = 'couldn\'t authenticate ...';
 					}
 				}
 				
@@ -102,6 +114,11 @@ if( isset( $GLOBALS['argv'][2] ) && $GLOBALS['argv'][2] )
 		
 				break;
 		}
+	}
+	
+	if( isset( $obj->debug ) )
+	{
+		die( print_r( $obj,1 ) );
 	}
 }
 

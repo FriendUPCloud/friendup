@@ -15,7 +15,7 @@
 include_once( 'php/friend.php' );
 include_once( 'php/classes/file.php' );
 
-if( !isset( $User ) || ( $User && ( !isset( $User->ID ) || !$User->ID ) ) || !is_object( $User ) )
+if( !isset( $UserSession ) || ( $UserSession && ( !isset( $UserSession->ID ) || !$UserSession->ID ) ) || !is_object( $UserSession ) )
 {
 	die( 'fail<!--separate-->{"response":"user did not authenticate. system module. Argv[1]: ' . $argv[1] . '"}' );
 }
@@ -35,7 +35,7 @@ if( $level = $SqlDatabase->FetchObject( '
 	SELECT g.Name FROM FUserGroup g, FUserToGroup ug
 	WHERE
 		g.Type = \'Level\' AND
-		ug.UserID=\'' . $User->ID . '\' AND
+		ug.UserID=\'' . $UserSession->UserID . '\' AND
 		ug.UserGroupID = g.ID
 ' ) )
 {
@@ -43,178 +43,185 @@ if( $level = $SqlDatabase->FetchObject( '
 }
 else $level = false;
 
-function GetFilesystemByArgs( $args )
+if( !function_exists( 'GetFilesystemByArgs' ) )
 {
-	global $SqlDatabase, $User;
-	$identifier = false;
-
-	if( isset( $args->fileInfo ) )
+	function GetFilesystemByArgs( $args )
 	{
-		if( isset( $args->fileInfo->ID ) )
+		global $SqlDatabase, $User, $UserSession;
+		$identifier = false;
+
+		if( isset( $args->fileInfo ) )
 		{
-			$identifier = 'f.ID=\'' . intval( $args->fileInfo->ID, 10 ) . '\'';
+			if( isset( $args->fileInfo->ID ) )
+			{
+				$identifier = 'f.ID=\'' . intval( $args->fileInfo->ID, 10 ) . '\'';
+			}
+			else
+			{
+				$identifier = 'f.Name=\'' . mysqli_real_escape_string( $SqlDatabase->_link, reset( explode( ':', $args->fileInfo->Path ) ) )  . '\'';
+			}
+		}
+		else if( isset( $args->path ) )
+		{
+			$identifier = 'f.Name=\'' . mysqli_real_escape_string( $SqlDatabase->_link, reset( explode( ':', $args->path ) ) ) . '\'';
+		}
+		if( $Filesystem = $SqlDatabase->FetchObject( '
+		SELECT * FROM `Filesystem` f
+		WHERE
+			(
+				f.GroupID IN (
+							SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
+							WHERE
+								g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
+								ug.UserID = \'' . $UserSession->UserID . '\'
+						)
+				OR
+				f.UserID=\'' . $UserSession->UserID . '\'
+			)
+			AND ' . $identifier . '
+		' ) )
+		{
+			return $Filesystem;
+		}
+		return $identifier;
+	}
+}
+
+if( !function_exists( 'checkDesktopEvents' ) )
+{
+	// Check for desktop events now
+	function checkDesktopEvents()
+	{
+		// Returnvar
+		$returnvar = [];
+
+		// Check if we have files to import
+		$files = [];
+		if( file_exists( 'import' ) && $f = opendir( 'import' ) )
+		{
+			while( $file = readdir( $f ) )
+			{
+				if( $file[0] == '.' ) continue;
+				$files[] = $file;
+			}
+			closedir( $f );
+		}
+		if( count( $files ) > 0 )
+		{
+			$returnvar['Import'] = $files;
+		}
+		// Count
+		$c = 0;
+		foreach( $returnvar as $k=>$v )
+			$c++;
+		if( $c > 0 )
+			return json_encode( $returnvar );
+		return false;
+	}
+}
+
+if( !function_exists( 'curl_exec_follow' ) )
+{
+	function curl_exec_follow( $cu, &$maxredirect = null )
+	{
+		$mr = 5;
+
+		if ( ini_get( 'open_basedir' ) == '' && ini_get( 'safe_mode' == 'Off' ) )
+		{
+			curl_setopt( $cu, CURLOPT_FOLLOWLOCATION, $mr > 0 );
+			curl_setopt( $cu, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
+			curl_setopt( $cu, CURLOPT_MAXREDIRS, $mr );
 		}
 		else
 		{
-			$identifier = 'f.Name=\'' . mysqli_real_escape_string( $SqlDatabase->_link, reset( explode( ':', $args->fileInfo->Path ) ) )  . '\'';
-		}
-	}
-	else if( isset( $args->path ) )
-	{
-		$identifier = 'f.Name=\'' . mysqli_real_escape_string( $SqlDatabase->_link, reset( explode( ':', $args->path ) ) ) . '\'';
-	}
-	if( $Filesystem = $SqlDatabase->FetchObject( '
-	SELECT * FROM `Filesystem` f
-	WHERE
-		(
-			f.GroupID IN (
-						SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
-						WHERE
-							g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-							ug.UserID = \'' . $User->ID . '\'
-					)
-			OR
-			f.UserID=\'' . $User->ID . '\'
-		)
-		AND ' . $identifier . '
-	' ) )
-	{
-		return $Filesystem;
-	}
-	return $identifier;
-}
+			curl_setopt( $cu, CURLOPT_FOLLOWLOCATION, false );
+			curl_setopt( $cu, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 
-// Check for desktop events now
-function checkDesktopEvents()
-{
-	// Returnvar
-	$returnvar = [];
-
-	// Check if we have files to import
-	$files = [];
-	if( file_exists( 'import' ) && $f = opendir( 'import' ) )
-	{
-		while( $file = readdir( $f ) )
-		{
-			if( $file{0} == '.' ) continue;
-			$files[] = $file;
-		}
-		closedir( $f );
-	}
-	if( count( $files ) > 0 )
-	{
-		$returnvar['Import'] = $files;
-	}
-	// Count
-	$c = 0;
-	foreach( $returnvar as $k=>$v )
-		$c++;
-	if( $c > 0 )
-		return json_encode( $returnvar );
-	return false;
-}
-
-
-
-function curl_exec_follow( $cu, &$maxredirect = null )
-{
-	$mr = 5;
-
-	if ( ini_get( 'open_basedir' ) == '' && ini_get( 'safe_mode' == 'Off' ) )
-	{
-		curl_setopt( $cu, CURLOPT_FOLLOWLOCATION, $mr > 0 );
-		curl_setopt( $cu, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
-		curl_setopt( $cu, CURLOPT_MAXREDIRS, $mr );
-	}
-	else
-	{
-		curl_setopt( $cu, CURLOPT_FOLLOWLOCATION, false );
-		curl_setopt( $cu, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
-
-		if ( $mr > 0 )
-		{
-			$newurl = curl_getinfo( $cu, CURLINFO_EFFECTIVE_URL );
-			$rch = curl_copy_handle( $cu );
-
-			curl_setopt( $rch, CURLOPT_HEADER, true );
-			curl_setopt( $rch, CURLOPT_NOBODY, true );
-			curl_setopt( $rch, CURLOPT_FORBID_REUSE, false );
-			curl_setopt( $rch, CURLOPT_RETURNTRANSFER, true );
-			do
+			if ( $mr > 0 )
 			{
-				curl_setopt( $rch, CURLOPT_URL, $newurl );
+				$newurl = curl_getinfo( $cu, CURLINFO_EFFECTIVE_URL );
+				$rch = curl_copy_handle( $cu );
 
-				$header = curl_exec( $rch );
-
-				if ( curl_errno( $rch ) )
+				curl_setopt( $rch, CURLOPT_HEADER, true );
+				curl_setopt( $rch, CURLOPT_NOBODY, true );
+				curl_setopt( $rch, CURLOPT_FORBID_REUSE, false );
+				curl_setopt( $rch, CURLOPT_RETURNTRANSFER, true );
+				do
 				{
-					$code = 0;
-				}
-				else
-				{
-					$code = curl_getinfo( $rch, CURLINFO_HTTP_CODE );
+					curl_setopt( $rch, CURLOPT_URL, $newurl );
 
-					if ( $code == 301 || $code == 302 || $code == 303 )
-					{
-						preg_match( '/Location:(.*?)\n/', $header, $matches );
+					$header = curl_exec( $rch );
 
-						if ( !$matches )
-						{
-							preg_match( '/location:(.*?)\n/', $header, $matches );
-						}
-
-						$oldurl = $newurl;
-						$newurl = trim( array_pop( $matches ) );
-
-						if ( $newurl && !strstr( $newurl, 'http://' ) && !strstr( $newurl, 'https://' ) )
-						{
-							if ( strstr( $oldurl, 'https://' ) )
-							{
-								$parts = explode( '/', str_replace( 'https://', '', $oldurl ) );
-								$newurl = ( 'https://' . reset( $parts ) . ( $newurl{0} != '/' ? '/' : '' ) . $newurl );
-							}
-							if ( strstr( $oldurl, 'http://' ) )
-							{
-								$parts = explode( '/', str_replace( 'http://', '', $oldurl ) );
-								$newurl = ( 'http://' . reset( $parts ) . ( $newurl{0} != '/' ? '/' : '' ) . $newurl );
-							}
-
-						}
-					}
-					else
+					if ( curl_errno( $rch ) )
 					{
 						$code = 0;
 					}
+					else
+					{
+						$code = curl_getinfo( $rch, CURLINFO_HTTP_CODE );
+
+						if ( $code == 301 || $code == 302 || $code == 303 )
+						{
+							preg_match( '/Location:(.*?)\n/', $header, $matches );
+
+							if ( !$matches )
+							{
+								preg_match( '/location:(.*?)\n/', $header, $matches );
+							}
+
+							$oldurl = $newurl;
+							$newurl = trim( array_pop( $matches ) );
+
+							if ( $newurl && !strstr( $newurl, 'http://' ) && !strstr( $newurl, 'https://' ) )
+							{
+								if ( strstr( $oldurl, 'https://' ) )
+								{
+									$parts = explode( '/', str_replace( 'https://', '', $oldurl ) );
+									$newurl = ( 'https://' . reset( $parts ) . ( $newurl[0] != '/' ? '/' : '' ) . $newurl );
+								}
+								if ( strstr( $oldurl, 'http://' ) )
+								{
+									$parts = explode( '/', str_replace( 'http://', '', $oldurl ) );
+									$newurl = ( 'http://' . reset( $parts ) . ( $newurl[0] != '/' ? '/' : '' ) . $newurl );
+								}
+
+							}
+						}
+						else
+						{
+							$code = 0;
+						}
+					}
 				}
-			}
-			while ( $code && --$mr );
-			curl_close( $rch );
-			if ( !$mr )
-			{
-				if ( $maxredirect === null )
+				while ( $code && --$mr );
+				curl_close( $rch );
+				if ( !$mr )
 				{
+					if ( $maxredirect === null )
+					{
+						return false;
+					}
+					else
+					{
+						$maxredirect = 0;
+					}
+
 					return false;
 				}
-				else
-				{
-					$maxredirect = 0;
-				}
 
-				return false;
+				curl_setopt( $cu, CURLOPT_URL, $newurl );
 			}
-
-			curl_setopt( $cu, CURLOPT_URL, $newurl );
 		}
+
+		$cu = curl_exec( $cu );
+
+		if( $cu )
+		{
+			return $cu;
+		}
+
+		return false;
 	}
-
-	$cu = curl_exec( $cu );
-
-	if( $cu )
-	{
-		return $cu;
-	}
-
-	return false;
 }
 
 if( isset( $args->command ) )
@@ -234,10 +241,10 @@ if( isset( $args->command ) )
 				'setfilepublic', 'setfileprivate', 'zip', 'unzip', 'volumeinfo',
 				'securitydomains', 'systemmail', 'removebookmark', 'addbookmark',
 				'getbookmarks', 'listapplicationdocs', 'finddocumentation', 'userinfoget',
-				'userinfoset',  'useradd', 'userupdate', 'userdelete', 'checkuserbyname', 'userbetamail', 'listbetausers', 'listconnectedusers',
+				'userinfoset',  'useradd', 'user/create', 'user/update', 'user/delete', 'checkuserbyname', 'userbetamail', 'listbetausers', 'listconnectedusers',
 				'usersetup', 'usersetupadd', 'usersetupapply', 'usersetupsave', 'usersetupdelete',
-				'usersetupget', 'userwallpaperset', 'workgroups', 'workgroupadd', 'workgroupupdate', 'workgroupdelete',
-				'workgroupget', 'setsetting', 'getsetting', 'getavatar', 'listlibraries', 'listmodules',
+				'usersetupget', 'userwallpaperset', 'workgroups', 'listworkgroups', 'workgroupadd', 'workgroupupdate', 'workgroupdelete',
+				'workgroupget', 'workgroupaddmetadata', 'setsetting', 'getsetting', 'getavatar', 'listlibraries', 'listmodules',
 				'listuserapplications', 'adduserapplication', 'removeuserapplication', 'getmimetypes',  'setmimetype', 'setmimetypes', 'deletemimetypes',
 				'deletecalendarevent', 'getcalendarevents', 'addcalendarevent',
 				'listappcategories', 'systempath', 'listthemes', 'settheme', /* DEPRECATED - look for comment below 'userdelete',*/'userunblock',
@@ -250,14 +257,31 @@ if( isset( $args->command ) )
 			die( 'ok<!--separate-->{"Commands": ' . json_encode( $commands ) . '}' );
 			break;
 		case 'tinyurl':
-			if( isset( $User ) )
+			if( isset( $UserSession ) )
 				require( 'modules/system/include/tinyurl.php' );
 			break;
+		case 'tinyurldata':
+			if( isset( $User ) )
+				require( 'modules/system/include/tinyurldata.php' );
+			break;
+		case 'generateinvite':
+		case 'getinvites':
+		case 'getpendinginvites':
+		case 'removependinginvite': // Removes already pending invite
+		case 'removeinvite':
+		case 'verifyinvite':
+		case 'sendinvite':
+			if( isset( $User ) )
+				require( 'modules/system/include/invites.php' );
+			break;
+		case 'leavegroup':
+			require( 'modules/system/include/leavegroup.php' );
+			break;
 		case 'ping':
-			if( isset( $User ) && isset( $User->ID ) )
+			if( isset( $UserSession ) && isset( $UserSession->UserID ) )
 			{
-				$User->Loggedtime = mktime();
-				$User->Save();
+				$UserSession->Loggedtime = mktime();
+				$UserSession->Save();
 				die( 'ok' );
 			}
 			die( 'fail<!--separate-->{"response":"ping failed"}'  );
@@ -274,6 +298,9 @@ if( isset( $args->command ) )
 		// Get the app image from repository
 		case 'repoappimage':
 			require( 'modules/system/include/repoappimage.php' );
+			break;
+		case 'sampleconfig':
+			require( 'modules/system/include/sampleconfig.php' );
 			break;
 		case 'getsecuritysettings':
 			if( isset( $configfilesettings[ 'Security' ] ) )
@@ -546,6 +573,13 @@ if( isset( $args->command ) )
 		case 'workspaceshortcuts':
 			require( 'modules/system/include/workspaceshortcuts.php' );
 			break;
+		// Notification related
+		case 'addqueuedevent':
+		case 'getqueuedevents':
+		case 'queuedeventresponse':
+			require( 'modules/system/include/' . $args->command . '.php' );
+			break;
+		
 		// Forcefully renew a session for a user
 		case 'usersessionrenew':
 			require( 'modules/system/include/usersessionrenew.php' );
@@ -558,7 +592,7 @@ if( isset( $args->command ) )
 			if( $o = $SqlDatabase->FetchObject( '
 				SELECT g.Name FROM FUserGroup g, FUserToGroup ug
 				WHERE
-					ug.UserID=\'' . $User->ID . '\' AND ug.UserGroupID = g.ID
+					ug.UserID=\'' . $UserSession->UserID . '\' AND ug.UserGroupID = g.ID
 					AND g.Type = \'Level\'
 			' ) )
 			{
@@ -566,6 +600,17 @@ if( isset( $args->command ) )
 			}
 			die( 'fail<!--separate-->{"response":"user level failed"}'  );
 			break;
+			
+		// Post an announcement to workgroups and known users
+		case 'announcement':
+    		require( 'modules/system/include/announcement.php' );
+		    break;
+		    
+		// Get user/workgroup relevant announcements
+		case 'getannouncements':
+		    require( 'modules/system/include/getannouncements.php' );
+		    break;
+			
 		case 'convertfile':
 			require( 'modules/system/include/convertfile.php' );
 			break;
@@ -581,7 +626,7 @@ if( isset( $args->command ) )
 					SELECT f.Name, f.Mounted FROM
 						Filesystem f
 					WHERE
-						f.Type="Assign" AND f.UserID=\'' . $User->ID . '\'
+						f.Type="Assign" AND f.UserID=\'' . $UserSession->UserID . '\'
 					ORDER BY f.Name ASC
 				' ) )
 				{
@@ -597,7 +642,7 @@ if( isset( $args->command ) )
 			if( $mode ) $mode = strtolower( $mode );
 			if( !$mode || ( $mode && $mode != 'add' ) )
 			{
-				$SqlDatabase->query( 'DELETE FROM `Filesystem` WHERE `Type` = "Assign" AND `UserID`=\'' . $User->ID . '\' AND `Name` = "' . mysqli_real_escape_string( $SqlDatabase->_link, str_replace( ':', '', trim( $assign ) ) ) . '"' );
+				$SqlDatabase->query( 'DELETE FROM `Filesystem` WHERE `Type` = "Assign" AND `UserID`=\'' . $UserSession->UserID . '\' AND `Name` = "' . mysqli_real_escape_string( $SqlDatabase->_link, str_replace( ':', '', trim( $assign ) ) ) . '"' );
 			}
 
 			// Just remove the assign
@@ -608,7 +653,7 @@ if( isset( $args->command ) )
 
 			// Add item
 			$o = new dbIO( 'Filesystem' );
-			$o->UserID = $User->ID;
+			$o->UserID = $UserSession->UserID;
 			$o->Name = str_replace( ':', '', trim( $assign ) );
 			$o->Type = 'Assign';
 			$o->Load(); // Try to load..
@@ -677,7 +722,7 @@ if( isset( $args->command ) )
 				$str = '';
 				while( $f = readdir( $dir ) )
 				{
-					if( $f{0} == '.' ) continue;
+					if( $f[0] == '.' ) continue;
 					if( file_exists( $g = 'devices/DOSDrivers/' . $f . '/door.js' ) )
 						$str .= file_get_contents( $g ) . "\n";
 				}
@@ -733,7 +778,7 @@ if( isset( $args->command ) )
 				if( $fsys = $SqlDatabase->FetchObject( '
 					SELECT f.* 
 					FROM `Filesystem` f 
-					WHERE f.UserID = \'' . $User->ID . '\' AND f.Name = \'' . $args->args->appPath . '\' 
+					WHERE f.UserID = \'' . $UserSession->UserID . '\' AND f.Name = \'' . $args->args->appPath . '\' 
 					ORDER BY f.ID ASC 
 				' ) )
 				{
@@ -752,7 +797,7 @@ if( isset( $args->command ) )
 						LEFT JOIN `FUserApplication` u ON 
 						( 
 								u.ApplicationID = k.ApplicationID 
-							AND u.UserID = \'' . $User->ID . '\' 
+							AND u.UserID = \'' . $UserSession->UserID . '\' 
 						)
 				WHERE 
 						k.UserID = \'' . $User->ID . '\' 
@@ -820,7 +865,7 @@ if( isset( $args->command ) )
 			{
 				while( $file = readdir( $dir ) )
 				{
-					if( $file{0} == '.' ) continue;
+					if( $file[0] == '.' ) continue;
 					if( !is_dir( 'modules/' . $file ) ) continue;
 					if( file_exists( 'modules/' . $file . '/calendarmodule.php' ) )
 					{
@@ -944,7 +989,7 @@ if( isset( $args->command ) )
 								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
 								WHERE
 									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-									ug.UserID = \'' . $User->ID . '\'
+									ug.UserID = \'' . $UserSession->UserID . '\'
 							)
 						)
 						AND f.Name=\'' . $devname . '\'
@@ -973,12 +1018,12 @@ if( isset( $args->command ) )
 					WHERE
 						f.Name=\'' . mysqli_real_escape_string( $SqlDatabase->_link, $devname ) . '\' AND
 						(
-							f.UserID=\'' . intval( $User->ID ) .'\' OR
+							f.UserID=\'' . intval( $UserSession->UserID ) .'\' OR
 							f.GroupID IN (
 								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
 								WHERE
 									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-									ug.UserID = \'' . intval( $User->ID ) . '\'
+									ug.UserID = \'' . intval( $UserSession->UserID ) . '\'
 							)
 						)
 					LIMIT 1
@@ -1026,12 +1071,12 @@ if( isset( $args->command ) )
 					SELECT * FROM `Filesystem`
 					WHERE
 						(
-							f.UserID=\'' . intval( $User->ID ) . '\' OR
+							f.UserID=\'' . intval( $UserSession->UserID ) . '\' OR
 							f.GroupID IN (
 								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
 								WHERE
 									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-									ug.UserID = \'' . intval( $User->ID ) . '\'
+									ug.UserID = \'' . intval( $UserSession->UserID ) . '\'
 							)
 						)
 						AND Name=\'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->devname ) . '\'
@@ -1043,7 +1088,7 @@ if( isset( $args->command ) )
 					UPDATE `Filesystem`
 						SET `Mounted` = "0"
 					WHERE
-						`ID` = \'' . $row->ID . '\' AND UserID=\'' . $User->ID . '\'
+						`ID` = \'' . $row->ID . '\' AND UserID=\'' . $UserSession->UserID . '\'
 					' );
 
 
@@ -1066,6 +1111,10 @@ if( isset( $args->command ) )
 		// Populate a sandbox
 		case 'sandbox':
 			require( 'modules/system/include/sandbox.php' );
+			break;
+		// Support per-app modules
+		case 'appmodule':
+			require( 'modules/system/include/appmodule.php' );
 			break;
 		// Try to lauch friend application
 		case 'friendapplication':
@@ -1139,7 +1188,7 @@ if( isset( $args->command ) )
 		// Remove a bookmark
 		case 'removebookmark':
 			$s = new dbIO( 'FSetting' );
-			$s->UserID = $User->ID;
+			$s->UserID = $UserSession->UserID;
 			$s->Type = 'bookmark';
 			$s->Key = $args->args->name;
 			$s->Load(); // Try to load it
@@ -1153,7 +1202,7 @@ if( isset( $args->command ) )
 		// Add a filesystem bookmark
 		case 'addbookmark':
 			$s = new dbIO( 'FSetting' );
-			$s->UserID = $User->ID;
+			$s->UserID = $UserSession->UserID;
 			$s->Type = 'bookmark';
 			$s->Key = $args->args->path;
 			$s->Load(); // Try to load it
@@ -1168,7 +1217,7 @@ if( isset( $args->command ) )
 		case 'getbookmarks':
 			if( $rows = $SqlDatabase->FetchObjects( '
 				SELECT * FROM `FSetting` WHERE
-				`UserID`=\'' . $User->ID . '\' AND
+				`UserID`=\'' . $UserSession->UserID . '\' AND
 				`Type`=\'bookmark\'
 				ORDER BY `Key` ASC
 			' ) )
@@ -1208,7 +1257,7 @@ if( isset( $args->command ) )
 				WHERE
 					a.ID = ua.ApplicationID
 				AND
-					ua.UserID = \'' . $User->ID . '\'
+					ua.UserID = \'' . $UserSession->UserID . '\'
 				ORDER BY a.Name DESC
 			' ) )
 			{
@@ -1256,7 +1305,7 @@ if( isset( $args->command ) )
 				WHERE
 					a.ID = ua.ApplicationID
 				AND
-					ua.UserID = \'' . $User->ID . '\'
+					ua.UserID = \'' . $UserSession->UserID . '\'
 				ORDER BY a.Name DESC
 			' ) )
 			{
@@ -1310,7 +1359,7 @@ if( isset( $args->command ) )
 				
 				$key = new dbIO( 'FKeys' );
 				$key->IsDeleted = '0';
-				$key->UserID = $User->ID;
+				$key->UserID = $UserSession->UserID;
 				if( isset( $args->args->id ) && $args->args->id )
 				{
 					if( !$key->Load( $args->args->id ) )
@@ -1329,7 +1378,7 @@ if( isset( $args->command ) )
 							`FUserApplication` u, 
 							`FApplication` a 
 						WHERE 
-								u.UserID = \'' . $User->ID . '\' 
+								u.UserID = \'' . $UserSession->UserID . '\' 
 							AND u.AuthID = \'' . $args->args->authId . '\' 
 							AND a.ID = u.ApplicationID 
 						ORDER BY 
@@ -1360,7 +1409,7 @@ if( isset( $args->command ) )
 						FROM 
 							`Filesystem` f 
 						WHERE 
-								f.UserID = \'' . $User->ID . '\' 
+								f.UserID = \'' . $UserSession->UserID . '\' 
 							AND f.Name = \'' . $args->args->appPath . '\' 
 						ORDER BY 
 							f.ID ASC 
@@ -1377,7 +1426,7 @@ if( isset( $args->command ) )
 							FROM 
 								`FKeys` k 
 							WHERE 
-									k.UserID = \'' . $User->ID . '\' 
+									k.UserID = \'' . $UserSession->UserID . '\' 
 								AND k.ID IN ( ' . $fs->KeysID . ' ) 
 								AND k.IsDeleted = "0" 
 								AND k.ApplicationID = "-1" 
@@ -1437,7 +1486,7 @@ if( isset( $args->command ) )
 				{
 					$sys = new dbIO( 'Filesystem' );
 					$sys->ID = $fsysid;
-					$sys->UserID = $User->ID;
+					$sys->UserID = $UserSession->UserID;
 					if( $sys->Load() )
 					{
 						$sys->KeysID = ( !strstr( ','.$sys->KeysID.',', ','.$key->ID.',' ) ? ( $sys->KeysID ? $sys->KeysID.',' : '' ) . $key->ID : $sys->KeysID );
@@ -1450,10 +1499,10 @@ if( isset( $args->command ) )
 			die( 'fail<!--separate-->{"response":"user keys update failed"}'  );
 			break;
 		case 'userkeysdelete':
-			if( $User->ID > 0 && $args->args->id )
+			if( $UserSession->UserID > 0 && $args->args->id )
 			{
 				$key = new dbIO( 'FKeys' );
-				$key->UserID = $User->ID;
+				$key->UserID = $UserSession->UserID;
 				if( $key->Load( $args->args->id ) )
 				{
 					$key->IsDeleted = 1;
@@ -1467,7 +1516,7 @@ if( isset( $args->command ) )
 		// Set info on a user
 		// TODO: Update with correct encryption algo
 		case 'userinfoset':
-			if( $level == 'Admin' || $args->args->id == $User->ID )
+			if( $level == 'Admin' || $args->args->id == $UserSession->UserID )
 			{
 				$u = new dbIO( 'FUser' );
 				if( $u->Load( $args->args->id ) )
@@ -1541,15 +1590,14 @@ if( isset( $args->command ) )
 		case 'useradd':
 			require( 'modules/system/include/useradd.php' );
 			break;
-		case 'userupdate':
-			require( 'modules/system/include/userupdate.php' );
-			break;
-		case 'userdelete':
-			require( 'modules/system/include/userdelete.php' );
+		case 'user/create':
+		case 'user/update':
+		case 'user/delete':
+			require( 'modules/system/include/user.php' );
 			break;
 		//
 		case 'checkuserbyname':
-			if( $level == 'Admin' || $args->args->id == $User->ID )
+			if( $level == 'Admin' || $args->args->id == $UserSession->UserID )
 			{
 				if( $userinfo = $SqlDatabase->FetchObject( '
 					SELECT `ID` FROM `FUser` WHERE Name = \'' . $args->args->username . '\'
@@ -1629,6 +1677,18 @@ if( isset( $args->command ) )
 		case 'userwallpaperset':
 			require( 'modules/system/include/userwallpaperset.php' );
 			break;
+		// List own workgroups (user's)
+		case 'listworkgroups':
+			require( 'modules/system/include/listworkgroups.php' );
+			break;
+		// Join a group (own group)
+		case 'joingroup':
+			require( 'modules/system/include/joingroup.php' );
+			break;
+		// Flush relational group info
+		case 'flushworkgroup':
+			require( 'modules/system/include/flushworkgroup.php' );
+			break;
 		// List workgroups
 		case 'workgroups':
 			require( 'modules/system/include/workgroups.php' );
@@ -1649,7 +1709,10 @@ if( isset( $args->command ) )
 		case 'workgroupget':
 			require( 'modules/system/include/workgroupget.php' );
 			break;
-
+		// Add metadata to a workgroup
+		case 'workgroupaddmetadata':
+			require( 'modules/system/include/workgroupaddmetadata.php' );
+			break;
 		case 'setsetting':
 			require( 'modules/system/include/setsetting.php' );
 			break;
@@ -1679,6 +1742,9 @@ if( isset( $args->command ) )
 			break;
 		case 'getapplicationpreview':
 			require( 'modules/system/include/getapplicationpreview.php' );
+			break;
+		case 'getapplicationicon':
+			require( 'modules/system/include/getapplicationicon.php' );
 			break;
 		case 'getmimetypes':
 			require( 'modules/system/include/getmimetypes.php' );
@@ -1736,7 +1802,7 @@ if( isset( $args->command ) )
 			break;
 		case 'settheme':
 			$o = new dbIO( 'FSetting' );
-			$o->UserID = $User->ID;
+			$o->UserID = $UserSession->UserID;
 			$o->Type = 'system';
 			$o->Key = 'theme';
 			$o->Load();
@@ -1940,7 +2006,7 @@ if( isset( $args->command ) )
 				$l = new dbIO( 'FSetting' );
 				$l->Type = 'system';
 				$l->Key = 'accepteula';
-				$l->UserID = $User->ID;
+				$l->UserID = $UserSession->UserID;
 				if( !$l->Load() )
 				{
 					die( 'fail<!--separate-->{"euladocument":"' . ( 
@@ -2016,7 +2082,7 @@ if( isset( $args->command ) )
 }
 
 // End of the line
-die( 'fail<!--separate-->{"response":"uncaught command exception"}' ); //end of the line<!--separate-->' . print_r( $args, 1 ) . '<!--separate-->' . ( isset( $User ) ? $User : 'No user object!' ) );
+if( !$args->skip ) die( 'fail<!--separate-->{"response":"uncaught command exception ' . print_r( $args,1 ) . '"}' ); //end of the line<!--separate-->' . print_r( $args, 1 ) . '<!--separate-->' . ( isset( $User ) ? $User : 'No user object!' ) );
 
 
 ?>

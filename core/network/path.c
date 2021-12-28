@@ -203,7 +203,7 @@ void PathResolve( Path* p )
 void PathMake( Path* path )
 {
 	// Free the previous path, if any
-	if( path->p_Raw )
+	if( path->p_Raw != NULL )
 	{
 		FFree( path->p_Raw );
 		path->p_Raw = NULL;
@@ -219,7 +219,7 @@ void PathMake( Path* path )
 	length += path->p_Size - 1;     // All the /'s inbetween segments
 	length += path->p_File ? 0 : 1; // Trailing / for directories
 
-	if( ( path->p_Raw = FCalloc( length + 1, sizeof( char ) ) ) != NULL )
+	if( ( path->p_Raw = FCalloc( (length + 1), sizeof( char ) ) ) != NULL )
 	{
 		path->p_Raw[length] = '\0';
 	}

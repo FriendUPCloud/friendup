@@ -59,6 +59,7 @@
 #include <network/websocket_client.h>
 #include <network/protocol_websocket.h>
 #include <util/session_id.h>
+#include <db/autoupdate.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -149,6 +150,7 @@ SystemBase *SystemInit( void )
 	l->l_SocketISSL.SocketWaitRead = SocketWaitReadSSL;
 	l->l_SocketISSL.SocketReadTillEnd = SocketReadTillEndSSL;
 	l->l_SocketISSL.SocketWrite = SocketWriteSSL;
+	l->l_SocketISSL.SocketWriteCompression = SocketWriteCompressionSSL;
 	l->l_SocketISSL.SocketDelete = SocketDeleteSSL;
 	l->l_SocketISSL.SocketReadPackage = SocketReadPackageSSL;
 
@@ -162,6 +164,7 @@ SystemBase *SystemInit( void )
 	l->l_SocketINOSSL.SocketWaitRead = SocketWaitReadNOSSL;
 	l->l_SocketINOSSL.SocketReadTillEnd = SocketReadTillEndNOSSL;
 	l->l_SocketINOSSL.SocketWrite = SocketWriteNOSSL;
+	l->l_SocketINOSSL.SocketWriteCompression = SocketWriteCompressionNOSSL;
 	l->l_SocketINOSSL.SocketDelete = SocketDeleteNOSSL;
 	l->l_SocketINOSSL.SocketReadPackage = SocketReadPackageNOSSL;
 
@@ -278,7 +281,7 @@ SystemBase *SystemInit( void )
 	l->LibraryZDrop = LibraryZDrop;
 	l->LibraryImageGet = LibraryImageGet;
 	l->LibraryImageDrop = LibraryImageDrop;
-	l->WebSocketSendMessage = WebSocketSendMessage;
+	l->UserSessionWebsocketWrite = UserSessionWebsocketWrite;
 	l->WebSocketSendMessageInt = WebSocketSendMessageInt;
 	l->WebsocketWrite = UserSessionWebsocketWrite;
 	l->SendProcessMessage = SendProcessMessage;
@@ -328,6 +331,11 @@ SystemBase *SystemInit( void )
 	l->RSA_CLIENT_KEY_PEM[ 0 ] = 0;
 	
 	l->sl_RemoveOldSessionTimeout = 0;
+	
+	// use deflate compression as default for http calls
+	l->l_HttpCompressionContent |= HTTP_COMPRESSION_DEFLATE;
+	
+	l->l_UpdateLoggedTimeOnUserMax = 10;
 	
 	if( plib != NULL && plib->Open != NULL )
 	{
@@ -389,6 +397,8 @@ SystemBase *SystemInit( void )
 			l->sl_SocketTimeout  = plib->ReadIntNCS( prop, "core:SSLSocketTimeout", 10000 );
 			l->sl_USFCacheMax = plib->ReadIntNCS( prop, "core:USFCachePerDevice", 102400000 );
 			
+			l->l_UpdateLoggedTimeOnUserMax = plib->ReadIntNCS( prop, "core:updateuserloggedtimeinterval", 10 );
+			
 			l->l_EnableHTTPChecker = plib->ReadIntNCS( prop, "Options:HttpChecker", 0 );
 			
 			l->sl_MasterServer = StringDuplicate( plib->ReadStringNCS( prop, "core:masterserveraddress", "pal.ideverket.no") );
@@ -425,6 +435,27 @@ SystemBase *SystemInit( void )
 					sprintf( l->RSA_SERVER_KEY, "%s%s%s", ptr, tptr, "key.pem" );
 					sprintf( l->RSA_SERVER_CA_CERT, "%s%s%s", ptr, tptr, "certificate.pem" );
 					sprintf( l->RSA_SERVER_CA_PATH, "%s%s%s", ptr, tptr, "/" );
+				}
+			}
+			
+			// http compression
+
+			tptr  = plib->ReadStringNCS( prop, "core:http_compression", NULL );
+			if( tptr != NULL )
+			{
+				if( strstr( tptr, "deflate" ) != NULL )
+				{
+					l->l_HttpCompressionContent |= HTTP_COMPRESSION_DEFLATE;
+				}
+				
+				if( strstr( tptr, "bzip" ) != NULL )
+				{
+					l->l_HttpCompressionContent |= HTTP_COMPRESSION_BZIP;
+				}
+				
+				if( strstr( tptr, "none" ) != NULL )
+				{
+					l->l_HttpCompressionContent = 0;
 				}
 			}
 			
@@ -550,7 +581,7 @@ SystemBase *SystemInit( void )
 	
 	if( skipDBUpdate == FALSE )
 	{
-		CheckAndUpdateDB( l );
+		CheckAndUpdateDB( l, UPDATE_DB_TYPE_GLOBAL );
 	}
 	else
 	{
@@ -682,6 +713,13 @@ SystemBase *SystemInit( void )
 	if( l->zlib == NULL )
 	{
 		Log( FLOG_ERROR, "[ERROR]: CANNOT OPEN z.library!\n");
+	}
+	
+	l->usblib = (USBLibrary *)LibraryOpen( l, "usb.library", 0 );
+	if( l->usblib == NULL )
+	{
+		Log( FLOG_ERROR, "[ERROR]: CANNOT OPEN usb.library!\n");
+        FERROR("Cannot open usb.library!\n");
 	}
 	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
@@ -916,12 +954,6 @@ SystemBase *SystemInit( void )
 	
 	// create all managers
 	
-	l->sl_SupportManager = SupportManagerNew( l );
-	if( l->sl_SupportManager == NULL )
-	{
-		Log( FLOG_ERROR, "Cannot initialize SupportManager\n");
-	}
-	
 	l->sl_PermissionManager = PermissionManagerNew( l );
 	if( l->sl_PermissionManager == NULL )
 	{
@@ -952,10 +984,10 @@ SystemBase *SystemInit( void )
 		Log( FLOG_ERROR, "Cannot initialize FSManagerNew\n");
 	}
 	
-	l->sl_USB = USBManagerNew( l );
-	if( l->sl_USB == NULL )
+	l->sl_USBRemoteManager = USBRemoteManagerNew( l );
+	if( l->sl_USBRemoteManager == NULL )
 	{
-		Log( FLOG_ERROR, "Cannot initialize USBManagerNew\n");
+		Log( FLOG_ERROR, "Cannot initialize USBRemoteManagerNew\n");
 	}
 	
 	l->sl_USM = USMNew( l );
@@ -1032,6 +1064,12 @@ SystemBase *SystemInit( void )
 		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
 	}
 	
+	l->sl_MitraManager = MitraManagerNew( l );
+	if( l->sl_MitraManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize Mitra Manager\n");
+	}
+	
 	FriendCoreManagerInitServices( l->fcm );
 	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
@@ -1047,7 +1085,9 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 
 	EventAdd( l->sl_EventManager, "DoorNotificationRemoveEntries", DoorNotificationRemoveEntries, l, time( NULL )+MINS30, MINS30, -1 );
-	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+l->sl_RemoveOldSessionTimeout, l->sl_RemoveOldSessionTimeout, -1 );	// default 60mins
+	
+	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", UMRemoveOldSessions, l, time( NULL )+l->sl_RemoveOldSessionTimeout, l->sl_RemoveOldSessionTimeout, -1 );	// default 60mins
+	//EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+l->sl_RemoveOldSessionTimeout, l->sl_RemoveOldSessionTimeout, -1 );	// default 60mins
 	// test, to remove
 	EventAdd( l->sl_EventManager, "PIDThreadManagerRemoveThreads", PIDThreadManagerRemoveThreads, l->sl_PIDTM, time( NULL )+MINS60, MINS60, -1 );
 	EventAdd( l->sl_EventManager, "CacheUFManagerRefresh", CacheUFManagerRefresh, l->sl_CacheUFM, time( NULL )+DAYS5, DAYS5, -1 );
@@ -1225,9 +1265,9 @@ void SystemClose( SystemBase *l )
 	{
 		FSManagerDelete(  l->sl_FSM );
 	}
-	if( l->sl_USB != NULL )
+	if( l->sl_USBRemoteManager != NULL )
 	{
-		USBManagerDelete( l->sl_USB );
+		USBRemoteManagerDelete( l->sl_USBRemoteManager );
 	}
 	if( l->sl_PrinterM != NULL )
 	{
@@ -1277,9 +1317,10 @@ void SystemClose( SystemBase *l )
 	{
 		SASManagerDelete( l->sl_SASManager );
 	}
-	if( l->sl_SupportManager != NULL )
+	
+	if( l->sl_MitraManager != NULL )
 	{
-		SupportManagerDelete( l->sl_SupportManager );
+		MitraManagerDelete( l->sl_MitraManager );
 	}
 	
 	// Remove sentinel from active memory
@@ -1363,6 +1404,11 @@ void SystemClose( SystemBase *l )
 	if( l->zlib != NULL )
 	{
 		LibraryClose( (struct Library *)l->zlib );
+	}
+	
+	if( l->usblib != NULL )
+	{
+		LibraryClose( (struct Library *)l->usblib );
 	}
 	
 	// Close mysql library
@@ -1707,7 +1753,7 @@ int SystemInitExternal( SystemBase *l )
 				if( ses != NULL )
 				{
 					ses->us_UserID = l->sl_Sentinel->s_User->u_ID;
-					ses->us_LoggedTime = timestamp;
+					ses->us_LastActionTime = timestamp;
 					
 					UserAddSession( l->sl_Sentinel->s_User, ses );
 					
@@ -1720,7 +1766,7 @@ int SystemInitExternal( SystemBase *l )
 			// regenerate sessionid for User
 			//
 			
-			if(  (timestamp - l->sl_Sentinel->s_User->u_LoggedTime) > l->sl_RemoveSessionsAfterTime )
+			if(  (timestamp - l->sl_Sentinel->s_User->u_LastActionTime) > l->sl_RemoveSessionsAfterTime )
 			{
 				UserRegenerateSessionID( l->sl_Sentinel->s_User, NULL );
 			}
@@ -1728,31 +1774,8 @@ int SystemInitExternal( SystemBase *l )
 		
 		UMCheckAndLoadAPIUser( l->sl_UM );
 		
-		Log( FLOG_INFO, "----------------------------------------------------\n");
-		Log( FLOG_INFO, "---------Mount user devices-------------------------\n");
-		Log( FLOG_INFO, "----------------------------------------------------\n");
-	
-		User *tmpUser = l->sl_UM->um_Users;
-		while( tmpUser != NULL )
-		{
-			char *err = NULL;
-			DEBUG( "[SystemBase] FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
-			UserDeviceMount( l, tmpUser, 1, TRUE, &err, FALSE );
-			if( err != NULL )
-			{
-				Log( FLOG_ERROR, "Initial system mount error. UserID: %lu Error: %s\n", tmpUser->u_ID, err );
-				FFree( err );
-			}
-			DEBUG( "[SystemBase] DONE FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
-			tmpUser = (User *)tmpUser->node.mln_Succ;
-		}
-		
-		Log( FLOG_INFO, "----------------------------------------------------\n");
-		Log( FLOG_INFO, "---------Mount user group devices-------------------\n");
-		Log( FLOG_INFO, "----------------------------------------------------\n");
-		
-		
-		
+		UMInitUsers( l->sl_UM );
+
 		/*
 		User *sentUser = NULL;
 		if( l->sl_Sentinel != NULL )
@@ -1795,257 +1818,6 @@ int SystemInitExternal( SystemBase *l )
 	return 0;
 }
 
-//
-// we need structure which will hold name of scripts and their numbers
-//
-
-typedef struct DBUpdateEntry
-{
-	int number;
-	char name[ 512 ];
-}DBUpdateEntry;
-
-/**
- * Check and Update FC database
- *
- * @param l pointer to SystemBase
- */
-
-void CheckAndUpdateDB( struct SystemBase *l )
-{
-	Log( FLOG_INFO, "----------------------------------------------------\n");
-	Log( FLOG_INFO, "---------Autoupdatedatabase process start-----------\n");
-	Log( FLOG_INFO, "----------------------------------------------------\n");
-	
-	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-	if( sqllib != NULL )
-	{
-		int startUpdatePosition = 0;
-		int orgStartUpdateposition = -1;
-		
-		char query[ 1024 ];
-		snprintf( query, sizeof(query), "SELECT * FROM `FGlobalVariables` WHERE `Key`='DB_VERSION'" );
-		
-		void *res = sqllib->Query( sqllib, query );
-		if( res != NULL )
-		{
-			char **row;
-			while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
-			{
-				// Id, Key, Value, Comment, date
-			
-				DEBUG("[SystemBase] \tFound database entry-> ID '%s' Key '%s', Value '%s', Comment '%s', Date '%s'\n", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ] );
-			
-				orgStartUpdateposition = startUpdatePosition = atoi( row[ 2 ] );
-			}
-			sqllib->FreeResult( sqllib, res );
-		}
-		
-		DEBUG("[SystemBase] CheckAndUpdateDB: %d\n", startUpdatePosition );
-		
-		DIR *dp = NULL;
-		struct dirent *dptr;
-		int numberOfFiles = 0;
-		
-		DEBUG("[SystemBase] UpdateDB found directory\n");
-		
-		if( ( dp = opendir( "sqlupdatescripts" ) ) != NULL )
-		{
-			while( ( dptr = readdir( dp ) ) != NULL )
-			{
-				if( strcmp( dptr->d_name, "." ) == 0 || strcmp( dptr->d_name, ".." ) == 0 )
-				{
-					continue;
-				}
-				
-				numberOfFiles++;
-			}
-			closedir( dp );
-		}
-		
-		DBUpdateEntry *dbentries;
-		
-		if( ( dbentries = FCalloc( numberOfFiles, sizeof(DBUpdateEntry) ) ) != NULL )
-		{
-			int position = 0;
-			
-			if( ( dp = opendir( "sqlupdatescripts" ) ) != NULL )
-			{
-				DEBUG("[SystemBase] UpdateDB found directory 1\n");
-				while( ( dptr = readdir( dp ) ) != NULL )
-				{
-					char number[ 512 ];
-					unsigned int i;
-				
-					if( strcmp( dptr->d_name, "." ) == 0 || strcmp( dptr->d_name, ".." ) == 0 )
-					{
-						continue;
-					}
-				
-					DEBUG("[SystemBase] get number from name\n");
-					// we must extract number from filename
-					strcpy( number, dptr->d_name );
-					for( i=0 ; i < strlen( number ) ; i++ )
-					{
-						if( number[ i ] == '_' )
-						{
-							number[ i ] = 0;
-							break;
-						}
-					}
-					
-					DEBUG("[SystemBase] number found: '%s'\n", number );
-					
-					dbentries[ position ].number = atoi( number );
-					if( dbentries[ position ].number > startUpdatePosition )
-					{
-						DEBUG("[SystemBase] Found script with number %d, script added: %s\n", dbentries[ position ].number, dptr->d_name );
-						strcpy( dbentries[ position ].name, dptr->d_name );
-						position++;
-					}
-					else
-					{
-						DEBUG("[SystemBase] !!!! dbentries[ position ].number <= startUpdatePosition\n");
-					}
-				}
-				closedir( dp );
-			}
-			
-			DEBUG("[SystemBase] Directories parsed startUpdatePosition: %d position %d\n", startUpdatePosition, position );
-			
-			// we must run script which holds changes
-			startUpdatePosition++;
-			char *lastSQLname = NULL;
-			int error = 0;
-			// now FC will update DB script after script
-			int i;
-			for( i=0 ; i < position ; i++ )
-			{
-				int j;
-				for( j=0; j < position ; j++ )
-				{
-					DEBUG("[SystemBase] Checking numbers, start: %d actual: %d\n", startUpdatePosition, dbentries[j].number );
-					if( startUpdatePosition == dbentries[j].number )
-					{
-						FILE *fp;
-						char scriptfname[ 712 ];
-						snprintf( scriptfname, sizeof( scriptfname ), "sqlupdatescripts/%s", dbentries[j].name );
-						DEBUG("[SystemBase] Found script with ID %d\n", startUpdatePosition );
-						
-						if( ( fp = fopen( scriptfname, "rb" ) ) != NULL )
-						{
-							fseek( fp, 0, SEEK_END );
-							long fsize = ftell( fp );
-							fseek( fp, 0, SEEK_SET );
-							
-							char *script;
-							if( ( script = FCalloc( fsize+1, sizeof(char) ) ) != NULL )
-							{
-								int readbytes = 0;
-								if( ( readbytes = fread( script, fsize, 1, fp ) ) > 0 )
-								{
-									char *command = script;
-									int i;
-
-									for( i=1 ; i < fsize ; i++ )
-									{
-										if( strncmp( &(script[ i ]), "----script----" , 14 ) == 0 )
-										{
-											char *start = &(script[ i ]);
-											char *end = strstr( start, "----script-end----" );
-											int len = (end - start)-1;
-											i += len;
-											
-											start += 14;
-											*end = 0;
-											
-											DEBUG("[SystemBase] Running script1 : %s from file: %s on database\n", start, scriptfname );
-											
-											if( sqllib->QueryWithoutResults( sqllib, start ) != 0 )
-											{
-												error = 1;
-											}
-											else
-											{
-												lastSQLname = dbentries[ j ].name;
-											}
-											
-											command = &script[ i+1 ];
-										}
-										else
-										{
-											if( script[ i ] == ';' )
-											{
-												script[ i ] = 0;
-												DEBUG("[SystemBase] Running script: %s from file: %s on database\n", command, scriptfname ); 
-												if( strlen( command) > 10 )
-												{
-													if( sqllib->QueryWithoutResults( sqllib, command ) != 0 )
-													{
-														error = 1;
-													}
-													else
-													{
-														lastSQLname = dbentries[j].name;
-													}
-												}
-												command = &script[ i+1 ];
-											}
-										}
-									}
-									// error: Duplicate column name
-									DEBUG("[SystemBase] Running script : %s from file: %s on database\n", command, scriptfname ); 
-									if( strlen( command ) > 10 )
-									{
-										if( sqllib->QueryWithoutResults( sqllib, command ) != 0 )
-										{
-											error = 1;
-										}
-										else
-										{
-											lastSQLname = dbentries[j].name;
-										}
-									}
-								}
-								FFree( script );
-							}
-							fclose( fp );
-						}
-						break;
-					}
-					
-					if( error == 1 )
-					{
-						break;
-					}
-				}
-				
-				if( error == 1 )
-				{
-					break;
-				}
-				startUpdatePosition++;
-			}
-			
-			// we must update which update was last
-			startUpdatePosition--;
-			
-			if( orgStartUpdateposition != startUpdatePosition && lastSQLname != NULL )
-			{
-				DEBUG("[SystemBase] Last script will be updated in DB\n");
-				snprintf( query, sizeof(query), "UPDATE `FGlobalVariables` SET `Value`='%d', `Date`='%lu', `Comment`='%s' WHERE `Key`='DB_VERSION'", startUpdatePosition, time(NULL), lastSQLname );
-				sqllib->QueryWithoutResults( sqllib, query );
-			}
-			FFree( dbentries );
-		}
-		l->LibrarySQLDrop( l, sqllib );
-	}
-	
-	Log( FLOG_INFO, "----------------------------------------------------\n");
-	Log( FLOG_INFO, "---------Autoupdatedatabase process END-------------\n");
-	Log( FLOG_INFO, "----------------------------------------------------\n");
-}
-
 
 typedef struct DevNode
 {
@@ -2057,7 +1829,7 @@ typedef struct DevNode
  * Load and mount all user doors
  *
  * @param l pointer to SystemBase
- * @param usr pointer to user to which doors belong
+ * @param usrses pointer to usersession to which doors belong
  * @param force integer 0 = don't force 1 = force
  * @param unmountIfFail should be device unmounted in DB if mount will fail
  * @param mountError pointer to error message
@@ -2065,15 +1837,22 @@ typedef struct DevNode
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserDeviceMount( SystemBase *l, User *usr, int force, FBOOL unmountIfFail, char **mountError, FBOOL notify )
+int UserDeviceMount( SystemBase *l, UserSession *usrses, int force, FBOOL unmountIfFail, char **mountError, FBOOL notify )
 {	
-	Log( FLOG_INFO,  "[UserDeviceMount] Mount user device from Database\n");
+	Log( FLOG_INFO, "[UserDeviceMount] Mount user device from Database\n");
 	SQLLibrary *sqllib;
 	
-	if( usr == NULL )
+	if( usrses == NULL || usrses->us_User == NULL )
 	{
 		DEBUG("[UserDeviceMount] User parameter is empty\n");
 		return -1;
+	}
+	User *usr = usrses->us_User;
+	
+	if( usr == NULL || usr->u_Status == USER_STATUS_TO_BE_REMOVED )
+	{
+		DEBUG("[UserDeviceMount] User is NULL or will be removed\n");
+		return -2;
 	}
 	
 	if( usr->u_MountedDevs != NULL && force == 0 )
@@ -2108,9 +1887,12 @@ g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND \
 ug.UserID = '%ld' \
 ) \
 ) \
-)AND ( (f.Owner='0' OR f.Owner IS NULL) AND f.Mounted=\'1\')", 
+)AND (f.Mounted=\'1\')", 
 usr->u_ID , usr->u_ID, usr->u_ID
 	);
+
+//)AND ( (f.Owner='0' OR f.Owner IS NULL) AND f.Mounted=\'1\')", 
+
 		DEBUG("[UserDeviceMount] Finding drives in DB\n");
 		void *res = sqllib->Query( sqllib, temptext );
 		if( res == NULL )
@@ -2129,7 +1911,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 		{
 			// Id, UserId, Name, Type, ShrtDesc, Server, Port, Path, Username, Password, Mounted
 
-			DEBUG("[UserDeviceMount] \tFound database -> Name '%s' Type '%s', Server '%s', Port '%s', Path '%s', Mounted '%s'\n", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
+			Log( FLOG_INFO, "[UserDeviceMount] \tFound database -> Name '%s' Type '%s', Server '%s', Port '%s', Path '%s', Mounted '%s'\n", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
 		
 			// make a list of devices
 			DevNode *ne = FCalloc( 1, sizeof(DevNode ) );
@@ -2174,6 +1956,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 				{ FSys_Mount_ID,      (FULONG)id },
 				{ FSys_Mount_Mount,   (FULONG)mount },
 				{ FSys_Mount_SysBase, (FULONG)SLIB },
+				{ FSys_Mount_UserSession, (FULONG)usrses },
 				{ FSys_Mount_Visible, (FULONG)1 },     // Assume visible
 				{TAG_DONE, TAG_DONE}
 			};
@@ -2181,7 +1964,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 			File *device = NULL;
 			DEBUG("[UserDeviceMount] Before mounting\n");
 			
-			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, mountError, usr->u_IsAdmin, notify );
+			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, mountError, usrses, notify );
 
 			sqllib = l->LibrarySQLGet( l );
 			// if there is error but error is not "device is already mounted"
@@ -2194,32 +1977,15 @@ usr->u_ID , usr->u_ID, usr->u_ID
 				{
 					//Log( FLOG_INFO, "UserDeviceMount. Device unmounted: %s UserID: %lu 
 					
-					/*
-					sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "\
-UPDATE `Filesystem` f SET `Mounted` = '0' \
-WHERE \
-( \
-f.UserID = '%ld' OR \
-f.GroupID IN ( \
-SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g \
-WHERE \
-g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND \
-ug.UserID = '%ld' \
-) \
-) \
-AND LOWER(f.Name) = LOWER('%s')", 
-						usr->u_ID, usr->u_ID, (char *)row[ 0 ] 
-					);
-					*/
 					sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "UPDATE `Filesystem` SET Mounted=0 WHERE ID=%lu", id );
 					
 					sqllib->QueryWithoutResults( sqllib, temptext );
 				}
 				else
 				{
-					sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "UPDATE `Filesystem` SET Mounted=0 WHERE ID=%lu", id );
+					//sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "UPDATE `Filesystem` SET Mounted=0 WHERE ID=%lu", id );
 					
-					sqllib->QueryWithoutResults( sqllib, temptext );
+					//sqllib->QueryWithoutResults( sqllib, temptext );
 				}
 			}
 			else if( device != NULL )
@@ -2258,14 +2024,21 @@ AND LOWER(f.Name) = LOWER('%s')",
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib __attribute__((unused)), User *usr )
+int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses )
 {
 	DEBUG("UserDeviceUnMount\n");
 	if( usr != NULL )
 	{
+		USER_CHANGE_ON( usr );
+		
 		if( usr->u_MountedDevs != NULL )
 		{
 			File *dev = usr->u_MountedDevs;
+			
+			usr->u_MountedDevs = NULL; // set it to NULL
+			
+			USER_CHANGE_OFF( usr );
+			
 			File *remdev = dev;
 			
 			while( dev != NULL )
@@ -2273,10 +2046,19 @@ int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib __attribute__((unused))
 				remdev = dev;
 				dev = (File *)dev->node.mln_Succ;
 				
-				DeviceUnMount( l->sl_DeviceManager, remdev, usr );
+				DEBUG("Pointer to remdev: %p in use %d\n", remdev, usr->u_InUse );
 				
-				FFree( remdev );
+				DeviceUnMount( l->sl_DeviceManager, remdev, usr, ses );
+				
+				DEBUG("Pointer to remdev2: %p in use %d\n", remdev, usr->u_InUse );
+				
+				//FFree( remdev );
+				FileDelete( remdev );
 			}
+		}
+		else
+		{
+			USER_CHANGE_OFF( usr );
 		}
 		
 		//TODO
@@ -2307,7 +2089,7 @@ char *RunMod( SystemBase *l, const char *type, const char *path, const char *arg
 	EModule *lmod = l->sl_Modules;
 	EModule *workmod = NULL;
 
-	DEBUG("[SystemBase] Run module '%s'\n", type );
+	//DEBUG("[SystemBase] Run module '%s'\n", type );
 
 	while( lmod != NULL )
 	{
@@ -2654,7 +2436,7 @@ Sentinel* GetSentinelUser( SystemBase* l )
  * @param len length of the message
  * @return 0 if message was sent otherwise error number
  */
-
+/*
 int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *usersession, char *msg, int len )
 {
 	unsigned char *buf;
@@ -2669,7 +2451,11 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 		{
 			if( usersession->us_WSD != NULL )
 			{
-				bytes += UserSessionWebsocketWrite( usersession, buf , len, LWS_WRITE_TEXT );
+				WSCData *data = (WSCData *)usersession->us_WSD;
+				if( data != NULL && data->wsc_UserSession != NULL && data->wsc_Wsi != NULL )
+				{
+					bytes += UserSessionWebsocketWrite( usersession, buf , len, LWS_WRITE_TEXT );
+				}
 			}
 			else
 			{
@@ -2690,6 +2476,7 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 	
 	return bytes;
 }
+*/
 
 /**
  * Send message via websockets
@@ -2759,7 +2546,8 @@ int SendProcessMessage( Http *request, char *data, int len )
 			
 			DEBUG("[SystemBase] SendProcessMessage message '%s'\n", sendbuf );
 			
-			WebSocketSendMessage( sb, pidt->pt_UserSession, sendbuf, newmsglen );
+			UserSessionWebsocketWrite( pidt->pt_UserSession, (unsigned char *)sendbuf, newmsglen, LWS_WRITE_TEXT);
+			//WebSocketSendMessage( sb, pidt->pt_UserSession, sendbuf, newmsglen );
 			
 			FFree( sendbuf );
 		}

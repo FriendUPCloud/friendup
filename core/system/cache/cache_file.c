@@ -79,24 +79,26 @@ int CacheFileRead( CacheFile* file )
 		fseek( file->cf_Fp, 0, SEEK_SET );  //same as rewind(f);
 		
 		file->cf_FileBuffer = (char *)FCalloc( file->cf_FileSize, sizeof( char ) );
-		if( file->cf_FileBuffer == NULL )
+		if( file->cf_FileBuffer != NULL )
+		{
+			fseek( file->cf_Fp, 0, SEEK_SET );
+			unsigned int result = fread( file->cf_FileBuffer, 1, file->cf_FileSize, file->cf_Fp );
+		
+			if( result < file->cf_FileSize )
+			{
+				FFree( file->cf_FileBuffer );
+				file->cf_FileBuffer = NULL;
+				fclose( file->cf_Fp );
+				file->cf_Fp = 0;
+				return -3;
+			}
+		}
+		else
 		{
 			DEBUG("Cannot allocate memory for file\n");
 			fclose( file->cf_Fp );
 			file->cf_Fp = 0;
 			return -2;
-		}
-	
-		fseek( file->cf_Fp, 0, SEEK_SET );
-		unsigned int result = fread( file->cf_FileBuffer, 1, file->cf_FileSize, file->cf_Fp );
-		
-		if( result < file->cf_FileSize )
-		{
-			FFree( file->cf_FileBuffer );
-			file->cf_FileBuffer = NULL;
-			fclose( file->cf_Fp );
-			file->cf_Fp = 0;
-			return -3; 
 		}
 		fclose( file->cf_Fp );
 		file->cf_Fp = 0;
@@ -110,27 +112,11 @@ int CacheFileRead( CacheFile* file )
  * @param file pointer to cashed file which we want to store
  * @return 0 when success, otherwise error number
  */
+
 int CacheFileStore( CacheFile* file )
 {
 	if( file != NULL )
 	{
-		/*
-		FILE* fp = fopen( file->cf_StorePath, "wb" );
-		if( fp == NULL )
-		{
-			FERROR("Cannot write file %s\n", file->cf_StorePath );
-			return -2;
-		}
-		
-		fwrite( file->cf_FileBuffer, 1, file->cf_FileSize, file->cf_Fp );
-		if( file->cf_FileBuffer != NULL )
-		{
-			FFree( file->cf_FileBuffer );
-			file->cf_FileBuffer = NULL;
-		}
-		
-		fclose( file->cf_Fp );
-		*/
 		if( file->cf_Fp != NULL )
 		{
 			fclose( file->cf_Fp );

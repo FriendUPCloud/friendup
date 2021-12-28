@@ -19,9 +19,8 @@ Friend = window.Friend || {};
 Friend.User = {
     
     // Vars --------------------------------------------------------------------
-    
-    State: 'offline', 			// online, offline, login
-    ServerIsThere: false,
+    State: 'online', 			// online, offline, login
+    ServerIsThere: true,
     Username: '',               // Holds the user's username
     AccessToken: null,          // Holds the user's access token
     ConnectionAttempts: 0,         // How many relogin attempts were made
@@ -31,7 +30,6 @@ Friend.User = {
     // Log into Friend Core
     Login: function( username, password, remember, callback, event, flags )
     {
-    	if( this.State == 'online' ) return;
     	this.State = 'login';
     	
     	if( !event ) event = window.event;
@@ -43,24 +41,47 @@ Friend.User = {
 		{
 			try
 			{
-				Workspace.conn.ws.cleanup();
+				Workspace.conn.ws.close();
 			}
 			catch( e )
 			{
 				console.log( 'Could not close conn.' );
 			}
 			delete Workspace.conn;
+			Workspace.conn = null;
 		}
 		
 		if( username && password )
-		{
+		{	
 			Workspace.encryption.setKeys( username, password );
-			this.SendLoginCall( {
-				username: username,
-				password: password,
-				remember: remember,
-				hashedPassword: flags.hashedPassword
-			}, callback );
+			
+			if( flags && flags.hashedPassword )
+			{
+				//console.log( 'Sending login with hashed password.' );
+				this.SendLoginCall( {
+					username: username,
+					password: password,
+					remember: remember,
+					hashedPassword: flags.hashedPassword,
+					inviteHash: flags.inviteHash
+				}, callback );
+			}
+			else
+			{
+				//console.log( 'Sending login with unhashed password' );
+				this.SendLoginCall( {
+					username: username,
+					password: password,
+					remember: remember,
+					hashedPassword: false,
+					inviteHash: flags && flags.inviteHash ? flags.inviteHash : false
+				}, callback );
+			}
+		}
+		// Relogin - as we do have an unflushed login
+		else if( Workspace.sessionId )
+		{
+		    return this.ReLogin();
 		}
 		else
 		{
@@ -108,7 +129,7 @@ Friend.User = {
     },
     // Send the actual login call
     SendLoginCall: function( info, callback )
-    {
+    {	
     	// Already logging in
     	this.State = 'login';
     	
@@ -117,6 +138,8 @@ Friend.User = {
     		this.lastLogin.currentRequest.destroy();
     	}
     	
+    	let self = this;
+    	
     	// Create a new library call object
 		let m = new FriendLibrary( 'system' );
 		this.lastLogin = m;
@@ -124,20 +147,35 @@ Friend.User = {
 		if( info.username && info.password )
 		{
 			Workspace.sessionId = '';
+			
+			if( window.Workspace && !Workspace.originalLogin )
+			{
+				Workspace.originalLogin = info.password;
+			}
+			
+			// TODO: Fix hash detector by making sure hashing doesn't occur without hashedPassword flag set.
+			let hashDetector = info.password.length > 20 && info.password.substr( 0, 6 ) == 'HASHED' ? true : false;
+			if( !info.hashedPassword && hashDetector )
+				info.hashedPassword = true;
+			
+			let hashed = info.hashedPassword ? info.password : ( 'HASHED' + Sha256.hash( info.password ) );
+			
 			m.addVar( 'username', info.username );
-			m.addVar( 'password', info.hashedPassword ? info.password : ( 'HASHED' + Sha256.hash( info.password ) ) );
+			m.addVar( 'password', hashed );
 			
 			try
 			{
 				let enc = parent.Workspace.encryption;
+				//console.log( 'Encrypting password into Workspace.loginPassword: ' + info.password );
 				parent.Workspace.loginPassword = enc.encrypt( info.password, enc.getKeys().publickey );
-				parent.Workspace.loginHashed = info.hashedPassword;
+				parent.Workspace.loginHashed = hashed;
 			}
 			catch( e )
 			{
 				let enc = Workspace.encryption;
+				//console.log( 'Encrypting(2) password into Workspace.loginPassword: ' + info.password );
 				Workspace.loginPassword = enc.encrypt( info.password, enc.getKeys().publickey );
-				Workspace.loginHashed = info.hashedPassword;
+				Workspace.loginHashed = hashed;
 			}
 		}
 		else if( info.sessionid )
@@ -155,7 +193,6 @@ Friend.User = {
 		m.onExecuted = function( json, serveranswer )
 		{
 			Friend.User.lastLogin = null;
-			
 			// We got a real error
 			if( json == null )
 			{
@@ -174,6 +211,9 @@ Friend.User = {
 					Workspace.loginid = json.loginid;
 					Workspace.userLevel = json.level;
 					Workspace.fullName = json.fullname;
+					
+					// If we have inviteHash, verify and add relationship between the inviter and the invitee.
+					if( info.inviteHash ) json.inviteHash = info.inviteHash;
 					
 					// We are now online!
 					Friend.User.SetUserConnectionState( 'online' );
@@ -213,12 +253,13 @@ Friend.User = {
 		}
 		m.forceHTTP = true;
 		m.forceSend = true;
+		m.loginCall = true;
 		m.execute( 'login' );
     },
 	// When session times out, use log in again...
 	ReLogin: function( callback )
 	{
-    	if( this.lastLogin ) return;
+    	if( this.lastLogin ) return false;
     	
     	this.State = 'login';
     	
@@ -230,10 +271,15 @@ Friend.User = {
     	
     	if( Workspace.loginUsername && Workspace.loginPassword )
     	{
+    		//console.log( 'Trying to log in with: ' + Workspace.loginUsername + ' AND ' + Workspace.loginPassword );
+    		
     		info.username = Workspace.loginUsername;
     		let enc = Workspace.encryption;
     		info.password = enc.decrypt( Workspace.loginPassword, enc.getKeys().privatekey );
-    		info.hashedPassword = Workspace.loginHashed;
+    		
+    		//console.log( 'Unhashed, decrypted password (Workspace.loginPassword): ' + info.password );
+    		
+    		info.hashedPassword = false;
     	}
     	else if( Workspace.sessionId )
     	{
@@ -252,7 +298,11 @@ Friend.User = {
 				console.log( 'Could not close conn.' );
 			}
 			delete Workspace.conn;
+			Workspace.conn = null;
 		}
+		
+		// Reset cajax http connections (because we lost connection)
+		_cajax_http_connections = 0;
 		
 		if( info.username || info.sessionid )
 		{
@@ -266,12 +316,16 @@ Friend.User = {
 		return 0;
     },
     // Log out
-    Logout: function()
+    Logout: function( cbk )
     {
-        // FIXME: Remove this - it is not used anymore
+    	if( !cbk ) cbk = false;
+    	
+    	// FIXME: Remove this - it is not used anymore
 		window.localStorage.removeItem( 'WorkspaceUsername' );
 		window.localStorage.removeItem( 'WorkspacePassword' );
 		window.localStorage.removeItem( 'WorkspaceSessionID' );
+		Workspace.loginUsername = null;
+	    Workspace.loginPassword = null;
 
 		let keys = parent.ApplicationStorage.load( { applicationName : 'Workspace' } );
 
@@ -289,18 +343,43 @@ Friend.User = {
 			if( dologt != null )
 				clearTimeout( dologt );
 			
-			// Do external logout and then our internal one.
-			if( Workspace.logoutURL )
+			if( !cbk )
 			{
-				Workspace.externalLogout();
-				return;
+				// Do external logout and then our internal one.
+				if( Workspace.logoutURL )
+				{
+					Workspace.externalLogout();
+					return;
+				}
 			}
 
 			let m = new cAjax();
 			m.open( 'get', '/system.library/user/logout/?sessionid=' + Workspace.sessionId, true );
 			m.forceHTTP = true;
 			m.send();
-			setTimeout( doLogout, 500 );
+			
+			if( !cbk )
+			{
+				setTimeout( doLogout, 500 );
+			}
+			else
+			{
+				if( Workspace.conn )
+				{
+					try
+					{
+						Workspace.conn.ws.close();
+					}
+					catch( e )
+					{
+						console.log( 'Could not close conn.' );
+					}
+					delete Workspace.conn;
+					Workspace.conn = null;
+				}
+				Workspace.sessionId = '';
+				cbk();
+			}
 		} );
 		// Could be there will be no connection..
 		function doLogout()
@@ -310,10 +389,13 @@ Friend.User = {
 				friendApp.exit();
 				return;
 			}
-			Workspace.sessionId = ''; 
-			document.location.href = window.location.href.split( '?' )[0]; //document.location.reload();
+			Workspace.sessionId = '';
+			document.location.href = window.location.href.split( '?' )[0].split( '#' )[0]; //document.location.reload();
 		}
-		dologt = setTimeout( doLogout, 750 );
+		if( !cbk )
+		{
+			dologt = setTimeout( doLogout, 750 );
+		}
 		return true;
     },
     // Remember keys
@@ -429,7 +511,6 @@ Friend.User = {
 						Friend.User.ConnectionAttempts = 0;
 					}
 				};
-			
 				if( !useAjax )
 					serverCheck.forceHTTP = true;
 				serverCheck.forceSend = true;
@@ -464,8 +545,6 @@ Friend.User = {
 		{
 			if( this.State != 'offline' )
 			{
-				this.ServerIsThere = false;
-				this.State = 'offline';
 				Workspace.workspaceIsDisconnected = true;
 				document.body.classList.add( 'Offline' );
 				if( Workspace.screen )
@@ -474,25 +553,38 @@ Friend.User = {
 				if( Workspace.nudgeWorkspacesWidget )
 					Workspace.nudgeWorkspacesWidget();
 				
+				if( this.checkInterval )
+					clearInterval( this.checkInterval );
+				this.checkInterval = setInterval( 'Friend.User.CheckServerConnection()', 2500 );
+				
 				// Try to close the websocket
-				if( Workspace.conn )
+				if( Workspace.conn && Workspace.conn.ws )
 				{
 					try
 					{
-						Workspace.conn.ws.cleanup();
+						Workspace.conn.ws.close();
 					}
 					catch( e )
 					{
 						console.log( 'Could not close conn.' );
 					}
+					if( Workspace.conn && Workspace.conn.ws )
+					{
+						delete Workspace.conn.ws;
+						Workspace.conn.ws = null;
+					}
 					delete Workspace.conn;
-					console.log( 'Removed websocket.' );
+					Workspace.conn = null;
 				}
-				
-				if( this.checkInterval )
-					clearInterval( this.checkInterval );
-				this.checkInterval = setInterval( 'Friend.User.CheckServerConnection()', 2500 );
+			
+				// Remove dirlisting cache!
+				if( window.DoorCache )
+				{
+					DoorCache.dirListing = {};
+				}
 			}
+			this.ServerIsThere = false;
+			this.State = 'offline';
 		}
 		else if( mode == 'online' )
 		{
@@ -522,6 +614,10 @@ Friend.User = {
 				if( !Workspace.conn && Workspace.initWebSocket )
 				{
 					Workspace.initWebSocket();
+				}
+				else
+				{
+					console.log( 'We have a kind of conn: ', Workspace.conn, Workspace.conn ? Workspace.conn.ws : false );
 				}
 				// Clear execution queue
 				_executionQueue = {};

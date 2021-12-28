@@ -243,7 +243,7 @@ Application.refreshFilePane = function( method, force, callback )
 			// Make an "add new note" button
 			fBar.add = document.createElement( 'div' );
 			fBar.add.className = 'NewItem';
-			fBar.add.innerHTML = '<div class="Button IconButton IconSmall fa-page-text">&nbsp;' + i18n( 'i18n_add_note' ) + '</div>';
+			fBar.add.innerHTML = '<div class="Button IconButton IconSmall fa-file-text">&nbsp;' + i18n( 'i18n_add_note' ) + '</div>';
 			fBar.add.onclick = Application.addNote;
 			fBar.appendChild( fBar.add );
 		}
@@ -605,7 +605,7 @@ Application.run = function( msg, iface )
 	}
 	this.fld.className = 'NewFolder BackgroundHeavier';
 	this.fld.innerHTML = '<div class="Button IconButton IconSmall fa-folder">&nbsp;' + i18n( 'i18n_add_folder' ) + '</div>';
-	this.fld.onclick = Application.addFolder;
+	this.fld.onclick = function(){ Application.addFolder() };
 	ge( 'LeftBar' ).parentNode.appendChild( this.fld );
 	
 	// Update the view mode
@@ -1560,6 +1560,7 @@ function ApplyStyle( styleObject, depth )
 // Add a folder ----------------------------------------------------------------
 Application.addFolder = function( e )
 {
+	let self = this;
 	let el = document.createElement( 'input' );
 	el.type = 'text';
 	el.className = 'FullWidth InputHeight';
@@ -1577,9 +1578,9 @@ Application.addFolder = function( e )
 		else if( w == 13 )
 		{
 			let l = new Library( 'system.library' );
-			l.onExecuted = function()
+			l.onExecuted = function( ee, dd )
 			{
-				self.fileBrowser.refresh();
+			    self.fileBrowser.refresh();
 			}
 			l.execute( 'file/makedir', { path: Application.path + this.value } );
 		}

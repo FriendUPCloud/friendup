@@ -29,6 +29,7 @@ function initLoginModules()
 	$modules = checkFCConfig();
 	$moduleconfigs = [];
 	
+	// Specific regext to trap oauth login module
 	if( preg_match( '/\/oauth[\/]{0,1}/i', $GLOBALS['argv'][1], $m ) )
 	{
 		if( file_exists( 'modules/login/oauth/oauth.php' ) )
@@ -36,12 +37,18 @@ function initLoginModules()
 			include_once( 'modules/login/oauth/oauth.php' );
 		}
 	}
-	// try to find config for each module
+	// Try to find config for each module
 	else if( $modules )
 	{
-		for($i = 0; $i < count( $modules ); $i++)
+		for( $i = 0; $i < count( $modules ); $i++ )
 		{
-			if( ( file_exists('cfg/'.$modules[$i].'.ini') && $cfg = parse_ini_file( 'cfg/'.$modules[$i].'.ini',true ) ) || $modules[$i] == 'fcdb' )
+			if( 
+			    ( 
+			        file_exists( 'cfg/' . $modules[ $i ] . '.ini' ) && 
+			        ( $cfg = parse_ini_file( 'cfg/' . $modules[ $i ] . '.ini', true ) )
+			    ) || 
+			    $modules[$i] == 'fcdb' 
+			)
 			{
 				$moduleconfigs[ $modules[$i] ] = $cfg;
 			}
@@ -78,7 +85,6 @@ function initLoginModules()
 				{
 					include_once( $config['Module']['login'] );
 				}
-				die( 'Could not find login module: ' . $module );
 			}
 			
 			die( 'Call standard module loginform and inform about the others.' );

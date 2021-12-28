@@ -78,12 +78,12 @@ if( $o->group == 'Admin' && $level != 'Admin' )
 if( isset( $obj->ID ) && $obj->ID > 0 )
 {
 	// Support workgroups
-	$groupID = '0';
-	if( $group = $SqlDatabase->FetchObject( '
+	$groupID = ( isset( $args->args->WorkgroupID ) && $args->args->WorkgroupID ? $args->args->WorkgroupID : '0' );
+	if( !$groupID && ( $group = $SqlDatabase->FetchObject( '
 		SELECT ug.* FROM FUserGroup ug
 			WHERE ug.Name = "' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->Workgroup ) . '"
 			AND ug.Type = "Workgroup"
-	' ) )
+	' ) ) )
 	{
 		$groupID = $group->ID;
 	}
@@ -99,6 +99,12 @@ if( isset( $obj->ID ) && $obj->ID > 0 )
 			$key = end( explode( '.', $k ) );
 			$config->$key = $v;
 		}
+	}
+	
+	// No diskspace??
+	if( !isset( $config->DiskSize ) || !$config->DiskSize || intval( $config->DiskSize, 10 ) < 0 || !trim( $config->DiskSize ) )
+	{
+		die( 'fail<!--separate-->{"response":-1,"message":"Could not save disk with zero diskspace."}' );
 	}
 
 	$SqlDatabase->query( $q = '

@@ -118,7 +118,7 @@ static int WebsocketClientCallback( struct lws *wsi, enum lws_callback_reasons r
 			break;
 		}
 
-		case LWS_CALLBACK_CLIENT_CLOSED:
+		//case LWS_CALLBACK_CLIENT_CLOSED:
 		case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
 			cd->wcd_WSClient->wc_ToRemove = TRUE;
 			INFO("WebsocketClient will be removed\n");

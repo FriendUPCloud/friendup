@@ -24,6 +24,7 @@
 
 #include "private-lib-core.h"
 #include <mbedtls/x509_csr.h>
+#include <errno.h>
 
 int
 lws_tls_server_client_cert_verify_config(struct lws_vhost *vh)
@@ -152,9 +153,6 @@ lws_tls_server_certs_load(struct lws_vhost *vhost, struct lws *wsi,
 		 */
 		cert = NULL;
 		private_key = NULL;
-
-		if (!mem_cert)
-			return 1;
 	}
 	if (lws_tls_alloc_pem_to_der_file(vhost->context, cert, mem_cert,
 					  mem_cert_len, &p, &flen)) {
@@ -182,14 +180,6 @@ lws_tls_server_certs_load(struct lws_vhost *vhost, struct lws *wsi,
 	lws_free_set_NULL(p);
 	if (!err) {
 		lwsl_err("Problem loading key\n");
-
-		return 1;
-	}
-
-	if (!private_key && !mem_privkey && vhost->protocols[0].callback(wsi,
-			LWS_CALLBACK_OPENSSL_CONTEXT_REQUIRES_PRIVATE_KEY,
-			vhost->tls.ssl_ctx, NULL, 0)) {
-		lwsl_err("ssl private key not set\n");
 
 		return 1;
 	}
@@ -264,7 +254,7 @@ int
 lws_tls_server_new_nonblocking(struct lws *wsi, lws_sockfd_type accept_fd)
 {
 	errno = 0;
-	wsi->tls.ssl = SSL_new(wsi->vhost->tls.ssl_ctx);
+	wsi->tls.ssl = SSL_new(wsi->a.vhost->tls.ssl_ctx);
 	if (wsi->tls.ssl == NULL) {
 		lwsl_err("SSL_new failed: errno %d\n", errno);
 
@@ -274,10 +264,10 @@ lws_tls_server_new_nonblocking(struct lws *wsi, lws_sockfd_type accept_fd)
 
 	SSL_set_fd(wsi->tls.ssl, accept_fd);
 
-	if (wsi->vhost->tls.ssl_info_event_mask)
+	if (wsi->a.vhost->tls.ssl_info_event_mask)
 		SSL_set_info_callback(wsi->tls.ssl, lws_ssl_info_callback);
 
-	SSL_set_sni_callback(wsi->tls.ssl, lws_mbedtls_sni_cb, wsi->context);
+	SSL_set_sni_callback(wsi->tls.ssl, lws_mbedtls_sni_cb, wsi->a.context);
 
 	return 0;
 }
@@ -306,7 +296,7 @@ lws_tls_server_accept(struct lws *wsi)
 	wsi->skip_fallback = 1;
 	if (n == 1) {
 
-		if (strstr(wsi->vhost->name, ".invalid")) {
+		if (strstr(wsi->a.vhost->name, ".invalid")) {
 			lwsl_notice("%s: vhost has .invalid, "
 				    "rejecting accept\n", __func__);
 
@@ -325,12 +315,17 @@ lws_tls_server_accept(struct lws *wsi)
 	}
 
 	m = SSL_get_error(wsi->tls.ssl, n);
-	lwsl_debug("%s: %p: accept SSL_get_error %d errno %d\n", __func__,
+	lwsl_notice("%s: %p: accept SSL_get_error %d errno %d\n", __func__,
 		   wsi, m, errno);
 
 	// mbedtls wrapper only
 	if (m == SSL_ERROR_SYSCALL && errno == 11)
 		return LWS_SSL_CAPABLE_MORE_SERVICE_READ;
+
+#if defined(__APPLE__)
+	if (m == SSL_ERROR_SYSCALL && errno == 35)
+		return LWS_SSL_CAPABLE_MORE_SERVICE_READ;
+#endif
 
 #if defined(WIN32)
 	if (m == SSL_ERROR_SYSCALL && errno == 0)

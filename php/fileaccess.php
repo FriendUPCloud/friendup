@@ -157,7 +157,7 @@ function tellApplication( $command, $user, $windowid, $authid )
 
 	//faLog( 'tellApplication ' . $command . ' :: ' . $user);
 
-	global $SqlDatabase, $Config, $User;
+	global $SqlDatabase, $Config, $User, $UserSession;
 	
 	if( !$windowid ) return false;
 	if( !$Config ) faConnectDB( $user );
@@ -166,7 +166,7 @@ function tellApplication( $command, $user, $windowid, $authid )
 
 	$url = ( $Config->SSLEnable ? 'https://' : 'http://' ) .
 		( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort . $messagestring;
-	$url .= '&sessionid=' . $User->SessionID;
+	$url .= '&sessionid=' . $UserSession->SessionID;
 
 	$c = curl_init();
 	curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false               );
@@ -642,10 +642,15 @@ function faConnectDB( $username )
 	}
 
 	/* SECURITY HOLE!? */ 
-	global $User;
+	global $User, $UserSession;
 	$User = new dbIO( 'FUser' );
 	$User->Name = $username;
+        
 	if( !$User->Load() ){ faLog('Could not load user: ' . $username ); friend404(); }
+
+	$UserSession = new dbIO( 'FUserSession' );
+	$UserSession->UserID = $User->ID;
+	$UserSession->Load();
 
 	define( 'FRIEND_USERNAME', $username );
 	define( 'FRIEND_PASSWORD', 'NOT_THE_REAL_PASSWORD' );
@@ -653,13 +658,12 @@ function faConnectDB( $username )
 	global $GLOBALS;
 	if( !isset( $GLOBALS[ 'args' ] ) )
 	{
-		$GLOBALS[ 'args' ] = (object) array('sessionid' => $User->SessionID);
+		$GLOBALS[ 'args' ] = (object) array( 'servertoken' => $User->ServerToken );
 	}
 	else
 	{
-		$GLOBALS[ 'args' ]->sessionid = $User->SessionID;
+		$GLOBALS[ 'args' ]->servertoken = $User->ServerToken;
 	}
-
 }
 
 ?>

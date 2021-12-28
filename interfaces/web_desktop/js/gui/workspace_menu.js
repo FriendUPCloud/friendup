@@ -610,6 +610,8 @@ var WorkspaceMenu =
 					{
 						li.classList.add( 'Disabled' );
 					}
+					else if( it.invisible )
+						continue
 					// A postmessage command
 					else if( typeof ( it.command ) == 'string' )
 					{

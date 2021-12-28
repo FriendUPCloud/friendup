@@ -50,6 +50,8 @@
 #define ENABLE_MOBILE_APP_NOTIFICATIONS 0
 #define ENABLE_NOTIFICATIONS_SINK 1
 
+//#define WS_COMPRESSION
+
 #if ENABLE_MOBILE_APP_NOTIFICATIONS == 1
 #include <mobile_app/mobile_app_websocket.h>
 #endif
@@ -63,6 +65,21 @@ extern pthread_mutex_t WSThreadMutex;
 static void dump_handshake_info(struct lws_tokens *lwst);
 
 static int callback_http( struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+
+//
+// Extensions
+//
+
+static const struct lws_extension exts[] = {
+	{
+		"permessage-deflate",
+		lws_extension_callback_pm_deflate,
+		"permessage-deflate"
+		 "; client_no_context_takeover"
+		 "; client_max_window_bits"
+	},
+	{ NULL, NULL, NULL /* terminator */ }
+};
 
 //
 //
@@ -132,37 +149,9 @@ static struct lws_protocols protocols[] = {
 	}
 };
 
-
 // list of supported protocols and callbacks 
 
 static struct lws_protocols protocols1[] = {
-	// first protocol must always be HTTP handler 
-	{
-		"http-only",		/* name */
-		callback_http,		/* callback */
-		sizeof (struct per_session_data__http),	/* per_session_data_size */
-		0,			/* max frame size / rx buffer */
-		1,
-		NULL,
-		0
-	},
-	{
-		"FriendApp-v1",
-		WebsocketAppCallback,
-		sizeof( struct MobileAppNotif ),
-		WS_PROTOCOL_BUFFER_SIZE,
-		3, //id - not used for anything yet
-		NULL,
-		0
-	},
-	{
-		NULL, NULL, 0, 0, 0, NULL, 0 		// End of list 
-	}
-};
-
-// list of supported protocols and callbacks 
-
-static struct lws_protocols protocols2[] = {
 	// first protocol must always be HTTP handler 
 	{
 		"http-only",		//
@@ -179,6 +168,33 @@ static struct lws_protocols protocols2[] = {
 		sizeof( struct MobileAppNotif ),
 		WS_PROTOCOL_BUFFER_SIZE,
 		4, //id - not used for anything yet
+		NULL,
+		0
+	},
+	{
+		NULL, NULL, 0, 0, 0, NULL, 0 		// End of list 
+	}
+};
+
+// list of supported protocols and callbacks 
+
+static struct lws_protocols protocols2[] = {
+	// first protocol must always be HTTP handler 
+	{
+		"http-only",		/* name */
+		callback_http,		/* callback */
+		sizeof (struct per_session_data__http),	/* per_session_data_size */
+		0,			/* max frame size / rx buffer */
+		1,
+		NULL,
+		0
+	},
+	{
+		"FriendApp-v1",
+		WebsocketAppCallback,
+		sizeof( struct MobileAppNotif ),
+		WS_PROTOCOL_BUFFER_SIZE,
+		3, //id - not used for anything yet
 		NULL,
 		0
 	},
@@ -273,9 +289,13 @@ int WebSocketStart( WebSocket *ws )
  * @param sslOn TRUE when WS must be secured through SSL, otherwise FALSE
  * @param proto protocols
  * @param extDebug enable extended debug
+ * @param timeout Websockets timeout
+ * @param katime timeout to all libwebsocket sockets, client or server
+ * @param kaprobes times to try to get a response from the peer before giving up and killing the connection
+ * @param kainterval if ka_time was nonzero, how long to wait before each ka_probes attempt
  * @return pointer to new WebSocket structure, otherwise NULL
  */
-WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extDebug )
+WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extDebug, int timeout, int katime, int kaprobes, int kainterval )
 {
 	WebSocket *ws = NULL;
 	SystemBase *lsb = (SystemBase *)sb;
@@ -314,15 +334,18 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 		}
 		
 		ws->ws_Info.port = ws->ws_Port;
-		if( proto == 0 )
+		if( proto == WEBSOCKET_TYPE_BROWSER )
 		{
 			ws->ws_Info.protocols = protocols;
+#ifdef WS_COMPRESSION
+			ws->ws_Info.extensions = exts;
+#endif
 		}
-		else if( proto == 1 )
+		else if( proto == WEBSOCKET_TYPE_EXTERNAL )
 		{
 			ws->ws_Info.protocols = protocols1;
 		}
-		else
+		else	// MOBILE
 		{
 			ws->ws_Info.protocols = protocols2;
 		}
@@ -333,8 +356,39 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 		ws->ws_Info.ssl_cert_filepath = ws->ws_CertPath;
 		ws->ws_Info.ssl_private_key_filepath = ws->ws_KeyPath;
 		ws->ws_Info.options = ws->ws_Opts;// | LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT;
-		ws->ws_Info.timeout_secs = 120;
-		ws->ws_Info.timeout_secs_ah_idle = 90;
+		//ws->ws_Info.timeout_secs = 120;
+		//ws->ws_Info.timeout_secs_ah_idle = 90;
+		//ws->ws_Info.ws_ping_pong_interval = timeout;
+		ws->ws_Info.timeout_secs = timeout;
+		if( katime > 0 )
+		{
+			ws->ws_Info.ka_time = katime;
+			if( kainterval <= 0 ) kainterval = 20;
+			ws->ws_Info.ka_interval = kainterval;
+			if( kaprobes <= 0 ) kaprobes = 2;
+			ws->ws_Info.ka_probes = kaprobes;
+		}
+		int ka_time;
+	//*< CONTEXT: 0 for no TCP keepalive, otherwise apply this keepalive
+	// * timeout to all libwebsocket sockets, client or server 
+	// int ka_probes;
+	// *< CONTEXT: if ka_time was nonzero, after the timeout expires how many
+	//times to try to get a response from the peer before giving up
+	//and killing the connection 
+	// int ka_interval;
+	// *< CONTEXT: if ka_time was nonzero, how long to wait before each ka_probes
+	//attempt 
+	// unsigned int timeout_secs;
+	// *< VHOST: various processes involving network roundtrips in the
+	// library are protected from hanging forever by timeouts.  If
+	//nonzero, this member lets you set the timeout used in seconds.
+	//Otherwise a default timeout is used. 
+		
+
+		ws->ws_Info.timeout_secs = 20;
+#ifdef __DEBUG
+		ws->ws_Info.timeout_secs_ah_idle = 20;
+#endif
 		if( ws->ws_UseSSL == TRUE ) 
 		{
 			ws->ws_Info.options |= LWS_SERVER_OPTION_REDIRECT_HTTP_TO_HTTPS;
@@ -620,6 +674,11 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 	User *actUser = actUserSess->us_User;
 	if( actUser != NULL )
 	{
+#ifdef WS_COMPRESSION
+//		lws_set_extension_option( wsi, "permessage-deflate", "rx_buf_size", "16");
+//		lws_set_extension_option( wsi, "permessage-deflate", "tx_buf_size", "16");
+#endif
+		
 		Log( FLOG_INFO,"[WS] WebSocket connection set for user %s  sessionid %s\n", actUser->u_Name, actUserSess->us_SessionID );
 
 		INFO("[WS] ADD WEBSOCKET CONNECTION TO USER %s\n\n",  actUser->u_Name );
@@ -639,7 +698,7 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
  * @return 0 if connection was deleted without problems otherwise error number
  */
 
-int DetachWebsocketFromSession( void *d )
+int DetachWebsocketFromSession( void *d, void *wsi )
 {
 	WSCData *data = (WSCData *)d;
 	
@@ -655,6 +714,14 @@ int DetachWebsocketFromSession( void *d )
 		if( data->wsc_UserSession != NULL )
 		{
 			us = (UserSession *)data->wsc_UserSession;
+			
+			WSCData *ldata = (WSCData *)us->us_WSD; 
+			if( ldata != NULL && wsi != ldata->wsc_Wsi )
+			{
+				DEBUG("[DetachWebsocketFromSession] we cannot detach this session. Wrong WSI pointer\n");
+				FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
+				return 0;
+			}
 		}
 		
 		//data->wsc_UserSession = NULL;

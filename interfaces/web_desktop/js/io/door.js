@@ -8,13 +8,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
-var DoorCache = {
-	dirListing: {}
-};
-
 Door = function( path )
 {
-	this.networkConnections = [];
 	this.init();
 	this.setPath( path );
 	this.vars = {};
@@ -41,12 +36,6 @@ Door.prototype.getPath = function()
 Door.prototype.stop = function()
 {
 	// Kill all bajax!
-	for( var a = 0; a < this.networkConnections.length; a++ )
-	{
-		if( this.networkConnections[ a ].destroy )
-			this.networkConnections[ a ].destroy();
-	}
-	this.networkConnections = [];
 }
 
 Door.prototype.setPath = function( path )
@@ -60,13 +49,13 @@ Door.prototype.setPath = function( path )
 		else this.path = '';
 
 		// Is this a dormant drive?
-		var doors = DormantMaster.getDoors();
+		let doors = DormantMaster.getDoors();
 		if( doors )
 		{
-			for( var d in doors )
+			for( let d in doors )
 			{
-				var door = doors[ d ];
-				var title = door.Title.split( ':' )[ 0 ];
+				let door = doors[ d ];
+				let title = door.Title.split( ':' )[ 0 ];
 				if( title == this.deviceName )
 				{
 					this.dormantDoor = true;
@@ -81,7 +70,7 @@ Door.prototype.setPath = function( path )
 			}
 		}
 		// Check normal doors
-		for( var a = 0; a < Workspace.icons.length; a++ )
+		for( let a = 0; a < Workspace.icons.length; a++ )
 		{
 			if( Workspace.icons[a].Title == this.deviceName )
 			{
@@ -115,18 +104,20 @@ Door.prototype.get = function( path )
 
 	// An object?
 	if( path && path.Path ) path = path.Path;
-	var vol = path.split( ':' )[0] + ':';
+	let vol = path.split( ':' )[0] + ':';
 	
 	// First case sensitive
-	for( var a = 0; a < Workspace.icons.length; a++ )
+	for( let a = 0; a < Workspace.icons.length; a++ )
 	{
 		if( Workspace.icons[a].Volume == vol )
 		{
 			// Also set the path
-			var d = path.toLowerCase().substr( 0, 7 ) == 'system:' ? new DoorSystem( vol ) : new Door( vol );
+			let d = path.toLowerCase().substr( 0, 7 ) == 'system:' ? new DoorSystem( vol ) : new Door( vol );
 			d.setPath( path );
 			if ( Workspace.icons[ a ].Config )
+			{
 				d.Config = Workspace.icons[a].Config;
+			}
 			else if ( d.dormantGetConfig )
 				d.Config = d.dormantGetConfig();
 			return d;
@@ -134,15 +125,15 @@ Door.prototype.get = function( path )
 	}
 	
 	// Then insensitive
-	var invol = vol.toLowerCase();
-	for( var a = 0; a < Workspace.icons.length; a++ )
+	let invol = vol.toLowerCase();
+	for( let a = 0; a < Workspace.icons.length; a++ )
 	{
 		if( Workspace.icons[a].Volume && Workspace.icons[a].Volume.toLowerCase() == invol )
 		{
 			// Also set the path
-			var v = Workspace.icons[a].Volume;
-			var d = path.toLowerCase().substr( 0, 7 ) == 'system:' ? new DoorSystem( v ) : new Door( v );
-			var fixPath = v + path.substr( v.length, path.length - v.length );
+			let v = Workspace.icons[a].Volume;
+			let d = path.toLowerCase().substr( 0, 7 ) == 'system:' ? new DoorSystem( v ) : new Door( v );
+			let fixPath = v + path.substr( v.length, path.length - v.length );
 			d.setPath( fixPath );
 			if ( Workspace.icons[ a ].Config )
 				d.Config = Workspace.icons[a].Config;
@@ -152,13 +143,13 @@ Door.prototype.get = function( path )
 		}
 	}
 
-	var door = new Door( path );
+	let door = new Door( path );
 
 	return door;
 };
 
 Door.prototype.getIcons = function( fileInfo, callback, flags )
-{	
+{
 	if( !this.path && this.deviceName )
 	{
 		if( typeof( fileInfo ) == 'string' && fileInfo != 'Mountlist:' )
@@ -171,7 +162,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 		}
 	}
 	
-	var finfo = false;
+	let finfo = false;
 
 	if( fileInfo )
 	{
@@ -210,7 +201,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 	// We don't want this amp stuff!
 	this.fileInfo.Path = this.fileInfo.Path ? this.fileInfo.Path.split( 'amp;' ).join( '' ) : this.fileInfo.Volume;
 
-	var t = this;
+	let t = this;
 
 	// Check dormant first!
 	this.checkDormantDoors( t.fileInfo.Path ? t.fileInfo.Path : false, function( dirs )
@@ -222,16 +213,14 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 			t.fileInfo.Path = t.path.indexOf( ':' ) > 0 ? t.path : ( t.deviceName + t.path );
 		}
 
-		var fname = t.fileInfo.Path.split( ':' )[1];
+		let fname = t.fileInfo.Path.split( ':' )[1];
 		if( fname && fname.indexOf( '/' ) > 0 ){ fname = fname.split( '/' ); fname = fname[fname.length-1]; }
-		var deviceName = t.fileInfo.Path.split( ':' )[0] + ':';
+		let deviceName = t.fileInfo.Path.split( ':' )[0] + ':';
 
 		// If we end up here, we're not using dormant - which is OK! :)
 		if( !t.dormantDoor && ( !dirs || ( dirs && !dirs.length ) ) )
-		{
-			var cache = DoorCache.dirListing;
-			
-			var updateurl = '/system.library/file/dir?r=1';
+		{	
+			let updateurl = '/system.library/file/dir?r=1';
 
 			if( Workspace.conf && Workspace.conf.authId )
 				updateurl += '&authid=' + encodeURIComponent( Workspace.conf.authId ); //j.addVar( 'authid', Workspace.conf.authId );
@@ -245,37 +234,14 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 				updateurl += '&details=true';
 			}
 			
-			// Use cache - used for preventing identical and pending dir requests
-			if( cache[ updateurl ] )
-			{
-				cache[ updateurl ].queue.push( callback );
-				return;
-			}
-			
-			// Setup cache queue
-			cache[ updateurl ] = {
-				queue: []
-			};
-			
 			// Use standard Friend Core doors
-			var j = new cAjax();
+			let j = new cAjax();
 			if( t.cancelId )
 				j.cancelId = t.cancelId;
 			if( t.context ) j.context = t.context;
 
 			//changed from post to get to get more speed.
 			j.open( 'POST', updateurl, true, true );
-			j.parseQueue = function( result, path, purePath )
-			{
-				if( cache[ updateurl ].queue.length )
-				{
-					for( var c = 0; c < cache[ updateurl ].queue.length; c++ )
-					{
-						cache[ updateurl ].queue[ c ]( result, path, purePath );
-					}
-				}
-				delete cache[ updateurl ]; // Flush!
-			}
 			
 			j.onload = function( e, d )
 			{
@@ -286,7 +252,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 						// Try to remount
 						if( e == 'fail' && d && ( !flags || ( flags && flags.retry ) ) )
 						{
-							var j = d.indexOf( '{' ) > 0 ? JSON.parse( d ) : {};
+							let j = d.indexOf( '{' ) > 0 ? JSON.parse( d ) : {};
 							if( j.response && j.response == 'device not mounted' )
 							{
 								return t.Mount( function()
@@ -295,15 +261,14 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 								} );
 							}
 						}
-						var res = callback( false, t.fileInfo.Path, false );
-						this.parseQueue( false, t.fileInfo.Path, false );
+						let res = callback( false, t.fileInfo.Path, false );
 						
 						return res;
 					}
 					
-					var parsed = '';
+					let parsed = '';
 					// Clear last bit
-					for( var tries = 0; tries < 2; tries++ )
+					for( let tries = 0; tries < 2; tries++ )
 					{
 						// Remove newlines
 						// TODO: Handle in server! This is a bug
@@ -325,14 +290,14 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 						}
 					}
 					
-					var list = d.indexOf( '{' ) && parsed ? parsed : {};
+					let list = d.indexOf( '{' ) && parsed ? parsed : {};
 					
 					if( typeof( list ) == 'object' && list.length )
 					{
 						// Fix paths
 						let sef = this;
 						let sharedCheck = [];
-						for( var a = 0; a < list.length; a++ )
+						for( let a = 0; a < list.length; a++ )
 						{
 							if( list[a].Path.indexOf( ':' ) < 0 )
 								list[a].Path = deviceName + list[a].Path;
@@ -364,51 +329,45 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 										}
 									}
 									catch( e )
-									{};
+									{
+									};
 								}
-								var pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
+								let pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
 								callback( list, t.fileInfo.Path, pth );
-								sef.parseQueue( list, t.fileInfo.Path, pth );
 							}
 							ch.execute( 'file/checksharedpaths', { paths: sharedCheck, path: deviceName } );
 						}
 						else
 						{
-							var pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
+							let pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
 							callback( list, t.fileInfo.Path, pth );
-							sef.parseQueue( list, t.fileInfo.Path, pth );
 						}
 					}
 					else
 					{
 						// Empty directory
 						callback( [], t.fileInfo.Path, false );
-						this.parseQueue( [], t.fileInfo.Path, false );
 					}
 				}
 				else
 				{
 					// Illegal directory
 					callback( false, t.fileInfo.Path, false );
-					this.parseQueue( false, t.fileInfo.Path, false );
 				}
 			}
 
 			j.send();
-			
-			// Register network connection
-			t.networkConnections.push( j );
 		}
 		else if( callback )
 		{
 			// We need this as an array!
 			if( dirs && typeof( dirs ) == 'object' )
 			{
-				var o = [];
-				for( var a in dirs ) o.push( dirs[a] );
+				let o = [];
+				for( let a in dirs ) o.push( dirs[a] );
 				dirs = o;
 			}
-			var pth;
+			let pth;
 			if ( dirs.length > 0 )
 				pth = dirs[0].Path.substr( 0, t.fileInfo.Path.length );
 			else
@@ -429,16 +388,16 @@ Door.prototype.checkDormantDoors = function( path, callback )
 	if( path.indexOf( ':' ) <= 0 )
 		return callback( false );
 
-	var p = path.split( ':' )[0] + ':';
+	let p = path.split( ':' )[0] + ':';
 	if( typeof( DormantMaster ) != 'undefined' )
 	{
-		var doors = DormantMaster.getDoors();
+		let doors = DormantMaster.getDoors();
 		if( doors )
 		{
 			// Case sensitive
-			for( var a in doors )
+			for( let a in doors )
 			{
-				var t = doors[a].Title + ':';		// HOGNE I lost so much time on ':' in Title, sometimes used, sometimes not... argh.
+				let t = doors[a].Title + ':';		// HOGNE I lost so much time on ':' in Title, sometimes used, sometimes not... argh.
 				if( t == p )
 				{
 					doors[a].Dormant.getDirectory( path, function( dirs )
@@ -451,9 +410,9 @@ Door.prototype.checkDormantDoors = function( path, callback )
 				}
 			}
 			// Case insensitive
-			for( var a in doors )
+			for( let a in doors )
 			{
-				var t = doors[a].Title + ':';
+				let t = doors[a].Title + ':';
 				if( t.toLowerCase() == p.toLowerCase() )
 				{
 					doors[a].Dormant.getDirectory( path, function( dirs )
@@ -487,7 +446,7 @@ Door.prototype.instantiate = function()
 // Writes to file
 Door.prototype.write = function( filename, data, mode, extraData )
 {
-	var dr = this;
+	let dr = this;
 
 	// Interface with dormant drive
 	if ( typeof extraData == 'undefined' )
@@ -507,14 +466,14 @@ Door.prototype.write = function( filename, data, mode, extraData )
 	if( this.mode == 'wb' || mode == 'wb' )
 	{
 		// Session or auth id
-		var s = ( Workspace.conf && Workspace.conf.authId ) ? ( 'authid=' + Workspace.conf.authId ) :
+		let s = ( Workspace.conf && Workspace.conf.authId ) ? ( 'authid=' + Workspace.conf.authId ) :
 			( 'sessionid=' + Workspace.sessionId );
-		var f = new FormData();
+		let f = new FormData();
 		
-		var blob = new Blob( [ data ], { type: 'application/octet-stream' } );
+		let blob = new Blob( [ data ], { type: 'application/octet-stream' } );
 		f.append( 'data', blob, "" );
-		var url = '/system.library/file/upload/?' + s + '&path=' + filename;
-		var poster = new XMLHttpRequest();
+		let url = '/system.library/file/upload/?' + s + '&path=' + filename;
+		let poster = new XMLHttpRequest();
 		
 		poster.open( 'POST', url, true );
 		poster.onload = function( oEvent )
@@ -532,7 +491,7 @@ Door.prototype.write = function( filename, data, mode, extraData )
 		return;
 	}
 	
-	var j = new cAjax();
+	let j = new cAjax();
 	if( this.context ) j.context = this.context;
 	if( this.cancelId )
 		jax.cancelId = this.cancelId;
@@ -550,28 +509,30 @@ Door.prototype.write = function( filename, data, mode, extraData )
 	j.addVar( 'mode', 'w' );
 	if( this.vars )
 	{
-		for( var a in this.vars )
+		for( let a in this.vars )
 		{
 			j.addVar( a, this.vars[a] );
 		}
 	}
 	j.onload = function( r, d )
 	{
-		var dat = 0;
+		let dat = 0;
 		if( r == 'ok' )
 		{
 			// Do the refreshing
 			Workspace.refreshWindowByPath( filename );
 			dat = ( JSON.parse( d ) ).FileDataStored;
+			if( dr.onWrite )
+			{
+				dr.onWrite( r, d );
+			}
 		}
-
-		if( dr.onWrite )
-			dr.onWrite( dat, extraData );
+		else if( dr.onWrite )
+		{
+			dr.onWrite( false, false );
+		}
 	}
 	j.send();
-	
-	// Register network connection
-	this.networkConnections.push( j );
 }
 
 // Reads a file
@@ -580,7 +541,7 @@ Door.prototype.read = function( filename, mode, extraData )
 	if ( typeof extraData == 'undefined' )
 		extraData = false;
 
-	var dr = this;
+	let dr = this;
 	if ( this.dormantRead )
 	{
 		return this.dormantRead( filename, mode, function( data )
@@ -591,7 +552,7 @@ Door.prototype.read = function( filename, mode, extraData )
 			}
 		} );
 	}
-	var j = new cAjax();
+	let j = new cAjax();
 	if( this.context ) j.context = this.context;
 	if( this.cancelId )
 		j.cancelId = this.cancelId;
@@ -617,7 +578,7 @@ Door.prototype.read = function( filename, mode, extraData )
 
 	if( this.vars )
 	{
-		for( var a in this.vars )
+		for( let a in this.vars )
 		{
 			j.addVar( a, this.vars[a] );
 		}
@@ -630,7 +591,7 @@ Door.prototype.read = function( filename, mode, extraData )
 			{
 				if( d.byteLength < 256 )
 				{
-					var str = ConvertArrayBufferToString( d );
+					let str = ConvertArrayBufferToString( d );
 					if( str && str.length )
 					{
 						if( str.substr( 0, 19 ) == 'fail<!--separate-->' )
@@ -651,15 +612,12 @@ Door.prototype.read = function( filename, mode, extraData )
 		}
 	}
 	j.send();
-	
-	// Register network connection
-	this.networkConnections.push( j );
 }
 
 // Execute a dos action now..
 Door.prototype.dosAction = function( ofunc, args, callback )
 {
-	var func = ofunc;
+	let func = ofunc;
 
 	if ( this.dormantDosAction )
 	{
@@ -672,21 +630,21 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 	}
 
 	// Special case for 'copy' if destination is a Dormant drive
-	var dr = this;
+	let dr = this;
 	if( ofunc == 'copy' )
 	{
-		var drive = args[ 'to' ].split( ':' )[ 0 ] + ':';
-		var doors = DormantMaster.getDoors();
+		let drive = args[ 'to' ].split( ':' )[ 0 ] + ':';
+		let doors = DormantMaster.getDoors();
 		if( doors )
 		{
-			for( var d in doors )
+			for( let d in doors )
 			{
-				var door = doors[ d ];
-				var title = door.Title.split( ':' )[ 0 ] + ':';
+				let door = doors[ d ];
+				let title = door.Title.split( ':' )[ 0 ] + ':';
 				if( title == drive )
 				{
 					// Loads the file in binary mode
-					var file = new File( args[ 'from' ] );
+					let file = new File( args[ 'from' ] );
 					if( this.cancelId )
 						file.cancelId = this.cancelId;
 					file.onLoad = function( data )
@@ -734,7 +692,7 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 	//console.log( '[ Door File Operation ] ' + ofunc + ' - ' + this.deviceName + ':' + this.path );
 
 	// Do the request
-	var j = new cAjax();
+	let j = new cAjax();
 	if( this.cancelId )
 		j.cancelId = this.cancelId;
 	if( this.context ) j.context = this.context;
@@ -747,7 +705,7 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 	// Since FC doesn't have full JSON support yet, let's do this too
 	if( args && ( typeof( args ) == 'object' || typeof( args ) == 'array' ) )
 	{
-		for( var a in args )
+		for( let a in args )
 		{
 			j.addVar( a, args[a] );
 		}
@@ -761,7 +719,7 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 		if( ofunc != 'info' )
 		{
 			refresh();
-			var s = this.responseText().split( '<!--separate-->' );
+			let s = this.responseText().split( '<!--separate-->' );
 			
 			if( s && s[0] != 'ok' )
 			{
@@ -772,12 +730,10 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 	}
 	j.send();
 	
-	this.networkConnections.push( j );
-	
 	function refresh()
 	{
-		var possibilities = [ 'from', 'From', 'to', 'To', 'path', 'Path' ];
-		for( var b = 0; b < possibilities.length; b++ )
+		let possibilities = [ 'from', 'From', 'to', 'To', 'path', 'Path' ];
+		for( let b = 0; b < possibilities.length; b++ )
 		{
 			if( args[possibilities[b]] )
 			{
@@ -819,14 +775,14 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 // Mount a device
 Door.prototype.Mount = function( callback )
 {
-	var f = new FriendLibrary( 'system.library' );
+	let f = new FriendLibrary( 'system.library' );
 	if( this.cancelId )
 		f.cancelId = this.cancelId;
 	f.onExecuted = function( e, d )
 	{
 		Application.refreshDoors();
 	}
-	var args = {
+	let args = {
 		command: 'mount',
 		devname: this.deviceName + ':',
 		type: this.Type ? this.Type : false
@@ -841,14 +797,14 @@ Door.prototype.Mount = function( callback )
 // Unmount a device
 Door.prototype.Unmount = function( callback )
 {
-	var f = new Library( 'system.library' );
+	let f = new Library( 'system.library' );
 	if( this.cancelId )
 		f.cancelId = this.cancelId;
 	f.onExecuted = function( e, d )
 	{
 		//
 	}
-	var args = {
+	let args = {
 		command: 'unmount',
 		devname: this.deviceName + ':'
 	};
@@ -861,16 +817,16 @@ Door.prototype.Unmount = function( callback )
 function IsPathOnDormantDoor( path )
 {
 	// Extract the drive from path
-	var drive = path.split( ':' )[ 0 ] + ':';
+	let drive = path.split( ':' )[ 0 ] + ':';
 
 	// Is this a dormant drive?
-	var doors = DormantMaster.getDoors();
+	let doors = DormantMaster.getDoors();
 	if( doors )
 	{
-		for( var d in doors )
+		for( let d in doors )
 		{
-			var door = doors[ d ];
-			var title = door.Title.split( ':' )[ 0 ] + ':';
+			let door = doors[ d ];
+			let title = door.Title.split( ':' )[ 0 ] + ':';
 			if ( title == drive )
 				return true;
 		}
@@ -894,8 +850,8 @@ function GetURLFromPath( path, callback, type, toAdd )
 		// Type not defined, get type from file extension
 		if ( typeof type == 'undefined' )
 		{
-			var extension = '';
-			var pos = path.lastIndexOf( '.' );
+			let extension = '';
+			let pos = path.lastIndexOf( '.' );
 			if ( pos >= 0 )
 				extension = path.substring( pos + 1 ).toLowerCase();
 			switch( extension )
@@ -950,7 +906,7 @@ function GetURLFromPath( path, callback, type, toAdd )
 		}
 
 		// Load the file in binary
-		var file = new File( path );
+		let file = new File( path );
 		if( this.cancelId )
 			file.cancelId = this.cancelId;
 		file.onLoad = function( data )
@@ -965,10 +921,10 @@ function GetURLFromPath( path, callback, type, toAdd )
 			}
 
 			// Create a blob and return it's URL
-			var arrayBufferView = new Uint8Array( data );
-			var blob = new Blob( [ arrayBufferView ], { type: type } );
-			var urlCreator = window.URL || window.webkitURL;
-			var imageUrl = urlCreator.createObjectURL( blob );
+			let arrayBufferView = new Uint8Array( data );
+			let blob = new Blob( [ arrayBufferView ], { type: type } );
+			let urlCreator = window.URL || window.webkitURL;
+			let imageUrl = urlCreator.createObjectURL( blob );
 			callback( imageUrl );
 		};
 		file.load( 'rb' );
@@ -977,7 +933,7 @@ function GetURLFromPath( path, callback, type, toAdd )
 	{
 		if ( !toAdd )
 			toAdd = ' ';
-		var imageUrl = '/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + encodeURIComponent( path ) + toAdd;
+		let imageUrl = '/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + encodeURIComponent( path ) + toAdd;
 		callback( imageUrl );
 	}
 }

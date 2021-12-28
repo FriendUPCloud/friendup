@@ -45,7 +45,7 @@ typedef struct WebdavToken
 	char						wt_Realm[ WEBDAV_TOKEN_LENGTH+1 ];
 	char						wt_Opaque[ WEBDAV_TOKEN_LENGTH+1 ];
 	FKey						*wt_Key;
-	time_t						wt_CreateTime;
+	time_t						wt_CreationTime;
 }WebdavToken;
 
 //

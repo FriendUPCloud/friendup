@@ -59,67 +59,70 @@ DOSToken *DOSTokenNew( UserSession *us, time_t timeout, int usedTimes )
  */
 void DOSTokenInit( DOSToken *dt )
 {
-	if( dt == NULL )
+	if( dt != NULL )
 	{
-		return;
-	}
-	if( dt->ct_Commands == NULL )
-	{
-		return;
-	}
-	int i;
-	int max = strlen( dt->ct_Commands );
-	dt->ct_MaxAccess = 1;
-	
-	// checking number of paths
-	for( i=0 ; i < max ; i++ )
-	{
-		if( dt->ct_Commands[ i ] == ';' )
+		if( dt->ct_Commands == NULL )
 		{
-			dt->ct_MaxAccess++;
+			return;
 		}
-	}
+		int i;
+		int max = strlen( dt->ct_Commands );
+		dt->ct_MaxAccess = 1;
 	
-	DEBUG("Found paths: %d\n", dt->ct_MaxAccess );
-	
-	if( ( dt->ct_AccessPath = FCalloc( dt->ct_MaxAccess, sizeof( DOSTokenPath ) ) ) != NULL )
-	{
-		int maxPathSize = (DOSTOKEN_MAX_PATH_SIZE-1);
-		int activePath = 0;
-		int pathEntry = 0;
-
-		dt->ct_AccessPath[ activePath ].path[ pathEntry ] = dt->ct_Commands;
-		
-		// going through command string
-		
+		// checking number of paths
 		for( i=0 ; i < max ; i++ )
 		{
-			printf("%c ", dt->ct_Commands[ i ] );
-			// '/' means new path part is provided
-			if( dt->ct_Commands[ i ] == '/' )
+			if( dt->ct_Commands[ i ] == ';' )
 			{
-				dt->ct_Commands[ i ] = 0;
-				pathEntry++;
-				
-				// we cannot have more then maxPathSize
-				if( pathEntry >= maxPathSize )
-				{
-					break;
-				}
-				
-				DEBUG("Active path %d entry %d\n", activePath, pathEntry );
-				dt->ct_AccessPath[ activePath ].path[ pathEntry ] = &(dt->ct_Commands[ i+1 ]);
+				dt->ct_MaxAccess++;
 			}
-			// ';' means that new path is provided
-			else if( dt->ct_Commands[ i ] == ';' )
+		}
+	
+		DEBUG("Found paths: %d\n", dt->ct_MaxAccess );
+		if( dt->ct_AccessPath != NULL )
+		{
+			FFree( dt->ct_AccessPath );
+		}
+	
+		if( ( dt->ct_AccessPath = FCalloc( dt->ct_MaxAccess, sizeof( DOSTokenPath ) ) ) != NULL )
+		{
+			int maxPathSize = (DOSTOKEN_MAX_PATH_SIZE-1);
+			int activePath = 0;
+			int pathEntry = 0;
+
+			dt->ct_AccessPath[ activePath ].path[ pathEntry ] = dt->ct_Commands;
+		
+			// going through command string
+		
+			for( i=0 ; i < max ; i++ )
 			{
-				dt->ct_Commands[ i ] = 0;
-				dt->ct_AccessPath[ activePath ].path[ pathEntry ] = &(dt->ct_Commands[ i+1 ]);
+				//printf("%c ", dt->ct_Commands[ i ] );
+				// '/' means new path part is provided
+				if( dt->ct_Commands[ i ] == '/' )
+				{
+					dt->ct_Commands[ i ] = 0;
+					pathEntry++;
 				
-				activePath++;
-				pathEntry = 0;
+					// we cannot have more then maxPathSize
+					if( pathEntry >= maxPathSize )
+					{
+						break;
+					}
 				
-				DEBUG("next %d pathentry %d\n", activePath, pathEntry );
+					DEBUG("Active path %d entry %d\n", activePath, pathEntry );
+					dt->ct_AccessPath[ activePath ].path[ pathEntry ] = &(dt->ct_Commands[ i+1 ]);
+				}
+				// ';' means that new path is provided
+				else if( dt->ct_Commands[ i ] == ';' )
+				{
+					dt->ct_Commands[ i ] = 0;
+					dt->ct_AccessPath[ activePath ].path[ pathEntry ] = &(dt->ct_Commands[ i+1 ]);
+				
+					activePath++;
+					pathEntry = 0;
+				
+					DEBUG("next %d pathentry %d\n", activePath, pathEntry );
+				}
 			}
 		}
 	}

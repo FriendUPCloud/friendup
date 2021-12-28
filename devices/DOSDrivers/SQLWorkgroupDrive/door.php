@@ -72,6 +72,18 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			}
 		}
 		
+		// Remove unwanted characters
+		private function safeFilename( $filename, $mode = 'normal' )
+		{
+			if( $mode == 'simple' )
+			{
+				$filename = str_replace( array( "\n", "\t", "\r" ), '', $filename );
+				return $filename;
+			}
+			$filename = str_replace( array( "\n", "\t", "\r", "/" ), '', $filename );
+			return $filename;
+		}
+		
 		// Public functions --------------------------------------------
 
 		/**
@@ -314,15 +326,20 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 					// Create a file object
 					$f = new dbIO( 'FSFile' );
 					$f->FilesystemID = $this->ID;
-					$fname = end( explode( ':', $args->path ) );
-					$fname = end( explode( '/', $fname ) );
+					$fname = explode( ':', $args->path );
+					$fname = end( $fname );
+					$fname = explode( '/', $fname );
+					$fname = end( $fname );
 					$f->Filename = $fname;
 					//$f->UserID = $User->ID; // TODO: Add for security!
 					$f->FolderID = '0';
 					$fn = '';
 	
 					// Can we get sub folder?
-					if( isset( $args->path ) && $subPath = trim( end( explode( ':', $args->path ) ) ) )
+					$sp = explode( ':', $args->path );
+					$sp = end( $sp );
+					$sp = trim( $sp );
+					if( isset( $args->path ) && $subPath = $sp )
 					{	
 						// Remove filename
 						if( substr( $subPath, -1, 1 ) != '/' && strstr( $subPath, '/' ) )
@@ -399,10 +416,16 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				// Can we get sub folder?
 				$fo = false;
 				
+				// Later filename
+				$fn = '';
+				
 				// Get by path (subfolder)
 				$subPath = $testPath = false;
 				if( is_string( $path ) && strstr( $path, ':' ) )
-					$testPath = $subPath = end( explode( ':', $path ) );
+				{
+					$exp = explode( ':', $path );
+					$testPath = $subPath = end( $exp );
+				}
 				
 				// Remove filename
 				if( substr( $subPath, -1, 1 ) != '/' && strstr( $subPath, '/' ) )
@@ -414,12 +437,12 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				
 				if( $fo = $this->getSubFolder( $subPath ) )
 				{
-					$Logger->log( '[SQLDRIVE] Found folder by path: ' . $subPath );
+					$Logger->log( '[SQLWORKGROUPDRIVE] Found folder by path: ' . $subPath );
 					$f->FolderID = $fo->ID;
 				}
 				else
 				{
-					$Logger->log( '[SQLDRIVE] Could not find folder by path: ' . $subPath );
+					$Logger->log( '[SQLWORKGROUPDRIVE] Could not find folder by path: ' . $subPath );
 				}
 				
 				if( substr( $testPath, -1, 1 ) == '/' )
@@ -471,17 +494,16 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 							else $fn .= rand(0,99999); 
 						}
 					}
-					if( $file = fopen( $Config->FCUpload . $fn, 'w+' ) )
+					
+					// If the file exists, check it, if not, make a new writable file
+					if( ( $f->ID > 0 && file_exists( $Config->FCUpload . $fn ) ) || true )
 					{
-						// Delete existing file
-						if( $deletable ) unlink( $deletable );
-						
 						if( isset( $args->tmpfile ) )
 						{
 							if( file_exists( $args->tmpfile ) )
 							{
-								fclose( $file );
 								$len = filesize( $args->tmpfile );
+								
 								if( $len > 0 )
 								{
 									// TODO: UGLY WORKAROUND, FIX IT!
@@ -493,7 +515,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 										if( substr( urldecode( $string ), 0, strlen( '<!--BASE64-->' ) ) == '<!--BASE64-->' )
 										{
 											// TODO: Add filesize limit!
-											$Logger->log( '[SQLWorkgroupDrive] Trying to read the temp file! May crash!' );
+											$Logger->log( '[SQLWORKGROUPDRIVE] Trying to read the temp file! May crash!' );
 											$fr = file_get_contents( $args->tmpfile );
 											$fr = base64_decode( end( explode( '<!--BASE64-->', urldecode( $fr ) ) ) );
 											if( $fo = fopen( $args->tmpfile, 'w' ) )
@@ -504,24 +526,27 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 										}
 										else
 										{
-											$Logger->log( '[SqlWorkgroupDrive] Not reading temp file, because it\'s not base 64. Plain move commencing.' );
+											$Logger->log( '[SQLWORKGROUPDRIVE] Not reading temp file, because it\'s not base 64. Plain move commencing.' );
 										}
 									}
 
 									if( $total + $len < SQLWORKGROUPDRIVE_FILE_LIMIT )
 									{
-										$Logger->log( '[SqlWorkgroupDrive] Moving tmp file ' . $args->tmpfile . ' to ' . $Config->FCUpload . $fn . ' because ' . ( $total + $len ) . ' < ' . SQLDRIVE_FILE_LIMIT );
+										$Logger->log( '[SQLWORKGROUPDRIVE] Moving tmp file ' . $args->tmpfile . ' to ' . $Config->FCUpload . $fn . ' because ' . ( $total + $len ) . ' < ' . SQLDRIVE_FILE_LIMIT );
+										// Delete existing file
+										if( $deletable ) unlink( $deletable );
+										
 										$res = rename( $args->tmpfile, $Config->FCUpload . $fn );
 										
 										if( !$res )
 										{
-											$Logger->log( '[SqlWorkgroupDrive] Failed to move file.' );
+											$Logger->log( '[SQLWORKGROUPDRIVE] Failed to move file.' );
 											die( 'fail<!--separate-->{"response":"-1","message":"Failed to move temp file."}' );
 										}
 									}
 									else
 									{
-										$Logger->log( '[SqlWorkgroupDrive] fail<!--separate-->Limit broken' );
+										$Logger->log( '[SQLWORKGROUPDRIVE] fail<!--separate-->Limit broken' );
 										die( 'fail<!--separate-->{"response":"-1","message":"Limit broken"}' );
 									}
 								}
@@ -535,10 +560,11 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 								die( 'fail<!--separate-->{"response","-1","message":"Tempfile does not exist"}' );
 							}
 						}
-						else
+						else if( $file = fopen( $Config->FCUpload . $fn, 'w+' ) )
 						{
 							if( $total + strlen( $args->data ) < SQLWORKGROUPDRIVE_FILE_LIMIT )
 							{
+								$Logger->log( '[SQLWORKGROUPDRIVE] Writing content to file. (limit etc: ' . ( $total + strlen( $args->data ) ) . ' < ' . SQLWORKGROUPDRIVE_FILE_LIMIT );
 								$len = fwrite( $file, $args->data );
 								fclose( $file );
 							}
@@ -554,6 +580,30 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 						if( !$f->DateCreated ) $f->DateCreated = date( 'Y-m-d H:i:s' );
 						$f->DateModified = date( 'Y-m-d H:i:s' );
 						$f->Save();
+						
+						// Update latest StoredBytes for this Filesystem
+						if( $this->ID > 0 && $User->ID > 0 )
+						{
+							$sbytes = 0;
+							if( $sum = $SqlDatabase->FetchObject( '
+								SELECT SUM(u.Filesize) z FROM FSFile u 
+								WHERE u.FilesystemID = \'' . $this->ID . '\'
+							' ) )
+							{
+								$sbytes = intval( $sum->z, 10 );
+							}
+							
+							$fs = new dbIO( 'Filesystem' );
+							$fs->ID = $this->ID;
+							if( $fs->Load() )
+							{
+								$Logger->log( '[SQLWORKGROUPDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
+						
+								$fs->StoredBytes = $sbytes;
+								$fs->Save();
+							}
+						}
+						
 						return 'ok<!--separate-->' . $len . '<!--separate-->' . $f->ID;
 					}
 				}
@@ -695,6 +745,30 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 						}
 					}
 					closedir( $dir );
+					
+					// Update latest StoredBytes for this Filesystem
+					if( $this->ID > 0 && $User->ID > 0 )
+					{
+						$sbytes = 0;
+						if( $sum = $SqlDatabase->FetchObject( '
+							SELECT SUM(u.Filesize) z FROM FSFile u 
+							WHERE u.FilesystemID = \'' . $this->ID . '\'
+						' ) )
+						{
+							$sbytes = intval( $sum->z, 10 );
+						}
+						
+						$fs = new dbIO( 'Filesystem' );
+						$fs->ID = $this->ID;
+						if( $fs->Load() )
+						{
+							$Logger->log( '[SQLWORKGROUPDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
+					
+							$fs->StoredBytes = $sbytes;
+							$fs->Save();
+						}
+					}
+					
 					if( $fcount > 0 )
 					{
 						die( 'ok<!--separate-->' . $fcount );
@@ -708,6 +782,20 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			{
 				if( !$this->ID )
 				{
+					$Logger->log( '
+						SELECT f.* FROM `Filesystem` f
+						WHERE 
+							LOWER(f.Name) = LOWER("' . reset( explode( ':', $args->path ) ) . '") AND
+							(
+								f.UserID=\'' . $User->ID . '\' OR
+								f.GroupID IN (
+									SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
+									WHERE 
+										g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
+										ug.UserID = \'' . $User->ID . '\'
+								)
+							)
+					' );
 					if( $d = $SqlDatabase->FetchObject( '
 						SELECT f.* FROM `Filesystem` f
 						WHERE 
@@ -734,7 +822,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				{
 					$o = new stdClass();
 					$o->Volume = $this->Name . ':';
-					$o->Used = $row->FZ;
+					$o->Used = ( $row->FZ ? $row->FZ : 0 );
 					$o->Filesize = SQLWORKGROUPDRIVE_FILE_LIMIT;
 					die( 'ok<!--separate-->' . json_encode( $o ) );
 				}
@@ -754,6 +842,9 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 						die( 'ok' );
 					case 'rename':
 						ob_clean();
+						
+						$args->newname = $this->safeFilename( $args->newname );
+						
 						// Is it a folder?
 						if( substr( $path, -1, 1 ) == '/' )
 						{
@@ -833,6 +924,8 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 							
 						if( $path )
 						{
+							$path= $this->safeFilename( $path, 'simple' );
+						
 							$f = new DbIO( 'FSFolder' );
 		
 							// Get by path (subfolder)
@@ -910,8 +1003,26 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 						return 'fail';
 					// Move files and folders or a whole volume to another door
 					case 'copy':
+						
+						// Must not break filesize limit!
+						$total = 0;
+						if( $sum = $SqlDatabase->FetchObject( '
+							SELECT SUM(u.Filesize) z FROM FSFile u
+							WHERE FilesystemID = \'' . $this->ID . '\'
+						' ) )
+						{
+							$total = intval( $sum->z, 10 );
+						}
+						if( $total >= SQLWORKGROUPDRIVE_FILE_LIMIT )
+						{
+							return 'fail';
+						}
+						
 						$from = isset( $args->from ) ? $args->from : ( isset( $args->args->from ) ? $args->args->from : false );
 						$to   = isset( $args->to )   ? $args->to   : ( isset( $args->args->to )   ? $args->args->to   : false );
+						
+						$to = $this->safeFilename( $to, 'simple' );
+						
 						if( isset( $from ) && isset( $to ) )
 						{
 							//$Logger->log( 'Trying from ' . $from . ' to ' . $to );
@@ -1112,7 +1223,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 		*/
 		public function putFile( $path, $fileObject )
 		{
-			global $Config, $User, $Logger;
+			global $Config, $SqlDatabase, $User, $Logger;
 		
 			if( $tmp = $fileObject->Door->getTmpFile( $fileObject->Path ) )
 			{
@@ -1147,7 +1258,30 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				$fi->Filesize = filesize( $Config->FCUpload . $fi->DiskFilename );
 			
 				$fi->Save();
-			
+				
+				// Update latest StoredBytes for this Filesystem
+				if( $this->ID > 0 && $User->ID > 0 )
+				{
+					$sbytes = 0;
+					if( $sum = $SqlDatabase->FetchObject( '
+						SELECT SUM(u.Filesize) z FROM FSFile u 
+						WHERE u.FilesystemID = \'' . $this->ID . '\'
+					' ) )
+					{
+						$sbytes = intval( $sum->z, 10 );
+					}
+					
+					$fs = new dbIO( 'Filesystem' );
+					$fs->ID = $this->ID;
+					if( $fs->Load() )
+					{
+						$Logger->log( '[SQLWORKGROUPDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
+				
+						$fs->StoredBytes = $sbytes;
+						$fs->Save();
+					}
+				}
+				
 				return true;
 			}
 		
@@ -1253,7 +1387,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 		*/
 		public function deleteFile( $path, $recursive = false )
 		{
-			global $Config, $User, $Logger;
+			global $Config, $SqlDatabase, $User, $Logger;
 		
 			// If it's a folder
 			if( substr( $path, -1, 1 ) == '/' )
@@ -1265,7 +1399,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			$fi = $this->getFileByPath( $path );
 		
 			$Logger->log( '[SQLWORKGROUPDRIVE] Found deletable file. ' . $fi->ID );
-		
+			
 			$fileExists = false;
 			if( $fi->ID > 0 )
 			{
@@ -1277,6 +1411,29 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				}
 				$Logger->log( '[SQLWORKGROUPDRIVE] Deleting file entry.' );
 				$fi->Delete();
+				
+				// Update latest StoredBytes for this Filesystem
+				if( $this->ID > 0 && $User->ID > 0 )
+				{
+					$sbytes = 0;
+					if( $sum = $SqlDatabase->FetchObject( '
+						SELECT SUM(u.Filesize) z FROM FSFile u 
+						WHERE u.FilesystemID = \'' . $this->ID . '\'
+					' ) )
+					{
+						$sbytes = intval( $sum->z, 10 );
+					}
+					
+					$fs = new dbIO( 'Filesystem' );
+					$fs->ID = $this->ID;
+					if( $fs->Load() )
+					{
+						$Logger->log( '[SQLWORKGROUPDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
+				
+						$fs->StoredBytes = $sbytes;
+						$fs->Save();
+					}
+				}
 			}
 			return $fileExists;
 		}
@@ -1445,7 +1602,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 		// Not to be used outside! Not public!
 		private function _deleteFolder( $fo, $recursive = true )
 		{
-			global $Config, $User, $Logger;
+			global $Config, $SqlDatabase, $User, $Logger;
 		
 			// Also delete all sub folders!
 			if( $recursive )
@@ -1483,6 +1640,30 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			}
 			//$Logger->log( 'Deleting database entry of folder ' . $fo->Name . '/ (' . $fo->ID . ')' );
 			$fo->Delete();
+			
+			// Update latest StoredBytes for this Filesystem
+			if( $this->ID > 0 && $User->ID > 0 )
+			{
+				$sbytes = 0;
+				if( $sum = $SqlDatabase->FetchObject( '
+					SELECT SUM(u.Filesize) z FROM FSFile u 
+					WHERE u.FilesystemID = \'' . $this->ID . '\'
+				' ) )
+				{
+					$sbytes = intval( $sum->z, 10 );
+				}
+				
+				$fs = new dbIO( 'Filesystem' );
+				$fs->ID = $this->ID;
+				if( $fs->Load() )
+				{
+					$Logger->log( '[SQLWORKGROUPDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
+			
+					$fs->StoredBytes = $sbytes;
+					$fs->Save();
+				}
+			}
+			
 			return true;
 		}
 	}

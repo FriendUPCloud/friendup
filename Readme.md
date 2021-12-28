@@ -1,5 +1,5 @@
-Friend OS v1.2.4, "Hydrogen"
-============================
+Friend OS v1.2.8, "Hydrogen 5"
+==============================
 
 *NB*: For extended functionality and related Friend projects such as the Android app refer [here](https://github.com/FriendSoftwareLabs).
 
@@ -24,6 +24,8 @@ In the Future, Friend OS will be to the cloud users what Linux is for machines.
 
 Getting started
 ===============
+
+Friend OS can be tested on https://friendsky.cloud - signup is free.
 
 Please follow this guide to install Friend OS:
 

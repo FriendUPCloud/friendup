@@ -45,7 +45,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 								   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 		
 		char buffer[ 256 ];
-		snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
+		snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
 		HttpAddTextContent( response, buffer );
 		
 		goto error;
@@ -69,7 +69,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 								   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 		
 		char buffer[ 256 ];
-		snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
+		snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
 		HttpAddTextContent( response, buffer );
 		
 		*result = 200;
@@ -109,7 +109,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 			char buffer[ 512 ];
 			char buffer1[ 256 ];
 			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "path, sessionid" );
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, buffer );
 		}
 		else		// sessionid or path = NULL
@@ -137,7 +137,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 				lpath = NULL;
 			}
 			
-			actDev = GetRootDeviceByName( loggedSession->us_User, devname );
+			actDev = GetRootDeviceByName( loggedSession->us_User, loggedSession, devname );
 			
 			// TODO: Custom stuff (should probably be in the actual FS)
 			// TODO: devname is 0 in length. Why strlen it?
@@ -177,12 +177,13 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 					if( l->sl_Sentinel != NULL &&  loggedSession->us_User == l->sl_Sentinel->s_User && mode[0] == 'w' )
 					{
 						char buffer[ 256 ];
-						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SENTINEL_USER_REQUIRED] , DICT_SENTINEL_USER_REQUIRED );
+						snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_SENTINEL_USER_REQUIRED] , DICT_SENTINEL_USER_REQUIRED );
 						HttpAddTextContent( response, buffer );
 					}
 					else
 					{
-						actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+						//actDev->f_SessionIDPTR = loggedSession->us_SessionID;
+						FileFillSessionID( actDev, loggedSession );
 						
 						File *fp = (File *)actFS->FileOpen( actDev, path, mode );
 					
@@ -264,7 +265,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 							char buffer[ 512 ];
 							char buffer1[ 256 ];
 							snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_CANNOT_OPEN_FILE], path );
-							snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_CANNOT_OPEN_FILE );
+							snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_CANNOT_OPEN_FILE );
 							HttpAddTextContent( response, buffer );
 						}
 					
@@ -276,7 +277,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 					char buffer[ 512 ];
 					char buffer1[ 256 ];
 					snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "mode" );
-					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+					snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 					HttpAddTextContent( response, buffer );
 				}
 			}
@@ -288,7 +289,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 				char buffer[ 512 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], devname );
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
 		}
@@ -347,7 +348,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 				char buffer[ 512 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "pointer" );
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
 		}	// sessionid or path = NULL
@@ -468,17 +469,6 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 				HttpAddTextContent( response, sizec );
 			}
 		}
-		/*
-		 * if( error != 0 )
-		 * {
-		 *	//HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"Pointer parameter is missing\"}" );
-		 *	char *endbuf;
-		 *	if( ( endbuf =  FCalloc( 4, sizeof(char) ) ) != NULL )
-		 *	{
-		 *		endbuf[ 0  ] =  endbuf[ 1 ] = endbuf[ 2 ] = -1;
-		 *		HttpSetContent( response, endbuf, 3 );
-	}
-	}*/
 	}
 	
 	/// @cond WEB_CALL_DOCUMENTATION
@@ -579,7 +569,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 			char buffer[ 512 ];
 			char buffer1[ 256 ];
 			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "pointer" );
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, buffer );
 		}
 	}
@@ -630,7 +620,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 		response = HttpNewSimple( HTTP_404_NOT_FOUND,  tags );
 		
 		char buffer[ 256 ];
-		snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FUNCTION_NOT_FOUND] , DICT_FUNCTION_NOT_FOUND );
+		snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_FUNCTION_NOT_FOUND] , DICT_FUNCTION_NOT_FOUND );
 		HttpAddTextContent( response, buffer );
 		*result = 404;
 	

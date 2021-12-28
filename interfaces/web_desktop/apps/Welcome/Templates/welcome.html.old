@@ -1,0 +1,293 @@
+<div class="ContentFull ScrollArea PaddingSize">
+	<div{nevershowed} class="NeverShow MousePointer" onclick="nevershow()">{nevershowagain}</div>
+	<div class="Stage" style="background: url('Progdir:christmas.jpg')">
+
+	</div>
+	
+	<div class="TheTabs">
+		<div class="TheTab Active MousePointer">
+			<span>Welcome</span>
+			<div class="ThePage PaddingMinor MouseDefault">
+				<div class="TheColumn">
+					<p>
+						<iframe width="100%" height="240" style="border-radius: 3px" src="https://www.youtube.com/embed/HCuPOp1dx9E" frameborder="0" gesture="media" allow="encrypted-media" allowfullscreen></iframe>
+					</p>
+					<p>
+						Welcome to the Friend Workspace! This is your very first 
+						virtual cloud computer on the internet. Let's get you 
+						started and introduce you to all of the opportunities and
+						functionalities that are available in Friend. We would urge
+						you to first watch the video above. Then you can explore
+						the other tabs.
+					</p>
+				</div>
+				<div class="TheColumn">
+					<h2>
+						Access our channels to interact with the community
+					</h2>
+					<div class="AppButtonBar">
+						<div class="AppButton MousePointer" onclick="launch('FriendNexus')">
+							<div class="AppButtonImage Community">
+								<img src="/webclient/gfx/friend-nexus.png" width="200" height="auto"/>
+							</div>
+							<div class="AppButtonLabel">
+								Friend Nexus
+							</div>
+						</div>
+						
+						<div class="AppButton MousePointer" onclick="launch('FriendChat')">
+							<div class="AppButtonImage Chat">
+								<img src="System:apps/FriendChat/icon.png"/>
+							</div>
+							<div class="AppButtonLabel">
+								Friend Chat
+							</div>
+						</div>
+					</div>
+					<h2>
+						Try our productivity applications!
+					</h2>
+					<div class="AppButtonBar">
+						<div class="AppButton MousePointer" onclick="launch('BassoonTracker')">
+							<div class="AppButtonImage Chat">
+								<img src="/webclient/gfx/bassoon.png" width="200"/>
+							</div>
+							<div class="AppButtonLabel">
+								Bassoon Tracker
+							</div>
+						</div>
+						<div class="AppButton MousePointer" onclick="launch('Photopea')">
+						<div class="AppButtonImage" style="background-image: url('/system.library/module/?module=system&command=getapplicationpreview&application=Photopea&authid={authid}'); background-position: center center; background-size: contain; background-repeat: no-repeat">
+							&nbsp;
+						</div>
+						<div class="AppButtonLabel">
+							Photopea
+						</div>
+					</div>
+					</div>
+					<h2>
+						Follow us!
+					</h2>
+					<div class="Social">
+						<a href="https://www.friend-nexus.com/" target="_blank"><img src="/webclient/gfx/friend-nexus.png" width="52" height="auto"/></a>
+						<a href="https://www.facebook.com/friendupcloud/" target="_blank"><img src="Progdir:Gfx/facebook.png"/></a>
+						<a href="https://twitter.com/friendupcloud" target="_blank"><img src="Progdir:Gfx/twitter.png"/></a>
+						<a href="https://www.youtube.com/channel/UCi_8eeLQt9DKJC0xZQsiIDg/videos?shelf_id=1&view=0&sort=dd" target="_blank"><img src="Progdir:Gfx/youtube.png"/></a>
+						<a href="https://www.linkedin.com/company/friend-software-labs-as" target="_blank"><img src="Progdir:Gfx/linkedin.png"/></a>
+						<br /><br /><a href="https://friendos.com/" target="_blank">Visit our website!</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="TheTab MousePointer">
+			<span>For business</span>
+			<div class="ThePage PaddingMinor MouseDefault">
+				<div class="TheColumn">
+					<h1>
+						Friendly environment for business
+					</h1>
+					<p>
+						If you have a business, or are part of a company, Friend offers a plethora of possibilities. The Friend Unifying Platform is a multi-user meta operating system, offering a device agnostic computing environment accessible via the Friend Workspace with an HTML5 and Javascript based user interface, where file management and applications can be run.​
+					</p>
+					<p>
+						<img src="Progdir:Gfx/business.jpg" class="ColumnImage" border="0" alt="Business user"/>
+					</p>
+					<p>
+						Friend is filled with features and functionality for business users. It offers a truly interactive cloud environment where you can mix and match Windows applications, legacy applications and web applications and distribute access to large groups of users across all devices, from a smartphone to a high end workstation.
+					</p>
+				</div>
+				<div class="TheColumn">
+					<h2>
+						Integration and automation
+					</h2>
+					<p>
+						Friend offers new and innovative ways to support your business as well as benefiting your customers in the process. Friend allows for seamless integration, automation and unique work flow design giving true meaning to digital transformation.
+					</p>
+					<p>
+						Please contact our business development function (insert contact link) to start a conversation on how to accelerate your digital transformation.
+					</p>
+					<h2>
+						Years in development
+					</h2>
+					<p>
+						We have spent many years developing Friend to be a dynamic and flexible user environment where you can integrate with existing products and solutions. This allows you to customize the Friend environment without losing system coherency - factors like compatability, support and administration stays the same.​​
+					</p>
+					<h2>
+						Commercial model
+					</h2>
+					<p>
+						Friend is priced per user per month, and includes technical
+						support built into the license.
+					</p>
+					<h2>
+						Test environments
+					</h2>
+					<p>
+						Please contact us at <a href="mailto:support@friendup.cloud">support@friendup.cloud</a>,
+						and we will set up your own test environment with all the bells and whistles of the
+						Friend platform.
+					</p>
+				</div>
+			</div>
+		</div>
+		<div class="TheTab MousePointer">
+			<span>Games and entertainment</span>
+			<div class="ThePage PaddingMinor MouseDefault">
+				<h1>
+					What if I just want to have fun?
+				</h1>
+				<p>
+					Friend has a quite a few games and fun apps you can play with
+					for your own leisure. Here is a selection. Just click either
+					of the icons below to start the game or app.
+				</p>
+				<div class="Fun AppButtonBar">
+					<div class="AppButton MousePointer" onclick="launch('Swooop')">
+						<div class="AppButtonImage" style="background-image: url('/system.library/module/?module=system&command=getapplicationpreview&application=Swooop&authid={authid}'); background-position: center center; background-size: contain; background-repeat: no-repeat">
+							&nbsp;
+						</div>
+						<div class="AppButtonLabel">
+							Swooop
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- div class="TheTab MousePointer">
+			<span>10 things to do in Friend</span>
+			<div class="ThePage PaddingMinor MouseDefault">
+				<div class="TheColumn">
+					<h1>
+						Top 10 things to do in Friend
+					</h1>
+					<p>
+						FriendUP is a fresh system, but that doesn't mean that there's nothing to do! Friend has already integrated a range of applications in the Workspace, ready for you to try. 
+					</p>
+					<p>
+						<strong>Here are the current top 10 things to do in FriendUP.</strong>
+					</p>
+					<p class="SideImage">
+						<span class="MousePointer LaunchIt" onclick="launch('FriendChat')">Launch it!</span>
+						<img src="Progdir:Gfx/friendchat_mini.jpg"/><br/>
+						Live chat with smart video layout and easy to use contact list.
+					</p>
+					<h2>
+						1. Chat with your friends.
+					</h2>
+					<p>
+						Friend Chat is the flagship application in Friend. It is feature rich and easy to use,
+						configurable and highly addictive once you start using it. Set up your own chat rooms, instant message with your friends or meet them face to face in video conferences. Or do audio only.
+					</p>
+					<p>
+						Once you advance, consider discovering internet relay chat rooms or add your Slack.
+					</p>
+					<p>
+						Read more about Friend Chat here.
+					</p>
+					<h2>
+						2. Use our cloud storage
+					</h2>
+					<p>
+						Friend comes complete with several useful file system drivers. This allows you with, just a couple of clicks, to connect to cloud storage disks on the web. But perhaps you would be content with our ultra fast native file systems.
+					</p>
+					<p>
+						You may wish to access your drives from your native OS. You can do this by mounting them through WebDAV.
+					</p>
+					<p class="SideImage">
+						<span class="MousePointer LaunchIt" onclick="launch('Author')">Launch it!</span>
+						<img src="Progdir:Gfx/author.jpg"/><br/>
+						Write a document or two with Author
+					</p>
+					<h2>
+						3. Write some texts in Author.
+					</h2>
+					<p>
+						While it may not be the top text editor in existence, it gets the job done. And it is fully integrated with your Friend disk drives. It shows what a Friend app can do with very little work by any entry level developer.
+					</p>
+					<h2>
+						4. Program your own app
+					</h2>
+					<p>
+						Know how to code? By reading through our developer's manual, you will find that making your own Friend app is easier than you may think.
+					</p>
+					<p>
+						Develop locally with your favorite tools. Copy your files with drag and drop directly from your local desktop into your Home drive in Friend. Or save directly through WebDAV.
+					</p>
+					<p>
+						If you like, you may write your app online with Friend Create. It's available right in the Workspace and supports many features found in IDEs.
+					</p>
+					<p class="SideImage">
+						<span class="MousePointer LaunchIt" onclick="launch('CrossWordsArena')">Launch it!</span>
+						<img src="Progdir:Gfx/cross.jpg"/><br/>
+						CrossWords Arena is an addictive game for mobile and desktop
+					</p>
+					<h2>
+						5. Play some games
+					</h2>
+					<p>
+						Friend comes bundled with quite a few games. These games are made using web technologies, often called HTML5. This technology is today comparable to the ones you use on Windows or Mac, and many say that it is a technology that will be used in most future games.
+					</p>
+					<h2>
+						6. Make art or edit some images
+					</h2>
+					<p>
+						Friend is integrated with Photopea. This fully featured paint and image manipulation program is fully based on web technologies and even challenges Photoshop in many areas.
+					</p>
+					<h2>
+						7. Or make some some nice SVGs
+					</h2>
+					<p>
+						SVG Edit is great for making vector graphics. And it is integrated with Friend too. Try it! And then save your artwork on your Friend drives. This way you can load them up again when you feel like another session.
+					</p>
+					<h2>
+						8. Manage your bookmarks in Friend
+					</h2>
+					<p>
+						Organise your web links in folders. Friend can take care of your bookmarks and serve them up in new tabs.
+					</p>
+					<h2>
+						9. Access the experience on your phone or tablet
+					</h2>
+					<p>
+						Friend is adapted for mobile devices. It even offers a downloadable (beta) Android app. This way you can access your apps, games, files and contacts on the move.
+					</p>
+					<p class="SideImage">
+						<span class="MousePointer LaunchIt"><a href="mailto:support@friendup.cloud">Get Liberator!</a></span>
+						<img src="Progdir:Gfx/thunder.jpg"/><br/>
+						Ask our support team for Liberator access to run Windows apps
+					</p>
+					<h2>
+						10. Use windows apps in Friend
+					</h2>
+					<p>
+						Are the web apps not enough for you? Why not try some of the demo Windows apps available right inside of the Friend Workspace. The possibilities are endless. See for yourself.
+					</p>
+					<hr/>
+					<h2>
+						What's next?
+					</h2>
+					<p>
+						There is lots more to see and do. Did you know that Friend is open source? Why don't you head over to GitHub and download the source code?
+					</p>
+					<p>
+						And then there is the community. The Friend Community app takes you right to it. It allows you to form groups and host events. It is our very own social media and collaboration web app, and it is integrated with Friend Chat, so that you can reach your community contacts live. It even works in our Android app.
+					</p>
+					<p>
+						And if you are a developer, check out our dev forum. There is already a range of coders there to interact with.
+					</p>
+					<h2>
+						Friend is here to stay
+					</h2>
+					<p>
+						Friend is a long term project, and we have lots planned for the future. Register as a demo user and you will automatically receive our newsletter. Stay in touch! There is a lot more coming.
+					</p>
+				</div>
+				<div class="TheColumn">
+				</div>
+			</div>
+		</div -->
+	</div>
+</div>
+<link rel="stylesheet" href="Progdir:Css/main.css"/>
+<script src="Progdir:Scripts/welcome.js"></script>
+

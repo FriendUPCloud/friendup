@@ -26,6 +26,7 @@ if( !class_exists( 'Door' ) )
 		var $_authcontext = null; // authentication key (e.g. sessionid)
 		var $_authdata = null; // authentication data (e.g. a sessionid hash)
 		var $_user = null; // override user
+		var $_userSession = null;
 	
 		// Construct a Door object
 		function __construct( $path = false, $authcontext = false, $authdata = false )
@@ -153,10 +154,39 @@ if( !class_exists( 'Door' ) )
 			return false;
 		}
 	
+		// Get relevant user's session
+		function getUserSession()
+		{
+			global $args, $User, $Logger, $SqlDatabase, $UserSession;
+			
+			if( !isset( $User->ID ) && !isset( $this->_user ) ) 
+			{
+				return false;
+			}
+			
+			$activeUserSession = isset( $this->_usersession ) ? $this->_usersession : $UserSession;
+			
+			// Check for server token and pick session from there
+			if( isset( $this->_user ) && isset( $this->_authcontext ) && $this->_authcontext == 'servertoken' )
+			{
+				if( isset( $this->_authdata ) )
+				{
+					$Sess = new dbIO( 'FUserSession' );
+					$Sess->UserID = $this->_user->ID;
+					if( $Sess->Load() && $Sess->UserID = $this->_user->ID )
+					{
+						$activeUserSession = $Sess;
+					}
+				}
+			}
+			
+			return $activeUserSession;
+		}
+	
 		// Gets the correct identifier to extract a filesystem
 		function getQuery( $path = false )
 		{
-			global $args, $User, $Logger, $SqlDatabase;
+			global $args, $User, $Logger, $SqlDatabase, $UserSession;
 			if( !isset( $User->ID ) && !isset( $this->_user ) ) 
 			{
 				return false;
@@ -164,6 +194,7 @@ if( !class_exists( 'Door' ) )
 		
 			// For whom are we calling?
 			$activeUser = isset( $this->_user ) ? $this->_user : $User;
+			$activeUserSession = $this->getUserSession();
 		
 			$identifier = false;
 		
@@ -220,16 +251,17 @@ if( !class_exists( 'Door' ) )
 				}
 				if( $identifier )
 				{
+					// TODO: Look at this had to add haccypatchy method to check for $User->ID first in order to view other users Filesystem as Admin server side ...
 					return '
 					SELECT * FROM `Filesystem` f 
 					WHERE 
 						(
-							f.UserID=\'' . $activeUser->ID . '\' OR
+							f.UserID=\'' . ( isset( $activeUser->ID ) ? $activeUser->ID : $activeUserSession->UserID ) . '\' OR
 							f.GroupID IN (
 								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
 								WHERE 
 									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-									ug.UserID = \'' . $activeUser->ID . '\'
+									ug.UserID = \'' . ( isset( $activeUser->ID ) ? $activeUser->ID : $activeUserSession->UserID ) . '\'
 							)
 						)
 						AND ' . $identifier . ' LIMIT 1';
@@ -240,16 +272,17 @@ if( !class_exists( 'Door' ) )
 			{
 				$op = explode( ':', $path );
 				$name = mysqli_real_escape_string( $SqlDatabase->_link, reset( $op ) );
+				// TODO: Look at this had to add haccypatchy method to check for $User->ID first in order to view other users Filesystem as Admin server side ...
 				return '
 					SELECT * FROM `Filesystem` f 
 					WHERE 
 						(
-							f.UserID=\'' . $activeUser->ID . '\' OR
+							f.UserID=\'' . ( isset( $activeUser->ID ) ? $activeUser->ID :$activeUserSession->UserID ) . '\' OR
 							f.GroupID IN (
 								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
 								WHERE 
 									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-									ug.UserID = \'' . $activeUser->ID . '\'
+									ug.UserID = \'' . ( isset( $activeUser->ID ) ? $activeUser->ID : $activeUserSession->UserID ) . '\'
 							)
 						)
 						AND
@@ -262,9 +295,10 @@ if( !class_exists( 'Door' ) )
 	
 		function dosQuery( $query )
 		{
-			global $Config, $User, $SqlDatabase, $Logger;
+			global $Config, $User, $SqlDatabase, $Logger, $UserSession;
 		
 			$activeUser = isset( $this->_user ) ? $this->user : $User;
+			$activeUserSession = $this->getUserSession();
 		
 			// Support auth context
 			if( isset( $this->_authdata ) )
@@ -283,11 +317,11 @@ if( !class_exists( 'Door' ) )
 			{
 				if( !strstr( $query, '?' ) )
 				{
-					$query .= '?sessionid=' . $activeUser->SessionID;
+					$query .= '?sessionid=' . $activeUserSession->SessionID;
 				}
 				else
 				{
-					$query .= '&sessionid=' . $activeUser->SessionID;
+					$query .= '&sessionid=' . $activeUserSession->SessionID;
 				}
 			}
 		
@@ -350,7 +384,7 @@ if( !class_exists( 'Door' ) )
 		
 			$debug = [];
 		
-			$Logger->log( 'Starting to sync here: ' . $pathFrom . ' to ' . $pathTo );
+			//$Logger->log( 'Starting to sync here: ' . $pathFrom . ' to ' . $pathTo );
 		
 			//$Logger->log( 'From ' . $pathFrom );
 			//$Logger->log( 'To   ' . $pathTo );
@@ -444,7 +478,7 @@ if( !class_exists( 'Door' ) )
 					$v->Destination = ( trim( $pathTo ) . trim( $v->Filename ) . ( $v->Type == 'Directory' ? '/' : '' ) );
 					if( !trim( $v->Destination ) )
 					{
-						$Logger->log( 'No desination in object!' ); //, print_r( $v, 1 ) );
+						//$Logger->log( 'No desination in object!' ); //, print_r( $v, 1 ) );
 						//die();
 					}
 			
@@ -596,7 +630,7 @@ if( !class_exists( 'Door' ) )
 						}
 						else if( !trim( $des->Path ) )
 						{
-							$Logger->log( $des->Filename . ' has no path. Skipping... ' . json_encode( $des ) );
+							//$Logger->log( $des->Filename . ' has no path. Skipping... ' . json_encode( $des ) );
 							continue;
 						}
 					
@@ -651,9 +685,10 @@ if( !class_exists( 'Door' ) )
 	
 		function deleteFile( $delpath )
 		{
-			global $User, $Logger;
+			global $User, $Logger, $UserSession;
 		
 			$activeUser = isset( $this->_user ) ? $this->_user : $User;
+			$activeUserSession = $this->getUserSession();
 		
 			// 1. Get the filesystem objects
 			$ph = explode( ':', $delpath );
@@ -666,7 +701,7 @@ if( !class_exists( 'Door' ) )
 			}
 		
 			$fs = new dbIO( 'Filesystem' );
-			$fs->UserID = $activeUser->ID;
+			$fs->UserID = $activeUserSession->UserID;
 			$fs->Name   = $ph;
 			$fs->Load();
 		
@@ -702,7 +737,7 @@ if( !class_exists( 'Door' ) )
 						return true;
 					}
 				
-					$Logger->log( 'couldn\'t deleteFolder... ' . $delpath );
+					//$Logger->log( 'couldn\'t deleteFolder... ' . $delpath );
 				
 					return false;
 				}
@@ -727,9 +762,10 @@ if( !class_exists( 'Door' ) )
 	
 		function copyFile( $pathFrom, $pathTo )
 		{
-			global $User, $Logger;
+			global $User, $Logger, $UserSession;
 		
 			$activeUser = isset( $this->_user ) ? $this->_user : $User;
+			$activeUserSession = $this->getUserSession();
 		
 			// 1. Get the filesystem objects
 			$from = explode( ':', $pathFrom ); $from = $from[0];
@@ -750,7 +786,7 @@ if( !class_exists( 'Door' ) )
 			else
 			{
 				$fsFrom = new dbIO( 'Filesystem' );
-				$fsFrom->UserID = $activeUser->ID;
+				$fsFrom->UserID = $activeUserSession->UserID;
 				$fsFrom->Name   = $from;
 				$fsFrom->Load();
 				$this->cacheFrom = $fsFrom;
@@ -762,7 +798,7 @@ if( !class_exists( 'Door' ) )
 			else
 			{
 				$fsTo = new dbIO( 'Filesystem' ); 
-				$fsTo->UserID = $activeUser->ID;
+				$fsTo->UserID = $activeUserSession->UserID;
 				$fsTo->Name   = $to;
 				$fsTo->Load();
 				$this->cacheTo = $fsTo;
@@ -825,7 +861,7 @@ if( !class_exists( 'Door' ) )
 						{
 							return true;
 						}
-						$Logger->log('Couldn\'t create folder (createFolder)... ' . $folderName . ' :: ' . $tpath);
+						//$Logger->log('Couldn\'t create folder (createFolder)... ' . $folderName . ' :: ' . $tpath);
 						return false;
 					}
 				}
@@ -844,7 +880,7 @@ if( !class_exists( 'Door' ) )
 						//$Logger->log('couldn\'t putFile... ' . $pathTo . ' :: ');
 					}
 				}
-				$Logger->log('how did we even get here... ' . $pathFrom . ' :: ' . $pathTo);
+				//$Logger->log('how did we even get here... ' . $pathFrom . ' :: ' . $pathTo);
 				return false;
 			}
 		}

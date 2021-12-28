@@ -1,90 +1,48 @@
+project(lws-minimal-secure-streams C)
 cmake_minimum_required(VERSION 2.8)
+find_package(libwebsockets CONFIG REQUIRED)
+list(APPEND CMAKE_MODULE_PATH ${LWS_CMAKE_DIR})
 include(CheckCSourceCompiles)
+include(LwsCheckRequirements)
 
 set(SAMP lws-minimal-secure-streams)
-
-# If we are being built as part of lws, confirm current build config supports
-# reqconfig, else skip building ourselves.
-#
-# If we are being built externally, confirm installed lws was configured to
-# support reqconfig, else error out with a helpful message about the problem.
-#
-MACRO(require_lws_config reqconfig _val result)
-
-	if (DEFINED ${reqconfig})
-	if (${reqconfig})
-		set (rq 1)
-	else()
-		set (rq 0)
-	endif()
-	else()
-		set(rq 0)
-	endif()
-
-	if (${_val} EQUAL ${rq})
-		set(SAME 1)
-	else()
-		set(SAME 0)
-	endif()
-
-	if (LWS_WITH_MINIMAL_EXAMPLES AND NOT ${SAME})
-		if (${_val})
-			message("${SAMP}: skipping as lws being built without ${reqconfig}")
-		else()
-			message("${SAMP}: skipping as lws built with ${reqconfig}")
-		endif()
-		set(${result} 0)
-	else()
-		if (LWS_WITH_MINIMAL_EXAMPLES)
-			set(MET ${SAME})
-		else()
-			CHECK_C_SOURCE_COMPILES("#include <libwebsockets.h>\nint main(void) {\n#if defined(${reqconfig})\n return 0;\n#else\n fail;\n#endif\n return 0;\n}\n" HAS_${reqconfig})
-			if (NOT DEFINED HAS_${reqconfig} OR NOT HAS_${reqconfig})
-				set(HAS_${reqconfig} 0)
-			else()
-				set(HAS_${reqconfig} 1)
-			endif()
-			if ((HAS_${reqconfig} AND ${_val}) OR (NOT HAS_${reqconfig} AND NOT ${_val}))
-				set(MET 1)
-			else()
-				set(MET 0)
-			endif()
-		endif()
-		if (NOT MET)
-			if (${_val})
-				message(FATAL_ERROR "This project requires lws must have been configured with ${reqconfig}")
-			else()
-				message(FATAL_ERROR "Lws configuration of ${reqconfig} is incompatible with this project")
-			endif()
-		endif()
-	endif()
-ENDMACRO()
-
 
 set(requirements 1)
 require_lws_config(LWS_ROLE_H1 1 requirements)
 require_lws_config(LWS_WITHOUT_CLIENT 0 requirements)
 require_lws_config(LWS_WITH_SECURE_STREAMS 1 requirements)
+require_lws_config(LWS_WITH_SECURE_STREAMS_STATIC_POLICY_ONLY 0 requirements)
+require_lws_config(LWS_WITH_SYS_STATE 1 requirements)
 
 if (requirements)
 	add_executable(${SAMP} minimal-secure-streams.c)
 
-	if (websockets_shared)
-		target_link_libraries(${SAMP} websockets_shared)
-		add_dependencies(${SAMP} websockets_shared)
-	else()
-		target_link_libraries(${SAMP} websockets)
+	if (LWS_CTEST_INTERNET_AVAILABLE)
+		add_test(NAME ss-warmcat COMMAND lws-minimal-secure-streams)
+		set_tests_properties(ss-warmcat
+				     PROPERTIES
+				     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/minimal-examples/secure-streams/minimal-secure-streams
+				     TIMEOUT 20)
 	endif()
 
-	if (LWS_WITH_SECURE_STREAMS_PROXY_API)
+	if (websockets_shared)
+		target_link_libraries(${SAMP} websockets_shared ${LIBWEBSOCKETS_DEP_LIBS})
+		add_dependencies(${SAMP} websockets_shared)
+	else()
+		target_link_libraries(${SAMP} websockets ${LIBWEBSOCKETS_DEP_LIBS})
+	endif()
+
+	CHECK_C_SOURCE_COMPILES("#include <libwebsockets.h>\nint main(void) {\ni#if defined(LWS_WITH_SECURE_STREAMS_PROXY_API)\n return 0;\n #else\n fail\n #endif\n return 0;\n}\n" HAS_LWS_WITH_SECURE_STREAMS_PROXY_API)
+
+	if (HAS_LWS_WITH_SECURE_STREAMS_PROXY_API OR LWS_WITH_SECURE_STREAMS_PROXY_API)
 		add_compile_options(-DLWS_SS_USE_SSPC)
 
 		add_executable(${SAMP}-client minimal-secure-streams.c)
 		if (websockets_shared)
-			target_link_libraries(${SAMP}-client websockets_shared)
+			target_link_libraries(${SAMP}-client websockets_shared ${LIBWEBSOCKETS_DEP_LIBS})
 			add_dependencies(${SAMP}-client websockets_shared)
 		else()
-			target_link_libraries(${SAMP}-client websockets)
+			target_link_libraries(${SAMP}-client websockets ${LIBWEBSOCKETS_DEP_LIBS})
 		endif()
 	endif()
 

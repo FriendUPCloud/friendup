@@ -10,7 +10,7 @@
 *                                                                              *
 *****************************************************************************©*/
 
-// /module/module=system&sessionid=378953:
+// /module/module=system&sessionid=378953;
 // 	command  = permissions
 // 	type     = read
 // 	context  = application

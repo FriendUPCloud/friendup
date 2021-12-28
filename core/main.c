@@ -27,8 +27,6 @@
 #include "core/friendcore_manager.h"
 #include "network/uri.h"
 
-#include <class/phpproxyclass.h>
-
 #include <system/systembase.h>
 #include <application/applicationlibrary.h>
 #include <db/sqllib.h>
@@ -251,12 +249,10 @@ int main( int argc, char *argv[])
 // Function which give us possibility to store logs even in crash handler
 //
 
-void cfclog(int fd, const char *fmt, ...)
+void cfclog(int fd, char *format, char *buf, const char *fmt, ...)
 {
 	//int fd;
 	//pid_t pid;
-	char format[BUF_SIZE];
-	char buf[BUF_SIZE];
 	int len;
 
 	va_list ap;
@@ -379,29 +375,10 @@ static void crash_handler(int sig __attribute__((unused)))
 #else
 	if( ( fd = open( CRASH_LOG_FILENAME, O_WRONLY | O_APPEND | O_CREAT, 0600) ) >= 0 )
 	{
-		cfclog( fd, "\n************ CRASH INFO ************\n");
-#ifdef APPVERSION
-		cfclog( fd, "APPVERSION %s\n", APPVERSION);
-#else
-		cfclog( fd, "no APPVERSION?\n");
-#endif
-#ifdef APPGITVERSION
-		cfclog( fd, "APPGITVERSION %s\n", APPGITVERSION);
-#else
-		cfclog( fd, "no APPGITVERSION?\n");
-#endif
-
-#ifdef __GNU_LIBRARY__
-		cfclog( fd, "glibc %d %d.%d\n", __GNU_LIBRARY__, __GLIBC__, __GLIBC_MINOR__);
-#else
-		cfclog( fd, "non-glibc system\n");
-#endif
-
-#ifdef __GNUC__
-		cfclog( fd, "gcc %d.%d.%d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
-#else
-		cfclog( fd, "non-gcc compiler\n");
-#endif
+		char format[BUF_SIZE];
+		char buf[BUF_SIZE];
+	
+		cfclog( fd, format, buf, "\n************ CRASH INFO ************\n");
 
 		int i, trace_size = 0;
 		//char **messages = (char **)NULL;
@@ -418,7 +395,7 @@ static void crash_handler(int sig __attribute__((unused)))
 		for (i = 0; i < trace_size; ++i)
 		{
 			//cfclog( "> %s\n", messages[i]);
-			cfclog( fd, "%s %p", _program_name, stackTraces[i] );
+			cfclog( fd, format, buf, "%s %p", _program_name, stackTraces[i] );
 			//safe_snprintf( buffer, 512, "%.256s %p", _program_name, stackTraces[i]);
 			//cfclog( fd, "> %s\n", buffer );
 			/*
@@ -429,16 +406,16 @@ static void crash_handler(int sig __attribute__((unused)))
 			*/
 		}
 	
-		cfclog( fd, "************ Do this calls on system to get line numbers ************\n");
+		cfclog( fd, format, buf, "************ Do this calls on system to get line numbers ************\n");
 		for (i = 0; i < trace_size; ++i)
 		{
 			safe_snprintf( buffer, 512, "addr2line -f -p -e %.256s %p", _program_name, stackTraces[i] );
-			cfclog( fd, "%s\n", buffer );
+			cfclog( fd, format, buf, "%s\n", buffer );
 		}
-		cfclog( fd, "*********************************************************************\n");
+		cfclog( fd, format, buf, "*********************************************************************\n");
 	
 		//if (messages) { free(messages); }
-		cfclog( fd, "************ CRASH INFO ************\n");
+		cfclog( fd, format, buf, "************ CRASH INFO ************\n");
 /*
 	printf("\n\n"
 			"#######################################################\n"
@@ -447,6 +424,29 @@ static void crash_handler(int sig __attribute__((unused)))
 			"#######################################################\n"
 			"\n\n", CRASH_LOG_FILENAME );
 	*/
+#ifdef APPVERSION
+		cfclog( fd, format, buf, "APPVERSION %s\n", APPVERSION);
+#else
+		cfclog( fd, format, buf, "no APPVERSION?\n");
+#endif
+#ifdef APPGITVERSION
+		cfclog( fd, format, buf, "APPGITVERSION %s\n", APPGITVERSION);
+#else
+		cfclog( fd, format, buf, "no APPGITVERSION?\n");
+#endif
+
+#ifdef __GNU_LIBRARY__
+		cfclog( fd, format, buf, "glibc %d %d.%d\n", __GNU_LIBRARY__, __GLIBC__, __GLIBC_MINOR__);
+#else
+		cfclog( fd, format, buf, "non-glibc system\n");
+#endif
+
+#ifdef __GNUC__
+		cfclog( fd, format, buf, "gcc %d.%d.%d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+#else
+		cfclog( fd, format, buf, "non-gcc compiler\n");
+#endif
+
 		close( fd );
 	}
 #endif

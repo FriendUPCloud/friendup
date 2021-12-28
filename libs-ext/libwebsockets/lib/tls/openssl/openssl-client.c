@@ -21,6 +21,12 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
+
+#include "lws_config.h"
+#ifdef LWS_HAVE_X509_VERIFY_PARAM_set1_host
+/* Before glibc 2.10, strnlen required _GNU_SOURCE */
+#define _GNU_SOURCE
+#endif
 #include <string.h>
 
 #include "private-lib-core.h"
@@ -100,7 +106,7 @@ OpenSSL_client_verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx)
 		return 0;
 	}
 
-	n = lws_get_context_protocol(wsi->context, 0).callback(wsi,
+	n = lws_get_context_protocol(wsi->a.context, 0).callback(wsi,
 			LWS_CALLBACK_OPENSSL_PERFORM_SERVER_CERT_VERIFICATION,
 			x509_ctx, ssl, preverify_ok);
 
@@ -138,7 +144,7 @@ lws_ssl_client_bio_create(struct lws *wsi)
 #if defined(LWS_HAVE_SSL_set_alpn_protos) && \
     defined(LWS_HAVE_SSL_get0_alpn_selected)
 	uint8_t openssl_alpn[40];
-	const char *alpn_comma = wsi->context->tls.alpn_default;
+	const char *alpn_comma = wsi->a.context->tls.alpn_default;
 	int n;
 #endif
 
@@ -173,7 +179,7 @@ lws_ssl_client_bio_create(struct lws *wsi)
 		p++;
 	}
 
-	wsi->tls.ssl = SSL_new(wsi->vhost->tls.ssl_client_ctx);
+	wsi->tls.ssl = SSL_new(wsi->a.vhost->tls.ssl_client_ctx);
 	if (!wsi->tls.ssl) {
 		lwsl_err("SSL_new failed: %s\n",
 		         ERR_error_string(lws_ssl_get_error(wsi, 0), NULL));
@@ -182,23 +188,25 @@ lws_ssl_client_bio_create(struct lws *wsi)
 	}
 
 #if defined (LWS_HAVE_SSL_SET_INFO_CALLBACK)
-	if (wsi->vhost->tls.ssl_info_event_mask)
+	if (wsi->a.vhost->tls.ssl_info_event_mask)
 		SSL_set_info_callback(wsi->tls.ssl, lws_ssl_info_callback);
 #endif
 
-#if defined LWS_HAVE_X509_VERIFY_PARAM_set1_host
+#if defined(LWS_HAVE_X509_VERIFY_PARAM_set1_host)
 	if (!(wsi->tls.use_ssl & LCCSCF_SKIP_SERVER_CERT_HOSTNAME_CHECK)) {
+#if !defined(USE_WOLFSSL)
+
 		X509_VERIFY_PARAM *param = SSL_get0_param(wsi->tls.ssl);
 
-#if !defined(USE_WOLFSSL)
 		/* Enable automatic hostname checks */
 		X509_VERIFY_PARAM_set_hostflags(param,
 					X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
-#endif
 		/* Handle the case where the hostname is an IP address */
 		if (!X509_VERIFY_PARAM_set1_ip_asc(param, hostname))
 			X509_VERIFY_PARAM_set1_host(param, hostname,
 					strnlen(hostname, sizeof(hostname)));
+#endif
+
 	}
 #else
 	if (!(wsi->tls.use_ssl & LCCSCF_SKIP_SERVER_CERT_HOSTNAME_CHECK)) {
@@ -251,15 +259,15 @@ lws_ssl_client_bio_create(struct lws *wsi)
 	 * Otherwise the connect will simply fail with error code -155
 	 */
 #ifdef USE_OLD_CYASSL
-	if (wsi->tls.use_ssl == 2)
+	if (wsi->tls.use_ssl & LCCSCF_ALLOW_SELFSIGNED)
 		CyaSSL_set_verify(wsi->tls.ssl, SSL_VERIFY_NONE, NULL);
 #else
-	if (wsi->tls.use_ssl == 2)
+	if (wsi->tls.use_ssl & LCCSCF_ALLOW_SELFSIGNED)
 		wolfSSL_set_verify(wsi->tls.ssl, SSL_VERIFY_NONE, NULL);
 #endif
 #endif /* USE_WOLFSSL */
 
-	wsi->tls.client_bio = BIO_new_socket((int)(long long)wsi->desc.sockfd,
+	wsi->tls.client_bio = BIO_new_socket((int)(lws_intptr_t)wsi->desc.sockfd,
 					     BIO_NOCLOSE);
 	SSL_set_bio(wsi->tls.ssl, wsi->tls.client_bio, wsi->tls.client_bio);
 
@@ -275,8 +283,8 @@ lws_ssl_client_bio_create(struct lws *wsi)
 
 #if defined(LWS_HAVE_SSL_set_alpn_protos) && \
     defined(LWS_HAVE_SSL_get0_alpn_selected)
-	if (wsi->vhost->tls.alpn)
-		alpn_comma = wsi->vhost->tls.alpn;
+	if (wsi->a.vhost->tls.alpn)
+		alpn_comma = wsi->a.vhost->tls.alpn;
 	if (wsi->stash)
 		alpn_comma = wsi->stash->cis[CIS_ALPN];
 #if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
@@ -297,7 +305,7 @@ lws_ssl_client_bio_create(struct lws *wsi)
 			wsi);
 
 	if (wsi->sys_tls_client_cert) {
-		lws_system_blob_t *b = lws_system_get_blob(wsi->context,
+		lws_system_blob_t *b = lws_system_get_blob(wsi->a.context,
 					LWS_SYSBLOB_TYPE_CLIENT_CERT_DER,
 					wsi->sys_tls_client_cert - 1);
 		const uint8_t *data;
@@ -327,7 +335,7 @@ lws_ssl_client_bio_create(struct lws *wsi)
 			goto no_client_cert;
 		}
 
-		b = lws_system_get_blob(wsi->context,
+		b = lws_system_get_blob(wsi->a.context,
 					LWS_SYSBLOB_TYPE_CLIENT_KEY_DER,
 					wsi->sys_tls_client_cert - 1);
 		if (!b)
@@ -376,7 +384,7 @@ no_client_cert:
 }
 
 enum lws_ssl_capable_status
-lws_tls_client_connect(struct lws *wsi)
+lws_tls_client_connect(struct lws *wsi, char *errbuf, int elen)
 {
 #if defined(LWS_HAVE_SSL_set_alpn_protos) && \
     defined(LWS_HAVE_SSL_get0_alpn_selected)
@@ -384,17 +392,13 @@ lws_tls_client_connect(struct lws *wsi)
 	char a[32];
 	unsigned int len;
 #endif
-	int m, n;
-#if defined(WIN32) || (_LWS_ENABLED_LOGS & LLL_INFO)
-	int en;
-#endif
+	int m, n, en;
 
 	errno = 0;
 	ERR_clear_error();
 	n = SSL_connect(wsi->tls.ssl);
-#if defined(WIN32) || (_LWS_ENABLED_LOGS & LLL_INFO)
 	en = errno;
-#endif
+
 	m = lws_ssl_get_error(wsi, n);
 
 	if (m == SSL_ERROR_SYSCALL
@@ -405,11 +409,15 @@ lws_tls_client_connect(struct lws *wsi)
 #if defined(WIN32) || (_LWS_ENABLED_LOGS & LLL_INFO)
 		lwsl_info("%s: n %d, m %d, errno %d\n", __func__, n, m, en);
 #endif
+		lws_snprintf(errbuf, elen, "connect SYSCALL %d", en);
 		return LWS_SSL_CAPABLE_ERROR;
 	}
 
-	if (m == SSL_ERROR_SSL)
+	if (m == SSL_ERROR_SSL) {
+		n = lws_snprintf(errbuf, elen, "connect SSL err %d: ", m);
+		ERR_error_string_n(m, errbuf + n, elen - n);
 		return LWS_SSL_CAPABLE_ERROR;
+	}
 
 	if (m == SSL_ERROR_WANT_READ || SSL_want_read(wsi->tls.ssl))
 		return LWS_SSL_CAPABLE_MORE_SERVICE_READ;
@@ -437,6 +445,8 @@ lws_tls_client_connect(struct lws *wsi)
 	if (!n) /* we don't know what he wants, but he says to retry */
 		return LWS_SSL_CAPABLE_MORE_SERVICE;
 
+	lws_snprintf(errbuf, elen, "connect unk %d", m);
+
 	return LWS_SSL_CAPABLE_ERROR;
 }
 
@@ -444,7 +454,7 @@ int
 lws_tls_client_confirm_peer_cert(struct lws *wsi, char *ebuf, int ebuf_len)
 {
 #if !defined(USE_WOLFSSL)
-	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
+	struct lws_context_per_thread *pt = &wsi->a.context->pt[(int)wsi->tsi];
 	char *p = (char *)&pt->serv_buf[0];
 	char *sb = p;
 	int n;
@@ -529,7 +539,10 @@ lws_tls_client_create_vhost_context(struct lws_vhost *vh,
 				    const char *cert_filepath,
 				    const void *cert_mem,
 				    unsigned int cert_mem_len,
-				    const char *private_key_filepath)
+				    const char *private_key_filepath,
+					const void *key_mem,
+				    unsigned int key_mem_len
+					)
 {
 	struct lws_tls_client_reuse *tcr;
 	X509_STORE *x509_store;
@@ -720,15 +733,25 @@ lws_tls_client_create_vhost_context(struct lws_vhost *vh,
 
 	/* openssl init for cert verification (for client sockets) */
 	if (!ca_filepath && (!ca_mem || !ca_mem_len)) {
+#if defined(LWS_HAVE_SSL_CTX_load_verify_dir)
+		if (!SSL_CTX_load_verify_dir(
+			vh->tls.ssl_client_ctx, LWS_OPENSSL_CLIENT_CERTS))
+#else
 		if (!SSL_CTX_load_verify_locations(
 			vh->tls.ssl_client_ctx, NULL, LWS_OPENSSL_CLIENT_CERTS))
+#endif
 			lwsl_err("Unable to load SSL Client certs from %s "
 			    "(set by LWS_OPENSSL_CLIENT_CERTS) -- "
 			    "client ssl isn't going to work\n",
 			    LWS_OPENSSL_CLIENT_CERTS);
 	} else if (ca_filepath) {
+#if defined(LWS_HAVE_SSL_CTX_load_verify_file)
+		if (!SSL_CTX_load_verify_file(
+			vh->tls.ssl_client_ctx, ca_filepath)) {
+#else
 		if (!SSL_CTX_load_verify_locations(
 			vh->tls.ssl_client_ctx, ca_filepath, NULL)) {
+#endif
 			lwsl_err(
 				"Unable to load SSL Client certs "
 				"file from %s -- client ssl isn't "
@@ -740,12 +763,11 @@ lws_tls_client_create_vhost_context(struct lws_vhost *vh,
 	} else {
 
 		lws_filepos_t amount = 0;
-		uint8_t *up1;
 		const uint8_t *up;
+		uint8_t *up1;
 
 		if (lws_tls_alloc_pem_to_der_file(vh->context, NULL, ca_mem,
-						  ca_mem_len, &up1,
-						  &amount)) {
+						  ca_mem_len, &up1, &amount)) {
 			lwsl_err("%s: Unable to decode x.509 mem\n", __func__);
 			lwsl_hexdump_notice(ca_mem, ca_mem_len);
 			return 1;
@@ -784,6 +806,7 @@ lws_tls_client_create_vhost_context(struct lws_vhost *vh,
 	 */
 
 	/* support for client-side certificate authentication */
+
 	if (cert_filepath) {
 		if (lws_tls_use_any_upgrade_check_extant(cert_filepath) !=
 				LWS_TLS_EXTANT_YES &&
@@ -801,18 +824,33 @@ lws_tls_client_create_vhost_context(struct lws_vhost *vh,
 			return 1;
 		}
 		lwsl_notice("Loaded client cert %s\n", cert_filepath);
+
 	} else if (cert_mem && cert_mem_len) {
-		n = SSL_CTX_use_certificate_ASN1(vh->tls.ssl_client_ctx,
-						 cert_mem_len, cert_mem);
-		if (n < 1) {
-			lwsl_err("%s: problem interpreting client cert\n",
-				 __func__);
-			lws_tls_err_describe_clear();
+		lws_filepos_t flen;
+		uint8_t *p;
+
+		if (lws_tls_alloc_pem_to_der_file(vh->context, NULL, cert_mem,
+						  cert_mem_len, &p, &flen)) {
+			lwsl_err("%s: couldn't read cert file\n", __func__);
+
 			return 1;
 		}
+
+		n = SSL_CTX_use_certificate_ASN1(vh->tls.ssl_client_ctx, (int)flen, p);
+
+		if (n < 1) {
+			lwsl_err("%s: problem interpreting client cert\n",  __func__);
+			lws_tls_err_describe_clear();
+		}
+
+		lws_free_set_NULL(p);
+
+		if (n != 1)
+			return 1;
+
 	}
 	if (private_key_filepath) {
-		lwsl_notice("%s: doing private key filepath\n", __func__);
+		lwsl_info("%s: using private key filepath\n", __func__);
 		lws_ssl_bind_passphrase(vh->tls.ssl_client_ctx, 1, info);
 		/* set the private key from KeyFile */
 		if (SSL_CTX_use_PrivateKey_file(vh->tls.ssl_client_ctx,
@@ -822,12 +860,39 @@ lws_tls_client_create_vhost_context(struct lws_vhost *vh,
 			lws_tls_err_describe_clear();
 			return 1;
 		}
-		lwsl_notice("Loaded client cert private key %s\n",
+		lwsl_info("Loaded client cert private key %s\n",
 			    private_key_filepath);
 
 		/* verify private key */
 		if (!SSL_CTX_check_private_key(vh->tls.ssl_client_ctx)) {
 			lwsl_err("Private SSL key doesn't match cert\n");
+			return 1;
+		}
+	}
+	else if (key_mem && key_mem_len) {
+
+		lws_filepos_t flen;
+		uint8_t *p;
+
+		if (lws_tls_alloc_pem_to_der_file(vh->context, NULL, key_mem,
+						  key_mem_len, &p, &flen)) {
+			lwsl_err("%s: couldn't use mem cert\n", __func__);
+
+			return 1;
+		}
+
+		n = SSL_CTX_use_PrivateKey_ASN1(EVP_PKEY_RSA, vh->tls.ssl_client_ctx, p,
+						(long)(lws_intptr_t)flen);
+		if (n != 1)
+			n = SSL_CTX_use_PrivateKey_ASN1(EVP_PKEY_EC,
+							vh->tls.ssl_client_ctx, p,
+							(long)(lws_intptr_t)flen);
+
+		lws_free_set_NULL(p);
+
+		if (n != 1)  {
+			lwsl_err("%s: unable to use key_mem\n", __func__);
+
 			return 1;
 		}
 	}

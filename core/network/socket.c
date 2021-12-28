@@ -41,6 +41,8 @@
 #include <sys/resource.h>
 #include <pthread.h>
 
+#include <zlib.h>
+
 //#undef __DEBUG
 //#define DEBUG( ...)
 //#undef DEBUG1
@@ -49,7 +51,7 @@
 void SocketFree( Socket *sock );
 
 #define SOCKET_STATE_MAX_ACCEPTED_TIME_s 15 //socket has N seconds to send the first byte
-#define READ_TILL_END_BUFFER_SIZE 4096	//8192
+#define READ_TILL_END_BUFFER_SIZE 4096*8	//8192
 #define READ_TILL_END_SOCKET_TIMEOUT (10000)
 #define READ_PACKAGE_BUFFER_SIZE 128000
 
@@ -646,6 +648,7 @@ int SocketConnectSSL( Socket* sock, const char *host )
 		}
 	}
 
+	/*
 	cert = SSL_get_peer_certificate( sock->s_Ssl );
 	if (cert == NULL)
 	{
@@ -663,6 +666,7 @@ int SocketConnectSSL( Socket* sock, const char *host )
 		free( line );
 		X509_free( cert );
 	}
+	*/
 	// ---------------------------------------------------------- *
 	// extract various certificate information                    *
 	// -----------------------------------------------------------
@@ -685,10 +689,11 @@ int SocketConnectSSL( Socket* sock, const char *host )
  * @param ssl set to TRUE if you want to setup secured conne
  * @param host internet address
  * @param port internet port number
+ * @param blocked set connection to blocked
  * @return pointer to new Socket object or NULL when error appear
  */
 
-Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port )
+Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port, FBOOL blocked )
 {
 	Socket *sock = NULL;
 	SystemBase *lsb = (SystemBase *)SLIB;
@@ -776,11 +781,11 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 
 		SSL_set_fd( sock->s_Ssl, sock->fd );
 
-		X509                *cert = NULL;
-		X509_NAME       *certname = NULL;
+		//X509                *cert = NULL;
+		//X509_NAME       *certname = NULL;
 
-		FBOOL blocked = sock->s_Blocked;
-		SocketSetBlocking( sock, FALSE );
+		//FBOOL blocked = sock->s_Blocked;
+		SocketSetBlocking( sock, blocked );
 		int n=0;
 
 		//n = SSL_connect( sock->s_Ssl );
@@ -857,9 +862,11 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 				break;
 			}
 		}
+		
+		DEBUG("[SocketConnectHost] SSLConnect SSL before block\n");
 
-		SocketSetBlocking( sock, blocked );
-
+		//SocketSetBlocking( sock, blocked );
+		/*
 		cert = SSL_get_peer_certificate( sock->s_Ssl );
 		if (cert == NULL)
 		{
@@ -877,6 +884,7 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 			free( line );
 			X509_free( cert );
 		}
+		*/
 		// ---------------------------------------------------------- *
 		// extract various certificate information                    *
 		// -----------------------------------------------------------
@@ -2311,8 +2319,12 @@ BufString *SocketReadTillEndSSL( Socket* sock, unsigned int pass __attribute__((
 		
 		BufString *bs = BufStringNew();
 		
+		DEBUG("[SocketReadTillEndSSL] Before quite != TRUE\n");
+		
 		while( quit != TRUE )
 		{
+			DEBUG("[SocketReadTillEndSSL] poll?\n");
+			
 			int ret = poll( &fds, 1, READ_TILL_END_SOCKET_TIMEOUT );
 			
 			DEBUG("[SocketReadTillEndSSL] Before select, ret: %d\n", ret );
@@ -2532,6 +2544,236 @@ FLONG SocketWriteSSL( Socket* sock, char* data, FLONG length )
 	return written;
 }
 
+//
+// Deflate compression
+//
+
+#define windowBits 15
+#define GZIP_ENCODING 16
+//#define CHUNK_LEN 8096
+#define CHUNK_LEN 0x4000
+
+inline static void compressDataDeflate( char *source, FQUAD sourceLen, unsigned char *storePtr, FQUAD *outputLen )
+{
+	FQUAD compressedLength = 0;
+	
+	z_stream strm;
+	strm.zalloc = Z_NULL;
+	strm.zfree  = Z_NULL;
+	strm.opaque = Z_NULL;
+	
+	deflateInit(&strm, Z_DEFAULT_COMPRESSION);
+	
+	//deflateInit2( &strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED,
+	//	windowBits , 8,	//| GZIP_ENCODING
+	//	Z_DEFAULT_STRATEGY );
+	
+	//DEBUG("start compressDataDeflate\n");
+	
+	unsigned char *dataPtr = (unsigned char *) source;
+	FQUAD dataLeft = sourceLen;
+
+	int flushFlag = 0;
+	strm.next_in  = (Bytef*)dataPtr;
+    strm.next_out = storePtr;
+	
+	while( dataLeft > 0 )
+	{
+		int dataIn = 0;
+		if( dataLeft < CHUNK_LEN )
+		{
+			//printf("finish will be used\n");
+			flushFlag = Z_FULL_FLUSH;// Z_FINISH;
+			dataIn = dataLeft;
+		}
+		else
+		{
+			//printf("flush\n");
+			flushFlag = Z_PARTIAL_FLUSH;
+			dataIn = CHUNK_LEN;
+		}
+		strm.avail_in = dataIn;
+		strm.avail_out = CHUNK_LEN;
+		
+		int err = deflate(&strm, flushFlag );
+		dataLeft -= dataIn;
+		
+		//unsigned long tin = (unsigned long) strm.total_in;
+		//unsigned long tlen = (unsigned long)sourceLen;
+		//DEBUG(" strm.total_in %ld <= http->http_SizeOfContent %ld  stored: %d\n", tin, tlen, (CHUNK_LEN - strm.avail_out) );
+	}
+	strm.avail_in = 0;
+	int err = deflate(&strm, Z_FINISH );
+	compressedLength = strm.total_out;
+	
+	deflateEnd( &strm );
+	*outputLen = compressedLength;
+}
+
+/**
+ * Write data to socket (NOSSL)
+ *
+ * @param sock pointer to Socket on which write function will be called
+ * @param type type of compression
+ * @param data pointer to char table which will be send
+ * @param length length of data which will be send
+ * @return number of bytes writen to socket
+ */
+FLONG SocketWriteCompressionNOSSL( Socket* sock, int type, char* data, FLONG length )
+{
+	if( length < 1 )
+	{
+		//FERROR("Socket is NULL or length < 1: %lu\n", length );
+		return -1;
+	}
+	
+	unsigned char outputBuf[ CHUNK_LEN ];
+	
+	z_stream strm;
+	strm.zalloc = Z_NULL;
+	strm.zfree  = Z_NULL;
+	strm.opaque = Z_NULL;
+	
+	deflateInit(&strm, Z_DEFAULT_COMPRESSION);
+	
+	unsigned char *dataPtr = (unsigned char *) data;
+	FQUAD dataLeft = length;
+
+	int flushFlag = 0;
+	strm.next_in  = (Bytef*)dataPtr;
+	
+	while( dataLeft > 0 )
+	{
+		int dataIn = 0;
+		if( dataLeft < CHUNK_LEN )
+		{
+			//printf("finish will be used\n");
+			flushFlag = Z_FULL_FLUSH;// Z_FINISH;
+			dataIn = dataLeft;
+		}
+		else
+		{
+			//printf("flush\n");
+			flushFlag = Z_PARTIAL_FLUSH;
+			dataIn = CHUNK_LEN;
+		}
+		strm.next_out = outputBuf;
+		strm.avail_in = dataIn;
+		strm.avail_out = CHUNK_LEN;
+		
+		int err = deflate(&strm, flushFlag );
+		dataLeft -= dataIn;
+		int have = (CHUNK_LEN - strm.avail_out);
+		
+		if( have > 0 )
+		{
+			send( sock->fd, outputBuf, have, MSG_DONTWAIT );
+		}
+	}
+	strm.avail_in = 0;
+	int err = deflate(&strm, Z_FINISH );
+
+	deflateEnd( &strm );
+
+	DEBUG("[SocketWriteNOSSL] end write %ld\n", strm.total_in );
+	return strm.total_in;
+}
+
+/**
+ * Write data to socket (SSL)
+ *
+ * @param sock pointer to Socket on which write function will be called
+ * @param type type of compression
+ * @param data pointer to char table which will be send
+ * @param length length of data which will be send
+ * @return number of bytes writen to socket
+ */
+FLONG SocketWriteCompressionSSL( Socket* sock, int type, char* data, FLONG length )
+{
+	if( length < 1 )
+	{
+		return -1;
+	}
+
+	unsigned char outputBuf[ CHUNK_LEN ];
+	
+	z_stream strm;
+	strm.zalloc = Z_NULL;
+	strm.zfree  = Z_NULL;
+	strm.opaque = Z_NULL;
+	
+	deflateInit(&strm, Z_DEFAULT_COMPRESSION);
+	
+	unsigned char *dataPtr = (unsigned char *) data;
+	FQUAD dataLeft = length;
+
+	int flushFlag = 0;
+	strm.next_in  = (Bytef*)dataPtr;
+	
+	while( dataLeft > 0 )
+	{
+		int dataIn = 0;
+		if( dataLeft < CHUNK_LEN )
+		{
+			//printf("finish will be used\n");
+			flushFlag = Z_FULL_FLUSH;// Z_FINISH;
+			dataIn = dataLeft;
+		}
+		else
+		{
+			//printf("flush\n");
+			flushFlag = Z_PARTIAL_FLUSH;
+			dataIn = CHUNK_LEN;
+		}
+		strm.next_out = outputBuf;
+		strm.avail_in = dataIn;
+		strm.avail_out = CHUNK_LEN;
+		
+		int err = deflate(&strm, flushFlag );
+		dataLeft -= dataIn;
+		int have = (CHUNK_LEN - strm.avail_out);
+		
+		if( have > 0 )
+		{
+			int counter = 0;
+			int res = SSL_write( sock->s_Ssl, outputBuf, have );
+
+			if( res <= 0 )
+			{
+				err = SSL_get_error( sock->s_Ssl, res );
+				switch( err )
+				{
+					// The operation did not complete. Call again.
+					case SSL_ERROR_WANT_WRITE:
+					{
+						break;
+					}
+					case SSL_ERROR_SSL:
+					{
+						FERROR("[SocketWriteSSL] Cannot write. Error %d stringerr: %s  fullsize: %ld\n", err, strerror( err ), length );
+						if( counter++ > 3 )
+						{
+							return 0;
+						}
+						break;
+					}
+					default:
+					{
+						FERROR("[SocketWriteSSL] Cannot write. Error %d stringerr: %s fullsize: %ld\n", err, strerror( err ), length );
+						return 0;
+					}
+				}
+			}
+		}
+	}
+	strm.avail_in = 0;
+	int err = deflate(&strm, Z_FINISH );
+
+	deflateEnd( &strm );
+	
+	return strm.total_in;
+}
+
 /**
  * Abort write function
  *
@@ -2554,7 +2796,7 @@ void SocketAbortWrite( Socket* sock )
  */
 void SocketDeleteNOSSL( Socket* sock )
 {
-	if( sock->fd <= 0 )
+	if( sock == NULL || sock->fd <= 0 )
 	{
 		FERROR("[SocketDeleteNOSSL] sock == NULL!\n");
 		return;
@@ -2589,7 +2831,7 @@ void SocketDeleteNOSSL( Socket* sock )
  */
 void SocketDeleteSSL( Socket* sock )
 {
-	if( sock->fd <= 0 )
+	if( sock == NULL || sock->fd <= 0 )
 	{
 		FERROR("Socket: sock == NULL!\n");
 		return;

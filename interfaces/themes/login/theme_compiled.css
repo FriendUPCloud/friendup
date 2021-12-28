@@ -24,7 +24,7 @@ body
 {
 	margin: 0;
 	padding: 0;
-	color: #95A5A6;
+	color: #5f7172;
 	font-family: 'assistant', sans-serif;
 	font-size: 15px;
 }
@@ -48,7 +48,7 @@ body
 { 
 	text-transform: uppercase; 
 	font-size: 0.9em;
-	color: #95A5A6;
+	color: #5f7172;
 }
 
 #LoginElement h1
@@ -188,6 +188,29 @@ label
 	display: block;
 	height: 30px;
 	line-height: 30px;
+}
+
+/* All content in the login window needs to be full size */
+html > body.activated.Login, html > body.activated.Login .ViewContainer, html > body.activated.Login .View,
+html > body[mobile].Login, html > body[mobile].Login .ViewContainer, html > body[mobile].Login .View
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	min-height: 100%;
+}
+
+@media screen and (max-device-width: 420px)
+{
+	html > body.Login, html > body.Login .ViewContainer, html > body.Login .View
+	{
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		min-height: 100%;
+	}
 }
 
 /* Classes */

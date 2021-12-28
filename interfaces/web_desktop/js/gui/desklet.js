@@ -87,6 +87,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 	
 	// Create dom node
 	this.dom = document.createElement ( 'div' );
+	this.dom.style.width = '10px';
+	this.dom.style.height = '10px';
 	this.dom.className = 'Desklet Initializing';
 	this.dom.id = this.makeUniqueId ();
 	this.desktop.appendChild ( this.dom );
@@ -273,7 +275,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 	
 	this.render = function( forceRefresh )
 	{
-		var self = this;
+		let self = this;
 		
 		// Setup the container for the launcher icons
 		this.dom.style.position = 'absolute';
@@ -281,7 +283,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		if( window.isMobile )
 		{
 			// Create hider
-			var hider = document.createElement( 'div' );
+			let hider = document.createElement( 'div' );
 			hider.className = 'Hider';
 			hider.onclick = function()
 			{
@@ -291,8 +293,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		}
 		
 		// Move window list
-		var viewList = false;
-		for( var a = 0; a < this.dom.childNodes.length; a++ )
+		let viewList = false;
+		for( let a = 0; a < this.dom.childNodes.length; a++ )
 		{
 			if( this.dom.childNodes[a].className == 'ViewList' )
 			{
@@ -306,36 +308,39 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			this.dom.appendChild( viewList );
 		}
 		
-		var items = [];
-		for( var a = 0; a < this.dom.childNodes.length; a++ )
+		let items = [];
+		for( let a = 0; a < this.dom.childNodes.length; a++ )
 		{
 			if( this.dom.childNodes[a].className == 'ViewList' ) continue;
 			items.push( this.dom.childNodes[a] );
 		}
 		if( this.viewList ) 
 		{
-			for( var a = 0; a < this.viewList.childNodes.length; a++ )
+			for( let a = 0; a < this.viewList.childNodes.length; a++ )
 				items.push( this.viewList.childNodes[a] );
 		}
 		
-		var horizontal = this.direction == 'horizontal' ? true : false;
+		if( !this.direction ) this.direction = 'horizontal';
 		
-		var itemWidth = this.conf && this.conf.size ? this.conf.size : 56;
-		var itemHeight = this.conf && this.conf.size ? this.conf.size : 56;
-		var marginWidth = horizontal ? 12 : 7;
-		var marginHeight = !horizontal ? 12 : 7;
+		let horizontal = this.direction == 'horizontal' ? true : false;
 		
-		var pos = this.conf.layout;
-		var position = this.conf.position;
 		
-		var scrollerMargins = {
+		let itemWidth = this.conf && this.conf.size ? this.conf.size : 56;
+		let itemHeight = this.conf && this.conf.size ? this.conf.size : 56;
+		let marginWidth = horizontal ? 12 : 7;
+		let marginHeight = !horizontal ? 12 : 7;
+		
+		let pos = this.conf.layout;
+		let position = this.conf.position;
+		
+		let scrollerMargins = {
 			top: 0,
 			left: 0,
 			right: 0,
 			bottom: 0
 		};
 		
-		var positionClass = '';
+		let positionClass = '';
 		
 		if( position != 'fixed' )
 		{
@@ -431,36 +436,36 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		}
 		
 		// Screen content
-		var cnt = ge( 'DoorsScreen' ).object._screen;
+		let cnt = ge( 'DoorsScreen' ).object._screen;
 
 		// Do the rendering of icons
-		var sh = ge( 'DoorsScreen' )[ !horizontal ? 'offsetHeight' : 'offsetWidth' ];
+		let sh = ge( 'DoorsScreen' )[ !horizontal ? 'offsetHeight' : 'offsetWidth' ];
 		if( !horizontal )
 		{
 			sh -= cnt.offsetTop;
 		}		
 		
 		// With dockwindowlist we allocate a bit more room for tasks
-		var availSpace = sh - ( ge( 'DockWindowList' ) ? 200 : 80 );
+		let availSpace = sh - ( ge( 'DockWindowList' ) ? 200 : 80 );
 		
-		var step = horizontal ? marginWidth : marginHeight;
+		let step = horizontal ? marginWidth : marginHeight;
 		
-		var calcLength = ( ( ( !horizontal ? itemHeight : itemWidth ) + step ) * items.length ) - step;
-		var blocks = Math.ceil( calcLength / availSpace ); // TODO: Make dynamic
+		let calcLength = ( ( ( !horizontal ? itemHeight : itemWidth ) + step ) * items.length ) - step;
+		let blocks = Math.ceil( calcLength / availSpace ); // TODO: Make dynamic
 		if( blocks < 1 ) blocks = 1;
 		
-		var currBlock = 0;
-		var len = 0;
-		var itemUnit = ( !horizontal ? itemHeight : itemWidth ) + step;
-		var maxLength = availSpace - itemUnit;
+		let currBlock = 0;
+		let len = 0;
+		let itemUnit = ( !horizontal ? itemHeight : itemWidth ) + step;
+		let maxLength = availSpace - itemUnit;
 		
-		var x = marginWidth, y = marginHeight, maxLen = 0;
-		var cols = rows = 1;
+		let x = marginWidth, y = marginHeight, maxLen = 0;
+		let cols = rows = 1;
 		this.iconListPixelLength = 0;
-		var comp;
-		for( var a = 0; a < items.length; a++ )
+		let comp;
+		for( let a = 0; a < items.length; a++ )
 		{
-			var cn = items[a];
+			let cn = items[a];
 			if( cn.classList.contains( 'WindowList' ) || cn.classList.contains( 'DockMenu' ) )
 				continue;
 			cn.style.position = 'absolute';
@@ -530,10 +535,12 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			// We need a full dock here
 			if( globalConfig.viewList == 'dockedlist' )
 			{
+				this.pixelWidth = document.body.offsetWidth;
 				this.pixelHeight = sh;
 			}
 			this.dom.style.width = marginWidth + Math.floor( cols * ( itemWidth + marginWidth ) ) + 'px';
 			this.dom.style.height = this.pixelHeight + 'px';
+			//console.log( 'Vert: ' + this.pixelHeight + ' ' + sh + ' ' + ( itemHeight + marginHeight ) );
 		}
 		else
 		{
@@ -544,16 +551,18 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			if( globalConfig.viewList == 'dockedlist' )
 			{
 				this.pixelWidth = document.body.offsetWidth;
+				this.pixelHeight = sh;
 			}
 			this.dom.style.width = this.pixelWidth + 'px';
 			this.dom.style.height = marginHeight + Math.floor( rows * ( itemHeight + marginHeight ) ) + 'px';
+			//console.log( 'Horiz: ' + this.pixelHeight );
 		}
 		
 		// Position of container
 		if( position != 'fixed' )
 		{
-			var th = cnt.offsetTop;
-			var midScreenH = ( ( this.dom.parentNode.offsetHeight - th ) * 0.5 ) + th;
+			let th = cnt.offsetTop;
+			let midScreenH = ( ( this.dom.parentNode.offsetHeight - th ) * 0.5 ) + th;
 			
 			this.dom.style.left = 'auto';
 			this.dom.style.top = 'auto';
@@ -615,7 +624,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			// Add margins around icons based on dock!
 			if( !window.isMobile )
 			{
-				var scroller = Workspace.screen.contentDiv;
+				let scroller = Workspace.screen.contentDiv;
 				if( scroller )
 				{
 					scroller.style.paddingTop = scrollerMargins.top + 'px';
@@ -637,8 +646,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 	{
 		if( ele.views )
 		{
-			var cnt = 0;
-			for( var a in ele.views )
+			let cnt = 0;
+			for( let a in ele.views )
 				cnt++;
 			if( cnt > 0 )
 			{
@@ -646,9 +655,9 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				else ele.state = ele.state == 'hidden' ? 'visible' : 'hidden';
 				
 				var elementCount = 0;
-				for( var i in ele.views )
+				for( let i in ele.views )
 				{
-					var s = ele.views[i].windowObject.getFlag( 'screen' );
+					let s = ele.views[i].windowObject.getFlag( 'screen' );
 					if( s.div.id != 'DoorsScreen' ) continue;
 					if( ele.views[i].windowObject.getFlag( 'invisible' ) ) continue;
 					ele.views[i].windowObject.setFlag( 'hidden', ele.state == 'hidden' ? true : false );
@@ -664,7 +673,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					}
 					else
 					{
-						var d = document.createElement( 'div' );
+						let d = document.createElement( 'div' );
 						d.className = 'ElementCount';
 						d.innerHTML = '<span>' + ( elementCount > 0 ? elementCount : '' ) + '</span>';
 						ele.appendChild( d );
@@ -689,7 +698,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 	{
 		if( typeof( ele ) != 'object' )
 		{
-			for( var a = 0; a < this.dom.childNodes.length; a++ )
+			for( let a = 0; a < this.dom.childNodes.length; a++ )
 			{
 				if( this.dom.childNodes[a].executable && this.dom.childNodes[a].executable == ele )
 				{
@@ -698,49 +707,65 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				}
 			}
 		}
-		var found = false;
-		var elementCount = 0;
+		let found = false;
+		let elementCount = 0;
 		
-		for( var a = 0; a < Workspace.applications.length; a++ )
+		for( let a = 0; a < Workspace.applications.length; a++ )
 		{
-			var ap = Workspace.applications[a];
+			let ap = Workspace.applications[a];
 			if( ap.applicationId != ele.uniqueId )
 				continue;
 			if( !ap.windows ) continue;
 			
 			// TODO: Animation before hiding!
-			var st = 'idle';
-			for( var w in ap.windows )
+			let st = 'idle';
+			let wsSet = false;
+			for( let w in ap.windows )
 			{
-				var s = ap.windows[w].getFlag( 'screen' );
+				let s = ap.windows[ w ].getFlag( 'screen' );
 				if( s.div.id != 'DoorsScreen' ) continue;
 				
 				elementCount++; // Count app windows
 				
-				if( st == 'idle' )
-					st = ap.windows[w].getFlag( 'hidden' );
-				if( ap.windows[w].getFlag( 'invisible' ) ) continue;
+				st = ap.windows[ w ].flags.hidden;
+				if( ap.windows[ w ].getFlag( 'invisible' ) ) continue;
 				// Just minimize
-				var ws = ap.windows[w].workspace;
-				if( st || ws != globalConfig.workspaceCurrent )
+				let ws = ap.windows[ w ].workspace;
+				
+				if( !wsSet && ws != globalConfig.workspaceCurrent )
 				{
-					_ActivateWindow( ap.windows[w]._window );
-					_WindowToFront( ap.windows[w]._window );
-					ele.classList.remove( 'Minimized' );
-					Workspace.switchWorkspace( ws );
-					ap.windows[w].setFlag( 'hidden', false );
-					ap.windows[w].flags.minimized = false;
-					ap.windows[w].activate();
+			        Workspace.switchWorkspace( ws );
+			        wsSet = true;
+			    }
+				
+				if( st || wsSet )
+				{
+					if( ele.classList.contains( 'Minimized' ) )
+					{
+    					ele.classList.remove( 'Minimized' );
+					}
+					if( ws != globalConfig.workspaceCurrent )
+					{
+				        Workspace.switchWorkspace( ws );
+				    }
+				    ap.windows[ w ].setFlag( 'hidden', false );
+				    ap.windows[ w ].flags.minimized = false;
+				    ap.windows[ w ].activate();
+				    
+				    _WindowToFront( ap.windows[ w ]._window );
 				}
 				else
 				{
-					ele.classList.add( 'Minimized' );
-					ap.windows[w].setFlag( 'hidden', true );
+					if( !ele.classList.contains( 'Minimized' ) )
+					{
+    					ele.classList.add( 'Minimized' );
+    			    }
+					ap.windows[ w ].setFlag( 'hidden', true );
 				}
 			}
 			if( !ele.elementCount )
 			{
-				var d = document.createElement( 'div' );
+				let d = document.createElement( 'div' );
 				d.className = 'ElementCount';
 				d.innerHTML = '<span>' + ( elementCount > 0 ? elementCount : '' ) + '</span>';
 				ele.elementCount = d;
@@ -763,25 +788,44 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 	
 	this.addLauncher = function( o )
 	{
-		var dk = this;
+		let dk = this;
 		if ( o.src && ( o.click || o.exe ) )
 		{
-			var div = document.createElement ( 'div' );
+			let div = document.createElement ( 'div' );
 			div.className = 'Launcher MousePointer';
 			if( o.className ) div.className += ' ' + o.className;
 			div.style.width = this.width - ( this.margin * 2 ) + 'px';
 			div.style.backgroundSize = 'contain';
 			div.style.height = this.width - ( this.margin * 2 ) + 'px';
 			div.executable = o.exe;
-			div.uniqueId = UniqueHash( o.exe + ' ' + o.displayname );
 			
-			// Running apps
-			for( var a in Workspace.applications )
+			// Try to find existing applicationId
+			if( div.executable )
 			{
-				if( Workspace.applications[ a ].applicationId == div.uniqueId )
+				for( let a in Workspace.applications )
 				{
-					div.classList.add( 'Running' );
-					break;
+					if( Workspace.applications[ a ].applicationName == o.exe )
+					{
+						div.classList.add( 'Running' );
+						div.uniqueId = Workspace.applications[a].applicationId;
+						break;
+					}
+				}
+			}
+			
+			if( !div.uniqueId )
+			{
+				div.uniqueId = UniqueHash( o.exe + ' ' + o.displayname );
+			
+				// Running apps (obsolete?)
+				// TODO: Check...
+				for( let a in Workspace.applications )
+				{
+					if( Workspace.applications[ a ].applicationId == div.uniqueId )
+					{
+						div.classList.add( 'Running' );
+						break;
+					}
 				}
 			}
 			
@@ -859,7 +903,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				}
 			}
 			
-			function clickFunc( e )
+			function deskletClickFunc( e )
 			{
 				if( e.button != 0 && e.type != 'touchend' ) return;
 				if( div.helpBubble ) div.helpBubble.close();
@@ -872,10 +916,13 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				// We got views? Just manage them
 				if( !isMobile )
 				{
-					if( dk.toggleViewVisibility( this ) ) return;
+					if( dk.toggleViewVisibility( div ) ) 
+					{
+						return;
+					}
 				}
 
-				var rememberCurrent = false;
+				let rememberCurrent = false;
 				
 				// If we have a non silent launch, and a current movable, deactivate current
 				if( currentMovable && o.opensilent === false )
@@ -884,8 +931,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					_DeactivateWindow( currentMovable );
 				}
 			
-				var args = '';
-				var executable = o.exe + '';
+				let args = '';
+				let executable = o.exe + '';
 
 				if( executable.indexOf( ' ' ) > 0 )
 				{
@@ -893,7 +940,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					if( t[0].indexOf( ':' ) == -1)
 					{
 						args = '';
-						for( var a = 1; a < t.length; a++ )
+						for( let a = 1; a < t.length; a++ )
 						{
 							args += t[a];
 							if( a < t.length - 1 )
@@ -909,7 +956,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				// Extension
 				if( executable.indexOf( ':' ) > 0 )
 				{
-					var l = executable.split( ':' )[1];
+					let l = executable.split( ':' )[1];
 					if( l.indexOf( '/' ) > 0 )
 					{
 						l = l.split('/');
@@ -918,15 +965,15 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				
 					if( l.length > 1 )
 					{
-						var ext = l;
+						let ext = l;
 						ext = '.' + ext[ ext.length - 1 ].toLowerCase();
 	
 						// Check mimetypes
-						for( var a in Workspace.mimeTypes )
+						for( let a in Workspace.mimeTypes )
 						{
 							var mt = Workspace.mimeTypes[ a ];
 
-							for( var b in mt.types )
+							for( let b in mt.types )
 							{
 								if( ext == mt.types[ b ].toLowerCase() )
 								{
@@ -975,13 +1022,13 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					{
 						// Find application window
 						// TODO: Find the last active
-						for( var a = 0; a < Workspace.applications.length; a++ )
+						for( let a = 0; a < Workspace.applications.length; a++ )
 						{
 							if( Workspace.applications[a].applicationId == div.uniqueId )
 							{
 								if( Workspace.applications[a].windows )
 								{
-									for( var c in Workspace.applications[a].windows )
+									for( let c in Workspace.applications[a].windows )
 									{
 										Workspace.applications[a].windows[ c ].flags.minimized = false;
 										Workspace.applications[a].windows[ c ].activate();
@@ -1070,7 +1117,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					var t = e.target ? e.target : e.srcElement;
 					if( t && t != div ) return;
 					if( window.isMobile && !dk.open ) return;
-					clickFunc( e );
+					deskletClickFunc( e );
 					if( div.helpBubble ) div.helpBubble.close();
 				}
 			}

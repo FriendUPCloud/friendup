@@ -19,31 +19,31 @@ window.addEventListener( 'mouseup', function(){
 window.addEventListener( 'mousemove', function( e ){
 	
 	// Where do we click?
-	var cx = e.clientX;
-	var cy = e.clientY;
+	let cx = e.clientX;
+	let cy = e.clientY;
 	
 	if( eventRectMouseDown )
 	{
 		// Get some data (scrollable element of clicked event node)
-		var pnode = ge( 'MainView' ).querySelector( '.CalendarDates' );
+		let pnode = ge( 'MainView' ).querySelector( '.CalendarDates' );
 		
 		// Scroll info
-		var st = pnode.scrollTop;
-		var sl = pnode.scrollLeft;
+		let st = pnode.scrollTop;
+		let sl = pnode.scrollLeft;
 		
 		// Where do we click in absolute coordinates
-		var cy = ( e.clientY + st ) - GetElementTop( pnode );
-		var cx = ( e.clientX + sl ) - GetElementLeft( pnode );
+		let cy = ( e.clientY + st ) - GetElementTop( pnode );
+		let cx = ( e.clientX + sl ) - GetElementLeft( pnode );
 		
-		var ele = eventRectMouseDown.element;
-		var l   = eventRectMouseDown.l;
-		var t   = eventRectMouseDown.t;
-		var w   = eventRectMouseDown.w;
-		var h   = eventRectMouseDown.h;
-		var x   = eventRectMouseDown.x;
-		var y   = eventRectMouseDown.y;
+		let ele = eventRectMouseDown.element;
+		let l   = eventRectMouseDown.l;
+		let t   = eventRectMouseDown.t;
+		let w   = eventRectMouseDown.w;
+		let h   = eventRectMouseDown.h;
+		let x   = eventRectMouseDown.x;
+		let y   = eventRectMouseDown.y;
 		
-		var offy = y - cy;
+		let offy = y - cy;
 		
 		if( eventRectMouseDown.clickPosition == 'bottom' )
 		{
@@ -65,14 +65,14 @@ var EventRect = function( definition )
 EventRect.prototype.init = function()
 {
 	if( this.div ) return;
-	var self = this;
+	let self = this;
 	this.div = document.createElement( 'div' );
 	this.div.event = self;
 	this.div.className = 'EventRect MousePointer';
 	this.div.style.top = this.definition.ypos + '%';
 	this.div.style.height = this.definition.height + '%';
 	
-	var paletteSlot = this.definition.event.Your ? 0 : 1;
+	let paletteSlot = this.definition.event.Your ? 0 : 1;
 	userList[ this.definition.event.Owner ] = this.definition.event.Owner;
 	
 	this.div.style.color = eventPaletteForeground[ paletteSlot ];
@@ -85,19 +85,19 @@ EventRect.prototype.init = function()
 		if( e.button != 0 ) return;
 		
 		// Get some data (scrollable element of clicked event node)
-		var pnode = ge( 'MainView' ).querySelector( '.CalendarDates' );
+		let pnode = ge( 'MainView' ).querySelector( '.CalendarDates' );
 		
 		// Scroll info
-		var st = pnode.scrollTop;
-		var sl = pnode.scrollLeft;
+		let st = pnode.scrollTop;
+		let sl = pnode.scrollLeft;
 		
 		
 		// Where do we click in absolute coordinates
-		var cy = ( e.clientY + st ) - GetElementTop( pnode );
-		var cx = ( e.clientX + sl ) - GetElementLeft( pnode );
+		let cy = ( e.clientY + st ) - GetElementTop( pnode );
+		let cx = ( e.clientX + sl ) - GetElementLeft( pnode );
 		
 		// Assume nothing was clicked
-		var cp = null;
+		let cp = null;
 		
 		// Coordinate 
 		if( cy < this.offsetTop + 10 )

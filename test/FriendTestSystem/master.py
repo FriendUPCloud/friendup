@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import asyncio
 try:
     import websocket
 except Exception:
@@ -21,8 +22,8 @@ from test_class import TestClass
 
 print("------------Friend Test started: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M") )
 
-PROCESS_COUNT = 10
-TEST_COUNT = 10
+PROCESS_COUNT = 1
+TEST_COUNT = 1
 MSG_INTERVAL = 1.00
 
 #if len(sys.argv) < 4:
@@ -80,7 +81,7 @@ PASS = "HASHED" + hashlib.sha256(PASS.encode('utf-8')).hexdigest()
 
 print("--------Send request for sessionid-----")
 
-PEM = "/home/stefkos/development/friendup/build/cfg/crt/certificate.pem"
+PEM = "/home/stefkos/development/osfriend/friendup/build/cfg/crt/certificate.pem"
 
 #
 # login user
@@ -89,6 +90,7 @@ if SSL == True:
     URL = "https://" + HOST + ":" + PORT + "/system.library/login"
     WS_URL = "wss://" + HOST + ":6500/"
     SSL_OPTS = {"cert_reqs": ssl.CERT_NONE,"ca_certs": certifi.where(),"ssl_version": ssl.PROTOCOL_TLSv1_2}
+    #SSL_OPTS = {"cert_reqs": ssl.CERT_NONE,"ca_certs": certifi.where(),"ssl_version": ssl.PROTOCOL_TLS_CLIENT}
 else:
     URL = "http://" + HOST + ":" + PORT + "/system.library/login"
     WS_URL = "ws://" + HOST + ":6500/"
@@ -196,11 +198,13 @@ MSG_LOGIN = '{"type":"con","data":{"sessionId":"%s"}}'
 
 def on_message(ws, message):
     global TEST_MSG_RETURNED, TEST_MSG_RETURNED_OK
-    #print('on message: ' + message )
+    print('on message: ' + message )
     try:
         # check connection message
-        CONMSGFOUND = message.find('"type":"con", "data" : { "type": "pong", "data"')
-        if CONMSGFOUND > 0:
+        msg = message.replace('\"','')
+        #print('------- ' + msg )
+        CONMSGFOUND = msg.find('{type:con,data:{type:pong,data:')
+        if CONMSGFOUND > -1:
             TEST_MSG_RETURNED_OK += 1
 
         # get requestid to match it with incoming message
@@ -209,8 +213,11 @@ def on_message(ws, message):
         POSEND = message[ POS: ].find('"')
 
         TEST_MSG_RETURNED += 1
+        
+        print('on message: checking empty value')
 
         if message[ POS:(POS+POSEND) ] != "":
+            print('on message: position value is not empty')
             for objEntry in LIST_OF_TESTS:
                 if str(reqid) == str(objEntry.getReqid() ):
                     result = objEntry.checkTest(message)
@@ -241,12 +248,12 @@ def on_message(ws, message):
     pass
 
 def on_error(ws, error):
-    print('On WS error: ' + error )
+    print('On WS error: ' + str(error) )
     pass
 
 def on_close(ws):
     print('On WS close')
-    sys.exit(1)
+    #sys.exit(1)
 
 reqid = 0 # unique request id
 
@@ -262,17 +269,21 @@ def on_open(ws):
             TEST_MSG_SENT += 1
             print('Send login message')
             ws.send( msg )
+            print('Sent login message')
             TEST_MSG_SEND += 1
         except:
             print('Cannot send Login message: ' + msg )
             traceback.print_exc()
             pass
         time.sleep(1.01)
+        print('Before while')
         while True:
             if TEST_COUNT == 0:
                 break
             TEST_COUNT -= 1
             time.sleep(MSG_INTERVAL)
+
+            print('Going through classes')
 
             for classEntry in LIST_OF_CLASSES:
                 reqid = reqid + 1
@@ -285,7 +296,7 @@ def on_open(ws):
                     ws.send(tempMsg)
                     TEST_MSG_SEND += 1
                 except:
-                    print('Cannot send message: ' + tempMsg )
+                    print('Cannot send message: ' + str(tempMsg) )
                     traceback.print_exc()
                     pass
                 time.sleep(MSG_INTERVAL)
@@ -295,10 +306,13 @@ def on_open(ws):
             #    ws.send(tempMsg)
             #ws.send(MSG_TEST % (SESSION_ID, SESSION_ID))
         #time.sleep(1.0)
+        print("Before close...")
         ws.close()
         print("thread terminating...")
     t = threading.Thread(target=run)
     t.start()
+
+websocket.enableTrace(True)
 
 def child():
     global WS_URL
@@ -309,7 +323,7 @@ def child():
                                 on_close = on_close,
                                 subprotocols=["FC-protocol"])
     ws.on_open = on_open
-    ws.run_forever(sslopt=SSL_OPTS)
+    ws.run_forever(sslopt=SSL_OPTS,ping_interval=70, ping_timeout=10)
 
 #
 # Start threads
@@ -331,10 +345,14 @@ for i in range(0, PROCESS_COUNT):
     #        pids[newpid] = 1
     except:
         #pass
+        print("Excetion in process creation")
         traceback.print_exc()
 while True:
     print('before while')
-    os.wait()
+    try:
+        os.wait()
+    except:
+        print("os.wait: Unexpected error")
     print('in while')
     PROCESS_COUNT -= 1
     if PROCESS_COUNT == 0:

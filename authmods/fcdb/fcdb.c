@@ -125,9 +125,10 @@ long GetRevision(void)
  * @param usr pointer to User structure
  * @param pass password provided
  * @param blockTime pointer to integer value where blocked account time will be returned (int seconds)
+ * @param devname device name
  * @return TRUE when success, otherwise FALSE
  */
-FBOOL CheckPassword( struct AuthMod *l, Http *r __attribute__((unused)), User *usr, char *pass, FULONG *blockTime )
+FBOOL CheckPassword( struct AuthMod *l, Http *r __attribute__((unused)), User *usr, char *pass, FULONG *blockTime, char *devname )
 {
 	if( usr == NULL )
 	{
@@ -146,7 +147,7 @@ FBOOL CheckPassword( struct AuthMod *l, Http *r __attribute__((unused)), User *u
 		DEBUG("SystemBase ptr %p\n", sb );
 		time_t tm = 0;
 		time_t tm_now = time( NULL );
-		FBOOL access = sb->sl_UserManagerInterface.UMGetLoginPossibilityLastLogins( sb->sl_UM, usr->u_Name, l->am_BlockAccountAttempts, &tm );
+		FBOOL access = sb->sl_UserManagerInterface.UMGetLoginPossibilityLastLogins( sb->sl_UM, usr->u_Name, pass, l->am_BlockAccountAttempts, &tm );
 		
 		DEBUG("[FCDB] Authentication, access flag set: %d, time difference between last login attempt and now %lu\n", (int)access, (unsigned long)( tm_now - tm ) );
 		// if last 3 access failed you must wait one hour from last login attempt
@@ -159,7 +160,7 @@ FBOOL CheckPassword( struct AuthMod *l, Http *r __attribute__((unused)), User *u
 			//sleep( max );
 			
 			FERROR("User: %s was trying to login 3 times in a row (fail login attempts)\n", usr->u_Name );
-			sb->sl_UserManagerInterface.UMStoreLoginAttempt( sb->sl_UM, usr->u_Name, "Login fail", "Last login attempts fail" );
+			sb->sl_UserManagerInterface.UMStoreLoginAttempt( sb->sl_UM, usr->u_Name, pass, "Login fail", "Last login attempts fail", devname );
 			
 			*blockTime = (FULONG) (tm_now + l->am_BlockAccountTimeout);
 			
@@ -321,7 +322,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 	{
 		time_t tm = 0;
 		time_t tm_now = time( NULL );
-		FBOOL access = sb->sl_UserManagerInterface.UMGetLoginPossibilityLastLogins( sb->sl_UM, name, l->am_BlockAccountAttempts, &tm );
+		FBOOL access = sb->sl_UserManagerInterface.UMGetLoginPossibilityLastLogins( sb->sl_UM, name, pass, l->am_BlockAccountAttempts, &tm );
 		
 		DEBUG("[FCDB] Authentication, access: %d, time difference between last login attempt and now %lu\n", access, ( tm_now - tm ) );
 		// if last 3 access failed you must wait one hour from last login attempt
@@ -334,7 +335,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 			//sleep( max );
 			
 			FERROR("User: %s was trying to login 3 times in a row (fail login attempts)\n", name );
-			sb->sl_UserManagerInterface.UMStoreLoginAttempt( sb->sl_UM, name, "Login fail", "Last login attempts fail" );
+			sb->sl_UserManagerInterface.UMStoreLoginAttempt( sb->sl_UM, name, pass, "Login fail", "Last login attempts fail", devname );
 			
 			*blockTime = (FULONG) (tm_now + l->am_BlockAccountTimeout);
 			
@@ -417,7 +418,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 		//if( strcmp( sessionId, "remote" ) == 0 )
 		{
 			DEBUG("[FCDB] remote connection found\n");
-			if( l->CheckPassword( l, r, tmpusr, (char *)pass, blockTime ) == FALSE )
+			if( l->CheckPassword( l, r, tmpusr, (char *)pass, blockTime, devname ) == FALSE )
 			{
 				//tmpusr->u_Error = FUP_AUTHERR_PASSWORD;
 				if(  tmpusr != NULL && userFromDB == TRUE ){ UserDelete( tmpusr );	tmpusr =  NULL; }
@@ -443,7 +444,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 				if( ses != NULL )
 				{
 					ses->us_UserID = tmpusr->u_ID;
-					ses->us_LoggedTime = timestamp;
+					ses->us_LastActionTime = timestamp;
 				}
 				DEBUG("[FCDB] remotefs returning session ptr %p\n", ses );
 
@@ -465,10 +466,10 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 		
 		if( uses != NULL )
 		{
-			uses->us_LoggedTime = timestamp;
+			uses->us_LastActionTime = timestamp;
 			DEBUG("[FCDB] Check password %s  -  %s\n", pass, uses->us_User->u_Password );
 			
-			if( l->CheckPassword( l, r, uses->us_User, (char *)pass, blockTime ) == FALSE )
+			if( l->CheckPassword( l, r, uses->us_User, (char *)pass, blockTime, devname ) == FALSE )
 			{
 				//uses->us_User->u_Error = FUP_AUTHERR_PASSWORD;
 				if(  tmpusr != NULL && userFromDB == TRUE ){ UserDelete( tmpusr );	tmpusr =  NULL; }
@@ -486,10 +487,10 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 			// session is valid
 			//
 		
-			if( (timestamp - uses->us_LoggedTime ) < sb->sl_RemoveSessionsAfterTime )
+			if( (timestamp - uses->us_LastActionTime ) < sb->sl_RemoveSessionsAfterTime )
 			{	// session timeout
 	
-				DEBUG("[FCDB] checking login time %ld < LOGOUTTIME %lu\n", timestamp - uses->us_LoggedTime, sb->sl_RemoveSessionsAfterTime );
+				DEBUG("[FCDB] checking login time %ld < LOGOUTTIME %lu\n", timestamp - uses->us_LastActionTime, sb->sl_RemoveSessionsAfterTime );
 	
 				// same session, update login time
 				
@@ -526,7 +527,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 		
 		DEBUG("[FCDB] AUTHENTICATE sessionid was not provided\n");
 		
-		if( l->CheckPassword( l, r, tmpusr, (char *)pass, blockTime ) == FALSE )
+		if( l->CheckPassword( l, r, tmpusr, (char *)pass, blockTime, devname ) == FALSE )
 		{
 			DEBUG( "[FCDB] Password does not match! %s (provided password) != %s (user from session or db)\n", pass, tmpusr->u_Password );
 			// if user is in global list, it means that that it didnt come  from outside
@@ -585,7 +586,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 			
 				FFree( new_session_id );
 				uses->us_UserID = tmpusr->u_ID;
-				uses->us_LoggedTime = time( NULL );
+				uses->us_LastActionTime = time( NULL );
 			
 				int error;
 				if( ( error = sqlLib->Save( sqlLib, UserSessionDesc, uses ) ) != 0 )
@@ -602,14 +603,13 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 			if( uses->us_SessionID == NULL || testAPIUser == FALSE )
 			{
 				DEBUG( "[FCDB] : We got a response on: \nAUTHENTICATE: SessionID = %s\n", uses->us_SessionID ? uses->us_SessionID : "No session id" );
-				DEBUG("\n\n\n1============================================================ tmiest %ld usertime %ld logouttst %lu\n\
-		==========================================================================\n", timestamp, uses->us_LoggedTime , sb->sl_RemoveSessionsAfterTime);
+
 				
 				//char tmpQuery[ 512 ];
 				//
 				// user was not logged out
 				//
-				if(  (timestamp - uses->us_LoggedTime) < sb->sl_RemoveSessionsAfterTime )
+				if(  (timestamp - uses->us_LastActionTime) < sb->sl_RemoveSessionsAfterTime )
 				{
 					DEBUG("User was not logged out\n");
 					
@@ -631,7 +631,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 				}
 
 				DEBUG("[FCDB] Update filesystems\n");
-				uses->us_LoggedTime = timestamp;
+				uses->us_LastActionTime = timestamp;
 
 				sb->LibrarySQLDrop( sb, sqlLib );
 				// TODO: Generate sessionid the first time if it is empty!!
@@ -651,7 +651,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 					{
 						DEBUG("============================================================\n \
 							user name %s current timestamp %ld login time %ld logout time %lu\n\
-								============================================================\n", tmpusr->u_Name, timestamp, uses->us_LoggedTime , sb->sl_RemoveSessionsAfterTime);
+								============================================================\n", tmpusr->u_Name, timestamp, uses->us_LastActionTime , sb->sl_RemoveSessionsAfterTime);
 						
 						char *hashBase = MakeString( 255 );
 						sprintf( hashBase, "%ld%s%d", timestamp, tmpusr->u_FullName, ( rand() % 999 ) + ( rand() % 999 ) + ( rand() % 999 ) );
@@ -683,13 +683,13 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 	
 loginok:
 	DEBUG("[FCDB] Login ok Stored %p\n", uses);
-	sb->sl_UserManagerInterface.UMStoreLoginAttempt( sb->sl_UM, name, "Login success", NULL );
+	sb->sl_UserManagerInterface.UMStoreLoginAttempt( sb->sl_UM, name, pass, "Login success", NULL, devname );
 	return uses;
 	
 loginfail:
 	{
 		time_t tm;
-		sb->sl_UserManagerInterface.UMStoreLoginAttempt( sb->sl_UM, name, "Login fail", "Login fail" );
+		sb->sl_UserManagerInterface.UMStoreLoginAttempt( sb->sl_UM, name, pass, "Login fail", "Login fail", devname );
 	}
 // if login fail, goto must be used
 	return NULL;
@@ -713,7 +713,7 @@ void Logout( struct AuthMod *l, Http *r __attribute__((unused)), char *name )
 	{
 		char tmpQuery[ 1024 ];
 		
-		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserSession WHERE SessionID = '%s'", name );
+		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserSession WHERE `SessionID`=\"%s\"", name );
 		DEBUG("Logout sql: %s\n", tmpQuery );
 		
 		sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
@@ -754,7 +754,7 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r __attribute__((unused)),
 	}
 
 	// we check if user is already logged in
-	if( ( timestamp - users->us_LoggedTime ) < sb->sl_RemoveSessionsAfterTime )
+	if( ( timestamp - users->us_LastActionTime ) < sb->sl_RemoveSessionsAfterTime )
 	{	// session timeout
 		// we set timeout
 
@@ -763,8 +763,7 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r __attribute__((unused)),
 			DEBUG( "[FCDB] IsSessionValid: Session is valid! %s\n", sessionId );
 			char tmpQuery[ 512 ];
 			
-			sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUserSession SET `LoggedTime` = '%ld' WHERE `SessionID` = '%s'", timestamp, sessionId );
-			//sprintf( tmpQuery, "UPDATE FUserSession SET `LoggedTime` = '%ld' WHERE `SessionID` = '%s'", timestamp, sessionId );
+			sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUserSession SET `LastActionTime`=%ld WHERE `SessionID`='%s'", timestamp, sessionId );
 
 			void *res = sqlLib->Query( sqlLib, tmpQuery );
 			if( res != NULL )

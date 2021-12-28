@@ -23,7 +23,7 @@ typedef struct SocketInterface
 {
 	Socket*					(*SocketNew)( void *sb, FBOOL ssl, unsigned short port, int type );
 	int						(*SocketListen)( Socket* s );
-	Socket*					(*SocketConnectHost)( void *sb, FBOOL ssl, char *host, unsigned short port );
+	Socket*					(*SocketConnectHost)( void *sb, FBOOL ssl, char *host, unsigned short port, FBOOL blocked );
 	int						(*SocketSetBlocking)( Socket* s, FBOOL block );
 }SocketInterface;
 

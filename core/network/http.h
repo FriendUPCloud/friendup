@@ -270,6 +270,15 @@ enum {
 //
 //
 
+
+#define HTTP_COMPRESSION_NONE		0
+#define	HTTP_COMPRESSION_DEFLATE	1
+#define	HTTP_COMPRESSION_BZIP		(HTTP_COMPRESSION_DEFLATE<<2)
+
+//
+//
+//
+
 // HTTP Request structure
 typedef struct Http
 {
@@ -322,7 +331,7 @@ typedef struct Http
 	//
 	// Do not write to these. They are "private"
 	//
-	char				*http_Response;
+	unsigned char		*http_Response;
 	FLONG				http_ResponseLength;
 
 	FBOOL				http_PartialRequest;
@@ -359,6 +368,8 @@ typedef struct Http
 	
 	FBOOL				*http_ShutdownPtr;		// pointer to quit flag
 	char				http_UserActionInfo[ 512 ];
+	
+	int					http_Compression;	// compression
 } Http;
 
 //
@@ -478,7 +489,7 @@ void HttpSetContent( Http*, char* data, unsigned int length );
 // Build the HTTP response
 //
 
-char* HttpBuild( Http* http );
+unsigned char* HttpBuild( Http* http );
 
 //
 // Frees a generic HttpObject (Caller is responsible for freeing other fields before calling this)
@@ -503,5 +514,11 @@ void HttpWriteAndFree( Http* http, Socket *sock );
 //
 
 void HttpWrite( Http* http, Socket *sock );
+
+//
+// Set compression
+//
+
+void HttpSetCompression( Http* http, int comp );
 
 #endif // __NETWORK_HTTP_H__

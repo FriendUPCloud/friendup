@@ -99,7 +99,7 @@ char *GetFileName( const char *path )
 
 void init( struct FHandler *s )
 {
-	DEBUG("[RAMFS] init\n");
+	DEBUG("[INRAM] init\n");
 }
 
 //
@@ -108,7 +108,7 @@ void init( struct FHandler *s )
 
 void deinit( struct FHandler *s )
 {
-	DEBUG("[RAMFS] deinit\n");
+	DEBUG("[INRAM] deinit\n");
 }
 
 //
@@ -127,7 +127,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 		return NULL;
 	}
 	
-	DEBUG("Mounting RAM filesystem!\n");
+	DEBUG("[INRAM] Mounting RAM filesystem!\n");
 	
 	if( ( dev = FCalloc( 1, sizeof( File ) ) ) != NULL )
 	{
@@ -171,7 +171,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 		dev->f_Size = 0;
 	}
 	
-	DEBUG("RAMFS mount ok\n");
+	DEBUG("[INRAM] mount ok\n");
 	
 	return dev;
 }
@@ -184,7 +184,7 @@ int Release( struct FHandler *s, void *f )
 {
 	if( f != NULL )
 	{
-		DEBUG("Release filesystem\n");
+		DEBUG("[INRAM] Release filesystem\n");
 		File *lf = (File*)f;
 		
 		if( lf->f_SpecialData )
@@ -208,7 +208,7 @@ int UnMount( struct FHandler *s, void *f )
 {
 	if( f != NULL )
 	{
-		DEBUG("Unmount filesystem\n");
+		DEBUG("[INRAM] Unmount filesystem\n");
 		File *lf = (File*)f;
 		
 		if( lf->f_SpecialData )
@@ -239,7 +239,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 	memcpy( tmppath, path, spath );
 	
 	File *locfil = NULL;
-	DEBUG("File open\n");
+	DEBUG("[INRAM] File open\n");
 	
 	SpecialData *srd  = (SpecialData *)s->f_SpecialData;
 	int error = 0;
@@ -257,7 +257,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		}
 	}
 	
-	DEBUG("File open 1  path %s  tmppath %s  nameptr %s\n", path, tmppath, nameptr );
+	DEBUG("[INRAM] File open 1  path %s  tmppath %s  nameptr %s\n", path, tmppath, nameptr );
     
 	INRAMFile *directory = NULL;
 	
@@ -274,21 +274,21 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 	{
 		if( directory->nf_Name != NULL )
 		{
-			DEBUG("Directory where file will be create/exist %s\n", directory->nf_Name );
+			DEBUG("[INRAM] Directory where file will be create/exist %s\n", directory->nf_Name );
 		}
 		
 		INRAMFile *nf = NULL;
 		
 		nf = INRAMFileGetChildByName( directory, nameptr );
 		// read
-		DEBUG("\nINRAM opened file for %s\n\n", mode );
+		DEBUG("\n[INRAM] opened file for %s\n\n", mode );
 		
 		if( mode[ 0 ] == 'r' )
 		{
 			if( nf == NULL )
 			{
 				free( tmppath );
-				FERROR("Cannot open file %s\n", path );
+				FERROR("[INRAM] Cannot open file %s\n", path );
 				return NULL;
 			}
 			nf->nf_Offset = 0;
@@ -313,21 +313,21 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		if( ( locfil = FCalloc( sizeof( File ), 1 ) ) != NULL )
 		{
 			locfil->f_Path = StringDup( path );
-			DEBUG("Fileopen, path duplicated %s\n", path );
+			DEBUG("[INRAM] Fileopen, path duplicated %s\n", path );
 			
 			locfil->f_SpecialData = FCalloc( 1, sizeof( SpecialData ) );
 			if( locfil->f_SpecialData != NULL )
 			{
 				((SpecialData *)locfil->f_SpecialData)->fp = nf;
 			}
-			DEBUG("\nOffset set to %ld\n\n", nf->nf_Offset );
+			DEBUG("\n[INRAM] Offset set to %ld\n\n", nf->nf_Offset );
 			
-			DEBUG("File open, descriptor returned\n");
+			DEBUG("[INRAM] File open, descriptor returned\n");
 		}
 	}
 
 	FFree( tmppath );
-	DEBUG("File open end\n");
+	DEBUG("[INRAM] File open end\n");
 
 	return locfil;
 }
@@ -355,7 +355,7 @@ int FileClose( struct File *s, void *fp )
 		if( lfp->f_Buffer ) free( lfp->f_Buffer );
 		free( lfp );
 		
-		DEBUG( "FileClose: Closing file pointer.\n" );
+		DEBUG( "[INRAM] FileClose: Closing file pointer.\n" );
 		
 		return close;
 	}
@@ -385,7 +385,7 @@ int FileRead( struct File *f, char *buffer, int rsize )
 		result = (int) readsize;
 		sd->fp->nf_Offset += readsize;
 	}
-	DEBUG("File read %d\n", result );
+	DEBUG("[INRAM] File read %d\n", result );
 	
 	if( result <= 0 ) return -1;
 	return result;
@@ -402,7 +402,7 @@ int FileWrite( struct File *f, char *buffer, int wsize )
 	SpecialData *sd = (SpecialData *)f->f_SpecialData;
 	if( sd )
 	{
-		DEBUG("File write %s\n", buffer );
+		DEBUG("[INRAM] File write %s\n", buffer );
 		result = BufStringAddSize( sd->fp->nf_Data, buffer, wsize );
 		 sd->fp->nf_Offset += result;
 	}
@@ -430,14 +430,14 @@ int FileSeek( struct File *s, int pos )
 
 int MakeDir( struct File *s, const char *path )
 {
-	INFO("MakeDir %s!\n", path );
+	INFO("[INRAM] MakeDir %s!\n", path );
 	int error = 0;
 	
 	SpecialData *srd  = (SpecialData *)s->f_SpecialData;
 	INRAMFile *directory = INRAMFileMakedirPath( srd->root, (char *)path, &error );
 	if( directory != NULL )
 	{
-		DEBUG("Directory found\n");
+		DEBUG("[INRAM] Directory found\n");
 		return -1;
 	}
 	
@@ -461,7 +461,7 @@ int GetDiskInfo( struct File *s, int64_t *used, int64_t *size )
 
 FLONG Delete( struct File *s, const char *path )
 {
-	DEBUG("Delete!\n");
+	DEBUG("[INRAM] Delete!\n");
 	FLONG deleted = 0;
 	
 	int error = 0;
@@ -471,7 +471,7 @@ FLONG Delete( struct File *s, const char *path )
 	{
 		INRAMFile *pdir = dir->nf_Parent;
 		
-		DEBUG("Delete parent ptr %p %s\n", pdir, pdir->nf_Name );
+		DEBUG("[INRAM] Delete parent ptr %p %s\n", pdir, pdir->nf_Name );
 		if( pdir != NULL )
 		{
 			dir = INRAMFileRemoveChild( pdir, dir );
@@ -480,20 +480,20 @@ FLONG Delete( struct File *s, const char *path )
 			{
 				deleted += INRAMFileDelete( dir );
 			}
-			DEBUG("Delete entries deleted\n");
+			DEBUG("[INRAM] Delete entries deleted\n");
 		}
 		else
 		{
-			FERROR("Parent entry is null\n");
+			FERROR("[INRAM] Parent entry is null\n");
 			return -1;
 		}
 	}
 	else
 	{
-		FERROR("Path not found %s\n", path );
+		FERROR("[INRAM] Path not found %s\n", path );
 		return -2;
 	}
-	DEBUG("Delete END\n");
+	DEBUG("[INRAM] Delete END\n");
 	
 	return deleted;
 }
@@ -504,7 +504,7 @@ FLONG Delete( struct File *s, const char *path )
 
 int Rename( struct File *s, const char *path, const char *nname )
 {
-	DEBUG("Rename!\n");
+	DEBUG("[INRAM] Rename!\n");
 	int res = 0;
 	
 	if( nname == NULL )
@@ -545,7 +545,7 @@ int Rename( struct File *s, const char *path, const char *nname )
 		}
 		else
 		{
-			FERROR("Cannot allocate memory\n");
+			FERROR("[INRAM] Cannot allocate memory\n");
 		}
 	}
 	
@@ -559,7 +559,7 @@ int Rename( struct File *s, const char *path, const char *nname )
 
 int Copy( struct File *s, const char *dst, const char *src )
 {
-	DEBUG("Copy!\n");
+	DEBUG("[INRAM] Copy!\n");
 
 	int error = 0;
 
@@ -577,7 +577,7 @@ FILE *popen( const char *c, const char *r );
 
 char *Execute( struct File *s, const char *path, const char *args )
 {
-	DEBUG("SYS mod run\n");
+	DEBUG("[INRAM] Execute\n");
 
 
 	return NULL;
@@ -663,10 +663,10 @@ BufString *Info( File *s, const char *path )
 
 	BufStringAdd( bs, "ok<!--separate-->");
 	
-	DEBUG("Info!\n");
+	DEBUG("[INRAM] Info!\n");
 	
 	// user is trying to get access to not his directory
-	DEBUG("Check access for path '%s' in root path '%s'  name '%s'\n", path, s->f_Path, s->f_Name );
+	DEBUG("[INRAM] Check access for path '%s' in root path '%s'  name '%s'\n", path, s->f_Path, s->f_Name );
 	
 	int error = 0;
 	SpecialData *srd = (SpecialData *) s->f_SpecialData;
@@ -687,12 +687,11 @@ BufString *Info( File *s, const char *path )
 		int size = 0;
 		if( buffer != NULL )
 		{
-			size = snprintf( buffer, globlen, "{ \"response\": \"%s\", \"code\":\"%d\",\"path\":\"%s\" }", l->sl_Dictionary->d_Msg[DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST] , DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST, path );
+			size = snprintf( buffer, globlen, "{\"response\":\"%s\",\"code\":\"%d\",\"path\":\"%s\"}", l->sl_Dictionary->d_Msg[DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST] , DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST, path );
 			
 			BufStringAddSize( bs, buffer, size );
 			FFree( buffer );
 		}
-		//BufStringAdd( bs, "{ \"response\": \"File or directory do not exist\"}" );
 	}
 	
 	DEBUG("[INRAM] Info END\n");
@@ -706,10 +705,10 @@ BufString *Info( File *s, const char *path )
 
 BufString *Call( File *s, const char *path, Http *request )
 {
-	DEBUG("Info!\n");
+	DEBUG("[INRAM] Call!\n");
 	BufString *bs = BufStringNew();
 	BufStringAdd( bs, "fail<!--separate-->");	
-	DEBUG("Info END\n");
+	DEBUG("[INRAM] Call END\n");
 	return bs;
 }
 
@@ -720,13 +719,13 @@ BufString *Call( File *s, const char *path, Http *request )
 BufString *Dir( File *s, const char *path )
 {
 	BufString *bs = BufStringNew();
-	DEBUG("Dir!\n");
+	DEBUG("[INRAM] Dir!\n");
 	
 	int error = 0;
 	// user is trying to get access to not his directory
 	SpecialData *srd = (SpecialData *) s->f_SpecialData;
 	INRAMFile *dir =INRAMFileGetLastPath( srd->root, path, &error );
-	DEBUG("Path received, pointer to: %p   path %s!\n", dir, path );
+	DEBUG("[INRAM] Path received, pointer to: %p   path %s!\n", dir, path );
 	
 	if( dir != NULL )
 	{
@@ -740,7 +739,7 @@ BufString *Dir( File *s, const char *path )
 		char tempString[ 4096 ];
 		int plen = strlen( path ) - 1;
 		
-		DEBUG("going through children\n");
+		DEBUG("[INRAM] going through children\n");
 		
 		while ( f != NULL )
 		{
@@ -759,7 +758,7 @@ BufString *Dir( File *s, const char *path )
 			}
 			FillStat( bs, f, s, tempString );
 			pos++;
-			DEBUG("Dir/PAth added %s\n", tempString );
+			DEBUG("[INRAM] Dir/PAth added %s\n", tempString );
 			
 			f = (INRAMFile *) f->node.mln_Succ;
 		}
@@ -773,7 +772,7 @@ BufString *Dir( File *s, const char *path )
 		BufStringAdd( bs, "ok<!--separate-->");
 		BufStringAdd( bs, "[]" );
 	}
-	DEBUG("Dir END %s\n", bs->bs_Buffer);
+	DEBUG("[INRAM] Dir END %s\n", bs->bs_Buffer);
 	
 	return bs;
 }

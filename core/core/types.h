@@ -164,6 +164,8 @@ typedef void * APTR;
 #ifndef FRIEND_CORE_MANAGER_ID_SIZE
 #define FRIEND_CORE_MANAGER_ID_SIZE	128
 #endif
+	
+#define ERROR_STRING_TEMPLATE "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}"
 
 #endif		// __TYPES_H__
 

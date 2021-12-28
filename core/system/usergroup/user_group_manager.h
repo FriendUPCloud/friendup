@@ -69,6 +69,12 @@ int UGMRemoveGroup( UserGroupManager *smgr, UserGroup *ug );
 UserGroup *UGMGetGroupByID( UserGroupManager *smgr, FULONG id );
 
 //
+// Get UserGroup by ID
+//
+
+UserGroup *UGMGetGroupByIDDB( UserGroupManager *ugm, FQUAD id );
+
+//
 // Get UserGroup by Name
 //
 

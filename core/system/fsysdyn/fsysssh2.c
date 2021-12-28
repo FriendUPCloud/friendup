@@ -2191,25 +2191,25 @@ BufString *Dir( File *s, const char *path )
 					BufStringAdd( bs, "\",");
 				}
 				
-				snprintf( tmp, sizeof(tmp), "\"Filesize\": %llu,", attrs.filesize );
+				snprintf( tmp, sizeof(tmp), "\"Filesize\":%llu,", attrs.filesize );
 				BufStringAdd( bs, tmp );
 				
 				char *timeStr = FCalloc( 64, sizeof( char ) );
 				if( timeStr != NULL )
 				{
 					strftime( timeStr, 63, "%Y-%m-%d %H:%M:%S", localtime( (const time_t *)&(attrs.mtime) ) );
-					snprintf( tmp, 63, "\"DateModified\": \"%s\",", timeStr );
+					snprintf( tmp, 63, "\"DateModified\":\"%s\",", timeStr );
 					BufStringAdd( bs, tmp );
 					FFree( timeStr );
 				}
 				
 				if( isDir )
 				{
-					BufStringAdd( bs,  "\"MetaType\":\"Directory\",\"Type\":\"Directory\" }" );
+					BufStringAdd( bs,  "\"MetaType\":\"Directory\",\"Type\":\"Directory\"}" );
 				}
 				else
 				{
-					BufStringAdd( bs, "\"MetaType\":\"File\",\"Type\":\"File\" }" );
+					BufStringAdd( bs, "\"MetaType\":\"File\",\"Type\":\"File\"}" );
 				}
 				 
 				 if( longentry[0] != '\0' )

@@ -55,7 +55,7 @@ cull_lagging_clients(struct per_vhost_data__minimal *vhd)
 {
 	uint32_t oldest_tail = lws_ring_get_oldest_tail(vhd->ring);
 	struct per_session_data__minimal *old_pss = NULL;
-	int most = 0, before = lws_ring_get_count_waiting_elements(vhd->ring,
+	int most = 0, before = (int)lws_ring_get_count_waiting_elements(vhd->ring,
 					&oldest_tail), m;
 
 	/*
@@ -111,7 +111,7 @@ cull_lagging_clients(struct per_vhost_data__minimal *vhd)
 			 * what is the largest number of pending ring elements
 			 * for any survivor.
 			 */
-			m = lws_ring_get_count_waiting_elements(vhd->ring,
+			m = (int)lws_ring_get_count_waiting_elements(vhd->ring,
 							&((*ppss)->tail));
 			if (m > most)
 				most = m;
@@ -279,36 +279,3 @@ callback_minimal(struct lws *wsi, enum lws_callback_reasons reason,
 		0, \
 		0, NULL, 0 \
 	}
-
-#if !defined (LWS_PLUGIN_STATIC)
-
-/* boilerplate needed if we are built as a dynamic plugin */
-
-static const struct lws_protocols protocols[] = {
-	LWS_PLUGIN_PROTOCOL_MINIMAL
-};
-
-int
-init_protocol_minimal(struct lws_context *context,
-		      struct lws_plugin_capability *c)
-{
-	if (c->api_magic != LWS_PLUGIN_API_MAGIC) {
-		lwsl_err("Plugin API %d, library API %d", LWS_PLUGIN_API_MAGIC,
-			 c->api_magic);
-		return 1;
-	}
-
-	c->protocols = protocols;
-	c->count_protocols = LWS_ARRAY_SIZE(protocols);
-	c->extensions = NULL;
-	c->count_extensions = 0;
-
-	return 0;
-}
-
-int
-destroy_protocol_minimal(struct lws_context *context)
-{
-	return 0;
-}
-#endif

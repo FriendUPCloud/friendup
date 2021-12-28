@@ -92,6 +92,7 @@
 	border: 0;
 }*/
 
+
 /* Gui UserList ------------------------------------------------------------------ */
 
 #Admin #UserList .submenu_wrapper
@@ -183,11 +184,12 @@
 #Admin #UserDetails .AvatarRect > div
 {
 	position: relative;
+	z-index: 0;
 	min-height: 138px;
 	box-sizing: border-box;
 }
 
-#Admin #UserDetails .AvatarRect > div button
+#Admin #UserDetails .AvatarRect > div button#AdminAvatarEdit
 {
 	position: absolute;
 	left: 10px;
@@ -221,6 +223,7 @@
     width: 256px;
     height: 256px;
     zoom: 0.5;
+    z-index: 5;
 }
 
 
@@ -245,24 +248,76 @@
 	border: 1px solid rgba(0,0,0,0) !important;*/
 }
 
+/* Gui LiberatorAppDetails --------------------------------------------------- */
+
+#Admin #LiberatorAppDetails .IconRect 
+{
+	max-width: 320px;
+	margin-left: auto;
+	margin-right: 0;
+}
+
+#Admin #LiberatorAppDetails .IconRect > div
+{
+	position: relative;
+	min-height: 138px;
+	box-sizing: border-box;
+}
+
+#Admin #LiberatorAppDetails .IconRect > div button
+{
+	position: absolute;
+	left: 10px;
+	bottom: 0;
+}
+
+#Admin #LiberatorAppDetails #LiberatorAppIconArea.IconSmall:before
+{
+	font-size: 128px;
+  	vertical-align: middle;
+  	line-height: 128px;
+  	/*color: #34495E;*/
+}
+
+#Admin #LiberatorAppDetails #LiberatorAppIconArea 
+{
+    position: relative;
+    display: block;
+    margin-bottom: 10px;
+    width: 128px;
+    height: 128px;
+    /*border-radius: 100%;*/
+    overflow: hidden;
+}
+
+#Admin #LiberatorAppDetails #LiberatorAppIconArea #LiberatorAppIcon 
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+    width: 256px;
+    height: 256px;
+    zoom: 0.5;
+}
+
 /* Server printers ---------------------------------------------------------- */
 
 
 
 /* Storage ------------------------------------------------------------------ */
 
-#Admin #StorageGui #DiskSizeContainer
+#Admin #StorageGui #DiskSizeContainer, #Admin .StorageGui .DiskSizeContainer
 {
 	display: none;
 }
 
-#Admin #StorageGui .HRow > .DiskContainer
+#Admin #StorageGui .HRow > .DiskContainer, #Admin .StorageGui .HRow > .DiskContainer
 {
 	min-width: 148px !important;
 	cursor: pointer;
 }
 
-#Admin #StorageGui .Col1
+#Admin #StorageGui .Col1, #Admin .StorageGui .Col1
 {
 	width: 40px;
 	height: 36px;
@@ -271,7 +326,7 @@
 	padding-bottom: 5px;
 }
 
-#Admin #StorageGui .Col2
+#Admin #StorageGui .Col2, #Admin .StorageGui .Col2
 {
 	width: calc(100% - 40px);
 	padding-left: 11px;
@@ -279,7 +334,7 @@
 	box-sizing: border-box;
 }
 
-#Admin #StorageGui .disk
+#Admin #StorageGui .disk, #Admin .StorageGui .disk
 {
 	position: relative;
 	width: 100%;
@@ -290,7 +345,7 @@
     background-repeat: no-repeat;
 }
 
-#Admin #StorageGui .disk > .label
+#Admin #StorageGui .disk > .label, #Admin .StorageGui .disk > .label
 {
 	position: absolute;
     right: calc(50% - 20px);
@@ -302,7 +357,7 @@
     background-size: 40%;
 }
 
-#Admin #StorageGui .name 
+#Admin #StorageGui .name, #Admin .StorageGui .name
 {
 	/*color: #20374D;*/
 	font-size: 12px;
@@ -310,15 +365,15 @@
 	line-height: 15px;
 }
 
-#Admin #StorageGui .type, 
-#Admin #StorageGui .bytes
+#Admin #StorageGui .type, #Admin .StorageGui .type,
+#Admin #StorageGui .bytes, #Admin .StorageGui .bytes
 {
 	/*color: #20374D;*/
 	font-size: 10px;
 	line-height: 13px;
 }
 
-#Admin #StorageGui .rectangle 
+#Admin #StorageGui .rectangle, #Admin .StorageGui .rectangle
 {
 	position: relative;
 	height: 6px;
@@ -328,7 +383,7 @@
 	box-sizing: border-box;
 }
 
-#Admin #StorageGui .rectangle > div 
+#Admin #StorageGui .rectangle > div, #Admin .StorageGui .rectangle > div
 {
 	position: absolute;
 	top: 0;
@@ -407,13 +462,23 @@
 
 #Admin .BackgroundRed
 {
-	background-color: #C0392B;
-	color: #f0f0f0;
+	background-color: #C0392B !important;
+	color: #f0f0f0 !important;
 }
 
 #Admin .BackgroundGrey
 {
 	background-color: #e3e7e8;
+}
+
+#Admin .Hidden
+{
+	display: none;
+}
+
+#Admin .Visible .Hidden
+{
+	display: block;
 }
 
 html body button.IconButton:not(:hover), html body .Button.IconButton:not(:hover)
@@ -424,5 +489,131 @@ html body button.IconButton:not(:hover), html body .Button.IconButton:not(:hover
 html body button.IconButton, html body .Button.IconButton
 {
 	border: 1px solid rgba(0,0,0,0);
+}
+
+/* Custom Gui ------------------------------------------------------------------ */
+
+body #Admin button:before, body #Admin button.IconSmall:before
+{
+	margin-right: 0;
+}
+
+body #Admin .AvatarRect > div #AdminAvatarRemove
+{
+	position: absolute;
+	top: 4px;
+	right: 0;
+	z-index: 10;
+	display: none;
+}
+
+body #Admin .AvatarRect > div:hover #AdminAvatarRemove
+{
+	display: block;
+}
+
+body #Admin .IconMedium:before
+{
+	font-size: 1.2em;
+}
+
+body #Admin #GuiSidebar a
+{
+	display: block;
+	position: relative;
+	top: -2px;
+}
+
+body #Admin #GuiSidebar a:before
+{
+	position: relative;
+	top: 2px;
+}
+
+body.Synthwave .Selected 
+{
+	background-color: #2d1a47;
+}
+
+body:not(.Charcoal):not(.Synthwave),
+body:not(.Charcoal):not(.Synthwave) .Box
+{
+	color: #20374D;
+}
+
+body:not(.Charcoal):not(.Synthwave) button, 
+body:not(.Charcoal):not(.Synthwave) .Button
+{
+	color: #20374D;
+}
+
+body:not(.Charcoal):not(.Synthwave) button.Negative, 
+body:not(.Charcoal):not(.Synthwave) .Button.Negative
+{
+	color: #fdfdfd;
+}
+
+body:not(.Charcoal):not(.Synthwave) button:hover, 
+body:not(.Charcoal):not(.Synthwave) .Button:hover
+{
+	color: #fdfdfd;
+}
+
+body:not(.Charcoal):not(.Synthwave) #Admin .BackgroundNegative
+{
+	background-color: #20374D;
+	color: #fdfdfd;
+}
+
+body:not(.Charcoal):not(.Synthwave) #Admin .BackgroundPositive,
+body:not(.Charcoal):not(.Synthwave) #Admin .Positive
+{
+	background-color: #fdfdfd;
+	color: #20374D;
+}
+
+body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent button.Positive:hover, 
+body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent .Button.Positive:hover
+{
+	background-color: #20374D;
+	color: #fdfdfd;
+}
+
+body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent input,
+body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent textarea
+{
+	color: #20374D;
+	background-color: #e3e7e8;
+}
+
+body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent select
+{
+	color: #20374D;
+}
+
+/* Gui Sidebar ------------------------------------------------------------------ */
+
+body:not(.Charcoal):not(.Synthwave) #Admin #GuiSidebar .Selected
+{
+	background-color: #fdfdfd;
+}
+
+body:not(.Charcoal):not(.Synthwave) #Admin #GuiSidebar .Selected .Negative
+{
+	color: #20374D;
+}
+
+body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent .Selected
+{
+	/*background-color: #20374D;
+	color: #fdfdfd;*/
+	color: #20374D;
+}
+
+html body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent button.Positive:hover, 
+html body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent .Button.Positive:hover
+{
+	color: inherit;
+	opacity: 0.8;
 }
 

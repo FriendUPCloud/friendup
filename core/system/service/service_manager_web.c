@@ -65,14 +65,6 @@ Http *SMWebRequest( void *lsb, char **urlpath, Http* request, UserSession *logge
 	
 	if( strcmp( urlpath[ 0 ], "request" ) == 0 )
 	{
-		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
-		};
-		
-		response = HttpNewSimple( HTTP_200_OK,  tags );
-		
 		char *params = NULL;
 		char *servername = NULL;
 		int type = 0;
@@ -112,10 +104,30 @@ Http *SMWebRequest( void *lsb, char **urlpath, Http* request, UserSession *logge
 		
 		if( params != NULL && path != NULL )
 		{
-			char *serresp = NotificationManagerSendRequestToConnections( l->sl_NotificationManager, request, loggedSession, servername, type, path, params ); // 0 - type request, 1 - event
+			BufString *serresp = NotificationManagerSendRequestToConnections( 
+				l->sl_NotificationManager, 
+				request, 
+				loggedSession, 
+				servername, 
+				type, 
+				path, 
+				params 
+			); // 0 - type request, 1 - event
+			
 			if( serresp != NULL )
 			{
-				HttpSetContent( response, serresp, strlen( serresp ) );
+				HttpSetContent( response, serresp->bs_Buffer, serresp->bs_Size );
+				
+				// assign response to return string and delete bufstring
+				serresp->bs_Buffer = NULL;
+				BufStringDelete( serresp );
+	/*
+				char buffer[ 256 ];
+			char buffer1[ 256 ];
+			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, channelid, app, title, message" );
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, buffer );
+			*/
 			}
 		} // missing parameters
 		else
@@ -123,7 +135,7 @@ Http *SMWebRequest( void *lsb, char **urlpath, Http* request, UserSession *logge
 			char buffer[ 512 ];
 			char buffer1[ 256 ];
 			snprintf( buffer1, sizeof(buffer1)-1, l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, channelid, app, title, message" );
-			snprintf( buffer, sizeof(buffer)-1, "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+			snprintf( buffer, sizeof(buffer)-1, ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, buffer );
 		}
 		
@@ -138,6 +150,7 @@ Http *SMWebRequest( void *lsb, char **urlpath, Http* request, UserSession *logge
 		}
 	}
 
+	DEBUG("Return pointer to response %p\n", response );
 	return response;
 }
 

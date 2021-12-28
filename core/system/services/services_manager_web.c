@@ -353,7 +353,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 		char buffer[ 512 ];
 		char buffer1[ 256 ];
 		snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "ServiceName (in url)" );
-		snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+		snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 		HttpAddTextContent( response, buffer );
 		
 		return response;

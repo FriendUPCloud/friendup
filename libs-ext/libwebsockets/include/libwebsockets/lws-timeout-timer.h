@@ -113,6 +113,10 @@ lws_set_timeout(struct lws *wsi, enum pending_timeout reason, int secs);
 void
 lws_set_timeout_us(struct lws *wsi, enum pending_timeout reason, lws_usec_t us);
 
+/* helper for clearer LWS_TO_KILL_ASYNC / LWS_TO_KILL_SYNC usage */
+#define lws_wsi_close(w, to_kill) lws_set_timeout(wsi, 1, to_kill)
+
+
 #define LWS_SET_TIMER_USEC_CANCEL ((lws_usec_t)-1ll)
 #define LWS_USEC_PER_SEC ((lws_usec_t)1000000)
 
@@ -146,6 +150,8 @@ lws_set_timeout_us(struct lws *wsi, enum pending_timeout reason, lws_usec_t us);
 LWS_VISIBLE LWS_EXTERN void
 lws_set_timer_usecs(struct lws *wsi, lws_usec_t usecs);
 
+#if defined(LWS_WITH_DEPRECATED_THINGS)
+
 /*
  * lws_timed_callback_vh_protocol() - calls back a protocol on a vhost after
  * 					the specified delay in seconds
@@ -154,6 +160,8 @@ lws_set_timer_usecs(struct lws *wsi, lws_usec_t usecs);
  * \param protocol: the protocol to call back
  * \param reason: callback reason
  * \param secs:	how many seconds in the future to do the callback.
+ *
+ * DEPRECATED since v4.1
  *
  * Callback the specified protocol with a fake wsi pointing to the specified
  * vhost and protocol, with the specified reason, at the specified time in the
@@ -168,7 +176,8 @@ lws_set_timer_usecs(struct lws *wsi, lws_usec_t usecs);
 LWS_VISIBLE LWS_EXTERN int
 lws_timed_callback_vh_protocol(struct lws_vhost *vh,
 			       const struct lws_protocols *prot,
-			       int reason, int secs);
+			       int reason, int secs)
+LWS_WARN_DEPRECATED;
 
 /*
  * lws_timed_callback_vh_protocol_us() - calls back a protocol on a vhost after
@@ -178,6 +187,8 @@ lws_timed_callback_vh_protocol(struct lws_vhost *vh,
  * \param protocol: the protocol to call back
  * \param reason: callback reason
  * \param us:	how many us in the future to do the callback.
+ *
+ * DEPRECATED since v4.1
  *
  * Callback the specified protocol with a fake wsi pointing to the specified
  * vhost and protocol, with the specified reason, at the specified time in the
@@ -192,7 +203,10 @@ lws_timed_callback_vh_protocol(struct lws_vhost *vh,
 LWS_VISIBLE LWS_EXTERN int
 lws_timed_callback_vh_protocol_us(struct lws_vhost *vh,
 				  const struct lws_protocols *prot, int reason,
-				  lws_usec_t us);
+				  lws_usec_t us)
+LWS_WARN_DEPRECATED;
+
+#endif
 
 struct lws_sorted_usec_list;
 
@@ -200,34 +214,117 @@ typedef void (*sul_cb_t)(struct lws_sorted_usec_list *sul);
 
 typedef struct lws_sorted_usec_list {
 	struct lws_dll2 list;	/* simplify the code by keeping this at start */
-	sul_cb_t	cb;
 	lws_usec_t	us;
+	sul_cb_t	cb;
+	uint32_t	latency_us;	/* us it may safely be delayed */
 } lws_sorted_usec_list_t;
 
+/*
+ * There are multiple sul owners to allow accounting for, a) events that must
+ * wake from suspend, and b) events that can be missued due to suspend
+ */
+#define LWS_COUNT_PT_SUL_OWNERS			2
+
+#define LWSSULLI_MISS_IF_SUSPENDED		0
+#define LWSSULLI_WAKE_IF_SUSPENDED		1
 
 /*
- * lws_sul_schedule() - schedule a callback
+ * lws_sul2_schedule() - schedule a callback
  *
  * \param context: the lws_context
  * \param tsi: the thread service index (usually 0)
+ * \param flags: LWSSULLI_...
  * \param sul: pointer to the sul element
- * \param cb: the scheduled callback
- * \param us: the delay before the callback arrives, or
- *		LWS_SET_TIMER_USEC_CANCEL to cancel it.
  *
  * Generic callback-at-a-later time function.  The callback happens on the
  * event loop thread context.
  *
  * Although the api has us resultion, the actual resolution depends on the
- * platform and is commonly 1ms.
+ * platform and may be, eg, 1ms.
  *
  * This doesn't allocate and doesn't fail.
  *
- * You can call it again with another us value to change the delay.
+ * If flags contains LWSSULLI_WAKE_IF_SUSPENDED, the scheduled event is placed
+ * on a sul owner list that, if the system has entered low power suspend mode,
+ * tries to arrange that the system should wake from platform suspend just
+ * before the event is due.  Scheduled events without this flag will be missed
+ * in the case the system is in suspend and nothing else happens to have woken
+ * it.
+ *
+ * You can call it again with another us value to change the delay or move the
+ * event to a different owner (ie, wake or miss on suspend).
  */
 LWS_VISIBLE LWS_EXTERN void
-lws_sul_schedule(struct lws_context *context, int tsi,
-	         lws_sorted_usec_list_t *sul, sul_cb_t cb, lws_usec_t us);
+lws_sul2_schedule(struct lws_context *context, int tsi, int flags,
+		  lws_sorted_usec_list_t *sul);
+
+/*
+ * lws_sul_cancel() - cancel scheduled callback
+ *
+ * \param sul: pointer to the sul element
+ *
+ * If it's scheduled, remove the sul from its owning sorted list.
+ * If not scheduled, it's a NOP.
+ */
+LWS_VISIBLE LWS_EXTERN void
+lws_sul_cancel(lws_sorted_usec_list_t *sul);
+
+/*
+ * lws_sul_earliest_wakeable_event() - get earliest wake-from-suspend event
+ *
+ * \param ctx: the lws context
+ * \param pearliest: pointer to lws_usec_t to take the result
+ *
+ * Either returns 1 if no pending event, or 0 and sets *pearliest to the
+ * MONOTONIC time of the current earliest next expected event.
+ */
+LWS_VISIBLE LWS_EXTERN int
+lws_sul_earliest_wakeable_event(struct lws_context *ctx, lws_usec_t *pearliest);
+
+/*
+ * For backwards compatibility
+ *
+ * If us is LWS_SET_TIMER_USEC_CANCEL, the sul is removed from the scheduler.
+ * New code can use lws_sul_cancel()
+ */
+
+LWS_VISIBLE LWS_EXTERN void
+lws_sul_schedule(struct lws_context *ctx, int tsi, lws_sorted_usec_list_t *sul,
+		 sul_cb_t _cb, lws_usec_t _us);
+LWS_VISIBLE LWS_EXTERN void
+lws_sul_schedule_wakesuspend(struct lws_context *ctx, int tsi,
+			     lws_sorted_usec_list_t *sul, sul_cb_t _cb,
+			     lws_usec_t _us);
+
+#if defined(LWS_WITH_SUL_DEBUGGING)
+/**
+ * lws_sul_debug_zombies() - assert there are no scheduled sul in a given object
+ *
+ * \param ctx: lws_context
+ * \param po: pointer to the object that is about to be destroyed
+ * \param len: length of the object that is about to be destroyed
+ * \param destroy_description: string clue what any failure is related to
+ *
+ * This is an optional debugging helper that walks the sul scheduler lists
+ * confirming that there are no suls scheduled that live inside the object
+ * footprint described by po and len.  When internal objects are about to be
+ * destroyed, like wsi / user_data or secure stream handles, if
+ * LWS_WITH_SUL_DEBUGGING is enabled the scheduler is checked for anything
+ * in the object being destroyed.  If something found, an error is printed and
+ * an assert fired.
+ *
+ * Internal sul like timeouts should always be cleaned up correctly, but user
+ * suls in, eg, wsi user_data area, or in secure stream user allocation, may be
+ * the cause of difficult to find bugs if valgrind not available and the user
+ * code left a sul in the scheduler after destroying the object the sul was
+ * living in.
+ */
+LWS_VISIBLE LWS_EXTERN void
+lws_sul_debug_zombies(struct lws_context *ctx, void *po, size_t len,
+		      const char *destroy_description);
+#else
+#define lws_sul_debug_zombies(_a, _b, _c, _d)
+#endif
 
 /*
  * lws_validity_confirmed() - reset the validity timer for a network connection
@@ -257,10 +354,9 @@ lws_validity_confirmed(struct lws *wsi);
  */
 
 LWS_VISIBLE LWS_EXTERN int
-__lws_sul_insert(lws_dll2_owner_t *own, lws_sorted_usec_list_t *sul,
-		 lws_usec_t us);
+__lws_sul_insert(lws_dll2_owner_t *own, lws_sorted_usec_list_t *sul);
 
 LWS_VISIBLE LWS_EXTERN lws_usec_t
-__lws_sul_service_ripe(lws_dll2_owner_t *own, lws_usec_t usnow);
+__lws_sul_service_ripe(lws_dll2_owner_t *own, int own_len, lws_usec_t usnow);
 
 ///@}

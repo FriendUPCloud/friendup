@@ -1,6 +1,6 @@
 /* Charcoal ----------------------------------------------------------------- */
 
-*
+html > body.Charcoal, html > body.Charcoal *
 {
     scrollbar-color: #404040 #1e1e1e !important;
 }

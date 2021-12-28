@@ -189,6 +189,7 @@ int main(int argc, const char **argv)
 	struct lws_context_creation_info info;
 	struct lws_client_connect_info i;
 	struct lws_context *context;
+	const char *p;
 	int n = 0;
 
 	signal(SIGINT, sigint_handler);
@@ -212,7 +213,7 @@ int main(int argc, const char **argv)
 	 */
 	info.fd_limit_per_thread = 1 + count_clients + 1;
 
-#if defined(LWS_WITH_MBEDTLS)
+#if defined(LWS_WITH_MBEDTLS) || defined(USE_WOLFSSL)
 	/*
 	 * OpenSSL uses the system trust store.  mbedTLS has to be told which
 	 * CA to trust explicitly.
@@ -245,6 +246,9 @@ int main(int argc, const char **argv)
 	if (lws_cmdline_option(argc, argv, "--form1"))
 		i.path = "/form1";
 
+	if ((p = lws_cmdline_option(argc, argv, "--port")))
+		i.port = atoi(p);
+
 	i.host = i.address;
 	i.origin = i.address;
 	i.method = "POST";
@@ -257,6 +261,8 @@ int main(int argc, const char **argv)
 
 	for (n = 0; n < count_clients; n++) {
 		i.pwsi = &client_wsi[n];
+		lwsl_notice("%s: connecting to %s:%d\n", __func__,
+			    i.address, i.port);
 		if (!lws_client_connect_via_info(&i))
 			completed++;
 	}

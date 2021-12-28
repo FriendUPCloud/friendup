@@ -59,12 +59,15 @@ int lws_ssl_get_error(struct lws *wsi, int n)
 	m = SSL_get_error(wsi->tls.ssl, n);
 	lwsl_debug("%s: %p %d -> %d (errno %d)\n", __func__, wsi->tls.ssl, n, m,
 		   errno);
+	if (m == SSL_ERROR_SSL)
+		lws_tls_err_describe_clear();
 
-	assert (errno != 9);
+	// assert (errno != 9);
 
 	return m;
 }
 
+#if defined(LWS_WITH_SERVER)
 static int
 lws_context_init_ssl_pem_passwd_cb(char *buf, int size, int rwflag,
 				   void *userdata)
@@ -77,7 +80,9 @@ lws_context_init_ssl_pem_passwd_cb(char *buf, int size, int rwflag,
 
 	return (int)strlen(buf);
 }
+#endif
 
+#if defined(LWS_WITH_CLIENT)
 static int
 lws_context_init_ssl_pem_passwd_client_cb(char *buf, int size, int rwflag,
 					  void *userdata)
@@ -94,13 +99,23 @@ lws_context_init_ssl_pem_passwd_client_cb(char *buf, int size, int rwflag,
 
 	return (int)strlen(buf);
 }
+#endif
 
 void
 lws_ssl_bind_passphrase(SSL_CTX *ssl_ctx, int is_client,
 			const struct lws_context_creation_info *info)
 {
-	if (!info->ssl_private_key_password &&
-	    !info->client_ssl_private_key_password)
+	if (
+#if defined(LWS_WITH_SERVER)
+		!info->ssl_private_key_password
+#endif
+#if defined(LWS_WITH_SERVER) && defined(LWS_WITH_CLIENT)
+			&&
+#endif
+#if defined(LWS_WITH_CLIENT)
+	    !info->client_ssl_private_key_password
+#endif
+	    )
 		return;
 	/*
 	 * password provided, set ssl callback and user data
@@ -109,10 +124,20 @@ lws_ssl_bind_passphrase(SSL_CTX *ssl_ctx, int is_client,
 	 */
 	SSL_CTX_set_default_passwd_cb_userdata(ssl_ctx, (void *)info);
 	SSL_CTX_set_default_passwd_cb(ssl_ctx, is_client ?
+#if defined(LWS_WITH_CLIENT)
 				      lws_context_init_ssl_pem_passwd_client_cb:
-				      lws_context_init_ssl_pem_passwd_cb);
+#else
+					NULL:
+#endif
+#if defined(LWS_WITH_SERVER)
+				      lws_context_init_ssl_pem_passwd_cb
+#else
+				      	NULL
+#endif
+				  );
 }
 
+#if defined(LWS_WITH_CLIENT)
 static void
 lws_ssl_destroy_client_ctx(struct lws_vhost *vhost)
 {
@@ -135,7 +160,7 @@ lws_ssl_destroy_client_ctx(struct lws_vhost *vhost)
 	lws_dll2_remove(&tcr->cc_list);
 	lws_free(tcr);
 }
-
+#endif
 void
 lws_ssl_destroy(struct lws_vhost *vhost)
 {
@@ -145,8 +170,9 @@ lws_ssl_destroy(struct lws_vhost *vhost)
 
 	if (vhost->tls.ssl_ctx)
 		SSL_CTX_free(vhost->tls.ssl_ctx);
-
+#if defined(LWS_WITH_CLIENT)
 	lws_ssl_destroy_client_ctx(vhost);
+#endif
 
 // after 1.1.0 no need
 #if (OPENSSL_VERSION_NUMBER <  0x10100000)
@@ -176,7 +202,7 @@ lws_ssl_destroy(struct lws_vhost *vhost)
 int
 lws_ssl_capable_read(struct lws *wsi, unsigned char *buf, int len)
 {
-	struct lws_context *context = wsi->context;
+	struct lws_context *context = wsi->a.context;
 	struct lws_context_per_thread *pt = &context->pt[(int)wsi->tsi];
 	int n = 0, m;
 
@@ -264,14 +290,21 @@ lws_ssl_capable_read(struct lws *wsi, unsigned char *buf, int len)
 		/* keep on trucking it seems */
 	}
 
+#if 0
+	/*
+	 * If using openssl type tls library, this is the earliest point for all
+	 * paths to dump what was received as decrypted data from the tls tunnel
+	 */
+	lwsl_notice("%s: len %d\n", __func__, n);
+	lwsl_hexdump_notice(buf, n);
+#endif
+
 	lws_stats_bump(pt, LWSSTATS_B_READ, n);
 
 #if defined(LWS_WITH_SERVER_STATUS)
-	if (wsi->vhost)
-		wsi->vhost->conn_stats.rx += n;
+	if (wsi->a.vhost)
+		wsi->a.vhost->conn_stats.rx += n;
 #endif
-
-	// lwsl_hexdump_err(buf, n);
 
 #if defined(LWS_WITH_DETAILED_LATENCY)
 	if (context->detailed_latency_cb) {
@@ -281,7 +314,7 @@ lws_ssl_capable_read(struct lws *wsi, unsigned char *buf, int len)
 		wsi->detlat.latencies[LAT_DUR_PROXY_RX_TO_ONWARD_TX] =
 			lws_now_usecs() - pt->ust_left_poll;
 		wsi->detlat.latencies[LAT_DUR_USERCB] = 0;
-		lws_det_lat_cb(wsi->context, &wsi->detlat);
+		lws_det_lat_cb(wsi->a.context, &wsi->detlat);
 	}
 #endif
 
@@ -297,10 +330,12 @@ lws_ssl_capable_read(struct lws *wsi, unsigned char *buf, int len)
 	if (!wsi->tls.ssl)
 		goto bail;
 
-	if (SSL_pending(wsi->tls.ssl) &&
-	    lws_dll2_is_detached(&wsi->tls.dll_pending_tls))
-		lws_dll2_add_head(&wsi->tls.dll_pending_tls,
-				  &pt->tls.dll_pending_tls_owner);
+	if (SSL_pending(wsi->tls.ssl)) {
+		if (lws_dll2_is_detached(&wsi->tls.dll_pending_tls))
+			lws_dll2_add_head(&wsi->tls.dll_pending_tls,
+					  &pt->tls.dll_pending_tls_owner);
+	} else
+		__lws_ssl_remove_wsi_from_buffered_list(wsi);
 
 	return n;
 bail:
@@ -323,8 +358,15 @@ lws_ssl_capable_write(struct lws *wsi, unsigned char *buf, int len)
 {
 	int n, m;
 
-	// lwsl_notice("%s: len %d\n", __func__, len);
-	// lwsl_hexdump_notice(buf, len);
+#if 0
+	/*
+	 * If using OpenSSL type tls library, this is the last point for all
+	 * paths before sending data into the tls tunnel, where you can dump it
+	 * and see what is being sent.
+	 */
+	lwsl_notice("%s: len %d\n", __func__, len);
+	lwsl_hexdump_notice(buf, len);
+#endif
 
 	if (!wsi->tls.ssl)
 		return lws_ssl_capable_write_no_ssl(wsi, buf, len);
@@ -366,6 +408,7 @@ lws_ssl_info_callback(const SSL *ssl, int where, int ret)
 	struct lws *wsi;
 	struct lws_context *context;
 	struct lws_ssl_info si;
+	int fd;
 
 #ifndef USE_WOLFSSL
 	context = (struct lws_context *)SSL_CTX_get_ex_data(
@@ -378,17 +421,22 @@ lws_ssl_info_callback(const SSL *ssl, int where, int ret)
 #endif
 	if (!context)
 		return;
-	wsi = wsi_from_fd(context, SSL_get_fd(ssl));
+
+	fd = SSL_get_fd(ssl);
+	if (fd < 0 || (fd - lws_plat_socket_offset()) < 0)
+		return;
+
+	wsi = wsi_from_fd(context, fd);
 	if (!wsi)
 		return;
 
-	if (!(where & wsi->vhost->tls.ssl_info_event_mask))
+	if (!(where & wsi->a.vhost->tls.ssl_info_event_mask))
 		return;
 
 	si.where = where;
 	si.ret = ret;
 
-	if (user_callback_handle_rxflow(wsi->protocol->callback,
+	if (user_callback_handle_rxflow(wsi->a.protocol->callback,
 					wsi, LWS_CALLBACK_SSL_INFO,
 					wsi->user_space, &si, 0))
 		lws_set_timeout(wsi, PENDING_TIMEOUT_KILLED_BY_SSL_INFO, -1);
@@ -407,7 +455,7 @@ lws_ssl_close(struct lws *wsi)
 	/* kill ssl callbacks, because we will remove the fd from the
 	 * table linking it to the wsi
 	 */
-	if (wsi->vhost->tls.ssl_info_event_mask)
+	if (wsi->a.vhost->tls.ssl_info_event_mask)
 		SSL_set_info_callback(wsi->tls.ssl, NULL);
 #endif
 
@@ -418,11 +466,11 @@ lws_ssl_close(struct lws *wsi)
 	SSL_free(wsi->tls.ssl);
 	wsi->tls.ssl = NULL;
 
-	lws_tls_restrict_return(wsi->context);
+	lws_tls_restrict_return(wsi->a.context);
 
 	// lwsl_notice("%s: ssl restr %d, simul %d\n", __func__,
-	//		wsi->context->simultaneous_ssl_restriction,
-	//		wsi->context->simultaneous_ssl);
+	//		wsi->a.context->simultaneous_ssl_restriction,
+	//		wsi->a.context->simultaneous_ssl);
 
 	return 1; /* handled */
 }
@@ -433,7 +481,9 @@ lws_ssl_SSL_CTX_destroy(struct lws_vhost *vhost)
 	if (vhost->tls.ssl_ctx)
 		SSL_CTX_free(vhost->tls.ssl_ctx);
 
+#if defined(LWS_WITH_CLIENT)
 	lws_ssl_destroy_client_ctx(vhost);
+#endif
 
 #if defined(LWS_WITH_ACME)
 	lws_tls_acme_sni_cert_destroy(vhost);

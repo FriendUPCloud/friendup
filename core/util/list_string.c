@@ -112,7 +112,7 @@ FLONG ListStringAdd( ListString *ls, char *data, FLONG size )
 
 int ListStringJoin( ListString *ls )
 {
-	ls->ls_Data = FCalloc( ls->ls_Size + 1, sizeof(char));
+	ls->ls_Data = FCalloc( (ls->ls_Size + 1), sizeof(char));
 	if( ls->ls_Data != NULL )
 	{
 		ListString *cur = ls->ls_Next;

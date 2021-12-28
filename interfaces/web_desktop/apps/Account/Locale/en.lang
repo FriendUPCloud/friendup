@@ -17,11 +17,17 @@ i18n_mode_normal                     : Normal
 i18n_mode_developer                  : Developer
 
 i18n_are_you_sure                    : Are you sure?
+i18n_deleting_desc                   : When deleting a group, all members and connected data will be dissolved.
 i18n_this_will_remove                : This will remove the disk from your mountlist.
+
+i18n_no_description                  : This group lacks a description.
+i18n_your_groups                     : Your groups
 
 i18n_delete_disk                     : Delete disk
 
 i18n_storage                         : Storage
+
+i18n_more                            : more...
 
 i18n_key_type              			 : Key type
 i18n_key_name              			 : Key name
@@ -40,12 +46,38 @@ i18n_back                            : Go back
 i18n_publickey                       : Public key
 
 i18n_key_information                 : Key information
-i18n_your_apps                       : Your apps
+i18n_your_apps                       : Applications
 i18n_available_storage               : Available storage
 i18n_unmounted_storage               : Disconnected storage
+i18n_groups                          : Groups
 
 i18n_no_apps                         : Status
 i18n_no_apps_desc                    : None installed.
+
+i18n_added_by_admin                  : Added by admin
+i18n_reason                          : Info
+i18n_no_groups_available             : You don't own any groups.
+i18n_failed_reading_groups           : Failed to read groups.
+i18n_create_group                    : Create new group
+i18n_create_group_disabled           : Maximum number of groups reached
+i18n_name                            : Name
+i18n_group_description               : Group description
+i18n_create_chat_room                : Create chat room
+i18n_find_users                      : Find users
+i18n_group_members                   : Group members
+i18n_no_users_connected_to_you       : No (other) users are connected to your account.
+i18n_invite_user_to_group            : Invite user to group
+i18n_no_users_connected_to_group     : No users are connected to group.
+i18n_remove_from_group               : Remove from group
+i18n_could_not_save_group            : Could not save group
+i18n_an_error_occured_group_save     : An error occured when saving your group. Please try again.
+i18n_edit_group                      : Edit group
+i18n_can_not_invite                  : Can not send invite
+i18n_can_not_invite_desc             : You can not invite users to this group because it hasn't been saved.
+i18n_sure_remove_user_from           : Are you sure that you want to remove the user from this group?
+i18n_pending_invites                 : Pending invites
+
+i18n_find_groups                     : Find groups...
 
 i18n_add_storage                     : Add storage
 i18n_edit_storage                    : Edit disk
@@ -65,6 +97,7 @@ i18n_description : Please choose which disk type you want to add to your system.
 i18n_disk                            : disk
 i18n_add_a                           : Add a
 i18n_edit                            : Edit
+i18n_delete                          : Delete
 
 i18n_disk_error                      : Disk error
 i18n_failed_to_edit                  : Failed to edit disk volume.
@@ -168,3 +201,21 @@ i18n_fnetAskOnlyToCommunity			 : Ask only to your main community
 i18n_fnetAskOnlyToFriends			 : Ask only to friends
 i18n_fnetSharingPower				 : Share your power
 i18n_fnetAskForPower				 : Ask for power
+
+i18n_leave_group                        : Leave group.
+i18n_other_groups                       : Group memberships
+i18n_leave_warning                      : If you leave, you may lose access to functionality that is connected to this group.
+i18n_group_name                         : Name
+i18n_invite                             : Invite users
+i18n_owner                              : Owner
+
+i18n_send_invite                        : Send invite
+i18n_recipient                          : Recipient
+i18n_invite_user                        : Invite user
+i18n_optional                           : optional
+i18n_full_name                          : Full name
+
+i18n_failed_to_send                     : Failed to send invite
+i18n_email_error                        : Could not send email. Please check the e-mail address.
+i18n_unknown_error                      : An unexpected server error occured.
+

@@ -122,6 +122,6 @@ FBOOL GenerateUUID( char **dst )
 			DEBUG("UUID generated: %s\n", *dst );
 		}
 	}
-return TRUE;
+	return TRUE;
 }
 

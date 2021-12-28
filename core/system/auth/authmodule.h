@@ -48,7 +48,7 @@ typedef struct AuthMod
 	// authenticate user, if user is authenticated to login, it returns User structure
 	UserSession							*(*Authenticate)( struct AuthMod *l, Http *r, struct UserSession *loguser, char *name, char *pass, char *devname, char *sessionId, FULONG *blockTime );
 	// check password
-	FBOOL 								(*CheckPassword)( struct AuthMod *l, Http *r, User *usr, char *pass, FULONG *blockTime );
+	FBOOL 								(*CheckPassword)( struct AuthMod *l, Http *r, User *usr, char *pass, FULONG *blockTime, char *devname );
 	// update password
 	int 								(*UpdatePassword)( struct AuthMod *l, Http *r, User *usr, char *pass );
 	// logout user

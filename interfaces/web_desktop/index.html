@@ -8,8 +8,8 @@
 		<meta name="referrer" content="origin">
 		<link rel="stylesheet" href="css/friendup.css;/webclient/theme/theme_compiled.css;/webclient/css/extraLoginCSS.css"/>
 		<style>
-			html body.Loading * { visibility: hidden; }
-			html body.Loading { background-color: #222222; }
+			html body.Loading:not(.Inside.ThemeLoaded) * { visibility: hidden; }
+			html body.Loading:not(.Inside.ThemeLoaded) { background-color: #222222; }
 			html body { overflow: hidden; }
 		</style>
 		<script src="
@@ -41,7 +41,7 @@
 		</script>
 		<meta name="apple-mobile-web-app-capable" content="yes">
 	</head>
-	<body onload="Workspace.preinit()" class="Loading" onunload="if( window.Workspace ) Workspace.doLeave();" onbeforeunload="if( window.Workspace ) Workspace.leave();">
+	<body onload="if( window.Workspace ) Workspace.preinit(); else document.location.reload();" class="Loading" onunload="if( window.Workspace ) Workspace.doLeave();" onbeforeunload="if( window.Workspace ) Workspace.leave(); if( window.doLogout ) window.doLogout();">
 		<div id="Screens"></div>
 		<div id="Tasks"></div>
 		<div id="TaskSwitcher"></div>
@@ -54,5 +54,6 @@
 				</p>
 			</div>
 		</div>
+		<link rel="stylesheet" href="css/static.css"/>
 	</body>
 </html>

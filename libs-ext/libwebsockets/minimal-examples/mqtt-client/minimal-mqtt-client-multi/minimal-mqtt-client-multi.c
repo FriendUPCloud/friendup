@@ -11,6 +11,12 @@
 #include <libwebsockets.h>
 #include <string.h>
 #include <signal.h>
+#if defined(WIN32)
+#define HAVE_STRUCT_TIMESPEC
+#if defined(pid_t)
+#undef pid_t
+#endif
+#endif
 #include <pthread.h>
 #include <assert.h>
 
@@ -411,7 +417,7 @@ int main(int argc, const char **argv)
 	info.fd_limit_per_thread = 1 + COUNT + 1;
 	info.retry_and_idle_policy = &retry;
 
-#if defined(LWS_WITH_MBEDTLS)
+#if defined(LWS_WITH_MBEDTLS) || defined(USE_WOLFSSL)
 	/*
 	 * OpenSSL uses the system trust store.  mbedTLS has to be told which
 	 * CA to trust explicitly.

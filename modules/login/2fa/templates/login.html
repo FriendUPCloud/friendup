@@ -362,6 +362,10 @@
 												parent.Workspace.userLevel     = json.level;
 												parent.Workspace.fullName      = json.fullname;
 												
+												// This is needed for Friend.User.ReLogin()
+												parent.Workspace.loginPassword = enc.encrypt( 'HASHED' + Sha256.hash( password ) );
+												parent.Workspace.loginHashed = true;
+												
 												// We are now online!
 												parent.Friend.User.SetUserConnectionState( 'online' );
 												

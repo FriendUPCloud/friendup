@@ -40,6 +40,10 @@ Application.run = function( msg, iface )
 					command: 'refresh_calendar'
 				},
 				{
+					name: i18n( 'menu_popout_window' ),
+					command: 'popout'
+				},
+				{
 					name: i18n( 'menu_quit' ),
 					command: 'quit'
 				}
@@ -114,6 +118,9 @@ Application.receiveMessage = function( msg )
 			break;
 		case 'view_day':
 			this.mainView.sendMessage( { command: 'setcalendarmode', mode: 'day' } );
+			break;
+		case 'popout':
+			this.mainView.popout();
 			break;
 		case 'sharing':
 			if( this.sharingWindow ) 

@@ -31,13 +31,48 @@ typedef struct UserSessionManager
 {
 	void							*usm_SB;
 	UserSession						*usm_Sessions;							// user sessions
-	UserSession						*usm_SessionsToBeRemoved;				// sessions which must be removed
+	//UserSession						*usm_SessionsToBeRemoved;				// sessions which must be removed
 	int								usm_SessionCounter;
+	int								usm_InUse;								// if something is using it value is increased
+	FBOOL							usm_ChangeState;						// change state
 	void 							*usm_UM;
 	
 	pthread_mutex_t					usm_Mutex;		// mutex
 } UserSessionManager;
 
+#ifndef SESSION_MANAGER_CHANGE_ON
+#define SESSION_MANAGER_CHANGE_ON( MGR ) \
+while( (MGR->usm_InUse > 0 && MGR->usm_ChangeState == TRUE ) ){ usleep( 2000 ); } \
+if( FRIEND_MUTEX_LOCK( &(MGR->usm_Mutex) ) == 0 ){ \
+	MGR->usm_ChangeState = TRUE; \
+	FRIEND_MUTEX_UNLOCK( &(MGR->usm_Mutex) ); \
+}
+#endif
+
+#ifndef SESSION_MANAGER_CHANGE_OFF
+#define SESSION_MANAGER_CHANGE_OFF( MGR ) \
+if( FRIEND_MUTEX_LOCK( &(MGR->usm_Mutex) ) == 0 ){ \
+	MGR->usm_ChangeState = FALSE; \
+	FRIEND_MUTEX_UNLOCK( &(MGR->usm_Mutex) ); \
+}
+#endif
+
+#ifndef SESSION_MANAGER_USE
+#define SESSION_MANAGER_USE( MGR ) \
+while( MGR->usm_ChangeState != FALSE ){ usleep( 2000 ); } \
+if( FRIEND_MUTEX_LOCK( &(MGR->usm_Mutex) ) == 0 ){ \
+	MGR->usm_InUse++; \
+	FRIEND_MUTEX_UNLOCK( &(MGR->usm_Mutex) ); \
+}
+#endif
+
+#ifndef SESSION_MANAGER_RELEASE
+#define SESSION_MANAGER_RELEASE( MGR ) \
+if( FRIEND_MUTEX_LOCK( &(MGR->usm_Mutex) ) == 0 ){ \
+	MGR->usm_InUse--; \
+	FRIEND_MUTEX_UNLOCK( &(MGR->usm_Mutex) ); \
+}
+#endif
 
 //
 // Create new UserSessionManager
@@ -166,12 +201,6 @@ int USMRemoveOldSessions( void *lsb );
 int USMRemoveOldSessionsinDB( void *lsb );
 
 //
-//
-//
-
-FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notification, UserSession *ses, File *device, char *path );
-
-//
 // get user by auth id
 //
 
@@ -199,24 +228,36 @@ void USMCloseUnusedWebSockets( UserSessionManager *usm );
 //
 //
 
-int USMGetSessionsDeleteDB( UserSessionManager *smgr, const char *sessionid );
+int USMSessionsDeleteDB( UserSessionManager *smgr, const char *sessionid );
 
 //
 // Generate temporary session
 //
 
-char *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, FULONG userID, int type );
+UserSession *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, FULONG userID, int type );
 
 //
 // Destroy temporary session
 //
 
-void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, char *sessionID );
+void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, UserSession *ses );
 
 //
 // Check if User Session is attached to Sentinel User
 //
 
 User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus, FBOOL *isSentinel );
+
+//
+//
+//
+
+int USMGetUserSessionStatistic( UserSessionManager *usm, BufString *bs, FBOOL details );
+
+//
+//
+//
+
+UserSession *USMGetSessionByUserName( UserSessionManager *usm, char *name, FBOOL caseSensitive );
 
 #endif //__SYSTEM_USER_USER_SESSIONMANAGER_H__
