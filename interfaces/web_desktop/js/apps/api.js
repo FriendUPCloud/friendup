@@ -1002,10 +1002,10 @@ function receiveEvent( event, queued )
 		// Blur all elements!
 		case 'blur':
 		{
-			let elems = document.getElementsByTagName( '*' );
+			/*let elems = document.getElementsByTagName( '*' );
 			for( let a = 0; a < elems.length; a++ )
 				elems[a].blur();
-			Notify( { title: 'Blur 2', text: 'blurrrr.' } );
+			Notify( { title: 'Blur 2', text: 'blurrrr.' } );*/
 			break;
 		}
 		// Executing an event that is coming in
