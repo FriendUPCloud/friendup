@@ -8281,9 +8281,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				e.clientX = windowMouseX;
 			}
 			
-			if( isTablet || isMobile )
+			if( isTouchDevice() )
 			{
-				if( e.touches )
+				if( e.changedTouches )
+				{
+					e.clientX = e.changedTouches[0].clientX;
+					e.clientY = e.changedTouches[0].clientY;
+				}
+				else if( e.touches )
 				{
 					e.clientX = e.touches[0].clientX;
 					e.clientY = e.touches[0].clientY;
