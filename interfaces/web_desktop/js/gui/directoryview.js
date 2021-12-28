@@ -3424,7 +3424,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 					window.touchStartCounter = null;
 					Workspace.showContextMenu( false, e );
 				}, 800 );
-			} 
+			}
 	
 			// Activate screen on click
 			if( this.window )

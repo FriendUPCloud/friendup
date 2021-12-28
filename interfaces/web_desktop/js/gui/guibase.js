@@ -3710,6 +3710,14 @@ movableMouseDown = function ( e )
 {
 	if ( !e ) e = window.event;
 	
+	if( isTouchDevice() )
+	{
+		if( !( e.target && ( e.target.value || e.target.type || e.target.nodeName == 'TEXTAREA' ) ) && document.activeElement )
+		{
+			document.activeElement.blur();
+		}
+	}
+	
 	window.focus();
 	
 	// Close tray bubble
@@ -3880,7 +3888,6 @@ movableMouseDown = function ( e )
 		{
 			clearRegionIcons( { force: true } );
 		}
-		
 	}
 }
 

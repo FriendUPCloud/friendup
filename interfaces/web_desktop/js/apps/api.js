@@ -6850,7 +6850,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 		Application.sendMessage( { type: 'system', command: 'registermousedown', x: e.clientX, y: e.clientY } );
 		
 		// Check if an input element has focus
-		Friend.GUI.checkInputFocus();
+		Friend.GUI.checkInputFocus( e );
 	}
 	function _kmouseup( e )
 	{
@@ -6862,7 +6862,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 		// Check if an input element has focus
 		setTimeout( function()
 		{
-			Friend.GUI.checkInputFocus();
+			Friend.GUI.checkInputFocus( e );
 		}, 250 );
 	}
 	
@@ -6870,7 +6870,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 	function _kresponse( e )
 	{	
 		// Check if an input element has focus
-		Friend.GUI.checkInputFocus();
+		Friend.GUI.checkInputFocus( e );
 		
 		// Let's report to Workspace what we're doing - to catch global keyboard shortcuts
 		let params = [ 'shiftKey', 'ctrlKey', 'metaKey', 'altKey', 'which', 'keyCode' ];
@@ -9079,8 +9079,13 @@ if( Friend )
 }
 
 // Check if Friend has focus on input field
-Friend.GUI.checkInputFocus = function()
+Friend.GUI.checkInputFocus = function( e )
 {
+	if( !( e.target && ( e.target.value || e.target.type || e.target.nodeName == 'TEXTAREA' ) ) && document.activeElement )
+	{
+		document.activeElement.blur();
+	}
+
 	let focused = document.activeElement;
 	if( !focused || focused == document.body )
 	{
