@@ -2818,13 +2818,16 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			
 				window.touchElementTime = ( new Date() ).getTime();
 				
-				if( window.touchstartCounter )
-					clearTimeout( window.touchstartCounter );
-				window.touchstartCounter = setTimeout( function()
+				if( isTouchDevice() )
 				{
-					window.touchStartCounter = null;
-					Workspace.showContextMenu( false, e );
-				}, 800 ); 
+					if( window.touchstartCounter )
+						clearTimeout( window.touchstartCounter );
+					window.touchstartCounter = setTimeout( function()
+					{
+						window.touchStartCounter = null;
+						Workspace.showContextMenu( false, e );
+					}, 800 );
+				} 
 			
 				if( isTablet )
 					dv.multiple = e.shiftKey = true;
@@ -3410,15 +3413,18 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		{	
 			if( !e ) e = window.event ? window.event : {};
 	
-			window.touchElementTime = ( new Date() ).getTime();
-	
-			if( window.touchstartCounter )
-				clearTimeout( window.touchstartCounter );
-			window.touchstartCounter = setTimeout( function()
+			if( isTouchDevice() )
 			{
-				window.touchStartCounter = null;
-				Workspace.showContextMenu( false, e );
-			}, 800 ); 
+				window.touchElementTime = ( new Date() ).getTime();
+		
+				if( window.touchstartCounter )
+					clearTimeout( window.touchstartCounter );
+				window.touchstartCounter = setTimeout( function()
+				{
+					window.touchStartCounter = null;
+					Workspace.showContextMenu( false, e );
+				}, 800 );
+			} 
 	
 			// Activate screen on click
 			if( this.window )
@@ -3996,10 +4002,13 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			}, 100 );
 
 
-			file.contextMenuTimeout = setTimeout( function()
+			if( isTouchDevice() )
 			{
-				Workspace.showContextMenu( false, event );
-			}, 800 );
+				file.contextMenuTimeout = setTimeout( function()
+				{
+					Workspace.showContextMenu( false, event );
+				}, 800 );
+			}
 			//return cancelBubble( event );
 		}, false );
 
