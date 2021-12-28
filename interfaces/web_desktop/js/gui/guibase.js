@@ -3712,9 +3712,12 @@ movableMouseDown = function ( e )
 	
 	if( isTouchDevice() )
 	{
-		if( !( e.target && ( e.target.value || e.target.type || e.target.nodeName == 'TEXTAREA' || e.target.getAttribute( 'contenteditable' ) == true ) ) && document.activeElement )
+		let active = document.activeElement;
+		let anod = '';
+		if( active ) anod = active.nodeName;
+		if( active && ( anod == 'TEXTAREA' || anod == 'INPUT' || active.getAttribute( 'contenteditable' ) ) )
 		{
-			document.activeElement.blur();
+			active.blur();
 		}
 	}
 	
