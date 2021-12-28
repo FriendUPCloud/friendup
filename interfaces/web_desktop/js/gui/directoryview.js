@@ -822,17 +822,17 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	
 	winobj.addEventListener( 'touchstart', function( e )
 	{
-		winobj.touchstartCounter = ( new Date() ).getTime();
+		winobj.touchstartCounter = setTimeout( function()
+		{
+			Workspace.showContextMenu( false, e );
+			winobj.touchstartCounter = null;
+		}, 800 );
 	} );
 	
 	winobj.addEventListener( 'touchend', function( e )
 	{
-		if( ( new Date() ).getTime() - winobj.touchstartCounter > 1000 )
-		{
-			cancelBubble( e );
-			Workspace.showContextMenu( false, e );
-			return;
-		}
+		clearTimeout( winobj.touchstartCounter );
+		winobj.touchstartCounter = null;
 	} );
 
 	// On scrolling, don't do the menu!
