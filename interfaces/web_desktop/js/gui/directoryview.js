@@ -2817,6 +2817,14 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				if( !e ) e = window.event ? window.event : {};
 			
 				window.touchElementTime = ( new Date() ).getTime();
+				
+				if( window.touchstartCounter )
+					clearTimeout( window.touchstartCounter );
+				window.touchstartCounter = setTimeout( function()
+				{
+					window.touchStartCounter = null;
+					Workspace.showContextMenu( false, e );
+				}, 800 ); 
 			
 				if( isTablet )
 					dv.multiple = e.shiftKey = true;
@@ -3404,6 +3412,14 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	
 			window.touchElementTime = ( new Date() ).getTime();
 	
+			if( window.touchstartCounter )
+				clearTimeout( window.touchstartCounter );
+			window.touchstartCounter = setTimeout( function()
+			{
+				window.touchStartCounter = null;
+				Workspace.showContextMenu( false, e );
+			}, 800 ); 
+	
 			// Activate screen on click
 			if( this.window )
 			{
@@ -3887,17 +3903,14 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				if( isTouchDevice() )
 				{
 					let diff = ( new Date() ).getTime() - window.touchElementTime;
-					// Contextmenu
-					if( diff >= 800 )
+					// Abort click
+					if( diff >= 250 && diff <= 800 )
 					{
 						if( window.touchstartCounter )
+						{
 							clearTimeout( window.touchstartCounter );
-						Workspace.showContextMenu( false, e );
-						return;
-					}
-					// Abort click
-					else if( diff >= 500 )
-					{
+							window.touchstartCounter = false;
+						}
 						return;
 					}
 				}

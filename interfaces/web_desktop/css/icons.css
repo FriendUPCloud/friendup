@@ -186,8 +186,8 @@ Just so that we can keep the outputted HTML smaller by using CSS classes :)
 	pointer-events: none;
 }
 
-.Coldom > .File div:after,
-.Row.File div:after
+.Coldom > .File div.Icon:before,
+.Row.File div.Icon:before
 {
 	content: " ";
 	display: block;
