@@ -4207,6 +4207,9 @@ function FocusOnNothing()
 			movableWindows[a].windowObject.sendMessage( { command: 'blur' } );
 		}
 	}
+	
+	console.log( 'Again blurring' );
+	
 	let eles = document.getElementsByTagName( '*' );
 	for( var a = 0; a < eles.length; a++ )
 	{

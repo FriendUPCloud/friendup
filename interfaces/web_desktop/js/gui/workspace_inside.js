@@ -10367,7 +10367,7 @@ function DoorsKeyDown( e )
 			// Escape means try to close the view
 			case 27:
 				// Inputs don't need to close the view
-				if( tar && ( tar.nodeName == 'INPUT' || tar.nodeName == 'SELECT' || tar.nodeName == 'TEXTAREA' ) )
+				if( tar && ( tar.nodeName == 'INPUT' || tar.nodeName == 'SELECT' || tar.nodeName == 'TEXTAREA' || tar.getAttribute( 'contenteditable' ) ) )
 				{
 					tar.blur();
 					return;
