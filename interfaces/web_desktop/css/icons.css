@@ -186,16 +186,16 @@ Just so that we can keep the outputted HTML smaller by using CSS classes :)
 	pointer-events: none;
 }
 
-.Coldom > .File div:before,
-.Row.File div:before
+.Coldom > .File div:after,
+.Row.File div:after
 {
 	content: " ";
 	display: block;
 	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
+	top: -10px;
+    left: -10px;
+    width: calc(100% + 16px);
+    height: calc(100% + 16px);
 	background: transparent;
 }
 
