@@ -2402,6 +2402,12 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	this.refreshScrollTimeout = false;
 	this.scroller.onscroll = function( e )
 	{	
+		if( self.refreshScrollTimeout )
+		{
+			clearTimeout( self.refreshScrollTimeout );
+			self.refreshScrollTimeout = false;
+		}
+		
 		// Only handle scroll if it changed
 		if( !self.scrollerTop || self.scrollerTop != self.scroller.scrollTop )
 		{
@@ -2409,11 +2415,6 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		}
 		else return;
 		
-		if( self.refreshScrollTimeout )
-		{
-			clearTimeout( self.refreshScrollTimeout );
-			self.refreshScrollTimeout = false;
-		}
 		self.refreshScrollTimeout = setTimeout( function()
 		{
 			// Don't redraw icon view if we have elements
