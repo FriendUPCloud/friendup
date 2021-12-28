@@ -1,3 +1,14 @@
+/*©agpl*************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
+*                                                                              *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
+*                                                                              *
+*****************************************************************************©*/
+
+// Instantiate tablet dashboard
 TabletDashboard = function()
 {
 	let self = this;
@@ -38,6 +49,8 @@ TabletDashboard = function()
 	this.elements = [];
 	this.favorites = [];
 }
+
+// Clean up tablet dashboard
 TabletDashboard.prototype.destroy = function()
 {
 	let self = this;
@@ -61,6 +74,8 @@ TabletDashboard.prototype.destroy = function()
 	}
 	delete self;
 }
+
+// Refresh the tablet dashboard
 TabletDashboard.prototype.refresh = function()
 {
 	let self = this;
@@ -164,6 +179,8 @@ TabletDashboard.prototype.refresh = function()
 		}
 	}
 }
+
+// Fetch dock elements (favorite apps)
 TabletDashboard.prototype.fetchDockElements = function()
 {
 	let self = this;
@@ -190,6 +207,8 @@ TabletDashboard.prototype.fetchDockElements = function()
 		}
 	}
 }
+
+// Fetch current window elements
 TabletDashboard.prototype.fetchWindowElements = function()
 {
 	let self = this;
@@ -262,3 +281,4 @@ TabletDashboard.prototype.fetchWindowElements = function()
 	}
 	this.elements = out;
 }
+
