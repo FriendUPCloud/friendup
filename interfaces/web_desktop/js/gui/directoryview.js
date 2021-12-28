@@ -813,9 +813,26 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		
 		cancelBubble( e );
 		
-		Workspace.showContextMenu( false, e );
+		// Cancels previous stuff
+		winobj.touchstartCounter = false;
 		
+		Workspace.showContextMenu( false, e );
 		return;
+	} );
+	
+	winobj.addEventListener( 'touchstart', function( e )
+	{
+		winobj.touchstartCounter = ( new Date() ).getTime();
+	} );
+	
+	winobj.addEventListener( 'touchend', function( e )
+	{
+		if( ( new Date() ).getTime() - winobj.touchstartCounter > 1000 )
+		{
+			cancelBubble( e );
+			Workspace.showContextMenu( false, e );
+			return;
+		}
 	} );
 
 	// On scrolling, don't do the menu!
