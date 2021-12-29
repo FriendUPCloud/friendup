@@ -256,7 +256,7 @@ if( !class_exists( 'Door' ) )
 				
 					// TODO: Look at this had to add haccypatchy method to check for $User->ID first in order to view other users Filesystem as Admin server side ...
 					return '
-					SELECT * FROM `Filesystem` f, `FUserGroup` ug, `FUserToGroup` fug
+					SELECT f.* FROM `Filesystem` f, `FUserGroup` ug, `FUserToGroup` fug
 					WHERE
 					    ug.Type = "Level" AND fug.UserID = \'' . $actId . '\' AND fug.UserGroupID = ug.ID AND
 					    ug.Name IN ( "Admin", "User", "API", "Guest" )
@@ -283,7 +283,7 @@ if( !class_exists( 'Door' ) )
 				$name = mysqli_real_escape_string( $SqlDatabase->_link, reset( $op ) );
 				// TODO: Look at this had to add haccypatchy method to check for $User->ID first in order to view other users Filesystem as Admin server side ...
 				return '
-					SELECT * FROM `Filesystem` f, `FUserGroup` ug, `FUserToGroup` fug
+					SELECT f.* FROM `Filesystem` f, `FUserGroup` ug, `FUserToGroup` fug
 					WHERE
 						ug.Type = "Level" AND fug.UserID = \'' . $actId . '\' AND fug.UserGroupID = ug.ID AND
 					    ug.Name IN ( "Admin", "User", "API", "Guest" )
