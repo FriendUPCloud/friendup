@@ -345,15 +345,10 @@ f.GroupID='%ld' AND f.Name='%s'",
 					char *visiblePtr = NULL;
 					config = StringDuplicate( row[ 6 ] );
 					
-					DEBUG("--------------------->>>>>>START\n");
-					
 					if( config != NULL && ( visiblePtr = strstr( config, "\"Visible\"" ) ) != NULL )
 					{
 						// "Visible":"on"
 						visiblePtr+= 9 + 2;	// name + quote + :
-						
-						
-						DEBUG("Visible: %s\n", visiblePtr );
 						
 						if( strncmp( visiblePtr, "on", 2 ) == 0 )
 						{
@@ -364,7 +359,6 @@ f.GroupID='%ld' AND f.Name='%s'",
 							visible = FALSE;
 						}
 					}
-					DEBUG("--------------------->>>>>>END visible: %d\n", visible );
 				}
 			}
 			
@@ -878,16 +872,11 @@ AND f.Name = '%s'",
 					char *visiblePtr = NULL;
 					config = StringDuplicate( row[ 6 ] );
 					
-					DEBUG("--------------------->>>>>>START\n");
-					
 					if( config != NULL && ( visiblePtr = strstr( config, "\"Visible\"" ) ) != NULL )
 					{
 						// "Visible":"on"
 						visiblePtr+= 9 + 2;	// name + quote + :
-						
-						
-						DEBUG("Visible: %s\n", visiblePtr );
-						
+
 						if( strncmp( visiblePtr, "on", 2 ) == 0 )
 						{
 							visible = TRUE;
@@ -897,7 +886,6 @@ AND f.Name = '%s'",
 							visible = FALSE;
 						}
 					}
-					DEBUG("--------------------->>>>>>END visible: %d\n", visible );
 				}
 				
 				if( row[ 7 ] != NULL ){ char *end; id = strtoul( (char *)row[ 7 ],  &end, 0 ); }
