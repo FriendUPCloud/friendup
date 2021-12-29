@@ -1100,7 +1100,7 @@ SystemBase *SystemInit( void )
 	
 	EventAdd( l->sl_EventManager, "RemoveOldLogs", RemoveOldLogs, l, time( NULL )+HOUR12, HOUR12, -1 );
 	
-	EventAdd( l->sl_EventManager, "UMRemoveOldUserLoginEntries", UMRemoveOldUserLoginEntries, l->sl_UM, time( NULL )+DAYS5, DAYS5, -1 );
+	EventAdd( l->sl_EventManager, "UMRemoveOldUserLoginEntries", UMRemoveOldUserLoginEntries, l->sl_UM, time( NULL )+MINS1, MINS1, -1 );//time( NULL )+DAYS5, DAYS5, -1 );
 	
 	
 	//EventAdd( l->sl_EventManager, "SecurityManagerRemoteOldBadSessionCalls", SecurityManagerRemoteOldBadSessionCalls, l->sl_SecurityManager, time( NULL )+MINS60, MINS60, -1 );
