@@ -347,7 +347,7 @@ f.GroupID='%ld' AND f.Name='%s'",
 					if( config != NULL && ( visiblePtr = strstr( config, "\"Visible\"" ) ) != NULL )
 					{
 						// "Visible":"on"
-						visiblePtr+= 9 + 2;	// name + quote + :
+						visiblePtr+= 9 + 3;	// name + quote + :
 						if( strcmp( visiblePtr, "on" ) != 0 )
 						{
 							visible = FALSE;
@@ -872,7 +872,7 @@ AND f.Name = '%s'",
 					if( config != NULL && ( visiblePtr = strstr( config, "\"Visible\"" ) ) != NULL )
 					{
 						// "Visible":"on"
-						visiblePtr+= 9 + 2;	// name + quote + :
+						visiblePtr+= 9 + 3;	// name + quote + :
 						if( strcmp( visiblePtr, "on" ) != 0 )
 						{
 							visible = FALSE;
