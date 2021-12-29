@@ -1361,12 +1361,15 @@ void UMRemoveOldUserLoginEntries( UserManager *um )
 		
 			// we are checking failed logins in last hour
 			sqlLib->SNPrintF( sqlLib, query, 2048, "DELETE FROM `FUserLogin` WHERE LoginTime < %ld", tm );
+			
+			DEBUG("[UMRemoveOldUserLoginEntries] query: %s\n", query );
 		
 			sqlLib->QueryWithoutResults( sqlLib, query );
 			
 			FFree( query );
 		}
 		sb->LibrarySQLDrop( sb, sqlLib );
+		DEBUG("[UMRemoveOldUserLoginEntries] end\n" );
 	}
 }
 
