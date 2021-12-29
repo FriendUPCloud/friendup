@@ -35,25 +35,6 @@ if( !class_exists( 'Door' ) )
 		
 			$this->dbTable( 'Filesystem' );
 			
-			// We may have an args object, then parse it into a string
-			if( is_object( $path ) )
-			{
-			    $d = false;
-			    if( isset( $path->devname ) )
-			    {
-			        $d = $path->devname . ':';
-			    }
-			    if( $d && isset( $path->path ) )
-			    {
-			        $d .= $path->path;
-			    }
-			    else if( isset( $path->path ) && strstr( $path->path, ':' ) )
-			    {
-			        $d = $path->path;
-			    }
-			    if( $d ) $path = $d;
-			}
-			
 			// We may wanna do this in the constructor
 			if( isset( $authcontext ) && isset( $authdata ) )
 			{
@@ -62,6 +43,7 @@ if( !class_exists( 'Door' ) )
 		
 			$this->GetAuthContextComponent();
 		
+		    // NB: $path could be the $args object passed, will be parsed in getQuery..
 			if( $q = $this->getQuery( $path ) )
 			{
 				if( $d = $SqlDatabase->FetchObject( $q ) )
