@@ -618,7 +618,7 @@ f.Name ASC";
 				userID = (FLONG)strtol(( char *)el->hme_Data, &next, 0);
 			}
 			
-			el = HttpGetPOSTParameter( request, "usergroupid" );
+			el = HttpGetPOSTParameter( request, "groupid" );
 			if( el != NULL )
 			{
 				char *next;
@@ -676,6 +676,15 @@ f.Name ASC";
 				{
 					userID = usr->u_ID;
 				}
+			}
+			
+			if( usrgrp != NULL )
+			{
+				if( usr == NULL )
+				{
+					usr = loggedSession->us_User;
+				}
+				foundUserInMemory = TRUE;
 			}
 			
 			/*
