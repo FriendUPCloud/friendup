@@ -46,7 +46,6 @@ if( !class_exists( 'Door' ) )
 		    // NB: $path could be the $args object passed, will be parsed in getQuery..
 			if( $q = $this->getQuery( $path ) )
 			{
-				$Logger->log( '[Door] THE FILESYSTEM QUERY: ' . $q );
 				if( $d = $SqlDatabase->FetchObject( $q ) )
 				{
 					foreach( $d as $k=>$v )
@@ -253,17 +252,23 @@ if( !class_exists( 'Door' ) )
 				}
 				if( $identifier )
 				{
+				    $actId = isset( $activeUser->ID ) ? $activeUser->ID : $activeUserSession->UserID;
+				
 					// TODO: Look at this had to add haccypatchy method to check for $User->ID first in order to view other users Filesystem as Admin server side ...
 					return '
-					SELECT * FROM `Filesystem` f 
-					WHERE 
+					SELECT * FROM `Filesystem` f, `FUserGroup` ug, `FUserToGroup` fug
+					WHERE
+					    ug.Type = "Level" AND fug.UserID = \'' . $actId . '\' AND fug.UserGroupID = ug.ID AND
+					    ug.Name IN ( "Admin", "User", "API", "Guest" )
+					    AND
 						(
-							f.UserID=\'' . ( isset( $activeUser->ID ) ? $activeUser->ID : $activeUserSession->UserID ) . '\' OR
+							ug.Name = \'Admin\' OR
+							f.UserID=\'' .$actId . '\' OR
 							f.GroupID IN (
 								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
 								WHERE 
 									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-									ug.UserID = \'' . ( isset( $activeUser->ID ) ? $activeUser->ID : $activeUserSession->UserID ) . '\'
+									ug.UserID = \'' . $actId . '\'
 							)
 						)
 						AND ' . $identifier . ' LIMIT 1';
