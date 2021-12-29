@@ -277,19 +277,24 @@ if( !class_exists( 'Door' ) )
 			// Get by path (string)
 			else
 			{
+				$actId = isset( $activeUser->ID ) ? $activeUser->ID : $activeUserSession->UserID;
+				
 				$op = explode( ':', $path );
 				$name = mysqli_real_escape_string( $SqlDatabase->_link, reset( $op ) );
 				// TODO: Look at this had to add haccypatchy method to check for $User->ID first in order to view other users Filesystem as Admin server side ...
 				return '
-					SELECT * FROM `Filesystem` f 
-					WHERE 
+					SELECT * FROM `Filesystem` f, `FUserGroup` ug, `FUserToGroup` fug
+					WHERE
+						ug.Type = "Level" AND fug.UserID = \'' . $actId . '\' AND fug.UserGroupID = ug.ID AND
+					    ug.Name IN ( "Admin", "User", "API", "Guest" )
+					    AND 
 						(
-							f.UserID=\'' . ( isset( $activeUser->ID ) ? $activeUser->ID :$activeUserSession->UserID ) . '\' OR
+							f.UserID=\'' . $actId . '\' OR
 							f.GroupID IN (
 								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
 								WHERE 
 									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-									ug.UserID = \'' . ( isset( $activeUser->ID ) ? $activeUser->ID : $activeUserSession->UserID ) . '\'
+									ug.UserID = \'' . $actId . '\'
 							)
 						)
 						AND
