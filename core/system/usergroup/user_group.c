@@ -188,6 +188,7 @@ File *UserGroupRemDeviceByName( UserGroup *ugrlist, const char *name, int *error
 			if( lf == NULL )
 			{
 				FERROR( "[UserGroupRemDeviceByName] Seems we have NO mounted devs for usergroup %s!\n", ugrlist->ug_Name );
+				ugrlist = (UserGroup *)ugrlist->node.mln_Succ;
 				continue;
 			}
 
