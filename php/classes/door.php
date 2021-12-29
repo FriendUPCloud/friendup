@@ -46,6 +46,7 @@ if( !class_exists( 'Door' ) )
 		    // NB: $path could be the $args object passed, will be parsed in getQuery..
 			if( $q = $this->getQuery( $path ) )
 			{
+				$Logger->log( '[Door] THE FILESYSTEM QUERY: ' . $q );
 				if( $d = $SqlDatabase->FetchObject( $q ) )
 				{
 					foreach( $d as $k=>$v )
