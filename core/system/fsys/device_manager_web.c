@@ -48,7 +48,7 @@ static inline void EscapeConfigFromString( char *str, char **configEscaped, char
 		{
 			int n = 0; for( ; n < len; n++ )
 			{
-				if( str[n] == '"' )
+				if( str[n] == '"' && str[ n-1 ] != '\\' )
 				{
 					(*configEscaped)[k++] = '\\';
 				}
@@ -1600,7 +1600,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 						{
 							sysname = sys->Name;
 						}
-						Filesystem *fsys = ( Filesystem *)dev->f_DOSDriver;
+						//Filesystem *fsys = ( Filesystem *)dev->f_DOSDriver;
 				
 						EscapeConfigFromString( dev->f_Config, &configEscaped, &executeCmd );
 					
