@@ -627,6 +627,8 @@ f.Name ASC";
 				{
 					usrgrp = UGMGetGroupByID( l->sl_UGM, locid );
 				}
+				
+				DEBUG("Mount groupid parameter received %d group ptr %p\n", locid, usrgrp );
 			}
 			
 			User *usr = loggedSession->us_User;
@@ -725,6 +727,8 @@ f.Name ASC";
 				char *error = NULL;
 				
 				int mountError = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &mountedDev, usr, &error, loggedSession, TRUE );
+				
+				DEBUG("Mount: mount error: %d\n", mountError );
 				
 				// This is ok!
 				if( mountError != 0 && mountError != FSys_Error_DeviceAlreadyMounted )
