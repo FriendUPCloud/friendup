@@ -350,12 +350,12 @@ f.GroupID='%ld' AND f.Name='%s'",
 					if( config != NULL && ( visiblePtr = strstr( config, "\"Visible\"" ) ) != NULL )
 					{
 						// "Visible":"on"
-						visiblePtr+= 9 + 3;	// name + quote + :
+						visiblePtr+= 9 + 2;	// name + quote + :
 						
 						
 						DEBUG("Visible: %s\n", visiblePtr );
 						
-						if( strcmp( visiblePtr, "on" ) == 0 )
+						if( strncmp( visiblePtr, "on", 2 ) == 0 )
 						{
 							visible = TRUE;
 						}
@@ -883,12 +883,12 @@ AND f.Name = '%s'",
 					if( config != NULL && ( visiblePtr = strstr( config, "\"Visible\"" ) ) != NULL )
 					{
 						// "Visible":"on"
-						visiblePtr+= 9 + 3;	// name + quote + :
+						visiblePtr+= 9 + 2;	// name + quote + :
 						
 						
 						DEBUG("Visible: %s\n", visiblePtr );
 						
-						if( strcmp( visiblePtr, "on" ) == 0 )
+						if( strncmp( visiblePtr, "on", 2 ) == 0 )
 						{
 							visible = TRUE;
 						}
