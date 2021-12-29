@@ -288,6 +288,12 @@ int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname );
 //
 //
 
+void UMRemoveOldUserLoginEntries( UserManager *um );
+
+//
+//
+//
+
 int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details );
 
 //
