@@ -34,7 +34,26 @@ if( !class_exists( 'Door' ) )
 			global $SqlDatabase, $Logger;
 		
 			$this->dbTable( 'Filesystem' );
-		
+			
+			// We may have an args object, then parse it into a string
+			if( is_object( $path ) )
+			{
+			    $d = false;
+			    if( isset( $path->devname ) )
+			    {
+			        $d = $path->devname . ':';
+			    }
+			    if( $d && isset( $path->path ) )
+			    {
+			        $d .= $path->path;
+			    }
+			    else if( isset( $path->path ) && strstr( $path->path, ':' ) )
+			    {
+			        $d = $path->path;
+			    }
+			    if( $d ) $path = $d;
+			}
+			
 			// We may wanna do this in the constructor
 			if( isset( $authcontext ) && isset( $authdata ) )
 			{
