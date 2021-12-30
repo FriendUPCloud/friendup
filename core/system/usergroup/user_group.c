@@ -180,6 +180,7 @@ File *UserGroupRemDeviceByName( UserGroup *ugrlist, const char *name, int *error
 {
 	if( name != NULL )
 	{
+		DEBUG("[UserGroupRemDeviceByName] trying start\n");
 		while( ugrlist != NULL )
 		{
 			File *lf = ugrlist->ug_MountedDevs;
@@ -207,6 +208,8 @@ File *UserGroupRemDeviceByName( UserGroup *ugrlist, const char *name, int *error
 		
 			if( remdev != NULL )
 			{
+				DEBUG("[UserGroupRemDeviceByName] device found: %s will be removed. Pending operations: %d\n", name, remdev->f_Operations );
+				
 				if( remdev->f_Operations <= 0 )
 				{
 					//DEBUG("[UserGroupRemDeviceByName] Remove device from list\n");
@@ -229,6 +232,7 @@ File *UserGroupRemDeviceByName( UserGroup *ugrlist, const char *name, int *error
 							lastone->node.mln_Succ = (struct MinNode *)next;
 						}
 					}
+					DEBUG("[UserGroupRemDeviceByName] Entry removed from list\n");
 					return remdev;
 				}
 				else
@@ -245,6 +249,9 @@ File *UserGroupRemDeviceByName( UserGroup *ugrlist, const char *name, int *error
 		DEBUG("[UserGroupRemDeviceByName] User paramter is equal to NULL\n");
 		return NULL;
 	}
+	
+	DEBUG("[UserGroupRemDeviceByName] end\n");
+	
 	return NULL;
 }
 
