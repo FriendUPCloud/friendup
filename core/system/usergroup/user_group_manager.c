@@ -455,8 +455,22 @@ int UGMAddGroup( UserGroupManager *ugm, UserGroup *ug )
 	
 	if( FRIEND_MUTEX_LOCK( &ugm->ugm_Mutex ) == 0 )
 	{
-		ug->node.mln_Succ = (MinNode *) ugm->ugm_UserGroups;
-		ugm->ugm_UserGroups = ug;
+		UserGroup *lug = ugm->ugm_UserGroups;
+		while( lug != NULL )
+		{
+			if( lug->ug_ID == ug->ug_ID )
+			{
+				FERROR("[UGMAddGroup] Cannot add same group to list\n");
+				break;
+			}
+			lug = (UserGroup *)lug->node.mln_Succ;
+		}
+		
+		if( lug == NULL )
+		{
+			ug->node.mln_Succ = (MinNode *) ugm->ugm_UserGroups;
+			ugm->ugm_UserGroups = ug;
+		}
 		FRIEND_MUTEX_UNLOCK( &ugm->ugm_Mutex );
 	}
 	return 0;

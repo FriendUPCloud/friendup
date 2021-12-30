@@ -709,6 +709,7 @@ f.Name ASC";
 			 */
 			
 			FBOOL updateDatabase = FALSE;
+			File *mountedDev = NULL;
 			
 			if( foundUserInMemory == FALSE )
 			{
@@ -736,8 +737,7 @@ f.Name ASC";
 					//{ FSys_Mount_Execute,        execute == NULL ? (FULONG)NULL : (FULONG)execute },
 					{ TAG_DONE, TAG_DONE }
 				};
-				
-				File *mountedDev = NULL;
+
 				char *error = NULL;
 				
 				int mountError = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &mountedDev, usr, &error, loggedSession, TRUE );
@@ -859,6 +859,8 @@ f.Name ASC";
 						// owner and groupID parameter must be set
 						if( usrgrp != NULL )
 						{
+							snprintf( temptext, 512, "UPDATE `Filesystem` f SET f.Mounted='1' where ID=%ld", mountedDev->f_ID );
+							/*
 							sqllib->SNPrintF( sqllib,  temptext, 512,"\
 UPDATE `Filesystem` f SET f.Mounted = '1', f.Owner='%lu', f.GroupID='%lu' \
 WHERE \
@@ -866,6 +868,7 @@ WHERE \
 AND LOWER(f.Name) = LOWER('%s')", 
 								userID, usrgrp->ug_ID, userID, devname 
 							);
+							*/
 						}
 						else
 						{
