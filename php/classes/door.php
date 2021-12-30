@@ -255,8 +255,9 @@ if( !class_exists( 'Door' ) )
 				    $actId = isset( $activeUser->ID ) ? $activeUser->ID : $activeUserSession->UserID;
 				
 					// TODO: Look at this had to add haccypatchy method to check for $User->ID first in order to view other users Filesystem as Admin server side ...
+					// Added user group 'Admin' as an optional way to qualify to read a disk not owned or associated by group
 					return '
-					SELECT * FROM `Filesystem` f, `FUserGroup` ug, `FUserToGroup` fug
+					SELECT f.* FROM `Filesystem` f, `FUserGroup` ug, `FUserToGroup` fug
 					WHERE
 					    ug.Type = "Level" AND fug.UserID = \'' . $actId . '\' AND fug.UserGroupID = ug.ID AND
 					    ug.Name IN ( "Admin", "User", "API", "Guest" )
@@ -265,10 +266,10 @@ if( !class_exists( 'Door' ) )
 							ug.Name = \'Admin\' OR
 							f.UserID=\'' .$actId . '\' OR
 							f.GroupID IN (
-								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
+								SELECT ug2.UserGroupID FROM FUserToGroup ug2, FUserGroup g
 								WHERE 
-									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-									ug.UserID = \'' . $actId . '\'
+									g.ID = ug2.UserGroupID AND g.Type = \'Workgroup\' AND
+									ug2.UserID = \'' . $actId . '\'
 							)
 						)
 						AND ' . $identifier . ' LIMIT 1';
@@ -277,19 +278,25 @@ if( !class_exists( 'Door' ) )
 			// Get by path (string)
 			else
 			{
+				$actId = isset( $activeUser->ID ) ? $activeUser->ID : $activeUserSession->UserID;
+				
 				$op = explode( ':', $path );
 				$name = mysqli_real_escape_string( $SqlDatabase->_link, reset( $op ) );
 				// TODO: Look at this had to add haccypatchy method to check for $User->ID first in order to view other users Filesystem as Admin server side ...
+				// Added user group 'Admin' as an optional way to qualify to read a disk not owned or associated by group
 				return '
-					SELECT * FROM `Filesystem` f 
-					WHERE 
+					SELECT f.* FROM `Filesystem` f, `FUserGroup` ug, `FUserToGroup` fug
+					WHERE
+						ug.Type = "Level" AND fug.UserID = \'' . $actId . '\' AND fug.UserGroupID = ug.ID AND
+					    ug.Name IN ( "Admin", "User", "API", "Guest" )
+					    AND 
 						(
-							f.UserID=\'' . ( isset( $activeUser->ID ) ? $activeUser->ID :$activeUserSession->UserID ) . '\' OR
+							f.UserID=\'' . $actId . '\' OR
 							f.GroupID IN (
-								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
+								SELECT ug2.UserGroupID FROM FUserToGroup ug2, FUserGroup g
 								WHERE 
-									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-									ug.UserID = \'' . ( isset( $activeUser->ID ) ? $activeUser->ID : $activeUserSession->UserID ) . '\'
+									g.ID = ug2.UserGroupID AND g.Type = \'Workgroup\' AND
+									ug2.UserID = \'' . $actId . '\'
 							)
 						)
 						AND
