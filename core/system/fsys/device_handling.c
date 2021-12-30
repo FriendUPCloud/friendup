@@ -1007,7 +1007,7 @@ AND f.Name = '%s'",
 						DEBUG("Device is already mounted2. Name: %s\n", fentry->f_Name );
 						
 						// just in case set proper flag in database. Seems that System app do not set this flag sometimes
-						
+						/*
 						SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 						if( sqllib != NULL )
 						{
@@ -1018,6 +1018,7 @@ AND f.Name = '%s'",
 							
 							l->LibrarySQLDrop( l , sqllib );
 						}
+						*/
 						
 						sameDevError = 1;
 						break;
