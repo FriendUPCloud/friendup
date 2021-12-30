@@ -584,6 +584,9 @@ f.Name ASC";
 			FULONG userID = 0;
 			char *host = NULL;
 			char *port = NULL;
+			User *usr = loggedSession->us_User;
+			FBOOL foundUserInMemory = TRUE;
+			FBOOL groupLoadedFromDB = FALSE;
 			
 			el = HttpGetPOSTParameter( request, "execute" );
 			if( el != NULL ) execute = ( char *)el->hme_Data;
@@ -628,11 +631,22 @@ f.Name ASC";
 					usrgrp = UGMGetGroupByID( l->sl_UGM, locid );
 				}
 				
+				// if group is not avaiable we should try to load it from DB
+				if( usrgrp == NULL )
+				{
+					// if user have access to group or if he is admin, he can mount drive there
+					FBOOL accessToGroup = FALSE;
+					if( UGMUserToGroupISConnectedDB( l->sl_UGM, locid, userID ) || (loggedSession->us_User != NULL && loggedSession->us_User->u_IsAdmin ) )
+					{
+						DEBUG("There is no group in memory but user have access to it. FCore will load it into memory\n");
+						accessToGroup = TRUE;
+						usrgrp = UGMGetGroupByIDDB( l->sl_UGM, locid );
+						groupLoadedFromDB = TRUE;
+					}
+				}
+				
 				DEBUG("Mount groupid parameter received %d group ptr %p\n", locid, usrgrp );
 			}
-			
-			User *usr = loggedSession->us_User;
-			FBOOL foundUserInMemory = TRUE;
 			
 			//
 			// this functionality allow admins to mount other users drives
@@ -801,6 +815,12 @@ f.Name ASC";
 				if( mountedDev != NULL && l->sl_UnMountDevicesInDB == 1 && mountError != FSys_Error_DeviceAlreadyMounted )
 				{
 					updateDatabase = TRUE;
+					
+					if( groupLoadedFromDB == TRUE && usrgrp != NULL )
+					{
+						DEBUG("Device was mounted and group loaded. Group will be attached to global list\n");
+						UGMAddGroup( l->sl_UGM, usrgrp );
+					}
 
 					mountedDev->f_Mounted = TRUE;
 					
@@ -811,6 +831,14 @@ f.Name ASC";
 						sprintf( devfull, "%s:", devname );
 						DoorNotificationCommunicateChanges( l, loggedSession, mountedDev, devfull );
 						FFree( devfull );
+					}
+				}
+				else
+				{
+					if( groupLoadedFromDB == TRUE && usrgrp != NULL )
+					{
+						DEBUG("Device wasnt mounted group loaded. Group will be deleted\n");
+						UserGroupDelete( l, usrgrp );
 					}
 				}
 			}	// usr != NULL
