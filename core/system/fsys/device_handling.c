@@ -1005,6 +1005,20 @@ AND f.Name = '%s'",
 					{
 						*mfile = fentry;
 						DEBUG("Device is already mounted2. Name: %s\n", fentry->f_Name );
+						
+						// just in case set proper flag in database. Seems that System app do not set this flag sometimes
+						
+						SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+						if( sqllib != NULL )
+						{
+							char temptext[ 256 ];
+	
+							snprintf( temptext, sizeof(temptext), "UPDATE `Filesystem` SET `Mounted`=1 WHERE `ID`='%lu'", id );
+							sqllib->QueryWithoutResults( sqllib, temptext );
+							
+							l->LibrarySQLDrop( l , sqllib );
+						}
+						
 						sameDevError = 1;
 						break;
 					}
