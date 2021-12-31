@@ -461,7 +461,8 @@ int UGMAddGroup( UserGroupManager *ugm, UserGroup *ug )
 			if( lug->ug_ID == ug->ug_ID )
 			{
 				FERROR("[UGMAddGroup] Cannot add same group to list\n");
-				break;
+				FRIEND_MUTEX_UNLOCK( &ugm->ugm_Mutex );
+				return 2;
 			}
 			lug = (UserGroup *)lug->node.mln_Succ;
 		}
@@ -858,7 +859,7 @@ int UGMAssignGroupToUser( UserGroupManager *ugm, User *usr )
 								nugl->node.mln_Succ = (MinNode *)usr->u_UserGroupLinks;
 								usr->u_UserGroupLinks = nugl;
 								
-								DEBUG("[UMAssignGroupToUser] User: %s assigned to group %ld\n", usr->u_Name, id );
+								DEBUG("[UMAssignGroupToUser] User: %s assigned to group (in memory) %ld name: %s\n", usr->u_Name, id, ug->ug_Name );
 							}
 						}
 					}

@@ -1163,7 +1163,10 @@ AND f.Name = '%s'",
 					usrgrp = UGMGetGroupByIDDB( l->sl_UGM, userGroupID );
 					if( usrgrp != NULL )
 					{
-						UGMAddGroup( l->sl_UGM, usrgrp );
+						if( UGMAddGroup( l->sl_UGM, usrgrp ) == 2 )
+						{
+							usrgrp = UGMGetGroupByIDDB( l->sl_UGM, userGroupID );
+						}
 						groupCreated = TRUE;	// if group is created it is a signal to FC that all users should be connected to it
 					}
 				}
