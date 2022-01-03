@@ -1161,14 +1161,18 @@ AND f.Name = '%s'",
 				if( usrgrp == NULL )
 				{
 					DEBUG("[Mount] new group will be created\n");
-					usrgrp = UGMGetGroupByIDDB( l->sl_UGM, userGroupID );
-					if( usrgrp != NULL )
+					usrgrp = UGMGetGroupByID( l->sl_UGM, userGroupID );
+					if( usrgrp == NULL )
 					{
-						int err = UGMAddGroup( l->sl_UGM, usrgrp );
+						usrgrp = UGMGetGroupByIDDB( l->sl_UGM, userGroupID );
+						if( usrgrp != NULL )
+						{
+							int err = UGMAddGroup( l->sl_UGM, usrgrp );
 						
-						DEBUG("[Mount] was group added to global list: %d (0 - ok)\n", err );
+							DEBUG("[Mount] was group added to global list: %d (0 - ok)\n", err );
 						
-						groupCreated = TRUE;	// if group is created it is a signal to FC that all users should be connected to it
+							groupCreated = TRUE;	// if group is created it is a signal to FC that all users should be connected to it
+						}
 					}
 				}
 				if( usrgrp != NULL )
