@@ -820,6 +820,10 @@ f.Name ASC";
 					{
 						DEBUG("Device was mounted and group loaded. Group will be attached to global list\n");
 						UGMAddGroup( l->sl_UGM, usrgrp );
+						
+						// lets notify users about changes which happened in his group
+
+						UMAddExistingUsersToGroup( l->sl_UM, usrgrp );
 					}
 
 					mountedDev->f_Mounted = TRUE;
