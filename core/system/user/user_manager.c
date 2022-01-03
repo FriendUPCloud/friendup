@@ -2365,6 +2365,8 @@ void UMAddExistingUsersToGroup( UserManager *um, UserGroup *ug )
 	//
 	// Go through logged users and add them to a group
 	//
+	
+	DEBUG("[UMAddExistingUsersToGroup] start\n");
 
 	USER_MANAGER_USE( um );
 	
@@ -2393,6 +2395,7 @@ void UMAddExistingUsersToGroup( UserManager *um, UserGroup *ug )
 						{
 							if( usr->u_ID == id )	// if this is user which we trying to find
 							{
+								DEBUG("[UMAddExistingUsersToGroup] used: %s was added to group: %s\n", usr->u_Name, ug->ug_Name );
 								UserAddToGroup( usr, ug );
 								break;		// we found user, we can stop
 							}
@@ -2408,6 +2411,8 @@ void UMAddExistingUsersToGroup( UserManager *um, UserGroup *ug )
 	}
 	
 	USER_MANAGER_RELEASE( um );
+	
+	DEBUG("[UMAddExistingUsersToGroup] end\n");
 	
 	FFree( tmpmsg );
 }
