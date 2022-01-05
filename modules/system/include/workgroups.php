@@ -115,7 +115,7 @@ if( isset( $args->args->level ) )
 }
 
 // If we set the workgroups flag, we want to only select the groups contained
-if( isset( $args->args->workgroups ) )
+if( isset( $args->args ) && isset( $args->args->workgroups ) )
 {
     $worksql = ' AND ( g.ID IN (' . $args->args->workgroups . ') OR g.ParentID IN (' . $args->args->workgroups . ') )';
 }
@@ -135,6 +135,7 @@ if( $rows = $SqlDatabase->FetchObjects( '
 			LEFT JOIN FMetaData m ON 
 			( 
 					m.DataTable = "FUserGroup" 
+			    AND m.ValueString = "presence-roomId"
 				AND m.DataID = g.ID 
 			) 
 			' . $ownergr . $levelgr . '
