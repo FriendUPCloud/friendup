@@ -232,9 +232,9 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 {
 	int retval = 0;
 
-	if( us == NULL )
+	if( us == NULL || us->us_WSD == NULL || us->us_Status == USER_STATUS_TO_BE_REMOVED )
 	{
-		DEBUG("[UserSessionWebsocketWrite] empty us %p\n", us );
+		DEBUG("[UserSessionWebsocketWrite] empty us %p or WSD %p. User status: %d\n", us, us->us_WSD, us->us_Status );
 		return 0;
 	}
 	
