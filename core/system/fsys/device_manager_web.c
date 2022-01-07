@@ -1135,39 +1135,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 								}
 							}
 						}
-						
-						/*
-						UserGroupLink *ugl = activeUser->u_UserGroupLinks;
-						while( ugl != NULL )
-						{
-							UserGroup *ug = ugl->ugl_Group;
-							if( ug != NULL )
-							{
-								File *f = NULL;
-								LIST_FOR_EACH( ug->ug_MountedDevs, f, File * )
-								{
-									FBOOL owner = FALSE;
-									if( f->f_User != NULL )
-									{
-										User *u = (User *)f->f_User;
-										if( u->u_ID == activeUser->u_ID )
-										{
-											owner = TRUE;
-										}
-									}
-							
-									if( owner == TRUE && strcmp( devname, f->f_Name ) == 0 )
-									{
-										mountError = 0;
-										f->f_Mounted = FALSE;
-										fid = f->f_ID; // Need the ID too!
-										type = ( char *) f->f_FSysName;//   f->f_Type; // Copy the type, we need it
-										ldevname = f->f_Name;
-									}
-								}
-							}
-							ugl = (UserGroupLink *)ugl->node.mln_Succ;
-						}*/
 					}
 				
 					struct TagItem tags[] = {
