@@ -944,6 +944,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 			goto error;
 		}
 		
+		DEBUG("\n\n\n\n\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n\n\n\n\n\n");
+		
 		HashmapElement *el = HttpGetPOSTParameter( request, "userid" );
 		if( el != NULL )
 		{
@@ -954,6 +956,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 		{
 			userID = loggedSession->us_UserID;
 		}
+		
+		DEBUG("device/unmount userid: %ld\n", userID );
 		
 		el = HttpGetPOSTParameter( request, "groupid" );
 		if( el != NULL )

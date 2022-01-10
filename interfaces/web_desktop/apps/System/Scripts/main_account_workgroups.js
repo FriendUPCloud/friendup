@@ -1522,13 +1522,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 					if( ShowLog ) console.log( { diskid: diskid, userid: ( userid ? userid : '0' ), devname: devname } );
 					
-<<<<<<< HEAD
 					//unmountDrive( devname, false, false, function()
 					//{
-=======
-					unmountDrive( devname, userid, gid, function()
-					{
->>>>>>> a78a555b7fc8a0620f96e55a12e7da96df9dea73
 						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 						
 						var m = new Module( 'system' );
