@@ -146,11 +146,13 @@ void CommServiceDelete( CommService *s )
 		}
 		FRIEND_MUTEX_UNLOCK( &s->s_Mutex );
 		
+		/*
 		if( FRIEND_MUTEX_LOCK( &s->s_CondMutex ) == 0 )
 		{
 			pthread_cond_broadcast( &s->s_DataReceivedCond );
 			FRIEND_MUTEX_UNLOCK( &s->s_CondMutex );
 		}
+		*/
 		
 		DEBUG2("[COMMSERV] : Quit set to TRUE, sending signal\n");
 		
