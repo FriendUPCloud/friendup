@@ -1554,7 +1554,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 						}
 						
-						m.execute( 'deletedoor', { id: diskid, userid: ( userid ? userid : '0' ), authid: Application.authId } );
+						m.execute( 'deletedoor', { id: diskid, groupid: gid ? gid : 0, userid: ( userid ? userid : '0' ), authid: Application.authId } );
 					
 					} );
 				
