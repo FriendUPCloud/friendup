@@ -947,6 +947,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 		DEBUG("\n\n\n\n\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n\n\n\n\n\n");
 		
 		HashmapElement *el = HttpGetPOSTParameter( request, "userid" );
+		if( !el ) el = HashmapGet( request->http_Query, "userid" );
 		if( el != NULL )
 		{
 			char *next;
@@ -960,6 +961,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 		DEBUG("device/unmount userid: %ld\n", userID );
 		
 		el = HttpGetPOSTParameter( request, "groupid" );
+		if( !el ) el = HashmapGet( request->http_Query, "groupid" );
 		if( el != NULL )
 		{
 			char *next;
