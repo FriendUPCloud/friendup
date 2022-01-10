@@ -1508,7 +1508,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 	}
 	
-	function removeStorage( diskid, userid, devname, callback )
+	function removeStorage( diskid, userid, gid, devname, callback )
 	{
 		if( diskid && devname )
 		{
@@ -1522,8 +1522,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 					if( ShowLog ) console.log( { diskid: diskid, userid: ( userid ? userid : '0' ), devname: devname } );
 					
+<<<<<<< HEAD
 					//unmountDrive( devname, false, false, function()
 					//{
+=======
+					unmountDrive( devname, userid, gid, function()
+					{
+>>>>>>> a78a555b7fc8a0620f96e55a12e7da96df9dea73
 						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 						
 						var m = new Module( 'system' );
@@ -1554,7 +1559,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 						}
 						
-						m.execute( 'deletedoor', { id: diskid, userid: ( userid ? userid : '0' ), authid: Application.authId } );
+						m.execute( 'deletedoor', { id: diskid, groupid: gid ? gid : 0, userid: ( userid ? userid : '0' ), authid: Application.authId } );
 					
 					//} );
 				
@@ -4255,6 +4260,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												user  : js.UserID,
 												name  : js.Name,
 												type  : js.Type,
+												grup  : js.GroupID,
 												csize : csize,
 												cunit : cunit,
 												note  : js.ShortDescription,
@@ -4687,7 +4693,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																	d.onclick = function ()
 																	{
 																	
-																		removeStorage( storage.id, storage.user, storage.name, function()
+																		removeStorage( storage.id, storage.user, storage.grup, storage.name, function()
 																		{
 																		
 																			listStorage( function( res, js )
