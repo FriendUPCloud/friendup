@@ -960,6 +960,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 		{
 			char *next;
 			groupID = (FLONG)strtol(( char *)el->hme_Data, &next, 0);
+			
+			DEBUG("device/unmount groupid: %ld\n", groupID );
 		}
 		
 		el = HttpGetPOSTParameter( request, "devname" );

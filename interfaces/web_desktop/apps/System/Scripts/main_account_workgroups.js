@@ -1522,8 +1522,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 					if( ShowLog ) console.log( { diskid: diskid, userid: ( userid ? userid : '0' ), devname: devname } );
 					
-					unmountDrive( devname, false, false, function()
-					{
+					//unmountDrive( devname, false, false, function()
+					//{
 						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 						
 						var m = new Module( 'system' );
@@ -1556,7 +1556,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						
 						m.execute( 'deletedoor', { id: diskid, userid: ( userid ? userid : '0' ), authid: Application.authId } );
 					
-					} );
+					//} );
 				
 				}
 			} );
