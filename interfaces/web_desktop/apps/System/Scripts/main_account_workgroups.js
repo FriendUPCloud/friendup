@@ -1508,7 +1508,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 	}
 	
-	function removeStorage( diskid, userid, devname, callback )
+	function removeStorage( diskid, userid, gid, devname, callback )
 	{
 		if( diskid && devname )
 		{
@@ -1522,7 +1522,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 					if( ShowLog ) console.log( { diskid: diskid, userid: ( userid ? userid : '0' ), devname: devname } );
 					
-					unmountDrive( devname, false, false, function()
+					unmountDrive( devname, false, gid, function()
 					{
 						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 						
@@ -4255,6 +4255,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												user  : js.UserID,
 												name  : js.Name,
 												type  : js.Type,
+												grup  : js.GroupID,
 												csize : csize,
 												cunit : cunit,
 												note  : js.ShortDescription,
@@ -4687,7 +4688,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																	d.onclick = function ()
 																	{
 																	
-																		removeStorage( storage.id, storage.user, storage.name, function()
+																		removeStorage( storage.id, storage.user, storage.grup, storage.name, function()
 																		{
 																		
 																			listStorage( function( res, js )
