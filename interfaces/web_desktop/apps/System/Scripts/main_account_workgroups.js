@@ -1285,7 +1285,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 						]
 					}, 
 					'object'   : 'user', 
-					'objectid' : ( userid ? userid : '0' ) 
+					'objectid' : ( userid ? userid : '0' ),
+					'groupid'  : groupid ? groupid : 0
 				} );
 			}
 		
@@ -1342,7 +1343,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 						]
 					}, 
 					'object'   : 'user', 
-					'objectid' : ( userid ? userid : '0' ) 
+					'objectid' : ( userid ? userid : '0' ),
+					'groupid'  : groupid ? groupid : 0
 				} );
 			}
 			
