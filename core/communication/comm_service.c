@@ -124,7 +124,7 @@ void CommServiceDelete( CommService *s )
 	{
 		s->s_Cam.cam_Quit = TRUE;
 		
-		while( s->s_OutgoingConnectionSet != TRUE )
+		//while( s->s_OutgoingConnectionSet != TRUE )
 		{
 			sleep( 1 );
 		}
