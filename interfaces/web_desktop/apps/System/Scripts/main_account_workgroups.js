@@ -3991,6 +3991,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										var storage = {
 											id   : sorted[b].ID,
 											user : sorted[b].UserID,
+											grup : sorted[b].GroupID,
 											name : sorted[b].Name,
 											type : sorted[b].Type,
 											size : readableBytes( size, 0 ), 
@@ -4049,7 +4050,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																d.onclick = function (  )
 																{
 																																
-																	init.edit( storage.id, storage.user );
+																	init.edit( storage.id, storage.user, storage.grup );
 																
 																};
 															}
@@ -4164,9 +4165,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 						
 							},
 							
-							edit : function ( sid, uid )
+							edit : function ( sid, uid, gid )
 							{
-								
 								this.func.mode[ 'storage' ] = 'edit';
 								
 								var args = {
@@ -4723,11 +4723,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 																	d.className = 'IconSmall FloatLeft MarginRight';
 																	d.innerHTML = ( storage.mount > 0 ? i18n('i18n_unmount_disk') : i18n('i18n_mount_disk') );
 																	d.onclick = function ()
-																	{
-																	
+																	{ 
 																		mountStorage( storage.name, storage.user, groupid, this, function()
 																		{
-																		
 																			listStorage( function( res, js )
 																			{
 																			

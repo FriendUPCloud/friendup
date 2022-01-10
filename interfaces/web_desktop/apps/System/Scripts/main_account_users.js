@@ -10431,6 +10431,7 @@ Sections.user_disk_refresh = function( mountlist, userid, func )
 						user  : rows[b].UserID,
 						name  : rows[b].Name,
 						type  : rows[b].Type,
+						group : rows[b].GroupID,
 						csize : csize,
 						cunit : cunit,
 						size  : size, 
@@ -10474,7 +10475,7 @@ Sections.user_disk_refresh = function( mountlist, userid, func )
 					}
 					else
 					{
-						mlst += '<div class="PaddingSmall Ellipsis" onclick="Sections.user_disk_update(' + storage.user + ',' + storage.id + ',\'' + storage.name + '\',' + userid + ')">';
+						mlst += '<div class="PaddingSmall Ellipsis" onclick="Sections.user_disk_update(' + storage.user + ',' + storage.id + ',\'' + storage.name + '\',' + userid + ',' + storage.group + ')">';
 					}
 					
 					mlst += '<div class="Col1 FloatLeft" id="Storage_' + storage.id + '">';
