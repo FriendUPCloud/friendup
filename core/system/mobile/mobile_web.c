@@ -440,6 +440,8 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			
 			int decodedTokenLen = 0;
 			char *decodedToken = Base64Decode( (const unsigned char *)token, strlen(token), &decodedTokenLen );
+			
+			DEBUG("--------------- token %s decodedtoken %s decoded len %d\n", token, decodedToken, decodedTokenLen );
 		
 			if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
 			{
