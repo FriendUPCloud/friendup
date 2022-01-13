@@ -448,7 +448,8 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 				if( sqllib != NULL )
 				{
-					sprintf( tmpQuery, "DELETE FROM `FUserMobileApp` WHERE AppToken=FROM_BASE64('%s') AND UserID=%ld", token, loggedSession->us_UserID );
+					sprintf( tmpQuery, "DELETE FROM `FUserMobileApp` WHERE AppToken='%s' AND UserID=%ld", decodedToken, loggedSession->us_UserID );
+					//sprintf( tmpQuery, "DELETE FROM `FUserMobileApp` WHERE AppToken=FROM_BASE64('%s') AND UserID=%ld", token, loggedSession->us_UserID );
 			
 					sqllib->QueryWithoutResults( sqllib, tmpQuery );
 					FFree( tmpQuery );
