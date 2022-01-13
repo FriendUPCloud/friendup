@@ -359,7 +359,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		el = HttpGetPOSTParameter( request, "token" );
 		if( el != NULL )
 		{
-			deviceID = UrlDecodeToMem( (char *)el->hme_Data );
+			token = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
 		if( id > 0 || deviceID != NULL )
