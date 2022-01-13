@@ -353,6 +353,14 @@ Friend.User = {
 				}
 			}
 
+			if( typeof friendApp != 'undefined' && typeof friendApp.get_app_token == 'function' )
+			{
+				let ud = new cAjax();
+				ud.open( 'get', '/system.library/mobule/deleteuma/?sessionid=' + Workspace.sessionId + '&token=' + window.Base64alt.encode( friendApp.get_app_token() ) , true );
+				ud.forceHTTP = true;
+				ud.send();
+			}
+
 			let m = new cAjax();
 			m.open( 'get', '/system.library/user/logout/?sessionid=' + Workspace.sessionId, true );
 			m.forceHTTP = true;
