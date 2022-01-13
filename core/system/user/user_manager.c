@@ -241,7 +241,7 @@ int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
  * @param ID user id
  * @return User structure or NULL value when problem appear
  */
-User *UMUserGetByID( UserManager *um, FQUAD id )
+User *UMUserGetByID( UserManager *um, FUQUAD id )
 {
 	USER_MANAGER_USE( um );
 	User *user = um->um_Users;
@@ -1419,7 +1419,7 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 				user->u_MountedDevs = NULL;
 				
 				UMAddUser( sb->sl_UM, user );
-				tuser = user;
+				um->um_APIUser = tuser = user;
 			
 				// API user have only one session
 				if( user->u_SessionsList == NULL )
@@ -1562,8 +1562,6 @@ int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details )
 			int devCounterBytes = 0;
 			int uglCounterBytes = 0;
 			
-			userCounter++;
-		
 			UserSessListEntry *sesentr = usr->u_SessionsList;
 			while( sesentr != NULL )
 			{
@@ -1580,6 +1578,7 @@ int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details )
 				rootDev = (File *)rootDev->node.mln_Succ;
 			}
 			
+			/*
 			UserGroupLink *ugl = usr->u_UserGroupLinks;
 			while( ugl != NULL )
 			{
@@ -1587,6 +1586,7 @@ int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details )
 				uglCounterBytes += sizeof( UserGroupLink );
 				ugl = (UserGroupLink *)ugl->node.mln_Succ;
 			}
+			*/
 			
 			if( nr == 0 )
 			{
@@ -2054,7 +2054,7 @@ FBOOL UMSendDoorNotification( UserManager *um, void *notif, UserSession *ses, Fi
 	// Go through logged users
 	//
     
-	DEBUG("CHECK11\n");
+	DEBUG("[UMSendDoorNotification] CHECK11\n");
 	USER_MANAGER_USE( um );
 	
 	User *usr = um->um_Users;
@@ -2156,11 +2156,11 @@ FBOOL UMSendDoorNotification( UserManager *um, void *notif, UserSession *ses, Fi
 				le = (UserSessListEntry *)le->node.mln_Succ;
 			} // while loop, session
 			
-			DEBUG("unlock user\n");
+			DEBUG("[UMSendDoorNotification] unlock user\n");
 			
 			USER_UNLOCK( usr );
 
-			DEBUG("CHECK12\n");
+			DEBUG("[UMSendDoorNotification] CHECK12\n");
 		}
 		usr = (User *)usr->node.mln_Succ;
 	}
@@ -2244,4 +2244,207 @@ int UMRemoveOldSessions( void *lsb )
 	Log( FLOG_INFO, "[UMRemoveOldSessions] end\n" );
 	
 	return 0;
+}
+
+/**
+ * Remove all users from group
+ *
+ * @param um pointer to UserManager
+ * @param groupid id of group from which users will be removed
+ */
+void UMRemoveUsersFromGroup( UserManager *um, FUQUAD groupid )
+{
+	USER_MANAGER_USE( um );
+
+	User *tuser = um->um_Users;
+	while( tuser != NULL )
+	{
+		USER_LOCK( tuser );
+		
+		if( tuser->u_UserGroupLinks != NULL )
+		{
+			// if group is first, lets just remove it quickly
+			if( tuser->u_UserGroupLinks->ugl_GroupID == groupid )
+			{
+				UserGroupLink *uglrem = tuser->u_UserGroupLinks;
+				tuser->u_UserGroupLinks = (UserGroupLink *)tuser->u_UserGroupLinks->node.mln_Succ;
+				FFree( uglrem );
+			}
+			else
+			{
+				UserGroupLink *prevugl = tuser->u_UserGroupLinks;
+				UserGroupLink *ugl = (UserGroupLink *)tuser->u_UserGroupLinks->node.mln_Succ;
+				while( ugl != NULL )
+				{
+					// seems current group is group which we wanted to find
+					if( ugl->ugl_GroupID == groupid )
+					{
+						// so previous group will get next pointer from current group
+						// becaouse current pointer will be released
+						prevugl->node.mln_Succ = ugl->node.mln_Succ;
+						FFree( ugl );
+						break;
+					}
+					
+					prevugl = ugl;
+					ugl = (UserGroupLink *)ugl->node.mln_Succ;
+				}
+			}
+		}
+		
+		USER_UNLOCK( tuser );
+		
+		tuser = (User *)tuser->node.mln_Succ;
+	}
+
+	USER_MANAGER_RELEASE( um );
+}
+
+
+/**
+ * Notify all users in group about changes
+ *
+ * @param um pointer to UserManager
+ * @param groupid id of group which users 
+ * @param type type of notification : 0 -mountlist changed
+ */
+
+#define UMNOTIFY_REQ_MSG_LEN 2048
+
+void UMNotifyAllUsersInGroup( UserManager *um, FQUAD groupid, int type )
+{
+	char *tmpmsg = FCalloc( UMNOTIFY_REQ_MSG_LEN, 1 );
+	if( tmpmsg == NULL )
+	{
+		FERROR("Cannot allocate memory for buffer\n");
+		return;
+	}
+	DEBUG("[UMNotifyAllUsersInGroup] START\n" );
+    
+	//
+	// Go through logged users
+	//
+
+	USER_MANAGER_USE( um );
+	
+	SystemBase *l = (SystemBase *)um->um_SB;
+	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	if( sqlLib != NULL )
+	{
+		snprintf( tmpmsg, UMNOTIFY_REQ_MSG_LEN, "SELECT DISTINCT UserID from FUserToGroup WHERE UserGroupID=%ld", groupid );
+		
+		void *result = sqlLib->Query(  sqlLib, tmpmsg );
+		if( result != NULL )
+		{
+			char **row;
+
+			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+			{
+				char *end;
+				FQUAD id = 0;
+				if( row[ 0 ] != NULL )
+				{
+					id = strtoll( row[ 0 ], &end, 0 );
+					if( id > 0 )
+					{
+						DEBUG("[UMNotifyAllUsersInGroup] find and notify user by id: %ld\n", id );
+						
+						User *usr = um->um_Users;
+						while( usr != NULL )
+						{
+							if( usr->u_ID == id && usr->u_SessionsList != NULL )	// if this is user which we trying to find
+							{
+								if( type == 0 )
+								{
+									UserNotifyFSEvent2( usr, "refresh", "Mountlist:" );
+								}
+								break;	// user found. There is no need to search for him
+							}
+							usr = (User *)usr->node.mln_Succ;
+						}
+					}
+				}
+				
+			}
+			sqlLib->FreeResult( sqlLib, result );
+		}
+		l->LibrarySQLDrop( l, sqlLib );
+	}
+	
+	USER_MANAGER_RELEASE( um );
+	
+	FFree( tmpmsg );
+}
+
+/**
+ * Add existing users to new groups
+ *
+ * @param um pointer to UserManager
+ * @param groupid id of group which users 
+ */
+
+#define LOCAL_SQL_LEN 256
+
+void UMAddExistingUsersToGroup( UserManager *um, UserGroup *ug )
+{
+	char *tmpmsg = FCalloc( LOCAL_SQL_LEN, 1 );
+	if( tmpmsg == NULL )
+	{
+		FERROR("Cannot allocate memory for buffer\n");
+		return;
+	}
+    
+	//
+	// Go through logged users and add them to a group
+	//
+	
+	DEBUG("[UMAddExistingUsersToGroup] start\n");
+
+	USER_MANAGER_USE( um );
+	
+	SystemBase *l = (SystemBase *)um->um_SB;
+	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	if( sqlLib != NULL )
+	{
+		snprintf( tmpmsg, LOCAL_SQL_LEN, "SELECT DISTINCT UserID from FUserToGroup WHERE UserGroupID=%ld", ug->ug_ID );
+		
+		void *result = sqlLib->Query(  sqlLib, tmpmsg );
+		if( result != NULL )
+		{
+			char **row;
+
+			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+			{
+				char *end;
+				FQUAD id = 0;
+				if( row[ 0 ] != NULL )
+				{
+					id = strtoll( row[ 0 ], &end, 0 );
+					if( id > 0 )
+					{
+						User *usr = um->um_Users;
+						while( usr != NULL )
+						{
+							if( usr->u_ID == id )	// if this is user which we trying to find
+							{
+								DEBUG("[UMAddExistingUsersToGroup] used: %s was added to group: %s\n", usr->u_Name, ug->ug_Name );
+								UserAddToGroup( usr, ug );
+								break;		// we found user, we can stop
+							}
+							usr = (User *)usr->node.mln_Succ;
+						}
+					}
+				}
+				
+			}
+			sqlLib->FreeResult( sqlLib, result );
+		}
+		l->LibrarySQLDrop( l, sqlLib );
+	}
+	
+	USER_MANAGER_RELEASE( um );
+	
+	DEBUG("[UMAddExistingUsersToGroup] end\n");
+	
+	FFree( tmpmsg );
 }

@@ -1761,29 +1761,15 @@ int SystemInitExternal( SystemBase *l )
 				}
 				FFree( newSessionId );
 			}
-			
-			//
-			// regenerate sessionid for User
-			//
-			
-			if(  (timestamp - l->sl_Sentinel->s_User->u_LastActionTime) > l->sl_RemoveSessionsAfterTime )
-			{
-				UserRegenerateSessionID( l->sl_Sentinel->s_User, NULL );
-			}
 		}
 		
 		UMCheckAndLoadAPIUser( l->sl_UM );
 		
 		UMInitUsers( l->sl_UM );
 
-		/*
-		User *sentUser = NULL;
-		if( l->sl_Sentinel != NULL )
-		{
-			sentUser = l->sl_Sentinel->s_User;
-		}*/
+		UGMMountGroupDrives( l->sl_UGM );
 		
-		UGMMountDrives( l->sl_UGM );
+		//UGMMountDrives( l->sl_UGM );	// previous function which was mounting all group drives without SQLWorkgroup
 	}
 	
 	// mount INRAM drive
@@ -1957,7 +1943,6 @@ usr->u_ID , usr->u_ID, usr->u_ID
 				{ FSys_Mount_Mount,   (FULONG)mount },
 				{ FSys_Mount_SysBase, (FULONG)SLIB },
 				{ FSys_Mount_UserSession, (FULONG)usrses },
-				{ FSys_Mount_Visible, (FULONG)1 },     // Assume visible
 				{TAG_DONE, TAG_DONE}
 			};
 

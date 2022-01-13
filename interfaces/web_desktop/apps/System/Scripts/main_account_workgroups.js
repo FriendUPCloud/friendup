@@ -991,6 +991,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 		let uuid = (groupid?'_'+groupid:'');
 		
+		if( !groupid ) groupid = 0;
+		
 		var elems = {};
 		
 		var inputs = ge( 'StorageGui'+uuid ).getElementsByTagName( 'input' );
@@ -1138,7 +1140,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 				if( !data.ID || ( elems[ 'Name' ].hasAttribute('data-mount-state') && elems[ 'Name' ].getAttribute('data-mount-state') == '1' ) )
 				{
-					remountDisk( ( elems[ 'Name' ] && elems[ 'Name' ].current ? elems[ 'Name' ].current : data.Name ), data.Name, data.userid, function()
+					remountDisk( ( elems[ 'Name' ] && elems[ 'Name' ].current ? elems[ 'Name' ].current : data.Name ), data.Name, data.userid, groupid, function()
 					{
 						// Refresh init.refresh();
 						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
@@ -1160,7 +1162,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			// if the disk is mounted, we need to unmount it based on its old name first.
 			if( elems[ 'Name' ].hasAttribute('data-stored-value') && elems[ 'Name' ].hasAttribute('data-mount-state') && elems[ 'Name' ].getAttribute('data-mount-state') == '1' )
 			{
-				unmountDisk( elems[ 'Name' ].getAttribute('data-stored-value'), userid, function( e, d )
+				unmountDisk( elems[ 'Name' ].getAttribute('data-stored-value'), userid, groupid, function( e, d )
 				{
 					skip = true;
 					data.ID = diskid;
@@ -1180,13 +1182,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 		}
 	}
 	
-	function mountStorage( devname, userid, _this, callback )
+	function mountStorage( devname, userid, groupid, _this, callback )
 	{
 		if( devname && _this )
 		{
 			if( _this.innerHTML.toLowerCase().indexOf( 'unmount' ) >= 0 )
 			{
-				unmountDisk( devname, userid, function( e, d )
+				unmountDisk( devname, userid, groupid, function( e, d )
 				{
 					if( ShowLog ) console.log( 'unmountDrive( '+devname+', '+( userid ? userid : '0' )+' ) ', { e:e, d:d } );
 					
@@ -1216,7 +1218,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			}
 			else
 			{
-				mountDisk( devname, userid, function( e, d )
+				mountDisk( devname, userid, groupid, function( e, d )
 				{
 					if( ShowLog ) console.log( 'mountDrive( '+devname+', '+( userid ? userid : '0' )+' ) ', { e:e, d:d } );
 				
@@ -1247,7 +1249,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		}
 	}
 	
-	function mountDisk( devname, userid, callback )
+	function mountDisk( devname, userid, groupid, callback )
 	{
 		if( devname )
 		{
@@ -1263,6 +1265,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 				{
 					vars.userid = ( userid ? userid : '0' );
 				}
+				
+				if( groupid > 0 ) vars.groupid = groupid;
 				
 				vars.authid = Application.authId;
 			
@@ -1281,7 +1285,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 						]
 					}, 
 					'object'   : 'user', 
-					'objectid' : ( userid ? userid : '0' ) 
+					'objectid' : ( userid ? userid : '0' ),
+					'groupid'  : groupid ? groupid : 0
 				} );
 			}
 		
@@ -1298,8 +1303,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 		}
 	}
 
-	function unmountDisk( devname, userid, callback )
+	function unmountDisk( devname, userid, groupid, callback )
 	{
+		console.log( 'Are we unmounting? dev: ' + devname + ' userid: ' + userid + ' groupid: ' + groupid );
+		if( !groupid ) groupid = 0;
+		
 		if( devname )
 		{
 			var vars = { devname: devname };
@@ -1314,6 +1322,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 				{
 					vars.userid = ( userid ? userid : '0' );
 				}
+				
+				if( groupid > 0 )
+					vars.groupid = groupid;
 				
 				vars.authid = Application.authId;
 				
@@ -1332,7 +1343,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 						]
 					}, 
 					'object'   : 'user', 
-					'objectid' : ( userid ? userid : '0' ) 
+					'objectid' : ( userid ? userid : '0' ),
+					'groupid'  : groupid ? groupid : 0
 				} );
 			}
 			
@@ -1349,13 +1361,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 		}
 	}
 	
-	function remountDisk( oldname, newname, userid, callback, skip )
+	function remountDisk( oldname, newname, userid, groupid, callback, skip )
 	{
 		if( oldname && newname )
 		{
 			if( skip )
 			{
-				mountDisk( newname, userid, function( e, d )
+				mountDisk( newname, userid, groupid, function( e, d )
 				{
 				
 					if( e != 'ok' )
@@ -1369,7 +1381,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			}
 			else
 			{
-				unmountDisk( oldname, userid, function( e, d )
+				unmountDisk( oldname, userid, groupid, function( e, d )
 				{
 				
 					if( e != 'ok' )
@@ -1377,7 +1389,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						Notify( { title: i18n( 'i18n_fail_unmount' ), text: ( d ? d : i18n( 'i18n_fail_unmount_more' ) ) } );
 					}
 				
-					mountDisk( newname, userid, function( e, d )
+					mountDisk( newname, userid, groupid, function( e, d )
 					{
 					
 						if( e != 'ok' )
@@ -1496,7 +1508,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 	}
 	
-	function removeStorage( diskid, userid, devname, callback )
+	function removeStorage( diskid, userid, gid, devname, callback )
 	{
 		if( diskid && devname )
 		{
@@ -1510,8 +1522,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 					if( ShowLog ) console.log( { diskid: diskid, userid: ( userid ? userid : '0' ), devname: devname } );
 					
-					unmountDrive( devname, false, function()
-					{
+					//unmountDrive( devname, false, false, function()
+					//{
 						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 						
 						var m = new Module( 'system' );
@@ -1542,9 +1554,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 						}
 						
-						m.execute( 'deletedoor', { id: diskid, userid: ( userid ? userid : '0' ), authid: Application.authId } );
+						m.execute( 'deletedoor', { id: diskid, groupid: gid ? gid : 0, userid: ( userid ? userid : '0' ), authid: Application.authId } );
 					
-					} );
+					//} );
 				
 				}
 			} );
@@ -3981,6 +3993,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										var storage = {
 											id   : sorted[b].ID,
 											user : sorted[b].UserID,
+											grup : sorted[b].GroupID,
 											name : sorted[b].Name,
 											type : sorted[b].Type,
 											size : readableBytes( size, 0 ), 
@@ -4039,7 +4052,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																d.onclick = function (  )
 																{
 																																
-																	init.edit( storage.id, storage.user );
+																	init.edit( storage.id, storage.user, storage.grup );
 																
 																};
 															}
@@ -4154,9 +4167,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 						
 							},
 							
-							edit : function ( sid, uid )
+							edit : function ( sid, uid, gid )
 							{
-								
 								this.func.mode[ 'storage' ] = 'edit';
 								
 								var args = {
@@ -4243,6 +4255,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												user  : js.UserID,
 												name  : js.Name,
 												type  : js.Type,
+												grup  : js.GroupID,
 												csize : csize,
 												cunit : cunit,
 												note  : js.ShortDescription,
@@ -4675,7 +4688,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																	d.onclick = function ()
 																	{
 																	
-																		removeStorage( storage.id, storage.user, storage.name, function()
+																		removeStorage( storage.id, storage.user, storage.grup, storage.name, function()
 																		{
 																		
 																			listStorage( function( res, js )
@@ -4713,11 +4726,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 																	d.className = 'IconSmall FloatLeft MarginRight';
 																	d.innerHTML = ( storage.mount > 0 ? i18n('i18n_unmount_disk') : i18n('i18n_mount_disk') );
 																	d.onclick = function ()
-																	{
-																	
-																		mountStorage( storage.name, storage.user, this, function()
+																	{ 
+																		mountStorage( storage.name, storage.user, groupid, this, function()
 																		{
-																		
 																			listStorage( function( res, js )
 																			{
 																			

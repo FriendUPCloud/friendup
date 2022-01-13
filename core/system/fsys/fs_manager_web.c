@@ -1897,11 +1897,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						}
 
 						FHandler *dsthand;
-						char *srcpath, *dstpath;
+						char *dstpath;
 						
-						File *copyFile;
-						
-						File *dstrootf = GetFileByPath( loggedSession->us_User, &dstpath, topath );
+						File *dstrootf = UserGetDeviceByPath( loggedSession->us_User, &dstpath, topath );
 						
 						DEBUG("[FSMWebRequest] COPY from %s TO %s\n", path, topath );
 						

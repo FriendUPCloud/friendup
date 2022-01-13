@@ -25,6 +25,8 @@
 #include <system/fsys/door_notification.h>
 #include <util/session_id.h>
 
+#include <strings.h>
+
 /**
  * Create new User Session Manager
  *
@@ -681,22 +683,6 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 			UserAddSession( locusr, us );
 
 			us->us_User = locusr;
-			
-			/*
-			DEBUG("[USMUserSessionAdd] have more sessions: %d mainsessionid: '%s'\n", userHaveMoreSessions, locusr->u_MainSessionID );
-			
-			if( userHaveMoreSessions == FALSE && ( locusr->u_MainSessionID == NULL || ( strlen( locusr->u_MainSessionID ) <= 0 ) ) )
-			{
-				DEBUG("[USMUserSessionAdd] is api: %d\n", locusr->u_IsAPI );
-				if( locusr != NULL && locusr->u_IsAPI == FALSE )
-				{
-					// we cannot regenerate session because drives are using this sessionid
-					UserRegenerateSessionID( smgr->usm_SB, locusr, NULL );
-				}
-				
-				DEBUG("[USMUserSessionAdd] SessionID will be overwriten\n");
-			}
-			*/
 		}
 	}
 	else

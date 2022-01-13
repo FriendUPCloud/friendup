@@ -143,7 +143,7 @@ User * UMUserGetByNameDB( UserManager *smgr, const char *name );
 //
 //
 
-User *UMUserGetByID( UserManager *um, FQUAD id );
+User *UMUserGetByID( UserManager *um, FUQUAD id );
 
 //
 //
@@ -331,5 +331,23 @@ FBOOL UMSendDoorNotification( UserManager *usm, void *notif, UserSession *ses, F
 //
 
 int UMRemoveOldSessions( void *lsb );
+
+//
+//
+//
+
+void UMRemoveUsersFromGroup( UserManager *um, FUQUAD groupid );
+
+//
+//
+//
+
+void UMNotifyAllUsersInGroup( UserManager *um, FQUAD groupid, int type );
+
+//
+//
+//
+
+void UMAddExistingUsersToGroup( UserManager *um, UserGroup *ug );
 
 #endif //__SYSTEM_USER_USER_MANAGER_H__
