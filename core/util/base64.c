@@ -156,8 +156,8 @@ char *Base64Decode( const unsigned char* data, unsigned int length, int *finalLe
 		return NULL;
 	}
 	
-	//int modulo = (length % 4);
-	int modulo = (length % 2);
+	int modulo = (length % 4);
+	//int modulo = (length % 2);
 	if( modulo != 0 ) //&& modulo != 2 )
 	{
 		FERROR("Cannot decode entry, beacouse size is incorect: %d\n", length );

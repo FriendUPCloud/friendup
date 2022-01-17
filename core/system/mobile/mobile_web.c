@@ -438,18 +438,18 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			char *tmpQuery = NULL;
 			int querysize = 1024;
 			
-			int decodedTokenLen = 0;
-			char *decodedToken = Base64Decode( (const unsigned char *)token, strlen(token), &decodedTokenLen );
+			//int decodedTokenLen = 0;
+			//char *decodedToken = Base64Decode( (const unsigned char *)token, strlen(token), &decodedTokenLen );
 			
-			DEBUG("--------------- token %s decodedtoken %s decoded len %d\n", token, decodedToken, decodedTokenLen );
+			//DEBUG("--------------- token %s decodedtoken %s decoded len %d\n", token, decodedToken, decodedTokenLen );
 		
 			if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
 			{
 				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 				if( sqllib != NULL )
 				{
-					sprintf( tmpQuery, "DELETE FROM `FUserMobileApp` WHERE AppToken='%s' AND UserID=%ld", decodedToken, loggedSession->us_UserID );
-					//sprintf( tmpQuery, "DELETE FROM `FUserMobileApp` WHERE AppToken=FROM_BASE64('%s') AND UserID=%ld", token, loggedSession->us_UserID );
+					//sprintf( tmpQuery, "DELETE FROM `FUserMobileApp` WHERE AppToken='%s' AND UserID=%ld", decodedToken, loggedSession->us_UserID );
+					sprintf( tmpQuery, "DELETE FROM `FUserMobileApp` WHERE AppToken=FROM_BASE64('%s') AND UserID=%ld", token, loggedSession->us_UserID );
 			
 					sqllib->QueryWithoutResults( sqllib, tmpQuery );
 					FFree( tmpQuery );
@@ -465,10 +465,10 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 				HttpAddTextContent( response, buffer );
 			}
 			
-			if( decodedToken != NULL )
-			{
-				FFree( decodedToken );
-			}
+			//if( decodedToken != NULL )
+			//{
+			//	FFree( decodedToken );
+			//}
 		}
 		
 		if( token != NULL )

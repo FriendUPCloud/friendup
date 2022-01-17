@@ -356,7 +356,9 @@ Friend.User = {
 			if( typeof friendApp != 'undefined' && typeof friendApp.get_app_token == 'function' )
 			{
 				let ud = new cAjax();
-				ud.open( 'get', '/system.library/mobile/deleteuma/?sessionid=' + Workspace.sessionId + '&token=' + window.Base64alt.encode( friendApp.get_app_token() ) , true );
+				//ud.open( 'get', '/system.library/mobile/deleteuma/?sessionid=' + Workspace.sessionId + '&token=' + window.Base64alt.encode( friendApp.get_app_token() ) , true );
+				ud.open( 'get', '/system.library/mobile/deleteuma/?sessionid=' + Workspace.sessionId + '&token=' + friendApp.get_app_token() , true );
+				//
 				ud.forceHTTP = true;
 				ud.send();
 			}
