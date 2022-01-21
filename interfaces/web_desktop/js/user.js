@@ -360,35 +360,68 @@ Friend.User = {
 				ud.open( 'get', '/system.library/mobile/deleteuma/?sessionid=' + Workspace.sessionId + '&token=' + friendApp.get_app_token() , true );
 				//
 				ud.forceHTTP = true;
-				ud.send();
-			}
+				ud.onload = function( lmdata )
+                        	{
+                                	console.log('DeleteUma finished: ' + lmdata );
+					let m = new cAjax();
+                                	m.open( 'get', '/system.library/user/logout/?sessionid=' + Workspace.sessionId, true );
+                                	m.forceHTTP = true;
+                                	m.send();
 
-			let m = new cAjax();
-			m.open( 'get', '/system.library/user/logout/?sessionid=' + Workspace.sessionId, true );
-			m.forceHTTP = true;
-			m.send();
-			
-			if( !cbk )
-			{
-				setTimeout( doLogout, 500 );
+                                	if( !cbk )
+                                	{
+                                        	setTimeout( doLogout, 500 );
+                                	}
+                                	else
+                                	{
+                                        	if( Workspace.conn )
+                                        	{
+                                                	try
+                                                	{
+                                                	        Workspace.conn.ws.close();
+                                               		}
+                                                	catch( e )
+                                                	{
+                                                        	console.log( 'Could not close conn.' );
+                                                	}
+                                                	delete Workspace.conn;
+                                                	Workspace.conn = null;
+                                        	}
+                                        	Workspace.sessionId = '';
+                                        	cbk();
+                                	}
+                        	};
+				ud.send();
 			}
 			else
 			{
-				if( Workspace.conn )
+				let m = new cAjax();
+				m.open( 'get', '/system.library/user/logout/?sessionid=' + Workspace.sessionId, true );
+				m.forceHTTP = true;
+				m.send();
+			
+				if( !cbk )
 				{
-					try
-					{
-						Workspace.conn.ws.close();
-					}
-					catch( e )
-					{
-						console.log( 'Could not close conn.' );
-					}
-					delete Workspace.conn;
-					Workspace.conn = null;
+					setTimeout( doLogout, 500 );
 				}
-				Workspace.sessionId = '';
-				cbk();
+				else
+				{
+					if( Workspace.conn )
+					{
+						try
+						{
+							Workspace.conn.ws.close();
+						}
+						catch( e )
+						{
+							console.log( 'Could not close conn.' );
+						}
+						delete Workspace.conn;
+						Workspace.conn = null;
+					}
+					Workspace.sessionId = '';
+					cbk();
+				}
 			}
 		} );
 		// Could be there will be no connection..
