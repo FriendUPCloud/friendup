@@ -663,7 +663,8 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
 	
 		DEBUG("[UMGetUserByNameDB] start\n");
 
-		sqlLib->SNPrintF( sqlLib, where, len, " `Name`='%s'", name );
+		snprintf( where, len, " `Name`='%s'", name );
+		//sqlLib->SNPrintF( sqlLib, where, len, " `Name`='%s'", name );
 	
 		int entries;
 	
