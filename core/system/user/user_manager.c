@@ -303,7 +303,8 @@ User * UMUserGetByNameDB( UserManager *um, const char *name )
 
 	User *user = NULL;
 	char tmpQuery[ 1024 ];
-	sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," Name = '%s'", name );
+	snprintf( tmpQuery, sizeof(tmpQuery)," Name='%s'", name );
+	//sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," Name = '%s'", name );
 	
 	int entries;
 	user = sqlLib->Load( sqlLib, UserDesc, tmpQuery, &entries );
