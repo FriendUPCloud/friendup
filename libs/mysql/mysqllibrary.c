@@ -1882,17 +1882,22 @@ int Reconnect( struct SQLLibrary *l )
 	{
 		mysql_close( l->con.sql_Con );
 	}
-	void *connection = mysql_real_connect( l->con.sql_Con, l->con.sql_Host, l->con.sql_DBName, l->con.sql_User, l->con.sql_Pass, l->con.sql_Port, NULL, 0 );
-	if( connection == NULL )
-	{
-		l->con.sql_Con = NULL;
-		FERROR( "[MYSQLLibrary] Failed to connect to database: '%s'.\n", mysql_error(l->con.sql_Con) );
-		return -1;
-	}
-	int reconnect = 1;
-	mysql_options( connection, MYSQL_OPT_RECONNECT, &reconnect );
 	
-	return 0;
+	l->con.sql_Con = mysql_init( NULL );
+	if( l->con.sql_Con != NULL )
+	{
+		void *connection = mysql_real_connect( l->con.sql_Con, l->con.sql_Host, l->con.sql_DBName, l->con.sql_User, l->con.sql_Pass, l->con.sql_Port, NULL, 0 );
+		if( connection == NULL )
+		{
+			l->con.sql_Con = NULL;
+			FERROR( "[MYSQLLibrary] Failed to connect to database: '%s'.\n", mysql_error(l->con.sql_Con) );
+			return -1;
+		}
+		int reconnect = 1;
+		mysql_options( connection, MYSQL_OPT_RECONNECT, &reconnect );
+		return 0;
+	}
+	return 1;
 }
 
 /**
