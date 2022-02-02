@@ -28,9 +28,10 @@
 #include <interface/properties_interface.h>
 #include <core/nodes.h>
 #include <time.h>
-#include <system/systembase.h>
+//#include <system/systembase.h>
 #include <ctype.h>
 #include <mysql.h>
+#include <util/list_string.h>
 
 #define LIB_NAME "mysql.library"
 #define LIB_VERSION 1
@@ -593,8 +594,8 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 	
 	if( mysql_query( l->con.sql_Con, querybs->bs_Buffer ) )
 	{
-		SystemBase *sb = (SystemBase *)l->sb;
-		sb->sl_UtilInterface.Log( FLOG_ERROR, "Update query error: %s\n", querybs->bs_Buffer );
+		//SystemBase *sb = (SystemBase *)l->sb;
+		//sb->sl_UtilInterface.Log( FLOG_ERROR, "Update query error: %s\n", querybs->bs_Buffer );
 		BufStringDelete( querybs );
 		
 		return 2;
@@ -827,7 +828,7 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 		// end of if( statement init)
 	
 		int finalqsize = tablequerybs->bs_Size + dataquerybs->bs_Size + 256;
-		SystemBase *sb = (SystemBase *)l->sb;
+		//SystemBase *sb = (SystemBase *)l->sb;
 		
 		if( ( finalQuery = FCalloc( finalqsize, sizeof(char) ) ) != NULL )
 		{
@@ -835,8 +836,8 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 
 			if (mysql_stmt_prepare(stmt, finalQuery, strlen(finalQuery)))
 			{
-				sb->sl_UtilInterface.Log( FLOG_ERROR,  "\n mysql_stmt_prepare(), INSERT failed");
-				sb->sl_UtilInterface.Log( FLOG_ERROR,  "\n %s", mysql_stmt_error(stmt));
+				//sb->sl_UtilInterface.Log( FLOG_ERROR,  "\n mysql_stmt_prepare(), INSERT failed");
+				//sb->sl_UtilInterface.Log( FLOG_ERROR,  "\n %s", mysql_stmt_error(stmt));
 				mysql_stmt_close( stmt ); // Free
 				BufStringDelete( tablequerybs );
 				BufStringDelete( dataquerybs );
@@ -847,8 +848,8 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 			// Bind the buffers 
 			if (mysql_stmt_bind_param( stmt, bindTable ) )
 			{
-				sb->sl_UtilInterface.Log( FLOG_ERROR, "param bind failed! ");
-				sb->sl_UtilInterface.Log( FLOG_ERROR, " %s\n", mysql_stmt_error(stmt) );
+				//sb->sl_UtilInterface.Log( FLOG_ERROR, "param bind failed! ");
+				//sb->sl_UtilInterface.Log( FLOG_ERROR, " %s\n", mysql_stmt_error(stmt) );
 				mysql_stmt_close( stmt ); // Free
 				BufStringDelete( tablequerybs );
 				BufStringDelete( dataquerybs );
@@ -865,7 +866,7 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 					// Supply data in chunks to server 
 					if (mysql_stmt_send_long_data(stmt, i, bindData[ i ]->ls_Data , bindData[ i ]->ls_Size ) )
 					{
-						sb->sl_UtilInterface.Log( FLOG_ERROR," send_long_data failed %s\n", mysql_stmt_error(stmt));
+						//sb->sl_UtilInterface.Log( FLOG_ERROR," send_long_data failed %s\n", mysql_stmt_error(stmt));
 					}
 				}
 			}
@@ -875,7 +876,7 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 			{
 				//FERROR("mysql_stmt_execute failed %s\n", mysql_stmt_error(stmt));
 				const char *error = mysql_stmt_error(stmt);
-				sb->sl_UtilInterface.Log( FLOG_ERROR, "Save query error: %s, query: %s\n", error, finalQuery );
+				//sb->sl_UtilInterface.Log( FLOG_ERROR, "Save query error: %s, query: %s\n", error, finalQuery );
 				
 				if( strstr( error, "Lost connection to MySQL server during" ) != NULL )
 				{
@@ -1877,6 +1878,10 @@ char* StringDuplicate( const char* str )
  */
 int Reconnect( struct SQLLibrary *l )
 {
+	if( l->con.sql_Con != NULL )
+	{
+		mysql_close( l->con.sql_Con );
+	}
 	void *connection = mysql_real_connect( l->con.sql_Con, l->con.sql_Host, l->con.sql_DBName, l->con.sql_User, l->con.sql_Pass, l->con.sql_Port, NULL, 0 );
 	if( connection == NULL )
 	{
