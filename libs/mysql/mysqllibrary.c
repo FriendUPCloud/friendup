@@ -1267,6 +1267,15 @@ int SNPrintF( struct SQLLibrary *l, char *str, size_t stringSize, const char *fm
 	const char *ptr = fmt;
 	char *escapedString = NULL;
 
+	if( l->con.sql_Recconect == TRUE )
+	{
+		if( Reconnect( l ) != 0 )
+		{
+			strcpy( str, " " );
+			return 1;
+		}
+	}
+	
 	/* This function can have SQL injection if the arguments are too long.
 	 * The last one may leak. To avoid it (until we get rid of this function alltogether)
 	 * the byte before the last is reserved for an extra null terminator (as a canary).
@@ -1274,6 +1283,7 @@ int SNPrintF( struct SQLLibrary *l, char *str, size_t stringSize, const char *fm
 	 * length is returned.
 	 */
 	str[stringSize-2] = '\0';
+	
 
 	if( ptr == NULL )
 	{
