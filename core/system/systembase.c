@@ -541,9 +541,9 @@ SystemBase *SystemInit( void )
 				if( l->sqlpool[ i ].sqll_Sqllib != NULL )
 				{
 					l->sqlpool[ i ].sql_ID = i;
-					error = l->sqlpool[ i ].sqll_Sqllib->SetOption( l->sqlpool[ i ].sqll_Sqllib, options );
+					l->sqlpool[ i ].sqll_Sqllib->SetOption( l->sqlpool[ i ].sqll_Sqllib, options );
 					error = l->sqlpool[ i ].sqll_Sqllib->Connect( l->sqlpool[ i ].sqll_Sqllib, host, dbname, login, pass, port );
-					error = l->sqlpool[ i ].sqll_Sqllib->l_Slot = i;
+					l->sqlpool[ i ].sqll_Sqllib->l_Slot = i;
 					if( error != 0 )
 					{
 						break;

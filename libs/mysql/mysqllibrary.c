@@ -1951,6 +1951,8 @@ int Connect( struct SQLLibrary *l, const char *host, const char *dbname, const c
 	int reconnect = 1;
 	mysql_options( connection, MYSQL_OPT_RECONNECT, &reconnect );
 	
+	DEBUG("[MYSQLLibrary] Connection set\n");
+	
 	return 0;
 }
 
