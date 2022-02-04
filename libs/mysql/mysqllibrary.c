@@ -919,21 +919,24 @@ void Delete( struct SQLLibrary *l, FULONG *descr, void *data )
 
 	// we should go trough for structure to find SQLT_IDINT
 
-	sprintf( tmpQuery, "delete from %s where ID = '%d'", (char *)descr[1], *strptr );
-
-	if( mysql_query( l->con.sql_Con, tmpQuery ) )
+	if( l->con.sql_Con != NULL && mysql_ping( l->con.sql_Con ) == 0 )
 	{
-		return;
-	}
+		sprintf( tmpQuery, "delete from %s where ID='%d'", (char *)descr[1], *strptr );
 
-	MYSQL_RES *result = mysql_store_result( l->con.sql_Con );
+		if( mysql_query( l->con.sql_Con, tmpQuery ) )
+		{
+			return;
+		}
+
+		MYSQL_RES *result = mysql_store_result( l->con.sql_Con );
   
-	if (result == NULL) 
-	{
-		return;
- 	}
+		if (result == NULL) 
+		{
+			return;
+		}
 
-	mysql_free_result( result );
+		mysql_free_result( result );
+	}
 }
 
 /**
@@ -948,21 +951,24 @@ void DeleteWhere( struct SQLLibrary *l, FULONG *descr, char *where )
 	char tmpQuery[ 2048 ];
 	// we should go trough for structure to find SQLT_IDINT
 
-	sprintf( tmpQuery, "delete from %s WHERE %s", (char *)descr[1], where );
-
-	if( mysql_query( l->con.sql_Con, tmpQuery ) )
+	if( l->con.sql_Con != NULL && mysql_ping( l->con.sql_Con ) == 0 )
 	{
-		return;
-	}
+		sprintf( tmpQuery, "delete from %s WHERE %s", (char *)descr[1], where );
 
-	MYSQL_RES *result = mysql_store_result( l->con.sql_Con );
+		if( mysql_query( l->con.sql_Con, tmpQuery ) )
+		{
+			return;
+		}
+
+		MYSQL_RES *result = mysql_store_result( l->con.sql_Con );
   
-	if (result == NULL) 
-	{
-		return;
- 	}
+		if (result == NULL) 
+		{
+			return;
+		}
 
-	mysql_free_result( result );
+		mysql_free_result( result );
+	}
 }
 
 /**
@@ -1015,31 +1021,34 @@ int NumberOfRecords( struct SQLLibrary *l, FULONG *descr, char *where )
 		sprintf( tmpQuery, "select count(*) from %s", (char *)descr[ 1 ] );
 	}
 	
-	if( mysql_query( l->con.sql_Con, tmpQuery ) )
+	if( l->con.sql_Con != NULL && mysql_ping( l->con.sql_Con ) == 0 )
 	{
-		FERROR("Cannot run query: '%s'\n", tmpQuery );
-		FERROR( "%s\n", mysql_error( l->con.sql_Con ) );
-		return -3;
-	}
+		if( mysql_query( l->con.sql_Con, tmpQuery ) )
+		{
+			FERROR("Cannot run query: '%s'\n", tmpQuery );
+			FERROR( "%s\n", mysql_error( l->con.sql_Con ) );
+			return -3;
+		}
 
-	MYSQL_RES *result = mysql_store_result( l->con.sql_Con );
+		MYSQL_RES *result = mysql_store_result( l->con.sql_Con );
   
-	if (result == NULL) 
-	{
-		return -4;
- 	}
+		if (result == NULL) 
+		{
+			return -4;
+		}
 
-	MYSQL_ROW row;
-	//
-	// Receiving data as linked list of objects
-	//
+		MYSQL_ROW row;
+		//
+		// Receiving data as linked list of objects
+		//
 
-	while ( ( row = mysql_fetch_row( result ) ) ) 
-	{
-		intRet = (int)atol( row[ 0 ] );
+		while ( ( row = mysql_fetch_row( result ) ) ) 
+		{
+			intRet = (int)atol( row[ 0 ] );
+		}
+
+		mysql_free_result( result );
 	}
-
-	mysql_free_result( result );
 	DEBUG("[MYSQLLibrary] NumberOfRecords END\n");
 	
 	return intRet;
@@ -1057,23 +1066,26 @@ int NumberOfRecordsCustomQuery( struct SQLLibrary *l, const char *query )
 	int intRet = -1;
 	DEBUG("[MYSQLLibrary] NumberOfRecordsCustomQuery\n");
 	
-	if( mysql_query( l->con.sql_Con, query ) )
+	if( l->con.sql_Con != NULL && mysql_ping( l->con.sql_Con ) == 0 )
 	{
-		FERROR("Cannot run query: '%s'\n", query );
-		FERROR( "%s\n", mysql_error( l->con.sql_Con ) );
-		return -3;
-	}
+		if( mysql_query( l->con.sql_Con, query ) )
+		{
+			FERROR("Cannot run query: '%s'\n", query );
+			FERROR( "%s\n", mysql_error( l->con.sql_Con ) );
+			return -3;
+		}
 
-	MYSQL_RES *result = mysql_store_result( l->con.sql_Con );
+		MYSQL_RES *result = mysql_store_result( l->con.sql_Con );
   
-	if (result == NULL) 
-	{
-		return -4;
- 	}
+		if (result == NULL) 
+		{
+			return -4;
+		}
  	
- 	intRet = (int)mysql_num_rows( result );
+		intRet = (int)mysql_num_rows( result );
 
-	mysql_free_result( result );
+		mysql_free_result( result );
+	}
 	DEBUG("[MYSQLLibrary] NumberOfRecordsCustomQuery END\n");
 	
 	return intRet;
@@ -1095,23 +1107,26 @@ MYSQL_RES *Query( struct SQLLibrary *l, const char *sel )
 		return NULL;
 	}
 	
-	if( mysql_query( l->con.sql_Con, sel ) )
+	if( l->con.sql_Con != NULL && mysql_ping( l->con.sql_Con ) == 0 )
 	{
-		FERROR("Cannot run query: '%s'\n", sel );
-		const char *err = mysql_error( l->con.sql_Con );
-		FERROR( "%s\n", err );
-		
-		if( strstr( err, "List connection to MySQL server" ) != NULL )
+		if( mysql_query( l->con.sql_Con, sel ) )
 		{
-			l->con.sql_Recconect = TRUE;
-		}
+			FERROR("Cannot run query: '%s'\n", sel );
+			const char *err = mysql_error( l->con.sql_Con );
+			FERROR( "%s\n", err );
 		
-		return NULL;
-	}
+			if( strstr( err, "List connection to MySQL server" ) != NULL )
+			{
+				l->con.sql_Recconect = TRUE;
+			}
+		
+			return NULL;
+		}
 	
-	DEBUG("[MYSQLLibrary] SELECT QUERY: >%s<\n", sel );
+		DEBUG("[MYSQLLibrary] SELECT QUERY: >%s<\n", sel );
 
-	result = mysql_store_result( l->con.sql_Con );
+		result = mysql_store_result( l->con.sql_Con );
+	}
 
 	return result;
 }
@@ -1127,7 +1142,7 @@ int QueryWithoutResults( struct SQLLibrary *l, const char *sel )
 {
 	if( l != NULL )
 	{
-		if( l->con.sql_Con != NULL )
+		if( l->con.sql_Con != NULL && mysql_ping( l->con.sql_Con ) == 0 )
 		{
 			DEBUG("[QueryWithoutResults] sql: %s\n", sel );
 			int err = mysql_query( l->con.sql_Con, sel );
@@ -1972,6 +1987,7 @@ int Disconnect( struct SQLLibrary *l )
 	if( l->con.sql_Pass != NULL ){ FFree( l->con.sql_Pass );  l->con.sql_Pass = NULL; }
 	
 	mysql_close( l->con.sql_Con );
+	l->con.sql_Con = NULL;
 	return 0;
 }
 
