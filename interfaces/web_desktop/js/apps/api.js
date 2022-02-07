@@ -6347,6 +6347,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					if( Application.run )
 					{
 						Application.run( packet );
+						FUI.initialize();
 					}
 					window.loaded = true;
 					// Use the application doneLoading function (different)
