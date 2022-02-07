@@ -70,12 +70,23 @@ window.FUI = window.FUI ? window.FUI : {
 		    } )( types[b] );
 		}
 	},
+	// Append child with initializer
+	appendChild( parent, child )
+	{
+		parent.appendChild( child );
+		this.initialize();
+	},
+	// Insert before element, with initializer
+	insertBefore( newnode, parent )
+	{
+		parent.insertBefore( newnode, parent );
+		this.initialize();
+	},
 	// Add a callback
 	addCallback( callbackId, callbackFunc )
 	{
 		window.FUI.callbacks[ callbackId ] = callbackFunc;
 	}
-
 };
 
 // Base class
