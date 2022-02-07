@@ -6150,6 +6150,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		window.loaded = true;
 		
+		// Initialize Friend User Interface
+		FUI.initialize();
+		
 		// What to do when we are done loading.. -------------------------------
 		
 		// Async is a bitch!
