@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>FUI test</title>
+		<link rel="stylesheet" href="theme.css"/>
+		<script src="../oo.js"></script>
+		<script src="fui.js"></script>
+	</head>
+	<body onload="fui.init()">
+		<script>
+			fui.onready = function()
+			{
+				var gui = fui.build( [ 
+					{
+						type: 'View',
+						width: 400, 
+						height: 300, 
+						title: 'Another one',
+						show: true,
+						children: [
+							{
+								type: 'View',
+								width: 200, 
+								height: 200, 
+								title: 'Sub windfow',
+								show: true
+							}
+						]
+					},
+					{
+						type: 'View',
+						width: 300, 
+						height: 400, 
+						title: 'Test window 4',
+						show: true,
+						children: [
+							{
+								type: 'Group',
+								width: '100%',
+								height: '50%',
+								border: 'none',
+								padding: 5,
+								paddingRight: 0,
+								show: true,
+								children: [
+									{
+										type: 'Input',
+										width: '70%',
+										name: 'input1',
+										show: true
+									},
+									{
+										type: 'Button',
+										width: '30%',
+										name: 'button2',
+										text: 'Add text',
+										show: true
+									},
+									{
+										type: 'Button',
+										width: '50%',
+										name: 'button1',
+										text: 'Clear text',
+										show: true
+									}
+								]
+							},
+							{
+								type: 'Group',
+								width: '100%',
+								height: '50%',
+								border: 'none',
+								padding: 0,
+								show: true,
+								children: [
+									{
+										type: 'List',
+										width: '100%',
+										height: '100%',
+										name: 'list1',
+										show: true
+									}
+								]
+							}
+						]
+					} 
+				] );
+				
+				// Simple event assignment
+				gui.get( 'button1' ).addEvent( 'click', function( e )
+				{
+					gui.get( 'input1' ).clear();
+				} );
+				
+				// Simple event assignment
+				gui.get( 'button2' ).addEvent( 'click', function( e )
+				{
+					gui.get( 'list1' ).addEntry( [ gui.get( 'input1' ).getValue(), 123, 234 ] );
+				} );
+				
+				gui.get( 'list1' ).setColumns( [ 'Col1', 'Col2', 'Col3' ] );
+			};
+		</script>
+	</body>
+</html>
