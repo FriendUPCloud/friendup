@@ -12,6 +12,7 @@
 window.FUI = window.FUI ? window.FUI : {
     // Initial built-in classes
     classTypes: [ 'string' ],
+    guiElements: {},
     // Create meta markup for a class instance
 	create( data )
 	{
@@ -82,6 +83,11 @@ window.FUI = window.FUI ? window.FUI : {
 		parent.insertBefore( newnode, parent );
 		this.initialize();
 	},
+	// Get that element!
+	getElementByUniqueId( id )
+	{
+		return this.guiElements[ id ] ? this.guiElements[ id ] : false;
+	}
 	// Add a callback
 	addCallback( callbackId, callbackFunc )
 	{
@@ -96,6 +102,18 @@ class FUIElement
     constructor( options )
     {
         this.options = options;
+        
+        if( options.uniqueid )
+        {
+        	if( window.FUI.guiElements[ options.uniqueid ] )
+        	{
+        		console.log( 'ccGUI: Gui element with proposed uniqueId ' + options.uniqueid + ' is taken. Object becomes an orphan.' );
+        	}
+        	else
+        	{
+        		window.FUI.guiElements[ options.uniqueid ] = this;
+        	}
+        }
         
         let d = document.createElement( 'div' );
         this.domElement = d;
@@ -128,6 +146,29 @@ class FUIElement
     // Grabs attributes from the dom element if they are supported
     grabAttributes( domElement )
     {
+    	let uid = domElement.getAttribute( 'uniqueid' );
+    	if( uid )
+    	{
+    		if( window.FUI.guiElements[ uid ] )
+    		{
+    			if( this.options.uniqueid )
+    			{
+    				console.log( 'FUI: Could not set new uniqueid - id ' + uid + ' already taken. Keeping old id: ' + this.options.uniqueId );
+    			}
+    			else
+    			{
+    				console.log( 'FUI: Gui element with proposed uniqueid ' + options.uniqueId + ' is taken. Object becomes an orphan.' );
+    			}
+    		}
+    		else
+    		{
+    			if( this.options.uniqueid && this.options.uniqueid != uid )
+    			{
+    				delete window.FUI.guiElements[ this.options.uniqueid ];
+    			}
+    			window.FUI.guiElements[ uid ] = this;
+    		}
+    	}
     }
     // Refreshes gui's own dom element
     refreshDom()
