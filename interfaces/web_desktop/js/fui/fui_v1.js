@@ -16,14 +16,20 @@ window.FUI = window.FUI ? window.FUI : {
     // Create meta markup for a class instance
 	create( data )
 	{
-		switch( data.Type )
+		switch( data.type )
 		{
 			case 'string':
-				return data.Value;
-				break;
+				let str = data.value;
+				// Extras are things that prepend the value
+				if( data.extras )
+					str = data.extras + str;
+				// Additions are things that appear after the value
+				if( data.additions )
+					str += data.additions;
+				return str;
 			default:
 			{
-    			let classStr = 'FUI' + data.Type.substr( 0, 1 ).toUpperCase() + data.Type.substr( 1, data.Type.length - 1 );
+    			let classStr = 'FUI' + data.type.substr( 0, 1 ).toUpperCase() + data.type.substr( 1, data.type.length - 1 );
 			    try
 			    {
                     let classObj = eval( classStr );
