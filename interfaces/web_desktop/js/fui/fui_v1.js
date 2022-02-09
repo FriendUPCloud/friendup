@@ -163,7 +163,7 @@ class FUIElement
     			}
     			else
     			{
-    				console.log( 'FUI: Gui element with proposed uniqueid ' + options.uniqueId + ' is taken. Object becomes an orphan.' );
+    				console.log( 'FUI: Gui element with proposed uniqueid ' + this.options.uniqueId + ' is taken. Object becomes an orphan.' );
     			}
     		}
     		else
