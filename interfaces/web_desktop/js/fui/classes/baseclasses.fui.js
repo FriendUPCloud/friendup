@@ -326,7 +326,7 @@ class FUIPicture extends FUIElement
     {
         super.grabAttributes( domElement );
         
-        let attrs = [ 'width', 'height', 'icon', 'type', 'shape', 'border-size' ];
+        let attrs = [ 'width', 'height', 'icon', 'type', 'shape', 'border-size', 'onclick' ];
         
         for( let a in attrs )
         {
@@ -340,6 +340,8 @@ class FUIPicture extends FUIElement
     refreshDom()
     {
         super.refreshDom();
+        
+        let self = this;
         
         // Do something with properties on dom
         
@@ -373,6 +375,21 @@ class FUIPicture extends FUIElement
         else
         {
         	this.domElement.style.borderWidth = '';
+        }
+        
+        if( this.options[ 'onclick' ] )
+        {
+        	this.domElement.style.cursor = 'pointer';
+        	this.domElement.onclick = function( e )
+        	{
+        		cancelBubble( e );
+        		if( window.FUI.callbacks[ self.options.onclick ] )
+		        {
+		            // Add structure with current element flags
+		            window.FUI.callbacks[ self.options.onclick ]( true );
+		        }
+		        return;
+        	}
         }
         
         // Set stuff on this.domElement.innerHTML
