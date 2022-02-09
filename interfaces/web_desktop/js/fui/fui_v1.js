@@ -113,12 +113,9 @@ class FUIElement
         {
         	if( window.FUI.guiElements[ options.uniqueid ] )
         	{
-        		console.log( 'ccGUI: Gui element with proposed uniqueId ' + options.uniqueid + ' is taken. Object becomes an orphan.' );
+        		console.log( 'ccGUI: Gui element with proposed uniqueId ' + options.uniqueid + ' is taken. Overwriting.' );
         	}
-        	else
-        	{
-        		window.FUI.guiElements[ options.uniqueid ] = this;
-        	}
+        	window.FUI.guiElements[ options.uniqueid ] = this;
         }
         
         let d = document.createElement( 'div' );
@@ -155,25 +152,8 @@ class FUIElement
     	let uid = domElement.getAttribute( 'uniqueid' );
     	if( uid )
     	{
-    		if( window.FUI.guiElements[ uid ] )
-    		{
-    			if( this.options.uniqueid )
-    			{
-    				console.log( 'FUI: Could not set new uniqueid - id ' + uid + ' already taken. Keeping old id: ' + this.options.uniqueId );
-    			}
-    			else
-    			{
-    				console.log( 'FUI: Gui element with proposed uniqueid ' + this.options.uniqueId + ' is taken. Object becomes an orphan.' );
-    			}
-    		}
-    		else
-    		{
-    			if( this.options && this.options.uniqueid && this.options.uniqueid != uid )
-    			{
-    				delete window.FUI.guiElements[ this.options.uniqueid ];
-    			}
-    			window.FUI.guiElements[ uid ] = this;
-    		}
+    		// Set directly
+			window.FUI.guiElements[ uid ] = this;
     	}
     }
     // Refreshes gui's own dom element
