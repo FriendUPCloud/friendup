@@ -397,6 +397,11 @@ class FUIPicture extends FUIElement
         {
         	let icon = this.options.icon ? ( 'fa-' + this.options.icon ) : 'fa-info';
         	this.domElement.innerHTML = '<div class="IconSmall ' + icon + exClasses + '"></div>';
+        	if( this.options[ 'border-size' ] )
+        	{
+        		let d = this.domElement.getElementsByTagName( 'div' )[0];
+        		d.style.marginTop = -( this.options[ 'border-size' ] >> 1 ) + 'px';
+        	}
         }
     }
     getMarkup( data )
