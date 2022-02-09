@@ -168,7 +168,7 @@ class FUIElement
     		}
     		else
     		{
-    			if( this.options.uniqueid && this.options.uniqueid != uid )
+    			if( this.options && this.options.uniqueid && this.options.uniqueid != uid )
     			{
     				delete window.FUI.guiElements[ this.options.uniqueid ];
     			}
