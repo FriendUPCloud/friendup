@@ -170,7 +170,9 @@ class FUIListview extends FUIElement
     
     setRowData( json )
     {
-    	this.rowData = json;
+    	// Contains references to data
+	    this.dataset = {};
+	    this.rowData = json;
     	this.refreshRows();
     }
     
@@ -200,28 +202,36 @@ class FUIListview extends FUIElement
 				
 				col.className = 'HContent' + w + ' Ellipsis FloatLeft' + alignment;
 				
+				// Identify column dataset
+				if( json[b][z].uniqueid )
+				{
+					this.dataset[ json[b][z].uniqueid ] = json[b][z];
+					this.dataset[ json[b][z].uniqueid ].domNode = col;
+				}
+				
 				let str = FUI.create( json[b][z] );
 				
 				json[b][z].Name = this.headerElements[z].name;
-				let onclick = json[b][z].OnClick;
+				let onclick = json[b][z].onclick;
 				
 				if( onclick )
 				{
 				    ( function( data, column )
 				    {
-				        column.onclick = function()
+				        column.onclick = function( e )
 				        {
+				        	if( e.target && e.target.nodeName == 'INPUT' ) return;
 				            if( window.FUI.callbacks[ onclick ] )
 	                        {
 	                            // Add structure with current element attributes
 	                            let obj = {};
 	                            for( let d = 0; d < data.length; d++ )
 	                            {
-	                                obj[ data[ d ].Name ] = {};
+	                                obj[ data[ d ].name ] = {};
 	                                for( let p in data[ d ] )
 	                                {
-	                                    if( p == 'Name' ) continue;
-	                                    obj[ data[ d ].Name ][ p ] = data[ d ][ p ];
+	                                    if( p == 'name' ) continue;
+	                                    obj[ data[ d ].name ][ p ] = data[ d ][ p ];
 	                                }
 	                            }
 	                            window.FUI.callbacks[ onclick ]( obj );
@@ -238,6 +248,51 @@ class FUIListview extends FUIElement
 		}
 		
 		FUI.initialize();
+    }
+    
+    // Edit a row / column by id
+    editColumnById( uid )
+    {
+    	let self = this;
+    	let set = this.dataset[ uid ];
+    	// We need to handle editing many different types of columns
+    	if( set.type == 'string' )
+    	{
+    		if( set.domNode && set.domNode.parentNode )
+    		{
+    			set.domNode.innerHTML = '<input type="text" class="InputHeight FullWidth" value="' + set.value + '"/>';
+    			let nod = set.domNode.getElementsByTagName( 'input' )[0];
+    			nod.addEventListener( 'blur', function( e )
+    			{
+    				set.value = this.value;
+    				
+    				// If there's an onchange event, execute it and provide the dataset as well as listview object
+    				if( set.onchange )
+    				{
+    					if( window.ccGUI.callbacks[ set.onchange ] )
+    					{
+    						window.ccGUI.callbacks[ set.onchange ]( set, self );
+    						return;
+    					}
+    				}
+    				self.refreshRows();
+    			} );
+    			nod.addEventListener( 'change', function( e )
+    			{
+    				this.blur();
+    			} );
+    			nod.focus();
+    			nod.select();
+    		}
+    		else
+    		{
+    			console.log( 'FUI: No supported dom node: ', set );
+    		}
+    	}
+    	else
+    	{
+    		console.log( 'FUI: Unsupported type: ' + set.type );
+    	}
     }
     
     clearRows()
