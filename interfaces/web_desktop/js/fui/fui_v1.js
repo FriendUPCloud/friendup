@@ -93,7 +93,7 @@ window.FUI = window.FUI ? window.FUI : {
 	getElementByUniqueId( id )
 	{
 		return this.guiElements[ id ] ? this.guiElements[ id ] : false;
-	}
+	},
 	// Add a callback
 	addCallback( callbackId, callbackFunc )
 	{
