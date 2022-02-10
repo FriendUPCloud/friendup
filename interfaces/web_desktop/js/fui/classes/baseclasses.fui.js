@@ -400,7 +400,7 @@ class FUIPicture extends FUIElement
         	if( this.options[ 'border-size' ] )
         	{
         		let d = this.domElement.getElementsByTagName( 'div' )[0];
-        		d.style.marginTop = -( this.options[ 'border-size' ] >> 1 ) + 'px';
+        		d.style.marginTop = -( this.options[ 'border-size' ] ) + 'px';
         	}
         }
     }
