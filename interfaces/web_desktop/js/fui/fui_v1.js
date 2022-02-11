@@ -13,6 +13,7 @@ window.FUI = window.FUI ? window.FUI : {
     // Initial built-in classes
     classTypes: [ 'string' ],
     guiElements: {},
+    callbacks: {},
     // Create meta markup for a class instance
 	create( data )
 	{
@@ -97,7 +98,7 @@ window.FUI = window.FUI ? window.FUI : {
 	// Add a callback
 	addCallback( callbackId, callbackFunc )
 	{
-		window.FUI.callbacks[ callbackId ] = callbackFunc;
+		this.callbacks[ callbackId ] = callbackFunc;
 	}
 };
 
