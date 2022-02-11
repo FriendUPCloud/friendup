@@ -1881,33 +1881,28 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
-					char *topath = NULL;
+					char *tmptopath = NULL;
 					el = HashmapGet( request->http_ParsedPostContent, "to" );
 					if( el == NULL ) el = HashmapGet( request->http_Query, "to" );
 					if( el != NULL )
 					{
-						topath = (char *)el->hme_Data;
+						tmptopath = (char *)el->hme_Data;
+						DEBUG("xx: %s\n", tmptopath );
 					}
 					
-					if( topath != NULL )
+					if( tmptopath != NULL )
 					{
-						char *tpath;
-						if( ( tpath = FCalloc( strlen( topath ) + 10 + 256, sizeof(char) ) ) != NULL )
-						{
-							UrlDecode( tpath, topath );
-							strcpy( topath, tpath );
-							FFree( tpath );
-						}
+						char *topath = UrlDecodeToMem( tmptopath );
+						
+						DEBUG("[FSMWebRequest] COPY from %s TO %s\n", origDecodedPath, topath );
 
-						if( strcmp( path, topath ) != 0 )
+						if( strcmp( origDecodedPath, topath ) != 0 )
 						{
 							FHandler *dsthand;
 							char *dstpath;
 						
 							File *dstrootf = UserGetDeviceByPath( loggedSession->us_User, &dstpath, topath );
-						
-							DEBUG("[FSMWebRequest] COPY from %s TO %s\n", path, topath );
-						
+
 							if( dstrootf != NULL )
 							{
 								FBOOL havesrc = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_User, "-R----" );

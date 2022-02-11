@@ -1677,7 +1677,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					UserGroupLink *ugl = loggedSession->us_User->u_UserGroupLinks;
 					while( ugl != NULL )
 					{
-						DEBUG("\n\n\n\nGROUP: %s\n\n\n\n\n", ugl->ugl_Group->ug_Name );
+						//DEBUG("\n\n\n\nGROUP: %s\n\n\n\n\n", ugl->ugl_Group->ug_Name );
 						File *dev = NULL;
 						if( ugl->ugl_Group != NULL )
 						{
