@@ -42,7 +42,7 @@ class FUIListview extends FUIElement
             this.options.hasHeader = true;
             
             let d = document.createElement( 'div' );
-            d.className = 'ContentHeader';
+            d.className = 'FUIListviewHeader';
             
             // Add the heading
             let heading = false;
@@ -109,7 +109,7 @@ class FUIListview extends FUIElement
             this.options.hasHeaders = true;
             
             let d = document.createElement( 'div' );
-            d.className = 'ContentListHeaders BorderTop';
+            d.className = 'FUIListviewHeaders BorderTop';
             
             let headerelements = headers.getElementsByTagName( 'listviewheader' );
             let row = document.createElement( 'div' );
@@ -143,7 +143,7 @@ class FUIListview extends FUIElement
             this.options.hasRows = true;
             
             let container = document.createElement( 'div' );
-            container.className = 'ContentBlock';
+            container.className = 'FUIListviewContent';
             this.rowContainer = container;
             this.domElement.appendChild( container );
             
