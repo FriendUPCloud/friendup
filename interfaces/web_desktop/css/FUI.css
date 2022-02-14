@@ -214,6 +214,9 @@
 .FUIListview .FUIListviewContent .HRow > div.FUIListviewOnclick
 {
 	cursor: pointer;
+}
+.FUIListview .FUIListviewContent .HRow > div.FUIListviewOnclick:hover
+{
 	color: var(--fui-color-emphasized);
 }
 
