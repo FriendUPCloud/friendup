@@ -238,6 +238,7 @@ class FUIListview extends FUIElement
 	                        }
 				        }
 				    } )( json[b], col );
+				    col.classList.add( 'FUIListviewOnclick' );
 				}
 				
 				col.innerHTML = str;					
