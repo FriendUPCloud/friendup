@@ -38,7 +38,12 @@
     --fui-border-radius-small: 3px;
     --fui-box-shadow: 0px 2px 5px rgba(0,0,0,0.4);
     
-    --fui-alert-border-color : red;
+    --fui-alert-border-color: red;
+    
+    --font-size-small: 12px;
+    --font-size-normal: 15px;
+    --font-size-large: 18px;
+    --font-size-x-large: 22px;
 }
 
 /* Check boxes */
