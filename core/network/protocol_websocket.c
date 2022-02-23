@@ -828,6 +828,41 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 	return 0;
 }
 
+int debug01( int  a )
+{
+	return a+1;
+}
+
+int debug02( int  a )
+{
+	return a+1;
+}
+
+int debug1( int  a )
+{
+	return a+1;
+}
+
+int debug2( int  a )
+{
+	return a+2;
+}
+
+int debug3( int  a )
+{
+	return a+3;
+}
+
+int debug4( int  a )
+{
+	return a+4;
+}
+
+int debug5( int  a )
+{
+	return a+5;
+}
+
 //
 //
 //
@@ -841,6 +876,11 @@ void *ParseAndCall( WSThreadData *wstd )
 	jsmn_parser p;
 	jsmntok_t *t;
 	
+	if( wstd == NULL )
+	{
+		return NULL;
+	}
+	
 	char *in = wstd->wstd_Msg;
 	wstd->wstd_Msg = NULL;			// we do not hold message in wstd anymore
 	size_t len = wstd->wstd_Len;
@@ -848,7 +888,10 @@ void *ParseAndCall( WSThreadData *wstd )
 	UserSession *locus = NULL;
 	UserSession *orig;
 	
-	locus = wstd->wstd_WSD->wsc_UserSession;
+	if( wstd->wstd_WSD != NULL )
+	{
+		locus = wstd->wstd_WSD->wsc_UserSession;
+	}
 	orig = locus;
 	if( orig != NULL )
 	{
@@ -1076,7 +1119,7 @@ void *ParseAndCall( WSThreadData *wstd )
 							// Incoming connection is authenticating with sessionid (the Workspace probably)
 							if( strncmp( "sessionId",  intstart, tendstrt ) == 0 )
 							{
-								char session[ DEFAULT_SESSION_ID_SIZE ];
+								char session[ DEFAULT_SESSION_ID_SIZE+1 ];
 								memset( session, 0, DEFAULT_SESSION_ID_SIZE );
 						
 								strncpy( session, in + t[ i1 ].start, t[i1 ].end-t[ i1 ].start );
@@ -1113,7 +1156,7 @@ void *ParseAndCall( WSThreadData *wstd )
 							// Incoming connection is authenticating with authid (from an application or an FS)
 							else if( strncmp( "authid",  intstart, tendstrt ) == 0 )
 							{
-								char authid[ DEFAULT_SESSION_ID_SIZE ];
+								char authid[ DEFAULT_SESSION_ID_SIZE+1 ];
 								memset( authid, 0, DEFAULT_SESSION_ID_SIZE );
 						
 								// We could connect? If so, then just send back a pong..
@@ -1178,7 +1221,8 @@ void *ParseAndCall( WSThreadData *wstd )
 				// To catch nasty bug with WS
 				//
 				
-				Log( FLOG_INFO, "[WS] Incoming message: '%.*s'\n" , 200, in );
+				//Log( FLOG_INFO, "[WS] Incoming message: '%.*s'\n" , 200, in );
+				Log( FLOG_INFO, "[WS] Incoming message: '%s'\n" , in );	// for debug
 				
 				// type object
 				if( t[4].type == JSMN_OBJECT)
@@ -1199,6 +1243,8 @@ void *ParseAndCall( WSThreadData *wstd )
 								Http *http = HttpNew( );
 								if( http != NULL )
 								{
+									debug01( 2 );
+									
 									http->http_RequestSource = HTTP_SOURCE_WS;
 									http->http_ParsedPostContent = HashmapNew();
 									http->http_Uri = UriNew();
@@ -1258,6 +1304,7 @@ void *ParseAndCall( WSThreadData *wstd )
 										
 										if( jsoneqin( in, &t[i], "requestid") == 0) 
 										{
+											debug1(1);
 											// threads
 											wstd->wstd_Requestid = StringDuplicateN(  (char *)(in + t[i1].start), (int)(t[i1].end-t[i1].start) );
 											requestid = wstd->wstd_Requestid;
@@ -1275,6 +1322,7 @@ void *ParseAndCall( WSThreadData *wstd )
 											
 											if( path == NULL )
 											{
+												debug2(2);
 												// threads
 												wstd->wstd_Path = StringDuplicateN( in + t[i1].start,t[i1].end-t[i1].start );
 												path = wstd->wstd_Path;//in + t[i1].start;
@@ -1305,6 +1353,7 @@ void *ParseAndCall( WSThreadData *wstd )
 											}
 											else
 											{
+												debug2(3);
 												// this is path parameter
 												if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 												{
@@ -1316,6 +1365,8 @@ void *ParseAndCall( WSThreadData *wstd )
 										{
 											authid = in + t[i1].start;
 											authids = t[i1].end-t[i1].start;
+											
+											debug4(4);
 											
 											if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 											{
@@ -1339,6 +1390,8 @@ void *ParseAndCall( WSThreadData *wstd )
 
 											if(( i1) < r && t[ i ].type != JSMN_ARRAY )
 											{
+												debug5(5);
+												
 												if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN( in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN( in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 												{
 													//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", (int)(t[i].end-t[i].start), (char *)(in + t[i].start), (int)(t[i1].end-t[i1].start), (char *)(in + t[i1].start) );
@@ -1443,23 +1496,26 @@ void *ParseAndCall( WSThreadData *wstd )
 												
 													if( http->http_Uri != NULL )
 													{
-														http->http_Uri->uri_QueryRaw = StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start );
+														http->http_Uri->uri_QueryRaw = StringDuplicateN( path, paths );
 													}
 												
-													http->http_RawRequestPath = StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start );
-													path[ paths ] = 0;
-													int j = 1;
-												
-													pathParts[ 0 ] = path;
-												
-													int selpart = 1;
-													
-													for( j = 1 ; j < paths ; j++ )
+													http->http_RawRequestPath = StringDuplicateN( path, paths );
+													if( paths > 0 )
 													{
-														if( path[ j ] == '/' )
+														path[ paths ] = 0;
+														int j = 1;
+													
+														pathParts[ 0 ] = path;
+												
+														int selpart = 1;
+													
+														for( j = 1 ; j < paths ; j++ )
 														{
-															pathParts[ selpart++ ] = &path[ j + 1 ];
-															path[ j ] = 0;
+															if( path[ j ] == '/' )
+															{
+																pathParts[ selpart++ ] = &path[ j + 1 ];
+																path[ j ] = 0;
+															}
 														}
 													}
 													i++;
@@ -1479,12 +1535,12 @@ void *ParseAndCall( WSThreadData *wstd )
 												authid = in + t[i1].start;
 												authids = t[i1].end-t[i1].start;
 											
-												if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
+												if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN( authid, authids ) ) == MAP_OK )
 												{
 													//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, in + t[i].start, t[i+1].end-t[i+1].start, in + t[i+1].start );
 												}
 											
-												if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN(  "authid", 6 ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
+												if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN(  "authid", 6 ), StringDuplicateN( authid, authids ) ) == MAP_OK )
 												{
 
 												}
@@ -1642,6 +1698,22 @@ void *ParseAndCall( WSThreadData *wstd )
 			orig->us_InUseCounter--; // Decrease for internal increase
 			DEBUG( "[WS] Decreased. %d\n", orig->us_InUseCounter );
 			FRIEND_MUTEX_UNLOCK( &(orig->us_Mutex) );
+		}
+		
+		if( orig->us_Status == USER_SESSION_STATUS_TO_REMOVE )
+		{
+			char *locName = StringDuplicate( orig->us_SessionID );
+			UserSessionDelete( orig );
+
+			if( SLIB->sl_ActiveAuthModule != NULL )
+			{
+				SLIB->sl_ActiveAuthModule->Logout( SLIB->sl_ActiveAuthModule, NULL, locName );
+			}
+			
+			if( locName != NULL )
+			{
+				FFree( locName );
+			}
 		}
 	}
 	

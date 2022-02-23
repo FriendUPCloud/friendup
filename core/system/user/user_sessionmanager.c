@@ -25,6 +25,8 @@
 #include <system/fsys/door_notification.h>
 #include <util/session_id.h>
 
+#include <strings.h>
+
 /**
  * Create new User Session Manager
  *
@@ -213,12 +215,15 @@ UserSession *USMGetSessionByDeviceIDandUser( UserSessionManager *usm, char *devi
 	UserSession *us = usm->usm_Sessions;
 	while( us != NULL )
 	{
-		DEBUG("[USMGetSessionByDeviceIDandUser] userid >%ld< devidentity >%s< compare to UID %ld and DEVID %s\n", us->us_UserID, us->us_DeviceIdentity, uid, devid );
-		if( us->us_UserID == uid && us->us_DeviceIdentity != NULL && strcmp( devid, us->us_DeviceIdentity ) == 0 )
+		if( us->us_Status != USER_SESSION_STATUS_TO_REMOVE && us->us_Status != USER_SESSION_STATUS_DELETE_IN_PROGRESS )
 		{
-			DEBUG("[USMGetSessionByDeviceIDandUser] found user by deviceid: %s sessionID: %s\n", devid, us->us_SessionID );
-			SESSION_MANAGER_RELEASE( usm );
-			return us;
+			DEBUG("[USMGetSessionByDeviceIDandUser] userid >%ld< devidentity >%s< compare to UID %ld and DEVID %s\n", us->us_UserID, us->us_DeviceIdentity, uid, devid );
+			if( us->us_UserID == uid && us->us_DeviceIdentity != NULL && strcmp( devid, us->us_DeviceIdentity ) == 0 && us->us_Status != USER_SESSION_STATUS_TO_REMOVE )
+			{
+				DEBUG("[USMGetSessionByDeviceIDandUser] found user by deviceid: %s sessionID: %s\n", devid, us->us_SessionID );
+				SESSION_MANAGER_RELEASE( usm );
+				return us;
+			}
 		}
 		us = (UserSession *) us->node.mln_Succ;
 	}
@@ -274,7 +279,7 @@ UserSession *USMGetSessionByDeviceIDandUserDB( UserSessionManager *smgr, char *d
  */
 UserSession *USMGetSessionByUserID( UserSessionManager *usm, FULONG id )
 {
-	DEBUG("CHECK6\n");
+	DEBUG("[USMGetSessionByUserID] start\n");
 	// We will take only first session of that user
 	// protect in mutex
 	SESSION_MANAGER_USE( usm );
@@ -678,22 +683,6 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 			UserAddSession( locusr, us );
 
 			us->us_User = locusr;
-			
-			/*
-			DEBUG("[USMUserSessionAdd] have more sessions: %d mainsessionid: '%s'\n", userHaveMoreSessions, locusr->u_MainSessionID );
-			
-			if( userHaveMoreSessions == FALSE && ( locusr->u_MainSessionID == NULL || ( strlen( locusr->u_MainSessionID ) <= 0 ) ) )
-			{
-				DEBUG("[USMUserSessionAdd] is api: %d\n", locusr->u_IsAPI );
-				if( locusr != NULL && locusr->u_IsAPI == FALSE )
-				{
-					// we cannot regenerate session because drives are using this sessionid
-					UserRegenerateSessionID( smgr->usm_SB, locusr, NULL );
-				}
-				
-				DEBUG("[USMUserSessionAdd] SessionID will be overwriten\n");
-			}
-			*/
 		}
 	}
 	else
@@ -1137,7 +1126,7 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, U
 	{
 		char temp[ 1024 ];
 	 
-		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` where 'SessionID'='%s' AND 'DeviceIdentity'='tempsession'", ses->us_SessionID );
+		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` where SessionID='%s' AND DeviceIdentity='tempsession'", ses->us_SessionID );
 
 		DEBUG("[USMDestroyTemporarySession] launched SQL: %s\n", temp );
 	

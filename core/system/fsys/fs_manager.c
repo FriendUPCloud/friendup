@@ -121,7 +121,8 @@ FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User 
 						}
 					}
 				
-					sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
+					//sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where 
+					snprintf( tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
 PermissionID in( \
 SELECT ID FROM `FFilePermission` WHERE \
 ( Path = '%s' OR Path = '%s' ) \
@@ -140,7 +141,8 @@ OR \
 				}
 				else
 				{
-					sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
+					//sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where 
+					snprintf( tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
 PermissionID in( \
 SELECT ID FROM `FFilePermission` WHERE \
 Path = '%s' \
@@ -660,8 +662,10 @@ OR \
 			int size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FPermLink` (PermissionID,ObjectID,Type,Access) VALUES( %lu, %lu, 0, '%s' )", permissionid, usr->u_ID, usercOld );
 			sqllib->QueryWithoutResults( sqllib, insertQuery );
 		}
+		
 		// groups
 
+		/*
 		if( groupc != NULL )
 		{
 			int lsize = strlen(groupc);
@@ -697,6 +701,8 @@ OR \
 				ugl = (UserGroupLink *)ugl->node.mln_Succ;
 			}
 		}
+		*/
+		
 		// others
 		
 		if( othersc != NULL )

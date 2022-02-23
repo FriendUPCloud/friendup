@@ -4014,6 +4014,68 @@ function FixWindowDimensions( mw )
 	SetWindowFlag( mw, 'max-width', mw.parentNode.offsetWidth );
 }
 
+function doReveal()
+{
+	if( window.friendApp && window.friendApp.reveal )
+	{
+		if( Workspace.wallpaperImage )
+		{
+			if( !Workspace.wallpaperLoaded )
+			{
+				if( Workspace.wallpaperImage == 'color' )
+				{
+					document.body.classList.add( 'Revealed' );
+					friendApp.reveal();
+				}
+				else
+				{
+					let i = new Image();
+					if( Workspace.wallpaperImageDecoded )
+						i.src = Workspace.wallpaperImageDecoded;
+					else i.src = getImageUrl( Workspace.wallpaperImage );
+					i.onload = function()
+					{
+						// Tell app we can show ourselves!
+						document.body.removeChild( i );
+						document.body.classList.add( 'Revealed' );
+						if( document.body.classList.contains( 'ThemeRefreshing' ) )
+						{
+						    Workspace.refreshTheme();
+						}
+						friendApp.reveal();
+					}
+					i.style.visibility = 'hidden';
+					document.body.appendChild( i );
+					if( i.width && i.width > 0 )
+					{
+						i.onload();
+					}
+				}
+			}
+			else
+			{
+				// Tell app we can show ourselves!
+				document.body.classList.add( 'Revealed' );
+				if( document.body.classList.contains( 'ThemeRefreshing' ) )
+				{
+				    Workspace.refreshTheme();
+				}
+				friendApp.reveal();
+			}
+		}
+		else
+		{
+			setTimeout( function(){ 
+				doReveal(); 
+			}, 50 );
+		}
+	}
+	else
+	{
+		//console.log( 'window.friendApp does not exist, or reveal does not exist on the object.' );
+	}
+}
+
 function ElementWindow ( ele )
 {
 	// Check if this element is in a window

@@ -87,6 +87,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 	
 	// Create dom node
 	this.dom = document.createElement ( 'div' );
+	this.dom.style.width = '10px';
+	this.dom.style.height = '10px';
 	this.dom.className = 'Desklet Initializing';
 	this.dom.id = this.makeUniqueId ();
 	this.desktop.appendChild ( this.dom );
@@ -318,7 +320,10 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				items.push( this.viewList.childNodes[a] );
 		}
 		
+		if( !this.direction ) this.direction = 'horizontal';
+		
 		let horizontal = this.direction == 'horizontal' ? true : false;
+		
 		
 		let itemWidth = this.conf && this.conf.size ? this.conf.size : 56;
 		let itemHeight = this.conf && this.conf.size ? this.conf.size : 56;
@@ -530,10 +535,12 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			// We need a full dock here
 			if( globalConfig.viewList == 'dockedlist' )
 			{
+				this.pixelWidth = document.body.offsetWidth;
 				this.pixelHeight = sh;
 			}
 			this.dom.style.width = marginWidth + Math.floor( cols * ( itemWidth + marginWidth ) ) + 'px';
 			this.dom.style.height = this.pixelHeight + 'px';
+			//console.log( 'Vert: ' + this.pixelHeight + ' ' + sh + ' ' + ( itemHeight + marginHeight ) );
 		}
 		else
 		{
@@ -544,9 +551,11 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			if( globalConfig.viewList == 'dockedlist' )
 			{
 				this.pixelWidth = document.body.offsetWidth;
+				this.pixelHeight = sh;
 			}
 			this.dom.style.width = this.pixelWidth + 'px';
 			this.dom.style.height = marginHeight + Math.floor( rows * ( itemHeight + marginHeight ) ) + 'px';
+			//console.log( 'Horiz: ' + this.pixelHeight );
 		}
 		
 		// Position of container

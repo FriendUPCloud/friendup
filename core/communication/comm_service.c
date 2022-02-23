@@ -124,7 +124,7 @@ void CommServiceDelete( CommService *s )
 	{
 		s->s_Cam.cam_Quit = TRUE;
 		
-		while( s->s_OutgoingConnectionSet != TRUE )
+		//while( s->s_OutgoingConnectionSet != TRUE )
 		{
 			sleep( 1 );
 		}
@@ -146,11 +146,13 @@ void CommServiceDelete( CommService *s )
 		}
 		FRIEND_MUTEX_UNLOCK( &s->s_Mutex );
 		
+		/*
 		if( FRIEND_MUTEX_LOCK( &s->s_CondMutex ) == 0 )
 		{
 			pthread_cond_broadcast( &s->s_DataReceivedCond );
 			FRIEND_MUTEX_UNLOCK( &s->s_CondMutex );
 		}
+		*/
 		
 		DEBUG2("[COMMSERV] : Quit set to TRUE, sending signal\n");
 		
@@ -473,7 +475,7 @@ Create outgoing connections\n \
 			
 			if( loccon->fc_Type == SERVER_CONNECTION_OUTGOING )
 			{
-				Socket *newsock = SocketConnectHost( service->s_SB, service->s_secured, loccon->fc_Address, service->s_port );
+				Socket *newsock = SocketConnectHost( service->s_SB, service->s_secured, loccon->fc_Address, service->s_port, TRUE );
 				if( newsock != NULL )
 				{
 					DEBUG("[CommServiceSetupOutgoing] Connection reestabilished\n");
@@ -531,7 +533,7 @@ Create outgoing connections\n \
 		{
 			DEBUG("[CommServiceSetupOutgoing] trying to setup connection to Friend Master Server: %s\n", SLIB->sl_MasterServer );
 			
-			Socket *newsock = SocketConnectHost( service->s_SB, service->s_secured, SLIB->sl_MasterServer, service->s_port );
+			Socket *newsock = SocketConnectHost( service->s_SB, service->s_secured, SLIB->sl_MasterServer, service->s_port, TRUE );
 			//if( newsock != NULL ) // master connection must be always avaiable in list
 			{
 				DEBUG("[CommServiceSetupOutgoing] Connection to Master FriendNode created on port: %d\n", service->s_port);
@@ -554,7 +556,7 @@ Create outgoing connections\n \
 			{
 				DEBUG("[CommServiceSetupOutgoing] -------------------------------------------------- trying to setup node connection: %s - node ID: %lu\n", cnode->cn_Address, cnode->cn_ID );
 			
-				Socket *newsock = SocketConnectHost( service->s_SB, service->s_secured, cnode->cn_Address, service->s_port );
+				Socket *newsock = SocketConnectHost( service->s_SB, service->s_secured, cnode->cn_Address, service->s_port, TRUE );
 				//if( newsock != NULL ) // master connection must be always avaiable in list
 				{
 					DEBUG("[CommServiceSetupOutgoing] Connection to '%s' created on port: %d\n", cnode->cn_Address, service->s_port);
@@ -1584,7 +1586,7 @@ FConnection *CommServiceAddConnectionByAddr( CommService* s, char *addr )
 		con =  (FConnection *)con->node.mln_Succ;
 	}
 	
-	Socket *newsock = SocketConnectHost( s->s_SB, s->s_secured, addr, s->s_port );
+	Socket *newsock = SocketConnectHost( s->s_SB, s->s_secured, addr, s->s_port, TRUE );
 	if( newsock == NULL )
 	{
 		FERROR("Cannot setup connection with host: %s\n", addr );
@@ -1854,7 +1856,7 @@ void *InternalPINGThread( void *d )
 		
 		if( con->fc_Type == SERVER_CONNECTION_OUTGOING )
 		{
-			Socket *newsock = SocketConnectHost( s->s_SB, s->s_secured, con->fc_Address, s->s_port );
+			Socket *newsock = SocketConnectHost( s->s_SB, s->s_secured, con->fc_Address, s->s_port, TRUE );
 			if( newsock != NULL )
 			{
 				//DEBUG("[CommServicePING] Connection reestabilished\n");

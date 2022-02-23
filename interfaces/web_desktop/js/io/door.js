@@ -115,7 +115,9 @@ Door.prototype.get = function( path )
 			let d = path.toLowerCase().substr( 0, 7 ) == 'system:' ? new DoorSystem( vol ) : new Door( vol );
 			d.setPath( path );
 			if ( Workspace.icons[ a ].Config )
+			{
 				d.Config = Workspace.icons[a].Config;
+			}
 			else if ( d.dormantGetConfig )
 				d.Config = d.dormantGetConfig();
 			return d;

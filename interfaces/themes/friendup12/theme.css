@@ -24,6 +24,7 @@
 @append url(System:css/icons.css);
 @append url(System:css/tabs.css);
 @append url(System:css/workspace.css);
+@append url(System:css/FUI.css);
 @append url(System:css/font-awesome.min.css);
 
 @declaration
@@ -396,14 +397,16 @@ html #DoorsScreen > .ScreenContent,
 html body:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
 {
 	top: 26px !important;
-	height: calc(100% - 26px) !important;
+	height: calc(100vh - 26px) !important;
+	min-height: calc(100vh - 26px) !important;
 }
 
 html body[mobile=mobile] #DoorsScreen > .ScreenContent,
 html body[mobile=mobile]:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
 {
 	top: 40px !important;
-	height: calc(100% - 40px) !important;
+	height: calc(100vh - 40px) !important;
+	min-height: calc(100vh - 40px) !important;
 }
 
 html .Screen > .ScreenContent
@@ -1736,6 +1739,7 @@ html #WorkspaceMenu .Open ul > li
 }
 
 html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu,
+html [mobile=mobile].ViewMaximized #WorkspaceMenu,
 html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu
 {
 	background: #20374D;

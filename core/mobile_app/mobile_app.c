@@ -1224,6 +1224,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 			// entry found
 			break;
 		}	// user found by name
+		USER_UNLOCK( usr );
 	
 		usr = (User *)usr->node.mln_Succ;
 	}

@@ -570,7 +570,7 @@ FConnection *ConnectToServer( CommService *s, char *conname )
 			}
 		}
 		
-		newsock = SocketConnectHost( s->s_SB, fcm->fcm_CommService->s_secured, address, port );
+		newsock = SocketConnectHost( s->s_SB, fcm->fcm_CommService->s_secured, address, port, TRUE );
 		
 		if( newsock != NULL )
 		{

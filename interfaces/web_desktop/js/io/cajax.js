@@ -544,6 +544,16 @@ cAjax.prototype.responseText = function()
 cAjax.prototype.send = function( data, callback )
 {
 	RemoveFromCajaxQueue( this );
+
+    // TODO: Make queue work
+    /*if( window.Workspace && Workspace.refreshWorkspaces && !Workspace.sessionId && !this.loginCall )
+    {
+        this.cachedData = data;
+        this.cachedCallback = callback;
+        AddToCajaxQueue( this );
+        console.log( 'Added to queue.' );
+        return;
+    }*/
 	
 	// Make sure we don't f this up!
 	if( this.onload && !this.onloadAfter )
@@ -573,10 +583,16 @@ cAjax.prototype.send = function( data, callback )
 	}
 	
 	if( !data && this.cachedData )
-	{
-		data = this.cachedData;
-		this.cachedData = null;
-	}
+    {
+        data = this.cachedData;
+        this.cachedData = null;
+    }
+    if( !callback && this.cachedCallback )
+    {
+        callback = this.cachedCallback;
+        this.cachedCallback = null;
+    }
+
 	
 	// Keep for later
 	if( data )
@@ -695,7 +711,8 @@ cAjax.prototype.send = function( data, callback )
 				
 				new Promise( function( resolve, reject )
 				{
-					if( !navigator.onLine )
+				    // Will throw an error unless we are forcing http for testing!
+					if( window.Friend && Friend.User && Friend.User.State != 'online' && !self.forceHTTP )
 					{
 						reject( 'error' );
 						return;
@@ -727,7 +744,7 @@ cAjax.prototype.send = function( data, callback )
 						}
 						else
 						{
-							console.log( 'No callback.' );
+							//console.log( 'No callback.' );
 						}
 					}
 					else if( err == 'success' );

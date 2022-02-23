@@ -66,19 +66,22 @@ if( !function_exists( 'GetFilesystemByArgs' ) )
 			$identifier = 'f.Name=\'' . mysqli_real_escape_string( $SqlDatabase->_link, reset( explode( ':', $args->path ) ) ) . '\'';
 		}
 		if( $Filesystem = $SqlDatabase->FetchObject( '
-		SELECT * FROM `Filesystem` f
+		SELECT f.* FROM `Filesystem` f, `FUserGroup` ug, `FUserToGroup` fug
 		WHERE
+		    ug.Type = "Level" AND fug.UserID = \'' . $UserSession->UserID . '\' AND fug.UserGroupID = ug.ID AND
+		    ug.Name IN ( "Admin", "User", "API", "Guest" )
+		    AND
 			(
+				ug.Name = \'Admin\' OR
+				f.UserID=\'' . $UserSession->UserID . '\' OR
 				f.GroupID IN (
-							SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
-							WHERE
-								g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-								ug.UserID = \'' . $UserSession->UserID . '\'
-						)
-				OR
-				f.UserID=\'' . $UserSession->UserID . '\'
+					SELECT ug2.UserGroupID FROM FUserToGroup ug2, FUserGroup g
+					WHERE 
+						g.ID = ug2.UserGroupID AND g.Type = \'Workgroup\' AND
+						ug2.UserID = \'' . $UserSession->UserID . '\'
+				)
 			)
-			AND ' . $identifier . '
+			AND ' . $identifier . ' LIMIT 1
 		' ) )
 		{
 			return $Filesystem;
@@ -1766,6 +1769,9 @@ if( isset( $args->command ) )
 			break;
 		case 'getapplicationpreview':
 			require( 'modules/system/include/getapplicationpreview.php' );
+			break;
+		case 'getapplicationicon':
+			require( 'modules/system/include/getapplicationicon.php' );
 			break;
 		case 'getmimetypes':
 			require( 'modules/system/include/getmimetypes.php' );

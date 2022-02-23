@@ -1676,7 +1676,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 
 					UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, NULL, workgroups );
 					
-					RefreshUserDrives( l->sl_DeviceManager, loggedSession, NULL, &error );
+					//RefreshUserDrives( l->sl_DeviceManager, loggedSession, NULL, &error );
 					
 					NotifyExtServices( l, request, logusr, "update" );
 					
@@ -1771,7 +1771,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				if( sess != NULL )
 				{
 					Log( FLOG_INFO, "[UMWebRequest] Logout user, user: %s deviceID: %s\n", sess->us_User->u_Name, sess->us_DeviceIdentity );
-					
+					/*
 					SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
 					if( sqlLib != NULL )
 					{
@@ -1791,8 +1791,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					{
 						l->sl_ActiveAuthModule->Logout( l->sl_ActiveAuthModule, request, sessid );
 					}
+					*/
 					
 					error = USMUserSessionRemove( l->sl_USM, sess );
+					
+					sess->us_Status = USER_SESSION_STATUS_TO_REMOVE;
 					
 					*sessionRemoved = LL_LOGOUT;
 				}
@@ -1899,20 +1902,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
 			HttpAddTextContent( response, buffer );
 		}
-		
-		
-		/*	if there is no parameter current user sessions should be returned
-		else
-		{
-			FERROR("[ERROR] username parameter is missing\n" );
-			char buffer[ 256 ];
-			char buffer1[ 256 ];
-			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_USER_DEV_REQUIRED], "username" );
-			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_USER_DEV_REQUIRED );
-			HttpAddTextContent( response, buffer );
-		}
-		*/
-		
+
 		if( usrname != NULL )
 		{
 			FFree( usrname );

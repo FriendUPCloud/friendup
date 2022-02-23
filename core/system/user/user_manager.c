@@ -70,7 +70,7 @@ void UMDelete( UserManager *smgr )
 	}
 	
 	User *remusr = usr;
-	Log( FLOG_INFO,  "Release users\n");
+	Log( FLOG_INFO, "[UMDelete] Release users\n");
 	
 	//
 	// we must release all users from memory
@@ -106,6 +106,8 @@ void UMDelete( UserManager *smgr )
 			DEBUG("[UMDelete] Free user %s\n", remusr->u_Name );
 			*/
 			UserReleaseDrives( remusr, smgr->um_SB );
+			
+			DEBUG("[UMDelete] Free user %s inuse %d\n", remusr->u_Name, remusr->u_InUse );
 			
 			UserDelete( remusr );
 			
@@ -239,7 +241,7 @@ int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
  * @param ID user id
  * @return User structure or NULL value when problem appear
  */
-User *UMUserGetByID( UserManager *um, FQUAD id )
+User *UMUserGetByID( UserManager *um, FUQUAD id )
 {
 	USER_MANAGER_USE( um );
 	User *user = um->um_Users;
@@ -1252,6 +1254,9 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, char *
 			char **row;
 			int i = 0;
 			FBOOL goodLogin = FALSE;
+			int wasSamePasswordTimes = 0;
+			
+			char *lastPassword = StringDuplicate( password );
 			
 			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 			{
@@ -1269,22 +1274,50 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, char *
 					break;
 				}
 				
-				DEBUG("row2: %s\n", row[ 2 ] );
-				if( row[ 2 ] != NULL && ( strcmp( row[ 2 ], password) == 0 ) )
+				// we do this check only to last password
+				DEBUG("[UMGetLoginPossibilityLastLogins] row2: %s  -  %s\n", row[ 2 ], password );
+				if( row[ 2 ] != NULL )
+				{
+					if( strcmp( lastPassword, row[ 2 ] ) == 0 )
+					{
+						DEBUG("[UMGetLoginPossibilityLastLogins] same password\n");
+						wasSamePasswordTimes++;
+					}
+					
+					if( lastPassword != NULL )
+					{
+						FFree( lastPassword );
+					}
+					lastPassword = StringDuplicate( row[ 2 ] );
+				}
+				/*
+				if( i == 0 && row[ 2 ] != NULL && ( strcmp( row[ 2 ], password) == 0 ) )
 				{
 					goodLogin = TRUE;
 					DEBUG("[UMGetLoginPossibilityLastLogins] previous and current password are same\n" );
 					break;
 				}
+				*/
 				
 				i++;
 				if( i >= numberOfFail )
 				{
+					if( wasSamePasswordTimes >= (numberOfFail-1) )
+					{
+						goodLogin = TRUE;
+					}
 					DEBUG("[UMGetLoginPossibilityLastLogins] number of fail login exceed\n" );
 					break;
 				}
 			}
 			sqlLib->FreeResult( sqlLib, result );
+			
+			if( lastPassword != NULL )
+			{
+				FFree( lastPassword );
+			}
+			
+			DEBUG("[UMGetLoginPossibilityLastLogins] wasSamePasswordTimes: %d\n", wasSamePasswordTimes );
 			
 			if( i < numberOfFail )
 			{
@@ -1306,6 +1339,38 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, char *
 		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	return canILogin;
+}
+
+/**
+ * Function remove old entries from database (FUserLogin entries)
+ *
+ * @param um pointer to UserManager
+ */
+void UMRemoveOldUserLoginEntries( UserManager *um )
+{
+	SystemBase *sb = (SystemBase *)um->um_SB;
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	if( sqlLib != NULL )
+	{
+		DEBUG("[UMRemoveOldUserLoginEntries] start\n" );
+		char *query = FCalloc( 1, 2048 );
+		if( query != NULL )
+		{
+			// 30 days in seconds 2 592 000
+			time_t tm = time( NULL ) - 2592000;
+		
+			// we are checking failed logins in last hour
+			sqlLib->SNPrintF( sqlLib, query, 2048, "DELETE FROM `FUserLogin` WHERE LoginTime < %ld", tm );
+			
+			DEBUG("[UMRemoveOldUserLoginEntries] query: %s\n", query );
+		
+			sqlLib->QueryWithoutResults( sqlLib, query );
+			
+			FFree( query );
+		}
+		sb->LibrarySQLDrop( sb, sqlLib );
+		DEBUG("[UMRemoveOldUserLoginEntries] end\n" );
+	}
 }
 
 /**
@@ -1354,7 +1419,7 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 				user->u_MountedDevs = NULL;
 				
 				UMAddUser( sb->sl_UM, user );
-				tuser = user;
+				um->um_APIUser = tuser = user;
 			
 				// API user have only one session
 				if( user->u_SessionsList == NULL )
@@ -1497,8 +1562,6 @@ int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details )
 			int devCounterBytes = 0;
 			int uglCounterBytes = 0;
 			
-			userCounter++;
-		
 			UserSessListEntry *sesentr = usr->u_SessionsList;
 			while( sesentr != NULL )
 			{
@@ -1515,6 +1578,7 @@ int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details )
 				rootDev = (File *)rootDev->node.mln_Succ;
 			}
 			
+			/*
 			UserGroupLink *ugl = usr->u_UserGroupLinks;
 			while( ugl != NULL )
 			{
@@ -1522,6 +1586,7 @@ int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details )
 				uglCounterBytes += sizeof( UserGroupLink );
 				ugl = (UserGroupLink *)ugl->node.mln_Succ;
 			}
+			*/
 			
 			if( nr == 0 )
 			{
@@ -1989,7 +2054,7 @@ FBOOL UMSendDoorNotification( UserManager *um, void *notif, UserSession *ses, Fi
 	// Go through logged users
 	//
     
-	DEBUG("CHECK11\n");
+	DEBUG("[UMSendDoorNotification] CHECK11\n");
 	USER_MANAGER_USE( um );
 	
 	User *usr = um->um_Users;
@@ -2091,11 +2156,11 @@ FBOOL UMSendDoorNotification( UserManager *um, void *notif, UserSession *ses, Fi
 				le = (UserSessListEntry *)le->node.mln_Succ;
 			} // while loop, session
 			
-			DEBUG("unlock user\n");
+			DEBUG("[UMSendDoorNotification] unlock user\n");
 			
 			USER_UNLOCK( usr );
 
-			DEBUG("CHECK12\n");
+			DEBUG("[UMSendDoorNotification] CHECK12\n");
 		}
 		usr = (User *)usr->node.mln_Succ;
 	}
@@ -2178,67 +2243,208 @@ int UMRemoveOldSessions( void *lsb )
 	
 	Log( FLOG_INFO, "[UMRemoveOldSessions] end\n" );
 	
-	/*
-	
-	// remove sessions from memory
-	UserSessionManager *smgr = sb->sl_USM;
-	// int nr = 0;
-	// we are conting maximum number of sessions
+	return 0;
+}
 
-	DEBUG("[USMRemoveOldSessions] CHECK10\n");
+/**
+ * Remove all users from group
+ *
+ * @param um pointer to UserManager
+ * @param groupid id of group from which users will be removed
+ */
+void UMRemoveUsersFromGroup( UserManager *um, FUQUAD groupid )
+{
+	USER_MANAGER_USE( um );
 
-	SESSION_MANAGER_USE( smgr );
-	
-	UserSession *actSession = smgr->usm_Sessions;
-	UserSession *remSession = actSession;
-	UserSession *newRoot = NULL;
-	
-	while( actSession != NULL )
+	User *tuser = um->um_Users;
+	while( tuser != NULL )
 	{
-		FBOOL canDelete = TRUE;
-		remSession = actSession;
+		USER_LOCK( tuser );
 		
-		if( sb->sl_Sentinel != NULL )
+		if( tuser->u_UserGroupLinks != NULL )
 		{
-			if( remSession->us_User == sb->sl_Sentinel->s_User && strcmp( remSession->us_DeviceIdentity, "remote" ) == 0 )
+			// if group is first, lets just remove it quickly
+			if( tuser->u_UserGroupLinks->ugl_GroupID == groupid )
 			{
-				DEBUG("Sentinel REMOTE session I cannot remove it\n");
-				canDelete = FALSE;
+				UserGroupLink *uglrem = tuser->u_UserGroupLinks;
+				tuser->u_UserGroupLinks = (UserGroupLink *)tuser->u_UserGroupLinks->node.mln_Succ;
+				FFree( uglrem );
+			}
+			else
+			{
+				UserGroupLink *prevugl = tuser->u_UserGroupLinks;
+				UserGroupLink *ugl = (UserGroupLink *)tuser->u_UserGroupLinks->node.mln_Succ;
+				while( ugl != NULL )
+				{
+					// seems current group is group which we wanted to find
+					if( ugl->ugl_GroupID == groupid )
+					{
+						// so previous group will get next pointer from current group
+						// becaouse current pointer will be released
+						prevugl->node.mln_Succ = ugl->node.mln_Succ;
+						FFree( ugl );
+						break;
+					}
+					
+					prevugl = ugl;
+					ugl = (UserGroupLink *)ugl->node.mln_Succ;
+				}
 			}
 		}
 		
-		if( actSession == (UserSession *)actSession->node.mln_Succ )
-		{
-			DEBUG( "DOUBLE ACTSESSION\n" );
-			break;
-		}
+		USER_UNLOCK( tuser );
 		
-		actSession = (UserSession *)actSession->node.mln_Succ;
+		tuser = (User *)tuser->node.mln_Succ;
+	}
+
+	USER_MANAGER_RELEASE( um );
+}
+
+
+/**
+ * Notify all users in group about changes
+ *
+ * @param um pointer to UserManager
+ * @param groupid id of group which users 
+ * @param type type of notification : 0 -mountlist changed
+ */
+
+#define UMNOTIFY_REQ_MSG_LEN 2048
+
+void UMNotifyAllUsersInGroup( UserManager *um, FQUAD groupid, int type )
+{
+	char *tmpmsg = FCalloc( UMNOTIFY_REQ_MSG_LEN, 1 );
+	if( tmpmsg == NULL )
+	{
+		FERROR("Cannot allocate memory for buffer\n");
+		return;
+	}
+	DEBUG("[UMNotifyAllUsersInGroup] START\n" );
+    
+	//
+	// Go through logged users
+	//
+
+	USER_MANAGER_USE( um );
+	
+	SystemBase *l = (SystemBase *)um->um_SB;
+	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	if( sqlLib != NULL )
+	{
+		snprintf( tmpmsg, UMNOTIFY_REQ_MSG_LEN, "SELECT DISTINCT UserID from FUserToGroup WHERE UserGroupID=%ld", groupid );
 		
-		// we delete session
-		if( canDelete == TRUE && ( ( acttime -  remSession->us_LastActionTime ) > sb->sl_RemoveSessionsAfterTime ) )
+		void *result = sqlLib->Query(  sqlLib, tmpmsg );
+		if( result != NULL )
 		{
-			UserRemoveSession( remSession->us_User, remSession );	// we want to remove it from user first
-			USMSessionsDeleteDB( smgr, remSession->us_SessionID );
-			UserSessionDelete( remSession );
+			char **row;
+
+			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+			{
+				char *end;
+				FQUAD id = 0;
+				if( row[ 0 ] != NULL )
+				{
+					id = strtoll( row[ 0 ], &end, 0 );
+					if( id > 0 )
+					{
+						DEBUG("[UMNotifyAllUsersInGroup] find and notify user by id: %ld\n", id );
+						
+						User *usr = um->um_Users;
+						while( usr != NULL )
+						{
+							if( usr->u_ID == id && usr->u_SessionsList != NULL )	// if this is user which we trying to find
+							{
+								if( type == 0 )
+								{
+									UserNotifyFSEvent2( usr, "refresh", "Mountlist:" );
+								}
+								break;	// user found. There is no need to search for him
+							}
+							usr = (User *)usr->node.mln_Succ;
+						}
+					}
+				}
+				
+			}
+			sqlLib->FreeResult( sqlLib, result );
 		}
-		else // or create new root of working sessions
-		{
-			remSession->node.mln_Succ = (MinNode *)newRoot;
-			newRoot = remSession;
-		}
+		l->LibrarySQLDrop( l, sqlLib );
 	}
 	
-	smgr->usm_Sessions = newRoot;
+	USER_MANAGER_RELEASE( um );
+	
+	FFree( tmpmsg );
+}
 
-	SESSION_MANAGER_RELEASE( smgr );
-	
+/**
+ * Add existing users to new groups
+ *
+ * @param um pointer to UserManager
+ * @param groupid id of group which users 
+ */
+
+#define LOCAL_SQL_LEN 256
+
+void UMAddExistingUsersToGroup( UserManager *um, UserGroup *ug )
+{
+	char *tmpmsg = FCalloc( LOCAL_SQL_LEN, 1 );
+	if( tmpmsg == NULL )
+	{
+		FERROR("Cannot allocate memory for buffer\n");
+		return;
+	}
+    
 	//
-	// now remove unused application sessions
+	// Go through logged users and add them to a group
 	//
 	
-	ApplicationManagerRemoveDetachedApplicationSession( sb->sl_ApplicationManager );
-	*/
+	DEBUG("[UMAddExistingUsersToGroup] start\n");
+
+	USER_MANAGER_USE( um );
 	
-	return 0;
+	SystemBase *l = (SystemBase *)um->um_SB;
+	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	if( sqlLib != NULL )
+	{
+		snprintf( tmpmsg, LOCAL_SQL_LEN, "SELECT DISTINCT UserID from FUserToGroup WHERE UserGroupID=%ld", ug->ug_ID );
+		
+		void *result = sqlLib->Query(  sqlLib, tmpmsg );
+		if( result != NULL )
+		{
+			char **row;
+
+			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+			{
+				char *end;
+				FQUAD id = 0;
+				if( row[ 0 ] != NULL )
+				{
+					id = strtoll( row[ 0 ], &end, 0 );
+					if( id > 0 )
+					{
+						User *usr = um->um_Users;
+						while( usr != NULL )
+						{
+							if( usr->u_ID == id )	// if this is user which we trying to find
+							{
+								DEBUG("[UMAddExistingUsersToGroup] used: %s was added to group: %s\n", usr->u_Name, ug->ug_Name );
+								UserAddToGroup( usr, ug );
+								break;		// we found user, we can stop
+							}
+							usr = (User *)usr->node.mln_Succ;
+						}
+					}
+				}
+				
+			}
+			sqlLib->FreeResult( sqlLib, result );
+		}
+		l->LibrarySQLDrop( l, sqlLib );
+	}
+	
+	USER_MANAGER_RELEASE( um );
+	
+	DEBUG("[UMAddExistingUsersToGroup] end\n");
+	
+	FFree( tmpmsg );
 }
