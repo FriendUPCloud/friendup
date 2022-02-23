@@ -173,64 +173,6 @@
  * doubly linked-list
  */
 
-#if defined (LWS_WITH_DEPRECATED_LWS_DLL)
-
-/*
- * This is going away in v4.1.  You can set the cmake option above to keep it
- * around temporarily.  Migrate your stuff to the more capable and robust
- * lws_dll2 below
- */
-
-struct lws_dll {
-	struct lws_dll *prev;
-	struct lws_dll *next;
-};
-
-/*
- * these all point to the composed list objects... you have to use the
- * lws_container_of() helper to recover the start of the containing struct
- */
-
-#define lws_dll_add_front lws_dll_add_head
-
-LWS_VISIBLE LWS_EXTERN void
-lws_dll_add_head(struct lws_dll *d, struct lws_dll *phead);
-
-LWS_VISIBLE LWS_EXTERN void
-lws_dll_add_tail(struct lws_dll *d, struct lws_dll *phead);
-
-LWS_VISIBLE LWS_EXTERN void
-lws_dll_insert(struct lws_dll *d, struct lws_dll *target,
-	       struct lws_dll *phead, int before);
-
-static LWS_INLINE struct lws_dll *
-lws_dll_get_head(struct lws_dll *phead) { return phead->next; }
-
-static LWS_INLINE struct lws_dll *
-lws_dll_get_tail(struct lws_dll *phead) { return phead->prev; }
-
-/*
- * caution, this doesn't track the tail in the head struct.  Use
- * lws_dll_remove_track_tail() instead of this if you want tail tracking.  Using
- * this means you can't use lws_dll_add_tail() amd
- */
-LWS_VISIBLE LWS_EXTERN void
-lws_dll_remove(struct lws_dll *d) LWS_WARN_DEPRECATED;
-
-LWS_VISIBLE LWS_EXTERN void
-lws_dll_remove_track_tail(struct lws_dll *d, struct lws_dll *phead);
-
-/* another way to do lws_start_foreach_dll_safe() on a list via a cb */
-
-LWS_VISIBLE LWS_EXTERN int
-lws_dll_foreach_safe(struct lws_dll *phead, void *user,
-		     int (*cb)(struct lws_dll *d, void *user));
-
-#define lws_dll_is_detached(___dll, __head) \
-	(!(___dll)->prev && !(___dll)->next && (__head)->prev != (___dll))
-
-#endif
-
 /*
  * lws_dll2_owner / lws_dll2 : more capable version of lws_dll.  Differences:
  *
@@ -302,6 +244,21 @@ lws_dll2_add_before(struct lws_dll2 *d, struct lws_dll2 *after);
 LWS_VISIBLE LWS_EXTERN void
 lws_dll2_add_sorted(lws_dll2_t *d, lws_dll2_owner_t *own,
 		    int (*compare)(const lws_dll2_t *d, const lws_dll2_t *i));
+
+LWS_VISIBLE LWS_EXTERN void *
+_lws_dll2_search_sz_pl(lws_dll2_owner_t *own, const char *name, size_t namelen,
+		      size_t dll2_ofs, size_t ptr_ofs);
+
+/*
+ * Searches objects in an owner list linearly and returns one with a given
+ * member C-string matching a supplied length-provided string if it exists, else
+ * NULL.
+ */
+
+#define lws_dll2_search_sz_pl(own, name, namelen, type, membd2list, membptr) \
+		((type *)_lws_dll2_search_sz_pl(own, name, namelen, \
+				       offsetof(type, membd2list), \
+				       offsetof(type, membptr)))
 
 #if defined(_DEBUG)
 void

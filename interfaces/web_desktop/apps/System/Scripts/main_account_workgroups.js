@@ -196,51 +196,26 @@ Sections.accounts_workgroups = function( cmd, extra )
 						workgroups = wgroups.data.details.groups;
 					}
 					
+					var out = {};
+					
 					if( wgroups && workgroups )
 					{
-						var out = [];
 						
 						for( var a in workgroups )
 						{
 							if( workgroups[a] && workgroups[a].ID )
 							{
-								out.push( { ID: workgroups[a].ID, UUID: workgroups[a].uuid, Name: workgroups[a].name, ParentID: workgroups[a].parentid, Status: workgroups[a].status } );
+								out[workgroups[a].ID] = ( { ID: workgroups[a].ID, UUID: workgroups[a].uuid, Name: workgroups[a].name, ParentID: workgroups[a].parentid, Status: workgroups[a].status } );
 							}
 						}
 						
-						if( callback ) return callback( out );
+						//if( callback ) return callback( out );
+						
 					}
 					
-					if( callback ) return callback( [] );
+					listModuleWorkgroups( out, callback );
 					
-					// OLD code ...
-					
-					/*if( ShowLog ) console.log( { e:e , d:d, args: args } );
-				
-					if( e == 'ok' && d )
-					{
-						try
-						{
-							var data = JSON.parse( d );
-							
-							// Workaround for now .... until rolepermissions is correctly implemented in C ...
-							
-							if( ShowLog ) console.log( '[1] ', data );
-							
-							if( data && data.data && data.data.details && data.data.details.groups )
-							{
-								data = data.data.details;
-							}
-														
-							if( data.groups )
-							{
-								return callback( true, data.groups );
-							}
-						} 
-						catch( e ){ } 
-					}
-				
-					return callback( false, false );*/
+					//if( callback ) return callback( [] );
 					
 				}
 				
@@ -258,6 +233,67 @@ Sections.accounts_workgroups = function( cmd, extra )
 		}
 		
 		return false;
+		
+	}
+	
+	// TODO: Temporary until owner and only admin flags are supported in system.library/group/list
+	
+	function listModuleWorkgroups( workgroups, callback )
+	{
+		
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			var data = null;
+			
+			try
+			{
+				data = JSON.parse( d );
+			}
+			catch( e ) {  }
+			
+			if( data && workgroups )
+			{
+				for( var i in data )
+				{
+					// Set Owner ...
+					
+					if( data[i] && data[i].ID && data[i].Owner && workgroups[data[i].ID] )
+					{
+						workgroups[data[i].ID].Owner = data[i].Owner;
+					}
+					
+					// Hide non Admin workgroups ...
+					
+					if( data[i] && data[i].ID && data[i].Level == 'User' && workgroups[data[i].ID] )
+					{
+						workgroups[data[i].ID].Hide = true;
+					}
+					
+				}
+			}
+			
+			console.log( '[1] listModuleWorkgroups', workgroups );
+			
+			console.log( '[2] listModuleWorkgroups', { e:e, d:(data?data:d) } );
+			
+			if( callback )
+			{
+				// Temporary until FriendCore supports all this ...
+				if( data )
+				{
+					return callback( data );
+				}
+				//if( workgroups )
+				//{
+				//	return callback( workgroups );
+				//}
+				
+				return callback( [] );
+			}
+			
+		}
+		m.execute( 'workgroups', { owner: true, level: true, authid: Application.authId } );
 		
 	}
 	
@@ -955,6 +991,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 		let uuid = (groupid?'_'+groupid:'');
 		
+		if( !groupid ) groupid = 0;
+		
 		var elems = {};
 		
 		var inputs = ge( 'StorageGui'+uuid ).getElementsByTagName( 'input' );
@@ -1083,6 +1121,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 			
 			data.authid = Application.authId;
 			
+			var skip = false;
+			
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, dat )
 			{
@@ -1095,20 +1135,21 @@ Sections.accounts_workgroups = function( cmd, extra )
 				}
 				else
 				{
-					Notify( { title: i18n( 'i18n_disk_success' ), text: i18n( 'i18n_disk_edited' ) } );
+					Notify( { title: i18n( 'i18n_disk_success' ), text: ( dat ? dat : i18n( 'i18n_disk_edited' ) ) } );
 				}
 				
 				if( !data.ID || ( elems[ 'Name' ].hasAttribute('data-mount-state') && elems[ 'Name' ].getAttribute('data-mount-state') == '1' ) )
 				{
-					remountDisk( ( elems[ 'Name' ] && elems[ 'Name' ].current ? elems[ 'Name' ].current : data.Name ), data.Name, data.userid, function()
+					remountDisk( ( elems[ 'Name' ] && elems[ 'Name' ].current ? elems[ 'Name' ].current : data.Name ), data.Name, data.userid, groupid, function()
 					{
 						// Refresh init.refresh();
 						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+						
 						if( callback )
 						{
 							callback();
 						}
-					} );					
+					}, skip );					
 				}
 				else if( callback )
 				{
@@ -1121,8 +1162,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 			// if the disk is mounted, we need to unmount it based on its old name first.
 			if( elems[ 'Name' ].hasAttribute('data-stored-value') && elems[ 'Name' ].hasAttribute('data-mount-state') && elems[ 'Name' ].getAttribute('data-mount-state') == '1' )
 			{
-				unmountDisk( elems[ 'Name' ].getAttribute('data-stored-value'), userid, function( e, d )
+				unmountDisk( elems[ 'Name' ].getAttribute('data-stored-value'), userid, groupid, function( e, d )
 				{
+					skip = true;
 					data.ID = diskid;
 					m.execute( 'editfilesystem', data );
 				});
@@ -1140,16 +1182,16 @@ Sections.accounts_workgroups = function( cmd, extra )
 		}
 	}
 	
-	function mountStorage( devname, userid, _this, callback )
+	function mountStorage( devname, userid, groupid, _this, callback )
 	{
 		if( devname && _this )
 		{
 			if( _this.innerHTML.toLowerCase().indexOf( 'unmount' ) >= 0 )
 			{
-				unmountDisk( devname, userid, function( e, d )
+				unmountDisk( devname, userid, groupid, function( e, d )
 				{
 					if( ShowLog ) console.log( 'unmountDrive( '+devname+', '+( userid ? userid : '0' )+' ) ', { e:e, d:d } );
-				
+					
 					if( e == 'ok' )
 					{
 						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
@@ -1169,14 +1211,14 @@ Sections.accounts_workgroups = function( cmd, extra )
 					}
 					else
 					{
-						Notify( { title: i18n( 'i18n_fail_unmount' ), text: i18n( 'i18n_fail_unmount_more' ) } );
+						Notify( { title: i18n( 'i18n_fail_unmount' ), text: ( d ? d : i18n( 'i18n_fail_unmount_more' ) ) } );
 					}
 				
 				} );
 			}
 			else
 			{
-				mountDisk( devname, userid, function( e, d )
+				mountDisk( devname, userid, groupid, function( e, d )
 				{
 					if( ShowLog ) console.log( 'mountDrive( '+devname+', '+( userid ? userid : '0' )+' ) ', { e:e, d:d } );
 				
@@ -1199,7 +1241,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					}
 					else
 					{
-						Notify( { title: i18n( 'i18n_fail_mount' ), text: i18n( 'i18n_fail_mount_more' ) } );
+						Notify( { title: i18n( 'i18n_fail_mount' ), text: ( d ? d : i18n( 'i18n_fail_mount_more' ) ) } );
 					}
 				
 				} );
@@ -1207,7 +1249,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		}
 	}
 	
-	function mountDisk( devname, userid, callback )
+	function mountDisk( devname, userid, groupid, callback )
 	{
 		if( devname )
 		{
@@ -1223,6 +1265,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 				{
 					vars.userid = ( userid ? userid : '0' );
 				}
+				
+				if( groupid > 0 ) vars.groupid = groupid;
 				
 				vars.authid = Application.authId;
 			
@@ -1241,7 +1285,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 						]
 					}, 
 					'object'   : 'user', 
-					'objectid' : ( userid ? userid : '0' ) 
+					'objectid' : ( userid ? userid : '0' ),
+					'groupid'  : groupid ? groupid : 0
 				} );
 			}
 		
@@ -1249,7 +1294,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 			f.onExecuted = function( e, d )
 			{
-				if( ShowLog ) console.log( 'mountDisk ( device/mount ) ', { vars: vars, e:e, d:d } );
+				if( ShowLog || e != 'ok' ) console.log( 'mountDisk ( device/mount ) ', { vars: vars, e:e, d:d } );
 			
 				if( callback ) callback( e, d );
 			}
@@ -1258,8 +1303,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 		}
 	}
 
-	function unmountDisk( devname, userid, callback )
+	function unmountDisk( devname, userid, groupid, callback )
 	{
+		console.log( 'Are we unmounting? dev: ' + devname + ' userid: ' + userid + ' groupid: ' + groupid );
+		if( !groupid ) groupid = 0;
+		
 		if( devname )
 		{
 			var vars = { devname: devname };
@@ -1274,6 +1322,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 				{
 					vars.userid = ( userid ? userid : '0' );
 				}
+				
+				if( groupid > 0 )
+					vars.groupid = groupid;
 				
 				vars.authid = Application.authId;
 				
@@ -1292,7 +1343,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 						]
 					}, 
 					'object'   : 'user', 
-					'objectid' : ( userid ? userid : '0' ) 
+					'objectid' : ( userid ? userid : '0' ),
+					'groupid'  : groupid ? groupid : 0
 				} );
 			}
 			
@@ -1300,7 +1352,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 			f.onExecuted = function( e, d )
 			{
-				if( ShowLog ) console.log( 'unmountDisk ( device/unmount ) ', { vars: vars, e:e, d:d } );
+				if( ShowLog || e != 'ok' ) console.log( 'unmountDisk ( device/unmount ) ', { vars: vars, e:e, d:d } );
 			
 				if( callback ) callback( e, d );
 			}
@@ -1309,21 +1361,48 @@ Sections.accounts_workgroups = function( cmd, extra )
 		}
 	}
 	
-	function remountDisk( oldname, newname, userid, callback )
+	function remountDisk( oldname, newname, userid, groupid, callback, skip )
 	{
 		if( oldname && newname )
 		{
-			unmountDisk( oldname, userid, function( e, d )
+			if( skip )
 			{
-			
-				mountDisk( newname, userid, function( e, d )
+				mountDisk( newname, userid, groupid, function( e, d )
 				{
 				
-					if( callback ) callback( e, d );
+					if( e != 'ok' )
+					{
+						Notify( { title: i18n( 'i18n_fail_mount' ), text: ( d ? d : i18n( 'i18n_fail_mount_more' ) ) } );
+					}
 				
-				} );
+					if( callback ) callback( e, d );
 			
-			} );
+				} );
+			}
+			else
+			{
+				unmountDisk( oldname, userid, groupid, function( e, d )
+				{
+				
+					if( e != 'ok' )
+					{
+						Notify( { title: i18n( 'i18n_fail_unmount' ), text: ( d ? d : i18n( 'i18n_fail_unmount_more' ) ) } );
+					}
+				
+					mountDisk( newname, userid, groupid, function( e, d )
+					{
+					
+						if( e != 'ok' )
+						{
+							Notify( { title: i18n( 'i18n_fail_mount' ), text: ( d ? d : i18n( 'i18n_fail_mount_more' ) ) } );
+						}
+					
+						if( callback ) callback( e, d );
+				
+					} );
+			
+				} );
+			}
 		}
 	}
 	
@@ -1429,7 +1508,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 	}
 	
-	function removeStorage( diskid, userid, devname, callback )
+	function removeStorage( diskid, userid, gid, devname, callback )
 	{
 		if( diskid && devname )
 		{
@@ -1443,8 +1522,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 					if( ShowLog ) console.log( { diskid: diskid, userid: ( userid ? userid : '0' ), devname: devname } );
 					
-					unmountDrive( devname, false, function()
-					{
+					//unmountDrive( devname, false, false, function()
+					//{
 						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 						
 						var m = new Module( 'system' );
@@ -1475,9 +1554,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 						}
 						
-						m.execute( 'deletedoor', { id: diskid, userid: ( userid ? userid : '0' ), authid: Application.authId } );
+						m.execute( 'deletedoor', { id: diskid, groupid: gid ? gid : 0, userid: ( userid ? userid : '0' ), authid: Application.authId } );
 					
-					} );
+					//} );
 				
 				}
 			} );
@@ -2454,7 +2533,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 									var unsorted = {};
 									
 									// Add all workgroups to unsorted and add subgroups array ...
-					
+									
 									for( var i in workgroups )
 									{
 										if( workgroups[i] && workgroups[i].ID )
@@ -2463,9 +2542,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 											{
 												continue;
 											}
-							
+											
 											unsorted[workgroups[i].ID] = {};
-							
+											
 											for( var ii in workgroups[i] )
 											{
 												if( workgroups[i][ii] )
@@ -2544,14 +2623,14 @@ Sections.accounts_workgroups = function( cmd, extra )
 												
 												sub = rows.ID;
 												
-												str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\',{id:'+rows.ID+',psub:'+info.ID+'});">';
+												str += '<div class="HRow'+(rows.Hide||!rows.Owner?' Hidden':'')+'" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\',{id:'+rows.ID+',psub:'+info.ID+'});">';
 						
 												str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 												str += '		<span name="'+rows.Name+'" class="IconMedium fa-users"></span>';
 												str += '	</div>';
-												str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent94 InputHeight FloatLeft Ellipsis">'+rows.Name+'</div>';
+												str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent90 InputHeight FloatLeft Ellipsis">'+rows.Name+(rows.Owner?' (by '+rows.Owner+')':'')+'</div>';
 												str += '</div>';
-										
+												
 												if( rows.groups.length > 0 )
 												{
 													str += '<div class="SubGroups">';
@@ -2563,13 +2642,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 														if( rows )
 														{
 															ii++;
-														
-															str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\',{id:'+rows.ID+',psub:'+info.ID+'})">';
+															
+															str += '<div class="HRow'+(rows.Hide||!rows.Owner?' Hidden':'')+'" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\',{id:'+rows.ID+',psub:'+info.ID+'})">';
 															str += '	<div class="TextCenter HContent4 InputHeight FloatLeft PaddingSmall" style="min-width:36px"></div>';
 															str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 															str += '		<span name="'+rows.Name+'" class="IconMedium fa-users"></span>';
 															str += '	</div>';
-															str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent88 InputHeight FloatLeft Ellipsis">'+rows.Name+'</div>';
+															str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent80 InputHeight FloatLeft Ellipsis">'+rows.Name+(rows.Owner?' (by '+rows.Owner+')':'')+'</div>';
 															str += '</div>';
 														
 															if( rows.groups.length > 0 )
@@ -2584,12 +2663,12 @@ Sections.accounts_workgroups = function( cmd, extra )
 																	{
 																		ii++;
 																	
-																		str += '<div class="HRow" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\',{id:'+rows.ID+',psub:'+info.ID+'})">';
+																		str += '<div class="HRow'+(rows.Hide||!rows.Owner?' Hidden':'')+'" id="SubWorkgroupID_'+rows.ID+'" onclick="Sections.accounts_workgroups( \'edit_sub\',{id:'+rows.ID+',psub:'+info.ID+'})">';
 																		str += '	<div class="TextCenter HContent8 InputHeight FloatLeft PaddingSmall" style="min-width:73px"></div>';
 																		str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 																		str += '		<span name="'+rows.Name+'" class="IconMedium fa-users"></span>';
 																		str += '	</div>';
-																		str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent82 InputHeight FloatLeft Ellipsis">'+rows.Name+'</div>';
+																		str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent70 InputHeight FloatLeft Ellipsis">'+rows.Name+(rows.Owner?' (by '+rows.Owner+')':'')+'</div>';
 																		str += '</div>';
 																	}
 															
@@ -2644,7 +2723,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 								if( ge( 'SubWorkgroupInner'+uuid ) )
 								{
 									var list = ge( 'SubWorkgroupInner'+uuid ).getElementsByTagName( 'div' );
-						
+									
+									ge( 'SubWorkgroupInner'+uuid ).className = ge( 'SubWorkgroupInner'+uuid ).className.split( ' Visible' ).join( '' ) + ( filter ? ' Visible' : '' );
+									
 									if( list.length > 0 )
 									{
 										for( var a = 0; a < list.length; a++ )
@@ -3912,6 +3993,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										var storage = {
 											id   : sorted[b].ID,
 											user : sorted[b].UserID,
+											grup : sorted[b].GroupID,
 											name : sorted[b].Name,
 											type : sorted[b].Type,
 											size : readableBytes( size, 0 ), 
@@ -3970,7 +4052,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																d.onclick = function (  )
 																{
 																																
-																	init.edit( storage.id, storage.user );
+																	init.edit( storage.id, storage.user, storage.grup );
 																
 																};
 															}
@@ -3982,12 +4064,12 @@ Sections.accounts_workgroups = function( cmd, extra )
 															+ '		</div>'
 															+ '	</div>'
 															+ '	<div class="Col2 FloatLeft HContent100 Name Ellipsis" id="StorageInfo_' + storage.id + '">'
-															+ '		<div class="name" title="' + storage.name + '">' + storage.name + ':</div>'
-															+ '		<div class="type" title="' + i18n( 'i18n_' + storage.type ) + '">' + i18n( 'i18n_' + storage.type ) + '</div>'
+															+ '		<div class="name Ellipsis" title="' + storage.name + '">' + storage.name + ':</div>'
+															+ '		<div class="type Ellipsis" title="' + i18n( 'i18n_' + storage.type ) + '">' + i18n( 'i18n_' + storage.type ) + '</div>'
 															+ '		<div class="rectangle" title="' + storage.used + ' used">'
 															+ '			<div style="width:' + storage.prog + '%"></div>'
 															+ '		</div>'
-															+ '		<div class="bytes" title="' + storage.free  + ' free of ' + storage.size + '">' + storage.free  + ' free of ' + storage.size + '</div>'
+															+ '		<div class="bytes Ellipsis" title="' + storage.free  + ' free of ' + storage.size + '">' + storage.free  + ' free of ' + storage.size + '</div>'
 															+ '	<div>';
 															return d;
 														}( this, storage, workgroup.groupid )
@@ -4085,9 +4167,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 						
 							},
 							
-							edit : function ( sid, uid )
+							edit : function ( sid, uid, gid )
 							{
-								
 								this.func.mode[ 'storage' ] = 'edit';
 								
 								var args = {
@@ -4174,6 +4255,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												user  : js.UserID,
 												name  : js.Name,
 												type  : js.Type,
+												grup  : js.GroupID,
 												csize : csize,
 												cunit : cunit,
 												note  : js.ShortDescription,
@@ -4606,7 +4688,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																	d.onclick = function ()
 																	{
 																	
-																		removeStorage( storage.id, storage.user, storage.name, function()
+																		removeStorage( storage.id, storage.user, storage.grup, storage.name, function()
 																		{
 																		
 																			listStorage( function( res, js )
@@ -4644,11 +4726,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 																	d.className = 'IconSmall FloatLeft MarginRight';
 																	d.innerHTML = ( storage.mount > 0 ? i18n('i18n_unmount_disk') : i18n('i18n_mount_disk') );
 																	d.onclick = function ()
-																	{
-																	
-																		mountStorage( storage.name, storage.user, this, function()
+																	{ 
+																		mountStorage( storage.name, storage.user, groupid, this, function()
 																		{
-																		
 																			listStorage( function( res, js )
 																			{
 																			
@@ -5206,7 +5286,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 				if( groups )
 				{
-				
+					
 					for( var a in groups )
 					{
 						var found = false;
@@ -5215,7 +5295,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						
 						str += '<div>';
 						
-						str += '<div class="HRow" id="WorkgroupID_' + groups[a].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].ID+',_this:this} )">';
+						str += '<div class="HRow Ellipsis' +(groups[a].Hide||!groups[a].Owner?' Hidden':'')+'" id="WorkgroupID_' + groups[a].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].ID+',_this:this} )">';
 						//str += '<div class="HRow" id="WorkgroupID_' + groups[a].ID + '" onclick="edit( '+groups[a].ID+', this )">';
 						//str += '	<div class="PaddingSmall HContent100 FloatLeft Ellipsis">';
 						//str += '		<span name="' + groups[a].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>';
@@ -5223,7 +5303,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 						str += '		<span name="' + groups[a].Name + '" class="IconMedium fa-users"></span>';
 						str += '	</div>';
-						str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent94 InputHeight FloatLeft Ellipsis">' + groups[a].Name+ '</div>';
+						str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent90 InputHeight FloatLeft Ellipsis">' + groups[a].Name + (groups[a].Owner?' (by '+groups[a].Owner+')':'') + '</div>';
 						
 						//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 						//str += '		<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
@@ -5241,7 +5321,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								
 								ii++;
 								
-								str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].groups[aa].ID+',_this:this} )">';
+								str += '<div class="HRow Ellipsis' +(groups[a].groups[aa].Hide||!groups[a].groups[aa].Owner?' Hidden':'')+'" id="WorkgroupID_' + groups[a].groups[aa].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].groups[aa].ID+',_this:this} )">';
 								//str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].ID + '" onclick="edit( '+groups[a].groups[aa].ID+', this )">';
 								//str += '	<div class="PaddingSmall HContent100 FloatLeft Ellipsis">';
 								//str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>';
@@ -5251,7 +5331,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 								str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconMedium fa-users"></span>';
 								str += '	</div>';
-								str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent88 InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].Name + '</div>';
+								str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent80 InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].Name + (groups[a].groups[aa].Owner?' (by '+groups[a].groups[aa].Owner+')':'') + '</div>';
 								
 								//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 								//str += '		<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
@@ -5269,7 +5349,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										
 										ii++;
 										
-										str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].groups[aa].groups[aaa].ID+',_this:this} )">';
+										str += '<div class="HRow Ellipsis' +(groups[a].groups[aa].groups[aaa].Hide||!groups[a].groups[aa].groups[aaa].Owner?' Hidden':'')+'" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].groups[aa].groups[aaa].ID+',_this:this} )">';
 										//str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '" onclick="edit( '+groups[a].groups[aa].groups[aaa].ID+', this )">';
 										//str += '	<div class="PaddingSmall HContent100 FloatLeft Ellipsis">';
 										//str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>';
@@ -5279,13 +5359,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 										str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 										str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconMedium fa-users"></span>';
 										str += '	</div>';
-										str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent82 InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + '</div>';
+										str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent70 InputHeight FloatLeft Ellipsis" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + groups[a].groups[aa].groups[aaa].Name + (groups[a].groups[aa].groups[aaa].Owner?' (by '+groups[a].groups[aa].groups[aaa].Owner+')':'') + '</div>';
 										
 										//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 										//str += '		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
 										//str += '	</div>';
 										str += '</div>';
-									
+										
 									}
 								
 									str += '</div>';
@@ -5612,6 +5692,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 						
 						if( list.length > 0 )
 						{
+							ge( 'WorkgroupInner' ).className = ge( 'WorkgroupInner' ).className.split( ' Visible' ).join( '' ) + ( filter ? ' Visible' : '' );
+							
 							for( var a = 0; a < list.length; a++ )
 							{
 								if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;

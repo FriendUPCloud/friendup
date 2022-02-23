@@ -57,6 +57,9 @@ var Module = function( mod )
 			j.forceSend = true;
 		}
 		
+		if( this.loginCall )
+		    j.loginCall = true;
+		
 		j.open( 'post', '/system.library/module/', true, true );
 		
 		// Make sure we can read args (from the myriad of places )

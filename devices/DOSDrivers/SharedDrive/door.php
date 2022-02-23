@@ -216,36 +216,202 @@ if( !class_exists( 'SharedDrive' ) )
 					$out = [];
 					$rows = $own = $groupShare = false;
 					
+					// My own stash!
+					if( $path[1] == 'You shared' )
+					{
+						// Get my shared data
+						if( $rows = $SqlDatabase->fetchObjects( '
+							SELECT DISTINCT(`Data`) FROM FShared WHERE OwnerUserID=\'' . intval( $User->ID, 10 ) . '\' GROUP BY `Data`
+						' ) )
+						{
+							foreach( $rows as $row )
+							{
+								if( $delete || $read || $getinfo || $write )
+								{
+									$fn = explode( ':', $row->Data );
+									if( strstr( $fn[1], '/' ) )
+									{
+										$fn = explode( '/', $fn[1] );
+										$fn = $fn[ count( $fn ) - 1 ];
+									}
+									else $fn = $fn[1];
+								}
+								
+								if( $delete )
+								{
+									if( $fn == $pth )
+									{
+										$SqlDatabase->Query( '
+											DELETE FROM FShared WHERE 
+												OwnerUserID=\'' . intval( $User->ID, 10 ) . '\' AND 
+												`Data`="' . mysqli_real_escape_string( $SqlDatabase->_link, $row->Data ) . '"
+										' );
+										die( 'ok<!--separate-->{"message":"Unshared file.","response":"1"}' );
+									}
+								}
+								// We want to get info!
+								if( isset( $getinfo ) && $pth == $fn )
+								{
+									$d = new File( $row->Data );
+									if( $info = $d->GetFileInfo() )
+									{
+										die( 'ok<!--separate-->' . json_encode( $info ) );
+									}
+									die( 'fail<!--separate-->' );
+								}
+								// Read mode intercepts here
+								else if( isset( $read ) && $pth == $fn ) 
+								{
+									$d = new File( $row->Data );
+									$d->LoadRaw();
+								}
+								else if( isset( $write ) && $pth == $fn )
+								{
+									$s->ExternServerToken = $row->ServerToken;
+
+									if( $info = $this->doWrite( $s, $args->tmpfile, $args->data ) )
+									{
+										die( 'ok<!--separate-->' . $info->Len . '<!--separate-->' );
+									}
+									die( 'fail<!--separate-->{"response":"-1","message":"Could not write file."}' );
+								}
+								
+								$path = $row->Data;
+								$filename = explode( ':', $path ); 
+								$filename = $filename[1];
+								if( strstr( $filename, '/' ) )
+								{
+									$filename = explode( '/', $filename );
+									$filename = $filename[ count( $filename ) - 1 ];
+								}
+								$s = new stdClass();
+								$s->Filename = $filename;
+								$s->Path = 'You shared/' . $filename;
+								$s->Type = 'File';
+								$s->MetaType = 'File';
+								$s->Permissions = '-RWED-RWED-RWED';
+								$s->Shared = '';
+								$s->SharedLink = '';
+								$s->Filesize = 0;
+								$s->Owner = $User->ID;
+								$s->ExternPath = $row->Data;
+								$s->ExternServerToken = $User->ServerToken;
+								$s->row = $row;
+								$out[] = $s;
+							}
+						}
+						// In delete mode, we got this far - return false
+						if( $delete )
+						{
+							die( 'fail<!--separate-->{"message":"Failed to unshare file.","response":"-1"}' );
+						}	
+						
+						// Use multi!
+						$multiArray = array();
+						$master = curl_multi_init();
+						foreach( $out as $row )
+						{
+							$volume = explode( ':', $row->ExternPath );
+							$volume = $volume[0] . ':';
+							
+							$url = ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/';
+							
+							$ch = FriendCall( $url . 'file/info?servertoken=' . $row->ExternServerToken, false,
+								array( 
+									'devname'   => $volume,
+									'path'      => $row->ExternPath
+								), true
+							);
+							
+							$row->multi = $ch;
+							
+							$multiArray[] = $row;
+							
+							curl_multi_add_handle( $master, $ch );
+						}
+						$out = [];
+						
+						// Wait for curl to finish
+						// TODO: This is the slowdown!
+						if( count( $multiArray ) )
+						{
+							$active = 0;
+							do
+							{
+								$status = curl_multi_exec( $master, $active );
+								if( $active )
+								{
+									// Wait a short time for more activity
+									curl_multi_select( $master );
+								}
+							}
+							while ( $active && $status == CURLM_OK );
+							
+							$out = [];
+							
+							foreach( $multiArray as $a => $file )
+							{
+								$res = curl_multi_getcontent( $file->multi );
+								curl_multi_remove_handle( $master, $file->multi );
+						
+								$code = explode( '<!--separate-->', $res );
+							
+								if( $code[0] == 'ok' )
+								{
+									$info = json_decode( $code[1] );
+									$file->Filesize = $info->Filesize;
+									$file->DateCreated = $info->DateCreated;
+									$file->DateModified = $info->DateModified;
+									unset( $file->multi );
+									$out[] = $file;
+								}
+								// This file does not exist!
+								else
+								{
+									$SqlDatabase->query( 'DELETE FROM FShared WHERE `Data`=\'' . $file->ExternPath . '\' AND OwnerUserID=\'' . $User->ID . '\'' );
+								}
+							}
+						}
+						//...
+						
+						die( 'ok<!--separate-->' . json_encode( $out ) );
+					}
+					
 					// Get data shared by other users directly
 					if( !( $rows = $SqlDatabase->fetchObjects( '
 						SELECT s.ID, s.Data, s.OwnerUserID, u.ServerToken FROM FShared s, FUser u 
 						WHERE 
 							u.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
-							s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
+							s.OwnerUserID != \'' . $User->ID . '\' AND
 							s.SharedType = \'user\' AND 
-							s.SharedID = \'' . intval( $User->ID, 10 ) . '\' AND 
+							s.SharedID = \'' . $User->ID . '\' AND 
 							u.ServerToken != "" AND 
 							u.ID = s.OwnerUserID
 					' ) ) )
 					{
-						// Shared through groups by others
-						// Second in union is own files
+						// Shared through groups (by others)
+						// Second in union is own files (your files!)
 						if( $rows = $SqlDatabase->fetchObjects( '
 							(
 								SELECT 
 									s.ID, s.Data, s.OwnerUserID, u.ServerToken
 								FROM 
-									FShared s, FUserGroup g, FUserToGroup ug, FUserToGroup ug2, FUser u
+									FShared s, FUserGroup g, FUserToGroup me_ug, FUserToGroup oth_ug, FUser u
 								WHERE 
 									g.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
-									s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
 									s.SharedType = \'group\' AND 
 									s.SharedID = g.ID AND 
-									ug.UserGroupID = g.ID AND
-									ug.UserID = s.OwnerUserID AND
-									ug2.UserGroupID = g.ID AND
-									ug2.UserID = \'' . $User->ID . '\' AND
-									u.ID = ug.UserID AND
+									
+									s.OwnerUserID != \'' . $User->ID . '\' AND
+									s.OwnerUserID = oth_ug.UserID AND
+									
+									me_ug.UserGroupID = g.ID AND
+									oth_ug.UserGroupID = g.ID AND
+									
+									me_ug.UserID = \'' . $User->ID . '\' AND
+									
+									u.ID = oth_ug.UserID AND
+									
 									u.ServerToken != ""
 							)
 							UNION
@@ -253,20 +419,26 @@ if( !class_exists( 'SharedDrive' ) )
 								SELECT 
 									s.ID, s.Data, s.OwnerUserID, u.ServerToken
 								FROM 
-									FShared s, FUserGroup g, FUserToGroup ug, FUser u
+									FShared s, FUserGroup g, FUserToGroup me_ug, FUser u
 								WHERE 
 									g.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
-									s.OwnerUserID = \'' . intval( $User->ID, 10 ) . '\' AND
 									s.SharedType = \'group\' AND 
 									s.SharedID = g.ID AND 
-									ug.UserGroupID = g.ID AND
-									ug.UserID = u.ID AND
-									u.ServerToken != "" AND 
-									u.ID = s.OwnerUserID
+									
+									s.OwnerUserID = \'' . $User->ID . '\' AND
+									s.OwnerUserID = u.ID AND
+									me_ug.UserGroupID = g.ID AND
+									me_ug.UserID = u.ID AND
+									
+									u.ServerToken != ""
 							)
 						' ) )
 						{
 							$groupShare = true;
+						}
+						else
+						{
+							//$Logger->log( 'Err! ' . mysqli_error( $SqlDatabase->_link ) );
 						}
 					}
 					// Add own files shared with other user (we're not in group)
@@ -275,10 +447,10 @@ if( !class_exists( 'SharedDrive' ) )
 						WHERE 
 							u2.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
 							s.SharedID = u2.ID AND
-							s.SharedID != \'' . intval( $User->ID, 10 ) . '\' AND 
+							s.SharedID != \'' . $User->ID . '\' AND 
 							s.SharedType = \'user\' AND 
 							u.ServerToken != "" AND 
-							s.OwnerUserID = \'' . intval( $User->ID, 10 ) . '\' AND
+							s.OwnerUserID = \'' . $User->ID . '\' AND
 							u.ID = s.OwnerUserID
 					' ) )
 					{
@@ -311,7 +483,7 @@ if( !class_exists( 'SharedDrive' ) )
 								if( $fn == $pth )
 								{
 									$SqlDatabase->Query( '
-										DELETE FROM FShared WHERE ID=\'' . intval( $row->ID, 10 ) . '\'
+										DELETE FROM FShared WHERE ID=\'' . intval( $row->ID, 10 ) . '\' AND OwnerUserID=\'' . $User->ID . '\'
 									' );
 									die( 'ok<!--separate-->{"message":"Unshared file.","response":"1"}' );
 								}
@@ -342,11 +514,12 @@ if( !class_exists( 'SharedDrive' ) )
 							$s->SharedLink = '';
 							$s->Filesize = 0;
 							$s->Owner = $row->OwnerUserID;
+							$s->row = $row;
 							
 							// Own files and others' files have different paths
 							if( $s->Owner == $User->ID )
 							{
-								$s->ExternPath = $vol[0] . ':' . $filename;
+								$s->ExternPath = $row->Data; //$vol[0] . ':' . $filename; (old nonsensical!)
 								$subPath = $filename;
 							}
 							// Other user's file
@@ -358,6 +531,7 @@ if( !class_exists( 'SharedDrive' ) )
 							}							
 							
 							$url = ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/';
+							
 							$s->multi = FriendCall( $url . 'file/info?servertoken=' . $row->ServerToken, false,
 								array( 
 									'devname'   => $vol[0],
@@ -369,6 +543,7 @@ if( !class_exists( 'SharedDrive' ) )
 						}
 						
 						// Wait for curl to finish
+						// TODO: This is the slowdown!
 						if( count( $multiArray ) )
 						{
 							do
@@ -380,7 +555,7 @@ if( !class_exists( 'SharedDrive' ) )
 					
 							for( $a = 0; $a < count( $multiArray ); $a++ )
 							{
-								$file = $multiArray[ $a ];
+								$file = $s = $multiArray[ $a ];
 						
 								$res = curl_multi_getcontent( $file->multi );
 						
@@ -419,18 +594,28 @@ if( !class_exists( 'SharedDrive' ) )
 										);
 									
 										// Don't timeout!
-										set_time_limit( 0 );
-										ob_end_clean();
-										if( $fp = fopen( $url . 'file/read?servertoken=' . $row->ServerToken . '&path=' . urlencode( $s->ExternPath ) . '&mode=rb', 'rb', false, $context ) )
+										$wholeUrl = $url . 'file/read?servertoken=' . $file->row->ServerToken . '&path=' . urlencode( $s->ExternPath ) . '&mode=rb';
+										$str = false;
+										if( $fp = fopen( $wholeUrl, 'rb', false, $context ) )
 										{
+											$str = fread( $fp, 5 );
+											// Failed attempt
+											if( $str == 'fail<' )
+											{
+												continue;
+											}
+											// Success
+											set_time_limit( 0 );
+											ob_end_clean();
+											echo( $str ); // output first 5 chars
 											fpassthru( $fp );
 											fclose( $fp );
+											die();
 										}
-										die();
 									}
 									else if( isset( $write ) && $pth == $s->Filename )
 									{
-										$s->ExternServerToken = $row->ServerToken;
+										$s->ExternServerToken = $file->row->ServerToken;
 
 										if( $info = $this->doWrite( $s, $args->tmpfile, $args->data ) )
 										{
@@ -448,7 +633,7 @@ if( !class_exists( 'SharedDrive' ) )
 								// This file does not exist!
 								else
 								{
-									$SqlDatabase->query( 'DELETE FROM FShared WHERE ID=\'' . $row->ID . '\' AND OwnerUserID=\'' . $User->ID . '\'' );
+									$SqlDatabase->query( 'DELETE FROM FShared WHERE ID=\'' . $file->row->ID . '\' AND OwnerUserID=\'' . $User->ID . '\'' );
 									continue;
 								}
 							}
@@ -470,79 +655,47 @@ if( !class_exists( 'SharedDrive' ) )
 				// This is the root path
 				else
 				{
-					$out = [];
-					// Get my shared data
-					if( $rows = $SqlDatabase->fetchObjects( '
-						SELECT DISTINCT(`Data`) FROM FShared WHERE OwnerUserID=\'' . intval( $User->ID, 10 ) . '\' GROUP BY `Data`
-					' ) )
-					{
-						foreach( $rows as $row )
-						{
-							if( $delete )
-							{
-								$fn = explode( ':', $row->Data );
-								if( strstr( $fn[1], '/' ) )
-								{
-									$fn = explode( '/', $fn[1] );
-									$fn = $fn[ count( $fn ) - 1 ];
-								}
-								else $fn = $fn[1];
-								if( $fn == $pth )
-								{
-									$SqlDatabase->Query( '
-										DELETE FROM FShared WHERE 
-											OwnerUserID=\'' . intval( $User->ID, 10 ) . '\' AND 
-											`Data`="' . mysqli_real_escape_string( $SqlDatabase->_link, $row->Data ) . '"
-									' );
-									die( 'ok<!--separate-->{"message":"Unshared file.","response":"1"}' );
-								}
-							}
-							$path = $row->Data;
-							$filename = explode( ':', $path ); 
-							$filename = $filename[1];
-							if( strstr( $filename, '/' ) )
-							{
-								$filename = explode( '/', $filename );
-								$filename = $filename[ count( $filename ) - 1 ];
-							}
-							$s = new stdClass();
-							$s->Filename = $filename;
-							$s->Path = $filename;
-							$s->Type = 'File';
-							$s->MetaType = 'File';
-							$s->Permissions = '-RWED-RWED-RWED';
-							$s->Shared = '';
-							$s->SharedLink = '';
-							$s->Filesize = 0;
-							$s->Owner = $User->ID;
-							$s->ExternPath = $row->Data;
-							$s->ExternServerToken = $User->ServerToken;
-							$out[] = $s;
-						}
-					}
-					// In delete mode, we got this far - return false
-					if( $delete )
-					{
-						die( 'fail<!--separate-->{"message":"Failed to unshare file.","response":"-1"}' );
-					}				
-				
 					// Select groupshares that has been shared in where I am member
-					// First in union is; Get folders by other users or groups
-					// Second one is: Select usershares where I am shared with
+					// Unions joints:
+					// 1: Get folders by others who shared in my member groups
+					// 2: Get folders by my shares in my member groups
+					// 3: Get other peoples specific shares with me
+					// 4: Get my shares to other users
 					
 					if( $rows = $SqlDatabase->fetchObjects( '
 					(
 						SELECT s.ID AS ShareID, "" as FullName, g.Name, g.ID, u.ID AS OwnerID, u.ServerToken, DateTouched AS DateModified, DateCreated, "group" AS `Type`
 							FROM 
-								FShared s, FUserGroup g, FUserToGroup ug, FUserToGroup ug2, FUser u
+								FShared s, FUserGroup g, FUserToGroup me_ug, FUserToGroup oth_ug, FUser u
 							WHERE 
-								s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
+								s.OwnerUserID != \'' . $User->ID . '\' AND
 								s.SharedType = \'group\' AND
-								s.SharedID = ug.UserGroupID AND
-								g.ID = ug.UserGroupID AND
-								g.ID = ug2.UserGroupID AND
-								ug2.UserID = \'' . $User->ID . '\' AND
-								u.ID = ug.UserID AND
+								s.SharedID = g.ID AND
+								s.OwnerUserID = oth_ug.UserID AND
+								
+								g.ID = me_ug.UserGroupID AND
+								g.ID = oth_ug.UserGroupID AND
+								
+								me_ug.UserID = \'' . $User->ID . '\' AND
+								oth_ug.UserID = u.ID AND
+								
+								u.ServerToken != ""
+					)
+					UNION
+					(
+						SELECT s.ID AS ShareID, "" as FullName, g.Name, g.ID, u.ID AS OwnerID, u.ServerToken, DateTouched AS DateModified, DateCreated, "group" AS `Type`
+							FROM 
+								FShared s, FUserGroup g, FUserToGroup me_ug, FUser u
+							WHERE 
+								s.OwnerUserID = \'' . $User->ID . '\' AND
+								s.SharedType = \'group\' AND
+								s.SharedID = g.ID AND
+								
+								g.ID = me_ug.UserGroupID AND
+								
+								me_ug.UserID = \'' . $User->ID . '\' AND
+								me_ug.UserID = u.ID AND
+
 								u.ServerToken != ""
 					)
 					UNION
@@ -552,9 +705,21 @@ if( !class_exists( 'SharedDrive' ) )
 								FShared s, FUser u 
 							WHERE
 								u.ID = s.OwnerUserID AND 
-								s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
+								s.OwnerUserID != \'' . $User->ID . '\' AND
 								s.SharedType = \'user\' AND
-								s.SharedID = \'' . intval( $User->ID, 10 ) . '\' AND
+								s.SharedID = \'' . $User->ID . '\' AND
+								u.ServerToken != ""
+					)
+					UNION
+					(
+						SELECT s.ID AS ShareID, u.FullName, u.Name, u.ID, u.ID AS OwnerID, u.ServerToken, DateTouched AS DateModified, DateCreated, "user" AS `Type`
+							FROM 
+								FShared s, FUser u 
+							WHERE
+								u.ID = s.SharedID AND 
+								s.OwnerUserID = \'' . $User->ID . '\' AND
+								s.SharedType = \'user\' AND
+								s.SharedID != \'' . $User->ID . '\' AND
 								u.ServerToken != ""
 					)
 					' ) )
@@ -587,6 +752,21 @@ if( !class_exists( 'SharedDrive' ) )
 							$out[] = $s;
 						}
 					}
+					
+					// Make a folder for content you shared with others
+					$others = new stdClass();
+					$others->Filename = 'You shared';
+					$others->Path = 'You shared';
+					$others->Title = 'i18n_you_shared';
+					$others->OwnerUserID = $User->ID;
+					$others->Type = 'Directory';
+					$others->MetaType = 'Directory';
+					$others->IconLabel = 'YouShare';
+					$others->DateCreated = $others->DateModified = date( 'Y-m-d H:i:s' );
+					$others->Shared = $others->SharedLink = '';
+					$others->Filesize = 0;
+					$others->ServerToken = $User->ServerToken;
+					$out[] = $others;
 				}
 				
 				// Use multi!

@@ -27,6 +27,7 @@
 #ifdef LWS_HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+#include <signal.h>
 
 void
 lws_ser_wu16be(uint8_t *b, uint16_t u)
@@ -152,6 +153,27 @@ lws_hex_to_byte_array(const char *h, uint8_t *dest, int max)
 	return lws_ptr_diff(dest, odest);
 }
 
+static char *hexch = "0123456789abcdef";
+
+int
+lws_hex_random(struct lws_context *context, char *dest, size_t len)
+{
+	size_t n = (len - 1) / 2;
+	uint8_t b, *r = (uint8_t *)dest + len - n;
+
+	if (lws_get_random(context, r, n) != n)
+		return 1;
+
+	while (n--) {
+		b = *r++;
+		*dest++ = hexch[b >> 4];
+		*dest++ = hexch[b & 0xf];
+	}
+
+	*dest = '\0';
+
+	return 0;
+}
 
 #if !defined(LWS_PLAT_OPTEE)
 
@@ -344,6 +366,114 @@ lws_strdup(const char *s)
 	return d;
 }
 
+const char *
+lws_nstrstr(const char *buf, size_t len, const char *name, size_t nl)
+{
+	const char *end = buf + len - nl + 1;
+	size_t n;
+
+	if (nl > len)
+		/* it cannot be found if the needle is longer than the haystack */
+		return NULL;
+
+	while (buf < end) {
+		if (*buf != name[0]) {
+			buf++;
+			continue;
+		}
+
+		if (nl == 1)
+			/* single char match, we are done */
+			return buf;
+
+		if (buf[nl - 1] == name[nl - 1]) {
+			/*
+			 * This is looking interesting then... the first
+			 * and last chars match, let's check the insides
+			 */
+			n = 1;
+			while (n < nl && buf[n] == name[n])
+				n++;
+
+			if (n == nl)
+				/* it's a hit */
+				return buf;
+		}
+
+		buf++;
+	}
+
+	return NULL;
+}
+
+/*
+ * name wants to be something like "\"myname\":"
+ */
+
+const char *
+lws_json_simple_find(const char *buf, size_t len, const char *name, size_t *alen)
+{
+	size_t nl = strlen(name);
+	const char *np = lws_nstrstr(buf, len, name, nl),
+		   *end = buf + len, *as;
+	int qu = 0;
+
+	if (!np)
+		return NULL;
+
+	np += nl;
+
+	while (np < end && (*np == ' ' || *np == '\t'))
+		np++;
+
+	if (np >= end)
+		return NULL;
+
+	/*
+	 * The arg could be lots of things after "name": with JSON, commonly a
+	 * string like "mystring", true, false, null, [...] or {...} ... we want
+	 * to handle common, simple cases cheaply with this; the user can choose
+	 * a full JSON parser like lejp if it's complicated.  So if no opening
+	 * quote, return until a terminator like , ] }.  If there's an opening
+	 * quote, return until closing quote, handling escaped quotes.
+	 */
+
+	if (*np == '\"') {
+		qu = 1;
+		np++;
+	}
+
+	as = np;
+	while (np < end &&
+	       (!qu || *np != '\"') && /* end quote is EOT if quoted */
+	       (qu || (*np != '}' && *np != ']' && *np != ',')) /* delimiters */
+	) {
+		if (qu && *np == '\\') /* skip next char if quoted escape */
+			np++;
+		np++;
+	}
+
+	*alen = lws_ptr_diff(np, as);
+
+	return as;
+}
+
+int
+lws_json_simple_strcmp(const char *buf, size_t len, const char *name,
+		       const char *comp)
+{
+	size_t al;
+	const char *hit = lws_json_simple_find(buf, len, name, &al);
+
+	if (!hit)
+		return -1;
+
+	if (al != strlen(comp))
+		return -1;
+
+	return strncmp(hit, comp, al);
+}
+
 static const char *hex = "0123456789ABCDEF";
 
 const char *
@@ -413,7 +543,14 @@ lws_json_purify(char *escaped, const char *string, int len, int *in_used)
 			continue;
 		}
 
-		if (*p == '\"' || *p == '\\' || *p < 0x20) {
+		if (*p == '\\') {
+			p++;
+			*q++ = '\\';
+			*q++ = '\\';
+			continue;
+		}
+
+		if (*p == '\"' || *p < 0x20) {
 			*q++ = '\\';
 			*q++ = 'u';
 			*q++ = '0';
@@ -469,7 +606,9 @@ lws_filename_purify_inplace(char *filename)
 		}
 
 		if (*filename == ':' ||
+#if !defined(WIN32)
 		    *filename == '\\' ||
+#endif
 		    *filename == '$' ||
 		    *filename == '%')
 			*filename = '_';
@@ -567,12 +706,14 @@ lws_finalize_startup(struct lws_context *context)
 	return 0;
 }
 
+#if !defined(LWS_PLAT_FREERTOS)
 void
 lws_get_effective_uid_gid(struct lws_context *context, int *uid, int *gid)
 {
 	*uid = context->uid;
 	*gid = context->gid;
 }
+#endif
 
 int
 lws_snprintf(char *str, size_t size, const char *format, ...)
@@ -926,7 +1067,9 @@ lws_strexp_expand(lws_strexp_t *exp, const char *in, size_t len,
 				break;
 			}
 
-			exp->out[exp->pos++] = *in;
+			if (exp->out)
+				exp->out[exp->pos] = *in;
+			exp->pos++;
 			if (exp->olen - exp->pos < 1) {
 				*pused_in = used + 1;
 				*pused_out = exp->pos;
@@ -945,8 +1088,11 @@ lws_strexp_expand(lws_strexp_t *exp, const char *in, size_t len,
 			if (exp->olen - exp->pos < 3)
 				return -1;
 
-			exp->out[exp->pos++] = '$';
-			exp->out[exp->pos++] = *in;
+			if (exp->out) {
+				exp->out[exp->pos++] = '$';
+				exp->out[exp->pos++] = *in;
+			} else
+				exp->pos += 2;
 			if (*in != '$')
 				exp->state = LWS_EXPS_LITERAL;
 			break;
@@ -981,7 +1127,8 @@ drain:
 		in++;
 	}
 
-	exp->out[exp->pos] = '\0';
+	if (exp->out)
+		exp->out[exp->pos] = '\0';
 	*pused_in = used;
 	*pused_out = exp->pos;
 
@@ -1047,6 +1194,12 @@ lws_mutex_refcount_unlock(struct lws_mutex_refcount *mr)
 	pthread_mutex_unlock(&mr->lock);
 }
 
+void
+lws_mutex_refcount_assert_held(struct lws_mutex_refcount *mr)
+{
+	assert(mr->lock_owner == pthread_self() && mr->lock_depth);
+}
+
 #endif /* SMP */
 
 
@@ -1076,9 +1229,19 @@ lws_cmdline_option(int argc, const char **argv, const char *val)
 
 static const char * const builtins[] = {
 	"-d",
+#if defined(LWS_WITH_UDP)
 	"--udp-tx-loss",
-	"--udp-rx-loss"
+	"--udp-rx-loss",
+#endif
+	"--ignore-sigterm"
 };
+
+#if !defined(LWS_PLAT_FREERTOS)
+static void
+lws_sigterm_catch(int sig)
+{
+}
+#endif
 
 void
 lws_cmdline_option_handle_builtin(int argc, const char **argv,
@@ -1098,11 +1261,20 @@ lws_cmdline_option_handle_builtin(int argc, const char **argv,
 		case 0:
 			logs = m;
 			break;
+#if defined(LWS_WITH_UDP)
 		case 1:
 			info->udp_loss_sim_tx_pc = m;
 			break;
 		case 2:
 			info->udp_loss_sim_rx_pc = m;
+			break;
+		case 3:
+#else
+		case 1:
+#endif
+#if !defined(LWS_PLAT_FREERTOS)
+			signal(SIGTERM, lws_sigterm_catch);
+#endif
 			break;
 		}
 	}

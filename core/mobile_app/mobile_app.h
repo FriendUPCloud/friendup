@@ -79,7 +79,18 @@ typedef struct MobileAppNotif
 	int						man_Type;
 	void					*man_Data;
 	int						man_InUse;
+	BufString				*man_BufString;
 }MobileAppNotif;
+
+//
+// Notifications which should go to firebase
+//
+
+typedef struct DelListEntry
+{
+	Notification *dle_NotificationPtr;
+	MinNode node;
+}DelListEntry;
 
 //
 //
@@ -91,4 +102,11 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 //
 //
 
-int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *notif, int action );
+int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *notif, int action );
+
+//
+//
+//
+
+int MobileAppNotifyUsersUpdate( void *lsb, DelListEntry *root, int action );
+

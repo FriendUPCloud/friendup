@@ -16,13 +16,23 @@ Application.run = function( msg, iface )
 		height: 600
 	};
 
-	if( msg.args == 'addstorage' )
+	let activeTab = null;
+	let args = msg.args.split( ' ' );
+	for( let a = 0; a < args.length; a++ )
 	{
-		wflags.invisible = true;
-		wflags.hidden = true;
+		if( args[a] == 'addstorage' )
+		{
+			wflags.invisible = true;
+			wflags.hidden = true;
+		}
+		else if( args[a].substr( 0, 4 ) == 'tab=' )
+		{
+			let tab = args[a].split( '=' );
+			activeTab = tab[1];
+		}
 	}
 	
-	var v = new View( wflags );
+	let v = new View( wflags );
 	
 	v.onClose = function()
 	{
@@ -31,37 +41,37 @@ Application.run = function( msg, iface )
 	
 	this.mainView = v;
 	
-	var m = new Module( 'system' );
+	let m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
-		var s = JSON.parse( d );
-		var f = new File( 'Progdir:Templates/main.html' );
+		let s = JSON.parse( d );
+		let f = new File( 'Progdir:Templates/main.html' );
 		
 		//console.log( 'userinfoget', s );
 		
 		// Inject available languages in template
-		var availLangs = {
+		let availLangs = {
 			'en': 'English',
 			'fr': 'French',
 			'no': 'Norwegian',
 			'fi': 'Finnish',
 			'pl': 'Polish'
 		};
-		var languages = '';
-		for( var a in availLangs )
+		let languages = '';
+		for( let a in availLangs )
 		{
-			var sel = a == Application.language ? ' selected="selected"' : '';
+			let sel = a == Application.language ? ' selected="selected"' : '';
 			languages += '<option value="' + a + '"' + sel + '>' + availLangs[ a ] + '</option>';
 		}
 		
 		// Inject possible Workspace modes
-		var modes = {
+		let modes = {
 			normal: i18n( 'i18n_mode_normal' ),
 			developer: i18n( 'i18n_mode_developer' ),
 			gamified: i18n( 'i18n_mode_gamified' )
 		};
-		var modeOut = '';
-		for( var a in modes )
+		let modeOut = '';
+		for( let a in modes )
 		{
 			var sel = a == Application.workspaceMode ? ' selected="selected"' : '';
 			modeOut += '<option value="' + a + '"' + sel + '>' + modes[a] + '</option>';
@@ -70,11 +80,12 @@ Application.run = function( msg, iface )
 		f.replacements = 
 		{
 			languages: languages,
-			modes: modeOut
+			modes: modeOut,
+			activeTab: activeTab
 		};
 
 		// If FriendNetwork is enabled, add the options		
-		var m = new Module('system');
+		let m = new Module('system');
 		m.onExecuted = function( e,d )
 		{
 			if ( e == 'ok' && parseInt( d ) == 1 )
@@ -86,12 +97,12 @@ Application.run = function( msg, iface )
 				f.replacements.friendNetwork3 = '\
 <div class="Tab IconSmall fa-laptop">' + i18n( 'i18n_device_information' ) + '</div>';
 
-				var ff = new File( 'Progdir:Templates/friendnetwork1.html' );
+				let ff = new File( 'Progdir:Templates/friendnetwork1.html' );
 				ff.onLoad = function( data )
 				{
 					f.replacements.friendNetwork2 = data;
 
-					var fff = new File( 'Progdir:Templates/friendnetwork2.html' );
+					let fff = new File( 'Progdir:Templates/friendnetwork2.html' );
 					fff.onLoad = function( data )
 					{
 						f.replacements.friendNetwork4 = data;
@@ -175,17 +186,50 @@ Application.receiveMessage = function( msg )
 		if( msg.result == 'ok' )
 		{
 			Notify({'title':i18n('i18_account2'),'text':i18n('i18n_settings_saved')});
-			Application.sendMessage( {
-				type: 'system',
-				command: 'updatelogin',
-				username: msg.data.Name,
-				password: msg.data.Password
-			} );
+			if( msg.data && msg.data.name )
+			{
+				if( msg.data.passwordClearText )
+				{
+					Application.sendMessage( {
+						type: 'system',
+						command: 'updatelogin',
+						username: msg.data.name,
+						password: msg.data.passwordClearText
+					} );
+				}
+				else
+				{
+					Application.sendMessage( {
+						type: 'system',
+						command: 'userupdate',
+						reason: 'poke'
+					} );
+				}
+			}
+			else
+			{
+				Application.sendMessage( {
+					type: 'system',
+					command: 'userupdate',
+					reason: 'poke'
+				} );
+			}
 		}
 	}
 	
 	switch( msg.command )
 	{
+		case 'closeView':
+			CloseView( msg.viewId );
+			Application.mainView.sendMessage( { command: 'refreshInvites', parentViewId: msg.parentViewId } );
+			break;
+		
+		case 'resizeGroupWindow':
+			Application.mainView.sendMessage( { command: 'resizeGroupWindow', viewId: msg.viewId } );
+			break;
+		case 'refreshgroups':
+			Application.mainView.sendMessage( { command: 'refreshgroups' } );
+			break;
 		case 'publickey': 
 			Application.sendMessage( { type: 'encryption', command: 'publickey', args: { encoded: false } }, function( res, data )
 			{

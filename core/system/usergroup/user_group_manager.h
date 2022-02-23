@@ -33,7 +33,7 @@ typedef struct UserGroupManager
 {
 	void								*ugm_SB;
 
-	UserGroup							*ugm_UserGroups;			// all user groups
+	UserGroup							*ugm_UserGroups;			// this will contain usergroups which have drives
 	pthread_mutex_t						ugm_Mutex;
 } UserGroupManager;
 
@@ -51,22 +51,40 @@ UserGroupManager *UGMNew( void *sb );
 void UGMDelete( UserGroupManager *smgr );
 
 //
-// add group to UserGroupManager
+// Mount UserGroup drives
 //
 
-int UGMAddGroup( UserGroupManager *smgr, UserGroup *ug );
+void UGMMountGroupDrives( UserGroupManager *um );
 
 //
-// remove(disable) group from UserGroupManager
+// Remove UserGroup from database
 //
 
-int UGMRemoveGroup( UserGroupManager *smgr, UserGroup *ug );
+int UGMRemoveGroupDB( UserGroupManager *ugm, FUQUAD groupid );
+
+//
+// Remove UserGroup
+//
+
+int UGMRemoveGroup( UserGroupManager *ugm, FUQUAD groupid );
 
 //
 // Get UserGroup by ID
 //
 
 UserGroup *UGMGetGroupByID( UserGroupManager *smgr, FULONG id );
+
+//
+// Get group by user id and group name
+//
+
+UserGroup *UGMGetGroupByUserIDAndName( UserGroupManager *um, FUQUAD userID, char *name );
+
+//
+// Get UserGroup by ID
+//
+
+UserGroup *UGMGetGroupByIDDB( UserGroupManager *ugm, FQUAD id );
 
 //
 // Get UserGroup by Name
@@ -79,6 +97,12 @@ UserGroup *UGMGetGroupByName( UserGroupManager *smgr, const char *name );
 //
 
 UserGroup *UGMGetGroupByNameDB( UserGroupManager *ugm, const char *name );
+
+//
+// Get UserGroup by Name and Type from database
+//
+
+UserGroup *UGMGetGroupByNameAndTypeDB( UserGroupManager *ugm, const char *name, const char *type );
 
 //
 // Remove drive from UserGroup
@@ -114,7 +138,25 @@ int UGMAddUserToGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID );
 //
 //
 
+UserGroup *UGMGetGroupByNameAndUserIDDB( UserGroupManager *ugm, const char *name, FQUAD userid );
+
+//
+//
+//
+
+int UGMAddUserToGroup( UserGroupManager *um, FULONG groupID, FULONG userID );
+
+//
+//
+//
+
 int UGMRemoveUserFromGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID );
+
+//
+//
+//
+
+int UGMRemoveUserFromGroup( UserGroupManager *um, FULONG groupID, FULONG userID );
 
 //
 //
@@ -144,7 +186,7 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type );
 //
 //
 
-FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const char *type, FULONG parentID, int status );
+FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const char *type, FULONG parentID, int status, FBOOL fParentID );
 
 //
 //
@@ -158,5 +200,13 @@ void UGMGetGroups( UserGroupManager *um, FULONG uid, BufString *bs, const char *
 
 int UGMGetUserGroupsDB( UserGroupManager *um, FULONG userID, BufString *bs );
 
+// This code is releated to groups and drives connected to them. This stuff must be in memory
+
+//
+// add group to UserGroupManager
+//
+
+//int UGMAddGroup( UserGroupManager *ugm, FQUAD userID, char *name );
+int UGMAddGroup( UserGroupManager *smgr, UserGroup *ug );
 
 #endif //__SYSTEM_USER_USER_GROUP_MANAGER_H__

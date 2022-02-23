@@ -92,6 +92,7 @@
 	border: 0;
 }*/
 
+
 /* Gui UserList ------------------------------------------------------------------ */
 
 #Admin #UserList .submenu_wrapper
@@ -470,6 +471,16 @@
 	background-color: #e3e7e8;
 }
 
+#Admin .Hidden
+{
+	display: none;
+}
+
+#Admin .Visible .Hidden
+{
+	display: block;
+}
+
 html body button.IconButton:not(:hover), html body .Button.IconButton:not(:hover)
 {
 	border: 1px solid rgba(0,0,0,0) !important;
@@ -597,5 +608,12 @@ body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent .Selected
 	/*background-color: #20374D;
 	color: #fdfdfd;*/
 	color: #20374D;
+}
+
+html body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent button.Positive:hover, 
+html body:not(.Charcoal):not(.Synthwave) #Admin #GuiContent .Button.Positive:hover
+{
+	color: inherit;
+	opacity: 0.8;
 }
 

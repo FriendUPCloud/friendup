@@ -67,7 +67,7 @@ var ScreenOverlay = {
 	{
 		if( this.debug ) return;
 		var self = this;
-
+		
 		// Reload the docks
 		Workspace.reloadDocks();
 		

@@ -163,11 +163,28 @@ function PollTray()
 					let tdi = StrPad( tim.getMinutes(), 2, '0' );
 					let timStr = tdy + '/' + tdm + '/' + tdd + ', ' + tdh + ':' + tdi;
 					
+					let interactions = '';
+					if( notties[a].type == 'interaction' && notties[a].eventId )
+					{
+						interactions = '\
+							<hr class="Divider"/>\
+							<p class="Layout">\
+								<button class="Accept FloatRight" type="button" ' +
+								'onmousedown="Workspace.handleNotificationInteraction(\'' + notties[a].eventId + '\', true, \'' + notties[a].uniqueId + '\')">\
+									' + i18n( 'i18n_accept' ) + '\
+								</button>\
+								<button class="Reject FloatLeft" type="button" ' +
+								'onmousedown="Workspace.handleNotificationInteraction(\'' + notties[a].eventId + '\', false, \'' + notties[a].uniqueId + '\')">\
+									' + i18n( 'i18n_reject' ) + '\
+								</button>\
+							</p>';
+					}
+					
 					d.innerHTML = '\
 						<div>\
 							<div class="NotificationClose FloatRight fa-remove IconSmall"></div>\
 							<p class="Layout"><strong>' + notties[a].title + '<br><span class="DateStamp">' + timStr + '</span></strong></p>\
-							<p class="Layout">' + notties[a].text + '</p>\
+							<p class="Layout">' + notties[a].text + '</p>' + interactions + '\
 						</div>';
 					d.onmousedown = function( ev )
 					{
@@ -298,7 +315,7 @@ function PollTray()
 			tray.notifications.num = null;
 		}
 		// Add numbers bubble
-		if( !tray.notifications.num && nots.length > 1 )
+		if( !tray.notifications.num && nots.length >= 1 )
 		{
 			tray.notifications.num = document.createElement( 'span' );
 			tray.notifications.num.className = 'NumberOfNotifications';
@@ -457,7 +474,15 @@ function PollMobileTray()
 // Add notification event for safe keeping
 function AddNotificationEvent( evt )
 {
-	var uniqueId = CryptoJS.SHA1( 
+	// Check duplicates
+	if( evt.eventId )
+	{
+		for( let b = 0; b < Workspace.notificationEvents.length; b++ )
+		{
+			if( Workspace.notificationEvents[b].eventId == evt.eventId ) return;
+		}
+	}
+	let uniqueId = CryptoJS.SHA1( 
 		'evt' + 
 		( new Date() ).getTime() + 
 		( Math.random() * 999 ) + 
@@ -469,7 +494,7 @@ function AddNotificationEvent( evt )
 		evt.externNotificationId = evt.notificationId;
 	if( evt.notificationId )
 	{
-		for( var b = 0; b < Workspace.notificationEvents.length; b++ )
+		for( let b = 0; b < Workspace.notificationEvents.length; b++ )
 		{
 			if( !Workspace.notificationEvents[ b ].externNotificationId )
 				continue;
@@ -841,4 +866,74 @@ function CloseNotification( notification )
 
 // Buffer for click callbacks
 var _oldNotifyClickCallbacks = [];
+
+// System messages -------------------------------------------------------------
+
+SystemMessageWidget = function( flags )
+{
+	this.flags = flags;
+};
+
+SystemMessageWidget.prototype.init = function( data )
+{
+	let self = this;
+	
+	if( !this.dom )
+	{
+		this.dom = document.createElement( 'div' );
+		this.dom.className = 'SystemMessageWidget';
+		if( window.Workspace )
+		{
+			this.screen = window.Workspace.screen;
+		}
+	
+		this.dom.style.width = '350px';
+		this.dom.style.height = '200px';
+	
+		let cnt = document.createElement( 'div' );
+		cnt.className = 'Content';
+		this.dom.appendChild( cnt );
+	
+		if( self.flags.x )
+		{
+			if( self.flags.x == 'right' )
+			{
+				this.dom.style.left = document.body.offsetWidth - 390 + 'px';
+			}
+			if( self.flags.y == 'bottom' )
+			{
+				this.dom.style.top = document.body.offsetHeight - 240 + 'px';
+			}
+		}
+	
+		cnt.innerHTML = atob( data.data );
+		this.screen.div.appendChild( this.dom );
+		
+		setTimeout( function()
+		{
+			self.dom.classList.add( 'Showing' );
+			self.dom.style.height = cnt.scrollHeight + 10 + 'px';
+			self.dom.style.top = document.body.offsetHeight - cnt.scrollHeight - 50 + 'px';
+		}, 5 );
+	}
+};
+
+SystemMessageWidget.prototype.refresh = function()
+{
+	
+};
+
+SystemMessageWidget.prototype.close = function()
+{
+	let self = this;
+	if( this.dom )
+	{
+		this.dom.classList.remove( 'Showing' );
+		setTimeout( function()
+		{
+			self.dom.parentNode.removeChild( self.dom );
+		}, 750 );
+	}
+}
+
 

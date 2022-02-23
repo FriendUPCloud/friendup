@@ -25,13 +25,14 @@ IntListEl *ILEParseString( char *str )
 	{
 		return NULL;
 	}
-	int i;
+	unsigned int i;
 	char *startToken = str;
 	char *curToken = str+1;
 	
 	IntListEl *rootEl = NULL;
 	
-	while( TRUE )
+	//while( TRUE )
+	for( i=0 ; i < (strlen( str )+1) ; i++ )
 	{
 		//printf("'%c'-'%d'   ===== ", *curToken, *curToken );
 		if( *curToken == 0 || *curToken == ',' )

@@ -289,9 +289,13 @@ int WebSocketStart( WebSocket *ws )
  * @param sslOn TRUE when WS must be secured through SSL, otherwise FALSE
  * @param proto protocols
  * @param extDebug enable extended debug
+ * @param timeout Websockets timeout
+ * @param katime timeout to all libwebsocket sockets, client or server
+ * @param kaprobes times to try to get a response from the peer before giving up and killing the connection
+ * @param kainterval if ka_time was nonzero, how long to wait before each ka_probes attempt
  * @return pointer to new WebSocket structure, otherwise NULL
  */
-WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extDebug )
+WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extDebug, int timeout, int katime, int kaprobes, int kainterval )
 {
 	WebSocket *ws = NULL;
 	SystemBase *lsb = (SystemBase *)sb;
@@ -352,6 +356,35 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 		ws->ws_Info.ssl_cert_filepath = ws->ws_CertPath;
 		ws->ws_Info.ssl_private_key_filepath = ws->ws_KeyPath;
 		ws->ws_Info.options = ws->ws_Opts;// | LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT;
+		//ws->ws_Info.timeout_secs = 120;
+		//ws->ws_Info.timeout_secs_ah_idle = 90;
+		//ws->ws_Info.ws_ping_pong_interval = timeout;
+		ws->ws_Info.timeout_secs = timeout;
+		if( katime > 0 )
+		{
+			ws->ws_Info.ka_time = katime;
+			if( kainterval <= 0 ) kainterval = 20;
+			ws->ws_Info.ka_interval = kainterval;
+			if( kaprobes <= 0 ) kaprobes = 2;
+			ws->ws_Info.ka_probes = kaprobes;
+		}
+		int ka_time;
+	//*< CONTEXT: 0 for no TCP keepalive, otherwise apply this keepalive
+	// * timeout to all libwebsocket sockets, client or server 
+	// int ka_probes;
+	// *< CONTEXT: if ka_time was nonzero, after the timeout expires how many
+	//times to try to get a response from the peer before giving up
+	//and killing the connection 
+	// int ka_interval;
+	// *< CONTEXT: if ka_time was nonzero, how long to wait before each ka_probes
+	//attempt 
+	// unsigned int timeout_secs;
+	// *< VHOST: various processes involving network roundtrips in the
+	// library are protected from hanging forever by timeouts.  If
+	//nonzero, this member lets you set the timeout used in seconds.
+	//Otherwise a default timeout is used. 
+		
+
 		ws->ws_Info.timeout_secs = 20;
 #ifdef __DEBUG
 		ws->ws_Info.timeout_secs_ah_idle = 20;
@@ -665,7 +698,7 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
  * @return 0 if connection was deleted without problems otherwise error number
  */
 
-int DetachWebsocketFromSession( void *d )
+int DetachWebsocketFromSession( void *d, void *wsi )
 {
 	WSCData *data = (WSCData *)d;
 	
@@ -681,6 +714,14 @@ int DetachWebsocketFromSession( void *d )
 		if( data->wsc_UserSession != NULL )
 		{
 			us = (UserSession *)data->wsc_UserSession;
+			
+			WSCData *ldata = (WSCData *)us->us_WSD; 
+			if( ldata != NULL && wsi != ldata->wsc_Wsi )
+			{
+				DEBUG("[DetachWebsocketFromSession] we cannot detach this session. Wrong WSI pointer\n");
+				FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
+				return 0;
+			}
 		}
 		
 		//data->wsc_UserSession = NULL;

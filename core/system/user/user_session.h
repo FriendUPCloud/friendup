@@ -36,7 +36,8 @@ enum
 	USER_SESSION_STATUS_NONE = 0,
 	USER_SESSION_STATUS_AUTHORIZING,
 	USER_SESSION_STATUS_AUTHORIZED,
-	USER_SESSION_STATUS_TO_REMOVE
+	USER_SESSION_STATUS_TO_REMOVE,
+	USER_SESSION_STATUS_DELETE_IN_PROGRESS
 };
 
 /*
@@ -114,7 +115,13 @@ void UserSessionInit( UserSession *us );
 
 int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msglen, int type );
 
+//
+//
+//
 
+#ifndef IS_SESSION_ADMIN
+#define IS_SESSION_ADMIN( us ) ( us->us_User != NULL && us->us_User->u_IsAdmin == TRUE )
+#endif
 
 static FULONG UserSessionDesc[] = { 
     SQLT_TABNAME, (FULONG)"FUserSession",       

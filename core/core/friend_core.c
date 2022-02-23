@@ -72,14 +72,6 @@
 //#define USE_WORKERS
 //#define USE_PTHREAD_ACCEPT
 
-
-typedef struct AcceptStruct
-{
-	int fd;
-	MinNode node;
-}AcceptStruct;
-
-
 extern void *FCM;			// FriendCoreManager
 
 void FriendCoreProcess( void *fcv );
@@ -215,7 +207,7 @@ struct fcThreadInstance
 	Socket					*sock;
 	// HT - Added for new implementation
 	//List                     *fds;
-	AcceptStruct			*afd;
+	AcceptSocketStruct			*afd;
 	// Incoming from accept
 	struct AcceptPair		*acceptPair;
 };
@@ -719,7 +711,6 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 				*/
 
 				srl = SSL_set_fd( s_Ssl, fd );
-				SSL_set_accept_state( s_Ssl );
 				if( srl != 1 )
 				{
 					int error = SSL_get_error( s_Ssl, srl );
@@ -730,9 +721,10 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 
 				int err = 0;
 				// we must be sure that SSL Accept is working
-				while( 1 )
+				while( TRUE )
 				{
 					DEBUG("[FriendCoreAcceptPhase2] before accept\n");
+					SSL_set_accept_state( s_Ssl );
 					if( ( err = SSL_accept( s_Ssl ) ) == 1 )
 					{
 						lbreak = 1;
@@ -1228,12 +1220,12 @@ void *FriendCoreAcceptPhase2( void *d )
 	
 	DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
 	
-	AcceptStruct *act = pre->afd;
-	AcceptStruct *rem = pre->afd;
+	AcceptSocketStruct *act = pre->afd;
+	AcceptSocketStruct *rem = pre->afd;
 	while( act != NULL )
 	{
 		rem = act;
-		act = (AcceptStruct *)act->node.mln_Succ;
+		act = (AcceptSocketStruct *)act->node.mln_Succ;
 		
 		FriendCoreAcceptPhase3( rem->fd, fc );
 		
@@ -1940,7 +1932,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					continue;
 				}
 
-				SSL_CTX_get_read_ahead( fc->fci_Sockets->s_Ctx );
+				//SSL_CTX_get_read_ahead( fc->fci_Sockets->s_Ctx );
 				SSL_CTX_set_session_cache_mode( fc->fci_Sockets->s_Ctx, SSL_SESS_CACHE_CLIENT | SSL_SESS_CACHE_NO_INTERNAL_STORE);
 
 				if( SocketListen( fc->fci_Sockets ) != 0 )
@@ -2075,7 +2067,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					{
 						DEBUG( "[FriendCoreEpoll] Adding the damned thing %d.\n", fd );
 						
-						AcceptStruct *as = FCalloc( 1, sizeof( AcceptStruct ) );
+						AcceptSocketStruct *as = FCalloc( 1, sizeof( AcceptSocketStruct ) );
 						if( as != NULL )
 						{
 							as->fd = fd;
@@ -2099,12 +2091,12 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 						//if( pre->fds )
 						if( pre->afd )
 						{
-							AcceptStruct *act = pre->afd;
-							AcceptStruct *rem = pre->afd;
+							AcceptSocketStruct *act = pre->afd;
+							AcceptSocketStruct *rem = pre->afd;
 							while( act != NULL )
 							{
 								rem = act;
-								act = (AcceptStruct *)act->node.mln_Succ;
+								act = (AcceptSocketStruct *)act->node.mln_Succ;
 								
 								shutdown( rem->fd, SHUT_RDWR );
 								close( rem->fd );

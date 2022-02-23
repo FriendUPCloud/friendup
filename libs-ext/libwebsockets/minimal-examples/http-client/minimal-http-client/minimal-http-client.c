@@ -204,6 +204,9 @@ system_notify_cb(lws_state_manager_t *mgr, lws_state_notify_link_t *link,
 	if (lws_cmdline_option(a->argc, a->argv, "--h1"))
 		i.alpn = "http/1.1";
 
+	if (lws_cmdline_option(a->argc, a->argv, "--h2-prior-knowledge"))
+		i.ssl_connection |= LCCSCF_H2_PRIOR_KNOWLEDGE;
+
 	if ((p = lws_cmdline_option(a->argc, a->argv, "-p")))
 		i.port = atoi(p);
 
@@ -279,6 +282,7 @@ int main(int argc, const char **argv)
 	info.protocols = protocols;
 	info.user = &args;
 	info.register_notifier_list = na;
+       info.connect_timeout_secs = 30;
 
 	/*
 	 * since we know this lws context is only ever going to be used with
@@ -289,7 +293,7 @@ int main(int argc, const char **argv)
 	 */
 	info.fd_limit_per_thread = 1 + 1 + 1;
 
-#if defined(LWS_WITH_MBEDTLS)
+#if defined(LWS_WITH_MBEDTLS) || defined(USE_WOLFSSL)
 	/*
 	 * OpenSSL uses the system trust store.  mbedTLS has to be told which
 	 * CA to trust explicitly.

@@ -1132,24 +1132,6 @@ function receiveEvent( event, queued )
 									f.load();
 								}
 								break;
-							case 'fui':
-								if( flags.frameworks.fui.javascript && flags.frameworks.fui.data )
-								{
-									let f = new File( 'System:sandboxed.html' );
-									f.onLoad = function( data )
-									{
-										let javascript = flags.frameworks.fui.javascript;
-										view.setContent( 
-`<script src="/webclient/js/fui/fui.js"></script>
-<script src="${javascript}"></script>
-<script type="text/javascript">
-	fui.loadJSON( "${flags.frameworks.fui.data}" );
-</script>` 
-										);
-									}
-									f.load();
-								}
-								break;
 						}
 					}
 				}
@@ -1232,6 +1214,11 @@ function receiveEvent( event, queued )
 								if( res === false )
 								{
 									w.onClose = onc;
+									Application.sendMessage( {
+										type: 'view',
+										method: 'cancelclose',
+										viewId: dataPacket.viewId
+									} );
 									return;
 								}
 							}
@@ -1539,7 +1526,7 @@ function receiveEvent( event, queued )
 					}
 					else
 					{
-						console.log( 'No callback?' );
+						//console.log( 'No callback?' );
 					}
 				}
 				// TODO: This should be removed, it's a double right? Like the first if. . . Goes further down to a window
@@ -1604,7 +1591,7 @@ function receiveEvent( event, queued )
 				{
 					if( f.onSave )
 					{
-						f.onSave();
+						f.onSave( dataPacket.responseCode, dataPacket.responseData );
 					}
 					else
 					{
@@ -2711,7 +2698,6 @@ function CloseView( id )
 	{
 		if( id.close )
 		{
-			console.log( ' -> Closing object.' );
 			return id.close();
 		}
 		return false;
@@ -3128,7 +3114,6 @@ WebAudioLoader = function( filePath, callback )
 					schBuf.connect( this.context.destination );
 					schBuf.connect( this.gainNode );
 					schBuf.start( this.bufferArrayTimeOffset );
-					console.log( 'Starting next at ' + ( this.bufferArrayTimeOffset ) );
 					this.bufferArrayTimeOffset += schBuf.buffer.duration;
 				}
 			}
@@ -5797,8 +5782,8 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 	}
 
 	// Disable debugging now
-	if( packet.workspaceMode == 'normal' || packet.workspaceMode == 'gamified' )
-		console.log = function(){};
+	//if( packet.workspaceMode == 'normal' || packet.workspaceMode == 'gamified' )
+	//	console.log = function(){};
 	Application.workspaceMode = packet.workspaceMode ? packet.workspaceMode : 'developer';
 
 	if( packet.userLevel )
@@ -6097,7 +6082,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					document.body.appendChild( d );
 					wait = true;
 					removes.push( scripts[a] );
-
+				}
+				else
+				{
+				    let d = document.createElement( 'script' );
+				    d.innerHTML = EntityDecode( scripts[a].innerHTML );
+				    document.body.appendChild( d );
 				}
 			}
 			// Clear friendscripts
@@ -6159,6 +6149,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		window.addEventListener( 'touchend', sendEventToParent );
 
 		window.loaded = true;
+		
+		// Initialize Friend User Interface
+		FUI.initialize();
 		
 		// What to do when we are done loading.. -------------------------------
 		
@@ -6357,6 +6350,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					if( Application.run )
 					{
 						Application.run( packet );
+						FUI.initialize();
 					}
 					window.loaded = true;
 					// Use the application doneLoading function (different)
@@ -6408,9 +6402,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		'js/io/cajax.js',
 		'js/io/appConnection.js',
 		'js/io/coreSocket.js',
-		'js/gui/treeview.js'
+		'js/gui/treeview.js',
+		'js/fui/fui_v1.js',
+		'js/fui/classes/baseclasses.fui.js',
+		'js/fui/classes/group.fui.js',
+		'js/fui/classes/listview.fui.js'
 	];
-	
 	let elez = [];
 	for ( let a = 0; a < js.length; a++ )
 	{
@@ -6458,7 +6455,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					'js/io/cajax.js',
 					'js/io/appConnection.js',
 					'js/io/coreSocket.js',
-					'js/gui/treeview.js'
+					'js/gui/treeview.js',
+					'js/fui/fui_v1.js',
+					'js/fui/classes/baseclasses.fui.js',
+					'js/fui/classes/group.fui.js',
+					'js/fui/classes/listview.fui.js'
 				]
 			];
 
@@ -6517,7 +6518,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		let style = document.createElement( 'style' );
 		style.innerHTML = packet.cachedAppData.css;
 		head.appendChild( style );
-		
 		let js = document.createElement( 'script' );
 		js.innerHTML = packet.cachedAppData.js;
 		head.appendChild( js );
@@ -6838,6 +6838,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 
 	function _kmousedown( e )
 	{
+		if( !window.Application || !Application.sendMessage ) return;
 		Application.sendMessage( { type: 'system', command: 'registermousedown', x: e.clientX, y: e.clientY } );
 		
 		// Check if an input element has focus
@@ -6845,6 +6846,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 	}
 	function _kmouseup( e )
 	{
+		if( !window.Application || !Application.sendMessage ) return;
 		if( Friend.mouseMoveFunc )
 			Friend.mouseMoveFunc = null;
 		Application.sendMessage( { type: 'system', command: 'registermouseup', x: e.clientX, y: e.clientY } );
@@ -8679,7 +8681,6 @@ GuiDesklet = function()
 			j.open( 'get', updateurl, true, true );
 			j.onload = function ()
 			{
-				console.log( 'The response was: ' + this.returnCode, this.returnData );
 				let content;
 				// New mode
 				if ( this.returnCode == 'ok' )

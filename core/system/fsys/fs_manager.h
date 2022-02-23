@@ -53,7 +53,6 @@ FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User 
 
 BufString *FSManagerGetAccess( FSManager *fm, const char *path, FULONG devid, User *usr );
 
-
 //
 // second function which protect files/folders/drivers
 //
@@ -71,5 +70,11 @@ int FSManagerProtect( FSManager *fm, const char *path, FULONG devid, char *accgr
 //
 
 BufString *FSManagerAddPermissionsToDir( FSManager *fm, BufString *recv, FULONG devid, User *usr  );
+
+//
+//
+//
+
+int FSManagerDeleteSharedEntry( FSManager *fm, char *path, FQUAD uid );
 
 #endif // __SYSTEM_FSYS_FSMANAGER_H__

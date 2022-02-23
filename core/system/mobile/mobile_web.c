@@ -229,9 +229,9 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 						*/
 					{
 						DEBUG("Delete old entries\n");
-						snprintf( query, sizeof(query), "DELETE from `FUserMobileApp` where AppToken='%s' AND UserID=%lu", apptoken, uid );
+						snprintf( query, sizeof(query), "DELETE from `FUserMobileApp` where `AppToken`=\"%s\" AND UserID=%lu", apptoken, uid );
 						sqllib->QueryWithoutResults( sqllib, query );
-						snprintf( query, sizeof(query), "DELETE from `FUserMobileApp` where DeviceID='%s' AND UserID=%lu", deviceID, uid );
+						snprintf( query, sizeof(query), "DELETE from `FUserMobileApp` where `DeviceID`=\"%s\" AND UserID=%lu", deviceID, uid );
 						sqllib->QueryWithoutResults( sqllib, query );
 					}
 					
@@ -323,6 +323,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 	* @param sessionid - (required) session id of logged user
 	* @param id - (required if deviceid was not passed) id of UserMobileApp which you want to delete
 	* @param deviceid - (required if id was not passed) deviceid of UserMobileApp which you want to delete
+	* @param token - (required) if id or deviceid were not passed FC will try to match token with user and delete it
 	* @return { Result: success} when success, otherwise error with code
 	*/
 	/// @endcond
@@ -338,6 +339,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 
 		FULONG id = 0;
 		char *deviceID = NULL;
+		char *token = NULL;
 		
 		DEBUG( "[MobileWebRequest] Delete UserMobileApp!!\n" );
 		
@@ -352,6 +354,12 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		if( el != NULL )
 		{
 			deviceID = UrlDecodeToMem( (char *)el->hme_Data );
+		}
+		
+		el = HttpGetPOSTParameter( request, "token" );
+		if( el != NULL )
+		{
+			token = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
 		if( id > 0 || deviceID != NULL )
@@ -424,8 +432,50 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
-		}	// no DB connection
+		}	// id <= 0 or deviceid == NULL
+		else
+		{
+			char *tmpQuery = NULL;
+			int querysize = 1024;
+			
+			//int decodedTokenLen = 0;
+			//char *decodedToken = Base64Decode( (const unsigned char *)token, strlen(token), &decodedTokenLen );
+			
+			//DEBUG("--------------- token %s decodedtoken %s decoded len %d\n", token, decodedToken, decodedTokenLen );
 		
+			if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
+			{
+				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+				if( sqllib != NULL )
+				{
+					//sprintf( tmpQuery, "DELETE FROM `FUserMobileApp` WHERE AppToken='%s' AND UserID=%ld", decodedToken, loggedSession->us_UserID );
+					//sprintf( tmpQuery, "DELETE FROM `FUserMobileApp` WHERE AppToken=FROM_BASE64('%s') AND UserID=%ld", token, loggedSession->us_UserID );
+					sprintf( tmpQuery, "DELETE FROM `FUserMobileApp` WHERE AppToken='%s' AND UserID=%ld", token, loggedSession->us_UserID );
+			
+					sqllib->QueryWithoutResults( sqllib, tmpQuery );
+					FFree( tmpQuery );
+					l->LibrarySQLDrop( l, sqllib );
+				}
+			
+				HttpAddTextContent( response, "ok<!--separate-->{ \"result\":\"success\"}" );
+			}
+			else
+			{
+				char buffer[ 256 ];
+				snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+				HttpAddTextContent( response, buffer );
+			}
+			
+			//if( decodedToken != NULL )
+			//{
+			//	FFree( decodedToken );
+			//}
+		}
+		
+		if( token != NULL )
+		{
+			FFree( token );
+		}
 		if( deviceID != NULL )
 		{
 			FFree( deviceID );

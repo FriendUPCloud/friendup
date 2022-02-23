@@ -361,7 +361,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			if( sqllib != NULL )
 			{
 				char q[ 1024 ];
-				sqllib->SNPrintF( sqllib, q, sizeof(q), "DELETE FROM `FUserApplication` WHERE AuthID='%s'", qauthid );
+				sqllib->SNPrintF( sqllib, q, sizeof(q), "DELETE FROM `FUserApplication` WHERE `AuthID`=\"%s\"", qauthid );
 
 				sqllib->QueryWithoutResults( sqllib, q );
 			

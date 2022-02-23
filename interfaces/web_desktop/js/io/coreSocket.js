@@ -53,12 +53,13 @@ FriendWebSocket = function( conf )
 	self.chunkDataLength = self.maxFCBytes - self.metaReserve;
 		// need some room for meta data aswell.
 
+	self.connectingRetries = 0;
+	
 	self.chunks = {};
 	self.allowReconnect = true;
 	self.pingInterval = 1000 * 10;
-	self.maxPingWait = 1000 * 10;
-	//self.pingInterval = 1000 * 40;
-	//self.maxPingWait = 1000 * 30;
+	self.pongCount = 0;
+	self.maxPingWait = Math.floor( 1000 * 1.5 ); // Wait 1.5 secs
 	self.pingCheck = 0;
 	self.reconnectDelay = 200; // ms
 	self.reconnectMaxDelay = 1000 * 30; // 30 sec max delay between reconnect attempts
@@ -87,13 +88,25 @@ FriendWebSocket.prototype.reconnect = function()
 {
 	let self = this;
 	
+	if( window.Workspace && !window.Workspace.sessionId )
+	{
+		console.log( 'Not reconnecting websocket due to no sessionId.' );
+		return;
+	}
+	
+	self.ready = false;
+	self.pongCount = 0;
 	self.allowReconnect = true;
 	
 	// We're pre reconnect - wait..
 	if( window.Friend && Friend.User && Friend.User.State != 'online' )
 	{
-		//console.log( 'Cannot reconnect - Friend User is not online.' );
-		return;
+		console.log( 'Cannot reconnect - Friend User is not online. Closing instead.' );
+		self.close();
+		if( Friend.User.State == 'offline' )
+		{
+		    return;
+		}
 	}
 	
 	self.doReconnect();
@@ -104,6 +117,7 @@ FriendWebSocket.prototype.reconnect = function()
 FriendWebSocket.prototype.close = function( code, reason )
 {
 	let self = this;
+	self.ready = false;
 	self.allowReconnect = false;
 	self.url = null;
 	self.sessionId = null;
@@ -115,7 +129,6 @@ FriendWebSocket.prototype.close = function( code, reason )
 	self.onstate = null;
 	self.onend = null;
 	self.wsClose( code, reason );
-	self.cleanup();
 }
 
 // PRIVATES
@@ -153,13 +166,18 @@ FriendWebSocket.prototype.init = function()
 
 FriendWebSocket.prototype.connect = function()
 {
+	let self = this;
+	
+	// Reset
+	self.ready = false;
+	self.pongCount = 0;
+	
 	if( window.Friend && Friend.User && Friend.User.State == 'offline' )
 	{
-		// console.log( 'Friend says the user is offline. Bye.' );
+		console.log( 'Friend says the user is offline. Bye.' );
 		return;
 	}
 	
-	let self = this;
 	if ( !self.url || !self.url.length )
 	{
 		if( self.pConf )
@@ -171,52 +189,36 @@ FriendWebSocket.prototype.connect = function()
 		throw new Error( 'no url provided for socket' );
 	}
 	
-	if( self.state == 'open' ) 
+	if( self.state && self.state.type )
 	{
-		// console.log( 'We are already open.' );
-		return;
+		if( self.state.type == 'open' ) 
+		{
+			// console.log( 'We are already open.' );
+			return;
+		}
+		
+		if( self.state.type == 'connecting' ) 
+		{
+			// console.log('ongoing connect. we will wait for this to finish.');
+			return;
+		}
 	}
-	
-	if( self.state == 'connecting' ) 
-	{
-		// console.log('ongoing connect. we will wait for this to finish.');
-		return;
-	}
-	
+		
 	self.setState( 'connecting' );
-	
 	
 	if( self.ws )
 	{
-		self.cleanup();
+		console.log( 'Reconnecting..' );
+		let ws = self.ws;
+		self.ws = null;
+		if( ws && ws.cleanup )
+			ws.cleanup();
+		return;
 	}
-	new Promise( function( resolve, reject )
-	{
-		try
-		{
-			self.ws = new window.WebSocket( self.url, 'FC-protocol' );
-			self.ws.onerror = function()
-			{
-				reject( 'error' );
-			}
-		}
-		catch( e2 )
-		{
-			console.log( '[coreSocket] Failed to connect.', h2 );
-			self.handleError( e2 );
-			return;
-		}
-	} ).catch( function( err )
-	{
-		if( err == 'error' )
-		{
-			self.cleanup();
-		}
-		else
-		{
-			self.logEx( e, 'connect' );
-		}
-	} );
+		
+	console.log( 'Connecting a new native websocket!' );
+	
+	self.ws = new window.WebSocket( self.url, 'FC-protocol' );
 	
 	self.attachHandlers();
 }
@@ -235,10 +237,21 @@ FriendWebSocket.prototype.attachHandlers = function()
 	self.ws.onerror = onError;
 	self.ws.onmessage = onMessage;
 	
-	function onOpen( e ) { self.handleOpen( e ); }
-	function onClose( e ) { self.handleClose( e ); }
-	function onError( e ) { self.handleError( e ); }
-	function onMessage( e ) { self.handleSocketMessage( e ); }
+	function onOpen( e ){ if( self.ws == this ) self.handleOpen( e ); }
+	function onClose( e )
+	{ 
+		if( self.ws == this )
+		{
+			self.handleClose( e );
+			console.log( 'Handling closing of websocket.' );
+		}
+		else
+		{
+			console.log( 'Could not handle close. Panic.' );
+		}
+	}
+	function onError( e ){ if( self.ws == this ) self.handleError( e ); }
+	function onMessage( e ){ if( self.ws == this ) self.handleSocketMessage( e ); }
 }
 
 FriendWebSocket.prototype.clearHandlers = function()
@@ -261,14 +274,18 @@ FriendWebSocket.prototype.clearHandlers = function()
 FriendWebSocket.prototype.doReconnect = function()
 {
 	let self = this;
-	if ( !reconnectAllowed() ) {
+	
+	if( !reconnectAllowed() ) 
+	{
 		if ( self.onend )
 			self.onend();
 		return false;
 	}
 	
 	if ( self.reconnectTimer )
+	{
 		return true;
+	}
 	
 	let delay = calcDelay();
 	
@@ -287,6 +304,7 @@ FriendWebSocket.prototype.doReconnect = function()
 		self.reconnectTimer = null;
 		self.reconnectAttempt += 1;
 		self.connect();
+		console.log( 'Doing actual reconnect.' );
 	}
 	
 	function reconnectAllowed()
@@ -347,6 +365,8 @@ FriendWebSocket.prototype.doReconnect = function()
 		let multiplier = min + point;
 		return multiplier;
 	}
+	
+	return true;
 }
 
 FriendWebSocket.prototype.setState = function( type, data )
@@ -355,31 +375,33 @@ FriendWebSocket.prototype.setState = function( type, data )
 		type: type,
 		data: data,
 	};
-	//console.log( 'State: ', this.state );
 	if( this.onstate ) this.onstate( this.state );
 }
 
 FriendWebSocket.prototype.handleOpen = function( e )
 {
 	this.reconnectAttempt = 0;
+	
+	// We are open
+	this.setState( 'open' );
 	this.setSession();
-	this.setReady();
-	
-	
+	this.startKeepAlive();
 }
 
 FriendWebSocket.prototype.handleClose = function( e )
 {
+	console.log( 'Handling close.', e );
+	console.trace();
 	this.cleanup();
 	this.setState( 'close' );
-	this.doReconnect();
 }
 
+// Handles error with reconnect
 FriendWebSocket.prototype.handleError = function( e )
 {
+	console.log( 'Handling error.' );
 	this.cleanup();
 	this.setState( 'error' );
-	this.doReconnect();
 }
 
 FriendWebSocket.prototype.handleSocketMessage = function( e )
@@ -406,11 +428,12 @@ FriendWebSocket.prototype.handleSocketMessage = function( e )
 		if( msg.data.data == 'session killed' )
 		{
 			Notify( { title: i18n( 'i18n_session_killed' ), text: i18n( 'i18n_session_killed_desc' ) } );
-			 console.log( 'Test3: Session was killed!' );
-			this.handleClose();
+			//console.log( 'Test3: Session was killed!' );
+			self.wsClose();
 			
 			setTimeout( function()
 			{
+				console.log( 'SESSION KILLED' );
 				Workspace.logout();
 			}, 500 );
 			return;
@@ -418,7 +441,7 @@ FriendWebSocket.prototype.handleSocketMessage = function( e )
 		else if( msg.data.data == 'session timeout' )
 		{
 			Notify( { title: i18n( 'i18n_session_expired' ), text: i18n( 'i18n_session_expired_desc' ) } );
-			this.handleClose();
+			self.wsClose();
 			Friend.User.ReLogin();
 			return;
 		}
@@ -507,8 +530,8 @@ FriendWebSocket.prototype.unsetSession = function()
 {
 	this.sessionId = false;
 	let msg = {
-		type : 'session',
-		data : this.sessionId,
+		type: 'session',
+		data: this.sessionId
 	};
 	this.sendOnSocket( msg );
 }
@@ -523,14 +546,13 @@ FriendWebSocket.prototype.setSession = function()
 			authId: this.authId || undefined,
 		},
 	};
+	this.keepAliveState = 'setsession';
 	this.sendOnSocket( sess );
 }
 
 FriendWebSocket.prototype.setReady = function()
 {
 	this.ready = true;
-	this.setState( 'open' );
-	this.startKeepAlive();
 	this.executeSendQueue();
 }
 
@@ -545,14 +567,30 @@ FriendWebSocket.prototype.sendCon = function( msg )
 FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 {
 	let self = this;
-	if( !socketReady( force ) )
+
+	if( self.state.type == 'connecting' || self.state.type == 'close' || self.state.type == 'error' || self.state.type == 'reconnect' )
 	{
+		if( self.connectingRetries++ > 2 )
+		{
+			if( window.Workspace )
+			{
+				Workspace.initWebSocket();
+				console.log( 'Forcefully reconnecting websocket.' );
+				return;
+			}
+		}
+	
 		queue( msg );
+		console.log( 'Going nowhere because of state is: ' + self.state.type );
 		return false;
 	}
 	
+	// Just reset this one
+	self.connectingRetries = 0;
+	
 	if ( !wsReady() )
 	{
+		//console.log( 'Socket isn\'t ready.' );
 		queue( msg );
 		self.doReconnect();
 		return false;
@@ -573,6 +611,7 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 	const success = self.wsSend( msgStr );
 	if( !success )
 	{
+		//console.log( 'Could not send!' );
 		queue( msg );
 		self.reconnect();
 		return false;
@@ -586,12 +625,6 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 			self.sendQueue = [];
 		
 		self.sendQueue.push( msg );
-	}
-	
-	function socketReady( force )
-	{
-		let ready = !!( self.ready && !force );
-		return ready;
 	}
 	
 	function wsReady()
@@ -731,14 +764,25 @@ FriendWebSocket.prototype.chunkSend = function( str )
 
 FriendWebSocket.prototype.wsSend = function( str )
 {
+	let self = this;
+	
+    if( window.Friend && Friend.User && Friend.User.State != 'online' )
+    {
+    	if ( !self.sendQueue )
+			self.sendQueue = [];
+		self.sendQueue.push( msg );
+		self.wsClose();
+		return;
+    }
+    
     if( !this.onstate ) 
     {
         return false;
     }
-	let self = this;
+	let res = false;
 	try
 	{
-		let res = self.ws.send( str );
+		res = self.ws.send( str );
 	}
 	catch( e )
 	{
@@ -774,11 +818,16 @@ FriendWebSocket.prototype.startKeepAlive = function()
 	{
 		self.sendPing();
 	}
+	// Do it now!
+	ping();
 }
+
 FriendWebSocket.prototype.sendPing = function( msg )
 {
 	let self = this;
-	if ( !self.keepAlive )
+	if( !self.keepAlive )
+		return;
+	if( self.pingCheck )
 		return;
 	
 	let timestamp = Date.now();
@@ -788,17 +837,18 @@ FriendWebSocket.prototype.sendPing = function( msg )
 	};
 
 	// Should always clear previous checkping so it doesn't suddenly fire as an orphan
-	if( self.pingCheck )
-		clearTimeout( self.pingCheck );
 	self.pingCheck = setTimeout( checkPing, self.maxPingWait );
 
-	function checkPing()
+	function checkPing( msg )
 	{
-		self.wsClose( 1000, 'ping never got its pong' );
-		self.reconnect();
+		self.wsClose( 1000, 'Ping never got its pong' + ( msg ? ( '. ' + msg ) : '' ) );
+		self.pingCheck = null;
 	}
 	
 	self.sendCon( ping );
+	
+	// We are sending ping
+	self.keepAliveState = 'ping';
 }
 
 FriendWebSocket.prototype.handlePing = function( data )
@@ -816,22 +866,43 @@ FriendWebSocket.prototype.handlePing = function( data )
 FriendWebSocket.prototype.handlePong = function( timeSent )
 {
 	let self = this;
+	
 	let now = Date.now();
 	let pingTime = now - timeSent;
 
 	if( self.pingCheck )
 	{ 
 		clearTimeout( self.pingCheck ); 
-		self.pingCheck = 0;
+		self.pingCheck = null;
+	}
+
+	// Register pong time
+	if( window.Workspace )
+		Workspace.lastWSPong = ( new Date() ).getTime();
+
+	self.setState( 'ping', pingTime );
+	
+	if( !this.ws )
+	{
+		consol.log( 'Pong, but no websocket active, terminate!' );
+		return this.wsClose();
 	}
 	
-	self.setState( 'ping', pingTime );
+	// We are receiving pong
+	if( self.keepAliveState != 'setsession' )
+	
+	self.keepAliveState = 'pong';
+	
+	// We're ready with pong!
+	//if( this.pongCount++ >= 2 )
+		self.setReady();
 	
 	if( Friend.User )
 	{
 		// Reinit user! (sets => server is there)
 		Friend.User.Init();
 	}
+	
 }
 
 FriendWebSocket.prototype.handleChunk = function( chunk )
@@ -881,11 +952,25 @@ FriendWebSocket.prototype.handleChunk = function( chunk )
 FriendWebSocket.prototype.stopKeepAlive = function()
 {
 	let self = this;
-	if ( !self.keepAlive )
-		return;
 	
-	window.clearInterval( self.keepAlive );
-	self.keepAlive = null;
+	// Clear timeouts
+	if( self.pingCheck )
+	{
+		clearTimeout( self.pingCheck );
+		self.pingCheck = null;
+	}
+	if( self.reconnectTimer )
+	{
+		clearTimeout( self.reconnectTimer );
+		self.reconnectTimer = null;
+	}
+	
+	// Clear intervals
+	if ( self.keepAlive )
+	{
+		window.clearInterval( self.keepAlive );
+		self.keepAlive = null;
+	}
 }
 
 FriendWebSocket.prototype.wsClose = function( code, reason )
@@ -897,14 +982,40 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 	code = code || 1000;
 	reason = reason || 'WS connection closed';
 	
-	try {
-		console.log( 'closing websocket', code, reason );
-		if( window.Friend && Friend.User )
-			Friend.User.CheckServerNow();
-		self.ws.close( code, reason );
-	} catch (e)
+	//console.log( 'Detatching native websocket from object.' );
+	
+	let wsHere = self.ws;
+	delete self.ws;
+	self.ws = null;
+	self.ready = false;
+	
+	try
+	{
+		console.log( 'Closing websocket', code, reason );
+		
+		if( wsHere.close )
+		{
+			wsHere.close( code, reason );
+		}
+		else console.log( 'Couldn\'t close websocket because close method was null and void.' );
+		
+	}
+	catch( e )
 	{
 		self.logEx( e, 'close' );
+		console.log( 'Could not check online state.' );
+	}
+	
+	// We were disconnected, remove delayed handler
+	if( window.Friend && Friend.User && Friend.User.State != 'online' )
+	{
+		console.log( 'We are disconnected. Strange things can happen.' );
+	}
+	
+	// Check server and online state!
+	if( window.Friend && Friend.User )
+	{
+		Friend.User.CheckServerNow();
 	}
 }
 
@@ -912,12 +1023,11 @@ FriendWebSocket.prototype.cleanup = function()
 {
 	let self = this;
 	this.conn = false;
+	self.keepAliveState = null;
 	self.stopKeepAlive();
 	self.clearHandlers();
 	self.wsClose();
-	if( window.Workspace )
-		Workspace.websocketState = 'offline';
-	delete self.ws;
+	self.reconnect();
 }
 
 FriendWebSocket.prototype.logEx = function( e, fnName )

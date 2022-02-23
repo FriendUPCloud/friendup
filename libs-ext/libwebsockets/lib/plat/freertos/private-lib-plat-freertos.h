@@ -24,7 +24,9 @@
  * Included from lib/private-lib-core.h if LWS_PLAT_FREERTOS
  */
 
+#if !defined(LWS_ESP_PLATFORM)
 #define SOMAXCONN 3
+#endif
 
 #if defined(LWS_AMAZON_RTOS)
  int
@@ -43,7 +45,6 @@
  #ifndef __cplusplus
   #include <errno.h>
  #endif
- #include <netdb.h>
  #include <signal.h>
 #if defined(LWS_AMAZON_RTOS)
 const char *
@@ -59,6 +60,7 @@ gai_strerror(int);
 #endif
  #include "timers.h"
  #include <esp_attr.h>
+ #include <semphr.h>
 #else
  #include "freertos/timers.h"
  #include <esp_attr.h>
@@ -68,7 +70,14 @@ gai_strerror(int);
 
 #if defined(LWS_WITH_ESP32)
 #include "lwip/apps/sntp.h"
+#include <errno.h>
 #endif
+
+typedef SemaphoreHandle_t lws_mutex_t;
+#define lws_mutex_init(x)	x = xSemaphoreCreateMutex()
+#define lws_mutex_destroy(x)	vSemaphoreDelete(x)
+#define lws_mutex_lock(x)	xSemaphoreTake(x, portMAX_DELAY)
+#define lws_mutex_unlock(x)	xSemaphoreGive(x)
 
 #include <lwip/sockets.h>
 
@@ -109,4 +118,15 @@ int
 insert_wsi(const struct lws_context *context, struct lws *wsi);
 
 #define delete_from_fd(A,B) A->lws_lookup[B - lws_plat_socket_offset()] = 0
+
+#define LWS_PLAT_TIMER_TYPE		TimerHandle_t
+#define LWS_PLAT_TIMER_CB(name, var)	void name(TimerHandle_t var)
+#define LWS_PLAT_TIMER_CB_GET_OPAQUE(x) pvTimerGetTimerID(x)
+#define LWS_PLAT_TIMER_CREATE(name, interval, repeat, opaque, cb) \
+	xTimerCreate(name, pdMS_TO_TICKS(interval) ? pdMS_TO_TICKS(interval) : 1, \
+			repeat ? pdTRUE : 0, opaque, cb)
+#define LWS_PLAT_TIMER_DELETE(ptr)	xTimerDelete(ptr, 0)
+#define LWS_PLAT_TIMER_START(ptr)	xTimerStart(ptr, 0)
+#define LWS_PLAT_TIMER_STOP(ptr)	xTimerStop(ptr, 0)
+
 

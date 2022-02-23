@@ -26,7 +26,7 @@ CallThings.prototype.init = function() {
 	const self = this;
 	self.main  = new View( {
 		title: i18n( 'i18n_callthings' ),
-		width: 700,
+		width: 500,
 		height: 600
 	});
 	
@@ -37,16 +37,7 @@ CallThings.prototype.init = function() {
 	}
 	
 	var tmpl = new File( 'Progdir:Templates/mainview.html' );
-	tmpl.replacements = {
-		/*
-		Application: i18n( 'i18n_application' ),
-		Permissions: i18n( 'i18n_permissions' ),
-		Cancel:      i18n('i18n_cancel')
-		*/
-	};
-	//tmpl.i18n();
 	tmpl.load();
-	
 	tmpl.onLoad = function( data )
 	{
 		self.main.setContent( data );

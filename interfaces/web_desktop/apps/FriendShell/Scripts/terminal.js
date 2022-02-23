@@ -99,7 +99,7 @@ Application.handlePipe = function( packet )
 	// Another response
 	else if( packet.returnMessage || ( !packet.returnMessage && packet.data ) )
 	{
-		var sw = packet.returnMessage || packet.data;
+		let sw = packet.returnMessage || packet.data;
 		switch( sw )
 		{
 			case 'quit':
@@ -138,7 +138,7 @@ Application.handlePipe = function( packet )
 								// Help on command
 								if( packet.returnMessage.name )
 								{
-									var help = i18n( 'i18n_' + packet.returnMessage.name );
+									let help = i18n( 'i18n_' + packet.returnMessage.name );
 									Application.addOutput( help );
 									Application.addNL();
 								}
@@ -169,10 +169,11 @@ Application.handlePipe = function( packet )
 								}
 								break;
 							case 'friendnetworksetpassword':
-								var ok = false;
+							{
+								let ok = false;
 								if ( !Application.friendNetworkClient && Application.friendNetworkHosts )
 								{
-									for ( var key in Application.friendNetworkHosts )
+									for( let key in Application.friendNetworkHosts )
 									{
 										if ( Application.friendNetworkHosts[ key ].name == packet.returnMessage.name )
 										{
@@ -188,6 +189,7 @@ Application.handlePipe = function( packet )
 									this.addNL();
 								}
 								break;
+							}
 							case 'friendnetworkdisconnect':
 								if ( this.friendNetworkClient )
 								{
@@ -200,19 +202,20 @@ Application.handlePipe = function( packet )
 								this.addNL();
 								break;
 							case 'friendnetworkdispose':
-								var found = false;
+							{
+								let found = false;
 								if ( !Application.friendNetworkClient && Application.friendNetworkHosts )
 								{
-									var hostName = packet.returnMessage.name;
-									var userName, p;
+									let hostName = packet.returnMessage.name;
+									let userName, p;
 									if ( (p = hostName.indexOf('@')) >= 0)
 									{
 										userName = hostName.substring(p + 1);
 										hostName = hostName.substring(0, p);
 									}
-									for ( var key in Application.friendNetworkHosts )
+									for( let key in Application.friendNetworkHosts )
 									{
-										var name = Application.friendNetworkHosts[ key ].name;
+										let name = Application.friendNetworkHosts[ key ].name;
 										if ( !userName )
 										{
 											p = name.indexOf('@');
@@ -240,6 +243,7 @@ Application.handlePipe = function( packet )
 									this.addNL();
 								}
 								break;
+							}
 						}
 					}
 				}
@@ -258,13 +262,13 @@ Application.handlePipe = function( packet )
 	if( packet.data )
 	{
 		// Check if we have anything in the data
-		var members = 0;
-		var fmem = false;
+		let members = 0;
+		let fmem = false;
 		
 		// Only count this if its an objects
 		if( typeof( packet.data ) == 'object' )
 		{
-			for( var a in packet.data )
+			for( let a in packet.data )
 			{
 				members++;
 				fmem = a;
@@ -288,7 +292,7 @@ Application.handlePipe = function( packet )
 				this.currentPath = packet.data.path;
 				return false;
 			}
-			var out = Application.generateOutputFromObjects( packet.data );
+			let out = Application.generateOutputFromObjects( packet.data );
 			Application.addOutput( out );
 		}
 		else
@@ -319,7 +323,7 @@ Application.handlePipe = function( packet )
 // Add error line
 Application.addError = function( str )
 {
-	var n = document.createElement( 'div' );
+	let n = document.createElement( 'div' );
 	n.innerHTML = '<div class="Error">' + str + '</div>';
 	this.terminal.appendChild( n );
 	this.terminal.scrollTop = 99999999;
@@ -328,7 +332,7 @@ Application.addError = function( str )
 // Add error line
 Application.addOutput = function( str)
 {
-	var n = document.createElement('div');
+	let n = document.createElement('div');
 	n.innerHTML = '<div class="Output SelectableText">' + str + '</div>';
 	this.terminal.appendChild(n);
 	this.terminal.scrollTop = 99999999;
@@ -341,7 +345,7 @@ Application.disableCLI = function( loadinganim )
 	this.loadingNr = 0;
 	if( this.currentCLI )
 	{
-		var pn = this.currentCLI.parentNode.parentNode;
+		let pn = this.currentCLI.parentNode.parentNode;
 		if( pn && pn.classList )
 		{
 			pn.classList.add( 'Loading' );
@@ -372,7 +376,7 @@ Application.enableCLI = function()
 	}
 	if( this.currentCLI )
 	{
-		var pn = this.currentCLI.parentNode.parentNode;
+		let pn = this.currentCLI.parentNode.parentNode;
 		if( pn && pn.classList )
 		{
 			pn.classList.remove( 'Loading1' );
@@ -399,12 +403,12 @@ Application.addNL = function( focus )
 	
 	this.disableCLI();
 	
-	var t = this.cliTemplate;
-	var n = document.createElement( 'div' );
+	let t = this.cliTemplate;
+	let n = document.createElement( 'div' );
 	n.innerHTML = t;
 	this.terminal.appendChild( n );
 	
-	var cli = GeByClass( 'Cli', n );
+	let cli = GeByClass( 'Cli', n );
 	cli.contentEditable = true;
 	cli.spellcheck = false;
 	
@@ -414,7 +418,7 @@ Application.addNL = function( focus )
 		setTimeout( function(){ Application.focusCLI(); }, 150 );
 	}
 	
-	var path = GeByClass( 'Path', n );
+	let path = GeByClass( 'Path', n );
 	path.innerHTML = this.shell.number + '. ' + this.currentPath + '>';
 	path.onfocus = function() { Application.focusCLI(); }
 	path.onclick = function() { Application.focusCLI(); }
@@ -450,12 +454,12 @@ Application.addQuestion = function( question, callback )
 	this.questionCallback = callback;
 	this.disableCLI();
 	
-	var t = this.cliTemplate;
-	var n = document.createElement( 'div' );
+	let t = this.cliTemplate;
+	let n = document.createElement( 'div' );
 	n.innerHTML = t;
 	this.terminal.appendChild( n );
 	
-	var cli = GeByClass( 'Cli', n );
+	let cli = GeByClass( 'Cli', n );
 	cli.contentEditable = true;
 	cli.spellcheck = false;
 	
@@ -467,7 +471,7 @@ Application.addQuestion = function( question, callback )
 	
 	n.className = 'Password';
 	
-	var path = GeByClass( 'Path', n );
+	let path = GeByClass( 'Path', n );
 	path.innerHTML = question +': ';
 	path.onfocus = function() { Application.focusCLI(); }
 	path.onclick = function() { Application.focusCLI(); }
@@ -504,10 +508,10 @@ Application.handleKeys = function( k )
 	{	
 		if( this.logKey >= 0 && this.cmdLog.length )
 		{
-			var t = this.terminal;
+			let t = this.terminal;
 			if( t )
 			{
-				var cli = GeByClass( 'Cli', t );
+				let cli = GeByClass( 'Cli', t );
 				cli = cli[cli.length-1];
 				cli.innerHTML = this.cmdLog[this.logKey];
 				SetCursorPosition( cli, 'end' );
@@ -524,10 +528,10 @@ Application.handleKeys = function( k )
 		
 		if( this.logKey >= 0 && this.cmdLog.length )
 		{
-			var t = this.terminal;
+			let t = this.terminal;
 			if( t )
 			{
-				var cli = GeByClass( 'Cli', t );
+				let cli = GeByClass( 'Cli', t );
 				cli = cli[cli.length-1];
 				cli.innerHTML = this.cmdLog[this.logKey];
 				SetCursorPosition( cli, 'end' );
@@ -539,10 +543,10 @@ Application.handleKeys = function( k )
 // Setup keyboard shortcuts
 Application.setupTerminalKeys = function()
 {
-	var t = this;
-	var f = this.terminal.getElementsByTagName( 'div' );
-	var o = false;
-	for ( var a = f.length - 1; a > 0; a-- )
+	let t = this;
+	let f = this.terminal.getElementsByTagName( 'div' );
+	let o = false;
+	for( let a = f.length - 1; a > 0; a-- )
 	{
 		if ( f[a].className == 'Cli' )
 		{
@@ -554,8 +558,8 @@ Application.setupTerminalKeys = function()
 	{
 		o.onkeydown = function( e )
 		{
-			var k = e.which ? e.which : e.keyCode;
-			var ctrl = e.ctrlKey;
+			let k = e.which ? e.which : e.keyCode;
+			let ctrl = e.ctrlKey;
 			
 			// Enter pressed
 			if( k == 13 )
@@ -566,7 +570,7 @@ Application.setupTerminalKeys = function()
 				{
 					if ( t.questionCallback )
 					{
-						var callback = t.questionCallback;
+						let callback = t.questionCallback;
 						t.questionCallback = false;
 						callback( t.currentCLI.innerHTML );
 						return cancelBubble( e );
@@ -580,8 +584,8 @@ Application.setupTerminalKeys = function()
 					if ( t.friendNetworkClient )
 					{
 						// Are we calling fnet disconnect?
-						var s = t.currentCLI.innerHTML.toLowerCase();
-						var p = s.indexOf( 'fnet', 0 );
+						let s = t.currentCLI.innerHTML.toLowerCase();
+						let p = s.indexOf( 'fnet', 0 );
 						if ( p < 0 ) p = s.indexOf( 'friendnetwork' );
 						if ( p >= 0 )
 						{
@@ -621,11 +625,11 @@ Application.setupTerminalKeys = function()
 				{
 					Application.complete = 1;
 					
-					var cmds = Application.currentCLI.innerText;
+					let cmds = Application.currentCLI.innerText;
 					cmds = cmds.split( ' ' );
-					var lcmd = cmds[cmds.length-1];
+					let lcmd = cmds[cmds.length-1];
 					
-					var m = new Library( 'system.library' );
+					let m = new Library( 'system.library' );
 					m.onExecuted = function( rc, rd )
 					{
 						
@@ -645,7 +649,7 @@ Application.setupTerminalKeys = function()
 							rd.push( {
 								Name: 'System'
 							} );
-							for( var a = 0; a < rd.length; a++ )
+							for( let a = 0; a < rd.length; a++ )
 							{
 								if( rd[a].Name.substr( 0, lcmd.length ).toLowerCase() == lcmd.toLowerCase() )
 								{
@@ -657,15 +661,15 @@ Application.setupTerminalKeys = function()
 							}
 						}
 						
-						var d = new Door( Application.currentPath );
+						let d = new Door( Application.currentPath );
 						d.path = Application.currentPath;
 						d.getIcons( function( data )
 						{
 							if( lcmd && lcmd.toLowerCase && lcmd.length )
 							{
-								for( var a = 0; a < data.length; a++ )
+								for( let a = 0; a < data.length; a++ )
 								{
-									var fn = data[a].Filename ? data[a].Filename : data[a].Title;
+									let fn = data[a].Filename ? data[a].Filename : data[a].Title;
 									if( !fn ) continue;
 									if( fn.toLowerCase().substr( 0, lcmd.length ) == lcmd.toLowerCase() )
 									{
@@ -685,8 +689,8 @@ Application.setupTerminalKeys = function()
 				// Aha, check autocomplete alternatives
 				else
 				{
-					var cl = t.currentCLI.innerText;
-					var d = new Door( Application.currentPath );
+					let cl = t.currentCLI.innerText;
+					let d = new Door( Application.currentPath );
 					d.path = Application.currentPath;
 					d.getIcons( function( data )
 					{
@@ -730,39 +734,39 @@ Application.evaluateInput = function( input, index, key )
 Application.sayCommandNotFound = function( c )
 {
 	// All else fails
-	var trans_cmd_not_found = i18n( 'i18n_command_not_found' );
+	let trans_cmd_not_found = i18n( 'i18n_command_not_found' );
 	this.addError( trans_cmd_not_found + '.' );
 	this.addNL();
 }
 
 Application.generateOutputFromObjects = function( objects )
 {
-	var acount = objects.length;
+	let acount = objects.length;
 	// Fix objects to array
 	if( isNaN( acount ) )
 	{
-		var o = [];
-		for( var a in objects ) o.push( objects[a] );
+		let o = [];
+		for( let a in objects ) o.push( objects[a] );
 		objects = o;
 		acount = o.length;
 	}
-	var third  = Math.floor( acount / 3 );
-	var output = [];
-	var count  = 0;
-	var column = 0;
+	let third  = Math.floor( acount / 3 );
+	let output = [];
+	let count  = 0;
+	let column = 0;
 	
 	// Go through the icons
-	var icons = '';
-	var trash = 0; // how many bad icons were found
-	for( var a = 0; a < acount; a++ )
+	let icons = '';
+	let trash = 0; // how many bad icons were found
+	for( let a = 0; a < acount; a++ )
 	{
-		var row = objects[a];
+		let row = objects[a];
 		if( !output[column] ) output[column] = '';
 		if( !row.Type ){ trash++; continue; }
-		var dirType = row.Type ? row.Type.toLowerCase() : 'File';
-		var isDir = ( dirType == 'directory' || row.MetaType == 'Folder' || dirType == 'dormant' );
-		var isElement = dirType != 'File' && !isDir;
-		var itm = '';
+		let dirType = row.Type ? row.Type.toLowerCase() : 'File';
+		let isDir = ( dirType == 'directory' || row.MetaType == 'Folder' || dirType == 'dormant' );
+		let isElement = dirType != 'File' && !isDir;
+		let itm = '';
 		if ( isDir ) 
 		{
 			itm = ( row.Title ? row.Title : row.Filename ) + ( isDir ? '/' : '' ) + '<br>';
@@ -771,8 +775,8 @@ Application.generateOutputFromObjects = function( objects )
 		else if( isElement && !row.Filesize )
 		{
 			itm = '<div class="File">';
-			var f = false;
-			for( var b in row )
+			let f = false;
+			for( let b in row )
 			{
 				if( b == 'ID' )
 				{
@@ -803,9 +807,9 @@ Application.generateOutputFromObjects = function( objects )
 	acount -= trash;
 	
 	icons += '<table style="border-collapse: collapse; border-spacing: 0"><tr>';
-	for( var a = 0; a < output.length; a++ )
+	for( let a = 0; a < output.length; a++ )
 	{
-		var c = output[a];
+		let c = output[a];
 		icons += '<td style="vertical-align: top; padding-right: 20px">' + c + '</td>';
 	}
 	icons += '</tr></table><br>';
@@ -816,8 +820,8 @@ Application.generateOutputFromObjects = function( objects )
 // Receive messages
 Application.receiveMessage = function( object )
 {
-	var self = this;
-	var command = object.command;
+	let self = this;
+	let command = object.command;
 /*	if( !command )
 	{
 		if ( object.data && object.data.command )
@@ -882,7 +886,7 @@ Application.receiveMessage = function( object )
 			this.addNL();
 			if( object.callback )
 			{
-				var f = extractCallback( object.callback );
+				let f = extractCallback( object.callback );
 				if( f ) f();
 			}
 			break;
@@ -893,14 +897,15 @@ Application.receiveMessage = function( object )
 			switch (object.subCommand)
 			{
 				case 'list':
-					var output = false;
-					var count = 1;
-					for (var a = 0; a < object.hosts.length; a++)
+				{
+					let output = false;
+					let count = 1;
+					for( let a = 0; a < object.hosts.length; a++ )
 					{
 						if ( object.hosts[a].apps )
 						{
-							var apps = object.hosts[a].apps;
-							for (var b = 0; b < apps.length; b++)
+							let apps = object.hosts[a].apps;
+							for( let b = 0; b < apps.length; b++ )
 							{
 								if ( apps[b].type == 'system' )
 								{
@@ -921,6 +926,7 @@ Application.receiveMessage = function( object )
 					}
 					this.addNL();
 					break;
+				}
 				case 'host':
 					this.addOutput('You are hosting "' + object.name + '"');
 					this.friendNetworkHosts[ object.hostKey ] = { name: object.name, key: object.hostKey, clients: [] };
@@ -939,8 +945,8 @@ Application.receiveMessage = function( object )
 					if ( this.friendNetworkHosts[ object.hostKey ])
 					{
 						this.friendNetworkHosts[object.hostKey] = false;
-						var temp = [];
-						for ( var key in this.friendNetworkHosts )
+						let temp = [];
+						for( let key in this.friendNetworkHosts )
 						{
 							if ( this.friendNetworkHosts[ key ])
 								temp[ key ] = this.friendNetworkHosts[ key ];
@@ -951,25 +957,27 @@ Application.receiveMessage = function( object )
 					}
 					break;
 				case 'clientConnected':
-					var shell = new Shell();
+				{
+					let shell = new Shell();
 					shell.onReady = function()
 					{
 						if ( Application.friendNetworkHosts[ object.hostKey ] )
 						{
-							var restrictedPath = object.sessionPassword ? false : Application.currentPath;
+							let restrictedPath = object.sessionPassword ? false : Application.currentPath;
 							Application.friendNetworkHosts[ object.hostKey ].clients[ object.key ] = {
 								key:   object.key,
 								shell: shell,
 								restrictedPath: restrictedPath
 							};
 							shell.evaluate( ['cd ' + Application.currentPath ], function(){}, restrictedPath, object.key );
-							var p2p = "";
+							let p2p = "";
 							if ( object.p2p ) p2p = ' (peer-to-peer)'
 							Application.addOutput( object.name + ' just connected to you' + p2p + '...' );
 							Application.addNL();
 						}
 					};
 					break;
+				}
 				case 'p2pClientConnected':
 					Application.addOutput( 'Peer-to-peer connection established' );
 					Application.addNL();
@@ -979,7 +987,7 @@ Application.receiveMessage = function( object )
 					Application.addNL();
 					break;
 				case 'clientDisconnected':
-					if ( this.friendNetworkHosts[ object.hostKey ])
+					if( this.friendNetworkHosts[ object.hostKey ])
 					{
 						if ( this.friendNetworkHosts[ object.hostKey ].clients[ object.key ] )
 						{
@@ -1035,21 +1043,22 @@ Application.receiveMessage = function( object )
 						Application.handlePipe( object.data );
 					break;
 				case 'status':
-					var out = "";
+				{
+					let out = "";
 					out += 'FriendNetwork status report<br />';
 					out += '---------------------------';
 					if ( object.connected )
 					{
 						out += '<br />Connected';
-						for ( var a = 0; a < object.hosts.length; a++ )
+						for( let a = 0; a < object.hosts.length; a++ )
 						{
 							out += '<br />Host: ' + object.hosts[ a ].name + '\n';
-							for ( var b = 0; b < object.hosts[ a ].hosting.length; b++ )
+							for( let b = 0; b < object.hosts[ a ].hosting.length; b++ )
 							{
 								out += '<br />    Hosting: ' + object.hosts[ a ].hosting[ b ].distantName + '\n';
 							}
 						}
-						for ( var a = 0; a < object.clients.length; a++ )
+						for( let a = 0; a < object.clients.length; a++ )
 						{
 							out += '<br />Client: of ' + object.clients[a].hostName +'\n';
 						}
@@ -1062,6 +1071,7 @@ Application.receiveMessage = function( object )
 					this.addOutput( out );
 					this.addNL();
 					break;
+				}
 				case 'error':
 					this.noNextNL = false;
 					switch ( object.error )
@@ -1094,7 +1104,7 @@ Application.receiveMessage = function( object )
 			}
 			break;
 		case 'applicationlist':
-			for( var a = 0; a < object.data.length; a++ )
+			for( let a = 0; a < object.data.length; a++ )
 			{
 				this.addOutput( object.data[a].applicationNumber + '. ' + object.data[a].name );
 			}
@@ -1118,7 +1128,7 @@ Application.receiveMessage = function( object )
 }
 Application.parseVariables = function( pr )
 {
-	for( var a in this.variables )
+	for( let a in this.variables )
 	{
 		if( !a.length ) continue;
 		pr = pr.split( "$" + a ).join( this.variables[a] );
@@ -1136,7 +1146,7 @@ Application.fnetDisconnect = function()
 // TODO: Get around ok<!--separate-->{ "response": "Device not mounted" } error
 function cmdCat( what, callback )
 {
-	var l = new Library( 'system.library' );
+	let l = new Library( 'system.library' );
 	l.onExecuted = function( e, d )
 	{
 		if( callback )
@@ -1155,12 +1165,12 @@ function cmdCat( what, callback )
 // makes a new execution list with a new indexing (set it to zero now!)
 function newStack( arr, newArr, index )
 {
-	var finalArr = [];
-	var mode = 0; // Are we inserting?
-	var i = 0;    // Index in newArr
-	var ai = 0;   // Index in arr
-	var whole = arr.length + newArr.length;
-	for( var a = 0; a < whole; a++ )
+	let finalArr = [];
+	let mode = 0; // Are we inserting?
+	let i = 0;    // Index in newArr
+	let ai = 0;   // Index in arr
+	let whole = arr.length + newArr.length;
+	for( let a = 0; a < whole; a++ )
 	{
 		// Insert the first part up to index
 		if( a <= index )
@@ -1188,13 +1198,13 @@ function addOnEventTrigger( app, trigger, variable, newList )
 {
 	function callback( data )
 	{
-		var script = "input off\n";
-		for( var a in newList ) script += newList[a] + "\n";
+		let script = "input off\n";
+		for( let a in newList ) script += newList[a] + "\n";
 		Application.variables[ variable ] = data;
 		Application.evaluateInput( [ script ], 0 );
 	}
 	
-	var cid = addPermanentCallback( callback );
+	let cid = addPermanentCallback( callback );
 	
 	DormantMaster.addEvent( {
 		eventName: trigger,

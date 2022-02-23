@@ -20,6 +20,11 @@ body:not([mobile]) .ViewContainer
 	opacity: 1;
 }
 
+.ViewContainer.Closing, .ViewContainer.Closing *
+{
+	pointer-events: none;
+}
+
 .View
 {
 	position: absolute;
@@ -145,6 +150,33 @@ html body[mobile] .View .FileDialog .FileBrowser .FileBrowserItemImage
 	display: inline-block;
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+.FileBrowser .DiskItem > .Name span.fa-remove
+{
+	cursor: pointer;
+	transition: opacity 0.25s;
+}
+
+.FileBrowser .DiskItem > .Name span.fa-remove:hover
+{
+	opacity: 0.8;
+}
+
+.FileBrowser .IconFolder, .FileBrowser .DiskItem
+{
+	cursor: pointer;
+}
+
+.FileBrowser .FolderItem > .Name, 
+.FileBrowser .DiskItem > .Name
+{
+	transition: opacity 0.25s;
+}
+
+.FileBrowser .FolderItem > .Name:hover, 
+.FileBrowser .DiskItem > .Name:hover
+{
+	opacity: 0.8;
 }
 
 
@@ -529,6 +561,11 @@ body:not([mobile]) .View[created=created]
 	-ms-transform: scale(1,0.1) !important;
 	-o-transform: scale(1,0.1) !important;
 	transform: scale(1,0.1) !important;
+}
+
+.ViewContainer.Closing, .ViewContainer.Closing *
+{
+	pointer-events: none;
 }
 
 .View > .Toolbar
@@ -1049,8 +1086,8 @@ html body.FullscreenApp #DoorsScreen.Screen > .ScreenContent
 	position: fixed !important;
 	top: 0 !important;
 	left: 0 !important;
-	width: 100% !important;
-	height: 100% !important;
+	width: 100vw !important;
+	height: 100vh !important;
 	z-index: 2147483647 !important;
 }
 
@@ -1560,7 +1597,7 @@ html body.Loading #FriendScreenOverlay
 	color: white;
 	overflow: hidden;
 	font-size: 1em;
-	z-index: 99999999999;
+	z-index: 2147483643;
 	opacity: 0;
 	box-sizing: border-box;
 	transition: opacity 0.25s;

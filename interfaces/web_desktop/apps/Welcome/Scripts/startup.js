@@ -21,7 +21,7 @@ Application.showWelcome = function()
 {
 	v = new View( {
 		'title': i18n('i18n_welcome_title'),
-		'width': 1025,
+		'width': 1125,
 		'height':  767,
 		'mobileMaximised': true
 	} );

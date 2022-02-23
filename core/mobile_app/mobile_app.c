@@ -1146,19 +1146,20 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	// then send him notification via mobile devices
 	
 	int bytesSent = 0;
-	User *usr = UMGetUserByName( sb->sl_UM, username );
-	if( usr != NULL )
+	
+	USER_MANAGER_USE( sb->sl_UM );
+	User *usr = sb->sl_UM->um_Users;
+	while( usr != NULL )
 	{
-		userID = usr->u_ID;
-		time_t timestamp = time( NULL );
-		//
-		if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
-		{
-			usr->u_InUse++;
-			FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
-		}
+		USER_LOCK( usr );
 		
+		if( usr->u_Name != NULL && strcmp( usr->u_Name, username ) == 0 )
 		{
+			userID = usr->u_ID;
+			time_t timestamp = time( NULL );
+		
+			//
+		
 			UserSessListEntry  *usl = usr->u_SessionsList;
 			while( usl != NULL )
 			{
@@ -1170,7 +1171,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						locses->us_InUseCounter++;
 						FRIEND_MUTEX_UNLOCK( &locses->us_Mutex );
 					}
-					
+				
 					DEBUG("[AdminWebRequest] Send Message through websockets: %s clients: %p timestamptrue: %d\n", locses->us_DeviceIdentity, locses->us_WSD, ( ( (timestamp - locses->us_LastActionTime) < sb->sl_RemoveSessionsAfterTime ) ) );
 				
 					if( ( ( (timestamp - locses->us_LastActionTime) < sb->sl_RemoveSessionsAfterTime ) ) && locses->us_WSD != NULL )
@@ -1181,7 +1182,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						lns->ns_RequestID = locses->us_ID;
 						lns->ns_Target = MOBILE_APP_TYPE_NONE;	// none means WS
 						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
-						
+					
 						// store notification for user session in database
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 					
@@ -1193,15 +1194,15 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						{
 							msgLen = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu, \"source\":\"ws\"}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
-					
+				
 						int msgsize = reqLengith + msgLen;
 						char *sndbuffer = FMalloc( msgsize );
 					
 						DEBUG("\t\t\t\t\t\t\t jsonMessage '%s' len %d \n", jsonMessage, reqLengith );
 						int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"notification\",\"data\":{\"id\":\"%lu\",\"notificationData\":%s}}}", lns->ns_ID , jsonMessage );
-					
+						
 						Log( FLOG_INFO, "Send notification through Websockets: '%s' len %d \n", sndbuffer, msgsize );
-					
+						
 						bytesSent += WebSocketSendMessageInt( locses, sndbuffer, lenmsg );
 						FFree( sndbuffer );
 					
@@ -1209,7 +1210,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						lns->node.mln_Succ = (MinNode *)notif->n_NotificationsSent;
 						notif->n_NotificationsSent = lns;
 					}
-					
+				
 					if( FRIEND_MUTEX_LOCK( &locses->us_Mutex ) == 0 )
 					{
 						locses->us_InUseCounter--;
@@ -1218,18 +1219,100 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 				} // locses = NULL
 				usl = (UserSessListEntry *)usl->node.mln_Succ;
 			}
-		}
+			USER_UNLOCK( usr );
+			
+			// entry found
+			break;
+		}	// user found by name
+		USER_UNLOCK( usr );
+	
+		usr = (User *)usr->node.mln_Succ;
+	}
+	USER_MANAGER_RELEASE( sb->sl_UM );
+	
+	if( usr == NULL )
+	{
+		userID = UMGetUserIDByNameDB( sb->sl_UM, username );
+	}
+	
+	/*
+	User *usr = UMGetUserByName( sb->sl_UM, username );
+	if( usr != NULL )
+	{
+		USER_LOCK( usr );
 		
-		if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
+		userID = usr->u_ID;
+		time_t timestamp = time( NULL );
+		
+		//
+		
+		UserSessListEntry  *usl = usr->u_SessionsList;
+		while( usl != NULL )
 		{
-			usr->u_InUse--;
-			FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+			UserSession *locses = (UserSession *)usl->us;
+			if( locses != NULL )
+			{
+				if( FRIEND_MUTEX_LOCK( &locses->us_Mutex ) == 0 )
+				{
+					locses->us_InUseCounter++;
+					FRIEND_MUTEX_UNLOCK( &locses->us_Mutex );
+				}
+				
+				DEBUG("[AdminWebRequest] Send Message through websockets: %s clients: %p timestamptrue: %d\n", locses->us_DeviceIdentity, locses->us_WSD, ( ( (timestamp - locses->us_LastActionTime) < sb->sl_RemoveSessionsAfterTime ) ) );
+				
+				if( ( ( (timestamp - locses->us_LastActionTime) < sb->sl_RemoveSessionsAfterTime ) ) && locses->us_WSD != NULL )
+				{
+					int msgLen = 0;
+					NotificationSent *lns = NotificationSentNew();
+					lns->ns_NotificationID = notif->n_ID;
+					lns->ns_RequestID = locses->us_ID;
+					lns->ns_Target = MOBILE_APP_TYPE_NONE;	// none means WS
+					lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
+					
+					// store notification for user session in database
+					NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
+					
+					if( notif->n_Extra )
+					{ //TK-1039
+						msgLen = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu, \"source\":\"ws\"}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
+					}
+					else
+					{
+						msgLen = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu, \"source\":\"ws\"}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
+					}
+				
+					int msgsize = reqLengith + msgLen;
+					char *sndbuffer = FMalloc( msgsize );
+					
+					DEBUG("\t\t\t\t\t\t\t jsonMessage '%s' len %d \n", jsonMessage, reqLengith );
+					int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"notification\",\"data\":{\"id\":\"%lu\",\"notificationData\":%s}}}", lns->ns_ID , jsonMessage );
+					
+					Log( FLOG_INFO, "Send notification through Websockets: '%s' len %d \n", sndbuffer, msgsize );
+					
+					bytesSent += WebSocketSendMessageInt( locses, sndbuffer, lenmsg );
+					FFree( sndbuffer );
+				
+					// add NotificationSent to Notification
+					lns->node.mln_Succ = (MinNode *)notif->n_NotificationsSent;
+					notif->n_NotificationsSent = lns;
+				}
+				
+				if( FRIEND_MUTEX_LOCK( &locses->us_Mutex ) == 0 )
+				{
+					locses->us_InUseCounter--;
+					FRIEND_MUTEX_UNLOCK( &locses->us_Mutex );
+				}
+			} // locses = NULL
+			usl = (UserSessListEntry *)usl->node.mln_Succ;
 		}
+
+		USER_UNLOCK( usr );
 	}	// usr != NULL
 	else
 	{
 		userID = UMGetUserIDByName( sb->sl_UM, username );
 	}
+	*/
 	
 	Log( FLOG_INFO, "User: %s userid: %lu will get content: %s\n", username, userID, content );
 	
@@ -1260,7 +1343,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		BufString *bs = MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
 		if( bs != NULL )
 		{
-			NotificationManagerNotificationSendFirebaseQueue( sb->sl_NotificationManager, notif, 1, "register", bs->bs_Buffer, MOBILE_APP_TYPE_ANDROID );
+			NotificationManagerNotificationAddFirebaseMessage( sb->sl_NotificationManager, notif, 1, "register", bs->bs_Buffer, MOBILE_APP_TYPE_ANDROID, TRUE );
 			Log( FLOG_INFO, "Firebase tokens which should get notification: %s (Android)", bs->bs_Buffer );
 			BufStringDelete( bs );
 		}
@@ -1268,7 +1351,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		bs = MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
 		if( bs != NULL )
 		{
-			NotificationManagerNotificationSendFirebaseQueue( sb->sl_NotificationManager, notif, 1, "register", bs->bs_Buffer, MOBILE_APP_TYPE_IOS );
+			NotificationManagerNotificationAddFirebaseMessage( sb->sl_NotificationManager, notif, 1, "register", bs->bs_Buffer, MOBILE_APP_TYPE_IOS, TRUE );
 			Log( FLOG_INFO, "Firebase tokens which should get notification: %s (IOS)", bs->bs_Buffer );
 			BufStringDelete( bs );
 		}
@@ -1423,13 +1506,13 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 		return 1;
 	}
 
-	FULONG userID = UMGetUserIDByName( sb->sl_UM, username );
+	FULONG userID = UMGetUserIDByNameDB( sb->sl_UM, username );
 	
 #ifdef USE_ONLY_FIREBASE
 	BufString *bs = MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
 	if( bs != NULL )
 	{
-		NotificationManagerNotificationSendFirebaseQueue( sb->sl_NotificationManager, notif, 1, "update", bs->bs_Buffer, MOBILE_APP_TYPE_ANDROID );
+		NotificationManagerNotificationAddFirebaseMessage( sb->sl_NotificationManager, notif, 1, "update", bs->bs_Buffer, MOBILE_APP_TYPE_ANDROID, TRUE );
 		//NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "update", bs->bs_Buffer );
 		//NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "update", "\"fVpPVyTb6OY:APA91bGhIvzwL2kFEdjwQa1ToI147uydLdw0hsauNUtqDx7NoV1EJ6CWjwSCmHDeDw6C4GsZV3jEpnTwk8asplawkCdAmC1NfmVE7GSp-H4nk_HDoYtBrhNz3es2uq-1bHiYqg2punIg\"" );
 		Log( FLOG_INFO, "Android (update) tokens which should get notification: %s (Android)", bs->bs_Buffer );
@@ -1438,7 +1521,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	bs = MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
 	if( bs != NULL )
 	{
-		NotificationManagerNotificationSendFirebaseQueue( sb->sl_NotificationManager, notif, 1, "update", bs->bs_Buffer, MOBILE_APP_TYPE_IOS );
+		NotificationManagerNotificationAddFirebaseMessage( sb->sl_NotificationManager, notif, 1, "update", bs->bs_Buffer, MOBILE_APP_TYPE_IOS, TRUE );
 		//NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "update", bs->bs_Buffer );
 		//NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "update", "\"fVpPVyTb6OY:APA91bGhIvzwL2kFEdjwQa1ToI147uydLdw0hsauNUtqDx7NoV1EJ6CWjwSCmHDeDw6C4GsZV3jEpnTwk8asplawkCdAmC1NfmVE7GSp-H4nk_HDoYtBrhNz3es2uq-1bHiYqg2punIg\"" );
 		Log( FLOG_INFO, "Android (update) tokens which should get notification: %s (IOS)", bs->bs_Buffer );
@@ -1514,6 +1597,105 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 		INFO("[MobileAppNotifyUserUpdate]: No A!\n");
 	}
 #endif
+	
+	return 0;
+}
+
+/**
+ * Notify user update
+ *
+ * @param root root of notifications which will go to firebase and will be deleted
+ * @param action id of action
+ * @return 0 when message was send, otherwise error number
+ */
+int MobileAppNotifyUsersUpdate( void *lsb, DelListEntry *root, int action )
+{
+	SystemBase *sb = (SystemBase *)lsb;
+	unsigned int reqLengith = LWS_PRE + 512;
+	
+	DelListEntry *le = root;
+	while( le != NULL )
+	{
+		DelListEntry *nextentry = (DelListEntry *)le->node.mln_Succ;
+		
+		Notification *dnotif = le->dle_NotificationPtr;
+		
+		if( dnotif != NULL )
+		{
+			DEBUG1("Msg will be sent! ID: %lu content: %s and deleted\n", dnotif->n_ID, dnotif->n_Content );
+		
+			//MobileAppNotifyUserUpdate( nstd->sntd_NM->nm_SB, dnotif->n_UserName, dnotif, NOTIFY_ACTION_TIMEOUT );
+			
+			DEBUG("[MobileAppNotifyUserUpdate] start\n");
+	
+			if( dnotif->n_NotificationsSent == NULL )
+			{
+				// memory leak check
+				//notif->n_NotificationsSent = NotificationManagerGetNotificationsSentDB( sb->sl_NotificationManager, notif->n_ID );
+			}
+			else
+			{
+				if( dnotif->n_Channel != NULL )
+				{
+					reqLengith += strlen( dnotif->n_Channel );
+				}
+		
+				if( dnotif->n_Content != NULL )
+				{
+					reqLengith += strlen( dnotif->n_Content );
+				}
+			
+				if( dnotif->n_Title != NULL )
+				{
+					reqLengith += strlen( dnotif->n_Title );
+				}
+		
+				if( dnotif->n_Application != NULL )
+				{
+					reqLengith += strlen( dnotif->n_Application );
+				}
+		
+				if( dnotif->n_Extra != NULL )
+				{
+					reqLengith += strlen( dnotif->n_Extra );
+				}
+				
+				FULONG userID = UMGetUserIDByNameDB( sb->sl_UM, dnotif->n_UserName );
+				if( userID != 0 )
+				{
+					BufString *bs = MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, dnotif->n_ID );
+					if( bs != NULL )
+					{
+						NotificationManagerNotificationAddFirebaseMessage( sb->sl_NotificationManager, dnotif, 1, "update", bs->bs_Buffer, MOBILE_APP_TYPE_ANDROID, FALSE );
+						Log( FLOG_INFO, "Android (update) tokens which should get notification: %s (Android)", bs->bs_Buffer );
+						BufStringDelete( bs );
+					}
+					bs = MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED, dnotif->n_ID );
+					if( bs != NULL )
+					{
+						NotificationManagerNotificationAddFirebaseMessage( sb->sl_NotificationManager, dnotif, 1, "update", bs->bs_Buffer, MOBILE_APP_TYPE_IOS, FALSE );
+						Log( FLOG_INFO, "Android (update) tokens which should get notification: %s (IOS)", bs->bs_Buffer );
+						BufStringDelete( bs );
+					}
+				}
+			}
+			
+			NotificationDelete( dnotif );
+			le->dle_NotificationPtr = NULL;
+		}
+		else
+		{
+			FERROR("Cannot find notification!\n");
+		}
+		
+		FFree( le );
+		
+		le = nextentry;
+	}
+	
+	NotificationManagerNotificationSendFirebaseQueue( sb->sl_NotificationManager );
+	
+	// get message length
 	
 	return 0;
 }

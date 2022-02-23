@@ -39,13 +39,25 @@ function RemoveFromExecutionQueue( app )
 // Load a javascript application into a sandbox
 function ExecuteApplication( app, args, callback, retries, flags )
 {
+	/*console.log( 'ExecuteApplication', [
+		app,
+		args,
+		callback,
+		retries,
+		flags,
+	]);*/
 	// Just nothing.
-	if( !app ) return;
+	if( !app ) {
+		console.log( 'just nothing things', app );
+		return;
+	}
 	
 	// If we don't have any cached basics, wait a bit
 	if( typeof( _applicationBasics ) == 'undefined' || !_applicationBasics.js )
 	{
-		if( retries == 3 ) return console.log( 'Could not execute app: ' + app );
+		//console.log( 'ExecuteApplication - retries', retries );
+		if( retries == 3 ) 
+			return console.log( 'Could not execute app: ' + app );
 		loadApplicationBasics( function()
 		{
 			ExecuteApplication( app, args, callback, !retries ? 3 : retries++, flags );
@@ -77,6 +89,10 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	// You need to wait with opening apps until they are loaded by app name
 	if( _executionQueue[ appName ] )
 	{
+		console.log( 'ExecuteApplication - app found in execution queue', {
+			app   : app,
+			queue : _executionQueue,
+		});
 		if( callback )
 			callback( false, { response: false, message: 'Already run.', data: 'executed' } );
 		return;
@@ -110,6 +126,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	// Check if the app called is found in the singleInstanceApps array
 	if( Friend.singleInstanceApps[ appName ] )
 	{
+		console.log( 'ExecuteApplication - found in singleInstanceApps', appName );
 		// Clean blocker
 		RemoveFromExecutionQueue( appName );
 		
@@ -144,6 +161,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			if( Workspace.applications[ a ].applicationName == appName )
 			{
 				var app = Workspace.applications[ a ];
+				console.log( 'ExecuteApplication, app found on mobile', [ appName, app ]);
 				for( var z in app.windows )
 				{
 					_ActivateWindow( app.windows[ z ]._window.parentNode );
@@ -175,12 +193,12 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	// Args should be arguments to application in string form! for example filename
 	if( typeof( args ) != 'string' ) args = '';
 
-	var workspace = 0; // Default workspace
+	let workspace = 0; // Default workspace
 
 	// Filter arguments
-	var aout = [];
+	let aout = [];
 	args = args.split( ' ' );
-	for( var a = 0; a < args.length; a++ )
+	for( let a = 0; a < args.length; a++ )
 	{
 		var pair = args[a].split( '=' );
 		if( pair.length > 1 )
@@ -207,6 +225,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	if( app.indexOf( ':' ) > 0 && app.indexOf( '.jsx' ) > 0 )
 	{
 		// Remove from execution queue
+		//console.log( 'ExecuteApplication - jsx things maybe', app );
 		RemoveFromExecutionQueue( appName );
 		return ExecuteJSXByPath( app, args, callback, undefined, flags );
 	}
@@ -216,11 +235,11 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	}
 
 	// 1. Ask about application.................................................
-	var m = new Module( 'system' );
+	let m = new Module( 'system' );
 	m.onExecuted = function( r, d )
 	{	
 		// Get data from Friend Core
-		var conf = false;
+		let conf = false;
 		try
 		{
 			conf = JSON.parse( d );
@@ -230,8 +249,10 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			//
 		}
 	
+		//console.log( 'ExecuteApplication.onExecuted', [ r, conf ]);
 		if( r == 'activate' )
 		{
+			//console.log( 'ExecuteApplication - active', app );
 			ActivateApplication( app, conf );
 			// Remove blocker
 			RemoveFromExecutionQueue( appName );
@@ -242,29 +263,31 @@ function ExecuteApplication( app, args, callback, retries, flags )
 		else if( r != 'ok' )
 		{
 			// console.log( 'Test2: Executing app Was not ok.' );
-			
+			//console.log( 'ExecuteApplication - onExecuted not ok', r );
 			if( r == 'notinstalled' || ( conf && conf.response == 'not installed' ) )
 			{
-				var hideView = false;
+				let hideView = false;
 				if( d.toLowerCase().indexOf('"trusted":"yes"') > 0 )
 				{
 					hideView = true;
 				}
 
-				
+				/*
+				// TODO: Remove this - because we should in this case show install menu - which happens now.
 				// Just use callback
-				if( callback )
+				if( callback && typeof( callback ) == 'function' && !hideView )
 				{
+					console.log( 'Tmgmdf.', callback );
 					if( !callback( { error: 2, errorMessage: i18n( 'install_question_title' ) } ) )
 					{
 						// Remove blocker
 						RemoveFromExecutionQueue( appName );
 						return;
 					}
-				}
+				}*/
 				
-				var title = i18n( 'install_question_mintitle' ) + ': ' + app;
-				var w = new View( {
+				let title = i18n( 'install_question_mintitle' ) + ': ' + app;
+				let w = new View( {
 					title:  title,
 					width:  480,
 					height: 140,
@@ -272,17 +295,17 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					hidden: hideView
 				} );
 
-				var f = new File( 'System:templates/install.html' );
+				let f = new File( 'System:templates/install.html' );
 				f.onLoad = function( data )
 				{
-					var repl = [ 'install_question_desc', 'install_question_title',
+					let repl = [ 'install_question_desc', 'install_question_title',
 								 'install_button', 'install_cancel' ];
-					for( var a in repl ) data = data.split( '{' + repl[a] + '}' ).join ( i18n( repl[a] ) );
+					for( let a in repl ) data = data.split( '{' + repl[a] + '}' ).join ( i18n( repl[a] ) );
 					data = data.split( '{app}' ).join ( app );
 					w.setContent( data );
 					if( hideView )
 					{
-						InstallApplication( app );
+						InstallApplication( app, callback );
 					}
 				}
 				f.load();
@@ -319,11 +342,11 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				Ac2Alert( i18n( 'application_not_found' ) );
 			}
 			if( callback ) callback( false );
-			// console.log( 'Test2: Dead.' );
+			//console.log( 'ExecuteApplication Dead.' );
 			
 			// Clean up single instance
-			var o = {};
-			for( var a in Friend.singleInstanceApps )
+			let o = {};
+			for( let a in Friend.singleInstanceApps )
 				if( a != appName )
 					o[ a ] = Friend.singleInstanceApps[ a ];
 			Friend.singleInstanceApps = o;
@@ -331,7 +354,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			KillApplication( appName );
 			
 			// Remove blocker
-			RemoveFromExecutionQueue( appName );		
+			RemoveFromExecutionQueue( appName );
 			return false;
 		}
 
@@ -340,6 +363,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 		{
 			if( typeof( conf.API ) == 'undefined' )
 			{
+				//console.log( 'ExecuteApplication - onExecuted, no API in conf', conf );
 				if( callback )
 				{
 					// Remove blocker
@@ -359,7 +383,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			{
 				return str;
 			}
-
+			
 			// Correct filepath can be a resource file (i.e. in a repository) or a local file
 			let filepath = '/system.library/module/?module=system&command=resource&authid=' + conf.AuthID + '&file=' + app + '/';
 			// Here's the local file..
@@ -414,6 +438,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				if( conf.Init.indexOf( ':' ) > 0 && conf.Init.indexOf( '.jsx' ) > 0 )
 				{
 					// Remove blocker
+					//console.log( 'ExecuteApplication - onExecuted, more jsx things', conf );
 					RemoveFromExecutionQueue( appName );
 					return ExecuteJSXByPath( conf.Init, args, callback, conf, flags );
 				}
@@ -432,7 +457,15 @@ function ExecuteApplication( app, args, callback, retries, flags )
 						app + '&friendup=' + escape( Doors.runLevels[0].domain ), true );
 					j.onload = function()
 					{	
-						let ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
+						let ws;
+						if( _applicationBasics && _applicationBasics.apiV1 )
+						{
+							ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
+						}
+						else
+						{
+							ws = this.rawData;
+						}
 						ifr.src = URL.createObjectURL(new Blob([ws],{type:'text/html'}));
 					}
 					j.send();
@@ -443,7 +476,14 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				// Same domain
 				ifr.src = sdomain + filepath + 'index.html?friendup=' + sdomain;
 			}
-
+			
+			/*console.log( 'ExecuteApplication - opening app', {
+				ifr    : ifr,
+				conf   : conf,
+				flags  : flags,
+				silent : flags.openSilent,
+			});*/
+			
 			// Register name and ID
 			ifr.applicationName = app.indexOf( ' ' ) > 0 ? app.split( ' ' )[0] : app;
 			ifr.userId = Workspace.userId;
@@ -943,7 +983,7 @@ function ActivateApplication( app, conf )
 	f.load();
 }
 
-function InstallApplication( app )
+function InstallApplication( app, callback )
 {
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
@@ -966,11 +1006,16 @@ function InstallApplication( app )
 				}
 				
 				w.close();
+				
 			}
+			if( callback )
+				callback( true );
 		}
 		else
 		{
 			Ac2Alert( 'Failed to install application...' );
+			if( callback )
+				callback( false );
 		}
 	}
 	m.execute( 'installapplication', { application: app } );
@@ -1212,8 +1257,8 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 	// Only run jsx after refreshing desktop to get mounted drives
 	Workspace.refreshDesktop( function()
 	{
-		var drive = path.split( ':' )[0] + ':';
-		var d = ( new Door( drive ) ).get( drive );
+		let drive = path.split( ':' )[0] + ':';
+		let d = ( new Door( drive ) ).get( drive );
 
 		// Running system with a drive config..
 		if( d )
@@ -1235,7 +1280,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 		}
 
 		// Load application into a sandboxed iframe
-		var ifr = document.createElement( 'iframe' );
+		let ifr = document.createElement( 'iframe' );
 		ifr.setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
 		ifr.path = '/webclient/jsx/';
 
@@ -1246,12 +1291,13 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 		function completeLaunch( data, app, args, path, callback, conf, html )
 		{
 			// Special case, we have a conf
-			var sid = false;
-			var confObject = false;
-			var applicationId = ( flags && flags.uniqueId ) ? flags.uniqueId : UniqueHash();
+			let sid = false;
+			let ifronload;
+			let confObject = false;
+			let applicationId = ( flags && flags.uniqueId ) ? flags.uniqueId : UniqueHash();
 			if( conf )
 			{
-				var dom = GetDomainFromConf( conf, applicationId );
+				let dom = GetDomainFromConf( conf, applicationId );
 
 				if( args ) conf.args = args;
 
@@ -1266,26 +1312,34 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 				}
 				
 				sid = confObject && confObject.authid ? true : false;
-				var svalu = sid ? confObject.authid : Workspace.sessionId;
-				var stype = sid ? 'authid' : 'sessionid';
+				let svalu = sid ? confObject.authid : Workspace.sessionId;
+				let stype = sid ? 'authid' : 'sessionid';
 				if( stype == 'sessionid' ) ifr.sessionId = svalu;
 
 				// Use path to figure out config
 				if( !d.dormantDoor && conf.indexOf( '{' ) >= 0 )
 					conf = encodeURIComponent( path.split( ':' )[0] + ':' );
 
-				var extra = '';
+				let extra = '';
 				if( stype == 'authid')
 					extra = '&theme=borderless';
 
 				// Quicker ajax implementation
-				var j = new cAjax();
+				let j = new cAjax();
 				j.open( 'POST', '/system.library/module/?module=system&command=sandbox' +
 					'&' + stype + '=' + svalu +
 					'&conf=' + conf + '&' + ( args ? ( 'args=' + args ) : '' ) + extra, true );
 				j.onload = function()
 				{
-					ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
+					let ws;
+					if( _applicationBasics.apiV1 )
+					{
+						ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
+					}
+					else
+					{
+						ws = this.rawData;
+					}
 					ifr.onload = ifronload;
 					ifr.src = URL.createObjectURL( new Blob([ ws ],{ type: 'text/html' } ) );
 				}
@@ -1328,21 +1382,21 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 			{
 				if( this.windows )
 				{
-					for( var a in this.windows )
+					for( let a in this.windows )
 					{
 						this.windows[a].close( level );
 					}
 				}
 				if( this.screens )
 				{
-					for( var a in this.screens )
+					for( let a in this.screens )
 					{
 						this.screens[a].close( level );
 					}
 				}
 				if( this.widgets )
 				{
-					for( var a in this.widgets )
+					for( let a in this.widgets )
 					{
 						this.widgets[a].close( level );
 					}
@@ -1351,8 +1405,8 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 				// If this is a forced kill, just fck the thing
 				if( level )
 				{
-					var out = [];
-					for( var a = 0; a < Workspace.applications.length; a++ )
+					let out = [];
+					for( let a = 0; a < Workspace.applications.length; a++ )
 					{
 						if( Workspace.applications[a] != this )
 							out.push( Workspace.applications[a] );
@@ -1376,7 +1430,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 				else
 				{
 					// Tell the jsx application to clean up first
-					var o = {
+					let o = {
 						command: 'quit',
 						filePath: '/webclient/jsx/',
 						domain:   typeof( sdomain ) != 'undefined' ? sdomain : ''
@@ -1421,17 +1475,17 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 			}
 
 			// Register application
-			var ifronload = function()
+			ifronload = function()
 			{
 				try
 				{
 					// Get document
-					var doc = ifr.contentWindow.document;
+					let doc = ifr.contentWindow.document;
 
-					var jsx = doc.createElement( 'script' );
+					let jsx = doc.createElement( 'script' );
 
 					// Path replacements
-					var dpath = '';
+					let dpath = '';
 
 					if( path )
 					{
@@ -1446,7 +1500,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 					ifr.contentWindow.document.getElementsByTagName( 'head' )[0].appendChild( jsx );
 					ifr.appPath = dpath;
 
-					var cid = addWrapperCallback( function()
+					let cid = addWrapperCallback( function()
 					{
 						if( callback )
 						{
@@ -1455,7 +1509,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 					} );
 
 					// Send initiator to app
-					var msg = {
+					let msg = {
 						command:          'initappframe',
 						base:             '/',
 						applicationId:    ifr.applicationId,
@@ -1485,7 +1539,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 					msg = JSON.stringify( msg );
 
 					// Get JSON data from url
-					var vdata = GetUrlVar( 'data' ); if( vdata ) msg.data = vdata;
+					let vdata = GetUrlVar( 'data' ); if( vdata ) msg.data = vdata;
 
 					ifr.contentWindow.postMessage( msg, Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
 				}
@@ -1496,7 +1550,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 			}
 
 			// Add application iframe to body
-			var iconPath = path;
+			let iconPath = path;
 			if( iconPath.substr( -4, 4 ).toLowerCase() == '.jsx' )
 			{
 				iconPath = iconPath.split( '/' );

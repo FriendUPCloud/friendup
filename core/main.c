@@ -27,8 +27,6 @@
 #include "core/friendcore_manager.h"
 #include "network/uri.h"
 
-#include <class/phpproxyclass.h>
-
 #include <system/systembase.h>
 #include <application/applicationlibrary.h>
 #include <db/sqllib.h>

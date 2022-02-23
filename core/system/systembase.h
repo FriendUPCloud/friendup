@@ -187,7 +187,7 @@ typedef struct Device
 #define FSys_Mount_Config				(FSys_Mount_Dummy + 14 ) // configuration
 //#define FSys_Mount_User_SessionID		(FSys_Mount_Dummy + 15 ) // user session id
 #define FSys_Mount_UserSession			(FSys_Mount_Dummy + 15 ) 
-#define FSys_Mount_Visible				(FSys_Mount_Dummy + 16 ) // Is the drive visible?
+//#define FSys_Mount_Visible				(FSys_Mount_Dummy + 16 ) // Is the drive visible?
 #define FSys_Mount_Execute				(FSys_Mount_Dummy + 17 ) // Can we execute something on mount?
 #define FSys_Mount_UserName				(FSys_Mount_Dummy+19)		// name of device
 #define FSys_Mount_UserID				(FSys_Mount_Dummy+20)		// userID - this will allow admin to mount drives to other users
@@ -382,7 +382,7 @@ typedef struct SystemBase
 
 	void							(*LibraryImageDrop)( struct SystemBase *sb, ImageLibrary *pl );
 	
-	int								(*UserDeviceMount)( struct SystemBase *l, User *usr, UserSession *us, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
+	int								(*UserDeviceMount)( struct SystemBase *l, UserSession *us, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
 	
 	int								(*UserDeviceUnMount)( struct SystemBase *l, User *usr, UserSession *ses );
 	
@@ -390,7 +390,7 @@ typedef struct SystemBase
 	
 	Sentinel						*(*GetSentinelUser)( struct SystemBase *l );
 
-	int								(*WebSocketSendMessage)( struct SystemBase *l, UserSession *usersession, char *msg, int len );
+	int								(*UserSessionWebsocketWrite)( UserSession *usersession, unsigned char *msg, int len, int type );
 	
 	int								(*WebSocketSendMessageInt)( UserSession *usersession, char *msg, int len );
 	
@@ -557,7 +557,7 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len );
 //
 //
 
-int UserDeviceMount( SystemBase *l, User *u, UserSession *usrses, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
+int UserDeviceMount( SystemBase *l, UserSession *usrses, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
 
 //
 //

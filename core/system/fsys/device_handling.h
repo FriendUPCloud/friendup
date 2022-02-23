@@ -31,6 +31,7 @@ typedef struct DeviceManager
 {
 	void				*dm_SB;
 	pthread_mutex_t		dm_Mutex;
+	int					dm_InUse;
 }DeviceManager;
 
 //
@@ -67,13 +68,13 @@ int UnMountFS( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *us
 //
 //
 
+int MountFSWorkgroupDrive( DeviceManager *dm, UserGroup *usrgrp, FBOOL notify, char *devname );
+
+//
+//
+//
+
 int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError, UserSession *ses, FBOOL notify );
-
-//
-//
-//
-
-int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, UserSession *ses, FULONG groupID );
 
 //
 //
@@ -86,12 +87,6 @@ int UserGroupDeviceMount( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrg
 //
 
 int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile, char **mountError );
-
-//
-//
-//
-
-File *GetFileByPath( User *usr, char **dstpath, const char *path );
 
 //
 //
@@ -111,18 +106,6 @@ File *GetUserDeviceByFSysUserIDDevName( DeviceManager *dm, SQLLibrary *sqllib, F
 //
 
 void UserNotifyFSEvent( DeviceManager *dm, char *evt, char *path );
-
-//
-//
-//
-
-void UserNotifyFSEvent2( DeviceManager *dm, User *u, char *evt, char *path );
-
-//
-//
-//
-
-int MountDoorByRow( DeviceManager *dm, User *usr, char **row, User *mountUser );
 
 //
 //

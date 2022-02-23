@@ -70,7 +70,8 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
  * @param command pointer to php command provided as string
  * @return new ListString structure or NULL when problem appear
  */
-static inline ListString *RunPHPScript( const char *command )
+static inline BufString *RunPHPScript( const char *command )
+//static inline ListString *RunPHPScript( const char *command )
 {
 	NPOpenFD pofd;
 	int err = newpopen( command, &pofd );
@@ -83,7 +84,8 @@ static inline ListString *RunPHPScript( const char *command )
 #define PHP_READ_SIZE 4096	
 	
 	char *buf = FMalloc( PHP_READ_SIZE + 16 );
-	ListString *ls = ListStringNew();
+	//ListString *ls = ListStringNew();
+	BufString *bs = BufStringNew();
 	
 #ifdef USE_NPOPEN_POLL
 
@@ -125,7 +127,8 @@ static inline ListString *RunPHPScript( const char *command )
 		if( size > 0 )
 		{
 			DEBUG( "[RunPHPScript] before adding to list\n");
-			ListStringAdd( ls, buf, size );
+			//ListStringAdd( ls, buf, size );
+			BufStringAddSize( bs, buf, size );
 			DEBUG( "[RunPHPScript] after adding to list\n");
 			//res += size;
 		}
@@ -204,45 +207,11 @@ static inline ListString *RunPHPScript( const char *command )
 	// Free pipe if it's there
 	newpclose( &pofd );
 	
-	ListStringJoin( ls );		//we join all string into one buffer
+	//ListStringJoin( ls );		//we join all string into one buffer
 	
-	DEBUG( "[RunPHPScript] Finished PHP call...(%lu length)-\n", ls->ls_Size );
-	return ls;
-	
-	/*
-	FILE *pipe = popen( command, "r" );
-	if( !pipe )
-	{
-		Log( FLOG_ERROR,"Cannot open pipe for command: %s\n", command );
-		return NULL;
-	}
-
-	FULONG size = 0;
-	ListString *data = ListStringNew();
-
-#define PHP_READ_SIZE 65536
-	char *buf = FCalloc( PHP_READ_SIZE, sizeof( char ) );
-	if( buf != NULL )
-	{
-		while( !feof( pipe ) )
-		{
-			// Make a new buffer and read
-			size = fread( buf, sizeof(char), PHP_READ_SIZE, pipe );
-
-			if( size > 0 )
-			{
-				ListStringAdd( data, buf, size );
-			}
-			pthread_yield();
-		}
-		ListStringJoin( data );		
-		FFree( buf );
-	}
-	// Free buffer if it's there
-	pclose( pipe );
-
-	return data;
-	*/
+	//DEBUG( "[RunPHPScript] Finished PHP call...(%lu length)-\n", ls->ls_Size );
+	//return ls;
+	return bs;
 }
 
 /**
@@ -372,6 +341,7 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 			snprintf( command, loclen, "php \"php/catch_all.php\" \"%s\";", locpath ); 
 			DEBUG( "[ReadServerFile] Executing %s\n", command );
 			int phpRun = FALSE;
+			/*
 			ListString *bs = RunPHPScript( command );
 			if( bs )
 			{
@@ -385,6 +355,21 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 				*result = 200;
 
 				ListStringDelete( bs );
+			}
+			*/
+			BufString *bs = RunPHPScript( command );
+			if( bs )
+			{
+				if( bs->bs_Size > 0 )
+				{
+					BufStringAddSize( dstbs, bs->bs_Buffer, bs->bs_Size );
+					BufStringAdd( dstbs, "\n");
+				}
+
+				phpRun = TRUE;
+				*result = 200;
+
+				BufStringDelete( bs );
 			}
 
 			if( !phpRun )
@@ -526,7 +511,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 		stime = GetCurrentTimestampD();
 #endif
 				
-		Log( FLOG_DEBUG, "[ProtocolHttp] Request parsed without problems.\n");
+		//Log( FLOG_DEBUG, "[ProtocolHttp] Request parsed without problems.\n");
 		Uri *uri = request->http_Uri;
 		Path *path = NULL;
 		if( uri->uri_Path->p_Raw )
@@ -644,7 +629,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							}
 							else
 							{
-								Log( FLOG_INFO, "[HTTP] SysWebRequest response: '%.*s'\n", 200, response->http_Content );
+								//Log( FLOG_INFO, "[HTTP] SysWebRequest response: '%.*s'\n", 200, response->content );
 							}
 						}
 						else
@@ -740,17 +725,13 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 							// Make the commandline string with the safe, escaped arguments, and check for buffer overflows.
 							int cx = snprintf( command, MAX_LEN_PHP_INT_COMMAND-1, "php \"php/login.php\" \"%s\" \"%s\" \"%s\"; 2>&1", uri->uri_Path->p_Raw, uri->uri_QueryRaw, request->http_Content ); // SLIB->sl_ModuleNames
-							//if( !( cx >= 0 ) )
-							//{
-							//	FERROR( "[ProtocolHttp] snprintf\n" );;
-							//}
-							//else
+
 							{
-								ListString *ls = RunPHPScript( command );
+								BufString *ls = RunPHPScript( command );
 								if( ls != NULL )
 								{
 									//DEBUG("\n\n\n\n\n\nDATA: %s\n\n\n\n\n\n", ls->ls_Data );
-									res = ls->ls_Size;
+									res = ls->bs_Size;
 								}
 								
 								struct TagItem tags[] = {
@@ -762,9 +743,9 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 								response = HttpNewSimple( HTTP_200_OK, tags );
 
-								if( ls != NULL && ls->ls_Data != NULL )
+								if( ls != NULL && ls->bs_Buffer != NULL )
 								{
-									HttpSetContent( response, ls->ls_Data, res );
+									HttpSetContent( response, ls->bs_Buffer, res );
 								}
 								else
 								{
@@ -778,9 +759,10 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 								if( ls != NULL )
 								{
-									ls->ls_Data = NULL;
-									ListStringDelete( ls );
+									ls->bs_Buffer = NULL;
+									BufStringDelete( ls );
 								}
+
 								DEBUG("Response delivered\n");
 								
 								FFree( command );
@@ -1186,6 +1168,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								if( mountedWithoutUser == TRUE )
 								{
 									DeviceRelease( SLIB->sl_DeviceManager, rootDev );
+
 									FileDelete( rootDev );
 								}
 								
@@ -1209,7 +1192,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							if( fs_Path != NULL ) FFree( fs_Path );
 							
 							// if temporary session was generated, we must remove it
-							if( sessionIDGenerated == TRUE )
+							//if( sessionIDGenerated == TRUE )
 							{
 								USMDestroyTemporarySession( SLIB->sl_USM, sqllib, session );
 							}
@@ -1251,7 +1234,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 						// We don't allow directory traversals..
 						if( flaw == 0 )
 						{
-							Log( FLOG_DEBUG, "[ProtocolHttp] read static file %s path size %d\n", path->p_Raw, path->p_RawSize );
+							//Log( FLOG_DEBUG, "[ProtocolHttp] read static file %s path size %d\n", path->p_Raw, path->p_RawSize );
 
 							for( i = 0; i < path->p_RawSize; i++ )
 							{
@@ -1690,7 +1673,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 											if( (SLIB->l_HttpCompressionContent&HTTP_COMPRESSION_DEFLATE) == HTTP_COMPRESSION_DEFLATE )
 											{
 												char *comprFromHeader = HttpGetHeaderFromTable( request, HTTP_HEADER_ACCEPT_ENCODING );
-												DEBUG("\n\n\n\n\n\nCompression %s\n\n\n\n\n\n", comprFromHeader );
+												//DEBUG("\n\n\n\n\n\nCompression %s\n\n\n\n\n\n", comprFromHeader );
 												
 												if( comprFromHeader != NULL && strstr( comprFromHeader, "deflate" ) != NULL )
 												{
@@ -1710,7 +1693,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 											response->http_WriteType = FREE_ONLY;
 
-											Log( FLOG_DEBUG, "[ProtocolHttp] File returned to caller, fsize %lu\n", file->lf_FileSize );
+											//Log( FLOG_DEBUG, "[ProtocolHttp] File returned to caller, fsize %lu\n", file->lf_FileSize );
 
 											//INFO("--------------------------------------------------------------%d\n", freeFile );
 											if( freeFile == TRUE )
@@ -1811,7 +1794,8 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												// Try to fall back on module
 												// TODO: Make this behaviour configurable
 												char *command = NULL;
-												ListString *phpResp = NULL;
+												//ListString *phpResp = NULL;
+												BufString *phpResp = NULL;
 
 												int clen = strlen( uri->uri_Path->p_Raw ) + 256;
 												
@@ -1885,15 +1869,15 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 													}
 												} // content-type json
 
-												if( phpResp && phpResp->ls_Data != NULL && phpResp->ls_Size > 0 )
+												if( phpResp && phpResp->bs_Buffer != NULL && phpResp->bs_Size > 0 )
 												{
 													// Check header and remove from data
-													char *cntype = CheckEmbeddedHeaders( phpResp->ls_Data, phpResp->ls_Size, "Content-Type" );
-													char *code = CheckEmbeddedHeaders( phpResp->ls_Data, phpResp->ls_Size, "Status Code" );
+													char *cntype = CheckEmbeddedHeaders( phpResp->bs_Buffer, phpResp->bs_Size, "Content-Type" );
+													char *code = CheckEmbeddedHeaders( phpResp->bs_Buffer, phpResp->bs_Size, "Status Code" );
 
 													if( cntype != NULL )
 													{
-														phpResp->ls_Size = StripEmbeddedHeaders( &phpResp->ls_Data, phpResp->ls_Size );
+														phpResp->bs_Size = StripEmbeddedHeaders( &(phpResp->bs_Buffer), phpResp->bs_Size );
 													}
 
 													struct TagItem tags[] = {
@@ -1930,7 +1914,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 														response = HttpNewSimple( HTTP_200_OK, tags );
 													}
 
-													char *resp = phpResp->ls_Data;
+													char *resp = phpResp->bs_Buffer;
 													if( resp != NULL )
 													{
 														const char *hsearche = "---http-headers-end---\n";
@@ -1950,16 +1934,16 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 													response->http_WriteType = FREE_ONLY;
 
-													sock->s_Interface->SocketWrite( sock, resp, (FLONG)(phpResp->ls_Size - (resp - phpResp->ls_Data)) );
+													sock->s_Interface->SocketWrite( sock, resp, (FLONG)(phpResp->bs_Size - (resp - phpResp->bs_Buffer)) );
 
 													if( cntype != NULL ) FFree( cntype );
 													if( code != NULL ) FFree( code );
 
 													result = 200;
 
-													Log( FLOG_ERROR, "Module call returned bytes: %lu\n", phpResp->ls_Size );
+													Log( FLOG_ERROR, "Module call returned bytes: %lu\n", phpResp->bs_Size );
 													//bs->ls_Data = NULL; 
-													ListStringDelete( phpResp );
+													BufStringDelete( phpResp );
 												}
 												else 
 												{

@@ -8,6 +8,15 @@
 *                                                                              *
 *****************************************************************************©*/
 
+let initdebug = false;
+
+function debug ( pretty )
+{
+	return ( initdebug = ( pretty ? 'pretty' : true ) );
+}
+
+console.log( '///// debug( true ); for pretty print ... /////' );
+
 // Main User Settings function to set up the whole user "module"
 var UsersSettings = function ( setting, set )
 {
@@ -1304,6 +1313,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										{
 											if( info.workgroups[i] && info.workgroups[i].ID )
 											{
+												if( info.workgroups[i].Hide && info.workgroups[i].UserID == userInfo.ID )
+												{
+													info.workgroups[i].Hide = false;
+												}
 												
 												unsorted[info.workgroups[i].ID] = {};
 							
@@ -1409,14 +1422,14 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 												str += '<div>';
 						
-												str += '<div class="HRow" id="WorkgroupID_' + groups[a].ID + '">';
+												str += '<div class="HRow'+(groups[a].Hide?' Hidden':'')+'" id="WorkgroupID_' + groups[a].ID + '">';
 						
 												str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 												str += '		<span name="' + groups[a].Name + '" class="IconMedium fa-users"></span>';
 												str += '	</div>';
-												str += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[a].Name+ '</div>';
+												str += '	<div class="PaddingSmall HContent60 InputHeight FloatLeft Ellipsis">' + groups[a].Name + (groups[a].Owner?' (by '+groups[a].Owner+')':'') + '</div>';
 						
-												str += '	<div class="PaddingSmall HContent20 FloatRight Ellipsis">';
+												str += '	<div class="PaddingSmall HContent15 FloatRight Ellipsis">';
 												
 												if( Application.checkAppPermission( [ 
 													'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
@@ -1531,15 +1544,15 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 														ii++;
 								
-														str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].ID + '">';
+														str += '<div class="HRow'+(groups[a].groups[aa].Hide?' Hidden':'')+'" id="WorkgroupID_' + groups[a].groups[aa].ID + '">';
 								
 														str += '	<div class="TextCenter HContent4 FloatLeft InputHeight PaddingSmall" style="min-width:36px"></div>';
 														str += '	<div class="TextCenter HContent10 FloatLeft InputHeight PaddingSmall Ellipsis edit">';
 														str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconMedium fa-users"></span>';
 														str += '	</div>';
-														str += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].Name + '</div>';
+														str += '	<div class="PaddingSmall HContent55 InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].Name + (groups[a].groups[aa].Owner?' (by '+groups[a].groups[aa].Owner+')':'') + '</div>';
 								
-														str += '<div class="PaddingSmall FloatRight Ellipsis">';
+														str += '<div class="PaddingSmall HContent15 FloatRight Ellipsis">';
 														
 														if( Application.checkAppPermission( [ 
 															'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
@@ -1653,16 +1666,16 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																}
 										
 																ii++;
-										
-																str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '">';
+																
+																str += '<div class="HRow'+(groups[a].groups[aa].groups[aaa].Hide?' Hidden':'')+'" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '">';
 										
 																str += '	<div class="TextCenter HContent8 InputHeight FloatLeft PaddingSmall" style="min-width:73px"></div>';
 																str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 																str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconMedium fa-users"></span>';
 																str += '	</div>';
-																str += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + '</div>';
+																str += '	<div class="PaddingSmall HContent55 InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + (groups[a].groups[aa].groups[aaa].Owner?' (by '+groups[a].groups[aa].groups[aaa].Owner+')':'') + '</div>';
 										
-																str += '	<div class="PaddingSmall FloatRight Ellipsis">';
+																str += '	<div class="PaddingSmall HContent15 FloatRight Ellipsis">';
 																
 																if( Application.checkAppPermission( [ 
 																	'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
@@ -2574,7 +2587,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									if( ge( 'WorkgroupInner' ) )
 									{
 										var list = ge( 'WorkgroupInner' ).getElementsByTagName( 'div' );
-						
+										
+										ge( 'WorkgroupInner' ).className = ge( 'WorkgroupInner' ).className.split( ' Visible' ).join( '' ) + ( filter ? ' Visible' : '' );
+										
 										if( list.length > 0 )
 										{
 											for( var a = 0; a < list.length; a++ )
@@ -6787,7 +6802,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 						loadingInfo.userInfo = userInfo;
 						
-						if( ShowLog ) console.log( '// 0 | Load userinfo', userInfo );
+						if( ShowLog || 1==1 ) console.log( '// 0 | Load userinfo', userInfo );
 						
 						// If abort request is set stop loading this user ...
 						if( UsersSettings( 'abort' ) )
@@ -6825,7 +6840,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						if( e != 'ok' ) wgroups = '';
 						loadingInfo.workgroups = wgroups;
 						
-						if( ShowLog ) console.log( '// 3 | Get user\'s workgroups' );
+						if( ShowLog || 1==1 ) console.log( '// 3 | Get user\'s workgroups', wgroups );
 						
 						// If abort request is set stop loading this user ...
 						if( UsersSettings( 'abort' ) )
@@ -6839,7 +6854,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 						initUsersDetails( loadingInfo, [ 'workgroup' ] );
 					}
-					u.execute( 'workgroups', { userid: extra, authid: Application.authId } );
+					u.execute( 'workgroups', { userid: extra, owner: true, level: true, authid: Application.authId } );
 					
 					// Go to next in line ...
 					loadingList[ ++loadingSlot ](  );
@@ -7889,15 +7904,13 @@ function applications( callback, id )
 				
 						if( json )
 						{
-							if( ShowLog ) console.log( 'listuserapplications ', { e:e, d:json } );
+							//console.log( 'Listuserapplications: ', json );
 							
 							return callback( true, json );
 						}
 					} 
 					catch( e ){ } 
 				}
-				
-				if( ShowLog ) console.log( 'listuserapplications ', { e:e, d:d } );
 				
 				return callback( false, false );
 			}
@@ -7914,17 +7927,16 @@ function applications( callback, id )
 					{
 						let json = JSON.parse( d );
 				
+						
 						if( json )
 						{
-							if( ShowLog ) console.log( 'software ', { e:e, d:json } );
+							//console.log( 'Software: ', json );
 							
 							return callback( true, json );
 						}
 					} 
 					catch( e ){ } 
 				}
-				
-				if( ShowLog ) console.log( 'software ', { e:e, d:d } );
 				
 				return callback( false, false );
 			}
@@ -8293,7 +8305,7 @@ function NewUser( _this )
 					ae.style.display = 'none';
 				}
 			}
-		
+			
 			let au = ge( 'usFullname' );
 			if( au ) au.onblur = function( e )
 			{
@@ -8332,7 +8344,6 @@ function NewUser( _this )
 			}
 			
 			// Workgroups ...
-			
 			
 			function GetUserWorkgroups( callback )
 			{
@@ -8383,22 +8394,24 @@ function NewUser( _this )
 							workgroups = wgroups.data.details.groups;
 						}
 						
+						var out = {};
+						
 						if( wgroups && workgroups )
 						{
-							let out = [];
-							
 							for( var a in workgroups )
 							{
 								if( workgroups[a] && workgroups[a].ID )
 								{
-									out.push( { ID: workgroups[a].ID, Name: workgroups[a].name, ParentID: workgroups[a].parentid } );
+									out[workgroups[a].ID] = ( { ID: workgroups[a].ID, UUID: workgroups[a].uuid, Name: workgroups[a].name, ParentID: workgroups[a].parentid, Status: workgroups[a].status } );
 								}
 							}
 							
-							if( callback ) return callback( out );
+							//if( callback ) return callback( out );
 						}
 						
-						if( callback ) return callback( [] );
+						listModuleWorkgroups( out, callback );
+						
+						//if( callback ) return callback( [] );
 						
 					}
 					f.execute( 'group/list', { authid: Application.authId, args: args } );
@@ -8437,6 +8450,67 @@ function NewUser( _this )
 				
 			}
 			
+			// TODO: Temporary until owner and only admin flags are supported in system.library/group/list
+			
+			function listModuleWorkgroups( workgroups, callback )
+			{
+		
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					var data = null;
+			
+					try
+					{
+						data = JSON.parse( d );
+					}
+					catch( e ) {  }
+			
+					if( data && workgroups )
+					{
+						for( var i in data )
+						{
+							// Set Owner ...
+					
+							if( data[i] && data[i].ID && data[i].Owner && workgroups[data[i].ID] )
+							{
+								workgroups[data[i].ID].Owner = data[i].Owner;
+							}
+					
+							// Hide non Admin workgroups ...
+					
+							if( data[i] && data[i].ID && data[i].Level == 'User' && workgroups[data[i].ID] )
+							{
+								workgroups[data[i].ID].Hide = true;
+							}
+					
+						}
+					}
+			
+					console.log( '[1] listModuleWorkgroups', workgroups );
+			
+					console.log( '[2] listModuleWorkgroups', { e:e, d:(data?data:d) } );
+			
+					if( callback )
+					{
+						// Temporary until FriendCore supports all this ...
+						if( data )
+						{
+							return callback( data );
+						}
+						//if( workgroups )
+						//{
+						//	return callback( workgroups );
+						//}
+				
+						return callback( [] );
+					}
+			
+				}
+				m.execute( 'workgroups', { owner: true, level: true, authid: Application.authId } );
+		
+			}
+			
 			
 			
 			GetUserWorkgroups( function( workgroups )
@@ -8445,7 +8519,7 @@ function NewUser( _this )
 				if( ShowLog ) console.log( 'workgroups: ', workgroups );
 				
 				groups = {};
-			
+				
 				if( workgroups )
 				{
 					
@@ -8554,14 +8628,14 @@ function NewUser( _this )
 						
 						str += '<div>';
 						
-						str += '<div class="HRow" id="WorkgroupID_' + groups[a].ID + '">';
+						str += '<div class="HRow'+(groups[a].Hide||!groups[a].Owner?' Hidden':'')+'" id="WorkgroupID_' + groups[a].ID + '">';
 						
 						str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 						str += '		<span name="' + groups[a].Name + '" class="IconMedium fa-users"></span>';
 						str += '	</div>';
-						str += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[a].Name+ '</div>';
+						str += '	<div class="PaddingSmall HContent60 InputHeight FloatLeft Ellipsis">' + groups[a].Name + (groups[a].Owner?' (by '+groups[a].Owner+')':'') + '</div>';
 						
-						str += '	<div class="PaddingSmall HContent20 FloatRight Ellipsis">';
+						str += '	<div class="PaddingSmall HContent15 FloatRight Ellipsis">';
 						//str += '		<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
 						str += CustomToggle( 'wid_' + groups[a].ID, 'FloatRight', null, function (  )
 						{
@@ -8656,15 +8730,15 @@ function NewUser( _this )
 								
 								ii++;
 								
-								str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].ID + '">';
+								str += '<div class="HRow'+(groups[a].groups[aa].Hide||!groups[a].groups[aa].Owner?' Hidden':'')+'" id="WorkgroupID_' + groups[a].groups[aa].ID + '">';
 								
 								str += '	<div class="TextCenter HContent4 InputHeight FloatLeft PaddingSmall" style="min-width:36px"></div>';
 								str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 								str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconMedium fa-users"></span>';
 								str += '	</div>';
-								str += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].Name + '</div>';
+								str += '	<div class="PaddingSmall HContent55 InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].Name + (groups[a].groups[aa].Owner?' (by '+groups[a].groups[aa].Owner+')':'') + '</div>';
 								
-								str += '<div class="PaddingSmall FloatRight Ellipsis">';
+								str += '<div class="PaddingSmall HContent15 FloatRight Ellipsis">';
 								//str += '<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
 								
 								str += CustomToggle( 'wid_' + groups[a].groups[aa].ID, 'FloatRight', null, function (  )
@@ -8760,15 +8834,15 @@ function NewUser( _this )
 										
 										ii++;
 										
-										str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '">';
+										str += '<div class="HRow'+(groups[a].groups[aa].groups[aaa].Hide||!groups[a].groups[aa].groups[aaa].Owner?' Hidden':'')+'" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '">';
 										
 										str += '	<div class="TextCenter HContent8 InputHeight FloatLeft PaddingSmall" style="min-width:73px"></div>';
 										str += '	<div class="TextCenter HContent10 InputHeight FloatLeft PaddingSmall Ellipsis edit">';
 										str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconMedium fa-users"></span>';
 										str += '	</div>';
-										str += '	<div class="PaddingSmall InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + '</div>';
+										str += '	<div class="PaddingSmall HContent55 InputHeight FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + (groups[a].groups[aa].groups[aaa].Owner?' (by '+groups[a].groups[aa].groups[aaa].Owner+')':'') + '</div>';
 										
-										str += '	<div class="PaddingSmall FloatRight Ellipsis">';
+										str += '	<div class="PaddingSmall HContent15 FloatRight Ellipsis">';
 										//str += '		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"></button>';
 										
 										str += CustomToggle( 'wid_' + groups[a].groups[aa].groups[aaa].ID, 'FloatRight', null, function (  )
@@ -9220,6 +9294,8 @@ function NewUser( _this )
 					if( ge( 'WorkgroupInner' ) )
 					{
 						var list = ge( 'WorkgroupInner' ).getElementsByTagName( 'div' );
+						
+						ge( 'WorkgroupInner' ).className = ge( 'WorkgroupInner' ).className.split( ' Visible' ).join( '' ) + ( filter ? ' Visible' : '' );
 						
 						if( list.length > 0 )
 						{
@@ -10355,6 +10431,7 @@ Sections.user_disk_refresh = function( mountlist, userid, func )
 						user  : rows[b].UserID,
 						name  : rows[b].Name,
 						type  : rows[b].Type,
+						group : rows[b].GroupID,
 						csize : csize,
 						cunit : cunit,
 						size  : size, 
@@ -10398,7 +10475,7 @@ Sections.user_disk_refresh = function( mountlist, userid, func )
 					}
 					else
 					{
-						mlst += '<div class="PaddingSmall Ellipsis" onclick="Sections.user_disk_update(' + storage.user + ',' + storage.id + ',\'' + storage.name + '\',' + userid + ')">';
+						mlst += '<div class="PaddingSmall Ellipsis" onclick="Sections.user_disk_update(' + storage.user + ',' + storage.id + ',\'' + storage.name + '\',' + userid + ',' + storage.group + ')">';
 					}
 					
 					mlst += '<div class="Col1 FloatLeft" id="Storage_' + storage.id + '">';
@@ -11209,7 +11286,7 @@ Sections.user_disk_save = function( userid, did )
 			{
 				Notify( { title: i18n( 'i18n_disk_success' ), text: i18n( 'i18n_disk_edited' ) } );
 			}
-			remountDrive( ( elems[ 'Name' ] && elems[ 'Name' ].current ? elems[ 'Name' ].current : data.Name ), data.Name, data.userid, function()
+			remountDrive( ( elems[ 'Name' ] && elems[ 'Name' ].current ? elems[ 'Name' ].current : data.Name ), data.Name, data.userid, 0, function()
 			{
 				
 				let u = new Module( 'system' );
@@ -11256,7 +11333,7 @@ Sections.user_disk_mount = function( devname, userid, _this )
 	{
 		if( _this.innerHTML.toLowerCase().indexOf( 'unmount' ) >= 0 )
 		{
-			unmountDrive( devname, userid, function( e, d )
+			unmountDrive( devname, userid, 0, function( e, d )
 			{
 				//console.log( 'unmountDrive( '+devname+', '+userid+' ) ', { e:e, d:d } );
 				
@@ -11296,7 +11373,7 @@ Sections.user_disk_mount = function( devname, userid, _this )
 		}
 		else
 		{
-			mountDrive( devname, userid, function( e, d )
+			mountDrive( devname, userid, 0, function( e, d )
 			{
 				//console.log( 'mountDrive( '+devname+', '+userid+' ) ', { e:e, d:d } );
 				
@@ -11338,8 +11415,9 @@ Sections.user_disk_mount = function( devname, userid, _this )
 
 // TODO: Check why it doesn't work to mount / unmount for other users as admin or with rights ...
 
-function mountDrive( devname, userid, callback )
+function mountDrive( devname, userid, groupid, callback )
 {
+	if( !groupid ) groupid = 0;
 	if( devname )
 	{
 		let vars = { devname: devname };
@@ -11350,6 +11428,7 @@ function mountDrive( devname, userid, callback )
 		{
 			vars.userid = userid;
 			vars.authid = Application.authId;
+			if( groupid > 0 ) vars.groupid = groupid;
 			
 			vars.args = JSON.stringify( {
 				'type'    : 'write', 
@@ -11381,8 +11460,10 @@ function mountDrive( devname, userid, callback )
 	}
 }
 
-function unmountDrive( devname, userid, callback )
+function unmountDrive( devname, userid, groupid, callback )
 {
+	if( !groupid ) groupid = 0;
+	
 	if( devname )
 	{
 		let vars = { devname: devname };
@@ -11393,6 +11474,8 @@ function unmountDrive( devname, userid, callback )
 		{
 			vars.userid = userid;
 			vars.authid = Application.authId;
+			
+			if( groupid > 0 ) vars.groupid = groupid;
 			
 			vars.args = JSON.stringify( {
 				'type'    : 'write', 
@@ -11424,14 +11507,14 @@ function unmountDrive( devname, userid, callback )
 	}
 }
 
-function remountDrive( oldname, newname, userid, callback )
+function remountDrive( oldname, newname, userid, groupid, callback )
 {
 	if( oldname && newname )
 	{
-		unmountDrive( oldname, userid, function( e, d )
+		unmountDrive( oldname, userid, groupid, function( e, d )
 		{
 			
-			mountDrive( newname, userid, function( e, d )
+			mountDrive( newname, userid, groupid, function( e, d )
 			{
 				
 				if( callback ) callback( e, d );
@@ -11595,7 +11678,9 @@ function _saveUser( uid, callback )
 		let d = ( server && server.data   ? server.data   : {} );
 		
 		if( ShowLog ) console.log( '_saveUser( uid, callback, newuser ) ', { e:e, d:d, args: args, server: server } );
-				
+		
+		if( initdebug ) console.log( initdebug == 'pretty' ? JSON.stringify( server, null, 4 ) : server );
+		
 		if( e == 'ok' )
 		{
 			
@@ -11772,7 +11857,7 @@ Sections.user_disk_remove = function( devname, did, userid )
 			{
 				// This is the hard delete method, used by admins ...
 				
-				unmountDrive( devname, userid, function()
+				unmountDrive( devname, userid, 0, function()
 				{
 					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 					

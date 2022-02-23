@@ -79,8 +79,7 @@ callback_http(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 	case LWS_CALLBACK_CLOSED_HTTP:
 		if (!pss)
 			break;
-		lws_sul_schedule(lws_get_context(wsi), 0, &pss->sul, sul_cb,
-				 LWS_SET_TIMER_USEC_CANCEL);
+		lws_sul_cancel(&pss->sul);
 		break;
 
 	case LWS_CALLBACK_HTTP_WRITEABLE:
@@ -129,8 +128,10 @@ int main(int argc, const char **argv)
 
 	memset(&info, 0, sizeof info); /* otherwise uninitialized garbage */
 	info.port = 7681;
+#if defined(LWS_WITH_TLS)
 	info.ssl_cert_filepath = "localhost-100y.cert";
 	info.ssl_private_key_filepath = "localhost-100y.key";
+#endif
 	info.protocols = protocols;
 	info.options =
 		LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT |

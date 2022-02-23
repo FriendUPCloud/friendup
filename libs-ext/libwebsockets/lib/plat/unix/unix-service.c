@@ -71,14 +71,14 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 	volatile struct lws_context_per_thread *vpt;
 	struct lws_context_per_thread *pt;
 	lws_usec_t timeout_us, us;
-	int n = -1;
+	int n;
 #if (defined(LWS_ROLE_WS) && !defined(LWS_WITHOUT_EXTENSIONS)) || defined(LWS_WITH_TLS)
 	int m;
 #endif
 
 	/* stay dead once we are dead */
 
-	if (!context || !context->vhost_list)
+	if (!context)
 		return 1;
 
 	pt = &context->pt[tsi];
@@ -96,14 +96,14 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 	if (context->event_loop_ops->run_pt)
 		context->event_loop_ops->run_pt(context, tsi);
 
-	if (!pt->service_tid_detected) {
-		struct lws _lws;
+	if (!pt->service_tid_detected && context->vhost_list) {
+		lws_fakewsi_def_plwsa(pt);
 
-		memset(&_lws, 0, sizeof(_lws));
-		_lws.context = context;
+		lws_fakewsi_prep_plwsa_ctx(context);
 
 		pt->service_tid = context->vhost_list->protocols[0].callback(
-					&_lws, LWS_CALLBACK_GET_THREAD_ID,
+					(struct lws *)plwsa,
+					LWS_CALLBACK_GET_THREAD_ID,
 					NULL, NULL, 0);
 		pt->service_tid_detected = 1;
 	}
@@ -113,7 +113,7 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 	/*
 	 * service ripe scheduled events, and limit wait to next expected one
 	 */
-	us = __lws_sul_service_ripe(&pt->pt_sul_owner, us);
+	us = __lws_sul_service_ripe(pt->pt_sul_owner, LWS_COUNT_PT_SUL_OWNERS, us);
 	if (us && us < timeout_us)
 		timeout_us = us;
 

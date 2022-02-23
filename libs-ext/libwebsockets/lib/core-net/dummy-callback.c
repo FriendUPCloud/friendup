@@ -24,6 +24,9 @@
 
 #include "private-lib-core.h"
 
+/* max individual proxied header payload size */
+#define MAXHDRVAL 1024
+
 #if defined(LWS_WITH_HTTP_PROXY)
 static int
 proxy_header(struct lws *wsi, struct lws *par, unsigned char *temp,
@@ -33,16 +36,23 @@ proxy_header(struct lws *wsi, struct lws *par, unsigned char *temp,
 
 	if (n < 1) {
 		lwsl_debug("%s: no index %d:\n", __func__, index);
+
 		return 0;
 	}
 
-	if (lws_hdr_copy(par, (char *)temp, temp_len, index) < 0)
+	if (lws_hdr_copy(par, (char *)temp, temp_len, index) < 0) {
+		lwsl_notice("%s: unable to copy par hdr idx %d (len %d)\n",
+				__func__, index, n);
 		return -1;
+	}
 
 	lwsl_debug("%s: index %d: %s\n", __func__, index, (char *)temp);
 
-	if (lws_add_http_header_by_token(wsi, index, temp, n, p, end))
+	if (lws_add_http_header_by_token(wsi, index, temp, n, p, end)) {
+		lwsl_notice("%s: unable to append par hdr idx %d (len %d)\n",
+				__func__, index, n);
 		return -1;
+	}
 
 	return 0;
 }
@@ -112,7 +122,8 @@ lws_callback_ws_proxy(struct lws *wsi, enum lws_callback_reasons reason,
 		if (!wsi->h1_ws_proxied || !wsi->parent)
 			break;
 
-		lws_process_ws_upgrade2(wsi->parent);
+		if (lws_process_ws_upgrade2(wsi->parent))
+			return -1;
 
 #if defined(LWS_WITH_HTTP2)
 		if (wsi->parent->mux_substream)
@@ -125,7 +136,7 @@ lws_callback_ws_proxy(struct lws *wsi, enum lws_callback_reasons reason,
 
 	case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
 	case LWS_CALLBACK_CLIENT_CLOSED:
-		lwsl_user("%s: client closed: parent %p\n", __func__, wsi->parent);
+		lwsl_info("%s: client closed: parent %p\n", __func__, wsi->parent);
 		if (wsi->parent)
                        lws_set_timeout(wsi->parent, 1, LWS_TO_KILL_ASYNC);
 		break;
@@ -133,7 +144,7 @@ lws_callback_ws_proxy(struct lws *wsi, enum lws_callback_reasons reason,
 	case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER:
 	{
 		unsigned char **p = (unsigned char **)in, *end = (*p) + len,
-				    tmp[128];
+				    tmp[MAXHDRVAL];
 
 		proxy_header(wsi, wsi->parent, tmp, sizeof(tmp),
 			      WSI_TOKEN_HTTP_ACCEPT_LANGUAGE, p, end);
@@ -193,7 +204,7 @@ lws_callback_ws_proxy(struct lws *wsi, enum lws_callback_reasons reason,
 		return 1;
 
 	case LWS_CALLBACK_CLOSED:
-		lwsl_user("%s: closed\n", __func__);
+		lwsl_info("%s: closed\n", __func__);
 		return -1;
 
 	case LWS_CALLBACK_RECEIVE:
@@ -250,6 +261,7 @@ const struct lws_protocols lws_ws_proxy = {
 
 #endif
 
+
 int
 lws_callback_http_dummy(struct lws *wsi, enum lws_callback_reasons reason,
 			void *user, void *in, size_t len)
@@ -282,7 +294,7 @@ lws_callback_http_dummy(struct lws *wsi, enum lws_callback_reasons reason,
 	case LWS_CALLBACK_HTTP_BODY_COMPLETION:
 #if defined(LWS_WITH_HTTP_PROXY)
 		if (wsi->child_list) {
-			lwsl_user("%s: LWS_CALLBACK_HTTP_BODY_COMPLETION: %d\n", __func__, (int)len);
+			lwsl_info("%s: LWS_CALLBACK_HTTP_BODY_COMPLETION: %d\n", __func__, (int)len);
 			break;
 		}
 #endif
@@ -296,7 +308,7 @@ lws_callback_http_dummy(struct lws *wsi, enum lws_callback_reasons reason,
 #if defined(LWS_WITH_HTTP_PROXY)
 	case LWS_CALLBACK_HTTP_BODY:
 		if (wsi->child_list) {
-			lwsl_user("%s: LWS_CALLBACK_HTTP_BODY: stashing %d\n", __func__, (int)len);
+			lwsl_info("%s: LWS_CALLBACK_HTTP_BODY: stashing %d\n", __func__, (int)len);
 			if (lws_buflist_append_segment(&wsi->http.buflist_post_body, in, len) < 0)
 				return -1;
 			lws_callback_on_writable(wsi->child_list);
@@ -314,7 +326,7 @@ lws_callback_http_dummy(struct lws *wsi, enum lws_callback_reasons reason,
 				lwsl_debug("AUX_BF__CGI forcing close\n");
 				return -1;
 			}
-			if (!n && wsi->http.cgi &&
+			if (!n && wsi->http.cgi && wsi->http.cgi->lsp &&
 			    wsi->http.cgi->lsp->stdwsi[LWS_STDOUT])
 				lws_rx_flow_control(
 					wsi->http.cgi->lsp->stdwsi[LWS_STDOUT], 1);
@@ -325,12 +337,16 @@ lws_callback_http_dummy(struct lws *wsi, enum lws_callback_reasons reason,
 			else
 				wsi->reason_bf &= ~LWS_CB_REASON_AUX_BF__CGI;
 
-			if (wsi->http.cgi && wsi->http.cgi->cgi_transaction_over)
+			if (wsi->http.cgi && wsi->http.cgi->cgi_transaction_over) {
+				lwsl_info("%s: txn over\n", __func__);
 				return -1;
+			}
+
 			break;
 		}
 
-		if (wsi->reason_bf & LWS_CB_REASON_AUX_BF__CGI_CHUNK_END) {
+		if ((wsi->http.cgi && wsi->http.cgi->cgi_transaction_over) ||
+		    (wsi->reason_bf & LWS_CB_REASON_AUX_BF__CGI_CHUNK_END)) {
 			if (!wsi->mux_substream) {
 				memcpy(buf + LWS_PRE, "0\x0d\x0a\x0d\x0a", 5);
 				lwsl_debug("writing chunk term and exiting\n");
@@ -482,7 +498,7 @@ lws_callback_http_dummy(struct lws *wsi, enum lws_callback_reasons reason,
 			return 0;
 
 		start = p = (unsigned char *)buf + LWS_PRE;
-		end = p + sizeof(buf) - LWS_PRE - 256;
+		end = p + sizeof(buf) - LWS_PRE - MAXHDRVAL;
 
 		if (lws_add_http_header_status(lws_get_parent(wsi),
 				lws_http_client_http_response(wsi), &p, end))
@@ -492,21 +508,21 @@ lws_callback_http_dummy(struct lws *wsi, enum lws_callback_reasons reason,
 		 * copy these headers from the client connection to the parent
 		 */
 
-		proxy_header(parent, wsi, end, 256,
+		proxy_header(parent, wsi, end, MAXHDRVAL,
 			     WSI_TOKEN_HTTP_CONTENT_LENGTH, &p, end);
-		proxy_header(parent, wsi, end, 256,
+		proxy_header(parent, wsi, end, MAXHDRVAL,
 			     WSI_TOKEN_HTTP_CONTENT_TYPE, &p, end);
-		proxy_header(parent, wsi, end, 256,
+		proxy_header(parent, wsi, end, MAXHDRVAL,
 			     WSI_TOKEN_HTTP_ETAG, &p, end);
-		proxy_header(parent, wsi, end, 256,
+		proxy_header(parent, wsi, end, MAXHDRVAL,
 			     WSI_TOKEN_HTTP_ACCEPT_LANGUAGE, &p, end);
-		proxy_header(parent, wsi, end, 256,
+		proxy_header(parent, wsi, end, MAXHDRVAL,
 			     WSI_TOKEN_HTTP_CONTENT_ENCODING, &p, end);
-		proxy_header(parent, wsi, end, 256,
+		proxy_header(parent, wsi, end, MAXHDRVAL,
 			     WSI_TOKEN_HTTP_CACHE_CONTROL, &p, end);
-		proxy_header(parent, wsi, end, 256,
+		proxy_header(parent, wsi, end, MAXHDRVAL,
 			     WSI_TOKEN_HTTP_SET_COOKIE, &p, end);
-		proxy_header(parent, wsi, end, 256,
+		proxy_header(parent, wsi, end, MAXHDRVAL,
 			     WSI_TOKEN_HTTP_LOCATION, &p, end);
 
 		if (!parent->mux_substream)
@@ -637,8 +653,9 @@ lws_callback_http_dummy(struct lws *wsi, enum lws_callback_reasons reason,
 			/* TBD stdin rx flow control */
 			break;
 		case LWS_STDOUT:
-			/* quench POLLIN on STDOUT until MASTER got writeable */
-			lws_rx_flow_control(args->stdwsi[LWS_STDOUT], 0);
+			if (args->stdwsi[LWS_STDOUT])
+				/* quench POLLIN on STDOUT until MASTER got writeable */
+				lws_rx_flow_control(args->stdwsi[LWS_STDOUT], 0);
 			wsi->reason_bf |= LWS_CB_REASON_AUX_BF__CGI;
 			/* when writing to MASTER would not block */
 			lws_callback_on_writable(wsi);
@@ -773,33 +790,38 @@ lws_callback_http_dummy(struct lws *wsi, enum lws_callback_reasons reason,
 			lwsl_notice("LWS_CALLBACK_CGI_STDIN_DATA: "
 				    "sent %d only %d went", n, args->len);
 
+		lwsl_info("%s: proxied %d bytes\n", __func__, n);
+
 		if (wsi->http.cgi->post_in_expected && args->stdwsi[LWS_STDIN] &&
 		    args->stdwsi[LWS_STDIN]->desc.filefd > 0) {
 			wsi->http.cgi->post_in_expected -= n;
+
 			if (!wsi->http.cgi->post_in_expected) {
 				struct lws *siwsi = args->stdwsi[LWS_STDIN];
 
-				lwsl_debug("%s: expected POST in end: "
-					   "closing stdin wsi %p, fd %d\n",
-					   __func__, siwsi, siwsi->desc.sockfd);
+				/*
+				 * The situation here is that we finished
+				 * proxying the incoming body from the net to
+				 * the STDIN stdwsi... and we want to close it
+				 * so it can understand we are done (necessary
+				 * if no content-length)...
+				 */
 
-				__remove_wsi_socket_from_fds(siwsi);
-				lwsi_set_state(siwsi, LRS_DEAD_SOCKET);
-				siwsi->socket_is_permanently_unusable = 1;
-//				lws_remove_child_from_any_parent(siwsi);
-				if (wsi->context->event_loop_ops->
-							close_handle_manually) {
+				lwsl_info("%s: expected POST in end: "
+					    "closing stdin wsi %p, fd %d\n",
+					    __func__, siwsi,
+					    siwsi->desc.sockfd);
 
-					wsi->context->event_loop_ops->
-						close_handle_manually(siwsi);
-					siwsi->told_event_loop_closed = 1;
-				} else {
-					compatible_close(siwsi->desc.sockfd);
-					__lws_free_wsi(siwsi);
-				}
-				wsi->http.cgi->lsp->pipe_fds[LWS_STDIN][1] = -1;
+				/*
+				 * We don't want the child / parent relationship
+				 * to be handled in close, since we want the
+				 * rest of the cgi and children to stay up
+				 */
 
-//				args->stdwsi[LWS_STDIN] = NULL;
+				lws_remove_child_from_any_parent(siwsi);
+				lws_wsi_close(siwsi, LWS_TO_KILL_ASYNC);
+				wsi->http.cgi->lsp->stdwsi[LWS_STDIN] = NULL;
+				lws_spawn_stdwsi_closed(wsi->http.cgi->lsp, siwsi);
 			}
 		}
 
@@ -816,7 +838,7 @@ lws_callback_http_dummy(struct lws *wsi, enum lws_callback_reasons reason,
 
 #if LWS_MAX_SMP > 1
 	case LWS_CALLBACK_GET_THREAD_ID:
-		return (int)(unsigned long long)pthread_self();
+		return (int)(lws_intptr_t)pthread_self();
 #endif
 
 	default:
