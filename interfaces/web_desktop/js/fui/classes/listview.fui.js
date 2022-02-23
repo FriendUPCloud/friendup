@@ -30,6 +30,8 @@ class FUIListview extends FUIElement
     
     grabAttributes( domElement )
     {
+        super.grabAttributes( domElement );
+        
         let self = this;
         
         let header = domElement.getElementsByTagName( 'listviewhead' );
