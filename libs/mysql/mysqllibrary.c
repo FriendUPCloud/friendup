@@ -1115,7 +1115,8 @@ MYSQL_RES *Query( struct SQLLibrary *l, const char *sel )
 			const char *err = mysql_error( l->con.sql_Con );
 			FERROR( "%s\n", err );
 		
-			if( strstr( err, "List connection to MySQL server" ) != NULL )
+			// Lost connection to MySQL server during query
+			if( strncmp( err, "Lost connection to MySQL server", 30 ) == 0 )
 			{
 				l->con.sql_Recconect = TRUE;
 			}
