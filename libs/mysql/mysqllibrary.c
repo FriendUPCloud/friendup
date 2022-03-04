@@ -1118,7 +1118,8 @@ MYSQL_RES *Query( struct SQLLibrary *l, const char *sel )
 			// Lost connection to MySQL server during query
 			if( strncmp( err, "Lost connection to MySQL server", 30 ) == 0 )
 			{
-				l->con.sql_Recconect = TRUE;
+				Reconnect( l );
+				//l->con.sql_Recconect = TRUE;
 			}
 		
 			return NULL;
@@ -1150,15 +1151,15 @@ int QueryWithoutResults( struct SQLLibrary *l, const char *sel )
 
 			if( err != 0 )
 			{
-				const char *errstr = mysql_error( l->con.sql_Con );
+				const char *err = mysql_error( l->con.sql_Con );
 				
-				FERROR("mysql_execute failed  SQL: %s error: %s\n", sel, errstr );
-				if( strstr( errstr, "Lost connection to MySQL server" ) != NULL )
+				FERROR("mysql_execute failed  SQL: %s error: %s\n", sel, err );
+				if( strncmp( err, "Lost connection to MySQL server", 30 ) == 0 )
 				{
 					Reconnect( l );
 					//l->con.sql_Recconect = TRUE;
 				}
-				else if( strstr( errstr, "Duplicate column name " ) != NULL )
+				else if( strstr( err, "Duplicate column name " ) != NULL )
 				{
 					return 0;
 				}
