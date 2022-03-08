@@ -51,10 +51,10 @@
 .FUICheckbox
 {
     position: relative;
-    width: 48px;
+    width: 40px;
     height: 18px;
     background-color: var(--fui-checkbox);
-    border-radius: 3px;
+    border-radius: 5px;
     cursor: pointer;
     display: inline-block;
 }
@@ -71,9 +71,9 @@
     left: 2px;
     width: calc(100% - 4px);
     height: calc(100% - 4px);
-    background: rgba(0,70,30,0.1);
+    background: transparent;
     overflow: hidden;
-    border-radius: 2px;
+    border-radius: 5px;
 }
 
 .FUICheckbox .FUIGroove .FUIButton
@@ -83,16 +83,15 @@
     top: 0;
     left: 0;
     height: 100%;
-    box-shadow: 0px 0px 11px rgba(0,70,30,0.3);
     transition: left,border-radius 0.25s,0.25s;
     background-color: var(--fui-checkbox-button);
-    border-radius: 2px 0 0 2px;
+    border-radius: 5px;
 }
 
 .FUICheckbox.FUIChecked .FUIGroove .FUIButton
 {
     left: 50%;
-    border-radius: 0 2px 2px 0;
+    border-radius: 5px;
 }
 
 /* Radio boxes */
