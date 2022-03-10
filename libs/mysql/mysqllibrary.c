@@ -1107,27 +1107,38 @@ MYSQL_RES *Query( struct SQLLibrary *l, const char *sel )
 		return NULL;
 	}
 	
-	if( l->con.sql_Con != NULL && mysql_ping( l->con.sql_Con ) == 0 )
+	if( l->con.sql_Con != NULL )
 	{
-		if( mysql_query( l->con.sql_Con, sel ) )
+		if( mysql_ping( l->con.sql_Con ) == 0 )
 		{
-			FERROR("Cannot run query: '%s'\n", sel );
-			const char *err = mysql_error( l->con.sql_Con );
-			FERROR( "%s\n", err );
-		
-			// Lost connection to MySQL server during query
-			if( strncmp( err, "Lost connection to MySQL server", 30 ) == 0 )
+			if( mysql_query( l->con.sql_Con, sel ) )
 			{
-				Reconnect( l );
-				//l->con.sql_Recconect = TRUE;
-			}
+				FERROR("Cannot run query: '%s'\n", sel );
+				const char *err = mysql_error( l->con.sql_Con );
+				FERROR( "%s\n", err );
 		
-			return NULL;
-		}
+				// Lost connection to MySQL server during query
+				if( strncmp( err, "Lost connection to MySQL server", 30 ) == 0 )
+				{
+					Reconnect( l );
+					//l->con.sql_Recconect = TRUE;
+				}
+		
+				//return NULL;
+			}
 	
-		DEBUG("[MYSQLLibrary] SELECT QUERY: >%s<\n", sel );
+			DEBUG("[MYSQLLibrary] SELECT QUERY: >%s<\n", sel );
 
-		result = mysql_store_result( l->con.sql_Con );
+			result = mysql_store_result( l->con.sql_Con );
+		}
+		else
+		{
+			FERROR("Ping to mysql server failed\n");
+		}
+	}
+	else
+	{
+		FERROR("Connection is equal to NULL\n");
 	}
 
 	return result;
@@ -1144,37 +1155,44 @@ int QueryWithoutResults( struct SQLLibrary *l, const char *sel )
 {
 	if( l != NULL )
 	{
-		if( l->con.sql_Con != NULL && mysql_ping( l->con.sql_Con ) == 0 )
+		if( l->con.sql_Con != NULL )
 		{
-			DEBUG("[QueryWithoutResults] sql: %s\n", sel );
-			int err = mysql_query( l->con.sql_Con, sel );
-
-			if( err != 0 )
+			if( mysql_ping( l->con.sql_Con ) == 0 )
 			{
-				const char *err = mysql_error( l->con.sql_Con );
+				DEBUG("[QueryWithoutResults] sql: %s\n", sel );
+				int err = mysql_query( l->con.sql_Con, sel );
+
+				if( err != 0 )
+				{
+					const char *err = mysql_error( l->con.sql_Con );
 				
-				FERROR("mysql_execute failed  SQL: %s error: %s\n", sel, err );
-				if( strncmp( err, "Lost connection to MySQL server", 30 ) == 0 )
-				{
-					Reconnect( l );
-					//l->con.sql_Recconect = TRUE;
+					FERROR("mysql_execute failed  SQL: %s error: %s\n", sel, err );
+					if( strncmp( err, "Lost connection to MySQL server", 30 ) == 0 )
+					{
+						Reconnect( l );
+						//l->con.sql_Recconect = TRUE;
+					}
+					else if( strstr( err, "Duplicate column name " ) != NULL )
+					{
+						return 0;
+					}
 				}
-				else if( strstr( err, "Duplicate column name " ) != NULL )
+				else
 				{
-					return 0;
+					MYSQL_RES *results;
+					results = mysql_store_result( l->con.sql_Con );
+					if( results != NULL )
+					{
+						mysql_free_result( results );
+					}
 				}
+
+				return err;
 			}
 			else
 			{
-				MYSQL_RES *results;
-				results = mysql_store_result( l->con.sql_Con );
-				if( results != NULL )
-				{
-					mysql_free_result( results );
-				}
+				FERROR("Ping to mysql server failed\n");
 			}
-
-			return err;
 		}
 		else
 		{
@@ -1905,14 +1923,19 @@ char* StringDuplicate( const char* str )
  */
 int Reconnect( struct SQLLibrary *l )
 {
+	DEBUG("[MYSQLLibrary] Reconnect\n");
+	
 	if( l->con.sql_Con != NULL )
 	{
 		mysql_close( l->con.sql_Con );
 	}
 	
+	DEBUG("[MYSQLLibrary] mysql closed\n");
+	
 	l->con.sql_Con = mysql_init( NULL );
 	if( l->con.sql_Con != NULL )
 	{
+		DEBUG("[MYSQLLibrary] Connection initialized\n");
 		void *connection = mysql_real_connect( l->con.sql_Con, l->con.sql_Host, l->con.sql_DBName, l->con.sql_User, l->con.sql_Pass, l->con.sql_Port, NULL, 0 );
 		if( connection == NULL )
 		{
@@ -1920,6 +1943,8 @@ int Reconnect( struct SQLLibrary *l )
 			FERROR( "[MYSQLLibrary] Failed to connect to database: '%s'.\n", mysql_error(l->con.sql_Con) );
 			return -1;
 		}
+		
+		DEBUG("[MYSQLLibrary] Connected\n");
 		int reconnect = 1;
 		mysql_options( connection, MYSQL_OPT_RECONNECT, &reconnect );
 		return 0;
