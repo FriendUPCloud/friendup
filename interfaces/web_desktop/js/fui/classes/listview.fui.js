@@ -192,6 +192,9 @@ class FUIListview extends FUIElement
     		
 			for( let z = 0; z < json[b].length; z++ )
 			{
+				// Not enough headers for json
+				if( z >= this.headerElements.length ) break;
+				
 				let col = document.createElement( 'div' );
 				
 				let w = this.headerElements && this.headerElements.length ? 
