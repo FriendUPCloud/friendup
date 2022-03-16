@@ -1727,7 +1727,7 @@ int UMGetActiveUsersWSList( UserManager *um, BufString *bs, FULONG userid, FBOOL
 		{
 			DEBUG("[UMWebRequest] Going through users, user: %s\n", usr->u_Name );
 	
-			if( usr->u_ID == userid )
+			if( userid == 0 || usr->u_ID == userid )
 			{
 				USER_LOCK( usr );
 			
