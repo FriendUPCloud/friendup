@@ -1800,8 +1800,16 @@ int UMGetActiveUsersWSList( UserManager *um, BufString *bs, FULONG userid, FBOOL
 				if( locses != NULL )
 				{
 					FBOOL add = FALSE;
-					//DEBUG("[UMWebRequest] Going through sessions, device: %s time %lu timeout time %lu WS ptr %p\n", locses->us_DeviceIdentity, (long unsigned int)(timestamp - locses->us_LoggedTime), l->sl_RemoveSessionsAfterTime, locses->us_WSClients );
-				
+					/*
+					DEBUG("[UMWebRequest] Going through sessions, "
+							"device: %s time %lu timeout time %lu WS ptr %p\n", 
+						locses->us_DeviceIdentity, 
+						(long unsigned int)(timestamp - locses->us_LastActionTime), 
+						l->sl_RemoveSessionsAfterTime, 
+						locses->us_WSD
+					);
+					*/
+					
 					if( ( (timestamp - locses->us_LastActionTime) < l->sl_RemoveSessionsAfterTime ) && locses->us_WSD != NULL )
 					{
 						add = TRUE;
@@ -1817,7 +1825,7 @@ int UMGetActiveUsersWSList( UserManager *um, BufString *bs, FULONG userid, FBOOL
 							add = FALSE;
 						}
 					}
-
+					
 					if( add == TRUE )
 					{
 						char tmp[ 512 ];
@@ -1825,12 +1833,34 @@ int UMGetActiveUsersWSList( UserManager *um, BufString *bs, FULONG userid, FBOOL
 
 						if( pos == 0 )
 						{
-							tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
+							tmpsize = snprintf( tmp, sizeof(tmp), "{"
+									"\"ID\":%ld,"
+									"\"UUID\":\"%s\","
+									"\"username\":\"%s\","
+									"\"deviceidentity\":\"%s\""
+								"}", 
+								usr->u_ID,
+								usr->u_UUID,
+								usr->u_Name, 
+								locses->us_DeviceIdentity 
+							);
 						}
 						else
 						{
-							tmpsize = snprintf( tmp, sizeof(tmp), ",{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
+							tmpsize = snprintf( tmp, sizeof(tmp), ",{"
+									"\"ID\":%ld,"
+									"\"UUID\":\"%s\","
+									"\"username\":\"%s\","
+									"\"deviceidentity\":\"%s\""
+								"}", 
+								usr->u_ID,
+								usr->u_UUID,
+								usr->u_Name, 
+								locses->us_DeviceIdentity 
+							);
 						}
+						
+						BufStringAddSize( bs, tmp, tmpsize );
 
 						pos++;
 					}
