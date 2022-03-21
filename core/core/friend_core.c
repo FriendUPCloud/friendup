@@ -101,7 +101,7 @@ int nothreads = 0;					/// threads coutner @todo to rewrite
 
 FriendCoreInstance *FriendCoreNew( void *sb, int id, FBOOL ssl, int port, int maxp, int bufsiz, char *hostname )
 {
-	LOG( FLOG_INFO, "[FriendCoreNew] Starting friend core\n" );
+	LOG( FLOG_INFO, "[FriendCoreNew] Starting friendcore\n" );
 	
 	// FOR DEBUG PURPOSES! -ht
 	//_reads = 0;
@@ -132,7 +132,7 @@ FriendCoreInstance *FriendCoreNew( void *sb, int id, FBOOL ssl, int port, int ma
 		return NULL;
 	}
 	
-	LOG( FLOG_INFO,"[FriendCoreNew] WorkerManager started\n");
+	LOG( FLOG_INFO,"[FriendCoreNew] Starting friendcore end\n");
 	
 	return fc;
 }
@@ -1828,6 +1828,8 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 		return;
 	}
 	SystemBase *sb = (SystemBase *)fc->fci_SB;
+	
+	DEBUG("[FriendCoreEpoll] start\n");
 
 	// Track fds.
 	fc->FDCount = 0;

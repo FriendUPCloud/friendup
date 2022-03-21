@@ -284,6 +284,12 @@ int CommServiceStart( CommService *s )
 			usleep( 2000 );
 		}
 		
+		// in case when service was launched and died in same time
+		if( s->s_Thread->t_Launched == FALSE )
+		{
+			s->s_Started = FALSE;
+		}
+		
 		pthread_t t;
 		pthread_create( &t, NULL, &ServiceTempThread, s );
 	}
@@ -1177,6 +1183,7 @@ int CommServiceThreadServer( FThread *ptr )
 	else
 	{
 		FERROR("[COMMSERV] Cannot open socket for communcation thread!\n");
+		service->s_Started = TRUE;
 	}
 	
 	DEBUG("[COMMSERV] CommunicationService End\n");

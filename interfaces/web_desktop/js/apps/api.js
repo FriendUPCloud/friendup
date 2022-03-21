@@ -1132,24 +1132,6 @@ function receiveEvent( event, queued )
 									f.load();
 								}
 								break;
-							case 'fui':
-								if( flags.frameworks.fui.javascript && flags.frameworks.fui.data )
-								{
-									let f = new File( 'System:sandboxed.html' );
-									f.onLoad = function( data )
-									{
-										let javascript = flags.frameworks.fui.javascript;
-										view.setContent( 
-`<script src="/webclient/js/fui/fui.js"></script>
-<script src="${javascript}"></script>
-<script type="text/javascript">
-	fui.loadJSON( "${flags.frameworks.fui.data}" );
-</script>` 
-										);
-									}
-									f.load();
-								}
-								break;
 						}
 					}
 				}
@@ -6168,6 +6150,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		window.loaded = true;
 		
+		// Initialize Friend User Interface
+		FUI.initialize();
+		
 		// What to do when we are done loading.. -------------------------------
 		
 		// Async is a bitch!
@@ -6365,6 +6350,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					if( Application.run )
 					{
 						Application.run( packet );
+						FUI.initialize();
 					}
 					window.loaded = true;
 					// Use the application doneLoading function (different)
@@ -6416,9 +6402,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		'js/io/cajax.js',
 		'js/io/appConnection.js',
 		'js/io/coreSocket.js',
-		'js/gui/treeview.js'
+		'js/gui/treeview.js',
+		'js/fui/fui_v1.js',
+		'js/fui/classes/baseclasses.fui.js',
+		'js/fui/classes/group.fui.js',
+		'js/fui/classes/listview.fui.js'
 	];
-	
 	let elez = [];
 	for ( let a = 0; a < js.length; a++ )
 	{
@@ -6466,7 +6455,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					'js/io/cajax.js',
 					'js/io/appConnection.js',
 					'js/io/coreSocket.js',
-					'js/gui/treeview.js'
+					'js/gui/treeview.js',
+					'js/fui/fui_v1.js',
+					'js/fui/classes/baseclasses.fui.js',
+					'js/fui/classes/group.fui.js',
+					'js/fui/classes/listview.fui.js'
 				]
 			];
 
@@ -6525,7 +6518,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		let style = document.createElement( 'style' );
 		style.innerHTML = packet.cachedAppData.css;
 		head.appendChild( style );
-		
 		let js = document.createElement( 'script' );
 		js.innerHTML = packet.cachedAppData.js;
 		head.appendChild( js );
