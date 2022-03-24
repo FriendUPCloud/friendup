@@ -2302,18 +2302,6 @@ function View( flags )
 		msg.parentViewId = Application.viewId;
 	}
 	
-	// Loads a FUI gui and populates view window
-	this.setFUITemplate( filename, callback )
-	{
-		if( callback )
-		{
-			// Fails
-			callback( false );
-		}
-		// Fails
-		return false;
-	}
-	
 	// Pop out!
 	this.popout = function()
 	{
