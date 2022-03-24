@@ -676,6 +676,8 @@ html #DoorsScreen > .ScreenContent > div > div > .File .Title > span
 	color: #f0f0f0;
 	border-radius: 15px;
 	padding: 2px 8px 2px 8px;
+	overflow: hidden;
+	max-height: 37px;
 }
 
 html #DoorsScreen > .ScreenContent > div > div > .File .Title

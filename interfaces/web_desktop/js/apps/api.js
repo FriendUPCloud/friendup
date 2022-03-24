@@ -2305,13 +2305,19 @@ function View( flags )
 	// Loads a FUI gui and populates view window
 	this.setFUITemplate = function( filename, callback )
 	{
-		if( callback )
+		let f = new File( filename );
+		f.onLoad = function( data )
 		{
-			// Fails
-			callback( false );
+			this.setContent( data, function( result )
+			{
+				if( callback )
+				{
+					// Fails
+					callback( result );
+				}
+			} );
 		}
-		// Fails
-		return false;
+		f.load();
 	}
 	
 	// Pop out!
