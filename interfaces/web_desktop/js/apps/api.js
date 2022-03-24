@@ -2303,7 +2303,7 @@ function View( flags )
 	}
 	
 	// Loads a FUI gui and populates view window
-	this.setFUITemplate( filename, callback )
+	this.setFUITemplate = function( filename, callback )
 	{
 		if( callback )
 		{
