@@ -53,4 +53,4 @@ optional arguments:
   -pc PC      Process count - number of processes launched in same time by
               user
   -mi MI      Message interval - interval between test calls
-
+  -hp HP      Check http POST parameters call
