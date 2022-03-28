@@ -2270,6 +2270,34 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( e == 'ok' )
 			{
 				Workspace.serverConfig = JSON.parse( d );
+				
+				// Support init modules
+				if( Workspace.serverConfig.initmodules )
+				{
+					let mods = Workspace.serverConfig.initmodules;
+					for( let z = 0; z < mods.length; z++ )
+					{
+						if( !Workspace.initModules )
+							Workspace.initModules = {};
+						let mod = mods[ z ];
+						if( !Workspace.initModules[ mod ] )
+						{
+							Workspace.initModules[ mod ] = {
+								loaded: true,
+								lastMessage: ''
+							};
+							( function( slot )
+							{
+								let ms = new Module( mod );
+								ms.onExecuted = function( mse, msd )
+								{
+									slot.lastMessage = mse;
+								}
+								ms.execute( 'preload' );
+							} )( Workspace.initModules[ mod ] );
+						}
+					}
+				}
 			}
 		}
 		b.execute( 'sampleconfig' );

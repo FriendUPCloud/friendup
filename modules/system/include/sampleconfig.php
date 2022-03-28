@@ -15,6 +15,24 @@ $object = new stdClass();
 $i = isset( $configfilesettings[ 'Security' ] ) && $configfilesettings[ 'Security' ][ 'InvitesEnabled' ] ? true : false;
 $object->invitesEnabled = $i;
 
+// Service initmodules to workspace
+if( isset( $configfilesettings[ 'Security' ] ) && $configfilesettings[ 'Security' ][ 'Initmodules' ] )
+{
+	$initmodules = explode( ',', $configfilesettings[ 'Security' ][ 'Initmodules' ] );
+	if( count( $initmodules ) > 0 )
+	{
+		$object->initmodules = $initmodules;
+		/*foreach( $initmodules as $mod )
+		{
+			$modPath = 'modules/' . $mod;
+			if( file_exists( $modPath ) && is_dir( $modPath ) && file_exists( $modPath . '/preload.php' ) )
+			{
+				include_once( $modPath . '/preload.php' );
+			}
+		}*/
+	}
+}
+
 die( 'ok<!--separate-->' . json_encode( $object ) );
 
 ?>
