@@ -868,7 +868,7 @@ int USMSessionSaveDB( UserSessionManager *smgr, UserSession *ses )
 		int error = 0;
 		char *temptext = FMalloc( TEMPSIZE );
 		
-		sqllib->SNPrintF( sqllib, temptext, TEMPSIZE, "SELECT ID FROM `FUserSession` WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", ses->us_DeviceIdentity,  ses->us_UserID );
+		snprintf( temptext, TEMPSIZE, "SELECT ID FROM `FUserSession` WHERE `DeviceIdentity`='%s' AND `UserID`=%lu", ses->us_DeviceIdentity,  ses->us_UserID );
 
 		void *res = sqllib->Query( sqllib, temptext );
 		char **row;
@@ -1155,6 +1155,7 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, U
 User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus, FBOOL *isSentinel )
 {
 	User *tuser = NULL;
+	/*
 	SystemBase *sb = (SystemBase *)usm->usm_SB;
 	FBOOL isUserSentinel = FALSE;
 	
@@ -1170,30 +1171,12 @@ User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus,
 		{
 			isUserSentinel = TRUE;
 			break;
-			/*
-			// Check both username and password
-
-			if( tuser != NULL && strcmp( tuser->u_Name, username ) == 0 )
-			{
-				FBOOL isUserSentinel = FALSE;
-			
-				Sentinel *sent = sb->GetSentinelUser( sb );
-				if( sent != NULL )
-				{
-					if( tuser == sent->s_User )
-					{
-						isUserSentinel = TRUE;
-					}
-				}
-				*rus = tusers;
-				break;
-			}
-			*/
 		}
 		tusers = (UserSession *)tusers->node.mln_Succ;
 	}
 	
 	SESSION_MANAGER_RELEASE( usm );
+	*/
 	
 	return tuser;
 }

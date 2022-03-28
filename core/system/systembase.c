@@ -541,8 +541,9 @@ SystemBase *SystemInit( void )
 				if( l->sqlpool[ i ].sqll_Sqllib != NULL )
 				{
 					l->sqlpool[ i ].sql_ID = i;
-					error = l->sqlpool[i ].sqll_Sqllib->SetOption( l->sqlpool[ i ].sqll_Sqllib, options );
-					error = l->sqlpool[i ].sqll_Sqllib->Connect( l->sqlpool[ i ].sqll_Sqllib, host, dbname, login, pass, port );
+					l->sqlpool[ i ].sqll_Sqllib->SetOption( l->sqlpool[ i ].sqll_Sqllib, options );
+					error = l->sqlpool[ i ].sqll_Sqllib->Connect( l->sqlpool[ i ].sqll_Sqllib, host, dbname, login, pass, port );
+					l->sqlpool[ i ].sqll_Sqllib->l_Slot = i;
 					if( error != 0 )
 					{
 						break;
@@ -556,7 +557,7 @@ SystemBase *SystemInit( void )
 				for( ; i < (unsigned int)l->sqlpoolConnections; i++ )
 				{
 					LibraryClose( l->sqlpool[ i ].sqll_Sqllib );
-					l->sqlpool[i ].sqll_Sqllib = NULL;
+					l->sqlpool[ i ].sqll_Sqllib = NULL;
 				}
 			}
 		}
@@ -2231,32 +2232,33 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
  * Drop mysql.library to pool
  *
  * @param l pointer to SystemBase
- * @param mclose pointer to mysql.library which will be returned to pool
+ * @param lib pointer to mysql.library which will be returned to pool
  */
 
-void LibrarySQLDrop( SystemBase *l, SQLLibrary *mclose )
+void LibrarySQLDrop( SystemBase *l, SQLLibrary *lib )
 {
 	int i = 0;
 	int closed = -1;
 	
-	if( mclose->l_InUse == TRUE )
+	if( FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex ) == 0 )
 	{
-		if( FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex ) == 0 )
+		if( lib->l_InUse == TRUE )
 		{
-			mclose->l_InUse = FALSE;
-			FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
+			lib->l_InUse = FALSE;
+			
+			closed = i;
 		}
-		closed = i;
+		FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
 	}
 		
-	if( mclose->l_InUse != FALSE )
+	if( lib->l_InUse != FALSE )
 	{
-		DEBUG( "[SystemBase] Mysql library %p is still in use\n", mclose );
+		DEBUG( "[SystemBase] Mysql library %p is still in use\n", lib );
 	}
 	
 	if( closed != -1 )
 	{
-		INFO( "[SystemBase] MYSQL library %p was closed properly.\n", mclose );
+		INFO( "[SystemBase] MYSQL library %p slot %d was closed properly.\n", lib, lib->l_Slot );
 	}
 }
 
