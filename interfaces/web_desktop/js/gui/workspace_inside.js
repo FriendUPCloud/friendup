@@ -2282,12 +2282,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						let mod = mods[ z ];
 						if( !Workspace.initModules[ mod ] )
 						{
+							// Don't load module twice, and track its progress
 							Workspace.initModules[ mod ] = {
 								loaded: true,
 								lastMessage: ''
 							};
 							( function( slot )
 							{
+								// If the module was found, execute its preload command
 								let ms = new Module( mod );
 								ms.onExecuted = function( mse, msd )
 								{
