@@ -2262,6 +2262,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// NB: Start of workspace_inside.js ----------------------------------------
 	refreshUserSettings: function( callback )
 	{
+		// This part is important - it is where we extend the workspace with 
+		// configurable extensions based on config settings
 		let b = new Module( 'system' );
 		b.onExecuted = function( e, d )
 		{
