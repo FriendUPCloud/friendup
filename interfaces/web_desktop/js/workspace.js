@@ -319,10 +319,7 @@ Workspace = {
 				// Set the clock
 				let e = '';
 				e +=    StrPad( d.getHours(), 2, '0' ) + ':' +
-						   StrPad( d.getMinutes(), 2, '0' ); /* + ':' +
-						   StrPad( d.getSeconds(), 2, '0' );*/
-				/*e +=    ' ' + StrPad( d.getDate(), 2, '0' ) + '/' +
-						   StrPad( d.getMonth() + 1, 2, '0' ) + '/' + d.getFullYear();*/
+						   StrPad( d.getMinutes(), 2, '0' );
 				ex.time.innerHTML = e;
 
 				// Realign workspaces
