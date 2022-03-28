@@ -2290,12 +2290,30 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							( function( slot )
 							{
 								// If the module was found, execute its preload command
-								let ms = new Module( mod );
-								ms.onExecuted = function( mse, msd )
+								if( mod.substr( 0, 10 ) == 'appModule:' )
 								{
-									slot.lastMessage = mse;
+									let m = mod.split( ':' )[1];
+									let ms = new Module( 'system' );
+									ms.onExecuted = function( mse, msd )
+									{
+										slot.lastMessage = mse;
+										console.log( 'What do we have here now?', mse, msd );
+									}
+									ms.execute( 'appmodule', {
+										appName: m,
+										method: 'preload'
+									} );
 								}
-								ms.execute( 'preload' );
+								else
+								{
+									let ms = new Module( mod );
+									ms.onExecuted = function( mse, msd )
+									{
+										slot.lastMessage = mse;
+										console.log( 'What do we have here?', mse, msd );
+									}
+									ms.execute( 'preload' );
+								}
 							} )( Workspace.initModules[ mod ] );
 						}
 					}
