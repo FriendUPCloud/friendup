@@ -353,9 +353,12 @@ var WorkspaceInside = {
 	// Invite a friend to the Workspace
 	inviteFriend: function()
 	{
-		if( !Workspace.serverConfig || !Workspace.serverConfig.invitesEnabled )
+		if( !Workspace.serverConfig || !Workspace.serverConfig || !Workspace.serverConfig.invitesEnabled )
 			return;
-		let version = 2;
+		
+		let version = 1;
+		if ( Workspace.serverConfig && Workspace.serverConfig.hasGroupFeature )
+			version = 2;
 		
 		let self = this;
 		let f = null;
@@ -374,8 +377,8 @@ var WorkspaceInside = {
 		{
 			let v = new View( {
 				title: i18n( 'i18n_invite_friend' ),
-				width: ( version == 1 ? 470 : 580 ),
-				height: ( version == 1 ? 204 : 600 )
+				width: ( version == 1 ? 480 : 580 ),
+				height: ( version == 1 ? 232 : 600 )
 			} );
 			self.inviteView = v;
 			v.onClose = function()
@@ -620,7 +623,8 @@ var WorkspaceInside = {
 					str += '</div>';
 				}
 				
-				self.inviteView.content.querySelector( '.PendingList' ).innerHTML = str;
+				if ( self.inviteView.content.querySelector( '.PendingList' ) )
+					self.inviteView.content.querySelector( '.PendingList' ).innerHTML = str;
 			}
 		}
 		return null;
@@ -2262,12 +2266,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// NB: Start of workspace_inside.js ----------------------------------------
 	refreshUserSettings: function( callback )
 	{
+		console.log( 'refreshUserSettings' );
 		let b = new Module( 'system' );
 		b.onExecuted = function( e, d )
 		{
 			if( e == 'ok' )
 			{
-				Workspace.serverConfig = JSON.parse( d );
+				const serverConfig = JSON.parse( d );
+				Workspace.serverConfig = serverConfig;
+				console.log( 'serverConfig', Workspace.serverConfig );
 			}
 		}
 		b.execute( 'sampleconfig' );
