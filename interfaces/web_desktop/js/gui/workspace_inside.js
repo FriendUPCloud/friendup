@@ -2301,7 +2301,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									}
 									ms.execute( 'appmodule', {
 										appName: m,
-										method: 'preload'
+										command: 'preload'
 									} );
 								}
 								else
