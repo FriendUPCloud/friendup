@@ -70,7 +70,7 @@ window.FUI = window.FUI ? window.FUI : {
 		return false;
 	},
 	// Loads a class and adds it to DOM, supports a callback when loaded
-	loadClass( type, callback = false )
+	loadClass( type, callback = false, skipInit = false )
 	{
 		if( !this.classExists( type ) )
 		{
@@ -82,7 +82,8 @@ window.FUI = window.FUI ? window.FUI : {
 			let head = document.getElementsByTagName( 'head' )[0];
 			cj.onload = function()
 			{
-				FUI.initialize();
+				if( !skipInit )
+					FUI.initialize();
 				if( callback ) callback( true );
 			}
 			head.appendChild( cj );
@@ -90,13 +91,36 @@ window.FUI = window.FUI ? window.FUI : {
 		}
 		else
 		{
-			callback( false );
+			if( callback ) callback( false );
+		}
+	},
+	// Loads multiple classes
+	loadClasses( typeList, callback = false )
+	{
+		let classLength = typeList.length;
+		function counter( result ){
+			if( --classLength == 0 )
+			{
+				// Done!
+				if( callback ) 
+					callback( true );
+				// Initialize the specified types
+				for( let a = 0; a < typeList.length; a++ )
+					FUI.initialize( typeList[ a ] );
+				// Initialize all the rest
+				FUI.initialize();
+			}
+		};
+		for( let a = 0; a < typeList.length; a++ )
+		{
+			this.loadClass( typeList[ a ], counter, true );
 		}
 	},
 	// Initialize all gui elements on body
-	initialize()
+	initialize( type = false )
 	{
 		let types = this.classTypes;
+		if( type ) types = [ type ];
 		
 		// Fetch all fragments
 		let frags = document.getElementsByTagName( 'fui-fragment' );

@@ -307,5 +307,5 @@ class FUIListview extends FUIElement
     }
 }
 
-FUI.registerClass( 'listview' );
+FUI.registerClass( 'listview', FUIListview );
 

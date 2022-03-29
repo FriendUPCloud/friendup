@@ -153,5 +153,5 @@ class FUIGroup extends FUIElement
     {
     }
 }
-FUI.registerClass( 'group' );
+FUI.registerClass( 'group', FUIGroup );
 
