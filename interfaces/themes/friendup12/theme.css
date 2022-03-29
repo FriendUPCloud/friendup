@@ -675,9 +675,10 @@ html #DoorsScreen > .ScreenContent > div > div > .File .Title > span
 	display: inline-block;
 	color: #f0f0f0;
 	border-radius: 15px;
-	padding: 2px 8px 2px 8px;
+	padding: 1px 8px 2px 8px;
 	overflow: hidden;
 	max-height: 37px;
+	box-shadow: inset 0px 0px 2px rgb(0 0 0 / 25%);
 }
 
 html #DoorsScreen > .ScreenContent > div > div > .File .Title

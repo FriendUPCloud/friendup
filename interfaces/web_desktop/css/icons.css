@@ -140,7 +140,7 @@
 {
 	content: " ";
 	display: inline-block;
-	vertical-align: middle;
+	vertical-align: text-bottom;
 	width: 16px;
 	height: 16px;
 	background-image: url(/iconthemes/friendup15/Folder.svg);
