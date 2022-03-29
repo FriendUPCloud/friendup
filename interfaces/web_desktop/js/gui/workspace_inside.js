@@ -2267,14 +2267,63 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	refreshUserSettings: function( callback )
 	{
 		console.log( 'refreshUserSettings' );
+		// This part is important - it is where we extend the workspace with 
+		// configurable extensions based on config settings
 		let b = new Module( 'system' );
 		b.onExecuted = function( e, d )
 		{
 			if( e == 'ok' )
 			{
-				const serverConfig = JSON.parse( d );
-				Workspace.serverConfig = serverConfig;
+				Workspace.serverConfig = JSON.parse( d );
 				console.log( 'serverConfig', Workspace.serverConfig );
+				
+				// Support init modules
+				if( Workspace.serverConfig.initmodules )
+				{
+					let mods = Workspace.serverConfig.initmodules;
+					for( let z = 0; z < mods.length; z++ )
+					{
+						if( !Workspace.initModules )
+							Workspace.initModules = {};
+						let mod = mods[ z ];
+						if( !Workspace.initModules[ mod ] )
+						{
+							// Don't load module twice, and track its progress
+							Workspace.initModules[ mod ] = {
+								loaded: true,
+								lastMessage: ''
+							};
+							( function( slot )
+							{
+								// If the module was found, execute its preload command
+								if( mod.substr( 0, 10 ) == 'appModule:' )
+								{
+									let m = mod.split( ':' )[1];
+									let ms = new Module( 'system' );
+									ms.onExecuted = function( mse, msd )
+									{
+										slot.lastMessage = mse;
+										console.log( 'What do we have here now?', mse, msd );
+									}
+									ms.execute( 'appmodule', {
+										appName: m,
+										command: 'preload'
+									} );
+								}
+								else
+								{
+									let ms = new Module( mod );
+									ms.onExecuted = function( mse, msd )
+									{
+										slot.lastMessage = mse;
+										console.log( 'What do we have here?', mse, msd );
+									}
+									ms.execute( 'preload' );
+								}
+							} )( Workspace.initModules[ mod ] );
+						}
+					}
+				}
 			}
 		}
 		b.execute( 'sampleconfig' );

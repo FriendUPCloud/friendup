@@ -317,13 +317,10 @@ Workspace = {
 				}
 
 				// Set the clock
-				let e = '';
-				e +=    StrPad( d.getHours(), 2, '0' ) + ':' +
-						   StrPad( d.getMinutes(), 2, '0' ); /* + ':' +
-						   StrPad( d.getSeconds(), 2, '0' );*/
-				/*e +=    ' ' + StrPad( d.getDate(), 2, '0' ) + '/' +
-						   StrPad( d.getMonth() + 1, 2, '0' ) + '/' + d.getFullYear();*/
-				ex.time.innerHTML = e;
+				let etime = '';
+				etime    += StrPad( d.getHours(), 2, '0' ) + ':' +
+						    StrPad( d.getMinutes(), 2, '0' );
+				ex.time.innerHTML = etime;
 
 				// Realign workspaces
 				Workspace.nudgeWorkspacesWidget();
