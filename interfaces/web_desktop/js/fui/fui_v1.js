@@ -77,7 +77,7 @@ window.FUI = window.FUI ? window.FUI : {
 		}
 		head.appendChild( cj );
 		head.appendChild( cc );
-	}
+	},
 	// Initialize all gui elements on body
 	initialize()
 	{
