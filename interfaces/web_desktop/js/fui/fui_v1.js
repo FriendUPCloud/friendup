@@ -13,6 +13,7 @@ window.FUI = window.FUI ? window.FUI : {
     // Initial built-in classes
     classTypes: [ 'string' ],
     guiElements: {},
+    fragments: {},
     callbacks: {},
     // Create meta markup for a class instance
 	create( data )
@@ -97,6 +98,20 @@ window.FUI = window.FUI ? window.FUI : {
 	{
 		let types = this.classTypes;
 		
+		// Fetch all fragments
+		let frags = document.getElementsByTagName( 'fui-fragment' );
+		if( frags.length > 0 )
+		{
+			for( let a = 0; a < frags.length; a++ )
+			{
+				let id = frags[ a ].getAttribute( 'uniqueid' );
+				if( !id ) continue;
+				this.fragments[ id ] = frags[ a ];
+				frags[ a ].parentNode.removeChild( frags[ a ] );
+			}
+		}
+		
+		// Convert active class placeholders
 		for( let b = 0; b < types.length; b++ )
 		{
 		    ( function( domtype )
@@ -124,6 +139,13 @@ window.FUI = window.FUI ? window.FUI : {
 				}
 		    } )( types[b] );
 		}
+	},
+	// Get a fragment for processing
+	getFragment( uniqueid )
+	{
+		if( this.fragments[ uniqueid ] )
+			return this.fragments[ uniqueid ].innerHTML;
+		return false;
 	},
 	// Append child with initializer
 	appendChild( parent, child )
