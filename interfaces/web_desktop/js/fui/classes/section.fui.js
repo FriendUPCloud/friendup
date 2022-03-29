@@ -93,7 +93,7 @@ if( !FUI.classExists( 'section' ) )
 		}
 	}
 
-	FUI.registerClass( 'section' );
+	FUI.registerClass( 'section', FUISection );
 
 }
 

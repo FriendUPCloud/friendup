@@ -1619,9 +1619,13 @@ function ActivateScripts( str )
 	}
 }
 
-function ExecuteScript( str )
+function ExecuteScript( str, scope = false )
 {
-	eval ( str );
+	if( scope )
+	{
+		scope.eval( str );
+	}
+	eval( str );
 }
 
 // Add a script

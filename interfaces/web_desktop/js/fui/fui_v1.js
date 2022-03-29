@@ -45,13 +45,19 @@ window.FUI = window.FUI ? window.FUI : {
 		}
 	},
 	// Registers a class to the factory
-	registerClass( type )
+	registerClass( type, classDefinition )
 	{
 	    for( let a = 0; a < this.classTypes.length; a++ )
 	    {
 	        if( this.classTypes[ a ] == type ) return false;
 	    }
 	    this.classTypes.push( type );
+	    
+	    // Place class definition on window scope
+	    if( classDefinition )
+	    {
+	    	window[  'FUI' + type.substr( 0, 1 ).toUpperCase() + type.substr( 1, type.length - 1 ) ] = classDefinition;
+	    }
 	},
 	// Checks if a class exists
 	classExists( type )
@@ -63,7 +69,7 @@ window.FUI = window.FUI ? window.FUI : {
 		return false;
 	},
 	// Loads a class and adds it to DOM, supports a callback when loaded
-	loadClass( type, callback )
+	loadClass( type, callback = false )
 	{
 		if( !this.classExists( type ) )
 		{
@@ -75,12 +81,6 @@ window.FUI = window.FUI ? window.FUI : {
 			let head = document.getElementsByTagName( 'head' )[0];
 			cj.onload = function()
 			{
-				console.log( 'Class loaded, now initializing.', window.FUIModuleview );
-				setTimeout( function()
-				{
-					console.log( 'Class loaded now?', window.FUIModuleview );
-				}, 0 );
-				
 				FUI.initialize();
 				if( callback ) callback( true );
 			}

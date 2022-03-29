@@ -254,7 +254,7 @@ if( !FUI.classExists( 'moduleview' ) )
 			if( callback ) callback();
 		}
 	}
-
-	FUI.registerClass( 'moduleview' );
+	
+	FUI.registerClass( 'moduleview', FUIModuleview );
 }
 
