@@ -1,0 +1,85 @@
+.FUIModuleView
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.FUIModuleView > .FUIModuleList
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 240px;
+	height: 100%;
+	overflow: auto;
+	scroll-behavior: smooth;
+	background-color: var(--fui-module-background);
+}
+
+
+.FUIModuleView > .FUIModuleContainer
+{
+	position: absolute;
+	top: 0;
+	left: 240px;
+	width: calc(100% - 240px);
+	height: 100%;
+	overflow: auto;
+	scroll-behavior: smooth;
+	background-color: var(--fui-background);
+	padding: var(--fui-padding-large);
+	box-sizing: border-box;
+}
+
+.FUIModuleView .FUIModulelistModule
+{
+	padding: var(--fui-padding-normal);
+	color: var(--fui-module-color);
+	cursor: pointer;
+	background: var(--fui-module-background);
+	transition: background-color 0.15s;
+}
+
+.FUIModuleView .FUIModulelistModule:hover
+{
+	background: var(--fui-module-background-hover);
+}
+
+.FUIModuleView .FUIModulelistModule:before
+{
+	vertical-align: top;
+	font-size: 32px;
+	margin: 0 10px 0 0;
+	width: 40px;
+	display: inline-block;
+	text-align: center;
+}
+
+.FUIModuleView .FUIModulelistModule.Clicked
+{
+	background: var(--fui-module-background-active);
+	color: var(--fui-module-color-active);
+}
+
+.FUIModuleView .FUIModulelistModule > div
+{
+	display: inline-block;
+}
+
+.FUIModuleView .FUIModulelistModule > div > h2
+{
+	font-size: 15px;
+	margin: 0;
+	font-weight: bold;
+}
+
+.FUIModuleView .FUIModulelistModule > div > p
+{
+	margin: 0 0 0px 0;
+}
+
+
+

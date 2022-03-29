@@ -53,6 +53,31 @@ window.FUI = window.FUI ? window.FUI : {
 	    }
 	    this.classTypes.push( type );
 	},
+	// Checks if a class exists
+	classExists( type )
+	{
+		for( let a = 0; a < this.classTypes.length; a++ )
+		{
+			if( this.classTypes[ a ] == type ) return true;
+		}
+		return false;
+	},
+	// Loads a class and adds it to DOM, supports a callback when loaded
+	loadClass( type, callback )
+	{
+		let cj = document.createElement( 'script' );
+		cj.src = '/webclient/js/fui/classes/' + type + '.fui.js';
+		let cc = document.createElement( 'link' );
+		cc.rel = 'stylesheet';
+		cc.href = '/webclient/js/fui/classes/' + type + '.fui.css';
+		let head = document.getElementsByTagName( 'head' )[0];
+		cj.onload = function()
+		{
+			if( callback ) callback();
+		}
+		head.appendChild( cj );
+		head.appendChild( cc );
+	}
 	// Initialize all gui elements on body
 	initialize()
 	{
