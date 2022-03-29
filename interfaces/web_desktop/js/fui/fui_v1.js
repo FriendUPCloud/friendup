@@ -171,6 +171,16 @@ window.FUI = window.FUI ? window.FUI : {
 			return this.fragments[ uniqueid ].innerHTML;
 		return false;
 	},
+	// Apply replacements on string
+	applyReplacements( string, kvchain )
+	{
+		string = string + ''; // Make sure it is a string
+		for( let a in kvchain )
+		{
+			string = string.split( '{' + a + '}' ).join( kvchain[ a ] );
+		}
+		return string;
+	},
 	// Append child with initializer
 	appendChild( parent, child )
 	{
