@@ -103,17 +103,25 @@ window.FUI = window.FUI ? window.FUI : {
 		    {
 		        // Convert markup into classes
 		        let ch = document.getElementsByTagName( domtype );
-		        let out = [];
-		        for( let a = 0; a < ch.length; a++ )
+		        if( ch.length > 0 )
 		        {
-		            out.push( ch[a] );
-		        }
-		        for( let a = 0; a < out.length; a++ )
-		        {
-		            let classStr = 'FUI' + domtype.substr( 0, 1 ).toUpperCase() + domtype.substr( 1, domtype.length - 1 );
-		            let classObj = eval( classStr );
-		            new classObj( { placeholderElement: out[a] } );
-		        }
+				    let out = [];
+				    for( let a = 0; a < ch.length; a++ )
+				    {
+				    	// Prevent system from reinitializing in a race condition
+				    	if( !ch[a].getAttribute( 'initializing' ) )
+				    	{
+							ch[a].setAttribute( 'initializing', 'true' );
+						    out.push( ch[a] );
+						}
+				    }
+				    for( let a = 0; a < out.length; a++ )
+				    {
+				        let classStr = 'FUI' + domtype.substr( 0, 1 ).toUpperCase() + domtype.substr( 1, domtype.length - 1 );
+				        let classObj = eval( classStr );
+				        new classObj( { placeholderElement: out[a] } );
+				    }
+				}
 		    } )( types[b] );
 		}
 	},
