@@ -65,18 +65,32 @@ window.FUI = window.FUI ? window.FUI : {
 	// Loads a class and adds it to DOM, supports a callback when loaded
 	loadClass( type, callback )
 	{
-		let cj = document.createElement( 'script' );
-		cj.src = '/webclient/js/fui/classes/' + type + '.fui.js';
-		let cc = document.createElement( 'link' );
-		cc.rel = 'stylesheet';
-		cc.href = '/webclient/js/fui/classes/' + type + '.fui.css';
-		let head = document.getElementsByTagName( 'head' )[0];
-		cj.onload = function()
+		if( !this.classExists( type ) )
 		{
-			if( callback ) callback();
+			let cj = document.createElement( 'script' );
+			cj.src = '/webclient/js/fui/classes/' + type + '.fui.js';
+			let cc = document.createElement( 'link' );
+			cc.rel = 'stylesheet';
+			cc.href = '/webclient/js/fui/classes/' + type + '.fui.css';
+			let head = document.getElementsByTagName( 'head' )[0];
+			cj.onload = function()
+			{
+				console.log( 'Class loaded, now initializing.', window.FUIModuleview );
+				setTimeout( function()
+				{
+					console.log( 'Class loaded now?', window.FUIModuleview );
+				}, 0 );
+				
+				FUI.initialize();
+				if( callback ) callback( true );
+			}
+			head.appendChild( cj );
+			head.appendChild( cc );
 		}
-		head.appendChild( cj );
-		head.appendChild( cc );
+		else
+		{
+			callback( false );
+		}
 	},
 	// Initialize all gui elements on body
 	initialize()

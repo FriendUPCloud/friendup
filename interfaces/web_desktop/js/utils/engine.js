@@ -1625,7 +1625,7 @@ function ExecuteScript( str )
 }
 
 // Add a script
-function AddScript( scriptsrc )
+function AddScript( scriptsrc, callback = false )
 {
 	var h = document.getElementsByTagName ( 'head' )[0];
 	var s = h.getElementsByTagName ( 'script' );
@@ -1643,8 +1643,16 @@ function AddScript( scriptsrc )
 		var sc = document.createElement ( 'script' );
 		sc.src = scriptsrc;
 		h.appendChild ( sc );
+		if( callback )
+		{
+			sc.onload = function()
+			{
+				callback( true );
+			}
+		}
 		return true;
 	}
+	if( callback ) callback( false );
 	return false;
 }
 
