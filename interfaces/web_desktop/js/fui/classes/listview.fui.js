@@ -189,7 +189,7 @@ class FUIListview extends FUIElement
     		let row = document.createElement( 'div' );
     		row.className = 'HRow EditRow';
     		let baseWidth = parseInt( 100 / json[b].length );
-    		
+
 			for( let z = 0; z < json[b].length; z++ )
 			{
 				// Not enough headers for json
@@ -307,5 +307,5 @@ class FUIListview extends FUIElement
     }
 }
 
-FUI.registerClass( 'listview' );
+FUI.registerClass( 'listview', FUIListview );
 
