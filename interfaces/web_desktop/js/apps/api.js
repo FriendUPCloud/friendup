@@ -854,7 +854,7 @@ function receiveEvent( event, queued )
 	{
 		dataPacket = event.data;
 	}
-
+	
 	if( !dataPacket.command )
 	{
 		Application.receiveMessage( dataPacket );
@@ -1417,6 +1417,7 @@ function receiveEvent( event, queued )
 			Application.fullName      = dataPacket.fullName;
 			Application.username      = dataPacket.username;
 			Application.workspaceMode = dataPacket.workspaceMode;
+			Application.serverConfig  = dataPacket.serverConfig;
 			Application.applicationName = dataPacket.applicationName;
 			Application.sendMessage   = setupMessageFunction( dataPacket, window.origin );
 			

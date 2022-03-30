@@ -356,9 +356,9 @@ var WorkspaceInside = {
 		if( !Workspace.serverConfig || !Workspace.serverConfig || !Workspace.serverConfig.invitesEnabled )
 			return;
 		
-		let version = 1;
-		if ( Workspace.serverConfig && Workspace.serverConfig.hasGroupFeature )
-			version = 2;
+		let version = 2;
+		if ( Workspace.serverConfig && Workspace.serverConfig.hasGroupsFeature === false )
+			version = 1;
 		
 		let self = this;
 		let f = null;

@@ -201,19 +201,24 @@
 					{friendNetwork2}
 				</div>
 				<script> 
-					InitTabs( 'MTabs' );
-					let tabs = ge( 'MTabs' ).getElementsByClassName( 'Tab' );
-					if( ge( 'activeTab' ).value != 'null' )
+					if ( !window.initTabsHasRun )
 					{
-						for( let a = 0; a < tabs.length; a++ )
+						window.initTabsHasRun = true;
+						InitTabs( 'MTabs' );
+						let tabs = ge( 'MTabs' ).getElementsByClassName( 'Tab' );
+						if( ge( 'activeTab' ).value != 'null' )
 						{
-							if( tabs[a].classList.contains( 'fa-' + ge( 'activeTab' ).value ) )
+							for( let a = 0; a < tabs.length; a++ )
 							{
-								tabs[a].click();
-								break;
+								if( tabs[a].classList.contains( 'fa-' + ge( 'activeTab' ).value ) )
+								{
+									tabs[a].click();
+									break;
+								}
 							}
 						}
 					}
+					
 				</script>
 			</div>
 		</div>

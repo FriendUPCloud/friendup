@@ -10,155 +10,198 @@
 
 Application.run = function( msg, iface )
 {
-	var wflags = {
-		title: i18n( 'i18n_account' ),
-		width: 720,
-		height: 600
-	};
-
-	let activeTab = null;
-	let args = msg.args.split( ' ' );
-	for( let a = 0; a < args.length; a++ )
+	console.log( 'account run', Application.serverConfig );
+	if ( !window.Application.serverConfig )
 	{
-		if( args[a] == 'addstorage' )
+		const sc = new Module( 'system' );
+		sc.onExecuted = ( s, d ) => 
 		{
-			wflags.invisible = true;
-			wflags.hidden = true;
-		}
-		else if( args[a].substr( 0, 4 ) == 'tab=' )
-		{
-			let tab = args[a].split( '=' );
-			activeTab = tab[1];
-		}
-	}
-	
-	let v = new View( wflags );
-	
-	v.onClose = function()
-	{
-		Application.quit();
-	}
-	
-	this.mainView = v;
-	
-	let m = new Module( 'system' );
-	m.onExecuted = function( e, d )
-	{
-		let s = JSON.parse( d );
-		let f = new File( 'Progdir:Templates/main.html' );
-		
-		//console.log( 'userinfoget', s );
-		
-		// Inject available languages in template
-		let availLangs = {
-			'en': 'English',
-			'fr': 'French',
-			'no': 'Norwegian',
-			'fi': 'Finnish',
-			'pl': 'Polish'
-		};
-		let languages = '';
-		for( let a in availLangs )
-		{
-			let sel = a == Application.language ? ' selected="selected"' : '';
-			languages += '<option value="' + a + '"' + sel + '>' + availLangs[ a ] + '</option>';
-		}
-		
-		// Inject possible Workspace modes
-		let modes = {
-			normal: i18n( 'i18n_mode_normal' ),
-			developer: i18n( 'i18n_mode_developer' ),
-			gamified: i18n( 'i18n_mode_gamified' )
-		};
-		let modeOut = '';
-		for( let a in modes )
-		{
-			var sel = a == Application.workspaceMode ? ' selected="selected"' : '';
-			modeOut += '<option value="' + a + '"' + sel + '>' + modes[a] + '</option>';
-		}
-		
-		f.replacements = 
-		{
-			languages: languages,
-			modes: modeOut,
-			activeTab: activeTab
-		};
-
-		// If FriendNetwork is enabled, add the options		
-		let m = new Module('system');
-		m.onExecuted = function( e,d )
-		{
-			if ( e == 'ok' && parseInt( d ) == 1 )
+			console.log( 'account sc back', [ s, d ]);
+			if ( 'ok' == s )
 			{
-				f.replacements.friendNetwork1 = '\
-<div class="Tab IconSmall fa-institution">' + i18n( 'i18n_friendNetwork' ) + '</div>\
-<div class="Tab IconSmall fa-institution">' + i18n( 'i18n_friendNetworkPowerSharing' ) + '</div>';
-
-				f.replacements.friendNetwork3 = '\
-<div class="Tab IconSmall fa-laptop">' + i18n( 'i18n_device_information' ) + '</div>';
-
-				let ff = new File( 'Progdir:Templates/friendnetwork1.html' );
-				ff.onLoad = function( data )
+				try 
 				{
-					f.replacements.friendNetwork2 = data;
+					Application.serverConfig = JSON.parse( d );
+				}
+				catch( ex )
+				{
+					
+				}
+			}
+			
+			start();
+		}
+	}
+	else
+	{
+		start();
+	}
+	
+	function start()
+	{
+		console.log( 'start', Application.serverConfig );
+		var wflags = {
+			title: i18n( 'i18n_account' ),
+			width: 720,
+			height: 600
+		};
 
-					let fff = new File( 'Progdir:Templates/friendnetwork2.html' );
-					fff.onLoad = function( data )
-					{
-						f.replacements.friendNetwork4 = data;
-						finish();
-					};
-					fff.load();
-				};
-				ff.load();
-			}				
-			else
+		let activeTab = null;
+		let args = msg.args.split( ' ' );
+		for( let a = 0; a < args.length; a++ )
+		{
+			if( args[a] == 'addstorage' )
 			{
-				f.replacements.friendNetwork1 = '';
-				f.replacements.friendNetwork2 = '';
-				f.replacements.friendNetwork3 = '';
-				f.replacements.friendNetwork4 = '';
-				finish();
+				wflags.invisible = true;
+				wflags.hidden = true;
+			}
+			else if( args[a].substr( 0, 4 ) == 'tab=' )
+			{
+				let tab = args[a].split( '=' );
+				activeTab = tab[1];
+			}
+		}
+		
+		let v = new View( wflags );
+		
+		v.onClose = function()
+		{
+			Application.quit();
+		}
+		
+		window.Application.mainView = v;
+		
+		let m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			let s = JSON.parse( d );
+			let f = new File( 'Progdir:Templates/main.html' );
+			
+			//console.log( 'userinfoget', s );
+			
+			// Inject available languages in template
+			let availLangs = {
+				'en': 'English',
+				'fr': 'French',
+				'no': 'Norwegian',
+				'fi': 'Finnish',
+				'pl': 'Polish'
+			};
+			let languages = '';
+			for( let a in availLangs )
+			{
+				let sel = a == Application.language ? ' selected="selected"' : '';
+				languages += '<option value="' + a + '"' + sel + '>' + availLangs[ a ] + '</option>';
+			}
+			
+			// Inject possible Workspace modes
+			let modes = {
+				normal: i18n( 'i18n_mode_normal' ),
+				developer: i18n( 'i18n_mode_developer' ),
+				gamified: i18n( 'i18n_mode_gamified' )
+			};
+			let modeOut = '';
+			for( let a in modes )
+			{
+				var sel = a == Application.workspaceMode ? ' selected="selected"' : '';
+				modeOut += '<option value="' + a + '"' + sel + '>' + modes[a] + '</option>';
+			}
+			
+			f.replacements = 
+			{
+				languages: languages,
+				modes: modeOut,
+				activeTab: activeTab
+			};
+
+			// If FriendNetwork is enabled, add the options		
+			let m = new Module('system');
+			m.onExecuted = function( e,d )
+			{
+				if ( e == 'ok' && parseInt( d ) == 1 )
+				{
+					f.replacements.friendNetwork1 = '\
+	<div class="Tab IconSmall fa-institution">' + i18n( 'i18n_friendNetwork' ) + '</div>\
+	<div class="Tab IconSmall fa-institution">' + i18n( 'i18n_friendNetworkPowerSharing' ) + '</div>';
+
+					f.replacements.friendNetwork3 = '\
+	<div class="Tab IconSmall fa-laptop">' + i18n( 'i18n_device_information' ) + '</div>';
+
+					let ff = new File( 'Progdir:Templates/friendnetwork1.html' );
+					ff.onLoad = function( data )
+					{
+						f.replacements.friendNetwork2 = data;
+
+						let fff = new File( 'Progdir:Templates/friendnetwork2.html' );
+						fff.onLoad = function( data )
+						{
+							f.replacements.friendNetwork4 = data;
+							finish();
+						};
+						fff.load();
+					};
+					ff.load();
+				}				
+				else
+				{
+					f.replacements.friendNetwork1 = '';
+					f.replacements.friendNetwork2 = '';
+					f.replacements.friendNetwork3 = '';
+					f.replacements.friendNetwork4 = '';
+					finish();
+				}
+			};
+			m.execute( 'checkfriendnetwork' );
+
+			function finish()
+			{
+				//f.replacements = {
+				//	'username' : s.Name,
+				//	'fullname' : s.FullName,
+				//	'email'    : s.Email
+				//};
+				f.i18n();
+				f.onLoad = function( data )
+				{
+					// remove groups tab from ui when groups feature is turned off
+					if ( Application.serverConfig && false === Application.serverConfig.hasGroupsFeature )
+					{
+						//console.log( 'fonload', data );
+						const d = document.createElement( 'div' );
+						d.innerHTML = data;
+						const tb = d.querySelector( '#MTabs .Tab.fa-group' );
+						tb.parentNode.removeChild( tb );
+						data = d.innerHTML;
+					}
+					
+					//console.log( 'tb', data );
+					v.setContent( data );
+					s.command = 'userinfo';
+					v.sendMessage( s );
+					
+					if( msg.args == 'addstorage' )
+					{
+						v.sendMessage( { command: 'addstorage' } );
+					}				
+					
+					//Authenticate.load( 'publickey', displayPublicKey );
+					
+					Application.sendMessage( { type: 'encryption', command: 'publickey', args: { encoded: false } }, function( res, data )
+					{	
+						if( res && data && data.publickey )
+						{
+							displayPublicKey( data.publickey );
+						}
+					} );
+				};
+				f.load();
 			}
 		};
-		m.execute( 'checkfriendnetwork' );
-
-		function finish()
-		{
-			//f.replacements = {
-			//	'username' : s.Name,
-			//	'fullname' : s.FullName,
-			//	'email'    : s.Email
-			//};
-			f.i18n();
-			f.onLoad = function( data )
-			{
-				v.setContent( data );
-				s.command = 'userinfo';
-				v.sendMessage( s );
-				
-				if( msg.args == 'addstorage' )
-				{
-					v.sendMessage( { command: 'addstorage' } );
-				}				
-				
-				//Authenticate.load( 'publickey', displayPublicKey );
-				
-				Application.sendMessage( { type: 'encryption', command: 'publickey', args: { encoded: false } }, function( res, data )
-				{	
-					if( res && data && data.publickey )
-					{
-						displayPublicKey( data.publickey );
-					}
-				} );
-			};
-			f.load();
-		}
-	};
-	m.execute( 'userinfoget', { id: msg.userId } );	
-	
-	// Set app in single mode
-	this.setSingleInstance( true );
+		m.execute( 'userinfoget', { id: msg.userId } );	
+		
+		// Set app in single mode
+		window.Application.setSingleInstance( true );
+	}
 		
 }
 

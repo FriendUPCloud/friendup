@@ -681,6 +681,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					username: ifr.username,
 					authId: ifr.authId,
 					args: oargs,
+					serverConfig : Workspace.serverConfig,
 					workspace: workspace,
 					friendApp : fApp,
 					dosDrivers: Friend.dosDrivers,

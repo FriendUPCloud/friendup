@@ -13,9 +13,10 @@
 $object = new stdClass();
 
 $ie = isset( $configfilesettings[ 'Security' ] ) && $configfilesettings[ 'Security' ][ 'InvitesEnabled' ] ? true : false;
-$hgf = isset( $configfilesettings[ 'Security' ] ) && $configfilesettings[ 'Security' ][ 'hasGroupsFeature' ] ? true : false;
+$groupFeatureSet = ( isset( $configfilesettings[ 'Security' ] ) && isset( $configfilesettings[ 'Security' ][ 'hasGroupsFeature' ] ));
 $object->invitesEnabled = $ie;
-$object->hasGroupsFeature = $hgf;
+if ( $groupFeatureSet )
+	$object->hasGroupsFeature = $configfilesettings[ 'Security' ][ 'hasGroupsFeature' ] ? true : false;
 
 // Service initmodules to workspace
 if( isset( $configfilesettings[ 'Security' ] ) && $configfilesettings[ 'Security' ][ 'Initmodules' ] )

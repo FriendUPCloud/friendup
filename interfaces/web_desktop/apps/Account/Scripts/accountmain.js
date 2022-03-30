@@ -10,6 +10,7 @@
 
 Application.run = function( msg, iface )
 {
+	console.log( 'Acc.run' );
 	Friend.exportAPI( Application.applicationId, {}, function( response, data, extra )
 	{
 		getStorage();
@@ -38,7 +39,33 @@ Application.run = function( msg, iface )
 		d.execute( 'getsetting', { setting: 'avatar_color' } );
 	} );
 	
-	refreshGroups( ge( 'groupSearcher' ).value );
+	const g = new Module( 'system' );
+	g.onExecuted = ( s, d ) => {
+		console.log( 'sampleconfig back', [ s, d ]);
+		if ( 'ok' == s )
+		{
+			let serverConfig = null;
+			try
+			{
+				serverConfig =  JSON.parse( d );
+			}
+			catch( ex )
+			{
+				return;
+			}
+			
+			console.log( 'sampleconfig', serverConfig );
+			if ( false === serverConfig.hasGroupsFeature )
+			{
+				return;
+			}
+			else
+			{
+				refreshGroups( ge( 'groupSearcher' ).value );
+			}
+		}
+	}
+	g.execute( 'sampleconfig' );
 	
 	// Clear / autoregenerate avatar
 	ge( 'ClearAvatar' ).onclick = function( e )
@@ -81,6 +108,7 @@ function findGroups()
 
 function refreshGroups( keys )
 {
+	console.trace( 'refreshgroups', keys );
 	if( !keys ) keys = '';
 	
 	let m = new Module( 'system' );
