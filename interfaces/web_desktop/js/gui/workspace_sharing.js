@@ -19,6 +19,7 @@ Workspace.sharingDialogs = {};
 // Set up sharing on a disk
 Workspace.viewSharingOptions = function( path )
 {
+	console.trace( 'viewSharingOptions', path );
 	let v = new View( {
 		title: i18n( 'i18n_sharing_options' ) + ' ' + path,
 		width: 640,

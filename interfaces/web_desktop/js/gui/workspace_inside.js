@@ -4617,6 +4617,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Fetch mountlist from database
 	getMountlist: function( callback, forceRefresh, addDormant )
 	{
+		console.trace( 'getMountlist', [ callback, forceRefresh, addDormant ]);
 		let t = this; // Reference to workspace
 		
 		// Just in case
@@ -4627,6 +4628,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			let d = new Module( 'system' );
 			d.onExecuted = function( res, dat )
 			{
+				console.log( 'getMountlist - types back', [ res, dat ])
 				if( res != 'ok' )
 				{
 					doGetMountlistHere();
@@ -4636,6 +4638,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				try
 				{
 					let types = JSON.parse( dat );
+					console.log( 'types', types );
 					Friend.dosDrivers = {};
 					for( let a = 0; a < types.length; a++ )
 					{
@@ -4670,6 +4673,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						try
 						{
 							let tmp = JSON.parse( visList );
+							console.log( 'devicesettings', visList )
 							visStruct = {};
 							for( let z = 0; z < tmp.length; z++ )
 								visStruct[ tmp[ z ].Filesystem ] = tmp[ z ];
@@ -4857,6 +4861,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						try
 						{
 							rows = JSON.parse( dat );
+							console.log( 'device/list', rows );
 						}
 						catch( e )
 						{
@@ -4891,11 +4896,23 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									foundHome = true;
 									fixCount++;
 								}
-								else if( rows[a].Name == 'Shared' )
+								
+								
+								if ( rows[a].Name == 'Shared' )
 								{
-									foundShared = true;
-									fixCount++;
+									if( ( null == Workspace.serverConfig.hasShareDrive ) || ( true == Workspace.serverConfig.hasShareDrive ) )
+									{
+										foundShared = true;
+										fixCount++;
+									}
+									else
+									{
+										continue;
+									}
 								}
+								
+								
+								
 							
 								// Doesn't exist, go on
 								let o = false;
@@ -5030,9 +5047,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							t.mountDrive( 'Home', checkIt );
 						}
-						if( !foundShared )
+						
+						if ( ( null == Workspace.serverConfig.hasShareDrive ) || ( true == Workspace.serverConfig.hasShareDrive ) )
 						{
-							t.mountDrive( 'Shared', checkIt );
+							if( !foundShared )
+							{
+								t.mountDrive( 'Shared', checkIt );
+							}
 						}
 					}
 					m.execute( 'device/list' );
@@ -5933,6 +5954,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Show file info dialog
 	fileInfo: function( iconOriginal )
 	{
+		console.log( 'fileInfo', iconOriginal );
 		if( !iconOriginal ) iconOriginal = this.getActiveIcon();
 		
 		let icon = {};
@@ -7459,6 +7481,35 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Refresh Doors menu recursively ------------------------------------------
 	refreshMenu: function( prohibitworkspaceMenu, activeElement = false )
 	{	
+		const self = this;
+		console.log( 'refreshMenu', {
+			sconf : Workspace.serverConfig,
+			fetch : self.isFetchingServerConfig,
+		});
+		if ( self.isFetchingServerConfig )
+			return;
+		
+		const sConf = Workspace.serverConfig;
+		if ( null == sConf )
+		{
+			self.isFetchingServerConfig = true;
+			console.log( 'refreshmenu getting server conf' );
+			const c = new Module( 'system' );
+			c.onExecuted = ( s, d ) => {
+				self.isFetchingServerConfig = false;
+				if ( 'ok' == s )
+				{
+					Workspace.serverConfig = JSON.parse( d );
+				}
+				
+				console.log( 'refreshmenu got server conf', Workspace.serverConfig );
+				self.refreshMenu();
+			}
+			c.execute( 'sampleconfig' );
+			
+			return;
+		}
+		
 		// Current has icons?
 		let iconsAvailable = currentMovable && currentMovable.content && currentMovable.content.directoryview ? true : false;
 		let volumeIcon = false;
@@ -7485,6 +7536,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		let finf = activeElement ? activeElement.fileInfo : false;
 		let isHomeDrive = finf && finf.Volume && finf.Volume == 'Home:' ? true : false;
 		let isSharedDrive = finf && finf.Volume && finf.Volume == 'Shared:' ? true : false;
+		let hasSharing = true;
+		
+		if (  null != sConf.hasShareDrive )
+			hasSharing = sConf.hasShareDrive;
 		
 		if( iconsSelected )
 		{
@@ -7589,8 +7644,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			currentMovable.content;
 			if( cnt ) systemDrive = cnt && cnt.fileInfo && cnt.fileInfo.Volume == 'System:';
 		}
-		
-		let sConf = Workspace.serverConfig;
 		
 		// Setup Doors menu
 		this.menu = [
@@ -7751,7 +7804,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						name:	sharedVolume ? i18n( 'menu_unshare' ) : i18n( 'menu_delete' ),
 						command: function() { Workspace.deleteFile( sharedVolume ? 'unshare' : false ); },
-						disabled: ( !iconsSelected || volumeIcon ) || systemDrive || cannotWrite
+						disabled: !hasSharing || ( !iconsSelected || volumeIcon ) || systemDrive || cannotWrite,
 					},
 					// Add sharing
 					{
@@ -7760,7 +7813,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							Workspace.viewSharingOptions( fileIcon.Path );
 						},
-						disabled: !( sharableFile && !sharedVolume )
+						disabled: !hasSharing || !( sharableFile && !sharedVolume ),
 					},
 					// Add sharing
 					{
@@ -7769,7 +7822,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							currentMovable.content.directoryview.ShowShareDialog( [ fileIcon.domNode ], 'shareinfo' );
 						},
-						disabled: ( sharableFile && !sharedVolume ) || volumeIcon || fileIcon.Type != 'File' || !fileIcon.ExternPath || fileIcon.Owner != Workspace.userId
+						disabled: !hasSharing || ( sharableFile && !sharedVolume ) || volumeIcon || fileIcon.Type != 'File' || !fileIcon.ExternPath || fileIcon.Owner != Workspace.userId
 					},
 					{
 						divider: true
@@ -7857,7 +7910,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						name:	i18n( 'menu_share' ),
 						command: function() { FriendNetworkShare.sharePath( shareIcon.Path, shareIcon.Type ); },
-						disabled: ( !iconsSelected || volumeIcon ) || systemDrive || cannotWrite || !canBeShared
+						disabled: !hasSharing || ( !iconsSelected || volumeIcon ) || systemDrive || cannotWrite || !canBeShared
 					},
 					{
 						name:	i18n( 'menu_download' ),
@@ -8105,6 +8158,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	showContextMenu: function( menu, e, extra )
 	{
+		console.trace( 'showContextMenu', [ menu, e, extra ]);
 		let tr = e.target ? e.target : e.srcElement;
 
 		if( tr == window )
@@ -8148,8 +8202,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				isFileMenu = true;
 				Workspace.refreshMenu( true, tmp );
 				menu = Workspace.menu;
+				console.log( 'workspacemenu', menu );
 			}
 		}
+		
 		
 		// Item uses system default
 		if( tr.defaultContextMenu ) 
@@ -8268,6 +8324,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( Workspace.menu[z].name == i18n( 'menu_icons' ) )
 				{
 					menu = Workspace.menu[z].items;
+					console.log( 'assign menu', menu );
 					break;
 				}
 			}
@@ -8451,6 +8508,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 			}
 			
+			console.log( 'late menu', menu );
 			let menuitemCount = 0;
 			for( let z = 0; z < menu.length; z++ )
 			{
