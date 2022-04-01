@@ -477,7 +477,7 @@ class FUIButton extends FUIElement
     	return '<fui-button>' + this.options.value + '</fui-button>';
     }
 }
-FUI.registerClass( 'template' );
+FUI.registerClass( 'button', FUIButton );
 
 
 

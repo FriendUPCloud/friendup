@@ -21,6 +21,7 @@ window.FUI = window.FUI ? window.FUI : {
 		switch( data.type )
 		{
 			case 'string':
+			{
 				let str = data.value;
 				// Extras are things that prepend the value
 				if( data.extras )
@@ -29,6 +30,7 @@ window.FUI = window.FUI ? window.FUI : {
 				if( data.additions )
 					str += data.additions;
 				return str;
+			}
 			default:
 			{
     			let classStr = 'FUI' + data.type.substr( 0, 1 ).toUpperCase() + data.type.substr( 1, data.type.length - 1 );
