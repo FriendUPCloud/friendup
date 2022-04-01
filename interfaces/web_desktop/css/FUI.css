@@ -224,3 +224,21 @@
 	color: var(--fui-color-emphasized);
 }
 
+/* Button */
+
+.FUIButtonElement
+{
+	background-color: var(--fui-list-button-background);
+	color: var(--fui-list-button-color);
+	border-radius: var(--fui-border-radius-small);
+	cursor: pointer;
+	padding: var(--fui-padding-row);
+}
+
+.FUIButtonElement:hover
+{
+	background-color: var(--fui-list-button-background-hover);
+    color: var(--fui-list-button-color-hover);
+}
+
+

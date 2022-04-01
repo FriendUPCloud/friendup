@@ -438,3 +438,47 @@ class FUIPicture extends FUIElement
 }
 FUI.registerClass( 'picture' );
 
+
+// Checkbox element
+class FUIButton extends FUIElement
+{
+    constructor( options )
+    {
+        super( options );
+    }
+    attachDomElement()
+    {
+        super.attachDomElement();
+        
+        let self = this;
+        
+        // Set stuff on this.domElement.innerHTML
+    }
+    grabAttributes( domElement )
+    {
+        super.grabAttributes( domElement );
+        
+        // if( domElement.getAttribute( 'someattribute' ) )
+        //     do something
+        
+        
+        //this.refreshDom();
+    }
+    refreshDom()
+    {
+        super.refreshDom();
+        // TODO: Add properties, uniqueId etc
+        this.domElement.innerHTML = '<div class="FUIButtonElement">' + this.options.value + '</div>';
+    }
+    getMarkup( data )
+    {
+    	// Return meta-markup for class instantiation later
+    	// TODO: Add properties, uniqueId etc
+    	return '<fui-button>' + this.options.value + '</fui-button>';
+    }
+}
+FUI.registerClass( 'template' );
+
+
+
+
