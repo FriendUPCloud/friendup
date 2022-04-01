@@ -453,6 +453,7 @@ class FUIButton extends FUIElement
         let self = this;
         
         // Set stuff on this.domElement.innerHTML
+        this.adaptSize();
     }
     grabAttributes( domElement )
     {
@@ -488,14 +489,43 @@ class FUIButton extends FUIElement
         	}
         }
         
+        
         // TODO: Add properties, uniqueId etc
         this.domElement.innerHTML = '<div class="FUIButtonElement">' + ( this.options.innerHTML ? this.options.innerHTML : '' ) + '</div>';
+        
+        this.adaptSize();
     }
     getMarkup( data )
     {
     	// Return meta-markup for class instantiation later
     	// TODO: Add properties, uniqueId etc
     	return '<fui-button>' + ( this.options.value ? this.options.value : '' ) + '</fui-button>';
+    }
+    adaptSize()
+    {
+    	// Adapt size if button is higher!
+        let p = this.domElement.parentNode;
+        if( p && p.parentNode )
+        {
+        	p = p.parentNode; // <- this is the container
+        	let d = this.domElement.getElementsByTagName( 'FUIButtonElement' )[0];
+		    if( d && d.offsetHeight > p.offsetHeight )
+		    {
+		    	let padding = parseInt( p.style.padding );
+		    	if( isNaN( padding ) || !padding )
+		    	{
+		    		padding = parseInt( p.style.paddingTop ) + parseInt( p.style.paddingBottom );
+		    		if( isNaN( padding ) ) padding = 0;
+		    	}
+		    	let h = ( p.offsetHeight - padding );
+		    	d.style.height = h + 'px';
+		    	if( h < 20 )
+		    		d.style.lineHeight = h;
+		    	if( h < 16 )
+		    		d.style.fontSize = 'var(--font-size-small)';
+		    	else d.style.fontSize = '';
+		    }
+		}
     }
 }
 FUI.registerClass( 'button', FUIButton );
