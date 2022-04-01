@@ -231,7 +231,6 @@
 	background-color: var(--fui-list-button-background);
 	color: var(--fui-list-button-color);
 	border-radius: var(--fui-border-radius-small);
-	cursor: pointer;
 	padding: var(--fui-padding-row);
 	text-align: center;
 }

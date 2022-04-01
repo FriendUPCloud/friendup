@@ -458,12 +458,35 @@ class FUIButton extends FUIElement
     {
         super.grabAttributes( domElement );
         
+        let attrs = [ /*'width', 'height', 'icon', 'type', 'shape', 'border-size',*/ 'onclick' ];
+        
+        for( let a in attrs )
+        {
+        	let op = domElement.getAttribute( attrs[ a ] );
+        	if( op )
+	        	this.options[ attrs[ a ] ] = op;
+        }
         
         this.refreshDom();
     }
     refreshDom()
     {
         super.refreshDom();
+        
+        if( this.options[ 'onclick' ] )
+        {
+        	this.domElement.style.cursor = 'pointer';
+        	this.domElement.onclick = function( e )
+        	{
+        		cancelBubble( e );
+        		if( window.FUI.callbacks[ self.options.onclick ] )
+		        {
+		            // Add structure with current element flags
+		            window.FUI.callbacks[ self.options.onclick ]( true );
+		        }
+		        return;
+        	}
+        }
         
         // TODO: Add properties, uniqueId etc
         this.domElement.innerHTML = '<div class="FUIButtonElement">' + ( this.options.innerHTML ? this.options.innerHTML : '' ) + '</div>';
