@@ -444,7 +444,7 @@ class FUIButton extends FUIElement
 {
     constructor( options )
     {
-        super( options );
+        super( options ); 
     }
     attachDomElement()
     {
@@ -458,23 +458,21 @@ class FUIButton extends FUIElement
     {
         super.grabAttributes( domElement );
         
-        // if( domElement.getAttribute( 'someattribute' ) )
-        //     do something
         
-        
-        //this.refreshDom();
+        this.refreshDom();
     }
     refreshDom()
     {
         super.refreshDom();
+        
         // TODO: Add properties, uniqueId etc
-        this.domElement.innerHTML = '<div class="FUIButtonElement">' + this.options.value + '</div>';
+        this.domElement.innerHTML = '<div class="FUIButtonElement">' + ( this.options.innerHTML ? this.options.innerHTML : '' ) + '</div>';
     }
     getMarkup( data )
     {
     	// Return meta-markup for class instantiation later
     	// TODO: Add properties, uniqueId etc
-    	return '<fui-button>' + this.options.value + '</fui-button>';
+    	return '<fui-button>' + ( this.options.value ? this.options.value : '' ) + '</fui-button>';
     }
 }
 FUI.registerClass( 'button', FUIButton );

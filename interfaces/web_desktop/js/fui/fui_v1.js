@@ -37,7 +37,7 @@ window.FUI = window.FUI ? window.FUI : {
 			    try
 			    {
                     let classObj = eval( classStr );
-                    return( new classObj().getMarkup( data ) );
+                    return( new classObj( data ).getMarkup( data ) );
                 }
                 catch( e )
                 {
@@ -144,6 +144,12 @@ window.FUI = window.FUI ? window.FUI : {
 		    {
 		        // Convert markup into classes
 		        let ch = document.getElementsByTagName( domtype );
+		        // TODO: Extract correct domtype from object
+		        // Support fui-*
+		        if( !ch || ( ch && !ch.length ) )
+		        {
+		        	ch = document.getElementsByTagName( 'fui-' + domtype );
+		        }
 		        if( ch.length > 0 )
 		        {
 				    let out = [];
@@ -160,7 +166,14 @@ window.FUI = window.FUI ? window.FUI : {
 				    {
 				        let classStr = 'FUI' + domtype.substr( 0, 1 ).toUpperCase() + domtype.substr( 1, domtype.length - 1 );
 				        let classObj = eval( classStr );
-				        new classObj( { placeholderElement: out[a] } );
+				        let opts = {};
+				        opts.placeholderElement = out[a];
+				        // Transfer innerHTML to options
+				        if( opts.placeholderElement.innerHTML )
+				        {
+				        	opts.innerHTML = opts.placeholderElement.innerHTML;
+				        }
+				        new classObj( opts );
 				    }
 				}
 		    } )( types[b] );
@@ -213,9 +226,9 @@ class FUIElement
     // Sets default values etc
     constructor( options )
     {
-        this.options = options;
+        this.options = options ? options : false;
         
-        if( options.uniqueid )
+        if( this.options && typeof( options.uniqueid ) != 'undefined' && options.uniqueid )
         {
         	if( window.FUI.guiElements[ options.uniqueid ] )
         	{
