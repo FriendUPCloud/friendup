@@ -544,10 +544,6 @@ class FUIButton extends FUIElement
 		    	else d.style.fontSize = '';
 		    }
 		}
-		else
-		{
-		    console.log( 'FUIButton: We still have no parent node.' );
-		}
     }
 }
 FUI.registerClass( 'button', FUIButton );
