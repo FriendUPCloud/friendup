@@ -459,7 +459,7 @@ class FUIButton extends FUIElement
     {
         super.grabAttributes( domElement );
         
-        let attrs = [ /*'width', 'height', 'icon', 'type', 'shape', 'border-size',*/ 'icon', 'onclick' ];
+        let attrs = [ /*'width', 'height', 'icon', 'type', 'shape', 'border-size',*/ 'uniqueid', 'icon', 'onclick' ];
         
         for( let a in attrs )
         {
