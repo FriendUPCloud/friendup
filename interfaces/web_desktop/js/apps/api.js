@@ -2303,24 +2303,6 @@ function View( flags )
 		msg.parentViewId = Application.viewId;
 	}
 	
-	// Loads a FUI gui and populates view window
-	this.setFUITemplate = function( filename, callback )
-	{
-		let f = new File( filename );
-		f.onLoad = function( data )
-		{
-			this.setContent( data, function( result )
-			{
-				if( callback )
-				{
-					// Fails
-					callback( result );
-				}
-			} );
-		}
-		f.load();
-	}
-	
 	// Pop out!
 	this.popout = function()
 	{
@@ -2660,6 +2642,13 @@ function View( flags )
 		if( this.onClose )
 		{
 			this.onClose();
+		}
+		
+		// Quit on close
+		let quitOnClose = this.getFlag( 'quitOnClose' );
+		if( quitOnClose )
+		{
+		    Application.quit();
 		}
 
 		if( this.preventClosing ) return;
