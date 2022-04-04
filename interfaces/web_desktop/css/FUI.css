@@ -240,6 +240,7 @@
 	border-radius: var(--fui-border-radius-small);
 	padding: var(--fui-padding-row);
 	text-align: center;
+	box-sizing: border-box;
 }
 
 .FUIButtonElement:hover

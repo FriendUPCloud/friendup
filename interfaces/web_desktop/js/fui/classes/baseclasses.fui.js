@@ -505,26 +505,27 @@ class FUIButton extends FUIElement
     {
     	// Adapt size if button is higher!
         let p = this.domElement.parentNode;
-        if( p && p.parentNode )
+        if( p )
         {
-        	p = p.parentNode; // <- this is the container
-        	let d = this.domElement.getElementsByTagName( 'FUIButtonElement' )[0];
-		    if( d && d.offsetHeight > p.offsetHeight )
+        	let d = this.domElement.querySelector( '.FUIButtonElement' );
+        	
+        	let h = p.offsetHeight;
+        	let styles = getComputedStyle( p );
+        	h -= parseInt( styles.paddingTop ) + parseInt( styles.paddingBottom );
+        	
+		    if( d && d.offsetHeight > h )
 		    {
-		    	let padding = parseInt( p.style.padding );
-		    	if( isNaN( padding ) || !padding )
-		    	{
-		    		padding = parseInt( p.style.paddingTop ) + parseInt( p.style.paddingBottom );
-		    		if( isNaN( padding ) ) padding = 0;
-		    	}
-		    	let h = ( p.offsetHeight - padding );
 		    	d.style.height = h + 'px';
 		    	if( h < 20 )
-		    		d.style.lineHeight = h;
-		    	if( h < 16 )
+		    		d.style.lineHeight = '0.9';
+		    	if( h < 20 )
 		    		d.style.fontSize = 'var(--font-size-small)';
 		    	else d.style.fontSize = '';
 		    }
+		}
+		else
+		{
+		    console.log( 'FUIButton: We still have no parent node.' );
 		}
     }
 }
