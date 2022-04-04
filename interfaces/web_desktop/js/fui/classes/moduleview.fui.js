@@ -15,6 +15,7 @@ if( !FUI.classExists( 'moduleview' ) )
 	{
 		constructor( options )
 		{
+			console.log( 'FUIModuleview' );
 		    super( options );
 		    
 		    // Set some vars
@@ -123,6 +124,7 @@ if( !FUI.classExists( 'moduleview' ) )
 		    
 		    this.refreshDom();
 		    
+		    console.log( 'moduelview onload things' );
 		    // Mani object has loaded
 		    if( this.onload ) this.onload();
 		    // Modulelist ready to load

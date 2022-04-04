@@ -12,6 +12,7 @@ class FUIListview extends FUIElement
 {
     constructor( options )
     {
+    	console.log( 'FUIListview' );
     	super( options );
         if( !this.options.hasHeader )
 	        this.options.hasHeader = false;
@@ -20,6 +21,19 @@ class FUIListview extends FUIElement
 	    if( !this.options.hasRows )
 	        this.options.hasRows = false;
     }
+    
+    show()
+    {
+    	console.log( 'lv.show', this.domElement );
+    	this.domElement.classList.toggle( 'ccHidden', false );
+    }
+    
+    hide()
+    {
+    	console.log( 'lv.hide', this.domElement );
+    	this.domElement.classList.toggle( 'ccHidden', true );
+    }
+    
     
     attachDomElement()
     {
@@ -30,9 +44,11 @@ class FUIListview extends FUIElement
     
     grabAttributes( domElement )
     {
+    	console.log( 'listview.grabAtts', domElement );
         super.grabAttributes( domElement );
         
-        let self = this;
+        
+        const self = this;
         
         let header = domElement.getElementsByTagName( 'listviewhead' );
         let headers = domElement.getElementsByTagName( 'listviewheaders' );
@@ -45,6 +61,54 @@ class FUIListview extends FUIElement
             
             let d = document.createElement( 'div' );
             d.className = 'FUIListviewHeader';
+            
+            // check for navigation
+            const headNavigationCollection = header.getElementsByTagName( 'listviewnavigation' );
+            if ( headNavigationCollection[0] )
+	        {
+	        	const headNavigationElement = headNavigationCollection[0];
+	        	console.log( 'headNavigationCollection', {
+	        		headNavigationElement : headNavigationElement,
+	        		c  : headNavigationElement.children,
+	        		l  : headNavigationElement.children.length,
+	        	});
+	        	this.options.hasNavigation = true;
+	        	d.classList.add( 'NavPad' );
+	        	const headNavigationContainer = document.createElement( 'div' );
+	        	headNavigationContainer.classList.add( 'HeadNav' );
+	        	for ( let i = 0; i < headNavigationElement.children.length; i++ )
+	        	{
+	        		const headNavBtn = headNavigationElement.children[ 0 ];
+	        		console.log( 'n', [ i, headNavBtn ]);
+	        		if ( 'listviewbutton' == headNavBtn.localName )
+	        		{
+	        			console.log( 'do button things', headNavBtn );
+	        			const navButton = document.createElement( 'div' );
+	        			navButton.classList.add( 'HeaderButton', 'IconSmall', 'MousePointer' );
+	        			const icon = headNavBtn.getAttribute( 'icon' );
+	        			if ( icon )
+	        			{
+	        				console.log( 'icon', icon );
+	        				navButton.classList.add( 'fa-' + icon ); 
+	        			}
+	        			
+	        			const onc = headNavBtn.getAttribute( 'onclick' )
+	        			if ( onc )
+	        			{
+	        				console.log( 'onclick', onc );
+	        				navButton.addEventListener( 'click', e => {
+	        					console.log( 'head nav btn on click', [ e, onc ]);
+	        					if ( window.ccGUI.callbacks[ onc ])
+	        						window.ccGUI.callbacks[ onc ]( self );
+	        				}, true );
+	        			}
+	        			
+	        			headNavigationContainer.appendChild( navButton );
+	        		}
+	        	}
+	        	
+	        	d.appendChild( headNavigationContainer );
+	        }
             
             // Add the heading
             let heading = false;
@@ -96,6 +160,39 @@ class FUIListview extends FUIElement
 		        			t.appendChild( b );
 		        		}
 		        	}
+		        	
+		        	self.filters = [];
+		        	let filterEls = null;
+		        	if ( ( filterEls = toolbar.getElementsByTagName( 'listviewfilter' ) ) )
+		        	{
+		        		console.log( 'found filters', [ filterEls, filterEls.length ]);
+		        		for( let a = 0; a < filterEls.length; a++ )
+		        		{
+		        			const f = document.createElement( 'input' );
+		        			//f.classList.add( 'MousePointer' );
+		        			self.filters.push( f );
+		        			
+		        			let cb = false;
+		        			if( ( cb = filterEls[a].getAttribute( 'onchange' ) ) )
+		        			{
+		        				console.log( 'found onchange', cb );
+				    			( function( ele, cbk )
+				    			{
+				    				ele.onchange = function( e )
+				    				{
+										// Trigger callback
+										console.log( 'filter onchange triggd', e );
+						                if( window.ccGUI.callbacks[ cbk ] )
+						                {
+						                    // Add structure with current element flags
+						                    window.ccGUI.callbacks[ cbk ]( self, ele.value );
+						                }
+						            }
+								} )( f, cb );
+							}
+		        			t.appendChild( f );
+		        		}
+		        	}
 		        	d.appendChild( t );
 		    	}
             }
@@ -104,6 +201,10 @@ class FUIListview extends FUIElement
         }
         
         self.headerElements = [];
+        self.cols = {
+        	'_list'    : [],
+        	'_current' : null,
+        };
         
         if( headers )
         {
@@ -124,21 +225,163 @@ class FUIListview extends FUIElement
             	self.headerElements[ a ].align = headerelements[a].getAttribute( 'align' );
             	self.headerElements[ a ].name = headerelements[a].getAttribute( 'name' ) ? headerelements[a].getAttribute( 'name' ) : headerelements[a].innerText;
             	self.headerElements[ a ].text = headerelements[a].innerText;
+            	self.headerElements[ a ].id = friendUP.tool.uid( 'h' );
+            	if ( headerelements[ a ].getAttribute( 'sortDefault' ) )
+            	{
+            		const so = headerelements[ a ].getAttribute( 'sortOrder' );
+            		if ( 'ZA' == so )
+            			self.sortInvert = true;
+            		self.sortDefault = self.headerElements[ a ].name;
+            	}
+            	self.cols[ self.headerElements[ a ].name ] = [];
+            	self.cols._list[ a ] = self.headerElements[ a ].name;
             	if( !self.headerElements[ a ].align ) self.headerElements[ a ].align = 'left';
             	let h = document.createElement( 'div' );
             	let alignment = self.headerElements[ a ].align;
             	if( alignment == 'left' ) alignment = ' TextLeft';
             	else if( alignment == 'right' ) alignment = ' TextRight';
             	else if( alignment == 'center' ) alignment = ' TextCenter';
+            	h.id = self.headerElements[ a ].id;
             	h.className = 'HContent' + self.headerElements[ a ].width + ' PaddingSmall Ellipsis FloatLeft' + alignment;
             	h.innerHTML = headerelements[ a ].innerHTML;
             	row.appendChild( h );
+            	
+            	const hname = self.headerElements[a].name;
+            	const hidx = a;
+            	h.addEventListener( 'click', e => {
+            		console.log( 'header click', {
+            			e    : e,
+            			keep : e.keepCurrent,
+            			sortb: e.sortBy,
+            			sd   : self.sortDefault,
+            			si   : self.sortInvert,
+            			name : hname,
+            			curr : self.cols._current,
+            			i    : hidx,
+            			col  : self.cols[ hname ],
+            			cols : self.cols,
+            			//type : self.cols[hname][0].type,
+            		});
+            		let header = null;
+            		if ( e.keepCurrent && ( self.cols._current != null ))
+            		{
+            			const parts = self.cols._current.split( '_' );
+            			header = parts[0];
+            			if ( null != parts[ 1 ])
+            				self.cols._current = header;
+            			else
+            				self.cols._current = header + '_inverted';
+            		}
+            		else
+            		{
+            			if ( e.sortBy )
+            				header = e.sortBy;
+            			else
+            				header = hname;
+            			
+            			if ( self.cols._current == null && self.sortInvert )
+            				self.cols._current = header;
+            		}
+            		
+            		if ( !self.cols[ header ].length )
+            			return;
+            		
+            		//console.log( 'sorting header', [ header, self.cols._current ]);
+            		const hIdx = self.cols._list.indexOf( header );
+            		const headId = self.headerElements[ hIdx ].id;
+            		const hEl = ge( headId );
+            		
+            		if ( 'string' == self.cols[header][0].type )
+            		{
+            			self.cols[header].sort(( ra, rb ) =>
+            			{
+            				//console.log( 'sort', [ ra.value, rb.value ]);
+            				if ( ra.value == null || rb.value == null )
+            				{
+            					if ( self.cols._current == header )
+            					{
+            						if ( null == ra.value )
+            							return -1;
+            						else
+            							return 1;
+            					}
+            					else
+            					{
+            						if ( null == ra.value )
+            							return 1;
+            						else
+            							return -1;
+            					}
+            				}
+            				
+            				if ( String( ra.value ).toLowerCase() == String( rb.value ).toLowerCase() )
+            					return 0;
+            				
+            				if ( self.cols._current == header )
+            				{
+            					if ( String( ra.value ).toLowerCase() < String( rb.value ).toLowerCase() )
+            						return 1;
+            					else
+            						return -1;
+            				}
+            				else
+            				{
+            					if ( String( ra.value ).toLowerCase() < String( rb.value ).toLowerCase() )
+            						return -1;
+            					else
+            						return 1;
+            				}
+            			});
+            			
+            			//console.log( 'sorted', self.cols[ header ]);
+            			const p = ge( self.cols[ header ][ 0 ].rowId ).parentNode;
+            			for( let i = 0; i < self.cols[ header ].length; i++ )
+            			{
+            				p.appendChild( ge( self.cols[ header ][ i ].rowId ));
+            			}
+            			
+            			if ( null == self.cols._current )
+            			{
+            				self.cols._current = header;
+            				hEl.classList.toggle( 'ListDirectionAZ', true );
+            			}
+            			else
+            			{
+            				const cP = self.cols._current.split( '_' );
+            				const curr = cP[0];
+            				const inv = !!cP[1];
+            				const cIdx = self.cols._list.indexOf( curr );
+            				const cHeadId = self.headerElements[ cIdx ].id;
+            				const cHEl = ge( cHeadId );
+            				if ( inv )
+            					cHEl.classList.toggle( 'ListDirectionZA', false );
+            				else
+            					cHEl.classList.toggle( 'ListDirectionAZ', false );
+            				
+            				
+            				
+	            			if ( self.cols._current == header )
+	            			{
+	            				self.cols._current = header + '_inverted';
+	            				hEl.classList.toggle( 'ListDirectionZA', true );
+	            			}
+	            			else
+	            			{
+	            				self.cols._current = header;
+	            				hEl.classList.toggle( 'ListDirectionAZ', true );
+	            			}
+            			}
+            			
+            			return;
+            		}
+            	}, false );
             }
             
             d.appendChild( row );
             this.domElement.appendChild( d );
         }
         
+        console.log( 'listview grabatts - rows', rows );
         if( rows )
         {
         	rows = rows[0];
@@ -150,16 +393,23 @@ class FUIListview extends FUIElement
             this.domElement.appendChild( container );
             
             let onload = rows.getAttribute( 'onload' );
+            console.log( 'onload ?', onload );
         	if( onload )
         	{
-        		this.onload = function()
+        		this.onload = function( e )
         		{
+        			console.log( 'listview onload' );
         			// Trigger callback
 	                if( window.FUI.callbacks[ onload ] )
 	                {
 	                    // Add structure with current element flags
 	                    window.FUI.callbacks[ onload ]( self );
 	                }
+	                else
+	                	console.log( 'no callback found for', {
+	                		callback_id   : onload,
+	                		FUI_callbacks : JSON.parse( JSON.stringify( FUI.callbacks )),
+	                	});
         		}
         	}
         }
@@ -180,6 +430,7 @@ class FUIListview extends FUIElement
     
     refreshRows()
     {
+    	const self = this;
     	let json = this.rowData;
     
     	this.clearRows();
@@ -188,6 +439,19 @@ class FUIListview extends FUIElement
     	{
     		let row = document.createElement( 'div' );
     		row.className = 'HRow EditRow';
+    		row.id = friendUP.tool.uid( 'r' );
+    		if ( json[b].onclick )
+    		{
+    			const oc = json[b].onclick;
+    			const rd = json[b];
+    			row.addEventListener( 'click', e =>
+    			{
+    				console.log( 'row onclick', oc );
+    				if ( window.ccGUI.callbacks[ oc ])
+    					window.ccGUI.callbacks[ oc ]( rd, self, e );
+    			}, false );
+    		}
+    		
     		let baseWidth = parseInt( 100 / json[b].length );
 
 			for( let z = 0; z < json[b].length; z++ )
@@ -206,6 +470,9 @@ class FUIListview extends FUIElement
             	else if( alignment == 'center' ) alignment = ' TextCenter';
 				
 				col.className = 'HContent' + w + ' Ellipsis FloatLeft' + alignment;
+				
+				json[b][z].rowId = row.id;
+				self.cols[ self.cols._list[ z ]][ b ] = json[b][z];
 				
 				// Identify column dataset
 				if( json[b][z].uniqueid )
@@ -244,6 +511,43 @@ class FUIListview extends FUIElement
 				        }
 				    } )( json[b], col );
 				    col.classList.add( 'FUIListviewOnclick' );
+				}
+				
+				const onchange = json[b][z].onchange;
+				if ( onchange )
+				{
+					/*console.log( 'found onchange for', {
+						json   : json,
+						jsonb  : json[b],
+						jsonbz : json[b][z],
+						col    : col,
+					});*/
+					const data = json[b];
+					const cnf = json[b][z];
+					const el = col;
+					el.onchange = e =>
+					{
+						console.log( 'onchange', [ cnf, el, e, e.target.value ] );
+						if ( window.ccGUI.callbacks[ onchange ] )
+						{
+							let obj = {};
+                            for( let d = 0; d < data.length; d++ )
+                            {
+                                obj[ data[ d ].name ] = {};
+                                for( let p in data[ d ] )
+                                {
+                                    if( p == 'name' ) continue;
+                                    obj[ data[ d ].name ][ p ] = data[ d ][ p ];
+                                }
+                            }
+                            if( e.target && e.target.value )
+                            {
+                            	obj.value = e.target.value;
+                            }
+							window.ccGUI.callbacks[ onchange ]( obj, self, e );
+						}
+					}
+					
 				}
 				
 				col.innerHTML = str;					
