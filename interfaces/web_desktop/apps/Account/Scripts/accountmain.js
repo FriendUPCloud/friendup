@@ -68,35 +68,38 @@ Application.run = function( msg, iface )
 	g.execute( 'sampleconfig' );
 	
 	// Clear / autoregenerate avatar
-	ge( 'ClearAvatar' ).onclick = function( e )
+	if( ge( 'ClearAvatar' ) )
 	{
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
-		{
-			var d = new Module( 'system' );
-			d.onExecuted = function( r, c )
-			{
-				refreshAvatar();
-				if( r == 'ok' )
-				{
-					try
-					{
-						var data = JSON.parse( c );
-						refreshPalette( data.avatar_color );
-					}
-					catch( e )
-					{
-						refreshPalette();
-					}
-				}
-				else
-				{
-					refreshPalette();
-				}
-			}
-			d.execute( 'getsetting', { setting: 'avatar_color' } );
-		}
-		m.execute( 'getsetting', { setting: 'avatar', mode: 'reset' } );
+	    ge( 'ClearAvatar' ).onclick = function( e )
+	    {
+		    var m = new Module( 'system' );
+		    m.onExecuted = function( e, d )
+		    {
+			    var d = new Module( 'system' );
+			    d.onExecuted = function( r, c )
+			    {
+				    refreshAvatar();
+				    if( r == 'ok' )
+				    {
+					    try
+					    {
+						    var data = JSON.parse( c );
+						    refreshPalette( data.avatar_color );
+					    }
+					    catch( e )
+					    {
+						    refreshPalette();
+					    }
+				    }
+				    else
+				    {
+					    refreshPalette();
+				    }
+			    }
+			    d.execute( 'getsetting', { setting: 'avatar_color' } );
+		    }
+		    m.execute( 'getsetting', { setting: 'avatar', mode: 'reset' } );
+	    }
 	}
 }
 

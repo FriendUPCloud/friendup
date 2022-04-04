@@ -191,6 +191,13 @@
 	color: var(--fui-module-color);
 }
 
+.FUIListview .FUIListviewHeaders .HRow,
+.FUIListview .FUIListviewContent .HRow, .FUIListview .FUIListviewContent .HRow > div
+{
+	max-height: 29px;
+	overflow: hidden;
+}
+
 .FUIListview .FUIListviewHeaders .HRow > div
 {
 	padding: var(--fui-padding-row) var(--fui-padding-normal) var(--fui-padding-row) var(--fui-padding-normal);
@@ -224,3 +231,25 @@
 	color: var(--fui-color-emphasized);
 }
 
+/* Button */
+
+.FUIButtonElement
+{
+	background-color: var(--fui-list-button-background);
+	color: var(--fui-list-button-color);
+	border-radius: var(--fui-border-radius-small);
+	padding: var(--fui-padding-row);
+	text-align: center;
+	box-sizing: border-box;
+}
+
+.FUIButtonElement:hover
+{
+	background-color: var(--fui-list-button-background-hover);
+    color: var(--fui-list-button-color-hover);
+}
+
+.FUIButtonElement:before
+{
+    margin: 0 4px 0 0;
+}

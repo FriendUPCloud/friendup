@@ -21,6 +21,7 @@ window.FUI = window.FUI ? window.FUI : {
 		switch( data.type )
 		{
 			case 'string':
+			{
 				let str = data.value;
 				// Extras are things that prepend the value
 				if( data.extras )
@@ -29,13 +30,14 @@ window.FUI = window.FUI ? window.FUI : {
 				if( data.additions )
 					str += data.additions;
 				return str;
+			}
 			default:
 			{
     			let classStr = 'FUI' + data.type.substr( 0, 1 ).toUpperCase() + data.type.substr( 1, data.type.length - 1 );
 			    try
 			    {
                     let classObj = eval( classStr );
-                    return( new classObj().getMarkup( data ) );
+                    return( new classObj( data ).getMarkup( data ) );
                 }
                 catch( e )
                 {
@@ -135,13 +137,25 @@ window.FUI = window.FUI ? window.FUI : {
 			}
 		}
 		
+		let jailClasses = { 'button': true };
+		
 		// Convert active class placeholders
 		for( let b = 0; b < types.length; b++ )
 		{
 		    ( function( domtype )
 		    {
 		        // Convert markup into classes
-		        let ch = document.getElementsByTagName( domtype );
+		        let ch = false;
+		        if( !jailClasses[ domtype ] )
+		        {
+		            ch = document.getElementsByTagName( domtype );
+		        }
+		        // TODO: Extract correct domtype from object
+		        // Support fui-*
+		        if( !ch || ( ch && !ch.length ) )
+		        {
+		        	ch = document.getElementsByTagName( 'fui-' + domtype );
+		        }
 		        if( ch.length > 0 )
 		        {
 				    let out = [];
@@ -158,7 +172,14 @@ window.FUI = window.FUI ? window.FUI : {
 				    {
 				        let classStr = 'FUI' + domtype.substr( 0, 1 ).toUpperCase() + domtype.substr( 1, domtype.length - 1 );
 				        let classObj = eval( classStr );
-				        new classObj( { placeholderElement: out[a] } );
+				        let opts = {};
+				        opts.placeholderElement = out[a];
+				        // Transfer innerHTML to options
+				        if( opts.placeholderElement.innerHTML )
+				        {
+				        	opts.innerHTML = opts.placeholderElement.innerHTML;
+				        }
+				        new classObj( opts );
 				    }
 				}
 		    } )( types[b] );
@@ -211,9 +232,9 @@ class FUIElement
     // Sets default values etc
     constructor( options )
     {
-        this.options = options;
+        this.options = options ? options : false;
         
-        if( options.uniqueid )
+        if( this.options && typeof( options.uniqueid ) != 'undefined' && options.uniqueid )
         {
         	if( window.FUI.guiElements[ options.uniqueid ] )
         	{
