@@ -2389,6 +2389,11 @@ function View( flags )
 	                {
 	                    templateStr += "\n" + '<script src="' + getWebUrl( val ) + '"></script>';
 	                }
+	                // Add css to template string
+	                if( val.substr( -4, 4 ).toLowerCase() == '.css' )
+	                {
+	                    templateStr += "\n" + '<link rel="stylesheet" href="' + getWebUrl( val ) + '"/>';
+	                }
 	            }
 	            // With a template source, load that before setting content
 	            if( templateSrc )
