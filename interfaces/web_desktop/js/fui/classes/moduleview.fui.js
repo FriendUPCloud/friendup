@@ -250,10 +250,14 @@ if( !FUI.classExists( 'moduleview' ) )
 				// Default operation
 				else
 				{
-				    d.onclick = function( m )
+				    ( function( mod )
 				    {
-				        self.setModuleContent( self.cards[ moduleList[ a ].module ] ? self.cards[ moduleList[ a ].module ].main : '' );
-				    }
+				        d.onclick = function( m )
+				        {
+				            self.setModuleContent( self.cards[ mod ] ? self.cards[ mod ].main : '' );
+				            self.activateModule( mod );
+				        }
+				    } )( moduleList[ a ].module );
 				}
 				par.appendChild( d );
 				if( moduleList[a].active )
@@ -274,8 +278,8 @@ if( !FUI.classExists( 'moduleview' ) )
 		setModuleContent( module, content )
 		{
 			// We can cache the module content for transitions?
-			//if( !this.moduleContent ) this.moduleContent = {};
-			//this.moduleContent[ module ] = content;
+			if( typeof( content ) == 'undefined' )
+			    content = '';
 			this.moduleContainer.domNode.innerHTML = content;
 			FUI.initialize();
 		}
