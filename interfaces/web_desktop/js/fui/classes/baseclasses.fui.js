@@ -474,6 +474,8 @@ class FUIButton extends FUIElement
     {
         super.refreshDom();
         
+        let self = this;
+        
         if( this.options[ 'onclick' ] )
         {
         	this.domElement.style.cursor = 'pointer';
@@ -493,6 +495,7 @@ class FUIButton extends FUIElement
         {
             cl = ' IconSmall fa-' + this.options[ 'icon' ];
         }
+        
         
         
         // TODO: Add properties, uniqueId etc
