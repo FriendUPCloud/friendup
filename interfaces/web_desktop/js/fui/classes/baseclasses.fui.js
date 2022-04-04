@@ -459,7 +459,7 @@ class FUIButton extends FUIElement
     {
         super.grabAttributes( domElement );
         
-        let attrs = [ /*'width', 'height', 'icon', 'type', 'shape', 'border-size',*/ 'onclick' ];
+        let attrs = [ /*'width', 'height', 'icon', 'type', 'shape', 'border-size',*/ 'icon', 'onclick' ];
         
         for( let a in attrs )
         {
@@ -488,18 +488,39 @@ class FUIButton extends FUIElement
 		        return;
         	}
         }
+        let cl = '';
+        if( this.options[ 'icon' ] )
+        {
+            cl = ' IconSmall fa-' + this.options[ 'icon' ];
+        }
         
         
         // TODO: Add properties, uniqueId etc
-        this.domElement.innerHTML = '<div class="FUIButtonElement">' + ( this.options.innerHTML ? this.options.innerHTML : '' ) + '</div>';
+        this.domElement.innerHTML = '<div class="FUIButtonElement' + cl + '">' + ( this.options.innerHTML ? this.options.innerHTML : '' ) + '</div>';
         
         this.adaptSize();
     }
     getMarkup( data )
     {
     	// Return meta-markup for class instantiation later
-    	// TODO: Add properties, uniqueId etc
-    	return '<fui-button>' + ( this.options.value ? this.options.value : '' ) + '</fui-button>';
+    	let attrs = [ /*'width', 'height', 'icon', 'type', 'shape', 'border-size',*/ 'icon', 'onclick' ];
+        let attrStr = [];
+        
+        // Build an array of attributes
+        for( let a in attrs )
+        {
+        	let op = this.options[ attrs[ a ] ]
+        	if( op )
+        	{
+	        	attrStr.push( attrs[ a ] + '="' + op + '"' );
+	        } 
+        }
+        if( attrStr.length > 0 )
+        {
+            attrStr = ' ' + attrStr.join( ' ' );
+        }
+        else attrStr = '';
+    	return '<fui-button' + attrStr + '>' + ( this.options.value ? this.options.value : '' ) + '</fui-button>';
     }
     adaptSize()
     {

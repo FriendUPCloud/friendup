@@ -249,4 +249,7 @@
     color: var(--fui-list-button-color-hover);
 }
 
-
+.FUIButtonElement:before
+{
+    margin: 0 4px 0 0;
+}
