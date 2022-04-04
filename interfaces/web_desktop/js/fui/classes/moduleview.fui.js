@@ -210,28 +210,65 @@ if( !FUI.classExists( 'moduleview' ) )
 				}
 				d.innerHTML = '<div><h2>' + moduleList[a].name + '</h2><p>' + moduleList[a].leadin + '</p></div>';
 				d.module = moduleList[ a ].module;
-				( function( mod, onc ){
-					d.onclick = function( e )
-					{
-						self.activateModule( mod );
-						
-						// Override
-						if( onc )
-						{
-							onc( self );
-							return;
-						}
-						// TODO: Create default functionality
-					}
-				} )( moduleList[a].module, moduleList[a].onclick );
+				
+				if( !self.cards )
+				    self.cards = {};
+				self.cards[ d.module ] = {
+				    main: ''
+				};
+				
+				// Onclick override
+				if( typeof( moduleList[a].onclick ) == 'function' )
+				{
+				    ( function( mod, onc ){
+					    d.onclick = function( e )
+					    {
+						    self.activateModule( mod );
+						    
+						    // Override
+						    if( onc )
+						    {
+							    onc( self );
+							    return;
+						    }
+						    // TODO: Create default functionality
+					    }
+				    } )( moduleList[a].module, moduleList[a].onclick );
+				}
+				// String based callbacks
+				else if( typeof( moduleList[a].onclick ) == 'string' )
+				{
+				    ( function( cbk, el )
+				    {
+				        el.onclick = function()
+				        {
+				            if( typeof( FUI.callbacks[ cbk ] ) )
+				                FUI.callbacks[ cbk ]( self );
+				        }
+				    } )( moduleList[a].onclick, d );
+				}
+				// Default operation
+				else
+				{
+				    d.onclick = function( m )
+				    {
+				        self.setModuleContent( self.cards[ moduleList[ a ].module ] ? self.cards[ moduleList[ a ].module ].main : '' );
+				    }
+				}
 				par.appendChild( d );
 				if( moduleList[a].active )
 				{
-					firstClick = function(){ self.activateModule( moduleList[a].module ); moduleList[a].onclick( self ); };
+					firstClick = function(){ self.activateModule( moduleList[a].module ); d.onclick( self ); };
 				}
 			}
 			
 			if( firstClick ) firstClick();
+		}
+		
+		// Set a module card
+		setModuleCard( module, content )
+		{
+		    this.cards[ module ] = content;
 		}
 		
 		setModuleContent( module, content )
