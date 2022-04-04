@@ -137,13 +137,19 @@ window.FUI = window.FUI ? window.FUI : {
 			}
 		}
 		
+		let jailClasses = { 'button': true };
+		
 		// Convert active class placeholders
 		for( let b = 0; b < types.length; b++ )
 		{
 		    ( function( domtype )
 		    {
 		        // Convert markup into classes
-		        let ch = document.getElementsByTagName( domtype );
+		        let ch = false;
+		        if( !jailClasses[ domtype ] )
+		        {
+		            ch = document.getElementsByTagName( domtype );
+		        }
 		        // TODO: Extract correct domtype from object
 		        // Support fui-*
 		        if( !ch || ( ch && !ch.length ) )
