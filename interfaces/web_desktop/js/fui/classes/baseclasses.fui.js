@@ -476,6 +476,9 @@ class FUIButton extends FUIElement
         
         let self = this;
         
+        // Class for dom element
+        let cl = '';
+        
         if( this.options[ 'onclick' ] )
         {
         	this.domElement.style.cursor = 'pointer';
@@ -489,14 +492,12 @@ class FUIButton extends FUIElement
 		        }
 		        return;
         	}
+        	cl += ' Clickable ';
         }
-        let cl = '';
         if( this.options[ 'icon' ] )
         {
-            cl = ' IconSmall fa-' + this.options[ 'icon' ];
+            cl += ' IconSmall fa-' + this.options[ 'icon' ];
         }
-        
-        
         
         // TODO: Add properties, uniqueId etc
         this.domElement.innerHTML = '<div class="FUIButtonElement' + cl + '">' + ( this.options.innerHTML ? this.options.innerHTML : '' ) + '</div>';
