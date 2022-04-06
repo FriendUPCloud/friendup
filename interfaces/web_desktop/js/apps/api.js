@@ -6222,9 +6222,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		window.loaded = true;
 		
-		// Initialize Friend User Interface
-		FUI.initialize();
-		
 		// What to do when we are done loading.. -------------------------------
 		
 		// Async is a bitch!
@@ -6422,11 +6419,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					if( Application.run )
 					{
 						Application.run( packet );
-						FUI.initialize();
 					}
 					window.loaded = true;
 					// Use the application doneLoading function (different)
 					Friend.application.doneLoading();
+					
+					// Initialize FUI
+					FUI.initialize();
 				}
 			}
 		}
