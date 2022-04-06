@@ -381,7 +381,7 @@ class FUIListview extends FUIElement
             this.domElement.appendChild( d );
         }
         
-        console.log( 'listview grabatts - rows', rows );
+        console.log( 'listview grabattsssss - rows', rows );
         if( rows )
         {
         	rows = rows[0];
