@@ -137,7 +137,7 @@ window.FUI = window.FUI ? window.FUI : {
 			}
 		}
 		
-		let jailClasses = { 'button': true };
+		let jailClasses = { 'button': true, 'html': true };
 		
 		// Convert active class placeholders
 		for( let b = 0; b < types.length; b++ )

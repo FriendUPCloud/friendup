@@ -439,7 +439,7 @@ class FUIPicture extends FUIElement
 FUI.registerClass( 'picture' );
 
 
-// Checkbox element
+// Button element
 class FUIButton extends FUIElement
 {
     constructor( options )
@@ -552,6 +552,66 @@ class FUIButton extends FUIElement
 }
 FUI.registerClass( 'button', FUIButton );
 
-
-
+// SimpleHTML element
+class FUIHTML extends FUIElement
+{
+    constructor( options )
+    {
+        super( options ); 
+    }
+    attachDomElement()
+    {
+        super.attachDomElement();
+    }
+    grabAttributes( domElement )
+    {
+        super.grabAttributes( domElement );
+        
+        let attrs = [ /*'width', 'height', 'icon', 'type', 'shape', 'border-size',*/ 'uniqueid' ];
+        
+        for( let a in attrs )
+        {
+        	let op = domElement.getAttribute( attrs[ a ] );
+        	if( op )
+	        	this.options[ attrs[ a ] ] = op;
+        }
+        
+        this.refreshDom();
+    }
+    refreshDom()
+    {
+        super.refreshDom();
+        
+        let self = this;
+        
+        // Class for dom element
+        let cl = '';
+        
+        // TODO: Add properties, uniqueId etc
+        this.domElement.innerHTML = '<div class="FUIHTML' + cl + '">' + ( this.options.innerHTML ? this.options.innerHTML : '' ) + '</div>';
+    }
+    getMarkup( data )
+    {
+    	// Return meta-markup for class instantiation later
+    	let attrs = [ 'uniqueid' ];
+        let attrStr = [];
+        
+        // Build an array of attributes
+        for( let a in attrs )
+        {
+        	let op = this.options[ attrs[ a ] ]
+        	if( op )
+        	{
+	        	attrStr.push( attrs[ a ] + '="' + op + '"' );
+	        } 
+        }
+        if( attrStr.length > 0 )
+        {
+            attrStr = ' ' + attrStr.join( ' ' );
+        }
+        else attrStr = '';
+    	return '<fui-html' + attrStr + '>' + ( this.options.value ? this.options.value : '' ) + '</fui-html>';
+    }
+}
+FUI.registerClass( 'html', FUIHTML );
 
