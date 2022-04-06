@@ -238,7 +238,7 @@ class FUIElement
         {
         	if( window.FUI.guiElements[ options.uniqueid ] )
         	{
-        		console.log( 'ccGUI: Gui element with proposed uniqueId ' + options.uniqueid + ' is taken. Overwriting.' );
+        		console.log( 'FUI: Gui element with proposed uniqueId ' + options.uniqueid + ' is taken. Overwriting.' );
         	}
         	window.FUI.guiElements[ options.uniqueid ] = this;
         }
