@@ -71,6 +71,21 @@ class FUIGroup extends FUIElement
                     }
                 }
                 
+                // Add padding
+                let padding = rows[a].getAttribute( 'padding' );
+                if( padding )
+                {
+                	switch( padding )
+                	{
+                		case 'row':
+                		case 'small':
+                		case 'normal':
+                		case 'big':
+	                		d.style.padding = 'var(-fui-padding-' + padding + ')';
+	                		break;
+                	}
+                }
+                
                 let children = rows[a].getElementsByTagName( '*' );
                 for( let b = 0; b < children.length; b++ )
                 {
@@ -111,6 +126,21 @@ class FUIGroup extends FUIElement
                     {
                         d.style.scrollBehavior = 'smooth';
                     }
+                }
+                
+                // Add padding
+                let padding = rows[a].getAttribute( 'padding' );
+                if( padding )
+                {
+                	switch( padding )
+                	{
+                		case 'row':
+                		case 'small':
+                		case 'normal':
+                		case 'big':
+	                		d.style.padding = 'var(-fui-padding-' + padding + ')';
+	                		break;
+                	}
                 }
                 
                 if( columns[a].getAttribute( 'id' ) )
