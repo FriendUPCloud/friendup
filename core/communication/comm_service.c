@@ -128,12 +128,15 @@ void CommServiceDelete( CommService *s )
 		{
 			sleep( 1 );
 		}
+		DEBUG2("[COMMSERV] CommunicationServiceDelete 1\n");
 		
 		if( FRIEND_MUTEX_LOCK( &s->s_CondMutex ) == 0 )
 		{
 			pthread_cond_broadcast( &s->s_DataReceivedCond );
 			FRIEND_MUTEX_UNLOCK( &s->s_CondMutex );
 		}
+		
+		DEBUG2("[COMMSERV] CommunicationServiceDelete 2\n");
 		FRIEND_MUTEX_LOCK( &s->s_Mutex );
 
 		CommRequest *cr = s->s_Requests;
@@ -145,6 +148,8 @@ void CommServiceDelete( CommService *s )
 			cr = (CommRequest *) cr->node.mln_Succ;
 		}
 		FRIEND_MUTEX_UNLOCK( &s->s_Mutex );
+		
+		DEBUG2("[COMMSERV] CommunicationServiceDelete 3\n");
 		
 		/*
 		if( FRIEND_MUTEX_LOCK( &s->s_CondMutex ) == 0 )
