@@ -239,6 +239,7 @@ if( !FUI.classExists( 'moduleview' ) )
 		    function attachCardAndGo()
 		    {
 		        parentElement.appendChild( d );
+		        FUI.initialize();
 		    }
 		    
 		    // Using a template url
