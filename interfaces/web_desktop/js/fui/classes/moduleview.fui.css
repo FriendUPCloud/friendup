@@ -96,5 +96,6 @@
 	color: var(--fui-color);
 	padding: 0;
 	border-radius: 0 0 var(--fui-border-radius-small) var(--fui-border-radius-small);
+	margin: 0 0 10px 0;
 }
 
