@@ -636,7 +636,7 @@ class FUIText extends FUIElement
             attrStr = ' ' + attrStr.join( ' ' );
         }
         else attrStr = '';
-    	return '<fui-button' + attrStr + '>' + ( this.options.value ? this.options.value : '' ) + '</fui-button>';
+    	return '<fui-text' + attrStr + '>' + ( this.options.value ? this.options.value : '' ) + '</fui-text>';
     }
     adaptSize()
     {
