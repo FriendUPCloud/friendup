@@ -8145,7 +8145,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	showContextMenu: function( menu, e, extra )
 	{
-		console.trace( 'showContextMenu', [ menu, e, extra ]);
 		let tr = e.target ? e.target : e.srcElement;
 
 		if( tr == window )
@@ -8189,7 +8188,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				isFileMenu = true;
 				Workspace.refreshMenu( true, tmp );
 				menu = Workspace.menu;
-				console.log( 'workspacemenu', menu );
 			}
 		}
 		
@@ -8311,7 +8309,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( Workspace.menu[z].name == i18n( 'menu_icons' ) )
 				{
 					menu = Workspace.menu[z].items;
-					console.log( 'assign menu', menu );
 					break;
 				}
 			}
@@ -8495,7 +8492,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 			}
 			
-			console.log( 'late menu', menu );
 			let menuitemCount = 0;
 			for( let z = 0; z < menu.length; z++ )
 			{
