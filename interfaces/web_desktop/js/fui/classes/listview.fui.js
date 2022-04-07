@@ -12,7 +12,6 @@ class FUIListview extends FUIElement
 {
     constructor( options )
     {
-    	console.log( 'FUIListview' );
     	super( options );
         if( !this.options.hasHeader )
 	        this.options.hasHeader = false;
@@ -24,14 +23,12 @@ class FUIListview extends FUIElement
     
     show()
     {
-    	console.log( 'lv.show', this.domElement );
-    	this.domElement.classList.toggle( 'ccHidden', false );
+    	this.domElement.classList.toggle( 'hidden', false );
     }
     
     hide()
     {
-    	console.log( 'lv.hide', this.domElement );
-    	this.domElement.classList.toggle( 'ccHidden', true );
+    	this.domElement.classList.toggle( 'hidden', true );
     }
     
     
@@ -44,7 +41,6 @@ class FUIListview extends FUIElement
     
     grabAttributes( domElement )
     {
-    	console.log( 'listview.grabAtts', domElement );
         super.grabAttributes( domElement );
         
         
@@ -67,11 +63,6 @@ class FUIListview extends FUIElement
             if ( headNavigationCollection[0] )
 	        {
 	        	const headNavigationElement = headNavigationCollection[0];
-	        	console.log( 'headNavigationCollection', {
-	        		headNavigationElement : headNavigationElement,
-	        		c  : headNavigationElement.children,
-	        		l  : headNavigationElement.children.length,
-	        	});
 	        	this.options.hasNavigation = true;
 	        	d.classList.add( 'NavPad' );
 	        	const headNavigationContainer = document.createElement( 'div' );
@@ -79,27 +70,22 @@ class FUIListview extends FUIElement
 	        	for ( let i = 0; i < headNavigationElement.children.length; i++ )
 	        	{
 	        		const headNavBtn = headNavigationElement.children[ 0 ];
-	        		console.log( 'n', [ i, headNavBtn ]);
 	        		if ( 'listviewbutton' == headNavBtn.localName )
 	        		{
-	        			console.log( 'do button things', headNavBtn );
 	        			const navButton = document.createElement( 'div' );
 	        			navButton.classList.add( 'HeaderButton', 'IconSmall', 'MousePointer' );
 	        			const icon = headNavBtn.getAttribute( 'icon' );
 	        			if ( icon )
 	        			{
-	        				console.log( 'icon', icon );
 	        				navButton.classList.add( 'fa-' + icon ); 
 	        			}
 	        			
 	        			const onc = headNavBtn.getAttribute( 'onclick' )
 	        			if ( onc )
 	        			{
-	        				console.log( 'onclick', onc );
 	        				navButton.addEventListener( 'click', e => {
-	        					console.log( 'head nav btn on click', [ e, onc ]);
-	        					if ( window.ccGUI.callbacks[ onc ])
-	        						window.ccGUI.callbacks[ onc ]( self );
+	        					if ( window.FUI.callbacks[ onc ])
+	        						window.FUI.callbacks[ onc ]( self );
 	        				}, true );
 	        			}
 	        			
@@ -127,7 +113,7 @@ class FUIListview extends FUIElement
             	if( toolbar )
             	{
 		        	let t = document.createElement( 'div' );
-		        	t.className = 'Left';
+		        	t.className = 'FUIListviewToolbar Left';
 		        	
 		        	let buttons = false;
 		        	if( ( buttons = toolbar.getElementsByTagName( 'listviewbutton' ) ) )
@@ -165,7 +151,6 @@ class FUIListview extends FUIElement
 		        	let filterEls = null;
 		        	if ( ( filterEls = toolbar.getElementsByTagName( 'listviewfilter' ) ) )
 		        	{
-		        		console.log( 'found filters', [ filterEls, filterEls.length ]);
 		        		for( let a = 0; a < filterEls.length; a++ )
 		        		{
 		        			const f = document.createElement( 'input' );
@@ -175,17 +160,15 @@ class FUIListview extends FUIElement
 		        			let cb = false;
 		        			if( ( cb = filterEls[a].getAttribute( 'onchange' ) ) )
 		        			{
-		        				console.log( 'found onchange', cb );
 				    			( function( ele, cbk )
 				    			{
 				    				ele.onchange = function( e )
 				    				{
 										// Trigger callback
-										console.log( 'filter onchange triggd', e );
-						                if( window.ccGUI.callbacks[ cbk ] )
+						                if( window.FUI.callbacks[ cbk ] )
 						                {
 						                    // Add structure with current element flags
-						                    window.ccGUI.callbacks[ cbk ]( self, ele.value );
+						                    window.FUI.callbacks[ cbk ]( self, ele.value );
 						                }
 						            }
 								} )( f, cb );
@@ -249,19 +232,6 @@ class FUIListview extends FUIElement
             	const hname = self.headerElements[a].name;
             	const hidx = a;
             	h.addEventListener( 'click', e => {
-            		console.log( 'header click', {
-            			e    : e,
-            			keep : e.keepCurrent,
-            			sortb: e.sortBy,
-            			sd   : self.sortDefault,
-            			si   : self.sortInvert,
-            			name : hname,
-            			curr : self.cols._current,
-            			i    : hidx,
-            			col  : self.cols[ hname ],
-            			cols : self.cols,
-            			//type : self.cols[hname][0].type,
-            		});
             		let header = null;
             		if ( e.keepCurrent && ( self.cols._current != null ))
             		{
@@ -286,7 +256,6 @@ class FUIListview extends FUIElement
             		if ( !self.cols[ header ].length )
             			return;
             		
-            		//console.log( 'sorting header', [ header, self.cols._current ]);
             		const hIdx = self.cols._list.indexOf( header );
             		const headId = self.headerElements[ hIdx ].id;
             		const hEl = ge( headId );
@@ -295,7 +264,7 @@ class FUIListview extends FUIElement
             		{
             			self.cols[header].sort(( ra, rb ) =>
             			{
-            				//console.log( 'sort', [ ra.value, rb.value ]);
+            				
             				if ( ra.value == null || rb.value == null )
             				{
             					if ( self.cols._current == header )
@@ -333,7 +302,7 @@ class FUIListview extends FUIElement
             				}
             			});
             			
-            			//console.log( 'sorted', self.cols[ header ]);
+            			
             			const p = ge( self.cols[ header ][ 0 ].rowId ).parentNode;
             			for( let i = 0; i < self.cols[ header ].length; i++ )
             			{
@@ -381,7 +350,6 @@ class FUIListview extends FUIElement
             this.domElement.appendChild( d );
         }
         
-        console.log( 'listview grabattsssss - rows', rows );
         if( rows )
         {
         	rows = rows[0];
@@ -393,12 +361,12 @@ class FUIListview extends FUIElement
             this.domElement.appendChild( container );
             
             let onload = rows.getAttribute( 'onload' );
-            console.log( 'onload ?', onload );
+        
         	if( onload )
         	{
         		this.onload = function( e )
         		{
-        			console.log( 'listview onload' );
+        			
         			// Trigger callback
 	                if( window.FUI.callbacks[ onload ] )
 	                {
@@ -446,9 +414,8 @@ class FUIListview extends FUIElement
     			const rd = json[b];
     			row.addEventListener( 'click', e =>
     			{
-    				console.log( 'row onclick', oc );
-    				if ( window.ccGUI.callbacks[ oc ])
-    					window.ccGUI.callbacks[ oc ]( rd, self, e );
+    				if ( window.FUI.callbacks[ oc ])
+    					window.FUI.callbacks[ oc ]( rd, self, e );
     			}, false );
     		}
     		
@@ -516,19 +483,13 @@ class FUIListview extends FUIElement
 				const onchange = json[b][z].onchange;
 				if ( onchange )
 				{
-					/*console.log( 'found onchange for', {
-						json   : json,
-						jsonb  : json[b],
-						jsonbz : json[b][z],
-						col    : col,
-					});*/
 					const data = json[b];
 					const cnf = json[b][z];
 					const el = col;
 					el.onchange = e =>
 					{
-						console.log( 'onchange', [ cnf, el, e, e.target.value ] );
-						if ( window.ccGUI.callbacks[ onchange ] )
+				
+						if ( window.FUI.callbacks[ onchange ] )
 						{
 							let obj = {};
                             for( let d = 0; d < data.length; d++ )
@@ -544,7 +505,7 @@ class FUIListview extends FUIElement
                             {
                             	obj.value = e.target.value;
                             }
-							window.ccGUI.callbacks[ onchange ]( obj, self, e );
+							window.FUI.callbacks[ onchange ]( obj, self, e );
 						}
 					}
 					
@@ -579,9 +540,9 @@ class FUIListview extends FUIElement
     				// If there's an onchange event, execute it and provide the dataset as well as listview object
     				if( set.onchange )
     				{
-    					if( window.ccGUI.callbacks[ set.onchange ] )
+    					if( window.FUI.callbacks[ set.onchange ] )
     					{
-    						window.ccGUI.callbacks[ set.onchange ]( set, self );
+    						window.FUI.callbacks[ set.onchange ]( set, self );
     						return;
     					}
     				}

@@ -2266,7 +2266,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// NB: Start of workspace_inside.js ----------------------------------------
 	refreshUserSettings: function( callback )
 	{
-		console.log( 'refreshUserSettings' );
 		// This part is important - it is where we extend the workspace with 
 		// configurable extensions based on config settings
 		let b = new Module( 'system' );
@@ -2275,7 +2274,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( e == 'ok' )
 			{
 				Workspace.serverConfig = JSON.parse( d );
-				console.log( 'serverConfig', Workspace.serverConfig );
 				
 				// Support init modules
 				if( Workspace.serverConfig.initmodules )
@@ -4617,7 +4615,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Fetch mountlist from database
 	getMountlist: function( callback, forceRefresh, addDormant )
 	{
-		console.trace( 'getMountlist', [ callback, forceRefresh, addDormant ]);
 		let t = this; // Reference to workspace
 		
 		// Just in case
@@ -4628,7 +4625,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			let d = new Module( 'system' );
 			d.onExecuted = function( res, dat )
 			{
-				console.log( 'getMountlist - types back', [ res, dat ])
 				if( res != 'ok' )
 				{
 					doGetMountlistHere();
@@ -4638,7 +4634,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				try
 				{
 					let types = JSON.parse( dat );
-					console.log( 'types', types );
 					Friend.dosDrivers = {};
 					for( let a = 0; a < types.length; a++ )
 					{
@@ -4673,7 +4668,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						try
 						{
 							let tmp = JSON.parse( visList );
-							console.log( 'devicesettings', visList )
 							visStruct = {};
 							for( let z = 0; z < tmp.length; z++ )
 								visStruct[ tmp[ z ].Filesystem ] = tmp[ z ];
@@ -4861,7 +4855,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						try
 						{
 							rows = JSON.parse( dat );
-							console.log( 'device/list', rows );
 						}
 						catch( e )
 						{
@@ -7482,10 +7475,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	refreshMenu: function( prohibitworkspaceMenu, activeElement = false )
 	{	
 		const self = this;
-		console.log( 'refreshMenu', {
-			sconf : Workspace.serverConfig,
-			fetch : self.isFetchingServerConfig,
-		});
 		if ( self.isFetchingServerConfig )
 			return;
 		
@@ -7493,7 +7482,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if ( null == sConf )
 		{
 			self.isFetchingServerConfig = true;
-			console.log( 'refreshmenu getting server conf' );
 			const c = new Module( 'system' );
 			c.onExecuted = ( s, d ) => {
 				self.isFetchingServerConfig = false;
@@ -7502,7 +7490,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					Workspace.serverConfig = JSON.parse( d );
 				}
 				
-				console.log( 'refreshmenu got server conf', Workspace.serverConfig );
 				self.refreshMenu();
 			}
 			c.execute( 'sampleconfig' );
@@ -7804,7 +7791,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						name:	sharedVolume ? i18n( 'menu_unshare' ) : i18n( 'menu_delete' ),
 						command: function() { Workspace.deleteFile( sharedVolume ? 'unshare' : false ); },
-						disabled: !hasSharing || ( !iconsSelected || volumeIcon ) || systemDrive || cannotWrite,
+						disabled: !( sharedVolume && hasSharing ) || ( !iconsSelected || volumeIcon ) || systemDrive || cannotWrite,
 					},
 					// Add sharing
 					{
