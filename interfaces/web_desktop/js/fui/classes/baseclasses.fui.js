@@ -438,7 +438,6 @@ class FUIPicture extends FUIElement
 }
 FUI.registerClass( 'picture' );
 
-
 // Checkbox element
 class FUIButton extends FUIElement
 {

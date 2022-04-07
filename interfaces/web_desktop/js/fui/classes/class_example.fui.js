@@ -68,7 +68,7 @@ class FUITemplate extends FUIElement
     	return str;*/
     }
 }
-FUI.registerClass( 'template' );
+FUI.registerClass( 'template', FUITemplate );
 
 
 
