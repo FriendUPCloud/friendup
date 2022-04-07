@@ -202,7 +202,10 @@ if( !FUI.classExists( 'moduleview' ) )
 					    for( let c = 0; c < this.cards[ mod ].length; c++ )
 					    {
 					        let card = this.cards[ mod ][ c ];
-					        this.renderCard( card, this.moduleContainer.domNode );
+					        if( typeof( card.visible ) == 'undefined' || card.visible )
+					        {
+					        	this.renderCard( card, this.moduleContainer.domNode );
+					        }
 					    }
 					}
 				}
