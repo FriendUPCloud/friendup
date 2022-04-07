@@ -153,10 +153,15 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 	{
 		if( FRIEND_MUTEX_LOCK( &serv->s_CondMutex ) == 0 )
 		{
+			DEBUG("[SendMessageAndWait] SendMessageAndWait message: waiting for condition\n");
 			pthread_cond_wait( &serv->s_DataReceivedCond, &serv->s_Mutex );
 			FRIEND_MUTEX_UNLOCK( &serv->s_CondMutex );
+			DEBUG("[SendMessageAndWait] SendMessageAndWait message unlocked\n");
 		}
-		else break;
+		else
+		{
+			break;
+		}
 
 		time_t acttime = time( NULL );
 		if( ( acttime - cr->cr_Time ) > 10 || cr->cr_Bs != NULL )
