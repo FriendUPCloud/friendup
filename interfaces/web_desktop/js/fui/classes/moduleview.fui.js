@@ -222,6 +222,20 @@ if( !FUI.classExists( 'moduleview' ) )
 		    let d = document.createElement( 'div' );
 		    d.className = 'ModuleCard';
 		    
+		    // If we added a card title
+		    if( card.title )
+		    {
+		    	let ct = document.createElement( 'div' );
+		    	ct.className = 'CardName';
+		    	ct.innerHTML = card.title;
+		    	d.appendChild( ct );
+		    }
+		    
+		    // Where card content goes
+		    let cnt = document.createElement( 'div' );
+		    cnt.className = 'CardContent';
+		    d.appendChild( cnt );
+		    
 		    function attachCardAndGo()
 		    {
 		        parentElement.appendChild( d );
@@ -233,7 +247,9 @@ if( !FUI.classExists( 'moduleview' ) )
 		        let f = new File( d.templateUrl );
 		        f.onLoad = function( data )
 		        {
-		            d.innerHTML = data;
+		        	let nd = document.createElement( 'div' );
+		            nd.innerHTML = data;
+		            cnt.appendChild( nd );
 		            attachCardAndGo();
 		        }
 		        f.load();
@@ -245,13 +261,14 @@ if( !FUI.classExists( 'moduleview' ) )
 		        let f = FUI.getFragment( card.fragmentId );
 		        if( f )
 		        {
-		            d.innerHTML = f;
+		            let nd = document.createElement( 'div' );
+		            nd.innerHTML = f;
+		            cnt.appendChild( nd );
 		            attachCardAndGo();
 		            return;
 		        }
 		    }
 		    
-	        d.innerHTML = '';
 	        attachCardAndGo();
 		}
 		
