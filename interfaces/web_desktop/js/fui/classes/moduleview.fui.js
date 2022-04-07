@@ -195,7 +195,6 @@ if( !FUI.classExists( 'moduleview' ) )
 					// We got cards on this module
 					if( this.cards && this.cards[ mod ] )
 					{
-						console.log( 'Rendering cards for ' + mod );
 						// Blank out container
 					    this.moduleContainer.domNode.innerHTML = '';
 					    
@@ -256,14 +255,19 @@ if( !FUI.classExists( 'moduleview' ) )
 	        attachCardAndGo();
 		}
 		
+		// Import module list from JSON structure
 		setModules( moduleList )
 		{
 			let self = this;
 			
+			// Holds the first module to activate
 			let firstClick = false;
 			
+			// Set up parentNode for HTML rendering
 			let par = this.moduleList.domNode;
 			par.innerHTML = '';
+			
+			// Process all modules
 			for( let a = 0; a < moduleList.length; a++ )
 			{
 				let d = document.createElement( 'div' );
