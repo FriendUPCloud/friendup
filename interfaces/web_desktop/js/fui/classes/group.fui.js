@@ -81,7 +81,7 @@ class FUIGroup extends FUIElement
                 		case 'small':
                 		case 'normal':
                 		case 'big':
-	                		d.style.padding = 'var(-fui-padding-' + padding + ')';
+	                		d.style.padding = 'var(--fui-padding-' + padding + ')';
 	                		break;
                 	}
                 }
@@ -138,7 +138,7 @@ class FUIGroup extends FUIElement
                 		case 'small':
                 		case 'normal':
                 		case 'big':
-	                		d.style.padding = 'var(-fui-padding-' + padding + ')';
+	                		d.style.padding = 'var(--fui-padding-' + padding + ')';
 	                		break;
                 	}
                 }
