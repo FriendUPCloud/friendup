@@ -178,6 +178,41 @@
 	padding: var(--fui-padding-normal);
 }
 
+.FUIListviewHeader > *
+{
+    display: inline-block;
+}
+
+.FUIListviewHeader > div
+{
+    line-height: 34px;
+}
+
+.FUIListviewHeader .HeaderButton
+{
+    text-align: center;
+    width: 18px;
+    height: 24px;
+    float: left;
+    display: block;
+    margin: 0 0 0 5px;
+}
+
+.FUIListviewToolbar
+{
+    float : right;
+}
+
+.FUIListviewToolbar > * 
+{
+    display: inline-block;
+}
+
+.FUIListviewToolbar .HeaderButton
+{
+    float : right;
+}
+
 .FUIListview .FUIListviewHeader h2
 {
 	margin: 0;
@@ -229,6 +264,23 @@
 .FUIListview .FUIListviewContent .HRow > div.FUIListviewOnclick:hover
 {
 	color: var(--fui-color-emphasized);
+}
+
+.FUIListview .FUIListviewContent .EditRow
+{
+    background-color: transparent;
+    color: var(--fui-color);
+    padding: var(--fui-padding-row);
+}
+
+.FUIListview .FUIListviewContent .EditRow.Yourself
+{
+    font-weight: bold;
+}
+
+.FUIListview .FUIListviewContent .EditRow:hover
+{
+    background-color: var(--fui-list-hover-background);
 }
 
 /* Button */
