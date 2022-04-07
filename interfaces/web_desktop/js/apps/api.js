@@ -2303,24 +2303,6 @@ function View( flags )
 		msg.parentViewId = Application.viewId;
 	}
 	
-	// Loads a FUI gui and populates view window
-	this.setFUITemplate = function( filename, callback )
-	{
-		let f = new File( filename );
-		f.onLoad = function( data )
-		{
-			this.setContent( data, function( result )
-			{
-				if( callback )
-				{
-					// Fails
-					callback( result );
-				}
-			} );
-		}
-		f.load();
-	}
-	
 	// Pop out!
 	this.popout = function()
 	{
@@ -2353,6 +2335,9 @@ function View( flags )
 			viewId: viewId,
 			data:    flags
 		} );
+		
+		// Handle flag actions
+		this._checkFlagActions( flags );
 	}
 	// Get flag
 	this.getFlag = function( flag )
@@ -2368,6 +2353,65 @@ function View( flags )
 			viewId: viewId,
 			data:    { flag: flag, value: value }
 		} );
+	
+	    // Handle flag actions	
+	    this._checkFlagActions( [ { flag: flag, value: value } ] );
+	}
+	// Checks flag actions
+	this._checkFlagActions = function( flags )
+	{
+	    let self = this;
+	    
+	    // Check all flags
+	    for( let a in flags )
+	    {
+	        let fl = flags[ a ];
+	        if( a == 'assets' && fl && fl.length )
+	        {
+	            let templateStr = '';
+        	    let templateSrc = false;
+        	    
+	            // Check for markup to add as template source
+	            for( let b = 0; b < fl.length; b++ )
+	            {
+	                let val = fl[ b ];
+	                let templateTest = (
+	                    val.substr( -5, 5 ).toLowerCase() == '.html' ||
+	                    val.substr( -4, 4 ).toLowerCase() == '.htm'
+	                );
+	                if( templateTest ) 
+	                {
+	                    templateSrc = val;
+	                    continue;
+	                }
+	                // Add scripts to template string
+	                if( val.substr( -3, 3 ).toLowerCase() == '.js' )
+	                {
+	                    templateStr += "\n" + '<script src="' + getWebUrl( val ) + '"></script>';
+	                }
+	                // Add css to template string
+	                if( val.substr( -4, 4 ).toLowerCase() == '.css' )
+	                {
+	                    templateStr += "\n" + '<link rel="stylesheet" href="' + getWebUrl( val ) + '"/>';
+	                }
+	            }
+	            // With a template source, load that before setting content
+	            if( templateSrc )
+                {
+                    let f = new File( templateSrc );
+                    f.onLoad = function( data )
+                    {
+                        self.setContent( data + templateStr );
+                    }
+                    f.load();
+                }
+                // Just set content
+                else
+                {
+                    this.setContent( templateStr );
+                }
+	        }
+	    }
 	}
 	this.getWindowElement = function( callback )
 	{
@@ -2661,6 +2705,13 @@ function View( flags )
 		{
 			this.onClose();
 		}
+		
+		// Quit on close
+		let quitOnClose = this.getFlag( 'quitOnClose' );
+		if( quitOnClose )
+		{
+		    Application.quit();
+		}
 
 		if( this.preventClosing ) return;
 		
@@ -2699,6 +2750,8 @@ function View( flags )
 	// Setup view object with master
 	Application.sendMessage( msg );
 	Application.windows[ viewId ] = this;
+	
+	this._checkFlagActions( this._flags ); // Things we need immediately
 
 	// Just activate this window (unless it starts minimized)
 	if( !flags.minimized )
@@ -6169,9 +6222,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		window.loaded = true;
 		
-		// Initialize Friend User Interface
-		FUI.initialize();
-		
 		// What to do when we are done loading.. -------------------------------
 		
 		// Async is a bitch!
@@ -6369,11 +6419,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					if( Application.run )
 					{
 						Application.run( packet );
-						FUI.initialize();
 					}
 					window.loaded = true;
 					// Use the application doneLoading function (different)
 					Friend.application.doneLoading();
+					
+					// Initialize FUI
+					FUI.initialize();
 				}
 			}
 		}

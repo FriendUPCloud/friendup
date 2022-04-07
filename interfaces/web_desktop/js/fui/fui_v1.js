@@ -137,13 +137,19 @@ window.FUI = window.FUI ? window.FUI : {
 			}
 		}
 		
+		let jailClasses = { 'button': true, 'html': true };
+		
 		// Convert active class placeholders
 		for( let b = 0; b < types.length; b++ )
 		{
 		    ( function( domtype )
 		    {
 		        // Convert markup into classes
-		        let ch = document.getElementsByTagName( domtype );
+		        let ch = false;
+		        if( !jailClasses[ domtype ] )
+		        {
+		            ch = document.getElementsByTagName( domtype );
+		        }
 		        // TODO: Extract correct domtype from object
 		        // Support fui-*
 		        if( !ch || ( ch && !ch.length ) )
@@ -232,7 +238,7 @@ class FUIElement
         {
         	if( window.FUI.guiElements[ options.uniqueid ] )
         	{
-        		console.log( 'ccGUI: Gui element with proposed uniqueId ' + options.uniqueid + ' is taken. Overwriting.' );
+        		console.log( 'FUI: Gui element with proposed uniqueId ' + options.uniqueid + ' is taken. Overwriting.' );
         	}
         	window.FUI.guiElements[ options.uniqueid ] = this;
         }

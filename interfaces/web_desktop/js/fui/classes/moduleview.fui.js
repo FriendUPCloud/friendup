@@ -184,12 +184,62 @@ if( !FUI.classExists( 'moduleview' ) )
 				{
 					ch.classList.add( 'Clicked' );
 					this.currentModule = mod;
+					
+					if( this.cards && this.cards[ mod ] )
+					{
+					    this.moduleContainer.domNode.innerHTML = '';
+					    for( let c = 0; c < this.cards[ mod ].length; c++ )
+					    {
+					        let card = this.cards[ mod ][ c ];
+					        this.renderCard( card, this.moduleContainer.domNode );
+					    }
+					}
 				}
 				else
 				{
 					ch.classList.remove( 'Clicked' );
 				}
 			}
+		}
+		
+		// Render a card in position
+		renderCard( card, parentElement )
+		{
+		    let self = this;
+		    
+		    let d = document.createElement( 'div' );
+		    
+		    function attachCardAndGo()
+		    {
+		        parentElement.appendChild( d );
+		    }
+		    
+		    // Using a template url
+		    if( d.templateUrl )
+		    {
+		        let f = new File( d.templateUrl );
+		        f.onLoad = function( data )
+		        {
+		            d.innerHTML = data;
+		            attachCardAndGo();
+		        }
+		        f.load();
+		        return;
+		    }
+		    // Using a fragment
+		    else if( card.fragmentId )
+		    {
+		        let f = FUI.getFragment( card.fragmentId );
+		        if( f )
+		        {
+		            d.innerHTML = f;
+		            attachCardAndGo();
+		            return;
+		        }
+		    }
+		    
+	        d.innerHTML = '';
+	        attachCardAndGo();
 		}
 		
 		setModules( moduleList )
@@ -210,24 +260,56 @@ if( !FUI.classExists( 'moduleview' ) )
 				}
 				d.innerHTML = '<div><h2>' + moduleList[a].name + '</h2><p>' + moduleList[a].leadin + '</p></div>';
 				d.module = moduleList[ a ].module;
-				( function( mod, onc ){
-					d.onclick = function( e )
-					{
-						self.activateModule( mod );
-						
-						// Override
-						if( onc )
-						{
-							onc( self );
-							return;
-						}
-						// TODO: Create default functionality
-					}
-				} )( moduleList[a].module, moduleList[a].onclick );
+				
+				if( !self.cards )
+				    self.cards = {};
+				self.cards[ d.module ] = moduleList[ a ].cards ? moduleList[ a ].cards : false;
+				
+				// Onclick override
+				if( typeof( moduleList[a].onclick ) == 'function' )
+				{
+				    ( function( mod, onc ){
+					    d.onclick = function( e )
+					    {
+						    self.activateModule( mod );
+						    
+						    // Override
+						    if( onc )
+						    {
+							    onc( self );
+							    return;
+						    }
+						    // TODO: Create default functionality
+					    }
+				    } )( moduleList[a].module, moduleList[a].onclick );
+				}
+				// String based callbacks
+				else if( typeof( moduleList[a].onclick ) == 'string' )
+				{
+				    ( function( cbk, el )
+				    {
+				        el.onclick = function()
+				        {
+				            if( typeof( FUI.callbacks[ cbk ] ) )
+				                FUI.callbacks[ cbk ]( self );
+				        }
+				    } )( moduleList[a].onclick, d );
+				}
+				// Default operation
+				else
+				{
+				    ( function( mod )
+				    {
+				        d.onclick = function( m )
+				        {
+				            self.activateModule( mod );
+				        }
+				    } )( moduleList[ a ].module );
+				}
 				par.appendChild( d );
 				if( moduleList[a].active )
 				{
-					firstClick = function(){ self.activateModule( moduleList[a].module ); moduleList[a].onclick( self ); };
+					firstClick = function(){ self.activateModule( moduleList[a].module ); d.onclick( self ); };
 				}
 			}
 			
@@ -237,8 +319,8 @@ if( !FUI.classExists( 'moduleview' ) )
 		setModuleContent( module, content )
 		{
 			// We can cache the module content for transitions?
-			//if( !this.moduleContent ) this.moduleContent = {};
-			//this.moduleContent[ module ] = content;
+			if( typeof( content ) == 'undefined' )
+			    content = '';
 			this.moduleContainer.domNode.innerHTML = content;
 			FUI.initialize();
 		}

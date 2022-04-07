@@ -3780,7 +3780,7 @@ var View = function( args )
 		let inGroup = false;
 		if( self.flags.viewGroup )
 		{
-			for( var a in movableWindows )
+			for( let a in movableWindows )
 			{
 				let w = movableWindows[ a ].windowObject;
 				if( w.viewId == self.flags.viewGroup.view )
@@ -3804,7 +3804,7 @@ var View = function( args )
 								if( e.button != 0 ) return;
 								
 								_WindowToFront( div );
-								for( var b = 0; b < divParent.tabs.childNodes.length; b++ )
+								for( let b = 0; b < divParent.tabs.childNodes.length; b++ )
 								{
 									if( tab == divParent.tabs.childNodes[ b ] )
 									{

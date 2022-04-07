@@ -438,7 +438,12 @@ class FUIPicture extends FUIElement
 }
 FUI.registerClass( 'picture' );
 
+<<<<<<< HEAD
 // Checkbox element
+=======
+
+// Button element
+>>>>>>> 4a2206ba9e6ecaf08ab7182f50d625c9fdd672f4
 class FUIButton extends FUIElement
 {
     constructor( options )
@@ -458,7 +463,7 @@ class FUIButton extends FUIElement
     {
         super.grabAttributes( domElement );
         
-        let attrs = [ /*'width', 'height', 'icon', 'type', 'shape', 'border-size',*/ 'onclick' ];
+        let attrs = [ /*'width', 'height', 'icon', 'type', 'shape', 'border-size',*/ 'uniqueid', 'icon', 'onclick' ];
         
         for( let a in attrs )
         {
@@ -473,6 +478,11 @@ class FUIButton extends FUIElement
     {
         super.refreshDom();
         
+        let self = this;
+        
+        // Class for dom element
+        let cl = '';
+        
         if( this.options[ 'onclick' ] )
         {
         	this.domElement.style.cursor = 'pointer';
@@ -486,41 +496,58 @@ class FUIButton extends FUIElement
 		        }
 		        return;
         	}
+        	cl += ' Clickable ';
+        }
+        if( this.options[ 'icon' ] )
+        {
+            cl += ' IconSmall fa-' + this.options[ 'icon' ];
         }
         
-        
         // TODO: Add properties, uniqueId etc
-        this.domElement.innerHTML = '<div class="FUIButtonElement">' + ( this.options.innerHTML ? this.options.innerHTML : '' ) + '</div>';
+        this.domElement.innerHTML = '<div class="FUIButtonElement' + cl + '">' + ( this.options.innerHTML ? this.options.innerHTML : '' ) + '</div>';
         
         this.adaptSize();
     }
     getMarkup( data )
     {
     	// Return meta-markup for class instantiation later
-    	// TODO: Add properties, uniqueId etc
-    	return '<fui-button>' + ( this.options.value ? this.options.value : '' ) + '</fui-button>';
+    	let attrs = [ /*'width', 'height', 'icon', 'type', 'shape', 'border-size',*/ 'icon', 'onclick' ];
+        let attrStr = [];
+        
+        // Build an array of attributes
+        for( let a in attrs )
+        {
+        	let op = this.options[ attrs[ a ] ]
+        	if( op )
+        	{
+	        	attrStr.push( attrs[ a ] + '="' + op + '"' );
+	        } 
+        }
+        if( attrStr.length > 0 )
+        {
+            attrStr = ' ' + attrStr.join( ' ' );
+        }
+        else attrStr = '';
+    	return '<fui-button' + attrStr + '>' + ( this.options.value ? this.options.value : '' ) + '</fui-button>';
     }
     adaptSize()
     {
     	// Adapt size if button is higher!
         let p = this.domElement.parentNode;
-        if( p && p.parentNode )
+        if( p )
         {
-        	p = p.parentNode; // <- this is the container
-        	let d = this.domElement.getElementsByTagName( 'FUIButtonElement' )[0];
-		    if( d && d.offsetHeight > p.offsetHeight )
+        	let d = this.domElement.querySelector( '.FUIButtonElement' );
+        	
+        	let h = p.offsetHeight;
+        	let styles = getComputedStyle( p );
+        	h -= parseInt( styles.paddingTop ) + parseInt( styles.paddingBottom );
+        	
+		    if( d && d.offsetHeight > h )
 		    {
-		    	let padding = parseInt( p.style.padding );
-		    	if( isNaN( padding ) || !padding )
-		    	{
-		    		padding = parseInt( p.style.paddingTop ) + parseInt( p.style.paddingBottom );
-		    		if( isNaN( padding ) ) padding = 0;
-		    	}
-		    	let h = ( p.offsetHeight - padding );
 		    	d.style.height = h + 'px';
 		    	if( h < 20 )
-		    		d.style.lineHeight = h;
-		    	if( h < 16 )
+		    		d.style.lineHeight = '0.9';
+		    	if( h < 20 )
 		    		d.style.fontSize = 'var(--font-size-small)';
 		    	else d.style.fontSize = '';
 		    }
@@ -529,6 +556,66 @@ class FUIButton extends FUIElement
 }
 FUI.registerClass( 'button', FUIButton );
 
-
-
+// SimpleHTML element
+class FUIHTML extends FUIElement
+{
+    constructor( options )
+    {
+        super( options ); 
+    }
+    attachDomElement()
+    {
+        super.attachDomElement();
+    }
+    grabAttributes( domElement )
+    {
+        super.grabAttributes( domElement );
+        
+        let attrs = [ /*'width', 'height', 'icon', 'type', 'shape', 'border-size',*/ 'uniqueid' ];
+        
+        for( let a in attrs )
+        {
+        	let op = domElement.getAttribute( attrs[ a ] );
+        	if( op )
+	        	this.options[ attrs[ a ] ] = op;
+        }
+        
+        this.refreshDom();
+    }
+    refreshDom()
+    {
+        super.refreshDom();
+        
+        let self = this;
+        
+        // Class for dom element
+        let cl = '';
+        
+        // TODO: Add properties, uniqueId etc
+        this.domElement.innerHTML = '<div class="FUIHTML' + cl + '">' + ( this.options.innerHTML ? this.options.innerHTML : '' ) + '</div>';
+    }
+    getMarkup( data )
+    {
+    	// Return meta-markup for class instantiation later
+    	let attrs = [ 'uniqueid' ];
+        let attrStr = [];
+        
+        // Build an array of attributes
+        for( let a in attrs )
+        {
+        	let op = this.options[ attrs[ a ] ]
+        	if( op )
+        	{
+	        	attrStr.push( attrs[ a ] + '="' + op + '"' );
+	        } 
+        }
+        if( attrStr.length > 0 )
+        {
+            attrStr = ' ' + attrStr.join( ' ' );
+        }
+        else attrStr = '';
+    	return '<fui-html' + attrStr + '>' + ( this.options.value ? this.options.value : '' ) + '</fui-html>';
+    }
+}
+FUI.registerClass( 'html', FUIHTML );
 

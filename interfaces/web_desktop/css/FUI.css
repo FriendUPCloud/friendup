@@ -240,12 +240,18 @@
 	border-radius: var(--fui-border-radius-small);
 	padding: var(--fui-padding-row);
 	text-align: center;
+	box-sizing: border-box;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
-.FUIButtonElement:hover
+.FUIButtonElement.Clickable:hover
 {
 	background-color: var(--fui-list-button-background-hover);
     color: var(--fui-list-button-color-hover);
 }
 
-
+.FUIButtonElement:before
+{
+    margin: 0 4px 0 0;
+}
