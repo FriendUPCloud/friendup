@@ -124,6 +124,7 @@ void CommServiceDelete( CommService *s )
 	{
 		s->s_Cam.cam_Quit = TRUE;
 		
+		/*
 		//while( s->s_OutgoingConnectionSet != TRUE )
 		{
 			sleep( 1 );
@@ -135,6 +136,7 @@ void CommServiceDelete( CommService *s )
 			pthread_cond_broadcast( &s->s_DataReceivedCond );
 			FRIEND_MUTEX_UNLOCK( &s->s_CondMutex );
 		}
+		*/
 		
 		DEBUG2("[COMMSERV] CommunicationServiceDelete 2\n");
 		FRIEND_MUTEX_LOCK( &s->s_Mutex );
@@ -245,7 +247,7 @@ void CommServiceDelete( CommService *s )
 //
 
 
-void *ServiceTempThread( void *d )
+void *ServiceRunOutgoingServices( void *d )
 {
 	pthread_detach( pthread_self() );
 	CommServiceSetupOutgoing( d );
@@ -296,7 +298,7 @@ int CommServiceStart( CommService *s )
 		}
 		
 		pthread_t t;
-		pthread_create( &t, NULL, &ServiceTempThread, s );
+		pthread_create( &t, NULL, &ServiceRunOutgoingServices, s );
 	}
 	return 0;
 }
