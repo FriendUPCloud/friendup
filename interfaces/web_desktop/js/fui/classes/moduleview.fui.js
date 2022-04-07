@@ -171,20 +171,42 @@ if( !FUI.classExists( 'moduleview' ) )
 			return str;*/
 		}
 		
+		// Activates a module, and renders it's root cards, if any
 		activateModule( mod )
 		{
 			let self = this;
+			
+			// Only do this once
+			if( this.currentActiveModule == mod ) return;
+			this.currentActiveModule = mod;
 			
 			let cont = self.moduleList.domNode;
 			for( let a = 0; a < cont.childNodes.length; a++ )
 			{
 				let ch = cont.childNodes[a];
 				if( !ch.module ) continue;
+				
+				// Found active module
 				if( ch.module == mod )
 				{
 					ch.classList.add( 'Clicked' );
 					this.currentModule = mod;
+					
+					// We got cards on this module
+					if( this.cards && this.cards[ mod ] )
+					{
+						// Blank out container
+					    this.moduleContainer.domNode.innerHTML = '';
+					    
+					    // Render each card on module content container
+					    for( let c = 0; c < this.cards[ mod ].length; c++ )
+					    {
+					        let card = this.cards[ mod ][ c ];
+					        this.renderCard( card, this.moduleContainer.domNode );
+					    }
+					}
 				}
+				// Found inactive module
 				else
 				{
 					ch.classList.remove( 'Clicked' );
@@ -192,14 +214,60 @@ if( !FUI.classExists( 'moduleview' ) )
 			}
 		}
 		
+		// Render a card in position
+		renderCard( card, parentElement )
+		{
+		    let self = this;
+		    
+		    let d = document.createElement( 'div' );
+		    d.className = 'ModuleCard';
+		    
+		    function attachCardAndGo()
+		    {
+		        parentElement.appendChild( d );
+		    }
+		    
+		    // Using a template url
+		    if( d.templateUrl )
+		    {
+		        let f = new File( d.templateUrl );
+		        f.onLoad = function( data )
+		        {
+		            d.innerHTML = data;
+		            attachCardAndGo();
+		        }
+		        f.load();
+		        return;
+		    }
+		    // Using a fragment
+		    else if( card.fragmentId )
+		    {
+		        let f = FUI.getFragment( card.fragmentId );
+		        if( f )
+		        {
+		            d.innerHTML = f;
+		            attachCardAndGo();
+		            return;
+		        }
+		    }
+		    
+	        d.innerHTML = '';
+	        attachCardAndGo();
+		}
+		
+		// Import module list from JSON structure
 		setModules( moduleList )
 		{
 			let self = this;
 			
+			// Holds the first module to activate
 			let firstClick = false;
 			
+			// Set up parentNode for HTML rendering
 			let par = this.moduleList.domNode;
 			par.innerHTML = '';
+			
+			// Process all modules
 			for( let a = 0; a < moduleList.length; a++ )
 			{
 				let d = document.createElement( 'div' );
@@ -213,9 +281,7 @@ if( !FUI.classExists( 'moduleview' ) )
 				
 				if( !self.cards )
 				    self.cards = {};
-				self.cards[ d.module ] = {
-				    main: ''
-				};
+				self.cards[ d.module ] = moduleList[ a ].cards ? moduleList[ a ].cards : false;
 				
 				// Onclick override
 				if( typeof( moduleList[a].onclick ) == 'function' )
@@ -254,7 +320,6 @@ if( !FUI.classExists( 'moduleview' ) )
 				    {
 				        d.onclick = function( m )
 				        {
-				            self.setModuleContent( self.cards[ mod ] ? self.cards[ mod ].main : '' );
 				            self.activateModule( mod );
 				        }
 				    } )( moduleList[ a ].module );
@@ -267,12 +332,6 @@ if( !FUI.classExists( 'moduleview' ) )
 			}
 			
 			if( firstClick ) firstClick();
-		}
-		
-		// Set a module card
-		setModuleCard( module, content )
-		{
-		    this.cards[ module ] = content;
 		}
 		
 		setModuleContent( module, content )

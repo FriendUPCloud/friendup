@@ -137,7 +137,7 @@ window.FUI = window.FUI ? window.FUI : {
 			}
 		}
 		
-		let jailClasses = { 'button': true };
+		let jailClasses = { 'button': true, 'html': true };
 		
 		// Convert active class placeholders
 		for( let b = 0; b < types.length; b++ )
@@ -238,7 +238,7 @@ class FUIElement
         {
         	if( window.FUI.guiElements[ options.uniqueid ] )
         	{
-        		console.log( 'ccGUI: Gui element with proposed uniqueId ' + options.uniqueid + ' is taken. Overwriting.' );
+        		console.log( 'FUI: Gui element with proposed uniqueId ' + options.uniqueid + ' is taken. Overwriting.' );
         	}
         	window.FUI.guiElements[ options.uniqueid ] = this;
         }
