@@ -85,6 +85,7 @@
 {
 	background-color: var(--fui-module-background);
 	color: var(--fui-module-color);
+	font-weight: bold;
 	padding: var(--fui-padding-normal);
 	border-radius: var(--fui-border-radius-small) var(--fui-border-radius-small) 0 0;
 }
