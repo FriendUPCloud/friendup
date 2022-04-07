@@ -93,7 +93,7 @@
 {
 	background-color: var(--fui-background-foreground);
 	color: var(--fui-color);
-	padding: var(--fui-padding-normal);
+	padding: 0;
 	border-radius: 0 0 var(--fui-border-radius-small) var(--fui-border-radius-small);
 }
 
