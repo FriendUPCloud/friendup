@@ -181,10 +181,18 @@ window.FUI = window.FUI ? window.FUI : {
 				        let classObj = eval( classStr );
 				        let opts = {};
 				        opts.placeholderElement = out[a];
+				        
 				        // Transfer innerHTML to options
-				        if( opts.placeholderElement.innerHTML )
+				        if( opts.placeholderElement.childNodes.length )
 				        {
-				        	opts.innerHTML = opts.placeholderElement.innerHTML;
+				        	let els = opts.placeholderElement.getElementsByTagName( '*' );
+				        	opts.childNodes = [];
+				        	for( let b = 0; b < els.length; b++ )
+				        	{
+				        		if( els[b].parentNode != opts.placeholderElement ) continue;
+				        		opts.childNodes.push( els[ b ] );
+				        	}
+						    opts.innerHTML = opts.placeholderElement.innerHTML;
 				        }
 				        new classObj( opts );
 				    }
@@ -197,7 +205,6 @@ window.FUI = window.FUI ? window.FUI : {
 	{
 		if( this.fragments[ uniqueid ] )
 		{
-			console.log( 'Getting fragment: ', this.fragments[ uniqueid ] ); 
 			return this.fragments[ uniqueid ];
 		}
 		return false;

@@ -483,7 +483,6 @@ class FUIButton extends FUIElement
         	this.domElement.onclick = function( e )
         	{
         		cancelBubble( e );
-        		console.log( 'Looking at a clickeclick: ' +  self.options.onclick );
         		if( window.FUI.callbacks[ self.options.onclick ] )
 		        {
 		            // Add structure with current element flags
@@ -700,7 +699,13 @@ class FUIHTML extends FUIElement
         let cl = '';
         
         // TODO: Add properties, uniqueId etc
-        this.domElement.innerHTML = '<div class="FUIHTML' + cl + '">' + ( this.options.innerHTML ? this.options.innerHTML : '' ) + '</div>';
+        this.domElement.innerHTML = '<div class="FUIHTML' + cl + '"></div>';
+        if( this.options.childNodes )
+        {
+        	let fml = this.domElement.getElementsByTagName( 'div' )[0];
+	        let cn = this.options.childNodes;
+	        for( let a = 0; a < cn.length; a++ ) fml.appendChild( cn[a] );
+	    }
     }
     getMarkup( data )
     {
