@@ -866,136 +866,138 @@ int CommServiceThreadServer( FThread *ptr )
 						{
 							count = (int)bs->bs_Size;
 							
-							DEBUG2("[COMMSERV] Read from socket %lu\n", (unsigned long)bs->bs_Size );
-							
-							DataForm *df = (DataForm *)bs->bs_Buffer;
-							
-							// checking if its FRIEND message
-
-							char incomingFriendCoreID[ FRIEND_CORE_MANAGER_ID_SIZE + 32 ];
-							memset( incomingFriendCoreID, 0, FRIEND_CORE_MANAGER_ID_SIZE + 32 );
-							
-							//unsigned int z;
-							//for( z=0 ; z < bs->bs_Size ; z++ )
-							//	printf("_%c_ ", bs->bs_Buffer[ z ] );
-							//printf("\n");
-							
-							int j = 0;
-							if( df->df_ID == ID_FCRE && count > 24 )
+							if( count > 0 )
 							{
-								//char *id = (char *)&(df[ 2 ].df_ID);
-								DEBUG2("COMMSERV] FCRE found\n");
-								df++;
+								DEBUG2("[COMMSERV] Read from socket %lu\n", (unsigned long)bs->bs_Size );
+							
+								DataForm *df = (DataForm *)bs->bs_Buffer;
+							
+								// checking if its FRIEND message
 
-								if( df->df_ID == ID_FCID )
+								char incomingFriendCoreID[ FRIEND_CORE_MANAGER_ID_SIZE + 32 ];
+								memset( incomingFriendCoreID, 0, FRIEND_CORE_MANAGER_ID_SIZE + 32 );
+							
+								//unsigned int z;
+								//for( z=0 ; z < bs->bs_Size ; z++ )
+								//	printf("_%c_ ", bs->bs_Buffer[ z ] );
+								//printf("\n");
+							
+								int j = 0;
+								if( df->df_ID == ID_FCRE && count > 24 )
 								{
-									DEBUG("[COMMSERV] ID found\n");
-									memcpy( incomingFriendCoreID, ((char *)(df+1)), FRIEND_CORE_MANAGER_ID_SIZE );
+									//char *id = (char *)&(df[ 2 ].df_ID);
+									DEBUG2("COMMSERV] FCRE found\n");
+									df++;
 
-									char *ptr = (char *)df;
-									DEBUG("[COMMSERV] size %lu\n", df->df_Size );
-									ptr += df->df_Size + COMM_MSG_HEADER_SIZE;
-									df = (DataForm *)ptr;
-								}
-								
-								if( df->df_ID == ID_FCRI )
-								{
-									CommRequest *cr = NULL;
-									DEBUG("[COMMSERV] Response received!\n");
-									
-									if( FRIEND_MUTEX_LOCK( &service->s_Mutex ) == 0 )
+									if( df->df_ID == ID_FCID )
 									{
-										DEBUG("[COMMSERV] lock set\n");
-										CommRequest *cr = service->s_Requests;
+										DEBUG("[COMMSERV] ID found\n");
+										memcpy( incomingFriendCoreID, ((char *)(df+1)), FRIEND_CORE_MANAGER_ID_SIZE );
+
+										char *ptr = (char *)df;
+										DEBUG("[COMMSERV] size %lu\n", df->df_Size );
+										ptr += df->df_Size + COMM_MSG_HEADER_SIZE;
+										df = (DataForm *)ptr;
+									}
+								
+									if( df->df_ID == ID_FCRI )
+									{
+										CommRequest *cr = NULL;
+										DEBUG("[COMMSERV] Response received!\n");
 										
-										while( cr != NULL )
+										if( FRIEND_MUTEX_LOCK( &service->s_Mutex ) == 0 )
 										{
-											DEBUG("[COMMSERV] Going through requests %ld find %ld\n", df->df_Size, cr->cr_RequestID );
-											if( cr->cr_RequestID == df->df_Size )
-											{
-												cr->cr_Bs = bs;
-
-												DEBUG("[COMMSERV] Message found by id\n");
-												break;
-											}
-											cr = (CommRequest *) cr->node.mln_Succ;
-										}
-										FRIEND_MUTEX_UNLOCK( &service->s_Mutex );
-									}
-									
-									if( cr != NULL )
-									{
-										if( FRIEND_MUTEX_LOCK( &service->s_CondMutex ) == 0 )
-										{
-											pthread_cond_broadcast( &service->s_DataReceivedCond );
-											FRIEND_MUTEX_UNLOCK( &service->s_CondMutex );
-										}
-									}
-								}
-								
-								// Another FC is trying to connect
-								
-								else if( df->df_ID == ID_FCON )
-								{
-									DataForm *clusterDF = df + 1;
-									INFO("[COMMSERV] New connection was set\n");
-
-									// if number 0 is connected then its normal server
-									// 1 - node master
-									// > 1 sub nodes
-									FULONG nodeID = clusterDF->df_Size;
-									FULONG newID = 0;
-									if( fcm->fcm_ClusterMaster )
-									{
-										newID = fcm->fcm_NodeIDGenerator++;
-									}
-
-									DEBUG2("[COMMSERV] FriendOS connected, name '%s'\n", incomingFriendCoreID );
-
-									//
-									// on the end we should accept connection but do not allow to call anything
-									// untill admin will accept connection
-									//
-
-									FConnection *con = CommServiceAddConnection( service, sock, NULL, NULL, incomingFriendCoreID, SERVER_CONNECTION_INCOMING, nodeID );
-
-									if( con != NULL )
-									{
-										clusterDF++;
-									if( clusterDF->df_ID == ID_FINF )
-									{
-										int size = clusterDF->df_Size;
-										clusterDF++; // sessions
+											DEBUG("[COMMSERV] lock set\n");
+											CommRequest *cr = service->s_Requests;
 										
-										while( size > 0 )
+											while( cr != NULL )
+											{
+												DEBUG("[COMMSERV] Going through requests %ld find %ld\n", df->df_Size, cr->cr_RequestID );
+												if( cr->cr_RequestID == df->df_Size )
+												{
+													cr->cr_Bs = bs;
+
+													DEBUG("[COMMSERV] Message found by id\n");
+													break;
+												}
+												cr = (CommRequest *) cr->node.mln_Succ;
+											}
+											FRIEND_MUTEX_UNLOCK( &service->s_Mutex );
+										}
+									
+										if( cr != NULL )
 										{
-											if( clusterDF->df_ID == ID_CITY )
+											if( FRIEND_MUTEX_LOCK( &service->s_CondMutex ) == 0 )
 											{
-												if( con->fc_GEOCity != NULL )
-												{
-													FFree( con->fc_GEOCity );
-												}
-												con->fc_GEOCity = StringDuplicateN( (char *)(clusterDF+1), clusterDF->df_Size );
-												DEBUG("GEOCITY found %s\n", con->fc_GEOCity );
+												pthread_cond_broadcast( &service->s_DataReceivedCond );
+												FRIEND_MUTEX_UNLOCK( &service->s_CondMutex );
 											}
-											else if( clusterDF->df_ID == ID_COUN )
+										}
+									}
+								
+									// Another FC is trying to connect
+								
+									else if( df->df_ID == ID_FCON )
+									{
+										DataForm *clusterDF = df + 1;
+										INFO("[COMMSERV] New connection was set\n");
+
+										// if number 0 is connected then its normal server
+										// 1 - node master
+										// > 1 sub nodes
+										FULONG nodeID = clusterDF->df_Size;
+										FULONG newID = 0;
+										if( fcm->fcm_ClusterMaster )
+										{
+											newID = fcm->fcm_NodeIDGenerator++;
+										}
+
+										DEBUG2("[COMMSERV] FriendOS connected, name '%s'\n", incomingFriendCoreID );
+
+										//
+										// on the end we should accept connection but do not allow to call anything
+										// untill admin will accept connection
+										//
+
+										FConnection *con = CommServiceAddConnection( service, sock, NULL, NULL, incomingFriendCoreID, SERVER_CONNECTION_INCOMING, nodeID );
+
+										if( con != NULL )
+										{
+											clusterDF++;
+											if( clusterDF->df_ID == ID_FINF )
 											{
-												int i;
-												int max = clusterDF->df_Size;
-												if( max > 9 ) max = 9;
-												char *dptr = (char *)(clusterDF+1);
-												
-												for( i=0 ; i < max; i++ )
+												int size = clusterDF->df_Size;
+												clusterDF++; // sessions
+										
+												while( size > 0 )
 												{
-													con->fc_GEOCountryCode[ i ] = dptr[ i ];
-												}
+													if( clusterDF->df_ID == ID_CITY )
+													{
+														if( con->fc_GEOCity != NULL )
+														{
+															FFree( con->fc_GEOCity );
+														}
+														con->fc_GEOCity = StringDuplicateN( (char *)(clusterDF+1), clusterDF->df_Size );
+														DEBUG("GEOCITY found %s\n", con->fc_GEOCity );
+													}
+													else if( clusterDF->df_ID == ID_COUN )
+													{
+														int i;
+														int max = clusterDF->df_Size;
+														if( max > 9 ) max = 9;
+														char *dptr = (char *)(clusterDF+1);
 												
-												DEBUG("GEOCOUNTRY found %s\n", con->fc_GEOCountryCode );
-											}
+														for( i=0 ; i < max; i++ )
+														{
+															con->fc_GEOCountryCode[ i ] = dptr[ i ];
+														}
+														
+														DEBUG("GEOCOUNTRY found %s\n", con->fc_GEOCountryCode );
+													}
 											
-											size -= (COMM_MSG_HEADER_SIZE + clusterDF->df_Size );
-											clusterDF++; // sessions
-										}
+													size -= (COMM_MSG_HEADER_SIZE + clusterDF->df_Size );
+													clusterDF++; // sessions
+												}
 										/*
 										clusterDF++; // geolcation
 										
@@ -1007,120 +1009,88 @@ int CommServiceThreadServer( FThread *ptr )
 											DEBUG("Found geolocation: [ %s ]\n", dstring );
 										}
 										*/
-									}
-										
-										sock = con->fc_Socket;
-										sock->s_Data = con;
-									
-										// if we have new connection
-										// we should setup same outgoing connection
-
-										char address[ INET6_ADDRSTRLEN ];
-										inet_ntop( AF_INET6, &sock->ip, address, INET6_ADDRSTRLEN );
-
-										int err = 0;
-
-										DEBUG("[COMMSERV] Outgoing connection created on port: %d\n", service->s_port);
-										//SocketSetBlocking( newcon->cfcc_Socket, TRUE );
-										{
-											// when connection tag is received we must response with our FriendCoreID 
-											
-											MsgItem tags[] = {
-												{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
-												{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)(FBYTE *)fcm->fcm_ID },
-												{ ID_FCOR, (FULONG)0 , MSG_INTEGER_VALUE },
-												{ ID_CLID, (FULONG)newID, MSG_INTEGER_VALUE },
-												{ TAG_DONE, TAG_DONE, TAG_DONE }
-											};
-											
-											DataForm *dfresp = DataFormNew( tags );
-											DEBUG("[COMMSERV] DataForm Created size %lu\n", dfresp->df_Size );
-											
-											// FC send his own id in response
-											int sbytes = sock->s_Interface->SocketWrite( sock, (char *)dfresp, (FLONG)dfresp->df_Size );
-
-											DataFormDelete( dfresp );
-											
-											INFO("Outgoing connection created\n");
-											
-											SQLLibrary *lsqllib = SLIB->LibrarySQLGet( SLIB );
-											if( lsqllib != NULL )
-											{
-												char where[ 1024 ];
-												snprintf( where, 1024, " FConnection where FCID='%s' AND Type=0", con->fc_FCID );
-												//snprintf( where, 1024, " FConnection where FCID='%s' AND DestinationFCID='%s' AND Type=0", con->fc_FCID, con->fc_DestinationFCID );
-												int number = lsqllib->NumberOfRecords( lsqllib, FConnectionDesc, where );
-												DEBUG("Number of connection found in DB %d\n", number );
-												if( number == 0 )
-												{
-													lsqllib->Save( lsqllib, FConnectionDesc, con );
-												}
-												SLIB->LibrarySQLDrop( SLIB, lsqllib );
 											}
-										}
-									}
-									else
-									{
-										sock->s_Interface->SocketDelete( sock );
-										sock = NULL;
-										FERROR( "[COMMSERV] Closing incoming!\n" );
-									}
-									BufStringDelete( bs );
-								}
-								else if( df->df_ID == ID_FRID )
-								{
-									FULONG reqid = df->df_Size;
-									
-									DEBUG("[COMMSERV] Request socket data ptr %p size %lu\n", sock->s_Data, df->df_Size );
-									
-									// connection is not assigned to FCConnection, we cannot run commands
-									if( sock->s_Data == NULL )
-									{
-										// when connection tag is received we must response with our FriendCoreID 
-										DataForm *responsedf = NULL;
-
-										DEBUG("[COMMSERV] Generate Data Form\n");
-										MsgItem tags[] = {
-											{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
-											{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)(FBYTE *)fcm->fcm_ID },
-											{ ID_FCRI, (FULONG)reqid , MSG_INTEGER_VALUE },
-											{ ID_FERR, (FULONG)SERVER_ERROR_CONNOTASSIGNED, MSG_INTEGER_VALUE },
-											{ TAG_DONE, TAG_DONE, TAG_DONE }
-										};
-										responsedf = DataFormNew( tags );
-
-										DEBUG("[COMMSERV] Response idreq %lu\n", reqid );
-									
-										// FC send his own id in response
-										int sbytes = sock->s_Interface->SocketWrite( sock, (char *)responsedf, (FLONG)responsedf->df_Size );
-
-										DEBUG("[COMMSERV] WROTE to sock %d\n", sbytes );
-									
-										DataFormDelete( responsedf );
-									}
-									else
-									{
-										FConnection *fccon = (FConnection *)sock->s_Data;
 										
-										// Friend cannot run blocked connections
-										if( fccon->fc_Status != CONNECTION_STATUS_BLOCKED )
-										{
-											DataForm *responsedf = ParseAndExecuteRequest( lsb, sock->s_Data, ++df, reqid );
+											sock = con->fc_Socket;
+											sock->s_Data = con;
 									
-											// when connection tag is received we must response with our FriendCoreID 
-											if( responsedf == NULL )
+											// if we have new connection
+											// we should setup same outgoing connection
+
+											char address[ INET6_ADDRSTRLEN ];
+											inet_ntop( AF_INET6, &sock->ip, address, INET6_ADDRSTRLEN );
+
+											int err = 0;
+
+											DEBUG("[COMMSERV] Outgoing connection created on port: %d\n", service->s_port);
+											//SocketSetBlocking( newcon->cfcc_Socket, TRUE );
 											{
-												DEBUG("[COMMSERV] Generate Data Form\n");
+												// when connection tag is received we must response with our FriendCoreID 
+											
 												MsgItem tags[] = {
 													{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
 													{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)(FBYTE *)fcm->fcm_ID },
-													{ ID_FCRI, (FULONG)reqid , MSG_INTEGER_VALUE },
-													{ ID_CMMD, (FULONG)0, MSG_INTEGER_VALUE },
+													{ ID_FCOR, (FULONG)0 , MSG_INTEGER_VALUE },
+													{ ID_CLID, (FULONG)newID, MSG_INTEGER_VALUE },
 													{ TAG_DONE, TAG_DONE, TAG_DONE }
 												};
-												responsedf = DataFormNew( tags );
+											
+												DataForm *dfresp = DataFormNew( tags );
+												DEBUG("[COMMSERV] DataForm Created size %lu\n", dfresp->df_Size );
+											
+												// FC send his own id in response
+												int sbytes = sock->s_Interface->SocketWrite( sock, (char *)dfresp, (FLONG)dfresp->df_Size );
+
+												DataFormDelete( dfresp );
+											
+												INFO("Outgoing connection created\n");
+											
+												SQLLibrary *lsqllib = SLIB->LibrarySQLGet( SLIB );
+												if( lsqllib != NULL )
+												{
+													char where[ 1024 ];
+													snprintf( where, 1024, " FConnection where FCID='%s' AND Type=0", con->fc_FCID );
+													//snprintf( where, 1024, " FConnection where FCID='%s' AND DestinationFCID='%s' AND Type=0", con->fc_FCID, con->fc_DestinationFCID );
+													int number = lsqllib->NumberOfRecords( lsqllib, FConnectionDesc, where );
+													DEBUG("Number of connection found in DB %d\n", number );
+													if( number == 0 )
+													{
+														lsqllib->Save( lsqllib, FConnectionDesc, con );
+													}
+													SLIB->LibrarySQLDrop( SLIB, lsqllib );
+												}
 											}
+										}
+										else
+										{
+											sock->s_Interface->SocketDelete( sock );
+											sock = NULL;
+											FERROR( "[COMMSERV] Closing incoming!\n" );
+										}
+										//BufStringDelete( bs );
+									}
+									else if( df->df_ID == ID_FRID )
+									{
+										FULONG reqid = df->df_Size;
 									
+										DEBUG("[COMMSERV] Request socket data ptr %p size %lu\n", sock->s_Data, df->df_Size );
+									
+										// connection is not assigned to FCConnection, we cannot run commands
+										if( sock->s_Data == NULL )
+										{
+											// when connection tag is received we must response with our FriendCoreID 
+											DataForm *responsedf = NULL;
+
+											DEBUG("[COMMSERV] Generate Data Form\n");
+											MsgItem tags[] = {
+												{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
+												{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)(FBYTE *)fcm->fcm_ID },
+												{ ID_FCRI, (FULONG)reqid , MSG_INTEGER_VALUE },
+												{ ID_FERR, (FULONG)SERVER_ERROR_CONNOTASSIGNED, MSG_INTEGER_VALUE },
+												{ TAG_DONE, TAG_DONE, TAG_DONE }
+											};
+											responsedf = DataFormNew( tags );
+
 											DEBUG("[COMMSERV] Response idreq %lu\n", reqid );
 									
 											// FC send his own id in response
@@ -1130,9 +1100,60 @@ int CommServiceThreadServer( FThread *ptr )
 									
 											DataFormDelete( responsedf );
 										}
-									}
+										else
+										{
+											FConnection *fccon = (FConnection *)sock->s_Data;
+										
+											// Friend cannot run blocked connections
+											if( fccon->fc_Status != CONNECTION_STATUS_BLOCKED )
+											{
+												DataForm *responsedf = ParseAndExecuteRequest( lsb, sock->s_Data, ++df, reqid );
 									
-									BufStringDelete( bs );
+												// when connection tag is received we must response with our FriendCoreID 
+												if( responsedf == NULL )
+												{
+													DEBUG("[COMMSERV] Generate Data Form\n");
+													MsgItem tags[] = {
+														{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
+														{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)(FBYTE *)fcm->fcm_ID },
+														{ ID_FCRI, (FULONG)reqid , MSG_INTEGER_VALUE },
+														{ ID_CMMD, (FULONG)0, MSG_INTEGER_VALUE },
+														{ TAG_DONE, TAG_DONE, TAG_DONE }
+													};
+													responsedf = DataFormNew( tags );
+												}
+									
+												DEBUG("[COMMSERV] Response idreq %lu\n", reqid );
+									
+												// FC send his own id in response
+												int sbytes = sock->s_Interface->SocketWrite( sock, (char *)responsedf, (FLONG)responsedf->df_Size );
+
+												DEBUG("[COMMSERV] WROTE to sock %d\n", sbytes );
+									
+												DataFormDelete( responsedf );
+											}
+										}
+									
+										//BufStringDelete( bs );
+									}
+									else
+									{
+										char eid[ 9 ]; eid[ 8 ] = 0;
+										char *t = (char *)df;
+										int z;
+										for( z=0 ; z < 8 ; z++ )
+											eid[ z ] = t[ z ];
+									
+										FERROR("[COMMSERV] Message uknown: [%s], FCRE found!\n", eid );
+
+										//BufStringDelete( bs );
+									}
+
+									if( tempBuffer != NULL )
+									{
+										FFree( tempBuffer );
+										tempBuffer = NULL;
+									}
 								}
 								else
 								{
@@ -1142,29 +1163,12 @@ int CommServiceThreadServer( FThread *ptr )
 									for( z=0 ; z < 8 ; z++ )
 										eid[ z ] = t[ z ];
 									
-									FERROR("[COMMSERV] Message uknown: [%s], FCRE found!\n", eid );
+									FERROR("[COMMSERV] Message uknown [%s]!\n", eid );
 
-									BufStringDelete( bs );
-								}
-
-								if( tempBuffer != NULL )
-								{
-									FFree( tempBuffer );
-									tempBuffer = NULL;
+									//BufStringDelete( bs );
 								}
 							}
-							else
-							{
-								char eid[ 9 ]; eid[ 8 ] = 0;
-								char *t = (char *)df;
-								int z;
-								for( z=0 ; z < 8 ; z++ )
-									eid[ z ] = t[ z ];
-									
-								FERROR("[COMMSERV] Message uknown [%s]!\n", eid );
-
-								BufStringDelete( bs );
-							}
+							BufStringDelete( bs );
 						}
 					}
 				}//end for through events
