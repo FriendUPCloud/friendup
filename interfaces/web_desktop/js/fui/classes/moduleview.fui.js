@@ -267,6 +267,7 @@ if( !FUI.classExists( 'moduleview' ) )
 		        {
 		            let nd = document.createElement( 'div' );
 		            nd.innerHTML = f;
+		            console.log( 'Here is the frag: ' + f );
 		            cnt.appendChild( nd );
 		            attachCardAndGo();
 		            return;

@@ -125,16 +125,23 @@ window.FUI = window.FUI ? window.FUI : {
 		if( type ) types = [ type ];
 		
 		// Fetch all fragments
-		let frags = document.getElementsByTagName( 'fui-fragment' );
-		if( frags.length > 0 )
+		let ifrags = document.getElementsByTagName( 'fui-fragment' );
+		if( ifrags.length > 0 )
 		{
+			let frags = [];
+			for( let a = 0; a < ifrags.length; a++ )
+			{
+				let id = ifrags[ a ].getAttribute( 'uniqueid' );
+				if( !id ) continue;
+				frags.push( { id: id, index: a, markup: ifrags[ a ].innerHTML, pnode: ifrags[ a ].parentNode, sourceNode: ifrags[ a ] } );
+			}
 			for( let a = 0; a < frags.length; a++ )
 			{
-				let id = frags[ a ].getAttribute( 'uniqueid' );
-				if( !id ) continue;
-				this.fragments[ id ] = frags[ a ];
-				frags[ a ].parentNode.removeChild( frags[ a ] );
+				let f = frags[ a ];
+				this.fragments[ f.id ] = f.markup;
+				f.pnode.removeChild( f.sourceNode );
 			}
+			ifrags = null;
 		}
 		
 		let jailClasses = { 'button': true, 'html': true };
@@ -189,7 +196,10 @@ window.FUI = window.FUI ? window.FUI : {
 	getFragment( uniqueid )
 	{
 		if( this.fragments[ uniqueid ] )
-			return this.fragments[ uniqueid ].innerHTML;
+		{
+			console.log( 'Getting fragment: ', this.fragments[ uniqueid ] ); 
+			return this.fragments[ uniqueid ];
+		}
 		return false;
 	},
 	// Apply replacements on string
