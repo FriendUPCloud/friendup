@@ -297,10 +297,10 @@ int CommServiceStart( CommService *s )
 		}
 		
 		// in case when service was launched and died in same time
-		if( s->s_Thread->t_Launched == FALSE )
-		{
-			s->s_Started = FALSE;
-		}
+		//if( s->s_Thread->t_Launched == FALSE )
+		//{
+		//	s->s_Started = FALSE;
+		//}
 		
 		pthread_t t;
 		pthread_create( &t, NULL, &ServiceRunOutgoingServices, s );
