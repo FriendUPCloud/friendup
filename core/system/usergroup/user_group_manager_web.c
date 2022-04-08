@@ -740,7 +740,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						ug->ug_Status = USER_GROUP_STATUS_ACTIVE;	// we can probably remove that
 					
 						char buffer[ 1024 ];
-						snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"sucess\",\"id\":%lu}", ug->ug_ID );
+						snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"success\",\"id\":%lu}", ug->ug_ID );
 						HttpAddTextContent( response, buffer );
 					
 						snprintf( buffer, sizeof(buffer), "{\"id\":%lu,\"uuid\":\"%s\",\"name\":\"%s\"}", ug->ug_ID, ug->ug_UUID, ug->ug_Name );
