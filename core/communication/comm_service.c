@@ -693,6 +693,8 @@ int CommServiceThreadServer( FThread *ptr )
 				
 				#define EPOLL_TIMEOUT 3000
 				
+				DEBUG("[COMMSERV] main loop\n");
+				
 				eventCount = epoll_wait( service->s_Epollfd, events, service->s_MaxEvents, EPOLL_TIMEOUT );
 				
 				if( eventCount == 0 )
@@ -705,6 +707,8 @@ int CommServiceThreadServer( FThread *ptr )
 					}
 					continue;
 				}
+				
+				DEBUG("[COMMSERV] main loop 1\n");
 				
 				for( i = 0; i < eventCount; i++ )
 				{
@@ -820,6 +824,8 @@ int CommServiceThreadServer( FThread *ptr )
 						// read all bytes from read end of pipe
 						char ch;
 						int result = 1;
+						
+						DEBUG("[COMMSERV] read comm pipe\n");
 						
 						while( result > 0 )
 						{
