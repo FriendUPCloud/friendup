@@ -122,6 +122,7 @@ void CommServiceDelete( CommService *s )
 	DEBUG2("[COMMSERV] CommunicationServiceDelete\n");
 	if( s != NULL )
 	{
+		int retry = 0;
 		s->s_Cam.cam_Quit = TRUE;
 		
 		/*
@@ -174,6 +175,10 @@ void CommServiceDelete( CommService *s )
 			}
 			DEBUG("sending quit signal\n");
 			sleep( 1 );
+			if( (retry++) >= 20 )	// this is happening during shotdown, we cannot block service
+			{
+				break;
+			}
 		}
 		DEBUG2("[COMMSERV]  close thread\n");
 		
