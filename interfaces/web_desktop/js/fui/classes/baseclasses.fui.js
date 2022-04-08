@@ -477,13 +477,13 @@ class FUIButton extends FUIElement
         
         // Class for dom element
         let cl = '';
-        
         if( this.options[ 'onclick' ] )
         {
         	this.domElement.style.cursor = 'pointer';
         	this.domElement.onclick = function( e )
         	{
         		cancelBubble( e );
+        		console.log( 'Looking at a clickeclick: ' +  self.options.onclick );
         		if( window.FUI.callbacks[ self.options.onclick ] )
 		        {
 		            // Add structure with current element flags
@@ -491,7 +491,7 @@ class FUIButton extends FUIElement
 		        }
 		        return;
         	}
-        	cl += ' Clickable ';
+        	cl += ' Clickable';
         }
         if( this.options[ 'icon' ] )
         {
