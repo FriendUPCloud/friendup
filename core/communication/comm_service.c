@@ -151,6 +151,7 @@ void CommServiceDelete( CommService *s )
 		
 		DEBUG2("[COMMSERV] CommunicationServiceDelete 3\n");
 		
+		/*
 		if( s->s_Thread->t_Launched == TRUE )
 		{
 			
@@ -160,6 +161,7 @@ void CommServiceDelete( CommService *s )
 				FRIEND_MUTEX_UNLOCK( &s->s_CondMutex );
 			}
 		}
+		*/
 		
 		DEBUG2("[COMMSERV] : Quit set to TRUE, sending signal\n");
 		
