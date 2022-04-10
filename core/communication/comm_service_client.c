@@ -93,7 +93,7 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 		return NULL;
 	}
 	
-	if( FRIEND_MUTEX_LOCK( &serv->s_Mutex ) == 0 )
+	if( FRIEND_MUTEX_LOCK( &(serv->s_Mutex) ) == 0 )
 	{
 		if( serv->s_Requests == NULL )
 		{
@@ -105,7 +105,7 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 			cr->node.mln_Succ = (MinNode *)serv->s_Requests;
 			serv->s_Requests = cr;
 		}
-		FRIEND_MUTEX_UNLOCK( &serv->s_Mutex );
+		FRIEND_MUTEX_UNLOCK( &(serv->s_Mutex) );
 	}
 	else
 	{
@@ -116,7 +116,7 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 
 	//int blocked = con->fc_Socket->s_Blocked;
 	
-	if( FRIEND_MUTEX_LOCK( &con->fc_Mutex ) == 0 )
+	if( FRIEND_MUTEX_LOCK( &(con->fc_Mutex) ) == 0 )
 	{
 		if( con->fc_Status != CONNECTION_STATUS_DISCONNECTED )
 		{
@@ -128,10 +128,10 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 		}
 		else
 		{
-			FRIEND_MUTEX_UNLOCK( &con->fc_Mutex );
+			FRIEND_MUTEX_UNLOCK( &(con->fc_Mutex) );
 			return NULL;
 		}
-		FRIEND_MUTEX_UNLOCK( &con->fc_Mutex );
+		FRIEND_MUTEX_UNLOCK( &(con->fc_Mutex) );
 	}
 	else
 	{
@@ -154,7 +154,7 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 		if( FRIEND_MUTEX_LOCK( &serv->s_CondMutex ) == 0 )
 		{
 			//DEBUG("[SendMessageAndWait] SendMessageAndWait message: waiting for condition\n");
-			pthread_cond_wait( &serv->s_DataReceivedCond, &serv->s_Mutex );
+			pthread_cond_wait( &(serv->s_DataReceivedCond), &(serv->s_Mutex) );
 			FRIEND_MUTEX_UNLOCK( &serv->s_CondMutex );
 			DEBUG("[SendMessageAndWait] SendMessageAndWait message unlocked\n");
 		}

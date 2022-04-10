@@ -178,9 +178,9 @@ int CommServiceThreadConnection( FThread *ptr )
 							{
 								cr->cr_Bs = bs;
 								DEBUG("[COMMSERV-s] Message found by id\n");
-								FRIEND_MUTEX_LOCK( &service->s_Mutex );
-								pthread_cond_broadcast( &service->s_DataReceivedCond );
-								FRIEND_MUTEX_UNLOCK( &service->s_Mutex );
+								FRIEND_MUTEX_LOCK( &(service->s_Mutex) );
+								pthread_cond_broadcast( &(service->s_DataReceivedCond) );
+								FRIEND_MUTEX_UNLOCK( &(service->s_Mutex) );
 								break;
 							}
 							cr = (CommRequest *) cr->node.mln_Succ;

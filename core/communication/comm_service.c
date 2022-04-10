@@ -98,9 +98,9 @@ CommService *CommServiceNew( int port, int secured, void *sb, int maxev, int buf
 		
 		service->s_SB = sb;
 		
-		pthread_mutex_init( &service->s_Mutex, NULL );
-		pthread_mutex_init( &service->s_CondMutex, NULL );
-		pthread_cond_init( &service->s_DataReceivedCond, NULL );
+		pthread_mutex_init( &(service->s_Mutex), NULL );
+		pthread_mutex_init( &(service->s_CondMutex), NULL );
+		pthread_cond_init( &(service->s_DataReceivedCond), NULL );
 	}
 	else
 	{
@@ -914,7 +914,7 @@ int CommServiceThreadServer( FThread *ptr )
 										CommRequest *cr = NULL;
 										DEBUG("[COMMSERV] Response received!\n");
 										
-										if( FRIEND_MUTEX_LOCK( &service->s_Mutex ) == 0 )
+										if( FRIEND_MUTEX_LOCK( &(service->s_Mutex) ) == 0 )
 										{
 											DEBUG("[COMMSERV] lock set\n");
 											CommRequest *cr = service->s_Requests;
@@ -931,16 +931,18 @@ int CommServiceThreadServer( FThread *ptr )
 												}
 												cr = (CommRequest *) cr->node.mln_Succ;
 											}
-											FRIEND_MUTEX_UNLOCK( &service->s_Mutex );
+											FRIEND_MUTEX_UNLOCK( &(service->s_Mutex) );
 										}
 									
 										if( cr != NULL )
 										{
-											if( FRIEND_MUTEX_LOCK( &service->s_CondMutex ) == 0 )
+											DEBUG("[COMMSERV] Before sending messages\n");
+											if( FRIEND_MUTEX_LOCK( &(service->s_CondMutex) ) == 0 )
 											{
-												pthread_cond_broadcast( &service->s_DataReceivedCond );
-												FRIEND_MUTEX_UNLOCK( &service->s_CondMutex );
+												pthread_cond_broadcast( &(service->s_DataReceivedCond) );
+												FRIEND_MUTEX_UNLOCK( &(service->s_CondMutex) );
 											}
+											DEBUG("[COMMSERV] After sending messages\n");
 										}
 									}
 								
