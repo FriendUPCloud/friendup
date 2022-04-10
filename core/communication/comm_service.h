@@ -92,16 +92,6 @@ enum {
 #define SERVER_PORT_SPLIT_SIGN ':'
 
 //
-// Message structure
-//
-
-typedef struct CommAppMsg
-{
-	int			cam_Quit;
-	int 		cam_State;		// status of service
-}CommAppMsg;
-
-//
 // communcation request
 //
 
@@ -251,7 +241,6 @@ typedef struct CommService
 	int 							s_recvPipe[ 2 ];
 	int 							s_ReadCommPipe, s_WriteCommPipe;
 	
-	CommAppMsg						s_Cam;				//
 	void 							*s_SB;
 	
 	int								s_MaxEvents;
@@ -270,6 +259,8 @@ typedef struct CommService
 	pthread_cond_t 					s_DataReceivedCond;
 	FBOOL							s_Started;			//if thread is started
 	FBOOL							s_OutgoingConnectionSet; // if outgoing connections are not set, FC cannot quit
+	
+	FBOOL							s_Quit;
 }CommService;
 
 //

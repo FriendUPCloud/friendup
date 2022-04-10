@@ -153,7 +153,7 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 	{
 		if( FRIEND_MUTEX_LOCK( &serv->s_CondMutex ) == 0 )
 		{
-			DEBUG("[SendMessageAndWait] SendMessageAndWait message: waiting for condition\n");
+			//DEBUG("[SendMessageAndWait] SendMessageAndWait message: waiting for condition\n");
 			pthread_cond_wait( &serv->s_DataReceivedCond, &serv->s_Mutex );
 			FRIEND_MUTEX_UNLOCK( &serv->s_CondMutex );
 			DEBUG("[SendMessageAndWait] SendMessageAndWait message unlocked\n");

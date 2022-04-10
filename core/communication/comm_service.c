@@ -123,13 +123,10 @@ void CommServiceDelete( CommService *s )
 	if( s != NULL )
 	{
 		int retry = 0;
-		s->s_Cam.cam_Quit = TRUE;
+		s->s_Quit = TRUE;
 		
 		/*
-		//while( s->s_OutgoingConnectionSet != TRUE )
-		{
-			sleep( 1 );
-		}
+
 		DEBUG2("[COMMSERV] CommunicationServiceDelete 1\n");
 		
 		if( FRIEND_MUTEX_LOCK( &s->s_CondMutex ) == 0 )
@@ -154,10 +151,14 @@ void CommServiceDelete( CommService *s )
 		
 		DEBUG2("[COMMSERV] CommunicationServiceDelete 3\n");
 		
-		if( FRIEND_MUTEX_LOCK( &s->s_CondMutex ) == 0 )
+		if( s->s_Thread->t_Launched == TRUE )
 		{
-			pthread_cond_broadcast( &s->s_DataReceivedCond );
-			FRIEND_MUTEX_UNLOCK( &s->s_CondMutex );
+			
+			if( FRIEND_MUTEX_LOCK( &s->s_CondMutex ) == 0 )
+			{
+				pthread_cond_broadcast( &s->s_DataReceivedCond );
+				FRIEND_MUTEX_UNLOCK( &s->s_CondMutex );
+			}
 		}
 		
 		DEBUG2("[COMMSERV] : Quit set to TRUE, sending signal\n");
@@ -692,7 +693,7 @@ int CommServiceThreadServer( FThread *ptr )
 			
 			service->s_Started = TRUE;
 			
-			while( service->s_Cam.cam_Quit != TRUE )
+			while( service->s_Quit != TRUE )
 			{
 				// All incomming network events go through here :)
 				// Wait for something to happen on any of the sockets we're listening on
@@ -839,13 +840,13 @@ int CommServiceThreadServer( FThread *ptr )
 							if( ch == 'q' )
 							{
 								//goto service_exit;
-								service->s_Cam.cam_Quit = TRUE;
+								service->s_Quit = TRUE;
 								DEBUG2("[COMMSERV] Closing!\n");
 								break;
 							}
 						}
 						
-						if( service->s_Cam.cam_Quit == TRUE )
+						if( service->s_Quit == TRUE )
 						{
 							break;
 						}
