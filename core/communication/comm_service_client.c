@@ -465,11 +465,16 @@ void FConnectionDelete( FConnection *con )
 {
 	if( con != NULL )
 	{
+		int retry = 15;
 		// we cannot delete FCommuncation when its doing PING
 		
 		while( TRUE )
 		{
 			if( con->fc_PingInProgress == FALSE )
+			{
+				break;
+			}
+			if( (retry-- ) <= 0 )
 			{
 				break;
 			}
