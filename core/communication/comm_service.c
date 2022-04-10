@@ -151,7 +151,6 @@ void CommServiceDelete( CommService *s )
 		
 		DEBUG2("[COMMSERV] CommunicationServiceDelete 3\n");
 		
-		/*
 		if( s->s_Thread->t_Launched == TRUE )
 		{
 			
@@ -161,7 +160,6 @@ void CommServiceDelete( CommService *s )
 				FRIEND_MUTEX_UNLOCK( &s->s_CondMutex );
 			}
 		}
-		*/
 		
 		DEBUG2("[COMMSERV] : Quit set to TRUE, sending signal\n");
 		
@@ -708,6 +706,7 @@ int CommServiceThreadServer( FThread *ptr )
 				
 				DEBUG("[COMMSERV] main loop: %d\n", eventCount );
 				
+				/*
 				if( eventCount == 0 )
 				{
 					if( FRIEND_MUTEX_LOCK( &service->s_CondMutex ) == 0 )
@@ -718,6 +717,7 @@ int CommServiceThreadServer( FThread *ptr )
 					}
 					continue;
 				}
+				*/
 				
 				DEBUG("[COMMSERV] main loop 1\n");
 				
