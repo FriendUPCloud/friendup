@@ -704,6 +704,8 @@ int CommServiceThreadServer( FThread *ptr )
 				
 				eventCount = epoll_wait( service->s_Epollfd, events, service->s_MaxEvents, EPOLL_TIMEOUT );
 				
+				DEBUG("[COMMSERV] main loop: %d\n", eventCount );
+				
 				if( eventCount == 0 )
 				{
 					if( FRIEND_MUTEX_LOCK( &service->s_CondMutex ) == 0 )
