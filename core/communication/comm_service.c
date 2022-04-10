@@ -154,13 +154,11 @@ void CommServiceDelete( CommService *s )
 		
 		DEBUG2("[COMMSERV] CommunicationServiceDelete 3\n");
 		
-		/*
 		if( FRIEND_MUTEX_LOCK( &s->s_CondMutex ) == 0 )
 		{
 			pthread_cond_broadcast( &s->s_DataReceivedCond );
 			FRIEND_MUTEX_UNLOCK( &s->s_CondMutex );
 		}
-		*/
 		
 		DEBUG2("[COMMSERV] : Quit set to TRUE, sending signal\n");
 		
@@ -233,8 +231,11 @@ void CommServiceDelete( CommService *s )
 		DEBUG2("[COMMSERV] : pipes closed\n");
 		
 		pthread_mutex_destroy( &s->s_Mutex );
+		DEBUG2("[COMMSERV] : s_Mutex closed\n");
 		pthread_mutex_destroy( &s->s_CondMutex );
+		DEBUG2("[COMMSERV] : s_CondMutex closed\n");
 		pthread_cond_destroy( &s->s_DataReceivedCond );
+		DEBUG2("[COMMSERV] : DataReceivedCond closed\n");
 		
 		if( s->s_Buffer )
 		{
