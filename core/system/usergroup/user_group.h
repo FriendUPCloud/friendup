@@ -43,12 +43,14 @@ CREATE TABLE `FUserGroup` (
 
 */
 
+/*
 typedef struct GroupUserLink
 {
 	MinNode				node;
 	void				*ugau_User;
 	FULONG				ugau_UserID;
 }GroupUserLink;
+*/
 
 //
 // User group status
@@ -66,16 +68,16 @@ enum
 typedef struct UserGroup
 {
 	MinNode 			node;
-	FULONG 				ug_ID;
-	char 				*ug_Name;
-	char				*ug_UUID;
-	FULONG 				ug_UserID;
-	FULONG				ug_ParentID;
-	char 				*ug_Type;
-	char				*ug_Description;
-	struct UserGroup	*ug_ParentGroup;
+	FULONG 				ug_ID;				// main  ID
+	char 				*ug_Name;			// group Name
+	char				*ug_UUID;			// Unique ID
+	FULONG 				ug_UserID;			// User ID, user who created it
+	FULONG				ug_ParentID;		// parent group ID
+	char 				*ug_Type;			// group type
+	char				*ug_Description;	// description
+	struct UserGroup	*ug_ParentGroup;	// pointer to parent group
 	
-	GroupUserLink		*ug_UserList;		// users assigned to group 
+	//GroupUserLink		*ug_UserList;		// users assigned to group 
 	File				*ug_MountedDevs;	// root file
 	int					ug_Status;
 	FBOOL				ug_IsAdmin;
@@ -120,13 +122,13 @@ File *UserGroupRemDeviceByName( UserGroup *ugrlist, const char *name, int *error
 //
 //
 
-int UserGroupAddUser( UserGroup *ug, void *u );
+//int UserGroupAddUser( UserGroup *ug, void *u );
 
 //
 //
 //
 
-int UserGroupRemoveUser( UserGroup *ug, void *u );
+//int UserGroupRemoveUser( UserGroup *ug, void *u );
 
 //
 //

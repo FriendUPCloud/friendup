@@ -672,13 +672,17 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							{
 								UserAddSession( usr, loggedSession );
 							}
-							loggedSession->us_UserID = usr->u_ID;
-							loggedSession->us_LastActionTime = time( NULL );
 							
-							UGMAssignGroupToUser( l->sl_UGM, usr );
+							if( usr != NULL )
+							{
+								loggedSession->us_UserID = usr->u_ID;
+								loggedSession->us_LastActionTime = time( NULL );
 							
-							USMSessionSaveDB( l->sl_USM, loggedSession );
-							USMUserSessionAddToList( l->sl_USM, loggedSession );
+								UGMAssignGroupToUser( l->sl_UGM, usr );
+							
+								USMSessionSaveDB( l->sl_USM, loggedSession );
+								USMUserSessionAddToList( l->sl_USM, loggedSession );
+							}
 						}
 					}
 				}
@@ -911,6 +915,13 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	//
 	// SECURITY SECTION END
 	//
+	
+	/*
+	if( loggedSession != NULL )
+	{
+		DEBUG("\n\n\nIS ADMIN: %d\n\n\n\n", IS_SESSION_ADMIN( loggedSession ) );
+	}
+	*/
 	
 	//
 	// Check dos token

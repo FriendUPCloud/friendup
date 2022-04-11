@@ -72,14 +72,6 @@
 //#define USE_WORKERS
 //#define USE_PTHREAD_ACCEPT
 
-
-typedef struct AcceptStruct
-{
-	int fd;
-	MinNode node;
-}AcceptStruct;
-
-
 extern void *FCM;			// FriendCoreManager
 
 void FriendCoreProcess( void *fcv );
@@ -109,7 +101,7 @@ int nothreads = 0;					/// threads coutner @todo to rewrite
 
 FriendCoreInstance *FriendCoreNew( void *sb, int id, FBOOL ssl, int port, int maxp, int bufsiz, char *hostname )
 {
-	LOG( FLOG_INFO, "[FriendCoreNew] Starting friend core\n" );
+	LOG( FLOG_INFO, "[FriendCoreNew] Starting friendcore\n" );
 	
 	// FOR DEBUG PURPOSES! -ht
 	//_reads = 0;
@@ -140,7 +132,7 @@ FriendCoreInstance *FriendCoreNew( void *sb, int id, FBOOL ssl, int port, int ma
 		return NULL;
 	}
 	
-	LOG( FLOG_INFO,"[FriendCoreNew] WorkerManager started\n");
+	LOG( FLOG_INFO,"[FriendCoreNew] Starting friendcore end\n");
 	
 	return fc;
 }
@@ -215,7 +207,7 @@ struct fcThreadInstance
 	Socket					*sock;
 	// HT - Added for new implementation
 	//List                     *fds;
-	AcceptStruct			*afd;
+	AcceptSocketStruct			*afd;
 	// Incoming from accept
 	struct AcceptPair		*acceptPair;
 };
@@ -1228,12 +1220,12 @@ void *FriendCoreAcceptPhase2( void *d )
 	
 	DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
 	
-	AcceptStruct *act = pre->afd;
-	AcceptStruct *rem = pre->afd;
+	AcceptSocketStruct *act = pre->afd;
+	AcceptSocketStruct *rem = pre->afd;
 	while( act != NULL )
 	{
 		rem = act;
-		act = (AcceptStruct *)act->node.mln_Succ;
+		act = (AcceptSocketStruct *)act->node.mln_Succ;
 		
 		FriendCoreAcceptPhase3( rem->fd, fc );
 		
@@ -1836,6 +1828,8 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 		return;
 	}
 	SystemBase *sb = (SystemBase *)fc->fci_SB;
+	
+	DEBUG("[FriendCoreEpoll] start\n");
 
 	// Track fds.
 	fc->FDCount = 0;
@@ -2073,7 +2067,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					{
 						DEBUG( "[FriendCoreEpoll] Adding the damned thing %d.\n", fd );
 						
-						AcceptStruct *as = FCalloc( 1, sizeof( AcceptStruct ) );
+						AcceptSocketStruct *as = FCalloc( 1, sizeof( AcceptSocketStruct ) );
 						if( as != NULL )
 						{
 							as->fd = fd;
@@ -2097,12 +2091,12 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 						//if( pre->fds )
 						if( pre->afd )
 						{
-							AcceptStruct *act = pre->afd;
-							AcceptStruct *rem = pre->afd;
+							AcceptSocketStruct *act = pre->afd;
+							AcceptSocketStruct *rem = pre->afd;
 							while( act != NULL )
 							{
 								rem = act;
-								act = (AcceptStruct *)act->node.mln_Succ;
+								act = (AcceptSocketStruct *)act->node.mln_Succ;
 								
 								shutdown( rem->fd, SHUT_RDWR );
 								close( rem->fd );

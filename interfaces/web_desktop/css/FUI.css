@@ -1,0 +1,226 @@
+/* Base theme */
+
+:root
+{
+    --fui-background: #ECF0F1; /* --fui-default-background? */
+    --fui-color: #333333;
+    --fui-color-emphasized: #000000;
+    --fui-background-foreground: white;
+    --fui-border-foreground: #DDDDDD;
+    
+    --fui-list-button-background: #cfcfcf;
+    --fui-list-button-background-hover: #909090;
+    --fui-list-button-color: #000000;
+    --fui-list-button-color-hover: #f0f0f0;
+
+    --fui-menu-background: #20374D;
+    --fui-menu-color: white;
+    --fui-padding-large: 20px;
+    --fui-padding-normal: 10px;
+    --fui-padding-row: 5px;
+    
+    --fui-canvas-background: #b1b2b3;
+    
+    --fui-list-hover-background: #efefef;
+    --fui-module-background: #20374D;
+    --fui-module-background-hover: #344A5E;
+    --fui-module-background-active: #ECF0F1; 
+    --fui-module-color: white;
+    --fui-module-color-active: #1a344c;
+    
+    --fui-checkbox-checked: #22b060;
+    --fui-checkbox: #b0b0b0;
+    --fui-checkbox-button: #ffffff;
+    
+    --fui-border-color-negative: #ffffff;
+    --fui-border-color: #3b3b3b;
+    --fui-border-radius-normal: 5px;
+    --fui-border-radius-small: 3px;
+    --fui-box-shadow: 0px 2px 5px rgba(0,0,0,0.4);
+    
+    --fui-alert-border-color: red;
+    
+    --font-size-small: 12px;
+    --font-size-normal: 15px;
+    --font-size-large: 18px;
+    --font-size-x-large: 22px;
+}
+
+/* Check boxes */
+
+.FUICheckbox
+{
+    position: relative;
+    width: 40px;
+    height: 18px;
+    background-color: var(--fui-checkbox);
+    border-radius: 5px;
+    cursor: pointer;
+    display: inline-block;
+}
+
+.FUICheckbox.FUIChecked
+{
+    background-color: var(--fui-checkbox-checked);
+}
+
+.FUICheckbox .FUIGroove
+{
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: calc(100% - 4px);
+    height: calc(100% - 4px);
+    background: transparent;
+    overflow: hidden;
+    border-radius: 5px;
+}
+
+.FUICheckbox .FUIGroove .FUIButton
+{
+    position: absolute;
+    width: 50%;
+    top: 0;
+    left: 0;
+    height: 100%;
+    transition: left,border-radius 0.25s,0.25s;
+    background-color: var(--fui-checkbox-button);
+    border-radius: 5px;
+}
+
+.FUICheckbox.FUIChecked .FUIGroove .FUIButton
+{
+    left: 50%;
+    border-radius: 5px;
+}
+
+/* Radio boxes */
+
+.FUIRadiobox
+{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    width: 100%;
+    position: relative;
+    gap: 5px;
+}
+
+.FUIRadiobox > .FUIRadioElement > .FUIRadioToggle
+{
+    cursor: pointer;
+}
+
+.FUIRadiobox > .FUIRadioElement > .FUIRadioToggle:after
+{
+    content: " ";
+    border-radius: 100%;
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border: 2px solid var(--fui-border-color);
+    background-color: var(--fui-checkbox-button);
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+.FUIRadiobox > .FUIRadioElement.FUISelected > .FUIRadioToggle:after
+{
+    background-color: var(--fui-menu-background);
+}
+
+/* Groups */
+
+.FUIGroup
+{
+    display: flex;
+}
+
+.FUIGroup.FUIRows
+{
+    flex-direction: column;
+}
+
+.FUIGroup.FUIColumns
+{
+    flex-direction: row;
+}
+
+.FUIGroup > .FUIRow
+{
+    margin-bottom: var(--fui-padding-row);
+}
+
+.FUIGroup > .FUIColumn
+{
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+}
+
+/* Picture */
+
+.FUIPicture
+{
+	display: inline-block;
+	text-align: center;
+	box-sizing: border-box;
+	vertical-align: middle;
+}
+
+/* Listview */
+
+.FUIListview .FUIListviewHeader 
+{
+	border-radius: var(--fui-border-radius-small) var(--fui-border-radius-small) 0 0;
+	background-color: var(--fui-module-background);
+	color: var(--fui-module-color);
+	padding: var(--fui-padding-normal);
+}
+
+.FUIListview .FUIListviewHeader h2
+{
+	margin: 0;
+	padding: 0;
+}
+
+.FUIListview .FUIListviewHeaders
+{
+	font-weight: bold;
+	background-color: var(--fui-module-background);
+	color: var(--fui-module-color);
+}
+
+.FUIListview .FUIListviewHeaders .HRow > div
+{
+	padding: var(--fui-padding-row) var(--fui-padding-normal) var(--fui-padding-row) var(--fui-padding-normal);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	box-sizing: border-box;
+}
+
+.FUIListview .FUIListviewContent
+{
+	background-color: var(--fui-background-foreground);
+	color: var(--fui-color);
+	padding-bottom: var(--fui-padding-row);
+	border-radius: 0 0 var(--fui-border-radius-small) var(--fui-border-radius-small);
+}
+
+.FUIListview .FUIListviewContent .HRow > div
+{
+	padding: var(--fui-padding-row) var(--fui-padding-normal) var(--fui-padding-row) var(--fui-padding-normal);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	box-sizing: border-box;
+}
+
+.FUIListview .FUIListviewContent .HRow > div.FUIListviewOnclick
+{
+	cursor: pointer;
+}
+.FUIListview .FUIListviewContent .HRow > div.FUIListviewOnclick:hover
+{
+	color: var(--fui-color-emphasized);
+}
+

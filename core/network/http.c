@@ -32,13 +32,13 @@
 #include <linux/limits.h>
 #include <util/string.h>
 #include <zlib.h>
+#include <stdlib.h>
 
 #ifndef INT_MAX
 #define INT_MAX (int) (0x7FFF/0x7FFFFFFF)
 #endif
 
-//test
-//#undef __DEBUG
+#undef __DEBUG
 
 extern SystemBase *SLIB;
 
@@ -1436,7 +1436,8 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 						if( size > TUNABLE_LARGE_HTTP_REQUEST_SIZE )
 						{
 							strcpy( http->http_TempContentFileName, HTTP_CONTENT_TEMP_NAME );
-							char *tfname = mktemp( http->http_TempContentFileName );
+							mktemp( http->http_TempContentFileName );
+							//int fd = mkstemp( http->http_TempContentFileName );
 							if( strlen( http->http_TempContentFileName ) == 0 )
 							{
 								FERROR("mktemp failed!");

@@ -11,13 +11,15 @@
 
 $groups = false;
 
-$userid = ( !isset( $args->args->userid ) ? $User->ID : 0 );
+$userid = ( !isset( $args->args->userid ) ? $User->ID : '0' );
 
 if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {
 	$args->authid = $args->args->authid;
 }
 
+// If we've set authid, we're using this module in application mode
+// > Permissions apply..
 if( isset( $args->authid ) )
 {
 	require_once( 'php/include/permissions.php' );
@@ -72,10 +74,11 @@ if( isset( $args->authid ) )
 		}
 	}
 }
+// < Permissions complete
 
 
-
-$userConn = 'LEFT'; // <- show all workgroups
+// With userConn (LEFT JOIN) we can show all groups despite join deps
+$userConn = 'LEFT';
 
 // Just show connected groups?
 if( isset( $args->args->connected ) || $level != 'Admin' )
@@ -83,11 +86,45 @@ if( isset( $args->args->connected ) || $level != 'Admin' )
 	$userConn = 'RIGHT';
 }
 
+$ownflag = $ownergr = $levelflag = $levelgr = $worksql = '';
+
+// If we've set the owner flag, we want the FullName returned as Owner
+if( isset( $args->args->owner ) )
+{
+    $ownflag = ', f.FullName AS Owner';
+    $ownergr = ' LEFT JOIN FUser f ON 
+			( 
+				f.ID = g.UserID 
+			)';
+}
+
+// If we set the level flag, we want the Name returned as Level
+if( isset( $args->args->level ) )
+{
+    $levelflag = ', l2.Name AS Level';
+    $levelgr = ' JOIN FUserGroup l2 ON 
+			( 
+					l2.Type = "Level" 
+				AND l2.Name IN ( "Admin", "User" ) 
+			)
+			JOIN FUserToGroup l1 ON 
+			( 
+					l1.UserID = g.UserID 
+				AND l1.UserGroupID = l2.ID 
+			)';
+}
+
+// If we set the workgroups flag, we want to only select the groups contained
+if( isset( $args->args ) && isset( $args->args->workgroups ) )
+{
+    $worksql = ' AND ( g.ID IN (' . $args->args->workgroups . ') OR g.ParentID IN (' . $args->args->workgroups . ') )';
+}
+
+// Execute the final query based on flags above
 if( $rows = $SqlDatabase->FetchObjects( '
 	SELECT 
-		g.ID, g.Name, g.ParentID, g.UserID, u.UserID AS WorkgroupUserID, m.ValueNumber, m.ValueString '
-		 . ( isset( $args->args->owner ) ? ',f.FullName AS Owner ' : '' ) 
-		 . ( isset( $args->args->level ) ? ',l2.Name AS Level' : '' ) . ' 
+		g.ID, g.Name, g.ParentID, g.UserID, u.UserID AS WorkgroupUserID, m.ValueNumber, m.ValueString 
+		' . $ownflag . $levelflag . ' 
 	FROM 
 		FUserGroup g 
 			' . $userConn . ' JOIN FUserToGroup u ON 
@@ -98,31 +135,14 @@ if( $rows = $SqlDatabase->FetchObjects( '
 			LEFT JOIN FMetaData m ON 
 			( 
 					m.DataTable = "FUserGroup" 
+			    AND m.ValueString = "presence-roomId"
 				AND m.DataID = g.ID 
 			) 
-			' . ( isset( $args->args->owner ) ? '
-			LEFT JOIN FUser f ON 
-			( 
-				f.ID = g.UserID 
-			) 
-			' : '' ) . ( isset( $args->args->level ) ? '
-			JOIN FUserGroup l2 ON 
-			( 
-					l2.Type = "Level" 
-				AND l2.Name IN ( "Admin", "User" ) 
-			)
-			JOIN FUserToGroup l1 ON 
-			( 
-					l1.UserID = g.UserID 
-				AND l1.UserGroupID = l2.ID 
-			)
-			' : '' ) . '
-			
-	WHERE g.Type = \'Workgroup\' 
-	' . ( isset( $args->args->workgroups ) ? '
-	AND ( g.ID IN (' . $args->args->workgroups . ') OR g.ParentID IN (' . $args->args->workgroups . ') ) 
-	' : '' ) . '
-	ORDER BY g.Name ASC 
+			' . $ownergr . $levelgr . '
+	WHERE 
+	    g.Type = \'Workgroup\'' . $worksql . '
+	ORDER BY 
+	    g.Name ASC 
 ' ) )
 {
 	foreach( $rows as $row )

@@ -83,15 +83,20 @@ void UserSessionDelete( UserSession *us )
 {
 	if( us != NULL )
 	{
-		Log( FLOG_DEBUG, "\nUserSessionDelete will be removed: %s\n\n", us->us_SessionID );
-		int count = 0;
-		int nrOfSessionsAttached = 0;
+		if( us->us_Status != USER_SESSION_STATUS_TO_REMOVE && us->us_Status != USER_SESSION_STATUS_DELETE_IN_PROGRESS )
+		{
+			return;
+		}
 		
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
 			us->us_Status = USER_SESSION_STATUS_DELETE_IN_PROGRESS;
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
+		
+		Log( FLOG_DEBUG, "\nUserSessionDelete will be removed: %s\n\n", us->us_SessionID );
+		int count = 0;
+		int nrOfSessionsAttached = 0;
 
 		// we must wait till all tasks will be finished
 		while( TRUE )
@@ -232,9 +237,9 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 {
 	int retval = 0;
 
-	if( us == NULL )
+	if( us == NULL || us->us_WSD == NULL || us->us_Status == USER_STATUS_TO_BE_REMOVED )
 	{
-		DEBUG("[UserSessionWebsocketWrite] empty us %p\n", us );
+		DEBUG("[UserSessionWebsocketWrite] empty us %p or WSD %p. User status: %d\n", us, us->us_WSD, us->us_Status );
 		return 0;
 	}
 	

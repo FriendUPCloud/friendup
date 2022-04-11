@@ -1881,193 +1881,198 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
-					char *topath = NULL;
+					char *tmptopath = NULL;
 					el = HashmapGet( request->http_ParsedPostContent, "to" );
 					if( el == NULL ) el = HashmapGet( request->http_Query, "to" );
 					if( el != NULL )
 					{
-						topath = (char *)el->hme_Data;
+						tmptopath = (char *)el->hme_Data;
+						DEBUG("xx: %s\n", tmptopath );
+					}
+					
+					if( tmptopath != NULL )
+					{
+						char *topath = UrlDecodeToMem( tmptopath );
 						
-						char *tpath;
-						if( ( tpath = FCalloc( strlen( topath ) + 10 + 256, sizeof(char) ) ) != NULL )
-						{
-							UrlDecode( tpath, topath );
-							strcpy( topath, tpath );
-							FFree( tpath );
-						}
+						DEBUG("[FSMWebRequest] COPY from %s TO %s\n", origDecodedPath, topath );
 
-						FHandler *dsthand;
-						char *srcpath, *dstpath;
-						
-						File *copyFile;
-						
-						File *dstrootf = GetFileByPath( loggedSession->us_User, &dstpath, topath );
-						
-						DEBUG("[FSMWebRequest] COPY from %s TO %s\n", path, topath );
-						
-						if( dstrootf != NULL )
+						if( strcmp( origDecodedPath, topath ) != 0 )
 						{
-							FBOOL havesrc = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_User, "-R----" );
-							
-							if( havesrc == TRUE )
+							FHandler *dsthand;
+							char *dstpath;
+						
+							File *dstrootf = UserGetDeviceByPath( loggedSession->us_User, &dstpath, topath );
+
+							if( dstrootf != NULL )
 							{
-								DEBUG("[FSMWebRequest] We have access to source: %s\n", path );
+								FBOOL havesrc = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_User, "-R----" );
 							
-								FBOOL havedst = FSManagerCheckAccess( l->sl_FSM, dstpath, actDev->f_ID, loggedSession->us_User, "--W---" );
-								if( havedst == TRUE )
+								if( havesrc == TRUE )
 								{
-									dstrootf->f_Operations++;
+									DEBUG("[FSMWebRequest] We have access to source: %s\n", path );
 							
-									DEBUG("[FSMWebRequest] We have access to destination: %s\n", topath );
-									
-									dsthand = dstrootf->f_FSys;
-									FHandler *actFS = (FHandler *)actDev->f_FSys;
-									int rsize = 0;
-							
-									if( dstpath[ strlen( dstpath ) - 1 ] != '/' )	// simple copy file
+									FBOOL havedst = FSManagerCheckAccess( l->sl_FSM, dstpath, actDev->f_ID, loggedSession->us_User, "--W---" );
+									if( havedst == TRUE )
 									{
-										DEBUG("[FSMWebRequest] Copy - executing file open on: %s to %s\n", path, topath );
-										
-										int64_t written = 0;
-										int64_t readall = 0;
-										
-										FileFillSessionID( actDev, loggedSession );
-										File *rfp = (File *)actFS->FileOpen( actDev, path, "rb" );
-										int closeError = 0;
-										
-										if( rfp != NULL )
+										dstrootf->f_Operations++;
+							
+										DEBUG("[FSMWebRequest] We have access to destination: %s\n", topath );
+									
+										dsthand = dstrootf->f_FSys;
+										FHandler *actFS = (FHandler *)actDev->f_FSys;
+							
+										if( dstpath[ strlen( dstpath ) - 1 ] != '/' )	// simple copy file
 										{
-											FileFillSessionID( dstrootf, loggedSession );
+											DEBUG("[FSMWebRequest] Copy - executing file open on: %s to %s\n", path, topath );
+										
+											int64_t written = 0;
+											int64_t readall = 0;
+										
+											FileFillSessionID( actDev, loggedSession );
+											File *rfp = (File *)actFS->FileOpen( actDev, path, "rb" );
+											int closeError = 0;
+										
+											if( rfp != NULL )
+											{
+												FileFillSessionID( dstrootf, loggedSession );
 											
-											File *wfp = (File *)dsthand->FileOpen( dstrootf, dstpath, "w+" );
+												File *wfp = (File *)dsthand->FileOpen( dstrootf, dstpath, "w+" );
 											
 #define COPY_BUFFER_SIZE 524288
 											
-											if( wfp != NULL )
-											{
-												// Using a big buffer!
-												char *dataBuffer = FCalloc( COPY_BUFFER_SIZE, sizeof(char) );
-												if( dataBuffer != NULL )
+												if( wfp != NULL )
 												{
-													DEBUG("[FSMWebRequest] file/copy - files opened, copy in progress\n");
-										
-													FQUAD dataread = 0;
-													int readTr = 0;
-													int bytes = 0;
-
-													while( ( dataread = actFS->FileRead( rfp, dataBuffer, COPY_BUFFER_SIZE ) ) > 0 )
+													// Using a big buffer!
+													char *dataBuffer = FCalloc( COPY_BUFFER_SIZE, sizeof(char) );
+													if( dataBuffer != NULL )
 													{
-														if( request->http_ShutdownPtr != NULL &&  *(request->http_ShutdownPtr) == TRUE )
-														{
-															break;
-														}
-													
-														readall += dataread;
-													
-														if( dataread > 0 )
-														{
-															bytes = 0;
-														
-															dataread = FileSystemActivityCheckAndUpdate( l, &(dstrootf->f_Activity), dataread );
+														DEBUG("[FSMWebRequest] file/copy - files opened, copy in progress\n");
+										
+														FQUAD dataread = 0;
+														int readTr = 0;
+														int bytes = 0;
 
-															bytes = dsthand->FileWrite( wfp, dataBuffer, dataread );
-
-															written += bytes;
-
-															dstrootf->f_BytesStored += bytes;
-															
-															readTr = 0;
-														}
-														else
+														while( ( dataread = actFS->FileRead( rfp, dataBuffer, COPY_BUFFER_SIZE ) ) > 0 )
 														{
-															readTr++;
-															if( readTr > 25 )
+															if( request->http_ShutdownPtr != NULL &&  *(request->http_ShutdownPtr) == TRUE )
 															{
-																DEBUG("Cannot read data from source!\n");
 																break;
 															}
+													
+															readall += dataread;
+													
+															if( dataread > 0 )
+															{
+																bytes = 0;
+														
+																dataread = FileSystemActivityCheckAndUpdate( l, &(dstrootf->f_Activity), dataread );
+
+																bytes = dsthand->FileWrite( wfp, dataBuffer, dataread );
+																written += bytes;
+
+																dstrootf->f_BytesStored += bytes;
+															
+																readTr = 0;
+															}
+															else
+															{
+																readTr++;
+																if( readTr > 25 )
+																{
+																	DEBUG("Cannot read data from source!\n");
+																	break;
+																}
+															}
 														}
+														FFree( dataBuffer );
 													}
-													FFree( dataBuffer );
+													else
+													{
+														DEBUG( "[FSMWebRequest] We could not do anything with the bad file pointers..\n" );
+													}
+													closeError = dsthand->FileClose( dstrootf, wfp );
 												}
-												else
-												{
-													DEBUG( "[FSMWebRequest] We could not do anything with the bad file pointers..\n" );
-												}
-												closeError = dsthand->FileClose( dstrootf, wfp );
+											
+												DEBUG( "[FSMWebRequest] Wrote %lu bytes. Read: %lu. Read file pointer %p. Write file pointer %p.\n", written, readall, rfp, wfp );
+											
+												actFS->FileClose( actDev, rfp );
 											}
-											
-											DEBUG( "[FSMWebRequest] Wrote %lu bytes. Read: %lu. Read file pointer %p. Write file pointer %p.\n", written, readall, rfp, wfp );
-											
-											actFS->FileClose( actDev, rfp );
-										}
 								
-										char tmp[ 128 ];
-										if( closeError != 0 )
-										{
-											sprintf( tmp, "fail<!--separate-->{\"response\":\"0\",\"Written\":\"%lu\",\"Error\":\"%d\"}", written, closeError );
-										}
-										else
-										{
-											sprintf( tmp, "ok<!--separate-->{\"response\":\"0\",\"Written\":\"%lu\"}", written );
-										}
+											char tmp[ 128 ];
+											if( closeError < 0 )
+											{
+												sprintf( tmp, "fail<!--separate-->{\"response\":\"0\",\"Written\":\"%lu\",\"Error\":\"%d\"}", written, closeError );
+											}
+											else
+											{
+												sprintf( tmp, "ok<!--separate-->{\"response\":\"0\",\"Written\":\"%lu\"}", written );
+											}
 
-										HttpAddTextContent( response, tmp );
-									}
-									else		// make directory
-									{
-										DEBUG("[FSMWebRequest] On copy, make dir first: %s\n", topath );
+											HttpAddTextContent( response, tmp );
+										}
+										else		// make directory
+										{
+											DEBUG("[FSMWebRequest] On copy, make dir first: %s\n", topath );
 										
-										FHandler *dsthand = (FHandler *)dstrootf->f_FSys;
+											FHandler *dsthand = (FHandler *)dstrootf->f_FSys;
 
-										char tmp[ 128 ];
+											char tmp[ 128 ];
 								
-										// cutting device name
-										unsigned int i;
-										for( i=0 ; i < strlen( topath ); i++ )
-										{
-											if( topath[ i ] == '/' )
+											// cutting device name
+											unsigned int i;
+											for( i=0 ; i < strlen( topath ); i++ )
 											{
-												topath += i+1;
-												break;
+												if( topath[ i ] == '/' )
+												{
+													topath += i+1;
+													break;
+												}
 											}
+								
+											FileFillSessionID( dstrootf, loggedSession );
+											int error = dsthand->MakeDir( dstrootf, topath );
+											sprintf( tmp, "ok<!--separate-->{\"response\":\"%d\"}", error );
+								
+											HttpAddTextContent( response, tmp );
 										}
-								
-										FileFillSessionID( dstrootf, loggedSession );
-										int error = dsthand->MakeDir( dstrootf, topath );
-										sprintf( tmp, "ok<!--separate-->{\"response\":\"%d\"}", error );
-								
-										HttpAddTextContent( response, tmp );
-									}
 							
-									dstrootf->f_Operations--;
+										dstrootf->f_Operations--;
 									
-									int len = 512;
-									len += strlen( topath );
-									char *command = FMalloc( len );
-									if( command != NULL )
-									{
-										snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", topath, loggedSession->us_SessionID );
-			
-										DEBUG("Run command via php: '%s'\n", command );
-										FULONG dataLength;
-
-										char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
-										if( data != NULL )
+										int len = 512;
+										len += strlen( topath );
+										char *command = FMalloc( len );
+										if( command != NULL )
 										{
-											/*if( strncmp( data, "ok", 2 ) == 0 )
+											snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", topath, loggedSession->us_SessionID );
+			
+											DEBUG("Run command via php: '%s'\n", command );
+											FULONG dataLength;
+
+											char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
+											if( data != NULL )
 											{
-											}*/
-											FFree( data );
+												/*if( strncmp( data, "ok", 2 ) == 0 )
+												{
+												}*/
+												FFree( data );
+											}
+											FFree( command );
 										}
-										FFree( command );
+									}
+									else
+									{
+										char dictmsgbuf[ 256 ];
+										char dictmsgbuf1[ 196 ];
+										snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_NO_ACCESS_TO], dstpath );
+										snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_NO_ACCESS_TO );
+										HttpAddTextContent( response, dictmsgbuf );
 									}
 								}
 								else
 								{
 									char dictmsgbuf[ 256 ];
 									char dictmsgbuf1[ 196 ];
-									snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_NO_ACCESS_TO], dstpath );
+									snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_NO_ACCESS_TO], path );
 									snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_NO_ACCESS_TO );
 									HttpAddTextContent( response, dictmsgbuf );
 								}
@@ -2076,17 +2081,15 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							{
 								char dictmsgbuf[ 256 ];
 								char dictmsgbuf1[ 196 ];
-								snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_NO_ACCESS_TO], path );
-								snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_NO_ACCESS_TO );
+								snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_DEVICE_NOT_FOUND], dstpath );
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_DEVICE_NOT_FOUND );
 								HttpAddTextContent( response, dictmsgbuf );
 							}
 						}
 						else
 						{
 							char dictmsgbuf[ 256 ];
-							char dictmsgbuf1[ 196 ];
-							snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_DEVICE_NOT_FOUND], dstpath );
-							snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_DEVICE_NOT_FOUND );
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CANNOT_COPY_OVER_SAME_FILE], DICT_CANNOT_COPY_OVER_SAME_FILE );
 							HttpAddTextContent( response, dictmsgbuf );
 						}
 					}

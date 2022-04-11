@@ -11282,7 +11282,11 @@ function loadApplicationBasics( callback )
 		'js/io/cajax.js',
 		'js/io/appConnection.js',
 		'js/io/coreSocket.js',
-		'js/gui/treeview.js' ].join( ';/webclient/' );
+		'js/gui/treeview.js',
+		'js/fui/fui_v1.js',
+		'js/fui/classes/baseclasses.fui.js',
+		'js/fui/classes/group.fui.js',
+		'js/fui/classes/listview.fui.js' ].join( ';/webclient/' );
 		let j_ = new File( js );
 		j_.onLoad = function( data )
 		{

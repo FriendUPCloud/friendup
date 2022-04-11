@@ -541,8 +541,9 @@ SystemBase *SystemInit( void )
 				if( l->sqlpool[ i ].sqll_Sqllib != NULL )
 				{
 					l->sqlpool[ i ].sql_ID = i;
-					error = l->sqlpool[i ].sqll_Sqllib->SetOption( l->sqlpool[ i ].sqll_Sqllib, options );
-					error = l->sqlpool[i ].sqll_Sqllib->Connect( l->sqlpool[ i ].sqll_Sqllib, host, dbname, login, pass, port );
+					l->sqlpool[ i ].sqll_Sqllib->SetOption( l->sqlpool[ i ].sqll_Sqllib, options );
+					error = l->sqlpool[ i ].sqll_Sqllib->Connect( l->sqlpool[ i ].sqll_Sqllib, host, dbname, login, pass, port );
+					l->sqlpool[ i ].sqll_Sqllib->l_Slot = i;
 					if( error != 0 )
 					{
 						break;
@@ -556,7 +557,7 @@ SystemBase *SystemInit( void )
 				for( ; i < (unsigned int)l->sqlpoolConnections; i++ )
 				{
 					LibraryClose( l->sqlpool[ i ].sqll_Sqllib );
-					l->sqlpool[i ].sqll_Sqllib = NULL;
+					l->sqlpool[ i ].sqll_Sqllib = NULL;
 				}
 			}
 		}
@@ -1099,6 +1100,9 @@ SystemBase *SystemInit( void )
 	EventAdd( l->sl_EventManager, "DOSTokenManagerAutoDelete", DOSTokenManagerAutoDelete, l->sl_DOSTM, time( NULL )+MINS5, MINS5, -1 );
 	
 	EventAdd( l->sl_EventManager, "RemoveOldLogs", RemoveOldLogs, l, time( NULL )+HOUR12, HOUR12, -1 );
+	
+	EventAdd( l->sl_EventManager, "UMRemoveOldUserLoginEntries", UMRemoveOldUserLoginEntries, l->sl_UM, time( NULL )+DAYS5, DAYS5, -1 );
+	
 	
 	//EventAdd( l->sl_EventManager, "SecurityManagerRemoteOldBadSessionCalls", SecurityManagerRemoteOldBadSessionCalls, l->sl_SecurityManager, time( NULL )+MINS60, MINS60, -1 );
 	
@@ -1758,29 +1762,15 @@ int SystemInitExternal( SystemBase *l )
 				}
 				FFree( newSessionId );
 			}
-			
-			//
-			// regenerate sessionid for User
-			//
-			
-			if(  (timestamp - l->sl_Sentinel->s_User->u_LastActionTime) > l->sl_RemoveSessionsAfterTime )
-			{
-				UserRegenerateSessionID( l->sl_Sentinel->s_User, NULL );
-			}
 		}
 		
 		UMCheckAndLoadAPIUser( l->sl_UM );
 		
 		UMInitUsers( l->sl_UM );
 
-		/*
-		User *sentUser = NULL;
-		if( l->sl_Sentinel != NULL )
-		{
-			sentUser = l->sl_Sentinel->s_User;
-		}*/
+		UGMMountGroupDrives( l->sl_UGM );
 		
-		UGMMountDrives( l->sl_UGM );
+		//UGMMountDrives( l->sl_UGM );	// previous function which was mounting all group drives without SQLWorkgroup
 	}
 	
 	// mount INRAM drive
@@ -1954,7 +1944,6 @@ usr->u_ID , usr->u_ID, usr->u_ID
 				{ FSys_Mount_Mount,   (FULONG)mount },
 				{ FSys_Mount_SysBase, (FULONG)SLIB },
 				{ FSys_Mount_UserSession, (FULONG)usrses },
-				{ FSys_Mount_Visible, (FULONG)1 },     // Assume visible
 				{TAG_DONE, TAG_DONE}
 			};
 
@@ -2243,32 +2232,33 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
  * Drop mysql.library to pool
  *
  * @param l pointer to SystemBase
- * @param mclose pointer to mysql.library which will be returned to pool
+ * @param lib pointer to mysql.library which will be returned to pool
  */
 
-void LibrarySQLDrop( SystemBase *l, SQLLibrary *mclose )
+void LibrarySQLDrop( SystemBase *l, SQLLibrary *lib )
 {
 	int i = 0;
 	int closed = -1;
 	
-	if( mclose->l_InUse == TRUE )
+	if( FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex ) == 0 )
 	{
-		if( FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex ) == 0 )
+		if( lib->l_InUse == TRUE )
 		{
-			mclose->l_InUse = FALSE;
-			FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
+			lib->l_InUse = FALSE;
+			
+			closed = i;
 		}
-		closed = i;
+		FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
 	}
 		
-	if( mclose->l_InUse != FALSE )
+	if( lib->l_InUse != FALSE )
 	{
-		DEBUG( "[SystemBase] Mysql library %p is still in use\n", mclose );
+		DEBUG( "[SystemBase] Mysql library %p is still in use\n", lib );
 	}
 	
 	if( closed != -1 )
 	{
-		INFO( "[SystemBase] MYSQL library %p was closed properly.\n", mclose );
+		INFO( "[SystemBase] MYSQL library %p slot %d was closed properly.\n", lib, lib->l_Slot );
 	}
 }
 

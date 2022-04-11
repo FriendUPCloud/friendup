@@ -24,6 +24,7 @@
 @append url(System:css/icons.css);
 @append url(System:css/tabs.css);
 @append url(System:css/workspace.css);
+@append url(System:css/FUI.css);
 @append url(System:css/font-awesome.min.css);
 
 @declaration

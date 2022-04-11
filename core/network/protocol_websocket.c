@@ -1119,7 +1119,7 @@ void *ParseAndCall( WSThreadData *wstd )
 							// Incoming connection is authenticating with sessionid (the Workspace probably)
 							if( strncmp( "sessionId",  intstart, tendstrt ) == 0 )
 							{
-								char session[ DEFAULT_SESSION_ID_SIZE ];
+								char session[ DEFAULT_SESSION_ID_SIZE+1 ];
 								memset( session, 0, DEFAULT_SESSION_ID_SIZE );
 						
 								strncpy( session, in + t[ i1 ].start, t[i1 ].end-t[ i1 ].start );
@@ -1156,7 +1156,7 @@ void *ParseAndCall( WSThreadData *wstd )
 							// Incoming connection is authenticating with authid (from an application or an FS)
 							else if( strncmp( "authid",  intstart, tendstrt ) == 0 )
 							{
-								char authid[ DEFAULT_SESSION_ID_SIZE ];
+								char authid[ DEFAULT_SESSION_ID_SIZE+1 ];
 								memset( authid, 0, DEFAULT_SESSION_ID_SIZE );
 						
 								// We could connect? If so, then just send back a pong..

@@ -25,7 +25,7 @@ IntListEl *ILEParseString( char *str )
 	{
 		return NULL;
 	}
-	int i;
+	unsigned int i;
 	char *startToken = str;
 	char *curToken = str+1;
 	
