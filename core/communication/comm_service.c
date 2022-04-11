@@ -122,7 +122,7 @@ void CommServiceDelete( CommService *s )
 	DEBUG2("[COMMSERV] CommunicationServiceDelete\n");
 	if( s != NULL )
 	{
-		int retry = 0;
+		int retry = 20;
 		s->s_Quit = TRUE;
 		
 		/*
@@ -151,9 +151,17 @@ void CommServiceDelete( CommService *s )
 		
 		DEBUG2("[COMMSERV] CommunicationServiceDelete 3\n");
 		
+		while( s->s_Thread->t_Launched != FALSE )
+		{
+			if( (retry--) <= 0 )
+			{
+				break;
+			}
+			sleep( 1 );
+		}
+		
 		if( s->s_Thread->t_Launched == TRUE )
 		{
-			
 			if( FRIEND_MUTEX_LOCK( &s->s_CondMutex ) == 0 )
 			{
 				pthread_cond_broadcast( &s->s_DataReceivedCond );
@@ -709,11 +717,11 @@ int CommServiceThreadServer( FThread *ptr )
 				/*
 				if( eventCount == 0 )
 				{
-					if( FRIEND_MUTEX_LOCK( &service->s_CondMutex ) == 0 )
+					if( FRIEND_MUTEX_LOCK( &(service->s_CondMutex) ) == 0 )
 					{
-						pthread_cond_broadcast( &service->s_DataReceivedCond );
+						pthread_cond_broadcast( &(service->s_DataReceivedCond) );
 						
-						FRIEND_MUTEX_UNLOCK( &service->s_CondMutex );
+						FRIEND_MUTEX_UNLOCK( &(service->s_CondMutex) );
 					}
 					continue;
 				}
@@ -1209,6 +1217,7 @@ int CommServiceThreadServer( FThread *ptr )
 		close( service->s_Epollfd );
 		
 		service->s_Socket->s_Interface->SocketDelete( service->s_Socket );
+		DEBUG("[COMMSERV] Socket deleted\n");
 	}
 	else
 	{
