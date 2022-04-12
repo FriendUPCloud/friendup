@@ -523,6 +523,10 @@ class FUITextarea extends FUIElement
     {
     	return this.domElement.getElementsByTagName( 'textarea' )[0].value;
     }
+    focus()
+    {
+    	return this.domElement.getElementsByTagName( 'textarea' )[0].focus();
+    }
     getMarkup( data )
     {
     	// Return meta-markup for class instantiation later
@@ -634,6 +638,10 @@ class FUIString extends FUIElement
     getValue()
     {
     	return this.domElement.getElementsByTagName( 'input' )[0].value;
+    }
+    focus()
+    {
+    	return this.domElement.getElementsByTagName( 'input' )[0].focus();
     }
     getMarkup( data )
     {
