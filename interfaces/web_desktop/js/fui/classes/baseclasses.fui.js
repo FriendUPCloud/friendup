@@ -477,7 +477,6 @@ class FUIButton extends FUIElement
         
         // Class for dom element
         let cl = '';
-        
         if( this.options[ 'onclick' ] )
         {
         	this.domElement.style.cursor = 'pointer';
@@ -491,7 +490,7 @@ class FUIButton extends FUIElement
 		        }
 		        return;
         	}
-        	cl += ' Clickable ';
+        	cl += ' Clickable';
         }
         if( this.options[ 'icon' ] )
         {
@@ -700,7 +699,13 @@ class FUIHTML extends FUIElement
         let cl = '';
         
         // TODO: Add properties, uniqueId etc
-        this.domElement.innerHTML = '<div class="FUIHTML' + cl + '">' + ( this.options.innerHTML ? this.options.innerHTML : '' ) + '</div>';
+        this.domElement.innerHTML = '<div class="FUIHTML' + cl + '"></div>';
+        if( this.options.childNodes )
+        {
+        	let fml = this.domElement.getElementsByTagName( 'div' )[0];
+	        let cn = this.options.childNodes;
+	        for( let a = 0; a < cn.length; a++ ) fml.appendChild( cn[a] );
+	    }
     }
     getMarkup( data )
     {

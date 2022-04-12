@@ -81,5 +81,21 @@
 	margin: 0 0 0px 0;
 }
 
+.FUIModuleView .CardName
+{
+	background-color: var(--fui-module-background);
+	color: var(--fui-module-color);
+	font-weight: bold;
+	padding: var(--fui-padding-normal);
+	border-radius: var(--fui-border-radius-small) var(--fui-border-radius-small) 0 0;
+}
 
+.FUIModuleView .CardName + .CardContent
+{
+	background-color: var(--fui-background-foreground);
+	color: var(--fui-color);
+	padding: 0;
+	border-radius: 0 0 var(--fui-border-radius-small) var(--fui-border-radius-small);
+	margin: 0 0 10px 0;
+}
 

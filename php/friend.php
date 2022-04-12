@@ -60,8 +60,15 @@ function FriendCall( $queryString = false, $flags = false, $post = false, $retur
 {
 	global $Config;
 	$ch = curl_init();
+	// Direct to server
 	if( !$queryString )
 		$queryString = ( $Config->SSLEnable ? 'https://' : 'http://' ) . ( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort;
+	// Short hand
+	else if( substr( $queryString, 0, 16 ) == '/system.library/' )
+	{
+		$base = ( $Config->SSLEnable ? 'https://' : 'http://' ) . ( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort;
+		$queryString = $base . $queryString;
+	}
 	curl_setopt( $ch, CURLOPT_URL, $queryString );
 	curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 	curl_setopt( $ch, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
