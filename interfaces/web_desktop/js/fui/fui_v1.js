@@ -144,7 +144,7 @@ window.FUI = window.FUI ? window.FUI : {
 			ifrags = null;
 		}
 		
-		let jailClasses = { 'button': true, 'html': true };
+		let jailClasses = { 'button': true, 'html': true, 'textarea': true, 'string': true, 'select': true };
 		
 		// Convert active class placeholders
 		for( let b = 0; b < types.length; b++ )

@@ -307,3 +307,45 @@
 {
     margin: 0 4px 0 0;
 }
+
+/* String */
+
+.FUIStringElement
+{
+	background-color: var(--fui-list-button-background);
+	border: 1px solid var(--fui-border-color);
+	color: var(--fui-list-button-color);
+	border-radius: var(--fui-border-radius-small);
+	padding: var(--fui-padding-row);
+	text-align: center;
+	box-sizing: border-box;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.FUIButtonElement:before
+{
+    margin: 0 4px 0 0;
+}
+
+/* Textarea */
+
+.FUITextareaElement
+{
+	background-color: var(--fui-list-button-background);
+	border: 1px solid var(--fui-border-color);
+	color: var(--fui-list-button-color);
+	border-radius: var(--fui-border-radius-small);
+	padding: var(--fui-padding-row);
+	text-align: center;
+	box-sizing: border-box;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.FUITextareaElement:before
+{
+    margin: 0 4px 0 0;
+}
+
+

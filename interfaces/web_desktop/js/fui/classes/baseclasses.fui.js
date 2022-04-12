@@ -438,6 +438,252 @@ class FUIPicture extends FUIElement
 }
 FUI.registerClass( 'picture' );
 
+// Textarea element
+class FUITextarea extends FUIElement
+{
+    constructor( options )
+    {
+        super( options ); 
+    }
+    attachDomElement()
+    {
+        super.attachDomElement();
+        
+        let self = this;
+        
+        // Set stuff on this.domElement.innerHTML
+        this.adaptSize();
+    }
+    grabAttributes( domElement )
+    {
+        super.grabAttributes( domElement );
+        
+        let attrs = [ /*'width', 'height', 'icon', 'type', 'shape', 'border-size',*/ 'uniqueid', 'icon', 'onchange' ];
+        
+        for( let a in attrs )
+        {
+        	let op = domElement.getAttribute( attrs[ a ] );
+        	if( op )
+	        	this.options[ attrs[ a ] ] = op;
+        }
+        
+        this.refreshDom();
+    }
+    refreshDom()
+    {
+        super.refreshDom();
+        
+        let self = this;
+        
+        // Class for dom element
+        let cl = '';
+        if( this.options[ 'icon' ] )
+        {
+            cl += ' IconSmall fa-' + this.options[ 'icon' ];
+        }
+        
+        // TODO: Add properties, uniqueId etc
+        this.domElement.innerHTML = '<div class="FUITextareaElement' + cl + '"><textarea>' + ( this.options.innerHTML ? this.options.innerHTML : '' ) + '</textarea></div>';
+        
+        // Sets onchange and onkeyup on input element
+        if( this.options[ 'onchange' ] )
+        {
+        	let inp = this.domElement.getElementsByTagName( 'textarea' )[0];
+        	inp.onchange = function( e )
+        	{
+        		cancelBubble( e );
+        		if( window.FUI.callbacks[ self.options.onchange ] )
+		        {
+		            // Add structure with current element flags
+		            window.FUI.callbacks[ self.options.onchange ]( inp.value );
+		        }
+		        return;
+        	}
+        	inp.onkeyup = function( e )
+        	{
+        		cancelBubble( e );
+        		if( window.FUI.callbacks[ self.options.onchange ] )
+		        {
+		            // Add structure with current element flags
+		            window.FUI.callbacks[ self.options.onchange ]( inp.value );
+		        }
+		        return;
+        	}
+        }
+        
+        this.adaptSize();
+    }
+    getMarkup( data )
+    {
+    	// Return meta-markup for class instantiation later
+    	let attrs = [ /*'width', 'height', 'icon', 'type', 'shape', 'border-size',*/ 'icon', 'onclick' ];
+        let attrStr = [];
+        
+        // Build an array of attributes
+        for( let a in attrs )
+        {
+        	let op = this.options[ attrs[ a ] ]
+        	if( op )
+        	{
+	        	attrStr.push( attrs[ a ] + '="' + op + '"' );
+	        } 
+        }
+        if( attrStr.length > 0 )
+        {
+            attrStr = ' ' + attrStr.join( ' ' );
+        }
+        else attrStr = '';
+    	return '<fui-textarea' + attrStr + '>' + ( this.options.value ? this.options.value : '' ) + '</fui-textarea>';
+    }
+    adaptSize()
+    {
+    	// Adapt size if button is higher!
+        let p = this.domElement.parentNode;
+        if( p )
+        {
+        	let d = this.domElement.querySelector( '.FUITextareaElement' );
+        	
+        	let h = p.offsetHeight;
+        	let styles = getComputedStyle( p );
+        	h -= parseInt( styles.paddingTop ) + parseInt( styles.paddingBottom );
+        	
+		    if( d && d.offsetHeight > h )
+		    {
+		    	d.style.height = h + 'px';
+		    	if( h < 20 )
+		    		d.style.lineHeight = '0.9';
+		    	if( h < 20 )
+		    		d.style.fontSize = 'var(--font-size-small)';
+		    	else d.style.fontSize = '';
+		    }
+		}
+    }
+}
+FUI.registerClass( 'textarea', FUITextarea );
+
+// String element
+class FUIString extends FUIElement
+{
+    constructor( options )
+    {
+        super( options ); 
+    }
+    attachDomElement()
+    {
+        super.attachDomElement();
+        
+        let self = this;
+        
+        // Set stuff on this.domElement.innerHTML
+        this.adaptSize();
+    }
+    grabAttributes( domElement )
+    {
+        super.grabAttributes( domElement );
+        
+        let attrs = [ /*'width', 'height', 'icon', 'type', 'shape', 'border-size',*/ 'uniqueid', 'icon', 'onchange' ];
+        
+        for( let a in attrs )
+        {
+        	let op = domElement.getAttribute( attrs[ a ] );
+        	if( op )
+	        	this.options[ attrs[ a ] ] = op;
+        }
+        
+        this.refreshDom();
+    }
+    refreshDom()
+    {
+        super.refreshDom();
+        
+        let self = this;
+        
+        // Class for dom element
+        let cl = '';
+        if( this.options[ 'icon' ] )
+        {
+            cl += ' IconSmall fa-' + this.options[ 'icon' ];
+        }
+        
+        // TODO: Add properties, uniqueId etc
+        this.domElement.innerHTML = '<div class="FUIStringElement' + cl + '"><input type="string" value="' + ( this.options.innerHTML ? this.options.innerHTML : '' ) + '"/></div>';
+        
+        // Sets onchange and onkeyup on input element
+        if( this.options[ 'onchange' ] )
+        {
+        	let inp = this.domElement.getElementsByTagName( 'input' )[0];
+        	inp.onchange = function( e )
+        	{
+        		cancelBubble( e );
+        		if( window.FUI.callbacks[ self.options.onchange ] )
+		        {
+		            // Add structure with current element flags
+		            window.FUI.callbacks[ self.options.onchange ]( inp.value );
+		        }
+		        return;
+        	}
+        	inp.onkeyup = function( e )
+        	{
+        		cancelBubble( e );
+        		if( window.FUI.callbacks[ self.options.onchange ] )
+		        {
+		            // Add structure with current element flags
+		            window.FUI.callbacks[ self.options.onchange ]( inp.value );
+		        }
+		        return;
+        	}
+        }
+        
+        this.adaptSize();
+    }
+    getMarkup( data )
+    {
+    	// Return meta-markup for class instantiation later
+    	let attrs = [ /*'width', 'height', 'icon', 'type', 'shape', 'border-size',*/ 'icon', 'onclick' ];
+        let attrStr = [];
+        
+        // Build an array of attributes
+        for( let a in attrs )
+        {
+        	let op = this.options[ attrs[ a ] ]
+        	if( op )
+        	{
+	        	attrStr.push( attrs[ a ] + '="' + op + '"' );
+	        } 
+        }
+        if( attrStr.length > 0 )
+        {
+            attrStr = ' ' + attrStr.join( ' ' );
+        }
+        else attrStr = '';
+    	return '<fui-string' + attrStr + '>' + ( this.options.value ? this.options.value : '' ) + '</fui-string>';
+    }
+    adaptSize()
+    {
+    	// Adapt size if button is higher!
+        let p = this.domElement.parentNode;
+        if( p )
+        {
+        	let d = this.domElement.querySelector( '.FUIStringElement' );
+        	
+        	let h = p.offsetHeight;
+        	let styles = getComputedStyle( p );
+        	h -= parseInt( styles.paddingTop ) + parseInt( styles.paddingBottom );
+        	
+		    if( d && d.offsetHeight > h )
+		    {
+		    	d.style.height = h + 'px';
+		    	if( h < 20 )
+		    		d.style.lineHeight = '0.9';
+		    	if( h < 20 )
+		    		d.style.fontSize = 'var(--font-size-small)';
+		    	else d.style.fontSize = '';
+		    }
+		}
+    }
+}
+FUI.registerClass( 'string', FUIString );
+
 // Button element
 class FUIButton extends FUIElement
 {
