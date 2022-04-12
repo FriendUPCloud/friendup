@@ -247,7 +247,6 @@ if( !FUI.classExists( 'moduleview' ) )
 									// Render this cards on the parent card's sibling node
 									self.renderCard( this.card.cards[ a ], this.card.childrenDomNode );
 								}
-								console.log( 'Has cards, what to render: ', data );								
 							}
 							return true;
 						}
