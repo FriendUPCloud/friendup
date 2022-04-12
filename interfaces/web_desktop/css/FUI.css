@@ -149,6 +149,7 @@
 .FUIGroup > .FUIRow
 {
     margin-bottom: var(--fui-padding-row);
+    min-height: 25px;
 }
 
 .FUIGroup > .FUIColumn
@@ -156,6 +157,7 @@
     flex-grow: 1;
     flex-shrink: 1;
     flex-basis: 0;
+    min-height: 25px;
 }
 
 /* Picture */
@@ -316,11 +318,12 @@
 	border: 1px solid var(--fui-border-color);
 	color: var(--fui-list-button-color);
 	border-radius: var(--fui-border-radius-small);
-	padding: var(--fui-padding-row);
+	padding: 0;
 	text-align: center;
 	box-sizing: border-box;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	min-height: 25px;
 }
 
 .FUIStringElement:before
@@ -336,6 +339,7 @@
 	height: 100%;
 	padding: var(--fui-padding-row);
 	resize: none;
+	padding: var(--fui-padding-row);
 }
 
 /* Textarea */
