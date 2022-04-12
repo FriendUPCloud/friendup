@@ -927,7 +927,7 @@ int CommServiceThreadServer( FThread *ptr )
 										if( FRIEND_MUTEX_LOCK( &(service->s_Mutex) ) == 0 )
 										{
 											DEBUG("[COMMSERV] lock set\n");
-											CommRequest *cr = service->s_Requests;
+											cr = service->s_Requests;
 										
 											while( cr != NULL )
 											{
