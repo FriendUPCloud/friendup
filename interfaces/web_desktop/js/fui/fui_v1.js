@@ -15,7 +15,9 @@ window.FUI = window.FUI ? window.FUI : {
     guiElements: {},
     fragments: {},
     callbacks: {},
-    clickEvents: {},
+    events: {
+    	'click'
+    },
     // Create meta markup for a class instance
 	create( data )
 	{
@@ -243,26 +245,34 @@ window.FUI = window.FUI ? window.FUI : {
 		this.callbacks[ callbackId ] = callbackFunc;
 	},
 	// Simple system to allow stuff to add click on window
-	addClickEvent( name, type, func )
+	addEvent( name, type, func )
 	{
-		if( !this.clickEvents[ type ] )
-			this.clickEvents[ type ] = {};
-		this.clickEvents[ type ][ name ] = func;
+		if( this.clickEvents[ type ] )
+		{
+			this.clickEvents[ type ][ name ] = func;
+			return true;
+		}
+		return false;
 	},
 	// Simple system to remove click event by name
-	removeClickEvent( name, type )
+	removeEvent( name, type )
 	{
-		this.clickEvents[ type ][ name ] = null;
+		if( this.clickEvents[ type ][ name ] )
+		{
+			this.clickEvents[ type ][ name ] = null;
+			return true;
+		}
+		return false;
 	}
 };
 
 // Activate click events
 window.addEventListener( 'click', function( e )
 {
-	if( FUI.clickEvents[ 'click' ] )
+	if( FUI.events[ 'click' ] )
 	{
-		for( let a in FUI.clickEvents[ 'click' ] )
-			if( FUI.clickEvents[ 'click' ][ a ] ) FUI.clickEvents[ 'click' ][ a ]( e );
+		for( let a in FUI.events[ 'click' ] )
+			if( FUI.events[ 'click' ][ a ] ) FUI.events[ 'click' ][ a ]( e );
 	}
 } );
 
