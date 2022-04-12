@@ -1,27 +1,25 @@
 .FUIMenubox
 {
-	background-color : red;
-	padding          : 0.5em;
+	
 }
 
 .FUIMenuboxHead
 {
-	background-color : yellow;
-	padding          : 0.5em;
+	padding          : var( --fui-padding-normal );
+	background-color : var( --fui-module-background );
 }
 
 .FUIMenuboxTitle
 {
-	background-color : green;
+
 }
 
 .FUIMenuboxContent
 {
-	background-color : blue;
-	padding          : 0.5em;
+
 }
 
 .FUIMenuboxItems
 {
-	background-color : green;
+
 }

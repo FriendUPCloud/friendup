@@ -129,7 +129,7 @@ class FUIGroup extends FUIElement
                 }
                 
                 // Add padding
-                let padding = rows[a].getAttribute( 'padding' );
+                let padding = columns[a].getAttribute( 'padding' );
                 if( padding )
                 {
                 	switch( padding )
