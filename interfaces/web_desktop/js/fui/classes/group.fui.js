@@ -66,24 +66,21 @@ class FUIGroup extends FUIElement
         	this.domElement.style.gap = int + 'px';
         }
         
-        // Support margins (left|right)
+        // Support margins
         let margin = domElement.getAttribute( 'margin' );
         if( margin )
         {
         	if( margin == 'normal' )
         	{
-        		this.domElement.style.marginLeft = 'var(--fui-padding-normal)';
-        		this.domElement.style.marginRight = 'var(--fui-padding-normal)';
+        		this.domElement.style.padding = 'var(--fui-padding-normal)';
         	}
         	else if( margin == 'small' )
         	{
-        		this.domElement.style.marginLeft = 'var(--fui-padding-row)';
-        		this.domElement.style.marginRight = 'var(--fui-padding-row)';
+        		this.domElement.style.padding = 'var(--fui-padding-row)';
         	}
         	else if( margin == 'large' )
         	{
-        		this.domElement.style.marginLeft = 'var(--fui-padding-large)';
-        		this.domElement.style.marginRight = 'var(--fui-padding-large)';
+        		this.domElement.style.padding = 'var(--fui-padding-large)';
         	}
         	else
         	{
