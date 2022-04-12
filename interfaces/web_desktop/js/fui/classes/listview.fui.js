@@ -455,7 +455,7 @@ class FUIListview extends FUIElement
 				
 				if( onclick )
 				{
-				    ( function( data, column )
+				    ( function( data, index, column )
 				    {
 				        column.onclick = function( e )
 				        {
@@ -466,17 +466,20 @@ class FUIListview extends FUIElement
 	                            let obj = {};
 	                            for( let d = 0; d < data.length; d++ )
 	                            {
-	                                obj[ data[ d ].name ] = {};
+	                            	let nam = data[ d ].name;
+	                            	if( !nam )
+	                            		nam = d;
+	                                obj[ nam ] = {};
 	                                for( let p in data[ d ] )
 	                                {
 	                                    if( p == 'name' ) continue;
-	                                    obj[ data[ d ].name ][ p ] = data[ d ][ p ];
+	                                    obj[ nam ][ p ] = data[ d ][ p ];
 	                                }
 	                            }
-	                            window.FUI.callbacks[ onclick ]( obj );
+	                            window.FUI.callbacks[ onclick ]( obj, data[ index ] );
 	                        }
 				        }
-				    } )( json[b], col );
+				    } )( json[b], z, col );
 				    col.classList.add( 'FUIListviewOnclick' );
 				}
 				
