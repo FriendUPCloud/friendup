@@ -341,6 +341,7 @@
 	padding: var(--fui-padding-row);
 	resize: none;
 	padding: var(--fui-padding-row);
+	cursor: text;
 }
 
 /* Textarea */
@@ -377,6 +378,7 @@
 	height: 100%;
 	padding: var(--fui-padding-row);
 	resize: none;
+	cursor: text;
 }
 
 
