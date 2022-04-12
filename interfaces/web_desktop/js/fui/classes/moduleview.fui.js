@@ -266,12 +266,48 @@ if( !FUI.classExists( 'moduleview' ) )
 		    d.className = 'ModuleCard';
 		    
 		    // If we added a card title
+		    let ct = false;
 		    if( card.title )
 		    {
-		    	let ct = document.createElement( 'div' );
+		    	ct = document.createElement( 'div' );
 		    	ct.className = 'CardName';
 		    	ct.innerHTML = card.title;
 		    	d.appendChild( ct );
+		    }
+		    
+		    // Add card buttons
+		    if( card.buttons && ct )
+		    {
+		    	let btns = document.createElement( 'div' );
+		    	btns.className = 'CardButtons';
+		    	d.appendChild( btns );
+		    	
+		    	for( let a = 0; a < card.buttons.length; a++ )
+		    	{
+		    		let btn = document.createElement( 'div' );
+		    		btn.className = 'CardButton';
+		    		if( card.buttons[ a ].icon )
+		    		{
+		    			btn.classList.add( 'IconSmall', 'fa-' + card.buttons[ a ].icon );
+		    		}
+		    		if( card.buttons[ a ].label )
+		    		{
+		    			btn.innerHTML = card.buttons[ a ].label;
+		    		}
+		    		if( card.buttons[ a ].onclick )
+		    		{
+						btn.onclick = function()
+						{
+							if( window.FUI.callbacks[ card.buttons[ a ].onclick ] )
+							{
+								// Add structure with current element flags
+								window.FUI.callbacks[ card.buttons[ a ].onclick ]( card.buttons[ a ] );
+							}
+						}
+					}
+					btns.appendChild( btn );
+		    	}
+				ct.appendChild( btns );
 		    }
 		    
 		    // Where card content goes

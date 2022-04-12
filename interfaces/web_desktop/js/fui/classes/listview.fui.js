@@ -50,7 +50,7 @@ class FUIListview extends FUIElement
         let headers = domElement.getElementsByTagName( 'listviewheaders' );
         let rows = domElement.getElementsByTagName( 'listviewrows' );
         
-        if( header )
+        if( header && header[0] )
         {
         	header = header[0];
             this.options.hasHeader = true;
