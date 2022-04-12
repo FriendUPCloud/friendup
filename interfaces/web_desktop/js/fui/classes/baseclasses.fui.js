@@ -868,26 +868,7 @@ class FUIText extends FUIElement
     }
     adaptSize()
     {
-    	// Adapt size if button is higher!
-        let p = this.domElement.parentNode;
-        if( p )
-        {
-        	let d = this.domElement.querySelector( '.FUITextElement' );
-        	
-        	let h = p.offsetHeight;
-        	let styles = getComputedStyle( p );
-        	h -= parseInt( styles.paddingTop ) + parseInt( styles.paddingBottom );
-        	
-		    if( d && d.offsetHeight > h )
-		    {
-		    	d.style.height = h + 'px';
-		    	if( h < 20 )
-		    		d.style.lineHeight = '0.9';
-		    	if( h < 20 )
-		    		d.style.fontSize = 'var(--font-size-small)';
-		    	else d.style.fontSize = '';
-		    }
-		}
+    	// TODO
     }
 }
 FUI.registerClass( 'text', FUIText );
