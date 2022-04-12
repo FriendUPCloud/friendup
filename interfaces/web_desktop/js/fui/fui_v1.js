@@ -15,6 +15,7 @@ window.FUI = window.FUI ? window.FUI : {
     guiElements: {},
     fragments: {},
     callbacks: {},
+    clickEvents: {},
     // Create meta markup for a class instance
 	create( data )
 	{
@@ -240,8 +241,30 @@ window.FUI = window.FUI ? window.FUI : {
 	addCallback( callbackId, callbackFunc )
 	{
 		this.callbacks[ callbackId ] = callbackFunc;
+	},
+	// Simple system to allow stuff to add click on window
+	addClickEvent( name, type, func )
+	{
+		if( !this.clickEvents[ type ] )
+			this.clickEvents[ type ] = {};
+		this.clickEvents[ type ][ name ] = func;
+	},
+	// Simple system to remove click event by name
+	removeClickEvent( name, type )
+	{
+		this.clickEvents[ type ][ name ] = null;
 	}
 };
+
+// Activate click events
+window.addEventListener( 'click', function( e )
+{
+	if( FUI.clickEvents[ 'click' ] )
+	{
+		for( let a in FUI.clickEvents[ 'click' ] )
+			if( FUI.clickEvents[ 'click' ][ a ] ) FUI.clickEvents[ 'click' ][ a ]( e );
+	}
+} );
 
 // Base class
 class FUIElement
