@@ -518,7 +518,7 @@ class FUITextarea extends FUIElement
     getMarkup( data )
     {
     	// Return meta-markup for class instantiation later
-    	let attrs = [ /*'width', 'height', 'icon', 'type', 'shape', 'border-size',*/ 'icon', 'onclick' ];
+    	let attrs = [ /*'width', 'height', 'icon', 'type', 'shape', 'border-size',*/ 'icon', 'onchange' ];
         let attrStr = [];
         
         // Build an array of attributes
@@ -595,6 +595,7 @@ class FUIString extends FUIElement
         if( this.options[ 'onchange' ] )
         {
         	let inp = this.domElement.getElementsByTagName( 'input' )[0];
+        	console.log( 'Got change event: ' + this.options[ 'onchange' ], inp );
         	inp.onchange = function( e )
         	{
         		cancelBubble( e );
@@ -622,7 +623,7 @@ class FUIString extends FUIElement
     getMarkup( data )
     {
     	// Return meta-markup for class instantiation later
-    	let attrs = [ /*'width', 'height', 'icon', 'type', 'shape', 'border-size',*/ 'icon', 'onclick' ];
+    	let attrs = [ /*'width', 'height', 'icon', 'type', 'shape', 'border-size',*/ 'icon', 'onchange' ];
         let attrStr = [];
         
         // Build an array of attributes
