@@ -16,7 +16,7 @@ window.FUI = window.FUI ? window.FUI : {
     fragments: {},
     callbacks: {},
     events: {
-    	'click'
+    	'click': []
     },
     // Create meta markup for a class instance
 	create( data )
