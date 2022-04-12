@@ -23,6 +23,7 @@
 .FUIModuleView > .FUIModuleContainer
 {
 	position: absolute;
+	display: flex;
 	top: 0;
 	left: 240px;
 	width: calc(100% - 240px);
@@ -32,6 +33,12 @@
 	background-color: var(--fui-background);
 	padding: var(--fui-padding-large);
 	box-sizing: border-box;
+	gap: 10px;
+}
+
+.FUIModuleView > .FUIModuleContainer > div
+{
+	flex: 1;
 }
 
 .FUIModuleView .FUIModulelistModule

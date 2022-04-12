@@ -86,6 +86,13 @@ class FUIGroup extends FUIElement
                 	}
                 }
                 
+                // Add for height
+                let height = rows[a].getAttribute( 'height' );
+                if( height )
+                {
+                	d.style.height = height;
+                }
+                
                 let children = rows[a].getElementsByTagName( '*' );
                 for( let b = 0; b < children.length; b++ )
                 {
@@ -129,7 +136,7 @@ class FUIGroup extends FUIElement
                 }
                 
                 // Add padding
-                let padding = rows[a].getAttribute( 'padding' );
+                let padding = columns[a].getAttribute( 'padding' );
                 if( padding )
                 {
                 	switch( padding )
@@ -141,6 +148,13 @@ class FUIGroup extends FUIElement
 	                		d.style.padding = 'var(--fui-padding-' + padding + ')';
 	                		break;
                 	}
+                }
+                
+                // Add for width
+                let width = columns[a].getAttribute( 'width' );
+                if( width )
+                {
+                	d.style.width = width;
                 }
                 
                 if( columns[a].getAttribute( 'id' ) )
@@ -177,7 +191,43 @@ class FUIGroup extends FUIElement
         {
             this.domElement.style.height = height;
         }
+        let width = domElement.getAttribute( 'width' );
+        if( width )
+        {
+        	this.domElement.style.width = width;
+        }
     }
+    
+    // Get an element by id
+    getElementByUniqueId( id )
+    {
+    	let eles = this.domElement.childNodes;
+    	for( let a = 0; a < eles.length; a++ )
+    	{
+    		let eles2 = eles[ a ].childNodes;
+    		if( eles2 )
+    		{
+    			for( let b = 0; b < eles2.length; b++ )
+    			{
+		    		if( eles2[ b ].id == id )
+		    		{
+						return {
+							domElement: eles[ b ],
+							setContent: function( cnt )
+							{
+								this.domElement.innerHTML = cnt;
+								FUI.initialize();
+								return true;
+							}
+						};
+					}
+		    	}
+		    }
+    	}
+    	// Fails
+    	return false;
+    }
+    
     // Refreshes gui's own dom element
     refreshDom()
     {
