@@ -9,6 +9,8 @@
     --fui-border-foreground: #DDDDDD;
     
     --fui-list-button-background: #cfcfcf;
+    --fui-list-item-background: #f8f8f8;
+    --fui-list-item-background-alternate: #f0f0f0;
     --fui-list-button-background-hover: #909090;
     --fui-list-button-color: #000000;
     --fui-list-button-color-hover: #f0f0f0;
