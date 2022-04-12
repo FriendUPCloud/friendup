@@ -247,9 +247,9 @@ window.FUI = window.FUI ? window.FUI : {
 	// Simple system to allow stuff to add click on window
 	addEvent( name, type, func )
 	{
-		if( this.clickEvents[ type ] )
+		if( this.events[ type ] )
 		{
-			this.clickEvents[ type ][ name ] = func;
+			this.events[ type ][ name ] = func;
 			return true;
 		}
 		return false;
@@ -257,9 +257,9 @@ window.FUI = window.FUI ? window.FUI : {
 	// Simple system to remove click event by name
 	removeEvent( name, type )
 	{
-		if( this.clickEvents[ type ][ name ] )
+		if( this.events[ type ][ name ] )
 		{
-			this.clickEvents[ type ][ name ] = null;
+			this.events[ type ][ name ] = null;
 			return true;
 		}
 		return false;
