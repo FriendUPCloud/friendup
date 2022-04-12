@@ -323,20 +323,36 @@
 	text-overflow: ellipsis;
 }
 
-.FUIButtonElement:before
+.FUIStringElement:before
 {
     margin: 0 4px 0 0;
 }
 
+.FUIStringElement input
+{
+	background: none;
+	border: 0;
+	width: 100%;
+	height: 100%;
+	padding: var(--fui-padding-row);
+	resize: none;
+}
+
 /* Textarea */
+
+.FUITextareaContainer
+{
+	height: 100%;
+}
 
 .FUITextareaElement
 {
+	height: 100%;
 	background-color: var(--fui-list-button-background);
 	border: 1px solid var(--fui-border-color);
 	color: var(--fui-list-button-color);
 	border-radius: var(--fui-border-radius-small);
-	padding: var(--fui-padding-row);
+	padding: 0;
 	text-align: center;
 	box-sizing: border-box;
 	overflow: hidden;
@@ -346,6 +362,16 @@
 .FUITextareaElement:before
 {
     margin: 0 4px 0 0;
+}
+
+.FUITextareaElement textarea
+{
+	background: none;
+	border: 0;
+	width: 100%;
+	height: 100%;
+	padding: var(--fui-padding-row);
+	resize: none;
 }
 
 

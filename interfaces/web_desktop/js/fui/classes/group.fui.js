@@ -43,6 +43,56 @@ class FUIGroup extends FUIElement
         
         this.domElement.innerHTML = '';
         
+        // Support fixed width
+        let width = domElement.getAttribute( 'width' );
+        if( width )
+        {
+        	this.domElement.style.width = width;
+        }
+        
+        // Support fixed height
+        let height = domElement.getAttribute( 'height' );
+        if( height )
+        {
+        	this.domElement.style.height = height;
+        }
+        
+        // Support gap
+        let gap = domElement.getAttribute( 'gap' );
+        if( gap )
+        {
+        	let int = parseInt( gap );
+        	if( isNaN( int ) ) int = 0;
+        	this.domElement.style.gap = int + 'px';
+        }
+        
+        // Support margins (left|right)
+        let margin = domElement.getAttribute( 'margin' );
+        if( margin )
+        {
+        	if( margin == 'normal' )
+        	{
+        		this.domElement.style.marginLeft = 'var(--fui-padding-normal)';
+        		this.domElement.style.marginRight = 'var(--fui-padding-normal)';
+        	}
+        	else if( margin == 'small' )
+        	{
+        		this.domElement.style.marginLeft = 'var(--fui-padding-row)';
+        		this.domElement.style.marginRight = 'var(--fui-padding-row)';
+        	}
+        	else if( margin == 'large' )
+        	{
+        		this.domElement.style.marginLeft = 'var(--fui-padding-large)';
+        		this.domElement.style.marginRight = 'var(--fui-padding-large)';
+        	}
+        	else
+        	{
+		    	let int = parseInt( margin );
+		    	if( isNaN( int ) ) int = 0;
+		    	this.domElement.style.margin = int + 'px';
+		    }
+        }
+        
         // Group containers with rows cannot have columns
         let rowcontainer = domElement.getElementsByTagName( 'rows' );
         if( rowcontainer.length )
@@ -182,7 +232,9 @@ class FUIGroup extends FUIElement
         let gap = domElement.getAttribute( 'gap' );
         if( gap )
         {
-            this.domElement.style.gap = gap;
+        	let int = parseInt( gap );
+        	if( isNaN( int ) ) int = 0;
+        	this.domElement.style.gap = int + 'px';
         }
         
         // Set height based on parent
