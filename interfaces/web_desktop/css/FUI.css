@@ -273,7 +273,7 @@
 {
     background-color: transparent;
     color: var(--fui-color);
-    padding: var(--fui-padding-row);
+    padding: 0;
 }
 
 .FUIListview .FUIListviewContent .EditRow.Yourself
