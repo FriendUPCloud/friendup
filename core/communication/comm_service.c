@@ -1088,7 +1088,7 @@ int CommServiceThreadServer( FThread *ptr )
 											sock = NULL;
 											FERROR( "[COMMSERV] Closing incoming!\n" );
 										}
-										//BufStringDelete( bs );
+										BufStringDelete( bs );
 									}
 									else if( df->df_ID == ID_FRID )
 									{
@@ -1155,7 +1155,7 @@ int CommServiceThreadServer( FThread *ptr )
 											}
 										}
 									
-										//BufStringDelete( bs );
+										BufStringDelete( bs );
 									}
 									else
 									{
@@ -1167,7 +1167,7 @@ int CommServiceThreadServer( FThread *ptr )
 									
 										FERROR("[COMMSERV] Message uknown: [%s], FCRE found!\n", eid );
 
-										//BufStringDelete( bs );
+										BufStringDelete( bs );
 									}
 
 									if( tempBuffer != NULL )
@@ -1186,10 +1186,10 @@ int CommServiceThreadServer( FThread *ptr )
 									
 									FERROR("[COMMSERV] Message uknown [%s]!\n", eid );
 
-									//BufStringDelete( bs );
+									BufStringDelete( bs );
 								}
 							}
-							BufStringDelete( bs );
+							//BufStringDelete( bs );
 						}
 					}
 				}//end for through events
