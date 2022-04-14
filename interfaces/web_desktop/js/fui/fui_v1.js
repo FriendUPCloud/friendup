@@ -267,14 +267,22 @@ window.FUI = window.FUI ? window.FUI : {
 };
 
 // Activate click events
-window.addEventListener( 'click', function( e )
+( function()
 {
-	if( FUI.events[ 'click' ] )
-	{
-		for( let a in FUI.events[ 'click' ] )
-			if( FUI.events[ 'click' ][ a ] ) FUI.events[ 'click' ][ a ]( e );
-	}
-} );
+    let eventTypes = [ 'click', 'mouseup', 'mousedown', 'mousemove', 'keyup', 'keydown' ];
+    for( let a in eventTypes )
+    {
+        let event = eventTypes[ a ];
+        window.addEventListener( event, function( e )
+        {
+	        if( FUI.events[ event ] )
+	        {
+		        for( let a in FUI.events[ event ] )
+			        if( FUI.events[ event ][ a ] ) FUI.events[ event ][ a ]( e );
+	        }
+        } );
+    }
+} )();
 
 // Base class
 class FUIElement
