@@ -273,6 +273,7 @@ window.FUI = window.FUI ? window.FUI : {
     for( let a in eventTypes )
     {
         let event = eventTypes[ a ];
+        FUI.events[ event ] = [];
         window.addEventListener( event, function( e )
         {
 	        if( FUI.events[ event ] )
