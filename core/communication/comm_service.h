@@ -291,13 +291,13 @@ int CommServiceStop( CommService *s );
 // send message
 //
 
-DataForm *CommServiceSendMsg( CommService *s, DataForm *df );
+//DataForm *CommServiceSendMsg( CommService *s, DataForm *df );
 
 //
 // send message directly to connection
 //
 
-DataForm *CommServiceSendMsgDirect(  FConnection *con, DataForm *df );
+//DataForm *CommServiceSendMsgDirect(  FConnection *con, DataForm *df );
 
 //
 // Add new connection
@@ -351,7 +351,13 @@ int CommServiceThreadServerSelect( FThread *ptr );
 //
 //
 
-BufString *SendMessageAndWait( FConnection *con, DataForm *df );
+//BufString *SendMessageAndWait( FConnection *con, DataForm *df );
+
+//
+//
+//
+
+//BufString *SendMessageToSessionsAndWait( void *lsb, FQUAD userID, DataForm *ldf );
 
 //
 //

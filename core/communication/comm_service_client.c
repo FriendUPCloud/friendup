@@ -215,10 +215,156 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 		}
 	}
 
-	DEBUG( "[SendMessageAndWait] SendMessageAndWait Done with sending, returning\n" );
+	DEBUG( "[SendMessageAndWait] SendMessageAndWait END\n" );
 	
 	return bs;
 }
+
+//
+//
+//
+
+typedef struct ListEntry
+{
+	char ID[ FRIEND_CORE_MANAGER_ID_SIZE+1 ];
+	char SessionID[ 512 ];
+	int sessionIDLen;
+	struct ListEntry *next;
+}ListEntry;
+
+/**
+ * Send message to all user sessions via CommunicationService and wait+read response
+ *
+ * @param lsb pointer to SystemBase
+ * @param userID ID of user which should get message across cluster
+ * @param ldf pointer message which will be send
+ * @return pointer to new BufString structure when success, otherwise NULL
+ */
+
+BufString *SendMessageToSessionsAndWait( void *lsb, FQUAD userID, DataForm *ldf )
+{
+	SystemBase *sb = (SystemBase *)lsb;
+	
+	DEBUG( "[SendMessageToSessionsAndWait] START\n" );
+	
+	//
+	// There is no connection to another server, so there is no need to send information across servers
+	//
+	
+	if( sb->fcm->fcm_CommService->s_Connections == NULL )
+	{
+		DEBUG( "[SendMessageToSessionsAndWait] There is no connection to another server\n" );
+		return NULL;
+	}
+	
+	BufString *bs = BufStringNew(); //test purpose
+	BufStringAdd( bs, "test" );
+	
+	char tmpQuery[ 1024 ];
+	
+	ListEntry *rootEntry = NULL;
+
+	SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
+	if( sqllib != NULL )
+	{
+		snprintf( tmpQuery, sizeof(tmpQuery), "select FCID,SessionID from FUserSession where FCID <> '%s' AND UserID=%ld", sb->fcm->fcm_ID, userID );
+		
+		void *res = sqllib->Query( sqllib, tmpQuery );
+		if( res != NULL )
+		{
+			char **row;
+			if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+			{
+				//
+				// We have to find all servers where user have active sessions
+				//
+				
+				if( row[ 0 ] != NULL )
+				{
+					ListEntry *entry = FCalloc( 1, sizeof( ListEntry ) );
+					
+					DEBUG("Entry found: %s\n", row[ 0 ] );
+					strncpy( entry->ID, row[ 0 ], FRIEND_CORE_MANAGER_ID_SIZE );
+					entry->sessionIDLen = strlen( row[ 1 ] );
+					strncpy( entry->SessionID, row[ 1 ], entry->sessionIDLen );
+					
+					entry->next = rootEntry;
+					rootEntry = entry;
+				}
+			}
+			sqllib->FreeResult( sqllib, res );
+		}
+		sb->LibrarySQLDrop( sb, sqllib );
+	}
+	
+	//
+	// Lets go through loop and send messages to servers
+	//
+	
+	while( rootEntry != NULL )
+	{
+		ListEntry *remEntry = rootEntry;
+
+		FConnection *actCon = sb->fcm->fcm_CommService->s_Connections;
+		while( actCon != NULL )
+		{
+			if( strncmp( rootEntry->ID, actCon->fc_Name, FRIEND_CORE_MANAGER_ID_SIZE ) == 0 )
+			{
+				DataForm *df = NULL;
+				
+				DEBUG("[SendMessageToSessionsAndWait] sending message to session %s\n", rootEntry->SessionID );
+		
+				MsgItem tags[] = {
+					{ ID_FCRE, (FULONG)0, (FULONG)MSG_GROUP_START },
+					{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)sb->fcm->fcm_ID },
+					{ ID_FRID, (FULONG)0, MSG_INTEGER_VALUE },
+					{ ID_CMMD, (FULONG)0, MSG_INTEGER_VALUE },
+					{ ID_QUER, (FULONG)FC_QUERY_FRIENDCORE_SYNC , MSG_INTEGER_VALUE },
+					{ ID_SESS, (FULONG)rootEntry->SessionID, rootEntry->sessionIDLen },
+					{ MSG_GROUP_END, 0,  0 },
+					{ TAG_DONE, TAG_DONE, TAG_DONE }
+				};
+	
+				df = DataFormNew( tags );
+		
+				DataFormAddForm( &df, ldf );
+		
+				BufString *retMsg = SendMessageAndWait( actCon, df );
+				if( retMsg != NULL )
+				{
+					BufStringDelete( retMsg );
+				}
+				
+				DataFormDelete( ldf );
+				
+				break;
+			}
+		}
+		
+		rootEntry = rootEntry->next;
+		FFree( remEntry );
+	}
+
+	DEBUG( "[SendMessageToSessionsAndWait] END\n" );
+	
+	return bs;
+}
+
+/*
+ char *FCID = NULL;
+		DataForm *df = NULL; 		// if NULL then no details needed
+		char *temp = FMalloc( 2048 );
+		int pos = 0;
+		
+		HashmapElement *el = GetHEReq( *request, "details" );
+		if( el != NULL && el->hme_Data )
+		{
+			if( strcmp( (char *)el->hme_Data, "true" ) == 0 )
+			{
+				
+			}
+		}
+ */
 
 /**
  * Send message via CommunicationService to provided receipients

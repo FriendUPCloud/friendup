@@ -956,7 +956,9 @@ int CommServiceThreadServer( FThread *ptr )
 										}
 									}
 								
+									//
 									// Another FC is trying to connect
+									//
 								
 									else if( df->df_ID == ID_FCON )
 									{
@@ -1090,6 +1092,11 @@ int CommServiceThreadServer( FThread *ptr )
 										}
 										BufStringDelete( bs );
 									}
+									
+									//
+									// Typical FC-Fc message
+									//
+									
 									else if( df->df_ID == ID_FRID )
 									{
 										FULONG reqid = df->df_Size;

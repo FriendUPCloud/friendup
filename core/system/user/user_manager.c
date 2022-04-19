@@ -2449,7 +2449,7 @@ void UMAddExistingUsersToGroup( UserManager *um, UserGroup *ug )
 			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 			{
 				char *end;
-				FQUAD id = 0;
+				FUQUAD id = 0;
 				if( row[ 0 ] != NULL )
 				{
 					id = strtoll( row[ 0 ], &end, 0 );

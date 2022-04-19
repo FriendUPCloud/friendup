@@ -18,6 +18,7 @@
 #define __INTERFACE_COMM_SERVICE_INTERFACE_H__
 
 #include <communication/comm_service.h>
+#include <communication/comm_service_client.h>
 
 typedef struct CommServiceInterface
 {

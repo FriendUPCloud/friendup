@@ -317,6 +317,10 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 			
 				BufStringDelete( bs );
 			}
+			else if( param == FC_QUERY_FRIENDCORE_SYNC )
+			{
+				df++;	// we have to jump to next section to read sessionid
+			}
 		break;
 	}
 	HashmapFree( paramhm );
