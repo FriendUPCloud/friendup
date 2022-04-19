@@ -308,7 +308,7 @@ BufString *SendMessageToSessionsAndWait( void *lsb, FQUAD userID, DataForm *ldf 
 		FConnection *actCon = sb->fcm->fcm_CommService->s_Connections;
 		while( actCon != NULL )
 		{
-			if( strncmp( rootEntry->ID, actCon->fc_Name, FRIEND_CORE_MANAGER_ID_SIZE ) == 0 )
+			if( actCon->fc_Name != NULL && strncmp( rootEntry->ID, actCon->fc_Name, FRIEND_CORE_MANAGER_ID_SIZE ) == 0 )
 			{
 				DataForm *df = NULL;
 				
@@ -340,10 +340,11 @@ BufString *SendMessageToSessionsAndWait( void *lsb, FQUAD userID, DataForm *ldf 
 				break;
 			}
 			
-			rootEntry = rootEntry->next;
+			actCon = (FConnection *)actCon->node.mln_Succ;
 			DEBUG( "[SendMessageToSessionsAndWait] loop\n");
 		}
 		
+		rootEntry = rootEntry->next;
 		FFree( remEntry );
 	}
 
