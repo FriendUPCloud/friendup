@@ -50,6 +50,13 @@ function cleanVirtualWorkspaceInformation()
 	}
 }
 
+function isTouchDevice()
+{
+	return ( ( 'ontouchstart' in window ) ||
+    	( navigator.maxTouchPoints > 0 ) ||
+    	( navigator.msMaxTouchPoints > 0 ) );
+}
+
 // Window information
 var movableHighestZindex = 99;
 var movableWindowCount = 0;
@@ -2654,6 +2661,10 @@ var _screenTitleTimeout = null;
 var prevScreen = prevWindow = false;
 function CheckScreenTitle( screen, force )
 {	
+	// Dashboard
+	if( window.Workspace && Workspace.dashboard )
+		Workspace.dashboard.refresh();
+	
 	let testObject = screen ? screen : window.currentScreen;
 	if( !testObject && !force ) return;
 	
@@ -3699,6 +3710,17 @@ movableMouseDown = function ( e )
 {
 	if ( !e ) e = window.event;
 	
+	if( isTouchDevice() )
+	{
+		let active = document.activeElement;
+		let anod = '';
+		if( active ) anod = active.nodeName;
+		if( active && !( anod == 'TEXTAREA' || anod == 'INPUT' || active.getAttribute( 'contenteditable' ) ) )
+		{
+			active.blur();
+		}
+	}
+	
 	window.focus();
 	
 	// Close tray bubble
@@ -3869,7 +3891,6 @@ movableMouseDown = function ( e )
 		{
 			clearRegionIcons( { force: true } );
 		}
-		
 	}
 }
 
@@ -4185,6 +4206,7 @@ function FocusOnNothing()
 			movableWindows[a].windowObject.sendMessage( { command: 'blur' } );
 		}
 	}
+	
 	let eles = document.getElementsByTagName( '*' );
 	for( var a = 0; a < eles.length; a++ )
 	{

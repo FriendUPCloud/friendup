@@ -180,6 +180,25 @@ Just so that we can keep the outputted HTML smaller by using CSS classes :)
 	/*text-shadow: 0 1px 0 #000;*/
 }
 
+.Coldom > .File div, 
+.Row.File div
+{
+	pointer-events: none;
+}
+
+.Coldom > .File div.Icon:before,
+.Row.File div.Icon:before
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	top: -10px;
+    left: -10px;
+    width: calc(100% + 16px);
+    height: calc(100% + 16px);
+	background: transparent;
+}
+
 #Doors .File a
 {
 	color: #FFF;

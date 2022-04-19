@@ -84,6 +84,23 @@
 				<div class="FloatLeft Box" id="ColorFileIconTextPreview" style="background-color: #313739">    </div>
 			</div>
 			-->
+			
+			<p class="Layout">
+				<strong id="LabelInputParadigmText"></strong>
+			</p>
+	
+			<form>
+				<div class="HRow MarginBottom MarginTop">
+					<div class="FloatLeft" id="InputParadigm">
+						<input type="radio" name="inputparadigm" id="inputparadigmautomatic" onchange="setOption('InputParadigm', this)" value="automatic" checked="checked"/> 
+						Automatic
+						<input type="radio" name="inputparadigm" id="inputparadigmtablet" onchange="setOption('InputParadigm', this)" value="tablet"/> 
+						Tablet
+						<input type="hidden" value="automatic" id="InputParadigmText" onchange="ge('inputparadigm'+this.value).click()"/>
+					</div>
+				</div>
+			</form>
+			
 			<p class="Layout">
 				<strong id="LabelButtonSchemeText"></strong>
 			</p>
@@ -161,7 +178,8 @@
 			colorFileIconText: '#313739',*/
 			buttonSchemeText: 'win',
 			colorSchemeText: 'light',
-			iconEffectText: 'shadow'
+			iconEffectText: 'shadow',
+			inputParadigmText: 'automatic'
 		};
 	
 		window.setOption = function( key, ele )

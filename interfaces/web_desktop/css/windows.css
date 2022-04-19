@@ -41,8 +41,7 @@ body:not([mobile]) .ViewContainer
 	-webkit-user-select: none;
 	user-select: none;
 	pointer-events: all;
-	background: black;
-	
+	background-color: transparent;
 }
 body:not([mobile]) .View
 {

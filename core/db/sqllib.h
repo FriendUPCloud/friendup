@@ -93,6 +93,7 @@ typedef struct SQLLibrary
 	SQLConnection con;
 	void					*sd;	// special data
 	FULONG					l_InUse;
+	int						l_Slot;
 	
 } SQLLibrary;
 

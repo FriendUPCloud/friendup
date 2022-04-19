@@ -1000,11 +1000,13 @@ function receiveEvent( event, queued )
 			}, 250 );
 			break;
 		// Blur all elements!
+		// TODO: Did not work
 		case 'blur':
 		{
-			let elems = document.getElementsByTagName( '*' );
+			/*let elems = document.getElementsByTagName( '*' );
 			for( let a = 0; a < elems.length; a++ )
 				elems[a].blur();
+			Notify( { title: 'Blur 2', text: 'blurrrr.' } );*/
 			break;
 		}
 		// Executing an event that is coming in
@@ -6913,7 +6915,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 		Application.sendMessage( { type: 'system', command: 'registermousedown', x: e.clientX, y: e.clientY } );
 		
 		// Check if an input element has focus
-		Friend.GUI.checkInputFocus();
+		Friend.GUI.checkInputFocus( e );
 	}
 	function _kmouseup( e )
 	{
@@ -6925,7 +6927,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 		// Check if an input element has focus
 		setTimeout( function()
 		{
-			Friend.GUI.checkInputFocus();
+			Friend.GUI.checkInputFocus( e );
 		}, 250 );
 	}
 	
@@ -6933,7 +6935,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 	function _kresponse( e )
 	{	
 		// Check if an input element has focus
-		Friend.GUI.checkInputFocus();
+		Friend.GUI.checkInputFocus( e );
 		
 		// Let's report to Workspace what we're doing - to catch global keyboard shortcuts
 		let params = [ 'shiftKey', 'ctrlKey', 'metaKey', 'altKey', 'which', 'keyCode' ];
@@ -9142,7 +9144,7 @@ if( Friend )
 }
 
 // Check if Friend has focus on input field
-Friend.GUI.checkInputFocus = function()
+Friend.GUI.checkInputFocus = function( e )
 {
 	let focused = document.activeElement;
 	if( !focused || focused == document.body )
@@ -9171,6 +9173,15 @@ Friend.GUI.checkInputFocus = function()
 			state: 'input-focus',
 			value: response
 		} );
+	}
+	if( focused && response == false )
+	{
+		focused.blur();
+	}
+	// Remain focus
+	else if( focused )
+	{
+		focused.focus();
 	}
 }
 

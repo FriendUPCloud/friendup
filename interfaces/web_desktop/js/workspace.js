@@ -22,6 +22,8 @@ Workspace = {
 	{
 		return false;
 	},
+	environmentName: 'Workspace',
+	osName: 'FriendOS',
 	staticBranch: 'Hydrogen 4',
 	icons: [],
 	menuMode: 'pear', // 'miga', 'fensters' (alternatives) -> other menu behaviours
@@ -64,6 +66,15 @@ Workspace = {
 		// Go ahead and init!
 		ScreenOverlay.init();
 		Workspace.init();
+		
+		if( window.innerWidth <= 1024 )
+		{
+			let p = ge( 'viewprt' );
+			if( p )
+			{
+				p.setAttribute( 'content', 'height=auto, width=auto, initial-scale=0.8, maximum-scale=1.0, user-scalable=no, viewport-fit=contain' );
+			}
+		}
 		
 		if( window.friendApp )
 		{
@@ -159,7 +170,7 @@ Workspace = {
 
 		// Setup default Doors screen
 		let wbscreen = new Screen( {
-			title: 'Friend Workspace',
+			title: Workspace.environmentName,
 			id:	'DoorsScreen',
 			extra: Workspace.fullName,
 			taskbar: true,
@@ -1003,6 +1014,7 @@ Workspace = {
 				'webclient/js/io/directoryview_fileoperations.js;' +
 				'webclient/js/gui/menufactory.js;' +
 				'webclient/js/gui/workspace_menu.js;' +
+				'webclient/js/gui/tabletdashboard.js;' +
 				'webclient/js/gui/deepestfield.js;' +
 				'webclient/js/gui/filedialog.js;' +
 				'webclient/js/gui/printdialog.js;' +

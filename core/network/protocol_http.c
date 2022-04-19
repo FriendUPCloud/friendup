@@ -1720,7 +1720,8 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												
 												qery[ 1024 ] = 0;
 												
-												sqllib->SNPrintF( sqllib, qery, 1024, "SELECT Source FROM FTinyUrl WHERE `Hash`=\"%s\"", hash ? hash : "-" );
+												snprintf( qery, 1024, "SELECT Source FROM FTinyUrl WHERE `Hash`=\"%s\"", hash ? hash : "-" );
+												//sqllib->SNPrintF( sqllib, qery, 1024, "SELECT Source FROM FTinyUrl WHERE `Hash`=\"%s\"", hash ? hash : "-" );
 												void *res = sqllib->Query( sqllib, qery );
 												if( res != NULL )
 												{

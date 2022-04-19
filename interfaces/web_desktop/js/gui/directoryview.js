@@ -801,28 +801,56 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	
 	// Add context menu
 	if( !winobj.oldContextMenuEvent ) winobj.oldContextMenuEvent = winobj.oncontextmenu;
-	winobj.addEventListener( 'contextmenu', function( e )
+	if( !isTouchDevice() )
 	{
-		let tr = e.target ? e.target : e.srcObject;
-		// Enable default behavior on the context menu instead
-		if( tr.classList && tr.classList.contains( 'DefaultContextMenu' ) )
+		winobj.addEventListener( 'contextmenu', function( e )
 		{
-			e.defaultBehavior = true;
-			return;
-		}
-		if( !window.isMobile && !window.isTablet )
-		{
+			let tr = e.target ? e.target : e.srcObject;
+			// Enable default behavior on the context menu instead
+			if( tr.classList && tr.classList.contains( 'DefaultContextMenu' ) )
+			{
+				e.defaultBehavior = true;
+				return;
+			}
+			
+			cancelBubble( e );
+			
+			// Cancels previous stuff
+			window.touchstartCounter = false;
+			
 			Workspace.showContextMenu( false, e );
-		}
-		return cancelBubble( e );
-	} );
+			return;
+		} );
+	}
+	else
+	{
+		winobj.addEventListener( 'touchstart', function( e )
+		{
+			if( window.touchstartCounter )
+				clearTimeout( window.touchstartCounter );
+			window.touchstartCounter = setTimeout( function()
+			{
+				Workspace.showContextMenu( false, e );
+				window.touchstartCounter = false;
+			}, 800 );
+		} );
+		
+		winobj.addEventListener( 'touchend', function( e )
+		{
+			clearTimeout( window.touchstartCounter );
+			window.touchstartCounter = false;
+		} );
+	}
 
 	// On scrolling, don't do the menu!
 	winobj.addEventListener( 'scroll', function(e)
 	{
-		 window.fileMenuElement = false;
-		 window.clickElement = false;
-		 if( window.menuTimeout )
+		clearTimeout( window.touchstartCounter );
+		window.touchstartCounter = null;
+		
+		window.fileMenuElement = false;
+		window.clickElement = false;
+		if( window.menuTimeout )
 			clearTimeout( window.menuTimeout );
 	}, true );
 
@@ -872,6 +900,12 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	// When resizing the window
 	winobj.redrawIcons = function( icons, direction, callback )
 	{
+		if( window.touchstartCounter )
+		{
+			clearTimeout( window.touchstartCounter );
+			window.touchstartCounter = null;
+		}
+		
 		let dirv = this.directoryview;
 		
 		// Assign icons now
@@ -2368,6 +2402,12 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	this.refreshScrollTimeout = false;
 	this.scroller.onscroll = function( e )
 	{	
+		if( self.refreshScrollTimeout )
+		{
+			clearTimeout( self.refreshScrollTimeout );
+			self.refreshScrollTimeout = false;
+		}
+		
 		// Only handle scroll if it changed
 		if( !self.scrollerTop || self.scrollerTop != self.scroller.scrollTop )
 		{
@@ -2375,11 +2415,6 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		}
 		else return;
 		
-		if( self.refreshScrollTimeout )
-		{
-			clearTimeout( self.refreshScrollTimeout );
-			self.refreshScrollTimeout = false;
-		}
 		self.refreshScrollTimeout = setTimeout( function()
 		{
 			// Don't redraw icon view if we have elements
@@ -2778,9 +2813,22 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			listed++;
 			
 			// Single click
-			r.onmousedown = function( e )
+			r[ isTouchDevice() ? 'ontouchstart' : 'onmousedown' ] = function( e )
 			{
 				if( !e ) e = window.event ? window.event : {};
+			
+				window.touchElementTime = ( new Date() ).getTime();
+				
+				if( isTouchDevice() )
+				{
+					if( window.touchstartCounter )
+						clearTimeout( window.touchstartCounter );
+					window.touchstartCounter = setTimeout( function()
+					{
+						window.touchStartCounter = null;
+						Workspace.showContextMenu( false, e );
+					}, 800 );
+				} 
 			
 				if( isTablet )
 					dv.multiple = e.shiftKey = true;
@@ -2937,123 +2985,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 
 			// Let's drag this bastard!
 			r.setAttribute( 'draggable', true );
-			
-			if( window.isTablet || !window.isMobile )
-			{
-				r.ondragstart = function( e )
-				{
-					if( this.classList.contains( 'Selected' ) )
-					{
-						obj.iconsCache = [];
-						mousePointer.pickup( this );
-					}
-					else
-					{
-						this.classList.add( 'Selected' );
-						this.selected = true;
-						this.icon.selected = true;
-						this.fileInfo.selected = true;
-						return this.ondragstart( e );
-					}
-					return cancelBubble( e );
-				}
-			}
-			if( window.isTablet || window.isMobile )
-			{
-				r.ontouchstart = function( e )
-				{
-					this.click = true;
-					let self = this;
-					this.listSelectTimeout = setTimeout( function()
-					{
-						self.click = false;
-						self.classList.add( 'Selected' );
-						self.selected = true;
-						this.icon.selected = true;
-						self.fileInfo.selected = true;
-						self.touchPos = {
-							x: e.touches[0].pageX,
-							y: e.touches[0].pageY
-						};
-						self.touchMode = 0;
-					}, 100 );
-					
-					this.contextMenuTimeout = setTimeout( function()
-					{
-						Workspace.showContextMenu( false, e );
-					}, 1000 );
-					
-					return cancelBubble( e );
-				}
-			}
-			if( window.isTablet )
-			{
-				r.ontouchmove = function( e )
-				{
-					if( !this.touchPos )
-						return;
-						
-					let current = {
-						x: e.touches[0].pageX,
-						y: e.touches[0].pageY
-					};
-			
-					let diffx = current.x - this.touchPos.x;
-					let diffy = current.y - this.touchPos.y;
-			
-					let distance = Math.sqrt(
-						Math.pow( diffx, 2 ) + Math.pow( diffy, 2 )
-					);
-				
-					if( distance > 15 )
-					{
-						obj.iconsCache = [];
-						mousePointer.pickup( this );
-						this.touchPos = false;
-						
-						if( this.listSelectTimeout )
-						{
-							clearTimeout( this.listSelectTimeout );
-							this.listSelectTimeout = false;
-						}
-						if( this.contextMenuTimeout )
-						{
-							clearTimeout( this.contextMenuTimeout );
-							this.contextMenuTimeout = false;
-						}
-					}
-					
-					return cancelBubble( e );
-				}
-			}
-			if( window.isTablet )
-			{
-				r.ontouchend = function( e )
-				{
-					if( this.click )
-					{
-						this.ondblclick( e );
-						if( this.listSelectTimeout )
-						{
-							clearTimeout( this.listSelectTimeout );
-							this.listSelectTimeout = false;
-						}
-						if( this.contextMenuTimeout )
-						{
-							clearTimeout( this.contextMenuTimeout );
-							this.contextMenuTimeout = false;
-						}
-					}
-					clearTimeout( this.contextMenuTimeout );
-					this.contextMenuTimeout = null;
-					this.touchPos = false;
-					return cancelBubble( e );
-				}
-				
-				r.onclick = null;
-				r.onmousedown = null;
-			}
-			
+									
 			// Releasing
 			r.onmouseup = function( e )
 			{
@@ -3478,9 +3410,22 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	// Attach events
 	if( !( self.flags && self.flags.nativeDraggable ) )
 	{
-		file.onmousedown = function( e )
-		{
+		file[ isTouchDevice() ? 'ontouchstart' : 'onmousedown' ] = function( e )
+		{	
 			if( !e ) e = window.event ? window.event : {};
+	
+			if( isTouchDevice() )
+			{
+				window.touchElementTime = ( new Date() ).getTime();
+		
+				if( window.touchstartCounter )
+					clearTimeout( window.touchstartCounter );
+				window.touchstartCounter = setTimeout( function()
+				{
+					window.touchStartCounter = null;
+					Workspace.showContextMenu( false, e );
+				}, 800 );
+			}
 	
 			// Activate screen on click
 			if( this.window )
@@ -3951,7 +3896,40 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	if( !self.flags || ( self.flags && !self.flags.nativeDraggable ) )
 	{
 		let eventName = ( window.isMobile && ( fileInfo.Type == 'Door' || fileInfo.Type == 'Dormant' ) ) ? 'onclick' : 'ondblclick';
-		file[ eventName ] = launchIcon;
+		if( isTouchDevice() )
+			eventName = 'ontouchend';
+		( function( eventn, fil, func )
+		{
+			fil[ eventn ] = function( e )
+			{
+				if( Workspace.contextMenuShowing )
+				{
+					return;
+				}
+				
+				if( isTouchDevice() )
+				{
+					let diff = ( new Date() ).getTime() - window.touchElementTime;
+					// Abort click
+					if( diff >= 250 && diff <= 800 )
+					{
+						if( window.touchstartCounter )
+						{
+							clearTimeout( window.touchstartCounter );
+							window.touchstartCounter = false;
+						}
+						return;
+					}
+				}
+					
+				if( window.touchstartCounter )
+				{
+					clearTimeout( window.touchstartCounter );
+					window.touchstartCounter = false;
+				}
+				func( e );
+			}
+		} )( eventName, file, launchIcon );
 	}
 	
 	// -------------------------------------------------------------------------
@@ -4025,10 +4003,13 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			}, 100 );
 
 
-			file.contextMenuTimeout = setTimeout( function()
+			if( isTouchDevice() )
 			{
-				Workspace.showContextMenu( false, event );
-			}, 1000 );
+				file.contextMenuTimeout = setTimeout( function()
+				{
+					Workspace.showContextMenu( false, event );
+				}, 800 );
+			}
 			//return cancelBubble( event );
 		}, false );
 

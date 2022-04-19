@@ -672,6 +672,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							{
 								UserAddSession( usr, loggedSession );
 							}
+
 							if( usr && usr->u_ID )
 							{
 							    loggedSession->us_UserID = usr->u_ID;

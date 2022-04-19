@@ -699,7 +699,7 @@ var WorkspaceMenu =
 	{
 		if( !wm ) return;
 		var mode = ( Workspace && Workspace.menuMode == 'miga' ) ? 'onmouseover' : 'onmousedown';
-		if( isMobile ) mode = 'ontouchend';
+		if( isMobile || isTouchDevice() ) mode = 'ontouchend';
 		
 		// We generated a new menu?
 		var menus = wm.getElementsByTagName( 'div' );

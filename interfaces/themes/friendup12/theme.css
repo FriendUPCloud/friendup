@@ -1336,6 +1336,7 @@ body:not([tablet])[mobile=mobile]:not(.WidgetSlideDown) #CalendarWidget
 }
 
 /* Window menu */
+
 body.WindowMenu #Screens .View.Active[maximized=true],
 body.WindowMenu #Screens .View.Active,
 body.WindowMenu #Screens .View
@@ -1397,6 +1398,8 @@ body.WindowMenu .Widget, body.WindowMenu #Statusbar
 	opacity: 0;
 	pointer-events: none;
 }
+
+/* Desklet */
 
 .Desklet.HasWindowlist
 {
@@ -1485,6 +1488,11 @@ html .Desklet[position=top_right] .Launcher.Running:after
 html #DockWindowList.Size32 .Task
 {
 	height: 28px;
+}
+
+html body.InputParadigmTablet .Desklet
+{
+	display: none;
 }
 
 
@@ -3970,5 +3978,4 @@ html > body[mobile] > div .Button.IconButton:hover
 @append url(System:../themes/friendup12/flavors_dark.css);
 @append url(System:../themes/friendup12/flavors_charcoal.css);
 @append url(System:../themes/friendup12/flavors_synthwave.css);
-
-
+@append url(System:../themes/friendup12/paradigm_tablet.css);
