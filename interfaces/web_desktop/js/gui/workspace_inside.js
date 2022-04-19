@@ -2497,7 +2497,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						globalConfig.hidedesktopicons = 0;
 						document.body.classList.remove( 'DesktopIconsHidden' );
-						if( Workspace.dashboard )
+						if( Workspace.dashboard && !Workspace.desktop && !Workspace.themeData[ 'sidebarEngine' ] )
 							Workspace.dashboard.destroy();
 					}
 					// Can only have workspaces on mobile
@@ -3914,33 +3914,22 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			    Workspace.themeData = [];
 			}
 			
-			// Support input paradigm in the theme
-			if( rdat.inputParadigm )
-			{
-			    Workspace.themeData[ 'inputParadigm' ] = rdat.inputParadigm;
-			    Workspace.themeDataSet = true;
-			}
-			// Ditto TODO: Figure out this a bit (why these two similar keys)
-			if( rdat.inputParadigmText )
-			{
-			    Workspace.themeData[ 'inputParadigmText' ] = rdat.inputParadigmText;
-			    Workspace.themeDataSet = true;
-			}
 			// Use sidebar engine
 			if( rdat.sidebarEngine )
 			{
 			    if( rdat.sidebarSrc )
 			    {
+			        Workspace.themeData[ 'sidebarEngine' ] = true;
+			        Workspace.themeDataSet = true;
 			        let j = document.createElement( 'script' );
 			        j.src = rdat.sidebarSrc;
 			        j.onload = function( e )
 			        {
-			            ( new SidebarEngine() );
+			            Workspace.dashboard = new SidebarEngine();
 			        }
 			        document.body.appendChild( j );
 			    }
 			}
-			
 			
 			Workspace.themeRefreshed = true;
 			Workspace.refreshUserSettings( function() 
