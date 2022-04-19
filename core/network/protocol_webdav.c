@@ -931,7 +931,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 			
 			if( loggedSession == NULL )
 			{
-				loggedSession = UserSessionNew( NULL, "webdav" );
+				loggedSession = UserSessionNew( NULL, "webdav", sb->fcm->fcm_ID );
 				if( loggedSession != NULL )
 				{
 					loggedSession->us_UserID = usr->u_ID;

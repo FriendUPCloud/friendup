@@ -1429,7 +1429,7 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 				{
 					// we now generate dummy session
 					//UserSession *ses = UserSessionNew( sb, "api", "api" );
-					UserSession *ses = UserSessionNew( NULL, "api" );
+					UserSession *ses = UserSessionNew( NULL, "api", sb->fcm->fcm_ID );
 					if( ses != NULL )
 					{
 						ses->us_UserID = user->u_ID;
@@ -2374,7 +2374,7 @@ void UMNotifyAllUsersInGroup( UserManager *um, FQUAD groupid, int type )
 			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 			{
 				char *end;
-				FQUAD id = 0;
+				FUQUAD id = 0;
 				if( row[ 0 ] != NULL )
 				{
 					id = strtoll( row[ 0 ], &end, 0 );

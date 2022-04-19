@@ -90,14 +90,14 @@ typedef struct UserSession
 	void					*us_WSD;				// pointer to WebsocketData
 	FQueue					us_MsgQueue;			// message queue
 	
-	char					*FCID;					// FriendCore ID (ID of session where user session is handled)
+	char					*us_FCID;					// FriendCore ID (ID of session where user session is handled)
 }UserSession;
 
 //
 //
 //
 
-UserSession *UserSessionNew( char *sessid, char *devid );
+UserSession *UserSessionNew( char *sessid, char *devid, char *fcid );
 
 //
 //

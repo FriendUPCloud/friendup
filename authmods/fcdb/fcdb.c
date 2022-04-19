@@ -440,7 +440,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 			if( usl == NULL )
 			{
 				if(  tmpusr != NULL && userFromDB == TRUE ){ UserDelete( tmpusr );	tmpusr =  NULL; }
-				UserSession *ses = UserSessionNew( sessionId, "remote" );
+				UserSession *ses = UserSessionNew( sessionId, "remote", sb->fcm->fcm_ID );
 				if( ses != NULL )
 				{
 					ses->us_UserID = tmpusr->u_ID;
@@ -582,7 +582,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 				//Generate new session ID for the user
 				char *new_session_id = SessionIDGenerate();
 			
-				uses = UserSessionNew( new_session_id, devname );
+				uses = UserSessionNew( new_session_id, devname, sb->fcm->fcm_ID );
 			
 				FFree( new_session_id );
 				uses->us_UserID = tmpusr->u_ID;

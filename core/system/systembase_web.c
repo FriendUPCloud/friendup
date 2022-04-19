@@ -564,7 +564,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						{
 							//DEBUG( "Making a new session with this sessionid by type authid: %s\n", usessid );
 							
-							loggedSession = UserSessionNew( usessid, "authid" );
+							loggedSession = UserSessionNew( usessid, "authid", l->fcm->fcm_ID );
 							if( loggedSession != NULL )
 							{
 								User *usr = UMUserGetByID( l->sl_UM, uid );
@@ -656,7 +656,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					loggedSession = USMGetSessionByUserID( l->sl_USM, uid );
 					if( loggedSession == NULL && userName[ 0 ] != 0 )	// only if user exist and it has servertoken
 					{
-						loggedSession = UserSessionNew( NULL, "servertoken" );
+						loggedSession = UserSessionNew( NULL, "servertoken", l->fcm->fcm_ID );
 						if( loggedSession != NULL )
 						{
 							User *usr = UMUserGetByName( l->sl_UM, userName );
@@ -789,7 +789,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			int userAdded = 0;
 			
 			// Server token reins supreme! Add the session
-			if( ( loggedSession = UserSessionNew( sessionid, "server" ) ) != NULL )
+			if( ( loggedSession = UserSessionNew( sessionid, "server", l->fcm->fcm_ID ) ) != NULL )
 			{
 				User *tmpusr = UMGetUserByName( l->sl_UM, userName );
 				if( !tmpusr )
@@ -2192,7 +2192,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							User *tmpusr = UMUserGetByNameDB( l->sl_UM, usrname );
 							if( tmpusr != NULL )
 							{
-								loggedSession = UserSessionNew( "remote", deviceid );
+								loggedSession = UserSessionNew( "remote", deviceid, l->fcm->fcm_ID );
 								if( loggedSession != NULL )
 								{
 									loggedSession->us_UserID = tmpusr->u_ID;

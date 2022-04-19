@@ -1077,7 +1077,7 @@ UserSession *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sq
 		locSQLused = TRUE;
 	}
 	
-	ses = UserSessionNew( NULL, "tempsession" );
+	ses = UserSessionNew( NULL, "tempsession", sb->fcm->fcm_ID );
 	if( ses != NULL )
 	{
 		ses->us_UserID = userID;

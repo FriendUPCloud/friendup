@@ -1749,7 +1749,7 @@ int SystemInitExternal( SystemBase *l )
 				char *newSessionId = SessionIDGenerate();
 				DEBUG("[SystemBase] Remote session will be created for Sentinel\n");
 				
-				UserSession *ses = UserSessionNew( newSessionId, "remote" );
+				UserSession *ses = UserSessionNew( newSessionId, "remote", l->fcm->fcm_ID );
 				//UserSession *ses = UserSessionNew( "remote", "remote" );
 				if( ses != NULL )
 				{
