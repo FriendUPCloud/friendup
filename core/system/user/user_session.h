@@ -89,6 +89,8 @@ typedef struct UserSession
 	time_t					us_LastPingTime;		// ping timestamp
 	void					*us_WSD;				// pointer to WebsocketData
 	FQueue					us_MsgQueue;			// message queue
+	
+	char					*FCID;					// FriendCore ID (ID of session where user session is handled)
 }UserSession;
 
 //
