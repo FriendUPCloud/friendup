@@ -691,7 +691,7 @@ DataForm *DataFormFromHttp( char *fcid, Http *http )
 			{
 				if( e.hme_Data != NULL )
 				{
-					if( strcmp( e.hme_Key, "remoteurl" ) == 0 )
+					if( strcmp( e.hme_Key, "sessionid" ) == 0 )
 					{
 						sessionid = UrlDecodeToMem( e.hme_Data );
 					}
