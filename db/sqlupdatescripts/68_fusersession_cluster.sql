@@ -1,2 +1,2 @@
-ALTER TABLE `FUserSession` ADD COLUMN `FCID` varchar(255) DEFAULT 0;
+ALTER TABLE `FUserSession` ADD COLUMN `FCID` varchar(255) DEFAULT '';
 
