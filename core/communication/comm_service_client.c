@@ -273,7 +273,7 @@ BufString *SendMessageToSessionsAndWait( void *lsb, FQUAD userID, DataForm *ldf 
 		if( res != NULL )
 		{
 			char **row;
-			if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+			while( ( row = sqllib->FetchRow( sqllib, res ) ) != NULL )
 			{
 				//
 				// We have to find all servers where user have active sessions
@@ -339,9 +339,11 @@ BufString *SendMessageToSessionsAndWait( void *lsb, FQUAD userID, DataForm *ldf 
 				
 				break;
 			}
+			
+			rootEntry = rootEntry->next;
+			DEBUG( "[SendMessageToSessionsAndWait] loop\n");
 		}
 		
-		rootEntry = rootEntry->next;
 		FFree( remEntry );
 	}
 
