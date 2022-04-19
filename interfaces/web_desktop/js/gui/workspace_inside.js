@@ -2139,8 +2139,10 @@ var WorkspaceInside = {
 	applyThemeConfig: function()
 	{
 		if( !this.themeData )
-			return;
-		
+	    {
+	        return;
+	    }
+	       
 		if( this.themeStyleElement )
 			this.themeStyleElement.innerHTML = '';
 		else
@@ -2162,7 +2164,6 @@ var WorkspaceInside = {
 		{
 			let p = this.themeData[ 'inputParadigmText' ];
 			p = p.substr( 0, 1 ).toUpperCase() + p.substr( 1, p.length - 1 );
-			
 			// Tablet type is special
 			if( p == 'Tablet' )
 			{
@@ -2342,7 +2343,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									ms.onExecuted = function( mse, msd )
 									{
 										slot.lastMessage = mse;
-										console.log( 'What do we have here now?', mse, msd );
 									}
 									ms.execute( 'appmodule', {
 										appName: m,
@@ -2355,7 +2355,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									ms.onExecuted = function( mse, msd )
 									{
 										slot.lastMessage = mse;
-										console.log( 'What do we have here?', mse, msd );
 									}
 									ms.execute( 'preload' );
 								}
@@ -2419,7 +2418,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						Workspace.themeData = dat[ 'themedata_' + Workspace.theme ];
 					}
-					else
+					else if( !Workspace.themeDataSet )
 					{
 						Workspace.themeData = false;
 					}
@@ -2486,6 +2485,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						globalConfig.scrolldesktopicons = dat.scrolldesktopicons;
 					}
 					else globalConfig.scrolldesktopicons = 0;
+					
 					if( dat.hidedesktopicons == 1 || Workspace.tabletMode == true )
 					{
 						globalConfig.hidedesktopicons = dat.scrolldesktopicons;
@@ -3907,6 +3907,40 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Add resources for theme settings --------------------------------
 			rdat = JSON.parse( rdat );
 			// Done resources theme settings -----------------------------------
+			
+			// Support theme data expansion directly from theme settings
+			if( !Workspace.themeData )
+			{
+			    Workspace.themeData = [];
+			}
+			
+			// Support input paradigm in the theme
+			if( rdat.inputParadigm )
+			{
+			    Workspace.themeData[ 'inputParadigm' ] = rdat.inputParadigm;
+			    Workspace.themeDataSet = true;
+			}
+			// Ditto TODO: Figure out this a bit (why these two similar keys)
+			if( rdat.inputParadigmText )
+			{
+			    Workspace.themeData[ 'inputParadigmText' ] = rdat.inputParadigmText;
+			    Workspace.themeDataSet = true;
+			}
+			// Use sidebar engine
+			if( rdat.sidebarEngine )
+			{
+			    if( rdat.sidebarSrc )
+			    {
+			        let j = document.createElement( 'script' );
+			        j.src = rdat.sidebarSrc;
+			        j.onload = function( e )
+			        {
+			            ( new SidebarEngine() );
+			        }
+			        document.body.appendChild( j );
+			    }
+			}
+			
 			
 			Workspace.themeRefreshed = true;
 			Workspace.refreshUserSettings( function() 
