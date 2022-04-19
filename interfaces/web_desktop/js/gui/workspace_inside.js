@@ -3915,19 +3915,37 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			
 			// Use sidebar engine
-			if( rdat.sidebarEngine )
+			if( rdat.jsExtensionEngine && rdat.jsExtensionEngine == 'custom' )
 			{
-			    if( rdat.sidebarSrc )
+			    if( rdat.jsExtensionSrc )
 			    {
-			        Workspace.themeData[ 'sidebarEngine' ] = true;
-			        Workspace.themeDataSet = true;
 			        let j = document.createElement( 'script' );
-			        j.src = rdat.sidebarSrc;
+			        j.src = rdat.jsExtensionSrc;
 			        j.onload = function( e )
 			        {
 			            Workspace.dashboard = new SidebarEngine();
 			        }
-			        document.body.appendChild( j );
+			        // Append sidebar
+			        function loadScript()
+			        {
+			            document.body.appendChild( j );
+			        }
+			        // Add locale optionally
+			        if( rdat.localeSrc )
+			        {
+			            loadScript = function()
+			            {
+			                if( rdat.localeSrc.substr( -1, 1 ) != '/' )
+			                    rdat.localeSrc += '/';
+			                i18nAddPath( rdat.localeSrc + self.locale + '.lang', function()
+			                {
+			                    document.body.appendChild( j );
+			                } );
+			            }
+			        }
+			        loadScript();
+			        Workspace.themeData[ 'sidebarEngine' ] = true;
+			        Workspace.themeDataSet = true;
 			    }
 			}
 			
