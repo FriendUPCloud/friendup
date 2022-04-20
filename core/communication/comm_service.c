@@ -1899,7 +1899,7 @@ void *InternalPINGThread( void *d )
 		}
 	}
 	
-	//DEBUG("bad resp %d\n", badResp );
+DEBUG("bad resp %d\n", badResp );
 	
 	if( badResp == TRUE )
 	{
@@ -1912,7 +1912,7 @@ void *InternalPINGThread( void *d )
 			Socket *newsock = SocketConnectHost( s->s_SB, s->s_secured, con->fc_Address, s->s_port, TRUE );
 			if( newsock != NULL )
 			{
-				//DEBUG("[CommServicePING] Connection reestabilished\n");
+				DEBUG("[CommServicePING] Connection reestabilished\n");
 				
 				if( con->fc_Socket != NULL )
 				{
