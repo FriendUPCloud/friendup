@@ -70,13 +70,11 @@ class FUIMenubox extends FUIElement
 
 		self.id = domEl.getAttribute( 'uniqueid' );
 		self.onload = domEl.getAttribute( 'onload' );
-		console.log( 'grabAttributes', [ self.id, onload ] );
 		self.domElement.id = self.id;
 		
 		let head = null;
 		let content = null;
 		const dHead = domEl.getElementsByTagName( 'menuboxhead' );
-		console.log( 'dHead', dHead );
 		if ( dHead[ 0 ] )
 		{
 			head = document.createElement( 'div' );

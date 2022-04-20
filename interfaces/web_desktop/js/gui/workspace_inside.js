@@ -7475,6 +7475,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	refreshMenu: function( prohibitworkspaceMenu, activeElement = false )
 	{	
 		const self = this;
+		console.log( 'refreshMenu' );
 		if ( self.isFetchingServerConfig )
 			return;
 		
@@ -9091,6 +9092,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
+			console.log( 'listuserapplications', [ e, d ]);
 			if( e != 'ok' ) 
 			{
 				ExecuteApplication( app, args, cbk );

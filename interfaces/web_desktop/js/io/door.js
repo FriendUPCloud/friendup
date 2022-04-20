@@ -29,7 +29,9 @@ Door.prototype.getPath = function()
 	}
 	if( this.path.indexOf( ':' ) > 0 )
 		return this.path;
-	return this.deviceName + ':' + this.path;
+	const path = this.deviceName + ':' + this.path;
+	console.log( 'getPath', [ this.path, this.deviceName, path ]);
+	return path;
 }
 
 // Stop all network activity!
