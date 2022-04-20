@@ -11,6 +11,7 @@ i18n_ColorFileIconText                  : Filikoner, tekstfarge
 i18n_ButtonSchemeText                   : Vindusknapper, layout
 i18n_ColorSchemeText                    : Fargetema
 i18n_IconEffectText                     : Ikon-effekt på skrivebord
+i18n_InputParadigmText                  : Interfaceparadigme
 
 i18n_set_defaults                       : Nullstill
 

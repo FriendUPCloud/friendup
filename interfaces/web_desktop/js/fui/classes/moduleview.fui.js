@@ -198,13 +198,17 @@ if( !FUI.classExists( 'moduleview' ) )
 						// Blank out container
 					    this.moduleContainer.domNode.innerHTML = '';
 					    
+					    let cardsContainer = document.createElement( 'div' );
+					    cardsContainer.className = 'FUICardsContainer';
+					    this.moduleContainer.domNode.appendChild( cardsContainer );
+					    
 					    // Render each card on module content container
 					    for( let c = 0; c < this.cards[ mod ].length; c++ )
 					    {
 					        let card = this.cards[ mod ][ c ];
 					        if( typeof( card.visible ) == 'undefined' || card.visible )
 					        {
-					        	this.renderCard( card, this.moduleContainer.domNode );
+					        	this.renderCard( card, cardsContainer );
 					        }
 					    }
 					}
@@ -217,6 +221,42 @@ if( !FUI.classExists( 'moduleview' ) )
 			}
 		}
 		
+		// Return a card object by module name and card name
+		getCard( moduleName, cardName )
+		{
+			let self = this;
+			
+			for( let a in this.cards )
+			{
+				if( a != moduleName ) continue;
+				
+				// Find card by name on this module
+				for( let b = 0; b < this.cards[ a ].length; b++ )
+				{
+					if( this.cards[ a ][ b ].name == cardName ) 
+					{
+						let o = {};
+						o.card = this.cards[ a ][ b ];
+						// Render children function
+						o.renderChildren = function( data )
+						{
+							if( this.card.cards )
+							{
+								for( let a = 0; a < this.card.cards.length; a++ )
+								{
+									// Render this cards on the parent card's sibling node
+									self.renderCard( this.card.cards[ a ], this.card.childrenDomNode );
+								}
+							}
+							return true;
+						}
+						return o;
+					}
+				}
+			}
+			return false;
+		}
+		
 		// Render a card in position
 		renderCard( card, parentElement )
 		{
@@ -226,12 +266,48 @@ if( !FUI.classExists( 'moduleview' ) )
 		    d.className = 'ModuleCard';
 		    
 		    // If we added a card title
+		    let ct = false;
 		    if( card.title )
 		    {
-		    	let ct = document.createElement( 'div' );
+		    	ct = document.createElement( 'div' );
 		    	ct.className = 'CardName';
 		    	ct.innerHTML = card.title;
 		    	d.appendChild( ct );
+		    }
+		    
+		    // Add card buttons
+		    if( card.buttons && ct )
+		    {
+		    	let btns = document.createElement( 'div' );
+		    	btns.className = 'CardButtons';
+		    	d.appendChild( btns );
+		    	
+		    	for( let a = 0; a < card.buttons.length; a++ )
+		    	{
+		    		let btn = document.createElement( 'div' );
+		    		btn.className = 'CardButton';
+		    		if( card.buttons[ a ].icon )
+		    		{
+		    			btn.classList.add( 'IconSmall', 'fa-' + card.buttons[ a ].icon );
+		    		}
+		    		if( card.buttons[ a ].label )
+		    		{
+		    			btn.innerHTML = card.buttons[ a ].label;
+		    		}
+		    		if( card.buttons[ a ].onclick )
+		    		{
+						btn.onclick = function()
+						{
+							if( window.FUI.callbacks[ card.buttons[ a ].onclick ] )
+							{
+								// Add structure with current element flags
+								window.FUI.callbacks[ card.buttons[ a ].onclick ]( card.buttons[ a ] );
+							}
+						}
+					}
+					btns.appendChild( btn );
+		    	}
+				ct.appendChild( btns );
 		    }
 		    
 		    // Where card content goes
@@ -241,7 +317,18 @@ if( !FUI.classExists( 'moduleview' ) )
 		    
 		    function attachCardAndGo()
 		    {
+		    	card.domNode = parentElement;
 		        parentElement.appendChild( d );
+		        
+		        // If we have child-cards, add container (sibling)
+		        if( card.cards )
+		        {
+		        	card.uniqueId = md5( card.name + ( Math.random() + Math.random() ) );
+		        	let cardsColumn = document.createElement( 'div' );
+		        	cardsColumn.className = 'FUICardContainerSibling';
+		        	card.childrenDomNode = cardsColumn; // This is set on parent card for reference
+		        	parentElement.parentNode.appendChild( cardsColumn );
+		        }
 		        FUI.initialize();
 		    }
 		    

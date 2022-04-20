@@ -11,6 +11,7 @@ i18n_ColorFileIconText                  : File manager text color
 i18n_ButtonSchemeText                   : Window button layout scheme
 i18n_ColorSchemeText                    : GUI color scheme
 i18n_IconEffectText                     : Desktop icon effect
+i18n_InputParadigmText                  : Input paradigm
 
 i18n_set_defaults                       : Revert to defaults
 

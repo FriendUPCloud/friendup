@@ -528,6 +528,10 @@ i18n_illegal_path_desc                  : The path you tried to enter does not e
 
 i18n_color_picker                       : Color picker
 
+#Dashboard ---------------------------------------------------------------------
+i18n_dashboard_favorites                : Favorites
+i18n_dashboard_tasks                    : Open tasks
+
 #Misc --------------------------------------------------------------------------
 
 Shell output : Shell output

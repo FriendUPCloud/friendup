@@ -6,6 +6,7 @@ var WorkspaceInside = {
 	// Tray icons
 	trayIcons: {},
 	workspaceInside: true,
+	tabletMode: false,
 	refreshDesktopIconsRetries: 0,
 	websocketDisconnectTime: 0,
 	currentViewState: 'inactive',
@@ -2138,8 +2139,10 @@ var WorkspaceInside = {
 	applyThemeConfig: function()
 	{
 		if( !this.themeData )
-			return;
-		
+	    {
+	        return;
+	    }
+	       
 		if( this.themeStyleElement )
 			this.themeStyleElement.innerHTML = '';
 		else
@@ -2156,6 +2159,30 @@ var WorkspaceInside = {
 				document.body.classList.add( uf );
 			else document.body.classList.remove( uf );
 		}
+		// Support input paradigms
+		if( typeof( this.themeData[ 'inputParadigmText' ] ) != 'undefined' )
+		{
+			let p = this.themeData[ 'inputParadigmText' ];
+			p = p.substr( 0, 1 ).toUpperCase() + p.substr( 1, p.length - 1 );
+			// Tablet type is special
+			if( p == 'Tablet' )
+			{
+				Workspace.tabletMode = true;
+				document.body.classList.add( 'InputParadigm' + p );
+			}
+			else
+			{
+				Workspace.tabletMode = false;
+				let classes = ( document.body.classList + '' ).split( ' ' );
+				let out = [];
+				for( let a = 0; a < classes.length; a++ )
+				{
+					if( classes[a].indexOf( 'InputParadigm' ) < 0 )
+						out.push( classes[ a ] );
+				}
+				document.body.classList = out.join( ' ' );
+			}
+		}
 		
 		let iconeffect = [ 'shadow', 'box' ];
 		for( let c in iconeffect )
@@ -2166,9 +2193,24 @@ var WorkspaceInside = {
 			else document.body.classList.remove( uf );
 		}
 		
-		if( this.themeData[ 'buttonSchemeText' ] == 'windows' )
-			document.body.classList.add( 'MSW' );
-		else document.body.classList.remove( 'MSW' );
+		if( typeof( this.themeData[ 'buttonSchemeText' ] ) != 'undefined' )
+		{
+			if( this.themeData[ 'buttonSchemeText' ] == 'windows' )
+			{
+				document.body.classList.add( 'MSW' );
+				document.body.classList.remove( 'AMIW' );
+			}
+			else if( this.themeData[ 'buttonSchemeText' ] == 'amiga' )
+			{
+				document.body.classList.add( 'AMIW' );
+				document.body.classList.remove( 'MSW' );
+			}
+			else
+			{ 
+				document.body.classList.remove( 'MSW' );
+				document.body.classList.remove( 'AMIW' );
+			}
+		}
 		
 		let str = '';
 		
@@ -2301,7 +2343,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									ms.onExecuted = function( mse, msd )
 									{
 										slot.lastMessage = mse;
-										console.log( 'What do we have here now?', mse, msd );
 									}
 									ms.execute( 'appmodule', {
 										appName: m,
@@ -2314,7 +2355,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									ms.onExecuted = function( mse, msd )
 									{
 										slot.lastMessage = mse;
-										console.log( 'What do we have here?', mse, msd );
 									}
 									ms.execute( 'preload' );
 								}
@@ -2378,7 +2418,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						Workspace.themeData = dat[ 'themedata_' + Workspace.theme ];
 					}
-					else
+					else if( !Workspace.themeDataSet )
 					{
 						Workspace.themeData = false;
 					}
@@ -2445,19 +2485,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						globalConfig.scrolldesktopicons = dat.scrolldesktopicons;
 					}
 					else globalConfig.scrolldesktopicons = 0;
-					if( dat.hidedesktopicons == 1 )
+					
+					if( dat.hidedesktopicons == 1 || Workspace.tabletMode == true )
 					{
 						globalConfig.hidedesktopicons = dat.scrolldesktopicons;
 						document.body.classList.add( 'DesktopIconsHidden' );
+						if( !Workspace.dashboard && typeof( window.TabletDashboard ) != 'undefined' )
+							Workspace.dashboard = new TabletDashboard();
 					}
 					else
 					{
 						globalConfig.hidedesktopicons = 0;
 						document.body.classList.remove( 'DesktopIconsHidden' );
+						if( Workspace.dashboard && !Workspace.desktop && !Workspace.themeData[ 'sidebarEngine' ] )
+							Workspace.dashboard.destroy();
 					}
 					// Can only have workspaces on mobile
 					// TODO: Implement dynamic workspace count for mobile (one workspace per app)
-					if( dat.workspacecount >= 0 && !window.isMobile )
+					if( dat.workspacecount >= 0 && !window.isMobile && !Workspace.tabletMode )
 					{
 						globalConfig.workspacecount = dat.workspacecount;
 					}
@@ -3849,7 +3894,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Setting loading
 		Workspace.setLoading( true );
 
-		if( !themeName ) themeName = 'friendup12';
+		if( !themeName ) themeName = Workspace.theme ? Workspace.theme : 'friendup12';
 		if( themeName == 'friendup' ) themeName = 'friendup12';
 		
 		themeName = themeName.toLowerCase();
@@ -3862,6 +3907,47 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Add resources for theme settings --------------------------------
 			rdat = JSON.parse( rdat );
 			// Done resources theme settings -----------------------------------
+			
+			// Support theme data expansion directly from theme settings
+			if( !Workspace.themeData )
+			{
+			    Workspace.themeData = [];
+			}
+			
+			// Use sidebar engine
+			if( rdat.jsExtensionEngine && rdat.jsExtensionEngine == 'custom' )
+			{
+			    if( rdat.jsExtensionSrc )
+			    {
+			        let j = document.createElement( 'script' );
+			        j.src = rdat.jsExtensionSrc;
+			        j.onload = function( e )
+			        {
+			            Workspace.dashboard = new SidebarEngine();
+			        }
+			        // Append sidebar
+			        function loadScript()
+			        {
+			            document.body.appendChild( j );
+			        }
+			        // Add locale optionally
+			        if( rdat.localeSrc )
+			        {
+			            loadScript = function()
+			            {
+			                if( rdat.localeSrc.substr( -1, 1 ) != '/' )
+			                    rdat.localeSrc += '/';
+			                i18nAddPath( rdat.localeSrc + self.locale + '.lang', function()
+			                {
+			                    document.body.appendChild( j );
+			                } );
+			            }
+			        }
+			        loadScript();
+			        Workspace.themeData[ 'sidebarEngine' ] = true;
+			        Workspace.themeDataSet = true;
+			    }
+			}
 			
 			Workspace.themeRefreshed = true;
 			Workspace.refreshUserSettings( function() 
@@ -6398,7 +6484,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 													try
 													{
 														let apps = JSON.parse( d );
-														let str = '<option value="">Friend Workspace</option>';
+														let str = '<option value="">' + Workspace.environmentName + '</option>';
 														for( let j = 0; j < apps.length; j++ )
 														{
 															let ex = '';
@@ -8146,6 +8232,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	showContextMenu: function( menu, e, extra )
 	{
+		// Do not do it double
+		if( this.contextMenuShowing ) return;
+		
 		let tr = e.target ? e.target : e.srcElement;
 
 		if( tr == window )
@@ -8331,9 +8420,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				e.clientX = windowMouseX;
 			}
 			
-			if( isTablet || isMobile )
+			if( isTouchDevice() )
 			{
-				if( e.touches )
+				if( e.changedTouches )
+				{
+					e.clientX = e.changedTouches[0].clientX;
+					e.clientY = e.changedTouches[0].clientY;
+				}
+				else if( e.touches )
 				{
 					e.clientX = e.touches[0].clientX;
 					e.clientY = e.touches[0].clientY;
@@ -10413,7 +10507,7 @@ function DoorsKeyDown( e )
 			// Escape means try to close the view
 			case 27:
 				// Inputs don't need to close the view
-				if( tar && ( tar.nodeName == 'INPUT' || tar.nodeName == 'SELECT' || tar.nodeName == 'TEXTAREA' ) )
+				if( tar && ( tar.nodeName == 'INPUT' || tar.nodeName == 'SELECT' || tar.nodeName == 'TEXTAREA' || tar.getAttribute( 'contenteditable' ) ) )
 				{
 					tar.blur();
 					return;
@@ -10592,7 +10686,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	let v = new View( {
-		title: i18n( 'i18n_title_about_friendos' ) + ' ' + Workspace.staticBranch,
+		title: Workspace.osName + ' ' + Workspace.staticBranch,
 		width: 540,
 		height: 560,
 		id: 'about_friendup'

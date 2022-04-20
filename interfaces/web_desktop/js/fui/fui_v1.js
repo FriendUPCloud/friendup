@@ -15,6 +15,9 @@ window.FUI = window.FUI ? window.FUI : {
     guiElements: {},
     fragments: {},
     callbacks: {},
+    events: {
+    	'click': []
+    },
     // Create meta markup for a class instance
 	create( data )
 	{
@@ -144,7 +147,7 @@ window.FUI = window.FUI ? window.FUI : {
 			ifrags = null;
 		}
 		
-		let jailClasses = { 'button': true, 'html': true };
+		let jailClasses = { 'button': true, 'html': true, 'textarea': true, 'string': true, 'select': true };
 		
 		// Convert active class placeholders
 		for( let b = 0; b < types.length; b++ )
@@ -240,8 +243,47 @@ window.FUI = window.FUI ? window.FUI : {
 	addCallback( callbackId, callbackFunc )
 	{
 		this.callbacks[ callbackId ] = callbackFunc;
+	},
+	// Simple system to allow stuff to add click on window
+	addEvent( name, type, func )
+	{
+		if( this.events[ type ] )
+		{
+			this.events[ type ][ name ] = func;
+			return true;
+		}
+		return false;
+	},
+	// Simple system to remove click event by name
+	removeEvent( name, type )
+	{
+		if( this.events[ type ][ name ] )
+		{
+			this.events[ type ][ name ] = null;
+			return true;
+		}
+		return false;
 	}
 };
+
+// Activate click events
+( function()
+{
+    let eventTypes = [ 'click', 'mouseup', 'mousedown', 'mousemove', 'keyup', 'keydown' ];
+    for( let a in eventTypes )
+    {
+        let event = eventTypes[ a ];
+        FUI.events[ event ] = [];
+        window.addEventListener( event, function( e )
+        {
+	        if( FUI.events[ event ] )
+	        {
+		        for( let a in FUI.events[ event ] )
+			        if( FUI.events[ event ][ a ] ) FUI.events[ event ][ a ]( e );
+	        }
+        } );
+    }
+} )();
 
 // Base class
 class FUIElement

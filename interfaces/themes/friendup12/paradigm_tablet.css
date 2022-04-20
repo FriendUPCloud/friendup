@@ -1,0 +1,217 @@
+/*
+
+This file is for the input-paradigm "tablet"
+
+*/
+
+html > body.InputParadigmTablet .WorkspacePivot
+{
+	position: absolute;
+	top: 3px;
+	left: 10px;
+	width: 20px;
+	height: 20px;
+	background: transparent;
+	z-index: 2;
+	cursor: pointer;
+	border-radius: 100%;
+	transition: box-shadow 0.2s;
+	box-shadow: 0 0 0 rgba(255,255,255,0);
+}
+
+html > body.InputParadigmTablet .WorkspacePivot:hover
+{
+	box-shadow: inset 0 0 2px rgba(255,255,255,0.3);
+}
+
+html > body.InputParadigmTablet .View
+{
+	left: 0 !important;
+	top: 0 !important;
+	min-width: 100% !important;
+	max-width: 100% !important;
+	width: 100% !important;
+	min-height: 100% !important;
+	max-height: 100% !important;
+	height: 100% !important; 
+}
+
+html > body.InputParadigmTablet .View .Title .Zoom,
+html > body.InputParadigmTablet .View .Title .Minimize,
+html > body.InputParadigmTablet .View .Title .Close
+{
+	display: none !important;
+}
+
+html > body.InputParadigmTablet .ViewContainer
+{
+	left: 200px !important;
+	top: 0 !important;
+	min-width: calc(100vw - 200px) !important;
+	max-width: calc(100vw - 200px) !important;
+	width: calc(100vw - 200px) !important;
+	min-height: 100% !important;
+	max-height: 100% !important;
+	height: 100% !important;
+}
+html > body.InputParadigmTablet .View,
+html > body.InputParadigmTablet .View .Title,
+html > body.InputParadigmTablet .View .Content
+{
+	border-radius: 0 !important;
+}
+
+html > body.InputParadigmTablet .ViewContainer[minimized=minimized]
+{
+	display: none;
+}
+
+html > body.InputParadigmTablet .TabletDashboard
+{
+	position: absolute;
+	transition: transform 0.25s;
+	top: 26px;
+	left: 0;
+	width: 200px;
+	height: 100%;
+	z-index: 2;
+	transform: translate3d(-200px,0,0);
+	background-color: #18293a;
+}
+
+html > body.InputParadigmTablet .TabletDashboard.Showing
+{
+	transform: translate3d(0,0,0);
+}
+
+html > body.InputParadigmTablet .TabletDashboard > .Label
+{
+	color: white;
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.5);
+	color: white;
+	font-weight: bold;
+	display: block;
+	padding: 10px 10px 10px 14px;
+	margin: 0;
+}
+
+html > body.InputParadigmTablet .TabletDashboard .DivContainer
+{
+	background-color: rgba(0,0,0,0.2);
+	border-radius: 0px;
+	padding: 4px;
+	margin: 0;
+	box-sizing: border-box;
+}
+
+html > body.InputParadigmTablet .TabletDashboard .ViewWindow,
+html > body.InputParadigmTablet .TabletDashboard .Application
+{
+	display: block;
+	padding: 5px 10px;
+	margin: 0px 0px 4px 0px;
+	border-radius: 0px;
+	background-color: rgba(100,100,100,0.3);
+	color: white;
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.5);
+	box-sizing: border-box;
+	transition: background-color,opacity,height,padding 0.15s,0.15s,0.15s,0.15s;
+	opacity: 1;
+	position: relative;
+	border-bottom: 1px solid rgba(0,0,0,0.25);
+	cursor: pointer;
+}
+
+html > body.InputParadigmTablet .TabletDashboard .ViewWindow:hover,
+html > body.InputParadigmTablet .TabletDashboard .Application:hover
+{
+	background-color: rgba(150,150,150,0.5);
+}
+
+html > body.InputParadigmTablet .TabletDashboard .ViewWindow.Closing,
+html > body.InputParadigmTablet .TabletDashboard .Application.Closing
+{
+	opacity: 0;
+	height: 0;
+	overflow: hidden;
+	padding: 0 10px 0 10px;
+}
+
+html > body.InputParadigmTablet .TabletDashboard .ViewWindow:last-child,
+html > body.InputParadigmTablet .TabletDashboard .Application:last-child
+{
+	margin-bottom: 0;
+}
+
+html > body.InputParadigmTablet .TabletDashboard .ViewWindow:after,
+html > body.InputParadigmTablet .TabletDashboard .Application:after
+{
+	display: block;
+	clear: both;
+	content: " ";
+}
+
+html > body.InputParadigmTablet .TabletDashboard .ViewWindow .Label,
+html > body.InputParadigmTablet .TabletDashboard .Application .Label
+{
+	display: block;
+	float: left;
+	max-width: 114px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+html > body.InputParadigmTablet .TabletDashboard .ViewWindow .Icon,
+html > body.InputParadigmTablet .TabletDashboard .Application .Icon
+{
+	display: block;
+	float: left;
+	margin: 0 10px 0 0;
+	width: 19px;
+	height: 19px;
+	border-radius: 3px;
+	background-size: contain;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+
+html > body.InputParadigmTablet .TabletDashboard .ViewWindow.Minimized,
+html > body.InputParadigmTablet .TabletDashboard .ViewWindow.Inactive
+{
+	opacity: 0.5;
+}
+
+html > body.InputParadigmTablet .TabletDashboard .ViewWindow .Close
+{
+	display: block;
+	font-family: monospace;
+	font-weight: bold;
+	background-image: url(/iconthemes/friendup15/close.svg);
+	background-position: center center;
+	background-repeat: no-repeat;
+	position: absolute;
+	right: 8px;
+	top: 5px;
+	width: 20px;
+	height: 20px;
+	filter: brightness(0.5);
+	transition: filter 0.15s;
+}
+
+html > body.InputParadigmTablet .TabletDashboard .ViewWindow .Close:hover
+{
+	filter: brightness(1.5);
+}
+
+/* TODO: May not need this */
+html > body.InputParadigmTablet .TabletDashboard.Showing:after
+{
+	display: block;
+    clear: both;
+    content: " ";
+    height: 27px;
+}
+
+
+

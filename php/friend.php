@@ -22,7 +22,7 @@ flush();
 
 set_time_limit( 10 ); // Replace this one later in the script if you need to!
 
-define( 'FRIEND_VERSION', 'v1.2.8' );
+define( 'FRIEND_VERSION', 'v1.2.9' );
 
 // Separator aware json encode/decode
 function friend_json_encode( $object )
