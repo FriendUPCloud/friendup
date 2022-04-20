@@ -761,7 +761,7 @@ DataForm *DataFormFromHttpToSync( char *fcid, Http *http )
 		items[ 3 ].mi_Data = MSG_INTEGER_VALUE;
 		
 		items[ 4 ].mi_Tag = ID_QUER;
-		items[ 4 ].mi_Size = FC_QUERY_SERVICES;
+		items[ 4 ].mi_Size = FC_QUERY_FRIENDCORE_SYNC;
 		items[ 4 ].mi_Data = MSG_INTEGER_VALUE;
 		
 		items[ 5 ].mi_Tag = ID_SESS;
