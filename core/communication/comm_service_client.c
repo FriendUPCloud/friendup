@@ -308,9 +308,9 @@ BufString *SendMessageToSessionsAndWait( void *lsb, FQUAD userID, DataForm *ldf 
 		FConnection *actCon = sb->fcm->fcm_CommService->s_Connections;
 		while( actCon != NULL )
 		{
-			DEBUG( "[SendMessageToSessionsAndWait] Check connection: %s\n", actCon->fc_FCID );
+			DEBUG( "[SendMessageToSessionsAndWait] Check connection: %s\n", actCon->fc_DestinationFCID );
 			
-			if( actCon->fc_Name != NULL && strncmp( rootEntry->ID, actCon->fc_FCID, FRIEND_CORE_MANAGER_ID_SIZE ) == 0 )
+			if( actCon->fc_Name != NULL && strncmp( rootEntry->ID, actCon->fc_DestinationFCID, FRIEND_CORE_MANAGER_ID_SIZE ) == 0 )
 			{
 				DataForm *df = NULL;
 				
