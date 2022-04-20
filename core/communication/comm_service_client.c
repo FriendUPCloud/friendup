@@ -267,7 +267,7 @@ BufString *SendMessageToSessionsAndWait( void *lsb, FQUAD userID, DataForm *ldf 
 	SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
 	if( sqllib != NULL )
 	{
-		snprintf( tmpQuery, sizeof(tmpQuery), "select FCID,SessionID from FUserSession where FCID <> '%s' AND UserID=%ld", sb->fcm->fcm_ID, userID );
+		snprintf( tmpQuery, sizeof(tmpQuery), "select FCID,SessionID from FUserSession where FCID not in('%s','') AND UserID=%ld", sb->fcm->fcm_ID, userID );
 		
 		void *res = sqllib->Query( sqllib, tmpQuery );
 		if( res != NULL )
