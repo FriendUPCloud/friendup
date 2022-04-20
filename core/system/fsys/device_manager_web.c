@@ -908,7 +908,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 				userID = loggedSession->us_UserID;
 			}
 			
-			DataForm *df = DataFormFromHttp( l->fcm->fcm_ID, request );
+			DataForm *df = DataFormFromHttpToSync( l->fcm->fcm_ID, request );
 			if( df != NULL )
 			{
 				BufString *res = SendMessageToSessionsAndWait( l, userID, df );

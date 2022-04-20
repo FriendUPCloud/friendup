@@ -312,10 +312,9 @@ BufString *SendMessageToSessionsAndWait( void *lsb, FQUAD userID, DataForm *ldf 
 			
 			if( actCon->fc_DestinationFCID != NULL && strncmp( rootEntry->ID, actCon->fc_DestinationFCID, FRIEND_CORE_MANAGER_ID_SIZE ) == 0 )
 			{
+				/*
 				DataForm *df = NULL;
 				
-				DEBUG("[SendMessageToSessionsAndWait] sending message to session %s\n", rootEntry->SessionID );
-		
 				MsgItem tags[] = {
 					{ ID_FCRE, (FULONG)0, (FULONG)MSG_GROUP_START },
 					{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE, (FULONG)sb->fcm->fcm_ID },
@@ -330,14 +329,17 @@ BufString *SendMessageToSessionsAndWait( void *lsb, FQUAD userID, DataForm *ldf 
 				df = DataFormNew( tags );
 		
 				DataFormAddForm( &df, ldf );
+				*/
+				
+				DEBUG("[SendMessageToSessionsAndWait] sending message to session %s\n", rootEntry->SessionID );
 		
-				BufString *retMsg = SendMessageAndWait( actCon, df );
+				BufString *retMsg = SendMessageAndWait( actCon, ldf );
 				if( retMsg != NULL )
 				{
 					BufStringDelete( retMsg );
 				}
 				
-				DataFormDelete( ldf );
+				//DataFormDelete( ldf );
 				
 				break;
 			}

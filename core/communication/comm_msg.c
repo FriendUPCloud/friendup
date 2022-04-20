@@ -669,7 +669,7 @@ DataForm *DataFormFromHttpRemoteCommand( Http *http )
  * @return DataForm which represents http request
  */
 
-DataForm *DataFormFromHttp( char *fcid, Http *http )
+DataForm *DataFormFromHttpToSync( char *fcid, Http *http )
 {
 	DataForm *df = NULL;
 	unsigned int i;
