@@ -318,11 +318,11 @@ BufString *SendMessageToSessionsAndWait( void *lsb, FQUAD userID, DataForm *ldf 
 		
 				MsgItem tags[] = {
 					{ ID_FCRE, (FULONG)0, (FULONG)MSG_GROUP_START },
-					{ ID_FCID, (FULONG)sb->fcm->fcm_ID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE },
+					{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE, (FULONG)sb->fcm->fcm_ID },
 					{ ID_FRID, (FULONG)0, MSG_INTEGER_VALUE },
 					{ ID_CMMD, (FULONG)0, MSG_INTEGER_VALUE },
 					{ ID_QUER, (FULONG)FC_QUERY_FRIENDCORE_SYNC , MSG_INTEGER_VALUE },
-					{ ID_SESS, (FULONG)rootEntry->SessionID, rootEntry->sessionIDLen },
+					{ ID_SESS, (FULONG)rootEntry->sessionIDLen, (FULONG)rootEntry->SessionID },
 					{ MSG_GROUP_END, 0,  0 },
 					{ TAG_DONE, TAG_DONE, TAG_DONE }
 				};
