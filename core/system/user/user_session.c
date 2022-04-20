@@ -49,8 +49,6 @@ UserSession *UserSessionNew( char *sessid, char *devid, char *fcid )
 		}
 		s->us_DeviceIdentity = StringDuplicate( devid );
 		
-		DEBUG("\n\nUSERSESSIONNEW->FCID->%s\n", fcid );
-		
 		s->us_FCID = StringDuplicate( fcid );
 		
 		UserSessionInit( s );
