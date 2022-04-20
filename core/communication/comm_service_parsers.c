@@ -247,7 +247,7 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 			
 			if( param == FC_QUERY_SERVICES )
 			{
-				DEBUG("[ParseMessage] Found services information query 1\n");
+				DEBUG( "[ParseMessage] Query services call: %lu\n", reqid );
 				Service *lsrv = fcm->fcm_ServiceManager->sm_Services;
 			
 				BufString *bs = BufStringNew();
@@ -296,11 +296,13 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 			}
 			else if( param == FC_QUERY_GEOLOC )
 			{
-				
+				DEBUG( "[ParseMessage] Geoloc call: %lu\n", reqid );
 			}
 			else if( param == FC_QUERY_FRIENDCORE_INFO )
 			{
 				BufString *bs = FriendCoreInfoGet( lsb->fcm->fcm_FCI );
+				
+				DEBUG( "[ParseMessage] FriendCore get info call: %lu\n", reqid );
 				
 				MsgItem tags[] = {
 					{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
@@ -319,6 +321,7 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 			}
 			else if( param == FC_QUERY_FRIENDCORE_SYNC )
 			{
+				DEBUG( "[ParseMessage] Synchronize call: %lu\n", reqid );
 				df++;	// we have to jump to next section to read sessionid
 			}
 		break;
