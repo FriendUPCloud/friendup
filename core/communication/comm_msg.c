@@ -801,6 +801,10 @@ DataForm *DataFormFromHttpToSync( char *fcid, Http *http )
 		items[ pos ].mi_Tag = MSG_GROUP_END;
 		items[ pos ].mi_Size = 0;
 		items[ pos++ ].mi_Data = 0;
+		
+		items[ pos ].mi_Tag = MSG_GROUP_END;
+		items[ pos ].mi_Size = 0;
+		items[ pos++ ].mi_Data = 0;
 
 		items[ pos ].mi_Tag = MSG_END;
 		items[ pos ].mi_Size = MSG_END;
