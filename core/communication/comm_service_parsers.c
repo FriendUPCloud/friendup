@@ -210,34 +210,27 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 			char *locdevname = HashmapGetData( paramhm, "devname" );
 			char *locdeviceid = HashmapGetData( paramhm, "deviceid" );
 			
-			USER_MANAGER_USE( lsb->sl_UM );
-			User *usr = lsb->sl_UM->um_Users;
-			while( usr != NULL )
+			User *usr = UMGetUserByName( lsb->sl_UM, locuname );
+			if( usr != NULL )
 			{
-				if( strcmp( locuname, usr->u_Name) == 0 )
+				USER_LOCK( usr );
+				UserSessListEntry *ul = usr->u_SessionsList;
+				
+				char tmpmsg[ 2048 ];
+				
+				while( ul != NULL )
 				{
-					USER_LOCK( usr );
-					UserSessListEntry *ul = usr->u_SessionsList;
+					UserSession *session = (UserSession *)ul->us;
 				
-					char tmpmsg[ 2048 ];
-				
-					while( ul != NULL )
-					{
-						UserSession *session = (UserSession *)ul->us;
+					int len = snprintf( tmpmsg, sizeof(tmpmsg), "{\"type\":\"msg\",\"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%s\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\" }}}", locdeviceid, locdevname, locpath, locuname  );
 					
-						int len = snprintf( tmpmsg, sizeof(tmpmsg), "{\"type\":\"msg\",\"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%s\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\" }}}", locdeviceid, locdevname, locpath, locuname  );
+					lsb->UserSessionWebsocketWrite( session, (unsigned char *)tmpmsg, len, LWS_WRITE_TEXT );
 					
-						lsb->UserSessionWebsocketWrite( session, (unsigned char *)tmpmsg, len, LWS_WRITE_TEXT );
-					
-						ul = (UserSessListEntry *)ul->node.mln_Succ;
-					}
-					USER_UNLOCK( usr );
+					ul = (UserSessListEntry *)ul->node.mln_Succ;
 				}
-
-				usr = (User *)usr->node.mln_Succ;
+				USER_UNLOCK( usr );
 			}
 			
-			USER_MANAGER_RELEASE( lsb->sl_UM );
 			break;
 			
 		case ID_QUER:

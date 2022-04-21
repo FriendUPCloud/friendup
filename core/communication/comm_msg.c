@@ -768,7 +768,11 @@ DataForm *DataFormFromHttpToSync( char *fcid, Http *http )
 		items[ 5 ].mi_Size = strlen(sessionid)+1;
 		items[ 5 ].mi_Data = (FULONG)sessionid;
 		
-		int pos = 6;
+		items[ 6 ].mi_Tag = ID_PARM;
+		items[ 6 ].mi_Size = 0;
+		items[ 6 ].mi_Data = MSG_GROUP_START;
+		
+		int pos = 7;
 		DFList *pentry = re;
 		while( pentry != NULL )
 		{
