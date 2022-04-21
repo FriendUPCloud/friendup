@@ -691,11 +691,11 @@ DataForm *DataFormFromHttpToSync( char *fcid, Http *http )
 			{
 				if( e.hme_Data != NULL )
 				{
-					if( strcmp( e.hme_Key, "sessionid" ) == 0 )
-					{
-						sessionid = UrlDecodeToMem( e.hme_Data );
-					}
-					else
+					//if( strcmp( e.hme_Key, "sessionid" ) == 0 )
+					//{
+					//	sessionid = UrlDecodeToMem( e.hme_Data );
+					//}
+					//else
 					{
 						char *data = UrlDecodeToMem( (char *)e.hme_Data );
 						if( data != NULL )
@@ -764,15 +764,15 @@ DataForm *DataFormFromHttpToSync( char *fcid, Http *http )
 		items[ 4 ].mi_Size = FC_QUERY_FRIENDCORE_SYNC;
 		items[ 4 ].mi_Data = MSG_INTEGER_VALUE;
 		
-		items[ 5 ].mi_Tag = ID_SESS;
-		items[ 5 ].mi_Size = strlen(sessionid)+1;
-		items[ 5 ].mi_Data = (FULONG)sessionid;
+		//items[ 5 ].mi_Tag = ID_SESS;
+		//items[ 5 ].mi_Size = strlen(sessionid)+1;
+		//items[ 5 ].mi_Data = (FULONG)sessionid;
 		
-		items[ 6 ].mi_Tag = ID_PARM;
-		items[ 6 ].mi_Size = 0;
-		items[ 6 ].mi_Data = MSG_GROUP_START;
+		items[ 5 ].mi_Tag = ID_PARM;
+		items[ 5 ].mi_Size = 0;
+		items[ 5 ].mi_Data = MSG_GROUP_START;
 		
-		int pos = 7;
+		int pos = 6;
 		DFList *pentry = re;
 		while( pentry != NULL )
 		{
