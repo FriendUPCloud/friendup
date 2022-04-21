@@ -727,7 +727,7 @@ DataForm *DataFormFromHttpToSync( char *fcid, Http *http )
 
 	DEBUG("[DataFormFromHttp] sessionid %s\n", sessionid );
 	
-	if( sessionid != NULL && ( items = FCalloc( numberTags, sizeof(MsgItem) ) ) != NULL )
+	if( /*sessionid != NULL &&*/ ( items = FCalloc( numberTags, sizeof(MsgItem) ) ) != NULL )
 	{
 		DEBUG("[DataFormFromHttp] memory allocated in size %d\n", numberTags );
 		
