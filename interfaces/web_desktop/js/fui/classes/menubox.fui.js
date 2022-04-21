@@ -20,6 +20,7 @@ class FUIMenubox extends FUIElement
 	{
 		const self = this;
 		console.log( 'setMenu', items );
+		self.items.innerHTML = '';
 		items.forEach( item => {
 			console.log( 'setMenu item', item );
 			const itemId = item.id;
@@ -69,13 +70,11 @@ class FUIMenubox extends FUIElement
 
 		self.id = domEl.getAttribute( 'uniqueid' );
 		self.onload = domEl.getAttribute( 'onload' );
-		console.log( 'grabAttributes', [ self.id, onload ] );
 		self.domElement.id = self.id;
 		
 		let head = null;
 		let content = null;
 		const dHead = domEl.getElementsByTagName( 'menuboxhead' );
-		console.log( 'dHead', dHead );
 		if ( dHead[ 0 ] )
 		{
 			head = document.createElement( 'div' );
@@ -83,7 +82,7 @@ class FUIMenubox extends FUIElement
 			const dTitle = dHead[ 0 ].getElementsByTagName( 'menuboxtitle' );
 			if ( dTitle[ 0 ])
 			{
-				const title = document.createElement( 'div' );
+				const title = document.createElement( 'h2' );
 				title.classList.add( 'FUIMenuboxTitle' );
 				title.textContent = dTitle[ 0 ].innerHTML;
 				head.appendChild( title );
