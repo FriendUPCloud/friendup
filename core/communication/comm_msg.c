@@ -379,9 +379,9 @@ FBYTE *DataFormFind( DataForm *df, ID id )
 
 typedef struct DFList
 {
-	char *t;
-	int s;
-	struct DFList *n;
+	char *df_Data;
+	int df_Size;
+	struct DFList *next;
 }DFList;
 
 DFList *CreateListEntry( char *key, char *value )
@@ -396,8 +396,8 @@ DFList *CreateListEntry( char *key, char *value )
 		ne = FCalloc( 1, sizeof(DFList) );
 		if( ne != NULL )
 		{
-			ne->t = tmp;
-			ne->s = size+1;
+			ne->df_Data = tmp;
+			ne->df_Size = size+1;
 		}
 	}
 	
@@ -474,7 +474,7 @@ DataForm *DataFormFromHttpRemoteCommand( Http *http )
 										}
 										else
 										{
-											le->n = ne;
+											le->next = ne;
 											le = ne;
 										}
 									} // ne != NULL
@@ -518,7 +518,7 @@ DataForm *DataFormFromHttpRemoteCommand( Http *http )
 								}
 								else
 								{
-									le->n = ne;
+									le->next = ne;
 									le = ne;
 								}
 							} // ne != NULL
@@ -572,17 +572,17 @@ DataForm *DataFormFromHttpRemoteCommand( Http *http )
 			DFList *dentr = pentry;
 			
 			items[ pos ].mi_Tag = ID_PRMT;
-			items[ pos ].mi_Size = pentry->s;
-			items[ pos ].mi_Data = (FULONG)pentry->t;
+			items[ pos ].mi_Size = pentry->df_Size;
+			items[ pos ].mi_Data = (FULONG)pentry->df_Data;
 			
 			pos++;
-			pentry = pentry->n;
+			pentry = pentry->next;
 			
 			if( dentr != NULL )
 			{
-				if( dentr->t != NULL )
+				if( dentr->df_Data != NULL )
 				{
-					FFree( dentr->t );
+					FFree( dentr->df_Data );
 				}
 				FFree( dentr );
 			}
@@ -700,11 +700,12 @@ DataForm *DataFormFromHttpToSync( char *fcid, Http *http )
 						char *data = UrlDecodeToMem( (char *)e.hme_Data );
 						if( data != NULL )
 						{
-							DEBUG("[DataFormFromHttpToSync] PARAM to structure: %s\n", data );
 							DFList *ne = CreateListEntry( e.hme_Key, data );
 						
 							if( ne != NULL )
 							{
+								DEBUG("[DataFormFromHttpToSync] PARAM to structure: %s\n", ne->df_Data );
+								
 								if( re == NULL )
 								{
 									re = ne;
@@ -712,7 +713,7 @@ DataForm *DataFormFromHttpToSync( char *fcid, Http *http )
 								}
 								else
 								{
-									le->n = ne;
+									le->next = ne;
 									le = ne;
 								}
 							} // ne != NULL
@@ -780,17 +781,17 @@ DataForm *DataFormFromHttpToSync( char *fcid, Http *http )
 			DFList *dentr = pentry;
 			
 			items[ pos ].mi_Tag = ID_PRMT;
-			items[ pos ].mi_Size = pentry->s;
-			items[ pos ].mi_Data = (FULONG)pentry->t;
+			items[ pos ].mi_Size = pentry->df_Size;
+			items[ pos ].mi_Data = (FULONG)pentry->df_Data;
 			
 			pos++;
-			pentry = pentry->n;
+			pentry = pentry->next;
 			
 			if( dentr != NULL )
 			{
-				if( dentr->t != NULL )
+				if( dentr->df_Data != NULL )
 				{
-					FFree( dentr->t );
+					FFree( dentr->df_Data );
 				}
 				FFree( dentr );
 			}
