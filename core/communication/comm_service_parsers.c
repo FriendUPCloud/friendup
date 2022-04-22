@@ -163,7 +163,7 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 					{
 						memcpy( param, val, parsize );
 						param[ parsize ] = 0;
-						DEBUG("[ParseAndExecuteRequest] Mem allocated for data %p\n",  param );
+						DEBUG("[ParseAndExecuteRequest] Mem allocated for data %p - %s\n",  param, param );
 					}
 
 					if( HashmapPut( paramhm, StringDuplicate( attr ), param ) == MAP_OK )

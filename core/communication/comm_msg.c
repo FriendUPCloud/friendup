@@ -679,7 +679,7 @@ DataForm *DataFormFromHttpToSync( char *fcid, Http *http )
 	DFList *re = NULL;	// root entry
 	DFList *le = NULL;	// last entry
 	
-	DEBUG("[DataFormFromHttp] start\n");
+	DEBUG("[DataFormFromHttpToSync] start\n");
 	
 	if( http->http_ParsedPostContent != NULL )
 	{
@@ -700,6 +700,7 @@ DataForm *DataFormFromHttpToSync( char *fcid, Http *http )
 						char *data = UrlDecodeToMem( (char *)e.hme_Data );
 						if( data != NULL )
 						{
+							DEBUG("[DataFormFromHttpToSync] PARAM to structure: %s\n", data );
 							DFList *ne = CreateListEntry( e.hme_Key, data );
 						
 							if( ne != NULL )
