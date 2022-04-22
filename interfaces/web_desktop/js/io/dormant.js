@@ -71,9 +71,12 @@ DormantMaster =
 {
 	appDoors: [],
 	events: {}, // Events from all applications, based on type
+	listeners : {}, // all listeners, by app
 	// Add an application to the dormant master
 	addAppDoor: function( dormantDoorObject )
 	{
+		const self = this;
+		console.log( 'addAppDoor', dormantDoorObject );
 		// Variables for an unique appdoor name
 		var num = 0;
 		var nam = dormantDoorObject.title;
@@ -104,6 +107,49 @@ DormantMaster =
 		{
 			if( Workspace.refreshDormantDisks )
 				Workspace.refreshDormantDisks();
+		}
+		
+		// check if anyone is already listening for this app
+		if ( this.listeners[ namnum ])
+		{
+			Object.keys( this.listeners[ namnum ]).forEach( listener => {
+				console.log( 'listener for', [ namnum, listener ]);
+				self.listeners[ namnum ][ listener ].callback( 'open', dormantDoorObject );
+			});
+		}
+	},
+	// Listen for an app to be available in dormant
+	listen : function( listenForAppName, listenerName, callback )
+	{
+		const self = this;
+		console.log( 'listen', [ listenForAppName, listenerName, callback ]);
+		if ( self.listeners[ listenForAppName ])
+		{
+			self.listeners[ listenForAppName ][ listenerName ] = {
+				listener : listenerName,
+				callback : callback,
+			};
+		}
+		else
+		{
+			self.listeners[ listenForAppName ] = {};
+			self.listen( listenForAppName, listenerName, callback );
+			return;
+		}
+		
+		// send event if app is already available
+		console.log( 'listen, ava', self.appDoors );
+		if ( !self.appDoors.length )
+			return;
+		
+		for ( let a = self.appDoors.length; a; )
+		{
+			a--;
+			if ( self.appDoors[ a ] && self.appDoors[ a ].title == listenForAppName )
+			{
+				callback( 'open', self.appDoors[ a ]);
+				break;
+			}
 		}
 	},
 	// Get all doors
