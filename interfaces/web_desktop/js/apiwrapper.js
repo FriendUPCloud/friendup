@@ -991,11 +991,12 @@ function apiWrapper( event, force )
 			// 2: pull from other exposed apps
 			// - is it possible for applicationId to leak to other applications?
 			case 'dormantmaster':
+				console.log( 'apiwrapper doormantmaster', msg );
 				switch( msg.method )
 				{
 					case 'execute':
 
-						//find our door
+						//find the door
 						var door = false;
 						for (var a = 0; a < DormantMaster.appDoors.length; a++)
 						{
@@ -1191,12 +1192,16 @@ function apiWrapper( event, force )
 								);
 							},
 							// Execute a dormant command!
-							execute: function( fnObj, args )
+							execute: function( fnObj, args, callback )
 							{
+								console.log( 'Door.execute', [ fnObj, args, callback ]);
 								var path = fnObj.Path;
 								var command = fnObj.Title || fnObj.Filename;
-								var id = addWrapperCallback(function (data)
+								var id = addWrapperCallback( data =>
 								{
+									console.trace( 'door.execute callback', [ data, callback ]);
+									if ( data && callback )
+										callback( null, data );
 									//
 								});
 								// Callback
