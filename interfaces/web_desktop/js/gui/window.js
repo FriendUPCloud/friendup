@@ -520,7 +520,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 	
 	// Recalculate toggle group
 	// It will pop out of view if it's overlapped by other buttons
-	if( div.content.directoryview )
+	if( div.content.directoryview && !document.body.classList.contains( 'ThemeEngine' ) )
 	{
 		let t = div.getElementsByClassName( 'ToggleGroup' );
 		let r = div.getElementsByClassName( 'Reload' );

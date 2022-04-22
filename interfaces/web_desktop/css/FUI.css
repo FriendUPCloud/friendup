@@ -31,6 +31,8 @@
     --fui-module-color: white;
     --fui-module-color-active: #1a344c;
     
+    --fui-border-normal: 1px solid #dddddd;
+    
     --fui-checkbox-checked: #22b060;
     --fui-checkbox: #b0b0b0;
     --fui-checkbox-button: #ffffff;
