@@ -59,6 +59,9 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 {
 	let self = this;
 	
+	// Make ready for alternative to bookmarks
+	this.favorites = [];
+	
 	this.clickType = null;
 	this.prevPath = null;
 	
@@ -487,6 +490,9 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 
 	// A click element for incoming path
 	let clickElement = null;
+	
+	// Check for theme engine (goes into favorites mode)
+	let favoritesMode = document.body.classList.contains( 'ThemeEngine' );
 
 	// Just get a list of disks
 	if( path == 'Mountlist:' )
@@ -515,6 +521,11 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			if( !msg || !msg.list ) return;
 			
 			if( callback ) callback();
+			
+			function updateFavorites()
+			{
+				console.log( 'checking favorites: ', self.favorites );
+			}
 			
 			function done()
 			{
@@ -603,11 +614,15 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					// Add the bookmark header if it doesn't exist
 					if( self.flags.bookmarks && msg.list[a].Type && msg.list[a].Type == 'header' && !self.bookmarksHeader )
 					{
-						let d = document.createElement( 'div' );
-						self.bookmarksHeader = d;
-						d.innerHTML = '<p class="Layout BorderBottom PaddingTop BorderTop PaddingBottom"><strong>' + i18n( 'i18n_bookmarks' ) + ':</strong></p>';
-						rootElement.appendChild( d );
-						continue;
+						// Only add bookmarks header when not in favorites mode
+						if( !favoritesMode )
+						{
+							let d = document.createElement( 'div' );
+							self.bookmarksHeader = d;
+							d.innerHTML = '<p class="Layout BorderBottom PaddingTop BorderTop PaddingBottom"><strong>' + i18n( 'i18n_bookmarks' ) + ':</strong></p>';
+							rootElement.appendChild( d );
+							continue;
+						}
 					}
 					
 					// Check if this item already exists
@@ -673,36 +688,43 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						
 						if( msg.list[a].Type && msg.list[a].Type == 'bookmark' )
 						{
-							// Set nice folder icon
-							nm.classList.remove( 'IconSmall' );
-							nm.classList.remove( 'IconDisk' );
-							let img = '/iconthemes/friendup15/DriveLabels/Bookmark.svg';
-							let i = document.createElement( 'div' );
-							i.className = 'FileBrowserItemImage';
-							i.style.backgroundImage = 'url("' + img + '")';
-							nm.appendChild( i );
-							
-							( function( ls ){
-								let ex = document.createElement( 'span' );
-								ex.className = 'FloatRight IconButton IconSmall fa-remove';
-								ex.onclick = function( e )
-								{
-									let m = new Module( 'system' );
-									m.onExecuted = function( e, d )
+							if( favoritesMode )
+							{
+								self.favorites.push( msg.list[a] );
+							}
+							else
+							{
+								// Set nice folder icon
+								nm.classList.remove( 'IconSmall' );
+								nm.classList.remove( 'IconDisk' );
+								let img = '/iconthemes/friendup15/DriveLabels/Bookmark.svg';
+								let i = document.createElement( 'div' );
+								i.className = 'FileBrowserItemImage';
+								i.style.backgroundImage = 'url("' + img + '")';
+								nm.appendChild( i );
+								
+								( function( ls ){
+									let ex = document.createElement( 'span' );
+									ex.className = 'FloatRight IconButton IconSmall fa-remove';
+									ex.onclick = function( e )
 									{
-										if( e == 'ok' )
+										let m = new Module( 'system' );
+										m.onExecuted = function( e, d )
 										{
-											self.clear();
-											self.refresh( null, null, null, null, { mode: 'poll' } );
+											if( e == 'ok' )
+											{
+												self.clear();
+												self.refresh( null, null, null, null, { mode: 'poll' } );
+											}
 										}
+										m.execute( 'removebookmark', { name: ls.Path } );
+										return cancelBubble( e );
 									}
-									m.execute( 'removebookmark', { name: ls.Path } );
-									return cancelBubble( e );
-								}
-								nm.appendChild( ex );
-							} )( msg.list[a] );
-							
-							ctype = 'bookmark';
+									nm.appendChild( ex );
+								} )( msg.list[a] );
+								
+								ctype = 'bookmark';
+							}
 						}
 						
 						let s = document.createElement( 'div' );
@@ -763,6 +785,11 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 							clickElement.onclick( { mode: 'open' } );
 						}, 5 );
 					}
+				}
+				
+				if( favoritesMode )
+				{
+					updateFavorites();
 				}
 			}
 			
