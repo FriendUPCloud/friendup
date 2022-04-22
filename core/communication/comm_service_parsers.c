@@ -134,7 +134,7 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 		
 		while( size > 1 )
 		{
-			data += COMM_MSG_HEADER_SIZE;
+			//data += COMM_MSG_HEADER_SIZE;
 			if( df->df_ID == ID_PRMT )
 			{
 				char *temp = (char *)data;
