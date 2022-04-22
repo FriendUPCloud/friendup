@@ -524,7 +524,50 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			
 			function updateFavorites()
 			{
-				console.log( 'checking favorites: ', self.favorites );
+				// No favorites container? Remove
+				if( !self.favoritesDom && self.favorites.length )
+				{
+					self.favoritesDom = document.createElement( 'div' );
+					self.favoritesDom.className = 'Favorites';
+					
+					let m = document.createElement( 'div' );
+					m.innerHTML = '<p><strong>Favorites:</strong></p>';
+					self.favoritesDom.appendChild( m );
+					
+					self.favoritesContainer = document.createElement( 'div' );
+					self.favoritesContainer.className = 'FileBrowserFavorites';
+					self.favoritesDom.appendChild( self.favoritesContainer );
+					
+					rootElement.insertBefore( self.favoritesDom, rootElement.firstChild );
+				}
+				// No favorites? Clean up
+				if( !self.favorites.length )
+				{
+					rootElement.removeChild( self.favoritesDom );
+					self.favoritesDom = false;
+					self.favoritesContainer = false;
+					return;
+				}
+				
+				let ul = document.createElement( 'ul' );
+				
+				for( let a = 0; a < self.favorites.length; a++ )
+				{
+					let item = self.favorites[ a ];
+					let li = document.createElement( 'li' );
+					
+					let icon = document.createElement( 'span' );
+					icon.className = 'FileBrowserItemImage';
+					icon.style.backgroundImage = 'url(/iconthemes/friendup15/DriveLabels/Bookmark.svg)';
+					let label = document.createElement( 'span' );
+					label.className = 'FileBrowserItemLabel';
+					label.innerHTML = item.Title;
+					
+					li.appendChild( icon ); li.appendChild( label );
+					ul.appendChild( li );
+				}
+				
+				self.favoritesContainer.appendChild( ul );
 			}
 			
 			function done()
@@ -795,6 +838,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			
 			if( self.flags.bookmarks )
 			{
+				self.favorites = [];
 				let m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
