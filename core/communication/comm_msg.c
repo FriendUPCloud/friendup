@@ -678,33 +678,26 @@ DataForm *DataFormFromHttpToSync( char *fcid, Http *http )
 			{
 				if( e.hme_Data != NULL )
 				{
-					//if( strcmp( e.hme_Key, "sessionid" ) == 0 )
-					//{
-					//	sessionid = UrlDecodeToMem( e.hme_Data );
-					//}
-					//else
+					char *data = UrlDecodeToMem( (char *)e.hme_Data );
+					if( data != NULL )
 					{
-						char *data = UrlDecodeToMem( (char *)e.hme_Data );
-						if( data != NULL )
+						DFList *ne = CreateListEntry( e.hme_Key, data );
+					
+						if( ne != NULL )
 						{
-							DFList *ne = CreateListEntry( e.hme_Key, data );
-						
-							if( ne != NULL )
+							DEBUG("[DataFormFromHttpToSync] PARAM to structure: %s\n", ne->df_Data );
+							
+							if( re == NULL )
 							{
-								DEBUG("[DataFormFromHttpToSync] PARAM to structure: %s\n", ne->df_Data );
-								
-								if( re == NULL )
-								{
-									re = ne;
-									le = ne;
-								}
-								else
-								{
-									le->next = ne;
-									le = ne;
-								}
-							} // ne != NULL
-						} // Calloc for temp message
+								re = ne;
+								le = ne;
+							}
+							else
+							{
+								le->next = ne;
+								le = ne;
+							}
+						} // ne != NULL
 						FFree( data );
 					} // data != NULL 
 				} // sessionid
@@ -718,6 +711,7 @@ DataForm *DataFormFromHttpToSync( char *fcid, Http *http )
 	
 	if( /*sessionid != NULL &&*/ ( items = FCalloc( numberTags, sizeof(MsgItem) ) ) != NULL )
 	{
+		char temp[ 256 ];
 		DEBUG("[DataFormFromHttp] memory allocated in size %d\n", numberTags );
 		
 		/*
@@ -761,7 +755,15 @@ DataForm *DataFormFromHttpToSync( char *fcid, Http *http )
 		items[ 5 ].mi_Size = 0;
 		items[ 5 ].mi_Data = MSG_GROUP_START;
 		
-		int pos = 6;
+		{
+			int tempLen = snprintf( temp, sizeof(temp), "uri=%s", http->http_Uri->uri_QueryRaw );
+			
+			items[ 6 ].mi_Tag = ID_PRMT;
+			items[ 6 ].mi_Size = tempLen + 1;
+			items[ 6 ].mi_Data = (FULONG)temp;
+		}
+		
+		int pos = 7;
 		DFList *pentry = re;
 		while( pentry != NULL )
 		{
