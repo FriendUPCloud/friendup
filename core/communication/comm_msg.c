@@ -569,23 +569,12 @@ DataForm *DataFormFromHttpRemoteCommand( Http *http )
 		DFList *pentry = re;
 		while( pentry != NULL )
 		{
-			DFList *dentr = pentry;
-			
 			items[ pos ].mi_Tag = ID_PRMT;
 			items[ pos ].mi_Size = pentry->df_Size;
 			items[ pos ].mi_Data = (FULONG)pentry->df_Data;
 			
 			pos++;
 			pentry = pentry->next;
-			
-			if( dentr != NULL )
-			{
-				if( dentr->df_Data != NULL )
-				{
-					FFree( dentr->df_Data );
-				}
-				FFree( dentr );
-			}
 		}
 		
 		// custom
@@ -629,23 +618,21 @@ DataForm *DataFormFromHttpRemoteCommand( Http *http )
 };
 	 */
 	
-	/*
 	DFList *pentry = re;
 	DFList *dentr = re;
 	while( pentry != NULL )
 	{
 		dentr = pentry;
-		pentry = pentry->n;
+		pentry = pentry->next;
 		if( dentr != NULL )
 		{
-			if( dentr->t != NULL )
+			if( dentr->df_Data != NULL )
 			{
-				FFree( dentr->t );
+				FFree( dentr->df_Data );
 			}
 			FFree( dentr );
 		}
 	}
-	*/
 	
 	if( remotehost != NULL )
 	{
@@ -778,23 +765,12 @@ DataForm *DataFormFromHttpToSync( char *fcid, Http *http )
 		DFList *pentry = re;
 		while( pentry != NULL )
 		{
-			DFList *dentr = pentry;
-			
 			items[ pos ].mi_Tag = ID_PRMT;
 			items[ pos ].mi_Size = pentry->df_Size;
 			items[ pos ].mi_Data = (FULONG)pentry->df_Data;
 			
 			pos++;
 			pentry = pentry->next;
-			
-			if( dentr != NULL )
-			{
-				if( dentr->df_Data != NULL )
-				{
-					FFree( dentr->df_Data );
-				}
-				FFree( dentr );
-			}
 		}
 		
 		// custom
@@ -837,6 +813,22 @@ DataForm *DataFormFromHttpToSync( char *fcid, Http *http )
 	 { MSG_END, MSG_END, MSG_END }
 };
 	 */
+	
+	DFList *pentry = re;
+	DFList *dentr = re;
+	while( pentry != NULL )
+	{
+		dentr = pentry;
+		pentry = pentry->next;
+		if( dentr != NULL )
+		{
+			if( dentr->df_Data != NULL )
+			{
+				FFree( dentr->df_Data );
+			}
+			FFree( dentr );
+		}
+	}
 
 	if( sessionid != NULL )
 	{
