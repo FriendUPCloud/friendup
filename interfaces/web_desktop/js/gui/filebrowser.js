@@ -608,17 +608,18 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					// Check our list (also contains bookmarks!)
 					for( let b = 0; b < msg.list.length; b++ )
 					{
-						if( msg.list[ b ].Volume == 'System:' ) continue;
+						let vol = msg.list[ b ].Volume;
+						if( vol == 'System:' ) continue;
 						
 						// Ignore shared: TODO: We are trying to remove it
-						if( self.directoryView && self.directoryView.filedialog && msg.list[ b ].Volume == 'Shared:' )
+						if( self.directoryView && self.directoryView.filedialog && vol == 'Shared:' )
 						{
 							continue;
 						}
 						
 						if( eles[a].id == 'diskitem_' + msg.list[b].Title )
 						{
-							createOnclickAction( eles[a], msg.list[b].Volume, 'volume', depth + 1 );
+							createOnclickAction( eles[a], vol, 'volume', depth + 1 );
 							
 							// Don't add twice
 							if( !found.find( function( ele ){ ele == msg.list[b].Title } ) )
@@ -853,10 +854,13 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						catch( e ){}
 					}
 					
-					msg.list.push( {
-						Title: i18n( 'i18n_bookmarks' ) + ':',
-						Type: 'header'
-					} );
+					if( !favoritesMode )
+					{
+						msg.list.push( {
+							Title: i18n( 'i18n_bookmarks' ) + ':',
+							Type: 'header'
+						} );
+					}
 					
 					self.hasBookmarks = false;
 					
