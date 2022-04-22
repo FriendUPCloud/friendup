@@ -148,6 +148,7 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 
 				for( i=1 ; i < df->df_Size ; i++ )
 				{
+					printf("%c ", temp[ i ] );
 					if( temp[ i ] == '=' )
 					{
 						temp[ i ] = 0;
