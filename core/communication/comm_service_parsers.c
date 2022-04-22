@@ -121,7 +121,7 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 	
 	df++;
 	
-	DEBUG("[ParseAndExecuteRequest] dfid %lld - %d\n", df->df_ID, ID_PARM );
+	DEBUG("[ParseAndExecuteRequest] dfid %ld - %d\n", df->df_ID, ID_PARM );
 	
 	if( df->df_ID == ID_PARM )
 	{
@@ -143,6 +143,8 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 				unsigned int i;
 				char *attr = temp;
 				char *val = NULL;
+				
+				DEBUG("[ParseAndExecuteRequest] PARAMETER: %s\n", temp );
 
 				for( i=1 ; i < df->df_Size ; i++ )
 				{
