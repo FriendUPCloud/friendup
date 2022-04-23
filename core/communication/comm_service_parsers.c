@@ -339,15 +339,17 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 						}
 						
 						// we have to parse uri (path) to get it and put in proper way in the table
-						unsigned int i;
+						int i;
+						int urilen = strlen( uri );
 						
 						memset( urlpath, 0, sizeof( urlpath ) );
 						urlpath[ 0 ] = uri;
 						
 						DEBUG( "[ParseMessage] Synchronize URI param: %s\n", uri );
 						
-						for( i=1 ; i < strlen( uri ) ; i++ )
+						for( i=1 ; i < urilen ; i++ )
 						{
+							printf("%c  -", uri[ i ] );
 							if( uri[ i ] == '/' )
 							{
 								DEBUG("->%s \n", urlpath[ pos ] );
