@@ -1230,6 +1230,16 @@ AND LOWER(f.Name) = LOWER('%s')",
 						l->LibrarySQLDrop( l, sqllib );
 					}
 				}
+				
+				if( request->http_RequestSource != HTTP_SOURCE_EXTERNAL_SERVER )
+				{
+					BufString *res = SendMessageToSessionsAndWait( l, userID, request );
+					if( res != NULL )
+					{
+						DEBUG("RESPONSE: %s\n", res->bs_Buffer );
+						BufStringDelete( res );
+					}
+				}
 			}
 			else
 			{
