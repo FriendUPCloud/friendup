@@ -40,6 +40,7 @@
 #include <core/friendcore_manager.h>
 #include <communication/comm_msg.h>
 #include <system/systembase.h>
+#include <system/systembase_web.h>
 
 // disable debug
 //#undef __DEBUG
@@ -321,6 +322,46 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 			{
 				DEBUG( "[ParseMessage] Synchronize call: %lu\n", reqid );
 				df++;	// we have to jump to next section to read sessionid
+				
+				char *sessionid = HashmapGetData( paramhm, "sessionid" );
+				if( sessionid != NULL )
+				{
+					char *uri = HashmapGetData( paramhm, "uri" );
+					if( uri != NULL )
+					{
+						int res = 0;
+						char *urlpath[ 20 ];
+						int pos = 0;
+						Http *req = HttpNew();
+						if( req != NULL )
+						{
+							req->http_ParsedPostContent = paramhm;
+						}
+						
+						// we have to parse uri (path) to get it and put in proper way in the table
+						unsigned int i;
+						
+						memset( urlpath, 0, sizeof( urlpath ) );
+						urlpath[ 0 ] = uri;
+						
+						for( i=1 ; i < strlen( uri ) ; i++ )
+						{
+							if( uri[ i ] == '/' )
+							{
+								uri[ i ] = 0;
+								i++;
+								urlpath[ pos++ ] = uri;
+							}
+						}
+						
+						
+						UserSession *uses = USMGetSessionBySessionID( lsb->sl_USM, sessionid );
+					
+						Http *resp = SysWebRequest( lsb, &urlpath[ 1 ], &req, uses, &res );
+						
+						
+					}
+				}
 			}
 		break;
 	}
