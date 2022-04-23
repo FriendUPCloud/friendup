@@ -841,10 +841,10 @@ DataForm *DataFormFromHttpToSync( char *fcid, Http *http, char *sessionid )
 		}
 	}
 
-	if( sessionid != NULL )
-	{
-		FFree( sessionid );
-	}
+	//if( sessionid != NULL )
+	//{
+	//	FFree( sessionid );
+	//}
 	
 	return df;
 }
