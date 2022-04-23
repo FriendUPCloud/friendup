@@ -149,7 +149,7 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 
 				for( i=1 ; i < df->df_Size ; i++ )
 				{
-					printf("%c ", temp[ i ] );
+					//printf("%c ", temp[ i ] );
 					if( temp[ i ] == '=' )
 					{
 						temp[ i ] = 0;
@@ -349,10 +349,10 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 						
 						for( i=1 ; i < urilen ; i++ )
 						{
-							printf("%c  -", uri[ i ] );
+							//printf("%c  -", uri[ i ] );
 							if( uri[ i ] == '/' )
 							{
-								DEBUG("->%s \n", urlpath[ pos ] );
+								//DEBUG("->%s \n", urlpath[ pos ] );
 								uri[ i ] = 0;
 								i++;
 								pos++;
