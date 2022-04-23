@@ -653,14 +653,14 @@ DataForm *DataFormFromHttpRemoteCommand( Http *http )
  *
  * @param fcim FriendCore ID
  * @param http pointer to Http message
+ * @param sessionid ID of user session which will be used on remote server
  * @return DataForm which represents http request
  */
 
-DataForm *DataFormFromHttpToSync( char *fcid, Http *http )
+DataForm *DataFormFromHttpToSync( char *fcid, Http *http, char *sessionid )
 {
 	DataForm *df = NULL;
 	unsigned int i;
-	char *sessionid = NULL;
 	int numberTags = 10;
 	MsgItem *items = NULL;
 	DFList *re = NULL;	// root entry
@@ -681,8 +681,17 @@ DataForm *DataFormFromHttpToSync( char *fcid, Http *http )
 					char *data = UrlDecodeToMem( (char *)e.hme_Data );
 					if( data != NULL )
 					{
-						DFList *ne = CreateListEntry( e.hme_Key, data );
+						DFList *ne = NULL;
 					
+						if( strcmp( "sessionid", e.hme_Key ) == 0 )
+						{
+							ne = CreateListEntry( e.hme_Key, sessionid );
+						}
+						else
+						{
+							ne = CreateListEntry( e.hme_Key, data );
+						}
+						
 						if( ne != NULL )
 						{
 							DEBUG("[DataFormFromHttpToSync] PARAM to structure: %s\n", ne->df_Data );

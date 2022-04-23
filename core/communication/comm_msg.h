@@ -179,7 +179,7 @@ DataForm *DataFormFromHttpRemoteCommand( Http *http );
 // Convert http to DataForm
 //
 
-DataForm *DataFormFromHttpToSync( char *fcid, Http *http );
+DataForm *DataFormFromHttpToSync( char *fcid, Http *http, char *sessionid );
 
 //
 //

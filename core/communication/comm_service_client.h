@@ -26,7 +26,7 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df );
 //
 //
 
-BufString *SendMessageToSessionsAndWait( void *lsb, FQUAD userID, DataForm *ldf );
+BufString *SendMessageToSessionsAndWait( void *lsb, FQUAD userID, Http *req );
 
 //
 //

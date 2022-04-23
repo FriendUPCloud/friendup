@@ -908,16 +908,12 @@ AND LOWER(f.Name) = LOWER('%s')",
 				userID = loggedSession->us_UserID;
 			}
 			
-			DataForm *df = DataFormFromHttpToSync( l->fcm->fcm_ID, request );
-			if( df != NULL )
+			
+			BufString *res = SendMessageToSessionsAndWait( l, userID, request );
+			if( res != NULL )
 			{
-				BufString *res = SendMessageToSessionsAndWait( l, userID, df );
-				if( res != NULL )
-				{
-					DEBUG("RESPONSE: %s\n", res->bs_Buffer );
-					BufStringDelete( res );
-				}
-				DataFormDelete( df );
+				DEBUG("RESPONSE: %s\n", res->bs_Buffer );
+				BufStringDelete( res );
 			}
 			
 		}		// check mount parameters

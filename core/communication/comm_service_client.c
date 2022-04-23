@@ -237,11 +237,11 @@ typedef struct ListEntry
  *
  * @param lsb pointer to SystemBase
  * @param userID ID of user which should get message across cluster
- * @param ldf pointer message which will be send
+ * @param req http request which will be converted to DataForm
  * @return pointer to new BufString structure when success, otherwise NULL
  */
 
-BufString *SendMessageToSessionsAndWait( void *lsb, FQUAD userID, DataForm *ldf )
+BufString *SendMessageToSessionsAndWait( void *lsb, FQUAD userID, Http *req )
 {
 	SystemBase *sb = (SystemBase *)lsb;
 	
@@ -331,16 +331,20 @@ BufString *SendMessageToSessionsAndWait( void *lsb, FQUAD userID, DataForm *ldf 
 				DataFormAddForm( &df, ldf );
 				*/
 				
-				DEBUG("[SendMessageToSessionsAndWait] sending message to session %s\n", rootEntry->SessionID );
-		
-				BufString *retMsg = SendMessageAndWait( actCon, ldf );
-				if( retMsg != NULL )
+				DataForm *df = DataFormFromHttpToSync( sb->fcm->fcm_ID, req, rootEntry->SessionID );
+				if( df != NULL )
 				{
-					BufStringDelete( retMsg );
+				
+					DEBUG("[SendMessageToSessionsAndWait] sending message to session %s\n", rootEntry->SessionID );
+		
+					BufString *retMsg = SendMessageAndWait( actCon, df );
+					if( retMsg != NULL )
+					{
+						BufStringDelete( retMsg );
+					}
+				
+					DataFormDelete( df );
 				}
-				
-				//DataFormDelete( ldf );
-				
 				break;
 			}
 			
