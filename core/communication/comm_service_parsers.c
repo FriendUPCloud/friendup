@@ -348,6 +348,7 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 						{
 							if( uri[ i ] == '/' )
 							{
+								DEBUG("->%s \n", urlpath[ pos ] );
 								uri[ i ] = 0;
 								i++;
 								urlpath[ pos++ ] = uri;
