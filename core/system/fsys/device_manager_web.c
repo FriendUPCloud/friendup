@@ -909,11 +909,14 @@ AND LOWER(f.Name) = LOWER('%s')",
 			}
 			
 			
-			BufString *res = SendMessageToSessionsAndWait( l, userID, request );
-			if( res != NULL )
+			if( request->http_RequestSource == HTTP_SOURCE_EXTERNAL_SERVER )
 			{
-				DEBUG("RESPONSE: %s\n", res->bs_Buffer );
-				BufStringDelete( res );
+				BufString *res = SendMessageToSessionsAndWait( l, userID, request );
+				if( res != NULL )
+				{
+					DEBUG("RESPONSE: %s\n", res->bs_Buffer );
+					BufStringDelete( res );
+				}
 			}
 			
 		}		// check mount parameters
