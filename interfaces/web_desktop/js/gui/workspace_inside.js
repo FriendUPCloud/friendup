@@ -7561,7 +7561,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	refreshMenu: function( prohibitworkspaceMenu, activeElement = false )
 	{	
 		const self = this;
-		console.log( 'refreshMenu' );
 		if ( self.isFetchingServerConfig )
 			return;
 		

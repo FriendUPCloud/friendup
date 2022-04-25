@@ -1199,7 +1199,7 @@ function apiWrapper( event, force )
 								var command = fnObj.Title || fnObj.Filename;
 								var id = addWrapperCallback( data =>
 								{
-									console.trace( 'door.execute callback', [ data, callback ]);
+									console.log( 'door.execute callback', [ data, callback ]);
 									if ( data && callback )
 										callback( null, data );
 									//
