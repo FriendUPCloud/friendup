@@ -3924,6 +3924,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			        j.onload = function( e )
 			        {
 			            Workspace.dashboard = new SidebarEngine();
+			            
 			        }
 			        // Append sidebar
 			        function loadScript()
@@ -11404,7 +11405,8 @@ function loadApplicationBasics( callback )
 		}
 		sb_.load();
 		// Preload basic scripts
-		let c_ = new File( '/system.library/module/?module=system&command=theme&args=%7B%22theme%22%3A%22friendup12%22%7D&sessionid=' + Workspace.sessionId );
+		let themeName = Workspace.theme ? Workspace.theme : 'friendup12';
+		let c_ = new File( '/system.library/module/?module=system&command=theme&args=%7B%22theme%22%3A%22' + themeName + '%22%7D&sessionid=' + Workspace.sessionId );
 		c_.onLoad = function( data )
 		{
 			if( _applicationBasics.css )
