@@ -587,6 +587,39 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					label.className = 'FileBrowserItemLabel';
 					label.innerHTML = item.Title;
 					
+					( function( liElement, ulElement, path )
+					{
+					    liElement.onclick = function( e )
+					    {
+					        // Find active list item
+					        let lis = ulElement.getElementsByTagName( 'li' );
+					        for( let a = 0; a < lis.length; a++ )
+					        {
+					            if( lis[ a ] == liElement )
+					            {
+					                lis[ a ].classList.add( 'Activated' );
+					                console.log( 'What is the path: ', path );
+					                self.callbacks.folderOpen( path, e );
+					            }
+					            else
+					            {
+					                lis[ a ].classList.remove( 'Activated' );
+					            }
+					        }
+					        // Remove active state on disks
+					        let disks = rootElement.getElementsByClassName( 'DiskItem' );
+					        for( let a = 0; a < disks.length; a++ )
+					        {
+					            let everything = disks[ a ].getElementsByTagName( 'div' );
+					            for( let b = 0; b < everything.length; b++ )
+					            {
+					                everything[b].classList.remove( 'Open' );
+					                everything[b].classList.remove( 'Active' );
+					            }
+					        }
+					    }
+					} )( li, ul, item.Path );
+					
 					li.appendChild( icon ); li.appendChild( label );
 					ul.appendChild( li );
 				}
