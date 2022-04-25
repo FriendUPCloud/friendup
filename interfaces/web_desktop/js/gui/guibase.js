@@ -2287,6 +2287,9 @@ function DrawRegionSelector( e )
 		ex = -window.regionWindow.parentNode.offsetLeft;
 		ey = -window.regionWindow.parentNode.offsetTop;
 		
+		// Check for other things
+		ex -= ge( 'DoorsScreen' ).offsetLeft;
+		
 		// Some implications per theme accounted for
 		if( rwc.contains( 'Content' ) )
 		{

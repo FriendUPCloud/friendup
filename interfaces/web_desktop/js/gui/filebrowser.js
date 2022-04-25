@@ -549,12 +549,36 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					return;
 				}
 				
-				let ul = document.createElement( 'ul' );
+				let ul = self.favoritesContainer.getElementsByTagName( 'ul' );
+				if( ul.length )
+				{
+				    ul = ul[0];
+				}
+				else
+				{
+				    ul = document.createElement( 'ul' );
+				    self.favoritesContainer.appendChild( ul );
+				}
 				
+				let existing = ul.getElementsByTagName( 'li' );
+
 				for( let a = 0; a < self.favorites.length; a++ )
 				{
+				    // Check for doubles
+				    let found = false;
+				    for( let b = 0; b < existing.length; b++ )
+				    {
+				        if( self.favorites[ a ].ID == existing[ b ].getAttribute( 'bookmark-id' ) )
+				        {
+				            found = true;
+				            break;
+				        }
+				    }
+				    if( found ) continue;
+				    
 					let item = self.favorites[ a ];
 					let li = document.createElement( 'li' );
+					li.setAttribute( 'bookmark-id', item.ID );
 					
 					let icon = document.createElement( 'span' );
 					icon.className = 'FileBrowserItemImage';
@@ -734,7 +758,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						{
 							if( favoritesMode )
 							{
-								self.favorites.push( msg.list[a] );
+								continue;
 							}
 							else
 							{
@@ -852,6 +876,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 							js = JSON.parse( d );
 						}
 						catch( e ){}
+					    console.log( 'Got favorites', js );
 					}
 					
 					if( !favoritesMode )
@@ -872,9 +897,17 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 								Title: js[a].name,
 								Type: 'bookmark',
 								Path: js[a].path,
-								Volume: js[a].path
+								Volume: js[a].path,
+								ID: js[a].id
 							};
-							msg.list.push( ele );
+							if( !favoritesMode )
+							{
+    							msg.list.push( ele );
+    					    }
+    						else
+    						{
+							    self.favorites.push( ele );
+							}
 						}
 						self.hasBookmarks = true;
 					}

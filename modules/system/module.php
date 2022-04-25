@@ -1232,6 +1232,7 @@ if( isset( $args->command ) )
 					$o = new stdClass();
 					$o->name = $data->name;
 					$o->path = $data->path;
+					$o->id = $row->ID;
 					$result[] = $o;
 				}
 				die( 'ok<!--separate-->' . json_encode( $result ) );
