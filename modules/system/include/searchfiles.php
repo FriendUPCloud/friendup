@@ -10,6 +10,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+if( !isset( $args->args->keywords ) ) die( 'fail<!--separate-->{"message":"Missing keywords.","response":-1}' );
+
 
 
 ?>
