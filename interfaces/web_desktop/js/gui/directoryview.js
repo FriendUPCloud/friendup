@@ -613,6 +613,8 @@ DirectoryView.prototype.initToolbar = function( winobj )
 		content: i18n( 'i18n_search' ),
 		onclick: function( e )
 		{
+		    if( Workspace.fileSearch )
+		        return Workspace.fileSearch( dw.window.fileInfo.Path, dw.window );
 			Workspace.showSearch( dw.window.fileInfo.Path, dw.window );
 		}
 	} );
