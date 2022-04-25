@@ -176,7 +176,8 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 // Supported flags ( { lockHistory: true|false } )
 Friend.FileBrowser.prototype.setPath = function( target, cbk, tempFlags, e )
 {
-	// Already set
+    console.log( 'Setting path: ' + target );
+    // Already set
 	if( this.flags.path && this.flags.path == target ) 
 	{
 		return;
@@ -262,6 +263,16 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 		
 		ele.onclick = function( e )
 		{
+			// Remove favorites active state
+			if( self.favoritesDom )
+			{
+			    let lis = self.favoritesContainer.getElementsByTagName( 'li' );
+			    for( let a = 0; a < lis.length; a++ )
+			    {
+			        lis[a].classList.remove( 'Activated' );
+			    }
+			}
+			
 			// Real click removes temp flags
 			if( e && ( e.button === 0 || e.button > 0 ) )
 				self.tempFlags = false;
@@ -958,6 +969,9 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	// Get sub directories
 	else
 	{
+	    // If we're in favorites mode, skip (we don't care about subdirs here)
+        if( self.favoritesDom ) return;
+    
 		// Support both API scope and Workspace scope
 		let func = function( path, flags, cb )
 		{
