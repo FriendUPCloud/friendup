@@ -12,6 +12,9 @@
 function _nameFix( wt )
 {
 	// HOGNE: fix for Title/Path column problem
+	if( document.body.classList.contains( 'ThemeEngine' ) )
+	    return wt;
+	
 	if ( wt.indexOf( ':' ) < 0 )
 		wt += ':';
 	wt = wt.split( ':' );
