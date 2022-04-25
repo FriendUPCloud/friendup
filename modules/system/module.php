@@ -827,6 +827,9 @@ if( isset( $args->command ) )
 			die( 'fail<!--separate-->{"response":"keys failed"} ' . $q );
 			//die( 'ok<!--separate-->[{"type":"treeroot","literal":"Treeroot"},{"type":"local","literal":"Local filesystem"},{"type":"corvo","literal":"MySQL Based Filesystem"},{"type":"website","literal":"Mount websites as doors"}]' );
 			break;
+		case 'searchfiles':
+		    require( 'modules/system/include/searchfiles.php' );
+		    break;
 		// Get desktop events
 		case 'events':
 			if( $data = checkDesktopEvents() )
