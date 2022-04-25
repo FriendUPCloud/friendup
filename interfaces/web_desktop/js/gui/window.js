@@ -2748,7 +2748,13 @@ var View = function( args )
 			}
 
 			// Pawel must win!
-			title.ondblclick = function( e )
+			let method = 'ondblclick';
+			if( document.body.classList.contains( 'ThemeEngine' ) )
+			{
+			    method = 'onclick';
+			    title.style.cursor = 'pointer';
+			}
+			title[ method ] = function( e )
 			{
 				if( self.flags.clickableTitle )
 				{
