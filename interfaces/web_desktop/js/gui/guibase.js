@@ -116,7 +116,7 @@ var mousePointer =
 			
 			// Check move on window
 			let z = 0;
-			for ( var a in movableWindows )
+			for( let a in movableWindows )
 			{
 				let wn = movableWindows[a];
 				let wnZ = parseInt ( wn.style.zIndex );
@@ -170,7 +170,7 @@ var mousePointer =
 			// Check screens and view windows
 			let screens = [];
 			let screenl = ge( 'Screens' );
-			for( var a = 0; a < screenl.childNodes.length; a++ )
+			for( let a = 0; a < screenl.childNodes.length; a++ )
 			{
 				if( screenl.childNodes[a].tagName == 'DIV' && screenl.childNodes[a].classList && screenl.childNodes[a].classList.contains( 'Screen' ) )
 				{
@@ -178,11 +178,11 @@ var mousePointer =
 				}
 			}
 			let ars = [];
-			for( var a in movableWindows )
+			for( let a in movableWindows )
 				ars.push( movableWindows[a] );
 			ars = ars.concat( screens );
 		
-			for( var c in ars )
+			for( let c in ars )
 			{
 				let isListView = false;
 				let isScreen = false;
@@ -235,14 +235,14 @@ var mousePointer =
 				
 				let hoverIcon = false;
 				
-				for( var a = 0; a < w.icons.length; a++ )
+				for( let a = 0; a < w.icons.length; a++ )
 				{
 					let ic = w.icons[a].domNode;
 					let icon = w.icons[a];
 			
 					// Exclude elements dragged
 					let found = false;
-					for( var b = 0; b < this.dom.childNodes.length; b++ )
+					for( let b = 0; b < this.dom.childNodes.length; b++ )
 					{
 						if( ic == this.dom.childNodes[b] )
 							found = true;
@@ -281,7 +281,7 @@ var mousePointer =
 				}
 			}
 			// Register roll out!
-			for( var a in window.movableWindows )
+			for( let a in window.movableWindows )
 			{
 				let wd = window.movableWindows[a];
 				if( ( !mover && wd.rollOut ) || ( wd != moveWin && wd.rollOut ) )
@@ -323,7 +323,7 @@ var mousePointer =
 			
 			// Check drop on tray icon
 			let titems = ge( 'Tray' ).childNodes;
-			for( var a = 0; a < titems.length; a++ )
+			for( let a = 0; a < titems.length; a++ )
 			{
 				let tr = titems[a];
 				let l = GetElementLeft( tr ); // left
@@ -334,7 +334,7 @@ var mousePointer =
 				{
 					dropper = tr;
 					let objs = [];
-					for( var k = 0; k < this.elements.length; k++ )
+					for( let k = 0; k < this.elements.length; k++ )
 					{
 						let e = this.elements[k];
 						if ( e.fileInfo.getDropInfo ) {
@@ -363,7 +363,7 @@ var mousePointer =
 			// Check screens and view windows
 			let screens = [];
 			let screenl = ge( 'Screens' );
-			for( var a = 0; a < screenl.childNodes.length; a++ )
+			for( let a = 0; a < screenl.childNodes.length; a++ )
 			{
 				if( screenl.childNodes[a].tagName == 'DIV' && screenl.childNodes[a].classList && screenl.childNodes[a].classList.contains( 'Screen' ) )
 				{
@@ -371,7 +371,7 @@ var mousePointer =
 				}
 			}
 			let ars = [];
-			for( var a in movableWindows )
+			for( let a in movableWindows )
 			{
 				// Don't check minimized windows
 				if( movableWindows[a].parentNode.getAttribute( 'minimized' ) ) continue;
@@ -390,7 +390,7 @@ var mousePointer =
 			if( !dropper )
 			{
 				let z = 0;
-				for ( let a in ars )
+				for( let a in ars )
 				{
 					let wn = ars[a];
 					let wnZ = parseInt ( wn.style.zIndex );
@@ -431,7 +431,7 @@ var mousePointer =
 			if( !skipDropCheck )
 			{
 				// Find what we dropped on
-				for( var c in ars )
+				for( let c in ars )
 				{
 					let isListView = false;
 					let isScreen = false;
@@ -487,7 +487,7 @@ var mousePointer =
 					}
 				
 					// Drop on icon
-					for ( var a = 0; a < w.icons.length; a++ )
+					for( let a = 0; a < w.icons.length; a++ )
 					{
 						let ic = w.icons[a].domNode;
 				
@@ -524,7 +524,7 @@ var mousePointer =
 				{
 					let z = 0;
 					let dropWin = 0;
-					for( var a = 0; a < __desklets.length; a++ )
+					for( let a = 0; a < __desklets.length; a++ )
 					{
 						let wn = __desklets[a].dom;
 						let wnZ = parseInt ( wn.style.zIndex );
@@ -582,7 +582,7 @@ var mousePointer =
 				}
 				else
 				{
-					for( var k = 0; k < this.elements.length; k++ )
+					for( let k = 0; k < this.elements.length; k++ )
 					{
 						let e = this.elements[k];
 						if( e.fileInfo )
@@ -627,7 +627,7 @@ var mousePointer =
 					{
 						// Check if we can place desktop shortcuts
 						let files = [];
-						for( var a = 0; a < objs.length; a++ )
+						for( let a = 0; a < objs.length; a++ )
 						{
 							if( objs[ a ].Type == 'Executable' )
 							{
@@ -665,7 +665,7 @@ var mousePointer =
 			// Place back again
 			if( !dropped || !dropper )
 			{
-				for( var a = 0; a < this.elements.length; a++ )
+				for( let a = 0; a < this.elements.length; a++ )
 				{
 					if( this.elements[a].ondrop )
 						this.elements[a].ondrop( dropper );
@@ -684,7 +684,7 @@ var mousePointer =
 			// Remove
 			else
 			{
-				for( var a = 0; a < this.elements.length; a++ )
+				for( let a = 0; a < this.elements.length; a++ )
 				{
 					if( this.elements[a].ondrop )
 						this.elements[a].ondrop( dropper );
@@ -736,7 +736,7 @@ var mousePointer =
 				return false;
 			}
 			
-			for( var a = 0; a < ele.window.icons.length; a++ )
+			for( let a = 0; a < ele.window.icons.length; a++ )
 			{
 				let ic = ele.window.icons[a];
 
@@ -768,14 +768,14 @@ var mousePointer =
 			let maxx = 99999;
 			let maxy = 99999;
 			let elements = this.elements;
-			for( var a = 0; a < elements.length; a++ )
+			for( let a = 0; a < elements.length; a++ )
 			{
 				if( parseInt( elements[ a ].style.left ) < maxx )
 					maxx = parseInt( elements[ a ].style.left );
 				if( parseInt( elements[ a ].style.top ) < maxy )
 					maxy = parseInt( elements[ a ].style.top );
 			}
-			for( var a = 0; a < elements.length; a++ )
+			for( let a = 0; a < elements.length; a++ )
 			{
 				elements[ a ].style.left = parseInt( elements[ a ].style.left ) - maxx + 'px';
 				elements[ a ].style.top = parseInt( elements[ a ].style.top ) - maxy + 'px';
@@ -905,7 +905,7 @@ function addSecureDropWidget( windowobject, objects )
 	{
 		w.setContent( data, function()
 		{
-			for( var a = 0; a < objects.length; a++ )
+			for( let a = 0; a < objects.length; a++ )
 			{
 				let url = getImageUrl( objects[ a ].Path )
 				let im = new Image();
@@ -1055,7 +1055,7 @@ function GetThemeInfo( property )
 		themeInfo.loaded = true;
 		// Flush old rules
 		let sheet = false;
-		for( var a = 0; a < document.styleSheets.length; a++ )
+		for( let a = 0; a < document.styleSheets.length; a++ )
 		{
 			if( document.styleSheets[a].href && document.styleSheets[a].href.indexOf( 'theme' ) > 0 )
 			{
@@ -1065,7 +1065,7 @@ function GetThemeInfo( property )
 		}
 		if( sheet )
 		{
-			for( var a = 0; a < sheet.cssRules.length; a++ )
+			for( let a = 0; a < sheet.cssRules.length; a++ )
 			{
 				let rule = sheet.cssRules[a];
 				let key = false;
@@ -1151,7 +1151,7 @@ function CoverScreens( sticky )
 	// Disable all screen overlays
 	let screenc = ge ( 'Screens' );
 	let screens = screenc.getElementsByTagName( 'div' );
-	for( var a = 0; a < screens.length; a++ )
+	for( let a = 0; a < screens.length; a++ )
 	{
 		if( !screens[a].className ) continue;
 		if( screens[a].parentNode != screenc ) continue;
@@ -1166,7 +1166,7 @@ function CoverOtherScreens()
 	// Disable all screen overlays
 	let screenc = ge ( 'Screens' );
 	let screens = screenc.getElementsByTagName ( 'div' );
-	for( var a = 0; a < screens.length; a++ )
+	for( let a = 0; a < screens.length; a++ )
 	{
 		if( !screens[a].className ) continue;
 		if( screens[a].parentNode != screenc ) continue;
@@ -1183,7 +1183,7 @@ function ExposeScreens()
 	// Disable all screen overlays
 	let screenc = ge ( 'Screens' );
 	let screens = screenc.getElementsByTagName ( 'div' );
-	for( var a = 0; a < screens.length; a++ )
+	for( let a = 0; a < screens.length; a++ )
 	{
 		if( !screens[a].className ) continue;
 		if( screens[a].parentNode != screenc ) continue;
@@ -1197,7 +1197,7 @@ function ExposeScreens()
 // Find a movable window by title string
 function FindWindowById ( id )
 {
-	for ( var i in movableWindows )
+	for( let i in movableWindows )
 	{
 		if ( i == id )
 		{
@@ -1212,7 +1212,7 @@ function FindWindowById ( id )
 function GuiCreate ( obj )
 {
 	let str = '';
-	for ( var a = 0; a < obj.length; a++ )
+	for( let a = 0; a < obj.length; a++ )
 	{
 		switch( typeof ( obj[a] ) )
 		{
@@ -1239,7 +1239,7 @@ function GuiColumns( data )
 	let widths = data[0];
 	let content = data[1];
 	let str = '<table class="GuiColums"><tr>';
-	for ( var a = 0; a < widths.length; a++ )
+	for( let a = 0; a < widths.length; a++ )
 	{
 		if ( widths[a].indexOf ( '%' ) < 0 && widths[a].indexOf ( 'px' ) < 0 )
 			widths[a] += 'px';
@@ -1494,7 +1494,7 @@ function NewSelectBox ( divobj, height, multiple )
 	let opts = divobj.getElementsByTagName ( 'div' );
 	let sw = 1;
 	
-	for ( var a = 0; a < opts.length; a++ )
+	for( let a = 0; a < opts.length; a++ )
 	{
 		let tr = document.createElement ( 'tr' );
 		tr.className = 'sw' + sw + ( opts[a].className ? ( ' ' + opts[a].className ) : '' );
@@ -1551,7 +1551,7 @@ function _NewSelectBoxCheck ( pid, ele )
 	else pel = pid;
 	if ( !pel ) return false;
 	let els = pel.getElementsByTagName ( 'tr' );
-	for ( var a = 0; a < els.length; a++ )
+	for( let a = 0; a < els.length; a++ )
 	{
 		let inp = els[a].getElementsByTagName ( 'input' )[0];
 		if ( inp.checked )
@@ -1578,7 +1578,7 @@ function GetSelectBoxValue( pel )
 	if ( table.className.indexOf ( 'Checkboxes' ) > 0 )
 	{
 		let res = new Array ();
-		for ( var a = 0; a < inputs.length; a++ )
+		for( let a = 0; a < inputs.length; a++ )
 		{
 			if ( inputs[a].checked )
 			{
@@ -1589,9 +1589,9 @@ function GetSelectBoxValue( pel )
 	}
 	else if ( table.className.indexOf ( 'Radioboxes' ) > 0 )
 	{
-		for ( var a = 0; a < inputs.length; a++ )
+		for( let a = 0; a < inputs.length; a++ )
 		{
-			if ( inputs[a].checked )
+			if( inputs[a].checked )
 			{
 				return inputs[a].getAttribute ( 'value' );
 			}
@@ -1608,7 +1608,7 @@ function _NewSelectBoxRadio ( pid, ele )
 	else pel = pid;
 	if ( !pel ) return false;
 	let els = pel.getElementsByTagName ( 'tr' );
-	for ( var a = 0; a < els.length; a++ )
+	for( let a = 0; a < els.length; a++ )
 	{
 		let inp = els[a].getElementsByTagName ( 'input' )[0];
 		if ( inp.checked )
@@ -1734,7 +1734,7 @@ movableListener = function( e, data )
 								z: 0
 							};
 							
-							for( var z in movableWindows )
+							for( let z in movableWindows )
 							{
 								let mw = movableWindows[ z ];
 
@@ -2047,7 +2047,7 @@ movableListener = function( e, data )
 				if( w.windowObject && w.windowObject.widgets )
 				{
 					let wds = w.windowObject.widgets;
-					for( var z = 0; z < wds.length; z++ )
+					for( let z = 0; z < wds.length; z++ )
 					{
 						let vx = mx + ( isNaN( wds[z].tx ) ? 0 : wds[z].tx );
 						let vy = my + ( isNaN( wds[z].ty ) ? 0 : wds[z].ty );
@@ -2273,8 +2273,8 @@ function DrawRegionSelector( e )
 	}
 	
 	// Extra offset in content window
-	let mx = windowMouseX; var my = windowMouseY;
-	let diffx = 0;		   var diffy = 0; 
+	let mx = windowMouseX; let my = windowMouseY;
+	let diffx = 0;		   let diffy = 0; 
 	let ex = 0; var ey = 0;
 	let eh = 0; var ew = 0;
 	let rwc = window.regionWindow.classList;
@@ -2412,7 +2412,7 @@ function DrawRegionSelector( e )
 				}
 			}
 			
-			for ( var a = 0; a < icos.length; a++ )
+			for ( let a = 0; a < icos.length; a++ )
 			{
 				let ics = icos[a].domNode;
 				// Coords on icon
@@ -2483,7 +2483,7 @@ function MakeTableList( entries, headers )
 	if ( headers )
 	{
 		str += '<tr>';
-		for ( var a = 0; a < headers.length; a++ )
+		for( let a = 0; a < headers.length; a++ )
 		{
 			str += '<td>' + headers[a] + '</td>';
 		}
@@ -2493,10 +2493,10 @@ function MakeTableList( entries, headers )
 	if ( cols <= 0 )
 		cols = entries[0].length;
 	let sw = 1;
-	for ( var a = 0; a < entries.length; a++ )
+	for( let a = 0; a < entries.length; a++ )
 	{
 		str += '<tr class="sw' + sw + '">';
-		for ( var b = 0; b < cols; b++ )
+		for( let b = 0; b < cols; b++ )
 		{
 			str += '<td>' + entries[a][b] + '</td>';
 		}
@@ -2506,13 +2506,13 @@ function MakeTableList( entries, headers )
 	return str;
 }
 
-var workbenchMenus = new Array ();
+var workbenchMenus = new Array();
 function SetMenuEntries ( menu, entries )
 {
-	if ( typeof ( workbenchMenus[menu] ) == 'undefined' ) 
+	if( typeof ( workbenchMenus[menu] ) == 'undefined' ) 
 		workbenchMenus[menu] = new Array ();
 	workbenchMenus[menu].push ( entries );
-	if ( typeof ( RefreshWorkspaceMenu ) != 'undefined' )
+	if( typeof ( RefreshWorkspaceMenu ) != 'undefined' )
 		RefreshWorkspaceMenu ();
 }
 
@@ -2591,7 +2591,7 @@ movableMouseUp = function( e )
 			Workspace.toggleStartMenu( false );
 	}
 	
-	for( var a in movableWindows )
+	for( let a in movableWindows )
 	{
 		let m = movableWindows[a];
 		m.removeAttribute( 'moving' );
@@ -3012,11 +3012,11 @@ function PollTaskbar( curr )
 			
 				// Remove tasks on the taskbar that isn't represented by a view
 				let cleaner = [];
-				for( var b = 0; b < t.tasks.length; b++ )
+				for( let b = 0; b < t.tasks.length; b++ )
 				{
 					// Look if this task is registered with a view
 					let f = false;
-					for( var a in movableWindows )
+					for( let a in movableWindows )
 					{
 						// Skip snapped windows
 						if( !movableWindows[ a ].snap && movableWindows[ a ].viewId == t.tasks[ b ].viewId )
@@ -3042,7 +3042,7 @@ function PollTaskbar( curr )
 			
 				t.tasks = cleaner; // Set cleaned task list
 			
-				for( var a in movableWindows )
+				for( let a in movableWindows )
 				{
 					let d = false;
 				
@@ -3068,7 +3068,7 @@ function PollTaskbar( curr )
 					}
 				
 					// Lets see if the view is a task we manage
-					for( var c = 0; c < t.tasks.length; c++ )
+					for( let c = 0; c < t.tasks.length; c++ )
 					{
 						if ( t.tasks[c].viewId == pn.viewId )
 						{
@@ -3201,7 +3201,7 @@ function PollTaskbar( curr )
 							if ( !e ) e = window.event;
 							let targ = e ? ( e.target ? e.target : e.srcElement ) : false;
 							if( extarg ) targ = extarg;
-							for( var n = 0; n < t.childNodes.length; n++ )
+							for( let n = 0; n < t.childNodes.length; n++ )
 							{
 								let ch = t.childNodes[ n ];
 								if( !ch.className ) continue;
@@ -3236,7 +3236,7 @@ function PollTaskbar( curr )
 									
 										if( div.attached )
 										{
-											for( var a = 0; a < div.attached.length; a++ )
+											for( let a = 0; a < div.attached.length; a++ )
 											{
 												if( !div.attached[ a ].minimized )
 												{
@@ -3281,7 +3281,7 @@ function PollTaskbar( curr )
 						if( d.applicationId )
 						{
 							let running = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
-							for( var a = 0; a < running.length; a++ )
+							for( let a = 0; a < running.length; a++ )
 							{
 								let task = running[a];
 								// Find the window!
@@ -3910,7 +3910,7 @@ function convertIconsToMultiple()
 	if( currentMovable && currentMovable && currentMovable.content && currentMovable.content.icons )
 	{
 		let ics = currentMovable.content.icons;
-		for( var a = 0; a < ics.length; a++ )
+		for( let a = 0; a < ics.length; a++ )
 		{
 			if( ics[a].selected )
 			{
@@ -3939,23 +3939,23 @@ function clearRegionIcons( flags )
 	let multipleCheck = flags && flags.force ? 'none' : 'multiple';
 
 	// Clear all icons
-	for( var a in movableWindows )
+	for( let a in movableWindows )
 	{
 		let w = movableWindows[a];
 		if( w.content && w.content.icons )
 			w = w.content;
 		if ( w.icons )
 		{
-			for ( var a = 0; a < w.icons.length; a++ )
+			for ( let b = 0; b < w.icons.length; b++ )
 			{
-				let ic = w.icons[a].domNode;
+				let ic = w.icons[ b ].domNode;
 				if( ic && ic.className )
 				{
 					if( exception != ic && ic.selected != multipleCheck )
 					{
 						ic.classList.remove( 'Selected' );
-						w.icons[a].selected = false;
-						w.icons[a].file = false;
+						w.icons[ b ].selected = false;
+						w.icons[ b ].file = false;
 						ic.selected = false;
 					}
 					ic.classList.remove( 'Editing' );
@@ -3974,7 +3974,7 @@ function clearRegionIcons( flags )
 	// Clear desktop icons
 	if( window.Doors && Doors.screen && Doors.screen.contentDiv.icons )
 	{
-		for( var a = 0; a < Doors.screen.contentDiv.icons.length; a++ )
+		for( let a = 0; a < Doors.screen.contentDiv.icons.length; a++ )
 		{
 			let icon = Doors.screen.contentDiv.icons[a];
 			let ic = icon.domNode;
@@ -4186,7 +4186,7 @@ function GetTitleBarG ()
 function ClearMenuItemStyling( par )
 {
 	let lis = par.getElementsByTagName( 'li' );
-	for( var a = 0; a < lis.length; a++ ) 
+	for( let a = 0; a < lis.length; a++ ) 
 	{
 		let sp = lis[a].getElementsByTagName( 'span' );
 		if( sp && sp[0] ) sp[0].className = '';
@@ -4202,7 +4202,7 @@ function FocusOnNothing()
 	
 	// Put focus somewhere else than where it is now..
 	// Blur like hell! :)
-	for( var a in movableWindows )
+	for( let a in movableWindows )
 	{
 		if( movableWindows[a].windowObject )
 		{
@@ -4211,7 +4211,7 @@ function FocusOnNothing()
 	}
 	
 	let eles = document.getElementsByTagName( '*' );
-	for( var a = 0; a < eles.length; a++ )
+	for( let a = 0; a < eles.length; a++ )
 	{
 		eles[a].blur();
 	}
@@ -4230,7 +4230,7 @@ function AlertBox( title, desc, buttons, win )
 		resize: false
 	} );
 	
-	for( var a in buttons )
+	for( let a in buttons )
 		buttonml += '<button class="IconSmall ' + buttons[a].className + '">' + buttons[a].text + '</button>';
 	
 	let ml = '<div class="Dialog"><div class="DialogContent">' + desc + '</div><div class="DialogButtons">' + buttonml + '</div></div>';
@@ -4240,7 +4240,7 @@ function AlertBox( title, desc, buttons, win )
 	// Collect added dom elements
 	let eles = w.content.getElementsByTagName( 'button' );
 	let dbuttons = [];
-	for( var a = 0; a < eles.length; a++ )
+	for( let a = 0; a < eles.length; a++ )
 	{
 		// TODO: Make safer!
 		if( eles[a].parentNode.className == 'DialogButtons' && eles[a].parentNode.parentNode == 'Dialog' )
@@ -4250,7 +4250,7 @@ function AlertBox( title, desc, buttons, win )
 	}
 	
 	// Set onclick actions
-	for( var c = 0; c < buttons.length; c++ )
+	for( let c = 0; c < buttons.length; c++ )
 	{
 		dbuttons[c].view = w;
 		dbuttons[c].onclick = buttons.onclick;
@@ -4315,7 +4315,7 @@ function FindImageColorProduct( img )
 		let average = { r: 0, g: 0, b: 0 };
 		let steps = 8;
 		let increments = steps << 2; // * 4
-		for( var i = 0; i < imgd.data.length; i += increments )
+		for( let i = 0; i < imgd.data.length; i += increments )
 		{
 			average.r += imgd.data[ i   ];
 			average.g += imgd.data[ i + 1 ];
@@ -4443,7 +4443,7 @@ function CreateHelpBubble( element, text, uniqueid, rules )
 			if( text.indexOf( "\n" ) > 0 )
 			{
 				text = text.split( "\n" );
-				for( var a = 0; a < text.length; a++ )
+				for( let a = 0; a < text.length; a++ )
 				{
 					if( d.measureText( text[ a ] ).width > mw )
 						mw = d.measureText( text[ a ] ).width;
@@ -4526,7 +4526,7 @@ function CreateHelpBubble( element, text, uniqueid, rules )
 			let pcl = [ 'Left', 'Top', 'Right', 'Bottom' ];
 			if( rules && rules.positions )
 				pcl = rules.positions;
-			for( var z = 0; z < pcl.length; z++ )
+			for( let z = 0; z < pcl.length; z++ )
 				if( pcl[ a ] != positionClass )
 					v.dom.classList.remove( pcl[ a ] );
 			if( v.dom.className.length && positionClass )
@@ -4537,7 +4537,7 @@ function CreateHelpBubble( element, text, uniqueid, rules )
 			if( pcl )
 			{
 				let f = false;
-				for( var a in pcl )
+				for( let a in pcl )
 				{
 					if( positionClass == pcl[ a ] )
 					{
