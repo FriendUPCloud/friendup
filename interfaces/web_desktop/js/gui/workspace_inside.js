@@ -7722,7 +7722,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Probably filemanager window
 		if( currentMovable )
 		{
-		    console.log( 'We have a movable' );
 		    // Excempt!
 		    // TODO: May be unnecessary
 		    if( !currentMovable.applicationId )
