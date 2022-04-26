@@ -7558,7 +7558,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			Notify( { title: i18n( 'i18n_unzip_start_none' ), text: i18n( 'i18n_unzip_startdesc_none' ) } );
 		}
 	},
-	// Refresh Doors menu recursively ------------------------------------------
+	// Refresh Workspace menu recursively --------------------------------------
 	refreshMenu: function( prohibitworkspaceMenu, activeElement = false )
 	{	
 		const self = this;
@@ -7612,7 +7612,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		let isSharedDrive = finf && finf.Volume && finf.Volume == 'Shared:' ? true : false;
 		let hasSharing = true;
 		
-		if (  null != sConf.hasShareDrive )
+		if( sConf.hasShareDrive != null )
 			hasSharing = sConf.hasShareDrive;
 		
 		if( iconsSelected )
@@ -7631,7 +7631,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							volumeIcon = true;
 						}
 						
-						if ( ics[ a ].Type == 'File' || ics[ a ].Type == 'Directory' )
+						if( ics[ a ].Type == 'File' || ics[ a ].Type == 'Directory' )
 						{
 							if( ics[ a ].Type == 'File' )
 							{
@@ -7717,6 +7717,32 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			currentMovable.content;
 			if( cnt ) systemDrive = cnt && cnt.fileInfo && cnt.fileInfo.Volume == 'System:';
+		}
+		
+		// Probably filemanager window
+		if( currentMovable )
+		{
+		    // Excempt!
+		    // TODO: May be unnecessary
+		    if( !currentMovable.applicationId )
+		    {
+		        currentScreen.quickMenu = {
+		            uniqueName: 'Workspace_Menu',
+		            items: [ {
+		                name: i18n( 'i18n_back' ),
+		                message: { 'command': 'back' }
+		            } ]
+		        };
+		    }
+		    else
+		    {
+		        currentScreen.quickMenu = false;
+		    }
+		}
+		// Workspace screen menu
+		else
+		{
+		    currentScreen.quickMenu = false;
 		}
 		
 		// Setup Doors menu

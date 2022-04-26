@@ -2676,6 +2676,10 @@ function CheckScreenTitle( screen, force )
         {
             Workspace.setQuickMenu( currentScreen.quickMenu, currentScreen );
         }
+        else if( Workspace.hideQuickMenu )
+        {
+            Workspace.hideQuickMenu();
+        }
     }
 	
 	// Dashboard
