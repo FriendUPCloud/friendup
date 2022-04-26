@@ -2507,7 +2507,7 @@ function MakeTableList( entries, headers )
 }
 
 var workbenchMenus = new Array();
-function SetMenuEntries ( menu, entries )
+function SetMenuEntries( menu, entries )
 {
 	if( typeof ( workbenchMenus[menu] ) == 'undefined' ) 
 		workbenchMenus[menu] = new Array ();
@@ -2664,6 +2664,20 @@ var _screenTitleTimeout = null;
 var prevScreen = prevWindow = false;
 function CheckScreenTitle( screen, force )
 {	
+	// Support quickmenu
+	if( Workspace.setQuickMenu )
+	{
+        let wo = window.currentMovable;
+        if( wo && wo._window && wo._window.quickMenu )
+        {       
+       	    Workspace.setQuickMenu( wo._window.quickMenu, wo._window );
+        }
+        else if( currentScreen && currentScreen.quickMenu )
+        {
+            Workspace.setQuickMenu( currentScreen.quickMenu, currentScreen );
+        }
+    }
+	
 	// Dashboard
 	if( window.Workspace && Workspace.dashboard )
 		Workspace.dashboard.refresh();
