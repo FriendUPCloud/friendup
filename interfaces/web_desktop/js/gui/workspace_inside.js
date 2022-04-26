@@ -7760,10 +7760,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		                command: 'close'
 		            }
 		        };
-		    }
-		    else
-		    {
-		        currentMovable.quickMenu = false;
+		        currentMovable.parseQuickMenuMessage = function( msg )
+		        {
+		            switch( msg.command )
+		            {
+		                case 'close':
+		                    CloseView();
+		                    break;
+		            }
+		        }
 		    }
 		}
 		// Workspace screen menu

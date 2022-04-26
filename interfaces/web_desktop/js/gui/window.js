@@ -2501,6 +2501,16 @@ var View = function( args )
 		if( isMobile )
 			Workspace.exitMobileMenu();
 
+        // Set placeholder quickmenu
+        div.quickMenu = {
+            uniqueName: 'placeholder_' + div.id,
+            0: {
+                name: i18n( 'i18n_close' ),
+                icon: 'remove',
+                command: 'quit'
+            }
+        };
+
 		// Check to set mainview
 		if( window._getAppByAppId )
 		{
@@ -4126,7 +4136,7 @@ var View = function( args )
 	// Set content on window
 	this.setContent = function( content, cbk )
 	{
-		// Safe content without any scripts or styles!
+	    // Safe content without any scripts or styles!
 		SetWindowContent( this._window, this.cleanHTMLData( content ) );
 		if( cbk ) cbk();
 	}

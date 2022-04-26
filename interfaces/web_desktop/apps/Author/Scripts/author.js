@@ -35,15 +35,19 @@ Application.run = function( msg, iface )
 	    icon: 'caret-down',
 	    items: [ {
 	        name: i18n( 'menu_new' ),
+	        icon: 'file',
 	        command: 'new'
 	    }, {
 	        name: i18n( 'menu_load' ),
+	        icon: 'folder-open',
 	        command: 'load'
 	    }, {
 	        name: i18n( 'menu_save' ),
+	        icon: 'save',
 	        command: 'save'
 	    }, {
 	        name: i18n( 'menu_save_as' ),
+	        icon: 'list-alt',
 	        command: 'save_as'
 	    } ]
 	}, {
