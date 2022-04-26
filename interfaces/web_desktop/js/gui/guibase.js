@@ -2668,17 +2668,27 @@ function CheckScreenTitle( screen, force )
 	if( Workspace.setQuickMenu )
 	{
         let wo = window.currentMovable;
-        if( wo && wo._window && wo._window.quickMenu )
+        if( wo && wo.quickMenu )
         {       
-       	    Workspace.setQuickMenu( wo._window.quickMenu, wo._window );
+       	    Workspace.setQuickMenu( wo.quickMenu, wo );
         }
         else if( currentScreen && currentScreen.quickMenu )
         {
             Workspace.setQuickMenu( currentScreen.quickMenu, currentScreen );
         }
-        else if( Workspace.hideQuickMenu )
+        // Just make a new one if it does not exist
+        else if( wo )
         {
-            Workspace.hideQuickMenu();
+            wo.quickMenu = {
+                uniqueName: MD5( Math.random() * 1000 + ( Math.random() * 1000 ) + '' ),
+                items: [ { name: i18n( 'i18n_back' ), message: { command: 'back' } } ]
+            };
+            Workspace.setQuickMenu( wo.quickMenu, wo );
+        }
+        else
+        {
+            if( Workspace.hideQuickMenu )
+                Workspace.hideQuickMenu();
         }
     }
 	

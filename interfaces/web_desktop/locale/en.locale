@@ -243,6 +243,13 @@ i18n_your_apps                          : Apps
 i18n_favorites                          : Favorites
 i18n_menu                               : Menu
 
+i18n_new_folder                         : New folder
+i18n_new_file                           : New file
+i18n_new_document                       : New document
+i18n_new_presentation                   : New presentation
+i18n_new_spreadsheet                    : New spreadsheet
+i18n_new_text                           : New pure text document
+
 i18n_close_menu                         : Close menu
 i18n_delete_shortcut                    : Delete shortcut
 

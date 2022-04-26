@@ -7722,21 +7722,49 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Probably filemanager window
 		if( currentMovable )
 		{
+		    console.log( 'We have a movable' );
 		    // Excempt!
 		    // TODO: May be unnecessary
 		    if( !currentMovable.applicationId )
 		    {
-		        currentScreen.quickMenu = {
+		        currentMovable.quickMenu = {
 		            uniqueName: 'Workspace_Menu',
-		            items: [ {
-		                name: i18n( 'i18n_back' ),
-		                message: { 'command': 'back' }
-		            } ]
+		            0: {
+		                name: i18n( 'i18n_new_file' ),
+		                icon: 'caret-down',
+		                items: [ {
+		                    name: i18n( 'i18n_new_text' ),
+		                    icon: 'file-text',
+		                    command: 'new_text'
+		                }, {
+		                    name: i18n( 'i18n_new_document' ),
+		                    icon: 'file-word-o',
+		                    command: 'new_document'
+		                }, {
+		                    name: i18n( 'i18n_new_presentation' ),
+		                    icon: 'file-powerpoint-o',
+		                    command: 'new_presentation'
+		                }, {
+		                    name: i18n( 'i18n_new_spreadsheet' ),
+		                    icon: 'file-excel-o',
+		                    command: 'new_spreadsheet'
+		                } ]
+		            },
+		            1: {
+		                name: i18n( 'i18n_new_folder' ),
+		                icon: 'folder',
+		                command: 'new_folder'
+		            },
+		            2: {
+		                name: i18n( 'i18n_close' ),
+		                icon: 'remove',
+		                command: 'close'
+		            }
 		        };
 		    }
 		    else
 		    {
-		        currentScreen.quickMenu = false;
+		        currentMovable.quickMenu = false;
 		    }
 		}
 		// Workspace screen menu
