@@ -339,7 +339,7 @@ f.GroupID='%ld' AND f.Name='%s'",
 			
 			if( row[ 6 ] != NULL )
 			{
-				config = StringDuplicate( row[ 6 ] );
+				//config = StringDuplicate( row[ 6 ] );
 				if( row[ 6 ] != NULL )
 				{
 					char *visiblePtr = NULL;

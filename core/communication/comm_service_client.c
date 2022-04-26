@@ -44,9 +44,6 @@
 #include <communication/comm_msg.h>
 #include <system/systembase.h>
 
-extern pthread_cond_t InitCond;
-extern pthread_mutex_t InitMutex;
-
 extern SystemBase *SLIB;
 
 /**
@@ -93,26 +90,20 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 		return NULL;
 	}
 	
-	if( FRIEND_MUTEX_LOCK( &(serv->s_Mutex) ) == 0 )
+	COMMSERVICE_USE( serv );
+	
+	if( serv->s_Requests == NULL )
 	{
-		if( serv->s_Requests == NULL )
-		{
-			serv->s_Requests = cr;
-		}
-		else
-		{
-			serv->s_Requests->node.mln_Pred = (MinNode *)cr;
-			cr->node.mln_Succ = (MinNode *)serv->s_Requests;
-			serv->s_Requests = cr;
-		}
-		FRIEND_MUTEX_UNLOCK( &(serv->s_Mutex) );
+		serv->s_Requests = cr;
 	}
 	else
 	{
-		FERROR("Cannot lock mutex!\n");
-		FFree( cr ); 
-		return NULL;
+		serv->s_Requests->node.mln_Pred = (MinNode *)cr;
+		cr->node.mln_Succ = (MinNode *)serv->s_Requests;
+		serv->s_Requests = cr;
 	}
+	
+	COMMSERVICE_RELEASE( serv );
 
 	//int blocked = con->fc_Socket->s_Blocked;
 	
@@ -172,45 +163,46 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 			bs = cr->cr_Bs;
 			quit = TRUE;
 
-			if( FRIEND_MUTEX_LOCK( &serv->s_Mutex ) == 0 )
+			COMMSERVICE_USE( serv );
+			
+			if( cr == serv->s_Requests )
 			{
-				if( cr == serv->s_Requests )
+				CommRequest *next = (CommRequest *)serv->s_Requests->node.mln_Succ;
+				if( next != NULL )
 				{
-					CommRequest *next = (CommRequest *)serv->s_Requests->node.mln_Succ;
-					if( next != NULL )
-					{
-						next->node.mln_Pred = (MinNode *)NULL;
-						serv->s_Requests = next;
-					}
-					else
-					{
-						serv->s_Requests = NULL;
-					}
+					next->node.mln_Pred = (MinNode *)NULL;
+					serv->s_Requests = next;
 				}
 				else
 				{
-					CommRequest *next = (CommRequest *)cr->node.mln_Succ;
-					CommRequest *prev = (CommRequest *)cr->node.mln_Pred;
-					if( next != NULL )
-					{
-						prev->node.mln_Pred = (MinNode *)prev;
-						prev->node.mln_Succ = (MinNode *)next;
-					}
-					else
-					{
-						if( prev != NULL )
-						{
-							prev->node.mln_Succ = (MinNode *)NULL;
-						}
-					}
+					serv->s_Requests = NULL;
 				}
-				if( cr != NULL )
-				{
-					FFree( cr );
-					cr = NULL;
-				}
-				FRIEND_MUTEX_UNLOCK( &serv->s_Mutex );
 			}
+			else
+			{
+				CommRequest *next = (CommRequest *)cr->node.mln_Succ;
+				CommRequest *prev = (CommRequest *)cr->node.mln_Pred;
+				if( next != NULL )
+				{
+					prev->node.mln_Pred = (MinNode *)prev;
+					prev->node.mln_Succ = (MinNode *)next;
+				}
+				else
+				{
+					if( prev != NULL )
+					{
+						prev->node.mln_Succ = (MinNode *)NULL;
+					}
+				}
+			}
+			if( cr != NULL )
+			{
+				FFree( cr );
+				cr = NULL;
+			}
+			
+			COMMSERVICE_RELEASE( serv );
+		
 			break;
 		}
 	}

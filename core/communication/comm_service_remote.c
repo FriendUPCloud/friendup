@@ -175,8 +175,6 @@ int CommServiceRemoteStart( CommServiceRemote *s )
 	{	
 		Log( FLOG_INFO, "[CommServiceRemote] Communication service SERVER start\n");
 		
-		//pthread_mutex_init( &InitMutex, NULL );
-		
 		s->csr_Thread = ThreadNew( CommServiceRemoteThreadServer, s, TRUE, NULL );
 		
 		DEBUG("[CommServiceRemote] CommServiceStart, pointer to thread %p\n", s->csr_Thread );

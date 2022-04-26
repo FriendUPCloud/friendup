@@ -63,10 +63,6 @@ void *get_in_addr(const struct sockaddr *sa) {
 // [Cores]
 // servers=localhost@servername1,192.168.12.1@server2
 
-// we must be sure that task will wait until queue will be ready
-
-pthread_cond_t InitCond = PTHREAD_COND_INITIALIZER;
-pthread_mutex_t InitMutex = PTHREAD_MUTEX_INITIALIZER;
 
 void CommServiceSetupOutgoing( CommService *service );
 
@@ -137,7 +133,7 @@ void CommServiceDelete( CommService *s )
 		*/
 		
 		DEBUG2("[COMMSERV] CommunicationServiceDelete 2\n");
-		FRIEND_MUTEX_LOCK( &s->s_Mutex );
+		COMMSERVICE_USE( s );
 
 		CommRequest *cr = s->s_Requests;
 		while( cr != NULL )
@@ -147,7 +143,7 @@ void CommServiceDelete( CommService *s )
 			
 			cr = (CommRequest *) cr->node.mln_Succ;
 		}
-		FRIEND_MUTEX_UNLOCK( &s->s_Mutex );
+		COMMSERVICE_RELEASE( s );
 		
 		DEBUG2("[COMMSERV] CommunicationServiceDelete 3\n");
 		
@@ -216,7 +212,8 @@ void CommServiceDelete( CommService *s )
 			Log( FLOG_ERROR,"Cannot close pipe\n");
 		}
 		
-		FRIEND_MUTEX_LOCK( &s->s_Mutex );
+		COMMSERVICE_CHANGE_ON( s );
+		
 		SystemBase *lsb = (SystemBase *)s->s_SB;
 		FriendCoreManager *fcm = lsb->fcm;
 		
@@ -224,6 +221,10 @@ void CommServiceDelete( CommService *s )
 		// close incoming connections
 		
 		FConnection *con = s->s_Connections;
+		s->s_Connections = NULL;
+		
+		COMMSERVICE_CHANGE_OFF( s );
+		
 		FConnection *rcon = con;
 		while( con != NULL )
 		{
@@ -233,9 +234,6 @@ void CommServiceDelete( CommService *s )
 			DEBUG("[COMMSERV] Delete connection\n");
 			FConnectionDelete( rcon );
 		}
-		s->s_Connections = NULL;
-		
-		FRIEND_MUTEX_UNLOCK( &s->s_Mutex );
 		
 		DEBUG2("[COMMSERV] : pipes closed\n");
 		
@@ -283,8 +281,6 @@ int CommServiceStart( CommService *s )
 	if( s )
 	{
 		Log( FLOG_INFO, "[COMMSERV] Communication service SERVER start\n");
-
-		pthread_mutex_init( &InitMutex, NULL );
 
 #ifdef USE_SELECT
 		s->s_Thread = ThreadNew( CommServiceThreadServerSelect, s, TRUE, NULL );
@@ -924,29 +920,29 @@ int CommServiceThreadServer( FThread *ptr )
 										CommRequest *cr = NULL;
 										DEBUG("[COMMSERV] Response received!\n");
 										
-										if( FRIEND_MUTEX_LOCK( &(service->s_Mutex) ) == 0 )
-										{
-											DEBUG("[COMMSERV] lock set\n");
-											cr = service->s_Requests;
+										COMMSERVICE_USE( service );
 										
-											while( cr != NULL )
+										DEBUG("[COMMSERV] lock set\n");
+										cr = service->s_Requests;
+										
+										while( cr != NULL )
+										{
+											DEBUG("[COMMSERV] Going through requests %ld find %ld\n", df->df_Size, cr->cr_RequestID );
+											if( cr->cr_RequestID == df->df_Size )
 											{
-												DEBUG("[COMMSERV] Going through requests %ld find %ld\n", df->df_Size, cr->cr_RequestID );
-												if( cr->cr_RequestID == df->df_Size )
-												{
-													cr->cr_Bs = bs;
+												cr->cr_Bs = bs;
 
-													DEBUG("[COMMSERV] Message found by id\n");
-													break;
-												}
-												cr = (CommRequest *) cr->node.mln_Succ;
+												DEBUG("[COMMSERV] Message found by id\n");
+												break;
 											}
-											FRIEND_MUTEX_UNLOCK( &(service->s_Mutex) );
+											cr = (CommRequest *) cr->node.mln_Succ;
 										}
+										COMMSERVICE_RELEASE( service );
 									
 										if( cr != NULL )
 										{
 											DEBUG("[COMMSERV] Before sending messages\n");
+											
 											if( FRIEND_MUTEX_LOCK( &(service->s_CondMutex) ) == 0 )
 											{
 												pthread_cond_broadcast( &(service->s_DataReceivedCond) );
@@ -1624,7 +1620,7 @@ FConnection *CommServiceAddConnectionByAddr( CommService* s, char *addr )
 		return NULL;
 	}
 	
-	FConnection *cfcn = NULL;
+	COMMSERVICE_USE( s );
 	FConnection *con  = s->s_Connections;
 
 	while( con != NULL )
@@ -1633,11 +1629,13 @@ FConnection *CommServiceAddConnectionByAddr( CommService* s, char *addr )
 		{
 			if( con->fc_Socket != NULL )
 			{
+				COMMSERVICE_RELEASE( s );
 				return con;
 			}
 		}
 		con =  (FConnection *)con->node.mln_Succ;
 	}
+	COMMSERVICE_RELEASE( s );
 	
 	Socket *newsock = SocketConnectHost( s->s_SB, s->s_secured, addr, s->s_port, TRUE );
 	if( newsock == NULL )
@@ -1679,13 +1677,14 @@ int CommServiceDelConnection( CommService* s, FConnection *loccon, Socket *sock 
 	FConnection *con  = NULL, *prevcon;
 	
 	DEBUG("[CommServiceDelConnection] Start\n");
-	FRIEND_MUTEX_LOCK( &s->s_Mutex );
+	
 	//
 	// connection is server
 	//
 
 	// incomming connections are removed by epoll
 	
+	COMMSERVICE_USE( s );
 	con = s->s_Connections;
 	prevcon = con;
 
@@ -1699,8 +1698,8 @@ int CommServiceDelConnection( CommService* s, FConnection *loccon, Socket *sock 
 		prevcon = con;
 		con =  (FConnection *)con->node.mln_Succ;
 	}
-	
-	FRIEND_MUTEX_UNLOCK( &s->s_Mutex );
+
+	COMMSERVICE_RELEASE( s );
 	
 	DEBUG("[COMMSERV] Remove socket connection\n");
 	
@@ -1795,7 +1794,7 @@ int CommServiceDelConnection( CommService* s, FConnection *loccon, Socket *sock 
 }
 
 //
-//
+// FC - FC internal ping command
 //
 
 void *InternalPINGThread( void *d )
@@ -1806,9 +1805,7 @@ void *InternalPINGThread( void *d )
 	con->fc_PingInProgress = TRUE;
 	
 	CommService* s = (CommService *)con->fc_Service;
-	//DEBUG("CS %p\n", s );
 	SystemBase *lsb = (SystemBase *)s->s_SB;
-	//DEBUG("lsb %p\n", lsb );
 	FriendCoreManager *fcm = (FriendCoreManager *)lsb->fcm;
 	
 	//DEBUG("ping loop>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>%p IP [%s]\n", con, con->fc_Address );
@@ -1899,7 +1896,7 @@ void *InternalPINGThread( void *d )
 		}
 	}
 	
-DEBUG("bad resp %d\n", badResp );
+	DEBUG("bad resp %d\n", badResp );
 	
 	if( badResp == TRUE )
 	{
@@ -1960,26 +1957,24 @@ void CommServicePING( CommService* s )
 	SystemBase *lsb = (SystemBase *)s->s_SB;
 	FriendCoreManager *fcm = (FriendCoreManager *)lsb->fcm; //s->s_FCM;
 	
-	FRIEND_MUTEX_LOCK( &s->s_Mutex );
+	COMMSERVICE_USE( s );
+
 	FConnection *con = s->s_Connections;
-	FRIEND_MUTEX_UNLOCK( &s->s_Mutex );
-	
+
 	while( con != NULL )
 	{
-		//DEBUG("Send ping\n");
 		if( con->fc_PingInProgress == FALSE )
 		{
 			pthread_t t;
 			pthread_create( &t, NULL, &InternalPINGThread, con );
 		}
-		
+	
 		if( fcm->fcm_Shutdown == TRUE )
 		{
 			break;
 		}
-		
+	
 		con = (FConnection *)con->node.mln_Succ;
 	}
-	
-	//DEBUG("Mutex released\n");
+	COMMSERVICE_RELEASE( s );
 }

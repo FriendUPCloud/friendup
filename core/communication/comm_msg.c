@@ -802,6 +802,8 @@ DataForm *DataFormFromHttpToSync( char *fcid, Http *http, char *sessionid )
 		DEBUG("[DataFormFromHttp] generate DataForm\n");
 		df = DataFormNew( items );
 		DEBUG("[DataFormFromHttp] release memory\n");
+		
+		FFree( items );
 	}
 	
 	/*
@@ -841,11 +843,6 @@ DataForm *DataFormFromHttpToSync( char *fcid, Http *http, char *sessionid )
 		}
 	}
 
-	//if( sessionid != NULL )
-	//{
-	//	FFree( sessionid );
-	//}
-	
 	return df;
 }
 
