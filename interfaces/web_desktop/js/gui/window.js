@@ -2503,7 +2503,7 @@ var View = function( args )
 
         // Set placeholder quickmenu
         div.quickMenu = {
-            uniqueName: 'placeholder_' + div.id,
+            uniqueName: 'placeholder_' + ( div.id ? div.id : MD5( Math.random() * 1000 + ( Math.random() * 1000 ) + '' ) ),
             0: {
                 name: i18n( 'i18n_close' ),
                 icon: 'remove',
