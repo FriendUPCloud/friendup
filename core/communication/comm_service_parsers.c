@@ -336,52 +336,52 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 						if( req != NULL )
 						{
 							req->http_ParsedPostContent = paramhm;
-						}
 						
-						// we have to parse uri (path) to get it and put in proper way in the table
-						int i;
-						int urilen = strlen( uri );
+							// we have to parse uri (path) to get it and put in proper way in the table
+							int i;
+							int urilen = strlen( uri );
 						
-						memset( urlpath, 0, sizeof( urlpath ) );
-						urlpath[ 0 ] = uri;
+							memset( urlpath, 0, sizeof( urlpath ) );
+							urlpath[ 0 ] = uri;
 						
-						DEBUG( "[ParseMessage] Synchronize URI param: %s\n", uri );
+							DEBUG( "[ParseMessage] Synchronize URI param: %s\n", uri );
 						
-						for( i=1 ; i < urilen ; i++ )
-						{
-							//printf("%c  -", uri[ i ] );
-							if( uri[ i ] == '/' )
+							for( i=1 ; i < urilen ; i++ )
 							{
-								//DEBUG("->%s \n", urlpath[ pos ] );
-								uri[ i ] = 0;
-								i++;
-								pos++;
-								urlpath[ pos ] = &uri[ i ];
+								//printf("%c  -", uri[ i ] );
+								if( uri[ i ] == '/' )
+								{
+									//DEBUG("->%s \n", urlpath[ pos ] );
+									uri[ i ] = 0;
+									i++;
+									pos++;
+									urlpath[ pos ] = &uri[ i ];
+								}
 							}
-						}
 						
+							UserSession *uses = USMGetSessionBySessionID( lsb->sl_USM, sessionid );
 						
-						UserSession *uses = USMGetSessionBySessionID( lsb->sl_USM, sessionid );
+							req->http_RequestSource = HTTP_SOURCE_EXTERNAL_SERVER;
 						
-						req->http_RequestSource = HTTP_SOURCE_EXTERNAL_SERVER;
-						
-						Http *resp = SysWebRequest( lsb, &urlpath[ 1 ], &req, uses, &res );
-						if( resp != NULL )
-						{
-							MsgItem tags[] = {
-								{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
-								{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)(FBYTE *)fcm->fcm_ID },
-								{ ID_FCRI, (FULONG)reqid , MSG_INTEGER_VALUE },
-								{ ID_QUER, (FULONG)FC_QUERY_FRIENDCORE_SYNC, MSG_INTEGER_VALUE },
-								{ ID_RESP, (FULONG)strlen( resp->http_Content ) +1, (FULONG)resp->http_Content },
-								{ TAG_DONE, TAG_DONE, TAG_DONE }
-							};
+							Http *resp = SysWebRequest( lsb, &urlpath[ 1 ], &req, uses, &res );
+							if( resp != NULL )
+							{
+								MsgItem tags[] = {
+									{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
+									{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)(FBYTE *)fcm->fcm_ID },
+									{ ID_FCRI, (FULONG)reqid , MSG_INTEGER_VALUE },
+									{ ID_QUER, (FULONG)FC_QUERY_FRIENDCORE_SYNC, MSG_INTEGER_VALUE },
+									{ ID_RESP, (FULONG)strlen( resp->http_Content ) +1, (FULONG)resp->http_Content },
+									{ TAG_DONE, TAG_DONE, TAG_DONE }
+								};
 			
-							DEBUG( "[ParseMessage] Prepare response with id: %lu\n", reqid );
+								DEBUG( "[ParseMessage] Prepare response with id: %lu\n", reqid );
 			
-							respdf = DataFormNew( tags );
+								respdf = DataFormNew( tags );
 							
-							HttpFree( resp );
+								HttpFree( resp );
+							}
+							HttpFree( req );
 						}
 					}
 				}
