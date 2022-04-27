@@ -336,6 +336,7 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 						if( req != NULL )
 						{
 							req->http_ParsedPostContent = paramhm;
+							paramhm = NULL;	// it is released on the end but we will release it with HttpFree
 						
 							// we have to parse uri (path) to get it and put in proper way in the table
 							int i;
