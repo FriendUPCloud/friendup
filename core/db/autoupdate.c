@@ -464,6 +464,8 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 						BufStringDelete( errorString );
 					}
 				}
+				
+				DBUpdateDelete( dbu );
 			}
 
 			FFree( dbentries );
