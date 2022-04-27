@@ -366,8 +366,23 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 						req->http_RequestSource = HTTP_SOURCE_EXTERNAL_SERVER;
 						
 						Http *resp = SysWebRequest( lsb, &urlpath[ 1 ], &req, uses, &res );
-						
-						
+						if( resp != NULL )
+						{
+							MsgItem tags[] = {
+								{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
+								{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)(FBYTE *)fcm->fcm_ID },
+								{ ID_FCRI, (FULONG)reqid , MSG_INTEGER_VALUE },
+								{ ID_QUER, (FULONG)FC_QUERY_FRIENDCORE_SYNC, MSG_INTEGER_VALUE },
+								{ ID_RESP, (FULONG)strlen( resp->http_Content ) +1, (FULONG)resp->http_Content },
+								{ TAG_DONE, TAG_DONE, TAG_DONE }
+							};
+			
+							DEBUG( "[ParseMessage] Prepare response with id: %lu\n", reqid );
+			
+							respdf = DataFormNew( tags );
+							
+							HttpFree( resp );
+						}
 					}
 				}
 			}
