@@ -2667,6 +2667,28 @@ function CheckScreenTitle( screen, force )
 	// Support quickmenu
 	if( Workspace.setQuickMenu )
 	{
+		// When running with quickmenu, make sure we have an active view!
+        if( !window.currentMovable )
+        {
+        	let highest = -1;
+        	let highestView = false;
+        	for( let a in movableWindows )
+        	{
+        		let mov = movableWindows[a];
+        		let candidateZ = parseInt( mov.style.zIndex );
+        		if( candidateZ > highest )
+        		{
+        			highest = candidateZ;
+        			highestView = mov;
+        		}
+        	}
+        	if( highestView )
+        	{
+        		_ActivateWindow( highestView );
+        		return;
+        	}
+        }
+        // We do have a current movable, use it
         let wo = window.currentMovable;
         if( wo && wo.quickMenu )
         {       
