@@ -1155,6 +1155,8 @@ function _ActivateWindow( div, nopoll, e )
 	    if( window.hideDashboard )
 	        window.hideDashboard();
 	}
+	if( window.Workspace && window.Workspace.showQuickMenu )
+        Workspace.showQuickMenu();
 	
 	// Already activating
 	if( div.parentNode.classList.contains( 'Activating' ) )

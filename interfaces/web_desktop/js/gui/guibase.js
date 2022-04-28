@@ -2905,6 +2905,12 @@ function PollTaskbar( curr )
 	if( !document.body || !document.body.classList.contains( 'Inside' ) ) return;
 	if( ge( 'FriendScreenOverlay' ) && ge( 'FriendScreenOverlay' ).classList.contains( 'Visible' ) )
 		return;
+	
+	// Do we have dashboard?
+	if( window.Workspace && Workspace.dashboard )
+	{
+	    Workspace.dashboard.refreshDashboard();
+	}
 		
 	if( globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist' )
 	{
