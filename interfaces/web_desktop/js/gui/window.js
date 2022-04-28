@@ -223,6 +223,16 @@ function SetWindowTitle( div, titleStr )
 	// Update window
 	document.title = titleStr + ' - ' + Friend.windowBaseString;
 	
+	// Viewtitle (for other uses than title)
+	let vTitle = titleStr;
+	if( vTitle.indexOf( ' - ' ) > 0 )
+	{
+	    vTitle = vTitle.split( ' - ' );
+	    vTitle[0] = '';
+	    vTitle = vTitle.join( '' );
+	}
+	div.viewTitle.innerHTML = vTitle;
+	
 	// Also check tasks
 	let baseElement = GetTaskbarElement();
 	if( !baseElement ) return;
@@ -1138,6 +1148,13 @@ function _ActivateWindow( div, nopoll, e )
 	}
 
 	if( !e ) e = window.event;
+	
+	// TODO: Also for touch!
+	if( e.button == 0 )
+	{
+	    if( window.hideDashboard )
+	        window.hideDashboard();
+	}
 	
 	// Already activating
 	if( div.parentNode.classList.contains( 'Activating' ) )
@@ -2341,6 +2358,11 @@ var View = function( args )
 			viewContainer.className = 'ViewContainer';
 			viewContainer.style.display = 'none';
 			
+			// Set up view title
+			let viewTitle = document.createElement( 'div' );
+			viewTitle.className = 'ViewTitle';
+			viewContainer.appendChild( viewTitle );
+			
 			// Get icon for visualizations
 			if( applicationId )
 			{
@@ -2421,6 +2443,7 @@ var View = function( args )
 			if( div == 'CREATE' )
 			{	
 				div = document.createElement( 'div' );
+				
 				if( applicationId ) div.applicationId = applicationId;
 				div.parentWindow = false;
 				if( parentWindow )
@@ -2442,6 +2465,8 @@ var View = function( args )
 					divParent = document.body;
 				}
 			}
+			
+			div.viewTitle = viewTitle;
 			
 			// Designate
 			movableWindows[ id ] = div;
