@@ -330,6 +330,50 @@ DormantMaster =
 		}
 		// Remove ones that are one off events
 		evs[ obj.eventName ] = newL;
+	},
+	/*
+		handle event from an app and emit it to registered listeners
+	*/
+	handleEvent : function( event ) {
+		const self = this;
+		console.log( 'DormantMaster.handleEvent', event );
+		let door = null;
+		// loop through apps doors
+		for ( let l = self.appDoors.length; l; )
+		{
+			l--;
+			const d = self.appDoors[ l ];
+			console.log( 'door', d );
+			if ( d.doorId === event.doorId ) {
+				door = d;
+				break;
+			}
+		}
+		
+		if ( null == door ){
+			console.log( 'DormantMaster.handleEvent - no door was found', {
+				event : event,
+				doors : self.appDoors,
+			});
+			return;
+		}
+		
+		if ( null == door.listeners[ event.path ] || door.listeners[ event.path ] == 0 ) {
+			console.log( 'DormantMaster.handleEvent - no listeners for event', {
+				event     : event,
+				listeners : door.listeners,
+			});
+		}
+		else
+		{
+			// loop through listeners
+			for ( let l = door.listeners[ event.path ].length; l; )
+			{
+				l--;
+				const listenId = door.listeners[ event.path ][ l ];
+				door.listeners[ listenId ]( event.data );
+			}
+		}
 	}
 }
 
