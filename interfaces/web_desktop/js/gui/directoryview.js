@@ -4066,8 +4066,10 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 // unique     = wheather to use a unique view or not
 // targetView = the view to reuse
 //
-function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView )
+function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView, ocallback )
 {
+	if( !ocallback ) ocallback = false;
+	
 	// Make a copy of fileinfo
 	let fileInfo = {};
 	for( let a in oFileInfo )
@@ -4092,7 +4094,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 	//console.log('OpenWindowByFileinfo fileInfo is ....... [] ',iconObject);
 	if( fileInfo.MetaType == 'ExecutableShortcut' )
 	{
-		ExecuteApplication( fileInfo.Filename );
+		ExecuteApplication( fileInfo.Filename, false, ocallback );
 	}
 	else if( fileInfo.Type == 'Dormant' )
 	{
@@ -4183,11 +4185,14 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		we.refresh ();
 		
 		win = null;
+		
+		if( ocallback ) ocallback();
 	}
 	else if( fileInfo.Type == 'DormantFunction' )
 	{
 		//fileInfo.Dormant.execute( fileInfo.Title ? fileInfo.Title : fileInfo.Filename );
 		fileInfo.Dormant.execute( fileInfo );
+		if( ocallback ) ocallback();
 	}
 	else if( iconObject.extension == 'mp3' || iconObject.extension == 'ogg' )
 	{
@@ -4205,6 +4210,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		win.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%" class="LoadingAnimation"><iframe style="border: 0; position: absolute; top: 0; left: 0; height: 100%; width: 100%" src="' + urlsrc + '"></iframe></div>' );
 		
 		win = null;
+		
+		if( ocallback ) ocallback();
 	}
 	// Web bookmarks
 	else if( iconObject.extension == 'url' )
@@ -4219,6 +4226,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 				Alert( i18n( 'i18n_follow_link' ), '<p class="Layout">' + ( d.notes.length ? d.notes : i18n( 'i18n_follow_link_desc' ) ) + ':</p>' + '<p class="LineHeight TextCenter Rounded Padding BackgroundNegative Negative"><strong>' + i18n( 'i18n_open_link' ) + ': <a onmouseup="CloseView()" href="' + d.link + '" target="_blank" class="Negative">' + d.name + '</a></strong></p>', i18n( 'i18n_cancel' ) );
 
 				window.open( d.link, '_blank' );
+				if( ocallback ) ocallback();
 			}
 			catch( e )
 			{
@@ -4229,7 +4237,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 	}
 	else if( iconObject.extension == 'library' || iconObject.extension == 'module' )
 	{
-		ExecuteApplication( 'FriendBrowser', iconObject.Path );
+		ExecuteApplication( 'FriendBrowser', iconObject.Path, ocallback );
 	}
 	else if(
 		iconObject.extension.toLowerCase() == 'jpeg' ||
@@ -4244,13 +4252,13 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 	// Run scripts in new shell
 	else if( iconObject.extension == 'run' )
 	{
-		return ExecuteApplication( 'FriendShell', "execute " + iconObject.Path );
+		return ExecuteApplication( 'FriendShell', "execute " + iconObject.Path, ocallback );
 	}
 	// Run scripts in new shell
 	else if( iconObject.Extension && iconObject.Extension == 'application' )
 	{
 		let jsx = iconObject.Path + iconObject.folderInfo.jsx;
-		return ExecuteApplication( 'FriendShell', "execute " + jsx );
+		return ExecuteApplication( 'FriendShell', "execute " + jsx, ocallback );
 	}
 	else if( iconObject.extension == 'ogv' || iconObject.extension == 'mov' || iconObject.extension == 'avi' || iconObject.extension == 'mp4' || iconObject.extension == 'mpg' )
 	{
@@ -4270,6 +4278,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			let urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : url ); 
 			
 			newWin.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%" class="LoadingAnimation"><video id="target_' + num + '" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" src="' + urlsrc + '" controls="controls" autoplay="autoplay" ondblclick="Workspace.fullscreen( this )" ontouchstart="touchDoubleClick( this, function( ele ){ Workspace.fullscreen( ele ); } )"></video></div>' );
+			if( ocallback ) ocallback();
 		}, '&mode=rs' );
 		win = null;
 	}
@@ -4287,7 +4296,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			// Run as a normal app
 			if( data.match( /Application.run/i ) )
 			{
-				ExecuteJSX( data, title, false, iconObject.Path );
+				ExecuteJSX( data, title, false, iconObject.Path, ocallback );
 			}
 			// Run in a window
 			else
@@ -4298,6 +4307,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					height: 480
 				} );
 				w.setJSXContent( data, title );
+				if( ocallback ) ocallback();
 			}
 		}
 		f.load();
@@ -4345,6 +4355,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			w.flags.minimized = false;
 			w.activate();
 			w.toFront();
+			if( ocallback ) ocallback();
 			return targetView.refresh(); 
 		}
 		else w = new View ( {
@@ -4358,6 +4369,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			'volume'    : isVolume,
 			'clickableTitle': true
 		} );
+		
+		if( ocallback ) ocallback();
 
 		// Ok, window probably was already opened, try to activate window
 		if( !w.ready )

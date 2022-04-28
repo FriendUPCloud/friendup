@@ -2108,6 +2108,13 @@ function CloseView( win, delayed )
 	
 	if( isMobile && Workspace.redrawIcons )
 		Workspace.redrawIcons();
+	
+	if( !currentMovable )
+	{
+	    // If we have a dashboard
+		if( window.showDashboard )
+		    showDashboard();
+	}
 }
 // Obsolete!!!
 CloseWindow = CloseView;

@@ -586,6 +586,10 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					this.parentNode.removeChild( this );
 					Workspace.applications = out;
 					Workspace.updateTasks();
+					
+					// If we have a dashboard
+					if( window.showDashboard )
+					    showDashboard();
 				}
 				// Tell the application to clean up first
 				else
@@ -1427,6 +1431,10 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 					}
 					Workspace.applications = out;
 					Workspace.updateTasks();
+					
+					// If we have a dashboard
+					if( window.showDashboard )
+					    showDashboard();
 				}
 				else
 				{
