@@ -1089,7 +1089,10 @@ function apiWrapper( event, force )
 					case 'delappevents':
 						DormantMaster.delApplicationEvents(msg.applicationName);
 						break;
-						// Make proxy object
+					case 'emit':
+						DormantMaster.handleEvent( msg );
+						break;
+				  	// Make proxy object
 					case 'addAppDoor':
 
 						// Make sure we have a unique name!
@@ -1116,6 +1119,7 @@ function apiWrapper( event, force )
 							title         : namnum,
 							doorId        : msg.doorId,
 							applicationId : msg.applicationId,
+			   				listeners     : {},
 							getDoor: function ()
 							{
 								var icon = 'apps/' + msg.title + '/icon.png';
@@ -1133,7 +1137,7 @@ function apiWrapper( event, force )
 									Flags    : '',
 									Type     : 'Dormant',
 									Path	 : namnum + ':',
-									Dormant  : this
+									Dormant  : this,
 								};
 							},
 							addWindow: function( win )
@@ -1255,6 +1259,21 @@ function apiWrapper( event, force )
 								app.contentWindow.postMessage(
 										JSON.stringify(ret), '*'
 								);
+							},
+							listen : function( eventPath, listener )
+							{
+								console.log( 'door.listen', [ eventPath, listener, this ]);
+								const self = this;
+								const listenId = friendUP.tool.uid();
+								if ( null == self.listeners[ eventPath ] )
+								{
+									self.listeners[ eventPath ] = [];
+								}
+								
+								self.listeners[ eventPath ].push( listenId );
+								self.listeners[ listenId ] = listener;
+								
+								return listenId;
 							},
 							dosAction: function( func, args, callback )
 							{
