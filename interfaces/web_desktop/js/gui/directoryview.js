@@ -699,7 +699,7 @@ DirectoryView.prototype.ShowFileBrowser = function()
 		let d = document.createElement( 'div' );
 		if( this.sidebarbackground )
 		{
-			d.className = 'FileBrowserContainer BackgroundHeavier ScrollBarSmall SmoothScrolling';
+			d.className = 'FileBrowserContainer BackgroundDefault ScrollBarSmall SmoothScrolling';
 		}
 		else 
 		{

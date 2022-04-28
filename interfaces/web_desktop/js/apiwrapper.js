@@ -1832,6 +1832,16 @@ function apiWrapper( event, force )
 								win.focusOnElement( msg.identifier, msg.flag );
 							}
 							break;
+					    // Set quick menu on window
+					    case 'setQuickMenu':
+					        msg.data.uniqueName = MD5( msg.applicationId + '-' + msg.viewId );
+					        if( win )
+					        {
+					            win._window.parentNode.quickMenu = msg.data;
+					        }
+					        CheckScreenTitle();
+					        break;
+					    // Set menu items on window
 						case 'setMenuItems':
 							if( win )
 								win.setMenuItems( msg.data, msg.applicationId, msg.viewId );

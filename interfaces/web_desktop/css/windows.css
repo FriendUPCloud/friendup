@@ -59,6 +59,9 @@ html body[singletask] .View > .Title
 	border-radius: 0;
 	box-shadow: none;
 }
+
+.ViewContainer > .ViewTitle { display: none; }
+
 html body[singletask] .View > .Title
 {
 	border-top: 1px solid rgba(255,255,255,0.05);

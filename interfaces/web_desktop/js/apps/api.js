@@ -2665,6 +2665,30 @@ function View( flags )
 		} );
 	}
 
+    // Set quickmenu (displays where supported)
+    this.setQuickMenu = function( object )
+    {
+        // Recursive translator
+		function applyi18n( object )
+		{
+			for( let a = 0; a < object.length; a++ )
+			{
+				object[a].name = i18n( object[a].name );
+				if( object[a].items && typeof( object[a].items ) == 'array' )
+					object[a].items = applyi18n( object[a].items );
+			}
+			return object;
+		}
+		
+		object = applyi18n( object );
+		Application.sendMessage( {
+		    type:   'view',
+		    method: 'setQuickMenu',
+		    viewId: viewId,
+		    data:   object
+		} );
+    }
+
 	// Sets the menu item on view element
 	this.setMenuItems = function( object )
 	{
@@ -2684,10 +2708,10 @@ function View( flags )
 		object = applyi18n( object );
 
 		Application.sendMessage( {
-			type:     'view',
-			method:   'setMenuItems',
+			type:   'view',
+			method: 'setMenuItems',
 			viewId: viewId,
-			data:     object
+			data:   object
 		} );
 	}
 

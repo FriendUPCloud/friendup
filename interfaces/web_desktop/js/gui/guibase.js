@@ -2507,7 +2507,7 @@ function MakeTableList( entries, headers )
 }
 
 var workbenchMenus = new Array();
-function SetMenuEntries ( menu, entries )
+function SetMenuEntries( menu, entries )
 {
 	if( typeof ( workbenchMenus[menu] ) == 'undefined' ) 
 		workbenchMenus[menu] = new Array ();
@@ -2664,6 +2664,56 @@ var _screenTitleTimeout = null;
 var prevScreen = prevWindow = false;
 function CheckScreenTitle( screen, force )
 {	
+	// Support quickmenu
+	if( Workspace.setQuickMenu )
+	{
+		// When running with quickmenu, make sure we have an active view!
+        if( !window.currentMovable )
+        {
+        	let highest = -1;
+        	let highestView = false;
+        	for( let a in movableWindows )
+        	{
+        		let mov = movableWindows[a];
+        		let candidateZ = parseInt( mov.style.zIndex );
+        		if( candidateZ > highest )
+        		{
+        			highest = candidateZ;
+        			highestView = mov;
+        		}
+        	}
+        	if( highestView )
+        	{
+        		_ActivateWindow( highestView );
+        		return;
+        	}
+        }
+        // We do have a current movable, use it
+        let wo = window.currentMovable;
+        if( wo && wo.quickMenu )
+        {       
+       	    Workspace.setQuickMenu( wo.quickMenu, wo );
+        }
+        else if( currentScreen && currentScreen.quickMenu )
+        {
+            Workspace.setQuickMenu( currentScreen.quickMenu, currentScreen );
+        }
+        // Just make a new one if it does not exist
+        else if( wo )
+        {
+            wo.quickMenu = {
+                uniqueName: MD5( Math.random() * 1000 + ( Math.random() * 1000 ) + '' ),
+                items: [ { name: i18n( 'i18n_back' ), message: { command: 'back' } } ]
+            };
+            Workspace.setQuickMenu( wo.quickMenu, wo );
+        }
+        else
+        {
+            if( Workspace.hideQuickMenu )
+                Workspace.hideQuickMenu();
+        }
+    }
+	
 	// Dashboard
 	if( window.Workspace && Workspace.dashboard )
 		Workspace.dashboard.refresh();

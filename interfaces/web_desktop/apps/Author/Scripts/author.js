@@ -29,6 +29,37 @@ Application.run = function( msg, iface )
 		return false;
 	}
 	
+	// Set up the quick menu items ---------------------------------------------
+	w.setQuickMenu( [ {
+	    name: i18n( 'menu_file' ),
+	    icon: 'caret-down',
+	    items: [ {
+	        name: i18n( 'menu_new' ),
+	        icon: 'file',
+	        command: 'new'
+	    }, {
+	        name: i18n( 'menu_load' ),
+	        icon: 'folder-open',
+	        command: 'load'
+	    }, {
+	        name: i18n( 'menu_save' ),
+	        icon: 'save',
+	        command: 'save'
+	    }, {
+	        name: i18n( 'menu_save_as' ),
+	        icon: 'list-alt',
+	        command: 'save_as'
+	    } ]
+	}, {
+	    name: i18n( 'menu_print' ),
+	    icon: 'print',
+	    command: 'print'
+	}, {
+	    name: i18n( 'i18n_close' ),
+	    icon: 'remove',
+	    command: 'quit'
+	} ] );
+	
 	// Set up the main menu items ----------------------------------------------
 	w.setMenuItems( [
 		{

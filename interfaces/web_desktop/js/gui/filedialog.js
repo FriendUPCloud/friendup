@@ -244,6 +244,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 
 		self.dialogWindow = w;
 		w.dialog = self;
+		w.content.classList.add( 'FileDialog' );
 
 		// Default path
 		self.path = path ? path : defaultPath;

@@ -18,7 +18,7 @@ var WorkspaceMenu =
 	},
 	show: function( resetMode )
 	{	
-		hideKeyboard();
+	    hideKeyboard();
 		
 		WorkspaceMenu.scrolling = false;
 		
