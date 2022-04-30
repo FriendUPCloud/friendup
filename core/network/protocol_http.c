@@ -828,7 +828,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 					{
 						//FileShared *fs = NULL;
 						char query[ 1024 ];
-						int entries = 0;
 
 						Log( FLOG_DEBUG, "[ProtocolHttp] Shared file hash %s name %s\n", path->p_Parts[ 1 ], path->p_Parts[ 2 ] );
 
@@ -842,10 +841,11 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							char *fs_Name = NULL;
 							char *fs_Type = NULL;
 							char *fs_Path = NULL;
-							FBOOL sessionIDGenerated = FALSE;
+							char *accessLevel = NULL;
+							char *externalID = NULL;
 
 							DEBUG("First call releated to shared files did not return any results\n");
-							sqllib->SNPrintF( sqllib, query, 1024, "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,fs.ID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID where `Hash`='%s'", path->p_Parts[ 1 ] );
+							sqllib->SNPrintF( sqllib, query, 1024, "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,fs.ID,fs.DstUserSID,fs.DstExternID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID where `Hash`='%s'", path->p_Parts[ 1 ] );
 							
 							void *res = sqllib->Query( sqllib, query );
 							if( res != NULL )
@@ -879,8 +879,43 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 										char *end;
 										fsysID = strtoul( row[ 5 ], &end, 0 );
 									}
+									if( row[ 6 ] != NULL )
+									{
+										accessLevel = StringDuplicate( row[ 6 ] );
+									}
+									if( row[ 7 ] != NULL )
+									{
+										externalID = StringDuplicate( row[ 7 ] );
+									}
 								}
 								sqllib->FreeResult( sqllib, res );
+							}
+							
+							FBOOL haveAccess = FALSE;
+							
+							//
+							// we got data from database, now we are checking access
+							//
+							
+							if( accessLevel != NULL )
+							{
+								// public available files do not need any checking
+								if( strcmp( accessLevel, "Public" ) == 0 )
+								{
+									haveAccess = TRUE;
+								}
+								else	
+								{
+									HashmapElement *idparam = GetHEReq( request, "id" );
+
+									if( idparam != NULL && idparam->hme_Data != NULL )
+									{
+										if( strcmp( externalID, idparam->hme_Data ) == 0 )
+										{
+											haveAccess = TRUE;
+										}
+									}
+								}
 							}
 
 							// Immediately drop here..
@@ -890,267 +925,291 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							UserSession *session = USMCreateTemporarySession( SLIB->sl_USM, sqllib, fs_IDUser, 0 );
 
 							Log( FLOG_DEBUG,"Check variables fs_Name: %s fs_DeviceName: %s fs_Path: %s\n", fs_Name, fs_DeviceName, fs_Path );
-							//if( ( fs = sqllib->Load( sqllib, FileSharedTDesc, query, &entries ) ) != NULL )
-							if( fs_Name != NULL && fs_DeviceName != NULL && fs_Path != NULL )
+							
+							if( haveAccess == TRUE )
 							{
-								FBOOL mountedWithoutUser = FALSE;
-								char *error = NULL;
-								CacheFile *cf = NULL;
-								char *mime = NULL;
-								File *rootDev = NULL;
-
-								// check if user is loaded
-								User *u = UMGetUserByID( SLIB->sl_UM, fs_IDUser );
-								if( u != NULL )
+								if( fs_Name != NULL && fs_DeviceName != NULL && fs_Path != NULL )
 								{
-									rootDev = UserGetDeviceByName( u, fs_DeviceName );
-								} // if user is not in memory (and his drives), we must mount drives only
+									FBOOL mountedWithoutUser = FALSE;
+									char *error = NULL;
+									CacheFile *cf = NULL;
+									char *mime = NULL;
+									File *rootDev = NULL;
+
+									// check if user is loaded
+									User *u = UMGetUserByID( SLIB->sl_UM, fs_IDUser );
+									if( u != NULL )
+									{
+										rootDev = UserGetDeviceByName( u, fs_DeviceName );
+									} // if user is not in memory (and his drives), we must mount drives only
 								
-								if( rootDev == NULL )
-								{
-									struct TagItem tags[] = {
-										{FSys_Mount_Type, (FULONG)fs_Type },
-										{FSys_Mount_Name, (FULONG)fs_DeviceName },
-										{FSys_Mount_UserID, (FULONG)fs_IDUser },
-										{FSys_Mount_Owner, (FULONG)NULL },
-										{FSys_Mount_UserSession, (FULONG)session },
-										{TAG_DONE, TAG_DONE}
-									};
+									if( rootDev == NULL )
+									{
+										struct TagItem tags[] = {
+											{FSys_Mount_Type, (FULONG)fs_Type },
+											{FSys_Mount_Name, (FULONG)fs_DeviceName },
+											{FSys_Mount_UserID, (FULONG)fs_IDUser },
+											{FSys_Mount_Owner, (FULONG)NULL },
+											{FSys_Mount_UserSession, (FULONG)session },
+											{TAG_DONE, TAG_DONE}
+										};
 									
-									DEBUG("MountFSNoUser\n");
+										DEBUG("MountFSNoUser\n");
 									
-									int err = MountFSNoUser( SLIB->sl_DeviceManager, (struct TagItem *)&tags, &(rootDev), &error );
-									if( err != 0 )
-									{
-										Log( FLOG_ERROR,"Cannot mount device, device '%s' will be unmounted. FERROR %d\n", fs_DeviceName, err );
-									}
-									mountedWithoutUser = TRUE;
-								}
-								
-								if( error != NULL )
-								{
-									FFree( error );
-								}
-
-								DEBUG("[ProtocolHttp] Device taken from DB/Session , devicename %s\n", fs_DeviceName );
-
-								if( rootDev != NULL )
-								{
-									FHandler *actFS = (FHandler *)rootDev->f_FSys;
-									int cacheState = CACHE_NOT_SUPPORTED;
-
-									char *extension = GetExtension( fs_Path );
-
-									// Use the extension if possible
-									if( strlen( extension ) )
-									{
-										mime = StringDuplicate( MimeFromExtension( extension ) );
-									}
-									else
-									{
-										mime = StringDuplicate( "application/octet-stream" );
-									}
-
-									//add mounting and reading files from FS
-									struct TagItem tags[] = {
-										{ HTTP_HEADER_CONTENT_TYPE, (FULONG)mime },
-										{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-										{ HTTP_HEADER_CACHE_CONTROL, (FULONG )StringDuplicate( "max-age = 3600" ) },
-										{ TAG_DONE, TAG_DONE }
-									};
-
-									// 0 = filesystem do not provide modify timestamp
-									time_t tim = actFS->GetChangeTimestamp( rootDev, fs_Path );
-									// there is no need to cache files which are stored on local disk
-									if( tim == 0 ) //|| strcmp( actFS->GetPrefix(), "local" ) )
-									{
-										Log( FLOG_DEBUG,"No cache support\n" );
-									}
-									else
-									{
-										cf = CacheUFManagerFileGet( SLIB->sl_CacheUFM, fs_IDUser, rootDev->f_ID, fs_Path );
-
-										// if TRUE file must be reloaded
-										if( cf != NULL )
+										int err = MountFSNoUser( SLIB->sl_DeviceManager, (struct TagItem *)&tags, &(rootDev), &error );
+										if( err != 0 )
 										{
-											cf->cf_ModificationTimestamp = tim;
-											if( cf->cf_ModificationTimestamp != tim )
-											{
-												cacheState = CACHE_FILE_REQUIRE_REFRESH;		// we can use same pointer to file, but there is need to store it again
-											}
-											else
-											{
-												cacheState = CACHE_FILE_CAN_BE_USED;		// cache have last file, we can use it
-											}
+											Log( FLOG_ERROR,"Cannot mount device, device '%s' will be unmounted. FERROR %d\n", fs_DeviceName, err );
+										}
+										mountedWithoutUser = TRUE;
+									}
+								
+									if( error != NULL )
+									{
+										FFree( error );
+									}
+
+									DEBUG("[ProtocolHttp] Device taken from DB/Session , devicename %s\n", fs_DeviceName );
+
+									if( rootDev != NULL )
+									{
+										FHandler *actFS = (FHandler *)rootDev->f_FSys;
+										int cacheState = CACHE_NOT_SUPPORTED;
+
+										char *extension = GetExtension( fs_Path );
+
+										// Use the extension if possible
+										if( strlen( extension ) )
+										{
+											mime = StringDuplicate( MimeFromExtension( extension ) );
 										}
 										else
 										{
-											cacheState = CACHE_FILE_MUST_BE_CREATED;		// file do not exist in cache, we can create new one
+											mime = StringDuplicate( "application/octet-stream" );
 										}
-									}
 
-									if( cacheState == CACHE_FILE_CAN_BE_USED )
-									{
-										int resp = 0;
-										int dataread = 0;
+										//add mounting and reading files from FS
+										struct TagItem tags[] = {
+											{ HTTP_HEADER_CONTENT_TYPE, (FULONG)mime },
+											{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+											{ HTTP_HEADER_CACHE_CONTROL, (FULONG )StringDuplicate( "max-age = 3600" ) },
+											{ TAG_DONE, TAG_DONE }
+										};
 
-										cf->cf_Fp = fopen( cf->cf_StorePath, "rb" );
-										if( cf->cf_Fp != NULL )
+										// 0 = filesystem do not provide modify timestamp
+										time_t tim = actFS->GetChangeTimestamp( rootDev, fs_Path );
+										// there is no need to cache files which are stored on local disk
+										if( tim == 0 ) //|| strcmp( actFS->GetPrefix(), "local" ) )
 										{
-											char *tbuffer = FMalloc( SHARING_BUFFER_SIZE );
-											if( tbuffer != NULL )
+											Log( FLOG_DEBUG,"No cache support\n" );
+										}
+										else
+										{
+											cf = CacheUFManagerFileGet( SLIB->sl_CacheUFM, fs_IDUser, rootDev->f_ID, fs_Path );
+
+											// if TRUE file must be reloaded
+											if( cf != NULL )
 											{
-												while( !feof( cf->cf_Fp ) )
+												cf->cf_ModificationTimestamp = tim;
+												if( cf->cf_ModificationTimestamp != tim )
 												{
-													if( resp == 0 && dataread > 0 )
-													{
-														response = HttpNewSimple( HTTP_200_OK, tags );
-														HttpWrite( response, request->http_Socket );
-														resp = 1;
-													}
-													dataread = fread( tbuffer, 1, SHARING_BUFFER_SIZE, cf->cf_Fp );
-													request->http_Socket->s_Interface->SocketWrite( request->http_Socket, tbuffer, dataread );
+													cacheState = CACHE_FILE_REQUIRE_REFRESH;		// we can use same pointer to file, but there is need to store it again
 												}
-												FFree( tbuffer );
-											}
-											fclose( cf->cf_Fp );
-										}
-
-										if( resp == 0 )
-										{
-											response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
-											HttpWrite( response, request->http_Socket );
-										}
-
-										result = 200;
-
-										HttpFree( response );
-										response = NULL;
-									}
-									else
-									{
-										DEBUG("CACHE STATE: %d\n", cacheState );
-										FILE *cffp = NULL;
-
-										if( cacheState == CACHE_FILE_MUST_BE_CREATED )
-										{
-											cf = CacheFileNew( fs_Path );
-											cf->cf_Fp = fopen( cf->cf_StorePath, "wb" );
-											cf->cf_ModificationTimestamp = tim;
-											cf->cf_FileSize = 0;
-											cffp = cf->cf_Fp;
-										}
-										else if( cacheState == CACHE_FILE_REQUIRE_REFRESH )
-										{
-											cf->cf_Fp = fopen( cf->cf_StorePath, "wb" );
-											cf->cf_FileSize = 0;
-											cffp = cf->cf_Fp;
-										}
-
-										// We need to get the sessionId if we can!
-										// currently from table we read UserID
-
-										FileFillSessionID( rootDev, session );
-
-										if( actFS != NULL )
-										{
-											char *filePath = fs_Path;
-											unsigned int i;
-
-											for( i = 0; i < strlen( fs_Path ); i++ )
-											{
-												if( fs_Path[ i ] == ':' )
+												else
 												{
-													filePath = &(fs_Path[ i + 1 ]);
+													cacheState = CACHE_FILE_CAN_BE_USED;		// cache have last file, we can use it
 												}
 											}
-
-											DEBUG("[ProtocolHttp] File will be opened now %s\n", filePath );
-
-											File *fp = ( File *)actFS->FileOpen( rootDev, filePath, "rs" );
-											if( fp != NULL )
+											else
 											{
-												int resp = 0;
-												
-												//fp->f_Stream = request->h_Stream;
-												//fp->f_Socket = request->h_Socket;
-												//fp->f_WSocket = request->h_WSocket;
-												//fp->f_Stream = TRUE;
+												cacheState = CACHE_FILE_MUST_BE_CREATED;		// file do not exist in cache, we can create new one
+											}
+										}
 
-												int dataread;
+										if( cacheState == CACHE_FILE_CAN_BE_USED )
+										{
+											int resp = 0;
+											int dataread = 0;
 
+											cf->cf_Fp = fopen( cf->cf_StorePath, "rb" );
+											if( cf->cf_Fp != NULL )
+											{
 												char *tbuffer = FMalloc( SHARING_BUFFER_SIZE );
 												if( tbuffer != NULL )
 												{
-													DEBUG("tbuffer\n");
-													while( ( dataread = actFS->FileRead( fp, tbuffer, SHARING_BUFFER_SIZE ) ) != -1 )
+													while( !feof( cf->cf_Fp ) )
 													{
-														DEBUG("inside of loop: read %d\n", dataread );
 														if( resp == 0 && dataread > 0 )
 														{
 															response = HttpNewSimple( HTTP_200_OK, tags );
 															HttpWrite( response, request->http_Socket );
 															resp = 1;
-															
-															request->http_Socket->s_Interface->SocketWrite( request->http_Socket, tbuffer, dataread );
 														}
-														else
-														{
-															request->http_Socket->s_Interface->SocketWrite( request->http_Socket, tbuffer, dataread );
-														}
-														
-														if( cffp != NULL )
-														{
-															DEBUG("Store %d\n", dataread );
-															fwrite( tbuffer, 1, dataread, cffp );
-															cf->cf_FileSize += dataread;
-														}
+														dataread = fread( tbuffer, 1, SHARING_BUFFER_SIZE, cf->cf_Fp );
+														request->http_Socket->s_Interface->SocketWrite( request->http_Socket, tbuffer, dataread );
 													}
 													FFree( tbuffer );
 												}
-												DEBUG("should I send fail? %d\n", resp );
-												
-												if( resp == 0 )
-												{
-													response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
-													HttpWrite( response, request->http_Socket );
+												fclose( cf->cf_Fp );
+											}
+
+											if( resp == 0 )
+											{
+												response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
+												HttpWrite( response, request->http_Socket );
+											}
+
+											result = 200;
+
+											HttpFree( response );
+											response = NULL;
+										}
+										else
+										{
+											DEBUG("CACHE STATE: %d\n", cacheState );
+											FILE *cffp = NULL;
+
+											if( cacheState == CACHE_FILE_MUST_BE_CREATED )
+											{
+												cf = CacheFileNew( fs_Path );
+												cf->cf_Fp = fopen( cf->cf_StorePath, "wb" );
+												cf->cf_ModificationTimestamp = tim;
+												cf->cf_FileSize = 0;
+												cffp = cf->cf_Fp;
+											}
+											else if( cacheState == CACHE_FILE_REQUIRE_REFRESH )
+											{
+												cf->cf_Fp = fopen( cf->cf_StorePath, "wb" );
+												cf->cf_FileSize = 0;
+												cffp = cf->cf_Fp;
 												}
 
-												result = 200;
+											// We need to get the sessionId if we can!
+											// currently from table we read UserID
 
-												HttpFree( response );
-												response = NULL;
+											FileFillSessionID( rootDev, session );
 
-												actFS->FileClose( rootDev, fp );
+											if( actFS != NULL )
+											{
+												char *filePath = fs_Path;
+												unsigned int i;
+
+												for( i = 0; i < strlen( fs_Path ); i++ )
+												{
+													if( fs_Path[ i ] == ':' )
+													{
+														filePath = &(fs_Path[ i + 1 ]);
+													}
+												}
+
+												DEBUG("[ProtocolHttp] File will be opened now %s\n", filePath );
+
+												File *fp = ( File *)actFS->FileOpen( rootDev, filePath, "rs" );
+												if( fp != NULL )
+												{
+													int resp = 0;
+												
+													//fp->f_Stream = request->h_Stream;
+													//fp->f_Socket = request->h_Socket;
+													//fp->f_WSocket = request->h_WSocket;
+													//fp->f_Stream = TRUE;
+
+													int dataread;
+
+													char *tbuffer = FMalloc( SHARING_BUFFER_SIZE );
+													if( tbuffer != NULL )
+													{
+														DEBUG("tbuffer\n");
+														while( ( dataread = actFS->FileRead( fp, tbuffer, SHARING_BUFFER_SIZE ) ) != -1 )
+														{
+															DEBUG("inside of loop: read %d\n", dataread );
+															if( resp == 0 && dataread > 0 )
+															{
+																response = HttpNewSimple( HTTP_200_OK, tags );
+																HttpWrite( response, request->http_Socket );
+																resp = 1;
+															
+																request->http_Socket->s_Interface->SocketWrite( request->http_Socket, tbuffer, dataread );
+															}
+															else
+															{
+																request->http_Socket->s_Interface->SocketWrite( request->http_Socket, tbuffer, dataread );
+															}
+														
+															if( cffp != NULL )
+															{
+																DEBUG("Store %d\n", dataread );
+																fwrite( tbuffer, 1, dataread, cffp );
+																cf->cf_FileSize += dataread;
+															}
+														}
+														FFree( tbuffer );
+													}
+													DEBUG("should I send fail? %d\n", resp );
+												
+													if( resp == 0 )
+													{
+														response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
+														HttpWrite( response, request->http_Socket );
+													}
+
+													result = 200;
+
+													HttpFree( response );
+													response = NULL;
+
+													actFS->FileClose( rootDev, fp );
+												}
+												else
+												{
+													response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
+												
+													result = 404;
+													Log( FLOG_ERROR,"Cannot open file %s!\n", filePath );
+												}
 											}
 											else
 											{
 												response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
-												
-												result = 404;
-												Log( FLOG_ERROR,"Cannot open file %s!\n", filePath );
-											}
-										}
-										else
-										{
-											response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
 											
-											result = 404;
-											Log( FLOG_ERROR,"Cannot find filesystem for device!\n");
-										}
+												result = 404;
+												Log( FLOG_ERROR,"Cannot find filesystem for device!\n");
+											}
 
-										if( cacheState == CACHE_FILE_MUST_BE_CREATED )
-										{
-											fclose( cf->cf_Fp );
-											CacheUFManagerFilePut( SLIB->sl_CacheUFM, fs_IDUser, rootDev->f_ID, cf );
-										}
-										else if( cacheState == CACHE_FILE_REQUIRE_REFRESH )
-										{
-											fclose( cf->cf_Fp );
-										}
+											if( cacheState == CACHE_FILE_MUST_BE_CREATED )
+											{
+												fclose( cf->cf_Fp );
+												CacheUFManagerFilePut( SLIB->sl_CacheUFM, fs_IDUser, rootDev->f_ID, cf );
+											}
+											else if( cacheState == CACHE_FILE_REQUIRE_REFRESH )
+											{
+												fclose( cf->cf_Fp );
+											}
 
-									} // cache support
-									FFree( extension );
+										} // cache support
+										FFree( extension );
+									}
+									else
+									{
+										struct TagItem tags[] = {
+											{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+											{ TAG_DONE, TAG_DONE }
+										};
+										response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
+									
+										result = 404;
+										Log( FLOG_ERROR,"Cannot get root device\n");
+									}
+								
+									// if device was mounted without user (not in memory) it must be removed on the end
+									if( mountedWithoutUser == TRUE )
+									{
+										DeviceRelease( SLIB->sl_DeviceManager, rootDev );
+
+										FileDelete( rootDev );
+									}
+								
+									//FileSharedDelete( fs );
 								}
 								else
 								{
@@ -1159,22 +1218,12 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 										{ TAG_DONE, TAG_DONE }
 									};
 									response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
-									
+								
 									result = 404;
-									Log( FLOG_ERROR,"Cannot get root device\n");
+									Log( FLOG_ERROR,"Fileshared entry not found in DB: sql %s\n", query );
 								}
-								
-								// if device was mounted without user (not in memory) it must be removed on the end
-								if( mountedWithoutUser == TRUE )
-								{
-									DeviceRelease( SLIB->sl_DeviceManager, rootDev );
-
-									FileDelete( rootDev );
-								}
-								
-								//FileSharedDelete( fs );
 							}
-							else
+							else	// if user do not have access
 							{
 								struct TagItem tags[] = {
 									{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
@@ -1183,13 +1232,15 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
 								
 								result = 404;
-								Log( FLOG_ERROR,"Fileshared entry not found in DB: sql %s\n", query );
+								Log( FLOG_ERROR,"User do not have access\n" );
 							}
 							
 							if( fs_DeviceName != NULL ) FFree( fs_DeviceName );
 							if( fs_Name != NULL ) FFree( fs_Name );
 							if( fs_Type != NULL ) FFree( fs_Type );
 							if( fs_Path != NULL ) FFree( fs_Path );
+							if( accessLevel != NULL ) FFree( accessLevel );
+							if( externalID != NULL ) FFree( externalID );
 							
 							// if temporary session was generated, we must remove it
 							//if( sessionIDGenerated == TRUE )

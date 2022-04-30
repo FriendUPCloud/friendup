@@ -2399,6 +2399,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 				*
 				* @param sessionid - (required) session id of logged user
 				* @param path - (required) path to file which you want to share
+				* @param visibility - set access for Public
 				* @return {hash:\<generated hash\>, name:\<name of shared file\> } when success, otherwise error number
 				*/
 				/// @endcond
@@ -2408,13 +2409,35 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 				{
 					char userid[ 512 ];
 					char name[ 256 ];
-					char dstfield[10];
+					char *dstfield = NULL;
+					char *externalID = NULL;
 					
 					response = HttpNewSimpleA( HTTP_200_OK, request, HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
-					strcpy( dstfield, "Public" );
+					HashmapElement *el = HttpGetPOSTParameter( request, "visibility" );
+					if( !el ) el = HashmapGet( request->http_Query, "visibility" );
+					if( el != NULL && el->hme_Data != NULL )
+					{
+						dstfield = UrlDecodeToMem( el->hme_Data );
+					}
+					else
+					{
+						dstfield = StringDuplicate( "Public" );
+					}
 					
+					el = HttpGetPOSTParameter( request, "externalid" );
+					el = HashmapGet( request->http_Query, "externalid" );
+					if( el != NULL && el->hme_Data != NULL )
+					{
+						externalID = UrlDecodeToMem( el->hme_Data );
+					}
+					
+					char *dest = UrlDecodeToMem( path );
+					char *encName = NULL;
+					char *fortestpurp = FMalloc( 2048 ); //[ 2048 ];
+
+					if( dstfield != NULL )
 					{
 						int i = strlen( path );
 
@@ -2429,117 +2452,149 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						
 						sprintf( userid, "%ld", loggedSession->us_User->u_ID );
 						sprintf( name, "%s", &path[ i ] );
-					}
 					
-					FHandler *actFS = (FHandler *)actDev->f_FSys;
-					FBOOL sharedFile = FALSE;
-					FBOOL alreadyExist = FALSE;
-					char hashmap[ 512 ];
-					hashmap[ 0 ] = 0;
-					
-					char *encName = NULL;
-					
-					if( strlen( name ) > 0 )
-					{
-						encName = UrlEncodeToMem( name );
-					}
-					DEBUG("[File/Expose] encoded file name: %s\n", encName );
+						FBOOL sharedFile = FALSE;
+						FBOOL alreadyExist = FALSE;
+						char hashmap[ 512 ];
+						hashmap[ 0 ] = 0;
 
-					//char *checkquery = NULL;
-					char *fortestpurp = FMalloc( 2048 ); //[ 2048 ];
-					snprintf( fortestpurp, 2048, "%s:%s", devname, path );
-					
-					char *dest = UrlDecodeToMem( path );
-					
-					SQLLibrary *sqllib = l->LibrarySQLGet( l );
-					if( sqllib != NULL )
-					{
-						int qsize = 512 + strlen( dest );
-
-						char *qery = FMalloc( qsize );
-						//qery[ 1024 ] = 0;
-						sqllib->SNPrintF( sqllib, qery, qsize, "SELECT Hash FROM FFileShared where `UserID`='%ld' AND `Path`='%s:%s'", loggedSession->us_User->u_ID, devname, dest );
-						void *res = sqllib->Query( sqllib, qery );
-						if( res != NULL )
+						if( strlen( name ) > 0 )
 						{
-							char **row;
-							if( ( row = sqllib->FetchRow( sqllib, res ) ) )
-							{
-								if( row[ 0 ] != NULL )
-								{
-									strcpy( hashmap, row[ 0 ] );
-								}
-							}
-							sqllib->FreeResult( sqllib, res );
+							encName = UrlEncodeToMem( name );
 						}
-						
-						// if entry do not exist in database
-						if( hashmap[ 0 ] == 0 )
-						{
-							FileShared *tmpfs = NULL;
-							
-							if( encName != NULL )
-							{
-								tmpfs = FileSharedNew( fortestpurp, encName );
-							}
-							else
-							{
-								tmpfs = FileSharedNew( fortestpurp, name );
-							}
+						DEBUG("[File/Expose] encoded file name: %s\n", encName );
 
-							if( tmpfs != NULL )
+						snprintf( fortestpurp, 2048, "%s:%s", devname, path );
+
+						SQLLibrary *sqllib = l->LibrarySQLGet( l );
+						if( sqllib != NULL )
+						{
+							FBOOL haveAccess = FALSE;
+							int qsize = 512 + strlen( dest );
+
+							char *qery = FMalloc( qsize );
+
+							sqllib->SNPrintF( sqllib, qery, qsize, "SELECT Hash FROM FFileShared where `UserID`='%ld' AND `Path`='%s:%s'", loggedSession->us_User->u_ID, devname, dest );
+							void *res = sqllib->Query( sqllib, qery );
+							if( res != NULL )
 							{
-								// we store user which is sharing data
-								tmpfs->fs_IDUser = loggedSession->us_User->u_ID;
-								// we also store filesystemID
-								tmpfs->fs_FSID = actDev->f_ID;
-								
-								DEBUG("\n\n\n\n\n tmpfs->fs_FSID : %lu\n\n\n\n\n", tmpfs->fs_FSID );
-						
-								tmpfs->fs_DeviceName = StringDuplicate( devname );
-								tmpfs->fs_DstUsers = StringDuplicate( dstfield );
-						
-								// Make a unique hash
-								char tmp[ 512 ];
-								snprintf( tmp, sizeof(tmp), "%s%d%d%d", path, rand() % 999, rand() % 999, rand() % 999 );
-								StrToMD5Str( hashmap, 512, tmp, strlen( tmp ) );
-								tmpfs->fs_Hash = StringDuplicate( hashmap );
-								tmpfs->fs_CreationTime = time( NULL );
-								/*
-								struct tm* ti;
-								ti = localtime( &(tmpfs->fs_CreatedTime) );
-								tmpfs->fs_CreateTimeTM.tm_year = ti->tm_year + 1900;
-								tmpfs->fs_CreateTimeTM.tm_mon = ti->tm_mon;
-								tmpfs->fs_CreateTimeTM.tm_mday = ti->tm_mday;
-							
-								tmpfs->fs_CreateTimeTM.tm_hour = ti->tm_hour;
-								tmpfs->fs_CreateTimeTM.tm_min = ti->tm_min;
-								tmpfs->fs_CreateTimeTM.tm_sec = ti->tm_sec;
-								*/
-								if( sqllib->Save( sqllib, FileSharedTDesc, tmpfs ) == 0 )
+								char **row;
+								if( ( row = sqllib->FetchRow( sqllib, res ) ) )
 								{
-									sharedFile = TRUE;
+									if( row[ 0 ] != NULL )
+									{
+										strcpy( hashmap, row[ 0 ] );
+									}
+								}
+								sqllib->FreeResult( sqllib, res );
+							}
+						
+							if( strcmp( dstfield, "Public" ) == 0 )
+							{
+								haveAccess = TRUE;
+							}
+							else if( strcmp( dstfield, "PresenceGroup" ) == 0 )
+							{
+								// before we store entry we should check if user have access to store shared file
+								/*
+								sqllib->SNPrintF( sqllib, qery, qsize, "SELECT Hash FROM FFileShared where `UserID`='%ld' AND `Path`='%s:%s'", loggedSession->us_User->u_ID, devname, dest );
+								void *res = sqllib->Query( sqllib, qery );
+								if( res != NULL )
+								{
+									char **row;
+									if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+									{
+										if( row[ 0 ] != NULL )
+										{
+											strcpy( hashmap, row[ 0 ] );
+										}
+									}
+									sqllib->FreeResult( sqllib, res );
+								}
+								*/
+								haveAccess = TRUE;
+							}
+							else if( strcmp( dstfield, "PresenceUser" ) == 0 )
+							{
+								haveAccess = TRUE;
+							}
+								
+							
+							// if entry do not exist in database
+							if( hashmap[ 0 ] == 0 )
+							{
+								if( haveAccess == TRUE )
+								{
+									FileShared *tmpfs = NULL;
+							
+									if( encName != NULL )
+									{
+										tmpfs = FileSharedNew( fortestpurp, encName );
+									}
+									else
+									{
+										tmpfs = FileSharedNew( fortestpurp, name );
+									}
+
+									if( tmpfs != NULL )
+									{
+										// we store user which is sharing data
+										tmpfs->fs_IDUser = loggedSession->us_User->u_ID;
+										// we also store filesystemID
+										tmpfs->fs_FSID = actDev->f_ID;
+								
+										DEBUG("\n\n\n\n\n tmpfs->fs_FSID : %lu\n\n\n\n\n", tmpfs->fs_FSID );
+						
+										tmpfs->fs_DeviceName = StringDuplicate( devname );
+										tmpfs->fs_DsttUserID = StringDuplicate( dstfield );
+										tmpfs->fs_DstExternID = StringDuplicate( externalID );
+						
+										// Make a unique hash
+										char tmp[ 512 ];
+										snprintf( tmp, sizeof(tmp), "%s%d%d%d", path, rand() % 999, rand() % 999, rand() % 999 );
+										StrToMD5Str( hashmap, 512, tmp, strlen( tmp ) );
+										tmpfs->fs_Hash = StringDuplicate( hashmap );
+										tmpfs->fs_CreationTime = time( NULL );
+										/*
+										struct tm* ti;
+										ti = localtime( &(tmpfs->fs_CreatedTime) );
+										tmpfs->fs_CreateTimeTM.tm_year = ti->tm_year + 1900;
+										tmpfs->fs_CreateTimeTM.tm_mon = ti->tm_mon;
+										tmpfs->fs_CreateTimeTM.tm_mday = ti->tm_mday;
+							
+										tmpfs->fs_CreateTimeTM.tm_hour = ti->tm_hour;
+										tmpfs->fs_CreateTimeTM.tm_min = ti->tm_min;
+										tmpfs->fs_CreateTimeTM.tm_sec = ti->tm_sec;
+										*/
+										if( sqllib->Save( sqllib, FileSharedTDesc, tmpfs ) == 0 )
+										{
+											sharedFile = TRUE;
+										}
+										else
+										{
+											Log( FLOG_ERROR, "Cannot store hash in FFileShared. Hash: %s Path %s\n", hashmap, path );
+										}
+								
+										FileSharedDeleteAll( tmpfs );
+									}
+									else
+									{
+										FERROR("Cannot allocate memory for shared file!\n");
+									}
 								}
 								else
 								{
-									Log( FLOG_ERROR, "Cannot store hash in FFileShared. Hash: %s Path %s\n", hashmap, path );
+									// no access
 								}
-								
-								FileSharedDeleteAll( tmpfs );
 							}
 							else
 							{
-								FERROR("Cannot allocate memory for shared file!\n");
+								alreadyExist = TRUE;
 							}
-						}
-						else
-						{
-							alreadyExist = TRUE;
-						}
 						
-						l->LibrarySQLDrop( l, sqllib );
-						FFree( qery );
-					}
+							l->LibrarySQLDrop( l, sqllib );
+							FFree( qery );
+						}
 
 					int size = 0;
 					char *tmp = FMalloc( 2048 );
@@ -2560,6 +2615,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					
 					HttpSetContent( response, tmp, size );
 					*result = 200;
+						} //dstfield
 					
 					if( dest != NULL )
 					{
@@ -2568,6 +2624,14 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( encName != NULL )
 					{
 						FFree( encName );
+					}
+					if( externalID != NULL )
+					{
+						FFree( externalID );
+					}
+					if( dstfield != NULL )
+					{
+						FFree( dstfield );
 					}
 					FFree( fortestpurp );
 				}

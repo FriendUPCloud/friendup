@@ -145,10 +145,10 @@ void FileSharedDelete( FileShared *f )
 			f->fs_DeviceName = NULL;
 		}
 
-		if( f->fs_DstUsers != NULL )
+		if( f->fs_DsttUserID != NULL )
 		{
-			FFree( f->fs_DstUsers );
-			f->fs_DstUsers = NULL;
+			FFree( f->fs_DsttUserID );
+			f->fs_DsttUserID = NULL;
 		}
 	
 		if( f->fs_Hash != NULL )
@@ -167,6 +167,12 @@ void FileSharedDelete( FileShared *f )
 		{
 			FFree( f->fs_Name );
 			f->fs_Name = NULL;
+		}
+		
+		if( f->fs_DstExternID != NULL )
+		{
+			FFree( f->fs_DstExternID );
+			f->fs_DstExternID = NULL;
 		}
 		
 		if( f->fs_Data )

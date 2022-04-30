@@ -140,7 +140,6 @@ typedef struct FileShared
 	char 								*fs_Path;		// full path
 	
 	FULONG								fs_IDUser;		// user which share his device (User *)
-	char 								*fs_DstUsers;
 	
 	char 								*fs_Hash;
 	time_t                          	fs_CreationTime;
@@ -149,6 +148,9 @@ typedef struct FileShared
 	ListString							*fs_Data;		// pointer to liststring which represents file data, list must be finalised before it will be atached here
 	FULONG 								fs_AppID;		// application ID
 	FULONG								fs_FSID;		// Filesystem ID
+	
+	char 								*fs_DsttUserID;
+	char								*fs_DstExternID;		// external ID
 } FileShared;
 
 
@@ -160,7 +162,8 @@ static const FULONG FileSharedTDesc[] = {
 	SQLT_STR, (FULONG)"Devname",          offsetof( struct FileShared, fs_DeviceName ), 
 	SQLT_STR, (FULONG)"Path",             offsetof( struct FileShared, fs_Path ), 
 	SQLT_INT, (FULONG)"UserID",           offsetof( struct FileShared, fs_IDUser ), 
-	SQLT_STR, (FULONG)"DstUserSID",       offsetof( struct FileShared, fs_DstUsers ), 
+	SQLT_STR, (FULONG)"DstUserSID",       offsetof( struct FileShared, fs_DsttUserID ), 
+	SQLT_STR, (FULONG)"DstExternID",      offsetof( struct FileShared, fs_DstExternID ), 
 	SQLT_DATETIME, (FULONG)"DateCreated", offsetof( struct FileShared, fs_CreationTime ),
 	SQLT_STR, (FULONG)"Hash",             offsetof( struct FileShared, fs_Hash ), 
 	SQLT_INT, (FULONG)"AppID",            offsetof( struct FileShared, fs_AppID ), 
