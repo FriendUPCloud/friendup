@@ -237,11 +237,11 @@ void CommServiceDelete( CommService *s )
 		
 		DEBUG2("[COMMSERV] : pipes closed\n");
 		
-		pthread_mutex_destroy( &s->s_Mutex );
+		pthread_mutex_destroy( &(s->s_Mutex) );
 		DEBUG2("[COMMSERV] : s_Mutex closed\n");
-		pthread_mutex_destroy( &s->s_CondMutex );
+		pthread_mutex_destroy( &(s->s_CondMutex) );
 		DEBUG2("[COMMSERV] : s_CondMutex closed\n");
-		pthread_cond_destroy( &s->s_DataReceivedCond );
+		pthread_cond_destroy( &(s->s_DataReceivedCond) );
 		DEBUG2("[COMMSERV] : DataReceivedCond closed\n");
 		
 		if( s->s_Buffer )

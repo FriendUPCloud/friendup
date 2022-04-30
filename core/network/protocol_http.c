@@ -842,7 +842,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							char *fs_Name = NULL;
 							char *fs_Type = NULL;
 							char *fs_Path = NULL;
-							FBOOL sessionIDGenerated = FALSE;
 
 							DEBUG("First call releated to shared files did not return any results\n");
 							sqllib->SNPrintF( sqllib, query, 1024, "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,fs.ID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID where `Hash`='%s'", path->p_Parts[ 1 ] );
