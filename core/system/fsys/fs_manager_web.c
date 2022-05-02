@@ -2488,16 +2488,26 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								}
 								sqllib->FreeResult( sqllib, res );
 							}
+							
+							//
+							// File is public, everyone can see this
+							//
 						
 							if( strcmp( dstfield, "Public" ) == 0 )
 							{
 								haveAccess = TRUE;
 							}
-							else if( strcmp( dstfield, "PresenceGroup" ) == 0 )
+							
+							//
+							// Check if user is in workgroup
+							//
+							
+							else if( strcmp( dstfield, "Workgroup" ) == 0 )
 							{
 								// before we store entry we should check if user have access to store shared file
-								/*
-								sqllib->SNPrintF( sqllib, qery, qsize, "SELECT Hash FROM FFileShared where `UserID`='%ld' AND `Path`='%s:%s'", loggedSession->us_User->u_ID, devname, dest );
+								
+								snprintf( qery, qsize, "SELECT ug.ID FROM FUserGroup ug inner join FUserToGroup utg on ug.ID=utg.UserGroupID where utg.UserID='%ld' AND ug.UniqueID='%s'", loggedSession->us_User->u_ID, externalID );
+								
 								void *res = sqllib->Query( sqllib, qery );
 								if( res != NULL )
 								{
@@ -2506,17 +2516,31 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									{
 										if( row[ 0 ] != NULL )
 										{
-											strcpy( hashmap, row[ 0 ] );
+											haveAccess = TRUE;
 										}
 									}
 									sqllib->FreeResult( sqllib, res );
 								}
-								*/
-								haveAccess = TRUE;
 							}
-							else if( strcmp( dstfield, "PresenceUser" ) == 0 )
+							else if( strcmp( dstfield, "User" ) == 0 )
 							{
-								haveAccess = TRUE;
+								// lets check if user have access to this file
+								
+								snprintf( qery, qsize, "SELECT u.ID FROM FUser u where u.ID='%ld' OR u.UniqueID='%s'", loggedSession->us_User->u_ID, externalID );
+								
+								void *res = sqllib->Query( sqllib, qery );
+								if( res != NULL )
+								{
+									char **row;
+									if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+									{
+										if( row[ 0 ] != NULL )
+										{
+											haveAccess = TRUE;
+										}
+									}
+									sqllib->FreeResult( sqllib, res );
+								}
 							}
 								
 							

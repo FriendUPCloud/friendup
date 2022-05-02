@@ -842,10 +842,11 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							char *fs_Type = NULL;
 							char *fs_Path = NULL;
 							char *accessLevel = NULL;
+							// this field contain information who should have access to file
 							char *externalID = NULL;
 
 							DEBUG("First call releated to shared files did not return any results\n");
-							sqllib->SNPrintF( sqllib, query, 1024, "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,fs.ID,fs.DstUserSID,fs.DstExternID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID where `Hash`='%s'", path->p_Parts[ 1 ] );
+							sqllib->SNPrintF( sqllib, query, 1024, "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,fs.ID,fs.DstUserSID,fs.DstExternID,fs.UserID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID where `Hash`='%s'", path->p_Parts[ 1 ] );
 							
 							void *res = sqllib->Query( sqllib, query );
 							if( res != NULL )
