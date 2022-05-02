@@ -617,13 +617,18 @@ if( isset( $args->command ) )
 		case 'convertfile':
 			require( 'modules/system/include/convertfile.php' );
 			break;
+		
 		// Install / upgrade application from central Friend Store repo
 		case 'install':
 			require( 'modules/system/include/install.php' );
 			break;
+		
+	    // Get a user's recent files list
 	    case 'getrecentfiles':
 	        require( 'modules/system/include/recentfiles.php' );
 	        break;
+		
+		// Add a path to an assign
 		case 'assign':
 			$mode = $args->args->mode;
 			if( !isset( $args->args->assign ) )
