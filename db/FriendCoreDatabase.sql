@@ -284,10 +284,11 @@ CREATE TABLE IF NOT EXISTS `FSFile` (
 --
 
 CREATE TABLE IF NOT EXISTS `FSFileLog` (
-  `ID` bigint NOT NULL AUTO_INCREMENT,
-  `FileID` bigint NOT NULL,
+  `ID` bigint(20) NOT NULL AUTO_INCREMENT,
+  `FilesystemID` bigint(20) NOT NULL,
+  `FileID` bigint(20) NOT NULL,
   `Path` varchar(512) DEFAULT NULL,
-  `UserID` bigint NOT NULL,
+  `UserID` bigint(20) NOT NULL,
   `AccessMode` int DEFAULT '0',
   `Accessed` datetime DEFAULT NULL,
   PRIMARY KEY (`ID`)
