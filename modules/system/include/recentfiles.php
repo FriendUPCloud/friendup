@@ -9,6 +9,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+global $SqlDatabase, $User;
+
 if( $rows = $SqlDatabase->fetchObjects( '
     SELECT g.* FROM FSFileLog g WHERE g.FileID IN ( 
         SELECT DISTINCT(FileID) FROM `FSFileLog`
@@ -31,5 +33,6 @@ if( $rows = $SqlDatabase->fetchObjects( '
     die( 'ok<!--separate-->' . json_encode( $out ) );
 }
 
+die( 'fail<!--separate-->{"message":"Could not find recent files.","response":-1}' );
 
 ?>

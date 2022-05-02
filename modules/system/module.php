@@ -2092,7 +2092,7 @@ if( isset( $args->command ) )
 }
 
 // End of the line
-if( !$args->skip ) die( 'fail<!--separate-->{"response":"uncaught command exception ' . print_r( $args,1 ) . '"}' ); //end of the line<!--separate-->' . print_r( $args, 1 ) . '<!--separate-->' . ( isset( $User ) ? $User : 'No user object!' ) );
+if( !isset( $args->skip ) || !$args->skip ) die( 'fail<!--separate-->{"response":"uncaught command exception ' . print_r( $args,1 ) . '"}' ); //end of the line<!--separate-->' . print_r( $args, 1 ) . '<!--separate-->' . ( isset( $User ) ? $User : 'No user object!' ) );
 
 
 ?>
