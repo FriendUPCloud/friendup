@@ -279,6 +279,20 @@ CREATE TABLE IF NOT EXISTS `FSFile` (
   PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
+--
+-- Table structure for table `FSFileLog`
+--
+
+CREATE TABLE IF NOT EXISTS `FSFileLog` (
+  `ID` bigint NOT NULL AUTO_INCREMENT,
+  `FileID` bigint NOT NULL,
+  `Path` varchar(512) DEFAULT NULL,
+  `UserID` bigint NOT NULL,
+  `AccessMode` int DEFAULT '0',
+  `Accessed` datetime DEFAULT NULL,
+  PRIMARY KEY (`ID`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
 -- --------------------------------------------------------
 
 --

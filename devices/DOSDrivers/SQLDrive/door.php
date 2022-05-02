@@ -23,8 +23,13 @@ if( !class_exists( 'DoorSQLDrive' ) )
 		*/
 		function onConstruct()
 		{
-			global $args;
+			global $args, $configfilesettings;
 			$this->fileInfo = isset( $args->fileInfo ) ? $args->fileInfo : new stdClass();
+			$this->fileHistoryEnabled = false;
+			if( isset( $configfilesettings[ 'Security' ] ) && isset( $configfilesettings[ 'Security' ][ 'FileHistory' ] ) )
+			{
+			    $this->fileHistoryEnabled = $configfilesettings[ 'Security' ][ 'FileHistory' ];
+			}
 			$defaultDiskspace = 500000000;
 			if( isset( $this->Config ) && strlen( $this->Config) > 3 )
 			{
