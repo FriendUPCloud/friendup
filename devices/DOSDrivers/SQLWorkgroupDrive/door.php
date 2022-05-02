@@ -606,6 +606,9 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 						
 								$fs->StoredBytes = $sbytes;
 								$fs->Save();
+								
+								// Log file transaction
+								$this->fileLog( 'write', $path, $f, $fs );
 							}
 						}
 						
@@ -655,6 +658,9 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 					
 					if( file_exists( $fname ) )
 					{
+						// Log file transaction
+						$this->fileLog( 'read', $args->path, false );
+						
 						$info = @getimagesize( $fname );
 					
 						// Only give this on images
@@ -1437,6 +1443,9 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				
 						$fs->StoredBytes = $sbytes;
 						$fs->Save();
+						
+						// Log file transaction
+						$this->fileLog( 'delete', $path, $fi, $fs );
 					}
 				}
 			}
@@ -1602,6 +1611,51 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				}
 			}
 			return false;
+		}
+		
+		// Log file transaction
+		private function fileLog( $mode, $path, $file, $filesystem = false )
+		{
+		    global $Config, $User, $SqlDatabase, $Logger;
+		    
+		    if( !$filesystem ) $filesystem = $this;
+		    
+		    $path = $SqlDatabase->_link->real_escape_string( $path );
+		    
+		    // Check valid mode
+		    $modeNum = 0;
+		    switch( $mode )
+		    {
+		        case 'read':
+		            $modeNum = 1;
+		            break;
+		        case 'write':
+		            $modeNum = 2;
+		            break;
+		        case 'delete':
+		            $modeNum = 3;
+		            break;
+		    }
+		    
+		    // If valid, execute query
+		    if( $modeNum > 0 )
+		    {
+		        // If successful query, return true
+	            if( $SqlDatabase->query( /*$q =*/ ( '
+	                INSERT INTO 
+	                    `FSFileLog` 
+	                    ( FilesystemID, FileID, UserID, `Path`, AccessMode, `Accessed` )
+	                    VALUES
+	                    ( \'' . intval( $filesystem->ID, 10 ) . '\', \'' . intval( $file->ID, 10 ) . '\', \'' . $User->ID . '\', "' . $path . '", \'' . $modeNum . '\', NOW() )
+    	            ' ) ) )
+    	        {
+    	            //$Logger->log( 'fileLog: ' . $q );
+	                return true;
+	            }
+		    }
+		    // Failed
+		    //$Logger->log( 'fileLog: FAILED' );
+		    return false;
 		}
 		
 		// Not to be used outside! Not public!
