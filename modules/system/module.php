@@ -621,6 +621,9 @@ if( isset( $args->command ) )
 		case 'install':
 			require( 'modules/system/include/install.php' );
 			break;
+	    case 'getrecentfiles':
+	        require( 'modules/system/include/recentfiles.php' );
+	        break;
 		case 'assign':
 			$mode = $args->args->mode;
 			if( !isset( $args->args->assign ) )
