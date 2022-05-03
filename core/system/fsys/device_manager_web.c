@@ -678,10 +678,6 @@ f.Name ASC";
 						foundUserInMemory = FALSE;
 					}
 				} // isAdmin or permissions granted
-				//if( args != NULL )
-				//{
-				//	FFree( args );
-				//}
 			}
 			else
 			{
