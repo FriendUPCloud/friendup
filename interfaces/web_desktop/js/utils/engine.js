@@ -1224,6 +1224,90 @@ function NumberExtract ( string )
 	return parseFloat ( string );
 }
 
+function HumanDateString( dt )
+{
+	function tPad( num )
+	{
+		if( ( num + '' ).length < 2 )
+			return '0' + ( num + '' );
+		return num;
+	}
+	
+	let months = [ 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Des' ];
+	
+	let now = new Date();
+	let then = new Date( dt );
+	
+	let nyear = now.getFullYear();
+	let nmonth = now.getMonth() + 1;
+	let ndate = now.getDate();
+	
+	let tyear = then.getFullYear();
+	let tmonth = then.getMonth() + 1;
+	let tdate = then.getDate();
+	
+	
+	// Last year we do not care about time
+	if( nyear > tyear )
+	{
+		return tdate + '. ' + months[ then.getMonth() ] + ' ' + tyear;
+	}
+	
+	// Check span of time
+	
+	let secs = 0;
+	let nowTime = now.getTime();
+	let thenTime = then.getTime();
+	
+	// In the past
+	if( nowTime > thenTime )
+	{
+		secs = Math.floor( ( nowTime - thenTime ) / 1000 );
+		
+		if( secs < 60 )
+		{
+			return secs + ' seconds ago.';
+		}
+		
+		if( secs / 60 < 60 )
+		{
+			let mins = Math.floor( secs / 60 );
+			return mins + ' ' + ( mins == 1 ? 'minute' : 'minutes' ) + ' ago.';
+		}
+		
+		if( secs / 60 / 60 < 24 )
+		{
+			let hours = Math.floor( secs / 60 / 60 );
+			return hours + ' ' + ( hours == 1 ? 'hour' : 'hours' ) + ' ago.';
+		}
+		
+		return tPad( tdate ) + '. ' + tPad( months[ then.getMonth() ] ) + ' ' + tyear; 
+	}
+	else
+	{
+		secs = Math.floor( ( thenTime - nowTime ) / 1000 );
+		
+		if( secs < 60 )
+		{
+			return 'In ' + secs + ' seconds.';
+		}
+		
+		if( secs / 60 < 60 )
+		{
+			let mins = Math.floor( secs / 60 );
+			return 'In ' + mins + ' ' + ( mins == 1 ? 'minute' : 'minutes' ) + '.';
+		}
+		
+		if( secs / 60 / 60 < 24 )
+		{
+			let hours = Math.floor( secs / 60 / 60 );
+			return 'In ' + hours + ' ' + ( hours == 1 ? 'hour' : 'hours' ) + '.';
+		}
+		
+		return tPad( tdate ) + '. ' + tPad( months[ then.getMonth() ] ) + ' ' + tyear;
+	}
+}
+
 // Easy tweener function that lets you 
 var __m_seed = 1;
 function mTween ( obj, time, func, endfunc )
