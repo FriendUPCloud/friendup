@@ -11,26 +11,55 @@
 
 global $SqlDatabase, $User;
 
-if( $rows = $SqlDatabase->fetchObjects( '
-    SELECT g.* FROM FSFileLog g WHERE g.FileID IN ( 
-        SELECT DISTINCT(FileID) FROM `FSFileLog`
-        WHERE
-            UserID = \'' . $User->ID . '\'
-        AND `Accessed` < ( NOW() + INTERVAL 30 DAY )
-    ) AND g.UserID = \'' . $User->ID . '\' ORDER BY g.Accessed DESC
-' ) )
+// Get files from workgroup drives
+if( isset( $args->args->workgroup ) )
 {
-    $test = [];
-    $out = [];
-    foreach( $rows as $row )
+    if( $rows = $SqlDatabase->fetchObjects( '
+        SELECT g.* FROM 
+            FSFileLog g, FUserGroup ug, Filesystem f
+        WHERE
+            g.FilesystemID = f.ID AND f.GroupID = ug.ID AND 
+            ug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\'
+            g.FileID IN ( 
+                SELECT DISTINCT(FileID) FROM `FSFileLog`
+                WHERE
+                    UserID = \'' . $User->ID . '\'
+                AND `Accessed` < ( NOW() + INTERVAL 30 DAY )
+            ) AND g.UserID = \'' . $User->ID . '\' ORDER BY g.Accessed DESC
+    ' ) )
     {
-        if( !isset( $test[ $row->FileID ] ) )
-        {
-            $test[ $row->FileID ] = true;
-            $out[] = $row;
-        }
+        $out = [];
+        die( 'ok<!--separate-->' . json_encode( $out ) );
     }
-    die( 'ok<!--separate-->' . json_encode( $out ) );
+}
+// Get files from personal drives
+else
+{
+    if( $rows = $SqlDatabase->fetchObjects( '
+        SELECT g.* FROM 
+            FSFileLog g, Filesystem f
+        WHERE 
+            g.FilesystemID = f.ID AND f.GroupID <= 0 AND
+            g.FileID IN ( 
+                SELECT DISTINCT(FileID) FROM `FSFileLog`
+                WHERE
+                    UserID = \'' . $User->ID . '\'
+                AND `Accessed` < ( NOW() + INTERVAL 30 DAY )
+        ) AND g.UserID = \'' . $User->ID . '\' ORDER BY g.Accessed DESC
+    ' ) )
+    {
+        $test = [];
+        $out = [];
+        foreach( $rows as $row )
+        {
+            if( !isset( $test[ $row->FileID ] ) )
+            {
+                $test[ $row->FileID ] = true;
+                $out[] = $row;
+            }
+        }
+        die( 'ok<!--separate-->' . json_encode( $out ) );
+    }
 }
 
 die( 'fail<!--separate-->{"message":"Could not find recent files.","response":-1}' );
