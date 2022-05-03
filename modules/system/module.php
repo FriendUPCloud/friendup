@@ -624,7 +624,7 @@ if( isset( $args->command ) )
 			break;
 		
 	    // Get a user's recent files list
-	    case 'getrecentfiles':
+	    case 'recentfiles':
 	        require( 'modules/system/include/recentfiles.php' );
 	        break;
 		
