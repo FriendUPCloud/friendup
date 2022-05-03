@@ -659,7 +659,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 					if( file_exists( $fname ) )
 					{
 						// Log file transaction
-						$this->fileLog( 'read', $args->path, false );
+						$this->fileLog( 'read', $args->path, $f, false );
 						
 						$info = @getimagesize( $fname );
 					
