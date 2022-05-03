@@ -1224,6 +1224,7 @@ function NumberExtract ( string )
 	return parseFloat ( string );
 }
 
+// Use date string dt "YYYY-MM-DD hh:mm:ss", return human readable string
 function HumanDateString( dt )
 {
 	function tPad( num )
