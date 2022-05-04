@@ -1150,7 +1150,7 @@ function _ActivateWindow( div, nopoll, e )
 	if( !e ) e = window.event;
 	
 	// TODO: Also for touch!
-	if( e.button == 0 )
+	if( e && e.button == 0 )
 	{
 	    if( window.hideDashboard )
 	        window.hideDashboard();

@@ -8221,6 +8221,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( fn.indexOf( '/' ) > 0 )
 			fn = fn.split( '/' ).pop();
 		
+		path = path.split( '#' ).join( '%23' );
 		let dowloadURI = document.location.protocol +'//'+ document.location.host +'/system.library/file/read/' + fn + '?mode=rs&sessionid=' + Workspace.sessionId + '&path='+ encodeURIComponent( path ) + '&download=1';
 		
 		//check if we are inside one of our apps with a custom download handler....
