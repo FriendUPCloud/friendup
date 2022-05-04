@@ -45,7 +45,7 @@ if( isset( $args->args->workgroup ) )
 		    	if( strstr( $path, '/' ) )
 		    		$path = array_pop( explode( '/', $row->Path ) );
 		    	if( substr( $path, 0, 1 ) == '.' ) continue;
-		    	if( $count++ > $maxToList ) continue;
+		    	if( $count++ >= $maxToList ) continue;
 		    	// Here we go
                 $test[ $row->FileID ] = true;
                 $out[] = $row;
@@ -82,7 +82,7 @@ else
 		    	if( strstr( $path, '/' ) )
 		    		$path = array_pop( explode( '/', $row->Path ) );
 		    	if( substr( $path, 0, 1 ) == '.' ) continue;
-		    	if( $count++ > $maxToList ) continue;
+		    	if( $count++ >= $maxToList ) continue;
 		    	// Here we go
                 $test[ $row->FileID ] = true;
                 $out[] = $row;
