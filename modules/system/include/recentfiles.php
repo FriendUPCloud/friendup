@@ -37,6 +37,12 @@ if( isset( $args->args->workgroup ) )
         {
             if( !isset( $test[ $row->FileID ] ) )
             {
+		    	// Skip hidden files
+		    	$path = pop( explode( ':', $row->Path ) );
+		    	if( strstr( $path, '/' ) )
+		    		$path = pop( explode( '/', $row->Path );
+		    	if( substr( $path, 0, 1 ) == '.' ) continue;
+		    	// Here we go
                 $test[ $row->FileID ] = true;
                 $out[] = $row;
             }
@@ -66,6 +72,12 @@ else
         {
             if( !isset( $test[ $row->FileID ] ) )
             {
+                // Skip hidden files
+		    	$path = pop( explode( ':', $row->Path ) );
+		    	if( strstr( $path, '/' ) )
+		    		$path = pop( explode( '/', $row->Path );
+		    	if( substr( $path, 0, 1 ) == '.' ) continue;
+		    	// Here we go
                 $test[ $row->FileID ] = true;
                 $out[] = $row;
             }
