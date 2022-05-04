@@ -8222,7 +8222,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			fn = fn.split( '/' ).pop();
 		
 		path = encodeURIComponent( path );
-		path.split( '#' ).join( '%23' );
+		path.split( '#' ).join( 'k' );
 		console.log( 'PATH: ' + path );
 		let dowloadURI = document.location.protocol +'//'+ document.location.host +'/system.library/file/read/' + fn + '?mode=rs&sessionid=' + Workspace.sessionId + '&path='+ path + '&download=1';
 		
