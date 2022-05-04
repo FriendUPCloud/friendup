@@ -11,6 +11,8 @@
 
 global $SqlDatabase, $User;
 
+$maxToList = 10;
+
 // Get files from workgroup drives
 if( isset( $args->args->workgroup ) )
 {
@@ -33,6 +35,7 @@ if( isset( $args->args->workgroup ) )
     {
         $test = [];
         $out = [];
+        $count = 0;
         foreach( $rows as $row )
         {
             if( !isset( $test[ $row->FileID ] ) )
@@ -42,6 +45,7 @@ if( isset( $args->args->workgroup ) )
 		    	if( strstr( $path, '/' ) )
 		    		$path = array_pop( explode( '/', $row->Path ) );
 		    	if( substr( $path, 0, 1 ) == '.' ) continue;
+		    	if( $count++ > $maxToList ) continue;
 		    	// Here we go
                 $test[ $row->FileID ] = true;
                 $out[] = $row;
@@ -68,6 +72,7 @@ else
     {
         $test = [];
         $out = [];
+        $count = 0;
         foreach( $rows as $row )
         {
             if( !isset( $test[ $row->FileID ] ) )
@@ -77,6 +82,7 @@ else
 		    	if( strstr( $path, '/' ) )
 		    		$path = array_pop( explode( '/', $row->Path ) );
 		    	if( substr( $path, 0, 1 ) == '.' ) continue;
+		    	if( $count++ > $maxToList ) continue;
 		    	// Here we go
                 $test[ $row->FileID ] = true;
                 $out[] = $row;
