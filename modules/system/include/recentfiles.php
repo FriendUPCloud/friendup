@@ -15,20 +15,32 @@ global $SqlDatabase, $User;
 if( isset( $args->args->workgroup ) )
 {
     if( $rows = $SqlDatabase->fetchObjects( '
-        SELECT g.* FROM 
-            FSFileLog g, FUserGroup ug, Filesystem f
+        SELECT g.*, u.FullName AS UserFullname FROM 
+            FSFileLog g, FUserGroup ug, Filesystem f, FUser u, FUserToGroup ddug
         WHERE
             g.FilesystemID = f.ID AND f.GroupID = ug.ID AND 
-            ug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\'
+            u.ID = g.UserID AND
+            ug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
             g.FileID IN ( 
-                SELECT DISTINCT(FileID) FROM `FSFileLog`
+                SELECT DISTINCT(g.FileID) FROM `FSFileLog` g, Filesystem f, FUserGroup fug
                 WHERE
-                    UserID = \'' . $User->ID . '\'
-                AND `Accessed` < ( NOW() + INTERVAL 30 DAY )
-            ) AND g.UserID = \'' . $User->ID . '\' ORDER BY g.Accessed DESC
+                    g.FilesystemID = f.ID AND
+                    f.GroupID = fug.ID AND
+                    fug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
+	                `Accessed` < ( NOW() + INTERVAL 30 DAY )
+            ) AND g.UserID = ddug.UserID AND ddug.UserGroupID = ug.ID ORDER BY g.Accessed DESC
     ' ) )
     {
+        $test = [];
         $out = [];
+        foreach( $rows as $row )
+        {
+            if( !isset( $test[ $row->FileID ] ) )
+            {
+                $test[ $row->FileID ] = true;
+                $out[] = $row;
+            }
+        }
         die( 'ok<!--separate-->' . json_encode( $out ) );
     }
 }
