@@ -303,7 +303,8 @@ User * UMUserGetByNameDB( UserManager *um, const char *name )
 
 	User *user = NULL;
 	char tmpQuery[ 1024 ];
-	sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," Name = '%s'", name );
+	snprintf( tmpQuery, sizeof(tmpQuery)," Name='%s'", name );
+	//sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," Name = '%s'", name );
 	
 	int entries;
 	user = sqlLib->Load( sqlLib, UserDesc, tmpQuery, &entries );
@@ -663,7 +664,8 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
 	
 		DEBUG("[UMGetUserByNameDB] start\n");
 
-		sqlLib->SNPrintF( sqlLib, where, len, " `Name`='%s'", name );
+		snprintf( where, len, " `Name`='%s'", name );
+		//sqlLib->SNPrintF( sqlLib, where, len, " `Name`='%s'", name );
 	
 		int entries;
 	
@@ -1246,7 +1248,8 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, char *
 		time_t tm = time( NULL );
 		
 		// we are checking failed logins in last hour
-		sqlLib->SNPrintF( sqlLib, query, 2048, "SELECT LoginTime,Failed,Password FROM `FUserLogin` WHERE `Login`='%s' AND (`LoginTime`>%lu AND `LoginTime`<=%lu) ORDER BY `LoginTime` DESC", name, tm-(3600l), tm );
+		//sqlLib->SNPrintF( sqlLib, query, 2048, "SELECT LoginTime,Failed,Password FROM `FUserLogin` WHERE `Login`='%s' AND (`LoginTime`>%lu AND `LoginTime`<=%lu) ORDER BY `LoginTime` DESC", name, tm-(3600l), tm );
+		snprintf( query, 2048, "SELECT LoginTime,Failed,Password FROM `FUserLogin` WHERE `Login`='%s' AND (`LoginTime`>%lu AND `LoginTime`<=%lu) ORDER BY `LoginTime` DESC", name, tm-(3600l), tm );
 		
 		void *result = sqlLib->Query( sqlLib, query );
 		if( result != NULL )
