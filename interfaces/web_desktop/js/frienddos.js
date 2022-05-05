@@ -88,17 +88,19 @@ window.Shell = function( appObject )
 	this.mindMode = false; // Use A.I.
 	this.pipe = false; // Target pipe!
 
-	this.mind = FriendMind.makeSession( appObject );
+    if( appObject )
+    	this.mind = FriendMind.makeSession( appObject );
+    else this.mind = null;
 
 	let aa = 0;
 
 	// This is used by object that are living in the Workspace domain
-	if( appObject.sessionId )
+	if( appObject && appObject.sessionId )
 	{
 		this.sessionId = appObject.sessionId;
 	}
 	// Application domain
-	else
+	else if( appObject )
 	{
 		this.applicationId = appObject.applicationId;
 		this.authId = appObject.authId;

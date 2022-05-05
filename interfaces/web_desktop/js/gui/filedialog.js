@@ -113,6 +113,12 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		init();
 	}
 	
+	this.close = function()
+	{
+	    if( self.dialogWindow )
+    	    self.dialogWindow.close();
+	}
+	
 	function init()
 	{
 		// We have a view
