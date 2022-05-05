@@ -1267,6 +1267,7 @@ function HumanDateString( dt )
 		
 		if( secs < 60 )
 		{
+		    return 'Just now.';
 			return secs + ' seconds ago.';
 		}
 		
@@ -1282,6 +1283,8 @@ function HumanDateString( dt )
 			return hours + ' ' + ( hours == 1 ? 'hour' : 'hours' ) + ' ago.';
 		}
 		
+		if( tyear == ( new Date() ).getFullYear() )
+		    return tPad( tdate ) + '. ' + tPad( months[ then.getMonth() ] ); 
 		return tPad( tdate ) + '. ' + tPad( months[ then.getMonth() ] ) + ' ' + tyear; 
 	}
 	else
