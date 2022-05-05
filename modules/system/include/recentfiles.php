@@ -61,7 +61,7 @@ else
         SELECT g.* FROM 
             FSFileLog g, Filesystem f
         WHERE 
-            g.FilesystemID = f.ID AND f.GroupID <= 0 AND
+            g.FilesystemID = f.ID AND
             g.FileID IN ( 
                 SELECT DISTINCT(FileID) FROM `FSFileLog`
                 WHERE
