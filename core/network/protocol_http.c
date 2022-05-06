@@ -912,13 +912,13 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								{
 									HashmapElement *sessionid = GetHEReq( request, "sessionid" );
 									
-									DEBUG("sharefile: accessLevel: %s sessionid: %s\n" accessLevel, sessionid );
+									DEBUG("sharefile: accessLevel: %s sessionid: %s\n", accessLevel, sessionid );
 
 									if( sessionid != NULL && sessionid->hme_Data != NULL )
 									{
 										session = USMGetSessionBySessionID( SLIB->sl_USM, (char *)sessionid->hme_Data );
 										
-										DEBUG("sharefile: session: %s\n" session );
+										DEBUG("sharefile: session: %s\n", session );
 										
 										//
 										// If its not public file so it means that
