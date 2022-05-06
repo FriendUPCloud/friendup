@@ -993,6 +993,10 @@ var WorkspaceInside = {
 		{
 			if( !this.screen ) return cbk( false );
 			
+			// Theme engine has workspacecount = 1
+			if( Workspace.themeData && typeof( Workspace.themeData[ 'sidebarEngine' ] ) != 'undefined' )
+				globalConfig.workspacecount = 1;
+			
 			this.screen.setFlag( 'vcolumns', globalConfig.workspacecount );
 			if( globalConfig.workspacecount > 1 )
 			{
