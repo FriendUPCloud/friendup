@@ -92,7 +92,7 @@ static inline int WriteMessageSink( DataQWSIM *d, unsigned char *msg, int len )
 
 			if( FRIEND_MUTEX_LOCK( &d->d_Mutex ) == 0 )
 			{
-				FQPushFIFO( &(d->d_Queue), en );
+				FQPushFIFO( &(d->d_OutgoingQueue), en );
 
 				FRIEND_MUTEX_UNLOCK( &(d->d_Mutex) );
 			
@@ -171,8 +171,10 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 				{
 					pthread_mutex_init( &locd->d_Mutex, NULL );
 					locd->d_Wsi = wsi;
-					memset( &(locd->d_Queue), 0, sizeof( locd->d_Queue ) );
-					FQInit( &(locd->d_Queue) );
+					memset( &(locd->d_OutgoingQueue), 0, sizeof( locd->d_OutgoingQueue ) );
+					FQInit( &(locd->d_OutgoingQueue) );
+					memset( &(locd->d_IncomingQueue), 0, sizeof( locd->d_IncomingQueue ) );
+					FQInit( &(locd->d_IncomingQueue) );
 					locd->d_Authenticated = TRUE;
 					man->man_Data = locd;
 					man->man_BufString = NULL;
@@ -207,9 +209,10 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 						FFree( d->d_ServerName );
 						d->d_ServerName = NULL;
 					}
-					//HashmapRemove( globalSocketAuthMap, websocketHash );
+
 					pthread_mutex_destroy( &(d->d_Mutex) );
-					FQDeInitFree( &(d->d_Queue) );
+					FQDeInitFree( &(d->d_OutgoingQueue) );
+					FQDeInitFree( &(d->d_IncomingQueue) );
 					FFree( d );
 				}	
 				man->man_Data = NULL;
@@ -234,7 +237,7 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 				DataQWSIM *d = (DataQWSIM *)man->man_Data;
 				FQEntry *e = NULL;
 				FRIEND_MUTEX_LOCK( &d->d_Mutex );
-				FQueue *q = &(d->d_Queue);
+				FQueue *q = &(d->d_OutgoingQueue);
 			
 				DEBUG("[websocket_app_callback] WRITABLE CALLBACK, q %p\n", q );
 			
@@ -269,7 +272,7 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 					FRIEND_MUTEX_UNLOCK( &d->d_Mutex );
 				}
 			
-				if( d != NULL && d->d_Queue.fq_First != NULL )
+				if( d != NULL && d->d_OutgoingQueue.fq_First != NULL )
 				{
 					//DEBUG("We have message to send, calling writable\n");
 					lws_callback_on_writable( wsi );
@@ -320,15 +323,6 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 					BufStringAddSize( man->man_BufString, buf, len );
 				}
 			}
-			/*
-			MobileAppNotif *man = (MobileAppNotif *)user;
-			if( man != NULL && man->man_Data != NULL )
-			{
-				DataQWSIM *d = (DataQWSIM *)man->man_Data;
-				ProcessIncomingRequest( d, buf, len, user );
-				buf = NULL;
-			}
-			*/
 		}
 		break;
 	}
@@ -725,28 +719,7 @@ void ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 											}
 											
 											Log( FLOG_INFO, "This users will get notifications: %.*s\n", (int)(t[p].end - t[p].start), (char *)(data + t[p].start) );
-
 										
-										/*
-										int j;
-										int locsize = t[p].size;
-										p++;
-										for( j=0 ; j < locsize ; j++ )
-										{
-											char *username = StringDuplicateN( data + t[p].start, (int)(t[p].end - t[p].start) );
-											DEBUG("This user will get message: %s\n", username );
-											UMsg *le = FCalloc( 1, sizeof(UMsg) );
-											if( le != NULL )
-											{
-												le->usrname = username;
-												le->node.mln_Succ = (MinNode *)ulistroot;
-												ulistroot = le;
-											}
-											//ListAdd( &usersList, username );
-											p++;
-										}
-										p--;
-										*/
 										SLIB->LibrarySQLDrop( SLIB, sqllib );
 										}
 									}
@@ -795,21 +768,7 @@ void ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 								if( userNameList == NULL || channel_id == NULL || title == NULL || content == NULL )
 								{
 									DEBUG( "channel_id: %s title: %s content: %s\n", channel_id, title , content );
-									/*
-									UMsg *le = ulistroot;
-									while( le != NULL )
-									{
-										UMsg *dme = le;
-										le = (UMsg *)le->node.mln_Succ;
-								
-										if( dme->usrname != NULL )
-										{
-											FFree( dme->usrname );
-										}
-										FFree( dme );
-									}
-									*/
-									
+
 									if( userNameList != NULL )
 									{
 										FFree( userNameList );
@@ -824,46 +783,7 @@ void ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 									ReplyError( d, WS_NOTIF_SINK_ERROR_PARAMETERS_NOT_FOUND );
 									goto error_point;
 								}
-								
-								/*
-								// debug purpose
-								BufString *debugUserList = BufStringNew();
-								UMsg *le = ulistroot;
-								while( le != NULL )
-								{
-									char temp[ 256 ];
-									int size = snprintf( temp, sizeof(temp), " User: %s", le->usrname );
-									BufStringAddSize( debugUserList, temp, size );
-									le = (UMsg *)le->node.mln_Succ;
-								}
-								if( debugUserList->bs_Size > 0 )
-								{
-									Log( FLOG_INFO, "This users will get notifications: %s\n", debugUserList->bs_Buffer );
-								}
-								else
-								{
-									Log( FLOG_ERROR, "Notification Error! No users in recipients list\n");
-								}
-								BufStringDelete( debugUserList );
-								*/
-								
-								int returnStatus = 0;
-								/*
-								le = ulistroot;
-								while( le != NULL )
-								{
-									if( le->usrname != NULL )
-									{
-										int status = MobileAppNotifyUserRegister( SLIB, (char *)le->usrname, channel_id, application, title, content, (MobileNotificationTypeT)notification_type, extra, timecreated );
-
-										if( status != 0 )
-										{
-											returnStatus = status;
-										}
-									}
-									le = (UMsg *)le->node.mln_Succ;
-								}
-								*/
+							
 								
 #ifdef ENABLE_NOTIFICATION_THREAD
 								pthread_t t;
@@ -924,22 +844,7 @@ void ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 								ReplyError( d, WS_NOTIF_SINK_ERROR_NOTIFICATION_TYPE_NOT_FOUND );
 								goto error_point;
 							}
-							
-							/*
-							UMsg *le = ulistroot;
-							while( le != NULL )
-							{
-								UMsg *dme = le;
-								le = (UMsg *)le->node.mln_Succ;
-								
-								if( dme->usrname != NULL )
-								{
-									FFree( dme->usrname );
-								}
-								FFree( dme );
-							}
-							*/
-							
+
 							if( releaseMemory == TRUE )
 							{
 								if( userNameList != NULL )

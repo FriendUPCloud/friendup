@@ -741,7 +741,7 @@ inline static int GenerateServiceMessage(
 	char *reqID, 
 	char *path, 
 	char *params, 
-	UserSession *us 
+	char *userID
 )
 {
 	int dstsize = 0;
@@ -759,7 +759,7 @@ inline static int GenerateServiceMessage(
 				"\"requestId\":\"%s\","
 				"\"data\":%s" 
 			"}",
-			us->us_User->u_UUID,
+			userID,
 			path, 
 			reqID,
 			params
@@ -774,7 +774,7 @@ inline static int GenerateServiceMessage(
 				"\"path\":\"service/%s\","
 				"\"data\":%s"
 			"}",
-			us->us_User->u_UUID,
+			userID,
 			path,
 			params
 		);
@@ -827,7 +827,7 @@ inline static int GenerateServiceMessage(
  * 
  * @param nm pointer to NotificationManager
  * @param req Http request
- * @param us user session
+ * @param userID user unique ID
  * @param sername server name to which message will be sent. NULL means that message will be send to all connections.
  * @param type type of message (request or event)
  * @param path command path
@@ -838,14 +838,13 @@ inline static int GenerateServiceMessage(
 BufString *NotificationManagerSendRequestToConnections( 
 	NotificationManager *nm, 
 	Http *req, 
-	UserSession *us, 
+	char *userID, 
 	char *sername, 
 	int type, 
 	const char *path, 
 	const char *params
 )
 {
-	//char *retMessage = NULL;
 	BufString *retMsg = BufStringNew();
 	
 	if( req != NULL && req->http_RequestSource == HTTP_SOURCE_EXTERNAL_SERVER )
@@ -896,24 +895,11 @@ BufString *NotificationManagerSendRequestToConnections(
 			DEBUG("Server name = NULL\n");
 			while( con != NULL )
 			{
-				DataQWSIM *en = (DataQWSIM *)con->esc_Connection;
-				/*
-				if( reqID != NULL )
-				{
-					snprintf( reqID, 128, "EXTSER_%lu%d_ID", time(NULL), rand()%999999 );
-					dstsize = snprintf( dstMsg, msglen, "{\"path\":\"service/%s\",\"requestId\":\"%s\",\"data\":{%s,\"originUserId\":\"%s\"}}", path, reqID, params, us->us_User->u_UUID );
-				}
-				else
-				{
-					dstsize = snprintf( dstMsg, msglen, "{\"path\":\"service/%s\",\"data\":{%s,\"originUserId\":\"%s\"}}", path, params, us->us_User->u_UUID );
-				}
-				*/
-				
-				dstsize = GenerateServiceMessage( dstMsg, reqID, (char *)path, (char *)params, us );
+				dstsize = GenerateServiceMessage( dstMsg, reqID, (char *)path, (char *)params, userID );
 				
 				Log( FLOG_INFO, "[NotificationManagerSendRequestToConnections] Send message: '%s'\n", dstMsg );
 				
-				DEBUG("Msg sent to: %s\n", en->d_ServerName );
+				//DEBUG("Msg sent to: %s\n", en->d_ServerName );
 				ret += WriteMessageToServers( con->esc_Connection, (unsigned char *)dstMsg, dstsize );
 				con = (ExternalServerConnection *)con->node.mln_Succ;
 				
@@ -929,15 +915,15 @@ BufString *NotificationManagerSendRequestToConnections(
 				if( reqID != NULL )
 				{
 					snprintf( reqID, 128, "EXTSER_%lu%d_ID", time(NULL), rand()%999999 );
-					dstsize = snprintf( dstMsg, msglen, "{\"path\":\"service/%s\",\"requestId\":\"%s\",\"data\":{%s,\"originUserId\":\"%s\"}}", path, reqID, params, us->us_User->u_UUID );
+					dstsize = snprintf( dstMsg, msglen, "{\"path\":\"service/%s\",\"requestId\":\"%s\",\"data\":{%s,\"originUserId\":\"%s\"}}", path, reqID, params, userID );
 				}
 				else
 				{
-					dstsize = snprintf( dstMsg, msglen, "{\"path\":\"service/%s\",\"data\":{%s,\"originUserId\":\"%s\"}}", path, params, us->us_User->u_UUID );
+					dstsize = snprintf( dstMsg, msglen, "{\"path\":\"service/%s\",\"data\":{%s,\"originUserId\":\"%s\"}}", path, params, userID );
 				}
 				*/
 				
-				dstsize = GenerateServiceMessage( dstMsg, reqID, (char *)path, (char *)params, us );
+				dstsize = GenerateServiceMessage( dstMsg, reqID, (char *)path, (char *)params, userID );
 				Log( FLOG_INFO, "[NotificationManagerSendRequestToConnections] Send message: '%s'\n", dstMsg );
 				
 				ret += WriteMessageToServers( con->esc_Connection, (unsigned char *)dstMsg, dstsize );
@@ -1231,30 +1217,6 @@ void NotificationSendThread( FThread *data )
 	nstd->sntd_RootNotification = NULL;
 	
 	MobileAppNotifyUsersUpdate( nstd->sntd_NM->nm_SB, entryToDelete, NOTIFY_ACTION_TIMEOUT );
-	
-	/*
-	DelListEntry *le = nstd->sntd_RootNotification;
-	while( le != NULL )
-	{
-		DelListEntry *nextentry = (DelListEntry *)le->node.mln_Succ;
-		
-		Notification *dnotif = le->dle_NotificationPtr;
-		
-		if( dnotif != NULL )
-		{
-			DEBUG1("Msg will be sent! ID: %lu content: %s and deleted\n", dnotif->n_ID, dnotif->n_Content );
-		
-			MobileAppNotifyUserUpdate( nstd->sntd_NM->nm_SB, dnotif->n_UserName, dnotif, NOTIFY_ACTION_TIMEOUT );
-			NotificationDelete( dnotif );
-			le->dle_NotificationPtr = NULL;
-		}
-		
-		FFree( le );
-		
-		le = nextentry;
-	}
-	FFree( nstd );
-	*/
 	
 	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )
 	{

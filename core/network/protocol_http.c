@@ -826,9 +826,10 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 					else if( strcmp( path->p_Parts[ 0 ], "sharedfile" ) == 0 )
 					{
-						//FileShared *fs = NULL;
 						char query[ 1024 ];
-
+						UserSession *session = NULL;
+						FBOOL tempSession = FALSE;
+						
 						Log( FLOG_DEBUG, "[ProtocolHttp] Shared file hash %s name %s\n", path->p_Parts[ 1 ], path->p_Parts[ 2 ] );
 
 						SQLLibrary *sqllib = SLIB->LibrarySQLGet( SLIB );
@@ -904,16 +905,45 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								if( strcmp( accessLevel, "Public" ) == 0 )
 								{
 									haveAccess = TRUE;
+									tempSession = TRUE;
+									session = USMCreateTemporarySession( SLIB->sl_USM, sqllib, fs_IDUser, 0 );
 								}
-								else	
+								else
 								{
-									HashmapElement *idparam = GetHEReq( request, "id" );
+									HashmapElement *sessionid = GetHEReq( request, "sessionid" );
 
-									if( idparam != NULL && idparam->hme_Data != NULL )
+									if( sessionid != NULL && sessionid->hme_Data != NULL )
 									{
-										if( strcmp( externalID, idparam->hme_Data ) == 0 )
+										session = USMGetSessionBySessionID( SLIB->sl_USM, (char *)sessionid->hme_Data );
+										
+										//
+										// If its not public file so it means that
+										//
+										
+										if( session != NULL )
 										{
-											haveAccess = TRUE;
+											if( strcmp( accessLevel, "Presence" ) == 0 )
+											{
+												char params[ 256 ];
+												snprintf( params, sizeof(params), "{\"userId\",\"%s\",\"roomId\":\"%s\"}", session->us_User->u_UUID, externalID );
+
+												BufString *serresp = NotificationManagerSendRequestToConnections( 
+													SLIB->sl_NotificationManager, 
+													request, externalID,  "Presence",  0, "room/isUserInRoom", params 
+												); // 0 - type request, 1 - event
+			
+												if( serresp != NULL )
+												{
+													if( serresp->bs_Buffer != NULL && strcmp( "true", serresp->bs_Buffer ) == 0 )
+													{
+														haveAccess = TRUE;
+													}
+												}
+											}
+											else if( strcmp( accessLevel, "Workgroup" ) == 0 )
+											{
+												//UGMUserToGroupISConnectedByUIDDB( SLIB->sl_UGM, );
+											}
 										}
 									}
 								}
@@ -922,8 +952,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							// Immediately drop here..
 							SLIB->LibrarySQLDrop( SLIB, sqllib );
 							sqllib = NULL;
-							
-							UserSession *session = USMCreateTemporarySession( SLIB->sl_USM, sqllib, fs_IDUser, 0 );
 
 							Log( FLOG_DEBUG,"Check variables fs_Name: %s fs_DeviceName: %s fs_Path: %s\n", fs_Name, fs_DeviceName, fs_Path );
 							
@@ -1244,7 +1272,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							if( externalID != NULL ) FFree( externalID );
 							
 							// if temporary session was generated, we must remove it
-							//if( sessionIDGenerated == TRUE )
+							if( tempSession == TRUE )
 							{
 								USMDestroyTemporarySession( SLIB->sl_USM, sqllib, session );
 							}

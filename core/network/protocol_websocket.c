@@ -1253,35 +1253,6 @@ void *ParseAndCall( WSThreadData *wstd )
 									{
 										//DEBUG1("[WS]:New values passed to POST %s\n", s->us_SessionID );
 									}
-									/*
-									if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
-									{
-											if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-											{
-												if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( us->us_SessionID ) ) == MAP_OK )
-												{
-												//DEBUG1("[WS]:New values passed to POST %s\n", s->us_SessionID );
-												}
-										
-												if( us->us_UserActionInfo[ 0 ] == 0 )
-												{
-													int fd = lws_get_socket_fd( fcd->wsc_Wsi );
-													char add[ 256 ];
-													char rip[ 256 ];
-											
-													lws_get_peer_addresses( fcd->wsc_Wsi, fd, add, sizeof(add), rip, sizeof(rip) );
-													//INFO("[WS]: WEBSOCKET call %s - %s\n", add, rip );
-											
-													snprintf( us->us_UserActionInfo, sizeof( us->us_UserActionInfo ), "%s / %s", add, rip );
-												}
-												FRIEND_MUTEX_UNLOCK( &(s->us_Mutex) );
-										}
-										else
-										{
-											FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
-										}
-									}
-									*/
 									
 									int i, i1;
 									

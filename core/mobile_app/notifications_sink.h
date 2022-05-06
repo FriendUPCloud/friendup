@@ -52,10 +52,15 @@ enum {
 
 typedef struct DataQWSIM{
 	struct lws			*d_Wsi;
-	pthread_mutex_t		d_Mutex;
-	FQueue				d_Queue;
-	FBOOL				d_Authenticated;
-	char				*d_ServerName;
+	
+	pthread_mutex_t		d_Mutex;			// protect messages (queue)
+	pthread_cond_t		d_Cond;				// when message is sent then it waits some seconds for getting info back. Cond says new message came
+	
+	FQueue				d_IncomingQueue;	// messages which are coming
+	FQueue				d_OutgoingQueue;	// messages which are going out
+	
+	FBOOL				d_Authenticated;	// if service is authenticated
+	char				*d_ServerName;		// name of external service
 }DataQWSIM;
 
 int WriteMessageToServers( DataQWSIM *d, unsigned char *msg, int len );

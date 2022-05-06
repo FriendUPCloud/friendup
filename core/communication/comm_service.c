@@ -890,7 +890,7 @@ int CommServiceThreadServer( FThread *ptr )
 									CommRequest *cr = NULL;
 									DEBUG("[COMMSERV] Response received!\n");
 									
-									if( FRIEND_MUTEX_LOCK( &service->s_Mutex ) == 0 )
+									if( FRIEND_MUTEX_LOCK( &(service->s_Mutex) ) == 0 )
 									{
 										DEBUG("[COMMSERV] lock set\n");
 										CommRequest *cr = service->s_Requests;
@@ -907,15 +907,15 @@ int CommServiceThreadServer( FThread *ptr )
 											}
 											cr = (CommRequest *) cr->node.mln_Succ;
 										}
-										FRIEND_MUTEX_UNLOCK( &service->s_Mutex );
+										FRIEND_MUTEX_UNLOCK( &(service->s_Mutex) );
 									}
 									
 									if( cr != NULL )
 									{
-										if( FRIEND_MUTEX_LOCK( &service->s_CondMutex ) == 0 )
+										if( FRIEND_MUTEX_LOCK( &(service->s_CondMutex) ) == 0 )
 										{
-											pthread_cond_broadcast( &service->s_DataReceivedCond );
-											FRIEND_MUTEX_UNLOCK( &service->s_CondMutex );
+											pthread_cond_broadcast( &(service->s_DataReceivedCond) );
+											FRIEND_MUTEX_UNLOCK( &(service->s_CondMutex) );
 										}
 									}
 								}

@@ -331,15 +331,6 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 						// callback writeable was here
 					}
 				}
-				/*
-				WSCData *wsd = NULL;
-				
-				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-				{
-					wsd = us->us_WSD;
-					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-				}
-				*/
 				
 				if( us->us_WSD != NULL )
 				{
@@ -421,9 +412,6 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 						FFree( en );
 						en = NULL;
 					}
-					
-			//#define FQPushFIFO( qroot, q ) if( (qroot)->fq_First == NULL ){ (qroot)->fq_First = q; (qroot)->fq_Last = q; }else{ (qroot)->fq_Last->node.mln_Succ = (MinNode *)q; (qroot)->fq_Last = q; } 
-					//FQPushFIFO( &(us->us_MsgQueue), en );
 					retval += msglen;
 				}
 				

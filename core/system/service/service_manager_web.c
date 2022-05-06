@@ -107,7 +107,7 @@ Http *SMWebRequest( void *lsb, char **urlpath, Http* request, UserSession *logge
 			BufString *serresp = NotificationManagerSendRequestToConnections( 
 				l->sl_NotificationManager, 
 				request, 
-				loggedSession, 
+				loggedSession->us_User->u_UUID, 
 				servername, 
 				type, 
 				path, 

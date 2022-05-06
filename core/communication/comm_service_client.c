@@ -151,10 +151,10 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 	FBOOL quit = FALSE;
 	while( quit != TRUE )
 	{
-		if( FRIEND_MUTEX_LOCK( &serv->s_CondMutex ) == 0 )
+		if( FRIEND_MUTEX_LOCK( &(serv->s_CondMutex) ) == 0 )
 		{
-			pthread_cond_wait( &serv->s_DataReceivedCond, &serv->s_Mutex );
-			FRIEND_MUTEX_UNLOCK( &serv->s_CondMutex );
+			pthread_cond_wait( &(serv->s_DataReceivedCond), &(serv->s_Mutex) );
+			FRIEND_MUTEX_UNLOCK( &(serv->s_CondMutex) );
 		}
 		else break;
 
@@ -166,7 +166,7 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 			bs = cr->cr_Bs;
 			quit = TRUE;
 
-			if( FRIEND_MUTEX_LOCK( &serv->s_Mutex ) == 0 )
+			if( FRIEND_MUTEX_LOCK( &(serv->s_Mutex) ) == 0 )
 			{
 				if( cr == serv->s_Requests )
 				{
@@ -203,7 +203,7 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 					FFree( cr );
 					cr = NULL;
 				}
-				FRIEND_MUTEX_UNLOCK( &serv->s_Mutex );
+				FRIEND_MUTEX_UNLOCK( &(serv->s_Mutex) );
 			}
 			break;
 		}

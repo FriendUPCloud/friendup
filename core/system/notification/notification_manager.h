@@ -49,7 +49,7 @@
 
 typedef struct ExternalServerConnection
 {
-	void			*esc_Connection;
+	void			*esc_Connection;	// real WS connection DataQWSIM
 	MinNode			node;
 }ExternalServerConnection;
 
@@ -83,6 +83,7 @@ typedef struct NotificationManager
 	char						*nm_FirebaseHost;
 	
 	int							nm_NumberOfLaunchedThreads;
+	
 	ExternalServerConnection	*nm_ESConnections;
 }NotificationManager;
 
@@ -142,7 +143,7 @@ int NotificationManagerSendInformationToConnections( NotificationManager *nm, ch
 
 int NotificationManagerSendEventToConnections( NotificationManager *nm, Http *req, char *sername, const char *reqid, const char *sertype, const char *func, const char *action, char *msg );
 
-BufString *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http *req, UserSession *us, char *sername, int type, const char *path, const char *params );
+BufString *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http *req, char *userID, char *sername, int type, const char *path, const char *params );
 
 int NotificationManagerAddIncomingRequestES( NotificationManager *nm, char *reqid, char *message );
 
