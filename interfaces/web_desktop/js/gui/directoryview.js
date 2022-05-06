@@ -5272,6 +5272,17 @@ Friend.startImageViewer = function( iconObject, extra )
 		
 		image = image[0];
 		
+		if( image.width > image.height )
+		{
+			image.parentNode.classList.remove( 'LargeHeight' );
+			image.parentNode.classList.add( 'LargeWidth' );
+		}
+		else
+		{
+			image.parentNode.classList.remove( 'LargeWidth' );
+			image.parentNode.classList.add( 'LargeHeight' );
+		}
+		
 		if( typeof( image.offsetX ) == 'undefined' )
 		{
 			image.offsetX = 0;
@@ -5659,6 +5670,16 @@ Friend.startImageViewer = function( iconObject, extra )
 									w: i.width,
 									h: i.height
 								};
+								if( i.width > i.height )
+								{
+									imgElement.parentNode.classList.remove( 'LargeHeight' );
+									imgElement.parentNode.classList.add( 'LargeWidth' );
+								}
+								else
+								{
+									imgElement.parentNode.classList.remove( 'LargeWidth' );
+									imgElement.parentNode.classList.add( 'LargeHeight' );
+								}
 								imgElement.src = i.src; 
 								imgElement.width = this.width; imgElement.height = this.height; 
 								repositionElement( owin, 'default', extra ); 
@@ -5683,6 +5704,16 @@ Friend.startImageViewer = function( iconObject, extra )
 									w: i.width,
 									h: i.height
 								};
+								if( i.width > i.height )
+								{
+									imgElement.parentNode.classList.remove( 'LargeHeight' );
+									imgElement.parentNode.classList.add( 'LargeWidth' );
+								}
+								else
+								{
+									imgElement.parentNode.classList.remove( 'LargeWidth' );
+									imgElement.parentNode.classList.add( 'LargeHeight' );
+								}
 								imgElement.src = i.src; 
 								imgElement.width = this.width; imgElement.height = this.height; 
 								repositionElement( owin, 'default', extra ); 
