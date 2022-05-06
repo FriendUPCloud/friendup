@@ -2435,7 +2435,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						externalID = UrlDecodeToMem( el->hme_Data );
 					}
 					
-					DEBUG("file/expose: externalid: %s\n", externalid );
+					DEBUG("file/expose: externalid: %s\n", externalID );
 					
 					char *dest = UrlDecodeToMem( path );
 					char *encName = NULL;
