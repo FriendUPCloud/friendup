@@ -911,10 +911,14 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								else
 								{
 									HashmapElement *sessionid = GetHEReq( request, "sessionid" );
+									
+									DEBUG("sharefile: accessLevel: %s sessionid: %s\n" accessLevel, sessionid );
 
 									if( sessionid != NULL && sessionid->hme_Data != NULL )
 									{
 										session = USMGetSessionBySessionID( SLIB->sl_USM, (char *)sessionid->hme_Data );
+										
+										DEBUG("sharefile: session: %s\n" session );
 										
 										//
 										// If its not public file so it means that
@@ -926,6 +930,8 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 											{
 												char params[ 256 ];
 												snprintf( params, sizeof(params), "{\"userId\",\"%s\",\"roomId\":\"%s\"}", session->us_User->u_UUID, externalID );
+												
+												DEBUG("sharefile: send request to presence: %s\n" params );
 
 												BufString *serresp = NotificationManagerSendRequestToConnections( 
 													SLIB->sl_NotificationManager, 
