@@ -2218,6 +2218,34 @@ var View = function( args )
 		}
 	}
 	
+	// Special hook for dashboard related workspace
+	if( window.hideDashboard )
+	{
+		let newApp = true;
+		if( args.applicationId )
+		{
+			for( let a in Workspace.applications )
+			{
+				let app = Workspace.applications[ a ];
+				if( app.applicationId == args.applicationId )
+				{
+					let count = 0;
+					for( let b in app.windows )
+					{
+						count++;
+						if( count > 1 )
+						{
+							newApp = false;
+							break;
+						}
+					}
+				}
+			}
+		}
+		if( newApp )
+			window.hideDashboard();
+	}
+	
 	// Start off
 	if( !args )
 		args = {};
