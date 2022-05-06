@@ -2429,7 +2429,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					DEBUG("file/expose: visibility: %s\n", dstfield );
 					
 					el = HttpGetPOSTParameter( request, "externalid" );
-					el = HashmapGet( request->http_Query, "externalid" );
+					if( !el ) el = HashmapGet( request->http_Query, "externalid" );
 					if( el != NULL && el->hme_Data != NULL )
 					{
 						externalID = UrlDecodeToMem( el->hme_Data );
@@ -2505,7 +2505,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							//
 							// Check if user is in workgroup
 							//
-							
+							else
+							{ haveAccess = TRUE; }
+							/*
 							else if( strcmp( dstfield, "Workgroup" ) == 0 )
 							{
 								// before we store entry we should check if user have access to store shared file
@@ -2546,7 +2548,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									sqllib->FreeResult( sqllib, res );
 								}
 							}
-								
+								*/
 							
 							// if entry do not exist in database
 							if( hashmap[ 0 ] == 0 )
@@ -2576,6 +2578,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										tmpfs->fs_DeviceName = StringDuplicate( devname );
 										tmpfs->fs_DsttUserID = StringDuplicate( dstfield );
 										tmpfs->fs_DstExternID = StringDuplicate( externalID );
+										
+										DEBUG("file/expose: tmpfs->fs_DsttUserID : %s tmpfs->fs_DstExternID : %s\n", tmpfs->fs_DsttUserID, tmpfs->fs_DstExternID );
 						
 										// Make a unique hash
 										char tmp[ 512 ];
