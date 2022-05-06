@@ -2426,12 +2426,16 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						dstfield = StringDuplicate( "Public" );
 					}
 					
+					DEBUG("file/expose: visibility: %s\n", dstfield );
+					
 					el = HttpGetPOSTParameter( request, "externalid" );
 					el = HashmapGet( request->http_Query, "externalid" );
 					if( el != NULL && el->hme_Data != NULL )
 					{
 						externalID = UrlDecodeToMem( el->hme_Data );
 					}
+					
+					DEBUG("file/expose: externalid: %s\n", externalid );
 					
 					char *dest = UrlDecodeToMem( path );
 					char *encName = NULL;
