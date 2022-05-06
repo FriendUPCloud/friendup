@@ -5148,6 +5148,17 @@ Friend.startImageViewer = function( iconObject, extra )
 		fullscreenenabled: true
 	} );
 	
+	win.content.parentNode.parseQuickMenuMessage = function( msg )
+    {
+        switch( msg.command )
+        {
+        	case 'quit':
+            case 'close':
+                CloseView();
+                break;
+        }
+    }
+	
 	let owin = win;
 	let bgMode = 'grid';
 	let rotate = 0;
