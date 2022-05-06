@@ -931,7 +931,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												char params[ 256 ];
 												snprintf( params, sizeof(params), "{\"userId\",\"%s\",\"roomId\":\"%s\"}", session->us_User->u_UUID, externalID );
 												
-												DEBUG("sharefile: send request to presence: %s\n" params );
+												DEBUG("sharefile: send request to presence: %s\n", params );
 
 												BufString *serresp = NotificationManagerSendRequestToConnections( 
 													SLIB->sl_NotificationManager, 
