@@ -918,7 +918,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									{
 										session = USMGetSessionBySessionID( SLIB->sl_USM, (char *)sessionid->hme_Data );
 										
-										DEBUG("sharefile: session: %s\n", session );
+										DEBUG("sharefile: session: %p\n", session );
 										
 										//
 										// If its not public file so it means that
@@ -948,7 +948,10 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 											}
 											else if( strcmp( accessLevel, "Workgroup" ) == 0 )
 											{
-												//UGMUserToGroupISConnectedByUIDDB( SLIB->sl_UGM, );
+												if( UGMUserToGroupISConnectedByUniqueUIDDB( SLIB->sl_UGM, externalID, session->us_UserID ) == TRUE )
+												{
+													haveAccess = TRUE;
+												}
 											}
 										}
 									}
