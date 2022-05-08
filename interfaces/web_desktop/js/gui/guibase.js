@@ -2907,7 +2907,7 @@ function PollTaskbar( curr )
 		return;
 	
 	// Do we have dashboard?
-	if( window.Workspace && Workspace.dashboard )
+	if( window.Workspace && Workspace.dashboard && Workspace.dashboard.refreshDashboard )
 	{
 	    Workspace.dashboard.refreshDashboard();
 	}
