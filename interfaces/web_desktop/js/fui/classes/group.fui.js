@@ -90,6 +90,52 @@ class FUIGroup extends FUIElement
 		    	this.domElement.style.margin = int + 'px';
 		    }
         }
+        // Left margin
+        let marginLeft = domElement.getAttribute( 'margin-left' );
+        if( marginLeft )
+        {
+            if( marginLeft == 'normal' )
+        	{
+        		this.domElement.style.paddingLeft = 'var(--fui-padding-normal)';
+        	}
+        	else if( marginLeft == 'small' )
+        	{
+        		this.domElement.style.paddingLeft = 'var(--fui-padding-row)';
+        	}
+        	else if( marginLeft == 'large' )
+        	{
+        		this.domElement.style.paddingLeft = 'var(--fui-padding-large)';
+        	}
+        	else
+        	{
+		    	let int = parseInt( marginLeft );
+		    	if( isNaN( int ) ) int = 0;
+		    	this.domElement.style.marginLeft = int + 'px';
+		    }
+        }
+        // Right margin
+        let marginRight = domElement.getAttribute( 'margin-right' );
+        if( marginRight )
+        {
+            if( marginRight == 'normal' )
+        	{
+        		this.domElement.style.paddingRight = 'var(--fui-padding-normal)';
+        	}
+        	else if( marginRight == 'small' )
+        	{
+        		this.domElement.style.paddingRight = 'var(--fui-padding-row)';
+        	}
+        	else if( marginRight == 'large' )
+        	{
+        		this.domElement.style.paddingRight = 'var(--fui-padding-large)';
+        	}
+        	else
+        	{
+		    	let int = parseInt( marginRight );
+		    	if( isNaN( int ) ) int = 0;
+		    	this.domElement.style.marginRight = int + 'px';
+		    }
+        }
         
         // Group containers with rows cannot have columns
         let rowcontainer = domElement.getElementsByTagName( 'rows' );
