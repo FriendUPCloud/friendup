@@ -5097,6 +5097,19 @@ var View = function( args )
 				this.setMainView( value );
 				this.flags.mainView = value;
 				break;
+			case 'dialog':
+			    if( viewdiv )
+			    {
+			        if( value )
+			        {
+			            viewdiv.parentNode.classList.add( 'Dialog' );
+			        }
+			        else
+			        {
+			            viewdiv.parentNode.classList.remove( 'Dialog' );
+			        }
+			    }
+			    break;
 			case 'clickableTitle':
 				this.flags.clickableTitle = value;
 				break;
@@ -6051,6 +6064,7 @@ function Ac2Alert ( msg, title )
 		'height' : 120
 	} );
 	v.setSticky();
+	v.setFlag( 'dialog', true );
 	v.setContent( '<div class="Dialog Box ContentFull">' + msg + '</div>' );
 }
 
@@ -6206,6 +6220,8 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 			id: 'confirm_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
 		} );
 	}
+	
+	v.setFlag( 'dialog', true );
 
 	v.onClose = function()
 	{
@@ -6339,6 +6355,8 @@ function Alert( title, string, cancelstring, callback )
 			id: 'alert_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
 		} );
 	}
+	
+	v.setFlag( 'dialog', true );
 	
 	v.onClose = function()
 	{

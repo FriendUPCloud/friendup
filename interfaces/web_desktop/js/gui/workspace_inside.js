@@ -9295,6 +9295,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			id: 'launcherview'
 		} );
 		
+		w.setFlag( 'dialog', true );
+		
 		w.onClose = function()
 		{
 			Workspace.launcherWindow = null;
