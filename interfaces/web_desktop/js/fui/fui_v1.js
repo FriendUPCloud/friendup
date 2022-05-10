@@ -204,11 +204,16 @@ window.FUI = window.FUI ? window.FUI : {
 		}
 	},
 	// Get a fragment for processing
-	getFragment( uniqueid )
+	getFragment( uniqueid, replacements )
 	{
 		if( this.fragments[ uniqueid ] )
 		{
-			return this.fragments[ uniqueid ];
+		    let frag = this.fragments[ uniqueid ];
+		    if( replacements )
+		    {
+		        return this.applyReplacements( frag, replacements );
+		    }
+			return frag;
 		}
 		return false;
 	},
