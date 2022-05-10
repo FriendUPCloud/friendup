@@ -39,8 +39,9 @@ class FUIGroup extends FUIElement
     // Grabs attributes from the dom element if they are supported
     grabAttributes( domElement )
     {
+        super.grabAttributes( domElement );
+        
         let self = this;
-        console.log( 'group', domElement );
         
         this.domElement.innerHTML = '';
         
@@ -139,7 +140,6 @@ class FUIGroup extends FUIElement
         
         // Group containers with rows cannot have columns
         let rowcontainer = domElement.getElementsByTagName( 'rows' );
-        console.log( 'rows', rowcontainer, rowcontainer.length );
         if( rowcontainer.length )
         {
             if ( rowcontainer[0].parentNode == domElement )
@@ -184,6 +184,12 @@ class FUIGroup extends FUIElement
                     	}
                     }
                     
+                    let uniqueid = rows[a].getAttribute( 'uniqueid' );
+                    if( uniqueid )
+                    {
+                        d.uniqueid = uniqueid;
+                    }
+                    
                     let children = rows[a].getElementsByTagName( '*' );
                     for( let b = 0; b < children.length; b++ )
                     {
@@ -201,7 +207,6 @@ class FUIGroup extends FUIElement
         
         // Group containers with columns cannot have rows
         let colcontainer = domElement.getElementsByTagName( 'columns' );
-        console.log( 'columns', colcontainer, colcontainer.length );
         if( colcontainer.length )
         {
             if ( colcontainer[0].parentNode == domElement )
@@ -216,7 +221,6 @@ class FUIGroup extends FUIElement
                     if( columns[a].parentNode != colcontainer )
                         continue;
                     
-                    console.log( 'create column for', columns[a]);
                     let d = document.createElement( 'div' );
                     d.className = 'FUIColumn';
                     
@@ -297,6 +301,18 @@ class FUIGroup extends FUIElement
     	let eles = this.domElement.childNodes;
     	for( let a = 0; a < eles.length; a++ )
     	{
+    		if( eles[ a ].uniqueid == id )
+    		{
+    		    return {
+    		        domElement: eles[ a ],
+    		        setContent: function( cnt )
+    		        {
+    		            this.domElement.innerHTML = cnt;
+    		            FUI.initialize();
+    		            return true;
+    		        }
+        		};
+        	}
     		let eles2 = eles[ a ].childNodes;
     		if( eles2 )
     		{
