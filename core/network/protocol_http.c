@@ -929,8 +929,8 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 											if( strcmp( accessLevel, "Presence" ) == 0 )
 											{
 												char params[ 256 ];
-												//snprintf( params, sizeof(params), "{\"userId\":\"%s\",\"roomId\":\"%s\"}", session->us_User->u_UUID, externalID );
-												snprintf( params, sizeof(params), "{\"userId\":\"%s\",\"roomId\":\"%s\"}", session->us_User->u_UUID, "room-608de929-16ae-4e94-a3d3-309412718069" );
+												snprintf( params, sizeof(params), "{\"userId\":\"%s\",\"roomId\":\"%s\"}", session->us_User->u_UUID, externalID );
+												//snprintf( params, sizeof(params), "{\"userId\":\"%s\",\"roomId\":\"%s\"}", session->us_User->u_UUID, "room-608de929-16ae-4e94-a3d3-309412718069" );
 												
 												DEBUG("sharefile: send request to presence: %s\n", params );
 
