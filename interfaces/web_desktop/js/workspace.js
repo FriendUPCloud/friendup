@@ -785,7 +785,7 @@ Workspace = {
 			height: 480,
 			'min-height': 280,
 			'resize': false,
-			title: 'Login to Friend OS',
+			title: 'Sign into your account',
 			close: false,
 			login: true,
 			theme: 'login'
@@ -801,7 +801,7 @@ Workspace = {
 					case 'eula':
 					{
 						let v = new View( {
-							title: 'LoginPopup',
+							title: 'Please verify our EULA',
 							width: 432,
 							height: 480,
 							resize: false
@@ -825,7 +825,7 @@ Workspace = {
 					case 'privacypolicy':
 					{
 						let v = new View( {
-							title: 'LoginPopup',
+							title: 'Privacy policy',
 							width: 432,
 							height: 480,
 							resize: false
