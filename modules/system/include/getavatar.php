@@ -161,6 +161,28 @@ else
 	}*/
 }
 
+// If the user is part of the same workgroup as the target user, then we can
+// fetch the avatar
+$targetUser = false;
+if( isset( $args->userid ) ) $targetUser = $args->userid;
+else if( isset( $args->args ) && isset( $args->args->userid ) ) 
+	$targetUser = $args->args->userid;
+if( $targetUser )
+{
+	if( $row = $SqlDatabase->fetchObject( '
+		SELECT tug.* FROM 
+			FUserToGroup tug,
+			FUserToGroup sug
+		WHERE
+			sug.UserID = \'' . $User->ID . '\' AND
+			tug.UserGroupID = sug.UserGroupID AND
+			tug.UserID = \'' . intval( $targetUser, 10 ) . '\'
+	' ) )
+	{
+		$userid = $row->UserID;
+	}
+}
+
 // Default thumbnail size
 $width = 256;
 $height = 256;
