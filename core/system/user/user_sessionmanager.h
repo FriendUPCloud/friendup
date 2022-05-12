@@ -201,10 +201,10 @@ int USMRemoveOldSessions( void *lsb );
 int USMRemoveOldSessionsinDB( void *lsb );
 
 //
-// get user by auth id
+// get user session by auth id
 //
 
-UserSession *UserGetByAuthID( UserSessionManager *usm, const char *authId );
+UserSession *USMUserSessionGetByAuthID( UserSessionManager *usm, const char *authId );
 
 //
 // get users by timeout

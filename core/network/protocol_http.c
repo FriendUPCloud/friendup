@@ -911,38 +911,51 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								else
 								{
 									HashmapElement *sessionid = GetHEReq( request, "sessionid" );
+									HashmapElement *authid = NULL;
 
 									if( sessionid != NULL && sessionid->hme_Data != NULL )
 									{
 										session = USMGetSessionBySessionID( SLIB->sl_USM, (char *)sessionid->hme_Data );
-										
-										//
-										// If its not public file so it means that
-										//
-										
-										if( session != NULL )
+									}
+									else
+									{
+										authid = GetHEReq( request, "authid" );
+										if( authid != NULL && authid->hme_Data != NULL )
 										{
-											if( strcmp( accessLevel, "Presence" ) == 0 )
-											{
-												char params[ 256 ];
-												snprintf( params, sizeof(params), "{\"userId\",\"%s\",\"roomId\":\"%s\"}", session->us_User->u_UUID, externalID );
+											session = USMUserSessionGetByAuthID( SLIB->sl_USM, (char *)authid->hme_Data );
+										}
+									}
+									
+										
+									//
+									// If its not public file so it means that
+									//
+									
+									if( session != NULL )
+									{
+										if( strcmp( accessLevel, "Presence" ) == 0 )
+										{
+											char params[ 256 ];
+											snprintf( params, sizeof(params), "{\"userId\",\"%s\",\"roomId\":\"%s\"}", session->us_User->u_UUID, externalID );
 
-												BufString *serresp = NotificationManagerSendRequestToConnections( 
-													SLIB->sl_NotificationManager, 
-													request, externalID,  "Presence",  0, "room/isUserInRoom", params 
-												); // 0 - type request, 1 - event
+											BufString *serresp = NotificationManagerSendRequestToConnections( 
+												SLIB->sl_NotificationManager, 
+												request, externalID,  "Presence",  0, "room/isUserInRoom", params 
+											); // 0 - type request, 1 - event
 			
-												if( serresp != NULL )
+											if( serresp != NULL )
+											{
+												if( serresp->bs_Buffer != NULL && strcmp( "true", serresp->bs_Buffer ) == 0 )
 												{
-													if( serresp->bs_Buffer != NULL && strcmp( "true", serresp->bs_Buffer ) == 0 )
-													{
-														haveAccess = TRUE;
-													}
+													haveAccess = TRUE;
 												}
 											}
-											else if( strcmp( accessLevel, "Workgroup" ) == 0 )
+										}
+										else if( strcmp( accessLevel, "Workgroup" ) == 0 )
+										{
+											if( UGMUserToGroupISConnectedByUIDAndUniqueDB( SLIB->sl_UGM, externalID, session->us_UserID ) == TRUE )
 											{
-												//UGMUserToGroupISConnectedByUIDDB( SLIB->sl_UGM, );
+												haveAccess = TRUE;
 											}
 										}
 									}

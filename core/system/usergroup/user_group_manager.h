@@ -200,6 +200,12 @@ void UGMGetGroups( UserGroupManager *um, FULONG uid, BufString *bs, const char *
 
 int UGMGetUserGroupsDB( UserGroupManager *um, FULONG userID, BufString *bs );
 
+//
+//
+//
+
+FBOOL UGMUserToGroupISConnectedByUIDAndUniqueDB( UserGroupManager *um, char *guniqueid, FULONG uid );
+
 // This code is releated to groups and drives connected to them. This stuff must be in memory
 
 //

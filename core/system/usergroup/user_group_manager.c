@@ -1631,6 +1631,52 @@ FBOOL UGMUserToGroupISConnectedByUIDDB( UserGroupManager *um, FULONG ugroupid, F
 }
 
 /**
+ * Check if User is connected to Group in DB by unique id
+ *
+ * @param um pointer to UserGroupManager
+ * @param guniqueid UserGroup unique ID
+ * @param uid User ID
+ * @return TRUE when entry exist, otherwise FALSE
+ */
+FBOOL UGMUserToGroupISConnectedByUIDAndUniqueDB( UserGroupManager *um, char *guniqueid, FULONG uid )
+{
+	SystemBase *sb = (SystemBase *)um->ugm_SB;
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	FBOOL ret = FALSE;
+	
+	if( sqlLib != NULL )
+	{
+		char tmpQuery[512];
+		snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID FROM FUserToGroup utg inner join FUserGroup ug on utg.UserGroupID=ug.ID WHERE ug.UniqueID=%s AND utg.UserID=%lu", guniqueid, uid );
+		
+		void *result = sqlLib->Query(  sqlLib, tmpQuery );
+		if( result != NULL )
+		{
+			int rows = sqlLib->NumberOfRows( sqlLib, result );
+			if( rows > 0 )
+			{
+				DEBUG("[UGMUserToGroupISConnectedByUIDDB] User is in group\n");
+				ret = TRUE;
+			}
+			sqlLib->FreeResult( sqlLib, result );
+		}
+		else
+		{
+			ret = FALSE;
+		}
+		
+		sb->LibrarySQLDrop( sb, sqlLib );
+	}
+	else
+	{
+		FERROR("[UGMUserToGroupISConnectedByUIDDB] DBConnection fail!\n");
+		return FALSE;
+	}
+	DEBUG("[UGMUserToGroupISConnectedByUIDDB] User is in group? %d\n", ret );
+	return ret;
+}
+
+/**
  * Return all groups and their members as string
  *
  * @param um pointer to UserGroupManager
