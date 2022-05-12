@@ -1319,3 +1319,48 @@ UserSession *USMGetSessionByUserName( UserSessionManager *usm, char *name, FBOOL
 	SESSION_MANAGER_RELEASE( usm );
 	return NULL;
 }
+
+/**
+ * Get session by authid
+ *
+ * @param usm pointer to UserSessionManager
+ * @param authId authentication id used to find user session
+ * @return UserSession structure
+ */
+
+UserSession *USMUserSessionGetByAuthID( UserSessionManager *usm, const char *authId )
+{
+	UserSession *us = NULL;
+	
+	SystemBase *sb = (SystemBase *)usm->usm_SB;
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	FQUAD userID = 0;
+	
+	if( sqlLib != NULL )
+	{
+		DEBUG("[USMUserSessionGetByAuthID] %s\n", authId );
+		
+		char query[ 1024 ];
+		sqlLib->SNPrintF( sqlLib, query, sizeof(query), "SELECT u.ID FROM `FUser` u, `FApplication` f WHERE f.AuthID=\"%s\" AND f.UserID = u.ID LIMIT 1", authId );
+		
+		void *result = sqlLib->Query( sqlLib, query );
+		if( result != NULL )
+		{
+			char **row;
+			if( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+			{
+				char *end;
+				userID = strtol( row[ 0 ], &end, 0 );
+			}
+			sqlLib->FreeResult( sqlLib, result );
+		}
+		sb->LibrarySQLDrop( sb, sqlLib );
+	}
+	
+	if( userID > 0 )
+	{
+		us = USMGetSessionByUserID( usm, userID );
+	}
+	
+	return us;
+}

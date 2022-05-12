@@ -913,47 +913,56 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									HashmapElement *sessionid = GetHEReq( request, "sessionid" );
 									
 									DEBUG("sharefile: accessLevel: %s sessionid: %s\n", accessLevel, sessionid );
+									HashmapElement *authid = NULL;
 
 									if( sessionid != NULL && sessionid->hme_Data != NULL )
 									{
 										session = USMGetSessionBySessionID( SLIB->sl_USM, (char *)sessionid->hme_Data );
-										
-										DEBUG("sharefile: session: %p\n", session );
-										
-										//
-										// If its not public file so it means that
-										//
-										
-										if( session != NULL )
+									}
+									else
+									{
+										authid = GetHEReq( request, "authid" );
+										if( authid != NULL && authid->hme_Data != NULL )
 										{
-											if( strcmp( accessLevel, "Presence" ) == 0 )
-											{
-												char params[ 256 ];
-												snprintf( params, sizeof(params), "{\"userId\":\"%s\",\"roomId\":\"%s\"}", session->us_User->u_UUID, externalID );
-												//snprintf( params, sizeof(params), "{\"userId\":\"%s\",\"roomId\":\"%s\"}", session->us_User->u_UUID, "room-608de929-16ae-4e94-a3d3-309412718069" );
-												
-												DEBUG("sharefile: send request to presence: %s\n", params );
+											session = USMUserSessionGetByAuthID( SLIB->sl_USM, (char *)authid->hme_Data );
+										}
+									}
+									
+									
+									DEBUG("sharefile: session: %p\n", session );
+									
+									//
+									// If its not public file so it means that
+									//
+									
+									if( session != NULL )
+									{
+										if( strcmp( accessLevel, "Presence" ) == 0 )
+										{
+											char params[ 256 ];
+											snprintf( params, sizeof(params), "{\"userId\":\"%s\",\"roomId\":\"%s\"}", session->us_User->u_UUID, externalID );
+											//snprintf( params, sizeof(params), "{\"userId\":\"%s\",\"roomId\":\"%s\"}", session->us_User->u_UUID, "room-608de929-16ae-4e94-a3d3-309412718069" );
+											
+											DEBUG("sharefile: send request to presence: %s\n", params );
 
-												BufString *serresp = NotificationManagerSendRequestToConnections( 
-													SLIB->sl_NotificationManager, 
-													request, externalID,  "Presence",  0, "room/isUserInRoom", params 
-												); // 0 - type request, 1 - event
+											BufString *serresp = NotificationManagerSendRequestToConnections( 
+												SLIB->sl_NotificationManager, 
+												request, externalID,  "Presence",  0, "room/isUserInRoom", params 
+											); // 0 - type request, 1 - event
 			
-												if( serresp != NULL )
-												{
-													if( serresp->bs_Buffer != NULL && strcmp( "true", serresp->bs_Buffer ) == 0 )
-													{
-														DEBUG("-------------------------> %s\n", serresp->bs_Buffer );
-														haveAccess = TRUE;
-													}
-												}
-											}
-											else if( strcmp( accessLevel, "Workgroup" ) == 0 )
+											if( serresp != NULL )
 											{
-												if( UGMUserToGroupISConnectedByUniqueUIDDB( SLIB->sl_UGM, externalID, session->us_UserID ) == TRUE )
+												if( serresp->bs_Buffer != NULL && strcmp( "true", serresp->bs_Buffer ) == 0 )
 												{
 													haveAccess = TRUE;
 												}
+											}
+										}
+										else if( strcmp( accessLevel, "Workgroup" ) == 0 )
+										{
+											if( UGMUserToGroupISConnectedByUIDAndUniqueDB( SLIB->sl_UGM, externalID, session->us_UserID ) == TRUE )
+											{
+												haveAccess = TRUE;
 											}
 										}
 									}
