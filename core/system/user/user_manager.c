@@ -929,7 +929,7 @@ void *UMUserGetByAuthIDDB( UserManager *um, const char *authId )
 		DEBUG("[UMUserGetByAuthIDDB] %s\n", authId );
 		// temporary solution, using MYSQL connection
 		char query[ 1024 ];
-		sqlLib->SNPrintF( sqlLib, query, sizeof(query), "SELECT u.ID FROM `FUser` u, `FApplication` f WHERE f.AuthID=\"%s\" AND f.UserID = u.ID LIMIT 1", authId );
+		sqlLib->SNPrintF( sqlLib, query, sizeof(query), "SELECT u.ID FROM FUserApplication a inner join FUser u on a.UserID=u.ID WHERE a.AuthID='%s' LIMIT 1", authId );
 		
 		void *result = sqlLib->Query( sqlLib, query );
 		if( result != NULL )
