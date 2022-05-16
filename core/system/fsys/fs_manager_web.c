@@ -715,7 +715,14 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								BufStringAdd( sql, " ) AND OwnerUserID=" );
 							
 								char num[ 32 ];
-								sprintf( num, "%ld", (long int)loggedSession->us_User->u_ID );
+								if( loggedSession != NULL )
+								{
+									sprintf( num, "%ld", (long int)loggedSession->us_UserID );
+								}
+								else
+								{
+									strcpy( num, "0" );
+								}
 								BufStringAdd( sql, num );
 						
 								// Create output "JSON"
@@ -2427,7 +2434,10 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						}
 						i++;
 						
-						sprintf( userid, "%ld", loggedSession->us_User->u_ID );
+						if( loggedSession->us_User != NULL )
+						{
+							sprintf( userid, "%ld", loggedSession->us_User->u_ID );
+						}
 						sprintf( name, "%s", &path[ i ] );
 					}
 					

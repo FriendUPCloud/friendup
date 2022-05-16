@@ -28,7 +28,14 @@
 //test
 //#undef __DEBUG
 
-int killUserSession( SystemBase *l, UserSession *ses, FBOOL remove )
+/**
+ * Kill user session
+ *
+ * @param ses session which will be deleted (marked 'to be deleted')
+ * @param remove if set to TRUE then session will be marked as "to deleted". Otherwise only message will be send via websockets
+ * @return error number
+ */
+int killUserSession( UserSession *ses, FBOOL remove )
 {
 	int error = 0;
 	char tmpmsg[ 2048 ];
@@ -69,29 +76,24 @@ int killUserSession( SystemBase *l, UserSession *ses, FBOOL remove )
 		usleep( 1000 );
 	}
 	
-	// test
-	//USMUserSessionRemove( l->sl_USM, ses );
-	//USMSessionsDeleteDB( l->sl_USM, ses->us_SessionID );
-	//WSCData *dat = (WSCData *)ses->us_WSD;
-	//dat->wsc_UserSession = NULL;
-	
 	if( remove == TRUE  )
 	{
 		ses->us_Status = USER_SESSION_STATUS_TO_REMOVE;
-		//error = USMUserSessionRemove( l->sl_USM, ses );	
 	}
 	return error;
 }
 
-//
-// Kill user session by user
-//
-
-inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid )
+/**
+ * Kill user session by user and device id
+ *
+ * @param u user which sessions will be deleted
+ * @param deviceid id of device which will be deleted. If deviceid will be equal to NULL all sessions will be removed
+ * @return error number
+ */
+inline static int killUserSessionByUser( User *u, char *deviceid )
 {
 	int error = 0;
 	int nrSessions = 0;
-	int i;
 	
 	//UserSession **toBeRemoved = NULL;
 	
@@ -145,56 +147,8 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 			nrSessions++;
 		}
 	}
-	
-	/*
-	// assign UserSessions to temporary table
-	if( nrSessions > 0 )
-	{
-		toBeRemoved = FMalloc( nrSessions * sizeof(UserSession *) );
-		i = 0;
-		while( usl != NULL )
-		{
-			toBeRemoved[ i ] = (UserSession *) usl->us;
-			usl = (UserSessListEntry *)usl->node.mln_Succ;
-			i++;
-		}
-	}
-	*/
+
 	USER_UNLOCK( u );
-	
-	/*
-	// remove sessions
-	for( i=0 ; i < nrSessions; i++ )
-	{
-		UserSession *ses = toBeRemoved[ i ];
-		
-		if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
-		{
-			if( ses->us_WSD != NULL  )
-			{
-				ses->us_WebSocketStatus = WEBSOCKET_SERVER_CLIENT_TO_BE_KILLED;
-			}
-			FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
-		}
-		
-		// wait till queue will be empty
-		while( TRUE )
-		{
-			if( ses->us_MsgQueue.fq_First == NULL )
-			{
-				break;
-			}
-			usleep( 1000 );
-		}
-		
-		error = USMUserSessionRemove( l->sl_USM, ses );
-	}
-	
-	if( toBeRemoved != NULL )
-	{
-		FFree( toBeRemoved );
-	}
-	*/
 	
 	DEBUG("[killUserSessionByUser] end\n");
 	
@@ -216,7 +170,6 @@ inline static void NotifyExtServices( SystemBase *l, Http *request, User *usr, c
 	{
 		msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"name\":\"%s\",\"groups\":[", usr->u_UUID, usr->u_ModifyTime, usr->u_Name );
 		BufStringAddSize( bs, msg, msize );
-		//UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
 	}
 	else
 	{
@@ -756,12 +709,10 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		{
 			FFree( level );
 		}
-		
 		if( workgroups != NULL )
 		{
 			FFree( workgroups );
 		}
-
 		if( usrname != NULL )
 		{
 			FFree( usrname );
@@ -1028,7 +979,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 									if( u != NULL )
 									{
 										DEBUG("[UMWebRequest] user sessions will be removed\n");
-										killUserSessionByUser( l, u, NULL );
+										killUserSessionByUser( u, NULL );
 									}
 									msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
 								}
@@ -1498,6 +1449,17 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						DEBUG("[update/user] after notification\n");
 					
 						HttpAddTextContent( response, "ok<!--separate-->{\"update\":\"success!\"}" );
+						
+						if( request->http_RequestSource != HTTP_SOURCE_EXTERNAL_SERVER )
+						{
+							BufString *res = SendMessageToSessionsAndWait( l, logusr->u_ID, request );
+							if( res != NULL )
+							{
+								DEBUG("RESPONSE: %s\n", res->bs_Buffer );
+								BufStringDelete( res );
+							}
+						}
+						// maybe we should send message via WS to notifi desktop about changes
 					}
 					else
 					{
@@ -1964,7 +1926,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			DEBUG("[UMWebRequest] Session found under pointer: %p\n", ses );
 			if( ses != NULL )
 			{
-				killUserSession( l, ses, TRUE );
+				killUserSession( ses, TRUE );
 			}
 		}
 		else if( deviceid != NULL && usrname != NULL )
@@ -1973,7 +1935,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			User *u = UMGetUserByName( l->sl_UM, usrname );
 			if( u != NULL )
 			{
-				killUserSessionByUser( l, u, deviceid );
+				killUserSessionByUser( u, deviceid );
 			}
 			else
 			{
