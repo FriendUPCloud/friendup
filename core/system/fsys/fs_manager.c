@@ -54,19 +54,18 @@ void FSManagerDelete( FSManager *fm )
 }
 
 /**
- * Chec File/Directory access rights
+ * Check File/Directory access rights
  *
  * @param fm filemanager structure
  * @param path path to file/directory which will be checked for access
  * @param devid deviceid
- * @param usr pointer to user for which access is checked
+ * @param userid pointer to user for which access is checked
  * @param perm permissions in format  ARWXDH (as string)
  * @return TRUE if success otherwise FALSE
  */
-FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User *usr, char *perm )
+FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, FUQUAD userid, char *perm )
 {
 	FBOOL result = FALSE;
-	char *localPath = NULL;
 	
 	DEBUG("[FSManagerCheckAccess] Check access for %s\n", path );
 	if( path == NULL )
@@ -103,7 +102,7 @@ FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User 
 			int pathLen = strlen(newPath);
 			char *tmpQuery;
 		
-			DEBUG("[FSManagerCheckAccess] User ptr %p alloc size %d\n", usr, querysize );
+			DEBUG("[FSManagerCheckAccess] User id %ld alloc size %d\n", userid, querysize );
 		
 			if( ( tmpQuery = FMalloc( querysize ) ) != NULL )
 			{
@@ -135,7 +134,7 @@ OR \
 OR \
 ( Type = 2 ) \
 ) \
-", newPath, parentPath, devid, usr->u_ID, usr->u_ID );
+", newPath, parentPath, devid, userid, userid );
 				
 					FFree( parentPath );
 				}
@@ -155,7 +154,7 @@ OR \
 OR \
 ( Type = 2 ) \
 ) \
-", newPath, devid, usr->u_ID, usr->u_ID );
+", newPath, devid, userid, userid );
 				}
 			
 				DEBUG("[FSManagerCheckAccess] Checking access via SQL '%s'\n", tmpQuery );
