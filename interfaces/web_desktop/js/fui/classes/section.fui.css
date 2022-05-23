@@ -1,0 +1,39 @@
+
+.FUISection
+{
+	
+}
+
+.FUISection > .FUISectionHeader
+{
+	border-radius: var(--fui-border-radius-small) var(--fui-border-radius-small) 0 0;
+	background-color: var(--fui-module-background);
+	color: var(--fui-module-color);
+	padding: var(--fui-padding-normal);
+}
+
+.FUIListview > .FUISectionHeader h2
+{
+	margin: 0;
+	padding: 0;
+}
+
+.FUISection > .FUISectionContent
+{
+	background-color: var(--fui-background-foreground);
+	color: var(--fui-color);
+	padding: var(--fui-padding-normal);
+	border-radius: 0 0 var(--fui-border-radius-small) var(--fui-border-radius-small);
+}
+
+.FUISection > .FUISectionFooter
+{
+	background-color: var(--fui-background-foreground);
+	color: var(--fui-color);
+}
+
+.FUISection > .FUISectionFooter > .Content
+{
+	padding: var(--fui-padding-normal);
+}
+

@@ -9,6 +9,8 @@
     --fui-border-foreground: #DDDDDD;
     
     --fui-list-button-background: #cfcfcf;
+    --fui-list-item-background: #f8f8f8;
+    --fui-list-item-background-alternate: #f0f0f0;
     --fui-list-button-background-hover: #909090;
     --fui-list-button-color: #000000;
     --fui-list-button-color-hover: #f0f0f0;
@@ -23,17 +25,20 @@
     
     --fui-list-hover-background: #efefef;
     --fui-module-background: #20374D;
+    --fui-module-background-darker: #14283b;
     --fui-module-background-hover: #344A5E;
     --fui-module-background-active: #ECF0F1; 
     --fui-module-color: white;
     --fui-module-color-active: #1a344c;
+    
+    --fui-border-normal: 1px solid #dddddd;
     
     --fui-checkbox-checked: #22b060;
     --fui-checkbox: #b0b0b0;
     --fui-checkbox-button: #ffffff;
     
     --fui-border-color-negative: #ffffff;
-    --fui-border-color: #3b3b3b;
+    --fui-border-color: #afafaf;
     --fui-border-radius-normal: 5px;
     --fui-border-radius-small: 3px;
     --fui-box-shadow: 0px 2px 5px rgba(0,0,0,0.4);
@@ -149,6 +154,7 @@
 .FUIGroup > .FUIRow
 {
     margin-bottom: var(--fui-padding-row);
+    min-height: 25px;
 }
 
 .FUIGroup > .FUIColumn
@@ -156,6 +162,7 @@
     flex-grow: 1;
     flex-shrink: 1;
     flex-basis: 0;
+    min-height: 25px;
 }
 
 /* Picture */
@@ -178,6 +185,41 @@
 	padding: var(--fui-padding-normal);
 }
 
+.FUIListviewHeader > *
+{
+    display: inline-block;
+}
+
+.FUIListviewHeader > div
+{
+    line-height: 34px;
+}
+
+.FUIListviewHeader .HeaderButton
+{
+    text-align: center;
+    width: 18px;
+    height: 24px;
+    float: left;
+    display: block;
+    margin: 0 0 0 5px;
+}
+
+.FUIListviewToolbar
+{
+    float : right;
+}
+
+.FUIListviewToolbar > * 
+{
+    display: inline-block;
+}
+
+.FUIListviewToolbar .HeaderButton
+{
+    float : right;
+}
+
 .FUIListview .FUIListviewHeader h2
 {
 	margin: 0;
@@ -189,6 +231,13 @@
 	font-weight: bold;
 	background-color: var(--fui-module-background);
 	color: var(--fui-module-color);
+}
+
+.FUIListview .FUIListviewHeaders .HRow,
+.FUIListview .FUIListviewContent .HRow, .FUIListview .FUIListviewContent .HRow > div
+{
+	max-height: 29px;
+	overflow: hidden;
 }
 
 .FUIListview .FUIListviewHeaders .HRow > div
@@ -223,4 +272,117 @@
 {
 	color: var(--fui-color-emphasized);
 }
+
+.FUIListview .FUIListviewContent .EditRow
+{
+    background-color: transparent;
+    color: var(--fui-color);
+    padding: 0;
+}
+
+.FUIListview .FUIListviewContent .EditRow.Yourself
+{
+    font-weight: bold;
+}
+
+.FUIListview .FUIListviewContent .EditRow:hover
+{
+    background-color: var(--fui-list-hover-background);
+}
+
+/* Button */
+
+.FUIButtonElement
+{
+	background-color: var(--fui-list-button-background);
+	color: var(--fui-list-button-color);
+	border-radius: var(--fui-border-radius-small);
+	padding: var(--fui-padding-row);
+	text-align: center;
+	box-sizing: border-box;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.FUIButtonElement.Clickable:hover
+{
+	background-color: var(--fui-list-button-background-hover);
+    color: var(--fui-list-button-color-hover);
+}
+
+.FUIButtonElement:before
+{
+    margin: 0 4px 0 0;
+}
+
+/* String */
+
+.FUIStringElement
+{
+	background-color: var(--fui-list-button-background);
+	border: 1px solid var(--fui-border-color);
+	color: var(--fui-list-button-color);
+	border-radius: var(--fui-border-radius-small);
+	padding: 0;
+	text-align: center;
+	box-sizing: border-box;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	min-height: 25px;
+}
+
+.FUIStringElement:before
+{
+    margin: 0 4px 0 0;
+}
+
+.FUIStringElement input
+{
+	background: none;
+	border: 0;
+	width: 100%;
+	height: 100%;
+	padding: var(--fui-padding-row);
+	resize: none;
+	padding: var(--fui-padding-row);
+	cursor: text;
+}
+
+/* Textarea */
+
+.FUITextareaContainer
+{
+	height: 100%;
+}
+
+.FUITextareaElement
+{
+	height: 100%;
+	background-color: var(--fui-list-button-background);
+	border: 1px solid var(--fui-border-color);
+	color: var(--fui-list-button-color);
+	border-radius: var(--fui-border-radius-small);
+	padding: 0;
+	text-align: center;
+	box-sizing: border-box;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.FUITextareaElement:before
+{
+    margin: 0 4px 0 0;
+}
+
+.FUITextareaElement textarea
+{
+	background: none;
+	border: 0;
+	width: 100%;
+	height: 100%;
+	padding: var(--fui-padding-row);
+	resize: none;
+	cursor: text;
+}
+
 
