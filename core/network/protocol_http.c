@@ -749,7 +749,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								}
 								else
 								{
-									HttpAddTextContent( response, "fail<!--separate-->PHP script return error" );
+									HttpAddTextContent( response, "fail<!--separate-->{\"message\":\"PHP script returned error message.\",\"response\"-1}" );
 								}
 
 								// write here and set data to NULL!!!!!

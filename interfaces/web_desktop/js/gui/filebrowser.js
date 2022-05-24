@@ -552,7 +552,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					rootElement.insertBefore( self.favoritesDom, rootElement.firstChild );
 				}
 				// No favorites? Clean up
-				if( !self.favorites.length )
+				if( self.favoritesDom && !self.favorites.length )
 				{
 					rootElement.removeChild( self.favoritesDom );
 					self.favoritesDom = false;
