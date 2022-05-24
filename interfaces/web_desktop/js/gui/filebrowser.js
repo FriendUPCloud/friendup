@@ -559,6 +559,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					self.favoritesContainer = false;
 					return;
 				}
+				if( !self.favoritesContainer ) return;
 				
 				let ul = self.favoritesContainer.getElementsByTagName( 'ul' );
 				if( ul.length )
