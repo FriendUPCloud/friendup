@@ -76,7 +76,6 @@ DormantMaster =
 	addAppDoor: function( dormantDoorObject )
 	{
 		const self = this;
-		console.log( 'addAppDoor', dormantDoorObject );
 		// Variables for an unique appdoor name
 		var num = 0;
 		var nam = dormantDoorObject.title;
@@ -113,7 +112,6 @@ DormantMaster =
 		if ( this.listeners[ namnum ])
 		{
 			Object.keys( this.listeners[ namnum ]).forEach( listener => {
-				console.log( 'listener for', [ namnum, listener ]);
 				self.listeners[ namnum ][ listener ].callback( 'open', dormantDoorObject );
 			});
 		}
@@ -122,7 +120,6 @@ DormantMaster =
 	listen : function( listenForAppName, listenerName, callback )
 	{
 		const self = this;
-		console.log( 'listen', [ listenForAppName, listenerName, callback ]);
 		if ( self.listeners[ listenForAppName ])
 		{
 			self.listeners[ listenForAppName ][ listenerName ] = {
@@ -138,7 +135,6 @@ DormantMaster =
 		}
 		
 		// send event if app is already available
-		console.log( 'listen, ava', self.appDoors );
 		if ( !self.appDoors.length )
 			return;
 		
@@ -336,14 +332,12 @@ DormantMaster =
 	*/
 	handleEvent : function( event ) {
 		const self = this;
-		console.log( 'DormantMaster.handleEvent', event );
 		let door = null;
 		// loop through apps doors
 		for ( let l = self.appDoors.length; l; )
 		{
 			l--;
 			const d = self.appDoors[ l ];
-			console.log( 'door', d );
 			if ( d.doorId === event.doorId ) {
 				door = d;
 				break;
