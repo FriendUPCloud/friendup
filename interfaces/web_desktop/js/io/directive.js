@@ -700,6 +700,8 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				};
 				if( conf.State ) o.state = conf.State;
 
+				console.log( 'Sent css to app with ' + _applicationBasics.css.length );
+
 				// Get JSON data from url
 				var vdata = GetUrlVar( 'data' ); if( vdata ) o.data = vdata;
 

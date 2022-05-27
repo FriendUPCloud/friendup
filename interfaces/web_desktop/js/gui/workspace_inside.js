@@ -11438,6 +11438,7 @@ function mobileDebug( str, clear )
 
 _applicationBasics = {};
 var _applicationBasicsLoading = false;
+var _previousBasicsTheme = false;
 function loadApplicationBasics( callback )
 {
 	if( _applicationBasicsLoading ) 
@@ -11447,6 +11448,15 @@ function loadApplicationBasics( callback )
 	_applicationBasicsLoading = setTimeout( function()
 	{
 		_applicationBasicsLoading = null;
+		
+		let themeName = Workspace.theme ? Workspace.theme : 'friendup12';
+		
+		// Do not reload the same stuff
+		if( _previousBasicsTheme == themeName )
+		{
+			return;
+		}
+		_previousBasicsTheme = themeName;
 		
 		// Don't do in login
 		if( Workspace.loginPrompt )
@@ -11463,6 +11473,11 @@ function loadApplicationBasics( callback )
 			_applicationBasics.apiV1 = URL.createObjectURL( new Blob( [ data ], { type: 'text/javascript' } ) );
 		}
 		a_.load();
+		
+		// Remove this when starting loading!
+		_applicationBasics.css = '';
+		
+		// Preload scrollbars
 		let sb_ = new File( '/themes/friendup12/scrollbars.css' );
 		sb_.onLoad = function( data )
 		{
@@ -11471,8 +11486,9 @@ function loadApplicationBasics( callback )
 			else _applicationBasics.css = data;
 		}
 		sb_.load();
-		// Preload basic scripts
-		let themeName = Workspace.theme ? Workspace.theme : 'friendup12';
+		
+		// Preload theme CSS
+		console.log( 'Loaded this string: ', '/system.library/module/?module=system&command=theme&args=%7B%22theme%22%3A%22' + themeName + '%22%7D&sessionid=' + Workspace.sessionId );
 		let c_ = new File( '/system.library/module/?module=system&command=theme&args=%7B%22theme%22%3A%22' + themeName + '%22%7D&sessionid=' + Workspace.sessionId );
 		c_.onLoad = function( data )
 		{
