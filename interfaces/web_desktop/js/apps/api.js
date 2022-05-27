@@ -6613,8 +6613,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	else if( packet.cachedAppData && packet.cachedAppData.js )
 	{
 		let style = document.createElement( 'style' );
-		style.innerHTML = packet.cachedAppData.css;
+		style.type = 'text/css';
+		if( style.styleSheet )
+			style.styleSheet.cssText = packet.cachedAppData.css;
+		else style.appendChild( document.createTextNode( packet.cachedAppData.css ) );
 		head.appendChild( style );
+		
 		let js = document.createElement( 'script' );
 		js.innerHTML = packet.cachedAppData.js;
 		head.appendChild( js );

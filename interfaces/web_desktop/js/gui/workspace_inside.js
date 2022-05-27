@@ -11488,13 +11488,36 @@ function loadApplicationBasics( callback )
 		sb_.load();
 		
 		// Preload theme CSS
-		console.log( 'Loaded this string: ', '/system.library/module/?module=system&command=theme&args=%7B%22theme%22%3A%22' + themeName + '%22%7D&sessionid=' + Workspace.sessionId );
 		let c_ = new File( '/system.library/module/?module=system&command=theme&args=%7B%22theme%22%3A%22' + themeName + '%22%7D&sessionid=' + Workspace.sessionId );
 		c_.onLoad = function( data )
 		{
+			// Convert @import to separate urls to load, because
+			// engine has trouble reading it
+			let tmp = data;
+			let imports;
+			let impOut = [];
+			while( imports = tmp.match( /\@import\ url\((.*?)\)[;]{0,1}/i ) )
+			{
+				if( imports.length > 0 )
+				{
+					tmp = tmp.split( imports[ 0 ] ).join ( '' );
+					// Add import to the top!
+					impOut.push( imports[0] );
+				}
+			}
+			
+			// Add without imports
+			if( tmp.length != data.length ) 
+				data = tmp;
+		
 			if( _applicationBasics.css )
 				_applicationBasics.css += data;
 			else _applicationBasics.css = data;
+			
+			if( impOut.length )
+			{
+				_applicationBasics.css = impOut.join( "\n" ) + "\n" + _applicationBasics.css;
+			}
 		}
 		c_.load();
 		
