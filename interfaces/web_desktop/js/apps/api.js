@@ -55,6 +55,7 @@ Friend.application = {
 	{
 		document.body.classList.remove( 'Loading' );
 		document.body.classList.add( 'activated' );
+		document.body.classList.add( 'application' );
 		setTimeout( function()
 		{
 			document.body.style.willChange = 'opacity';
