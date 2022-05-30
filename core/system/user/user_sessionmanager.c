@@ -150,11 +150,30 @@ UserSession *USMGetSessionBySessionID( UserSessionManager *usm, char *sessionid 
 	UserSession *us = usm->usm_Sessions;
 	while( us != NULL )
 	{
+		if( FRIEND_MUTEX_LOCK( &us->us_Mutex ) == 0 )
+		{
+			us->us_InUseCounter++;
+			FRIEND_MUTEX_UNLOCK( &us->us_Mutex );
+		}
+		
 		if( strcmp( sessionid, us->us_SessionID ) == 0 )
 		{
 			DEBUG("CHECK4END found\n");
+			if( FRIEND_MUTEX_LOCK( &us->us_Mutex ) == 0 )
+			{
+				us->us_InUseCounter--;
+				FRIEND_MUTEX_UNLOCK( &us->us_Mutex );
+			}
 			SESSION_MANAGER_RELEASE( usm );
 			return us;
+		}
+		else
+		{
+			if( FRIEND_MUTEX_LOCK( &us->us_Mutex ) == 0 )
+			{
+				us->us_InUseCounter--;
+				FRIEND_MUTEX_UNLOCK( &us->us_Mutex );
+			}
 		}
 		us = (UserSession *) us->node.mln_Succ;
 	}

@@ -1,0 +1,125 @@
+.FUIModuleView
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.FUIModuleView > .FUIModuleList
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 240px;
+	height: 100%;
+	overflow: auto;
+	scroll-behavior: smooth;
+	background-color: var(--fui-module-background);
+}
+
+
+.FUIModuleView > .FUIModuleContainer
+{
+	position: absolute;
+	display: flex;
+	top: 0;
+	left: 240px;
+	width: calc(100% - 240px);
+	height: 100%;
+	overflow: auto;
+	scroll-behavior: smooth;
+	background-color: var(--fui-background);
+	padding: var(--fui-padding-large);
+	box-sizing: border-box;
+	gap: 10px;
+}
+
+.FUIModuleView > .FUIModuleContainer > div
+{
+	flex: 1;
+}
+
+.FUIModuleView .FUIModulelistModule
+{
+	padding: var(--fui-padding-normal);
+	color: var(--fui-module-color);
+	cursor: pointer;
+	background: var(--fui-module-background);
+	transition: background-color 0.15s;
+}
+
+.FUIModuleView .FUIModulelistModule:hover
+{
+	background: var(--fui-module-background-hover);
+}
+
+.FUIModuleView .FUIModulelistModule:before
+{
+	vertical-align: top;
+	font-size: 32px;
+	margin: 0 10px 0 0;
+	width: 40px;
+	display: inline-block;
+	text-align: center;
+}
+
+.FUIModuleView .FUIModulelistModule.Clicked
+{
+	background: var(--fui-module-background-active);
+	color: var(--fui-module-color-active);
+}
+
+.FUIModuleView .FUIModulelistModule > div
+{
+	display: inline-block;
+}
+
+.FUIModuleView .FUIModulelistModule > div > h2
+{
+	font-size: 15px;
+	margin: 0;
+	font-weight: bold;
+}
+
+.FUIModuleView .FUIModulelistModule > div > p
+{
+	margin: 0 0 0px 0;
+}
+
+.FUIModuleView .CardName
+{
+	background-color: var(--fui-module-background);
+	color: var(--fui-module-color);
+	font-weight: bold;
+	padding: var(--fui-padding-normal);
+	border-radius: var(--fui-border-radius-small) var(--fui-border-radius-small) 0 0;
+}
+
+.FUIModuleView .CardName + .CardContent
+{
+	background-color: var(--fui-background-foreground);
+	color: var(--fui-color);
+	padding: 0 0 5px 0;
+	border-radius: 0 0 var(--fui-border-radius-small) var(--fui-border-radius-small);
+	margin: 0 0 10px 0;
+	min-height: 10px;
+}
+
+.FUIModuleView .CardName .CardButtons
+{
+	float: right;
+	text-align: right;
+}
+
+.FUIModuleView .CardName .CardButtons .CardButton
+{
+	cursor: pointer;
+}
+
+.FUIModuleView .CardName .CardButtons .CardButton:hover
+{
+	opacity: 0.8;
+}
+
