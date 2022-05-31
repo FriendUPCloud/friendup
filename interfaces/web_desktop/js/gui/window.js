@@ -2588,8 +2588,8 @@ var View = function( args )
 			}
 		}
 
-		// Tell it's opening
-		if( !flags.minimized )
+		// Tell it's opening (not minimized or invisible ones)
+		if( !flags.minimized && !flags.invisible )
 		{
 			// Allow initialized
 			if( window.currentMovable )

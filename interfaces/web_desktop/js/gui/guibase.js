@@ -2686,7 +2686,6 @@ function CheckScreenTitle( screen, force )
         	{
         	    if( highestView.windowObject.getFlag( 'invisible' ) )
         	    {
-        	        console.log( 'It is invisible 2' );
         	        return;
         	    }
         		_ActivateWindow( highestView );
@@ -2699,7 +2698,6 @@ function CheckScreenTitle( screen, force )
         // Don't act on invisibles
         if( wo && wo.windowObject.getFlag( 'invisible' ) )
         {
-            console.log( 'It is invisible!' );
             return;
         }
         
