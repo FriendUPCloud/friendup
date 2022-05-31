@@ -2692,6 +2692,11 @@ function CheckScreenTitle( screen, force )
         }
         // We do have a current movable, use it
         let wo = window.currentMovable;
+       
+        // Don't act on invislbles 
+        if( wo && wo.windowObject.getFlag( 'invisible' ) )
+            return;
+        
         if( wo && wo.quickMenu )
         {       
        	    Workspace.setQuickMenu( wo.quickMenu, wo );
