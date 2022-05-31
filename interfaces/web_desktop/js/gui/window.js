@@ -2222,7 +2222,7 @@ var View = function( args )
 	}
 	
 	// Special hook for dashboard related workspace
-	if( window.hideDashboard )
+	if( window.hideDashboard && ( !args || !args.invisible ) )
 	{
 		let newApp = true;
 		if( args.applicationId )
