@@ -62,7 +62,8 @@ function ExecuteApplication( app, args, callback, retries, flags )
 		flags,
 	]);*/
 	// Just nothing.
-	if( !app ) {
+	if( !app )
+	{
 		console.log( 'just nothing things', app );
 		return;
 	}
@@ -78,7 +79,8 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			ExecuteApplication( app, args, callback, !retries ? 3 : retries++, flags );
 		} );
 	}
-	var appName = app;
+	
+	let appName = app;
 	if( app.indexOf( ':' ) > 0 )
 	{
 		if( app.indexOf( '/' ) > 0 )
@@ -94,7 +96,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	// Don't allow quitting of this one
 	if( flags.noquit )
 	{
-	    console.log( 'Adding ' + appName + ' to noquit list!' );
+	    console.log( 'Adding ' + appName + ' to noquit list.' );
 	    Workspace.noQuitList.push( appName );
 	}
 	
