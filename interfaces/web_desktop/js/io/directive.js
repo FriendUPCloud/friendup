@@ -94,7 +94,8 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	// Don't allow quitting of this one
 	if( flags.noquit )
 	{
-	    Workspace.noQuitList.push( app );
+	    console.log( 'Adding ' + appName + ' to noquit list!' );
+	    Workspace.noQuitList.push( appName );
 	}
 	
 	if( args )
