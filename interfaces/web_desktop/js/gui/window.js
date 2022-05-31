@@ -1138,6 +1138,8 @@ function _ActivateWindow( div, nopoll, e )
 {
     if( div.windowObject && div.windowObject.getFlag( 'invisible' ) == true ) return;
     
+    console.trace();
+    
 	// Check window color
 	if( div.windowObject.getFlag( 'windowActive' ) )
 	{
