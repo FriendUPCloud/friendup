@@ -5277,6 +5277,16 @@ var View = function( args )
 				this.flags[ flag ] = value;
 				PollTaskbar();
 				break;
+			case 'liveView':
+			    if( value == true || value == 'true' )
+			    {
+			        viewdiv.viewContainer.classList.add( 'Liveview' );
+			    }
+			    else
+			    {
+			        viewdiv.viewContainer.classList.remove( 'Liveview' );
+			    }
+			    break;
 			case 'screen':
 				this.flags.screen = value;
 				break;
