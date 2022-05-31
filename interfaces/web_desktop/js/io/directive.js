@@ -92,7 +92,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
     	flags.openSilent = false;
 	
 	// Don't allow quitting of this one
-	if( flags.noQuit )
+	if( flags.noquit )
 	{
 	    Workspace.noQuitList.push( app );
 	}
