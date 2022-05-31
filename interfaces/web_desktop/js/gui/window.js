@@ -958,6 +958,7 @@ function SetScreenByWindowElement( div )
 // Just like _ActivateWindow, only without doing anything but activating
 function _ActivateWindowOnly( div )
 {
+    if( div.windowObject && div.windowObject.getFlag( 'invisible' ) == true ) return;
 	if( Workspace.contextMenuShowing && Workspace.contextMenuShowing.shown )
 	{
 		return;
@@ -1135,6 +1136,8 @@ function _ActivateWindowOnly( div )
 var _activationTarget = null;
 function _ActivateWindow( div, nopoll, e )
 {
+    if( div.windowObject && div.windowObject.getFlag( 'invisible' ) == true ) return;
+    
 	// Check window color
 	if( div.windowObject.getFlag( 'windowActive' ) )
 	{
