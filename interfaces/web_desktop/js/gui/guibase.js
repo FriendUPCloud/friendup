@@ -2685,7 +2685,10 @@ function CheckScreenTitle( screen, force )
         	if( highestView )
         	{
         	    if( highestView.windowObject.getFlag( 'invisible' ) )
+        	    {
+        	        console.log( 'It is invisible 2' );
         	        return;
+        	    }
         		_ActivateWindow( highestView );
         		return;
         	}
@@ -2693,9 +2696,12 @@ function CheckScreenTitle( screen, force )
         // We do have a current movable, use it
         let wo = window.currentMovable;
        
-        // Don't act on invislbles 
+        // Don't act on invisibles
         if( wo && wo.windowObject.getFlag( 'invisible' ) )
+        {
+            console.log( 'It is invisible!' );
             return;
+        }
         
         if( wo && wo.quickMenu )
         {       
