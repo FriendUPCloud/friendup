@@ -5257,6 +5257,17 @@ var View = function( args )
 						viewdiv.viewContainer.style.visibility = '';
 						viewdiv.viewContainer.style.pointerEvents = '';
 					}
+					if( flag == 'invisible' )
+					{
+					    if( value == true || value == 'true' )
+					    {
+					        viewdiv.viewContainer.classList.add( 'Invisible' );
+					    }
+					    else
+					    {
+					        viewdiv.viewContainer.classList.remove( 'Invisible' );
+					    }
+					}
 					ResizeWindow( viewdiv );
 					RefreshWindow( viewdiv );
 				}
