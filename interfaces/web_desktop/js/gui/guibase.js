@@ -2684,6 +2684,8 @@ function CheckScreenTitle( screen, force )
         	}
         	if( highestView )
         	{
+        	    if( highestView.windowObject.getFlag( 'invisible' ) )
+        	        return;
         		_ActivateWindow( highestView );
         		return;
         	}
