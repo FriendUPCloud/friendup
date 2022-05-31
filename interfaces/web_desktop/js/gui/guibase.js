@@ -2689,6 +2689,7 @@ function CheckScreenTitle( screen, force )
         	        return;
         	    }
         		_ActivateWindow( highestView );
+        		if( window.hideDashboard ) window.hideDashboard();
         		return;
         	}
         }
