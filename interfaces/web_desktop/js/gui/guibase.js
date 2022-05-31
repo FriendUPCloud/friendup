@@ -2675,6 +2675,7 @@ function CheckScreenTitle( screen, force )
         	for( let a in movableWindows )
         	{
         		let mov = movableWindows[a];
+        		if( mov.windowObject && mov.windowObject.getFlag( 'invisible' ) ) continue;
         		let candidateZ = parseInt( mov.style.zIndex );
         		if( candidateZ > highest )
         		{
