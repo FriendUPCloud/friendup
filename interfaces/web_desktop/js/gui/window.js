@@ -3906,7 +3906,14 @@ var View = function( args )
 		}
 		
 		// Append view window to parent
-		divParent.appendChild( viewContainer );
+		if( flags.liveView && Workspace.dashboard && Workspace.dashboard.liveViews )
+		{
+		    Workspace.dashboard.liveViews.appendChild( viewContainer );
+		}
+		else
+		{
+		    divParent.appendChild( viewContainer );
+		}
 		
 		if( inGroup )
 		{
