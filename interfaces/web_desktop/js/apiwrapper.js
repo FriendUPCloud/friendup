@@ -3725,6 +3725,9 @@ function apiWrapper( event, force )
 						m.execute( 'savestate', { state: msg.state, authId: msg.authId } );
 						break;
 					case 'quit':
+					    // Look if we are allowed to quit
+        			    if( !canQuitApp( app.applicationName ) ) return;
+        			    
 						if( app ) app.quit( msg.force ? msg.force : false );
 						if( PollTray ) PollTray();
 						break;

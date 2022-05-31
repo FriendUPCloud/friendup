@@ -42,8 +42,12 @@ function canQuitApp( appName )
     for( let a = 0; a < Workspace.noQuitList.length; a++ )
     {
         if( Workspace.noQuitList[ a ] == appName )
+        {
+            console.log( 'Can not quit this app' );
             return false;
+        }
     }
+    console.log( 'We can quit ' + appName, Workspace.noQuitList );
     return true;
 }
 
