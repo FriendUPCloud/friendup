@@ -2694,7 +2694,7 @@ function CheckScreenTitle( screen, force )
         		return;
         	}
         }
-        else if( currentMovable )
+        else if( currentMovable && currentMovable.classList.contains( 'Active' ) )
         {
             if( window.hideDashboard ) window.hideDashboard();
         }
