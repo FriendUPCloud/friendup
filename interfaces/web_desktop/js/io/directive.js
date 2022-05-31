@@ -36,6 +36,17 @@ function RemoveFromExecutionQueue( app )
 	}
 }
 
+// Check if we can quit an app
+function canQuitApp( appName )
+{
+    for( let a = 0; a < Workspace.noQuitList.length; a++ )
+    {
+        if( Workspace.noQuitList[ a ] == appName )
+            return false;
+    }
+    return true;
+}
+
 // Load a javascript application into a sandbox
 function ExecuteApplication( app, args, callback, retries, flags )
 {
@@ -75,6 +86,12 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	if( !flags ) flags = {};
 	if( flags.openSilent !== true )
     	flags.openSilent = false;
+	
+	// Don't allow quitting of this one
+	if( flags.noQuit )
+	{
+	    Workspace.noQuitList.push( app );
+	}
 	
 	if( args )
 	{
@@ -502,6 +519,9 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			// Quit the application
 			ifr.quit = function( level )
 			{
+			    // Look if we are allowed to quit
+			    if( !canQuitApp( this.applicationName ) ) return;
+			    
 				// Clean blocker
 				RemoveFromExecutionQueue( appName );
 				
@@ -1387,6 +1407,9 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 			// Quit the application
 			ifr.quit = function( level )
 			{
+			    // Look if we are allowed to quit
+			    if( !canQuitApp( this.applicationName ) ) return;
+			    
 				if( this.windows )
 				{
 					for( let a in this.windows )

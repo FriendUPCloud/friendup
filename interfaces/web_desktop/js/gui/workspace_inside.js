@@ -17,6 +17,8 @@ var WorkspaceInside = {
 	readyToRun: false,
 	// Onready functions
 	onReadyList: [],
+	// Don't quit these apps
+	noQuitList: [],
 	// Switch to workspace
 	getReadyToRun: function(){ return ( this.readyToRun ? 'true' : 'false' ); },
 	switchWorkspace: function( num )
