@@ -2694,6 +2694,10 @@ function CheckScreenTitle( screen, force )
         		return;
         	}
         }
+        else if( currentMovable )
+        {
+            if( window.hideDashboard ) window.hideDashboard();
+        }
         // We do have a current movable, use it
         let wo = window.currentMovable;
        
