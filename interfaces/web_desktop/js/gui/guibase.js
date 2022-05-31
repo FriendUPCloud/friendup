@@ -2665,7 +2665,7 @@ var prevScreen = prevWindow = false;
 function CheckScreenTitle( screen, force )
 {	
 	// Support quickmenu
-	if( Workspace.setQuickMenu && window.canSetQuickMenu window.canSetQuickmenu() )
+	if( Workspace.setQuickMenu && window.canSetQuickMenu && window.canSetQuickmenu() )
 	{
 		// When running with quickmenu, make sure we have an active view!
         if( !window.currentMovable )
