@@ -4144,7 +4144,7 @@ var View = function( args )
 		self.parseFlags( flags );
 		
 		// Only activate if needed
-		if( !flags.minimized && !flags.openSilent )
+		if( !flags.minimized && !flags.openSilent && !flags.invisible )
 		{
 			_ActivateWindow( div );
 			_WindowToFront( div );
