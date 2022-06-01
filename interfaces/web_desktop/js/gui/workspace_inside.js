@@ -3932,34 +3932,37 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 			    if( rdat.jsExtensionSrc )
 			    {
-			        let j = document.createElement( 'script' );
-			        j.src = rdat.jsExtensionSrc;
-			        j.onload = function( e )
-			        {
-			            Workspace.dashboard = new SidebarEngine();
-			            
-			        }
-			        // Append sidebar
-			        function loadScript()
-			        {
-			            document.body.appendChild( j );
-			        }
-			        // Add locale optionally
-			        if( rdat.localeSrc )
-			        {
-			            loadScript = function()
-			            {
-			                if( rdat.localeSrc.substr( -1, 1 ) != '/' )
-			                    rdat.localeSrc += '/';
-			                i18nAddPath( rdat.localeSrc + self.locale + '.lang', function()
-			                {
-			                    document.body.appendChild( j );
-			                } );
-			            }
-			        }
-			        loadScript();
-			        Workspace.themeData[ 'sidebarEngine' ] = true;
-			        Workspace.themeDataSet = true;
+			    	if( !Workspace.themeData || typeof( Workspace.themeData[ 'sidebarEngine' ] ) == 'undefined' )
+			    	{
+					    let j = document.createElement( 'script' );
+					    j.src = rdat.jsExtensionSrc;
+					    j.onload = function( e )
+					    {
+					        Workspace.dashboard = new SidebarEngine();
+					        
+					    }
+					    // Append sidebar
+					    function loadScript()
+					    {
+					        document.body.appendChild( j );
+					    }
+					    // Add locale optionally
+					    if( rdat.localeSrc )
+					    {
+					        loadScript = function()
+					        {
+					            if( rdat.localeSrc.substr( -1, 1 ) != '/' )
+					                rdat.localeSrc += '/';
+					            i18nAddPath( rdat.localeSrc + self.locale + '.lang', function()
+					            {
+					                document.body.appendChild( j );
+					            } );
+					        }
+					    }
+					    loadScript();
+					    Workspace.themeData[ 'sidebarEngine' ] = true;
+					    Workspace.themeDataSet = true;
+					}
 			    }
 			}
 			
