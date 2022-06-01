@@ -3905,6 +3905,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		themeName = themeName.toLowerCase();
 		
+		// Don't load this twice
+		if( Workspace.theme == themeName )
+		{
+			console.log( 'Tried to reload current theme. Skipped.' );
+			return;
+		}
+		
 		Workspace.theme = themeName;
 		
 		let m = new File( 'System:../themes/' + themeName + '/settings.json' );
