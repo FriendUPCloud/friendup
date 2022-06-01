@@ -3908,7 +3908,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Don't load this twice
 		if( Workspace.theme == themeName )
 		{
-			console.log( 'Tried to reload current theme. Skipped.' );
+			document.body.classList.remove( 'ThemeRefreshing' );
 			return;
 		}
 		
