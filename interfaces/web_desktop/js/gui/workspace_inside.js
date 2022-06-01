@@ -3909,6 +3909,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( Workspace.theme == themeName )
 		{
 			document.body.classList.remove( 'ThemeRefreshing' );
+			Workspace.setLoading( false );
 			return;
 		}
 		
