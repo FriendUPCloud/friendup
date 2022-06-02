@@ -3933,7 +3933,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 			    if( rdat.jsExtensionSrc )
 			    {
-			    	if( !Workspace.themeDataSet && ( !Workspace.themeData || typeof( Workspace.themeData[ 'sidebarEngine' ] ) == 'undefined' ) )
+			    	if( !Workspace.dashboard && ( !Workspace.themeData || typeof( Workspace.themeData[ 'sidebarEngine' ] ) == 'undefined' ) )
 			    	{
 					    let j = document.createElement( 'script' );
 					    j.src = rdat.jsExtensionSrc;
