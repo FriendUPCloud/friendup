@@ -5345,6 +5345,9 @@ var View = function( args )
 				// Check window color
 				this.flags[ flag ] = value;
 				break;
+			case 'sidebarManaged':
+			    viewdiv.classList.add( 'SidebarManaged' );
+			    break;
 			// Takes all flags
 			default:
 				this.flags[ flag ] = value;
