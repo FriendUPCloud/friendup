@@ -93,7 +93,7 @@ Application.run = function( msg )
 		} ]
 	}, {
 		name: i18n( 'menu_project' ),
-		icon: 'wpforms',
+		icon: 'caret-down',
 		items: [ {
 			name: i18n( 'menu_project_new' ),
 			icon: 'plus',
@@ -121,6 +121,7 @@ Application.run = function( msg )
 		} ]
 	}, {
 		name: i18n( 'menu_packages' ),
+		icon: 'caret-down',
 		items: [ {
 			name: i18n( 'menu_package_generate' ),
 			icon: 'cog',
