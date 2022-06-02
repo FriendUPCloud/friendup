@@ -5346,7 +5346,7 @@ var View = function( args )
 				this.flags[ flag ] = value;
 				break;
 			case 'sidebarManaged':
-			    viewdiv.classList.add( 'SidebarManaged' );
+			    viewdiv.parentNode.classList.add( 'SidebarManaged' );
 			    break;
 			// Takes all flags
 			default:
