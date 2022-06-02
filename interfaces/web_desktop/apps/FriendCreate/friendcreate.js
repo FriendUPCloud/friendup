@@ -111,13 +111,13 @@ Application.run = function( msg )
 			icon: 'copy',
 			command: 'project_save_as'
 		}, {
-			name: i18n( 'menu_project_close' ),
-			icon: 'remove',
-			command: 'project_close'
-		}, {
 			name: i18n( 'menu_project_editor' ),
 			icon: 'wpforms',
 			command: 'project_editor'
+		}, {
+			name: i18n( 'menu_project_close' ),
+			icon: 'remove',
+			command: 'project_close'
 		} ]
 	}, {
 		name: i18n( 'menu_packages' ),
