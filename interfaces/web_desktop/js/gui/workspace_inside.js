@@ -3873,11 +3873,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	refreshTheme: function( themeName, update, themeConfig, initpass )
 	{
 		let self = this;
+		console.log( 'refreshTheme: Refreshing theme with themename: ' + themeName );
 		
 		// Only on force or first time
 		if( this.themeRefreshed && !update )
 		{
 			document.body.classList.remove( 'ThemeRefreshing' );
+			console.log( 'refreshTheme: pass' );
 			return;
 		}
 
@@ -3911,6 +3913,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			document.body.classList.remove( 'ThemeRefreshing' );
 			Workspace.setLoading( false );
+			console.log( 'refreshTheme: Already loaded theme ' + themeName );
 			return;
 		}
 		
@@ -3919,6 +3922,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		let m = new File( 'System:../themes/' + themeName + '/settings.json' );
 		m.onLoad = function( rdat )
 		{
+			console.log( 'refreshTheme: Loaded settings.json' );
+			
 			// Add resources for theme settings --------------------------------
 			rdat = JSON.parse( rdat );
 			// Done resources theme settings -----------------------------------
@@ -4006,6 +4011,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						document.body.classList.add( 'ThemeLoaded' );
 						setTimeout( function()
 						{
+							console.log( 'refreshTheme: Done loading theme!' );
 							document.body.classList.remove( 'ThemeRefreshing' );
 						}, 150 );
 						// We are inside (wait for wallpaper) - watchdog
