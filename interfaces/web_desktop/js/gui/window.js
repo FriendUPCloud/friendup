@@ -2572,7 +2572,10 @@ var View = function( args )
             0: {
                 name: i18n( 'i18n_close' ),
                 icon: 'remove',
-                command: 'quit'
+                command: function()
+                {
+                	div.windowObject.close();
+                }
             }
         };
 

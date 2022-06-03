@@ -7743,6 +7743,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		    // TODO: May be unnecessary
 		    if( !currentMovable.applicationId )
 		    {
+		    	let curr = currentMovable;
 		        currentMovable.quickMenu = {
 		            uniqueName: 'Workspace_Menu',
 		            0: {
@@ -7781,8 +7782,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		        {
 		            switch( msg.command )
 		            {
+		            	// A standard close event
 		                case 'close':
-		                    CloseView();
+		                    this.windowObject.close();
 		                    break;
 		            }
 		        }
