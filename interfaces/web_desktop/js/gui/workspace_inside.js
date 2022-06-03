@@ -11476,7 +11476,8 @@ function loadApplicationBasics( callback )
 		// Do not reload the same stuff
 		if( _previousBasicsTheme == themeName )
 		{
-			callback();
+			if( callback )
+				callback();
 			return;
 		}
 		_previousBasicsTheme = themeName;
