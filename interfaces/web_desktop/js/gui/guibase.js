@@ -2626,8 +2626,12 @@ movableMouseUp = function( e )
 	{
 		if( Workspace.iconContextMenu )
 		{
-			Workspace.iconContextMenu.dom.querySelector( '.MenuItems' ).classList.add( 'Closing' );
-			Workspace.iconContextMenu.dom.querySelector( '.MenuItems' ).classList.remove( 'Open' );
+			let men = orkspace.iconContextMenu.dom.querySelector( '.MenuItems' );
+			if( men )
+			{
+				men.classList.add( 'Closing' );
+				men.classList.remove( 'Open' );
+			}
 			setTimeout( function()
 			{
 				Workspace.iconContextMenu.hide();
