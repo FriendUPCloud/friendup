@@ -3691,6 +3691,12 @@ function AudioObject( sample, callback )
 
 function getImageUrl( path, mode )
 {
+	// Path is already fixed
+	if( path.indexOf( '?' > 0 ) )
+	{
+		return path;
+	}
+	
 	if( !mode ) mode = 'rs';
 	
 	// TODO: Determine from Doors!
@@ -3717,6 +3723,7 @@ function getImageUrl( path, mode )
 	{
 		path = encodeURIComponent( path );
 	}
+	
 
 	let prt = 'authid=' + ( Application.authId ? Application.authId : '' );
 	if( Application.sessionId ) prt = 'sessionid=' + Application.sessionId;
