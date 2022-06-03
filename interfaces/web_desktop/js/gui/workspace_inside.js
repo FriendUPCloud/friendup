@@ -2316,6 +2316,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		// This part is important - it is where we extend the workspace with 
 		// configurable extensions based on config settings
+		console.log( 'refreshUserSettings: Getting settings' );
 		let b = new Module( 'system' );
 		b.onExecuted = function( e, d )
 		{
@@ -2371,19 +2372,26 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 		}
 		b.execute( 'sampleconfig' );
-		
+		console.log(  'refreshUserSettings: Getting loads of settings' );
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
+			console.log( 'refreshUserSettings: Settings came in' );
 			function initFriendWorkspace()
 			{
 				// Make sure we have loaded
 				if( Workspace.mode != 'vr' && ( Workspace.screen && Workspace.screen.contentDiv ) )
+				{
 					if( Workspace.screen.contentDiv.offsetHeight < 100 )
-						return setTimeout( initFriendWorkspace, 50 );
-						
+					{
+						console.log( 'refreshUserSettings: Not all contentDiv stuff loaded, wait 50ms and retry.' );
+						return setTimeout( function(){ initFriendWorkspace(); }, 50 );
+					}
+				}
+				
 				if( e == 'ok' && d )
 				{
+					console.log( 'refreshUserSettings: Settings loaded ok.' );
 					Workspace.userSettingsLoaded = true;
 					let dat = JSON.parse( d );
 					if( dat.wallpaperdoors && dat.wallpaperdoors.substr )
@@ -2584,6 +2592,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							ScreenOverlay.hide();
 							PollTray();
 							PollTaskbar();					
+							console.log( 'refreshUserSettings: Running callback...' );
+							if( callback ) callback();
 							return;
 						}
 						
@@ -2697,13 +2707,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				else
 				{
+					console.log( 'refreshUserSettings: Settings did not load.' );
 					Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 					Workspace.wallpaperImageDecoded = false;
 					Workspace.windowWallpaperImage = '';
 					document.body.classList.add( 'DefaultWallpaper' );
 					doReveal();
 				}
-				if( callback && typeof( callback ) == 'function' ) callback();
+				if( callback && typeof( callback ) == 'function' )
+				{
+					console.log( 'refreshUserSettings: Running callback()' );
+					callback();
+				}
 			}
 			
 			// Load application cache's and then init workspace
@@ -3974,9 +3989,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			
 			Workspace.themeRefreshed = true;
+			console.log( 'refreshTheme: Starting refresh user settings..' );
 			Workspace.refreshUserSettings( function() 
 			{
 				CheckScreenTitle();
+				console.log( 'refreshTheme: Checked screen title.' );
 
 				let h = document.getElementsByTagName( 'head' );
 				if( h )
@@ -4008,6 +4025,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					styles.type = 'text/css';
 					styles.onload = function()
 					{
+						console.log( 'refreshTheme: Got theme css' );
 						document.body.classList.add( 'ThemeLoaded' );
 						setTimeout( function()
 						{
