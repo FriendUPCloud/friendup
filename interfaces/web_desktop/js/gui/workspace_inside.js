@@ -3877,6 +3877,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Only on force or first time
 		if( this.themeRefreshed && !update )
 		{
+			document.body.classList.remove( 'ThemeRefreshing' );
 			return;
 		}
 
@@ -11469,6 +11470,7 @@ function loadApplicationBasics( callback )
 		// Do not reload the same stuff
 		if( _previousBasicsTheme == themeName )
 		{
+			callback();
 			return;
 		}
 		_previousBasicsTheme = themeName;
