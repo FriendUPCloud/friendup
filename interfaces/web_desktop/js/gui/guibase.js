@@ -2626,7 +2626,7 @@ movableMouseUp = function( e )
 	{
 		if( Workspace.iconContextMenu )
 		{
-			let men = orkspace.iconContextMenu.dom.querySelector( '.MenuItems' );
+			let men = Workspace.iconContextMenu.dom.querySelector( '.MenuItems' );
 			if( men )
 			{
 				men.classList.add( 'Closing' );
