@@ -238,7 +238,7 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 			if( testquit++ > 30 )
 			{
 				Log( FLOG_ERROR, "[WorkManagerRun] Worker dispatch timeout, dropping client\n");
-				pthread_yield();	// try to finish other tasks
+				sched_yield();	// try to finish other tasks
 				//exit( 0 ); // <- die! only for debug
 				testquit = 0;
 				//usleep( 15000 );
