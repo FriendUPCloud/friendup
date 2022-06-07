@@ -202,9 +202,9 @@ var _is_touch_device;
 function isTouchDevice()
 {
 	// Test for really difficult ones!
-	if( !( window.matchMedia( '(pointer: coarse)' ).matches ) )
+	if( ( window.matchMedia( '(pointer: coarse)' ).matches ) )
 	{
-        return false;
+        return true;
     }
 	
 	if( _is_touch_device === false || _is_touch_device === true ) return _is_touch_device;
@@ -2647,11 +2647,10 @@ function checkMobileBrowser()
     // Test for really difficult ones!
 	if( !( window.matchMedia( '(pointer: coarse)' ).matches ) )
 	{
-        window.isMobile = false;
-        window.isTablet = false;
-        document.body.removeAttribute( 'mobile' );
-        document.body.removeAttribute( 'tablet' );
-        console.log( 'More testing eh: ', navigator.userAgent );
+        window.isMobile = true;
+        window.isTablet = true;
+        document.body.setAttribute( 'mobile', 'mobile' );
+        document.body.setAttribute( 'tablet', 'tablet' );
     }
 
 	return window.isMobile;
