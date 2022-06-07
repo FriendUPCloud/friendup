@@ -116,7 +116,7 @@ Widget.prototype.calcPosition = function()
 		{
 			this.dom.style.left = ( target.offsetWidth >> 1 ) - ( this.tw >> 1 ) + 'px';
 		}
-		else if( this.tx.substr && this.tx.substr( -1, 1 ) == '%' )
+		else if( this.tx && this.tx.substr && this.tx.substr( -1, 1 ) == '%' )
 		{
 			var pct = window.innerWidth / 100 * parseInt( this.tx );
 			this.dom.style.left = pct + 'px';
