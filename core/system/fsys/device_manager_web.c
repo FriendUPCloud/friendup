@@ -905,7 +905,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 			}
 			
 			
-			if( request->http_RequestSource != HTTP_SOURCE_EXTERNAL_SERVER )
+			if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
 			{
 				BufString *res = SendMessageToSessionsAndWait( l, userID, request );
 				if( res != NULL )
@@ -1227,7 +1227,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					}
 				}
 				
-				if( request->http_RequestSource != HTTP_SOURCE_EXTERNAL_SERVER )
+				if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
 				{
 					BufString *res = SendMessageToSessionsAndWait( l, userID, request );
 					if( res != NULL )

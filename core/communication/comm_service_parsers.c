@@ -362,7 +362,7 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 						
 							UserSession *uses = USMGetSessionBySessionID( lsb->sl_USM, sessionid );
 						
-							req->http_RequestSource = HTTP_SOURCE_EXTERNAL_SERVER;
+							req->http_RequestSource = HTTP_SOURCE_NODE_SERVER;
 						
 							Http *resp = SysWebRequest( lsb, &urlpath[ 1 ], &req, uses, &res );
 							if( resp != NULL )

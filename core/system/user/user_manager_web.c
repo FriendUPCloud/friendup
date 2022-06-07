@@ -799,26 +799,29 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							DEBUG( "[UMWebRequest] UMRemoveAndDeleteUser %d!\n", usr->u_InUse );
 							UMRemoveAndDeleteUser( l->sl_UM, usr, ((SystemBase*)m)->sl_USM);
 						}
-
-						sprintf( tmpQuery, "DELETE FROM `FUser` WHERE ID=%lu", id );
 						
-						sqllib->QueryWithoutResults( sqllib, tmpQuery );
+						if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
+						{
+							sprintf( tmpQuery, "DELETE FROM `FUser` WHERE ID=%lu", id );
 						
-						sprintf( tmpQuery, " DELETE FROM `FUserGroup` WHERE UserID=%lu", id );
+							sqllib->QueryWithoutResults( sqllib, tmpQuery );
 						
-						sqllib->QueryWithoutResults( sqllib, tmpQuery );
+							sprintf( tmpQuery, " DELETE FROM `FUserGroup` WHERE UserID=%lu", id );
 						
-						sprintf( tmpQuery, " DELETE FROM `FUserSession` WHERE UserID=%lu", id );
+							sqllib->QueryWithoutResults( sqllib, tmpQuery );
 						
-						sqllib->QueryWithoutResults( sqllib, tmpQuery );
+							sprintf( tmpQuery, " DELETE FROM `FUserSession` WHERE UserID=%lu", id );
 						
-						sprintf( tmpQuery, " DELETE FROM `Filesystem` WHERE UserID=%lu", id );
+							sqllib->QueryWithoutResults( sqllib, tmpQuery );
 						
-						sqllib->QueryWithoutResults( sqllib, tmpQuery );
+							sprintf( tmpQuery, " DELETE FROM `Filesystem` WHERE UserID=%lu", id );
 						
-						sprintf( tmpQuery, "DELETE FROM `FUserToGroup` WHERE UserID=%lu", id );
+							sqllib->QueryWithoutResults( sqllib, tmpQuery );
 						
-						sqllib->QueryWithoutResults( sqllib, tmpQuery );
+							sprintf( tmpQuery, "DELETE FROM `FUserToGroup` WHERE UserID=%lu", id );
+						
+							sqllib->QueryWithoutResults( sqllib, tmpQuery );
+						}
 						
 						FFree( tmpQuery );
 						
@@ -926,12 +929,15 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						FBOOL gotFromDB = FALSE;
 						time_t  updateTime = time( NULL );
 						
-						// update status and modify timestamp
-						sprintf( tmpQuery, "UPDATE `FUser` set Status=%lu,ModifyTime=%lu where ID=%lu", status, updateTime, id );
+						if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
+						{
+							// update status and modify timestamp
+							sprintf( tmpQuery, "UPDATE `FUser` set Status=%lu,ModifyTime=%lu where ID=%lu", status, updateTime, id );
 						
-						DEBUG( "[UMWebRequest] status updated\n");
+							DEBUG( "[UMWebRequest] status updated\n");
 						
-						sqllib->QueryWithoutResults( sqllib, tmpQuery );
+							sqllib->QueryWithoutResults( sqllib, tmpQuery );
+						}
 						
 						User *usr = UMGetUserByID( l->sl_UM, id );
 						if( usr != NULL )
@@ -947,17 +953,21 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						
 						if( status == USER_STATUS_ENABLED )
 						{
-							time_t tm = 0;
-							time_t tm_now = time( NULL );
-							if( usr != NULL )
+							if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
 							{
-								FBOOL access = UMGetLoginPossibilityLastLogins( l->sl_UM, usr->u_Name, usr->u_Password, l->sl_ActiveAuthModule->am_BlockAccountAttempts, &tm );
+								time_t tm = 0;
+								time_t tm_now = time( NULL );
 							
-								// if access is disabled and user should be enabled, we remove last login fail
-								if( access == FALSE )
+								if( usr != NULL )
 								{
-									sqllib->SNPrintF( sqllib, tmpQuery, sizeof(tmpQuery), "DELETE from `FUserLogin` where UserID=%lu AND Failed is not null AND LoginTime>%lu", id, (tm_now-l->sl_ActiveAuthModule->am_BlockAccountTimeout) );
-									sqllib->QueryWithoutResults( sqllib, tmpQuery );
+									FBOOL access = UMGetLoginPossibilityLastLogins( l->sl_UM, usr->u_Name, usr->u_Password, l->sl_ActiveAuthModule->am_BlockAccountAttempts, &tm );
+							
+									// if access is disabled and user should be enabled, we remove last login fail
+									if( access == FALSE )
+									{
+										sqllib->SNPrintF( sqllib, tmpQuery, sizeof(tmpQuery), "DELETE from `FUserLogin` where UserID=%lu AND Failed is not null AND LoginTime>%lu", id, (tm_now-l->sl_ActiveAuthModule->am_BlockAccountTimeout) );
+										sqllib->QueryWithoutResults( sqllib, tmpQuery );
+									}
 								}
 							}
 						}
@@ -1114,17 +1124,20 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					{
 						HttpAddTextContent( response, "ok<!--separate-->{\"updatepassword\":\"success!\"}" );
 					
-						SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-						if( sqllib != NULL )
+						if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
 						{
-							char tmpQuery[ 256 ];
-							time_t  updateTime = time( NULL );
+							SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+							if( sqllib != NULL )
+							{
+								char tmpQuery[ 256 ];
+								time_t  updateTime = time( NULL );
 					
-							// update status and modify timestamp
-							sprintf( tmpQuery, "UPDATE `FUser` set ModifyTime=%lu where ID=%lu", updateTime, usr->u_ID );
+								// update status and modify timestamp
+								sprintf( tmpQuery, "UPDATE `FUser` set ModifyTime=%lu where ID=%lu", updateTime, usr->u_ID );
 					
-							sqllib->QueryWithoutResults( sqllib, tmpQuery );
-							l->LibrarySQLDrop( l, sqllib );
+								sqllib->QueryWithoutResults( sqllib, tmpQuery );
+								l->LibrarySQLDrop( l, sqllib );
+							}
 						}
 					}
 					else
@@ -1433,14 +1446,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						
 						DEBUG("[update/user] before notification\n");
 					
-						NotifyExtServices( l, request, logusr, "update" );
-					
-						// we must notify user
-						//if( logusr != loggedSession->us_User )
-						//{
-						//	UserNotifyFSEvent2( l->sl_DeviceManager, logusr, "refresh", "Mountlist:" );
-						//}
-					
 						if( error != NULL )
 						{
 							FFree( error );
@@ -1450,8 +1455,10 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					
 						HttpAddTextContent( response, "ok<!--separate-->{\"update\":\"success!\"}" );
 						
-						if( request->http_RequestSource != HTTP_SOURCE_EXTERNAL_SERVER )
+						if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
 						{
+							NotifyExtServices( l, request, logusr, "update" );
+							
 							BufString *res = SendMessageToSessionsAndWait( l, logusr->u_ID, request );
 							if( res != NULL )
 							{
@@ -1640,7 +1647,10 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					
 					//RefreshUserDrives( l->sl_DeviceManager, loggedSession, NULL, &error );
 					
-					NotifyExtServices( l, request, logusr, "update" );
+					if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
+					{
+						NotifyExtServices( l, request, logusr, "update" );
+					}
 					
 					if( error != NULL )
 					{
@@ -1733,28 +1743,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				if( sess != NULL )
 				{
 					Log( FLOG_INFO, "[UMWebRequest] Logout user, user: %s deviceID: %s\n", sess->us_User->u_Name, sess->us_DeviceIdentity );
-					/*
-					SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
-					if( sqlLib != NULL )
-					{
-						sqlLib->Delete( sqlLib, UserSessionDesc, sess );
-						
-						if( sess->us_MobileAppID > 0 )
-						{
-							char temp[ 1024 ];
-							snprintf( temp, sizeof(temp), "DELETE from `FUserMobileApp` where `ID`=%lu", sess->us_MobileAppID );
-	
-							sqlLib->QueryWithoutResults( sqlLib, temp );
-						}
-						l->LibrarySQLDrop( l, sqlLib );
-					}
-					
-					if( l->sl_ActiveAuthModule != NULL )
-					{
-						l->sl_ActiveAuthModule->Logout( l->sl_ActiveAuthModule, request, sessid );
-					}
-					*/
-					
+
 					error = USMUserSessionRemove( l->sl_USM, sess );
 					
 					sess->us_Status = USER_SESSION_STATUS_TO_REMOVE;
