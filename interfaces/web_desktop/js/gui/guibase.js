@@ -123,7 +123,7 @@ var mousePointer =
 			let moveWin = false;
 			
 			// Get mouse coords
-			if( window.isTablet || window.isMobile )
+			if( isTouchDevice() )
 			{
 				windowMouseX = e.touches[0].pageX;
 				windowMouseY = e.touches[0].pageY;
@@ -737,7 +737,7 @@ var mousePointer =
 	pickup: function ( ele, e )
 	{
 		// Do not allow pickup for mobile
-		if( window.isMobile || window.isTablet ) return;
+		if( isTouchDevice() ) return;
 		
 		if( !e ) e = window.event;
 		let ctrl = e && ( e.ctrlKey || e.shiftKey || e.command );
@@ -1655,7 +1655,7 @@ movableListener = function( e, data )
 	let ww = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 	let wh = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
 	let x, y;
-	if( ( typeof( e.touches ) != 'undefined' && typeof( e.touches[0] ) != 'undefined' ) && ( window.isTablet || window.isMobile || isTouchDevice() ) )
+	if( ( typeof( e.touches ) != 'undefined' && typeof( e.touches[0] ) != 'undefined' ) && ( isTouchDevice() ) )
 	{
 		x = e.touches[0].pageX;
 		y = e.touches[0].pageY;
@@ -3844,7 +3844,7 @@ movableMouseDown = function ( e )
 	// Get target
 	let tar = e.srcElement ? e.srcElement : e.target;
 	
-	if( ( window.isTablet || window.isMobile ) && Workspace.contextMenuShowing )
+	if( isTouchDevice() && Workspace.contextMenuShowing )
 	{
 		Workspace.iconContextMenu.hide();
 		Workspace.contextMenuShowing = null;
@@ -3853,7 +3853,7 @@ movableMouseDown = function ( e )
 	}
 	
 	// TODO: Allow context menus!
-	if( !window.isMobile && !window.isTablet && ( rc || e.button != 0 ) )
+	if( !isTouchDevice() && ( rc || e.button != 0 ) )
 	{
 		return;
 	}
@@ -4440,7 +4440,7 @@ function FindImageColorProduct( img )
 
 function CreateHelpBubble( element, text, uniqueid, rules )
 {
-	if( isMobile || isTablet ) return;
+	if( isTouchDevice() ) return;
 	if( !element ) return;
 	if( !text ) text = '';
 	
