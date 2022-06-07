@@ -2642,7 +2642,7 @@ function checkMobileBrowser()
 	if( !( window.matchMedia( '(pointer: coarse)' ).matches ) )
 	{
         window.isMobile = false;
-        window.isTabled = false;
+        window.isTablet = false;
         console.log( 'More testing eh: ', navigator.userAgent );
     }
 
