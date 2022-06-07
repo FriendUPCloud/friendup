@@ -201,12 +201,6 @@ function GeByClass ( nm, el )
 var _is_touch_device;
 function isTouchDevice()
 {
-	// Test for really difficult ones!
-	if( ( window.matchMedia( '(pointer: coarse)' ).matches ) )
-	{
-        return true;
-    }
-	
 	if( _is_touch_device === false || _is_touch_device === true ) return _is_touch_device;
 	try
 	{
@@ -2642,16 +2636,6 @@ function checkMobileBrowser()
 		};
 		console.error = console.debug = console.info =  console.log
 	}
-	
-	
-    // Test for really difficult ones!
-	if( !( window.matchMedia( '(pointer: coarse)' ).matches ) )
-	{
-        window.isMobile = true;
-        window.isTablet = true;
-        document.body.setAttribute( 'mobile', 'mobile' );
-        document.body.setAttribute( 'tablet', 'tablet' );
-    }
 
 	return window.isMobile;
 }
