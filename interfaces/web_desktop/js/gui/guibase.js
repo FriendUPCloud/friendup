@@ -18,6 +18,21 @@ var FUI_MOUSEDOWN_SCROLLV = 10;
 var FUI_WINDOW_MARGIN     =  3;
 var FUI_MOUSEDOWN_PICKOBJ = 11;
 
+/* Make sure we figure out what the browser fires --------------------------- */
+
+var friendInputMethodOverride = false;
+
+window.addEventListener( 'touchstart', function()
+{
+    friendInputMethodOverride = 'touch';
+    console.log( 'Detected touch' );
+} );
+window.addEventListener( 'click', function()
+{
+    friendInputMethodOverride = 'click';
+    console.log( 'Detected click' );
+} );
+
 /* Done important flags for GUI elements ------------------------------------ */
 
 // Container of settings for virtual workspaces
@@ -52,6 +67,15 @@ function cleanVirtualWorkspaceInformation()
 
 function isTouchDevice()
 {
+    // We found an override
+	if( friendInputMethodOverride == 'touch' )
+	{
+	    return true;
+	}
+	else if( friendInputMethodOverride == 'click' )
+	{
+	    return false;
+	}
 	return ( ( 'ontouchstart' in window ) ||
     	( navigator.maxTouchPoints > 0 ) ||
     	( navigator.msMaxTouchPoints > 0 ) );

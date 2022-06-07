@@ -2566,6 +2566,7 @@ function checkTablet()
 function checkMobileBrowser()
 {
 	if( !document.body ) return setTimeout( checkMobileBrowser, 50 );
+	
 	window.isMobile = checkMobile();
 	if( !window.isTablet )
 		window.isTablet = checkTablet() || isTouchDevice();
