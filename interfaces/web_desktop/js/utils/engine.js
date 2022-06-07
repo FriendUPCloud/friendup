@@ -201,6 +201,12 @@ function GeByClass ( nm, el )
 var _is_touch_device;
 function isTouchDevice()
 {
+	// Test for really difficult ones!
+	if( !( window.matchMedia( '(pointer: coarse)' ).matches ) )
+	{
+        return false;
+    }
+	
 	if( _is_touch_device === false || _is_touch_device === true ) return _is_touch_device;
 	try
 	{
