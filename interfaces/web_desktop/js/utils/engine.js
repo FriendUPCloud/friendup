@@ -2643,6 +2643,7 @@ function checkMobileBrowser()
 	{
         window.isMobile = false;
         window.isTabled = false;
+        console.log( 'More testing eh: ', navigator.userAgent );
     }
 
 	return window.isMobile;
