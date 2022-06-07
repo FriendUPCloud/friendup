@@ -252,7 +252,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					strncpy( devname, origDecodedPath, dpos );
 					devname[ dpos ] = 0;
 				}
-				DEBUG( "[FSMWebRequest] Device name '%s' Logguser name %s- path %s\n", devname, loggedSession->us_User->u_Name, path );
+				
+				if( loggedSession->us_User != NULL )
+				{
+					DEBUG( "[FSMWebRequest] Device name '%s' Logguser name %s- path %s\n", devname, loggedSession->us_User->u_Name, path );
+				}
 
 				path = locpath;
 				
@@ -318,7 +322,14 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 			
 			DEBUG("[FSMWebRequest] Find device by name %s\n", devname );
 			
-			actDev = GetRootDeviceByName( loggedSession->us_User, loggedSession, devname );
+			if( loggedSession->us_User != NULL )
+			{
+				actDev = GetRootDeviceByName( loggedSession->us_User, loggedSession, devname );
+			}
+			else
+			{
+				DEBUG("[FSMWebRequest] User is not attached to session\n");
+			}
 			
 			// TODO: Custom stuff (should probably be in the actual FS)
 
@@ -370,7 +381,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 						HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
-					FBOOL have = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_User, "-R----" );
+					FBOOL have = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_UserID, "-R----" );
 					if( have == TRUE )
 					{
 						BufString *resp = actFS->Info( actDev, path );
@@ -591,7 +602,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
-					FBOOL have = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_User, "---E--" );
+					FBOOL have = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_UserID, "---E--" );
 					if( have == TRUE )
 					{
 						FHandler *actFS = (FHandler *)actDev->f_FSys;
@@ -715,7 +726,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								BufStringAdd( sql, " ) AND OwnerUserID=" );
 							
 								char num[ 32 ];
-								sprintf( num, "%ld", (long int)loggedSession->us_User->u_ID );
+								snprintf( num, sizeof(num), "%ld", (long int)loggedSession->us_UserID );
 								BufStringAdd( sql, num );
 						
 								// Create output "JSON"
@@ -804,7 +815,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 						HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
-					FBOOL have = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_User, "-R----" );
+					FBOOL have = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_UserID, "-R----" );
 					if( have == TRUE )
 					{
 						FBOOL details = FALSE;
@@ -917,7 +928,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						{
 							DEBUG("[FSMWebRequest] Filesystem RENAME\n");
 						
-							FBOOL have = FSManagerCheckAccess( l->sl_FSM, origDecodedPath, actDev->f_ID, loggedSession->us_User, "--W---" );
+							FBOOL have = FSManagerCheckAccess( l->sl_FSM, origDecodedPath, actDev->f_ID, loggedSession->us_UserID, "--W---" );
 							if( have == TRUE )
 							{
 								FileFillSessionID( actDev, loggedSession );
@@ -1027,7 +1038,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					}
 					else
 					{
-						have = FSManagerCheckAccess( l->sl_FSM, origDecodedPath, actDev->f_ID, loggedSession->us_User, "----D-" );
+						have = FSManagerCheckAccess( l->sl_FSM, origDecodedPath, actDev->f_ID, loggedSession->us_UserID, "----D-" );
 					}
 					
 					if( have == TRUE )
@@ -1044,7 +1055,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							if( notify == TRUE )
 							{
 								// send information about changes on disk
-								//DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
+
 								char *notifPath = CutNotificationPath( origDecodedPath );
 								if( notifPath != NULL )
 								{
@@ -1150,7 +1161,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						}
 						else
 						{
-							have = FSManagerCheckAccess( l->sl_FSM, lpath, actDev->f_ID, loggedSession->us_User, "--W---" );
+							have = FSManagerCheckAccess( l->sl_FSM, lpath, actDev->f_ID, loggedSession->us_UserID, "--W---" );
 						}
 						
 						// we must get only file/dir name to check it
@@ -1239,7 +1250,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
-					FBOOL have = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_User, "---E--" );
+					FBOOL have = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_UserID, "---E--" );
 					if( have == TRUE )
 					{
 						FHandler *actFS = (FHandler *)actDev->f_FSys;
@@ -1350,7 +1361,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						{
 							string_escape_quotes(&origDecodedPath[namepos], escapedFilename );
 
-							//memset( temp, 0, sizeof( temp ) );
 							snprintf( temp, sizeof( temp ), "attachment; filename=\"%s\"", escapedFilename );
 						
 							DEBUG("dOWNLOAD file path '%s' '%s'\n", &origDecodedPath[namepos], temp );
@@ -1374,7 +1384,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							TAG_DONE, TAG_DONE );
 					}
 					
-					FBOOL have = FSManagerCheckAccess( l->sl_FSM, origDecodedPath, actDev->f_ID, loggedSession->us_User, "-R----" );
+					FBOOL have = FSManagerCheckAccess( l->sl_FSM, origDecodedPath, actDev->f_ID, loggedSession->us_UserID, "-R----" );
 					if( have == TRUE )
 					{
 						if( mode != NULL && strcmp( mode, "rs" ) == 0 )		// read stream
@@ -1465,8 +1475,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								//we want to read only part of data
 #define FS_READ_BUFFER 262144
 
-								//FQUAD totalBytes = 0;
-								
 								BufString *bs = BufStringNew();
 
 								if( offset != NULL && bytes != NULL )
@@ -1521,11 +1529,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							
 								else 
 								{
-									//if( request->h_RequestSource == HTTP_SOURCE_WS )
-									//{
-									//	ListStringAdd( ls, "ok<!--separate-->", 17 );
-									//}
-									
 									int readbytes = FS_READ_BUFFER;
 									char *dataBuffer = FCalloc( readbytes, sizeof( char ) );
 								
@@ -1758,21 +1761,12 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							}
 						}
 					}
-					
-					// TODO: Test UNSTABLE CODE
-					/*// Base64 instead
-					else if( el && strcmp( el->data, "base64" ) == 0 )
-					{
-					fdata = Base64Decode( fdata, strlen( fdata ), &flength );
-				}
-				int dataSize = flength > 0 ? flength : strlen( fdata );
-				*/
-					
+
 					if( mode != NULL )
 					{
 						if( fdata != NULL )
 						{
-							FBOOL have = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_User, "--W---" );
+							FBOOL have = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_UserID, "--W---" );
 							if( have == TRUE )
 							{
 								FileFillSessionID( actDev, loggedSession );
@@ -1905,13 +1899,13 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 
 							if( dstrootf != NULL )
 							{
-								FBOOL havesrc = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_User, "-R----" );
+								FBOOL havesrc = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_UserID, "-R----" );
 							
 								if( havesrc == TRUE )
 								{
 									DEBUG("[FSMWebRequest] We have access to source: %s\n", path );
 							
-									FBOOL havedst = FSManagerCheckAccess( l->sl_FSM, dstpath, actDev->f_ID, loggedSession->us_User, "--W---" );
+									FBOOL havedst = FSManagerCheckAccess( l->sl_FSM, dstpath, actDev->f_ID, loggedSession->us_UserID, "--W---" );
 									if( havedst == TRUE )
 									{
 										dstrootf->f_Operations++;
@@ -2173,7 +2167,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						while( file != NULL )
 						{
 							LOG( FLOG_DEBUG, "UPLOAD FILE : %s : %ld\n", file->hf_FileName, file->hf_FileSize );
-							DEBUG("Going throug files\n");
+
 							if( targetPath )
 							{
 								sprintf( tmpPath, "%s", targetPath );
@@ -2231,7 +2225,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							
 							DEBUG( "[FSMWebRequest] Trying to save file %s (path: %s, devname: %s)\n", dstPath, path, devname );
 							
-							FBOOL have = FSManagerCheckAccess( l->sl_FSM, tmpPath, actDev->f_ID, loggedSession->us_User, "--W---" );
+							FBOOL have = FSManagerCheckAccess( l->sl_FSM, tmpPath, actDev->f_ID, loggedSession->us_UserID, "--W---" );
 							if( have == TRUE )
 							{
 								char tmpFileData[ 512 ];
@@ -2631,7 +2625,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						perm = (char *)el->hme_Data;
 					}
 					
-					FBOOL access = FSManagerCheckAccess( l->sl_FSM, origDecodedPath, actDev->f_ID, loggedSession->us_User, perm );
+					FBOOL access = FSManagerCheckAccess( l->sl_FSM, origDecodedPath, actDev->f_ID, loggedSession->us_UserID, perm );
 					if( access == TRUE )
 					{
 						HttpAddTextContent( response,  "ok<!--separate-->{\"result\":\"access\"}" );
@@ -2678,7 +2672,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					}
 					else
 					{
-						HttpAddTextContent( response,  "ok<!--separate-->{ \"Result\": \"no response\"}" );
+						HttpAddTextContent( response,  "ok<!--separate-->{\"Result\":\"no response\"}" );
 					}
 				}
 				
@@ -2856,7 +2850,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						
 						if( err == 0 )
 						{
-							snprintf( answer, sizeof(answer),  "ok<!--separate-->{ \"Result\": \"%ld\"}", retVal );
+							snprintf( answer, sizeof(answer),  "ok<!--separate-->{\"Result\":\"%ld\"}", retVal );
 						}
 						else
 						{
@@ -3136,7 +3130,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 													int err2 = DoorNotificationCommunicateChanges( l, loggedSession, dstdevice, archpath );
 												}
 											
-												HttpAddTextContent( response,  "ok<!--separate-->{\"result\": 0 }" );
+												HttpAddTextContent( response,  "ok<!--separate-->{\"result\":0}" );
 											}
 											else
 											{
