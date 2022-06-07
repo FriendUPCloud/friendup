@@ -24,13 +24,13 @@ var friendInputMethodOverride = false;
 
 window.addEventListener( 'touchstart', function()
 {
-    friendInputMethodOverride = 'touch';
-    console.log( 'Detected touch' );
+    if( !friendInputMethodOverride )
+        friendInputMethodOverride = 'touch';
 } );
 window.addEventListener( 'click', function()
 {
-    friendInputMethodOverride = 'click';
-    console.log( 'Detected click' );
+    if( !friendInputMethodOverride )
+        friendInputMethodOverride = 'click';
 } );
 
 /* Done important flags for GUI elements ------------------------------------ */

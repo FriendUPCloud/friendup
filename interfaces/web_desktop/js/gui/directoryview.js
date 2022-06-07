@@ -2818,7 +2818,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			listed++;
 			
 			// Single click
-			r[ isTouchDevice() ? 'ontouchstart' : 'onmousedown' ] = function( e )
+			r[ 'onmousedown' ] = function( e )
 			{
 				if( !e ) e = window.event ? window.event : {};
 			
@@ -2981,6 +2981,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					}
 				}
 			}
+			r[ 'ontouchstart' ] = r[ 'onmousedown' ];
 
 			r.fileInfo = f.fileInfo;
 			
@@ -3002,6 +3003,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					}
 				}
 			}
+			r.ontouchend = r.onmouseup;
 
 			// For clicks
 			ic.domNode = r;
@@ -3415,7 +3417,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	// Attach events
 	if( !( self.flags && self.flags.nativeDraggable ) )
 	{
-		file[ isTouchDevice() ? 'ontouchstart' : 'onmousedown' ] = function( e )
+		file[ 'onmousedown' ] = function( e )
 		{	
 			if( !e ) e = window.event ? window.event : {};
 	
@@ -3606,6 +3608,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			if( e && e.stopPropagation )
 				e.stopPropagation();
 		}
+		// Also enable for touch
+		file[ 'ontouchstart' ] = file[ 'onmousedown' ];
 
 		// -------------------------------------------------------------------------
 		// This one driggers dropping icons! (believe it or not)
@@ -3901,8 +3905,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	if( !self.flags || ( self.flags && !self.flags.nativeDraggable ) )
 	{
 		let eventName = ( window.isMobile && ( fileInfo.Type == 'Door' || fileInfo.Type == 'Dormant' ) ) ? 'onclick' : 'ondblclick';
-		if( isTouchDevice() )
-			eventName = 'ontouchend';
+
 		( function( eventn, fil, func )
 		{
 			fil[ eventn ] = function( e )
@@ -3934,6 +3937,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				}
 				func( e );
 			}
+			fil[ 'ontouchend' ] = fil[ eventn ];
 		} )( eventName, file, launchIcon );
 	}
 	
