@@ -2636,6 +2636,15 @@ function checkMobileBrowser()
 		};
 		console.error = console.debug = console.info =  console.log
 	}
+	
+	
+    // Test for really difficult ones!
+	if( !( window.matchMedia( '(pointer: coarse)' ).matches ) )
+	{
+        window.isMobile = false;
+        window.isTabled = false;
+    }
+
 	return window.isMobile;
 }
 
