@@ -4220,6 +4220,7 @@ function InitGuibaseEvents()
 {
 	if( isTouchDevice() )
 	{
+	    console.log( 'Using touch device.' );
 		window.addEventListener( 'touchstart', movableMouseDown, false );
 		window.addEventListener( 'touchmove', movableListener, false );
 		window.addEventListener( 'touchend', movableMouseUp, false );
