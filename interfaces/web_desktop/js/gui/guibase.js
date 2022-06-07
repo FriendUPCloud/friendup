@@ -2260,7 +2260,7 @@ movableListener = function( e, data )
 		}
 	}
 	// Mouse down on desktop (regions)
-	if( !window.isTablet && !window.isMobile && window.mouseDown == 4 && window.regionWindow )
+	if( !isTouchDevice() && window.mouseDown == 4 && window.regionWindow )
 	{
 		// Prime
 		if( window.regionWindow.directoryview )
