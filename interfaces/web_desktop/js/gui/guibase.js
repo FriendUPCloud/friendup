@@ -4218,55 +4218,49 @@ function ElementWindow ( ele )
 
 function InitGuibaseEvents()
 {
-	if( isTouchDevice() )
-	{
-	    console.log( 'Using touch device.' );
-		window.addEventListener( 'touchstart', movableMouseDown, false );
-		window.addEventListener( 'touchmove', movableListener, false );
-		window.addEventListener( 'touchend', movableMouseUp, false );
-	}
-	else
-	{
-		if( window.attachEvent )
-			window.attachEvent( 'onmouseup', movableMouseUp, false );
-		else window.addEventListener( 'mouseup', movableMouseUp, false );	
-		
-		if( window.attachEvent )
-			window.attachEvent ( 'onmousemove', movableListener, false );
-		else window.addEventListener( 'mousemove', movableListener, false );
-		
-		if( window.attachEvent )
-			window.attachEvent( 'onmousedown', movableMouseDown, false );
-		else window.addEventListener( 'mousedown', movableMouseDown, false );
+	window.addEventListener( 'touchstart', movableMouseDown, false );
+	window.addEventListener( 'touchmove', movableListener, false );
+	window.addEventListener( 'touchend', movableMouseUp, false );
 
-		if( window.attachEvent )
-			window.attachEvent( 'oncontextmenu', contextMenu, false );
-		else window.addEventListener( 'contextmenu', contextMenu, false );
+	if( window.attachEvent )
+		window.attachEvent( 'onmouseup', movableMouseUp, false );
+	else window.addEventListener( 'mouseup', movableMouseUp, false );	
+	
+	if( window.attachEvent )
+		window.attachEvent ( 'onmousemove', movableListener, false );
+	else window.addEventListener( 'mousemove', movableListener, false );
+	
+	if( window.attachEvent )
+		window.attachEvent( 'onmousedown', movableMouseDown, false );
+	else window.addEventListener( 'mousedown', movableMouseDown, false );
+
+	if( window.attachEvent )
+		window.attachEvent( 'oncontextmenu', contextMenu, false );
+	else window.addEventListener( 'contextmenu', contextMenu, false );
+	
+	// On blur, activate current movable (don't put it to front)
+	window.addEventListener( 'blur', function( e )
+	{
+		// Refresh the tray
+		PollTray();
 		
-		// On blur, activate current movable (don't put it to front)
-		window.addEventListener( 'blur', function( e )
+		let viewObject = null;
+		if( document.activeElement )
 		{
-			// Refresh the tray
-			PollTray();
-			
-			let viewObject = null;
-			if( document.activeElement )
+			viewObject = document.activeElement;
+		}
+		if( window.currentMovable )
+		{
+			if( window.currentMovable.content == viewObject.view )
 			{
-				viewObject = document.activeElement;
+				_WindowToFront( window.currentMovable );
 			}
-			if( window.currentMovable )
+			else
 			{
-				if( window.currentMovable.content == viewObject.view )
-				{
-					_WindowToFront( window.currentMovable );
-				}
-				else
-				{
-					_ActivateWindowOnly( window.currentMovable );
-				}
+				_ActivateWindowOnly( window.currentMovable );
 			}
-		} );
-	}
+		}
+	} );
 	
 	if( window.attachEvent )
 		window.attachEvent( 'onresize', movableListener, false );
