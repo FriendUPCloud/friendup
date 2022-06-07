@@ -150,7 +150,7 @@ Widget.prototype.calcPosition = function()
 		{
 			this.dom.style.top = ( target.offsetHeight >> 1 ) - ( this.th >> 1 ) + 'px';
 		}
-		else if( this.ty.substr && this.ty.substr( -1, 1 ) == '%' )
+		else if( this.ty && this.ty.substr && this.ty.substr( -1, 1 ) == '%' )
 		{
 			var pct = window.innerHeight / 100 * parseInt( this.ty );
 			this.dom.style.top = pct + 'px';
