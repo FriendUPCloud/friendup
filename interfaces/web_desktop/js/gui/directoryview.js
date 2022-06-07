@@ -806,28 +806,27 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	
 	// Add context menu
 	if( !winobj.oldContextMenuEvent ) winobj.oldContextMenuEvent = winobj.oncontextmenu;
-	if( !isTouchDevice() )
+	
+	winobj.addEventListener( 'contextmenu', function( e )
 	{
-		winobj.addEventListener( 'contextmenu', function( e )
+		let tr = e.target ? e.target : e.srcObject;
+		// Enable default behavior on the context menu instead
+		if( tr.classList && tr.classList.contains( 'DefaultContextMenu' ) )
 		{
-			let tr = e.target ? e.target : e.srcObject;
-			// Enable default behavior on the context menu instead
-			if( tr.classList && tr.classList.contains( 'DefaultContextMenu' ) )
-			{
-				e.defaultBehavior = true;
-				return;
-			}
-			
-			cancelBubble( e );
-			
-			// Cancels previous stuff
-			window.touchstartCounter = false;
-			
-			Workspace.showContextMenu( false, e );
+			e.defaultBehavior = true;
 			return;
-		} );
-	}
-	else
+		}
+		
+		cancelBubble( e );
+		
+		// Cancels previous stuff
+		window.touchstartCounter = false;
+		
+		Workspace.showContextMenu( false, e );
+		return;
+	} );
+	
+	if( isTouchDevice() )
 	{
 		winobj.addEventListener( 'touchstart', function( e )
 		{
@@ -2835,7 +2834,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					}, 800 );
 				} 
 			
-				if( isTablet )
+				if( isTouchDevice() )
 					dv.multiple = e.shiftKey = true;
 			
 				// This means we are adding
@@ -2997,7 +2996,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			{
 				if( !e.ctrlKey && !e.shiftKey && !e.command && !ge( 'RegionSelector' ) )
 				{
-					if( !isMobile && !isTablet )
+					if( !isTouchDevice() )
 					{
 						clearRegionIcons( { exception: this, force: true } );
 					}
@@ -3573,7 +3572,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				{
 					if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
 					{
-						if( !isMobile && !isTablet )
+						if( !isTouchDevice() )
 						{
 							clearRegionIcons( { exception: this } );
 						}
@@ -3633,7 +3632,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			}
 			if( !e.ctrlKey && !e.shiftKey && !e.command && !ge( 'RegionSelector' ) )
 			{
-				if( !isMobile && !isTablet )
+				if( !isTouchDevice() )
 				{
 					clearRegionIcons( { exception: this, force: true } );
 				}
