@@ -645,7 +645,7 @@ f.Name ASC";
 					}
 				}
 				
-				DEBUG("Mount groupid parameter received %d group ptr %p\n", locid, usrgrp );
+				DEBUG("Mount groupid parameter received %ld group ptr %p\n", locid, usrgrp );
 			}
 			
 			//
