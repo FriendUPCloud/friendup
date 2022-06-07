@@ -4218,7 +4218,7 @@ function ElementWindow ( ele )
 
 function InitGuibaseEvents()
 {
-	if( window.isTablet || window.isMobile || isTouchDevice() )
+	if( isTouchDevice() )
 	{
 		window.addEventListener( 'touchstart', movableMouseDown, false );
 		window.addEventListener( 'touchmove', movableListener, false );
