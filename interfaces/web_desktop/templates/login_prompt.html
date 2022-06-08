@@ -4,7 +4,7 @@
 	<head>
 		<script onload="" src="/webclient/js/apps/api.js"></script>
 	</head>
-	<body class="Loading" onload="loginNow(); ge('loginButton').onclick=function(){Application.doLogin();}">
+	<body class="Loading" onload="loginNow(); document.getElementById('loginButton').onclick=function(){Application.doLogin();}; document.getElementById('loginButton').classList.remove( 'Disabled' )">
 		<link rel="stylesheet" href="/webclient/css/extraLoginCSS.css"/>
 		<div id="LoginElement" style="visibility: hidden">
 			<div class="VContentTop">
