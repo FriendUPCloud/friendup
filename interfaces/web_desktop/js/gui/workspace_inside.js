@@ -1290,8 +1290,6 @@ var WorkspaceInside = {
 		// We're already open or connecting
 		if( Workspace.conn && Workspace.conn.ws && Workspace.conn.ws.ready ) return;
 		
-		console.log( 'initWebSocket: Trying to start web socket.' );
-		
 		if( window.Friend && Friend.User && Friend.User.State != 'online' ) 
 		{
 			console.log( 'Cannot initialize web socket - user is offline.' );
@@ -2314,10 +2312,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		this.themeStyleElement.innerHTML = str;
 	},
 	// NB: Start of workspace_inside.js ----------------------------------------
-	refreshUserSettings: function( callback, retries )
+	refreshUserSettings: function( callback )
 	{
-		let self = this;
-		
 		// This part is important - it is where we extend the workspace with 
 		// configurable extensions based on config settings
 		console.log( 'refreshUserSettings: Getting settings' );
@@ -2326,7 +2322,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			if( e == 'ok' )
 			{
-				console.log( 'refreshUserSettings: Getting settings was ok', e, d );
 				Workspace.serverConfig = JSON.parse( d );
 				
 				// Support init modules
@@ -2375,32 +2370,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 				}
 			}
-			else
-			{
-			    console.log( 'refreshUserSettings: This is our result, ', e, d );
-			    if( !retries && retries !== 0 )
-			    {
-			        self.refreshUserSettings( callback, 2 );
-			    }
-			    else if( retries-- > 0 )
-			    {
-			        self.refreshUserSettings( callback, retries );
-			    }
-			    else
-			    {
-			        console.log( 'refreshUserSettings: Could not load server settings. Setting empty.' );
-			        Workspace.serverConfig = {};
-			        setTimeout( function(){ Workspace.logout(); }, 250 );
-			    }
-			}
 		}
-		b.forceHTTP = true;
 		b.execute( 'sampleconfig' );
 		console.log(  'refreshUserSettings: Getting loads of settings' );
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( 'refreshUserSettings: Settings came in', e, d );
+			console.log( 'refreshUserSettings: Settings came in' );
 			function initFriendWorkspace()
 			{
 				// Make sure we have loaded
@@ -10025,7 +10001,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			
 			if( !Workspace.conn || !Workspace.conn.ws )
 			{
-				console.log( 'Initializing websocket.' );
 				Workspace.initWebSocket();
 			}
 		}
@@ -10794,7 +10769,6 @@ function InitWorkspaceNetwork()
 	// Establish a websocket connection to the core
 	if( !wsp.conn && wsp.sessionId && window.FriendConnection )
 	{
-	    console.log( 'Initializing workspace network.' );
 		wsp.initWebSocket();
 	}
 
