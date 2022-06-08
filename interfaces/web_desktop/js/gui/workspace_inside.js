@@ -2391,6 +2391,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			    }
 			}
 		}
+		b.forceHTTP = true;
 		b.execute( 'sampleconfig' );
 		console.log(  'refreshUserSettings: Getting loads of settings' );
 		let m = new Module( 'system' );
