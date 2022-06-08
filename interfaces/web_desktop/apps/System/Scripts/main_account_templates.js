@@ -1185,6 +1185,8 @@ Sections.accounts_templates = function( cmd, extra )
 				//return '<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
 				return '<p>\
 				    <button class="Button IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>\
+				</p>\
+				<p>\
 				    <button class="Button IconSmall fa-remove" id="wallpaper_none">Use no wallpaper</button>\
 				</p>';
 			},
