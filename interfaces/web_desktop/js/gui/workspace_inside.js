@@ -9335,7 +9335,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			id: 'launcherview'
 		} );
 		
-		w.setFlag( 'dialog', true );
+		w.setFlag( 'standard-dialog', true );
 		
 		w.onClose = function()
 		{

@@ -5127,6 +5127,11 @@ var View = function( args )
 			        if( value )
 			        {
 			            viewdiv.parentNode.classList.add( 'Dialog' );
+			            if( flag == 'dialog' )
+			            {
+					        viewdiv.style.left = 'calc(100% - ' + viewdiv.offsetWidth + 'px)';
+					        viewdiv.style.top = 'calc(100% - ' + viewdiv.offsetHeight + 'px)';
+					    }
 			        }
 			        else
 			        {
