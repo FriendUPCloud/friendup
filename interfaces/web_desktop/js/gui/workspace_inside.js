@@ -1290,6 +1290,8 @@ var WorkspaceInside = {
 		// We're already open or connecting
 		if( Workspace.conn && Workspace.conn.ws && Workspace.conn.ws.ready ) return;
 		
+		console.log( 'initWebSocket: Trying to start web socket.' );
+		
 		if( window.Friend && Friend.User && Friend.User.State != 'online' ) 
 		{
 			console.log( 'Cannot initialize web socket - user is offline.' );
@@ -2398,7 +2400,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( 'refreshUserSettings: Settings came in' );
+			console.log( 'refreshUserSettings: Settings came in', e, d );
 			function initFriendWorkspace()
 			{
 				// Make sure we have loaded
@@ -10023,6 +10025,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			
 			if( !Workspace.conn || !Workspace.conn.ws )
 			{
+				console.log( 'Initializing websocket.' );
 				Workspace.initWebSocket();
 			}
 		}
@@ -10791,6 +10794,7 @@ function InitWorkspaceNetwork()
 	// Establish a websocket connection to the core
 	if( !wsp.conn && wsp.sessionId && window.FriendConnection )
 	{
+	    console.log( 'Initializing workspace network.' );
 		wsp.initWebSocket();
 	}
 
