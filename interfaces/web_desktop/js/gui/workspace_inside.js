@@ -2312,8 +2312,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		this.themeStyleElement.innerHTML = str;
 	},
 	// NB: Start of workspace_inside.js ----------------------------------------
-	refreshUserSettings: function( callback )
+	refreshUserSettings: function( callback, retries )
 	{
+		let self = this;
+		
 		// This part is important - it is where we extend the workspace with 
 		// configurable extensions based on config settings
 		console.log( 'refreshUserSettings: Getting settings' );
@@ -2369,6 +2371,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						}
 					}
 				}
+			}
+			else
+			{
+			    console.log( 'refreshUserSettings: This is our result, ', e, d );
+			    if( !retries && retries !== 0 )
+			    {
+			        self.refreshUserSettings( callback, 2 );
+			    }
+			    else if( retries-- > 0 )
+			    {
+			        self.refreshUserSettings( callback, retries );
+			    }
+			    else
+			    {
+			        console.log( 'refreshUserSettings: Could not load server settings. Setting empty.' );
+			        Workspace.serverConfig = {};
+			        setTimeout( function(){ Workspace.logout(); }, 250 );
+			    }
 			}
 		}
 		b.execute( 'sampleconfig' );
