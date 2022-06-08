@@ -4,7 +4,7 @@
 	<head>
 		<script onload="" src="/webclient/js/apps/api.js"></script>
 	</head>
-	<body class="Loading" onload="loginNow()">
+	<body class="Loading" onload="loginNow(); ge('loginButton').onclick=function(){Application.doLogin();}">
 		<link rel="stylesheet" href="/webclient/css/extraLoginCSS.css"/>
 		<div id="LoginElement" style="visibility: hidden">
 			<div class="VContentTop">
@@ -39,7 +39,7 @@
 						</div>
 						<div class="HRow MarginTop">
 							<div class="HContent100">
-								<button id="loginButton" class="IconSmall fa-unlock" tabindex="4" onclick="Application.doLogin()">
+								<button id="loginButton" class="IconSmall fa-unlock Disabled" tabindex="4">
 									Sign in
 								</button>
 								<!--<div id="RememberMe">
