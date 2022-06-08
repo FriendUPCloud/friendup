@@ -4409,6 +4409,19 @@ Sections.accounts_templates = function( cmd, extra )
 							    let ctx = ge( 'AdminWallpaper' ).getContext( '2d' );
 							    ctx.fillStyle = '#223344';
 							    ctx.fillRect( 0, 0, 256, 256 );
+							    updateWallpaper( details.ID, function( e, d, vars )
+								{
+									
+									if( e && vars )
+									{
+										
+									}
+									else
+									{
+										if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+									}
+							
+								} );
 							}
 							var b = ge( 'wallpaper_button_inner' );
 							b.onclick = function(  )
