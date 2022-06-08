@@ -5110,6 +5110,17 @@ var View = function( args )
 				this.setMainView( value );
 				this.flags.mainView = value;
 				break;
+			// Standard dialog has preset width and height
+			case 'standard-dialog':
+			// Dialog is treated only like a dialog
+				if( value )
+		        {
+		            viewdiv.parentNode.classList.add( 'StandardDialog' );
+		        }
+		        else
+		        {
+		            viewdiv.parentNode.classList.remove( 'StandardDialog' );
+		        }
 			case 'dialog':
 			    if( viewdiv )
 			    {
@@ -6103,7 +6114,7 @@ function Ac2Alert ( msg, title )
 		'height' : 120
 	} );
 	v.setSticky();
-	v.setFlag( 'dialog', true );
+	v.setFlag( 'standard-dialog', true );
 	v.setContent( '<div class="Dialog Box ContentFull">' + msg + '</div>' );
 }
 
@@ -6260,7 +6271,7 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 		} );
 	}
 	
-	v.setFlag( 'dialog', true );
+	v.setFlag( 'standard-dialog', true );
 
 	v.onClose = function()
 	{
@@ -6395,7 +6406,7 @@ function Alert( title, string, cancelstring, callback )
 		} );
 	}
 	
-	v.setFlag( 'dialog', true );
+	v.setFlag( 'standard-dialog', true );
 	
 	v.onClose = function()
 	{
