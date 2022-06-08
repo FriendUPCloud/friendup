@@ -2324,6 +2324,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			if( e == 'ok' )
 			{
+				console.log( 'refreshUserSettings: Getting settings was ok', e, d );
 				Workspace.serverConfig = JSON.parse( d );
 				
 				// Support init modules
