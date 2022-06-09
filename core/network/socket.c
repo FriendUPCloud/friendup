@@ -2927,7 +2927,7 @@ void SocketDeleteSSL( Socket* sock )
 		socklen_t optlen = sizeof( optval );
 		optval = 0;
 		optlen = sizeof( optval );
-		setsockopt( sock->fd, SOL_SOCKET, SO_KEEPALIVE, &optval, optlen );
+		//setsockopt( sock->fd, SOL_SOCKET, SO_KEEPALIVE, &optval, optlen );
 		
 		int e = 0;
 		shutdown( sock->fd, SHUT_RDWR );
@@ -2935,7 +2935,6 @@ void SocketDeleteSSL( Socket* sock )
 		e = close( sock->fd );
 		DEBUG("[SocketDeleteSSL] socked closed: %d\n", sock->fd );
 		sock->fd = 0;
-	    usleep( 50000 );
 	}
 	FFree( sock );
 }
