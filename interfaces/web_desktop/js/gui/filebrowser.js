@@ -599,6 +599,10 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					label.className = 'FileBrowserItemLabel';
 					label.innerHTML = item.Title;
 					
+					let remove = document.createElement( 'span' );
+					remove.className = 'IconSmall fa-remove';
+					li.appendChild( remove );
+					
 					( function( liElement, ulElement, path )
 					{
 					    liElement.onclick = function( e )
