@@ -602,7 +602,6 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					rem.className = 'IconSmall fa-remove';
 					rem.onclick = function( e )
 					{
-					    e.preventDefault();
 					    let m = new Module( 'system' );
 						m.onExecuted = function( e, d )
 						{
