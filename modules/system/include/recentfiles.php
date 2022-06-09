@@ -80,9 +80,13 @@ else
             if( !isset( $test[ $row->FileID ] ) )
             {
                 // Skip hidden files
-		    	$path = array_pop( explode( ':', $row->Path ) );
+                $path = explode( ':', $row->Path );
+		    	$path = array_pop( $path );
 		    	if( strstr( $path, '/' ) )
-		    		$path = array_pop( explode( '/', $row->Path ) );
+		    	{
+		    	    $path = explode( '/', $row->Path );
+		    		$path = array_pop( $path );
+		        }
 		    	if( substr( $path, 0, 1 ) == '.' ) continue;
 		    	if( $count++ >= $maxToList ) continue;
 		    	// Here we go
