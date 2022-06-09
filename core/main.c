@@ -95,6 +95,9 @@ int main( int argc, char *argv[])
 	int i;
 	int mcheckOption = 0;
 	
+	// Dangerous thing from Hogne
+	sigaction(SIGPIPE, &(struct sigaction){SIG_IGN}, NULL);
+	
 	for( i=0 ; i < argc ; i++ )
 	{
 		if( strcmp( argv[i], "--mcheck" ) == 0 )

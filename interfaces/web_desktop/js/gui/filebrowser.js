@@ -610,7 +610,6 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					            if( lis[ a ] == liElement )
 					            {
 					                lis[ a ].classList.add( 'Activated' );
-					                console.log( 'What is the path: ', path );
 					                self.callbacks.folderOpen( path, e );
 					            }
 					            else
