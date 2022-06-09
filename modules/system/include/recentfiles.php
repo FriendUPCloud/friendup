@@ -30,6 +30,7 @@ if( isset( $args->args->workgroup ) )
                     f.GroupID = fug.ID AND
                     fug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
 	                `Accessed` < ( NOW() + INTERVAL 30 DAY )
+	            LIMIT 10
             ) AND g.UserID = ddug.UserID AND ddug.UserGroupID = ug.ID ORDER BY g.Accessed DESC
     ' ) )
     {
@@ -41,7 +42,8 @@ if( isset( $args->args->workgroup ) )
             if( !isset( $test[ $row->FileID ] ) )
             {
 		    	// Skip hidden files
-		    	$path = array_pop( explode( ':', $row->Path ) );
+		    	$path = explode( ':', $row->Path );
+		    	$path = array_pop( $path );
 		    	if( strstr( $path, '/' ) )
 		    		$path = array_pop( explode( '/', $row->Path ) );
 		    	if( substr( $path, 0, 1 ) == '.' ) continue;
