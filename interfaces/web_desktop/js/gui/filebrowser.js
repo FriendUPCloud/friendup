@@ -598,10 +598,23 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					let label = document.createElement( 'span' );
 					label.className = 'FileBrowserItemLabel';
 					label.innerHTML = item.Title;
-					
-					let remove = document.createElement( 'span' );
-					remove.className = 'IconSmall fa-remove';
-					li.appendChild( remove );
+					let rem = document.createElement( 'span' );
+					rem.className = 'IconSmall fa-remove';
+					rem.onclick = function( e )
+					{
+					    e.preventDefault();
+					    let m = new Module( 'system' );
+						m.onExecuted = function( e, d )
+						{
+							if( e == 'ok' )
+							{
+								self.clear();
+								self.refresh( null, null, null, null, { mode: 'poll' } );
+							}
+						}
+						m.execute( 'removebookmark', { name: item.Path } );
+						return cancelBubble( e );
+					}
 					
 					( function( liElement, ulElement, path )
 					{
@@ -636,6 +649,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					} )( li, ul, item.Path );
 					
 					li.appendChild( icon ); li.appendChild( label );
+					li.appendChild( rem );
 					ul.appendChild( li );
 				}
 				
