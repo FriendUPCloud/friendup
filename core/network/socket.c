@@ -2930,11 +2930,12 @@ void SocketDeleteSSL( Socket* sock )
 		setsockopt( sock->fd, SOL_SOCKET, SO_KEEPALIVE, &optval, optlen );
 		
 		int e = 0;
-		//shutdown( sock->fd, SHUT_RDWR );
+		shutdown( sock->fd, SHUT_RDWR );
 
 		e = close( sock->fd );
 		DEBUG("[SocketDeleteSSL] socked closed: %d\n", sock->fd );
 		sock->fd = 0;
+	    usleep( 50000 );
 	}
 	FFree( sock );
 }
