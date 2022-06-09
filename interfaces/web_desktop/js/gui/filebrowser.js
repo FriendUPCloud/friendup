@@ -193,6 +193,134 @@ Friend.FileBrowser.prototype.rollOver = function( elements )
 {
 	// Do some user feedback later
 };
+Friend.FileBrowser.prototype.updateFavorites = function()
+{
+    let self = this;
+    
+    let rootElement = this.dom;
+    
+    if( self.favoritesDom && !self.favoritesDom.parentNode )
+        self.favoritesDom = null;
+    
+	// No favorites container? Remove
+	if( !self.favoritesDom && self.favorites.length )
+	{
+		self.favoritesDom = document.createElement( 'div' );
+		self.favoritesDom.className = 'Favorites';
+		
+		let m = document.createElement( 'div' );
+		m.innerHTML = '<p><strong>Favorites:</strong></p>';
+		self.favoritesDom.appendChild( m );
+		
+		self.favoritesContainer = document.createElement( 'div' );
+		self.favoritesContainer.className = 'FileBrowserFavorites';
+		self.favoritesDom.appendChild( self.favoritesContainer );
+		
+		rootElement.insertBefore( self.favoritesDom, rootElement.firstChild );
+	}
+	// No favorites? Clean up
+	if( self.favoritesDom && !self.favorites.length && rootElement && rootElement.parentNode )
+	{
+		rootElement.removeChild( self.favoritesDom );
+		self.favoritesDom = false;
+		self.favoritesContainer = false;
+		return;
+	}
+	if( !self.favoritesContainer ) return;
+	
+	let ul = self.favoritesContainer.getElementsByTagName( 'ul' );
+	if( ul.length )
+	{
+	    ul = ul[0];
+	}
+	else
+	{
+	    ul = document.createElement( 'ul' );
+	    self.favoritesContainer.appendChild( ul );
+	}
+	
+	let existing = ul.getElementsByTagName( 'li' );
+
+	for( let a = 0; a < self.favorites.length; a++ )
+	{
+	    // Check for doubles
+	    let found = false;
+	    for( let b = 0; b < existing.length; b++ )
+	    {
+	        if( self.favorites[ a ].ID == existing[ b ].getAttribute( 'bookmark-id' ) )
+	        {
+	            found = true;
+	            break;
+	        }
+	    }
+	    if( found ) continue;
+	    
+		let item = self.favorites[ a ];
+		let li = document.createElement( 'li' );
+		li.setAttribute( 'bookmark-id', item.ID );
+		
+		let icon = document.createElement( 'span' );
+		icon.className = 'FileBrowserItemImage';
+		icon.style.backgroundImage = 'url(/iconthemes/friendup15/DriveLabels/Bookmark.svg)';
+		let label = document.createElement( 'span' );
+		label.className = 'FileBrowserItemLabel';
+		label.innerHTML = item.Title;
+		let rem = document.createElement( 'span' );
+		rem.className = 'IconSmall fa-remove';
+		
+		( function( liElement, ulElement, remmer, path )
+		{
+		    liElement.onclick = function( e )
+		    {
+		        // Find active list item
+		        let lis = ulElement.getElementsByTagName( 'li' );
+		        for( let a = 0; a < lis.length; a++ )
+		        {
+		            if( lis[ a ] == liElement )
+		            {
+		                lis[ a ].classList.add( 'Activated' );
+		                self.callbacks.folderOpen( path, e );
+		            }
+		            else
+		            {
+		                lis[ a ].classList.remove( 'Activated' );
+		            }
+		        }
+		        // Remove active state on disks
+		        let disks = rootElement.getElementsByClassName( 'DiskItem' );
+		        for( let a = 0; a < disks.length; a++ )
+		        {
+		            let everything = disks[ a ].getElementsByTagName( 'div' );
+		            for( let b = 0; b < everything.length; b++ )
+		            {
+		                everything[b].classList.remove( 'Open' );
+		                everything[b].classList.remove( 'Active' );
+		            }
+		        }
+		    }
+		    remmer.onclick = function( ev )
+		    {
+		        let mo = new Module( 'system' );
+			    mo.onExecuted = function( eo, od )
+			    {
+				    if( eo == 'ok' )
+				    {
+					    self.clear();
+					    self.refresh( null, null, null, null, { mode: 'poll' } );
+				    }
+			    }
+			    mo.execute( 'removebookmark', { name: path } );
+			    return cancelBubble( ev );
+		    }
+		} )( li, ul, rem, item.Path );
+		
+		li.appendChild( icon ); li.appendChild( label );
+		li.appendChild( rem );
+		ul.appendChild( li );
+	}
+	
+	self.favoritesContainer.appendChild( ul );
+}
 Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, depth, flags, evt )
 {
 	let self = this;
@@ -533,128 +661,6 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			
 			if( callback ) callback();
 			
-			function updateFavorites()
-			{
-				// No favorites container? Remove
-				if( !self.favoritesDom && self.favorites.length )
-				{
-					self.favoritesDom = document.createElement( 'div' );
-					self.favoritesDom.className = 'Favorites';
-					
-					let m = document.createElement( 'div' );
-					m.innerHTML = '<p><strong>Favorites:</strong></p>';
-					self.favoritesDom.appendChild( m );
-					
-					self.favoritesContainer = document.createElement( 'div' );
-					self.favoritesContainer.className = 'FileBrowserFavorites';
-					self.favoritesDom.appendChild( self.favoritesContainer );
-					
-					rootElement.insertBefore( self.favoritesDom, rootElement.firstChild );
-				}
-				// No favorites? Clean up
-				if( self.favoritesDom && !self.favorites.length )
-				{
-					rootElement.removeChild( self.favoritesDom );
-					self.favoritesDom = false;
-					self.favoritesContainer = false;
-					return;
-				}
-				if( !self.favoritesContainer ) return;
-				
-				let ul = self.favoritesContainer.getElementsByTagName( 'ul' );
-				if( ul.length )
-				{
-				    ul = ul[0];
-				}
-				else
-				{
-				    ul = document.createElement( 'ul' );
-				    self.favoritesContainer.appendChild( ul );
-				}
-				
-				let existing = ul.getElementsByTagName( 'li' );
-
-				for( let a = 0; a < self.favorites.length; a++ )
-				{
-				    // Check for doubles
-				    let found = false;
-				    for( let b = 0; b < existing.length; b++ )
-				    {
-				        if( self.favorites[ a ].ID == existing[ b ].getAttribute( 'bookmark-id' ) )
-				        {
-				            found = true;
-				            break;
-				        }
-				    }
-				    if( found ) continue;
-				    
-					let item = self.favorites[ a ];
-					let li = document.createElement( 'li' );
-					li.setAttribute( 'bookmark-id', item.ID );
-					
-					let icon = document.createElement( 'span' );
-					icon.className = 'FileBrowserItemImage';
-					icon.style.backgroundImage = 'url(/iconthemes/friendup15/DriveLabels/Bookmark.svg)';
-					let label = document.createElement( 'span' );
-					label.className = 'FileBrowserItemLabel';
-					label.innerHTML = item.Title;
-					let rem = document.createElement( 'span' );
-					rem.className = 'IconSmall fa-remove';
-					rem.onclick = function( e )
-					{
-					    let m = new Module( 'system' );
-						m.onExecuted = function( e, d )
-						{
-							if( e == 'ok' )
-							{
-								self.clear();
-								self.refresh( null, null, null, null, { mode: 'poll' } );
-							}
-						}
-						m.execute( 'removebookmark', { name: item.Path } );
-						return cancelBubble( e );
-					}
-					
-					( function( liElement, ulElement, path )
-					{
-					    liElement.onclick = function( e )
-					    {
-					        // Find active list item
-					        let lis = ulElement.getElementsByTagName( 'li' );
-					        for( let a = 0; a < lis.length; a++ )
-					        {
-					            if( lis[ a ] == liElement )
-					            {
-					                lis[ a ].classList.add( 'Activated' );
-					                self.callbacks.folderOpen( path, e );
-					            }
-					            else
-					            {
-					                lis[ a ].classList.remove( 'Activated' );
-					            }
-					        }
-					        // Remove active state on disks
-					        let disks = rootElement.getElementsByClassName( 'DiskItem' );
-					        for( let a = 0; a < disks.length; a++ )
-					        {
-					            let everything = disks[ a ].getElementsByTagName( 'div' );
-					            for( let b = 0; b < everything.length; b++ )
-					            {
-					                everything[b].classList.remove( 'Open' );
-					                everything[b].classList.remove( 'Active' );
-					            }
-					        }
-					    }
-					} )( li, ul, item.Path );
-					
-					li.appendChild( icon ); li.appendChild( label );
-					li.appendChild( rem );
-					ul.appendChild( li );
-				}
-				
-				self.favoritesContainer.appendChild( ul );
-			}
-			
 			function done()
 			{
 				// Get existing
@@ -918,7 +924,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				
 				if( favoritesMode )
 				{
-					updateFavorites();
+					self.updateFavorites();
 				}
 			}
 			
