@@ -95,10 +95,6 @@ int main( int argc, char *argv[])
 	int i;
 	int mcheckOption = 0;
 	
-	// Dangerous thing from Hogne
-	struct sigaction notAct;
-	sigaction(SIGPIPE, &notAct, NULL);
-	
 	for( i=0 ; i < argc ; i++ )
 	{
 		if( strcmp( argv[i], "--mcheck" ) == 0 )
