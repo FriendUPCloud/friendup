@@ -112,13 +112,11 @@ $cr = new dbIO( 'FSetting' );
 $cr->Type = 'system';
 $cr->Key = 'firstlogin';
 $cr->UserID = $userid;
-$Logger->log( 'Checking first login' );
 if( !$cr->Load() || ( isset( $args->args->force ) && $args->args->force ) )
 {
 	// Check for expansion
 	if( file_exists( 'cfg/firstlogin.php' ) )
 	{
-		$Logger->log( 'Using config\'s first login.' );
 		require( 'cfg/firstlogin.php' );
 	}
 	// Do defaults
