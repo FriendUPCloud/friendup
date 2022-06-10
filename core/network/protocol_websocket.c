@@ -396,7 +396,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 				
 				DEBUG("[WS] Webcall finished!\n");
 				
-				if( wsd->wsc_UserSession != NULL && us->us_MsgQueue.fq_First != NULL )
+				if( wsd->wsc_UserSession != NULL && us != NULL && us->us_MsgQueue.fq_First != NULL )
 				{
 					lws_callback_on_writable( wsi );
 				}
