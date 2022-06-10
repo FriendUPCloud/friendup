@@ -38,13 +38,6 @@ if( isset( $args->app ) && isset( $configfilesettings[ 'Security' ][ 'UserAppWhi
 	}	
 }
 
-// Activate whitelist
-if( isset( $args->app ) && isset( $configfilesettings[ 'Security' ][ 'UserAppAutoinstall' ] ) )
-{
-	$autoinstall = $configfilesettings[ 'Security' ][ 'UserAppAutoinstall' ];
-	$autoinstall = explode( ',', $autoinstall );
-}
-
 if( $level == 'API' )
 {
 	$app = new stdClass();
@@ -81,38 +74,7 @@ if( $app->ID )
 		// User application part is not stored, app not installed
 		if( !$ua->Load() )
 		{
-			// We have allow-list of autoinstall apps
-			if( isset( $autoinstall ) )
-			{
-				// We found the app in autoinstall list
-				if( in_array( $args->app, $autoinstall ) )
-				{
-					$perms = [];
-					foreach( $conf->Permissions as $p )
-					{
-						$val = '';
-						if( $p == 'Door Local' )
-							$val = 'all';
-						$perms[] = array( $p, $val );
-					}
-				
-					// Collect permissions in a string
-					$app->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . $row->ID );
-					$app->Permissions = json_encode( $perms );
-					$app->Data = '{}';
-					$app->Save();
-				}
-				// User needs to manually install application
-				else
-				{
-					die( 'fail<!--separate-->{"response":"application lacks user installation record"}' );
-				}
-			}
-			// User needs to manually install application
-			else
-			{
-				die( 'fail<!--separate-->{"response":"application lacks user installation record"}' );
-			}
+			die( 'fail<!--separate-->{"response":"application lacks user installation record"}' );
 		}
 		else
 		{
