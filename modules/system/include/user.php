@@ -1068,26 +1068,29 @@ function _firstLogin( $userid )
 				}' );
 				
 				// 4. Wallpaper images directory
-				$f2 = new dbIO( 'FSFolder' );
-				$f2->FilesystemID = $o->ID;
-				$f2->UserID = $userid;
-				$f2->Name = 'Wallpaper';
-				if( !$f2->Load() )
+				if( isset( $Config->copydefaultwallpapers ) )
 				{
-					$f2->DateCreated = date( 'Y-m-d H:i:s' );
-					$f2->DateModified = $f2->DateCreated;
-					$f2->Save();
+					$f2 = new dbIO( 'FSFolder' );
+					$f2->FilesystemID = $o->ID;
+					$f2->UserID = $userid;
+					$f2->Name = 'Wallpaper';
+					if( !$f2->Load() )
+					{
+						$f2->DateCreated = date( 'Y-m-d H:i:s' );
+						$f2->DateModified = $f2->DateCreated;
+						$f2->Save();
+					}
+					
+					$debug[$userid]->WallpaperFolder = json_decode( '{
+						"DbName"       : "FSFolder",
+						"ID"           : "'.$f2->ID.'",
+						"FilesystemID" : "'.$f2->FilesystemID.'",
+						"UserID"       : "'.$f2->UserID.'",
+						"Name"         : "'.$f2->Name.'",
+						"DateCreated"  : "'.$f2->DateCreated.'",
+						"DateModified" : "'.$f2->DateModified.'"
+					}' );
 				}
-				
-				$debug[$userid]->WallpaperFolder = json_decode( '{
-					"DbName"       : "FSFolder",
-					"ID"           : "'.$f2->ID.'",
-					"FilesystemID" : "'.$f2->FilesystemID.'",
-					"UserID"       : "'.$f2->UserID.'",
-					"Name"         : "'.$f2->Name.'",
-					"DateCreated"  : "'.$f2->DateCreated.'",
-					"DateModified" : "'.$f2->DateModified.'"
-				}' );
 				
 				// 5. Some example documents
 				$f = new dbIO( 'FSFolder' );
