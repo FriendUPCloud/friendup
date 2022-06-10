@@ -18,6 +18,8 @@ let _cajax_http_max_connections = 6;            // Max
 let _cajax_http_last_time = 0;                  // Time since last
 let _cajax_mutex = 0;
 
+let _cajax_ws_disabled = 1;                     // Disable websocket usage?
+
 let _cajax_origin = document.location.origin;
 
 // For debug
@@ -412,6 +414,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	
 	// Try websockets!!
 	if( 
+		!_cajax_ws_disabled &&
 		!this.forceHTTP &&
 		window.Workspace &&
 		Workspace.conn && 
