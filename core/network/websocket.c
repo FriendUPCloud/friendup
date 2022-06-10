@@ -491,10 +491,6 @@ void WebSocketDelete( WebSocket* ws )
 			ws->ws_Context = NULL;
 			DEBUG( "[WS] context destroyed\n");
 		}
-		
-		if( ws->ws_CertPath != NULL )
-		{
-		}
 			
 		FFree( ws );
 	}
@@ -702,9 +698,12 @@ int DetachWebsocketFromSession( void *d, void *wsi )
 {
 	WSCData *data = (WSCData *)d;
 	
+	DEBUG("[DetachWebsocketFromSession] start\n");
+	
     SystemBase *l = (SystemBase *)SLIB;
 	if( data->wsc_UserSession == NULL )
 	{
+		DEBUG("[DetachWebsocketFromSession] session is empty!\n");
 		return 1;
 	}
 	
@@ -747,5 +746,7 @@ int DetachWebsocketFromSession( void *d, void *wsi )
 		data->wsc_UserSession = NULL;
 		FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
 	}
+	
+	DEBUG("[DetachWebsocketFromSession] end\n");
     return 0;
 }
