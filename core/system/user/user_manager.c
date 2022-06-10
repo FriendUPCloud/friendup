@@ -2222,7 +2222,7 @@ int UMSendUserChangesNotification( UserManager *um, UserSession *ses )
 	if( tmpmsg == NULL )
 	{
 		FERROR("Cannot allocate memory for buffer\n");
-		return FALSE;
+		return 1;
 	}
     
 	//
@@ -2252,7 +2252,7 @@ int UMSendUserChangesNotification( UserManager *um, UserSession *ses )
 		
 		if( sendNotif == TRUE )
 		{
-			DEBUG("[USMSendDoorNotification] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->UserSessionWebsocketWrite, sb, uses->us_DeviceIdentity );
+			DEBUG("[USMSendDoorNotification] Send message %s\n", tmpmsg );
 		
 			UserSessionWebsocketWrite( uses, (unsigned char *)tmpmsg, len, LWS_WRITE_TEXT );
 
@@ -2267,7 +2267,7 @@ int UMSendUserChangesNotification( UserManager *um, UserSession *ses )
 	USER_MANAGER_RELEASE( um );
 	
 	FFree( tmpmsg );
-	return TRUE;
+	return 0;
 }
 
 //

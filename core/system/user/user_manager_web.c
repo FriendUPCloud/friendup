@@ -1466,6 +1466,10 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 								BufStringDelete( res );
 							}
 						}
+						else
+						{
+							UMSendUserChangesNotification( l->sl_UM, loggedSession );
+						}
 						// maybe we should send message via WS to notifi desktop about changes
 					}
 					else

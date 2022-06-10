@@ -330,6 +330,12 @@ FBOOL UMSendDoorNotification( UserManager *usm, void *notif, UserSession *ses, F
 //
 //
 
+int UMSendUserChangesNotification( UserManager *um, UserSession *ses );
+
+//
+//
+//
+
 int UMRemoveOldSessions( void *lsb );
 
 //
