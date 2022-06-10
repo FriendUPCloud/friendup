@@ -346,51 +346,11 @@ else if ( $path = findInSearchPaths( $args->args->application ) )
 		if( in_array( $args->app, $autoinstall ) )
 		{
 			$trusted = 'yes';
-			/*// Create fapplication and fuser application if they do not exist..
-			$o = new DbIO( 'FApplication' );
-			$o->UserID = $User->ID;
-			$o->Name = $args->args->application;
-			$o->Config = 
-			if( !$o->Load() )
-			{
-				$o->DateInstalled = date( 'Y-m-d H:i:s' );
-				$o->DateModified = $o->DateInstalled;
-				$o->Save();
-			}
-			if( !$o->ID ) die( 'fail<!--separate-->No application object!' );
-			
-			$fa = new DbIO( 'FUserApplication' );
-			$fa->UserID = $User->ID;
-			$fa->ApplicationID = $o->ID;
-			if( !$fa->Load() )
-			{
-				$fa->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . microtime() );
-				$fa->Save();
-			}
-			// TODO: Update authid sometime for guests..? No?
-			$conf->AuthID = $fa->AuthID;
-			
-			storeRecentApps( $o->Name );
-		
-			$perms = [];
-			foreach( $conf->Permissions as $p )
-			{
-				$val = '';
-				if( $p == 'Door Local' )
-					$val = 'all';
-				$perms[] = array( $p, $val );
-			}
-		
-			// Collect permissions in a string
-			$app->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . $row->ID );
-			$app->Permissions = json_encode( $perms );
-			$app->Data = '{}';
-			$app->Save();*/
 		}
 		// User needs to manually install application
 		else
 		{
-			die( 'fail<!--separate-->{"response":"application lacks user installation record"}' );
+			die( 'fail<!--separate-->{"response":"application lacks user installation record"}<!--separate-->' . print_r( $autoinstall, 1 ) );
 		}
 	}
 	
