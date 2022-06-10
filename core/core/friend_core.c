@@ -1033,6 +1033,14 @@ static inline int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
 		while( 1 )
 		{
 			DEBUG("[FriendCoreAcceptPhase3] before accept\n");
+			
+			// If this ssl is in shutdown, break
+			if( SSL_get_shutdown( s_Ssl ) != 1 )
+			{
+				FERROR( "[FriendCoreAcceptPhase3] SSL_get_shutdown() gives != 1\n" );
+				break;
+			}
+			
 			if( ( err = SSL_accept( s_Ssl ) ) == 1 )
 			{
 				break;
