@@ -708,7 +708,8 @@ if( $args->command )
 				
 				if( !$online )
 				{
-					
+					// TODO: Sometimes, we would want to reinvite - possibly with a new link
+					//       Todo thing is to do that soon :)
 					if( $found )
 					{
 						die( 'fail<!--separate-->{"response":-1,"message":"Invitation already sent, try removing the pending invite and resend."}' );
