@@ -187,13 +187,16 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 					if( ShowLog ) console.log( 'workgroups ', { e:e , d:(wgroups?wgroups:d), args: args } );
 					
-					if( wgroups.groups )
+					if( wgroups )
 					{
-						workgroups = wgroups.groups;
-					}
-					else if( wgroups.data && wgroups.data.details && wgroups.data.details.groups )
-					{
-						workgroups = wgroups.data.details.groups;
+						if( wgroups.groups )
+						{
+							workgroups = wgroups.groups;
+						}
+						else if( wgroups.data && wgroups.data.details && wgroups.data.details.groups )
+						{
+							workgroups = wgroups.data.details.groups;
+						}
 					}
 					
 					var out = {};
