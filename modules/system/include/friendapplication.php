@@ -333,7 +333,7 @@ else if ( $path = findInSearchPaths( $args->args->application ) )
 	}
 	
 	// Activate whitelist
-	if( isset( $args->app ) && isset( $configfilesettings[ 'Security' ][ 'UserAppAutoinstall' ] ) )
+	if( isset( $configfilesettings[ 'Security' ][ 'UserAppAutoinstall' ] ) )
 	{
 		$autoinstall = $configfilesettings[ 'Security' ][ 'UserAppAutoinstall' ];
 		$autoinstall = explode( ',', $autoinstall );
