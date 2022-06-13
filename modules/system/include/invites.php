@@ -561,8 +561,6 @@ if( $args->command )
 				}
 			}
 			
-			
-			
 			if( isset( $args->args->userid ) && $args->args->userid )
 			{
 				if( !$contact = $SqlDatabase->FetchObject( '
@@ -589,8 +587,6 @@ if( $args->command )
 				}
 			}
 			
-			
-			
 			if( $usr = $SqlDatabase->FetchObject( '
 				SELECT f.ID, f.Name, f.FullName, f.Email, f.UniqueID, f.Status, s.Data AS Avatar 
 				FROM FUser f 
@@ -608,10 +604,7 @@ if( $args->command )
 				$data->username   = $usr->Name;
 				$data->fullname   = $usr->FullName;
 				
-				
-				
 				$hash = false; $online = false; $found = false;
-				
 				
 				$f = new dbIO( 'FTinyUrl' );
 				$f->Source = ( $baseUrl . '/system.library/user/addrelationship?data=' . urlencode( json_encode( $data ) ) . '&contact=' . urlencode( json_encode( $contact ) ) );
@@ -630,7 +623,11 @@ if( $args->command )
 				}
 				else
 				{
-					$found = true;
+				    // If the invite is over a week old, just allow reinvite
+				    if( strtotime( $f->DateCreated ) > strtotime( time() ) - ( 60 * 60 * 24 * 7 ) )
+				    {
+					    $found = true;
+					}
 				}
 				if( $f->ID > 0 )
 				{
@@ -645,8 +642,6 @@ if( $args->command )
 				{
 					die( 'fail<!--separate-->{"response":-1,"message":"Could not read invite hash."}' );
 				}
-				
-				
 				
 				if( $contact->ID > 0 )
 				{
@@ -702,10 +697,7 @@ if( $args->command )
 					}
 				}
 				
-				
-				
 				// Send email if not online or if email is specified ...
-				
 				if( !$online )
 				{
 					// TODO: Sometimes, we would want to reinvite - possibly with a new link
@@ -762,17 +754,11 @@ if( $args->command )
 						
 						die( 'fail<!--separate-->{"response":-1,"message":"Could not send e-mail."}' );
 					}
-					
-					die( 'ok<!--separate-->Mail sent!' );
-					
+					die( 'ok<!--separate-->Mail sent!' );	
 				}
-				
 				die( 'ok<!--separate-->{"Response":"Invitation notification registered in database id: ' . ( $n->ID ? $n->ID : 0 ) . '"}' );
-				
 			}
-			
 			die( 'fail<!--separate-->{"Response":"Could not send invite"}' );
-			
 			break;
 		
 	}
