@@ -318,6 +318,8 @@ f.GroupID='%ld' AND f.Name='%s'",
 	
 		void *res = sqllib->Query( sqllib, temptext );
 		char **row;
+		
+		FFree( temptext );
 	
 		if( res != NULL )
 		{
