@@ -225,8 +225,6 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 									memcpy( tmpval, row[i], lengths[i] );
 									// Add tmpval to string pointer list..
 									memcpy( strptr + dptr[2], &tmpval, sizeof( char * ) );
-									
-									FFree( tmpval );
 								}
 							}
 							else
