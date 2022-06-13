@@ -628,6 +628,11 @@ if( $args->command )
 				    {
 					    $found = true;
 					}
+					// So when the invite is old and we are trying to make a new one, delete the old one
+					else
+					{
+					    $f->delete();
+					}
 				}
 				if( $f->ID > 0 )
 				{
