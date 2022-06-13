@@ -716,7 +716,8 @@ function _fcquery( $command = '', $args = false, $method = 'POST', $headers = fa
 		$debug = ( isset( $conf['options']['debugmodules'] ) && strstr( $conf['options']['debugmodules'], 'system/user' ) ? $conf['options']['debugmodules'] : false );
 		
 		$usePort = ( $Config->FCHost == 'localhost' || $Config->FCOnLocalhost ) && $Config->FCPort;
-		$server = ( $Config->SSLEnable ? 'https://' : 'http://' ) . $Config->FCHost . ( $usePort ? ( ':' . $Config->FCPort ) : '' );
+		$host = $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost;
+        $server = ( $Config->SSLEnable ? 'https://' : 'http://' ) . $host . ( $usePort ? ( ':' . $Config->FCPort ) : '' );
 		
 		$url = ( $server . $command );
 	
