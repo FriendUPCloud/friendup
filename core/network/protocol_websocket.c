@@ -416,7 +416,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 		case LWS_CALLBACK_SERVER_WRITEABLE:
 			DEBUG1("[WS] LWS_CALLBACK_SERVER_WRITEABLE\n");
 			
-			if( wsd->wsc_UserSession == NULL || wsd->wsc_Wsi == NULL )
+			if( wsd->wsc_UserSession == NULL || wsd->wsc_Wsi == NULL || wsd->wsc_Status == WSC_STATUS_TO_BE_REMOVED )
 			{
 				DEBUG("[WS] Cannot write message, WS Client is equal to NULL, fcwd %p wsiptr %p\n", wsd, wsi );
 				return 0;
@@ -516,8 +516,10 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 	
 	case LWS_CALLBACK_PROTOCOL_DESTROY:
 		// protocol will be destroyed
-		if( wsd != NULL && wsd->wsc_Wsi != NULL )
+		if( wsd != NULL && wsd->wsc_Wsi != NULL && wsd->wsc_Status != WSC_STATUS_TO_BE_REMOVED )
 		{
+			wsd->wsc_Status = WSC_STATUS_TO_BE_REMOVED;
+			
 			while( TRUE )
 			{
 				if( wsd->wsc_InUseCounter <= 0 )
@@ -536,13 +538,13 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 				wsd->wsc_Buffer = NULL;
 			}
 	
-			//lws_close_reason( wsi, LWS_CLOSE_STATUS_GOINGAWAY , NULL, 0 );
-		
 			pthread_mutex_destroy( &(wsd->wsc_Mutex) );
 	
 			Log( FLOG_DEBUG, "[WS] Callback LWS_CALLBACK_PROTOCOL_DESTROY\n");
 			
 			wsd->wsc_Wsi = NULL;
+			
+			wsd->wsc_Status = WSC_STATUS_DELETED;
 		}
 		break;
 		
