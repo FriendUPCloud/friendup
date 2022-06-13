@@ -83,6 +83,8 @@ void UserSessionDelete( UserSession *us )
 {
 	if( us != NULL )
 	{
+		DEBUG("[UserSessionDelete] status: %d\n", us->us_Status );
+		
 		if( us->us_Status != USER_SESSION_STATUS_TO_REMOVE && us->us_Status != USER_SESSION_STATUS_DELETE_IN_PROGRESS )
 		{
 			return;
