@@ -34,6 +34,8 @@ WebsocketReqManager *WebsocketReqManagerNew( )
 {
 	WebsocketReqManager *wrm;
 	
+	DEBUG("[WebsocketReqManagerNew] start\n");
+	
 	if( ( wrm = FCalloc( 1, sizeof(WebsocketReqManager) ) ) != NULL )
 	{
 		pthread_mutex_init( &(wrm->wrm_Mutex), NULL );
@@ -49,6 +51,7 @@ WebsocketReqManager *WebsocketReqManagerNew( )
  */
 void WebsocketReqManagerDelete( WebsocketReqManager *wrm )
 {
+	DEBUG("[WebsocketReqManagerDelete] start\n");
 	if( wrm != NULL )
 	{
 		if( FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) ) == 0 )
@@ -58,6 +61,8 @@ void WebsocketReqManagerDelete( WebsocketReqManager *wrm )
 			FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
 		}
 		pthread_mutex_destroy( &(wrm->wrm_Mutex) );
+		
+		DEBUG("[WebsocketReqManagerDelete] released\n");
 		
 		FFree( wrm );
 	}

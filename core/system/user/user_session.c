@@ -173,8 +173,6 @@ void UserSessionDelete( UserSession *us )
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
 		
-		//UserSessionWebsocketDeInit( &(us->us_Websockets) );
-
 		DEBUG("[UserSessionDelete] Session released  sessid: %s device: %s \n", us->us_SessionID, us->us_DeviceIdentity );
 
 		// first clear WebsocketReqManager and then remove it
