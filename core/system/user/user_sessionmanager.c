@@ -1143,6 +1143,8 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, U
 	FBOOL locSQLused = FALSE;
 	SystemBase *sb = NULL;
 	
+	DEBUG("[USMDestroyTemporarySession] start\n");
+	
 	SQLLibrary *locSqllib = sqllib;
 	if( sqllib == NULL )
 	{
@@ -1169,8 +1171,10 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, U
 	
 	if( ses != NULL )
 	{
+		DEBUG("[USMDestroyTemporarySession] session will be deleted: %p\n", ses );
 		UserSessionDelete( ses );
 	}
+	DEBUG("[USMDestroyTemporarySession] end\n");
 }
 
 /**
