@@ -3960,6 +3960,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					    j.src = rdat.jsExtensionSrc;
 					    j.onload = function( e )
 					    {
+					        if( Workspace.dashboard )
+					        {
+					            console.log( 'Dashboard already initialized.' );
+					            return;
+					        }
 					        Workspace.dashboard = new SidebarEngine();
 					        console.log( 'Initializing sidebar.' );
 					        console.trace();
