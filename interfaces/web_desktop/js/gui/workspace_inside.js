@@ -4033,7 +4033,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							console.log( 'refreshTheme: Done loading theme!' );
 							document.body.classList.remove( 'ThemeRefreshing' );
-						}, 150 );
+						}, 50 );
 						// We are inside (wait for wallpaper) - watchdog
 						if( !Workspace.insideInterval )
 						{
