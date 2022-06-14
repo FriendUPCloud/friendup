@@ -3954,17 +3954,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 			    if( rdat.jsExtensionSrc )
 			    {
-			    	if( !Workspace.dashboard && ( !Workspace.themeData || typeof( Workspace.themeData[ 'sidebarEngine' ] ) == 'undefined' ) )
+			    	if( !Workspace.dashboard )
 			    	{
+			    	    Workspace.dashboard = true; // placeholder
 					    let j = document.createElement( 'script' );
 					    j.src = rdat.jsExtensionSrc;
 					    j.onload = function( e )
 					    {
-					        if( Workspace.dashboard )
-					        {
-					            console.log( 'Dashboard already initialized.' );
-					            return;
-					        }
 					        Workspace.dashboard = new SidebarEngine();
 					        console.log( 'Initializing sidebar.' );
 					        console.trace();
