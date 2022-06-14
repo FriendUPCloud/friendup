@@ -3890,17 +3890,23 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		let self = this;
 		console.log( 'refreshTheme: Refreshing theme with themename: ' + themeName );
 		
+		// Block while working
+		if( this.refreshThemeBlock ) return;
+		this.refreshThemeBlock = true;
+		
 		// Only on force or first time
 		if( this.themeRefreshed && !update )
 		{
 			document.body.classList.remove( 'ThemeRefreshing' );
 			console.log( 'refreshTheme: pass' );
+			this.refreshThemeBlock = false;
 			return;
 		}
 
 		if( !initpass )
 		{
 			document.body.classList.add( 'ThemeRefreshing' );
+			this.refreshThemeBlock = false;
 			return setTimeout( function()
 			{
 				Workspace.refreshTheme( themeName, update, themeConfig, true );
@@ -3929,10 +3935,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			document.body.classList.remove( 'ThemeRefreshing' );
 			Workspace.setLoading( false );
 			console.log( 'refreshTheme: Already loaded theme ' + themeName );
+			this.refreshThemeBlock = false;
 			return;
 		}
 		
 		Workspace.theme = themeName;
+		
+		// Done blocking
+		this.refreshThemeBlock = false;
 		
 		let m = new File( 'System:../themes/' + themeName + '/settings.json' );
 		m.onLoad = function( rdat )
