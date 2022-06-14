@@ -3961,7 +3961,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					    j.onload = function( e )
 					    {
 					        Workspace.dashboard = new SidebarEngine();
-					        
+					        console.log( 'Initializing sidebar.' );
+					        console.trace();
 					    }
 					    // Append sidebar
 					    function loadScript()
