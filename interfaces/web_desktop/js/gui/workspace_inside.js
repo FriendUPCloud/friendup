@@ -4040,6 +4040,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							let retries = 0;
 							Workspace.insideInterval = setInterval( function()
 							{
+							    console.log( 'Waiting for load. ' + Math.random() );
 							    // If we're still readjusting, wait a little
         						if( !isMobile && window.outerHeight > 480 && document.body.offsetHeight < 480 )
         						    return;

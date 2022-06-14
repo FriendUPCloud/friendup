@@ -5379,7 +5379,7 @@ var View = function( args )
 		if( flag == 'screen' ) return;
 
 		// Support dashboard
-		if( window.Workspace && Workspace.dashboard )
+		if( window.Workspace && Workspace.dashboard && Workspace.dashboard !== true )
 			Workspace.dashboard.refresh();
 		
 		// Finally set the value on application
