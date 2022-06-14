@@ -2760,7 +2760,7 @@ function CheckScreenTitle( screen, force )
     }
 	
 	// Dashboard
-	if( window.Workspace && Workspace.dashboard )
+	if( window.Workspace && Workspace.dashboard && Workspace.dashboard !== true )
 		Workspace.dashboard.refresh();
 	
 	let testObject = screen ? screen : window.currentScreen;
@@ -2952,7 +2952,7 @@ function PollTaskbar( curr )
 		return;
 	
 	// Do we have dashboard?
-	if( window.Workspace && Workspace.dashboard && Workspace.dashboard.refreshDashboard )
+	if( window.Workspace && Workspace.dashboard && Workspace.dashboard !== true && Workspace.dashboard.refreshDashboard )
 	{
 	    Workspace.dashboard.refreshDashboard();
 	}
