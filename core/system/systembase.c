@@ -2417,57 +2417,6 @@ Sentinel* GetSentinelUser( SystemBase* l )
 /**
  * Send message via websockets
  *
- * @param l pointer to SystemBase
- * @param usersession recipient of 
- * @param msg message which will be send
- * @param len length of the message
- * @return 0 if message was sent otherwise error number
- */
-/*
-int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *usersession, char *msg, int len )
-{
-	unsigned char *buf;
-	int bytes = 0;
-	buf = (unsigned char *)FCalloc( len + 128, sizeof( unsigned char ) );
-	if( buf != NULL )
-	{
-		memcpy( buf, msg, len );
-	
-		DEBUG("[SystemBase] Writing to websockets, string '%s' size %d\n",msg, len );
-		//if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
-		{
-			if( usersession->us_WSD != NULL )
-			{
-				WSCData *data = (WSCData *)usersession->us_WSD;
-				if( data != NULL && data->wsc_UserSession != NULL && data->wsc_Wsi != NULL )
-				{
-					bytes += UserSessionWebsocketWrite( usersession, buf , len, LWS_WRITE_TEXT );
-				}
-			}
-			else
-			{
-				FERROR("Cannot write to WS, WSI is NULL!\n");
-			}
-			//FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
-		}
-		DEBUG("[SystemBase] Writing to websockets done, stuff released\n");
-		
-		FFree( buf );
-	}
-	else
-	{
-		Log( FLOG_ERROR,"Cannot allocate memory for message\n");
-		return 0;
-	}
-	DEBUG("[SystemBase] WebSocketSendMessage end, wrote %d bytes\n", bytes );
-	
-	return bytes;
-}
-*/
-
-/**
- * Send message via websockets
- *
  * @param usersession recipient of 
  * @param msg message which will be send
  * @param len length of the message
@@ -2487,7 +2436,11 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 
 			if( usersession->us_WSD != NULL && usersession->us_WebSocketStatus == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
 			{
-				bytes += UserSessionWebsocketWrite( usersession , buf , len, LWS_WRITE_TEXT );
+				int ret = UserSessionWebsocketWrite( usersession , buf , len, LWS_WRITE_TEXT );
+				if( ret > 0 )
+				{
+					bytes += ret;
+				}
 			}
 			else
 			{
@@ -2534,7 +2487,6 @@ int SendProcessMessage( Http *request, char *data, int len )
 			DEBUG("[SystemBase] SendProcessMessage message '%s'\n", sendbuf );
 			
 			UserSessionWebsocketWrite( pidt->pt_UserSession, (unsigned char *)sendbuf, newmsglen, LWS_WRITE_TEXT);
-			//WebSocketSendMessage( sb, pidt->pt_UserSession, sendbuf, newmsglen );
 			
 			FFree( sendbuf );
 		}

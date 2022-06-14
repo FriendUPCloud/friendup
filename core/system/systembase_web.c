@@ -672,17 +672,17 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							{
 								UserAddSession( usr, loggedSession );
 							}
-							
-							if( usr != NULL )
+
+							if( usr && usr->u_ID )
 							{
-								loggedSession->us_UserID = usr->u_ID;
-								loggedSession->us_LastActionTime = time( NULL );
-							
-								UGMAssignGroupToUser( l->sl_UGM, usr );
-							
-								USMSessionSaveDB( l->sl_USM, loggedSession );
-								USMUserSessionAddToList( l->sl_USM, loggedSession );
-							}
+							    loggedSession->us_UserID = usr->u_ID;
+							    loggedSession->us_LastActionTime = time( NULL );
+							    
+							    UGMAssignGroupToUser( l->sl_UGM, usr );
+							    
+							    USMSessionSaveDB( l->sl_USM, loggedSession );
+							    USMUserSessionAddToList( l->sl_USM, loggedSession );
+					        }
 						}
 					}
 				}
