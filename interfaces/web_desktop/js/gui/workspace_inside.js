@@ -3628,7 +3628,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			title: i18n( 'i18n_connect_network_drive' ),
 			width: 360,
 			height: 400,
-			id: 'connect_network_drive'
+			id: 'connect_network_drive',
+			dialog: true
 		} );
 		v.onClose = function(){ Workspace.cfsview = false; }
 		this.cfsview = v;
@@ -5305,7 +5306,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			let v = new View( {
 				title: i18n( 'i18n_create_web_link' ),
 				width: 400,
-				height: 250
+				height: 250,
+				dialog: true
 			} );
 
 			let f = new File( '/webclient/templates/weblink.html' );
@@ -5387,7 +5389,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					id: 'makedir',
 					width: 325,
 					height: 100,
-					title: i18n( 'i18n_make_a_new_container' )
+					title: i18n( 'i18n_make_a_new_container' ),
+					dialog: true,
 				} );
 			}
 			else
@@ -9703,7 +9706,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			title:  i18n( 'i18n_copying_files' ),
 			width:  320,
 			height: 100,
-			id:     'fileops'
+			id:     'fileops',
+			dialog: true,
+			dockable: true
 		} );
 
 		let uprogress = new File( 'templates/file_operation.html' );

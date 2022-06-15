@@ -1559,7 +1559,9 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					let w = new View( {
 						title:  i18n( 'i18n_copying_files' ),
 						width:  320,
-						height: 100
+						height: 100,
+						dialog: true,
+						dockable: true
 					} );
 
 					let uprogress = new File( 'templates/file_operation.html' ); 
