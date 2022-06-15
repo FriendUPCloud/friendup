@@ -5592,7 +5592,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						title: i18n( 'rename_file' ),
 						width: 320,
 						height: 100,
-						resize: false
+						resize: false,
+						dialog: true
 					} );
 				}
 
@@ -9348,7 +9349,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			'min-height': 80,
 			'max-height': 80,
 			resize: false,
-			id: 'launcherview'
+			id: 'launcherview',
+			dialog: true
 		} );
 		
 		w.setFlag( 'standard-dialog', true );
