@@ -16,50 +16,57 @@ $maxToList = 10;
 // Get files from workgroup drives
 if( isset( $args->args->workgroup ) )
 {
-    if( $rows = $SqlDatabase->fetchObjects( $q = ( '
-        SELECT g.*, u.FullName AS UserFullname FROM 
-            FSFileLog g, FUserGroup ug, Filesystem f, FUser u, FUserToGroup ddug
+	if( $distinct = $SqlDatabase->fetchObjects( '
+		SELECT DISTINCT(g.FileID) DCT FROM `FSFileLog` g, Filesystem f, FUserGroup fug
         WHERE
-            g.FilesystemID = f.ID AND 
-            f.GroupID = ug.ID AND 
-            ug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
-            g.FileID IN ( 
-                SELECT DISTINCT(g.FileID) FROM `FSFileLog` g, Filesystem f, FUserGroup fug
-                WHERE
-                    g.FilesystemID = f.ID AND
-                    f.GroupID = fug.ID AND
-                    fug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
-	                `Accessed` < ( NOW() + INTERVAL 30 DAY )
-	            LIMIT 10
-            ) 
-            AND 
-            	ddug.UserID = \'' . $User->ID . '\' AND 
-            	ddug.UserGroupID = ug.ID 
-		ORDER BY g.Accessed DESC
-    ' ) ) )
+            g.FilesystemID = f.ID AND
+            f.GroupID = fug.ID AND
+            fug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
+            `Accessed` < ( NOW() + INTERVAL 30 DAY )
+        LIMIT 10
+    ' ) )
     {
-        $test = [];
-        $out = [];
-        $count = 0;
-        foreach( $rows as $row )
-        {
-            if( !isset( $test[ $row->FileID ] ) )
-            {
-		    	// Skip hidden files
-		    	$path = explode( ':', $row->Path );
-		    	$path = array_pop( $path );
-		    	if( strstr( $path, '/' ) )
-		    		$path = array_pop( explode( '/', $row->Path ) );
-		    	if( substr( $path, 0, 1 ) == '.' ) continue;
-		    	if( $count++ >= $maxToList ) continue;
-		    	// Here we go
-                $test[ $row->FileID ] = true;
-                $out[] = $row;
-            }
-        }
-        die( 'ok<!--separate-->' . json_encode( $out ) );
+    	$list = [];
+    	foreach( $distinct as $dis )
+    	{
+    		$list[] = $dis->DCT;
+    	}
+		if( $rows = $SqlDatabase->fetchObjects( $q = ( '
+		    SELECT g.*, u.FullName AS UserFullname FROM 
+		        FSFileLog g, FUserGroup ug, Filesystem f, FUser u, FUserToGroup ddug
+		    WHERE
+		        g.FilesystemID = f.ID AND 
+		        f.GroupID = ug.ID AND 
+		        ug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
+		        g.FileID IN ( ' . implode( ', ', $list ) . ' ) 
+		        AND 
+		        	ddug.UserID = \'' . $User->ID . '\' AND 
+		        	ddug.UserGroupID = ug.ID 
+			ORDER BY g.Accessed DESC
+		' ) ) )
+		{
+		    $test = [];
+		    $out = [];
+		    $count = 0;
+		    foreach( $rows as $row )
+		    {
+		        if( !isset( $test[ $row->FileID ] ) )
+		        {
+					// Skip hidden files
+					$path = explode( ':', $row->Path );
+					$path = array_pop( $path );
+					if( strstr( $path, '/' ) )
+						$path = array_pop( explode( '/', $row->Path ) );
+					if( substr( $path, 0, 1 ) == '.' ) continue;
+					if( $count++ >= $maxToList ) continue;
+					// Here we go
+		            $test[ $row->FileID ] = true;
+		            $out[] = $row;
+		        }
+		    }
+		    die( 'ok<!--separate-->' . json_encode( $out ) );
+		}
     }
-    die( 'fail<!--separate-->Query failed: ' . $q );
 }
 // Get files from personal drives
 else
