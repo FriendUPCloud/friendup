@@ -16,7 +16,7 @@ $maxToList = 10;
 // Get files from workgroup drives
 if( isset( $args->args->workgroup ) )
 {
-    if( $rows = $SqlDatabase->fetchObjects( '
+    if( $rows = $SqlDatabase->fetchObjects( $q = ( '
         SELECT g.*, u.FullName AS UserFullname FROM 
             FSFileLog g, FUserGroup ug, Filesystem f, FUser u, FUserToGroup ddug
         WHERE
@@ -36,7 +36,7 @@ if( isset( $args->args->workgroup ) )
             	ddug.UserID = \'' . $User->ID . '\' AND 
             	ddug.UserGroupID = ug.ID 
 		ORDER BY g.Accessed DESC
-    ' ) )
+    ' ) ) )
     {
         $test = [];
         $out = [];
@@ -59,6 +59,7 @@ if( isset( $args->args->workgroup ) )
         }
         die( 'ok<!--separate-->' . json_encode( $out ) );
     }
+    die( 'fail<!--separate-->Query failed: ' . $q );
 }
 // Get files from personal drives
 else
