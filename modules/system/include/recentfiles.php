@@ -31,9 +31,17 @@ if( isset( $args->args->workgroup ) )
     	{
     		$list[] = $dis->DCT;
     	}
+    	
+    	$extra = $extrasql = '';
+    	if( isset( $args->args->mode ) && $args->args->mode == 'sql-only' )
+    	{
+    		$extra = ', FSFile fl';
+    		$extrasql = 'AND fl.ID = g.FileID';
+    	}
+    	
 		if( $rows = $SqlDatabase->fetchObjects( $q = ( '
 		    SELECT g.*, u.FullName AS UserFullname FROM 
-		        FSFileLog g, FUserGroup ug, Filesystem f, FUser u, FUserToGroup ddug
+		        FSFileLog g, FUserGroup ug, Filesystem f, FUser u, FUserToGroup ddug' . $extra . '
 		    WHERE
 		        g.FilesystemID = f.ID AND 
 		        f.GroupID = ug.ID AND 
@@ -42,6 +50,7 @@ if( isset( $args->args->workgroup ) )
 		        AND 
 		        	ddug.UserID = \'' . $User->ID . '\' AND 
 		        	ddug.UserGroupID = ug.ID 
+		       	' . $extrasql . '
 			ORDER BY g.Accessed DESC
 		' ) ) )
 		{
