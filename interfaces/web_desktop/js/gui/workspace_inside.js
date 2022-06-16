@@ -3968,15 +3968,20 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			    	if( !Workspace.dashboard )
 			    	{
 			    	    Workspace.dashboard = true; // placeholder
-					    let j = document.createElement( 'script' );
-					    j.src = rdat.jsExtensionSrc;
-					    j.onload = function( e )
-					    {
-					        if( !Workspace.dashboard )
+			    	    if( !Workspace.dashboardLoading )
+			    	    {
+					        let j = document.createElement( 'script' );
+					        j.src = rdat.jsExtensionSrc;
+					        j.onload = function( e )
 					        {
-					            Workspace.dashboard = new SidebarEngine();
-					            console.log( 'Initializing sidebar.' );
+					            if( !Workspace.dashboard )
+					            {
+					                Workspace.dashboard = new SidebarEngine();
+					                console.log( 'Initializing sidebar.' );
+					                Workspace.dashboardLoading = null;
+					            }
 					        }
+					        Workspace.dashboardLoading = j;
 					    }
 					    // Append sidebar
 					    function loadScript()
