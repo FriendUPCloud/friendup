@@ -3889,13 +3889,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	refreshTheme: function( themeName, update, themeConfig, initpass )
 	{
 		let self = this;
-		if( !document.body )
-		{
-		    return setTimeout( function()
-		    {
-		        Workspace.refreshTheme( themeName, update, themeConfig, initpass );
-		    }, 25 );
-		}
 		console.log( 'refreshTheme: Refreshing theme with themename: ' + themeName );
 		
 		// Block while working
@@ -3974,10 +3967,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			    {
 			    	if( !Workspace.dashboard )
 			    	{
+			    	    let j = null;
 			    	    Workspace.dashboard = true; // placeholder
 			    	    if( !Workspace.dashboardLoading )
 			    	    {
-					        let j = document.createElement( 'script' );
+					        j = document.createElement( 'script' );
 					        j.src = rdat.jsExtensionSrc;
 					        j.onload = function( e )
 					        {
@@ -3993,7 +3987,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					    // Append sidebar
 					    function loadScript()
 					    {
-					        document.body.appendChild( j );
+					        if( j )
+					        {
+    					        document.body.appendChild( j );
+    					        j = null;
+    					    }
 					    }
 					    // Add locale optionally
 					    if( rdat.localeSrc )
@@ -4004,7 +4002,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					                rdat.localeSrc += '/';
 					            i18nAddPath( rdat.localeSrc + self.locale + '.lang', function()
 					            {
-					                document.body.appendChild( j );
+					                if( j )
+					                {
+    					                document.body.appendChild( j );
+    					                j = null;
+    					            }
 					            } );
 					        }
 					    }
