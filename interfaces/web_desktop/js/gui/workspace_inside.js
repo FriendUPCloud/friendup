@@ -3972,9 +3972,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					    j.src = rdat.jsExtensionSrc;
 					    j.onload = function( e )
 					    {
-					        Workspace.dashboard = new SidebarEngine();
-					        console.log( 'Initializing sidebar.' );
-					        console.trace();
+					        if( !Workspace.dashboard )
+					        {
+					            Workspace.dashboard = new SidebarEngine();
+					            console.log( 'Initializing sidebar.' );
+					        }
 					    }
 					    // Append sidebar
 					    function loadScript()
