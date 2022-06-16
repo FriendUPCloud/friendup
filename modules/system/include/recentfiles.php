@@ -46,7 +46,7 @@ if( isset( $args->args->workgroup ) )
 		        g.FilesystemID = f.ID AND 
 		        f.GroupID = ug.ID AND 
 		        ug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
-		        u.ID = g.UserID AND
+		        u.ID = f.UserID AND
 		        g.FileID IN ( ' . implode( ', ', $list ) . ' ) AND
 		        AND 
 		        	ddug.UserID = \'' . $User->ID . '\' AND 
