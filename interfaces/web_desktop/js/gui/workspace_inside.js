@@ -3967,7 +3967,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			    {
 			    	if( !Workspace.dashboard )
 			    	{
-			    	    Workspace.dashboard = true; // placeholder
 			    	    if( !Workspace.dashboardLoading )
 			    	    {
 			        	    let j = document.createElement( 'script' );
