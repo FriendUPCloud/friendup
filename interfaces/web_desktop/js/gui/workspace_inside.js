@@ -3988,6 +3988,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					        {
 					            if( j )
 					            {
+					                console.log( 'Appending one' );
         					        document.body.appendChild( j );
         					        j = null;
         					    }
@@ -4003,12 +4004,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					                {
 					                    if( j )
 					                    {
+        					                console.log( 'Appending two' );
         					                document.body.appendChild( j );
         					                j = null;
         					            }
 					                } );
 					            }
 					        }
+					        console.log( 'Loading stuff' );
 					        loadScript();
 					    }
 					    Workspace.themeData[ 'sidebarEngine' ] = true;
