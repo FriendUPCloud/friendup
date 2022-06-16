@@ -3967,11 +3967,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			    {
 			    	if( !Workspace.dashboard )
 			    	{
-			    	    let j = null;
 			    	    Workspace.dashboard = true; // placeholder
 			    	    if( !Workspace.dashboardLoading )
 			    	    {
-					        j = document.createElement( 'script' );
+			        	    let j = document.createElement( 'script' );
 					        j.src = rdat.jsExtensionSrc;
 					        j.onload = function( e )
 					        {
@@ -3983,34 +3982,35 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					            }
 					        }
 					        Workspace.dashboardLoading = j;
-					    }
-					    // Append sidebar
-					    function loadScript()
-					    {
-					        if( j )
+					    
+					        // Append sidebar
+					        function loadScript()
 					        {
-    					        document.body.appendChild( j );
-    					        j = null;
-    					    }
-					    }
-					    // Add locale optionally
-					    if( rdat.localeSrc )
-					    {
-					        loadScript = function()
-					        {
-					            if( rdat.localeSrc.substr( -1, 1 ) != '/' )
-					                rdat.localeSrc += '/';
-					            i18nAddPath( rdat.localeSrc + self.locale + '.lang', function()
+					            if( j )
 					            {
-					                if( j )
-					                {
-    					                document.body.appendChild( j );
-    					                j = null;
-    					            }
-					            } );
+        					        document.body.appendChild( j );
+        					        j = null;
+        					    }
 					        }
+					        // Add locale optionally
+					        if( rdat.localeSrc )
+					        {
+					            loadScript = function()
+					            {
+					                if( rdat.localeSrc.substr( -1, 1 ) != '/' )
+					                    rdat.localeSrc += '/';
+					                i18nAddPath( rdat.localeSrc + self.locale + '.lang', function()
+					                {
+					                    if( j )
+					                    {
+        					                document.body.appendChild( j );
+        					                j = null;
+        					            }
+					                } );
+					            }
+					        }
+					        loadScript();
 					    }
-					    loadScript();
 					    Workspace.themeData[ 'sidebarEngine' ] = true;
 					    Workspace.themeDataSet = true;
 					}
