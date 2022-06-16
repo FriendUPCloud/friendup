@@ -22,6 +22,7 @@ if( isset( $args->args->workgroup ) )
             g.FilesystemID = f.ID AND
             f.GroupID = fug.ID AND
             g.UserID = ffug.UserID AND
+            ffug.UserGroupID = fug.ID AND
             fug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
             `Accessed` < ( NOW() + INTERVAL 30 DAY )
         LIMIT 10
@@ -42,12 +43,13 @@ if( isset( $args->args->workgroup ) )
     	
 		if( $rows = $SqlDatabase->fetchObjects( $q = ( '
 		    SELECT g.*, u.FullName AS UserFullname FROM 
-		        FSFileLog g, FUserGroup ug, Filesystem f, FUser u, FUserToGroup ddug' . $extra . '
+		        FSFileLog g, FUserGroup ug, Filesystem f, FUser u, FUserToGroup fileman, FUserToGroup ddug' . $extra . '
 		    WHERE
 		        g.FilesystemID = f.ID AND 
 		        f.GroupID = ug.ID AND 
 		        ug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
-		        u.ID = g.UserID AND
+		        u.ID = fileman.UserID AND
+		        ug.ID = fileman.UserGroupID AND
 		        g.FileID IN ( ' . implode( ', ', $list ) . ' ) AND
 		        AND 
 		        	ddug.UserID = \'' . $User->ID . '\' AND 
