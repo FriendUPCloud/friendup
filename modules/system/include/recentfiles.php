@@ -16,8 +16,15 @@ $maxToList = 10;
 // Get files from workgroup drives
 if( isset( $args->args->workgroup ) )
 {
+    $extra = $extrasql = '';
+	if( isset( $args->args->mode ) && $args->args->mode == 'sql-only' )
+	{
+		$extra = ', FSFile fl';
+		$extrasql = 'AND fl.ID = g.FileID';
+	}
+
 	if( $distinct = $SqlDatabase->fetchObjects( '
-		SELECT DISTINCT(g.FileID) DCT FROM `FSFileLog` g, Filesystem f, FUserGroup fug, FUserToGroup ffug
+		SELECT DISTINCT(g.FileID) DCT FROM `FSFileLog` g, Filesystem f, FUserGroup fug, FUserToGroup ffug' . $extra . '
         WHERE
             g.FilesystemID = f.ID AND
             f.GroupID = fug.ID AND
@@ -25,6 +32,7 @@ if( isset( $args->args->workgroup ) )
             ffug.UserGroupID = fug.ID AND
             fug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
             `Accessed` < ( NOW() + INTERVAL 30 DAY )
+            ' . $extrasql . '
         LIMIT 10
     ' ) )
     {
@@ -34,14 +42,7 @@ if( isset( $args->args->workgroup ) )
     		$list[] = $dis->DCT;
     	}
     	
-    	$extra = $extrasql = '';
-    	if( isset( $args->args->mode ) && $args->args->mode == 'sql-only' )
-    	{
-    		$extra = ', FSFile fl';
-    		$extrasql = 'AND fl.ID = g.FileID';
-    	}
-    	
-		if( $rows = $SqlDatabase->fetchObjects( $q = ( '
+    	if( $rows = $SqlDatabase->fetchObjects( $q = ( '
 		    SELECT g.*, u.FullName AS UserFullname FROM 
 		        FSFileLog g, 
 		        FUserGroup ug, 
