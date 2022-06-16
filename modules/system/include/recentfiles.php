@@ -43,14 +43,19 @@ if( isset( $args->args->workgroup ) )
     	
 		if( $rows = $SqlDatabase->fetchObjects( $q = ( '
 		    SELECT g.*, u.FullName AS UserFullname FROM 
-		        FSFileLog g, FUserGroup ug, Filesystem f, FUser u, FUserToGroup fileman, FUserToGroup ddug' . $extra . '
+		        FSFileLog g, 
+		        FUserGroup ug, 
+		        Filesystem f, 
+		        FUser u, 
+		        FUserToGroup fileman, 
+		        FUserToGroup ddug' . $extra . '
 		    WHERE
-		        g.FilesystemID = f.ID AND 
+		        f.ID = g.FilesystemID AND 
 		        f.GroupID = ug.ID AND 
 		        ug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
 		        u.ID = fileman.UserID AND
 		        ug.ID = fileman.UserGroupID AND
-		        g.FileID IN ( ' . implode( ', ', $list ) . ' ) AND
+		        g.FileID IN ( ' . implode( ', ', $list ) . ' )
 		        AND 
 		        	ddug.UserID = \'' . $User->ID . '\' AND 
 		        	ddug.UserGroupID = ug.ID 
