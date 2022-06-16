@@ -13,16 +13,16 @@ global $SqlDatabase, $User;
 
 $maxToList = 10;
 
+$extra = $extrasql = '';
+if( isset( $args->args->mode ) && $args->args->mode == 'sql-only' )
+{
+	$extra = ', FSFile fl';
+	$extrasql = 'AND fl.ID = g.FileID';
+}
+
 // Get files from workgroup drives
 if( isset( $args->args->workgroup ) )
 {
-    $extra = $extrasql = '';
-	if( isset( $args->args->mode ) && $args->args->mode == 'sql-only' )
-	{
-		$extra = ', FSFile fl';
-		$extrasql = 'AND fl.ID = g.FileID';
-	}
-
 	if( $distinct = $SqlDatabase->fetchObjects( '
 		SELECT DISTINCT(g.FileID) DCT FROM `FSFileLog` g, Filesystem f, FUserGroup fug, FUserToGroup ffug' . $extra . '
         WHERE
@@ -92,7 +92,7 @@ else
 {
     if( $rows = $SqlDatabase->fetchObjects( '
         SELECT g.* FROM 
-            FSFileLog g, Filesystem f
+            FSFileLog g, Filesystem f' . $extra . '
         WHERE 
             g.FilesystemID = f.ID AND
             g.FileID IN ( 
@@ -100,6 +100,7 @@ else
                 WHERE
                     UserID = \'' . $User->ID . '\'
                 AND `Accessed` < ( NOW() + INTERVAL 30 DAY )
+                ' . $extrasql . '
         ) AND g.UserID = \'' . $User->ID . '\' ORDER BY g.Accessed DESC
     ' ) )
     {
