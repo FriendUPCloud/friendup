@@ -17,10 +17,11 @@ $maxToList = 10;
 if( isset( $args->args->workgroup ) )
 {
 	if( $distinct = $SqlDatabase->fetchObjects( '
-		SELECT DISTINCT(g.FileID) DCT FROM `FSFileLog` g, Filesystem f, FUserGroup fug
+		SELECT DISTINCT(g.FileID) DCT FROM `FSFileLog` g, Filesystem f, FUserGroup fug, FUserToGroup ffug
         WHERE
             g.FilesystemID = f.ID AND
             f.GroupID = fug.ID AND
+            g.UserID = ffug.UserID AND
             fug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
             `Accessed` < ( NOW() + INTERVAL 30 DAY )
         LIMIT 10
@@ -46,7 +47,7 @@ if( isset( $args->args->workgroup ) )
 		        g.FilesystemID = f.ID AND 
 		        f.GroupID = ug.ID AND 
 		        ug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
-		        u.ID = f.UserID AND
+		        u.ID = g.UserID AND
 		        g.FileID IN ( ' . implode( ', ', $list ) . ' ) AND
 		        AND 
 		        	ddug.UserID = \'' . $User->ID . '\' AND 
