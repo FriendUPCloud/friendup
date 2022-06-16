@@ -7843,6 +7843,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		                case 'close':
 		                    this.windowObject.close();
 		                    break;
+		                default:
+		                    if( Workspace.dashboard.parseQuickMenuMessage )
+		                        Workspace.dashboard.parseQuickMenuMessage( msg );
+		                    break;
 		            }
 		        }
 		    }
