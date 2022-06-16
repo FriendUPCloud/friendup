@@ -3889,6 +3889,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	refreshTheme: function( themeName, update, themeConfig, initpass )
 	{
 		let self = this;
+		if( !document.body )
+		{
+		    return setTimeout( function()
+		    {
+		        Workspace.refreshTheme( themeName, update, themeConfig, initpass );
+		    }, 25 );
+		}
 		console.log( 'refreshTheme: Refreshing theme with themename: ' + themeName );
 		
 		// Block while working
