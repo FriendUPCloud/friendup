@@ -1421,25 +1421,32 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						char *error = NULL;
 						DEBUG("[UMWebRequest] FC will do a change\n");
 					
-						GenerateUUID( &( logusr->u_UUID ) );
+						//GenerateUUID( &( logusr->u_UUID ) );
 						
-						if( status >= 0 )
+						if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
 						{
-							char msg[ 512 ];
-							logusr->u_Status = status;
-
-							if( status == USER_STATUS_DISABLED )
+							if( status >= 0 )
 							{
-								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\",\"true\"}", logusr->u_UUID );
+								char msg[ 512 ];
+								logusr->u_Status = status;
+								
+								if( status == USER_STATUS_DISABLED )
+								{
+									snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\",\"true\"}", logusr->u_UUID );
+								}
+								else
+								{
+									snprintf( msg, sizeof(msg), "{\"userid\":\"%s\"}", logusr->u_UUID );
+								}
+								NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
 							}
-							else
-							{
-								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\"}", logusr->u_UUID );
-							}
-							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
+							UMUserUpdateDB( l->sl_UM, logusr );
 						}
-						UMUserUpdateDB( l->sl_UM, logusr );
-					
+						else
+						{
+							logusr->u_Status = status;
+						}
+						
 						UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, level, workgroups );
 					
 						RefreshUserDrives( l->sl_DeviceManager, loggedSession, NULL, &error );
@@ -1674,6 +1681,22 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				if( userFromSession == FALSE )
 				{
 					UserDelete( logusr );
+				}
+				
+				if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
+				{
+					NotifyExtServices( l, request, logusr, "update" );
+					
+					BufString *res = SendMessageToSessionsAndWait( l, logusr->u_ID, request );
+					if( res != NULL )
+					{
+						DEBUG("RESPONSE: %s\n", res->bs_Buffer );
+						BufStringDelete( res );
+					}
+				}
+				else
+				{
+					UMSendUserChangesNotification( l->sl_UM, loggedSession );
 				}
 			}
 		}
