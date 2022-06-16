@@ -379,6 +379,7 @@ User * UMUserGetByIDDB( UserManager *um, FULONG id )
 int UMUserCreate( UserManager *smgr, Http *r , User *usr )
 {
 	SystemBase *sb = (SystemBase *)smgr->um_SB;
+	int val = 0;
 	
 	if( usr == NULL )
 	{
@@ -442,7 +443,7 @@ int UMUserCreate( UserManager *smgr, Http *r , User *usr )
 	if( r->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
 	{
 		SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
-		int val = 0;
+
 		if( sqlLib != NULL )
 		{
 			char tmpQuery[ 128 ];
