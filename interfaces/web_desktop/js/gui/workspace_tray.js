@@ -61,6 +61,11 @@ function PollTrayPosition()
 // Poll the tray for elements - handles all object types
 function PollTray()
 {
+	if( Workspace.dashboard && Workspace.dashboard.pollTray )
+	{
+		Workspace.dashboard.pollTray();
+	}
+
 	// Mobile handles this a bit differently
 	if( isMobile )
 	{
