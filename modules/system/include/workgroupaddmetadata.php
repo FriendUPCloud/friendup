@@ -10,6 +10,11 @@
 *                                                                              *
 *****************************************************************************©*/
 
+if( is_string( $args->args ) )
+{
+	$args->args = json_decode( $args->args );
+}
+
 if( $args->args->groupId && $args->args->roomId )
 {
 	$g = new dbIO( 'FUserGroup' );
