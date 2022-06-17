@@ -37,6 +37,6 @@ if( $args->args->groupId && $args->args->roomId )
 	}
 	die( 'fail<!--separate-->{"response":-1,"message":"Could not load group."}' );
 }
-die( 'fail<!--separate-->{"response":-1,"message":"Params missing ..."}<!--separate-->' . print_r( $args, 1 ) );
+die( 'fail<!--separate-->{"response":-1,"message":"Params missing. Please check your args variable."}' );
 
 ?>
