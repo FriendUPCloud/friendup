@@ -12,7 +12,7 @@
 
 if( is_string( $args->args ) )
 {
-	$args->args = json_decode( $args->args );
+	$args->args = json_decode( stripslashes( $args->args ) );
 }
 
 if( $args->args->groupId && $args->args->roomId )
