@@ -74,28 +74,28 @@ Http *SMWebRequest( void *lsb, char **urlpath, Http* request, UserSession *logge
 		
 		HashmapElement *el = NULL;
 		
-		el = HttpGetPOSTParameter( request, "params" );
+		el = GetHEReq( request, "params" );
 		if( el != NULL )
 		{
 			params = UrlDecodeToMem( (char *)el->hme_Data );
 			DEBUG( "[NMWebRequest] params %s!!\n", params );
 		}
 		
-		el = HttpGetPOSTParameter( request, "type" );
+		el = GetHEReq( request, "type" );
 		if( el != NULL )
 		{
 			type = atoi( (char *)el->hme_Data );
 			DEBUG( "[NMWebRequest] type %d!!\n", type );
 		}
 		
-		el = HttpGetPOSTParameter( request, "path" );
+		el = GetHEReq( request, "path" );
 		if( el != NULL )
 		{
 			path = UrlDecodeToMem( (char *)el->hme_Data );
 			DEBUG( "[NMWebRequest] group %s!!\n", path );
 		}
 		
-		el = HttpGetPOSTParameter( request, "servername" );
+		el = GetHEReq( request, "servername" );
 		if( el != NULL )
 		{
 			servername = UrlDecodeToMem( (char *)el->hme_Data );
