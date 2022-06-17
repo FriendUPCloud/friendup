@@ -121,20 +121,13 @@ Http *SMWebRequest( void *lsb, char **urlpath, Http* request, UserSession *logge
 				// assign response to return string and delete bufstring
 				serresp->bs_Buffer = NULL;
 				BufStringDelete( serresp );
-	/*
-				char buffer[ 256 ];
-			char buffer1[ 256 ];
-			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, channelid, app, title, message" );
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
-			HttpAddTextContent( response, buffer );
-			*/
 			}
 		} // missing parameters
 		else
 		{
 			char buffer[ 512 ];
 			char buffer1[ 256 ];
-			snprintf( buffer1, sizeof(buffer1)-1, l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, channelid, app, title, message" );
+			snprintf( buffer1, sizeof(buffer1)-1, l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "params, path" );
 			snprintf( buffer, sizeof(buffer)-1, ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, buffer );
 		}
