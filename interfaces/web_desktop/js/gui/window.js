@@ -2015,7 +2015,7 @@ function CloseView( win, delayed )
 
 		// Activate latest activated view (not on mobile)
 		let nextActive = false;
-		if( div.classList.contains( 'Active' ) )
+		if( div.classList.contains( 'Active' ) || div.windowObject.getFlag( 'dialog' ) )
 		{
 			if( Friend.GUI.view.viewHistory.length )
 			{
@@ -2049,6 +2049,7 @@ function CloseView( win, delayed )
 							if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 							{
 								let vh = Friend.GUI.view.viewHistory[ a ];
+								currentMovable = vh;
 								_ActivateWindow( vh );
 								if( vh.content && vh.content.refresh )
 									vh.content.refresh();
