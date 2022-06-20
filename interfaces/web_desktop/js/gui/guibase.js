@@ -4323,13 +4323,13 @@ function AlertBox( title, desc, buttons, win )
 		title: title,
 		width: 380,
 		height: 200,
-		resize: false
+		resize: false,
+		dialog: true
 	} );
 	
 	for( let a in buttons )
 		buttonml += '<button class="IconSmall ' + buttons[a].className + '">' + buttons[a].text + '</button>';
 	
-	w.setFlag( 'dialog', true );
 	let ml = '<div class="Dialog"><div class="DialogContent">' + desc + '</div><div class="DialogButtons">' + buttonml + '</div></div>';
 	
 	w.setContent( ml );

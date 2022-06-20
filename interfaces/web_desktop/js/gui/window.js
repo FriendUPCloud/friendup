@@ -956,7 +956,7 @@ function SetScreenByWindowElement( div )
 }
 
 // Just like _ActivateWindow, only without doing anything but activating
-function _ActivateWindowOnly( div )
+function _ActivateWindowOnly( div, e )
 {
     if( div.windowObject && div.windowObject.getFlag( 'invisible' ) == true ) return;
 	if( Workspace.contextMenuShowing && Workspace.contextMenuShowing.shown )
@@ -969,6 +969,17 @@ function _ActivateWindowOnly( div )
 	{
 		_ActivateWindow( div.content.blocker.getWindowElement().parentNode, false );
 		return;
+	}
+	
+	// Dialogs here are not activated
+    if( 
+    	window.Workspace && Workspace.dashboard && div.windowObject && (
+    		div.windowObject.flags[ 'dialog' ] ||
+    		div.windowObject.flags[ 'standard-dialog' ]
+    	) 
+    )
+    {
+    	return _ActivateDialogWindow( div, e );
 	}
 	
 	// Don't select other fields
@@ -1048,6 +1059,8 @@ function _ActivateWindowOnly( div )
 			
 			m.classList.add( 'Active' );
 			m.viewContainer.classList.add( 'Active' );
+			console.log( 'Is it a dialog?', m.windowObject.flags[ 'standard-dialog' ] );
+			console.trace();
 			
 			// Set active window
 			if( m.windowObject.getFlag( 'windowActive' ) )
@@ -1132,11 +1145,36 @@ function _ActivateWindowOnly( div )
 	CheckScreenTitle();
 }
 
+function _ActivateDialogWindow( div, e )
+{
+	if( !e ) e = window.event;
+	// TODO: Also for touch!
+	currentMovable = div;
+	if( e && e.button == 0 )
+	{
+		if( window.hideDashboard )
+		    window.hideDashboard();
+	}
+	if( window.Workspace && window.Workspace.showQuickMenu )
+	    Workspace.showQuickMenu();
+}
+
 // "Private" function to activate a window
 var _activationTarget = null;
 function _ActivateWindow( div, nopoll, e )
 {
     if( div.windowObject && div.windowObject.getFlag( 'invisible' ) == true ) return;
+    
+    // Dialogs here are not activated
+    if( 
+    	window.Workspace && Workspace.dashboard && div.windowObject && (
+    		div.windowObject.flags[ 'dialog' ] ||
+    		div.windowObject.flags[ 'standard-dialog' ]
+    	) 
+    )
+    {
+    	return _ActivateDialogWindow( div );
+	}
     
 	// Check window color
 	if( div.windowObject.getFlag( 'windowActive' ) )
@@ -2303,7 +2341,8 @@ var View = function( args )
 
 		let filter = [
 			'min-width', 'min-height', 'width', 'height', 'id', 'title', 
-			'screen', 'parentView', 'transparent', 'minimized'
+			'screen', 'parentView', 'transparent', 'minimized', 'dialog', 
+			'standard-dialog'
 		];
 
 		if( !flags.screen )
@@ -3913,6 +3952,8 @@ var View = function( args )
 		{
 		    Workspace.dashboard.liveViews.appendChild( viewContainer );
 		}
+		else if( flags.dockable && ge( 'DockableWindowContainer' ) )
+			ge( 'DockableWindowContainer' ).appendChild( viewContainer );
 		else
 		{
 		    divParent.appendChild( viewContainer );
@@ -4155,6 +4196,7 @@ var View = function( args )
 		
 		// Reparse! We may have forgotten some things
 		self.parseFlags( flags );
+		console.log( 'What: ', flags );
 		
 		// Only activate if needed
 		if( !flags.minimized && !flags.openSilent && !flags.invisible )
@@ -5113,15 +5155,20 @@ var View = function( args )
 			// Standard dialog has preset width and height
 			case 'standard-dialog':
 			// Dialog is treated only like a dialog
-				if( value )
-		        {
-		            viewdiv.parentNode.classList.add( 'StandardDialog' );
-		        }
-		        else
-		        {
-		            viewdiv.parentNode.classList.remove( 'StandardDialog' );
-		        }
+				if( viewdiv.parentNode )
+				{
+					if( value )
+				    {
+				        viewdiv.parentNode.classList.add( 'StandardDialog' );
+				    }
+				    else
+				    {
+				        viewdiv.parentNode.classList.remove( 'StandardDialog' );
+				    }
+				}
+		        this.flags[ 'standard-dialog' ] = value;
 			case 'dialog':
+				this.flags[ 'dialog' ] = value;
 			    if( viewdiv )
 			    {
 			        if( value )
@@ -6116,10 +6163,10 @@ function Ac2Alert ( msg, title )
 	let v = new View( {
 		'title'  : !title ? i18n('Alert') : title,
 		'width'  : 400,
-		'height' : 120
+		'height' : 120,
+		'standard-dialog': true
 	} );
 	v.setSticky();
-	v.setFlag( 'standard-dialog', true );
 	v.setContent( '<div class="Dialog Box ContentFull">' + msg + '</div>' );
 }
 
@@ -6264,7 +6311,8 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 			width: 400,
 			resize: false,
 			height: d.offsetHeight + 75,
-			id: 'confirm_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
+			id: 'confirm_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random(),
+			'standard-dialog': true
 		} );
 	}
 	else
@@ -6278,8 +6326,6 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 			id: 'confirm_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
 		} );
 	}
-	
-	v.setFlag( 'standard-dialog', true );
 
 	v.onClose = function()
 	{
@@ -6399,7 +6445,8 @@ function Alert( title, string, cancelstring, callback )
 			width: 400,
 			resize: false,
 			height: minContentHeight + parseInt( themeTitle ) + parseInt( themeBottom ),
-			id: 'alert_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
+			id: 'alert_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random(),
+			'standard-dialog': true
 		} );
 	}
 	else
@@ -6413,8 +6460,6 @@ function Alert( title, string, cancelstring, callback )
 			id: 'alert_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
 		} );
 	}
-	
-	v.setFlag( 'standard-dialog', true );
 	
 	v.onClose = function()
 	{

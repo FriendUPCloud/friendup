@@ -9369,10 +9369,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			'max-height': 80,
 			resize: false,
 			id: 'launcherview',
-			dialog: true
+			dialog: true,
+			'standard-dialog': true
 		} );
-		
-		w.setFlag( 'standard-dialog', true );
 		
 		w.onClose = function()
 		{
