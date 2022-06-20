@@ -6213,7 +6213,10 @@ function _kresize( e, depth )
 			Workspace.screenList[a].resized = true;
 			Workspace.screenList[a].resize();
 		}
-		Workspace.initWorkspaces();
+		if( globalConfig.workspacecount > 1 )
+		{
+			Workspace.initWorkspaces();
+		}
 		Workspace.checkWorkspaceWallpapers();
 	}
 	
