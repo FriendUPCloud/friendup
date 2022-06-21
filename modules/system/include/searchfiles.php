@@ -49,7 +49,6 @@ function addPath( $file )
 }
 
 // Find files from filesystems
-
 if( isset( $args->args->path ) )
 {
 }
@@ -57,19 +56,32 @@ if( isset( $args->args->path ) )
 else
 {
 	if( $rows = $SqlDatabase->fetchObjects( '
-		SELECT 
-			f.* 
-		FROM FSFile f, Filesystem fs 
-		WHERE 
-			f.UserID=\'' . $User->ID . '\' AND f.FolderID >= 0 AND f.Filename LIKE "%' . $args->args->keywords . '%" AND fs.ID = f.FilesystemID
-			AND f.UserID=\'' . $User->ID . '\'
-		ORDER BY DateModified DESC LIMIT ' . strval( $start ) . ', ' . $limit . '
+		SELECT k.* FROM 
+			FSFile k WHERE ID IN (
+				SELECT 
+					f.ID 
+				FROM FSFile f, Filesystem fs 
+				WHERE 
+					fs.UserID=\'' . $User->ID . '\' AND f.FolderID >= 0 AND f.Filename LIKE "%' . $args->args->keywords . '%" AND fs.ID = f.FilesystemID
+					AND f.UserID=\'' . $User->ID . '\' AND fs.Type = "SQLDrive"
+			) OR ID IN (
+				SELECT f2.ID
+				FROM
+					FSFile f2, Filesystem fs2, FUserToGroup ug
+				WHERE
+					fs2.GroupID = ug.UserGroupID AND ug.UserID=\'' . $User->ID . '\' AND 
+					f2.FolderID >= 0 AND f2.Filename LIKE "%' . $args->args->keywords . '%" AND fs2.ID = f2.FilesystemID
+					AND f2.UserID=\'' . $User->ID . '\' AND fs2.Type = "SQLWorkgroupDrive"
+			)
+			ORDER BY k.DateModified DESC LIMIT ' . strval( $start ) . ', ' . $limit . '
 	' ) )
 	{
 		$outs = [];
 		foreach( $rows as $row )
 		{
 			$out = new stdClass();
+			// Skip hidden files
+			if( substr( $row->Filename, 0, 1 ) == '.' ) continue;
 			$out->Filename = $row->Filename;
 			$out->DateModified = $row->DateModified;
 			$out->Path = addPath( $row );
@@ -78,7 +90,6 @@ else
 		die( 'ok<!--separate-->' . json_encode( $outs ) );
 	}
 }
-
 
 die( 'fail<!--separate-->{"message":"Your search yielded no results.","response":-1}' );
 
