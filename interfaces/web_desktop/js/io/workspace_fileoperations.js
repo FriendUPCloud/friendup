@@ -74,7 +74,8 @@ Workspace.deleteFile = function( mode )
 						v = new View( {
 							title: i18n( titles ),
 							width: 320,
-							height: 100
+							height: 100,
+							dockable: true
 						} );
 					}
 					
