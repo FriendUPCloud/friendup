@@ -57,7 +57,12 @@ if( isset( $args->args->path ) )
 else
 {
 	if( $rows = $SqlDatabase->fetchObjects( '
-		SELECT * FROM FSFile WHERE UserID=\'' . $User->ID . '\' AND FolderID >= 0 AND Filename LIKE "%' . $args->args->keywords . '%"
+		SELECT 
+			f.* 
+		FROM FSFile f, Filesystem fs 
+		WHERE 
+			f.UserID=\'' . $User->ID . '\' AND f.FolderID >= 0 AND f.Filename LIKE "%' . $args->args->keywords . '%" AND fs.ID = f.FilesystemID
+			AND f.UserID=\'' . $User->ID . '\'
 		ORDER BY DateModified DESC LIMIT ' . strval( $start ) . ', ' . $limit . '
 	' ) )
 	{
