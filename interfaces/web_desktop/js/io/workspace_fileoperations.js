@@ -75,6 +75,7 @@ Workspace.deleteFile = function( mode )
 							title: i18n( titles ),
 							width: 320,
 							height: 100,
+							dialog: true,
 							dockable: true
 						} );
 					}
