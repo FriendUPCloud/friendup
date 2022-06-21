@@ -553,6 +553,8 @@ function Notify( message, callback, clickcallback )
 {
 	if( !Workspace.notifications ) return;
 	if( !message ) return;
+	if( window.NotifyOverride )
+		return NotifyOverride( message, callback, clickcallback );
 	
 	mobileDebug( 'Notify... (state ' + Workspace.currentViewState + ')', true );
 	
