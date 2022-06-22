@@ -3692,7 +3692,7 @@ function AudioObject( sample, callback )
 function getImageUrl( path, mode )
 {
 	// Path is already fixed
-	if( path.indexOf( '?' > 0 ) )
+	if( path.indexOf( '?' ) > 0 )
 	{
 		return path;
 	}
