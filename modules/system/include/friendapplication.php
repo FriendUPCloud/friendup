@@ -375,7 +375,7 @@ else if ( $path = findInSearchPaths( $args->args->application ) )
 	}
 	
 	// We have allow-list of autoinstall apps
-	if( isset( $autoinstall ) )
+	if( $trusted != 'yes' && isset( $autoinstall ) )
 	{
 		// We found the app in autoinstall list
 		if( in_array( $args->args->application, $autoinstall ) )
@@ -385,7 +385,7 @@ else if ( $path = findInSearchPaths( $args->args->application ) )
 		// User needs to manually install application
 		else
 		{
-			die( 'fail<!--separate-->{"response":"application lacks user installation record"}<!--separate-->' . print_r( $tmp, 1 ) );
+			die( 'fail<!--separate-->{"response":"application lacks user installation record"}' );
 		}
 	}
 	
