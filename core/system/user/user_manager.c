@@ -2127,7 +2127,10 @@ FBOOL UMSendDoorNotification( UserManager *um, void *notif, UserSession *ses, Fi
 				
 					UserSessionWebsocketWrite( uses, (unsigned char *)tmpmsg, len, LWS_WRITE_TEXT );
 
+					//
 					// send message to all remote users
+					//
+					
 					RemoteUser *ruser = usr->u_RemoteUsers;
 					while( ruser != NULL )
 					{
@@ -2189,6 +2192,29 @@ FBOOL UMSendDoorNotification( UserManager *um, void *notif, UserSession *ses, Fi
 						} // while remote drives
 						ruser = (RemoteUser *)ruser->node.mln_Succ;
 					} // while remote users
+					
+					//
+					// Notify user sessions in cluster
+					//
+					
+					Http *request = HttpNew();
+					if( request != NULL )
+					{
+						request->http_ParsedPostContent = HashmapNew();
+						
+						HashmapPut( request->http_ParsedPostContent, "devid", value );
+						HashmapPut( request->http_ParsedPostContent, "devname", device->f_Name );
+						HashmapPut( request->http_ParsedPostContent, "owner", usr->u_Name );
+						HashmapPut( request->http_ParsedPostContent, "path", path );
+						
+						BufString *res = SendMessageToSessionsAndWait( sb, usr->u_ID, request );
+						if( res != NULL )
+						{
+							DEBUG("RESPONSE: %s\n", res->bs_Buffer );
+							BufStringDelete( res );
+						}
+					}
+					
 				} // sendNotif == TRUE
 				le = (UserSessListEntry *)le->node.mln_Succ;
 			} // while loop, session

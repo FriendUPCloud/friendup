@@ -326,7 +326,9 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 				char *sessionid = HashmapGetData( paramhm, "sessionid" );
 				if( sessionid != NULL )
 				{
+					char *fsinfo;	// filesystem info
 					char *uri = HashmapGetData( paramhm, "uri" );
+					
 					if( uri != NULL )
 					{
 						int res = 0;
@@ -384,6 +386,62 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 							}
 							HttpFree( req );
 						}
+					}
+					else if( ( fsinfo = HashmapGetData( paramhm, "fschange" ) ) != NULL ) 
+					{
+						UserSession *uses = USMGetSessionBySessionID( lsb->sl_USM, sessionid );
+						if( uses != NULL )
+						{
+							if( uses->us_User != NULL )
+							{
+								char *devid = HashmapGetData( paramhm, "devid" );
+								char *devname = HashmapGetData( paramhm, "devname" );
+								char *owner = HashmapGetData( paramhm, "owner" );
+								char *path = HashmapGetData( paramhm, "path" );
+								
+								if( path != NULL && devid != NULL && devname != NULL && owner != NULL )
+								{
+									int globmlen = 128 + strlen( path ) + strlen( devid ) + strlen( devname ) + strlen( owner );
+									char *message = FCalloc( 1, globmlen );
+									
+									if( message != NULL )
+									{
+										USER_LOCK( uses->us_User );
+			
+										DEBUG("[ParseMessage] Send notification to user: %s id: %lu\n", uses->us_User->u_Name, uses->us_UserID );
+										
+										int mlen = snprintf( message, globmlen, "{\"type\":\"msg\",\"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%s\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\"}}}", devid, devname, path, owner  );
+			
+										UserSessListEntry *list = uses->us_User->u_SessionsList;
+										while( list != NULL )
+										{
+											if( list->us != NULL )
+											{
+												UserSessionWebsocketWrite( list->us, (unsigned char *)message, mlen, LWS_WRITE_TEXT);
+											}
+											else
+											{
+												INFO("[ParseMessage] Cannot send WS message: %s\n", message );
+											}
+											list = (UserSessListEntry *)list->node.mln_Succ;
+										}
+										FFree( message );
+									}
+									USER_UNLOCK( uses->us_User );
+								}
+							}	// user != NULL
+						}
+						
+						MsgItem tags[] = {
+							{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
+							{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)(FBYTE *)fcm->fcm_ID },
+							{ ID_FCRI, (FULONG)reqid , MSG_INTEGER_VALUE },
+							{ ID_QUER, (FULONG)FC_QUERY_FRIENDCORE_SYNC, MSG_INTEGER_VALUE },
+							{ ID_RESP, (FULONG)3, (FULONG)"ok" },
+							{ TAG_DONE, TAG_DONE, TAG_DONE }
+						};
+
+						respdf = DataFormNew( tags );
 					}
 				}
 			}
