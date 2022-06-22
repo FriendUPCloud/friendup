@@ -1059,8 +1059,6 @@ function _ActivateWindowOnly( div, e )
 			
 			m.classList.add( 'Active' );
 			m.viewContainer.classList.add( 'Active' );
-			console.log( 'Is it a dialog?', m.windowObject.flags[ 'standard-dialog' ] );
-			console.trace();
 			
 			// Set active window
 			if( m.windowObject.getFlag( 'windowActive' ) )
@@ -4197,7 +4195,6 @@ var View = function( args )
 		
 		// Reparse! We may have forgotten some things
 		self.parseFlags( flags );
-		console.log( 'What: ', flags );
 		
 		// Only activate if needed
 		if( !flags.minimized && !flags.openSilent && !flags.invisible )
