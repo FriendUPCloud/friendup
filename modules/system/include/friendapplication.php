@@ -385,7 +385,7 @@ else if ( $path = findInSearchPaths( $args->args->application ) )
 		// User needs to manually install application
 		else
 		{
-			die( 'fail<!--separate-->{"response":"application lacks user installation record"}' );
+			die( 'fail<!--separate-->{"response":"application lacks user installation record"}<!--separate-->' . print_r( $tmp, 1 ) );
 		}
 	}
 	
