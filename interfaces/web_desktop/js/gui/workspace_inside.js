@@ -8493,7 +8493,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						ExecuteApplication( 'Looknfeel' );
 					}
-				},				{
+				}, {
 					name: i18n( 'menu_edit_wallpaper' ),
 					command: function()
 					{
