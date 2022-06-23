@@ -251,7 +251,7 @@ if( $args->command )
 			// verifyinvite (args: hash=123d4h)
 			
 			// TODO: Verify and remove personal invites, keep the general invites ...
-			
+			$Logger->log( '[invites] We are verifying an invite' );
 			if( isset( $args->args->hash ) && $args->args->hash )
 			{
 				if( $f = $SqlDatabase->FetchObject( '
@@ -266,9 +266,7 @@ if( $args->command )
 						{
 							if( $json = json_decode( decodeUrl( $f->Source ) ) )
 							{
-								
-								// TODO: Add support for adding to workgroup(s) when that is ready ...
-								
+								$Logger->log( '[invites] Working on adding user to group' );
 								if( $json->data->workgroups )
 								{
 									foreach( $json->data->workgroups as $group )
@@ -326,6 +324,7 @@ if( $args->command )
 											AND c.ID = ' . $User->ID . ' AND c.Status = 0 
 									' ) )
 									{
+										$Logger->log( '[invites] Adding relationship between user and contact' );
 										if( $result = FriendCoreQuery( '/system.library/user/addrelationship', 
 										[
 											'mode'       => $json->data->mode,
