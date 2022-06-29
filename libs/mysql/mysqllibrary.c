@@ -191,7 +191,9 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 				case SQLT_NODE:
 					{
 						dataUsed = 1;
-						MinNode *locnode = (MinNode *)strptr + dptr[ 2 ];
+						MinNode *locnode = (MinNode *)(strptr + dptr[ 2 ]);
+						
+						print("strptr %p dptr %p\n", strptr, dptr[ 2 ] );
 						
 						printf("Node %p locnode %p\n", node, locnode );
 						
