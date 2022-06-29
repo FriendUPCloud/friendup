@@ -150,6 +150,16 @@ UserSession *USMGetSessionBySessionID( UserSessionManager *usm, char *sessionid 
 	UserSession *us = usm->usm_Sessions;
 	while( us != NULL )
 	{
+		//
+		// If session is in "to remove" state, we can skip it
+		//
+		
+		if( us->us_Status == USER_SESSION_STATUS_TO_REMOVE )
+		{
+			us = (UserSession *) us->node.mln_Succ;
+			continue;
+		}
+		
 		if( FRIEND_MUTEX_LOCK( &us->us_Mutex ) == 0 )
 		{
 			us->us_InUseCounter++;
@@ -1133,6 +1143,8 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, U
 	FBOOL locSQLused = FALSE;
 	SystemBase *sb = NULL;
 	
+	DEBUG("[USMDestroyTemporarySession] start\n");
+	
 	SQLLibrary *locSqllib = sqllib;
 	if( sqllib == NULL )
 	{
@@ -1159,8 +1171,10 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, U
 	
 	if( ses != NULL )
 	{
+		DEBUG("[USMDestroyTemporarySession] session will be deleted: %p\n", ses );
 		UserSessionDelete( ses );
 	}
+	DEBUG("[USMDestroyTemporarySession] end\n");
 }
 
 /**

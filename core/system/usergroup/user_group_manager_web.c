@@ -1734,7 +1734,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*
-	* <HR><H2>system.library/group/listdetails</H2>List groups and users inside. Function require admin rights.
+	* <HR><H2>system.library/group/listdetails</H2>List groups and users inside. Function require admin rights for groups the user is not a memeber of
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param id - id of parent workgroup
@@ -1867,13 +1867,79 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
 				if( data != NULL )
 				{
-					/*
 					if( strncmp( data, "ok", 2 ) == 0 )
 					{
+						
+						
+						char tmp[ 1024 ];
+						int tmpsize = 0;
+						BufString *retString = BufStringNew();
+						BufStringAddSize( retString, "ok<!--separate-->{", 18 );
+						UserGroup *ug = UGMGetGroupByIDDB( l->sl_UGM, groupID );
+						if( ug != NULL )
+						{
+							tmpsize = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"uuid\":\"%s\",\"userid\":%lu,\"name\":\"%s\",\"parentid\":%lu,\"type\":\"%s\",\"status\":%d,\"users\":[", groupID, ug->ug_UUID, ug->ug_UserID, ug->ug_Name, ug->ug_ParentID, ug->ug_Type, ug->ug_Status );
+						}
+						else
+						{
+							tmpsize = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"users\":[", groupID );
+						}
+						BufStringAddSize( retString, tmp, tmpsize );
+					
+						if( groupID > 0 )	// we want list of users which belongs to one group
+						{
+							// get required information for external servers
+						
+							SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+							if( sqlLib != NULL )
+							{
+								char tmpQuery[ 768 ];
+								snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID,u.Name,u.FullName FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserGroupID=%lu group by ug.UserID", groupID );
+								void *result = sqlLib->Query(  sqlLib, tmpQuery );
+								if( result != NULL )
+								{
+									int itmp;
+									int pos = 0;
+									char **row;
+									while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+									{
+										if( pos == 0 )
+										{
+											itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%s,\"uuid\":\"%s\",\"name\":\"%s\",\"fullname\":\"%s\"}", (char *)row[0], (char *)row[ 1 ], (char *)row[ 2 ], (char *)row[ 3 ] );
+										}
+										else
+										{
+											itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%s,\"uuid\":\"%s\",\"name\":\"%s\",\"fullname\":\"%s\"}", (char *)row[0], (char *)row[ 1 ], (char *)row[ 2 ], (char *)row[ 3 ] );
+										}
+										BufStringAddSize( retString, tmp, itmp );
+										pos++;
+									}
+									sqlLib->FreeResult( sqlLib, result );
+								}
+								l->LibrarySQLDrop( l, sqlLib );
+							}
+						}
+
+						BufStringAddSize( retString, "]}", 2 );
+					
+						respSet = TRUE;
+						HttpSetContent( response, retString->bs_Buffer, retString->bs_Size );
+						
+						//NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "listdetails", &(retString->bs_Buffer[17]) );
+						
+						retString->bs_Buffer = NULL;
+						BufStringDelete( retString );
+						if( ug != NULL )
+						{
+							UserGroupDeleteAll( l, ug );
+						}
+						
 					}
-					*/
-					respSet = TRUE;
-					HttpSetContent( response, data, dataLength );
+					else
+					{
+						respSet = TRUE;
+						HttpSetContent( response, data, dataLength );
+					}
 				}
 				FFree( command );
 			}
