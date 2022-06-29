@@ -191,6 +191,9 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 					{
 						dataUsed = 1;
 						MinNode *locnode = (MinNode *)strptr + dptr[ 2 ];
+						
+						DEBUG("Node %p locnode %d\n", node, locnode );
+						
 						if( node != NULL )
 						{
 							node->mln_Succ = (MinNode *)data;
