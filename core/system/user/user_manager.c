@@ -2221,7 +2221,7 @@ FBOOL UMSendDoorNotification( UserManager *um, void *notif, UserSession *ses, Fi
 							BufStringDelete( res );
 						}
 						
-						HttpFree( request );
+						//HttpFree( request );
 					}
 					
 				} // sendNotif == TRUE
