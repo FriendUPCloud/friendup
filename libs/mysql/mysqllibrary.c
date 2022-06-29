@@ -185,6 +185,7 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 		// While the column is not the last
 		while( dptr[0] != SQLT_END )
 		{
+			printf( " id %d\n", dptr[0] );
 			switch( dptr[ 0 ] )
 			{
 				case SQLT_NODE:
@@ -192,7 +193,7 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 						dataUsed = 1;
 						MinNode *locnode = (MinNode *)strptr + dptr[ 2 ];
 						
-						DEBUG("Node %p locnode %d\n", node, locnode );
+						printf("Node %p locnode %p\n", node, locnode );
 						
 						if( node != NULL )
 						{
