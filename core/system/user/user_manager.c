@@ -2208,7 +2208,7 @@ FBOOL UMSendDoorNotification( UserManager *um, void *notif, UserSession *ses, Fi
 						char value[ 32 ];
 						snprintf( value, sizeof(value), "%ld", device->f_ID );
 						
-						HashmapPut( request->http_ParsedPostContent, "uri", "fschange" );
+						HashmapPut( request->http_ParsedPostContent, "fschange", "true" );
 						HashmapPut( request->http_ParsedPostContent, "devid", value );
 						HashmapPut( request->http_ParsedPostContent, "devname", device->f_Name );
 						HashmapPut( request->http_ParsedPostContent, "owner", usr->u_Name );
