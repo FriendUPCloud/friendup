@@ -501,6 +501,7 @@ if( $args->command )
 								if( isset( $args->args->groupId ) && !$found ) continue;
 							
 								$obj = new stdClass();
+								$obj->Hash          = $f->Hash;
 								$obj->EventID       = 0;
 								$obj->InviteLinkID  = $f->ID;
 								$obj->UserID        = ( isset( $json->contact->ID       ) ? $json->contact->ID       : false                                );
