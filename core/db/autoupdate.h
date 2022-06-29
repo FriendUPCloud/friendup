@@ -86,6 +86,12 @@ void DBUpdateDelete( DBUpdate *dbu );
 //
 //
 
+void DBUpdateDeleteAll( DBUpdate *dbu );
+
+//
+//
+//
+
 void CheckAndUpdateDB( SystemBase *sb, int type );
 
 

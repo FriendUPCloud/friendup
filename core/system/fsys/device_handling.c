@@ -318,6 +318,8 @@ f.GroupID='%ld' AND f.Name='%s'",
 	
 		void *res = sqllib->Query( sqllib, temptext );
 		char **row;
+		
+		FFree( temptext );
 	
 		if( res != NULL )
 		{
@@ -339,25 +341,21 @@ f.GroupID='%ld' AND f.Name='%s'",
 			
 			if( row[ 6 ] != NULL )
 			{
+				char *visiblePtr = NULL;
 				config = StringDuplicate( row[ 6 ] );
-				if( row[ 6 ] != NULL )
-				{
-					char *visiblePtr = NULL;
-					config = StringDuplicate( row[ 6 ] );
 					
-					if( config != NULL && ( visiblePtr = strstr( config, "\"Visible\"" ) ) != NULL )
-					{
-						// "Visible":"on"
-						visiblePtr+= 9 + 2;	// name + quote + :
+				if( config != NULL && ( visiblePtr = strstr( config, "\"Visible\"" ) ) != NULL )
+				{
+					// "Visible":"on"
+					visiblePtr+= 9 + 2;	// name + quote + :
 						
-						if( strncmp( visiblePtr, "on", 2 ) == 0 )
-						{
-							visible = TRUE;
-						}
-						else
-						{
-							visible = FALSE;
-						}
+					if( strncmp( visiblePtr, "on", 2 ) == 0 )
+					{
+						visible = TRUE;
+					}
+					else
+					{
+						visible = FALSE;
 					}
 				}
 			}

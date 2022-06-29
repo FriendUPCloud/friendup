@@ -83,7 +83,9 @@ void UserSessionDelete( UserSession *us )
 {
 	if( us != NULL )
 	{
-		if( us->us_Status != USER_SESSION_STATUS_TO_REMOVE && us->us_Status != USER_SESSION_STATUS_DELETE_IN_PROGRESS )
+		DEBUG("[UserSessionDelete] status: %d\n", us->us_Status );
+		
+		if( us->us_Status == USER_SESSION_STATUS_TO_REMOVE || us->us_Status == USER_SESSION_STATUS_DELETE_IN_PROGRESS )
 		{
 			return;
 		}
@@ -173,8 +175,6 @@ void UserSessionDelete( UserSession *us )
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
 		
-		//UserSessionWebsocketDeInit( &(us->us_Websockets) );
-
 		DEBUG("[UserSessionDelete] Session released  sessid: %s device: %s \n", us->us_SessionID, us->us_DeviceIdentity );
 
 		// first clear WebsocketReqManager and then remove it
@@ -240,7 +240,7 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 	if( us == NULL || us->us_WSD == NULL || us->us_Status == USER_STATUS_TO_BE_REMOVED )
 	{
 		DEBUG("[UserSessionWebsocketWrite] empty us %p or WSD %p. User status: %d\n", us, us->us_WSD, us->us_Status );
-		return 0;
+		return -1;
 	}
 	
 	// Decrease use internal
