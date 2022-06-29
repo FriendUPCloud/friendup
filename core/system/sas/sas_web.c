@@ -189,6 +189,12 @@ Http* SASWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *
 					int size = 0;
 					FBOOL add = TRUE;
 					
+					if( FRIEND_MUTEX_LOCK( &al->usersession->us_Mutex ) == 0 )
+					{
+						al->usersession->us_InUseCounter++;
+						FRIEND_MUTEX_UNLOCK( &al->usersession->us_Mutex );
+					}
+					
 					if( usersOnly )
 					{
 						if( strstr( bs->bs_Buffer, al->usersession->us_User->u_Name ) != NULL )
@@ -211,6 +217,12 @@ Http* SASWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *
 					
 						pos++;
 					}
+					if( FRIEND_MUTEX_LOCK( &al->usersession->us_Mutex ) == 0 )
+					{
+						al->usersession->us_InUseCounter--;
+						FRIEND_MUTEX_UNLOCK( &al->usersession->us_Mutex );
+					}
+					
 					al = (SASUList *) al->node.mln_Succ;
 				}
 				
@@ -352,6 +364,12 @@ Application.checkDocumentSession = function( sasID = null )
 				DEBUG("SASWeb sasid: %lu force: %d\n", asval, force );
 				if( force == TRUE )
 				{
+					if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+					{
+						loggedSession->us_InUseCounter++;
+						FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
+					}
+					
 					// if user want to create SAS with his own ID
 					SASSession *as = SASManagerGetSession( l->sl_SASManager, asval );
 					if( as == NULL )
@@ -407,6 +425,12 @@ Application.checkDocumentSession = function( sasID = null )
 							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_CANNOT_CREATE_SAS], DICT_CANNOT_CREATE_SAS );
 							HttpAddTextContent( response, dictmsgbuf );
 						}
+					}
+					
+					if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+					{
+						loggedSession->us_InUseCounter--;
+						FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
 					}
 				}
 				else	// sasid paramter was not sent
@@ -592,6 +616,12 @@ Application.checkDocumentSession = function( sasID = null )
 					int err = 0;
 				
 					char tmpmsg[ 255 ];
+					
+					if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+					{
+						loggedSession->us_InUseCounter++;
+						FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
+					}
 				
 					if( locus->us_User == loggedSession->us_User )
 					{
@@ -618,6 +648,12 @@ Application.checkDocumentSession = function( sasID = null )
 						err = SASSessionSendOwnerMessage( as, loggedSession, tmpmsg, msgsize );
 					
 						err = SASSessionRemUserSession( as, loggedSession );
+					}
+					
+					if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+					{
+						loggedSession->us_InUseCounter--;
+						FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
 					}
 				
 					if( err == 0 )
@@ -706,13 +742,13 @@ Application.checkDocumentSession = function( sasID = null )
 			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "authid, sasid" );
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
+			
 			FERROR("authid or sasid is missing!\n");
 		}
 		// We've got what we need! Continue
 		else
 		{
 			char *end = NULL;
-			int assidlen = strlen( assid );
 			FUQUAD asval = strtoull( assid, &end, 0 );
 			char buffer[ 1024 ];
 			
@@ -723,6 +759,12 @@ Application.checkDocumentSession = function( sasID = null )
 			if( as != NULL )
 			{
 				int error = 1;
+				
+				if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+				{
+					loggedSession->us_InUseCounter++;
+					FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
+				}
 				
 				DEBUG("App session type: %d\n", as->sas_Type );
 				// if session is open, we can add new users to list without asking for permission
@@ -824,8 +866,14 @@ Application.checkDocumentSession = function( sasID = null )
 				else
 				{
 					char dictmsgbuf[ 256 ];
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
 					HttpAddTextContent( response, dictmsgbuf );
+				}
+				
+				if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+				{
+					loggedSession->us_InUseCounter--;
+					FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
 				}
 			}
 			else if( force == TRUE )	// if session do not exist and system is forced to create new SAS
@@ -837,7 +885,7 @@ Application.checkDocumentSession = function( sasID = null )
 					int err = SASManagerAddSession( l->sl_SASManager, as );
 					if( err == 0 )
 					{
-						int size = sprintf( buffer, "{ \"SASID\": \"%lu\",\"type\":%d }", as->sas_SASID, as->sas_Type );
+						int size = sprintf( buffer, "{ \"SASID\":\"%lu\",\"type\":%d }", as->sas_SASID, as->sas_Type );
 						HttpAddTextContent( response, buffer );
 					}
 					else
@@ -917,6 +965,7 @@ Application.checkDocumentSession = function( sasID = null )
 			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "sasid" );
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
+			
 			FERROR("AuthID is missing!\n");
 			
 			//if( authid != NULL ) { FFree( authid ); }
@@ -936,6 +985,12 @@ Application.checkDocumentSession = function( sasID = null )
 			// We found session!
 			if( as != NULL )
 			{
+				if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+				{
+					loggedSession->us_InUseCounter++;
+					FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
+				}
+				
 				// Find invitee user with authid from user list in allowed users
 				SASUList *li = SASSessionGetListEntryBySession( as, loggedSession );
 				int error = 1;
@@ -966,6 +1021,12 @@ Application.checkDocumentSession = function( sasID = null )
 					char dictmsgbuf[ 256 ];
 					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
 					HttpAddTextContent( response, dictmsgbuf );
+				}
+				
+				if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+				{
+					loggedSession->us_InUseCounter--;
+					FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
 				}
 			}
 			else
@@ -1017,7 +1078,6 @@ Application.checkDocumentSession = function( sasID = null )
 		}
 		
 		SASSession *as = NULL;
-		char buffer[ 1024 ];
 		char applicationName[ 1024 ];
 		applicationName[ 0 ] = 0;
 		
@@ -1026,7 +1086,6 @@ Application.checkDocumentSession = function( sasID = null )
 			char *end;
 			FUQUAD asval = strtoul( assid,  &end, 0 );
 			DEBUG("[SASWebRequest] ASSID %s endptr-startp %d\n", assid, (int)(end-assid) );
-			int errors = 0;
 			
 			as = SASManagerGetSession( l->sl_SASManager, asval );
 		}
@@ -1102,6 +1161,12 @@ Application.checkDocumentSession = function( sasID = null )
 			
 			if( as != NULL && msg != NULL )
 			{
+				if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+				{
+					loggedSession->us_InUseCounter++;
+					FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
+				}
+					
 				if( userlist != NULL )
 				{
 					char *resp = SASSessionAddUsersByName( as, loggedSession, userlist, applicationName, msg  );
@@ -1134,6 +1199,12 @@ Application.checkDocumentSession = function( sasID = null )
 					char dictmsgbuf[ 256 ];
 					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_CANNOT_ADD_USERS] , DICT_CANNOT_ADD_USERS );
 					HttpAddTextContent( response, dictmsgbuf );
+				}
+				
+				if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+				{
+					loggedSession->us_InUseCounter--;
+					FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
 				}
 			}
 		}
@@ -1210,6 +1281,12 @@ Application.checkDocumentSession = function( sasID = null )
 			
 			DEBUG("[SASWebRequest] UserList passed '%s' as ptr %p\n", userlist, as );
 			
+			if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+			{
+				loggedSession->us_InUseCounter++;
+				FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
+			}
+			
 			BufString *bs = SASSessionRemUserByNames( as, loggedSession, userlist );
 			if( bs != NULL )
 			{
@@ -1222,6 +1299,12 @@ Application.checkDocumentSession = function( sasID = null )
 				char dictmsgbuf[ 256 ];
 				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_CANNOT_REMOVE_USERS] , DICT_CANNOT_REMOVE_USERS );
 				HttpAddTextContent( response, dictmsgbuf );
+			}
+			
+			if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+			{
+				loggedSession->us_InUseCounter--;
+				FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
 			}
 		}
 		else
@@ -1293,6 +1376,12 @@ Application.checkDocumentSession = function( sasID = null )
 			
 			if( as != NULL )
 			{
+				if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+				{
+					loggedSession->us_InUseCounter++;
+					FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
+				}
+				
 				int err = 0;
 				if( as->sas_Type == SAS_TYPE_OPEN )
 				{
@@ -1319,6 +1408,12 @@ Application.checkDocumentSession = function( sasID = null )
 				if( as->sas_Obsolete == TRUE )
 				{
 					int err = SASManagerRemSession( l->sl_SASManager, as );
+				}
+				
+				if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+				{
+					loggedSession->us_InUseCounter--;
+					FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
 				}
 			}
 			else
@@ -1390,9 +1485,14 @@ Application.checkDocumentSession = function( sasID = null )
 		if( assid != NULL && msg != NULL )
 		{
 			char *end;
-			int assidlen = strlen( assid );
 			FUQUAD asval = strtoull( assid,  &end, 0 );
 			SASSession *as = SASManagerGetSession( l->sl_SASManager, asval );
+			
+			if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+			{
+				loggedSession->us_InUseCounter++;
+				FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
+			}
 			
 			FERROR("AS %p  asval %lu\n", as, asval );
 			if( as != NULL )
@@ -1433,6 +1533,12 @@ Application.checkDocumentSession = function( sasID = null )
 				char dictmsgbuf[ 256 ];
 				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_SASID_NOT_FOUND] , DICT_SASID_NOT_FOUND );
 				HttpAddTextContent( response, dictmsgbuf );
+			}
+			
+			if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+			{
+				loggedSession->us_InUseCounter--;
+				FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
 			}
 		}
 		else
@@ -1496,9 +1602,14 @@ Application.checkDocumentSession = function( sasID = null )
 		if( assid != NULL && devid != NULL && username != NULL )
 		{
 			char *end;
-			int assidlen = strlen( assid );
 			FUQUAD asval = strtoull( assid,  &end, 0 );
 			SASSession *as = SASManagerGetSession( l->sl_SASManager, asval );
+			
+			if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+			{
+				loggedSession->us_InUseCounter++;
+				FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
+			}
 			
 			FERROR("AS %p  asval %lu\n", as, asval );
 			if( as != NULL )
@@ -1562,6 +1673,12 @@ Application.checkDocumentSession = function( sasID = null )
 				char dictmsgbuf[ 256 ];
 				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_SASID_NOT_FOUND] , DICT_SASID_NOT_FOUND );
 				HttpAddTextContent( response, dictmsgbuf );
+			}
+			
+			if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+			{
+				loggedSession->us_InUseCounter--;
+				FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
 			}
 		}
 		else
@@ -1627,9 +1744,14 @@ Application.checkDocumentSession = function( sasID = null )
 		if( assid != NULL && devid != NULL )
 		{
 			char *end;
-			int assidlen = strlen( assid );
 			FUQUAD asval = strtoull( assid,  &end, 0 );
 			SASSession *as = SASManagerGetSession( l->sl_SASManager, asval );
+			
+			if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+			{
+				loggedSession->us_InUseCounter++;
+				FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
+			}
 			
 			FERROR("AS %p  asval %lu\n", as, asval );
 			if( as != NULL )
@@ -1713,6 +1835,12 @@ Application.checkDocumentSession = function( sasID = null )
 				char dictmsgbuf[ 256 ];
 				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_SASID_NOT_FOUND] , DICT_SASID_NOT_FOUND );
 				HttpAddTextContent( response, dictmsgbuf );
+			}
+			
+			if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+			{
+				loggedSession->us_InUseCounter--;
+				FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
 			}
 		}
 		else
@@ -1815,6 +1943,12 @@ Application.checkDocumentSession = function( sasID = null )
 						le = (INVAREntry *) le->node.mln_Succ;
 					}
 				}
+				
+				if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+				{
+					loggedSession->us_InUseCounter++;
+					FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
+				}
 			
 				// if entry exist we just update data
 				// otherwise we create new entry
@@ -1862,6 +1996,12 @@ Application.checkDocumentSession = function( sasID = null )
 						le->node.mln_Succ = (MinNode *) as->sas_Variables;
 						as->sas_Variables = le;
 					}
+				}
+				
+				if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+				{
+					loggedSession->us_InUseCounter--;
+					FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
 				}
 				
 				FRIEND_MUTEX_UNLOCK( &as->sas_VariablesMut );
@@ -1933,9 +2073,14 @@ Application.checkDocumentSession = function( sasID = null )
 		if( assid != NULL && varid != NULL )
 		{
 			char *end;
-			int assidlen = strlen( assid );
 			FUQUAD asval = strtoull( assid,  &end, 0 );
 			SASSession *as = SASManagerGetSession( l->sl_SASManager, asval );
+			
+			if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+			{
+				loggedSession->us_InUseCounter++;
+				FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
+			}
 			
 			if( as != NULL )
 			{
@@ -1943,23 +2088,24 @@ Application.checkDocumentSession = function( sasID = null )
 				
 				// trying to find existing variable, because ID was passed
 				
-				FRIEND_MUTEX_LOCK( &as->sas_VariablesMut );
-				if( varid != NULL )
+				if( FRIEND_MUTEX_LOCK( &as->sas_VariablesMut ) == 0 )
 				{
-					FULONG varidlong = strtoull( varid,  &end, 0 );
-			
-					le = as->sas_Variables;
-					while( le != NULL )
+					if( varid != NULL )
 					{
-						if( le->ne_ID == varidlong )
+						FULONG varidlong = strtoull( varid,  &end, 0 );
+			
+						le = as->sas_Variables;
+						while( le != NULL )
 						{
-							break;
+							if( le->ne_ID == varidlong )
+							{
+								break;
+							}
+							le = (INVAREntry *) le->node.mln_Succ;
 						}
-						le = (INVAREntry *) le->node.mln_Succ;
 					}
+					FRIEND_MUTEX_UNLOCK( &as->sas_VariablesMut );
 				}
-				
-				FRIEND_MUTEX_UNLOCK( &as->sas_VariablesMut );
 				
 				if( le != NULL )
 				{
@@ -2002,8 +2148,14 @@ Application.checkDocumentSession = function( sasID = null )
 			else
 			{
 				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\": \"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_SASID_NOT_FOUND] , DICT_SASID_NOT_FOUND );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_SASID_NOT_FOUND] , DICT_SASID_NOT_FOUND );
 				HttpAddTextContent( response, dictmsgbuf );
+			}
+			
+			if( FRIEND_MUTEX_LOCK( &loggedSession->us_Mutex ) == 0 )
+			{
+				loggedSession->us_InUseCounter--;
+				FRIEND_MUTEX_UNLOCK( &loggedSession->us_Mutex );
 			}
 		}
 		else
@@ -2026,53 +2178,7 @@ Application.checkDocumentSession = function( sasID = null )
 	
 		return response;
 	}
-		
-/*
-						//request->query;
-						//
-						// PARAMETERS SHOULD BE TAKEN FROM
-						// POST NOT GET
-						
-		if( request->uri->query != NULL )
-		{
-			char *usr = NULL;
-			char *pass = NULL;
-							
-			HashmapElement_t *el =  HashmapGet( request->uri->query, "username" );
-			if( el != NULL )
-			{
-				usr = (char *)el->data;
-			}
-							
-			el =  HashmapGet( request->uri->query, "password" );
-			if( el != NULL )
-			{
-				pass = (char *)el->data;
-			}
-							
-			if( usr != NULL && pass != NULL )
-			{
-				User *loggedUser = l->Authenticate( l, usr, pass, NULL );
-				if( loggedUser != NULL )
-				{
-					char tmp[ 20 ];
-					sprintf( tmp, "LERR: %d\n", loggedUser->u_Error );	// check user.library to display errors
-					HttpAddTextContent( response, tmp );
-				}else{
-					HttpAddTextContent( response, "LERR: -1" );			// out of memory/user not found
-				}
-			}
-		}
-		DEBUG("user login response\n");
 
-		HttpWriteAndFree( response, sock );
-		result = 200;
-	}else
-	{
-		Http404( sock );
-		return 404;
-	}
-	*/
 	DEBUG("[SASWebRequest] FriendCore returned %s\n", response->http_Content );
 
 	return response;
