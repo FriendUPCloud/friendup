@@ -884,9 +884,13 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 				const char *error = mysql_stmt_error(stmt);
 				//sb->sl_UtilInterface.Log( FLOG_ERROR, "Save query error: %s, query: %s\n", error, finalQuery );
 				
-				if( strstr( error, "Lost connection to MySQL server during" ) != NULL )
+				if( error != NULL )
 				{
-					Reconnect( l );
+					if( strstr( error, "Lost connection to MySQL server during" ) != NULL )
+					{
+						Reconnect( l );
+					}
+					FERROR("mysql/save: ERROR: %s\n", error );
 				}
 				
 				retValue = 1;
