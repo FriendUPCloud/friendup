@@ -2201,10 +2201,14 @@ FBOOL UMSendDoorNotification( UserManager *um, void *notif, UserSession *ses, Fi
 					if( request != NULL )
 					{
 						request->http_ParsedPostContent = HashmapNew();
+						request->http_Uri = UriNew();
+						
+						request->http_Uri->uri_QueryRaw = StringDuplicateN( "fschange", 8 );
 						
 						char value[ 32 ];
 						snprintf( value, sizeof(value), "%ld", device->f_ID );
 						
+						HashmapPut( request->http_ParsedPostContent, "uri", "fschange" );
 						HashmapPut( request->http_ParsedPostContent, "devid", value );
 						HashmapPut( request->http_ParsedPostContent, "devname", device->f_Name );
 						HashmapPut( request->http_ParsedPostContent, "owner", usr->u_Name );
@@ -2216,6 +2220,8 @@ FBOOL UMSendDoorNotification( UserManager *um, void *notif, UserSession *ses, Fi
 							DEBUG("RESPONSE: %s\n", res->bs_Buffer );
 							BufStringDelete( res );
 						}
+						
+						HttpFree( request );
 					}
 					
 				} // sendNotif == TRUE
