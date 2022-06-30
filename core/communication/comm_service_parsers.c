@@ -411,6 +411,8 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 										DEBUG("[ParseMessage] Send notification to user: %s id: %lu\n", uses->us_User->u_Name, uses->us_UserID );
 										
 										int mlen = snprintf( message, globmlen, "{\"type\":\"msg\",\"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%s\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\"}}}", devid, devname, path, owner  );
+										
+										DEBUG("Send notification about changes in path: %s\n", path );
 			
 										UserSessListEntry *list = uses->us_User->u_SessionsList;
 										while( list != NULL )
