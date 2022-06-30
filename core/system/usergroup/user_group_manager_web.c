@@ -1799,6 +1799,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			}
 			BufStringAddSize( retString, tmp, tmpsize );
 		
+			DEBUG( "[usergroupmanager] Trying to check stuff: %p - %d\n", ug, groupID );
+		
 			if( groupID > 0 )	// we want list of users which belongs to one group
 			{
 				// get required information for external servers
