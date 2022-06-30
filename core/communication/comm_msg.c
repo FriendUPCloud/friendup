@@ -764,6 +764,9 @@ DataForm *DataFormFromHttpToSync( char *fcid, Http *http, char *sessionid )
 		items[ 5 ].mi_Size = 0;
 		items[ 5 ].mi_Data = MSG_GROUP_START;
 		
+		int pos = 7;
+		
+		if( http->http_Uri->uri_QueryRaw != NULL )
 		{
 			int tempLen = snprintf( temp, sizeof(temp), "uri=%s", http->http_Uri->uri_QueryRaw );
 			
@@ -771,8 +774,11 @@ DataForm *DataFormFromHttpToSync( char *fcid, Http *http, char *sessionid )
 			items[ 6 ].mi_Size = tempLen + 1;
 			items[ 6 ].mi_Data = (FULONG)temp;
 		}
-		
-		int pos = 7;
+		else
+		{
+			pos = 6;
+		}
+
 		DFList *pentry = re;
 		while( pentry != NULL )
 		{
