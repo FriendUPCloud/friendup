@@ -399,7 +399,8 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses __attribute_
 			
 			DEBUG("[DoorNotificationCommunicateChanges] send door notification to: %lu\n", notification->dn_OwnerID );
 			
-			UMSendDoorNotification( sb->sl_UM, notification, ses, device, path );
+			UMSendDoorNotification( sb->sl_UM, notification, ses, device, notification->dn_Path );
+			//UMSendDoorNotification( sb->sl_UM, notification, ses, device, path );
 			
 			notification = (DoorNotification *)notification->node.mln_Succ;
 			
