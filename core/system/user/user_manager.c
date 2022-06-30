@@ -2203,7 +2203,7 @@ FBOOL UMSendDoorNotification( UserManager *um, void *notif, UserSession *ses, Fi
 						request->http_ParsedPostContent = HashmapNew();
 						request->http_Uri = UriNew();
 						
-						request->http_Uri->uri_QueryRaw = StringDuplicateN( "fschange", 8 );
+						//request->http_Uri->uri_QueryRaw = StringDuplicateN( "fschange", 8 );
 						
 						char value[ 32 ];
 						snprintf( value, sizeof(value), "%ld", device->f_ID );

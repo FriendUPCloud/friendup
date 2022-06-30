@@ -464,7 +464,7 @@ INSERT INTO `FUserToGroup` (`UserID`,`UserGroupID`) VALUES ( 2,2 );
   `Type` bigint(2) NOT NULL,
   `Time` bigint(32) NOT NULL,
   PRIMARY KEY (`ID`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- 2017-03-06 -- on the end we will not use alter, but since we dont have version mechanism Im adding that here - stefkos
 ALTER TABLE `Filesystem` ADD `Execute` VARCHAR( 512 );
