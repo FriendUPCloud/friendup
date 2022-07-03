@@ -3892,7 +3892,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		console.log( 'refreshTheme: Refreshing theme with themename: ' + themeName );
 		
 		// Don't reupdate when it's already loaded
-		if( Workspace.theme && Workspace.theme == themeName ) return;
+		if( Workspace.theme && Workspace.theme == themeName ) 
+		{
+			console.log( 'Theme already set ' + themeName );
+			return;
+		}
 		
 		// Block while working
 		if( this.refreshThemeBlock ) return;
