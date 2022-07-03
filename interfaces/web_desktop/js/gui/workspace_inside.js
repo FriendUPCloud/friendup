@@ -3899,7 +3899,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( this.themeRefreshed && !update )
 		{
 			document.body.classList.remove( 'ThemeRefreshing' );
-			console.log( 'refreshTheme: pass' );
 			this.refreshThemeBlock = false;
 			return;
 		}
@@ -3930,19 +3929,20 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		themeName = themeName.toLowerCase();
 		
-		console.log( 'Current theme: ' + themeName );
-		
 		// Don't load this twice
 		if( Workspace.theme == themeName )
 		{
 			document.body.classList.remove( 'ThemeRefreshing' );
+			console.log( 'Theme already loaded: ' + themeName );
 			Workspace.setLoading( false );
-			console.log( 'refreshTheme: Already loaded theme ' + themeName );
 			this.refreshThemeBlock = false;
 			return;
 		}
+		else
+		{
+			console.log( 'Theme not loaded before: ' + themeName );
+		}
 		
-		console.log( 'Here is the theme: ' + themeName );
 		Workspace.theme = themeName;
 		
 		// Done blocking
@@ -3950,9 +3950,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		let m = new File( 'System:../themes/' + themeName + '/settings.json' );
 		m.onLoad = function( rdat )
-		{
-			console.log( 'refreshTheme: Loaded settings.json' );
-			
+		{	
 			// Add resources for theme settings --------------------------------
 			rdat = JSON.parse( rdat );
 			// Done resources theme settings -----------------------------------
@@ -3979,7 +3977,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					            if( !Workspace.dashboard )
 					            {
 					                Workspace.dashboard = new SidebarEngine();
-					                console.log( 'Initializing sidebar.' );
 					                Workspace.dashboardLoading = null;
 					            }
 					        }
@@ -4020,11 +4017,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			
 			Workspace.themeRefreshed = true;
-			console.log( 'refreshTheme: Starting refresh user settings..' );
 			Workspace.refreshUserSettings( function() 
 			{
 				CheckScreenTitle();
-				console.log( 'refreshTheme: Checked screen title.' );
 
 				let h = document.getElementsByTagName( 'head' );
 				if( h )
@@ -4056,11 +4051,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					styles.type = 'text/css';
 					styles.onload = function()
 					{
-						console.log( 'refreshTheme: Got theme css' );
 						document.body.classList.add( 'ThemeLoaded' );
 						setTimeout( function()
 						{
-							console.log( 'refreshTheme: Done loading theme!' );
 							document.body.classList.remove( 'ThemeRefreshing' );
 						}, 50 );
 						// We are inside (wait for wallpaper) - watchdog
@@ -4069,7 +4062,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							let retries = 0;
 							Workspace.insideInterval = setInterval( function()
 							{
-							    console.log( 'Waiting for load. ' + Math.random() );
 							    // If we're still readjusting, wait a little
         						if( !isMobile && window.outerHeight > 480 && document.body.offsetHeight < 480 )
         						    return;
@@ -6111,7 +6103,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Show file info dialog
 	fileInfo: function( iconOriginal )
 	{
-		console.log( 'fileInfo', iconOriginal );
 		if( !iconOriginal ) iconOriginal = this.getActiveIcon();
 		
 		let icon = {};
