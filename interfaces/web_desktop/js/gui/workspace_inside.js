@@ -4125,7 +4125,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									}
 									
 									// New version of Friend?
-									if( Workspace.loginUsername != 'go' )
+									if( Workspace.loginUsername != 'go' && !Workspace.dashboard )
 									{
 										if( !Workspace.friendVersion || Workspace.friendVersion != Workspace.systemInfo.FriendCoreVersion )
 										{
