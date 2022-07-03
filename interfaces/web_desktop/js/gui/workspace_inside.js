@@ -3889,12 +3889,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	refreshTheme: function( themeName, update, themeConfig, initpass )
 	{
 		let self = this;
-		console.log( 'refreshTheme: Refreshing theme with themename: ' + themeName );
 		
 		// Don't reupdate when it's already loaded
 		if( Workspace.theme && Workspace.theme == themeName ) 
 		{
-			console.log( 'Theme already set ' + themeName );
 			return;
 		}
 		
@@ -4030,22 +4028,26 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 					// Remove old one
 					let l = h.getElementsByTagName( 'link' );
-					for( let b = 0; b < l.length; b++ )
+					let l2 = document.body.getElementsByTagName( 'link' );
+					function stripOld()
 					{
-						if( l[b].parentNode != h ) continue;
-						l[b].href = '';
-						l[b].parentNode.removeChild( l[b] );
-					}
-					// Remove scrollbars
-					l = document.body.getElementsByTagName( 'link' );
-					for( let b = 0; b < l.length; b++ )
-					{
-						if( l[b].href.indexOf( '/scrollbars.css' ) > 0 )
+						for( let b = 0; b < l.length; b++ )
 						{
+							if( l[b].parentNode != h ) continue;
 							l[b].href = '';
 							l[b].parentNode.removeChild( l[b] );
 						}
+						// Remove scrollbars
+						for( let b = 0; b < l2.length; b++ )
+						{
+							if( l2[b].href.indexOf( '/scrollbars.css' ) > 0 )
+							{
+								l2[b].href = '';
+								l2[b].parentNode.removeChild( l2[b] );
+							}
+						}
 					}
+					
 
 					// New css!
 					let styles = document.createElement( 'link' );
@@ -4053,6 +4055,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					styles.type = 'text/css';
 					styles.onload = function()
 					{
+						// Remove old stuff
+						stripOld();
+						
 						document.body.classList.add( 'ThemeLoaded' );
 						setTimeout( function()
 						{
