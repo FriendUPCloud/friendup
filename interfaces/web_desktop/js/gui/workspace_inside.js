@@ -3930,6 +3930,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		themeName = themeName.toLowerCase();
 		
+		console.log( 'Current theme: ' + themeName );
+		
 		// Don't load this twice
 		if( Workspace.theme == themeName )
 		{
@@ -3940,6 +3942,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			return;
 		}
 		
+		console.log( 'Here is the theme: ' + themeName );
 		Workspace.theme = themeName;
 		
 		// Done blocking
