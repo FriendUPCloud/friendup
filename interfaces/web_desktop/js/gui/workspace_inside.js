@@ -7982,7 +7982,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						name:	i18n( 'menu_new_weblink' ),
 						command: function() { Workspace.weblink(); },
-						disabled: sharedVolume || !iconsAvailable || systemDrive || dormant
+						disabled: sharedVolume || !iconsAvailable || systemDrive || dormant || typeof( Workspace.dashboard ) == 'object'
 					},
 					{
 						name:	i18n( 'menu_new_directory' ),
@@ -7992,7 +7992,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						name:	i18n( 'menu_show_icon_information' ),
 						command: function(){ Workspace.refreshFileInfo( function(){ Workspace.fileInfo(); } ) },
-						disabled: !iconsSelected
+						disabled: !iconsSelected || typeof( Workspace.dashboard ) == 'object'
 					},
 					{
 						name:	i18n( 'menu_edit_filename' ),
@@ -8026,7 +8026,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							Workspace.viewSharingOptions( fileIcon.Path );
 						},
-						disabled: !hasSharing || !( sharableFile && !sharedVolume ),
+						disabled: !hasSharing || !( sharableFile && !sharedVolume ) || typeof( Workspace.dashboard ) == 'object',
 					},
 					// Add sharing
 					{
@@ -8035,7 +8035,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							currentMovable.content.directoryview.ShowShareDialog( [ fileIcon.domNode ], 'shareinfo' );
 						},
-						disabled: !hasSharing || ( sharableFile && !sharedVolume ) || volumeIcon || fileIcon.Type != 'File' || !fileIcon.ExternPath || fileIcon.Owner != Workspace.userId
+						disabled: !hasSharing || ( sharableFile && !sharedVolume ) || volumeIcon || fileIcon.Type != 'File' || !fileIcon.ExternPath || fileIcon.Owner != Workspace.userId || typeof( Workspace.dashboard ) == 'object'
 					},
 					{
 						divider: true
@@ -8096,34 +8096,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						disabled: !volumeIcon || !canUnmount
 					},
 					{
-						name:   i18n( 'menu_close_idle_connections' ),
-						command: function(){
-							if( DeepestField && DeepestField.connections )
-							{
-								let df = DeepestField;
-								for( let a in df.connections )
-								{
-									let d = df.connections[a];
-									d.object.close(); // Close connection
-									if( d && d.parentNode )
-									{
-										try
-										{
-											d.parentNode.removeChild( d );
-										}
-										catch( e )
-										{
-										}
-									}
-								}
-							}
-						},
-						disabled: isMobile || _cajax_process_count <= 0
-					},
-					{
 						name:	i18n( 'menu_share' ),
 						command: function() { FriendNetworkShare.sharePath( shareIcon.Path, shareIcon.Type ); },
-						disabled: !hasSharing || ( !iconsSelected || volumeIcon ) || systemDrive || cannotWrite || !canBeShared
+						disabled: !hasSharing || ( !iconsSelected || volumeIcon ) || systemDrive || cannotWrite || !canBeShared || typeof( Workspace.dashboard ) == 'object'
 					},
 					{
 						name:	i18n( 'menu_download' ),
@@ -8674,7 +8649,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							else
 							{
 								let ext = thisicon.fileInfo.Filename.split( '.' ).pop();
-								if( ext )
+								if( ext && !Workspace.dashboard )
 								{
 									switch( ext.toLowerCase() )
 									{
