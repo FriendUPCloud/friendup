@@ -3891,6 +3891,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		let self = this;
 		console.log( 'refreshTheme: Refreshing theme with themename: ' + themeName );
 		
+		// Don't reupdate when it's already loaded
+		if( Workspace.theme && Workspace.theme == themeName ) return;
+		
 		// Block while working
 		if( this.refreshThemeBlock ) return;
 		this.refreshThemeBlock = true;
@@ -3933,14 +3936,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( Workspace.theme == themeName )
 		{
 			document.body.classList.remove( 'ThemeRefreshing' );
-			console.log( 'Theme already loaded: ' + themeName );
 			Workspace.setLoading( false );
 			this.refreshThemeBlock = false;
 			return;
-		}
-		else
-		{
-			console.log( 'Theme not loaded before: ' + themeName );
 		}
 		
 		Workspace.theme = themeName;
