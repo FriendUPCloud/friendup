@@ -2067,7 +2067,6 @@ function CloseView( win, delayed )
 					}
 				}
 			}
-			console.log( 'What is it: ', currentMovable );
 		}
 
 		if( div )
@@ -2144,13 +2143,24 @@ function CloseView( win, delayed )
 			}
 		}
 	}
-
+	
 	if( !window.currentMovable )
 	{
-		if( Workspace.screen && Workspace.screen.getFlag )
-		{
-			document.title = Workspace.screen.getFlag( 'title' );
-		}
+	    for( let a in movableWindows )
+	    {
+	        if( movableWindows[ a ].windowObject && movableWindows[ a ].windowObject.getFlag( 'dialog' ) )
+	        {
+	            currentMovable = movableWindows[ a ];
+	            break;
+	        }
+	    }
+	    if( !window.currentMovable )
+	    {
+		    if( Workspace.screen && Workspace.screen.getFlag )
+		    {
+			    document.title = Workspace.screen.getFlag( 'title' );
+		    }
+	    }
 	}
 
 	// Check window
