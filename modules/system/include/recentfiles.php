@@ -24,18 +24,20 @@ if( isset( $args->args->mode ) && $args->args->mode == 'sql-only' )
 if( isset( $args->args->workgroup ) )
 {
 	if( $distinct = $SqlDatabase->fetchObjects( $q1 = ( '
-		SELECT DISTINCT(filelog.FileID) DCT FROM `FSFileLog` filelog, Filesystem f, FUserGroup fug, FUserToGroup ffug' . $extra . '
-        WHERE
-            filelog.FilesystemID = f.ID AND
-            f.GroupID = fug.ID AND
-            filelog.UserID = ffug.UserID AND
-            ffug.UserGroupID = fug.ID AND
-            fug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
-            filelog.UserID != \'' . $User->ID . '\' AND
-            filelog.Accessed < ( NOW() + INTERVAL 30 DAY )
-            ' . $extrasql . '
-        ORDER BY filelog.Accessed DESC
-        LIMIT 20
+		SELECT DISTINCT(finalfile.FileID) FROM (
+		    SELECT filelog.ID FROM `FSFileLog` filelog, Filesystem f, FUserGroup fug, FUserToGroup ffug' . $extra . '
+            WHERE
+                filelog.FilesystemID = f.ID AND
+                f.GroupID = fug.ID AND
+                filelog.UserID = ffug.UserID AND
+                ffug.UserGroupID = fug.ID AND
+                fug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
+                filelog.UserID != \'' . $User->ID . '\' AND
+                filelog.Accessed < ( NOW() + INTERVAL 30 DAY )
+                ' . $extrasql . '
+            ORDER BY filelog.Accessed DESC
+            LIMIT 150
+       ) LIMIT 10;
     ' ) ) )
     {
     	$list = [];
