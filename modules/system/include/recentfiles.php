@@ -31,6 +31,7 @@ if( isset( $args->args->workgroup ) )
             g.UserID = ffug.UserID AND
             ffug.UserGroupID = fug.ID AND
             fug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
+            g.UserID != \'' . $User->ID . '\' AND
             `Accessed` < ( NOW() + INTERVAL 30 DAY )
             ' . $extrasql . '
         LIMIT 10
@@ -58,10 +59,11 @@ if( isset( $args->args->workgroup ) )
 		        u.ID = fileman.UserID AND
 		        ug.ID = fileman.UserGroupID AND
 		        g.FileID IN ( ' . implode( ', ', $list ) . ' ) AND
-		        g.UserID = fileman.UserID AND u2.ID = fileman.UserID
-		        AND 
-		        	ddug.UserID = \'' . $User->ID . '\' AND 
-		        	ddug.UserGroupID = ug.ID 
+		        g.UserID = fileman.UserID AND 
+		        u2.ID = fileman.UserID AND 
+		        u2.ID != \'' . $User->ID . '\' AND 
+	        	ddug.UserID = \'' . $User->ID . '\' AND 
+	        	ddug.UserGroupID = ug.ID 
 		       	' . $extrasql . '
 			ORDER BY g.Accessed DESC
 		' ) ) )
