@@ -121,7 +121,7 @@
 						}
 						else
 						{
-							die('done2'); // . $mail->ErrorInfo
+							die('done2<!--separate-->'. $mail->ErrorInfo );
 						}
 										
 					} catch (phpmailerException $e) {
