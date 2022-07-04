@@ -57,7 +57,7 @@ if( isset( $args->args->workgroup ) )
 		        u.ID = fileman.UserID AND
 		        ug.ID = fileman.UserGroupID AND
 		        g.FileID IN ( ' . implode( ', ', $list ) . ' ) AND
-		        g.UserID = fileman.UserID AND
+		        g.UserID = fileman.UserID
 		        AND 
 		        	ddug.UserID = \'' . $User->ID . '\' AND 
 		        	ddug.UserGroupID = ug.ID 
