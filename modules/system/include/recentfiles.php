@@ -66,6 +66,7 @@ if( isset( $args->args->workgroup ) )
 			ORDER BY g.Accessed DESC
 		' ) ) )
 		{
+		    $Logger->log( $q );
 		    $test = [];
 		    $out = [];
 		    $count = 0;
