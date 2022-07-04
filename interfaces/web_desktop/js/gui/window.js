@@ -2067,6 +2067,7 @@ function CloseView( win, delayed )
 					}
 				}
 			}
+			console.log( 'What is it: ', currentMovable );
 		}
 
 		if( div )
