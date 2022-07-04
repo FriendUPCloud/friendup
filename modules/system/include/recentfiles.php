@@ -68,7 +68,7 @@ if( isset( $args->args->workgroup ) )
 	        	myrelation.UserID = myuser.ID AND 
 	        	myrelation.UserGroupID = ug.ID 
 		       	' . $extrasql . '
-			ORDER BY g.Accessed DESC
+			ORDER BY filelog.Accessed DESC
 		' ) ) )
 		{
 		    $Logger->log( $q );
