@@ -25,7 +25,7 @@ if( isset( $args->args->workgroup ) )
 {
 	if( $distinct = $SqlDatabase->fetchObjects( $q1 = ( '
 		SELECT DISTINCT(z.FileID) DCT FROM (
-		    SELECT filelog.ID FROM `FSFileLog` filelog, Filesystem f, FUserGroup fug, FUserToGroup ffug' . $extra . '
+		    SELECT filelog.FileID FROM `FSFileLog` filelog, Filesystem f, FUserGroup fug, FUserToGroup ffug' . $extra . '
             WHERE
                 filelog.FilesystemID = f.ID AND
                 f.GroupID = fug.ID AND
