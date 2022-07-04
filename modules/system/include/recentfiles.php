@@ -24,7 +24,7 @@ if( isset( $args->args->mode ) && $args->args->mode == 'sql-only' )
 if( isset( $args->args->workgroup ) )
 {
 	if( $distinct = $SqlDatabase->fetchObjects( $q1 = ( '
-		SELECT DISTINCT(finalfile.FileID) FROM (
+		SELECT DISTINCT(z.ID) FROM (
 		    SELECT filelog.ID FROM `FSFileLog` filelog, Filesystem f, FUserGroup fug, FUserToGroup ffug' . $extra . '
             WHERE
                 filelog.FilesystemID = f.ID AND
@@ -37,7 +37,7 @@ if( isset( $args->args->workgroup ) )
                 ' . $extrasql . '
             ORDER BY filelog.Accessed DESC
             LIMIT 150
-       ) LIMIT 10;
+       ) z LIMIT 10;
     ' ) ) )
     {
     	$list = [];
