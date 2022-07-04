@@ -74,7 +74,7 @@ if( isset( $args->args->workgroup ) )
 			ORDER BY filelog.Accessed DESC
 		' ) ) )
 		{
-		    $Logger->log( $q );
+		    //$Logger->log( $q );
 		    $test = [];
 		    $out = [];
 		    $count = 0;
@@ -98,12 +98,12 @@ if( isset( $args->args->workgroup ) )
 		}
 		else
 		{
-		    $Logger->log( $q );
+		    //$Logger->log( $q );
 		}
     }
     else
     {
-        $Logger->log( 'FAIO -> ' . $q1 );
+        //$Logger->log( 'FAIO -> ' . $q1 );
     }
 }
 // Get files from personal drives
