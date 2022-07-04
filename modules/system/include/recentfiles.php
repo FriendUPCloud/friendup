@@ -44,26 +44,29 @@ if( isset( $args->args->workgroup ) )
     	}
     	
     	if( $rows = $SqlDatabase->fetchObjects( $q = ( '
-		    SELECT g.*, u2.FullName AS UserFullname FROM 
-		        FSFileLog g, 
+		    SELECT 
+		        filelog.*, 
+		        otheruser.FullName AS UserFullname 
+		    FROM 
+		        FSFileLog filelog, 
 		        FUserGroup ug, 
 		        Filesystem f, 
-		        FUser u, 
-		        FUser u2,
-		        FUserToGroup fileman, 
-		        FUserToGroup ddug' . $extra . '
+		        FUser otheruser, 
+		        FUser myuser,
+		        FUserToGroup otherrelation, 
+		        FUserToGroup myrelation' . $extra . '
 		    WHERE
-		        f.ID = g.FilesystemID AND 
+		        f.ID = filelog.FilesystemID AND 
 		        f.GroupID = ug.ID AND 
 		        ug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
-		        u.ID = fileman.UserID AND
-		        ug.ID = fileman.UserGroupID AND
-		        g.FileID IN ( ' . implode( ', ', $list ) . ' ) AND
-		        g.UserID = fileman.UserID AND 
-		        u2.ID = fileman.UserID AND 
-		        u2.ID != \'' . $User->ID . '\' AND 
-	        	ddug.UserID = \'' . $User->ID . '\' AND 
-	        	ddug.UserGroupID = ug.ID 
+		        otheruser.ID = otherrelation.UserID AND
+		        ug.ID = otherrelation.UserGroupID AND
+		        filelog.FileID IN ( ' . implode( ', ', $list ) . ' ) AND
+		        filelog.UserID = otherrelation.UserID AND 
+		        myuser.ID != otherrelation.UserID AND 
+		        myuser.ID = \'' . $User->ID . '\' AND 
+	        	myrelation.UserID = myuser.ID AND 
+	        	myrelation.UserGroupID = ug.ID 
 		       	' . $extrasql . '
 			ORDER BY g.Accessed DESC
 		' ) ) )
