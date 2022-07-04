@@ -8649,7 +8649,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							else
 							{
 								let ext = thisicon.fileInfo.Filename.split( '.' ).pop();
-								if( ext && !Workspace.dashboard )
+								if( ext )
 								{
 									switch( ext.toLowerCase() )
 									{
@@ -8657,20 +8657,23 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										case 'jpeg':
 										case 'png':
 										case 'gif':
-											menu.push( {
-												name: i18n( 'menu_set_as_wallpaper' ),
-												command: function()
-												{
-													let m = new Module( 'system' );
-													m.onExecuted = function()
-													{
-														Workspace.wallpaperImage = thisicon.fileInfo.Path;
-														Workspace.wallpaperImageDecoded = getImageUrl( thisicon.fileInfo.Path );
-														Workspace.refreshDesktop();
-													}
-													m.execute( 'setsetting', { setting: 'wallpaperdoors', data: thisicon.fileInfo.Path } );
-												}
-											} );
+										    if( !Workspace.dashboard )
+										    {
+											    menu.push( {
+												    name: i18n( 'menu_set_as_wallpaper' ),
+												    command: function()
+												    {
+													    let m = new Module( 'system' );
+													    m.onExecuted = function()
+													    {
+														    Workspace.wallpaperImage = thisicon.fileInfo.Path;
+														    Workspace.wallpaperImageDecoded = getImageUrl( thisicon.fileInfo.Path );
+														    Workspace.refreshDesktop();
+													    }
+													    m.execute( 'setsetting', { setting: 'wallpaperdoors', data: thisicon.fileInfo.Path } );
+												    }
+											    } );
+											}
 											break;
 										case 'fpkg':
 											if( Workspace.userLevel == 'admin' )
