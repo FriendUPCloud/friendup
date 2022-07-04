@@ -4225,6 +4225,10 @@ var View = function( args )
 		if( !flags.minimized && Workspace.calendarWidget )
 			Workspace.calendarWidget.hide();
 		
+		if( Workspace.dashboard && typeof( hideDashboard ) != 'undefined' )
+		{
+		    hideDashboard();
+		}
 	}
 
 	// Send window to different workspace
