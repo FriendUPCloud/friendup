@@ -5178,6 +5178,7 @@ var View = function( args )
 				this.flags[ 'dialog' ] = value;
 			    if( viewdiv )
 			    {
+			        console.log( 'Setting dialog flag.' );
 			        if( value )
 			        {
 			            viewdiv.parentNode.classList.add( 'Dialog' );
@@ -5185,7 +5186,6 @@ var View = function( args )
 			            {
 					        viewdiv.style.left = 'calc(50% - ' + ( viewdiv.offsetWidth >> 1 ) + 'px)';
 					        viewdiv.style.top = 'calc(50% - ' + ( viewdiv.offsetHeight >> 1 ) + 'px)';
-					        console.log( 'Set stuff: ' + 'calc(50% - ' + ( viewdiv.offsetWidth >> 1 ) + 'px)' );
 					    }
 			        }
 			        else
