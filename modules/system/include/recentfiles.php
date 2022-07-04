@@ -32,7 +32,7 @@ if( isset( $args->args->workgroup ) )
             ffug.UserGroupID = fug.ID AND
             fug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
             filelog.UserID != \'' . $User->ID . '\' AND
-            `Accessed` < ( NOW() + INTERVAL 30 DAY )
+            filelog.Accessed < ( NOW() + INTERVAL 30 DAY )
             ' . $extrasql . '
         ORDER BY filelog.Accessed DESC
         LIMIT 20
@@ -105,16 +105,16 @@ else
 {
     if( $rows = $SqlDatabase->fetchObjects( '
         SELECT g.* FROM 
-            FSFileLog g, Filesystem f' . $extra . '
+            FSFileLog filelog, Filesystem f' . $extra . '
         WHERE 
-            g.FilesystemID = f.ID AND
-            g.FileID IN ( 
+            filelog.FilesystemID = f.ID AND
+            filelog.FileID IN ( 
                 SELECT DISTINCT(FileID) FROM `FSFileLog`
                 WHERE
                     UserID = \'' . $User->ID . '\'
                 AND `Accessed` < ( NOW() + INTERVAL 30 DAY )
                 ' . $extrasql . '
-        ) AND g.UserID = \'' . $User->ID . '\' ORDER BY g.Accessed DESC
+        ) AND filelog.UserID = \'' . $User->ID . '\' ORDER BY filelog.Accessed DESC
     ' ) )
     {
         $test = [];
