@@ -24,7 +24,7 @@ if( isset( $args->args->mode ) && $args->args->mode == 'sql-only' )
 if( isset( $args->args->workgroup ) )
 {
 	if( $distinct = $SqlDatabase->fetchObjects( $q1 = ( '
-		SELECT DISTINCT(z.ID) FROM (
+		SELECT DISTINCT(z.ID) DCT FROM (
 		    SELECT filelog.ID FROM `FSFileLog` filelog, Filesystem f, FUserGroup fug, FUserToGroup ffug' . $extra . '
             WHERE
                 filelog.FilesystemID = f.ID AND
