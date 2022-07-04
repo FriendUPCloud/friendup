@@ -5172,11 +5172,9 @@ var View = function( args )
 			        if( value )
 			        {
 			            viewdiv.parentNode.classList.add( 'Dialog' );
-			            if( flag == 'dialog' )
-			            {
-					        viewdiv.style.left = 'calc(50% - ' + viewdiv.offsetWidth + 'px)';
-					        viewdiv.style.top = 'calc(50% - ' + viewdiv.offsetHeight + 'px)';
-					    }
+			            
+				        viewdiv.style.left = 'calc(50% - ' + viewdiv.offsetWidth + 'px)';
+				        viewdiv.style.top = 'calc(50% - ' + viewdiv.offsetHeight + 'px)';
 			        }
 			        else
 			        {
