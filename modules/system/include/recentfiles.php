@@ -93,6 +93,10 @@ if( isset( $args->args->workgroup ) )
 		    }
 		    die( 'ok<!--separate-->' . json_encode( $out ) );
 		}
+		else
+		{
+		    $Logger->log( $q );
+		}
     }
 }
 // Get files from personal drives
