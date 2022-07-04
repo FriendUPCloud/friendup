@@ -5178,7 +5178,6 @@ var View = function( args )
 				this.flags[ 'dialog' ] = value;
 			    if( viewdiv )
 			    {
-			        console.log( 'Setting dialog flag.' );
 			        if( value )
 			        {
 			            viewdiv.parentNode.classList.add( 'Dialog' );
