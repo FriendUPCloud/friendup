@@ -104,7 +104,7 @@ if( isset( $args->args->workgroup ) )
 else
 {
     if( $rows = $SqlDatabase->fetchObjects( '
-        SELECT g.* FROM 
+        SELECT filelog.* FROM 
             FSFileLog filelog, Filesystem f' . $extra . '
         WHERE 
             filelog.FilesystemID = f.ID AND
