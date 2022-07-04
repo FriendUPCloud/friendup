@@ -23,7 +23,7 @@ if( isset( $args->args->mode ) && $args->args->mode == 'sql-only' )
 // Get files from workgroup drives
 if( isset( $args->args->workgroup ) )
 {
-	if( $distinct = $SqlDatabase->fetchObjects( '
+	if( $distinct = $SqlDatabase->fetchObjects( $q1 = ( '
 		SELECT DISTINCT(filelog.FileID) DCT FROM `FSFileLog` filelog, Filesystem f, FUserGroup fug, FUserToGroup ffug' . $extra . '
         WHERE
             filelog.FilesystemID = f.ID AND
@@ -36,7 +36,7 @@ if( isset( $args->args->workgroup ) )
             ' . $extrasql . '
         ORDER BY filelog.Accessed DESC
         LIMIT 20
-    ' ) )
+    ' ) ) )
     {
     	$list = [];
     	foreach( $distinct as $dis )
@@ -98,6 +98,10 @@ if( isset( $args->args->workgroup ) )
 		{
 		    $Logger->log( $q );
 		}
+    }
+    else
+    {
+        $Logger->log( 'FAIO -> ' . $q1 );
     }
 }
 // Get files from personal drives
