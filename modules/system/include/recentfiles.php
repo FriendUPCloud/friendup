@@ -34,7 +34,8 @@ if( isset( $args->args->workgroup ) )
             filelog.UserID != \'' . $User->ID . '\' AND
             `Accessed` < ( NOW() + INTERVAL 30 DAY )
             ' . $extrasql . '
-        LIMIT 10
+        ORDER BY filelog.Accessed DESC
+        LIMIT 20
     ' ) )
     {
     	$list = [];
