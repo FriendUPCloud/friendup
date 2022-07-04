@@ -3796,6 +3796,13 @@ function apiWrapper( event, force )
 						break;
 					case 'refreshdoors':
 						Workspace.refreshDesktop( false, true );
+						for( let a in movableWindows )
+						{
+						    if( movableWindows[ a ].content && movableWindows[ a ].content.fileBrowser )
+						    {
+						        movableWindows[ a ].content.fileBrowser.refresh();
+						    }
+						}
 						break;
 					case 'executeapplication':
 						// TODO: Make "can run applications" permission
