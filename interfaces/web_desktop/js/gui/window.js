@@ -2143,24 +2143,13 @@ function CloseView( win, delayed )
 			}
 		}
 	}
-	
+
 	if( !window.currentMovable )
 	{
-	    for( let a in movableWindows )
-	    {
-	        if( movableWindows[ a ].windowObject && movableWindows[ a ].windowObject.getFlag( 'dialog' ) )
-	        {
-	            currentMovable = movableWindows[ a ];
-	            break;
-	        }
-	    }
-	    if( !window.currentMovable )
-	    {
-		    if( Workspace.screen && Workspace.screen.getFlag )
-		    {
-			    document.title = Workspace.screen.getFlag( 'title' );
-		    }
-	    }
+		if( Workspace.screen && Workspace.screen.getFlag )
+		{
+			document.title = Workspace.screen.getFlag( 'title' );
+		}
 	}
 
 	// Check window
