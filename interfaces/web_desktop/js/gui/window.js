@@ -551,6 +551,15 @@ function ResizeWindow( div, wi, he, mode, depth )
 			}
 		}
 	}
+	
+	let flagDia = div.windowObject.getFlag( 'dialog' );
+	if( flagDia )
+	{
+	    setTimeout( function()
+	    {
+	        div.windowObject.setFlag( 'dialog', flagDia );
+	    }, 50 );
+	}
 }
 
 // Get the statusbar height
@@ -3868,7 +3877,7 @@ var View = function( args )
 				}
 			}
 		}
-
+		
 		// Add div to view container
 		viewContainer.appendChild( div );
 		div.viewContainer = viewContainer;
@@ -5172,9 +5181,11 @@ var View = function( args )
 			        if( value )
 			        {
 			            viewdiv.parentNode.classList.add( 'Dialog' );
-			            
-				        viewdiv.style.left = 'calc(50% - ' + viewdiv.offsetWidth + 'px)';
-				        viewdiv.style.top = 'calc(50% - ' + viewdiv.offsetHeight + 'px)';
+			            if( flag == 'dialog' )
+			            {
+					        viewdiv.style.left = 'calc(50% - ' + viewdiv.offsetWidth + 'px)';
+					        viewdiv.style.top = 'calc(50% - ' + viewdiv.offsetHeight + 'px)';
+					    }
 			        }
 			        else
 			        {
