@@ -5185,6 +5185,7 @@ var View = function( args )
 			            {
 					        viewdiv.style.left = 'calc(50% - ' + ( viewdiv.offsetWidth >> 1 ) + 'px)';
 					        viewdiv.style.top = 'calc(50% - ' + ( viewdiv.offsetHeight >> 1 ) + 'px)';
+					        console.log( 'Set stuff: ' + 'calc(50% - ' + ( viewdiv.offsetWidth >> 1 ) + 'px)' );
 					    }
 			        }
 			        else
