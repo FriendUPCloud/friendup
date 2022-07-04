@@ -105,8 +105,8 @@
 					$mail->isHTML(true); 
 					
 					
-					
-					$mail->Subject = 'FriendUP password recovery';
+					$subject = $cfg['Mail']['subject'] ? $cfg['Mail']['subject'] : 'FriendOS Password Recovery';
+					$mail->Subject = $subject;
 					$mail->Body    = $mailtemplate;
 					$mail->AltBody = strip_tags($mailtemplate);
 					
