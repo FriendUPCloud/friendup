@@ -17,21 +17,21 @@ $extra = $extrasql = '';
 if( isset( $args->args->mode ) && $args->args->mode == 'sql-only' )
 {
 	$extra = ', FSFile fl';
-	$extrasql = 'AND fl.ID = g.FileID';
+	$extrasql = 'AND fl.ID = filelog.FileID';
 }
 
 // Get files from workgroup drives
 if( isset( $args->args->workgroup ) )
 {
 	if( $distinct = $SqlDatabase->fetchObjects( '
-		SELECT DISTINCT(g.FileID) DCT FROM `FSFileLog` g, Filesystem f, FUserGroup fug, FUserToGroup ffug' . $extra . '
+		SELECT DISTINCT(filelog.FileID) DCT FROM `FSFileLog` g, Filesystem f, FUserGroup fug, FUserToGroup ffug' . $extra . '
         WHERE
-            g.FilesystemID = f.ID AND
+            filelog.FilesystemID = f.ID AND
             f.GroupID = fug.ID AND
-            g.UserID = ffug.UserID AND
+            filelog.UserID = ffug.UserID AND
             ffug.UserGroupID = fug.ID AND
             fug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
-            g.UserID != \'' . $User->ID . '\' AND
+            filelog.UserID != \'' . $User->ID . '\' AND
             `Accessed` < ( NOW() + INTERVAL 30 DAY )
             ' . $extrasql . '
         LIMIT 10
