@@ -4871,6 +4871,7 @@ function CheckDoorsKeys( e )
 	let cycle = false;
 	
 	if( e.target && e.target.nodeName == 'INPUT' ) return;
+	if( document.body.classList.contains( 'Dialog' ) return;
 	
 	// No normal dirmode when editing a filename
 	let wobject = window.regionWindow ? ( window.regionWindow.windowObject ?
