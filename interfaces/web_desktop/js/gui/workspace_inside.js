@@ -2373,367 +2373,389 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		b.execute( 'sampleconfig' );
 		console.log(  'refreshUserSettings: Getting loads of settings' );
-		let m = new Module( 'system' );
-		m.onExecuted = function( e, d )
+		let userSettingsFetched = false;
+		function getUserSettings()
 		{
-			console.log( 'refreshUserSettings: Settings came in' );
-			function initFriendWorkspace()
+			let m = new Module( 'system' );
+			m.onExecuted = function( e, d )
 			{
-				// Make sure we have loaded
-				if( !Workspace.dashboard && Workspace.mode != 'vr' && ( Workspace.screen && Workspace.screen.contentDiv ) )
+				userSettingsFetched = true;
+				console.log( 'refreshUserSettings: Settings came in' );
+				function initFriendWorkspace()
 				{
-					if( Workspace.screen.contentDiv.offsetHeight < 100 )
+					// Make sure we have loaded
+					if( !Workspace.dashboard && Workspace.mode != 'vr' && ( Workspace.screen && Workspace.screen.contentDiv ) )
 					{
-						console.log( 'refreshUserSettings: Not all contentDiv stuff loaded, wait 50ms and retry.' );
-						return setTimeout( function(){ initFriendWorkspace(); }, 50 );
+						if( Workspace.screen.contentDiv.offsetHeight < 100 )
+						{
+							console.log( 'refreshUserSettings: Not all contentDiv stuff loaded, wait 50ms and retry.' );
+							return setTimeout( function(){ initFriendWorkspace(); }, 50 );
+						}
 					}
-				}
-				
-				if( e == 'ok' && d )
-				{
-					console.log( 'refreshUserSettings: Settings loaded ok.' );
-					Workspace.userSettingsLoaded = true;
-					let dat = JSON.parse( d );
-					if( dat.wallpaperdoors && dat.wallpaperdoors.substr )
+					
+					if( e == 'ok' && d )
 					{
-						if( dat.wallpaperdoors.substr(0,5) == 'color' )
+						console.log( 'refreshUserSettings: Settings loaded ok.' );
+						Workspace.userSettingsLoaded = true;
+						let dat = JSON.parse( d );
+						if( dat.wallpaperdoors && dat.wallpaperdoors.substr )
 						{
-							Workspace.wallpaperImage = 'color';
-							Workspace.wallpaperImageDecoded = false;
-							document.body.classList.remove( 'NoWallpaper' );
-							document.body.classList.remove( 'DefaultWallpaper' );
-						}
-						else if( dat.wallpaperdoors.length )
-						{
-							Workspace.wallpaperImage = dat.wallpaperdoors;
-							if( 
-								dat.wallpaperdoors.indexOf( ':' ) > 0 && 
-								( dat.wallpaperdoors.indexOf( 'http://' ) != 0 || dat.wallpaperdoors.indexOf( 'https://' ) ) 
-							)
+							if( dat.wallpaperdoors.substr(0,5) == 'color' )
 							{
-								Workspace.wallpaperImageDecoded = getImageUrl( Workspace.wallpaperImage );
+								Workspace.wallpaperImage = 'color';
+								Workspace.wallpaperImageDecoded = false;
+								document.body.classList.remove( 'NoWallpaper' );
+								document.body.classList.remove( 'DefaultWallpaper' );
 							}
-							document.body.classList.remove( 'NoWallpaper' );
-							document.body.classList.remove( 'DefaultWallpaper' );
+							else if( dat.wallpaperdoors.length )
+							{
+								Workspace.wallpaperImage = dat.wallpaperdoors;
+								if( 
+									dat.wallpaperdoors.indexOf( ':' ) > 0 && 
+									( dat.wallpaperdoors.indexOf( 'http://' ) != 0 || dat.wallpaperdoors.indexOf( 'https://' ) ) 
+								)
+								{
+									Workspace.wallpaperImageDecoded = getImageUrl( Workspace.wallpaperImage );
+								}
+								document.body.classList.remove( 'NoWallpaper' );
+								document.body.classList.remove( 'DefaultWallpaper' );
+							}
+							else 
+							{
+								document.body.classList.add( 'DefaultWallpaper' );
+								Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
+								Workspace.wallpaperImageDecoded = false;
+							}
 						}
-						else 
+						else
 						{
-							document.body.classList.add( 'DefaultWallpaper' );
+							document.body.classList.add( 'NoWallpaper' );
+						}
+						// Check for theme specifics
+						if( dat[ 'themedata_' + Workspace.theme ] )
+						{
+							Workspace.themeData = dat[ 'themedata_' + Workspace.theme ];
+						}
+						else if( !Workspace.themeDataSet )
+						{
+							Workspace.themeData = false;
+						}
+						Workspace.applyThemeConfig();
+						Workspace.loadSystemInfo();
+						
+						// Fallback
+						if( !isMobile )
+						{
+							if( !dat.wizardrun )
+							{
+								if( !Workspace.WizardExecuted )
+								{
+									//ExecuteApplication( 'FriendWizard' );
+									Workspace.WizardExecuted = true;
+								}
+							}
+						}
+						
+						if( !Workspace.wallpaperImage || Workspace.wallpaperImage == '""' || Workspace.wallpaperImage === '' )
+						{
 							Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 							Workspace.wallpaperImageDecoded = false;
 						}
-					}
-					else
-					{
-						document.body.classList.add( 'NoWallpaper' );
-					}
-					// Check for theme specifics
-					if( dat[ 'themedata_' + Workspace.theme ] )
-					{
-						Workspace.themeData = dat[ 'themedata_' + Workspace.theme ];
-					}
-					else if( !Workspace.themeDataSet )
-					{
-						Workspace.themeData = false;
-					}
-					Workspace.applyThemeConfig();
-					Workspace.loadSystemInfo();
-					
-					// Fallback
-					if( !isMobile )
-					{
-						if( !dat.wizardrun )
+						
+						if( dat.wallpaperwindows )
 						{
-							if( !Workspace.WizardExecuted )
-							{
-								//ExecuteApplication( 'FriendWizard' );
-								Workspace.WizardExecuted = true;
-							}
+							Workspace.windowWallpaperImage = dat.wallpaperwindows;
 						}
-					}
-					
-					if( !Workspace.wallpaperImage || Workspace.wallpaperImage == '""' || Workspace.wallpaperImage === '' )
-					{
-						Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
-						Workspace.wallpaperImageDecoded = false;
-					}
-					
-					if( dat.wallpaperwindows )
-					{
-						Workspace.windowWallpaperImage = dat.wallpaperwindows;
-					}
 
-					if( dat.language )
-					{
-						globalConfig.language = dat.language.spokenLanguage;
-						globalConfig.alternateLanguage = dat.language.spokenAlternate ? dat.language.spokenAlternate : 'en-US';
-					}
-					if( dat.menumode )
-					{
-						globalConfig.menuMode = dat.menumode;
-					}
-					if( dat.focusmode )
-					{
-						globalConfig.focusMode = dat.focusmode;
-						document.body.setAttribute( 'focusmode', dat.focusmode ); // Register for styling
-					}
-					if( dat.navigationmode )
-					{
-						globalConfig.navigationMode = dat.navigationmode;
-					}
-					if( dat.hiddensystem )
-					{
-						globalConfig.hiddenSystem = dat.hiddensystem;
-					}
-					if( window.isMobile )
-					{
-						globalConfig.viewList = 'separate';
-					}
-					else if( dat.windowlist )
-					{
-						globalConfig.viewList = dat.windowlist;
-						document.body.setAttribute( 'viewlist', dat.windowlist ); // Register for styling
-					}
-					if( dat.scrolldesktopicons == 1 )
-					{
-						globalConfig.scrolldesktopicons = dat.scrolldesktopicons;
-					}
-					else globalConfig.scrolldesktopicons = 0;
-					
-					if( dat.hidedesktopicons == 1 || Workspace.tabletMode == true )
-					{
-						globalConfig.hidedesktopicons = dat.scrolldesktopicons;
-						document.body.classList.add( 'DesktopIconsHidden' );
-						if( !Workspace.dashboard && typeof( window.TabletDashboard ) != 'undefined' )
-							Workspace.dashboard = new TabletDashboard();
-					}
-					else
-					{
-						globalConfig.hidedesktopicons = 0;
-						document.body.classList.remove( 'DesktopIconsHidden' );
-						if( Workspace.dashboard && !Workspace.desktop && !Workspace.themeData[ 'sidebarEngine' ] )
-							Workspace.dashboard.destroy();
-					}
-					// Can only have workspaces on mobile
-					// TODO: Implement dynamic workspace count for mobile (one workspace per app)
-					if( dat.workspacecount >= 0 && !window.isMobile && !Workspace.tabletMode )
-					{
-						globalConfig.workspacecount = dat.workspacecount;
-					}
-					else
-					{
-						globalConfig.workspacecount = 1;
-					}
+						if( dat.language )
+						{
+							globalConfig.language = dat.language.spokenLanguage;
+							globalConfig.alternateLanguage = dat.language.spokenAlternate ? dat.language.spokenAlternate : 'en-US';
+						}
+						if( dat.menumode )
+						{
+							globalConfig.menuMode = dat.menumode;
+						}
+						if( dat.focusmode )
+						{
+							globalConfig.focusMode = dat.focusmode;
+							document.body.setAttribute( 'focusmode', dat.focusmode ); // Register for styling
+						}
+						if( dat.navigationmode )
+						{
+							globalConfig.navigationMode = dat.navigationmode;
+						}
+						if( dat.hiddensystem )
+						{
+							globalConfig.hiddenSystem = dat.hiddensystem;
+						}
+						if( window.isMobile )
+						{
+							globalConfig.viewList = 'separate';
+						}
+						else if( dat.windowlist )
+						{
+							globalConfig.viewList = dat.windowlist;
+							document.body.setAttribute( 'viewlist', dat.windowlist ); // Register for styling
+						}
+						if( dat.scrolldesktopicons == 1 )
+						{
+							globalConfig.scrolldesktopicons = dat.scrolldesktopicons;
+						}
+						else globalConfig.scrolldesktopicons = 0;
+						
+						if( dat.hidedesktopicons == 1 || Workspace.tabletMode == true )
+						{
+							globalConfig.hidedesktopicons = dat.scrolldesktopicons;
+							document.body.classList.add( 'DesktopIconsHidden' );
+							if( !Workspace.dashboard && typeof( window.TabletDashboard ) != 'undefined' )
+								Workspace.dashboard = new TabletDashboard();
+						}
+						else
+						{
+							globalConfig.hidedesktopicons = 0;
+							document.body.classList.remove( 'DesktopIconsHidden' );
+							if( Workspace.dashboard && !Workspace.desktop && !Workspace.themeData[ 'sidebarEngine' ] )
+								Workspace.dashboard.destroy();
+						}
+						// Can only have workspaces on mobile
+						// TODO: Implement dynamic workspace count for mobile (one workspace per app)
+						if( dat.workspacecount >= 0 && !window.isMobile && !Workspace.tabletMode )
+						{
+							globalConfig.workspacecount = dat.workspacecount;
+						}
+						else
+						{
+							globalConfig.workspacecount = 1;
+						}
 
-					if( dat.workspacemode )
-					{
-						Workspace.workspacemode = dat.workspacemode;
-					}
-					else
-					{
-						Workspace.workspacemode = 'developer';
-					}
-				
-					// Disable console log now..
-					if( Workspace.workspacemode == 'normal' || Workspace.workspacemode == 'gamified' )
-					{
-						//console.log = function(){};
-					}
-					
-					if( dat.workspace_labels )
-					{
-						globalConfig.workspace_labels = dat.workspace_labels;
-					}
-					else
-					{
-						globalConfig.workspace_labels = [];
-					}
-					
-					// Make sure iOS has the correct information
-					if( window.friendApp && window.webkit && window.friendApp.setBackgroundColor )
-					{
-						let col = '#34495E';
-						switch( Workspace.themeData.colorSchemeText )
+						if( dat.workspacemode )
 						{
-							case 'charcoal':
-								col = '#3b3b3b';
-								break;
-							default:
-								break;
+							Workspace.workspacemode = dat.workspacemode;
 						}
-						window.friendApp.setBackgroundColor( col );
-					}
-					
-					// If we haven't refreshed, do it now
-					if( !Workspace.desktopFirstRefresh )
-					{
-						Workspace.refreshDesktop();
-					}
-					
-					// Do the startup sequence in sequence (only once)
-					if( !Workspace.startupSequenceRegistered )
-					{	
-						Workspace.startupSequenceRegistered = true;
-						
-						// Reload the docks here
-						Workspace.reloadDocks();
-						
-						
-						// In single tasking mode, we just skip
-						if( Workspace.isSingleTask )
+						else
 						{
-							// Oh! We wanted to start an application!
-							if( GetUrlVar( 'app' ) )
-							{
-								let args = false;
-								if( GetUrlVar( 'args' ) ) args = GetUrlVar( 'args' );
-								ExecuteApplication( GetUrlVar( 'app' ), args );
-							}
-							ScreenOverlay.hide();
-							PollTray();
-							PollTaskbar();					
-							console.log( 'refreshUserSettings: Running callback...' );
-							if( callback ) callback();
-							return;
+							Workspace.workspacemode = 'developer';
+						}
+					
+						// Disable console log now..
+						if( Workspace.workspacemode == 'normal' || Workspace.workspacemode == 'gamified' )
+						{
+							//console.log = function(){};
 						}
 						
-						/* We have a startup application! */
-						
-						Workspace.onReadyList.push( function()
+						if( dat.workspace_labels )
 						{
-							let seq = dat.startupsequence;
-							if( typeof( seq ) != 'object' )
+							globalConfig.workspace_labels = dat.workspace_labels;
+						}
+						else
+						{
+							globalConfig.workspace_labels = [];
+						}
+						
+						// Make sure iOS has the correct information
+						if( window.friendApp && window.webkit && window.friendApp.setBackgroundColor )
+						{
+							let col = '#34495E';
+							switch( Workspace.themeData.colorSchemeText )
 							{
-								try
-								{
-									seq = JSON.parse( seq );
-								}
-								catch( e )
-								{
-									seq = [];
-								}
+								case 'charcoal':
+									col = '#3b3b3b';
+									break;
+								default:
+									break;
 							}
-							if( seq.length )
+							window.friendApp.setBackgroundColor( col );
+						}
+						
+						// If we haven't refreshed, do it now
+						if( !Workspace.desktopFirstRefresh )
+						{
+							Workspace.refreshDesktop();
+						}
+						
+						// Do the startup sequence in sequence (only once)
+						if( !Workspace.startupSequenceRegistered )
+						{	
+							Workspace.startupSequenceRegistered = true;
+							
+							// Reload the docks here
+							Workspace.reloadDocks();
+							
+							
+							// In single tasking mode, we just skip
+							if( Workspace.isSingleTask )
 							{
-								if( ScreenOverlay.debug )
-									ScreenOverlay.setTitle( i18n( 'i18n_starting_your_session' ) );
-								let l = {
-									index: 0,
-									func: function()
+								// Oh! We wanted to start an application!
+								if( GetUrlVar( 'app' ) )
+								{
+									let args = false;
+									if( GetUrlVar( 'args' ) ) args = GetUrlVar( 'args' );
+									ExecuteApplication( GetUrlVar( 'app' ), args );
+								}
+								ScreenOverlay.hide();
+								PollTray();
+								PollTaskbar();					
+								console.log( 'refreshUserSettings: Running callback...' );
+								if( callback ) callback();
+								return;
+							}
+							
+							/* We have a startup application! */
+							
+							Workspace.onReadyList.push( function()
+							{
+								let seq = dat.startupsequence;
+								if( typeof( seq ) != 'object' )
+								{
+									try
 									{
-										if( Workspace.getWebSocketsState() != 'open' )
+										seq = JSON.parse( seq );
+									}
+									catch( e )
+									{
+										seq = [];
+									}
+								}
+								if( seq.length )
+								{
+									if( ScreenOverlay.debug )
+										ScreenOverlay.setTitle( i18n( 'i18n_starting_your_session' ) );
+									let l = {
+										index: 0,
+										func: function()
 										{
-											//console.log( 'Waiting for websocket... ' + Math.random() );
-											return setTimeout( function(){ l.func() }, 500 );
-										}
-										if( !ScreenOverlay.done && l.index < seq.length )
-										{
-											// Register for Friend DOS
-											ScreenOverlay.launchIndex = l.index;
-											let cmd = seq[ l.index++ ];
-											if( cmd && cmd.length )
+											if( Workspace.getWebSocketsState() != 'open' )
 											{
-												// Sanitize
-												if( cmd.indexOf( 'launch' ) == 0 )
+												//console.log( 'Waiting for websocket... ' + Math.random() );
+												return setTimeout( function(){ l.func() }, 500 );
+											}
+											if( !ScreenOverlay.done && l.index < seq.length )
+											{
+												// Register for Friend DOS
+												ScreenOverlay.launchIndex = l.index;
+												let cmd = seq[ l.index++ ];
+												if( cmd && cmd.length )
 												{
-													let appString = cmd.substr( 7, cmd.length - 7 );
-													let appName = appString.split( ' ' )[0];
-													let args = appString.substr( appName.length + 1, appString.length - appName.length + 1 );
-													let found = false;
-													for( let b = 0; b < Workspace.applications.length; b++ )
+													// Sanitize
+													if( cmd.indexOf( 'launch' ) == 0 )
 													{
-														if( Workspace.applications[ b ].applicationName == appName )
+														let appString = cmd.substr( 7, cmd.length - 7 );
+														let appName = appString.split( ' ' )[0];
+														let args = appString.substr( appName.length + 1, appString.length - appName.length + 1 );
+														let found = false;
+														for( let b = 0; b < Workspace.applications.length; b++ )
 														{
-															found = true;
-															break;
+															if( Workspace.applications[ b ].applicationName == appName )
+															{
+																found = true;
+																break;
+															}
+														}
+														if( !found && !Friend.startupApps[ appName ] )
+														{
+															let slot;
+															if( ScreenOverlay.debug )
+																slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );											
+															ScreenOverlay.addDebug( 'Executing ' + cmd );
+															
+															Workspace.shell.execute( cmd, function( res )
+															{
+																if( ScreenOverlay.debug )
+																{
+																	ScreenOverlay.editStatus( slot, res ? 'Ok' : 'Error' );
+																	ScreenOverlay.addDebug( 'Done ' + cmd );
+																}
+																l.func();
+																if( Workspace.mainDock && !Workspace.isSingleTask )
+																	Workspace.mainDock.closeDesklet();
+															} );
+														}
+														// Just skip
+														else
+														{
+															l.func();
 														}
 													}
-													if( !found && !Friend.startupApps[ appName ] )
-													{
-														let slot;
-														if( ScreenOverlay.debug )
-															slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );											
-														ScreenOverlay.addDebug( 'Executing ' + cmd );
-														
-														Workspace.shell.execute( cmd, function( res )
-														{
-															if( ScreenOverlay.debug )
-															{
-																ScreenOverlay.editStatus( slot, res ? 'Ok' : 'Error' );
-																ScreenOverlay.addDebug( 'Done ' + cmd );
-															}
-															l.func();
-															if( Workspace.mainDock && !Workspace.isSingleTask )
-																Workspace.mainDock.closeDesklet();
-														} );
-													}
-													// Just skip
 													else
 													{
 														l.func();
 													}
+													return;
 												}
-												else
-												{
-													l.func();
-												}
-												return;
 											}
+											// Hide overlay
+											ScreenOverlay.hide();
+											
+											PollTray();
+											PollTaskbar();
+											l.func = function()
+											{
+												//
+											}
+											// We are done. Empty startup apps!
+											Friend.startupApps = {};
 										}
-										// Hide overlay
-										ScreenOverlay.hide();
-										
-										PollTray();
-										PollTaskbar();
-										l.func = function()
-										{
-											//
-										}
-										// We are done. Empty startup apps!
-										Friend.startupApps = {};
 									}
+									l.func();
 								}
-								l.func();
-							}
-							else
-							{
-								// Hide overlay
-								ScreenOverlay.hide();
-								PollTray();
-								PollTaskbar();
-							}
-						} );
+								else
+								{
+									// Hide overlay
+									ScreenOverlay.hide();
+									PollTray();
+									PollTaskbar();
+								}
+							} );
+						}
+					}
+					else
+					{
+						console.log( 'refreshUserSettings: Settings did not load.' );
+						Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
+						Workspace.wallpaperImageDecoded = false;
+						Workspace.windowWallpaperImage = '';
+						document.body.classList.add( 'DefaultWallpaper' );
+						doReveal();
+					}
+					if( callback && typeof( callback ) == 'function' )
+					{
+						console.log( 'refreshUserSettings: Running callback()' );
+						callback();
 					}
 				}
-				else
-				{
-					console.log( 'refreshUserSettings: Settings did not load.' );
-					Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
-					Workspace.wallpaperImageDecoded = false;
-					Workspace.windowWallpaperImage = '';
-					document.body.classList.add( 'DefaultWallpaper' );
-					doReveal();
-				}
-				if( callback && typeof( callback ) == 'function' )
-				{
-					console.log( 'refreshUserSettings: Running callback()' );
-					callback();
-				}
+				
+				// Load application cache's and then init workspace
+				loadApplicationBasics(
+					initFriendWorkspace()
+				);
 			}
 			
-			// Load application cache's and then init workspace
-			loadApplicationBasics(
-				initFriendWorkspace()
-			);
+			m.forceHTTP = true;
+			m.execute( 'getsetting', { settings: [ 
+				'avatar', 'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
+				'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
+				'focusmode', 'hiddensystem', 'workspacecount', 
+				'scrolldesktopicons', 'hidedesktopicons', 'wizardrun', 'themedata_' + Workspace.theme,
+				'workspacemode', 'workspace_labels'
+			] } );
 		}
-		m.forceHTTP = true;
-		m.execute( 'getsetting', { settings: [ 
-			'avatar', 'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
-			'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
-			'focusmode', 'hiddensystem', 'workspacecount', 
-			'scrolldesktopicons', 'hidedesktopicons', 'wizardrun', 'themedata_' + Workspace.theme,
-			'workspacemode', 'workspace_labels'
-		] } );
+		getUserSettings();
+		setTimeout( function()
+		{
+			if( !userSettingsFetched )
+			{
+				console.log( 'Failed to get user settings 1' );
+				getUserSettings();
+				setTimeout( function()
+				{
+					if( !userSettingsFetched )
+					{
+						console.log( 'Failed to get user settings!' );
+					}
+				}, 450 );
+			}
+		}, 450 );
 	},
 	// Called on onunload
 	unloadFriendNetwork: function( e )
@@ -3978,6 +4000,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					            {
 					                Workspace.dashboard = new SidebarEngine();
 					                Workspace.dashboardLoading = null;
+					                console.log( '[Login phase] Initialized sidebar engine!' );
 					            }
 					        }
 					        Workspace.dashboardLoading = j;
@@ -4019,6 +4042,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			Workspace.themeRefreshed = true;
 			Workspace.refreshUserSettings( function() 
 			{
+				console.log( '[Login phase] Done refreshing user settings.' );
 				CheckScreenTitle();
 
 				let h = document.getElementsByTagName( 'head' );
@@ -4059,6 +4083,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						stripOld();
 						
 						document.body.classList.add( 'ThemeLoaded' );
+						console.log( '[Login phase] Theme loaded!!' );
 						setTimeout( function()
 						{
 							document.body.classList.remove( 'ThemeRefreshing' );
