@@ -1905,6 +1905,12 @@ function CloseView( win, delayed )
 		
 		if( win.parentNode.classList.contains( 'Dialog' ) || win.parentNode.parentNode.classList.contains( 'Dialog' ) )
 		{
+			let qm = null;
+			if( ( qm = win.parentNode.querySelector( '.QuickMenu' ) ) )
+			{
+				qm.classList.remove( 'Showing' );
+				ge( 'DoorsScreen' ).appendChild( qm );
+			}
 			document.body.classList.remove( 'Dialog' );
 		}
 		
