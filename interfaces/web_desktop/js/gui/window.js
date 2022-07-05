@@ -1903,7 +1903,7 @@ function CloseView( win, delayed )
 			win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
 		}
 		
-		if( win.parentNode.classList.contains( 'Dialog' ) )
+		if( win.parentNode.classList.contains( 'Dialog' ) || win.parentNode.parentNode.classList.contains( 'Dialog' ) )
 		{
 			document.body.classList.remove( 'Dialog' );
 		}
