@@ -4870,6 +4870,8 @@ function CheckDoorsKeys( e )
 	let k = e.which | e.keyCode;
 	let cycle = false;
 	
+	if( e.target && e.target.nodeName == 'INPUT' ) return;
+	
 	// No normal dirmode when editing a filename
 	let wobject = window.regionWindow ? ( window.regionWindow.windowObject ?
 		window.regionWindow.windowObject : window.regionWindow.parentNode.windowObject ) : false;
