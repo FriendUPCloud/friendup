@@ -1156,6 +1156,7 @@ function _ActivateDialogWindow( div, e )
 {
 	if( !e ) e = window.event;
 	// TODO: Also for touch!
+	document.body.classList.add( 'Dialog' );
 	currentMovable = div;
 	if( e && e.button == 0 )
 	{
@@ -1182,6 +1183,8 @@ function _ActivateWindow( div, nopoll, e )
     {
     	return _ActivateDialogWindow( div );
 	}
+	
+	document.body.classList.remove( 'Dialog' );
     
 	// Check window color
 	if( div.windowObject.getFlag( 'windowActive' ) )
@@ -1898,6 +1901,11 @@ function CloseView( win, delayed )
 		if( win.parentNode.classList.contains( 'View' ) )
 		{
 			win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
+		}
+		
+		if( win.parentNode.classList.contains( 'Dialog' ) )
+		{
+			document.body.classList.remove( 'Dialog' );
 		}
 		
 		// Unassign this
