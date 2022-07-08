@@ -4053,10 +4053,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					// Remove old one
 					let l = h.getElementsByTagName( 'link' );
 					let l2 = document.body.getElementsByTagName( 'link' );
-					function stripOld()
+					function stripOld( test )
 					{
 						for( let b = 0; b < l.length; b++ )
 						{
+							if( l[b].href == test ) continue;
 							if( l[b].parentNode != h ) continue;
 							l[b].href = '';
 							l[b].parentNode.removeChild( l[b] );
@@ -4064,6 +4065,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						// Remove scrollbars
 						for( let b = 0; b < l2.length; b++ )
 						{
+							if( l2[b].href == test ) continue;
 							if( l2[b].href.indexOf( '/scrollbars.css' ) > 0 )
 							{
 								l2[b].href = '';
@@ -4080,7 +4082,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					styles.onload = function()
 					{
 						// Remove old stuff
-						stripOld();
+						stripOld( this.href );
 						
 						document.body.classList.add( 'ThemeLoaded' );
 						console.log( '[Login phase] Theme loaded!!' );
