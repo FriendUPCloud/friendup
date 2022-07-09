@@ -399,9 +399,13 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 								char *owner = HashmapGetData( paramhm, "owner" );
 								char *path = HashmapGetData( paramhm, "path" );
 								
-								if( path != NULL && devid != NULL && devname != NULL && owner != NULL )
+								if( devid != NULL && devname != NULL && owner != NULL )
 								{
-									int globmlen = 128 + strlen( path ) + strlen( devid ) + strlen( devname ) + strlen( owner );
+									int globmlen = 128 + strlen( devid ) + strlen( devname ) + strlen( owner );
+									if( path != NULL )
+									{
+										globmlen += strlen( path );
+									}
 									char *message = FCalloc( 1, globmlen );
 									
 									if( message != NULL )
@@ -410,7 +414,15 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 			
 										DEBUG("[ParseMessage] Send notification to user: %s id: %lu\n", uses->us_User->u_Name, uses->us_UserID );
 										
-										int mlen = snprintf( message, globmlen, "{\"type\":\"msg\",\"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%s\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\"}}}", devid, devname, path, owner  );
+										int mlen = 0;
+										if( path != NULL )
+										{
+											mlen = snprintf( message, globmlen, "{\"type\":\"msg\",\"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%s\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\"}}}", devid, devname, path, owner  );
+										}
+										else
+										{
+											mlen = snprintf( message, globmlen, "{\"type\":\"msg\",\"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%s\",\"devname\":\"%s\",\"path\":\"\",\"owner\":\"%s\"}}}", devid, devname, owner  );
+										}
 										
 										DEBUG("Send notification about changes in path: %s\n", path );
 			
