@@ -17,24 +17,28 @@ $extra = $extrasql = '';
 if( isset( $args->args->mode ) && $args->args->mode == 'sql-only' )
 {
 	$extra = ', FSFile fl';
-	$extrasql = 'AND fl.ID = g.FileID';
+	$extrasql = 'AND fl.ID = filelog.FileID';
 }
 
 // Get files from workgroup drives
 if( isset( $args->args->workgroup ) )
 {
-	if( $distinct = $SqlDatabase->fetchObjects( '
-		SELECT DISTINCT(g.FileID) DCT FROM `FSFileLog` g, Filesystem f, FUserGroup fug, FUserToGroup ffug' . $extra . '
-        WHERE
-            g.FilesystemID = f.ID AND
-            f.GroupID = fug.ID AND
-            g.UserID = ffug.UserID AND
-            ffug.UserGroupID = fug.ID AND
-            fug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
-            `Accessed` < ( NOW() + INTERVAL 30 DAY )
-            ' . $extrasql . '
-        LIMIT 10
-    ' ) )
+	if( $distinct = $SqlDatabase->fetchObjects( $q1 = ( '
+		SELECT DISTINCT(z.FileID) DCT FROM (
+		    SELECT filelog.FileID FROM `FSFileLog` filelog, Filesystem f, FUserGroup fug, FUserToGroup ffug' . $extra . '
+            WHERE
+                filelog.FilesystemID = f.ID AND
+                f.GroupID = fug.ID AND
+                filelog.UserID = ffug.UserID AND
+                ffug.UserGroupID = fug.ID AND
+                fug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
+                filelog.UserID != \'' . $User->ID . '\' AND
+                filelog.Accessed < ( NOW() + INTERVAL 30 DAY )
+                ' . $extrasql . '
+            ORDER BY filelog.Accessed DESC
+            LIMIT 150
+       ) z LIMIT 10;
+    ' ) ) )
     {
     	$list = [];
     	foreach( $distinct as $dis )
@@ -43,27 +47,34 @@ if( isset( $args->args->workgroup ) )
     	}
     	
     	if( $rows = $SqlDatabase->fetchObjects( $q = ( '
-		    SELECT g.*, u.FullName AS UserFullname FROM 
-		        FSFileLog g, 
+		    SELECT 
+		        filelog.*, 
+		        otheruser.FullName AS UserFullname 
+		    FROM 
+		        FSFileLog filelog, 
 		        FUserGroup ug, 
 		        Filesystem f, 
-		        FUser u, 
-		        FUserToGroup fileman, 
-		        FUserToGroup ddug' . $extra . '
+		        FUser otheruser, 
+		        FUser myuser,
+		        FUserToGroup otherrelation, 
+		        FUserToGroup myrelation' . $extra . '
 		    WHERE
-		        f.ID = g.FilesystemID AND 
+		        f.ID = filelog.FilesystemID AND 
 		        f.GroupID = ug.ID AND 
 		        ug.ID = \'' . intval( $args->args->workgroup, 10 ) . '\' AND
-		        u.ID = fileman.UserID AND
-		        ug.ID = fileman.UserGroupID AND
-		        g.FileID IN ( ' . implode( ', ', $list ) . ' )
-		        AND 
-		        	ddug.UserID = \'' . $User->ID . '\' AND 
-		        	ddug.UserGroupID = ug.ID 
+		        otheruser.ID = otherrelation.UserID AND
+		        ug.ID = otherrelation.UserGroupID AND
+		        filelog.FileID IN ( ' . implode( ', ', $list ) . ' ) AND
+		        filelog.UserID = otherrelation.UserID AND 
+		        myuser.ID != otherrelation.UserID AND 
+		        myuser.ID = \'' . $User->ID . '\' AND 
+	        	myrelation.UserID = myuser.ID AND 
+	        	myrelation.UserGroupID = ug.ID 
 		       	' . $extrasql . '
-			ORDER BY g.Accessed DESC
+			ORDER BY filelog.Accessed DESC
 		' ) ) )
 		{
+		    //$Logger->log( $q );
 		    $test = [];
 		    $out = [];
 		    $count = 0;
@@ -85,23 +96,31 @@ if( isset( $args->args->workgroup ) )
 		    }
 		    die( 'ok<!--separate-->' . json_encode( $out ) );
 		}
+		else
+		{
+		    //$Logger->log( $q );
+		}
+    }
+    else
+    {
+        //$Logger->log( 'FAIO -> ' . $q1 );
     }
 }
 // Get files from personal drives
 else
 {
     if( $rows = $SqlDatabase->fetchObjects( '
-        SELECT g.* FROM 
-            FSFileLog g, Filesystem f' . $extra . '
+        SELECT filelog.* FROM 
+            FSFileLog filelog, Filesystem f' . $extra . '
         WHERE 
-            g.FilesystemID = f.ID AND
-            g.FileID IN ( 
+            filelog.FilesystemID = f.ID AND
+            filelog.FileID IN ( 
                 SELECT DISTINCT(FileID) FROM `FSFileLog`
                 WHERE
                     UserID = \'' . $User->ID . '\'
                 AND `Accessed` < ( NOW() + INTERVAL 30 DAY )
                 ' . $extrasql . '
-        ) AND g.UserID = \'' . $User->ID . '\' ORDER BY g.Accessed DESC
+        ) AND filelog.UserID = \'' . $User->ID . '\' ORDER BY filelog.Accessed DESC
     ' ) )
     {
         $test = [];

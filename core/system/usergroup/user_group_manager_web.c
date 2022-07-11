@@ -2219,6 +2219,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		}
 		else
 		{
+			DEBUG( "[UMWebRequest] removeusers\n" );
+			
 			// We need to check if user owns group
 			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 			if( sqllib != NULL )
@@ -2249,6 +2251,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		
 		if( canUpdateUsers == TRUE )
 		{
+			DEBUG( "[UMWebRequest] removeusers canUpdateUsers\n" );
+			
 			el = HttpGetPOSTParameter( request, "users" );
 			if( el != NULL )
 			{
@@ -2265,6 +2269,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			
 			if( groupID > 0 )
 			{
+				DEBUG( "[UMWebRequest] removeusers groupID %ld\n", groupID );
+				
 				char tmp[ 512 ];
 				int itmp = 0;
 				UserGroup *ug = NULL;
@@ -2272,6 +2278,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				
 				if( normalUserUpdate == TRUE ) // update in DB only
 				{
+					DEBUG( "[UMWebRequest] removeusers normalUserUpdate\n" );
+					
 					ug = UGMGetGroupByIDDB( l->sl_UGM, groupID );
 					
 					if( ug == NULL )
@@ -2290,11 +2298,15 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 					SQLLibrary *sqlLib = l->LibrarySQLGet( l );
 					if( sqlLib != NULL )
 					{
+						DEBUG( "[UMWebRequest] sqlib != NULL\n" );
+						
 						char tmpQuery[ 512 ];
 						snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.UniqueID,u.Status FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserID in(%s) AND ug.UserGroupID=%lu", usersSQL, groupID );
 						void *result = sqlLib->Query(  sqlLib, tmpQuery );
 						if( result != NULL )
 						{
+							DEBUG( "[UMWebRequest] sql result != NULL\n" );
+							
 							int pos = 0;
 							char **row;
 							while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
@@ -2330,6 +2342,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				
 					if( ug != NULL )
 					{
+						DEBUG( "[UMWebRequest] ug != NULL\n" );
+						
 						// go through all elements and find proper users
 					
 						IntListEl *el = NULL;
@@ -2345,6 +2359,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 							el = (IntListEl *)el->node.mln_Succ;
 
 							FBOOL exist = UGMUserToGroupISConnectedByUIDDB( l->sl_UGM, groupID, rmEntry->i_Data );
+							DEBUG( "[UMWebRequest] exist %d\n", exist );
 							if( exist == TRUE )
 							{
 								UGMRemoveUserFromGroup( l->sl_UGM, groupID, rmEntry->i_Data );
@@ -2362,6 +2377,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				}
 				else	// admin user
 				{
+					DEBUG( "[UMWebRequest] admin user\n" );
+					
 					ug = UGMGetGroupByIDDB( l->sl_UGM, groupID );
 				
 					if( ug == NULL )
@@ -2385,6 +2402,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 						void *result = sqlLib->Query(  sqlLib, tmpQuery );
 						if( result != NULL )
 						{
+							DEBUG( "[UMWebRequest] sql result1 != NULL\n" );
+							
 							int pos = 0;
 							char **row;
 							while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
@@ -2495,6 +2514,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 						}
 					} // ug = NULL
 				}
+				
+				DEBUG( "[UMWebRequest] join response\n" );
 				
 				if( ug != NULL )
 				{
