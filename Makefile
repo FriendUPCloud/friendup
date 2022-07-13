@@ -113,6 +113,8 @@ flush:
 # SETUP all additional libs - no debug
 setup:
 	@echo "Setup in progress."
+	mkdir -p $(FRIEND_PATH)/tools
+	gcc -g -o2 tools/jscleaner.c -o jscleaner
 	mkdir -p $(FRIEND_PATH)/docs/internal/webcalls
 	mkdir -p $(FRIEND_PATH)/docs/internal/core
 	mkdir -p $(FRIEND_HOME) $(FRIEND_PATH)/autostart $(FRIEND_PATH)/resources $(FRIEND_PATH)/resources/webclient $(FRIEND_PATH)/resources/repository $(FRIEND_PATH)/sqlupdatescripts $(FRIEND_PATH)/repository $(FRIEND_PATH)/cfg/crt
@@ -207,4 +209,7 @@ internaldoc:
 
 dump:
 	objdump -d build/FriendCore >FriendCore.dump
+
+quiet:
+	./jscleaner -dir build/resources/
 
