@@ -2194,24 +2194,26 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		FBOOL canUpdateUsers = FALSE;
 		FBOOL normalUserUpdate = FALSE;
 		
-		el = HttpGetPOSTParameter( request, "args" );
+		el = GetHEReq( request, "args" );
 		if( el != NULL )
 		{
 			args = el->hme_Data;
 		}
 
-		el = HttpGetPOSTParameter( request, "authid" );
+		el = GetHEReq( request, "authid" );
 		if( el != NULL )
 		{
 			authid = el->hme_Data;
 		}
 		
-		el = HttpGetPOSTParameter( request, "id" );
+		el = GetHEReq( request, "id" );
 		if( el != NULL )
 		{
 			char *end;
 			groupID = strtol( (char *)el->hme_Data, &end, 0 );
 		}
+
+		DEBUG("Is session admin: %d sessionid %s\n", IS_SESSION_ADMIN( loggedSession ), loggedSession->us_SessionID );
 		
 		if( IS_SESSION_ADMIN( loggedSession ) || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 		{	// user cannot create any groups without permissions
@@ -2253,7 +2255,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		{
 			DEBUG( "[UMWebRequest] removeusers canUpdateUsers\n" );
 			
-			el = HttpGetPOSTParameter( request, "users" );
+			el = GetHEReq( request, "users" );
 			if( el != NULL )
 			{
 				users = UrlDecodeToMem( (char *)el->hme_Data );
@@ -2267,6 +2269,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			BufString *retExtString = BufStringNew();
 			BufStringAddSize( retExtString, "{", 1 );
 			
+			DEBUG("GroupID : %ld normal user %d\n", groupID, normalUserUpdate );
+
 			if( groupID > 0 )
 			{
 				DEBUG( "[UMWebRequest] removeusers groupID %ld\n", groupID );
@@ -2377,7 +2381,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				}
 				else	// admin user
 				{
-					DEBUG( "[UMWebRequest] admin user\n" );
+					DEBUG( "[UGMWebRequest] admin user\n" );
 					
 					ug = UGMGetGroupByIDDB( l->sl_UGM, groupID );
 				
@@ -2391,6 +2395,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 					}
 					BufStringAddSize( retString, tmp, itmp );
 					BufStringAddSize( retExtString, tmp, itmp );
+
+					DEBUG( "[UGMWebRequest] group found in DB %p ID %ld\n", ug, groupID );
 				
 					// get required information for external servers
 			
@@ -2399,6 +2405,9 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 					{
 						char tmpQuery[ 512 ];
 						snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.UniqueID,u.Status FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserID in(%s) AND ug.UserGroupID=%lu", usersSQL, groupID );
+						
+						DEBUG("Remove user SQL (select): %s\n", tmpQuery );
+						
 						void *result = sqlLib->Query(  sqlLib, tmpQuery );
 						if( result != NULL )
 						{
@@ -2442,6 +2451,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 					if( ug != NULL )
 					{
 						FBOOL levelType = FALSE;
+
+						DEBUG( "[UGMWebRequest] do action, remove\n");
 					
 						if( strcmp( ug->ug_Type, "Level" ) == 0 )
 						{

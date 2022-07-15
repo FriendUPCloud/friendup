@@ -659,6 +659,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						loggedSession = UserSessionNew( NULL, "servertoken" );
 						if( loggedSession != NULL )
 						{
+							sprintf( sessionid, "%s", loggedSession->us_SessionID );
+
 							User *usr = UMUserGetByName( l->sl_UM, userName );
 							if( usr == NULL )
 							{
@@ -666,6 +668,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								if( usr != NULL )
 								{
 									UMAddUser( l->sl_UM, usr );
+									UserAddSession( usr, loggedSession );
 								}
 							}
 							else
@@ -682,7 +685,9 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							    
 							    USMSessionSaveDB( l->sl_USM, loggedSession );
 							    USMUserSessionAddToList( l->sl_USM, loggedSession );
-					        }
+					        	
+								DEBUG("ADMINADMIN: %p  %d\n", loggedSession->us_User, IS_SESSION_ADMIN( loggedSession ) );
+							}
 						}
 					}
 				}
@@ -748,7 +753,9 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			else
 			{
 				DEBUG("[SysWebRequest] USMGetSessionBySessionID\n");
-				UserSession *locus = USMGetSessionBySessionID( l->sl_USM, sessionid );
+				UserSession *locus = NULL;
+				
+				locus = USMGetSessionBySessionID( l->sl_USM, sessionid );
 				
 				
 				if( locus != NULL )
@@ -811,6 +818,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					
 					USMUserSessionAddToList( l->sl_USM, loggedSession );
 				}
+				DEBUG("ADMINADMIN: %d\n", IS_SESSION_ADMIN( loggedSession ) );
 			}
 		}
 		
@@ -1960,6 +1968,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				{
 					USMSessionSaveDB( l->sl_USM, us );
 				}
+
+				DEBUG("ADMINADMIN: %d\n", IS_SESSION_ADMIN( loggedSession ) );
 				
 				if( us != NULL )
 				{
@@ -2619,4 +2629,3 @@ error:
 	FFree( sessionid );
 	return response;
 }
-
