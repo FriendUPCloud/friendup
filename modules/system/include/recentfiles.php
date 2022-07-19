@@ -98,12 +98,12 @@ if( isset( $args->args->workgroup ) )
 		}
 		else
 		{
-		    //$Logger->log( $q );
+		    //$Logger->log( '[Recent teams] FAILED: ' . $q );
 		}
     }
     else
     {
-        //$Logger->log( 'FAIO -> ' . $q1 );
+        //$Logger->log( '[Recent teams] FAIO -> ' . $q1 );
     }
 }
 // Get files from personal drives
