@@ -647,6 +647,8 @@ if( $args->command )
 					die( 'fail<!--separate-->{"response":-1,"message":"Could not read invite hash."}' );
 				}
 				
+				$Logger->log( '[sendinvite] Getting contact information for queued event.' );
+				
 				if( $contact->ID > 0 )
 				{
 					// Check if user is online ...
@@ -668,6 +670,8 @@ if( $args->command )
 					
 					// TODO: Remove this once all old databases that is missing this column is updated.
 					$SqlDatabase->query( 'ALTER TABLE `FQueuedEvent` ADD `InviteLinkID` bigint(20) NOT NULL DEFAULT \'0\';' );
+					
+					$Logger->log( '[sendinvite] Making queued event.' );
 					
 					// Send a notification message			
 					$n = new dbIO( 'FQueuedEvent' );
@@ -702,13 +706,18 @@ if( $args->command )
 				}
 				else
 				{
+					$Logger->log( '[sendinvite] Making queued event without contact relation.' );
+					
 					// Send a notification message			
 					$n = new dbIO( 'FQueuedEvent' );
 					$n->UserID = $usr->ID;
+					$n->Date = date( 'Y-m-d H:i:s' );
 					$n->TargetUserID = 0;
 					$n->TargetGroupID = $gid;
 					$n->InviteLinkID = $f->ID;
 					$n->Save();
+					
+					$Logger->log( '[sendinvite] Event saved: ' . $n->Save() );
 				}
 				
 				// Send email if not online or if email is specified ...
