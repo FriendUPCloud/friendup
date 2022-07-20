@@ -700,6 +700,16 @@ if( $args->command )
 						}
 					}
 				}
+				else
+				{
+					// Send a notification message			
+					$n = new dbIO( 'FQueuedEvent' );
+					$n->UserID = $usr->ID;
+					$n->TargetUserID = 0;
+					$n->TargetGroupID = $gid;
+					$n->InviteLinkID = $f->ID;
+					$n->Save();
+				}
 				
 				// Send email if not online or if email is specified ...
 				if( !$online )
