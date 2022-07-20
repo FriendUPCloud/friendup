@@ -717,7 +717,7 @@ if( $args->command )
 					$n->InviteLinkID = $f->ID;
 					$n->Save();
 					
-					$Logger->log( '[sendinvite] Event saved: ' . $n->Save() );
+					$Logger->log( '[sendinvite] Event saved: ' . $n->ID );
 				}
 				
 				// Send email if not online or if email is specified ...
