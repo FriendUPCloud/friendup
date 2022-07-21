@@ -2340,13 +2340,15 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					
 					if( notify == TRUE )
 					{
+						/*
 						char *notifPath = CutNotificationPath( origDecodedPath );
 						if( notifPath != NULL )
 						{
 							DoorNotificationCommunicateChanges( l, loggedSession, actDev, notifPath );
 							FFree( notifPath );
 						}
-						//DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
+						*/
+						DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
 					}
 					
 					DEBUG("[FSMWebRequest] Upload done\n");
