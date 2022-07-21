@@ -721,14 +721,18 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 
 				UserGroup *ug = NULL;
 				
-				if( groupCreatedByUser == TRUE )
-				{
+				//
+				// while working on Jeanie we found out that user could not create group because he was doing it on server token session (as admin)
+				// and admin checks all groups not only groups assigned to user
+				//
+				//if( groupCreatedByUser == TRUE )
+				//{
 					ug = UGMGetGroupByNameAndUserIDDB( l->sl_UGM, groupname, loggedSession->us_UserID );
-				}
-				else
-				{
-					ug = UGMGetGroupByNameDB( l->sl_UGM, groupname );
-				}
+				//}
+				//else
+				//{
+				//	ug = UGMGetGroupByNameDB( l->sl_UGM, groupname );
+				//}
 				
 				FBOOL groupUpdate = FALSE;
 				DEBUG("[UMWebRequest] GroupCreate: pointer to group from memory: %p\n", ug );
