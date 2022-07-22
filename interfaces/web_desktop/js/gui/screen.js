@@ -153,7 +153,7 @@ Screen = function ( flags, initObject )
 			var extra = this._flags['extra'];
 			if( this._flags[ 'extraClickHref' ] )
 				extra = '<span class="ExtraClick" onclick="' + this._flags[ 'extraClickHref' ] + '; return cancelBubble( event )">' + extra + '</span>';
-			ex = "\n		<div class=\"Extra\">" + extra + "</div>";
+			ex = "\n		<div class=\"Extra\"><span>" + extra + "</span></div>";
 		}
 		
 		div.innerHTML = "" +
