@@ -148,6 +148,7 @@ Screen = function ( flags, initObject )
 		div.style.webkitTransform = 'translate3d(0, 0, 0)';
 		
 		var ex = '';
+		
 		if( flags.id == 'DoorsScreen' )
 		{
 			var extra = this._flags['extra'];
