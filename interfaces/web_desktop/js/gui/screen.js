@@ -89,7 +89,7 @@ Screen = function ( flags, initObject )
 				this._flags[ flag ] = value;
 				var e = this.div.screenTitle.getElementsByClassName( 'Extra' )[0];
 				if( e )
-					e.innerHTML = value;
+					e.innerHTML = '<span>' + value + '</span>';
 				break;	
 			
 			case 'theme':	
