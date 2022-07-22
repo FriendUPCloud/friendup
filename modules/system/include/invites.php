@@ -733,9 +733,9 @@ if( $args->command )
 					$invitelink = buildUrl( $hash, $Conf, $ConfShort );
 					
 					// Set up mail content!
-					if( isset( $Conf[ 'FriendMail' ][ 'TemplateDir' ] ) )
+					if( isset( $Conf[ 'Mail' ][ 'TemplateDir' ] ) )
 					{
-						$tplDir = $Conf[ 'FriendMail' ][ 'TemplateDir' ];
+						$tplDir = $Conf[ 'Mail' ][ 'TemplateDir' ];
 						$cnt = file_get_contents( $tplDir . "/base_email_template.html" );
 					}
 					else
@@ -757,9 +757,9 @@ if( $args->command )
 					
 					// TODO: Get avatar / group info somewhere public or with access code / invite token ...
 					
-					if( isset( $Conf[ 'FriendMail' ][ 'TemplateDir' ] ) )
+					if( isset( $Conf[ 'Mail' ][ 'TemplateDir' ] ) )
 					{
-						$tplDir = $Conf[ 'FriendMail' ][ 'TemplateDir' ];
+						$tplDir = $Conf[ 'Mail' ][ 'TemplateDir' ];
 						$baserepl->body = doReplacements( file_get_contents( $tplDir . ( $gname ? "/group_invite_email_template.html" : "/invite_email_template.html" ) ) );
 					}
 					else
