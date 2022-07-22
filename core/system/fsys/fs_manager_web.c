@@ -41,6 +41,8 @@ static inline char *CutNotificationPath( char *path )
 	char *notifPath = StringDuplicate( path );
 	if( notifPath != NULL )
 	{
+		DEBUG("[CutNotificationPath] path %s\n", path );
+		
 		int i, notifPathLen = strlen( notifPath );
 		if( notifPath[ notifPathLen-1 ] == '/' )
 		{
@@ -58,6 +60,8 @@ static inline char *CutNotificationPath( char *path )
 				}
 			}
 		}
+		
+		DEBUG("[CutNotificationPath] path changed %s\n", notifPath );
 	}
 	return notifPath;
 }
@@ -1983,6 +1987,13 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 															}
 														}
 														FFree( dataBuffer );
+														
+														char *notifPath = CutNotificationPath( dstpath );
+														if( notifPath != NULL )
+														{
+															DoorNotificationCommunicateChanges( l, loggedSession, wfp, notifPath );
+															FFree( notifPath );
+														}
 													}
 													else
 													{
