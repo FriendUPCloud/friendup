@@ -45,13 +45,17 @@ static inline char *CutNotificationPath( char *path )
 		if( notifPath[ notifPathLen-1 ] == '/' )
 		{
 			notifPathLen-=2;
+			notifPath[ notifPathLen-1 ] = 0;
 		}
-		for( i=notifPathLen ; i >= 0 ; i-- )
+		else
 		{
-			if( notifPath[ i ] == '/' || notifPath[ i ] == ':' )
+			for( i=notifPathLen ; i >= 0 ; i-- )
 			{
-				notifPath[ i+1 ] = 0;
-				break;
+				if( notifPath[ i ] == '/' || notifPath[ i ] == ':' )
+				{
+					notifPath[ i+1 ] = 0;
+					break;
+				}
 			}
 		}
 	}
@@ -2340,15 +2344,14 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					
 					if( notify == TRUE )
 					{
-						/*
 						char *notifPath = CutNotificationPath( origDecodedPath );
 						if( notifPath != NULL )
 						{
 							DoorNotificationCommunicateChanges( l, loggedSession, actDev, notifPath );
 							FFree( notifPath );
 						}
-						*/
-						DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
+						
+						//DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
 					}
 					
 					DEBUG("[FSMWebRequest] Upload done\n");
