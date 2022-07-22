@@ -1987,6 +1987,13 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 															}
 														}
 														FFree( dataBuffer );
+														
+														char *notifPath = CutNotificationPath( dstpath );
+														if( notifPath != NULL )
+														{
+															DoorNotificationCommunicateChanges( l, loggedSession, wfp, notifPath );
+															FFree( notifPath );
+														}
 													}
 													else
 													{
