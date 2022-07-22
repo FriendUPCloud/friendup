@@ -760,7 +760,7 @@ if( $args->command )
 					if( isset( $Conf[ 'Mail' ][ 'TemplateDir' ] ) )
 					{
 						$tplDir = $Conf[ 'Mail' ][ 'TemplateDir' ];
-						$baserepl->body = doReplacements( file_get_contents( $tplDir . ( $gname ? "/group_invite_email_template.html" : "/invite_email_template.html" ) ) );
+						$baserepl->body = doReplacements( file_get_contents( $tplDir . ( $gname ? "/group_invite_email_template.html" : "/invite_email_template.html" ) ), $repl );
 					}
 					else
 					{
