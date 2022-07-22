@@ -387,7 +387,7 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses __attribute_
 				break;
 			}
 		}
-		DEBUG("[DoorNotificationCommunicateChanges] Lock communicate changes: %s\n", pathNoDevice );
+		DEBUG("[DoorNotificationCommunicateChanges] Lock communicate path: %s changes: %s\n", path, pathNoDevice );
 		
 		DoorNotification *notification = DoorNotificationGetNotificationsFromPath( sqllib, device, pathNoDevice );
 		
