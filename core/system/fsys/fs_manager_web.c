@@ -41,19 +41,27 @@ static inline char *CutNotificationPath( char *path )
 	char *notifPath = StringDuplicate( path );
 	if( notifPath != NULL )
 	{
+		DEBUG("[CutNotificationPath] path %s\n", path );
+		
 		int i, notifPathLen = strlen( notifPath );
 		if( notifPath[ notifPathLen-1 ] == '/' )
 		{
 			notifPathLen-=2;
+			notifPath[ notifPathLen-1 ] = 0;
 		}
-		for( i=notifPathLen ; i >= 0 ; i-- )
+		else
 		{
-			if( notifPath[ i ] == '/' || notifPath[ i ] == ':' )
+			for( i=notifPathLen ; i >= 0 ; i-- )
 			{
-				notifPath[ i+1 ] = 0;
-				break;
+				if( notifPath[ i ] == '/' || notifPath[ i ] == ':' )
+				{
+					notifPath[ i+1 ] = 0;
+					break;
+				}
 			}
 		}
+		
+		DEBUG("[CutNotificationPath] path changed %s\n", notifPath );
 	}
 	return notifPath;
 }
@@ -1979,6 +1987,13 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 															}
 														}
 														FFree( dataBuffer );
+														
+														char *notifPath = CutNotificationPath( dstpath );
+														if( notifPath != NULL )
+														{
+															DoorNotificationCommunicateChanges( l, loggedSession, wfp, notifPath );
+															FFree( notifPath );
+														}
 													}
 													else
 													{
@@ -2346,7 +2361,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							DoorNotificationCommunicateChanges( l, loggedSession, actDev, notifPath );
 							FFree( notifPath );
 						}
-						//DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
+						
+						//DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
 					}
 					
 					DEBUG("[FSMWebRequest] Upload done\n");

@@ -631,18 +631,18 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		FBOOL canCreateWorkgroup = FALSE;
 		FBOOL groupCreatedByUser = FALSE;
 		
-		el = HttpGetPOSTParameter( request, "authid" );
+		el = GetHEReq( request, "authid" );
 		if( el != NULL )
 		{
 			authid = el->hme_Data;
 		}
-		el = HttpGetPOSTParameter( request, "args" );
+		el = GetHEReq( request, "args" );
 		if( el != NULL )
 		{
 			args = el->hme_Data;
 		}
 		
-		el = HttpGetPOSTParameter( request, "groupname" );
+		el = GetHEReq( request, "groupname" );
 		if( el != NULL )
 		{
 			groupname = UrlDecodeToMem( (char *)el->hme_Data );
@@ -669,14 +669,14 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		
 		if( canCreateWorkgroup == TRUE )
 		{
-			el = HttpGetPOSTParameter( request, "description" );
+			el = GetHEReq( request, "description" );
 			if( el != NULL )
 			{
 				description = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[UMGWebRequest] Update description %s!!\n", description );
 			}
 			
-			el = HttpGetPOSTParameter( request, "type" );
+			el = GetHEReq( request, "type" );
 			if( el != NULL )
 			{
 				type = UrlDecodeToMem( (char *)el->hme_Data );
@@ -692,13 +692,13 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				type = StringDuplicate( "Workgroup" );
 			}
 			
-			el = HttpGetPOSTParameter( request, "parentid" );
+			el = GetHEReq( request, "parentid" );
 			if( el != NULL && el->hme_Data != NULL && strlen( el->hme_Data ) > 0 )
 			{
 				char *end;
 				parentID = strtol( (char *)el->hme_Data, &end, 0 );
 			}
-			el = HttpGetPOSTParameter( request, "users" );
+			el = GetHEReq( request, "users" );
 			if( el != NULL )
 			{
 				users = UrlDecodeToMem( (char *)el->hme_Data );
@@ -721,14 +721,18 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 
 				UserGroup *ug = NULL;
 				
-				if( groupCreatedByUser == TRUE )
-				{
+				//
+				// while working on Jeanie we found out that user could not create group because he was doing it on server token session (as admin)
+				// and admin checks all groups not only groups assigned to user
+				//
+				//if( groupCreatedByUser == TRUE )
+				//{
 					ug = UGMGetGroupByNameAndUserIDDB( l->sl_UGM, groupname, loggedSession->us_UserID );
-				}
-				else
-				{
-					ug = UGMGetGroupByNameDB( l->sl_UGM, groupname );
-				}
+				//}
+				//else
+				//{
+				//	ug = UGMGetGroupByNameDB( l->sl_UGM, groupname );
+				//}
 				
 				FBOOL groupUpdate = FALSE;
 				DEBUG("[UMWebRequest] GroupCreate: pointer to group from memory: %p\n", ug );
@@ -927,7 +931,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		
 		DEBUG( "[UMWebRequest] Delete group!!\n" );
 		
-		HashmapElement *el = HttpGetPOSTParameter( request, "id" );
+		HashmapElement *el = GetHEReq( request, "id" );
 		if( el != NULL )
 		{
 			char *next;
@@ -938,12 +942,12 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		{
 			char *authid = NULL;
 			char *args = NULL;
-			el = HttpGetPOSTParameter( request, "authid" );
+			el = GetHEReq( request, "authid" );
 			if( el != NULL )
 			{
 				authid = el->hme_Data;
 			}
-			el = HttpGetPOSTParameter( request, "args" );
+			el = GetHEReq( request, "args" );
 			if( el != NULL )
 			{
 				args = el->hme_Data;
@@ -1100,19 +1104,19 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		
 		char *authid = NULL;
 		char *args = NULL;
-		el = HttpGetPOSTParameter( request, "authid" );
+		el = GetHEReq( request, "authid" );
 		if( el != NULL )
 		{
 			authid = el->hme_Data;
 		}
-		el = HttpGetPOSTParameter( request, "args" );
+		el = GetHEReq( request, "args" );
 		if( el != NULL )
 		{
 			args = el->hme_Data;
 			//args = UrlDecodeToMem( el->hme_Data );
 		}
 		
-		el = HttpGetPOSTParameter( request, "id" );
+		el = GetHEReq( request, "id" );
 		if( el != NULL )
 		{
 			char *end;
@@ -1137,14 +1141,14 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		{
 			int emptyDescription = 0;
 			
-			el = HttpGetPOSTParameter( request, "groupname" );
+			el = GetHEReq( request, "groupname" );
 			if( el != NULL )
 			{
 				groupname = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[UMWebRequest] Group/Update Update groupname %s!!\n", groupname );
 			}
 			
-			el = HttpGetPOSTParameter( request, "type" );
+			el = GetHEReq( request, "type" );
 			if( el != NULL )
 			{
 				type = UrlDecodeToMem( (char *)el->hme_Data );
@@ -1155,7 +1159,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				}
 			}
 			
-			el = HttpGetPOSTParameter( request, "description" );
+			el = GetHEReq( request, "description" );
 			if( el != NULL )
 			{
 				description = UrlDecodeToMem( (char *)el->hme_Data );
@@ -1166,7 +1170,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				DEBUG( "[UMWebRequest] Group/Update Update description %s!!\n", description );
 			}
 			
-			el = HttpGetPOSTParameter( request, "parentid" );
+			el = GetHEReq( request, "parentid" );
 			if( el != NULL )
 			{
 				char *end;
@@ -1174,13 +1178,13 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				fParentID = TRUE;
 			}
 			
-			el = HttpGetPOSTParameter( request, "status" );
+			el = GetHEReq( request, "status" );
 			if( el != NULL )
 			{
 				status = atoi( (char *)el->hme_Data );
 			}
 			
-			el = HttpGetPOSTParameter( request, "users" );
+			el = GetHEReq( request, "users" );
 			if( el != NULL )
 			{
 				// if user can add/remove users from workgroup
@@ -1520,12 +1524,12 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		
 		char *authid = NULL;
 		char *args = NULL;
-		el = HttpGetPOSTParameter( request, "authid" );
+		el = GetHEReq( request, "authid" );
 		if( el != NULL )
 		{
 			authid = el->hme_Data;
 		}
-		el = HttpGetPOSTParameter( request, "args" );
+		el = GetHEReq( request, "args" );
 		if( el != NULL )
 		{
 			args = el->hme_Data;
@@ -1637,7 +1641,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		el = HttpGetPOSTParameter( request, "parentid" );
+		el = GetHEReq( request, "parentid" );
 		if( el != NULL )
 		{
 			char *end;
@@ -1645,13 +1649,13 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			fParentID = TRUE;
 		}
 		
-		el = HttpGetPOSTParameter( request, "status" );
+		el = GetHEReq( request, "status" );
 		if( el != NULL )
 		{
 			status = atoi( (char *)el->hme_Data );
 		}
 		
-		el = HttpGetPOSTParameter( request, "type" );
+		el = GetHEReq( request, "type" );
 		if( el != NULL )
 		{
 			type = UrlDecodeToMem( (char *)el->hme_Data );
@@ -1686,13 +1690,13 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			char *authid = NULL;
 			char *args = NULL;
 
-			el = HttpGetPOSTParameter( request, "authid" );
+			el = GetHEReq( request, "authid" );
 			if( el != NULL )
 			{
 				authid = el->hme_Data;
 				len += strlen( authid );
 			}
-			el = HttpGetPOSTParameter( request, "args" );
+			el = GetHEReq( request, "args" );
 			if( el != NULL )
 			{
 				args = el->hme_Data;
@@ -1758,14 +1762,14 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		el = HttpGetPOSTParameter( request, "id" );
+		el = GetHEReq( request, "id" );
 		if( el != NULL )
 		{
 			char *end;
 			groupID = strtol( (char *)el->hme_Data, &end, 0 );
 		}
 		
-		el = HttpGetPOSTParameter( request, "authid" );
+		el = GetHEReq( request, "authid" );
 		if( el != NULL )
 		{
 			authid = el->hme_Data;
@@ -1774,7 +1778,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				len += strlen( authid );
 			}
 		}
-		el = HttpGetPOSTParameter( request, "args" );
+		el = GetHEReq( request, "args" );
 		if( el != NULL )
 		{
 			args = el->hme_Data;
@@ -1991,13 +1995,13 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		el = HttpGetPOSTParameter( request, "args" );
+		el = GetHEReq( request, "args" );
 		if( el != NULL )
 		{
 			args = el->hme_Data;
 		}
 		
-		el = HttpGetPOSTParameter( request, "authid" );
+		el = GetHEReq( request, "authid" );
 		if( el != NULL )
 		{
 			authid = el->hme_Data;
@@ -2005,7 +2009,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		
 		if( IS_SESSION_ADMIN( loggedSession ) || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 		{
-			el = HttpGetPOSTParameter( request, "users" );
+			el = GetHEReq( request, "users" );
 			if( el != NULL )
 			{
 				users = UrlDecodeToMem( (char *)el->hme_Data );
@@ -2013,7 +2017,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				DEBUG( "[UMWebRequest] addusers users %s!!\n", users );
 			}
 		
-			el = HttpGetPOSTParameter( request, "id" );
+			el = GetHEReq( request, "id" );
 			if( el != NULL )
 			{
 				char *end;
@@ -2194,24 +2198,26 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		FBOOL canUpdateUsers = FALSE;
 		FBOOL normalUserUpdate = FALSE;
 		
-		el = HttpGetPOSTParameter( request, "args" );
+		el = GetHEReq( request, "args" );
 		if( el != NULL )
 		{
 			args = el->hme_Data;
 		}
 
-		el = HttpGetPOSTParameter( request, "authid" );
+		el = GetHEReq( request, "authid" );
 		if( el != NULL )
 		{
 			authid = el->hme_Data;
 		}
 		
-		el = HttpGetPOSTParameter( request, "id" );
+		el = GetHEReq( request, "id" );
 		if( el != NULL )
 		{
 			char *end;
 			groupID = strtol( (char *)el->hme_Data, &end, 0 );
 		}
+
+		DEBUG("Is session admin: %d sessionid %s\n", IS_SESSION_ADMIN( loggedSession ), loggedSession->us_SessionID );
 		
 		if( IS_SESSION_ADMIN( loggedSession ) || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 		{	// user cannot create any groups without permissions
@@ -2253,7 +2259,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		{
 			DEBUG( "[UMWebRequest] removeusers canUpdateUsers\n" );
 			
-			el = HttpGetPOSTParameter( request, "users" );
+			el = GetHEReq( request, "users" );
 			if( el != NULL )
 			{
 				users = UrlDecodeToMem( (char *)el->hme_Data );
@@ -2267,6 +2273,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			BufString *retExtString = BufStringNew();
 			BufStringAddSize( retExtString, "{", 1 );
 			
+			DEBUG("GroupID : %ld normal user %d\n", groupID, normalUserUpdate );
+
 			if( groupID > 0 )
 			{
 				DEBUG( "[UMWebRequest] removeusers groupID %ld\n", groupID );
@@ -2377,7 +2385,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				}
 				else	// admin user
 				{
-					DEBUG( "[UMWebRequest] admin user\n" );
+					DEBUG( "[UGMWebRequest] admin user\n" );
 					
 					ug = UGMGetGroupByIDDB( l->sl_UGM, groupID );
 				
@@ -2391,6 +2399,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 					}
 					BufStringAddSize( retString, tmp, itmp );
 					BufStringAddSize( retExtString, tmp, itmp );
+
+					DEBUG( "[UGMWebRequest] group found in DB %p ID %ld\n", ug, groupID );
 				
 					// get required information for external servers
 			
@@ -2399,6 +2409,9 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 					{
 						char tmpQuery[ 512 ];
 						snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.UniqueID,u.Status FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserID in(%s) AND ug.UserGroupID=%lu", usersSQL, groupID );
+						
+						DEBUG("Remove user SQL (select): %s\n", tmpQuery );
+						
 						void *result = sqlLib->Query(  sqlLib, tmpQuery );
 						if( result != NULL )
 						{
@@ -2442,6 +2455,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 					if( ug != NULL )
 					{
 						FBOOL levelType = FALSE;
+
+						DEBUG( "[UGMWebRequest] do action, remove\n");
 					
 						if( strcmp( ug->ug_Type, "Level" ) == 0 )
 						{
@@ -2586,14 +2601,14 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		
 		if( IS_SESSION_ADMIN( loggedSession ) )
 		{
-			el = HttpGetPOSTParameter( request, "id" );
+			el = GetHEReq( request, "id" );
 			if( el != NULL )
 			{
 				char *end;
 				groupID = strtol( (char *)el->hme_Data, &end, 0 );
 			}
 			
-			el = HttpGetPOSTParameter( request, "users" );
+			el = GetHEReq( request, "users" );
 			if( el != NULL )
 			{
 				users = UrlDecodeToMem( (char *)el->hme_Data );

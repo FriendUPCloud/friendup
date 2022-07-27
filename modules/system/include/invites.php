@@ -647,6 +647,8 @@ if( $args->command )
 					die( 'fail<!--separate-->{"response":-1,"message":"Could not read invite hash."}' );
 				}
 				
+				$Logger->log( '[sendinvite] Getting contact information for queued event.' );
+				
 				if( $contact->ID > 0 )
 				{
 					// Check if user is online ...
@@ -668,6 +670,8 @@ if( $args->command )
 					
 					// TODO: Remove this once all old databases that is missing this column is updated.
 					$SqlDatabase->query( 'ALTER TABLE `FQueuedEvent` ADD `InviteLinkID` bigint(20) NOT NULL DEFAULT \'0\';' );
+					
+					$Logger->log( '[sendinvite] Making queued event.' );
 					
 					// Send a notification message			
 					$n = new dbIO( 'FQueuedEvent' );
@@ -700,6 +704,21 @@ if( $args->command )
 						}
 					}
 				}
+				else
+				{
+					$Logger->log( '[sendinvite] Making queued event without contact relation.' );
+					
+					// Send a notification message			
+					$n = new dbIO( 'FQueuedEvent' );
+					$n->UserID = $usr->ID;
+					$n->Date = date( 'Y-m-d H:i:s' );
+					$n->TargetUserID = 0;
+					$n->TargetGroupID = $gid;
+					$n->InviteLinkID = $f->ID;
+					$n->Save();
+					
+					$Logger->log( '[sendinvite] Event saved: ' . $n->ID );
+				}
 				
 				// Send email if not online or if email is specified ...
 				if( !$online )
@@ -714,7 +733,15 @@ if( $args->command )
 					$invitelink = buildUrl( $hash, $Conf, $ConfShort );
 					
 					// Set up mail content!
-					$cnt = file_get_contents( "php/templates/mail/base_email_template.html" );
+					if( isset( $Conf[ 'Mail' ][ 'TemplateDir' ] ) )
+					{
+						$tplDir = $Conf[ 'Mail' ][ 'TemplateDir' ];
+						$cnt = file_get_contents( $tplDir . "/base_email_template.html" );
+					}
+					else
+					{
+						$cnt = file_get_contents( "php/templates/mail/base_email_template.html" );
+					}
 				
 					$repl = new stdClass(); $baserepl = new stdClass();
 			
@@ -730,7 +757,15 @@ if( $args->command )
 					
 					// TODO: Get avatar / group info somewhere public or with access code / invite token ...
 					
-					$baserepl->body = doReplacements( file_get_contents( $gname ? "php/templates/mail/group_invite_email_template.html" : "php/templates/mail/invite_email_template.html" ), $repl );
+					if( isset( $Conf[ 'Mail' ][ 'TemplateDir' ] ) )
+					{
+						$tplDir = $Conf[ 'Mail' ][ 'TemplateDir' ];
+						$baserepl->body = doReplacements( file_get_contents( $tplDir . ( $gname ? "/group_invite_email_template.html" : "/invite_email_template.html" ) ), $repl );
+					}
+					else
+					{
+						$baserepl->body = doReplacements( file_get_contents( $gname ? "php/templates/mail/group_invite_email_template.html" : "php/templates/mail/invite_email_template.html" ), $repl );
+					}
 					
 					$cnt = doReplacements( $cnt, $baserepl );
 					

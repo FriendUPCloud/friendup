@@ -89,7 +89,7 @@ Screen = function ( flags, initObject )
 				this._flags[ flag ] = value;
 				var e = this.div.screenTitle.getElementsByClassName( 'Extra' )[0];
 				if( e )
-					e.innerHTML = value;
+					e.innerHTML = '<span>' + value + '</span>';
 				break;	
 			
 			case 'theme':	
@@ -148,12 +148,13 @@ Screen = function ( flags, initObject )
 		div.style.webkitTransform = 'translate3d(0, 0, 0)';
 		
 		var ex = '';
+		
 		if( flags.id == 'DoorsScreen' )
 		{
 			var extra = this._flags['extra'];
 			if( this._flags[ 'extraClickHref' ] )
 				extra = '<span class="ExtraClick" onclick="' + this._flags[ 'extraClickHref' ] + '; return cancelBubble( event )">' + extra + '</span>';
-			ex = "\n		<div class=\"Extra\">" + extra + "</div>";
+			ex = "\n		<div class=\"Extra\"><span>" + extra + "</span></div>";
 		}
 		
 		div.innerHTML = "" +
