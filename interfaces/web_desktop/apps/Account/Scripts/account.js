@@ -96,9 +96,9 @@ Application.run = function( msg, iface )
 			
 			// Inject possible Workspace modes
 			let modes = {
-				normal: i18n( 'i18n_mode_normal' ),
-				developer: i18n( 'i18n_mode_developer' ),
-				gamified: i18n( 'i18n_mode_gamified' )
+				normal    : i18n( 'i18n_mode_normal' ),
+				developer : i18n( 'i18n_mode_developer' ),
+				gamified  : i18n( 'i18n_mode_gamified' )
 			};
 			let modeOut = '';
 			for( let a in modes )
@@ -109,9 +109,9 @@ Application.run = function( msg, iface )
 			
 			f.replacements = 
 			{
-				languages: languages,
-				modes: modeOut,
-				activeTab: activeTab
+				languages : languages,
+				modes     : modeOut,
+				activeTab : activeTab
 			};
 
 			// If FriendNetwork is enabled, add the options		

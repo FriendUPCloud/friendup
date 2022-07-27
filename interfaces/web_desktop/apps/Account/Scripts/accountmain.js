@@ -55,13 +55,22 @@ Application.run = function( msg, iface )
 			}
 			
 			console.log( 'sampleconfig', serverConfig );
-			if ( false === serverConfig.hasGroupsFeature )
+			if ( null != serverConfig.hasGroupsFeature )
 			{
-				return;
+				if ( true === serverConfig.hasGroupsFeature )
+					refreshGroups( ge( 'groupSearcher' ).value );
 			}
-			else
+			
+			if ( null != serverConfig.friendTheme )
 			{
-				refreshGroups( ge( 'groupSearcher' ).value );
+				console.log( 'theres a friend theme' );
+				if ( 'jeanie' === serverConfig.friendTheme )
+				{
+					ge( 'MTabs' ).querySelectorAll( '.Tab' )[1]
+						.style = 'display: none';
+					ge( 'MTabs' ).querySelectorAll( '.Tab' )[2]
+						.style = 'display: none';
+				}
 			}
 		}
 	}
