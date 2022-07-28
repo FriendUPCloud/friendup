@@ -104,7 +104,7 @@ Workspace.deleteFile = function( mode )
 					
 					let container = document.createElement( 'div' );
 					container.className = 'ProgressBar';
-					cont.appendChild( progress );
+					cont.appendChild( container );
 					
 					var progress = document.createElement( 'div' );
 					progress.className = 'Progress';
