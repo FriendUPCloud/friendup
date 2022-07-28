@@ -684,6 +684,8 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 			title:  ctrl ? i18n( 'i18n_copying_files' ) : i18n('i18n_moving_files'),
 			width:  400,
 			height: 145,
+			dialog: true,
+			dockable: true,
 			'max-height': 145,
 			id:     'fileops_' + copySessionId
 		} );
