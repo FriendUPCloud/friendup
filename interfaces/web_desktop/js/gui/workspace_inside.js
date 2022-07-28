@@ -5731,19 +5731,39 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			let eles = rwin.content.getElementsByTagName( 'div' );
 			let selected = [];
 
-			for( let a = 0; a < eles.length; a++ )
+			if( rwin.content && rwin.content.icons )
 			{
-				if( eles[a].className.indexOf( ' Selected' ) < 0 )
-					continue;
-
-				// Make a copy (we might not have the source view window open anymore!)
-				let eleCopy = document.createElement( eles[a].tagName );
-				eleCopy.innerHTML = eles[a].innerHTML;
-				eleCopy.fileInfo = eles[a].fileInfo;
-				eleCopy.window = { fileInfo: rwin.content.fileInfo, refresh: rwin.refresh };
-
-				selected.push( eleCopy );
+			    for( let a = 0; a < rwin.content.icons.length; a++ )
+			    {
+			        let ic = rwin.content.icons[a];
+			        if( !ic.selected ) continue;
+			        
+			        // Make a copy (we might not have the source view window open anymore!)
+				    let eleCopy = document.createElement( 'div' );
+				    eleCopy.innerHTML = ic.domNode ? ic.domNode.innerHTML : '<div class="File"></div>';
+				    eleCopy.fileInfo = ic;
+				    eleCopy.window = { fileInfo: ic, refresh: rwin.refresh };
+				    selected.push( eleCopy );
+			    }
 			}
+			// TODO: Never go here (and remove this code later)
+			else
+			{
+			    for( let a = 0; a < eles.length; a++ )
+			    {
+				    if( eles[a].className.indexOf( ' Selected' ) < 0 )
+					    continue;
+
+				    // Make a copy (we might not have the source view window open anymore!)
+				    let eleCopy = document.createElement( eles[a].tagName );
+				    eleCopy.innerHTML = eles[a].innerHTML;
+				    eleCopy.fileInfo = eles[a].fileInfo;
+				    eleCopy.window = { fileInfo: rwin.content.fileInfo, refresh: rwin.refresh };
+
+				    selected.push( eleCopy );
+			    }
+		    }
+		    
 			//only act if we have something to do afterwards...
 			if( selected.length > 0 )
 			{
