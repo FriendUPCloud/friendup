@@ -113,9 +113,9 @@ else
         SELECT DISTINCT(filelog.FileID) F FROM `FSFileLog` filelog' . $extra . '
         WHERE
             filelog.UserID = \'' . $User->ID . '\'
-            AND filelog.Accessed < ( NOW() + INTERVAL 30 DAY )
+            AND filelog.Accessed >= ( NOW() + INTERVAL 30 DAY )
             ' . $extrasql . '
-        LIMIT 1500
+        LIMIT 150
     ' ) )
     {
         $ids = [];
