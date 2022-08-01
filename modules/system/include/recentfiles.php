@@ -115,7 +115,7 @@ else
             filelog.UserID = \'' . $User->ID . '\'
             AND filelog.Accessed < ( NOW() + INTERVAL 30 DAY )
             ' . $extrasql . '
-        LIMIT 150
+        LIMIT 1500
     ' ) )
     {
         $ids = [];
@@ -129,7 +129,7 @@ else
                 filelog.FileID IN ( ' . implode( ',', $ids ) . ' ) 
             ' . $extrasql . '
             AND filelog.UserID = \'' . $User->ID . '\' 
-            ORDER BY filelog.ID DESC
+            ORDER BY filelog.Accessed DESC
         ' ) ) )
         {
             $test = [];
