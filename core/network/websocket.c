@@ -256,7 +256,7 @@ int WebsocketThread( FThread *data )
 				cnt = 0;
 			}
 		}
-		int n = lws_service( ws->ws_Context, -1 );
+		int n = lws_service( ws->ws_Context, 0 );
 		usleep( 5 );
 	}
 	Log( FLOG_INFO, "[WS] Service stopped\n" );
