@@ -243,7 +243,6 @@ void CommServiceDelete( CommService *s )
 void *ServiceTempThread( void *d )
 {
 	pthread_detach( pthread_self() );
-	signal(SIGPIPE, SIG_IGN);
 	CommServiceSetupOutgoing( d );
 	DEBUG("[ServiceTempThread] pthread quit\n");
 	pthread_exit( NULL );
