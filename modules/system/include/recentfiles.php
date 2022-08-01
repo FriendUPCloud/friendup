@@ -117,7 +117,7 @@ else
                 filelog.UserID = \'' . $User->ID . '\'
                 AND filelog.Accessed >= \'' . $past . '\'
                 ' . $extrasql . '
-            LIMIT 150
+            LIMIT 2550
         ) z
         ORDER BY z.F DESC
     ' ) )
@@ -134,6 +134,7 @@ else
                 ' . $extrasql . '
                 AND filelog.UserID = \'' . $User->ID . '\' 
             ORDER BY filelog.Accessed DESC
+            LIMIT 30
         ' ) ) )
         {
             $test = [];
