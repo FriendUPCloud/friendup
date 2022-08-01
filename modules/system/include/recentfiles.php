@@ -109,43 +109,51 @@ if( isset( $args->args->workgroup ) )
 // Get files from personal drives
 else
 {
-    if( $rows = $SqlDatabase->fetchObjects( '
-        SELECT filelog.* FROM 
-            FSFileLog filelog, Filesystem f' . $extra . '
-        WHERE 
-            filelog.FilesystemID = f.ID AND
-            filelog.FileID IN ( 
-                SELECT DISTINCT(FileID) FROM `FSFileLog`
-                WHERE
-                    UserID = \'' . $User->ID . '\'
-                AND `Accessed` < ( NOW() + INTERVAL 30 DAY )
-                ' . $extrasql . '
-        ) AND filelog.UserID = \'' . $User->ID . '\' ORDER BY filelog.Accessed DESC
+    if( $uniques = $SqlDatabase->fetchObjects( '
+        SELECT DISTINCT(FileID) F FROM `FSFileLog`
+        WHERE
+            UserID = \'' . $User->ID . '\'
+        AND `Accessed` < ( NOW() + INTERVAL 30 DAY )
+        LIMIT 150
     ' ) )
     {
-        $test = [];
-        $out = [];
-        $count = 0;
-        foreach( $rows as $row )
+        $ids = [];
+        foreach( $uniques as $u )
+            $ids[] = $u->F;
+        if( $rows = $SqlDatabase->fetchObjects( '
+            SELECT filelog.* FROM 
+                FSFileLog filelog, Filesystem f' . $extra . '
+            WHERE 
+                filelog.FilesystemID = f.ID AND
+                filelog.FileID IN ( ' . $ids . ' ) 
+            ' . $extrasql . '
+            AND filelog.UserID = \'' . $User->ID . '\' ORDER BY filelog.Accessed DESC
+        ' ) )
         {
-            if( !isset( $test[ $row->FileID ] ) )
+            $test = [];
+            $out = [];
+            $count = 0;
+            foreach( $rows as $row )
             {
-                // Skip hidden files
-                $path = explode( ':', $row->Path );
-		    	$path = array_pop( $path );
-		    	if( strstr( $path, '/' ) )
-		    	{
-		    	    $path = explode( '/', $row->Path );
-		    		$path = array_pop( $path );
-		        }
-		    	if( substr( $path, 0, 1 ) == '.' ) continue;
-		    	if( $count++ >= $maxToList ) continue;
-		    	// Here we go
-                $test[ $row->FileID ] = true;
-                $out[] = $row;
+                if( !isset( $test[ $row->FileID ] ) )
+                {
+                    // Skip hidden files
+                    $path = explode( ':', $row->Path );
+		        	$path = array_pop( $path );
+		        	if( strstr( $path, '/' ) )
+		        	{
+		        	    $path = explode( '/', $row->Path );
+		        		$path = array_pop( $path );
+		            }
+		        	if( substr( $path, 0, 1 ) == '.' ) continue;
+		        	if( $count++ >= $maxToList ) continue;
+		        	// Here we go
+                    $test[ $row->FileID ] = true;
+                    $out[] = $row;
+                }
             }
+            die( 'ok<!--separate-->' . json_encode( $out ) );
         }
-        die( 'ok<!--separate-->' . json_encode( $out ) );
     }
 }
 
