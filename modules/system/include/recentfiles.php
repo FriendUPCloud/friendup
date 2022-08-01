@@ -110,10 +110,11 @@ if( isset( $args->args->workgroup ) )
 else
 {
     if( $uniques = $SqlDatabase->fetchObjects( '
-        SELECT DISTINCT(FileID) F FROM `FSFileLog`
+        SELECT DISTINCT(l.FileID) F FROM `FSFileLog` l' . $extra . '
         WHERE
-            UserID = \'' . $User->ID . '\'
-            AND `Accessed` < ( NOW() + INTERVAL 30 DAY )
+            l.UserID = \'' . $User->ID . '\'
+            AND l.Accessed < ( NOW() + INTERVAL 30 DAY )
+            ' . $extrasql . '
         LIMIT 150
     ' ) )
     {
