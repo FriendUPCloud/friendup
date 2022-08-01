@@ -113,7 +113,7 @@ else
         SELECT DISTINCT(FileID) F FROM `FSFileLog`
         WHERE
             UserID = \'' . $User->ID . '\'
-        AND `Accessed` < ( NOW() + INTERVAL 30 DAY )
+            AND `Accessed` < ( NOW() + INTERVAL 30 DAY )
         LIMIT 150
     ' ) )
     {
@@ -127,7 +127,8 @@ else
                 filelog.FilesystemID = f.ID AND
                 filelog.FileID IN ( ' . implode( ',', $ids ) . ' ) 
             ' . $extrasql . '
-            AND filelog.UserID = \'' . $User->ID . '\' ORDER BY filelog.Accessed DESC
+            AND filelog.UserID = \'' . $User->ID . '\' 
+            ORDER BY filelog.Accessed DESC
         ' ) )
         {
             $test = [];
