@@ -120,7 +120,7 @@ else
         $ids = [];
         foreach( $uniques as $u )
             $ids[] = $u->F;
-        if( $rows = $SqlDatabase->fetchObjects( '
+        if( $rows = $SqlDatabase->fetchObjects( $q = ( '
             SELECT filelog.* FROM 
                 FSFileLog filelog, Filesystem f' . $extra . '
             WHERE 
@@ -129,7 +129,7 @@ else
             ' . $extrasql . '
             AND filelog.UserID = \'' . $User->ID . '\' 
             ORDER BY filelog.Accessed DESC
-        ' ) )
+        ' ) ) )
         {
             $test = [];
             $out = [];
@@ -158,6 +158,6 @@ else
     }
 }
 
-die( 'fail<!--separate-->{"message":"Could not find recent files.","response":-1}' );
+die( 'fail<!--separate-->{"message":"Could not find recent files.","response":-1}<!--separate-->' . $q );
 
 ?>
