@@ -111,12 +111,15 @@ else
 {
     $past = date( 'Y-m-d H:i:s', time() - ( 60 * 60 * 24 * 30 ) );
     if( $uniques = $SqlDatabase->fetchObjects( '
-        SELECT DISTINCT(filelog.FileID) F FROM `FSFileLog` filelog' . $extra . '
-        WHERE
-            filelog.UserID = \'' . $User->ID . '\'
-            AND filelog.Accessed >= \'' . $past . '\'
-            ' . $extrasql . '
-        LIMIT 150
+        SELECT * FROM ( 
+            SELECT DISTINCT(filelog.FileID) F FROM `FSFileLog` filelog' . $extra . '
+            WHERE
+                filelog.UserID = \'' . $User->ID . '\'
+                AND filelog.Accessed >= \'' . $past . '\'
+                ' . $extrasql . '
+            LIMIT 150
+        ) z
+        ORDER BY z.ID DESC
     ' ) )
     {
         $ids = [];
