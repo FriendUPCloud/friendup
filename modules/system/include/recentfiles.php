@@ -109,14 +109,14 @@ if( isset( $args->args->workgroup ) )
 // Get files from personal drives
 else
 {
-    if( $uniques = $SqlDatabase->fetchObjects( '
-        SELECT DISTINCT(l.FileID) F FROM `FSFileLog` l' . $extra . '
+    if( $uniques = $SqlDatabase->fetchObjects( $q = ( '
+        SELECT DISTINCT(filelog.FileID) F FROM `FSFileLog` filelog' . $extra . '
         WHERE
-            l.UserID = \'' . $User->ID . '\'
-            AND l.Accessed < ( NOW() + INTERVAL 30 DAY )
+            filelog.UserID = \'' . $User->ID . '\'
+            AND filelog.Accessed < ( NOW() + INTERVAL 30 DAY )
             ' . $extrasql . '
         LIMIT 150
-    ' ) )
+    ' ) ) )
     {
         $ids = [];
         foreach( $uniques as $u )
