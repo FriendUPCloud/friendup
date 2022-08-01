@@ -131,8 +131,8 @@ else
             WHERE 
                 filelog.FilesystemID = f.ID AND
                 filelog.FileID IN ( ' . implode( ',', $ids ) . ' ) 
-            ' . $extrasql . '
-            AND filelog.UserID = \'' . $User->ID . '\' 
+                ' . $extrasql . '
+                AND filelog.UserID = \'' . $User->ID . '\' 
             ORDER BY filelog.Accessed DESC
         ' ) ) )
         {
@@ -163,6 +163,6 @@ else
     }
 }
 
-die( 'fail<!--separate-->{"message":"Could not find recent files.","response":-1}' );
+die( 'fail<!--separate-->{"message":"Could not find recent files.","response":-1}<!--separate-->' . $q );
 
 ?>
