@@ -158,11 +158,11 @@ else
                     $out[] = $row;
                 }
             }
-            die( 'ok<!--separate-->' . json_encode( $out ) );
+            die( 'ok<!--separate-->' . json_encode( $out ) . '<!--separate-->' . $q );
         }
     }
 }
 
-die( 'fail<!--separate-->{"message":"Could not find recent files.","response":-1}<!--separate-->' . $q );
+die( 'fail<!--separate-->{"message":"Could not find recent files.","response":-1}' );
 
 ?>
