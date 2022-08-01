@@ -115,7 +115,7 @@ else
             filelog.UserID = \'' . $User->ID . '\'
             AND filelog.Accessed < ( NOW() + INTERVAL 30 DAY )
             ' . $extrasql . '
-        LIMIT 150
+        LIMIT 350
     ' ) )
     {
         $ids = [];
