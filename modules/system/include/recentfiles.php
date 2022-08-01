@@ -119,7 +119,7 @@ else
                 ' . $extrasql . '
             LIMIT 150
         ) z
-        ORDER BY z.ID DESC
+        ORDER BY z.F DESC
     ' ) )
     {
         $ids = [];
