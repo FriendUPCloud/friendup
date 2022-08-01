@@ -109,14 +109,14 @@ if( isset( $args->args->workgroup ) )
 // Get files from personal drives
 else
 {
-    if( $uniques = $SqlDatabase->fetchObjects( $q = ( '
+    if( $uniques = $SqlDatabase->fetchObjects( '
         SELECT DISTINCT(filelog.FileID) F FROM `FSFileLog` filelog' . $extra . '
         WHERE
             filelog.UserID = \'' . $User->ID . '\'
             AND filelog.Accessed < ( NOW() + INTERVAL 30 DAY )
             ' . $extrasql . '
         LIMIT 150
-    ' ) ) )
+    ' ) )
     {
         $ids = [];
         foreach( $uniques as $u )
@@ -159,6 +159,6 @@ else
     }
 }
 
-die( 'fail<!--separate-->{"message":"Could not find recent files.","response":-1}<!--separate-->' . $q );
+die( 'fail<!--separate-->{"message":"Could not find recent files.","response":-1}' );
 
 ?>
