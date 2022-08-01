@@ -1269,7 +1269,7 @@ void *FriendCoreProcessSockBlock( void *fcv )
 		return NULL;
 	}
 
-	struct fcThreadInstance *th = ( struct fcThreadInstance *)fcv;
+    struct fcThreadInstance *th = ( struct fcThreadInstance *)fcv;
 
 	BufStringDisk *resultString = NULL;
 
@@ -1325,6 +1325,9 @@ void *FriendCoreProcessSockBlock( void *fcv )
 	
 	// Always assume this first..
 	th->sock->s_SocketBlockTimeout = 0;
+	
+	int set = 1;
+    setsockopt( th->sock, SOL_SOCKET, SO_NOSIGPIPE, (void *)&set, sizeof(int) );
 	
 	if( locBuffer != NULL )
 	{
