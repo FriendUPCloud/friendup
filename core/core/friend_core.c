@@ -1326,8 +1326,7 @@ void *FriendCoreProcessSockBlock( void *fcv )
 	// Always assume this first..
 	th->sock->s_SocketBlockTimeout = 0;
 	
-	int set = 1;
-    setsockopt( th->sock->fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&set, sizeof(int) );
+	signal(SIGPIPE, SIG_IGN);
 	
 	if( locBuffer != NULL )
 	{
