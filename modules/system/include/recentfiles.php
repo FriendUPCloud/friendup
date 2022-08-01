@@ -125,7 +125,7 @@ else
                 FSFileLog filelog, Filesystem f' . $extra . '
             WHERE 
                 filelog.FilesystemID = f.ID AND
-                filelog.FileID IN ( ' . $ids . ' ) 
+                filelog.FileID IN ( ' . implode( ',', $ids ) . ' ) 
             ' . $extrasql . '
             AND filelog.UserID = \'' . $User->ID . '\' ORDER BY filelog.Accessed DESC
         ' ) )
