@@ -1210,8 +1210,9 @@ void *FriendCoreAcceptPhase2( void *d )
 	//DEBUG("[FriendCoreAcceptPhase2] detached\n");
 #ifdef USE_PTHREAD
 	pthread_detach( pthread_self() );		// using workers atm
+    signal(SIGPIPE, SIG_IGN);
 #endif
-
+    
 	struct fcThreadInstance *pre = (struct fcThreadInstance *)d;
 	FriendCoreInstance *fc = (FriendCoreInstance *)pre->fc;
 
@@ -1259,6 +1260,7 @@ void *FriendCoreProcessSockBlock( void *fcv )
 {
 #ifdef USE_PTHREAD
 	pthread_detach( pthread_self() );
+    signal(SIGPIPE, SIG_IGN);
 #endif 
 
 	if( fcv == NULL )
@@ -1325,8 +1327,6 @@ void *FriendCoreProcessSockBlock( void *fcv )
 	
 	// Always assume this first..
 	th->sock->s_SocketBlockTimeout = 0;
-	
-	signal(SIGPIPE, SIG_IGN);
 	
 	if( locBuffer != NULL )
 	{
@@ -1487,6 +1487,7 @@ void *FriendCoreProcessSockNonBlock( void *fcv )
 {
 #ifdef USE_PTHREAD
 	pthread_detach( pthread_self() );
+	signal(SIGPIPE, SIG_IGN);
 #endif 
 
 	if( fcv == NULL )
@@ -1820,6 +1821,8 @@ static inline void FriendCoreSelect( FriendCoreInstance* fc )
 */
 static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 {
+	signal(SIGPIPE, SIG_IGN);
+	
 	int eventCount = 0;
 	int i;
 	struct epoll_event *currentEvent;

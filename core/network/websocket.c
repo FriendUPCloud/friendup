@@ -217,6 +217,8 @@ void hand(int s )
 int WebsocketThread( FThread *data )
 {
 	pthread_detach( pthread_self() );
+	signal(SIGPIPE, SIG_IGN);
+	
 	int cnt = 0;
 	WebSocket *ws = (WebSocket *)data->t_Data;
 	if( ws == NULL || ws->ws_Context == NULL )

@@ -231,6 +231,7 @@ void *ParseAndCall( WSThreadData *wstd );
 int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userData, void *tin, ssize_t len)
 {
     signal(SIGPIPE, SIG_IGN);
+    
 	WSCData *wsd =  (WSCData *) userData;// lws_context_user ( this );
 	int returnError = 0;
 	
@@ -822,6 +823,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 void *ParseAndCall( WSThreadData *wstd )
 {
 	pthread_detach( pthread_self() );
+	signal(SIGPIPE, SIG_IGN);
 
 	int i, i1;
 	int r;
