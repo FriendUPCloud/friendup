@@ -213,7 +213,7 @@ ListString *PHPCall( const char *command )
 		return NULL;
 	}
 	
-	char *buf = FCalloc( PHP_READ_SIZE+16 );
+	char *buf = FCallocAlign( PHP_READ_SIZE+16, sizeof( char ) );
 	ListString *ls = ListStringNew();
 	int errCounter = 0;
 	int size = 0;
