@@ -115,9 +115,9 @@ else
             SELECT DISTINCT(filelog.FileID) F FROM `FSFileLog` filelog' . $extra . '
             WHERE
                 filelog.UserID = \'' . $User->ID . '\'
-                AND filelog.Accessed >= \'' . $past . '\'
+                AND filelog.Accessed <= \'' . $past . '\'
                 ' . $extrasql . '
-            LIMIT 2550
+            LIMIT 150
         ) z
         ORDER BY z.F DESC
     ' ) )
@@ -159,7 +159,7 @@ else
                     $out[] = $row;
                 }
             }
-            die( 'ok<!--separate-->' . json_encode( $out ) . '<!--separate-->' . $q );
+            die( 'ok<!--separate-->' . json_encode( $out ) );
         }
     }
 }
