@@ -37,6 +37,8 @@ if( !isset( $args->args->listdetails ) )
     $args->args->listdetails = false;
 if( !isset( $args->args->data ) )
     $args->args->data = false;
+if( !isset( $args->args->object ) )
+    $args->args->object = false;
 
 if( $data = Permissions( $args->args->type, $args->args->context, ( isset( $args->authid ) ? 'AUTHID'.$args->authid : $args->args->name ), $args->args->data, $args->args->object, $args->args->objectid, $args->args->listdetails ) )
 {
