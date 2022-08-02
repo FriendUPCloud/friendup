@@ -299,6 +299,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 					
 					if( typeof( list ) == 'object' && list.length )
 					{
+					    console.log( 'CPY we got an OBJECT' );
 						// Fix paths
 						let sef = this;
 						let sharedCheck = [];
