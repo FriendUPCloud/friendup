@@ -127,7 +127,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			    if( substr( $path, 0, 13 ) == '<!--base64-->' )
 			    {
 			        $p = explode( '<!--base64-->', $path );
-			        $path = base64_decode( $( $p[1] );
+			        $path = base64_decode( $p[1] );
 			    }
 			
 				$path = str_replace( '::', ':', $path );
