@@ -346,12 +346,14 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 						else
 						{
 							let pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
+							console.log( 'CPY - Calling back!!!: ' + pth );
 							callback( list, t.fileInfo.Path, pth );
 						}
 					}
 					else
 					{
 						// Empty directory
+						console.log( 'CPY - Calling back (empty)!!!' );
 						callback( [], t.fileInfo.Path, false );
 					}
 				}
