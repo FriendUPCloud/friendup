@@ -209,7 +209,6 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 	console.log( 'CPY - DIR Checking path: ' + t.fileInfo.Path );
 	this.checkDormantDoors( t.fileInfo.Path ? t.fileInfo.Path : false, function( dirs )
 	{
-		console.log( 'CPY - Checking complete (not dormant)' );
 		if( !t.fileInfo.Path && t.path )
 		{
 			if( t.deviceName.indexOf( ':' ) < 0 )
@@ -336,6 +335,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 									}
 									catch( e )
 									{
+									    console.log( 'CPY - ERROR checking JSON: ' + chd );
 									};
 								}
 								let pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
