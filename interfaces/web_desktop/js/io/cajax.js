@@ -11,7 +11,6 @@
 let _cajax_process_count = 0;
 
 let _cajax_connection_seed = Math.random(0,999)+Math.random(0,999)+Math.random(0,999)+'_';
-let _cajax_connection_num = 0;
 
 let _cajax_http_connections = 0;                // How many?
 let _cajax_http_max_connections = 6;            // Max
@@ -97,6 +96,10 @@ function RemoveFromCajaxQueue( ele )
 		}
 	}
 	Friend.cajax = o;
+	for( let a = 0; a < executors.length; a++ )
+	{
+	    executors[ a ].send();
+	}
 }
 
 // Cancel all queued cajax calls on id
@@ -1011,7 +1014,7 @@ if( typeof bindSingleParameterMethod != 'function' )
 function CleanAjaxCalls()
 {
     console.log( 'CPY - Cleaning ajax calls' );
-	if( _cajax_connection_num == 0 && Friend.cajax.length == 0 )
+	if( Friend.cajax.length == 0 )
 	{
 		// Clean it up!
 		_cajax_process_count = 0;
