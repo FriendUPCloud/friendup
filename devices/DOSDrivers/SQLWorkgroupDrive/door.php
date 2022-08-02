@@ -1620,6 +1620,9 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 		    
 		    if( !$filesystem ) $filesystem = $this;
 		    
+		    // Disable logger
+		    if( isset( $this->logger ) && $this->logger == 'disabled' ) return false;
+		    
 		    $path = $SqlDatabase->_link->real_escape_string( $path );
 		    
 		    // Check valid mode

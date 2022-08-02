@@ -658,6 +658,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					if( file_exists( $fname ) )
 					{
 						// Log file transaction
+						if( $args->
 						$this->fileLog( 'read', $args->path, $f, false );
 								
 						$info = @getimagesize( $fname );
@@ -1621,6 +1622,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 		    global $Config, $User, $SqlDatabase, $Logger;
 		    
 		    if( !$filesystem ) $filesystem = $this;
+		    
+		    // Disable logger
+		    if( isset( $this->logger ) && $this->logger == 'disabled' ) return false;
 		    
 		    $path = $SqlDatabase->_link->real_escape_string( $path );
 		    
