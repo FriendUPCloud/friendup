@@ -1989,9 +1989,9 @@ BufString *Info( File *s, const char *path )
 						sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encPath ? encPath : "" );
 
 					FilterPHPVar( commandCnt );
-					int i = 0; if( i == 1 ) i = 2;
 					
 					snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", commandCnt );
+					int i = 0; if( i == 1 ) i = 2;
 			
 					// Execute!
 					BufString *bs = NULL;
