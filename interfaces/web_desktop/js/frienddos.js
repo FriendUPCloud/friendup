@@ -4320,6 +4320,7 @@ window.FriendDOS =
 										callback( 'Failed to ' + ( move ? 'move' : 'copy' ) + ' file...', { done: true } );
 									}
 								}
+								console.log( 'CPY + copying to ' + desination );
 								doorSrc.dosAction( 'copy', { from: finalSrc, to: destination }, function( result )
 								{
 									if( move )
