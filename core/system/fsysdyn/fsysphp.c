@@ -230,7 +230,7 @@ ListString *PHPCall( const char *command )
 	fds[1].events = POLLOUT;
 	
 	// Set to non block
-	fcntl( fds[1].fd, F_SETFL, O_BLOCK );
+	fcntl( fds[1].fd, F_SETFL, O_TRUNC );
 	
 	int ret = 0;
 
