@@ -1989,12 +1989,11 @@ BufString *Info( File *s, const char *path )
 						sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encPath ? encPath : "" );
 					
 					FilterPHPVar( commandCnt );
-					
+					// More to pinpoint
 					snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", commandCnt );
 			
 					// Execute!
 					BufString *bs = NULL;
-					// Do it
 					ListString *result = PHPCall( command );
 					if( result != NULL && result->ls_Size && result->ls_Size > 5 )
 					{
