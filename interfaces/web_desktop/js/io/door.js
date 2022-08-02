@@ -237,6 +237,9 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 				updateurl += '&details=true';
 			}
 			
+			updateurl += '&testingx=1';
+			console.log( 'CPY + TESTINGX' );
+			
 			// Use standard Friend Core doors
 			let j = new cAjax();
 			if( t.cancelId )
@@ -257,8 +260,8 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 						// Try to remount
 						if( e == 'fail' && d && ( !flags || ( flags && flags.retry ) ) )
 						{
-							let j = d.indexOf( '{' ) > 0 ? JSON.parse( d ) : {};
-							if( j.response && j.response == 'device not mounted' )
+							let u = d.indexOf( '{' ) > 0 ? JSON.parse( d ) : {};
+							if( u.response && u.response == 'device not mounted' )
 							{
 								return t.Mount( function()
 								{
