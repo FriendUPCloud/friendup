@@ -1975,12 +1975,12 @@ BufString *Info( File *s, const char *path )
 				( encPath ? strlen( encPath ) : 0 ) + 128 + strlen( "php \"modules/system/module.php\" \"\";" );
 			
 			// Whole command
-			char *command = FMalloc( cmdLength );
+			char *command = CMalloc( cmdLength, sizeof( char ) );
 				
 			if( command != NULL )
 			{
 				// Just get vars
-				char *commandCnt = FMalloc( cmdLength );
+				char *commandCnt = CMalloc( cmdLength, sizeof( char ) );
 			
 				// Generate command string
 				if( commandCnt != NULL )
@@ -2022,8 +2022,10 @@ BufString *Info( File *s, const char *path )
 				
 					FFree( commandCnt );
 					FFree( command );
-					FFree( encPath );
-					FFree( encPathSlash );
+					if( encPath )
+						FFree( encPath );
+					if( encPathSlash )
+						FFree( encPathSlash );
 					return bs;
 				}
 				FFree( command );
