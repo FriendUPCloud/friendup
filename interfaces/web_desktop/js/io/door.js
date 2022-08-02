@@ -699,7 +699,8 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 		j.cancelId = this.cancelId;
 	if( this.context ) j.context = this.context;
 	j.forceHTTP = true;
-	console.log( 'DOSAction trying: ' + '/system.library/' + func );
+	if( func.indexOf( 'copy' ) > 0 )
+    	console.log( 'DOSAction trying: ' + '/system.library/' + func );
 	j.open( 'post', '/system.library/' + func, true, true );
 	if( Workspace.conf && Workspace.conf.authId )
 		j.addVar( 'authid', Workspace.conf.authId );
