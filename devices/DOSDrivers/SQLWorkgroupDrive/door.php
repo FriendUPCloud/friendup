@@ -1489,8 +1489,15 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				$fi->FilesystemID = $this->ID;
 				$fi->FolderID = $fo ? $fo->ID : '0';
 				if( strstr( $path, '/' ) )
-					$fi->Filename = end( explode( '/', $path ) );
-				else $fi->Filename = end( explode( ':', $path ) );
+				{
+				    $tp = explode( '/', $path );
+					$fi->Filename = end( $tp );
+				}
+				else 
+				{
+				    $tp = explode( ':', $path );
+				    $fi->Filename = end( $tp );
+			    }
 				$fi->Filename = str_replace( "'", "\\'", $fi->Filename );
 				$fi->Load();
 			}
