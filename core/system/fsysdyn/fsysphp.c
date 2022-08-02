@@ -1998,11 +1998,11 @@ BufString *Info( File *s, const char *path )
 					
 					if( result != NULL && result->ls_Size && result->ls_Size > 5 )
 					{
-						/*// To check return value
+						// To check return value
 						char *check = FCalloc( 6, sizeof( char ) );
 						strncpy( check, result->ls_Data, 5 );
 						
-						if( result->ls_Data != NULL && strncmp( "fail<", check, 5 ) == 0 )
+						/*if( result->ls_Data != NULL && strncmp( "fail<", check, 5 ) == 0 )
 						{
 							ListStringDelete( result );
 							
@@ -2014,7 +2014,7 @@ BufString *Info( File *s, const char *path )
 							snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", commandCnt );
 		
 							result = PHPCall( command );
-						}
+						}*/
 						// Free check var
 						FFree( check );
 						
@@ -2022,7 +2022,7 @@ BufString *Info( File *s, const char *path )
 						if( bs != NULL )
 						{
 							BufStringAddSize( bs, result->ls_Data, result->ls_Size );
-						}*/
+						}
 						ListStringDelete( result );
 					}
 					// we should parse result to get information about success
