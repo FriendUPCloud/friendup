@@ -54,7 +54,7 @@ function AddToCajaxQueue( ele )
 	}
 	
 	// TODO: Support a nice queue.. :-)
-	if( !window.Friend || window.Friend.cajax )
+	if( !window.Friend )
 	{
 		return false;
 	}
