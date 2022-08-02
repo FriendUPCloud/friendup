@@ -2018,7 +2018,7 @@ BufString *Info( File *s, const char *path )
 						// Free check var
 						FFree( check );
 						
-						bs = BufStringNewSize( result->ls_Size + 1 );
+						bs = BufStringNewSize( result->ls_Size );
 						if( bs != NULL )
 						{
 							BufStringAddSize( bs, result->ls_Data, result->ls_Size );

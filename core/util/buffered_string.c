@@ -45,14 +45,13 @@ BufString *BufStringNewSize(unsigned int initial_size)
 {
 	BufString *str = NULL;
 		
-	if( ( str = FCalloc( sizeof( BufString ), 1 ) ) != NULL )
+	if( ( str = FCalloc( 1, sizeof( BufString ) ) ) != NULL )
 	{
 		str->bs_Size = 0;
 		str->bs_Bufsize = initial_size;
-		str->bs_Buffer = FMalloc( str->bs_Bufsize + 1 );
+		str->bs_Buffer = FCalloc( str->bs_Bufsize + 1, sizeof( BufString ) );
 		if (str->bs_Buffer)
 		{
-			str->bs_Buffer[ 0 ] = 0;
 			return str;
 		}
 		FFree( str );
