@@ -1991,11 +1991,11 @@ BufString *Info( File *s, const char *path )
 					FilterPHPVar( commandCnt );
 					
 					snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", commandCnt );
-					int i = 0; if( i == 1 ) i = 2;
 			
 					// Execute!
 					BufString *bs = NULL;
 					ListString *result = PHPCall( command );
+					int i = 0; if( i == 1 ) i = 2;
 					if( result != NULL && result->ls_Size && result->ls_Size > 5 )
 					{
 						// To check return value
