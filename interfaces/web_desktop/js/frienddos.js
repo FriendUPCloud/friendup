@@ -4176,7 +4176,7 @@ window.FriendDOS =
 				// TODO: Implement abort
 				for( let a = 0; a < data.length; a++ )
 				{
-					//console.log( '>>> Examining: ' + data[a].Path );
+					console.log( 'CPY >>> Examining: ' + data[a].Path );
 					// Make a trim
 					let compare = data[a].Path;
 					if(
