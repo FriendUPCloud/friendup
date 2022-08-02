@@ -233,6 +233,7 @@ ListString *PHPCall( const char *command )
 	fcntl( fds[1].fd, F_SETFL, O_NONBLOCK );
 	
 	int ret = 0;
+	int total = 0;
 
 	while( TRUE )
 	{
@@ -251,12 +252,14 @@ ListString *PHPCall( const char *command )
 
 		if( size > 0 )
 		{
-			//int err = ListStringAdd( ls, buf, size );
+			int err = ListStringAdd( ls, buf, size );
 			if( err != 0 )
 			{
 			    DEBUG( "Liststring failed!\n" );
 			    break;
 			}
+			if( total > 8100 )
+			    break;
 		}
 		else
 		{
