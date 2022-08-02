@@ -658,7 +658,6 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					if( file_exists( $fname ) )
 					{
 						// Log file transaction
-						if( $args->
 						$this->fileLog( 'read', $args->path, $f, false );
 								
 						$info = @getimagesize( $fname );
