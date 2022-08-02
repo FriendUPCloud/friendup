@@ -206,6 +206,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 	let t = this;
 
 	// Check dormant first!
+	console.log( 'CPY - DIR Checking path: ' + t.fileInfo.Path );
 	this.checkDormantDoors( t.fileInfo.Path ? t.fileInfo.Path : false, function( dirs )
 	{
 		if( !t.fileInfo.Path && t.path )
