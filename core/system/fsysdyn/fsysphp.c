@@ -192,7 +192,7 @@ char *GetFileName( const char *path )
 }
 
 //#define PHP_READ_SIZE 262144
-#define PHP_READ_SIZE 512
+#define PHP_READ_SIZE 4096
 // #define PHP_READ_SIZE 131072
 //#define PHP_READ_SIZE (1024 * 1024 * 2)
 #define USE_NPOPEN_POLL
@@ -251,7 +251,7 @@ ListString *PHPCall( const char *command )
 
 		if( size > 0 )
 		{
-			int err = ListStringAdd( ls, buf, size );
+			//int err = ListStringAdd( ls, buf, size );
 			if( err != 0 )
 			{
 			    DEBUG( "Liststring failed!\n" );
