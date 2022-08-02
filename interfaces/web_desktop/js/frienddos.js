@@ -4196,7 +4196,7 @@ window.FriendDOS =
 					let compared = false;
 					let finalSrc = src;
 					// TODO: If the filename contains actually a '*' sign, then switch order on these if's!
-					if( src.indexOf( '*' ) )
+					if( src.indexOf( '*' ) > 0 )
 					{
 						// If src fits wildcard!
 						let srcCmpPos = src.indexOf( '*' ) + 1;
