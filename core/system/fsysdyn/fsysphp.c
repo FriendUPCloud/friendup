@@ -1998,7 +1998,7 @@ BufString *Info( File *s, const char *path )
 					if( result != NULL )
 					{
 						// To check return value
-						char *check = FCalloc( 6 );
+						char *check = FCalloc( 6, sizeof( char ) );
 						strncpy( check, result->ls_Data, 5 );
 						
 						if( result->ls_Data != NULL && result->ls_Size > 19 && strncmp( "fail<", check, 5 ) == 0 )
