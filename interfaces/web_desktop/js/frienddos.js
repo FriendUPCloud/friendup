@@ -4169,6 +4169,8 @@ window.FriendDOS =
 			doorSrc.path = pthTest;
 			
 			copyObject.processes++;
+			
+			console.log( 'CPY - Getting icons at ' + src );
 			doorSrc.getIcons( false, function( data )
 			{
 				copyObject.completed++;
