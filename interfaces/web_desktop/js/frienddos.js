@@ -4020,7 +4020,7 @@ window.FriendDOS =
 	{
 		let fdos = this;
 		
-		console.log( '> Got a query of copying ' + src + ' to ' + dest );
+		console.log( 'CPY Got a query of copying ' + src + ' to ' + dest );
 		
 		// Do we want to move the files?
 		let move = flags && flags.move ? true : false;
@@ -4052,7 +4052,7 @@ window.FriendDOS =
 						}
 						else
 						{
-						    console.log( 'Done copying ' + this.copyTotal + ' files.', { done: true } );
+						    console.log( 'CPY Done copying ' + this.copyTotal + ' files.', { done: true } );
 							this.callback( 'Done copying ' + this.copyTotal + ' files.', { done: true } );
 						}
 						this.callback = false;
@@ -4207,13 +4207,9 @@ window.FriendDOS =
 					}
 					else if( compare == src ) compared = true;
 					
-					if( !compared )
-					{
-					    console.log( 'Failed to compare: ' + compare + ' == ' + src );
-					}
-					
 					if( compared )
 					{
+					    console.log( 'CPY - !Preparing to copy to ' + destination );
 						compareCount++;
 						// Recurse into directories (copy a directory)
 						if( data[a].Type == 'Directory' || data[a].Type == 'Door' )
@@ -4337,7 +4333,7 @@ window.FriendDOS =
 									}
 									else
 									{
-									    console.log( ' + done executing ' + destination );
+									    console.log( 'CPY + done executing ' + destination );
 										callback( 'Copied ' + finalSrc + ' to ' + destination + '..' );
 									}
 
