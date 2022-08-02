@@ -122,12 +122,12 @@ int newpclose( NPOpenFD *po )
 {
 	int ret, status;
 	
-	DEBUG("[newpclose] start, %d\n", po->npo_PID);
+	//DEBUG("[newpclose] start, %d\n", po->npo_PID);
 	
 	close( po->np_FD[ NPOPEN_INPUT ] );
 	close( po->np_FD[ NPOPEN_CONSOLE ] );
 	
-	ret = waitpid( po->npo_PID, &status, 0 );
+	ret = waitpid( po->npo_PID, &status, WNOHANG );
 	if( ret == 0 )
 	{
 		DEBUG("[newpclose] KILL! end ret = 0\n");
