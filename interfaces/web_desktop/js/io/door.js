@@ -152,6 +152,7 @@ Door.prototype.get = function( path )
 
 Door.prototype.getIcons = function( fileInfo, callback, flags )
 {
+	console.log( 'CPY - Getting icons NOW ', fileInfo );
 	if( !this.path && this.deviceName )
 	{
 		if( typeof( fileInfo ) == 'string' && fileInfo != 'Mountlist:' )
@@ -184,7 +185,6 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 	else if( !this.deviceName )
 	{
 		if( callback ) callback( false );
-		console.log( 'CPY - No device name!', fileInfo );
 		return false;
 	}
 	else
