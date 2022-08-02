@@ -245,7 +245,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 			//changed from post to get to get more speed.
 			j.forceHTTP = true;
 			j.open( 'POST', updateurl, true, true );
-			
+			console.log( 'CPY - Calling DIR (' + t.fileInfo.Path + ')' );
 			j.onload = function( e, d )
 			{
 			    console.log( 'CPY - Return value DIR (' + t.fileInfo.Path + ') is ' + e );
