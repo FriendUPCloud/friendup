@@ -191,8 +191,8 @@ char *GetFileName( const char *path )
 	return p;
 }
 
-#define PHP_READ_SIZE 262144
-//#define PHP_READ_SIZE 4096
+//#define PHP_READ_SIZE 262144
+#define PHP_READ_SIZE 4096
 // #define PHP_READ_SIZE 131072
 //#define PHP_READ_SIZE (1024 * 1024 * 2)
 #define USE_NPOPEN_POLL
@@ -213,8 +213,9 @@ ListString *PHPCall( const char *command )
 		return NULL;
 	}
 	
-	char *buf = FCalloc( PHP_READ_SIZE+1, sizeof( char ) );
-	ListString *ls = ListStringNew();
+	char *buf = FCalloc( ( PHP_READ_SIZE * 2 )+1, sizeof( char ) );
+	int total = 0;
+	//ListString *ls = ListStringNew();
 	int errCounter = 0;
 	int size = 0;
 
@@ -233,7 +234,6 @@ ListString *PHPCall( const char *command )
 	fcntl( fds[1].fd, F_SETFL, O_NONBLOCK );
 	
 	int ret = 0;
-	int total = 0;
 
 	while( TRUE )
 	{
@@ -248,9 +248,13 @@ ListString *PHPCall( const char *command )
 			break;
 		}
 		
-		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
+		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf + total, PHP_READ_SIZE);
+		total += size;
+		if( total > PHP_READ_SIZE * 2 ) 
+		    break;
+        if( size <= 0 ) break;
 
-		if( size > 0 )
+		/*if( size > 0 )
 		{
 			ListStringAdd( ls, buf, size );
 		}
@@ -259,10 +263,10 @@ ListString *PHPCall( const char *command )
 			errCounter++;
 			DEBUG("ErrCounter: %d\n", errCounter );
 			break;
-		}
+		}*/
 	}
 #else
-	fd_set set;
+	/*fd_set set;
 	struct timeval timeout;
 
 	// Initialize the timeout data structure. 
@@ -271,7 +275,7 @@ ListString *PHPCall( const char *command )
 
 	while( TRUE )
 	{
-		/* Initialize the file descriptor set. */
+		// Initialize the file descriptor set. 
 		FD_ZERO( &set );
 		FD_SET( pofd.np_FD[ NPOPEN_CONSOLE ], &set);
 		DEBUG("[PHPFsys] in loop\n");
@@ -304,20 +308,20 @@ ListString *PHPCall( const char *command )
 				break;
 			}
 		}
-	}
+	}*/
 #endif
 	
-	FFree( buf );
+	//FFree( buf );
 
 	// Free pipe if it's there
 	newpclose( &pofd );
 	
-	ListStringJoin( ls );		//we join all string into one buffer
+	//ListStringJoin( ls );		//we join all string into one buffer
 
 	//DEBUG( "[fsysphp] Finished PHP call...(%lu length, %s)-\n", ls->ls_Size, ls->ls_Data );
 	//DEBUG( "[fsysphp] Finished PHP call...(%lu length, %s)-\n", ls->ls_Size, ls->ls_Data );
 	
-	return ls;
+	return buf;
 }
 
 //
