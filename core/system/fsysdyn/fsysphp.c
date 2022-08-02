@@ -2002,10 +2002,10 @@ BufString *Info( File *s, const char *path )
 						char *check = FCalloc( 6, sizeof( char ) );
 						strncpy( check, result->ls_Data, 5 );
 						
-						DEBUG( "[HOGNE] (check: %s) %s\n", check, result->ls_Data );
-						/*if( result->ls_Data != NULL && strncmp( "fail<", check, 5 ) == 0 )
+						DEBUG( "[HOGNE] (check: %s) %s -> propose: %s\n", check, result->ls_Data, encPathSlash );
+						if( result->ls_Data != NULL && strncmp( "fail<", check, 5 ) == 0 )
 						{
-							ListStringDelete( result );
+							/*ListStringDelete( result );
 							
 							snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=info&authkey=false&sessionid=%s&path=%s&subPath=",
 								sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encPathSlash ? encPathSlash : "" );
@@ -2014,8 +2014,8 @@ BufString *Info( File *s, const char *path )
 							
 							snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", commandCnt );
 		
-							result = PHPCall( command );
-						}*/
+							result = PHPCall( command );*/
+						}
 						// Free check var
 						FFree( check );
 						
