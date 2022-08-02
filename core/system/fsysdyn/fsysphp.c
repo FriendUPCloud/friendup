@@ -250,7 +250,7 @@ ListString *PHPCall( const char *command )
 		
 		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf + total, PHP_READ_SIZE);
 		total += size;
-		if( total > PHP_READ_SIZE * 2 ) 
+		if( total > PHP_READ_SIZE ) 
 		    break;
         if( size <= 0 ) break;
 
