@@ -1025,7 +1025,7 @@ function CleanAjaxCalls()
 	}
 	else
 	{
-	    console.log( 'CPY - Execute!' );
+	    console.log( 'CPY - Execute! - ' + Friend.cajax[0].url );
 		Friend.cajax[0].send();
 	}
 }
