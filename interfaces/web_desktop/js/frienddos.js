@@ -4213,7 +4213,6 @@ window.FriendDOS =
 					
 					if( compared )
 					{
-					    console.log( 'CPY - !Preparing to copy to ' + dest + dest.substr( dest.length - 1, 1 ) + data[a].Filename + '/' );
 						compareCount++;
 						// Recurse into directories (copy a directory)
 						if( data[a].Type == 'Directory' || data[a].Type == 'Door' )
@@ -4222,6 +4221,7 @@ window.FriendDOS =
 							if( dsign != ':' && dsign != '/' ) dsign = '/'; else dsign = '';
 
 							let destination = dest + dsign + data[a].Filename + '/';
+							console.log( 'CPY - Copying folder path: ' + destination );
 							let p = data[a].Path;
 
 				   			copyObject.deleteMovePaths.push( { path: p, door: doorSrc } );
@@ -4324,7 +4324,7 @@ window.FriendDOS =
 										callback( 'Failed to ' + ( move ? 'move' : 'copy' ) + ' file...', { done: true } );
 									}
 								}
-								console.log( 'CPY + copying to ' + destination );
+								console.log( 'CPY + copying file to ' + destination );
 								doorSrc.dosAction( 'copy', { from: finalSrc, to: destination }, function( result )
 								{
 									if( move )
