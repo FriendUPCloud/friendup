@@ -54,7 +54,7 @@ function AddToCajaxQueue( ele )
 	}
 	
 	// TODO: Support a nice queue.. :-)
-	if( !window.Friend || !window.Friend.cajax )
+	if( !window.Friend || window.Friend.cajax )
 	{
 		return false;
 	}
@@ -604,7 +604,7 @@ cAjax.prototype.send = function( data, callback )
 	// Wait in case of check server connection
 	if( window.Workspace && ( window.Friend && Friend.User && Friend.User.State == 'offline' ) && !this.forceSend )
 	{	
-		//console.log( 'Adding because!' );
+		console.log( 'CPY ISSUE Adding to queue because!' );
 		AddToCajaxQueue( self );
 		return;
 	}
