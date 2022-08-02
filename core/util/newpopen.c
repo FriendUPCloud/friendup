@@ -59,8 +59,6 @@ int newpopen(const char *cmd, NPOpenFD *po )
 	
 	pid = vfork();
 	
-	signal(SIGPIPE, SIG_IGN);
-	
 	if( pid == 0 )
 	{
 		// PS: We're not using the err pipe - it's here for historical reasons
@@ -83,8 +81,8 @@ int newpopen(const char *cmd, NPOpenFD *po )
 		}
 		
 		execl( "/bin/sh", "sh", "-c", cmd, NULL );
-		perror( "Error with execl...\n" );
-		_exit( 0 );
+		//perror( "Error with execl...\n" );
+		//_exit( 0 );
 	}
 	// Parent
 	else if( pid > 0 )
