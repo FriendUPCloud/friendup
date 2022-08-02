@@ -1934,7 +1934,7 @@ FLONG GetChangeTimestamp( struct File *s, const char *path )
 BufString *Info( File *s, const char *path )
 {
 	DEBUG("[PHPFS] Info\n");
-	
+	return NULL;
 	if( s != NULL )
 	{
 		char *comm = NULL;
