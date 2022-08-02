@@ -412,6 +412,9 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	}
 	this.opened = true;
 	
+	if( url.indexOf( 'testingx' ) > 0 )
+	    console.log( 'CPY SENDX: ' + url );
+	
 	// Try websockets!!
 	if( 
 		!_cajax_ws_disabled &&
