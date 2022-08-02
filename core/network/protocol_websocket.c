@@ -338,7 +338,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 				}
 				else // only fragment was received
 				{
-					DEBUG1("[WS] Only received: %s\n", (char *)tin );
+					//DEBUG1("[WS] Only received: %s\n", (char *)tin );
 					BufStringAddSize( wsd->wsc_Buffer, tin, len );
 					return 0;
 				}
@@ -1036,7 +1036,7 @@ void *ParseAndCall( WSThreadData *wstd )
 										{
 											if( wsreq->wr_IsBroken )
 											{
-												Log( FLOG_ERROR, "Message is broken: '%s'\n", wsreq->wr_Message );
+												Log( FLOG_ERROR, "Message is broken.\n" ); //: '%s'\n", wsreq->wr_Message );
 											}
 											DEBUG( "[WS] No message!\n" );
 										}

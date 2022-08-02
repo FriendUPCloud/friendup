@@ -2693,9 +2693,11 @@ window.Shell = function( appObject )
 				// 'all' on the end
 				if( !recursive ) recursive = args[ args.length - 1 ].toLowerCase() == 'all' ? true : false;
 
+                console.log( 'Copying ' + src );
 				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: false, nooverwrite: nooverwrite }, function( result, done )
 				{
 					if( !done ) done = false;
+					console.log( ' > Copy to ' + dst + ' completed' );
 					callback( false, { response: result, done: done } );
 				} );
 			}
