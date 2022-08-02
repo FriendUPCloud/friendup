@@ -2023,7 +2023,6 @@ BufString *Info( File *s, const char *path )
 							bs = BufStringNew();
 							if( bs != NULL )
 							{
-								ListStringJoin( result );
 								bs->bs_Size = result->ls_Size + 1;
 								bs->bs_Bufsize = bs->bs_Size;
 								bs->bs_Buffer = FCalloc( bs->bs_Size, sizeof( char ) );
