@@ -4348,6 +4348,10 @@ window.FriendDOS =
 							} );
 						}
 					}
+					else
+					{
+					    console.log( 'CPY - FAILED to copy to ' + destination );
+					}
 				}
 				if( depth == 0 && compareCount == 0 )
 				{
