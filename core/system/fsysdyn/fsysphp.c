@@ -1995,8 +1995,8 @@ BufString *Info( File *s, const char *path )
 					// Execute!
 					BufString *bs = NULL;
 					ListString *result = PHPCall( command );
-					int i = 0; if( i == 1 ) i = 2;
-					if( result != NULL && result->ls_Size && result->ls_Size > 5 )
+					//int i = 0; if( i == 1 ) i = 2;
+					/*if( result != NULL && result->ls_Size && result->ls_Size > 5 )
 					{
 						// To check return value
 						char *check = FCalloc( 6, sizeof( char ) );
@@ -2024,7 +2024,7 @@ BufString *Info( File *s, const char *path )
 							BufStringAddSize( bs, result->ls_Data, result->ls_Size );
 						}
 						ListStringDelete( result );
-					}
+					}*/
 					// we should parse result to get information about success
 				
 					FFree( commandCnt );
