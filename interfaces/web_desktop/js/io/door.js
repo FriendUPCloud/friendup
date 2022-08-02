@@ -358,6 +358,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 				}
 			}
 
+            j.forceHTTP = true;
 			j.send();
 		}
 		else if( callback )
@@ -558,8 +559,7 @@ Door.prototype.read = function( filename, mode, extraData )
 	if( this.context ) j.context = this.context;
 	if( this.cancelId )
 		j.cancelId = this.cancelId;
-	if( mode == 'rb' )
-		j.forceHTTP = true;
+	j.forceHTTP = true;
 	j.open( 'post', '/system.library/file/read', true, true );
 	if( Workspace.conf && Workspace.conf.authId )
 		j.addVar( 'authid', Workspace.conf.authId );
