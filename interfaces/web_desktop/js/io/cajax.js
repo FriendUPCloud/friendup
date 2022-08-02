@@ -114,7 +114,6 @@ function CancelCajaxOnId( id )
 		}
 	}
 	Friend.cajax = o;
-	console.log( 'CPY - cancelled' );
 }
 
 // A simple ajax function

@@ -4020,8 +4020,6 @@ window.FriendDOS =
 	{
 		let fdos = this;
 		
-		console.log( 'CPY Got a query of copying ' + src + ' to ' + dest );
-		
 		// Do we want to move the files?
 		let move = flags && flags.move ? true : false;
 
@@ -4052,7 +4050,6 @@ window.FriendDOS =
 						}
 						else
 						{
-						    console.log( 'CPY Done copying ' + this.copyTotal + ' files.', { done: true } );
 							this.callback( 'Done copying ' + this.copyTotal + ' files.', { done: true } );
 						}
 						this.callback = false;
@@ -4113,8 +4110,6 @@ window.FriendDOS =
 		{
 			let self = this;
 
-            console.log( 'CPY - STARTING looking at file ' + src );
-
 			if (!depth)
    			{
     			depth = 0;
@@ -4170,7 +4165,6 @@ window.FriendDOS =
 			
 			copyObject.processes++;
 			
-			console.log( 'CPY - Getting icons at ' + src );
 			doorSrc.getIcons( false, function( data )
 			{
 				copyObject.completed++;
@@ -4178,7 +4172,6 @@ window.FriendDOS =
 				let compareCount = 0;
 				
 				// TODO: Implement abort
-				console.log( 'CPY - Preparing to copy ' + src );
 				for( let a = 0; a < data.length; a++ )
 				{
 					// Make a trim
@@ -4217,7 +4210,6 @@ window.FriendDOS =
 					
 					if( compared )
 					{
-					    console.log( 'CPY "compared" > ' + compare + ' == ' + src );
 						compareCount++;
 						// Recurse into directories (copy a directory)
 						if( data[a].Type == 'Directory' || data[a].Type == 'Door' )
@@ -4226,7 +4218,6 @@ window.FriendDOS =
 							if( dsign != ':' && dsign != '/' ) dsign = '/'; else dsign = '';
 
 							let destination = dest + dsign + data[a].Filename + '/';
-							console.log( 'CPY - Copying folder path: ' + destination );
 							let p = data[a].Path;
 
 				   			copyObject.deleteMovePaths.push( { path: p, door: doorSrc } );
@@ -4298,7 +4289,6 @@ window.FriendDOS =
 						// Copy single file
 						else
 						{
-							console.log( 'CPY - Copying single file: ' + src );
 							copyObject.copyTotal++;
 							copyObject.processes++;
 							let destination = dest;
@@ -4330,7 +4320,6 @@ window.FriendDOS =
 										callback( 'Failed to ' + ( move ? 'move' : 'copy' ) + ' file...', { done: true } );
 									}
 								}
-								console.log( 'CPY + copying file to ' + destination );
 								doorSrc.dosAction( 'copy', { from: finalSrc, to: destination }, function( result )
 								{
 									if( move )

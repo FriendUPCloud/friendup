@@ -206,7 +206,6 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 	let t = this;
 
 	// Check dormant first!
-	console.log( 'CPY - DIR Checking path: ' + t.fileInfo.Path );
 	this.checkDormantDoors( t.fileInfo.Path ? t.fileInfo.Path : false, function( dirs )
 	{
 		if( !t.fileInfo.Path && t.path )
@@ -237,9 +236,6 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 				updateurl += '&details=true';
 			}
 			
-			updateurl += '&testingx=1';
-			console.log( 'CPY + TESTINGX' );
-			
 			// Use standard Friend Core doors
 			let j = new cAjax();
 			if( t.cancelId )
@@ -249,10 +245,8 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 			//changed from post to get to get more speed.
 			j.forceHTTP = true;
 			j.open( 'POST', updateurl, true, true );
-			console.log( 'CPY - Calling DIR (' + t.fileInfo.Path + ')' );
 			j.onload = function( e, d )
 			{
-			    console.log( 'CPY - Return value DIR (' + t.fileInfo.Path + ') is ' + e );
 				if( e )
 				{
 					if( e != 'ok' )
@@ -302,7 +296,6 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 					
 					if( typeof( list ) == 'object' && list.length )
 					{
-					    console.log( 'CPY we got an OBJECT' );
 						// Fix paths
 						let sef = this;
 						let sharedCheck = [];
@@ -339,11 +332,9 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 									}
 									catch( e )
 									{
-									    console.log( 'CPY - ERROR checking JSON: ' + chd );
 									}
 								}
 								let pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
-								console.log( 'CPY - SHARED PATH STUFF!' );
 								callback( list, t.fileInfo.Path, pth );
 							}
 							ch.execute( 'file/checksharedpaths', { paths: sharedCheck, path: deviceName } );
@@ -351,14 +342,12 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 						else
 						{
 							let pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
-							console.log( 'CPY - Calling back!!!: ' + pth );
 							callback( list, t.fileInfo.Path, pth );
 						}
 					}
 					else
 					{
 						// Empty directory
-						console.log( 'CPY - Calling back (empty)!!!' );
 						callback( [], t.fileInfo.Path, false );
 					}
 				}
