@@ -192,7 +192,7 @@ char *GetFileName( const char *path )
 }
 
 //#define PHP_READ_SIZE 262144
-#define PHP_READ_SIZE 4096
+#define PHP_READ_SIZE 16000
 // #define PHP_READ_SIZE 131072
 //#define PHP_READ_SIZE (1024 * 1024 * 2)
 #define USE_NPOPEN_POLL
@@ -248,12 +248,12 @@ ListString *PHPCall( const char *command )
 			break;
 		}
 		
-		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf + total, PHP_READ_SIZE);
+		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
 		total += size;
 		if( total > PHP_READ_SIZE ) 
 		    break;
         if( size <= 0 ) break;
-
+        break;
 		/*if( size > 0 )
 		{
 			ListStringAdd( ls, buf, size );
