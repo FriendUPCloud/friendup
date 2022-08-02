@@ -195,7 +195,7 @@ char *GetFileName( const char *path )
 #define PHP_READ_SIZE 4096
 // #define PHP_READ_SIZE 131072
 //#define PHP_READ_SIZE (1024 * 1024 * 2)
-#define USE_NPOPEN_POLL
+//#define USE_NPOPEN_POLL
 
 //
 // php call, send request, read answer (for big files
@@ -287,6 +287,7 @@ ListString *PHPCall( const char *command )
 			DEBUG("FSYSPHP: SELECT Error\n");
 			break;
 		}
+		
 		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
 
 		if( size > 0 )
