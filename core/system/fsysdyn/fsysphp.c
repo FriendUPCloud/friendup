@@ -2030,8 +2030,10 @@ BufString *Info( File *s, const char *path )
 				}
 				FFree( command );
 			}
-			FFree( encPath );
-			FFree( encPathSlash );
+			if( encPath )
+				FFree( encPath );
+			if( encPathSlash )
+				FFree( encPathSlash );
 		}
 	}
 	return NULL;
