@@ -4209,7 +4209,6 @@ window.FriendDOS =
 							compared = true;
 							finalSrc = compare;
 						}
-						console.log( 'CPY - FOUND WILD: ' + src );
 					}
 					else if( compare == src )
 					{
@@ -4353,10 +4352,6 @@ window.FriendDOS =
 								} );
 							} );
 						}
-					}
-					else
-					{
-					    console.log( 'CPY - FAILED to copy ' + src );
 					}
 				}
 				if( depth == 0 && compareCount == 0 )
