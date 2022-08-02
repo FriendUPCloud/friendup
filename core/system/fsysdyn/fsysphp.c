@@ -1995,13 +1995,13 @@ BufString *Info( File *s, const char *path )
 					// Execute!
 					BufString *bs = NULL;
 					ListString *result = PHPCall( command );
-					if( result != NULL )
+					if( result != NULL && result->ls_Size > 5 )
 					{
 						// To check return value
 						char *check = FCalloc( 6, sizeof( char ) );
 						strncpy( check, result->ls_Data, 5 );
 						
-						if( result->ls_Data != NULL && result->ls_Size > 19 && strncmp( "fail<", check, 5 ) == 0 )
+						if( result->ls_Data != NULL && strncmp( "fail<", check, 5 ) == 0 )
 						{
 							ListStringDelete( result );
 							
