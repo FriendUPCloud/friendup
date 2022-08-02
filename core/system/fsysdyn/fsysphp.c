@@ -1975,12 +1975,12 @@ BufString *Info( File *s, const char *path )
 				( encPath ? strlen( encPath ) : 0 ) + 128 + strlen( "php \"modules/system/module.php\" \"\";" );
 			
 			// Whole command
-			char *command = CMalloc( cmdLength, sizeof( char ) );
+			char *command = FCalloc( cmdLength, sizeof( char ) );
 				
 			if( command != NULL )
 			{
 				// Just get vars
-				char *commandCnt = CMalloc( cmdLength, sizeof( char ) );
+				char *commandCnt = FCalloc( cmdLength, sizeof( char ) );
 			
 				// Generate command string
 				if( commandCnt != NULL )
