@@ -4206,6 +4206,10 @@ window.FriendDOS =
 						}
 					}
 					else if( compare == src ) compared = true;
+					else
+					{
+					    console.log( 'CPY - FAILED COMPARE: ' + compare + ' == ' + src );
+					}
 					
 					if( compared )
 					{
