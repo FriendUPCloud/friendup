@@ -5933,7 +5933,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					
 					let copyStr = 'copy ' + source + ' to ' + destin + fn;
-					console.log( 'Adding for copy: ' + copyStr );
 					sh.parseScript( copyStr, function()
 					{
 						if( cliplen-- == 0 )

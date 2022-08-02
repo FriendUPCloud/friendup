@@ -364,6 +364,7 @@ window.Shell = function( appObject )
 			if( result )
 			{
 				buffer += typeof( result ) == 'object' ? result.response : result;
+				console.log( 'Executing and got result: ' + buffer );
 			}
 			if( index > array.length )
 			{
