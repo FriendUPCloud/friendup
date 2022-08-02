@@ -251,7 +251,7 @@ if( !class_exists( 'Door' ) )
 					$identifier = 'f.ID=\'' . intval( $args->fileInfo->ID, 10 ) . '\'';
 				}
 				// To disable filelog()
-				if( isset( $args->args->logger )
+				if( isset( $args->args->logger ) )
 				{
 				    $this->logger = $args->args->logger;
 				}
