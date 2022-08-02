@@ -412,9 +412,6 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	}
 	this.opened = true;
 	
-	if( url.indexOf( 'testingx' ) > 0 )
-	    console.log( 'CPY SENDX: ' + url );
-	
 	// Try websockets!!
 	if( 
 		!_cajax_ws_disabled &&
@@ -689,6 +686,10 @@ cAjax.prototype.send = function( data, callback )
 		{
 			let u = this.url.split( '?' );
 			u = u[ 0 ] + '?' + ( u[ 1 ] ? ( u[ 1 ] + '&' ) : '' ) + 'cachekiller=' + this.getRandNumbers();
+			
+			if( this.url.indexOf( 'testingx' ) > 0 )
+    	        console.log( 'CPY POST SENDX: ' + u );
+			
 			this.proxy.setRequestHeader( 'Method', 'POST ' + u + ' HTTP/1.1' );
 			this.proxy.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
 			
@@ -771,6 +772,10 @@ cAjax.prototype.send = function( data, callback )
 		{
 			let u = this.url.split( '?' );
 			u = u[0] + '?' + ( u[ 1 ] ? ( u[ 1 ] + '&' ) : '' ) + 'cachekiller=' + this.getRandNumbers();
+			
+			if( this.url.indexOf( 'testingx' ) > 0 )
+    	        console.log( 'CPY POST SENDX: ' + u );
+			
 			this.proxy.setRequestHeader( 'Method', 'GET ' + u + ' HTTP/1.1' );
 			try 
 			{ 
