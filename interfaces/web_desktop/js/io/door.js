@@ -248,7 +248,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 			
 			j.onload = function( e, d )
 			{
-			    console.log( 'Return value for + ' updateurl + ' is ' + e );
+			    console.log( 'CPY - Return value DIR (' + t.fileInfo.Path + ') is ' + e );
 				if( e )
 				{
 					if( e != 'ok' )
