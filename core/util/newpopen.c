@@ -122,31 +122,12 @@ int newpclose( NPOpenFD *po )
 {
 	int ret, status;
 	
-	//DEBUG("[newpclose] start, %d\n", po->npo_PID);
+	DEBUG("[newpclose] start, %d\n", po->npo_PID);
 	
 	close( po->np_FD[ NPOPEN_INPUT ] );
 	close( po->np_FD[ NPOPEN_CONSOLE ] );
 	
-	do {
-        ret = waitpid(po->npo_PID, &status, WUNTRACED | WCONTINUED);
-        if (ret == -1) {
-            perror("waitpid");
-            //exit(EXIT_FAILURE);
-            break;
-        }
-
-       if (WIFEXITED(status)) {
-            printf("exited, status=%d\n", WEXITSTATUS(status));
-        } else if (WIFSIGNALED(status)) {
-            printf("killed by signal %d\n", WTERMSIG(status));
-        } else if (WIFSTOPPED(status)) {
-            printf("stopped by signal %d\n", WSTOPSIG(status));
-        } else if (WIFCONTINUED(status)) {
-            printf("continued\n");
-        }
-    } while (!WIFEXITED(status) && !WIFSIGNALED(status));
-	
-	//ret = waitpid( po->npo_PID, &status, WNOHANG );
+	ret = waitpid( po->npo_PID, &status, WNOHANG );
 	if( ret == 0 )
 	{
 		DEBUG("[newpclose] KILL! end ret = 0\n");
