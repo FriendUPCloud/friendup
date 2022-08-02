@@ -1938,7 +1938,7 @@ BufString *Info( File *s, const char *path )
 	if( s != NULL )
 	{
 		char *comm = NULL;
-		int len = 64;
+		int len = 1024;
 		if( path != NULL )
 		{
 			len += strlen( path );
@@ -2002,7 +2002,7 @@ BufString *Info( File *s, const char *path )
 						char *check = FCalloc( 6, sizeof( char ) );
 						strncpy( check, result->ls_Data, 5 );
 						
-						/*if( result->ls_Data != NULL && strncmp( "fail<", check, 5 ) == 0 )
+						if( result->ls_Data != NULL && strncmp( "fail<", check, 5 ) == 0 )
 						{
 							ListStringDelete( result );
 							
@@ -2014,7 +2014,7 @@ BufString *Info( File *s, const char *path )
 							snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", commandCnt );
 		
 							result = PHPCall( command );
-						}*/
+						}
 						// Free check var
 						FFree( check );
 						
