@@ -184,6 +184,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 	else if( !this.deviceName )
 	{
 		if( callback ) callback( false );
+		console.log( 'CPY - No device name!', fileInfo );
 		return false;
 	}
 	else
