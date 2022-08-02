@@ -1996,9 +1996,6 @@ BufString *Info( File *s, const char *path )
 					BufString *bs = NULL;
 					ListString *result = PHPCall( command );
 					
-					DEBUG( "[HOGNE] Result frmo command: %s\n", command );
-					DEBUG( "[HOGNE] Result: %s\n", result->ls_Data );
-					
 					if( result != NULL && result->ls_Size && result->ls_Size > 5 )
 					{
 						// To check return value
@@ -2027,10 +2024,11 @@ BufString *Info( File *s, const char *path )
 							if( bs != NULL )
 							{
 								ListStringJoin( result );
-								bs->bs_Size = result->ls_Size;
-								bs->bs_Bufsize = result->ls_Size;
-								bs->bs_Buffer = FCalloc( result->ls_Size + 1, sizeof( char ) );
+								bs->bs_Size = result->ls_Size + 1;
+								bs->bs_Bufsize = bs->bs_Size;
+								bs->bs_Buffer = FCalloc( bs->bs_Size, sizeof( char ) );
 								strncpy( bs->bs_Buffer, result->ls_Data, result->ls_Size );
+								DEBUG( "[Hogne] Resulting string has data: %s\n", bs->bs_Buffer );
 							}
 							ListStringDelete( result );
 						}
