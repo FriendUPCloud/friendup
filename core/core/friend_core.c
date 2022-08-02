@@ -1904,7 +1904,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					{
 						DEBUG( "[FriendCoreEpoll] Waiting, current fds: %d\n", fc->FDCount );
 						FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
-						usleep( 200 );
+						usleep( 5 );
 						FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) );
 					}
 					FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
