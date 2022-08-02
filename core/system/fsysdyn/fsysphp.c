@@ -1938,7 +1938,7 @@ BufString *Info( File *s, const char *path )
 	if( s != NULL )
 	{
 		char *comm = NULL;
-		int len = 256;
+		int len = 64;
 		if( path != NULL )
 		{
 			len += strlen( path );
@@ -2006,10 +2006,10 @@ BufString *Info( File *s, const char *path )
 						{
 							ListStringDelete( result );
 							
-							/*snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=info&authkey=false&sessionid=%s&path=%s&subPath=",
+							snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=info&authkey=false&sessionid=%s&path=%s&subPath=",
 								sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encPathSlash ? encPathSlash : "" );
 							
-							FilterPHPVar( commandCnt );*/
+							FilterPHPVar( commandCnt );
 							
 							snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", commandCnt );
 		
@@ -2018,11 +2018,11 @@ BufString *Info( File *s, const char *path )
 						// Free check var
 						FFree( check );
 						
-						bs = BufStringNewSize( result->ls_Size );
+						/*bs = BufStringNewSize( result->ls_Size );
 						if( bs != NULL )
 						{
 							BufStringAddSize( bs, result->ls_Data, result->ls_Size );
-						}
+						}*/
 						ListStringDelete( result );
 					}
 					// we should parse result to get information about success
