@@ -131,7 +131,8 @@ int newpclose( NPOpenFD *po )
         ret = waitpid(po->npo_PID, &status, WUNTRACED | WCONTINUED);
         if (ret == -1) {
             perror("waitpid");
-            exit(EXIT_FAILURE);
+            //exit(EXIT_FAILURE);
+            break;
         }
 
        if (WIFEXITED(status)) {
