@@ -30,7 +30,6 @@ if( !Friend.cajax ) Friend.cajax = [];
 
 function AddToCajaxQueue( ele )
 {
-    console.log( 'CPY Adding to cajax queue' );
 	// If we're queueing it
 	if( ele.onQueue ) ele.onQueue();
 	
@@ -63,7 +62,6 @@ function AddToCajaxQueue( ele )
 	{
 		if( Friend.cajax[a] == ele )
 		{
-		    console.log( 'CPY is a duplicate!' );
 			return false;
 		}
 	}
@@ -72,7 +70,6 @@ function AddToCajaxQueue( ele )
 	for( let a = 0; a < Friend.cajax.length; a++ )
 		o.push( Friend.cajax[ a ] );
 	Friend.cajax = o;
-	console.log( 'CPY new queue: ', o );
 }
 
 function RemoveFromCajaxQueue( ele )
@@ -999,7 +996,6 @@ if( typeof bindSingleParameterMethod != 'function' )
 // Clean ajax calls!
 function CleanAjaxCalls()
 {
-    console.log( 'CPY - Cleaning ajax calls' );
 	if( Friend.cajax.length == 0 )
 	{
 		// Clean it up!
@@ -1013,7 +1009,6 @@ function CleanAjaxCalls()
 	}
 	else
 	{
-	    console.log( 'CPY - Execute! - ' + Friend.cajax[0].url );
 		Friend.cajax[0].send();
 	}
 }
