@@ -360,7 +360,7 @@ window.Shell = function( appObject )
 	        console.log( 'Executing: ' + script );
 	        this.execute( script, function( result, data )
 		    {
-			    callback( true, buffer );
+			    callback( true, result );
 		    } );
 	    }
 	};
