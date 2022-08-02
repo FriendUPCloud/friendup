@@ -2018,11 +2018,11 @@ BufString *Info( File *s, const char *path )
 						// Free check var
 						FFree( check );
 						
-						/*bs = BufStringNewSize( result->ls_Size );
+						bs = BufStringNewSize( result->ls_Size + 1 );
 						if( bs != NULL )
 						{
 							BufStringAddSize( bs, result->ls_Data, result->ls_Size );
-						}*/
+						}
 						ListStringDelete( result );
 					}
 					// we should parse result to get information about success
