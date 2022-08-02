@@ -252,14 +252,7 @@ ListString *PHPCall( const char *command )
 
 		if( size > 0 )
 		{
-			int err = ListStringAdd( ls, buf, size );
-			if( err != 0 )
-			{
-			    DEBUG( "Liststring failed!\n" );
-			    break;
-			}
-			if( total > 8100 )
-			    break;
+			ListStringAdd( ls, buf, size );
 		}
 		else
 		{

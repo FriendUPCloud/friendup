@@ -59,6 +59,8 @@ int newpopen(const char *cmd, NPOpenFD *po )
 	
 	pid = vfork();
 	
+	signal(SIGPIPE, SIG_IGN);
+	
 	if( pid == 0 )
 	{
 		// PS: We're not using the err pipe - it's here for historical reasons
