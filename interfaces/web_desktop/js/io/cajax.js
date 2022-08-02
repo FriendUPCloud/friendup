@@ -607,8 +607,7 @@ cAjax.prototype.send = function( data, callback )
 
 	// Wait in case of check server connection
 	if( window.Workspace && ( window.Friend && Friend.User && Friend.User.State == 'offline' ) && !this.forceSend )
-	{	
-		console.log( 'CPY ISSUE Adding to queue because!' );
+	{
 		AddToCajaxQueue( self );
 		return;
 	}
@@ -690,10 +689,7 @@ cAjax.prototype.send = function( data, callback )
 		{
 			let u = this.url.split( '?' );
 			u = u[ 0 ] + '?' + ( u[ 1 ] ? ( u[ 1 ] + '&' ) : '' ) + 'cachekiller=' + this.getRandNumbers();
-			
-			if( this.url.indexOf( 'testingx' ) > 0 )
-    	        console.log( 'CPY POST SENDX: ' + u );
-			
+
 			this.proxy.setRequestHeader( 'Method', 'POST ' + u + ' HTTP/1.1' );
 			this.proxy.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
 			
@@ -776,10 +772,7 @@ cAjax.prototype.send = function( data, callback )
 		{
 			let u = this.url.split( '?' );
 			u = u[0] + '?' + ( u[ 1 ] ? ( u[ 1 ] + '&' ) : '' ) + 'cachekiller=' + this.getRandNumbers();
-			
-			if( this.url.indexOf( 'testingx' ) > 0 )
-    	        console.log( 'CPY POST SENDX: ' + u );
-			
+
 			this.proxy.setRequestHeader( 'Method', 'GET ' + u + ' HTTP/1.1' );
 			try 
 			{ 
@@ -1018,6 +1011,7 @@ if( typeof bindSingleParameterMethod != 'function' )
 // Clean ajax calls!
 function CleanAjaxCalls()
 {
+    console.log( 'CPY - Cleaning ajax calls' );
 	if( _cajax_connection_num == 0 && Friend.cajax.length == 0 )
 	{
 		// Clean it up!
@@ -1031,6 +1025,7 @@ function CleanAjaxCalls()
 	}
 	else
 	{
+	    console.log( 'CPY - Execute!' );
 		Friend.cajax[0].send();
 	}
 }
