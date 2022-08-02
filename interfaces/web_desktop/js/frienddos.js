@@ -351,6 +351,7 @@ window.Shell = function( appObject )
 	this.parseScript = function( script, callback )
 	{
 		script = script.split( "\n" );
+		console.log( 'Queueing: ', script );
 		this.queueCommand( script, 0, [], callback );
 	};
 
@@ -360,11 +361,9 @@ window.Shell = function( appObject )
 		let t = this;
 		this.execute( array[index++], function( result, data )
 		{
-			//console.log( 'this.queueCommand = function( array, index, buffer, callback ) ', { array: array, index: index, buffer: buffer } );
 			if( result )
 			{
 				buffer += typeof( result ) == 'object' ? result.response : result;
-				console.log( 'Executing and got result: ' + buffer );
 			}
 			if( index > array.length )
 			{
