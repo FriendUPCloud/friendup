@@ -1997,9 +1997,12 @@ BufString *Info( File *s, const char *path )
 					ListString *result = PHPCall( command );
 					if( result != NULL )
 					{
-						if( result->ls_Data != NULL && result->ls_Size > 19 && strncmp( "fail<!--separate-->", result->ls_Data, 19 ) == 0 )
+						// To check return value
+						char *check = FCalloc( 6 );
+						strncpy( check, result->ls_Data, 5 );
+						
+						if( result->ls_Data != NULL && result->ls_Size > 19 && strncmp( "fail<", check, 5 ) == 0 )
 						{
-							//
 							ListStringDelete( result );
 							
 							snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=info&authkey=false&sessionid=%s&path=%s&subPath=",
@@ -2011,6 +2014,8 @@ BufString *Info( File *s, const char *path )
 		
 							result = PHPCall( command );
 						}
+						// Free check var
+						FFree( check );
 						
 						bs = BufStringNewSize( result->ls_Size );
 						if( bs != NULL )
