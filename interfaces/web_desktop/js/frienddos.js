@@ -4213,7 +4213,7 @@ window.FriendDOS =
 					
 					if( compared )
 					{
-					    console.log( 'CPY - !Preparing to copy to ' + destination );
+					    console.log( 'CPY - !Preparing to copy to ' + dest + dsign + data[a].Filename + '/' );
 						compareCount++;
 						// Recurse into directories (copy a directory)
 						if( data[a].Type == 'Directory' || data[a].Type == 'Door' )
