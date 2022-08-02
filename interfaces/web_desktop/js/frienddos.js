@@ -4052,6 +4052,7 @@ window.FriendDOS =
 						}
 						else
 						{
+						    console.log( 'Done copying ' + this.copyTotal + ' files.', { done: true } );
 							this.callback( 'Done copying ' + this.copyTotal + ' files.', { done: true } );
 						}
 						this.callback = false;
@@ -4318,6 +4319,7 @@ window.FriendDOS =
 										callback( 'Failed to ' + ( move ? 'move' : 'copy' ) + ' file...', { done: true } );
 									}
 								}
+								console.log( 'EXECUTING COPY: ' + finalSrc + ' -> ' + destination );
 								doorSrc.dosAction( 'copy', { from: finalSrc, to: destination }, function( result )
 								{
 									if( move )
@@ -4331,6 +4333,7 @@ window.FriendDOS =
 									}
 									else
 									{
+									    console.log( ' + done executing ' + destination );
 										callback( 'Copied ' + finalSrc + ' to ' + destination + '..' );
 									}
 
