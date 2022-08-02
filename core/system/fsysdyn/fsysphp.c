@@ -2018,12 +2018,19 @@ BufString *Info( File *s, const char *path )
 						// Free check var
 						FFree( check );
 						
-						bs = BufStringNewSize( result->ls_Size );
-						if( bs != NULL )
+						if( result != NULL )
 						{
-							BufStringAddSize( bs, result->ls_Data, result->ls_Size );
+							bs = BufStringNew();
+							if( bs != NULL )
+							{
+								ListStringJoin( result );
+								bs->bs_Size = result->ls_Size;
+								bs->bs_Bufsize = result->ls_Size;
+								bs->bs_Buffer = FCalloc( result->ls_Size + 1, sizeof( char ) );
+								strncpy( bs->bs_Buffer, result->ls_Data, result->ls_Size );
+							}
+							ListStringDelete( result );
 						}
-						ListStringDelete( result );
 					}
 					// we should parse result to get information about success
 				
