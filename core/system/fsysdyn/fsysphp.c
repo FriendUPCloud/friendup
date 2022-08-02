@@ -2002,7 +2002,7 @@ BufString *Info( File *s, const char *path )
 						char *check = FCalloc( 6, sizeof( char ) );
 						strncpy( check, result->ls_Data, 5 );
 						
-						DEBUG( "[HOGNE] (check: %s) %s\n", check, result->ls_Data );
+						DEBUG( "[HOGNE] (check: %s)\n", check );
 						/*if( result->ls_Data != NULL && strncmp( "fail<", check, 5 ) == 0 )
 						{
 							ListStringDelete( result );
