@@ -213,8 +213,7 @@ ListString *PHPCall( const char *command )
 		return NULL;
 	}
 	
-	char *buf = FMalloc( PHP_READ_SIZE+16 );
-	buf[ PHP_READ_SIZE + 15 ] = 0;
+	char *buf = FCalloc( PHP_READ_SIZE+1, sizeof( char ) );
 	ListString *ls = ListStringNew();
 	int errCounter = 0;
 	int size = 0;
@@ -237,7 +236,7 @@ ListString *PHPCall( const char *command )
 
 	while( TRUE )
 	{
-		ret = poll( fds, 2, 500 ); // HT Small timeout
+		ret = poll( fds, 2, 250 ); // HT Small timeout
 
 		if( ret == 0 )
 		{
@@ -247,6 +246,7 @@ ListString *PHPCall( const char *command )
 		{
 			break;
 		}
+		
 		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
 
 		if( size > 0 )
