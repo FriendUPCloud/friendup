@@ -78,28 +78,14 @@ function AddToCajaxQueue( ele )
 function RemoveFromCajaxQueue( ele )
 {
 	let o = [];
-	let executeLength = 6;
-	let executors = [];
 	for( let a = 0; a < Friend.cajax.length; a++ )
 	{
 		if( Friend.cajax[a] != ele )
 		{
-			if( executeLength > 0 )
-			{
-				executors.push( Friend.cajax[a] );
-				executeLength--;
-			}
-			else
-			{
-				o.push( Friend.cajax[a] );
-			}
+			o.push( Friend.cajax[a] );
 		}
 	}
 	Friend.cajax = o;
-	for( let a = 0; a < executors.length; a++ )
-	{
-	    executors[ a ].send();
-	}
 }
 
 // Cancel all queued cajax calls on id
