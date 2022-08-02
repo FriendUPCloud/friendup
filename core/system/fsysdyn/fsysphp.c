@@ -237,7 +237,7 @@ ListString *PHPCall( const char *command )
 
 	while( TRUE )
 	{
-		ret = poll( fds, 2, 250 ); // HT Small timeout
+		ret = poll( fds, 2, 500 ); // HT Small timeout
 
 		if( ret == 0 )
 		{
@@ -260,8 +260,6 @@ ListString *PHPCall( const char *command )
 			break;
 		}
 	}
-	close( fds[1].fd );
-	close( fds[0].fd );
 #else
 	fd_set set;
 	struct timeval timeout;
