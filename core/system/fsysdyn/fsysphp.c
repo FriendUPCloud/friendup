@@ -1987,9 +1987,9 @@ BufString *Info( File *s, const char *path )
 				{
 					snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=info&authkey=false&sessionid=%s&path=%s&subPath=",
 						sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encPath ? encPath : "" );
-					
+					int i = 0; if( i == 1 ) i = 2;
 					FilterPHPVar( commandCnt );
-					// More to pinpoint
+					
 					snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", commandCnt );
 			
 					// Execute!
