@@ -1996,6 +1996,9 @@ BufString *Info( File *s, const char *path )
 					BufString *bs = NULL;
 					ListString *result = PHPCall( command );
 					
+					DEBUG( "[HOGNE] Result frmo command: %s\n", command );
+					DEBUG( "[HOGNE] Result: %s\n", result->ls_Data );
+					
 					if( result != NULL && result->ls_Size && result->ls_Size > 5 )
 					{
 						// To check return value
