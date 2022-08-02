@@ -2027,7 +2027,6 @@ BufString *Info( File *s, const char *path )
 								bs->bs_Bufsize = bs->bs_Size;
 								bs->bs_Buffer = FCalloc( bs->bs_Size, sizeof( char ) );
 								strncpy( bs->bs_Buffer, result->ls_Data, result->ls_Size );
-								DEBUG( "[Hogne] Resulting string has data: %s (other: %s)\n", bs->bs_Buffer, result->ls_Data );
 							}
 							ListStringDelete( result );
 						}
