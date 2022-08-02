@@ -1995,6 +1995,7 @@ BufString *Info( File *s, const char *path )
 					// Execute!
 					BufString *bs = NULL;
 					ListString *result = PHPCall( command );
+					// Hello
 					if( result != NULL && result->ls_Size && result->ls_Size > 5 )
 					{
 						// To check return value
