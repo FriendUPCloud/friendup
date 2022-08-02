@@ -234,22 +234,17 @@ ListString *PHPCall( const char *command )
 	fcntl( fds[1].fd, F_SETFL, O_NONBLOCK );
 	
 	int ret = 0;
-	int timeout = FILESYSTEM_MOD_TIMEOUT * 1000;
 
 	while( TRUE )
 	{
-		//DEBUG("[PHPFsys] in loop\n");
-		
 		ret = poll( fds, 2, 250 ); // HT Small timeout
 
 		if( ret == 0 )
 		{
-			//DEBUG("Timeout!\n");
 			break;
 		}
-		else if(  ret < 0 )
+		else if( ret < 0 )
 		{
-			//DEBUG("Error\n");
 			break;
 		}
 		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
@@ -265,6 +260,8 @@ ListString *PHPCall( const char *command )
 			break;
 		}
 	}
+	close( fds[1].fd );
+	close( fds[0].fd );
 #else
 	fd_set set;
 	struct timeval timeout;
