@@ -4183,13 +4183,17 @@ window.FriendDOS =
 				{
 					// Make a trim
 					let compare = data[a].Path;
-					if(
-						data[a].Path.substr( data[a].Path.length - 1, 1 ) == '/' &&
-						src.substr( src.length - 1, 1 ) != '/'
-					)
+					
+					if( data[a].Type == 'Directory' )
 					{
-						compare = compare.substr( 0, compare.length - 1 );
-					}
+					    if(
+						    data[a].Path.substr( data[a].Path.length - 1, 1 ) == '/' &&
+						    src.substr( src.length - 1, 1 ) != '/'
+					    )
+					    {
+						    compare = compare.substr( 0, compare.length - 1 );
+					    }
+				    }
 
 					// We have a match with the path we want to copy!
 					let compared = false;
