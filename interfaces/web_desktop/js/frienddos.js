@@ -4207,6 +4207,11 @@ window.FriendDOS =
 					}
 					else if( compare == src ) compared = true;
 					
+					if( !compared )
+					{
+					    console.log( 'Failed to compare: ' + compare + ' == ' + src );
+					}
+					
 					if( compared )
 					{
 						compareCount++;
@@ -4319,7 +4324,6 @@ window.FriendDOS =
 										callback( 'Failed to ' + ( move ? 'move' : 'copy' ) + ' file...', { done: true } );
 									}
 								}
-								console.log( 'EXECUTING COPY: ' + finalSrc + ' -> ' + destination );
 								doorSrc.dosAction( 'copy', { from: finalSrc, to: destination }, function( result )
 								{
 									if( move )
