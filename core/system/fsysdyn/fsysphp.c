@@ -283,7 +283,7 @@ ListString *PHPCall( const char *command )
 			DEBUG("Timeout!\n");
 			break;
 		}
-		else if(  ret < 0 )
+		else if( ret < 0 )
 		{
 			DEBUG("FSYSPHP: SELECT Error\n");
 			break;
