@@ -4215,10 +4215,6 @@ window.FriendDOS =
 					{
 					    compared = true;
 				    }
-				    else
-				    {
-				        console.log( 'CPY ERR: ' + src + ' IS NOT ' + compare );
-				    }
 					
 					if( compared )
 					{
