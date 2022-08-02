@@ -4020,6 +4020,8 @@ window.FriendDOS =
 	{
 		let fdos = this;
 		
+		console.log( '> Got a query of copying ' + src + ' to ' + dest );
+		
 		// Do we want to move the files?
 		let move = flags && flags.move ? true : false;
 
