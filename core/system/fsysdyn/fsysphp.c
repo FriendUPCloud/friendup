@@ -1938,7 +1938,7 @@ BufString *Info( File *s, const char *path )
 	if( s != NULL )
 	{
 		char *comm = NULL;
-		int len = 64;
+		int len = 256;
 		if( path != NULL )
 		{
 			len += strlen( path );
@@ -1972,7 +1972,7 @@ BufString *Info( File *s, const char *path )
 			int cmdLength = strlen( "type=&module=files&args=false&command=info&authkey=false&sessionid=&path=&subPath=" ) +
 				( sd->type ? strlen( sd->type ) : 0 ) + 
 				( s->f_SessionIDPTR ? strlen( s->f_SessionIDPTR ) : 0 ) + 
-				( encPath ? strlen( encPath ) : 0 ) + 256 + strlen( "php \"modules/system/module.php\" \"\";" );
+				( encPath ? strlen( encPath ) : 0 ) + 128 + strlen( "php \"modules/system/module.php\" \"\";" );
 			
 			// Whole command
 			char *command = FCalloc( cmdLength, sizeof( char ) );
@@ -2006,10 +2006,10 @@ BufString *Info( File *s, const char *path )
 						{
 							ListStringDelete( result );
 							
-							snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=info&authkey=false&sessionid=%s&path=%s&subPath=",
+							/*snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=info&authkey=false&sessionid=%s&path=%s&subPath=",
 								sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encPathSlash ? encPathSlash : "" );
 							
-							FilterPHPVar( commandCnt );
+							FilterPHPVar( commandCnt );*/
 							
 							snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", commandCnt );
 		
