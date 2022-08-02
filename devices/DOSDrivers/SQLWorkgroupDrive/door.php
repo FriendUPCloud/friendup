@@ -1560,7 +1560,6 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				else
 				{
 					// If this last joint might be a file, return parent id
-					$Logger->log('Not a real folder "' . $finalPath[0] . '"? -> COULD NOT LOAD SQLDrive Folder // FilesystemID: ' . $fo->FilesystemID .  ' // FolderID ' . $fo->FolderID . ' // Name ' . $fo->Name );
 					return false;
 				}
 				//$Logger->log('Our current folder ID is '. $fo->ID);
