@@ -1972,7 +1972,7 @@ BufString *Info( File *s, const char *path )
 			int cmdLength = strlen( "type=&module=files&args=false&command=info&authkey=false&sessionid=&path=&subPath=" ) +
 				( sd->type ? strlen( sd->type ) : 0 ) + 
 				( s->f_SessionIDPTR ? strlen( s->f_SessionIDPTR ) : 0 ) + 
-				( encPath ? strlen( encPath ) : 0 ) + 1024 + strlen( "php \"modules/system/module.php\" \"\";" );
+				( encPath ? strlen( encPath ) : 0 ) + 128 + strlen( "php \"modules/system/module.php\" \"\";" );
 			
 			// Whole command
 			char *command = FMalloc( cmdLength );
