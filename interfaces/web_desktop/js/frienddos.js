@@ -4113,6 +4113,8 @@ window.FriendDOS =
 		{
 			let self = this;
 
+            console.log( 'CPY - STARTING looking at file ' + src );
+
 			if (!depth)
    			{
     			depth = 0;
@@ -4176,7 +4178,6 @@ window.FriendDOS =
 				// TODO: Implement abort
 				for( let a = 0; a < data.length; a++ )
 				{
-					console.log( 'CPY >>> Examining: ' + data[a].Path );
 					// Make a trim
 					let compare = data[a].Path;
 					if(
@@ -4206,10 +4207,6 @@ window.FriendDOS =
 						}
 					}
 					else if( compare == src ) compared = true;
-					else
-					{
-					    console.log( 'CPY - FAILED COMPARE: ' + compare + ' == ' + src );
-					}
 					
 					if( compared )
 					{
@@ -4338,7 +4335,6 @@ window.FriendDOS =
 									}
 									else
 									{
-									    console.log( 'CPY + done executing ' + destination );
 										callback( 'Copied ' + finalSrc + ' to ' + destination + '..' );
 									}
 
