@@ -1997,7 +1997,7 @@ BufString *Info( File *s, const char *path )
 					ListString *result = PHPCall( command );
 					if( result != NULL )
 					{
-						if( result->ls_Data != NULL && strncmp( "fail<!--separate-->", result->ls_Data, 19 ) == 0 )
+						if( result->ls_Data != NULL && result->ls_Size > 19 && strncmp( "fail<!--separate-->", result->ls_Data, 19 ) == 0 )
 						{
 							ListStringDelete( result );
 							
