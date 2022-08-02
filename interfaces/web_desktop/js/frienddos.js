@@ -359,7 +359,7 @@ window.Shell = function( appObject )
 	this.queueCommand = function( array, index, buffer, callback )
 	{
 		let t = this;
-		console.log( 'Executing: ' + array[index] );
+		console.log( 'Executing: ', array, index, array[index] );
 		this.execute( array[index++], function( result, data )
 		{
 			if( result )
