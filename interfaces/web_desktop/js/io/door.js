@@ -152,7 +152,6 @@ Door.prototype.get = function( path )
 
 Door.prototype.getIcons = function( fileInfo, callback, flags )
 {
-	console.log( 'CPY - Getting icons NOW ', fileInfo );
 	if( !this.path && this.deviceName )
 	{
 		if( typeof( fileInfo ) == 'string' && fileInfo != 'Mountlist:' )
@@ -210,6 +209,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 	console.log( 'CPY - DIR Checking path: ' + t.fileInfo.Path );
 	this.checkDormantDoors( t.fileInfo.Path ? t.fileInfo.Path : false, function( dirs )
 	{
+		console.log( 'CPY - Checking complete (not dormant)' );
 		if( !t.fileInfo.Path && t.path )
 		{
 			if( t.deviceName.indexOf( ':' ) < 0 )
