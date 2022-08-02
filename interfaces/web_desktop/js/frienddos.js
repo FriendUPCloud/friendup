@@ -357,7 +357,6 @@ window.Shell = function( appObject )
 	    }
 	    else
 	    {
-	        console.log( 'Executing: ' + script );
 	        this.execute( script, function( result, data )
 		    {
 			    callback( true, result );
