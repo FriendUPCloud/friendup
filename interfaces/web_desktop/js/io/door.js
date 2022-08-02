@@ -297,7 +297,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 					}
 					
 					console.log( 'CPY - What is list: ' + d );
-					let list = d.indexOf( '{' ) && parsed ? parsed : {};
+					let list = d.indexOf( '[' ) >= 0 && parsed ? parsed : {};
 					
 					if( typeof( list ) == 'object' && list.length )
 					{
