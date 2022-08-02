@@ -4298,6 +4298,7 @@ window.FriendDOS =
 						// Copy single file
 						else
 						{
+							console.log( 'CPY - Copying single file: ' + src );
 							copyObject.copyTotal++;
 							copyObject.processes++;
 							let destination = dest;
