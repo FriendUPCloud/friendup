@@ -64,6 +64,7 @@ function AddToCajaxQueue( ele )
 	{
 		if( Friend.cajax[a] == ele )
 		{
+		    console.log( 'CPY is a duplicate!' );
 			return false;
 		}
 	}
@@ -72,6 +73,7 @@ function AddToCajaxQueue( ele )
 	for( let a = 0; a < Friend.cajax.length; a++ )
 		o.push( Friend.cajax[ a ] );
 	Friend.cajax = o;
+	console.log( 'CPY new queue: ', o );
 }
 
 function RemoveFromCajaxQueue( ele )
@@ -112,6 +114,7 @@ function CancelCajaxOnId( id )
 		}
 	}
 	Friend.cajax = o;
+	console.log( 'CPY - cancelled' );
 }
 
 // A simple ajax function
