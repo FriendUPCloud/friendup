@@ -248,6 +248,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 			
 			j.onload = function( e, d )
 			{
+			    console.log( 'Return value for + ' updateurl + ' is ' + e );
 				if( e )
 				{
 					if( e != 'ok' )
