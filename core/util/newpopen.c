@@ -81,8 +81,8 @@ int newpopen(const char *cmd, NPOpenFD *po )
 		}
 		
 		execl( "/bin/sh", "sh", "-c", cmd, NULL );
-		//perror( "Error with execl...\n" );
-		//_exit( 0 );
+		perror( "Error with execl...\n" );
+		_exit( 0 );
 	}
 	// Parent
 	else if( pid > 0 )
@@ -127,7 +127,7 @@ int newpclose( NPOpenFD *po )
 	close( po->np_FD[ NPOPEN_INPUT ] );
 	close( po->np_FD[ NPOPEN_CONSOLE ] );
 	
-	ret = waitpid( po->npo_PID, &status, WNOHANG );
+	ret = waitpid( po->npo_PID, &status, 0 );
 	if( ret == 0 )
 	{
 		DEBUG("[newpclose] KILL! end ret = 0\n");
