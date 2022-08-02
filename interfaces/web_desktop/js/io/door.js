@@ -337,9 +337,10 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 									catch( e )
 									{
 									    console.log( 'CPY - ERROR checking JSON: ' + chd );
-									};
+									}
 								}
 								let pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
+								console.log( 'CPY - SHARED PATH STUFF!' );
 								callback( list, t.fileInfo.Path, pth );
 							}
 							ch.execute( 'file/checksharedpaths', { paths: sharedCheck, path: deviceName } );
