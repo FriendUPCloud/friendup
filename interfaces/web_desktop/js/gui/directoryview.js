@@ -4622,6 +4622,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 				updateurl += '&path=' + encodeURIComponent( self.fileInfo.Path );
 				updateurl += '&sessionid=' + encodeURIComponent( Workspace.sessionId );
 
+				j.forceHTTP = true;
 				j.open( 'get', updateurl, true, true );
 
 				j.fileInfo = self.fileInfo;
