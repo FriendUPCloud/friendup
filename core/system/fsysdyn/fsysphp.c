@@ -1999,6 +1999,7 @@ BufString *Info( File *s, const char *path )
 					{
 						if( result->ls_Data != NULL && result->ls_Size > 19 && strncmp( "fail<!--separate-->", result->ls_Data, 19 ) == 0 )
 						{
+							//
 							ListStringDelete( result );
 							
 							snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=info&authkey=false&sessionid=%s&path=%s&subPath=",
