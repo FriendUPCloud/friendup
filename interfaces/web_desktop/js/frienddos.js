@@ -4350,7 +4350,7 @@ window.FriendDOS =
 					}
 					else
 					{
-					    console.log( 'CPY - FAILED to copy to ' + destination );
+					    console.log( 'CPY - FAILED to copy ' + src );
 					}
 				}
 				if( depth == 0 && compareCount == 0 )
