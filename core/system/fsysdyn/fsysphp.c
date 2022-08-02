@@ -321,7 +321,8 @@ ListString *PHPCall( const char *command )
 	//DEBUG( "[fsysphp] Finished PHP call...(%lu length, %s)-\n", ls->ls_Size, ls->ls_Data );
 	//DEBUG( "[fsysphp] Finished PHP call...(%lu length, %s)-\n", ls->ls_Size, ls->ls_Data );
 	ListString *l = ListStringNew();
-	l->ls_Data = buf;
+	ListStringAdd( ls, buf, total );
+	FFree( buf );
 	return l;
 }
 
