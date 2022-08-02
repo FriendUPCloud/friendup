@@ -350,16 +350,28 @@ window.Shell = function( appObject )
 	// Parse a whole script
 	this.parseScript = function( script, callback )
 	{
-		script = script.split( "\n" );
-		console.log( 'Queueing: ', script );
-		this.queueCommand( script, 0, [], callback );
+	    if( script.indexOf( "\n" ) > 0 )
+	    {
+		    script = script.split( "\n" );
+		    this.queueCommand( script, 0, [], callback );
+	    }
+	    else
+	    {
+	        this.execute( script, function( result, data )
+		    {
+			    if( result )
+			    {
+				    buffer += typeof( result ) == 'object' ? result.response : result;
+			    }
+			    callback( true, buffer );
+		    } );
+	    }
 	};
 
 	// queue and culminate output!
 	this.queueCommand = function( array, index, buffer, callback )
 	{
 		let t = this;
-		console.log( 'Executing: ', array, index, array[index] );
 		this.execute( array[index++], function( result, data )
 		{
 			if( result )
