@@ -5769,7 +5769,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				Friend.workspaceClipBoardMode = 'copy';
 				Friend.workspaceClipBoard = selected;
-				console.log( 'We copied ' + selected.length + ' files' );
+				console.log( 'We copied ' + selected.length + ' files', selected );
 			}
 			
 			WorkspaceMenu.show();
