@@ -31,6 +31,7 @@ if( !Friend.cajax ) Friend.cajax = [];
 
 function AddToCajaxQueue( ele )
 {
+    console.log( 'CPY Adding to cajax queue' );
 	// If we're queueing it
 	if( ele.onQueue ) ele.onQueue();
 	
