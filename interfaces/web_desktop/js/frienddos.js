@@ -4135,7 +4135,6 @@ window.FriendDOS =
 			if ( srcPath == destPath )
 			{
 				callback( 'Cannot ' + ( move ? 'move' : 'copy' ) + ' into self.', { done: true } );
-				console.log( 'CPY - ABORTING dest and source is equal' );
 				return false;
 			}
 
@@ -4170,15 +4169,14 @@ window.FriendDOS =
 			doorSrc.path = pthTest;
 			
 			copyObject.processes++;
-			console.log( 'CPY - Getting source directory' );
 			doorSrc.getIcons( false, function( data )
 			{
-			    console.log( 'CPY - > Source directory gotten' );
 				copyObject.completed++;
 				
 				let compareCount = 0;
 				
 				// TODO: Implement abort
+				console.log( 'CPY - Preparing to copy ' + src );
 				for( let a = 0; a < data.length; a++ )
 				{
 					// Make a trim
