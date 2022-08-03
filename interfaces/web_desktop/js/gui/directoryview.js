@@ -3505,7 +3505,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			if( e.button == 2 )
 			{
 				// check icons
-				if( !Workspace.contextMenuShowing || !this.classList.contains( 'Selected' ) )
+				if( !Workspace.contextMenuShowing && !this.classList.contains( 'Selected' ) )
 				{
 					clearRegionIcons( { force: true } );
 				}
