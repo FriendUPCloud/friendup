@@ -3007,6 +3007,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			// Releasing
 			r.onmouseup = function( e )
 			{
+				if( e.button == 2 ) return;
 				if( !e.ctrlKey && !e.shiftKey && !e.command && !ge( 'RegionSelector' ) )
 				{
 					if( !isTouchDevice() )
@@ -3505,12 +3506,14 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			{
 				// check icons
 				if( !Workspace.contextMenuShowing )
+				{
 					clearRegionIcons();
-				this.classList.add( 'Selected' );
-				found = this;
-				this.selected = true;
-				this.icon.selected = true;
-				this.fileInfo.selected = true;
+					this.classList.add( 'Selected' );
+					found = this;
+					this.selected = true;
+					this.icon.selected = true;
+					this.fileInfo.selected = true;
+				}
 			
 				// Count selected icons
 				this.directoryView.windowObject.checkSelected();
