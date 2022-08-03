@@ -2867,7 +2867,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					}
 					return cancelBubble( e );
 				}
-				else
+				else if( e.button == 0 || !e.button )
 				{
 					// Use override if possible
 					if( this.file.directoryView.filedialog && isMobile )
