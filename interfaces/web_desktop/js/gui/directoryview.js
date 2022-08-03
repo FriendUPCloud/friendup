@@ -3509,6 +3509,10 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				{
 					clearRegionIcons();
 				}
+				else if( Workspace.contextMenuShowing && !this.classList.contains( 'Selected' ) )
+				{
+					clearRegionIcons();
+				}
 				
 				this.classList.add( 'Selected' );
 				found = this;
