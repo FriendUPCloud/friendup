@@ -601,22 +601,29 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			}
 			if( type == 'volume' )
 			{
-				menu.push( {
-					name: i18n( 'menu_show_icon_information' ),
-					command: function()
-					{
-						for( let c = 0; c < Workspace.icons.length; c++ )
+				if ( window?.Workspace?.theme != 'jeanie' )
+				{
+					menu.push( {
+						name: i18n( 'menu_show_icon_information' ),
+						command: function()
 						{
-							if( Workspace.icons[ c ].Volume === ppath )
+							for( let c = 0; c < Workspace.icons.length; c++ )
 							{
-								Workspace.fileInfo( Workspace.icons[ c ] );
-								break;
+								if( Workspace.icons[ c ].Volume === ppath )
+								{
+									Workspace.fileInfo( Workspace.icons[ c ] );
+									break;
+								}
 							}
 						}
-					}
-				} );
+					} );
+				}
 			}
 			if( cf ) menu.push( cf );
+			
+			if ( menu.length < 1 )
+				return cancelBubble( e );
+			
 			if( window.ShowContextMenu )
 			{
 				ShowContextMenu( i18n( 'i18n_file_menu' ), menu );
