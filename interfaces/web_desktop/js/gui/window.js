@@ -2366,7 +2366,7 @@ var View = function( args )
 		let filter = [
 			'min-width', 'min-height', 'width', 'height', 'id', 'title', 
 			'screen', 'parentView', 'transparent', 'minimized', 'dialog', 
-			'standard-dialog'
+			'standard-dialog', 'sidebarManaged'
 		];
 
 		if( !flags.screen )
