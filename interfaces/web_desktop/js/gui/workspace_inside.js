@@ -9931,11 +9931,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			else if( e.data['error'] == 1 )
 			{
+				if( Workspace.dashboard )
+				{
+					Notify( { title: 'File transfer error', text: e.data[ 'errormessage' ] } );
+				}
 				uprogress.displayError(e.data['errormessage']);
 			}
 			else
 			{
-				console.log('Unhandles message from filetransfer worker',e);
+				console.log('Unhandled message from filetransfer worker',e);
 			}
 
 		}

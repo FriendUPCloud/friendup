@@ -1694,6 +1694,10 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						if( uprogress.info )
 							uprogress.info.innerHTML = '<div style="color:#F00; padding-top:10px; font-weight:700;">'+ msg +'</div>';
 						uprogress.myview.setFlag( 'height', 140 );
+						if( Workspace.dashboard )
+						{
+							Notify( { title: 'File transfer error', text: msg } );
+						}
 					}
 
 					// Error happened!
