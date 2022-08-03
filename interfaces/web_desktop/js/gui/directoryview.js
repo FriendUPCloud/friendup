@@ -3507,11 +3507,11 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				// check icons
 				if( !Workspace.contextMenuShowing || !this.classList.contains( 'Selected' ) )
 				{
-					clearRegionIcons();
+					clearRegionIcons( { force: true } );
 				}
 				else if( Workspace.contextMenuShowing && !this.classList.contains( 'Selected' ) )
 				{
-					clearRegionIcons();
+					clearRegionIcons( { force: true } );
 				}
 				
 				this.classList.add( 'Selected' );
