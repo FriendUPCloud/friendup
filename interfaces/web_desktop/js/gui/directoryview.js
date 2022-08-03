@@ -3497,9 +3497,9 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			// Right mouse button
 			if( e.button == 2 )
 			{
-				console.log( 'Blipp' );
 				// check icons
-				clearRegionIcons();
+				if( !Workspace.contextMenuShowing )
+					clearRegionIcons();
 				this.classList.add( 'Selected' );
 				found = this;
 				this.selected = true;
