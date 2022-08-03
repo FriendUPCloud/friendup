@@ -3427,6 +3427,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		{
 			if( !e ) e = window.event ? window.event : {};
 	
+			if( Workspace.contextMenuShowing ) return;
+			
 			if( isTouchDevice() )
 			{
 				window.touchElementTime = ( new Date() ).getTime();
