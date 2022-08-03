@@ -2869,7 +2869,6 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				}
 				else if( e.button == 0 || !e.button )
 				{
-					console.log( 'BOOP' );
 					// Use override if possible
 					if( this.file.directoryView.filedialog && isMobile )
 					{
@@ -3425,8 +3424,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	if( !( self.flags && self.flags.nativeDraggable ) )
 	{
 		file[ 'onmousedown' ] = function( e )
-		{	
-			console.log( 'BOING' );
+		{
 			if( !e ) e = window.event ? window.event : {};
 	
 			if( isTouchDevice() )
@@ -3446,12 +3444,15 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			if( this.window )
 			{
 				// when changing from one directoryview to another, clear region icons
-				if(
-					window.currentMovable && window.currentMovable.classList.contains( 'Active' ) &&
-					this.window.parentNode != window.currentMovable
-				)
+				if( e.button == 0 || !e.button )
 				{
-					clearRegionIcons();
+					if(
+						window.currentMovable && window.currentMovable.classList.contains( 'Active' ) &&
+						this.window.parentNode != window.currentMovable
+					)
+					{
+						clearRegionIcons();
+					}
 				}
 				if( this.window.parentNode.classList.contains( 'View' ) )
 				{
@@ -3548,7 +3549,6 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			}
 			else if( e.button == 0 || !e.button )
 			{
-				console.log( 'POOP' );
 				// Use override if possible
 				if( this.directoryView.filedialog )
 				{
@@ -3624,6 +3624,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		// This one driggers dropping icons! (believe it or not)
 		file.onmouseup = function( e )
 		{
+			if( !( e.button == 0 || !e.button ) )
+				return;
 			if( mousePointer && mousePointer.elements.length )
 			{
 				// Drop on an icon on a workbench icon
