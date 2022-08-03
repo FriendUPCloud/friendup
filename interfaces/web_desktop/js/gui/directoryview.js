@@ -809,6 +809,11 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	
 	winobj.addEventListener( 'contextmenu', function( e )
 	{
+		if( Workspace.contextMenuShowing )
+		{
+			Workspace.contextMenuShowing.hide()
+			Workspace.contextMenuShowing = false;
+		}
 		let tr = e.target ? e.target : e.srcObject;
 		// Enable default behavior on the context menu instead
 		if( tr.classList && tr.classList.contains( 'DefaultContextMenu' ) )
