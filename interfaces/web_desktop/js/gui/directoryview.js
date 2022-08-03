@@ -3505,15 +3505,16 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			if( e.button == 2 )
 			{
 				// check icons
-				if( !Workspace.contextMenuShowing )
+				if( !Workspace.contextMenuShowing || !this.classList.contains( 'Selected' ) )
 				{
 					clearRegionIcons();
-					this.classList.add( 'Selected' );
-					found = this;
-					this.selected = true;
-					this.icon.selected = true;
-					this.fileInfo.selected = true;
 				}
+				
+				this.classList.add( 'Selected' );
+				found = this;
+				this.selected = true;
+				this.icon.selected = true;
+				this.fileInfo.selected = true;
 			
 				// Count selected icons
 				this.directoryView.windowObject.checkSelected();
