@@ -1922,7 +1922,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	else if( option == 'imageview' )
 	{
 		gridX = 240;
-		gridY = 180;
+		gridY = 210;
 	}
 	
 	// Get display frame
@@ -3420,6 +3420,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	{
 		file[ 'onmousedown' ] = function( e )
 		{	
+			console.log( 'BOING' );
 			if( !e ) e = window.event ? window.event : {};
 	
 			if( isTouchDevice() )
