@@ -1207,7 +1207,10 @@ function _ActivateWindow( div, nopoll, e )
 	        window.hideDashboard();
 	}
 	if( window.Workspace && window.Workspace.showQuickMenu && !div.parentNode.classList.contains( 'SidebarManaged' ) )
+	{
+		console.log( div.parentNode.className );
         Workspace.showQuickMenu();
+    }
 	
 	// Already activating
 	if( div.parentNode.classList.contains( 'Activating' ) )
