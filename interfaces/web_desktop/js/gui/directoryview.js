@@ -3497,6 +3497,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			// Right mouse button
 			if( e.button == 2 )
 			{
+				console.log( 'Blipp' );
 				// check icons
 				clearRegionIcons();
 				this.classList.add( 'Selected' );
@@ -3506,8 +3507,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				this.fileInfo.selected = true;
 			
 				// Count selected icons
-				if( !Workspace.contextMenuShowing )
-					this.directoryView.windowObject.checkSelected();
+				this.directoryView.windowObject.checkSelected();
 			
 				if( !window.isMobile )
 				{
