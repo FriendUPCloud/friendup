@@ -9934,6 +9934,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( Workspace.dashboard )
 				{
 					Notify( { title: 'File transfer error', text: e.data[ 'errormessage' ] } );
+					uworker.terminate(); // End the copying process
+					w.close();
 				}
 				uprogress.displayError(e.data['errormessage']);
 			}

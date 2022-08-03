@@ -443,6 +443,8 @@ File = function( filename )
 				if( Workspace.dashboard )
 				{
 					Notify( { title: 'File transfer error', text: msg } );
+					uworker.terminate(); // End the copying process
+					w.close();
 				}
 			}
 

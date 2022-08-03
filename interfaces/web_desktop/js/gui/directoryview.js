@@ -1697,6 +1697,8 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						if( Workspace.dashboard )
 						{
 							Notify( { title: 'File transfer error', text: msg } );
+							uworker.terminate(); // End the copying process
+							w.close();
 						}
 					}
 
