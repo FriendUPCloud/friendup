@@ -5439,9 +5439,12 @@ var View = function( args )
 				this.flags[ flag ] = value;
 				break;
 			case 'sidebarManaged':
-			    if( value == 'true' || value == true )
-    			    viewdiv.parentNode.classList.add( 'SidebarManaged' );
-    			else viewdiv.parentNode.classList.remove( 'SidebarManaged' );
+				if( viewdiv && viewdiv.parentNode )
+				{
+					if( value == 'true' || value == true )
+					    viewdiv.parentNode.classList.add( 'SidebarManaged' );
+					else viewdiv.parentNode.classList.remove( 'SidebarManaged' );
+				}
     			this.flags[ flag ] = value;
 			    break;
 			// Takes all flags
