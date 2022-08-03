@@ -2869,6 +2869,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				}
 				else if( e.button == 0 || !e.button )
 				{
+					console.log( 'BOOP' );
 					// Use override if possible
 					if( this.file.directoryView.filedialog && isMobile )
 					{
@@ -3547,6 +3548,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			}
 			else if( e.button == 0 || !e.button )
 			{
+				console.log( 'POOP' );
 				// Use override if possible
 				if( this.directoryView.filedialog )
 				{
