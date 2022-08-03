@@ -1206,9 +1206,8 @@ function _ActivateWindow( div, nopoll, e )
 	    if( window.hideDashboard )
 	        window.hideDashboard();
 	}
-	if( window.Workspace && window.Workspace.showQuickMenu && !div.parentNode.classList.contains( 'SidebarManaged' ) )
+	if( window.Workspace && window.Workspace.showQuickMenu && !div.windowObject.getFlag( 'sidebarManaged' ) )
 	{
-		console.log( div.parentNode.className );
         Workspace.showQuickMenu();
     }
 	
@@ -5443,6 +5442,7 @@ var View = function( args )
 			    if( value == 'true' || value == true )
     			    viewdiv.parentNode.classList.add( 'SidebarManaged' );
     			else viewdiv.parentNode.classList.remove( 'SidebarManaged' );
+    			this.flags[ flag ] = value;
 			    break;
 			// Takes all flags
 			default:
