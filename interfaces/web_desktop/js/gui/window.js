@@ -1206,7 +1206,7 @@ function _ActivateWindow( div, nopoll, e )
 	    if( window.hideDashboard )
 	        window.hideDashboard();
 	}
-	if( window.Workspace && window.Workspace.showQuickMenu && !div.windowObject.getFlag( 'sidebarManaged' ) )
+	if( window.Workspace && window.Workspace.showQuickMenu && !div.parentNode.classList.contains( 'SidebarManaged' ) ) )
         Workspace.showQuickMenu();
 	
 	// Already activating
