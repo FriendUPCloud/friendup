@@ -565,6 +565,12 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 		}
 		ele.oncontextmenu = function( e )
 		{
+			console.log( 'oncontextmenu', {
+				isMobile      : isMobile,
+				noContextMenu : self.flags.noContextMenu,
+				type          : type,
+				theme         : window?.Workspace?.theme,
+			});
 			if( isMobile ) return;
 			if( self.flags.noContextMenu ) return cancelBubble( e );
 			
