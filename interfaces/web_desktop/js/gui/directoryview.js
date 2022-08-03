@@ -3545,7 +3545,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				}
 				return cancelBubble( e );
 			}
-			else
+			else if( e.button == 0 || !e.button )
 			{
 				// Use override if possible
 				if( this.directoryView.filedialog )
