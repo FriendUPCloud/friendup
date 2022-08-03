@@ -3427,8 +3427,6 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		{
 			if( !e ) e = window.event ? window.event : {};
 	
-			if( Workspace.contextMenuShowing ) return;
-			
 			if( isTouchDevice() )
 			{
 				window.touchElementTime = ( new Date() ).getTime();
@@ -3508,7 +3506,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				this.fileInfo.selected = true;
 			
 				// Count selected icons
-				this.directoryView.windowObject.checkSelected();
+				if( !Workspace.contextMenuShowing )
+					this.directoryView.windowObject.checkSelected();
 			
 				if( !window.isMobile )
 				{
