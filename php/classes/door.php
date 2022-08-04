@@ -250,6 +250,11 @@ if( !class_exists( 'Door' ) )
 				{
 					$identifier = 'f.ID=\'' . intval( $args->fileInfo->ID, 10 ) . '\'';
 				}
+				// To disable filelog()
+				if( isset( $args->args->logger ) )
+				{
+				    $this->logger = $args->args->logger;
+				}
 				if( $identifier )
 				{
 				    $actId = isset( $activeUser->ID ) ? $activeUser->ID : $activeUserSession->UserID;
@@ -834,23 +839,31 @@ if( !class_exists( 'Door' ) )
 				{
 					// Use built-in, will work on local.handler
 					$doorFrom = new Door( $pathFrom );
+					if( $this->logger )
+    					$doorFrom->logger = $this->logger;
 				}
 				else
 				{
 					$path = $pathFrom;
 					include( $testFrom );
 					$doorFrom = $door;
+					if( $this->logger )
+    					$doorFrom->logger = $this->logger;
 				}
 				if( !file_exists( $testTo ) )
 				{
 					// Use built-in, will work on local.handler
 					$doorTo = new Door( $pathTo );
+					if( $this->logger )
+    					$doorTo->logger = $this->logger;
 				}
 				else
 				{
 					$path = $pathTo;
 					include( $testTo );
 					$doorTo = $door;
+					if( $this->logger )
+    					$doorTo->logger = $this->logger;
 				}
 			
 				unset( $door, $path );
@@ -949,6 +962,8 @@ if( !class_exists( 'Door' ) )
 			else if( is_object( $file ) && isset( $file->Door ) )
 			{
 				$file = new File( $file->Door->Name . ':' . $file->Path );
+				if( $this->logger )
+    				$file->logger = $this->logger;
 				if( $file->Load() )
 				{
 					$cnt = $file->_content;

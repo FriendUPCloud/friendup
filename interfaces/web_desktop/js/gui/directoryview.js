@@ -809,6 +809,11 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	
 	winobj.addEventListener( 'contextmenu', function( e )
 	{
+		if( Workspace.contextMenuShowing )
+		{
+			Workspace.contextMenuShowing.hide()
+			Workspace.contextMenuShowing = false;
+		}
 		let tr = e.target ? e.target : e.srcObject;
 		// Enable default behavior on the context menu instead
 		if( tr.classList && tr.classList.contains( 'DefaultContextMenu' ) )
@@ -1689,6 +1694,12 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						if( uprogress.info )
 							uprogress.info.innerHTML = '<div style="color:#F00; padding-top:10px; font-weight:700;">'+ msg +'</div>';
 						uprogress.myview.setFlag( 'height', 140 );
+						if( Workspace.dashboard )
+						{
+							Notify( { title: 'File transfer error', text: msg } );
+							uworker.terminate(); // End the copying process
+							w.close();
+						}
 					}
 
 					// Error happened!
@@ -1922,7 +1933,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	else if( option == 'imageview' )
 	{
 		gridX = 240;
-		gridY = 180;
+		gridY = 210;
 	}
 	
 	// Get display frame
@@ -2862,7 +2873,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					}
 					return cancelBubble( e );
 				}
-				else
+				else if( e.button == 0 || !e.button )
 				{
 					// Use override if possible
 					if( this.file.directoryView.filedialog && isMobile )
@@ -2996,6 +3007,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			// Releasing
 			r.onmouseup = function( e )
 			{
+				if( e.button == 2 ) return;
 				if( !e.ctrlKey && !e.shiftKey && !e.command && !ge( 'RegionSelector' ) )
 				{
 					if( !isTouchDevice() )
@@ -3419,7 +3431,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	if( !( self.flags && self.flags.nativeDraggable ) )
 	{
 		file[ 'onmousedown' ] = function( e )
-		{	
+		{
 			if( !e ) e = window.event ? window.event : {};
 	
 			if( isTouchDevice() )
@@ -3439,12 +3451,15 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			if( this.window )
 			{
 				// when changing from one directoryview to another, clear region icons
-				if(
-					window.currentMovable && window.currentMovable.classList.contains( 'Active' ) &&
-					this.window.parentNode != window.currentMovable
-				)
+				if( e.button == 0 || !e.button )
 				{
-					clearRegionIcons();
+					if(
+						window.currentMovable && window.currentMovable.classList.contains( 'Active' ) &&
+						this.window.parentNode != window.currentMovable
+					)
+					{
+						clearRegionIcons();
+					}
 				}
 				if( this.window.parentNode.classList.contains( 'View' ) )
 				{
@@ -3490,7 +3505,15 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			if( e.button == 2 )
 			{
 				// check icons
-				clearRegionIcons();
+				if( !Workspace.contextMenuShowing && !this.classList.contains( 'Selected' ) )
+				{
+					clearRegionIcons( { force: true } );
+				}
+				else if( Workspace.contextMenuShowing && !this.classList.contains( 'Selected' ) )
+				{
+					clearRegionIcons( { force: true } );
+				}
+				
 				this.classList.add( 'Selected' );
 				found = this;
 				this.selected = true;
@@ -3539,7 +3562,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				}
 				return cancelBubble( e );
 			}
-			else
+			else if( e.button == 0 || !e.button )
 			{
 				// Use override if possible
 				if( this.directoryView.filedialog )
@@ -3616,6 +3639,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		// This one driggers dropping icons! (believe it or not)
 		file.onmouseup = function( e )
 		{
+			if( !( e.button == 0 || !e.button ) )
+				return;
 			if( mousePointer && mousePointer.elements.length )
 			{
 				// Drop on an icon on a workbench icon
@@ -3664,9 +3689,16 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 						for( let b in mt.types )
 						{
 							// Make sure we have a valid executable
-							if( ext == mt.types[b].toLowerCase() && mt.executable.length )
+							if( ext == mt.types[b].toLowerCase() && ( mt.error || mt.executable.length ) )
 							{
-								return ExecuteApplication( mt.executable, obj.fileInfo.Path );
+							    if( mt.error )
+							    {
+							        return Alert( mt.error.title, mt.error.text );
+							    }
+							    else if( mt.executable.length )
+							    {
+								    return ExecuteApplication( mt.executable, obj.fileInfo.Path );
+							    }
 							}
 						}
 					}
@@ -4622,6 +4654,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 				updateurl += '&path=' + encodeURIComponent( self.fileInfo.Path );
 				updateurl += '&sessionid=' + encodeURIComponent( Workspace.sessionId );
 
+				j.forceHTTP = true;
 				j.open( 'get', updateurl, true, true );
 
 				j.fileInfo = self.fileInfo;
@@ -5816,6 +5849,7 @@ function GetIconClassByExtension( extension, fileInfo )
 			iconInner.className = 'TypeWebUrl';
 			break;
 		case 'txt':
+		case 'memo':
 			iconInner.className = 'TypeTXT';
 			break;
 		case 'avi':

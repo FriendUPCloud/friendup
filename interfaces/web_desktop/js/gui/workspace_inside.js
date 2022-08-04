@@ -5769,6 +5769,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				Friend.workspaceClipBoardMode = 'copy';
 				Friend.workspaceClipBoard = selected;
+				console.log( 'We copied ' + selected.length + ' files', selected );
 			}
 			
 			WorkspaceMenu.show();
@@ -5932,7 +5933,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					
 					let copyStr = 'copy ' + source + ' to ' + destin + fn;
-					
 					sh.parseScript( copyStr, function()
 					{
 						if( cliplen-- == 0 )
@@ -7855,9 +7855,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		                name: i18n( 'i18n_new_file' ),
 		                icon: 'caret-down',
 		                items: [ {
-		                    name: i18n( 'i18n_new_text' ),
+		                    name: i18n( 'i18n_new_memo' ),
 		                    icon: 'file-text',
-		                    command: 'new_text'
+		                    command: 'new_memo'
 		                }, {
 		                    name: i18n( 'i18n_new_document' ),
 		                    icon: 'file-word-o',
@@ -9931,11 +9931,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			else if( e.data['error'] == 1 )
 			{
+				if( Workspace.dashboard )
+				{
+					Notify( { title: 'File transfer error', text: e.data[ 'errormessage' ] } );
+					uworker.terminate(); // End the copying process
+					w.close();
+				}
 				uprogress.displayError(e.data['errormessage']);
 			}
 			else
 			{
-				console.log('Unhandles message from filetransfer worker',e);
+				console.log('Unhandled message from filetransfer worker',e);
 			}
 
 		}

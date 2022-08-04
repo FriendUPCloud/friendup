@@ -125,8 +125,8 @@ Widget.prototype.calcPosition = function()
 	else
 	{
 		// 
-		if( this.tx + this.tw > this.target.offsetWidth )
-			this.tx = this.target.offsetWidth - this.tw;
+		if( this.tx + this.tw > ( this.target.offsetWidth + this.target.offsetLeft ) )
+			this.tx = ( this.target.offsetWidth + this.target.offsetLeft ) - this.tw;
 		else if( this.tx < 0 ) this.tx = 0;
 		//
 		var px = this.tx - this.target.offsetLeft;

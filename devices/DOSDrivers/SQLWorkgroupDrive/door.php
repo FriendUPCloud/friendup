@@ -124,6 +124,12 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			
 			if( isset( $path ) )
 			{
+			    if( substr( $path, 0, 13 ) == '<!--base64-->' )
+			    {
+			        $p = explode( '<!--base64-->', $path );
+			        $path = base64_decode( $p[1] );
+			    }
+			
 				$path = str_replace( '::', ':', $path );
 				$path = str_replace( ':/', ':', $path );
 				$path = explode( ':', $path );
@@ -537,7 +543,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 
 									if( $total + $len < SQLWORKGROUPDRIVE_FILE_LIMIT )
 									{
-										$Logger->log( '[SQLWORKGROUPDRIVE] Moving tmp file ' . $args->tmpfile . ' to ' . $Config->FCUpload . $fn . ' because ' . ( $total + $len ) . ' < ' . SQLDRIVE_FILE_LIMIT );
+										$Logger->log( '[SQLWORKGROUPDRIVE] Moving tmp file ' . $args->tmpfile . ' to ' . $Config->FCUpload . $fn . ' because ' . ( $total + $len ) . ' < ' . SQLWORKGROUPDRIVE_FILE_LIMIT );
 										// Delete existing file
 										if( $deletable ) unlink( $deletable );
 										
@@ -1483,8 +1489,15 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				$fi->FilesystemID = $this->ID;
 				$fi->FolderID = $fo ? $fo->ID : '0';
 				if( strstr( $path, '/' ) )
-					$fi->Filename = end( explode( '/', $path ) );
-				else $fi->Filename = end( explode( ':', $path ) );
+				{
+				    $tp = explode( '/', $path );
+					$fi->Filename = end( $tp );
+				}
+				else 
+				{
+				    $tp = explode( ':', $path );
+				    $fi->Filename = end( $tp );
+			    }
 				$fi->Filename = str_replace( "'", "\\'", $fi->Filename );
 				$fi->Load();
 			}
@@ -1560,7 +1573,6 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				else
 				{
 					// If this last joint might be a file, return parent id
-					$Logger->log('Not a real folder "' . $finalPath[0] . '"? -> COULD NOT LOAD SQLDrive Folder // FilesystemID: ' . $fo->FilesystemID .  ' // FolderID ' . $fo->FolderID . ' // Name ' . $fo->Name );
 					return false;
 				}
 				//$Logger->log('Our current folder ID is '. $fo->ID);
@@ -1619,6 +1631,9 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 		    global $Config, $User, $SqlDatabase, $Logger;
 		    
 		    if( !$filesystem ) $filesystem = $this;
+		    
+		    // Disable logger
+		    if( isset( $this->logger ) && $this->logger == 'disabled' ) return false;
 		    
 		    $path = $SqlDatabase->_link->real_escape_string( $path );
 		    

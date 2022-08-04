@@ -104,7 +104,7 @@ WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, i
 			}
 			//FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
 		}
-		DEBUG("[WebsocketReqPutData] req pointer %p chunk %d/%d , datasize %d\n", req, chunk, total, datasize );
+		//DEBUG("[WebsocketReqPutData] req pointer %p chunk %d/%d , datasize %d\n", req, chunk, total, datasize );
 		
 		// request exist, we are adding new part to it
 		if( req != NULL )

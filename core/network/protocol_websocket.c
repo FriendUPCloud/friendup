@@ -230,6 +230,8 @@ void *ParseAndCall( WSThreadData *wstd );
  */
 int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userData, void *tin, ssize_t len)
 {
+    signal(SIGPIPE, SIG_IGN);
+    
 	WSCData *wsd =  (WSCData *) userData;// lws_context_user ( this );
 	int returnError = 0;
 	
@@ -336,7 +338,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 				}
 				else // only fragment was received
 				{
-					DEBUG1("[WS] Only received: %s\n", (char *)tin );
+					//DEBUG1("[WS] Only received: %s\n", (char *)tin );
 					BufStringAddSize( wsd->wsc_Buffer, tin, len );
 					return 0;
 				}
@@ -456,7 +458,9 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 
 						int errret = lws_send_pipe_choked( wsi );
 				
-						DEBUG1("Sending message, size: %d PRE %d msg %s\n", e->fq_Size, LWS_SEND_BUFFER_PRE_PADDING, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
+				        // Hogne removed åprinting the entire message
+						//DEBUG1("Sending message, size: %d PRE %d msg %s\n", e->fq_Size, LWS_SEND_BUFFER_PRE_PADDING, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
+						DEBUG1("Sending message, size: %d PRE %d.\n", e->fq_Size, LWS_SEND_BUFFER_PRE_PADDING );
 						if( e != NULL )
 						{
 							DEBUG("[WS] Release: %p\n", e->fq_Data );
@@ -712,7 +716,9 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 							locptr[ znew++ ] = car;
 						}
 					
-						DEBUG("protocol websocket, before write: %s\n", locptr );
+					    // Hogne removed message output here
+						//DEBUG("protocol websocket, before write: %s\n", locptr );
+						DEBUG("protocol websocket, before write....\n", locptr );
 						if( locptr[ znew-1 ] == 0 )
 						{
 							znew--;
@@ -819,6 +825,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 void *ParseAndCall( WSThreadData *wstd )
 {
 	pthread_detach( pthread_self() );
+	signal(SIGPIPE, SIG_IGN);
 
 	int i, i1;
 	int r;
@@ -1029,7 +1036,7 @@ void *ParseAndCall( WSThreadData *wstd )
 										{
 											if( wsreq->wr_IsBroken )
 											{
-												Log( FLOG_ERROR, "Message is broken: '%s'\n", wsreq->wr_Message );
+												Log( FLOG_ERROR, "Message is broken.\n" ); //: '%s'\n", wsreq->wr_Message );
 											}
 											DEBUG( "[WS] No message!\n" );
 										}

@@ -11,7 +11,6 @@
 let _cajax_process_count = 0;
 
 let _cajax_connection_seed = Math.random(0,999)+Math.random(0,999)+Math.random(0,999)+'_';
-let _cajax_connection_num = 0;
 
 let _cajax_http_connections = 0;                // How many?
 let _cajax_http_max_connections = 6;            // Max
@@ -54,7 +53,7 @@ function AddToCajaxQueue( ele )
 	}
 	
 	// TODO: Support a nice queue.. :-)
-	if( !window.Friend || !window.Friend.cajax )
+	if( !window.Friend )
 	{
 		return false;
 	}
@@ -76,21 +75,11 @@ function AddToCajaxQueue( ele )
 function RemoveFromCajaxQueue( ele )
 {
 	let o = [];
-	let executeLength = 6;
-	let executors = [];
 	for( let a = 0; a < Friend.cajax.length; a++ )
 	{
 		if( Friend.cajax[a] != ele )
 		{
-			if( executeLength > 0 )
-			{
-				executors.push( Friend.cajax[a] );
-				executeLength--;
-			}
-			else
-			{
-				o.push( Friend.cajax[a] );
-			}
+			o.push( Friend.cajax[a] );
 		}
 	}
 	Friend.cajax = o;
@@ -603,8 +592,7 @@ cAjax.prototype.send = function( data, callback )
 
 	// Wait in case of check server connection
 	if( window.Workspace && ( window.Friend && Friend.User && Friend.User.State == 'offline' ) && !this.forceSend )
-	{	
-		//console.log( 'Adding because!' );
+	{
 		AddToCajaxQueue( self );
 		return;
 	}
@@ -686,6 +674,7 @@ cAjax.prototype.send = function( data, callback )
 		{
 			let u = this.url.split( '?' );
 			u = u[ 0 ] + '?' + ( u[ 1 ] ? ( u[ 1 ] + '&' ) : '' ) + 'cachekiller=' + this.getRandNumbers();
+
 			this.proxy.setRequestHeader( 'Method', 'POST ' + u + ' HTTP/1.1' );
 			this.proxy.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
 			
@@ -768,6 +757,7 @@ cAjax.prototype.send = function( data, callback )
 		{
 			let u = this.url.split( '?' );
 			u = u[0] + '?' + ( u[ 1 ] ? ( u[ 1 ] + '&' ) : '' ) + 'cachekiller=' + this.getRandNumbers();
+
 			this.proxy.setRequestHeader( 'Method', 'GET ' + u + ' HTTP/1.1' );
 			try 
 			{ 
@@ -1006,7 +996,7 @@ if( typeof bindSingleParameterMethod != 'function' )
 // Clean ajax calls!
 function CleanAjaxCalls()
 {
-	if( _cajax_connection_num == 0 && Friend.cajax.length == 0 )
+	if( Friend.cajax.length == 0 )
 	{
 		// Clean it up!
 		_cajax_process_count = 0;

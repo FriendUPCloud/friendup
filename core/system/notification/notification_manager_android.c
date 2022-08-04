@@ -30,6 +30,7 @@
 void NotificationAndroidSendingThread( FThread *data )
 {
 	pthread_detach( pthread_self() );
+	signal(SIGPIPE, SIG_IGN);
 	
 	data->t_Launched = TRUE;
 	NotificationManager *nm = (NotificationManager *)data->t_Data;

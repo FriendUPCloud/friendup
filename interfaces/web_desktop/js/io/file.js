@@ -440,6 +440,12 @@ File = function( filename )
 			{
 				uprogress.info.innerHTML = '<div style="color:#F00; padding-top:10px; font-weight:700;">'+ msg +'</div>';
 				uprogress.myview.setFlag("height",140);
+				if( Workspace.dashboard )
+				{
+					Notify( { title: 'File transfer error', text: msg } );
+					uworker.terminate(); // End the copying process
+					w.close();
+				}
 			}
 
 			uworker.onerror = function( err )

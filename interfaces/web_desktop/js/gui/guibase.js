@@ -2655,6 +2655,8 @@ movableMouseUp = function( e )
 			{
 				men.classList.add( 'Closing' );
 				men.classList.remove( 'Open' );
+				e.preventDefault();
+				cancelBubble( e );
 			}
 			setTimeout( function()
 			{

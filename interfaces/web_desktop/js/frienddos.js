@@ -350,8 +350,18 @@ window.Shell = function( appObject )
 	// Parse a whole script
 	this.parseScript = function( script, callback )
 	{
-		script = script.split( "\n" );
-		this.queueCommand( script, 0, [], callback );
+	    if( script.indexOf( "\n" ) > 0 )
+	    {
+		    script = script.split( "\n" );
+		    this.queueCommand( script, 0, [], callback );
+	    }
+	    else
+	    {
+	        this.execute( script, function( result, data )
+		    {
+			    callback( true, result );
+		    } );
+	    }
 	};
 
 	// queue and culminate output!
@@ -360,7 +370,6 @@ window.Shell = function( appObject )
 		let t = this;
 		this.execute( array[index++], function( result, data )
 		{
-			//console.log( 'this.queueCommand = function( array, index, buffer, callback ) ', { array: array, index: index, buffer: buffer } );
 			if( result )
 			{
 				buffer += typeof( result ) == 'object' ? result.response : result;
@@ -4155,6 +4164,7 @@ window.FriendDOS =
 			doorSrc.path = pthTest;
 			
 			copyObject.processes++;
+			
 			doorSrc.getIcons( false, function( data )
 			{
 				copyObject.completed++;
@@ -4164,9 +4174,9 @@ window.FriendDOS =
 				// TODO: Implement abort
 				for( let a = 0; a < data.length; a++ )
 				{
-					//console.log( '>>> Examining: ' + data[a].Path );
 					// Make a trim
 					let compare = data[a].Path;
+					
 					if(
 						data[a].Path.substr( data[a].Path.length - 1, 1 ) == '/' &&
 						src.substr( src.length - 1, 1 ) != '/'
@@ -4179,7 +4189,7 @@ window.FriendDOS =
 					let compared = false;
 					let finalSrc = src;
 					// TODO: If the filename contains actually a '*' sign, then switch order on these if's!
-					if( src.indexOf( '*' ) )
+					if( src.indexOf( '*' ) > 0 )
 					{
 						// If src fits wildcard!
 						let srcCmpPos = src.indexOf( '*' ) + 1;
@@ -4193,7 +4203,10 @@ window.FriendDOS =
 							finalSrc = compare;
 						}
 					}
-					else if( compare == src ) compared = true;
+					else if( compare == src )
+					{
+					    compared = true;
+				    }
 					
 					if( compared )
 					{

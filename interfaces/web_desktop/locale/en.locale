@@ -248,7 +248,7 @@ i18n_new_file                           : New file
 i18n_new_document                       : New document
 i18n_new_presentation                   : New presentation
 i18n_new_spreadsheet                    : New spreadsheet
-i18n_new_text                           : New pure text document
+i18n_new_memo                           : New memo
 
 i18n_close_menu                         : Close menu
 i18n_delete_shortcut                    : Delete shortcut

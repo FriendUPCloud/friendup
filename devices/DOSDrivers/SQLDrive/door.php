@@ -128,6 +128,12 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			
 			if( isset( $path ) )
 			{
+			    if( substr( $path, 0, 13 ) == '<!--base64-->' )
+			    {
+			        $p = explode( '<!--base64-->', $path );
+			        $path = base64_decode( $p[1] );
+			    }
+			
 				$path = str_replace( '::', ':', $path );
 				$path = str_replace( ':/', ':', $path );
 				$path = explode( ':', $path );
@@ -821,6 +827,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			{
 				$action = isset( $args->action ) ? $args->action : ( isset( $args->args->action ) ? $args->args->action : false );
 				$path   = $args->path;
+				
 				switch( $action )
 				{
 					case 'mount':
@@ -1621,6 +1628,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 		    global $Config, $User, $SqlDatabase, $Logger;
 		    
 		    if( !$filesystem ) $filesystem = $this;
+		    
+		    // Disable logger
+		    if( isset( $this->logger ) && $this->logger == 'disabled' ) return false;
 		    
 		    $path = $SqlDatabase->_link->real_escape_string( $path );
 		    

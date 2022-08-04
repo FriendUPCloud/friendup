@@ -217,6 +217,8 @@ void hand(int s )
 int WebsocketThread( FThread *data )
 {
 	pthread_detach( pthread_self() );
+	signal(SIGPIPE, SIG_IGN);
+	
 	int cnt = 0;
 	WebSocket *ws = (WebSocket *)data->t_Data;
 	if( ws == NULL || ws->ws_Context == NULL )
@@ -228,7 +230,6 @@ int WebsocketThread( FThread *data )
 	
 	DEBUG1("[WS] Websocket thread started\n");
 	
-	//signal( SIGPIPE, SIG_IGN );
 	//signal( SIGPIPE, hand );
 
 	if( ws->ws_ExtendedDebug )
@@ -241,8 +242,6 @@ int WebsocketThread( FThread *data )
 	while( TRUE )
 	{
 		int n = lws_service( ws->ws_Context, -1 );
-		usleep( 2500 );
-		
 		if( ws->ws_Quit == TRUE && ws->ws_NumberCalls <= 0 )
 		{
 			FINFO("WS Quit!\n");
@@ -259,6 +258,7 @@ int WebsocketThread( FThread *data )
 				cnt = 0;
 			}
 		}
+		usleep( 1 );
 	}
 	Log( FLOG_INFO, "[WS] Service stopped\n" );
 

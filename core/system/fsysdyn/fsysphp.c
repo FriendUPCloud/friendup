@@ -213,7 +213,7 @@ ListString *PHPCall( const char *command )
 		return NULL;
 	}
 	
-	char *buf = FMalloc( PHP_READ_SIZE+16 );
+	char *buf = FCalloc( PHP_READ_SIZE+1, sizeof( char ) );
 	ListString *ls = ListStringNew();
 	int errCounter = 0;
 	int size = 0;
@@ -233,25 +233,21 @@ ListString *PHPCall( const char *command )
 	fcntl( fds[1].fd, F_SETFL, O_NONBLOCK );
 	
 	int ret = 0;
-	int timeout = FILESYSTEM_MOD_TIMEOUT * 1000;
 
 	while( TRUE )
 	{
-		//DEBUG("[PHPFsys] in loop\n");
-		
 		ret = poll( fds, 2, 250 ); // HT Small timeout
 
 		if( ret == 0 )
 		{
-			//DEBUG("Timeout!\n");
 			break;
 		}
-		else if(  ret < 0 )
+		else if( ret < 0 )
 		{
-			//DEBUG("Error\n");
 			break;
 		}
-		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
+		
+		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE );
 
 		if( size > 0 )
 		{
@@ -291,6 +287,7 @@ ListString *PHPCall( const char *command )
 			DEBUG("FSYSPHP: SELECT Error\n");
 			break;
 		}
+		
 		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
 
 		if( size > 0 )
@@ -317,7 +314,7 @@ ListString *PHPCall( const char *command )
 	ListStringJoin( ls );		//we join all string into one buffer
 
 	//DEBUG( "[fsysphp] Finished PHP call...(%lu length, %s)-\n", ls->ls_Size, ls->ls_Data );
-	DEBUG( "[fsysphp] Finished PHP call...(%lu length, %s)-\n", ls->ls_Size, ls->ls_Data );
+	//DEBUG( "[fsysphp] Finished PHP call...(%lu length, %s)-\n", ls->ls_Size, ls->ls_Data );
 	
 	return ls;
 }
@@ -1932,12 +1929,12 @@ FLONG GetChangeTimestamp( struct File *s, const char *path )
 
 //
 // Get info about file/folder and return as "string"
+// TODO: THIS FUNCTION CRASHES WHEN COPYING LOTS OF FILES
 //
 
 BufString *Info( File *s, const char *path )
 {
 	DEBUG("[PHPFS] Info\n");
-	
 	if( s != NULL )
 	{
 		char *comm = NULL;
@@ -1978,19 +1975,19 @@ BufString *Info( File *s, const char *path )
 				( encPath ? strlen( encPath ) : 0 ) + 128 + strlen( "php \"modules/system/module.php\" \"\";" );
 			
 			// Whole command
-			char *command = FMalloc( cmdLength );
+			char *command = FCalloc( cmdLength, sizeof( char ) );
 				
 			if( command != NULL )
 			{
 				// Just get vars
-				char *commandCnt = FMalloc( cmdLength );
+				char *commandCnt = FCalloc( cmdLength, sizeof( char ) );
 			
 				// Generate command string
 				if( commandCnt != NULL )
 				{
 					snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=info&authkey=false&sessionid=%s&path=%s&subPath=",
 						sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encPath ? encPath : "" );
-					
+
 					FilterPHPVar( commandCnt );
 					
 					snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", commandCnt );
@@ -1998,9 +1995,14 @@ BufString *Info( File *s, const char *path )
 					// Execute!
 					BufString *bs = NULL;
 					ListString *result = PHPCall( command );
-					if( result != NULL )
+					
+					if( result != NULL && result->ls_Size && result->ls_Size > 5 )
 					{
-						if( result->ls_Data != NULL && strncmp( "fail<!--separate-->", result->ls_Data, 19 ) == 0 )
+						// To check return value
+						char *check = FCalloc( 6, sizeof( char ) );
+						strncpy( check, result->ls_Data, 5 );
+						
+						if( result->ls_Data != NULL && strncmp( "fail<", check, 5 ) == 0 )
 						{
 							ListStringDelete( result );
 							
@@ -2013,26 +2015,38 @@ BufString *Info( File *s, const char *path )
 		
 							result = PHPCall( command );
 						}
+						// Free check var
+						FFree( check );
 						
-						bs = BufStringNewSize( result->ls_Size );
-						if( bs != NULL )
+						if( result != NULL )
 						{
-							BufStringAddSize( bs, result->ls_Data, result->ls_Size );
+							bs = BufStringNew();
+							if( bs != NULL )
+							{
+								bs->bs_Size = result->ls_Size + 1;
+								bs->bs_Bufsize = bs->bs_Size;
+								bs->bs_Buffer = FCalloc( bs->bs_Size, sizeof( char ) );
+								strncpy( bs->bs_Buffer, result->ls_Data, result->ls_Size );
+							}
+							ListStringDelete( result );
 						}
-						ListStringDelete( result );
 					}
 					// we should parse result to get information about success
 				
 					FFree( commandCnt );
 					FFree( command );
-					FFree( encPath );
-					FFree( encPathSlash );
+					if( encPath )
+						FFree( encPath );
+					if( encPathSlash )
+						FFree( encPathSlash );
 					return bs;
 				}
 				FFree( command );
 			}
-			FFree( encPath );
-			FFree( encPathSlash );
+			if( encPath )
+				FFree( encPath );
+			if( encPathSlash )
+				FFree( encPathSlash );
 		}
 	}
 	return NULL;

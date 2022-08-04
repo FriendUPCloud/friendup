@@ -152,6 +152,7 @@ FUQUAD EventGetNewID( EventManager *em )
 void EventLaunch( CoreEvent *ptr )
 {
 	pthread_detach( pthread_self() );
+	signal(SIGPIPE, SIG_IGN);
 	ptr->ce_Launched = TRUE;
 	threadsNo++;
 	
@@ -183,6 +184,7 @@ void EventLaunch( CoreEvent *ptr )
 void *EventManagerLoopThread( FThread *ptr )
 {
 	pthread_detach( pthread_self() );
+	signal(SIGPIPE, SIG_IGN);
 	
 	EventManager *ce = (EventManager *)ptr->t_Data;
 	SystemBase *lsb = (SystemBase *)ce->em_SB;

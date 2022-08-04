@@ -1210,8 +1210,9 @@ void *FriendCoreAcceptPhase2( void *d )
 	//DEBUG("[FriendCoreAcceptPhase2] detached\n");
 #ifdef USE_PTHREAD
 	pthread_detach( pthread_self() );		// using workers atm
+    signal(SIGPIPE, SIG_IGN);
 #endif
-
+    
 	struct fcThreadInstance *pre = (struct fcThreadInstance *)d;
 	FriendCoreInstance *fc = (FriendCoreInstance *)pre->fc;
 
@@ -1259,6 +1260,7 @@ void *FriendCoreProcessSockBlock( void *fcv )
 {
 #ifdef USE_PTHREAD
 	pthread_detach( pthread_self() );
+    signal(SIGPIPE, SIG_IGN);
 #endif 
 
 	if( fcv == NULL )
@@ -1269,7 +1271,7 @@ void *FriendCoreProcessSockBlock( void *fcv )
 		return NULL;
 	}
 
-	struct fcThreadInstance *th = ( struct fcThreadInstance *)fcv;
+    struct fcThreadInstance *th = ( struct fcThreadInstance *)fcv;
 
 	BufStringDisk *resultString = NULL;
 
@@ -1485,6 +1487,7 @@ void *FriendCoreProcessSockNonBlock( void *fcv )
 {
 #ifdef USE_PTHREAD
 	pthread_detach( pthread_self() );
+	signal(SIGPIPE, SIG_IGN);
 #endif 
 
 	if( fcv == NULL )
@@ -1818,6 +1821,8 @@ static inline void FriendCoreSelect( FriendCoreInstance* fc )
 */
 static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 {
+	signal(SIGPIPE, SIG_IGN);
+	
 	int eventCount = 0;
 	int i;
 	struct epoll_event *currentEvent;
@@ -1899,7 +1904,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					{
 						DEBUG( "[FriendCoreEpoll] Waiting, current fds: %d\n", fc->FDCount );
 						FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
-						usleep( 200 );
+						usleep( 5 );
 						FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) );
 					}
 					FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );

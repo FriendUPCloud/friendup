@@ -244,7 +244,6 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 
 			//changed from post to get to get more speed.
 			j.open( 'POST', updateurl, true, true );
-			
 			j.onload = function( e, d )
 			{
 				if( e )
@@ -254,8 +253,8 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 						// Try to remount
 						if( e == 'fail' && d && ( !flags || ( flags && flags.retry ) ) )
 						{
-							let j = d.indexOf( '{' ) > 0 ? JSON.parse( d ) : {};
-							if( j.response && j.response == 'device not mounted' )
+							let u = d.indexOf( '{' ) > 0 ? JSON.parse( d ) : {};
+							if( u.response && u.response == 'device not mounted' )
 							{
 								return t.Mount( function()
 								{
@@ -292,7 +291,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 						}
 					}
 					
-					let list = d.indexOf( '{' ) && parsed ? parsed : {};
+					let list = d.indexOf( '[' ) >= 0 && parsed ? parsed : [];
 					
 					if( typeof( list ) == 'object' && list.length )
 					{
@@ -332,7 +331,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 									}
 									catch( e )
 									{
-									};
+									}
 								}
 								let pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
 								callback( list, t.fileInfo.Path, pth );
@@ -558,8 +557,7 @@ Door.prototype.read = function( filename, mode, extraData )
 	if( this.context ) j.context = this.context;
 	if( this.cancelId )
 		j.cancelId = this.cancelId;
-	if( mode == 'rb' )
-		j.forceHTTP = true;
+	j.forceHTTP = true;
 	j.open( 'post', '/system.library/file/read', true, true );
 	if( Workspace.conf && Workspace.conf.authId )
 		j.addVar( 'authid', Workspace.conf.authId );
@@ -698,6 +696,9 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 	if( this.cancelId )
 		j.cancelId = this.cancelId;
 	if( this.context ) j.context = this.context;
+	j.forceHTTP = true;
+	if( func.indexOf( 'copy' ) > 0 )
+    	console.log( 'DOSAction trying: ' + '/system.library/' + func, args );
 	j.open( 'post', '/system.library/' + func, true, true );
 	if( Workspace.conf && Workspace.conf.authId )
 		j.addVar( 'authid', Workspace.conf.authId );

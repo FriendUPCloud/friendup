@@ -1206,8 +1206,10 @@ function _ActivateWindow( div, nopoll, e )
 	    if( window.hideDashboard )
 	        window.hideDashboard();
 	}
-	if( window.Workspace && window.Workspace.showQuickMenu )
+	if( window.Workspace && window.Workspace.showQuickMenu && !div.windowObject.getFlag( 'sidebarManaged' ) )
+	{
         Workspace.showQuickMenu();
+    }
 	
 	// Already activating
 	if( div.parentNode.classList.contains( 'Activating' ) )
@@ -2364,7 +2366,7 @@ var View = function( args )
 		let filter = [
 			'min-width', 'min-height', 'width', 'height', 'id', 'title', 
 			'screen', 'parentView', 'transparent', 'minimized', 'dialog', 
-			'standard-dialog'
+			'standard-dialog', 'sidebarManaged'
 		];
 
 		if( !flags.screen )
@@ -5437,9 +5439,13 @@ var View = function( args )
 				this.flags[ flag ] = value;
 				break;
 			case 'sidebarManaged':
-			    if( value == 'true' || value == true )
-    			    viewdiv.parentNode.classList.add( 'SidebarManaged' );
-    			else viewdiv.parentNode.classList.remove( 'SidebarManaged' );
+				if( viewdiv && viewdiv.parentNode )
+				{
+					if( value == 'true' || value == true )
+					    viewdiv.parentNode.classList.add( 'SidebarManaged' );
+					else viewdiv.parentNode.classList.remove( 'SidebarManaged' );
+				}
+    			this.flags[ flag ] = value;
 			    break;
 			// Takes all flags
 			default:
