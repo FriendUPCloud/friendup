@@ -4782,7 +4782,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	}
 	else if ( fileInfo.MetaType == 'File' )
 	{
-	    console.log( 'Hello' );
 		if( fileInfo.Type.toLowerCase() == 'executable' )
 		{
 			ExecuteApplication( fileInfo.fileName ? fileInfo.fileName :
@@ -4790,7 +4789,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		}
 		else
 		{
-	        let ext = obj.fileInfo.Path.split( '.' );
+	        let ext = fileInfo.Path.split( '.' );
 			if( ext.length > 1 )
 			{
 				ext = '.' + ext[ext.length-1].toLowerCase();
@@ -4810,7 +4809,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 						    }
 						    else if( mt.executable.length )
 						    {
-							    return ExecuteApplication( mt.executable, obj.fileInfo.Path );
+							    return ExecuteApplication( mt.executable, fileInfo.Path );
 						    }
 						}
 					}
