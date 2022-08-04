@@ -3693,7 +3693,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 							{
 							    if( mt.error )
 							    {
-							        return Alert( mt.error );
+							        return Alert( mt.error.title, mt.error.text );
 							    }
 							    else if( mt.executable.length )
 							    {
