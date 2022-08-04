@@ -265,7 +265,7 @@ Application.load = function()
 	
 	var flags = {
 		multiSelect: false,
-		suffix: 'html',
+		suffix: 'memo',
 		triggerFunction: function( arr )
 		{
 			if( arr )
@@ -283,7 +283,7 @@ Application.load = function()
 		rememberPath: true,
 		mainView: this.mainView,
 		type: 'load',
-		suffix: [ 'html', 'htm' ]	
+		suffix: [ 'memo', 'html', 'htm' ]	
 	};
 	
 	var f = new Filedialog( flags );
@@ -324,7 +324,7 @@ Application.save = function( mode )
 				}
 				
 				if( fname.indexOf( '.' ) < 0 )
-					fname += '.html';
+					fname += '.memo';
 				Application.mainView.sendMessage( {
 					command: 'savefile',
 					path: fname
@@ -334,7 +334,7 @@ Application.save = function( mode )
 			},
 			mainView: this.mainView,
 			title: mode == 'saveas' ? i18n( 'i18n_save_as' ) : i18n( 'i18n_save' ),
-			suffix: [ 'html', 'htm' ]
+			suffix: [ 'memo', 'html', 'htm' ]
 		};
 	
 		var f = new Filedialog( flags );
