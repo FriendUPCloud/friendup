@@ -51,10 +51,6 @@ Application.run = function( msg, iface )
 	        command: 'save_as'
 	    } ]
 	}, {
-	    name: i18n( 'menu_print' ),
-	    icon: 'print',
-	    command: 'print'
-	}, {
 	    name: i18n( 'i18n_close' ),
 	    icon: 'remove',
 	    command: 'quit'
