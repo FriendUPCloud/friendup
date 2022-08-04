@@ -3689,9 +3689,16 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 						for( let b in mt.types )
 						{
 							// Make sure we have a valid executable
-							if( ext == mt.types[b].toLowerCase() && mt.executable.length )
+							if( ext == mt.types[b].toLowerCase() && ( mt.error || mt.executable.length ) )
 							{
-								return ExecuteApplication( mt.executable, obj.fileInfo.Path );
+							    if( mt.error )
+							    {
+							        return Alert( mt.error );
+							    }
+							    else if( mt.executable.length )
+							    {
+								    return ExecuteApplication( mt.executable, obj.fileInfo.Path );
+							    }
 							}
 						}
 					}
