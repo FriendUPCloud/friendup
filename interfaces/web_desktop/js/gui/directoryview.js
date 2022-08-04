@@ -4790,6 +4790,32 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		}
 		else
 		{
+		    let ext = obj.fileInfo.Path.split( '.' );
+			if( ext.length > 1 )
+			{
+				ext = '.' + ext[ext.length-1].toLowerCase();
+
+				// Check mimetypes
+				for( let a in Workspace.mimeTypes )
+				{
+					let mt = Workspace.mimeTypes[a];
+					for( let b in mt.types )
+					{
+						// Make sure we have a valid executable
+						if( ext == mt.types[b].toLowerCase() && ( mt.error || mt.executable.length ) )
+						{
+						    if( mt.error )
+						    {
+						        return Alert( mt.error.title, mt.error.text );
+						    }
+						    else if( mt.executable.length )
+						    {
+							    return ExecuteApplication( mt.executable, obj.fileInfo.Path );
+						    }
+						}
+					}
+				}
+			}
 	
 			// No mime type? Ask Friend Core
 			let mim = new Module( 'system' );
