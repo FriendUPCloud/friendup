@@ -4780,7 +4780,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		
 		win = null;
 	}
-	// TODO: Check mime type!
 	else if ( fileInfo.MetaType == 'File' )
 	{
 		if( fileInfo.Type.toLowerCase() == 'executable' )
@@ -4790,7 +4789,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		}
 		else
 		{
-		    let ext = obj.fileInfo.Path.split( '.' );
+	        let ext = fileInfo.Path.split( '.' );
 			if( ext.length > 1 )
 			{
 				ext = '.' + ext[ext.length-1].toLowerCase();
@@ -4810,13 +4809,13 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 						    }
 						    else if( mt.executable.length )
 						    {
-							    return ExecuteApplication( mt.executable, obj.fileInfo.Path );
+							    return ExecuteApplication( mt.executable, fileInfo.Path );
 						    }
 						}
 					}
 				}
 			}
-	
+
 			// No mime type? Ask Friend Core
 			let mim = new Module( 'system' );
 			mim.onExecuted = function( me, md )
