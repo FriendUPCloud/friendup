@@ -122,6 +122,7 @@ int newpclose( NPOpenFD *po )
 {
 	close( po->np_FD[ NPOPEN_INPUT ] );
 	close( po->np_FD[ NPOPEN_CONSOLE ] );
-	waitpid( po->npo_PID, NULL, WNOHANG );
+    if( 0 == ( waitpid( po->npo_PID, NULL, WNOHANG ) ) )
+        kill( po->npo_PID, SIGKILL );
 	return 0;
 }
