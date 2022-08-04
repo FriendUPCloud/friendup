@@ -4782,6 +4782,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	}
 	else if ( fileInfo.MetaType == 'File' )
 	{
+	    console.log( 'Hello' );
 		if( fileInfo.Type.toLowerCase() == 'executable' )
 		{
 			ExecuteApplication( fileInfo.fileName ? fileInfo.fileName :
