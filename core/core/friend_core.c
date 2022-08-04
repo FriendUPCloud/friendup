@@ -1402,7 +1402,7 @@ void *FriendCoreProcessSockBlock( void *fcv )
 						}
 						else
 						{
-							usleep( 10 );
+							usleep( 0 );
 							DEBUG("[FriendCoreProcessSockBlock] Continue, resultString->bsd_Size %ld expectedLength %ld\n", resultString->bsd_Size, expectedLength );
 							// buffer is not equal to what should come
 							continue;
@@ -1904,7 +1904,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					{
 						DEBUG( "[FriendCoreEpoll] Waiting, current fds: %d\n", fc->FDCount );
 						FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
-						usleep( 5 );
+						usleep( 0 );
 						FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) );
 					}
 					FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
@@ -2131,7 +2131,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	
 	//DEBUG("End main loop\n");
 	
-	usleep( 1 );
+	usleep( 0 );
 
 	int counter = 15;
 	// check number of working threads
