@@ -28,8 +28,8 @@
 #define SUFFIX "php"
 
 #define LBUFFER_SIZE 8192
-#define PHP_READ_SIZE 4096
-//#define PHP_READ_SIZE 65536
+//#define PHP_READ_SIZE 4096
+#define PHP_READ_SIZE 16384
 
 //
 // app structure
