@@ -7859,9 +7859,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		                    icon: 'file-text',
 		                    command: 'new_text'
 		                }, {
-		                    name: i18n( 'i18n_new_document' ),
+		                    name: i18n( 'i18n_new_memo' ),
 		                    icon: 'file-word-o',
-		                    command: 'new_document'
+		                    command: 'new_memo'
 		                }, {
 		                    name: i18n( 'i18n_new_presentation' ),
 		                    icon: 'file-powerpoint-o',
