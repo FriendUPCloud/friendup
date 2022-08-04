@@ -120,19 +120,8 @@ int newpopen(const char *cmd, NPOpenFD *po )
 
 int newpclose( NPOpenFD *po )
 {
-	int ret, status;
-	
-	DEBUG("[newpclose] start, %d\n", po->npo_PID);
-	
 	close( po->np_FD[ NPOPEN_INPUT ] );
 	close( po->np_FD[ NPOPEN_CONSOLE ] );
-	
-	ret = waitpid( po->npo_PID, &status, WNOHANG );
-	if( ret == 0 )
-	{
-		DEBUG("[newpclose] KILL! end ret = 0\n");
-		return status;
-	}
-	DEBUG("[newpclose] end ret\n");
-	return ret;
+	waitpid( po->npo_PID, NULL, WNOHANG );
+	return 0;
 }

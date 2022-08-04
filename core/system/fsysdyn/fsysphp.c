@@ -192,8 +192,8 @@ char *GetFileName( const char *path )
 }
 
 //#define PHP_READ_SIZE 262144
-//#define PHP_READ_SIZE 4096
-#define PHP_READ_SIZE 16384
+#define PHP_READ_SIZE 4096
+// #define PHP_READ_SIZE 131072
 //#define PHP_READ_SIZE (1024 * 1024 * 2)
 #define USE_NPOPEN_POLL
 
