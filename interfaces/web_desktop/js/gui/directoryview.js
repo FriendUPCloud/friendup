@@ -5849,6 +5849,7 @@ function GetIconClassByExtension( extension, fileInfo )
 			iconInner.className = 'TypeWebUrl';
 			break;
 		case 'txt':
+		case 'memo':
 			iconInner.className = 'TypeTXT';
 			break;
 		case 'avi':
