@@ -6037,6 +6037,49 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( !e ) e = {};
 				let cliplen = clip.length;
 				let sh = new Shell( 0 );
+				sh.onmessage = function( msg )
+				{
+					let selfsh = this;
+					if( !uprogress && this.uniqueId )
+					{
+						this.stop = true;
+						if( !this.stopped )
+						{
+							this.stopped = true;
+							window.FriendDOS.delSession( this.uniqueId );
+							Notify( { title: i18n( 'i18n_copy_operation' ), text: i18n( 'i18n_copying_files_stopped' ) } );
+						}
+						return;
+					}
+					if( msg.type == 'progress' )
+					{
+						let pct = ( msg.progress.count / msg.progress.total * 100 );
+						uprogress.setProgress( pct, msg.progress.count, msg.progress.total );
+						if( pct == 100 )
+						{
+							if( completeTimeo )
+								clearTimeout( completeTimeo );
+							completeTimeo = setTimeout( function()
+							{
+								// Close the view if possible
+								if( uprogress )
+									w.close();
+								if( !selfsh.stop )
+								{
+									Notify( { title: i18n( 'i18n_copy_operation' ), text: i18n( 'i18n_copying_files_complete' ) } );
+								}
+							}, 1000 );
+						}
+						else
+						{
+							if( completeTimeo )
+							{
+								clearTimeout( completeTimeo );
+								completeTimeo = null;
+							}
+						}
+					}
+				}
 				for( let b = 0; b < clip.length && uprogress; b++ )
 				{	
 					let spath = clip[b].fileInfo.Path;
@@ -6056,49 +6099,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					
 					let copyStr = 'copy ' + source + ' to ' + destin + fn;
-					sh.onmessage = function( msg )
-					{
-						let selfsh = this;
-						if( !uprogress && this.uniqueId )
-						{
-							this.stop = true;
-							if( !this.stopped )
-							{
-								this.stopped = true;
-								window.FriendDOS.delSession( this.uniqueId );
-								Notify( { title: i18n( 'i18n_copy_operation' ), text: i18n( 'i18n_copying_files_stopped' ) } );
-							}
-							return;
-						}
-						if( msg.type == 'progress' )
-						{
-							let pct = ( msg.progress.count / msg.progress.total * 100 );
-							uprogress.setProgress( pct, msg.progress.count, msg.progress.total );
-							if( pct == 100 )
-							{
-								if( completeTimeo )
-									clearTimeout( completeTimeo );
-								completeTimeo = setTimeout( function()
-								{
-									// Close the view if possible
-									if( uprogress )
-										w.close();
-									if( !selfsh.stop )
-									{
-										Notify( { title: i18n( 'i18n_copy_operation' ), text: i18n( 'i18n_copying_files_complete' ) } );
-									}
-								}, 1000 );
-							}
-							else
-							{
-								if( completeTimeo )
-								{
-									clearTimeout( completeTimeo );
-									completeTimeo = null;
-								}
-							}
-						}
-					}
 					sh.parseScript( copyStr, function(){ delete sh; } );
 				}
 			} );
