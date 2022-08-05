@@ -697,8 +697,8 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 		j.cancelId = this.cancelId;
 	if( this.context ) j.context = this.context;
 	j.forceHTTP = true;
-	if( func.indexOf( 'copy' ) > 0 )
-    	console.log( 'DOSAction trying: ' + '/system.library/' + func, args );
+	//if( func.indexOf( 'copy' ) > 0 )
+    //	console.log( 'DOSAction trying: ' + '/system.library/' + func, args );
 	j.open( 'post', '/system.library/' + func, true, true );
 	if( Workspace.conf && Workspace.conf.authId )
 		j.addVar( 'authid', Workspace.conf.authId );
@@ -727,6 +727,7 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 			if( s && s[0] != 'ok' )
 			{
 				doAlert();
+				console.log( 'Failed: ' + this.responseText );
 			}
 		}
 		if( callback ) callback( this.responseText(), dr );
