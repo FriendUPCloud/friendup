@@ -2558,7 +2558,7 @@ movableMouseUp = function( e )
 	
 	let target = e.target ? e.target : e.srcElement;
 	
-	if( target && ( target.nodeName.indexOf( 'input' ) || target.nodeName == 'textarea' ) )
+	if( target && ( target.nodeName == 'input' || target.nodeName == 'textarea' ) )
 	{
 		return;
 	}
