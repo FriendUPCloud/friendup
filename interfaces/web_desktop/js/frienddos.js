@@ -4105,6 +4105,7 @@ window.FriendDOS =
 						}
 						catch( e )
 						{
+							console.log( 'Failed on file (2) ' + dest + ' -> ' + d );
 							return callback( 'Failed to get file info on ' + dest, { done: true } );
 						}
 						if( f && f.Type == 'Directory' )
