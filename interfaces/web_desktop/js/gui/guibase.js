@@ -2558,6 +2558,11 @@ movableMouseUp = function( e )
 	
 	let target = e.target ? e.target : e.srcElement;
 	
+	if( target && ( target.nodeName.indexOf( 'input' ) || target.nodeName == 'textarea' ) )
+	{
+		return;
+	}
+	
 	// For mobile
 	if( isMobile )
 	{
