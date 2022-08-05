@@ -3078,7 +3078,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						clearRegionIcons( { exception: this, force: true } );
 					}
 				}
-				if( this.classList.contains( 'Selected' )
+				if( this.classList.contains( 'Selected' ) )
 				{
 					this.classList.remove( 'Selected' );
 					this.selected = false;
