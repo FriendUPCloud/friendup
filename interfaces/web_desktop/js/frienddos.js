@@ -4047,7 +4047,7 @@ window.FriendDOS =
 						//console.log( 'Copying files: ' + this.copyCounter + ' / ' + this.copyTotal + ' at depth ' + this.copyDepth );
 						if( flags.shell && flags.shell.onmessage )
 						{
-							console.log( 'Copytotal: ' + this.copyTotal + ' Copycounter: ' + this.copyCounter + ' | Processes: ' + copyObject.processes + ' | Completed: ' + copyObject.completed );
+							//console.log( 'Copytotal: ' + this.copyTotal + ' Copycounter: ' + this.copyCounter + ' | Processes: ' + copyObject.processes + ' | Completed: ' + copyObject.completed );
 							flags.shell.onmessage( { 'type': 'progress', progress: { total: this.processes + this.copyTotal, count: this.completed + this.copyCounter } } );
 						}
 						
@@ -4342,6 +4342,7 @@ window.FriendDOS =
 									catch( e )
 									{
 										callback( 'Failed to ' + ( move ? 'move' : 'copy' ) + ' file...', { done: true } );
+										console.log( 'Failed on file ' + dest + ' -> ' + result );
 									}
 								}
 								copyObject.processes++;
