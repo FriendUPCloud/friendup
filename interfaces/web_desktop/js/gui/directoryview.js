@@ -2906,6 +2906,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				if( !e ) e = window.event ? window.event : {};
 			
 				window.touchElementTime = ( new Date() ).getTime();
+				window.mouseDown = this;
 				
 				if( isTouchDevice() )
 				{
@@ -3031,7 +3032,6 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					}
 					else
 					{
-						console.log( 'WHAAAAAAAAAAA ' + Math.random() );
 						let sh = e.shiftKey || e.ctrlKey;
 						if( !sh ) 
 						{
