@@ -6036,12 +6036,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				if( !e ) e = {};
 				let cliplen = clip.length;
+				let sh = new Shell( 0 );
 				for( let b = 0; b < clip.length && uprogress; b++ )
 				{	
 					let spath = clip[b].fileInfo.Path;
 					
 					let lastChar = spath.substr( -1, 1 );
-					let sh = new Shell( 0 );
 					let source = spath.split( ' ' ).join( '\\ ' );
 					let destin = ( destPath ).split( ' ' ).join( '\\ ' );
 					let fn = ( clip[b].fileInfo.NewFilename ? clip[b].fileInfo.NewFilename : clip[b].fileInfo.Filename );
