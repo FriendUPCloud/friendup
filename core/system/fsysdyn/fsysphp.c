@@ -1175,6 +1175,19 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 // Close File
 //
 
+#define ASCII_START 32
+#define ASCII_END 126
+
+char* generateRandomString(int size) {
+    int i;
+    char *res = malloc(size + 1);
+    for(i = 0; i < size; i++) {
+        res[i] = (char) (rand()%(ASCII_END-ASCII_START))+ASCII_START;
+    }
+    res[i] = '\0';
+    return res;
+}
+
 int FileClose( struct File *s, void *fp )
 {
 	if( fp != NULL )
@@ -1230,8 +1243,8 @@ int FileClose( struct File *s, void *fp )
 				// Add colon here
 				if( !PathHasColon( sd->path ) )
 				{
-					char *tmpPath = FCalloc( strlen( s->f_Name ) + strlen( sd->path ) + 2, sizeof( char ) );
-					sprintf( tmpPath, "%s:%s", s->f_Name, sd->path );
+					char *tmpPath = FCalloc( strlen( s->f_Name ) + strlen( sd->path ) + 8 + 2, sizeof( char ) );
+					sprintf( tmpPath, "%s:%s%s", s->f_Name, sd->path, generateRandomString( 8 ) );
 					encPath = MarkAndBase64EncodeString( tmpPath );
 					FFree( tmpPath );
 				}

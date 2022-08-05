@@ -1984,7 +1984,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 																	DEBUG("Cannot read data from source!\n");
 																	break;
 																}
-																usleep( 250 );
 															}
 														}
 														FFree( dataBuffer );
