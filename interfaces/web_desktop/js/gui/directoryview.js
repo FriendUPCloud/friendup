@@ -514,6 +514,16 @@ DirectoryView.prototype.initToolbar = function( winobj )
 			align: 'center',
 			buttons: [
 				{
+					element: 'div',
+					value: 'iconview',
+					className: 'VolumeInfo',
+					content: '<div></div>',
+					onclick: function( e )
+					{
+						// Nothing
+					}
+				},
+				{
 					element: 'button',
 					value: 'iconview',
 					className: 'IconButton IconView IconSmall fa-th-large' + ( lmode == 'iconview' ? ' Active' : '' ),
@@ -624,12 +634,13 @@ DirectoryView.prototype.initToolbar = function( winobj )
 		let d = document.createElement( btn.element );
 		if( btn.content )
 			d.innerHTML = btn.content;
-		d.className = btn.className + ' ' + btn.icon;
+		d.className = btn.className + ( btn.icon ? ( ' ' + btn.icon ) : '' );
 		d.onclick = btn.onclick;
 		if( btn.value )
 			d.value = btn.value;
 		d.addEventListener( 'touchstart', d.onclick, true );
 		par.appendChild( d );
+		return d;
 	}
 
 	// Process!
@@ -641,7 +652,8 @@ DirectoryView.prototype.initToolbar = function( winobj )
 			let ele = document.createElement( 'div' );
 			buttons[a].domElement = ele;
 			ele.className = 'ToggleGroup';
-			ele.className += ' ' + buttons[a].align;
+			if( buttons[a].align )
+				ele.className += ' ' + buttons[a].align;
 			ele.checkActive = function( value )
 			{
 				let eles = this.getElementsByTagName( 'button' );
@@ -657,7 +669,60 @@ DirectoryView.prototype.initToolbar = function( winobj )
 			for( let b in buttons[a].buttons )
 			{
 				let bt = buttons[a].buttons[b];
-				renderButton( bt, ele );
+				let d = renderButton( bt, ele );
+				if( d.className == 'VolumeInfo' )
+				{
+					winobj.volumeBar = d;
+					d.refresh = function()
+					{
+						let self = this;
+						let m = new Module( 'system' );
+						m.onExecuted = function( e, d )
+						{
+							let o = d;
+							if( typeof( o ) != 'object' )
+								o = d && d.indexOf( '{' ) >= 0 ? JSON.parse( d ) : {};
+							if( o && o.Filesize && o.Filesize > 0 )
+							{
+								let sizeBar = sizeGroove = sizeText = sizeLabel = false;
+								sizeGroove = self.querySelector( '.SizeGroove' );
+								if( !sizeGroove )
+								{
+									sizeGroove = document.createElement( 'div' );
+									sizeGroove.className = 'SizeGroove';
+									sizeBar = document.createElement( 'div' );
+									sizeBar.className = 'SizeBar';
+									sizeText = document.createElement( 'div' );
+									sizeText.className = 'SizeText';
+									sizeLabel = document.createElement( 'span' );
+									sizeLabel.className = 'SizeLabel';
+									sizeLabel.innerHTML = i18n( 'i18n_disk_usage' ) + ':';
+									self.appendChild( sizeLabel );
+									self.appendChild( sizeGroove );
+									sizeGroove.appendChild( sizeBar );
+									sizeGroove.appendChild( sizeText );
+								}
+								else
+								{
+									sizeBar = sizeGroove.querySelector( '.SizeBar' );
+									sizeText = sizeGroove.querySelector( '.SizeText' );
+								}
+								let pct = Math.floor( o.Used / o.Filesize * 100 );
+								sizeText.innerHTML = humanFilesize( o.Used ) + '/' + humanFilesize( o.Filesize ) + ' (' + pct + '%)';
+								sizeBar.style.width = pct + '%';
+								if( pct >= 90 )
+									sizeBar.classList.add( 'AlmostFull' );
+								else sizeBar.classList.remove( 'AlmostFull' );
+							}
+							// This shouldn't happen!
+							else
+							{
+								d.innerHTML = '<p>Disk is broken.</p>';
+							}
+						}
+						m.execute( 'volumeinfo', { path: winobj.fileInfo.Path } );
+					}
+				}
 			}
 			t.appendChild( ele );
 		}
@@ -1025,6 +1090,8 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			{
 				if( dirv.bookmarks && !dirv.bookmarks.classList.contains( 'ScreenContent' ) )
 				{
+					if( this.volumeBar ) this.volumeBar.refresh();
+					
 					// Bookmarks
 					if( !dirv.animationsSet )
 					{
@@ -1114,6 +1181,8 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			this.noRun = 0;
 			this.noRunPath = '';
 		}
+		
+		if( this.volumeBar ) this.volumeBar.refresh();
 		
 		if( this.icons )
 		{
@@ -2575,10 +2644,12 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 	// Clear list
 	if( changed )
 	{
+		if( this.window.volumeBar ) this.window.volumeBar.refresh();
+		
 		if( !this.listView )
 		{
 			this.ShowFileBrowser();
-		
+			
 			let divs = [];
 
 			// Setup the listview for the first time
@@ -4649,7 +4720,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 				}
 				
 				let j = new cAjax ();
-
+				
 				let updateurl = '/system.library/file/dir?wr=1'
 				updateurl += '&path=' + encodeURIComponent( self.fileInfo.Path );
 				updateurl += '&sessionid=' + encodeURIComponent( Workspace.sessionId );

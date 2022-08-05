@@ -4,6 +4,56 @@
 
 */
 
+.ToggleGroup .VolumeInfo 
+{
+    display: inline-block;
+    font-size: 80%;
+    white-space: nowrap;
+}
+
+.ToggleGroup .VolumeInfo > * 
+{
+    display: inline-block;
+    vertical-align: top;
+    position: relative;
+    top: -2px;
+    left: -18px;
+}
+
+.ToggleGroup .VolumeInfo > .SizeLabel 
+{
+    margin: 0 5px 0 0;
+}
+
+.ToggleGroup .VolumeInfo > .SizeGroove 
+{
+    background-color: rgba(0,0,0,0.07);
+    position: relative;
+    width: 180px;
+    height: 17px;
+}
+
+.ToggleGroup .VolumeInfo > .SizeGroove .SizeBar
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 17px;
+    background-color: var(--fui-color-aqua);
+    z-index: 1;
+}
+
+.ToggleGroup .VolumeInfo .SizeText 
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 3;
+    text-align: center;
+    height: 100%;
+}
+
 .IconWindow .Content > .FileBrowserContainer + .Listview,
 .IconWindow .Content > .FileBrowserContainer + .Scroller
 {

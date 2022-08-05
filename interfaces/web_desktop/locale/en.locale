@@ -644,6 +644,7 @@ i18n_dir_btn_iconview                   : Normal
 i18n_dir_btn_compact                    : Compact
 i18n_dir_btn_listview                   : List
 i18n_dir_btn_imageview                  : Gallery
+i18n_disk_usage                         : Disk usage
 
 #Sessions ----------------------------------------------------------------------
 
