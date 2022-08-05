@@ -3040,7 +3040,15 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 							}
 						}
 						
-						if( !this.classList.contains( 'Selected' ) )
+						if( this.classList.contains( 'Selected' ) )
+						{
+							// Check if we need this
+							this.classList.remove( 'Selected' );
+							this.selected = false;
+							this.icon.selected = false;
+							this.fileInfo.selected = false;
+						}
+						else
 						{
 							this.classList.add( 'Selected' );
 							this.selected = sh ? 'multiple' : true;
@@ -3077,13 +3085,6 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					{
 						clearRegionIcons( { exception: this, force: true } );
 					}
-				}
-				if( this.classList.contains( 'Selected' ) )
-				{
-					this.classList.remove( 'Selected' );
-					this.selected = false;
-					this.icon.selected = false;
-					this.fileInfo.selected = false;
 				}
 			}
 			r.ontouchend = r.onmouseup;
