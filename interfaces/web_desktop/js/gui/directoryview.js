@@ -3036,13 +3036,12 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						{
 							if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
 							{
-								clearRegionIcons( { exception: this } );
+								//clearRegionIcons( { exception: this } );
 							}
 						}
 						
 						if( this.classList.contains( 'Selected' ) )
 						{
-							// Check if we need this
 							this.classList.remove( 'Selected' );
 							this.selected = false;
 							this.icon.selected = false;
