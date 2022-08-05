@@ -43,6 +43,11 @@
     z-index: 1;
 }
 
+.ToggleGroup .VolumeInfo > .SizeGroove .SizeBar.AlmostFull
+{
+	background-color: var(--fui-color-amaranth);
+}
+
 .ToggleGroup .VolumeInfo .SizeText 
 {
     position: absolute;
