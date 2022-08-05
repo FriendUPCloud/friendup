@@ -59,6 +59,11 @@
     height: 100%;
 }
 
+.ToggleGroup .VolumeInfo > .SizeGroove .SizeBar.AlmostFull + .SizeText
+{
+	color: white;
+}
+
 .IconWindow .Content > .FileBrowserContainer + .Listview,
 .IconWindow .Content > .FileBrowserContainer + .Scroller
 {
