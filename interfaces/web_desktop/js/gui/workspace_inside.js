@@ -6081,7 +6081,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								completeTimeo = setTimeout( function()
 								{
 									if( uprogress )
-										uprogress.close();
+										w.close();
 									if( !selfsh.stop )
 									{
 										Notify( { title: i18n( 'i18n_copy_operation' ), text: i18n( 'i18n_copying_files_complete' ) } );
