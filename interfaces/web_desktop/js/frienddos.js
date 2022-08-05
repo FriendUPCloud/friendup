@@ -87,6 +87,8 @@ window.Shell = function( appObject )
 	this.state = { entry: -1 }; // Engine state
 	this.mindMode = false; // Use A.I.
 	this.pipe = false; // Target pipe!
+	this.terminate = false;
+	this.stop = false;
 
     if( appObject )
     	this.mind = FriendMind.makeSession( appObject );
@@ -2702,7 +2704,7 @@ window.Shell = function( appObject )
 				// 'all' on the end
 				if( !recursive ) recursive = args[ args.length - 1 ].toLowerCase() == 'all' ? true : false;
 
-				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: false, nooverwrite: nooverwrite }, function( result, done )
+				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: false, nooverwrite: nooverwrite, shell: shell }, function( result, done )
 				{
 					if( !done ) done = false;
 					callback( false, { response: result, done: done } );
@@ -3891,7 +3893,7 @@ window.Shell = function( appObject )
 				if( !recursive ) 
 					recursive = args[ args.length - 1 ].toLowerCase() == 'all' ? true : false;
 
-				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: true }, function( result, done )
+				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: true, shell: shell }, function( result, done )
 				{
 					if( !done ) 
 						done = false;
@@ -4020,6 +4022,8 @@ window.FriendDOS =
 	{
 		let fdos = this;
 		
+		if( flags.shell && flags.shell.stop == true ) return;
+		
 		// Do we want to move the files?
 		let move = flags && flags.move ? true : false;
 
@@ -4055,6 +4059,10 @@ window.FriendDOS =
 						this.callback = false;
 					}
 					//console.log( 'Copying files: ' + this.copyCounter + ' / ' + this.copyTotal + ' at depth ' + this.copyDepth );
+					if( flags.shell && flags.shell.onmessage )
+					{
+						flags.shell.onmessage( { 'type': 'progress', progress: { total: this.copyTotal, count: this.copyCounter } } );
+					}
 				}
 			};
 		}
@@ -4164,6 +4172,7 @@ window.FriendDOS =
 			doorSrc.path = pthTest;
 			
 			copyObject.processes++;
+			if( flags.shell && flags.shell.stop == true ) return;
 			
 			doorSrc.getIcons( false, function( data )
 			{
@@ -4226,6 +4235,7 @@ window.FriendDOS =
 				   			copyObject.processes++;
 							doorSrc.dosAction( 'makedir', { path: destination }, function()
 							{
+								if( flags.shell && flags.shell.stop == true ) return;
 								copyObject.completed++;
 								let d = ( new Door() ).get( p );
 								
@@ -4233,12 +4243,14 @@ window.FriendDOS =
 								copyObject.processes++;
 								d.getIcons( p, function( subs )
 								{
+									if( flags.shell && flags.shell.stop == true ) return;
 									copyObject.completed++;
 									function CopyAndCallback( dcp, dfn, move )
 									{
 										copyObject.processes++;
 										doorSrc.dosAction( 'copy', { from: dcp, to: destination + dfn }, function( result )
 										{
+											if( flags.shell && flags.shell.stop == true ) return;
 											copyObject.completed++;
 											if( move )
 											{
@@ -4296,6 +4308,7 @@ window.FriendDOS =
 							doorDst = new Door( dest );
 							doorDst.dosAction( 'info', { path: dest }, function( result )
 							{
+								if( flags.shell && flags.shell.stop == true ) return;
 								let lastChar = destination.substr( -1, 1 );
 								if( result.substr( 0, 5 ) != 'fail<' )
 								{
@@ -4322,6 +4335,7 @@ window.FriendDOS =
 								}
 								doorSrc.dosAction( 'copy', { from: finalSrc, to: destination }, function( result )
 								{
+									if( flags.shell && flags.shell.stop == true ) return;
 									if( move )
 									{
 										callback( 'Moved ' + finalSrc + ' to ' + destination + '..' );

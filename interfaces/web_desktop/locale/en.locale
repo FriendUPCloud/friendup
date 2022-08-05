@@ -308,6 +308,7 @@ i18n_only_executables_can_drop          : Only executables can be dropped on the
 
 i18n_copy_operation                     : File copy operation
 i18n_copying_files_complete             : Copying files complete.
+i18n_copying_files_stopped              : Copying files stopped.
 
 i18n_choose_file_to_upload              : Choose file to upload
 i18n_upload_target                      : Upload target

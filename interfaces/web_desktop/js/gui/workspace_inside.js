@@ -5769,7 +5769,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				Friend.workspaceClipBoardMode = 'copy';
 				Friend.workspaceClipBoard = selected;
-				console.log( 'We copied ' + selected.length + ' files', selected );
 			}
 			
 			WorkspaceMenu.show();
@@ -5856,6 +5855,130 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			
 			Workspace.menuContext = null;
 			
+			// Open window
+			let w = new View( {
+				title:  i18n( 'i18n_copying_files' ),
+				width:  320,
+				height: 100,
+				id:     'fileops',
+				dialog: true,
+				dockable: true
+			} );
+
+			let uprogress = new File( 'templates/file_operation.html' );
+
+			let groove = false, bar = false, frame = false, progressbar = false, progress = false;
+
+			//upload dialog...
+			uprogress.onLoad = function( data )
+			{
+				data = data.split( '{cancel}' ).join( i18n( 'i18n_cancel' ) );
+				w.setContent( data );
+
+				w.onClose = function()
+				{
+					
+					// Terminate
+					uprogress = false
+				}
+
+				uprogress.myview = w;
+
+				// Setup progress bar
+				let eled = w.getWindowElement().getElementsByTagName( 'div' );
+				for( let a = 0; a < eled.length; a++ )
+				{
+					if( eled[a].className )
+					{
+						let types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'Info', 'Progress' ];
+						for( let b = 0; b < types.length; b++ )
+						{
+							if( eled[a].className.indexOf( types[b] ) == 0 )
+							{
+								switch( types[b] )
+								{
+									case 'ProgressBar': progressbar    = eled[a]; break;
+									case 'Groove':      groove         = eled[a]; break;
+									case 'Frame':       frame          = eled[a]; break;
+									case 'Bar':         bar            = eled[a]; break;
+									case 'Info':		uprogress.info = eled[a]; break;
+									case 'Progress':    progress       = eled[a]; break;
+								}
+								break;
+							}
+						}
+					}
+				}
+
+
+				//activate cancel button... we assume we only hav eone button in the template
+				let cb = w.getWindowElement().getElementsByTagName( 'button' )[0];
+
+				cb.mywindow = w;
+				cb.onclick = function( e )
+				{
+					// Terminate copy
+					this.mywindow.close();
+					uprogress = false;
+				}
+
+				// Only continue if we have everything
+				if( progressbar && groove && frame && bar )
+				{
+					progressbar.style.position = 'relative';
+					frame.style.width = '100%';
+					frame.style.height = '40px';
+					groove.style.position = 'absolute';
+					groove.style.width = '100%';
+					groove.style.height = '30px';
+					groove.style.top = '0';
+					groove.style.left = '0';
+					progress.style.position = 'absolute';
+					progress.style.top = '0';
+					progress.style.left = '0';
+					progress.style.width = '100%';
+					progress.style.height = '30px';
+					progress.style.textAlign = 'center';
+					progress.style.zIndex = 2;
+					bar.style.position = 'absolute';
+					bar.style.width = '2px';
+					bar.style.height = '30px';
+					bar.style.top = '0';
+					bar.style.left = '0';
+
+					// Preliminary progress bar
+					bar.total = 1;
+					bar.items = 1;
+					uprogress.bar = bar;
+				}
+				uprogress.loaded = true;
+				uprogress.setProgress( 0 );
+			}
+
+			// For the progress bar
+			uprogress.setProgress = function( percent, wri, tot )
+			{
+				// only update display if we are loaded...
+				// otherwise just drop and wait for next call to happen ;)
+				if( uprogress.loaded )
+				{
+					uprogress.bar.style.width = Math.floor( Math.max(1,percent ) ) + '%';
+					progress.innerHTML = Math.floor( percent ) + '%' + ( wri ? ( ' ' + humanFilesize( wri ) + '/' + humanFilesize( tot ) ) : '' );
+				}
+				if( percent == 100 )
+				{
+					uprogress.done = true;
+					if( uprogress.info )
+						uprogress.info.innerHTML = '<div id="transfernotice" style="padding-top:10px;">' +
+							'Storing file in destination folder...</div>';
+				}
+			};
+
+			uprogress.load();
+			
+			uprogress.setProgress( '0%', 0, 0 );
+			let completeTimeo = null;
+			
 			// Get files in dest path
 			let d = new Door( destPath );
 			d.getIcons( destFinf, function( items )
@@ -5913,7 +6036,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				if( !e ) e = {};
 				let cliplen = clip.length;
-				for( let b = 0; b < clip.length; b++ )
+				for( let b = 0; b < clip.length && uprogress; b++ )
 				{	
 					let spath = clip[b].fileInfo.Path;
 					
@@ -5933,14 +6056,49 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					
 					let copyStr = 'copy ' + source + ' to ' + destin + fn;
-					sh.parseScript( copyStr, function()
+					sh.onmessage = function( msg )
 					{
-						if( cliplen-- == 0 )
+						let selfsh = this;
+						if( !uprogress && this.uniqueId )
 						{
-							Notify( { title: i18n( 'i18n_copy_operation' ), text: i18n( 'i18n_copying_files_complete' ) } );
+							this.stop = true;
+							if( !this.stopped )
+							{
+								this.stopped = true;
+								window.FriendDOS.delSession( this.uniqueId );
+								Notify( { title: i18n( 'i18n_copy_operation' ), text: i18n( 'i18n_copying_files_stopped' ) } );
+							}
+							return;
 						}
-						delete sh;
-					}  );
+						if( msg.type == 'progress' )
+						{
+							let pct = ( msg.progress.count / msg.progress.total * 100 );
+							uprogress.setProgress( pct, msg.progress.count, msg.progress.total );
+							if( pct == 100 )
+							{
+								if( completeTimeo )
+									clearTimeout( completeTimeo );
+								completeTimeo = setTimeout( function()
+								{
+									if( uprogress )
+										uprogress.close();
+									if( !selfsh.stop )
+									{
+										Notify( { title: i18n( 'i18n_copy_operation' ), text: i18n( 'i18n_copying_files_complete' ) } );
+									}
+								}, 350 );
+							}
+							else
+							{
+								if( completeTimeo )
+								{
+									clearTimeout( completeTimeo );
+									completeTimeo = null;
+								}
+							}
+						}
+					}
+					sh.parseScript( copyStr, function(){ delete sh; } );
 				}
 			} );
 		}
