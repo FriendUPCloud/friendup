@@ -3043,11 +3043,10 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						if( this.classList.contains( 'Selected' ) )
 						{
 							// Check if we need this
-							/*
 							this.classList.remove( 'Selected' );
 							this.selected = false;
 							this.icon.selected = false;
-							this.fileInfo.selected = false;*/
+							this.fileInfo.selected = false;
 						}
 						else
 						{
