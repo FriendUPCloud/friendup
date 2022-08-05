@@ -6086,7 +6086,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									{
 										Notify( { title: i18n( 'i18n_copy_operation' ), text: i18n( 'i18n_copying_files_complete' ) } );
 									}
-								}, 350 );
+								}, 1000 );
 							}
 							else
 							{
