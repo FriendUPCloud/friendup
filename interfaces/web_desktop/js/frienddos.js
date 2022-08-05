@@ -4044,7 +4044,7 @@ window.FriendDOS =
 					if( flags.shell && flags.shell.onmessage )
 					{
 						console.log( 'Copytotal: ' + this.copyTotal + ' Copycounter: ' + this.copyCounter + ' | Processes: ' + copyObject.processes + ' | Completed: ' + copyObject.completed );
-						flags.shell.onmessage( { 'type': 'progress', progress: { total: this.processes, count: this.completed } } );
+						flags.shell.onmessage( { 'type': 'progress', progress: { total: this.processes + this.copyTotal, count: this.completed + this.copyCounter } } );
 					}
 					
 					if( this.copyCounter == this.copyTotal && this.copyDepth === 0 && this.processes == this.completed )
@@ -4256,8 +4256,10 @@ window.FriendDOS =
 											if( move )
 											{
 												// Done moving one
+												copyObject.processes++;
 												doorSrc.dosAction( 'delete', { path: dcp, notrash: flags.notrash }, function( result )
 												{
+													copyObject.completed++;
 													console.log( 'Deleted ' + dcp + ' ->', result );
 												} );
 												callback( 'Moved ' + dcp + ' to ' + destination + dfn );
