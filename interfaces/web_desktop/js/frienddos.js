@@ -4040,6 +4040,13 @@ window.FriendDOS =
 				deleteMovePaths: [],
 				test: function()
 				{
+					//console.log( 'Copying files: ' + this.copyCounter + ' / ' + this.copyTotal + ' at depth ' + this.copyDepth );
+					if( flags.shell && flags.shell.onmessage )
+					{
+						console.log( 'Copytotal: ' + this.copyTotal + ' Copycounter: ' + this.copyCounter + ' | Processes: ' + copyObject.processes + ' | Completed: ' + copyObject.completed );
+						flags.shell.onmessage( { 'type': 'progress', progress: { total: this.processes, count: this.completed } } );
+					}
+					
 					if( this.copyCounter == this.copyTotal && this.copyDepth === 0 && this.processes == this.completed )
 					{
 						if( !this.callback ) return;
@@ -4057,11 +4064,6 @@ window.FriendDOS =
 							this.callback( 'Done copying ' + this.copyTotal + ' files.', { done: true } );
 						}
 						this.callback = false;
-					}
-					//console.log( 'Copying files: ' + this.copyCounter + ' / ' + this.copyTotal + ' at depth ' + this.copyDepth );
-					if( flags.shell && flags.shell.onmessage )
-					{
-						flags.shell.onmessage( { 'type': 'progress', progress: { total: this.copyTotal, count: this.copyCounter } } );
 					}
 				}
 			};
@@ -4180,7 +4182,6 @@ window.FriendDOS =
 				
 				let compareCount = 0;
 				
-				// TODO: Implement abort
 				for( let a = 0; a < data.length; a++ )
 				{
 					// Make a trim
@@ -4308,6 +4309,7 @@ window.FriendDOS =
 							doorDst = new Door( dest );
 							doorDst.dosAction( 'info', { path: dest }, function( result )
 							{
+								copyObject.completed++;
 								if( flags.shell && flags.shell.stop == true ) return;
 								let lastChar = destination.substr( -1, 1 );
 								if( result.substr( 0, 5 ) != 'fail<' )
@@ -4333,6 +4335,7 @@ window.FriendDOS =
 										callback( 'Failed to ' + ( move ? 'move' : 'copy' ) + ' file...', { done: true } );
 									}
 								}
+								copyObject.processes++;
 								doorSrc.dosAction( 'copy', { from: finalSrc, to: destination }, function( result )
 								{
 									if( flags.shell && flags.shell.stop == true ) return;
@@ -4340,8 +4343,10 @@ window.FriendDOS =
 									{
 										callback( 'Moved ' + finalSrc + ' to ' + destination + '..' );
 										// Done moving one
+										copyObject.processes++;
 										doorSrc.dosAction( 'delete', { path: finalSrc, notrash: flags.notrash }, function( result )
 										{
+											copyObject.completed++;
 											console.log( 'Deleted ' + finalSrc + ' ->', result );
 										} );
 									}
