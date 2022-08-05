@@ -991,7 +991,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		SystemBase *locsb = (SystemBase *)sd->sb;
 
 		// when pointer is used there is no way that something will write to same file
-		snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/Friendup/%s_read_%f%p%d", s->f_SessionIDPTR, timeInMill, sd, rand()%999999 );
+		snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/Friendup/%s_read_%f%p%d", s->f_SessionIDPTR, timeInMill, sd, rand()%999 );
 		
 		DEBUG( "[PHPFsys/FileOpen] Success in locking %s\n", tmpfilename );
 
@@ -1112,10 +1112,15 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 	}
 	else if( mode[0] == 'w' )
 	{
-		char tmpfilename[ 712 ];
-
 		// Make sure we can make the tmp file unique
-		snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/Friendup/%s_write_%d%d%d%d", s->f_SessionIDPTR, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
+		char tmpfilename[ 712 ];
+		struct timeval  tv;
+		gettimeofday(&tv, NULL);
+
+		double timeInMill = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000 ; // convert tv_sec & tv_usec to millisecond
+
+		// when pointer is used there is no way that something will write to same file		
+		snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/Friendup/%s_write_%f%p%d", s->f_SessionIDPTR, timeInMill, locsd, rand()%999 );
 
 		DEBUG("[PHPFsys/FileOpen] WRITE FILE %s\n", tmpfilename );
 
