@@ -727,7 +727,7 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 			if( s && s[0] != 'ok' )
 			{
 				doAlert();
-				console.log( 'Failed: ' + this.responseText );
+				console.log( 'Failed: ' + this.responseText() );
 			}
 		}
 		if( callback ) callback( this.responseText(), dr );
