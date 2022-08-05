@@ -2872,6 +2872,8 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			r.className += ' File';
 			//RemoveIconEvents( f ); // Strip events
 			r.file = f;
+			r.onmouseout = f.onmouseout;
+			r.directoryView = f.directoryView;
 			
 			// Overwrite doubleclick
 			if( ic.Type == 'File' && this.doubleclickfiles )
@@ -2906,6 +2908,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				if( !e ) e = window.event ? window.event : {};
 			
 				window.touchElementTime = ( new Date() ).getTime();
+				
 				window.mouseDown = this;
 				
 				if( isTouchDevice() )
@@ -3070,8 +3073,6 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			
 			r.window = obj.window;
 
-			icnt.appendChild( r );
-
 			// Let's drag this bastard!
 			r.setAttribute( 'draggable', true );
 									
@@ -3088,6 +3089,8 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				}
 			}
 			r.ontouchend = r.onmouseup;
+			
+			icnt.appendChild( r );
 
 			// For clicks
 			ic.domNode = r;
@@ -3995,6 +3998,10 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			
 			if ( window.mouseDown == this )
 			{
+				this.classList.add( 'Selected' );
+				this.fileInfo.selected = true;
+				this.selected = true;
+				this.icon.selected = true;
 				mousePointer.pickup( this );
 				window.mouseDown = 4;
 				return cancelBubble ( e );
