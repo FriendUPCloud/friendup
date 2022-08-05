@@ -4030,43 +4030,50 @@ window.FriendDOS =
 		// Setup copyobject!
 		if( !copyObject ) 
 		{
-			copyObject = {
-				copyCounter: 0, // Done copying files
-				copyTotal: 0,   // Files copying in progress
-				copyDepth: 0,    // Swipe depth
-				processes: 0, // Other processes
-				completed: 0, // Completed processes
-				callback: callback,
-				deleteMovePaths: [],
-				test: function()
-				{
-					//console.log( 'Copying files: ' + this.copyCounter + ' / ' + this.copyTotal + ' at depth ' + this.copyDepth );
-					if( flags.shell && flags.shell.onmessage )
+			if( flags.shell && flags.shell.copyObject )
+				copyObject = flags.shell.copyObject;
+			else
+			{
+				copyObject = {
+					copyCounter: 0, // Done copying files
+					copyTotal: 0,   // Files copying in progress
+					copyDepth: 0,    // Swipe depth
+					processes: 0, // Other processes
+					completed: 0, // Completed processes
+					callback: callback,
+					deleteMovePaths: [],
+					test: function()
 					{
-						console.log( 'Copytotal: ' + this.copyTotal + ' Copycounter: ' + this.copyCounter + ' | Processes: ' + copyObject.processes + ' | Completed: ' + copyObject.completed );
-						flags.shell.onmessage( { 'type': 'progress', progress: { total: this.processes + this.copyTotal, count: this.completed + this.copyCounter } } );
-					}
-					
-					if( this.copyCounter == this.copyTotal && this.copyDepth === 0 && this.processes == this.completed )
-					{
-						if( !this.callback ) return;
-						if( move )
+						//console.log( 'Copying files: ' + this.copyCounter + ' / ' + this.copyTotal + ' at depth ' + this.copyDepth );
+						if( flags.shell && flags.shell.onmessage )
 						{
-							for( let a = this.deleteMovePaths.length - 1; a >= 0; a-- )
+							console.log( 'Copytotal: ' + this.copyTotal + ' Copycounter: ' + this.copyCounter + ' | Processes: ' + copyObject.processes + ' | Completed: ' + copyObject.completed );
+							flags.shell.onmessage( { 'type': 'progress', progress: { total: this.processes + this.copyTotal, count: this.completed + this.copyCounter } } );
+						}
+						
+						if( this.copyCounter == this.copyTotal && this.copyDepth === 0 && this.processes == this.completed )
+						{
+							if( !this.callback ) return;
+							if( move )
 							{
-								let dmp = this.deleteMovePaths[ a ];
-								dmp.door.dosAction( 'delete', { path: dmp.path, notrash: flags.notrash } );
+								for( let a = this.deleteMovePaths.length - 1; a >= 0; a-- )
+								{
+									let dmp = this.deleteMovePaths[ a ];
+									dmp.door.dosAction( 'delete', { path: dmp.path, notrash: flags.notrash } );
+								}
+								this.callback( 'Done moving ' + this.copyTotal + ' files.', { done: true } );
 							}
-							this.callback( 'Done moving ' + this.copyTotal + ' files.', { done: true } );
+							else
+							{
+								this.callback( 'Done copying ' + this.copyTotal + ' files.', { done: true } );
+							}
+							this.callback = false;
 						}
-						else
-						{
-							this.callback( 'Done copying ' + this.copyTotal + ' files.', { done: true } );
-						}
-						this.callback = false;
 					}
-				}
-			};
+				};
+				if( flags.shell )
+					flags.shell.copyObject = copyObject;
+			}
 		}
 
 		// Verified destinations are passing
