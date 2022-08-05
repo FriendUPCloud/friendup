@@ -3032,13 +3032,13 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					else
 					{
 						let sh = e.shiftKey || e.ctrlKey;
-						if( !sh ) 
+						/*if( !sh ) 
 						{
 							if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
 							{
 								clearRegionIcons( { exception: this } );
 							}
-						}
+						}*/
 						
 						if( this.classList.contains( 'Selected' ) )
 						{
