@@ -3032,23 +3032,15 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					else
 					{
 						let sh = e.shiftKey || e.ctrlKey;
-						/*if( !sh ) 
+						if( !sh ) 
 						{
 							if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
 							{
 								clearRegionIcons( { exception: this } );
 							}
-						}*/
-						
-						if( this.classList.contains( 'Selected' ) )
-						{
-							// Check if we need this
-							this.classList.remove( 'Selected' );
-							this.selected = false;
-							this.icon.selected = false;
-							this.fileInfo.selected = false;
 						}
-						else
+						
+						if( !this.classList.contains( 'Selected' ) )
 						{
 							this.classList.add( 'Selected' );
 							this.selected = sh ? 'multiple' : true;
@@ -3085,6 +3077,13 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					{
 						clearRegionIcons( { exception: this, force: true } );
 					}
+				}
+				if( this.classList.contains( 'Selected' )
+				{
+					this.classList.remove( 'Selected' );
+					this.selected = false;
+					this.icon.selected = false;
+					this.fileInfo.selected = false;
 				}
 			}
 			r.ontouchend = r.onmouseup;
