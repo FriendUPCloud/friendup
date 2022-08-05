@@ -1243,10 +1243,12 @@ int FileClose( struct File *s, void *fp )
 				// Add colon here
 				if( !PathHasColon( sd->path ) )
 				{
+					char *r = generateRandomString( 8 );
 					char *tmpPath = FCalloc( strlen( s->f_Name ) + strlen( sd->path ) + 8 + 2, sizeof( char ) );
-					sprintf( tmpPath, "%s:%s%s", s->f_Name, sd->path, generateRandomString( 8 ) );
+					sprintf( tmpPath, "%s:%s%s", s->f_Name, sd->path, r );
 					encPath = MarkAndBase64EncodeString( tmpPath );
 					FFree( tmpPath );
+					free( r );
 				}
 				else
 				{
