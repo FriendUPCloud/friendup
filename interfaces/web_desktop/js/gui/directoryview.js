@@ -3031,12 +3031,13 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					}
 					else
 					{
+						console.log( 'WHAAAAAAAAAAA ' + Math.random() );
 						let sh = e.shiftKey || e.ctrlKey;
 						if( !sh ) 
 						{
 							if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
 							{
-								//clearRegionIcons( { exception: this } );
+								clearRegionIcons( { exception: this } );
 							}
 						}
 						
