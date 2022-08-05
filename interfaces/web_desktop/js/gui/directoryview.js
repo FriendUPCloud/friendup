@@ -2946,6 +2946,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					{
 						Workspace.showContextMenu( false, e );
 					}
+					cancelMouseEvents( e );
 					return cancelBubble( e );
 				}
 				else if( e.button == 0 || !e.button )
