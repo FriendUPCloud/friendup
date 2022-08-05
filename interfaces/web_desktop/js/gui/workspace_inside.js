@@ -6080,6 +6080,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									clearTimeout( completeTimeo );
 								completeTimeo = setTimeout( function()
 								{
+									// Close the view if possible
 									if( uprogress )
 										w.close();
 									if( !selfsh.stop )
