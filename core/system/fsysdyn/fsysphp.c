@@ -2030,6 +2030,7 @@ BufString *Info( File *s, const char *path )
 							{
 								bs->bs_Size = result->ls_Size + 1;
 								bs->bs_Bufsize = bs->bs_Size;
+								if( bs->bs_Buffer ) FFree( bs->bs_Buffer );
 								bs->bs_Buffer = FCalloc( bs->bs_Size, sizeof( char ) );
 								strncpy( bs->bs_Buffer, result->ls_Data, result->ls_Size );
 							}
