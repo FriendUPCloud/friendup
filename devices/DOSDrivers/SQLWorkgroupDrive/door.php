@@ -979,14 +979,18 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 								if( substr( $name, -1, 1 ) == '/' )
 									$name = substr( $name, 0, strlen( $name ) - 1 );
 								if( strstr( $name, '/' ) )
-									$name = end( explode( '/', $name ) );
+								{
+									$name = explode( '/', $name );
+									$name = end( $name );
+								}
 						
 								if( trim( $name ) )
 								{
 									$name = trim( $name );
 									if( substr( $name, -1, 1 ) == '/' )
 										$name = substr( $name, 0, strlen( $name ) - 1 );
-									$newFolder = end( explode( '/', $name ) );
+									$newFolder = explode( '/', $name );
+									$newFolder = end( $newFolder );
 									$f->FilesystemID = $this->ID;
 									$f->Name = $newFolder;
 									
