@@ -240,8 +240,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			'min-height' : 400,
 			'loadAnimation' : true
 		};
-		
-		fl.setMenuItems( {} );
 
 		if( mainview && mainview.getFlag( 'screen' ) )
 		{
@@ -249,6 +247,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		}
 
 		let w = new View( fl );
+		w.setMenuItems( {} );
 
 		self.dialogWindow = w;
 		w.dialog = self;
