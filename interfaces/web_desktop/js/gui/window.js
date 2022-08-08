@@ -1178,13 +1178,14 @@ function _ActivateWindow( div, nopoll, e )
     	window.Workspace && Workspace.dashboard && div.windowObject && (
     		div.windowObject.flags[ 'dialog' ] ||
     		div.windowObject.flags[ 'standard-dialog' ] ||
-    		( div.content && div.content.classList.FileDialog( 'Dialog' ) )
+    		( div.content && div.content.classList.contains( 'FileDialog' ) )
     	) 
     )
     {
     	return _ActivateDialogWindow( div );
 	}
 	
+	// Remove dialog flag only if it's not a dialog
 	document.body.classList.remove( 'Dialog' );
     
 	// Check window color
