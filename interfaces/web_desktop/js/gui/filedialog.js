@@ -251,7 +251,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		self.dialogWindow = w;
 		w.dialog = self;
 		w.content.classList.add( 'FileDialog' );
-		document.body.classList.add( 'Dialog' );
 
 		// Default path
 		self.path = path ? path : defaultPath;
