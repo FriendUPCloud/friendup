@@ -1621,7 +1621,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 					$fname = substr( $fi->Filename, 0, strlen( $fi->Filename ) - ( strlen( $ext ) + 1 ) );
 					$filename = $fname . '.' . $ext;
 					while( file_exists( $Config->FCTmp . $filename ) )
-						$filename = $fname . rand( 0, 999 ) . '.' . $ext;
+						$filename = $fname . ( rand( 0, 999 ) . rand( 0, 999 ) ) . '.' . $ext;
 					// Make tmp file
 					copy( $Config->FCUpload . $fi->DiskFilename, $Config->FCTmp . $filename );
 					return $Config->FCTmp . $filename;
