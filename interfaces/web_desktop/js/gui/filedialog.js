@@ -248,7 +248,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 
 		let w = new View( fl );
 		w.setMenuItems( {} );
-		w.content.parentNode.quickMenu = { name: 'Close', icon: 'remove', command: 'close' };
 
 		self.dialogWindow = w;
 		w.dialog = self;
