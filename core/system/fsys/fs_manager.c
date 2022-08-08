@@ -1067,18 +1067,18 @@ OR \
 					access[ 0 ][ 0 ] = access[ 1 ][ 0 ] = access[ 2 ][ 0 ] = 0;
 					// fetch access rights to file
 
-					sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
-PermissionID in( \
+					sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, `Type`, PermissionID FROM `FPermLink` WHERE \
+PermissionID IN ( \
 SELECT ID FROM `FFilePermission` WHERE \
-( Path = '%s' ) \
+( `Path` = '%s' ) \
 AND DeviceID = %lu \
 ) \
 AND ( \
-( ObjectID in( select UserGroupID from `FUserToGroup` where UserID = %lu ) and Type = 1 ) \
+( ObjectID in( SELECT UserGroupID FROM `FUserToGroup` where UserID = %lu ) and `Type` = 1 ) \
 OR \
-( ObjectID = %lu and Type = 0 ) \
+( ObjectID = %lu AND `Type` = 0 ) \
 OR \
-( Type = 2 ) \
+( `Type` = 2 ) \
 )", newPath, devid, usr->u_ID, usr->u_ID );
 
 					void *res = sqlLib->Query( sqlLib, tmpQuery );
