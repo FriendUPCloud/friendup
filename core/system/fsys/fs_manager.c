@@ -1074,7 +1074,7 @@ SELECT ID FROM `FFilePermission` WHERE \
 AND DeviceID = %lu \
 ) \
 AND ( \
-( ObjectID in( SELECT UserGroupID FROM `FUserToGroup` where UserID = %lu ) and `Type` = 1 ) \
+( ObjectID IN ( SELECT UserGroupID FROM `FUserToGroup` WHERE UserID = %lu ) and `Type` = 1 ) \
 OR \
 ( ObjectID = %lu AND `Type` = 0 ) \
 OR \
