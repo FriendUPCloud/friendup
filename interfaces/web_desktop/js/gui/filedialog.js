@@ -252,6 +252,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		w.dialog = self;
 		w.content.classList.add( 'FileDialog' );
 		document.body.classList.add( 'Dialog' );
+		console.log( 'Adding dialog document.' );
 		w.onclose = function()
 		{
 			document.body.classList.remove( 'Dialog' );
