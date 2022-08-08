@@ -1111,7 +1111,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 		*/
 		public function openFile( $path, $mode )
 		{
-			global $Config, $User;
+			global $Config, $User, $Logger;
 			
 			// Set basics on file pointer object
 			$o = new stdClass();
@@ -1127,6 +1127,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 					$o->mode = strtolower( trim( $mode ) );
 					break;
 				default:
+					$Logger->log( 'openFile: NO MODE' );
 					return false;
 			}
 			
@@ -1163,6 +1164,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				$o->tmpPath = $tmpPath;
 				return $o;
 			}
+			$Logger->log( 'openFile: Could not open file (' . ( isset( $tmpPath ) ? $tmpPath : '[NULL]' ) . ' ' . ( isset( $o->mode ) ? $o->mode : '[NULL]' ) . ' )' );
 			return false;
 		}
 		

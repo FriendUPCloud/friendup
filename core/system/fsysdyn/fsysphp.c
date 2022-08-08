@@ -1677,7 +1677,7 @@ int MakeDir( struct File *f, const char *path )
 				else
 				{
 					error = -2;
-					FERROR( "[fsysphp] Unknown error unmounting device %s..\n", f->f_Name );
+					FERROR( "[fsysphp] No response from module call %s..\n", f->f_Name );
 				}
 				
 				// TODO: we should parse result to get information about success
