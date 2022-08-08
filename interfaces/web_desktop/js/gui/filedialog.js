@@ -554,6 +554,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		w.addEvent( 'close', function()
 		{
 			if( w.md ) w.md.close();
+			document.body.classList.remove( 'Dialog' );
 		
 			if( mainview )
 			{
