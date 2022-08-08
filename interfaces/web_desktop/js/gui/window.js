@@ -1177,7 +1177,8 @@ function _ActivateWindow( div, nopoll, e )
     if( 
     	window.Workspace && Workspace.dashboard && div.windowObject && (
     		div.windowObject.flags[ 'dialog' ] ||
-    		div.windowObject.flags[ 'standard-dialog' ]
+    		div.windowObject.flags[ 'standard-dialog' ] ||
+    		( div.content && div.content.classList.FileDialog( 'Dialog' ) )
     	) 
     )
     {
