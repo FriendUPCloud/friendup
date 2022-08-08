@@ -888,7 +888,7 @@ if( !class_exists( 'Door' ) )
 						{
 							return true;
 						}
-						//$Logger->log('Couldn\'t create folder (createFolder)... ' . $folderName . ' :: ' . $tpath);
+						$Logger->log('[DOOR] Couldn\'t create folder (createFolder)... ' . $folderName . ' :: ' . $tpath);
 						return false;
 					}
 				}
@@ -904,10 +904,10 @@ if( !class_exists( 'Door' ) )
 						{
 							return true;
 						}
-						//$Logger->log('couldn\'t putFile... ' . $pathTo . ' :: ');
+						$Logger->log('[DOOR] couldn\'t putFile... ' . $pathTo . ' :: ');
 					}
 				}
-				//$Logger->log('how did we even get here... ' . $pathFrom . ' :: ' . $pathTo);
+				$Logger->log('[DOOR] how did we even get here... ' . $pathFrom . ' :: ' . $pathTo);
 				return false;
 			}
 		}
