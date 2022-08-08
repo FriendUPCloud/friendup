@@ -1006,6 +1006,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 								}
 							}
 						}
+						$Logger->log( '[SQLWorkgroupDrive] Failed to create folder: ' . $path );
 						die( 'fail<!--separate-->' ); //why: ' . print_r( $args, 1 ) . '(' . $path . ')' );
 						break;
 					case 'delete':
