@@ -116,10 +116,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	this.close = function()
 	{
 	    if( self.dialogWindow )
-	    {
-	    	document.body.classList.remove( 'Dialog' );
     	    self.dialogWindow.close();
-	    }
 	}
 	
 	function init()
@@ -255,7 +252,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		w.dialog = self;
 		w.content.classList.add( 'FileDialog' );
 		document.body.classList.add( 'Dialog' );
-		
+
 		// Default path
 		self.path = path ? path : defaultPath;
 		if( typeof ( path ) == 'object' )
@@ -421,7 +418,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 						if( ok )
 						{
 							triggerfunction( p );
-							document.body.classList.remove( 'Dialog' );
 							w.close();
 						}
 					}, i18n( 'i18n_overwrite' ) );
@@ -429,7 +425,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				else
 				{
 					triggerfunction( p );
-					document.body.classList.remove( 'Dialog' );
 					w.close();
 				}
 				return;
@@ -455,7 +450,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			if( ele && fobj )
 			{
 				triggerfunction( [ fobj ] );
-				document.body.classList.remove( 'Dialog' );
 				w.close ();
 				return;
 			}
@@ -499,7 +493,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 					triggerfunction( '' );
 				}
 			}
-			document.body.classList.remove( 'Dialog' );
 			w.close ();
 		}
 
@@ -561,10 +554,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 
 		w.addEvent( 'close', function()
 		{
-			if( w.md ) 
-			{
-				w.md.close();
-			}
+			if( w.md ) w.md.close();
 		
 			if( mainview )
 			{
@@ -572,7 +562,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				_ActivateWindow( mainview.getWindowElement ().parentNode );
 			}
 			triggerfunction( false );
-			document.body.classList.remove( 'Dialog' );
 		} );
 	
 		if( type != 'open' && type != 'save' && type != 'path' )
@@ -735,7 +724,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				cacl.onclick = function()
 				{
 					triggerfunction( '' );
-					document.body.classList.remove( 'Dialog' );
 					w.close();
 				}
 			}
