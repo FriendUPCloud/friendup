@@ -871,7 +871,7 @@ void *ParseAndCall( WSThreadData *wstd )
 			return NULL;
 		}
 	}
-	
+	if( 1 == 1 ){ int a = 1; }
 	t = FCalloc( 256, sizeof(jsmntok_t) );
 	jsmn_init( &p );
 	r = jsmn_parse( &p, in, len, t, 256 );
