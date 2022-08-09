@@ -293,7 +293,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 					wsd->wsc_Buffer = NULL;
 				}
 			
-				lws_close_reason( wsi, LWS_CLOSE_STATUS_GOINGAWAY , NULL, 0 );
+				lws_close_reason( wsi, LWS_CLOSE_STATUS_GOINGAWAY, NULL, 0 );
 				
 				pthread_mutex_destroy( &(wsd->wsc_Mutex) );
 			
@@ -532,7 +532,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 					break;
 				}
 				DEBUG("[WS] Closing WS, number: %d\n", wsd->wsc_InUseCounter );
-				usleep( 5 );
+				usleep( 50 );
 			}
 			DetachWebsocketFromSession( wsd, wsi );
 	
