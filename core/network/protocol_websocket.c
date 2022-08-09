@@ -244,6 +244,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 	// After CLOSE and DESTROY just clean up and remove
 	if( wsd->wsc_Status == WSC_STATUS_TO_BE_REMOVED || wsd->wsc_Status == WSC_STATUS_DELETED )
 	{
+		DEBUG( "We are going away\n" );
 		if( wsd->wsc_InUseCounter <= 0 )
 		{
 			DetachWebsocketFromSession( wsd, wsi );
