@@ -270,7 +270,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 					if( FRIEND_MUTEX_LOCK( &( wsd->wsc_Mutex ) ) == 0 )
 					{
 						wsd->wsc_Status = WSC_STATUS_TO_BE_REMOVED;
-						
+						DetachWebsocketFromSession( wsd, wsi );
 						FRIEND_MUTEX_UNLOCK( &( wsd->wsc_Mutex ) );
 					}
 						
