@@ -283,7 +283,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 		    //DEBUG("[WS] Callback client closed!\n");
 		case LWS_CALLBACK_CLOSED:
 			{
-				if( wsd->wsc_InUseCounter <= 0 && wsd->wsc_Status != WSC_STATUS_TO_BE_REMOVED )
+				if( wsd->wsc_Status != WSC_STATUS_TO_BE_REMOVED )
 				{
 					DetachWebsocketFromSession( wsd, wsi );
 				
