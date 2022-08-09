@@ -552,9 +552,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 			pthread_mutex_destroy( &(wsd->wsc_Mutex) );
 	
 			Log( FLOG_DEBUG, "[WS] Callback LWS_CALLBACK_PROTOCOL_DESTROY\n");
-			
-			wsd->wsc_Wsi = NULL;
-			wsd->wsc_Status = WSC_STATUS_DELETED;
 		}
 		break;
 		

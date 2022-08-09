@@ -348,7 +348,7 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 						((WSCData *)us->us_WSD)->wsc_InUseCounter++;
 						FRIEND_MUTEX_UNLOCK( &(((WSCData *)us->us_WSD)->wsc_Mutex) );
 					
-						if( ((WSCData *)us->us_WSD)->wsc_Wsi != NULL )
+						if( ((WSCData *)us->us_WSD)->wsc_Wsi != NULL && wsd->wsc_Status != WSC_STATUS_DELETED ) && wsd->wsc_Status != WSC_STATUS_TO_BE_REMOVED )
 						{
 							lws_callback_on_writable( ((WSCData *)us->us_WSD)->wsc_Wsi );
 						}
@@ -433,7 +433,7 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 					{
 						wsd->wsc_InUseCounter++;
 						FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
-						if( wsd->wsc_Wsi != NULL )
+						if( wsd->wsc_Wsi != NULL && wsd->wsc_Status != WSC_STATUS_DELETED && wsd->wsc_Status != WSC_STATUS_TO_BE_REMOVED )
 						{
 							lws_callback_on_writable( wsd->wsc_Wsi );
 						}
