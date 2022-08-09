@@ -270,7 +270,6 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 		
 			if( us->us_Wsi != NULL )
 			{
-				int fqEntrySize = sizeof( FQEntry );
 				for( actChunk = 0; actChunk < totalChunk ; actChunk++ )
 				{
 					unsigned char *queueMsg = FMalloc( WS_PROTOCOL_BUFFER_SIZE );
@@ -306,7 +305,7 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 
 						DEBUG( "[UserSessionWebsocketWrite] Determined chunk: %d\n", actChunk );
 				
-						FQEntry *en = FCalloc( 1, fqEntrySize );
+						FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 						if( en != NULL )
 						{
 							en->fq_Data = queueMsg;

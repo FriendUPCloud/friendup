@@ -53,7 +53,7 @@ WebsocketReq *WebsocketReqNew( char *id, int chunk __attribute__((unused)), int 
 		{
 			DEBUG("[WebsocketReqNew] Memory for data allocated at: %p\n", req->wr_Message );
 			memcpy( req->wr_Message, data, datasize );
-			req->wr_Message[ req->wr_TotalSize - 1 ] = 0; // This allow us to see messages by using %s
+			req->wr_Message[ req->wr_TotalSize ] = 0; // This allow us to see messages by using %s
 		}
 	}
 	
