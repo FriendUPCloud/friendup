@@ -270,8 +270,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 						break;
 					}
 					DEBUG("[WS] Closing WS, number: %d\n", wsd->wsc_InUseCounter );
-					//sleep( 1 );
-					usleep( 350000 );	// 0.35 seconds
 					
 					if( tr-- <= 0 )
 					{
@@ -284,7 +282,9 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 						DEBUG("[WS] wsc_UserSession is equal to NULL\n");
 						break;
 					}
+					usleep( 5 );
 				}
+				
 				DetachWebsocketFromSession( wsd, wsi );
 			
 				if( wsd->wsc_Buffer != NULL )
@@ -338,7 +338,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 				}
 				else // only fragment was received
 				{
-					//DEBUG1("[WS] Only received: %s\n", (char *)tin );
+					//DEBUG1("[WS] Only received: %p, %s, %p, %d\n", wsd->wsc_Buffer, (char *)tin, tin, len );
 					BufStringAddSize( wsd->wsc_Buffer, tin, len );
 					return 0;
 				}
@@ -532,7 +532,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 					break;
 				}
 				DEBUG("[WS] Closing WS, number: %d\n", wsd->wsc_InUseCounter );
-				sleep( 1 );
+				usleep( 5 );
 			}
 			DetachWebsocketFromSession( wsd, wsi );
 	
@@ -1152,6 +1152,7 @@ void *ParseAndCall( WSThreadData *wstd )
 						// simple PING
 						if( tsize > 0 && strncmp( "ping",  in + t[ 6 ].start, tsize ) == 0 && r > 8 )
 						{
+							if( 1 == 1 ){ int a = 1; }
 							wstd->wstd_Requestid = StringDuplicateN( (char *)(in + t[ 8 ].start), t[ 8 ].end-t[ 8 ].start );
 
 							if( locus != NULL )
