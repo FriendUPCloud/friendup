@@ -69,6 +69,8 @@ unsigned int BufStringAdd(BufString *bs, const char *string_to_append);
  */
 unsigned int BufStringAddSize(BufString *bs, const char *string_to_append, unsigned int string_to_append_length);
 
+unsigned int BufStringAddSizeMalloc(BufString *bs, const char *string_to_append, unsigned int string_to_append_length);
+
 
 /**
  * Read file to buffered string

@@ -134,6 +134,57 @@ unsigned int BufStringAddSize( BufString *bs, const char *string_to_append, unsi
 	return 0;
 }
 
+unsigned int BufStringAddSizeMalloc(BufString *bs, const char *string_to_append, unsigned int string_to_append_length)
+{
+	if( bs == NULL || string_to_append == NULL || string_to_append_length < 1 )
+	{
+		FERROR("Cannot add NULL text!\n");
+		return 1;
+	}
+
+	if ( (string_to_append_length + bs->bs_Size) >= bs->bs_Bufsize){ //not enough place in buffer - reallocate
+
+		unsigned int increment = string_to_append_length;
+
+		//-------------------------------------------------
+		/* TK-608, TK-703
+		 * Speculatively increase buffer size beyond what is immediately necessary
+		 * to reduce total number of realloc calls.
+		 */
+		if (bs->previous_increment){
+			increment = bs->previous_increment + string_to_append_length;
+		}
+		//-------------------------------------------------
+
+		bs->previous_increment = increment;
+
+		unsigned int new_size = bs->bs_Bufsize + increment + 1/*place for terminator*/;
+
+		char *tmp = FMalloc( new_size );
+        //char *tmp = FRealloc(bs->bs_Buffer, new_size); //TK-609
+		
+		if( tmp ) //realloc succedeed and moved the data
+		{
+			memcpy( tmp, bs->bs_Buffer, bs->bs_Bufsize );
+			FFree( bs->bs_Buffer );
+			bs->bs_Buffer = tmp;
+			bs->bs_Bufsize = new_size;
+		}
+		else
+		{
+			FERROR("Cannot allocate memory for buffer!\n");
+			return -1;
+		}
+	}
+
+	// there is space in the buffer, we can put information there
+	memcpy( bs->bs_Buffer + bs->bs_Size, string_to_append, string_to_append_length );
+	bs->bs_Size += string_to_append_length;
+	bs->bs_Buffer[ bs->bs_Size ] = '\0'; //force null termination
+	
+	return 0;
+}
+
 /**
  * Read file to buffered string
  * @param path path to file
