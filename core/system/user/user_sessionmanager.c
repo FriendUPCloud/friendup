@@ -1223,11 +1223,11 @@ int countSessionSize( UserSession *us )
 	if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 	{
 		size = USERSESSION_SIZE + 255;	// approx 255 for sessionid
-		int fqentrySize = sizeof( FQEntry );
+
 		FQEntry *fqe = us->us_MsgQueue.fq_First;
 		while( fqe != NULL )
 		{
-			size += fqe->fq_Size + fqentrySize;
+			size += fqe->fq_Size + sizeof( FQEntry );
 			fqe = (FQEntry *)fqe->node.mln_Succ;
 		}
 	
