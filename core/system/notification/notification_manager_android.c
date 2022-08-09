@@ -117,6 +117,7 @@ void NotificationAndroidSendingThread( FThread *data )
 						break;
 					}
 				}
+				usleep( 25 );
 			}
 			
 			if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )

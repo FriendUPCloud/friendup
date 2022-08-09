@@ -1036,7 +1036,7 @@ static inline int RemoteSocketAcceptPhase3( int fd, CommServiceRemote *csr )
 			{
 				break;
 			}
-			usleep( 0 );
+			usleep( 250 );
 	
 			//if( csr->fci_Shutdown == TRUE )
 			//{
