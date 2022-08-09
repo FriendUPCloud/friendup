@@ -261,6 +261,22 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 		    //DEBUG("[WS] Callback client closed!\n");
 		case LWS_CALLBACK_CLOSED:
 			{
+				UserSession *us = (UserSession *)wsd->wsc_UserSession;
+				
+				while( true )
+				{
+					if( FRIEND_MUTEX_LOCK( &( ((WSCData *)us->us_WSD)->wsc_Mutex) ) == 0 )
+					{
+						if( us->us_InUseCounter <= 0 )
+						{
+							FRIEND_MUTEX_UNLOCK( &( ((WSCData *)us->us_WSD)->wsc_Mutex) );
+							break;
+						}
+						FRIEND_MUTEX_UNLOCK( &( ((WSCData *)us->us_WSD)->wsc_Mutex) );
+					}
+					usleep( 25 );
+				}
+					
 				if( wsd->wsc_Buffer != NULL )
 				{
 					BufStringDelete( wsd->wsc_Buffer );
