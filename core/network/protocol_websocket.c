@@ -295,7 +295,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 					wsd->wsc_Buffer = NULL;
 				}
 			
-				lws_close_reason( wsi, LWS_CLOSE_STATUS_GOINGAWAY , NULL, 0 );
+				//lws_close_reason( wsi, LWS_CLOSE_STATUS_GOINGAWAY , NULL, 0 ); // May not need this as its closed!
 				
 				pthread_mutex_destroy( &(wsd->wsc_Mutex) );
 			
