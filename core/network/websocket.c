@@ -241,7 +241,7 @@ int WebsocketThread( FThread *data )
 
 	while( TRUE )
 	{
-		int n = lws_service( ws->ws_Context, 250 );
+		int n = lws_service( ws->ws_Context, 0 );
 		if( ws->ws_Quit == TRUE && ws->ws_NumberCalls <= 0 )
 		{
 			FINFO("WS Quit!\n");
