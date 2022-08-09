@@ -247,6 +247,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 		case LWS_CALLBACK_ESTABLISHED:
 			pthread_mutex_init( &(wsd->wsc_Mutex), NULL );
 			
+			wsd->wsc_Status = WSC_STATUS_ACTIVE;
+			
 			#ifdef WS_COMPRESSION
 			lws_set_extension_option( wsi, "permessage-deflate", "rx_buf_size", "16");
 			lws_set_extension_option( wsi, "permessage-deflate", "tx_buf_size", "16");
@@ -263,19 +265,20 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 			{
 				UserSession *us = (UserSession *)wsd->wsc_UserSession;
 				
-				while( true )
+				
+				
+				if( FRIEND_MUTEX_LOCK( &( ((WSCData *)us->us_WSD)->wsc_Mutex) ) == 0 )
 				{
-					if( FRIEND_MUTEX_LOCK( &( ((WSCData *)us->us_WSD)->wsc_Mutex) ) == 0 )
+					wsd->wsc_Status = WSC_STATUS_TO_BE_REMOVED;
+					
+					if( us->us_InUseCounter <= 0 )
 					{
-						if( us->us_InUseCounter <= 0 )
-						{
-							FRIEND_MUTEX_UNLOCK( &( ((WSCData *)us->us_WSD)->wsc_Mutex) );
-							break;
-						}
 						FRIEND_MUTEX_UNLOCK( &( ((WSCData *)us->us_WSD)->wsc_Mutex) );
+						break;
 					}
-					usleep( 25 );
+					FRIEND_MUTEX_UNLOCK( &( ((WSCData *)us->us_WSD)->wsc_Mutex) );
 				}
+				usleep( 25 );
 					
 				if( wsd->wsc_Buffer != NULL )
 				{
@@ -287,7 +290,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 				
 				Log( FLOG_DEBUG, "[WS] Callback session closed\n");
 				
-				wsd->wsc_Status = WSC_STATUS_TO_BE_REMOVED;
+				
 			}
 		break;
 		
@@ -406,7 +409,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 		case LWS_CALLBACK_SERVER_WRITEABLE:
 			DEBUG1("[WS] LWS_CALLBACK_SERVER_WRITEABLE\n");
 			
-			if( wsd->wsc_UserSession == NULL || wsd->wsc_Wsi == NULL || wsd->wsc_Status == WSC_STATUS_TO_BE_REMOVED )
+			if( wsd->wsc_Status == 0 || wsd->wsc_UserSession == NULL || wsd->wsc_Wsi == NULL || wsd->wsc_Status == WSC_STATUS_TO_BE_REMOVED )
 			{
 				DEBUG("[WS] Cannot write message, WS Client is equal to NULL, fcwd %p wsiptr %p\n", wsd, wsi );
 				return 0;
