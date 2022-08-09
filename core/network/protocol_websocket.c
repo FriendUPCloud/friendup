@@ -232,8 +232,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 {
     signal(SIGPIPE, SIG_IGN);
     
-    if( !tin ) return 0;
-    
 	WSCData *wsd =  (WSCData *) userData;// lws_context_user ( this );
 	int returnError = 0;
 	
@@ -262,14 +260,10 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 		    //DEBUG("[WS] Callback client closed!\n");
 		case LWS_CALLBACK_CLOSED:
 			{
-				wsd->wsc_Status = WSC_STATUS_TO_BE_REMOVED;
-				
-				//int tr = 8;
+				int tr = 8;
 				
 				while( TRUE )
 				{
-					usleep( 50 );
-					
 					if( wsd->wsc_InUseCounter <= 0 )
 					{
 						DEBUG("[WS] Callback closed!\n");
@@ -277,17 +271,18 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 					}
 					DEBUG("[WS] Closing WS, number: %d\n", wsd->wsc_InUseCounter );
 					
-					//if( tr-- <= 0 )
-					//{
-					//	DEBUG("[WS] Quit after 5\n");
-					//	break;
-					//}
+					if( tr-- <= 0 )
+					{
+						DEBUG("[WS] Quit after 5\n");
+						break;
+					}
 					
 					if( wsd->wsc_UserSession == NULL )
 					{
 						DEBUG("[WS] wsc_UserSession is equal to NULL\n");
 						break;
 					}
+					usleep( 5 );
 				}
 				
 				DetachWebsocketFromSession( wsd, wsi );
@@ -298,11 +293,9 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 					wsd->wsc_Buffer = NULL;
 				}
 			
-				//lws_close_reason( wsi, LWS_CLOSE_STATUS_GOINGAWAY , NULL, 0 ); // May not need this as its closed!
+				lws_close_reason( wsi, LWS_CLOSE_STATUS_GOINGAWAY , NULL, 0 );
 				
 				pthread_mutex_destroy( &(wsd->wsc_Mutex) );
-				
-				wsd->wsc_Wsi = NULL;
 			
 				Log( FLOG_DEBUG, "[WS] Callback session closed\n");
 				
@@ -316,12 +309,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 
 		case LWS_CALLBACK_RECEIVE:
 			{
-				if( wsd->wsc_Status == WSC_STATUS_DELETED && wsd->wsc_Status == WSC_STATUS_TO_BE_REMOVED )
-				{
-					return 0;
-				}
 				wsd->wsc_Wsi = wsi;
-
 
 				UserSession *us = (UserSession *)wsd->wsc_UserSession;
 				
@@ -334,7 +322,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 				// if nothing left and this is last message
 				if( !remaining && lws_is_final_fragment( wsi ) )
 				{
-					BufStringAddSizeMalloc( wsd->wsc_Buffer, tin, len );
+					BufStringAddSize( wsd->wsc_Buffer, tin, len );
 					
 					if( wsd->wsc_Buffer->bs_Size > 0 )
 					{
@@ -351,7 +339,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 				else // only fragment was received
 				{
 					//DEBUG1("[WS] Only received: %p, %s, %p, %d\n", wsd->wsc_Buffer, (char *)tin, tin, len );
-					BufStringAddSizeMalloc( wsd->wsc_Buffer, tin, len );
+					BufStringAddSize( wsd->wsc_Buffer, tin, len );
 					return 0;
 				}
 				
@@ -428,11 +416,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 		break;
 		
 		case LWS_CALLBACK_SERVER_WRITEABLE:
-			if( wsd->wsc_Status == WSC_STATUS_DELETED && wsd->wsc_Status == WSC_STATUS_TO_BE_REMOVED )
-			{
-				return 0;
-			}
-		
 			DEBUG1("[WS] LWS_CALLBACK_SERVER_WRITEABLE\n");
 			
 			if( wsd->wsc_UserSession == NULL || wsd->wsc_Wsi == NULL || wsd->wsc_Status == WSC_STATUS_TO_BE_REMOVED )
@@ -543,15 +526,14 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 			
 			while( TRUE )
 			{
-				usleep( 50 );
 				if( wsd->wsc_InUseCounter <= 0 )
 				{
 					DEBUG("[WS] Callback closed!\n");
 					break;
 				}
 				DEBUG("[WS] Closing WS, number: %d\n", wsd->wsc_InUseCounter );
+				usleep( 5 );
 			}
-			
 			DetachWebsocketFromSession( wsd, wsi );
 	
 			if( wsd->wsc_Buffer != NULL )
@@ -563,6 +545,10 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 			pthread_mutex_destroy( &(wsd->wsc_Mutex) );
 	
 			Log( FLOG_DEBUG, "[WS] Callback LWS_CALLBACK_PROTOCOL_DESTROY\n");
+			
+			wsd->wsc_Wsi = NULL;
+			
+			wsd->wsc_Status = WSC_STATUS_DELETED;
 		}
 		break;
 		
@@ -961,7 +947,7 @@ void *ParseAndCall( WSThreadData *wstd )
 							if( part > 0 && total > 0 && data > 0 && wstd->wstd_WSD->wsc_UserSession != NULL )
 							{
 								//DEBUG("[WS] Got chunked message: %d\n\n\n%.*s\n\n\n", t[ data ].end-t[ data ].start, t[ data ].end-t[ data ].start, (char *)(in + t[ data ].start) );
-								char *idc = StringDuplicateN( in + t[ id ].start, (int)(t[ id ].end - t[ id ].start) );
+								char *idc = StringDuplicateN( in + t[ id ].start,    (int)(t[ id ].end - t[ id ].start) );
 								part = StringNToInt( in + t[ part ].start,  (int)(t[ part ].end - t[ part ].start) );
 								total = StringNToInt( in + t[ total ].start, (int)(t[ total ].end - t[ total ].start) );
 								
