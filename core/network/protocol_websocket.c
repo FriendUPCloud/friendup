@@ -262,7 +262,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 		    //DEBUG("[WS] Callback client closed!\n");
 		case LWS_CALLBACK_CLOSED:
 			{
-				int tr = 8;
+				//int tr = 8;
 				
 				while( TRUE )
 				{
@@ -273,18 +273,18 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 					}
 					DEBUG("[WS] Closing WS, number: %d\n", wsd->wsc_InUseCounter );
 					
-					if( tr-- <= 0 )
-					{
-						DEBUG("[WS] Quit after 5\n");
-						break;
-					}
+					//if( tr-- <= 0 )
+					//{
+					//	DEBUG("[WS] Quit after 5\n");
+					//	break;
+					//}
 					
 					if( wsd->wsc_UserSession == NULL )
 					{
 						DEBUG("[WS] wsc_UserSession is equal to NULL\n");
 						break;
 					}
-					usleep( 5 );
+					usleep( 50 );
 				}
 				
 				DetachWebsocketFromSession( wsd, wsi );
