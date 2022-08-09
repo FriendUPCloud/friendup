@@ -2130,6 +2130,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 			
 			}
 		}
+		usleep( 0 );
 	}
 	
 	//DEBUG("End main loop\n");
