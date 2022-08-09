@@ -269,8 +269,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 				
 				lws_close_reason( wsi, LWS_CLOSE_STATUS_GOINGAWAY, NULL, 0 );
 				
-				pthread_mutex_destroy( &(wsd->wsc_Mutex) );
-			
 				Log( FLOG_DEBUG, "[WS] Callback session closed\n");
 				
 				wsd->wsc_Status = WSC_STATUS_TO_BE_REMOVED;
@@ -497,6 +495,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 		if( wsd != NULL )
 		{
 			wsd->wsc_Status = WSC_STATUS_DELETED;
+			pthread_mutex_destroy( &(wsd->wsc_Mutex) );
 		}
 		break;
 		/*
