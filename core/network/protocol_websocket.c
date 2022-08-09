@@ -322,7 +322,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 				// if nothing left and this is last message
 				if( !remaining && lws_is_final_fragment( wsi ) )
 				{
-					BufStringAddSize( wsd->wsc_Buffer, tin, len );
+					BufStringAddSizeMalloc( wsd->wsc_Buffer, tin, len );
 					
 					if( wsd->wsc_Buffer->bs_Size > 0 )
 					{
@@ -339,7 +339,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 				else // only fragment was received
 				{
 					//DEBUG1("[WS] Only received: %p, %s, %p, %d\n", wsd->wsc_Buffer, (char *)tin, tin, len );
-					BufStringAddSize( wsd->wsc_Buffer, tin, len );
+					BufStringAddSizeMalloc( wsd->wsc_Buffer, tin, len );
 					return 0;
 				}
 				
@@ -947,7 +947,7 @@ void *ParseAndCall( WSThreadData *wstd )
 							if( part > 0 && total > 0 && data > 0 && wstd->wstd_WSD->wsc_UserSession != NULL )
 							{
 								//DEBUG("[WS] Got chunked message: %d\n\n\n%.*s\n\n\n", t[ data ].end-t[ data ].start, t[ data ].end-t[ data ].start, (char *)(in + t[ data ].start) );
-								char *idc = StringDuplicateN( in + t[ id ].start,    (int)(t[ id ].end - t[ id ].start) );
+								char *idc = StringDuplicateN( in + t[ id ].start, (int)(t[ id ].end - t[ id ].start) );
 								part = StringNToInt( in + t[ part ].start,  (int)(t[ part ].end - t[ part ].start) );
 								total = StringNToInt( in + t[ total ].start, (int)(t[ total ].end - t[ total ].start) );
 								
@@ -1152,7 +1152,6 @@ void *ParseAndCall( WSThreadData *wstd )
 						// simple PING
 						if( tsize > 0 && strncmp( "ping",  in + t[ 6 ].start, tsize ) == 0 && r > 8 )
 						{
-							if( 1 == 1 ){ int a = 1; }
 							wstd->wstd_Requestid = StringDuplicateN( (char *)(in + t[ 8 ].start), t[ 8 ].end-t[ 8 ].start );
 
 							if( locus != NULL )
