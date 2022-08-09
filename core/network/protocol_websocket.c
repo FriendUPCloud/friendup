@@ -265,20 +265,12 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 			{
 				UserSession *us = (UserSession *)wsd->wsc_UserSession;
 				
-				
-				
 				if( FRIEND_MUTEX_LOCK( &( ((WSCData *)us->us_WSD)->wsc_Mutex) ) == 0 )
 				{
 					wsd->wsc_Status = WSC_STATUS_TO_BE_REMOVED;
 					
-					if( us->us_InUseCounter <= 0 )
-					{
-						FRIEND_MUTEX_UNLOCK( &( ((WSCData *)us->us_WSD)->wsc_Mutex) );
-						break;
-					}
 					FRIEND_MUTEX_UNLOCK( &( ((WSCData *)us->us_WSD)->wsc_Mutex) );
 				}
-				usleep( 25 );
 					
 				if( wsd->wsc_Buffer != NULL )
 				{
