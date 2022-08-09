@@ -232,7 +232,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 {
     signal(SIGPIPE, SIG_IGN);
     
-	WSCData *wsd =  (WSCData *) userData;// lws_context_user ( this );
+	WSCData *wsd =  (WSCData *)userData;// lws_context_user ( this );
 	int returnError = 0;
 	
 	DEBUG("FC_Callback: reason: %d wsiptr %p fcwdptr %p\n", reason, wsi, userData );
@@ -261,22 +261,18 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 		    //DEBUG("[WS] Callback client closed!\n");
 		case LWS_CALLBACK_CLOSED:
 			{
-				if( wsd->wsc_InUseCounter <= 0 && wsd->wsc_Status != WSC_STATUS_TO_BE_REMOVED )
+				if( wsd->wsc_Buffer != NULL )
 				{
-					DetachWebsocketFromSession( wsd, wsi );
-				
-					if( wsd->wsc_Buffer != NULL )
-					{
-						BufStringDelete( wsd->wsc_Buffer );
-						wsd->wsc_Buffer = NULL;
-					}
-				
-					lws_close_reason( wsi, LWS_CLOSE_STATUS_GOINGAWAY, NULL, 0 );
-					
-					pthread_mutex_destroy( &(wsd->wsc_Mutex) );
-				
-					Log( FLOG_DEBUG, "[WS] Callback session closed\n");
+					BufStringDelete( wsd->wsc_Buffer );
+					wsd->wsc_Buffer = NULL;
 				}
+				
+				lws_close_reason( wsi, LWS_CLOSE_STATUS_GOINGAWAY, NULL, 0 );
+				
+				pthread_mutex_destroy( &(wsd->wsc_Mutex) );
+			
+				Log( FLOG_DEBUG, "[WS] Callback session closed\n");
+				
 				wsd->wsc_Status = WSC_STATUS_TO_BE_REMOVED;
 			}
 		break;
