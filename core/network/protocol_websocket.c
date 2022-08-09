@@ -232,7 +232,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 {
     signal(SIGPIPE, SIG_IGN);
     
-    if( !tin ) return;
+    if( !tin ) return 0;
     
 	WSCData *wsd =  (WSCData *) userData;// lws_context_user ( this );
 	int returnError = 0;
