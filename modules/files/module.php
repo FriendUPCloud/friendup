@@ -64,7 +64,8 @@ if( $Filesystem = new Door( $args ) )
 			$door->SetAuthContext( 'sessionid', $args->sessionid );
 		}
 		
-		$Logger->log( '[FILES] Running ' . $command . ' on path ' . $path );
+		if( isset( $args->command ) )
+			$Logger->log( '[FILES] Running ' . $args->command . ' on path ' . $path );
 		
 		// Execute dos action
 		if( $result = $door->dosAction( $args ) )
