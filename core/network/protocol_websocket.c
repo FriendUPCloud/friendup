@@ -315,7 +315,12 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 
 		case LWS_CALLBACK_RECEIVE:
 			{
+				if( wsd->wsc_Status == WSC_STATUS_DELETED && wsd->wsc_Status == WSC_STATUS_TO_BE_REMOVED )
+				{
+					return 0;
+				}
 				wsd->wsc_Wsi = wsi;
+
 
 				UserSession *us = (UserSession *)wsd->wsc_UserSession;
 				
@@ -422,6 +427,11 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 		break;
 		
 		case LWS_CALLBACK_SERVER_WRITEABLE:
+			if( wsd->wsc_Status == WSC_STATUS_DELETED && wsd->wsc_Status == WSC_STATUS_TO_BE_REMOVED )
+			{
+				return 0;
+			}
+		
 			DEBUG1("[WS] LWS_CALLBACK_SERVER_WRITEABLE\n");
 			
 			if( wsd->wsc_UserSession == NULL || wsd->wsc_Wsi == NULL || wsd->wsc_Status == WSC_STATUS_TO_BE_REMOVED )
