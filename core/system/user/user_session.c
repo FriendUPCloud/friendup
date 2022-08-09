@@ -341,7 +341,7 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 				}
 				*/
 				
-				if( us->us_WSD != NULL )
+				/*if( us->us_WSD != NULL )
 				{
 					if( FRIEND_MUTEX_LOCK( &( ((WSCData *)us->us_WSD)->wsc_Mutex) ) == 0 )
 					{
@@ -359,7 +359,7 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 							FRIEND_MUTEX_UNLOCK( &(((WSCData *)us->us_WSD)->wsc_Mutex) );
 						}
 					}
-				}
+				}*/
 			}
 
 			FFree( encmsg );
@@ -427,7 +427,7 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 					retval += msglen;
 				}
 				
-				if( us->us_Wsi != NULL )
+				/*if( us->us_Wsi != NULL )
 				{
 					if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
 					{
@@ -443,7 +443,7 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 							FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
 						}
 					}
-				}
+				}*/
 			}
 		}
 	}
