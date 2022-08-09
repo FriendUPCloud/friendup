@@ -273,10 +273,10 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 						if( wsd->wsc_InUseCounter <= 0 )
 						{
 							DEBUG("[WS] Callback closed!\n");
-							FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) )
+							FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 							break;
 						}
-						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) )
+						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 					}
 					DEBUG("[WS] Closing WS, number: %d\n", wsd->wsc_InUseCounter );
 					
