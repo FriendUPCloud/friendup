@@ -267,11 +267,11 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 				
 				if( us != NULL )
 				{
-					if( FRIEND_MUTEX_LOCK( &( ( wsd->us_WSD->wsc_Mutex ) ) == 0 )
+					if( FRIEND_MUTEX_LOCK( &( wsd->us_WSD->wsc_Mutex ) ) == 0 )
 					{
 						wsd->wsc_Status = WSC_STATUS_TO_BE_REMOVED;
 						
-						FRIEND_MUTEX_UNLOCK( &( ( wsd->us_WSD->wsc_Mutex ) );
+						FRIEND_MUTEX_UNLOCK( &( wsd->us_WSD->wsc_Mutex ) );
 					}
 						
 					if( wsd->wsc_Buffer != NULL )
