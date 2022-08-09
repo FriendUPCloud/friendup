@@ -947,7 +947,7 @@ void *ParseAndCall( WSThreadData *wstd )
 							if( part > 0 && total > 0 && data > 0 && wstd->wstd_WSD->wsc_UserSession != NULL )
 							{
 								//DEBUG("[WS] Got chunked message: %d\n\n\n%.*s\n\n\n", t[ data ].end-t[ data ].start, t[ data ].end-t[ data ].start, (char *)(in + t[ data ].start) );
-								char *idc = StringDuplicateN( in + t[ id ].start,    (int)(t[ id ].end - t[ id ].start) );
+								char *idc = StringDuplicateN( in + t[ id ].start, (int)(t[ id ].end - t[ id ].start) );
 								part = StringNToInt( in + t[ part ].start,  (int)(t[ part ].end - t[ part ].start) );
 								total = StringNToInt( in + t[ total ].start, (int)(t[ total ].end - t[ total ].start) );
 								
