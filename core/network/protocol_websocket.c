@@ -498,26 +498,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 			pthread_mutex_destroy( &(wsd->wsc_Mutex) );
 		}
 		break;
-		/*
-		wsd->wsc_Status = WSC_STATUS_TO_BE_REMOVED;
-			
-			if( wsd->wsc_InUseCounter <= 0 )
-			{
-				DetachWebsocketFromSession( wsd, wsi );
 		
-				if( wsd->wsc_Buffer != NULL )
-				{
-					BufStringDelete( wsd->wsc_Buffer );
-					wsd->wsc_Buffer = NULL;
-				}
-		
-				pthread_mutex_destroy( &(wsd->wsc_Mutex) );
-		
-				Log( FLOG_DEBUG, "[WS] Callback LWS_CALLBACK_PROTOCOL_DESTROY\n");
-				
-				wsd->wsc_Wsi = NULL;
-				
-		*/
 	//case LWS_CALLBACK_GET_THREAD_ID:
 	//	return (uint64_t)pthread_self();
 		
