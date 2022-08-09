@@ -871,7 +871,7 @@ void *ParseAndCall( WSThreadData *wstd )
 			return NULL;
 		}
 	}
-	if( 1 == 1 ){ int a = 1; }
+	
 	t = FCalloc( 256, sizeof(jsmntok_t) );
 	jsmn_init( &p );
 	r = jsmn_parse( &p, in, len, t, 256 );
@@ -1152,6 +1152,7 @@ void *ParseAndCall( WSThreadData *wstd )
 						// simple PING
 						if( tsize > 0 && strncmp( "ping",  in + t[ 6 ].start, tsize ) == 0 && r > 8 )
 						{
+							if( 1 == 1 ){ int a = 1; }
 							wstd->wstd_Requestid = StringDuplicateN( (char *)(in + t[ 8 ].start), t[ 8 ].end-t[ 8 ].start );
 
 							if( locus != NULL )
