@@ -241,28 +241,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 
 	DEBUG("[WS] before switch\n");
 	
-	// After CLOSE and DESTROY just clean up and remove
-	if( wsd && wsd->wsc_Status == WSC_STATUS_TO_BE_REMOVED || wsd->wsc_Status == WSC_STATUS_DELETED )
-	{
-		if( wsd->wsc_InUseCounter <= 0 )
-		{
-			DetachWebsocketFromSession( wsd, wsi );
-	
-			if( wsd->wsc_Buffer != NULL )
-			{
-				BufStringDelete( wsd->wsc_Buffer );
-				wsd->wsc_Buffer = NULL;
-			}
-	
-			pthread_mutex_destroy( &(wsd->wsc_Mutex) );
-	
-			Log( FLOG_DEBUG, "[WS] Callback LWS_CALLBACK_PROTOCOL_DESTROY\n");
-			
-			wsd->wsc_Wsi = NULL;
-		}
-		return 0;
-	}
-	
 	
 	switch( reason )
 	{
@@ -283,7 +261,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 		    //DEBUG("[WS] Callback client closed!\n");
 		case LWS_CALLBACK_CLOSED:
 			{
-				if( wsd->wsc_Status != WSC_STATUS_TO_BE_REMOVED )
+				if( wsd->wsc_InUseCounter <= 0 && wsd->wsc_Status != WSC_STATUS_TO_BE_REMOVED )
 				{
 					DetachWebsocketFromSession( wsd, wsi );
 				
@@ -523,26 +501,28 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 		if( wsd != NULL )
 		{
 			wsd->wsc_Status = WSC_STATUS_DELETED;
+		}
+		break;
+		/*
+		wsd->wsc_Status = WSC_STATUS_TO_BE_REMOVED;
 			
-			if( wsd->wsc_InUseCounter <= 0 && wsd->wsc_Status != WSC_STATUS_TO_BE_REMOVED )
+			if( wsd->wsc_InUseCounter <= 0 )
 			{
 				DetachWebsocketFromSession( wsd, wsi );
-			
+		
 				if( wsd->wsc_Buffer != NULL )
 				{
 					BufStringDelete( wsd->wsc_Buffer );
 					wsd->wsc_Buffer = NULL;
 				}
-			
-				lws_close_reason( wsi, LWS_CLOSE_STATUS_GOINGAWAY, NULL, 0 );
-				
-				pthread_mutex_destroy( &(wsd->wsc_Mutex) );
-			
-				Log( FLOG_DEBUG, "[WS] Callback session closed\n");
-			}
-		}
-		break;
 		
+				pthread_mutex_destroy( &(wsd->wsc_Mutex) );
+		
+				Log( FLOG_DEBUG, "[WS] Callback LWS_CALLBACK_PROTOCOL_DESTROY\n");
+				
+				wsd->wsc_Wsi = NULL;
+				
+		*/
 	//case LWS_CALLBACK_GET_THREAD_ID:
 	//	return (uint64_t)pthread_self();
 		
