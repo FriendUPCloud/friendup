@@ -241,7 +241,7 @@ int WebsocketThread( FThread *data )
 
 	while( TRUE )
 	{
-		int n = lws_service( ws->ws_Context, -1 );
+		int n = lws_service( ws->ws_Context, 250 );
 		if( ws->ws_Quit == TRUE && ws->ws_NumberCalls <= 0 )
 		{
 			FINFO("WS Quit!\n");
@@ -258,7 +258,6 @@ int WebsocketThread( FThread *data )
 				cnt = 0;
 			}
 		}
-		usleep( 150 );
 	}
 	Log( FLOG_INFO, "[WS] Service stopped\n" );
 
