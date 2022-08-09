@@ -84,7 +84,7 @@ unsigned int BufStringAdd(BufString *bs, const char *string_to_append)
     return BufStringAddSize(bs, string_to_append, appendix_length);
 }
 
-unsigned int BufStringAddSize(BufString *bs, const char *string_to_append, unsigned int string_to_append_length)
+unsigned int BufStringAddSize( BufString *bs, const char *string_to_append, unsigned int string_to_append_length )
 {
 	if( bs == NULL || string_to_append == NULL || string_to_append_length < 1 )
 	{
@@ -92,7 +92,8 @@ unsigned int BufStringAddSize(BufString *bs, const char *string_to_append, unsig
 		return 1;
 	}
 
-	if ( (string_to_append_length + bs->bs_Size) >= bs->bs_Bufsize){ //not enough place in buffer - reallocate
+	if ( ( string_to_append_length + bs->bs_Size) >= bs->bs_Bufsize )
+	{ //not enough place in buffer - reallocate
 
 		unsigned int increment = string_to_append_length;
 
@@ -101,7 +102,8 @@ unsigned int BufStringAddSize(BufString *bs, const char *string_to_append, unsig
 		 * Speculatively increase buffer size beyond what is immediately necessary
 		 * to reduce total number of realloc calls.
 		 */
-		if (bs->previous_increment){
+		if( bs->previous_increment )
+		{
 			increment = bs->previous_increment + string_to_append_length;
 		}
 		//-------------------------------------------------
@@ -110,9 +112,9 @@ unsigned int BufStringAddSize(BufString *bs, const char *string_to_append, unsig
 
 		unsigned int new_size = bs->bs_Bufsize + increment + 1/*place for terminator*/;
 
-        char *tmp = FRealloc(bs->bs_Buffer, new_size); //TK-609
+        char *tmp = FRealloc( bs->bs_Buffer, new_size ); //TK-609
 
-        if (tmp) //realloc succedeed and moved the data
+        if( tmp ) //realloc succedeed and moved the data
         {
             bs->bs_Buffer = tmp;
             bs->bs_Bufsize = new_size;
