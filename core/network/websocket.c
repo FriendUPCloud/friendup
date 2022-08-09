@@ -258,7 +258,7 @@ int WebsocketThread( FThread *data )
 				cnt = 0;
 			}
 		}
-		usleep( 1 );
+		usleep( 150 );
 	}
 	Log( FLOG_INFO, "[WS] Service stopped\n" );
 

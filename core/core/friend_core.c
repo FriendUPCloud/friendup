@@ -1890,7 +1890,6 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	// All incoming network events go through here
 	while( !fc->fci_Shutdown )
 	{
-		usleep( 0 );
 #ifdef SINGLE_SHOT
 		epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_MOD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) );
 #endif
