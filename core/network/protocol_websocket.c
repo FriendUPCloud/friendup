@@ -262,21 +262,18 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 		    //DEBUG("[WS] Callback client closed!\n");
 		case LWS_CALLBACK_CLOSED:
 			{
+				wsd->wsc_Status = WSC_STATUS_TO_BE_REMOVED;
+				
 				//int tr = 8;
 				
 				while( TRUE )
 				{
 					usleep( 50 );
 					
-					if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) )
+					if( wsd->wsc_InUseCounter <= 0 )
 					{
-						if( wsd->wsc_InUseCounter <= 0 )
-						{
-							DEBUG("[WS] Callback closed!\n");
-							FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
-							break;
-						}
-						FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
+						DEBUG("[WS] Callback closed!\n");
+						break;
 					}
 					DEBUG("[WS] Closing WS, number: %d\n", wsd->wsc_InUseCounter );
 					
@@ -306,7 +303,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 				pthread_mutex_destroy( &(wsd->wsc_Mutex) );
 				
 				wsd->wsc_Wsi = NULL;
-				wsd->wsc_Status = WSC_STATUS_DELETED;
 			
 				Log( FLOG_DEBUG, "[WS] Callback session closed\n");
 				
