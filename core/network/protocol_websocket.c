@@ -265,24 +265,23 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 			{
 				UserSession *us = (UserSession *)wsd->wsc_UserSession;
 				
-				if( FRIEND_MUTEX_LOCK( &( ((WSCData *)us->us_WSD)->wsc_Mutex) ) == 0 )
+				if( us != NULL )
 				{
-					wsd->wsc_Status = WSC_STATUS_TO_BE_REMOVED;
-					
-					FRIEND_MUTEX_UNLOCK( &( ((WSCData *)us->us_WSD)->wsc_Mutex) );
+					if( FRIEND_MUTEX_LOCK( &( ((WSCData *)us->us_WSD)->wsc_Mutex) ) == 0 )
+					{
+						wsd->wsc_Status = WSC_STATUS_TO_BE_REMOVED;
+						
+						FRIEND_MUTEX_UNLOCK( &( ((WSCData *)us->us_WSD)->wsc_Mutex) );
+					}
+						
+					if( wsd->wsc_Buffer != NULL )
+					{
+						BufStringDelete( wsd->wsc_Buffer );
+						wsd->wsc_Buffer = NULL;
+					}
+					Log( FLOG_DEBUG, "[WS] Callback session closed\n");
 				}
-					
-				if( wsd->wsc_Buffer != NULL )
-				{
-					BufStringDelete( wsd->wsc_Buffer );
-					wsd->wsc_Buffer = NULL;
-				}
-				
-				lws_close_reason( wsi, LWS_CLOSE_STATUS_GOINGAWAY, NULL, 0 );
-				
-				Log( FLOG_DEBUG, "[WS] Callback session closed\n");
-				
-				
+							
 			}
 		break;
 		
