@@ -282,7 +282,9 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 						DEBUG("[WS] wsc_UserSession is equal to NULL\n");
 						break;
 					}
+					usleep( 5 );
 				}
+				
 				DetachWebsocketFromSession( wsd, wsi );
 			
 				if( wsd->wsc_Buffer != NULL )
@@ -337,7 +339,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 				else // only fragment was received
 				{
 					//DEBUG1("[WS] Only received: %s\n", (char *)tin );
-					BufStringAddSize( wsd->wsc_Buffer, tin, len );
+					//BufStringAddSize( wsd->wsc_Buffer, tin, len );
 					return 0;
 				}
 				
@@ -530,7 +532,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 					break;
 				}
 				DEBUG("[WS] Closing WS, number: %d\n", wsd->wsc_InUseCounter );
-				usleep( 50 );
+				usleep( 5 );
 			}
 			DetachWebsocketFromSession( wsd, wsi );
 	
