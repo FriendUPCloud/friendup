@@ -556,7 +556,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 							this.parentNode.checkActive( this.value );
 						}
 					}
-				},
+				},/*
 				{
 					element: 'button',
 					value: 'compact',
@@ -573,7 +573,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 							this.parentNode.checkActive( this.value );
 						}
 					}
-				},
+				},*/
 				{
 					element: 'button',
 					value: 'listview',
