@@ -2071,6 +2071,7 @@ function CloseView( win, delayed )
 				{
 					_DeactivateWindows();
 					showDashboard();
+					setTimeout( function(){ showDashboard(); }, 150 );
 				}
 				else
 				{
@@ -2099,6 +2100,7 @@ function CloseView( win, delayed )
 				{
 					_DeactivateWindows();
 					showDashboard();
+					setTimeout( function(){ showDashboard(); }, 150 );
 				}
 			}
 		}
