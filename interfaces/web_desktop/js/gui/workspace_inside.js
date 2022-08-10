@@ -10791,9 +10791,7 @@ function DoorsKeyDown( e )
 					}
 					input.onmousedown = function( e )
 					{
-						this.selectionEnd = 0;
-						this.selectionStart = 0;
-						return e.preventDefault();
+						return cancelBubble( e );
 					}
 					input.onmouseup = function( e )
 					{
