@@ -2908,6 +2908,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			r[ 'onmousedown' ] = function( e )
 			{
 				if( !e ) e = window.event ? window.event : {};
+				if( e.target && e.target.nodeName == 'TEXTAREA' ) return;
 			
 				window.touchElementTime = ( new Date() ).getTime();
 				
@@ -3510,6 +3511,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		file[ 'onmousedown' ] = function( e )
 		{
 			if( !e ) e = window.event ? window.event : {};
+			if( e.target && e.target.nodeName == 'TEXTAREA' ) return;
 	
 			if( isTouchDevice() )
 			{
