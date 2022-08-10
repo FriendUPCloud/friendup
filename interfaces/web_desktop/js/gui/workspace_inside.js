@@ -3764,7 +3764,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				clearTimeout( self.refreshPaths[ ppath ].timeout );
 				if( self.refreshPaths[ ppath ].finalTimeout )
 					clearTimeout( self.refreshPaths[ ppath ].finalTimeout );
-				self.refreshPaths[ ppath ].finalTimeout = null;;
+				self.refreshPaths[ ppath ].finalTimeout = null;
 			}
 			
 			// No time control yet? Set it up.
@@ -3782,6 +3782,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				// Setup a new callback for running after the refresh
 				let cbk = function()
 				{
+					// If window path changed, just return
+					if( path != w.fileInfo.Path )
+						return;
+					
 					if( !self.refreshPaths[ ppath ] )
 					{
 						if( w.directoryview )
@@ -3798,7 +3802,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							{
 								if( w.directoryview )
 									w.directoryview.toChange = true;
-								//else console.log( 'AAAAAAAARGH!', w );
 								w.refresh();
 								// Remove this one - now we are ready for the next call
 							}
@@ -3809,6 +3812,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					// Run the actual callback
 					if( callback ) callback();
 				};
+				// If window path changed, just return
+				if( path != w.fileInfo.Path )
+					return;
 				// Do the actual refresh
 				if( w.directoryview )
 					w.directoryview.toChange = true;
@@ -6099,7 +6105,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					
 					let copyStr = 'copy ' + source + ' to ' + destin + fn;
-					sh.parseScript( copyStr, function(){ delete sh; } );
+					sh.parseScript( copyStr, function(){ /* Nothing in here */ } );
 				}
 			} );
 		}
