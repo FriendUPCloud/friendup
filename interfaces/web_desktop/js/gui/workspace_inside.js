@@ -10793,6 +10793,8 @@ function DoorsKeyDown( e )
 					{
 						this.selectionEnd = 0;
 						this.selectionStart = 0;
+						this.click( e );
+						return cancelBubble( e );
 					}
 					input.onmouseup = function( e )
 					{
