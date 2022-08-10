@@ -4191,7 +4191,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	if( !ocallback ) ocallback = false;
 	
 	let fromFolder = false;
-	if( currentMovable.content && currentMovable.content.directoryview )
+	if( currentMovable && currentMovable.content && currentMovable.content.directoryview )
 		fromFolder = true;
 	
 	// Make a copy of fileinfo
