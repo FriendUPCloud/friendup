@@ -2162,10 +2162,13 @@ function CloseView( win, delayed )
 		console.log( 'Here: ', currentMovable );
 		if( !currentMovable || ( currentMovable && currentMovable.windowObject.getFlag.dockable && window.showDashboard ) )
 		{
-			_DeactivateWindows();
-			console.log( 'BLAH' );
-			showDashboard();
-			return;
+			if( window.showDashboard )
+			{
+				_DeactivateWindows();
+				console.log( 'BLAH' );
+				showDashboard();
+				return;
+			}
 		}
 		
 		if( app && isMobile && app.mainView && app.mainView != win.windowObject )
