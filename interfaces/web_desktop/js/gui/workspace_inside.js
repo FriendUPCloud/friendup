@@ -10791,6 +10791,7 @@ function DoorsKeyDown( e )
 					}
 					input.onmousedown = function( e )
 					{
+						console.log( e.target );
 						return e.stopPropagation();
 					}
 					input.onmouseup = function( e )
