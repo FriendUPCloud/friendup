@@ -2119,6 +2119,7 @@ function CloseView( win, delayed )
 			movableHighestZindex = 99;
 		}
 		
+		console.log( 'Here: ', currentMovable );
 		if( currentMovable && currentMovable.windowObject.getFlag.dockable && window.showDashboard )
 		{
 			showDashboard();
