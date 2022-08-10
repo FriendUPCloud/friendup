@@ -707,6 +707,8 @@ DirectoryView.prototype.initToolbar = function( winobj )
 									sizeBar = sizeGroove.querySelector( '.SizeBar' );
 									sizeText = sizeGroove.querySelector( '.SizeText' );
 								}
+								if( !o.Used ) o.Used = 0;
+								if( !o.Filesize ) o.Filesize = 0;
 								let pct = Math.floor( o.Used / o.Filesize * 100 );
 								sizeText.innerHTML = humanFilesize( o.Used ) + '/' + humanFilesize( o.Filesize ) + ' (' + pct + '%)';
 								sizeBar.style.width = pct + '%';
