@@ -2041,7 +2041,7 @@ function CloseView( win, delayed )
 			div.appendChild( ele );
 		}
 		
-		console.log( 'What?', win );
+		console.log( 'What?', win.windowObject.recentLocation );
 
 		// Activate latest activated view (not on mobile)
 		let nextActive = false;
