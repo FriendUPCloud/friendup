@@ -5460,125 +5460,154 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				Workspace.newDir = null;
 			}
 
-			if( window.isMobile )
+			//n.dosAction( 'info', { path: directoryWindow.content.fileInfo.Path
+			let n = new Door( directoryWindow.content.fileInfo.Path );
+			n.getIcons( directoryWindow.content.fileInfo, function( res )
 			{
-				d.setContent( '\
-				<div class="Dialog">\
-					<div class="VContentTop BackgroundDefault Padding ScrollArea">\
-						<div>\
-							<p><strong>' + i18n( 'i18n_name' ) + ':</strong></p>\
-						</div>\
-						<div class="Padding">\
-							<div class="HRow">\
-								<div class="HContent100 FloatLeft">\
-									<p class="Layout InputHeight"><input class="FullWidth MakeDirName" type="text" value="' + i18n( 'i18n_new_container' ) + '"/></p>\
-								</div>\
-							</div>\
-						</div>\
-					</div>\
-					<div class="VContentBottom BorderTop ColorToolbar BackgroundToolbar TextRight Padding" style="height: 50px">\
-						<button type="button" class="Button fa-remove IconSmall CancelButton">\
-							' + i18n( 'i18n_cancel' ) + '\
-						</button>\
-						<button type="button" class="Button fa-folder IconSmall NetContainerButton">\
-							' + i18n( 'i18n_create_container' ) + '\
-						</button>\
-					</div>\
-				</div>' );
-			}
-			else
-			{
-				d.setContent( '\
-				<div class="ContentFull">\
-					<div class="VContentTop BorderBottom" style="bottom: 50px;">\
-						<div class="Padding">\
-							<div class="HRow">\
-								<div class="HContent25 FloatLeft">\
-									<p class="Layout InputHeight"><strong>' + i18n( 'i18n_name' ) + ':</strong></p>\
-								</div>\
-								<div class="HContent75 FloatLeft">\
-									<p class="Layout InputHeight"><input class="FullWidth MakeDirName" type="text" value="' + i18n( 'i18n_new_container' ) + '"/></p>\
-								</div>\
-							</div>\
-						</div>\
-					</div>\
-					<div class="VContentBottom Padding" style="height: 50px">\
-						<button type="button" class="Button fa-folder IconSmall NetContainerButton">\
-							' + i18n( 'i18n_create_container' ) + '\
-						</button>\
-					</div>\
-				</div>' );
-			}
-
-			let inputField  = d.getByClass( 'MakeDirName' )[0];
-			let inputButton = d.getByClass( 'NetContainerButton' )[0];
-			let can = d.getByClass( 'CancelButton' )[0];
-			if( can ) can.onclick = function(){ d.close(); }
-
-			let fi = directoryWindow.content.fileInfo;
-			let dr;
-
-			if ( fi.Dormant && fi.Dormant.dosAction )
-				dr = fi.Dormant;
-			else
-				dr = fi.Door ? fi.Door : Workspace.getDoorByPath( fi.Path );
-			let i = fi.ID
-			let p = fi.Path;
-
-			inputButton.onclick = function()
-			{
-				if( inputField.value.length > 0 )
+				let candidate = i18n( 'i18n_new_container' );
+				if( !res )
+					return setCnt( candidate );
+				let test = candidate;
+				let found = false;
+				let num = 2;
+				do
 				{
-					// Make sure we have a correct path..
-					let ll = p.substr( p.length - 1, 1 );
-					if( ll != '/' && ll != ':' )
-						p += '/';
-
-					dr.dosAction( 'makedir', { path: p + inputField.value, id: i }, function()
+					found = false;
+					for( let a = 0; a < res.length; a++ )
 					{
-						if( directoryWindow && directoryWindow.content )
+						if( res[a].Type == 'Directory' && res[a].Filename == test )
 						{
-							let dw = directoryWindow;
-							if( !dw.activate )
-							{
-								if( dw.windowObject )
-									dw = dw.windowObject;
-							}
-							if( dw.activate )
-							{
-								dw.activate();
-								// Refresh now
-								if( directoryWindow.content )
-								{
-									if( directoryWindow.content.directoryview )
-										directoryWindow.content.directoryview.toChange = true;
-									directoryWindow.content.refresh();
-								}
-								else 
-								{
-									if( directoryWindow.directoryview )
-										directoryWindow.directoryview.toChange = true;
-									directoryWindow.refresh();
-								}
-							}
-							d.close();
+							test = candidate + ' ' + num++;
+							found = true;
+							break;
 						}
-					} );
+					}
+				}
+				while( found );
+				setCnt( test );
+			} );
+			function setCnt( fldName )
+			{
+				if( window.isMobile )
+				{
+					d.setContent( '\
+					<div class="Dialog">\
+						<div class="VContentTop BackgroundDefault Padding ScrollArea">\
+							<div>\
+								<p><strong>' + i18n( 'i18n_name' ) + ':</strong></p>\
+							</div>\
+							<div class="Padding">\
+								<div class="HRow">\
+									<div class="HContent100 FloatLeft">\
+										<p class="Layout InputHeight"><input class="FullWidth MakeDirName" type="text" value="' + fldName + '"/></p>\
+									</div>\
+								</div>\
+							</div>\
+						</div>\
+						<div class="VContentBottom BorderTop ColorToolbar BackgroundToolbar TextRight Padding" style="height: 50px">\
+							<button type="button" class="Button fa-remove IconSmall CancelButton">\
+								' + i18n( 'i18n_cancel' ) + '\
+							</button>\
+							<button type="button" class="Button fa-folder IconSmall NetContainerButton">\
+								' + i18n( 'i18n_create_container' ) + '\
+							</button>\
+						</div>\
+					</div>' );
 				}
 				else
 				{
-					inputField.focus();
+					d.setContent( '\
+					<div class="ContentFull">\
+						<div class="VContentTop BorderBottom" style="bottom: 50px;">\
+							<div class="Padding">\
+								<div class="HRow">\
+									<div class="HContent25 FloatLeft">\
+										<p class="Layout InputHeight"><strong>' + i18n( 'i18n_name' ) + ':</strong></p>\
+									</div>\
+									<div class="HContent75 FloatLeft">\
+										<p class="Layout InputHeight"><input class="FullWidth MakeDirName" type="text" value="' + fldName + '"/></p>\
+									</div>\
+								</div>\
+							</div>\
+						</div>\
+						<div class="VContentBottom Padding" style="height: 50px">\
+							<button type="button" class="Button fa-folder IconSmall NetContainerButton">\
+								' + i18n( 'i18n_create_container' ) + '\
+							</button>\
+						</div>\
+					</div>' );
 				}
-			}
 
-			inputField.onkeydown = function( e )
-			{
-				let w = e.which ? e.which : e.keyCode;
-				if ( w == 13 ) inputButton.onclick ();
-			}
+				let inputField  = d.getByClass( 'MakeDirName' )[0];
+				let inputButton = d.getByClass( 'NetContainerButton' )[0];
+				let can = d.getByClass( 'CancelButton' )[0];
+				if( can ) can.onclick = function(){ d.close(); }
 
-			inputField.focus();
-			inputField.select();
+				let fi = directoryWindow.content.fileInfo;
+				let dr;
+
+				if ( fi.Dormant && fi.Dormant.dosAction )
+					dr = fi.Dormant;
+				else
+					dr = fi.Door ? fi.Door : Workspace.getDoorByPath( fi.Path );
+				let i = fi.ID
+				let p = fi.Path;
+
+				inputButton.onclick = function()
+				{
+					if( inputField.value.length > 0 )
+					{
+						// Make sure we have a correct path..
+						let ll = p.substr( p.length - 1, 1 );
+						if( ll != '/' && ll != ':' )
+							p += '/';
+
+						dr.dosAction( 'makedir', { path: p + inputField.value, id: i }, function()
+						{
+							if( directoryWindow && directoryWindow.content )
+							{
+								let dw = directoryWindow;
+								if( !dw.activate )
+								{
+									if( dw.windowObject )
+										dw = dw.windowObject;
+								}
+								if( dw.activate )
+								{
+									dw.activate();
+									// Refresh now
+									if( directoryWindow.content )
+									{
+										if( directoryWindow.content.directoryview )
+											directoryWindow.content.directoryview.toChange = true;
+										directoryWindow.content.refresh();
+									}
+									else 
+									{
+										if( directoryWindow.directoryview )
+											directoryWindow.directoryview.toChange = true;
+										directoryWindow.refresh();
+									}
+								}
+								d.close();
+							}
+						} );
+					}
+					else
+					{
+						inputField.focus();
+					}
+				}
+
+				inputField.onkeydown = function( e )
+				{
+					let w = e.which ? e.which : e.keyCode;
+					if ( w == 13 ) inputButton.onclick ();
+				}
+
+				inputField.focus();
+				inputField.select();
+			}
 		}
 	},
 	// Rename active file
