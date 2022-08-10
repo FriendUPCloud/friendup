@@ -10791,7 +10791,7 @@ function DoorsKeyDown( e )
 					}
 					input.onmousedown = function( e )
 					{
-						return cancelBubble( e );
+						return e.stopPropagation();
 					}
 					input.onmouseup = function( e )
 					{
