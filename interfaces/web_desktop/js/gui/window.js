@@ -2069,6 +2069,7 @@ function CloseView( win, delayed )
 				}
 				else if( Workspace.recentLocation && Workspace.recentLocation == 'dashboard' )
 				{
+					console.log( 'Show dashboard 1' );
 					showDashboard();
 				}
 				else
@@ -2096,6 +2097,7 @@ function CloseView( win, delayed )
 			{
 				if( Workspace.recentLocation && Workspace.recentLocation == 'dashboard' )
 				{
+					console.log( 'Show dashboard 2' );
 					showDashboard();
 				}
 			}
