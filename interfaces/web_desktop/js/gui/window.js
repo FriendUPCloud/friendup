@@ -2150,7 +2150,7 @@ function CloseView( win, delayed )
 			}, 400 );
 		}
 		
-		if( Workspace.recentLication )
+		if( Workspace.recentLocation )
 		{
 			Workspace.recentLocation = null;
 			return;
