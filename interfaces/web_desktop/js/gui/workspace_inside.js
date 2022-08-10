@@ -10789,12 +10789,11 @@ function DoorsKeyDown( e )
 							}, 5 );
 						}
 					}
-					input.onclick = function( e )
+					input.onmousedown = function( e )
 					{
 						this.selectionEnd = 0;
 						this.selectionStart = 0;
-						this.click( e );
-						return cancelBubble( e );
+						return e.preventDefault();
 					}
 					input.onmouseup = function( e )
 					{
