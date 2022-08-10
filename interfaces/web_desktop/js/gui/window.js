@@ -2040,6 +2040,8 @@ function CloseView( win, delayed )
 			ele.style.zIndex = 7867878;
 			div.appendChild( ele );
 		}
+		
+		console.log( 'What?', win );
 
 		// Activate latest activated view (not on mobile)
 		let nextActive = false;
