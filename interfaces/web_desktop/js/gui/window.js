@@ -2118,6 +2118,12 @@ function CloseView( win, delayed )
 			movableWindowCount = 0;
 			movableHighestZindex = 99;
 		}
+		
+		if( !currentMovable && window.showDashboard )
+		{
+			showDashboard();
+		}
+		
 		// Check events
 		if( div.content && div.content.events )
 		{
