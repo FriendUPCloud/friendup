@@ -2162,6 +2162,8 @@ function CloseView( win, delayed )
 		console.log( 'Here: ', currentMovable );
 		if( !currentMovable || ( currentMovable && currentMovable.windowObject.getFlag.dockable && window.showDashboard ) )
 		{
+			_DeactivateWindows();
+			console.log( 'BLAH' );
 			showDashboard();
 			return;
 		}
