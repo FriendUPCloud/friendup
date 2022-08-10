@@ -10757,6 +10757,7 @@ function DoorsKeyDown( e )
 					// Aha, F2!
 					icons[a].domNode.classList.add( 'Editing' );
 					let input = document.createElement( 'textarea' );
+					input.resize = false;
 					input.className = 'Title';
 					icons[a].editField = input;
 					input.value = icons[a].Filename ? icons[a].Filename : icons[a].fileInfo.Filename;
