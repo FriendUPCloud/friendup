@@ -2041,6 +2041,8 @@ function CloseView( win, delayed )
 			div.appendChild( ele );
 		}
 
+		console.log( 'Closing windopw ' + Math.random() );
+
 		// Activate latest activated view (not on mobile)
 		let nextActive = false;
 		if( div.classList.contains( 'Active' ) || div.windowObject.getFlag( 'dialog' ) )
