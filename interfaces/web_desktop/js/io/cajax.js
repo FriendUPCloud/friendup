@@ -65,11 +65,18 @@ function AddToCajaxQueue( ele )
 			return false;
 		}
 	}
+	// Add ajax element to the bottom of the queue
+	let o = [];
+	for( let a = 0; a < Friend.cajax.length; a++ )
+		o.push( Friend.cajax[ a ] );
+	o.push( ele );
+	Friend.cajax = o;
+	/*
 	// Add ajax element to the top of the queue
 	let o = [ ele ];
 	for( let a = 0; a < Friend.cajax.length; a++ )
 		o.push( Friend.cajax[ a ] );
-	Friend.cajax = o;
+	Friend.cajax = o;*/
 }
 
 function RemoveFromCajaxQueue( ele )
