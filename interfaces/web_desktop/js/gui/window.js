@@ -2042,57 +2042,60 @@ function CloseView( win, delayed )
 		}
 		
 		console.log( 'What?', win.windowObject.recentLocation );
-
-		// Activate latest activated view (not on mobile)
-		let nextActive = false;
-		if( div.classList.contains( 'Active' ) || div.windowObject.getFlag( 'dialog' ) )
+		if( win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
 		{
-			if( Friend.GUI.view.viewHistory.length )
+			console.log( 'showing dash!' );
+			_DeactivateWindows();
+			showDashboard();
+			setTimeout( function(){ showDashboard(); }, 150 );
+		}
+		else
+		{
+
+			// Activate latest activated view (not on mobile)
+			let nextActive = false;
+			if( div.classList.contains( 'Active' ) || div.windowObject.getFlag( 'dialog' ) )
 			{
-				// Only activate last view in the same app
-				if( appId )
+				if( Friend.GUI.view.viewHistory.length )
 				{
-					for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
+					// Only activate last view in the same app
+					if( appId )
 					{
-						if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
+						for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 						{
-							// Only activate non minimized views
-							if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+							if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
 							{
-								let vh = Friend.GUI.view.viewHistory[ a ];
-								_ActivateWindow( vh );
-								if( vh.content && vh.content.refresh )
-									vh.content.refresh();
-								nextActive = true;
+								// Only activate non minimized views
+								if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+								{
+									let vh = Friend.GUI.view.viewHistory[ a ];
+									_ActivateWindow( vh );
+									if( vh.content && vh.content.refresh )
+										vh.content.refresh();
+									nextActive = true;
+								}
+								break;
 							}
-							break;
 						}
 					}
-				}
-				else if( win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
-				{
-					console.log( 'showing dash!' );
-					_DeactivateWindows();
-					showDashboard();
-					setTimeout( function(){ showDashboard(); }, 150 );
-				}
-				else
-				{
-					for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
+					else
 					{
-						if( Friend.GUI.view.viewHistory[ a ].windowObject.workspace == globalConfig.workspaceCurrent )
+						for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 						{
-							// Only activate non minimized views
-							if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+							if( Friend.GUI.view.viewHistory[ a ].windowObject.workspace == globalConfig.workspaceCurrent )
 							{
-								let vh = Friend.GUI.view.viewHistory[ a ];
-								currentMovable = vh;
-								_ActivateWindow( vh );
-								if( vh.content && vh.content.refresh )
-									vh.content.refresh();
-								nextActive = true;
+								// Only activate non minimized views
+								if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+								{
+									let vh = Friend.GUI.view.viewHistory[ a ];
+									currentMovable = vh;
+									_ActivateWindow( vh );
+									if( vh.content && vh.content.refresh )
+										vh.content.refresh();
+									nextActive = true;
+								}
+								break;
 							}
-							break;
 						}
 					}
 				}

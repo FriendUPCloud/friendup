@@ -4373,7 +4373,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		iconObject.extension.toLowerCase() == 'pdf' 
 	)
 	{
-		Friend.startImageViewer( iconObject, { parentView: currentMovable } );
+		Friend.startImageViewer( iconObject, { parentView: currentMovable, recent: fromFolder ? false : 'dashboard' } );
 	}
 	// Run scripts in new shell
 	else if( iconObject.extension == 'run' )
@@ -5306,6 +5306,10 @@ Friend.startImageViewer = function( iconObject, extra )
 		memorize         : true,
 		fullscreenenabled: true
 	} );
+	if( extra && extra.recent )
+	{
+		win.recentLocation = extra.recent;
+	}
 	
 	win.content.parentNode.parseQuickMenuMessage = function( msg )
     {
