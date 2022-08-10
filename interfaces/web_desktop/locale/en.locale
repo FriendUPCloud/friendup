@@ -34,7 +34,7 @@ i18n_bookmarks_remove                : Remove
 i18n_empty_view                      : Empty view
 i18n_no_bookmarks                    : You have no bookmarks.
 i18n_illegal_path                    : Illegal path
-i18n_illegal_fld_mountlist           : You can not make a new directory in the mountlist.
+i18n_illegal_fld_mountlist           : You can not make a new folder in the mountlist.
 i18n_desklets                        : Desklets
 i18n_software                        : Software
 i18n_sound                           : Sound
@@ -108,10 +108,10 @@ i18n_continue                           : Continue
 i18n_couldnotinstallapp                 : Could not install application.
 
 i18n_choose_file                        : Choose file
-i18n_new_container                      : New directory
-i18n_create_container                   : Make directory
+i18n_new_container                      : New folder
+i18n_create_container                   : Make folder
 i18n_name                               : Name
-i18n_make_a_new_container               : Make a new directory
+i18n_make_a_new_container               : Make a new folder
 i18n_error_could_not_list_directory     : Empty directory
 
 i18n_error                              : Error
@@ -510,8 +510,8 @@ i18n_stat_operation                     : File information
 i18n_could_not_stat_file                : Could not stat file.
 i18n_protect_operation                  : Protecting of file(s)
 i18n_could_not_protect_files            : Could not protect file(s).
-i18n_makedir_operation                  : New directory
-i18n_could_not_make_dir                 : Could not create new directory.
+i18n_makedir_operation                  : New folder
+i18n_could_not_make_dir                 : Could not create new folder.
 i18n_volume_information                 : Disk information
 i18n_volume_permissions                 : Disk permissions
 i18n_disk_full                          : The disk is full
