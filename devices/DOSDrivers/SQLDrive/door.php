@@ -459,9 +459,6 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						$fn = $f->Filename;
 						$f->DiskFilename = '';
 					}
-					
-					$Logger->log( '[SQLDRIVE] 1. Does our previous file exist?' . ( file_get_contents( $deletable ) ) . ' -> ' . $deletable );
-					
 				
 					// Sanitize!
 					if( strstr( $fn, '/' ) )
@@ -490,8 +487,6 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						}
 					}
 				
-					$Logger->log( '[SQLDRIVE] 2. Does our previous file exist?' . ( file_get_contents( $deletable ) ) . ' -> ' . $deletable );
-				
 					// If the file exists, check it, if not, make a new writable file
 					if( ( $f->ID > 0 && file_exists( $wname . $fn ) ) || true )
 					{
@@ -503,8 +498,6 @@ if( !class_exists( 'DoorSQLDrive' ) )
 								
 								if( $len > 0 )
 								{
-									$Logger->log( '[SQLDRIVE] 3. Does our previous file exist?' . ( file_get_contents( $deletable ) ) . ' -> ' . $deletable );
-								
 									//$Logger->log( '[SQLDrive] Ugly workaround to "fix" base64 support...' );
 									// TODO: UGLY WORKAROUND, FIX IT!
 									//       We need to support base64 streams
