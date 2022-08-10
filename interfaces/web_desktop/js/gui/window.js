@@ -2119,7 +2119,7 @@ function CloseView( win, delayed )
 			movableHighestZindex = 99;
 		}
 		
-		if( !currentMovable && window.showDashboard )
+		if( currentMovable && currentMovable.windowObject.getFlag.dockable && window.showDashboard )
 		{
 			showDashboard();
 		}
