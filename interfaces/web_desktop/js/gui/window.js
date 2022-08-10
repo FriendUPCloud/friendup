@@ -2092,6 +2092,13 @@ function CloseView( win, delayed )
 					}
 				}
 			}
+			else
+			{
+				if( Workspace.recentLocation && Workspace.recentLocation == 'dashboard' )
+				{
+					showDashboard();
+				}
+			}
 		}
 		
 		Workspace.recentLocation = null;
