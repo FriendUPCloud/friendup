@@ -2067,7 +2067,7 @@ function CloseView( win, delayed )
 						}
 					}
 				}
-				else if( Workspace.recentLocation && Workspace.recentLocation == 'dashboard' )
+				else if( win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
 				{
 					_DeactivateWindows();
 					showDashboard();
@@ -2126,9 +2126,7 @@ function CloseView( win, delayed )
 				}
 			}
 		}
-		
-		if( !Workspace.recentLocation )
-			PollTaskbar();
+		PollTaskbar();
 
 		// Remove link to current movable
 		if( win == window.currentMovable ) window.currentMovable = null;
@@ -2152,9 +2150,8 @@ function CloseView( win, delayed )
 			}, 400 );
 		}
 		
-		if( Workspace.recentLocation )
+		if( win.windowObject.recentLocation )
 		{
-			Workspace.recentLocation = null;
 			return;
 		}
 		

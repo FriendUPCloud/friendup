@@ -1928,6 +1928,8 @@ function apiWrapper( event, force )
 					}
 					
 					let v = new View( msg.data );
+					if( msg.applicationId )
+						v.recentLocation = window.Workspace && Workspace.dashboard ? 'dashboard' : '';
 					let win = msg.parentViewId && app.windows ? app.windows[ msg.parentViewId ] : false;
 					if( win )
 					{

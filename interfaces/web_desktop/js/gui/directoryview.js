@@ -4186,7 +4186,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 // unique     = wheather to use a unique view or not
 // targetView = the view to reuse
 //
-function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView, ocallback )
+function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView, ocallback, returnflags = false )
 {
 	if( !ocallback ) ocallback = false;
 	
@@ -4239,6 +4239,10 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			'id'        : wid,
 			'volume'    : wt.substr( wt.length - 1, 1 ) == ':' ? true : false
 		} );
+		if( returnflags )
+		{
+			returnflags.window = win;
+		}
 
 		if( fileInfo.Dormant && fileInfo.Dormant.addWindow )
 		{
@@ -4324,6 +4328,10 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			height   : 100,
 			memorize : true
 		} );
+		if( returnflags )
+		{
+			returnflags.window = win;
+		}
 		
 		let urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : '/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + encodeURIComponent( fileInfo.Path ) ); 
 		
@@ -4390,6 +4398,10 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			height   : 512,
 			memorize : true
 		} );
+		if( returnflags )
+		{
+			returnflags.window = win;
+		}
 
 		let num = ( Math.random() * 1000 ) + ( ( new Date() ).getTime() ) + ( Math.random() * 1000 );
 		let newWin = win;
@@ -4426,6 +4438,10 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 					width:  640,
 					height: 480
 				} );
+				if( returnflags )
+				{
+					returnflags.window = w;
+				}
 				w.setJSXContent( data, title );
 				if( ocallback ) ocallback();
 			}
@@ -4489,6 +4505,10 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			'volume'    : isVolume,
 			'clickableTitle': true
 		} );
+		if( returnflags && w )
+		{
+			returnflags.window = w;
+		}
 		
 		if( ocallback ) ocallback();
 
@@ -4953,6 +4973,10 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 						'memorize' : true,
 						'id'       : fileInfo.MetaType + '_' + fid
 					} );
+					if( returnflags )
+					{
+						returnflags.window = win;
+					}
 					/*console.log( '[9] you are here ... directoryview.js |||| ' + '<iframe style="background: #e0e0e0; position: absolute; top: 0; \
 						left: 0; width: 100%; height: 100%; border: 0" \
 						src="/system.library/file/read?sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&mode=rs"></iframe>' );*/
