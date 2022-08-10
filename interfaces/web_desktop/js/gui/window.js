@@ -2070,7 +2070,6 @@ function CloseView( win, delayed )
 				else if( Workspace.recentLocation && Workspace.recentLocation == 'dashboard' )
 				{
 					_DeactivateWindows();
-					currentMovable = null;
 					showDashboard();
 					setTimeout( function(){ showDashboard(); }, 150 );
 				}
@@ -2095,20 +2094,8 @@ function CloseView( win, delayed )
 					}
 				}
 			}
-			else
-			{
-				if( Workspace.recentLocation && Workspace.recentLocation == 'dashboard' )
-				{
-					_DeactivateWindows();
-					currentMovable = null;
-					showDashboard();
-					setTimeout( function(){ showDashboard(); }, 150 );
-				}
-			}
 		}
 		
-		Workspace.recentLocation = null;
-
 		if( div )
 		{
 			// Clean up ids
@@ -2161,6 +2148,12 @@ function CloseView( win, delayed )
 			{
 				document.body.removeAttribute( 'windowcount' );
 			}, 400 );
+		}
+		
+		if( Workspace.recentLication )
+		{
+			Workspace.recentLocation = null;
+			return;
 		}
 		
 		if( app && isMobile && app.mainView && app.mainView != win.windowObject )
