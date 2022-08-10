@@ -2069,7 +2069,6 @@ function CloseView( win, delayed )
 				}
 				else if( Workspace.recentLocation && Workspace.recentLocation == 'dashboard' )
 				{
-					console.log( 'Show dashboard 1' );
 					_DeactivateWindows();
 					showDashboard();
 				}
@@ -2098,7 +2097,6 @@ function CloseView( win, delayed )
 			{
 				if( Workspace.recentLocation && Workspace.recentLocation == 'dashboard' )
 				{
-					console.log( 'Show dashboard 2' );
 					_DeactivateWindows();
 					showDashboard();
 				}
