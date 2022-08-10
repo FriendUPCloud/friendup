@@ -2067,6 +2067,10 @@ function CloseView( win, delayed )
 						}
 					}
 				}
+				else if( Workspace.recentLocation && Workspace.recentLocation == 'dashboard' )
+				{
+					showDashboard();
+				}
 				else
 				{
 					for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
@@ -2089,6 +2093,8 @@ function CloseView( win, delayed )
 				}
 			}
 		}
+		
+		Workspace.recentLocation = null;
 
 		if( div )
 		{
