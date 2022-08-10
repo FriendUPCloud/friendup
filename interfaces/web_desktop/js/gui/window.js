@@ -2120,7 +2120,7 @@ function CloseView( win, delayed )
 		}
 		
 		console.log( 'Here: ', currentMovable );
-		if( currentMovable && currentMovable.windowObject.getFlag.dockable && window.showDashboard )
+		if( !currentMovable || ( currentMovable && currentMovable.windowObject.getFlag.dockable && window.showDashboard ) )
 		{
 			showDashboard();
 		}
