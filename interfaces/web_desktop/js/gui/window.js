@@ -2041,8 +2041,6 @@ function CloseView( win, delayed )
 			div.appendChild( ele );
 		}
 
-		console.log( 'Closing windopw ' + Math.random() );
-
 		// Activate latest activated view (not on mobile)
 		let nextActive = false;
 		if( div.classList.contains( 'Active' ) || div.windowObject.getFlag( 'dialog' ) )
@@ -2072,6 +2070,7 @@ function CloseView( win, delayed )
 				else if( Workspace.recentLocation && Workspace.recentLocation == 'dashboard' )
 				{
 					_DeactivateWindows();
+					currentMovable = null;
 					showDashboard();
 					setTimeout( function(){ showDashboard(); }, 150 );
 				}
@@ -2101,6 +2100,7 @@ function CloseView( win, delayed )
 				if( Workspace.recentLocation && Workspace.recentLocation == 'dashboard' )
 				{
 					_DeactivateWindows();
+					currentMovable = null;
 					showDashboard();
 					setTimeout( function(){ showDashboard(); }, 150 );
 				}
