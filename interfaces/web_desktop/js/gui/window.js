@@ -2067,10 +2067,6 @@ function CloseView( win, delayed )
 						}
 					}
 				}
-				else if( window.Workspace && Workspace.dashboard && window.showDashboard )
-				{
-					showDashboard();
-				}
 				else
 				{
 					for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
