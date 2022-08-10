@@ -60,18 +60,6 @@ Application.run = function( msg, iface )
 				if ( true === serverConfig.hasGroupsFeature )
 					refreshGroups( ge( 'groupSearcher' ).value );
 			}
-			
-			if ( null != serverConfig.friendTheme )
-			{
-				console.log( 'theres a friend theme' );
-				if ( 'jeanie' === serverConfig.friendTheme )
-				{
-					ge( 'MTabs' ).querySelectorAll( '.Tab' )[1]
-						.style = 'display: none';
-					ge( 'MTabs' ).querySelectorAll( '.Tab' )[2]
-						.style = 'display: none';
-				}
-			}
 		}
 	}
 	g.execute( 'sampleconfig' );
