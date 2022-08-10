@@ -2041,17 +2041,14 @@ function CloseView( win, delayed )
 			div.appendChild( ele );
 		}
 		
-		console.log( 'What?', win.windowObject.recentLocation );
 		if( win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
 		{
-			console.log( 'showing dash!' );
 			_DeactivateWindows();
 			showDashboard();
 			setTimeout( function(){ showDashboard(); }, 150 );
 		}
 		else
 		{
-
 			// Activate latest activated view (not on mobile)
 			let nextActive = false;
 			if( div.classList.contains( 'Active' ) || div.windowObject.getFlag( 'dialog' ) )
