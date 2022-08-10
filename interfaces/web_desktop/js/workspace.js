@@ -337,7 +337,7 @@ Workspace = {
 				Workspace.nudgeWorkspacesWidget();
 				Workspace.refreshExtraWidgetContents(); // < Screenbar icons
 			}
-			this.clockInterval = setInterval( clock, 1000 );
+			this.clockInterval = setInterval( clock, 30000 );
 		}
 
 		// Start the workspace session!
