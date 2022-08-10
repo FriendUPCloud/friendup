@@ -10789,7 +10789,7 @@ function DoorsKeyDown( e )
 							}, 5 );
 						}
 					}
-					input.onmousedown = function( e )
+					input.onclick = function( e )
 					{
 						this.selectionEnd = 0;
 						this.selectionStart = 0;
