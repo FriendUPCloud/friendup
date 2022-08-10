@@ -2119,12 +2119,6 @@ function CloseView( win, delayed )
 			movableHighestZindex = 99;
 		}
 		
-		console.log( 'Here: ', currentMovable );
-		if( !currentMovable || ( currentMovable && currentMovable.windowObject.getFlag.dockable && window.showDashboard ) )
-		{
-			showDashboard();
-		}
-		
 		// Check events
 		if( div.content && div.content.events )
 		{
@@ -2160,8 +2154,15 @@ function CloseView( win, delayed )
 			}, 400 );
 		}
 		
+		// Dashboard support
 		if( win.windowObject.recentLocation )
 		{
+			return;
+		}
+		console.log( 'Here: ', currentMovable );
+		if( !currentMovable || ( currentMovable && currentMovable.windowObject.getFlag.dockable && window.showDashboard ) )
+		{
+			showDashboard();
 			return;
 		}
 		
