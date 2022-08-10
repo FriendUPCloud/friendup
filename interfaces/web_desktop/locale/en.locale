@@ -371,7 +371,7 @@ i18n_swipe_down_to_close                : Swipe down to close
 
 menu_buildwebapp                        : Build web application
 menu_icons                              : File
-menu_new_directory                      : Make directory
+menu_new_directory                      : Make folder
 menu_new_weblink                        : Create web link
 menu_show_icon_information              : Properties
 menu_edit_filename                      : Rename file
