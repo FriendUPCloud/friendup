@@ -2126,7 +2126,9 @@ function CloseView( win, delayed )
 				}
 			}
 		}
-		PollTaskbar();
+		
+		if( !Workspace.recentLocation )
+			PollTaskbar();
 
 		// Remove link to current movable
 		if( win == window.currentMovable ) window.currentMovable = null;
