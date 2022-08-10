@@ -1156,15 +1156,18 @@ function _ActivateDialogWindow( div, e )
 {
 	if( !e ) e = window.event;
 	// TODO: Also for touch!
-	document.body.classList.add( 'Dialog' );
-	currentMovable = div;
-	if( e && e.button == 0 )
+	if( !div.windowObject.flags.dockable )
 	{
-		if( window.hideDashboard )
-		    window.hideDashboard();
+		document.body.classList.add( 'Dialog' );
+		currentMovable = div;
+		if( e && e.button == 0 )
+		{
+			if( window.hideDashboard )
+				window.hideDashboard();
+		}
+		if( window.Workspace && window.Workspace.showQuickMenu )
+			Workspace.showQuickMenu();
 	}
-	if( window.Workspace && window.Workspace.showQuickMenu )
-	    Workspace.showQuickMenu();
 }
 
 // "Private" function to activate a window
