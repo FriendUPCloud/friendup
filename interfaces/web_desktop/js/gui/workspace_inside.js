@@ -10898,28 +10898,6 @@ function DoorsKeyDown( e )
 					}
 					return;
 				}
-				if( currentMovable )
-				{
-					if( currentMovable.content )
-					{
-						if( currentMovable.content.windowObject )
-						{
-							// Not possible to send message?
-							if( !currentMovable.content.windowObject.sendMessage( { type: 'view', method: 'close' } ) )
-							{
-								CloseView( currentMovable );
-							}
-						}
-						else
-						{
-							CloseView( currentMovable );
-						}
-					}
-					else
-					{
-						CloseView( currentMovable );
-					}
-				}
 				break;
 			default:
 				//console.log( 'Clicked: ' + w );
