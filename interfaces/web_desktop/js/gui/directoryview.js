@@ -4193,7 +4193,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	let fromFolder = false;
 	if( currentMovable && currentMovable.content && currentMovable.content.directoryview )
 		fromFolder = true;
-	console.log( 'What: ', currentMovable );
+	console.log( 'What? from folder? ', fromFolder ? 'YES' : 'NO' );
 	
 	// Make a copy of fileinfo
 	let fileInfo = {};
