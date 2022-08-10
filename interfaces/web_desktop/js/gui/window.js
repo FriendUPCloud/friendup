@@ -2069,6 +2069,7 @@ function CloseView( win, delayed )
 				}
 				else if( win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
 				{
+					console.log( 'showing dash!' );
 					_DeactivateWindows();
 					showDashboard();
 					setTimeout( function(){ showDashboard(); }, 150 );
