@@ -309,34 +309,46 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 						}
 						if( sharedCheck.length )
 						{
-							let ch = new Library( 'system' );
-							ch.onExecuted = function( che, chd )
+							// No dashboard
+							if( !( window.Workspace && Workspace.dashboard ) )
 							{
-								if( che == 'ok' )
+								let ch = new Library( 'system' );
+								ch.onExecuted = function( che, chd )
 								{
-									try
+									if( che == 'ok' )
 									{
-										chd = JSON.parse( chd );
-										for( let z = 0; z < list.length; z++ )
+										try
 										{
-											for( let c = 0; c < chd.length; c++ )
+											chd = JSON.parse( chd );
+											for( let z = 0; z < list.length; z++ )
 											{
-												if( chd[c] == list[z].Path )
+												for( let c = 0; c < chd.length; c++ )
 												{
-													list[ z ].SharedFile = true;
-													break;
+													if( chd[c] == list[z].Path )
+													{
+														list[ z ].SharedFile = true;
+														break;
+													}
 												}
 											}
 										}
+										catch( e )
+										{
+										}
 									}
-									catch( e )
-									{
-									}
+									let pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
+									callback( list, t.fileInfo.Path, pth );
 								}
-								let pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
-								callback( list, t.fileInfo.Path, pth );
+								ch.execute( 'file/checksharedpaths', { paths: sharedCheck, path: deviceName } );
 							}
-							ch.execute( 'file/checksharedpaths', { paths: sharedCheck, path: deviceName } );
+							// In dashboard mode, we don't have shared file
+							else
+							{
+								for( let z = 0; z < list.length; z++ )
+								{
+									list[ z ].SharedFile = false;
+								}
+							}
 						}
 						else
 						{
