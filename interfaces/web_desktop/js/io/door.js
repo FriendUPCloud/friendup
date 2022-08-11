@@ -348,6 +348,8 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 								{
 									list[ z ].SharedFile = false;
 								}
+								let pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
+								callback( list, t.fileInfo.Path, pth );
 							}
 						}
 						else
