@@ -1654,6 +1654,7 @@ function apiWrapper( event, force )
 
 							// Receive a close request from below
 						case 'close':
+							console.log( 'view.close', [ msg, win ])
 							if( win )
 							{
 								let out = [];
