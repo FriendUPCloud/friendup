@@ -390,6 +390,8 @@ FriendWebSocket.prototype.handleOpen = function( e )
 
 FriendWebSocket.prototype.handleClose = function( e )
 {
+	if( self.pingCheck === 0 )
+		return;
 	console.log( 'Handling close.', e );
 	this.cleanup();
 	this.setState( 'close' );
@@ -398,6 +400,8 @@ FriendWebSocket.prototype.handleClose = function( e )
 // Handles error with reconnect
 FriendWebSocket.prototype.handleError = function( e )
 {
+	if( self.pingCheck === 0 )
+		return;
 	console.log( 'Handling error.' );
 	this.cleanup();
 	this.setState( 'error' );
