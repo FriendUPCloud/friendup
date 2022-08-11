@@ -674,126 +674,129 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						
 						char *decoded = UrlDecodeToMem( paths );
 						
-						// Get JSON structure
-						JSONData *j = JSONParse( decoded, strlen( decoded ) );
-					
-						if( j->type && ( j->type == JSON_TYPE_ARRAY || j->type == JSON_TYPE_ARRAY_LIST ) )
+						if( decoded != NULL )
 						{
-							// Build SQL query
-							BufString *sql = BufStringNew();
-							BufStringAdd( sql, "SELECT DISTINCT(`Data`) FROM FShared WHERE `Data` IN ( " );
-							
-							SQLLibrary *sqllib = l->LibrarySQLGet( l );
-							
-							int resultCount = 0;
-							BufString *result = BufStringNew();
-							
-							if( sqllib != NULL )
+							// Get JSON structure
+							JSONData *j = JSONParse( decoded, strlen( decoded ) );
+						
+							if( j->type && ( j->type == JSON_TYPE_ARRAY || j->type == JSON_TYPE_ARRAY_LIST ) )
 							{
-								JSONData **list = ( JSONData ** )j->data;
-								unsigned int i = 0; for( ; i < j->size; i++ )
+								// Build SQL query
+								BufString *sql = BufStringNew();
+								BufStringAdd( sql, "SELECT DISTINCT(`Data`) FROM FShared WHERE `Data` IN ( " );
+								
+								SQLLibrary *sqllib = l->LibrarySQLGet( l );
+								
+								int resultCount = 0;
+								BufString *result = BufStringNew();
+								
+								if( sqllib != NULL )
 								{
-									JSONData *dt = list[ i ];
-									if( dt != NULL )
+									JSONData **list = ( JSONData ** )j->data;
+									unsigned int i = 0; for( ; i < j->size; i++ )
 									{
-										if( dt->type == JSON_TYPE_STRING )
+										JSONData *dt = list[ i ];
+										if( dt != NULL )
 										{
-											BufStringAdd( sql, "\"" );
-											char *data = ( char *)dt->data;
-											
-											// TODO: Replace this with mysql_escape_string!
-											unsigned int test = 0; 
-											int failed = 0;
-											for( ; test < strlen( data ); test++ )
-											{
-												if( data[ test ] == ';' || data[ test ] == '\"' )
-												{
-													failed = 1;
-													break;
-												}
-											}
-											
-											if( data != NULL && failed == 0 )
-											{
-												BufStringAdd( sql, data );
-											}
-											// Done security test
-											
-											if( i < j->size - 1 )
-											{
-												BufStringAdd( sql, "\"," );
-											}
-											else
+											if( dt->type == JSON_TYPE_STRING )
 											{
 												BufStringAdd( sql, "\"" );
+												char *data = ( char *)dt->data;
+												
+												// TODO: Replace this with mysql_escape_string!
+												unsigned int test = 0; 
+												int failed = 0;
+												for( ; test < strlen( data ); test++ )
+												{
+													if( data[ test ] == ';' || data[ test ] == '\"' )
+													{
+														failed = 1;
+														break;
+													}
+												}
+												
+												if( data != NULL && failed == 0 )
+												{
+													BufStringAdd( sql, data );
+												}
+												// Done security test
+												
+												if( i < j->size - 1 )
+												{
+													BufStringAdd( sql, "\"," );
+												}
+												else
+												{
+													BufStringAdd( sql, "\"" );
+												}
 											}
 										}
 									}
-								}
-						
-								BufStringAdd( sql, " ) AND OwnerUserID=" );
 							
-								char num[ 32 ];
-								snprintf( num, sizeof(num), "%ld", (long int)loggedSession->us_UserID );
-								BufStringAdd( sql, num );
-						
-								// Create output "JSON"
-								BufStringAdd( result, "ok<!--separate-->[" );
-						
-								// Fetch the result
+									BufStringAdd( sql, " ) AND OwnerUserID=" );
+								
+									char num[ 32 ];
+									snprintf( num, sizeof(num), "%ld", (long int)loggedSession->us_UserID );
+									BufStringAdd( sql, num );
 							
-								void *res = sqllib->Query( sqllib, sql->bs_Buffer );
-								if( res != NULL )
-								{
-									char **row;
-									while( ( row = sqllib->FetchRow( sqllib, res ) ) )
+									// Create output "JSON"
+									BufStringAdd( result, "ok<!--separate-->[" );
+							
+									// Fetch the result
+								
+									void *res = sqllib->Query( sqllib, sql->bs_Buffer );
+									if( res != NULL )
 									{
-										if( row[ 0 ] != NULL )
+										char **row;
+										while( ( row = sqllib->FetchRow( sqllib, res ) ) )
 										{
-											if( resultCount > 0 )
+											if( row[ 0 ] != NULL )
 											{
-												BufStringAdd( result, ",\"" );
-											}
-											else
-											{
+												if( resultCount > 0 )
+												{
+													BufStringAdd( result, ",\"" );
+												}
+												else
+												{
+													BufStringAdd( result, "\"" );
+												}
+												BufStringAdd( result, row[ 0 ] );
 												BufStringAdd( result, "\"" );
+												resultCount++;
 											}
-											BufStringAdd( result, row[ 0 ] );
-											BufStringAdd( result, "\"" );
-											resultCount++;
 										}
+										sqllib->FreeResult( sqllib, res );
 									}
-									sqllib->FreeResult( sqllib, res );
+									l->LibrarySQLDrop( l, sqllib );
 								}
-								l->LibrarySQLDrop( l, sqllib );
-							}
-							BufStringAdd( result, "]" );
-							
-							BufStringDelete( sql );
-							
-							if( resultCount > 0 )
-							{
-								HttpAddTextContent( response, result->bs_Buffer );
+								BufStringAdd( result, "]" );
+								
+								BufStringDelete( sql );
+								
+								if( resultCount > 0 )
+								{
+									HttpAddTextContent( response, result->bs_Buffer );
+								}
+								else
+								{
+									// TODO: Add error code
+									char dictmsgbuf[ 256 ];
+									snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"No shared files in directory\",\"instance\":\"1\",\"code\":\"-1\"}" );
+									HttpAddTextContent( response, dictmsgbuf );
+								}
+								BufStringDelete( result );
 							}
 							else
 							{
 								// TODO: Add error code
 								char dictmsgbuf[ 256 ];
-								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"No shared files in directory\",\"instance\":\"1\",\"code\":\"-1\"}" );
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"Paths not given in array format\",\"instance\":\"2\",\"code\":\"-1\"}" );
 								HttpAddTextContent( response, dictmsgbuf );
 							}
-							BufStringDelete( result );
+						
+							JSONFree( j );
+							free( decoded );
 						}
-						else
-						{
-							// TODO: Add error code
-							char dictmsgbuf[ 256 ];
-							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"Paths not given in array format\",\"instance\":\"2\",\"code\":\"-1\"}" );
-							HttpAddTextContent( response, dictmsgbuf );
-						}
-					
-						JSONFree( j );
-						free( decoded );
 					}
 					// Fail
 					else
