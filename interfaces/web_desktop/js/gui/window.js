@@ -1893,7 +1893,6 @@ function HasClassname( div, classname )
 // Could one day be moved to the View class...
 function CloseView( win, delayed )
 {
-	console.log( 'CloseView', [ win, delayed ])
 	if( !win && window.currentMovable )
 		win = window.currentMovable;
 		
@@ -5044,14 +5043,6 @@ var View = function( args )
 	// Close a view window
 	this.close = function ( force )
 	{
-		console.log( 'window.close', {
-			force    : force,
-			isMobile : isMobile,
-			'this'   : this,
-			'_window': this._window,
-			blocker  : this._window?.blocker,
-			onClose  : this.onClose,
-		})
 		if( isMobile )
 			Workspace.exitMobileMenu();
 		
