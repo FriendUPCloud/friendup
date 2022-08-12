@@ -967,6 +967,7 @@ function SetScreenByWindowElement( div )
 // Just like _ActivateWindow, only without doing anything but activating
 function _ActivateWindowOnly( div, e )
 {
+	console.log( '[test] Activating' );
     if( div.windowObject && div.windowObject.getFlag( 'invisible' ) == true ) return;
 	if( Workspace.contextMenuShowing && Workspace.contextMenuShowing.shown )
 	{
@@ -977,7 +978,7 @@ function _ActivateWindowOnly( div, e )
 	if( !isMobile && div.content && div.content.blocker )
 	{
 		_ActivateWindow( div.content.blocker.getWindowElement().parentNode, false );
-		console.log( 'Lopsjucf' );
+		console.log( '[test] Lopsjucf' );
 		return;
 	}
 	
@@ -989,7 +990,7 @@ function _ActivateWindowOnly( div, e )
     	) 
     )
     {
-    	console.log( 'Foppafop' );
+    	console.log( '[test] Foppafop' );
     	return _ActivateDialogWindow( div, e );
 	}
 	
@@ -1164,7 +1165,7 @@ function _ActivateDialogWindow( div, e )
 		currentMovable = div;
 		if( e && e.button == 0 )
 		{
-			if( !div.windowObject.applicationId && !div.classList.contains( 'IconWindow' ) )
+			if( !div.windowObject.applicationId || div.classList.contains( 'IconWindow' ) )
 			{
 				_DeactivateWindows();
 				currentMovable = div;
@@ -2096,7 +2097,6 @@ function CloseView( win, delayed )
 								// Only activate non minimized views
 								if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 								{
-									console.log( 'Foppafopp' );
 									let vh = Friend.GUI.view.viewHistory[ a ];
 									currentMovable = vh;
 									_ActivateWindow( vh );
