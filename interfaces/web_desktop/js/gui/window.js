@@ -2094,7 +2094,6 @@ function CloseView( win, delayed )
 					// Only activate last view in the same app
 					if( appId )
 					{
-						console.log( 'Foppapsps' );
 						for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 						{
 							if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )

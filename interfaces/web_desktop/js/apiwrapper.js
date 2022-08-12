@@ -4058,6 +4058,8 @@ function apiWrapper( event, force )
 							}
 						};
 						var d = new Filedialog( flags );
+						if( app )
+							d.applicationId = msg.applicationId;
 						break;
 					case 'opencamera':
 						var win = app.windows ? app.windows[ msg.viewId ] : false;
