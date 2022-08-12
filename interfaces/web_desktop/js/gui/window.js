@@ -1662,6 +1662,7 @@ function _removeMobileCloseButtons()
 
 function _DeactivateWindows( flags = false )
 {
+	console.trace();
 	clearRegionIcons();
 	let windowsDeactivated = 0;
 	window.currentMovable = null;
