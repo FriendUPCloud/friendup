@@ -2019,8 +2019,6 @@ function CloseView( win, delayed )
 		if( app && div == app.displayedView )
 			app.displayedView = null;
 
-		console.log( '[test] app id ' + appId );
-
 		if( !isGroupMember && div.parentNode )
 		{
 			// Immediately kill child views for mobile!
@@ -2084,22 +2082,18 @@ function CloseView( win, delayed )
 			_DeactivateWindows();
 			showDashboard();
 			setTimeout( function(){ showDashboard(); }, 150 );
-			console.log( 'Comes fro dash' );
 		}
 		else
 		{
 			// Activate latest activated view (not on mobile)
 			let nextActive = false;
-			console.log( '[test] foppa' );
 			if( div.classList.contains( 'Active' ) || div.windowObject.getFlag( 'dialog' ) )
 			{
-				console.log( '[test] FISKE' + appId );
 				if( Friend.GUI.view.viewHistory.length )
 				{
 					// Only activate last view in the same app
 					if( appId )
 					{
-						console.log( '[test] CHECKING windows in history' );
 						for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 						{
 							if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
