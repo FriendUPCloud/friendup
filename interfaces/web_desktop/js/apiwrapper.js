@@ -3489,6 +3489,8 @@ function apiWrapper( event, force )
 					case 'alert':
 						let alerv = Alert( msg.title, msg.string );
 						app.windows[ alerv.viewId ] = alerv;
+						if( app )
+							alrtv.applicationId = msg.applicationId;
 						break;
 					case 'confirm':
 						var nmsg = {};
@@ -3523,6 +3525,8 @@ function apiWrapper( event, force )
 						);
 						app.windows[ confv.viewId ] = confv;
 						msg.callback = false;
+						if( app )
+							confv.applicationId = msg.applicationId;
 						break;
 
 					case 'reload_user_settings':
