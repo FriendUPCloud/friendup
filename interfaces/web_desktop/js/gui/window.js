@@ -1171,7 +1171,7 @@ function _ActivateDialogWindow( div, e )
 						exceptions.push( movableWindows[ a ] );
 				}
 				console.log( 'Got exceptions?', exceptions );
-				_DeactivateWindows( exceptions.length ? exceptions : false );
+				_DeactivateWindows( exceptions.length ? { exceptions: exceptions } : false );
 				currentMovable = div;
 			}
 			if( window.hideDashboard )
