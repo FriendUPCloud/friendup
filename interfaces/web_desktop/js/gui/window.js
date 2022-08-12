@@ -2052,13 +2052,13 @@ function CloseView( win, delayed )
 		
 		if( win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
 		{
-			console.log( 'Boba' );
 			_DeactivateWindows();
 			showDashboard();
 			setTimeout( function(){ showDashboard(); }, 150 );
 		}
 		else
 		{
+			console.log( 'Boba' );
 			// Activate latest activated view (not on mobile)
 			let nextActive = false;
 			if( div.classList.contains( 'Active' ) || div.windowObject.getFlag( 'dialog' ) )
