@@ -2007,6 +2007,7 @@ function CloseView( win, delayed )
 		}
 		
 		let appId = win.windowObject ? win.windowObject.applicationId : false;
+		console.log( '[test] DO WE HAVE APP ID: ' + appId );
 
 		// Clear reference
 		if ( window.regionWindow == div.content )
