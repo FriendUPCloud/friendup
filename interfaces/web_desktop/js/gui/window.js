@@ -1170,6 +1170,7 @@ function _ActivateDialogWindow( div, e )
 					if( movableWindows[ a ].classList.contains( 'Active' ) )
 						exceptions.push( movableWindows[ a ] );
 				}
+				console.log( 'Got exceptions?', exceptions );
 				_DeactivateWindows( exceptions.length ? exceptions : false );
 				currentMovable = div;
 			}
