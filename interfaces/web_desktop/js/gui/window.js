@@ -2007,7 +2007,6 @@ function CloseView( win, delayed )
 		}
 		
 		let appId = win.windowObject ? win.windowObject.applicationId : false;
-		console.log( '[test] DO WE HAVE APP ID: ' + appId );
 
 		// Clear reference
 		if ( window.regionWindow == div.content )
@@ -2095,6 +2094,7 @@ function CloseView( win, delayed )
 					// Only activate last view in the same app
 					if( appId )
 					{
+						console.log( '[test] CHECKING windows in history' );
 						for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 						{
 							if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
