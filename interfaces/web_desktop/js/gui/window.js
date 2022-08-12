@@ -2081,6 +2081,7 @@ function CloseView( win, delayed )
 		{
 			_DeactivateWindows();
 			showDashboard();
+			console.log( '[test] We are in recent' );
 			setTimeout( function(){ showDashboard(); }, 150 );
 		}
 		else
