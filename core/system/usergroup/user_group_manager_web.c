@@ -1873,8 +1873,6 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				{
 					if( strncmp( data, "ok", 2 ) == 0 )
 					{
-						
-						
 						char tmp[ 1024 ];
 						int tmpsize = 0;
 						BufString *retString = BufStringNew();
