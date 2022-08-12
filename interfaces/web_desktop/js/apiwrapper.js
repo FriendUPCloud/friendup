@@ -3489,7 +3489,7 @@ function apiWrapper( event, force )
 					case 'alert':
 						let alerv = Alert( msg.title, msg.string );
 						app.windows[ alerv.viewId ] = alerv;
-						if( app )
+						if( msg.applicationId )
 							alrtv.applicationId = msg.applicationId;
 						break;
 					case 'confirm':
@@ -3525,7 +3525,7 @@ function apiWrapper( event, force )
 						);
 						app.windows[ confv.viewId ] = confv;
 						msg.callback = false;
-						if( app )
+						if( msg.applicationId )
 							confv.applicationId = msg.applicationId;
 						break;
 
@@ -4062,7 +4062,7 @@ function apiWrapper( event, force )
 							}
 						};
 						var d = new Filedialog( flags );
-						if( app )
+						if( msg.applicationId )
 							d.applicationId = msg.applicationId;
 						break;
 					case 'opencamera':
