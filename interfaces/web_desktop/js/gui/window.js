@@ -2019,6 +2019,8 @@ function CloseView( win, delayed )
 		if( app && div == app.displayedView )
 			app.displayedView = null;
 
+		console.log( '[test] app id ' + appId );
+
 		if( !isGroupMember && div.parentNode )
 		{
 			// Immediately kill child views for mobile!
