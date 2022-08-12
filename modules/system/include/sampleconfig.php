@@ -25,7 +25,7 @@ if ( $jiniTheme )
 	$object->friendTheme = $configfilesettings[ 'FriendCore' ][ 'friendTheme' ];
 
 // Service initmodules to workspace
-if( isset( $configfilesettings[ 'Security' ] ) && $configfilesettings[ 'Security' ][ 'Initmodules' ] )
+if( isset( $configfilesettings[ 'Security' ] ) && isset( $configfilesettings[ 'Security' ][ 'Initmodules' ] ) )
 {
 	$initmodules = explode( ',', $configfilesettings[ 'Security' ][ 'Initmodules' ] );
 	if( count( $initmodules ) > 0 )
