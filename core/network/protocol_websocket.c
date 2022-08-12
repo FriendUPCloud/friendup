@@ -505,6 +505,13 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 		if( wsd != NULL )
 		{
 			wsd->wsc_Status = WSC_STATUS_DELETED;
+			
+			if( wsd->wsc_Buffer != NULL )
+			{
+				BufStringDelete( wsd->wsc_Buffer );
+				wsd->wsc_Buffer = NULL;
+			}
+			
 			pthread_mutex_destroy( &(wsd->wsc_Mutex) );
 		}
 		break;
