@@ -2096,6 +2096,7 @@ function CloseView( win, delayed )
 								// Only activate non minimized views
 								if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 								{
+									console.log( 'Foppafopp' );
 									let vh = Friend.GUI.view.viewHistory[ a ];
 									currentMovable = vh;
 									_ActivateWindow( vh );
