@@ -789,7 +789,7 @@ void *ParseAndCall( WSThreadData *wstd )
 	jsmn_parser p;
 	jsmntok_t *t;
 	
-	if( wstd == NULL )
+	if( wstd == NULL || wstd->wstd_WSD->wsc_Status == WSC_STATUS_TO_BE_REMOVED )
 	{
 		return NULL;
 	}
