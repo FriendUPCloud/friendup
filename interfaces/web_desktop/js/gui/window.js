@@ -1175,8 +1175,13 @@ function _ActivateDialogWindow( div, e )
 				_DeactivateWindows( exceptions.length ? { exceptions: exceptions } : false );
 				currentMovable = div;
 			}
+			console.log( '[Test] Can we' );
 			if( window.hideDashboard )
 				window.hideDashboard();
+		}
+		else
+		{
+			console.log( '[tesþ] We can not' );
 		}
 		if( window.Workspace && window.Workspace.showQuickMenu )
 			Workspace.showQuickMenu();
