@@ -967,7 +967,6 @@ function SetScreenByWindowElement( div )
 // Just like _ActivateWindow, only without doing anything but activating
 function _ActivateWindowOnly( div, e )
 {
-	console.log( '[test] Activating' );
     if( div.windowObject && div.windowObject.getFlag( 'invisible' ) == true ) return;
 	if( Workspace.contextMenuShowing && Workspace.contextMenuShowing.shown )
 	{
@@ -978,7 +977,6 @@ function _ActivateWindowOnly( div, e )
 	if( !isMobile && div.content && div.content.blocker )
 	{
 		_ActivateWindow( div.content.blocker.getWindowElement().parentNode, false );
-		console.log( 'Lopsjucf' );
 		return;
 	}
 	
@@ -987,10 +985,9 @@ function _ActivateWindowOnly( div, e )
     	window.Workspace && Workspace.dashboard && div.windowObject && (
     		div.windowObject.flags[ 'dialog' ] ||
     		div.windowObject.flags[ 'standard-dialog' ]
-    	) && !div.classList.contains( 'IconWindow' )
+    	) 
     )
     {
-    	console.log( '[test] Foppafop' );
     	return _ActivateDialogWindow( div, e );
 	}
 	
@@ -1167,7 +1164,13 @@ function _ActivateDialogWindow( div, e )
 		{
 			if( !div.windowObject.applicationId && !div.classList.contains( 'IconWindow' ) )
 			{
-				_DeactivateWindows();
+				let exceptions = [];
+				for( let a in movableWindows )
+				{
+					if( movableWindows[ a ].classList.contains( 'Active' ) )
+						exceptions.push( movableWindows[ a ] );
+				}
+				_DeactivateWindows( exceptions.length ? exceptions : false );
 				currentMovable = div;
 			}
 			if( window.hideDashboard )
@@ -1539,7 +1542,7 @@ function _removeWindowTiles( div )
 function _DeactivateWindow( m, skipCleanUp )
 {
 	let ret = false;
-	console.trace();
+	
 	if( m.className && m.classList.contains( 'Active' ) )
 	{
 		m.classList.remove( 'Active' );
@@ -2063,9 +2066,8 @@ function CloseView( win, delayed )
 		{
 			// Activate latest activated view (not on mobile)
 			let nextActive = false;
-			if( div.classList.contains( 'Active' ) || div.windowObject.flags.dialog )
+			if( div.classList.contains( 'Active' ) || div.windowObject.getFlag( 'dialog' ) )
 			{
-				console.log( '[test] Loba' );
 				if( Friend.GUI.view.viewHistory.length )
 				{
 					// Only activate last view in the same app
