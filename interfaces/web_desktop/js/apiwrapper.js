@@ -4036,6 +4036,7 @@ function apiWrapper( event, force )
 						break;
 					// File dialogs --------------------------------------------
 					case 'filedialog':
+						console.log( '[test] Filedialog', msg );
 						var win = app.windows ? app.windows[ msg.viewId ] : false;
 						var tar = win ? app.windows[msg.targetViewId] : false; // Target for postmessage
 						// No targetview id? Then just use the parent view
