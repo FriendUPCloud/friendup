@@ -977,6 +977,7 @@ function _ActivateWindowOnly( div, e )
 	if( !isMobile && div.content && div.content.blocker )
 	{
 		_ActivateWindow( div.content.blocker.getWindowElement().parentNode, false );
+		console.log( 'Lopsjucf' );
 		return;
 	}
 	
@@ -988,6 +989,7 @@ function _ActivateWindowOnly( div, e )
     	) 
     )
     {
+    	console.log( 'Foppafop' );
     	return _ActivateDialogWindow( div, e );
 	}
 	
@@ -2058,11 +2060,11 @@ function CloseView( win, delayed )
 		}
 		else
 		{
-			console.log( 'Boba' );
 			// Activate latest activated view (not on mobile)
 			let nextActive = false;
-			if( div.classList.contains( 'Active' ) || div.windowObject.getFlag( 'dialog' ) )
+			if( div.classList.contains( 'Active' ) || div.windowObject.flags.dialog )
 			{
+				console.log( 'Loba' );
 				if( Friend.GUI.view.viewHistory.length )
 				{
 					// Only activate last view in the same app
