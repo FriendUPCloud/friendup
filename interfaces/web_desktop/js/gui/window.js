@@ -978,7 +978,7 @@ function _ActivateWindowOnly( div, e )
 	if( !isMobile && div.content && div.content.blocker )
 	{
 		_ActivateWindow( div.content.blocker.getWindowElement().parentNode, false );
-		console.log( '[test] Lopsjucf' );
+		console.log( 'Lopsjucf' );
 		return;
 	}
 	
@@ -987,7 +987,7 @@ function _ActivateWindowOnly( div, e )
     	window.Workspace && Workspace.dashboard && div.windowObject && (
     		div.windowObject.flags[ 'dialog' ] ||
     		div.windowObject.flags[ 'standard-dialog' ]
-    	) 
+    	) && !div.classList.contains( 'IconWindow' )
     )
     {
     	console.log( '[test] Foppafop' );
@@ -1165,7 +1165,7 @@ function _ActivateDialogWindow( div, e )
 		currentMovable = div;
 		if( e && e.button == 0 )
 		{
-			if( !div.windowObject.applicationId || div.classList.contains( 'IconWindow' ) )
+			if( !div.windowObject.applicationId && !div.classList.contains( 'IconWindow' ) )
 			{
 				_DeactivateWindows();
 				currentMovable = div;
