@@ -1917,7 +1917,9 @@ function CloseView( win, delayed )
 			win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
 		}
 		
-		if( win.parentNode.classList.contains( 'Dialog' ) || win.parentNode.parentNode.classList.contains( 'Dialog' ) || win.parentNode.classList.contains( 'FileDialog' ) )
+		if( win.parentNode.classList.contains( 'Dialog' ) || 
+			win.parentNode.parentNode.classList.contains( 'Dialog' ) ||
+			win.parentNode.parentNode.classList.contains( 'FileDialog' ) )
 		{
 			let qm = null;
 			if( ( qm = win.parentNode.querySelector( '.QuickMenu' ) ) )
@@ -3345,7 +3347,7 @@ var View = function( args )
 			// Update information in the window storage object
 			let d = GetWindowStorage( this.uniqueId );
 			
-		CloseView	if( !div.getAttribute( 'maximized' ) )
+			if( !div.getAttribute( 'maximized' ) )
 			{
 				d.top = this.offsetTop;
 				d.left = this.offsetLeft;
