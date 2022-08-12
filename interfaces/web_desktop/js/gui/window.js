@@ -1164,13 +1164,14 @@ function _ActivateDialogWindow( div, e )
 		{
 			if( !div.windowObject.applicationId && !div.classList.contains( 'IconWindow' ) )
 			{
+				// If we have active windows that already shows, don't deactivate them for the dialog
+				// TODO: Exception is for file views - but not file dialogs
 				let exceptions = [];
 				for( let a in movableWindows )
 				{
 					if( movableWindows[ a ].classList.contains( 'Active' ) )
 						exceptions.push( movableWindows[ a ] );
 				}
-				console.log( 'Got exceptions?', exceptions );
 				_DeactivateWindows( exceptions.length ? { exceptions: exceptions } : false );
 				currentMovable = div;
 			}
