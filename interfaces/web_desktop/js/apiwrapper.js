@@ -4053,6 +4053,7 @@ function apiWrapper( event, force )
 							multiSelect:        msg.multiSelect,
 							keyboardNavigation: msg.keyboardNavigation,
 							rememberPath:       msg.rememberPath,
+							applicationId:      msg.applicationId,
 							triggerFunction: function( data )
 							{
 								var nmsg = msg;
@@ -4063,8 +4064,6 @@ function apiWrapper( event, force )
 							}
 						};
 						var d = new Filedialog( flags );
-						if( msg.applicationId )
-							d.applicationId = msg.applicationId;
 						break;
 					case 'opencamera':
 						var win = app.windows ? app.windows[ msg.viewId ] : false;

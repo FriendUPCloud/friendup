@@ -21,6 +21,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	let keyboardNavigation = false;
 	let ignoreFiles = false;
 	let rememberPath = false;
+	let applicationId = false;
 	
 	// Sanitize paths
 	let lastChar;
@@ -166,6 +167,10 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 					case 'rememberPath':
 						rememberPath = object[a] ? true : false;
 						break;
+					case 'applicationId':
+						applicationId = object[a];
+						break;
+						
 				}
 			}
 		}
@@ -247,6 +252,8 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		}
 
 		let w = new View( fl );
+		if( applicationId )
+			w.applicationId = applicationId;
 		w.setMenuItems( {} );
 
 		self.dialogWindow = w;
