@@ -2138,8 +2138,6 @@ function CloseView( win, delayed )
 			}
 		}
 		PollTaskbar();
-		if( window.pollLiveViews )
-			pollLiveViews();
 
 		// Remove link to current movable
 		if( win == window.currentMovable ) window.currentMovable = null;
@@ -2175,6 +2173,8 @@ function CloseView( win, delayed )
 			{
 				_DeactivateWindows();
 				showDashboard();
+				if( window.pollLiveViews )
+					pollLiveViews();
 				return;
 			}
 		}
@@ -2219,6 +2219,13 @@ function CloseView( win, delayed )
 	    // If we have a dashboard
 		if( window.showDashboard )
 		    showDashboard();
+		if( window.pollLiveViews )
+			pollLiveViews();
+	}
+	else
+	{
+		if( window.pollLiveViews )
+			pollLiveViews();
 	}
 }
 // Obsolete!!!
