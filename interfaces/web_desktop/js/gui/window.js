@@ -1683,7 +1683,21 @@ function _DeactivateWindows( flags = false )
 		let m = movableWindows[a];
 		if( m.classList.contains( 'Active' ) )
 		{
-			windowsDeactivated += _DeactivateWindow( m, true );
+			// Check exceptions to deactivation
+			let found = false;
+			if( flags && flags.exceptions )
+			{
+				for( let b = 0; b < flags.exceptions.length; b++ )
+				{
+					if( flags.exceptions[ b ] == m )
+					{
+						found = true;
+						break;
+					}
+				}
+			}
+			if( !found )
+				windowsDeactivated += _DeactivateWindow( m, true );
 		}
 	}
 
