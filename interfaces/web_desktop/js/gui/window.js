@@ -1162,6 +1162,11 @@ function _ActivateDialogWindow( div, e )
 		currentMovable = div;
 		if( e && e.button == 0 )
 		{
+			if( !div.windowObject.applicationId )
+			{
+				_DeactivateWindows();
+				currentMovable = div;
+			}
 			if( window.hideDashboard )
 				window.hideDashboard();
 		}
@@ -1655,7 +1660,7 @@ function _removeMobileCloseButtons()
 	}
 }
 
-function _DeactivateWindows()
+function _DeactivateWindows( flags = false )
 {
 	clearRegionIcons();
 	let windowsDeactivated = 0;
@@ -1671,7 +1676,9 @@ function _DeactivateWindows()
 	{
 		let m = movableWindows[a];
 		if( m.classList.contains( 'Active' ) )
+		{
 			windowsDeactivated += _DeactivateWindow( m, true );
+		}
 	}
 
 	//if( windowsDeactivated > 0 ) PollTaskbar ();
@@ -2159,13 +2166,12 @@ function CloseView( win, delayed )
 		{
 			return;
 		}
-		console.log( 'Here: ', currentMovable );
+		
 		if( !currentMovable || ( currentMovable && currentMovable.windowObject.getFlag.dockable && window.showDashboard ) )
 		{
 			if( window.showDashboard )
 			{
 				_DeactivateWindows();
-				console.log( 'BLAH' );
 				showDashboard();
 				return;
 			}
@@ -4275,7 +4281,10 @@ var View = function( args )
 		
 		if( Workspace.dashboard && typeof( hideDashboard ) != 'undefined' )
 		{
-		    hideDashboard();
+			if( !self.flags.dialog )
+			{
+			    hideDashboard();
+			}
 		}
 	}
 
