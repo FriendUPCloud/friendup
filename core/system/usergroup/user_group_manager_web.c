@@ -1942,6 +1942,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 						respSet = TRUE;
 						HttpSetContent( response, data, dataLength );
 					}
+					
+					FFree( data );
 				}
 				FFree( command );
 			}
