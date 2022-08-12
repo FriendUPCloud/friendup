@@ -2084,6 +2084,7 @@ function CloseView( win, delayed )
 			_DeactivateWindows();
 			showDashboard();
 			setTimeout( function(){ showDashboard(); }, 150 );
+			console.log( 'Comes fro dash' );
 		}
 		else
 		{
