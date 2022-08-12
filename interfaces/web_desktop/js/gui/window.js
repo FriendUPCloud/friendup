@@ -2052,6 +2052,7 @@ function CloseView( win, delayed )
 		
 		if( win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
 		{
+			console.log( 'Boba' );
 			_DeactivateWindows();
 			showDashboard();
 			setTimeout( function(){ showDashboard(); }, 150 );
