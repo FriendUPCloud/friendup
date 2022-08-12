@@ -2138,6 +2138,8 @@ function CloseView( win, delayed )
 			}
 		}
 		PollTaskbar();
+		if( window.pollLiveViews )
+			pollLiveViews();
 
 		// Remove link to current movable
 		if( win == window.currentMovable ) window.currentMovable = null;
