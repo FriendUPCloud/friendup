@@ -733,11 +733,22 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										}
 									}
 							
-									BufStringAdd( sql, " ) AND OwnerUserID=" );
-								
 									char num[ 32 ];
-									snprintf( num, sizeof(num), "%ld", (long int)loggedSession->us_UserID );
+									if( loggedSession != NULL )
+									{
+										snprintf( num, sizeof(num),"%ld", (long int)loggedSession->us_UserID );
+									}
+									else
+									{
+										strcpy( num, "0" );
+									}
+
 									BufStringAdd( sql, num );
+						
+									// Create output "JSON"
+									BufStringAdd( result, "ok<!--separate-->[" );
+						
+									// Fetch the result
 							
 									// Create output "JSON"
 									BufStringAdd( result, "ok<!--separate-->[" );
@@ -2440,7 +2451,10 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						}
 						i++;
 						
-						sprintf( userid, "%ld", loggedSession->us_User->u_ID );
+						if( loggedSession->us_User != NULL )
+						{
+							sprintf( userid, "%ld", loggedSession->us_User->u_ID );
+						}
 						sprintf( name, "%s", &path[ i ] );
 					}
 					

@@ -376,9 +376,10 @@ User * UMUserGetByIDDB( UserManager *um, FULONG id )
  * @param usr user structure which will be stored in DB
  * @return 0 when success, otherwise error number
  */
-int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr )
+int UMUserCreate( UserManager *smgr, Http *r , User *usr )
 {
 	SystemBase *sb = (SystemBase *)smgr->um_SB;
+	int val = 0;
 	
 	if( usr == NULL )
 	{
@@ -439,23 +440,26 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 	
 	GenerateUUID( &( usr->u_UUID ) );
 
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
-	int val = 0;
-	if( sqlLib != NULL )
+	if( r->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
 	{
-		char tmpQuery[ 128 ];
+		SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+
+		if( sqlLib != NULL )
+		{
+			char tmpQuery[ 128 ];
 		
-		val = sqlLib->Save( sqlLib, UserDesc, usr );
+			val = sqlLib->Save( sqlLib, UserDesc, usr );
 		
-		sprintf( tmpQuery, "DELETE FROM `FUserToGroup` WHERE UserID=%lu", usr->u_ID );
-		sqlLib->QueryWithoutResults( sqlLib, tmpQuery );
+			sprintf( tmpQuery, "DELETE FROM `FUserToGroup` WHERE UserID=%lu", usr->u_ID );
+			sqlLib->QueryWithoutResults( sqlLib, tmpQuery );
 		
-		sb->LibrarySQLDrop( sb, sqlLib );
-	}
-	else
-	{
-		FERROR("[UMUserCreate] Cannot create user, mysql.library was not opened!\n");
-		return 2;
+			sb->LibrarySQLDrop( sb, sqlLib );
+		}
+		else
+		{
+			FERROR("[UMUserCreate] Cannot create user, mysql.library was not opened!\n");
+			return 2;
+		}
 	}
 	return val;
 }
@@ -1429,7 +1433,7 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 				{
 					// we now generate dummy session
 					//UserSession *ses = UserSessionNew( sb, "api", "api" );
-					UserSession *ses = UserSessionNew( NULL, "api" );
+					UserSession *ses = UserSessionNew( NULL, "api", sb->fcm->fcm_ID );
 					if( ses != NULL )
 					{
 						ses->us_UserID = user->u_ID;
@@ -2123,7 +2127,10 @@ FBOOL UMSendDoorNotification( UserManager *um, void *notif, UserSession *ses, Fi
 				
 					UserSessionWebsocketWrite( uses, (unsigned char *)tmpmsg, len, LWS_WRITE_TEXT );
 
+					//
 					// send message to all remote users
+					//
+					
 					RemoteUser *ruser = usr->u_RemoteUsers;
 					while( ruser != NULL )
 					{
@@ -2185,6 +2192,39 @@ FBOOL UMSendDoorNotification( UserManager *um, void *notif, UserSession *ses, Fi
 						} // while remote drives
 						ruser = (RemoteUser *)ruser->node.mln_Succ;
 					} // while remote users
+					
+					//
+					// Notify user sessions in cluster
+					//
+					
+					Http *request = HttpNew();
+					if( request != NULL )
+					{
+						request->http_ParsedPostContent = HashmapNew();
+						request->http_Uri = UriNew();
+						
+						//request->http_Uri->uri_QueryRaw = StringDuplicateN( "fschange", 8 );
+						
+						char value[ 32 ];
+						snprintf( value, sizeof(value), "%ld", device->f_ID );
+						
+						HashmapPut( request->http_ParsedPostContent, "sessionid", "test" );
+						HashmapPut( request->http_ParsedPostContent, "fschange", "true" );
+						HashmapPut( request->http_ParsedPostContent, "devid", value );
+						HashmapPut( request->http_ParsedPostContent, "devname", device->f_Name );
+						HashmapPut( request->http_ParsedPostContent, "owner", usr->u_Name );
+						HashmapPut( request->http_ParsedPostContent, "path", path );
+						
+						BufString *res = SendMessageToSessionsAndWait( sb, usr->u_ID, request );
+						if( res != NULL )
+						{
+							DEBUG("RESPONSE: %s\n", res->bs_Buffer );
+							BufStringDelete( res );
+						}
+						
+						//HttpFree( request );
+					}
+					
 				} // sendNotif == TRUE
 				le = (UserSessListEntry *)le->node.mln_Succ;
 			} // while loop, session
@@ -2203,6 +2243,73 @@ FBOOL UMSendDoorNotification( UserManager *um, void *notif, UserSession *ses, Fi
 	FFree( tmpmsg );
 	return TRUE;
 }
+
+/**
+ * Send user changes notification
+ *
+ * @param um pointer to UserManager
+ * @param ses UserSession
+ * @return 0 when there is no error, otherwise error number
+ */
+int UMSendUserChangesNotification( UserManager *um, UserSession *ses )
+{
+	SystemBase *sb = (SystemBase *)um->um_SB;
+
+	char *tmpmsg = FCalloc( 2048, 1 );
+	if( tmpmsg == NULL )
+	{
+		FERROR("Cannot allocate memory for buffer\n");
+		return 1;
+	}
+    
+	//
+	// Go through logged users
+	//
+    
+	USER_MANAGER_USE( um );
+	
+	User *usr = ses->us_User;
+
+	USER_LOCK( usr );
+	
+	int len = snprintf( tmpmsg, 2048, "{\"type\":\"msg\",\"data\":{\"type\":\"user-change\",\"data\":{\"username\":\"%s\"}}}", usr->u_Name );
+	
+	// go through all User Sessions and send message
+	UserSessListEntry *le = usr->u_SessionsList;
+	while( le != NULL )
+	{
+		UserSession *uses = (UserSession *)le->us;
+		
+		// do not send message to sender
+		FBOOL sendNotif = TRUE;
+		if( uses == NULL )
+		{
+			sendNotif = FALSE;
+		}
+		
+		if( sendNotif == TRUE )
+		{
+			DEBUG("[USMSendDoorNotification] Send message %s\n", tmpmsg );
+		
+			UserSessionWebsocketWrite( uses, (unsigned char *)tmpmsg, len, LWS_WRITE_TEXT );
+
+		} // sendNotif == TRUE
+		le = (UserSessListEntry *)le->node.mln_Succ;
+	} // while loop, session
+	
+	DEBUG("[UMSendDoorNotification] unlock user\n");
+	
+	USER_UNLOCK( usr );
+
+	USER_MANAGER_RELEASE( um );
+	
+	FFree( tmpmsg );
+	return 0;
+}
+
+//
+//
+//
 
 typedef struct RemoveEntry
 {

@@ -399,7 +399,8 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses __attribute_
 			
 			DEBUG("[DoorNotificationCommunicateChanges] send door notification to: %lu\n", notification->dn_OwnerID );
 			
-			UMSendDoorNotification( sb->sl_UM, notification, ses, device, path );
+			UMSendDoorNotification( sb->sl_UM, notification, ses, device, pathNoDevice );// notification->dn_Path );
+			//UMSendDoorNotification( sb->sl_UM, notification, ses, device, path );
 			
 			notification = (DoorNotification *)notification->node.mln_Succ;
 			
@@ -426,10 +427,10 @@ int DoorNotificationRemoveEntries( void *lsb )
 	{
 		DEBUG("[DoorNotificationRemoveEntries] start\n");
 		char temp[ 1024 ];
-		time_t acttime = time( NULL );
+		time_t acttime = time( NULL ) - 86400;
 		
 		// we remove old entries older then 24 hours
-		snprintf( temp, sizeof(temp), "DELETE from `FDoorNotification` WHERE (%lu-Time)>86400", acttime );
+		snprintf( temp, sizeof(temp), "DELETE from `FDoorNotification` WHERE 'Time' < %lu", acttime );
 		
 		sqllib->QueryWithoutResults( sqllib, temp );
 		
