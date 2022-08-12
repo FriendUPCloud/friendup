@@ -1162,7 +1162,7 @@ function _ActivateDialogWindow( div, e )
 		currentMovable = div;
 		if( e && e.button == 0 )
 		{
-			if( !div.windowObject.applicationId )
+			if( !div.windowObject.applicationId && !div.parentNode.classList.contains( 'FileDialog' ) )
 			{
 				_DeactivateWindows();
 				currentMovable = div;
