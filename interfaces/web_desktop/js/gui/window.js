@@ -2079,7 +2079,7 @@ function CloseView( win, delayed )
 			div.appendChild( ele );
 		}
 		
-		if( win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
+		if( !appId && win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
 		{
 			_DeactivateWindows();
 			showDashboard();
