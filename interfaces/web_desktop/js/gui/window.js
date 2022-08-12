@@ -1539,7 +1539,7 @@ function _removeWindowTiles( div )
 function _DeactivateWindow( m, skipCleanUp )
 {
 	let ret = false;
-	
+	console.trace();
 	if( m.className && m.classList.contains( 'Active' ) )
 	{
 		m.classList.remove( 'Active' );
@@ -2065,7 +2065,7 @@ function CloseView( win, delayed )
 			let nextActive = false;
 			if( div.classList.contains( 'Active' ) || div.windowObject.flags.dialog )
 			{
-				console.log( 'Loba' );
+				console.log( '[test] Loba' );
 				if( Friend.GUI.view.viewHistory.length )
 				{
 					// Only activate last view in the same app
