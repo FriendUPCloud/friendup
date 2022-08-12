@@ -2089,6 +2089,7 @@ function CloseView( win, delayed )
 			let nextActive = false;
 			if( div.classList.contains( 'Active' ) || div.windowObject.getFlag( 'dialog' ) )
 			{
+				console.log( '[test] FISKE' );
 				if( Friend.GUI.view.viewHistory.length )
 				{
 					// Only activate last view in the same app
