@@ -4023,8 +4023,6 @@ window.FriendDOS =
 	{
 		let fdos = this;
 		
-		let srcDirCache = {};
-		
 		if( flags.shell && flags.shell.stop == true ) return;
 		
 		// Do we want to move the files?
@@ -4043,6 +4041,7 @@ window.FriendDOS =
 					copyDepth: 0,    // Swipe depth
 					processes: 0, // Other processes
 					completed: 0, // Completed processes
+					dirCache: {}, // Cache of directories
 					callback: callback,
 					deleteMovePaths: [],
 					test: function()
@@ -4077,6 +4076,13 @@ window.FriendDOS =
 				if( flags.shell )
 					flags.shell.copyObject = copyObject;
 			}
+		}
+
+		// Set dir cache
+		let srcDirCache = false;
+		if( copyObject )
+		{
+			srcDirCache = copyObject.dirCache;
 		}
 
 		// Verified destinations are passing
@@ -4192,7 +4198,7 @@ window.FriendDOS =
 			
 			// Try to cache directory listing on source path
 			let found = false;
-			if( doorSrc.path )
+			if( doorSrc.path && srcDirCache && srcDirCache[ doorSrc.path ] )
 			{
 				if( srcDirCache[ doorSrc.path ] )
 				{
@@ -4208,6 +4214,9 @@ window.FriendDOS =
 			
 			function execCopyProc( data )
 			{
+				if( srcDirCache && !srcDirCache[ doorSrc.path ] )
+					srcDirCache[ doorSrc.path ] = data;
+				
 				copyObject.completed++;
 				
 				let compareCount = 0;
