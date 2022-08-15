@@ -6072,6 +6072,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( !e ) e = {};
 				let cliplen = clip.length;
 				let sh = new Shell( 0 );
+				sh.cancelId = 'copy_files_' + ( Math.random() * 999 ) + '' + ( Math.random() * 999 ) + ( new Date() ).getTime(); // Cancellable
 				sh.onmessage = function( msg )
 				{
 					let selfsh = this;
@@ -6083,6 +6084,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							this.stopped = true;
 							window.FriendDOS.delSession( this.uniqueId );
 							Notify( { title: i18n( 'i18n_copy_operation' ), text: i18n( 'i18n_copying_files_stopped' ) } );
+							CancelCajaxOnId( sh.cancelId );
 						}
 						return;
 					}

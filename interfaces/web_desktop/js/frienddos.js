@@ -231,6 +231,7 @@ window.Shell = function( appObject )
 			{
 				// Use standard doors
 				let door = ( new Door() ).get( path );
+				door.cancelId = shell.cancelId;
 				door.getIcons( false, function( data )
 				{
 					let info = false;
@@ -2704,7 +2705,7 @@ window.Shell = function( appObject )
 				// 'all' on the end
 				if( !recursive ) recursive = args[ args.length - 1 ].toLowerCase() == 'all' ? true : false;
 
-				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: false, nooverwrite: nooverwrite, shell: shell }, function( result, done )
+				FriendDOS.copyFiles( src, dst, { cancelId: shell.cancelId, recursive: recursive, move: false, nooverwrite: nooverwrite, shell: shell }, function( result, done )
 				{
 					if( !done ) done = false;
 					callback( false, { response: result, done: done } );
@@ -2762,7 +2763,7 @@ window.Shell = function( appObject )
 				}
 
 				// Finally delete
-				FriendDOS.deleteFiles( src, { recursive: recursive, notrash: notrash }, function( result )
+				FriendDOS.deleteFiles( src, { cancelId: shell.cancelId, recursive: recursive, notrash: notrash }, function( result )
 				{
 					callback( false, { response: result, done: true } );
 				} );
