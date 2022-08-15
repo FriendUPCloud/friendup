@@ -3104,7 +3104,7 @@ window.Shell = function( appObject )
 						return callback( false, { response: 'Could not parse file information.' } );
 					}
 				}
-			} );
+			}, shell.cancelId ? shell.cancelId : false );
 		},		
 		'kill': function( args, callback )
 		{
@@ -4120,7 +4120,7 @@ window.FriendDOS =
 						else flags = { verifiedDestination: true };
 					}
 					cfcbk( src, dest, flags, callback, depth );
-				} );
+				}, flags.shell && flags.shell.cancelId ? flags.shell.cancelId : false );
 			}
 		}
 
@@ -4137,6 +4137,9 @@ window.FriendDOS =
 			// Get door objects
 			let doorSrc = ( new Door() ).get( src );
 			let doorDst = ( new Door() ).get( dest );
+			
+			doorSrc.cancelId = ( flags.shell && flags.shell.cancelId ) ? flags.shell.cancelId : false;
+			doorDst.cancelId = ( flags.shell && flags.shell.cancelId ) ? flags.shell.cancelId : false;
 
 			// Don't copy to self
 			let srcPath = src;
@@ -4606,9 +4609,11 @@ window.FriendDOS =
 	},
 
 	// Callback format myFunc( bool return value, data )
-	getFileInfo: function( path, callback )
+	getFileInfo: function( path, callback, cancelId = false )
 	{
 		let l = new Library( 'system.library' );
+		if( cancelId )
+			l.cancelId = cancelId;
 		l.onExecuted = function( e, d )
 		{
 			if( callback ) callback( e == 'ok' ? true : false, d );
