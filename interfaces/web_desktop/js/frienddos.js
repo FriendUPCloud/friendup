@@ -4023,6 +4023,8 @@ window.FriendDOS =
 	{
 		let fdos = this;
 		
+		let srcDirCache = {};
+		
 		if( flags.shell && flags.shell.stop == true ) return;
 		
 		// Do we want to move the files?
@@ -4188,7 +4190,23 @@ window.FriendDOS =
 			copyObject.processes++;
 			if( flags.shell && flags.shell.stop == true ) return;
 			
-			doorSrc.getIcons( false, function( data )
+			// Try to cache directory listing on source path
+			let found = false;
+			if( doorSrc.path )
+			{
+				if( srcDirCache[ doorSrc.path ] )
+				{
+					execCopyProc( srcDirCache[ doorSrc.path ] );
+					console.log( 'Using cache on ' + doorSrc.path );
+					found = true;
+				}
+			}
+			if( !found )
+			{
+				doorSrc.getIcons( false, execCopyProc );
+			}			
+			
+			function executeCopyProc( data )
 			{
 				copyObject.completed++;
 				
@@ -4389,7 +4407,7 @@ window.FriendDOS =
 						callback( 'No files copied...', { done: true } );
 					}
 				}
-			} );
+			};
 		}
 	},
 	// Delete files with option flags
