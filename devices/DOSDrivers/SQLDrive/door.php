@@ -229,29 +229,33 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							$entries[$k]->Shared = 'Private';
 						}
 					}
-					if( $shared = $SqlDatabase->FetchObjects( $q = ( '
-						SELECT Path, UserID, ID, `Name`, `Hash` FROM FFileShared s
-						WHERE
-							s.DstUserSID = "Public" AND s.Path IN ( "' . implode( '", "', $paths ) . '" ) AND
-							s.UserID IN ( ' . implode( ', ', $userids ) . ' )
-					' ) ) )
+					
+					if( !isset( $config[ 'Security' ][ 'hasShareDrive' ] ) || $config[ 'Security' ][ 'hasShareDrive' ] == 1 )
 					{
-						foreach( $entries as $k=>$entry )
+						if( $shared = $SqlDatabase->FetchObjects( $q = ( '
+							SELECT Path, UserID, ID, `Name`, `Hash` FROM FFileShared s
+							WHERE
+								s.DstUserSID = "Public" AND s.Path IN ( "' . implode( '", "', $paths ) . '" ) AND
+								s.UserID IN ( ' . implode( ', ', $userids ) . ' )
+						' ) ) )
 						{
-							foreach( $shared as $sh )
+							foreach( $entries as $k=>$entry )
 							{
-								// Add volume name to entry if it's not there
-								// TODO: Make sure its always there!
-								if( isset( $entry->Path ) && !strstr( $entry->Path, ':' ) )
-									$entry->Path = $volume . $entry->Path;
-								if( isset( $entry->Path ) && isset( $sh->Path ) && $entry->Path == $sh->Path && $entry->UserID == $sh->UserID )
+								foreach( $shared as $sh )
 								{
-									$entries[$k]->Shared = 'Public';
-									
-									$link = ( $Config->SSLEnable == 1 ? 'https' : 'http' ) . '://';
-									$p = $Config->FCPort ? ( ':' . $Config->FCPort ) : '';
-									$link .= $Config->FCHost . $p . '/sharedfile/' . $sh->Hash . '/' . $sh->Name;
-									$entries[$k]->SharedLink = $link;
+									// Add volume name to entry if it's not there
+									// TODO: Make sure its always there!
+									if( isset( $entry->Path ) && !strstr( $entry->Path, ':' ) )
+										$entry->Path = $volume . $entry->Path;
+									if( isset( $entry->Path ) && isset( $sh->Path ) && $entry->Path == $sh->Path && $entry->UserID == $sh->UserID )
+									{
+										$entries[$k]->Shared = 'Public';
+										
+										$link = ( $Config->SSLEnable == 1 ? 'https' : 'http' ) . '://';
+										$p = $Config->FCPort ? ( ':' . $Config->FCPort ) : '';
+										$link .= $Config->FCHost . $p . '/sharedfile/' . $sh->Hash . '/' . $sh->Name;
+										$entries[$k]->SharedLink = $link;
+									}
 								}
 							}
 						}
@@ -599,7 +603,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							$fs->ID = $this->ID;
 							if( $fs->Load() )
 							{
-								$Logger->log( '[SQLDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
+								//$Logger->log( '[SQLDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
 						
 								$fs->StoredBytes = $sbytes;
 								$fs->Save();
