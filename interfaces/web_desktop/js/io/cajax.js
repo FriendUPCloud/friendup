@@ -72,10 +72,10 @@ function AddToCajaxQueue( ele )
 		}
 	}
 	// Add ajax element to the bottom of the queue
-	let o = [];
+	let o = [ ele ];
 	for( let a = 0; a < Friend.cajax.length; a++ )
 		o.push( Friend.cajax[ a ] );
-	o.push( ele );
+	//o.push( ele );
 	Friend.cajax = o;
 	/*
 	// Add ajax element to the top of the queue
