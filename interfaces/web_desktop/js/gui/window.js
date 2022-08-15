@@ -967,7 +967,6 @@ function SetScreenByWindowElement( div )
 // Just like _ActivateWindow, only without doing anything but activating
 function _ActivateWindowOnly( div, e )
 {
-	console.log( '[test] Activating' );
     if( div.windowObject && div.windowObject.getFlag( 'invisible' ) == true ) return;
 	if( Workspace.contextMenuShowing && Workspace.contextMenuShowing.shown )
 	{
@@ -978,7 +977,6 @@ function _ActivateWindowOnly( div, e )
 	if( !isMobile && div.content && div.content.blocker )
 	{
 		_ActivateWindow( div.content.blocker.getWindowElement().parentNode, false );
-		console.log( '[test] Lopsjucf' );
 		return;
 	}
 	
@@ -990,7 +988,6 @@ function _ActivateWindowOnly( div, e )
     	) 
     )
     {
-    	console.log( '[test] Foppafop' );
     	return _ActivateDialogWindow( div, e );
 	}
 	
@@ -1165,11 +1162,24 @@ function _ActivateDialogWindow( div, e )
 		currentMovable = div;
 		if( e && e.button == 0 )
 		{
-			if( !div.windowObject.applicationId || div.classList.contains( 'IconWindow' ) )
+			if( !div.windowObject.applicationId && !div.classList.contains( 'IconWindow' ) )
 			{
-				_DeactivateWindows();
+				// If we have active windows that already shows, don't deactivate them for the dialog
+				// TODO: Exception is for file views - but not file dialogs
+				let exceptions = [];
+				for( let a in movableWindows )
+				{
+					if( movableWindows[ a ].classList.contains( 'Active' ) )
+						exceptions.push( movableWindows[ a ] );
+				}
+				_DeactivateWindows( exceptions.length ? { exceptions: exceptions } : false );
 				currentMovable = div;
 			}
+			if( window.hideDashboard )
+				window.hideDashboard();
+		}
+		else
+		{
 			if( window.hideDashboard )
 				window.hideDashboard();
 		}
@@ -1680,7 +1690,21 @@ function _DeactivateWindows( flags = false )
 		let m = movableWindows[a];
 		if( m.classList.contains( 'Active' ) )
 		{
-			windowsDeactivated += _DeactivateWindow( m, true );
+			// Check exceptions to deactivation
+			let found = false;
+			if( flags && flags.exceptions )
+			{
+				for( let b = 0; b < flags.exceptions.length; b++ )
+				{
+					if( flags.exceptions[ b ] == m )
+					{
+						found = true;
+						break;
+					}
+				}
+			}
+			if( !found )
+				windowsDeactivated += _DeactivateWindow( m, true );
 		}
 	}
 
@@ -2053,7 +2077,7 @@ function CloseView( win, delayed )
 			div.appendChild( ele );
 		}
 		
-		if( win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
+		if( !appId && win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
 		{
 			_DeactivateWindows();
 			showDashboard();
@@ -2063,9 +2087,8 @@ function CloseView( win, delayed )
 		{
 			// Activate latest activated view (not on mobile)
 			let nextActive = false;
-			if( div.classList.contains( 'Active' ) || div.windowObject.flags.dialog )
+			if( div.classList.contains( 'Active' ) || div.windowObject.getFlag( 'dialog' ) )
 			{
-				console.log( 'Loba' );
 				if( Friend.GUI.view.viewHistory.length )
 				{
 					// Only activate last view in the same app
