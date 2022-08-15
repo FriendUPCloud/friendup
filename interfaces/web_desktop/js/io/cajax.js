@@ -630,7 +630,7 @@ cAjax.prototype.send = function( data, callback )
 	// Can't have too many! Queue control
 	if( this.mode != 'websocket' )
 	{
-		if( !this.forceSend && ( _cajax_http_connections >= _cajax_http_max_connections || ( this.dosCall && _cajax_dos_connections >= _cajax_dos_max_connections ) )
+		if( !this.forceSend && ( _cajax_http_connections >= _cajax_http_max_connections || ( this.dosCall && _cajax_dos_connections >= _cajax_dos_max_connections ) ) )
 		{
 			//console.log( 'We got max connections!' );
 			AddToCajaxQueue( self );
