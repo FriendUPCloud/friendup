@@ -1988,6 +1988,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 																	break;
 																}
 															}
+															usleep( 25 );
 														}
 														FFree( dataBuffer );
 														
