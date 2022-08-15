@@ -650,6 +650,15 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 		return -1;
 	}
 	
+	while( TRUE )
+	{
+		if( actUserSess->us_Wsi == NULL && actUserSess->us_WSD == NULL )
+		{
+			break;
+		}
+		usleep( 200 );
+	}
+	
 	if( FRIEND_MUTEX_LOCK( &(actUserSess->us_Mutex) ) == 0 )
 	{
 		actUserSess->us_Wsi = wsi;
