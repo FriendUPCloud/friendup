@@ -1174,7 +1174,7 @@ void *ParseAndCall( WSThreadData *wstd )
 					{
 						if( strncmp( "request",  in + t[ 6 ].start, t[ 6 ].end-t[ 6 ].start ) == 0 )
 						{
-							if( locus != NULL && wstd != NULL )
+							if( wstd->wstd_WSD->wsc_UserSession != NULL && wstd != NULL )
 							{
 								DEBUG("[WS] Request received\n");
 								char *requestid = NULL;
