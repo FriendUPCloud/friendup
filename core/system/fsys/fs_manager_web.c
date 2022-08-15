@@ -1943,8 +1943,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 											
 												File *wfp = (File *)dsthand->FileOpen( dstrootf, dstpath, "w+" );
 											
-//#define COPY_BUFFER_SIZE 524288
-#define COPY_BUFFER_SIZE 16384
+#define COPY_BUFFER_SIZE 524288
 											
 												if( wfp != NULL )
 												{
@@ -1989,7 +1988,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 																	break;
 																}
 															}
-															usleep( 25 );
 														}
 														FFree( dataBuffer );
 														
