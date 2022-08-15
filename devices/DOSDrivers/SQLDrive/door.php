@@ -105,7 +105,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 		 */
 		public function dosAction( $args )
 		{
-			global $SqlDatabase, $User, $Config, $Logger;
+			global $SqlDatabase, $User, $Config, $Logger, $configfilesettings;
 		
 			// Sanitized username
 			$uname = str_replace( array( '..', '/', ' ' ), '_', $User->Name );
@@ -230,7 +230,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						}
 					}
 					
-					if( !isset( $config[ 'Security' ][ 'hasShareDrive' ] ) || $config[ 'Security' ][ 'hasShareDrive' ] == 1 )
+					if( !isset( $configfilesettings[ 'Security' ][ 'hasShareDrive' ] ) || $configfilesettings[ 'Security' ][ 'hasShareDrive' ] == 1 )
 					{
 						if( $shared = $SqlDatabase->FetchObjects( $q = ( '
 							SELECT Path, UserID, ID, `Name`, `Hash` FROM FFileShared s

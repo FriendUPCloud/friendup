@@ -247,7 +247,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 						foreach( $wuids as $w ) $userids[] = $w;
 					}
 					
-					if( !isset( $config[ 'Security' ][ 'hasShareDrive' ] ) || $config[ 'Security' ][ 'hasShareDrive' ] == 1 )
+					if( !isset( $configfilesettings[ 'Security' ][ 'hasShareDrive' ] ) || $configfilesettings[ 'Security' ][ 'hasShareDrive' ] == 1 )
 					{
 						if( $shared = $SqlDatabase->FetchObjects( $q = ( '
 							SELECT Path, UserID, ID, `Name`, `Hash` FROM FFileShared s
