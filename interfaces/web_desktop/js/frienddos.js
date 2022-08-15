@@ -4041,7 +4041,6 @@ window.FriendDOS =
 					copyDepth: 0,    // Swipe depth
 					processes: 0, // Other processes
 					completed: 0, // Completed processes
-					dirCache: {}, // Cache of directories
 					callback: callback,
 					deleteMovePaths: [],
 					test: function()
@@ -4076,13 +4075,6 @@ window.FriendDOS =
 				if( flags.shell )
 					flags.shell.copyObject = copyObject;
 			}
-		}
-
-		// Set dir cache
-		let srcDirCache = false;
-		if( copyObject )
-		{
-			srcDirCache = copyObject.dirCache;
 		}
 
 		// Verified destinations are passing
@@ -4196,27 +4188,8 @@ window.FriendDOS =
 			copyObject.processes++;
 			if( flags.shell && flags.shell.stop == true ) return;
 			
-			// Try to cache directory listing on source path
-			let found = false;
-			if( doorSrc.path && srcDirCache && srcDirCache[ doorSrc.path ] )
+			doorSrc.getIcons( false, function( data )
 			{
-				if( srcDirCache[ doorSrc.path ] )
-				{
-					execCopyProc( srcDirCache[ doorSrc.path ] );
-					console.log( 'Using cache on ' + doorSrc.path );
-					found = true;
-				}
-			}
-			if( !found )
-			{
-				doorSrc.getIcons( false, execCopyProc );
-			}			
-			
-			function execCopyProc( data )
-			{
-				if( srcDirCache && !srcDirCache[ doorSrc.path ] )
-					srcDirCache[ doorSrc.path ] = data;
-				
 				copyObject.completed++;
 				
 				let compareCount = 0;
@@ -4347,23 +4320,9 @@ window.FriendDOS =
 							copyObject.processes++;
 							let destination = dest;
 							
-							// Use the info already available
-							if( copyObject.dirCache[ dest ] )
+							doorDst = new Door( dest );
+							doorDst.dosAction( 'info', { path: dest }, function( result )
 							{
-								console.log( 'Using dir cache on ' + dest );
-								copyDest( copyObject.dirCache[ dest ] );
-							}
-							else
-							{
-								doorDst = new Door( dest );
-								doorDst.dosAction( 'info', { path: dest }, copyDest );
-							}
-							function copyDest( result )
-							{
-								// Set info
-								if( !copyObject.dirCache[ dest ] )
-									copyObject.dirCache[ dest ] = result;
-								
 								copyObject.completed++;
 								if( flags.shell && flags.shell.stop == true ) return;
 								let lastChar = destination.substr( -1, 1 );
@@ -4415,7 +4374,7 @@ window.FriendDOS =
 									copyObject.completed++;
 									copyObject.test();
 								} );
-							}
+							} );
 						}
 					}
 				}
@@ -4430,7 +4389,7 @@ window.FriendDOS =
 						callback( 'No files copied...', { done: true } );
 					}
 				}
-			};
+			} );
 		}
 	},
 	// Delete files with option flags
