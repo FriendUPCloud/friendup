@@ -953,6 +953,8 @@ void *ParseAndCall( WSThreadData *wstd )
 	
 											BufStringDelete( wstd->wstd_Queryrawbs );
 											
+											ParseAndCall( wstd );
+											/*
 											// Increase use for external (parseandcall)
 											UserSession *uc = ( UserSession *)wstd->wstd_WSD->wsc_UserSession;
 											if( uc != NULL )
@@ -983,6 +985,8 @@ void *ParseAndCall( WSThreadData *wstd )
 													}
 												}
 											}
+											*/
+											
 											wstd = NULL;
 											
 											
