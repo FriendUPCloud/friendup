@@ -272,8 +272,35 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 						wsd->wsc_Status = WSC_STATUS_TO_BE_REMOVED;
 						FRIEND_MUTEX_UNLOCK( &( wsd->wsc_Mutex ) );
 					}
+					
+					int tr = 8;
+				
+					while( TRUE )
+					{
+						if( wsd->wsc_InUseCounter <= 0 )
+						{
+							DEBUG("[WS] Callback closed!\n");
+							break;
+						}
+						DEBUG("[WS] Closing WS, number: %d\n", wsd->wsc_InUseCounter );
+						//sleep( 1 );
+						usleep( 3500 );	// 0.35 seconds
+					
+						if( tr-- <= 0 )
+						{
+							DEBUG("[WS] Quit after 5\n");
+							break;
+						}
+					
+						if( wsd->wsc_UserSession == NULL )
+						{
+							DEBUG("[WS] wsc_UserSession is equal to NULL\n");
+							break;
+						}
+					}
+					
 					DetachWebsocketFromSession( wsd, wsi );
-						
+					
 					if( wsd->wsc_Buffer != NULL )
 					{
 						BufStringDelete( wsd->wsc_Buffer );
