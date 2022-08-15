@@ -4206,7 +4206,7 @@ window.FriendDOS =
 				doorSrc.getIcons( false, execCopyProc );
 			}			
 			
-			function executeCopyProc( data )
+			function execCopyProc( data )
 			{
 				copyObject.completed++;
 				
