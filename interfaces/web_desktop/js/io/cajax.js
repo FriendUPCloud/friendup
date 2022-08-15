@@ -20,6 +20,9 @@ let _cajax_mutex = 0;
 let _cajax_ws_connections = 0;                  // How many?
 let _cajax_ws_max_connections = 12;             // Max
 
+let _cajax_dos_connections = 0;
+let _cajax_dos_max_connections = 3;
+
 let _cajax_ws_disabled = 0;                     // Disable websocket usage?
 
 let _cajax_origin = document.location.origin;
@@ -294,6 +297,12 @@ cAjax = function()
 				if( !jax.forceSend )
 				{
 					_cajax_http_connections--;
+					if( jax.dosCall )
+					{
+						_cajax_dos_connections--;
+						if( _cajax_dos_connections < 0 )
+							_cajax_dos_connections = 0;
+					}
 					if( _cajax_http_connections < 0 )
 						_cajax_http_connections = 0;
 				}
@@ -411,6 +420,17 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	}
 	this.opened = true;
 	
+	this.dosCall = false;
+	if( 
+		url.indexOf( '/file/read' ) >= 0 &&
+		url.indexOf( '/file/copy' ) >= 0 &&
+		url.indexOf( '/file/delete' ) >= 0 &&
+		url.indexOf( '/file/write' ) >= 0
+	)
+	{
+		this.dosCall = true;
+	}
+	
 	// Try websockets!!
 	if( 
 		!_cajax_ws_disabled &&
@@ -424,12 +444,9 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		typeof( url ) == 'string' && 
 		url.indexOf( 'http' ) != 0 && 
 		url.indexOf( 'system.library' ) >= 0 &&
-		url.indexOf( '/file/read' ) < 0 &&
-		url.indexOf( '/file/copy' ) < 0 &&
-		url.indexOf( '/file/delete' ) < 0 &&
-		url.indexOf( '/file/write' ) < 0
+		!this.dosCall
 	)
-	{	
+	{
 		this.mode = 'websocket';
 		this.url = url;
 		this.hasReturnCode = hasReturnCode;
@@ -612,14 +629,20 @@ cAjax.prototype.send = function( data, callback )
 	// Can't have too many! Queue control
 	if( this.mode != 'websocket' )
 	{
-		if( !this.forceSend && _cajax_http_connections >= _cajax_http_max_connections )
+		if( !this.forceSend && ( _cajax_http_connections >= _cajax_http_max_connections || ( this.dosCall && _cajax_dos_connections >= _cajax_dos_max_connections ) )
 		{
 			//console.log( 'We got max connections!' );
 			AddToCajaxQueue( self );
 			return;
 		}
 		if( !this.forceSend )
+		{
 			_cajax_http_connections++;
+			if( this.dosCall )
+			{
+				_cajax_dos_connections++;
+			}
+		}
 	}
 	// Limit on websockets
 	else
