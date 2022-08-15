@@ -4346,8 +4346,8 @@ window.FriendDOS =
 									}
 									catch( e )
 									{
-										callback( 'Failed to ' + ( move ? 'move' : 'copy' ) + ' file...', { done: true } );
-										console.log( 'Failed on file ' + dest + ' -> ' + result );
+										//callback( 'Failed to ' + ( move ? 'move' : 'copy' ) + ' file...', { done: true } );
+										//console.log( 'Failed on file ' + dest + ' -> ' + result );
 									}
 								}
 								copyObject.processes++;
