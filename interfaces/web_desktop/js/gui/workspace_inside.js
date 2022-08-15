@@ -6084,7 +6084,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							this.stopped = true;
 							window.FriendDOS.delSession( this.uniqueId );
 							Notify( { title: i18n( 'i18n_copy_operation' ), text: i18n( 'i18n_copying_files_stopped' ) } );
-							CancelCajaxOnId( sh.cancelId );
+							CancelCajaxOnId( sh.cancelId ); // Cancel all ajax events on this cancelId
 						}
 						return;
 					}
