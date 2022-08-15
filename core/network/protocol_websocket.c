@@ -953,7 +953,6 @@ void *ParseAndCall( WSThreadData *wstd )
 	
 											BufStringDelete( wstd->wstd_Queryrawbs );
 											
-											if( 1 == 2 ){ int a = 10; };
 											ParseAndCall( wstd );
 											/*
 											// Increase use for external (parseandcall)

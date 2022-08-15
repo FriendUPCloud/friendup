@@ -17,6 +17,9 @@ let _cajax_http_max_connections = 6;            // Max
 let _cajax_http_last_time = 0;                  // Time since last
 let _cajax_mutex = 0;
 
+let _cajax_ws_connections = 0;                  // How many?
+let _cajax_ws_max_connections = 25;             // Max
+
 let _cajax_ws_disabled = 0;                     // Disable websocket usage?
 
 let _cajax_origin = document.location.origin;
@@ -616,6 +619,16 @@ cAjax.prototype.send = function( data, callback )
 		if( !this.forceSend )
 			_cajax_http_connections++;
 	}
+	// Limit on websockets
+	else
+	{
+		if( _cajax_ws_connections >= _cajax_ws_max_connections )
+		{
+			AddToCajaxQueue( self );
+			return;
+		}
+		_cajax_ws_connections++;
+	}
 	
 	// Register successful send
 	_cajax_http_last_time = ( new Date() ).getTime();
@@ -820,6 +833,8 @@ cAjax.prototype.decreaseProcessCount = function()
 cAjax.prototype.handleWebSocketResponse = function( wsdata )
 {	
 	let self = this;
+	
+	_cajax_ws_connections--;
 	
 	if( self.life )
 		clearTimeout( self.life );
