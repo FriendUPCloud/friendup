@@ -260,8 +260,9 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 							{
 								// Add volume name to entry if it's not there
 								// TODO: Make sure its always there!
-								if( !strstr( $entry->Path, ':' ) )
-									$entry->Path = $volume . $entry->Path;
+								if( isset( $entry->Path ) && !strstr( $entry->Path, ':' ) )
+									$entry->Path = $volume . ( isset( $entry->Path ) ? $entry->Path : '' );
+								else $entry->Path = $volume;
 								if( isset( $entry->Path ) && isset( $sh->Path ) && $entry->Path == $sh->Path && in_array( $sh->UserID, $userids ) )
 								{
 									$entries[$k]->Shared = 'Public';
