@@ -425,6 +425,8 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		url.indexOf( 'http' ) != 0 && 
 		url.indexOf( 'system.library' ) >= 0 &&
 		url.indexOf( '/file/read' ) < 0 &&
+		url.indexOf( '/file/copy' ) < 0 &&
+		url.indexOf( '/file/delete' ) < 0 &&
 		url.indexOf( '/file/write' ) < 0
 	)
 	{	
