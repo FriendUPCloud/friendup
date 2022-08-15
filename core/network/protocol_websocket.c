@@ -702,7 +702,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 					
 					    // Hogne removed message output here
 						//DEBUG("protocol websocket, before write: %s\n", locptr );
-						DEBUG("protocol websocket, before write....\n", locptr );
+						DEBUG("protocol websocket, before write.... %p\n", locptr );
 						if( locptr[ znew-1 ] == 0 )
 						{
 							znew--;
