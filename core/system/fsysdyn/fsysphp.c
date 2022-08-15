@@ -1502,7 +1502,7 @@ int FileWrite( struct File *f, char *buffer, int size  )
 	SpecialData *sd = (SpecialData *)f->f_SpecialData;
 	if( sd != NULL )
 	{
-		DEBUG("Save to file %s size %d  fileid %p\n", sd->fname, size, sd->fp );
+		//DEBUG("Save to file %s size %d  fileid %p\n", sd->fname, size, sd->fp );
 		result = fwrite( buffer, 1, size, sd->fp );
 	}
 
