@@ -4347,9 +4347,23 @@ window.FriendDOS =
 							copyObject.processes++;
 							let destination = dest;
 							
-							doorDst = new Door( dest );
-							doorDst.dosAction( 'info', { path: dest }, function( result )
+							// Use the info already available
+							if( copyObject.dirCache[ dest ] )
 							{
+								console.log( 'Using dir cache on ' + dest );
+								copyDest( copyObject.dirCache[ dest ] );
+							}
+							else
+							{
+								doorDst = new Door( dest );
+								doorDst.dosAction( 'info', { path: dest }, copyDest );
+							}
+							function copyDest( result )
+							{
+								// Set info
+								if( !copyObject.dirCache[ dest ] )
+									copyObject.dirCache[ dest ] = result;
+								
 								copyObject.completed++;
 								if( flags.shell && flags.shell.stop == true ) return;
 								let lastChar = destination.substr( -1, 1 );
@@ -4401,7 +4415,7 @@ window.FriendDOS =
 									copyObject.completed++;
 									copyObject.test();
 								} );
-							} );
+							}
 						}
 					}
 				}
