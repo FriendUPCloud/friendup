@@ -18,7 +18,7 @@ let _cajax_http_last_time = 0;                  // Time since last
 let _cajax_mutex = 0;
 
 let _cajax_ws_connections = 0;                  // How many?
-let _cajax_ws_max_connections = 25;             // Max
+let _cajax_ws_max_connections = 12;             // Max
 
 let _cajax_ws_disabled = 0;                     // Disable websocket usage?
 
