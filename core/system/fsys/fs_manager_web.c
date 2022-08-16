@@ -46,7 +46,7 @@ static inline char *CutNotificationPath( char *path )
 		int i, notifPathLen = strlen( notifPath );
 		if( notifPath[ notifPathLen-1 ] == '/' )
 		{
-			notifPathLen-=2;
+			//notifPathLen-=2;
 			notifPath[ notifPathLen-1 ] = 0;
 		}
 		else
