@@ -105,7 +105,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 		 */
 		public function dosAction( $args )
 		{
-			global $SqlDatabase, $User, $Config, $Logger;
+			global $SqlDatabase, $User, $Config, $Logger, $configfilesettings;
 		
 			//$Logger->log( 'Executing a dos action: ' . $args->command );
 			//$Logger->log( 'Pure args: ' . print_r( $args, 1 ) );
@@ -247,29 +247,33 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 						foreach( $wuids as $w ) $userids[] = $w;
 					}
 					
-					if( $shared = $SqlDatabase->FetchObjects( $q = ( '
-						SELECT Path, UserID, ID, `Name`, `Hash` FROM FFileShared s
-						WHERE
-							s.DstUserSID = "Public" AND s.Path IN ( "' . implode( '", "', $paths ) . '" ) AND
-							s.UserID IN ( ' . implode( ', ', $userids ) . ' )
-					' ) ) )
+					if( !isset( $configfilesettings[ 'Security' ][ 'hasShareDrive' ] ) || $configfilesettings[ 'Security' ][ 'hasShareDrive' ] == 1 )
 					{
-						foreach( $entries as $k=>$entry )
+						if( $shared = $SqlDatabase->FetchObjects( $q = ( '
+							SELECT Path, UserID, ID, `Name`, `Hash` FROM FFileShared s
+							WHERE
+								s.DstUserSID = "Public" AND s.Path IN ( "' . implode( '", "', $paths ) . '" ) AND
+								s.UserID IN ( ' . implode( ', ', $userids ) . ' )
+						' ) ) )
 						{
-							foreach( $shared as $sh )
+							foreach( $entries as $k=>$entry )
 							{
-								// Add volume name to entry if it's not there
-								// TODO: Make sure its always there!
-								if( !strstr( $entry->Path, ':' ) )
-									$entry->Path = $volume . $entry->Path;
-								if( isset( $entry->Path ) && isset( $sh->Path ) && $entry->Path == $sh->Path && in_array( $sh->UserID, $userids ) )
+								foreach( $shared as $sh )
 								{
-									$entries[$k]->Shared = 'Public';
-									
-									$link = ( $Config->SSLEnable == 1 ? 'https' : 'http' ) . '://';
-									$p = $Config->FCPort ? ( ':' . $Config->FCPort ) : '';
-									$link .= $Config->FCHost . $p . '/sharedfile/' . $sh->Hash . '/' . $sh->Name;
-									$entries[$k]->SharedLink = $link;
+									// Add volume name to entry if it's not there
+									// TODO: Make sure its always there!
+									if( isset( $entry->Path ) && !strstr( $entry->Path, ':' ) )
+										$entry->Path = $volume . ( isset( $entry->Path ) ? $entry->Path : '' );
+									else if( !isset( $entry->Path ) ) $entry->Path = $volume;
+									if( isset( $entry->Path ) && isset( $sh->Path ) && $entry->Path == $sh->Path && in_array( $sh->UserID, $userids ) )
+									{
+										$entries[$k]->Shared = 'Public';
+										
+										$link = ( $Config->SSLEnable == 1 ? 'https' : 'http' ) . '://';
+										$p = $Config->FCPort ? ( ':' . $Config->FCPort ) : '';
+										$link .= $Config->FCHost . $p . '/sharedfile/' . $sh->Hash . '/' . $sh->Name;
+										$entries[$k]->SharedLink = $link;
+									}
 								}
 							}
 						}
@@ -575,7 +579,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 						{
 							if( $total + strlen( $args->data ) < SQLWORKGROUPDRIVE_FILE_LIMIT )
 							{
-								$Logger->log( '[SQLWORKGROUPDRIVE] Writing content to file. (limit etc: ' . ( $total + strlen( $args->data ) ) . ' < ' . SQLWORKGROUPDRIVE_FILE_LIMIT );
+								//$Logger->log( '[SQLWORKGROUPDRIVE] Writing content to file. (limit etc: ' . ( $total + strlen( $args->data ) ) . ' < ' . SQLWORKGROUPDRIVE_FILE_LIMIT );
 								$len = fwrite( $file, $args->data );
 								fclose( $file );
 							}
@@ -608,7 +612,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 							$fs->ID = $this->ID;
 							if( $fs->Load() )
 							{
-								$Logger->log( '[SQLWORKGROUPDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
+								//$Logger->log( '[SQLWORKGROUPDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
 						
 								$fs->StoredBytes = $sbytes;
 								$fs->Save();

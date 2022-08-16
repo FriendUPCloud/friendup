@@ -30,7 +30,7 @@ Door.prototype.getPath = function()
 	if( this.path.indexOf( ':' ) > 0 )
 		return this.path;
 	const path = this.deviceName + ':' + this.path;
-	console.log( 'getPath', [ this.path, this.deviceName, path ]);
+	//console.log( 'getPath', [ this.path, this.deviceName, path ]);
 	return path;
 }
 

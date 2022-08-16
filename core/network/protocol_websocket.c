@@ -272,8 +272,35 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 						wsd->wsc_Status = WSC_STATUS_TO_BE_REMOVED;
 						FRIEND_MUTEX_UNLOCK( &( wsd->wsc_Mutex ) );
 					}
+					
+					int tr = 8;
+				
+					while( TRUE )
+					{
+						if( wsd->wsc_InUseCounter <= 0 )
+						{
+							DEBUG("[WS] Callback closed!\n");
+							break;
+						}
+						DEBUG("[WS] Closing WS, number: %d\n", wsd->wsc_InUseCounter );
+						//sleep( 1 );
+						usleep( 3500 );	// 0.35 seconds
+					
+						if( tr-- <= 0 )
+						{
+							DEBUG("[WS] Quit after 5\n");
+							break;
+						}
+					
+						if( wsd->wsc_UserSession == NULL )
+						{
+							DEBUG("[WS] wsc_UserSession is equal to NULL\n");
+							break;
+						}
+					}
+					
 					DetachWebsocketFromSession( wsd, wsi );
-						
+					
 					if( wsd->wsc_Buffer != NULL )
 					{
 						BufStringDelete( wsd->wsc_Buffer );
@@ -680,7 +707,8 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 							locptr[ znew++ ] = car;
 						}
 					
-						DEBUG("protocol websocket, before write: %s\n", locptr );
+
+						DEBUG("protocol websocket, before write.... %p\n", locptr );
 						if( locptr[ znew-1 ] == 0 )
 						{
 							znew--;
@@ -958,6 +986,8 @@ void *ParseAndCall( WSThreadData *wstd )
 	
 											BufStringDelete( wstd->wstd_Queryrawbs );
 											
+											ParseAndCall( wstd );
+											/*
 											// Increase use for external (parseandcall)
 											
 											UserSession *uc = ( UserSession *)wstd->wstd_WSD->wsc_UserSession;
@@ -989,6 +1019,8 @@ void *ParseAndCall( WSThreadData *wstd )
 													}
 												}
 											}
+											*/
+											
 											wstd = NULL;
 											
 											
@@ -1149,7 +1181,7 @@ void *ParseAndCall( WSThreadData *wstd )
 					{
 						if( strncmp( "request",  in + t[ 6 ].start, t[ 6 ].end-t[ 6 ].start ) == 0 )
 						{
-							if( locus != NULL && wstd != NULL )
+							if( wstd->wstd_WSD->wsc_UserSession != NULL && wstd != NULL && locus->us_Status != USER_SESSION_STATUS_TO_REMOVE )
 							{
 								DEBUG("[WS] Request received\n");
 								char *requestid = NULL;

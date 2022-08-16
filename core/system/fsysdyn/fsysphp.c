@@ -373,7 +373,7 @@ BufStringDisk *PHPCallDisk( const char *command )
 
 BufStringDisk *PHPCallDisk( const char *command )
 {
-	DEBUG("[PHPCallDisk] run app: '%s'\n", command );
+	//DEBUG("[PHPCallDisk] run app: '%s'\n", command );
     
 	NPOpenFD pofd;
 	int err = newpopen( command, &pofd );
@@ -418,7 +418,7 @@ BufStringDisk *PHPCallDisk( const char *command )
 		}
 		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
 
-		DEBUG( "[PHPCallDisk] Adding %d of data\n", size );
+		//DEBUG( "[PHPCallDisk] Adding %d of data\n", size );
 		if( size > 0 )
 		{
 			BufStringDiskAddSize( ls, buf, size );
@@ -426,7 +426,7 @@ BufStringDisk *PHPCallDisk( const char *command )
 		else
 		{
 			errCounter++;
-			DEBUG("[PHPCallDisk] ErrCounter: %d\n", errCounter );
+			//DEBUG("[PHPCallDisk] ErrCounter: %d\n", errCounter );
 
 			break;
 		}
@@ -1502,7 +1502,7 @@ int FileWrite( struct File *f, char *buffer, int size  )
 	SpecialData *sd = (SpecialData *)f->f_SpecialData;
 	if( sd != NULL )
 	{
-		DEBUG("Save to file %s size %d  fileid %p\n", sd->fname, size, sd->fp );
+		//DEBUG("Save to file %s size %d  fileid %p\n", sd->fname, size, sd->fp );
 		result = fwrite( buffer, 1, size, sd->fp );
 	}
 

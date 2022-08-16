@@ -231,6 +231,7 @@ window.Shell = function( appObject )
 			{
 				// Use standard doors
 				let door = ( new Door() ).get( path );
+				door.cancelId = shell.cancelId;
 				door.getIcons( false, function( data )
 				{
 					let info = false;
@@ -2704,7 +2705,7 @@ window.Shell = function( appObject )
 				// 'all' on the end
 				if( !recursive ) recursive = args[ args.length - 1 ].toLowerCase() == 'all' ? true : false;
 
-				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: false, nooverwrite: nooverwrite, shell: shell }, function( result, done )
+				FriendDOS.copyFiles( src, dst, { cancelId: shell.cancelId, recursive: recursive, move: false, nooverwrite: nooverwrite, shell: shell }, function( result, done )
 				{
 					if( !done ) done = false;
 					callback( false, { response: result, done: done } );
@@ -2762,7 +2763,7 @@ window.Shell = function( appObject )
 				}
 
 				// Finally delete
-				FriendDOS.deleteFiles( src, { recursive: recursive, notrash: notrash }, function( result )
+				FriendDOS.deleteFiles( src, { cancelId: shell.cancelId, recursive: recursive, notrash: notrash }, function( result )
 				{
 					callback( false, { response: result, done: true } );
 				} );
@@ -3103,7 +3104,7 @@ window.Shell = function( appObject )
 						return callback( false, { response: 'Could not parse file information.' } );
 					}
 				}
-			} );
+			}, shell.cancelId ? shell.cancelId : false );
 		},		
 		'kill': function( args, callback )
 		{
@@ -4119,7 +4120,7 @@ window.FriendDOS =
 						else flags = { verifiedDestination: true };
 					}
 					cfcbk( src, dest, flags, callback, depth );
-				} );
+				}, flags.shell && flags.shell.cancelId ? flags.shell.cancelId : false );
 			}
 		}
 
@@ -4136,6 +4137,9 @@ window.FriendDOS =
 			// Get door objects
 			let doorSrc = ( new Door() ).get( src );
 			let doorDst = ( new Door() ).get( dest );
+			
+			doorSrc.cancelId = ( flags.shell && flags.shell.cancelId ) ? flags.shell.cancelId : false;
+			doorDst.cancelId = ( flags.shell && flags.shell.cancelId ) ? flags.shell.cancelId : false;
 
 			// Don't copy to self
 			let srcPath = src;
@@ -4342,8 +4346,8 @@ window.FriendDOS =
 									}
 									catch( e )
 									{
-										callback( 'Failed to ' + ( move ? 'move' : 'copy' ) + ' file...', { done: true } );
-										console.log( 'Failed on file ' + dest + ' -> ' + result );
+										//callback( 'Failed to ' + ( move ? 'move' : 'copy' ) + ' file...', { done: true } );
+										//console.log( 'Failed on file ' + dest + ' -> ' + result );
 									}
 								}
 								copyObject.processes++;
@@ -4605,9 +4609,11 @@ window.FriendDOS =
 	},
 
 	// Callback format myFunc( bool return value, data )
-	getFileInfo: function( path, callback )
+	getFileInfo: function( path, callback, cancelId = false )
 	{
 		let l = new Library( 'system.library' );
+		if( cancelId )
+			l.cancelId = cancelId;
 		l.onExecuted = function( e, d )
 		{
 			if( callback ) callback( e == 'ok' ? true : false, d );

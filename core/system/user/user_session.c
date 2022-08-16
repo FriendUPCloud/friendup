@@ -193,6 +193,7 @@ void UserSessionDelete( UserSession *us )
 			if( us->us_DeviceIdentity != NULL )
 			{
 				FFree( us->us_DeviceIdentity );
+				us->us_DeviceIdentity = NULL;
 			}
 			
 			if( us->us_FCID != NULL )
@@ -203,6 +204,7 @@ void UserSessionDelete( UserSession *us )
 			if( us->us_SessionID != NULL )
 			{
 				FFree( us->us_SessionID );
+				us->us_SessionID = NULL;
 			}
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
