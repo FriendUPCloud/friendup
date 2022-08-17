@@ -2122,6 +2122,7 @@ function CloseView( win, delayed )
 						{
 							if( Friend.GUI.view.viewHistory[ a ].windowObject.workspace == globalConfig.workspaceCurrent )
 							{
+								if( currentMovable.windowObject.getFlag( 'sidebarManaged' ) ) continue;
 								// Only activate non minimized views
 								if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 								{
