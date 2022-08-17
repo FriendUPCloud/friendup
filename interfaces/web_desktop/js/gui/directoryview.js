@@ -3796,6 +3796,9 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			if( ( obj.fileInfo.Type == 'Door' || obj.fileInfo.Type == 'Dormant' ) && dv.navMode == 'toolbar' )
 			{
 				let ppath = obj.fileInfo.Path;
+				
+				console.log( 'Adding 3 event on ' + ppath );
+				
 				if( !Workspace.diskNotificationList[ ppath ] )
 				{
 					Workspace.diskNotificationList[ ppath ] = {
@@ -3921,6 +3924,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 
 				// Update on notifications
 				let ppath = obj.fileInfo.Path;
+				
+				console.log( 'Adding event on ' + ppath );
 				
 				if( !Workspace.diskNotificationList[ ppath ] )
 				{
@@ -4547,6 +4552,9 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		} );
 		
 		let ppath = fileInfo.Path;
+		
+		console.log( 'Adding 2 event on ' + ppath );
+		
 		if( !Workspace.diskNotificationList[ ppath ] )
 		{
 			Workspace.diskNotificationList[ ppath ] = {
