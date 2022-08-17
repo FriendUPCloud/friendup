@@ -4572,9 +4572,9 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 					return;
 				}
 				let func = null;
-				func = win.addEvent( 'systemclose', function()
+				func = w.addEvent( 'systemclose', function()
 				{
-					win.RemoveEvent( 'systemclose', func );
+					w.RemoveEvent( 'systemclose', func );
 					let ff = new Library( 'system.library' );
 					ff.addVar( 'sessionid', Workspace.sessionId );
 					ff.addVar( 'path', ppath );
