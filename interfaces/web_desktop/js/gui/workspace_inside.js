@@ -1709,8 +1709,6 @@ var WorkspaceInside = {
 					}
 				}
 				
-				//'{"type":"msg","data":{"type":"request","requestid":"fconn-req-6285s1f0-4umcqc64-6jdr7g36","path":"system.library/file/notificationstart","data":{"sessionid":"6cf2fbb927203ceb133afb8f0ab9bcce4486eb27","path":"Team%20tobj%C3%B8rn%20rott%3ANew%20directory%2F"},"sessionid":"6cf2fbb927203ceb133afb8f0ab9bcce4486eb27"}}'
-				
 				if( msg.data )
 				{
 					console.log( '[REMOVELATER] Got message data!' );
@@ -6901,7 +6899,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 														break;
 													}
 												}
-												if( !ic ) return Workspace.refreshWindowByPath( path );;
+												if( !ic ) return Workspace.refreshWindowByPath( path );
 												for( let b = 0; b < eles.length; b++ )
 												{
 													if( eles[b].getAttribute( 'name' ) == 'PublicLink' )
