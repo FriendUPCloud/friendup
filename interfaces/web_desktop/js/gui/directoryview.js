@@ -168,6 +168,7 @@ DirectoryView = function( winobj, extra )
 						let j = JSON.parse( d );
 						winobj.parentNode.windowObject.addEvent( 'systemclose', function()
 						{
+							winobj.parentNode.windowObject.removeEvent( 'systemclose', func );
 							let ff = new Library( 'system.library' );
 							ff.addVar( 'sessionid', Workspace.sessionId );
 							ff.addVar( 'path', path );
@@ -4814,8 +4815,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		// No door, implement standard refresh
 		else
 		{
-			console.log( 'Standard refresh' );
-			
 			win.refresh = function ( callback )
 			{	
 				this.directoryview.HideShareDialog();
