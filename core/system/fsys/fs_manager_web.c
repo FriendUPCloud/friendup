@@ -43,13 +43,17 @@ static inline char *CutNotificationPath( char *path )
 	{
 		DEBUG("[CutNotificationPath] path %s\n", path );
 		
+		//
+		// If last entry in path is directory (end with /) then
+		//
+		
 		int i, notifPathLen = strlen( notifPath );
 		if( notifPath[ notifPathLen-1 ] == '/' )
 		{
-			notifPathLen-=2;
-			notifPath[ notifPathLen-1 ] = 0;
+			//notifPathLen-=2;
+			//notifPath[ notifPathLen-1 ] = 0;
 		}
-		else
+		else	// seems file was last entry in path, so we have to get directory where file is stored
 		{
 			for( i=notifPathLen ; i >= 0 ; i-- )
 			{
@@ -733,11 +737,22 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										}
 									}
 							
-									BufStringAdd( sql, " ) AND OwnerUserID=" );
-								
 									char num[ 32 ];
-									snprintf( num, sizeof(num), "%ld", (long int)loggedSession->us_UserID );
+									if( loggedSession != NULL )
+									{
+										snprintf( num, sizeof(num),"%ld", (long int)loggedSession->us_UserID );
+									}
+									else
+									{
+										strcpy( num, "0" );
+									}
+
 									BufStringAdd( sql, num );
+						
+									// Create output "JSON"
+									BufStringAdd( result, "ok<!--separate-->[" );
+						
+									// Fetch the result
 							
 									// Create output "JSON"
 									BufStringAdd( result, "ok<!--separate-->[" );
@@ -1947,6 +1962,10 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 											
 												if( wfp != NULL )
 												{
+													wfp->f_ID = dstrootf->f_ID;		// some filesystems may not assign proper deviceid, so we have to do it manually here
+													if( wfp->f_Name ){ FFree( wfp->f_Name ); }
+													wfp->f_Name = StringDuplicate( dstrootf->f_Name );
+													
 													// Using a big buffer!
 													char *dataBuffer = FCalloc( COPY_BUFFER_SIZE, sizeof(char) );
 													if( dataBuffer != NULL )
@@ -1992,9 +2011,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 														}
 														FFree( dataBuffer );
 														
-														char *notifPath = CutNotificationPath( dstpath );
+														DEBUG("--->topath : %s\n", topath );
+														char *notifPath = CutNotificationPath( topath );
 														if( notifPath != NULL )
 														{
+															DEBUG("--->notifPath : %s\n", notifPath );
 															DoorNotificationCommunicateChanges( l, loggedSession, wfp, notifPath );
 															FFree( notifPath );
 														}
@@ -2441,7 +2462,10 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						}
 						i++;
 						
-						sprintf( userid, "%ld", loggedSession->us_User->u_ID );
+						if( loggedSession->us_User != NULL )
+						{
+							sprintf( userid, "%ld", loggedSession->us_User->u_ID );
+						}
 						sprintf( name, "%s", &path[ i ] );
 					}
 					

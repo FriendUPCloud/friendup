@@ -63,10 +63,6 @@ void *get_in_addr(const struct sockaddr *sa) {
 // [Cores]
 // servers=localhost@servername1,192.168.12.1@server2
 
-// we must be sure that task will wait until queue will be ready
-
-pthread_cond_t InitCond = PTHREAD_COND_INITIALIZER;
-pthread_mutex_t InitMutex = PTHREAD_MUTEX_INITIALIZER;
 
 void CommServiceSetupOutgoing( CommService *service );
 

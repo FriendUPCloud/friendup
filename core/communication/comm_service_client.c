@@ -44,9 +44,6 @@
 #include <communication/comm_msg.h>
 #include <system/systembase.h>
 
-extern pthread_cond_t InitCond;
-extern pthread_mutex_t InitMutex;
-
 extern SystemBase *SLIB;
 
 /**
