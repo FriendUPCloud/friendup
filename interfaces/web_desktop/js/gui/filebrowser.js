@@ -177,11 +177,6 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 Friend.FileBrowser.prototype.setPath = function( target, cbk, tempFlags, e )
 {
     console.log( 'Setting path: ' + target );
-    // Already set
-	if( this.flags.path && this.flags.path == target ) 
-	{
-		return;
-	}
 	
 	let winobj = currentMovable.wnidowObject;
 	let path = target;
@@ -220,6 +215,12 @@ Friend.FileBrowser.prototype.setPath = function( target, cbk, tempFlags, e )
 		}
 		f.execute( 'file/notificationstart' );
 		//console.log('notification start ' + path);
+	}
+	
+	// Already set
+	if( this.flags.path && this.flags.path == target ) 
+	{
+		return;
 	}
 	
 	this.tempFlags = false;
