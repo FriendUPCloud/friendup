@@ -4309,7 +4309,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		we.parentWindow = iconObject.window;
 		we.fileInfo = fileInfo;
 		
-		CreateDirectoryView( we );
+		CreateDirectoryView( we ); //
 		
 		let ppath = fileInfo.Path;
 		if( !Workspace.diskNotificationList[ ppath ] )
