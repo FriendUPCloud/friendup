@@ -1941,7 +1941,7 @@ function CloseView( win, delayed )
 			window.currentMovable = null;
 		
 		if( !win.parentNode.parentNode ) return;
-		if( win.parentNode.classList.contains( 'View' ) )
+		if( win.parentNode.classList.contains( 'ViewContainer' ) )
 		{
 			win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
 			console.log( 'Adding closing!' );
