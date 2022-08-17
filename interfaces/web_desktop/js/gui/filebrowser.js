@@ -185,6 +185,8 @@ Friend.FileBrowser.prototype.setPath = function( target, cbk, tempFlags, e )
 	
 	let winobj = currentMovable.wnidowObject;
 	let path = target;
+	
+	console.log( 'Adding event 5 to ' + path );
 			
 	if( !Workspace.diskNotificationList[ path ] )
 	{
