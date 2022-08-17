@@ -3795,6 +3795,50 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			let dv = obj.directoryView ? obj.directoryView : obj.fileInfo.directoryview;
 			if( ( obj.fileInfo.Type == 'Door' || obj.fileInfo.Type == 'Dormant' ) && dv.navMode == 'toolbar' )
 			{
+				let ppath = obj.fileInfo.Path;
+				if( !Workspace.diskNotificationList[ ppath ] )
+				{
+					Workspace.diskNotificationList[ ppath ] = {
+						type: 'directory',
+						view: we
+					};
+					let f = new Library( 'system.library' );
+					f.addVar( 'sessionid', Workspace.sessionId );
+					f.addVar( 'path', ppath );
+					f.onExecuted = function( e, d )
+					{
+						if( e != 'ok' )
+							return;
+					
+						let j;
+						try
+						{
+							j = JSON.parse( d );
+						}
+						catch( e )
+						{
+							console.log( 'Error in JSON format: ', d );
+							return;
+						}
+						we.windowObject.addEvent( 'systemclose', function()
+						{
+							let ff = new Library( 'system.library' );
+							ff.addVar( 'sessionid', Workspace.sessionId );
+							ff.addVar( 'path', ppath );
+							ff.addVar( 'id', j.Result );
+							ff.onExecuted = function( es, ds )
+							{
+								// TODO: Clear it?
+								Workspace.diskNotificationList[ ppath ] = false;
+							}
+							ff.execute( 'file/notificationremove' );
+							//console.log( 'Notification remove: ' + ppath );
+						} );
+					}
+					f.execute( 'file/notificationstart' );
+					//console.log( 'Notification start: ' + ppath );
+				}
+				
 				uniqueView = true;
 				if( obj.fileInfo.Path != obj.fileInfo.Volume )
 				{
