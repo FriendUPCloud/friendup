@@ -2105,6 +2105,7 @@ function CloseView( win, delayed )
 								if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 								{
 									let vh = Friend.GUI.view.viewHistory[ a ];
+									currentMovable = vh;
 									_ActivateWindow( vh );
 									if( vh.content && vh.content.refresh )
 										vh.content.refresh();
@@ -2169,8 +2170,7 @@ function CloseView( win, delayed )
 				}
 			}
 		}
-		if( !Workspace.dashboard )
-			PollTaskbar();
+		PollTaskbar();
 
 		// Remove link to current movable
 		if( win == window.currentMovable ) window.currentMovable = null;
