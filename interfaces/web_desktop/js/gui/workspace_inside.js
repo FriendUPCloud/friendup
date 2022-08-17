@@ -1707,8 +1707,15 @@ var WorkspaceInside = {
 							}
 						}
 					}
+				}
+				
+				//'{"type":"msg","data":{"type":"request","requestid":"fconn-req-6285s1f0-4umcqc64-6jdr7g36","path":"system.library/file/notificationstart","data":{"sessionid":"6cf2fbb927203ceb133afb8f0ab9bcce4486eb27","path":"Team%20tobj%C3%B8rn%20rott%3ANew%20directory%2F"},"sessionid":"6cf2fbb927203ceb133afb8f0ab9bcce4486eb27"}}'
+				
+				if( msg.data )
+				{
+					console.log( '[REMOVELATER] Got message data!' );
 					// TODO: Make this more logical!!!
-					else if( data.path == 'system.library/file/notificationstart' )
+					if( data.path == 'system.library/file/notificationstart' )
 					{
 						if( data.data && data.data.path )
 						{
