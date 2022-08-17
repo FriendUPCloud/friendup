@@ -1929,7 +1929,9 @@ function CloseView( win, delayed )
 {
 	if( !win && window.currentMovable )
 		win = window.currentMovable;
-		
+	
+	let isDialog = false;
+	
 	if( win )
 	{
 		// Clean up!
@@ -1948,6 +1950,7 @@ function CloseView( win, delayed )
 			win.parentNode.parentNode.classList.contains( 'Dialog' ) ||
 			win.parentNode.parentNode.classList.contains( 'FileDialog' ) )
 		{
+			isDialog = true;
 			let qm = null;
 			if( ( qm = win.parentNode.querySelector( '.QuickMenu' ) ) )
 			{
@@ -2102,6 +2105,7 @@ function CloseView( win, delayed )
 								if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 								{
 									let vh = Friend.GUI.view.viewHistory[ a ];
+									console.log( 'Found view: ', vh );
 									_ActivateWindow( vh );
 									if( vh.content && vh.content.refresh )
 										vh.content.refresh();
