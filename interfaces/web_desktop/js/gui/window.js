@@ -2104,6 +2104,7 @@ function CloseView( win, delayed )
 								// Only activate non minimized views
 								if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 								{
+									hideDashboard();
 									let vh = Friend.GUI.view.viewHistory[ a ];
 									console.log( 'Found view: ', vh );
 									_ActivateWindow( vh );
