@@ -4496,7 +4496,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		{
 			Workspace.diskNotificationList[ ppath ] = {
 				type: 'directory',
-				view: we
+				view: win
 			};
 			let f = new Library( 'system.library' );
 			f.addVar( 'sessionid', Workspace.sessionId );
