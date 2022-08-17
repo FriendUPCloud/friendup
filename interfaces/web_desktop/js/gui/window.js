@@ -1193,7 +1193,7 @@ var _activationTarget = null;
 function _ActivateWindow( div, nopoll, e )
 {
     if( div.windowObject && div.windowObject.getFlag( 'invisible' ) == true ) return;
-    if( div.parentNode && div.parentNode.classList.contains( 'Closing' ) return;
+    if( div.parentNode && div.parentNode.classList.contains( 'Closing' ) ) return;
     
     // Dialogs here are not activated
     if( 
