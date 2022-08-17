@@ -197,7 +197,6 @@ if( $args->command )
 							{
 								if( isset( $res->data->id ) && $res->data->id )
 								{
-									
 									// TODO: Look into why you need to run user/update after user/create to create a user in Friend Core ...
 									
 									$data['id'] = $res->data->id;
