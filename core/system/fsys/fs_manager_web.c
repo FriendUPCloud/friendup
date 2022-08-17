@@ -1963,6 +1963,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 												if( wfp != NULL )
 												{
 													wfp->f_ID = dstrootf->f_ID;		// some filesystems may not assign proper deviceid, so we have to do it manually here
+													if( wfp->f_Name ){ FFree( wfp->f_Name ); }
+													wfp->f_Name = StringDuplicate( dstrootf->f_Name );
 													
 													// Using a big buffer!
 													char *dataBuffer = FCalloc( COPY_BUFFER_SIZE, sizeof(char) );
