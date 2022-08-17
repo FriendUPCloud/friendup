@@ -2104,9 +2104,7 @@ function CloseView( win, delayed )
 								// Only activate non minimized views
 								if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 								{
-									hideDashboard();
 									let vh = Friend.GUI.view.viewHistory[ a ];
-									console.log( 'Found view: ', vh );
 									_ActivateWindow( vh );
 									if( vh.content && vh.content.refresh )
 										vh.content.refresh();
@@ -2201,10 +2199,11 @@ function CloseView( win, delayed )
 			return;
 		}
 		
-		if( !currentMovable || ( currentMovable && currentMovable.windowObject.getFlag.dockable && window.showDashboard ) )
+		if( !currentMovable || ( currentMovable && currentMovable.windowObject.getFlag( 'dockable' ) && window.showDashboard ) )
 		{
 			if( window.showDashboard )
 			{
+				console.log( 'showing dash' );
 				_DeactivateWindows();
 				showDashboard();
 				if( window.pollLiveViews )
@@ -2250,6 +2249,7 @@ function CloseView( win, delayed )
 	
 	if( !currentMovable )
 	{
+		console.log( 'No current movable!' );
 	    // If we have a dashboard
 		if( window.showDashboard )
 		    showDashboard();
