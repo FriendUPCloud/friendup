@@ -43,13 +43,17 @@ static inline char *CutNotificationPath( char *path )
 	{
 		DEBUG("[CutNotificationPath] path %s\n", path );
 		
+		//
+		// If last entry in path is directory (end with /) then
+		//
+		
 		int i, notifPathLen = strlen( notifPath );
 		if( notifPath[ notifPathLen-1 ] == '/' )
 		{
 			//notifPathLen-=2;
 			//notifPath[ notifPathLen-1 ] = 0;
 		}
-		else
+		else	// seems file was last entry in path, so we have to get directory where file is stored
 		{
 			for( i=notifPathLen ; i >= 0 ; i-- )
 			{
@@ -2003,9 +2007,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 														}
 														FFree( dataBuffer );
 														
+														DEBUG("--->dstpath : %s\n", dstpath );
 														char *notifPath = CutNotificationPath( dstpath );
 														if( notifPath != NULL )
 														{
+															DEBUG("--->notifPath : %s\n", notifPath );
 															DoorNotificationCommunicateChanges( l, loggedSession, wfp, notifPath );
 															FFree( notifPath );
 														}
