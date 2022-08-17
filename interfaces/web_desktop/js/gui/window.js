@@ -2203,7 +2203,7 @@ function CloseView( win, delayed )
 		{
 			if( window.showDashboard )
 			{
-				console.log( 'showing dash' );
+				console.log( 'showing dash', currentMovable );
 				_DeactivateWindows();
 				showDashboard();
 				if( window.pollLiveViews )
@@ -2249,7 +2249,6 @@ function CloseView( win, delayed )
 	
 	if( !currentMovable )
 	{
-		console.log( 'No current movable!' );
 	    // If we have a dashboard
 		if( window.showDashboard )
 		    showDashboard();
