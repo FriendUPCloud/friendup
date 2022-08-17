@@ -1944,7 +1944,7 @@ function CloseView( win, delayed )
 		if( !win.parentNode.parentNode ) return;
 		if( win.parentNode.classList.contains( 'ViewContainer' ) )
 		{
-			win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
+			win.parentNode.classList.add( 'Closing', 'NoEvents' );
 		}
 		
 		if( win.parentNode.classList.contains( 'Dialog' ) || 
