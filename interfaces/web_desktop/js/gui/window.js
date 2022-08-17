@@ -2169,7 +2169,8 @@ function CloseView( win, delayed )
 				}
 			}
 		}
-		PollTaskbar();
+		if( !Workspace.dashboard )
+			PollTaskbar();
 
 		// Remove link to current movable
 		if( win == window.currentMovable ) window.currentMovable = null;
@@ -2203,7 +2204,7 @@ function CloseView( win, delayed )
 		{
 			if( window.showDashboard )
 			{
-				console.log( 'showing dash', currentMovable );
+				console.log( 'showing dash' );
 				_DeactivateWindows();
 				showDashboard();
 				if( window.pollLiveViews )
