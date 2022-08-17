@@ -1944,6 +1944,7 @@ function CloseView( win, delayed )
 		if( win.parentNode.classList.contains( 'View' ) )
 		{
 			win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
+			console.log( 'Adding closing!' );
 		}
 		
 		if( win.parentNode.classList.contains( 'Dialog' ) || 
@@ -2204,7 +2205,6 @@ function CloseView( win, delayed )
 		{
 			if( window.showDashboard )
 			{
-				console.log( 'showing dash' );
 				_DeactivateWindows();
 				showDashboard();
 				if( window.pollLiveViews )
