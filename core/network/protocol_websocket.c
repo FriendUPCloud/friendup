@@ -41,9 +41,9 @@ extern SystemBase *SLIB;
 typedef struct WSThreadData
 {
 	WSCData						*wstd_WSD;
-	//UserSession					*wstd_UserSession;		// session should be taken from WSCData
+	UserSession					*wstd_UserSession;		// hold session in case when libwebsockets will release WSCData
 	Http						*wstd_Http;
-	char						*wstd_PathParts[ 1024 ];
+	char						*wstd_PathParts[ 1024 ];	// to avoid memory allocation
 	BufString					*wstd_Queryrawbs;
 	char 						*wstd_Requestid;
 	char						*wstd_Path;
@@ -362,6 +362,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 					wstd->wstd_WSD = wsd;
 					wstd->wstd_Msg = in;
 					wstd->wstd_Len = len;
+					wstd->wstd_UserSession = wsd->wsc_UserSession;	// lets be sure that wsd is not released
 
 					//
 					// Using Websocket thread to read/write messages, rest should happen in userspace
@@ -830,7 +831,7 @@ void *ParseAndCall( WSThreadData *wstd )
 	
 	if( wstd->wstd_WSD != NULL )
 	{
-		locus = wstd->wstd_WSD->wsc_UserSession;
+		locus = wstd->wstd_UserSession;
 	}
 	orig = locus;
 	if( orig != NULL )
@@ -1174,7 +1175,7 @@ void *ParseAndCall( WSThreadData *wstd )
 					{
 						if( strncmp( "request",  in + t[ 6 ].start, t[ 6 ].end-t[ 6 ].start ) == 0 )
 						{
-							if( wstd->wstd_WSD->wsc_UserSession != NULL && wstd != NULL && locus->us_Status != USER_SESSION_STATUS_TO_REMOVE )
+							if( wstd->wstd_UserSession != NULL && wstd != NULL && locus->us_Status != USER_SESSION_STATUS_TO_REMOVE )
 							{
 								DEBUG("[WS] Request received\n");
 								char *requestid = NULL;
