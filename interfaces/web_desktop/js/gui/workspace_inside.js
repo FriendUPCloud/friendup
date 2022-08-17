@@ -1708,20 +1708,6 @@ var WorkspaceInside = {
 						}
 					}
 				}
-				
-				if( msg.data )
-				{
-					console.log( '[REMOVELATER] Got message data!' );
-					// TODO: Make this more logical!!!
-					if( data.path == 'system.library/file/notificationstart' )
-					{
-						if( data.data && data.data.path )
-						{
-							Workspace.refreshWindowByPath( data.data.path );
-							console.log( '[REMOVELATER] Refreshing window by path: ' + data.data.path );
-						}
-					}					
-				}
 			}
 		}
 	},
