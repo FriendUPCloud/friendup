@@ -178,7 +178,7 @@ Friend.FileBrowser.prototype.setPath = function( target, cbk, tempFlags, e )
 {
     console.log( 'Setting path: ' + target );
 	
-	let winobj = currentMovable.wnidowObject;
+	let winobj = currentMovable.windowObject;
 	let path = target;
 	
 	console.log( 'Adding event 5 to ' + path );
