@@ -4491,52 +4491,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	// We've clicked on a directory!
 	else if( fileInfo.MetaType == 'Directory' || fileInfo.MetaType == 'Door' )
 	{
-		let ppath = fileInfo.Path;
-		if( !Workspace.diskNotificationList[ ppath ] )
-		{
-			Workspace.diskNotificationList[ ppath ] = {
-				type: 'directory',
-				view: win
-			};
-			let f = new Library( 'system.library' );
-			f.addVar( 'sessionid', Workspace.sessionId );
-			f.addVar( 'path', ppath );
-			f.onExecuted = function( e, d )
-			{
-				if( e != 'ok' )
-					return;
-			
-				let j;
-				try
-				{
-					j = JSON.parse( d );
-				}
-				catch( e )
-				{
-					console.log( 'Error in JSON format: ', d );
-					return;
-				}
-				let func = null;
-				func = win.addEvent( 'systemclose', function()
-				{
-					win.RemoveEvent( 'systemclose', func );
-					let ff = new Library( 'system.library' );
-					ff.addVar( 'sessionid', Workspace.sessionId );
-					ff.addVar( 'path', ppath );
-					ff.addVar( 'id', j.Result );
-					ff.onExecuted = function( es, ds )
-					{
-						// TODO: Clear it?
-						Workspace.diskNotificationList[ ppath ] = false;
-					}
-					ff.execute( 'file/notificationremove' );
-					//console.log( 'Notification remove: ' + ppath );
-				} );
-			}
-			f.execute( 'file/notificationstart' );
-			//console.log( 'Notification start: ' + ppath );
-		}
-	
 		// Try to reuse the directoryview extra flags
 		let extra = fileInfo.directoryview ? fileInfo.directoryview.oldExtra : null;
 		
@@ -4591,6 +4545,52 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			'volume'    : isVolume,
 			'clickableTitle': true
 		} );
+		
+		let ppath = fileInfo.Path;
+		if( !Workspace.diskNotificationList[ ppath ] )
+		{
+			Workspace.diskNotificationList[ ppath ] = {
+				type: 'directory',
+				view: w
+			};
+			let f = new Library( 'system.library' );
+			f.addVar( 'sessionid', Workspace.sessionId );
+			f.addVar( 'path', ppath );
+			f.onExecuted = function( e, d )
+			{
+				if( e != 'ok' )
+					return;
+			
+				let j;
+				try
+				{
+					j = JSON.parse( d );
+				}
+				catch( e )
+				{
+					console.log( 'Error in JSON format: ', d );
+					return;
+				}
+				let func = null;
+				func = win.addEvent( 'systemclose', function()
+				{
+					win.RemoveEvent( 'systemclose', func );
+					let ff = new Library( 'system.library' );
+					ff.addVar( 'sessionid', Workspace.sessionId );
+					ff.addVar( 'path', ppath );
+					ff.addVar( 'id', j.Result );
+					ff.onExecuted = function( es, ds )
+					{
+						// TODO: Clear it?
+						Workspace.diskNotificationList[ ppath ] = false;
+					}
+					ff.execute( 'file/notificationremove' );
+					//console.log( 'Notification remove: ' + ppath );
+				} );
+			}
+			f.execute( 'file/notificationstart' );
+			//console.log( 'Notification start: ' + ppath );
+		}
 		
 		if( ocallback ) ocallback();
 
