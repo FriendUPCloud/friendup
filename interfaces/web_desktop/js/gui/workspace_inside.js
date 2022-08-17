@@ -7391,14 +7391,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								}
 							}
 						
-							console.log( 'UPLOAD COMPLETED ' + ee, dd );
 							Notify( { title: i18n( 'i18n_upload_completed' ), text: i18n( 'i18n_upload_completed_description' ) } );
 							if( typeof Workspace.uploadWindow.close == 'function' ) Workspace.uploadWindow.close();
 							Workspace.refreshWindowByPath( uppath );
 						}
 						else
 						{
-							console.log( 'ERROR UPLOAD ' + dd );
 							Notify( { title: i18n( 'i18n_upload_failed' ), text: i18n( 'i18n_upload_failed_description' ) } );
 						}
 					
