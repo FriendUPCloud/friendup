@@ -197,7 +197,6 @@ if( $args->command )
 							{
 								if( isset( $res->data->id ) && $res->data->id )
 								{
-									
 									// TODO: Look into why you need to run user/update after user/create to create a user in Friend Core ...
 									
 									$data['id'] = $res->data->id;
@@ -397,6 +396,11 @@ if( $args->command )
 			
 			if( isset( $data['id'] ) && $data['id'] )
 			{
+				// Check if the user is in quarantine
+				if( $quar = $SqlDatabase->fetchObject( 'SELECT q.* FROM UserQuarantine q, FUser u WHERE u.ID = q.UserID AND u.LoginTime=0 AND q.Verified=\'0\' AND q.UserID=\'' . intval( $data['id'], 10 ) . '\'' ) )
+				{
+					die( 'fail<!--separate-->{"message":"Can not update a quarantined user.","response":-1}' );
+				}
 				
 				if( $perm = Permissions( 'write', 'application', "'System','Admin'", [ 
 					'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
