@@ -2007,8 +2007,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 														}
 														FFree( dataBuffer );
 														
-														DEBUG("--->dstpath : %s\n", dstpath );
-														char *notifPath = CutNotificationPath( dstpath );
+														DEBUG("--->topath : %s\n", topath );
+														char *notifPath = CutNotificationPath( topath );
 														if( notifPath != NULL )
 														{
 															DEBUG("--->notifPath : %s\n", notifPath );
