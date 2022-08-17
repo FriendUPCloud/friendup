@@ -4814,6 +4814,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		// No door, implement standard refresh
 		else
 		{
+			console.log( 'Standard refresh' );
+			
 			win.refresh = function ( callback )
 			{	
 				this.directoryview.HideShareDialog();
