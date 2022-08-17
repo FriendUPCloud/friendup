@@ -3823,7 +3823,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 						let func = null;
 						func = we.windowObject.addEvent( 'systemclose', function()
 						{
-							we.windowObject.RemoveEvent( 'systemclose', func );
+							we.windowObject.removeEvent( 'systemclose', func );
 							let ff = new Library( 'system.library' );
 							ff.addVar( 'sessionid', Workspace.sessionId );
 							ff.addVar( 'path', ppath );
@@ -3949,7 +3949,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 						let func = null;
 						func = we.windowObject.addEvent( 'systemclose', function()
 						{
-							we.windowObject.RemoveEvent( 'systemclose', func );
+							we.windowObject.removeEvent( 'systemclose', func );
 							let ff = new Library( 'system.library' );
 							ff.addVar( 'sessionid', Workspace.sessionId );
 							ff.addVar( 'path', ppath );
@@ -4574,7 +4574,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 				let func = null;
 				func = w.addEvent( 'systemclose', function()
 				{
-					w.RemoveEvent( 'systemclose', func );
+					w.removeEvent( 'systemclose', func );
 					let ff = new Library( 'system.library' );
 					ff.addVar( 'sessionid', Workspace.sessionId );
 					ff.addVar( 'path', ppath );
