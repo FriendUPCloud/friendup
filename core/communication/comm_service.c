@@ -258,7 +258,6 @@ int CommServiceStart( CommService *s )
 	{
 		Log( FLOG_INFO, "[COMMSERV] Communication service SERVER start\n");
 
-		pthread_mutex_init( &InitMutex, NULL );
 
 #ifdef USE_SELECT
 		s->s_Thread = ThreadNew( CommServiceThreadServerSelect, s, TRUE, NULL );
