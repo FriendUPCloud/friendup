@@ -2024,6 +2024,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 													{
 														DEBUG( "[FSMWebRequest] We could not do anything with the bad file pointers..\n" );
 													}
+													
+													if( wfp->f_Name ){ FFree( wfp->f_Name ); }
+													
 													closeError = dsthand->FileClose( dstrootf, wfp );
 												}
 											
