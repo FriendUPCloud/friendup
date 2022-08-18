@@ -152,6 +152,8 @@ void CommServiceDelete( CommService *s )
 		
 		DEBUG2("[COMMSERV] : Quit set to TRUE, sending signal\n");
 		
+		int try = 10;
+		
 		while( TRUE )
 		{
 			char ch = 'q';
@@ -163,6 +165,11 @@ void CommServiceDelete( CommService *s )
 			}
 			DEBUG("sending quit signal\n");
 			sleep( 1 );
+			
+			if( tr-- <= 0 )
+			{
+				break;
+			}
 		}
 		DEBUG2("[COMMSERV]  close thread\n");
 		
