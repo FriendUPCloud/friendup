@@ -166,7 +166,7 @@ void CommServiceDelete( CommService *s )
 			DEBUG("sending quit signal\n");
 			sleep( 1 );
 			
-			if( tr-- <= 0 )
+			if( try-- <= 0 )
 			{
 				break;
 			}
