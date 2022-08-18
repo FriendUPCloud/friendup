@@ -739,7 +739,10 @@ int CommServiceThreadServer( FThread *ptr )
 										FERROR("Cannot remove socket connection\n");
 									}
 									*/
-									sock->s_Data = NULL;
+									if( sock != NULL )
+									{
+										sock->s_Data = NULL;
+									}
 									loccon->fc_Socket = NULL;
 									loccon->fc_Status = CONNECTION_STATUS_DISCONNECTED;
 								
