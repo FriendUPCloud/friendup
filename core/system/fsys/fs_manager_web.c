@@ -926,12 +926,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						
 								if( notify == TRUE )
 								{
-									char *notifPath = CutNotificationPath( origDecodedPath );
-									if( notifPath != NULL )
-									{
-										DoorNotificationCommunicateChanges( l, loggedSession, actDev, notifPath );
-										FFree( notifPath );
-									}
+									DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
 								}
 							
 								// delete Thumbnails
@@ -1045,12 +1040,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							{
 								// send information about changes on disk
 
-								char *notifPath = CutNotificationPath( origDecodedPath );
-								if( notifPath != NULL )
-								{
-									DoorNotificationCommunicateChanges( l, loggedSession, actDev, notifPath );
-									FFree( notifPath );
-								}
+								DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
 							}
 							// delete file in cache
 							CacheUFManagerFileDelete( l->sl_CacheUFM, loggedSession->us_ID, actDev->f_ID, origDecodedPath );
@@ -1189,12 +1179,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									
 									if( notify == TRUE )
 									{
-										char *notifPath = CutNotificationPath( origDecodedPath );
-										if( notifPath != NULL )
-										{
-											DoorNotificationCommunicateChanges( l, loggedSession, actDev, notifPath );
-											FFree( notifPath );
-										}
+										DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
 									}
 								}
 								HttpAddTextContent( response, tmp );
@@ -1801,12 +1786,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							
 									if( notify == TRUE )
 									{
-										char *notifPath = CutNotificationPath( origDecodedPath );
-										if( notifPath != NULL )
-										{	
-											DoorNotificationCommunicateChanges( l, loggedSession, actDev, notifPath );
-											FFree( notifPath );
-										}
+										DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
 									}
 								}
 								else
@@ -1975,13 +1955,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 														FFree( dataBuffer );
 														
 														DEBUG("--->topath : %s\n", topath );
-														char *notifPath = CutNotificationPath( topath );
-														if( notifPath != NULL )
-														{
-															DEBUG("--->notifPath : %s\n", notifPath );
-															DoorNotificationCommunicateChanges( l, loggedSession, wfp, notifPath );
-															FFree( notifPath );
-														}
+														DoorNotificationCommunicateChanges( l, loggedSession, wfp, topath );
 													}
 													else
 													{
@@ -2346,14 +2320,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					
 					if( notify == TRUE )
 					{
-						char *notifPath = CutNotificationPath( origDecodedPath );
-						if( notifPath != NULL )
-						{
-							DoorNotificationCommunicateChanges( l, loggedSession, actDev, notifPath );
-							FFree( notifPath );
-						}
-						
-						//DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
+						DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
 					}
 					
 					DEBUG("[FSMWebRequest] Upload done\n");

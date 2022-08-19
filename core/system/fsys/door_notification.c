@@ -424,6 +424,11 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses __attribute_
 		int lastSlashPosition = 0;
 		unsigned int i;
 		unsigned int len = strlen( path );
+		
+		//
+		// We need to get device name and path name which will
+		//
+		
 		for( i=2; i < len ; i++ )
 		{
 			if( path[ i ] == ':' )
@@ -435,6 +440,11 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses __attribute_
 			{
 				lastSlashPosition = i;
 			}
+		}
+		
+		if( lastSlashPosition != (len-1) )
+		{
+			pathNoDevice[ lastSlashPosition ] = 0;
 		}
 		
 		
