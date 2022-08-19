@@ -422,6 +422,7 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses __attribute_
 	{
 		char *pathNoDevice = path;
 		int lastSlashPosition = 0;
+		int preLastSlashPosition = 0;
 		unsigned int i;
 		unsigned int len = strlen( path );
 		
@@ -434,10 +435,12 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses __attribute_
 			if( path[ i ] == ':' )
 			{
 				pathNoDevice = &(path[ i+1 ]);
+				preLastSlashPosition = i;
 				lastSlashPosition = i;
 			}
 			else if( path[ i ] == '/' )
 			{
+				preLastSlashPosition = lastSlashPosition;
 				lastSlashPosition = i;
 			}
 		}
@@ -446,7 +449,7 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses __attribute_
 		
 		if( lastSlashPosition != (len-1) )
 		{
-			pathNoDevice[ lastSlashPosition ] = 0;
+			pathNoDevice[ preLastSlashPosition ] = 0;
 		}
 		
 		
