@@ -447,7 +447,7 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses __attribute_
 		
 		DEBUG("[DoorNotificationCommunicateChanges] lastSlashPosition %d (len-1) %d string %s\n", lastSlashPosition, (len-1), pathNoDevice );
 		
-		if( lastSlashPosition != (len-1) )
+		if( lastSlashPosition == (len-1) )
 		{
 			pathNoDevice[ preLastSlashPosition ] = 0;
 		}
