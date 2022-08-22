@@ -1179,6 +1179,15 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									
 									if( notify == TRUE )
 									{
+										if( origDecodedPath != NULL )
+										{
+											int len = strlen( origDecodedPath );
+											if( origDecodedPath[ len-1 ] == '/' )
+											{
+												origDecodedPath[ len-1 ] = 0;
+											}
+										}
+										
 										DEBUG("origDecodedPath %s\n", origDecodedPath );
 										DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
 									}
