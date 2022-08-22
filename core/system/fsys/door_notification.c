@@ -447,10 +447,10 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses __attribute_
 		
 		DEBUG("[DoorNotificationCommunicateChanges] lastSlashPosition %d (len-1) %d string %s\n", lastSlashPosition, (len-1), pathNoDevice );
 		
-		if( lastSlashPosition == (len-1) )
-		{
-			path[ preLastSlashPosition ] = 0;
-		}
+		//if( lastSlashPosition == (len-1) )
+		//{
+		//	path[ preLastSlashPosition ] = 0;
+		//}
 		
 		
 		DEBUG("[DoorNotificationCommunicateChanges] Lock communicate path: %s changes: %s\n", path, pathNoDevice );
