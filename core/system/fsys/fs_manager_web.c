@@ -2076,6 +2076,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CANNOT_COPY_OVER_SAME_FILE], DICT_CANNOT_COPY_OVER_SAME_FILE );
 							HttpAddTextContent( response, dictmsgbuf );
 						}
+						
+						if( topath != NULL )
+						{
+							FFree( topath );
+						}
 					}
 					else
 					{
