@@ -121,8 +121,6 @@ void CommServiceDelete( CommService *s )
 		int retry = 20;
 		s->s_Quit = TRUE;
 		
-		/*
-
 		DEBUG2("[COMMSERV] CommunicationServiceDelete 1\n");
 		
 		if( FRIEND_MUTEX_LOCK( &s->s_CondMutex ) == 0 )
@@ -130,7 +128,6 @@ void CommServiceDelete( CommService *s )
 			pthread_cond_broadcast( &s->s_DataReceivedCond );
 			FRIEND_MUTEX_UNLOCK( &s->s_CondMutex );
 		}
-		*/
 		
 		DEBUG2("[COMMSERV] CommunicationServiceDelete 2\n");
 		COMMSERVICE_USE( s );
