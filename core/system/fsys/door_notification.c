@@ -354,6 +354,49 @@ AND DeviceID = %lu", path, parentPath, device->f_ID );
 	return rootLock;
 }
 
+
+
+/*
+
+//
+// Internal function to cut path from path+filename
+//
+
+static inline char *CutNotificationPath( char *path )
+{
+	char *notifPath = StringDuplicate( path );
+	if( notifPath != NULL )
+	{
+		DEBUG("[CutNotificationPath] path %s\n", path );
+		
+		//
+		// If last entry in path is directory (end with /) then
+		//
+		
+		int i, notifPathLen = strlen( notifPath );
+		if( notifPath[ notifPathLen-1 ] == '/' )
+		{
+			//notifPathLen-=2;
+			//notifPath[ notifPathLen-1 ] = 0;
+		}
+		else	// seems file was last entry in path, so we have to get directory where file is stored
+		{
+			for( i=notifPathLen ; i >= 0 ; i-- )
+			{
+				if( notifPath[ i ] == '/' || notifPath[ i ] == ':' )
+				{
+					notifPath[ i+1 ] = 0;
+					break;
+				}
+			}
+		}
+		
+		DEBUG("[CutNotificationPath] path changed %s\n", notifPath );
+	}
+	return notifPath;
+}
+ */
+
 /**
  * Send notification to users about changes in the path
  *
@@ -378,15 +421,38 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses __attribute_
 	if( sqllib != NULL )
 	{
 		char *pathNoDevice = path;
+		int lastSlashPosition = 0;
+		int preLastSlashPosition = 0;
 		unsigned int i;
-		for( i=2; i < strlen( path ) ; i++ )
+		unsigned int len = strlen( path );
+		
+		//
+		// We need to get device name and path name which will
+		//
+		
+		for( i=2; i < len ; i++ )
 		{
 			if( path[ i ] == ':' )
 			{
 				pathNoDevice = &(path[ i+1 ]);
-				break;
+				preLastSlashPosition = i;
+				lastSlashPosition = i;
+			}
+			else if( path[ i ] == '/' )
+			{
+				preLastSlashPosition = lastSlashPosition;
+				lastSlashPosition = i;
 			}
 		}
+		
+		DEBUG("[DoorNotificationCommunicateChanges] lastSlashPosition %d (len-1) %d string %s\n", lastSlashPosition, (len-1), pathNoDevice );
+		
+		//if( lastSlashPosition == (len-1) )
+		//{
+		//	path[ preLastSlashPosition ] = 0;
+		//}
+		
+		
 		DEBUG("[DoorNotificationCommunicateChanges] Lock communicate path: %s changes: %s\n", path, pathNoDevice );
 		
 		DoorNotification *notification = DoorNotificationGetNotificationsFromPath( sqllib, device, pathNoDevice );

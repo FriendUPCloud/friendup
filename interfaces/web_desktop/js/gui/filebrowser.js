@@ -176,13 +176,49 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 // Supported flags ( { lockHistory: true|false } )
 Friend.FileBrowser.prototype.setPath = function( target, cbk, tempFlags, e )
 {
-    console.log( 'Setting path: ' + target );
-    // Already set
+	let winobj = currentMovable.windowObject;
+	let path = target;
+			
+	if( !Workspace.diskNotificationList[ path ] )
+	{
+		Workspace.diskNotificationList[ path ] = {
+			type: 'directory',
+			view: winobj
+		};
+		let f = new Library( 'system.library' );
+		f.addVar( 'sessionid', Workspace.sessionId );
+		f.addVar( 'path', path );
+		f.onExecuted = function( e, d )
+		{
+			if( e == 'ok' )
+			{
+				let j = JSON.parse( d );
+				winobj.addEvent( 'systemclose', function()
+				{
+					winobj.removeEvent( 'systemclose', func );
+					let ff = new Library( 'system.library' );
+					ff.addVar( 'sessionid', Workspace.sessionId );
+					ff.addVar( 'path', path );
+					ff.addVar( 'id', j.Result );
+					ff.onExecuted = function( es, ds )
+					{
+						Workspace.diskNotificationList[ path ] = false;
+					}
+					ff.execute( 'file/notificationremove' );
+				} );
+			}
+			//console.log( 'File notification start result: ' + e, d );
+		}
+		f.execute( 'file/notificationstart' );
+		//console.log('notification start ' + path);
+	}
+	
+	// Already set
 	if( this.flags.path && this.flags.path == target ) 
 	{
 		return;
 	}
-
+	
 	this.tempFlags = false;
 	this.flags.path = target; // This is the current target path..
 	if( tempFlags ) this.tempFlags = tempFlags;

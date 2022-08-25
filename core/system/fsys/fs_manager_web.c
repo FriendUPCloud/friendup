@@ -32,44 +32,6 @@ if( PTH[ INT ] == '/' || PTH[ INT ] == ':' || PTH[ INT ] == '\'' ) \
 	break; \
 }
 
-//
-// Internal function to cut path from path+filename
-//
-
-static inline char *CutNotificationPath( char *path )
-{
-	char *notifPath = StringDuplicate( path );
-	if( notifPath != NULL )
-	{
-		DEBUG("[CutNotificationPath] path %s\n", path );
-		
-		//
-		// If last entry in path is directory (end with /) then
-		//
-		
-		int i, notifPathLen = strlen( notifPath );
-		if( notifPath[ notifPathLen-1 ] == '/' )
-		{
-			//notifPathLen-=2;
-			//notifPath[ notifPathLen-1 ] = 0;
-		}
-		else	// seems file was last entry in path, so we have to get directory where file is stored
-		{
-			for( i=notifPathLen ; i >= 0 ; i-- )
-			{
-				if( notifPath[ i ] == '/' || notifPath[ i ] == ':' )
-				{
-					notifPath[ i+1 ] = 0;
-					break;
-				}
-			}
-		}
-		
-		DEBUG("[CutNotificationPath] path changed %s\n", notifPath );
-	}
-	return notifPath;
-}
-
 /**
  * Filesystem web calls handler
  *
@@ -963,12 +925,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						
 								if( notify == TRUE )
 								{
-									char *notifPath = CutNotificationPath( origDecodedPath );
-									if( notifPath != NULL )
-									{
-										DoorNotificationCommunicateChanges( l, loggedSession, actDev, notifPath );
-										FFree( notifPath );
-									}
+									DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
 								}
 							
 								// delete Thumbnails
@@ -1082,12 +1039,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							{
 								// send information about changes on disk
 
-								char *notifPath = CutNotificationPath( origDecodedPath );
-								if( notifPath != NULL )
-								{
-									DoorNotificationCommunicateChanges( l, loggedSession, actDev, notifPath );
-									FFree( notifPath );
-								}
+								DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
 							}
 							// delete file in cache
 							CacheUFManagerFileDelete( l->sl_CacheUFM, loggedSession->us_ID, actDev->f_ID, origDecodedPath );
@@ -1226,12 +1178,17 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									
 									if( notify == TRUE )
 									{
-										char *notifPath = CutNotificationPath( origDecodedPath );
-										if( notifPath != NULL )
+										if( origDecodedPath != NULL )
 										{
-											DoorNotificationCommunicateChanges( l, loggedSession, actDev, notifPath );
-											FFree( notifPath );
+											int len = strlen( origDecodedPath );
+											if( origDecodedPath[ len-1 ] == '/' )
+											{
+												origDecodedPath[ len-1 ] = 0;
+											}
 										}
+										
+										DEBUG("origDecodedPath %s\n", origDecodedPath );
+										DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
 									}
 								}
 								HttpAddTextContent( response, tmp );
@@ -1838,12 +1795,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							
 									if( notify == TRUE )
 									{
-										char *notifPath = CutNotificationPath( origDecodedPath );
-										if( notifPath != NULL )
-										{	
-											DoorNotificationCommunicateChanges( l, loggedSession, actDev, notifPath );
-											FFree( notifPath );
-										}
+										DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
 									}
 								}
 								else
@@ -2012,18 +1964,15 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 														FFree( dataBuffer );
 														
 														DEBUG("--->topath : %s\n", topath );
-														char *notifPath = CutNotificationPath( topath );
-														if( notifPath != NULL )
-														{
-															DEBUG("--->notifPath : %s\n", notifPath );
-															DoorNotificationCommunicateChanges( l, loggedSession, wfp, notifPath );
-															FFree( notifPath );
-														}
+														DoorNotificationCommunicateChanges( l, loggedSession, wfp, topath );
 													}
 													else
 													{
 														DEBUG( "[FSMWebRequest] We could not do anything with the bad file pointers..\n" );
 													}
+													
+													if( wfp->f_Name ){ FFree( wfp->f_Name ); }
+													
 													closeError = dsthand->FileClose( dstrootf, wfp );
 												}
 											
@@ -2125,6 +2074,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							char dictmsgbuf[ 256 ];
 							snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CANNOT_COPY_OVER_SAME_FILE], DICT_CANNOT_COPY_OVER_SAME_FILE );
 							HttpAddTextContent( response, dictmsgbuf );
+						}
+						
+						if( topath != NULL )
+						{
+							FFree( topath );
 						}
 					}
 					else
@@ -2380,14 +2334,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					
 					if( notify == TRUE )
 					{
-						char *notifPath = CutNotificationPath( origDecodedPath );
-						if( notifPath != NULL )
-						{
-							DoorNotificationCommunicateChanges( l, loggedSession, actDev, notifPath );
-							FFree( notifPath );
-						}
-						
-						//DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
+						DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
 					}
 					
 					DEBUG("[FSMWebRequest] Upload done\n");

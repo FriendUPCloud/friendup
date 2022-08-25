@@ -1193,6 +1193,7 @@ var _activationTarget = null;
 function _ActivateWindow( div, nopoll, e )
 {
     if( div.windowObject && div.windowObject.getFlag( 'invisible' ) == true ) return;
+    if( div.parentNode && div.parentNode.classList.contains( 'Closing' ) ) return;
     
     // Dialogs here are not activated
     if( 
@@ -1929,7 +1930,9 @@ function CloseView( win, delayed )
 {
 	if( !win && window.currentMovable )
 		win = window.currentMovable;
-		
+	
+	let isDialog = false;
+	
 	if( win )
 	{
 		// Clean up!
@@ -1939,15 +1942,16 @@ function CloseView( win, delayed )
 			window.currentMovable = null;
 		
 		if( !win.parentNode.parentNode ) return;
-		if( win.parentNode.classList.contains( 'View' ) )
+		if( win.parentNode.classList.contains( 'ViewContainer' ) )
 		{
-			win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
+			win.parentNode.classList.add( 'Closing', 'NoEvents' );
 		}
 		
 		if( win.parentNode.classList.contains( 'Dialog' ) || 
 			win.parentNode.parentNode.classList.contains( 'Dialog' ) ||
 			win.parentNode.parentNode.classList.contains( 'FileDialog' ) )
 		{
+			isDialog = true;
 			let qm = null;
 			if( ( qm = win.parentNode.querySelector( '.QuickMenu' ) ) )
 			{
@@ -2102,6 +2106,7 @@ function CloseView( win, delayed )
 								if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 								{
 									let vh = Friend.GUI.view.viewHistory[ a ];
+									currentMovable = vh;
 									_ActivateWindow( vh );
 									if( vh.content && vh.content.refresh )
 										vh.content.refresh();
@@ -2117,6 +2122,7 @@ function CloseView( win, delayed )
 						{
 							if( Friend.GUI.view.viewHistory[ a ].windowObject.workspace == globalConfig.workspaceCurrent )
 							{
+								if( Friend.GUI.view.viewHistory[ a ].windowObject.getFlag( 'sidebarManaged' ) ) continue;
 								// Only activate non minimized views
 								if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 								{
@@ -2196,7 +2202,7 @@ function CloseView( win, delayed )
 			return;
 		}
 		
-		if( !currentMovable || ( currentMovable && currentMovable.windowObject.getFlag.dockable && window.showDashboard ) )
+		if( !currentMovable || ( currentMovable && currentMovable.windowObject.getFlag( 'dockable' ) && window.showDashboard ) )
 		{
 			if( window.showDashboard )
 			{

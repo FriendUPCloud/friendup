@@ -164,6 +164,8 @@ void CommServiceDelete( CommService *s )
 		
 		DEBUG2("[COMMSERV] : Quit set to TRUE, sending signal\n");
 		
+		int try = 10;
+		
 		while( TRUE )
 		{
 			char ch = 'q';
@@ -175,7 +177,8 @@ void CommServiceDelete( CommService *s )
 			}
 			DEBUG("sending quit signal\n");
 			sleep( 1 );
-			if( (retry++) >= 20 )	// this is happening during shotdown, we cannot block service
+			
+			if( try-- <= 0 )
 			{
 				break;
 			}
@@ -760,7 +763,10 @@ int CommServiceThreadServer( FThread *ptr )
 										FERROR("Cannot remove socket connection\n");
 									}
 									*/
-									sock->s_Data = NULL;
+									if( sock != NULL )
+									{
+										sock->s_Data = NULL;
+									}
 									loccon->fc_Socket = NULL;
 									loccon->fc_Status = CONNECTION_STATUS_DISCONNECTED;
 								
