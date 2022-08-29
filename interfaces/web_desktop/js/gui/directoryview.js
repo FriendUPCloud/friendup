@@ -168,7 +168,7 @@ DirectoryView = function( winobj, extra )
 						let j = JSON.parse( d );
 						winobj.parentNode.windowObject.addEvent( 'systemclose', function()
 						{
-							winobj.parentNode.windowObject.removeEvent( 'systemclose', func );
+							winobj.parentNode.windowObject.removeEvent( 'systemclose', this );
 							let ff = new Library( 'system.library' );
 							ff.addVar( 'sessionid', Workspace.sessionId );
 							ff.addVar( 'path', path );
