@@ -4678,7 +4678,7 @@ window.FriendDOS =
 	},
 	
 	// Opens a window based on filepath (used for opening files hosted external)  
-	openWindowByFilename: function( fileInfo, ext )
+	openWindowByFilename: function( fileInfo, ext, appId = false )
 	{
 		if( typeof( fileInfo ) === "string" )
 		{
@@ -4712,7 +4712,8 @@ window.FriendDOS =
 			MetaType     : ( fileInfo.MetaType     ? fileInfo.MetaType     : 'File' ),
 			Path         : ( fileInfo.Path         ? fileInfo.Path         : ''     ),
 			Type         : ( fileInfo.Type         ? fileInfo.Type         : 'File' ),
-			downloadhref : ( fileInfo.downloadhref ? fileInfo.downloadhref : ''     )
+			downloadhref : ( fileInfo.downloadhref ? fileInfo.downloadhref : ''     ),
+			applicationId: appId
 		};
 		
 		return OpenWindowByFileinfo( fileInfo );
