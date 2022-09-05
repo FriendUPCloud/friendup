@@ -4436,6 +4436,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	    if( fileInfo.applicationId )
 		{
 		    iconObject.applicationId = fileInfo.applicationId;
+		    console.log( 'Setting app id: ' + iconObject.applicationId );
 		}
 		Friend.startImageViewer( iconObject, { parentView: currentMovable, recent: fromFolder ? false : 'dashboard' } );
 	}
