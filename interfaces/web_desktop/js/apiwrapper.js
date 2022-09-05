@@ -484,7 +484,6 @@ function apiWrapper( event, force )
 						    {
 						        appId = currentMovable.windowObject.applicationId;
 						    }
-						    console.log( 'openWindowByFilename: ', msg.args, 'App id: ' + appId );
 							Friend.DOS.openWindowByFilename( msg.args.fileInfo, msg.args.ext, appId );
 						}
 						break;
