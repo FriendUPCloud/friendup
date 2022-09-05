@@ -479,6 +479,7 @@ function apiWrapper( event, force )
 					case 'openWindowByFilename':
 						if( msg.args )
 						{
+						    console.log( 'openWindowByFilename: ', msg.args );
 							Friend.DOS.openWindowByFilename( msg.args.fileInfo, msg.args.ext );
 						}
 						break;
