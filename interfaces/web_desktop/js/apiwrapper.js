@@ -479,12 +479,12 @@ function apiWrapper( event, force )
 					case 'openWindowByFilename':
 						if( msg.args )
 						{
-						    console.log( 'openWindowByFilename: ', msg.args );
 						    let appId = false;
 						    if( currentMovable && currentMovable.windowObject && currentMovable.windowObject.applicationId )
 						    {
 						        appId = currentMovable.windowObject.applicationId;
 						    }
+						    console.log( 'openWindowByFilename: ', msg.args, 'App id: ' + appId );
 							Friend.DOS.openWindowByFilename( msg.args.fileInfo, msg.args.ext, appId );
 						}
 						break;
