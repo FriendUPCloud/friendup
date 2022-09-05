@@ -4716,8 +4716,6 @@ window.FriendDOS =
 			applicationId: appId
 		};
 		
-		console.log( 'Sending file info: ', fileInfo );
-		
 		return OpenWindowByFileinfo( fileInfo );
 	}
 	
