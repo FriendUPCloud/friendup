@@ -10,6 +10,8 @@
 
 var _dialogStorage = {};
 
+let fileDialogAllowedChars = 'abcdefghijklmnopqrstuvwxyzæøå1234567890_-ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ() .';
+
 // Opens a file dialog connected to an application
 Filedialog = function( object, triggerfunction, path, type, filename, title )
 {	
