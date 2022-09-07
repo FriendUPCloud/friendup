@@ -2875,9 +2875,16 @@ function CheckScreenTitle( screen, force )
 		if( obj && tit )
 		{
 			obj.setFlag( 'title', tit );
-			if( tit.indexOf( Friend.windowBaseString ) < 0 )
-				tit += ' - ' + Friend.windowBaseString;
-			document.title = tit;
+			if( Friend.windowBaseStringRules && Friend.windowBaseStringRules == 'replace' )
+			{
+				document.title = Friend.windowBaseString;
+			}
+			else
+			{
+				if( tit.indexOf( Friend.windowBaseString ) < 0 )
+					tit += ' - ' + Friend.windowBaseString;
+				document.title = tit;
+			}
 		}
 		
 		// Enable the global menu
