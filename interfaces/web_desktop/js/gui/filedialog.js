@@ -10,8 +10,6 @@
 
 var _dialogStorage = {};
 
-let fileDialogAllowedChars = 'abcdefghijklmnopqrstuvwxyzæøå1234567890_-ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ() .';
-
 // Opens a file dialog connected to an application
 Filedialog = function( object, triggerfunction, path, type, filename, title )
 {	
@@ -321,9 +319,46 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			}
 		}
 
+		// Check if the filename has good chars
+		w.checkFilename = function( filename )
+		{
+			if( filename.length < 1 ) return false;
+			let fileDialogAllowedChars = 'abcdefghijklmnopqrstuvwxyzæøå1234567890_-ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ() .';
+			let outName = '';
+			let finalReturn = true;
+			console.log( 'We have filename: ' + filename );
+			for( let a = 0; a < filename.length; a++ )
+			{
+				let found = false;
+				for( let b = 0; b < fileDialogAllowedChars.length; b++ )
+				{
+					if( filename.substr( a, 1 ) == fileDialogAllowedChars.substr( b, 1 ) )
+					{
+						found = true;
+						break;
+					}
+				}
+				if( !found )
+				{
+					finalReturn = false;
+					outName += '_';
+				}
+				else
+				{
+					outName += filename.substr( a, 1 );
+				}
+			}
+			// Correct filename
+			if( outName != filename )
+			{
+				dialog.saveinput.value = outName;
+			}
+			return finalReturn;
+		}
+
 		// Take a selected file entry and use the trigger function on it
 		w.choose = function( ele, stage )
-		{
+		{	
 			if( !dialog.path )
 			{
 				Alert( i18n( 'i18n_no_path' ), i18n( 'i18n_please_choose_a_path' ) );
@@ -369,13 +404,15 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			// Save dialog uses current path and written filename
 			if( dialog.type == 'save' )
 			{
-				if ( typeof ( dialog.saveinput ) == 'undefined' || dialog.saveinput.value.length < 1 )
+				// Prequalify the filename
+				if( typeof ( dialog.saveinput ) == 'undefined' || dialog.saveinput.value.length < 1 || !this.checkFilename( dialog.saveinput.value ) )
 				{
 					Alert( i18n( 'i18n_erroneous_filename' ), i18n( 'i18n_please_set_a_valid_filename' ), false, w );
 					if( dialog.saveinput ) dialog.saveinput.focus ();
 					return;
 				}
 				let p = dialog.path;
+				
 				p = p.split ( ':/' ).join ( ':' );
 				let fname = dialog.saveinput.value + "";
 				if ( p.substr ( p.length - 1, 1 ) == ':' )
@@ -383,7 +420,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				else if ( p.substr ( p.length - 1, 1 ) != '/' )
 					p += '/' + fname;
 				else p += fname;
-			
 			
 				if( dialog.suffix )
 				{
