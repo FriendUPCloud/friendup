@@ -326,7 +326,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			let fileDialogAllowedChars = 'abcdefghijklmnopqrstuvwxyzæøå1234567890_-ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ() .';
 			let outName = '';
 			let finalReturn = true;
-			console.log( 'We have filename: ' + filename );
+			
 			for( let a = 0; a < filename.length; a++ )
 			{
 				let found = false;
