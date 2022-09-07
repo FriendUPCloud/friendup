@@ -104,8 +104,6 @@ typedef struct FriendCoreManager
 	struct SSHServer			*fcm_SSHServer;									///< TelnetServer
 	
 	ServiceManager				*fcm_ServiceManager;							///< Service Manager
-	WebSocket					*fcm_WebSocket;                                 ///< WebSocket Manager
-	WebSocket					*fcm_WebSocketNotification;                     ///< WebSocket Notification Manager
 	
 	FriendcoreInfo				*fcm_FCI;										///< Friend Core Information
 	void						*fcm_SB;  ///<Pointer to SystemBase
@@ -143,6 +141,16 @@ typedef struct FriendCoreManager
 	int							fcm_WSka_time;
 	int							fcm_WSka_probes;
 	int							fcm_WSka_interval;
+	
+	int							fcm_WorkspaceServiceTimeout;
+	int							fcm_WorkspaceServiceSleepTime;
+	int							fcm_WorkspaceStartPort;		// if set then default port is unused
+	int							fcm_WorkspacePortCount;
+	WebSocket					**fcm_WebSocket;                                 ///< WebSocket Manager
+	WebSocket					*fcm_WebSocketNotification;                     ///< WebSocket Notification Manager
+	
+	int							fcm_ExtServiceTimeout;
+	int							fcm_ExtServiceSleepTime;
 }FriendCoreManager;
 
 //

@@ -77,6 +77,9 @@ typedef struct WebSocket
 	
 	int									ws_NumberCalls;
 	pthread_mutex_t						ws_Mutex;
+	
+	int									ws_ServiceSleepTime;
+	int									ws_ServiceTimeout;
 } WebSocket;
 
 
@@ -108,13 +111,13 @@ typedef struct WSCData
 }WSCData;
 
 //
-//
+// Create new Websocket
 //
 
-WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extDebug, int timeout, int katime, int kaprobes, int kainterval );
+WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extDebug, int timeout, int katime, int kaprobes, int kainterval, int servSleepTime, int servTimeout );
 
 //
-//
+// Delete Websocket
 //
 
 void WebSocketDelete( WebSocket *ws );

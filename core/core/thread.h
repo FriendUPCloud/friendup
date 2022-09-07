@@ -53,7 +53,7 @@ typedef struct FThread
 	FBOOL				t_Quit;
 	void				*( *t_Function)( void * );
 	void				*t_Data;
-	FBOOL				t_Launched;
+	volatile FBOOL		t_Launched;
 	uint64_t			t_PID;
 }FThread;
 

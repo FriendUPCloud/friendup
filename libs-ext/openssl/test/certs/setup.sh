@@ -9,6 +9,8 @@ DAYS=-1 ./mkcert.sh genroot "Root CA" root-key root-expired
 ./mkcert.sh genss "Root CA" root-key root-nonca
 ./mkcert.sh genroot "Root CA" root-key2 root-cert2
 ./mkcert.sh genroot "Root Cert 2" root-key root-name2
+./mkcert.sh genroot "Cross Root" cross-key cross-root
+./mkcert.sh genca "Root CA" root-key root-cross-cert cross-key cross-root
 #
 openssl x509 -in root-cert.pem -trustout \
     -addtrust serverAuth -out root+serverAuth.pem
@@ -125,7 +127,7 @@ OPENSSL_KEYBITS=768 \
 # client intermediate ca: cca-cert
 # trust variants: +serverAuth, -serverAuth, +clientAuth, -clientAuth
 #
-./mkcert.sh genca "CA" ca-key cca-cert root-key root-cert clientAuth
+./mkcert.sh genca -p clientAuth "CA" ca-key cca-cert root-key root-cert
 #
 openssl x509 -in cca-cert.pem -trustout \
     -addtrust serverAuth -out cca+serverAuth.pem
@@ -143,7 +145,7 @@ openssl x509 -in cca-cert.pem -trustout \
 # server intermediate ca: sca-cert
 # trust variants: +serverAuth, -serverAuth, +clientAuth, -clientAuth, -anyEKU, +anyEKU
 #
-./mkcert.sh genca "CA" ca-key sca-cert root-key root-cert serverAuth
+./mkcert.sh genca -p serverAuth "CA" ca-key sca-cert root-key root-cert
 #
 openssl x509 -in sca-cert.pem -trustout \
     -addtrust serverAuth -out sca+serverAuth.pem
@@ -380,9 +382,14 @@ REQMASK=MASK:0x800 ./mkcert.sh req badalt7-key "O = Bad NC Test Certificate 7" \
 # SHA1
 ./mkcert.sh genee PSS-SHA1 ee-key ee-pss-sha1-cert ca-key ca-cert \
     -sha1 -sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:digest
-# SHA256
+# EE SHA256
 ./mkcert.sh genee PSS-SHA256 ee-key ee-pss-sha256-cert ca-key ca-cert \
-    -sha256 -sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:digest
+            -sha256 -sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:digest
+# CA-PSS
+./mkcert.sh genca "CA-PSS" ca-pss-key ca-pss-cert root-key root-cert \
+            -sha256 -sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:-1
+./mkcert.sh genee "EE-PSS" ee-key ee-pss-cert ca-pss-key ca-pss-cert \
+            -sha256 -sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:-1
 
 OPENSSL_KEYALG=ec OPENSSL_KEYBITS=brainpoolP256r1 ./mkcert.sh genee \
     "Server ECDSA brainpoolP256r1 cert" server-ecdsa-brainpoolP256r1-key \

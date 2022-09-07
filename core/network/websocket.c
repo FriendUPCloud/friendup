@@ -241,7 +241,8 @@ int WebsocketThread( FThread *data )
 
 	while( TRUE )
 	{
-		int n = lws_service( ws->ws_Context, -1 );
+		int n = lws_service( ws->ws_Context, ws->ws_ServiceTimeout );
+		//DEBUG("LWSSERVICE wait\n");
 		if( ws->ws_Quit == TRUE && ws->ws_NumberCalls <= 0 )
 		{
 			FINFO("WS Quit!\n");
@@ -258,12 +259,13 @@ int WebsocketThread( FThread *data )
 				cnt = 0;
 			}
 		}
-		usleep( 25 );
+		usleep( ws->ws_ServiceSleepTime );
 	}
-	Log( FLOG_INFO, "[WS] Service stopped\n" );
+	Log( FLOG_INFO, "[WS] Thread stopped\n" );
 
 done:
 	data->t_Launched = FALSE;
+	ws->ws_Thread->t_Launched = FALSE;
 	pthread_exit( NULL );
 	return 0;
 }
@@ -293,9 +295,11 @@ int WebSocketStart( WebSocket *ws )
  * @param katime timeout to all libwebsocket sockets, client or server
  * @param kaprobes times to try to get a response from the peer before giving up and killing the connection
  * @param kainterval if ka_time was nonzero, how long to wait before each ka_probes attempt
+ * @param servSleepTime service sleep time
+ * @param servTimeout service timeout
  * @return pointer to new WebSocket structure, otherwise NULL
  */
-WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extDebug, int timeout, int katime, int kaprobes, int kainterval )
+WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extDebug, int timeout, int katime, int kaprobes, int kainterval, int servSleepTime, int servTimeout )
 {
 	WebSocket *ws = NULL;
 	SystemBase *lsb = (SystemBase *)sb;
@@ -307,6 +311,9 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 		//char *fhome = getenv( "FRIEND_HOME" );
 		ws->ws_FCM = lsb->fcm;
 		ws->ws_ExtendedDebug = extDebug;
+		
+		ws->ws_ServiceSleepTime = servSleepTime; //25;	// default values
+		ws->ws_ServiceTimeout = servTimeout; //-1;
 		
 		ws->ws_Port = port;
 		ws->ws_UseSSL = sslOn;
@@ -450,18 +457,27 @@ void WebSocketDelete( WebSocket* ws )
 	if( ws != NULL )
 	{
 		ws->ws_Quit = TRUE;
+		ws->ws_Thread->t_Quit = TRUE;
 		DEBUG("[WS] Websocket close in progress\n");
 		int tries = 0;
 		
 #ifdef ENABLE_WEBSOCKETS_THREADS
 		while( TRUE )
 		{
+			ThreadCancel( ws->ws_Thread, 0 );
+			
 			if( ws->ws_NumberCalls <= 0 && ws->ws_Thread->t_Launched == FALSE )
 			{
 				break;
 			}
 			DEBUG("[WS] Closing WS. Threads: %d\n", ws->ws_NumberCalls );
-			sleep( 1 );
+			usleep( 5000 );
+			
+			if( ws->ws_Context != NULL )
+			{
+				lws_context_destroy( ws->ws_Context );
+				ws->ws_Context = NULL;
+			}
 			
 			tries++;
 			if( tries > 30 )

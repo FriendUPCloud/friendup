@@ -187,6 +187,14 @@ FriendCoreManager *FriendCoreManagerNew()
 		fcm->fcm_WSka_probes = 0;
 		fcm->fcm_WSka_interval = 0;
 		
+		fcm->fcm_WorkspaceServiceTimeout = -1;
+		fcm->fcm_WorkspaceServiceSleepTime = 25;
+		fcm->fcm_WorkspaceStartPort = 0;
+		fcm->fcm_WorkspacePortCount = 0;
+	
+		fcm->fcm_ExtServiceTimeout = -1;
+		fcm->fcm_ExtServiceSleepTime = 25;
+		
 		Props *prop = NULL;
 		PropertiesInterface *plib = &(SLIB->sl_PropertiesInterface);
 		{
@@ -231,6 +239,16 @@ FriendCoreManager *FriendCoreManagerNew()
 				fcm->fcm_WSka_time = plib->ReadIntNCS( prop, "core:katime", 0 );
 				fcm->fcm_WSka_probes = plib->ReadIntNCS( prop, "core:kaprobes", 0 );
 				fcm->fcm_WSka_interval = plib->ReadIntNCS( prop, "core:kainterval", 0 );
+				
+				// websockets
+				
+				fcm->fcm_WorkspaceServiceTimeout = plib->ReadIntNCS( prop, "websockets:timeout", -1 );
+				fcm->fcm_WorkspaceServiceSleepTime = plib->ReadIntNCS( prop, "websockets:sleep", 25 );
+				fcm->fcm_WorkspaceStartPort = plib->ReadIntNCS( prop, "websockets:startport", 0 );
+				fcm->fcm_WorkspacePortCount  = plib->ReadIntNCS( prop, "websockets:portnumber", 0 );
+	
+				fcm->fcm_ExtServiceTimeout = plib->ReadIntNCS( prop, "extwebsockets:timeout", -1 );
+				fcm->fcm_ExtServiceSleepTime = plib->ReadIntNCS( prop, "extwebsockets:sleep", 25 );
 				
 				char *tptr  = plib->ReadStringNCS( prop, "LoginModules:modules", "" );
 				if( tptr != NULL )
@@ -372,19 +390,46 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 {
 	if( fcm->fcm_DisableWS != TRUE )
 	{
-		if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled, WEBSOCKET_TYPE_BROWSER, fcm->fcm_WSExtendedDebug, fcm->fcm_WSTimeout, fcm->fcm_WSka_time, fcm->fcm_WSka_probes, fcm->fcm_WSka_interval ) ) != NULL )
+		if( fcm->fcm_WorkspacePortCount <= 0 )
 		{
-			WebSocketStart( fcm->fcm_WebSocket );
+			if( (fcm->fcm_WebSocket = FCalloc( 1, sizeof(WebSocket *) ) ) != NULL )
+			{
+				if( ( fcm->fcm_WebSocket[ 0 ] = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled, WEBSOCKET_TYPE_BROWSER, fcm->fcm_WSExtendedDebug, fcm->fcm_WSTimeout, fcm->fcm_WSka_time, fcm->fcm_WSka_probes, fcm->fcm_WSka_interval, fcm->fcm_WorkspaceServiceTimeout, fcm->fcm_WorkspaceServiceSleepTime ) ) != NULL )
+				{
+					WebSocketStart( fcm->fcm_WebSocket[ 0 ] );
+				}
+				else
+				{
+					Log( FLOG_FATAL, "Cannot launch websocket server\n");
+					return -1;
+				}
+			}
 		}
-		else
+		else	// if we want to have more then one Websocket connection on different ports
 		{
-			Log( FLOG_FATAL, "Cannot launch websocket server\n");
-			return -1;
+			if( (fcm->fcm_WebSocket = FCalloc( fcm->fcm_WorkspacePortCount, sizeof(WebSocket *) ) ) != NULL )
+			{
+				int i;
+				
+				for( i=0; i < fcm->fcm_WorkspacePortCount ; i++ )
+				{
+					int port = fcm->fcm_WorkspaceStartPort + i;
+					if( ( fcm->fcm_WebSocket[ i ] = WebSocketNew( SLIB, port, fcm->fcm_WSSSLEnabled, WEBSOCKET_TYPE_BROWSER, fcm->fcm_WSExtendedDebug, fcm->fcm_WSTimeout, fcm->fcm_WSka_time, fcm->fcm_WSka_probes, fcm->fcm_WSka_interval, fcm->fcm_WorkspaceServiceTimeout, fcm->fcm_WorkspaceServiceSleepTime ) ) != NULL )
+					{
+						WebSocketStart( fcm->fcm_WebSocket[ i ] );
+					}
+					else
+					{
+						Log( FLOG_FATAL, "Cannot launch websocket server\n");
+						return -1;
+					}
+				}
+			}
 		}
 		
 		if( fcm->fcm_DisableExternalWS == 0 )
 		{
-			if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, FALSE, WEBSOCKET_TYPE_EXTERNAL, fcm->fcm_WSExtendedDebug, fcm->fcm_WSTimeout, fcm->fcm_WSka_time, fcm->fcm_WSka_probes, fcm->fcm_WSka_interval ) ) != NULL )
+			if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, FALSE, WEBSOCKET_TYPE_EXTERNAL, fcm->fcm_WSExtendedDebug, fcm->fcm_WSTimeout, fcm->fcm_WSka_time, fcm->fcm_WSka_probes, fcm->fcm_WSka_interval, fcm->fcm_ExtServiceSleepTime, fcm->fcm_ExtServiceTimeout ) ) != NULL )
 			{
 				WebSocketStart( fcm->fcm_WebSocketNotification );
 			}
@@ -467,7 +512,22 @@ void FriendCoreManagerDelete( FriendCoreManager *fcm )
 		DEBUG("[FriendCoreManager] Closing WS\n");
 		if( fcm->fcm_WebSocket != NULL )
 		{
-			WebSocketDelete( fcm->fcm_WebSocket );
+			if( fcm->fcm_WorkspacePortCount <= 0 )
+			{
+				WebSocketDelete( fcm->fcm_WebSocket[ 0 ] );
+			}
+			else
+			{
+				int i;
+				
+				for( i=0; i < fcm->fcm_WorkspacePortCount ; i++ )
+				{
+					DEBUG("[FriendCoreManager] closing WS : %d on port: %d\n", i, fcm->fcm_WebSocket[ i ]->ws_Port );
+					WebSocketDelete( fcm->fcm_WebSocket[ i ] );
+				}
+			}
+			
+			FFree( fcm->fcm_WebSocket );
 			fcm->fcm_WebSocket = NULL;
 		}
 		

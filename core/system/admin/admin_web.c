@@ -707,7 +707,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		
 			Log( FLOG_INFO, "Websocket stopped\n");
 			
-			if( ( l->fcm->fcm_WebSocket = WebSocketNew( l,  l->fcm->fcm_WSPort, l->fcm->fcm_WSSSLEnabled, 0, l->fcm->fcm_WSExtendedDebug, l->fcm->fcm_WSTimeout, l->fcm->fcm_WSka_time, l->fcm->fcm_WSka_probes, l->fcm->fcm_WSka_interval ) ) != NULL )
+			if( ( l->fcm->fcm_WebSocket = WebSocketNew( l,  l->fcm->fcm_WSPort, l->fcm->fcm_WSSSLEnabled, 0, l->fcm->fcm_WSExtendedDebug, l->fcm->fcm_WSTimeout, l->fcm->fcm_WSka_time, l->fcm->fcm_WSka_probes, l->fcm->fcm_WSka_interval, l->fcm->fcm_WorkspaceServiceTimeout, l->fcm->fcm_WorkspaceServiceSleepTime ) ) != NULL )
 			{
 				WebSocketStart( l->fcm->fcm_WebSocket );
 				Log( FLOG_INFO, "Websocket thread will started\n");
