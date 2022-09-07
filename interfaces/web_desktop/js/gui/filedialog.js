@@ -325,6 +325,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			if( filename.length < 1 ) return false;
 			let fileDialogAllowedChars = 'abcdefghijklmnopqrstuvwxyzæøå1234567890_-ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ() .';
 			let outName = '';
+			let errors = [];
 			let finalReturn = true;
 			
 			for( let a = 0; a < filename.length; a++ )
@@ -341,19 +342,10 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				if( !found )
 				{
 					finalReturn = false;
-					outName += '_';
-				}
-				else
-				{
-					outName += filename.substr( a, 1 );
+					errors.push( filename.substr( a, 1 ) );
 				}
 			}
-			// Correct filename
-			if( outName != filename )
-			{
-				dialog.saveinput.value = outName;
-			}
-			return finalReturn;
+			return finalReturn ? { error: false } : { error: errors.join( ', ' ) };
 		}
 
 		// Take a selected file entry and use the trigger function on it
@@ -405,12 +397,24 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			if( dialog.type == 'save' )
 			{
 				// Prequalify the filename
-				if( typeof ( dialog.saveinput ) == 'undefined' || dialog.saveinput.value.length < 1 || !this.checkFilename( dialog.saveinput.value ) )
+				if( typeof ( dialog.saveinput ) == 'undefined' || dialog.saveinput.value.length < 1 )
 				{
 					Alert( i18n( 'i18n_erroneous_filename' ), i18n( 'i18n_please_set_a_valid_filename' ), false, w );
 					if( dialog.saveinput ) dialog.saveinput.focus ();
 					return;
 				}
+				
+				if( dialog.saveinput )
+				{
+					let response = this.checkFilename( dialog.saveinput.value );
+					if( response.error )
+					{
+						Alert( i18n( 'i18n_erroneous_filename' ), 'You have some illegal characters in your filename: "' + response.error + '". Remove these and save again.' );
+						dialog.saveinput.focus();
+						return;
+					}
+				}
+				
 				let p = dialog.path;
 				
 				p = p.split ( ':/' ).join ( ':' );
