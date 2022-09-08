@@ -195,6 +195,12 @@ void FriendCoreManagerShutdown( FriendCoreManager *fcm );
 
 int FriendCoreManagerInitServices( FriendCoreManager *fcm );
 
+//
+//
+//
+
+WebSocket *FriendCoreManagerGetWSByNumberOfSessions( FriendCoreManager *fcm );
+
 
 
 #endif //__CORE_FRIENDCORE_MANAGER_H__

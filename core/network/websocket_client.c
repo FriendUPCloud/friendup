@@ -387,3 +387,46 @@ int WebsocketClientSendMessage( WebsocketClient *cl, char *msg, int len )
 	DEBUG("[WebsocketClientSendMessage] end\n" );
 	return len;
 }
+
+/**
+ * Return information about WebSocket which doesnt have big workload
+ *
+ * @param fcm pointer to FriendCoreManager
+ * @return pointer to WebSocket which doesnt have big workload
+ */
+WebSocket *FriendCoreManagerGetWSByNumberOfSessions( FriendCoreManager *fcm )
+{
+	WebSocket *ws = NULL;
+	
+	DEBUG("[FriendCoreManagerGetWSByNumberOfSessions] start\n" );
+	
+	if( fcm->fcm_WorkspacePortCount > 0 )
+	{
+		int minSessions = 99999999;		// we set maximum value to check which thread handle minimum number of sessions
+		int i;
+		
+		for( i=0 ; i < fcm->fcm_WorkspacePortCount ; i++ )
+		{
+			if( fcm->fcm_WebSocket[ i ]->ws_NumberOfSessions < 1 )
+			{
+				ws = fcm->fcm_WebSocket[ i ];
+				break;
+			}
+			else
+			{
+				if( fcm->fcm_WebSocket[ i ]->ws_NumberOfSessions < minSessions )
+				{
+					minSessions = fcm->fcm_WebSocket[ i ]->ws_NumberOfSessions;
+					ws = fcm->fcm_WebSocket[ i ];
+				}
+			}
+		}
+	}
+	else
+	{
+		ws = fcm->fcm_WebSocket[ 0 ];
+	}
+	DEBUG("[FriendCoreManagerGetWSByNumberOfSessions] end\n" );
+	
+	return ws;
+}

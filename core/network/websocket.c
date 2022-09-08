@@ -228,6 +228,8 @@ int WebsocketThread( FThread *data )
 		return 0;
 	}
 	
+	ws->ws_ThreadID = pthread_self();
+	
 	DEBUG1("[WS] Websocket thread started\n");
 	
 	//signal( SIGPIPE, hand );
@@ -367,6 +369,8 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 		//ws->ws_Info.timeout_secs_ah_idle = 90;
 		//ws->ws_Info.ws_ping_pong_interval = timeout;
 		ws->ws_Info.timeout_secs = timeout;
+		ws->ws_Info.signal_cb = signal(SIGPIPE, SIG_IGN);
+
 		if( katime > 0 )
 		{
 			ws->ws_Info.ka_time = katime;
@@ -687,6 +691,31 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 		{
 			data->wsc_UserSession = actUserSess;
 			data->wsc_Wsi = wsi;
+			
+			// we use only this when we want to have multiple Websockets
+			
+			if( SLIB->fcm->fcm_WorkspacePortCount > 0 )
+			{
+				void *vhost = lws_get_vhost( wsi );
+				if( vhost != NULL )
+				{
+					int port = lws_get_vhost_port( vhost );
+					if( port > 0 )
+					{
+						int i;
+						
+						for( i=0 ; i < SLIB->fcm->fcm_WorkspacePortCount ; i++ )
+						{
+							if( port == SLIB->fcm->fcm_WebSocket[ i ]->ws_Port )
+							{
+								SLIB->fcm->fcm_WebSocket[ i ]->ws_NumberOfSessions++;
+								data->wsc_Websocket = SLIB->fcm->fcm_WebSocket[ i ];		// we assign Websocket because we want to decrese number of user sessions on it
+								break;
+							}
+						}
+					}
+				}
+			}
 			FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
 		}
 	}
@@ -769,6 +798,10 @@ int DetachWebsocketFromSession( void *d, void *wsi )
 	
 	if( FRIEND_MUTEX_LOCK( &(data->wsc_Mutex) ) == 0 )
 	{
+		if( data->wsc_Websocket != NULL )
+		{
+			data->wsc_Websocket->ws_NumberOfSessions--;
+		}
 		data->wsc_UserSession = NULL;
 		FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
 	}

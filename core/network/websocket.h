@@ -77,6 +77,7 @@ typedef struct WebSocket
 	
 	int									ws_NumberCalls;
 	pthread_mutex_t						ws_Mutex;
+	int									ws_NumberOfSessions;
 	
 	int									ws_ServiceSleepTime;
 	int									ws_ServiceTimeout;
@@ -108,6 +109,8 @@ typedef struct WSCData
 	int								wsc_InUseCounter;
 	int								wsc_UpdateLoggedTimeCounter;	// this field says how many calls left to call LoggedTime update on FUser table
 	int								wsc_Status;
+	
+	WebSocket						*wsc_Websocket;					// to add or remove session from counter
 }WSCData;
 
 //
