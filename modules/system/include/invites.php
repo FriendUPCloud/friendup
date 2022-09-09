@@ -527,6 +527,10 @@ if( $args->command )
 			
 			break;
 		
+		case 'resendinvite':
+			
+			break;
+		
 		case 'sendinvite':
 			
 			if( !isset( $args->args->userid ) && !$args->args->userid && !isset( $args->args->email ) && !$args->args->email )
