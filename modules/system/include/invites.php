@@ -511,7 +511,7 @@ if( $args->command )
 								$obj->Fullname      = ( isset( $json->contact->FullName ) ? $json->contact->FullName : false                                );
 								$obj->Email         = ( isset( $json->contact->Email    ) ? $json->contact->Email    : false                                );
 								$obj->LinkUrl       = $baseUrl . '/webclient/index.html#invite=' . $f->Hash . 'BASE64' . 
-														base64_encode( '{"user":"' . utf8_decode( $obj->Fullname ) . '","hash":"' . $f->Hash . '"}' ) );
+														base64_encode( '{"user":"' . utf8_decode( $obj->Fullname ) . '","hash":"' . $f->Hash . '"}' );
 								$out[] = $obj;
 							}
 						}
