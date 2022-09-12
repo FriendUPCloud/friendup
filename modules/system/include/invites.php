@@ -510,7 +510,8 @@ if( $args->command )
 								$obj->TargetGroupID = ( isset( $args->args->groupId     ) ? $args->args->groupId     : ( count( $groupid ) ? $groupid : 0 ) );
 								$obj->Fullname      = ( isset( $json->contact->FullName ) ? $json->contact->FullName : false                                );
 								$obj->Email         = ( isset( $json->contact->Email    ) ? $json->contact->Email    : false                                );
-							
+								$obj->LinkUrl       = $baseUrl . '/webclient/index.html#invite=' . $f->Hash . 'BASE64' . 
+														base64_encode( '{"user":"' . utf8_decode( $obj->Fullname ) . '","hash":"' . $f->Hash . '"}' ) );
 								$out[] = $obj;
 							}
 						}
@@ -529,6 +530,7 @@ if( $args->command )
 			
 			break;
 		
+		// Just resend an existing invite
 		case 'resendinvite':
 			$reinvite = true;
 			// Then send invite
@@ -737,8 +739,6 @@ if( $args->command )
 					{
 						die( 'fail<!--separate-->{"response":-1,"message":"Invitation already sent, try removing the pending invite and resend."}' );
 					}
-					
-					$invitelink = buildUrl( $hash, $Conf, $ConfShort );
 					
 					// Set up mail content!
 					if( isset( $Conf[ 'Mail' ][ 'TemplateDir' ] ) )
