@@ -2946,6 +2946,8 @@ function CheckMaximizedView()
 			document.body.classList.remove( 'ViewMaximized' );
 		}
 	}
+	if( window.pollLiveViews )
+		pollLiveViews();
 }
 
 // Get the taskbar element
