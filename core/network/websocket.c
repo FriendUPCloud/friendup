@@ -228,8 +228,6 @@ int WebsocketThread( FThread *data )
 		return 0;
 	}
 	
-	ws->ws_ThreadID = pthread_self();
-	
 	DEBUG1("[WS] Websocket thread started\n");
 	
 	//signal( SIGPIPE, hand );
@@ -369,7 +367,7 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 		//ws->ws_Info.timeout_secs_ah_idle = 90;
 		//ws->ws_Info.ws_ping_pong_interval = timeout;
 		ws->ws_Info.timeout_secs = timeout;
-		ws->ws_Info.signal_cb = signal(SIGPIPE, SIG_IGN);
+		//ws->ws_Info.signal_cb = signal(SIGPIPE, SIG_IGN);
 
 		if( katime > 0 )
 		{
