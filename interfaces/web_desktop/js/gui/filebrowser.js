@@ -195,7 +195,7 @@ Friend.FileBrowser.prototype.setPath = function( target, cbk, tempFlags, e )
 				let j = JSON.parse( d );
 				winobj.addEvent( 'systemclose', function()
 				{
-					winobj.removeEvent( 'systemclose', func );
+					winobj.removeEvent( 'systemclose', this );
 					let ff = new Library( 'system.library' );
 					ff.addVar( 'sessionid', Workspace.sessionId );
 					ff.addVar( 'path', path );
