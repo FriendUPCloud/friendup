@@ -108,19 +108,22 @@ function RemoveFromCajaxQueue( ele )
 // Cancel all queued cajax calls on id
 function CancelCajaxOnId( id )
 {
-	let queue = Friend.cajax[ ele.type ].queue;
-	let o = [];
-	for( let a = 0; a < queue.length; a++ )
+	for( let type in Friend.cajax )
 	{
-		if( queue[ a ].cancelId != id )
-			o.push( queue[ a ] );
-		else 
+		let queue = Friend.cajax[ type ].queue;
+		let o = [];
+		for( let a = 0; a < queue.length; a++ )
 		{
-			// Tell it it failed
-			queue[ a ].destroy();
+			if( queue[ a ].cancelId != id )
+				o.push( queue[ a ] );
+			else 
+			{
+				// Tell it it failed
+				queue[ a ].destroy();
+			}
 		}
+		Friend.cajax[ type ].queue = o;
 	}
-	Friend.cajax[ ele.type ].queue = o;
 }
 
 // A simple ajax function
