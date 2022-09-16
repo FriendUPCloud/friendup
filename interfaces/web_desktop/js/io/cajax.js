@@ -115,6 +115,8 @@ cAjax = function()
 {
 	let self = this;
 	
+	self.type = false; // Type of ajax call (group for queueing) 
+	
 	_cajax_process_count++;
 	
 	// cajax only survives for so long..
