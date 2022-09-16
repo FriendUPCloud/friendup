@@ -102,6 +102,7 @@ File = function( filename )
 
 		let t = this;
 		let jax = new cAjax ();
+		jax.type = 'dos';
 		jax.forceHTTP = true;
 		if( this.cancelId )
 			jax.cancelId = this.cancelId;
@@ -150,6 +151,7 @@ File = function( filename )
 	{
 		let t = this;
 		let jax = new cAjax ();
+		jax.type = 'dos';
 		jax.forceHTTP = true;
 		
 		if( t.ondestroy ) jax.ondestroy = t.ondestroy;
@@ -542,6 +544,7 @@ File = function( filename )
 		else
 		{
 			let jax = new cAjax();
+			jax.type = 'dos';
 			jax.forceHTTP = true;
 			if( this.cancelId )
 				jax.cancelId = this.cancelId;

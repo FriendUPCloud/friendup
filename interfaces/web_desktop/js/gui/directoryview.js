@@ -4862,6 +4862,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 				}
 				
 				let j = new cAjax ();
+				j.type = 'dir';
 				
 				let updateurl = '/system.library/file/dir?wr=1'
 				updateurl += '&path=' + encodeURIComponent( self.fileInfo.Path );
