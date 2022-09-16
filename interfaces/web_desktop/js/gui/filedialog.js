@@ -579,13 +579,15 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				ds.path = dialog.path;
 			}
 		
-			this._window.redrawIcons();
+			if( this._window && this._window.redrawIcons )
+				this._window.redrawIcons();
 		}
 
 		// Do the actual redrawing of the file list
 		w.redrawFilelist = function( objs )
 		{
-			this._window.redrawIcons();
+			if( this._window && this._window.redrawIcons )
+				this._window.redrawIcons();
 		}
 
 		w.getContainer = function()
