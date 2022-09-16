@@ -176,7 +176,11 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 // Supported flags ( { lockHistory: true|false } )
 Friend.FileBrowser.prototype.setPath = function( target, cbk, tempFlags, e )
 {
-	let winobj = currentMovable.windowObject;
+	let winobj = false;
+	if( this.directoryView.window.windowObject )
+		winobj = this.directoryView.window.windowObject;
+	else return false;
+	
 	let path = target;
 			
 	if( !Workspace.diskNotificationList[ path ] )
