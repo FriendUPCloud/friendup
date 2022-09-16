@@ -6462,7 +6462,7 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 	d.parentNode.removeChild( d );
 
 	let f = new File( 'System:templates/confirm.html' );
-	
+	f.type = 'confirm';
 	let thirdbutton = '';
 	/* check for third button values */
 	if( extrabuttontext && extrabuttonreturn )
