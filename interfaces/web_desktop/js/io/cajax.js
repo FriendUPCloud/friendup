@@ -29,12 +29,20 @@ let _c_count = 0;
 let _c_destroyed = 0;
 
 if( !window.Friend ) window.Friend = {};
-if( !Friend.cajax ) Friend.cajax = {};
+if( !Friend.cajax ) 
+{
+	Friend.cajax = {};
+	Friend.cajaxTypes = [];
+}
 
 function AddToCajaxQueue( ele )
 {
 	if( typeof( Friend.cajax[ ele.type ] ) == 'undefined' )
+	{
 		Friend.cajax[ ele.type ] = { count: 0, max: 0, queue: [] };
+		Friend.cajaxTypes.push( ele.type );
+	}
+	
 	let queue = Friend.cajax[ ele.type ].queue;
 	
 	// If we're queueing it
@@ -446,6 +454,8 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	)
 	{
 		this.mode = 'websocket';
+		if( self.type.indexOf( '_websocket' ) < 0 )
+			self.type += '_websocket';
 		this.url = url;
 		this.hasReturnCode = hasReturnCode;
 		//console.log( 'WebSocket call: ' + url );
@@ -566,17 +576,7 @@ cAjax.prototype.send = function( data, callback )
 	
 	RemoveFromCajaxQueue( this );
 
-    // TODO: Make queue work
-    /*if( window.Workspace && Workspace.refreshWorkspaces && !Workspace.sessionId && !this.loginCall )
-    {
-        this.cachedData = data;
-        this.cachedCallback = callback;
-        AddToCajaxQueue( this );
-        console.log( 'Added to queue.' );
-        return;
-    }*/
-	
-	// Make sure we don't f this up!
+    // Make sure we don't f this up!
 	if( this.onload && !this.onloadAfter )
 	{
 		this.onloadAfter = this.onload;
@@ -585,7 +585,7 @@ cAjax.prototype.send = function( data, callback )
 			this.onload = null;
 			this.onloadAfter( e, d );
 			this.onloadAfter = null;
-			CleanAjaxCalls( self.type );
+			CleanAjaxCalls();
 		}
 	}
 
@@ -1035,8 +1035,21 @@ if( typeof bindSingleParameterMethod != 'function' )
 }
 
 // Clean ajax calls!
-function CleanAjaxCalls( type )
+let currentCajaxType = 0;
+function CleanAjaxCalls( depth = false )
 {
+	// Cycle types
+	let type;
+	do
+	{
+		currentCajaxType++;
+		if( currentCajaxType >= Friend.cajaxTypes.length )
+			currentCajaxType = 0;
+		type = Friend.cajaxTypes[ currentCajaxType ];
+	}
+	while( currentCajaxType != 0 && Friend.cajax[ type ].queue.length < 1 );
+	
+	// Try to execute queue
 	if( typeof( Friend.cajax[ type ] ) != 'undefined' )
 	{
 		if( Friend.cajax[ type ].queue.length == 0 )
@@ -1049,11 +1062,14 @@ function CleanAjaxCalls( type )
 				titleBars[b].classList.remove( 'Busy' );
 			}
 			document.body.classList.remove( 'Busy' );
+			return false;
 		}
 		else
 		{
 			Friend.cajax[ type ].queue[ 0 ].send();
+			return true;
 		}
 	}
+	return false;
 }
 
