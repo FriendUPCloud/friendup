@@ -20,9 +20,6 @@ let _cajax_mutex = 0;
 let _cajax_ws_connections = 0;                  // How many?
 let _cajax_ws_max_connections = 12;             // Max
 
-let _cajax_dos_connections = 0;
-let _cajax_dos_max_connections = 3;
-
 let _cajax_ws_disabled = 0;                     // Disable websocket usage?
 
 let _cajax_origin = document.location.origin;
@@ -32,10 +29,14 @@ let _c_count = 0;
 let _c_destroyed = 0;
 
 if( !window.Friend ) window.Friend = {};
-if( !Friend.cajax ) Friend.cajax = [];
+if( !Friend.cajax ) Friend.cajax = {};
 
 function AddToCajaxQueue( ele )
 {
+	if( typeof( Friend.cajax[ ele.type ] ) == 'undefined' )
+		Friend.cajax[ ele.type ] = { count: 0, max: 0, queue: [] };
+	let queue = Friend.cajax[ ele.type ].queue;
+	
 	// If we're queueing it
 	if( ele.onQueue ) ele.onQueue();
 	
@@ -64,49 +65,54 @@ function AddToCajaxQueue( ele )
 		return false;
 	}
 	// Duplicate check
-	for( let a = 0; a < Friend.cajax.length; a++ )
+	for( let a = 0; a < queue.length; a++ )
 	{
-		if( Friend.cajax[a] == ele )
+		if( queue[a] == ele )
 		{
 			return false;
 		}
 	}
 	// Add ajax element to the bottom of the queue
 	let o = [];
-	for( let a = 0; a < Friend.cajax.length; a++ )
-		o.push( Friend.cajax[ a ] );
+	for( let a = 0; a < queue.length; a++ )
+		o.push( queue[ a ] );
 	o.push( ele );
-	Friend.cajax = o;
+	Friend.cajax[ ele.type ].queue = o;
 }
 
 function RemoveFromCajaxQueue( ele )
 {
+	if( typeof( Friend.cajax[ ele.type ] ) == 'undefined' )
+		return;
+		
+	let queue = Friend.cajax[ ele.type ].queue;
 	let o = [];
-	for( let a = 0; a < Friend.cajax.length; a++ )
+	for( let a = 0; a < queue.length; a++ )
 	{
-		if( Friend.cajax[a] != ele )
+		if( queue[a] != ele )
 		{
-			o.push( Friend.cajax[a] );
+			o.push( queue[a] );
 		}
 	}
-	Friend.cajax = o;
+	Friend.cajax[ ele.type ].queue = o;
 }
 
 // Cancel all queued cajax calls on id
 function CancelCajaxOnId( id )
 {
+	let queue = Friend.cajax[ ele.type ].queue;
 	let o = [];
-	for( let a = 0; a < Friend.cajax.length; a++ )
+	for( let a = 0; a < queue.length; a++ )
 	{
-		if( Friend.cajax[ a ].cancelId != id )
-			o.push( Friend.cajax[ a ] );
+		if( queue[ a ].cancelId != id )
+			o.push( queue[ a ] );
 		else 
 		{
 			// Tell it it failed
-			Friend.cajax[ a ].destroy();
+			queue[ a ].destroy();
 		}
 	}
-	Friend.cajax = o;
+	Friend.cajax[ ele.type ].queue = o;
 }
 
 // A simple ajax function
@@ -115,7 +121,7 @@ cAjax = function()
 {
 	let self = this;
 	
-	self.type = false; // Type of ajax call (group for queueing) 
+	self.type = 'normal'; // Type of ajax call (group for queueing) 
 	
 	_cajax_process_count++;
 	
@@ -293,12 +299,6 @@ cAjax = function()
 				if( !jax.forceSend )
 				{
 					_cajax_http_connections--;
-					if( jax.dosCall )
-					{
-						_cajax_dos_connections--;
-						if( _cajax_dos_connections < 0 )
-							_cajax_dos_connections = 0;
-					}
 					if( _cajax_http_connections < 0 )
 						_cajax_http_connections = 0;
 				}
@@ -416,16 +416,17 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	}
 	this.opened = true;
 	
-	this.dosCall = false;
+	// Move dos calls onto http
+	let dosCall = false;
 	if( 
-		url.indexOf( '/file/read' ) >= 0 &&
-		url.indexOf( '/file/copy' ) >= 0 &&
-		url.indexOf( '/file/delete' ) >= 0 &&
-		url.indexOf( '/file/write' ) >= 0 &&
+		url.indexOf( '/file/read' ) >= 0 ||
+		url.indexOf( '/file/copy' ) >= 0 ||
+		url.indexOf( '/file/delete' ) >= 0 ||
+		url.indexOf( '/file/write' ) >= 0 ||
 		url.indexOf( '/file/dir' )
 	)
 	{
-		this.dosCall = true;
+		dosCall = true;
 	}
 	
 	// Try websockets!!
@@ -441,7 +442,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		typeof( url ) == 'string' && 
 		url.indexOf( 'http' ) != 0 && 
 		url.indexOf( 'system.library' ) >= 0 &&
-		!this.dosCall
+		!dosCall
 	)
 	{
 		this.mode = 'websocket';
@@ -561,6 +562,8 @@ cAjax.prototype.responseText = function()
 // Send ajax query
 cAjax.prototype.send = function( data, callback )
 {
+	let self = this;
+	
 	RemoveFromCajaxQueue( this );
 
     // TODO: Make queue work
@@ -582,12 +585,10 @@ cAjax.prototype.send = function( data, callback )
 			this.onload = null;
 			this.onloadAfter( e, d );
 			this.onloadAfter = null;
-			CleanAjaxCalls();
+			CleanAjaxCalls( self.type );
 		}
 	}
 
-	let self = this;
-	
 	if( self.life )
 	{
 		clearTimeout( self.life );
@@ -626,7 +627,7 @@ cAjax.prototype.send = function( data, callback )
 	// Can't have too many! Queue control
 	if( this.mode != 'websocket' )
 	{
-		if( !this.forceSend && ( _cajax_http_connections >= _cajax_http_max_connections || ( this.dosCall && _cajax_dos_connections >= _cajax_dos_max_connections ) ) )
+		if( !this.forceSend && ( _cajax_http_connections >= _cajax_http_max_connections ) )
 		{
 			//console.log( 'We got max connections!' );
 			AddToCajaxQueue( self );
@@ -635,10 +636,6 @@ cAjax.prototype.send = function( data, callback )
 		if( !this.forceSend )
 		{
 			_cajax_http_connections++;
-			if( this.dosCall )
-			{
-				_cajax_dos_connections++;
-			}
 		}
 	}
 	// Limit on websockets
@@ -1038,22 +1035,25 @@ if( typeof bindSingleParameterMethod != 'function' )
 }
 
 // Clean ajax calls!
-function CleanAjaxCalls()
+function CleanAjaxCalls( type )
 {
-	if( Friend.cajax.length == 0 )
+	if( typeof( Friend.cajax[ type ] ) != 'undefined' )
 	{
-		// Clean it up!
-		_cajax_process_count = 0;
-		let titleBars = document.getElementsByClassName( 'TitleBar' );
-		for( let b = 0; b < titleBars.length; b++ )
+		if( Friend.cajax[ type ].queue.length == 0 )
 		{
-			titleBars[b].classList.remove( 'Busy' );
+			// Clean it up!
+			_cajax_process_count = 0;
+			let titleBars = document.getElementsByClassName( 'TitleBar' );
+			for( let b = 0; b < titleBars.length; b++ )
+			{
+				titleBars[b].classList.remove( 'Busy' );
+			}
+			document.body.classList.remove( 'Busy' );
 		}
-		document.body.classList.remove( 'Busy' );
-	}
-	else
-	{
-		Friend.cajax[0].send();
+		else
+		{
+			Friend.cajax[ type ].queue[ 0 ].send();
+		}
 	}
 }
 
