@@ -623,6 +623,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 
 		// Get template
 		let f = new File( 'System:templates/filedialog' + ( '_' + type + '.html' ) );
+		f.type = 'dialog';
 		f.replacements = {
 			'file_load'  : i18n( 'file_load'  ),
 			'file_save'  : i18n( 'file_save'  ),
@@ -821,6 +822,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 					MetaType: 'Directory',
 					Door: new Door( 'Home:' )
 				};
+				w._window.fileInfo.Door.type = 'dialog';
 			}
 			else
 			{
@@ -835,6 +837,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 					MetaType: 'Directory',
 					Door: new Door( dialog.path.split( ':' )[0] )
 				};
+				w._window.fileInfo.Door.type = 'dialog';
 			}
 		
 			// Set up directoryview
@@ -875,6 +878,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			dir.listMode = 'listview';
 		
 			// Get icons and load!
+			w._window.fileInfo.Door.type = 'dialog';
 			w._window.fileInfo.Door.getIcons( dialog.path, function( items )
 			{
 				w._window.icons = items;
@@ -885,6 +889,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			{
 				let f = w._window.fileInfo;
 				let d = new Door( f.Path );
+				d.type = 'dialog';
 				dialog.path = f.Path;
 			
 				let fin = {
@@ -895,6 +900,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				};
 			
 				let dr = new Door( f.Path );
+				dr.type = 'dialog';
 				dr.getIcons( f.Path, function( icons )
 				{
 					w._window.directoryview.addToHistory( fin );
