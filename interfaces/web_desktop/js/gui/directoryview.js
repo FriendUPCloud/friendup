@@ -3447,8 +3447,17 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				ur = tmp;
 			}
 			
-			iconInner.style.backgroundImage = 'url(\'' + ur + '\')';
-			iconInner.classList.add( 'Thumbnail' );
+			// Delay thumbnails until we've got our slot in the ajax queue executed
+			let thu = new cAjax();
+			thu.type = 'dos';
+			thu.forceHTTP = true;
+			thu.open( 'get', '/system.library/module/?module=system&command=validate', true, true );
+            thu.onload = function()
+            {
+			    iconInner.style.backgroundImage = 'url(\'' + ur + '\')';
+			    iconInner.classList.add( 'Thumbnail' );
+			}
+			thu.send();
 			
 			// Put in cache
 			if( !tmp )
