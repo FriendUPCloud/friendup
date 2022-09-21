@@ -327,6 +327,11 @@ cAjax = function()
 		// Something went wrong!
 		else if( this.readyState == 4 && ( this.status == 500 || this.status == 0 || this.status == 404 ) )
 		{
+		    // If we have available slots, but we have other ajax calls in pipe, execute them
+		    if( _cajax_http_connections < _cajax_http_max_connections )
+		    {
+		        CleanAjaxCalls();
+		    }
 			// tell our caller...
 			if( jax.onload ) 
 			{
