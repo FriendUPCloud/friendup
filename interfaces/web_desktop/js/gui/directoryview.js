@@ -3448,16 +3448,19 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			}
 			
 			// Delay thumbnails until we've got our slot in the ajax queue executed
-			let thu = new cAjax();
-			thu.type = 'dos';
-			thu.forceHTTP = true;
-			thu.open( 'get', '/system.library/module/?module=system&command=validate', true, true );
-            thu.onload = function()
-            {
-			    iconInner.style.backgroundImage = 'url(\'' + ur + '\')';
-			    iconInner.classList.add( 'Thumbnail' );
-			}
-			thu.send();
+			( function( iii, uu )
+			{
+			    let thu = new cAjax();
+			    thu.type = 'dos';
+			    thu.forceHTTP = true;
+			    thu.open( 'get', '/system.library/module/?module=system&command=validate', true, true );
+                thu.onload = function()
+                { 
+			        iii.style.backgroundImage = 'url(\'' + uu + '\')';
+			        iii.classList.add( 'Thumbnail' );
+			    }
+			    thu.send();
+			} )( iconInner, ur );
 			
 			// Put in cache
 			if( !tmp )
