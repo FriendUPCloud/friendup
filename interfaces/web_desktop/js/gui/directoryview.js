@@ -3451,7 +3451,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			( function( iii, uu )
 			{
 			    let thu = new cAjax();
-			    thu.type = 'dos';
+			    thu.type = 'thumbnail';
 			    thu.forceHTTP = true;
 			    thu.open( 'get', '/system.library/module/?module=system&command=validate', true, true );
                 thu.onload = function()
