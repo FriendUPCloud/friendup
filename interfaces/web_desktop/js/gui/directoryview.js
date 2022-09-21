@@ -3445,22 +3445,26 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			if( tmp = this.getCache( ur, fileInfo.directoryview, fileInfo.DateModified ) )
 			{
 				ur = tmp;
+				iconInner.style.backgroundImage = 'url(\'' + ur + '\')';
+	            iconInner.classList.add( 'Thumbnail' );
 			}
-			
-			// Delay thumbnails until we've got our slot in the ajax queue executed
-			( function( iii, uu )
+			else
 			{
-			    let thu = new cAjax();
-			    thu.type = 'thumbnail';
-			    thu.forceHTTP = true;
-			    thu.open( 'get', '/system.library/module/?module=system&command=validate', true, true );
-                thu.onload = function()
-                { 
-			        iii.style.backgroundImage = 'url(\'' + uu + '\')';
-			        iii.classList.add( 'Thumbnail' );
-			    }
-			    thu.send();
-			} )( iconInner, ur );
+			    // Delay thumbnails until we've got our slot in the ajax queue executed
+			    ( function( iii, uu )
+			    {
+			        let thu = new cAjax();
+			        thu.type = 'thumbnail';
+			        thu.forceHTTP = true;
+			        thu.open( 'get', '/system.library/module/?module=system&command=validate', true, true );
+                    thu.onload = function()
+                    { 
+			            iii.style.backgroundImage = 'url(\'' + uu + '\')';
+			            iii.classList.add( 'Thumbnail' );
+			        }
+			        thu.send();
+			    } )( iconInner, ur );
+		    }
 			
 			// Put in cache
 			if( !tmp )
