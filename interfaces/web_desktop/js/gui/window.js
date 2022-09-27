@@ -221,7 +221,9 @@ function SetWindowTitle( div, titleStr )
 	div.titleString = titleStr;
 	
 	// Update window
-	document.title = titleStr + ' - ' + Friend.windowBaseString;
+	if( Friend.windowBaseStringRules && Friend.windowBaseStringRules == 'replace' )
+		document.title = Friend.windowBaseString;
+	else document.title = titleStr + ' - ' + Friend.windowBaseString;
 	
 	// Viewtitle (for other uses than title)
 	let vTitle = titleStr;
@@ -1364,7 +1366,14 @@ function _ActivateWindow( div, nopoll, e )
 	}
 	
 	// Update window title
-	document.title = div.windowObject.getFlag( 'title' ) + ' - ' + Friend.windowBaseString;
+	if( Friend.windowBaseStringRules && Friend.windowBaseStringRules == 'replace' )
+	{
+		document.title = Friend.windowBaseString;
+	}
+	else
+	{
+		document.title = div.windowObject.getFlag( 'title' ) + ' - ' + Friend.windowBaseString;
+	}
 
 	// If it has a window blocker, activate that instead
 	if ( div && div.content && typeof ( div.content.blocker ) == 'object' )
@@ -6453,7 +6462,7 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 	d.parentNode.removeChild( d );
 
 	let f = new File( 'System:templates/confirm.html' );
-	
+	f.type = 'confirm';
 	let thirdbutton = '';
 	/* check for third button values */
 	if( extrabuttontext && extrabuttonreturn )

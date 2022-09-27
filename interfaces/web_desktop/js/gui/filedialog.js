@@ -319,9 +319,38 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			}
 		}
 
+		// Check if the filename has good chars
+		w.checkFilename = function( filename )
+		{
+			if( filename.length < 1 ) return false;
+			let fileDialogAllowedChars = 'abcdefghijklmnopqrstuvwxyzæøå1234567890_-ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ() .';
+			let outName = '';
+			let errors = [];
+			let finalReturn = true;
+			
+			for( let a = 0; a < filename.length; a++ )
+			{
+				let found = false;
+				for( let b = 0; b < fileDialogAllowedChars.length; b++ )
+				{
+					if( filename.substr( a, 1 ) == fileDialogAllowedChars.substr( b, 1 ) )
+					{
+						found = true;
+						break;
+					}
+				}
+				if( !found )
+				{
+					finalReturn = false;
+					errors.push( filename.substr( a, 1 ) );
+				}
+			}
+			return finalReturn ? { error: false } : { error: errors.join( ', ' ) };
+		}
+
 		// Take a selected file entry and use the trigger function on it
 		w.choose = function( ele, stage )
-		{
+		{	
 			if( !dialog.path )
 			{
 				Alert( i18n( 'i18n_no_path' ), i18n( 'i18n_please_choose_a_path' ) );
@@ -367,13 +396,27 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			// Save dialog uses current path and written filename
 			if( dialog.type == 'save' )
 			{
-				if ( typeof ( dialog.saveinput ) == 'undefined' || dialog.saveinput.value.length < 1 )
+				// Prequalify the filename
+				if( typeof ( dialog.saveinput ) == 'undefined' || dialog.saveinput.value.length < 1 )
 				{
 					Alert( i18n( 'i18n_erroneous_filename' ), i18n( 'i18n_please_set_a_valid_filename' ), false, w );
 					if( dialog.saveinput ) dialog.saveinput.focus ();
 					return;
 				}
+				
+				if( dialog.saveinput )
+				{
+					let response = this.checkFilename( dialog.saveinput.value );
+					if( response.error )
+					{
+						Alert( i18n( 'i18n_erroneous_filename' ), 'You have some illegal characters in your filename: "' + response.error + '". Remove these and save again.' );
+						dialog.saveinput.focus();
+						return;
+					}
+				}
+				
 				let p = dialog.path;
+				
 				p = p.split ( ':/' ).join ( ':' );
 				let fname = dialog.saveinput.value + "";
 				if ( p.substr ( p.length - 1, 1 ) == ':' )
@@ -381,7 +424,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				else if ( p.substr ( p.length - 1, 1 ) != '/' )
 					p += '/' + fname;
 				else p += fname;
-			
 			
 				if( dialog.suffix )
 				{
@@ -537,13 +579,15 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				ds.path = dialog.path;
 			}
 		
-			this._window.redrawIcons();
+			if( this._window && this._window.redrawIcons )
+				this._window.redrawIcons();
 		}
 
 		// Do the actual redrawing of the file list
 		w.redrawFilelist = function( objs )
 		{
-			this._window.redrawIcons();
+			if( this._window && this._window.redrawIcons )
+				this._window.redrawIcons();
 		}
 
 		w.getContainer = function()
@@ -579,6 +623,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 
 		// Get template
 		let f = new File( 'System:templates/filedialog' + ( '_' + type + '.html' ) );
+		f.type = 'dialog';
 		f.replacements = {
 			'file_load'  : i18n( 'file_load'  ),
 			'file_save'  : i18n( 'file_save'  ),
@@ -777,6 +822,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 					MetaType: 'Directory',
 					Door: new Door( 'Home:' )
 				};
+				w._window.fileInfo.Door.type = 'dialog';
 			}
 			else
 			{
@@ -791,6 +837,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 					MetaType: 'Directory',
 					Door: new Door( dialog.path.split( ':' )[0] )
 				};
+				w._window.fileInfo.Door.type = 'dialog';
 			}
 		
 			// Set up directoryview
@@ -831,6 +878,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			dir.listMode = 'listview';
 		
 			// Get icons and load!
+			w._window.fileInfo.Door.type = 'dialog';
 			w._window.fileInfo.Door.getIcons( dialog.path, function( items )
 			{
 				w._window.icons = items;
@@ -841,6 +889,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			{
 				let f = w._window.fileInfo;
 				let d = new Door( f.Path );
+				d.type = 'dialog';
 				dialog.path = f.Path;
 			
 				let fin = {
@@ -851,6 +900,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				};
 			
 				let dr = new Door( f.Path );
+				dr.type = 'dialog';
 				dr.getIcons( f.Path, function( icons )
 				{
 					w._window.directoryview.addToHistory( fin );

@@ -3445,10 +3445,26 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			if( tmp = this.getCache( ur, fileInfo.directoryview, fileInfo.DateModified ) )
 			{
 				ur = tmp;
+				iconInner.style.backgroundImage = 'url(\'' + ur + '\')';
+	            iconInner.classList.add( 'Thumbnail' );
 			}
-			
-			iconInner.style.backgroundImage = 'url(\'' + ur + '\')';
-			iconInner.classList.add( 'Thumbnail' );
+			else
+			{
+			    // Delay thumbnails until we've got our slot in the ajax queue executed
+			    ( function( iii, uu )
+			    {
+			        let thu = new cAjax();
+			        thu.type = 'thumbnail';
+			        thu.forceHTTP = true;
+			        thu.open( 'get', '/system.library/module/?module=system&command=validate', true, true );
+                    thu.onload = function()
+                    { 
+			            iii.style.backgroundImage = 'url(\'' + uu + '\')';
+			            iii.classList.add( 'Thumbnail' );
+			        }
+			        thu.send();
+			    } )( iconInner, ur );
+		    }
 			
 			// Put in cache
 			if( !tmp )
@@ -4293,6 +4309,10 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			'id'        : wid,
 			'volume'    : wt.substr( wt.length - 1, 1 ) == ':' ? true : false
 		} );
+		if( fileInfo.applicationId )
+		{
+		    win.applicationId = fileInfo.applicationId;
+		}
 		if( !fromFolder && Workspace.dashboard ) win.recentLocation = 'dashboard';
 
 		if( fileInfo.Dormant && fileInfo.Dormant.addWindow )
@@ -4379,6 +4399,12 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			height   : 100,
 			memorize : true
 		} );
+		
+		if( fileInfo.applicationId )
+		{
+		    win.applicationId = fileInfo.applicationId;
+		}
+		
 		if( !fromFolder && Workspace.dashboard ) win.recentLocation = 'dashboard';
 		
 		let urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : '/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + encodeURIComponent( fileInfo.Path ) ); 
@@ -4423,6 +4449,10 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		iconObject.extension.toLowerCase() == 'pdf' 
 	)
 	{
+	    if( fileInfo.applicationId )
+		{
+		    iconObject.applicationId = fileInfo.applicationId;
+		}
 		Friend.startImageViewer( iconObject, { parentView: currentMovable, recent: fromFolder ? false : 'dashboard' } );
 	}
 	// Run scripts in new shell
@@ -4446,6 +4476,12 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			height   : 512,
 			memorize : true
 		} );
+		
+		if( fileInfo.applicationId )
+		{
+		    win.applicationId = fileInfo.applicationId;
+		}
+		
 		if( !fromFolder && Workspace.dashboard ) win.recentLocation = 'dashboard';
 
 		let num = ( Math.random() * 1000 ) + ( ( new Date() ).getTime() ) + ( Math.random() * 1000 );
@@ -4547,6 +4583,11 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			'volume'    : isVolume,
 			'clickableTitle': true
 		} );
+		
+		if( fileInfo.applicationId )
+		{
+		    w.applicationId = fileInfo.applicationId;
+		}
 		
 		let ppath = fileInfo.Path;
 		
@@ -5403,6 +5444,12 @@ Friend.startImageViewer = function( iconObject, extra )
 		memorize         : true,
 		fullscreenenabled: true
 	} );
+	
+	if( iconObject.applicationId )
+	{
+	    win.applicationId = iconObject.applicationId;
+	}
+	
 	if( extra && extra.recent )
 	{
 		win.recentLocation = extra.recent;

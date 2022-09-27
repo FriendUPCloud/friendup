@@ -238,6 +238,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 			
 			// Use standard Friend Core doors
 			let j = new cAjax();
+			j.type = t.type ? t.type : 'dos';
 			if( t.cancelId )
 				j.cancelId = t.cancelId;
 			if( t.context ) j.context = t.context;
@@ -507,6 +508,7 @@ Door.prototype.write = function( filename, data, mode, extraData )
 	}
 	
 	let j = new cAjax();
+	j.type = dr.type ? dr.type : 'dos';
 	if( this.context ) j.context = this.context;
 	if( this.cancelId )
 		jax.cancelId = this.cancelId;
@@ -568,6 +570,7 @@ Door.prototype.read = function( filename, mode, extraData )
 		} );
 	}
 	let j = new cAjax();
+	j.type = this.type ? this.type : 'dos';
 	if( this.context ) j.context = this.context;
 	if( this.cancelId )
 		j.cancelId = this.cancelId;
@@ -707,6 +710,7 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 
 	// Do the request
 	let j = new cAjax();
+	j.type = this.type ? this.type : 'dos';
 	if( this.cancelId )
 		j.cancelId = this.cancelId;
 	if( this.context ) j.context = this.context;

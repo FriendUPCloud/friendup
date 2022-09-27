@@ -267,6 +267,7 @@ if( isset( $args->command ) )
 			if( isset( $User ) )
 				require( 'modules/system/include/tinyurldata.php' );
 			break;
+		case 'resendinvite':
 		case 'generateinvite':
 		case 'getinvites':
 		case 'getpendinginvites':

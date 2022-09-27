@@ -18,6 +18,8 @@ ini_set( 'display_errors', 1 );
 include_once( 'php/include/helpers.php' );
 include_once( 'php/classes/mailserver.php' );
 
+$reinvite = false; // In case we are reinviting
+
 if( $args->command )
 {
 	$Conf = parse_ini_file( 'cfg/cfg.ini', true );
@@ -508,7 +510,8 @@ if( $args->command )
 								$obj->TargetGroupID = ( isset( $args->args->groupId     ) ? $args->args->groupId     : ( count( $groupid ) ? $groupid : 0 ) );
 								$obj->Fullname      = ( isset( $json->contact->FullName ) ? $json->contact->FullName : false                                );
 								$obj->Email         = ( isset( $json->contact->Email    ) ? $json->contact->Email    : false                                );
-							
+								$obj->LinkUrl       = $baseUrl . '/webclient/index.html#invite=' . $f->Hash . 'BASE64' . 
+														base64_encode( '{"user":"' . utf8_decode( $User->FullName ) . '","hash":"' . $f->Hash . '"}' );
 								$out[] = $obj;
 							}
 						}
@@ -526,6 +529,11 @@ if( $args->command )
 			die( 'fail<!--separate-->' . json_encode( $reason ) );
 			
 			break;
+		
+		// Just resend an existing invite
+		case 'resendinvite':
+			$reinvite = true;
+			// Then send invite
 		
 		case 'sendinvite':
 			
@@ -586,6 +594,7 @@ if( $args->command )
 				}
 			}
 			
+			// Loads user and avatar
 			if( $usr = $SqlDatabase->FetchObject( '
 				SELECT f.ID, f.Name, f.FullName, f.Email, f.UniqueID, f.Status, s.Data AS Avatar 
 				FROM FUser f 
@@ -605,6 +614,7 @@ if( $args->command )
 				
 				$hash = false; $online = false; $found = false;
 				
+				// Generate invite hash (tiny url)
 				$f = new dbIO( 'FTinyUrl' );
 				$f->Source = ( $baseUrl . '/system.library/user/addrelationship?data=' . urlencode( json_encode( $data ) ) . '&contact=' . urlencode( json_encode( $contact ) ) );
 				if( !$f->Load() )
@@ -622,8 +632,13 @@ if( $args->command )
 				}
 				else
 				{
+					// When reinviting, just re-use the thing
+					if( $reinvite )
+					{
+						$found = true;
+					}
 				    // If the invite is over a week old, just allow reinvite
-				    if( strtotime( $f->DateCreated ) > strtotime( time() ) - ( 60 * 60 * 24 * 7 ) )
+				    else if( strtotime( $f->DateCreated ) > strtotime( time() ) - ( 60 * 60 * 24 * 7 ) )
 				    {
 					    $found = true;
 					}
@@ -652,7 +667,6 @@ if( $args->command )
 				if( $contact->ID > 0 )
 				{
 					// Check if user is online ...
-					
 					if( !$online && ( $res1 = FriendCoreQuery( '/system.library/user/activewslist',
 					[
 						'usersonly' => true,
@@ -667,9 +681,6 @@ if( $args->command )
 							}
 						}
 					}
-					
-					// TODO: Remove this once all old databases that is missing this column is updated.
-					$SqlDatabase->query( 'ALTER TABLE `FQueuedEvent` ADD `InviteLinkID` bigint(20) NOT NULL DEFAULT \'0\';' );
 					
 					$Logger->log( '[sendinvite] Making queued event.' );
 					
@@ -723,14 +734,11 @@ if( $args->command )
 				// Send email if not online or if email is specified ...
 				if( !$online )
 				{
-					// TODO: Sometimes, we would want to reinvite - possibly with a new link
-					//       Todo thing is to do that soon :)
-					if( $found )
+					// We have already sent a link, and we don't want to reinvite
+					if( $found && !$reinvite )
 					{
 						die( 'fail<!--separate-->{"response":-1,"message":"Invitation already sent, try removing the pending invite and resend."}' );
 					}
-					
-					$invitelink = buildUrl( $hash, $Conf, $ConfShort );
 					
 					// Set up mail content!
 					if( isset( $Conf[ 'Mail' ][ 'TemplateDir' ] ) )
