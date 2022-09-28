@@ -726,7 +726,14 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				};
 				if( conf.State ) o.state = conf.State;
 
-				console.log( 'Sent css to app with ' + _applicationBasics.css.length );
+                if( _applicationBasics.css )
+                {
+				    console.log( 'Directive: Sent (cached) css to app with ' + _applicationBasics.css.length );
+			    }
+			    else
+			    {
+			        console.log( 'Directive: Could not find css string length. Handle in API.' );
+			    }
 
 				// Get JSON data from url
 				var vdata = GetUrlVar( 'data' ); if( vdata ) o.data = vdata;
