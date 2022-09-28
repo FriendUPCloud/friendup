@@ -726,7 +726,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				};
 				if( conf.State ) o.state = conf.State;
 
-                if( _applicationBasics.css )
+                if( _applicationBasics.css && _applicationBasics.css.length > 0 )
                 {
 				    console.log( 'Directive: Sent (cached) css to app with ' + _applicationBasics.css.length );
 			    }
