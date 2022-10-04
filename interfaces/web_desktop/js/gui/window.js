@@ -2098,6 +2098,7 @@ function CloseView( win, delayed )
 		}
 		else
 		{
+		    console.log( 'Foobaloobi: ', appId, win.windowObject.recentLocation, win );
 			// Activate latest activated view (not on mobile)
 			let nextActive = false;
 			if( div.classList.contains( 'Active' ) || div.windowObject.getFlag( 'dialog' ) )
