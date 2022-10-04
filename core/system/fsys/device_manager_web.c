@@ -567,9 +567,6 @@ f.Name ASC";
 			type = (char *)el->hme_Data;
 		}
 		
-		int mountError = 0;
-		
-		//if( sessionid == NULL || devname == NULL )
 		if( devname == NULL )
 		{
 			FERROR("One of required arguments is missing: sessionid, devname\n");
@@ -681,10 +678,6 @@ f.Name ASC";
 						foundUserInMemory = FALSE;
 					}
 				} // isAdmin or permissions granted
-				//if( args != NULL )
-				//{
-				//	FFree( args );
-				//}
 			}
 			else
 			{
@@ -900,6 +893,28 @@ AND LOWER(f.Name) = LOWER('%s')",
 					l->LibrarySQLDrop( l, sqllib );
 				}
 			}
+			
+			//
+			// If server is in cluster then message other sessions on different servers
+			//
+			
+			userID = 0;
+			if( loggedSession != NULL )
+			{
+				userID = loggedSession->us_UserID;
+			}
+			
+			
+			if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
+			{
+				BufString *res = SendMessageToSessionsAndWait( l, userID, request );
+				if( res != NULL )
+				{
+					DEBUG("RESPONSE: %s\n", res->bs_Buffer );
+					BufStringDelete( res );
+				}
+			}
+			
 		}		// check mount parameters
 		*result = 200;
 	}
@@ -1209,6 +1224,16 @@ AND LOWER(f.Name) = LOWER('%s')",
 						*result = 200;
 
 						l->LibrarySQLDrop( l, sqllib );
+					}
+				}
+				
+				if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
+				{
+					BufString *res = SendMessageToSessionsAndWait( l, userID, request );
+					if( res != NULL )
+					{
+						DEBUG("RESPONSE: %s\n", res->bs_Buffer );
+						BufStringDelete( res );
 					}
 				}
 			}

@@ -185,12 +185,18 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 		// While the column is not the last
 		while( dptr[0] != SQLT_END )
 		{
+			//printf( " id %d\n", dptr[0] );
 			switch( dptr[ 0 ] )
 			{
 				case SQLT_NODE:
 					{
 						dataUsed = 1;
-						MinNode *locnode = (MinNode *)strptr + dptr[ 2 ];
+						MinNode *locnode = (MinNode *)(strptr + dptr[ 2 ]);
+						
+						//printf("strptr %p dptr %p\n", strptr, dptr[ 2 ] );
+						
+						//printf("Node %p locnode %p\n", node, locnode );
+						
 						if( node != NULL )
 						{
 							node->mln_Succ = (MinNode *)data;
@@ -878,9 +884,13 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 				const char *error = mysql_stmt_error(stmt);
 				//sb->sl_UtilInterface.Log( FLOG_ERROR, "Save query error: %s, query: %s\n", error, finalQuery );
 				
-				if( strstr( error, "Lost connection to MySQL server during" ) != NULL )
+				if( error != NULL )
 				{
-					Reconnect( l );
+					if( strstr( error, "Lost connection to MySQL server during" ) != NULL )
+					{
+						Reconnect( l );
+					}
+					FERROR("mysql/save: ERROR: %s\n", error );
 				}
 				
 				retValue = 1;

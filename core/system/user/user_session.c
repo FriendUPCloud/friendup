@@ -31,9 +31,10 @@ extern SystemBase *SLIB;
  *
  * @param sessid sessionID
  * @param devid deviceID
+ * @param fcid FriendCore ID
  * @return new UserSession structure when success, otherwise NULL
  */
-UserSession *UserSessionNew( char *sessid, char *devid )
+UserSession *UserSessionNew( char *sessid, char *devid, char *fcid )
 {
 	UserSession *s;
 	if( ( s = FCalloc( 1, sizeof(UserSession) ) ) != NULL )
@@ -47,6 +48,8 @@ UserSession *UserSessionNew( char *sessid, char *devid )
 			s->us_SessionID = SessionIDGenerate();
 		}
 		s->us_DeviceIdentity = StringDuplicate( devid );
+		
+		s->us_FCID = StringDuplicate( fcid );
 		
 		UserSessionInit( s );
 		
@@ -191,6 +194,11 @@ void UserSessionDelete( UserSession *us )
 			{
 				FFree( us->us_DeviceIdentity );
 				us->us_DeviceIdentity = NULL;
+			}
+			
+			if( us->us_FCID != NULL )
+			{
+				FFree( us->us_FCID );
 			}
 	
 			if( us->us_SessionID != NULL )

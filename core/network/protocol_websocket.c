@@ -533,6 +533,13 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 		if( wsd != NULL )
 		{
 			wsd->wsc_Status = WSC_STATUS_DELETED;
+			
+			if( wsd->wsc_Buffer != NULL )
+			{
+				BufStringDelete( wsd->wsc_Buffer );
+				wsd->wsc_Buffer = NULL;
+			}
+			
 			pthread_mutex_destroy( &(wsd->wsc_Mutex) );
 		}
 		break;
@@ -701,8 +708,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 							locptr[ znew++ ] = car;
 						}
 					
-					    // Hogne removed message output here
-						//DEBUG("protocol websocket, before write: %s\n", locptr );
+
 						DEBUG("protocol websocket, before write.... %p\n", locptr );
 						if( locptr[ znew-1 ] == 0 )
 						{
@@ -817,7 +823,7 @@ void *ParseAndCall( WSThreadData *wstd )
 	jsmn_parser p;
 	jsmntok_t *t;
 	
-	if( wstd == NULL )
+	if( wstd == NULL || wstd->wstd_WSD->wsc_Status == WSC_STATUS_TO_BE_REMOVED )
 	{
 		return NULL;
 	}
@@ -827,26 +833,26 @@ void *ParseAndCall( WSThreadData *wstd )
 	size_t len = wstd->wstd_Len;
 	
 	UserSession *locus = NULL;
-	UserSession *orig;
+	UserSession *origSession;
 	
 	if( wstd->wstd_WSD != NULL )
 	{
 		locus = wstd->wstd_UserSession;
 	}
-	orig = locus;
-	if( orig != NULL )
+	origSession = locus;
+	if( origSession != NULL )
 	{
-		if( orig->us_WSD == NULL )
+		if( origSession->us_WSD == NULL )
 		{
 			// This error is happening pretty random!
 			// This one leads to websocket errors...
 			
 			FERROR("[ParseAndCall] There is no WS connection attached to user session!\n");
 			// Decrease use for external call
-			if( FRIEND_MUTEX_LOCK( &(orig->us_Mutex) ) == 0 )
+			if( FRIEND_MUTEX_LOCK( &(origSession->us_Mutex) ) == 0 )
 			{
-				orig->us_InUseCounter--;
-				FRIEND_MUTEX_UNLOCK( &(orig->us_Mutex) );
+				origSession->us_InUseCounter--;
+				FRIEND_MUTEX_UNLOCK( &(origSession->us_Mutex) );
 			}
 			// Free websocket thread data
 			FFree( wstd );
@@ -984,6 +990,7 @@ void *ParseAndCall( WSThreadData *wstd )
 											ParseAndCall( wstd );
 											/*
 											// Increase use for external (parseandcall)
+											
 											UserSession *uc = ( UserSession *)wstd->wstd_WSD->wsc_UserSession;
 											if( uc != NULL )
 											{
@@ -1183,6 +1190,7 @@ void *ParseAndCall( WSThreadData *wstd )
 								int paths = 0;
 								char *authid = NULL;
 								int authids = 0;
+								char *nsess = StringDuplicate( locus->us_SessionID );
 								
 								Http *http = HttpNew( );
 								if( http != NULL )
@@ -1191,40 +1199,11 @@ void *ParseAndCall( WSThreadData *wstd )
 									http->http_ParsedPostContent = HashmapNew();
 									http->http_Uri = UriNew();
 
-									if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( locus->us_SessionID ) ) == MAP_OK )
+									if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( "sessionid" ), nsess ) == MAP_OK )
 									{
 										//DEBUG1("[WS]:New values passed to POST %s\n", s->us_SessionID );
 									}
-									/*
-									if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
-									{
-											if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-											{
-												if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( us->us_SessionID ) ) == MAP_OK )
-												{
-												//DEBUG1("[WS]:New values passed to POST %s\n", s->us_SessionID );
-												}
-										
-												if( us->us_UserActionInfo[ 0 ] == 0 )
-												{
-													int fd = lws_get_socket_fd( fcd->wsc_Wsi );
-													char add[ 256 ];
-													char rip[ 256 ];
-											
-													lws_get_peer_addresses( fcd->wsc_Wsi, fd, add, sizeof(add), rip, sizeof(rip) );
-													//INFO("[WS]: WEBSOCKET call %s - %s\n", add, rip );
-											
-													snprintf( us->us_UserActionInfo, sizeof( us->us_UserActionInfo ), "%s / %s", add, rip );
-												}
-												FRIEND_MUTEX_UNLOCK( &(s->us_Mutex) );
-										}
-										else
-										{
-											FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
-										}
-									}
-									*/
-									
+
 									int i, i1;
 									
 									//thread
@@ -1392,13 +1371,28 @@ void *ParseAndCall( WSThreadData *wstd )
 									http->http_ParsedPostContent = HashmapNew();
 									http->http_Uri = UriNew();
 									
+									if( FRIEND_MUTEX_LOCK( &( wstd->wstd_WSD->wsc_Mutex ) ) == 0 )
+									{
+										wstd->wstd_WSD->wsc_InUseCounter++;
+										FRIEND_MUTEX_UNLOCK( &( wstd->wstd_WSD->wsc_Mutex ) );
+									}
+									
 									UserSession *ses = wstd->wstd_WSD->wsc_UserSession;
 									if( ses != NULL )
 									{
-										DEBUG("[WS] Session ptr %p  session %p\n", ses, ses->us_SessionID );
-										if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( ses->us_SessionID ) ) == MAP_OK )
+										if( wstd->wstd_WSD != NULL && wstd->wstd_WSD->wsc_UserSession != NULL )
 										{
-											DEBUG1("[WS] New values passed to POST %s\n", ses->us_SessionID );
+											DEBUG("[WS] Session ptr %p  session %p\n", ses, ses->us_SessionID );
+											if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( ses->us_SessionID ) ) == MAP_OK )
+											{
+												DEBUG1("[WS] New values passed to POST %s\n", ses->us_SessionID );
+											}
+										}
+										
+										if( FRIEND_MUTEX_LOCK( &( wstd->wstd_WSD->wsc_Mutex ) ) == 0 )
+										{
+											wstd->wstd_WSD->wsc_InUseCounter--;
+											FRIEND_MUTEX_UNLOCK( &( wstd->wstd_WSD->wsc_Mutex ) );
 										}
 									
 										int i, i1;
@@ -1581,8 +1575,16 @@ void *ParseAndCall( WSThreadData *wstd )
 											}
 										}
 										HttpFree( http );
+									}	// session != null
+									else
+									{
+										if( FRIEND_MUTEX_LOCK( &( wstd->wstd_WSD->wsc_Mutex ) ) == 0 )
+										{
+											wstd->wstd_WSD->wsc_InUseCounter--;
+											FRIEND_MUTEX_UNLOCK( &( wstd->wstd_WSD->wsc_Mutex ) );
+										}
 									}
-								} // session != NULL
+								} // http != NULL
 								else
 								{
 									FERROR("[WS] User session is NULL\n");
@@ -1622,21 +1624,21 @@ void *ParseAndCall( WSThreadData *wstd )
 		FERROR("[WS] Object expected\n");
 	}
 	
-	if( orig != NULL )
+	if( origSession != NULL )
 	{
-		if( FRIEND_MUTEX_LOCK( &(orig->us_Mutex) ) == 0 )
+		if( FRIEND_MUTEX_LOCK( &(origSession->us_Mutex) ) == 0 )
 		{
-			orig->us_InUseCounter--; // Decrease for internal increase
-			DEBUG( "[WS] Decreased. %d\n", orig->us_InUseCounter );
-			FRIEND_MUTEX_UNLOCK( &(orig->us_Mutex) );
+			origSession->us_InUseCounter--; // Decrease for internal increase
+			DEBUG( "[WS] Decreased. %d\n", origSession->us_InUseCounter );
+			FRIEND_MUTEX_UNLOCK( &(origSession->us_Mutex) );
 		}
 		
-		if( orig->us_Status == USER_SESSION_STATUS_TO_REMOVE )
+		if( origSession->us_Status == USER_SESSION_STATUS_TO_REMOVE )
 		{
-			char *locName = StringDuplicate( orig->us_SessionID );
+			char *locName = StringDuplicate( origSession->us_SessionID );
 			if( locName != NULL )
 			{
-				UserSessionDelete( orig );
+				UserSessionDelete( origSession );
 
 				if( SLIB->sl_ActiveAuthModule != NULL )
 				{

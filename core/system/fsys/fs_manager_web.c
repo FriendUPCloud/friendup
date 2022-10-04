@@ -32,7 +32,6 @@ if( PTH[ INT ] == '/' || PTH[ INT ] == ':' || PTH[ INT ] == '\'' ) \
 	break; \
 }
 
-
 /**
  * Filesystem web calls handler
  *

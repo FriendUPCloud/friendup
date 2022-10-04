@@ -385,8 +385,10 @@ CREATE TABLE IF NOT EXISTS `FUserGroup` (
 --
 
 CREATE TABLE IF NOT EXISTS `FUserToGroup` (
+  `ID` bigint(32) NOT NULL AUTO_INCREMENT,
   `UserID` bigint(20) NOT NULL,
-  `UserGroupID` bigint(20) NOT NULL
+  `UserGroupID` bigint(20) NOT NULL,
+  PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
@@ -477,7 +479,7 @@ INSERT INTO `FUserToGroup` (`UserID`,`UserGroupID`) VALUES ( 2,2 );
   `Type` bigint(2) NOT NULL,
   `Time` bigint(32) NOT NULL,
   PRIMARY KEY (`ID`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- 2017-03-06 -- on the end we will not use alter, but since we dont have version mechanism Im adding that here - stefkos
 ALTER TABLE `Filesystem` ADD `Execute` VARCHAR( 512 );

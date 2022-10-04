@@ -479,7 +479,6 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 						BufStringDelete( errorString );
 					}
 				}
-				
 				DBUpdateDeleteAll( dbu );
 			}
 

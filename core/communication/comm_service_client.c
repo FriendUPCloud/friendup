@@ -90,30 +90,24 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 		return NULL;
 	}
 	
-	if( FRIEND_MUTEX_LOCK( &serv->s_Mutex ) == 0 )
+	COMMSERVICE_USE( serv );
+	
+	if( serv->s_Requests == NULL )
 	{
-		if( serv->s_Requests == NULL )
-		{
-			serv->s_Requests = cr;
-		}
-		else
-		{
-			serv->s_Requests->node.mln_Pred = (MinNode *)cr;
-			cr->node.mln_Succ = (MinNode *)serv->s_Requests;
-			serv->s_Requests = cr;
-		}
-		FRIEND_MUTEX_UNLOCK( &serv->s_Mutex );
+		serv->s_Requests = cr;
 	}
 	else
 	{
-		FERROR("Cannot lock mutex!\n");
-		FFree( cr ); 
-		return NULL;
+		serv->s_Requests->node.mln_Pred = (MinNode *)cr;
+		cr->node.mln_Succ = (MinNode *)serv->s_Requests;
+		serv->s_Requests = cr;
 	}
+	
+	COMMSERVICE_RELEASE( serv );
 
 	//int blocked = con->fc_Socket->s_Blocked;
 	
-	if( FRIEND_MUTEX_LOCK( &con->fc_Mutex ) == 0 )
+	if( FRIEND_MUTEX_LOCK( &(con->fc_Mutex) ) == 0 )
 	{
 		if( con->fc_Status != CONNECTION_STATUS_DISCONNECTED )
 		{
@@ -125,10 +119,10 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 		}
 		else
 		{
-			FRIEND_MUTEX_UNLOCK( &con->fc_Mutex );
+			FRIEND_MUTEX_UNLOCK( &(con->fc_Mutex) );
 			return NULL;
 		}
-		FRIEND_MUTEX_UNLOCK( &con->fc_Mutex );
+		FRIEND_MUTEX_UNLOCK( &(con->fc_Mutex) );
 	}
 	else
 	{
@@ -148,12 +142,18 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 	FBOOL quit = FALSE;
 	while( quit != TRUE )
 	{
+		DEBUG("[SendMessageAndWait] SendMessageAndWait message: waiting for condition\n");
 		if( FRIEND_MUTEX_LOCK( &serv->s_CondMutex ) == 0 )
 		{
-			pthread_cond_wait( &serv->s_DataReceivedCond, &serv->s_CondMutex );
+			pthread_cond_wait( &(serv->s_DataReceivedCond), &(serv->s_CondMutex) );
+
 			FRIEND_MUTEX_UNLOCK( &serv->s_CondMutex );
+			DEBUG("[SendMessageAndWait] SendMessageAndWait message unlocked\n");
 		}
-		else break;
+		else
+		{
+			break;
+		}
 
 		time_t acttime = time( NULL );
 		if( ( acttime - cr->cr_Time ) > 10 || cr->cr_Bs != NULL )
@@ -163,53 +163,211 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 			bs = cr->cr_Bs;
 			quit = TRUE;
 
-			if( FRIEND_MUTEX_LOCK( &serv->s_Mutex ) == 0 )
+			COMMSERVICE_USE( serv );
+			
+			if( cr == serv->s_Requests )
 			{
-				if( cr == serv->s_Requests )
+				CommRequest *next = (CommRequest *)serv->s_Requests->node.mln_Succ;
+				if( next != NULL )
 				{
-					CommRequest *next = (CommRequest *)serv->s_Requests->node.mln_Succ;
-					if( next != NULL )
-					{
-						next->node.mln_Pred = (MinNode *)NULL;
-						serv->s_Requests = next;
-					}
-					else
-					{
-						serv->s_Requests = NULL;
-					}
+					next->node.mln_Pred = (MinNode *)NULL;
+					serv->s_Requests = next;
 				}
 				else
 				{
-					CommRequest *next = (CommRequest *)cr->node.mln_Succ;
-					CommRequest *prev = (CommRequest *)cr->node.mln_Pred;
-					if( next != NULL )
-					{
-						prev->node.mln_Pred = (MinNode *)prev;
-						prev->node.mln_Succ = (MinNode *)next;
-					}
-					else
-					{
-						if( prev != NULL )
-						{
-							prev->node.mln_Succ = (MinNode *)NULL;
-						}
-					}
+					serv->s_Requests = NULL;
 				}
-				if( cr != NULL )
-				{
-					FFree( cr );
-					cr = NULL;
-				}
-				FRIEND_MUTEX_UNLOCK( &serv->s_Mutex );
 			}
+			else
+			{
+				CommRequest *next = (CommRequest *)cr->node.mln_Succ;
+				CommRequest *prev = (CommRequest *)cr->node.mln_Pred;
+				if( next != NULL )
+				{
+					prev->node.mln_Pred = (MinNode *)prev;
+					prev->node.mln_Succ = (MinNode *)next;
+				}
+				else
+				{
+					if( prev != NULL )
+					{
+						prev->node.mln_Succ = (MinNode *)NULL;
+					}
+				}
+			}
+			if( cr != NULL )
+			{
+				FFree( cr );
+				cr = NULL;
+			}
+			
+			COMMSERVICE_RELEASE( serv );
+		
 			break;
 		}
 	}
 
-	DEBUG( "[SendMessageAndWait] SendMessageAndWait Done with sending, returning\n" );
+	DEBUG( "[SendMessageAndWait] SendMessageAndWait END\n" );
 	
 	return bs;
 }
+
+//
+//
+//
+
+typedef struct ListEntry
+{
+	char ID[ FRIEND_CORE_MANAGER_ID_SIZE+1 ];
+	char SessionID[ 512 ];
+	int sessionIDLen;
+	struct ListEntry *next;
+}ListEntry;
+
+/**
+ * Send message to all user sessions via CommunicationService and wait+read response
+ *
+ * @param lsb pointer to SystemBase
+ * @param userID ID of user which should get message across cluster
+ * @param req http request which will be converted to DataForm
+ * @return pointer to new BufString structure when success, otherwise NULL
+ */
+
+BufString *SendMessageToSessionsAndWait( void *lsb, FQUAD userID, Http *req )
+{
+	SystemBase *sb = (SystemBase *)lsb;
+	
+	DEBUG( "[SendMessageToSessionsAndWait] START\n" );
+	
+	//
+	// There is no connection to another server, so there is no need to send information across servers
+	//
+	
+	if( sb->fcm->fcm_CommService->s_Connections == NULL )
+	{
+		DEBUG( "[SendMessageToSessionsAndWait] There is no connection to another server\n" );
+		return NULL;
+	}
+	
+	BufString *bs = BufStringNew(); //test purpose
+	BufStringAdd( bs, "test" );
+	
+	char tmpQuery[ 1024 ];
+	
+	ListEntry *rootEntry = NULL;
+
+	SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
+	if( sqllib != NULL )
+	{
+		snprintf( tmpQuery, sizeof(tmpQuery), "select FCID,SessionID from FUserSession where FCID not in('%s','') AND UserID=%ld", sb->fcm->fcm_ID, userID );
+		
+		void *res = sqllib->Query( sqllib, tmpQuery );
+		if( res != NULL )
+		{
+			char **row;
+			while( ( row = sqllib->FetchRow( sqllib, res ) ) != NULL )
+			{
+				//
+				// We have to find all servers where user have active sessions
+				//
+				
+				if( row[ 0 ] != NULL )
+				{
+					ListEntry *entry = FCalloc( 1, sizeof( ListEntry ) );
+					
+					DEBUG("Entry found: %s\n", row[ 0 ] );
+					strncpy( entry->ID, row[ 0 ], FRIEND_CORE_MANAGER_ID_SIZE );
+					entry->sessionIDLen = strlen( row[ 1 ] );
+					strncpy( entry->SessionID, row[ 1 ], entry->sessionIDLen );
+					
+					entry->next = rootEntry;
+					rootEntry = entry;
+				}
+			}
+			sqllib->FreeResult( sqllib, res );
+		}
+		sb->LibrarySQLDrop( sb, sqllib );
+	}
+	
+	//
+	// Lets go through loop and send messages to servers
+	//
+	
+	while( rootEntry != NULL )
+	{
+		ListEntry *remEntry = rootEntry;
+
+		FConnection *actCon = sb->fcm->fcm_CommService->s_Connections;
+		while( actCon != NULL )
+		{
+			DEBUG( "[SendMessageToSessionsAndWait] Check connection: %s\n", actCon->fc_DestinationFCID );
+			
+			if( actCon->fc_DestinationFCID != NULL && strncmp( rootEntry->ID, actCon->fc_DestinationFCID, FRIEND_CORE_MANAGER_ID_SIZE ) == 0 )
+			{
+				/*
+				DataForm *df = NULL;
+				
+				MsgItem tags[] = {
+					{ ID_FCRE, (FULONG)0, (FULONG)MSG_GROUP_START },
+					{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE, (FULONG)sb->fcm->fcm_ID },
+					{ ID_FRID, (FULONG)0, MSG_INTEGER_VALUE },
+					{ ID_CMMD, (FULONG)0, MSG_INTEGER_VALUE },
+					{ ID_QUER, (FULONG)FC_QUERY_FRIENDCORE_SYNC , MSG_INTEGER_VALUE },
+					{ ID_SESS, (FULONG)rootEntry->sessionIDLen, (FULONG)rootEntry->SessionID },
+					{ MSG_GROUP_END, 0,  0 },
+					{ TAG_DONE, TAG_DONE, TAG_DONE }
+				};
+	
+				df = DataFormNew( tags );
+		
+				DataFormAddForm( &df, ldf );
+				*/
+				
+				DataForm *df = DataFormFromHttpToSync( sb->fcm->fcm_ID, req, rootEntry->SessionID );
+				if( df != NULL )
+				{
+				
+					DEBUG("[SendMessageToSessionsAndWait] sending message to session %s\n", rootEntry->SessionID );
+		
+					BufString *retMsg = SendMessageAndWait( actCon, df );
+					if( retMsg != NULL )
+					{
+						BufStringDelete( retMsg );
+					}
+				
+					DataFormDelete( df );
+				}
+				break;
+			}
+			
+			actCon = (FConnection *)actCon->node.mln_Succ;
+			DEBUG( "[SendMessageToSessionsAndWait] loop\n");
+		}
+		
+		rootEntry = rootEntry->next;
+		FFree( remEntry );
+	}
+
+	DEBUG( "[SendMessageToSessionsAndWait] END\n" );
+	
+	return bs;
+}
+
+/*
+ char *FCID = NULL;
+		DataForm *df = NULL; 		// if NULL then no details needed
+		char *temp = FMalloc( 2048 );
+		int pos = 0;
+		
+		HashmapElement *el = GetHEReq( *request, "details" );
+		if( el != NULL && el->hme_Data )
+		{
+			if( strcmp( (char *)el->hme_Data, "true" ) == 0 )
+			{
+				
+			}
+		}
+ */
 
 /**
  * Send message via CommunicationService to provided receipients
@@ -457,11 +615,16 @@ void FConnectionDelete( FConnection *con )
 {
 	if( con != NULL )
 	{
+		int retry = 15;
 		// we cannot delete FCommuncation when its doing PING
 		
 		while( TRUE )
 		{
 			if( con->fc_PingInProgress == FALSE )
+			{
+				break;
+			}
+			if( (retry-- ) <= 0 )
 			{
 				break;
 			}
