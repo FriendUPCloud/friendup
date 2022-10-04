@@ -2096,9 +2096,15 @@ function CloseView( win, delayed )
 			showDashboard();
 			setTimeout( function(){ showDashboard(); }, 150 );
 		}
+		// Also do this with appid
+		else if( appId && win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
+		{
+		    _DeactivateWindows();
+			showDashboard();
+			setTimeout( function(){ showDashboard(); }, 150 );
+		}
 		else
 		{
-		    console.log( 'Foobaloobi: ', appId, win.windowObject.recentLocation, win );
 			// Activate latest activated view (not on mobile)
 			let nextActive = false;
 			if( div.classList.contains( 'Active' ) || div.windowObject.getFlag( 'dialog' ) )
