@@ -314,7 +314,7 @@ i18n_copying_files_stopped              : Copying files stopped.
 i18n_choose_file_to_upload              : Choose file to upload
 i18n_upload_target                      : Upload target
 i18n_browse                             : Browse
-i18n_upload_the_file                    : Start upload
+i18n_upload_the_file                    : Upload
 i18n_file_upload                        : File upload
 i18n_upload_completed                   : Upload completed.
 i18n_upload_failed                      : Upload failed.
