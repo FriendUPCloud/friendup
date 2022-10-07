@@ -21,6 +21,7 @@ i18n_network                         : Network
 i18n_language                        : Language
 i18n_bookmarks                       : Bookmarks
 i18n_upload_a_file                   : Upload file
+i18n_change_up_path                  : Change path
 i18n_selected_files                  : Selected files
 i18n_in_total                        : In total
 i18n_deleting_files                  : Deleting files
