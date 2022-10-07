@@ -392,6 +392,19 @@ body .Button.IconButton
 	border: 0 !important;
 }
 
+span.VerticalLine
+{
+    background-color: #455155;
+    width: 3px;
+    top: -1px;
+    border-radius: 5px;
+    position: relative;
+    height: 14px;
+    border: 0;
+    margin: 0px 10px 0 4px;
+    display: inline-block;
+}
+
 .Button.Glue, 
 button.Glue
 {

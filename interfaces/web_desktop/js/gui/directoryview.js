@@ -511,6 +511,21 @@ DirectoryView.prototype.initToolbar = function( winobj )
 			}
 		},
 		{
+		    element: 'separator',
+		    className: 'VerticalLine',
+		    content: '',
+		    onclick: null
+		},
+		{
+		    element: 'button',
+		    className: 'IconButton Upload IconSmall fa-cloud-upload',
+		    content: i18n( 'i18n_upload_a_file' ),
+		    onclick: function( e )
+		    {
+		        console.log( 'Yeah' );
+		    }
+		},
+		{
 			element: 'toggle-group',
 			align: 'center',
 			buttons: [
@@ -632,14 +647,27 @@ DirectoryView.prototype.initToolbar = function( winobj )
 
 	function renderButton( btn, par )
 	{
-		let d = document.createElement( btn.element );
+	    let d;
+	    if( btn.element == 'separator' )
+	    {
+	        d = document.createElement( 'span' );
+	    }
+		else
+		{
+		    d = document.createElement( btn.element );
+	    }
 		if( btn.content )
+		{
 			d.innerHTML = btn.content;
+		}
 		d.className = btn.className + ( btn.icon ? ( ' ' + btn.icon ) : '' );
-		d.onclick = btn.onclick;
+		if( btn.onclick )
+		{
+		    d.onclick = btn.onclick;
+		    d.addEventListener( 'touchstart', d.onclick, true );
+	    }
 		if( btn.value )
 			d.value = btn.value;
-		d.addEventListener( 'touchstart', d.onclick, true );
 		par.appendChild( d );
 		return d;
 	}
