@@ -323,6 +323,7 @@ i18n_upload_failed_description          : Could not upload your file.
 i18n_select_local_files                 : Select file(s) to upload
 i18n_not_upload_target                  : Not an upload target
 i18n_not_upload_target_desc             : You can not upload to the Shared drive.
+i18n_upload_file_to_storage             : Upload some file(s)
 
 i18n_unzip_completed                    : Decompressing completed.
 i18n_unzip_comdesc                      : Decompressing a file(s) completed successfully
