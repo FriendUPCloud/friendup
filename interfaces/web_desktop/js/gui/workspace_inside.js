@@ -7406,7 +7406,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( currentMovable && currentMovable.content.fileInfo )
 			fi = currentMovable.content.fileInfo.Path;
 		
-		let w = new View( {
+		let options = {
 			title: i18n( 'i18n_choose_file_to_upload' ),
 			width: 370,
 			'min-width': 370,
@@ -7415,7 +7415,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			id: 'fileupload',
 			resize: true,
 			screen: Workspace.screen
-		} );
+		};
+		
+		if( Workspace.dashboard )
+		{
+		    options[ 'standard-dialog' ] = true;
+		}
+		
+		let w = new View( options );
 		
 		this.uploadWindow = w;
 		w.onClose = function()
