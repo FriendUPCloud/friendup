@@ -522,7 +522,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 		    content: i18n( 'i18n_upload_a_file' ),
 		    onclick: function( e )
 		    {
-		        console.log( 'Yeah' );
+		        Workspace.uploadFile();
 		    }
 		},
 		{
