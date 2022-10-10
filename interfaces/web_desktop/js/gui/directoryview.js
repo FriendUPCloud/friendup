@@ -3840,6 +3840,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			let dv = obj.directoryView ? obj.directoryView : obj.fileInfo.directoryview;
 			if( ( obj.fileInfo.Type == 'Door' || obj.fileInfo.Type == 'Dormant' ) && dv.navMode == 'toolbar' )
 			{
+				let we = dv.windowObject;
 				let ppath = obj.fileInfo.Path;
 				
 				if( !Workspace.diskNotificationList[ ppath ] )
