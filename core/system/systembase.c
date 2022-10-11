@@ -541,6 +541,7 @@ SystemBase *SystemInit( void )
 		Log( FLOG_INFO, "core:updateuserloggedtimeinterval: %d\n", l->l_UpdateLoggedTimeOnUserMax );
 		Log( FLOG_INFO, "options:httpchecker: %d\n", l->l_EnableHTTPChecker );
 		Log( FLOG_INFO, "core:masterserveraddress: %s\n", l->sl_MasterServer );
+		Log( FLOG_INFO, "-----Options-END------------------------\n");
 
 		l->sqlpool = FCalloc( l->sqlpoolConnections, sizeof( SQLConPool) );
 		if( l->sqlpool != NULL )
