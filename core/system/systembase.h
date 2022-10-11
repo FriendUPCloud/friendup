@@ -430,6 +430,8 @@ typedef struct SystemBase
 	
 	int								l_HttpCompressionContent;	// information which compression is supported by the server
 	int								l_UpdateLoggedTimeOnUserMax;
+	
+	int								l_CompressDecompressDelay;	// delay used in compress/decompress functionality. It slowns down process = less cpu usage
 } SystemBase;
 
 

@@ -3237,6 +3237,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						char *dirname = FMalloc( 1024 );
 						if( dirname != NULL )
 						{
+							request->http_SB = l;
+							
 							snprintf( dirname, 1024, "%s%s_decomp_%d%d", DEFAULT_TMP_DIRECTORY, loggedSession->us_SessionID, rand()%9999, rand()%9999 );
 						
 							mkdir( dirname, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH );

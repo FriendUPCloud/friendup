@@ -216,6 +216,15 @@ int FileUploadFileOrDirectoryRec( Http *request, File *dstdev, const char *dst, 
 		return 1;
 	}
 	
+	if( request->http_SB != NULL )
+	{
+		SystemBase *sb = (SystemBase *)request->http_SB;
+		if( sb->l_CompressDecompressDelay > 0 )
+		{
+			usleep( sb->l_CompressDecompressDelay );
+		}
+	}
+	
 	DEBUG("[FileUploadFileOrDirectoryRec] dst %s <- src %s start\n", dst, src );
 	
 	if( S_ISDIR( statbuf.st_mode ) )
@@ -463,6 +472,15 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 	BufString *bs = NULL;
 	
 	DEBUG("[FileDownloadFileOrDirectoryRec]  start fod %d   dst: %s\n", fod, dst );
+	
+	if( request->http_SB != NULL )
+	{
+		SystemBase *sb = (SystemBase *)request->http_SB;
+		if( sb->l_CompressDecompressDelay > 0 )
+		{
+			usleep( sb->l_CompressDecompressDelay );
+		}
+	}
 	
 	if( fod <= 0 )
 	{

@@ -336,6 +336,7 @@ SystemBase *SystemInit( void )
 	l->l_HttpCompressionContent |= HTTP_COMPRESSION_DEFLATE;
 	
 	l->l_UpdateLoggedTimeOnUserMax = 10;
+	l->l_CompressDecompressDelay = 0;
 	
 	if( plib != NULL && plib->Open != NULL )
 	{
@@ -394,6 +395,8 @@ SystemBase *SystemInit( void )
 			
 			l->sl_CacheFiles = plib->ReadIntNCS( prop, "Options:CacheFiles", 1 );
 			l->sl_UnMountDevicesInDB = plib->ReadIntNCS( prop, "Options:UnmountInDB", 1 );
+			l->l_CompressDecompressDelay = plib->ReadIntNCS( prop, "Options:packingdelay", 0 );
+			
 			l->sl_SocketTimeout  = plib->ReadIntNCS( prop, "core:SSLSocketTimeout", 10000 );
 			l->sl_USFCacheMax = plib->ReadIntNCS( prop, "core:USFCachePerDevice", 102400000 );
 			
@@ -528,6 +531,16 @@ SystemBase *SystemInit( void )
 		Log( FLOG_INFO, "-----DBName: %s\n", dbname );
 		Log( FLOG_INFO, "-----User: %s\n", login );
 		Log( FLOG_INFO, "----------------------------------------\n");
+		Log( FLOG_INFO, "-----Options----------------------------\n");
+		Log( FLOG_INFO, "user:timeout: %d\n", l->sl_RemoveOldSessionTimeout );
+		Log( FLOG_INFO, "options:cachefiles: %d\n", l->sl_CacheFiles );
+		Log( FLOG_INFO, "options:unmountindb: %d\n", l->sl_UnMountDevicesInDB );
+		Log( FLOG_INFO, "options:packingdelay: %d\n", l->l_CompressDecompressDelay );
+		Log( FLOG_INFO, "core:sslsockettimeout: %d\n", l->sl_SocketTimeout );
+		Log( FLOG_INFO, "core:usfcacheperdevice: %d\n", l->sl_USFCacheMax );
+		Log( FLOG_INFO, "core:updateuserloggedtimeinterval: %d\n", l->l_UpdateLoggedTimeOnUserMax );
+		Log( FLOG_INFO, "options:httpchecker: %d\n", l->l_EnableHTTPChecker );
+		Log( FLOG_INFO, "core:masterserveraddress: %s\n", l->sl_MasterServer );
 
 		l->sqlpool = FCalloc( l->sqlpoolConnections, sizeof( SQLConPool) );
 		if( l->sqlpool != NULL )
