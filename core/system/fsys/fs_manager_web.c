@@ -3264,8 +3264,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										// first we must copy file to local tmp folder
 
 										FHandler *actFS = (FHandler *)actDev->f_FSys;
-										int dataread = 0;
-										int readbytes = 0;
+										FUQUAD dataread = 0;
+										FUQUAD readbytes = 0;
 
 										if( actFS != NULL )
 										{
@@ -3313,7 +3313,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										}
 										fclose( localfp );
 							
-										DEBUG("[FSMWebRequest] Archive read, bytes %d\n", readbytes );
+										DEBUG("[FSMWebRequest] Archive read, bytes %lu\n", readbytes );
 							
 										// archive was stored on disk
 										
