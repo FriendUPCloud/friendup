@@ -21,13 +21,26 @@
 #include <core/types.h>
 #include <core/nodes.h>
 #include <system/fsys/fsys.h>
-//#include <system/systembase.h>
+
+
+//
+// Filesystem extensions
+//
+
+
+#define DOSDriver_Extension_Copy			1
+#define DOSDriver_Extension_Delete		(1<<1)
+
+//
+// structure
+//
 
 typedef struct DOSDriver{
 	MinNode 							node;
 	FHandler							*dd_Handler;
 	char								*dd_Name;
 	char								*dd_Type;
+	unsigned int						dd_Extensions;
 }DOSDriver;
 
 //int RescanDOSDrivers( void *l );

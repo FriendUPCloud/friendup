@@ -1,5 +1,8 @@
 {
 	"type":    "Local",
+    "handler": "local",
+    "version": 1,
+    "externsions":"copy,delete",
 	"short":   "Local server",
 	"literal": "Local server filesystem",
 	"group":   "Admin",

@@ -427,6 +427,7 @@ f.GroupID='%ld' AND f.Name='%s'",
 							{
 								filesys = ddrive->dd_Handler;
 								filedd = ddrive;
+						
 								break;
 							}
 							ddrive = (DOSDriver *)ddrive->node.mln_Succ;
@@ -469,6 +470,7 @@ f.GroupID='%ld' AND f.Name='%s'",
 							
 								if( retFile != NULL )
 								{
+									retFile->f_DOSDriverExtension = filedd->dd_Extensions;
 									retFile->f_UserID = dbUserID;
 									FileFillSessionID( retFile, session ); 
 									retFile->f_UserGroupID = userGroupID;
@@ -1127,6 +1129,7 @@ AND f.Name = '%s'",
 		
 		if( usr != NULL && retFile != NULL )
 		{
+			retFile->f_DOSDriverExtension = filedd->dd_Extensions;
 			retFile->f_UserID = dbUserID;
 			FileFillSessionID( retFile, us );
 			retFile->f_UserGroupID = userGroupID;
@@ -1420,6 +1423,7 @@ int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile, char **m
 	
 		if( retFile != NULL )
 		{
+			retFile->f_DOSDriverExtension = filedd->dd_Extensions;
 			retFile->f_ID = dbid;
 			retFile->f_Mounted = mount;
 		

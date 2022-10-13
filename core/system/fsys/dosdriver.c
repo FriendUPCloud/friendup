@@ -59,6 +59,7 @@ DOSDriver *DOSDriverCreate( SystemBase *sl, const char *path, char *name )
 	DOSDriver *ddrive = NULL;
 	char *type = "type";
 	char *handler = "handler";
+	unsigned int extensions = 0;
 	
 	DEBUG( "[DOSDriverCreate] Trying to create dos driver %s (path: %s)\n", name, path );
 	
@@ -67,17 +68,78 @@ DOSDriver *DOSDriverCreate( SystemBase *sl, const char *path, char *name )
 		ddrive->dd_Name = StringDuplicateN( name, strlen( name ) );
 		ddrive->dd_Type = NULL;
 		
-		struct PropertiesInterface *plib = &(SLIB->sl_PropertiesInterface);
-		Props *prop = NULL;
+		//struct PropertiesInterface *plib = &(SLIB->sl_PropertiesInterface);
+		//Props *prop = NULL;
 	
 		//if( ( plib = (struct PropertiesLibrary *)LibraryOpen( sl, "properties.library", 0 ) ) != NULL )
 		{
 			char fileName[ 1024 ];
 			sprintf( fileName, "%s/dosdriver.ini", path );
 			
+			char *buffer = FMalloc( 4096 * sizeof(char) );
+			if( buffer != NULL )
+			{
+				FILE *readfile = NULL;
+
+				if( ( readfile = fopen( fileName, "rb" ) ) != NULL )
+				{
+					fread( buffer, 4096, 1, readfile );
+					
+					fclose( readfile );
+				}
+				
+				int r;
+				jsmn_parser p;
+				jsmntok_t t[128]; // We expect no more than 128 tokens 
+				
+				jsmn_init(&p);
+				
+				r = jsmn_parse(&p, buffer, bs->bs_Size - 17, t, sizeof(t)/sizeof(t[0]));
+				
+				FFree( buffer );
+			}
+			
+			int i, i1;
+				
+			
+				
+				char *buffer = &bs->bs_Buffer[ 17 ];
+			
+				
+				if (r < 0) 
+				{
+					FERROR("Failed to parse JSON: %d\n", r);
+					BufStringDelete( bs );
+					return 1;
+				}
+			
+				// Filename, Path, Filesize, DateModified, MetaType, Type (File/Directory)
+				
+				char *isdir = NULL;
+			
+				for( i = 0; i < r ; i++ )
+				{
+					i1 = i + 1;
+					if (jsoneq( buffer, &t[ i ], "Type") == 0) 
+					{
+						if( strncmp( "Directory",  buffer + t[ i1 ].start, t[ i1 ].end-t[ i1 ].start ) == 0 )
+						{
+							isdir = buffer + t[ i1 ].start;
+						}
+					}
+					else if (jsoneq( buffer, &t[ i ], "Filename") == 0) 
+					{
+						fname = buffer + t[ i1 ].start;
+						fnamesize = t[ i1 ].end-t[ i1 ].start;
+					}
+				}
+			
+			/*
 			prop = plib->Open( fileName );
 			if( prop != NULL)
 			{
+				
+				
 				DEBUG("[SYSTEMLibrary] reading login\n");
 				type = plib->ReadStringNCS( prop, "DOSDriver:type", "null" );
 				handler = plib->ReadStringNCS( prop, "DOSDriver:handler", "null" );
@@ -96,9 +158,25 @@ DOSDriver *DOSDriverCreate( SystemBase *sl, const char *path, char *name )
 					}
 					efsys = (FHandler *)efsys->node.mln_Succ;
 				}
+				
+				//
+				// parse and set extensions flag
+				//
+				
+				char *tmp = plib->ReadStringNCS( prop, "DOSDriver:extensions", "null" );
+				
+				if( strstr( tmp, "copy" ) != NULL )
+				{
+					ddrive->dd_Extensions |= DOSDriver_Extension_Copy;
+				}
+				if( strstr( tmp, "delete" ) != NULL )
+				{
+					ddrive->dd_Extensions |= DOSDriver_Extension_Delete;
+				}
 
 				plib->Close( prop );
 			}
+			*/
 		}
 
 		if( ddrive->dd_Handler == NULL )

@@ -100,6 +100,7 @@ typedef struct File
 	FilesystemActivity			f_Activity;			// information how many bytes user can read/store
 	
 	FBOOL						f_WorkgroupDrive;	// if workgroup drive, then value is set to TRUE
+	unsigned int				f_DOSDriverExtension;	// DOSDriver extension flag
 } File;
 
 
