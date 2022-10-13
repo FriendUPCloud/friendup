@@ -2090,6 +2090,11 @@ function CloseView( win, delayed )
 			div.appendChild( ele );
 		}
 		
+		// TODO: Remove this hack
+		// Check for Friend Chat dialog window
+		let isFriendChat = win.windowObject.applicationName == 'FriendChat';
+		let isFCDialog = isFriendChat && win.id && win.id.indexOf( 'Settings' ) == 0;
+		
 		if( !appId && win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
 		{
 			_DeactivateWindows();
@@ -2097,7 +2102,7 @@ function CloseView( win, delayed )
 			setTimeout( function(){ showDashboard(); }, 150 );
 		}
 		// Also do this with appid
-		else if( appId && win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
+		else if( isFCDialog && appId && win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
 		{
 		    _DeactivateWindows();
 			showDashboard();
