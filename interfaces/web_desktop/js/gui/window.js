@@ -2093,7 +2093,7 @@ function CloseView( win, delayed )
 		// TODO: Remove this hack
 		// Check for Friend Chat dialog window
 		let isFriendChat = win.windowObject.applicationName == 'FriendChat';
-		let isFCDialog = isFriendChat && win.id && win.id.indexOf( 'Settings' ) == 0;
+		let isFCDialog = isFriendChat && win.id && ( win.id.indexOf( 'Settings' ) == 0 || win.id.indexOf( 'Account_settings' ) == 0 );
 		
 		if( !appId && win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
 		{
