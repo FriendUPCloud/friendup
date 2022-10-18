@@ -28,6 +28,7 @@
 #include <system/fsys/file.h>
 #include <network/user_session_websocket.h>
 #include <system/user/user_session.h>
+#include "fs_manager.h"
 
 //
 //
@@ -84,6 +85,7 @@ typedef struct FHandler
 	int                     (*FileRead)( struct File *s, char *buf, int size );
 	int                     (*FileWrite)( struct File *s, char *buf, int size );
 	int                     (*FileSeek)( struct File *s, int pos );
+	void					(*RunExtension)( FileProcess *fm, File *srcFile, File *dstFile, char *srcPath, char *dstPath, int extension );
 	
 	int                     (*MakeDir)( struct File *s, const char *path );
 	int64_t                 (*Delete)( struct File *s, const char *path );

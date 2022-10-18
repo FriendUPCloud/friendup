@@ -35,6 +35,8 @@ FSManager *FSManagerNew( void *sb )
 	if( ( fm = FCalloc( 1, sizeof( FSManager ) ) ) != NULL )
 	{
 		fm->fm_SB = sb;
+		
+		pthread_mutex_init( &(fm->fm_Mutex), NULL );
 	}
 	
 	return fm;
@@ -49,6 +51,21 @@ void FSManagerDelete( FSManager *fm )
 {
 	if( fm != NULL )
 	{
+		if( FRIEND_MUTEX_LOCK( &(fm->fm_Mutex) ) == 0 )
+		{
+			FileProcess *rp = fm->fm_FileProcess;
+			while( rp != NULL )
+			{
+				FileProcess *releaseP = rp;
+				
+				rp = (FileProcess *) rp->node.mln_Succ;
+				
+				FFree( releaseP );
+			}
+			FRIEND_MUTEX_UNLOCK( &(fm->fm_Mutex) );
+		}
+		
+		pthread_mutex_destroy( &(fm->fm_Mutex) );
 		FFree( fm );
 	}
 }
@@ -1210,5 +1227,97 @@ int FSManagerDeleteSharedEntry( FSManager *fm, char *path, FQUAD uid )
 		}
 		sb->LibrarySQLDrop( sb, sqllib );
 	}
+	return 0;
+}
+
+//
+// Internal function
+//
+
+void RunFSThread( void *v )
+{
+	FileProcess *fp = (FileProcess *) v;
+	FSManager *fm = NULL;
+	if( fp != NULL )
+	{
+		fp->fp_PID = pthread_self();
+		fp->fp_FileProcess( fp, fp->fp_SrcFile, fp->fp_DstFile, fp->fp_SrcPath, fp->fp_DstPath, fp->fp_Extension );
+		
+		//
+		// We have to lock manager to remove entry from list
+		//
+		
+		if( FRIEND_MUTEX_LOCK( &(fm->fm_Mutex) ) == 0 )
+		{
+			// if its first on the list
+			if( fp == fm->fm_FileProcess )
+			{
+				fm->fm_FileProcess = (FileProcess *)fp->node.mln_Succ;
+			}
+			else
+			{
+				FileProcess *rp = fm->fm_FileProcess;
+				while( rp != NULL )
+				{
+					if( fp == (FileProcess *) rp->node.mln_Succ )
+					{
+						rp->node.mln_Succ = fp->node.mln_Succ;
+						break;
+					}
+					rp = (FileProcess *) rp->node.mln_Succ;
+				}
+			}
+			FRIEND_MUTEX_UNLOCK( &(fm->fm_Mutex) );
+		}
+		
+		if( fp->fp_SrcPath != NULL )
+		{
+			FFree( fp->fp_SrcPath );
+		}
+		if( fp->fp_DstPath != NULL )
+		{
+			FFree( fp->fp_DstPath );
+		}
+	}
+}
+
+/**
+ * Create FileProcess thread
+ *
+ * @param fm pointer to FSManager structure
+ * @param function pointer to function from filesystem which will run in thread
+ * @param uid user id which point to user which shared entry will be removed
+*  @return 0 when success otherwise error number
+ */
+int FSCreateFileThread( FSManager *fs, void (*function)(FileProcess *,File *, File *, char *, char *, int), File *srcf, File *dstf, char *srcp, char *dstp, int extension )
+{
+	FileProcess *fp = NULL;
+	
+	if( ( fp = FCalloc( 1, sizeof( FileProcess ) ) ) != NULL )
+	{
+		fp->fp_SrcFile = srcf;
+		fp->fp_DstFile = dstf;
+		fp->fp_SrcPath = StringDuplicate( srcp );
+		fp->fp_DstPath = StringDuplicate( dstp );
+		fp->fp_Extension = extension;
+		fp->fp_FSManager = fs;
+		
+		if( pthread_create( &(fp->fp_Thread), NULL, (void *(*) (void *))&function, ( void *)fp ) == 0 )
+		{
+			// We have to add process to list
+			
+			if( FRIEND_MUTEX_LOCK( &(fs->fm_Mutex) ) == 0 )
+			{
+				fp->node.mln_Succ = (MinNode *)fs->fm_FileProcess;
+				fs->fm_FileProcess = fp;
+				FRIEND_MUTEX_UNLOCK( &(fs->fm_Mutex) );
+			}
+		}
+		else
+		{
+			FFree( fp );
+		}
+	}
+	
 	return 0;
 }

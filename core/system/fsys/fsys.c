@@ -100,6 +100,7 @@ FHandler *FHandlerCreate( const char *path, const char *name )
 			fsys->FileRead = dlsym( fsys->handle, "FileRead");
 			fsys->FileWrite = dlsym( fsys->handle, "FileWrite");
 			fsys->FileSeek = dlsym( fsys->handle, "FileSeek");
+			fsys->RunExtension = dlsym( fsys->handle, "RunExtension");
 			
 			fsys->Info = dlsym( fsys->handle, "Info");
 			fsys->Call = dlsym( fsys->handle, "Call");

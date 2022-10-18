@@ -2603,4 +2603,11 @@ int InfoSet( File *s, const char *path, const char *key, const char *value )
 	return 0;
 }
 
+//
+// Run Extension
+//
 
+void RunExtension( FileProcess *fm, File *srcFile, File *dstFile, char *srcPath, char *dstPath, int extension )
+{
+	return;
+}

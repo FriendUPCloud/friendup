@@ -777,4 +777,11 @@ BufString *Dir( File *s, const char *path )
 	return bs;
 }
 
+//
+// Run Extension
+//
 
+void RunExtension( FileProcess *fm, File *srcFile, File *dstFile, char *srcPath, char *dstPath, int extension )
+{
+	return;
+}

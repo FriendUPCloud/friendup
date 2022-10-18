@@ -1,5 +1,7 @@
 {
 	"type":    "Remote",
+    "handler":  "Remote",
+    "version": 1,
 	"literal": "Remote filesystem",
 	"group":   "User",
 	"sharing":  "0",

@@ -1,5 +1,7 @@
 {
 	"type":    "SQLRODrive",
+    "handler":  "php",
+    "version": 1,
 	"short":   "Read Only",
 	"literal": "Read only filesystem",
 	"group":   "Admin",

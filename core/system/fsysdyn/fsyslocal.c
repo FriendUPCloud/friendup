@@ -1656,3 +1656,206 @@ int InfoSet( File *f, const char *path, const char *key, const char *value )
 	
 	return 0;
 }
+
+//
+// Copy single file
+//
+
+int CopyFile( const char *src, const char *dst )
+{
+	const int bufsz = 65536;
+	char *buf = malloc(bufsz);
+	if (!buf) return -1; // like mkdir, rmdir, return 0 for success, -1 for failure 
+	FILE *hin = fopen(src, "rb");
+	if (!hin) { free(buf); return -1; }
+	FILE *hout = fopen(dst, "wb");
+	if (!hout) { free(buf); fclose(hin); return -1; }
+	size_t buflen;
+	while( (buflen = fread( buf, 1, bufsz, hin ) ) > 0 )
+	{
+		if( buflen != fwrite( buf, 1, buflen, hout ) )
+		{
+			fclose(hout);
+			fclose(hin);
+			free(buf);
+			return -1; // IO error writing data 
+		}
+	}
+	free(buf);
+	int r = ferror(hin) ? -1 : 0; // check if fread had indicated IO error on input 
+	fclose(hin);
+	return r | (fclose(hout) ? -1 : 0); // final case: check if IO error flushing buffer -- don't omit this it really can happen; calling `fflush()` won't help. 
+}
+
+//
+// Copy files and subdirectories
+//
+
+void CopyWithSubdirectory( char *pSrcPath, char *pDstPath )
+{
+	int i;
+	char srcPath[ PATH_MAX ];
+	char dstPath[ PATH_MAX ];
+	
+	struct dirent *dp;
+	DIR *dir = opendir( pSrcPath );
+
+	if( !dir )
+	{
+		return;
+	}
+
+	while( (dp = readdir(dir)) != NULL )
+	{
+		if( strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0 )
+		{
+			struct stat filestat;
+			
+			
+            //printf("%c%c%s\n", 195, 196, dp->d_name);
+
+			strcpy( srcPath, pSrcPath );
+			strcat( srcPath, "/" );
+			strcat( srcPath, dp->d_name );
+			
+			strcpy( dstPath, pDstPath );
+			strcat( dstPath, "/" );
+			strcat( dstPath, dp->d_name );
+			
+			stat( dp->d_name,&filestat);
+			
+			if( S_ISDIR(filestat.st_mode) )
+			{
+				mkdir( dstPath, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH );
+				CopyWithSubdirectory( srcPath, dstPath );
+			}
+			else
+			{
+				CopyFile( srcPath, dstPath );
+			}
+        }
+	}
+
+	closedir(dir);
+}
+
+//
+// Run Extension
+//
+
+void RunExtension( FileProcess *fm, File *srcFile, File *dstFile, char *srcPath, char *dstPath, int extension )
+{
+	DEBUG("[RunExtension] FileOpen\n");
+	
+	if( extension == DOSDriver_Extension_Copy )
+	{
+		//
+		// Make source relative srcPath
+		//
+		
+		int srcPathSize = strlen( srcPath );
+		char *srcCommClean = FCalloc( srcPathSize+10, sizeof( char ) );
+		if( srcCommClean != NULL )
+		{
+			int i = 0;
+			for( i=0 ; i < srcPathSize ; i++ )
+			{
+				if( srcPath[ i ] == ':' )
+				{
+					break;
+				}
+			}
+	
+			if( i < srcPathSize )
+			{
+				strcpy( srcCommClean, &(srcPath[ i+1 ]) );
+			}
+			else
+			{
+				strcpy( srcCommClean, srcPath );
+			}
+
+			int spath = srcPathSize;
+			int srcrsPath = strlen( srcFile->f_Path );
+			File *srcfil = NULL;
+			char *srcComm = FCalloc( srcrsPath + spath + 5, sizeof( char ) );
+	
+			// Remove the filename from commclean in a clean path
+
+			// Create a string that has the real file path of the file
+			if( srcComm != NULL )
+			{
+				FILE *f = NULL;
+		
+				if( srcFile->f_Path[ srcrsPath-1 ] == '/' )
+				{
+					sprintf( srcComm, "%s%s", srcFile->f_Path, srcCommClean );
+				}
+				else
+				{
+					sprintf( srcComm, "%s/%s", srcFile->f_Path, srcCommClean );
+				}
+				
+				//
+				// Prepare path for destination
+				//
+				
+				int dstPathSize = strlen( dstPath );
+				char *dstCommClean = FCalloc( dstPathSize+10, sizeof( char ) );
+				if( dstCommClean != NULL )
+				{
+					for( i=0 ; i < dstPathSize ; i++ )
+					{
+						if( dstPath[ i ] == ':' )
+						{
+							break;
+						}
+					}
+	
+					if( i < dstPathSize )
+					{
+						strcpy( dstCommClean, &(dstPath[ i+1 ]) );
+					}
+					else
+					{
+						strcpy( dstCommClean, dstPath );
+					}
+
+					int dpath = dstPathSize;
+					int dstrsPath = strlen( srcFile->f_Path );
+					File *dstfil = NULL;
+					char *dstComm = FCalloc( dstrsPath + dpath + 5, sizeof( char ) );
+	
+					// Remove the filename from commclean in a clean path
+
+					// Create a string that has the real file path of the file
+					if( dstComm != NULL )
+					{
+						FILE *f = NULL;
+		
+						if( srcFile->f_Path[ dstrsPath-1 ] == '/' )
+						{
+							sprintf( dstComm, "%s%s", srcFile->f_Path, dstCommClean );
+						}
+						else
+						{
+							sprintf( dstComm, "%s/%s", srcFile->f_Path, dstCommClean );
+						}
+						
+						//
+						// DO action!
+						//
+						
+						CopyWithSubdirectory( srcComm, dstComm );
+				
+						FFree( dstComm );
+					}
+					FFree( dstCommClean );
+				}
+				
+				FFree( srcComm );
+			}
+			FFree( srcCommClean );
+		}
+	}
+}

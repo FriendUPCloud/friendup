@@ -1,5 +1,7 @@
 {
 	"type":    "SQLDrive",
+    "handler":  "php",
+    "version": 1,
 	"short":   "Personal Storage",
 	"literal": "Personal Filesystem",
 	"group":   "Admin",

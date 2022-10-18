@@ -2295,3 +2295,12 @@ int InfoSet( File *f __attribute__((unused)), const char *path __attribute__((un
 	return 0;
 }
 
+//
+// Run Extension
+//
+
+void RunExtension( FileProcess *fm, File *srcFile, File *dstFile, char *srcPath, char *dstPath, int extension )
+{
+	return;
+}
+

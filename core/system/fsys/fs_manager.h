@@ -24,9 +24,36 @@
 #include <system/user/user.h>
 #include <system/user/user_session.h>
 
+//
+//
+//
+
+typedef struct FileProcess
+{
+	pid_t			fp_PID;			// ID of thread
+	pthread_t		fp_Thread;		// pointer to thread
+	int				fp_Quit;		// quit flag
+	struct MinNode	node;
+	
+	void			(*fp_FileProcess)( struct FileProcess*, File *, File *, char *, char *, int);
+	File			*fp_SrcFile;
+	File			*fp_DstFile;
+	char			*fp_SrcPath;
+	char			*fp_DstPath;
+	int				fp_Extension; 
+	
+	void			*fp_FSManager;
+}FileProcess;
+
+//
+//
+//
+
 typedef struct FSManager
 {
 	void 					*fm_SB;
+	pthread_mutex_t			fm_Mutex;
+	FileProcess				*fm_FileProcess;	// list of processes
 }FSManager;
 
 //
@@ -40,6 +67,12 @@ FSManager *FSManagerNew( void *sb );
 //
 
 void FSManagerDelete( FSManager *fm );
+
+//
+//
+//
+
+int FSCreateFileThread( FSManager *fs, void (*function)(FileProcess *,File *, File *, char *, char *, int), File *srcf, File *dstf, char *srcp, char *dstp, int extension );
 
 //
 // check if user have access to file/directory/door

@@ -1,5 +1,7 @@
 {
 	"type":    "SQLWorkgroupDrive",
+    "handler":  "php",
+    "version": 1,
 	"short":   "Workgroup Disk",
 	"literal": "Shared filesystem for workgroups",
 	"group":   "Admin",

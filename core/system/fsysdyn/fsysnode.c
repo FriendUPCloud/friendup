@@ -1614,3 +1614,11 @@ BufString *Dir( File *s, const char *path )
 	return NULL;
 }
 
+//
+// Run Extension
+//
+
+void RunExtension( FileProcess *fm, File *srcFile, File *dstFile, char *srcPath, char *dstPath, int extension )
+{
+	return;
+}

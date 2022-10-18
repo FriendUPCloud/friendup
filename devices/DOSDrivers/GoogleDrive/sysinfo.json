@@ -1,5 +1,7 @@
 {
 	"type":    "GoogleDrive",
+    "handler":  "php",
+    "version": 1,
 	"literal": "Google Drive Based Filesystem",
 	"group":   "User",
 	"icon": "icon.png"

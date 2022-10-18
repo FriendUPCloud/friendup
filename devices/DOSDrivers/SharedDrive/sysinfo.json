@@ -1,5 +1,7 @@
 {
 	"type":    "SharedDrive",
+    "handler":  "php",
+    "version": 1,
 	"short":   "Shared",
 	"literal": "Shared disk",
 	"group":   "API",
