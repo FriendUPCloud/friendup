@@ -117,7 +117,7 @@ if( isset( $args->args->userid ) && !isset( $args->userid ) )
 
 if ( isset( $args->userid ))
 {
-	$targetId = $args->userId;
+	$targetId = $args->userid;
 }
 else
 {
