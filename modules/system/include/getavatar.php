@@ -105,7 +105,7 @@ function _file_output( $filepath, $display )
 // figure out whos avatar to load ( target user ). The absense of a user id input
 // will be considered a request for that users own avatar
 
-$Logger->log( 'getavatar input', json_encode( $args ));
+$Logger->log( 'getavatar input: ' . json_encode( $args ));
 
 $targetId = false;
 $targetUId = false;
@@ -239,11 +239,15 @@ $tuWhere = 'tu.ID = \'' . $targetId . '\'';
 if ( $targetUId )
 	$tuWhere = 'tu.UniqueID = \'' . $targetUId . '\'';
 	
+$Logger->log( 'getavatar where: ' . $tuWhere );
+
 $targetUser = $SqlDatabase->fetchObject('
 	SELECT tu.* FROM
 		FUser tu
 	WHERE ' . $tuWhere . '
 ');
+
+$Logger->log( 'getavatar targetUser: ' . json_encode( $targetUser ));
 
 if ( null != $targetUser )
 {
