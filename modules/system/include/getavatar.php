@@ -263,9 +263,12 @@ if ( null != $targetUser )
 				sug.UserID = \'' . $User->ID . '\' AND
 				tug.UserGroupID = sug.UserGroupID AND
 				tug.UserID = \'' . $targetUser->ID . '\'
-		')
+		');
+		
 		if ( null != $relation )
+		{
 			$inWorkGroup = true;
+		}
 	}
 }
 else
