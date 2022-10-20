@@ -309,6 +309,13 @@ if( !file_exists( $wname . 'thumbnails' ) )
 
 $userid = $targetUser->ID;
 
+$Logger->log( 'getavatar load/create: ' . json_encode([
+	'userid' => $userid,
+	'height' => $height,
+	'width'  => $width,
+	'hash'   => $hash,
+]));
+
 if( $userid > 0 && $wname )
 {
 	
