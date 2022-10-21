@@ -399,7 +399,9 @@ if( $userid > 0 && $wname )
 			}
 			else $hex = trim( $palette[ rand( 0, count( $palette ) - 1 ) ] );
 	
-			$img = imagecreatetruecolor( 256, 256 );
+			$gw = 512;
+			$gh = 512;
+			$img = imagecreatetruecolor( $gw, $gh );
 			imagealphablending( $img, false );
 			imagesavealpha( $img, true );
 			imageantialias( $img, true );
@@ -407,10 +409,15 @@ if( $userid > 0 && $wname )
 	
 			// Make transparentgim
 			$transparent = imagecolorallocatealpha( $img, 255, 255, 255, 127 );
-			imagefilledrectangle( $img, 0, 0, 256, 256, $transparent );
+			imagefilledrectangle( $img, 0, 0, $width, $height, $transparent );
 	
 			// Draw color circle (3x the size)
-			$factor = 3 * 256;
+			$factor = 0;
+			if ( $gw > $gh )
+				$factor = 3 * $gh;
+			else
+				$factor = 3 * $gw;
+			
 			$nimg = imagecreatetruecolor( $factor, $factor );
 			imageantialias( $nimg, true );
 			imagealphablending( $nimg, false );
@@ -425,7 +432,7 @@ if( $userid > 0 && $wname )
 			imagefilledellipse( $nimg, $factor >> 1, $factor >> 1, $factor, $factor, $color );
 	
 			// Copy resized version
-			imagecopyresampled( $img, $nimg, 0, 0, 0, 0, 256, 256, $factor, $factor );
+			imagecopyresampled( $img, $nimg, 0, 0, 0, 0, $width, $height, $factor, $factor );
 	
 			// Font path
 			$font = 'resources/themes/friendup12/fonts/Assistant-ExtraBold.ttf';

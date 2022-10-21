@@ -437,7 +437,7 @@ function refreshAvatar()
 				avSrc.onload = function()
 				{
 					var ctx = avatar.getContext( '2d' );
-					ctx.drawImage( avSrc, 0, 0, 128, 128 );
+					ctx.drawImage( avSrc, 0, 0, 512, 512 );
 				}
 			}
 		}
