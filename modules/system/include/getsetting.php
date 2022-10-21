@@ -224,12 +224,10 @@ else if ( isset( $args->args->setting ) )
 			$initials = mb_convert_encoding( $initials, 'ISO-8859-1', 'UTF-8' );
 		}
 		
-		$fontSize = ( $factor / 6 ) * ( 24 / 35 );
-		$Logger->log( 'font size: ' . $fontSize );
 		$initials = explode( ' ', $initials );
 		$initials = strtoupper( count( $initials ) > 1 ? $initials[0]{0} . $initials[1]{0} : substr( $initials[0], 0, 2 ) );
-		$dims = getsetting_calculateTextBox( $initials, $font, $fontSize, 0 );
-		imagettftext( $img, $fontSize, 0, ( $factor / 6 ) - ( $dims[ 'width' ] >> 1 ) - $dims[ 'left' ], ( $factor / 6 ) + ( $dims[ 'height' ] >> 1 ) + ( $dims[ 'height' ] - $dims[ 'top' ] ), $color, $font, $initials );
+		$dims = getsetting_calculateTextBox( $initials, $font, ( $factor / 6 ) * ( 24 / 35 ), 0 );
+		imagettftext( $img, ( $factor / 6 ) * ( 24 / 35 ), 0, ( $factor / 6 ) - ( $dims[ 'width' ] >> 1 ) - $dims[ 'left' ], ( $factor / 6 ) + ( $dims[ 'height' ] >> 1 ) + ( $dims[ 'height' ] - $dims[ 'top' ] ), $color, $font, $initials );
 		ob_start();
 		imagepng( $img );
 		$png = ob_get_clean();

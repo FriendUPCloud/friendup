@@ -343,7 +343,7 @@ if( $userid > 0 && $wname )
 		// We do not have full name and we can load and ( we have no mode or the mode isn't reset )
 		if( !isset( $args->args->fullname ) && $s->Load() && ( !isset( $args->args->mode ) || $args->args->mode != 'reset' ) )
 		{
-			$Logger->log( 'getavatar - generate filepath from data, s-data:  ' . json_encode( $s ));
+			$Logger->log( 'getavatar - generate filepath from data' );
 			$json = false;
 			if( substr( $s->Data, 0, 1 ) == '"' && substr( $s->Data, -1, 1 ) == '"' )
 			{
@@ -409,7 +409,7 @@ if( $userid > 0 && $wname )
 	
 			// Make transparentgim
 			$transparent = imagecolorallocatealpha( $img, 255, 255, 255, 127 );
-			imagefilledrectangle( $img, 0, 0, $width, $height, $transparent );
+			imagefilledrectangle( $img, 0, 0, $gw, $gh, $transparent );
 	
 			// Draw color circle (3x the size)
 			$factor = 0;
@@ -432,7 +432,7 @@ if( $userid > 0 && $wname )
 			imagefilledellipse( $nimg, $factor >> 1, $factor >> 1, $factor, $factor, $color );
 	
 			// Copy resized version
-			imagecopyresampled( $img, $nimg, 0, 0, 0, 0, $width, $height, $factor, $factor );
+			imagecopyresampled( $img, $nimg, 0, 0, 0, 0, $gw, $gh, $factor, $factor );
 	
 			// Font path
 			$font = 'resources/themes/friendup12/fonts/Assistant-ExtraBold.ttf';
@@ -444,8 +444,8 @@ if( $userid > 0 && $wname )
 			$initials = explode( ' ', $initials );
 			$initials = strtoupper( count( $initials ) > 1 ? $initials[0]{0} . $initials[1]{0} : substr( $initials[0], 0, 2 ) );
 			
-			$dims = getsetting_calculateTextBox( $initials, $font, 88, 0 );
-			imagettftext( $img, 88, 0, 128 - ( $dims[ 'width' ] >> 1 ) - $dims[ 'left' ], 128 + ( $dims[ 'height' ] >> 1 ) + ( $dims[ 'height' ] - $dims[ 'top' ] ), $color, $font, $initials );
+			$dims = getsetting_calculateTextBox( $initials, $font, ( $factor / 6 ) * ( 24 / 35 ), 0 );
+			imagettftext( $img, ( $factor / 6 ) * ( 24 / 35 ), 0, ( $factor / 6 ) - ( $dims[ 'width' ] >> 1 ) - $dims[ 'left' ], ( $factor / 6 ) + ( $dims[ 'height' ] >> 1 ) + ( $dims[ 'height' ] - $dims[ 'top' ] ), $color, $font, $initials );
 			ob_start();
 			imagepng( $img );
 			$png = ob_get_clean();
@@ -508,7 +508,7 @@ if( $userid > 0 && $wname )
 			// create image from blob ...
 			$Logger->log( 'getavatar found lots of stuff, create from blob: ' .json_encode([
 				'userid'   => $userid,
-				'avatar'   => $avatar,
+				'avatar'   => !!$avatar,
 				'hash'     => $hash,
 				'fname'    => $fname,
 				'filepath' => $filepath,
