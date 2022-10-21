@@ -325,7 +325,7 @@ if( $userid > 0 && $wname )
 	// Check if it exists!
 	if( $hash && file_exists( $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png' ) )
 	{
-		$Logger->log( 'getavatar found file at: ' . $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png' ) );
+		$Logger->log( 'getavatar found file at: ' . $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png' );
 		_file_output( $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png', $display );
 		die();
 	}
