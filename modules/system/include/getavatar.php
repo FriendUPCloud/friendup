@@ -320,17 +320,19 @@ if( $userid > 0 && $wname )
 {
 	
 	$folderpath = ( $wname . 'thumbnails/avatar_' . $userid . '/' );
+	$Logger->log( 'getavatar looking for file: ' . $folderpath );
 	
 	// Check if it exists!
 	if( $hash && file_exists( $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png' ) )
 	{
+		$Logger->log( 'getavatar found file at: ' . $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png' ) );
 		_file_output( $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png', $display );
 		die();
 	}
 	// Try to generate it
 	else
 	{
-	
+		$Logger->log( 'getavatar did not find a file, will generate' );
 		$avatar = '';
 		
 		$s = new dbIO( 'FSetting' );
@@ -341,6 +343,7 @@ if( $userid > 0 && $wname )
 		// We do not have full name and we can load and ( we have no mode or the mode isn't reset )
 		if( !isset( $args->args->fullname ) && $s->Load() && ( !isset( $args->args->mode ) || $args->args->mode != 'reset' ) )
 		{
+			$Logger->log( 'getavatar - generate from data, s-data:  ' . $s->Data );
 			$json = false;
 			if( substr( $s->Data, 0, 1 ) == '"' && substr( $s->Data, -1, 1 ) == '"' )
 			{
@@ -372,12 +375,13 @@ if( $userid > 0 && $wname )
 			
 			// Fix filename
 			$fname = ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png';
-			
+			$Logger->log( 'getavatar generate from data, write to: ' . $fname );
 			$filepath = ( $wname . 'thumbnails/avatar_' . $userid . '/' . $fname );
 		}
 		// Generate default avatar -------------------------------------------------
 		else if( isset( $args->args->fullname ) || $userid == $User->ID )
 		{
+			$Logger->log( 'getavatar generate txt' );
 			if( !isset( $Config->DefaultPalette ) )
 			{
 				$palette = array( 
@@ -478,19 +482,30 @@ if( $userid > 0 && $wname )
 			
 			// Fix filename
 			$fname = ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png';
-			
 			$filepath = ( $wname . 'thumbnails/avatar_' . $userid . '/' . $fname );
+			$Logger->log( 'getavatar generate txt done: ', $filepath );
 		}
 		
 		// Check again ...
 		if( $hash && file_exists( $filepath ) )
 		{
+			$Logger->log( 'getavatar found it this time lol ' . json_encode([
+				'hash'     => $hash,
+				'filepath' => $filepath,
+			]) );
 			_file_output( $filepath, $display );	
 		}
 		
 		if( $avatar && $hash && $fname && $filepath )
 		{
 			// create image from blob ...
+			$Logger->log( 'getavatar found lots of stuff, create from blob: ' .json_encode([
+				'userid'   => $userid,
+				'avatar'   => $avatar,
+				'hash'     => $hash,
+				'fname'    => $fname,
+				'filepath' => $filepath,
+			]) );
 			
 			if( $data = explode( ',', $avatar ) )
 			{
@@ -546,6 +561,7 @@ if( $userid > 0 && $wname )
 				
 				if( !$source )
 				{
+					$Logger->log( 'getavatar blobl no source, return broken' );
 					_file_broken( $display );
 				}
 				
@@ -591,6 +607,17 @@ if( $userid > 0 && $wname )
 				}
 				
 				// Resize
+				$Logger->log( 'getavatar generate txt - resize: ' . json_encode([
+					'mode' => $mode,
+					'height' => $height,
+					'width' => $width,
+					'x' => $x,
+					'y' => $y,
+					'rw' => $rw,
+					'rh' => $rh,
+					'iw' => $iw,
+					'ih' => $ih,
+				]) );
 				imagecopyresampled( $dest, $source, $x, $y, 0, 0, $rw, $rh, $iw, $ih );
 				
 				// Save
@@ -618,6 +645,7 @@ if( $userid > 0 && $wname )
 }
 
 // TODO: Support more icons
+$Logger->log( 'getavatar TODO broken' );
 _file_broken( $display );
 
 ?>
