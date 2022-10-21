@@ -320,7 +320,7 @@ if( $userid > 0 && $wname )
 {
 	
 	$folderpath = ( $wname . 'thumbnails/avatar_' . $userid . '/' );
-	$Logger->log( 'getavatar looking for file: ' $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png' );
+	$Logger->log( 'getavatar looking for file: ' . $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png' );
 	
 	// Check if it exists!
 	if( $hash && file_exists( $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png' ) )
