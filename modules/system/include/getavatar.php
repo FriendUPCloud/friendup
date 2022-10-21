@@ -343,7 +343,7 @@ if( $userid > 0 && $wname )
 		// We do not have full name and we can load and ( we have no mode or the mode isn't reset )
 		if( !isset( $args->args->fullname ) && $s->Load() && ( !isset( $args->args->mode ) || $args->args->mode != 'reset' ) )
 		{
-			$Logger->log( 'getavatar - generate from data, s-data:  ' . $s->Data );
+			$Logger->log( 'getavatar - generate filepath from data, s-data:  ' . json_encode( $s ));
 			$json = false;
 			if( substr( $s->Data, 0, 1 ) == '"' && substr( $s->Data, -1, 1 ) == '"' )
 			{
@@ -375,8 +375,8 @@ if( $userid > 0 && $wname )
 			
 			// Fix filename
 			$fname = ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png';
-			$Logger->log( 'getavatar generate from data, write to: ' . $fname );
 			$filepath = ( $wname . 'thumbnails/avatar_' . $userid . '/' . $fname );
+			$Logger->log( 'getavatar from data, setting filepath: ' . $filepath );
 		}
 		// Generate default avatar -------------------------------------------------
 		else if( isset( $args->args->fullname ) || $userid == $User->ID )
