@@ -28,8 +28,10 @@
 //
 
 
-#define DOSDriver_Extension_Copy			1
-#define DOSDriver_Extension_Delete		(1<<1)
+#define DOSDriver_Extension_GetInfo			1
+#define DOSDriver_Extension_Copy		(1<<1)
+#define DOSDriver_Extension_Move		(1<<2)
+#define DOSDriver_Extension_Delete		(1<<3)
 
 //
 // structure

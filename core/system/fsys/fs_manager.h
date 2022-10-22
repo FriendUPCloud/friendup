@@ -30,17 +30,21 @@
 
 typedef struct FileProcess
 {
-	pid_t			fp_PID;			// ID of thread
+	FUQUAD			fp_PID;			// ID of thread
 	pthread_t		fp_Thread;		// pointer to thread
 	int				fp_Quit;		// quit flag
 	struct MinNode	node;
 	
-	void			(*fp_FileProcess)( struct FileProcess*, File *, File *, char *, char *, int);
+	int			(*fp_FileProcess)( struct FileProcess*, File *, File *, char *, char *, int);
 	File			*fp_SrcFile;
 	File			*fp_DstFile;
 	char			*fp_SrcPath;
 	char			*fp_DstPath;
-	int				fp_Extension; 
+	int				fp_Extension;
+	
+	int				fp_actNumber;
+	int				fp_maxNumber;
+ 	int				fp_Progress;			// progress in % of operation
 	
 	void			*fp_FSManager;
 }FileProcess;
@@ -54,6 +58,7 @@ typedef struct FSManager
 	void 					*fm_SB;
 	pthread_mutex_t			fm_Mutex;
 	FileProcess				*fm_FileProcess;	// list of processes
+	FUQUAD					fm_ProcessID;
 }FSManager;
 
 //
@@ -72,7 +77,13 @@ void FSManagerDelete( FSManager *fm );
 //
 //
 
-int FSCreateFileThread( FSManager *fs, void (*function)(FileProcess *,File *, File *, char *, char *, int), File *srcf, File *dstf, char *srcp, char *dstp, int extension );
+FUQUAD FSCreateFileThread( FSManager *fs, int (*function)(FileProcess *,File *, File *, char *, char *, int), File *srcf, File *dstf, char *srcp, char *dstp, int extension );
+
+//
+//
+//
+
+int FSGetProcessStatus( FSManager *fm, FQUAD id );
 
 //
 // check if user have access to file/directory/door

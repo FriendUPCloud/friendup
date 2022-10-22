@@ -1658,6 +1658,50 @@ int InfoSet( File *f, const char *path, const char *key, const char *value )
 }
 
 //
+// Get number of files
+//
+
+int ScanForFiles( char *pSrcPath )
+{
+	int files = 0;
+	char srcPath[ PATH_MAX ];
+	
+	struct dirent *dp;
+	DIR *dir = opendir( pSrcPath );
+
+	if( !dir )
+	{
+		return 0;
+	}
+
+	while( (dp = readdir(dir)) != NULL )
+	{
+		if( strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0 )
+		{
+			struct stat filestat;
+
+			strcpy( srcPath, pSrcPath );
+			strcat( srcPath, "/" );
+			strcat( srcPath, dp->d_name );
+			
+			stat( dp->d_name,&filestat);
+			
+			if( S_ISDIR(filestat.st_mode) )
+			{
+				files += ScanForFiles( srcPath );
+			}
+			else
+			{
+				files++;
+			}
+        }
+	}
+
+	closedir(dir);
+	return files;
+}
+
+//
 // Copy single file
 //
 
@@ -1691,7 +1735,7 @@ int CopyFile( const char *src, const char *dst )
 // Copy files and subdirectories
 //
 
-void CopyWithSubdirectory( char *pSrcPath, char *pDstPath )
+void CopyWithSubdirectory( FileProcess *fp, char *pSrcPath, char *pDstPath )
 {
 	int i;
 	char srcPath[ PATH_MAX ];
@@ -1727,11 +1771,13 @@ void CopyWithSubdirectory( char *pSrcPath, char *pDstPath )
 			if( S_ISDIR(filestat.st_mode) )
 			{
 				mkdir( dstPath, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH );
-				CopyWithSubdirectory( srcPath, dstPath );
+				CopyWithSubdirectory( fp, srcPath, dstPath );
 			}
 			else
 			{
 				CopyFile( srcPath, dstPath );
+				fp->fp_actNumber++;
+				fp->fp_Progress = (int) ( (float)fp->fp_actNumber/(float)fp->fp_maxNumber );
 			}
         }
 	}
@@ -1743,12 +1789,14 @@ void CopyWithSubdirectory( char *pSrcPath, char *pDstPath )
 // Run Extension
 //
 
-void RunExtension( FileProcess *fm, File *srcFile, File *dstFile, char *srcPath, char *dstPath, int extension )
+int RunExtension( FileProcess *fm, File *srcFile, File *dstFile, char *srcPath, char *dstPath, int extension )
 {
-	DEBUG("[RunExtension] FileOpen\n");
+	DEBUG("[RunExtension] Start\n");
 	
-	if( extension == DOSDriver_Extension_Copy )
+	if( extension == DOSDriver_Extension_Copy || extension == DOSDriver_Extension_Move )
 	{
+		DEBUG("[RunExtension] extension copy\n");
+		
 		//
 		// Make source relative srcPath
 		//
@@ -1795,6 +1843,8 @@ void RunExtension( FileProcess *fm, File *srcFile, File *dstFile, char *srcPath,
 				{
 					sprintf( srcComm, "%s/%s", srcFile->f_Path, srcCommClean );
 				}
+				
+				DEBUG("[RunExtension] src comm set\n");
 				
 				//
 				// Prepare path for destination
@@ -1846,8 +1896,27 @@ void RunExtension( FileProcess *fm, File *srcFile, File *dstFile, char *srcPath,
 						// DO action!
 						//
 						
-						CopyWithSubdirectory( srcComm, dstComm );
-				
+						struct stat filestat;
+						stat( srcComm,&filestat);
+			
+						if( S_ISDIR(filestat.st_mode) )
+						{
+							fm->fp_maxNumber = ScanForFiles( srcComm );
+							
+							CopyWithSubdirectory( fm, srcComm, dstComm );
+						}
+						else
+						{
+							CopyFile( srcComm, dstComm );
+						}
+						
+						// Move is copy + source delete
+						
+						if( extension == DOSDriver_Extension_Move )
+						{
+							RemoveDirectoryLocal( srcComm );
+						}
+						
 						FFree( dstComm );
 					}
 					FFree( dstCommClean );
@@ -1857,5 +1926,10 @@ void RunExtension( FileProcess *fm, File *srcFile, File *dstFile, char *srcPath,
 			}
 			FFree( srcCommClean );
 		}
+	}	// end of copy/move extension
+	else if( extension == DOSDriver_Extension_GetInfo )
+	{
+		return fm->fp_Progress;
 	}
+	return 0;
 }

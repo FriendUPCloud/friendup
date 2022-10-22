@@ -1234,13 +1234,15 @@ int FSManagerDeleteSharedEntry( FSManager *fm, char *path, FQUAD uid )
 // Internal function
 //
 
-void RunFSThread( void *v )
+void *RunFSThread( void *v )
 {
 	FileProcess *fp = (FileProcess *) v;
 	FSManager *fm = NULL;
 	if( fp != NULL )
 	{
-		fp->fp_PID = pthread_self();
+		fm = fp->fp_FSManager;
+		//fp->fp_PID = pthread_self();
+		DEBUG("[RunFSThread] Call process function\n");
 		fp->fp_FileProcess( fp, fp->fp_SrcFile, fp->fp_DstFile, fp->fp_SrcPath, fp->fp_DstPath, fp->fp_Extension );
 		
 		//
@@ -1279,6 +1281,11 @@ void RunFSThread( void *v )
 			FFree( fp->fp_DstPath );
 		}
 	}
+	else
+	{
+		DEBUG("[RunFSThread]  pointer to data is NULL\n");
+	}
+	return NULL;
 }
 
 /**
@@ -1287,11 +1294,13 @@ void RunFSThread( void *v )
  * @param fm pointer to FSManager structure
  * @param function pointer to function from filesystem which will run in thread
  * @param uid user id which point to user which shared entry will be removed
-*  @return 0 when success otherwise error number
+*  @return pid id or 0 if error
  */
-int FSCreateFileThread( FSManager *fs, void (*function)(FileProcess *,File *, File *, char *, char *, int), File *srcf, File *dstf, char *srcp, char *dstp, int extension )
+FUQUAD FSCreateFileThread( FSManager *fs, int (*function)(FileProcess *,File *, File *, char *, char *, int), File *srcf, File *dstf, char *srcp, char *dstp, int extension )
 {
 	FileProcess *fp = NULL;
+	
+	DEBUG("[FSCreateFileThread] Start\n");
 	
 	if( ( fp = FCalloc( 1, sizeof( FileProcess ) ) ) != NULL )
 	{
@@ -1301,10 +1310,20 @@ int FSCreateFileThread( FSManager *fs, void (*function)(FileProcess *,File *, Fi
 		fp->fp_DstPath = StringDuplicate( dstp );
 		fp->fp_Extension = extension;
 		fp->fp_FSManager = fs;
+		fp->fp_FileProcess = function;
 		
-		if( pthread_create( &(fp->fp_Thread), NULL, (void *(*) (void *))&function, ( void *)fp ) == 0 )
+		if( FRIEND_MUTEX_LOCK( &(fs->fm_Mutex) ) == 0 )
+		{
+			fs->fm_ProcessID++;
+			fp->fp_PID = fs->fm_ProcessID;
+			FRIEND_MUTEX_UNLOCK( &(fs->fm_Mutex) );
+		}
+		
+		if( pthread_create( &(fp->fp_Thread), NULL, (void *(*) (void *))RunFSThread, ( void *)fp ) == 0 )
 		{
 			// We have to add process to list
+			
+			DEBUG("[FSCreateFileThread] Thread started\n");
 			
 			if( FRIEND_MUTEX_LOCK( &(fs->fm_Mutex) ) == 0 )
 			{
@@ -1312,6 +1331,7 @@ int FSCreateFileThread( FSManager *fs, void (*function)(FileProcess *,File *, Fi
 				fs->fm_FileProcess = fp;
 				FRIEND_MUTEX_UNLOCK( &(fs->fm_Mutex) );
 			}
+			return fp->fp_PID;
 		}
 		else
 		{
@@ -1321,3 +1341,43 @@ int FSCreateFileThread( FSManager *fs, void (*function)(FileProcess *,File *, Fi
 	
 	return 0;
 }
+
+/**
+ * Get process status
+ *
+ * @param fm pointer to FSManager structure
+ * @param id of thread which we want to ge status
+*  @return pid id or 0 if error
+ */
+int FSGetProcessStatus( FSManager *fm, FQUAD id )
+{
+	FUQUAD ret = 0; 
+	
+	DEBUG("[FSGetProcessStatus] Start\n");
+	
+	if( FRIEND_MUTEX_LOCK( &(fm->fm_Mutex) ) == 0 )
+	{
+		FileProcess *rp = fm->fm_FileProcess;
+		while( rp != NULL )
+		{
+			if( id == rp->fp_PID )
+			{
+				FHandler *lfs = (FHandler *)rp->fp_SrcFile->f_FSys;
+				if( lfs->RunExtension != NULL )
+				{
+					ret = lfs->RunExtension( rp, rp->fp_SrcFile, rp->fp_DstFile, NULL, NULL, DOSDriver_Extension_GetInfo );
+				}
+				
+				break;
+			}
+			rp = (FileProcess *) rp->node.mln_Succ;
+		}
+		
+		FRIEND_MUTEX_UNLOCK( &(fm->fm_Mutex) );
+	}
+	
+	DEBUG("[FSGetProcessStatus] Start\n");
+	
+	return ret;
+}
+

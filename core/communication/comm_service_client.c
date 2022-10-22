@@ -271,15 +271,17 @@ BufString *SendMessageToSessionsAndWait( void *lsb, FQUAD userID, Http *req )
 				// We have to find all servers where user have active sessions
 				//
 				
-				if( row[ 0 ] != NULL )
+				if( row[ 0 ] != NULL && row[ 1 ] != NULL )
 				{
 					ListEntry *entry = FCalloc( 1, sizeof( ListEntry ) );
 					
 					DEBUG("Entry found: %s\n", row[ 0 ] );
+
 					strncpy( entry->ID, row[ 0 ], FRIEND_CORE_MANAGER_ID_SIZE );
+
 					entry->sessionIDLen = strlen( row[ 1 ] );
 					strncpy( entry->SessionID, row[ 1 ], entry->sessionIDLen );
-					
+
 					entry->next = rootEntry;
 					rootEntry = entry;
 				}

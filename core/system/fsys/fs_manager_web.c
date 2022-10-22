@@ -164,7 +164,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 	
 	DEBUG( "[FSMWebRequest] Checking path: %s\n", path );
 	
-	if( strcmp( urlpath[ 1 ], "copy" ) == 0 )
+	//
+	// This was request but we should avoid this kind of changes "in the middle"
+	//
+	
+	if( strcmp( urlpath[ 1 ], "copy" ) == 0 || strcmp( urlpath[ 1 ], "move" ) == 0 )
 	{
 		el = HttpGetPOSTParameter( request, "from" );
 		if( el == NULL ) el = HashmapGet( request->http_Query, "from" );
@@ -1886,6 +1890,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									FBOOL havedst = FSManagerCheckAccess( l->sl_FSM, dstpath, actDev->f_ID, loggedSession->us_UserID, "--W---" );
 									if( havedst == TRUE )
 									{
+										FBOOL commandRun = FALSE;
 										dstrootf->f_Operations++;
 
 										DEBUG("[FSMWebRequest] We have access to destination: %s\n", topath );
@@ -1899,18 +1904,43 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 											// Run in thread
 											//
 											
-											FSCreateFileThread( l->sl_FSM, &(actFS->RunExtension), actDev, dstrootf, NULL, NULL, DOSDriver_Extension_Copy );
+											pid_t id = FSCreateFileThread( l->sl_FSM, actFS->RunExtension, actDev, dstrootf, path, dstpath, DOSDriver_Extension_Copy );
+											commandRun = TRUE;
 
 											DEBUG("COPY extension found!\n");
 											
 											char tmp[ 128 ];
 
-											sprintf( tmp, "ok<!--separate-->{\"response\":\"0\"}" );
+											sprintf( tmp, "ok<!--separate-->{\"response\":\"%d\"}", id );
 
 											HttpAddTextContent( response, tmp );
 											
+											dstrootf->f_Operations--;
+									
+											int len = 512;
+											len += strlen( topath );
+											char *command = FMalloc( len );
+											if( command != NULL )
+											{
+												snprintf( command, len, "command=thumbnaildelete&extension=true&path=%s&sessionid=%s", topath, loggedSession->us_SessionID );
+			
+												DEBUG("Run command via php: '%s'\n", command );
+												FULONG dataLength;
+
+												char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
+												if( data != NULL )
+												{
+													/*if( strncmp( data, "ok", 2 ) == 0 )
+													{
+													}*/
+													FFree( data );
+												}
+												FFree( command );
+											}
 										}
-										else	// copy without extension
+										
+										
+										if( commandRun == FALSE ) // copy without extension
 										{
 											if( dstpath[ strlen( dstpath ) - 1 ] != '/' )	// simple copy file
 											{
@@ -2037,30 +2067,336 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								
 												HttpAddTextContent( response, tmp );
 											}
-										}	// run extension or old way
-							
-										dstrootf->f_Operations--;
+											
+											dstrootf->f_Operations--;
 									
-										int len = 512;
-										len += strlen( topath );
-										char *command = FMalloc( len );
-										if( command != NULL )
-										{
-											snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", topath, loggedSession->us_SessionID );
-			
-											DEBUG("Run command via php: '%s'\n", command );
-											FULONG dataLength;
-
-											char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
-											if( data != NULL )
+											int len = 512;
+											len += strlen( topath );
+											char *command = FMalloc( len );
+											if( command != NULL )
 											{
-												/*if( strncmp( data, "ok", 2 ) == 0 )
+												snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", topath, loggedSession->us_SessionID );
+			
+												DEBUG("Run command via php: '%s'\n", command );
+												FULONG dataLength;
+
+												char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
+												if( data != NULL )
 												{
-												}*/
-												FFree( data );
+													/*if( strncmp( data, "ok", 2 ) == 0 )
+													{
+													}*/
+													FFree( data );
+												}
+												FFree( command );
 											}
-											FFree( command );
+										}	// run extension or old way
+
+									}
+									else
+									{
+										char dictmsgbuf[ 256 ];
+										char dictmsgbuf1[ 196 ];
+										snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_NO_ACCESS_TO], dstpath );
+										snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_NO_ACCESS_TO );
+										HttpAddTextContent( response, dictmsgbuf );
+									}
+								}
+								else
+								{
+									char dictmsgbuf[ 256 ];
+									char dictmsgbuf1[ 196 ];
+									snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_NO_ACCESS_TO], path );
+									snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_NO_ACCESS_TO );
+									HttpAddTextContent( response, dictmsgbuf );
+								}
+							}
+							else
+							{
+								char dictmsgbuf[ 256 ];
+								char dictmsgbuf1[ 196 ];
+								snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_DEVICE_NOT_FOUND], dstpath );
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_DEVICE_NOT_FOUND );
+								HttpAddTextContent( response, dictmsgbuf );
+							}
+						}
+						else
+						{
+							char dictmsgbuf[ 256 ];
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CANNOT_COPY_OVER_SAME_FILE], DICT_CANNOT_COPY_OVER_SAME_FILE );
+							HttpAddTextContent( response, dictmsgbuf );
+						}
+						
+						if( topath != NULL )
+						{
+							FFree( topath );
+						}
+					}
+					else
+					{
+						char dictmsgbuf[ 512 ];
+						char dictmsgbuf1[ 256 ];
+						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "to" );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+						HttpAddTextContent( response, dictmsgbuf );
+					}
+				}	// file copy
+				
+				/// @cond WEB_CALL_DOCUMENTATION
+				/**
+				*
+				* <HR><H2>system.library/file/move</H2>Copy file from one place to another
+				*
+				* @param sessionid - (required) session id of logged user
+				* @param from - (required) path to source file
+				* @param to - (required) path to destination path
+				* @return { response: 0, Written: <number of bytes>} when success, otherwise error number
+				*/
+				/// @endcond
+				else if( strcmp( urlpath[ 1 ], "move" ) == 0 )
+				{
+					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
+											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
+					
+					char *tmptopath = NULL;
+					el = HashmapGet( request->http_ParsedPostContent, "to" );
+					if( el == NULL ) el = HashmapGet( request->http_Query, "to" );
+					if( el != NULL )
+					{
+						tmptopath = (char *)el->hme_Data;
+						DEBUG("xx: %s\n", tmptopath );
+					}
+					
+					if( tmptopath != NULL )
+					{
+						char *topath = UrlDecodeToMem( tmptopath );
+						
+						DEBUG("[FSMWebRequest] MOVE from %s TO %s\n", origDecodedPath, topath );
+
+						if( strcmp( origDecodedPath, topath ) != 0 )
+						{
+							FHandler *dsthand;
+							char *dstpath;
+						
+							File *dstrootf = UserGetDeviceByPath( loggedSession->us_User, &dstpath, topath );
+
+							if( dstrootf != NULL )
+							{
+								FBOOL havesrc = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_UserID, "-R----" );
+							
+								if( havesrc == TRUE )
+								{
+									DEBUG("[FSMWebRequest] We have access to source: %s\n", path );
+							
+									FBOOL havedst = FSManagerCheckAccess( l->sl_FSM, dstpath, actDev->f_ID, loggedSession->us_UserID, "--W---" );
+									if( havedst == TRUE )
+									{
+										FBOOL commandRun = FALSE;
+										
+										dstrootf->f_Operations++;
+
+										DEBUG("[FSMWebRequest] We have access to destination: %s\n", topath );
+									
+										dsthand = dstrootf->f_FSys;
+										FHandler *actFS = (FHandler *)actDev->f_FSys;
+										
+										if( (actDev->f_FSys == dstrootf->f_FSys) && (actDev->f_DOSDriverExtension & DOSDriver_Extension_Move) && (dstrootf->f_DOSDriverExtension & DOSDriver_Extension_Move) )
+										{
+											//
+											// Run in thread
+											//
+											
+											pid_t id = FSCreateFileThread( l->sl_FSM, actFS->RunExtension, actDev, dstrootf, path, dstpath, DOSDriver_Extension_Move );
+											commandRun = TRUE;
+
+											DEBUG("COPY extension found!\n");
+											
+											char tmp[ 128 ];
+
+											sprintf( tmp, "ok<!--separate-->{\"response\":\"%d\"}", id );
+
+											HttpAddTextContent( response, tmp );
+											
+											dstrootf->f_Operations--;
+									
+											int len = 512;
+											len += strlen( topath );
+											char *command = FMalloc( len );
+											if( command != NULL )
+											{
+												snprintf( command, len, "command=thumbnaildelete&extension=true&path=%s&sessionid=%s", topath, loggedSession->us_SessionID );
+			
+												DEBUG("Run command via php: '%s'\n", command );
+												FULONG dataLength;
+
+												char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
+												if( data != NULL )
+												{
+													/*if( strncmp( data, "ok", 2 ) == 0 )
+													{
+													}*/
+													FFree( data );
+												}
+												FFree( command );
+											}
 										}
+										
+										if( commandRun == FALSE ) // copy without extension
+										{
+											if( dstpath[ strlen( dstpath ) - 1 ] != '/' )	// simple copy file
+											{
+												DEBUG("[FSMWebRequest] Move - executing file open on: %s to %s\n", path, topath );
+										
+												int64_t written = 0;
+												int64_t readall = 0;
+										
+												FileFillSessionID( actDev, loggedSession );
+												File *rfp = (File *)actFS->FileOpen( actDev, path, "rb" );
+												int closeError = 0;
+										
+												if( rfp != NULL )
+												{
+													FileFillSessionID( dstrootf, loggedSession );
+											
+													File *wfp = (File *)dsthand->FileOpen( dstrootf, dstpath, "w+" );
+											
+#define COPY_BUFFER_SIZE 524288
+											
+													if( wfp != NULL )
+													{
+														wfp->f_ID = dstrootf->f_ID;		// some filesystems may not assign proper deviceid, so we have to do it manually here
+														if( wfp->f_Name ){ FFree( wfp->f_Name ); }
+														wfp->f_Name = StringDuplicate( dstrootf->f_Name );
+													
+														// Using a big buffer!
+														char *dataBuffer = FCalloc( COPY_BUFFER_SIZE, sizeof(char) );
+														if( dataBuffer != NULL )
+														{
+															DEBUG("[FSMWebRequest] file/move - files opened, copy in progress\n");
+										
+															FQUAD dataread = 0;
+															int readTr = 0;
+															int bytes = 0;
+
+															while( ( dataread = actFS->FileRead( rfp, dataBuffer, COPY_BUFFER_SIZE ) ) > 0 )
+															{
+																if( request->http_ShutdownPtr != NULL &&  *(request->http_ShutdownPtr) == TRUE )
+																{
+																	break;
+																}
+													
+																readall += dataread;
+													
+																if( dataread > 0 )
+																{
+																	bytes = 0;
+														
+																	dataread = FileSystemActivityCheckAndUpdate( l, &(dstrootf->f_Activity), dataread );
+
+																	bytes = dsthand->FileWrite( wfp, dataBuffer, dataread );
+																	written += bytes;
+
+																	dstrootf->f_BytesStored += bytes;
+															
+																	readTr = 0;
+																}
+																else
+																{
+																	readTr++;
+																	if( readTr > 25 )
+																	{
+																		DEBUG("Cannot read data from source!\n");
+																		break;
+																	}
+																}
+																usleep( 25 );
+															}
+															FFree( dataBuffer );
+
+															DEBUG("--->topath : %s\n", topath );
+															DoorNotificationCommunicateChanges( l, loggedSession, wfp, topath );
+														}
+														else
+														{
+															DEBUG( "[FSMWebRequest] We could not do anything with the bad file pointers..\n" );
+														}
+													
+														if( wfp->f_Name ){ FFree( wfp->f_Name ); }
+													
+														closeError = dsthand->FileClose( dstrootf, wfp );
+													}
+											
+													DEBUG( "[FSMWebRequest] Wrote %lu bytes. Read: %lu. Read file pointer %p. Write file pointer %p.\n", written, readall, rfp, wfp );
+											
+													actFS->FileClose( actDev, rfp );
+													
+													// as it is move, we have to delete source
+													
+													actFS->Delete( actDev, path );
+												}
+								
+												char tmp[ 128 ];
+												if( closeError < 0 )
+												{
+													sprintf( tmp, "fail<!--separate-->{\"response\":\"0\",\"Written\":\"%lu\",\"Error\":\"%d\"}", written, closeError );
+												}
+												else
+												{
+													sprintf( tmp, "ok<!--separate-->{\"response\":\"0\",\"Written\":\"%lu\"}", written );
+												}
+
+												HttpAddTextContent( response, tmp );
+											}
+											else		// make directory
+											{
+												DEBUG("[FSMWebRequest] On copy, make dir first: %s\n", topath );
+										
+												FHandler *dsthand = (FHandler *)dstrootf->f_FSys;
+	
+												char tmp[ 128 ];
+								
+												// cutting device name
+												unsigned int i;
+												for( i=0 ; i < strlen( topath ); i++ )
+												{
+													if( topath[ i ] == '/' )
+													{
+														topath += i+1;
+														break;
+													}
+												}
+								
+												FileFillSessionID( dstrootf, loggedSession );
+												int error = dsthand->MakeDir( dstrootf, topath );
+												sprintf( tmp, "ok<!--separate-->{\"response\":\"%d\"}", error );
+								
+												HttpAddTextContent( response, tmp );
+											}
+											
+											dstrootf->f_Operations--;
+									
+											int len = 512;
+											len += strlen( topath );
+											char *command = FMalloc( len );
+											if( command != NULL )
+											{
+												snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", topath, loggedSession->us_SessionID );
+			
+												DEBUG("Run command via php: '%s'\n", command );
+												FULONG dataLength;
+
+												char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
+												if( data != NULL )
+												{
+													/*if( strncmp( data, "ok", 2 ) == 0 )
+													{
+													}*/
+													FFree( data );
+												}
+												FFree( command );
+											}
+										}	// run extension or old way
+
 									}
 									else
 									{
@@ -3667,6 +4003,52 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					{
 						char buffer[ 256 ];
 						snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_FILESYSTEM_NOT_FOUND] , DICT_FILESYSTEM_NOT_FOUND );
+						HttpAddTextContent( response, buffer );
+					}
+				}
+				
+				
+				/// @cond WEB_CALL_DOCUMENTATION
+				/**
+				*
+				* <HR><H2>system.library/file/getprocstat</H2>Get metadata from file
+				*
+				* @param sessionid - (required) session id of logged user
+				* @param id - (required) path to file or directory from which you want to get metadata
+				* @return metadata in JSON format when success, otherwise error number
+				*/
+				/// @endcond
+				else if( strcmp( urlpath[ 1 ], "getprocstat" ) == 0 )
+				{
+					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
+											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
+					
+					DEBUG("[FSMWebRequest] getprocstat get\n");
+					
+					pid_t id = 0;
+						
+					el = HttpGetPOSTParameter( request, "id" );
+					if( el == NULL ) el = HashmapGet( request->http_Query, "id" );
+					if( el != NULL )
+					{
+						char *end;
+						id = strtoull( (char *)el->hme_Data,  &end, 0 );
+					}
+						
+					if( id > 0 )
+					{
+						int retStatus = FSGetProcessStatus( l->sl_FSM, id );
+						
+						char tmp[ 256 ];
+						snprintf( tmp, sizeof(tmp), "ok<!--separate-->{\"Result\":0,\"processid\":%d}", retStatus );
+						HttpAddTextContent( response, tmp );
+					}
+					else
+					{
+						char buffer[ 512 ];
+						char buffer1[ 256 ];
+						snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id" );
+						snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_PARAMETERS_MISSING );
 						HttpAddTextContent( response, buffer );
 					}
 				}

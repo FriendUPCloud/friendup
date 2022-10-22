@@ -2299,8 +2299,8 @@ int InfoSet( File *f __attribute__((unused)), const char *path __attribute__((un
 // Run Extension
 //
 
-void RunExtension( FileProcess *fm, File *srcFile, File *dstFile, char *srcPath, char *dstPath, int extension )
+int RunExtension( FileProcess *fm, File *srcFile, File *dstFile, char *srcPath, char *dstPath, int extension )
 {
-	return;
+	return 0;
 }
 

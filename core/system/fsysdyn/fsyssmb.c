@@ -1620,7 +1620,7 @@ int InfoSet( File *f, const char *path, const char *key, const char *value )
 // Run Extension
 //
 
-void RunExtension( FileProcess *fm, File *srcFile, File *dstFile, char *srcPath, char *dstPath, int extension )
+int RunExtension( FileProcess *fm, File *srcFile, File *dstFile, char *srcPath, char *dstPath, int extension )
 {
-	return;
+	return 0;
 }
