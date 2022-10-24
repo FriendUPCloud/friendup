@@ -2242,5 +2242,207 @@ BufString *Dir( File *s, const char *path )
 
 int RunExtension( FileProcess *fm, File *srcFile, File *dstFile, char *srcPath, char *dstPath, int extension )
 {
+		DEBUG("[RunExtension] Start\n");
+	
+	if( extension == DOSDriver_Extension_Copy || extension == DOSDriver_Extension_Move )
+	{
+		DEBUG("[RunExtension] extension copy\n");
+		
+		//
+		// Make source relative srcPath
+		//
+		
+		int srcPathSize = strlen( srcPath );
+		char *srcCommClean = FCalloc( srcPathSize+10, sizeof( char ) );
+		if( srcCommClean != NULL )
+		{
+			int i = 0;
+			for( i=0 ; i < srcPathSize ; i++ )
+			{
+				if( srcPath[ i ] == ':' )
+				{
+					break;
+				}
+			}
+	
+			if( i < srcPathSize )
+			{
+				strcpy( srcCommClean, &(srcPath[ i+1 ]) );
+			}
+			else
+			{
+				strcpy( srcCommClean, srcPath );
+			}
+
+			int spath = srcPathSize;
+			int srcrsPath = strlen( srcFile->f_Path );
+			File *srcfil = NULL;
+			char *srcComm = FCalloc( srcrsPath + spath + 5, sizeof( char ) );
+	
+			// Remove the filename from commclean in a clean path
+
+			// Create a string that has the real file path of the file
+			if( srcComm != NULL )
+			{
+				FILE *f = NULL;
+		
+				if( srcFile->f_Path[ srcrsPath-1 ] == '/' )
+				{
+					sprintf( srcComm, "%s%s", srcFile->f_Path, srcCommClean );
+				}
+				else
+				{
+					sprintf( srcComm, "%s/%s", srcFile->f_Path, srcCommClean );
+				}
+				
+				DEBUG("[RunExtension] src comm set\n");
+				
+				//
+				// Prepare path for destination
+				//
+				
+				int dstPathSize = strlen( dstPath );
+				char *dstCommClean = FCalloc( dstPathSize+10, sizeof( char ) );
+				if( dstCommClean != NULL )
+				{
+					for( i=0 ; i < dstPathSize ; i++ )
+					{
+						if( dstPath[ i ] == ':' )
+						{
+							break;
+						}
+					}
+	
+					if( i < dstPathSize )
+					{
+						strcpy( dstCommClean, &(dstPath[ i+1 ]) );
+					}
+					else
+					{
+						strcpy( dstCommClean, dstPath );
+					}
+
+					int dpath = dstPathSize;
+					int dstrsPath = strlen( srcFile->f_Path );
+					File *dstfil = NULL;
+					char *dstComm = FCalloc( dstrsPath + dpath + 5, sizeof( char ) );
+	
+					// Remove the filename from commclean in a clean path
+
+					// Create a string that has the real file path of the file
+					if( dstComm != NULL )
+					{
+						FILE *f = NULL;
+		
+						if( srcFile->f_Path[ dstrsPath-1 ] == '/' )
+						{
+							sprintf( dstComm, "%s%s", srcFile->f_Path, dstCommClean );
+						}
+						else
+						{
+							sprintf( dstComm, "%s/%s", srcFile->f_Path, dstCommClean );
+						}
+						
+						//
+						// DO action!
+						//
+						
+						char *srcEncPath = MarkAndBase64EncodeString( srcComm );
+						if( srcEncPath != NULL )
+						{
+							char *dstEncPath = MarkAndBase64EncodeString( dstComm );
+							if( dstEncPath != NULL )
+							{
+								char *cmdPath = NULL;
+								
+								if( extension == DOSDriver_Extension_Copy )
+								{
+									cmdPath = "type=&module=files&args=false&command=copyext&authkey=false&sessionid=%s&source=%s&destination=%s&id=%d";
+								}
+								else
+								{
+									cmdPath = "type=&module=files&args=false&command=moveext&authkey=false&sessionid=%s&source=%s&destination=%s&id=%d";
+								}
+								
+								SpecialData *sd = (SpecialData *)srcFile->f_SpecialData;
+								// Calculate length of variables in string
+								int cmdLength = strlen( cmdPath ) +
+									( sd->type ? strlen( sd->type ) : 0 ) +
+									( srcFile->f_SessionIDPTR ? strlen( srcFile->f_SessionIDPTR ) : 0 ) +
+									( srcEncPath ? strlen( srcEncPath ) : 0 ) + ( dstEncPath ? strlen( dstEncPath ) : 0 ) + 128 + strlen( "php \"modules/system/module.php\" \"\";" );
+									
+								char *command = FMalloc( cmdLength );
+								if( command != NULL )
+								{
+									// Just get vars
+									char *commandCnt = FCalloc( cmdLength + 10, sizeof( char ) );
+									
+									// Generate command string
+									if( commandCnt != NULL )
+									{
+										snprintf( commandCnt, cmdLength, cmdPath, srcFile->f_SessionIDPTR ? srcFile->f_SessionIDPTR : "", srcEncPath ? srcEncPath : "", dstEncPath ? dstEncPath : "", fm->fp_PID );
+											
+										snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
+
+										ListString *result = PHPCall( command );
+		
+										if( result != NULL )
+										{
+											ListStringDelete( result );
+										}
+										FFree( commandCnt );
+									}
+									FFree( command );
+								}
+								FFree( dstEncPath );
+							}
+							FFree( srcEncPath );
+						}
+						FFree( dstComm );
+					}
+					FFree( dstCommClean );
+				}
+				FFree( srcComm );
+			}
+			FFree( srcCommClean );
+		}
+	}	// end of copy/move extension
+	else if( extension == DOSDriver_Extension_GetInfo )
+	{
+		char *cmdPath = "type=&module=files&args=false&command=getinfoext&authkey=false&sessionid=%sid=%d";
+		
+		SpecialData *sd = (SpecialData *)srcFile->f_SpecialData;
+		// Calculate length of variables in string
+		int cmdLength = strlen( cmdPath ) +
+			( sd->type ? strlen( sd->type ) : 0 ) +
+			( srcFile->f_SessionIDPTR ? strlen( srcFile->f_SessionIDPTR ) : 0 ) +
+			+ 128 + strlen( "php \"modules/system/module.php\" \"\";" );
+			
+		char *command = FMalloc( cmdLength );
+		if( command != NULL )
+		{
+			// Just get vars
+			char *commandCnt = FCalloc( cmdLength + 10, sizeof( char ) );
+			
+			// Generate command string
+			if( commandCnt != NULL )
+			{
+				snprintf( commandCnt, cmdLength, cmdPath, srcFile->f_SessionIDPTR ? srcFile->f_SessionIDPTR : "", fm->fp_PID );
+				
+				snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
+
+				ListString *result = PHPCall( command );
+		
+				if( result != NULL )
+				{
+					ListStringDelete( result );
+				}
+				FFree( commandCnt );
+			}
+			FFree( command );
+		}
+		
+		return fm->fp_Progress;
+	}
 	return 0;
 }
