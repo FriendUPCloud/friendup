@@ -323,6 +323,11 @@ if( $userid > 0 && $wname )
 	$Logger->log( 'getavatar looking for file: ' . $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png' );
 	
 	// Check if it exists!
+	if ( !$hash && $targetUser->Image )
+	{
+		$hash = $targetUser->Image;
+	}
+	
 	if( $hash && file_exists( $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png' ) )
 	{
 		$Logger->log( 'getavatar found file at: ' . $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png' );
@@ -343,7 +348,7 @@ if( $userid > 0 && $wname )
 		// We do not have full name and we can load and ( we have no mode or the mode isn't reset )
 		if( !isset( $args->args->fullname ) && $s->Load() && ( !isset( $args->args->mode ) || $args->args->mode != 'reset' ) )
 		{
-			$Logger->log( 'getavatar - generate filepath from data' );
+			$Logger->log( 'getavatar - find hash or generate from data' );
 			$json = false;
 			if( substr( $s->Data, 0, 1 ) == '"' && substr( $s->Data, -1, 1 ) == '"' )
 			{
@@ -359,6 +364,10 @@ if( $userid > 0 && $wname )
 			}
 			else $avatar = $s->Data;
 			
+			
+			$hash = md5( $avatar );
+			
+			/*
 			if( $s->ID > 0 && $avatar && $s->UserID > 0 )
 			{
 				$u = new dbIO( 'FUser' );
@@ -372,6 +381,7 @@ if( $userid > 0 && $wname )
 					$hash = md5( $avatar );
 				}
 			}
+			*/
 			
 			// Fix filename
 			$fname = ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png';
