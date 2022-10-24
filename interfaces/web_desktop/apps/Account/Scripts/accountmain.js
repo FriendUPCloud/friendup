@@ -10,7 +10,6 @@
 
 Application.run = function( msg, iface )
 {
-	console.log( 'Acc.run' );
 	Friend.exportAPI( Application.applicationId, {}, function( response, data, extra )
 	{
 		getStorage();
@@ -41,7 +40,6 @@ Application.run = function( msg, iface )
 	
 	const g = new Module( 'system' );
 	g.onExecuted = ( s, d ) => {
-		console.log( 'sampleconfig back', [ s, d ]);
 		if ( 'ok' == s )
 		{
 			let serverConfig = null;
@@ -54,7 +52,6 @@ Application.run = function( msg, iface )
 				return;
 			}
 			
-			console.log( 'sampleconfig', serverConfig );
 			if ( null != serverConfig.hasGroupsFeature )
 			{
 				if ( true === serverConfig.hasGroupsFeature )
@@ -738,7 +735,6 @@ function changeAvatar()
 				var image = new Image()
 				image.onload = function()
 				{
-					console.log( 'image', image )
 					// Resizes the image
 					var canvas = ge( 'Avatar' );
 					var context = canvas.getContext( '2d' );
