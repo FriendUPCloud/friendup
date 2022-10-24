@@ -504,6 +504,7 @@ if( $userid > 0 && $wname )
 		}
 		
 		// Check again ...
+		$Logger->log( 'check again: ' . $hash . ' - ' . $filepath );
 		if( $hash && file_exists( $filepath ) )
 		{
 			$Logger->log( 'getavatar found it this time lol ' . json_encode([
