@@ -176,8 +176,8 @@ else if ( isset( $args->args->setting ) )
 			$hex = $args->args->color;
 		else $hex = trim( $palette[ rand( 0, count( $palette ) - 1 ) ] );
 		
-		$width = 512;
-		$height = 512;
+		$width = 1024;
+		$height = 1024;
 		$img = imagecreatetruecolor( $width, $height );
 		imagealphablending( $img, false );
 		imagesavealpha( $img, true );
