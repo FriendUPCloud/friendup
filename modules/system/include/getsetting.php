@@ -176,7 +176,9 @@ else if ( isset( $args->args->setting ) )
 			$hex = $args->args->color;
 		else $hex = trim( $palette[ rand( 0, count( $palette ) - 1 ) ] );
 		
-		$img = imagecreatetruecolor( 256, 256 );
+		$width = 1024;
+		$height = 1024;
+		$img = imagecreatetruecolor( $width, $height );
 		imagealphablending( $img, false );
 		imagesavealpha( $img, true );
 		imageantialias( $img, true );
@@ -184,10 +186,15 @@ else if ( isset( $args->args->setting ) )
 		
 		// Make transparentgim
 		$transparent = imagecolorallocatealpha( $img, 255, 255, 255, 127 );
-		imagefilledrectangle( $img, 0, 0, 256, 256, $transparent );
+		imagefilledrectangle( $img, 0, 0, $width, $height, $transparent );
 		
 		// Draw color circle (3x the size)
-		$factor = 3 * 256;
+		$factor = 0;
+		if ( $width > $height )
+			$factor = 3 * $height;
+		else
+			$factor = 3 * $width;
+		
 		$nimg = imagecreatetruecolor( $factor, $factor );
 		imageantialias( $nimg, true );
 		imagealphablending( $nimg, false );
@@ -202,7 +209,7 @@ else if ( isset( $args->args->setting ) )
 		imagefilledellipse( $nimg, $factor >> 1, $factor >> 1, $factor, $factor, $color );
 		
 		// Copy resized version
-		imagecopyresampled( $img, $nimg, 0, 0, 0, 0, 256, 256, $factor, $factor );
+		imagecopyresampled( $img, $nimg, 0, 0, 0, 0, $width, $height, $factor, $factor );
 		
 		// Font path
 		$font = 'resources/themes/friendup12/fonts/Assistant-ExtraBold.ttf';
@@ -219,8 +226,8 @@ else if ( isset( $args->args->setting ) )
 		
 		$initials = explode( ' ', $initials );
 		$initials = strtoupper( count( $initials ) > 1 ? $initials[0]{0} . $initials[1]{0} : substr( $initials[0], 0, 2 ) );
-		$dims = getsetting_calculateTextBox( $initials, $font, 88, 0 );
-		imagettftext( $img, 88, 0, 128 - ( $dims[ 'width' ] >> 1 ) - $dims[ 'left' ], 128 + ( $dims[ 'height' ] >> 1 ) + ( $dims[ 'height' ] - $dims[ 'top' ] ), $color, $font, $initials );
+		$dims = getsetting_calculateTextBox( $initials, $font, ( $factor / 6 ) * ( 24 / 35 ), 0 );
+		imagettftext( $img, ( $factor / 6 ) * ( 24 / 35 ), 0, ( $factor / 6 ) - ( $dims[ 'width' ] >> 1 ) - $dims[ 'left' ], ( $factor / 6 ) + ( $dims[ 'height' ] >> 1 ) + ( $dims[ 'height' ] - $dims[ 'top' ] ), $color, $font, $initials );
 		ob_start();
 		imagepng( $img );
 		$png = ob_get_clean();

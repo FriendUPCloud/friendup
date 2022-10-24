@@ -10,7 +10,6 @@
 
 Application.run = function( msg, iface )
 {
-	console.log( 'Acc.run' );
 	Friend.exportAPI( Application.applicationId, {}, function( response, data, extra )
 	{
 		getStorage();
@@ -41,7 +40,6 @@ Application.run = function( msg, iface )
 	
 	const g = new Module( 'system' );
 	g.onExecuted = ( s, d ) => {
-		console.log( 'sampleconfig back', [ s, d ]);
 		if ( 'ok' == s )
 		{
 			let serverConfig = null;
@@ -54,7 +52,6 @@ Application.run = function( msg, iface )
 				return;
 			}
 			
-			console.log( 'sampleconfig', serverConfig );
 			if ( null != serverConfig.hasGroupsFeature )
 			{
 				if ( true === serverConfig.hasGroupsFeature )
@@ -437,7 +434,7 @@ function refreshAvatar()
 				avSrc.onload = function()
 				{
 					var ctx = avatar.getContext( '2d' );
-					ctx.drawImage( avSrc, 0, 0, 128, 128 );
+					ctx.drawImage( avSrc, 0, 0, 512, 512 );
 				}
 			}
 		}
@@ -735,13 +732,13 @@ function changeAvatar()
 			if ( item )
 			{
 				// Load the image
-				var image = new Image();
+				var image = new Image()
 				image.onload = function()
 				{
 					// Resizes the image
 					var canvas = ge( 'Avatar' );
 					var context = canvas.getContext( '2d' );
-					context.drawImage( image, 0, 0, 128, 128 );
+					context.drawImage( image, 0, 0, 512, 512 );
 				}
 				image.src = getImageUrl( item[ 0 ].Path );
 			}
