@@ -484,6 +484,17 @@ function apiWrapper( event, force )
 								per : permissions,
 								xtr : extra,
 							})
+							if ( !response )
+								return
+							
+							Friend.DOS.getFileInfo( msg.path, {}, ( response, fileInfo, extra ) => {
+								console.log( 'getFileInfo response', {
+									res  : response,
+									fifo : fileInfo,
+									exr  : extra,
+								})
+								
+							} )
 						})
 						break;
 					case 'openWindowByFilename':
