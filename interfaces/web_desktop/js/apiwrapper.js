@@ -476,6 +476,16 @@ function apiWrapper( event, force )
 								app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
 						}, msg.extra );
 						break;
+					case 'openWindowByPath':
+						console.log( 'openWindowByPath', msg )
+						Friend.DOS.getFileAccess( msg.path, ( response, permissions, extra ) => {
+							console.log( 'getFileAccess response', {
+								res : response,
+								per : permissions,
+								xtr : extra,
+							})
+						})
+						break;
 					case 'openWindowByFilename':
 						if( msg.args )
 						{
