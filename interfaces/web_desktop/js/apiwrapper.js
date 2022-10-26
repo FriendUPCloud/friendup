@@ -478,7 +478,7 @@ function apiWrapper( event, force )
 						break;
 					case 'openWindowByPath':
 						console.log( 'openWindowByPath', msg )
-						Friend.DOS.getFileAccess( msg.path, ( response, permissions, extra ) => {
+						Friend.DOS.getFileAccess( msg.path, {}, ( response, permissions, extra ) => {
 							console.log( 'getFileAccess response', {
 								res : response,
 								per : permissions,
