@@ -493,8 +493,11 @@ function apiWrapper( event, force )
 									fifo : fileInfo,
 									exr  : extra,
 								})
+								if ( !response )
+									return
 								
-							} )
+								Friend.DOS.openWindowByFilename( fileInfo )
+							})
 						})
 						break;
 					case 'openWindowByFilename':
