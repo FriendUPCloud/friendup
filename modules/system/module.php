@@ -898,6 +898,10 @@ if( isset( $args->command ) )
 			}
 			die( 'fail<!--separate-->' );
 			break;
+		// Get shared file path based on hash
+		case 'getsharefilepath':
+    		require( 'modules/system/include/getsharefilepath.php' );
+		    break;
 		// Share something!
 		case 'share':
 			require( 'modules/system/include/share.php' );
