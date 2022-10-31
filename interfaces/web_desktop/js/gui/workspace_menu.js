@@ -436,7 +436,7 @@ var WorkspaceMenu =
 		if( menudiv && menudiv.menu != menuItems ) menudiv.menu = menuItems; else return;
 		
 		// This need to be able to stringify to validate menu items
-		if( depth == 0 )
+		if( depth == 0 && menuItems && typeof( menuItems.push ) != 'undefined' )
 		{
 			if( !menuItems.length && isMobile )
 			{

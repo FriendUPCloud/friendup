@@ -1916,6 +1916,7 @@ void HttpFree( Http* http )
 	{
 		FFree( http->http_Response );
 	}
+	// in case when content is in file
 	if( http->http_ContentFileHandle > 0 )
 	{
 		munmap( http->http_Content, http->http_ContentLength );
@@ -1924,7 +1925,10 @@ void HttpFree( Http* http )
 	}
 	else
 	{
-		FFree( http->http_Content );
+		if( http->http_Content )
+		{
+			FFree( http->http_Content );
+		}
 	}
 	if( http->http_ParsedPostContent != NULL )
 	{

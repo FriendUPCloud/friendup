@@ -2062,6 +2062,11 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		let whWidth = windowWidth;
 		let columns = Math.floor( whWidth / mobIW );
 		marginLeft = Math.floor( whWidth - ( mobIW * columns ) ) >> 1;
+		if( window.Workspace && Workspace.dashboard )
+		{
+		    marginLeft = 0;
+		    marginRight = window.innerWidth;
+		}
 	}
 	
 	let iy  = marginTop; 

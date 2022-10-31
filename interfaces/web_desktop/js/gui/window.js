@@ -235,6 +235,13 @@ function SetWindowTitle( div, titleStr )
 	}
 	div.viewTitle.innerHTML = vTitle;
 	
+	// Support dashboard
+	let dl = document.querySelector( '.DashboardLabel' );
+	if( dl )
+	{
+	    dl.innerHTML = vTitle;
+    }
+	
 	// Also check tasks
 	let baseElement = GetTaskbarElement();
 	if( !baseElement ) return;
