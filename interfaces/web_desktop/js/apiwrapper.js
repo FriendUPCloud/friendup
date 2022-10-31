@@ -462,13 +462,13 @@ function apiWrapper( event, force )
 							// Setup the callback message
 							let nmsg = 
 							{
-								viewId: msg.viewId,
-								applicationId: msg.applicationId,
-								callback: cbk,
-								response: response,
-								permissions: permissions,
-								path: msg.path, 
-								extra: extra
+								viewId        : msg.viewId,
+								applicationId : msg.applicationId,
+								callback      : cbk,
+								response      : response,
+								permissions   : permissions,
+								path          : msg.path, 
+								extra         : extra
 							};
 							if( tar )
 								tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
