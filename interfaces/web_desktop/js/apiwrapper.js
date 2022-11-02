@@ -496,7 +496,10 @@ function apiWrapper( event, force )
 								if ( !response )
 									return
 								
-								Friend.DOS.openWindowByFilename( fileInfo )
+								if ( 'File' == fileInfo.Type )
+									Friend.DOS.openWindowByFilename( fileInfo )
+								if ( 'Directory' == fileInfo.Type )
+									OpenWindowByFileinfo( fileInfo )
 							})
 						})
 						break;
