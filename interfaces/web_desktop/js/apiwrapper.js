@@ -499,7 +499,10 @@ function apiWrapper( event, force )
 								if ( 'File' == fileInfo.Type )
 									Friend.DOS.openWindowByFilename( fileInfo )
 								if ( 'Directory' == fileInfo.Type )
+								{
+									fileInfo.MetaType = 'Directory'
 									OpenWindowByFileinfo( fileInfo )
+								}
 							})
 						})
 						break;
