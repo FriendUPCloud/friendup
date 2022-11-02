@@ -501,6 +501,7 @@ function apiWrapper( event, force )
 								if ( 'Directory' == fileInfo.Type )
 								{
 									fileInfo.MetaType = 'Directory'
+									fileInfo.Path = msg.path
 									OpenWindowByFileinfo( fileInfo )
 								}
 							})
