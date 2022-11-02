@@ -502,6 +502,7 @@ function apiWrapper( event, force )
 								{
 									fileInfo.MetaType = 'Directory'
 									fileInfo.Path = msg.path
+									console.log( 'open path', fileInfo )
 									OpenWindowByFileinfo( fileInfo )
 								}
 							})
