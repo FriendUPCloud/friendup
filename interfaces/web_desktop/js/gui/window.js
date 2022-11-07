@@ -1216,6 +1216,11 @@ function _ActivateWindow( div, nopoll, e )
     	return _ActivateDialogWindow( div );
 	}
 	
+	if( div && div.windowObject && div.windowObject.applicationId )
+	{
+	    window.currentContext = null;
+	}
+	
 	// Remove dialog flag only if it's not a dialog
 	document.body.classList.remove( 'Dialog' );
     
@@ -2097,11 +2102,7 @@ function CloseView( win, delayed )
 			div.appendChild( ele );
 		}
 		
-		// TODO: Remove this hack
-		// Check for Friend Chat dialog window
-		let isFriendChat = win.windowObject.applicationName == 'FriendChat';
-		let isFCDialog = isFriendChat && win.id && ( win.id.indexOf( 'Settings' ) == 0 || win.id.indexOf( 'Account_settings' ) == 0 );
-		
+		// Check the window context, if it exists
 		if( window.currentContext )
 		{
 		    switch( window.currentContext )
