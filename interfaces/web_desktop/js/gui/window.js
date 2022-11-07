@@ -2102,6 +2102,44 @@ function CloseView( win, delayed )
 		let isFriendChat = win.windowObject.applicationName == 'FriendChat';
 		let isFCDialog = isFriendChat && win.id && ( win.id.indexOf( 'Settings' ) == 0 || win.id.indexOf( 'Account_settings' ) == 0 );
 		
+		if( window.currentContext )
+		{
+		    switch( window.currentContext )
+		    {
+		        case 'dashboard':
+		            _DeactivateWindows();
+			        showDashboard();
+			        setTimeout( function(){ showDashboard(); }, 150 );
+			        break;
+		        case 'sidebar':
+		            _DeactivateWindows();
+		            hideDashboard();
+                	break;
+                default:
+                    if( appId )
+                    {
+                        for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
+						{
+							if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
+							{
+								// Only activate non minimized views
+								if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+								{
+									let vh = Friend.GUI.view.viewHistory[ a ];
+									currentMovable = vh;
+									_ActivateWindow( vh );
+									if( vh.content && vh.content.refresh )
+										vh.content.refresh();
+									nextActive = true;
+								}
+								break;
+							}
+						}
+                    }
+                    break;
+		    }
+		}
+		/* OLD CODE for dashboard stuff 
 		if( !appId && win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
 		{
 			_DeactivateWindows();
@@ -2114,7 +2152,7 @@ function CloseView( win, delayed )
 		    _DeactivateWindows();
 			showDashboard();
 			setTimeout( function(){ showDashboard(); }, 150 );
-		}
+		}*/
 		else
 		{
 			// Activate latest activated view (not on mobile)
