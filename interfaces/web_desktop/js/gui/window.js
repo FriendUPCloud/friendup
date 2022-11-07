@@ -1218,7 +1218,7 @@ function _ActivateWindow( div, nopoll, e )
 	
 	if( div && div.windowObject && div.windowObject.applicationId )
 	{
-	    window.currentContext = null;
+	    window.currentContext = [ div, window.currentContext ];
 	}
 	
 	// Remove dialog flag only if it's not a dialog
@@ -2105,40 +2105,52 @@ function CloseView( win, delayed )
 		// Check the window context, if it exists
 		if( window.currentContext )
 		{
-		    switch( window.currentContext )
+		    function handleContext()
 		    {
-		        case 'dashboard':
-		            _DeactivateWindows();
-			        showDashboard();
-			        setTimeout( function(){ showDashboard(); }, 150 );
-			        break;
-		        case 'sidebar':
-		            _DeactivateWindows();
-		            hideDashboard();
-                	break;
-                default:
-                    if( appId )
-                    {
-                        for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
-						{
-							if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
-							{
-								// Only activate non minimized views
-								if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
-								{
-									let vh = Friend.GUI.view.viewHistory[ a ];
-									currentMovable = vh;
-									_ActivateWindow( vh );
-									if( vh.content && vh.content.refresh )
-										vh.content.refresh();
-									nextActive = true;
-								}
-								break;
-							}
-						}
-                    }
-                    break;
-		    }
+		        switch( window.currentContext )
+		        {
+		            case 'dashboard':
+		                _DeactivateWindows();
+			            showDashboard();
+			            setTimeout( function(){ showDashboard(); }, 150 );
+			            break;
+		            case 'sidebar':
+		                _DeactivateWindows();
+		                hideDashboard();
+                    	break;
+                	// We have a different thing for other contexts
+                    default:
+                        let appCheck = true;
+                        // We got a context array ([ currentWindow, prevContext ])
+                        if( typeof( window.currentContext ) == 'object' )
+                        {
+                            window.currentContext = window.currentContext[ 1 ];
+                            return handleContext();
+                        }
+                        if( appId && appCheck )
+                        {
+                            for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
+						    {
+							    if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
+							    {
+								    // Only activate non minimized views
+								    if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+								    {
+									    let vh = Friend.GUI.view.viewHistory[ a ];
+									    currentMovable = vh;
+									    _ActivateWindow( vh );
+									    if( vh.content && vh.content.refresh )
+										    vh.content.refresh();
+									    nextActive = true;
+								    }
+								    break;
+							    }
+						    }
+                        }
+                        break;
+		        }
+	        }
+	        handleContext();
 		}
 		/* OLD CODE for dashboard stuff 
 		if( !appId && win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
