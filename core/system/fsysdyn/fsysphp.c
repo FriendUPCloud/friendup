@@ -613,7 +613,10 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 		{
 			sd->module = StringDup( module );
 			
-			DEBUG( "[fsysphp] Copying session normal: %s - hashed %s\n", us->us_SessionID, us->us_SessionID );
+			if( us != NULL )
+			{
+				DEBUG( "[fsysphp] Copying session normal: %s - hashed %s\n", us->us_SessionID, us->us_SessionID );
+			}
 			
 			FileFillSessionID( dev, us );
 			sd->type = StringDup( type );
@@ -626,7 +629,12 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 				( name ? strlen( name ) : 0 ) + 
 				( path ? strlen( path ) : 0 ) + 
 				( module ? strlen( module ) : strlen( "files" ) ) + 
-				( strlen( us->us_SessionID ) ) + 1;
+				 1;
+				
+			if( us != NULL && us->us_SessionID != NULL )
+			{
+				cmdLength += strlen( us->us_SessionID );
+			}
 			
 			
 			// Whole command

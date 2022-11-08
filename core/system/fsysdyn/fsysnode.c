@@ -317,7 +317,10 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 		{
 			sd->module = StringDup( module );
 			DEBUG( "Copying session.\n" );
-			FileFillSessionID( dev, us );
+			if( us != NULL )
+			{
+				FileFillSessionID( dev, us );
+			}
 			sd->type = StringDup( type );
 			dev->f_SpecialData = sd;
 			sd->sb = sb;
@@ -328,7 +331,12 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 				( name ? strlen( name ) : 0 ) + 
 				( path ? strlen( path ) : 0 ) + 
 				( module ? strlen( module ) : strlen( "files" ) ) + 
-				( us ? strlen( us->us_SessionID ) : 0 ) + 1;
+				1;
+				
+			if( us != NULL && us->us_SessionID != NULL )
+			{
+				cmdLength += strlen( us->us_SessionID );
+			}
 			
 			
 			// Whole command
@@ -349,7 +357,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 						name ? name : "", 
 						path ? path : "", 
 						module ? module : "files", 
-						us->us_SessionID ? us->us_SessionID : ""  );
+						us ? (us->us_SessionID ? us->us_SessionID : "" ) : ""  );
 					sprintf( command, "node \"modules/node/module.js\" \"%s\";", FilterNodeVar( commandCnt ) );
 					FFree( commandCnt );
 			
@@ -396,10 +404,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 					}		
 					if( result ) ListStringDelete( result );
 				}
-				else
-				{
-					FFree( command );
-				}
+				FFree( command );
 			}
 		}
 		DEBUG("[fsysnode] IS DIRECTORY data filled\n");

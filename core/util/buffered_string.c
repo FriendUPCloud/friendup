@@ -31,7 +31,7 @@
 BufString *BufStringNew(void)
 {
 	BufString *str = NULL;
-	if( (str = FCalloc(sizeof(BufString), 1 )) != NULL )
+	if( (str = FCalloc( 1, sizeof(BufString) )) != NULL )
 	{
 		//str->bs_Size = 0;
 		str->bs_Bufsize = BUF_STRING_MAX;
@@ -45,7 +45,7 @@ BufString *BufStringNewSize(unsigned int initial_size)
 {
 	BufString *str = NULL;
 		
-	if( ( str = FCalloc( sizeof( BufString ), 1 ) ) != NULL )
+	if( ( str = FCalloc( 1, sizeof( BufString ) ) ) != NULL )
 	{
 		str->bs_Size = 0;
 		str->bs_Bufsize = initial_size;

@@ -26,19 +26,19 @@
  * @param size size of maxiumum buffer size (in bytes)
  * @return new CacheManager structure or NULL if error appear
  */
-CacheManager *CacheManagerNew( FULONG size )
+CacheManager *CacheManagerNew( FUQUAD size )
 {
 	DEBUG( "[CacheManagerNew] Setting up cache manager.\n" );
 	CacheManager *cm = FCalloc( 1, sizeof( CacheManager ) );
 	if( cm != NULL )
 	{
-		int i = 0;
-		
 		pthread_mutex_init( &(cm->cm_Mutex), NULL );
 		
 		cm->cm_CacheFileGroup = FCalloc( CACHE_GROUP_MAX, sizeof(CacheFileGroup) );
 		if( cm->cm_CacheFileGroup != NULL )
 		{
+			unsigned int i = 0;
+			
 			for( i = 0; i < CACHE_GROUP_MAX; i++ )
 			{
 				cm->cm_CacheFileGroup[ i ].cg_EntryId = i;

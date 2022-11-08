@@ -54,7 +54,7 @@ typedef struct CacheManager
 //
 //
 
-CacheManager *CacheManagerNew( FULONG size );
+CacheManager *CacheManagerNew( FUQUAD size );
 
 //
 //

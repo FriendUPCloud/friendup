@@ -30,7 +30,7 @@
 BufStringDisk *BufStringDiskNew(void)
 {
 	BufStringDisk *str = NULL;
-	if( (str = FCalloc(sizeof(BufStringDisk), 1 )) != NULL)
+	if( (str = FCalloc( 1, sizeof(BufStringDisk) )) != NULL)
 	{
 		//str->bsd_Size = 0;
 		str->bsd_Bufsize = BUF_STRING_DISK_MAX;
@@ -44,7 +44,7 @@ BufStringDisk *BufStringDiskNewSize(unsigned int initial_size)
 {
 	BufStringDisk *str = NULL;
 		
-	if( ( str = FCalloc( sizeof( BufStringDisk ), 1 ) ) != NULL )
+	if( ( str = FCalloc( 1, sizeof( BufStringDisk ) ) ) != NULL )
 	{
 		str->bsd_Size = 0;
 		str->bsd_Bufsize = initial_size;
