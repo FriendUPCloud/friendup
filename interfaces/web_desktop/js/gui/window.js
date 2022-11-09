@@ -2125,8 +2125,11 @@ function CloseView( win, delayed )
                         if( typeof( window.currentContext ) == 'object' )
                         {
                             // Activate it
-                            _ActivateWindow( window.currentContext[ 0 ] );
                             window.currentContext = window.currentContext[ 1 ];
+                            if( typeof( window.currentContext ) == 'object' )
+                            {
+                                _ActivateWindow( window.currentContext[0] );
+                            }
                             return handleContext();
                         }
                         if( appId && appCheck )
