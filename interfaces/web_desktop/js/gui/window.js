@@ -1219,7 +1219,7 @@ function _ActivateWindow( div, nopoll, e )
 	if( div && div.windowObject )
 	{
 	    window.currentContext = [ div, window.currentContext ];
-	    console.log( 'currentContext: Setting array.' );
+	    console.log( 'currentContext: Setting array.', window.currentContext );
 	}
 	
 	// Remove dialog flag only if it's not a dialog
