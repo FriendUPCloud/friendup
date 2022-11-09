@@ -1216,14 +1216,10 @@ function _ActivateWindow( div, nopoll, e )
     	return _ActivateDialogWindow( div );
 	}
 	
-	if( div && div.windowObject && div.windowObject.applicationId )
+	if( div && div.windowObject )
 	{
 	    window.currentContext = [ div, window.currentContext ];
 	    console.log( 'currentContext: Setting array.' );
-	}
-	else
-	{
-	    console.log( 'currentContext: No app id? - What is: ', div, div.windowObject );
 	}
 	
 	// Remove dialog flag only if it's not a dialog
@@ -2112,7 +2108,6 @@ function CloseView( win, delayed )
 		{
 		    function handleContext()
 		    {
-		        console.log( 'currentContext: HANDLING CONTEXT on closing view' );
 		        switch( window.currentContext )
 		        {
 		            case 'dashboard':
