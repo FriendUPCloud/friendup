@@ -2107,6 +2107,7 @@ function CloseView( win, delayed )
 		{
 		    function handleContext()
 		    {
+		        console.log( 'May I ask what context though has?', window.currentContext );
 		        switch( window.currentContext )
 		        {
 		            case 'dashboard':
