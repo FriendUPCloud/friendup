@@ -1220,6 +1220,10 @@ function _ActivateWindow( div, nopoll, e )
 	{
 	    window.currentContext = [ div, window.currentContext ];
 	}
+	else
+	{
+	    console.log( 'No app id? - What is: ', div, div.windowObject );
+	}
 	
 	// Remove dialog flag only if it's not a dialog
 	document.body.classList.remove( 'Dialog' );
@@ -2107,7 +2111,6 @@ function CloseView( win, delayed )
 		{
 		    function handleContext()
 		    {
-		        console.log( 'May I ask what context though has?', window.currentContext );
 		        switch( window.currentContext )
 		        {
 		            case 'dashboard':
