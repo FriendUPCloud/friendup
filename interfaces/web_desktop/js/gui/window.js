@@ -2112,6 +2112,7 @@ function CloseView( win, delayed )
 		{
 		    function handleContext()
 		    {
+		        console.log( 'currentContext: HANDLING CONTEXT on closing view' );
 		        switch( window.currentContext )
 		        {
 		            case 'dashboard':
