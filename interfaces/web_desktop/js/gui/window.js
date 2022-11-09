@@ -1219,7 +1219,6 @@ function _ActivateWindow( div, nopoll, e )
 	if( div && div.windowObject )
 	{
 	    window.currentContext = [ div, window.currentContext ];
-	    console.log( 'currentContext: Setting array.', window.currentContext );
 	}
 	
 	// Remove dialog flag only if it's not a dialog
@@ -2125,6 +2124,8 @@ function CloseView( win, delayed )
                         // We got a context array ([ currentWindow, prevContext ])
                         if( typeof( window.currentContext ) == 'object' )
                         {
+                            // Activate it
+                            _ActivateWindow( window.currentContext[ 0 ] );
                             window.currentContext = window.currentContext[ 1 ];
                             return handleContext();
                         }
