@@ -320,6 +320,11 @@ Friend.User = {
     {
     	if( !cbk ) cbk = false;
     	
+    	if( GetCookie( 'remcreds' ) )
+    	{
+    	    DelCookie( 'remcreds' );
+    	}
+    	
     	// FIXME: Remove this - it is not used anymore
 		window.localStorage.removeItem( 'WorkspaceUsername' );
 		window.localStorage.removeItem( 'WorkspacePassword' );
