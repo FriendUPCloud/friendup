@@ -462,19 +462,51 @@ function apiWrapper( event, force )
 							// Setup the callback message
 							let nmsg = 
 							{
-								viewId: msg.viewId,
-								applicationId: msg.applicationId,
-								callback: cbk,
-								response: response,
-								permissions: permissions,
-								path: msg.path, 
-								extra: extra
+								viewId        : msg.viewId,
+								applicationId : msg.applicationId,
+								callback      : cbk,
+								response      : response,
+								permissions   : permissions,
+								path          : msg.path, 
+								extra         : extra
 							};
 							if( tar )
 								tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
 							else 
 								app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
 						}, msg.extra );
+						break;
+					case 'openWindowByPath':
+						console.log( 'openWindowByPath', msg )
+						Friend.DOS.getFileAccess( msg.path, {}, ( response, permissions, extra ) => {
+							console.log( 'getFileAccess response', {
+								res : response,
+								per : permissions,
+								xtr : extra,
+							})
+							if ( !response )
+								return
+							
+							Friend.DOS.getFileInfo( msg.path, {}, ( response, fileInfo, extra ) => {
+								console.log( 'getFileInfo response', {
+									res  : response,
+									fifo : fileInfo,
+									exr  : extra,
+								})
+								if ( !response )
+									return
+								
+								if ( 'File' == fileInfo.Type )
+									Friend.DOS.openWindowByFilename( fileInfo )
+								if ( 'Directory' == fileInfo.Type )
+								{
+									fileInfo.MetaType = 'Directory'
+									fileInfo.Path = msg.path
+									console.log( 'open path', fileInfo )
+									OpenWindowByFileinfo( fileInfo )
+								}
+							})
+						})
 						break;
 					case 'openWindowByFilename':
 						if( msg.args )
