@@ -657,7 +657,7 @@ function Notify( message, callback, clickcallback )
 				d.className = 'Notification Mobile';
 				d.id = 'MobileNotifications';
 				// With dashboard mode, use body for notifications
-				if( Workspace.dashboard )
+				if( Workspace.dashboard && isMobile )
 				    document.body.appendChild( d );
 				else ge( 'DoorsScreen' ).appendChild( d );
 			}
