@@ -3208,7 +3208,8 @@ function apiWrapper( event, force )
 						}
 						break;
 					case 'showcontextmenu':
-						Workspace.showContextMenu( msg.menu, window.event, msg );
+						console.log( 'wopper.showcontxtmeny', [ msg, window.event ])
+						Workspace.showContextMenu( msg.menu, ( msg.event || window.event ), msg );
 						break;
 					case 'setworkspacemode':
 						var mm = new Module( 'system' );

@@ -8598,6 +8598,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	showContextMenu: function( menu, e, extra )
 	{
 		// Do not do it double
+		console.log( 'showContextMenu', {
+			menu : menu,
+			e    : e,
+			contextMenuShowing : this.contextMenuShowing,
+		})
 		if( this.contextMenuShowing ) return;
 		
 		let tr = e.target ? e.target : e.srcElement;
