@@ -8787,6 +8787,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Applications uses global X&Y coords
 			if( extra && extra.applicationId )
 			{
+				console.log( 'XY', [ windowMouseX, windowMouseY, extra.mouse ])
 				e.clientY = windowMouseY;
 				e.clientX = windowMouseX;
 			}
