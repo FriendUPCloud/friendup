@@ -8599,8 +8599,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		// Do not do it double
 		console.log( 'showContextMenu', {
-			menu : menu,
-			e    : e,
+			menu  : menu,
+			e     : e,
+			extra : extra,
 			contextMenuShowing : this.contextMenuShowing,
 		})
 		if( this.contextMenuShowing ) return;
@@ -8805,11 +8806,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			
 			let flg = {
-				width: 200,
-				height: 100,
-				top: e.clientY,
-				left: e.clientX,
-				transparent: true
+				width       : 200,
+				height      : 100,
+				top         : e.clientY,
+				left        : e.clientX,
+				transparent : true
 			}
 			let v = false;
 			
@@ -8978,10 +8979,23 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						( function( m ){
 							p.cmd = function( e )
 							{
+								console.log( 'cmd', [ menu, extra ])
 								let app = findApplication( extra.applicationId );
 								if( extra.viewId && app.windows[ extra.viewId ] )
 								{
-									app.windows[ extra.viewId ].sendMessage( { command: m.command, data: m.data } );
+									if ( extra.callback )
+									{
+										app.windows[ extra.viewId ].sendMessage({
+											type     : 'callback',
+											callback : extra.callback,
+											command  : m.command,
+											data     : m.data,
+										})
+									}
+									else
+									{
+										app.windows[ extra.viewId ].sendMessage( { command: m.command, data: m.data } );
+									}
 								}
 								else app.postMessage( { command: m.command, data: m.data }, '*' );
 							}
