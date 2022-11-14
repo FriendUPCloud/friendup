@@ -447,34 +447,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							FFree( authid );
 							authid = NULL;
 						}
-					}
-					
-					char *end;
-					FUQUAD asval = strtoull( assid,  &end, 0 );
-					
-					if( authid != NULL )
-					{
-						SASSession *as = SASManagerGetSession( l->sl_SASManager, asval );
-						if( as != NULL )
-						{
-							if( FRIEND_MUTEX_LOCK( &as->sas_SessionsMut ) == 0 )
-							{
-								SASUList *alist = as->sas_UserSessionList;
-								while( alist != NULL )
-								{
-									//DEBUG("Authid check %s user %s\n", alist->authid, alist->usersession->us_User->u_Name );
-									if( strcmp( alist->authid, authid ) ==  0 )
-									{
-										loggedSession = alist->usersession;
-										sprintf( sessionid, "%s", loggedSession->us_SessionID ); // Overwrite sessionid
-										DEBUG("Found user %s\n", loggedSession->us_User->u_Name );
-										break;
-									}
-									alist = (SASUList *)alist->node.mln_Succ;
-								}
-								FRIEND_MUTEX_UNLOCK( &as->sas_SessionsMut );
-							}
-						}
 						FFree( authid );
 					}
 					FFree( assid );

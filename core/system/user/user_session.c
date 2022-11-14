@@ -141,7 +141,7 @@ void UserSessionDelete( UserSession *us )
 		// Remove session from SAS
 		//
 		
-		SASManagerRemUserSession( lsb->sl_SASManager, us );
+		//SASManagerRemUserSession( lsb->sl_SASManager, us );
 		
 		DEBUG("[UserSessionDelete] User removed from app session\n");
 		

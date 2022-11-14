@@ -21,6 +21,7 @@
 #define __SYSTEM_SAS_SAS_MANAGER_H__
 
 #include <system/sas/sas_server.h>
+#include <util/buffered_string.h>
 
 //
 // app session manager structure
@@ -46,6 +47,17 @@ SASManager *SASManagerNew( void *sb );
 
 void SASManagerDelete( SASManager *asmm );
 
+//
+//
+//
+
+int SASManagerRegisterSession( SASManager *sasm, BufString *resp, FULONG id );
+
+//
+//
+//
+
+void SASManagerUnregisterSession( SASManager *sasm, FULONG id );
 
 
 #endif // __SYSTEM_SAS_SAS_MANAGER_H__

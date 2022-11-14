@@ -18,7 +18,7 @@
  */
 #include "sas_manager.h"
 #include <system/systembase.h>
-#include "sas_session.h"
+#include "sas_server.h"
 #include <core/functions.h>
 
 /**
@@ -59,5 +59,122 @@ void SASManagerDelete( SASManager *asm )
 		pthread_mutex_destroy( &(asm->sasm_Mutex) );
 		
 		FFree( asm );
+	}
+}
+
+/**
+ * Register SAS session
+ *
+ * @param sasm pointer to SASManager
+ * @param resp respone passed as string
+ * @param id id which we want to force to use
+ * @return 0 when no error, otherwise error number
+ */
+int SASManagerRegisterSession( SASManager *sasm, BufString *resp, FULONG id )
+{
+	if( FRIEND_MUTEX_LOCK( &(sasm->sasm_Mutex) ) == 0 )
+	{
+		SystemBase *sb = (SystemBase *)sasm->sasm_SB;
+		char where[ 256 ];
+		int entries = 0;
+		
+		//
+		// We create new session, assign it to the server and return IP of the server and ID of SASSession
+		//
+		
+		// SELECT *
+		// FROM pieces
+		// WHERE price =  ( SELECT MIN(price) FROM pieces ) LIMIT 1
+
+		if( id == 0 )
+		{
+			strcpy( where, "Sessions=(SELECT MIN( Sessions ) FROM FSASServer) LIMIT 1" );
+		}
+		else
+		{
+			snprintf( where, sizeof( where ), "ID = (SELECT ServerID FROM SASSession where ID=%ld )", id );
+		}
+	
+		SASServer *server = NULL;
+		
+		SQLLibrary *lsqllib = sb->LibrarySQLGet( sb );
+		if( lsqllib != NULL )
+		{
+			
+			server = lsqllib->Load( lsqllib, FSASServerDesc, where, &entries );
+			
+			if( server != NULL )
+			{
+				SASSession *nsession = NULL;
+				
+				if( id == 0 )
+				{
+					nsession = SASSessionNew();
+				}
+				else
+				{
+					snprintf( where, sizeof( where ), "ID=%ld", id );
+					nsession = lsqllib->Load( lsqllib, FSASSessionDesc, where, &entries );
+				}
+				
+				if( nsession != NULL )
+				{
+					// assign server to SAS + set creation time timestamp
+					nsession->ss_ServerID = server->sass_ID;
+					nsession->ss_CreationTime = time( NULL );
+					
+					lsqllib->Save( lsqllib, FSASSessionDesc, nsession );
+					
+					DEBUG("Save called\n");
+					
+					if( resp != NULL )
+					{
+						char tmp[ 256 ];
+						int len = snprintf( tmp, sizeof(tmp), "'server':'%s','sasid':%ld", server->sass_IP, nsession->ss_ID );
+						
+						BufStringAddSize( resp, tmp, len );
+					}
+				}
+			}
+		
+			sb->LibrarySQLDrop( sb, lsqllib );
+		}
+		
+		FRIEND_MUTEX_UNLOCK( &(sasm->sasm_Mutex) );
+		
+		// there are not SASServers
+		
+		if( server == NULL )
+		{
+			return 1;
+		}
+		else
+		{
+			SASServerDelete( server );
+		}
+	}
+	
+	return 0;
+}
+
+/**
+ * Unregister SAS session
+ *
+ * @param sasm pointer to SASManager
+ * @param id of SAS which will be removed
+ */
+void SASManagerUnregisterSession( SASManager *sasm, FULONG id )
+{
+	SystemBase *sb = (SystemBase *)sasm->sasm_SB;
+	SQLLibrary *lsqllib = sb->LibrarySQLGet( sb );
+	if( lsqllib != NULL )
+	{
+		char tmpQuery[ 1024 ];
+		
+		lsqllib->SNPrintF( lsqllib, tmpQuery, sizeof(tmpQuery), "DELETE FROM FSASSession WHERE `ID`=\"%ld\"", id );
+		
+		lsqllib->QueryWithoutResults(  lsqllib, tmpQuery );
+		
+		sb->LibrarySQLDrop( sb, lsqllib );
 	}
 }

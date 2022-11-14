@@ -628,7 +628,7 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 	BufString *tablequerybs = BufStringNew();
 	BufString *dataquerybs = BufStringNew();
 	
-	DEBUG("[MYSQLLibrary] Save\n");
+	DEBUG("[MYSQLLibrary] Save: descr %p data %p\n", descr, data );
 	
 	if( descr == NULL || data == NULL )
 	{
@@ -638,6 +638,8 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 		return 0;
 	}
 	
+	//DEBUG("[MYSQLLibrary] Save: data and description provided\n");
+	
 	if( descr[ 0 ] != SQLT_TABNAME )
 	{
 		BufStringDelete( tablequerybs );
@@ -645,6 +647,8 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 		FERROR("SQLT_TABNAME was not provided!\n");
 		return 0;
 	}
+	
+	//DEBUG("[MYSQLLibrary] Save: first position in data is TABLENAME\n");
 
 	FULONG *dptr = (FULONG *)&descr[ SQL_DATA_STRUCT_START ];		// first 2 entries inform about table, rest information provided is about columns
 	unsigned char *strptr = (unsigned char *)data;	// pointer to structure to which will will insert data
@@ -845,6 +849,9 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 				//sb->sl_UtilInterface.Log( FLOG_ERROR,  "\n mysql_stmt_prepare(), INSERT failed");
 				//sb->sl_UtilInterface.Log( FLOG_ERROR,  "\n %s", mysql_stmt_error(stmt));
 				mysql_stmt_close( stmt ); // Free
+				
+				FERROR("[Save] :mysql_stmt_prepare: > %s\n", tablequerybs->bs_Buffer );
+				
 				BufStringDelete( tablequerybs );
 				BufStringDelete( dataquerybs );
 				FFree( finalQuery );
@@ -857,6 +864,9 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 				//sb->sl_UtilInterface.Log( FLOG_ERROR, "param bind failed! ");
 				//sb->sl_UtilInterface.Log( FLOG_ERROR, " %s\n", mysql_stmt_error(stmt) );
 				mysql_stmt_close( stmt ); // Free
+				
+				FERROR("[Save] :mysql_stmt_bind_param: > %s\n", tablequerybs->bs_Buffer );
+				
 				BufStringDelete( tablequerybs );
 				BufStringDelete( dataquerybs );
 				FFree( finalQuery );
@@ -909,8 +919,16 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 			DEBUG("[MYSQLLibrary] New entry created in DB, ID: %lu\n", uid );
 		}
 	}
+	else
+	{
+		FERROR("Cannot create statement\n");
+	}
+	DEBUG("----------------------->>>> %s\n", tablequerybs->bs_Buffer );
+	
 	BufStringDelete( tablequerybs );
 	BufStringDelete( dataquerybs );
+	
+	DEBUG("[MYSQLLibrary] Save:\n" );
 	
 	return retValue;
 }
