@@ -8604,7 +8604,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			extra : extra,
 			contextMenuShowing : this.contextMenuShowing,
 		})
-		if( this.contextMenuShowing ) return;
+		if( this.contextMenuShowing && !extra?.applicationId ) return;
 		
 		let tr = e.target ? e.target : e.srcElement;
 
@@ -8813,13 +8813,25 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				left        : e.clientX,
 				transparent : true
 			}
-			let v = false;
 			
-			if( Workspace.iconContextMenu )
+			if ( extra?.mouse )
+			{
+				flg.top = extra.mouse.clientY
+				flg.left = extra.mouse.clientX
+			}
+			
+			let v = false;
+			if ( Workspace.iconContextMenu && !( extra && null != extra.applicationId ))
 			{
 				v = Workspace.iconContextMenu;
 			}
-			else v = Workspace.iconContextMenu = new Widget( flg );
+			else
+			{
+				if ( null != Workspace.iconContextMenu )
+					Workspace.iconContextMenu.hide()
+				
+				v = Workspace.iconContextMenu = new Widget( flg );
+			} 
 			
 			this.contextMenuShowing = v;
 			
