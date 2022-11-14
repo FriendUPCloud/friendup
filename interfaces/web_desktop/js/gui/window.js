@@ -1204,6 +1204,17 @@ function _ActivateWindow( div, nopoll, e )
     if( div.windowObject && div.windowObject.getFlag( 'invisible' ) == true ) return;
     if( div.parentNode && div.parentNode.classList.contains( 'Closing' ) ) return;
     
+    // Support dashboard
+    let vTitle = div.windowObject.getFlag( 'title' );
+    if( vTitle )
+    {
+	    let dl = document.querySelector( '.DashboardLabel' );
+	    if( dl )
+	    {
+	        dl.innerHTML = vTitle;
+        }
+    }
+    
     // Dialogs here are not activated
     if( 
     	window.Workspace && Workspace.dashboard && div.windowObject && (
