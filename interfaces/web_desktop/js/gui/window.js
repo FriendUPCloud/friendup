@@ -6510,7 +6510,7 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 	let curr = window.currentMovable;
 
 	let v;
-	if( !window.isMobile )
+	if( !window.isMobile || Workspace.dashboard )
 	{
 		v = new View( {
 			title: title,
@@ -6644,7 +6644,7 @@ function Alert( title, string, cancelstring, callback )
 	let themeBottom = GetThemeInfo( 'ViewBottom' ).height;
 	
 	let v;
-	if( !window.isMobile )
+	if( !window.isMobile || Workspace.dashboard )
 	{
 		v = new View( {
 			title: title,
