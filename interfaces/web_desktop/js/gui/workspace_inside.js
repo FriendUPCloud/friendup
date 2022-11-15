@@ -8816,8 +8816,27 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			
 			if ( extra?.mouse )
 			{
-				flg.top = extra.mouse.clientY
-				flg.left = extra.mouse.clientX
+				if ( extra.viewId )
+				{
+					const offset = app.windows[ extra.viewId ].iframe?.getBoundingClientRect()
+					
+					console.log( 'offset', offset )
+					if ( null == offset )
+					{
+						flg.top = extra.mouse.clientY
+						flg.left = extra.mouse.clientX
+					}
+					else
+					{
+						flg.top = extra.mouse.clientY + offset.y
+						flg.left = extra.mouse.clientX + offset.x
+					}
+				}
+				else
+				{
+					flg.top = extra.mouse.clientY
+					flg.left = extra.mouse.clientX
+				}
 			}
 			
 			let v = false;
