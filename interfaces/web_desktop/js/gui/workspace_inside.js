@@ -8818,8 +8818,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				if ( extra.viewId )
 				{
+					const app = findApplication( extra.applicationId )
 					const offset = app.windows[ extra.viewId ].iframe?.getBoundingClientRect()
-					
 					console.log( 'offset', offset )
 					if ( null == offset )
 					{
