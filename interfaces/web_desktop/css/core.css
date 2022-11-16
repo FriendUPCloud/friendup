@@ -2225,6 +2225,11 @@ body:not([mobile]):not([tablet]) #Available_tutorials .Tutorial > div:hover
 	border-radius: 3px;
 }
 
+.Widget:focus-visible
+{
+	outline : unset;
+}
+
 .Widget.Fadable
 {
 	transition: opacity 0.25s;
