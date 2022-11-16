@@ -2223,10 +2223,6 @@ body:not([mobile]):not([tablet]) #Available_tutorials .Tutorial > div:hover
 	box-shadow: 0 2px 3px rgba(0,0,0,0.3);
 	color: white;
 	border-radius: 3px;
-}
-
-.Widget:focus-visible
-{
 	outline : unset;
 }
 
