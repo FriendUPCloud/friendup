@@ -9088,12 +9088,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if ( extra?.viewId )
 			{
 				v.dom.tabIndex = -1
-				v.dom.focus()
+				v.dom.focus({
+					focusVisible : false,
+				})
 				v.dom.addEventListener( 'blur', e => {
 					console.log( 'context blur', e )
 					v.hide()
 					if ( extra.callback )
 					{
+						let app = findApplication( extra.applicationId )
 						app.windows[ extra.viewId ].sendMessage({
 							type     : 'callback',
 							callback : extra.callback,
