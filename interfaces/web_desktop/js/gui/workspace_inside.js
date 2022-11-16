@@ -9091,6 +9091,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				v.dom.focus()
 				v.dom.addEventListener( 'blur', e => {
 					console.log( 'context blur', e )
+					v.hide()
+					if ( extra.callback )
+					{
+						app.windows[ extra.viewId ].sendMessage({
+							type     : 'callback',
+							callback : extra.callback,
+							command  : false,
+							data     : null,
+						})
+					}
 				}, false )
 			}
 			
