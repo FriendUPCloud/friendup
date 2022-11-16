@@ -9085,6 +9085,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				p.innerHTML = menu[z].name;
 				menuout.appendChild( p );
 			}
+			if ( extra?.viewId )
+			{
+				v.dom.tabIndex = -1
+				v.dom.focus()
+				v.dom.addEventListener( 'blur', e => {
+					console.log( 'context blur', e )
+				}, false )
+			}
+			
 			if( menuitemCount )
 			{
 				v.dom.appendChild( menuout );
