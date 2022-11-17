@@ -4680,13 +4680,14 @@ function AddCSSByUrl( csspath, callback )
 			'translate( 0px, '
 			+ num
 			+ 'px)'
-		const prefixes = [ '', 'Webkit' ]
+		const prefixes = [ /*'', */ 'Webkit' ]
 		console.log( 'translate', [ num, trans ])
 		prefixes.some( pre => {
 			const style = pre + 'Transform'
-			console.log( 'style', {
+			console.log( 'style check', {
 				style  : style,
-				std    : ( null != document.body.style[ 'Transform' ]),
+				std    : ( null != document.body.style[ 'transform' ]),
+				STD    : ( null != document.body.style[ 'Transform' ]),
 				webkit : ( null != document.body.style[ 'WebkitTransform' ]),
 			})
 			if ( null == document.body.style[ style ])
