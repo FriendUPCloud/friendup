@@ -4622,14 +4622,21 @@ function AddCSSByUrl( csspath, callback )
 	console.log( 'workspace visualViewport check', window.visualViewport )
 	if ( null != window.visualViewport )
 	{
+		const vv = window.visualViewport
 		window.visualViewport.addEventListener( 'resize', e => 
 		{
-			console.log( 'w.VV resize', e )
+			console.log( 'w.VV resize', {
+				e  : e,
+				vv : json.parse( json.stringify( vv )),
+			} )
 		}, false )
 		
 		window.visualViewport.addEventListener( 'scroll', e => 
 		{
-			console.log( 'w.VV scroll', e )
+			console.log( 'w.VV scroll', {
+				e  : e,
+				vv : json.parse( json.stringify( vv )),
+			} )
 		}, false )
 	}
 	else
