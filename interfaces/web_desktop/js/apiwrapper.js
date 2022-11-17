@@ -4621,7 +4621,7 @@ function AddCSSByUrl( csspath, callback )
 {
 	console.log( 'workspace visualViewport check', {
 		VV      : window.visualViewport,
-		cheight : window.body.clientHeight,
+		cheight : document?.body?.clientHeight,
 		rect    : document?.body?.getBoundingClientRect(),
 	})
 	if ( null != window.visualViewport )
