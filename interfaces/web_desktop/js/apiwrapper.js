@@ -4621,7 +4621,7 @@ function AddCSSByUrl( csspath, callback )
 {
 	console.log( 'workspace visualViewport check', {
 		VV   : window.visualViewport,
-		rect : document.body.getBoundingClientRect()
+		rect : document?.body?.getBoundingClientRect(),
 	})
 	if ( null != window.visualViewport )
 	{
@@ -4631,7 +4631,7 @@ function AddCSSByUrl( csspath, callback )
 			console.log( 'w.VV resize', {
 				e    : e,
 				vvh  : vv.height,
-				//rect : document.body.getBoundingClientRect()
+				rect : document?.body?.getBoundingClientRect(),
 			} )
 		}, false )
 		
@@ -4640,7 +4640,7 @@ function AddCSSByUrl( csspath, callback )
 			console.log( 'w.VV scroll', {
 				e    : e,
 				vvh  : vv.height,
-				//rect : document.body.getBoundingClientRect()
+				rect : document?.body?.getBoundingClientRect(),
 			} )
 		}, false )
 	}
