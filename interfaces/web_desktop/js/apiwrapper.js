@@ -4626,7 +4626,7 @@ function AddCSSByUrl( csspath, callback )
 	if ( null != window.visualViewport )
 	{
 		const vv = window.visualViewport
-		
+		let timeout = null
 		let initialHeight = null
 		if ( !vv.height )
 			initialHeight = vv.height
@@ -4638,6 +4638,7 @@ function AddCSSByUrl( csspath, callback )
 				ih   : initialHeight,
 				vvh  : vv.height,
 				rect : document?.body?.getBoundingClientRect(),
+				tim  : timeout,
 			})
 			if ( null == initialHeight )
 			{
@@ -4645,10 +4646,17 @@ function AddCSSByUrl( csspath, callback )
 				return
 			}
 			
-			if ( vv.height != initialHeight )
-				translate( initialHeight - vv.height )
-			else
-				translate( 0 )
+			if ( null != timeout )
+				return
+			
+			timeout = window.setTimeout(() =>
+			{
+				timeout = null
+				if ( vv.height != initialHeight )
+					translate( vv.height - initialHeight )
+				else
+					translate( 0 )
+			}, 200 )
 			
 		}, false )
 		
