@@ -4678,8 +4678,8 @@ function AddCSSByUrl( csspath, callback )
 			const style = pre + 'Transform'
 			console.log( 'style', {
 				style  : style,
-				std    : document.body.style[ 'Transform' ]
-				webkit : document.body.style[ 'WebkitTransform' ]
+				std    : document.body.style[ 'Transform' ],
+				webkit : document.body.style[ 'WebkitTransform' ],
 			})
 			if ( null == document.body.style[ style ])
 				return false
