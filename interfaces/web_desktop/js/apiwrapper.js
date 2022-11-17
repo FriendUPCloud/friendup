@@ -4670,7 +4670,7 @@ function AddCSSByUrl( csspath, callback )
 	{
 		const trans = 
 			'translate('
-			+ num,
+			+ num
 			+ 'px)'
 		const prefixes = [ '', 'Webkit' ]
 		console.log( 'translate', [ num, trans ])
