@@ -4619,23 +4619,28 @@ function AddCSSByUrl( csspath, callback )
 
 (() =>
 {
-	console.log( 'workspace visualViewport check', window.visualViewport )
+	console.log( 'workspace visualViewport check', {
+		VV   : window.visualViewport,
+		rect : document.body.getBoundingClientRect()
+	})
 	if ( null != window.visualViewport )
 	{
 		const vv = window.visualViewport
 		window.visualViewport.addEventListener( 'resize', e => 
 		{
 			console.log( 'w.VV resize', {
-				e  : e,
-				vv : vv,
+				e    : e,
+				vvh  : vv.height,
+				rect : document.body.getBoundingClientRect()
 			} )
 		}, false )
 		
 		window.visualViewport.addEventListener( 'scroll', e => 
 		{
 			console.log( 'w.VV scroll', {
-				e  : e,
-				vv : vv,
+				e    : e,
+				vvh  : vv.height,
+				rect : document.body.getBoundingClientRect()
 			} )
 		}, false )
 	}
