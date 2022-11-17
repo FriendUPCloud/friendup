@@ -4616,3 +4616,25 @@ function AddCSSByUrl( csspath, callback )
 	document.body.appendChild( s );
 	window.cssStyles[csspath] = s;
 }
+
+(() =>
+{
+	console.log( 'workspace visualViewport check', window.visualViewport )
+	if ( null != window.visualViewport )
+	{
+		window.visualViewport.addEventListener( 'resize', e => 
+		{
+			console.log( 'w.VV resize', e )
+		}, false )
+		
+		window.visualViewport.addEventListener( 'scroll', e => 
+		{
+			console.log( 'w.VV scroll', e )
+		}, false )
+	}
+	else
+	{
+		return false
+	}
+	
+})();
