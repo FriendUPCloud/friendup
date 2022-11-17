@@ -4627,7 +4627,7 @@ function AddCSSByUrl( csspath, callback )
 		{
 			console.log( 'w.VV resize', {
 				e  : e,
-				vv : json.parse( json.stringify( vv )),
+				vv : JSON.parse( JSON.stringify( vv )),
 			} )
 		}, false )
 		
@@ -4635,7 +4635,7 @@ function AddCSSByUrl( csspath, callback )
 		{
 			console.log( 'w.VV scroll', {
 				e  : e,
-				vv : json.parse( json.stringify( vv )),
+				vv : JSON.parse( JSON.stringify( vv )),
 			} )
 		}, false )
 	}
