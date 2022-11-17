@@ -4626,13 +4626,30 @@ function AddCSSByUrl( csspath, callback )
 	if ( null != window.visualViewport )
 	{
 		const vv = window.visualViewport
+		
+		let initialHeight = null
+		if ( !vv.height )
+			initialHeight = vv.height
+		
 		window.visualViewport.addEventListener( 'resize', e => 
 		{
 			console.log( 'w.VV resize', {
 				e    : e,
+				ih   : initialHeight,
 				vvh  : vv.height,
 				rect : document?.body?.getBoundingClientRect(),
-			} )
+			})
+			if ( null == initialHeight )
+			{
+				initialHeight = vv.height
+				return
+			}
+			
+			if ( vv.height != initialHeight )
+				translate( initialHeight - vv.height )
+			else
+				translate( 0 )
+			
 		}, false )
 		
 		window.visualViewport.addEventListener( 'scroll', e => 
@@ -4647,6 +4664,29 @@ function AddCSSByUrl( csspath, callback )
 	else
 	{
 		return false
+	}
+	
+	function translate( num )
+	{
+		const trans = 
+			'translate('
+			+ num,
+			+ 'px)'
+		const prefixes = [ '', 'Webkit' ]
+		console.log( 'translate', [ num, trans ])
+		prefixes.some( pre => {
+			const style = pre + 'Transform'
+			console.log( 'style', {
+				style  : style,
+				std    : document.body.style[ 'Transform' ]
+				webkit : document.body.style[ 'WebkitTransform' ]
+			})
+			if ( null == document.body.style[ style ])
+				return false
+			
+			document.body.style[ style ] = trans
+			return true
+		})
 	}
 	
 })();
