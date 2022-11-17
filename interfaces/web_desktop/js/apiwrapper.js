@@ -4669,7 +4669,7 @@ function AddCSSByUrl( csspath, callback )
 	function translate( num )
 	{
 		const trans = 
-			'translate( 0px, -'
+			'translate( 0px, '
 			+ num
 			+ 'px)'
 		const prefixes = [ '', 'Webkit' ]
@@ -4678,12 +4678,13 @@ function AddCSSByUrl( csspath, callback )
 			const style = pre + 'Transform'
 			console.log( 'style', {
 				style  : style,
-				std    : document.body.style[ 'Transform' ],
-				webkit : document.body.style[ 'WebkitTransform' ],
+				std    : ( null != document.body.style[ 'Transform' ]),
+				webkit : ( null != document.body.style[ 'WebkitTransform' ]),
 			})
 			if ( null == document.body.style[ style ])
 				return false
 			
+			console.log( 'setting style', style )
 			document.body.style[ style ] = trans
 			return true
 		})
