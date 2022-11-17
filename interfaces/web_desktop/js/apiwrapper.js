@@ -4620,8 +4620,9 @@ function AddCSSByUrl( csspath, callback )
 (() =>
 {
 	console.log( 'workspace visualViewport check', {
-		VV   : window.visualViewport,
-		rect : document?.body?.getBoundingClientRect(),
+		VV      : window.visualViewport,
+		cheight : window.body.clientHeight,
+		rect    : document?.body?.getBoundingClientRect(),
 	})
 	if ( null != window.visualViewport )
 	{
@@ -4680,7 +4681,16 @@ function AddCSSByUrl( csspath, callback )
 			'translate( 0px, '
 			+ num
 			+ 'px)'
-		const prefixes = [ /*'', */ 'Webkit' ]
+		console.log( 'translate', {
+			setting : trans,
+			std     : ( null != document.body.style[ 'transform' ]),
+			STD     : ( null != document.body.style[ 'Transform' ]),
+			webkit  : ( null != document.body.style[ 'WebkitTransform' ]),
+		})
+		document.body.style[ 'WebkitTransform' ] = trans
+		
+		/*
+		const prefixes = [ 'Webkit' ]
 		console.log( 'translate', [ num, trans ])
 		prefixes.some( pre => {
 			const style = pre + 'Transform'
@@ -4697,6 +4707,7 @@ function AddCSSByUrl( csspath, callback )
 			document.body.style[ style ] = trans
 			return true
 		})
+		*/
 	}
 	
 })();
