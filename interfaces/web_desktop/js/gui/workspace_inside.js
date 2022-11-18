@@ -11986,14 +11986,14 @@ function loadApplicationBasics( callback )
 		const trans = 
 			'translate( 0px, '
 			+ num
-			+ 'px)'
+			+ 'px), scale(1.6)'
 		console.log( 'translate', {
 			setting : trans,
 			std     : ( null != document.body.style[ 'transform' ]),
 			STD     : ( null != document.body.style[ 'Transform' ]),
 			webkit  : ( null != document.body.style[ 'WebkitTransform' ]),
 		})
-		document.body.classList.toggle( 'Inside', false )
+		//document.body.classList.toggle( 'Inside', false )
 		document.body.style[ 'WebkitTransform' ] = trans
 		
 		/*
