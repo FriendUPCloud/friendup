@@ -11932,8 +11932,9 @@ function loadApplicationBasics( callback )
 		if ( null != window.visualViewport )
 		{
 			const vv = window.visualViewport
+			console.log( 'vv, h, s', [ vv, vv.height, screen?.height ])
 			let timeout = null
-			let initialHeight = document.body.clientHeight
+			let initialHeight = ( vv.height || screen?.height )
 			
 			window.visualViewport.addEventListener( 'resize', e => 
 			{
