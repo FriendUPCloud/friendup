@@ -11981,7 +11981,7 @@ function loadApplicationBasics( callback )
 		const trans = 
 			'translate( 0px, '
 			+ num
-			+ 'px), scale(1.6)'
+			+ 'px) scale(1.6)'
 		console.log( 'translate', {
 			setting : trans,
 			std     : ( null != document.body.style[ 'transform' ]),
