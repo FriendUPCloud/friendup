@@ -11993,6 +11993,7 @@ function loadApplicationBasics( callback )
 			STD     : ( null != document.body.style[ 'Transform' ]),
 			webkit  : ( null != document.body.style[ 'WebkitTransform' ]),
 		})
+		document.body.classList.toggle( 'Inside', false )
 		document.body.style[ 'WebkitTransform' ] = trans
 		
 		/*
