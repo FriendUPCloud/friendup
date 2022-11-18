@@ -11941,16 +11941,12 @@ function loadApplicationBasics( callback )
 			{
 				console.log( 'w.VV resize', {
 					e    : e,
-					ih   : initialHeight,
+					//ih   : initialHeight,
 					vvh  : vv.height,
-					rect : document?.body?.getBoundingClientRect(),
+					ch   : document.body.clientHeight,
+					//rect : document?.body?.getBoundingClientRect(),
 					tim  : timeout,
 				})
-				if ( null == initialHeight )
-				{
-					initialHeight = vv.height
-					return
-				}
 				
 				if ( null != timeout )
 					return
@@ -11962,7 +11958,7 @@ function loadApplicationBasics( callback )
 						translate( vv.height - document.body.clientHeight )
 					else
 						translate( 0 )
-				}, 300 )
+				}, 500 )
 				
 			}, false )
 			
