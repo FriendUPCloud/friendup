@@ -11958,11 +11958,11 @@ function loadApplicationBasics( callback )
 				timeout = window.setTimeout(() =>
 				{
 					timeout = null
-					if ( vv.height != initialHeight )
-						translate( vv.height - initialHeight )
+					if ( vv.height != document.body.clientHeight )
+						translate( vv.height - document.body.clientHeight )
 					else
 						translate( 0 )
-				}, 200 )
+				}, 300 )
 				
 			}, false )
 			
