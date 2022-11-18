@@ -4694,6 +4694,7 @@ function AddCSSByUrl( csspath, callback )
 		})
 		document.body.style[ 'WebkitTransform' ] = trans
 		console.log( 'after', document.body.style[ 'transform' ])
+		document.body.style[ 'transform' ] = null
 		
 		/*
 		const prefixes = [ 'Webkit' ]
