@@ -11933,15 +11933,13 @@ function loadApplicationBasics( callback )
 		{
 			const vv = window.visualViewport
 			let timeout = null
-			let initialHeight = null
-			if ( !vv.height )
-				initialHeight = vv.height
+			let initialHeight = document.body.clientHeight
 			
 			window.visualViewport.addEventListener( 'resize', e => 
 			{
 				console.log( 'w.VV resize', {
 					e    : e,
-					//ih   : initialHeight,
+					ih   : initialHeight,
 					vvh  : vv.height,
 					ch   : document.body.clientHeight,
 					//rect : document?.body?.getBoundingClientRect(),
@@ -11954,11 +11952,11 @@ function loadApplicationBasics( callback )
 				timeout = window.setTimeout(() =>
 				{
 					timeout = null
-					if ( vv.height != document.body.clientHeight )
-						translate( vv.height - document.body.clientHeight )
+					if ( vv.height != initialHeight )
+						translate( vv.height - initialHeight )
 					else
 						translate( 0 )
-				}, 500 )
+				}, 1000 )
 				
 			}, false )
 			
