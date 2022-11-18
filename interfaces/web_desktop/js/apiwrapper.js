@@ -4623,56 +4623,61 @@ function AddCSSByUrl( csspath, callback )
 		VV      : window.visualViewport,
 		cheight : document?.body?.clientHeight,
 		rect    : document?.body?.getBoundingClientRect(),
+		saf     : navigator?.userAgent?.indexOf( 'Safari' )
 	})
-	if ( null != window.visualViewport )
+	
+	if( navigator?.userAgent?.indexOf( 'Safari' ) > -1 )
 	{
-		const vv = window.visualViewport
-		let timeout = null
-		let initialHeight = null
-		if ( !vv.height )
-			initialHeight = vv.height
-		
-		window.visualViewport.addEventListener( 'resize', e => 
+		if ( null != window.visualViewport )
 		{
-			console.log( 'w.VV resize', {
-				e    : e,
-				ih   : initialHeight,
-				vvh  : vv.height,
-				rect : document?.body?.getBoundingClientRect(),
-				tim  : timeout,
-			})
-			if ( null == initialHeight )
-			{
+			const vv = window.visualViewport
+			let timeout = null
+			let initialHeight = null
+			if ( !vv.height )
 				initialHeight = vv.height
-				return
-			}
 			
-			if ( null != timeout )
-				return
-			
-			timeout = window.setTimeout(() =>
+			window.visualViewport.addEventListener( 'resize', e => 
 			{
-				timeout = null
-				if ( vv.height != initialHeight )
-					translate( vv.height - initialHeight )
-				else
-					translate( 0 )
-			}, 200 )
+				console.log( 'w.VV resize', {
+					e    : e,
+					ih   : initialHeight,
+					vvh  : vv.height,
+					rect : document?.body?.getBoundingClientRect(),
+					tim  : timeout,
+				})
+				if ( null == initialHeight )
+				{
+					initialHeight = vv.height
+					return
+				}
+				
+				if ( null != timeout )
+					return
+				
+				timeout = window.setTimeout(() =>
+				{
+					timeout = null
+					if ( vv.height != initialHeight )
+						translate( vv.height - initialHeight )
+					else
+						translate( 0 )
+				}, 200 )
+				
+			}, false )
 			
-		}, false )
-		
-		window.visualViewport.addEventListener( 'scroll', e => 
+			window.visualViewport.addEventListener( 'scroll', e => 
+			{
+				console.log( 'w.VV scroll', {
+					e    : e,
+					vvh  : vv.height,
+					rect : document?.body?.getBoundingClientRect(),
+				} )
+			}, false )
+		}
+		else
 		{
-			console.log( 'w.VV scroll', {
-				e    : e,
-				vvh  : vv.height,
-				rect : document?.body?.getBoundingClientRect(),
-			} )
-		}, false )
-	}
-	else
-	{
-		return false
+			return false
+		}
 	}
 	
 	function translate( num )
@@ -4688,6 +4693,7 @@ function AddCSSByUrl( csspath, callback )
 			webkit  : ( null != document.body.style[ 'WebkitTransform' ]),
 		})
 		document.body.style[ 'WebkitTransform' ] = trans
+		console.log( 'after', document.body.style[ 'transform' ])
 		
 		/*
 		const prefixes = [ 'Webkit' ]
