@@ -4623,10 +4623,10 @@ function AddCSSByUrl( csspath, callback )
 		VV      : window.visualViewport,
 		cheight : document?.body?.clientHeight,
 		rect    : document?.body?.getBoundingClientRect(),
-		saf     : navigator?.userAgent?.indexOf( 'Safari' )
+		ios     : isIos()
 	})
 	
-	if( navigator?.userAgent?.indexOf( 'Safari' ) > -1 )
+	if( isIos() )
 	{
 		if ( null != window.visualViewport )
 		{
@@ -4714,6 +4714,19 @@ function AddCSSByUrl( csspath, callback )
 			return true
 		})
 		*/
+	}
+	
+	function isIos() {
+		return [
+			'iPad Simulator',
+			'iPhone Simulator',
+			'iPod Simulator',
+			'iPad',
+			'iPhone',
+			'iPod'
+		].includes(navigator.platform)
+		// iPad on iOS 13 detection
+		|| (navigator.userAgent.includes("Mac") && "ontouchend" in document)
 	}
 	
 })();
