@@ -11937,7 +11937,6 @@ function loadApplicationBasics( callback )
 				console.log( 'vv, vvh, sh', [ vv, vv.height, screen?.height ])
 				let timeout = null
 				let initialHeight = ( vv.height || screen?.height )
-				let maxOffset = 0
 				
 				window.visualViewport.addEventListener( 'resize', e => 
 				{
@@ -11957,24 +11956,16 @@ function loadApplicationBasics( callback )
 					{
 						timeout = null
 						const offset = initialHeight - vv.height
-						if ( offset > maxOffset ) {
-							console.log( 'updateing maxoffset', [ offset, maxOffset ])
-							maxOffset = offset
-						}
-						
-						const diff = initialHeight - vv.height
 						console.log( 'pre translate', {
-							diff   : diff,
 							offset : offset,
-							max    : maxOffset,
 							vvh     : vv.height,
 						})
-						if ( 20 > diff )
+						if ( 20 > offset )
 							translate( 0 )
 						else
-							translate( maxOffset )
+							translate( offset )
 						
-					}, 600 )
+					}, 1 )
 					
 				}, false )
 				
