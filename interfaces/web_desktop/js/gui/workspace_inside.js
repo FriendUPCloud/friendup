@@ -11935,17 +11935,24 @@ function loadApplicationBasics( callback )
 			console.log( 'vv, h, s', [ vv, vv.height, screen?.height ])
 			let timeout = null
 			let initialHeight = ( vv.height || screen?.height )
+			let maxOffset = 0
 			
 			window.visualViewport.addEventListener( 'resize', e => 
 			{
+				const offset = vv.height - initialHeight
 				console.log( 'w.VV resize', {
 					e    : e,
 					ih   : initialHeight,
 					vvh  : vv.height,
 					ch   : document.body.clientHeight,
+					maxO : maxOffset,
+					off  : offset,
 					//rect : document?.body?.getBoundingClientRect(),
 					tim  : timeout,
 				})
+				
+				if ( offset > maxOffset )
+					maxOffset = offset
 				
 				if ( null != timeout )
 					return
@@ -11953,10 +11960,17 @@ function loadApplicationBasics( callback )
 				timeout = window.setTimeout(() =>
 				{
 					timeout = null
-					if ( vv.height != initialHeight )
-						translate( vv.height - initialHeight )
-					else
+					const diff = vv.height - initialHeight
+					console.log( 'pre translate', {
+						diff : diff,
+						max  : maxOffset,
+						vv   : vv,
+					})
+					if ( 20 > diff )
 						translate( 0 )
+					else
+						translate( maxOffset )
+					
 				}, 1000 )
 				
 			}, false )
