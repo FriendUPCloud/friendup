@@ -11929,65 +11929,68 @@ function loadApplicationBasics( callback )
 	
 	if( isIos() )
 	{
-		if ( null != window.visualViewport )
-		{
-			const vv = window.visualViewport
-			console.log( 'vv, h, s', [ vv, vv.height, screen?.height ])
-			let timeout = null
-			let initialHeight = ( vv.height || screen?.height )
-			let maxOffset = 0
+		window.setTimeout(() => {
 			
-			window.visualViewport.addEventListener( 'resize', e => 
+			if ( null != window.visualViewport )
 			{
-				const offset = initialHeight - vv.height
-				console.log( 'w.VV resize', {
-					e    : e,
-					ih   : initialHeight,
-					vvh  : vv.height,
-					ch   : document.body.clientHeight,
-					maxO : maxOffset,
-					off  : offset,
-					//rect : document?.body?.getBoundingClientRect(),
-					tim  : timeout,
-				})
+				const vv = window.visualViewport
+				console.log( 'vv, vvh, sh', [ vv, vv.height, screen?.height ])
+				let timeout = null
+				let initialHeight = ( vv.height || screen?.height )
+				let maxOffset = 0
 				
-				if ( offset > maxOffset )
-					maxOffset = offset
-				
-				if ( null != timeout )
-					return
-				
-				timeout = window.setTimeout(() =>
+				window.visualViewport.addEventListener( 'resize', e => 
 				{
-					timeout = null
-					const diff = initialHeight - vv.height
-					console.log( 'pre translate', {
-						diff : diff,
-						max  : maxOffset,
-						vv   : vv,
+					const offset = initialHeight - vv.height
+					console.log( 'w.VV resize', {
+						e    : e,
+						ih   : initialHeight,
+						vvh  : vv.height,
+						ch   : document.body.clientHeight,
+						maxO : maxOffset,
+						off  : offset,
+						//rect : document?.body?.getBoundingClientRect(),
+						tim  : timeout,
 					})
-					if ( 20 > diff )
-						translate( 0 )
-					else
-						translate( maxOffset )
 					
-				}, 1000 )
+					if ( offset > maxOffset )
+						maxOffset = offset
+					
+					if ( null != timeout )
+						return
+					
+					timeout = window.setTimeout(() =>
+					{
+						timeout = null
+						const diff = initialHeight - vv.height
+						console.log( 'pre translate', {
+							diff : diff,
+							max  : maxOffset,
+							vv   : vv,
+						})
+						if ( 20 > diff )
+							translate( 0 )
+						else
+							translate( maxOffset )
+						
+					}, 300 )
+					
+				}, false )
 				
-			}, false )
-			
-			window.visualViewport.addEventListener( 'scroll', e => 
+				window.visualViewport.addEventListener( 'scroll', e => 
+				{
+					console.log( 'w.VV scroll', {
+						e    : e,
+						vvh  : vv.height,
+						rect : document?.body?.getBoundingClientRect(),
+					} )
+				}, false )
+			}
+			else
 			{
-				console.log( 'w.VV scroll', {
-					e    : e,
-					vvh  : vv.height,
-					rect : document?.body?.getBoundingClientRect(),
-				} )
-			}, false )
-		}
-		else
-		{
-			return false
-		}
+				return false
+			}
+		}, 1000 )
 	}
 	
 	function translate( num )
