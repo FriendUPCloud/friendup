@@ -11939,7 +11939,7 @@ function loadApplicationBasics( callback )
 			
 			window.visualViewport.addEventListener( 'resize', e => 
 			{
-				const offset = vv.height - initialHeight
+				const offset = initialHeight - vv.height
 				console.log( 'w.VV resize', {
 					e    : e,
 					ih   : initialHeight,
@@ -11960,7 +11960,7 @@ function loadApplicationBasics( callback )
 				timeout = window.setTimeout(() =>
 				{
 					timeout = null
-					const diff = vv.height - initialHeight
+					const diff = initialHeight - vv.height
 					console.log( 'pre translate', {
 						diff : diff,
 						max  : maxOffset,
@@ -11993,7 +11993,7 @@ function loadApplicationBasics( callback )
 	function translate( num )
 	{
 		const trans = 
-			'translate( 0px, '
+			'translate( 0px, -'
 			+ num
 			+ 'px) scale(1.6)'
 		console.log( 'translate', {
