@@ -12023,15 +12023,15 @@ function loadApplicationBasics( callback )
 	
 	function isIos() {
 		return [
-			'iPad Simulator',
+			//'iPad Simulator',
 			'iPhone Simulator',
 			'iPod Simulator',
-			'iPad',
+			//'iPad',
 			'iPhone',
 			'iPod'
 		].includes(navigator.platform)
 		// iPad on iOS 13 detection
-		|| (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+		//|| (navigator.userAgent.includes("Mac") && "ontouchend" in document)
 	}
 	
 })();
