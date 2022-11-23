@@ -11987,7 +11987,7 @@ function loadApplicationBasics( callback )
 	
 	function translate( num )
 	{
-		const trans = [
+		let trans = [
 			'translate( 0px, -',
 			num,
 			'px)',
@@ -11995,7 +11995,8 @@ function loadApplicationBasics( callback )
 		
 		if ( isIos())
 			trans.push( ' scale(1.6)' )
-			
+		
+		trans = trans.join( '')
 		console.log( 'translate', {
 			setting : trans,
 			std     : ( null != document.body.style[ 'transform' ]),
