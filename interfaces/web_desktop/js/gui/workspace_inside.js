@@ -11927,7 +11927,7 @@ function loadApplicationBasics( callback )
 		ios     : isIos()
 	})
 	
-	if( isIos() )
+	if( isIos() || isIpad() )
 	{
 		window.setTimeout(() => {
 			
@@ -11987,10 +11987,15 @@ function loadApplicationBasics( callback )
 	
 	function translate( num )
 	{
-		const trans = 
-			'translate( 0px, -'
-			+ num
-			+ 'px) scale(1.6)'
+		const trans = [
+			'translate( 0px, -',
+			num,
+			'px)',
+		]
+		
+		if ( isIos())
+			trans.push( ' scale(1.6)' )
+			
 		console.log( 'translate', {
 			setting : trans,
 			std     : ( null != document.body.style[ 'transform' ]),
@@ -12032,6 +12037,19 @@ function loadApplicationBasics( callback )
 		].includes(navigator.platform)
 		// iPad on iOS 13 detection
 		//|| (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+	}
+	
+	function isIpad() {
+		return [
+			'iPad Simulator',
+			//'iPhone Simulator',
+			//'iPod Simulator',
+			'iPad',
+			//'iPhone',
+			//'iPod'
+		].includes(navigator.platform)
+		// iPad on iOS 13 detection
+		|| (navigator.userAgent.includes("Mac") && "ontouchend" in document)
 	}
 	
 })();
