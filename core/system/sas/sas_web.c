@@ -97,15 +97,25 @@ Http* SASWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{ TAG_DONE, TAG_DONE}
 		};
+		FULONG id = 0;
 		
 		DEBUG("[SASWebRequest] Register\n");
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
+		HashmapElement *el;
+		el = HashmapGet( request->http_ParsedPostContent, "id" );
+		if( el == NULL ) el = HashmapGet( request->http_Query, "to" );
+		if( el != NULL )
+		{
+			char *end;
+			id = strtoll( el->hme_Data,  &end, 0 );
+		}
+		
 		BufString *bsresp = BufStringNew();
 		BufStringAddSize( bsresp, "{", 1 );
 		
-		SASManagerRegisterSession( l->sl_SASManager, bsresp );
+		SASManagerRegisterSession( l->sl_SASManager, bsresp, id );
 		
 		BufStringAddSize( bsresp, "}", 1 );
 
