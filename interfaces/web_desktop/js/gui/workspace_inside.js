@@ -11940,30 +11940,14 @@ function loadApplicationBasics( callback )
 					screen : screen,
 					orient : screen?.orientation,
 					orityp : screen?.orientation?.type,
+					wori   : window.orientation,
 				})
 				
 				let timeout = null
-				let ph = 0
-				let lh = 0
-				mode = ''
-				if ( vv.height > vv.width )
-				{
-					mode = 'portrait'
-					ph = vv.height
-					lh = vv.width
-				}
-				else
-				{
-					mode = 'landscape'
-					lh = vv.height
-					ph = vv.width
-				}
+				let maxHeight = 0
+				updateMaxHeight()
 				
-				console.log( 'init summary', {
-					ph   : ph,
-					lh   : lh,
-					mode : mode,
-				})
+				console.log( 'orient summary', maxHeight )
 				
 				if ( null != screen?.orientation )
 				{
@@ -11984,9 +11968,7 @@ function loadApplicationBasics( callback )
 				{
 					console.log( 'w.VV resize', {
 						e    : e,
-						mode : mode,
-						ph   : ph,
-						lh   : lh,
+						maxH : maxHeight,
 						tim  : timeout,
 					})
 					
@@ -11995,15 +11977,12 @@ function loadApplicationBasics( callback )
 					
 					timeout = window.setTimeout(() =>
 					{
-						checkOrientation()
+						setOrientation()
 						timeout = null
-						let offset = 0
-						if ( 'portrait' == mode )
-							offset = ph - vv.height
-						if ( 'landscape' == mode )
-							offset = lh - vv.height
+						const offset = maxHeight - vv.height
 						
 						console.log( 'translate this', {
+							maxH   : maxHeight,
 							offset : offset,
 							vvh    : vv.height,
 						})
@@ -12025,9 +12004,9 @@ function loadApplicationBasics( callback )
 					} )
 				}, false )
 				
-				function checkOrientation()
+				function updateMaxHeight()
 				{
-					console.log( 'checkOrientation', {
+					console.log( 'updateMaxHeight', {
 						orient : screen?.orientation,
 						orityp : screen?.orientation?.type,
 						ih     : window.innerHeight,
@@ -12038,8 +12017,43 @@ function loadApplicationBasics( callback )
 						vvw    : vv.width,
 						ph     : ph,
 						lh     : lh,
-						mode   : mode,
 					})
+					
+					const iH = window.innerHeight
+					const iW = window.innerWidth
+					const mode = getOrientation()
+					console.log( 'mode', mode )
+					if ( 'portait' == mode )
+					{
+						maxHeight = iH
+					}
+					else
+					{
+						maxHeight = iW
+					}
+					
+					function getOrientation()
+					{
+						if ( null != window.orientation )
+						{
+							const wo = window.orientation
+							console.log( 'wo', wo )
+							if ( 0 == wo || 180 == wo )
+								return 'portrait'
+							else
+								return 'landscape'
+						}
+						
+						if ( null != window.screen?.orientation )
+						{
+							const so = screen.orientation.type
+							console.log( '>>>TODO<<< so', so )
+							return 'portrait'
+						}
+						
+						console.log( 'could not determine an orientation :((((' )
+						return 'portrait'
+					}
 				}
 			}
 			else
