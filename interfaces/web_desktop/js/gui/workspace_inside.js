@@ -11922,30 +11922,61 @@ function loadApplicationBasics( callback )
 {
 	console.log( 'workspace visualViewport check', {
 		VV      : window.visualViewport,
-		cheight : document?.body?.clientHeight,
-		rect    : document?.body?.getBoundingClientRect(),
-		ios     : isIos()
+		ios     : isIos(),
+		ipad    : isIpad(),
 	})
 	
 	if( isIos() || isIpad() )
 	{
-		window.setTimeout(() => {
-			
+		window.setTimeout(() =>
+		{
 			if ( null != window.visualViewport )
 			{
 				const vv = window.visualViewport
-				console.log( 'vv, vvh, sh', [ vv, vv.height, screen?.height ])
+				console.log( 'vv', {
+					vv     : vv,
+					vvh    : vv.height,
+					vvw    : vv.width,
+					screen : screen,
+					orient : screen?.orientation,
+					orityp : screen?.orientation?.type,
+				})
+				
 				let timeout = null
-				let initialHeight = ( vv.height || screen?.height )
+				let ph = 0
+				let lh = 0
+				mode = ''
+				if ( vv.height > vv.width )
+				{
+					mode = 'portrait'
+					ph = vv.height
+					lh = vv.width
+				}
+				else
+				{
+					mode = 'landscape'
+					lh = vv.height
+					ph = vv.width
+				}
+				
+				console.log( 'init summary', {
+					ph   : ph,
+					lh   : lh,
+					mode : mode,
+				})
+				
+				if ( null != screen?.orientation )
+					screen.orientation.addEventListener( 'change', e => {
+						console.log( 'screen orientation change', e )
+					}, false )
 				
 				window.visualViewport.addEventListener( 'resize', e => 
 				{
 					console.log( 'w.VV resize', {
 						e    : e,
-						ih   : initialHeight,
-						vvh  : vv.height,
-						ch   : document.body.clientHeight,
-						//rect : document?.body?.getBoundingClientRect(),
+						mode : mode,
+						ph   : ph,
+						lh   : lh,
 						tim  : timeout,
 					})
 					
@@ -11954,11 +11985,17 @@ function loadApplicationBasics( callback )
 					
 					timeout = window.setTimeout(() =>
 					{
+						checkOrientation()
 						timeout = null
-						const offset = initialHeight - vv.height
-						console.log( 'pre translate', {
+						let offset = 0
+						if ( 'portrait' == mode )
+							offset = ph - vv.height
+						if ( 'landscape' == mode )
+							offset = lh - vv.height
+						
+						console.log( 'translate this', {
 							offset : offset,
-							vvh     : vv.height,
+							vvh    : vv.height,
 						})
 						if ( 20 > offset )
 							translate( 0 )
@@ -11977,6 +12014,19 @@ function loadApplicationBasics( callback )
 						rect : document?.body?.getBoundingClientRect(),
 					} )
 				}, false )
+				
+				function checkOrientation()
+				{
+					console.log( 'checkOrientation', {
+						orient : screen?.orientation,
+						orityp : screen?.orientation?.type
+						vvh    : vv.height,
+						vvw    : vv.width,
+						ph     : ph,
+						lh     : lh,
+						mode   : mode,
+					})
+				}
 			}
 			else
 			{
