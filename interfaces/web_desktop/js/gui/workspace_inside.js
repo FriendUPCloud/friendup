@@ -12019,7 +12019,7 @@ function loadApplicationBasics( callback )
 				{
 					console.log( 'checkOrientation', {
 						orient : screen?.orientation,
-						orityp : screen?.orientation?.type
+						orityp : screen?.orientation?.type,
 						vvh    : vv.height,
 						vvw    : vv.width,
 						ph     : ph,
