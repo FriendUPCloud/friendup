@@ -11966,9 +11966,19 @@ function loadApplicationBasics( callback )
 				})
 				
 				if ( null != screen?.orientation )
+				{
 					screen.orientation.addEventListener( 'change', e => {
 						console.log( 'screen orientation change', e )
 					}, false )
+				}
+				
+				if ( window.addEventListener )
+				{
+					window.addEventListener( 'orientationchange', e => 
+					{
+						console.log( 'w.orichange', e )
+					}, false )
+				}
 				
 				window.visualViewport.addEventListener( 'resize', e => 
 				{
@@ -12020,6 +12030,10 @@ function loadApplicationBasics( callback )
 					console.log( 'checkOrientation', {
 						orient : screen?.orientation,
 						orityp : screen?.orientation?.type,
+						ih     : window.innerHeight,
+						iw     : window.innerWidth,
+						sh     : screen.height,
+						sw     : screen.width,
 						vvh    : vv.height,
 						vvw    : vv.width,
 						ph     : ph,
