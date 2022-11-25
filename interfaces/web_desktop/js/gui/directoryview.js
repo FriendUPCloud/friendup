@@ -4286,6 +4286,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 // unique     = wheather to use a unique view or not
 // targetView = the view to reuse
 //
+let friendPdfIndex = 0;
 function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView, ocallback )
 {
 	if( !ocallback ) ocallback = false;
@@ -4479,8 +4480,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		iconObject.extension.toLowerCase() == 'jpeg' ||
 		iconObject.extension.toLowerCase() == 'jpg' ||
 		iconObject.extension.toLowerCase() == 'png' ||
-		iconObject.extension.toLowerCase() == 'gif' ||
-		iconObject.extension.toLowerCase() == 'pdf' 
+		iconObject.extension.toLowerCase() == 'gif'
 	)
 	{
 	    if( fileInfo.applicationId )
@@ -4488,6 +4488,68 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		    iconObject.applicationId = fileInfo.applicationId;
 		}
 		Friend.startImageViewer( iconObject, { parentView: currentMovable, recent: fromFolder ? false : 'dashboard' } );
+	}
+	else if( iconObject.extension.toLowerCase() == 'pdf' )
+	{
+	    let v = new View( {
+	        title: iconObject.Path,
+	        width: 800,
+	        height: 800
+	    } );
+	    v.setContent( '<canvas id="pdf' + ( ++friendPdfIndex ) + '" class="PDFView"></canvas>' );
+	    v.style.position = 'absolute';
+	    v.style.width = '100%';
+	    v.style.height = '100%';
+	    v.style.top = '0';
+	    v.style.left = '0';
+	    let c = ge( 'pdf' + friendPDFIndex );
+	    if( !c )
+	        return v.close();
+        let pdfjsLib = window['pdfjs-dist/build/pdf'];
+        if( !pdfjsLib ) return v.close();
+        
+        let f = new File( iconObject.Path );
+        f.onload = function( data )
+        {
+                
+            pdfjsLib.GlobalWorkerOptions.workerSrc = '//mozilla.github.io/pdf.js/build/pdf.worker.js';
+            // Using DocumentInitParameters object to load binary data.
+            let loadingTask = pdfjsLib.getDocument( { data: data } );
+            loadingTask.promise.then( function( pdf )
+            {
+                // Fetch the first page
+                let pageNumber = 1;
+                pdf.getPage( pageNumber ).then( function( page )
+                {
+                    console.log('Page loaded');
+
+                    let scale = 1.5;
+                    let viewport = page.getViewport( { scale: scale } );
+
+                    // Prepare canvas using PDF page dimensions
+                    let context = c.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    // Render PDF page into canvas context
+                    let renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+                    let renderTask = page.render( renderContext );
+                    renderTask.promise.then( function()
+                    {
+                        console.log( 'Page rendered' );
+                    } );
+                } );
+            }, 
+            function( reason )
+            {
+                // PDF loading error
+                console.error(reason);
+            } );
+        }
+        f.load();
 	}
 	// Run scripts in new shell
 	else if( iconObject.extension == 'run' )
