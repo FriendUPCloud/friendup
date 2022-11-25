@@ -11917,3 +11917,221 @@ function loadApplicationBasics( callback )
 	}, 2 );
 };
 
+
+(() =>
+{
+	console.log( 'workspace visualViewport check', {
+		VV      : window.visualViewport,
+		ios     : isIos(),
+		ipad    : isIpad(),
+	})
+	
+	if( isIos() || isIpad() )
+	{
+		window.setTimeout(() =>
+		{
+			if ( null != window.visualViewport )
+			{
+				const vv = window.visualViewport
+				console.log( 'vv', {
+					vv     : vv,
+					vvh    : vv.height,
+					vvw    : vv.width,
+					screen : screen,
+					orient : screen?.orientation,
+					orityp : screen?.orientation?.type,
+					wori   : window.orientation,
+				})
+				
+				let timeout = null
+				let maxHeight = 0
+				updateMaxHeight()
+				
+				console.log( 'orient summary', maxHeight )
+				
+				if ( null != screen?.orientation )
+				{
+					screen.orientation.addEventListener( 'change', e => {
+						console.log( 'screen orientation change', e )
+					}, false )
+				}
+				
+				if ( window.addEventListener )
+				{
+					window.addEventListener( 'orientationchange', e => 
+					{
+						console.log( 'w.orichange', e )
+					}, false )
+				}
+				
+				window.visualViewport.addEventListener( 'resize', e => 
+				{
+					console.log( 'w.VV resize', {
+						e    : e,
+						vvh  : vv.height,
+						vvw  : vv.width,
+						maxH : maxHeight,
+						tim  : timeout,
+					})
+					
+					if ( null != timeout )
+						return
+					
+					timeout = window.setTimeout(() =>
+					{
+						updateMaxHeight()
+						timeout = null
+						const offset = maxHeight - vv.height
+						
+						console.log( 'translate this', {
+							maxH   : maxHeight,
+							offset : offset,
+							vvh    : vv.height,
+						})
+						if ( 20 > offset )
+							translate( 0 )
+						else
+							translate( offset )
+						
+					}, 100 )
+					
+				}, false )
+				
+				window.visualViewport.addEventListener( 'scroll', e => 
+				{
+					console.log( 'w.VV scroll', {
+						e    : e,
+						vvh  : vv.height,
+						rect : document?.body?.getBoundingClientRect(),
+					} )
+				}, false )
+				
+				function updateMaxHeight()
+				{
+					console.log( 'updateMaxHeight', {
+						orient : screen?.orientation,
+						orityp : screen?.orientation?.type,
+						ih     : window.innerHeight,
+						iw     : window.innerWidth,
+						sh     : screen.height,
+						sw     : screen.width,
+						vvh    : vv.height,
+						vvw    : vv.width,
+					})
+					
+					maxHeight = window.innerHeight
+					return
+					
+					const iH = window.innerHeight
+					const iW = window.innerWidth
+					const mode = getOrientation()
+					console.log( 'mode', mode )
+					if ( 'portrait' == mode )
+					{
+						maxHeight = iH
+					}
+					else
+					{
+						maxHeight = iW
+					}
+					
+					function getOrientation()
+					{
+						if ( null != window.orientation )
+						{
+							const wo = window.orientation
+							console.log( 'wo', wo )
+							if ( 0 == wo || 180 == wo )
+								return 'portrait'
+							else
+								return 'landscape'
+						}
+						
+						if ( null != window.screen?.orientation )
+						{
+							const so = screen.orientation.type
+							console.log( '>>>TODO<<< so', so )
+							return 'portrait'
+						}
+						
+						console.log( 'could not determine an orientation :((((' )
+						return 'portrait'
+					}
+				}
+			}
+			else
+			{
+				return false
+			}
+		}, 1000 )
+	}
+	
+	function translate( num )
+	{
+		let trans = [
+			'translate( 0px, -',
+			num,
+			'px)',
+		]
+		
+		if ( isIos())
+			trans.push( ' scale(1.6)' )
+		
+		trans = trans.join( '')
+		console.log( 'translate', {
+			setting : trans,
+			std     : ( null != document.body.style[ 'transform' ]),
+			STD     : ( null != document.body.style[ 'Transform' ]),
+			webkit  : ( null != document.body.style[ 'WebkitTransform' ]),
+		})
+		//document.body.classList.toggle( 'Inside', false )
+		document.body.style[ 'WebkitTransform' ] = trans
+		
+		/*
+		const prefixes = [ 'Webkit' ]
+		console.log( 'translate', [ num, trans ])
+		prefixes.some( pre => {
+			const style = pre + 'Transform'
+			console.log( 'style check', {
+				style  : style,
+				std    : ( null != document.body.style[ 'transform' ]),
+				STD    : ( null != document.body.style[ 'Transform' ]),
+				webkit : ( null != document.body.style[ 'WebkitTransform' ]),
+			})
+			if ( null == document.body.style[ style ])
+				return false
+			
+			console.log( 'setting style', style )
+			document.body.style[ style ] = trans
+			return true
+		})
+		*/
+	}
+	
+	function isIos() {
+		return [
+			//'iPad Simulator',
+			'iPhone Simulator',
+			'iPod Simulator',
+			//'iPad',
+			'iPhone',
+			'iPod'
+		].includes(navigator.platform)
+		// iPad on iOS 13 detection
+		//|| (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+	}
+	
+	function isIpad() {
+		return [
+			'iPad Simulator',
+			//'iPhone Simulator',
+			//'iPod Simulator',
+			'iPad',
+			//'iPhone',
+			//'iPod'
+		].includes(navigator.platform)
+		// iPad on iOS 13 detection
+		|| (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+	}
+	
+})();

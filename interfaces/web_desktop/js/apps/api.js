@@ -7157,10 +7157,10 @@ function Confirm( title, string, callb, confirmOKText, confirmCancelText, thirdB
 function Alert( title, string, callback )
 {
 	Application.sendMessage( {
-		type: 'system',
-		command: 'alert',
-		title: title,
-		string: string
+		type    : 'system',
+		command : 'alert',
+		title   : title,
+		string  : string
 	} );
 }
 
@@ -7169,10 +7169,10 @@ function Alert( title, string, callback )
 function ShowContextMenu( header, menu )
 {
 	Application.sendMessage( {
-		type: 'system',
-		header: header,
-		command: 'showcontextmenu',
-		menu: menu
+		type    : 'system',
+		header  : header,
+		command : 'showcontextmenu',
+		menu    : menu
 	} );
 }
 
