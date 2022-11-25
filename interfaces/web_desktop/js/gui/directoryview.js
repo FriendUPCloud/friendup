@@ -4497,14 +4497,14 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	        height: 800
 	    } );
 	    v.setContent( '<canvas id="pdf' + ( ++friendPdfIndex ) + '" class="PDFView"></canvas>' );
-	    v.style.position = 'absolute';
-	    v.style.width = '100%';
-	    v.style.height = '100%';
-	    v.style.top = '0';
-	    v.style.left = '0';
 	    let c = ge( 'pdf' + friendPDFIndex );
 	    if( !c )
 	        return v.close();
+	    c.style.position = 'absolute';
+	    c.style.width = '100%';
+	    c.style.height = '100%';
+	    c.style.top = '0';
+	    c.style.left = '0';
         let pdfjsLib = window['pdfjs-dist/build/pdf'];
         if( !pdfjsLib ) return v.close();
         
