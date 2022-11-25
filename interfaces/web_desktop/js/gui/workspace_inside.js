@@ -11979,7 +11979,7 @@ function loadApplicationBasics( callback )
 					
 					timeout = window.setTimeout(() =>
 					{
-						setOrientation()
+						updateMaxHeight()
 						timeout = null
 						const offset = maxHeight - vv.height
 						
