@@ -4496,7 +4496,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	        width: 800,
 	        height: 800
 	    } );
-	    v.setContent( '<iframe id="pdf' + ( ++friendPdfIndex ) + '" src="/webclient/3rdparty/pdfjs/web/viewer.html" class="PDFView"></iframe>' );
+	    v.setContent( '<iframe id="pdf' + ( ++friendPdfIndex ) + '" src="/webclient/3rdparty/pdfjs/web/viewer.html?file=' + getImageUrl( iconObject.Path ) + '" class="PDFView"></iframe>' );
 	    let c = ge( 'pdf' + friendPdfIndex );
 	    if( !c )
 	    {
@@ -4507,52 +4507,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	    c.style.height = '100%';
 	    c.style.top = '0';
 	    c.style.left = '0';
-	    
-        let pdfjsLib = window['pdfjs-dist/build/pdf'];
-        if( !pdfjsLib ) return v.close();
-        
-        let f = new File( iconObject.Path );
-        f.onLoad = function( data )
-        {
-            /*pdfjsLib.GlobalWorkerOptions.workerSrc = '/webclient/3rdparty/pdfjs/build/pdf.worker.js';
-            //'//mozilla.github.io/pdf.js/build/pdf.worker.js';
-            // Using DocumentInitParameters object to load binary data.
-            let loadingTask = pdfjsLib.getDocument( { data: data } );
-            loadingTask.promise.then( function( pdf )
-            {
-                // Fetch the first page
-                let pageNumber = 1;
-                pdf.getPage( pageNumber ).then( function( page )
-                {
-                    console.log('Page loaded');
-
-                    let scale = 1.5;
-                    let viewport = page.getViewport( { scale: scale } );
-
-                    // Prepare canvas using PDF page dimensions
-                    let context = c.getContext('2d');
-                    c.height = viewport.height;
-                    c.width = viewport.width;
-
-                    // Render PDF page into canvas context
-                    let renderContext = {
-                        canvasContext: context,
-                        viewport: viewport
-                    };
-                    let renderTask = page.render( renderContext );
-                    renderTask.promise.then( function()
-                    {
-                        console.log( 'Page rendered' );
-                    } );
-                } );
-            }, 
-            function( reason )
-            {
-                // PDF loading error
-                console.error(reason);
-            } );*/
-        }
-        f.load( 'rb' );
 	}
 	// Run scripts in new shell
 	else if( iconObject.extension == 'run' )
