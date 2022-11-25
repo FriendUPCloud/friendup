@@ -4499,7 +4499,9 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	    v.setContent( '<canvas id="pdf' + ( ++friendPdfIndex ) + '" class="PDFView"></canvas>' );
 	    let c = ge( 'pdf' + friendPdfIndex );
 	    if( !c )
+	    {
 	        return v.close();
+        }
 	    c.style.position = 'absolute';
 	    c.style.width = '100%';
 	    c.style.height = '100%';
@@ -4509,7 +4511,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
         if( !pdfjsLib ) return v.close();
         
         let f = new File( iconObject.Path );
-        f.onload = function( data )
+        f.onLoad = function( data )
         {
             console.log( 'What goes around', data );
             pdfjsLib.GlobalWorkerOptions.workerSrc = '//mozilla.github.io/pdf.js/build/pdf.worker.js';
