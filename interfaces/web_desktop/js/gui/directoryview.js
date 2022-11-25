@@ -4531,8 +4531,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 
                     // Prepare canvas using PDF page dimensions
                     let context = c.getContext('2d');
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
+                    c.height = viewport.height;
+                    c.width = viewport.width;
 
                     // Render PDF page into canvas context
                     let renderContext = {
