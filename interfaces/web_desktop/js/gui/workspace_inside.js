@@ -11968,6 +11968,8 @@ function loadApplicationBasics( callback )
 				{
 					console.log( 'w.VV resize', {
 						e    : e,
+						vvh  : vv.height,
+						vvw  : vv.width,
 						maxH : maxHeight,
 						tim  : timeout,
 					})
@@ -12015,8 +12017,6 @@ function loadApplicationBasics( callback )
 						sw     : screen.width,
 						vvh    : vv.height,
 						vvw    : vv.width,
-						ph     : ph,
-						lh     : lh,
 					})
 					
 					const iH = window.innerHeight
