@@ -11993,7 +11993,7 @@ function loadApplicationBasics( callback )
 						else
 							translate( offset )
 						
-					}, 1 )
+					}, 100 )
 					
 				}, false )
 				
