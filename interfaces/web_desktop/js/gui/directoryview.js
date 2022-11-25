@@ -4514,7 +4514,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
         f.onLoad = function( data )
         {
             console.log( 'What goes around', data );
-            pdfjsLib.GlobalWorkerOptions.workerSrc = '/web_desktop/3rdparty/pdfjs/build/pdf.worker.js';
+            pdfjsLib.GlobalWorkerOptions.workerSrc = '/webclient/3rdparty/pdfjs/build/pdf.worker.js';
             //'//mozilla.github.io/pdf.js/build/pdf.worker.js';
             // Using DocumentInitParameters object to load binary data.
             let loadingTask = pdfjsLib.getDocument( { data: data } );
