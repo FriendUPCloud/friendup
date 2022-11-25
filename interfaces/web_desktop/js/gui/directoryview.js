@@ -4497,7 +4497,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	        height: 800
 	    } );
 	    v.setContent( '<canvas id="pdf' + ( ++friendPdfIndex ) + '" class="PDFView"></canvas>' );
-	    let c = ge( 'pdf' + friendPDFIndex );
+	    let c = ge( 'pdf' + friendPdfIndex );
 	    if( !c )
 	        return v.close();
 	    c.style.position = 'absolute';
