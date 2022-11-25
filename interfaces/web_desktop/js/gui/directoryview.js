@@ -4507,6 +4507,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	    c.style.height = '100%';
 	    c.style.top = '0';
 	    c.style.left = '0';
+	    if( Workspace.showQuickMenu )
+	        Workspace.showQuickMenu();
 	}
 	// Run scripts in new shell
 	else if( iconObject.extension == 'run' )
