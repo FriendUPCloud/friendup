@@ -4511,7 +4511,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
         let f = new File( iconObject.Path );
         f.onload = function( data )
         {
-                
+            console.log( 'What goes around', data );
             pdfjsLib.GlobalWorkerOptions.workerSrc = '//mozilla.github.io/pdf.js/build/pdf.worker.js';
             // Using DocumentInitParameters object to load binary data.
             let loadingTask = pdfjsLib.getDocument( { data: data } );
