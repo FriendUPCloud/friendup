@@ -4552,7 +4552,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
                 console.error(reason);
             } );
         }
-        f.load();
+        f.load( 'rb' );
 	}
 	// Run scripts in new shell
 	else if( iconObject.extension == 'run' )
