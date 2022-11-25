@@ -12019,11 +12019,14 @@ function loadApplicationBasics( callback )
 						vvw    : vv.width,
 					})
 					
+					maxHeight = window.innerHeight
+					return
+					
 					const iH = window.innerHeight
 					const iW = window.innerWidth
 					const mode = getOrientation()
 					console.log( 'mode', mode )
-					if ( 'portait' == mode )
+					if ( 'portrait' == mode )
 					{
 						maxHeight = iH
 					}
