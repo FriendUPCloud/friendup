@@ -1979,7 +1979,6 @@ function CloseView( win, delayed )
 			win.parentNode.classList.add( 'Closing', 'NoEvents' );
 		}
 		
-		// Dialogs hide the quick menu, if it exists, and removes dialog class
 		if( win.parentNode.classList.contains( 'Dialog' ) || 
 			win.parentNode.parentNode.classList.contains( 'Dialog' ) ||
 			win.parentNode.parentNode.classList.contains( 'FileDialog' ) )
@@ -2119,9 +2118,6 @@ function CloseView( win, delayed )
 		{
 		    function handleContext()
 		    {
-		    	if( window.currentMovable && div != window.currentMovable ) 
-		    		return;
-	    		
 		        switch( window.currentContext )
 		        {
 		            case 'dashboard':
@@ -2137,13 +2133,10 @@ function CloseView( win, delayed )
                     default:
                         let appCheck = true;
                         // We got a context array ([ currentWindow, prevContext ])
-                        if( typeof( window.currentContext ) == 'object' && typeof( window.currentContext ) != 'undefined' && window.currentContext != 'undefined' )
+                        if( typeof( window.currentContext ) == 'object' )
                         {
-                        	if( window.currentContext.length > 1 && typeof( window.currentContext[ 1 ] ) != 'undefined' )
-                        	{
-                            	window.currentContext = window.currentContext[ 1 ];
-		                        return handleContext();
-                        	}
+                            window.currentContext = window.currentContext[ 1 ];
+                            return handleContext();
                         }
                         if( appId && appCheck )
                         {
@@ -2170,8 +2163,21 @@ function CloseView( win, delayed )
 	        }
 	        handleContext();
 		}
-		// Only if we were current
-		else if ( window.currentMovable && div != window.currentMovable )
+		/* OLD CODE for dashboard stuff 
+		if( !appId && win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
+		{
+			_DeactivateWindows();
+			showDashboard();
+			setTimeout( function(){ showDashboard(); }, 150 );
+		}
+		// Also do this with appid
+		else if( isFCDialog && appId && win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
+		{
+		    _DeactivateWindows();
+			showDashboard();
+			setTimeout( function(){ showDashboard(); }, 150 );
+		}*/
+		else
 		{
 			// Activate latest activated view (not on mobile)
 			let nextActive = false;
@@ -2201,7 +2207,7 @@ function CloseView( win, delayed )
 						}
 					}
 					else
-					{	
+					{
 						for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 						{
 							if( Friend.GUI.view.viewHistory[ a ].windowObject.workspace == globalConfig.workspaceCurrent )
@@ -2222,14 +2228,6 @@ function CloseView( win, delayed )
 						}
 					}
 				}
-				else
-				{
-					//
-				}
-			}
-			else
-			{
-				//
 			}
 		}
 		
@@ -2547,10 +2545,6 @@ var View = function( args )
 		{
 			flags.screen = Workspace.screen;
 		}
-		
-		// Standard dialogs cancel context
-		if( flags.dialog || flags[ 'standard-dialog' ] && !flags.sidebarManaged )
-			window.currentContext = false;
 
 		// This needs to be set immediately!
 		self.parseFlags( flags, filter );

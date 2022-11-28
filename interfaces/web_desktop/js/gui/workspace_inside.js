@@ -5454,8 +5454,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				} );
 			}
 			
-			window.currentContext = false;
-			
 			Workspace.newDir = d;
 			d.onClose = function()
 			{
@@ -5574,7 +5572,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									if( dw.windowObject )
 										dw = dw.windowObject;
 								}
-								
 								if( dw.activate )
 								{
 									dw.activate();
@@ -5678,8 +5675,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						dialog: true
 					} );
 				}
-
-				window.currentContext = false;
 
 				Workspace.renameWindow = w;
 

@@ -16,8 +16,6 @@ Workspace.deleteFile = function( mode )
 	if( !window.currentMovable || ( window.currentMovable && !window.currentMovable.content.refresh ) )
 		return;
 
-	window.currentContext = false;
-
 	// Detached refresh object
 	let rObj = {
 		refresh: window.currentMovable.content.refresh,
