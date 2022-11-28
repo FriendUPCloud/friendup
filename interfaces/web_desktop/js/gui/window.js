@@ -2141,11 +2141,8 @@ function CloseView( win, delayed )
                         	if( window.currentContext.length > 1 && typeof( window.currentContext[ 1 ] ) != 'undefined' )
                         	{
                             	window.currentContext = window.currentContext[ 1 ];
-                            	console.log( 'Just look again...', window.currentContext );
-                            	console.log( 'Let us look: ', window.currentContext[ 1 ] );
 		                        return handleContext();
                         	}
-                        	console.log( 'Skip ahead with...', window.currentContext );
                         }
                         if( appId && appCheck )
                         {
