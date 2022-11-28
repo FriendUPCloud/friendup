@@ -5454,6 +5454,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				} );
 			}
 			
+			window.currentContext = false;
+			
 			Workspace.newDir = d;
 			d.onClose = function()
 			{
