@@ -2117,6 +2117,7 @@ function CloseView( win, delayed )
 		// Check the window context, if it exists
 		if( window.currentContext )
 		{
+			console.log( 'We got context!' );
 		    function handleContext()
 		    {
 		        switch( window.currentContext )
