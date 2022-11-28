@@ -2141,6 +2141,7 @@ function CloseView( win, delayed )
                         	if( window.currentContext.length )
                         	{
                             	window.currentContext = window.currentContext[ 1 ];
+                            	console.log( 'Let us look: ', window.currentContext[ 1 ] );
                         	}
                         	else
                         	{
