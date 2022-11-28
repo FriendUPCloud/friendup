@@ -2170,11 +2170,14 @@ function CloseView( win, delayed )
 			let nextActive = false;
 			if( div.classList.contains( 'Active' ) || div.windowObject.getFlag( 'dialog' ) )
 			{
+				console.log( 'Active view or dialog' );
 				if( Friend.GUI.view.viewHistory.length )
 				{
 					// Only activate last view in the same app
 					if( appId )
 					{
+						console.log( 'APPID We closed the dialog or active window...' );
+						
 						for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 						{
 							if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
@@ -2218,6 +2221,14 @@ function CloseView( win, delayed )
 						}
 					}
 				}
+				else
+				{
+					console.log( 'Seems we have no history' );
+				}
+			}
+			else
+			{
+				console.log( 'Unknown issue.' );
 			}
 		}
 		
