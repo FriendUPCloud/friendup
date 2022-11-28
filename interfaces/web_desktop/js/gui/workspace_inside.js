@@ -5566,6 +5566,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 						dr.dosAction( 'makedir', { path: p + inputField.value, id: i }, function()
 						{
+							window.currentContext = false;
+						
 							if( directoryWindow && directoryWindow.content )
 							{
 								let dw = directoryWindow;
