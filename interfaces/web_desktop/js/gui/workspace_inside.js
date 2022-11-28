@@ -5676,6 +5676,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					} );
 				}
 
+				window.currentContext = false;
+
 				Workspace.renameWindow = w;
 
 				if( window.isMobile )
