@@ -2139,7 +2139,7 @@ function CloseView( win, delayed )
                         if( typeof( window.currentContext ) == 'object' )
                         {
                             window.currentContext = window.currentContext[ 1 ];
-                            console.log( 'Trying again...' );
+                            console.log( 'Trying again...', window.currentContext[ 1 ] );
                             return handleContext();
                         }
                         if( appId && appCheck )
