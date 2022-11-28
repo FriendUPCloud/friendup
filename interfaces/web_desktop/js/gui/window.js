@@ -2543,6 +2543,10 @@ var View = function( args )
 		{
 			flags.screen = Workspace.screen;
 		}
+		
+		// Standard dialogs cancel context
+		if( flags.dialog || flags[ 'standard-dialog' ] )
+			window.currentContext = false;
 
 		// This needs to be set immediately!
 		self.parseFlags( flags, filter );
