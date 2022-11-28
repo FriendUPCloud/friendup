@@ -2138,7 +2138,7 @@ function CloseView( win, delayed )
                         // We got a context array ([ currentWindow, prevContext ])
                         if( typeof( window.currentContext ) == 'object' && typeof( window.currentContext ) != 'undefined' && window.currentContext != 'undefined' )
                         {
-                        	if( window.currentContext.length > 1 )
+                        	if( window.currentContext.length > 1 && typeof( window.currentContext[ 1 ] ) != 'undefined' )
                         	{
                             	window.currentContext = window.currentContext[ 1 ];
                             	console.log( 'Just look again...', window.currentContext );
