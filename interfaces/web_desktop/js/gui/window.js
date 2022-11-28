@@ -2139,6 +2139,7 @@ function CloseView( win, delayed )
                         	{
                         		if( typeof( window.currentContext[ 1 ] ) != 'undefined' )
                         		{
+                        			console.log( 'What was the prev: ', window.currentContext[ 1 ] );
 				                    window.currentContext = window.currentContext[ 1 ];
 				                    return handleContext();
 			                    }
