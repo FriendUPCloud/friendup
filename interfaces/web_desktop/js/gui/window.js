@@ -2119,6 +2119,9 @@ function CloseView( win, delayed )
 		{
 		    function handleContext()
 		    {
+		    	if( window.currentMovable && div != window.currentMovable ) 
+		    		return;
+	    		
 		        switch( window.currentContext )
 		        {
 		            case 'dashboard':
@@ -2167,7 +2170,8 @@ function CloseView( win, delayed )
 	        }
 	        handleContext();
 		}
-		else
+		// Only if we were current
+		else if ( window.currentMovable && div != window.currentMovable )
 		{
 			// Activate latest activated view (not on mobile)
 			let nextActive = false;

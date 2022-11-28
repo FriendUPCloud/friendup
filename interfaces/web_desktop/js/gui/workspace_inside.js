@@ -5577,7 +5577,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								
 								if( dw.activate )
 								{
-									console.log( 'Activating window', dw );
 									dw.activate();
 									// Refresh now
 									if( directoryWindow.content )
