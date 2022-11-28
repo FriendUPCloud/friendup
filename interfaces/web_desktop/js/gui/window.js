@@ -2545,7 +2545,7 @@ var View = function( args )
 		}
 		
 		// Standard dialogs cancel context
-		if( flags.dialog || flags[ 'standard-dialog' ] )
+		if( flags.dialog || flags[ 'standard-dialog' ] && !flags.sidebarManaged )
 			window.currentContext = false;
 
 		// This needs to be set immediately!
