@@ -2136,7 +2136,7 @@ function CloseView( win, delayed )
                     default:
                         let appCheck = true;
                         // We got a context array ([ currentWindow, prevContext ])
-                        if( typeof( window.currentContext ) == 'object' )
+                        if( typeof( window.currentContext ) == 'object' && typeof( window.currentContext ) != 'undefined' )
                         {
                         	if( window.currentContext.length > 1 )
                         	{
