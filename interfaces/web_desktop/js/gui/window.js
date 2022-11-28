@@ -2135,11 +2135,18 @@ function CloseView( win, delayed )
                         // We got a context array ([ currentWindow, prevContext ])
                         if( typeof( window.currentContext ) == 'object' )
                         {
-                        	if( window.currentContext.length > 1 )
+                        	if( window.currentContext[0] && window.currentContext[0].tagName == 'DIV' 
+                        	{
+                        		currentMovable = window.currentContext[ 0 ];
+                        		_ActivateWindow( window.currentContext[ 0 ] );
+                        		if( window.currentContext[ 0 ].content && window.currentContext[ 0 ].content.refresh )
+                        			window.currentContext[ 0 ].content.refresh();
+                        		return;
+                        	}
+                        	else if( window.currentContext.length > 1 )
                         	{
                         		if( typeof( window.currentContext[ 1 ] ) != 'undefined' )
                         		{
-                        			console.log( 'What was the prev: ', window.currentContext[ 1 ] );
 				                    window.currentContext = window.currentContext[ 1 ];
 				                    return handleContext();
 			                    }
