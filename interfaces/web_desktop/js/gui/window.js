@@ -2124,13 +2124,11 @@ function CloseView( win, delayed )
 		            case 'dashboard':
 		                _DeactivateWindows();
 			            showDashboard();
-			            console.log( 'With dash' );
 			            setTimeout( function(){ showDashboard(); }, 150 );
 			            break;
 		            case 'sidebar':
 		                _DeactivateWindows();
 		                hideDashboard();
-		                console.log( 'With sidebar' );
                     	break;
                 	// We have a different thing for other contexts
                     default:
