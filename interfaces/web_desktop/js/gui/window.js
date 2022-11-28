@@ -2138,8 +2138,14 @@ function CloseView( win, delayed )
                         // We got a context array ([ currentWindow, prevContext ])
                         if( typeof( window.currentContext ) == 'object' )
                         {
-                            window.currentContext = window.currentContext[ 1 ];
-                            console.log( 'Trying again...', window.currentContext[ 1 ] );
+                        	if( window.currentContext.length )
+                        	{
+                            	window.currentContext = window.currentContext[ 1 ];
+                        	}
+                        	else
+                        	{
+                            	console.log( 'Trying again...', window.currentContext );
+                        	}
                             return handleContext();
                         }
                         if( appId && appCheck )
