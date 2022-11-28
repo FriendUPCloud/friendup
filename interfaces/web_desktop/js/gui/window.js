@@ -1979,6 +1979,7 @@ function CloseView( win, delayed )
 			win.parentNode.classList.add( 'Closing', 'NoEvents' );
 		}
 		
+		// Dialogs hide the quick menu, if it exists, and removes dialog class
 		if( win.parentNode.classList.contains( 'Dialog' ) || 
 			win.parentNode.parentNode.classList.contains( 'Dialog' ) ||
 			win.parentNode.parentNode.classList.contains( 'FileDialog' ) )
@@ -2163,20 +2164,6 @@ function CloseView( win, delayed )
 	        }
 	        handleContext();
 		}
-		/* OLD CODE for dashboard stuff 
-		if( !appId && win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
-		{
-			_DeactivateWindows();
-			showDashboard();
-			setTimeout( function(){ showDashboard(); }, 150 );
-		}
-		// Also do this with appid
-		else if( isFCDialog && appId && win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
-		{
-		    _DeactivateWindows();
-			showDashboard();
-			setTimeout( function(){ showDashboard(); }, 150 );
-		}*/
 		else
 		{
 			// Activate latest activated view (not on mobile)
@@ -2208,10 +2195,13 @@ function CloseView( win, delayed )
 					}
 					else
 					{
+						console.log( 'We closed the dialog or active window...' );
+						
 						for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 						{
 							if( Friend.GUI.view.viewHistory[ a ].windowObject.workspace == globalConfig.workspaceCurrent )
 							{
+								console.log( 'We found a window in history: ', Friend.GUI.view.viewHistory[ a ] );
 								if( Friend.GUI.view.viewHistory[ a ].windowObject.getFlag( 'sidebarManaged' ) ) continue;
 								// Only activate non minimized views
 								if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
