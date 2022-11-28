@@ -2138,7 +2138,7 @@ function CloseView( win, delayed )
                         // We got a context array ([ currentWindow, prevContext ])
                         if( typeof( window.currentContext ) == 'object' )
                         {
-                        	if( window.currentContext.length )
+                        	if( window.currentContext.length > 1 )
                         	{
                             	window.currentContext = window.currentContext[ 1 ];
                             	console.log( 'Let us look: ', window.currentContext[ 1 ] );
