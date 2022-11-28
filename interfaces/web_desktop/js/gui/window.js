@@ -2117,7 +2117,6 @@ function CloseView( win, delayed )
 		// Check the window context, if it exists
 		if( window.currentContext )
 		{
-			console.log( 'We got context!' );
 		    function handleContext()
 		    {
 		        switch( window.currentContext )
@@ -2125,11 +2124,13 @@ function CloseView( win, delayed )
 		            case 'dashboard':
 		                _DeactivateWindows();
 			            showDashboard();
+			            console.log( 'With dash' );
 			            setTimeout( function(){ showDashboard(); }, 150 );
 			            break;
 		            case 'sidebar':
 		                _DeactivateWindows();
 		                hideDashboard();
+		                console.log( 'With sidebar' );
                     	break;
                 	// We have a different thing for other contexts
                     default:
@@ -2138,6 +2139,7 @@ function CloseView( win, delayed )
                         if( typeof( window.currentContext ) == 'object' )
                         {
                             window.currentContext = window.currentContext[ 1 ];
+                            console.log( 'Trying again...' );
                             return handleContext();
                         }
                         if( appId && appCheck )
@@ -2160,6 +2162,10 @@ function CloseView( win, delayed )
 							    }
 						    }
                         }
+                        else
+                        {
+                        	console.log( 'We have no appid or app check?', appId, appCheck );
+                        }
                         break;
 		        }
 	        }
@@ -2171,14 +2177,11 @@ function CloseView( win, delayed )
 			let nextActive = false;
 			if( div.classList.contains( 'Active' ) || div.windowObject.getFlag( 'dialog' ) )
 			{
-				console.log( 'Active view or dialog' );
 				if( Friend.GUI.view.viewHistory.length )
 				{
 					// Only activate last view in the same app
 					if( appId )
 					{
-						console.log( 'APPID We closed the dialog or active window...' );
-						
 						for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 						{
 							if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
@@ -2198,14 +2201,11 @@ function CloseView( win, delayed )
 						}
 					}
 					else
-					{
-						console.log( 'We closed the dialog or active window...' );
-						
+					{	
 						for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 						{
 							if( Friend.GUI.view.viewHistory[ a ].windowObject.workspace == globalConfig.workspaceCurrent )
 							{
-								console.log( 'We found a window in history: ', Friend.GUI.view.viewHistory[ a ] );
 								if( Friend.GUI.view.viewHistory[ a ].windowObject.getFlag( 'sidebarManaged' ) ) continue;
 								// Only activate non minimized views
 								if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
@@ -2224,12 +2224,12 @@ function CloseView( win, delayed )
 				}
 				else
 				{
-					console.log( 'Seems we have no history' );
+					//
 				}
 			}
 			else
 			{
-				console.log( 'Unknown issue.' );
+				//
 			}
 		}
 		
