@@ -2164,10 +2164,6 @@ function CloseView( win, delayed )
 							    }
 						    }
                         }
-                        else
-                        {
-                        	console.log( 'We have no appid or app check?', appId, appCheck );
-                        }
                         break;
 		        }
 	        }
