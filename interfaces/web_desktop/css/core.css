@@ -2319,6 +2319,12 @@ body:not([mobile]):not([tablet]) .Widget .MenuItems .MenuItem:hover
 
 .Widget .MenuItems .MenuHeader
 {
+	overflow      : hidden;
+	text-overflow : ellipsis;
+}
+
+.Widget .MenuItems .MenuHeader
+{
 	font-weight: bold;
 	display: block;
 	margin: 0;
