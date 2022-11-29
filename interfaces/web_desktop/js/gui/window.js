@@ -2115,7 +2115,6 @@ function CloseView( win, delayed )
 		
 		// Context -------------------------------------------------------------
 		// Check the window recent location exists, and use it instead
-		let usedRecent = false;
 		if( win.windowObject && win.windowObject.recentLocation && win.windowObject.recentLocation.substr( 0, 7 ) == 'viewId:' )
 		{
 			let id = win.windowObject.recentLocation;
@@ -2127,13 +2126,16 @@ function CloseView( win, delayed )
 					currentMovable = movableWindows[ z ];
 					_ActivateWindow( currentMovable );
 					window.currentContext = false;
-					usedRecent = true;
 					break;
 				}
 			}
+			// Default
+			_DeactivateWindows();
+            showDashboard();
+            setTimeout( function(){ showDashboard(); }, 150 );
 		}
 		// Check the window context, if it exists
-		if( !usedRecent && window.currentContext )
+		if( window.currentContext )
 		{
 		    function handleContext()
 		    {
