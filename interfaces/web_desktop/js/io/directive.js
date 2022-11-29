@@ -708,7 +708,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					oargs = args;
 				}
 
-				var o = {
+				let o = {
 					command: 'register',
 					applicationId: ifr.applicationId,
 					applicationName: ifr.applicationName,
@@ -730,7 +730,8 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					domain:   sdomain,
 					registerCallback: cid,
 					clipboard: Friend.clipboard,
-					cachedAppData: _applicationBasics
+					cachedAppData: _applicationBasics,
+					context: flags.context ? flags.context : null
 				};
 				if( conf.State ) o.state = conf.State;
 

@@ -1964,9 +1964,23 @@ function apiWrapper( event, force )
 						}
 					}
 					
+					// Does the view msg override the context?
+					if( msg.context )
+					{
+						window.currentContext = false;
+					}
+					
 					let v = new View( msg.data );
-					if( msg.applicationId )
+					
+					if( msg.context )
+					{						
+						v.recentLocation = '';
+					}
+					else if( msg.applicationId )
+					{
 						v.recentLocation = window.Workspace && Workspace.dashboard ? 'dashboard' : '';
+					}
+					
 					let win = msg.parentViewId && app.windows ? app.windows[ msg.parentViewId ] : false;
 					if( win )
 					{

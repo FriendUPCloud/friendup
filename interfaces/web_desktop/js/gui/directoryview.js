@@ -3826,7 +3826,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 							    }
 							    else if( mt.executable.length )
 							    {
-								    return ExecuteApplication( mt.executable, obj.fileInfo.Path );
+							    	// Execute app using currentMovable as context
+								    return ExecuteApplication( mt.executable, obj.fileInfo.Path, false, false, { context: currentMovable } );
 							    }
 							}
 						}
@@ -3834,7 +3835,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 					// Execute jsx!
 					if( ext == '.jsx' )
 					{
-						return ExecuteApplication( obj.fileInfo.Path );
+						// Execute jsx using currentMovable as context
+						return ExecuteApplication( obj.fileInfo.Path, false, false, false, { context: currentMovable } );
 					}
 				}
 			}
