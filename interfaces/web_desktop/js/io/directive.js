@@ -623,10 +623,9 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					Workspace.updateTasks();
 					
 					// If we have a view context
-					console.log( 'Do we have a context? ' + flags.context );
-					if( flags.context && flags.context.substr( 0, 7 ) == 'viewId:' )
+					if( flags.context )
 					{
-						let id = ifr.context.substr( 7, ifr.context.length - 7 );
+						let id = flags.context;
 						for( let z in movableWindows )
 						{
 							if( movableWindows[ z ].windowObject && movableWindows[ z ].windowObject.getViewId() == id )
