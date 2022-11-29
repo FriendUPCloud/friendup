@@ -2127,12 +2127,13 @@ function CloseView( win, delayed )
 					currentMovable = movableWindows[ z ];
 					_ActivateWindow( currentMovable );
 					window.currentContext = false;
+					usedRecent = true;
 					break;
 				}
 			}
 		}
 		// Check the window context, if it exists
-		else if( window.currentContext )
+		if( window.currentContext )
 		{
 		    function handleContext()
 		    {
@@ -2196,7 +2197,7 @@ function CloseView( win, delayed )
 	        handleContext();
 		}
 		// Context end ---------------------------------------------------------
-		else
+		else if( !usedRecent )
 		{
 			// Activate latest activated view (not on mobile)
 			let nextActive = false;
