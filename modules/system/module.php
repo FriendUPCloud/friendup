@@ -449,7 +449,6 @@ if( isset( $args->command ) )
 
 				curl_close( $c );
 				
-				$Logger->log( 'result: ' . $r );
 				
 				if( isset( $args->args->diskpath ) )
 				{
