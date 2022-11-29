@@ -2119,6 +2119,7 @@ function CloseView( win, delayed )
 		{
 			let id = win.windowObject.recentLocation;
 			id = id.substr( 7, id.length - 7 );
+			let actSet = false;
 			for( let z in movableWindows )
 			{
 				if( movableWindows[ z ].windowObject && movableWindows[ z ].windowObject.getViewId() == id )
@@ -2126,14 +2127,18 @@ function CloseView( win, delayed )
 					currentMovable = movableWindows[ z ];
 					_ActivateWindow( currentMovable );
 					window.currentContext = false;
+					actSet = true;
 					break;
 				}
 			}
-			// Default
-			console.log( 'HALLO!' );
-			_DeactivateWindows();
-            showDashboard();
-            setTimeout( function(){ showDashboard(); }, 150 );
+			if( !actSet )
+			{
+				// Default
+				console.log( 'HALLO!' );
+				_DeactivateWindows();
+		        showDashboard();
+		        setTimeout( function(){ showDashboard(); }, 150 );
+	        }
 		}
 		// Check the window context, if it exists
 		if( window.currentContext )
