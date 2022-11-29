@@ -2134,7 +2134,6 @@ function CloseView( win, delayed )
 			if( !actSet )
 			{
 				// Default
-				console.log( 'HALLO!' );
 				_DeactivateWindows();
 		        showDashboard();
 		        setTimeout( function(){ showDashboard(); }, 150 );
