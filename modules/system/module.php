@@ -413,10 +413,16 @@ if( isset( $args->command ) )
 					$fields[$k] = $v;
 				}
 				
+				$Logger->log( 'proxyget  fields' . $fields );
+				if ( 0 < count( $fields ))
+				{
+					$Logger->log( 'proxyget  setting post things: ' . count( $fields ));
+					curl_setopt( $c, CURLOPT_POST, true );
+					curl_setopt( $c, CURLOPT_POSTFIELDS, http_build_query( $fields ) );
+				}
 				
-				curl_setopt( $c, CURLOPT_POST, true );
 				curl_setopt( $c, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
-				curl_setopt( $c, CURLOPT_POSTFIELDS, http_build_query( $fields ) );
+				
 				curl_setopt( $c, CURLOPT_RETURNTRANSFER, true );
 				curl_setopt( $c, CURLOPT_HTTPHEADER, array( 'Accept-charset: UTF-8' ) );
 				curl_setopt( $c, CURLOPT_ENCODING, 'UTF-8' );
