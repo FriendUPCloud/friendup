@@ -2133,7 +2133,7 @@ function CloseView( win, delayed )
 			}
 		}
 		// Check the window context, if it exists
-		if( window.currentContext )
+		if( !usedRecent && window.currentContext )
 		{
 		    function handleContext()
 		    {
@@ -2197,7 +2197,7 @@ function CloseView( win, delayed )
 	        handleContext();
 		}
 		// Context end ---------------------------------------------------------
-		else if( !usedRecent )
+		else
 		{
 			// Activate latest activated view (not on mobile)
 			let nextActive = false;
