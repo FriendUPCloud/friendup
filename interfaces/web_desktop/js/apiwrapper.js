@@ -1974,7 +1974,7 @@ function apiWrapper( event, force )
 					
 					if( msg.context )
 					{						
-						v.recentLocation = '';
+						v.recentLocation = 'viewId:' + msg.context;
 					}
 					else if( msg.applicationId )
 					{
