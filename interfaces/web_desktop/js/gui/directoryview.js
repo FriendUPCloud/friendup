@@ -4498,6 +4498,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	        width: 800,
 	        height: 800
 	    } );
+	    if( currentMovable )
+		    v.recentLocation = 'viewId:' + currentMovable.windowObject.getViewId();
 	    v.setContent( '<iframe id="pdf' + ( ++friendPdfIndex ) + '" src="/webclient/3rdparty/pdfjs/web/viewer.html?file=' + encodeURIComponent( getImageUrl( iconObject.Path, 'rb' ) ) + '" class="PDFView"></iframe>' );
 	    let c = ge( 'pdf' + friendPdfIndex );
 	    if( !c )
