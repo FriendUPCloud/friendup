@@ -890,6 +890,12 @@ function receiveEvent( event, queued )
 		return;
 	}
 	
+	// Register context for window calls
+	if( dataPacket.context )
+	{
+		window.windowContext = dataPacket.context;
+	}
+	
 	switch( dataPacket.command )
 	{	
 		// Update clipboard
@@ -2298,7 +2304,8 @@ function View( flags )
 	let msg = {
 		type:    'view',
 		data:    flags,
-		viewId: viewId
+		viewId: viewId,
+		context: window.windowContext
 	};
 	
 	if( Application.viewId )

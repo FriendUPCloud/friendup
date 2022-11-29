@@ -2113,6 +2113,32 @@ function CloseView( win, delayed )
 			div.appendChild( ele );
 		}
 		
+		// Context -------------------------------------------------------------
+		// Check the window recent location exists, and use it instead
+		if( win.windowObject && win.windowObject.recentLocation && win.windowObject.recentLocation.substr( 0, 7 ) == 'viewId:' )
+		{
+			let id = win.windowObject.recentLocation;
+			id = id.substr( 7, id.length - 7 );
+			let actSet = false;
+			for( let z in movableWindows )
+			{
+				if( movableWindows[ z ].windowObject && movableWindows[ z ].windowObject.getViewId() == id )
+				{
+					currentMovable = movableWindows[ z ];
+					_ActivateWindow( currentMovable );
+					window.currentContext = false;
+					actSet = true;
+					break;
+				}
+			}
+			if( !actSet )
+			{
+				// Default
+				_DeactivateWindows();
+		        showDashboard();
+		        setTimeout( function(){ showDashboard(); }, 150 );
+	        }
+		}
 		// Check the window context, if it exists
 		if( window.currentContext )
 		{
@@ -2177,20 +2203,7 @@ function CloseView( win, delayed )
 	        }
 	        handleContext();
 		}
-		/* OLD CODE for dashboard stuff 
-		if( !appId && win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
-		{
-			_DeactivateWindows();
-			showDashboard();
-			setTimeout( function(){ showDashboard(); }, 150 );
-		}
-		// Also do this with appid
-		else if( isFCDialog && appId && win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
-		{
-		    _DeactivateWindows();
-			showDashboard();
-			setTimeout( function(){ showDashboard(); }, 150 );
-		}*/
+		// Context end ---------------------------------------------------------
 		else
 		{
 			// Activate latest activated view (not on mobile)

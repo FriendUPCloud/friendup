@@ -3826,7 +3826,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 							    }
 							    else if( mt.executable.length )
 							    {
-								    return ExecuteApplication( mt.executable, obj.fileInfo.Path );
+							    	// Execute app using currentMovable as context
+								    return ExecuteApplication( mt.executable, obj.fileInfo.Path, false, false, { context: currentMovable.windowObject.getViewId() } );
 							    }
 							}
 						}
@@ -3834,7 +3835,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 					// Execute jsx!
 					if( ext == '.jsx' )
 					{
-						return ExecuteApplication( obj.fileInfo.Path );
+						// Execute jsx using currentMovable as context
+						return ExecuteApplication( obj.fileInfo.Path, false, false, false, { context: currentMovable.windowObject.getViewId() } );
 					}
 				}
 			}
@@ -4491,11 +4493,16 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	}
 	else if( iconObject.extension.toLowerCase() == 'pdf' )
 	{
+		let cm = currentMovable;
 	    let v = new View( {
 	        title: iconObject.Path,
 	        width: 800,
 	        height: 800
 	    } );
+	    v.onClose = function()
+	    {
+		    cm.windowObject.activate();
+	    }
 	    v.setContent( '<iframe id="pdf' + ( ++friendPdfIndex ) + '" src="/webclient/3rdparty/pdfjs/web/viewer.html?file=' + encodeURIComponent( getImageUrl( iconObject.Path, 'rb' ) ) + '" class="PDFView"></iframe>' );
 	    let c = ge( 'pdf' + friendPdfIndex );
 	    if( !c )
