@@ -623,7 +623,8 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					Workspace.updateTasks();
 					
 					// If we have a view context
-					if( ifr.context && ifr.context.substr( 0, 7 ) == 'viewId:' )
+					console.log( 'Do we have a context? ' + flags.context );
+					if( flags.context && flags.context.substr( 0, 7 ) == 'viewId:' )
 					{
 						let id = ifr.context.substr( 7, ifr.context.length - 7 );
 						for( let z in movableWindows )
