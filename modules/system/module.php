@@ -395,6 +395,7 @@ if( isset( $args->command ) )
 			if( function_exists( 'curl_init' ) )
 			{
 				// Make sure we're getting an url!
+				$Logger->log( 'proxyget ' . $args->args->url );
 				if( $args->args->url )
 				{
 					$str5 = substr( $args->args->url, 0, 5 );
@@ -411,6 +412,8 @@ if( isset( $args->command ) )
 					if( $k == 'url' ) continue;
 					$fields[$k] = $v;
 				}
+				
+				
 				curl_setopt( $c, CURLOPT_POST, true );
 				curl_setopt( $c, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 				curl_setopt( $c, CURLOPT_POSTFIELDS, http_build_query( $fields ) );
@@ -440,7 +443,7 @@ if( isset( $args->command ) )
 
 				curl_close( $c );
 				
-				
+				$Logger->log( 'result: ' . $r );
 				
 				if( isset( $args->args->diskpath ) )
 				{
@@ -449,7 +452,7 @@ if( isset( $args->command ) )
 						$f = new File( $args->args->diskpath );
 						if( $f->save( $r ) )
 						{
-							//$Logger->log( 'Saved to ' . $args->args->diskpath );
+							$Logger->log( 'Saved to ' . $args->args->diskpath );
 							die( 'ok<!--separate-->{"result":"1","message":"Saved","path":"' . $args->args->diskpath . '"}' );
 						}
 					}
