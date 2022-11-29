@@ -4493,6 +4493,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	}
 	else if( iconObject.extension.toLowerCase() == 'pdf' )
 	{
+		let c = currentMovable;
 	    let v = new View( {
 	        title: iconObject.Path,
 	        width: 800,
@@ -4500,7 +4501,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	    } );
 	    v.onClose = function()
 	    {
-		    currentMovable.windowObject.activate();
+		    c.windowObject.activate();
 	    }
 	    v.setContent( '<iframe id="pdf' + ( ++friendPdfIndex ) + '" src="/webclient/3rdparty/pdfjs/web/viewer.html?file=' + encodeURIComponent( getImageUrl( iconObject.Path, 'rb' ) ) + '" class="PDFView"></iframe>' );
 	    let c = ge( 'pdf' + friendPdfIndex );
