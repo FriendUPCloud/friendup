@@ -413,8 +413,8 @@ if( isset( $args->command ) )
 					$fields[$k] = $v;
 				}
 				
-				$Logger->log( 'proxyget  fields' . $fields );
-				if ( 0 < count( $fields ))
+				$Logger->log( 'proxyget  fields' . json_encode( $fields ));
+				if ( 1 < count( $fields ))
 				{
 					$Logger->log( 'proxyget  setting post things: ' . count( $fields ));
 					curl_setopt( $c, CURLOPT_POST, true );
