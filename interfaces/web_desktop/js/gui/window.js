@@ -2130,6 +2130,7 @@ function CloseView( win, delayed )
 				}
 			}
 			// Default
+			console.log( 'HALLO!' );
 			_DeactivateWindows();
             showDashboard();
             setTimeout( function(){ showDashboard(); }, 150 );
