@@ -529,6 +529,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			ifr.authId = conf.AuthID;
 			ifr.applicationNumber = _appNum++;
 			ifr.permissions = conf.Permissions;
+			ifr.context = msg.context ? msg.context : '';
 
 			// Quit the application
 			ifr.quit = function( level )
@@ -621,8 +622,22 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					Workspace.applications = out;
 					Workspace.updateTasks();
 					
+					// If we have a view context
+					if( ifr.context && ifr.context.substr( 0, 7 ) == 'viewId:' )
+					{
+						let id = ifr.context.substr( 7, ifr.context.length - 7 );
+						for( let z in movableWindows )
+						{
+							if( movableWindows[ z ].windowObject && movableWindows[ z ].windowObject.getViewId() == id )
+							{
+								currentMovable = movableWindows[ z ];
+								_ActivateWindow( movableWindows[ z ] );
+								break;
+							}
+						}
+					}
 					// If we have a dashboard
-					if( window.showDashboard )
+					else if( window.showDashboard )
 					    showDashboard();
 				}
 				// Tell the application to clean up first
