@@ -4286,6 +4286,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 // unique     = wheather to use a unique view or not
 // targetView = the view to reuse
 //
+let friendPdfIndex = 0;
 function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView, ocallback )
 {
 	if( !ocallback ) ocallback = false;
@@ -4479,8 +4480,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		iconObject.extension.toLowerCase() == 'jpeg' ||
 		iconObject.extension.toLowerCase() == 'jpg' ||
 		iconObject.extension.toLowerCase() == 'png' ||
-		iconObject.extension.toLowerCase() == 'gif' ||
-		iconObject.extension.toLowerCase() == 'pdf' 
+		iconObject.extension.toLowerCase() == 'gif'
 	)
 	{
 	    if( fileInfo.applicationId )
@@ -4488,6 +4488,25 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		    iconObject.applicationId = fileInfo.applicationId;
 		}
 		Friend.startImageViewer( iconObject, { parentView: currentMovable, recent: fromFolder ? false : 'dashboard' } );
+	}
+	else if( iconObject.extension.toLowerCase() == 'pdf' )
+	{
+	    let v = new View( {
+	        title: iconObject.Path,
+	        width: 800,
+	        height: 800
+	    } );
+	    v.setContent( '<iframe id="pdf' + ( ++friendPdfIndex ) + '" src="/webclient/3rdparty/pdfjs/web/viewer.html?file=' + encodeURIComponent( getImageUrl( iconObject.Path, 'rb' ) ) + '" class="PDFView"></iframe>' );
+	    let c = ge( 'pdf' + friendPdfIndex );
+	    if( !c )
+	    {
+	        return v.close();
+        }
+	    c.style.position = 'absolute';
+	    c.style.width = '100%';
+	    c.style.height = '100%';
+	    c.style.top = '0';
+	    c.style.left = '0';
 	}
 	// Run scripts in new shell
 	else if( iconObject.extension == 'run' )

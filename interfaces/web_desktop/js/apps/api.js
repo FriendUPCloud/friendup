@@ -3727,7 +3727,7 @@ function getImageUrl( path, mode )
 
 	let prt = 'authid=' + ( Application.authId ? Application.authId : '' );
 	if( Application.sessionId ) prt = 'sessionid=' + Application.sessionId;
-	let u = '/system.library/file/read?' + prt + '&path=' + path + '&mode=rs';
+	let u = '/system.library/file/read?' + prt + '&path=' + path + '&mode=' + mode;
 	return u;
 }
 // Alias
