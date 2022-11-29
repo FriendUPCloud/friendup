@@ -529,7 +529,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			ifr.authId = conf.AuthID;
 			ifr.applicationNumber = _appNum++;
 			ifr.permissions = conf.Permissions;
-			ifr.context = msg.context ? msg.context : '';
+			ifr.context = flags.context ? flags.context : '';
 
 			// Quit the application
 			ifr.quit = function( level )
