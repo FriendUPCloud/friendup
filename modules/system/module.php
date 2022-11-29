@@ -395,7 +395,7 @@ if( isset( $args->command ) )
 			if( function_exists( 'curl_init' ) )
 			{
 				// Make sure we're getting an url!
-				$Logger->log( 'proxyget ' . $args->args->url );
+				$Logger->log( 'proxyget: ' . json_encode( $args->args ));
 				if( $args->args->url )
 				{
 					$str5 = substr( $args->args->url, 0, 5 );
@@ -409,12 +409,16 @@ if( isset( $args->command ) )
 				$fields = [];
 				foreach( $args->args as $k=>$v )
 				{
-					if( $k == 'url' ) continue;
+					if ( $k == 'url' ) 
+						continue;
+					if ( $k == 'diskpath' )
+						continue;
+					
 					$fields[$k] = $v;
 				}
 				
-				$Logger->log( 'proxyget  fields' . json_encode( $fields ));
-				if ( 1 < count( $fields ))
+				$Logger->log( 'proxyget fields: ' . json_encode( $fields ));
+				if ( 0 < count( $fields ))
 				{
 					$Logger->log( 'proxyget  setting post things: ' . count( $fields ));
 					curl_setopt( $c, CURLOPT_POST, true );
