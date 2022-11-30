@@ -2128,6 +2128,7 @@ function CloseView( win, delayed )
 					_ActivateWindow( currentMovable );
 					window.currentContext = false;
 					actSet = true;
+					console.log( '1) Showing parent window' );
 					break;
 				}
 			}
@@ -2137,6 +2138,7 @@ function CloseView( win, delayed )
 				_DeactivateWindows();
 		        showDashboard();
 		        setTimeout( function(){ showDashboard(); }, 150 );
+		        console.log( '2) Deactivating and showing dash!!' );
 	        }
 		}
 		// Check the window context, if it exists
@@ -2144,6 +2146,7 @@ function CloseView( win, delayed )
 		{
 		    function handleContext()
 		    {
+		    	console.log( '3) Handling context' );
 		        switch( window.currentContext )
 		        {
 		            case 'dashboard':
@@ -2208,8 +2211,10 @@ function CloseView( win, delayed )
 		{
 			// Activate latest activated view (not on mobile)
 			let nextActive = false;
+			console.log( '4) Attempting other stuff' );
 			if( div.classList.contains( 'Active' ) || div.windowObject.getFlag( 'dialog' ) )
 			{
+				console.log( '4) Doing other stuff' );
 				if( Friend.GUI.view.viewHistory.length )
 				{
 					// Only activate last view in the same app
