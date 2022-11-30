@@ -2150,16 +2150,19 @@ function CloseView( win, delayed )
 		        switch( window.currentContext )
 		        {
 		            case 'dashboard':
+		            	console.log( '3a) Dashboard' );
 		                _DeactivateWindows();
 			            showDashboard();
 			            setTimeout( function(){ showDashboard(); }, 150 );
 			            break;
 		            case 'sidebar':
+		            	console.log( '3b) Sidebar' );
 		                _DeactivateWindows();
 		                hideDashboard();
                     	break;
                 	// We have a different thing for other contexts
                     default:
+                    	console.log( '3c) Some other thing: ', window.currentContext );
                         let appCheck = true;
                         // We got a context array ([ currentWindow, prevContext ])
                         if( typeof( window.currentContext ) == 'object' )
