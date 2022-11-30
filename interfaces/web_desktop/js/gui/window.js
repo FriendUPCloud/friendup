@@ -2167,7 +2167,7 @@ function CloseView( win, delayed )
                         // We got a context array ([ currentWindow, prevContext ])
                         if( typeof( window.currentContext ) == 'object' )
                         {
-                        	if( window.currentContext[0] && window.currentContext[0].tagName == 'DIV' && window.currentContext != currentMovable )
+                        	if( window.currentContext[0] && window.currentContext[0].tagName == 'DIV' && window.currentContext[0] != currentMovable )
                         	{
                         		currentMovable = window.currentContext[ 0 ];
                         		_ActivateWindow( window.currentContext[ 0 ] );
