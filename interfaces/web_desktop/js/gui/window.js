@@ -2180,6 +2180,7 @@ function CloseView( win, delayed )
                         		if( typeof( window.currentContext[ 1 ] ) != 'undefined' )
                         		{
 				                    window.currentContext = window.currentContext[ 1 ];
+				                    console.log( '3c 1) Ok, handling new context..', window.currentContext );
 				                    return handleContext();
 			                    }
 	                        }
