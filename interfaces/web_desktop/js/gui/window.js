@@ -2128,7 +2128,6 @@ function CloseView( win, delayed )
 					_ActivateWindow( currentMovable );
 					window.currentContext = false;
 					actSet = true;
-					console.log( '1) Showing parent window' );
 					break;
 				}
 			}
@@ -2138,7 +2137,6 @@ function CloseView( win, delayed )
 				_DeactivateWindows();
 		        showDashboard();
 		        setTimeout( function(){ showDashboard(); }, 150 );
-		        console.log( '2) Deactivating and showing dash!!' );
 	        }
 		}
 		// Check the window context, if it exists
@@ -2146,23 +2144,19 @@ function CloseView( win, delayed )
 		{
 		    function handleContext()
 		    {
-		    	console.log( '3) Handling context' );
 		        switch( window.currentContext )
 		        {
 		            case 'dashboard':
-		            	console.log( '3a) Dashboard' );
 		                _DeactivateWindows();
 			            showDashboard();
 			            setTimeout( function(){ showDashboard(); }, 150 );
 			            break;
 		            case 'sidebar':
-		            	console.log( '3b) Sidebar' );
 		                _DeactivateWindows();
 		                hideDashboard();
                     	break;
                 	// We have a different thing for other contexts
                     default:
-                    	console.log( '3c) Some other thing: ', window.currentContext );
                         let appCheck = true;
                         // We got a context array ([ currentWindow, prevContext ])
                         if( typeof( window.currentContext ) == 'object' )
@@ -2180,7 +2174,6 @@ function CloseView( win, delayed )
                         		if( typeof( window.currentContext[ 1 ] ) != 'undefined' )
                         		{
 				                    window.currentContext = window.currentContext[ 1 ];
-				                    console.log( '3c 1) Ok, handling new context..', window.currentContext );
 				                    return handleContext();
 			                    }
 	                        }
