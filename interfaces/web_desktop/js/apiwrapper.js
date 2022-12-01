@@ -3885,6 +3885,14 @@ function apiWrapper( event, force )
 									runWrapperCallback( nmsg.callback, response );
 								}
 							}
+							
+							// Add flags
+							let flags = false;
+							if( msg.flags )
+							{
+								flags = msg.flags;
+							}
+							
 							// Special case
 							if( msg.path && msg.path.split( ':' )[0] == 'System' )
 							{
@@ -3896,7 +3904,7 @@ function apiWrapper( event, force )
 							}
 							else
 							{
-								ExecuteApplication( msg.executable, msg.args, cb );
+								ExecuteApplication( msg.executable, msg.args, cb, false, flags );
 							}
 							msg = null;
 						}
