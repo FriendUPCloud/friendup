@@ -1230,6 +1230,7 @@ function _ActivateWindow( div, nopoll, e )
 	if( div && div.windowObject )
 	{
 	    window.currentContext = [ div, window.currentContext ];
+	    console.log( 'Adding this to current context stack: ', div );
 	}
 	
 	// Remove dialog flag only if it's not a dialog
