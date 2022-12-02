@@ -496,6 +496,7 @@ function apiWrapper( event, force )
 								if ( !response )
 									return
 								
+								fileInfo.flags = msg.flags
 								if ( 'File' == fileInfo.Type )
 									Friend.DOS.openWindowByFilename( fileInfo )
 								if ( 'Directory' == fileInfo.Type )
@@ -511,6 +512,7 @@ function apiWrapper( event, force )
 					case 'openWindowByFilename':
 						if( msg.args )
 						{
+							console.log( 'openWindowByFilename', msg )
 						    let appId = false;
 						    if( currentMovable && currentMovable.windowObject && currentMovable.windowObject.applicationId )
 						    {
