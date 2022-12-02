@@ -1170,6 +1170,7 @@ function _ActivateDialogWindow( div, e )
 		console.log( '_ActivateDialogWindow: This is not a dockable view!' );
 		console.log( '_ActivateDialogWindow: It is: ' + div.windowObject.getFlag( 'title' ) );
 		document.body.classList.add( 'Dialog' );
+		div.windowObject.activate();
 		currentMovable = div;
 		if( e && e.button == 0 )
 		{
@@ -2000,7 +2001,8 @@ function CloseView( win, delayed )
 				qm.classList.remove( 'Showing' );
 				ge( 'DoorsScreen' ).appendChild( qm );
 			}
-			document.body.classList.remove( 'Dialog' );
+			if( win == currentMovable )
+				document.body.classList.remove( 'Dialog' );
 		}
 		
 		// Unassign this
