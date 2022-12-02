@@ -12082,7 +12082,7 @@ function loadApplicationBasics( callback )
 	function translate( num )
 	{
 		let trans = [
-			'transform : '
+			'transform : ',
 			'translate( 0px, -',
 			num,
 			'px)',

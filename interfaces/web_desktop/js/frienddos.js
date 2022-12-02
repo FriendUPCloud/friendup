@@ -4713,6 +4713,7 @@ window.FriendDOS =
 			Path         : ( fileInfo.Path         ? fileInfo.Path         : ''     ),
 			Type         : ( fileInfo.Type         ? fileInfo.Type         : 'File' ),
 			downloadhref : ( fileInfo.downloadhref ? fileInfo.downloadhref : ''     ),
+			flags        : ( fileInfo.flags        ? fileInfo.flags        : null   ),
 			applicationId: appId
 		};
 		
