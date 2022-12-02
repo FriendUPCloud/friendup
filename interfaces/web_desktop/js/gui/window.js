@@ -1167,10 +1167,12 @@ function _ActivateDialogWindow( div, e )
 	// TODO: Also for touch!
 	if( !div.windowObject.flags.dockable )
 	{
+		console.log( '_ActivateDialogWindow: This is not a dockable view!' );
 		document.body.classList.add( 'Dialog' );
 		currentMovable = div;
 		if( e && e.button == 0 )
 		{
+			console.log( '_ActivateDialogWindow: Was not clicked!' );
 			if( !div.windowObject.applicationId && !div.classList.contains( 'IconWindow' ) )
 			{
 				// If we have active windows that already shows, don't deactivate them for the dialog
@@ -1189,11 +1191,15 @@ function _ActivateDialogWindow( div, e )
 		}
 		else
 		{
+			console.log( '_ActivateDialogWindow: It was clicked!' );
 			if( window.hideDashboard )
 				window.hideDashboard();
 		}
 		if( window.Workspace && window.Workspace.showQuickMenu )
+		{
+			console.log( '_ActivateDialogWindow: Showing quick menu!' );
 			Workspace.showQuickMenu();
+		}
 	}
 }
 
@@ -1215,7 +1221,14 @@ function _ActivateWindow( div, nopoll, e )
         }
     }
     
-    // Dialogs here are not activated
+    // Add div if it hasn't been added already
+	if( div && div.windowObject && ( window.currentContext && ( typeof( window.currentContext ) == 'string' || div != window.currentContext[ 0 ] ) ) )
+	{
+	    window.currentContext = [ div, window.currentContext ];
+	    console.log( 'Adding this to current context stack: ', div );
+	}
+	
+	// Dialogs here are not activated
     if( 
     	window.Workspace && Workspace.dashboard && div.windowObject && (
     		div.windowObject.flags[ 'dialog' ] ||
@@ -1225,11 +1238,6 @@ function _ActivateWindow( div, nopoll, e )
     )
     {
     	return _ActivateDialogWindow( div );
-	}
-	
-	if( div && div.windowObject )
-	{
-	    window.currentContext = [ div, window.currentContext ];
 	}
 	
 	// Remove dialog flag only if it's not a dialog
@@ -1960,6 +1968,7 @@ function HasClassname( div, classname )
 // Could one day be moved to the View class...
 function CloseView( win, delayed )
 {
+	console.log( '[CloseView] ...' ); console.trace();
 	if( !win && window.currentMovable )
 		win = window.currentMovable;
 	
@@ -2126,7 +2135,9 @@ function CloseView( win, delayed )
 				{
 					currentMovable = movableWindows[ z ];
 					_ActivateWindow( currentMovable );
-					window.currentContext = false;
+					if( typeof( window.currentContext ) == 'object' && window.currentContext.length > 1 )
+						window.currentContext = window.currentContext[ 1 ];
+					else window.currentContext = false;
 					actSet = true;
 					break;
 				}
@@ -2142,8 +2153,10 @@ function CloseView( win, delayed )
 		// Check the window context, if it exists
 		if( window.currentContext )
 		{
-		    function handleContext()
+		    function handleContext( depth )
 		    {
+		    	if( !depth ) depth = 1;
+		    	console.log( '1. Handling context (depth ' + depth + ')' );
 		        switch( window.currentContext )
 		        {
 		            case 'dashboard':
@@ -2161,8 +2174,10 @@ function CloseView( win, delayed )
                         // We got a context array ([ currentWindow, prevContext ])
                         if( typeof( window.currentContext ) == 'object' )
                         {
-                        	if( window.currentContext[0] && window.currentContext[0].tagName == 'DIV' )
+                        	console.log( '3. Is a context array' );
+                        	if( window.currentContext[0] && window.currentContext[0].tagName == 'DIV' && window.currentContext[0] != currentMovable )
                         	{
+                        		console.log( '4a. Is a window' );
                         		currentMovable = window.currentContext[ 0 ];
                         		_ActivateWindow( window.currentContext[ 0 ] );
                         		if( window.currentContext[ 0 ].content && window.currentContext[ 0 ].content.refresh )
@@ -2171,15 +2186,19 @@ function CloseView( win, delayed )
                         	}
                         	else if( window.currentContext.length > 1 )
                         	{
+                        		console.log( '4b. Context has length' );
                         		if( typeof( window.currentContext[ 1 ] ) != 'undefined' )
                         		{
+                        			console.log( '5. Roll in context [1] and try again..' );
+                        			console.log( '5: -> ( ' + window.currentContext.length + ' ) -> ', window.currentContext );
 				                    window.currentContext = window.currentContext[ 1 ];
-				                    return handleContext();
+				                    return handleContext( depth + 1 );
 			                    }
 	                        }
                         }
                         if( appId && appCheck )
                         {
+                        	console.log( '6. We have app id.' );
                             for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 						    {
 							    if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
@@ -2187,6 +2206,7 @@ function CloseView( win, delayed )
 								    // Only activate non minimized views
 								    if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 								    {
+									    console.log( '7. We found the window' );
 									    let vh = Friend.GUI.view.viewHistory[ a ];
 									    currentMovable = vh;
 									    _ActivateWindow( vh );
@@ -2208,6 +2228,7 @@ function CloseView( win, delayed )
 		{
 			// Activate latest activated view (not on mobile)
 			let nextActive = false;
+			console.log( 'A) Attempting other stuff' );
 			if( div.classList.contains( 'Active' ) || div.windowObject.getFlag( 'dialog' ) )
 			{
 				if( Friend.GUI.view.viewHistory.length )
