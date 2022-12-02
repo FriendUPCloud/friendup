@@ -1168,6 +1168,7 @@ function _ActivateDialogWindow( div, e )
 	if( !div.windowObject.flags.dockable )
 	{
 		console.log( '_ActivateDialogWindow: This is not a dockable view!' );
+		console.log( '_ActivateDialogWindow: It is: ' + div.windowObject.getFlag( 'title' ) );
 		document.body.classList.add( 'Dialog' );
 		currentMovable = div;
 		if( e && e.button == 0 )
