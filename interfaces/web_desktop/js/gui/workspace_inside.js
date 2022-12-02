@@ -5674,6 +5674,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					} );
 				}
 
+				w.onClose = function()
+				{
+					Workspace.renameWindow = false;
+				}
+
 				Workspace.renameWindow = w;
 
 				if( window.isMobile )
@@ -6229,7 +6234,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							win.content.refresh();
 						}
 						if( Workspace.renameWindow )
+						{
 							Workspace.renameWindow.close();
+							Workspace.renameWindow = false;
+						}
 					}
 				);
 			}
