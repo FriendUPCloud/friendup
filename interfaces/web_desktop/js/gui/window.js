@@ -2164,7 +2164,7 @@ function CloseView( win, delayed )
                 	// We have a different thing for other contexts
                     default:
                         let appCheck = true;
-                        console.log( '2. Closing thingie.' );
+                        console.log( '2. Closing thingie; ', win );
                         // We got a context array ([ currentWindow, prevContext ])
                         if( typeof( window.currentContext ) == 'object' )
                         {
