@@ -1228,7 +1228,7 @@ function _ActivateWindow( div, nopoll, e )
 	}
 	
 	// Add div if it hasn't been added already
-	if( div && div.windowObject && ( typeof( window.currentContext ) == 'string' || div != window.currentContext[ 0 ] )
+	if( div && div.windowObject && ( typeof( window.currentContext ) == 'string' || div != window.currentContext[ 0 ] ) )
 	{
 	    window.currentContext = [ div, window.currentContext ];
 	    console.log( 'Adding this to current context stack: ', div );
