@@ -2127,7 +2127,9 @@ function CloseView( win, delayed )
 				{
 					currentMovable = movableWindows[ z ];
 					_ActivateWindow( currentMovable );
-					window.currentContext = false;
+					if( typeof( window.currentContext ) == 'object' && window.currentContext.length > 1 )
+						window.currentContext = window.currentContext[ 1 ];
+					else window.currentContext = false;
 					actSet = true;
 					break;
 				}
