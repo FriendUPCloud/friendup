@@ -5650,9 +5650,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					Workspace.renameWindow.close();
 					Workspace.renameWindow = false;
-				}
-				
-				
+				}				
 
 				let w;
 				if( window.isMobile || Workspace.isSingleTask )
@@ -5674,6 +5672,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						resize: false,
 						dialog: true
 					} );
+					w.onClose = function()
+					{
+						Workspace.renameWindow = false;
+					}
 				}
 
 				Workspace.renameWindow = w;
