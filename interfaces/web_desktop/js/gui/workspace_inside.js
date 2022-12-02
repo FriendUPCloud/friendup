@@ -12088,7 +12088,7 @@ function loadApplicationBasics( callback )
 		]
 		
 		if ( isIos())
-			trans.push( ' scale(1.6)' )
+			trans.push( ' scale(1.3) !important' )
 		
 		trans = trans.join( '')
 		console.log( 'translate', {
