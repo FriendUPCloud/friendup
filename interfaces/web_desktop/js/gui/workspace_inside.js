@@ -12082,6 +12082,7 @@ function loadApplicationBasics( callback )
 	function translate( num )
 	{
 		let trans = [
+			'transform : '
 			'translate( 0px, -',
 			num,
 			'px)',
@@ -12098,7 +12099,8 @@ function loadApplicationBasics( callback )
 			webkit  : ( null != document.body.style[ 'WebkitTransform' ]),
 		})
 		//document.body.classList.toggle( 'Inside', false )
-		document.body.style[ 'WebkitTransform' ] = trans
+		//document.body.style[ 'WebkitTransform' ] = trans
+		document.body.setAttribute( 'style', trans )
 		
 		/*
 		const prefixes = [ 'Webkit' ]
