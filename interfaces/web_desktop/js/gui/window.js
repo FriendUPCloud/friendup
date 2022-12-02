@@ -1215,7 +1215,14 @@ function _ActivateWindow( div, nopoll, e )
         }
     }
     
-    // Dialogs here are not activated
+    // Add div if it hasn't been added already
+	if( div && div.windowObject && ( window.currentContext && ( typeof( window.currentContext ) == 'string' || div != window.currentContext[ 0 ] ) ) )
+	{
+	    window.currentContext = [ div, window.currentContext ];
+	    console.log( 'Adding this to current context stack: ', div );
+	}
+	
+	// Dialogs here are not activated
     if( 
     	window.Workspace && Workspace.dashboard && div.windowObject && (
     		div.windowObject.flags[ 'dialog' ] ||
@@ -1225,13 +1232,6 @@ function _ActivateWindow( div, nopoll, e )
     )
     {
     	return _ActivateDialogWindow( div );
-	}
-	
-	// Add div if it hasn't been added already
-	if( div && div.windowObject && ( window.currentContext && ( typeof( window.currentContext ) == 'string' || div != window.currentContext[ 0 ] ) ) )
-	{
-	    window.currentContext = [ div, window.currentContext ];
-	    console.log( 'Adding this to current context stack: ', div );
 	}
 	
 	// Remove dialog flag only if it's not a dialog
@@ -2164,7 +2164,6 @@ function CloseView( win, delayed )
                 	// We have a different thing for other contexts
                     default:
                         let appCheck = true;
-                        console.log( '2. Closing thingie; ', win );
                         // We got a context array ([ currentWindow, prevContext ])
                         if( typeof( window.currentContext ) == 'object' )
                         {
