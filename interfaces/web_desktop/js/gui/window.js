@@ -2165,6 +2165,7 @@ function CloseView( win, delayed )
 				    switch( window.currentContext )
 				    {
 				        case 'dashboard':
+				        	console.log( 'Context is dashboard!', currentMovable );
 				            _DeactivateWindows();
 					        showDashboard();
 					        setTimeout( function(){ showDashboard(); }, 150 );
