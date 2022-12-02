@@ -2184,6 +2184,7 @@ function CloseView( win, delayed )
                         		if( typeof( window.currentContext[ 1 ] ) != 'undefined' )
                         		{
                         			console.log( '5. Roll in context [1] and try again..' );
+                        			console.log( '5: -> ( ' + window.currentContext.length + ' ) -> ', window.currentContext );
 				                    window.currentContext = window.currentContext[ 1 ];
 				                    return handleContext( depth + 1 );
 			                    }
