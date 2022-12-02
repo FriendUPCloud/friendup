@@ -1227,7 +1227,8 @@ function _ActivateWindow( div, nopoll, e )
     	return _ActivateDialogWindow( div );
 	}
 	
-	if( div && div.windowObject )
+	// Add div if it hasn't been added already
+	if( div && div.windowObject && div != window.currentContext )
 	{
 	    window.currentContext = [ div, window.currentContext ];
 	    console.log( 'Adding this to current context stack: ', div );
