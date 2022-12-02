@@ -1167,10 +1167,12 @@ function _ActivateDialogWindow( div, e )
 	// TODO: Also for touch!
 	if( !div.windowObject.flags.dockable )
 	{
+		console.log( '_ActivateDialogWindow: This is not a dockable view!' );
 		document.body.classList.add( 'Dialog' );
 		currentMovable = div;
 		if( e && e.button == 0 )
 		{
+			console.log( '_ActivateDialogWindow: Was not clicked!' );
 			if( !div.windowObject.applicationId && !div.classList.contains( 'IconWindow' ) )
 			{
 				// If we have active windows that already shows, don't deactivate them for the dialog
@@ -1193,7 +1195,9 @@ function _ActivateDialogWindow( div, e )
 				window.hideDashboard();
 		}
 		if( window.Workspace && window.Workspace.showQuickMenu )
+		{
 			Workspace.showQuickMenu();
+		}
 	}
 }
 
