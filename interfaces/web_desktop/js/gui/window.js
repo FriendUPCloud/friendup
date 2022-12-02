@@ -1970,12 +1970,6 @@ function HasClassname( div, classname )
 // Could one day be moved to the View class...
 function CloseView( win, delayed )
 {
-	if( window.closingDashboardWindowTimeo )
-	{
-		clearTimeout( window.closingDashboardWindowTimeo );
-		delete window.closingDashboardWindowTimeo;
-	}
-	
 	console.log( '[CloseView] ...' ); console.trace();
 	if( !win && window.currentMovable )
 		win = window.currentMovable;
@@ -2166,11 +2160,6 @@ function CloseView( win, delayed )
 			{
 				function handleContext( depth )
 				{
-					if( window.closingDashboardWindowTimeo )
-					{
-						clearTimeout( window.closingDashboardWindowTimeo );
-						delete window.closingDashboardWindowTimeo;
-					}
 					if( !depth ) depth = 1;
 					console.log( '1. Handling context (depth ' + depth + ')' );
 				    switch( window.currentContext )
@@ -2179,7 +2168,6 @@ function CloseView( win, delayed )
 				        	console.log( 'Context is dashboard!', currentMovable );
 				            _DeactivateWindows();
 					        showDashboard();
-					        window.closingDashboardWindowTimeo = setTimeout( function(){ showDashboard(); }, 150 );
 					        break;
 				        case 'sidebar':
 				            _DeactivateWindows();
