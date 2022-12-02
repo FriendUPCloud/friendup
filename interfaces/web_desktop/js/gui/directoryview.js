@@ -5071,10 +5071,12 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	}
 	else if ( fileInfo.MetaType == 'File' )
 	{
+		console.log( 'File', fileInfo )
 		if( fileInfo.Type.toLowerCase() == 'executable' )
 		{
 			ExecuteApplication( fileInfo.fileName ? fileInfo.fileName :
-				( fileInfo.Filename ? fileInfo.Filename : fileInfo.Title ) );
+				( fileInfo.Filename ? fileInfo.Filename : fileInfo.Title ),
+				null, null, null, fileInfo.flags ? fileInfo.flags : null );
 		}
 		else
 		{
@@ -5098,7 +5100,13 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 						    }
 						    else if( mt.executable.length )
 						    {
-							    return ExecuteApplication( mt.executable, fileInfo.Path );
+						    	console.log( 'executeable mt', mt )
+							    return ExecuteApplication( 
+							    	mt.executable, 
+							    	fileInfo.Path,
+							    	null, null,
+							    	fileInfo.flags 
+							    );
 						    }
 						}
 					}
@@ -5116,9 +5124,15 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 				}
 				catch( e ){};
 		
+		        console.log( 'mime check for', [ fileInfo, js ])
 				if( me == 'ok' && js )
 				{
-					ExecuteApplication( js.executable, fileInfo.Path );
+					ExecuteApplication( 
+						js.executable,
+						fileInfo.Path,
+						null, null,
+						fileInfo.flags
+					);
 				}
 				else
 				{
