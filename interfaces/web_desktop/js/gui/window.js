@@ -1191,11 +1191,13 @@ function _ActivateDialogWindow( div, e )
 		}
 		else
 		{
+			console.log( '_ActivateDialogWindow: It was clicked!' );
 			if( window.hideDashboard )
 				window.hideDashboard();
 		}
 		if( window.Workspace && window.Workspace.showQuickMenu )
 		{
+			console.log( '_ActivateDialogWindow: Showing quick menu!' );
 			Workspace.showQuickMenu();
 		}
 	}
