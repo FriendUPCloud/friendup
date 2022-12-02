@@ -5672,10 +5672,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						resize: false,
 						dialog: true
 					} );
-					w.onClose = function()
-					{
-						Workspace.renameWindow = false;
-					}
 				}
 
 				Workspace.renameWindow = w;
@@ -5743,6 +5739,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					clb.onclick = function()
 					{
 						w.close();
+						Workspace.renameWindow = false;
 					}
 				}
 				inp.select();
@@ -6189,7 +6186,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									win.content.refresh();
 								}
 								if( Workspace.renameWindow )
+								{
 									Workspace.renameWindow.close();
+									Workspace.renameWindow = false;
+								}
 							} 
 						);
 					} 
@@ -6199,7 +6199,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				Notify( { title: i18n( 'i18n_cannotRename' ), text: i18n( 'i18n_noWritePermission' ) } );
 				if( Workspace.renameWindow )
+				{
 					Workspace.renameWindow.close();
+					Workspace.renameWindow = false;
+				}
 			}
 			return;
 		}
