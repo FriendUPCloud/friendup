@@ -4643,7 +4643,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			'memorize'  : true,
 			'id'        : id,
 			'volume'    : isVolume,
-			'context'   : ,
 			'clickableTitle': true
 		} );
 		
