@@ -4654,6 +4654,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		    {
 		        window.currentContext = curr.getViewId();
         		w.recentLocation = 'viewId:' + window.currentContext;
+        		console.log( 'Doing this: ' + w.recentLocation );
 		    }
 		}
 		
