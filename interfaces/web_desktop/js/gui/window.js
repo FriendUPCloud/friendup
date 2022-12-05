@@ -2129,6 +2129,7 @@ function CloseView( win, delayed )
 		// Check the window recent location exists, and use it instead
 		if( currentMovable == win )
 		{
+		    console.log( 'Checking for recent thingie: ', win.windowObject.recentLocation );
 			if( win.windowObject && win.windowObject.recentLocation && win.windowObject.recentLocation.substr( 0, 7 ) == 'viewId:' )
 			{
 				console.log( 'This window has a recent location..' );
