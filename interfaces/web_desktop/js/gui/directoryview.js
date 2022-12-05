@@ -4613,6 +4613,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		
 		// Reuse or not?
 		let w;
+		let curr = window.currentMovable ? currentMovable.windowObject : false;
 		if( targetView )
 		{
 			w = targetView.windowObject;
@@ -4649,9 +4650,11 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		// View ID in context sets recent location
 		if( fileInfo.flags && fileInfo.flags.context )
 		{
-		    console.log( 'SETTING RECENT LOCATION: ' + fileInfo.flags.context );
-		    window.currentContext = fileInfo.flags.context;
-    		w.recentLocation = 'viewId:' + fileInfo.flags.context;
+		    if( fileInfo.flags.context == '$CURRENTVIEWID' && curr )
+		    {
+		        window.currentContext = curr.getViewId();
+        		w.recentLocation = 'viewId:' + window.currentContext;
+		    }
 		}
 		
 		if( fileInfo.applicationId )
