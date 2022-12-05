@@ -4653,8 +4653,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		    if( fileInfo.flags.context == '$CURRENTVIEWID' && curr )
 		    {
 		        window.currentContext = curr.getViewId();
-        		w.recentLocation = 'viewId:' + window.currentContext;
-        		console.log( 'Doing this: ' + w.recentLocation );
+        		//w.recentLocation = 'viewId:' + window.currentContext;
+        		console.log( 'Doing this: ' + window.currentContext );
 		    }
 		}
 		
