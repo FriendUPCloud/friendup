@@ -4641,6 +4641,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			'memorize'  : true,
 			'id'        : id,
 			'volume'    : isVolume,
+			'context'   : ( fileInfo.flags && fileInfo.flags.context ) ? fileInfo.flags.context : false,
 			'clickableTitle': true
 		} );
 		
