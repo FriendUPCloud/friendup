@@ -4643,9 +4643,15 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			'memorize'  : true,
 			'id'        : id,
 			'volume'    : isVolume,
-			'context'   : ( fileInfo.flags && fileInfo.flags.context ) ? fileInfo.flags.context : false,
+			'context'   : ,
 			'clickableTitle': true
 		} );
+		
+		// View ID in context sets recent location
+		if( fileInfo.flags && fileInfo.flags.context )
+		{
+    		w.recentLocation = 'viewId:' + fileInfo.flags.context;
+		}
 		
 		if( fileInfo.applicationId )
 		{
