@@ -2127,8 +2127,6 @@ function CloseView( win, delayed )
 		
 		// Context -------------------------------------------------------------
 		// Check the window recent location exists, and use it instead
-		console.log( 'Current?', currentMovable );
-		console.log( 'Window?', win );
 		if( ( currentMovable && currentMovable == win ) || ( !currentMovable && win ) )
 		{
 		    console.log( 'Checking for recent thingie: ', win.windowObject.recentLocation );
