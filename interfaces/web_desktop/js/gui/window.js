@@ -2131,8 +2131,10 @@ function CloseView( win, delayed )
 		{
 			if( win.windowObject && win.windowObject.recentLocation && win.windowObject.recentLocation.substr( 0, 7 ) == 'viewId:' )
 			{
+				console.log( 'This window has a recent location..' );
 				let id = win.windowObject.recentLocation;
 				id = id.substr( 7, id.length - 7 );
+				console.log( 'This is the ID of that window: ' + id );
 				let actSet = false;
 				for( let z in movableWindows )
 				{
