@@ -496,12 +496,13 @@ function apiWrapper( event, force )
 								if ( !response )
 									return
 								
-								fileInfo.flags = msg.flags;
 								
-								if( flags.context && flags.context == '$CURRENTVIEWID' )
+								if( msg.flags.context && msg.flags.context == '$CURRENTVIEWID' )
 								{
-								    flags.context = currentMovable.windowObject.getViewId();
+								    msg.flags.context = currentMovable.windowObject.getViewId();
 								}
+								
+								fileInfo.flags = msg.flags;
 								
 								if ( 'File' == fileInfo.Type )
 									Friend.DOS.openWindowByFilename( fileInfo )
