@@ -4490,7 +4490,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		{
 		    iconObject.applicationId = fileInfo.applicationId;
 		}
-		
+		console.log( "starting viewer" );
 		Friend.startImageViewer( iconObject, { parentView: currentMovable, recent: fromFolder ? false : 'dashboard' } );
 	}
 	else if( iconObject.extension.toLowerCase() == 'pdf' )
@@ -5533,8 +5533,6 @@ Friend.startImageViewer = function( iconObject, extra )
 		memorize         : true,
 		fullscreenenabled: true
 	} );
-	
-	console.log( 'tesintg image v', currentMovable );
 	
 	if( iconObject.applicationId )
 	{
