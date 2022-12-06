@@ -72,6 +72,8 @@ void SASManagerDelete( SASManager *asm )
  */
 int SASManagerRegisterSession( SASManager *sasm, BufString *resp, FULONG id )
 {
+	DEBUG("[SASManagerRegisterSession] ID %ld\n", id );
+	
 	if( FRIEND_MUTEX_LOCK( &(sasm->sasm_Mutex) ) == 0 )
 	{
 		SystemBase *sb = (SystemBase *)sasm->sasm_SB;
@@ -92,7 +94,7 @@ int SASManagerRegisterSession( SASManager *sasm, BufString *resp, FULONG id )
 		}
 		else
 		{
-			snprintf( where, sizeof( where ), "ID = (SELECT ServerID FROM SASSession where ID=%ld )", id );
+			snprintf( where, sizeof( where ), "ID = (SELECT ServerID FROM FSASSession where ID=%ld )", id );
 		}
 	
 		SASServer *server = NULL;
@@ -109,32 +111,41 @@ int SASManagerRegisterSession( SASManager *sasm, BufString *resp, FULONG id )
 				
 				if( id == 0 )
 				{
+					DEBUG("[SASManagerRegisterSession] we have to create new sesson\n");
 					nsession = SASSessionNew();
 				}
 				else
 				{
 					snprintf( where, sizeof( where ), "ID=%ld", id );
 					nsession = lsqllib->Load( lsqllib, FSASSessionDesc, where, &entries );
+					DEBUG("[SASManagerRegisterSession] session exist, load from DB %ld ptr %p\n", id, nsession );
 				}
 				
 				if( nsession != NULL )
 				{
 					// assign server to SAS + set creation time timestamp
-					nsession->ss_ServerID = server->sass_ID;
-					nsession->ss_CreationTime = time( NULL );
+					if( id == 0 )
+					{
+						nsession->ss_ServerID = server->sass_ID;
+						nsession->ss_CreationTime = time( NULL );
 					
-					lsqllib->Save( lsqllib, FSASSessionDesc, nsession );
+						lsqllib->Save( lsqllib, FSASSessionDesc, nsession );
+					}
 					
-					DEBUG("Save called\n");
+					DEBUG("[SASManagerRegisterSession] Save called\n");
 					
 					if( resp != NULL )
 					{
 						char tmp[ 256 ];
-						int len = snprintf( tmp, sizeof(tmp), "'server':'%s','sasid':%ld", server->sass_IP, nsession->ss_ID );
+						int len = snprintf( tmp, sizeof(tmp), "\"server\":\"%s\",\"sasid\":%ld", server->sass_IP, nsession->ss_ID );
 						
 						BufStringAddSize( resp, tmp, len );
 					}
 				}
+			}
+			else
+			{
+				DEBUG("[SASManagerRegisterSession] Cannot load session with id: %d\n", id );
 			}
 		
 			sb->LibrarySQLDrop( sb, lsqllib );

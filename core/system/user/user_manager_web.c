@@ -2158,6 +2158,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			userID = strtol( (char *)el->hme_Data, &end, 0 );
 		}
 		
+		DEBUG("[usernmanagerweb]: msg %s\n", msg );
+		
 		BufString *bs = BufStringNew();
 		
 		// we are going through users and their sessions

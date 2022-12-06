@@ -105,7 +105,7 @@ Http* SASWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *
 		
 		HashmapElement *el;
 		el = HashmapGet( request->http_ParsedPostContent, "id" );
-		if( el == NULL ) el = HashmapGet( request->http_Query, "to" );
+		if( el == NULL ) el = HashmapGet( request->http_Query, "id" );
 		if( el != NULL )
 		{
 			char *end;
