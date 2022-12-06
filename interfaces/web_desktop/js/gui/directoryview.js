@@ -4613,6 +4613,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		
 		// Reuse or not?
 		let w;
+		let curr = window.currentMovable ? currentMovable.windowObject : false;
 		if( targetView )
 		{
 			w = targetView.windowObject;
@@ -4645,6 +4646,17 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			'volume'    : isVolume,
 			'clickableTitle': true
 		} );
+		
+		// View ID in context sets recent location
+		if( fileInfo.flags && fileInfo.flags.context )
+		{
+		    if( fileInfo.flags.context == '$CURRENTVIEWID' && curr )
+		    {
+		        window.currentContext = false;
+        		w.recentLocation = 'viewId:' + curr.getViewId();
+        		console.log( 'Doing this now' );
+		    }
+		}
 		
 		if( fileInfo.applicationId )
 		{
