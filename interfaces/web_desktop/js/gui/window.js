@@ -1227,8 +1227,6 @@ function _ActivateWindow( div, nopoll, e )
 	if( div && div.windowObject && ( window.currentContext && ( typeof( window.currentContext ) == 'string' || div != window.currentContext[ 0 ] ) ) )
 	{
 	    window.currentContext = [ div, window.currentContext ];
-	    console.trace();
-	    console.log( 'Adding this to current context stack: ', div );
 	}
 	
 	// Dialogs here are not activated

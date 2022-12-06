@@ -4319,7 +4319,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		};
 	}
 	
-	//console.log('OpenWindowByFileinfo fileInfo is ....... [] ',iconObject);
+	console.log('OpenWindowByFileinfo fileInfo is ....... [] ',iconObject);
 	if( fileInfo.MetaType == 'ExecutableShortcut' )
 	{
 		ExecuteApplication( fileInfo.Filename, false, ocallback );
