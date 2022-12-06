@@ -395,7 +395,6 @@ if( isset( $args->command ) )
 			if( function_exists( 'curl_init' ) )
 			{
 				// Make sure we're getting an url!
-				$Logger->log( 'proxyget: ' . json_encode( $args->args ));
 				if( $args->args->url )
 				{
 					$str5 = substr( $args->args->url, 0, 5 );
@@ -417,10 +416,8 @@ if( isset( $args->command ) )
 					$fields[$k] = $v;
 				}
 				
-				$Logger->log( 'proxyget fields: ' . json_encode( $fields ));
 				if ( 0 < count( $fields ))
 				{
-					$Logger->log( 'proxyget  setting post things: ' . count( $fields ));
 					curl_setopt( $c, CURLOPT_POST, true );
 					curl_setopt( $c, CURLOPT_POSTFIELDS, http_build_query( $fields ) );
 				}

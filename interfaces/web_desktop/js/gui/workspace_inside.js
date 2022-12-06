@@ -8611,12 +8611,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	showContextMenu: function( menu, e, extra )
 	{
 		// Do not do it double
-		console.log( 'showContextMenu', {
-			menu  : menu,
-			e     : e,
-			extra : extra,
-			contextMenuShowing : this.contextMenuShowing,
-		})
 		if( this.contextMenuShowing && !extra?.applicationId ) return;
 		
 		let tr = e.target ? e.target : e.srcElement;
@@ -8800,7 +8794,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Applications uses global X&Y coords
 			if( extra && extra.applicationId )
 			{
-				console.log( 'XY', [ windowMouseX, windowMouseY, extra.mouse ])
 				e.clientY = windowMouseY;
 				e.clientX = windowMouseX;
 			}
@@ -8833,7 +8826,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					const app = findApplication( extra.applicationId )
 					const offset = app.windows[ extra.viewId ].iframe?.getBoundingClientRect()
-					console.log( 'offset', offset )
 					if ( null == offset )
 					{
 						flg.top = extra.mouse.clientY
@@ -9024,7 +9016,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						( function( m ){
 							p.cmd = function( e )
 							{
-								console.log( 'cmd', [ menu, extra ])
 								let app = findApplication( extra.applicationId );
 								if( extra.viewId && app.windows[ extra.viewId ] )
 								{
@@ -9105,7 +9096,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					focusVisible : false,
 				})
 				v.dom.addEventListener( 'blur', e => {
-					console.log( 'context blur', e )
 					v.hide()
 					if ( extra.callback )
 					{
@@ -11933,12 +11923,6 @@ function loadApplicationBasics( callback )
 
 (() =>
 {
-	console.log( 'workspace visualViewport check', {
-		VV      : window.visualViewport,
-		ios     : isIos(),
-		ipad    : isIpad(),
-	})
-	
 	if( isIos() || isIpad() )
 	{
 		window.setTimeout(() =>
@@ -11946,26 +11930,14 @@ function loadApplicationBasics( callback )
 			if ( null != window.visualViewport )
 			{
 				const vv = window.visualViewport
-				console.log( 'vv', {
-					vv     : vv,
-					vvh    : vv.height,
-					vvw    : vv.width,
-					screen : screen,
-					orient : screen?.orientation,
-					orityp : screen?.orientation?.type,
-					wori   : window.orientation,
-				})
-				
 				let timeout = null
 				let maxHeight = 0
 				updateMaxHeight()
 				
-				console.log( 'orient summary', maxHeight )
-				
 				if ( null != screen?.orientation )
 				{
 					screen.orientation.addEventListener( 'change', e => {
-						console.log( 'screen orientation change', e )
+						//
 					}, false )
 				}
 				
@@ -11973,20 +11945,12 @@ function loadApplicationBasics( callback )
 				{
 					window.addEventListener( 'orientationchange', e => 
 					{
-						console.log( 'w.orichange', e )
+						//
 					}, false )
 				}
 				
 				window.visualViewport.addEventListener( 'resize', e => 
 				{
-					console.log( 'w.VV resize', {
-						e    : e,
-						vvh  : vv.height,
-						vvw  : vv.width,
-						maxH : maxHeight,
-						tim  : timeout,
-					})
-					
 					if ( null != timeout )
 						return
 					
@@ -11995,12 +11959,6 @@ function loadApplicationBasics( callback )
 						updateMaxHeight()
 						timeout = null
 						const offset = maxHeight - vv.height
-						
-						console.log( 'translate this', {
-							maxH   : maxHeight,
-							offset : offset,
-							vvh    : vv.height,
-						})
 						if ( 20 > offset )
 							translate( 0 )
 						else
@@ -12012,33 +11970,17 @@ function loadApplicationBasics( callback )
 				
 				window.visualViewport.addEventListener( 'scroll', e => 
 				{
-					console.log( 'w.VV scroll', {
-						e    : e,
-						vvh  : vv.height,
-						rect : document?.body?.getBoundingClientRect(),
-					} )
+					//
 				}, false )
 				
 				function updateMaxHeight()
 				{
-					console.log( 'updateMaxHeight', {
-						orient : screen?.orientation,
-						orityp : screen?.orientation?.type,
-						ih     : window.innerHeight,
-						iw     : window.innerWidth,
-						sh     : screen.height,
-						sw     : screen.width,
-						vvh    : vv.height,
-						vvw    : vv.width,
-					})
-					
 					maxHeight = window.innerHeight
 					return
 					
 					const iH = window.innerHeight
 					const iW = window.innerWidth
 					const mode = getOrientation()
-					console.log( 'mode', mode )
 					if ( 'portrait' == mode )
 					{
 						maxHeight = iH
@@ -12053,7 +11995,6 @@ function loadApplicationBasics( callback )
 						if ( null != window.orientation )
 						{
 							const wo = window.orientation
-							console.log( 'wo', wo )
 							if ( 0 == wo || 180 == wo )
 								return 'portrait'
 							else
@@ -12067,7 +12008,6 @@ function loadApplicationBasics( callback )
 							return 'portrait'
 						}
 						
-						console.log( 'could not determine an orientation :((((' )
 						return 'portrait'
 					}
 				}
@@ -12092,35 +12032,10 @@ function loadApplicationBasics( callback )
 			trans.push( ' scale(1.3) !important' )
 		
 		trans = trans.join( '')
-		console.log( 'translate', {
-			setting : trans,
-			std     : ( null != document.body.style[ 'transform' ]),
-			STD     : ( null != document.body.style[ 'Transform' ]),
-			webkit  : ( null != document.body.style[ 'WebkitTransform' ]),
-		})
+
 		//document.body.classList.toggle( 'Inside', false )
 		//document.body.style[ 'WebkitTransform' ] = trans
 		document.body.setAttribute( 'style', trans )
-		
-		/*
-		const prefixes = [ 'Webkit' ]
-		console.log( 'translate', [ num, trans ])
-		prefixes.some( pre => {
-			const style = pre + 'Transform'
-			console.log( 'style check', {
-				style  : style,
-				std    : ( null != document.body.style[ 'transform' ]),
-				STD    : ( null != document.body.style[ 'Transform' ]),
-				webkit : ( null != document.body.style[ 'WebkitTransform' ]),
-			})
-			if ( null == document.body.style[ style ])
-				return false
-			
-			console.log( 'setting style', style )
-			document.body.style[ style ] = trans
-			return true
-		})
-		*/
 	}
 	
 	function isIos() {

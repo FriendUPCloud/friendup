@@ -3230,7 +3230,6 @@ function apiWrapper( event, force )
 						}
 						break;
 					case 'showcontextmenu':
-						console.log( 'wopper.showcontxtmeny', [ msg, window.event ])
 						Workspace.showContextMenu( msg.menu, window.event, msg );
 						break;
 					case 'setworkspacemode':
