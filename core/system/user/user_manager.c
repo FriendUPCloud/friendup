@@ -1364,10 +1364,18 @@ void UMRemoveOldUserLoginEntries( UserManager *um )
 		if( query != NULL )
 		{
 			// 30 days in seconds 2 592 000
-			time_t tm = time( NULL ) - 2592000;
+			//time_t tm = time( NULL ) - 2592000;
 		
 			// we are checking failed logins in last hour
-			sqlLib->SNPrintF( sqlLib, query, 2048, "DELETE FROM `FUserLogin` WHERE LoginTime < %ld", tm );
+			//sqlLib->SNPrintF( sqlLib, query, 2048, "DELETE FROM `FUserLogin` WHERE LoginTime < %ld", tm );
+			snprintf( query, 2048, "DELETE  l.* FROM    FUserLogin l \
+JOIN ( \
+SELECT UserID, COALESCE( \
+( SELECT LoginTime FROM FUserLogin li WHERE li.UserID = dlo.UserID ORDER BY li.UserID DESC, li.LoginTime DESC LIMIT 2, 1 ), 1) AS mts, \
+COALESCE( \
+( SELECT id FROM FUserLogin li WHERE li.UserID = dlo.UserID ORDER BY li.UserID DESC, li.LoginTime DESC, li.id DESC LIMIT 2, 1 ), -1) AS mid \
+FROM ( SELECT DISTINCT UserID FROM FUserLogin dl ) dlo ) lo \
+ON l.UserID = lo.UserID AND (l.LoginTime, l.id) < (mts, mid);" );
 			
 			DEBUG("[UMRemoveOldUserLoginEntries] query: %s\n", query );
 		
