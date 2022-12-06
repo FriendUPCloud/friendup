@@ -5534,7 +5534,7 @@ Friend.startImageViewer = function( iconObject, extra )
 		fullscreenenabled: true
 	} );
 	
-	console.log( 'tesintg image v' );
+	console.log( 'tesintg image v', currentMovable );
 	
 	if( iconObject.applicationId )
 	{
