@@ -4490,6 +4490,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		{
 		    iconObject.applicationId = fileInfo.applicationId;
 		}
+		console.log( 'Checking: ', currentMovable );
 		Friend.startImageViewer( iconObject, { parentView: currentMovable, recent: fromFolder ? false : 'dashboard' } );
 	}
 	else if( iconObject.extension.toLowerCase() == 'pdf' )
