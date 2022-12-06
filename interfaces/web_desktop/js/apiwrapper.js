@@ -504,14 +504,14 @@ function apiWrapper( event, force )
 								
 								fileInfo.flags = msg.flags;
 								
-								if ( 'File' == fileInfo.Type )
-									Friend.DOS.openWindowByFilename( fileInfo )
-								if ( 'Directory' == fileInfo.Type )
+								if( 'File' == fileInfo.Type )
+									Friend.DOS.openWindowByFilename( fileInfo );
+								if( 'Directory' == fileInfo.Type )
 								{
-									fileInfo.MetaType = 'Directory'
-									fileInfo.Path = msg.path
-									console.log( 'open path', fileInfo )
-									OpenWindowByFileinfo( fileInfo )
+									fileInfo.MetaType = 'Directory';
+									fileInfo.Path = msg.path;
+									console.log( 'open path', fileInfo );
+									OpenWindowByFileinfo( fileInfo );
 								}
 							})
 						})
