@@ -11933,12 +11933,6 @@ function loadApplicationBasics( callback )
 
 (() =>
 {
-	console.log( 'workspace visualViewport check', {
-		VV      : window.visualViewport,
-		ios     : isIos(),
-		ipad    : isIpad(),
-	})
-	
 	if( isIos() || isIpad() )
 	{
 		window.setTimeout(() =>
@@ -11946,26 +11940,14 @@ function loadApplicationBasics( callback )
 			if ( null != window.visualViewport )
 			{
 				const vv = window.visualViewport
-				console.log( 'vv', {
-					vv     : vv,
-					vvh    : vv.height,
-					vvw    : vv.width,
-					screen : screen,
-					orient : screen?.orientation,
-					orityp : screen?.orientation?.type,
-					wori   : window.orientation,
-				})
-				
 				let timeout = null
 				let maxHeight = 0
 				updateMaxHeight()
 				
-				console.log( 'orient summary', maxHeight )
-				
 				if ( null != screen?.orientation )
 				{
 					screen.orientation.addEventListener( 'change', e => {
-						console.log( 'screen orientation change', e )
+						//
 					}, false )
 				}
 				
@@ -11973,20 +11955,12 @@ function loadApplicationBasics( callback )
 				{
 					window.addEventListener( 'orientationchange', e => 
 					{
-						console.log( 'w.orichange', e )
+						//
 					}, false )
 				}
 				
 				window.visualViewport.addEventListener( 'resize', e => 
 				{
-					console.log( 'w.VV resize', {
-						e    : e,
-						vvh  : vv.height,
-						vvw  : vv.width,
-						maxH : maxHeight,
-						tim  : timeout,
-					})
-					
 					if ( null != timeout )
 						return
 					
@@ -11995,12 +11969,6 @@ function loadApplicationBasics( callback )
 						updateMaxHeight()
 						timeout = null
 						const offset = maxHeight - vv.height
-						
-						console.log( 'translate this', {
-							maxH   : maxHeight,
-							offset : offset,
-							vvh    : vv.height,
-						})
 						if ( 20 > offset )
 							translate( 0 )
 						else
@@ -12012,33 +11980,17 @@ function loadApplicationBasics( callback )
 				
 				window.visualViewport.addEventListener( 'scroll', e => 
 				{
-					console.log( 'w.VV scroll', {
-						e    : e,
-						vvh  : vv.height,
-						rect : document?.body?.getBoundingClientRect(),
-					} )
+					//
 				}, false )
 				
 				function updateMaxHeight()
 				{
-					console.log( 'updateMaxHeight', {
-						orient : screen?.orientation,
-						orityp : screen?.orientation?.type,
-						ih     : window.innerHeight,
-						iw     : window.innerWidth,
-						sh     : screen.height,
-						sw     : screen.width,
-						vvh    : vv.height,
-						vvw    : vv.width,
-					})
-					
 					maxHeight = window.innerHeight
 					return
 					
 					const iH = window.innerHeight
 					const iW = window.innerWidth
 					const mode = getOrientation()
-					console.log( 'mode', mode )
 					if ( 'portrait' == mode )
 					{
 						maxHeight = iH
@@ -12053,7 +12005,6 @@ function loadApplicationBasics( callback )
 						if ( null != window.orientation )
 						{
 							const wo = window.orientation
-							console.log( 'wo', wo )
 							if ( 0 == wo || 180 == wo )
 								return 'portrait'
 							else
@@ -12067,7 +12018,6 @@ function loadApplicationBasics( callback )
 							return 'portrait'
 						}
 						
-						console.log( 'could not determine an orientation :((((' )
 						return 'portrait'
 					}
 				}
@@ -12092,35 +12042,10 @@ function loadApplicationBasics( callback )
 			trans.push( ' scale(1.3) !important' )
 		
 		trans = trans.join( '')
-		console.log( 'translate', {
-			setting : trans,
-			std     : ( null != document.body.style[ 'transform' ]),
-			STD     : ( null != document.body.style[ 'Transform' ]),
-			webkit  : ( null != document.body.style[ 'WebkitTransform' ]),
-		})
+
 		//document.body.classList.toggle( 'Inside', false )
 		//document.body.style[ 'WebkitTransform' ] = trans
 		document.body.setAttribute( 'style', trans )
-		
-		/*
-		const prefixes = [ 'Webkit' ]
-		console.log( 'translate', [ num, trans ])
-		prefixes.some( pre => {
-			const style = pre + 'Transform'
-			console.log( 'style check', {
-				style  : style,
-				std    : ( null != document.body.style[ 'transform' ]),
-				STD    : ( null != document.body.style[ 'Transform' ]),
-				webkit : ( null != document.body.style[ 'WebkitTransform' ]),
-			})
-			if ( null == document.body.style[ style ])
-				return false
-			
-			console.log( 'setting style', style )
-			document.body.style[ style ] = trans
-			return true
-		})
-		*/
 	}
 	
 	function isIos() {
