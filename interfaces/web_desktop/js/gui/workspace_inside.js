@@ -8611,12 +8611,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	showContextMenu: function( menu, e, extra )
 	{
 		// Do not do it double
-		console.log( 'showContextMenu', {
-			menu  : menu,
-			e     : e,
-			extra : extra,
-			contextMenuShowing : this.contextMenuShowing,
-		})
 		if( this.contextMenuShowing && !extra?.applicationId ) return;
 		
 		let tr = e.target ? e.target : e.srcElement;
@@ -8800,7 +8794,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Applications uses global X&Y coords
 			if( extra && extra.applicationId )
 			{
-				console.log( 'XY', [ windowMouseX, windowMouseY, extra.mouse ])
 				e.clientY = windowMouseY;
 				e.clientX = windowMouseX;
 			}
@@ -8833,7 +8826,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					const app = findApplication( extra.applicationId )
 					const offset = app.windows[ extra.viewId ].iframe?.getBoundingClientRect()
-					console.log( 'offset', offset )
 					if ( null == offset )
 					{
 						flg.top = extra.mouse.clientY
@@ -9024,7 +9016,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						( function( m ){
 							p.cmd = function( e )
 							{
-								console.log( 'cmd', [ menu, extra ])
 								let app = findApplication( extra.applicationId );
 								if( extra.viewId && app.windows[ extra.viewId ] )
 								{
@@ -9105,7 +9096,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					focusVisible : false,
 				})
 				v.dom.addEventListener( 'blur', e => {
-					console.log( 'context blur', e )
 					v.hide()
 					if ( extra.callback )
 					{
