@@ -1228,7 +1228,6 @@ function _ActivateWindow( div, nopoll, e )
 	{
 	    console.trace();
 	    window.currentContext = [ div, window.currentContext ];
-	    console.log( 'Adding this to current context stack: ', div );
 	}
 	
 	// Dialogs here are not activated
