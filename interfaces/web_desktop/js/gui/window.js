@@ -1985,6 +1985,9 @@ function CloseView( win, delayed )
 			win.parentNode.classList.add( 'Closing', 'NoEvents' );
 		}
 		
+		console.log( 'Sniffing class names.' );
+		console.log( win, win.parentNode );
+		
 		if( win.parentNode.classList.contains( 'Dialog' ) || 
 			win.parentNode.parentNode.classList.contains( 'Dialog' ) ||
 			win.parentNode.parentNode.classList.contains( 'FileDialog' ) )
