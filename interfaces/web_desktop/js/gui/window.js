@@ -1167,14 +1167,11 @@ function _ActivateDialogWindow( div, e )
 	// TODO: Also for touch!
 	if( !div.windowObject.flags.dockable )
 	{
-		console.log( '_ActivateDialogWindow: This is not a dockable view!' );
-		console.log( '_ActivateDialogWindow: It is: ' + div.windowObject.getFlag( 'title' ) );
 		document.body.classList.add( 'Dialog' );
 		
 		currentMovable = div;
 		if( e && e.button == 0 )
 		{
-			console.log( '_ActivateDialogWindow: Was not clicked!' );
 			if( !div.windowObject.applicationId && !div.classList.contains( 'IconWindow' ) )
 			{
 				// If we have active windows that already shows, don't deactivate them for the dialog
@@ -1193,13 +1190,11 @@ function _ActivateDialogWindow( div, e )
 		}
 		else
 		{
-			console.log( '_ActivateDialogWindow: It was clicked!' );
 			if( window.hideDashboard )
 				window.hideDashboard();
 		}
 		if( window.Workspace && window.Workspace.showQuickMenu )
 		{
-			console.log( '_ActivateDialogWindow: Showing quick menu!' );
 			Workspace.showQuickMenu();
 		}
 	}
@@ -1592,6 +1587,8 @@ function _removeWindowTiles( div )
 function _DeactivateWindow( m, skipCleanUp )
 {
 	let ret = false;
+
+	if( !m ) return;
 	
 	if( !m ) return;
 	
@@ -2002,7 +1999,20 @@ function CloseView( win, delayed )
 				qm.classList.remove( 'Showing' );
 				ge( 'DoorsScreen' ).appendChild( qm );
 			}
-			if( win == currentMovable )
+			
+			let currentIsDialog = false;
+			if( currentMovable )
+			{
+			    let cr = currentMovable;
+			    if( cr.parentNode.classList.contains( 'Dialog' ) || 
+			        cr.parentNode.parentNode.classList.contains( 'Dialog' ) ||
+			        cr.parentNode.parentNode.classList.contains( 'FileDialog' ) )
+		        {
+		            currentIsDialog = true;
+		        }
+			}
+			
+			if( win == currentMovable || currentIsDialog )
 				document.body.classList.remove( 'Dialog' );
 		}
 		
@@ -2157,9 +2167,11 @@ function CloseView( win, delayed )
 			    }
 			}
 			// Check the window context, if it exists
+			//console.log( 'Foo bar', window.currentContext );
 			if( window.currentContext )
 			{
-				function handleContext( depth )
+			    //console.log( 'Test' );
+			    function handleContext( depth )
 				{
 					if( !depth ) depth = 1;
 				    switch( window.currentContext )
@@ -2175,9 +2187,22 @@ function CloseView( win, delayed )
 		            	// We have a different thing for other contexts
 		                default:
 		                    let appCheck = true;
+		                    //console.log( 'Checking context: ', window.currentContext );
 		                    // We got a context array ([ currentWindow, prevContext ])
 		                    if( typeof( window.currentContext ) == 'object' )
 		                    {
+		                        // We are referring to self! Fix it
+		                        if( window.currentContext[0] == win && typeof( window.currentContext[1] ) != 'undefined' )
+		                        {
+		                            //console.log( 'I am self: ', window.currentContext );
+		                            window.currentContext = window.currentContext[1];
+	                                if( window.currentContext == 'dashboard' )
+	                                {
+	                                    return handleContext( depth + 1 );
+	                                }
+	                            }
+	                            
+	                            
 		                    	if( window.currentContext[0] && window.currentContext[0].tagName == 'DIV' && window.currentContext[0] != currentMovable )
 		                    	{
 		                    		currentMovable = window.currentContext[ 0 ];
@@ -2332,7 +2357,7 @@ function CloseView( win, delayed )
 		}
 		
 		// Dashboard support
-		if( win.windowObject.recentLocation )
+		if( win.windowObject.recentLocation && win.windowObject.recentLocation  != 'dashboard' )
 		{
 			return;
 		}
