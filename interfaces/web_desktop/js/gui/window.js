@@ -1167,14 +1167,11 @@ function _ActivateDialogWindow( div, e )
 	// TODO: Also for touch!
 	if( !div.windowObject.flags.dockable )
 	{
-		console.log( '_ActivateDialogWindow: This is not a dockable view!' );
-		console.log( '_ActivateDialogWindow: It is: ' + div.windowObject.getFlag( 'title' ) );
 		document.body.classList.add( 'Dialog' );
 		
 		currentMovable = div;
 		if( e && e.button == 0 )
 		{
-			console.log( '_ActivateDialogWindow: Was not clicked!' );
 			if( !div.windowObject.applicationId && !div.classList.contains( 'IconWindow' ) )
 			{
 				// If we have active windows that already shows, don't deactivate them for the dialog
@@ -1193,13 +1190,11 @@ function _ActivateDialogWindow( div, e )
 		}
 		else
 		{
-			console.log( '_ActivateDialogWindow: It was clicked!' );
 			if( window.hideDashboard )
 				window.hideDashboard();
 		}
 		if( window.Workspace && window.Workspace.showQuickMenu )
 		{
-			console.log( '_ActivateDialogWindow: Showing quick menu!' );
 			Workspace.showQuickMenu();
 		}
 	}
@@ -2127,13 +2122,10 @@ function CloseView( win, delayed )
 		
 		// Context -------------------------------------------------------------
 		// Check the window recent location exists, and use it instead
-		console.log( 'Closeview: Checking view' );
 		if( ( currentMovable && currentMovable == win ) || ( !currentMovable && win ) )
 		{
-		    console.log( 'Closeview: Have current' );
 			if( win.windowObject && win.windowObject.recentLocation && win.windowObject.recentLocation.substr( 0, 7 ) == 'viewId:' )
 			{
-			    console.log( 'Closeview: Have viewId', win.windowObject.recentLocation );
 				let id = win.windowObject.recentLocation;
 				id = id.substr( 7, id.length - 7 );
 				let actSet = false;
@@ -2152,7 +2144,6 @@ function CloseView( win, delayed )
 				}
 				if( !actSet )
 				{
-				    console.log( 'Closeview: Showing dash' );
 					// Default
 					_DeactivateWindows();
 				    showDashboard();
@@ -2162,7 +2153,6 @@ function CloseView( win, delayed )
 			// Check the window context, if it exists
 			if( window.currentContext )
 			{
-			    console.log( 'Closeview: Using context ' + window.currentContext );
 				function handleContext( depth )
 				{
 					if( !depth ) depth = 1;
@@ -2338,13 +2328,11 @@ function CloseView( win, delayed )
 		// Dashboard support
 		if( win.windowObject.recentLocation && win.windowObject.recentLocation  != 'dashboard' )
 		{
-		    console.log( 'Closeview: We got recent..' );
 			return;
 		}
 		
 		if( !currentMovable || ( currentMovable && currentMovable.windowObject.getFlag( 'dockable' ) && window.showDashboard ) )
 		{
-		    console.log( 'Closeview: We are in last parts.' );
 			if( window.showDashboard )
 			{
 				_DeactivateWindows();
