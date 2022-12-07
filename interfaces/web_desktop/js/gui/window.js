@@ -2176,7 +2176,7 @@ function CloseView( win, delayed )
 		                    if( typeof( window.currentContext ) == 'object' )
 		                    {
 		                        // We are referring to self! Fix it
-		                        if( window.currentContext == win && typeof( window.currentContext[1] ) != 'undefined' )
+		                        if( window.currentContext[0] == win && typeof( window.currentContext[1] ) != 'undefined' )
 		                        {
 		                            console.log( 'I am self: ', window.currentContext );
 		                            window.currentContext = window.currentContext[1];
