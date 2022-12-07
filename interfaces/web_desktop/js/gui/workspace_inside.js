@@ -2316,7 +2316,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		// This part is important - it is where we extend the workspace with 
 		// configurable extensions based on config settings
-		console.log( 'refreshUserSettings: Getting settings' );
+		//console.log( 'refreshUserSettings: Getting settings' );
 		let b = new Module( 'system' );
 		b.onExecuted = function( e, d )
 		{
@@ -2372,7 +2372,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 		}
 		b.execute( 'sampleconfig' );
-		console.log(  'refreshUserSettings: Getting loads of settings' );
+		//console.log(  'refreshUserSettings: Getting loads of settings' );
 		let userSettingsFetched = false;
 		function getUserSettings()
 		{
@@ -2380,7 +2380,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			m.onExecuted = function( e, d )
 			{
 				userSettingsFetched = true;
-				console.log( 'refreshUserSettings: Settings came in' );
+				//console.log( 'refreshUserSettings: Settings came in' );
 				function initFriendWorkspace()
 				{
 					// Make sure we have loaded
@@ -2388,14 +2388,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						if( Workspace.screen.contentDiv.offsetHeight < 100 )
 						{
-							console.log( 'refreshUserSettings: Not all contentDiv stuff loaded, wait 50ms and retry.' );
+							//console.log( 'refreshUserSettings: Not all contentDiv stuff loaded, wait 50ms and retry.' );
 							return setTimeout( function(){ initFriendWorkspace(); }, 50 );
 						}
 					}
 					
 					if( e == 'ok' && d )
 					{
-						console.log( 'refreshUserSettings: Settings loaded ok.' );
+						//console.log( 'refreshUserSettings: Settings loaded ok.' );
 						Workspace.userSettingsLoaded = true;
 						let dat = JSON.parse( d );
 						if( dat.wallpaperdoors && dat.wallpaperdoors.substr )
@@ -2596,7 +2596,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								ScreenOverlay.hide();
 								PollTray();
 								PollTaskbar();					
-								console.log( 'refreshUserSettings: Running callback...' );
+								//console.log( 'refreshUserSettings: Running callback...' );
 								if( callback ) callback();
 								return;
 							}
@@ -2711,7 +2711,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					else
 					{
-						console.log( 'refreshUserSettings: Settings did not load.' );
+						//console.log( 'refreshUserSettings: Settings did not load.' );
 						Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 						Workspace.wallpaperImageDecoded = false;
 						Workspace.windowWallpaperImage = '';
@@ -2720,7 +2720,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					if( callback && typeof( callback ) == 'function' )
 					{
-						console.log( 'refreshUserSettings: Running callback()' );
+						//console.log( 'refreshUserSettings: Running callback()' );
 						callback();
 					}
 				}
@@ -4006,7 +4006,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					            {
 					                Workspace.dashboard = new SidebarEngine();
 					                Workspace.dashboardLoading = null;
-					                console.log( '[Login phase] Initialized sidebar engine!' );
+					                //console.log( '[Login phase] Initialized sidebar engine!' );
 					            }
 					        }
 					        Workspace.dashboardLoading = j;
@@ -4048,7 +4048,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			Workspace.themeRefreshed = true;
 			Workspace.refreshUserSettings( function() 
 			{
-				console.log( '[Login phase] Done refreshing user settings.' );
+				//console.log( '[Login phase] Done refreshing user settings.' );
 				CheckScreenTitle();
 
 				let h = document.getElementsByTagName( 'head' );
@@ -4091,7 +4091,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						stripOld( this.href );
 						
 						document.body.classList.add( 'ThemeLoaded' );
-						console.log( '[Login phase] Theme loaded!!' );
+						//console.log( '[Login phase] Theme loaded!!' );
 						setTimeout( function()
 						{
 							document.body.classList.remove( 'ThemeRefreshing' );

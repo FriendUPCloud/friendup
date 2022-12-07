@@ -54,7 +54,7 @@ function canQuitApp( appName )
 // Load a javascript application into a sandbox
 function ExecuteApplication( app, args, callback, retries, flags )
 {
-	console.log( 'ExecuteApplication', [ app, args, callback, retries, flags ])
+	//console.log( 'ExecuteApplication', [ app, args, callback, retries, flags ])
     // Do not do this if we have nothing
     if( !document.body || ( document.body && !document.body.classList.contains( 'Loaded' ) ) )
     {
@@ -73,7 +73,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	// Just nothing.
 	if( !app )
 	{
-		console.log( 'just nothing things', app );
+		//console.log( 'just nothing things', app );
 		return;
 	}
 	
@@ -82,7 +82,10 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	{
 		//console.log( 'ExecuteApplication - retries', retries );
 		if( retries == 3 ) 
-			return console.log( 'Could not execute app: ' + app );
+		{
+			//return console.log( 'Could not execute app: ' + app );
+			return;
+		}
 		loadApplicationBasics( function()
 		{
 			ExecuteApplication( app, args, callback, !retries ? 3 : retries++, flags );
@@ -753,11 +756,11 @@ function ExecuteApplication( app, args, callback, retries, flags )
 
                 if( _applicationBasics.css && _applicationBasics.css.length > 0 )
                 {
-				    console.log( 'Directive: Sent (cached) css to app with ' + _applicationBasics.css.length );
+				    //console.log( 'Directive: Sent (cached) css to app with ' + _applicationBasics.css.length );
 			    }
 			    else
 			    {
-			        console.log( 'Directive: Could not find css string length. Handle in API.' );
+			        //console.log( 'Directive: Could not find css string length. Handle in API.' );
 			    }
 
 				// Get JSON data from url
