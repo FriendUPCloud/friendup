@@ -2169,12 +2169,16 @@ function CloseView( win, delayed )
 		            	// We have a different thing for other contexts
 		                default:
 		                    let appCheck = true;
+		                    console.log( 'Checking context: ', window.currentContext );
 		                    // We got a context array ([ currentWindow, prevContext ])
 		                    if( typeof( window.currentContext ) == 'object' )
 		                    {
 		                        // We are referring to self! Fix it
 		                        if( window.currentContext == win && typeof( window.currentContext[1] ) != 'undefined' )
+		                        {
+		                            console.log( 'I am self: ', window.currentContext );
 		                            window.currentContext = window.currentContext[1];
+	                            }
 	                            
 		                    	if( window.currentContext[0] && window.currentContext[0].tagName == 'DIV' && window.currentContext[0] != currentMovable )
 		                    	{
