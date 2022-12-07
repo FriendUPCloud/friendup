@@ -2153,6 +2153,7 @@ function CloseView( win, delayed )
 			// Check the window context, if it exists
 			if( window.currentContext )
 			{
+			    console.log( 'Handling context: ', window.currentContext );
 				function handleContext( depth )
 				{
 					if( !depth ) depth = 1;
