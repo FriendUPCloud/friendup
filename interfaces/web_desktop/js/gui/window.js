@@ -2180,7 +2180,12 @@ function CloseView( win, delayed )
 		                        {
 		                            console.log( 'I am self: ', window.currentContext );
 		                            window.currentContext = window.currentContext[1];
+	                                if( window.currentContext == 'dashboard' )
+	                                {
+	                                    return handleContext( depth + 1 );
+	                                }
 	                            }
+	                            
 	                            
 		                    	if( window.currentContext[0] && window.currentContext[0].tagName == 'DIV' && window.currentContext[0] != currentMovable )
 		                    	{
