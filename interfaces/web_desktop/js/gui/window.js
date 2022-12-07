@@ -1986,12 +1986,11 @@ function CloseView( win, delayed )
 		}
 		
 		console.log( 'Sniffing class names.' );
-		console.log( win, win.parentNode );
+		console.log( win, win.parentNode, win.parentNode.parentNode );
 		
 		if( win.parentNode.classList.contains( 'Dialog' ) || 
 			win.parentNode.parentNode.classList.contains( 'Dialog' ) ||
-			win.parentNode.parentNode.classList.contains( 'FileDialog' ) ||
-			win.parentNode.parentNode.parentNode.classList.contains( 'Dialog' ) )
+			win.parentNode.parentNode.classList.contains( 'FileDialog' ) )
 		{
 			isDialog = true;
 			let qm = null;
