@@ -2151,7 +2151,7 @@ function CloseView( win, delayed )
 			    }
 			}
 			// Check the window context, if it exists
-			console.log( 'Foo bar' );
+			console.log( 'Foo bar', window.currentContext );
 			if( window.currentContext )
 			{
 			    console.log( 'Test' );
