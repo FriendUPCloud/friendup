@@ -2127,10 +2127,13 @@ function CloseView( win, delayed )
 		
 		// Context -------------------------------------------------------------
 		// Check the window recent location exists, and use it instead
+		console.log( 'Closeview: Checking view' );
 		if( ( currentMovable && currentMovable == win ) || ( !currentMovable && win ) )
 		{
+		    console.log( 'Closeview: Have current' );
 			if( win.windowObject && win.windowObject.recentLocation && win.windowObject.recentLocation.substr( 0, 7 ) == 'viewId:' )
 			{
+			    console.log( 'Closeview: Have viewId', win.windowObject.recentLocation );
 				let id = win.windowObject.recentLocation;
 				id = id.substr( 7, id.length - 7 );
 				let actSet = false;
@@ -2149,6 +2152,7 @@ function CloseView( win, delayed )
 				}
 				if( !actSet )
 				{
+				    console.log( 'Closeview: Showing dash' );
 					// Default
 					_DeactivateWindows();
 				    showDashboard();
@@ -2158,6 +2162,7 @@ function CloseView( win, delayed )
 			// Check the window context, if it exists
 			if( window.currentContext )
 			{
+			    console.log( 'Closeview: Using context ' + window.currentContext );
 				function handleContext( depth )
 				{
 					if( !depth ) depth = 1;
