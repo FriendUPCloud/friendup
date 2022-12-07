@@ -1990,7 +1990,8 @@ function CloseView( win, delayed )
 		
 		if( win.parentNode.classList.contains( 'Dialog' ) || 
 			win.parentNode.parentNode.classList.contains( 'Dialog' ) ||
-			win.parentNode.parentNode.classList.contains( 'FileDialog' ) )
+			win.parentNode.parentNode.classList.contains( 'FileDialog' ) ||
+			win.parentNode.parentNode.parentNode.classList.contains( 'Dialog' ) )
 		{
 			isDialog = true;
 			let qm = null;
