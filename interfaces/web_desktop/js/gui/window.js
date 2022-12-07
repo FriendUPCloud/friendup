@@ -2338,13 +2338,16 @@ function CloseView( win, delayed )
 		// Dashboard support
 		if( win.windowObject.recentLocation )
 		{
+		    console.log( 'Closeview: We got recent..' );
 			return;
 		}
 		
 		if( !currentMovable || ( currentMovable && currentMovable.windowObject.getFlag( 'dockable' ) && window.showDashboard ) )
 		{
+		    console.log( 'Closeview: We are in last parts.' );
 			if( window.showDashboard )
 			{
+			    console.log( 'Closeview: Showing dash' );
 				_DeactivateWindows();
 				showDashboard();
 				if( window.pollLiveViews )
