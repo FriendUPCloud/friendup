@@ -13,6 +13,9 @@ var _dialogStorage = {};
 // Opens a file dialog connected to an application
 Filedialog = function( object, triggerfunction, path, type, filename, title )
 {	
+    // Tell the system that a dialog is opening
+    window.dialogOpening = true;
+    
 	let self = this;
 	let mainview = false;
 	let suffix = false;
@@ -97,6 +100,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			if( e == true )
 			{
 				init();
+				delete window.dialogOpening;
 			}
 			else
 			{
@@ -105,6 +109,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 					path = 'Home:';
 					object.path = 'Home:';
 					init();
+					delete window.dialogOpening;
 				} );
 			}
 		} );
@@ -112,6 +117,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	else
 	{
 		init();
+		delete window.dialogOpening;
 	}
 	
 	this.close = function()
