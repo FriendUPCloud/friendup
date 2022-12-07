@@ -4291,7 +4291,6 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 let friendPdfIndex = 0;
 function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView, ocallback )
 {
-	console.log( 'OpenWindowByFileinfo', oFileInfo )
 	if( !ocallback ) ocallback = false;
 	
 	let fromFolder = false;
@@ -4590,7 +4589,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	// We've clicked on a directory!
 	else if( fileInfo.MetaType == 'Directory' || fileInfo.MetaType == 'Door' )
 	{
-		console.log( 'OpenWindowByFileinfo, Directory', fileInfo )
 		// Try to reuse the directoryview extra flags
 		let extra = fileInfo.directoryview ? fileInfo.directoryview.oldExtra : null;
 		
@@ -4654,7 +4652,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		    {
 		        window.currentContext = false;
         		w.recentLocation = 'viewId:' + curr.getViewId();
-        		console.log( 'Doing this now' );
 		    }
 		}
 		
