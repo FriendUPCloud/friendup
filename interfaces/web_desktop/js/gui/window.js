@@ -1591,6 +1591,8 @@ function _removeWindowTiles( div )
 function _DeactivateWindow( m, skipCleanUp )
 {
 	let ret = false;
+
+	if( !m ) return;
 	
 	if( m.className && m.classList.contains( 'Active' ) )
 	{
