@@ -2012,8 +2012,7 @@ function CloseView( win, delayed )
 		        }
 			}
 			
-			console.log( 'test: ' + ( win == currentMovable ? 'yes' : 'no' ) + ' -> ' + ( !currentIsDialog ? 'yes' : 'no' ) );
-			if( win == currentMovable || !currentIsDialog )
+			if( win == currentMovable || currentIsDialog )
 				document.body.classList.remove( 'Dialog' );
 		}
 		
