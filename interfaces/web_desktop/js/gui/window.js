@@ -1999,8 +1999,20 @@ function CloseView( win, delayed )
 				qm.classList.remove( 'Showing' );
 				ge( 'DoorsScreen' ).appendChild( qm );
 			}
-			console.log( 'Removing dialog!' );
-			if( win == currentMovable )
+			
+			let currentIsDialog = false;
+			if( currentMovable )
+			{
+			    let cr = currentMovable;
+			    if( cr.parentNode.classList.contains( 'Dialog' ) || 
+			        cr.parentNode.parentNode.classList.contains( 'Dialog' ) ||
+			        cr.parentNode.parentNode.classList.contains( 'FileDialog' ) )
+		        {
+		            currentIsDialog = true;
+		        }
+			}
+			
+			if( win == currentMovable || !currentIsDialog )
 				document.body.classList.remove( 'Dialog' );
 		}
 		
