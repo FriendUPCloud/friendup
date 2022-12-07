@@ -2151,10 +2151,10 @@ function CloseView( win, delayed )
 			    }
 			}
 			// Check the window context, if it exists
-			console.log( 'Foo bar', window.currentContext );
+			//console.log( 'Foo bar', window.currentContext );
 			if( window.currentContext )
 			{
-			    console.log( 'Test' );
+			    //console.log( 'Test' );
 			    function handleContext( depth )
 				{
 					if( !depth ) depth = 1;
@@ -2171,14 +2171,14 @@ function CloseView( win, delayed )
 		            	// We have a different thing for other contexts
 		                default:
 		                    let appCheck = true;
-		                    console.log( 'Checking context: ', window.currentContext );
+		                    //console.log( 'Checking context: ', window.currentContext );
 		                    // We got a context array ([ currentWindow, prevContext ])
 		                    if( typeof( window.currentContext ) == 'object' )
 		                    {
 		                        // We are referring to self! Fix it
 		                        if( window.currentContext[0] == win && typeof( window.currentContext[1] ) != 'undefined' )
 		                        {
-		                            console.log( 'I am self: ', window.currentContext );
+		                            //console.log( 'I am self: ', window.currentContext );
 		                            window.currentContext = window.currentContext[1];
 	                                if( window.currentContext == 'dashboard' )
 	                                {
