@@ -2336,7 +2336,7 @@ function CloseView( win, delayed )
 		}
 		
 		// Dashboard support
-		if( win.windowObject.recentLocation )
+		if( win.windowObject.recentLocation && win.windowObject.recentLocation  != 'dashboard' )
 		{
 		    console.log( 'Closeview: We got recent..' );
 			return;
@@ -2347,7 +2347,6 @@ function CloseView( win, delayed )
 		    console.log( 'Closeview: We are in last parts.' );
 			if( window.showDashboard )
 			{
-			    console.log( 'Closeview: Showing dash' );
 				_DeactivateWindows();
 				showDashboard();
 				if( window.pollLiveViews )
