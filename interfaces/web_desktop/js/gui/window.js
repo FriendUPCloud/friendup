@@ -2153,8 +2153,7 @@ function CloseView( win, delayed )
 			// Check the window context, if it exists
 			if( window.currentContext )
 			{
-			    console.log( 'Handling context: ', window.currentContext );
-				function handleContext( depth )
+			    function handleContext( depth )
 				{
 					if( !depth ) depth = 1;
 				    switch( window.currentContext )
@@ -2173,6 +2172,10 @@ function CloseView( win, delayed )
 		                    // We got a context array ([ currentWindow, prevContext ])
 		                    if( typeof( window.currentContext ) == 'object' )
 		                    {
+		                        // We are referring to self! Fix it
+		                        if( window.currentContext == win && typeof( window.currentContext[1] ) != 'undefined' )
+		                            window.currentContext = window.currentContext[1];
+	                            
 		                    	if( window.currentContext[0] && window.currentContext[0].tagName == 'DIV' && window.currentContext[0] != currentMovable )
 		                    	{
 		                    		currentMovable = window.currentContext[ 0 ];
