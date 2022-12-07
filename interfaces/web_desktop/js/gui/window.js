@@ -2151,8 +2151,10 @@ function CloseView( win, delayed )
 			    }
 			}
 			// Check the window context, if it exists
+			console.log( 'Foo bar' );
 			if( window.currentContext )
 			{
+			    console.log( 'Test' );
 			    function handleContext( depth )
 				{
 					if( !depth ) depth = 1;
