@@ -1360,7 +1360,7 @@ void UMRemoveOldUserLoginEntries( UserManager *um )
 	if( sqlLib != NULL )
 	{
 		DEBUG("[UMRemoveOldUserLoginEntries] start\n" );
-		char *query = FCalloc( 1, 2048 );
+		char *query = FCalloc( 1, 4096 );
 		if( query != NULL )
 		{
 			// 30 days in seconds 2 592 000
@@ -1368,14 +1368,29 @@ void UMRemoveOldUserLoginEntries( UserManager *um )
 		
 			// we are checking failed logins in last hour
 			//sqlLib->SNPrintF( sqlLib, query, 2048, "DELETE FROM `FUserLogin` WHERE LoginTime < %ld", tm );
-			snprintf( query, 2048, "DELETE  l.* FROM    FUserLogin l \
+			snprintf( query, 4096, "DELETE l.* FROM FUserLogin l \
 JOIN ( \
-SELECT UserID, COALESCE( \
-( SELECT LoginTime FROM FUserLogin li WHERE li.UserID = dlo.UserID ORDER BY li.UserID DESC, li.LoginTime DESC LIMIT 2, 1 ), 1) AS mts, \
-COALESCE( \
-( SELECT id FROM FUserLogin li WHERE li.UserID = dlo.UserID ORDER BY li.UserID DESC, li.LoginTime DESC, li.id DESC LIMIT 2, 1 ), -1) AS mid \
-FROM ( SELECT DISTINCT UserID FROM FUserLogin dl ) dlo ) lo \
-ON l.UserID = lo.UserID AND (l.LoginTime, l.id) < (mts, mid);" );
+SELECT UserID, COALESCE ( ( SELECT LoginTime FROM FUserLogin li \
+WHERE li.UserID = dlo.UserID AND Information='Login success' ORDER BY li.UserID DESC, li.LoginTime DESC LIMIT 2, 1 ), 1) AS mts, \
+COALESCE( ( SELECT id FROM FUserLogin li WHERE li.UserID = dlo.UserID AND Information='Login success' ORDER BY li.UserID DESC, li.LoginTime DESC, li.id DESC LIMIT 2, 1 ), -1) AS mid \
+FROM ( SELECT  DISTINCT UserID FROM FUserLogin dl WHERE Information='Login success') dlo) lo \
+ON l.UserID = lo.UserID AND (l.LoginTime, l.id) < (mts, mid) AND l.Information='Login success'; \
+\
+DELETE l.* FROM FUserLogin l \
+JOIN ( \
+SELECT UserID, COALESCE ( ( SELECT LoginTime FROM FUserLogin li \
+WHERE li.UserID = dlo.UserID AND Information='Login fail' ORDER BY li.UserID DESC, li.LoginTime DESC LIMIT 2, 1 ), 1) AS mts, \
+COALESCE( ( SELECT  id FROM FUserLogin li WHERE li.UserID = dlo.UserID AND Information='Login fail' ORDER BY li.UserID DESC, li.LoginTime DESC, li.id DESC LIMIT 2, 1 ), -1) AS mid \
+FROM ( SELECT  DISTINCT UserID FROM FUserLogin dl WHERE Information='Login fail') dlo ) lo \
+ON l.UserID = lo.UserID AND (l.LoginTime, l.id) < (mts, mid) AND l.Information='Login fail'; \
+\
+DELETE  l.* FROM FUserLogin l \
+JOIN ( \
+SELECT UserID, COALESCE( ( SELECT LoginTime FROM FUserLogin li \
+WHERE li.UserID = dlo.UserID AND Information='Passwordreset' ORDER BY li.UserID DESC, li.LoginTime DESC LIMIT 2, 1 ), 1) AS mts, \
+COALESCE ( ( SELECT id FROM FUserLogin li WHERE li.UserID = dlo.UserID AND Information='Passwordreset' ORDER BY li.UserID DESC, li.LoginTime DESC, li.id DESC LIMIT 2, 1 ), -1) AS mid \
+FROM ( SELECT DISTINCT UserID FROM FUserLogin dl WHERE Information='Passwordreset') dlo ) lo \
+ON l.UserID = lo.UserID AND (l.LoginTime, l.id) < (mts, mid) AND l.Information='Passwordreset';" );
 			
 			DEBUG("[UMRemoveOldUserLoginEntries] query: %s\n", query );
 		
