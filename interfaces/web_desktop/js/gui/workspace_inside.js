@@ -8611,13 +8611,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	showContextMenu: function( menu, e, extra )
 	{
 		console.log( 'showContectMenu', [ menu, e, extra ])
+		e = e || {}
+		
 		// Do not do it double
 		if( this.contextMenuShowing && !extra?.applicationId ) return;
 		
-		let tr = null
-		if ( e != null )
-			tr = e.target ? e.target : e.srcElement;
-
+		let tr = e.target ? e.target : e.srcElement;
 		if( tr == window )
 			tr = document.body;
 		
