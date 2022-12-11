@@ -8664,7 +8664,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		
 		// Item uses system default
-		if( tr.defaultContextMenu ) 
+		if( tr != null && tr.defaultContextMenu ) 
 		{
 			return false;
 		}
