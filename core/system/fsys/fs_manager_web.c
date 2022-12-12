@@ -2427,6 +2427,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( strlen( name ) > 0 )
 					{
 						encName = UrlEncodeToMem( name );
+						Log( FLOG_INFO, "Name param orig: %s encoded %s\n", name, encName );
 					}
 					DEBUG("[File/Expose] encoded file name: %s\n", encName );
 
@@ -2527,23 +2528,28 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					}
 
 					int size = 0;
-					char *tmp = FMalloc( 2048 );
-					if( sharedFile == TRUE )
-					{
-						size = snprintf( tmp, 2048, "ok<!--separate-->{\"hash\":\"%s\",\"name\":\"%s\"}", hashmap, encName );
-					}
-					else if( alreadyExist == TRUE )
-					{
-						size = snprintf( tmp, 2048, "ok<!--separate-->{\"hash\":\"%s\",\"name\":\"%s\"}", hashmap, encName );
-					}
-					else
-					{
-						size = snprintf( tmp, 2048, ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CANNOT_SHARE_FILE], DICT_CANNOT_SHARE_FILE );
-					}
+					char *tmp = NULL;
 					
-					DEBUG("RESPONSE : '%s'\n", tmp );
+					if( ( tmp = FMalloc( 2048 ) ) != NULL )
+					{
+						if( sharedFile == TRUE )
+						{
+							size = snprintf( tmp, 2048, "ok<!--separate-->{\"hash\":\"%s\",\"name\":\"%s\"}", hashmap, encName );
+						}
+						else if( alreadyExist == TRUE )
+						{
+							size = snprintf( tmp, 2048, "ok<!--separate-->{\"hash\":\"%s\",\"name\":\"%s\"}", hashmap, encName );
+						}
+						else
+						{
+							size = snprintf( tmp, 2048, ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_CANNOT_SHARE_FILE], DICT_CANNOT_SHARE_FILE );
+						}
 					
-					HttpSetContent( response, tmp, size );
+						DEBUG("RESPONSE : '%s'\n", tmp );
+						Log( FLOG_INFO, "Response %s\n", tmp );
+					
+						HttpSetContent( response, tmp, size );
+					}
 					*result = 200;
 					
 					if( dest != NULL )

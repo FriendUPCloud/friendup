@@ -365,9 +365,12 @@ void _UrlEncodeInitTables()
 }
 char *UrlEncodeToMem( const char *src )
 {
-	if( _rfc3986[0] == 0 ) _UrlEncodeInitTables();
+	if( _rfc3986[0] == 0 )
+	{
+		_UrlEncodeInitTables();
+	}
 	
-	int memsize = ( SHIFT_LEFT( strlen( src ), 2) );
+	int memsize = ( strlen( src )*2);
 	char *res = NULL;
 	char *enc = FCallocAlign( memsize, 1 );
 	if( enc != NULL )
