@@ -358,12 +358,16 @@ char *UrlDecodeToMem( const char* src )
 }
 
 char _rfc3986[ 256 ] = { 0 };
+
+#pragma GCC push_options
+#pragma GCC optimize("O0")
+
 void _UrlEncodeInitTables()
 {
 	int i = 0; for( ; i < 256; i++ )
 		_rfc3986[ i ] = isalnum( i ) || i == '~' || i == '-' || i == '.' || i == '_' ? i : 0;
 }
-char * __attribute__((optimize("O0"))) UrlEncodeToMem( const char *src )
+char * UrlEncodeToMem( const char *src )
 {
 	if( _rfc3986[0] == 0 )
 	{
@@ -394,6 +398,7 @@ char * __attribute__((optimize("O0"))) UrlEncodeToMem( const char *src )
 	//enc[ memsize-1 ] = 0;
     return res;
 }
+#pragma GCC pop_options
 
 // Note: If the number is too large to fit in an uint, this function will simply overflow.
 //       It's safe, but can be unexpected.
