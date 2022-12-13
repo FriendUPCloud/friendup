@@ -392,7 +392,8 @@ char * UrlEncodeToMem( const char *src )
 			{
 				sprintf( enc, "%%%02X", ( unsigned char)*src );
 			}
-			while( *( ++enc ) != '\0' ){};
+			while( *( ++enc ) != '\0' ){ printf("|");};
+			printf("\n");
 		}
 	}
 	//enc[ memsize-1 ] = 0;
