@@ -376,7 +376,7 @@ char * UrlEncodeToMem( const char *src )
 	
 	int memsize = ( strlen( src )*2);
 	char *res = NULL;
-	char *enc = FCalloc( (memsize*2), 1 );// FCallocAlign( memsize, 1 );
+	char *enc = FCalloc( (memsize*4), 1 );// FCallocAlign( memsize, 1 );
 	if( enc != NULL )
 	{
 		res = enc;
@@ -384,6 +384,7 @@ char * UrlEncodeToMem( const char *src )
 		{
 			int pos = 0;
 			unsigned short int var = (unsigned short int) *src;
+			printf("var : %d\n", var );
 			if( var > 255 ) var = 255;
 			// if we don't have an index on the current character in the 
 			// table, then add it pure, else, encode it
