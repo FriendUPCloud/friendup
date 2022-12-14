@@ -376,23 +376,28 @@ char * UrlEncodeToMem( const char *src )
 	
 	int memsize = ( strlen( src )*2);
 	char *res = NULL;
-	char *enc = FCallocAlign( memsize, 1 );
+	char *enc = FCalloc( (memsize*2), 1 );// FCallocAlign( memsize, 1 );
 	if( enc != NULL )
 	{
 		res = enc;
 		for( ; *src; src++ )
 		{
+			int pos = 0;
+			unsigned short int var = (unsigned short int) *src;
 			// if we don't have an index on the current character in the 
 			// table, then add it pure, else, encode it
-			if( _rfc3986[ (int)*src ] ) 
+			if( _rfc3986[ var ] ) 
 			{
-				sprintf( enc, "%c", _rfc3986[ (int)*src ] );
+				pos = sprintf( enc, "%c", (char)_rfc3986[ var ] );
 			}
 			else 
 			{
-				sprintf( enc, "%%%02X", ( unsigned char)*src );
+				pos = sprintf( enc, "%%%02X", ( unsigned char)*src );
 			}
-			while( *( ++enc ) != '\0' ){ printf("|");};
+			printf("Add: %d  c : %c intsrc %d rfc %c\n", pos, *src, (int)*src, _rfc3986[ var ] );
+			enc += pos;
+			
+			//while( *( ++enc ) != 0 ){ printf("|");};
 			printf("\n");
 		}
 	}
