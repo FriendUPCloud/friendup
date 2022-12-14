@@ -384,6 +384,7 @@ char * UrlEncodeToMem( const char *src )
 		{
 			int pos = 0;
 			unsigned short int var = (unsigned short int) *src;
+			if( var > 255 ) var = 255;
 			// if we don't have an index on the current character in the 
 			// table, then add it pure, else, encode it
 			if( _rfc3986[ var ] ) 
