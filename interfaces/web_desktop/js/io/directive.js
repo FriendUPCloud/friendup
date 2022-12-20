@@ -56,9 +56,8 @@ function ExecuteApplication( app, args, callback, retries, flags )
 {
 	//console.log( 'ExecuteApplication', [ app, args, callback, retries, flags ])
     // Do not do this if we have nothing
-    if( !document.body || ( document.body && !document.body.classList.contains( 'Loaded' ) ) )
+    if( !document.body || ( document.body.getAttribute( 'sharedapp' ) || ( document.body && !document.body.classList.contains( 'Loaded' ) ) ) )
     {
-        console.log( 'Bad deal!' );
         return setTimeout( function()
         {
             ExecuteApplication( app, args, callback, retries, flags );
@@ -74,7 +73,6 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	// Just nothing.
 	if( !app )
 	{
-	    console.log( 'No app.' );
 		//console.log( 'just nothing things', app );
 		return;
 	}
@@ -85,7 +83,6 @@ function ExecuteApplication( app, args, callback, retries, flags )
 		//console.log( 'ExecuteApplication - retries', retries );
 		if( retries == 3 ) 
 		{
-		    console.log( 'No app basics' );
 			//return console.log( 'Could not execute app: ' + app );
 			return;
 		}
@@ -216,8 +213,6 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			}
 		}
 	}
-
-    console.log( 'Got so far' );
 
 	// Common ones
 	switch( app.toLowerCase() )
