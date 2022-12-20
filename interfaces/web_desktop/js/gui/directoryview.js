@@ -3826,7 +3826,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 							    }
 							    else if( mt.executable.length )
 							    {
-								    return ExecuteApplication( mt.executable, obj.fileInfo.Path );
+							    	// Execute app using currentMovable as context
+								    return ExecuteApplication( mt.executable, obj.fileInfo.Path, false, false, { context: currentMovable.windowObject.getViewId() } );
 							    }
 							}
 						}
@@ -3834,7 +3835,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 					// Execute jsx!
 					if( ext == '.jsx' )
 					{
-						return ExecuteApplication( obj.fileInfo.Path );
+						// Execute jsx using currentMovable as context
+						return ExecuteApplication( obj.fileInfo.Path, false, false, false, { context: currentMovable.windowObject.getViewId() } );
 					}
 				}
 			}
@@ -4286,6 +4288,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 // unique     = wheather to use a unique view or not
 // targetView = the view to reuse
 //
+let friendPdfIndex = 0;
 function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView, ocallback )
 {
 	if( !ocallback ) ocallback = false;
@@ -4479,8 +4482,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		iconObject.extension.toLowerCase() == 'jpeg' ||
 		iconObject.extension.toLowerCase() == 'jpg' ||
 		iconObject.extension.toLowerCase() == 'png' ||
-		iconObject.extension.toLowerCase() == 'gif' ||
-		iconObject.extension.toLowerCase() == 'pdf' 
+		iconObject.extension.toLowerCase() == 'gif'
 	)
 	{
 	    if( fileInfo.applicationId )
@@ -4488,6 +4490,30 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		    iconObject.applicationId = fileInfo.applicationId;
 		}
 		Friend.startImageViewer( iconObject, { parentView: currentMovable, recent: fromFolder ? false : 'dashboard' } );
+	}
+	else if( iconObject.extension.toLowerCase() == 'pdf' )
+	{
+		let cm = currentMovable;
+	    let v = new View( {
+	        title: iconObject.Path,
+	        width: 800,
+	        height: 800
+	    } );
+	    v.onClose = function()
+	    {
+		    cm.windowObject.activate();
+	    }
+	    v.setContent( '<iframe id="pdf' + ( ++friendPdfIndex ) + '" src="/webclient/3rdparty/pdfjs/web/viewer.html?file=' + encodeURIComponent( getImageUrl( iconObject.Path, 'rb' ) ) + '" class="PDFView"></iframe>' );
+	    let c = ge( 'pdf' + friendPdfIndex );
+	    if( !c )
+	    {
+	        return v.close();
+        }
+	    c.style.position = 'absolute';
+	    c.style.width = '100%';
+	    c.style.height = '100%';
+	    c.style.top = '0';
+	    c.style.left = '0';
 	}
 	// Run scripts in new shell
 	else if( iconObject.extension == 'run' )
@@ -4585,6 +4611,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		
 		// Reuse or not?
 		let w;
+		let curr = window.currentMovable ? currentMovable.windowObject : false;
 		if( targetView )
 		{
 			w = targetView.windowObject;
@@ -4617,6 +4644,16 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			'volume'    : isVolume,
 			'clickableTitle': true
 		} );
+		
+		// View ID in context sets recent location
+		if( fileInfo.flags && fileInfo.flags.context )
+		{
+		    if( fileInfo.flags.context == '$CURRENTVIEWID' && curr )
+		    {
+		        window.currentContext = false;
+        		w.recentLocation = 'viewId:' + curr.getViewId();
+		    }
+		}
 		
 		if( fileInfo.applicationId )
 		{
@@ -5045,10 +5082,12 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	}
 	else if ( fileInfo.MetaType == 'File' )
 	{
+		console.log( 'File', fileInfo )
 		if( fileInfo.Type.toLowerCase() == 'executable' )
 		{
 			ExecuteApplication( fileInfo.fileName ? fileInfo.fileName :
-				( fileInfo.Filename ? fileInfo.Filename : fileInfo.Title ) );
+				( fileInfo.Filename ? fileInfo.Filename : fileInfo.Title ),
+				null, null, null, fileInfo.flags ? fileInfo.flags : null );
 		}
 		else
 		{
@@ -5072,7 +5111,13 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 						    }
 						    else if( mt.executable.length )
 						    {
-							    return ExecuteApplication( mt.executable, fileInfo.Path );
+						    	console.log( 'executeable mt', mt )
+							    return ExecuteApplication( 
+							    	mt.executable, 
+							    	fileInfo.Path,
+							    	null, null,
+							    	fileInfo.flags 
+							    );
 						    }
 						}
 					}
@@ -5090,9 +5135,15 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 				}
 				catch( e ){};
 		
+		        console.log( 'mime check for', [ fileInfo, js ])
 				if( me == 'ok' && js )
 				{
-					ExecuteApplication( js.executable, fileInfo.Path );
+					ExecuteApplication( 
+						js.executable,
+						fileInfo.Path,
+						null, null,
+						fileInfo.flags
+					);
 				}
 				else
 				{

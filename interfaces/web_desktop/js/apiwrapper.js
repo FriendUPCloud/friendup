@@ -462,13 +462,13 @@ function apiWrapper( event, force )
 							// Setup the callback message
 							let nmsg = 
 							{
-								viewId: msg.viewId,
-								applicationId: msg.applicationId,
-								callback: cbk,
-								response: response,
-								permissions: permissions,
-								path: msg.path, 
-								extra: extra
+								viewId        : msg.viewId,
+								applicationId : msg.applicationId,
+								callback      : cbk,
+								response      : response,
+								permissions   : permissions,
+								path          : msg.path, 
+								extra         : extra
 							};
 							if( tar )
 								tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
@@ -476,9 +476,50 @@ function apiWrapper( event, force )
 								app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
 						}, msg.extra );
 						break;
+					case 'openWindowByPath':
+						console.log( 'openWindowByPath', msg )
+						Friend.DOS.getFileAccess( msg.path, {}, ( response, permissions, extra ) => {
+							console.log( 'getFileAccess response', {
+								res : response,
+								per : permissions,
+								xtr : extra,
+							})
+							if ( !response )
+								return
+							
+							Friend.DOS.getFileInfo( msg.path, {}, ( response, fileInfo, extra ) => {
+								console.log( 'getFileInfo response', {
+									res  : response,
+									fifo : fileInfo,
+									exr  : extra,
+								})
+								if ( !response )
+									return
+								
+								
+								if( msg.flags.context && msg.flags.context == '$CURRENTVIEWID' )
+								{
+								    msg.flags.context = currentMovable.windowObject.getViewId();
+								}
+								
+								fileInfo.flags = msg.flags;
+								
+								if( 'File' == fileInfo.Type )
+									Friend.DOS.openWindowByFilename( fileInfo );
+								if( 'Directory' == fileInfo.Type )
+								{
+									fileInfo.MetaType = 'Directory';
+									fileInfo.Path = msg.path;
+									console.log( 'open path', fileInfo );
+									OpenWindowByFileinfo( fileInfo );
+								}
+							})
+						})
+						break;
 					case 'openWindowByFilename':
 						if( msg.args )
 						{
+							console.log( 'openWindowByFilename', msg )
 						    let appId = false;
 						    if( currentMovable && currentMovable.windowObject && currentMovable.windowObject.applicationId )
 						    {
@@ -1932,9 +1973,23 @@ function apiWrapper( event, force )
 						}
 					}
 					
+					// Does the view msg override the context?
+					if( msg.context )
+					{
+						window.currentContext = false;
+					}
+					
 					let v = new View( msg.data );
-					if( msg.applicationId )
+					
+					if( msg.context )
+					{						
+						v.recentLocation = 'viewId:' + msg.context;
+					}
+					else if( msg.applicationId )
+					{
 						v.recentLocation = window.Workspace && Workspace.dashboard ? 'dashboard' : '';
+					}
+					
 					let win = msg.parentViewId && app.windows ? app.windows[ msg.parentViewId ] : false;
 					if( win )
 					{
@@ -3838,6 +3893,14 @@ function apiWrapper( event, force )
 									runWrapperCallback( nmsg.callback, response );
 								}
 							}
+							
+							// Add flags
+							let flags = false;
+							if( msg.flags )
+							{
+								flags = msg.flags;
+							}
+							
 							// Special case
 							if( msg.path && msg.path.split( ':' )[0] == 'System' )
 							{
@@ -3849,7 +3912,7 @@ function apiWrapper( event, force )
 							}
 							else
 							{
-								ExecuteApplication( msg.executable, msg.args, cb );
+								ExecuteApplication( msg.executable, msg.args, cb, false, flags );
 							}
 							msg = null;
 						}

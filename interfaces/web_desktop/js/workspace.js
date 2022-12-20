@@ -986,6 +986,7 @@ Workspace = {
 			let s = document.createElement( 'script' );
 			s.src = '/webclient/js/gui/workspace_inside.js;' +
 				'webclient/3rdparty/adapter.js;' +
+				'webclient/3rdparty/pdfjs/build/pdf.js;' +
 				'webclient/js/utils/speech-input.js;' +
 				'webclient/js/utils/events.js;' +
 				'webclient/js/utils/utilities.js;' +

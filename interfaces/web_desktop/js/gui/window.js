@@ -1168,6 +1168,7 @@ function _ActivateDialogWindow( div, e )
 	if( !div.windowObject.flags.dockable )
 	{
 		document.body.classList.add( 'Dialog' );
+		
 		currentMovable = div;
 		if( e && e.button == 0 )
 		{
@@ -1193,7 +1194,9 @@ function _ActivateDialogWindow( div, e )
 				window.hideDashboard();
 		}
 		if( window.Workspace && window.Workspace.showQuickMenu )
+		{
 			Workspace.showQuickMenu();
+		}
 	}
 }
 
@@ -1204,7 +1207,24 @@ function _ActivateWindow( div, nopoll, e )
     if( div.windowObject && div.windowObject.getFlag( 'invisible' ) == true ) return;
     if( div.parentNode && div.parentNode.classList.contains( 'Closing' ) ) return;
     
-    // Dialogs here are not activated
+    // Support dashboard
+    let vTitle = div.windowObject.getFlag( 'title' );
+    if( vTitle )
+    {
+	    let dl = document.querySelector( '.DashboardLabel' );
+	    if( dl )
+	    {
+	        dl.innerHTML = vTitle;
+        }
+    }
+    
+    // Add div if it hasn't been added already
+	if( div && div.windowObject && ( window.currentContext && ( typeof( window.currentContext ) == 'string' || div != window.currentContext[ 0 ] ) ) )
+	{
+	    window.currentContext = [ div, window.currentContext ];
+	}
+	
+	// Dialogs here are not activated
     if( 
     	window.Workspace && Workspace.dashboard && div.windowObject && (
     		div.windowObject.flags[ 'dialog' ] ||
@@ -1214,11 +1234,6 @@ function _ActivateWindow( div, nopoll, e )
     )
     {
     	return _ActivateDialogWindow( div );
-	}
-	
-	if( div && div.windowObject && div.windowObject.applicationId )
-	{
-	    window.currentContext = [ div, window.currentContext ];
 	}
 	
 	// Remove dialog flag only if it's not a dialog
@@ -1571,6 +1586,10 @@ function _removeWindowTiles( div )
 function _DeactivateWindow( m, skipCleanUp )
 {
 	let ret = false;
+
+	if( !m ) return;
+	
+	if( !m ) return;
 	
 	if( m.className && m.classList.contains( 'Active' ) )
 	{
@@ -1979,7 +1998,21 @@ function CloseView( win, delayed )
 				qm.classList.remove( 'Showing' );
 				ge( 'DoorsScreen' ).appendChild( qm );
 			}
-			document.body.classList.remove( 'Dialog' );
+			
+			let currentIsDialog = false;
+			if( currentMovable )
+			{
+			    let cr = currentMovable;
+			    if( cr.parentNode.classList.contains( 'Dialog' ) || 
+			        cr.parentNode.parentNode.classList.contains( 'Dialog' ) ||
+			        cr.parentNode.parentNode.classList.contains( 'FileDialog' ) )
+		        {
+		            currentIsDialog = true;
+		        }
+			}
+			
+			if( win == currentMovable || currentIsDialog )
+				document.body.classList.remove( 'Dialog' );
 		}
 		
 		// Unassign this
@@ -2102,117 +2135,164 @@ function CloseView( win, delayed )
 			div.appendChild( ele );
 		}
 		
-		// Check the window context, if it exists
-		if( window.currentContext )
+		// Context -------------------------------------------------------------
+		// Check the window recent location exists, and use it instead
+		if( ( currentMovable && currentMovable == win ) || ( !currentMovable && win ) )
 		{
-		    function handleContext()
-		    {
-		        switch( window.currentContext )
-		        {
-		            case 'dashboard':
-		                _DeactivateWindows();
-			            showDashboard();
-			            setTimeout( function(){ showDashboard(); }, 150 );
-			            break;
-		            case 'sidebar':
-		                _DeactivateWindows();
-		                hideDashboard();
-                    	break;
-                	// We have a different thing for other contexts
-                    default:
-                        let appCheck = true;
-                        // We got a context array ([ currentWindow, prevContext ])
-                        if( typeof( window.currentContext ) == 'object' )
-                        {
-                            window.currentContext = window.currentContext[ 1 ];
-                            return handleContext();
-                        }
-                        if( appId && appCheck )
-                        {
-                            for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
-						    {
-							    if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
-							    {
-								    // Only activate non minimized views
-								    if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
-								    {
-									    let vh = Friend.GUI.view.viewHistory[ a ];
-									    currentMovable = vh;
-									    _ActivateWindow( vh );
-									    if( vh.content && vh.content.refresh )
-										    vh.content.refresh();
-									    nextActive = true;
-								    }
-								    break;
-							    }
-						    }
-                        }
-                        break;
-		        }
-	        }
-	        handleContext();
-		}
-		/* OLD CODE for dashboard stuff 
-		if( !appId && win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
-		{
-			_DeactivateWindows();
-			showDashboard();
-			setTimeout( function(){ showDashboard(); }, 150 );
-		}
-		// Also do this with appid
-		else if( isFCDialog && appId && win.windowObject.recentLocation && win.windowObject.recentLocation == 'dashboard' )
-		{
-		    _DeactivateWindows();
-			showDashboard();
-			setTimeout( function(){ showDashboard(); }, 150 );
-		}*/
-		else
-		{
-			// Activate latest activated view (not on mobile)
-			let nextActive = false;
-			if( div.classList.contains( 'Active' ) || div.windowObject.getFlag( 'dialog' ) )
+			if( win.windowObject && win.windowObject.recentLocation && win.windowObject.recentLocation.substr( 0, 7 ) == 'viewId:' )
 			{
-				if( Friend.GUI.view.viewHistory.length )
+				let id = win.windowObject.recentLocation;
+				id = id.substr( 7, id.length - 7 );
+				let actSet = false;
+				for( let z in movableWindows )
 				{
-					// Only activate last view in the same app
-					if( appId )
+					if( movableWindows[ z ].windowObject && movableWindows[ z ].windowObject.getViewId() == id )
 					{
-						for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
-						{
-							if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
-							{
-								// Only activate non minimized views
-								if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+						currentMovable = movableWindows[ z ];
+						_ActivateWindow( currentMovable );
+						if( typeof( window.currentContext ) == 'object' && window.currentContext.length > 1 )
+							window.currentContext = window.currentContext[ 1 ];
+						else window.currentContext = false;
+						actSet = true;
+						break;
+					}
+				}
+				if( !actSet )
+				{
+					// Default
+					_DeactivateWindows();
+				    showDashboard();
+				    setTimeout( function(){ showDashboard(); }, 150 );
+			    }
+			}
+			// Check the window context, if it exists
+			//console.log( 'Foo bar', window.currentContext );
+			if( window.currentContext )
+			{
+			    //console.log( 'Test' );
+			    function handleContext( depth )
+				{
+					if( !depth ) depth = 1;
+				    switch( window.currentContext )
+				    {
+				        case 'dashboard':
+				            _DeactivateWindows();
+					        showDashboard();
+					        break;
+				        case 'sidebar':
+				            _DeactivateWindows();
+				            hideDashboard();
+		                	break;
+		            	// We have a different thing for other contexts
+		                default:
+		                    let appCheck = true;
+		                    //console.log( 'Checking context: ', window.currentContext );
+		                    // We got a context array ([ currentWindow, prevContext ])
+		                    if( typeof( window.currentContext ) == 'object' )
+		                    {
+		                        // We are referring to self! Fix it
+		                        if( window.currentContext[0] == win && typeof( window.currentContext[1] ) != 'undefined' )
+		                        {
+		                            //console.log( 'I am self: ', window.currentContext );
+		                            window.currentContext = window.currentContext[1];
+	                                if( window.currentContext == 'dashboard' )
+	                                {
+	                                    return handleContext( depth + 1 );
+	                                }
+	                            }
+	                            
+	                            
+		                    	if( window.currentContext[0] && window.currentContext[0].tagName == 'DIV' && window.currentContext[0] != currentMovable )
+		                    	{
+		                    		currentMovable = window.currentContext[ 0 ];
+		                    		_ActivateWindow( window.currentContext[ 0 ] );
+		                    		if( window.currentContext[ 0 ].content && window.currentContext[ 0 ].content.refresh )
+		                    			window.currentContext[ 0 ].content.refresh();
+		                    		return;
+		                    	}
+		                    	else if( window.currentContext.length > 1 )
+		                    	{
+		                    		if( typeof( window.currentContext[ 1 ] ) != 'undefined' )
+		                    		{
+						                window.currentContext = window.currentContext[ 1 ];
+						                return handleContext( depth + 1 );
+					                }
+			                    }
+		                    }
+		                    if( appId && appCheck )
+		                    {
+		                        for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 								{
-									let vh = Friend.GUI.view.viewHistory[ a ];
-									currentMovable = vh;
-									_ActivateWindow( vh );
-									if( vh.content && vh.content.refresh )
-										vh.content.refresh();
-									nextActive = true;
+									if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
+									{
+										// Only activate non minimized views
+										if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+										{
+											let vh = Friend.GUI.view.viewHistory[ a ];
+											currentMovable = vh;
+											_ActivateWindow( vh );
+											if( vh.content && vh.content.refresh )
+												vh.content.refresh();
+											nextActive = true;
+										}
+										break;
+									}
 								}
-								break;
+		                    }
+		                    break;
+				    }
+			    }
+			    handleContext();
+			}
+			// Context end ---------------------------------------------------------
+			else
+			{
+				// Activate latest activated view (not on mobile)
+				let nextActive = false;
+				if( div.classList.contains( 'Active' ) || div.windowObject.getFlag( 'dialog' ) )
+				{
+					if( Friend.GUI.view.viewHistory.length )
+					{
+						// Only activate last view in the same app
+						if( appId )
+						{
+							for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
+							{
+								if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
+								{
+									// Only activate non minimized views
+									if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+									{
+										let vh = Friend.GUI.view.viewHistory[ a ];
+										currentMovable = vh;
+										_ActivateWindow( vh );
+										if( vh.content && vh.content.refresh )
+											vh.content.refresh();
+										nextActive = true;
+									}
+									break;
+								}
 							}
 						}
-					}
-					else
-					{
-						for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
+						else
 						{
-							if( Friend.GUI.view.viewHistory[ a ].windowObject.workspace == globalConfig.workspaceCurrent )
+							for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 							{
-								if( Friend.GUI.view.viewHistory[ a ].windowObject.getFlag( 'sidebarManaged' ) ) continue;
-								// Only activate non minimized views
-								if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+								if( Friend.GUI.view.viewHistory[ a ].windowObject.workspace == globalConfig.workspaceCurrent )
 								{
-									let vh = Friend.GUI.view.viewHistory[ a ];
-									currentMovable = vh;
-									_ActivateWindow( vh );
-									if( vh.content && vh.content.refresh )
-										vh.content.refresh();
-									nextActive = true;
+									if( Friend.GUI.view.viewHistory[ a ].windowObject.getFlag( 'sidebarManaged' ) ) continue;
+									// Only activate non minimized views
+									if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+									{
+										let vh = Friend.GUI.view.viewHistory[ a ];
+										currentMovable = vh;
+										_ActivateWindow( vh );
+										if( vh.content && vh.content.refresh )
+											vh.content.refresh();
+										nextActive = true;
+									}
+									break;
 								}
-								break;
 							}
 						}
 					}
@@ -2276,7 +2356,7 @@ function CloseView( win, delayed )
 		}
 		
 		// Dashboard support
-		if( win.windowObject.recentLocation )
+		if( win.windowObject.recentLocation && win.windowObject.recentLocation  != 'dashboard' )
 		{
 			return;
 		}
@@ -6499,7 +6579,7 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 	let curr = window.currentMovable;
 
 	let v;
-	if( !window.isMobile )
+	if( !window.isMobile || Workspace.dashboard )
 	{
 		v = new View( {
 			title: title,
@@ -6633,7 +6713,7 @@ function Alert( title, string, cancelstring, callback )
 	let themeBottom = GetThemeInfo( 'ViewBottom' ).height;
 	
 	let v;
-	if( !window.isMobile )
+	if( !window.isMobile || Workspace.dashboard )
 	{
 		v = new View( {
 			title: title,

@@ -2316,7 +2316,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		// This part is important - it is where we extend the workspace with 
 		// configurable extensions based on config settings
-		console.log( 'refreshUserSettings: Getting settings' );
+		//console.log( 'refreshUserSettings: Getting settings' );
 		let b = new Module( 'system' );
 		b.onExecuted = function( e, d )
 		{
@@ -2372,7 +2372,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 		}
 		b.execute( 'sampleconfig' );
-		console.log(  'refreshUserSettings: Getting loads of settings' );
+		//console.log(  'refreshUserSettings: Getting loads of settings' );
 		let userSettingsFetched = false;
 		function getUserSettings()
 		{
@@ -2380,7 +2380,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			m.onExecuted = function( e, d )
 			{
 				userSettingsFetched = true;
-				console.log( 'refreshUserSettings: Settings came in' );
+				//console.log( 'refreshUserSettings: Settings came in' );
 				function initFriendWorkspace()
 				{
 					// Make sure we have loaded
@@ -2388,14 +2388,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						if( Workspace.screen.contentDiv.offsetHeight < 100 )
 						{
-							console.log( 'refreshUserSettings: Not all contentDiv stuff loaded, wait 50ms and retry.' );
+							//console.log( 'refreshUserSettings: Not all contentDiv stuff loaded, wait 50ms and retry.' );
 							return setTimeout( function(){ initFriendWorkspace(); }, 50 );
 						}
 					}
 					
 					if( e == 'ok' && d )
 					{
-						console.log( 'refreshUserSettings: Settings loaded ok.' );
+						//console.log( 'refreshUserSettings: Settings loaded ok.' );
 						Workspace.userSettingsLoaded = true;
 						let dat = JSON.parse( d );
 						if( dat.wallpaperdoors && dat.wallpaperdoors.substr )
@@ -2596,7 +2596,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								ScreenOverlay.hide();
 								PollTray();
 								PollTaskbar();					
-								console.log( 'refreshUserSettings: Running callback...' );
+								//console.log( 'refreshUserSettings: Running callback...' );
 								if( callback ) callback();
 								return;
 							}
@@ -2711,7 +2711,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					else
 					{
-						console.log( 'refreshUserSettings: Settings did not load.' );
+						//console.log( 'refreshUserSettings: Settings did not load.' );
 						Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 						Workspace.wallpaperImageDecoded = false;
 						Workspace.windowWallpaperImage = '';
@@ -2720,7 +2720,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					if( callback && typeof( callback ) == 'function' )
 					{
-						console.log( 'refreshUserSettings: Running callback()' );
+						//console.log( 'refreshUserSettings: Running callback()' );
 						callback();
 					}
 				}
@@ -4006,7 +4006,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					            {
 					                Workspace.dashboard = new SidebarEngine();
 					                Workspace.dashboardLoading = null;
-					                console.log( '[Login phase] Initialized sidebar engine!' );
+					                //console.log( '[Login phase] Initialized sidebar engine!' );
 					            }
 					        }
 					        Workspace.dashboardLoading = j;
@@ -4048,7 +4048,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			Workspace.themeRefreshed = true;
 			Workspace.refreshUserSettings( function() 
 			{
-				console.log( '[Login phase] Done refreshing user settings.' );
+				//console.log( '[Login phase] Done refreshing user settings.' );
 				CheckScreenTitle();
 
 				let h = document.getElementsByTagName( 'head' );
@@ -4091,7 +4091,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						stripOld( this.href );
 						
 						document.body.classList.add( 'ThemeLoaded' );
-						console.log( '[Login phase] Theme loaded!!' );
+						//console.log( '[Login phase] Theme loaded!!' );
 						setTimeout( function()
 						{
 							document.body.classList.remove( 'ThemeRefreshing' );
@@ -5650,9 +5650,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					Workspace.renameWindow.close();
 					Workspace.renameWindow = false;
-				}
-				
-				
+				}				
 
 				let w;
 				if( window.isMobile || Workspace.isSingleTask )
@@ -5674,6 +5672,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						resize: false,
 						dialog: true
 					} );
+				}
+
+				w.onClose = function()
+				{
+					Workspace.renameWindow = false;
 				}
 
 				Workspace.renameWindow = w;
@@ -5741,6 +5744,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					clb.onclick = function()
 					{
 						w.close();
+						Workspace.renameWindow = false;
 					}
 				}
 				inp.select();
@@ -6187,7 +6191,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									win.content.refresh();
 								}
 								if( Workspace.renameWindow )
+								{
 									Workspace.renameWindow.close();
+									Workspace.renameWindow = false;
+								}
 							} 
 						);
 					} 
@@ -6197,7 +6204,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				Notify( { title: i18n( 'i18n_cannotRename' ), text: i18n( 'i18n_noWritePermission' ) } );
 				if( Workspace.renameWindow )
+				{
 					Workspace.renameWindow.close();
+					Workspace.renameWindow = false;
+				}
 			}
 			return;
 		}
@@ -6224,7 +6234,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							win.content.refresh();
 						}
 						if( Workspace.renameWindow )
+						{
 							Workspace.renameWindow.close();
+							Workspace.renameWindow = false;
+						}
 					}
 				);
 			}
@@ -8597,11 +8610,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	showContextMenu: function( menu, e, extra )
 	{
+		console.log( 'showContectMenu', [ menu, e, extra ])
+		e = e || {}
+		
 		// Do not do it double
-		if( this.contextMenuShowing ) return;
+		if( this.contextMenuShowing && !extra?.applicationId ) return;
 		
 		let tr = e.target ? e.target : e.srcElement;
-
 		if( tr == window )
 			tr = document.body;
 		
@@ -8648,7 +8663,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		
 		// Item uses system default
-		if( tr.defaultContextMenu ) 
+		if( tr != null && tr.defaultContextMenu ) 
 		{
 			return false;
 		}
@@ -8800,19 +8815,49 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			
 			let flg = {
-				width: 200,
-				height: 100,
-				top: e.clientY,
-				left: e.clientX,
-				transparent: true
+				width       : 200,
+				height      : 100,
+				top         : e.clientY,
+				left        : e.clientX,
+				transparent : true
 			}
-			let v = false;
 			
-			if( Workspace.iconContextMenu )
+			if ( extra?.mouse )
+			{
+				if ( extra.viewId )
+				{
+					const app = findApplication( extra.applicationId )
+					const offset = app.windows[ extra.viewId ].iframe?.getBoundingClientRect()
+					if ( null == offset )
+					{
+						flg.top = extra.mouse.clientY
+						flg.left = extra.mouse.clientX
+					}
+					else
+					{
+						flg.top = extra.mouse.clientY + offset.y
+						flg.left = extra.mouse.clientX + offset.x
+					}
+				}
+				else
+				{
+					flg.top = extra.mouse.clientY
+					flg.left = extra.mouse.clientX
+				}
+			}
+			
+			let v = false;
+			if ( Workspace.iconContextMenu && !( extra && null != extra.applicationId ))
 			{
 				v = Workspace.iconContextMenu;
 			}
-			else v = Workspace.iconContextMenu = new Widget( flg );
+			else
+			{
+				if ( null != Workspace.iconContextMenu )
+					Workspace.iconContextMenu.hide()
+				
+				v = Workspace.iconContextMenu = new Widget( flg );
+			} 
 			
 			this.contextMenuShowing = v;
 			
@@ -8976,7 +9021,19 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								let app = findApplication( extra.applicationId );
 								if( extra.viewId && app.windows[ extra.viewId ] )
 								{
-									app.windows[ extra.viewId ].sendMessage( { command: m.command, data: m.data } );
+									if ( extra.callback )
+									{
+										app.windows[ extra.viewId ].sendMessage({
+											type     : 'callback',
+											callback : extra.callback,
+											command  : m.command,
+											data     : m.data,
+										})
+									}
+									else
+									{
+										app.windows[ extra.viewId ].sendMessage( { command: m.command, data: m.data } );
+									}
 								}
 								else app.postMessage( { command: m.command, data: m.data }, '*' );
 							}
@@ -9034,6 +9091,27 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				p.innerHTML = menu[z].name;
 				menuout.appendChild( p );
 			}
+			if ( extra?.viewId )
+			{
+				v.dom.tabIndex = -1
+				v.dom.focus({
+					focusVisible : false,
+				})
+				v.dom.addEventListener( 'blur', e => {
+					v.hide()
+					if ( extra.callback )
+					{
+						let app = findApplication( extra.applicationId )
+						app.windows[ extra.viewId ].sendMessage({
+							type     : 'callback',
+							callback : extra.callback,
+							command  : false,
+							data     : null,
+						})
+					}
+				}, false )
+			}
+			
 			if( menuitemCount )
 			{
 				v.dom.appendChild( menuout );
@@ -11844,3 +11922,148 @@ function loadApplicationBasics( callback )
 	}, 2 );
 };
 
+
+(() =>
+{
+	if( isIos() || isIpad() )
+	{
+		window.setTimeout(() =>
+		{
+			if ( null != window.visualViewport )
+			{
+				const vv = window.visualViewport
+				let timeout = null
+				let maxHeight = 0
+				updateMaxHeight()
+				
+				if ( null != screen?.orientation )
+				{
+					screen.orientation.addEventListener( 'change', e => {
+						//
+					}, false )
+				}
+				
+				if ( window.addEventListener )
+				{
+					window.addEventListener( 'orientationchange', e => 
+					{
+						//
+					}, false )
+				}
+				
+				window.visualViewport.addEventListener( 'resize', e => 
+				{
+					if ( null != timeout )
+						return
+					
+					timeout = window.setTimeout(() =>
+					{
+						updateMaxHeight()
+						timeout = null
+						const offset = maxHeight - vv.height
+						if ( 20 > offset )
+							translate( 0 )
+						else
+							translate( offset )
+						
+					}, 100 )
+					
+				}, false )
+				
+				window.visualViewport.addEventListener( 'scroll', e => 
+				{
+					//
+				}, false )
+				
+				function updateMaxHeight()
+				{
+					maxHeight = window.innerHeight
+					return
+					
+					const iH = window.innerHeight
+					const iW = window.innerWidth
+					const mode = getOrientation()
+					if ( 'portrait' == mode )
+					{
+						maxHeight = iH
+					}
+					else
+					{
+						maxHeight = iW
+					}
+					
+					function getOrientation()
+					{
+						if ( null != window.orientation )
+						{
+							const wo = window.orientation
+							if ( 0 == wo || 180 == wo )
+								return 'portrait'
+							else
+								return 'landscape'
+						}
+						
+						if ( null != window.screen?.orientation )
+						{
+							const so = screen.orientation.type
+							console.log( '>>>TODO<<< so', so )
+							return 'portrait'
+						}
+						
+						return 'portrait'
+					}
+				}
+			}
+			else
+			{
+				return false
+			}
+		}, 1000 )
+	}
+	
+	function translate( num )
+	{
+		let trans = [
+			'transform : ',
+			'translate( 0px, -',
+			num,
+			'px)',
+		]
+		
+		if ( isIos())
+			trans.push( ' scale(1.3) !important' )
+		
+		trans = trans.join( '')
+
+		//document.body.classList.toggle( 'Inside', false )
+		//document.body.style[ 'WebkitTransform' ] = trans
+		document.body.setAttribute( 'style', trans )
+	}
+	
+	function isIos() {
+		return [
+			//'iPad Simulator',
+			'iPhone Simulator',
+			'iPod Simulator',
+			//'iPad',
+			'iPhone',
+			'iPod'
+		].includes(navigator.platform)
+		// iPad on iOS 13 detection
+		//|| (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+	}
+	
+	function isIpad() {
+		return [
+			'iPad Simulator',
+			//'iPhone Simulator',
+			//'iPod Simulator',
+			'iPad',
+			//'iPhone',
+			//'iPod'
+		].includes(navigator.platform)
+		// iPad on iOS 13 detection
+		|| (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+	}
+	
+})();

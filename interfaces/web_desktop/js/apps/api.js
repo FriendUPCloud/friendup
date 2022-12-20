@@ -890,6 +890,12 @@ function receiveEvent( event, queued )
 		return;
 	}
 	
+	// Register context for window calls
+	if( dataPacket.context )
+	{
+		window.windowContext = dataPacket.context;
+	}
+	
 	switch( dataPacket.command )
 	{	
 		// Update clipboard
@@ -2298,7 +2304,8 @@ function View( flags )
 	let msg = {
 		type:    'view',
 		data:    flags,
-		viewId: viewId
+		viewId: viewId,
+		context: window.windowContext
 	};
 	
 	if( Application.viewId )
@@ -3727,7 +3734,7 @@ function getImageUrl( path, mode )
 
 	let prt = 'authid=' + ( Application.authId ? Application.authId : '' );
 	if( Application.sessionId ) prt = 'sessionid=' + Application.sessionId;
-	let u = '/system.library/file/read?' + prt + '&path=' + path + '&mode=rs';
+	let u = '/system.library/file/read?' + prt + '&path=' + path + '&mode=' + mode;
 	return u;
 }
 // Alias
@@ -7157,10 +7164,10 @@ function Confirm( title, string, callb, confirmOKText, confirmCancelText, thirdB
 function Alert( title, string, callback )
 {
 	Application.sendMessage( {
-		type: 'system',
-		command: 'alert',
-		title: title,
-		string: string
+		type    : 'system',
+		command : 'alert',
+		title   : title,
+		string  : string
 	} );
 }
 
@@ -7169,10 +7176,10 @@ function Alert( title, string, callback )
 function ShowContextMenu( header, menu )
 {
 	Application.sendMessage( {
-		type: 'system',
-		header: header,
-		command: 'showcontextmenu',
-		menu: menu
+		type    : 'system',
+		header  : header,
+		command : 'showcontextmenu',
+		menu    : menu
 	} );
 }
 

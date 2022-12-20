@@ -2223,6 +2223,7 @@ body:not([mobile]):not([tablet]) #Available_tutorials .Tutorial > div:hover
 	box-shadow: 0 2px 3px rgba(0,0,0,0.3);
 	color: white;
 	border-radius: 3px;
+	outline : unset;
 }
 
 .Widget.Fadable
@@ -2314,6 +2315,12 @@ body:not([mobile]):not([tablet]) .Widget .MenuItems .MenuItem:hover
 	background: rgba(255,255,255,0.2);
 	color: white;
 	text-shadow: 0px 1px 1px rgba(0,0,0,0.6);
+}
+
+.Widget .MenuItems .MenuHeader
+{
+	overflow      : hidden;
+	text-overflow : ellipsis;
 }
 
 .Widget .MenuItems .MenuHeader

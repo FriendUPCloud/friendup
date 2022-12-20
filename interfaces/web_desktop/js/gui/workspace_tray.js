@@ -656,7 +656,10 @@ function Notify( message, callback, clickcallback )
 				var d = document.createElement( 'div' );
 				d.className = 'Notification Mobile';
 				d.id = 'MobileNotifications';
-				ge( 'DoorsScreen' ).appendChild( d );
+				// With dashboard mode, use body for notifications
+				if( Workspace.dashboard && isMobile )
+				    document.body.appendChild( d );
+				else ge( 'DoorsScreen' ).appendChild( d );
 			}
 			// On mobile it's always seen!
 			nev.seen = true;

@@ -408,12 +408,22 @@ if( isset( $args->command ) )
 				$fields = [];
 				foreach( $args->args as $k=>$v )
 				{
-					if( $k == 'url' ) continue;
+					if ( $k == 'url' ) 
+						continue;
+					if ( $k == 'diskpath' )
+						continue;
+					
 					$fields[$k] = $v;
 				}
-				curl_setopt( $c, CURLOPT_POST, true );
+				
+				if ( 0 < count( $fields ))
+				{
+					curl_setopt( $c, CURLOPT_POST, true );
+					curl_setopt( $c, CURLOPT_POSTFIELDS, http_build_query( $fields ) );
+				}
+				
 				curl_setopt( $c, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
-				curl_setopt( $c, CURLOPT_POSTFIELDS, http_build_query( $fields ) );
+				
 				curl_setopt( $c, CURLOPT_RETURNTRANSFER, true );
 				curl_setopt( $c, CURLOPT_HTTPHEADER, array( 'Accept-charset: UTF-8' ) );
 				curl_setopt( $c, CURLOPT_ENCODING, 'UTF-8' );
@@ -441,7 +451,6 @@ if( isset( $args->command ) )
 				curl_close( $c );
 				
 				
-				
 				if( isset( $args->args->diskpath ) )
 				{
 					if( strlen( $r ) && $args->args->diskpath )
@@ -449,7 +458,7 @@ if( isset( $args->command ) )
 						$f = new File( $args->args->diskpath );
 						if( $f->save( $r ) )
 						{
-							//$Logger->log( 'Saved to ' . $args->args->diskpath );
+							$Logger->log( 'Saved to ' . $args->args->diskpath );
 							die( 'ok<!--separate-->{"result":"1","message":"Saved","path":"' . $args->args->diskpath . '"}' );
 						}
 					}
