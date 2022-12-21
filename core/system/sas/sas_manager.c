@@ -126,6 +126,7 @@ int SASManagerRegisterSession( SASManager *sasm, BufString *resp, FULONG id )
 						if( nsession != NULL )
 						{
 							nsession->ss_ID = id;
+							DEBUG("[SASManagerRegisterSession] session created with id: %ld\n", id );
 						}
 					}
 				}
