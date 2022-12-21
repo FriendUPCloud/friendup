@@ -102,8 +102,14 @@ int SASManagerRegisterSession( SASManager *sasm, BufString *resp, FULONG id )
 		SQLLibrary *lsqllib = sb->LibrarySQLGet( sb );
 		if( lsqllib != NULL )
 		{
-			
 			server = lsqllib->Load( lsqllib, FSASServerDesc, where, &entries );
+			
+			if( id > 0 && server == NULL )
+			{
+				strcpy( where, "Sessions=(SELECT MIN( Sessions ) FROM FSASServer) LIMIT 1" );
+				server = lsqllib->Load( lsqllib, FSASServerDesc, where, &entries );
+			}
+			
 			
 			if( server != NULL )
 			{
@@ -155,7 +161,7 @@ int SASManagerRegisterSession( SASManager *sasm, BufString *resp, FULONG id )
 			}
 			else
 			{
-				DEBUG("[SASManagerRegisterSession] Cannot load session with id: %d\n", id );
+				DEBUG("[SASManagerRegisterSession] Cannot load SAS Server with id: %d\n", id );
 			}
 		
 			sb->LibrarySQLDrop( sb, lsqllib );
