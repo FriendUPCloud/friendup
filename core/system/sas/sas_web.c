@@ -118,6 +118,8 @@ Http* SASWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *
 		SASManagerRegisterSession( l->sl_SASManager, bsresp, id );
 		
 		BufStringAddSize( bsresp, "}", 1 );
+		
+		DEBUG("[SASWebRequest] Register response: %s\n", bsresp->bs_Buffer );
 
 		HttpAddTextContent( response, bsresp->bs_Buffer );
 		
