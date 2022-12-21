@@ -119,6 +119,15 @@ int SASManagerRegisterSession( SASManager *sasm, BufString *resp, FULONG id )
 					snprintf( where, sizeof( where ), "ID=%ld", id );
 					nsession = lsqllib->Load( lsqllib, FSASSessionDesc, where, &entries );
 					DEBUG("[SASManagerRegisterSession] session exist, load from DB %ld ptr %p\n", id, nsession );
+					
+					if( nsession == NULL )
+					{
+						nsession = SASSessionNew();
+						if( nsession != NULL )
+						{
+							nsession->ss_ID = id;
+						}
+					}
 				}
 				
 				if( nsession != NULL )
