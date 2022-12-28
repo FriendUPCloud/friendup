@@ -78,7 +78,7 @@ static inline int WriteMessageSink( DataQWSIM *d, unsigned char *msg, int len )
 	{
 		return 0;
 	}
-	DEBUG("WriteMessageSink\n"); 
+	//DEBUG("WriteMessageSink\n"); 
 	FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 	if( en != NULL )
 	{
@@ -236,7 +236,7 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 				FRIEND_MUTEX_LOCK( &d->d_Mutex );
 				FQueue *q = &(d->d_Queue);
 			
-				DEBUG("[websocket_app_callback] WRITABLE CALLBACK, q %p\n", q );
+				//DEBUG("[websocket_app_callback] WRITABLE CALLBACK, q %p\n", q );
 			
 				if( ( e = FQPop( q ) ) != NULL )
 				{
@@ -248,7 +248,7 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 
 					//INFO("\t\t\t\t\t\t\t\t\t\t\tSENDMESSSAGE\n<%s> size: %d\n\n\n\n", e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size );
 					int res = lws_write( wsi, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
-					DEBUG("[websocket_app_callback] message sent: %s len %d\n", e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, res );
+					//DEBUG("[websocket_app_callback] message sent: %s len %d\n", e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, res );
 
 					int v = lws_send_pipe_choked( wsi );
 				
@@ -458,7 +458,7 @@ void ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 
 	int tokens_found = jsmn_parse( &parser, data, len, t, nrElements );
 	
-	DEBUG( "Token found: %d", tokens_found );
+	//DEBUG( "Token found: %d", tokens_found );
 	if( tokens_found < 1 )
 	{
 		Log( FLOG_ERROR, "Messages from 3rd server corrupted: %s\n", data );
@@ -594,7 +594,7 @@ void ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 					char *reply = FMalloc( bufferSize );
 					//char reply[ 128 ];
 					DEBUG("size: %d\n", t[4].end-t[4].start );
-					DEBUG("Data: %s\n", (char *)(data + t[4].start));
+					//DEBUG("Data: %s\n", (char *)(data + t[4].start));
 					//DEBUG("received message: %s {\"type\":\"pong\",\"data\":\"%.*s\"}", (int)(t[4].end-t[4].start), (char *)(data + t[4].start) );
 					//int locmsglen = snprintf( reply + LWS_PRE, bufferSize ,"{\"type\":\"pong\",\"data\":\"%.*s\"}", t[4].end-t[4].start,data + t[4].start );
 					int locmsglen = sprintf( reply + LWS_PRE ,"{\"type\":\"pong\",\"data\":\"%.*s\"}", t[4].end-t[4].start,data + t[4].start );
@@ -642,7 +642,7 @@ void ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 						{
 							// 6 notification, 7 data, 8 object, 9 variables  // OLD
 							
-							DEBUG( "\n\nnotification \\o/\n" );
+							//DEBUG( "\n\nnotification \\o/\n" );
 							int p;
 							int notification_type = -1;
 							char *channel_id = NULL;
@@ -693,7 +693,7 @@ void ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 									// we have to filter user with devices by using this call
 									// SELECT DISTINCT u.Name FROM `FUser` u inner join `FUserMobileApp` uma on u.ID = uma.UserID WHERE Name in( "stefkos" )
 									
-									DEBUG("Found array of users\n");
+									//DEBUG("Found array of users\n");
 									p++;
 									if( t[p].type == JSMN_ARRAY ) 
 									{

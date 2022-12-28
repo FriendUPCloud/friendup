@@ -1291,7 +1291,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 				//DelListEntry *lastDeleteListEntry = NULL;
 			
 				cleanCoutner++;
-				DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t counter > 15\n");
+				//DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t counter > 15\n");
 				int toDel = 0;
 				int allEntries = 0;
 			
