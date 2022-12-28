@@ -107,7 +107,7 @@ static inline BufString *RunPHPScript( const char *command )
 	
 	while( TRUE )
 	{
-		DEBUG("[RunPHPScript] in loop\n");
+		//DEBUG("[RunPHPScript] in loop\n");
 		
 		int ret = poll( fds, 2, 250 );
 
@@ -123,13 +123,13 @@ static inline BufString *RunPHPScript( const char *command )
 		}
 		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
 
-		DEBUG( "[RunPHPScript] Adding %d of data\n", size );
+		//DEBUG( "[RunPHPScript] Adding %d of data\n", size );
 		if( size > 0 )
 		{
-			DEBUG( "[RunPHPScript] before adding to list\n");
+			//DEBUG( "[RunPHPScript] before adding to list\n");
 			//ListStringAdd( ls, buf, size );
 			BufStringAddSize( bs, buf, size );
-			DEBUG( "[RunPHPScript] after adding to list\n");
+			//DEBUG( "[RunPHPScript] after adding to list\n");
 			//res += size;
 		}
 		else
@@ -141,7 +141,7 @@ static inline BufString *RunPHPScript( const char *command )
 		}
 	}
 	
-	DEBUG("[RunPHPScript] File read\n");
+	//DEBUG("[RunPHPScript] File read\n");
 	
 #else
 	int errCounter = 0;

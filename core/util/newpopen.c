@@ -122,7 +122,7 @@ int newpclose( NPOpenFD *po )
 {
 	int ret, status;
 	
-	DEBUG("[newpclose] start, %d\n", po->npo_PID);
+	//DEBUG("[newpclose] start, %d\n", po->npo_PID);
 	
 	close( po->np_FD[ NPOPEN_INPUT ] );
 	close( po->np_FD[ NPOPEN_CONSOLE ] );
@@ -133,6 +133,6 @@ int newpclose( NPOpenFD *po )
 		DEBUG("[newpclose] KILL! end ret = 0\n");
 		return status;
 	}
-	DEBUG("[newpclose] end ret\n");
+	//DEBUG("[newpclose] end ret\n");
 	return ret;
 }

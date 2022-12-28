@@ -2837,7 +2837,7 @@ void SocketDeleteSSL( Socket* sock )
 		return;
 	}
 
-	DEBUG("[SocketDeleteSSL] ssl\n");
+	//DEBUG("[SocketDeleteSSL] ssl\n");
 	if( sock->s_Ssl )
 	{
 		int ret, ssl_r;
@@ -2846,11 +2846,11 @@ void SocketDeleteSSL( Socket* sock )
 		switch( ( ret = SSL_shutdown( sock->s_Ssl ) ) )
 		{
 			case 1:
-				DEBUG("[SocketDeleteSSL] Ret 1\n");
+				//DEBUG("[SocketDeleteSSL] Ret 1\n");
 				// ok 
 				break;
 			case 0:
-				DEBUG("[SocketDeleteSSL] Ret 0\n");
+				//DEBUG("[SocketDeleteSSL] Ret 0\n");
 				ERR_clear_error();
 				/*
 					if( -1 != ( ret = SSL_shutdown( sock->s_Ssl ) ) )
@@ -2933,7 +2933,7 @@ void SocketDeleteSSL( Socket* sock )
 		shutdown( sock->fd, SHUT_RDWR );
 
 		e = close( sock->fd );
-		DEBUG("[SocketDeleteSSL] socked closed: %d\n", sock->fd );
+		//DEBUG("[SocketDeleteSSL] socked closed: %d\n", sock->fd );
 		sock->fd = 0;
 	}
 	FFree( sock );

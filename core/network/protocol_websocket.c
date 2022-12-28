@@ -358,7 +358,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 				WSThreadData *wstd = FCalloc( 1, sizeof( WSThreadData ) );
 				if( wstd != NULL )
 				{
-					DEBUG("[WS] Pass wsd to thread: %p\n", wsd );
+					//DEBUG("[WS] Pass wsd to thread: %p\n", wsd );
 					wstd->wstd_WSD = wsd;
 					wstd->wstd_Msg = in;
 					wstd->wstd_Len = len;
@@ -374,7 +374,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 						{
 							us->us_LastPingTime = time( NULL );
 							us->us_InUseCounter++; // Increase use (parseandcall)
-							DEBUG( "[WS] Increase for parse and call: %d\n", us->us_InUseCounter );
+							//DEBUG( "[WS] Increase for parse and call: %d\n", us->us_InUseCounter );
 							FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 						}
 					}
@@ -406,7 +406,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 				ParseAndCall( wsd, tin, len );
 #endif
 				
-				DEBUG("[WS] Webcall finished!\n");
+				//DEBUG("[WS] Webcall finished!\n");
 				
 				if( wsd->wsc_UserSession != NULL && us != NULL && us->us_MsgQueue.fq_First != NULL )
 				{
@@ -563,7 +563,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 		break;
 	}
 
-	DEBUG("[WS] END of callback\n");
+	//DEBUG("[WS] END of callback\n");
 
 	return returnError;
 }
