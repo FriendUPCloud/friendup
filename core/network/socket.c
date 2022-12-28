@@ -1700,10 +1700,10 @@ int SocketReadBlockedSSL( Socket* sock, char* data, unsigned int length, unsigne
 	
 	if( fds.revents & POLLIN )
 	{
-		DEBUG("[SocketReadBlockedSSL] Got data!!\n");
+		//DEBUG("[SocketReadBlockedSSL] Got data!!\n");
 		len = SSL_read( sock->s_Ssl, data, length );
 	
-		DEBUG("[SocketReadBlockedSSL] %p, read: %d\n", sock, len );
+		//DEBUG("[SocketReadBlockedSSL] %p, read: %d\n", sock, len );
 		
 		if( len <= 0 )
 		{

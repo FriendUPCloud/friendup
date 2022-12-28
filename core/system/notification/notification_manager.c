@@ -1301,7 +1301,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 					Notification *notifStayLast = NULL;
 				
 					Notification *notif = nm->nm_Notifications;
-					INFO( "[NotificationManagerTimeoutThread] checking\n");
+					//INFO( "[NotificationManagerTimeoutThread] checking\n");
 					while( notif != NULL )
 					{
 						DEBUG("Notification ID: %lu\n", notif->n_ID );
@@ -1364,7 +1364,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 				}
 			
 				// update and remove list of entries
-				DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t update and remove list of entries: %d all entries %d\n", toDel, allEntries );
+				//DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t update and remove list of entries: %d all entries %d\n", toDel, allEntries );
 			
 				// seems there is no new notification to delete
 				if( sntd->sntd_RootNotification == NULL )
@@ -1378,7 +1378,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 					FThread *t = ThreadNew( NotificationSendThread, sntd, TRUE, NULL );
 				}
 
-				DEBUG("[NotificationManagerTimeoutThread] Check Notification!\n");
+				//DEBUG("[NotificationManagerTimeoutThread] Check Notification!\n");
 				counter = 0;
 			
 				// 86400 - one day in seconds , 3600 *24

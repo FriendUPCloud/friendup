@@ -981,7 +981,7 @@ static inline int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
 		return -1;
 	}
 
-	DEBUG( "[FriendCoreAcceptPhase3] Using file descr: %d\n", fd );
+	//DEBUG( "[FriendCoreAcceptPhase3] Using file descr: %d\n", fd );
 
 	struct sockaddr_in6 client;
 	socklen_t           clientLen = sizeof( client );
@@ -1012,7 +1012,7 @@ static inline int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
 		BIO *bio = SSL_get_rbio( s_Ssl );
 		if( bio != NULL )
 		{
-			DEBUG("[FriendCoreAcceptPhase3] Read buffer will be changed!\n");
+			//DEBUG("[FriendCoreAcceptPhase3] Read buffer will be changed!\n");
 			BIO_set_read_buffer_size( bio, 81920 );
 		}
 
@@ -1030,7 +1030,7 @@ static inline int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
 		// we must be sure that SSL Accept is working
 		while( 1 )
 		{
-			DEBUG("[FriendCoreAcceptPhase3] before accept\n");
+			//DEBUG("[FriendCoreAcceptPhase3] before accept\n");
 			if( ( err = SSL_accept( s_Ssl ) ) == 1 )
 			{
 				break;
@@ -1098,7 +1098,7 @@ static inline int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
 		}
 	}
 
-	DEBUG("[FriendCoreAcceptPhase3] before getting incoming: fd %d\n", fd );
+	//DEBUG("[FriendCoreAcceptPhase3] before getting incoming: fd %d\n", fd );
 
 	if( fc->fci_Shutdown == TRUE )
 	{
@@ -1148,7 +1148,7 @@ static inline int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
 				pthread_attr_setstacksize( &attr, stacksize );
 				
 				// Make sure we keep the number of threads under the limit
-				DEBUG("[FriendCoreAcceptPhase3] create process friendcoreprocessosckblock\n");
+				//DEBUG("[FriendCoreAcceptPhase3] create process friendcoreprocessosckblock\n");
 				//change NULL to &attr
 				if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockBlock, ( void *)pre ) != 0 )
 				{
@@ -1177,12 +1177,12 @@ static inline int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
 		}
 	}
 	
-	DEBUG("[FriendCoreAcceptPhase3] in accept loop - success\n");
+	//DEBUG("[FriendCoreAcceptPhase3] in accept loop - success\n");
 	
 	return 0;
 	
 	accerror3:
-	DEBUG("[FriendCoreAcceptPhase3] ERROR\n");
+	//DEBUG("[FriendCoreAcceptPhase3] ERROR\n");
 	
 	
 	if( fd >= 0 )
@@ -1331,7 +1331,7 @@ void *FriendCoreProcessSockBlock( void *fcv )
 		
 		while( TRUE )
 		{
-			DEBUG( "Waiting!!\n" );
+			//DEBUG( "Waiting!!\n" );
 			// Only increases timeouts in retries
 			if( retryContentNotFull == 1 )
 			{

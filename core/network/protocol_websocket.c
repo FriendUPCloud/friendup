@@ -239,7 +239,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 
 	char *in = NULL;
 
-	DEBUG("[WS] before switch\n");
+	//DEBUG("[WS] before switch\n");
 	
 	
 	switch( reason )

@@ -704,11 +704,11 @@ int CommServiceThreadServer( FThread *ptr )
 				
 				#define EPOLL_TIMEOUT 3000
 				
-				DEBUG("[COMMSERV] main loop\n");
+				//DEBUG("[COMMSERV] main loop\n");
 				
 				eventCount = epoll_wait( service->s_Epollfd, events, service->s_MaxEvents, EPOLL_TIMEOUT );
 				
-				DEBUG("[COMMSERV] main loop: %d\n", eventCount );
+				//DEBUG("[COMMSERV] main loop: %d\n", eventCount );
 				
 				/*
 				if( eventCount == 0 )
@@ -723,7 +723,7 @@ int CommServiceThreadServer( FThread *ptr )
 				}
 				*/
 				
-				DEBUG("[COMMSERV] main loop 1\n");
+				//DEBUG("[COMMSERV] main loop 1\n");
 				
 				for( i = 0; i < eventCount; i++ )
 				{
@@ -1940,7 +1940,7 @@ void *InternalPINGThread( void *d )
 	
 	con->fc_PingInProgress = FALSE;
 	
-	DEBUG("[ServiceTempThread] internal ping thread quit\n");
+	//	DEBUG("[ServiceTempThread] internal ping thread quit\n");
 	
 	pthread_exit( NULL );
 	return NULL;
