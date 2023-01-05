@@ -437,7 +437,7 @@ typedef struct SystemBase
 //
 //
 
-SystemBase *SystemInit( void );
+SystemBase *SystemInit( FBOOL skipDBupdParam );
 
 //
 //
