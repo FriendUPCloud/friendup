@@ -580,7 +580,7 @@ SystemBase *SystemInit( FBOOL skipDBupdParam )
 		return NULL;
 	}
 	
-	if( skipDBUpdate == FALSE || skipDBupdParam == FALSE )
+	if( skipDBUpdate == FALSE && skipDBupdParam == FALSE )
 	{
 		CheckAndUpdateDB( l, UPDATE_DB_TYPE_GLOBAL );
 	}
