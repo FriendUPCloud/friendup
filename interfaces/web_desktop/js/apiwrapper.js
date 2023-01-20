@@ -4126,7 +4126,7 @@ function apiWrapper( event, force )
 							{
 								var nmsg = msg;
 								nmsg.data = data;
-								if( tar )
+								if( tar && tar.iframe && tar.iframe.contentWindow )
 									tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
 								else app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
 							}
