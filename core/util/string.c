@@ -357,38 +357,49 @@ char *UrlDecodeToMem( const char* src )
 	return org_dst;
 }
 
-char _rfc3986[ 256 ] = { 0 };
-void _UrlEncodeInitTables()
-{
-	int i = 0; for( ; i < 256; i++ )
-		_rfc3986[ i ] = isalnum( i ) || i == '~' || i == '-' || i == '.' || i == '_' ? i : 0;
-}
+
+
+
+
+static const char enctable[] = "0123456789ABCDEF";
+
+ #define friendisalnum( sign ) ( isalnum( ((unsigned char)( sign ) ) ) )
+
 char *UrlEncodeToMem( const char *src )
 {
-	if( _rfc3986[0] == 0 ) _UrlEncodeInitTables();
-	
-	int memsize = ( SHIFT_LEFT( strlen( src ), 2) );
+	int memsize = ( strlen( src )*4);
 	char *res = NULL;
-	char *enc = FCallocAlign( memsize, 1 );
+	char *enc = FCalloc( memsize, 1 );// FCallocAlign( memsize, 1 );
 	if( enc != NULL )
 	{
-		res = enc;
-		for( ; *src; src++ )
+		char *d = enc;
+		const unsigned char *s = (const unsigned char *)src;
+		unsigned char c;
+		
+		for( ; s < (const unsigned char *)src + strlen( src ); ++s) 
 		{
-			// if we don't have an index on the current character in the 
-			// table, then add it pure, else, encode it
-			if( _rfc3986[ (int)*src ] ) 
+			c = *s;
+			if( c < 0x80 && ( friendisalnum( c )
+						|| c == '-' || c == '.'
+						|| c == '_' || c == '~') )
 			{
-				sprintf( enc, "%c", _rfc3986[ (int)*src ] );
+				*d++ = c;
 			}
-			else 
+			else if( c == ' ' )
 			{
-				sprintf( enc, "%%%02X", ( unsigned char)*src );
+				*d++ = '+';
 			}
-			while( *( ++enc ) != '\0' ){};
+			else
+			{
+				*d++ = '%';
+				*d++ = enctable[c >> 4];
+				*d++ = enctable[c & 0xf];
+			}
 		}
+		*d = 0;
+		res = enc;
 	}
-	//enc[ memsize-1 ] = 0;
+	
     return res;
 }
 

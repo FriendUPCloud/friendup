@@ -118,7 +118,7 @@ void handle_sigchld( int sig )
  * @return pointer to SystemBase
  */
 
-SystemBase *SystemInit( void )
+SystemBase *SystemInit( FBOOL skipDBupdParam )
 {
 	//char *tmp = "{\"type\":\"authenticate\",\"data\":{\"serviceKey\":\"qwerty123456789\",\"serviceName\":\"presence\"}}";
 	//int size = strlen ( tmp );
@@ -580,7 +580,7 @@ SystemBase *SystemInit( void )
 		return NULL;
 	}
 	
-	if( skipDBUpdate == FALSE )
+	if( skipDBUpdate == FALSE && skipDBupdParam == FALSE )
 	{
 		CheckAndUpdateDB( l, UPDATE_DB_TYPE_GLOBAL );
 	}
