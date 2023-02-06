@@ -798,17 +798,27 @@ Workspace = {
 				switch( msg.type )
 				{
 					
+					case 'terms':
 					case 'eula':
 					{
+					    let titl = msg.type == 'eula' ? 'EULA' : 'terms';
+					
 						let v = new View( {
-							title: 'Please verify our EULA',
+							title: 'Please verify our ' + titl,
 							width: 432,
 							height: 480,
 							resize: false
 						} );
 						
 						let f = new XMLHttpRequest();
-						f.open( 'POST', '/webclient/templates/EULA.html', true, true );
+						if( msg.type == 'eula' )
+						{
+						    f.open( 'POST', '/webclient/templates/EULA.html', true, true );
+					    }
+					    else
+					    {
+					        f.open( 'POST', msg.src, true, true );
+					    }
 						f.onload = function()
 						{
 							let t = this.responseText + '';
@@ -821,7 +831,7 @@ Workspace = {
 						f.send();
 					}
 					break;
-						
+					
 					case 'privacypolicy':
 					{
 						let v = new View( {
