@@ -659,6 +659,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						email = NULL;
 						locusr->u_Password = usrpass;
 						locusr->u_Timezone = timezone;
+						locusr->u_CreationTime = time( NULL );
 						usrpass = NULL;
 						userCreated = TRUE;
 						
