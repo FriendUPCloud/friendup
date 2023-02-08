@@ -22,10 +22,11 @@ function ParseCssFile( $path )
 {
 	global $genCompiledTheme, $args;
 	
-	// Root
-	$string = AddParsedCSS( $path . 'theme.css' );
+	if( !file_exists( $path . 'theme.css' ) ) return false;
+	$string = file_get_contents( $path . 'theme.css' );
 	
-	if( !$string ) return false;
+	// Root
+	$string = AddParsedCSS( $path . 'theme.css', $string );
 	
 	// Appended styles with culminating variables and rules
 	if( preg_match_all( '/\@append[^u]*?url[^(]*?\(([^)]*?)\)[^;]*?\;[\s]+/', $string, $matches ) )
@@ -59,7 +60,7 @@ function ParseCssFile( $path )
 	}
 	
 	// Generate theme cache!
-	if( $genComp && $string )
+	if( $genComp )
 	{
 		unlink( $path . 'theme_compiled.css' );
 		if( $f = fopen( $path . 'theme_compiled.css', 'w+' ) )
@@ -169,27 +170,28 @@ function AddParsedCSS( $path )
 		}
 	}
 	
-	if( count( $replacements ) )
+	// Execute replacements
+	if( !count( $replacements ) )
+		return;
+	
+	foreach( $replacements as $replacement )
 	{
-		foreach( $replacements as $replacement )
+		// Remove variable lines with the value delete
+		if( $replacement[1] == 'delete' )
 		{
-			// Remove variable lines with the value delete
-			if( $replacement[1] == 'delete' )
+			// Add slashes
+			$rp = $replacement[1];
+			$op = '';
+			for( $u = 0; u < strlen( $rp ); $u++ )
 			{
-				// Add slashes
-				$rp = $replacement[1];
-				$op = '';
-				for( $u = 0; u < strlen( $rp ); $u++ )
-				{
-					$c = substr( $rp, $u, 1 );
-					if ( preg_match( '/[^a-zA-Z0-9]/', $c ) )
-						$op .= '\'';
-					$op .= $c;
-				}
-				$string = preg_replace( '/.*?\:.*?' . $op . '\;[\n|\r]+/i', '', $string );
-			} 
-			else $string = str_replace( $replacement[0] . ';', $replacement[1] . ';', $string );
-		}
+				$c = substr( $rp, $u, 1 );
+				if ( preg_match( '/[^a-zA-Z0-9]/', $c ) )
+					$op .= '\'';
+				$op .= $c;
+			}
+			$string = preg_replace( '/.*?\:.*?' . $op . '\;[\n|\r]+/i', '', $string );
+		} 
+		else $string = str_replace( $replacement[0] . ';', $replacement[1] . ';', $string );
 	}
 	
 	// Execute block replacements

@@ -878,47 +878,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 			return $out;
 			
 			break;
-		
-		case 'workgroup':
-			// operations on workgroup
-			$out = new stdClass();
-			switch( $type )
-			{
-				case 'read':
-					$uId = $User->ID;
-					$wId = $objectid;
-				
-					$out->message = 'read dev';
-					$out->response = -1;
-					if ( 'Admin' == $level )
-					{
-						$out->response = 1;
-					}
-					else
-					{
-						$out->in = [ $uId, $wId, ];
-						$isInWorgQuery = 'SELECT * FROM FUserToGroup
-							WHERE UserID='.$uId.'
-							AND UserGroupID='.$wId.'
-						';
-						$rows = $SqlDatabase->FetchObjects( $isInWorgQuery );
-						$out->rows = $rows;
-						if ( isset( $rows ) && ( count( $rows ) > 0 ))
-							$out->response = 1;
-						
-					}
-			    break;
-			    	
-				default : 
-					$out->response = -1;
-					$out->message = 'NOOP';
 			
-			}
-			
-			$out->debug = $debug;
-			return $out;
-	    	
-			break;
 		// Default to error message about missing context ...
 		
 		default:

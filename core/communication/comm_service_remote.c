@@ -46,25 +46,6 @@
 #define FLAGS S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
 #define MAX_MSG 50
 
-//
-// structure used to pass parameters from network thread to single accepted socket thread
-//
-
-/**
-* Thread to handle incoming connections!!!
-*/
-struct acceptThreadInstance 
-{ 
-	CommServiceRemote		*srv;
-	pthread_t				thread;
-	struct epoll_event		*event;
-	Socket					*sock;
-	// Incoming from accept
-	
-	AcceptSocketStruct			*afd;
-	struct AcceptPair		*acceptPair;
-};
-
 /**
  * Create remote communication service
  *
@@ -174,6 +155,8 @@ int CommServiceRemoteStart( CommServiceRemote *s )
 	if( s )
 	{	
 		Log( FLOG_INFO, "[CommServiceRemote] Communication service SERVER start\n");
+		
+		//pthread_mutex_init( &InitMutex, NULL );
 		
 		s->csr_Thread = ThreadNew( CommServiceRemoteThreadServer, s, TRUE, NULL );
 		
@@ -554,616 +537,6 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 	return actDataForm;
 }
 
-
-//
-// Handle socket accept
-//
-
-#define READ_TILL_END_BUFFER_SIZE_RFS 40096	//8192
-
-BufString *LocalSocketRead( Socket* sock, unsigned int pass __attribute__((unused)), int sec )
-{
-	if( sock == NULL )
-	{
-		FERROR("[SocketReadTillEndSSL] Cannot read from socket, socket = NULL!\n");
-		return NULL;
-	}
-
-	DEBUG2("[SocketReadTillEndSSL] Socket wait for message, blocked %d\n", sock->s_Blocked );
-
-	struct timeval tv;
-
-	struct pollfd fds;
-
-	// watch stdin for input 
-	fds.fd = sock->fd;// STDIN_FILENO;
-	fds.events = POLLIN;
-
-	tv.tv_sec = sec;
-	tv.tv_usec = 0;
-	FBOOL quit = FALSE;
-	
-	char *locbuffer = FMalloc( READ_TILL_END_BUFFER_SIZE_RFS );
-	if( locbuffer != NULL )
-	{
-		int fullPackageSize = 0;
-		FQUAD read = 0;
-		int retries = 0;
-		
-		BufString *bs = BufStringNew();
-		
-		while( quit != TRUE )
-		{
-			int ret = poll( &fds, 1, READ_TILL_END_BUFFER_SIZE_RFS );
-			
-			DEBUG("[SocketReadTillEndSSL] Before select, ret: %d\n", ret );
-			if( ret == 0 )
-			{
-				DEBUG("[SocketReadTillEndSSL] Timeout!\n");
-				BufStringDelete( bs );
-				FFree( locbuffer );
-				return NULL;
-			}
-			else if( ret < 0 )
-			{
-				DEBUG("[SocketReadTillEndSSL] Error\n");
-				BufStringDelete( bs );
-				FFree( locbuffer );
-				return NULL;
-			}
-
-			int res = 0, err = 0;//, buf = length;
-		
-			DEBUG("[SocketReadTillEndSSL] SSL enabled\n");
-
-			if( fds.revents & EPOLLIN )
-			{
-				DEBUG("[SocketReadTillEndSSL] Before read\n");
-				//if( read + buf > length ) buf = length - read;
-				if( ( res = SSL_read( sock->s_Ssl, locbuffer, READ_TILL_END_BUFFER_SIZE_RFS ) ) >= 0 )
-				{
-					read += (FQUAD)res;
-					
-					DEBUG("[SocketReadTillEndSSL] Read: %d fullpackage: %d\n", res, fullPackageSize );
-				
-					FULONG *rdat = (FULONG *)locbuffer;
-					if( ID_FCRE == rdat[ 0 ] )
-					{
-						fullPackageSize = rdat[ 1 ];
-					}
-					BufStringAddSize( bs, locbuffer, res );
-
-					if( fullPackageSize > 0 && read >= (FQUAD) fullPackageSize )
-					{
-						FFree( locbuffer );
-						return bs;
-					}
-				}
-				DEBUG("[SocketReadTillEndSSL] res2 : %d fullpackagesize %d\n", res, fullPackageSize );
-
-				if( res < 0 )
-				{
-					err = SSL_get_error( sock->s_Ssl, res );
-					DEBUG("[SocketReadTillEndSSL] err: %d\n", err );
-					switch( err )
-					{
-					// The TLS/SSL I/O operation completed.
-					case SSL_ERROR_NONE:
-						FERROR( "[SocketReadTillEndSSL] Completed successfully.\n" );
-						return bs;
-						// The TLS/SSL connection has been closed. Goodbye!
-					case SSL_ERROR_ZERO_RETURN:
-						FERROR( "[SocketReadTillEndSSL] The connection was closed, return %ld\n", read );
-						return bs;
-						// The operation did not complete. Call again.
-					case SSL_ERROR_WANT_READ:
-						break;
-					case SSL_ERROR_WANT_WRITE:
-						return bs;
-					case SSL_ERROR_SYSCALL:
-						return bs;
-					default:
-						DEBUG("[SocketReadTillEndSSL] default error\n");
-						usleep( 50 );
-						if( retries++ > 15 )
-						{
-							FFree( locbuffer );
-							return bs;
-						}
-					}
-				}
-				else if( res == 0 )
-				{
-					DEBUG("[SocketReadTillEndSSL] res = 0\n");
-					if( retries++ > 15 )
-					{
-						FFree( locbuffer );
-						return bs;
-					}
-				}
-			}	// if EPOLLIN
-		}	// QUIT != TRUE
-		FFree( locbuffer );
-	}
-	return NULL;
-}
-
-//
-//
-//
-
-void *RemoteSocketProcessSockBlock( void *fcv )
-{
-#ifdef USE_PTHREAD
-	pthread_detach( pthread_self() );
-#endif 
-
-	if( fcv == NULL )
-	{
-#ifdef USE_PTHREAD
-		pthread_exit( NULL );
-#endif
-		return NULL;
-	}
-
-	struct acceptThreadInstance *th = ( struct acceptThreadInstance *)fcv;
-
-	if( th->sock == NULL )
-	{
-		goto close_fcp;
-	}
-
-	FBYTE *tempBuffer = NULL;
-
-	DEBUG("[RemoteSocketProcessSockBlock] Wait for message on socket\n");
-	
-
-	BufString *bs = NULL;
-	if( th->sock != NULL )
-	{
-		int bufferSize = 40960;
-		int tr = 5;
-		char locBuffer[ bufferSize ];
-		
-		SocketSetBlocking( th->sock, TRUE );
-		//bs = SocketReadPackage( sock );
-		//bs = LocalSocketRead( th->sock, 0, 15 );
-		bs = th->sock->s_Interface->SocketReadTillEnd( th->sock, 0, 3 );
-		/*
-		bs = BufStringNew();
-		while( TRUE )
-		{
-			DEBUG( "Waiting!!\n" );
-			// Only increases timeouts in retries
-			//if( retryContentNotFull == 1 )
-			{
-				th->sock->s_SocketBlockTimeout = 100;
-			}
-			
-			// Read from socket
-			int res = SSL_read( th->sock->s_Ssl, locBuffer, bufferSize );
-
-			//int res = th->sock->s_Interface->SocketReadBlocked( th->sock, locBuffer, bufferSize, bufferSize );
-			if( res >= 0 )
-			{
-				BufStringAddSize( bs, locBuffer, res );
-			}
-			else
-			{
-				break;
-			}
-			if( tr-- <= 0 ){ break; }
-		}
-		*/
-		
-	}
-	else
-	{
-		FERROR("[RemoteSocketProcessSockBlock] Sock == NULL!\n");
-	}
-	
-	if( bs != NULL )
-	{
-		int count = (int)bs->bs_Size;
-	
-		DEBUG2("[RemoteSocketProcessSockBlock] PROCESSING RECEIVED CALL, DATA READ %d\n", (int)count );
-		int dcount = count;
-		DataForm *df = (DataForm *)bs->bs_Buffer;
-		
-		// checking if its FRIEND message
-		
-		int j = 0;
-		if( df->df_ID == ID_FCRE && count > 24 )
-		{
-			char *id = (char *)&(df[ 2 ].df_ID);
-
-			//DEBUG2("[CommServiceRemote] ID POS 2 %lu ID_RESP %lu ID_QUERY %lu   ID %c %c %c %c\n", df[ 2 ].df_ID, ID_RESP, ID_QUER, id[0], id[1], id[2], id[3] );
-			
-			if( df[ 2 ].df_ID == ID_QUER )
-			{
-				// checking if its a request or response
-				//if( count >= (ssize_t)df->df_Size )
-				
-				// we received whole data
-				// Process data
-				DataForm *recvDataForm = NULL;
-				FBOOL isStream = FALSE;
-				
-				DEBUG("[RemoteSocketProcessSockBlock] All data received, processing bytes %d-------------------------------------------PROCESSING ANSWER\n", dcount );
-				
-				recvDataForm = ParseMessageCSR( th->srv, th->sock, (FBYTE *)bs->bs_Buffer, (int *)&dcount, &isStream );
-				
-				DEBUG2("[RemoteSocketProcessSockBlock] Data processed-----------------------------------------\n");
-				
-				// return information
-				if( recvDataForm != NULL )
-				{
-					DEBUG2("[RemoteSocketProcessSockBlock] Data received-----------------------------------------%lu\n", recvDataForm->df_Size);
-
-					int wrote = 0;
-					
-					if( isStream == FALSE )
-					{
-						wrote = th->sock->s_Interface->SocketWrite( th->sock, (char *)recvDataForm, (FLONG)recvDataForm->df_Size );
-					}
-					DEBUG2("[RemoteSocketProcessSockBlock] Wrote bytes %d\n", wrote );
-					
-					// remove data form
-					DataFormDelete( recvDataForm );
-					BufStringDelete( bs );
-				}
-				else
-				{
-					// prepare asnwer
-					// everything goes well - no response
-					
-					DataForm *tmpfrm = DataFormNew( NULL );
-					
-					FBYTE tdata[ 20 ];
-					FULONG *tdatau = (FULONG *)tdata;
-					tdatau[ 0 ] = ID_RPOK;
-					tdatau[ 1 ] = 20;
-					strcpy( (char *)&tdata[ 8 ], "No response" );
-					DataFormAdd( &tmpfrm, tdata, 20 );
-					
-					DEBUG2("[RemoteSocketProcessSockBlock] Service, send message to socket, size %lu\n", tmpfrm->df_Size );
-					
-					th->sock->s_Interface->SocketWrite( th->sock, (char *)tmpfrm, (FLONG)tmpfrm->df_Size );
-					
-					DataFormDelete( tmpfrm );
-				}
-			}
-			else if( df[ 2 ].df_ID == ID_FCON )
-			{
-				INFO("[RemoteSocketProcessSockBlock] New connection was set\n");
-				BufStringDelete( bs );
-			}
-			else
-			{
-				FERROR("[RemoteSocketProcessSockBlock] Message uknown!\n");
-				BufStringDelete( bs );
-			}
-
-			if( tempBuffer != NULL )
-			{
-				FFree( tempBuffer );
-				tempBuffer = NULL;
-			}
-		}
-	}
-
-	// Shortcut!
-	close_fcp:
-	
-	
-	DEBUG( "[RemoteSocketProcessSockBlock] Closing socket %d.\n", th->sock->fd );
-	
-	if( th->sock )
-	{
-		th->sock->s_Interface->SocketDelete( th->sock );
-		th->sock = NULL;
-	}
-
-	// Free the pair
-	if( th != NULL )
-	{
-		FFree( th );
-		th = NULL;
-	}
-
-
-#ifdef USE_PTHREAD
-	pthread_exit( NULL );
-#endif
-	return NULL;
-}
-
-
-// HT
-static inline int RemoteSocketAcceptPhase3( int fd, CommServiceRemote *csr )
-{	
-	// Prepare ssl
-	SSL                 *s_Ssl    = NULL;
-	
-	struct pollfd lfds; // watch stdin for input 
-	lfds.fd = fd; // STDIN_FILENO;
-	lfds.events = POLLIN;
-	int err = poll( &lfds, 1, 250 );
-	if( err == 0 )
-	{
-		FERROR("[RemoteAcceptPhase3] want read TIMEOUT....\n");
-		goto accerror3;
-	}
-	else if( err < 0 )
-	{
-		FERROR("[RemoteAcceptPhase3] other....\n");
-		goto accerror3;
-	}
-	
-	if( fd == -1 )
-	{
-		// Get some info about failure..
-		switch( errno )
-		{
-			case EAGAIN: break;
-			case EBADF:DEBUG( "[RemoteAcceptPhase3] The socket argument is not a valid file descriptor.\n" );
-				goto accerror3;
-			case ECONNABORTED:DEBUG( "[RemoteAcceptPhase3] A connection has been aborted.\n" );
-				goto accerror3;
-			case EINTR:DEBUG( "[RemoteAcceptPhase3] The accept() function was interrupted by a signal that was caught before a valid connection arrived.\n" );
-				goto accerror3;
-			case EINVAL:DEBUG( "[RemoteAcceptPhase3] The socket is not accepting connections.\n" );
-				goto accerror3;
-			case ENFILE:DEBUG( "[RemoteAcceptPhase3] The maximum number of file descriptors in the system are already open.\n" );
-				goto accerror3;
-			case ENOTSOCK:DEBUG( "[RemoteAcceptPhase3] The socket argument does not refer to a socket.\n" );
-				goto accerror3;
-			case EOPNOTSUPP:DEBUG( "[RemoteAcceptPhase3] The socket type of the specified socket does not support accepting connections.\n" );
-				goto accerror3;
-			default: DEBUG("[RemoteAcceptPhase3] Accept return bad fd\n");
-				goto accerror3;
-		}
-		return -1;
-	}
-
-	DEBUG( "[RemoteAcceptPhase3] Using file descr: %d\n", fd );
-
-	struct sockaddr_in6 client;
-	socklen_t           clientLen = sizeof( client );
-	Socket              *incoming = NULL;
-	SSL_CTX             *s_Ctx    = NULL;
-
-	int prerr = getpeername( fd, (struct sockaddr *) &client, &clientLen );
-	if( prerr == -1 )
-	{
-		goto accerror3;
-	}
-
-	// Get incoming
-	int lbreak = 0;
-
-	if( csr->csr_Socket && csr->csr_Socket->s_SSLEnabled == TRUE )
-	{
-		int srl = 0;
-
-		s_Ssl = SSL_new( csr->csr_Socket->s_Ctx );
-
-		if( s_Ssl == NULL )
-		{
-			FERROR("[RemoteAcceptPhase3] Cannot accept SSL connection\n");
-			goto accerror3;
-		}
-
-		BIO *bio = SSL_get_rbio( s_Ssl );
-		if( bio != NULL )
-		{
-			DEBUG("[RemoteAcceptPhase3] Read buffer will be changed!\n");
-			BIO_set_read_buffer_size( bio, 81920 );
-		}
-
-		srl = SSL_set_fd( s_Ssl, fd );
-		SSL_set_accept_state( s_Ssl );
-		if( srl != 1 )
-		{
-			int error = SSL_get_error( s_Ssl, srl );
-			FERROR( "[RemoteAcceptPhase3] Could not set fd, error: %d fd: %d\n", error, fd );
-			
-			goto accerror3;
-		}
-
-		int err = 0;
-		// we must be sure that SSL Accept is working
-		while( 1 )
-		{
-			DEBUG("[RemoteAcceptPhase3] before accept\n");
-			if( ( err = SSL_accept( s_Ssl ) ) == 1 )
-			{
-				break;
-			}
-
-			if( err <= 0 || err == 2 )
-			{
-				int error = SSL_get_error( s_Ssl, err );
-				switch( error )
-				{
-					case SSL_ERROR_NONE:
-						// NO error..
-						FERROR( "[RemoteAcceptPhase3] No error\n" );
-						lbreak = 1;
-					break;
-					case SSL_ERROR_ZERO_RETURN:
-						FERROR("[RemoteAcceptPhase3] SSL_ACCEPT error: Socket closed.\n" );
-						goto accerror3;
-					case SSL_ERROR_WANT_READ:
-						lbreak = 2;
-					break;
-					case SSL_ERROR_WANT_WRITE:
-						lbreak = 2;
-					break;
-					case SSL_ERROR_WANT_ACCEPT:
-						FERROR( "[RemoteAcceptPhase3] Want accept\n" );
-						goto accerror3;
-					case SSL_ERROR_WANT_X509_LOOKUP:
-						FERROR( "[RemoteAcceptPhase3] Want 509 lookup\n" );
-						goto accerror3;
-					case SSL_ERROR_SYSCALL:
-						FERROR( "[RemoteAcceptPhase3] Error syscall. Goodbye! %s.\n", ERR_error_string( ERR_get_error(), NULL ) );
-						//goto accerror;
-						lbreak = 2;
-						break;
-					case SSL_ERROR_SSL:
-					{
-						int enume = ERR_get_error();
-						FERROR( "[RemoteAcceptPhase3] SSL_ERROR_SSL: %s.\n", ERR_error_string( enume, NULL ) );
-						lbreak = 2;
-				
-						// HTTP to HTTPS redirection code
-						if( enume == 336027804 ) // http redirect
-						{
-							//moveToHttp( fd );
-						}
-						else
-						{
-							goto accerror3;
-						}
-						break;
-					}
-				}
-			}
-			if( lbreak >= 1 )
-			{
-				break;
-			}
-			usleep( 250 );
-	
-			//if( csr->fci_Shutdown == TRUE )
-			//{
-			//	FINFO("[RemoteAcceptPhase3] Accept socket process will be stopped, becaouse Shutdown is in progress\n");
-			//	break;
-			//}
-		}
-	}
-
-	DEBUG("[RemoteAcceptPhase3] before getting incoming: fd %d\n", fd );
-	/*
-	if( fc->fci_Shutdown == TRUE )
-	{
-		if( fd > 0 )
-		{
-			close( fd );
-		}
-	}
-	else
-	*/
-	{
-		if( fd > 0 )
-		{
-			incoming = ( Socket *)FCalloc( 1, sizeof( Socket ) );
-			if( incoming != NULL )
-			{
-				incoming->s_Data = csr;
-				incoming->fd = fd;
-				incoming->port = ntohs( client.sin6_port );
-				incoming->ip = client.sin6_addr;
-				incoming->s_SSLEnabled = csr->csr_Socket->s_SSLEnabled;
-				incoming->s_SB = csr->csr_Socket->s_SB;
-				incoming->s_Interface = csr->csr_Socket->s_Interface;
-
-				if( csr->csr_Socket->s_SSLEnabled == TRUE )
-				{
-					incoming->s_Ssl = s_Ssl;
-					incoming->s_Ctx = s_Ctx;
-				}
-			}
-			else
-			{
-				FERROR("[RemoteAcceptPhase3] Cannot allocate memory for socket!\n");
-				goto accerror3;
-			}
-	
-	
-			struct acceptThreadInstance *pre = FCalloc( 1, sizeof( struct acceptThreadInstance ) );
-			if( pre != NULL )
-			{
-				pre->srv = csr; pre->sock = incoming;
-
-				//size_t stacksize = 16777216; //16 * 1024 * 1024;
-				//size_t stacksize = 8388608;	// half of previous stack
-				size_t stacksize = 1048576; // A meg
-				pthread_attr_t attr;
-				pthread_attr_init( &attr );
-				pthread_attr_setstacksize( &attr, stacksize );
-				
-				// Make sure we keep the number of threads under the limit
-				DEBUG("[RemoteAcceptPhase3] create process friendcoreprocessosckblock\n");
-				//change NULL to &attr
-				if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&RemoteSocketProcessSockBlock, ( void *)pre ) != 0 )
-				{
-					FFree( pre );
-				}
-			}
-		}
-	}
-	
-	DEBUG("[RemoteAcceptPhase3] in accept loop - success\n");
-	
-	return 0;
-	
-	accerror3:
-	DEBUG("[RemoteAcceptPhase3] ERROR\n");
-	
-	
-	if( fd >= 0 )
-	{
-		shutdown( fd, SHUT_RDWR );
-		close( fd );
-	}
-	
-	if( s_Ssl != NULL )
-	{
-		SSL_free( s_Ssl );
-	}
-
-	return -1;
-}
-
-
-void *SocketAcceptPhase2( void *d )
-{
-	//DEBUG("[FriendCoreAcceptPhase2] detached\n");
-#ifdef USE_PTHREAD
-	pthread_detach( pthread_self() );		// using workers atm
-#endif
-
-	struct acceptThreadInstance *pre = (struct acceptThreadInstance *)d;
-
-	// Accept
-	int fd = 0;
-	
-	DEBUG("[RemoteAcceptPhase2] before accept4\n");
-	
-	AcceptSocketStruct *act = pre->afd;
-	AcceptSocketStruct *rem = pre->afd;
-	while( act != NULL )
-	{
-		rem = act;
-		act = (AcceptSocketStruct *)act->node.mln_Succ;
-		
-		RemoteSocketAcceptPhase3( rem->fd, pre->srv );
-
-		FFree( rem );
-	}
-
-	FFree( pre );
-
-#ifdef USE_PTHREAD
-	pthread_exit( NULL );	// temporary disabled
-#endif
-		
-	return NULL;
-}
-
-
 /**
  * Communication Remote Server thread
  *
@@ -1460,56 +833,46 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 					else if( currentEvent.data.fd == service->csr_Socket->fd )
 					{
 						// We have a notification on the listening socket, which means one or more incoming connections.
-						
-						struct acceptThreadInstance *pre = FCalloc( 1, sizeof( struct acceptThreadInstance ) );
-						if( pre != NULL )
+						while( TRUE )
 						{
-							pre->srv = service;
-					
-							int fd = 0;
-							struct sockaddr_in6 client;
-							socklen_t clientLen = sizeof( client );
-					
-							while( ( fd = accept4( service->csr_Socket->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) != -1 )
+							FERROR("-=================RECEIVED========================-\n");
+							
+							incomming = service->csr_Socket->s_Interface->SocketAccept( service->csr_Socket );
+							if( incomming == NULL )
 							{
-								DEBUG( "[FriendCoreEpoll] Adding the damned thing %d.\n", fd );
-						
-								struct AcceptSocketStruct *as = FCalloc( 1, sizeof( struct AcceptSocketStruct ) );
-								if( as != NULL )
+								// We have processed all incoming connections.
+								if( (errno == EAGAIN ) || ( errno == EWOULDBLOCK) )
 								{
-									as->fd = fd;
-									as->node.mln_Succ = (MinNode *)pre->afd;
+									break;
 								}
-								pre->afd = as;
-					
+								// Other error
+								FERROR("[CommServiceRemote] : cannot accept incoming connection\n");
+								break;
 							}
-					
-					//DEBUG("[FriendCoreEpoll] Thread create pointer: %p friendcore: %p\n", pre, fc );
-					
-					if( pthread_create( &pre->thread, NULL, &SocketAcceptPhase2, ( void *)pre ) != 0 )
-					{
-						DEBUG("[FriendCoreEpoll] Pthread create fail\n");
-						//if( pre->fds )
-						if( pre->afd )
-						{
-							AcceptSocketStruct *act = pre->afd;
-							AcceptSocketStruct *rem = pre->afd;
-							while( act != NULL )
+
+							DEBUG2("[CommServiceRemote] Socket Connection Accepted\n");
+
+							incomming->s_Timeouts = 5;
+							incomming->s_Timeoutu = 0;
+
+							// used for not persistent connections
+							struct epoll_event event;
+
+							event.data.fd = incomming->fd;//s->s_Socket->fd;
+							event.data.ptr = (void *) incomming;
+							event.events = EPOLLIN | EPOLLRDHUP | EPOLLET;
+							int retval = epoll_ctl( service->csr_Epollfd, EPOLL_CTL_ADD, incomming->fd, &event );
+							if( retval == -1 )
 							{
-								rem = act;
-								act = (AcceptSocketStruct *)act->node.mln_Succ;
-								
-								shutdown( rem->fd, SHUT_RDWR );
-								close( rem->fd );
+								FERROR("[CommServiceRemote] EPOLLctrl error\n");
+								return 1;
 							}
 						}
-						FFree( pre );
-					}
-					
-					//
-					// checking internal pipe
-					//
-					
+						
+						//
+						// checking internal pipe
+						//
+						
 					}
 					else if( currentEvent.data.fd == service->csr_ReadCommPipe )
 					{
@@ -1539,12 +902,11 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 					}
 					else
 					{
-						/*
 						// Remove event // not persistent connection
 						epoll_ctl( service->csr_Epollfd, EPOLL_CTL_DEL, sock->fd, NULL );
 						
 						FBYTE *tempBuffer = NULL;
-
+						int tempSize = 0;
 						DEBUG("[CommServiceRemote] Wait for message on socket\n");
 						
 						//SocketSetBlocking( sock, TRUE );
@@ -1647,10 +1009,8 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 									tempBuffer = NULL;
 								}
 							}
-							*/
 						}
-						//service->csr_Socket->s_Interface->SocketDelete( sock );
-						
+						service->csr_Socket->s_Interface->SocketDelete( sock );
 					}
 				}//end for through events
 			} //end while

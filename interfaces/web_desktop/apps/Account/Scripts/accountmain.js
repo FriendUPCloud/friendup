@@ -38,62 +38,38 @@ Application.run = function( msg, iface )
 		d.execute( 'getsetting', { setting: 'avatar_color' } );
 	} );
 	
-	const g = new Module( 'system' );
-	g.onExecuted = ( s, d ) => {
-		if ( 'ok' == s )
-		{
-			let serverConfig = null;
-			try
-			{
-				serverConfig =  JSON.parse( d );
-			}
-			catch( ex )
-			{
-				return;
-			}
-			
-			if ( null != serverConfig.hasGroupsFeature )
-			{
-				if ( true === serverConfig.hasGroupsFeature )
-					refreshGroups( ge( 'groupSearcher' ).value );
-			}
-		}
-	}
-	g.execute( 'sampleconfig' );
+	refreshGroups( ge( 'groupSearcher' ).value );
 	
 	// Clear / autoregenerate avatar
-	if( ge( 'ClearAvatar' ) )
+	ge( 'ClearAvatar' ).onclick = function( e )
 	{
-	    ge( 'ClearAvatar' ).onclick = function( e )
-	    {
-		    var m = new Module( 'system' );
-		    m.onExecuted = function( e, d )
-		    {
-			    var d = new Module( 'system' );
-			    d.onExecuted = function( r, c )
-			    {
-				    refreshAvatar();
-				    if( r == 'ok' )
-				    {
-					    try
-					    {
-						    var data = JSON.parse( c );
-						    refreshPalette( data.avatar_color );
-					    }
-					    catch( e )
-					    {
-						    refreshPalette();
-					    }
-				    }
-				    else
-				    {
-					    refreshPalette();
-				    }
-			    }
-			    d.execute( 'getsetting', { setting: 'avatar_color' } );
-		    }
-		    m.execute( 'getsetting', { setting: 'avatar', mode: 'reset' } );
-	    }
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			var d = new Module( 'system' );
+			d.onExecuted = function( r, c )
+			{
+				refreshAvatar();
+				if( r == 'ok' )
+				{
+					try
+					{
+						var data = JSON.parse( c );
+						refreshPalette( data.avatar_color );
+					}
+					catch( e )
+					{
+						refreshPalette();
+					}
+				}
+				else
+				{
+					refreshPalette();
+				}
+			}
+			d.execute( 'getsetting', { setting: 'avatar_color' } );
+		}
+		m.execute( 'getsetting', { setting: 'avatar', mode: 'reset' } );
 	}
 }
 
@@ -105,7 +81,6 @@ function findGroups()
 
 function refreshGroups( keys )
 {
-	console.trace( 'refreshgroups', keys );
 	if( !keys ) keys = '';
 	
 	let m = new Module( 'system' );
@@ -434,7 +409,7 @@ function refreshAvatar()
 				avSrc.onload = function()
 				{
 					var ctx = avatar.getContext( '2d' );
-					ctx.drawImage( avSrc, 0, 0, 512, 512 );
+					ctx.drawImage( avSrc, 0, 0, 128, 128 );
 				}
 			}
 		}
@@ -732,13 +707,13 @@ function changeAvatar()
 			if ( item )
 			{
 				// Load the image
-				var image = new Image()
+				var image = new Image();
 				image.onload = function()
 				{
 					// Resizes the image
 					var canvas = ge( 'Avatar' );
 					var context = canvas.getContext( '2d' );
-					context.drawImage( image, 0, 0, 512, 512 );
+					context.drawImage( image, 0, 0, 128, 128 );
 				}
 				image.src = getImageUrl( item[ 0 ].Path );
 			}

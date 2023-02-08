@@ -425,7 +425,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 			
 			HashmapPut( (*request)->http_ParsedPostContent, StringDuplicate("sessionid"), remsession );
 			
-			DataForm *df = DataFormFromHttpRemoteCommand( *request );
+			DataForm *df = DataFormFromHttp( *request );
 			if( df != NULL )
 			{
 				DEBUG("[AdminWebRequest] Connect to server rhost %s\n", host );

@@ -89,15 +89,13 @@ typedef struct UserSession
 	time_t					us_LastPingTime;		// ping timestamp
 	void					*us_WSD;				// pointer to WebsocketData
 	FQueue					us_MsgQueue;			// message queue
-	
-	char					*us_FCID;					// FriendCore ID (ID of session where user session is handled)
 }UserSession;
 
 //
 //
 //
 
-UserSession *UserSessionNew( char *sessid, char *devid, char *fcid );
+UserSession *UserSessionNew( char *sessid, char *devid );
 
 //
 //
@@ -135,7 +133,6 @@ static FULONG UserSessionDesc[] = {
 	SQLT_INT,			(FULONG)"LastActionTime", 	offsetof( struct UserSession, us_LastActionTime ),
 	SQLT_INT,			(FULONG)"CreationTime", 	offsetof( struct UserSession, us_CreationTime ),
 	SQLT_INT,			(FULONG)"UMA_ID",			offsetof( struct UserSession, us_MobileAppID ),
-	SQLT_STR,			(FULONG)"FCID",				offsetof( struct UserSession, us_FCID ),
 	SQLT_INIT_FUNCTION,	(FULONG)"init",				(FULONG)&UserSessionInit,
 	SQLT_NODE,			(FULONG)"node",				offsetof( struct UserSession, node ),
 	SQLT_END 

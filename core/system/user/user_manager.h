@@ -143,7 +143,7 @@ User * UMUserGetByNameDB( UserManager *smgr, const char *name );
 //
 //
 
-User *UMUserGetByID( UserManager *um, FUQUAD id );
+User *UMUserGetByID( UserManager *um, FQUAD id );
 
 //
 //
@@ -288,12 +288,6 @@ int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname );
 //
 //
 
-void UMRemoveOldUserLoginEntries( UserManager *um );
-
-//
-//
-//
-
 int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details );
 
 //
@@ -330,30 +324,6 @@ FBOOL UMSendDoorNotification( UserManager *usm, void *notif, UserSession *ses, F
 //
 //
 
-int UMSendUserChangesNotification( UserManager *um, UserSession *ses );
-
-//
-//
-//
-
 int UMRemoveOldSessions( void *lsb );
-
-//
-//
-//
-
-void UMRemoveUsersFromGroup( UserManager *um, FUQUAD groupid );
-
-//
-//
-//
-
-void UMNotifyAllUsersInGroup( UserManager *um, FQUAD groupid, int type );
-
-//
-//
-//
-
-void UMAddExistingUsersToGroup( UserManager *um, UserGroup *ug );
 
 #endif //__SYSTEM_USER_USER_MANAGER_H__

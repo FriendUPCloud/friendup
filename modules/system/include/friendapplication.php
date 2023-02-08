@@ -141,9 +141,6 @@ foreach( $sets as $set )
 	}
 }
 
-// Just a marker to redo the test
-friendapplicationstart:
-
 // Do we already have an object? An app project!
 if( $retObject && isset( $retObject->ProjectName ) )
 {
@@ -302,41 +299,6 @@ else if( $row = $SqlDatabase->FetchObject( '
 		
 		die( 'ok<!--separate-->' . json_encode( $conf ) );
 	}
-	
-	// Activate whitelist
-	if( isset( $configfilesettings[ 'Security' ][ 'UserAppAutoinstall' ] ) )
-	{
-		$autoinstall = $configfilesettings[ 'Security' ][ 'UserAppAutoinstall' ];
-		$autoinstall = explode( ',', $autoinstall );
-		// We have allow-list of autoinstall apps
-		if( isset( $autoinstall ) )
-		{
-			// We found the app in autoinstall list
-			if( in_array( $args->args->application, $autoinstall ) )
-			{
-				$inPermissions = json_decode( $row->Permissions );
-				$perms = [];
-				foreach( $inPermissions as $perm )
-				{
-					$value = '';
-					if( $perm = 'Door Local' ) $value = 'all';
-					$perms[] = array( $perm, $value );
-				}
-			
-				// Collect permissions in a string
-				$app = new dbIO( 'FUserApplication' );
-				$app->ApplicationID = $row->ID;
-				$app->UserID = $User->ID;
-				$app->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . $row->ID );
-				$app->Permissions = json_encode( $perms );
-				$app->Data = '{}';
-				$app->Save();
-				
-				// Try again
-				goto friendapplicationstart;
-			}
-		}
-	}
 	die( 'activate<!--separate-->' . $row->Config );
 }
 else if ( $path = findInSearchPaths( $args->args->application ) )
@@ -366,29 +328,6 @@ else if ( $path = findInSearchPaths( $args->args->application ) )
 			}
 		}
 	}
-	
-	// Activate whitelist
-	if( isset( $configfilesettings[ 'Security' ][ 'UserAppAutoinstall' ] ) )
-	{
-		$autoinstall = $configfilesettings[ 'Security' ][ 'UserAppAutoinstall' ];
-		$autoinstall = explode( ',', $autoinstall );
-	}
-	
-	// We have allow-list of autoinstall apps
-	if( $trusted != 'yes' && isset( $autoinstall ) )
-	{
-		// We found the app in autoinstall list
-		if( in_array( $args->args->application, $autoinstall ) )
-		{
-			$trusted = 'yes';
-		}
-		// User needs to manually install application
-		else
-		{
-			die( 'fail<!--separate-->{"response":"application lacks user installation record"}' );
-		}
-	}
-	
 	die( 'notinstalled<!--separate-->{"path":"' . $path . '","trusted":"'. $trusted .'"}' );
 }
 die( 'fail<!--separate-->{"response": "file does not exist"}' );
