@@ -684,8 +684,6 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 			title:  ctrl ? i18n( 'i18n_copying_files' ) : i18n('i18n_moving_files'),
 			width:  400,
 			height: 145,
-			dialog: true,
-			dockable: true,
 			'max-height': 145,
 			id:     'fileops_' + copySessionId
 		} );
@@ -742,7 +740,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 		}
 		
 		// This is the context for file operations (cancellable)
-		let series = UniqueHash();
+		var series = UniqueHash();
 
 		// Close button
 		if( fcb )
@@ -794,9 +792,9 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 			// Preliminary progress bar
 			bar.total = eles.length;
 			bar.items = eles.length;
-			let handleBarRefresh = setInterval( function()
+			var handleBarRefresh = setInterval( function()
 			{
-				let size = Math.floor( 100 - ( 100 / bar.total * bar.items ) );
+				var size = Math.floor( 100 - ( 100 / bar.total * bar.items ) );
 				if ( size != bar.friendSize )
 				{
 					bar.friendSize = size;
@@ -806,7 +804,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 			}, 100 );
 			
 			// Create a filecopy object
-			let fileCopyObject = 
+			var fileCopyObject = 
 			{
 				// Vars --------------------------------------------------------
 				

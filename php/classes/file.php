@@ -158,7 +158,7 @@ class File
 		$ex = '/system.library/file/read/?mode=rb&path=' . jsUrlEncode( $filepath );
 		$url = ( $Config->SSLEnable ? 'https://' : 'http://' ) .
 			( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort . $ex;
-		
+			
 		// Get authentication url component (with $userInfo if needed)
 		$url .= '&' . $this->GetAuthContextComponent( $userInfo );
 
@@ -236,9 +236,11 @@ class File
 		global $Config, $User, $Logger;
 		
 		$fd = new Door( reset( explode( ':', $this->path ) ) . ':', $this->_authcontext, $this->_authdata );
+		//$Logger->log( '[File.class] GetFileInfo: ' . $this->_authcontext . ' -> ' . $this->_authdata );
 		$d = new dbIO( 'FFileInfo' );
 		$d->Path = $this->path;
 		$d->FilesystemID = $fd->ID;
+		//$Logger->log( '[File.class] GetFileInfo: ' . $fd->ID );
 		if( $d->Load() )
 		{
 			$this->_fileinfo = $d->Data;
@@ -300,7 +302,11 @@ class File
 					'target' => jsUrlEncode( $this->path ),
 					'data' => $curlFile
 				);
-					
+		
+				//$Logger->log( '[File::Save] Trying to save content in: ' . $url . ' with path ' . $this->path );
+				//$Logger->log( '[File::Save] POSTFIELDS ' . print_r($postfields,1) );
+
+			
 				$ch = curl_init();
 				curl_setopt( $ch, CURLOPT_URL, $url    );
 				curl_setopt( $ch, CURLOPT_POSTFIELDS, $postfields );
@@ -316,6 +322,10 @@ class File
 				curl_close( $ch );
 		
 				unlink( '/tmp/' . $ff );
+			
+				//$Logger->log( '[File::Save] Result of save: ' );
+				//$Logger->log( $result );
+				//$Logger->log( "\n" );
 	
 				return $result;
 			}
@@ -336,6 +346,8 @@ class File
 		
 		$url .= '&' . $this->GetAuthContextComponent();
 
+		//$Logger->log( 'Sending DELETE ' . $url );
+
 		$c = curl_init();
 		
 		curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false               );
@@ -346,6 +358,9 @@ class File
 	
 		$r = curl_exec( $c );
 		curl_close( $c );
+		
+		
+		//$Logger->log( 'Got a results... ' . $r );
 		
 		if( $r != false )
 		{

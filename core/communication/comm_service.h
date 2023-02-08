@@ -92,6 +92,16 @@ enum {
 #define SERVER_PORT_SPLIT_SIGN ':'
 
 //
+// Message structure
+//
+
+typedef struct CommAppMsg
+{
+	int			cam_Quit;
+	int 		cam_State;		// status of service
+}CommAppMsg;
+
+//
 // communcation request
 //
 
@@ -241,6 +251,7 @@ typedef struct CommService
 	int 							s_recvPipe[ 2 ];
 	int 							s_ReadCommPipe, s_WriteCommPipe;
 	
+	CommAppMsg						s_Cam;				//
 	void 							*s_SB;
 	
 	int								s_MaxEvents;
@@ -253,56 +264,13 @@ typedef struct CommService
 	FConnection						*s_Connections;							///< FCConnections incoming
 	int 							s_NumberConnections;
 	pthread_mutex_t					s_Mutex;
-	int								s_InUse;
-	FBOOL							s_ChangeState;
 	pthread_mutex_t					s_CondMutex;
 	
 	CommRequest						*s_Requests;
 	pthread_cond_t 					s_DataReceivedCond;
 	FBOOL							s_Started;			//if thread is started
 	FBOOL							s_OutgoingConnectionSet; // if outgoing connections are not set, FC cannot quit
-	
-	FBOOL							s_Quit;
 }CommService;
-
-
-//
-//
-//
-
-#ifndef COMMSERVICE_CHANGE_ON
-#define COMMSERVICE_CHANGE_ON( MGR ) \
-while( (MGR->s_InUse > 0 && MGR->s_ChangeState == TRUE ) ){ usleep( 2000 ); } \
-if( FRIEND_MUTEX_LOCK( &(MGR->s_Mutex) ) == 0 ){ \
-	MGR->s_ChangeState = TRUE; \
-	FRIEND_MUTEX_UNLOCK( &(MGR->s_Mutex) ); \
-}
-#endif
-
-#ifndef COMMSERVICE_CHANGE_OFF
-#define COMMSERVICE_CHANGE_OFF( MGR ) \
-if( FRIEND_MUTEX_LOCK( &(MGR->s_Mutex) ) == 0 ){ \
-	MGR->s_ChangeState = FALSE; \
-	FRIEND_MUTEX_UNLOCK( &(MGR->s_Mutex) ); \
-}
-#endif
-
-#ifndef COMMSERVICE_USE
-#define COMMSERVICE_USE( MGR ) \
-while( MGR->s_ChangeState != FALSE ){ usleep( 2000 ); } \
-if( FRIEND_MUTEX_LOCK( &(MGR->s_Mutex) ) == 0 ){ \
-	MGR->s_InUse++; \
-	FRIEND_MUTEX_UNLOCK( &(MGR->s_Mutex) ); \
-}
-#endif
-
-#ifndef COMMSERVICE_RELEASE
-#define COMMSERVICE_RELEASE( MGR ) \
-if( FRIEND_MUTEX_LOCK( &(MGR->s_Mutex) ) == 0 ){ \
-	MGR->s_InUse--; \
-	FRIEND_MUTEX_UNLOCK( &(MGR->s_Mutex) ); \
-}
-#endif
 
 //
 // create new CommService
@@ -327,6 +295,18 @@ int CommServiceStart( CommService *s );
 //
 
 int CommServiceStop( CommService *s );
+
+//
+// send message
+//
+
+DataForm *CommServiceSendMsg( CommService *s, DataForm *df );
+
+//
+// send message directly to connection
+//
+
+DataForm *CommServiceSendMsgDirect(  FConnection *con, DataForm *df );
 
 //
 // Add new connection
@@ -375,6 +355,12 @@ int CommServiceThreadServer( FThread *ptr );
 //
 
 int CommServiceThreadServerSelect( FThread *ptr );
+
+//
+//
+//
+
+BufString *SendMessageAndWait( FConnection *con, DataForm *df );
 
 //
 //

@@ -234,7 +234,6 @@ void UserDelete( User *usr )
 		// remove all sessions connected to user
 		
 		UserSessListEntry *us = (UserSessListEntry *)usr->u_SessionsList;
-		usr->u_SessionsList = NULL;
 		UserSessListEntry *delus = us;
 		while( us != NULL )
 		{
@@ -243,7 +242,8 @@ void UserDelete( User *usr )
 		
 			FFree( delus );
 		}
-
+		usr->u_SessionsList = NULL;
+	
 		// remove all remote users and drives
 	
 		RemoteUserDeleteAll( usr->u_RemoteUsers );
@@ -252,18 +252,17 @@ void UserDelete( User *usr )
 			
 		UserGroupLink *ugl = usr->u_UserGroupLinks;
 		while( ugl != NULL )
+		//for( i=0 ; i < usr->u_GroupsNr ; i++ )
 		{
 			UserGroupLink *n = (UserGroupLink *)ugl->node.mln_Succ;
 			//UserGroupRemoveUser( usr->u_Groups[i], usr );
-			//UserGroupRemoveUser( ugl->ugl_Group, usr );
-			FFree( ugl );
+			UserGroupRemoveUser( ugl->ugl_Group, usr );
 			ugl = n;
 		}
 
-		//UserDeleteGroupLinkAll( usr->u_UserGroupLinks );
+		UserDeleteGroupLinkAll( usr->u_UserGroupLinks );
 		usr->u_UserGroupLinks = NULL;
-		
-		
+
 		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 		{
 			if( usr->u_Email ){ FFree( usr->u_Email );}
@@ -413,7 +412,6 @@ File *UserRemDeviceByName( User *usr, const char *name, int *error )
 	{
 		File *remdev = NULL;
 		File *lastone = NULL;
-		UserGroupLink *groupLink = NULL;
 		
 		USER_CHANGE_ON( usr );
 		
@@ -431,99 +429,18 @@ File *UserRemDeviceByName( User *usr, const char *name, int *error )
 			lastone = lf;
 			lf = (File *)lf->node.mln_Succ;
 		}
-		
-		if( remdev == NULL )
-		{
-			lastone = NULL;
-			
-			UserGroupLink *ugl = usr->u_UserGroupLinks;
-			while( ugl != NULL )
-			{
-				lf = ugl->ugl_Group->ug_MountedDevs;
-				
-				DEBUG( "[UserRemDeviceByName] check group: %s\n",  ugl->ugl_Group->ug_Name );
-		
-				while( lf != NULL )
-				{
-					DEBUG( "[UserRemDeviceByName] next device: %s\n", lf->f_Name );
-					
-					// now we must check if user created drive or if he is admin
-					if( lf->f_UserID == usr->u_ID || usr->u_IsAdmin == TRUE )
-					{
-						DEBUG( "[UserRemDeviceByName] Checking in group fs in list %s == %s...\n", lf->f_Name, name );
-						if( strcmp( lf->f_Name, name ) == 0 )
-						{
-							DEBUG( "[UserRemDeviceByName] Found one in group (%s == %s)\n", lf->f_Name, name );
-							remdev = lf;
-							groupLink = ugl;
-							break;
-						}
-					}
-					lastone = lf;
-					lf = (File *)lf->node.mln_Succ;
-				}
-				
-				if( groupLink != NULL )
-				{
-					break;
-				}
-				
-				ugl = (UserGroupLink *)ugl->node.mln_Succ;
-			}
-		}
-		
 		USER_CHANGE_OFF( usr );
 		
 		if( remdev != NULL )
 		{
-			int retry = 50;
-			while( remdev->f_Operations > 0 )
+			if( remdev->f_Operations <= 0 )
 			{
-				usleep( 5000 );
-				if( retry-- <= 0 ) break;	// quit in case
-			}
-			
-			USER_CHANGE_ON( usr );
-			
-			DEBUG("[UserRemDeviceByName] Remove device from list\n");
-			
-			// first we check if device was removed from user group
-			
-			if( groupLink != NULL )
-			{
-				// remove device from list
+				DEBUG("[UserRemDeviceByName] Remove device from list\n");
 				
-				lf = groupLink->ugl_Group->ug_MountedDevs;
+				USER_CHANGE_ON( usr );
 				
-				// remove device from list
-	
-				if( groupLink->ugl_Group->ug_MountedDevs == remdev )		// checking if its our first entry
-				{
-					File *next = (File*)remdev->node.mln_Succ;
-					groupLink->ugl_Group->ug_MountedDevs = (File *)next;
-					if( next != NULL )
-					{
-						next->node.mln_Pred = NULL;
-					}
-				}
-				else
-				{
-					File *next = (File *)remdev->node.mln_Succ;
-					//next->node.mln_Pred = (struct MinNode *)prev;
-					if( lastone != NULL )
-					{
-						lastone->node.mln_Succ = (struct MinNode *)next;
-					}
-				}
-				
-				// we have to check if group have device mounted, if not it should be removed
-				
-				//TODO remove group if its empty
-			} // seems device was user device
-			else
-			{
 				usr->u_MountedDevsNr--;
-		
+			
 				if( usr->u_MountedDevs == remdev )		// checking if its our first entry
 				{
 					File *next = (File*)remdev->node.mln_Succ;
@@ -542,10 +459,16 @@ File *UserRemDeviceByName( User *usr, const char *name, int *error )
 						lastone->node.mln_Succ = (struct MinNode *)next;
 					}
 				}
+				USER_CHANGE_OFF( usr );
+				
+				return remdev;
 			}
-			
-			USER_CHANGE_OFF( usr );
-			return remdev;
+			else
+			{
+				DEBUG("[UserRemDeviceByName] Cannot unmount device, operation in progress\n");
+				*error = FSys_Error_OpsInProgress;
+				return remdev;
+			}
 		}
 	}
 	else
@@ -573,6 +496,7 @@ File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error )
 {
 	if( usr != NULL )
 	{
+		
 		USER_CHANGE_ON( usr );
 		
 		File *lf = usr->u_MountedDevs;
@@ -763,116 +687,66 @@ File *UserGetDeviceByName( User *usr, const char *name )
 		}
 		lfile = (File *)lfile->node.mln_Succ;
 	}
-	
-	// file not found, we have to try to check if drive is workgroup drive
-	
-	UserGroupLink *ugl = usr->u_UserGroupLinks;
-	while( ugl != NULL )
-	{
-		UserGroup *ug = (UserGroup *) ugl->ugl_Group;
-		lfile = ug->ug_MountedDevs;
-	
-		while( lfile != NULL )
-		{
-			if( strcmp( name, lfile->f_Name ) == 0 )
-			{
-				DEBUG("Device found: %s\n", name );
-				USER_UNLOCK( usr );
-				return lfile;
-			}
-			lfile = (File *)lfile->node.mln_Succ;
-		}
-		ugl = (UserGroupLink *)ugl->node.mln_Succ;
-	}
-	
 	USER_UNLOCK( usr );
 	
 	return NULL;
 }
 
 /**
- * Get file by path
+ * Regenerate sessionid for user (DEPRICATED)
  *
- * @param usr pointer to user to which devices belong
- * @param dstpath pointer to pointer where file path will be stored (without device)
- * @param path path to file
- * @return when device exist and its avaiable then pointer to it is returned
+ * @param lsb pointer to SystemBase
+ * @param usr pointer to User which will have new sessionid
+ * @param newsess new session hash. If passed value is equal to NULL new hash will be generated
+ * @return 0 when success, otherwise error number
  */
-
-// NB: This one is not thread safe. Lock mutex before use!
-File *UserGetDeviceByPath( User *usr, char **dstpath, const char *path )
+int UserRegenerateSessionID( User *usr, char *newsess )
 {
-	File *fhand = NULL;
-	char ddrivename[ 256 ];
-
-	int dpos = ColonPosition( path );
-	strncpy( ddrivename, path, dpos );
-	ddrivename[ dpos ] = 0;
-
-	// Make sure we have a valid path!
-	int pl = strlen( path );
-	int i = 0; int success = 0;
-	for( ; i < pl; i++ )
-	{
-		if( path[i] == ':' )
-		{
-			success++;
-			break;
-		}
-	}
-	if( success <= 0 )
-	{
-		FERROR("Path is not correct\n");
-		return NULL;
-	}
-
-	*dstpath = (char *)&path[ dpos + 1 ];
-	DEBUG("[GetFileByPath] Get handle by path!\n");
-
+/*
 	if( usr != NULL )
 	{
-		USER_LOCK( usr );
-		
-		File *ldr = usr->u_MountedDevs;
-		while( ldr != NULL )
-		{ 
-			if( strcmp( ldr->f_Name, ddrivename ) == 0 )
-			{
-				fhand = ldr;
-				break;
-			}
-			ldr = (File *) ldr->node.mln_Succ;
-		}
-		
-		if( fhand == NULL )
+		//pthread_mutex_lock( &(usr->) );
+		// Remove old one and update
+		if( usr->u_MainSessionID )
 		{
-			UserGroupLink *ugl = usr->u_UserGroupLinks;
-			while( ugl != NULL )
-			{
-				UserGroup *ug = (UserGroup *) ugl->ugl_Group;
-				File *lfile = ug->ug_MountedDevs;
-	
-				while( lfile != NULL )
-				{
-					if( strcmp( ddrivename, lfile->f_Name ) == 0 )
-					{
-						DEBUG("Device found: %s\n", ddrivename );
-						fhand = lfile;
-						break;
-					}
-					lfile = (File *)lfile->node.mln_Succ;
-				}
-				if( fhand != NULL )
-				{
-					break;
-				}
-				ugl = (UserGroupLink *)ugl->node.mln_Succ;
-			}
+			FFree( usr->u_MainSessionID );
 		}
 		
-		USER_UNLOCK( usr );
+		if( newsess != NULL )
+		{
+			usr->u_MainSessionID = StringDuplicate( newsess );
+		}
+		else
+		{
+			time_t timestamp = time ( NULL );
+	
+			char *hashBase = MakeString( 255 );
+			sprintf( hashBase, "%ld%s%d", timestamp, usr->u_FullName, ( rand() % 999 ) + ( rand() % 999 ) + ( rand() % 999 ) );
+			HashedString( &hashBase );
+
+			usr->u_MainSessionID = hashBase;
+		}
+	
+		// UPDATE file systems
+		File *lDev = usr->u_MountedDevs;
+		if( lDev != NULL )
+		{
+			while( lDev != NULL )
+			{
+
+				//lDev->f_SessionID = StringDuplicate( usr->u_MainSessionID );
+				lDev->f_SessionIDPTR = usr->u_MainSessionID;
+				lDev = (File *)lDev->node.mln_Succ;
+			}
+		}
 	}
-	return fhand;
+	else
+	{
+		DEBUG("User structure = NULL\n");
+		return 1;
+	}
+*/
+	return 0;
 }
 
 /**
@@ -894,7 +768,6 @@ void UserDeleteGroupLink( UserGroupLink *ugl )
  *
  * @param ugl pointer to UserGroupLink root entry
  */
-
 void UserDeleteGroupLinkAll( UserGroupLink *ugl )
 {
 	while( ugl != NULL )
@@ -911,7 +784,7 @@ void UserDeleteGroupLinkAll( UserGroupLink *ugl )
  * 
  * @param u pointer to User
  */
-/*
+
 void UserRemoveFromGroups( User *u )
 {
 	if( u == NULL )
@@ -921,7 +794,7 @@ void UserRemoveFromGroups( User *u )
 	
 	DEBUG("[UserRemoveFromGroups] remove start\n");
 	// remove user from group first
-	
+	/*
 	UserGroupLink *ugl = u->u_UserGroupLinks;
 	while( ugl != NULL )
 	{
@@ -957,92 +830,42 @@ void UserRemoveFromGroups( User *u )
 		}
 		ugl = (UserGroupLink *)ugl->node.mln_Succ;
 	}
+	*/
 	
 	DEBUG("[UserRemoveFromGroups] remove before links delete\n");
 	// remove all links to group
-
 	USER_CHANGE_ON( u );
 	UserDeleteGroupLinkAll( u->u_UserGroupLinks );
 	u->u_UserGroupLinks = NULL;
 	USER_CHANGE_OFF( u );
-
+	
 	DEBUG("[UserRemoveFromGroups] remove end\n");
-}
-*/
-
-/**
- * Remove user from all groups
- * 
- * @param sb pointer to SystemBase
- * @param u pointer to User
- */
-
-void UserRemoveFromGroupsDB( void *sb, User *u )
-{
-	if( u == NULL )
-	{
-		return;
-	}
-	
-	DEBUG("[UserRemoveFromGroupsDB] remove start\n");
-	
-	SystemBase *lsb = (SystemBase *)sb;
-	SQLLibrary *sqlLib = lsb->LibrarySQLGet( lsb );
-	
-	if( sqlLib != NULL )
-	{
-		char query[ 256 ];
-		sqlLib->SNPrintF( sqlLib, query, sizeof(query), "DELETE FROM FUserToGroup WHERE UserID='%ld", u->u_ID );
-		
-		sqlLib->QueryWithoutResults( sqlLib, query );
-
-		lsb->LibrarySQLDrop( lsb, sqlLib );
-	}
-
-	DEBUG("[UserRemoveFromGroupsDB] remove end\n");
 }
 
 /**
  * Check if user is in group
  *
- * @param sb pointer to SystemBase
  * @param usr User
  * @param gid group id 
  * @return TRUE if user is in group, otherwise FALSE
  */
-
-FBOOL UserIsInGroupDB( void *sb, User *usr, FULONG gid )
+FBOOL UserIsInGroup( User *usr, FULONG gid )
 {
-	DEBUG("[UserIsInGroupDB] remove start\n");
-	FBOOL isInGroup = FALSE;
-	
-	SystemBase *lsb = (SystemBase *)sb;
-	SQLLibrary *sqlLib = lsb->LibrarySQLGet( lsb );
-	
-	if( sqlLib != NULL )
+	USER_LOCK( usr );
+
+	UserGroupLink *ugl = usr->u_UserGroupLinks;
+	while( ugl != NULL )
 	{
-		char query[ 1024 ];
-		sqlLib->SNPrintF( sqlLib, query, sizeof(query), "SELECT count(*) from FUserToGroup WHERE UserID=%ld AND UserGroupID=%ld", usr->u_ID, gid );
-		
-		void *result = sqlLib->Query( sqlLib, query );
-		if( result != NULL )
-		{ 
-			char **row;
-			if( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
-			{
-				if( atol( row[ 0 ] ) > 0 )
-				{
-					isInGroup = TRUE;
-				}
-			}
-			sqlLib->FreeResult( sqlLib, result );
+		if( ugl->ugl_GroupID == gid )
+		{
+			USER_UNLOCK( usr );
+			return TRUE;
 		}
-		lsb->LibrarySQLDrop( lsb, sqlLib );
+		ugl = (UserGroupLink *)ugl->node.mln_Succ;
 	}
-
-	DEBUG("[UserIsInGroupDB] remove end\n");
-
-	return isInGroup;
+		
+	USER_UNLOCK( usr );
+	return FALSE;
 }
 
 /**
@@ -1107,7 +930,7 @@ void UserListSessions( User* usr, BufString *bs, void *sb )
 			{
 				if( sessions->us == NULL )
 				{
-					DEBUG("[UserListSessions] ERR\n");
+					DEBUG("ERR\n");
 					sessions = (UserSessListEntry *) sessions->node.mln_Succ;
 					continue;
 				}
@@ -1198,7 +1021,7 @@ void UserNotifyFSEvent2( User *u, char *evt, char *path )
 				}
 				else
 				{
-					INFO("[UserNotifyFSEvent2] Cannot send WS message: %s\n", message );
+					INFO("Cannot send WS message: %s\n", message );
 				}
 				list = (UserSessListEntry *)list->node.mln_Succ;
 			}
@@ -1209,96 +1032,4 @@ void UserNotifyFSEvent2( User *u, char *evt, char *path )
 	}
 	
 	DEBUG("[UserNotifyFSEvent2] end\n");
-}
-
-/**
- * Add UserGroup to user
- *
- * @param u user
- * @param evt event type (char *)
- * @param path path to file
- */
-
-int UserAddToGroup( User *usr, UserGroup *ug )
-{
-	DEBUG("[UserAddToGroup] start\n" );
-	if( usr != NULL && ug != NULL )
-	{
-		USER_CHANGE_ON( usr );
-		UserGroupLink *ugl = usr->u_UserGroupLinks;
-		while( ugl != NULL )
-		{
-			if( ugl->ugl_GroupID == ug->ug_ID )
-			{
-				break;
-			}
-			ugl = (UserGroupLink *) ugl->node.mln_Succ;
-		}
-		
-		// seems user is not assigned to group, its time to do it
-		
-		if( ugl == NULL )
-		{
-			UserGroupLink *ugl = (UserGroupLink *)FCalloc( 1, sizeof(UserGroupLink ) );
-			if( ugl != NULL )
-			{
-				ugl->ugl_Group = ug;
-				ugl->ugl_GroupID = ug->ug_ID;
-				
-				ugl->node.mln_Succ = (MinNode *) usr->u_UserGroupLinks;
-				usr->u_UserGroupLinks = ugl;
-			}
-		}
-		
-		USER_CHANGE_OFF( usr );
-	}
-	DEBUG("[UserAddToGroup] end\n" );
-	return 0;
-}
-
-//
-//
-//
-
-int UserRemoveFromGroup( User *usr, FUQUAD groupid )
-{
-	DEBUG("[UserRemoveFromGroup] start. GroupID %ld\n", groupid );
-	if( usr != NULL )
-	{
-		USER_CHANGE_ON( usr );
-		
-		if( usr->u_UserGroupLinks != NULL )
-		{
-			// if group is first, lets just remove it quickly
-			if( usr->u_UserGroupLinks->ugl_GroupID == groupid )
-			{
-				UserGroupLink *uglrem = usr->u_UserGroupLinks;
-				usr->u_UserGroupLinks = (UserGroupLink *)usr->u_UserGroupLinks->node.mln_Succ;
-				FFree( uglrem );
-			}
-			else
-			{
-				UserGroupLink *prevugl = usr->u_UserGroupLinks;
-				UserGroupLink *ugl = (UserGroupLink *)usr->u_UserGroupLinks->node.mln_Succ;
-				while( ugl != NULL )
-				{
-					// seems current group is group which we wanted to find
-					if( ugl->ugl_GroupID == groupid )
-					{
-						// so previous group will get next pointer from current group
-						// becaouse current pointer will be released
-						prevugl->node.mln_Succ = ugl->node.mln_Succ;
-						FFree( ugl );
-						break;
-					}
-				
-					prevugl = ugl;
-					ugl = (UserGroupLink *)ugl->node.mln_Succ;
-				}
-			}
-		}
-		USER_CHANGE_OFF( usr );
-	}
-	DEBUG("[UserRemoveFromGroup] end. GroupID %ld\n", groupid );
-	return 0;
 }

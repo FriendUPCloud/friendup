@@ -185,7 +185,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	if( err != 0 )
 	{
 		FERROR("[PHPmod] cannot open pipe: %s\n", strerror( errno ) );
-		BufStringDelete( bs );
+		//ListStringDelete( ls );
 		FFree( buf );
 		return NULL;
 	}

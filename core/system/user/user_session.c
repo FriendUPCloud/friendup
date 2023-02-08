@@ -31,10 +31,9 @@ extern SystemBase *SLIB;
  *
  * @param sessid sessionID
  * @param devid deviceID
- * @param fcid FriendCore ID
  * @return new UserSession structure when success, otherwise NULL
  */
-UserSession *UserSessionNew( char *sessid, char *devid, char *fcid )
+UserSession *UserSessionNew( char *sessid, char *devid )
 {
 	UserSession *s;
 	if( ( s = FCalloc( 1, sizeof(UserSession) ) ) != NULL )
@@ -48,8 +47,6 @@ UserSession *UserSessionNew( char *sessid, char *devid, char *fcid )
 			s->us_SessionID = SessionIDGenerate();
 		}
 		s->us_DeviceIdentity = StringDuplicate( devid );
-		
-		s->us_FCID = StringDuplicate( fcid );
 		
 		UserSessionInit( s );
 		
@@ -86,22 +83,15 @@ void UserSessionDelete( UserSession *us )
 {
 	if( us != NULL )
 	{
-		DEBUG("[UserSessionDelete] status: %d\n", us->us_Status );
-		
-		if( us->us_Status == USER_SESSION_STATUS_TO_REMOVE || us->us_Status == USER_SESSION_STATUS_DELETE_IN_PROGRESS )
-		{
-			return;
-		}
+		Log( FLOG_DEBUG, "\nUserSessionDelete will be removed: %s\n\n", us->us_SessionID );
+		int count = 0;
+		int nrOfSessionsAttached = 0;
 		
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
 			us->us_Status = USER_SESSION_STATUS_DELETE_IN_PROGRESS;
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
-		
-		Log( FLOG_DEBUG, "\nUserSessionDelete will be removed: %s\n\n", us->us_SessionID );
-		int count = 0;
-		int nrOfSessionsAttached = 0;
 
 		// we must wait till all tasks will be finished
 		while( TRUE )
@@ -162,7 +152,7 @@ void UserSessionDelete( UserSession *us )
 			{
 				if( us->us_WSD != NULL && ((WSCData *)us->us_WSD) != NULL )
 				{
-					((WSCData *)us->us_WSD)->wsc_InUseCounter = -666;
+					((WSCData *)us->us_WSD)->wsc_InUseCounter = 0;
 					((WSCData *)us->us_WSD)->wsc_UserSession = NULL;
 					((WSCData *)us->us_WSD)->wsc_Wsi = NULL;
 				}
@@ -178,6 +168,8 @@ void UserSessionDelete( UserSession *us )
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
 		
+		//UserSessionWebsocketDeInit( &(us->us_Websockets) );
+
 		DEBUG("[UserSessionDelete] Session released  sessid: %s device: %s \n", us->us_SessionID, us->us_DeviceIdentity );
 
 		// first clear WebsocketReqManager and then remove it
@@ -193,18 +185,11 @@ void UserSessionDelete( UserSession *us )
 			if( us->us_DeviceIdentity != NULL )
 			{
 				FFree( us->us_DeviceIdentity );
-				us->us_DeviceIdentity = NULL;
-			}
-			
-			if( us->us_FCID != NULL )
-			{
-				FFree( us->us_FCID );
 			}
 	
 			if( us->us_SessionID != NULL )
 			{
 				FFree( us->us_SessionID );
-				us->us_SessionID = NULL;
 			}
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
@@ -247,10 +232,10 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 {
 	int retval = 0;
 
-	if( us == NULL || us->us_WSD == NULL || us->us_Status == USER_STATUS_TO_BE_REMOVED )
+	if( us == NULL )
 	{
-		DEBUG("[UserSessionWebsocketWrite] empty us %p or WSD %p. User status: %d\n", us, us->us_WSD, us->us_Status );
-		return -1;
+		DEBUG("[UserSessionWebsocketWrite] empty us %p\n", us );
+		return 0;
 	}
 	
 	// Decrease use internal
@@ -353,23 +338,21 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 				
 				if( us->us_WSD != NULL )
 				{
-					WSCData *wsd = us->us_WSD;
-					
 					if( FRIEND_MUTEX_LOCK( &( ((WSCData *)us->us_WSD)->wsc_Mutex) ) == 0 )
 					{
-						if( wsd->wsc_Wsi != NULL && wsd->wsc_Status != WSC_STATUS_DELETED && wsd->wsc_Status != WSC_STATUS_TO_BE_REMOVED )
-						{
-							wsd->wsc_InUseCounter++;
-							FRIEND_MUTEX_UNLOCK( &(((WSCData *)us->us_WSD)->wsc_Mutex) );
-							
-							lws_callback_on_writable( ((WSCData *)us->us_WSD)->wsc_Wsi );
-							
-							if( FRIEND_MUTEX_LOCK( &( ((WSCData *)us->us_WSD)->wsc_Mutex) ) == 0 )
-							{
-								wsd->wsc_InUseCounter--;
-							}
-						}
+						((WSCData *)us->us_WSD)->wsc_InUseCounter++;
 						FRIEND_MUTEX_UNLOCK( &(((WSCData *)us->us_WSD)->wsc_Mutex) );
+					
+						if( ((WSCData *)us->us_WSD)->wsc_Wsi != NULL )
+						{
+							lws_callback_on_writable( ((WSCData *)us->us_WSD)->wsc_Wsi );
+						}
+					
+						if( FRIEND_MUTEX_LOCK( &(((WSCData *)us->us_WSD)->wsc_Mutex) ) == 0 )
+						{
+							((WSCData *)us->us_WSD)->wsc_InUseCounter--;
+							FRIEND_MUTEX_UNLOCK( &(((WSCData *)us->us_WSD)->wsc_Mutex) );
+						}
 					}
 				}
 			}
@@ -443,19 +426,17 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 				{
 					if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
 					{
-						if( wsd->wsc_Wsi != NULL && wsd->wsc_Status != WSC_STATUS_DELETED && wsd->wsc_Status != WSC_STATUS_TO_BE_REMOVED )
-						{
-							wsd->wsc_InUseCounter++;
-							FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
-							
-							lws_callback_on_writable( wsd->wsc_Wsi );
-							
-							if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
-							{
-								wsd->wsc_InUseCounter--;
-							}
-						}
+						wsd->wsc_InUseCounter++;
 						FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
+						if( wsd->wsc_Wsi != NULL )
+						{
+							lws_callback_on_writable( wsd->wsc_Wsi );
+						}
+						if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
+						{
+							wsd->wsc_InUseCounter--;
+							FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
+						}
 					}
 				}
 			}

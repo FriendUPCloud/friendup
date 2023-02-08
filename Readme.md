@@ -1,4 +1,4 @@
-Friend OS v1.3.0, "Helium 1"
+Friend OS v1.2.8, "Hydrogen 4"
 ==============================
 
 *NB*: For extended functionality and related Friend projects such as the Android app refer [here](https://github.com/FriendSoftwareLabs).

@@ -39,8 +39,6 @@ body.Login .View
 	background: transparent;
 }
 
-body .ViewTitle { display: none; }
-
 body.Login .View > .Content:before
 {
 	display: none;

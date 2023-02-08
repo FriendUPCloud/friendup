@@ -22,8 +22,6 @@ Workspace = {
 	{
 		return false;
 	},
-	environmentName: 'Workspace',
-	osName: 'FriendOS',
 	staticBranch: 'Hydrogen 4',
 	icons: [],
 	menuMode: 'pear', // 'miga', 'fensters' (alternatives) -> other menu behaviours
@@ -66,15 +64,6 @@ Workspace = {
 		// Go ahead and init!
 		ScreenOverlay.init();
 		Workspace.init();
-		
-		if( window.innerWidth <= 1024 )
-		{
-			let p = ge( 'viewprt' );
-			if( p )
-			{
-				p.setAttribute( 'content', 'height=auto, width=auto, initial-scale=0.8, maximum-scale=1.0, user-scalable=no, viewport-fit=contain' );
-			}
-		}
 		
 		if( window.friendApp )
 		{
@@ -170,7 +159,7 @@ Workspace = {
 
 		// Setup default Doors screen
 		let wbscreen = new Screen( {
-			title: Workspace.environmentName,
+			title: 'Friend Workspace',
 			id:	'DoorsScreen',
 			extra: Workspace.fullName,
 			taskbar: true,
@@ -328,16 +317,19 @@ Workspace = {
 				}
 
 				// Set the clock
-				let etime = '';
-				etime    += StrPad( d.getHours(), 2, '0' ) + ':' +
-						    StrPad( d.getMinutes(), 2, '0' );
-				ex.time.innerHTML = etime;
+				let e = '';
+				e +=    StrPad( d.getHours(), 2, '0' ) + ':' +
+						   StrPad( d.getMinutes(), 2, '0' ); /* + ':' +
+						   StrPad( d.getSeconds(), 2, '0' );*/
+				/*e +=    ' ' + StrPad( d.getDate(), 2, '0' ) + '/' +
+						   StrPad( d.getMonth() + 1, 2, '0' ) + '/' + d.getFullYear();*/
+				ex.time.innerHTML = e;
 
 				// Realign workspaces
 				Workspace.nudgeWorkspacesWidget();
 				Workspace.refreshExtraWidgetContents(); // < Screenbar icons
 			}
-			this.clockInterval = setInterval( clock, 30000 );
+			this.clockInterval = setInterval( clock, 1000 );
 		}
 
 		// Start the workspace session!
@@ -785,7 +777,7 @@ Workspace = {
 			height: 480,
 			'min-height': 280,
 			'resize': false,
-			title: 'Sign into your account',
+			title: 'Login to Friend OS',
 			close: false,
 			login: true,
 			theme: 'login'
@@ -798,27 +790,17 @@ Workspace = {
 				switch( msg.type )
 				{
 					
-					case 'terms':
 					case 'eula':
 					{
-					    let titl = msg.type == 'eula' ? 'EULA' : 'terms';
-					
 						let v = new View( {
-							title: 'Please verify our ' + titl,
+							title: 'LoginPopup',
 							width: 432,
 							height: 480,
 							resize: false
 						} );
 						
 						let f = new XMLHttpRequest();
-						if( msg.type == 'eula' )
-						{
-						    f.open( 'POST', '/webclient/templates/EULA.html', true, true );
-					    }
-					    else
-					    {
-					        f.open( 'POST', msg.src, true, true );
-					    }
+						f.open( 'POST', '/webclient/templates/EULA.html', true, true );
 						f.onload = function()
 						{
 							let t = this.responseText + '';
@@ -831,11 +813,11 @@ Workspace = {
 						f.send();
 					}
 					break;
-					
+						
 					case 'privacypolicy':
 					{
 						let v = new View( {
-							title: 'Privacy policy',
+							title: 'LoginPopup',
 							width: 432,
 							height: 480,
 							resize: false
@@ -996,7 +978,6 @@ Workspace = {
 			let s = document.createElement( 'script' );
 			s.src = '/webclient/js/gui/workspace_inside.js;' +
 				'webclient/3rdparty/adapter.js;' +
-				'webclient/3rdparty/pdfjs/build/pdf.js;' +
 				'webclient/js/utils/speech-input.js;' +
 				'webclient/js/utils/events.js;' +
 				'webclient/js/utils/utilities.js;' +
@@ -1025,7 +1006,6 @@ Workspace = {
 				'webclient/js/io/directoryview_fileoperations.js;' +
 				'webclient/js/gui/menufactory.js;' +
 				'webclient/js/gui/workspace_menu.js;' +
-				'webclient/js/gui/tabletdashboard.js;' +
 				'webclient/js/gui/deepestfield.js;' +
 				'webclient/js/gui/filedialog.js;' +
 				'webclient/js/gui/printdialog.js;' +
@@ -1065,202 +1045,197 @@ Workspace = {
 				}
 
                 // Just get it done!
-                function doInitInside()
-                {
-					InitWorkspaceNetwork();
+				InitWorkspaceNetwork();
 
-					// Reset some options
-					if( ev && ev.shiftKey )
+				// Reset some options
+				if( ev && ev.shiftKey )
+				{
+					_this.themeOverride = 'friendup12';
+				}
+
+				if( GetUrlVar( 'interface' ) )
+				{
+					switch( GetUrlVar( 'interface' ) )
 					{
-						_this.themeOverride = 'friendup12';
+						case 'native':
+							_this.interfaceMode = 'native';
+							break;
+						default:
+							break;
 					}
+				}
 
-					if( GetUrlVar( 'interface' ) )
+				if( GetUrlVar( 'noleavealert' ) )
+				{
+					_this.noLeaveAlert = true;
+				}
+
+				SetupWorkspaceData( json );
+				
+				if( !_this.workspaceHasLoadedOnceBefore )
+				{
+					Workspace.setLoading( true );
+					_this.workspaceHasLoadedOnceBefore = true;
+				}
+
+
+				// Lets load the stored window positions!
+				LoadWindowStorage();
+
+				// Set up a shell instance for the workspace
+				let uid = FriendDOS.addSession( _this );
+				_this.shell = FriendDOS.getSession( uid );
+				
+				// We're getting the theme set in an url var
+				let th = '';
+				if( ( th = GetUrlVar( 'theme' ) ) )
+				{
+					_this.refreshTheme( th, false );
+					if( _this.loginPrompt )
 					{
-						switch( GetUrlVar( 'interface' ) )
+						_this.loginPrompt.close();
+						_this.loginPrompt = false;
+					}
+					_this.init();
+				}
+				// See if we have some theme settings
+				else
+				{
+					// Check eula
+					let m = new Module( 'system' );
+					m.onExecuted = function( e, d )
+					{	
+						let m = new Module( 'system' );
+						m.onExecuted = function( ee, dd )
 						{
-							case 'native':
-								_this.interfaceMode = 'native';
-								break;
-							default:
-								break;
+					        if( ee != 'ok' )
+					        {
+					        	if( dd )
+					        	{
+					        		try
+					        		{
+					        			let js = JSON.parse( dd );
+					        			if( js.euladocument )
+					        			{
+					        				Workspace.euladocument = js.euladocument;
+					        			}
+					        		}
+					        		catch( e ){};
+					        	}
+					            ShowEula();
+							}
+				            afterEula( e );								
+						}
+						m.execute( 'checkeula' );
+						
+						// When eula is displayed or not
+						function afterEula( e )
+						{
+							// Invites
+							if( json.inviteHash )
+							{
+								let inv = new Module( 'system' );
+								inv.onExecuted = function( err, dat )
+								{
+									// TODO: Make some better error handling ...
+									if( err != 'ok' ) console.log( '[ERROR] verifyinvite: ' + ( dat ? dat : err ) );
+								}
+								inv.execute( 'verifyinvite', { hash: json.inviteHash } );
+							}
+							
+							if( e == 'ok' )
+							{
+								let s = {};
+								try
+								{
+									s = JSON.parse( d );
+								}
+								catch( e )
+								{ 
+									s = {}; 
+								};
+								if( s && s.Theme && s.Theme.length )
+								{
+									_this.refreshTheme( s.Theme.toLowerCase(), false );
+								}
+								else
+								{
+									_this.refreshTheme( false, false );
+								}
+								_this.mimeTypes = s.Mimetypes;
+							}
+							else _this.refreshTheme( false, false );
+
+							if( _this.loginPrompt )
+							{
+								_this.loginPrompt.close();
+								_this.loginPrompt = false;
+							}
+							_this.init();
 						}
 					}
-
-					if( GetUrlVar( 'noleavealert' ) )
-					{
-						_this.noLeaveAlert = true;
-					}
-
-					SetupWorkspaceData( json );
+					m.execute( 'usersettings' );
+				}
+				
+				// Language
+				_this.locale = 'en';
+				let l = new Module( 'system' );
+				l.onExecuted = function( e, d )
+				{
+					// New translations
+					i18n_translations = [];
 					
-					if( !_this.workspaceHasLoadedOnceBefore )
+					let decoded = false;
+					try
 					{
-						Workspace.setLoading( true );
-						_this.workspaceHasLoadedOnceBefore = true;
+						decoded = JSON.parse( d );
+					}
+					catch( e )
+					{
+						//console.log( 'This: ', d );
 					}
 
-
-					// Lets load the stored window positions!
-					LoadWindowStorage();
-
-					// Set up a shell instance for the workspace
-					let uid = FriendDOS.addSession( _this );
-					_this.shell = FriendDOS.getSession( uid );
-					
-					// We're getting the theme set in an url var
-					let th = '';
-					if( ( th = GetUrlVar( 'theme' ) ) )
+					// Add it!
+					i18nClearLocale();
+					if( e == 'ok' )
 					{
-						_this.refreshTheme( th, false );
-						if( _this.loginPrompt )
-						{
-							_this.loginPrompt.close();
-							_this.loginPrompt = false;
-						}
-						_this.init();
+						if( decoded && typeof( decoded.locale ) != 'undefined' )
+							_this.locale = decoded.locale;
+						//load english first and overwrite with localised values afterwards :)
+						i18nAddPath( 'locale/en.locale', function(){
+							if( _this.locale != 'en' ) i18nAddPath( 'locale/' + _this.locale + '.locale' );
+						} );
 					}
-					// See if we have some theme settings
 					else
 					{
-						// Check eula
-						let m = new Module( 'system' );
-						m.onExecuted = function( e, d )
-						{	
-							let m = new Module( 'system' );
-							m.onExecuted = function( ee, dd )
-							{
-							    if( ee != 'ok' )
-							    {
-							    	if( dd )
-							    	{
-							    		try
-							    		{
-							    			let js = JSON.parse( dd );
-							    			if( js.euladocument )
-							    			{
-							    				Workspace.euladocument = js.euladocument;
-							    			}
-							    		}
-							    		catch( e ){};
-							    	}
-							        ShowEula();
-								}
-						        afterEula( e );								
-							}
-							m.execute( 'checkeula' );
-							
-							// When eula is displayed or not
-							function afterEula( e )
-							{
-								// Invites
-								if( json.inviteHash )
-								{
-									let inv = new Module( 'system' );
-									inv.onExecuted = function( err, dat )
-									{
-										// TODO: Make some better error handling ...
-										if( err != 'ok' ) console.log( '[ERROR] verifyinvite: ' + ( dat ? dat : err ) );
-									}
-									inv.execute( 'verifyinvite', { hash: json.inviteHash } );
-								}
-								
-								if( e == 'ok' )
-								{
-									let s = {};
-									try
-									{
-										s = JSON.parse( d );
-									}
-									catch( e )
-									{ 
-										s = {}; 
-									};
-									if( s && s.Theme && s.Theme.length )
-									{
-										_this.refreshTheme( s.Theme.toLowerCase(), false );
-									}
-									else
-									{
-										_this.refreshTheme( false, false );
-									}
-									console.log( 'We got a theme: ' + s.Theme );
-									_this.mimeTypes = s.Mimetypes;
-								}
-								else _this.refreshTheme( false, false );
+						i18nAddPath( 'locale/en.locale' );
+					}
 
-								if( _this.loginPrompt )
-								{
-									_this.loginPrompt.close();
-									_this.loginPrompt = false;
-								}
-								_this.init();
-							}
+					try
+					{
+						if( decoded.response == 'Failed to load user.' )
+						{
+							_this.logout();
 						}
-						m.execute( 'usersettings' );
+					}
+					catch( e ){};
+					
+					// Current stored Friend version
+					if( typeof( decoded.friendversion ) == 'undefined' || decoded.friendversion == 'undefined' )
+					{
+						Workspace.friendVersion = false;
+					}
+					else
+					{
+						Workspace.friendVersion = decoded.friendversion;
 					}
 					
-					// Language
-					_this.locale = 'en';
-					let l = new Module( 'system' );
-					l.onExecuted = function( e, d )
-					{
-						// New translations
-						i18n_translations = [];
-						
-						let decoded = false;
-						try
-						{
-							decoded = JSON.parse( d );
-						}
-						catch( e )
-						{
-							//console.log( 'This: ', d );
-						}
-
-						// Add it!
-						i18nClearLocale();
-						if( e == 'ok' )
-						{
-							if( decoded && typeof( decoded.locale ) != 'undefined' )
-								_this.locale = decoded.locale;
-							//load english first and overwrite with localised values afterwards :)
-							i18nAddPath( 'locale/en.locale', function(){
-								if( _this.locale != 'en' ) i18nAddPath( 'locale/' + _this.locale + '.locale' );
-							} );
-						}
-						else
-						{
-							i18nAddPath( 'locale/en.locale' );
-						}
-
-						try
-						{
-							if( decoded.response == 'Failed to load user.' )
-							{
-								_this.logout();
-							}
-						}
-						catch( e ){};
-						
-						// Current stored Friend version
-						if( typeof( decoded.friendversion ) == 'undefined' || decoded.friendversion == 'undefined' )
-						{
-							Workspace.friendVersion = false;
-						}
-						else
-						{
-							Workspace.friendVersion = decoded.friendversion;
-						}
-						
-						if( callback && typeof( callback ) == 'function' ) callback();
-						Workspace.postInit();
-					}
-					l.execute( 'getsetting', { settings: [ 'locale', 'friendversion' ] } );
+					if( callback && typeof( callback ) == 'function' ) callback();
+					Workspace.postInit();
 				}
-				if( window.InitWorkspaceNetwork )
-					doInitInside();
-				else setTimeout( function(){ doInitInside(); }, 50 );
+				l.execute( 'getsetting', { settings: [ 'locale', 'friendversion' ] } );
+				
+				return 1;
 			}
 			document.body.appendChild( s );
 		}

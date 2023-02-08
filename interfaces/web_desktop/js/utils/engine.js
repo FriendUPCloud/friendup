@@ -1224,94 +1224,6 @@ function NumberExtract ( string )
 	return parseFloat ( string );
 }
 
-// Use date string dt "YYYY-MM-DD hh:mm:ss", return human readable string
-function HumanDateString( dt )
-{
-	function tPad( num )
-	{
-		if( ( num + '' ).length < 2 )
-			return '0' + ( num + '' );
-		return num;
-	}
-	
-	let months = [ 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Des' ];
-	
-	let now = new Date();
-	let then = new Date( dt );
-	
-	let nyear = now.getFullYear();
-	let nmonth = now.getMonth() + 1;
-	let ndate = now.getDate();
-	
-	let tyear = then.getFullYear();
-	let tmonth = then.getMonth() + 1;
-	let tdate = then.getDate();
-	
-	
-	// Last year we do not care about time
-	if( nyear > tyear )
-	{
-		return tdate + '. ' + months[ then.getMonth() ] + ' ' + tyear;
-	}
-	
-	// Check span of time
-	
-	let secs = 0;
-	let nowTime = now.getTime();
-	let thenTime = then.getTime();
-	
-	// In the past
-	if( nowTime > thenTime )
-	{
-		secs = Math.floor( ( nowTime - thenTime ) / 1000 );
-		
-		if( secs < 60 )
-		{
-		    return 'Just now.';
-			return secs + ' seconds ago.';
-		}
-		
-		if( secs / 60 < 60 )
-		{
-			let mins = Math.floor( secs / 60 );
-			return mins + ' ' + ( mins == 1 ? 'minute' : 'minutes' ) + ' ago.';
-		}
-		
-		if( secs / 60 / 60 < 24 )
-		{
-			let hours = Math.floor( secs / 60 / 60 );
-			return hours + ' ' + ( hours == 1 ? 'hour' : 'hours' ) + ' ago.';
-		}
-		
-		if( tyear == ( new Date() ).getFullYear() )
-		    return tPad( tdate ) + '. ' + tPad( months[ then.getMonth() ] ); 
-		return tPad( tdate ) + '. ' + tPad( months[ then.getMonth() ] ) + ' ' + tyear; 
-	}
-	else
-	{
-		secs = Math.floor( ( thenTime - nowTime ) / 1000 );
-		
-		if( secs < 60 )
-		{
-			return 'In ' + secs + ' seconds.';
-		}
-		
-		if( secs / 60 < 60 )
-		{
-			let mins = Math.floor( secs / 60 );
-			return 'In ' + mins + ' ' + ( mins == 1 ? 'minute' : 'minutes' ) + '.';
-		}
-		
-		if( secs / 60 / 60 < 24 )
-		{
-			let hours = Math.floor( secs / 60 / 60 );
-			return 'In ' + hours + ' ' + ( hours == 1 ? 'hour' : 'hours' ) + '.';
-		}
-		
-		return tPad( tdate ) + '. ' + tPad( months[ then.getMonth() ] ) + ' ' + tyear;
-	}
-}
-
 // Easy tweener function that lets you 
 var __m_seed = 1;
 function mTween ( obj, time, func, endfunc )
@@ -1707,17 +1619,13 @@ function ActivateScripts( str )
 	}
 }
 
-function ExecuteScript( str, scope = false )
+function ExecuteScript( str )
 {
-	if( scope )
-	{
-		scope.eval( str );
-	}
-	eval( str );
+	eval ( str );
 }
 
 // Add a script
-function AddScript( scriptsrc, callback = false )
+function AddScript( scriptsrc )
 {
 	var h = document.getElementsByTagName ( 'head' )[0];
 	var s = h.getElementsByTagName ( 'script' );
@@ -1735,16 +1643,8 @@ function AddScript( scriptsrc, callback = false )
 		var sc = document.createElement ( 'script' );
 		sc.src = scriptsrc;
 		h.appendChild ( sc );
-		if( callback )
-		{
-			sc.onload = function()
-			{
-				callback( true );
-			}
-		}
 		return true;
 	}
-	if( callback ) callback( false );
 	return false;
 }
 
@@ -2566,7 +2466,6 @@ function checkTablet()
 function checkMobileBrowser()
 {
 	if( !document.body ) return setTimeout( checkMobileBrowser, 50 );
-	
 	window.isMobile = checkMobile();
 	if( !window.isTablet )
 		window.isTablet = checkTablet() || isTouchDevice();
@@ -2637,7 +2536,6 @@ function checkMobileBrowser()
 		};
 		console.error = console.debug = console.info =  console.log
 	}
-
 	return window.isMobile;
 }
 

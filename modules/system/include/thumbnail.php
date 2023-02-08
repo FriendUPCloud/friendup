@@ -117,10 +117,16 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	$thumb->UserID = $userid;
 	if( $thumb->Load() )
 	{
+		if( isset( $args->debug ) )
+		{
+			die( '[1] ' . $thumb->UserID . ' -- ' . $thumb->Path . ' -- ' . $thumb->Filepath . ' -- ' . $thumb->Filesize . ' == ' . $filesize );
+		}
+		
 		// Check if it exists!
 		if( file_exists( $thumb->Filepath ) && ( !$filesize || ( $filesize > 0 && $thumb->Filesize == $filesize ) ) )
 		{
 			$found = true;
+			
 			FriendHeader( 'Content-Type: image/png' );
 			die( file_get_contents( $thumb->Filepath ) );
 		}
@@ -128,7 +134,9 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		else
 		{
 			$found = false;
+			
 			$thumb->delete();
+			//_file_broken();
 		}
 	}
 	if( !$found )
@@ -139,7 +147,7 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	
 		// Get data
 		$ch = curl_init();
-		curl_setopt( $ch, CURLOPT_URL, $d->GetUrl() . '&logger=disabled' );
+		curl_setopt( $ch, CURLOPT_URL, $d->GetUrl() );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
 		curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );

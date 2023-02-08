@@ -51,12 +51,6 @@ $debug = ( isset( $debug ) ? $debug : [] );
 
 $userid = ( isset( $args->args->userid ) ? $args->args->userid : $User->ID );
 
-// Check if the user is in quarantine
-if( $quar = $SqlDatabase->fetchObject( 'SELECT q.* FROM UserQuarantine q, FUser u WHERE u.ID = q.UserID AND u.LoginTime=0 AND q.Verified=\'0\' AND q.UserID=\'' . intval( $userid, 10 ) . '\'' ) )
-{
-	die( 'fail<!--separate-->{"message":"Can not update a quarantined user.","response":-1}' );
-}
-
 // Check workgroup specific expansion
 // Load user's workgroups
 if( $wgroups = $SqlDatabase->FetchObjects( '
