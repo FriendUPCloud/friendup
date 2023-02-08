@@ -19,10 +19,26 @@
 // 	object   = user
 // 	objectid = 37628
 
+global $User;
+
+if ( isset( $args->authid ) && $args->authid == '(null)')
+	$args->authid = null;
+
 if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {
 	$args->authid = $args->args->authid;
 }
+
+if( !isset( $args->args->name ) )
+    $args->args->name = false;
+if( !isset( $args->args->objectid ) )
+    $args->args->objectid = false;
+if( !isset( $args->args->listdetails ) )
+    $args->args->listdetails = false;
+if( !isset( $args->args->data ) )
+    $args->args->data = false;
+if( !isset( $args->args->object ) )
+    $args->args->object = false;
 
 if( $data = Permissions( $args->args->type, $args->args->context, ( isset( $args->authid ) ? 'AUTHID'.$args->authid : $args->args->name ), $args->args->data, $args->args->object, $args->args->objectid, $args->args->listdetails ) )
 {
@@ -38,7 +54,7 @@ if( $data = Permissions( $args->args->type, $args->args->context, ( isset( $args
 			die( 'fail<!--separate-->' . json_encode( $data ) );
 		}
 	}
-	
+
 	die( 'ok<!--separate-->{"message":"Permission granted.","response":1}' );
 }
 

@@ -45,7 +45,7 @@ void FSManagerDelete( FSManager *fm );
 // check if user have access to file/directory/door
 //
 
-FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User *usr, char *perm );
+FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, FUQUAD userid, char *perm );
 
 //
 // return access rights in json format

@@ -54,19 +54,18 @@ void FSManagerDelete( FSManager *fm )
 }
 
 /**
- * Chec File/Directory access rights
+ * Check File/Directory access rights
  *
  * @param fm filemanager structure
  * @param path path to file/directory which will be checked for access
  * @param devid deviceid
- * @param usr pointer to user for which access is checked
+ * @param userid pointer to user for which access is checked
  * @param perm permissions in format  ARWXDH (as string)
  * @return TRUE if success otherwise FALSE
  */
-FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User *usr, char *perm )
+FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, FUQUAD userid, char *perm )
 {
 	FBOOL result = FALSE;
-	char *localPath = NULL;
 	
 	DEBUG("[FSManagerCheckAccess] Check access for %s\n", path );
 	if( path == NULL )
@@ -103,7 +102,7 @@ FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User 
 			int pathLen = strlen(newPath);
 			char *tmpQuery;
 		
-			DEBUG("[FSManagerCheckAccess] User ptr %p alloc size %d\n", usr, querysize );
+			DEBUG("[FSManagerCheckAccess] User id %ld alloc size %d\n", userid, querysize );
 		
 			if( ( tmpQuery = FMalloc( querysize ) ) != NULL )
 			{
@@ -135,7 +134,7 @@ OR \
 OR \
 ( Type = 2 ) \
 ) \
-", newPath, parentPath, devid, usr->u_ID, usr->u_ID );
+", newPath, parentPath, devid, userid, userid );
 				
 					FFree( parentPath );
 				}
@@ -155,7 +154,7 @@ OR \
 OR \
 ( Type = 2 ) \
 ) \
-", newPath, devid, usr->u_ID, usr->u_ID );
+", newPath, devid, userid, userid );
 				}
 			
 				DEBUG("[FSManagerCheckAccess] Checking access via SQL '%s'\n", tmpQuery );
@@ -662,8 +661,10 @@ OR \
 			int size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FPermLink` (PermissionID,ObjectID,Type,Access) VALUES( %lu, %lu, 0, '%s' )", permissionid, usr->u_ID, usercOld );
 			sqllib->QueryWithoutResults( sqllib, insertQuery );
 		}
+		
 		// groups
 
+		/*
 		if( groupc != NULL )
 		{
 			int lsize = strlen(groupc);
@@ -699,6 +700,8 @@ OR \
 				ugl = (UserGroupLink *)ugl->node.mln_Succ;
 			}
 		}
+		*/
+		
 		// others
 		
 		if( othersc != NULL )
@@ -1016,18 +1019,18 @@ BufString *FSManagerAddPermissionsToDir( FSManager *fm, BufString *recv, FULONG 
 							}
 						}
 						
-						sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
-PermissionID in( \
+						sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT `Access`, ObjectID, `Type`, PermissionID FROM `FPermLink` WHERE \
+PermissionID IN ( \
 SELECT ID FROM `FFilePermission` WHERE \
-( Path = '%s' ) \
+( `Path` = '%s' ) \
 AND DeviceID = %lu \
 ) \
 AND ( \
-( ObjectID in( select UserGroupID from `FUserToGroup` where UserID = %lu ) and Type = 1 ) \
+( ObjectID IN ( SELECT UserGroupID FROM `FUserToGroup` WHERE UserID = %lu ) AND `Type` = 1 ) \
 OR \
-( ObjectID = %lu and Type = 0 ) \
+( ObjectID = %lu and `Type` = 0 ) \
 OR \
-( Type = 2 ) \
+( `Type` = 2 ) \
 )", parentPath, devid, usr->u_ID, usr->u_ID );
 						
 						void *res = sqlLib->Query( sqlLib, tmpQuery );
@@ -1064,18 +1067,18 @@ OR \
 					access[ 0 ][ 0 ] = access[ 1 ][ 0 ] = access[ 2 ][ 0 ] = 0;
 					// fetch access rights to file
 
-					sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
-PermissionID in( \
+					sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, `Type`, PermissionID FROM `FPermLink` WHERE \
+PermissionID IN ( \
 SELECT ID FROM `FFilePermission` WHERE \
-( Path = '%s' ) \
+( `Path` = '%s' ) \
 AND DeviceID = %lu \
 ) \
 AND ( \
-( ObjectID in( select UserGroupID from `FUserToGroup` where UserID = %lu ) and Type = 1 ) \
+( ObjectID IN ( SELECT UserGroupID FROM `FUserToGroup` WHERE UserID = %lu ) and `Type` = 1 ) \
 OR \
-( ObjectID = %lu and Type = 0 ) \
+( ObjectID = %lu AND `Type` = 0 ) \
 OR \
-( Type = 2 ) \
+( `Type` = 2 ) \
 )", newPath, devid, usr->u_ID, usr->u_ID );
 
 					void *res = sqlLib->Query( sqlLib, tmpQuery );

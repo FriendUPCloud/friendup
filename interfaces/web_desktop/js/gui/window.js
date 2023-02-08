@@ -221,7 +221,26 @@ function SetWindowTitle( div, titleStr )
 	div.titleString = titleStr;
 	
 	// Update window
-	document.title = titleStr + ' - ' + Friend.windowBaseString;
+	if( Friend.windowBaseStringRules && Friend.windowBaseStringRules == 'replace' )
+		document.title = Friend.windowBaseString;
+	else document.title = titleStr + ' - ' + Friend.windowBaseString;
+	
+	// Viewtitle (for other uses than title)
+	let vTitle = titleStr;
+	if( vTitle.indexOf( ' - ' ) > 0 )
+	{
+	    vTitle = vTitle.split( ' - ' );
+	    vTitle[0] = '';
+	    vTitle = vTitle.join( '' );
+	}
+	div.viewTitle.innerHTML = vTitle;
+	
+	// Support dashboard
+	let dl = document.querySelector( '.DashboardLabel' );
+	if( dl )
+	{
+	    dl.innerHTML = vTitle;
+    }
 	
 	// Also check tasks
 	let baseElement = GetTaskbarElement();
@@ -520,7 +539,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 	
 	// Recalculate toggle group
 	// It will pop out of view if it's overlapped by other buttons
-	if( div.content.directoryview )
+	if( div.content.directoryview && !document.body.classList.contains( 'ThemeEngine' ) )
 	{
 		let t = div.getElementsByClassName( 'ToggleGroup' );
 		let r = div.getElementsByClassName( 'Reload' );
@@ -540,6 +559,15 @@ function ResizeWindow( div, wi, he, mode, depth )
 				t[0].style.pointerEvents = 'all';
 			}
 		}
+	}
+	
+	let flagDia = div.windowObject.getFlag( 'dialog' );
+	if( flagDia )
+	{
+	    setTimeout( function()
+	    {
+	        div.windowObject.setFlag( 'dialog', flagDia );
+	    }, 50 );
 	}
 }
 
@@ -946,8 +974,9 @@ function SetScreenByWindowElement( div )
 }
 
 // Just like _ActivateWindow, only without doing anything but activating
-function _ActivateWindowOnly( div )
+function _ActivateWindowOnly( div, e )
 {
+    if( div.windowObject && div.windowObject.getFlag( 'invisible' ) == true ) return;
 	if( Workspace.contextMenuShowing && Workspace.contextMenuShowing.shown )
 	{
 		return;
@@ -958,6 +987,17 @@ function _ActivateWindowOnly( div )
 	{
 		_ActivateWindow( div.content.blocker.getWindowElement().parentNode, false );
 		return;
+	}
+	
+	// Dialogs here are not activated
+    if( 
+    	window.Workspace && Workspace.dashboard && div.windowObject && (
+    		div.windowObject.flags[ 'dialog' ] ||
+    		div.windowObject.flags[ 'standard-dialog' ]
+    	) 
+    )
+    {
+    	return _ActivateDialogWindow( div, e );
 	}
 	
 	// Don't select other fields
@@ -978,7 +1018,7 @@ function _ActivateWindowOnly( div )
 	
 	// we use this one to calculate the max-height of the active window once its switched....
 	let newOffsetY = 0;
-	for( var a in movableWindows )
+	for( let a in movableWindows )
 	{
 		let m = movableWindows[a];
 
@@ -1121,10 +1161,84 @@ function _ActivateWindowOnly( div )
 	CheckScreenTitle();
 }
 
+function _ActivateDialogWindow( div, e )
+{
+	if( !e ) e = window.event;
+	// TODO: Also for touch!
+	if( !div.windowObject.flags.dockable )
+	{
+		document.body.classList.add( 'Dialog' );
+		
+		currentMovable = div;
+		if( e && e.button == 0 )
+		{
+			if( !div.windowObject.applicationId && !div.classList.contains( 'IconWindow' ) )
+			{
+				// If we have active windows that already shows, don't deactivate them for the dialog
+				// TODO: Exception is for file views - but not file dialogs
+				let exceptions = [];
+				for( let a in movableWindows )
+				{
+					if( movableWindows[ a ].classList.contains( 'Active' ) )
+						exceptions.push( movableWindows[ a ] );
+				}
+				_DeactivateWindows( exceptions.length ? { exceptions: exceptions } : false );
+				currentMovable = div;
+			}
+			if( window.hideDashboard )
+				window.hideDashboard();
+		}
+		else
+		{
+			if( window.hideDashboard )
+				window.hideDashboard();
+		}
+		if( window.Workspace && window.Workspace.showQuickMenu )
+		{
+			Workspace.showQuickMenu();
+		}
+	}
+}
+
 // "Private" function to activate a window
 var _activationTarget = null;
 function _ActivateWindow( div, nopoll, e )
 {
+    if( div.windowObject && div.windowObject.getFlag( 'invisible' ) == true ) return;
+    if( div.parentNode && div.parentNode.classList.contains( 'Closing' ) ) return;
+    
+    // Support dashboard
+    let vTitle = div.windowObject.getFlag( 'title' );
+    if( vTitle )
+    {
+	    let dl = document.querySelector( '.DashboardLabel' );
+	    if( dl )
+	    {
+	        dl.innerHTML = vTitle;
+        }
+    }
+    
+    // Add div if it hasn't been added already
+	if( div && div.windowObject && ( window.currentContext && ( typeof( window.currentContext ) == 'string' || div != window.currentContext[ 0 ] ) ) )
+	{
+	    window.currentContext = [ div, window.currentContext ];
+	}
+	
+	// Dialogs here are not activated
+    if( 
+    	window.Workspace && Workspace.dashboard && div.windowObject && (
+    		div.windowObject.flags[ 'dialog' ] ||
+    		div.windowObject.flags[ 'standard-dialog' ] ||
+    		( div.content && div.content.classList.contains( 'FileDialog' ) )
+    	) 
+    )
+    {
+    	return _ActivateDialogWindow( div );
+	}
+	
+	// Remove dialog flag only if it's not a dialog
+	document.body.classList.remove( 'Dialog' );
+    
 	// Check window color
 	if( div.windowObject.getFlag( 'windowActive' ) )
 	{
@@ -1138,6 +1252,17 @@ function _ActivateWindow( div, nopoll, e )
 	}
 
 	if( !e ) e = window.event;
+	
+	// TODO: Also for touch!
+	if( e && e.button == 0 )
+	{
+	    if( window.hideDashboard )
+	        window.hideDashboard();
+	}
+	if( window.Workspace && window.Workspace.showQuickMenu && !div.windowObject.getFlag( 'sidebarManaged' ) )
+	{
+        Workspace.showQuickMenu();
+    }
 	
 	// Already activating
 	if( div.parentNode.classList.contains( 'Activating' ) )
@@ -1268,7 +1393,14 @@ function _ActivateWindow( div, nopoll, e )
 	}
 	
 	// Update window title
-	document.title = div.windowObject.getFlag( 'title' ) + ' - ' + Friend.windowBaseString;
+	if( Friend.windowBaseStringRules && Friend.windowBaseStringRules == 'replace' )
+	{
+		document.title = Friend.windowBaseString;
+	}
+	else
+	{
+		document.title = div.windowObject.getFlag( 'title' ) + ' - ' + Friend.windowBaseString;
+	}
 
 	// If it has a window blocker, activate that instead
 	if ( div && div.content && typeof ( div.content.blocker ) == 'object' )
@@ -1454,6 +1586,10 @@ function _removeWindowTiles( div )
 function _DeactivateWindow( m, skipCleanUp )
 {
 	let ret = false;
+
+	if( !m ) return;
+	
+	if( !m ) return;
 	
 	if( m.className && m.classList.contains( 'Active' ) )
 	{
@@ -1578,7 +1714,7 @@ function _removeMobileCloseButtons()
 	}
 }
 
-function _DeactivateWindows()
+function _DeactivateWindows( flags = false )
 {
 	clearRegionIcons();
 	let windowsDeactivated = 0;
@@ -1594,7 +1730,23 @@ function _DeactivateWindows()
 	{
 		let m = movableWindows[a];
 		if( m.classList.contains( 'Active' ) )
-			windowsDeactivated += _DeactivateWindow( m, true );
+		{
+			// Check exceptions to deactivation
+			let found = false;
+			if( flags && flags.exceptions )
+			{
+				for( let b = 0; b < flags.exceptions.length; b++ )
+				{
+					if( flags.exceptions[ b ] == m )
+					{
+						found = true;
+						break;
+					}
+				}
+			}
+			if( !found )
+				windowsDeactivated += _DeactivateWindow( m, true );
+		}
 	}
 
 	//if( windowsDeactivated > 0 ) PollTaskbar ();
@@ -1818,7 +1970,9 @@ function CloseView( win, delayed )
 {
 	if( !win && window.currentMovable )
 		win = window.currentMovable;
-		
+	
+	let isDialog = false;
+	
 	if( win )
 	{
 		// Clean up!
@@ -1828,9 +1982,37 @@ function CloseView( win, delayed )
 			window.currentMovable = null;
 		
 		if( !win.parentNode.parentNode ) return;
-		if( win.parentNode.classList.contains( 'View' ) )
+		if( win.parentNode.classList.contains( 'ViewContainer' ) )
 		{
-			win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
+			win.parentNode.classList.add( 'Closing', 'NoEvents' );
+		}
+		
+		if( win.parentNode.classList.contains( 'Dialog' ) || 
+			win.parentNode.parentNode.classList.contains( 'Dialog' ) ||
+			win.parentNode.parentNode.classList.contains( 'FileDialog' ) )
+		{
+			isDialog = true;
+			let qm = null;
+			if( ( qm = win.parentNode.querySelector( '.QuickMenu' ) ) )
+			{
+				qm.classList.remove( 'Showing' );
+				ge( 'DoorsScreen' ).appendChild( qm );
+			}
+			
+			let currentIsDialog = false;
+			if( currentMovable )
+			{
+			    let cr = currentMovable;
+			    if( cr.parentNode.classList.contains( 'Dialog' ) || 
+			        cr.parentNode.parentNode.classList.contains( 'Dialog' ) ||
+			        cr.parentNode.parentNode.classList.contains( 'FileDialog' ) )
+		        {
+		            currentIsDialog = true;
+		        }
+			}
+			
+			if( win == currentMovable || currentIsDialog )
+				document.body.classList.remove( 'Dialog' );
 		}
 		
 		// Unassign this
@@ -1952,55 +2134,172 @@ function CloseView( win, delayed )
 			ele.style.zIndex = 7867878;
 			div.appendChild( ele );
 		}
-
-		// Activate latest activated view (not on mobile)
-		let nextActive = false;
-		if( div.classList.contains( 'Active' ) )
+		
+		// Context -------------------------------------------------------------
+		// Check the window recent location exists, and use it instead
+		if( ( currentMovable && currentMovable == win ) || ( !currentMovable && win ) )
 		{
-			if( Friend.GUI.view.viewHistory.length )
+			if( win.windowObject && win.windowObject.recentLocation && win.windowObject.recentLocation.substr( 0, 7 ) == 'viewId:' )
 			{
-				// Only activate last view in the same app
-				if( appId )
+				let id = win.windowObject.recentLocation;
+				id = id.substr( 7, id.length - 7 );
+				let actSet = false;
+				for( let z in movableWindows )
 				{
-					for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
+					if( movableWindows[ z ].windowObject && movableWindows[ z ].windowObject.getViewId() == id )
 					{
-						if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
-						{
-							// Only activate non minimized views
-							if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
-							{
-								let vh = Friend.GUI.view.viewHistory[ a ];
-								_ActivateWindow( vh );
-								if( vh.content && vh.content.refresh )
-									vh.content.refresh();
-								nextActive = true;
-							}
-							break;
-						}
+						currentMovable = movableWindows[ z ];
+						_ActivateWindow( currentMovable );
+						if( typeof( window.currentContext ) == 'object' && window.currentContext.length > 1 )
+							window.currentContext = window.currentContext[ 1 ];
+						else window.currentContext = false;
+						actSet = true;
+						break;
 					}
 				}
-				else
+				if( !actSet )
 				{
-					for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
+					// Default
+					_DeactivateWindows();
+				    showDashboard();
+				    setTimeout( function(){ showDashboard(); }, 150 );
+			    }
+			}
+			// Check the window context, if it exists
+			//console.log( 'Foo bar', window.currentContext );
+			if( window.currentContext )
+			{
+			    //console.log( 'Test' );
+			    function handleContext( depth )
+				{
+					if( !depth ) depth = 1;
+				    switch( window.currentContext )
+				    {
+				        case 'dashboard':
+				            _DeactivateWindows();
+					        showDashboard();
+					        break;
+				        case 'sidebar':
+				            _DeactivateWindows();
+				            hideDashboard();
+		                	break;
+		            	// We have a different thing for other contexts
+		                default:
+		                    let appCheck = true;
+		                    //console.log( 'Checking context: ', window.currentContext );
+		                    // We got a context array ([ currentWindow, prevContext ])
+		                    if( typeof( window.currentContext ) == 'object' )
+		                    {
+		                        // We are referring to self! Fix it
+		                        if( window.currentContext[0] == win && typeof( window.currentContext[1] ) != 'undefined' )
+		                        {
+		                            //console.log( 'I am self: ', window.currentContext );
+		                            window.currentContext = window.currentContext[1];
+	                                if( window.currentContext == 'dashboard' )
+	                                {
+	                                    return handleContext( depth + 1 );
+	                                }
+	                            }
+	                            
+	                            
+		                    	if( window.currentContext[0] && window.currentContext[0].tagName == 'DIV' && window.currentContext[0] != currentMovable )
+		                    	{
+		                    		currentMovable = window.currentContext[ 0 ];
+		                    		_ActivateWindow( window.currentContext[ 0 ] );
+		                    		if( window.currentContext[ 0 ].content && window.currentContext[ 0 ].content.refresh )
+		                    			window.currentContext[ 0 ].content.refresh();
+		                    		return;
+		                    	}
+		                    	else if( window.currentContext.length > 1 )
+		                    	{
+		                    		if( typeof( window.currentContext[ 1 ] ) != 'undefined' )
+		                    		{
+						                window.currentContext = window.currentContext[ 1 ];
+						                return handleContext( depth + 1 );
+					                }
+			                    }
+		                    }
+		                    if( appId && appCheck )
+		                    {
+		                        for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
+								{
+									if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
+									{
+										// Only activate non minimized views
+										if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+										{
+											let vh = Friend.GUI.view.viewHistory[ a ];
+											currentMovable = vh;
+											_ActivateWindow( vh );
+											if( vh.content && vh.content.refresh )
+												vh.content.refresh();
+											nextActive = true;
+										}
+										break;
+									}
+								}
+		                    }
+		                    break;
+				    }
+			    }
+			    handleContext();
+			}
+			// Context end ---------------------------------------------------------
+			else
+			{
+				// Activate latest activated view (not on mobile)
+				let nextActive = false;
+				if( div.classList.contains( 'Active' ) || div.windowObject.getFlag( 'dialog' ) )
+				{
+					if( Friend.GUI.view.viewHistory.length )
 					{
-						if( Friend.GUI.view.viewHistory[ a ].windowObject.workspace == globalConfig.workspaceCurrent )
+						// Only activate last view in the same app
+						if( appId )
 						{
-							// Only activate non minimized views
-							if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+							for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 							{
-								let vh = Friend.GUI.view.viewHistory[ a ];
-								_ActivateWindow( vh );
-								if( vh.content && vh.content.refresh )
-									vh.content.refresh();
-								nextActive = true;
+								if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
+								{
+									// Only activate non minimized views
+									if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+									{
+										let vh = Friend.GUI.view.viewHistory[ a ];
+										currentMovable = vh;
+										_ActivateWindow( vh );
+										if( vh.content && vh.content.refresh )
+											vh.content.refresh();
+										nextActive = true;
+									}
+									break;
+								}
 							}
-							break;
+						}
+						else
+						{
+							for( let a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
+							{
+								if( Friend.GUI.view.viewHistory[ a ].windowObject.workspace == globalConfig.workspaceCurrent )
+								{
+									if( Friend.GUI.view.viewHistory[ a ].windowObject.getFlag( 'sidebarManaged' ) ) continue;
+									// Only activate non minimized views
+									if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+									{
+										let vh = Friend.GUI.view.viewHistory[ a ];
+										currentMovable = vh;
+										_ActivateWindow( vh );
+										if( vh.content && vh.content.refresh )
+											vh.content.refresh();
+										nextActive = true;
+									}
+									break;
+								}
+							}
 						}
 					}
 				}
 			}
 		}
-
+		
 		if( div )
 		{
 			// Clean up ids
@@ -2020,6 +2319,7 @@ function CloseView( win, delayed )
 			movableWindowCount = 0;
 			movableHighestZindex = 99;
 		}
+		
 		// Check events
 		if( div.content && div.content.events )
 		{
@@ -2053,6 +2353,24 @@ function CloseView( win, delayed )
 			{
 				document.body.removeAttribute( 'windowcount' );
 			}, 400 );
+		}
+		
+		// Dashboard support
+		if( win.windowObject.recentLocation && win.windowObject.recentLocation  != 'dashboard' )
+		{
+			return;
+		}
+		
+		if( !currentMovable || ( currentMovable && currentMovable.windowObject.getFlag( 'dockable' ) && window.showDashboard ) )
+		{
+			if( window.showDashboard )
+			{
+				_DeactivateWindows();
+				showDashboard();
+				if( window.pollLiveViews )
+					pollLiveViews();
+				return;
+			}
 		}
 		
 		if( app && isMobile && app.mainView && app.mainView != win.windowObject )
@@ -2089,6 +2407,20 @@ function CloseView( win, delayed )
 	
 	if( isMobile && Workspace.redrawIcons )
 		Workspace.redrawIcons();
+	
+	if( !currentMovable )
+	{
+	    // If we have a dashboard
+		if( window.showDashboard )
+		    showDashboard();
+		if( window.pollLiveViews )
+			pollLiveViews();
+	}
+	else
+	{
+		if( window.pollLiveViews )
+			pollLiveViews();
+	}
 }
 // Obsolete!!!
 CloseWindow = CloseView;
@@ -2192,6 +2524,34 @@ var View = function( args )
 		}
 	}
 	
+	// Special hook for dashboard related workspace
+	if( window.hideDashboard && ( !args || !args.invisible ) )
+	{
+		let newApp = true;
+		if( args.applicationId )
+		{
+			for( let a in Workspace.applications )
+			{
+				let app = Workspace.applications[ a ];
+				if( app.applicationId == args.applicationId )
+				{
+					let count = 0;
+					for( let b in app.windows )
+					{
+						count++;
+						if( count > 1 )
+						{
+							newApp = false;
+							break;
+						}
+					}
+				}
+			}
+		}
+		if( newApp )
+			window.hideDashboard();
+	}
+	
 	// Start off
 	if( !args )
 		args = {};
@@ -2246,7 +2606,8 @@ var View = function( args )
 
 		let filter = [
 			'min-width', 'min-height', 'width', 'height', 'id', 'title', 
-			'screen', 'parentView', 'transparent', 'minimized'
+			'screen', 'parentView', 'transparent', 'minimized', 'dialog', 
+			'standard-dialog', 'sidebarManaged'
 		];
 
 		if( !flags.screen )
@@ -2341,6 +2702,11 @@ var View = function( args )
 			viewContainer.className = 'ViewContainer';
 			viewContainer.style.display = 'none';
 			
+			// Set up view title
+			let viewTitle = document.createElement( 'div' );
+			viewTitle.className = 'ViewTitle';
+			viewContainer.appendChild( viewTitle );
+			
 			// Get icon for visualizations
 			if( applicationId )
 			{
@@ -2421,6 +2787,7 @@ var View = function( args )
 			if( div == 'CREATE' )
 			{	
 				div = document.createElement( 'div' );
+				
 				if( applicationId ) div.applicationId = applicationId;
 				div.parentWindow = false;
 				if( parentWindow )
@@ -2442,6 +2809,8 @@ var View = function( args )
 					divParent = document.body;
 				}
 			}
+			
+			div.viewTitle = viewTitle;
 			
 			// Designate
 			movableWindows[ id ] = div;
@@ -2501,6 +2870,19 @@ var View = function( args )
 		if( isMobile )
 			Workspace.exitMobileMenu();
 
+        // Set placeholder quickmenu
+        div.quickMenu = {
+            uniqueName: 'placeholder_' + ( div.id ? div.id : MD5( Math.random() * 1000 + ( Math.random() * 1000 ) + '' ) ),
+            0: {
+                name: i18n( 'i18n_close' ),
+                icon: 'remove',
+                command: function()
+                {
+                	div.windowObject.close();
+                }
+            }
+        };
+
 		// Check to set mainview
 		if( window._getAppByAppId )
 		{
@@ -2516,8 +2898,8 @@ var View = function( args )
 			}
 		}
 
-		// Tell it's opening
-		if( !flags.minimized )
+		// Tell it's opening (not minimized or invisible ones)
+		if( !flags.minimized && !flags.invisible )
 		{
 			// Allow initialized
 			if( window.currentMovable )
@@ -2748,7 +3130,13 @@ var View = function( args )
 			}
 
 			// Pawel must win!
-			title.ondblclick = function( e )
+			let method = 'ondblclick';
+			if( document.body.classList.contains( 'ThemeEngine' ) )
+			{
+			    method = 'onclick';
+			    title.style.cursor = 'pointer';
+			}
+			title[ method ] = function( e )
 			{
 				if( self.flags.clickableTitle )
 				{
@@ -3746,7 +4134,7 @@ var View = function( args )
 				}
 			}
 		}
-
+		
 		// Add div to view container
 		viewContainer.appendChild( div );
 		div.viewContainer = viewContainer;
@@ -3780,7 +4168,7 @@ var View = function( args )
 		let inGroup = false;
 		if( self.flags.viewGroup )
 		{
-			for( var a in movableWindows )
+			for( let a in movableWindows )
 			{
 				let w = movableWindows[ a ].windowObject;
 				if( w.viewId == self.flags.viewGroup.view )
@@ -3804,7 +4192,7 @@ var View = function( args )
 								if( e.button != 0 ) return;
 								
 								_WindowToFront( div );
-								for( var b = 0; b < divParent.tabs.childNodes.length; b++ )
+								for( let b = 0; b < divParent.tabs.childNodes.length; b++ )
 								{
 									if( tab == divParent.tabs.childNodes[ b ] )
 									{
@@ -3825,7 +4213,16 @@ var View = function( args )
 		}
 		
 		// Append view window to parent
-		divParent.appendChild( viewContainer );
+		if( flags.liveView && Workspace.dashboard && Workspace.dashboard.liveViews )
+		{
+		    Workspace.dashboard.liveViews.appendChild( viewContainer );
+		}
+		else if( flags.dockable && ge( 'DockableWindowContainer' ) )
+			ge( 'DockableWindowContainer' ).appendChild( viewContainer );
+		else
+		{
+		    divParent.appendChild( viewContainer );
+		}
 		
 		if( inGroup )
 		{
@@ -4066,7 +4463,7 @@ var View = function( args )
 		self.parseFlags( flags );
 		
 		// Only activate if needed
-		if( !flags.minimized && !flags.openSilent )
+		if( !flags.minimized && !flags.openSilent && !flags.invisible )
 		{
 			_ActivateWindow( div );
 			_WindowToFront( div );
@@ -4085,6 +4482,13 @@ var View = function( args )
 		if( !flags.minimized && Workspace.calendarWidget )
 			Workspace.calendarWidget.hide();
 		
+		if( Workspace.dashboard && typeof( hideDashboard ) != 'undefined' )
+		{
+			if( !self.flags.dialog )
+			{
+			    hideDashboard();
+			}
+		}
 	}
 
 	// Send window to different workspace
@@ -4120,7 +4524,7 @@ var View = function( args )
 	// Set content on window
 	this.setContent = function( content, cbk )
 	{
-		// Safe content without any scripts or styles!
+	    // Safe content without any scripts or styles!
 		SetWindowContent( this._window, this.cleanHTMLData( content ) );
 		if( cbk ) cbk();
 	}
@@ -5019,6 +5423,40 @@ var View = function( args )
 				this.setMainView( value );
 				this.flags.mainView = value;
 				break;
+			// Standard dialog has preset width and height
+			case 'standard-dialog':
+			// Dialog is treated only like a dialog
+				if( viewdiv.parentNode )
+				{
+					if( value )
+				    {
+				        viewdiv.parentNode.classList.add( 'StandardDialog' );
+				    }
+				    else
+				    {
+				        viewdiv.parentNode.classList.remove( 'StandardDialog' );
+				    }
+				}
+		        this.flags[ 'standard-dialog' ] = value;
+			case 'dialog':
+				this.flags[ 'dialog' ] = value;
+			    if( viewdiv )
+			    {
+			        if( value )
+			        {
+			            viewdiv.parentNode.classList.add( 'Dialog' );
+			            if( flag == 'dialog' )
+			            {
+					        viewdiv.style.left = 'calc(50% - ' + ( viewdiv.offsetWidth >> 1 ) + 'px)';
+					        viewdiv.style.top = 'calc(50% - ' + ( viewdiv.offsetHeight >> 1 ) + 'px)';
+					    }
+			        }
+			        else
+			        {
+			            viewdiv.parentNode.classList.remove( 'Dialog' );
+			        }
+			    }
+			    break;
 			case 'clickableTitle':
 				this.flags.clickableTitle = value;
 				break;
@@ -5166,12 +5604,33 @@ var View = function( args )
 						viewdiv.viewContainer.style.visibility = '';
 						viewdiv.viewContainer.style.pointerEvents = '';
 					}
+					if( flag == 'invisible' )
+					{
+					    if( value == true || value == 'true' )
+					    {
+					        viewdiv.viewContainer.classList.add( 'Invisible' );
+					    }
+					    else
+					    {
+					        viewdiv.viewContainer.classList.remove( 'Invisible' );
+					    }
+					}
 					ResizeWindow( viewdiv );
 					RefreshWindow( viewdiv );
 				}
 				this.flags[ flag ] = value;
 				PollTaskbar();
 				break;
+			case 'liveView':
+			    if( value == true || value == 'true' )
+			    {
+			        viewdiv.viewContainer.classList.add( 'Liveview' );
+			    }
+			    else
+			    {
+			        viewdiv.viewContainer.classList.remove( 'Liveview' );
+			    }
+			    break;
 			case 'screen':
 				this.flags.screen = value;
 				break;
@@ -5223,6 +5682,15 @@ var View = function( args )
 				// Check window color
 				this.flags[ flag ] = value;
 				break;
+			case 'sidebarManaged':
+				if( viewdiv && viewdiv.parentNode )
+				{
+					if( value == 'true' || value == true )
+					    viewdiv.parentNode.classList.add( 'SidebarManaged' );
+					else viewdiv.parentNode.classList.remove( 'SidebarManaged' );
+				}
+    			this.flags[ flag ] = value;
+			    break;
 			// Takes all flags
 			default:
 				this.flags[ flag ] = value;
@@ -5232,13 +5700,17 @@ var View = function( args )
 		// Some values are not set on application
 		if( flag == 'screen' ) return;
 
+		// Support dashboard
+		if( window.Workspace && Workspace.dashboard && Workspace.dashboard !== true )
+			Workspace.dashboard.refresh();
+		
 		// Finally set the value on application
 
 		// Notify window if possible
 		// TODO: Real value after its evaluated
 		if( !Workspace.applications )
 			return;
-		for( var a = 0; a < Workspace.applications.length; a++ )
+		for( let a = 0; a < Workspace.applications.length; a++ )
 		{
 			let app = Workspace.applications[a];
 			if( app.applicationId == viewdiv.applicationId )
@@ -5966,7 +6438,8 @@ function Ac2Alert ( msg, title )
 	let v = new View( {
 		'title'  : !title ? i18n('Alert') : title,
 		'width'  : 400,
-		'height' : 120
+		'height' : 120,
+		'standard-dialog': true
 	} );
 	v.setSticky();
 	v.setContent( '<div class="Dialog Box ContentFull">' + msg + '</div>' );
@@ -6062,7 +6535,10 @@ function _kresize( e, depth )
 			Workspace.screenList[a].resized = true;
 			Workspace.screenList[a].resize();
 		}
-		Workspace.initWorkspaces();
+		if( globalConfig.workspacecount > 1 )
+		{
+			Workspace.initWorkspaces();
+		}
 		Workspace.checkWorkspaceWallpapers();
 	}
 	
@@ -6103,14 +6579,15 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 	let curr = window.currentMovable;
 
 	let v;
-	if( !window.isMobile )
+	if( !window.isMobile || Workspace.dashboard )
 	{
 		v = new View( {
 			title: title,
 			width: 400,
 			resize: false,
 			height: d.offsetHeight + 75,
-			id: 'confirm_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
+			id: 'confirm_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random(),
+			'standard-dialog': true
 		} );
 	}
 	else
@@ -6135,7 +6612,7 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 	d.parentNode.removeChild( d );
 
 	let f = new File( 'System:templates/confirm.html' );
-	
+	f.type = 'confirm';
 	let thirdbutton = '';
 	/* check for third button values */
 	if( extrabuttontext && extrabuttonreturn )
@@ -6236,14 +6713,15 @@ function Alert( title, string, cancelstring, callback )
 	let themeBottom = GetThemeInfo( 'ViewBottom' ).height;
 	
 	let v;
-	if( !window.isMobile )
+	if( !window.isMobile || Workspace.dashboard )
 	{
 		v = new View( {
 			title: title,
 			width: 400,
 			resize: false,
 			height: minContentHeight + parseInt( themeTitle ) + parseInt( themeBottom ),
-			id: 'alert_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
+			id: 'alert_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random(),
+			'standard-dialog': true
 		} );
 	}
 	else

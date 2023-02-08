@@ -29,7 +29,9 @@ Door.prototype.getPath = function()
 	}
 	if( this.path.indexOf( ':' ) > 0 )
 		return this.path;
-	return this.deviceName + ':' + this.path;
+	const path = this.deviceName + ':' + this.path;
+	//console.log( 'getPath', [ this.path, this.deviceName, path ]);
+	return path;
 }
 
 // Stop all network activity!
@@ -236,13 +238,13 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 			
 			// Use standard Friend Core doors
 			let j = new cAjax();
+			j.type = t.type ? t.type : 'dos';
 			if( t.cancelId )
 				j.cancelId = t.cancelId;
 			if( t.context ) j.context = t.context;
 
 			//changed from post to get to get more speed.
 			j.open( 'POST', updateurl, true, true );
-			
 			j.onload = function( e, d )
 			{
 				if( e )
@@ -252,8 +254,8 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 						// Try to remount
 						if( e == 'fail' && d && ( !flags || ( flags && flags.retry ) ) )
 						{
-							let j = d.indexOf( '{' ) > 0 ? JSON.parse( d ) : {};
-							if( j.response && j.response == 'device not mounted' )
+							let u = d.indexOf( '{' ) > 0 ? JSON.parse( d ) : {};
+							if( u.response && u.response == 'device not mounted' )
 							{
 								return t.Mount( function()
 								{
@@ -290,7 +292,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 						}
 					}
 					
-					let list = d.indexOf( '{' ) && parsed ? parsed : {};
+					let list = d.indexOf( '[' ) >= 0 && parsed ? parsed : [];
 					
 					if( typeof( list ) == 'object' && list.length )
 					{
@@ -308,34 +310,48 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 						}
 						if( sharedCheck.length )
 						{
-							let ch = new Library( 'system' );
-							ch.onExecuted = function( che, chd )
+							// No dashboard
+							if( !( window.Workspace && Workspace.dashboard ) )
 							{
-								if( che == 'ok' )
+								let ch = new Library( 'system' );
+								ch.onExecuted = function( che, chd )
 								{
-									try
+									if( che == 'ok' )
 									{
-										chd = JSON.parse( chd );
-										for( let z = 0; z < list.length; z++ )
+										try
 										{
-											for( let c = 0; c < chd.length; c++ )
+											chd = JSON.parse( chd );
+											for( let z = 0; z < list.length; z++ )
 											{
-												if( chd[c] == list[z].Path )
+												for( let c = 0; c < chd.length; c++ )
 												{
-													list[ z ].SharedFile = true;
-													break;
+													if( chd[c] == list[z].Path )
+													{
+														list[ z ].SharedFile = true;
+														break;
+													}
 												}
 											}
 										}
+										catch( e )
+										{
+										}
 									}
-									catch( e )
-									{
-									};
+									let pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
+									callback( list, t.fileInfo.Path, pth );
+								}
+								ch.execute( 'file/checksharedpaths', { paths: sharedCheck, path: deviceName } );
+							}
+							// In dashboard mode, we don't have shared file
+							else
+							{
+								for( let z = 0; z < list.length; z++ )
+								{
+									list[ z ].SharedFile = false;
 								}
 								let pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
 								callback( list, t.fileInfo.Path, pth );
 							}
-							ch.execute( 'file/checksharedpaths', { paths: sharedCheck, path: deviceName } );
 						}
 						else
 						{
@@ -492,6 +508,7 @@ Door.prototype.write = function( filename, data, mode, extraData )
 	}
 	
 	let j = new cAjax();
+	j.type = dr.type ? dr.type : 'dos';
 	if( this.context ) j.context = this.context;
 	if( this.cancelId )
 		jax.cancelId = this.cancelId;
@@ -553,11 +570,11 @@ Door.prototype.read = function( filename, mode, extraData )
 		} );
 	}
 	let j = new cAjax();
+	j.type = this.type ? this.type : 'dos';
 	if( this.context ) j.context = this.context;
 	if( this.cancelId )
 		j.cancelId = this.cancelId;
-	if( mode == 'rb' )
-		j.forceHTTP = true;
+	j.forceHTTP = true;
 	j.open( 'post', '/system.library/file/read', true, true );
 	if( Workspace.conf && Workspace.conf.authId )
 		j.addVar( 'authid', Workspace.conf.authId );
@@ -693,9 +710,13 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 
 	// Do the request
 	let j = new cAjax();
+	j.type = this.type ? this.type : 'dos';
 	if( this.cancelId )
 		j.cancelId = this.cancelId;
 	if( this.context ) j.context = this.context;
+	j.forceHTTP = true;
+	//if( func.indexOf( 'copy' ) > 0 )
+    //	console.log( 'DOSAction trying: ' + '/system.library/' + func, args );
 	j.open( 'post', '/system.library/' + func, true, true );
 	if( Workspace.conf && Workspace.conf.authId )
 		j.addVar( 'authid', Workspace.conf.authId );
@@ -724,6 +745,7 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 			if( s && s[0] != 'ok' )
 			{
 				doAlert();
+				console.log( 'Failed: ' + this.responseText() );
 			}
 		}
 		if( callback ) callback( this.responseText(), dr );

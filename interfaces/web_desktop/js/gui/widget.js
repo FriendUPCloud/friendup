@@ -116,7 +116,7 @@ Widget.prototype.calcPosition = function()
 		{
 			this.dom.style.left = ( target.offsetWidth >> 1 ) - ( this.tw >> 1 ) + 'px';
 		}
-		else if( this.tx.substr && this.tx.substr( -1, 1 ) == '%' )
+		else if( this.tx && this.tx.substr && this.tx.substr( -1, 1 ) == '%' )
 		{
 			var pct = window.innerWidth / 100 * parseInt( this.tx );
 			this.dom.style.left = pct + 'px';
@@ -125,8 +125,8 @@ Widget.prototype.calcPosition = function()
 	else
 	{
 		// 
-		if( this.tx + this.tw > this.target.offsetWidth )
-			this.tx = this.target.offsetWidth - this.tw;
+		if( this.tx + this.tw > ( this.target.offsetWidth + this.target.offsetLeft ) )
+			this.tx = ( this.target.offsetWidth + this.target.offsetLeft ) - this.tw;
 		else if( this.tx < 0 ) this.tx = 0;
 		//
 		var px = this.tx - this.target.offsetLeft;
@@ -150,7 +150,7 @@ Widget.prototype.calcPosition = function()
 		{
 			this.dom.style.top = ( target.offsetHeight >> 1 ) - ( this.th >> 1 ) + 'px';
 		}
-		else if( this.ty.substr && this.ty.substr( -1, 1 ) == '%' )
+		else if( this.ty && this.ty.substr && this.ty.substr( -1, 1 ) == '%' )
 		{
 			var pct = window.innerHeight / 100 * parseInt( this.ty );
 			this.dom.style.top = pct + 'px';

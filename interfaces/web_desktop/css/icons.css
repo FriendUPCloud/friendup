@@ -4,6 +4,66 @@
 
 */
 
+.ToggleGroup .VolumeInfo 
+{
+    display: inline-block;
+    font-size: 80%;
+    white-space: nowrap;
+}
+
+.ToggleGroup .VolumeInfo > * 
+{
+    display: inline-block;
+    vertical-align: top;
+    position: relative;
+    top: -2px;
+    left: -18px;
+}
+
+.ToggleGroup .VolumeInfo > .SizeLabel 
+{
+    margin: 0 5px 0 0;
+}
+
+.ToggleGroup .VolumeInfo > .SizeGroove 
+{
+    background-color: rgba(0,0,0,0.07);
+    position: relative;
+    width: 180px;
+    height: 17px;
+}
+
+.ToggleGroup .VolumeInfo > .SizeGroove .SizeBar
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 17px;
+    background-color: var(--fui-color-aqua);
+    z-index: 1;
+}
+
+.ToggleGroup .VolumeInfo > .SizeGroove .SizeBar.AlmostFull
+{
+	background-color: var(--fui-color-amaranth);
+}
+
+.ToggleGroup .VolumeInfo .SizeText 
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 3;
+    text-align: center;
+    height: 100%;
+}
+
+.ToggleGroup .VolumeInfo > .SizeGroove .SizeBar.AlmostFull + .SizeText
+{
+	color: white;
+}
+
 .IconWindow .Content > .FileBrowserContainer + .Listview,
 .IconWindow .Content > .FileBrowserContainer + .Scroller
 {
@@ -140,7 +200,7 @@
 {
 	content: " ";
 	display: inline-block;
-	vertical-align: middle;
+	vertical-align: text-bottom;
 	width: 16px;
 	height: 16px;
 	background-image: url(/iconthemes/friendup15/Folder.svg);
@@ -178,6 +238,25 @@ Just so that we can keep the outputted HTML smaller by using CSS classes :)
 {
 	color: #202020;
 	/*text-shadow: 0 1px 0 #000;*/
+}
+
+.Coldom > .File div, 
+.Row.File div
+{
+	pointer-events: none;
+}
+
+.Coldom > .File div.Icon:before,
+.Row.File div.Icon:before
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	top: -10px;
+    left: -10px;
+    width: calc(100% + 16px);
+    height: calc(100% + 16px);
+	background: transparent;
 }
 
 #Doors .File a

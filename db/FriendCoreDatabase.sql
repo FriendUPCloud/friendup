@@ -279,6 +279,21 @@ CREATE TABLE IF NOT EXISTS `FSFile` (
   PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
+--
+-- Table structure for table `FSFileLog`
+--
+
+CREATE TABLE IF NOT EXISTS `FSFileLog` (
+  `ID` bigint(20) NOT NULL AUTO_INCREMENT,
+  `FilesystemID` bigint(20) NOT NULL,
+  `FileID` bigint(20) NOT NULL,
+  `Path` varchar(512) DEFAULT NULL,
+  `UserID` bigint(20) NOT NULL,
+  `AccessMode` int DEFAULT '0',
+  `Accessed` datetime DEFAULT NULL,
+  PRIMARY KEY (`ID`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
 -- --------------------------------------------------------
 
 --
@@ -370,8 +385,10 @@ CREATE TABLE IF NOT EXISTS `FUserGroup` (
 --
 
 CREATE TABLE IF NOT EXISTS `FUserToGroup` (
+  `ID` bigint(32) NOT NULL AUTO_INCREMENT,
   `UserID` bigint(20) NOT NULL,
-  `UserGroupID` bigint(20) NOT NULL
+  `UserGroupID` bigint(20) NOT NULL,
+  PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
@@ -462,7 +479,7 @@ INSERT INTO `FUserToGroup` (`UserID`,`UserGroupID`) VALUES ( 2,2 );
   `Type` bigint(2) NOT NULL,
   `Time` bigint(32) NOT NULL,
   PRIMARY KEY (`ID`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- 2017-03-06 -- on the end we will not use alter, but since we dont have version mechanism Im adding that here - stefkos
 ALTER TABLE `Filesystem` ADD `Execute` VARCHAR( 512 );
@@ -499,11 +516,12 @@ ALTER TABLE `Filesystem` ADD `Execute` VARCHAR( 512 );
   PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
-CREATE TABLE `FQueuedEvent` (
+CREATE TABLE IF NOT EXISTS `FQueuedEvent` (
   `ID` bigint(20) NOT NULL AUTO_INCREMENT,
   `UserID` bigint(20) DEFAULT 0,
-  `TargetUserID` bigint(20) DEFAULT 0,
   `TargetGroupID` bigint(20) DEFAULT 0,
+  `TargetUserID` bigint(20) DEFAULT 0,
+  `InviteLinkID` bigint(20) DEFAULT 0,
   `Type` varchar(255) NOT NULL,
   `Date` datetime,
   `Status` varchar(255) NOT NULL DEFAULT '',

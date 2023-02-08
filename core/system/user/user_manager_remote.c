@@ -68,7 +68,7 @@ int UMAddGlobalRemoteUser( UserManager *um, const char *name, const char *sessid
 		
 		Socket *newsock;
 		
-		newsock = SocketConnectHost( service->s_SB, service->s_secured, actUsr->ru_Host, service->s_port );
+		newsock = SocketConnectHost( service->s_SB, service->s_secured, actUsr->ru_Host, service->s_port, TRUE );
 		if( newsock != NULL )
 		{
 			FConnection *con = CommServiceAddConnection( service, newsock, NULL, actUsr->ru_Host, NULL, SERVER_CONNECTION_OUTGOING, 0 );
@@ -195,7 +195,7 @@ int UMAddGlobalRemoteDrive( UserManager *um, const char *locuname, const char *u
 			
 			Socket *newsock;
 			
-			newsock = SocketConnectHost( service->s_SB, service->s_secured, actUsr->ru_Host, service->s_port );
+			newsock = SocketConnectHost( service->s_SB, service->s_secured, actUsr->ru_Host, service->s_port, TRUE );
 			if( newsock != NULL )
 			{
 				con = CommServiceAddConnection( service, newsock, NULL, actUsr->ru_Host, NULL, SERVER_CONNECTION_OUTGOING, 0 );

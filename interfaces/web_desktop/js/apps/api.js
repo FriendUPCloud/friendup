@@ -55,6 +55,7 @@ Friend.application = {
 	{
 		document.body.classList.remove( 'Loading' );
 		document.body.classList.add( 'activated' );
+		document.body.classList.add( 'application' );
 		setTimeout( function()
 		{
 			document.body.style.willChange = 'opacity';
@@ -854,7 +855,7 @@ function receiveEvent( event, queued )
 	{
 		dataPacket = event.data;
 	}
-
+	
 	if( !dataPacket.command )
 	{
 		Application.receiveMessage( dataPacket );
@@ -887,6 +888,12 @@ function receiveEvent( event, queued )
 		if( !__queuedEventInterval )
 			__queuedEventInterval = setInterval( queuedEventTimer, __timeout );
 		return;
+	}
+	
+	// Register context for window calls
+	if( dataPacket.context )
+	{
+		window.windowContext = dataPacket.context;
 	}
 	
 	switch( dataPacket.command )
@@ -1000,11 +1007,13 @@ function receiveEvent( event, queued )
 			}, 250 );
 			break;
 		// Blur all elements!
+		// TODO: Did not work
 		case 'blur':
 		{
-			let elems = document.getElementsByTagName( '*' );
+			/*let elems = document.getElementsByTagName( '*' );
 			for( let a = 0; a < elems.length; a++ )
 				elems[a].blur();
+			Notify( { title: 'Blur 2', text: 'blurrrr.' } );*/
 			break;
 		}
 		// Executing an event that is coming in
@@ -1126,24 +1135,6 @@ function receiveEvent( event, queued )
 <div id="Application"></div>
 <script type="text/javascript">
 	Friend.Tree.loadJSON( "${flags.frameworks.tree.data}", '${treeProperties}' );
-</script>` 
-										);
-									}
-									f.load();
-								}
-								break;
-							case 'fui':
-								if( flags.frameworks.fui.javascript && flags.frameworks.fui.data )
-								{
-									let f = new File( 'System:sandboxed.html' );
-									f.onLoad = function( data )
-									{
-										let javascript = flags.frameworks.fui.javascript;
-										view.setContent( 
-`<script src="/webclient/js/fui/fui.js"></script>
-<script src="${javascript}"></script>
-<script type="text/javascript">
-	fui.loadJSON( "${flags.frameworks.fui.data}" );
 </script>` 
 										);
 									}
@@ -1435,6 +1426,7 @@ function receiveEvent( event, queued )
 			Application.fullName      = dataPacket.fullName;
 			Application.username      = dataPacket.username;
 			Application.workspaceMode = dataPacket.workspaceMode;
+			Application.serverConfig  = dataPacket.serverConfig;
 			Application.applicationName = dataPacket.applicationName;
 			Application.sendMessage   = setupMessageFunction( dataPacket, window.origin );
 			
@@ -2312,7 +2304,8 @@ function View( flags )
 	let msg = {
 		type:    'view',
 		data:    flags,
-		viewId: viewId
+		viewId: viewId,
+		context: window.windowContext
 	};
 	
 	if( Application.viewId )
@@ -2352,6 +2345,9 @@ function View( flags )
 			viewId: viewId,
 			data:    flags
 		} );
+		
+		// Handle flag actions
+		this._checkFlagActions( flags );
 	}
 	// Get flag
 	this.getFlag = function( flag )
@@ -2367,6 +2363,65 @@ function View( flags )
 			viewId: viewId,
 			data:    { flag: flag, value: value }
 		} );
+	
+	    // Handle flag actions	
+	    this._checkFlagActions( [ { flag: flag, value: value } ] );
+	}
+	// Checks flag actions
+	this._checkFlagActions = function( flags )
+	{
+	    let self = this;
+	    
+	    // Check all flags
+	    for( let a in flags )
+	    {
+	        let fl = flags[ a ];
+	        if( a == 'assets' && fl && fl.length )
+	        {
+	            let templateStr = '';
+        	    let templateSrc = false;
+        	    
+	            // Check for markup to add as template source
+	            for( let b = 0; b < fl.length; b++ )
+	            {
+	                let val = fl[ b ];
+	                let templateTest = (
+	                    val.substr( -5, 5 ).toLowerCase() == '.html' ||
+	                    val.substr( -4, 4 ).toLowerCase() == '.htm'
+	                );
+	                if( templateTest ) 
+	                {
+	                    templateSrc = val;
+	                    continue;
+	                }
+	                // Add scripts to template string
+	                if( val.substr( -3, 3 ).toLowerCase() == '.js' )
+	                {
+	                    templateStr += "\n" + '<script src="' + getWebUrl( val ) + '"></script>';
+	                }
+	                // Add css to template string
+	                if( val.substr( -4, 4 ).toLowerCase() == '.css' )
+	                {
+	                    templateStr += "\n" + '<link rel="stylesheet" href="' + getWebUrl( val ) + '"/>';
+	                }
+	            }
+	            // With a template source, load that before setting content
+	            if( templateSrc )
+                {
+                    let f = new File( templateSrc );
+                    f.onLoad = function( data )
+                    {
+                        self.setContent( data + templateStr );
+                    }
+                    f.load();
+                }
+                // Just set content
+                else
+                {
+                    this.setContent( templateStr );
+                }
+	        }
+	    }
 	}
 	this.getWindowElement = function( callback )
 	{
@@ -2618,6 +2673,30 @@ function View( flags )
 		} );
 	}
 
+    // Set quickmenu (displays where supported)
+    this.setQuickMenu = function( object )
+    {
+        // Recursive translator
+		function applyi18n( object )
+		{
+			for( let a = 0; a < object.length; a++ )
+			{
+				object[a].name = i18n( object[a].name );
+				if( object[a].items && typeof( object[a].items ) == 'array' )
+					object[a].items = applyi18n( object[a].items );
+			}
+			return object;
+		}
+		
+		object = applyi18n( object );
+		Application.sendMessage( {
+		    type:   'view',
+		    method: 'setQuickMenu',
+		    viewId: viewId,
+		    data:   object
+		} );
+    }
+
 	// Sets the menu item on view element
 	this.setMenuItems = function( object )
 	{
@@ -2637,10 +2716,10 @@ function View( flags )
 		object = applyi18n( object );
 
 		Application.sendMessage( {
-			type:     'view',
-			method:   'setMenuItems',
+			type:   'view',
+			method: 'setMenuItems',
 			viewId: viewId,
-			data:     object
+			data:   object
 		} );
 	}
 
@@ -2659,6 +2738,13 @@ function View( flags )
 		if( this.onClose )
 		{
 			this.onClose();
+		}
+		
+		// Quit on close
+		let quitOnClose = this.getFlag( 'quitOnClose' );
+		if( quitOnClose )
+		{
+		    Application.quit();
 		}
 
 		if( this.preventClosing ) return;
@@ -2698,6 +2784,8 @@ function View( flags )
 	// Setup view object with master
 	Application.sendMessage( msg );
 	Application.windows[ viewId ] = this;
+	
+	this._checkFlagActions( this._flags ); // Things we need immediately
 
 	// Just activate this window (unless it starts minimized)
 	if( !flags.minimized )
@@ -3610,6 +3698,12 @@ function AudioObject( sample, callback )
 
 function getImageUrl( path, mode )
 {
+	// Path is already fixed
+	if( path.indexOf( '?' ) > 0 )
+	{
+		return path;
+	}
+	
 	if( !mode ) mode = 'rs';
 	
 	// TODO: Determine from Doors!
@@ -3636,10 +3730,11 @@ function getImageUrl( path, mode )
 	{
 		path = encodeURIComponent( path );
 	}
+	
 
 	let prt = 'authid=' + ( Application.authId ? Application.authId : '' );
 	if( Application.sessionId ) prt = 'sessionid=' + Application.sessionId;
-	let u = '/system.library/file/read?' + prt + '&path=' + path + '&mode=rs';
+	let u = '/system.library/file/read?' + prt + '&path=' + path + '&mode=' + mode;
 	return u;
 }
 // Alias
@@ -6369,6 +6464,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					window.loaded = true;
 					// Use the application doneLoading function (different)
 					Friend.application.doneLoading();
+					
+					// Initialize FUI
+					FUI.initialize();
 				}
 			}
 		}
@@ -6416,9 +6514,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		'js/io/cajax.js',
 		'js/io/appConnection.js',
 		'js/io/coreSocket.js',
-		'js/gui/treeview.js'
+		'js/gui/treeview.js',
+		'js/fui/fui_v1.js',
+		'js/fui/classes/baseclasses.fui.js',
+		'js/fui/classes/group.fui.js',
+		'js/fui/classes/listview.fui.js'
 	];
-	
 	let elez = [];
 	for ( let a = 0; a < js.length; a++ )
 	{
@@ -6466,7 +6567,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					'js/io/cajax.js',
 					'js/io/appConnection.js',
 					'js/io/coreSocket.js',
-					'js/gui/treeview.js'
+					'js/gui/treeview.js',
+					'js/fui/fui_v1.js',
+					'js/fui/classes/baseclasses.fui.js',
+					'js/fui/classes/group.fui.js',
+					'js/fui/classes/listview.fui.js'
 				]
 			];
 
@@ -6523,7 +6628,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	else if( packet.cachedAppData && packet.cachedAppData.js )
 	{
 		let style = document.createElement( 'style' );
-		style.innerHTML = packet.cachedAppData.css;
+		style.type = 'text/css';
+		if( style.styleSheet )
+			style.styleSheet.cssText = packet.cachedAppData.css;
+		else style.appendChild( document.createTextNode( packet.cachedAppData.css ) );
 		head.appendChild( style );
 		
 		let js = document.createElement( 'script' );
@@ -6850,7 +6958,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 		Application.sendMessage( { type: 'system', command: 'registermousedown', x: e.clientX, y: e.clientY } );
 		
 		// Check if an input element has focus
-		Friend.GUI.checkInputFocus();
+		Friend.GUI.checkInputFocus( e );
 	}
 	function _kmouseup( e )
 	{
@@ -6862,7 +6970,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 		// Check if an input element has focus
 		setTimeout( function()
 		{
-			Friend.GUI.checkInputFocus();
+			Friend.GUI.checkInputFocus( e );
 		}, 250 );
 	}
 	
@@ -6870,7 +6978,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 	function _kresponse( e )
 	{	
 		// Check if an input element has focus
-		Friend.GUI.checkInputFocus();
+		Friend.GUI.checkInputFocus( e );
 		
 		// Let's report to Workspace what we're doing - to catch global keyboard shortcuts
 		let params = [ 'shiftKey', 'ctrlKey', 'metaKey', 'altKey', 'which', 'keyCode' ];
@@ -7056,10 +7164,10 @@ function Confirm( title, string, callb, confirmOKText, confirmCancelText, thirdB
 function Alert( title, string, callback )
 {
 	Application.sendMessage( {
-		type: 'system',
-		command: 'alert',
-		title: title,
-		string: string
+		type    : 'system',
+		command : 'alert',
+		title   : title,
+		string  : string
 	} );
 }
 
@@ -7068,10 +7176,10 @@ function Alert( title, string, callback )
 function ShowContextMenu( header, menu )
 {
 	Application.sendMessage( {
-		type: 'system',
-		header: header,
-		command: 'showcontextmenu',
-		menu: menu
+		type    : 'system',
+		header  : header,
+		command : 'showcontextmenu',
+		menu    : menu
 	} );
 }
 
@@ -9079,7 +9187,7 @@ if( Friend )
 }
 
 // Check if Friend has focus on input field
-Friend.GUI.checkInputFocus = function()
+Friend.GUI.checkInputFocus = function( e )
 {
 	let focused = document.activeElement;
 	if( !focused || focused == document.body )
@@ -9108,6 +9216,15 @@ Friend.GUI.checkInputFocus = function()
 			state: 'input-focus',
 			value: response
 		} );
+	}
+	if( focused && response == false )
+	{
+		focused.blur();
+	}
+	// Remain focus
+	else if( focused )
+	{
+		focused.focus();
 	}
 }
 

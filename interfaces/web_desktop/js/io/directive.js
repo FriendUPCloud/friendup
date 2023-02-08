@@ -36,9 +36,33 @@ function RemoveFromExecutionQueue( app )
 	}
 }
 
+// Check if we can quit an app
+function canQuitApp( appName )
+{
+    for( let a = 0; a < Workspace.noQuitList.length; a++ )
+    {
+        if( Workspace.noQuitList[ a ] == appName )
+        {
+            console.log( 'Can not quit this app' );
+            return false;
+        }
+    }
+    console.log( 'We can quit ' + appName, Workspace.noQuitList );
+    return true;
+}
+
 // Load a javascript application into a sandbox
 function ExecuteApplication( app, args, callback, retries, flags )
 {
+	//console.log( 'ExecuteApplication', [ app, args, callback, retries, flags ])
+    // Do not do this if we have nothing
+    if( !document.body || ( !document.body.getAttribute( 'sharedapp' ) && ( document.body && !document.body.classList.contains( 'Loaded' ) ) ) )
+    {
+        return setTimeout( function()
+        {
+            ExecuteApplication( app, args, callback, retries, flags );
+        }, 50 );
+    }
 	/*console.log( 'ExecuteApplication', [
 		app,
 		args,
@@ -47,8 +71,9 @@ function ExecuteApplication( app, args, callback, retries, flags )
 		flags,
 	]);*/
 	// Just nothing.
-	if( !app ) {
-		console.log( 'just nothing things', app );
+	if( !app )
+	{
+		//console.log( 'just nothing things', app );
 		return;
 	}
 	
@@ -57,13 +82,17 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	{
 		//console.log( 'ExecuteApplication - retries', retries );
 		if( retries == 3 ) 
-			return console.log( 'Could not execute app: ' + app );
+		{
+			//return console.log( 'Could not execute app: ' + app );
+			return;
+		}
 		loadApplicationBasics( function()
 		{
 			ExecuteApplication( app, args, callback, !retries ? 3 : retries++, flags );
 		} );
 	}
-	var appName = app;
+	
+	let appName = app;
 	if( app.indexOf( ':' ) > 0 )
 	{
 		if( app.indexOf( '/' ) > 0 )
@@ -75,6 +104,12 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	if( !flags ) flags = {};
 	if( flags.openSilent !== true )
     	flags.openSilent = false;
+	
+	// Don't allow quitting of this one
+	if( flags.noquit )
+	{
+	    Workspace.noQuitList.push( appName );
+	}
 	
 	if( args )
 	{
@@ -498,10 +533,14 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			ifr.authId = conf.AuthID;
 			ifr.applicationNumber = _appNum++;
 			ifr.permissions = conf.Permissions;
+			ifr.context = flags.context ? flags.context : '';
 
 			// Quit the application
 			ifr.quit = function( level )
 			{
+			    // Look if we are allowed to quit
+			    if( !canQuitApp( this.applicationName ) ) return;
+			    
 				// Clean blocker
 				RemoveFromExecutionQueue( appName );
 				
@@ -586,6 +625,24 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					this.parentNode.removeChild( this );
 					Workspace.applications = out;
 					Workspace.updateTasks();
+					
+					// If we have a view context
+					if( flags.context )
+					{
+						let id = flags.context;
+						for( let z in movableWindows )
+						{
+							if( movableWindows[ z ].windowObject && movableWindows[ z ].windowObject.getViewId() == id )
+							{
+								currentMovable = movableWindows[ z ];
+								_ActivateWindow( movableWindows[ z ] );
+								break;
+							}
+						}
+					}
+					// If we have a dashboard
+					else if( window.showDashboard )
+					    showDashboard();
 				}
 				// Tell the application to clean up first
 				else
@@ -670,7 +727,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					oargs = args;
 				}
 
-				var o = {
+				let o = {
 					command: 'register',
 					applicationId: ifr.applicationId,
 					applicationName: ifr.applicationName,
@@ -681,6 +738,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					username: ifr.username,
 					authId: ifr.authId,
 					args: oargs,
+					serverConfig : Workspace.serverConfig,
 					workspace: workspace,
 					friendApp : fApp,
 					dosDrivers: Friend.dosDrivers,
@@ -691,9 +749,19 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					domain:   sdomain,
 					registerCallback: cid,
 					clipboard: Friend.clipboard,
-					cachedAppData: _applicationBasics
+					cachedAppData: _applicationBasics,
+					context: flags.context ? flags.context : null
 				};
 				if( conf.State ) o.state = conf.State;
+
+                if( _applicationBasics.css && _applicationBasics.css.length > 0 )
+                {
+				    //console.log( 'Directive: Sent (cached) css to app with ' + _applicationBasics.css.length );
+			    }
+			    else
+			    {
+			        //console.log( 'Directive: Could not find css string length. Handle in API.' );
+			    }
 
 				// Get JSON data from url
 				var vdata = GetUrlVar( 'data' ); if( vdata ) o.data = vdata;
@@ -1380,6 +1448,9 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 			// Quit the application
 			ifr.quit = function( level )
 			{
+			    // Look if we are allowed to quit
+			    if( !canQuitApp( this.applicationName ) ) return;
+			    
 				if( this.windows )
 				{
 					for( let a in this.windows )
@@ -1426,6 +1497,10 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 					}
 					Workspace.applications = out;
 					Workspace.updateTasks();
+					
+					// If we have a dashboard
+					if( window.showDashboard )
+					    showDashboard();
 				}
 				else
 				{

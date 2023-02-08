@@ -1183,8 +1183,12 @@ Sections.accounts_templates = function( cmd, extra )
 			{
 				// TODO: Fix first login first so we can set wallpapers on users not logged in yet.
 				//return '<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
-				return '<button class="Button IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
-				
+				return '<p>\
+				    <button class="Button IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>\
+				</p>\
+				<p>\
+				    <button class="Button IconSmall fa-remove" id="wallpaper_none">Use no wallpaper</button>\
+				</p>';
 			},
 			
 			wallpaper_preview : function ()
@@ -4397,6 +4401,28 @@ Sections.accounts_templates = function( cmd, extra )
 						
 						if( ge( 'wallpaper_button_inner' ) )
 						{
+							// Support no wallpaper
+							let rm = ge( 'wallpaper_none' );
+							rm.onclick = function()
+							{
+							    ge( 'wallpaper_button_inner' ).setAttribute( 'value', 'color' );
+							    let ctx = ge( 'AdminWallpaper' ).getContext( '2d' );
+							    ctx.fillStyle = '#223344';
+							    ctx.fillRect( 0, 0, 256, 256 );
+							    updateWallpaper( details.ID, function( e, d, vars )
+								{
+									
+									if( e && vars )
+									{
+										
+									}
+									else
+									{
+										if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+									}
+							
+								} );
+							}
 							var b = ge( 'wallpaper_button_inner' );
 							b.onclick = function(  )
 							{
@@ -4464,13 +4490,22 @@ Sections.accounts_templates = function( cmd, extra )
 							
 							if( look )
 							{
-								// Only update the wallaper if it exists..
-								var avSrc = new Image();
-								avSrc.src = look;
-								avSrc.onload = function()
-								{
-									var ctx = ge( 'AdminWallpaper' ).getContext( '2d' );
-									ctx.drawImage( avSrc, 0, 0, 256, 256 );
+							    if( look == 'color' )
+							    {
+						            let ctx = ge( 'AdminWallpaper' ).getContext( '2d' );
+						            ctx.fillStyle = '#223344';
+						            ctx.fillRect( 0, 0, 256, 256 );
+							    }
+							    else
+							    {
+								    // Only update the wallaper if it exists..
+								    var avSrc = new Image();
+								    avSrc.src = look;
+								    avSrc.onload = function()
+								    {
+									    var ctx = ge( 'AdminWallpaper' ).getContext( '2d' );
+									    ctx.drawImage( avSrc, 0, 0, 256, 256 );
+								    }
 								}
 							}
 							

@@ -36,3 +36,4 @@ if( $data = Permissions( $args->args->type, $args->args->context, ( isset( $args
 die( 'ok<!--separate-->{"message":"Permission granted.","reason":"Permission for this app isn\'t set ...","response":1}' );
 
 ?>
+ 

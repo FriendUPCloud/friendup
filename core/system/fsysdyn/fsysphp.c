@@ -213,7 +213,7 @@ ListString *PHPCall( const char *command )
 		return NULL;
 	}
 	
-	char *buf = FMalloc( PHP_READ_SIZE+16 );
+	char *buf = FCalloc( PHP_READ_SIZE+1, sizeof( char ) );
 	ListString *ls = ListStringNew();
 	int errCounter = 0;
 	int size = 0;
@@ -233,25 +233,21 @@ ListString *PHPCall( const char *command )
 	fcntl( fds[1].fd, F_SETFL, O_NONBLOCK );
 	
 	int ret = 0;
-	int timeout = FILESYSTEM_MOD_TIMEOUT * 1000;
 
 	while( TRUE )
 	{
-		//DEBUG("[PHPFsys] in loop\n");
-		
 		ret = poll( fds, 2, 250 ); // HT Small timeout
 
 		if( ret == 0 )
 		{
-			//DEBUG("Timeout!\n");
 			break;
 		}
-		else if(  ret < 0 )
+		else if( ret < 0 )
 		{
-			//DEBUG("Error\n");
 			break;
 		}
-		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
+		
+		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE );
 
 		if( size > 0 )
 		{
@@ -291,6 +287,7 @@ ListString *PHPCall( const char *command )
 			DEBUG("FSYSPHP: SELECT Error\n");
 			break;
 		}
+		
 		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
 
 		if( size > 0 )
@@ -317,7 +314,7 @@ ListString *PHPCall( const char *command )
 	ListStringJoin( ls );		//we join all string into one buffer
 
 	//DEBUG( "[fsysphp] Finished PHP call...(%lu length, %s)-\n", ls->ls_Size, ls->ls_Data );
-	DEBUG( "[fsysphp] Finished PHP call...(%lu length, %s)-\n", ls->ls_Size, ls->ls_Data );
+	//DEBUG( "[fsysphp] Finished PHP call...(%lu length, %s)-\n", ls->ls_Size, ls->ls_Data );
 	
 	return ls;
 }
@@ -376,7 +373,7 @@ BufStringDisk *PHPCallDisk( const char *command )
 
 BufStringDisk *PHPCallDisk( const char *command )
 {
-	DEBUG("[PHPCallDisk] run app: '%s'\n", command );
+	//DEBUG("[PHPCallDisk] run app: '%s'\n", command );
     
 	NPOpenFD pofd;
 	int err = newpopen( command, &pofd );
@@ -421,7 +418,7 @@ BufStringDisk *PHPCallDisk( const char *command )
 		}
 		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
 
-		DEBUG( "[PHPCallDisk] Adding %d of data\n", size );
+		//DEBUG( "[PHPCallDisk] Adding %d of data\n", size );
 		if( size > 0 )
 		{
 			BufStringDiskAddSize( ls, buf, size );
@@ -429,7 +426,7 @@ BufStringDisk *PHPCallDisk( const char *command )
 		else
 		{
 			errCounter++;
-			DEBUG("[PHPCallDisk] ErrCounter: %d\n", errCounter );
+			//DEBUG("[PHPCallDisk] ErrCounter: %d\n", errCounter );
 
 			break;
 		}
@@ -1115,10 +1112,15 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 	}
 	else if( mode[0] == 'w' )
 	{
-		char tmpfilename[ 712 ];
-
 		// Make sure we can make the tmp file unique
-		snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/Friendup/%s_write_%d%d%d%d", s->f_SessionIDPTR, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
+		char tmpfilename[ 712 ];
+		struct timeval  tv;
+		gettimeofday(&tv, NULL);
+
+		double timeInMill = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000 ; // convert tv_sec & tv_usec to millisecond
+
+		// when pointer is used there is no way that something will write to same file		
+		snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/Friendup/%s_write_%f%p%d", s->f_SessionIDPTR, timeInMill, s, rand()%999 );
 
 		DEBUG("[PHPFsys/FileOpen] WRITE FILE %s\n", tmpfilename );
 
@@ -1274,7 +1276,7 @@ int FileClose( struct File *s, void *fp )
 							
 							if( result->bsd_Buffer[0] == 'f' && result->bsd_Buffer[1] == 'a' && result->bsd_Buffer[2] == 'i' && result->bsd_Buffer[3] == 'l' )
 							{
-								closeerr = 2;
+								closeerr = -2;
 							}
 							
 							DEBUG( "[fsysphp] Closed file using PHP call.\n" );
@@ -1500,7 +1502,7 @@ int FileWrite( struct File *f, char *buffer, int size  )
 	SpecialData *sd = (SpecialData *)f->f_SpecialData;
 	if( sd != NULL )
 	{
-		DEBUG("Save to file %s size %d  fileid %p\n", sd->fname, size, sd->fp );
+		//DEBUG("Save to file %s size %d  fileid %p\n", sd->fname, size, sd->fp );
 		result = fwrite( buffer, 1, size, sd->fp );
 	}
 
@@ -1675,7 +1677,7 @@ int MakeDir( struct File *f, const char *path )
 				else
 				{
 					error = -2;
-					FERROR( "[fsysphp] Unknown error unmounting device %s..\n", f->f_Name );
+					FERROR( "[fsysphp] No response from module call %s..\n", f->f_Name );
 				}
 				
 				// TODO: we should parse result to get information about success
@@ -1932,12 +1934,12 @@ FLONG GetChangeTimestamp( struct File *s, const char *path )
 
 //
 // Get info about file/folder and return as "string"
+// TODO: THIS FUNCTION CRASHES WHEN COPYING LOTS OF FILES
 //
 
 BufString *Info( File *s, const char *path )
 {
 	DEBUG("[PHPFS] Info\n");
-	
 	if( s != NULL )
 	{
 		char *comm = NULL;
@@ -1978,19 +1980,19 @@ BufString *Info( File *s, const char *path )
 				( encPath ? strlen( encPath ) : 0 ) + 128 + strlen( "php \"modules/system/module.php\" \"\";" );
 			
 			// Whole command
-			char *command = FMalloc( cmdLength );
+			char *command = FCalloc( cmdLength, sizeof( char ) );
 				
 			if( command != NULL )
 			{
 				// Just get vars
-				char *commandCnt = FMalloc( cmdLength );
+				char *commandCnt = FCalloc( cmdLength, sizeof( char ) );
 			
 				// Generate command string
 				if( commandCnt != NULL )
 				{
 					snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=info&authkey=false&sessionid=%s&path=%s&subPath=",
 						sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encPath ? encPath : "" );
-					
+
 					FilterPHPVar( commandCnt );
 					
 					snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", commandCnt );
@@ -1998,9 +2000,14 @@ BufString *Info( File *s, const char *path )
 					// Execute!
 					BufString *bs = NULL;
 					ListString *result = PHPCall( command );
-					if( result != NULL )
+					
+					if( result != NULL && result->ls_Size && result->ls_Size > 5 )
 					{
-						if( result->ls_Data != NULL && strncmp( "fail<!--separate-->", result->ls_Data, 19 ) == 0 )
+						// To check return value
+						char *check = FCalloc( 6, sizeof( char ) );
+						strncpy( check, result->ls_Data, 5 );
+						
+						if( result->ls_Data != NULL && strncmp( "fail<", check, 5 ) == 0 )
 						{
 							ListStringDelete( result );
 							
@@ -2013,26 +2020,39 @@ BufString *Info( File *s, const char *path )
 		
 							result = PHPCall( command );
 						}
+						// Free check var
+						FFree( check );
 						
-						bs = BufStringNewSize( result->ls_Size );
-						if( bs != NULL )
+						if( result != NULL )
 						{
-							BufStringAddSize( bs, result->ls_Data, result->ls_Size );
+							bs = BufStringNew();
+							if( bs != NULL )
+							{
+								bs->bs_Size = result->ls_Size + 1;
+								bs->bs_Bufsize = bs->bs_Size;
+								if( bs->bs_Buffer ) FFree( bs->bs_Buffer );
+								bs->bs_Buffer = FCalloc( bs->bs_Size, sizeof( char ) );
+								strncpy( bs->bs_Buffer, result->ls_Data, result->ls_Size );
+							}
+							ListStringDelete( result );
 						}
-						ListStringDelete( result );
 					}
 					// we should parse result to get information about success
 				
 					FFree( commandCnt );
 					FFree( command );
-					FFree( encPath );
-					FFree( encPathSlash );
+					if( encPath )
+						FFree( encPath );
+					if( encPathSlash )
+						FFree( encPathSlash );
 					return bs;
 				}
 				FFree( command );
 			}
-			FFree( encPath );
-			FFree( encPathSlash );
+			if( encPath )
+				FFree( encPath );
+			if( encPathSlash )
+				FFree( encPathSlash );
 		}
 	}
 	return NULL;

@@ -61,6 +61,11 @@ function PollTrayPosition()
 // Poll the tray for elements - handles all object types
 function PollTray()
 {
+	if( Workspace.dashboard && Workspace.dashboard.pollTray )
+	{
+		Workspace.dashboard.pollTray();
+	}
+
 	// Mobile handles this a bit differently
 	if( isMobile )
 	{
@@ -548,6 +553,8 @@ function Notify( message, callback, clickcallback )
 {
 	if( !Workspace.notifications ) return;
 	if( !message ) return;
+	if( window.NotifyOverride )
+		return NotifyOverride( message, callback, clickcallback );
 	
 	mobileDebug( 'Notify... (state ' + Workspace.currentViewState + ')', true );
 	
@@ -649,7 +656,10 @@ function Notify( message, callback, clickcallback )
 				var d = document.createElement( 'div' );
 				d.className = 'Notification Mobile';
 				d.id = 'MobileNotifications';
-				ge( 'DoorsScreen' ).appendChild( d );
+				// With dashboard mode, use body for notifications
+				if( Workspace.dashboard && isMobile )
+				    document.body.appendChild( d );
+				else ge( 'DoorsScreen' ).appendChild( d );
 			}
 			// On mobile it's always seen!
 			nev.seen = true;

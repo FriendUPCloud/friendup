@@ -564,7 +564,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						{
 							//DEBUG( "Making a new session with this sessionid by type authid: %s\n", usessid );
 							
-							loggedSession = UserSessionNew( usessid, "authid" );
+							loggedSession = UserSessionNew( usessid, "authid", l->fcm->fcm_ID );
 							if( loggedSession != NULL )
 							{
 								User *usr = UMUserGetByID( l->sl_UM, uid );
@@ -656,9 +656,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					loggedSession = USMGetSessionByUserID( l->sl_USM, uid );
 					if( loggedSession == NULL && userName[ 0 ] != 0 )	// only if user exist and it has servertoken
 					{
-						loggedSession = UserSessionNew( NULL, "servertoken" );
+						loggedSession = UserSessionNew( NULL, "servertoken", l->fcm->fcm_ID );
 						if( loggedSession != NULL )
 						{
+							sprintf( sessionid, "%s", loggedSession->us_SessionID );
+
 							User *usr = UMUserGetByName( l->sl_UM, userName );
 							if( usr == NULL )
 							{
@@ -666,19 +668,24 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								if( usr != NULL )
 								{
 									UMAddUser( l->sl_UM, usr );
+									UserAddSession( usr, loggedSession );
 								}
 							}
 							else
 							{
 								UserAddSession( usr, loggedSession );
 							}
-							loggedSession->us_UserID = usr->u_ID;
-							loggedSession->us_LastActionTime = time( NULL );
-							
-							UGMAssignGroupToUser( l->sl_UGM, usr );
-							
-							USMSessionSaveDB( l->sl_USM, loggedSession );
-							USMUserSessionAddToList( l->sl_USM, loggedSession );
+
+							if( usr && usr->u_ID )
+							{
+							    loggedSession->us_UserID = usr->u_ID;
+							    loggedSession->us_LastActionTime = time( NULL );
+							    
+							    UGMAssignGroupToUser( l->sl_UGM, usr );
+							    
+							    USMSessionSaveDB( l->sl_USM, loggedSession );
+							    USMUserSessionAddToList( l->sl_USM, loggedSession );
+					        }
 						}
 					}
 				}
@@ -744,7 +751,9 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			else
 			{
 				DEBUG("[SysWebRequest] USMGetSessionBySessionID\n");
-				UserSession *locus = USMGetSessionBySessionID( l->sl_USM, sessionid );
+				UserSession *locus = NULL;
+				
+				locus = USMGetSessionBySessionID( l->sl_USM, sessionid );
 				
 				
 				if( locus != NULL )
@@ -785,7 +794,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			int userAdded = 0;
 			
 			// Server token reins supreme! Add the session
-			if( ( loggedSession = UserSessionNew( sessionid, "server" ) ) != NULL )
+			if( ( loggedSession = UserSessionNew( sessionid, "server", l->fcm->fcm_ID ) ) != NULL )
 			{
 				User *tmpusr = UMGetUserByName( l->sl_UM, userName );
 				if( !tmpusr )
@@ -807,6 +816,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					
 					USMUserSessionAddToList( l->sl_USM, loggedSession );
 				}
+				DEBUG("ADMINADMIN: %d\n", IS_SESSION_ADMIN( loggedSession ) );
 			}
 		}
 		
@@ -911,6 +921,13 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	//
 	// SECURITY SECTION END
 	//
+	
+	/*
+	if( loggedSession != NULL )
+	{
+		DEBUG("\n\n\nIS ADMIN: %d\n\n\n\n", IS_SESSION_ADMIN( loggedSession ) );
+	}
+	*/
 	
 	//
 	// Check dos token
@@ -1949,6 +1966,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				{
 					USMSessionSaveDB( l->sl_USM, us );
 				}
+
+				DEBUG("ADMINADMIN: %d\n", IS_SESSION_ADMIN( loggedSession ) );
 				
 				if( us != NULL )
 				{
@@ -2181,7 +2200,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							User *tmpusr = UMUserGetByNameDB( l->sl_UM, usrname );
 							if( tmpusr != NULL )
 							{
-								loggedSession = UserSessionNew( "remote", deviceid );
+								loggedSession = UserSessionNew( "remote", deviceid, l->fcm->fcm_ID );
 								if( loggedSession != NULL )
 								{
 									loggedSession->us_UserID = tmpusr->u_ID;
@@ -2253,20 +2272,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								{
 									UserAddSession( locusr, loggedSession );
 								}
-								/*
-								USER_MANAGER_USE( l->sl_UM );
-								User *lusr = l->sl_UM->um_Users;
-								while( lusr != NULL )
-								{
-									if( loggedSession->us_UserID == lusr->u_ID )
-									{
-										loggedSession->us_User = lusr;
-										break;
-									}
-									lusr = (User *)lusr->node.mln_Succ;
-								}
-								USER_MANAGER_RELEASE( l->sl_UM );
-								*/
 							}
 						
 							//
@@ -2608,4 +2613,3 @@ error:
 	FFree( sessionid );
 	return response;
 }
-

@@ -107,7 +107,7 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 	position: absolute;
 	right: 0;
 	top: 0;
-	width: 120px;
+	width: 121px;
 	height: auto;
 	background: black;
 	opacity: 0.8;

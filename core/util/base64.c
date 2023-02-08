@@ -33,7 +33,6 @@ static char encoding_table[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
                                  'w', 'x', 'y', 'z', '0', '1', '2', '3',
                                  '4', '5', '6', '7', '8', '9', '+', '/' };
 static char *decoding_table = NULL;
-static int mod_table[] = { 0, 2, 1 };
 
 //
 //
@@ -150,13 +149,14 @@ char *MarkAndBase64EncodeString( const char *chr )
 /* Unstable code! Please test! */
 char *Base64Decode( const unsigned char* data, unsigned int length, int *finalLength )
 {
-	//if( decoding_table == NULL ) build_decoding_table();
 	if( length <= 0 )
 	{
 		return NULL;
 	}
 	
-	if( length % 4 != 0 )
+	int modulo = (length % 4);
+	//int modulo = (length % 2);
+	if( modulo != 0 ) //&& modulo != 2 )
 	{
 		FERROR("Cannot decode entry, beacouse size is incorect: %d\n", length );
 		return NULL;
@@ -177,11 +177,10 @@ char *Base64Decode( const unsigned char* data, unsigned int length, int *finalLe
 		unsigned int i, j;
 		for( i = 0, j = 0; i < length; )
 		{
-			//DEBUG(" i : %d dataptr %p\n", i, data );
-			unsigned long long sextet_a = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
-			unsigned long long sextet_b = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
-			unsigned long long sextet_c = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
-			unsigned long long sextet_d = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
+			unsigned long long sextet_a = data[i] == '=' ? 0 & i++ : (unsigned int)decoding_table[data[i++]];
+			unsigned long long sextet_b = data[i] == '=' ? 0 & i++ : (unsigned int)decoding_table[data[i++]];
+			unsigned long long sextet_c = data[i] == '=' ? 0 & i++ : (unsigned int)decoding_table[data[i++]];
+			unsigned long long sextet_d = data[i] == '=' ? 0 & i++ : (unsigned int)decoding_table[data[i++]];
 
 			unsigned long long triple =   ( sextet_a << 18 )  // 3 * 6
 									+ ( sextet_b << 12 )  // 2 * 6
@@ -192,7 +191,6 @@ char *Base64Decode( const unsigned char* data, unsigned int length, int *finalLe
 			if( j < output_length) decoded_data[j++] = (triple >> 16 ) & 0xFF; // 2 * 8
 			if( j < output_length) decoded_data[j++] = (triple >> 8  ) & 0xFF; // 1 * 8
 			if( j < output_length) decoded_data[j++] = (triple       ) & 0xFF; // 0 * 8
-			//printf(" %c %c %c", decoded_data[x], decoded_data[x+1], decoded_data[x+2] );
 		}
 	
 		*finalLength = output_length;

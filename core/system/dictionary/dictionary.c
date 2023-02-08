@@ -102,7 +102,8 @@ static const char *DefaultDictionaryMessages[] =
 "USB Remote device cannot be created",
 "USB Remote device cannot be removed",
 "Cannot remove group with 'Level' type",
-"Cannot edit or remove UserGroup because its locked"
+"Cannot edit or remove UserGroup because its locked",
+"Cannot copy over same file"
 };
 
 /**

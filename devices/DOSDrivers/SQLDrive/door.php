@@ -23,8 +23,13 @@ if( !class_exists( 'DoorSQLDrive' ) )
 		*/
 		function onConstruct()
 		{
-			global $args;
+			global $args, $configfilesettings;
 			$this->fileInfo = isset( $args->fileInfo ) ? $args->fileInfo : new stdClass();
+			$this->fileHistoryEnabled = false;
+			if( isset( $configfilesettings[ 'Security' ] ) && isset( $configfilesettings[ 'Security' ][ 'FileHistory' ] ) )
+			{
+			    $this->fileHistoryEnabled = $configfilesettings[ 'Security' ][ 'FileHistory' ];
+			}
 			$defaultDiskspace = 500000000;
 			if( isset( $this->Config ) && strlen( $this->Config) > 3 )
 			{
@@ -100,7 +105,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 		 */
 		public function dosAction( $args )
 		{
-			global $SqlDatabase, $User, $Config, $Logger;
+			global $SqlDatabase, $User, $Config, $Logger, $configfilesettings;
 		
 			// Sanitized username
 			$uname = str_replace( array( '..', '/', ' ' ), '_', $User->Name );
@@ -123,6 +128,12 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			
 			if( isset( $path ) )
 			{
+			    if( substr( $path, 0, 13 ) == '<!--base64-->' )
+			    {
+			        $p = explode( '<!--base64-->', $path );
+			        $path = base64_decode( $p[1] );
+			    }
+			
 				$path = str_replace( '::', ':', $path );
 				$path = str_replace( ':/', ':', $path );
 				$path = explode( ':', $path );
@@ -218,29 +229,33 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							$entries[$k]->Shared = 'Private';
 						}
 					}
-					if( $shared = $SqlDatabase->FetchObjects( $q = ( '
-						SELECT Path, UserID, ID, `Name`, `Hash` FROM FFileShared s
-						WHERE
-							s.DstUserSID = "Public" AND s.Path IN ( "' . implode( '", "', $paths ) . '" ) AND
-							s.UserID IN ( ' . implode( ', ', $userids ) . ' )
-					' ) ) )
+					
+					if( !isset( $configfilesettings[ 'Security' ][ 'hasShareDrive' ] ) || $configfilesettings[ 'Security' ][ 'hasShareDrive' ] == 1 )
 					{
-						foreach( $entries as $k=>$entry )
+						if( $shared = $SqlDatabase->FetchObjects( $q = ( '
+							SELECT Path, UserID, ID, `Name`, `Hash` FROM FFileShared s
+							WHERE
+								s.DstUserSID = "Public" AND s.Path IN ( "' . implode( '", "', $paths ) . '" ) AND
+								s.UserID IN ( ' . implode( ', ', $userids ) . ' )
+						' ) ) )
 						{
-							foreach( $shared as $sh )
+							foreach( $entries as $k=>$entry )
 							{
-								// Add volume name to entry if it's not there
-								// TODO: Make sure its always there!
-								if( isset( $entry->Path ) && !strstr( $entry->Path, ':' ) )
-									$entry->Path = $volume . $entry->Path;
-								if( isset( $entry->Path ) && isset( $sh->Path ) && $entry->Path == $sh->Path && $entry->UserID == $sh->UserID )
+								foreach( $shared as $sh )
 								{
-									$entries[$k]->Shared = 'Public';
-									
-									$link = ( $Config->SSLEnable == 1 ? 'https' : 'http' ) . '://';
-									$p = $Config->FCPort ? ( ':' . $Config->FCPort ) : '';
-									$link .= $Config->FCHost . $p . '/sharedfile/' . $sh->Hash . '/' . $sh->Name;
-									$entries[$k]->SharedLink = $link;
+									// Add volume name to entry if it's not there
+									// TODO: Make sure its always there!
+									if( isset( $entry->Path ) && !strstr( $entry->Path, ':' ) )
+										$entry->Path = $volume . $entry->Path;
+									if( isset( $entry->Path ) && isset( $sh->Path ) && $entry->Path == $sh->Path && $entry->UserID == $sh->UserID )
+									{
+										$entries[$k]->Shared = 'Public';
+										
+										$link = ( $Config->SSLEnable == 1 ? 'https' : 'http' ) . '://';
+										$p = $Config->FCPort ? ( ':' . $Config->FCPort ) : '';
+										$link .= $Config->FCHost . $p . '/sharedfile/' . $sh->Hash . '/' . $sh->Name;
+										$entries[$k]->SharedLink = $link;
+									}
 								}
 							}
 						}
@@ -448,9 +463,6 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						$fn = $f->Filename;
 						$f->DiskFilename = '';
 					}
-					
-					$Logger->log( '[SQLDRIVE] 1. Does our previous file exist?' . ( file_get_contents( $deletable ) ) . ' -> ' . $deletable );
-					
 				
 					// Sanitize!
 					if( strstr( $fn, '/' ) )
@@ -479,8 +491,6 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						}
 					}
 				
-					$Logger->log( '[SQLDRIVE] 2. Does our previous file exist?' . ( file_get_contents( $deletable ) ) . ' -> ' . $deletable );
-				
 					// If the file exists, check it, if not, make a new writable file
 					if( ( $f->ID > 0 && file_exists( $wname . $fn ) ) || true )
 					{
@@ -492,8 +502,6 @@ if( !class_exists( 'DoorSQLDrive' ) )
 								
 								if( $len > 0 )
 								{
-									$Logger->log( '[SQLDRIVE] 3. Does our previous file exist?' . ( file_get_contents( $deletable ) ) . ' -> ' . $deletable );
-								
 									//$Logger->log( '[SQLDrive] Ugly workaround to "fix" base64 support...' );
 									// TODO: UGLY WORKAROUND, FIX IT!
 									//       We need to support base64 streams
@@ -595,10 +603,13 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							$fs->ID = $this->ID;
 							if( $fs->Load() )
 							{
-								$Logger->log( '[SQLDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
+								//$Logger->log( '[SQLDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
 						
 								$fs->StoredBytes = $sbytes;
 								$fs->Save();
+								
+								// Log file transaction
+								$this->fileLog( 'write', $path, $f, $fs );
 							}
 						}
 						
@@ -649,6 +660,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					
 					if( file_exists( $fname ) )
 					{
+						// Log file transaction
+						$this->fileLog( 'read', $args->path, $f, false );
+								
 						$info = @getimagesize( $fname );
 					
 						// Only give this on images
@@ -810,6 +824,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			{
 				$action = isset( $args->action ) ? $args->action : ( isset( $args->args->action ) ? $args->args->action : false );
 				$path   = $args->path;
+				
 				switch( $action )
 				{
 					case 'mount':
@@ -1428,6 +1443,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				
 						$fs->StoredBytes = $sbytes;
 						$fs->Save();
+						
+						// Log file transaction
+						$this->fileLog( 'delete', $path, $fi, $fs );
 					}
 				}
 			}
@@ -1599,6 +1617,54 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				}
 			}
 			return false;
+		}
+		
+		// Log file transaction
+		private function fileLog( $mode, $path, $file, $filesystem = false )
+		{
+		    global $Config, $User, $SqlDatabase, $Logger;
+		    
+		    if( !$filesystem ) $filesystem = $this;
+		    
+		    // Disable logger
+		    if( isset( $this->logger ) && $this->logger == 'disabled' ) return false;
+		    
+		    $path = $SqlDatabase->_link->real_escape_string( $path );
+		    
+		    // Check valid mode
+		    $modeNum = 0;
+		    switch( $mode )
+		    {
+		        case 'read':
+		            $modeNum = 1;
+		            break;
+		        case 'write':
+		            $modeNum = 2;
+		            break;
+		        case 'delete':
+		            $modeNum = 3;
+		            break;
+		    }
+		    
+		    // If valid, execute query
+		    if( $modeNum > 0 )
+		    {
+		        // If successful query, return true
+	            if( $SqlDatabase->query( /*$q =*/ ( '
+	                INSERT INTO 
+	                    `FSFileLog` 
+	                    ( FilesystemID, FileID, UserID, `Path`, AccessMode, `Accessed` )
+	                    VALUES
+	                    ( \'' . intval( $filesystem->ID, 10 ) . '\', \'' . intval( $file->ID, 10 ) . '\', \'' . $User->ID . '\', "' . $path . '", \'' . $modeNum . '\', NOW() )
+    	            ' ) ) )
+    	        {
+    	            //$Logger->log( 'fileLog: ' . $q );
+	                return true;
+	            }
+		    }
+		    // Failed
+		    //$Logger->log( 'fileLog: FAILED' );
+		    return false;
 		}
 		
 		// Not to be used outside! Not public!

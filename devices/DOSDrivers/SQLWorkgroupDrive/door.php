@@ -23,8 +23,13 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 		*/
 		function onConstruct()
 		{
-			global $args, $Logger;
+			global $args, $configfilesettings, $Logger;
 			$this->fileInfo = isset( $args->fileInfo ) ? $args->fileInfo : new stdClass();
+			$this->fileHistoryEnabled = false;
+			if( isset( $configfilesettings[ 'Security' ] ) && isset( $configfilesettings[ 'Security' ][ 'FileHistory' ] ) )
+			{
+			    $this->fileHistoryEnabled = $configfilesettings[ 'Security' ][ 'FileHistory' ];
+			}
 			$defaultDiskspace = 500000000;
 			if( isset( $this->Config ) && strlen( $this->Config) > 3 )
 			{
@@ -100,7 +105,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 		 */
 		public function dosAction( $args )
 		{
-			global $SqlDatabase, $User, $Config, $Logger;
+			global $SqlDatabase, $User, $Config, $Logger, $configfilesettings;
 		
 			//$Logger->log( 'Executing a dos action: ' . $args->command );
 			//$Logger->log( 'Pure args: ' . print_r( $args, 1 ) );
@@ -119,6 +124,12 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			
 			if( isset( $path ) )
 			{
+			    if( substr( $path, 0, 13 ) == '<!--base64-->' )
+			    {
+			        $p = explode( '<!--base64-->', $path );
+			        $path = base64_decode( $p[1] );
+			    }
+			
 				$path = str_replace( '::', ':', $path );
 				$path = str_replace( ':/', ':', $path );
 				$path = explode( ':', $path );
@@ -236,29 +247,33 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 						foreach( $wuids as $w ) $userids[] = $w;
 					}
 					
-					if( $shared = $SqlDatabase->FetchObjects( $q = ( '
-						SELECT Path, UserID, ID, `Name`, `Hash` FROM FFileShared s
-						WHERE
-							s.DstUserSID = "Public" AND s.Path IN ( "' . implode( '", "', $paths ) . '" ) AND
-							s.UserID IN ( ' . implode( ', ', $userids ) . ' )
-					' ) ) )
+					if( !isset( $configfilesettings[ 'Security' ][ 'hasShareDrive' ] ) || $configfilesettings[ 'Security' ][ 'hasShareDrive' ] == 1 )
 					{
-						foreach( $entries as $k=>$entry )
+						if( $shared = $SqlDatabase->FetchObjects( $q = ( '
+							SELECT Path, UserID, ID, `Name`, `Hash` FROM FFileShared s
+							WHERE
+								s.DstUserSID = "Public" AND s.Path IN ( "' . implode( '", "', $paths ) . '" ) AND
+								s.UserID IN ( ' . implode( ', ', $userids ) . ' )
+						' ) ) )
 						{
-							foreach( $shared as $sh )
+							foreach( $entries as $k=>$entry )
 							{
-								// Add volume name to entry if it's not there
-								// TODO: Make sure its always there!
-								if( !strstr( $entry->Path, ':' ) )
-									$entry->Path = $volume . $entry->Path;
-								if( isset( $entry->Path ) && isset( $sh->Path ) && $entry->Path == $sh->Path && in_array( $sh->UserID, $userids ) )
+								foreach( $shared as $sh )
 								{
-									$entries[$k]->Shared = 'Public';
-									
-									$link = ( $Config->SSLEnable == 1 ? 'https' : 'http' ) . '://';
-									$p = $Config->FCPort ? ( ':' . $Config->FCPort ) : '';
-									$link .= $Config->FCHost . $p . '/sharedfile/' . $sh->Hash . '/' . $sh->Name;
-									$entries[$k]->SharedLink = $link;
+									// Add volume name to entry if it's not there
+									// TODO: Make sure its always there!
+									if( isset( $entry->Path ) && !strstr( $entry->Path, ':' ) )
+										$entry->Path = $volume . ( isset( $entry->Path ) ? $entry->Path : '' );
+									else if( !isset( $entry->Path ) ) $entry->Path = $volume;
+									if( isset( $entry->Path ) && isset( $sh->Path ) && $entry->Path == $sh->Path && in_array( $sh->UserID, $userids ) )
+									{
+										$entries[$k]->Shared = 'Public';
+										
+										$link = ( $Config->SSLEnable == 1 ? 'https' : 'http' ) . '://';
+										$p = $Config->FCPort ? ( ':' . $Config->FCPort ) : '';
+										$link .= $Config->FCHost . $p . '/sharedfile/' . $sh->Hash . '/' . $sh->Name;
+										$entries[$k]->SharedLink = $link;
+									}
 								}
 							}
 						}
@@ -532,7 +547,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 
 									if( $total + $len < SQLWORKGROUPDRIVE_FILE_LIMIT )
 									{
-										$Logger->log( '[SQLWORKGROUPDRIVE] Moving tmp file ' . $args->tmpfile . ' to ' . $Config->FCUpload . $fn . ' because ' . ( $total + $len ) . ' < ' . SQLDRIVE_FILE_LIMIT );
+										$Logger->log( '[SQLWORKGROUPDRIVE] Moving tmp file ' . $args->tmpfile . ' to ' . $Config->FCUpload . $fn . ' because ' . ( $total + $len ) . ' < ' . SQLWORKGROUPDRIVE_FILE_LIMIT );
 										// Delete existing file
 										if( $deletable ) unlink( $deletable );
 										
@@ -564,7 +579,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 						{
 							if( $total + strlen( $args->data ) < SQLWORKGROUPDRIVE_FILE_LIMIT )
 							{
-								$Logger->log( '[SQLWORKGROUPDRIVE] Writing content to file. (limit etc: ' . ( $total + strlen( $args->data ) ) . ' < ' . SQLWORKGROUPDRIVE_FILE_LIMIT );
+								//$Logger->log( '[SQLWORKGROUPDRIVE] Writing content to file. (limit etc: ' . ( $total + strlen( $args->data ) ) . ' < ' . SQLWORKGROUPDRIVE_FILE_LIMIT );
 								$len = fwrite( $file, $args->data );
 								fclose( $file );
 							}
@@ -597,10 +612,13 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 							$fs->ID = $this->ID;
 							if( $fs->Load() )
 							{
-								$Logger->log( '[SQLWORKGROUPDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
+								//$Logger->log( '[SQLWORKGROUPDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
 						
 								$fs->StoredBytes = $sbytes;
 								$fs->Save();
+								
+								// Log file transaction
+								$this->fileLog( 'write', $path, $f, $fs );
 							}
 						}
 						
@@ -650,6 +668,9 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 					
 					if( file_exists( $fname ) )
 					{
+						// Log file transaction
+						$this->fileLog( 'read', $args->path, $f, false );
+						
 						$info = @getimagesize( $fname );
 					
 						// Only give this on images
@@ -962,14 +983,18 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 								if( substr( $name, -1, 1 ) == '/' )
 									$name = substr( $name, 0, strlen( $name ) - 1 );
 								if( strstr( $name, '/' ) )
-									$name = end( explode( '/', $name ) );
+								{
+									$name = explode( '/', $name );
+									$name = end( $name );
+								}
 						
 								if( trim( $name ) )
 								{
 									$name = trim( $name );
 									if( substr( $name, -1, 1 ) == '/' )
 										$name = substr( $name, 0, strlen( $name ) - 1 );
-									$newFolder = end( explode( '/', $name ) );
+									$newFolder = explode( '/', $name );
+									$newFolder = end( $newFolder );
 									$f->FilesystemID = $this->ID;
 									$f->Name = $newFolder;
 									
@@ -989,6 +1014,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 								}
 							}
 						}
+						$Logger->log( '[SQLWorkgroupDrive] Failed to create folder: ' . $path );
 						die( 'fail<!--separate-->' ); //why: ' . print_r( $args, 1 ) . '(' . $path . ')' );
 						break;
 					case 'delete':
@@ -1089,7 +1115,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 		*/
 		public function openFile( $path, $mode )
 		{
-			global $Config, $User;
+			global $Config, $User, $Logger;
 			
 			// Set basics on file pointer object
 			$o = new stdClass();
@@ -1105,6 +1131,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 					$o->mode = strtolower( trim( $mode ) );
 					break;
 				default:
+					$Logger->log( 'openFile: NO MODE' );
 					return false;
 			}
 			
@@ -1141,6 +1168,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				$o->tmpPath = $tmpPath;
 				return $o;
 			}
+			$Logger->log( 'openFile: Could not open file (' . ( isset( $tmpPath ) ? $tmpPath : '[NULL]' ) . ' ' . ( isset( $o->mode ) ? $o->mode : '[NULL]' ) . ' )' );
 			return false;
 		}
 		
@@ -1432,6 +1460,9 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				
 						$fs->StoredBytes = $sbytes;
 						$fs->Save();
+						
+						// Log file transaction
+						$this->fileLog( 'delete', $path, $fi, $fs );
 					}
 				}
 			}
@@ -1469,8 +1500,15 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				$fi->FilesystemID = $this->ID;
 				$fi->FolderID = $fo ? $fo->ID : '0';
 				if( strstr( $path, '/' ) )
-					$fi->Filename = end( explode( '/', $path ) );
-				else $fi->Filename = end( explode( ':', $path ) );
+				{
+				    $tp = explode( '/', $path );
+					$fi->Filename = end( $tp );
+				}
+				else 
+				{
+				    $tp = explode( ':', $path );
+				    $fi->Filename = end( $tp );
+			    }
 				$fi->Filename = str_replace( "'", "\\'", $fi->Filename );
 				$fi->Load();
 			}
@@ -1546,7 +1584,6 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				else
 				{
 					// If this last joint might be a file, return parent id
-					$Logger->log('Not a real folder "' . $finalPath[0] . '"? -> COULD NOT LOAD SQLDrive Folder // FilesystemID: ' . $fo->FilesystemID .  ' // FolderID ' . $fo->FolderID . ' // Name ' . $fo->Name );
 					return false;
 				}
 				//$Logger->log('Our current folder ID is '. $fo->ID);
@@ -1590,13 +1627,61 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 					$fname = substr( $fi->Filename, 0, strlen( $fi->Filename ) - ( strlen( $ext ) + 1 ) );
 					$filename = $fname . '.' . $ext;
 					while( file_exists( $Config->FCTmp . $filename ) )
-						$filename = $fname . rand( 0, 999 ) . '.' . $ext;
+						$filename = $fname . ( rand( 0, 999 ) . rand( 0, 999 ) ) . '.' . $ext;
 					// Make tmp file
 					copy( $Config->FCUpload . $fi->DiskFilename, $Config->FCTmp . $filename );
 					return $Config->FCTmp . $filename;
 				}
 			}
 			return false;
+		}
+		
+		// Log file transaction
+		private function fileLog( $mode, $path, $file, $filesystem = false )
+		{
+		    global $Config, $User, $SqlDatabase, $Logger;
+		    
+		    if( !$filesystem ) $filesystem = $this;
+		    
+		    // Disable logger
+		    if( isset( $this->logger ) && $this->logger == 'disabled' ) return false;
+		    
+		    $path = $SqlDatabase->_link->real_escape_string( $path );
+		    
+		    // Check valid mode
+		    $modeNum = 0;
+		    switch( $mode )
+		    {
+		        case 'read':
+		            $modeNum = 1;
+		            break;
+		        case 'write':
+		            $modeNum = 2;
+		            break;
+		        case 'delete':
+		            $modeNum = 3;
+		            break;
+		    }
+		    
+		    // If valid, execute query
+		    if( $modeNum > 0 )
+		    {
+		        // If successful query, return true
+	            if( $SqlDatabase->query( /*$q =*/ ( '
+	                INSERT INTO 
+	                    `FSFileLog` 
+	                    ( FilesystemID, FileID, UserID, `Path`, AccessMode, `Accessed` )
+	                    VALUES
+	                    ( \'' . intval( $filesystem->ID, 10 ) . '\', \'' . intval( $file->ID, 10 ) . '\', \'' . $User->ID . '\', "' . $path . '", \'' . $modeNum . '\', NOW() )
+    	            ' ) ) )
+    	        {
+    	            //$Logger->log( 'fileLog: ' . $q );
+	                return true;
+	            }
+		    }
+		    // Failed
+		    //$Logger->log( 'fileLog: FAILED' );
+		    return false;
 		}
 		
 		// Not to be used outside! Not public!

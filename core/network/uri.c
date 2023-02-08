@@ -268,16 +268,19 @@ char* UriGetPath( char* str, unsigned int strLen, char** next )
 	         Retrives this part -'
 	*/
 	char* ptrEnd = str + strLen;
+	char strii, stri;
 	for( unsigned int i = 0; i < strLen; i++ )
 	{
 		// %3C <  %3E >
 		if( str[i] == '%' )
 		{
-			if( str[i+1] == '3' && (str[i+2] == 'C' || str[i+2] == 'E') )
+			stri = str[i+1];
+			strii = str[i+2];
+			if( stri == '3' && (strii == 'C' || strii == 'E') )
 			{
 				str[i] = ' ';
 			}
-			else if( str[i+1] == '2' && str[i+2] == '2' )
+			else if( stri == '2' && strii == '2' )
 			{
 				str[i] = ' ';
 			}

@@ -327,7 +327,7 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 			
 					DEBUG("[admin/connadd] trying to setup connection to Friend Master Server: %s\n", address );
 			
-					Socket *newsock = SocketConnectHost( l, service->s_secured, address, service->s_port );
+					Socket *newsock = SocketConnectHost( l, service->s_secured, address, service->s_port, TRUE );
 					//if( newsock != NULL )
 					{
 						DEBUG("[connection/add] Connection to Master FriendNode created on port: %d\n", service->s_port);
@@ -580,7 +580,8 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 			{
 				CommService *s = l->fcm->fcm_CommService;
 				
-				FRIEND_MUTEX_LOCK( &s->s_Mutex );
+				COMMSERVICE_USE( s );
+				
 				FConnection *con = s->s_Connections;
 				FConnection *selcon = NULL;
 				
@@ -599,7 +600,7 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 					}
 					con = (FConnection *)con->node.mln_Succ;
 				}
-				FRIEND_MUTEX_UNLOCK( &s->s_Mutex );
+				COMMSERVICE_RELEASE( s );
 				
 				if( con == NULL )	// connection with this name not found
 				{
@@ -762,7 +763,8 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 			{
 				CommService *s = l->fcm->fcm_CommService;
 				
-				FRIEND_MUTEX_LOCK( &s->s_Mutex );
+				COMMSERVICE_USE( s );
+				
 				FConnection *con = s->s_Connections;
 				
 				DEBUG("[ConnectionWeb] remove connection id: %lu name: %s\n", id, name );
@@ -789,7 +791,7 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 						con = (FConnection *)con->node.mln_Succ;
 					}
 				}
-				FRIEND_MUTEX_UNLOCK( &s->s_Mutex );
+				COMMSERVICE_RELEASE( s );
 				
 				if( con != NULL )
 				{

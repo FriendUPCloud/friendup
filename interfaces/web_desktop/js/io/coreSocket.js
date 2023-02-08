@@ -390,8 +390,9 @@ FriendWebSocket.prototype.handleOpen = function( e )
 
 FriendWebSocket.prototype.handleClose = function( e )
 {
+	if( self.pingCheck === 0 )
+		return;
 	console.log( 'Handling close.', e );
-	console.trace();
 	this.cleanup();
 	this.setState( 'close' );
 }
@@ -399,6 +400,8 @@ FriendWebSocket.prototype.handleClose = function( e )
 // Handles error with reconnect
 FriendWebSocket.prototype.handleError = function( e )
 {
+	if( self.pingCheck === 0 )
+		return;
 	console.log( 'Handling error.' );
 	this.cleanup();
 	this.setState( 'error' );
@@ -459,12 +462,14 @@ FriendWebSocket.prototype.handleEvent = function( msg )
 	}
 	if( 'con' === msg.type )
 	{
+		if( self.pingCheck ) { clearTimeout( self.pingCheck ); self.pingCheck = 0 }
 		this.handleConnMessage( msg.data );
 		return;
 	}
 	
 	if( 'msg' === msg.type )
 	{
+		if( self.pingCheck ) { clearTimeout( self.pingCheck ); self.pingCheck = 0 }
 		this.onmessage( msg.data );
 		return;
 	}
@@ -873,7 +878,7 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 	if( self.pingCheck )
 	{ 
 		clearTimeout( self.pingCheck ); 
-		self.pingCheck = null;
+		self.pingCheck = 0;
 	}
 
 	// Register pong time
@@ -957,7 +962,7 @@ FriendWebSocket.prototype.stopKeepAlive = function()
 	if( self.pingCheck )
 	{
 		clearTimeout( self.pingCheck );
-		self.pingCheck = null;
+		self.pingCheck = 0;
 	}
 	if( self.reconnectTimer )
 	{
@@ -975,6 +980,9 @@ FriendWebSocket.prototype.stopKeepAlive = function()
 
 FriendWebSocket.prototype.wsClose = function( code, reason )
 {
+	// This means we have no open connections
+	_cajax_ws_connections = 0;
+	
 	let self = this;
 	if ( !self.ws )
 		return;

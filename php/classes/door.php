@@ -34,7 +34,7 @@ if( !class_exists( 'Door' ) )
 			global $SqlDatabase, $Logger;
 		
 			$this->dbTable( 'Filesystem' );
-		
+			
 			// We may wanna do this in the constructor
 			if( isset( $authcontext ) && isset( $authdata ) )
 			{
@@ -43,6 +43,7 @@ if( !class_exists( 'Door' ) )
 		
 			$this->GetAuthContextComponent();
 		
+		    // NB: $path could be the $args object passed, will be parsed in getQuery..
 			if( $q = $this->getQuery( $path ) )
 			{
 				if( $d = $SqlDatabase->FetchObject( $q ) )
@@ -249,19 +250,31 @@ if( !class_exists( 'Door' ) )
 				{
 					$identifier = 'f.ID=\'' . intval( $args->fileInfo->ID, 10 ) . '\'';
 				}
+				// To disable filelog()
+				if( isset( $args->args->logger ) )
+				{
+				    $this->logger = $args->args->logger;
+				}
 				if( $identifier )
 				{
+				    $actId = isset( $activeUser->ID ) ? $activeUser->ID : $activeUserSession->UserID;
+				
 					// TODO: Look at this had to add haccypatchy method to check for $User->ID first in order to view other users Filesystem as Admin server side ...
+					// Added user group 'Admin' as an optional way to qualify to read a disk not owned or associated by group
 					return '
-					SELECT * FROM `Filesystem` f 
-					WHERE 
+					SELECT f.* FROM `Filesystem` f, `FUserGroup` ug, `FUserToGroup` fug
+					WHERE
+					    ug.Type = "Level" AND fug.UserID = \'' . $actId . '\' AND fug.UserGroupID = ug.ID AND
+					    ug.Name IN ( "Admin", "User", "API", "Guest" )
+					    AND
 						(
-							f.UserID=\'' . ( isset( $activeUser->ID ) ? $activeUser->ID : $activeUserSession->UserID ) . '\' OR
+							ug.Name = \'Admin\' OR
+							f.UserID=\'' .$actId . '\' OR
 							f.GroupID IN (
-								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
+								SELECT ug2.UserGroupID FROM FUserToGroup ug2, FUserGroup g
 								WHERE 
-									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-									ug.UserID = \'' . ( isset( $activeUser->ID ) ? $activeUser->ID : $activeUserSession->UserID ) . '\'
+									g.ID = ug2.UserGroupID AND g.Type = \'Workgroup\' AND
+									ug2.UserID = \'' . $actId . '\'
 							)
 						)
 						AND ' . $identifier . ' LIMIT 1';
@@ -270,19 +283,25 @@ if( !class_exists( 'Door' ) )
 			// Get by path (string)
 			else
 			{
+				$actId = isset( $activeUser->ID ) ? $activeUser->ID : $activeUserSession->UserID;
+				
 				$op = explode( ':', $path );
 				$name = mysqli_real_escape_string( $SqlDatabase->_link, reset( $op ) );
 				// TODO: Look at this had to add haccypatchy method to check for $User->ID first in order to view other users Filesystem as Admin server side ...
+				// Added user group 'Admin' as an optional way to qualify to read a disk not owned or associated by group
 				return '
-					SELECT * FROM `Filesystem` f 
-					WHERE 
+					SELECT f.* FROM `Filesystem` f, `FUserGroup` ug, `FUserToGroup` fug
+					WHERE
+						ug.Type = "Level" AND fug.UserID = \'' . $actId . '\' AND fug.UserGroupID = ug.ID AND
+					    ug.Name IN ( "Admin", "User", "API", "Guest" )
+					    AND 
 						(
-							f.UserID=\'' . ( isset( $activeUser->ID ) ? $activeUser->ID :$activeUserSession->UserID ) . '\' OR
+							f.UserID=\'' . $actId . '\' OR
 							f.GroupID IN (
-								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
+								SELECT ug2.UserGroupID FROM FUserToGroup ug2, FUserGroup g
 								WHERE 
-									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-									ug.UserID = \'' . ( isset( $activeUser->ID ) ? $activeUser->ID : $activeUserSession->UserID ) . '\'
+									g.ID = ug2.UserGroupID AND g.Type = \'Workgroup\' AND
+									ug2.UserID = \'' . $actId . '\'
 							)
 						)
 						AND
@@ -820,23 +839,31 @@ if( !class_exists( 'Door' ) )
 				{
 					// Use built-in, will work on local.handler
 					$doorFrom = new Door( $pathFrom );
+					if( $this->logger )
+    					$doorFrom->logger = $this->logger;
 				}
 				else
 				{
 					$path = $pathFrom;
 					include( $testFrom );
 					$doorFrom = $door;
+					if( $this->logger )
+    					$doorFrom->logger = $this->logger;
 				}
 				if( !file_exists( $testTo ) )
 				{
 					// Use built-in, will work on local.handler
 					$doorTo = new Door( $pathTo );
+					if( $this->logger )
+    					$doorTo->logger = $this->logger;
 				}
 				else
 				{
 					$path = $pathTo;
 					include( $testTo );
 					$doorTo = $door;
+					if( $this->logger )
+    					$doorTo->logger = $this->logger;
 				}
 			
 				unset( $door, $path );
@@ -861,7 +888,7 @@ if( !class_exists( 'Door' ) )
 						{
 							return true;
 						}
-						//$Logger->log('Couldn\'t create folder (createFolder)... ' . $folderName . ' :: ' . $tpath);
+						$Logger->log('[DOOR] Couldn\'t create folder (createFolder)... ' . $folderName . ' :: ' . $tpath);
 						return false;
 					}
 				}
@@ -877,10 +904,10 @@ if( !class_exists( 'Door' ) )
 						{
 							return true;
 						}
-						//$Logger->log('couldn\'t putFile... ' . $pathTo . ' :: ');
+						$Logger->log('[DOOR] couldn\'t putFile... ' . $pathTo . ' :: ');
 					}
 				}
-				//$Logger->log('how did we even get here... ' . $pathFrom . ' :: ' . $pathTo);
+				$Logger->log('[DOOR] how did we even get here... ' . $pathFrom . ' :: ' . $pathTo);
 				return false;
 			}
 		}
@@ -935,6 +962,8 @@ if( !class_exists( 'Door' ) )
 			else if( is_object( $file ) && isset( $file->Door ) )
 			{
 				$file = new File( $file->Door->Name . ':' . $file->Path );
+				if( $this->logger )
+    				$file->logger = $this->logger;
 				if( $file->Load() )
 				{
 					$cnt = $file->_content;

@@ -66,19 +66,22 @@ if( !function_exists( 'GetFilesystemByArgs' ) )
 			$identifier = 'f.Name=\'' . mysqli_real_escape_string( $SqlDatabase->_link, reset( explode( ':', $args->path ) ) ) . '\'';
 		}
 		if( $Filesystem = $SqlDatabase->FetchObject( '
-		SELECT * FROM `Filesystem` f
+		SELECT f.* FROM `Filesystem` f, `FUserGroup` ug, `FUserToGroup` fug
 		WHERE
+		    ug.Type = "Level" AND fug.UserID = \'' . $UserSession->UserID . '\' AND fug.UserGroupID = ug.ID AND
+		    ug.Name IN ( "Admin", "User", "API", "Guest" )
+		    AND
 			(
+				ug.Name = \'Admin\' OR
+				f.UserID=\'' . $UserSession->UserID . '\' OR
 				f.GroupID IN (
-							SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
-							WHERE
-								g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-								ug.UserID = \'' . $UserSession->UserID . '\'
-						)
-				OR
-				f.UserID=\'' . $UserSession->UserID . '\'
+					SELECT ug2.UserGroupID FROM FUserToGroup ug2, FUserGroup g
+					WHERE 
+						g.ID = ug2.UserGroupID AND g.Type = \'Workgroup\' AND
+						ug2.UserID = \'' . $UserSession->UserID . '\'
+				)
 			)
-			AND ' . $identifier . '
+			AND ' . $identifier . ' LIMIT 1
 		' ) )
 		{
 			return $Filesystem;
@@ -264,6 +267,7 @@ if( isset( $args->command ) )
 			if( isset( $User ) )
 				require( 'modules/system/include/tinyurldata.php' );
 			break;
+		case 'resendinvite':
 		case 'generateinvite':
 		case 'getinvites':
 		case 'getpendinginvites':
@@ -404,12 +408,22 @@ if( isset( $args->command ) )
 				$fields = [];
 				foreach( $args->args as $k=>$v )
 				{
-					if( $k == 'url' ) continue;
+					if ( $k == 'url' ) 
+						continue;
+					if ( $k == 'diskpath' )
+						continue;
+					
 					$fields[$k] = $v;
 				}
-				curl_setopt( $c, CURLOPT_POST, true );
+				
+				if ( 0 < count( $fields ))
+				{
+					curl_setopt( $c, CURLOPT_POST, true );
+					curl_setopt( $c, CURLOPT_POSTFIELDS, http_build_query( $fields ) );
+				}
+				
 				curl_setopt( $c, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
-				curl_setopt( $c, CURLOPT_POSTFIELDS, http_build_query( $fields ) );
+				
 				curl_setopt( $c, CURLOPT_RETURNTRANSFER, true );
 				curl_setopt( $c, CURLOPT_HTTPHEADER, array( 'Accept-charset: UTF-8' ) );
 				curl_setopt( $c, CURLOPT_ENCODING, 'UTF-8' );
@@ -437,7 +451,6 @@ if( isset( $args->command ) )
 				curl_close( $c );
 				
 				
-				
 				if( isset( $args->args->diskpath ) )
 				{
 					if( strlen( $r ) && $args->args->diskpath )
@@ -445,7 +458,7 @@ if( isset( $args->command ) )
 						$f = new File( $args->args->diskpath );
 						if( $f->save( $r ) )
 						{
-							//$Logger->log( 'Saved to ' . $args->args->diskpath );
+							$Logger->log( 'Saved to ' . $args->args->diskpath );
 							die( 'ok<!--separate-->{"result":"1","message":"Saved","path":"' . $args->args->diskpath . '"}' );
 						}
 					}
@@ -614,10 +627,18 @@ if( isset( $args->command ) )
 		case 'convertfile':
 			require( 'modules/system/include/convertfile.php' );
 			break;
+		
 		// Install / upgrade application from central Friend Store repo
 		case 'install':
 			require( 'modules/system/include/install.php' );
 			break;
+		
+	    // Get a user's recent files list
+	    case 'recentfiles':
+	        require( 'modules/system/include/recentfiles.php' );
+	        break;
+		
+		// Add a path to an assign
 		case 'assign':
 			$mode = $args->args->mode;
 			if( !isset( $args->args->assign ) )
@@ -824,6 +845,9 @@ if( isset( $args->command ) )
 			die( 'fail<!--separate-->{"response":"keys failed"} ' . $q );
 			//die( 'ok<!--separate-->[{"type":"treeroot","literal":"Treeroot"},{"type":"local","literal":"Local filesystem"},{"type":"corvo","literal":"MySQL Based Filesystem"},{"type":"website","literal":"Mount websites as doors"}]' );
 			break;
+		case 'searchfiles':
+		    require( 'modules/system/include/searchfiles.php' );
+		    break;
 		// Get desktop events
 		case 'events':
 			if( $data = checkDesktopEvents() )
@@ -883,6 +907,10 @@ if( isset( $args->command ) )
 			}
 			die( 'fail<!--separate-->' );
 			break;
+		// Get shared file path based on hash
+		case 'getsharefilepath':
+    		require( 'modules/system/include/getsharefilepath.php' );
+		    break;
 		// Share something!
 		case 'share':
 			require( 'modules/system/include/share.php' );
@@ -1229,6 +1257,7 @@ if( isset( $args->command ) )
 					$o = new stdClass();
 					$o->name = $data->name;
 					$o->path = $data->path;
+					$o->id = $row->ID;
 					$result[] = $o;
 				}
 				die( 'ok<!--separate-->' . json_encode( $result ) );
@@ -2082,7 +2111,7 @@ if( isset( $args->command ) )
 }
 
 // End of the line
-if( !$args->skip ) die( 'fail<!--separate-->{"response":"uncaught command exception ' . print_r( $args,1 ) . '"}' ); //end of the line<!--separate-->' . print_r( $args, 1 ) . '<!--separate-->' . ( isset( $User ) ? $User : 'No user object!' ) );
+if( !isset( $args->skip ) || !$args->skip ) die( 'fail<!--separate-->{"response":"uncaught command exception ' . print_r( $args,1 ) . '"}' ); //end of the line<!--separate-->' . print_r( $args, 1 ) . '<!--separate-->' . ( isset( $User ) ? $User : 'No user object!' ) );
 
 
 ?>

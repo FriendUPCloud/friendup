@@ -1,0 +1,86 @@
+
+.FUIProgressbar
+{
+	position: relative;
+	width: 100%;
+	height: 20px;
+	box-sizing: border-box;
+	vertical-align: middle;
+	background-color: var(--fui-list-button-background);
+	border-radius: var(--fui-border-radius-small);
+	overflow: hidden;
+}
+
+.FUIProgressbar > .FUIProgressGroove
+{
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+	color: white;
+}
+
+.FUIProgressbar > .FUIProgressGroove > .FUIProgressBar
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 0%;
+	height: 100%;
+	transition: width,background-color 0.25s,0.25s;
+	background: linear-gradient(to left, #21384F, #2D5276);
+	border-radius: var(--fui-border-radius-small);
+}
+
+/*.FUIProgressbar > .FUIProgressGroove > .FUIProgressBar.FUIPG0
+{
+	background-color: #aa0000;
+}
+
+.FUIProgressbar > .FUIProgressGroove > .FUIProgressBar.FUIPG20
+{
+	background-color: #ff4400;
+}
+
+.FUIProgressbar > .FUIProgressGroove > .FUIProgressBar.FUIPG40
+{
+	background-color: #aa8800;
+}
+
+.FUIProgressbar > .FUIProgressGroove > .FUIProgressBar.FUIPG60
+{
+	background-color: #66cc33;
+}
+
+.FUIProgressbar > .FUIProgressGroove > .FUIProgressBar.FUIPG80
+{
+	background-color: #22ff44;
+}
+
+.FUIProgressbar > .FUIProgressGroove > .FUIProgressBar.FUIPG100
+{
+	background-color: #10ff77;
+}*/
+
+.FUIProgressBarText
+{
+	text-align: center;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	vertical-align: middle;
+	z-index: 2;
+	mix-blend-mode: exclusion;
+}
+
+.FUIProgressBarText > span
+{
+	vertical-align: middle;
+	display: block;
+	line-height: 20px;
+}
+
+
