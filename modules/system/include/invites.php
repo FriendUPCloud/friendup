@@ -755,7 +755,7 @@ if( $args->command )
 			
 					$repl->baseUrl = $baserepl->baseUrl = $baseUrl;
 				
-					$repl->url = ( $baseUrl . '/webclient/index.html#invite=' . $hash . 'BASE64' . base64_encode( '{"user":"' . utf8_decode( $usr->FullName ) . '","hash":"' . $hash . '"}' ) );
+					$repl->url = ( $baseUrl . '/webclient/index.html#invite=' . $hash . 'BASE64' . base64_encode( '{"user":"' . utf8_decode( $usr->FullName ) . '","hash":"' . $hash . '","group":"' . $gname . '"}' ) );
 					
 					$repl->sitename = ( isset( $Conf[ 'Registration' ][ 'reg_sitename' ] ) ? $Conf[ 'Registration' ][ 'reg_sitename' ] : 'Friend Sky' );
 					$repl->user     = $usr->FullName;
