@@ -198,6 +198,8 @@ Workspace = {
 			i.id = 'InputGrabber';
 			i.style.position = 'absolute';
 			i.style.left = '-1000px';
+			i.style.top = '0';
+			i.style.opacity = 0;
 			i.style.pointerEvents = 'none';
 			ge( 'DoorsScreen' ).appendChild( i );
 		}
