@@ -1297,8 +1297,13 @@ window.ononline = function()
 }
 
 
-if( navigator.userAgent.indexOf( 'Safari' ) > 0 )
+function initBrowser()
 {
-	document.body.classList.add( 'Safari' );
+	if( !document.body )
+		return setTimeout( initBrowser, 100 );
+	if( navigator.userAgent.indexOf( 'Safari' ) > 0 )
+	{
+		document.body.classList.add( 'Safari' );
+	}
 }
-
+initBrowser();
