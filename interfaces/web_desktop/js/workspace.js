@@ -1297,3 +1297,8 @@ window.ononline = function()
 }
 
 
+if( navigator.userAgent.indexOf( 'Safari' ) > 0 )
+{
+	document.body.classList.add( 'Safari' );
+}
+
