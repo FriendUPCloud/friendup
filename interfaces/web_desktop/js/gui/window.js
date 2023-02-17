@@ -1078,6 +1078,15 @@ function _ActivateWindowOnly( div, e )
 			m.classList.add( 'Active' );
 			m.viewContainer.classList.add( 'Active' );
 			
+			if( m.windowObject.flags.singletask )
+			{
+				document.body.classList.add( 'Singletask' );
+			}
+			else
+			{
+				document.body.classList.remove( 'Singletask' );
+			}
+			
 			// Set active window
 			if( m.windowObject.getFlag( 'windowActive' ) )
 			{
@@ -2013,6 +2022,12 @@ function CloseView( win, delayed )
 			
 			if( win == currentMovable || currentIsDialog )
 				document.body.classList.remove( 'Dialog' );
+		}
+		
+		// Single task
+		if( win.windowObject.getFlag( 'singletask' ) )
+		{
+			document.body.classList.remove( 'Singletask' );
 		}
 		
 		// Unassign this
@@ -5422,6 +5437,9 @@ var View = function( args )
 			case 'mainView':
 				this.setMainView( value );
 				this.flags.mainView = value;
+				break;
+			case 'singletask':
+				this.flags.singletask = value;
 				break;
 			// Standard dialog has preset width and height
 			case 'standard-dialog':
