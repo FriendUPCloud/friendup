@@ -1304,10 +1304,6 @@ function initBrowser()
 	if( navigator.userAgent.indexOf( 'Safari' ) > 0 )
 	{
 		document.body.classList.add( 'Safari' );
-		let met = document.createElement( 'meta' );
-		met.setAttribute( 'http-equiv', 'ScreenOrientation' );
-		met.setAttribute( 'content', 'autoRotate:disabled' );
-		document.getElementsByTagName( 'head' )[0].appendChild( met );
 	}
 }
 initBrowser();
