@@ -1600,6 +1600,9 @@ function _DeactivateWindow( m, skipCleanUp )
 	
 	if( !m ) return;
 	
+	if( window.currentMovable && currentMovable.windowObject.getFlag( 'singletask' ) )
+	    return;
+	
 	if( m.className && m.classList.contains( 'Active' ) )
 	{
 		m.classList.remove( 'Active' );
