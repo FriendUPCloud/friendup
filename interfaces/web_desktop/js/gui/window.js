@@ -1602,7 +1602,9 @@ function _DeactivateWindow( m, skipCleanUp )
 	
 	// Cannot deactivate singletaskers
 	if( m.windowObject && m.windowObject.getFlag( 'singletask' ) )
-        return;
+	{
+        return _ActivateWindow( m );
+    }
 	
 	if( m.className && m.classList.contains( 'Active' ) )
 	{
