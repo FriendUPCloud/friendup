@@ -3585,7 +3585,10 @@ var View = function( args )
 		div.doMinimize = function ( e )
 		{
 		    // Not single task
-		    if( this.windowObject.getFlag( 'singletask' ) ) return;
+		    if( this.windowObject.getFlag( 'singletask' ) ) 
+		    {
+	            return this.windowObject.activate();
+	        }
 		    
 			if( div.minimized ) 
 			{
