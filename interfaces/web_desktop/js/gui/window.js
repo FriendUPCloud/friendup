@@ -1600,15 +1600,9 @@ function _DeactivateWindow( m, skipCleanUp )
 	
 	if( !m ) return;
 	
-	for( let a in movableWindows )
-	{
-	    let mm = movableWindows[ a ];
-	    if( mm.windowObject && mm.getFlag( 'singletask' ) )
-	    {
-	        mm.windowObject.activate();
-	        return;
-	    }
-	}
+	// Cannot deactivate singletaskers
+	if( m.windowObject && m.getFlag( 'singletask' ) )
+        return;
 	
 	if( m.className && m.classList.contains( 'Active' ) )
 	{
@@ -3588,6 +3582,9 @@ var View = function( args )
 		
 		div.doMinimize = function ( e )
 		{
+		    // Not single task
+		    if( this.windowObject.getFlag( 'singletask' ) ) return;
+		    
 			if( div.minimized ) 
 			{
 				return;
