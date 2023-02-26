@@ -1601,7 +1601,7 @@ function _DeactivateWindow( m, skipCleanUp )
 	if( !m ) return;
 	
 	// Cannot deactivate singletaskers
-	if( m.windowObject && m.getFlag( 'singletask' ) )
+	if( m.windowObject && m.windowObject.getFlag( 'singletask' ) )
         return;
 	
 	if( m.className && m.classList.contains( 'Active' ) )
