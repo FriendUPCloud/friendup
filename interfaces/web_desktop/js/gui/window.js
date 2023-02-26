@@ -1600,8 +1600,15 @@ function _DeactivateWindow( m, skipCleanUp )
 	
 	if( !m ) return;
 	
-	if( window.currentMovable && currentMovable.windowObject.getFlag( 'singletask' ) )
-	    return;
+	for( let a in movableWindows )
+	{
+	    let mm = movableWindows[ a ];
+	    if( mm.windowObject && mm.getFlag( 'singletask' ) )
+	    {
+	        mm.windowObject.activate();
+	        return;
+	    }
+	}
 	
 	if( m.className && m.classList.contains( 'Active' ) )
 	{
