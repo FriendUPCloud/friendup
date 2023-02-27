@@ -3993,9 +3993,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( rdat.jsExtensionEngine && rdat.jsExtensionEngine == 'custom' )
 			{
 			    // Add loading flag here - the extension needs to unset them
-			    document.body.classList.add( 'Loading' );
-	            document.body.classList.remove( 'Loaded' );
-	            document.body.classList.remove( 'Inside' );
+			    document.body.classList.add( 'ExtensionLoading' );
+			    console.log( 'Extension loading..' );
 	    
 			    if( rdat.jsExtensionSrc )
 			    {
