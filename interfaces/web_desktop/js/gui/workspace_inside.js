@@ -3992,6 +3992,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Use sidebar engine
 			if( rdat.jsExtensionEngine && rdat.jsExtensionEngine == 'custom' )
 			{
+			    // Add loading flag here - the extension needs to unset them
+			    document.body.classList.add( 'Loading' );
+	            document.body.classList.remove( 'Loaded' );
+	            document.body.classList.remove( 'Inside' );
+	    
 			    if( rdat.jsExtensionSrc )
 			    {
 			    	if( !Workspace.dashboard )
