@@ -3994,7 +3994,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 			    // Add loading flag here - the extension needs to unset them
 			    document.body.classList.add( 'ExtensionLoading' );
-			    console.log( 'Extension loading..' );
 	    
 			    if( rdat.jsExtensionSrc )
 			    {
