@@ -3993,6 +3993,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( rdat.jsExtensionEngine && rdat.jsExtensionEngine == 'custom' )
 			{
 			    // Add loading flag here - the extension needs to unset them
+			    document.body.classList.add( 'SidebarLoading' );
 	    
 			    if( rdat.jsExtensionSrc )
 			    {
