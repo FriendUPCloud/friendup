@@ -3993,7 +3993,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( rdat.jsExtensionEngine && rdat.jsExtensionEngine == 'custom' )
 			{
 			    // Add loading flag here - the extension needs to unset them
-			    document.body.classList.add( 'ExtensionLoading' );
 	    
 			    if( rdat.jsExtensionSrc )
 			    {
@@ -4097,7 +4096,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						//console.log( '[Login phase] Theme loaded!!' );
 						setTimeout( function()
 						{
-							document.body.classList.remove( 'ThemeRefreshing' );
+						    if( !document.body.classList.contains( 'SidebarLoading' ) )
+    							document.body.classList.remove( 'ThemeRefreshing' );
 						}, 50 );
 						// We are inside (wait for wallpaper) - watchdog
 						if( !Workspace.insideInterval )
@@ -4121,7 +4121,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									// Set right classes
 									if( !Workspace.initializingWorkspaces )
 									{
-										Workspace.setLoading( false );
+										if( !document.body.classList.contains( 'SidebarLoading' ) )
+    										Workspace.setLoading( false );
 									}
 									
 									document.title = Friend.windowBaseString;
