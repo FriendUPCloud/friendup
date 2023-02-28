@@ -3990,7 +3990,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			
 			// Use sidebar engine
-			if( !isMobile && rdat.jsExtensionEngine && rdat.jsExtensionEngine == 'custom' )
+			if( rdat.jsExtensionEngine && rdat.jsExtensionEngine == 'custom' )
 			{
 			    // Add loading flag here - the extension needs to unset them
 			    document.body.classList.add( 'SidebarLoading' );
