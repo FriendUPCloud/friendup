@@ -4122,41 +4122,45 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	// Notice: Door and Dormant with isMobile overwrites onclick
 	if( !self.flags || ( self.flags && !self.flags.nativeDraggable ) )
 	{
-		let eventName = ( window.isMobile && ( fileInfo.Type == 'Door' || fileInfo.Type == 'Dormant' ) ) ? 'onclick' : 'ondblclick';
+	    if( !( file.directoryView.filedialog && isMobile  && file.directoryView.doubleclickfiles ) )
+	    {
+	        
+		    let eventName = ( window.isMobile && ( fileInfo.Type == 'Door' || fileInfo.Type == 'Dormant' ) ) ? 'onclick' : 'ondblclick';
 
-		( function( eventn, fil, func )
-		{
-			fil[ eventn ] = function( e )
-			{
-				if( Workspace.contextMenuShowing )
-				{
-					return;
-				}
-				
-				if( isTouchDevice() )
-				{
-					let diff = ( new Date() ).getTime() - window.touchElementTime;
-					// Abort click
-					if( diff >= 250 && diff <= 800 )
-					{
-						if( window.touchstartCounter )
-						{
-							clearTimeout( window.touchstartCounter );
-							window.touchstartCounter = false;
-						}
-						return;
-					}
-				}
-					
-				if( window.touchstartCounter )
-				{
-					clearTimeout( window.touchstartCounter );
-					window.touchstartCounter = false;
-				}
-				func( e );
-			}
-			fil[ 'ontouchend' ] = fil[ eventn ];
-		} )( eventName, file, launchIcon );
+		    ( function( eventn, fil, func )
+		    {
+			    fil[ eventn ] = function( e )
+			    {
+				    if( Workspace.contextMenuShowing )
+				    {
+					    return;
+				    }
+				    
+				    if( isTouchDevice() )
+				    {
+					    let diff = ( new Date() ).getTime() - window.touchElementTime;
+					    // Abort click
+					    if( diff >= 250 && diff <= 800 )
+					    {
+						    if( window.touchstartCounter )
+						    {
+							    clearTimeout( window.touchstartCounter );
+							    window.touchstartCounter = false;
+						    }
+						    return;
+					    }
+				    }
+					    
+				    if( window.touchstartCounter )
+				    {
+					    clearTimeout( window.touchstartCounter );
+					    window.touchstartCounter = false;
+				    }
+				    func( e );
+			    }
+			    fil[ 'ontouchend' ] = fil[ eventn ];
+		    } )( eventName, file, launchIcon );
+	    }
 	}
 	
 	// -------------------------------------------------------------------------
