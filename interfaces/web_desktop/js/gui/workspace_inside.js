@@ -2380,6 +2380,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			let m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
+			    if( userSettingsFetched ) 
+			    {
+			        console.log( 'Settings already loaded.' );
+			        return;
+		        }
 				userSettingsFetched = true;
 				console.log( 'refreshUserSettings: Settings came in' );
 				function initFriendWorkspace()
