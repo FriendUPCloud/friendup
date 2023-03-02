@@ -4122,45 +4122,53 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	// Notice: Door and Dormant with isMobile overwrites onclick
 	if( !self.flags || ( self.flags && !self.flags.nativeDraggable ) )
 	{
-	    if( !( file.directoryView.filedialog && isMobile  && file.directoryView.doubleclickfiles ) )
-	    {
-	        
-		    let eventName = ( window.isMobile && ( fileInfo.Type == 'Door' || fileInfo.Type == 'Dormant' ) ) ? 'onclick' : 'ondblclick';
+    
+        
+	    let eventName = ( window.isMobile && ( fileInfo.Type == 'Door' || fileInfo.Type == 'Dormant' ) ) ? 'onclick' : 'ondblclick';
 
-		    ( function( eventn, fil, func )
+	    ( function( eventn, fil, func )
+	    {
+		    fil[ eventn ] = function( e )
 		    {
-			    fil[ eventn ] = function( e )
+		        // No case here!
+		        if( eventName == 'ondblclick' )
+		        {
+		            if( !( this.directoryView.filedialog && isMobile && this.directoryView.doubleclickfiles ) )
+            	    {
+            	        return;
+            	    }
+        	    }
+		    
+		    
+			    if( Workspace.contextMenuShowing )
 			    {
-				    if( Workspace.contextMenuShowing )
+				    return;
+			    }
+			    
+			    if( isTouchDevice() )
+			    {
+				    let diff = ( new Date() ).getTime() - window.touchElementTime;
+				    // Abort click
+				    if( diff >= 250 && diff <= 800 )
 				    {
+					    if( window.touchstartCounter )
+					    {
+						    clearTimeout( window.touchstartCounter );
+						    window.touchstartCounter = false;
+					    }
 					    return;
 				    }
-				    
-				    if( isTouchDevice() )
-				    {
-					    let diff = ( new Date() ).getTime() - window.touchElementTime;
-					    // Abort click
-					    if( diff >= 250 && diff <= 800 )
-					    {
-						    if( window.touchstartCounter )
-						    {
-							    clearTimeout( window.touchstartCounter );
-							    window.touchstartCounter = false;
-						    }
-						    return;
-					    }
-				    }
-					    
-				    if( window.touchstartCounter )
-				    {
-					    clearTimeout( window.touchstartCounter );
-					    window.touchstartCounter = false;
-				    }
-				    func( e );
 			    }
-			    fil[ 'ontouchend' ] = fil[ eventn ];
-		    } )( eventName, file, launchIcon );
-	    }
+				    
+			    if( window.touchstartCounter )
+			    {
+				    clearTimeout( window.touchstartCounter );
+				    window.touchstartCounter = false;
+			    }
+			    func( e );
+		    }
+		    fil[ 'ontouchend' ] = fil[ eventn ];
+	    } )( eventName, file, launchIcon );
 	}
 	
 	// -------------------------------------------------------------------------
