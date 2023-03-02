@@ -875,7 +875,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				},
 				doubleclickfiles:    function( element, event )
 				{
-				    w.select( element );
+					element.classList.add( 'Selected' );
 					if( event ) return cancelBubble( event );
 				}
 			} );
