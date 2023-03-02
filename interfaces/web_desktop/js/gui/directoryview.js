@@ -2989,7 +2989,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				else if( e.button == 0 || !e.button )
 				{
 					// Use override if possible
-					if( this.file.directoryView.filedialog && isMobile )
+					/*if( this.file.directoryView.filedialog && isMobile )
 					{
 						if( this.file.directoryView.doubleclickfiles )
 						{
@@ -3004,7 +3004,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 							return cancelBubble( e );
 						}
 						return;
-					}
+					}*/
 					
 					let p = icnt;
 				

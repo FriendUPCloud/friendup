@@ -788,7 +788,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			}
 			if( open )
 			{
-				open.ondblclick = function()
+				open.onclick = function()
 				{
 					w.choose();
 				}
@@ -796,7 +796,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			// Save file
 			if( save )
 			{
-				save.ondblclick = function()
+				save.onclick = function()
 				{
 					w.choose();
 				}
