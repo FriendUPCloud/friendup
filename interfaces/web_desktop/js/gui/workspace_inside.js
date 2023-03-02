@@ -2373,6 +2373,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		b.execute( 'sampleconfig' );
 		//console.log(  'refreshUserSettings: Getting loads of settings' );
+		
 		let userSettingsFetched = false;
 		function getUserSettings()
 		{
@@ -2380,9 +2381,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			m.onExecuted = function( e, d )
 			{
 				userSettingsFetched = true;
-				//console.log( 'refreshUserSettings: Settings came in' );
+				console.log( 'refreshUserSettings: Settings came in' );
 				function initFriendWorkspace()
 				{
+				    console.log( 'Initializing friend workspace.' );
 					// Make sure we have loaded
 					if( !Workspace.dashboard && Workspace.mode != 'vr' && ( Workspace.screen && Workspace.screen.contentDiv ) )
 					{
