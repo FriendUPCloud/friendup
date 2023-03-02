@@ -2917,7 +2917,6 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				let cl = this.doubleclickfiles;
 				r.ondblclick = function( e )
 				{
-				    console.log( 'Running double clcik1' );
 					cl( this.file, e );
 				}
 			}
@@ -3012,7 +3011,6 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					// We have an external event
 					if( dv.clickfile )
 					{
-					    console.log( 'Using external event' );
 						dv.clickfile( this.file, e );
 					}
 				
