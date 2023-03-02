@@ -2919,6 +2919,8 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				{
 					cl( this.file, e );
 				}
+				// Nullify click
+				r.onclick = null;
 			}
 			else
 			{
