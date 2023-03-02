@@ -3802,8 +3802,6 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			if( !event ) event = window.event;
 		
 			obj = ele ? ele : file;
-			
-			console.trace();
 		
 			// File extension
 			if( obj.fileInfo && obj.fileInfo.Path && obj.fileInfo.Path.indexOf( '.' ) > 0 )
