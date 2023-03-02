@@ -2917,10 +2917,9 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				let cl = this.doubleclickfiles;
 				r.ondblclick = function( e )
 				{
+				    console.log( 'Running double clcik1' );
 					cl( this.file, e );
 				}
-				// Nullify click
-				r.onclick = null;
 			}
 			else
 			{
@@ -2993,6 +2992,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					// Use override if possible
 					if( this.file.directoryView.filedialog && isMobile )
 					{
+					    console.log( 'Wha' );
 						if( this.file.directoryView.doubleclickfiles )
 						{
 							if( this.fileInfo.Type == 'File' )
