@@ -3560,7 +3560,6 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	{
 		file[ 'onmousedown' ] = function( e )
 		{
-			console.log( 'FOOOO' + Math.random() );
 			if( !e ) e = window.event ? window.event : {};
 			if( e.target && e.target.nodeName == 'TEXTAREA' ) return;
 	
@@ -3803,6 +3802,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			if( !event ) event = window.event;
 		
 			obj = ele ? ele : file;
+			
+			console.trace();
 		
 			// File extension
 			if( obj.fileInfo && obj.fileInfo.Path && obj.fileInfo.Path.indexOf( '.' ) > 0 )
