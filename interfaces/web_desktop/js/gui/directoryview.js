@@ -4141,9 +4141,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
                 	    }
             	    }
         	    }
-        	    console.log( fileInfo );
-		    
-		    
+        	    
 			    if( Workspace.contextMenuShowing )
 			    {
 				    return;
