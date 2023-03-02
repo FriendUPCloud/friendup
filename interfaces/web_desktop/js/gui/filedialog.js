@@ -872,14 +872,12 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 						}
 						dialog.saveinput.value = cand;
 					}
-				}/*,
+				},
 				doubleclickfiles:    function( element, event )
 				{
-					element.classList.add( 'Selected' );
-					console.trace( 'Togoa', console.trace() );
-					w.choose( element );
+				    w.select( element );
 					if( event ) return cancelBubble( event );
-				}*/
+				}
 			} );
 			dir.showHiddenFiles = false;
 			dir.listMode = 'listview';
