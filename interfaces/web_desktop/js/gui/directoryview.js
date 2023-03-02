@@ -4131,13 +4131,17 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		    fil[ eventn ] = function( e )
 		    {
 		        // No case here!
-		        if( eventName == 'ondblclick' )
+		        if( fileInfo.Type != 'Directory' )
 		        {
-		            if( !( this.directoryView.filedialog && isMobile && this.directoryView.doubleclickfiles ) )
-            	    {
-            	        return;
+		            if( eventName == 'ondblclick' )
+		            {
+		                if( !( this.directoryView.filedialog && isMobile && this.directoryView.doubleclickfiles ) )
+                	    {
+                	        return;
+                	    }
             	    }
         	    }
+        	    console.log( fileInfo );
 		    
 		    
 			    if( Workspace.contextMenuShowing )
