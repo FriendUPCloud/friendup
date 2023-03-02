@@ -2992,7 +2992,6 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					// Use override if possible
 					if( this.file.directoryView.filedialog && isMobile )
 					{
-					    console.log( 'Wha' );
 						if( this.file.directoryView.doubleclickfiles )
 						{
 							if( this.fileInfo.Type == 'File' )
@@ -3013,6 +3012,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					// We have an external event
 					if( dv.clickfile )
 					{
+					    console.log( 'Using external event' );
 						dv.clickfile( this.file, e );
 					}
 				
