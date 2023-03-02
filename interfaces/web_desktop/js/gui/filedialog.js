@@ -363,6 +363,8 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				return false;
 			}
 		
+		    console.log( 'Chosing: ' + Math.random() );
+		
 			// Check if the storage space is there, and that the volume
 			// is writable
 			if( !stage && dialog.type == 'save' )
