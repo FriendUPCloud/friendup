@@ -2316,7 +2316,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		// This part is important - it is where we extend the workspace with 
 		// configurable extensions based on config settings
-		//console.log( 'refreshUserSettings: Getting settings' );
 		let b = new Module( 'system' );
 		b.onExecuted = function( e, d )
 		{
@@ -2372,7 +2371,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 		}
 		b.execute( 'sampleconfig' );
-		//console.log(  'refreshUserSettings: Getting loads of settings' );
 		
 		let userSettingsFetched = false;
 		function getUserSettings()
@@ -2381,10 +2379,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			m.onExecuted = function( e, d )
 			{
 			    if( userSettingsFetched ) 
-			    {
-			        console.log( 'Settings already loaded.' );
 			        return;
-		        }
+		        
 				userSettingsFetched = true;
 				
 				function initFriendWorkspace()
@@ -2394,17 +2390,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						if( Workspace.screen.contentDiv.offsetHeight < 100 )
 						{
-							//console.log( 'refreshUserSettings: Not all contentDiv stuff loaded, wait 50ms and retry.' );
 							return setTimeout( function(){ initFriendWorkspace(); }, 50 );
 						}
 					}
 					
-					console.log( 'Initializing friend workspace.' );
-					
 					if( e == 'ok' && d )
 					{
-						console.log( 'refreshUserSettings: Settings loaded ok.' );
-						
 						Workspace.userSettingsLoaded = true;
 						let dat = JSON.parse( d );
 						if( dat.wallpaperdoors && dat.wallpaperdoors.substr )
@@ -2720,7 +2711,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					else
 					{
-						//console.log( 'refreshUserSettings: Settings did not load.' );
 						Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 						Workspace.wallpaperImageDecoded = false;
 						Workspace.windowWallpaperImage = '';
@@ -2729,7 +2719,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					if( callback && typeof( callback ) == 'function' )
 					{
-						console.log( 'refreshUserSettings: Running callback()' );
 						callback();
 					}
 				}
