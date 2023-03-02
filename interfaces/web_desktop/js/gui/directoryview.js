@@ -3560,6 +3560,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	{
 		file[ 'onmousedown' ] = function( e )
 		{
+			console.log( 'FOOOO' + Math.random() );
 			if( !e ) e = window.event ? window.event : {};
 			if( e.target && e.target.nodeName == 'TEXTAREA' ) return;
 	
