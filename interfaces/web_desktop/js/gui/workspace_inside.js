@@ -2386,10 +2386,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			        return;
 		        }
 				userSettingsFetched = true;
-				console.log( 'refreshUserSettings: Settings came in' );
+				
 				function initFriendWorkspace()
 				{
-				    console.log( 'Initializing friend workspace.' );
 					// Make sure we have loaded
 					if( !Workspace.dashboard && Workspace.mode != 'vr' && ( Workspace.screen && Workspace.screen.contentDiv ) )
 					{
@@ -2400,9 +2399,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						}
 					}
 					
+					console.log( 'Initializing friend workspace.' );
+					
 					if( e == 'ok' && d )
 					{
-						//console.log( 'refreshUserSettings: Settings loaded ok.' );
+						console.log( 'refreshUserSettings: Settings loaded ok.' );
+						
 						Workspace.userSettingsLoaded = true;
 						let dat = JSON.parse( d );
 						if( dat.wallpaperdoors && dat.wallpaperdoors.substr )
@@ -2727,7 +2729,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					if( callback && typeof( callback ) == 'function' )
 					{
-						//console.log( 'refreshUserSettings: Running callback()' );
+						console.log( 'refreshUserSettings: Running callback()' );
 						callback();
 					}
 				}
