@@ -4135,7 +4135,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		        {
 		            if( eventName == 'ondblclick' )
 		            {
-		                if( !( this.directoryView.filedialog && isMobile && this.directoryView.doubleclickfiles ) )
+		                if( this.directoryView.filedialog && this.directoryView.doubleclickfiles )
                 	    {
                 	        return;
                 	    }
