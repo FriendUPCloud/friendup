@@ -8,6 +8,7 @@ CREATE TABLE ProcessWorkflow (
 );
 CREATE TABLE ProcessNode (
   `ID` bigint(20) NOT NULL auto_increment,
+  `UniqueID` varchar(255) default "",
   `WorkflowID` bigint(20) NOT NULL,
   `Title` varchar(255) default "Unnamed",
   `Label` varchar(255) default "Unnamed",
