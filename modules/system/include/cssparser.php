@@ -18,13 +18,20 @@ $replacements = [];
 $genCompiledTheme = false;
 
 // Parse a string / file and make compact, logical css
-function ParseCssFile( $path )
+function ParseCssFile( $path, $mobile = false )
 {
 	global $genCompiledTheme, $args;
 	
 	// Root
-	$string = AddParsedCSS( $path . 'theme.css' );
-	
+	if( $mobile && file_exists( $path . 'theme_mobile.css' ) )
+	{
+	    $string = AddParsedCSS( $path . 'theme_mobile.css' );
+	}
+	else
+	{
+	    $string = AddParsedCSS( $path . 'theme.css' );
+    }
+    
 	if( !$string ) return false;
 	
 	// Appended styles with culminating variables and rules

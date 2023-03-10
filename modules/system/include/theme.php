@@ -24,7 +24,7 @@ if( $theme != 'default' )
 
 include_once( 'modules/system/include/cssparser.php' );
 
-ParseCssFile( $path );
+ParseCssFile( $path, isset( $args->mobile ) ? $args->mobile : false );
 
 die( 'fail<!--separate-->{"response":"fatal error in theme"}' );
 

@@ -4217,11 +4217,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						AddCSSByUrl( '/themes/' + themeName + '/scrollbars.css' );
 						styles.href = '/system.library/module/?module=system&command=theme&args=' + encodeURIComponent( '{"theme":"' + themeName + '"}' ) + '&sessionid=' + Workspace.sessionId;
+						if( isMobile ) styles.href += '&mobile=true';
 					}
 					else
 					{
 						AddCSSByUrl( '/themes/friendup12/scrollbars.css' );
 						styles.href = '/system.library/module/?module=system&command=theme&args=' + encodeURIComponent( '{"theme":"friendup12"}' ) + '&sessionid=' + Workspace.sessionId;
+						if( isMobile ) styles.href += '&mobile=true';
 					}
 
 					// Add new one
