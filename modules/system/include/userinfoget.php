@@ -265,7 +265,7 @@ if( 1==1/* || $rolePermission || $level == 'Admin' || $uid == $User->ID*/ )
 					
 					if( $uis )
 					{
-						$userinfo->WorkgroupIds = implode( ', ', $uis );
+						$userinfo->WorkgroupIds = $uis;
 					}
 				}
 				
