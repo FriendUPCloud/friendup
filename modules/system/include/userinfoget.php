@@ -143,7 +143,8 @@ if( 1==1/* || $rolePermission || $level == 'Admin' || $uid == $User->ID*/ )
 		SELECT
 			u.*,
 			g.Name AS `Level`,
-			wg.Name AS `Workgroup`
+			wg.Name AS `Workgroup`,
+			wg.UniqueID AS `WorkgroupIDs`
 		FROM
 			`FUser` u,
 			`FUserGroup` g,

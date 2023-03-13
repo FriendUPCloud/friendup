@@ -123,7 +123,7 @@ if( isset( $args->args ) && isset( $args->args->workgroups ) )
 // Execute the final query based on flags above
 if( $rows = $SqlDatabase->FetchObjects( '
 	SELECT 
-		g.ID, g.Name, g.ParentID, g.UserID, u.UserID AS WorkgroupUserID, m.ValueNumber, m.ValueString 
+		g.ID, g.UniqueID, g.Name, g.ParentID, g.UserID, u.UserID AS WorkgroupUserID, m.ValueNumber, m.ValueString 
 		' . $ownflag . $levelflag . ' 
 	FROM 
 		FUserGroup g 
