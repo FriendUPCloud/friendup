@@ -2294,6 +2294,7 @@ function View( flags )
 	console.log( 'Setting flags: ||||||||||', JSON.stringify(flags) );
 	let fl = JSON.stringify( flags );
 	flags = JSON.parse( fl );
+	console.log( 'What: ', flags );
 	let viewId = 'window_' + ( new Date() ).getTime() + '.' + Math.random();
 
 	// Proxy screens are virtual :)
