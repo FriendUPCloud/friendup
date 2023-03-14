@@ -5750,7 +5750,7 @@ function setupMessageFunction( dataPacket, origin )
 	{
 	    if( msg.type == 'view' )
 	    {
-	        console.log( 'What is the message: ', msg );
+	        console.log( 'What is the message: ', JSON.parse( JSON.stringify( msg.data ) ) );
         }
 		// Convert some data formats in a JSON complient structure
 		for( let a in msg )
