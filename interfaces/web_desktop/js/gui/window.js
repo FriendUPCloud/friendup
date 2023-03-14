@@ -2541,6 +2541,8 @@ var View = function( args )
 {
 	let self = this;
 	
+	console.log( 'What arguments?', args );
+	
 	// Windows on own screen ignores the virtual workspaces
 	if( args.screen && args.screen != Workspace.screen )
 	{
@@ -5780,7 +5782,6 @@ var View = function( args )
 	}
 	this.parseFlags = function( flags, filter )
 	{
-	    console.log( 'Let us look: ', flags );
 		if( !this.flags ) this.flags = {};
 		for( var a in flags )
 		{
