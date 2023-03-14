@@ -1213,8 +1213,12 @@ function _ActivateDialogWindow( div, e )
 var _activationTarget = null;
 function _ActivateWindow( div, nopoll, e )
 {
+    let titl = div.windowObject ? div.windowObject.getFlag( 'title' ) : 'unknown';
+    console.log( 'Trying to activate ' + titl );
     if( div.windowObject && div.windowObject.getFlag( 'invisible' ) == true ) return;
+    console.log( 'Moving on ' + titl );
     if( div.parentNode && div.parentNode.classList.contains( 'Closing' ) ) return;
+    console.log( 'And on ' + titl );
     
     // Support dashboard
     let vTitle = div.windowObject.getFlag( 'title' );
@@ -1245,6 +1249,8 @@ function _ActivateWindow( div, nopoll, e )
     	return _ActivateDialogWindow( div );
 	}
 	
+	console.log( 'And onnnn ' + titl );
+	
 	// Remove dialog flag only if it's not a dialog
 	document.body.classList.remove( 'Dialog' );
     
@@ -1259,6 +1265,8 @@ function _ActivateWindow( div, nopoll, e )
 	{
 		return;
 	}
+	
+	console.log( 'An---d on ' + titl );
 
 	if( !e ) e = window.event;
 	
@@ -1291,6 +1299,8 @@ function _ActivateWindow( div, nopoll, e )
 		}
 		return;
 	}
+	
+	console.log( 'And on........ ' + titl );
 	
 	// Don't activate a window that is being removed
 	if( div.classList.contains( 'Remove' ) )
@@ -1354,6 +1364,8 @@ function _ActivateWindow( div, nopoll, e )
 			_WindowToFront( div );
 		return;
 	}
+	
+	console.log( 'And on gass ' + titl );
 	
 	// Reactivate all iframes
 	let fr = div.windowObject.content.getElementsByTagName( 'iframe' );
