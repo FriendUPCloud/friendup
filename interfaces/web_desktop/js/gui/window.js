@@ -5687,6 +5687,7 @@ var View = function( args )
 					{
 						if( viewdiv.doMinimize )
 						{
+						    console.log( 'What: ', viewdiv, this.flags );
 							viewdiv.doMinimize();
 						}
 					}
