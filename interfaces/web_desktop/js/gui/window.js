@@ -5681,7 +5681,6 @@ var View = function( args )
 				this.flags.screen = value;
 				break;
 			case 'minimized':
-			    console.trace();
 				if( viewdiv )
 				{
 					if( value == 'true' || value == true )
