@@ -2291,7 +2291,7 @@ function Widget( flags )
 
 function View( flags )
 {
-	console.log( 'Setting flags: ||||||||||', flags );
+	console.log( 'Setting flags: ||||||||||', JSON.stringify(flags) );
 	let viewId = 'window_' + ( new Date() ).getTime() + '.' + Math.random();
 
 	// Proxy screens are virtual :)
