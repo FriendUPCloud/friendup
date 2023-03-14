@@ -3596,6 +3596,7 @@ var View = function( args )
 		
 		div.doMinimize = function ( e )
 		{
+		    console.trace();
 		    // Not single task
 		    if( this.windowObject.getFlag( 'singletask' ) ) 
 		    {
@@ -5680,6 +5681,7 @@ var View = function( args )
 				this.flags.screen = value;
 				break;
 			case 'minimized':
+			    console.trace();
 				if( viewdiv )
 				{
 					if( value == 'true' || value == true )
