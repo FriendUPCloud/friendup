@@ -2291,10 +2291,6 @@ function Widget( flags )
 
 function View( flags )
 {
-	console.log( 'Setting flags: ||||||||||', JSON.stringify(flags) );
-	let fl = JSON.stringify( flags );
-	flags = JSON.parse( fl );
-	console.log( 'What: ', flags );
 	let viewId = 'window_' + ( new Date() ).getTime() + '.' + Math.random();
 
 	// Proxy screens are virtual :)
@@ -5752,6 +5748,10 @@ function setupMessageFunction( dataPacket, origin )
 
 	function _sendMessage( msg, callback )
 	{
+	    if( msg.type == 'view' )
+	    {
+	        console.log( 'What is the message: ', msg );
+        }
 		// Convert some data formats in a JSON complient structure
 		for( let a in msg )
 		{
