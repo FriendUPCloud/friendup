@@ -5277,6 +5277,7 @@ var View = function( args )
 	    console.log( 'Going to open this window' );
 		if( isMobile && !force && this.flags.minimized ) 
 		{
+		    console.log( 'Going to bail...: ' + this.getFlag( 'title' ) );
 			return;
 		}
 		console.log( 'Now coing for activation' );
