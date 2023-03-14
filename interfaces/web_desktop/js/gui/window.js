@@ -1214,11 +1214,8 @@ var _activationTarget = null;
 function _ActivateWindow( div, nopoll, e )
 {
     let titl = div.windowObject ? div.windowObject.getFlag( 'title' ) : 'unknown';
-    console.log( 'Trying to activate ' + titl );
     if( div.windowObject && div.windowObject.getFlag( 'invisible' ) == true ) return;
-    console.log( 'Moving on ' + titl );
     if( div.parentNode && div.parentNode.classList.contains( 'Closing' ) ) return;
-    console.log( 'And on ' + titl );
     
     // Support dashboard
     let vTitle = div.windowObject.getFlag( 'title' );
@@ -1249,8 +1246,6 @@ function _ActivateWindow( div, nopoll, e )
     	return _ActivateDialogWindow( div );
 	}
 	
-	console.log( 'And onnnn ' + titl );
-	
 	// Remove dialog flag only if it's not a dialog
 	document.body.classList.remove( 'Dialog' );
     
@@ -1265,8 +1260,6 @@ function _ActivateWindow( div, nopoll, e )
 	{
 		return;
 	}
-	
-	console.log( 'An---d on ' + titl );
 
 	if( !e ) e = window.event;
 	
@@ -1299,8 +1292,6 @@ function _ActivateWindow( div, nopoll, e )
 		}
 		return;
 	}
-	
-	console.log( 'And on........ ' + titl );
 	
 	// Don't activate a window that is being removed
 	if( div.classList.contains( 'Remove' ) )
@@ -1364,8 +1355,6 @@ function _ActivateWindow( div, nopoll, e )
 			_WindowToFront( div );
 		return;
 	}
-	
-	console.log( 'And on gass ' + titl );
 	
 	// Reactivate all iframes
 	let fr = div.windowObject.content.getElementsByTagName( 'iframe' );
@@ -2541,8 +2530,6 @@ var View = function( args )
 {
 	let self = this;
 	
-	console.log( 'What arguments?', args );
-	
 	// Windows on own screen ignores the virtual workspaces
 	if( args.screen && args.screen != Workspace.screen )
 	{
@@ -3598,12 +3585,9 @@ var View = function( args )
 		
 		div.doMinimize = function ( e )
 		{
-		    console.log( 'EXECUTING DOMINIMIZE -----------------------------' );
-		    console.trace();
 		    // Not single task
 		    if( this.windowObject.getFlag( 'singletask' ) ) 
 		    {
-		        console.log( 'Abort, we will activate because single task!' );
 	            return this.windowObject.activate();
 	        }
 		    
@@ -5279,13 +5263,11 @@ var View = function( args )
 	// Activate window
 	this.activate = function( force )
 	{
-	    console.log( 'Going to open this window' );
 		if( isMobile && !force && this.flags.minimized ) 
 		{
 		    console.log( 'Going to bail...: ' + this.getFlag( 'title' ) );
 			return;
 		}
-		console.log( 'Now coing for activation' );
 		_ActivateWindow( this._window.parentNode );
 	}
 	// Move window to front
@@ -5691,9 +5673,6 @@ var View = function( args )
 					{
 						if( viewdiv.doMinimize )
 						{
-						    console.log( 'What: ====================================', viewdiv, this.flags );
-						    console.trace();
-						    console.log( '============================================ =' );
 							viewdiv.doMinimize();
 						}
 					}
