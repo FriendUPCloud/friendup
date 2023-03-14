@@ -5748,14 +5748,6 @@ function setupMessageFunction( dataPacket, origin )
 
 	function _sendMessage( msg, callback )
 	{
-	    if( msg.type == 'view' )
-	    {
-	        if( msg.data )
-	        {
-    	        msg.data = JSON.parse( JSON.stringify( msg.data ) );
-	            console.log( 'Here is the datA: ', msg.data );
-            }
-        }
 		// Convert some data formats in a JSON complient structure
 		for( let a in msg )
 		{

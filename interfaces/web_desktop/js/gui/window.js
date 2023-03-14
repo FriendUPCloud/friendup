@@ -5265,7 +5265,6 @@ var View = function( args )
 	{
 		if( isMobile && !force && this.flags.minimized ) 
 		{
-		    console.log( 'Going to bail...: ' + this.getFlag( 'title' ) );
 			return;
 		}
 		_ActivateWindow( this._window.parentNode );
