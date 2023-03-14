@@ -3596,10 +3596,12 @@ var View = function( args )
 		
 		div.doMinimize = function ( e )
 		{
+		    console.log( 'EXECUTING DOMINIMIZE -----------------------------' );
 		    console.trace();
 		    // Not single task
 		    if( this.windowObject.getFlag( 'singletask' ) ) 
 		    {
+		        console.log( 'Abort, we will activate because single task!' );
 	            return this.windowObject.activate();
 	        }
 		    
