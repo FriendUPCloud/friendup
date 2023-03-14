@@ -5274,10 +5274,12 @@ var View = function( args )
 	// Activate window
 	this.activate = function( force )
 	{
+	    console.log( 'Going to open this window' );
 		if( isMobile && !force && this.flags.minimized ) 
 		{
 			return;
 		}
+		console.log( 'Now coing for activation' );
 		_ActivateWindow( this._window.parentNode );
 	}
 	// Move window to front
