@@ -2785,6 +2785,8 @@ function View( flags )
 	Application.sendMessage( msg );
 	Application.windows[ viewId ] = this;
 	
+	console.log( 'We want! :::::::::::', this._flags );
+	
 	this._checkFlagActions( this._flags ); // Things we need immediately
 
 	// Just activate this window (unless it starts minimized)

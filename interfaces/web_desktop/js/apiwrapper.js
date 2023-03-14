@@ -1979,7 +1979,6 @@ function apiWrapper( event, force )
 						window.currentContext = false;
 					}
 					
-					console.log( 'Running stuff -------------------------', msg.data );
 					let v = new View( msg.data );
 					
 					if( msg.context )
