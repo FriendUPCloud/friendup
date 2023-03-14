@@ -2291,6 +2291,7 @@ function Widget( flags )
 
 function View( flags )
 {
+	console.log( 'Setting flags: ||||||||||', flags );
 	let viewId = 'window_' + ( new Date() ).getTime() + '.' + Math.random();
 
 	// Proxy screens are virtual :)
@@ -2784,8 +2785,6 @@ function View( flags )
 	// Setup view object with master
 	Application.sendMessage( msg );
 	Application.windows[ viewId ] = this;
-	
-	console.log( 'We want! :::::::::::', this._flags );
 	
 	this._checkFlagActions( this._flags ); // Things we need immediately
 
