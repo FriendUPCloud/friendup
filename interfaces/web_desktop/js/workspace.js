@@ -67,15 +67,6 @@ Workspace = {
 		ScreenOverlay.init();
 		Workspace.init();
 		
-		if( window.innerWidth <= 1024 )
-		{
-			let p = ge( 'viewprt' );
-			if( p )
-			{
-				p.setAttribute( 'content', 'height=auto, width=auto, initial-scale=0.8, maximum-scale=1.0, user-scalable=no, viewport-fit=contain' );
-			}
-		}
-		
 		if( window.friendApp )
 		{
 			document.body.classList.add( 'friendapp' );
