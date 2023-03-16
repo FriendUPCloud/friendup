@@ -2180,6 +2180,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		for( let a = 0; a < icons.length; a++ )
 		{
 			let fn = icons[a].Filename ? icons[a].Filename : icons[a].Title;
+			if( !fn ) continue;
 			
 			// Skip dot files
 			if( !self.showHiddenFiles && fn.substr( 0, 1 ) == '.' ) continue;
