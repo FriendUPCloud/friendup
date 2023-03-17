@@ -3974,290 +3974,297 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Done blocking
 		this.refreshThemeBlock = false;
 		
-		let m = new File( 'System:../themes/' + themeName + '/settings.json' );
-		m.onLoad = function( rdat )
-		{	
-			// Add resources for theme settings --------------------------------
-			try
-			{
-			    rdat = JSON.parse( rdat );
-		    }
-		    catch( e )
-		    {
-		        console.log( 'We cannot read json from rdat: ', rdat );
-		        rdat = false;
-		    }
-			// Done resources theme settings -----------------------------------
-			
-			// Support theme data expansion directly from theme settings
-			if( !Workspace.themeData )
-			{
-			    Workspace.themeData = [];
-			}
-			
-			// Use sidebar engine
-			if( rdat && rdat.jsExtensionEngine && rdat.jsExtensionEngine == 'custom' )
-			{
-			    // Add loading flag here - the extension needs to unset them
-			    document.body.classList.add( 'SidebarLoading' );
-	    
-			    if( rdat.jsExtensionSrc )
+		function initThemeSettingsJson( num = 0 )
+		{
+		    let m = new File( 'System:../themes/' + themeName + '/settings.json' );
+		    m.onLoad = function( rdat )
+		    {	
+			    // Add resources for theme settings --------------------------------
+			    try
 			    {
-			    	if( !Workspace.dashboard )
-			    	{
-			    	    if( !Workspace.dashboardLoading )
-			    	    {
-			        	    let j = document.createElement( 'script' );
-					        j.src = rdat.jsExtensionSrc;
-					        j.onload = function( e )
-					        {
-					            if( !Workspace.dashboard )
-					            {
-					                Workspace.dashboard = new SidebarEngine();
-					                Workspace.dashboardLoading = null;
-					                //console.log( '[Login phase] Initialized sidebar engine!' );
-					            }
-					        }
-					        Workspace.dashboardLoading = j;
-					    
-					        // Append sidebar
-					        function loadScript()
-					        {
-					            if( j )
-					            {
-        					        document.body.appendChild( j );
-        					        j = null;
-        					    }
-					        }
-					        // Add locale optionally
-					        if( rdat.localeSrc )
-					        {
-					            loadScript = function()
-					            {
-					                if( rdat.localeSrc.substr( -1, 1 ) != '/' )
-					                    rdat.localeSrc += '/';
-					                i18nAddPath( rdat.localeSrc + self.locale + '.lang', function()
-					                {
-					                    if( j )
-					                    {
-        					                document.body.appendChild( j );
-        					                j = null;
-        					            }
-					                } );
-					            }
-					        }
-					        loadScript();
-					    }
-					    Workspace.themeData[ 'sidebarEngine' ] = true;
-					    Workspace.themeDataSet = true;
-					}
+			        rdat = JSON.parse( rdat );
+		        }
+		        catch( e )
+		        {
+		            console.log( 'Retrying, as we cannot read json from rdat: ', themeName, rdat );
+		            rdat = false;
+		            if( num == 0 )
+    		            return initThemeSettingsJson( num + 1 );
+		            return;
+		        }
+			    // Done resources theme settings -----------------------------------
+			    
+			    // Support theme data expansion directly from theme settings
+			    if( !Workspace.themeData )
+			    {
+			        Workspace.themeData = [];
 			    }
-			}
-			
-			Workspace.themeRefreshed = true;
-			Workspace.refreshUserSettings( function() 
-			{
-				//console.log( '[Login phase] Done refreshing user settings.' );
-				CheckScreenTitle();
+			    
+			    // Use sidebar engine
+			    if( rdat && rdat.jsExtensionEngine && rdat.jsExtensionEngine == 'custom' )
+			    {
+			        // Add loading flag here - the extension needs to unset them
+			        document.body.classList.add( 'SidebarLoading' );
+	        
+			        if( rdat.jsExtensionSrc )
+			        {
+			        	if( !Workspace.dashboard )
+			        	{
+			        	    if( !Workspace.dashboardLoading )
+			        	    {
+			            	    let j = document.createElement( 'script' );
+					            j.src = rdat.jsExtensionSrc;
+					            j.onload = function( e )
+					            {
+					                if( !Workspace.dashboard )
+					                {
+					                    Workspace.dashboard = new SidebarEngine();
+					                    Workspace.dashboardLoading = null;
+					                    //console.log( '[Login phase] Initialized sidebar engine!' );
+					                }
+					            }
+					            Workspace.dashboardLoading = j;
+					        
+					            // Append sidebar
+					            function loadScript()
+					            {
+					                if( j )
+					                {
+            					        document.body.appendChild( j );
+            					        j = null;
+            					    }
+					            }
+					            // Add locale optionally
+					            if( rdat.localeSrc )
+					            {
+					                loadScript = function()
+					                {
+					                    if( rdat.localeSrc.substr( -1, 1 ) != '/' )
+					                        rdat.localeSrc += '/';
+					                    i18nAddPath( rdat.localeSrc + self.locale + '.lang', function()
+					                    {
+					                        if( j )
+					                        {
+            					                document.body.appendChild( j );
+            					                j = null;
+            					            }
+					                    } );
+					                }
+					            }
+					            loadScript();
+					        }
+					        Workspace.themeData[ 'sidebarEngine' ] = true;
+					        Workspace.themeDataSet = true;
+					    }
+			        }
+			    }
+			    
+			    Workspace.themeRefreshed = true;
+			    Workspace.refreshUserSettings( function() 
+			    {
+				    //console.log( '[Login phase] Done refreshing user settings.' );
+				    CheckScreenTitle();
 
-				let h = document.getElementsByTagName( 'head' );
-				if( h )
-				{
-					h = h[0];
+				    let h = document.getElementsByTagName( 'head' );
+				    if( h )
+				    {
+					    h = h[0];
 
-					// Remove old one
-					let l = h.getElementsByTagName( 'link' );
-					let l2 = document.body.getElementsByTagName( 'link' );
-					function stripOld( test )
-					{
-						for( let b = 0; b < l.length; b++ )
-						{
-							if( l[b].href == test ) continue;
-							if( l[b].parentNode != h ) continue;
-							l[b].href = '';
-							l[b].parentNode.removeChild( l[b] );
-						}
-						// Remove scrollbars
-						for( let b = 0; b < l2.length; b++ )
-						{
-							if( l2[b].href == test ) continue;
-							if( l2[b].href.indexOf( '/scrollbars.css' ) > 0 )
-							{
-								l2[b].href = '';
-								l2[b].parentNode.removeChild( l2[b] );
-							}
-						}
-					}
-					
+					    // Remove old one
+					    let l = h.getElementsByTagName( 'link' );
+					    let l2 = document.body.getElementsByTagName( 'link' );
+					    function stripOld( test )
+					    {
+						    for( let b = 0; b < l.length; b++ )
+						    {
+							    if( l[b].href == test ) continue;
+							    if( l[b].parentNode != h ) continue;
+							    l[b].href = '';
+							    l[b].parentNode.removeChild( l[b] );
+						    }
+						    // Remove scrollbars
+						    for( let b = 0; b < l2.length; b++ )
+						    {
+							    if( l2[b].href == test ) continue;
+							    if( l2[b].href.indexOf( '/scrollbars.css' ) > 0 )
+							    {
+								    l2[b].href = '';
+								    l2[b].parentNode.removeChild( l2[b] );
+							    }
+						    }
+					    }
+					    
 
-					// New css!
-					let styles = document.createElement( 'link' );
-					styles.rel = 'stylesheet';
-					styles.type = 'text/css';
-					styles.onload = function()
-					{
-						// Remove old stuff
-						stripOld( this.href );
-						
-						document.body.classList.add( 'ThemeLoaded' );
-						//console.log( '[Login phase] Theme loaded!!' );
-						setTimeout( function()
-						{
-						    if( !document.body.classList.contains( 'SidebarLoading' ) )
-    							document.body.classList.remove( 'ThemeRefreshing' );
-						}, 50 );
-						// We are inside (wait for wallpaper) - watchdog
-						if( !Workspace.insideInterval )
-						{
-							let retries = 0;
-							Workspace.insideInterval = setInterval( function()
-							{
-							    // If we're still readjusting, wait a little
-        						if( !isMobile && window.outerHeight > 480 && document.body.offsetHeight < 480 )
-        						    return;
-        						
-        						if( parseInt( GetThemeInfo( 'ScreenTitle' ).height ) <= 0 )
-        						    return;
-        						
-								// If we're in VR, just immediately go in, or when wallpaper loaded or when we waited 5 secs
-								if( Workspace.mode == 'vr' || Workspace.wallpaperLoaded || retries++ > 100 )
-								{
-								    clearInterval( Workspace.insideInterval );
-									Workspace.insideInterval = null;
-								
-									// Set right classes
-									if( !Workspace.initializingWorkspaces )
-									{
-										if( !document.body.classList.contains( 'SidebarLoading' ) )
-    										Workspace.setLoading( false );
-									}
-									
-									document.title = Friend.windowBaseString;
-									
-									// Remove the overlay when inside
-									if( Workspace.screen )
-										Workspace.screen.hideOverlay();
-								
-									// Refresh widgets
-									Workspace.refreshExtraWidgetContents();
-								
-									// Redraw now
-									if( !isMobile )
-										DeepestField.redraw();
-									
-									if( location.hash && location.hash.indexOf( 'clean' ) ) Workspace.goDialogShown = true;
-									
-									// Show about dialog
-									if( !isMobile && window.go && !Workspace.goDialogShown )
-									{
-										AboutGoServer();
-										Workspace.goDialogShown = true;
-									}
-									
-									// Make sure we update icons...
-									Workspace.redrawIcons( 1 );
-									
-									// Update locale for download applet
-									if( ge( 'Tray' ) && ge( 'Tray' ).downloadApplet )
-									{
-										ge( 'Tray' ).downloadApplet.innerHTML = '<div class="BubbleInfo"><div>' + i18n( 'i18n_drag_files_to_download' ) + '.</div></div>';
-									}
-									// And the calendar applet
-									if( ge( 'Tray' ) && ge( 'Tray' ).calendarApplet )
-									{
-										ge( 'Tray' ).calendarApplet.innerHTML = '<div class="BubbleInfo"><div>' + i18n( 'i18n_add_calendar_event' ) + '.</div></div>';
-									}
-									
-									// New version of Friend?
-									if( Workspace.loginUsername != 'go' && !Workspace.dashboard )
-									{
-										if( !Workspace.friendVersion || Workspace.friendVersion != Workspace.systemInfo.FriendCoreVersion )
-										{
-											Workspace.upgradeWorkspaceSettings( function(){
-												setTimeout( function()
-												{
-													let n = Notify( 
-														{ 
-															title: 'Workspace was upgraded', 
-															text: 'Your Workspace and settings were upgraded to ' + Workspace.systemInfo.FriendCoreVersion + '.', 
-															sticky: true
-														}, 
-														false, 
-														function()
-														{
-															CloseNotification( n );
-														} 
-													);
-												}, 1000 );
-											} );
-										}
-									}
-									
-									// We are ready!
-									Workspace.readyToRun = true;
-									if( window.friendApp && friendApp.onWorkspaceReady )
-									{
-										friendApp.onWorkspaceReady();
-									}
-									else
-									{
-										Workspace.onReady();
-									}
-									Workspace.updateViewState( 'active' );
-								}
-							}, 50 );
-						}
-					
-						// Flush theme info
-						themeInfo.loaded = false;
-					
-						// Refresh them
-						Workspace.initWorkspaces();
-					
-						// Redraw icons if they are delayed
-						Workspace.redrawIcons();
-						
-						// Make sure screen dimensions are read
-						_kresize();
-					}
+					    // New css!
+					    let styles = document.createElement( 'link' );
+					    styles.rel = 'stylesheet';
+					    styles.type = 'text/css';
+					    styles.onload = function()
+					    {
+						    // Remove old stuff
+						    stripOld( this.href );
+						    
+						    document.body.classList.add( 'ThemeLoaded' );
+						    //console.log( '[Login phase] Theme loaded!!' );
+						    setTimeout( function()
+						    {
+						        if( !document.body.classList.contains( 'SidebarLoading' ) )
+        							document.body.classList.remove( 'ThemeRefreshing' );
+						    }, 50 );
+						    // We are inside (wait for wallpaper) - watchdog
+						    if( !Workspace.insideInterval )
+						    {
+							    let retries = 0;
+							    Workspace.insideInterval = setInterval( function()
+							    {
+							        // If we're still readjusting, wait a little
+            						if( !isMobile && window.outerHeight > 480 && document.body.offsetHeight < 480 )
+            						    return;
+            						
+            						if( parseInt( GetThemeInfo( 'ScreenTitle' ).height ) <= 0 )
+            						    return;
+            						
+								    // If we're in VR, just immediately go in, or when wallpaper loaded or when we waited 5 secs
+								    if( Workspace.mode == 'vr' || Workspace.wallpaperLoaded || retries++ > 100 )
+								    {
+								        clearInterval( Workspace.insideInterval );
+									    Workspace.insideInterval = null;
+								    
+									    // Set right classes
+									    if( !Workspace.initializingWorkspaces )
+									    {
+										    if( !document.body.classList.contains( 'SidebarLoading' ) )
+        										Workspace.setLoading( false );
+									    }
+									    
+									    document.title = Friend.windowBaseString;
+									    
+									    // Remove the overlay when inside
+									    if( Workspace.screen )
+										    Workspace.screen.hideOverlay();
+								    
+									    // Refresh widgets
+									    Workspace.refreshExtraWidgetContents();
+								    
+									    // Redraw now
+									    if( !isMobile )
+										    DeepestField.redraw();
+									    
+									    if( location.hash && location.hash.indexOf( 'clean' ) ) Workspace.goDialogShown = true;
+									    
+									    // Show about dialog
+									    if( !isMobile && window.go && !Workspace.goDialogShown )
+									    {
+										    AboutGoServer();
+										    Workspace.goDialogShown = true;
+									    }
+									    
+									    // Make sure we update icons...
+									    Workspace.redrawIcons( 1 );
+									    
+									    // Update locale for download applet
+									    if( ge( 'Tray' ) && ge( 'Tray' ).downloadApplet )
+									    {
+										    ge( 'Tray' ).downloadApplet.innerHTML = '<div class="BubbleInfo"><div>' + i18n( 'i18n_drag_files_to_download' ) + '.</div></div>';
+									    }
+									    // And the calendar applet
+									    if( ge( 'Tray' ) && ge( 'Tray' ).calendarApplet )
+									    {
+										    ge( 'Tray' ).calendarApplet.innerHTML = '<div class="BubbleInfo"><div>' + i18n( 'i18n_add_calendar_event' ) + '.</div></div>';
+									    }
+									    
+									    // New version of Friend?
+									    if( Workspace.loginUsername != 'go' && !Workspace.dashboard )
+									    {
+										    if( !Workspace.friendVersion || Workspace.friendVersion != Workspace.systemInfo.FriendCoreVersion )
+										    {
+											    Workspace.upgradeWorkspaceSettings( function(){
+												    setTimeout( function()
+												    {
+													    let n = Notify( 
+														    { 
+															    title: 'Workspace was upgraded', 
+															    text: 'Your Workspace and settings were upgraded to ' + Workspace.systemInfo.FriendCoreVersion + '.', 
+															    sticky: true
+														    }, 
+														    false, 
+														    function()
+														    {
+															    CloseNotification( n );
+														    } 
+													    );
+												    }, 1000 );
+											    } );
+										    }
+									    }
+									    
+									    // We are ready!
+									    Workspace.readyToRun = true;
+									    if( window.friendApp && friendApp.onWorkspaceReady )
+									    {
+										    friendApp.onWorkspaceReady();
+									    }
+									    else
+									    {
+										    Workspace.onReady();
+									    }
+									    Workspace.updateViewState( 'active' );
+								    }
+							    }, 50 );
+						    }
+					    
+						    // Flush theme info
+						    themeInfo.loaded = false;
+					    
+						    // Refresh them
+						    Workspace.initWorkspaces();
+					    
+						    // Redraw icons if they are delayed
+						    Workspace.redrawIcons();
+						    
+						    // Make sure screen dimensions are read
+						    _kresize();
+					    }
 
-					if( themeName && themeName != 'default' )
-					{
-						AddCSSByUrl( '/themes/' + themeName + '/scrollbars.css' );
-						styles.href = '/system.library/module/?module=system&command=theme&args=' + encodeURIComponent( '{"theme":"' + themeName + '"}' ) + '&sessionid=' + Workspace.sessionId;
-					}
-					else
-					{
-						AddCSSByUrl( '/themes/friendup12/scrollbars.css' );
-						styles.href = '/system.library/module/?module=system&command=theme&args=' + encodeURIComponent( '{"theme":"friendup12"}' ) + '&sessionid=' + Workspace.sessionId;
-					}
+					    if( themeName && themeName != 'default' )
+					    {
+						    AddCSSByUrl( '/themes/' + themeName + '/scrollbars.css' );
+						    styles.href = '/system.library/module/?module=system&command=theme&args=' + encodeURIComponent( '{"theme":"' + themeName + '"}' ) + '&sessionid=' + Workspace.sessionId;
+					    }
+					    else
+					    {
+						    AddCSSByUrl( '/themes/friendup12/scrollbars.css' );
+						    styles.href = '/system.library/module/?module=system&command=theme&args=' + encodeURIComponent( '{"theme":"friendup12"}' ) + '&sessionid=' + Workspace.sessionId;
+					    }
 
-					// Add new one
-					h.appendChild( styles );
-					
-					// Constrain all windows
-					ConstrainWindows();
-				}
+					    // Add new one
+					    h.appendChild( styles );
+					    
+					    // Constrain all windows
+					    ConstrainWindows();
+				    }
 
-				// Update running applications
-				let taskIframes = ge( 'Tasks' ).getElementsByClassName( 'AppSandbox' );
-				for( let a = 0; a < taskIframes.length; a++ )
-				{
-					let msg = {
-						type: 'system',
-						command: 'refreshtheme',
-						theme: themeName
-					};
-					if( themeConfig )
-						msg.themeData = themeConfig;
-					taskIframes[a].ifr.contentWindow.postMessage( JSON.stringify( msg ), '*' );
-				}
-		
-				// Flush theme info
-				themeInfo.loaded = false;
-			} );
-		}
-		m.load();
+				    // Update running applications
+				    let taskIframes = ge( 'Tasks' ).getElementsByClassName( 'AppSandbox' );
+				    for( let a = 0; a < taskIframes.length; a++ )
+				    {
+					    let msg = {
+						    type: 'system',
+						    command: 'refreshtheme',
+						    theme: themeName
+					    };
+					    if( themeConfig )
+						    msg.themeData = themeConfig;
+					    taskIframes[a].ifr.contentWindow.postMessage( JSON.stringify( msg ), '*' );
+				    }
+		    
+				    // Flush theme info
+				    themeInfo.loaded = false;
+			    } );
+		    }
+		    m.load();
+	    }
+	    initThemeSettingsJson();
 	},
 	// Check for new desktop events too!
 	checkDesktopEvents: function()
