@@ -663,6 +663,11 @@ Friend.User = {
 				{
 					Workspace.initWebSocket();
 				}
+				else if( !Workspace.initWebSocket )
+				{
+				    console.log( 'Retrying to initialize.' );
+				    return setTimeout( function(){ Friend.User.SetUserConnectionState( mode, force ); }, 25 );
+				}
 				else
 				{
 					console.log( 'We have a kind of conn: ', Workspace.conn, Workspace.conn ? Workspace.conn.ws : false );
