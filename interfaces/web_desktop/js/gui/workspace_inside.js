@@ -3978,7 +3978,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		m.onLoad = function( rdat )
 		{	
 			// Add resources for theme settings --------------------------------
-			rdat = JSON.parse( rdat );
+			try
+			{
+			    rdat = JSON.parse( rdat );
+		    }
+		    catch( e )
+		    {
+		        console.log( 'We cannot read json from rdat: ', rdat );
+		        rdat = false;
+		    }
 			// Done resources theme settings -----------------------------------
 			
 			// Support theme data expansion directly from theme settings
@@ -3988,7 +3996,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			
 			// Use sidebar engine
-			if( rdat.jsExtensionEngine && rdat.jsExtensionEngine == 'custom' )
+			if( rdat && rdat.jsExtensionEngine && rdat.jsExtensionEngine == 'custom' )
 			{
 			    // Add loading flag here - the extension needs to unset them
 			    document.body.classList.add( 'SidebarLoading' );
