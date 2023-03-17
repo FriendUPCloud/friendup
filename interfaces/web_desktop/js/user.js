@@ -659,7 +659,7 @@ Friend.User = {
 				if( Workspace.refreshDesktop )
 					Workspace.refreshDesktop( true, false );
 				// Try to reboot the websocket
-				if( !Workspace.conn && Workspace.initWebSocket )
+				if( ( !Workspace.conn || Workspace.conn == null ) && Workspace.initWebSocket )
 				{
 					Workspace.initWebSocket();
 				}
