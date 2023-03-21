@@ -41,6 +41,12 @@ int killUserSession( UserSession *ses, FBOOL remove )
 	char tmpmsg[ 2048 ];
 	int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
 	
+	if( ses == NULL )
+	{
+		DEBUG("[UMWebRequest] killSession session is NULL\n");
+		return 1;
+	}
+	
 	int msgsndsize = WebSocketSendMessageInt( ses, tmpmsg, lenmsg );
 	
 	char *uname = NULL;
@@ -48,8 +54,8 @@ int killUserSession( UserSession *ses, FBOOL remove )
 	{
 		uname = ses->us_User->u_Name;
 	}
-		
-	DEBUG("[UMWebRequest] user %s session %s will be removed by user %s msglength %d\n", uname, ses->us_SessionID, uname, msgsndsize );
+	
+	DEBUG("[UMWebRequest] killSession user %s session %s will be removed by user %s msglength %d\n", uname, ses->us_SessionID, uname, msgsndsize );
 	
 	// set flag to WS connection "te be killed"
 	if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
