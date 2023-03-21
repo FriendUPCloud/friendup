@@ -502,6 +502,17 @@ if( $args->command )
 							
 								if( isset( $args->args->groupId ) && !$found ) continue;
 							
+							    $gname = '';
+							    
+							    if( $group = $SqlDatabase->FetchObject( '
+					                SELECT ID, Name FROM FUserGroup 
+					                WHERE Type = "Workgroup" AND ID=\'' .  $obj->TargetGroupID . '\' 
+					                ORDER BY ID ASC 
+				                ' ) )
+				                {
+					                $gname = $group->Name;
+				                }
+							
 								$obj = new stdClass();
 								$obj->Hash          = $f->Hash;
 								$obj->EventID       = 0;
@@ -511,7 +522,7 @@ if( $args->command )
 								$obj->Fullname      = ( isset( $json->contact->FullName ) ? $json->contact->FullName : false                                );
 								$obj->Email         = ( isset( $json->contact->Email    ) ? $json->contact->Email    : false                                );
 								$obj->LinkUrl       = $baseUrl . '/webclient/index.html#invite=' . $f->Hash . 'BASE64' . 
-														base64_encode( '{"user":"' . utf8_decode( $User->FullName ) . '","hash":"' . $f->Hash . '"}' );
+														base64_encode( '{"user":"' . utf8_decode( $User->FullName ) . '","hash":"' . $f->Hash . '","group":"' . $gname . '"}' );
 								$out[] = $obj;
 							}
 						}

@@ -1177,7 +1177,7 @@ Workspace = {
 									{
 										_this.refreshTheme( false, false );
 									}
-									console.log( 'We got a theme: ' + s.Theme );
+									//console.log( 'We got a theme: ' + s.Theme );
 									_this.mimeTypes = s.Mimetypes;
 								}
 								else _this.refreshTheme( false, false );
