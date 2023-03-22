@@ -513,17 +513,7 @@ if( $args->command )
 								$obj->Fullname      = ( isset( $json->contact->FullName ) ? $json->contact->FullName : false                                );
 								$obj->Email         = ( isset( $json->contact->Email    ) ? $json->contact->Email    : false                                );
 								
-<<<<<<< HEAD
-							    $groupName = '';
-								$group = $SqlDatabase->fetchObject( 'SELECT * FROM FUserGroup WHERE ID=\'' . $obj->TargetGroupID . '\'' );
-								if( $group )
-								    $groupName = $group->Name;
-								
-								
-								$obj->LinkUrl       = $baseUrl . '/webclient/index.html#invite=' . $f->Hash . 'BASE64' . 
-														base64_encode( '{"user":"' . utf8_decode( $User->FullName ) . '","hash":"' . $f->Hash . '","group":"' . $groupName . '"}' );
-=======
-								if( $group = $SqlDatabase->FetchObject( '
+							    if( $group = $SqlDatabase->FetchObject( '
 					                SELECT ID, Name FROM FUserGroup 
 					                WHERE Type = "Workgroup" AND ID=\'' .  $obj->TargetGroupID . '\' 
 					                ORDER BY ID ASC 
@@ -534,7 +524,7 @@ if( $args->command )
 								
 								$obj->LinkUrl       = $baseUrl . '/webclient/index.html#invite=' . $f->Hash . 'BASE64' . 
 														base64_encode( '{"user":"' . utf8_decode( $User->FullName ) . '","hash":"' . $f->Hash . '","group":"' . $gname . '"}' );
->>>>>>> release/1.3.0
+
 								$out[] = $obj;
 							}
 						}
