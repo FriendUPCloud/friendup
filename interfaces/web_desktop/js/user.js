@@ -659,9 +659,14 @@ Friend.User = {
 				if( Workspace.refreshDesktop )
 					Workspace.refreshDesktop( true, false );
 				// Try to reboot the websocket
-				if( !Workspace.conn && Workspace.initWebSocket )
+				if( ( !Workspace.conn || Workspace.conn == null ) && Workspace.initWebSocket )
 				{
 					Workspace.initWebSocket();
+				}
+				else if( !Workspace.initWebSocket )
+				{
+				    console.log( 'Retrying to initialize.' );
+				    return setTimeout( function(){ Friend.User.SetUserConnectionState( mode, force ); }, 25 );
 				}
 				else
 				{
