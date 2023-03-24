@@ -327,10 +327,6 @@ if( isset( $args->command ) )
 		case 'getmetadata':
 			require( 'modules/system/include/getmetadata.php' );
 			break;
-		// Register the client login
-		case 'registerlogin':
-		    require( 'modules/system/include/registerlogin.php' );
-			break;
 		// Get server logs
 		case 'getlogs':
 			require( 'modules/system/include/getlogs.php' );
