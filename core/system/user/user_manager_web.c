@@ -47,6 +47,19 @@ int killUserSession( UserSession *ses, FBOOL remove )
 		return 1;
 	}
 	
+	// set flag to WS connection "te be killed"
+	if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
+	{
+		if( ses->us_WSD != NULL )
+		{
+			ses->us_WebSocketStatus = WEBSOCKET_SERVER_CLIENT_TO_BE_KILLED;
+		}
+		
+		ses->us_InUseCounter++;
+		
+		FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
+	}
+	
 	int msgsndsize = WebSocketSendMessageInt( ses, tmpmsg, lenmsg );
 	
 	char *uname = NULL;
@@ -56,16 +69,6 @@ int killUserSession( UserSession *ses, FBOOL remove )
 	}
 	
 	DEBUG("[UMWebRequest] killSession user %s session %s will be removed by user %s msglength %d\n", uname, ses->us_SessionID, uname, msgsndsize );
-	
-	// set flag to WS connection "te be killed"
-	if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
-	{
-		if( ses->us_WSD != NULL )
-		{
-			ses->us_WebSocketStatus = WEBSOCKET_SERVER_CLIENT_TO_BE_KILLED;
-		}
-		FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
-	}
 	
 	// wait till queue will be empty
 	while( TRUE )
@@ -86,8 +89,79 @@ int killUserSession( UserSession *ses, FBOOL remove )
 	{
 		ses->us_Status = USER_SESSION_STATUS_TO_REMOVE;
 	}
+	
+	if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
+	{
+		ses->us_InUseCounter--;
+		
+		FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
+	}
+	
 	return error;
 }
+
+/*
+0000000001e76d0 <killUserSession>:
+  1e76d0:       f3 0f 1e fa             endbr64 
+  1e76d4:       55                      push   %rbp
+  1e76d5:       48 89 e5                mov    %rsp,%rbp
+  1e76d8:       48 81 ec 40 08 00 00    sub    $0x840,%rsp
+  1e76df:       48 89 bd c8 f7 ff ff    mov    %rdi,-0x838(%rbp)
+  1e76e6:       89 f0                   mov    %esi,%eax
+  1e76e8:       88 85 c4 f7 ff ff       mov    %al,-0x83c(%rbp)
+  1e76ee:       64 48 8b 04 25 28 00    mov    %fs:0x28,%rax
+  1e76f5:       00 00 
+  1e76f7:       48 89 45 f8             mov    %rax,-0x8(%rbp)
+  1e76fb:       31 c0                   xor    %eax,%eax
+  1e76fd:       c7 85 dc f7 ff ff 00    movl   $0x0,-0x824(%rbp)
+  1e7704:       00 00 00 
+  1e7707:       48 8d 85 f0 f7 ff ff    lea    -0x810(%rbp),%rax
+  1e770e:       48 8d 35 eb e3 2c 00    lea    0x2ce3eb(%rip),%rsi        # 4b5b00 <__func__.31795+0x720>
+  1e7715:       48 89 c7                mov    %rax,%rdi
+  1e7718:       b8 00 00 00 00          mov    $0x0,%eax
+  1e771d:       e8 ce 99 f6 ff          callq  1510f0 <sprintf@plt>
+  1e7722:       89 85 e0 f7 ff ff       mov    %eax,-0x820(%rbp)
+  1e7728:       8b 95 e0 f7 ff ff       mov    -0x820(%rbp),%edx
+  1e772e:       48 8d 8d f0 f7 ff ff    lea    -0x810(%rbp),%rcx
+  1e7735:       48 8b 85 c8 f7 ff ff    mov    -0x838(%rbp),%rax
+  1e773c:       48 89 ce                mov    %rcx,%rsi
+  1e773f:       48 89 c7                mov    %rax,%rdi
+  1e7742:       e8 f2 0d fc ff          callq  1a8539 <WebSocketSendMessageInt>
+  1e7747:       89 85 e4 f7 ff ff       mov    %eax,-0x81c(%rbp)
+  1e774d:       48 c7 85 e8 f7 ff ff    movq   $0x0,-0x818(%rbp)
+  1e7754:       00 00 00 00 
+  1e7758:       48 8b 85 c8 f7 ff ff    mov    -0x838(%rbp),%rax
+  1e775f:       48 8b 40 78             mov    0x78(%rax),%rax
+  1e7763:       48 85 c0                test   %rax,%rax
+  1e7766:       74 16                   je     1e777e <killUserSession+0xae>
+  1e7768:       48 8b 85 c8 f7 ff ff    mov    -0x838(%rbp),%rax
+  1e776f:       48 8b 40 78             mov    0x78(%rax),%rax
+  1e7773:       48 8b 40 18             mov    0x18(%rax),%rax
+  1e7777:       48 89 85 e8 f7 ff ff    mov    %rax,-0x818(%rbp)
+  1e777e:       e8 0d 93 f6 ff          callq  150a90 <pthread_self@plt>
+  1e7783:       48 89 c1                mov    %rax,%rcx
+  1e7786:       ba 34 00 00 00          mov    $0x34,%edx
+  1e778b:       48 8d 35 b6 e3 2c 00    lea    0x2ce3b6(%rip),%rsi        # 4b5b48 <__func__.31795+0x768>
+  1e7792:       48 8d 3d ce e3 2c 00    lea    0x2ce3ce(%rip),%rdi        # 4b5b67 <__func__.31795+0x787>
+  1e7799:       b8 00 00 00 00          mov    $0x0,%eax
+  1e779e:       e8 4d 89 f6 ff          callq  1500f0 <printf@plt>
+  1e77a3:       48 8b 85 c8 f7 ff ff    mov    -0x838(%rbp),%rax
+  1e77aa:       48 8b 50 50             mov    0x50(%rax),%rdx
+  1e77ae:       8b b5 e4 f7 ff ff       mov    -0x81c(%rbp),%esi
+  1e77b4:       48 8b 8d e8 f7 ff ff    mov    -0x818(%rbp),%rcx
+  1e77bb:       48 8b 85 e8 f7 ff ff    mov    -0x818(%rbp),%rax
+  1e77c2:       41 89 f0                mov    %esi,%r8d
+  1e77c5:       48 89 c6                mov    %rax,%rsi
+  1e77c8:       48 8d 3d b1 e3 2c 00    lea    0x2ce3b1(%rip),%rdi        # 4b5b80 <__func__.31795+0x7a0>
+  1e77cf:       b8 00 00 00 00          mov    $0x0,%eax
+  1e77d4:       e8 17 89 f6 ff          callq  1500f0 <printf@plt>
+  1e77d9:       48 8b 85 c8 f7 ff ff    mov    -0x838(%rbp),%rax
+  1e77e0:       48 83 c0 18             add    $0x18,%rax
+  1e77e4:       48 89 c7                mov    %rax,%rdi
+  1e77e7:       e8 64 8c f6 ff          callq  150450 <pthread_mutex_lock@plt>
+  1e77ec:       85 c0                   test   %eax,%eax
+
+ */
 
 /**
  * Kill user session by user and device id
