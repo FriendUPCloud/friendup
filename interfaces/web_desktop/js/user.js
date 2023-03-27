@@ -222,10 +222,6 @@ Friend.User = {
 					{
                 		// Init workspace
 						Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
-						// Register login client
-						let m = new Module( 'system' );
-						m.forceHTTP = true;
-						m.execute( 'registerlogin', { userId: json.userid, type: isMobile ? 'mobile' : 'desktop' } );
 					}
 					else
 					{
