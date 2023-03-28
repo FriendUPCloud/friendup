@@ -1063,6 +1063,8 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 	UserSession *sessionToDelete;
 	while( ( sessionToDelete = USMGetSessionByUserID( userSessionManager, userId ) ) != NULL )
 	{
+		USERSESSION_LOCK( sessionToDelete );
+		
 		DEBUG("[UMRemoveAndDeleteUser] user in use1 %d\n", usr->u_InUse );
 		
 		USMUserSessionRemove( sb->sl_USM, sessionToDelete );
@@ -1080,6 +1082,8 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 		
 		//int status = USMUserSessionRemove( userSessionManager, sessionToDelete );
 		//DEBUG("%s removing session at %p, status %d\n", __func__, sessionToDelete, status);
+		
+		USERSESSION_UNLOCK( sessionToDelete );
 	}
 	UserRemoveConnectedSessions( usr, FALSE );
 	
