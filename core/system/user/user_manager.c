@@ -1056,6 +1056,46 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 	
 	DEBUG("[UMRemoveAndDeleteUser] remove user\n");
 	
+	USER_CHANGE_ON( usr );
+
+	UserSessListEntry *us = (UserSessListEntry *)usr->u_SessionsList;
+	UserSessListEntry *delus = us;
+	
+	while( us != NULL )
+	{
+		delus = us;
+		us = (UserSessListEntry *)us->node.mln_Succ;
+		
+
+		UserSession *locses = (UserSession *)delus->us;
+		
+		//
+		DEBUG("[UMRemoveAndDeleteUser] user in use1 %d\n", usr->u_InUse );
+		
+		USMUserSessionRemove( sb->sl_USM, locses );
+		
+		DEBUG("[UMRemoveAndDeleteUser] user in use2 %d\n", usr->u_InUse );
+		
+		killUserSession( um->um_SB, locses, FALSE );
+		
+		DEBUG("[UMRemoveAndDeleteUser] user in use3 %d\n", usr->u_InUse );
+		
+		// we must remove session from user otherwise it will go into infinite loop
+		//UserRemoveSession( usr, locses );
+		//
+		
+		locses->us_User = NULL;
+		FFree( delus );
+	}
+		usr->u_SessionsList = NULL;
+
+	USER_CHANGE_OFF( usr );
+	
+	//
+	// Old version
+	//
+	
+	/*
 	FULONG userId = usr->u_ID;
 
 	//UserRemoveConnectedSessions( usr, FALSE );
@@ -1063,6 +1103,11 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 	UserSession *sessionToDelete;
 	while( ( sessionToDelete = USMGetSessionByUserID( userSessionManager, userId ) ) != NULL )
 	{
+		if( sessionToDelete->us_Status == USER_SESSION_STATUS_TO_REMOVE )
+		{
+			DEBUG("[UMRemoveAndDeleteUser] session will be deleted\n");
+			continue;
+		}
 		USERSESSION_LOCK( sessionToDelete );
 		
 		DEBUG("[UMRemoveAndDeleteUser] user in use1 %d\n", usr->u_InUse );
@@ -1087,12 +1132,15 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 	}
 	UserRemoveConnectedSessions( usr, FALSE );
 	
+	
 	DEBUG("[UMRemoveAndDeleteUser] user in use5 %d\n", usr->u_InUse );
 
-	unsigned int n = 0;
-	FBOOL found = FALSE;
+	
 	
 	USER_MANAGER_CHANGE_ON( um );
+	*/
+	FBOOL found = FALSE;
+	unsigned int n = 0;
 	
 	userCurrent = um->um_Users;
 	while( userCurrent != NULL )

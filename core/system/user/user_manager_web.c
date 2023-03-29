@@ -41,9 +41,9 @@ int killUserSession( UserSession *ses, FBOOL remove )
 	char tmpmsg[ 2048 ];
 	int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
 	
-	if( ses == NULL )
+	if( ses == NULL || ses->us_Status == USER_SESSION_STATUS_TO_REMOVE )
 	{
-		DEBUG("[UMWebRequest] killSession session is NULL\n");
+		DEBUG("[UMWebRequest] killSession session is NULL or will be removed shortly\n");
 		return 1;
 	}
 	
@@ -877,7 +877,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							
 							l->UserDeviceUnMount( l, usr, loggedSession );
 							
-							DEBUG( "[UMWebRequest] UMRemoveAndDeleteUser %d!\n", usr->u_InUse );
+							DEBUG( "[UMWebRequest] UMRemoveAndDeleteUser in use %d userid %ld!\n", usr->u_InUse, usr->u_ID );
 							UMRemoveAndDeleteUser( l->sl_UM, usr, ((SystemBase*)m)->sl_USM);
 						}
 						
