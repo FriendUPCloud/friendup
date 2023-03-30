@@ -174,6 +174,7 @@ if( 1==1/* || $rolePermission || $level == 'Admin' || $uid == $User->ID*/ )
 				if( $wgs = $SqlDatabase->FetchObjects( '
 					SELECT 
 						g.ID, 
+						g.UniqueID,
 						g.ParentID, 
 						g.Name, 
 						ug.UserID '
@@ -234,6 +235,7 @@ if( 1==1/* || $rolePermission || $level == 'Admin' || $uid == $User->ID*/ )
 				if( !$userinfo->Workgroup && ( $wgs = $SqlDatabase->FetchObjects( '
 					SELECT
 						g.ID, 
+						g.UniqueID AS `GroupId`,
 						g.ParentID, 
 						g.Name AS `Workgroup`
 					FROM
@@ -246,11 +248,12 @@ if( 1==1/* || $rolePermission || $level == 'Admin' || $uid == $User->ID*/ )
 				' ) ) )
 				{
 					$ugs = array();
-
+					$uis = array();
 					foreach( $wgs as $wg )
 					{
 						$gds = ( $gds ? ( $gds . ',' . $wg->ID ) : $wg->ID );
 						$ugs[] = $wg->Workgroup;
+						$uis[] = $wg->GroupId;
 					}
 			
 					$userinfo->Workgroup = $wgs;
@@ -258,6 +261,11 @@ if( 1==1/* || $rolePermission || $level == 'Admin' || $uid == $User->ID*/ )
 					if( $ugs )
 					{
 						$userinfo->Workgroup = implode( ', ', $ugs );
+					}
+					
+					if( $uis )
+					{
+						$userinfo->WorkgroupIds = $uis;
 					}
 				}
 				
@@ -286,6 +294,7 @@ if( 1==1/* || $rolePermission || $level == 'Admin' || $uid == $User->ID*/ )
 		if( $userinfo->Status == 1 )
 		{
 			$userinfo->Workgroup = '';
+			$userinfo->WorkgroupIDs = '';
 		}
 		
 		$gds = false;
