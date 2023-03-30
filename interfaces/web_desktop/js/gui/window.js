@@ -1213,6 +1213,7 @@ function _ActivateDialogWindow( div, e )
 var _activationTarget = null;
 function _ActivateWindow( div, nopoll, e )
 {
+    let titl = div.windowObject ? div.windowObject.getFlag( 'title' ) : 'unknown';
     if( div.windowObject && div.windowObject.getFlag( 'invisible' ) == true ) return;
     if( div.parentNode && div.parentNode.classList.contains( 'Closing' ) ) return;
     

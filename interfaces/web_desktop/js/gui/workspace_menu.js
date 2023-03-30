@@ -467,7 +467,7 @@ var WorkspaceMenu =
 				menudiv.innerHTML = '';
 			}
 			
-			if( isMobile && ( appid || ( currentMovable && currentMovable.content.directoryview ) ) )
+			if( isMobile && ( appid || ( currentMovable && currentMovable.content && currentMovable.content.directoryview ) ) )
 			{
 				let found = false;
 				for( var z = 0; z < menuItems.length; z++ )

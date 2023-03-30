@@ -2180,6 +2180,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		for( let a = 0; a < icons.length; a++ )
 		{
 			let fn = icons[a].Filename ? icons[a].Filename : icons[a].Title;
+			if( !fn || !fn.substr ) continue;
 			
 			// Skip dot files
 			if( !self.showHiddenFiles && fn.substr( 0, 1 ) == '.' ) continue;
@@ -2189,7 +2190,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 				continue;
 			}
 			// Skip backup files
-			else if( !self.showHiddenFiles && fn.substr( fn.length - 4, 4 ) == '.bak' )
+			else if( !self.showHiddenFiles && fn && fn.substr( fn.length - 4, 4 ) == '.bak' )
 				continue;
 			else if( fn.substr( fn.length - 5, 5 ) == '.info' )
 				infoIcons[ fn ] = true;
@@ -2232,8 +2233,11 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		 		Type: icons[a].Type
 		 	};
 		 	
+		 	// File is broken
+            if( !fn.Filename || ( fn.Filename && !fn.Filename.substr ) ) continue;
+		 	
 		 	// Skip dot files
-			if( !self.showHiddenFiles && fn.Filename.substr( 0, 1 ) == '.' ) continue;
+			if( !self.showHiddenFiles && fn.Filename && fn.Filename.substr( 0, 1 ) == '.' ) continue;
 			
 			// Skip files with wrong suffix
 			else if( icons[a].Type == 'File' && self.suffix && !self.checkSuffix( fn ) )
@@ -2242,7 +2246,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 			}
 			
 			// Skip backup files
-			else if( !self.showHiddenFiles && fn.Filename.substr( fn.Filename.length - 4, 4 ) == '.bak' )
+			else if( !self.showHiddenFiles && fn.Filename && fn.Filename.substr( fn.Filename.length - 4, 4 ) == '.bak' )
 				continue;
 
 			// Only show orphan .info files
