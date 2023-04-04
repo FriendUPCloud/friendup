@@ -136,6 +136,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			if( Friend.singleInstanceApps && Friend.singleInstanceApps[ appName ] )
 			{
 				Friend.singleInstanceApps[ appName ].sendMessage( args );
+				console.log( 'Tried to post message directly to running app: ', appName, args );
 			}
 		}
 		return;
