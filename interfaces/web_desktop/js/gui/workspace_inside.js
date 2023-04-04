@@ -11539,7 +11539,7 @@ Workspace.pushTrashcan = {};
 // Receive push notification (when a user clicks native push notification on phone)
 Workspace.receivePush = function( jsonMsg, ready )
 {
-	//console.log( 'Workspace.receivePush', jsonMsg );
+	console.log( 'Workspace.receivePush (' + ( new Date() ).getTime() + '):', jsonMsg );
 	if( !isMobile ) return 'mobile';
 	let msg = jsonMsg ? jsonMsg : ( window.friendApp && typeof friendApp.get_notification == 'function' ? friendApp.get_notification() : false );
 
