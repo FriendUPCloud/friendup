@@ -130,6 +130,14 @@ function ExecuteApplication( app, args, callback, retries, flags )
 		});
 		if( callback )
 			callback( false, { response: false, message: 'Already run.', data: 'executed' } );
+		// Send message to already running app
+		if( args )
+		{
+			if( Friend.singleInstanceApps && Friend.singleInstanceApps[ appName ] )
+			{
+				Friend.singleInstanceApps[ appName ].sendMessage( args );
+			}
+		}
 		return;
 	}
 
