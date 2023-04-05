@@ -1123,11 +1123,9 @@ function apiWrapper( event, force )
 							// If we have a viable door, use it
 							if( door )
 							{
-								console.log( 'door', door )
 								for (var a = 0; a < msg.data.length; a++)
 								{
 									msg.data[a].Dormant = door;
-									console.log( 'add to thing', msg.data )
 								}
 								runWrapperCallback( msg.callbackId, msg.data );
 							}
@@ -1259,7 +1257,8 @@ function apiWrapper( event, force )
 								var command = fnObj.Title || fnObj.Filename;
 								var id = addWrapperCallback( data =>
 								{
-									if ( data && callback )
+									
+									if ( callback )
 										callback( null, data );
 									//
 								});
