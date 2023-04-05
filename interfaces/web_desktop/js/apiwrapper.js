@@ -62,15 +62,6 @@ function getWrapperCallback( uniqueId )
 // Run a callback and remove from list
 function runWrapperCallback( uniqueId, data )
 {
-	if ( null == data )
-	{
-		console.log( 'runWrapperCallback', {
-			cid   : uniqueId,
-			data  : data,
-			backs : apiWrapperCallbacks,
-		})
-	}
-	
 	if( typeof( apiWrapperCallbacks[uniqueId] ) == 'function' )
 	{
 		apiWrapperCallbacks[uniqueId]( data );
@@ -1046,7 +1037,6 @@ function apiWrapper( event, force )
 			// 2: pull from other exposed apps
 			// - is it possible for applicationId to leak to other applications?
 			case 'dormantmaster':
-				console.log( 'dormant msg', msg );
 				switch( msg.method )
 				{
 					case 'execute':
