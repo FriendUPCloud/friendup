@@ -62,6 +62,15 @@ function getWrapperCallback( uniqueId )
 // Run a callback and remove from list
 function runWrapperCallback( uniqueId, data )
 {
+	if ( null == data )
+	{
+		console.log( 'runWrapperCallback', {
+			cid   : uniqueId,
+			data  : data,
+			backs : apiWrapperCallbacks,
+		})
+	}
+	
 	if( typeof( apiWrapperCallbacks[uniqueId] ) == 'function' )
 	{
 		apiWrapperCallbacks[uniqueId]( data );
@@ -1118,6 +1127,7 @@ function apiWrapper( event, force )
 								for (var a = 0; a < msg.data.length; a++)
 								{
 									msg.data[a].Dormant = door;
+									console.log( 'add to thing', msg.data )
 								}
 								runWrapperCallback( msg.callbackId, msg.data );
 							}
