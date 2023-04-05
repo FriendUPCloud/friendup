@@ -124,6 +124,22 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	// You need to wait with opening apps until they are loaded by app name
 	if( _executionQueue[ appName ] )
 	{
+		// Send message to already running app
+		if( args )
+		{
+			if( Friend.singleInstanceApps && Friend.singleInstanceApps[ appName ] )
+			{
+				let nmsg = {
+					command: 'cliarguments',
+					args: args
+				};
+				Friend.singleInstanceApps[ appName ].contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+				console.log( 'Tried to post message directly to running single instance app: ', appName, args );
+				if( callback )
+					callback( false, { response: false, message: 'Already run.', data: 'executed' } );
+				return;
+			}
+		}
 		console.log( 'ExecuteApplication - app found in execution queue', {
 			app   : app,
 			queue : _executionQueue,
