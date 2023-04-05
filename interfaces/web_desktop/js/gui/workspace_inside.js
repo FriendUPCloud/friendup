@@ -11725,7 +11725,11 @@ Workspace.receivePush = function( jsonMsg, ready )
 		
 			console.log( ' Sendtoapp: ' + JSON.stringify( amsg ) );
 		
-			app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+			//app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+			setTimeout( function()
+			{
+				app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+			}, 2000 );
 		
 			// Delete wrapper callback if it isn't executed within 1 second
 			setTimeout( function()
