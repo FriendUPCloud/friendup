@@ -1039,6 +1039,8 @@ function apiWrapper( event, force )
 			case 'dormantmaster':
 				switch( msg.method )
 				{
+					
+					console.log( 'dormant msg', msg )
 					case 'execute':
 
 						//find the door
@@ -1102,10 +1104,10 @@ function apiWrapper( event, force )
 						if( msg.data )
 						{
 							//find our door
-							var door = false;
-							for (var a = 0; a < DormantMaster.appDoors.length; a++)
+							let door = false
+							for (var a = 0; a < DormantMaster.appDoors.length; a++ )
 							{
-								if (DormantMaster.appDoors[a].doorId == msg.doorId)
+								if (DormantMaster.appDoors[a].doorId == msg.doorId )
 								{
 									door = DormantMaster.appDoors[a];
 								}
@@ -1113,6 +1115,7 @@ function apiWrapper( event, force )
 							// If we have a viable door, use it
 							if( door )
 							{
+								console.log( 'door', door )
 								for (var a = 0; a < msg.data.length; a++)
 								{
 									msg.data[a].Dormant = door;
