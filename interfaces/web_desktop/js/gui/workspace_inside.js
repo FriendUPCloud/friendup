@@ -11723,7 +11723,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 				data: msg
 			};
 		
-			console.log( ' Sendtoapp: ' + JSON.stringify( msg ) );
+			console.log( ' Sendtoapp: ' + JSON.stringify( amsg ) );
 		
 			app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 		
