@@ -1037,10 +1037,9 @@ function apiWrapper( event, force )
 			// 2: pull from other exposed apps
 			// - is it possible for applicationId to leak to other applications?
 			case 'dormantmaster':
+				console.log( 'dormant msg', msg );
 				switch( msg.method )
 				{
-					
-					console.log( 'dormant msg', msg )
 					case 'execute':
 
 						//find the door
