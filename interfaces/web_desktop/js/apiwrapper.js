@@ -3548,9 +3548,13 @@ function apiWrapper( event, force )
 						break;
 					case 'alert':
 						let alerv = Alert( msg.title, msg.string );
-						app.windows[ alerv.viewId ] = alerv;
-						if( msg.applicationId )
-							alerv.applicationId = msg.applicationId;
+						if( alerv )
+						{
+							if( alerv && alerv.viewId )
+								app.windows[ alerv.viewId ] = alerv;
+							if( msg.applicationId )
+								alerv.applicationId = msg.applicationId;
+						}
 						break;
 					case 'confirm':
 						var nmsg = {};
