@@ -1102,10 +1102,10 @@ function apiWrapper( event, force )
 						if( msg.data )
 						{
 							//find our door
-							var door = false;
-							for (var a = 0; a < DormantMaster.appDoors.length; a++)
+							let door = false
+							for (var a = 0; a < DormantMaster.appDoors.length; a++ )
 							{
-								if (DormantMaster.appDoors[a].doorId == msg.doorId)
+								if (DormantMaster.appDoors[a].doorId == msg.doorId )
 								{
 									door = DormantMaster.appDoors[a];
 								}
@@ -1247,7 +1247,8 @@ function apiWrapper( event, force )
 								var command = fnObj.Title || fnObj.Filename;
 								var id = addWrapperCallback( data =>
 								{
-									if ( data && callback )
+									
+									if ( callback )
 										callback( null, data );
 									//
 								});
