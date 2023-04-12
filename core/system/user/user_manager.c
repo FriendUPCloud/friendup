@@ -1053,21 +1053,19 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 	User *userPrevious = NULL; //previous element of the linked list
 	SystemBase *sb = (SystemBase *)um->um_SB;
 
-	//USER_LOCK( usr );
-	
 	DEBUG("[UMRemoveAndDeleteUser] remove user\n");
 	
 	USER_CHANGE_ON( usr );
 
 	UserSessListEntry *us = (UserSessListEntry *)usr->u_SessionsList;
 	UserSessListEntry *delus = us;
+	usr->u_SessionsList = NULL;
 	
 	while( us != NULL )
 	{
 		delus = us;
 		us = (UserSessListEntry *)us->node.mln_Succ;
 		
-
 		UserSession *locses = (UserSession *)delus->us;
 		
 		//
@@ -1091,7 +1089,6 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 		locses->us_User = NULL;
 		FFree( delus );
 	}
-		usr->u_SessionsList = NULL;
 
 	USER_CHANGE_OFF( usr );
 	
