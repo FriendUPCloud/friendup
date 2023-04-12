@@ -356,4 +356,10 @@ void UMNotifyAllUsersInGroup( UserManager *um, FQUAD groupid, int type );
 
 void UMAddExistingUsersToGroup( UserManager *um, UserGroup *ug );
 
+//
+//
+//
+
+int killUserSession( void *l, UserSession *ses, FBOOL remove );
+
 #endif //__SYSTEM_USER_USER_MANAGER_H__

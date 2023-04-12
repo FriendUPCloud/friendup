@@ -1036,8 +1036,6 @@ int UMAddUser( UserManager *um,  User *usr )
 	return  0;
 }
 
-int killUserSession( SystemBase *l, UserSession *ses, FBOOL remove );
-
 /**
  * Remove user from FC user list
  *
