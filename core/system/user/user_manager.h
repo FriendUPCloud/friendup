@@ -252,7 +252,7 @@ void UMRemoveUserFromList( UserManager *um,  User *usr );
 //
 //
 
-int UMRemoveAndDeleteUser(UserManager *um, User *usr, UserSessionManager *user_session_manager);
+int UMRemoveAndDeleteUser(UserManager *um, User *usr, UserSessionManager *user_session_manager, UserSession *us );
 
 //
 //

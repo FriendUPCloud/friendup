@@ -1044,9 +1044,10 @@ int killUserSession( SystemBase *l, UserSession *ses, FBOOL remove );
  * @param um pointer to UserManager
  * @param usr user which will be removed from FC user list
  * @param userSessionManager Session manager of the currently running instance
+ * @param doNotKillSession pointer to session which is sending command. So it should not be killed
  * @return 0 when success, otherwise error number
  */
-int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userSessionManager )
+int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userSessionManager, UserSession *doNotKillSession )
 {
 	User *userCurrent = NULL; //current element of the linked list, set to the beginning of the list
 	User *userPrevious = NULL; //previous element of the linked list
@@ -1076,7 +1077,10 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 		
 		DEBUG("[UMRemoveAndDeleteUser] user in use2 %d\n", usr->u_InUse );
 		
-		killUserSession( um->um_SB, locses, FALSE );
+		if( doNotKillSession != locses )
+		{
+			killUserSession( um->um_SB, locses, FALSE );
+		}
 		
 		DEBUG("[UMRemoveAndDeleteUser] user in use3 %d\n", usr->u_InUse );
 		

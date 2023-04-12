@@ -878,7 +878,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							l->UserDeviceUnMount( l, usr, loggedSession );
 							
 							DEBUG( "[UMWebRequest] UMRemoveAndDeleteUser in use %d userid %ld!\n", usr->u_InUse, usr->u_ID );
-							UMRemoveAndDeleteUser( l->sl_UM, usr, ((SystemBase*)m)->sl_USM);
+							UMRemoveAndDeleteUser( l->sl_UM, usr, ((SystemBase*)m)->sl_USM, loggedSession );
 						}
 						
 						if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
