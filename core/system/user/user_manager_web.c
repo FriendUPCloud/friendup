@@ -38,12 +38,17 @@
 int killUserSession( UserSession *ses, FBOOL remove )
 {
 	int error = 0;
-	char tmpmsg[ 2048 ];
-	int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
+#define KILL_SESSION_MESSAGE_LEN 1024
+	
+	char *tmpmsg = FMalloc( KILL_SESSION_MESSAGE_LEN+1 );
+	if( tmpmsg == NULL ){ return -1; }
+	
+	int lenmsg = snprintf( tmpmsg, KILL_SESSION_MESSAGE_LEN, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
 	
 	if( ses == NULL || ses->us_Status == USER_SESSION_STATUS_TO_REMOVE )
 	{
 		DEBUG("[UMWebRequest] killSession session is NULL or will be removed shortly\n");
+		FFree( tmpmsg );
 		return 1;
 	}
 	
@@ -96,6 +101,8 @@ int killUserSession( UserSession *ses, FBOOL remove )
 		
 		FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
 	}
+	
+	FFree( tmpmsg );
 	
 	return error;
 }
