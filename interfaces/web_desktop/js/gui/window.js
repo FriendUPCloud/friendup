@@ -5451,6 +5451,11 @@ var View = function( args )
 				this.setMainView( value );
 				this.flags.mainView = value;
 				break;
+			case 'noquickmenu':
+				if( value )
+					this._window.classList.add( 'NoQuickmenu' );
+				else this._window.classList.remove( 'NoQuickmenu' );
+				break;
 			case 'singletask':
 				this.flags.singletask = value;
 				break;
