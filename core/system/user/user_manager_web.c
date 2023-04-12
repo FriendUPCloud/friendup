@@ -35,7 +35,7 @@
  * @param remove if set to TRUE then session will be marked as "to deleted". Otherwise only message will be send via websockets
  * @return error number
  */
-int killUserSession( UserSession *ses, FBOOL remove )
+int killUserSession( void *sb, UserSession *ses, FBOOL remove )
 {
 	int error = 0;
 #define KILL_SESSION_MESSAGE_LEN 1024
@@ -2030,7 +2030,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			DEBUG("[UMWebRequest] Session found under pointer: %p\n", ses );
 			if( ses != NULL )
 			{
-				killUserSession( ses, TRUE );
+				killUserSession( l, ses, TRUE );
 			}
 		}
 		else if( deviceid != NULL && usrname != NULL )
