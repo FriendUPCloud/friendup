@@ -11539,9 +11539,11 @@ Workspace.pushTrashcan = {};
 // Receive push notification (when a user clicks native push notification on phone)
 Workspace.receivePush = function( jsonMsg, ready )
 {
-	//console.log( 'Workspace.receivePush', jsonMsg );
+	console.log( 'Workspace.receivePush (' + ( new Date() ).getTime() + '):', jsonMsg );
 	if( !isMobile ) return 'mobile';
 	let msg = jsonMsg ? jsonMsg : ( window.friendApp && typeof friendApp.get_notification == 'function' ? friendApp.get_notification() : false );
+
+	console.log( 'Checking message: ', msg );
 
 	// we use 1 as special case for no push being here... to make it easier to know when to launch startup sequence... maybe not ideal, but works
 	if( msg == false || msg == 1 ) 
@@ -11721,7 +11723,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 				data: msg
 			};
 		
-			console.log( ' Sendtoapp: ' + JSON.stringify( msg ) );
+			console.log( ' Sendtoapp: ' + JSON.stringify( amsg ) );
 		
 			app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 		

@@ -9202,7 +9202,7 @@ Friend.GUI.checkInputFocus = function( e )
 	let response = false;
 	if( focused )
 	{
-		if( focused.tagName == 'INPUT' || focused.tagName == 'TEXTAREA' || focused.getAttribute( 'contenteditable' ) )
+		if( focused.tagName == 'INPUT' || focused.tagName == 'TEXTAREA' || focused.getAttribute( 'contenteditable' ) || focused.tagName == 'SELECT' )
 		{
 			response = true;
 		}
