@@ -69,6 +69,7 @@ typedef struct UserSession
 	time_t					us_LastActionTime;			// last update from user
 	time_t					us_CreationTime;			// last login
 	int						us_Status;					// session status
+	int						us_ChangeState;				// if is in change state
 	
 	File					*us_OpenedFiles;			// opened files in user session
 	
@@ -123,6 +124,23 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 
 #ifndef IS_SESSION_ADMIN
 #define IS_SESSION_ADMIN( us ) ( us->us_User != NULL && us->us_User->u_IsAdmin == TRUE )
+#endif
+
+#ifndef USERSESSION_LOCK
+#define USERSESSION_LOCK( US ) \
+while( US->us_ChangeState != FALSE ){ usleep( 2000 ); } \
+if( FRIEND_MUTEX_LOCK( &(US->us_Mutex) ) == 0 ){ \
+	US->us_InUseCounter++; \
+	FRIEND_MUTEX_UNLOCK( &(US->us_Mutex) ); \
+}
+#endif
+
+#ifndef USERSESSION_UNLOCK
+#define USERSESSION_UNLOCK( US ) \
+if( FRIEND_MUTEX_LOCK( &(US->us_Mutex) ) == 0 ){ \
+	US->us_InUseCounter--; \
+	FRIEND_MUTEX_UNLOCK( &(US->us_Mutex) ); \
+}
 #endif
 
 static FULONG UserSessionDesc[] = { 
