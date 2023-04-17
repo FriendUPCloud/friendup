@@ -273,13 +273,16 @@ class Mailer
 			$mailer->Username    = $cnf[ 'friendmail_user' ];
 			$mailer->Password    = $cnf[ 'friendmail_pass' ];
 			$mailer->Port        = intval( $cnf[ 'friendmail_port' ], 10 );
+			
+			$from = isset( $cnf[ 'friendmail_from' ] ) ? $cnf[ 'friendmail_from' ] : $cnf[ 'friendmail_user' ];
+			
 			if( isset( $cnf[ 'friendmail_name' ] ) )
 			{
-				$mailer->setFrom(  $cnf[ 'friendmail_user' ], $cnf[ 'friendmail_name' ] );
+				$mailer->setFrom(  $from, $cnf[ 'friendmail_name' ] );
 			}
 			else
 			{
-				$mailer->setFrom(  $cnf[ 'friendmail_user' ] );
+				$mailer->setFrom(  $from );
 			}
 			if( isset( $cnf[ 'friendmail_pcol' ] ) )
 			{
