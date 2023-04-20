@@ -1990,7 +1990,7 @@ function CloseView( win, delayed )
 	let isDialog = false;
 	
 	let title = win.windowObject.getFlag( 'Title' );
-	console.log( 'x: Closing window ' + title );
+	console.log( 'x: Closing window ' + title, win );
 	
 	if( win )
 	{
