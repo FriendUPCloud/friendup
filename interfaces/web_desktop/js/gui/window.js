@@ -1990,7 +1990,6 @@ function CloseView( win, delayed )
 	let isDialog = false;
 	
 	let title = win.windowObject.getFlag( 'Title' );
-	console.log( 'x: Closing window ' + title, win );
 	
 	if( win )
 	{
@@ -2003,8 +2002,12 @@ function CloseView( win, delayed )
 		if( !win.parentNode.parentNode ) return;
 		if( win.parentNode.classList.contains( 'ViewContainer' ) )
 		{
-			console.log( 'x: -> Adding "closing" ' + title );
 			win.parentNode.classList.add( 'Closing', 'NoEvents' );
+		}
+		// win == "content"
+		else if( win.parentNode.parentNode.classList.contains( 'ViewContainer' ) )
+		{
+			win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
 		}
 		
 		if( win.parentNode.classList.contains( 'Dialog' ) || 
