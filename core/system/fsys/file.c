@@ -20,6 +20,7 @@
 #include <system/fsys/device_handling.h>
 #include <system/json/jsmn.h>
 #include <system/systembase.h>
+#include <util/newpopen.h>
 
 /**
  * Create new File
@@ -951,6 +952,147 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *basepath, co
 	}
 	
 	DEBUG("[FileDownloadFilesOrFolder] end\n");
+	DEBUG("============================================================================\n");
+	
+	return 0;
+}
+
+/**
+ * Function download file from Friend FS
+ *
+ * @param request pointer to http request
+ * @param us pointer to UserSession
+ * @param dst pointer to destination path
+ * @param src pointer to source path
+ * @return 0 when success, otherwise error number
+ */
+
+int FileDownloadFile( Http *request, void *us, const char *dst, char *src )
+{
+	UserSession *loggedSession = (UserSession *)us;
+	File *actDev = NULL;
+	char devname[ 256 ];
+	memset( devname, '\0', sizeof(devname) );
+	int basePos = strlen( basepath );
+	
+	DEBUG("[FileDownloadFile] start\n");
+	
+	// getting devname from destination path
+	
+	unsigned int i;
+
+	for( i=0 ; i < strlen( src ); i++ )
+	{
+		if( src[ i ] == ':' )
+		{
+			basePos -= (i+1);
+			break;
+		}
+		devname[ i ] = src[ i ];
+	}
+	
+	//DEBUG("[FileDownloadFile] getdevbyname\n");
+	
+	//DEBUG("\n============================================================\n\n\n dst: %s\nsrc: %s\nbasepath: %s\nbasepos: %d\n\n\n\n\n", dst, src, basepath, basePos );
+	
+	if( ( actDev = GetRootDeviceByName( loggedSession->us_User, loggedSession, devname ) ) != NULL )
+	{
+		actDev->f_Operations++;
+		
+		char *lfile = src;
+		int lastslash = 0;
+		unsigned int length = strlen( src )-1;
+		int locbpath = strlen( basepath );
+		
+		int coma = 0;
+		int end = 0;
+		int j;
+		int flen = strlen( lfile )-1;
+		for( j = 1 ; j < flen ; j++ )
+		{
+			if( lfile[ j ] == ':' )
+			{
+				coma = j;
+				end = j;
+			}
+			else if( lfile[ j ] == '/' )
+			{
+				end = j;
+			}
+		}
+		
+		char *tmpdst = FCalloc( strlen( dst ) + 512, sizeof( char ) );
+		if( tmpdst != NULL )
+		{
+			strcpy( tmpdst, dst );
+			strcat( tmpdst, &lfile[ end+1 ] );
+			
+			DEBUG("============= dst %s\n========= tmpdst %s\n", &lfile[ end+1 ], tmpdst );
+			
+			FileFillSessionID( actDev, loggedSession );
+			
+			DEBUG("[FileDownloadFile] File will be downloaded on start: %s\n", dst );
+			// copy file to local storage
+		
+			FILE *storefile = NULL;
+		
+			//int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst, const char *src, int cutPos, int fod, int *numberFiles )
+			
+			//DEBUG("\n\n\nsrcdev  : %s changed: %s NEWDST %s\n\n", src, &src[ cutPos ], newdst );
+			if( ( storefile = fopen( tmpdst, "wb" ) ) != NULL )
+			{
+				FHandler *fsys = actDev->f_FSys;
+		
+				// 1024 mul 32 = 32768
+				char dbuf[ 32768 ];
+				
+				File *srcfp = (File *)fsys->FileOpen( actDev, src, "rb" );
+				if( srcfp != NULL )
+				{
+					int rcnt = 0;
+
+					while( ( rcnt = fsys->FileRead( srcfp, dbuf, 32768 ) ) != -1 )
+					{
+						fwrite( dbuf, 1, rcnt, storefile );
+					}
+					fsys->FileClose( actDev, srcfp );
+				}
+				else
+				{
+					FERROR("Cannot open file to store %s\n", dst );
+				}
+				fclose( storefile );
+				
+				if( request != NULL )
+				{
+					int namelen = strlen( dst );
+					char message[ 1024 ];
+					SystemBase *sb = (SystemBase *)request->http_SB;
+			
+					char *fname = (char *)dst;
+					if( namelen > 255 )
+					{
+						fname = (char *) dst+(namelen - 255);
+					}
+					
+					int size = snprintf( message, sizeof(message), "\"action\":\"copy\",\"filename\":\"%s\",\"progress\":null", fname );
+			
+					sb->SendProcessMessage( request, message, size );
+				}
+				
+				//--------------------------
+			}
+			FFree( tmpdst );
+		}
+		
+		actDev->f_Operations--;
+	}
+	else	// else GetRootDeviceByName = NULL
+	{
+		return 1;
+	}
+	
+	DEBUG("[FileDownloadFile] end\n");
 	DEBUG("============================================================================\n");
 	
 	return 0;
