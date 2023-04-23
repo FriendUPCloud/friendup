@@ -3292,12 +3292,16 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						if( dstdevicename != NULL )
 						{
 							unsigned int j = 0;
-							for( j=0; j < strlen( dstdevicename ) ; j++ )
+							for( j=0; j < strlen( destination ) ; j++ )
 							{
-								if( dstdevicename[ j ] == ':' )
+								if( destination[ j ] == ':' )
 								{
 									dstdevicename[ j ] = 0;
 									break;
+								}
+								else
+								{
+									dstdevicename[ j ] = destination[ j ];
 								}
 							}
 							
@@ -3389,7 +3393,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						
 						FFree( tmpLocalFile );
 						FFree( tmpDstLocalFile );
-						FFree( dstdevicename );
+						//FFree( dstdevicename );
 						
 						
 						/*
