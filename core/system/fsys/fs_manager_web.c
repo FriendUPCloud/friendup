@@ -3232,7 +3232,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 				* <HR><H2>system.library/file/makepdf</H2>Make pdf from file (document)
 				*
 				* @param sessionid - (required) session id of logged user
-				* @param source - (required) path to files or directories which you want to archive. Entries must be separated by semicolon
+				* @param path - (required) path to files or directories which you want to archive. Entries must be separated by semicolon
 				* @param destination - (required) path to place where archive will be stored 
 				* @param notify - send notification to other sessions/user about changes (by default set to true, set false to disable this)
 				* @return { Result: 0 } when success, otherwise error number
@@ -3241,18 +3241,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 				else if( strcmp( urlpath[ 1 ], "makepdf" ) == 0 )
 				{
 					char *destination = NULL;
-					char *files    = NULL;
+					//char *files    = NULL;
 					
 					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
-					// Files to archive
-					el = HttpGetPOSTParameter( request, "source" );
-					if( el == NULL ) el = HashmapGet( request->http_Query, "source" );
-					if( el != NULL )
-					{
-						files = UrlDecodeToMem( (char *)el->hme_Data );
-					}
 					
 					// Where archive should be stored
 					el = HttpGetPOSTParameter( request, "destination" );
@@ -3276,7 +3269,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						}
 					}
 					
-					if( files != NULL )
+					//if( files != NULL )
 					{
 						request->http_SB = l;
 
@@ -3291,9 +3284,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						}
 						else
 						{
-							int dstLen = strlen( files ) + 16;
+							int dstLen = strlen( origDecodedPath ) + 16;
 							destination = FCalloc( dstLen, sizeof(char) );
-							snprintf( destination, dstLen, "%s_.pdf", files );
+							snprintf( destination, dstLen, "%s_.pdf", origDecodedPath );
 						}
 						
 						if( dstdevicename != NULL )
@@ -3315,7 +3308,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							
 							// get file
 							
-							FileDownloadFile( request, loggedSession, tmpLocalFile, files );
+							FileDownloadFile( request, loggedSession, tmpLocalFile, origDecodedPath );
 							
 							// convert local file to pdf
 							
@@ -3407,6 +3400,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						}
 						*/
 					}
+					/*
 					else
 					{
 						char dictmsgbuf[ 512 ];
@@ -3415,6 +3409,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 						HttpAddTextContent( response, dictmsgbuf );
 					}
+					*/
 					
 					// Clean up memory
 					if( destination != NULL )
@@ -3422,10 +3417,10 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						FFree( destination );
 					}
 					
-					if( files != NULL )
-					{
-						FFree( files );
-					}
+					//if( files != NULL )
+					//{
+					//	FFree( files );
+					//}
 				}
 				
 				/// @cond WEB_CALL_DOCUMENTATION
