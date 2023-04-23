@@ -47,7 +47,7 @@ int convertToPdf( char *src )
 	if( command != NULL )
 	{
 		int i, len = 0;	// lets find chars which we dont want to handle (security, do not allow to run more commands)
-		len = snprintf( command, comLen, "lowriter --convert-to pdf %s", src );
+		len = snprintf( command, comLen, "lowriter --convert-to pdf %s --outdir /tmp/Friendup/", src );
 		
 		DEBUG("[convertToPdf] command: %s\n", command );
 		
