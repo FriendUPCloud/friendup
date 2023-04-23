@@ -973,7 +973,7 @@ int FileDownloadFile( Http *request, void *us, const char *dst, char *src )
 	File *actDev = NULL;
 	char devname[ 256 ];
 	memset( devname, '\0', sizeof(devname) );
-	int basePos = strlen( basepath );
+	int basePos = strlen( src );
 	
 	DEBUG("[FileDownloadFile] start\n");
 	
@@ -1002,7 +1002,7 @@ int FileDownloadFile( Http *request, void *us, const char *dst, char *src )
 		char *lfile = src;
 		int lastslash = 0;
 		unsigned int length = strlen( src )-1;
-		int locbpath = strlen( basepath );
+		//int locbpath = strlen( basepath );
 		
 		int coma = 0;
 		int end = 0;

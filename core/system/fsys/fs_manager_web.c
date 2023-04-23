@@ -3375,7 +3375,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								}
 								else
 								{
-									FERROR("Cannot open file to read %s\n", tmpfilename );
+									FERROR("Cannot open file to read %s\n", tmpDstLocalFile );
 								}
 								FFree( buffer );
 							}
