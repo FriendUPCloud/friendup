@@ -1025,7 +1025,7 @@ int FileDownloadFile( Http *request, void *us, const char *dst, char *src )
 		if( tmpdst != NULL )
 		{
 			strcpy( tmpdst, dst );
-			strcat( tmpdst, &lfile[ end+1 ] );
+			//strcat( tmpdst, &lfile[ end+1 ] );	// we can use this to convert list of files not only one
 			
 			DEBUG("============= dst %s\n========= tmpdst %s\n", &lfile[ end+1 ], tmpdst );
 			
