@@ -3321,21 +3321,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							
 							DEBUG("[makepdf] download file from: %s to: %s\n", origDecodedPath, tmpLocalFile );
 							
-							{
-								FILE *file;
-    if((file = fopen(tmpLocalFile,"r"))!=NULL)
-        {
-			DEBUG("[makepdf] file exist: %s\n", tmpLocalFile );
-            // file exists
-            fclose(file);
-        }
-    else
-        {
-            //File not found, no memory leak since 'file' == NULL
-            //fclose(file) would cause an error
-        }
-							}
-							
 							// convert local file to pdf
 							
 							convertToPdf( tmpLocalFile );
@@ -3408,8 +3393,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 
 						// delete local files
 						
-						//remove( tmpLocalFile );
-						//remove( tmpDstLocalFile );
+						remove( tmpLocalFile );
+						remove( tmpDstLocalFile );
 						
 						// relase resources
 						
