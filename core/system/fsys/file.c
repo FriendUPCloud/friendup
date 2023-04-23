@@ -1082,6 +1082,10 @@ int FileDownloadFile( Http *request, void *us, const char *dst, char *src )
 				
 				//--------------------------
 			}
+			else
+			{
+				DEBUG("Cannot write file! %s\n", tmpdst );
+			}
 			FFree( tmpdst );
 		}
 		
