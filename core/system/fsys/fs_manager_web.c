@@ -3393,8 +3393,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 
 						// delete local files
 						
-						remove( tmpLocalFile );
-						remove( tmpDstLocalFile );
+						//remove( tmpLocalFile );
+						//remove( tmpDstLocalFile );
 						
 						// relase resources
 						
