@@ -49,6 +49,8 @@ int convertToPdf( char *src )
 		int i, len = 0;	// lets find chars which we dont want to handle (security, do not allow to run more commands)
 		len = snprintf( command, comLen, "lowriter --convert-to pdf %s", src );
 		
+		DEBUG("[convertToPdf] command: %s\n", command );
+		
 		for( i=0 ; i < len ; i++ )
 		{
 			if( command[ i ] == '|' ){ command[ i ] = ' '; }
@@ -3310,9 +3312,14 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							snprintf( tmpLocalFile, 2048, "/tmp/Friendup/srcdoc_%ld.docx", (unsigned long)loggedSession );
 							snprintf( tmpDstLocalFile, 2048, "/tmp/Friendup/srcdoc_%ld.pdf", (unsigned long)loggedSession );
 							
+							DEBUG("[makepdf] store as local file: %s\n", tmpLocalFile );
+							DEBUG("[makepdf] convert to: %s\n", tmpDstLocalFile );
+							
 							// get file
 							
 							FileDownloadFile( request, loggedSession, tmpLocalFile, origDecodedPath );
+							
+							DEBUG("[makepdf] download file from: %s to: %s\n", origDecodedPath, tmpLocalFile );
 							
 							// convert local file to pdf
 							
