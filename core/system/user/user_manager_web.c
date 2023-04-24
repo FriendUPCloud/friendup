@@ -35,21 +35,22 @@
  * @param remove if set to TRUE then session will be marked as "to deleted". Otherwise only message will be send via websockets
  * @return error number
  */
-int killUserSession( UserSession *ses, FBOOL remove )
+int killUserSession( void *sb, UserSession *ses, FBOOL remove )
 {
 	int error = 0;
-	char tmpmsg[ 2048 ];
-	int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
+#define KILL_SESSION_MESSAGE_LEN 1024
 	
-	int msgsndsize = WebSocketSendMessageInt( ses, tmpmsg, lenmsg );
+	char *tmpmsg = FMalloc( KILL_SESSION_MESSAGE_LEN+1 );
+	if( tmpmsg == NULL ){ return -1; }
 	
-	char *uname = NULL;
-	if( ses->us_User != NULL )
+	int lenmsg = snprintf( tmpmsg, KILL_SESSION_MESSAGE_LEN, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
+	
+	if( ses == NULL || ses->us_Status == USER_SESSION_STATUS_TO_REMOVE )
 	{
-		uname = ses->us_User->u_Name;
+		DEBUG("[UMWebRequest] killSession session is NULL or will be removed shortly\n");
+		FFree( tmpmsg );
+		return 1;
 	}
-		
-	DEBUG("[UMWebRequest] user %s session %s will be removed by user %s msglength %d\n", uname, ses->us_SessionID, uname, msgsndsize );
 	
 	// set flag to WS connection "te be killed"
 	if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
@@ -58,8 +59,21 @@ int killUserSession( UserSession *ses, FBOOL remove )
 		{
 			ses->us_WebSocketStatus = WEBSOCKET_SERVER_CLIENT_TO_BE_KILLED;
 		}
+		
+		ses->us_InUseCounter++;
+		
 		FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
 	}
+	
+	int msgsndsize = WebSocketSendMessageInt( ses, tmpmsg, lenmsg );
+	
+	char *uname = NULL;
+	if( ses->us_User != NULL )
+	{
+		uname = ses->us_User->u_Name;
+	}
+	
+	DEBUG("[UMWebRequest] killSession user %s session %s will be removed by user %s msglength %d\n", uname, ses->us_SessionID, uname, msgsndsize );
 	
 	// wait till queue will be empty
 	while( TRUE )
@@ -80,6 +94,16 @@ int killUserSession( UserSession *ses, FBOOL remove )
 	{
 		ses->us_Status = USER_SESSION_STATUS_TO_REMOVE;
 	}
+	
+	if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
+	{
+		ses->us_InUseCounter--;
+		
+		FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
+	}
+	
+	FFree( tmpmsg );
+	
 	return error;
 }
 
@@ -797,8 +821,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							
 							l->UserDeviceUnMount( l, usr, loggedSession );
 							
-							DEBUG( "[UMWebRequest] UMRemoveAndDeleteUser %d!\n", usr->u_InUse );
-							UMRemoveAndDeleteUser( l->sl_UM, usr, ((SystemBase*)m)->sl_USM);
+							DEBUG( "[UMWebRequest] UMRemoveAndDeleteUser in use %d userid %ld!\n", usr->u_InUse, usr->u_ID );
+							UMRemoveAndDeleteUser( l->sl_UM, usr, ((SystemBase*)m)->sl_USM, loggedSession );
 						}
 						
 						if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
@@ -1943,7 +1967,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			DEBUG("[UMWebRequest] Session found under pointer: %p\n", ses );
 			if( ses != NULL )
 			{
-				killUserSession( ses, TRUE );
+				killUserSession( l, ses, TRUE );
 			}
 		}
 		else if( deviceid != NULL && usrname != NULL )

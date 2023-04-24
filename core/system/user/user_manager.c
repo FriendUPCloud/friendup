@@ -1036,26 +1036,65 @@ int UMAddUser( UserManager *um,  User *usr )
 	return  0;
 }
 
-int killUserSession( SystemBase *l, UserSession *ses, FBOOL remove );
-
 /**
  * Remove user from FC user list
  *
  * @param um pointer to UserManager
  * @param usr user which will be removed from FC user list
  * @param userSessionManager Session manager of the currently running instance
+ * @param doNotKillSession pointer to session which is sending command. So it should not be killed
  * @return 0 when success, otherwise error number
  */
-int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userSessionManager )
+int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userSessionManager, UserSession *doNotKillSession )
 {
 	User *userCurrent = NULL; //current element of the linked list, set to the beginning of the list
 	User *userPrevious = NULL; //previous element of the linked list
 	SystemBase *sb = (SystemBase *)um->um_SB;
 
-	//USER_LOCK( usr );
-	
 	DEBUG("[UMRemoveAndDeleteUser] remove user\n");
 	
+	USER_CHANGE_ON( usr );
+
+	UserSessListEntry *us = (UserSessListEntry *)usr->u_SessionsList;
+	UserSessListEntry *delus = us;
+	usr->u_SessionsList = NULL;
+	
+	while( us != NULL )
+	{
+		delus = us;
+		us = (UserSessListEntry *)us->node.mln_Succ;
+		
+		UserSession *locses = (UserSession *)delus->us;
+		
+		//
+		DEBUG("[UMRemoveAndDeleteUser] user in use1 %d\n", usr->u_InUse );
+		
+		USMUserSessionRemove( sb->sl_USM, locses );
+		
+		DEBUG("[UMRemoveAndDeleteUser] user in use2 %d\n", usr->u_InUse );
+		
+		if( doNotKillSession != locses )
+		{
+			killUserSession( um->um_SB, locses, FALSE );
+		}
+		
+		DEBUG("[UMRemoveAndDeleteUser] user in use3 %d\n", usr->u_InUse );
+		
+		// we must remove session from user otherwise it will go into infinite loop
+		//UserRemoveSession( usr, locses );
+		//
+		
+		locses->us_User = NULL;
+		FFree( delus );
+	}
+
+	USER_CHANGE_OFF( usr );
+	
+	//
+	// Old version
+	//
+	
+	/*
 	FULONG userId = usr->u_ID;
 
 	//UserRemoveConnectedSessions( usr, FALSE );
@@ -1063,6 +1102,13 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 	UserSession *sessionToDelete;
 	while( ( sessionToDelete = USMGetSessionByUserID( userSessionManager, userId ) ) != NULL )
 	{
+		if( sessionToDelete->us_Status == USER_SESSION_STATUS_TO_REMOVE )
+		{
+			DEBUG("[UMRemoveAndDeleteUser] session will be deleted\n");
+			continue;
+		}
+		USERSESSION_LOCK( sessionToDelete );
+		
 		DEBUG("[UMRemoveAndDeleteUser] user in use1 %d\n", usr->u_InUse );
 		
 		USMUserSessionRemove( sb->sl_USM, sessionToDelete );
@@ -1080,15 +1126,20 @@ int UMRemoveAndDeleteUser( UserManager *um, User *usr, UserSessionManager *userS
 		
 		//int status = USMUserSessionRemove( userSessionManager, sessionToDelete );
 		//DEBUG("%s removing session at %p, status %d\n", __func__, sessionToDelete, status);
+		
+		USERSESSION_UNLOCK( sessionToDelete );
 	}
 	UserRemoveConnectedSessions( usr, FALSE );
 	
+	
 	DEBUG("[UMRemoveAndDeleteUser] user in use5 %d\n", usr->u_InUse );
 
-	unsigned int n = 0;
-	FBOOL found = FALSE;
+	
 	
 	USER_MANAGER_CHANGE_ON( um );
+	*/
+	FBOOL found = FALSE;
+	unsigned int n = 0;
 	
 	userCurrent = um->um_Users;
 	while( userCurrent != NULL )

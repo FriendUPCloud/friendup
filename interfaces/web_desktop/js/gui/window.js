@@ -1989,6 +1989,8 @@ function CloseView( win, delayed )
 	
 	let isDialog = false;
 	
+	let title = win.windowObject.getFlag( 'Title' );
+	
 	if( win )
 	{
 		// Clean up!
@@ -2001,6 +2003,11 @@ function CloseView( win, delayed )
 		if( win.parentNode.classList.contains( 'ViewContainer' ) )
 		{
 			win.parentNode.classList.add( 'Closing', 'NoEvents' );
+		}
+		// win == "content"
+		else if( win.parentNode.parentNode.classList.contains( 'ViewContainer' ) )
+		{
+			win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
 		}
 		
 		if( win.parentNode.classList.contains( 'Dialog' ) || 
@@ -5450,6 +5457,12 @@ var View = function( args )
 			case 'mainView':
 				this.setMainView( value );
 				this.flags.mainView = value;
+				break;
+			case 'noquickmenu':
+				if( value )
+					this._window.classList.add( 'NoQuickmenu' );
+				else this._window.classList.remove( 'NoQuickmenu' );
+				this.flags.noquickmenu = value;
 				break;
 			case 'singletask':
 				this.flags.singletask = value;
