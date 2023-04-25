@@ -470,11 +470,12 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				if( dw.pathHistoryIndex > 0 )
 				{
 					let fin = dw.pathHistoryRewind();
-					dw.window.fileInfo = fin;
+					dw.window.fileInfo = fin; 
 					
 					if( !isMobile && winobj.fileBrowser )
 					{
-						winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
+					    console.log( '[BACK] Test.' );
+						//winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
 					}
 					winobj.refresh();
 				}
