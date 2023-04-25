@@ -495,7 +495,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					
 					if( !isMobile && winobj.fileBrowser )
 					{
-						winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
+						//winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
 					}
 					winobj.refresh();
 				}
