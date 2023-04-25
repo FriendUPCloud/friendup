@@ -475,7 +475,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					if( !isMobile && winobj.fileBrowser )
 					{
 					    console.log( '[BACK] Test.' );
-						//winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
+						//winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } ); // <- doesn't work properly
 					}
 					winobj.refresh();
 				}
