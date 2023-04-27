@@ -1291,6 +1291,13 @@ body {
   cursor: default;
 }
 
+/* Added for FriendOS on mobile */
+body #outerContainer > div {
+    min-width: 100%;
+    zoom: 0.8;
+}
+/* Done FriendOS */
+
 #outerContainer {
   width: 100%;
   height: 100%;
