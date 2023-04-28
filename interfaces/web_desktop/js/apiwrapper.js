@@ -3923,6 +3923,7 @@ function apiWrapper( event, force )
 						}
 						break;
 					case 'librarycall':
+						console.log( 'librarycall', msg )
 						var j = new cAjax();
 						var ex = '';
 						if( msg.func )
@@ -3963,6 +3964,7 @@ function apiWrapper( event, force )
 							j.addVar( 'sessionid', Workspace.sessionId );
 						j.onload = function( rc, dt )
 						{
+							console.log( 'librarycall onload', [ rc, dt ])
 							var nmsg = msg;
 							nmsg.command = 'libraryresponse';
 							nmsg.returnCode = rc;
