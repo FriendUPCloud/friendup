@@ -422,7 +422,18 @@ cAjax.prototype.destroy = function()
 // Open an ajax query
 cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 {
-	let self = this;
+	const self = this
+	
+	if ( -1 != url.indexOf( 'expose' ))
+	{
+		console.log( 'cAjax.open', {
+			self          : self,
+			method        : method,
+			ulr           : url,
+			sync          : syncing,
+			hasReturnCode : hasReturnCode,
+		})
+	}
 	
 	if( this.opened )
 	{
@@ -443,6 +454,9 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		url.indexOf( '/file/expose' )
 	)
 	{
+		if ( -1 != url.indexOf( ' ' ))
+			console.log( 'spicy url', url )
+		
 		dosCall = true;
 	}
 	
