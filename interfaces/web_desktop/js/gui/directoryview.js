@@ -4321,6 +4321,17 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	for( let a in oFileInfo )
 		fileInfo[ a ] = oFileInfo[ a ];
 
+	function initContext( v )
+	{
+		if( !v ) return;
+		// View ID in context sets recent location
+		if( fileInfo.flags && fileInfo.flags.context )
+		{
+			// Set context on current window flags
+			v.setFlag( 'context', fileInfo.flags.context );		
+		}
+	}
+	
 	if( !iconObject )
 	{
 		let ext = fileInfo.Path ? fileInfo.Path.split( '.' ) : ( fileInfo.Filename ? fileInfo.Filename.split( '.' ) : fileInfo.Title.split( '.' ) );
@@ -4365,6 +4376,9 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			'id'        : wid,
 			'volume'    : wt.substr( wt.length - 1, 1 ) == ':' ? true : false
 		} );
+		
+		initContext( win );
+		
 		if( fileInfo.applicationId )
 		{
 		    win.applicationId = fileInfo.applicationId;
@@ -4456,6 +4470,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			memorize : true
 		} );
 		
+		initContext( win );
+		
 		if( fileInfo.applicationId )
 		{
 		    win.applicationId = fileInfo.applicationId;
@@ -4518,10 +4534,14 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	        width: 800,
 	        height: 800
 	    } );
+	    
+	    initContext( v );
+	    
 	    v.onClose = function()
 	    {
 		    cm.windowObject.activate();
 	    }
+	    
 	    v.setContent( '<iframe id="pdf' + ( ++friendPdfIndex ) + '" src="/webclient/3rdparty/pdfjs/web/viewer.html?file=' + encodeURIComponent( getImageUrl( iconObject.Path, 'rb' ) ) + '" class="PDFView"></iframe>' );
 	    let c = ge( 'pdf' + friendPdfIndex );
 	    if( !c )
@@ -4555,6 +4575,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			height   : 512,
 			memorize : true
 		} );
+		
+		initContext( win );
 		
 		if( fileInfo.applicationId )
 		{
@@ -4598,6 +4620,9 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 					width:  640,
 					height: 480
 				} );
+				
+				initContext( w );
+				
 				w.setJSXContent( data, title );
 				if( !fromFolder && Workspace.dashboard ) w.recentLocation = 'dashboard';
 				if( ocallback ) ocallback();
@@ -4649,20 +4674,30 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			w.flags.minimized = false;
 			w.activate();
 			w.toFront();
+			
+			initContext( w );
+			
 			if( ocallback ) ocallback();
 			return targetView.refresh(); 
 		}
-		else w = new View ( {
-			'title'     : wt,
-			'width'     : stored && stored.width ? stored.width : 800,
-			'height'    : stored && stored.height ? stored.height : 400,
-			'min-width' : 340,
-			'min-height': 180,
-			'memorize'  : true,
-			'id'        : id,
-			'volume'    : isVolume,
-			'clickableTitle': true
-		} );
+		else 
+		{
+			w = new View ( {
+				'title'     : wt,
+				'width'     : stored && stored.width ? 
+					stored.width : 800,
+				'height'    : stored && stored.height ? 
+					stored.height : 400,
+				'min-width' : 340,
+				'min-height': 180,
+				'memorize'  : true,
+				'id'        : id,
+				'volume'    : isVolume,
+				'clickableTitle': true
+			} );
+		}
+		
+		initContext( w );
 		
 		// View ID in context sets recent location
 		if( fileInfo.flags && fileInfo.flags.context )
@@ -5203,6 +5238,9 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 						'memorize' : true,
 						'id'       : fileInfo.MetaType + '_' + fid
 					} );
+					
+					initContext( win );
+					
 					if( !fromFolder && Workspace.dashboard ) win.recentLocation = 'dashboard';
 					/*console.log( '[9] you are here ... directoryview.js |||| ' + '<iframe style="background: #e0e0e0; position: absolute; top: 0; \
 						left: 0; width: 100%; height: 100%; border: 0" \
