@@ -5464,7 +5464,7 @@ var View = function( args )
 						break;
 					}
 				}
-				console.log( 'CONTEXT: ' + this.flags.context );
+				console.log( 'CONTEXT: ' + this.flags.context, this._window );
 				break;
 			case 'mainView':
 				this.setMainView( value );
