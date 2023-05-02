@@ -4321,6 +4321,25 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	for( let a in oFileInfo )
 		fileInfo[ a ] = oFileInfo[ a ];
 
+	// View ID in context sets recent location
+	if( fileInfo.flags && fileInfo.flags.context )
+	{
+		if( curr )
+		{
+			if( fileInfo.flags.context == '$CURRENTVIEWID' && curr )
+			{
+			    window.currentContext = false;
+			    v.recentLocation = 'viewId:' + curr.getViewId();
+			}
+			// Set context on current window flags
+			curr.setFlag( 'context', fileInfo.flags.context );
+		}
+	}
+	else
+	{
+		console.log( 'No flag for context: ', flags );
+	}
+	
 	if( !iconObject )
 	{
 		let ext = fileInfo.Path ? fileInfo.Path.split( '.' ) : ( fileInfo.Filename ? fileInfo.Filename.split( '.' ) : fileInfo.Title.split( '.' ) );
@@ -4524,30 +4543,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	    {
 		    cm.windowObject.activate();
 	    }
-	    
-	    // View ID in context sets recent location
-		if( fileInfo.flags && fileInfo.flags.context )
-		{
-			if( curr )
-			{
-				if( fileInfo.flags.context == '$CURRENTVIEWID' && curr )
-				{
-					console.log( 'Right flag for context: ' + fileInfo.flags.context );
-				    window.currentContext = false;
-				    v.recentLocation = 'viewId:' + curr.getViewId();
-				}
-				else
-				{
-					console.log( 'Other flags for context: ' + fileInfo.flags.context );
-				}
-				// Set context on current window flags
-				curr.flags.context = fileInfo.flags.context;
-			}
-		}
-		else
-		{
-			console.log( 'No flag for context: ', flags );
-		}
 	    
 	    v.setContent( '<iframe id="pdf' + ( ++friendPdfIndex ) + '" src="/webclient/3rdparty/pdfjs/web/viewer.html?file=' + encodeURIComponent( getImageUrl( iconObject.Path, 'rb' ) ) + '" class="PDFView"></iframe>' );
 	    let c = ge( 'pdf' + friendPdfIndex );
