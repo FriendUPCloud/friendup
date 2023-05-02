@@ -4528,17 +4528,21 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	    // View ID in context sets recent location
 		if( fileInfo.flags && fileInfo.flags.context )
 		{
-		    if( fileInfo.flags.context == '$CURRENTVIEWID' && curr )
-		    {
-		    	console.log( 'Right flag for context: ' + fileInfo.flags.context );
-		        window.currentContext = false;
-		        if( curr )
-        			v.recentLocation = 'viewId:' + curr.getViewId();
-		    }
-		    else
-		    {
-		    	console.log( 'Other flags for context: ' + fileInfo.flags.context );
-		    }
+			if( curr )
+			{
+				if( fileInfo.flags.context == '$CURRENTVIEWID' && curr )
+				{
+					console.log( 'Right flag for context: ' + fileInfo.flags.context );
+				    window.currentContext = false;
+				    v.recentLocation = 'viewId:' + curr.getViewId();
+				}
+				else
+				{
+					console.log( 'Other flags for context: ' + fileInfo.flags.context );
+				}
+				// Set context on current window flags
+				curr.flags.context = fileInfo.flags.context;
+			}
 		}
 		else
 		{
