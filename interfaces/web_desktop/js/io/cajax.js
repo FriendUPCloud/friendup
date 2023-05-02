@@ -432,6 +432,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 			ulr           : url,
 			sync          : syncing,
 			hasReturnCode : hasReturnCode,
+			vars          : self.vars,
 		})
 	}
 	
@@ -454,9 +455,6 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		url.indexOf( '/file/expose' )
 	)
 	{
-		if ( -1 != url.indexOf( ' ' ))
-			console.log( 'spicy url', url )
-		
 		dosCall = true;
 	}
 	
@@ -762,6 +760,9 @@ cAjax.prototype.send = function( data, callback )
 				let out = [];
 				for( let a in this.vars )
 					out.push( a + '=' + this.vars[ a ] );
+				
+				if ( -1 != this.url.indexOf( 'expose' ))
+					console.log( 'send expose out', [ this.vars, out ])
 				
 				new Promise( function( resolve, reject )
 				{
