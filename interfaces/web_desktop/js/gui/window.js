@@ -5460,9 +5460,11 @@ var View = function( args )
 					if( a == value )
 					{
 						this.currentContext = [ movableWindows[ a ] ];
+						this.flags.context = value;
 						break;
 					}
 				}
+				console.log( 'CONTEXT: ' + this.flags.context );
 				break;
 			case 'mainView':
 				this.setMainView( value );
