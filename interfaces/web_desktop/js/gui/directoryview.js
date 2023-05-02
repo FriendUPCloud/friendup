@@ -4328,7 +4328,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		if( fileInfo.flags && fileInfo.flags.context )
 		{
 			// Set context on current window flags
-			curr.setFlag( 'context', fileInfo.flags.context );		
+			v.setFlag( 'context', fileInfo.flags.context );		
 		}
 	}
 	
