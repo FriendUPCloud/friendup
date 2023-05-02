@@ -4513,6 +4513,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	else if( iconObject.extension.toLowerCase() == 'pdf' )
 	{
 		let cm = currentMovable;
+		let curr = window.currentMovable ?
+	        	currentMovable.windowObject : false;
 	    let v = new View( {
 	        title: iconObject.Path,
 	        width: 800,
@@ -4529,8 +4531,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		    if( fileInfo.flags.context == '$CURRENTVIEWID' && curr )
 		    {
 		        window.currentContext = false;
-		        let curr = window.currentMovable ?
-		        	currentMovable.windowObject : false;
 		        if( curr )
         			v.recentLocation = 'viewId:' + curr.getViewId();
 		    }
