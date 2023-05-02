@@ -4522,6 +4522,20 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	    {
 		    cm.windowObject.activate();
 	    }
+	    
+	    // View ID in context sets recent location
+		if( fileInfo.flags && fileInfo.flags.context )
+		{
+		    if( fileInfo.flags.context == '$CURRENTVIEWID' && curr )
+		    {
+		        window.currentContext = false;
+		        let curr = window.currentMovable ?
+		        	currentMovable.windowObject : false;
+		        if( curr )
+        			v.recentLocation = 'viewId:' + curr.getViewId();
+		    }
+		}
+	    
 	    v.setContent( '<iframe id="pdf' + ( ++friendPdfIndex ) + '" src="/webclient/3rdparty/pdfjs/web/viewer.html?file=' + encodeURIComponent( getImageUrl( iconObject.Path, 'rb' ) ) + '" class="PDFView"></iframe>' );
 	    let c = ge( 'pdf' + friendPdfIndex );
 	    if( !c )
