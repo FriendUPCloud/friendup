@@ -4530,10 +4530,19 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		{
 		    if( fileInfo.flags.context == '$CURRENTVIEWID' && curr )
 		    {
+		    	console.log( 'Right flag for context: ' + fileInfo.flags.context );
 		        window.currentContext = false;
 		        if( curr )
         			v.recentLocation = 'viewId:' + curr.getViewId();
 		    }
+		    else
+		    {
+		    	console.log( 'Other flags for context: ' + fileInfo.flags.context );
+		    }
+		}
+		else
+		{
+			console.log( 'No flag for context: ', flags );
 		}
 	    
 	    v.setContent( '<iframe id="pdf' + ( ++friendPdfIndex ) + '" src="/webclient/3rdparty/pdfjs/web/viewer.html?file=' + encodeURIComponent( getImageUrl( iconObject.Path, 'rb' ) ) + '" class="PDFView"></iframe>' );
