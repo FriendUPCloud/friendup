@@ -424,7 +424,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 {
 	const self = this
 	
-	if ( -1 != url.indexOf( 'expose' ))
+	if ( -1 != url.indexOf( 'file/' ))
 	{
 		console.log( 'cAjax.open', {
 			self          : self,
@@ -761,7 +761,7 @@ cAjax.prototype.send = function( data, callback )
 				for( let a in this.vars )
 					out.push( a + '=' + this.vars[ a ] );
 				
-				if ( -1 != this.url.indexOf( 'expose' ))
+				if ( -1 != this.url.indexOf( 'file/' ))
 					console.log( 'send expose out', [ this.vars, out ])
 				
 				new Promise( function( resolve, reject )
