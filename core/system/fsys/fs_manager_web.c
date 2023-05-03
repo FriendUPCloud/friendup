@@ -47,7 +47,7 @@ int convertToPdf( char *src )
 	if( command != NULL )
 	{
 		int i, len = 0;	// lets find chars which we dont want to handle (security, do not allow to run more commands)
-		len = snprintf( command, comLen, "lowriter --convert-to pdf %s --outdir /tmp/Friendup/", src );
+		len = snprintf( command, comLen, "soffice --convert-to pdf %s --outdir /tmp/Friendup/", src );
 		
 		DEBUG("[convertToPdf] command: %s\n", command );
 		
@@ -3309,7 +3309,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							
 							// create local file names
 							
-							snprintf( tmpLocalFile, 2048, "/tmp/Friendup/srcdoc_%ld.docx", (unsigned long)loggedSession );
+							snprintf( tmpLocalFile, 2048, "/tmp/Friendup/srcdoc_%ld", (unsigned long)loggedSession );
 							snprintf( tmpDstLocalFile, 2048, "/tmp/Friendup/srcdoc_%ld.pdf", (unsigned long)loggedSession );
 							
 							DEBUG("[makepdf] store as local file: %s\n", tmpLocalFile );
