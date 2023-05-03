@@ -1989,6 +1989,8 @@ function CloseView( win, delayed )
 	
 	let isDialog = false;
 	
+	let title = win.windowObject.getFlag( 'Title' );
+	
 	if( win )
 	{
 		// Clean up!
@@ -2001,6 +2003,11 @@ function CloseView( win, delayed )
 		if( win.parentNode.classList.contains( 'ViewContainer' ) )
 		{
 			win.parentNode.classList.add( 'Closing', 'NoEvents' );
+		}
+		// win == "content"
+		else if( win.parentNode.parentNode.classList.contains( 'ViewContainer' ) )
+		{
+			win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
 		}
 		
 		if( win.parentNode.classList.contains( 'Dialog' ) || 
@@ -5447,6 +5454,17 @@ var View = function( args )
 		// Set the flag
 		switch( flag )
 		{
+			case 'context':
+				for( let a in movableWindows )
+				{
+					if( a == value )
+					{
+						this.currentContext = [ movableWindows[ a ] ];
+						this.flags.context = value;
+						break;
+					}
+				}
+				break;
 			case 'mainView':
 				this.setMainView( value );
 				this.flags.mainView = value;
