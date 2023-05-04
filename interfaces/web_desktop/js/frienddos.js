@@ -3414,7 +3414,7 @@ window.Shell = function( appObject )
 								PadList( rows[a].Visible ? 'yes' : 'hidden', 10, 'right', '&nbsp;' ) + '</div>';
 							diskcount++;
 						}
-						callback( true, { response: disks + '<br>' + 'Found ' + diskcount + ' disk(s) in mountlist.' } );
+						callback( true, { response: disks + '<br>' + 'Found ' + diskcount + ' disk(s) in mountlist.', data: rows } );
 					}
 					else
 					{
