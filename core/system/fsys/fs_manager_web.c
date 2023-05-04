@@ -3310,8 +3310,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							
 							// create local file names
 							
-							snprintf( tmpLocalFile, 2048, "/tmp/Friendup/srcdoc_%ld", (unsigned long)loggedSession );
-							snprintf( tmpDstLocalFile, 2048, "/tmp/Friendup/srcdoc_%ld.pdf", (unsigned long)loggedSession );
+							time_t t = time( NULL );
+							snprintf( tmpLocalFile, 2048, "/tmp/Friendup/srcdoc_%ld_%ld", (unsigned long)loggedSession, t );
+							snprintf( tmpDstLocalFile, 2048, "/tmp/Friendup/srcdoc_%ld_%ld.pdf", (unsigned long)loggedSession, t );
 							
 							DEBUG("[makepdf] store as local file: %s\n", tmpLocalFile );
 							DEBUG("[makepdf] convert to: %s\n", tmpDstLocalFile );
