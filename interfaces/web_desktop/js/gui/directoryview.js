@@ -5609,9 +5609,8 @@ Friend.startImageViewer = function( iconObject, extra )
         	case 'quit':
             case 'close':
                 CloseView();
-                console.log( 'Has parent view!', extra );
-                if( extra.parentView )
-                	extra.parentView.windowObject.activate();
+                if( extra && extra.parentView )
+                	_ActivateWindow( extra.parentView );
                 break;
         }
     }
@@ -5626,7 +5625,12 @@ Friend.startImageViewer = function( iconObject, extra )
 	{
 		if( extra && extra.parentView )
 		{
+			console.log( 'DO IT!' );
 			_ActivateWindow( extra.parentView );
+		}
+		else
+		{
+			console.log( 'Blah: ', extra );
 		}
 	}
 	
