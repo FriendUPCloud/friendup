@@ -5626,7 +5626,7 @@ Friend.startImageViewer = function( iconObject, extra )
 		if( extra && extra.parentView )
 		{
 			console.log( 'DO IT!', extra.parentView );
-			_ActivateWindow( extra.parentView );
+			extra.parentView.windowObject.activate();
 		}
 		else
 		{
