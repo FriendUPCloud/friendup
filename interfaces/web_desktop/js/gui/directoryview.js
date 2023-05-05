@@ -4331,7 +4331,10 @@ function OpenWindowByUrl( url, fileInfo )
 	    v.onClose = function()
 	    {
 	    	console.log( 'ARRRRRRRRRRRRRRRRRRRRRRRRRRRRRR!' );
-		    cm.windowObject.activate();
+	    	setTimeout( function()
+	    	{
+		    	cm.windowObject.activate();
+		    }, 5 );
 	    }
 	    
 	    v.setContent( '<iframe id="pdf' + ( ++friendPdfIndex ) + '" src="/webclient/3rdparty/pdfjs/web/viewer.html?file=' + encodeURIComponent( url ) + '" class="PDFView"></iframe>' );
