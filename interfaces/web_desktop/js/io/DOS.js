@@ -586,7 +586,7 @@ Friend.DOS.openWindowByFilename = function( fileInfo, ext, appId = false )
 				// Support url instead
 				if( fileInfo.Url )
 				{
-					return OpenWindowByUrl( fileInfo.Url );
+					return OpenWindowByUrl( fileInfo.Url, fileInfo );
 				}
 				return false;
 			}

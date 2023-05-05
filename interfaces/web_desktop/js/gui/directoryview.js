@@ -4301,11 +4301,23 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 }
 
 // Just opens a window by url
-function OpenWindowByUrl( url )
+function OpenWindowByUrl( url, fileInfo )
 {
 	let ext = url.split( '.' ).pop();
 	if( ext )
 		ext = ext.toLowerCase();
+	
+	function initContext( v )
+	{
+		if( !v ) return;
+		console.log( '!!---------------- Looking at flags: ', fileInfo.flags );
+		// View ID in context sets recent location
+		if( fileInfo.flags && fileInfo.flags.context )
+		{
+			// Set context on current window flags
+			v.setFlag( 'context', fileInfo.flags.context );		
+		}
+	}
 	
 	if( ext == 'pdf' )
 	{
