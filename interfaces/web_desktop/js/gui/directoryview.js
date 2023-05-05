@@ -5632,10 +5632,6 @@ Friend.startImageViewer = function( iconObject, extra )
 				extra.parentView.windowObject.activate();
 			}, 5 );
 		}
-		else
-		{
-			console.log( 'Blah: ', extra );
-		}
 	}
 	
 	// Set up menu items on image viewer

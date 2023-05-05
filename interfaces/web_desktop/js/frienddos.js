@@ -4697,7 +4697,12 @@ window.FriendDOS =
 		{
 			if( !ext )
 			{
-				ext = fileInfo.Path ? fileInfo.Path.split( '.' ) : ( fileInfo.Filename ? fileInfo.Filename.split( '.' ) : fileInfo.Title.split( '.' ) );
+				ext = fileInfo.Path ? fileInfo.Path.split( '.' ) : ( fileInfo.Filename ? fileInfo.Filename.split( '.' ) : ( fileInfo.Title ? fileInfo.Title.split( '.' ) : false ) );
+				if( ext == false )
+				{
+					console.log( 'Error finding file path or title or filename: ', fileInfo );
+					return false;
+				}
 				ext = ext[ext.length-1];
 			}
 		}
