@@ -4307,18 +4307,6 @@ function OpenWindowByUrl( url )
 	if( ext )
 		ext = ext.toLowerCase();
 	
-	function initContext( v )
-	{
-		if( !v ) return;
-		console.log( '!!---------------- Looking at flags: ', fileInfo.flags );
-		// View ID in context sets recent location
-		if( fileInfo.flags && fileInfo.flags.context )
-		{
-			// Set context on current window flags
-			v.setFlag( 'context', fileInfo.flags.context );		
-		}
-	}
-	
 	if( ext == 'pdf' )
 	{
 		let cm = currentMovable;
@@ -4327,8 +4315,6 @@ function OpenWindowByUrl( url )
 	        width: 800,
 	        height: 800
 	    } );
-	    
-	    initContext( v );
 	    
 	    v.onClose = function()
 	    {
