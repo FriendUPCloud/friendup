@@ -4533,6 +4533,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		
 		v.onClose = function()
 	    {
+	    	console.log( 'Close The Fakka !Fakka!' );
 		    cm.windowObject.activate();
 	    }
 		
