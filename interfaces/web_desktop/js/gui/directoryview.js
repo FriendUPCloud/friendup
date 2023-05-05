@@ -4521,12 +4521,22 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		iconObject.extension.toLowerCase() == 'gif'
 	)
 	{
+	    let cm = currentMovable;
+	    
 	    if( fileInfo.applicationId )
 		{
 		    iconObject.applicationId = fileInfo.applicationId;
 		}
 		let v = Friend.startImageViewer( iconObject, { parentView: currentMovable, recent: fromFolder ? false : 'dashboard' } );
+		console.log( ' > Setting viewer: ', v );
 		initContext( v );
+		
+		v.onClose = function()
+	    {
+		    cm.windowObject.activate();
+	    }
+		
+		console.log( ' > Check: ', v );
 	}
 	else if( iconObject.extension.toLowerCase() == 'pdf' )
 	{
