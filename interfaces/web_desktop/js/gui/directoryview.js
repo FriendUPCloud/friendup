@@ -5655,6 +5655,11 @@ Friend.startImageViewer = function( iconObject, extra )
 					command: function()
 					{
 						CloseView( win );
+						if( extra && extra.parentView )
+						{
+							console.log( 'DO IT!' );
+							_ActivateWindow( extra.parentView );
+						}
 					}
 				}
 			]
