@@ -4524,7 +4524,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		{
 		    iconObject.applicationId = fileInfo.applicationId;
 		}
-		Friend.startImageViewer( iconObject, { parentView: currentMovable, recent: fromFolder ? false : 'dashboard' } );
+		let v = Friend.startImageViewer( iconObject, { parentView: currentMovable, recent: fromFolder ? false : 'dashboard' } );
+		initContext( v );
 	}
 	else if( iconObject.extension.toLowerCase() == 'pdf' )
 	{
@@ -6190,7 +6191,7 @@ Friend.startImageViewer = function( iconObject, extra )
 	function doImage( path, title )
 	{
 	}
-	win = null;
+	return win;
 };
 
 function GetIconClassByExtension( extension, fileInfo )
