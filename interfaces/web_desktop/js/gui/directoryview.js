@@ -4324,7 +4324,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	function initContext( v )
 	{
 		if( !v ) return;
-		console.log( 'Looking at flags: ', fileInfo.flags );
+		console.log( '!!---------------- Looking at flags: ', fileInfo.flags );
 		// View ID in context sets recent location
 		if( fileInfo.flags && fileInfo.flags.context )
 		{
