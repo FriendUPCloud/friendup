@@ -4330,6 +4330,7 @@ function OpenWindowByUrl( url, fileInfo )
 	    
 	    v.onClose = function()
 	    {
+	    	console.log( 'ARRRRRRRRRRRRRRRRRRRRRRRRRRRRRR!' );
 		    cm.windowObject.activate();
 	    }
 	    
