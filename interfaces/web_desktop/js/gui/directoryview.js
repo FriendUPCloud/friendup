@@ -4521,21 +4521,13 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		iconObject.extension.toLowerCase() == 'gif'
 	)
 	{
-	    let cm = currentMovable;
-	    
 	    if( fileInfo.applicationId )
 		{
 		    iconObject.applicationId = fileInfo.applicationId;
 		}
 		let v = Friend.startImageViewer( iconObject, { parentView: currentMovable, recent: fromFolder ? false : 'dashboard' } );
-		console.log( ' > Setting viewer: ', v );
-		initContext( v );
 		
-		v.onClose = function()
-	    {
-	    	console.log( 'Close The Fakka !Fakka!' );
-		    cm.windowObject.activate();
-	    }
+		initContext( v );
 		
 		console.log( ' > Check: ', v );
 	}
@@ -5617,6 +5609,8 @@ Friend.startImageViewer = function( iconObject, extra )
         	case 'quit':
             case 'close':
                 CloseView();
+                if( extra.parentView )
+                	extra.parentView.windowObject.activate();
                 break;
         }
     }
