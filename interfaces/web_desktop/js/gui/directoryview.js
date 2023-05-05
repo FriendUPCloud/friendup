@@ -5626,7 +5626,11 @@ Friend.startImageViewer = function( iconObject, extra )
 		if( extra && extra.parentView )
 		{
 			console.log( 'DO IT!', extra.parentView );
-			extra.parentView.windowObject.activate();
+			_DeactivateWindow( currentMovable );
+			setTimeout( function()
+			{
+				extra.parentView.windowObject.activate();
+			}, 25 );
 		}
 		else
 		{
