@@ -4312,7 +4312,7 @@ function OpenWindowByUrl( url )
 	{
 		let cm = currentMovable;
 	    let v = new View( {
-	        title: iconObject.Path,
+	        title: url,
 	        width: 800,
 	        height: 800
 	    } );
