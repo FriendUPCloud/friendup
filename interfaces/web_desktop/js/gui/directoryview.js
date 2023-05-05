@@ -4300,6 +4300,47 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	}
 }
 
+// Just opens a window by url
+function OpenWindowByUrl( url )
+{
+	let ext = url.split( '.' ).pop();
+	if( ext )
+		ext = ext.toLowerCase();
+	
+	
+	if( ext == 'pdf' )
+	{
+		let cm = currentMovable;
+	    let v = new View( {
+	        title: iconObject.Path,
+	        width: 800,
+	        height: 800
+	    } );
+	    
+	    initContext( v );
+	    
+	    v.onClose = function()
+	    {
+		    cm.windowObject.activate();
+	    }
+	    
+	    v.setContent( '<iframe id="pdf' + ( ++friendPdfIndex ) + '" src="/webclient/3rdparty/pdfjs/web/viewer.html?file=' + encodeURIComponent( url ) + '" class="PDFView"></iframe>' );
+	    let c = ge( 'pdf' + friendPdfIndex );
+	    if( !c )
+	    {
+	        return v.close();
+        }
+	    c.style.position = 'absolute';
+	    c.style.width = '100%';
+	    c.style.height = '100%';
+	    c.style.top = '0';
+	    c.style.left = '0';
+	    return true;
+	}
+	console.log( 'Unsupported extension..' );
+	return false;
+}
+
 // Opens a window based on the fileInfo (type etc) -----------------------------
 // oFileInfo  = original file info
 // event      = input event
