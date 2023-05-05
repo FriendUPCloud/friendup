@@ -5630,7 +5630,7 @@ Friend.startImageViewer = function( iconObject, extra )
 			setTimeout( function()
 			{
 				extra.parentView.windowObject.activate();
-			}, 25 );
+			}, 5 );
 		}
 		else
 		{
