@@ -5660,7 +5660,6 @@ Friend.startImageViewer = function( iconObject, extra )
                 CloseView();
                 if( extra && extra.parentView )
                 {
-                	console.log( 'Activating other!' );
                 	extra.parentView.windowObject.activate();
             	}
                 break;
@@ -5677,7 +5676,6 @@ Friend.startImageViewer = function( iconObject, extra )
 	{
 		if( extra && extra.parentView )
 		{
-			console.log( 'Activating other 2!' );
 			extra.parentView.windowObject.activate();
 		}
 	}
