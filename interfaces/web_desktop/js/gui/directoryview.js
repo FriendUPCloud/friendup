@@ -3608,8 +3608,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				if( currentMovable )
 				{
 					_DeactivateWindow( currentMovable );
+					currentMovable = null;
 				}
-				currentMovable = null;
 			}
 
 			// This means we are adding
@@ -4578,6 +4578,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		{
 		    iconObject.applicationId = fileInfo.applicationId;
 		}
+		console.log( 'What is this: ', currentMovable );
 		let v = Friend.startImageViewer( iconObject, { parentView: currentMovable, recent: fromFolder ? false : 'dashboard' } );
 		
 		initContext( v );
@@ -5663,7 +5664,11 @@ Friend.startImageViewer = function( iconObject, extra )
             case 'close':
                 CloseView();
                 if( extra && extra.parentView )
+                {
+                	console.log( 'ACTIVA: ', extra.parentView );
                 	_ActivateWindow( extra.parentView );
+            	}
+            	else console.log( 'NEMA ACTIVA!', extra );
                 break;
         }
     }
@@ -5678,12 +5683,7 @@ Friend.startImageViewer = function( iconObject, extra )
 	{
 		if( extra && extra.parentView )
 		{
-			console.log( 'DO IT!', extra.parentView );
-			_DeactivateWindow( currentMovable );
-			setTimeout( function()
-			{
-				extra.parentView.windowObject.activate();
-			}, 5 );
+			extra.parentView.windowObject.activate( 'force' );
 		}
 	}
 	
