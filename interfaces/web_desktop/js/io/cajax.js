@@ -423,19 +423,6 @@ cAjax.prototype.destroy = function()
 cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 {
 	const self = this
-	
-	if ( -1 != url.indexOf( 'file/' ))
-	{
-		console.log( 'cAjax.open', {
-			self          : self,
-			method        : method,
-			ulr           : url,
-			sync          : syncing,
-			hasReturnCode : hasReturnCode,
-			vars          : self.vars,
-		})
-	}
-	
 	if( this.opened )
 	{
 		//console.log( '[cajax] Impossible error! Illegal reuse of object.' );
@@ -760,10 +747,7 @@ cAjax.prototype.send = function( data, callback )
 				let out = [];
 				for( let a in this.vars )
 					out.push( a + '=' + this.vars[ a ] );
-				
-				if ( -1 != this.url.indexOf( 'file/' ))
-					console.log( 'send expose out', [ this.vars, out ])
-				
+
 				new Promise( function( resolve, reject )
 				{
 				    // Will throw an error unless we are forcing http for testing!

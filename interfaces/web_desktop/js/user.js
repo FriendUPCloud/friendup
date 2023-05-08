@@ -665,7 +665,6 @@ Friend.User = {
 				}
 				else if( !Workspace.initWebSocket )
 				{
-				    console.log( 'Retrying to initialize.' );
 				    return setTimeout( function(){ Friend.User.SetUserConnectionState( mode, force ); }, 25 );
 				}
 				else
