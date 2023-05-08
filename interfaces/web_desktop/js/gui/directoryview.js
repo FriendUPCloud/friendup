@@ -5660,10 +5660,9 @@ Friend.startImageViewer = function( iconObject, extra )
                 CloseView();
                 if( extra && extra.parentView )
                 {
-                	console.log( 'ACTIVA: ', extra.parentView );
-                	_ActivateWindow( extra.parentView );
+                	console.log( 'Activating other!' );
+                	extra.parentView.windowObject.activate();
             	}
-            	else console.log( 'NEMA ACTIVA!', extra );
                 break;
         }
     }
@@ -5678,7 +5677,8 @@ Friend.startImageViewer = function( iconObject, extra )
 	{
 		if( extra && extra.parentView )
 		{
-			extra.parentView.windowObject.activate( 'force' );
+			console.log( 'Activating other 2!' );
+			extra.parentView.windowObject.activate();
 		}
 	}
 	
