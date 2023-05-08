@@ -4330,10 +4330,7 @@ function OpenWindowByUrl( url, fileInfo )
 	    
 	    v.onClose = function()
 	    {
-	    	setTimeout( function()
-	    	{
-		    	cm.windowObject.activate();
-		    }, 5 );
+	    	cm.windowObject.activate();
 	    }
 	    
 	    v.setContent( '<iframe id="pdf' + ( ++friendPdfIndex ) + '" src="/webclient/3rdparty/pdfjs/web/viewer.html?file=' + encodeURIComponent( url ) + '" class="PDFView"></iframe>' );
@@ -4349,7 +4346,6 @@ function OpenWindowByUrl( url, fileInfo )
 	    c.style.left = '0';
 	    return true;
 	}
-	console.log( 'Unsupported extension..' );
 	return false;
 }
 
