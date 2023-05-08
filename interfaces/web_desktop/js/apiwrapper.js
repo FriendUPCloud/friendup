@@ -477,25 +477,13 @@ function apiWrapper( event, force )
 						}, msg.extra );
 						break;
 					case 'openWindowByPath':
-						console.log( 'openWindowByPath', msg )
 						Friend.DOS.getFileAccess( msg.path, {}, ( response, permissions, extra ) => {
-							console.log( 'getFileAccess response', {
-								res : response,
-								per : permissions,
-								xtr : extra,
-							})
 							if ( !response )
 								return
 							
 							Friend.DOS.getFileInfo( msg.path, {}, ( response, fileInfo, extra ) => {
-								console.log( 'getFileInfo response', {
-									res  : response,
-									fifo : fileInfo,
-									exr  : extra,
-								})
 								if ( !response )
 									return
-								
 								
 								if( msg.flags.context && msg.flags.context == '$CURRENTVIEWID' )
 								{
@@ -3923,7 +3911,6 @@ function apiWrapper( event, force )
 						}
 						break;
 					case 'librarycall':
-						console.log( 'librarycall', msg )
 						var j = new cAjax();
 						var ex = '';
 						if( msg.func )
@@ -3964,7 +3951,6 @@ function apiWrapper( event, force )
 							j.addVar( 'sessionid', Workspace.sessionId );
 						j.onload = function( rc, dt )
 						{
-							console.log( 'librarycall onload', [ rc, dt ])
 							var nmsg = msg;
 							nmsg.command = 'libraryresponse';
 							nmsg.returnCode = rc;
