@@ -470,11 +470,12 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				if( dw.pathHistoryIndex > 0 )
 				{
 					let fin = dw.pathHistoryRewind();
-					dw.window.fileInfo = fin;
+					dw.window.fileInfo = fin; 
 					
 					if( !isMobile && winobj.fileBrowser )
 					{
-						winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
+					    console.log( '[BACK] Test.' );
+						//winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } ); // <- doesn't work properly
 					}
 					winobj.refresh();
 				}
@@ -494,7 +495,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					
 					if( !isMobile && winobj.fileBrowser )
 					{
-						winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
+						//winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
 					}
 					winobj.refresh();
 				}
@@ -3607,8 +3608,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				if( currentMovable )
 				{
 					_DeactivateWindow( currentMovable );
+					currentMovable = null;
 				}
-				currentMovable = null;
 			}
 
 			// This means we are adding
@@ -4299,6 +4300,55 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	}
 }
 
+// Just opens a window by url
+function OpenWindowByUrl( url, fileInfo )
+{
+	let ext = url.split( '.' ).pop();
+	if( ext )
+		ext = ext.toLowerCase();
+	
+	function initContext( v )
+	{
+		if( !v ) return;
+		console.log( '!!---------------- Looking at flags: ', fileInfo.flags );
+		// View ID in context sets recent location
+		if( fileInfo.flags && fileInfo.flags.context )
+		{
+			// Set context on current window flags
+			v.setFlag( 'context', fileInfo.flags.context );		
+		}
+	}
+	
+	if( ext == 'pdf' )
+	{
+		let cm = currentMovable;
+	    let v = new View( {
+	        title: url,
+	        width: 800,
+	        height: 800
+	    } );
+	    
+	    v.onClose = function()
+	    {
+	    	cm.windowObject.activate();
+	    }
+	    
+	    v.setContent( '<iframe id="pdf' + ( ++friendPdfIndex ) + '" src="/webclient/3rdparty/pdfjs/web/viewer.html?file=' + encodeURIComponent( url ) + '" class="PDFView"></iframe>' );
+	    let c = ge( 'pdf' + friendPdfIndex );
+	    if( !c )
+	    {
+	        return v.close();
+        }
+	    c.style.position = 'absolute';
+	    c.style.width = '100%';
+	    c.style.height = '100%';
+	    c.style.top = '0';
+	    c.style.left = '0';
+	    return true;
+	}
+	return false;
+}
+
 // Opens a window based on the fileInfo (type etc) -----------------------------
 // oFileInfo  = original file info
 // event      = input event
@@ -4320,6 +4370,17 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	for( let a in oFileInfo )
 		fileInfo[ a ] = oFileInfo[ a ];
 
+	function initContext( v )
+	{
+		if( !v ) return;
+		// View ID in context sets recent location
+		if( fileInfo.flags && fileInfo.flags.context )
+		{
+			// Set context on current window flags
+			v.setFlag( 'context', fileInfo.flags.context );		
+		}
+	}
+	
 	if( !iconObject )
 	{
 		let ext = fileInfo.Path ? fileInfo.Path.split( '.' ) : ( fileInfo.Filename ? fileInfo.Filename.split( '.' ) : fileInfo.Title.split( '.' ) );
@@ -4364,6 +4425,9 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			'id'        : wid,
 			'volume'    : wt.substr( wt.length - 1, 1 ) == ':' ? true : false
 		} );
+		
+		initContext( win );
+		
 		if( fileInfo.applicationId )
 		{
 		    win.applicationId = fileInfo.applicationId;
@@ -4455,6 +4519,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			memorize : true
 		} );
 		
+		initContext( win );
+		
 		if( fileInfo.applicationId )
 		{
 		    win.applicationId = fileInfo.applicationId;
@@ -4507,7 +4573,12 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		{
 		    iconObject.applicationId = fileInfo.applicationId;
 		}
-		Friend.startImageViewer( iconObject, { parentView: currentMovable, recent: fromFolder ? false : 'dashboard' } );
+		console.log( 'What is this: ', currentMovable );
+		let v = Friend.startImageViewer( iconObject, { parentView: currentMovable, recent: fromFolder ? false : 'dashboard' } );
+		
+		initContext( v );
+		
+		console.log( ' > Check: ', v );
 	}
 	else if( iconObject.extension.toLowerCase() == 'pdf' )
 	{
@@ -4517,10 +4588,14 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	        width: 800,
 	        height: 800
 	    } );
+	    
+	    initContext( v );
+	    
 	    v.onClose = function()
 	    {
 		    cm.windowObject.activate();
 	    }
+	    
 	    v.setContent( '<iframe id="pdf' + ( ++friendPdfIndex ) + '" src="/webclient/3rdparty/pdfjs/web/viewer.html?file=' + encodeURIComponent( getImageUrl( iconObject.Path, 'rb' ) ) + '" class="PDFView"></iframe>' );
 	    let c = ge( 'pdf' + friendPdfIndex );
 	    if( !c )
@@ -4554,6 +4629,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			height   : 512,
 			memorize : true
 		} );
+		
+		initContext( win );
 		
 		if( fileInfo.applicationId )
 		{
@@ -4597,6 +4674,9 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 					width:  640,
 					height: 480
 				} );
+				
+				initContext( w );
+				
 				w.setJSXContent( data, title );
 				if( !fromFolder && Workspace.dashboard ) w.recentLocation = 'dashboard';
 				if( ocallback ) ocallback();
@@ -4648,20 +4728,30 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			w.flags.minimized = false;
 			w.activate();
 			w.toFront();
+			
+			initContext( w );
+			
 			if( ocallback ) ocallback();
 			return targetView.refresh(); 
 		}
-		else w = new View ( {
-			'title'     : wt,
-			'width'     : stored && stored.width ? stored.width : 800,
-			'height'    : stored && stored.height ? stored.height : 400,
-			'min-width' : 340,
-			'min-height': 180,
-			'memorize'  : true,
-			'id'        : id,
-			'volume'    : isVolume,
-			'clickableTitle': true
-		} );
+		else 
+		{
+			w = new View ( {
+				'title'     : wt,
+				'width'     : stored && stored.width ? 
+					stored.width : 800,
+				'height'    : stored && stored.height ? 
+					stored.height : 400,
+				'min-width' : 340,
+				'min-height': 180,
+				'memorize'  : true,
+				'id'        : id,
+				'volume'    : isVolume,
+				'clickableTitle': true
+			} );
+		}
+		
+		initContext( w );
 		
 		// View ID in context sets recent location
 		if( fileInfo.flags && fileInfo.flags.context )
@@ -5202,6 +5292,9 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 						'memorize' : true,
 						'id'       : fileInfo.MetaType + '_' + fid
 					} );
+					
+					initContext( win );
+					
 					if( !fromFolder && Workspace.dashboard ) win.recentLocation = 'dashboard';
 					/*console.log( '[9] you are here ... directoryview.js |||| ' + '<iframe style="background: #e0e0e0; position: absolute; top: 0; \
 						left: 0; width: 100%; height: 100%; border: 0" \
@@ -5565,6 +5658,10 @@ Friend.startImageViewer = function( iconObject, extra )
         	case 'quit':
             case 'close':
                 CloseView();
+                if( extra && extra.parentView )
+                {
+                	extra.parentView.windowObject.activate();
+            	}
                 break;
         }
     }
@@ -5579,7 +5676,7 @@ Friend.startImageViewer = function( iconObject, extra )
 	{
 		if( extra && extra.parentView )
 		{
-			_ActivateWindow( extra.parentView );
+			extra.parentView.windowObject.activate();
 		}
 	}
 	
@@ -5604,6 +5701,10 @@ Friend.startImageViewer = function( iconObject, extra )
 					command: function()
 					{
 						CloseView( win );
+						if( extra && extra.parentView )
+						{
+							_ActivateWindow( extra.parentView );
+						}
 					}
 				}
 			]
@@ -6151,7 +6252,7 @@ Friend.startImageViewer = function( iconObject, extra )
 	function doImage( path, title )
 	{
 	}
-	win = null;
+	return win;
 };
 
 function GetIconClassByExtension( extension, fileInfo )

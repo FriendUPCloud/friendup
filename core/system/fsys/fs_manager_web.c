@@ -2426,7 +2426,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					
 					if( strlen( name ) > 0 )
 					{
-						encName = UrlEncodeToMem( name );
+						//encName = UrlEncodeToMem( name ); - previous version, new way will be tested
+						encName = StringDuplicate( name );
 						Log( FLOG_INFO, "Name param orig: %s encoded %s\n", name, encName );
 					}
 					DEBUG("[File/Expose] encoded file name: %s\n", encName );

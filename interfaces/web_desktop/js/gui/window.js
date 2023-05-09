@@ -5454,6 +5454,17 @@ var View = function( args )
 		// Set the flag
 		switch( flag )
 		{
+			case 'context':
+				for( let a in movableWindows )
+				{
+					if( a == value )
+					{
+						this.currentContext = [ movableWindows[ a ] ];
+						this.flags.context = value;
+						break;
+					}
+				}
+				break;
 			case 'mainView':
 				this.setMainView( value );
 				this.flags.mainView = value;

@@ -580,7 +580,16 @@ Friend.DOS.openWindowByFilename = function( fileInfo, ext, appId = false )
 	{
 		if( !ext )
 		{
-			ext = fileInfo.Path ? fileInfo.Path.split( '.' ) : ( fileInfo.Filename ? fileInfo.Filename.split( '.' ) : fileInfo.Title.split( '.' ) );
+			ext = fileInfo.Path ? fileInfo.Path.split( '.' ) : ( fileInfo.Filename ? fileInfo.Filename.split( '.' ) : ( fileInfo.Title ? fileInfo.Title.split( '.' ) : false ) );
+			if( ext == false )
+			{
+				// Support url instead
+				if( fileInfo.Url )
+				{
+					return OpenWindowByUrl( fileInfo.Url, fileInfo );
+				}
+				return false;
+			}
 			ext = ext[ext.length-1];
 		}
 	}

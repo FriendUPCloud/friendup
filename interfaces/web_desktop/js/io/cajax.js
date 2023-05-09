@@ -422,8 +422,7 @@ cAjax.prototype.destroy = function()
 // Open an ajax query
 cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 {
-	let self = this;
-	
+	const self = this
 	if( this.opened )
 	{
 		//console.log( '[cajax] Impossible error! Illegal reuse of object.' );
@@ -435,11 +434,12 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	// Move dos calls onto http
 	let dosCall = false;
 	if( 
-		url.indexOf( '/file/read' ) >= 0 ||
-		url.indexOf( '/file/copy' ) >= 0 ||
+		url.indexOf( '/file/read'   ) >= 0 ||
+		url.indexOf( '/file/copy'   ) >= 0 ||
 		url.indexOf( '/file/delete' ) >= 0 ||
-		url.indexOf( '/file/write' ) >= 0 ||
-		url.indexOf( '/file/dir' )
+		url.indexOf( '/file/write'  ) >= 0 ||
+		url.indexOf( '/file/dir'    ) >= 0 ||
+		url.indexOf( '/file/expose' )
 	)
 	{
 		dosCall = true;
@@ -500,10 +500,10 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	else
 	{
 		this.lastOptions = {
-			method: method,
-			url: url,
-			syncing: syncing,
-			hasReturnCode: hasReturnCode
+			method        : method,
+			url           : url,
+			syncing       : syncing,
+			hasReturnCode : hasReturnCode
 		};
 	
 		if( !method ) method = this.method ? this.method : 'POST';
@@ -747,7 +747,7 @@ cAjax.prototype.send = function( data, callback )
 				let out = [];
 				for( let a in this.vars )
 					out.push( a + '=' + this.vars[ a ] );
-				
+
 				new Promise( function( resolve, reject )
 				{
 				    // Will throw an error unless we are forcing http for testing!

@@ -226,6 +226,10 @@ Friend.FileBrowser.prototype.setPath = function( target, cbk, tempFlags, e )
 	this.tempFlags = false;
 	this.flags.path = target; // This is the current target path..
 	if( tempFlags ) this.tempFlags = tempFlags;
+	
+	console.log( '[setPath] Refreshing on this path: (' + this.rootPath + ') ' + target, { context: this.lastContext } );
+	console.log( '[setPath] --' );
+	
 	this.refresh( this.rootPath, this.dom, cbk, 0, { context: this.lastContext } );
 }
 
@@ -361,53 +365,41 @@ Friend.FileBrowser.prototype.updateFavorites = function()
 	
 	self.favoritesContainer.appendChild( ul );
 }
-Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, depth, flags, evt )
+// Create onclick action function for refresh function
+Friend.FileBrowser.prototype.getOnClickActionFunc = function( data )
 {
-	let self = this;
-	if( !evt ) evt = {};
-	
-	if( !rootElement ) rootElement = this.dom;
-	if( !callback ) callback = false;
-	if( !path ) path = this.rootPath; // Use the rootpath
-	if( !depth ) depth = 1;
-	
-	// Fix column problem
-	if ( path.indexOf( ':' ) < 0 )
-		path += ':';
-
-	let refreshMode = 'normal';
-	let context = null;
-	if( flags )
+    let self = this;
+    let context = refreshMode = path = rootElement = callback = depth = flags = evt = false;
+    if( data )
+    {
+        if( data.context )
+            context = data.context;
+        if( data.path )
+            path = data.path;
+        if( data.rootElement )
+            rootElement = data.rootElement;
+        if( data.callback )
+            callback = data.callback;
+        if( data.depth )
+            depth = data.depth;
+        if( data.flags )
+            flags = data.flags;
+        if( data.evt )
+            evt = data.evt;
+    }
+    
+    if( flags )
 	{
 		if( flags.context )
 		{
-			if( self.lastContext != flags.context && !evt.button )
-			{
-				return;
-			}
 			context = flags.context;
 			self.lastContext = context;
 		}
 		if( flags.mode )
 			refreshMode = flags.mode;
 	}
-
-	if( !this.headerDisks )
-	{
-		this.headerDisks = document.createElement( 'div' );
-		this.headerDisks.innerHTML = '<p class="Layout BorderBottom PaddingBottom"><strong>' + i18n( 'i18n_your_devices' ) + ':</strong></p>';
-		rootElement.appendChild( this.headerDisks );
-	}
-	
-	// What are we looking for at this level?
-	// Keeps the whole target path, but searches on each level recursively..
-	let targetPath = false;
-	if( this.flags.path )
-	{
-		targetPath = this.flags.path;
-	}
-	
-	function createOnclickAction( ele, ppath, type, depth )
+    
+    function createOnclickAction( ele, ppath, type, depth )
 	{
 		// Not more than once
 		if( ele.onclick ) return;
@@ -679,7 +671,65 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			return cancelBubble( e );
 		}
 	}
+	return createOnclickAction;
+}
+// Refresh the file browser (side bar)
+Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, depth, flags, evt )
+{
+	let self = this;
+	if( !evt ) evt = {};
+	
+	if( !rootElement ) rootElement = this.dom;
+	if( !callback ) callback = false;
+	if( !path ) path = this.rootPath; // Use the rootpath
+	if( !depth ) depth = 1;
+	
+	// Fix column problem
+	if ( path.indexOf( ':' ) < 0 )
+		path += ':';
 
+	let refreshMode = 'normal';
+	let context = null;
+	if( flags )
+	{
+		if( flags.context )
+		{
+			if( self.lastContext != flags.context && !evt.button )
+			{
+				return;
+			}
+			context = flags.context;
+			self.lastContext = context;
+		}
+		if( flags.mode )
+			refreshMode = flags.mode;
+	}
+
+	if( !this.headerDisks )
+	{
+		this.headerDisks = document.createElement( 'div' );
+		this.headerDisks.innerHTML = '<p class="Layout BorderBottom PaddingBottom"><strong>' + i18n( 'i18n_your_devices' ) + ':</strong></p>';
+		rootElement.appendChild( this.headerDisks );
+	}
+	
+	// What are we looking for at this level?
+	// Keeps the whole target path, but searches on each level recursively..
+	let targetPath = false;
+	if( this.flags.path )
+	{
+		targetPath = this.flags.path;
+	}
+	
+	let createOnclickAction = self.getOnClickActionFunc( { 
+	    context: context,
+	    path: path, 
+	    rootElement: rootElement, 
+	    callback: callback, 
+	    depth: depth, 
+	    flags: flags, 
+	    evt: evt
+    } );  
+		
 	// A click element for incoming path
 	let clickElement = null;
 	

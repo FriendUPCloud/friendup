@@ -3414,7 +3414,7 @@ window.Shell = function( appObject )
 								PadList( rows[a].Visible ? 'yes' : 'hidden', 10, 'right', '&nbsp;' ) + '</div>';
 							diskcount++;
 						}
-						callback( true, { response: disks + '<br>' + 'Found ' + diskcount + ' disk(s) in mountlist.' } );
+						callback( true, { response: disks + '<br>' + 'Found ' + diskcount + ' disk(s) in mountlist.', data: rows } );
 					}
 					else
 					{
@@ -4697,7 +4697,16 @@ window.FriendDOS =
 		{
 			if( !ext )
 			{
-				ext = fileInfo.Path ? fileInfo.Path.split( '.' ) : ( fileInfo.Filename ? fileInfo.Filename.split( '.' ) : fileInfo.Title.split( '.' ) );
+				ext = fileInfo.Path ? fileInfo.Path.split( '.' ) : ( fileInfo.Filename ? fileInfo.Filename.split( '.' ) : ( fileInfo.Title ? fileInfo.Title.split( '.' ) : false ) );
+				if( ext == false )
+				{
+					// Support url instead
+					if( fileInfo.Url )
+					{
+						return OpenWindowByUrl( fileInfo.Url, fileInfo );
+					}
+					return false;
+				}
 				ext = ext[ext.length-1];
 			}
 		}
