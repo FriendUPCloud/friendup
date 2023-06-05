@@ -8078,7 +8078,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 		    // Excempt!
 		    // TODO: May be unnecessary
-		    if( !currentMovable.applicationId && !currentMovable.content.classList.contains( 'FileDialog' ) )
+		    if( !currentMovable.applicationId && ( !currentMovable.content || !currentMovable.content.classList.contains( 'FileDialog' ) ) )
 		    {
 		    	let curr = currentMovable;
 		        currentMovable.quickMenu = {
