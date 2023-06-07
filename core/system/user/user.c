@@ -1302,3 +1302,37 @@ int UserRemoveFromGroup( User *usr, FUQUAD groupid )
 	DEBUG("[UserRemoveFromGroup] end. GroupID %ld\n", groupid );
 	return 0;
 }
+
+/**
+ * Create new UserToDelete
+ *
+ * @return new UserToDelete structure when success, otherwise NULL
+ */
+UserToDelete *UserToDeleteNew( )
+{
+	UserToDelete *utd;
+	
+	if( ( utd = FCalloc( 1, sizeof( UserToDelete ) ) ) != NULL )
+	{
+		
+	}
+	
+	return utd;
+}
+
+/**
+ * Remove UserToDelete structure
+ *
+ * @param usr pointer to UserToDelete structure which will be deleted
+ */
+void UserToDeleteDelete( UserToDelete *del )
+{
+	if( del != NULL )
+	{
+		if( del->utd_UserName )
+		{
+			FFree( del->utd_UserName );
+		}
+		FFree( del );
+	}
+}

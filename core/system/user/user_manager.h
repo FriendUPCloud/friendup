@@ -294,6 +294,12 @@ void UMRemoveOldUserLoginEntries( UserManager *um );
 //
 //
 
+void UMRemoveRemovedUsersData( UserManager *um );
+
+//
+//
+//
+
 int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details );
 
 //

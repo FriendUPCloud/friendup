@@ -814,7 +814,36 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					
 					if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
 					{
-						User * usr = UMGetUserByID( l->sl_UM, id );
+						User *usr;
+						User *usrToDelete;
+						
+						// we must mark user in database "to be deleted". This way we will be able to clean all his stuff after some period of time
+						
+						usrToDelete = UMGetUserByIDDB( l->sl_UM, id );
+						if( usrToDelete != NULL )
+						{
+							UserToDelete *utd = UserToDeleteNew( );
+							if( utd != NULL )
+							{
+								utd->utd_UserName = StringDuplicate( usrToDelete->u_Name );
+								utd->utd_UserID = id;
+								
+								// now lets store new entry
+								
+								SQLLibrary *lsqllib = l->LibrarySQLGet( l );
+								if( lsqllib != NULL )
+								{
+									lsqllib->Save( lsqllib, FUserToDeleteDesc, utd );
+									l->LibrarySQLDrop( l, lsqllib );
+								}
+								UserToDeleteDelete( utd );
+							}
+							
+							UserDelete( usrToDelete );
+						}
+						
+						usr = UMGetUserByID( l->sl_UM, id );
+						
 						if( usr != NULL && usr->u_Status != USER_STATUS_TO_BE_REMOVED )
 						{
 							DEBUG( "[UMWebRequest] UMRemoveAndDeleteUser %d! before unmount\n", usr->u_InUse );
