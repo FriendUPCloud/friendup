@@ -368,4 +368,10 @@ void UMAddExistingUsersToGroup( UserManager *um, UserGroup *ug );
 
 int killUserSession( void *l, UserSession *ses, FBOOL remove );
 
+//
+//
+//
+
+void UMPurgeUserData( UserManager *um, FQUAD id, char *userName );
+
 #endif //__SYSTEM_USER_USER_MANAGER_H__

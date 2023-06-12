@@ -836,6 +836,9 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 									lsqllib->Save( lsqllib, FUserToDeleteDesc, utd );
 									l->LibrarySQLDrop( l, lsqllib );
 								}
+								
+								UMPurgeUserData( l->sl_UM, id, usrToDelete->u_Name );
+								
 								UserToDeleteDelete( utd );
 							}
 							
