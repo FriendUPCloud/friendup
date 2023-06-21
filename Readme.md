@@ -160,15 +160,6 @@ New developers joining the project needs to sign our contributor agreement befor
 
 The contributor agreement is our vehicle for ensuring that this project can enjoy commercial support and gain essential project management, as well as an open book development cycle on Github.
 
-Developer Community / Chat rooms
-================================
-
-We invite everybody to join our Discord developer community at https://discord.gg/GREj9Gv.
-
-Demo server
------------
-
-For those that just want to test our Workspace, you can try our demo after registering at [https://go.friendup.cloud/](https://go.friendup.cloud/)
 
 Tested - a lot
 ==============
