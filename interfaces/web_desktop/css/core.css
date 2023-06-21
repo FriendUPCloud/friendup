@@ -81,6 +81,13 @@ body
    -ms-transform: rotateZ(0deg);
  	transform: rotateZ(0deg);*/
 	overflow: hidden;
+    touch-action: none;
+}
+
+
+body[mobile=mobile], body[tablet=tablet]
+{
+    touch-action: auto;
 }
 
 /* Preload images */
