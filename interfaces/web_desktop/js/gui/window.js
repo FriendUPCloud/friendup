@@ -5500,7 +5500,7 @@ var View = function( args )
 			        if( value )
 			        {
 			            viewdiv.parentNode.classList.add( 'Dialog' );
-			            if( flag == 'dialog' )
+			            if( flag == 'dialog' && document.body.classList.contains( 'ThemeEngine' ) )
 			            {
 					        viewdiv.style.left = 'calc(50% - ' + ( viewdiv.offsetWidth >> 1 ) + 'px)';
 					        viewdiv.style.top = 'calc(50% - ' + ( viewdiv.offsetHeight >> 1 ) + 'px)';
