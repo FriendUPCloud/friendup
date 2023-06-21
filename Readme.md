@@ -6,7 +6,7 @@ Friend OS v1.3.0, "Helium"
 ---
 **Release notes**
 
-https://github.com/FriendUPCloud/friendup/discussions/153
+COMING SOON
 ---
 
 The Friend OS leverages the computing power of the Internet to offer many of the features and functionalities of Chrome OS, Windows, Linux, Android, macOS or iOS, without the need to choose a specific hardware platform or proprietary software package. If you have a device that is connected to the Internet, you can use the Friend OS.
@@ -25,16 +25,6 @@ Distributed and powerful
 
 Friend OS aims to make the powerful emerging web technologies easy to work with. This is why we reach out to you, to help us enrich this platform with DOS drivers, modules, libraries and apps so that we can cover all of the interesting technologies out there that people use and love.
 In the Future, Friend OS will be to the cloud users what Linux is for machines.
-
-Getting started
-===============
-
-Please follow this guide to install Friend OS:
-
-```
-For Ubuntu 18: https://docs.friendos.com/docs/administrator-guide/installation/
-For Ubuntu 20: https://docs.friendos.com/docs/administrator-guide/installation-ubuntu-20/
-```
 
 Running the serving kernel manually
 -----------------------------------
