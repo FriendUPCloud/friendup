@@ -15,11 +15,6 @@ The FriendOS liberates you from Big Tech:  It gives you control to create, colla
 
 ![Friend OS Hydrogen](https://friendos.com/wp-content/uploads/2020/07/hydrogen-fulldesktop.jpg "Friend OS Hydrogen")
 
-Free account
-------------
-
-Get a free account on our production environment: https://friendsky.cloud/
-
 Across devices
 --------------
 
@@ -33,8 +28,6 @@ In the Future, Friend OS will be to the cloud users what Linux is for machines.
 
 Getting started
 ===============
-
-Friend OS can be tested on https://friendsky.cloud - signup is free.
 
 Please follow this guide to install Friend OS:
 
