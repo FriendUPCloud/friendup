@@ -104,4 +104,10 @@ LocFile* LocFileNewFromBuf( char* path, BufString *bs );
 
 char *GetExtension( char *name );
 
+//
+//
+//
+
+char *GetExtensionPtr( char* name );
+
 #endif
