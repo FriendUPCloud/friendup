@@ -6,19 +6,14 @@ Friend OS v1.3.0, "Helium"
 ---
 **Release notes**
 
-https://github.com/FriendUPCloud/friendup/discussions/153
+COMING SOON
 ---
 
 The Friend OS leverages the computing power of the Internet to offer many of the features and functionalities of Chrome OS, Windows, Linux, Android, macOS or iOS, without the need to choose a specific hardware platform or proprietary software package. If you have a device that is connected to the Internet, you can use the Friend OS.
 
 The FriendOS liberates you from Big Tech:  It gives you control to create, collaborate, store and share information, data and content across all your devices in a secure private environment and access it anywhere on any device.
 
-![Friend OS Hydrogen](https://friendos.com/wp-content/uploads/2020/07/hydrogen-fulldesktop.jpg "Friend OS Hydrogen")
-
-Free account
-------------
-
-Get a free account on our production environment: https://friendsky.cloud/
+![Friend OS Hydrogen](https://friendos.com/Hydrogen.jpg)
 
 Across devices
 --------------
@@ -30,18 +25,6 @@ Distributed and powerful
 
 Friend OS aims to make the powerful emerging web technologies easy to work with. This is why we reach out to you, to help us enrich this platform with DOS drivers, modules, libraries and apps so that we can cover all of the interesting technologies out there that people use and love.
 In the Future, Friend OS will be to the cloud users what Linux is for machines.
-
-Getting started
-===============
-
-Friend OS can be tested on https://friendsky.cloud - signup is free.
-
-Please follow this guide to install Friend OS:
-
-```
-For Ubuntu 18: https://docs.friendos.com/docs/administrator-guide/installation/
-For Ubuntu 20: https://docs.friendos.com/docs/administrator-guide/installation-ubuntu-20/
-```
 
 Running the serving kernel manually
 -----------------------------------
@@ -157,25 +140,6 @@ Licensing
 =========
 
 Friend OS is a large system consisting of several layers. It has a kernel core that is managing the Friend resources. This one is licensed under the MIT license. Then it has modules, DOS drivers and runtime linked libraries. These are licensed under the LGPLv3 license. Finally, we have the GUI for Friend - the Friend Workspace. This is licensed under the AGPLv3 license.
-
-Contributor agreement
-=====================
-
-New developers joining the project needs to sign our contributor agreement before they are allowed to commit changes to the project. The contributor agreement can be found here:
-
- * https://friendos.com/contributors/
-
-The contributor agreement is our vehicle for ensuring that this project can enjoy commercial support and gain essential project management, as well as an open book development cycle on Github.
-
-Developer Community / Chat rooms
-================================
-
-We invite everybody to join our Discord developer community at https://discord.gg/GREj9Gv.
-
-Demo server
------------
-
-For those that just want to test our Workspace, you can try our demo after registering at [https://go.friendup.cloud/](https://go.friendup.cloud/)
 
 Tested - a lot
 ==============
