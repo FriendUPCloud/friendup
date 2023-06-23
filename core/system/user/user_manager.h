@@ -294,6 +294,12 @@ void UMRemoveOldUserLoginEntries( UserManager *um );
 //
 //
 
+void UMRemoveRemovedUsersData( UserManager *um );
+
+//
+//
+//
+
 int UMGetUserStatistic( UserManager *um, BufString *bs, FBOOL details );
 
 //
@@ -361,5 +367,11 @@ void UMAddExistingUsersToGroup( UserManager *um, UserGroup *ug );
 //
 
 int killUserSession( void *l, UserSession *ses, FBOOL remove );
+
+//
+//
+//
+
+void UMPurgeUserData( UserManager *um, FQUAD id, char *userName );
 
 #endif //__SYSTEM_USER_USER_MANAGER_H__

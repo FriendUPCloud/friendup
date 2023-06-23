@@ -1103,6 +1103,8 @@ SystemBase *SystemInit( FBOOL skipDBupdParam )
 	
 	EventAdd( l->sl_EventManager, "UMRemoveOldUserLoginEntries", UMRemoveOldUserLoginEntries, l->sl_UM, time( NULL )+DAYS5, DAYS5, -1 );
 	
+	EventAdd( l->sl_EventManager, "UMRemoveRemovedUsersData", UMRemoveRemovedUsersData, l->sl_UM, time( NULL )+DAYS5, DAYS5, -1 );
+	
 	
 	//EventAdd( l->sl_EventManager, "SecurityManagerRemoteOldBadSessionCalls", SecurityManagerRemoteOldBadSessionCalls, l->sl_SecurityManager, time( NULL )+MINS60, MINS60, -1 );
 	

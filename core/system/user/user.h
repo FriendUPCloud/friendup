@@ -388,5 +388,53 @@ static FULONG UserDesc[] = {
 	SQLT_END 
 };
 
+/*
+CREATE TABLE IF NOT EXISTS `FUserToDelete` (
+	`ID` bigint(32) NOT NULL AUTO_INCREMENT,
+	`UserName` char(512) NOT NULL,
+	`UserID` bigint(32) NOT NULL,
+	PRIMARY KEY (`ID`) 
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+*/
+
+//
+// user structure
+//
+
+typedef struct UserToDelete
+{
+	MinNode						node;
+	FULONG						utd_ID;
+	char						*utd_UserName;
+	FULONG						utd_UserID;
+}UserToDelete;
+
+//
+//
+//
+
+UserToDelete *UserToDeleteNew( );
+
+//
+//
+//
+
+void UserToDeleteDelete( UserToDelete *del );
+
+//
+//
+//
+
+static FULONG FUserToDeleteDesc[] = { 
+    SQLT_TABNAME, (FULONG)"FUser",       
+    SQLT_STRUCTSIZE, sizeof( struct User ), 
+	SQLT_IDINT,			(FULONG)"ID",				offsetof( struct UserToDelete, utd_ID ), 
+	SQLT_STR,			(FULONG)"UserName",			offsetof( struct UserToDelete, utd_UserName ),
+	SQLT_INT,			(FULONG)"UserID",			offsetof( struct UserToDelete, utd_UserID ),
+	SQLT_INIT_FUNCTION,	(FULONG)"init",				(FULONG)0,
+	SQLT_NODE,			(FULONG)"node",				offsetof( struct User, node ),
+	SQLT_END 
+};
+	
 
 #endif // __SYSTEM_USER_USER_H__

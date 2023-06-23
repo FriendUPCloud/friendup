@@ -204,6 +204,12 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *basepath, co
 //
 //
 
+int FileDownloadFile( Http *request, void *us, const char *dst, char *src );
+
+//
+//
+//
+
 int FileOrDirectoryDeleteRec( Http *request, File *srcdev, const char *src, int fod, int *numberFiles );
 
 //

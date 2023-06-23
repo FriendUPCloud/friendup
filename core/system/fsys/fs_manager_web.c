@@ -33,6 +33,38 @@ if( PTH[ INT ] == '/' || PTH[ INT ] == ':' || PTH[ INT ] == '\'' ) \
 }
 
 /**
+ * Convert file to pdf
+ *
+ * @param src path to file which will be converted to pdf
+ * 
+ **/
+
+int convertToPdf( char *src )
+{
+	int comLen = strlen( src ) + 128;
+	char *command = FMalloc( comLen );
+	
+	if( command != NULL )
+	{
+		int i, len = 0;	// lets find chars which we dont want to handle (security, do not allow to run more commands)
+		len = snprintf( command, comLen, "soffice --convert-to pdf %s --outdir /tmp/Friendup/", src );
+		
+		DEBUG("[convertToPdf] command: %s\n", command );
+		
+		for( i=0 ; i < len ; i++ )
+		{
+			if( command[ i ] == '|' ){ command[ i ] = ' '; }
+		}
+	
+		system( command );
+		FFree( command );
+	}
+	
+	return 0;
+}
+
+
+/**
  * Filesystem web calls handler
  *
  * @param m pointer to SystemBase
@@ -3195,6 +3227,212 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					{
 						FFree( files );
 					}
+				}
+				
+				/// @cond WEB_CALL_DOCUMENTATION
+				/**
+				*
+				* <HR><H2>system.library/file/makepdf</H2>Make pdf from file (document)
+				*
+				* @param sessionid - (required) session id of logged user
+				* @param path - (required) path to files or directories which you want to archive. Entries must be separated by semicolon
+				* @param destination - (required) path to place where archive will be stored 
+				* @param notify - send notification to other sessions/user about changes (by default set to true, set false to disable this)
+				* @return { Result: 0 } when success, otherwise error number
+				*/
+				/// @endcond
+				else if( strcmp( urlpath[ 1 ], "makepdf" ) == 0 )
+				{
+					char *destination = NULL;
+					//char *files    = NULL;
+					
+					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
+											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
+					
+					
+					// Where archive should be stored
+					el = HttpGetPOSTParameter( request, "destination" );
+					if( el == NULL ) el = HashmapGet( request->http_Query, "destination" );
+					if( el != NULL )
+					{
+						destination = UrlDecodeToMem( (char *)el->hme_Data );
+					}
+					
+					FBOOL notify = TRUE;
+					el = HttpGetPOSTParameter( request, "notify" );
+					if( el == NULL ) el = HashmapGet( request->http_Query, "notify" );
+					if( el != NULL )
+					{
+						if( el->hme_Data != NULL )
+						{
+							if( strcmp( (char *)el->hme_Data, "false" ) == 0 )
+							{
+								notify = FALSE;
+							}
+						}
+					}
+					
+					//if( files != NULL )
+					{
+						request->http_SB = l;
+
+						char *command = FCalloc( 2048, sizeof(char) );
+						char *dstdevicename = FCalloc( 256, sizeof(char) );
+						char *tmpLocalFile = FCalloc( 2048, sizeof(char) );
+						char *tmpDstLocalFile = FCalloc( 2048, sizeof(char) );
+						
+						if( destination != NULL )
+						{
+							destination = StringDuplicate( destination );
+						}
+						else
+						{
+							int dstLen = strlen( origDecodedPath ) + 16;
+							destination = FCalloc( dstLen, sizeof(char) );
+							snprintf( destination, dstLen, "%s_.pdf", origDecodedPath );
+						}
+						
+						if( dstdevicename != NULL )
+						{
+							unsigned int j = 0;
+							for( j=0; j < strlen( destination ) ; j++ )
+							{
+								if( destination[ j ] == ':' )
+								{
+									dstdevicename[ j ] = 0;
+									break;
+								}
+								else
+								{
+									dstdevicename[ j ] = destination[ j ];
+								}
+							}
+							
+							// create local file names
+							
+							time_t t = time( NULL );
+							snprintf( tmpLocalFile, 2048, "/tmp/Friendup/srcdoc_%ld_%ld", (unsigned long)loggedSession, t );
+							snprintf( tmpDstLocalFile, 2048, "/tmp/Friendup/srcdoc_%ld_%ld.pdf", (unsigned long)loggedSession, t );
+							
+							DEBUG("[makepdf] store as local file: %s\n", tmpLocalFile );
+							DEBUG("[makepdf] convert to: %s\n", tmpDstLocalFile );
+							
+							// get file
+							
+							FileDownloadFile( request, loggedSession, tmpLocalFile, origDecodedPath );
+							
+							DEBUG("[makepdf] download file from: %s to: %s\n", origDecodedPath, tmpLocalFile );
+							
+							// convert local file to pdf
+							
+							convertToPdf( tmpLocalFile );
+							
+							// upload result
+							
+							File *dstdevice = NULL;
+							if( ( dstdevice = GetRootDeviceByName( loggedSession->us_User, loggedSession, dstdevicename ) ) != NULL )
+							{
+								char *buffer = FMalloc( 32768 * sizeof(char) );
+							
+								FILE *readfile = NULL;
+								FHandler *fsys = dstdevice->f_FSys;
+								
+								if( ( readfile = fopen( tmpDstLocalFile, "rb" ) ) != NULL )
+								{
+									FileFillSessionID( actDev, loggedSession );
+									
+									File *fp = (File *)fsys->FileOpen( dstdevice, destination, "wb" );
+									if( fp != NULL )
+									{
+										FQUAD bufferSize = 0;
+										while( ( bufferSize = fread( buffer, 1, 32768, readfile ) ) > 0 )
+										{
+											int stored = 0;
+											
+											bufferSize = FileSystemActivityCheckAndUpdate( l, &(dstdevice->f_Activity), bufferSize );
+											stored = fsys->FileWrite( fp, buffer, bufferSize );
+											dstdevice->f_BytesStored += stored;
+										}
+										fsys->FileClose( dstdevice, fp );
+										
+										char *msgpath = destination;
+										unsigned int k=0;
+											
+										for( k=0 ; k < strlen( destination ) ; k++ )
+										{
+											if( destination[ k ] == ':' )
+											{
+												msgpath = &destination[ k+1 ];
+											}
+										}
+										
+										if( notify == TRUE )
+										{
+											int err2 = DoorNotificationCommunicateChanges( l, loggedSession, dstdevice, destination );
+										}
+										
+										HttpAddTextContent( response,  "ok<!--separate-->{\"result\":0}" );
+									}
+									else
+									{
+										FERROR("Cannot open file to store %s\n", destination );
+									}
+									fclose( readfile );
+								}
+								else
+								{
+									FERROR("Cannot open file to read %s\n", tmpDstLocalFile );
+								}
+								FFree( buffer );
+							}
+							FFree( dstdevicename );
+						}
+						else
+						{
+							FERROR("Cannot allocate memory for path\n" );
+						}
+						FFree( command );
+
+						// delete local files
+						
+						remove( tmpLocalFile );
+						remove( tmpDstLocalFile );
+						
+						// relase resources
+						
+						FFree( tmpLocalFile );
+						FFree( tmpDstLocalFile );
+						//FFree( dstdevicename );
+						
+						
+						/*
+						else
+						{
+							HttpAddTextContent( response,  "fail<!--separate-->{ \"response\": \"Error with files path!\"}" );
+						}
+						*/
+					}
+					/*
+					else
+					{
+						char dictmsgbuf[ 512 ];
+						char dictmsgbuf1[ 256 ];
+						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "source" );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), ERROR_STRING_TEMPLATE, dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+						HttpAddTextContent( response, dictmsgbuf );
+					}
+					*/
+					
+					// Clean up memory
+					if( destination != NULL )
+					{
+						FFree( destination );
+					}
+					
+					//if( files != NULL )
+					//{
+					//	FFree( files );
+					//}
 				}
 				
 				/// @cond WEB_CALL_DOCUMENTATION

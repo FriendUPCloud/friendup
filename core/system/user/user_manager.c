@@ -29,6 +29,9 @@
 #include <system/notification/notification.h>
 #include <system/fsys/door_notification.h>
 
+#include <ftw.h>
+#include <unistd.h>
+
 /**
  * Create UserManager
  *
@@ -1397,6 +1400,187 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, char *
 		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	return canILogin;
+}
+
+//
+// Delete file/directory from local disk
+// internal function
+//
+
+int UMUnlinkCB( const char *fpath, const struct stat *sb __attribute__((unused)), int typeflag __attribute__((unused)), void *ftwbuf __attribute__((unused)))
+{
+	int rv = remove( fpath );
+	if( rv != 0 )
+	{
+		DEBUG("Cannot delete %s\n", fpath );
+	}
+	
+	return rv;
+}
+
+/**
+ * Function remove user data from database
+ *
+ * @param um pointer to UserManager
+ * @param id id of the user which data will be deleted
+ * @param userName name of user which data will be removed
+ */
+
+void UMPurgeUserData( UserManager *um, FQUAD id, char *userName )
+{
+	SystemBase *sb = (SystemBase *)um->um_SB;
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	
+	if( sqlLib != NULL )
+	{
+		DEBUG("[UMPurgeUserData] id %lld\n", id );
+		// temporary solution, using MYSQL connection
+		char *query = FMalloc( 2048 );
+		
+		// first delete database entries
+		
+		snprintf( query, 2048, "delete from DockItem where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FAnnouncement where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FAnnouncementStatus where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from Fapplication where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FAppSession where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FCalendar where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FContact where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FContactAttribute where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FContact where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FFileShared where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		// miss Filesystem TODO
+		
+		snprintf( query, 2048, "delete from FKeys where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FMail where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FMailHeader where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FMailOutgoing where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FQueuedEvent where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FRefreshToken where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FRefreshToken where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FScreen where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FSetting where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FSFile where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FSFileLog where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FSFolder where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FShared where OwnerUserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FSSearchData where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FThumbnail where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FTinyUrl where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FUserApplication where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FUserGroup where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FUserLog where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		//TODO store information about deleteing user
+		
+		snprintf( query, 2048, "delete from FUserLogin where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		//TOD send information to mobile device that user data were deleted?
+		
+		snprintf( query, 2048, "delete from FUserMobileApp where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FUserSession where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FUserSessionApp where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FUserStats where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from FUserToGroup where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		snprintf( query, 2048, "delete from MitraFileSync where UserID=%ld", id );
+		sqlLib->QueryWithoutResults( sqlLib, query );
+		
+		// now delete user files
+		
+		snprintf( query, 2048, "storage/%s", userName );
+		nftw( query, UMUnlinkCB, 64, FTW_DEPTH | FTW_PHYS );
+		
+		FFree( query );
+		
+		sb->LibrarySQLDrop( sb, sqlLib );
+	}
+}
+
+//return nftw( path, UnlinkCB, 64, FTW_DEPTH | FTW_PHYS );
+
+/**
+ * Function remove old entries from database (FUserLogin entries)
+ *
+ * @param um pointer to UserManager
+ */
+
+void UMRemoveRemovedUsersData( UserManager *um )
+{
+	// all deleted UserID   -  select UserID from FUserToGroup utg where UserID not in (select ID from FUser) group by UserID
+	
+	// select UserID from Filesystem utg where UserID not in (select ID from FUser) group by UserID
+	
+	// select UserID from FSFile utg where UserID not in (select ID from FUser) group by UserID
+
+	
 }
 
 /**
