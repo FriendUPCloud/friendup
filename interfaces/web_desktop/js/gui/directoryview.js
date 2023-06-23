@@ -3880,7 +3880,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 							return;
 						}
 						let func = null;
-						func = we.windowObject.addEvent( 'systemclose', function()
+						if( 
+						func = we.addEvent( 'systemclose', function()
 						{
 							we.windowObject.removeEvent( 'systemclose', func );
 							let ff = new Library( 'system.library' );
