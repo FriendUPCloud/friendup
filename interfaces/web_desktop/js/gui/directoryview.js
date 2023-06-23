@@ -3879,9 +3879,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 							console.log( 'Error in JSON format: ', d );
 							return;
 						}
-						let func = null;
-						if( 
-						func = we.addEvent( 'systemclose', function()
+						let func = we.addEvent( 'systemclose', function()
 						{
 							we.windowObject.removeEvent( 'systemclose', func );
 							let ff = new Library( 'system.library' );
