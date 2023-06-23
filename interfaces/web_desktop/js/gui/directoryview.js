@@ -3879,21 +3879,24 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 							console.log( 'Error in JSON format: ', d );
 							return;
 						}
-						let func = we.addEvent( 'systemclose', function()
+						if( we && we.addEvent )
 						{
-							we.windowObject.removeEvent( 'systemclose', func );
-							let ff = new Library( 'system.library' );
-							ff.addVar( 'sessionid', Workspace.sessionId );
-							ff.addVar( 'path', ppath );
-							ff.addVar( 'id', j.Result );
-							ff.onExecuted = function( es, ds )
+							we.addEvent( 'systemclose', function()
 							{
-								// TODO: Clear it?
-								Workspace.diskNotificationList[ ppath ] = false;
-							}
-							ff.execute( 'file/notificationremove' );
-							//console.log( 'Notification remove: ' + ppath );
-						} );
+								we.windowObject.removeEvent( 'systemclose', func );
+								let ff = new Library( 'system.library' );
+								ff.addVar( 'sessionid', Workspace.sessionId );
+								ff.addVar( 'path', ppath );
+								ff.addVar( 'id', j.Result );
+								ff.onExecuted = function( es, ds )
+								{
+									// TODO: Clear it?
+									Workspace.diskNotificationList[ ppath ] = false;
+								}
+								ff.execute( 'file/notificationremove' );
+								//console.log( 'Notification remove: ' + ppath );
+							} );
+						}
 					}
 					f.execute( 'file/notificationstart' );
 					//console.log( 'Notification start: ' + ppath );
