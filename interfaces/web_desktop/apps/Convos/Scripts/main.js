@@ -1,0 +1,4 @@
+Application.run = function( msg )
+{
+}
+
