@@ -1882,6 +1882,8 @@ var WorkspaceInside = {
 		    }
 		}
 		
+		this.nudgeWorkspacesWidget();
+		
 		if( !Workspace.cachedSessionList || cand - this.refreshEWCTime > 30 )
 		{
 			this.refreshEWCTime = cand;
