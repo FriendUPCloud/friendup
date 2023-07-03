@@ -20,7 +20,11 @@ class FUIChatoverview extends FUIElement
         
         this.domElement.innerHTML = data;
         
+        this.domChannels = this.domElement.querySelector( '.Channels' );
+        this.domChatlist = this.domElement.querySelector( '.Chatlist' );
+        
         // Set stuff on this.domElement.innerHTML
+        this.refreshDom();
     }
     grabAttributes( domElement )
     {
@@ -34,7 +38,8 @@ class FUIChatoverview extends FUIElement
         super.refreshDom();
         let self = this;
         
-        console.log( 'What is the dom: ', this.domElement );
+        console.log( 'Refreshing dom!' );
+        this.redrawChannels();
     }
     // Get markup for object
     getMarkup( data )
@@ -53,6 +58,20 @@ class FUIChatoverview extends FUIElement
     errorMessage( string )
     {
         this.domElement.innerHTML = '<h2 class="Error">' + string + '</h2>';
+    }
+    // Redraw channels
+    redrawChannels()
+    {
+    	if( this.channels )
+    	{
+    		return;
+    	}
+    	// Default
+    	this.domChannels.innerHTML = '\
+    	<div class="Channel Jeanie"></div>\
+    	<div class="Channel DM"></div>\
+    	<div class="Channel Add"></div>\
+    	';
     }
 }
 FUI.registerClass( 'chatoverview', FUIChatoverview );

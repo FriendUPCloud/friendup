@@ -6,7 +6,7 @@ Application.run = function( msg ){
 			'Progdir:Markup/main.html'
 		],
 		width: 600,
-		height: 900,
+		height: 600,
 	} );
 };
 
