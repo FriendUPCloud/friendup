@@ -13,6 +13,13 @@ class FUIChatoverview extends FUIElement
         
         this.domElement.className = 'FUIChatoverview';
         
+        let data = '\
+        <div class="Channels"></div>\
+        <div class="Chatlist"></div>\
+        ';
+        
+        this.domElement.innerHTML = data;
+        
         // Set stuff on this.domElement.innerHTML
     }
     grabAttributes( domElement )
@@ -26,6 +33,7 @@ class FUIChatoverview extends FUIElement
     {
         super.refreshDom();
         let self = this;
+        
         console.log( 'What is the dom: ', this.domElement );
     }
     // Get markup for object
