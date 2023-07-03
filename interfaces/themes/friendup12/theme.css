@@ -1688,6 +1688,16 @@ html .Screen > .TitleBar > .Left .Extra:hover .Time
 	color: white;
 }
 
+html .Screen > .TitleBar > .Left > .Extra > span 
+{
+    margin: 0 5px 0 0;
+}
+
+html .Screen > .TitleBar > .Left > .Extra > div:last-child
+{
+    margin: 0;
+}
+
 html .Screen > .TitleBar
 {
 	background: #e0e0e0;
