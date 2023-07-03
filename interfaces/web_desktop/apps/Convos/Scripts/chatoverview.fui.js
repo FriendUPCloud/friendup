@@ -26,6 +26,7 @@ class FUIChatoverview extends FUIElement
     {
         super.refreshDom();
         let self = this;
+        console.log( 'What is the dom: ', this.domElement );
     }
     // Get markup for object
     getMarkup( data )
