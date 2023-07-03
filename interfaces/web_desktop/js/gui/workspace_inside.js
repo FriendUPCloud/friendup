@@ -8628,7 +8628,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	showContextMenu: function( menu, e, extra )
 	{
-		console.log( 'showContectMenu', [ menu, e, extra ])
 		e = e || {}
 		
 		// Do not do it double
