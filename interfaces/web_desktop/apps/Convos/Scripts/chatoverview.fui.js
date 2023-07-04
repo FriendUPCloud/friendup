@@ -83,9 +83,26 @@ class FUIChatoverview extends FUIElement
     		{
     			if( prop == 'jeanie' )
     			{
+    				ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/mascot-small-black.png' ) + ')';
 					ele.onclick = function()
 					{
 						self.setActiveChannel( prop, this );
+					}
+				}
+				else if( prop == 'dm' )
+    			{
+    				ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/dm.png' ) + ')';
+					ele.onclick = function()
+					{
+						//self.setActiveChannel( prop, this );
+					}
+				}
+				else if( prop == 'add' )
+    			{
+    				ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/add.png' ) + ')';
+					ele.onclick = function()
+					{
+						//self.setActiveChannel( prop, this );
 					}
 				}
 				else

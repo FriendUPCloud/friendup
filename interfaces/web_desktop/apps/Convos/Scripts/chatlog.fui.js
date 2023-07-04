@@ -25,8 +25,18 @@ class FUIChatlog extends FUIElement
         this.domMessages = this.domElement.querySelector( '.Messages' );
         this.domInput = this.domElement.querySelector( '.Input' );
         
+        this.initDomInput();
+        
         // Set stuff on this.domElement.innerHTML
         this.refreshDom();
+    }
+    initDomInput()
+    {
+    	this.domInput.innerHTML = '\
+    		<textarea rows="1"></textarea>\
+    	';
+    	let t = this.domInput.getElementsByTagName( 'textarea' );
+    	this.domTextarea = t[0];
     }
     grabAttributes( domElement )
     {

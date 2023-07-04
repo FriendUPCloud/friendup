@@ -20,6 +20,19 @@
 	height: 60px;
 	margin: 0 0 20px 0;
 	cursor: pointer;
+	background-position: center;
+	background-repeat: no-repeat;
+	border-width: 0px;
+	border-color: none;
+	border-style: solid;
+	box-sizing: border-box;
+}
+
+.FUIChatoverview > .Channels > .Channel.Active
+{
+	background-color: var(--fui-palette-chan03);
+	border-width: 3px; 
+	border-color: var(--fui-background);
 }
 
 /* Chat list */

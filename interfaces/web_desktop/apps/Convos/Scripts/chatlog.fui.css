@@ -35,3 +35,21 @@
 	color: var(--fui-menu-color);
 	text-align: center;
 }
+
+.FUIChatlog .Input textarea
+{
+	position: absolute;
+	display: block;
+	border: 0;
+	outline: none;
+	top: 0;
+	left: 40px;
+	width: calc(100% - 80px);
+	height: 50px;
+	background: transparent;
+	color: white;
+	font-size: 18px;
+	box-sizing: border-box;
+	padding: 15px;
+}
+
