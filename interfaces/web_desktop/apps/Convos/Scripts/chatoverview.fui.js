@@ -110,9 +110,9 @@ class FUIChatoverview extends FUIElement
     			tabs[ a ].classList.remove( 'Active' );
     		}
     	}
-		let chlist = this.domChannels.querySelector( '.Chatlist' );
-		chlist.innerHTML = '<fui-chatlist name="' + label + '"></fui-chatlist>';
-		FUI.init();
+		let chlist = this.domElement.querySelector( '.Chatlist' );
+		chlist.innerHTML = '<fui-chatlog name="' + label + '"></fui-chatlog>';
+		FUI.initialize();
     }
 }
 FUI.registerClass( 'chatoverview', FUIChatoverview );
