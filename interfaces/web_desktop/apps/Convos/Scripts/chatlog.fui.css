@@ -1,5 +1,16 @@
 /**/
 
+.FUIChatlog
+{
+	opacity: 0;
+	transition: opacity 0.15s;
+}
+
+.FUIChatlog.Initialized
+{
+	opacity: 1;
+}
+
 .FUIChatlog .Topic
 {
 	position: absolute;
@@ -22,6 +33,10 @@
 	left: 0;
 	width: 100%;
 	height: calc(100% - 100px);
+	overflow: auto;
+	scroll-behavior: smooth;
+	box-sizing: border-box;
+	padding: 15px;
 }
 
 .FUIChatlog .Input
@@ -39,6 +54,7 @@
 .FUIChatlog .Input textarea
 {
 	position: absolute;
+	line-height: 18px;
 	display: block;
 	border: 0;
 	outline: none;
@@ -51,5 +67,28 @@
 	font-size: 18px;
 	box-sizing: border-box;
 	padding: 15px;
+}
+
+.FUIChatlog .Message
+{
+	background-color: var(--fui-background);
+	color: var(--fui-color);
+	padding: 15px;
+	box-sizing: border-box;
+	border-radius: 3px;
+	margin: 0 0 10px 0;
+	opacity: 0;
+	transition: opacity 0.15s;
+}
+
+.FUIChatlog .Message.Showing
+{
+	opacity: 1;
+}
+
+.FUIChatlog .Message.Own
+{
+	background-color: var(--fui-module-background);
+	color: var(--fui-module-color);
 }
 

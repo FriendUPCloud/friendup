@@ -259,6 +259,9 @@ if( isset( $args->command ) )
 			sort( $commands );
 			die( 'ok<!--separate-->{"Commands": ' . json_encode( $commands ) . '}' );
 			break;
+		case 'convos':
+			require( 'modules/system/include/convos.php' );
+			break;
 		case 'tinyurl':
 			if( isset( $UserSession ) )
 				require( 'modules/system/include/tinyurl.php' );

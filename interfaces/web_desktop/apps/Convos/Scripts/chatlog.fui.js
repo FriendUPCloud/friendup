@@ -15,7 +15,7 @@ class FUIChatlog extends FUIElement
         
         let data = '\
         <div class="Topic"></div>\
-        <div class="Messages"></div>\
+        <div class="Messages"><div class="Incoming"></div><div class="Queue"></div></div>\
         <div class="Input"></div>\
         ';
         
@@ -32,11 +32,36 @@ class FUIChatlog extends FUIElement
     }
     initDomInput()
     {
+    	let self = this;
+    	
     	this.domInput.innerHTML = '\
     		<textarea rows="1"></textarea>\
     	';
     	let t = this.domInput.getElementsByTagName( 'textarea' );
     	this.domTextarea = t[0];
+    	this.domTextarea.addEventListener( 'keydown', function( e )
+    	{
+    		if( e.which == 13 )
+    		{
+    			let val = this.value;
+    			this.value = '';
+    			cancelBubble( e );
+    			
+    			self.queueMessage( val );
+    		}
+    	} );
+    }
+    queueMessage( string )
+    {
+    	let dom = document.createElement( 'div' );
+    	dom.className = 'Message Own';
+    	dom.innerHTML = '<p>' + string + '</p>';
+    	dom.setAttribute( 'timestamp', ( new Date() ).getTime() );
+    	this.domMessages.querySelector( '.Queue' ).appendChild( dom );
+    	setTimeout( function()
+    	{
+    		dom.classList.add( 'Showing' );
+		}, 2 );
     }
     grabAttributes( domElement )
     {
@@ -51,6 +76,8 @@ class FUIChatlog extends FUIElement
         let self = this;
         
         console.log( 'Refreshing dom!' );
+        
+        this.domElement.classList.add( 'Initialized' );
        
     }
     // Get markup for object

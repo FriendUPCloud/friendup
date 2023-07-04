@@ -111,6 +111,7 @@ class FUIChatoverview extends FUIElement
 				}
     		} )( chans[ a ], uniqueid );
     	}
+    	chans[ 0 ].click();
     }
     // Set active channel
     setActiveChannel( label, tab )
