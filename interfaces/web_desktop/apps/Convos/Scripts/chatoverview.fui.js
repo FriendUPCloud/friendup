@@ -52,7 +52,7 @@ class FUIChatoverview extends FUIElement
     	    if( n++ > 0 ) props += ' ';
     	    props += a + '="' + props[ a ] + '"';
     	}
-    	return '<fui-billinglist' + props + '></fui-billinglist>';
+    	return '<fui-chatoverview' + props + '></fui-chatoverview>';
     }
     // Just display an error message
     errorMessage( string )
@@ -62,16 +62,57 @@ class FUIChatoverview extends FUIElement
     // Redraw channels
     redrawChannels()
     {
+    	let self = this;
+    	
     	if( this.channels )
     	{
     		return;
     	}
     	// Default
     	this.domChannels.innerHTML = '\
-    	<div class="Channel Jeanie"></div>\
-    	<div class="Channel DM"></div>\
-    	<div class="Channel Add"></div>\
+    	<div class="Channel Jeanie" uniqueid="jeanie"></div>\
+    	<div class="Channel DM" uniqueid="dm"></div>\
+    	<div class="Channel Add" uniqueid="add"></div>\
     	';
+    	
+    	let chans = this.domChannels.getElementsByClassName( 'Channel' );
+    	for( let a = 0; a < chans.length; a++ )
+    	{
+    		let uniqueid = chans[ a ].getAttribute( 'uniqueid' );
+    		( function( ele, prop )
+    		{
+    			if( prop == 'jeanie' )
+    			{
+					ele.onclick = function()
+					{
+						self.setActiveChannel( prop, this );
+					}
+				}
+				else
+				{
+					console.log( 'not yet.' );
+				}
+    		} )( chans[ a ], uniqueid );
+    	}
+    }
+    // Set active channel
+    setActiveChannel( label, tab )
+    {
+    	let tabs = this.domChannels.getElementsByClassName( 'Channel' );
+    	for( let a = 0; a < tabs.length; a++ )
+    	{
+    		if( tabs[ a ] == tab )
+    		{
+    			tabs[ a ].classList.add( 'Active' );
+    		}
+    		else
+    		{
+    			tabs[ a ].classList.remove( 'Active' );
+    		}
+    	}
+		let chlist = this.domChannels.querySelector( '.Chatlist' );
+		chlist.innerHTML = '<fui-chatlist name="' + label + '"></fui-chatlist>';
+		FUI.init();
     }
 }
 FUI.registerClass( 'chatoverview', FUIChatoverview );
