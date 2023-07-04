@@ -102,6 +102,14 @@ class FUIChatoverview extends FUIElement
     				ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/add.png' ) + ')';
 					ele.onclick = function()
 					{
+						let n = new View( {
+						    title: i18n( 'i18n_create_room' ),
+						    width: 600,
+						    height: 600,
+						    assets: [
+						        'Progdir:Markup/room.html'
+						    ]
+						} );
 						//self.setActiveChannel( prop, this );
 					}
 				}
