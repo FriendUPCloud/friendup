@@ -53,15 +53,32 @@ class FUIChatlog extends FUIElement
     }
     queueMessage( string )
     {
+        let self = this;
+        
     	let dom = document.createElement( 'div' );
     	dom.className = 'Message Own';
     	dom.innerHTML = '<p>' + string + '</p>';
     	dom.setAttribute( 'timestamp', ( new Date() ).getTime() );
     	this.domMessages.querySelector( '.Queue' ).appendChild( dom );
+    	
+    	// Add queue to Convos
+    	if( window.Convos )
+    	{
+    	    Convos.outgoing.push( {
+    	        timestamp: dom.getAttribute( 'timestamp' ),
+    	        message: string,
+    	        callback: function(){ self.clearQueue(); }
+    	    } );
+    	}
+    	
     	setTimeout( function()
     	{
     		dom.classList.add( 'Showing' );
 		}, 2 );
+    }
+    clearQueue()
+    {
+        this.domMessages.querySelector( '.Queue' ).innerHTML = '';
     }
     grabAttributes( domElement )
     {
@@ -74,8 +91,6 @@ class FUIChatlog extends FUIElement
     {
         super.refreshDom();
         let self = this;
-        
-        console.log( 'Refreshing dom!' );
         
         this.domElement.classList.add( 'Initialized' );
        
