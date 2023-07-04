@@ -176,5 +176,6 @@ This is the list of dependencies Friend Core needs to function.
 -    ssh
 -    make
 -    libsmbclient-dev
+-    libwebsockets-dev
 
 
