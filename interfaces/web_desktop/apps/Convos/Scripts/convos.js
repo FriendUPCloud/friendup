@@ -1,3 +1,7 @@
+window.Convos = {
+	outgoing: []
+};
+
 Application.run = function( msg )
 {
 	this.holdConnection();
@@ -7,6 +11,14 @@ Application.run = function( msg )
 Application.holdConnection = function()
 {
 	let args = {};
+	
+	// Push outgoing messages to args
+	if( Convos.outgoing.length )
+	{
+		args.outgoing = Convos.outgoing;
+		Convos.outgoing = [];
+	}
+	
 	let m = new XMLHttpRequest();
 	m.open( 'POST', '/system.library/module/?module=system&command=convos&authid=' + Application.authId + '&args=' + JSON.stringify( args ), true );
 	m.onload = function( data )
