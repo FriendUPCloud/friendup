@@ -111,8 +111,11 @@ class FUIChatoverview extends FUIElement
     		}
     	}
 		let chlist = this.domElement.querySelector( '.Chatlist' );
-		chlist.innerHTML = '<fui-chatlog name="' + label + '"></fui-chatlog>';
+		chlist.innerHTML = '<fui-chatlog uniqueid="messages" name="' + label + '"></fui-chatlog>';
 		FUI.initialize();
+		let messages = FUI.getElementByUniqueId( 'messages' );
+		// temporary!
+		messages.domTopic.innerHTML = label;
     }
 }
 FUI.registerClass( 'chatoverview', FUIChatoverview );

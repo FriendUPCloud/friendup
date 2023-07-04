@@ -1,1 +1,37 @@
 /**/
+
+.FUIChatlog .Topic
+{
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 50px;
+	background-color: var(--fui-module-background-darker);
+	color: var(--fui-menu-color);
+	text-align: center;
+	padding: 15px;
+	box-sizing: border-box;
+	font-weight: bold;
+}
+
+.FUIChatlog .Messages
+{
+	position: absolute;
+	top: 50px;
+	left: 0;
+	width: 100%;
+	height: calc(100% - 100px);
+}
+
+.FUIChatlog .Input
+{
+	position: absolute;
+	left: 0;
+	top: calc(100% - 50px);
+	width: 100%;
+	height: 50px;
+	background-color: var(--fui-module-background-darker);
+	color: var(--fui-menu-color);
+	text-align: center;
+}
