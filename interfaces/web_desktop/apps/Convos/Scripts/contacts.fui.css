@@ -39,6 +39,17 @@
     height: calc(100% - 35px);
 }
 
+.FUIContacts .Contacts .Contact
+{
+    opacity: 0;
+    transition: opacity 0.25s;
+}
+
+.FUIContacts .Contacts .Contact.Showing
+{
+    opacity: 1;
+}
+
 .FUIContacts .Chat
 {
     background-color: var(--fui-background-foreground);

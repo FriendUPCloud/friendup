@@ -47,6 +47,23 @@ class FUIContacts extends FUIElement
         let uniqueId = domElement.getAttribute( 'uniqueid' );
         if( uniqueId ) this.options.uniqueid = uniqueId;
     }
+    addContact( contact )
+    {
+        let d = document.createElement( 'div' );
+        d.className = 'Contact';
+        if( contact.Type == 'User' )
+        {
+            d.className += ' User';
+        }
+        d.innerHTML = '<span class="Avatar"></span><span class="Name">' + contact.Fullname + '</span>';
+        if( !this.userList[ contact.Fullname ] )
+        {
+            this.userList[ contact.Fullname ] = document.createElement( 'div' );
+            this.userList[ contact.Fullname ].className = 'Slot';
+        }
+        this.userList[ contact.Fullname ].appendChild( d );
+        setTimeout( function(){ d.classList.add( 'Showing' ); }, 2 );
+    }
     refreshDom( evaluated = false )
     {
         super.refreshDom();
@@ -55,7 +72,14 @@ class FUIContacts extends FUIElement
         let m = new Module( 'system' );
         m.onExecuted = function( me, md )
         {
-            
+            if( me == 'ok' )
+            {
+                let list = JSON.parse( md );
+                for( let a = 0; a < list.length; a++ )
+                {
+                    self.addContact( list[a] );
+                }
+            }
         }
         m.execute( 'convos', { method: 'contacts' } );
         
