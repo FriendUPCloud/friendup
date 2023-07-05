@@ -7,3 +7,46 @@
     height: 100%;
     background-color: var(--fui-background-foreground);
 }
+
+.FUIContacts .ContactSearch
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200px;
+    height: 25px;
+    background-color: var(--fui-module-background-darker);
+    color: var(--fui-menu-color);
+}
+
+.FUIContacts .ContactSearch > input
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+}
+
+.FUIContacts .Contacts
+{
+    background-color: var(--fui-module-background-darker);
+    color: var(--fui-menu-color);
+    position: absolute;
+    top: 25px;
+    left: 0;
+    width: 200px;
+    height: calc(100% - 25px);
+}
+
+.FUIContacts .Chat
+{
+    background-color: var(--fui-background-foreground);
+    color: var(--fui-color);
+    position: absolute;
+    top: 0px;
+    left: 200px;
+    width: calc(100% - 200px);
+    height: 100%;
+}

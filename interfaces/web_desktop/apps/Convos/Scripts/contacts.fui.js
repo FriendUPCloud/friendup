@@ -26,6 +26,7 @@ class FUIContacts extends FUIElement
         this.domElement.className = 'FUIContacts';
         
         let data = '\
+        <div class="ContactSearch"><input type="text" value="" placeholder="Find a contact..."/></div>\
         <div class="Contacts"></div>\
         <div class="Chat"></div>\
         ';
@@ -34,6 +35,7 @@ class FUIContacts extends FUIElement
         
         this.domContacts = this.domElement.querySelector( '.Contacts' );
         this.domChat = this.domElement.querySelector( '.Chat' );
+        this.domSearch = this.domElement.querySelector( '.ContactSearch' ).getElementsByTagName( 'input' )[0];
         
         // Set stuff on this.domElement.innerHTML
         this.refreshDom();
@@ -49,6 +51,7 @@ class FUIContacts extends FUIElement
     {
         super.refreshDom();
         let self = this;
+        
         
         console.log( 'Refreshing dom!' );
     }

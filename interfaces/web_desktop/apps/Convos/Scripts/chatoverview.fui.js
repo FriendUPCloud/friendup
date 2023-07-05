@@ -155,9 +155,13 @@ class FUIChatoverview extends FUIElement
 	        chlist.innerHTML = '<fui-contacts uniqueid="contacts"></fui-contacts>';
 	    }
 		FUI.initialize();
+		
 		let messages = FUI.getElementByUniqueId( 'messages' );
-		// temporary!
-		messages.domTopic.innerHTML = label;
+		if( messages )
+		{
+		    // temporary!
+		    messages.domTopic.innerHTML = label;
+	    }
     }
 }
 FUI.registerClass( 'chatoverview', FUIChatoverview );
