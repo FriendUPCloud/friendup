@@ -101,6 +101,7 @@ if( isset( $args->args ) )
                         AND mes.UserID = \'' . $User->ID . '\'
                         AND fug.UserGroupID = ug.ID
                         AND fug.UserID = u.ID
+                        AND fug.UserID != mes.UserID
                 ) a UNION (
                     SELECT 
                         f.ID AS `ID`,
