@@ -4,6 +4,7 @@ Application.run = function( msg ){
 		assets: [
 			'Progdir:Markup/main.html'
 		],
+		background: 'transparent',
 		width: 600,
 		height: 600,
 	} );

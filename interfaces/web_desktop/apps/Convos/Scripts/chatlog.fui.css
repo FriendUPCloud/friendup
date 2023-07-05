@@ -37,6 +37,7 @@
 	scroll-behavior: smooth;
 	box-sizing: border-box;
 	padding: 15px;
+	background-color: var(--fui-background-foreground);
 }
 
 .FUIChatlog .Input

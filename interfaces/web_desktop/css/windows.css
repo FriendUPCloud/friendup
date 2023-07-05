@@ -81,6 +81,11 @@ html body[singletask] .View > .Title > div > .Minimize
 	overflow: hidden !important;
 }
 
+.ViewContainer > .View.TransparentBg > .Content
+{
+    background: transparent !important;
+}
+
 /* Disabled for default theme */
 .ViewContainer > .ViewIcon
 {

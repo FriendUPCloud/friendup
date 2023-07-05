@@ -5719,6 +5719,17 @@ var View = function( args )
 			case 'fullscreenenabled':
 				this.flags.fullscreenenabled = value;
 				break;
+			case 'background':
+			    this.flags.background = value;
+			    if( value == false )
+			    {
+			        viewdiv.classList.remove( 'TransparentBg' );
+		        }
+		        else
+		        {
+		            viewdiv.classList.add( 'TransparentBg' );
+		        }
+			    break;
 			case 'transparent':
 				this.flags.transparent = value;
 				if( viewdiv )

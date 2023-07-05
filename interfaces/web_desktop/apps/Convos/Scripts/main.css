@@ -1,0 +1,5 @@
+html > body,
+html > body:not(.Inside):not(.Loading)
+{
+    background: transparent !important;
+}
