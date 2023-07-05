@@ -45,7 +45,7 @@ Application.holdConnection = function( flags )
 		Convos.outgoing = [];
 	}
 	
-	// In this case, we are blocking new calls
+	// In this case, we are blocking new calls (longpolling)
 	if( !( args.outgoing || args.method ) )
 	{
 	    if( this.blocking ) return;
