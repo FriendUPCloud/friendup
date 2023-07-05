@@ -26,8 +26,10 @@ if( isset( $args->args ) )
             $o = new dbIO( 'Message' );
             $o->UniqueUserID = $User->UniqueID;
             $o->RoomID = 0;
-            $o->RoomType = 'jeanie';
+            $o->RoomType = $out->type ? $out->type : 'jeanie';
             $o->ParentID = 0;
+            if( $out->targetId )
+                $o->TargetID = $out->targetId;
             $o->DateUpdated = date( 'Y-m-d H:i:s' );
             $o->Date = date( 'Y-m-d H:i:s', $out->timestamp );
             $o->Message = $out->message;
@@ -57,14 +59,70 @@ if( isset( $args->args ) )
         if( $args->args->method == 'messages' )
         {
             $rows = false;
-            if( isset( $args->args->roomType ) && $args->args->roomType == 'jeanie' )
+            if( isset( $args->args->roomType ) )
             {
-                $rows = $SqlDatabase->FetchObjects( '
-                    SELECT m.ID, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u WHERE
-                    m.RoomType = \'jeanie\' AND m.UniqueUserID=\'' . $User->UniqueID . '\' AND
-                    m.UniqueUserID = u.UniqueID
-                    ORDER BY m.Date ASC, m.ID ASC LIMIT 50
-                ' );
+                if( $args->args->roomType == 'jeanie' )
+                {
+                    $rows = $SqlDatabase->FetchObjects( '
+                        SELECT 
+                            m.ID, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u 
+                        WHERE
+                            m.RoomType = \'jeanie\' AND m.UniqueUserID=\'' . $User->UniqueID . '\' AND
+                            m.UniqueUserID = u.UniqueID
+                        ORDER BY 
+                            m.Date ASC, m.ID ASC LIMIT 50
+                    ' );
+                }
+                else if( $args->args->roomType == 'dm-contact' )
+                {
+                    $rows = $SqlDatabase->FetchObjects( '
+                    SELECT 
+                        m.ID, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FContact u 
+                    WHERE
+                        m.RoomType = \'dm-contact\' AND 
+                        ( 
+                            ( 
+                                m.UniqueUserID = \'' . $User->UniqueID . '\' AND 
+                                m.UniqueUserID = u.UniqueID AND
+                                m.TargetID = \'' . $SqlDatabase->_link->real_escape_string( $args->args->cid ) . '\'
+                            )
+                            OR
+                            (
+                                m.UniqueUserID = \'' . $SqlDatabase->_link->real_escape_string( $args->args->cid ) . '\' AND
+                                m.UniqueUserID != \'' . $User->UniqueID . '\' AND
+                                m.TargetID = \'' . $User->UniqueID . '\'
+                            )
+                        )
+                        u.ID = m.TargetID
+                    ORDER BY 
+                        m.Date ASC, m.ID ASC LIMIT 50
+                    ' );
+                }
+                else if( $args->args->roomType == 'dm-user' )
+                {
+                    $rows = $SqlDatabase->FetchObjects( '
+                    SELECT 
+                        m.ID, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u 
+                    WHERE
+                        m.RoomType = \'dm-user\' AND 
+                        ( 
+                            ( 
+                                m.UniqueUserID = \'' . $User->UniqueID . '\' AND 
+                                m.UniqueUserID = u.UniqueID AND
+                                m.TargetID = \'' . $SqlDatabase->_link->real_escape_string( $args->args->cid ) . '\'
+                            )
+                            OR
+                            (
+                                m.UniqueUserID = \'' . $SqlDatabase->_link->real_escape_string( $args->args->cid ) . '\' AND
+                                m.UniqueUserID != \'' . $User->UniqueID . '\' AND
+                                m.TargetID = \'' . $User->UniqueID . '\'
+                            )
+                        ) AND
+                        u.UniqueID = m.TargetID
+                    ORDER BY 
+                        m.Date ASC, m.ID ASC LIMIT 50
+                    ' );
+                }
             }
             // We got rows!
             if( $rows && count( $rows ) > 0 )

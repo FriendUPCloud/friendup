@@ -185,7 +185,7 @@ class FUIChatlog extends FUIElement
     	        timestamp: parseInt( parseFloat( dom.getAttribute( 'timestamp' ) ) / 1000 ),
     	        message: string,
     	        type: this.options.type ? this.options.type : '',
-    	        parentId: this.options.parentId ? this.options.parentId : ''
+    	        targetId: this.options.cid
     	    } );
     	}
     	
@@ -221,6 +221,12 @@ class FUIChatlog extends FUIElement
         
         let type = domElement.getAttribute( 'type' );
         if( type ) this.options.type = type;
+        
+        let cid = domElement.getAttribute( 'cid' );
+        if( cid ) this.options.cid = cid;
+        
+        let context = domElement.getAttribute( 'context' );
+        if( context ) this.options.context = context;
     }
     refreshDom( evaluated = false )
     {
