@@ -150,6 +150,7 @@ class FUIChatlog extends FUIElement
     }
     toBottom( way )
     {
+        let self = this;
         if( way == 'smooth' )
         {
             this.domMessages.scrollTop = this.domMessages.offsetHeight;
