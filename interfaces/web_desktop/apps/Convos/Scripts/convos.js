@@ -20,6 +20,8 @@ Application.run = function( msg )
 // Start polling
 Application.holdConnection = function( flags )
 {
+	let self = this;
+	
 	let args = {};
 	
 	// Apply flags
@@ -43,10 +45,20 @@ Application.holdConnection = function( flags )
 		Convos.outgoing = [];
 	}
 	
+	// In this case, we are blocking new calls
+	if( !( args.outgoing || args.method ) )
+	{
+	    if( this.blocking ) return;
+    	this.blocking = true;
+	}
+	
 	let m = new XMLHttpRequest();
 	m.open( 'POST', '/system.library/module/?module=system&command=convos&authid=' + Application.authId + '&args=' + JSON.stringify( args ), true );
 	m.onload = function( data )
 	{
+	    if( self.blocking && !( args.outgoing || args.method ) )
+    	    self.blocking = false;
+	    
 		if( this.response )
 		{
 		    let js = JSON.parse( this.response.split( '<!--separate-->' )[1] );

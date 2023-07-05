@@ -187,21 +187,21 @@ if( isset( $args->args ) )
             }
             die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve contacts."}' );
         }
+        die( 'fail<!--separate-->{"response":0,"message":"Unknown method."}' );
     }
 }
 
 
 // Hold until we get an event
-$eventCount = 0;
 while( !( $row = $SqlDatabase->FetchObject( '
     SELECT * FROM MessageSession WHERE SessionID=\'' . $UserSession->SessionID . '\' AND ActivityDate != PrevDate
 ' ) ) )
 {
     sleep( 1 );
 }
-else
+if( $row )
 {
-    die( 'ok<!--separate-->{"message":"We got activity","response":-1}' );
+   die( 'ok<!--separate-->{"message":"We got activity","response":-1}' );
 }
 die( 'fail<!--separate-->{"message":"No event.","response":-1}' );
 
