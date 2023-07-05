@@ -84,7 +84,7 @@ if( isset( $args->args ) )
                 }
                 die( 'ok<!--separate-->{"response":1,"messages":' . json_encode( $outlist ) . '}' );
             }
-            die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve messages.' );
+            die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve messages."}' );
         }
         else if( $args->args->method == 'contacts' )
         {
@@ -115,7 +115,7 @@ if( isset( $args->args ) )
             {
                 die( 'ok<!--separate-->{"response":1,"messages":' . json_encode( $rows ) . '}' );
             }
-            die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve contacts.' );
+            die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve contacts."}' );
         }
     }
 }
