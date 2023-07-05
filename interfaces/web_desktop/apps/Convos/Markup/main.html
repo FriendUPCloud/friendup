@@ -5,6 +5,32 @@
         </row>
     </rows>
 </group>
+<fui-fragment uniqueid="chat-message-head">
+    <div class="Profile">
+        <p>
+            <span style="background-image: url({avatar-image})"></span>
+        </p>
+        <p>
+            <label>{i18n_fullname}</label>
+            <span>{fullname}</label>
+        </p>
+        <p>
+            <label>{i18n_date}</label>
+            <span>{date}</label>
+        </p>
+        <p class="Signature">
+            {signature}
+        </p>
+    </div>
+    <div class="Text">
+        {message}
+    </div>
+</fui-fragment>
+<fui-fragment uniqueid="chat-message">
+    <div class="Text Alone">
+        {message}
+    </div>
+</fui-fragment>
 <script src="Progdir:Scripts/convos.js"></script>
 <script src="Progdir:Scripts/contacts.fui.js"></script>
 <script src="Progdir:Scripts/chatoverview.fui.js"></script>

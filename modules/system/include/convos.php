@@ -60,7 +60,7 @@ if( isset( $args->args ) )
             if( isset( $args->args->roomType ) && $args->args->roomType == 'jeanie' )
             {
                 $rows = $SqlDatabase->FetchObjects( '
-                    SELECT m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u WHERE
+                    SELECT m.ID, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u WHERE
                     m.RoomType = \'jeanie\' AND m.UniqueUserID=\'' . $User->UniqueID . '\' AND
                     m.UniqueUserID = u.UniqueID
                     ORDER BY m.Date ASC, m.ID ASC LIMIT 50
@@ -73,6 +73,7 @@ if( isset( $args->args ) )
                 foreach( $rows as $k=>$v )
                 {
                     $out = new stdClass();
+                    $out->ID = $v->ID;
                     $out->Name = $v->Name;
                     $out->Message = $v->Message;
                     $out->Date = $v->Date;

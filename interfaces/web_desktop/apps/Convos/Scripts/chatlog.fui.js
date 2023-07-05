@@ -14,6 +14,9 @@ class FUIChatlog extends FUIElement
     {
         super( options );
         // Do stuff
+        
+        this.messageList = {};
+        this.messageListOrder = [];
     }
     attachDomElement()
     {
@@ -61,17 +64,84 @@ class FUIChatlog extends FUIElement
     		}
     	} );
     }
+    // Adds messages to a list locked by sorted timestamps
     addMessages( messageList )
     {
         for( let a = 0; a < messageList.length; a++ )
         {
             let m = messageList[a];
+            
             let d = document.createElement( 'div' );
             d.className = 'Message';
             d.innerHTML = '<p>' + m.Message + '</p>';
-            d.setAttribute( 'timestamp', new Date( m.Date ).getTime() );
+            let timestamp = ( new Date( m.Date ) ).getTime();
             if( m.Own ) d.classList.add( 'Own' );
-            this.domMessages.querySelector( '.Incoming' ).appendChild( d );
+            
+            // Get slot
+            let slot = timestamp;
+            let slotId = slot + m.ID;
+            d.slotId = slotId; // If we will use this new element, give slotid
+            
+            // Update a message in a time slot
+            if( this.messageList[ slot ] && this.messageList[ slot ].parentNode )
+            {
+                let found = false;
+                for( let b = 0; b < this.messageList[ slot ].childNodes.length; b++ )
+                {
+                    if( this.messageList[ slot ].childNodes[ b ].slotId == slotId )
+                    {
+                        found = this.messageList[ slot ].childNodes[ b ];
+                        break;
+                    }
+                }
+                if( found )
+                {
+                    found.parentNode.replaceChild( found, d );
+                }
+                else
+                {
+                    this.messageList[ slot ].appendChild( d );
+                }
+            }
+            // Insert a message in a timestamp slot
+            else
+            {
+                let grp = document.createElement( 'div' );
+                grp.className = 'Slot';
+                grp.appendChild( d );
+                this.messageList[ slot ] = grp;
+                
+                this.messageListOrder.push( slot );
+                this.messageListOrder.sort();
+                // First message
+                if( this.messageListOrder.length == 1 )
+                {
+                    // Create group
+                    this.domMessages.querySelector( '.Incoming' ).appendChild( grp );
+                }
+                else
+                {
+                    for( let b = 0; b < this.messageListOrder.length; b++ )
+                    {
+                        let last = b == this.messageListOrder.length - 1;
+                        let slotHere = this.messageListOrder[ b ];
+                        // We found our slot
+                        if( slotHere == slot )
+                        {
+                            // Add since we're the last in the list
+                            if( last )
+                            {
+                                 this.domMessages.querySelector( '.Incoming' ).appendChild( grp );
+                            }
+                            // Insert before previous
+                            else
+                            {
+                                this.domMessages.querySelector( '.Incoming' ).insertBefore( this.messageList[ this.messageListOrder[ b + 1 ] ], grp );
+                            }
+                        }
+                    }
+                }
+            }
             ( function( r ){ setTimeout( function(){ r.classList.add( 'Showing' ); },  ); } )( d );
         }
     }
