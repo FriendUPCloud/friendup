@@ -67,6 +67,8 @@ class FUIChatlog extends FUIElement
     // Adds messages to a list locked by sorted timestamps
     addMessages( messageList )
     {
+        let self = this;
+        
         for( let a = 0; a < messageList.length; a++ )
         {
             let m = messageList[a];
@@ -144,7 +146,9 @@ class FUIChatlog extends FUIElement
             }
             ( function( r ){ setTimeout( function(){ r.classList.add( 'Showing' ); },  ); } )( d );   
         }
+        this.domMessages.style.scrollBehavior = 'inherit';
         this.domMessages.scrollTop = this.domMessages.offsetHeight;
+        setTimeout( function(){ self.domMessages.style.scrollBehavior = 'smooth'; }, 5 );
     }
     queueMessage( string )
     {
