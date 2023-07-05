@@ -48,6 +48,15 @@
     transition: background-color 0.25s;
     background-color: transparent;
     color: var(--fui-module-color);
+    height: 45px;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+.FUIContacts .Contacts .Contact.Active
+{
+    background-color: var(--fui-module-background-active);
+    color: var(--fui-module-color-active);
 }
 
 .FUIContacts .Contacts .Slot
@@ -73,7 +82,7 @@
 .FUIContacts .Contacts .Contact > span:first-child
 {
     position: absolute;
-    top: 0;
+    top: 5px;
     left: 5px;
     width: 35px;
     height: 35px;
@@ -84,7 +93,7 @@
 .FUIContacts .Contacts .Contact > span:last-child
 {
     position: absolute;
-    top: 0;
+    top: 5px;
     left: 40px;
     width: calc(100% - 40px);
     height: 35px;

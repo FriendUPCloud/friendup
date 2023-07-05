@@ -48,7 +48,7 @@ class FUIChatlog extends FUIElement
     	let self = this;
     	
     	this.domInput.innerHTML = '\
-    		<textarea rows="1"></textarea>\
+    		<div class="Upload"></div><div class="Emote"></div><textarea rows="1"></textarea><div class="Send"></div>\
     	';
     	let t = this.domInput.getElementsByTagName( 'textarea' );
     	this.domTextarea = t[0];
@@ -130,7 +130,7 @@ class FUIChatlog extends FUIElement
                 // Replace existing node
                 if( found )
                 {
-                    found.parentNode.replaceChild( found, d );
+                    this.messageList[ slot ].replaceChild( d, found );
                 }
                 // Add a new node to this group slot
                 else
