@@ -13,7 +13,9 @@ class FUIContacts extends FUIElement
     constructor( options )
     {
         super( options );
-        // Do stuff
+        
+        this.userList = {}; // Dom elements
+        this.userListOrder = []; // Sorted list
     }
     attachDomElement()
     {
@@ -29,6 +31,9 @@ class FUIContacts extends FUIElement
         ';
         
         this.domElement.innerHTML = data;
+        
+        this.domContacts = this.domElement.querySelector( '.Contacts' );
+        this.domChat = this.domElement.querySelector( '.Chat' );
         
         // Set stuff on this.domElement.innerHTML
         this.refreshDom();
