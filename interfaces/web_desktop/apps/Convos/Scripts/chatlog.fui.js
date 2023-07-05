@@ -153,11 +153,11 @@ class FUIChatlog extends FUIElement
         let self = this;
         if( way == 'smooth' )
         {
-            this.domMessages.scrollTop = this.domMessages.offsetHeight;
+            this.domMessages.scrollTop = this.domMessages.lastChild.offsetHeight + this.domMessages.lastChild.offsetTop;
             return;
         }
         this.domMessages.style.scrollBehavior = 'inherit';
-        this.domMessages.scrollTop = this.domMessages.offsetHeight;
+        this.domMessages.scrollTop = this.domMessages.lastChild.offsetHeight + this.domMessages.lastChild.offsetTop;
         setTimeout( function(){ self.domMessages.style.scrollBehavior = 'smooth'; }, 5 );
     }
     queueMessage( string )
