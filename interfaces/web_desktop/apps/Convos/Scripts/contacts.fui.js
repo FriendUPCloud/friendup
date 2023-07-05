@@ -24,7 +24,7 @@ class FUIContacts extends FUIElement
         this.domElement.className = 'FUIContacts';
         
         let data = '\
-        <div class="Contacts"></div>
+        <div class="Contacts"></div>\
         ';
         
         // Set stuff on this.domElement.innerHTML
