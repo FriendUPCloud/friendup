@@ -66,8 +66,7 @@ class FUIChatlog extends FUIElement
     	{
     	    Convos.outgoing.push( {
     	        timestamp: dom.getAttribute( 'timestamp' ),
-    	        message: string,
-    	        callback: function(){ self.clearQueue(); }
+    	        message: string
     	    } );
     	}
     	

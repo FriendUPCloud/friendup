@@ -16,8 +16,17 @@ Application.holdConnection = function()
 	if( Convos.outgoing.length )
 	{
 		args.outgoing = Convos.outgoing;
+		
+		let system = FUI.getElementByUniqueId( 'messages' );
+		if( system && system.clearQueue )
+		{
+		    system.clearQueue();
+		}
+		
 		Convos.outgoing = [];
 	}
+	
+	console.log( 'Sending to convos: ', args );
 	
 	let m = new XMLHttpRequest();
 	m.open( 'POST', '/system.library/module/?module=system&command=convos&authid=' + Application.authId + '&args=' + JSON.stringify( args ), true );
