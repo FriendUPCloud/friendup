@@ -126,8 +126,8 @@ if( isset( $args->args ) )
                             (
                                 m.UniqueUserID = \'' . $SqlDatabase->_link->real_escape_string( $args->args->cid ) . '\' AND
                                 m.UniqueUserID != \'' . $User->UniqueID . '\' AND
-                                m.TargetID = \'' . $User->UniqueID . '\' AND 
-                                u.UniqueID = m.TargetID
+                                u.UniqueID = m.UniqueUserID AND
+                                m.TargetID = \'' . $User->UniqueID . '\'
                             )
                         )
                     ORDER BY 
