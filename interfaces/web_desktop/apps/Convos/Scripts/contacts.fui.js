@@ -52,6 +52,12 @@ class FUIContacts extends FUIElement
         super.refreshDom();
         let self = this;
         
+        let m = new Module( 'system' );
+        m.onExecuted = function( me, md )
+        {
+            
+        }
+        m.execute( 'convos', { method: 'contacts' } );
         
         console.log( 'Refreshing dom!' );
     }

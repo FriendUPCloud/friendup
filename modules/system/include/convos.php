@@ -86,6 +86,37 @@ if( isset( $args->args ) )
             }
             die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve messages.' );
         }
+        else if( $args->args->method == 'contacts' )
+        {
+            $rows = $SqlDatabase->FetchObjects( '
+                SELECT * FROM (
+                    SELECT 
+                        u.UniqueID AS `ID`,
+                        "User" as `Type`,
+                        u.Name as `Fullname`
+                    FROM FUser u, FUserToGroup mes, FUserToGroup fug, FUserGroup ug
+                    WHERE
+                            ug.Type = "Workgroup"
+                        AND mes.UserGroupID = ug.ID
+                        AND mes.UserID = \'' . $User->ID . '\'
+                        AND fug.UserGroupID = ug.ID
+                        AND fug.UserID = u.ID
+                ) a UNION (
+                    SELECT 
+                        f.ID AS `ID`,
+                        "Contact" AS `Type`,
+                        CONCAT( f.Firstname, f.Lastname ) AS `Fullname`
+                    FROM FContact f
+                    WHERE
+                            f.OwnerUserID = \'' . $User->ID . '\'
+                );
+            ' );
+            if( $rows && count( $rows ) > 0 )
+            {
+                die( 'ok<!--separate-->{"response":1,"messages":' . json_encode( $rows ) . '}' );
+            }
+            die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve contacts.' );
+        }
     }
 }
 
