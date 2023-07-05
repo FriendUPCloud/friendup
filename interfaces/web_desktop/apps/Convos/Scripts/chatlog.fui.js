@@ -183,7 +183,9 @@ class FUIChatlog extends FUIElement
     	{
     	    Convos.outgoing.push( {
     	        timestamp: parseInt( parseFloat( dom.getAttribute( 'timestamp' ) ) / 1000 ),
-    	        message: string
+    	        message: string,
+    	        type: this.options.type ? this.options.type : '',
+    	        parentId: this.options.parentId ? this.options.parentId : ''
     	    } );
     	}
     	
@@ -216,6 +218,9 @@ class FUIChatlog extends FUIElement
         
         let uniqueId = domElement.getAttribute( 'uniqueid' );
         if( uniqueId ) this.options.uniqueid = uniqueId;
+        
+        let type = domElement.getAttribute( 'type' );
+        if( type ) this.options.type = type;
     }
     refreshDom( evaluated = false )
     {
