@@ -146,6 +146,10 @@ class FUIChatlog extends FUIElement
             }
             ( function( r ){ setTimeout( function(){ r.classList.add( 'Showing' ); },  ); } )( d );   
         }
+        this.toBottom();
+    }
+    toBottom()
+    {
         this.domMessages.style.scrollBehavior = 'inherit';
         this.domMessages.scrollTop = this.domMessages.offsetHeight;
         setTimeout( function(){ self.domMessages.style.scrollBehavior = 'smooth'; }, 5 );
@@ -179,6 +183,8 @@ class FUIChatlog extends FUIElement
     	{
     		dom.classList.add( 'Showing' );
 		}, 2 );
+		
+		this.toBottom();
     }
     clearQueue()
     {
