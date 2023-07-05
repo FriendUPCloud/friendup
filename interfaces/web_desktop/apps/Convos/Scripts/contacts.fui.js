@@ -25,6 +25,7 @@ class FUIContacts extends FUIElement
         
         let data = '\
         <div class="Contacts"></div>\
+        <div class="Chat"></div>\
         ';
         
         // Set stuff on this.domElement.innerHTML

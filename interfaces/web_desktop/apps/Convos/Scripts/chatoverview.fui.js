@@ -48,7 +48,6 @@ class FUIChatoverview extends FUIElement
         super.refreshDom();
         let self = this;
         
-        console.log( 'Refreshing dom!' );
         this.redrawChannels();
     }
     // Get markup for object
@@ -104,7 +103,7 @@ class FUIChatoverview extends FUIElement
     				ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/dm.png' ) + ')';
 					ele.onclick = function()
 					{
-						//self.setActiveChannel( prop, this );
+						self.setActiveChannel( prop, this );
 					}
 				}
 				else if( prop == 'add' )
@@ -147,7 +146,14 @@ class FUIChatoverview extends FUIElement
     		}
     	}
 		let chlist = this.domElement.querySelector( '.Chatlist' );
-		chlist.innerHTML = '<fui-chatlog uniqueid="messages" name="' + label + '"></fui-chatlog>';
+		if( label == 'jeanie' )
+		{
+		    chlist.innerHTML = '<fui-chatlog uniqueid="messages" name="' + label + '"></fui-chatlog>';
+	    }
+	    else if( label == 'dm' )
+	    {
+	        chlist.innerHTML = '<fui-contacts uniqueid="contacts"></fui-contacts>';
+	    }
 		FUI.initialize();
 		let messages = FUI.getElementByUniqueId( 'messages' );
 		// temporary!
