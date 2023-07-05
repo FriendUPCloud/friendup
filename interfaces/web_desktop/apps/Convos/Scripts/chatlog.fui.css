@@ -80,6 +80,7 @@
 	margin: 0 0 10px 0;
 	opacity: 0;
 	transition: opacity 0.15s;
+	position: relative;
 }
 
 .FUIChatlog .Message.Showing
@@ -92,4 +93,26 @@
 	background-color: var(--fui-module-background);
 	color: var(--fui-module-color);
 }
+
+@keyframes glassanim
+{
+    0% { transform: rotate(360deg); }
+    50% { transform: rotate(180deg); }
+    100% { transform: rotate(0deg); }
+}
+
+.FUIChatlog .Queue > .Message::before
+{
+    content: "\f252";
+    font-family: fontawesome;
+    animation-name: glassanim;
+    animation-duration: 1s;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    pointer-events: none;
+}
+
 

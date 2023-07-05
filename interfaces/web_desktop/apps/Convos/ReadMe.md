@@ -1,7 +1,7 @@
 
 
 Mysql ```
-CREATE TABLE IF NOT EXISTS `Messages` (
+CREATE TABLE IF NOT EXISTS `Message` (
   `ID` bigint NOT NULL AUTO_INCREMENT,
   `RoomID` bigint NOT NULL,
   `RoomType` varchar(255) DEFAULT NULL,

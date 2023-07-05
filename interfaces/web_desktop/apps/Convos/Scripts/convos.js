@@ -4,13 +4,20 @@ window.Convos = {
 
 Application.run = function( msg )
 {
-	this.holdConnection();
+	this.holdConnection( { method: 'messages', roomType: 'jeanie' } );
 }
 
 // Start polling
-Application.holdConnection = function()
+Application.holdConnection = function( flags )
 {
 	let args = {};
+	
+	// Apply flags
+	if( flags )
+	{
+	    for( let a in flags )
+	        args[ a ] = flags[ a ];
+	}
 	
 	// Push outgoing messages to args
 	if( Convos.outgoing.length )
@@ -35,7 +42,15 @@ Application.holdConnection = function()
 		console.log( 'Data: ', data, this.response );
 		if( this.response )
 		{
-			
+		    let js = JSON.parse( this.response.split( '<!--separate-->' )[1] );
+		    if( js && js.response == 1 )
+		    {
+		        if( js.messages )
+		        {
+		            let mess = FUI.getElementByUniqueId( 'messages' );
+		            mess.addMessages( js.messages );
+		        }
+		    }
 		}
 		// Restart polling
 		Application.holdConnection();

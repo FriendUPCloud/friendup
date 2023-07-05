@@ -51,9 +51,29 @@ class FUIChatlog extends FUIElement
     		}
     	} );
     }
+    addMessages( messageList )
+    {
+        for( let a = 0; a < messageList.length; a++ )
+        {
+            let m = messageList[a];
+            let d = document.createElement( 'div' );
+            d.className = 'Message';
+            d.innerHTML = '<p>' + m.Message + '</p>';
+            d.setAttribute( 'timestamp', new Date( m.Date ).getTime() );
+            if( m.Own ) d.classList.add( 'Own' );
+            this.domMessages.querySelector( '.Incoming' ).appendChild( d );
+            ( function( r ){ setTimeout( function(){ r.classList.add( 'Showing' ); },  ); } )( d );
+        }
+    }
     queueMessage( string )
     {
         let self = this;
+        
+        // When in a lock, just wait
+        if( self.lock )
+        {
+            return setTimeout( function(){ self.queueMessage( string ); }, 250 );
+        }
         
     	let dom = document.createElement( 'div' );
     	dom.className = 'Message Own';
@@ -65,7 +85,7 @@ class FUIChatlog extends FUIElement
     	if( window.Convos )
     	{
     	    Convos.outgoing.push( {
-    	        timestamp: dom.getAttribute( 'timestamp' ),
+    	        timestamp: parseInt( parseFloat( dom.getAttribute( 'timestamp' ) ) / 1000 ),
     	        message: string
     	    } );
     	}
@@ -77,7 +97,19 @@ class FUIChatlog extends FUIElement
     }
     clearQueue()
     {
-        this.domMessages.querySelector( '.Queue' ).innerHTML = '';
+        let self = this;
+        self.lock = true;
+        let queue = this.domMessages.querySelector( '.Queue' );
+        let messages = queue.getElementsByClassName( 'Message' );
+        for( let a = 0; a < messages.length; a++ )
+        {
+            messages[ a ].classList.remove( 'Showing' );
+        }
+        setTimeout( function()
+        {
+            self.lock = false;
+            self.domMessages.querySelector( '.Queue' ).innerHTML = '';
+        }, 250 );
     }
     grabAttributes( domElement )
     {
