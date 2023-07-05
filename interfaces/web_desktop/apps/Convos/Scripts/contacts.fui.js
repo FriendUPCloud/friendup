@@ -28,6 +28,8 @@ class FUIContacts extends FUIElement
         <div class="Chat"></div>\
         ';
         
+        this.domElement.innerHTML = data;
+        
         // Set stuff on this.domElement.innerHTML
         this.refreshDom();
     }
