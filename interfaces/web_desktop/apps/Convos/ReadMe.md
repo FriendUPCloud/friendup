@@ -1,6 +1,7 @@
 
+#This table holds all messages
 
-Mysql ```
+MySQL ```
 CREATE TABLE IF NOT EXISTS `Message` (
   `ID` bigint NOT NULL AUTO_INCREMENT,
   `RoomID` bigint NOT NULL,
@@ -15,4 +16,14 @@ CREATE TABLE IF NOT EXISTS `Message` (
 )
 ```
 
+#This table holds the message session of a user. It manages polling.
 
+MySQL ```
+CREATE TABLE IF NOT EXISTS `MessageSession` (
+  `ID` bigint NOT NULL AUTO_INCREMENT,
+  `UniqueUserID` varchar(255) NOT NULL,
+  `SessionID` varchar(255) NOT NULL,
+  `ActivityDate` datetime DEFAULT NULL,
+  PRIMARY KEY (`ID`)
+)
+```
