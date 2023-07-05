@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS `MessageSession` (
   `UniqueUserID` varchar(255) NOT NULL,
   `SessionID` varchar(255) NOT NULL,
   `ActivityDate` datetime DEFAULT NULL,
+  `PrevDate` datetime DEFAULT NULL,
   PRIMARY KEY (`ID`)
 )
 ```

@@ -12,6 +12,17 @@
 
 $response = new stdClass();
 
+// Check chat session
+$sess = new dbIO( 'MessageSession' );
+$sess->SessionID = $UserSession->SessionID;
+$sess->UniqueUserID = $User->UniqueID;
+$sess->Load();
+if( !$sess->PrevDate )
+    $sess->PrevDate = date( 'Y-m-d H:i:s' );
+if( !$sess->ActivityDate )
+    $sess->ActivityDate = $sess->PrevDate;
+$sess->Save();
+
 if( isset( $args->args ) )
 {
     if( isset( $args->args->outgoing ) )
@@ -182,10 +193,16 @@ if( isset( $args->args ) )
 
 // Hold until we get an event
 $eventCount = 0;
-do
+while( !( $row = $SqlDatabase->FetchObject( '
+    SELECT * FROM MessageSession WHERE SessionID=\'' . $UserSession->SessionID . '\' AND ActivityDate != PrevDate
+' ) ) )
 {
+    sleep( 1 );
 }
-while( !$eventCount );
+else
+{
+    die( 'ok<!--separate-->{"message":"We got activity","response":-1}' );
+}
 die( 'fail<!--separate-->{"message":"No event.","response":-1}' );
 
 ?>
