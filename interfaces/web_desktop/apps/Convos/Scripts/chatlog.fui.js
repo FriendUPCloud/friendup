@@ -96,10 +96,12 @@ class FUIChatlog extends FUIElement
                         break;
                     }
                 }
+                // Replace existing node
                 if( found )
                 {
                     found.parentNode.replaceChild( found, d );
                 }
+                // Add a new node to this group slot
                 else
                 {
                     this.messageList[ slot ].appendChild( d );
