@@ -43,6 +43,45 @@
 {
     opacity: 0;
     transition: opacity 0.25s;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.25s;
+    background-color: transparent;
+    color: var(--fui-module-color);
+}
+
+.FUIContacts .Contacts .Contact:hover
+{
+    background-color: var(--fui-module-background-hover);
+    color: var(--fui-module-color);
+}
+
+.FUIContacts .Contacts .Contact > span
+{
+    box-sizing: border-box;
+    padding: 15px;
+    height: 35px;
+}
+
+.FUIContacts .Contacts .Contact > span:first-child
+{
+    position: absolute;
+    top: 0;
+    left: 5px;
+    width: 35px;
+    height: 35px;
+    background-color: var(--fui-palette-chan03);
+    border-radius: 35px;
+}
+
+.FUIContacts .Contacts .Contact > span:last-child
+{
+    position: absolute;
+    top: 0;
+    left: 40px;
+    width: calc(100% - 40px);
+    height: 35px;
+    padding: 8px 10px;
 }
 
 .FUIContacts .Contacts .Contact.Showing

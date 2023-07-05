@@ -114,7 +114,7 @@ if( isset( $args->args ) )
             ' );
             if( $rows && count( $rows ) > 0 )
             {
-                die( 'ok<!--separate-->{"response":1,"messages":' . json_encode( $rows ) . '}' );
+                die( 'ok<!--separate-->{"response":1,"contacts":' . json_encode( $rows ) . '}' );
             }
             die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve contacts."}' );
         }

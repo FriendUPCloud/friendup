@@ -49,21 +49,38 @@ class FUIContacts extends FUIElement
     }
     addContact( contact )
     {
+        let self = this;
+        
         let d = document.createElement( 'div' );
         d.className = 'Contact';
         if( contact.Type == 'User' )
         {
             d.className += ' User';
         }
+        d.record = contact;
         d.innerHTML = '<span class="Avatar"></span><span class="Name">' + contact.Fullname + '</span>';
+        d.onclick = function()
+        {
+            self.setChatView( this.record );
+        }
+        
+        // The slot does not exist?
         if( !this.userList[ contact.Fullname ] )
         {
             this.userList[ contact.Fullname ] = document.createElement( 'div' );
             this.userList[ contact.Fullname ].className = 'Slot';
+            this.domContacts.appendChild( this.userList[ contact.Fullname ] );
         }
+        // Add to slot
         this.userList[ contact.Fullname ].appendChild( d );
         setTimeout( function(){ d.classList.add( 'Showing' ); }, 2 );
     }
+    setChatView( record )
+    {
+        this.domChat.innerHTML = '<fui-chatlist uniqueid="dmchat" label="' + record.Fullname + '"></fui-chatlist>';
+        FUI.initialize();
+    }
+    // Contacts are refreshed by date active
     refreshDom( evaluated = false )
     {
         super.refreshDom();
@@ -75,15 +92,13 @@ class FUIContacts extends FUIElement
             if( me == 'ok' )
             {
                 let list = JSON.parse( md );
-                for( let a = 0; a < list.length; a++ )
+                for( let a = 0; a < list.contacts.length; a++ )
                 {
-                    self.addContact( list[a] );
+                    self.addContact( list.contacts[a] );
                 }
             }
         }
         m.execute( 'convos', { method: 'contacts' } );
-        
-        console.log( 'Refreshing dom!' );
     }
     // Get markup for object
     getMarkup( data )

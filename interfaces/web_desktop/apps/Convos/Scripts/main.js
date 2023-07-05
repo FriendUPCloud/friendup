@@ -15,7 +15,7 @@ Application.run = function( msg ){
 			'Progdir:Markup/main.html'
 		],
 		background: 'transparent',
-		width: 600,
+		width: 800,
 		height: 600,
 	} );
 };
