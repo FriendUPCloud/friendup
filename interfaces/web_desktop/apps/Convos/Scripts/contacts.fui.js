@@ -77,7 +77,7 @@ class FUIContacts extends FUIElement
     }
     setChatView( record )
     {
-        this.domChat.innerHTML = '<fui-chatlist uniqueid="dmchat" label="' + record.Fullname + '"></fui-chatlist>';
+        this.domChat.innerHTML = '<fui-chatlog uniqueid="dmchat" label="' + record.Fullname + '"></fui-chatlog>';
         FUI.initialize();
     }
     // Contacts are refreshed by date active
