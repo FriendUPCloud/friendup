@@ -80,8 +80,9 @@ class FUIContacts extends FUIElement
         let context = ' context="' + ( record.Type == 'User' ? 'user' : 'contact' ) + '"';
         context += ' cid="' + record.ID + '"';
         let dm = record.Type == 'User' ? 'dm-user' : 'dm-contact';
-        this.domChat.innerHTML = '<fui-chatlog uniqueid="dmchat" type="' + dm + '" name="' + record.Fullname + '"' + context + '></fui-chatlog>';
+        this.domChat.innerHTML = '<fui-chatlog uniqueid="messages" type="' + dm + '" name="' + record.Fullname + '"' + context + '></fui-chatlog>';
         FUI.initialize();
+        Application.holdConnection( { method: 'messages', roomType: dm, cid: record.ID } );
     }
     // Contacts are refreshed by date active
     refreshDom( evaluated = false )

@@ -115,10 +115,10 @@ if( isset( $args->args ) )
                             (
                                 m.UniqueUserID = \'' . $SqlDatabase->_link->real_escape_string( $args->args->cid ) . '\' AND
                                 m.UniqueUserID != \'' . $User->UniqueID . '\' AND
-                                m.TargetID = \'' . $User->UniqueID . '\'
+                                m.TargetID = \'' . $User->UniqueID . '\' AND 
+                                u.UniqueID = m.TargetID
                             )
-                        ) AND
-                        u.UniqueID = m.TargetID
+                        )
                     ORDER BY 
                         m.Date ASC, m.ID ASC LIMIT 50
                     ' );

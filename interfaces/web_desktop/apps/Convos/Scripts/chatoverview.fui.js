@@ -149,6 +149,7 @@ class FUIChatoverview extends FUIElement
 		if( label == 'jeanie' )
 		{
 		    chlist.innerHTML = '<fui-chatlog uniqueid="messages" name="' + label + '"></fui-chatlog>';
+		    Application.holdConnection( { method: 'messages', roomType: 'jeanie' } );
 	    }
 	    else if( label == 'dm' )
 	    {

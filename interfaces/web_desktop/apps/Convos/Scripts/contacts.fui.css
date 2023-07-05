@@ -50,6 +50,13 @@
     color: var(--fui-module-color);
 }
 
+.FUIContacts .Contacts .Slot
+{
+    height: 45px;
+    padding-top: 5px;
+    box-sizing: border-box;
+}
+
 .FUIContacts .Contacts .Contact:hover
 {
     background-color: var(--fui-module-background-hover);
