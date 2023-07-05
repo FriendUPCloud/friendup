@@ -88,6 +88,11 @@
 	opacity: 1;
 }
 
+.FUIChatlog .Message .Name
+{
+    font-weight: bold;
+}
+
 .FUIChatlog .Message.Own
 {
 	background-color: var(--fui-module-background);

@@ -69,13 +69,44 @@ class FUIChatlog extends FUIElement
     {
         let self = this;
         
+        function parseDate( instr )
+        {
+            let now = new Date();
+            let test = now.getFullYear() + '-' + StrPad( now.getMonth() + 1, 2, '0' )+ '-' + StrPad( now.getDate(), 2, '0' );
+            let time = new Date( instr );
+            let diff = ( now.getTime() / 1000 ) - ( time.getTime() / 1000 );
+            if( diff < 60 )
+            {
+                return Math.floor( diff ) + ' ' + i18n( 'i18n_seconds_ago' ) + '.';
+            }
+            else if( diff < 3600 )
+            {
+                return Math.floor( diff / 60 ) + ' ' + i18n( 'i18n_minutes_ago' ) + '.';
+            }
+            else if( diff < 86400 )
+            {
+                return Math.floor( diff / 60 / 24 ) + ' ' + i18n( 'i18n_hours_ago' ) + '.';
+            }
+            if( test == instr.substr( 0, test.length ) )
+                return instr.substr( test.length, instr.length - test.length );
+            return instr.split( ' ' )[1];
+        }
+        
         for( let a = 0; a < messageList.length; a++ )
         {
             let m = messageList[a];
             
             let d = document.createElement( 'div' );
             d.className = 'Message';
-            d.innerHTML = '<p>' + m.Message + '</p>';
+            let replacements = {
+                message: m.Message,
+                i18n_date: i18n( 'i18n_date' ),
+                i18n_fullname: i18n( 'i18n_fullname' ),
+                date: parseDate( m.Date ),
+                signature: '',
+                fullname: m.Own ? i18n( 'i18n_you' ) : m.Name
+            };
+            d.innerHTML = FUI.getFragment( 'chat-message-head', replacements );
             let timestamp = ( new Date( m.Date ) ).getTime();
             if( m.Own ) d.classList.add( 'Own' );
             
