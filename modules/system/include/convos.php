@@ -16,12 +16,12 @@ $response = new stdClass();
 $sess = new dbIO( 'MessageSession' );
 $sess->SessionID = $UserSession->SessionID;
 $sess->UniqueUserID = $User->UniqueID;
-$sess->Load();
-if( !$sess->PrevDate )
+if( !$sess->Load() )
+{
     $sess->PrevDate = date( 'Y-m-d H:i:s' );
-if( !$sess->ActivityDate )
     $sess->ActivityDate = $sess->PrevDate;
-$sess->Save();
+    $sess->Save();
+}
 
 if( isset( $args->args ) )
 {
@@ -34,13 +34,24 @@ if( isset( $args->args ) )
         
         foreach( $args->args->outgoing as $out )
         {
+            // Do not save empty messages.
+            if( !trim( $out->message ) ) continue;
+            
             $o = new dbIO( 'Message' );
             $o->UniqueUserID = $User->UniqueID;
             $o->RoomID = 0;
             $o->RoomType = $out->type ? $out->type : 'jeanie';
             $o->ParentID = 0;
-            if( $out->targetId )
+            if( isset( $out->targetId ) )
+            {
                 $o->TargetID = $out->targetId;
+                
+                // Update sessions
+                if( $o->RoomType == 'dm-user' )
+                {
+                    $SqlDatabase->query( 'UPDATE MessageSession SET ActivityDate=\'' . date( 'Y-m-d H:i:s' ) . '\' WHERE UniqueUserID=\'' . $SqlDatabase->_link->real_escape_string( $o->TargetID ) . '\'' );
+                }
+            }
             $o->DateUpdated = date( 'Y-m-d H:i:s' );
             $o->Date = date( 'Y-m-d H:i:s', $out->timestamp );
             $o->Message = $out->message;
@@ -61,6 +72,9 @@ if( isset( $args->args ) )
         
         if( count( $response->messages ) > 0 )
         {
+            // Update sessions
+            $SqlDatabase->query( 'UPDATE MessageSession SET ActivityDate=\'' . date( 'Y-m-d H:i:s' ) . '\' WHERE UniqueUserID=\'' . $User->UniqueID . '\'' );
+        
             die( 'ok<!--separate-->' . json_encode( $response ) );
         }
         die( 'fail<!--separate-->{"response":0,"message":"Failed to store message(s)."}' );
@@ -201,6 +215,13 @@ while( !( $row = $SqlDatabase->FetchObject( '
 }
 if( $row )
 {
+   // Next time is different
+   if( $sess->ID )
+   {
+       $sess->ActivityDate = date( 'Y-m-d H:i:s' );
+       $sess->PrevDate = $sess->ActivityDate;
+       $sess->Save();
+   }
    die( 'ok<!--separate-->{"message":"We got activity","response":-1}' );
 }
 die( 'fail<!--separate-->{"message":"No event.","response":-1}' );
