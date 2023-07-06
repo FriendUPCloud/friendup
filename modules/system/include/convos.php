@@ -189,7 +189,8 @@ if( isset( $args->args ) )
                     SELECT 
                         u.UniqueID AS `ID`,
                         "User" as `Type`,
-                        u.Name as `Fullname`
+                        u.Name as `Nickname`,
+                        u.FullName as `Fullname`
                     FROM FUser u, FUserToGroup mes, FUserToGroup fug, FUserGroup ug
                     WHERE
                             ug.Type = "Workgroup"
@@ -202,6 +203,7 @@ if( isset( $args->args ) )
                     SELECT 
                         f.ID AS `ID`,
                         "Contact" AS `Type`,
+                        f.Firstname as `Nickname`,
                         CONCAT( f.Firstname, f.Lastname ) AS `Fullname`
                     FROM FContact f
                     WHERE
