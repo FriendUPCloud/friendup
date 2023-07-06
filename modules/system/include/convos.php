@@ -205,8 +205,9 @@ if( isset( $args->args ) )
                         CONCAT( f.Firstname, f.Lastname ) AS `Fullname`
                     FROM FContact f
                     WHERE
-                            f.OwnerUserID = \'' . $User->ID . '\'
-                );
+                        f.OwnerUserID = \'' . $User->ID . '\'
+                )
+                ORDER BY Fullname ASC
             ' );
             if( $rows && count( $rows ) > 0 )
             {
