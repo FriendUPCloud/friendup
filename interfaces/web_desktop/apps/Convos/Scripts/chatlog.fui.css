@@ -27,6 +27,14 @@
 	line-height: 25px;
 }
 
+.FUIChatlog .Messages > div
+{
+    position: relative;
+    max-width: 800px;
+    display: block;
+    margin: auto;
+}
+
 .FUIChatlog .Messages
 {
 	position: absolute;
@@ -35,6 +43,7 @@
 	width: 100%;
 	height: calc(100% - 35px);
 	overflow: auto;
+	overflow-y: scroll;
 	scroll-behavior: smooth;
 	box-sizing: border-box;
 	padding: 15px 15px 80px 15px;
@@ -50,10 +59,10 @@
 	height: 80px;
 	background-color: var(--fui-background-dim);
 	color: var(--fui-menu-color);
-	text-align: center;
+	justify-content: center;
 	z-index: 2;
 	display: flex;
-	padding: 15px;
+	padding: 15px 21px 15px 15px;
 	box-sizing: border-box;
 }
 
@@ -115,6 +124,7 @@
 
 .FUIChatlog .Input textarea
 {
+    max-width: 650px;
 	line-height: 18px;
 	display: inline-block;
 	flex-grow: 1;
