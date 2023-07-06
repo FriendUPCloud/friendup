@@ -184,6 +184,14 @@ if( isset( $args->args ) )
         }
         else if( $args->args->method == 'contacts' )
         {
+            $filterA = $filterB = '';
+            if( isset( $args->args->filter ) )
+            {
+                $f = $SqlDatabase->_link->real_escape_string( trim( $args->args->filter ) );
+                $filterA = ' AND ( u.Name LIKE "%' . $f . '%" OR u.FullName LIKE "%' . $f . '%" )';
+                $filterB = ' AND ( f.Firstname LIKE "%' . $f . '%" OR f.Lastname LIKE "%' . $f . '%" )';
+            }
+            
             $rows = $SqlDatabase->FetchObjects( '
                 SELECT * FROM (
                     SELECT 
@@ -198,13 +206,13 @@ if( isset( $args->args ) )
                         AND mes.UserID = \'' . $User->ID . '\'
                         AND fug.UserGroupID = ug.ID
                         AND fug.UserID = u.ID
-                        AND fug.UserID != mes.UserID
+                        AND fug.UserID != mes.UserID' . $filterA . '
                 ) a UNION (
                     SELECT 
                         f.ID AS `ID`,
                         "Contact" AS `Type`,
                         f.Firstname as `Nickname`,
-                        CONCAT( f.Firstname, f.Lastname ) AS `Fullname`
+                        CONCAT( f.Firstname, f.Lastname ) AS `Fullname`' . $filterB . '
                     FROM FContact f
                     WHERE
                         f.OwnerUserID = \'' . $User->ID . '\'

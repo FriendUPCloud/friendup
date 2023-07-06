@@ -180,24 +180,25 @@ window.FUI = window.FUI ? window.FUI : {
 				    }
 				    for( let a = 0; a < out.length; a++ )
 				    {
-				        let classStr = 'FUI' + domtype.substr( 0, 1 ).toUpperCase() + domtype.substr( 1, domtype.length - 1 );
-				        let classObj = eval( classStr );
-				        let opts = {};
-				        opts.placeholderElement = out[a];
-				        
-				        // Transfer innerHTML to options
-				        if( opts.placeholderElement.childNodes.length )
+				        ( function( el )
 				        {
-				        	let els = opts.placeholderElement.getElementsByTagName( '*' );
-				        	opts.childNodes = [];
-				        	for( let b = 0; b < els.length; b++ )
-				        	{
-				        		if( els[b].parentNode != opts.placeholderElement ) continue;
-				        		opts.childNodes.push( els[ b ] );
-				        	}
-						    opts.innerHTML = opts.placeholderElement.innerHTML;
-				        }
-				        new classObj( opts );
+				            let classStr = 'FUI' + domtype.substr( 0, 1 ).toUpperCase() + domtype.substr( 1, domtype.length - 1 );
+				            let opts = {};
+				            opts.placeholderElement = el;
+				            // Transfer innerHTML to options
+				            if( opts.placeholderElement.childNodes.length )
+				            {
+				            	let els = opts.placeholderElement.getElementsByTagName( '*' );
+				            	opts.childNodes = [];
+				            	for( let b = 0; b < els.length; b++ )
+				            	{
+				            		if( els[b].parentNode != opts.placeholderElement ) continue;
+				            		opts.childNodes.push( els[ b ] );
+				            	}
+						        opts.innerHTML = opts.placeholderElement.innerHTML;
+				            }
+				            eval( 'new ' + classStr + '( opts )' );
+				        } )( out[a] );
 				    }
 				}
 		    } )( types[b] );

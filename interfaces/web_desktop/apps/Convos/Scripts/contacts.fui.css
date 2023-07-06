@@ -13,7 +13,7 @@
     position: absolute;
     top: 0;
     left: 0;
-    width: 200px;
+    width: 300px;
     height: 35px;
     background-color: var(--fui-module-background-darker);
     color: var(--fui-menu-color);
@@ -34,7 +34,7 @@
     position: absolute;
     top: 35px;
     left: 0;
-    width: 200px;
+    width: 300px;
     height: calc(100% - 35px);
     overflow: auto;
 }
@@ -106,6 +106,9 @@
     width: calc(100% - 40px);
     height: 35px;
     padding: 8px 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .FUIContacts .Contacts .Contact.Showing
@@ -119,7 +122,7 @@
     color: var(--fui-color);
     position: absolute;
     top: 0px;
-    left: 200px;
-    width: calc(100% - 200px);
+    left: 300px;
+    width: calc(100% - 300px);
     height: 100%;
 }

@@ -77,7 +77,7 @@ Application.holdConnection = function( flags )
 		        {
 		            let mess = FUI.getElementByUniqueId( 'messages' );
 		            mess.addMessages( js.messages );
-		            console.log( 'Adding messages:  ' + mess.lastId, js.messages );
+		            //console.log( 'Adding messages:  ' + mess.lastId, js.messages );
 		            if( mess.clearQueue ) mess.clearQueue();
 		        }
 		    }

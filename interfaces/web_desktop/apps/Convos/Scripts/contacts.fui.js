@@ -14,8 +14,11 @@ class FUIContacts extends FUIElement
     {
         super( options );
         
+        this.contactFilter = '';
         this.userList = {}; // Dom elements
         this.userListOrder = []; // Sorted list
+        
+        console.log( 'What is the contact filter?', this.contactFilter );
     }
     attachDomElement()
     {
@@ -26,7 +29,7 @@ class FUIContacts extends FUIElement
         this.domElement.className = 'FUIContacts';
         
         let data = '\
-        <div class="ContactSearch"><input type="text" value="" placeholder="Find a contact..."/></div>\
+        <div class="ContactSearch"><input type="text" value="' + ( typeof( self.contactFilter ) != 'undefined' ? self.contactFilter : '' ) + '" placeholder="Find a contact..."/></div>\
         <div class="Contacts"></div>\
         <div class="Chat"></div>\
         ';
@@ -36,6 +39,17 @@ class FUIContacts extends FUIElement
         this.domContacts = this.domElement.querySelector( '.Contacts' );
         this.domChat = this.domElement.querySelector( '.Chat' );
         this.domSearch = this.domElement.querySelector( '.ContactSearch' ).getElementsByTagName( 'input' )[0];
+        
+        this.domSearch.addEventListener( 'keyup', function( e )
+        {
+            if( self.contacttimeo )
+                clearTimeout( self.contacttimeo );
+            self.contacttimeo = setTimeout( function()
+            {
+                self.contactFilter = this.value;
+                self.refreshDom();
+            }, 350 );
+        } );
         
         // Set stuff on this.domElement.innerHTML
         this.refreshDom();
@@ -104,19 +118,44 @@ class FUIContacts extends FUIElement
         super.refreshDom();
         let self = this;
         
-        let m = new Module( 'system' );
-        m.onExecuted = function( me, md )
+        if( self.contactFilter != '' )
         {
-            if( me == 'ok' )
+            console.log( 'Filter: ', self.contactFilter );
+            let conts = self.domContacts.getElementsByClassName( 'Contact' );
+            for( let a = 0; a < conts.length; a++ )
             {
-                let list = JSON.parse( md );
-                for( let a = 0; a < list.contacts.length; a++ )
+                if( conts[ a ].querySelector( '.Name' ).innerText.indexOf( self.contactFilter ) >= 0 )
                 {
-                    self.addContact( list.contacts[a] );
+                    conts[ a ].style.display = '';
+                }
+                else
+                {
+                    conts[ a ].style.display = 'none';
                 }
             }
         }
-        m.execute( 'convos', { method: 'contacts' } );
+        else
+        {
+            let m = new Module( 'system' );
+            m.onExecuted = function( me, md )
+            {
+                // Reset hidden
+                let conts = self.domContacts.getElementsByClassName( 'Contact' );
+                for( let a = 0; a < conts.length; a++ )
+                {
+                    conts[ a ].style.display = '';
+                }
+                if( me == 'ok' )
+                {
+                    let list = JSON.parse( md );
+                    for( let a = 0; a < list.contacts.length; a++ )
+                    {
+                        self.addContact( list.contacts[a] );
+                    }
+                }
+            }
+            m.execute( 'convos', { method: 'contacts' } );
+        }
     }
     // Get markup for object
     getMarkup( data )
