@@ -9,12 +9,28 @@
 *****************************************************************************©*/
 
 window.Convos = {
-	outgoing: []
+	outgoing: [],
+	sounds: {}
 };
 
 Application.run = function( msg )
 {
 	this.holdConnection( { method: 'messages', roomType: 'jeanie' } );
+}
+
+Application.playSound = function( snd )
+{
+    if( !Convos.sounds[ snd ] )
+    {
+        Convos.sounds[ snd ] = new AudioObject( snd, function()
+        {
+            Convos.sounds[ snd ].play();
+        } );
+    }
+    else
+    {
+        Convos.sounds[ snd ].play();
+    }
 }
 
 // Start polling

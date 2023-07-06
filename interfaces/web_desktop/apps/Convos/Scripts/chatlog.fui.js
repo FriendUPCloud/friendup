@@ -247,6 +247,8 @@ class FUIChatlog extends FUIElement
 	        } );
     	}
     	
+    	Application.playSound( getImageUrl( 'Progdir:Assets/send.ogg' ) );
+    	
     	setTimeout( function()
     	{
     		dom.classList.add( 'Showing' );
