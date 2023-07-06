@@ -14,11 +14,12 @@ class FUIContacts extends FUIElement
     {
         super( options );
         
+        this.initialized = true;
         this.contactFilter = '';
         this.userList = {}; // Dom elements
         this.userListOrder = []; // Sorted list
         
-        console.log( 'What is the contact filter?', this.contactFilter );
+        this.refreshDom();
     }
     attachDomElement()
     {
@@ -42,13 +43,14 @@ class FUIContacts extends FUIElement
         
         this.domSearch.addEventListener( 'keyup', function( e )
         {
+            let s = this;
             if( self.contacttimeo )
                 clearTimeout( self.contacttimeo );
             self.contacttimeo = setTimeout( function()
             {
-                self.contactFilter = this.value;
+                self.contactFilter = s.value.toLowerCase();
                 self.refreshDom();
-            }, 350 );
+            }, 100 );
         } );
         
         // Set stuff on this.domElement.innerHTML
@@ -84,9 +86,9 @@ class FUIContacts extends FUIElement
             this.userList[ contact.Fullname ] = document.createElement( 'div' );
             this.userList[ contact.Fullname ].className = 'Slot';
             this.domContacts.appendChild( this.userList[ contact.Fullname ] );
+            // Add to slot
+            this.userList[ contact.Fullname ].appendChild( d );
         }
-        // Add to slot
-        this.userList[ contact.Fullname ].appendChild( d );
         setTimeout( function(){ d.classList.add( 'Showing' ); }, 2 );
     }
     setChatView( record )
@@ -116,21 +118,23 @@ class FUIContacts extends FUIElement
     refreshDom( evaluated = false )
     {
         super.refreshDom();
+        
+        if( !this.initialized ) return;
+        
         let self = this;
         
         if( self.contactFilter != '' )
         {
-            console.log( 'Filter: ', self.contactFilter );
             let conts = self.domContacts.getElementsByClassName( 'Contact' );
             for( let a = 0; a < conts.length; a++ )
             {
-                if( conts[ a ].querySelector( '.Name' ).innerText.indexOf( self.contactFilter ) >= 0 )
+                if( conts[ a ].querySelector( '.Name' ).innerText.toLowerCase().indexOf( self.contactFilter ) >= 0 )
                 {
-                    conts[ a ].style.display = '';
+                    conts[ a ].parentNode.style.display = '';
                 }
                 else
                 {
-                    conts[ a ].style.display = 'none';
+                    conts[ a ].parentNode.style.display = 'none';
                 }
             }
         }
@@ -143,7 +147,7 @@ class FUIContacts extends FUIElement
                 let conts = self.domContacts.getElementsByClassName( 'Contact' );
                 for( let a = 0; a < conts.length; a++ )
                 {
-                    conts[ a ].style.display = '';
+                    conts[ a ].parentNode.style.display = '';
                 }
                 if( me == 'ok' )
                 {
