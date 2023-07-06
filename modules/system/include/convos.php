@@ -196,6 +196,7 @@ if( isset( $args->args ) )
                 SELECT * FROM (
                     SELECT 
                         u.UniqueID AS `ID`,
+                        u.ID AS `UserID`,
                         "User" as `Type`,
                         u.Name as `Nickname`,
                         u.FullName as `Fullname`
@@ -210,6 +211,7 @@ if( isset( $args->args ) )
                 ) a UNION (
                     SELECT 
                         f.ID AS `ID`,
+                        "" AS `UserID`,
                         "Contact" AS `Type`,
                         f.Firstname as `Nickname`,
                         CONCAT( f.Firstname, f.Lastname ) AS `Fullname`' . $filterB . '

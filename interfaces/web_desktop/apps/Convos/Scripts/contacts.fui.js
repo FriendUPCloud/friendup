@@ -80,6 +80,20 @@ class FUIContacts extends FUIElement
             self.setChatView( this.record );
         }
         
+        // Load avatar
+        let i = new Image();
+        i.src = '/system.library/module/?module=system&command=getavatar&userid=' + contact.UserID + '&width=128&height=128&authid=' + Application.authId;
+        i.onload = function()
+        {
+            d.querySelector( '.Avatar' ).style.backgroundImage = 'url(' + this.src + ')';
+            console.log( 'It was loaded: ', this.src );
+            document.body.removeChild( i );
+        }
+        i.style.position = 'absolute';
+        i.style.visibility = 'hidden';
+        document.body.appendChild( i );
+        console.log( 'Loaded a contact: ', i, contact );
+        
         // The slot does not exist?
         if( !this.userList[ contact.Fullname ] )
         {

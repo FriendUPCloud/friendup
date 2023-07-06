@@ -89,6 +89,13 @@
     height: 35px;
 }
 
+.FUIContacts .Contacts .Contact > span.Avatar
+{
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
 .FUIContacts .Contacts .Contact > span:first-child
 {
     position: absolute;
