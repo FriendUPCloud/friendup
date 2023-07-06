@@ -62,7 +62,9 @@
 .FUIContacts .Contacts .Contact.Active, 
 .FUIContacts .Contacts .Contact:hover,
 .FUIContacts .Contacts .Slot:nth-child(even) .Contact:hover,
-.FUIContacts .Contacts .Slot:nth-child(even) .Contact.Active
+.FUIContacts .Contacts .Slot:nth-child(even) .Contact.Active,
+.FUIContacts .Contacts .Slot:nth-child(odd) .Contact:hover,
+.FUIContacts .Contacts .Slot:nth-child(odd) .Contact.Active
 {
     background-color: var(--fui-list-item-background-hover);
     color: var(--fui-list-item-color-hover);
@@ -94,8 +96,10 @@
     left: 5px;
     width: 35px;
     height: 35px;
-    background-color: var(--fui-palette-chan03);
+    background-color: var(--fui-list-background);
     border-radius: 35px;
+    border: 3px solid white;
+    box-sizing: border-box;
 }
 
 .FUIContacts .Contacts .Contact > span:last-child
