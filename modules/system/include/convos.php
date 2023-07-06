@@ -65,9 +65,10 @@ if( isset( $args->args ) )
             if( $o->ID > 0 )
             {
                 $s = new stdClass();
+                $s->ID = $o->ID;
+                $s->Name = $User->Name;
                 $s->Date = $o->Date;
                 $s->Message = $o->Message;
-                $s->Username = $User->Name;
                 $s->Avatar = 'default';
                 $s->Own = true;
                 $response->messages[] = $s;
@@ -89,6 +90,13 @@ if( isset( $args->args ) )
         if( $args->args->method == 'messages' )
         {
             $rows = false;
+            
+            $lastId = '';
+            if( isset( $args->args->lastId ) )
+            {
+                $lastId = ' AND m.ID > ' . $args->args->lastId;
+            }
+            
             if( isset( $args->args->roomType ) )
             {
                 if( $args->args->roomType == 'jeanie' )
@@ -98,7 +106,7 @@ if( isset( $args->args ) )
                             m.ID, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u 
                         WHERE
                             m.RoomType = \'jeanie\' AND m.UniqueUserID=\'' . $User->UniqueID . '\' AND
-                            m.UniqueUserID = u.UniqueID
+                            m.UniqueUserID = u.UniqueID' . $lastId . '
                         ORDER BY 
                             m.Date DESC, m.ID DESC LIMIT 50
                     ' );
@@ -123,7 +131,7 @@ if( isset( $args->args ) )
                                 m.TargetID = \'' . $User->UniqueID . '\'
                             )
                         )
-                        u.ID = m.TargetID
+                        u.ID = m.TargetID' . $lastId . '
                     ORDER BY 
                         m.Date DESC, m.ID DESC LIMIT 50
                     ' );
@@ -148,7 +156,7 @@ if( isset( $args->args ) )
                                 u.UniqueID = m.UniqueUserID AND
                                 m.TargetID = \'' . $User->UniqueID . '\'
                             )
-                        )
+                        )' . $lastId . '
                     ORDER BY 
                         m.Date DESC, m.ID DESC LIMIT 50
                     ' );

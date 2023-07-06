@@ -17,26 +17,27 @@
 	left: 0;
 	top: 0;
 	width: 100%;
-	height: 50px;
+	height: 35px;
 	background-color: var(--fui-menu-background);
 	color: var(--fui-menu-color);
 	text-align: center;
-	padding: 15px;
+	padding: 5px 15px;
 	box-sizing: border-box;
 	font-weight: bold;
+	line-height: 25px;
 }
 
 .FUIChatlog .Messages
 {
 	position: absolute;
-	top: 50px;
+	top: 35px;
 	left: 0;
 	width: 100%;
-	height: calc(100% - 50px);
+	height: calc(100% - 35px);
 	overflow: auto;
 	scroll-behavior: smooth;
 	box-sizing: border-box;
-	padding: 15px 15px 75px 15px;
+	padding: 15px 15px 80px 15px;
 	background-color: var(--fui-background-foreground);
 }
 
@@ -139,10 +140,40 @@
 	padding: 15px;
 	box-sizing: border-box;
 	border-radius: 3px;
-	margin: 0 0 10px 0;
+	margin: 10px 0 0 0;
 	opacity: 0;
 	transition: opacity 0.15s;
 	position: relative;
+}
+
+.FUIChatlog .Slot:first-child .Message
+{
+    margin: 0;
+}
+
+.Message.ConceilOwner 
+{
+    margin: 0;
+}
+
+.Message.FirstForOwner
+{
+    border-radius: 3px 3px 0 0;
+}
+
+.Message.ConceilOwner
+{
+    border-radius: 0;
+}
+
+.Message.FirstForOwner .Date, .Message.ConceilOwner:not(.LastForOwner) .Date
+{
+    display: none;
+}
+
+.Message.ConceilOwner.LastForOwner
+{
+    border-radius: 0 0 3px 3px;
 }
 
 .FUIChatlog .Message p
@@ -153,6 +184,35 @@
 .FUIChatlog .Message p:last-child
 {
     margin: 0;
+}
+
+.FUIChatlog .Message p.Date
+{
+    position: absolute;
+    right: 15px;
+    bottom: 5px;
+    font-size: 13px;
+    opacity: 1;
+    transition: opacity 0.15s;
+}
+
+.FUIChatlog .Message .Text::after 
+{
+    display: inline-block;
+    width: 100px;
+    background: transparent;
+    content: " ";
+    height: 10px;
+}
+
+.FUIChatlog .Message.ConceilOwner .Nickname
+{
+    display: none;
+}
+
+.FUIChatlog .Message p.Date:hover
+{
+    opacity: 0.4;
 }
 
 .FUIChatlog .Message.Showing

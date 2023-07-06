@@ -6,20 +6,13 @@
     </rows>
 </group>
 <fui-fragment uniqueid="chat-message-head">
-    <div class="Profile">
-        <p>
-            <span style="background-image: url({avatar-image})"></span>
-        </p>
-        <p>
-            <span class="Name">{fullname}</label>
-        </p>
-        <p>
-            <span>{date}</label>
-        </p>
-        <p class="Signature">
-            {signature}
-        </p>
-    </div>
+    <div class="Avatar"><span style="background-image: url({avatar-image})"></span></div>
+    <p class="Nickname">
+        <span class="Name">{fullname}</label>
+    </p>
+    <p class="Date">
+        <span>{date}</label>
+    </p>
     <div class="Text">
         {message}
     </div>

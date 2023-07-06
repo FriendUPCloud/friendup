@@ -31,11 +31,14 @@ Application.holdConnection = function( flags )
 	        args[ a ] = flags[ a ];
 	}
 	
+	let pid = Math.floor( Math.random() * 1000 );
+	
 	// Push outgoing messages to args
 	if( Convos.outgoing.length )
 	{
 		args.outgoing = Convos.outgoing;
 		Convos.outgoing = [];
+		//console.log( 'REGISTERING OUTGOING MESSAGES (' + pid + ').' );
 	}
 	
 	if( args.outgoing || args.method )
@@ -52,7 +55,7 @@ Application.holdConnection = function( flags )
 	{
 	    if( this.blocking )
 	    {
-            //console.log( '[blocking] We are blocking this call' );
+            //console.log( '[blocking] We are blocking this call. (' + pid + ')' );
 	        return;
         }
     	this.blocking = true;
@@ -70,17 +73,18 @@ Application.holdConnection = function( flags )
 		    let js = JSON.parse( this.response.split( '<!--separate-->' )[1] );
 		    if( js && js.response == 1 )
 		    {
-		        if( js.messages )
+		        if( js.messages && js.messages.length > 0 )
 		        {
 		            let mess = FUI.getElementByUniqueId( 'messages' );
 		            mess.addMessages( js.messages );
+		            console.log( 'Adding messages:  ' + mess.lastId, js.messages );
 		            if( mess.clearQueue ) mess.clearQueue();
 		        }
 		    }
 		    // Response from longpolling
 		    else if( js && js.response == 200 )
 		    {
-		        console.log( 'What was the result now?' );
+		        //console.log( 'What was the result now?' );
 		        FUI.getElementByUniqueId( 'messages' ).refreshMessages();
 		    }
 		}

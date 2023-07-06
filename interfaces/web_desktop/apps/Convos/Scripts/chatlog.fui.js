@@ -17,6 +17,7 @@ class FUIChatlog extends FUIElement
         
         this.messageList = {};
         this.messageListOrder = [];
+        this.lastId = 0;
     }
     attachDomElement()
     {
@@ -37,6 +38,9 @@ class FUIChatlog extends FUIElement
         this.domTopic = this.domElement.querySelector( '.Topic' );
         this.domMessages = this.domElement.querySelector( '.Messages' );
         this.domInput = this.domElement.querySelector( '.Input' );
+        
+        if( this.options.name )
+            this.domTopic.innerHTML = this.options.name;
         
         this.initDomInput();
         
@@ -104,8 +108,15 @@ class FUIChatlog extends FUIElement
             
             if( !m.ID ) continue; // Skip unregistered ones
             
+            // Find highest message ID
+            if( parseInt( m.ID ) > self.lastId )
+                self.lastId = parseInt( m.ID );
+            
             let d = document.createElement( 'div' );
             d.className = 'Message';
+            d.classList.add( 'Showing' );
+            d.setAttribute( 'owner', m.Name );
+            
             let replacements = {
                 message: self.replaceEmojis( m.Message ),
                 i18n_date: i18n( 'i18n_date' ),
@@ -139,20 +150,17 @@ class FUIChatlog extends FUIElement
                 // Replace existing node
                 if( found )
                 {
-                    console.log( 'Found existing: ' + m.Message + ' (' + slotId + ')' );
                     this.messageList[ slot ].replaceChild( d, found );
                 }
                 // Add a new node to this group slot
                 else
                 {
-                    console.log( 'Add new: ' + m.Message + ' (' + slotId + ')' );
                     this.messageList[ slot ].appendChild( d );
                 }
             }
             // Insert a message in a timestamp slot
             else
             {
-                console.log( 'New message: ' + slot, m.Message + '(' + slotId + ')' );
                 let grp = document.createElement( 'div' );
                 grp.className = 'Slot';
                 grp.appendChild( d );
@@ -190,9 +198,9 @@ class FUIChatlog extends FUIElement
                     }
                 }
             }
-            ( function( r ){ setTimeout( function(){ r.classList.add( 'Showing' ); },  ); } )( d );   
         }
         this.toBottom();
+        this.refreshDom();
     }
     toBottom( way )
     {
@@ -234,7 +242,8 @@ class FUIChatlog extends FUIElement
     	    Application.holdConnection( { 
     	        method: 'messages', 
     	        roomType: this.options.type ? this.options.type : '', 
-    	        cid: this.options.cid ? this.options.cid : '' 
+    	        cid: this.options.cid ? this.options.cid : '',
+    	        lastId: this.lastId
 	        } );
     	}
     	
@@ -247,7 +256,12 @@ class FUIChatlog extends FUIElement
     }
     refreshMessages()
     {
-        let msg = { method: 'messages', roomType: this.options.type ? this.options.type : '', cid: this.options.cid ? this.options.cid : '' };
+        let msg = { 
+            method: 'messages', 
+            roomType: this.options.type ? this.options.type : '', 
+            cid: this.options.cid ? this.options.cid : '',
+            lastId: this.lastId
+        };
         Application.holdConnection( msg );
     }
     clearQueue()
@@ -258,14 +272,10 @@ class FUIChatlog extends FUIElement
         let messages = queue.getElementsByClassName( 'Message' );
         for( let a = 0; a < messages.length; a++ )
         {
-            messages[ a ].classList.remove( 'Showing' );
             ( function( mess )
             {
-                setTimeout( function()
-                {
-                    if( mess.parentNode )
-                        mess.parentNode.removeChild( mess );
-                }, 250 );
+                if( mess.parentNode )
+                    mess.parentNode.removeChild( mess );
             } )( messages[ a ] );
         }
         setTimeout( function()
@@ -288,11 +298,39 @@ class FUIChatlog extends FUIElement
         
         let context = domElement.getAttribute( 'context' );
         if( context ) this.options.context = context;
+        
+        let name = domElement.getAttribute( 'name' );
+        if( name ) this.options.name = name;
     }
     refreshDom( evaluated = false )
     {
         super.refreshDom();
         let self = this;
+        
+        // Let's do some message owner management for styling
+        let messages = this.domElement.getElementsByClassName( 'Message' );
+        let lastOwner = false;
+        for( let a = 0; a < messages.length; a++ )
+        {
+            let owner = messages[ a ].getAttribute( 'owner' );
+            if( owner == lastOwner )
+            {
+                messages[ a ].classList.add( 'ConceilOwner' );
+                if( a + 1 < messages.length && messages[ a + 1 ].getAttribute( 'owner' ) != owner )
+                {
+                    messages[ a ].classList.add( 'LastForOwner' );
+                }
+            }
+            else if( a + 1 < messages.length && messages[ a + 1 ].getAttribute( 'owner' ) == owner )
+            {
+                messages[ a ].classList.add( 'FirstForOwner' );
+            }
+            if( a + 1 >= messages.length && messages[ a ].classList.contains( 'ConceilOwner' ) )
+            {
+                messages[ a ].classList.add( 'LastForOwner' );
+            }
+            lastOwner = owner;
+        }
         
         this.domElement.classList.add( 'Initialized' );
        
