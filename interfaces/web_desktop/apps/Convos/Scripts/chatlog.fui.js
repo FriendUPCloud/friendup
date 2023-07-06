@@ -92,14 +92,16 @@ class FUIChatlog extends FUIElement
             return instr.split( ' ' )[1];
         }
         
-        for( let a = 0; a < messageList.length; a++ )
+        for( let a = messageList.length - 1; a >= 0; a-- )
         {
             let m = messageList[a];
+            
+            if( !m.ID ) continue; // Skip unregistered ones
             
             let d = document.createElement( 'div' );
             d.className = 'Message';
             let replacements = {
-                message: m.Message,
+                message: self.replaceEmojis( m.Message ),
                 i18n_date: i18n( 'i18n_date' ),
                 i18n_fullname: i18n( 'i18n_fullname' ),
                 date: parseDate( m.Date ),
@@ -107,21 +109,22 @@ class FUIChatlog extends FUIElement
                 fullname: m.Own ? i18n( 'i18n_you' ) : m.Name
             };
             d.innerHTML = FUI.getFragment( 'chat-message-head', replacements );
-            let timestamp = ( new Date( m.Date ) ).getTime();
+            let timestamp = Math.floor( ( new Date( m.Date ) ).getTime() / 1000 );
             if( m.Own ) d.classList.add( 'Own' );
             
             // Get slot
             let slot = timestamp;
-            let slotId = slot + m.ID;
-            d.slotId = slotId; // If we will use this new element, give slotid
+            let slotId = slot + '-' + m.ID;
+            d.setAttribute( 'slotId', slotId ); // If we will use this new element, give slotid
             
             // Update a message in a time slot
             if( this.messageList[ slot ] && this.messageList[ slot ].parentNode )
             {
+                //console.log( 'Add message to existing slot: ' + slot, m.Message );
                 let found = false;
                 for( let b = 0; b < this.messageList[ slot ].childNodes.length; b++ )
                 {
-                    if( this.messageList[ slot ].childNodes[ b ].slotId == slotId )
+                    if( this.messageList[ slot ].childNodes[ b ].getAttribute( 'slotId' ) == slotId )
                     {
                         found = this.messageList[ slot ].childNodes[ b ];
                         break;
@@ -130,17 +133,20 @@ class FUIChatlog extends FUIElement
                 // Replace existing node
                 if( found )
                 {
+                    console.log( 'Found existing: ' + m.Message + ' (' + slotId + ')' );
                     this.messageList[ slot ].replaceChild( d, found );
                 }
                 // Add a new node to this group slot
                 else
                 {
+                    console.log( 'Add new: ' + m.Message + ' (' + slotId + ')' );
                     this.messageList[ slot ].appendChild( d );
                 }
             }
             // Insert a message in a timestamp slot
             else
             {
+                console.log( 'New message: ' + slot, m.Message + '(' + slotId + ')' );
                 let grp = document.createElement( 'div' );
                 grp.className = 'Slot';
                 grp.appendChild( d );
@@ -148,6 +154,7 @@ class FUIChatlog extends FUIElement
                 
                 this.messageListOrder.push( slot );
                 this.messageListOrder.sort();
+
                 // First message
                 if( this.messageListOrder.length == 1 )
                 {
@@ -164,7 +171,7 @@ class FUIChatlog extends FUIElement
                         if( slotHere == slot )
                         {
                             // Add since we're the last in the list
-                            if( last )
+                            if( last || b == 0 )
                             {
                                  this.domMessages.querySelector( '.Incoming' ).appendChild( grp );
                             }
@@ -234,8 +241,8 @@ class FUIChatlog extends FUIElement
     }
     refreshMessages()
     {
-        console.log( 'Trying to get messages now! - snip -' );
-        //Application.holdConnection( { method: 'messages', roomType: this.options.type ? this.options.type : '', cid: this.options.cid ? this.options.cid : '' } );
+        let msg = { method: 'messages', roomType: this.options.type ? this.options.type : '', cid: this.options.cid ? this.options.cid : '' };
+        Application.holdConnection( msg );
     }
     clearQueue()
     {
@@ -294,6 +301,47 @@ class FUIChatlog extends FUIElement
     errorMessage( string )
     {
         this.domElement.innerHTML = '<h2 class="Error">' + string + '</h2>';
+    }
+    replaceEmojis( string )
+    {
+        while( 1 )
+        {
+            let res = string.match( /\:(.*?)\:/i );
+            if( res && res[0] )
+            {
+                string = string.split( res[0] ).join( this.emoji( res[1] ) );
+            }
+            else break;
+        }
+        
+        let smilies = [ ':-)', ':)', ':-D', ':D', 'X)', 'B)', 'B-)', 'X-)', ':|', ':-|', ':-o', ':o', ':O', ':O', ':(', ':-(',  ';)', ';-)' ];
+        let emotes  = [ '🙂',  '🙂', '😀', '😀', '😆', '😎', '😎', '😆', '😐', '😐', '😮', '😮', '😮', '😮', '😒', '😒', '😏', '😏' ];
+        
+        for( let a = 0; a < smilies.length; a++ )
+        {
+            string = string.split( smilies[a] ).join( '<span class="Emoji">' + emotes[a] + '</span>' );
+        }
+        
+        return string;
+    }
+    emoji( type )
+    {
+        let s = '';
+        switch( type )
+        {
+            case 'bug': s = '🪲'; break;
+            case 'sun': s = '☀️'; break;
+            case 'heart': s = '❤️'; break;
+            case 'kiss': s = '💋'; break;
+            case 'y': s = '👍'; break;
+            case 'beers': s = '🍻'; break;
+            case 'beer': s = '🍺'; break;
+            case 'wine': s = '🍷'; break;
+            case 'sick': s = '😷'; break;
+            case 'fire': s = '🔥'; break;
+            default: break;
+        }
+        return '<span class="Emoji">' + s + '</span>';
     }
 }
 FUI.registerClass( 'chatlog', FUIChatlog );

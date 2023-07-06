@@ -51,6 +51,18 @@
     --fui-palette-chan04: #78e8bf;
     --fui-palette-chan05: #b9fc97;
     
+    --fui-palette-chan01-dim: #1c5cff88;
+    --fui-palette-chan02-dim: #a98cd888;
+    --fui-palette-chan03-dim: #a84cd388;
+    --fui-palette-chan04-dim: #78e8bf88;
+    --fui-palette-chan05-dim: #b9fc9788;
+    
+    --fui-palette-chan01-dimmer: #1c5cff33;
+    --fui-palette-chan02-dimmer: #a98cd833;
+    --fui-palette-chan03-dimmer: #a84cd333;
+    --fui-palette-chan04-dimmer: #78e8bf33;
+    --fui-palette-chan05-dimmer: #b9fc9733;
+    
     --font-size-small: 12px;
     --font-size-normal: 15px;
     --font-size-large: 18px;

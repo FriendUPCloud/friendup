@@ -100,7 +100,7 @@ if( isset( $args->args ) )
                             m.RoomType = \'jeanie\' AND m.UniqueUserID=\'' . $User->UniqueID . '\' AND
                             m.UniqueUserID = u.UniqueID
                         ORDER BY 
-                            m.Date ASC, m.ID ASC LIMIT 50
+                            m.Date DESC, m.ID DESC LIMIT 50
                     ' );
                 }
                 else if( $args->args->roomType == 'dm-contact' )
@@ -125,7 +125,7 @@ if( isset( $args->args ) )
                         )
                         u.ID = m.TargetID
                     ORDER BY 
-                        m.Date ASC, m.ID ASC LIMIT 50
+                        m.Date DESC, m.ID DESC LIMIT 50
                     ' );
                 }
                 else if( $args->args->roomType == 'dm-user' )
@@ -150,7 +150,7 @@ if( isset( $args->args ) )
                             )
                         )
                     ORDER BY 
-                        m.Date ASC, m.ID ASC LIMIT 50
+                        m.Date DESC, m.ID DESC LIMIT 50
                     ' );
                 }
             }

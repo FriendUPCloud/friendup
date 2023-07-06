@@ -547,7 +547,6 @@ body:not([mobile]) #Screens .View.Opening
 	transition: none;
 	-moz-transition: none;
 	-webkit-transition: none;
-	will-change: transform, content;
 }
 
 /* Don't animate but the opacity when fading in a window */

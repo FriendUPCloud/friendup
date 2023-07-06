@@ -51,6 +51,9 @@
 	color: var(--fui-menu-color);
 	text-align: center;
 	z-index: 2;
+	display: flex;
+	padding: 0 15px 0 15px;
+	box-sizing: border-box;
 }
 
 .FUIChatlog .Input > div
@@ -103,11 +106,12 @@
 {
 	line-height: 18px;
 	display: inline-block;
+	flex-grow: 1;
 	border: 0;
 	outline: none;
 	top: 0;
 	left: 40px;
-	width: calc(100% - 180px);
+	width: auto;
 	height: 50px;
 	background: var(--fui-menu-background);
 	color: var(--fui-menu-color);
@@ -143,8 +147,8 @@
 
 .FUIChatlog .Message.Own
 {
-	background-color: var(--fui-module-background);
-	color: var(--fui-module-color);
+	background-color: var(--fui-palette-chan01-dimmer);
+    color: var(--fui-color);
 }
 
 @keyframes glassanim
@@ -168,4 +172,12 @@
     pointer-events: none;
 }
 
+.FUIChatlog .Emoji
+{
+    font-family: Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,Android Emoji,EmojiSymbols,EmojiOne Mozilla,Twemoji Mozilla,Segoe UI Symbol,Noto Color Emoji Compat,emoji,noto-emojipedia-fallback;
+    font-weight: 400;
+    font-size: 24px;
+    vertical-align: baseline;
+    filter: drop-shadow(0px 2px 6px rgba(0,0,0,0.4));
+}
 
