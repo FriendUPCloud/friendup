@@ -30,8 +30,7 @@
 
 .FUIContacts .Contacts
 {
-    background-color: var(--fui-module-background-darker);
-    color: var(--fui-menu-color);
+    background-color: var(--fui-list-background);
     position: absolute;
     top: 35px;
     left: 0;
@@ -46,23 +45,31 @@
     position: relative;
     cursor: pointer;
     transition: background-color 0.25s;
-    background-color: transparent;
-    color: var(--fui-module-color);
+    background-color: var(--fui-list-item-background);
+    color: var(--fui-list-item-color);
     height: 45px;
     padding: 5px;
     box-sizing: border-box;
 }
 
-.FUIContacts .Contacts .Contact.Active
+.FUIContacts .Contacts .Slot:nth-child(even) .Contact
 {
-    background-color: var(--fui-module-background-active);
-    color: var(--fui-module-color-active);
+    background-color: var(--fui-list-item-background-alternate);
+    color: var(--fui-list-item-color-alternate);
+}
+
+.FUIContacts .Contacts .Contact.Active, 
+.FUIContacts .Contacts .Contact:hover,
+.FUIContacts .Contacts .Slot:nth-child(even) .Contact:hover,
+.FUIContacts .Contacts .Slot:nth-child(even) .Contact.Active
+{
+    background-color: var(--fui-list-item-background-hover);
+    color: var(--fui-list-item-color-hover);
 }
 
 .FUIContacts .Contacts .Slot
 {
     height: 45px;
-    padding-top: 5px;
     box-sizing: border-box;
 }
 

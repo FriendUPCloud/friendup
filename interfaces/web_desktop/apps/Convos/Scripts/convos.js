@@ -35,13 +35,6 @@ Application.holdConnection = function( flags )
 	if( Convos.outgoing.length )
 	{
 		args.outgoing = Convos.outgoing;
-		
-		let system = FUI.getElementByUniqueId( 'messages' );
-		if( system && system.clearQueue )
-		{
-		    system.clearQueue();
-		}
-		
 		Convos.outgoing = [];
 	}
 	
@@ -81,6 +74,7 @@ Application.holdConnection = function( flags )
 		        {
 		            let mess = FUI.getElementByUniqueId( 'messages' );
 		            mess.addMessages( js.messages );
+		            if( mess.clearQueue ) mess.clearQueue();
 		        }
 		    }
 		    // Response from longpolling

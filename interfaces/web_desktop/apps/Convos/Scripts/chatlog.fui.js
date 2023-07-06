@@ -52,6 +52,12 @@ class FUIChatlog extends FUIElement
     	';
     	let t = this.domInput.getElementsByTagName( 'textarea' );
     	this.domTextarea = t[0];
+    	this.domInput.querySelector( '.Send' ).onclick = function()
+    	{
+    	    let val = self.domTextarea.value;
+			self.domTextarea.value = '';	
+			self.queueMessage( val );
+    	}
     	this.domTextarea.addEventListener( 'keydown', function( e )
     	{
     		if( e.which == 13 )
@@ -253,11 +259,18 @@ class FUIChatlog extends FUIElement
         for( let a = 0; a < messages.length; a++ )
         {
             messages[ a ].classList.remove( 'Showing' );
+            ( function( mess )
+            {
+                setTimeout( function()
+                {
+                    if( mess.parentNode )
+                        mess.parentNode.removeChild( mess );
+                }, 250 );
+            } )( messages[ a ] );
         }
         setTimeout( function()
         {
             self.lock = false;
-            self.domMessages.querySelector( '.Queue' ).innerHTML = '';
         }, 250 );
     }
     grabAttributes( domElement )

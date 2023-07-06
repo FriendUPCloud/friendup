@@ -235,7 +235,7 @@ if( $row )
        $sess->PrevDate = $sess->ActivityDate;
        $sess->Save();
    }
-   error_log( '[convos.php] We got activity!! ' . $User->Name );
+   //error_log( '[convos.php] We got activity!! ' . $User->Name );
    die( 'ok<!--separate-->{"message":"We got activity after long poll","response":200}' );
 }
 die( 'fail<!--separate-->{"message":"No event.","response":-1}' );

@@ -3,15 +3,25 @@
 :root
 {
     --fui-background: #ECF0F1; /* --fui-default-background? */
+    --fui-background-dim: #ECF0F188; 
     --fui-color: #333333;
     --fui-color-emphasized: #000000;
     --fui-background-foreground: white;
+    --fui-background-foreground-dim: #ffffff88;
     --fui-border-foreground: #DDDDDD;
     
+    
+    --fui-list-background: #d1d5d5;
+    --fui-list-item-background: #ecf0f1;
+    --fui-list-item-background-alternate: #d1d5d5;
+    --fui-list-item-color: #1f2527;
+    --fui-list-item-color-alternate: #2f3537;
+    --fui-list-item-background-hover: #696a6b;
+    --fui-list-item-color-hover: #ecf0f1;
+    
     --fui-list-button-background: #cfcfcf;
-    --fui-list-item-background: #f8f8f8;
-    --fui-list-item-background-alternate: #f0f0f0;
     --fui-list-button-background-hover: #909090;
+    --fui-list-button-color-hover: #ffffff;
     --fui-list-button-color: #000000;
     --fui-list-button-color-hover: #f0f0f0;
 
@@ -20,6 +30,11 @@
     --fui-padding-large: 20px;
     --fui-padding-normal: 10px;
     --fui-padding-row: 5px;
+    
+    --fui-button-background: #E3E7E8;
+    --fui-button-color: #202020;
+    --fui-button-background-hover: #a84cd3;
+    --fui-button-color-hover: #e0e0e0;
     
     --fui-canvas-background: #b1b2b3;
     
