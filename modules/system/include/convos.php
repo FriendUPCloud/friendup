@@ -10,6 +10,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+ini_set( 'max_execution_time', '300' ); // Die after 5 minutes
+
 $response = new stdClass();
 
 // Check chat session
@@ -27,6 +29,8 @@ if( isset( $args->args ) )
 {
     if( isset( $args->args->outgoing ) )
     {
+        //error_log( '[convos.php] Incoming messages.' );
+        
         // Prepare successful response
         $response->response = '1';
         $response->message = 'Stored message(s).';
@@ -81,6 +85,7 @@ if( isset( $args->args ) )
     }
     if( isset( $args->args->method ) )
     {
+        //error_log( '[convos.php] Method start.' );
         if( $args->args->method == 'messages' )
         {
             $rows = false;
@@ -205,12 +210,20 @@ if( isset( $args->args ) )
     }
 }
 
+/* If we end up here in the module call, it means we are ready to longpoll    */
 
 // Hold until we get an event
+$retries = 10;
 while( !( $row = $SqlDatabase->FetchObject( '
     SELECT * FROM MessageSession WHERE SessionID=\'' . $UserSession->SessionID . '\' AND ActivityDate != PrevDate
 ' ) ) )
 {
+    //error_log( '[convos.php] We are in long polling for ' . $User->Name . ' (' . $UserSession->SessionID . ')' );
+    if( $retries-- < 0 )
+    {
+        //error_log( '[convos.php] Hang up.' );
+        break;
+    }
     sleep( 1 );
 }
 if( $row )
@@ -222,7 +235,8 @@ if( $row )
        $sess->PrevDate = $sess->ActivityDate;
        $sess->Save();
    }
-   die( 'ok<!--separate-->{"message":"We got activity","response":-1}' );
+   error_log( '[convos.php] We got activity!! ' . $User->Name );
+   die( 'ok<!--separate-->{"message":"We got activity after long poll","response":200}' );
 }
 die( 'fail<!--separate-->{"message":"No event.","response":-1}' );
 

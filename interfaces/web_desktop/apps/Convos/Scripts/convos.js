@@ -45,10 +45,23 @@ Application.holdConnection = function( flags )
 		Convos.outgoing = [];
 	}
 	
+	if( args.outgoing || args.method )
+    {
+        //console.log( '[skip long poll] We are going for it!' );
+    }
+    else
+    {
+        //console.log( '[long poll mode] We are in long poll mode!' );
+    }
+	
 	// In this case, we are blocking new calls (longpolling)
 	if( !( args.outgoing || args.method ) )
 	{
-	    if( this.blocking ) return;
+	    if( this.blocking )
+	    {
+            //console.log( '[blocking] We are blocking this call' );
+	        return;
+        }
     	this.blocking = true;
 	}
 	
@@ -69,6 +82,12 @@ Application.holdConnection = function( flags )
 		            let mess = FUI.getElementByUniqueId( 'messages' );
 		            mess.addMessages( js.messages );
 		        }
+		    }
+		    // Response from longpolling
+		    else if( js && js.response == 200 )
+		    {
+		        console.log( 'What was the result now?' );
+		        FUI.getElementByUniqueId( 'messages' ).refreshMessages();
 		    }
 		}
 		// Restart polling

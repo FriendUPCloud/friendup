@@ -218,6 +218,11 @@ class FUIChatlog extends FUIElement
     	        type: this.options.type ? this.options.type : '',
     	        targetId: this.options.cid
     	    } );
+    	    Application.holdConnection( { 
+    	        method: 'messages', 
+    	        roomType: this.options.type ? this.options.type : '', 
+    	        cid: this.options.cid ? this.options.cid : '' 
+	        } );
     	}
     	
     	setTimeout( function()
@@ -226,6 +231,11 @@ class FUIChatlog extends FUIElement
 		}, 2 );
 		
 		this.toBottom( 'smooth' );
+    }
+    refreshMessages()
+    {
+        console.log( 'Trying to get messages now! - snip -' );
+        //Application.holdConnection( { method: 'messages', roomType: this.options.type ? this.options.type : '', cid: this.options.cid ? this.options.cid : '' } );
     }
     clearQueue()
     {
