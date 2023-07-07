@@ -77,6 +77,8 @@ Application.holdConnection = function( flags )
     	this.blocking = true;
 	}
 	
+	let now = Math.floor( new Date().getTime() / 1000 );
+	
 	let m = new XMLHttpRequest();
 	m.open( 'POST', '/system.library/module/?module=system&command=convos&authid=' + Application.authId + '&args=' + JSON.stringify( args ), true );
 	m.onload = function( data )
@@ -93,14 +95,12 @@ Application.holdConnection = function( flags )
 		        {
 		            let mess = FUI.getElementByUniqueId( 'messages' );
 		            mess.addMessages( js.messages );
-		            //console.log( 'Adding messages:  ' + mess.lastId, js.messages );
 		            if( mess.clearQueue ) mess.clearQueue();
 		        }
 		    }
 		    // Response from longpolling
 		    else if( js && js.response == 200 )
 		    {
-		        //console.log( 'What was the result now?' );
 		        FUI.getElementByUniqueId( 'messages' ).refreshMessages();
 		    }
 		}

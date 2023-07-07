@@ -89,6 +89,7 @@ class FUIChatlog extends FUIElement
     	    {
     	        clearActive( this );
     	        this.classList.add( 'Active' );
+    	        this.popWidget = new FUIPopwidget( { target: this } );
     	    }
     	}
     	this.domInput.querySelector( '.Upload' ).onclick = function()

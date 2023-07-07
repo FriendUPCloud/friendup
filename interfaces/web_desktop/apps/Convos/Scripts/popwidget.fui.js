@@ -41,6 +41,10 @@ class FUIPopwidget extends FUIElement
         super.refreshDom();
         let self = this;
     }
+    destroy()
+    {
+        console.log( '[FUIPopwidget] What to do now?' );
+    }
     // Get markup for object
     getMarkup( data )
     {

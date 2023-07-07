@@ -239,24 +239,28 @@ while( !( $row = $SqlDatabase->FetchObject( '
     SELECT * FROM MessageSession WHERE SessionID=\'' . $UserSession->SessionID . '\' AND ActivityDate != PrevDate
 ' ) ) )
 {
-    //error_log( '[convos.php] We are in long polling for ' . $User->Name . ' (' . $UserSession->SessionID . ')' );
+    error_log( '[convos.php] We are in long polling for ' . $User->Name . ' (' . $UserSession->SessionID . ')' );
     if( $retries-- < 0 )
     {
-        //error_log( '[convos.php] Hang up.' );
+        error_log( '[convos.php] Hang up.' );
         break;
     }
     sleep( 1 );
 }
 if( $row )
 {
-   // Next time is different
+   // We've seen the changes
    if( $sess->ID )
    {
        $sess->ActivityDate = date( 'Y-m-d H:i:s' );
-       $sess->PrevDate = '1970-01-01 12:00:00';
+       $sess->PrevDate = $sess->ActivityDate;
        $sess->Save();
+       error_log( '[convos.php] Activity, saving session! -> ' . $UserSession->SessionID );
    }
-   //error_log( '[convos.php] We got activity!! ' . $User->Name );
+   else
+   {
+       error_log( '[convos.php] We got activity!! ' . $User->Name );
+   }
    die( 'ok<!--separate-->{"message":"We got activity after long poll","response":200}' );
 }
 die( 'fail<!--separate-->{"message":"No event.","response":-1}' );
