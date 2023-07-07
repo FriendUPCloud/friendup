@@ -62,6 +62,24 @@ class FUIChatlog extends FUIElement
 			self.domTextarea.value = '';	
 			self.queueMessage( val );
     	}
+    	this.domInput.querySelector( '.Search' ).onclick = function()
+    	{
+    	    if( self.domInput.querySelector( '.Search' ).classList.contains( 'Active' ) )
+    	    {
+    	        this.classList.remove( 'Active' );
+    	    }
+    	    else
+    	    {
+        	    let divs = self.domInput.getElementsByTagName( 'div' );
+        	    for( let a = 0; a < divs.length; a++ )
+        	    {
+        	        if( divs[ a ].parentNode != self.domInput ) continue;
+        	        if( divs[ a ].classList.contains( 'Search' ) )
+        	            divs[ a ].classList.add( 'Active' );
+	                else divs[ a ].classList.remove( 'Active' );
+        	    }
+    	    }   
+    	}
     	this.domTextarea.addEventListener( 'keydown', function( e )
     	{
     		if( e.which == 13 )

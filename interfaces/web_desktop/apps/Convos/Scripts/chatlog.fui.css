@@ -124,7 +124,11 @@
 .FUIChatlog .Input .Send:hover,
 .FUIChatlog .Input .Emote:hover,
 .FUIChatlog .Input .Upload:hover,
-.FUIChatlog .Input .Search:hover
+.FUIChatlog .Input .Search:hover,
+.FUIChatlog .Input .Send.Active,
+.FUIChatlog .Input .Emote.Active,
+.FUIChatlog .Input .Upload.Active,
+.FUIChatlog .Input .Search.Active
 {
     background-color: var(--fui-button-background-hover);
     color: var(--fui-button-color-hover);

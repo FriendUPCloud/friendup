@@ -17,7 +17,13 @@ Application.run = function( msg ){
 		background: 'transparent',
 		width: 800,
 		height: 600,
+		quitOnClose: true,
+		singleInstance: true
 	} );
+	v.onClose = function()
+	{
+	    Application.quit();
+	}
 };
 
 
