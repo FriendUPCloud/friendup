@@ -24,7 +24,7 @@ Workspace = {
 	},
 	environmentName: 'Workspace',
 	osName: 'FriendOS',
-	staticBranch: 'Hydrogen 4',
+	staticBranch: 'Helium',
 	icons: [],
 	menuMode: 'pear', // 'miga', 'fensters' (alternatives) -> other menu behaviours
 	mode: 'default',

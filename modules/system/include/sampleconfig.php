@@ -12,9 +12,14 @@
 
 $object = new stdClass();
 
-$ie = isset( $configfilesettings[ 'Security' ] ) && $configfilesettings[ 'Security' ][ 'InvitesEnabled' ] ? true : false;
-$groupFeatureSet = ( isset( $configfilesettings[ 'Security' ] ) && isset( $configfilesettings[ 'Security' ][ 'hasGroupsFeature' ] ));
-$shareDriveSet = ( isset( $configfilesettings[ 'Security' ] ) && isset( $configfilesettings[ 'Security' ][ 'hasShareDrive' ] ));
+$ie = $groupFeatureSet = $shareDriveSet = false;
+$cnfsec = isset( $configfilesettings[ 'Security' ] ) ? $configfilesettings[ 'Security' ] : false;
+if( $cnfsec )
+{
+    $ie = isset( $configfilesettings[ 'Security' ][ 'InvitesEnabled' ] ) && $configfilesettings[ 'Security' ][ 'InvitesEnabled' ];
+    $groupFeatureSet = isset( $configfilesettings[ 'Security' ][ 'hasGroupsFeature' ] );
+    $shareDriveSet = isset( $configfilesettings[ 'Security' ][ 'hasShareDrive' ] );
+}
 $jiniTheme = ( isset( $configfilesettings[ 'FriendCore' ] ) && isset( $configfilesettings[ 'FriendCore' ][ 'friendTheme' ] ));
 $object->invitesEnabled = $ie;
 if ( $groupFeatureSet )

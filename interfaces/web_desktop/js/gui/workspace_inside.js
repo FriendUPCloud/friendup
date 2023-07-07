@@ -8148,7 +8148,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				[
 					{
 						name:	i18n( 'menu_about' ),
-						command: function(){ AboutFriendUP(); }
+						command: function(){ AboutFriendOS(); }
 					},
 					{
 						name:	i18n( 'my_account' ),
@@ -11134,7 +11134,7 @@ function ExecuteVoiceCommands( e )
 
 
 // Popup an About FriendUP dialog...
-function AboutFriendUP()
+function AboutFriendOS()
 {
 	if( !Workspace.sessionId ) return;
 	let v = new View( {
