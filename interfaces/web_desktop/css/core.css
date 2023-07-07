@@ -3620,6 +3620,12 @@ body.Offline #OfflineMessage
 	font-weight: bold;
 }
 
+.Screen > .TitleBar > .Left .Extra.Hover > span,
+.Screen > .TitleBar > .Left .Extra.Hover > div
+{
+    color: white;
+}
+
 .Screen > .TitleBar > .Left .Extra .Offline
 {
 	color: #aa0000;
