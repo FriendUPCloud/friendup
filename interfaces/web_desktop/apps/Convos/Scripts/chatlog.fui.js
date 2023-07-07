@@ -51,6 +51,18 @@ class FUIChatlog extends FUIElement
     {
     	let self = this;
     	
+    	function clearActive( exception )
+    	{
+    	    let divs = self.domInput.getElementsByTagName( 'div' );
+    	    for( let a = 0; a < divs.length; a++ )
+    	    {
+    	        if( divs[ a ].parentNode != self.domInput ) continue;
+    	        if( divs[ a ] == exception )
+    	            divs[ a ].classList.add( 'Active' );
+                else divs[ a ].classList.remove( 'Active' );
+    	    }
+    	}
+    	
     	this.domInput.innerHTML = '\
     		<div class="Upload"></div><div class="Search"></div><div class="Emote"></div><textarea rows="1"></textarea><div class="Send"></div>\
     	';
@@ -59,8 +71,40 @@ class FUIChatlog extends FUIElement
     	this.domInput.querySelector( '.Send' ).onclick = function()
     	{
     	    let val = self.domTextarea.value;
+    	    if( val.split( ' ' ).join( '' ).length <= 0 )
+		        return;
 			self.domTextarea.value = '';	
 			self.queueMessage( val );
+    	}
+    	this.domInput.querySelector( '.Emote' ).onclick = function()
+    	{
+    	    if( this.classList.contains( 'Active' ) )
+    	    {
+    	        this.classList.remove( 'Active' );
+    	        if( this.popWidget )
+    	            this.popWidget.destroy();
+    	        this.popWidget = null;
+    	    }
+    	    else
+    	    {
+    	        clearActive( this );
+    	        this.classList.add( 'Active' );
+    	    }
+    	}
+    	this.domInput.querySelector( '.Upload' ).onclick = function()
+    	{
+    	    if( this.classList.contains( 'Active' ) )
+    	    {
+    	        this.classList.remove( 'Active' );
+    	        if( this.popWidget )
+    	            this.popWidget.destroy();
+    	        this.popWidget = null;
+    	    }
+    	    else
+    	    {
+    	        clearActive( this );
+    	        this.classList.add( 'Active' );
+    	    }
     	}
     	this.domInput.querySelector( '.Search' ).onclick = function()
     	{
@@ -70,20 +114,15 @@ class FUIChatlog extends FUIElement
     	    }
     	    else
     	    {
-        	    let divs = self.domInput.getElementsByTagName( 'div' );
-        	    for( let a = 0; a < divs.length; a++ )
-        	    {
-        	        if( divs[ a ].parentNode != self.domInput ) continue;
-        	        if( divs[ a ].classList.contains( 'Search' ) )
-        	            divs[ a ].classList.add( 'Active' );
-	                else divs[ a ].classList.remove( 'Active' );
-        	    }
+    	        clearActive( this );
     	    }   
     	}
     	this.domTextarea.addEventListener( 'keydown', function( e )
     	{
     		if( e.which == 13 )
     		{
+    		    if( this.value.split( ' ' ).join( '' ).length <= 0 )
+    		        return;
     			let val = this.value;
     			this.value = '';
     			cancelBubble( e );
