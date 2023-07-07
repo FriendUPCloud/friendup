@@ -86,9 +86,16 @@
     border-radius: 5px 0 0 5px;
 }
 
-.FUIChatlog .Input > div.Upload
+.FUIChatlog .Input > div.Upload,
+.FUIChatlog .Input > div.Search
 {
     border-right: 1px solid rgba(0,0,0,0.05);
+}
+
+.FUIChatlog .Input .Search::after
+{
+    content: "\f002";
+    font-family: fontawesome;
 }
 
 .FUIChatlog .Input .Upload::after
@@ -116,7 +123,8 @@
 
 .FUIChatlog .Input .Send:hover,
 .FUIChatlog .Input .Emote:hover,
-.FUIChatlog .Input .Upload:hover
+.FUIChatlog .Input .Upload:hover,
+.FUIChatlog .Input .Search:hover
 {
     background-color: var(--fui-button-background-hover);
     color: var(--fui-button-color-hover);

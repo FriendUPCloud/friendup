@@ -52,7 +52,7 @@ class FUIChatlog extends FUIElement
     	let self = this;
     	
     	this.domInput.innerHTML = '\
-    		<div class="Upload"></div><div class="Emote"></div><textarea rows="1"></textarea><div class="Send"></div>\
+    		<div class="Upload"></div><div class="Search"></div><div class="Emote"></div><textarea rows="1"></textarea><div class="Send"></div>\
     	';
     	let t = this.domInput.getElementsByTagName( 'textarea' );
     	this.domTextarea = t[0];
