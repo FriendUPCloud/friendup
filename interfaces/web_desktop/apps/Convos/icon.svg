@@ -15,7 +15,10 @@
    version="1.1"
    id="svg8"
    inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)"
-   sodipodi:docname="icon.svg">
+   sodipodi:docname="icon.svg"
+   inkscape:export-filename="/home/autocaret/Projects/friendup/interfaces/web_desktop/apps/Convos/icon.png"
+   inkscape:export-xdpi="101.6"
+   inkscape:export-ydpi="101.6">
   <defs
      id="defs2" />
   <sodipodi:namedview
@@ -71,13 +74,13 @@
      id="layer2"
      inkscape:label="Layer 2">
     <path
-       style="opacity:1;vector-effect:none;fill:#a98cd8;fill-opacity:1;stroke:none;stroke-width:0.99999994;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
-       d="M 14.441406,5.8574219 C 8.9030455,6.0130296 2.2971879,10.269586 3.2792969,16.496094 c 1.9672959,6.658404 9.9992381,8.571472 16.1132811,7.632812 1.828309,1.339875 3.452229,3.081934 5.689453,3.744141 1.209373,-2.012029 -1.245546,-4.176108 -0.660156,-5.824219 C 30.338146,19.625772 30.091956,9.8115534 23.962891,7.7832031 21.080423,6.1449218 17.707557,5.7152218 14.441406,5.8574219 Z"
+       style="opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.99999994;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 14.417969,4.7988281 C 8.1910516,4.8055303 1.0655808,10.01878 2.2753906,16.830078 c 2.1021614,6.903708 10.3331774,9.389969 16.8378904,8.404297 1.943413,1.277417 4.308176,4.399037 6.873047,3.185547 1.407724,-1.807636 -0.527981,-3.900095 -0.357422,-5.783203 C 32.144227,19.12342 30.555439,7.8826945 23.316406,6.2695312 20.540256,5.0129707 17.436407,4.6724965 14.417969,4.7988281 Z"
        id="path4536-3-6"
        inkscape:connector-curvature="0" />
     <path
        style="opacity:1;vector-effect:none;fill:#255c91;fill-opacity:1;stroke:none;stroke-width:0.99999994;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
-       d="M 14.884766,6.9316406 C 9.9230617,6.9933635 3.435088,10.457591 4.3027344,16.21875 c 1.8298878,6.270303 9.5961696,7.758057 15.2128906,6.730469 1.692892,0.958444 2.897649,2.604 4.712891,3.394531 0.235331,-1.676135 -2.091476,-3.653386 -0.873047,-5.035156 5.124776,-1.532657 6.043027,-9.506627 1.107422,-11.964844 -2.764163,-1.9381152 -6.25396,-2.594995 -9.578125,-2.4121094 z"
+       d="M 15.503906,6.3789062 C 10.007251,6.1718134 2.8886387,10.004573 3.7832031,16.332031 5.6891554,22.894865 13.6567,24.46966 19.533203,23.576172 c 1.733918,1.186413 3.155545,2.862452 5.185547,3.585937 0.662556,-1.974279 -1.462384,-3.562868 -1.041016,-5.404297 5.725144,-1.78347 6.168278,-10.979837 0.527344,-13.2167964 C 21.621609,6.9309694 18.52045,6.309795 15.503906,6.3789062 Z"
        id="path4536-3"
        inkscape:connector-curvature="0" />
     <path
