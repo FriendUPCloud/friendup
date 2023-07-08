@@ -25,8 +25,14 @@ if( !$sess->Load() )
     $sess->Save();
 }
 
+error_log( '[convos.php] Received this: ' . print_r( $args, 1 ) );
+
 if( isset( $args->args ) )
 {
+    if( is_string( $args->args ) && !json_decode( $args->args ) )
+    {
+        die( 'fail<!--separate-->{"message":"Could not interpret call.","response":0}' );
+    }
     if( isset( $args->args->outgoing ) )
     {
         //error_log( '[convos.php] Incoming messages.' );
@@ -60,6 +66,7 @@ if( isset( $args->args ) )
             $o->Date = date( 'Y-m-d H:i:s', $out->timestamp );
             $o->Message = $out->message;
             $o->Save();
+            //error_log( '[convos.php] Saved the message - got ID: ' . $o->ID );
             
             // Add to response
             if( $o->ID > 0 )
@@ -80,9 +87,15 @@ if( isset( $args->args ) )
             // Update sessions
             $SqlDatabase->query( 'UPDATE MessageSession SET ActivityDate=\'' . date( 'Y-m-d H:i:s' ) . '\', PrevDate=\'1970-01-01 12:00:00\' WHERE UniqueUserID=\'' . $User->UniqueID . '\'' );
         
-            die( 'ok<!--separate-->' . json_encode( $response ) );
+            if( !isset( $args->args->method ) )
+            {
+                die( 'ok<!--separate-->' . json_encode( $response ) );
+            }
         }
-        die( 'fail<!--separate-->{"response":0,"message":"Failed to store message(s)."}' );
+        if( !isset( $args->args->method ) )
+        {
+            die( 'fail<!--separate-->{"response":0,"message":"Failed to store message(s)."}' );
+        }
     }
     if( isset( $args->args->method ) )
     {
@@ -180,6 +193,11 @@ if( isset( $args->args ) )
                 }
                 die( 'ok<!--separate-->{"response":1,"messages":' . json_encode( $outlist ) . '}' );
             }
+            // We got messages instead from the args->outgoing
+            else if( isset( $response->messages ) )
+            {
+                die( 'ok<!--separate-->' . json_encode( $response ) );
+            }
             die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve messages."}' );
         }
         else if( $args->args->method == 'contacts' )
@@ -239,10 +257,10 @@ while( !( $row = $SqlDatabase->FetchObject( '
     SELECT * FROM MessageSession WHERE SessionID=\'' . $UserSession->SessionID . '\' AND ActivityDate != PrevDate
 ' ) ) )
 {
-    error_log( '[convos.php] We are in long polling for ' . $User->Name . ' (' . $UserSession->SessionID . ')' );
+    //error_log( '[convos.php] We are in long polling for ' . $User->Name . ' (' . $UserSession->SessionID . ')' );
     if( $retries-- < 0 )
     {
-        error_log( '[convos.php] Hang up.' );
+        error_log( '[convos.php] Hang up. ' . $UserSession->SessionID );
         break;
     }
     sleep( 1 );

@@ -14,7 +14,6 @@ class FUIPopwidget extends FUIElement
     {
         super( options );
         // Do stuff
-       
     }
     attachDomElement()
     {
@@ -23,8 +22,59 @@ class FUIPopwidget extends FUIElement
         let self = this;
         
         this.domElement.className = 'FUIPopwidget';
-        
         this.domElement.innerHTML = '';
+        
+        // Get left position
+        let leftO = this.options.originElement;
+        let left = 0;
+        while( leftO != document.body )
+        {
+            left += leftO.offsetLeft;
+            leftO = leftO.parentNode;
+        }
+        
+        // Dims and position and constraints
+        left += ( this.options.originElement.offsetWidth / 2 );
+        let top  = GetElementTop(  this.options.originElement );
+        let w = this.options.width;
+        let h = this.options.height;
+        left -= w / 2;
+        top -= h;
+        if( top < 0 ) top = 0;
+        if( left < 0 ) left = 0;
+        if( left + w >= document.body.offsetWidth )
+        {
+            left -= ( left + w ) - document.body.offsetWidth;
+            if( left < 0 )
+            {
+                left = 0;
+                w = document.body.offsetWidth;
+            }
+        }
+        if( top + h >= document.body.offsetHeight )
+        {
+            top -= ( top + h ) - document.body.offsetHeight;
+            if( top < 0 )
+            {
+                top = 0;
+                h = document.body.offsetHeight;
+            }
+        }
+        
+        this.domElement.style.left = left + 'px';
+        this.domElement.style.top = top + 'px';
+        this.domElement.style.width = w + 'px';
+        this.domElement.style.height = h + 'px';
+        this.domElement.innerHTML = '<div class="Content">' + this.options.content + '</div>';
+        this.domElement.addEventListener( 'click', function( e )
+        {
+            if( self.options.clickCallback )
+            {
+                self.options.clickCallback( e );
+            }
+        } );
+        
+        setTimeout( function(){ self.domElement.classList.add( 'Showing' ); }, 2 );
         
         // Set stuff on this.domElement.innerHTML
         this.refreshDom();
@@ -43,7 +93,13 @@ class FUIPopwidget extends FUIElement
     }
     destroy()
     {
-        console.log( '[FUIPopwidget] What to do now?' );
+        let self = this;
+        this.domElement.classList.remove( 'Showing' );
+        setTimeout( function()
+        {
+            if( self.domElement.parentNode )
+                self.domElement.parentNode.removeChild( self.domElement );
+        }, 250 );
     }
     // Get markup for object
     getMarkup( data )

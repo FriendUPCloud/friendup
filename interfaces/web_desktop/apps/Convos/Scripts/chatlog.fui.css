@@ -134,9 +134,9 @@
     color: var(--fui-button-color-hover);
 }
 
-.FUIChatlog .Input textarea
+.FUIChatlog .Input > div.Textarea
 {
-    max-width: 650px;
+    max-width: 600px;
 	line-height: 18px;
 	display: inline-block;
 	flex-grow: 1;
@@ -148,11 +148,18 @@
 	height: 50px;
 	background: var(--fui-background-foreground);
 	color: var(--fui-color);
-	font-size: 18px;
+	font-size: 16px;
 	box-sizing: border-box;
 	padding: 15px;
 	border-radius: 0;
 	margin: 0;
+	text-align: left;
+	cursor: text;
+}
+
+.FUIChatlog .Input > div.Textarea span.Emoticon
+{
+    cursor: inherit;
 }
 
 .FUIChatlog .Message
@@ -281,5 +288,31 @@
     font-size: 24px;
     vertical-align: baseline;
     filter: drop-shadow(0px 2px 6px rgba(0,0,0,0.2));
+}
+
+.FUIPopwidget p > strong.Header
+{
+    color: var(--fui-menu-color);
+    font-weight: bold;
+}
+
+.EmojiList
+{
+    text-align: justify;
+    letter-spacing: 3px;
+    line-height: 30px;
+}
+
+span.Emoticon
+{
+    font-family: Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,Android Emoji,EmojiSymbols,EmojiOne Mozilla,Twemoji Mozilla,Segoe UI Symbol,Noto Color Emoji Compat,emoji,noto-emojipedia-fallback;
+    font-weight: 400;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+span.Emoticon:hover
+{
+    filter: drop-shadow(0px 2px 6px rgba(255,255,255,0.4));
 }
 

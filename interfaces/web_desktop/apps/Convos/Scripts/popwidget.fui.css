@@ -1,0 +1,22 @@
+.FUIPopwidget
+{
+    position: absolute;
+    z-index: 2147483647;
+    background: rgba(0,0,0,0.8);
+    border-radius: 5px;
+    opacity: 0;
+    transition: opacity 0.25s;
+    overflow: hidden;
+    overflow-y: auto;
+    box-sizing: border-box;
+    border: 3px solid var(--fui-button-background-hover);
+}
+.FUIPopwidget > .Content
+{
+    padding: 15px;
+    box-sizing: border-box;
+}
+.FUIPopwidget.Showing
+{
+    opacity: 1;
+}
