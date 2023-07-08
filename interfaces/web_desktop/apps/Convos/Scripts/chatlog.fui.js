@@ -211,10 +211,41 @@ class FUIChatlog extends FUIElement
     	        clearActive( this );
     	    }   
     	}
+    	this.domTextarea.checkHeight = function()
+    	{
+    	    if( this.offsetHeight > 50 )
+    	    {
+    	        this.style.top = 50 - this.offsetHeight + 'px';
+    	        this.classList.add( 'Grown' );
+    	    }
+    	    else
+    	    {
+    	        this.style.top = 0;
+    	        this.classList.remove( 'Grown' );
+    	    }
+    	}
+    	this.domTextarea.addEventListener( 'keyup', function( e )
+    	{
+    	    if( e.which == 16 )
+    	    {
+    	        this.shiftKey = false;
+	        }
+	        this.checkHeight();
+    	} );
     	this.domTextarea.addEventListener( 'keydown', function( e )
     	{
-    		if( e.which == 13 )
+    	    if( e.which == 16 )
+    	    {
+    	        this.shiftKey = true;
+	        }
+    		else if( e.which == 13 )
     		{
+    		    if( this.shiftKey )
+    		    {
+    		        this.checkHeight();
+    		        return;
+		        }
+		        
     		    let val = self.domTextarea.innerText;
         	    if( val.split( ' ' ).join( '' ).length <= 0 )
 		            return;
@@ -224,6 +255,7 @@ class FUIChatlog extends FUIElement
     			
     			self.queueMessage( val );
     		}
+    		this.checkHeight();
     	} );
     }
     // Adds messages to a list locked by sorted timestamps
@@ -484,6 +516,10 @@ class FUIChatlog extends FUIElement
                 if( a + 1 < messages.length && messages[ a + 1 ].getAttribute( 'owner' ) != owner )
                 {
                     messages[ a ].classList.add( 'LastForOwner' );
+                }
+                else
+                {
+                    messages[ a ].classList.remove( 'LastForOwner' );
                 }
             }
             else if( a + 1 < messages.length && messages[ a + 1 ].getAttribute( 'owner' ) == owner )
