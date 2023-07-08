@@ -157,6 +157,10 @@ class FUIChatlog extends FUIElement
                             node.setAttribute( 'contenteditable', 'false' );
                             node.className = 'Emoticon';
                             node.innerHTML = String.fromCodePoint( code );
+                            
+                            s.popWidget.destroy();
+    	                    s.classList.remove( 'Active' );
+                            
                             if( window.getSelection )
                             {
                                 sel = window.getSelection();
@@ -172,8 +176,11 @@ class FUIChatlog extends FUIElement
                             } 
                             self.domTextarea.appendChild( node );
 	                    }
-	                    s.popWidget.destroy();
-	                    s.classList.remove( 'Active' );
+	                    else
+	                    {
+	                        s.popWidget.destroy();
+	                        s.classList.remove( 'Active' );
+                        }
     	            }
 	            } );
     	    }
