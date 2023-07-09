@@ -75,7 +75,7 @@ class FUIChatlog extends FUIElement
         {
             let par = document.createElement( 'div' );
             par.className = 'ParentLink';
-            par.innerHTML = i18n( 'i18n_gotoparent' );
+            par.innerHTML = '';
             par.onclick = function()
             {
                 let p = FUI.getElementByUniqueId( self.options.parentElement );

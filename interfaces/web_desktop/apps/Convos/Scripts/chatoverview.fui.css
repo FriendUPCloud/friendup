@@ -58,9 +58,11 @@
 	transition: width,left 0.25s,0.25s;
 }
 
-.FUIChatoverview.Chat > .Chatlist
+@media(max-width: 768px)
 {
-    left: 0;
-    width: 100%;
+    .FUIChatoverview.Chat > .Chatlist
+    {
+        left: 0;
+        width: 100%;
+    }
 }
-
