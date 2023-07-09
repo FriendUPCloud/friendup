@@ -437,6 +437,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			}
 			
 			User *u = loggedSession->us_User;
+			int destUserFound = 0;
 		
 			if( msg != NULL && loggedSession->us_User != NULL )
 			{
@@ -475,6 +476,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						if( userId > 0 )
 						{
 							u = UMGetUserByID( l->sl_UM, userId );
+							if( u ) destUserFound = 1;
 						}
 					}
 					// Do it on destination user unique ID and appname
@@ -507,6 +509,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						if( userId > 0 )
 						{
 							u = UMGetUserByID( l->sl_UM, userId );
+							if( u ) destUserFound = 1;
 						}
 					}
 					else
@@ -514,7 +517,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					    DEBUG( "[UMebRequest] Seems we have no user..\n" );
 					}
 
-					if( loggedSession->us_User != NULL )
+					if( u && loggedSession->us_User != NULL )
 					{
 						USER_LOCK( u );
 						
