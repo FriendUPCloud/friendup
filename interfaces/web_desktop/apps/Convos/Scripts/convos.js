@@ -83,10 +83,51 @@ Application.holdConnection = function( flags )
 	m.open( 'POST', '/system.library/module/?module=system&command=convos&authid=' + Application.authId + '&args=' + JSON.stringify( args ), true );
 	m.onload = function( data )
 	{
+	    if( args.outgoing && args.outgoing.length )
+	    {
+	        // Alert the other user
+            let musers = [];
+            let messages = [];
+            for( let b = 0; b < args.outgoing.length; b++ )
+            {
+                let found = false;
+                for( let c = 0; c < musers.length; c++ )
+                {
+                    if( args.outgoing[ b ].targetId == musers[ c ] )
+                    {
+                        found = musers[ c ];
+                        break;
+                    }
+                }
+                if( !found )
+                {
+                    musers.push( args.outgoing[ b ].targetId );
+                    messages.push( args.outgoing[ b ].message );
+                }
+            }
+            
+            if( musers.length > 0 )
+            {
+                for( let b = 0; b < musers.length; b++ )
+                {
+                    if( typeof( musers[ b ] ) != 'undefined' )
+                    {
+                        let amsg = {
+                            'appname': 'Convos',
+                            'dstuniqueid': musers[ b ],
+                            'msg': '{"sender":"' + Application.fullName + '","message":"' + messages[ b ] + '"}'
+                        };
+                        let m = new Library( 'system.library' );
+                        m.execute( 'user/session/sendmsg', amsg );
+                    }
+                }
+            }
+	    }
+	
 	    if( self.blocking && !( args.outgoing || args.method ) )
     	    self.blocking = false;
 	    
-		if( this.response )
+	    if( this.response )
 		{
 		    let js = JSON.parse( this.response.split( '<!--separate-->' )[1] );
 		    if( js && js.response == 1 )
@@ -101,7 +142,11 @@ Application.holdConnection = function( flags )
 		    // Response from longpolling
 		    else if( js && js.response == 200 )
 		    {
-		        FUI.getElementByUniqueId( 'messages' ).refreshMessages();
+		        // Do a refresh in 1 second
+		        setTimeout( function()
+		        {
+		            FUI.getElementByUniqueId( 'messages' ).refreshMessages();
+	            }, 1000 );
 		    }
 		}
 		// Restart polling

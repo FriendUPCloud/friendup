@@ -11362,8 +11362,15 @@ function handleSASRequest( e )
 
 function handleServerMessage( e )
 {
+    function base64ToBytes( base64 )
+    {
+        const binString = atob( base64 );
+        return Uint8Array.from( binString, ( m ) => m.codePointAt( 0 ) );
+    }
+
 	if( e.message && e.appname )
-	{
+	{	    
+		let found = false;
 		let apps = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
 		for( let a = 0; a < apps.length; a++ )
 		{
@@ -11380,7 +11387,29 @@ function handleServerMessage( e )
 					message: e.message
 				};				
 				apps[a].contentWindow.postMessage( nmsg, '*' );
+				found = apps[a];
 			}
+		}
+		if( !found )
+		{
+		    // TODO: Support public key decryption
+		    let text = decodeURIComponent( e.message.message );
+            try
+            {
+                let dec = new TextDecoder().decode( base64ToBytes( text ) );
+                text = dec;
+            }
+            catch( e2 ){};
+		    Notify( {
+		            title: 'From ' + e.message.sender,
+		            text: text,
+		        },
+		        null,
+		        function( k )
+		        {
+		            ExecuteApplication( 'Convos', '', e.message );
+	            }
+		    );
 		}
 	}
 	else

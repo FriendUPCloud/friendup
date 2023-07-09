@@ -377,7 +377,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		/// @cond WEB_CALL_DOCUMENTATION
 		/**
 		*
-		* <HR><H2>system.library/user/session/sendmsg</H2>Send message to another user session
+		* <HR><H2>system.library/user/session/sendmsg</H2>Send message to another user session or uniqueid
 		*
 		* @param sessionid - (required) session id of logged user
 		* @param msg - (required) message which will be send (JSON or string in quotes)
@@ -402,6 +402,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			char *msg = NULL;
 			char *appname = NULL;
 			char *authid = NULL;
+			char *uniqueid = NULL;
 		
 			FERROR( "[UMWebRequest] send message" );
 		
@@ -429,12 +430,18 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				authid = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
+			el = HttpGetPOSTParameter( request, "dstuniqueid" );
+			if( el != NULL )
+			{
+				uniqueid = UrlDecodeToMem( (char *)el->hme_Data );
+			}
+			
 			User *u = loggedSession->us_User;
 		
 			if( msg != NULL && loggedSession->us_User != NULL )
 			{
 				int msgsndsize = 0;
-				DEBUG("[UMWebRequest] Send message session by sessionid\n");
+				//DEBUG("[UMWebRequest] Send message session by sessionid\n");
 			
 				int msgsize = 512 + strlen(msg);
 				char *tmpmsg = FMalloc( msgsize );
@@ -449,7 +456,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						{
 							char q[ 1024 ];
 							
-							sqllib->SNPrintF( sqllib, q, sizeof(q), "SELECT `UserId` FROM `FApplication` a  WHERE ua.AuthID=\"%s\" and ua.ApplicationID = a.ID LIMIT 1", authid );
+							sqllib->SNPrintF( sqllib, q, sizeof(q), "SELECT ua.UserID FROM `FApplication` a, `FUserApplication` ua WHERE ua.AuthID=\"%s\" AND ua.ApplicationID = a.ID LIMIT 1", authid );
 
 							void *res = sqllib->Query( sqllib, q );
 							if( res != NULL )
@@ -469,6 +476,42 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						{
 							u = UMGetUserByID( l->sl_UM, userId );
 						}
+					}
+					// Do it on destination user unique ID and appname
+					else if( uniqueid != NULL && appname != NULL )
+					{
+					    FULONG userId = 0;
+						
+						SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+						if( sqllib != NULL )
+						{
+							char q[ 1024 ];
+							
+							// TODO: Add filter - we mustn't send to ALL users! Add check if we're in a group with the target user
+							sqllib->SNPrintF( sqllib, q, sizeof(q), "SELECT ua.UserID FROM `FApplication` a, `FUserApplication` ua, `FUser` us WHERE a.Name=\"%s\" AND ua.ApplicationID = a.ID AND ua.UserID = us.ID AND us.UniqueID=\"%s\" LIMIT 1", appname, uniqueid );
+
+							void *res = sqllib->Query( sqllib, q );
+							if( res != NULL )
+							{
+								char **row;
+								if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+								{
+									char *next;
+									userId = strtol ( (char *)row[ 0 ], &next, 0 );
+								}
+								sqllib->FreeResult( sqllib, res );
+							}
+							l->LibrarySQLDrop( l, sqllib );
+						}
+						
+						if( userId > 0 )
+						{
+							u = UMGetUserByID( l->sl_UM, userId );
+						}
+					}
+					else
+					{
+					    DEBUG( "[UMebRequest] Seems we have no user..\n" );
 					}
 
 					if( loggedSession->us_User != NULL )
