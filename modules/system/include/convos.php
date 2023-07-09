@@ -25,7 +25,7 @@ if( !$sess->Load() )
     $sess->Save();
 }
 
-error_log( '[convos.php] Received this: ' . print_r( $args, 1 ) );
+//error_log( '[convos.php] Received this: ' . print_r( $args, 1 ) );
 
 if( isset( $args->args ) )
 {
@@ -260,7 +260,7 @@ while( !( $row = $SqlDatabase->FetchObject( '
     //error_log( '[convos.php] We are in long polling for ' . $User->Name . ' (' . $UserSession->SessionID . ')' );
     if( $retries-- < 0 )
     {
-        error_log( '[convos.php] Hang up. ' . $UserSession->SessionID );
+        //error_log( '[convos.php] Hang up. ' . $UserSession->SessionID );
         break;
     }
     sleep( 1 );
@@ -273,11 +273,11 @@ if( $row )
        $sess->ActivityDate = date( 'Y-m-d H:i:s' );
        $sess->PrevDate = $sess->ActivityDate;
        $sess->Save();
-       error_log( '[convos.php] Activity, saving session! -> ' . $UserSession->SessionID );
+       //error_log( '[convos.php] Activity, saving session! -> ' . $UserSession->SessionID );
    }
    else
    {
-       error_log( '[convos.php] We got activity!! ' . $User->Name );
+       //error_log( '[convos.php] We got activity!! ' . $User->Name );
    }
    die( 'ok<!--separate-->{"message":"We got activity after long poll","response":200}' );
 }
