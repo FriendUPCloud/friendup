@@ -30,8 +30,8 @@ Application.run = function( msg ){
 	{
 	    setTimeout( function()
 	    {
-	        v.sendMessage( msg.args );
-        }, 250 );
+	        Application.receiveMessage( { command: 'servermessage', data: msg.args } );
+        }, 1250 );
 	}
 };
 

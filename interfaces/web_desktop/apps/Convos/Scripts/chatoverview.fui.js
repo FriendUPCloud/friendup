@@ -137,6 +137,13 @@ class FUIChatoverview extends FUIElement
     	{
     		if( tabs[ a ].classList.contains( 'DM' ) )
     		{
+    		    // It is already active
+    		    if( tabs[ a ].classList.contains( 'Active' ) )
+    		    {
+    		        let contacts = FUI.getElementByUniqueId( 'contacts' );
+    		        contacts.poll( user );
+    		        return;
+    		    }
     			tabs[ a ].classList.add( 'Active' );
     		}
     		else
@@ -144,7 +151,9 @@ class FUIChatoverview extends FUIElement
     			tabs[ a ].classList.remove( 'Active' );
     		}
     	}
+    	let chlist = this.domElement.querySelector( '.Chatlist' );
     	chlist.innerHTML = '<fui-contacts uniqueid="contacts" user="' + user + '"></fui-contacts>';
+    	FUI.initialize();
     }
     // Set active channel
     setActiveChannel( label, tab )

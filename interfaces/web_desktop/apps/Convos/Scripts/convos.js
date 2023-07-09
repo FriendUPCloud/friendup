@@ -22,7 +22,7 @@ Application.receiveMessage = function( msg )
 {
     if( msg.sender )
     {
-        let overview = FUI.getElementsByUniqueId( 'convos' );
+        let overview = FUI.getElementByUniqueId( 'convos' );
         overview.activateDirectMessage( msg.sender );
     }
 }
@@ -151,11 +151,7 @@ Application.holdConnection = function( flags )
 		    // Response from longpolling
 		    else if( js && js.response == 200 )
 		    {
-		        // Do a refresh in 1 second
-		        setTimeout( function()
-		        {
-		            FUI.getElementByUniqueId( 'messages' ).refreshMessages();
-	            }, 1000 );
+		        // Good.
 		    }
 		}
 		// Restart polling

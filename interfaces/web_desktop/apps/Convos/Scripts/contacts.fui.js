@@ -66,6 +66,27 @@ class FUIContacts extends FUIElement
         let user = domElement.getAttribute( 'user' );
         if( user ) this.options.user = user;
     }
+    // Just check the contact
+    poll( contactName )
+    {
+        let self = this;
+        
+        // TODO: Replace with UniqueID at one point
+        // Only poll active channels
+        if( typeof( self.userList[ contactName ] ) != 'undefined' )
+        {
+            let ele = self.userList[ contactName ].querySelector( '.Contact' );
+            if( ele.classList.contains( 'Active' ) )
+            {
+                Application.holdConnection( { method: 'messages', roomType: 'dm-user', cid: ele.record.ID } );
+            }
+            // Not active, simply add activity marker
+            else
+            {
+                ele.classList.add( 'NewActivity' );
+            }
+        }
+    }
     addContact( contact )
     {
         let self = this;
@@ -81,13 +102,18 @@ class FUIContacts extends FUIElement
         d.onclick = function()
         {
             self.setChatView( this.record );
+            this.classList.remove( 'NewActivity' );
         }
         
         // Init user
         if( contact.Fullname == this.options.user )
         {
-            this.options.user = null;
-            d.click();
+            self.queuedClick = function()
+            {
+                self.options.user = null;
+                self.queuedClick = null;
+                d.click();
+            }
         }
         
         // Load avatar
@@ -159,6 +185,8 @@ class FUIContacts extends FUIElement
                     conts[ a ].parentNode.style.display = 'none';
                 }
             }
+            if( self.queuedClick )
+                self.queuedClick();
         }
         else
         {
@@ -179,6 +207,8 @@ class FUIContacts extends FUIElement
                         self.addContact( list.contacts[a] );
                     }
                 }
+                if( self.queuedClick )
+                    self.queuedClick();
             }
             m.execute( 'convos', { method: 'contacts' } );
         }
