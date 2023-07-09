@@ -337,6 +337,9 @@ if( isset( $args->command ) )
 		case 'resetguisettings':
 			require( 'modules/system/include/resetguisettings.php' );
 			break;
+		case 'websitegraph':
+		    require( 'modules/system/include/websitegraph.php' );
+		    break;
 		case 'software':
 			require( 'modules/system/include/software.php' );
 			break;

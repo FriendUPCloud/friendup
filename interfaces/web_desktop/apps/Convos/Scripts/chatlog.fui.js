@@ -585,6 +585,23 @@ class FUIChatlog extends FUIElement
     {
         this.domElement.innerHTML = '<h2 class="Error">' + string + '</h2>';
     }
+    checkLinks()
+    {
+        let eles = this.domElement.getElementsByTagName( 'WebLink' );
+        for( let a = 0; a < eles.length; a++ )
+        {
+            if( !eles[ a ].classList.contains( 'LinkChecked' ) )
+            {
+                eles[ a ].classList.add( 'LinkChecked' );
+                let m = new Module( 'system' );
+                m.onExecuted = function( me, md )
+                {
+                    console.log( 'Here: ', me, md );
+                }
+                m.execute( 'websitegraph', { 'url', eles[ a ].getAttribute( 'href' ) } );
+            }
+        }
+    }
     replaceUrls( string )
     {
         let fnd = 0;
@@ -593,7 +610,7 @@ class FUIChatlog extends FUIElement
             let res = string.match( /[\s]{0,1}http([s]{0,1}\:\/\/[^\s]*)/i );
             if( res != null )
             {
-                string = string.split( res[0] ).join( '<a href="fnd' + res[1] + '" target="_blank">fnd' + res[1] + '</a>' );
+                string = string.split( res[0] ).join( '<a class="WebLink" href="fnd' + res[1] + '" target="_blank">fnd' + res[1] + '</a>' );
                 fnd++;
                 continue;
             }
