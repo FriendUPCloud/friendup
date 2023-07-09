@@ -46,7 +46,7 @@
 	overflow-y: scroll;
 	scroll-behavior: smooth;
 	box-sizing: border-box;
-	padding: 15px 15px 80px 15px;
+    padding: 15px 15px 95px 15px;
 	background-color: var(--fui-background-foreground);
 }
 
