@@ -2,7 +2,7 @@
 
 /* FUI */
 
-:root
+:root body.Charcoal
 {
     --fui-background-foreground: #262626;
     --fui-background-foreground-dim: #26262688;
