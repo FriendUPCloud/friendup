@@ -178,7 +178,7 @@
 	color: var(--fui-color);
 	padding: 15px;
 	box-sizing: border-box;
-	border-radius: 3px;
+	border-radius: 10px;
 	margin: 10px 0 0 0;
 	opacity: 0;
 	transition: opacity 0.15s;
@@ -197,7 +197,7 @@
 
 .Message.FirstForOwner
 {
-    border-radius: 3px 3px 0 0;
+    border-radius: 10px 10px 0 0;
 }
 
 .Message.ConceilOwner
@@ -212,7 +212,7 @@
 
 .Message.ConceilOwner.LastForOwner
 {
-    border-radius: 0 0 3px 3px;
+    border-radius: 0 0 10px 10px;
 }
 
 .FUIChatlog .Message p
@@ -330,7 +330,7 @@ span.Emoticon:hover
 {
     display: block;
     border: 1px solid rgba(0,0,0,0.2);
-    border-radius: 3px;
+    border-radius: 10px;
     overflow: hidden;
 }
 
@@ -338,7 +338,7 @@ span.Emoticon:hover
 {
     display: block;
     border: 1px solid rgba(0,0,0,0.2);
-    border-radius: 3px;
+    border-radius: 10px;
     overflow: hidden;
     opacity: 0;
     transition: opacity 0.15s;
