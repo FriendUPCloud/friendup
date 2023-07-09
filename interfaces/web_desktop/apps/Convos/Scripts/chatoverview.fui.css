@@ -14,10 +14,13 @@
 	overflow-x: hidden;
 }
 
-.FUIChatoverview.Chat > .Channels
+@media(max-width: 768px)
 {
-    width: 0;
-    padding: 20px 0;
+    .FUIChatoverview.Chat > .Channels
+    {
+        width: 0;
+        padding: 20px 0;
+    }
 }
 
 .FUIChatoverview > .Channels > .Channel
