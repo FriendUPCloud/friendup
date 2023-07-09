@@ -344,7 +344,7 @@ span.Emoticon:hover
     .FUIChatlog .Topic > .ParentLink::before
     {
         display: static;
-        margin: 0 5px 0 0;
+        margin: 0;
         content: "\f100";
         font-family: fontawesome;
     }

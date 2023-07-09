@@ -66,8 +66,8 @@
 .FUIContacts .Contacts .Slot:nth-child(odd) .Contact:hover,
 .FUIContacts .Contacts .Slot:nth-child(odd) .Contact.Active
 {
-    background-color: var(--fui-list-item-background-hover);
-    color: var(--fui-list-item-color-hover);
+    background-color: var(--fui-menu-background);
+    color: var(--fui-menu-color);
 }
 
 .FUIContacts .Contacts .Slot

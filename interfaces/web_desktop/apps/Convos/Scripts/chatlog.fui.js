@@ -274,33 +274,36 @@ class FUIChatlog extends FUIElement
     		this.checkHeight();
     	} );
     }
+    parseDate( instr )
+    {
+        let now = new Date();
+        let test = now.getFullYear() + '-' + StrPad( now.getMonth() + 1, 2, '0' )+ '-' + StrPad( now.getDate(), 2, '0' );
+        let time = new Date( instr );
+        let diff = ( now.getTime() / 1000 ) - ( time.getTime() / 1000 );
+        if( diff < 60 )
+        {
+            if( diff < 1 )
+            {
+                return i18n( 'i18n_just_now' );
+            }
+            return Math.floor( diff ) + ' ' + i18n( 'i18n_seconds_ago' ) + '.';
+        }
+        else if( diff < 3600 )
+        {
+            return Math.floor( diff / 60 ) + ' ' + i18n( 'i18n_minutes_ago' ) + '.';
+        }
+        else if( diff < 86400 )
+        {
+            return Math.floor( diff / 60 / 24 ) + ' ' + i18n( 'i18n_hours_ago' ) + '.';
+        }
+        if( test == instr.substr( 0, test.length ) )
+            return instr.substr( test.length, instr.length - test.length );
+        return instr.split( ' ' )[1];
+    }
     // Adds messages to a list locked by sorted timestamps
     addMessages( messageList )
     {
         let self = this;
-        
-        function parseDate( instr )
-        {
-            let now = new Date();
-            let test = now.getFullYear() + '-' + StrPad( now.getMonth() + 1, 2, '0' )+ '-' + StrPad( now.getDate(), 2, '0' );
-            let time = new Date( instr );
-            let diff = ( now.getTime() / 1000 ) - ( time.getTime() / 1000 );
-            if( diff < 60 )
-            {
-                return Math.floor( diff ) + ' ' + i18n( 'i18n_seconds_ago' ) + '.';
-            }
-            else if( diff < 3600 )
-            {
-                return Math.floor( diff / 60 ) + ' ' + i18n( 'i18n_minutes_ago' ) + '.';
-            }
-            else if( diff < 86400 )
-            {
-                return Math.floor( diff / 60 / 24 ) + ' ' + i18n( 'i18n_hours_ago' ) + '.';
-            }
-            if( test == instr.substr( 0, test.length ) )
-                return instr.substr( test.length, instr.length - test.length );
-            return instr.split( ' ' )[1];
-        }
         
         for( let a = messageList.length - 1; a >= 0; a-- )
         {
@@ -329,7 +332,7 @@ class FUIChatlog extends FUIElement
                 message: self.replaceEmojis( text ),
                 i18n_date: i18n( 'i18n_date' ),
                 i18n_fullname: i18n( 'i18n_fullname' ),
-                date: parseDate( m.Date ),
+                date: self.parseDate( m.Date ),
                 signature: '',
                 fullname: m.Own ? i18n( 'i18n_you' ) : m.Name
             };
@@ -528,6 +531,14 @@ class FUIChatlog extends FUIElement
         let lastOwner = false;
         for( let a = 0; a < messages.length; a++ )
         {
+            let date = messages[ a ].querySelector( '.Date' );
+            let tstm = messages[ a ].getAttribute( 'slotid' );
+            if( tstm )
+            {
+                let newDate = self.parseDate( parseInt( tstm.split( '-' )[0] ) * 1000 );
+                date.innerHTML = newDate;
+            }
+            
             let owner = messages[ a ].getAttribute( 'owner' );
             if( owner == lastOwner )
             {
