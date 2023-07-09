@@ -71,6 +71,18 @@ class FUIChatlog extends FUIElement
         
         if( this.options.name )
             this.domTopic.innerHTML = this.options.name;
+        if( this.options.parentElement )
+        {
+            let par = document.createElement( 'div' );
+            par.className = 'ParentLink';
+            par.innerHTML = i18n( 'i18n_gotoparent' );
+            par.onclick = function()
+            {
+                let p = FUI.getElementByUniqueId( self.options.parentElement );
+                p.contactsMode();
+            }
+            this.domTopic.appendChild( par );
+        }
         
         this.initDomInput();
         
@@ -502,6 +514,9 @@ class FUIChatlog extends FUIElement
         
         let name = domElement.getAttribute( 'name' );
         if( name ) this.options.name = name;
+        
+        let parentElement = domElement.getAttribute( 'parentelement' );
+        if( parentElement ) this.options.parentElement = parentElement;
     }
     refreshDom( evaluated = false )
     {

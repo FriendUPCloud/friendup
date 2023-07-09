@@ -139,12 +139,16 @@ class FUIContacts extends FUIElement
         }
         setTimeout( function(){ d.classList.add( 'Showing' ); }, 2 );
     }
+    contactsMode()
+    {
+        this.domElement.classList.remove( 'Chat' );
+    }
     setChatView( record )
     {
         let context = ' context="' + ( record.Type == 'User' ? 'user' : 'contact' ) + '"';
         context += ' cid="' + record.ID + '"';
         let dm = record.Type == 'User' ? 'dm-user' : 'dm-contact';
-        this.domChat.innerHTML = '<fui-chatlog uniqueid="messages" type="' + dm + '" name="' + record.Fullname + '"' + context + '></fui-chatlog>';
+        this.domChat.innerHTML = '<fui-chatlog parentelement="' + this.options.uniqueid + '" uniqueid="messages" type="' + dm + '" name="' + record.Fullname + '"' + context + '></fui-chatlog>';
         FUI.initialize();
         
         let contacts = this.domContacts.getElementsByClassName( 'Contact' );
@@ -159,6 +163,8 @@ class FUIContacts extends FUIElement
                 contacts[a].classList.remove( 'Active' );
             }
         }
+        
+        this.domElement.classList.add( 'Chat' );
         
         Application.holdConnection( { method: 'messages', roomType: dm, cid: record.ID } );
     }

@@ -3,3 +3,39 @@ html > body:not(.Inside):not(.Loading)
 {
     background: transparent !important;
 }
+
+.Chatlist .FUIContacts .Contacts,
+.Chatlist .FUIContacts .ContactSearch
+{
+    transition: width 0.25s;
+}
+.Chatlist .FUIContacts .Chat
+{
+    transition: left,width 0.25s,0.25s;
+}
+
+@media(max-width: 768px)
+{
+    .Chatlist .FUIContacts .Contacts,
+    .Chatlist .FUIContacts .ContactSearch
+    {
+        width: 100%;
+    }
+    .Chatlist .FUIContacts .Chat
+    {
+        left: 100%;
+        width: 0%;
+    }
+    
+    .Chatlist .FUIContacts.Chat .Contacts,
+    .Chatlist .FUIContacts.Chat .ContactSearch
+    {
+        width: 0;
+    }
+    .Chatlist .FUIContacts.Chat .Chat
+    {
+        left: 0;
+        width: 100%;
+    }
+}
+

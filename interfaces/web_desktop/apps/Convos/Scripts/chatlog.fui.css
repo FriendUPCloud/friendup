@@ -64,6 +64,7 @@
 	display: flex;
 	padding: 15px 21px 15px 15px;
 	box-sizing: border-box;
+	overflow-x: hidden;
 }
 
 .FUIChatlog .Input > div
@@ -323,5 +324,29 @@ span.Emoticon
 span.Emoticon:hover
 {
     filter: drop-shadow(0px 2px 6px rgba(255,255,255,0.4));
+}
+
+@media (max-width: 768px)
+{
+    .FUIChatlog .Topic > .ParentLink 
+    {
+        background: var(--fui-background-dim);
+        position: absolute;
+        left: 15px;
+        top: 4px;
+        width: auto;
+        height: 25px;
+        line-height: 26px;
+        padding: 0px 10px;
+        border-radius: 13px;
+    }
+
+    .FUIChatlog .Topic > .ParentLink::before
+    {
+        display: static;
+        margin: 0 5px 0 0;
+        content: "\f100";
+        font-family: fontawesome;
+    }
 }
 
