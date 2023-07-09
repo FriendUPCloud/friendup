@@ -140,21 +140,28 @@ Application.holdConnection = function( flags )
 	    
 	    if( this.response )
 		{
-		    let js = JSON.parse( this.response.split( '<!--separate-->' )[1] );
-		    if( js && js.response == 1 )
+		    try
 		    {
-		        if( js.messages && js.messages.length > 0 )
+		        let js = JSON.parse( this.response.split( '<!--separate-->' )[1] );
+		        if( js && js.response == 1 )
 		        {
-		            let mess = FUI.getElementByUniqueId( 'messages' );
-		            mess.addMessages( js.messages );
-		            if( mess.clearQueue ) mess.clearQueue();
+		            if( js.messages && js.messages.length > 0 )
+		            {
+		                let mess = FUI.getElementByUniqueId( 'messages' );
+		                mess.addMessages( js.messages );
+		                if( mess.clearQueue ) mess.clearQueue();
+		            }
 		        }
-		    }
-		    // Response from longpolling
-		    else if( js && js.response == 200 )
-		    {
-		        // Good.
-		    }
+		        // Response from longpolling
+		        else if( js && js.response == 200 )
+		        {
+		            // Good.
+		        }
+            }
+            catch( e )
+            {
+                console.log( 'Uncaught error.' );
+            }
 		}
 		// Restart polling
 		Application.holdConnection();
