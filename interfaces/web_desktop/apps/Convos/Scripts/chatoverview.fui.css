@@ -10,6 +10,14 @@
 	padding: 20px;
 	box-sizing: border-box;
 	background-color: var(--fui-module-background);
+	transition: width,padding 0.25s,0.25s;
+	overflow-x: hidden;
+}
+
+.FUIChatoverview.Chat > .Channels
+{
+    width: 0;
+    padding: 20px 0;
 }
 
 .FUIChatoverview > .Channels > .Channel
@@ -44,5 +52,12 @@
 	left: 100px;
 	width: calc(100% - 100px);
 	height: 100%;
+	transition: width,left 0.25s,0.25s;
+}
+
+.FUIChatoverview.Chat > .Chatlist
+{
+    left: 0;
+    width: 100%;
 }
 

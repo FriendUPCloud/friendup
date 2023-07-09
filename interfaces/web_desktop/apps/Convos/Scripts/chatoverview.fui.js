@@ -50,6 +50,17 @@ class FUIChatoverview extends FUIElement
         
         this.redrawChannels();
     }
+    setChat( mode )
+    {
+        if( mode == true )
+        {
+            this.domElement.classList.add( 'Chat' );
+        }
+        else
+        {
+            this.domElement.classList.remove( 'Chat' );
+        }
+    }
     // Get markup for object
     getMarkup( data )
     {
@@ -152,7 +163,7 @@ class FUIChatoverview extends FUIElement
     		}
     	}
     	let chlist = this.domElement.querySelector( '.Chatlist' );
-    	chlist.innerHTML = '<fui-contacts uniqueid="contacts" user="' + user + '"></fui-contacts>';
+    	chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts" user="' + user + '"></fui-contacts>';
     	FUI.initialize();
     }
     // Set active channel
@@ -173,12 +184,12 @@ class FUIChatoverview extends FUIElement
 		let chlist = this.domElement.querySelector( '.Chatlist' );
 		if( label == 'jeanie' )
 		{
-		    chlist.innerHTML = '<fui-chatlog uniqueid="messages" name="' + label + '"></fui-chatlog>';
+		    chlist.innerHTML = '<fui-chatlog parentelement="convos" uniqueid="messages" name="' + label + '"></fui-chatlog>';
 		    Application.holdConnection( { method: 'messages', roomType: 'jeanie' } );
 	    }
 	    else if( label == 'dm' )
 	    {
-	        chlist.innerHTML = '<fui-contacts uniqueid="contacts"></fui-contacts>';
+	        chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts"></fui-contacts>';
 	    }
 		FUI.initialize();
 		

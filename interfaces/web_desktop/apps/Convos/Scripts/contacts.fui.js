@@ -63,6 +63,9 @@ class FUIContacts extends FUIElement
         let uniqueId = domElement.getAttribute( 'uniqueid' );
         if( uniqueId ) this.options.uniqueid = uniqueId;
         
+        let parentElement = domElement.getAttribute( 'parentelement' );
+        if( parentElement ) this.options.parentElement = parentElement;
+        
         let user = domElement.getAttribute( 'user' );
         if( user ) this.options.user = user;
     }
@@ -142,6 +145,12 @@ class FUIContacts extends FUIElement
     contactsMode()
     {
         this.domElement.classList.remove( 'Chat' );
+        
+        if( this.options.parentElement )
+        {
+            let par = FUI.getElementByUniqueId( this.options.parentElement );
+            par.setChat( false );
+        }
     }
     setChatView( record )
     {
@@ -165,6 +174,12 @@ class FUIContacts extends FUIElement
         }
         
         this.domElement.classList.add( 'Chat' );
+        
+        if( this.options.parentElement )
+        {
+            let par = FUI.getElementByUniqueId( this.options.parentElement );
+            par.setChat( true );
+        }
         
         Application.holdConnection( { method: 'messages', roomType: dm, cid: record.ID } );
     }
