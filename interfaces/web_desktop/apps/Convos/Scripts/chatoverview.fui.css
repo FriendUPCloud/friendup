@@ -39,6 +39,11 @@
 	box-sizing: border-box;
 }
 
+.FUIChatoverview > .Channels > .Channel:not(.Active) 
+{
+    background-color: var(--fui-palette-chan03-dim);
+}
+
 .FUIChatoverview > .Channels > .Channel.Active
 {
 	background-color: var(--fui-palette-chan03);
