@@ -277,7 +277,7 @@ class FUIChatlog extends FUIElement
     parseDate( instr )
     {
         let now = new Date();
-        let test = now.getFullYear() + '-' + StrPad( now.getMonth() + 1, 2, '0' )+ '-' + StrPad( now.getDate(), 2, '0' );
+        let test = now.getFullYear() + '-' + StrPad( now.getMonth() + 1, 2, '0' ) + '-' + StrPad( now.getDate(), 2, '0' );
         let time = new Date( instr );
         let diff = ( now.getTime() / 1000 ) - ( time.getTime() / 1000 );
         if( diff < 60 )
@@ -296,9 +296,10 @@ class FUIChatlog extends FUIElement
         {
             return Math.floor( diff / 60 / 24 ) + ' ' + i18n( 'i18n_hours_ago' ) + '.';
         }
+        instr = time.getFullYear() + '-' + StrPad( time.getMonth() + 1, 2, '0' ) + '-' + StrPad( time.getDate(), 2, '0' );
         if( test == instr.substr( 0, test.length ) )
             return instr.substr( test.length, instr.length - test.length );
-        return instr.split( ' ' )[1];
+        return instr;
     }
     // Adds messages to a list locked by sorted timestamps
     addMessages( messageList )
@@ -329,7 +330,7 @@ class FUIChatlog extends FUIElement
             catch( e ){};
             
             let replacements = {
-                message: self.replaceEmojis( text ),
+                message: self.replaceUrls( self.replaceEmojis( text ) ),
                 i18n_date: i18n( 'i18n_date' ),
                 i18n_fullname: i18n( 'i18n_fullname' ),
                 date: self.parseDate( m.Date ),
@@ -583,6 +584,26 @@ class FUIChatlog extends FUIElement
     errorMessage( string )
     {
         this.domElement.innerHTML = '<h2 class="Error">' + string + '</h2>';
+    }
+    replaceUrls( string )
+    {
+        let fnd = 0;
+        while( 1 )
+        {
+            let res = string.match( /[\s]{0,1}http([s]{0,1}\:\/\/[^\s]*)/i );
+            if( res != null )
+            {
+                string = string.split( res[0] ).join( '<a href="fnd' + res[1] + '" target="_blank">fnd' + res[1] + '</a>' );
+                fnd++;
+                continue;
+            }
+            break;
+        }
+        if( fnd )
+        {
+            string = string.split( 'fnds://' ).join( 'https://' ).split( 'fnd://' ).join( 'http://' );
+        }
+        return string;
     }
     replaceEmojis( string )
     {
