@@ -48,7 +48,7 @@
     transition: background-color 0.25s;
     background-color: var(--fui-list-item-background);
     color: var(--fui-list-item-color);
-    height: 45px;
+    height: 55px;
     padding: 5px;
     box-sizing: border-box;
 }
@@ -72,7 +72,7 @@
 
 .FUIContacts .Contacts .Slot
 {
-    height: 45px;
+    height: 55px;
     box-sizing: border-box;
 }
 
@@ -99,8 +99,8 @@
 .FUIContacts .Contacts .Contact > span:first-child
 {
     position: absolute;
-    top: 5px;
-    left: 5px;
+    top: 10px;
+    left: 10px;
     width: 35px;
     height: 35px;
     background-color: var(--fui-list-background);
@@ -113,10 +113,11 @@
 {
     position: absolute;
     top: 5px;
-    left: 40px;
-    width: calc(100% - 40px);
-    height: 35px;
-    padding: 8px 10px;
+    left: 45px;
+    width: calc(100% - 45px);
+    height: 45px;
+    padding: 0px 10px;
+    line-height: 44px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
