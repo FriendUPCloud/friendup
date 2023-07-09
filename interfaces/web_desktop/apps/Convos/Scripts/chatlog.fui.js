@@ -564,6 +564,7 @@ class FUIChatlog extends FUIElement
             lastOwner = owner;
         }
         
+        this.checkLinks();
         this.domElement.classList.add( 'Initialized' );
        
     }
@@ -587,18 +588,105 @@ class FUIChatlog extends FUIElement
     }
     checkLinks()
     {
-        let eles = this.domElement.getElementsByTagName( 'WebLink' );
+        let self = this;
+        
+        let eles = this.domElement.getElementsByClassName( 'WebLink' );
         for( let a = 0; a < eles.length; a++ )
         {
             if( !eles[ a ].classList.contains( 'LinkChecked' ) )
             {
                 eles[ a ].classList.add( 'LinkChecked' );
-                let m = new Module( 'system' );
-                m.onExecuted = function( me, md )
+                ( function( el )
                 {
-                    console.log( 'Here: ', me, md );
-                }
-                m.execute( 'websitegraph', { 'url', eles[ a ].getAttribute( 'href' ) } );
+                    let m = new Module( 'system' );
+                    m.onExecuted = function( me, md )
+                    {
+                        if( !el.parentNode ) return;
+                        if( me != 'ok' )
+                            return;
+                        let ne = document.createElement( 'div' );
+                        ne.className = 'WebLinkPreview';
+                        el.parentNode.replaceChild( ne, el );
+                        let ln = document.createElement( 'p' );
+                        ln.className = 'WebLinkP';
+                        ln.appendChild( el );
+                        
+                        
+                        let ogs = {};
+                        while( 1 )
+                        {
+                            let res = md.match( /\sproperty\=\"og\:(.*?)\".*?content\=\"(.*?)\"/i );
+                            if( res != null )
+                            {
+                                ogs[ res[1] ] = res[2];
+                                md = md.split( res[0] ).join( '' );
+                                continue;
+                            }
+                            break;
+                        }
+                        
+                        let sn = false;
+                        if( ogs.site_name )
+                        {
+                            sn = document.createElement( 'p' );
+                            sn.innerHTML = ogs.site_name;
+                            sn.className = 'OGSite';
+                            sn.onclick = function()
+                            {
+                                window.open( el.getAttribute( 'href' ), '_blank' );
+                            }
+                            ne.appendChild( sn );
+                        }
+                        if( ogs.title && ( !ogs.site_name || ogs.site_name != ogs.title ) )
+                        {
+                            if( sn )
+                            {
+                                sn.innerHTML += ' - ' + ogs.title;
+                            }
+                            else
+                            {
+                                let p = document.createElement( 'p' );
+                                p.innerHTML = ogs.title;
+                                p.className = 'OGSite';
+                                ne.appendChild( p );
+                                p.onclick = function()
+                                {
+                                    window.open( el.getAttribute( 'href' ), '_blank' );
+                                }
+                            }
+                        }
+                        if( ogs.image )
+                        {
+                            let d = document.createElement( 'div' );
+                            d.className = 'OGImage';
+                            ne.appendChild( d );
+                            d.onclick = function()
+                            {
+                                window.open( el.getAttribute( 'href' ), '_blank' );
+                            }
+                            
+                            let n = document.createElement( 'img' );
+                            n.src = ogs.image;
+                            n.style.position = 'absolute';
+                            n.style.pointerEvents = 'none';
+                            n.onload = function()
+                            {
+                                n.style.position = '';
+                                ne.classList.add( 'Showing' );
+                                self.toBottom();
+                            }
+                            if( n.width ) n.onload();
+                            d.appendChild( n );
+                        }
+                        else
+                        {
+                            ne.classList.add( 'Showing' );
+                        }
+                        
+                        ne.appendChild( ln );
+                    }
+                    m.execute( 'websitegraph', { 'link': el.getAttribute( 'href' ) } );
+                } )( eles[ a ] );
             }
         }
     }

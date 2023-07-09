@@ -326,6 +326,66 @@ span.Emoticon:hover
     filter: drop-shadow(0px 2px 6px rgba(255,255,255,0.4));
 }
 
+.FUIChatlog .Messages .WebLinkPreview 
+{
+    display: block;
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.FUIChatlog .Messages .WebLinkPreview 
+{
+    display: block;
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 3px;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.FUIChatlog .Messages .WebLinkPreview p.WebLinkP,
+.FUIChatlog .Messages .WebLinkPreview p.OGSite
+{
+    display: block;
+    padding: 5px;
+    background-color: var(--fui-menu-background);
+    color: var(--fui-menu-color);
+    margin: 0;
+}
+.FUIChatlog .Messages .WebLinkPreview p.OGSite
+{
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.FUIChatlog .Messages div.OGImage > img
+{
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    display: block;
+    cursor: pointer;
+}
+
+.FUIChatlog .Messages .WebLinkPreview p.WebLinkP a
+{
+    color: var(--fui-menu-color);
+}
+
+.FUIChatlog .Messages .WebLinkPreview.Showing
+{
+    opacity: 1;
+}
+
+.FUIChatlog .Messages .WebLinkPreview .OGImage
+{
+    display: block;
+    width: 100%;
+    cursor: pointer;
+}
+
+
 @media (max-width: 768px)
 {
     .FUIChatlog .Topic > .ParentLink 
