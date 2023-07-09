@@ -73,7 +73,7 @@ Friend.application = {
 	}
 };
 
-var Application =
+window.Application =
 {
 	activated: false,
 	sessionObject: {},
