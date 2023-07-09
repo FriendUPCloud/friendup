@@ -130,6 +130,22 @@ class FUIChatoverview extends FUIElement
     	}
     	chans[ 0 ].click();
     }
+    activateDirectMessage( user )
+    {
+        let tabs = this.domChannels.getElementsByClassName( 'Channel' );
+        for( let a = 0; a < tabs.length; a++ )
+    	{
+    		if( tabs[ a ].classList.contains( 'DM' ) )
+    		{
+    			tabs[ a ].classList.add( 'Active' );
+    		}
+    		else
+    		{
+    			tabs[ a ].classList.remove( 'Active' );
+    		}
+    	}
+    	chlist.innerHTML = '<fui-contacts uniqueid="contacts" user="' + user + '"></fui-contacts>';
+    }
     // Set active channel
     setActiveChannel( label, tab )
     {

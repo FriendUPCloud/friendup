@@ -62,6 +62,9 @@ class FUIContacts extends FUIElement
         
         let uniqueId = domElement.getAttribute( 'uniqueid' );
         if( uniqueId ) this.options.uniqueid = uniqueId;
+        
+        let user = domElement.getAttribute( 'user' );
+        if( user ) this.options.user = user;
     }
     addContact( contact )
     {
@@ -78,6 +81,13 @@ class FUIContacts extends FUIElement
         d.onclick = function()
         {
             self.setChatView( this.record );
+        }
+        
+        // Init user
+        if( contact.Fullname == this.options.user )
+        {
+            this.options.user = null;
+            d.click();
         }
         
         // Load avatar

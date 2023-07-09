@@ -24,6 +24,23 @@ Application.run = function( msg ){
 	{
 	    Application.quit();
 	}
+	this.view = v;
+	
+	if( msg.args )
+	{
+	    setTimeout( function()
+	    {
+	        v.sendMessage( msg.args );
+        }, 250 );
+	}
 };
+
+Application.receiveMessage = function( msg )
+{
+    if( msg.command && msg.command == 'servermessage' )
+    {
+        this.view.sendMessage( msg.data );
+    }
+}
 
 

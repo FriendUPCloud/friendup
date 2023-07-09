@@ -11377,7 +11377,7 @@ function handleServerMessage( e )
 			// TODO: Have per application permissions here..
 			// Not all applications should be able to send messages to
 			// all other applications...
-			if( apps[a].applicationDisplayName == e.appname )
+			if( apps[a].applicationName == e.appname || apps[a].applicationDisplayName == e.appname )
 			{
 				let nmsg = {
 					command: 'notify',
@@ -11407,7 +11407,7 @@ function handleServerMessage( e )
 		        null,
 		        function( k )
 		        {
-		            ExecuteApplication( 'Convos', '', e.message );
+		            ExecuteApplication( 'Convos', JSON.stringify( e.message ) );
 	            }
 		    );
 		}

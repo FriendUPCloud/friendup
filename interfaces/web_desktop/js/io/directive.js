@@ -713,7 +713,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				
 				var cid = addWrapperCallback( function( data )
 				{
-					if( callback )
+					if( typeof( callback ) == 'function' )
 					{
 						callback( "\n", { response: 'Executable has run.', result: data == 'registered' } );
 						callback = null;
@@ -806,7 +806,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			// Five second timeout to receive a response
 			setTimeout( function()
 			{
-				if( callback )
+				if( typeof( callback ) != 'undefined' && typeof( callback ) == 'function' )
 				{
 					callback( false );
 				}

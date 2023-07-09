@@ -16,6 +16,15 @@ window.Convos = {
 Application.run = function( msg )
 {
 	this.holdConnection( { method: 'messages', roomType: 'jeanie' } );
+} 
+
+Application.receiveMessage = function( msg )
+{
+    if( msg.sender )
+    {
+        let overview = FUI.getElementsByUniqueId( 'convos' );
+        overview.activateDirectMessage( msg.sender );
+    }
 }
 
 Application.playSound = function( snd )
