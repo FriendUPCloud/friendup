@@ -1,5 +1,29 @@
 /* Charcoal ----------------------------------------------------------------- */
 
+/* FUI */
+
+:root
+{
+    --fui-background-foreground: #262626;
+    --fui-background-foreground-dim: #26262688;
+    --fui-background: #1c1c1c;
+    --fui-background-dim: #1c1c1c88;
+    --fui-color: #e6e6e6;
+    --fui-button-background: #333333;
+    --fui-button-color: #e8e8e8;
+    --fui-menu-background: #333333;
+    --fui-list-background: #1c1c1c;
+    --fui-list-item-background: #212121;
+    --fui-list-item-background-alternate: #2c2c2c;
+    --fui-list-item-color: #afafaf;
+    --fui-list-item-color-alternate: #c9c9c9;
+    --fui-module-background-darker: #242424;
+    --fui-module-background: #333333;
+    
+}
+
+/* END FUI */
+
 html > body.Charcoal, html > body.Charcoal *
 {
     scrollbar-color: #404040 #1e1e1e !important;
