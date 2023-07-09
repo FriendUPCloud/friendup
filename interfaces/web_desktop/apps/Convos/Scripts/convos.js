@@ -163,8 +163,6 @@ Application.holdConnection = function( flags )
                 console.log( 'Uncaught error.' );
             }
 		}
-		// Restart polling
-		Application.holdConnection();
 	}
 	m.send();
 }
