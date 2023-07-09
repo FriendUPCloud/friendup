@@ -8,6 +8,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+serverQueue = [];
+
 Application.run = function( msg ){
 	let v = new View( {
 		title: 'Convos',
@@ -28,18 +30,29 @@ Application.run = function( msg ){
 	
 	if( msg.args )
 	{
-	    setTimeout( function()
+	    if( msg.args.sender )
 	    {
-	        Application.receiveMessage( { command: 'servermessage', data: msg.args } );
-        }, 1250 );
+	        serverQueue.push( msg.args );
+	    }
 	}
 };
 
 Application.receiveMessage = function( msg )
 {
-    if( msg.command && msg.command == 'servermessage' )
+    if( msg.command )
     {
-        this.view.sendMessage( msg.data );
+        if( msg.command == 'servermessage' )
+        {
+            this.view.sendMessage( msg.data );
+        }
+        else if( msg.command == 'app-ready' )
+        {
+            for( let a = 0; a < serverQueue.length; a++ )
+            {
+                this.view.sendMessage( serverQueue[ a ] );
+            }
+            serverQueue = [];
+        }
     }
 }
 

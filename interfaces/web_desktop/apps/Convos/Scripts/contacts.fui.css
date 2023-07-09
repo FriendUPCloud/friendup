@@ -127,11 +127,10 @@
     opacity: 1;
 }
 
-@keyframes pulse
-{
-    0%: { opacity: 0.6; }
-    50%: {opacity: 1; }
-    100%: { opacity: 0.6; }
+@keyframes pulsingchat {
+    0% { opacity: 0.6; }
+    50% {opacity: 1; }
+    100% { opacity: 0.6; }
 }
 
 .FUIContacts .Contacts .Contact.Showing.NewActivity::after 
@@ -144,9 +143,10 @@
     right: 15px;
     top: 0;
     line-height: 45px;
-    animation-name: pulse;
+    animation-name: pulsingchat;
     animation-duration: 1s;
     animation-iteration-count: infinite;
+    transition: opacity 0.25s;
 }
 
 .FUIContacts .Chat

@@ -16,6 +16,8 @@ window.Convos = {
 Application.run = function( msg )
 {
 	this.holdConnection( { method: 'messages', roomType: 'jeanie' } );
+	// We loaded!
+	this.sendMessage( { command: 'app-ready' } );
 } 
 
 Application.receiveMessage = function( msg )
