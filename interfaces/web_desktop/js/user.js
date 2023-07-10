@@ -212,6 +212,13 @@ Friend.User = {
 					Workspace.userLevel = json.level;
 					Workspace.fullName = json.fullname;
 					
+					// Silence non-admin user's debug
+					if( Workspace.userLevel != 'admin' )
+					{
+						console.log( '%cWelcome to %cFriend OS!', 'font-weight: bold;', 'font-weight: bold; color: #5599ff;' );
+						window.console.log = function( msg ){};
+					}
+					
 					// If we have inviteHash, verify and add relationship between the inviter and the invitee.
 					if( info.inviteHash ) json.inviteHash = info.inviteHash;
 					

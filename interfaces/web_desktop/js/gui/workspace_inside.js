@@ -2,7 +2,7 @@
 Friend.startupApps = {};
 
 // Added to workspace
-var WorkspaceInside = {
+let WorkspaceInside = {
 	// Tray icons
 	trayIcons: {},
 	workspaceInside: true,
