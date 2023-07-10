@@ -6631,6 +6631,8 @@ function _kresize( e, depth )
 			}, 500 );
 		}
 	}
+	
+	Workspace.nudgeWorkspacesWidget();
 }
 
 function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext, extrabuttonreturn )
