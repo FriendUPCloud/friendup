@@ -217,7 +217,9 @@ if( isset( $args->args ) )
                         u.ID AS `UserID`,
                         "User" as `Type`,
                         u.Name as `Nickname`,
-                        u.FullName as `Fullname`
+                        u.FullName as `Fullname`,
+                        u.LastActionTime,
+                        u.LoginTime
                     FROM FUser u, FUserToGroup mes, FUserToGroup fug, FUserGroup ug
                     WHERE
                             ug.Type = "Workgroup"
@@ -232,12 +234,14 @@ if( isset( $args->args ) )
                         "" AS `UserID`,
                         "Contact" AS `Type`,
                         f.Firstname as `Nickname`,
-                        CONCAT( f.Firstname, f.Lastname ) AS `Fullname`' . $filterB . '
+                        CONCAT( f.Firstname, f.Lastname ) AS `Fullname`,
+                        1 AS `LastActionTime`,
+                        1 AS `LoginTime`
                     FROM FContact f
                     WHERE
-                        f.OwnerUserID = \'' . $User->ID . '\'
+                        f.OwnerUserID = \'' . $User->ID . '\'' . $filterB . '
                 )
-                ORDER BY Fullname ASC
+                ORDER BY LoginTime DESC, Fullname ASC
             ' );
             if( $rows && count( $rows ) > 0 )
             {
