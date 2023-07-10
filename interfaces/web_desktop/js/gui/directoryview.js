@@ -4327,7 +4327,8 @@ function OpenWindowByUrl( url, fileInfo )
 	    let v = new View( {
 	        title: url,
 	        width: 800,
-	        height: 800
+	        height: 800,
+	        background: 'transparent'
 	    } );
 	    
 	    v.onClose = function()
@@ -4575,7 +4576,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		{
 		    iconObject.applicationId = fileInfo.applicationId;
 		}
-		console.log( 'What is this: ', currentMovable );
+		
 		let v = Friend.startImageViewer( iconObject, { parentView: currentMovable, recent: fromFolder ? false : 'dashboard' } );
 		
 		initContext( v );
@@ -4588,7 +4589,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 	    let v = new View( {
 	        title: iconObject.Path,
 	        width: 800,
-	        height: 800
+	        height: 800,
+	        background: 'transparent'
 	    } );
 	    
 	    initContext( v );
@@ -5640,7 +5642,8 @@ Friend.startImageViewer = function( iconObject, extra )
 		width            : 650,
 		height           : 512,
 		memorize         : true,
-		fullscreenenabled: true
+		fullscreenenabled: true,
+		background       : 'transparent'
 	} );
 	
 	if( iconObject.applicationId )

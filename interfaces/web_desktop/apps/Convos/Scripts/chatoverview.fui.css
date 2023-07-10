@@ -48,7 +48,7 @@
 {
 	background-color: var(--fui-palette-chan03);
 	border-width: 3px; 
-	border-color: var(--fui-color);
+	border-color: var(--fui-border-color-negative);
 }
 
 /* Chat list */
