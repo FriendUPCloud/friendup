@@ -220,7 +220,7 @@ Friend.User = {
 					}
 					else
 					{
-						console.log( '%cWelcome to %cFriend OS administrator!', 'font-weight: bold;', 'font-weight: bold; color: #5599ff;' );
+						console.log( '%cWelcome to %cFriend OS, %cadministrator!', 'font-weight: bold;', 'font-weight: bold; color: #5599ff;', 'color: inherit; font-weight: bold' );
 						console.log( 'This console may become messy with error reporting.' );
 						console.log( '****' );
 					}
