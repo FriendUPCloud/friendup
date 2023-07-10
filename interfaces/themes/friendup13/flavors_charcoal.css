@@ -120,7 +120,7 @@ body.Charcoal input[type=email], body.Charcoal input[type=username],
 body.Charcoal input[type=datetime-local], body.Charcoal input[type=password], 
 html body.Charcoal textarea, html body.Charcoal select, html body.Charcoal select:hover
 {
-    border-radius: 2px;
+    border-radius: 10px;
     border: 1px solid #202020;
     background: #242424;
     color: #e0e0e0;
@@ -225,7 +225,7 @@ html body.Charcoal div .File.Selected:before
 html body.Charcoal .File.Selected:before
 {
 	background: rgba(255,255,255,0.1);
-	border-radius: 2px;
+	border-radius: 10px;
 	content: " ";
 	display: block;
 	width: 120%;

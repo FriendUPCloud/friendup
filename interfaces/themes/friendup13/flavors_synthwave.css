@@ -132,7 +132,7 @@ body.Synthwave input[type=email], body.Synthwave input[type=username],
 body.Synthwave input[type=datetime-local], body.Synthwave input[type=password], 
 html body.Synthwave textarea, html body.Synthwave select, html body.Synthwave select:hover
 {
-    border-radius: 2px;
+    border-radius: 10px;
     border: 1px solid #2d1a47;
     background: #2d1a47;
     color: #bdbcff;
@@ -253,7 +253,7 @@ html body.Synthwave div .File.Selected:before
 html body.Synthwave .File.Selected:before
 {
 	background: rgba(255,255,255,0.1);
-	border-radius: 2px;
+	border-radius: 10px;
 	content: " ";
 	display: block;
 	width: 120%;

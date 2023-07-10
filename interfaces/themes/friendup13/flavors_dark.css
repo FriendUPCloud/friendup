@@ -82,7 +82,7 @@ body.Dark input[type=email], body.Dark input[type=username],
 body.Dark input[type=datetime-local], body.Dark input[type=password], 
 html body.Dark textarea, html body.Dark select, html body.Dark select:hover
 {
-    border-radius: 2px;
+    border-radius: 10px;
     border: 1px solid #19242e;
     background: #1b2732;
     color: #e0e0e0;
@@ -176,7 +176,7 @@ html body.Dark div .File.Selected:before
 html body.Dark  .File.Selected:before
 {
 	background: rgba(255,255,255,0.1);
-	border-radius: 2px;
+	border-radius: 10px;
 	content: " ";
 	display: block;
 	width: 120%;
