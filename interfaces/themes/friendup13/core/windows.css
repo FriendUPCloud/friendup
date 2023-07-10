@@ -107,7 +107,8 @@ html body[singletask] .View > .Title > div > .Minimize
 	transition: opacity 0.25s;
 }
 
-[mobile] .View.Mountlist .DirectoryToolbar button
+[mobile] .View.Mountlist .DirectoryToolbar button,
+[mobile] .View.Mountlist .DirectoryToolbar span.VerticalLine
 {
 	opacity: 0;
 	pointer-events: none;

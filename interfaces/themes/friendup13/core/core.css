@@ -61,16 +61,8 @@ html
 	user-select: none;
 	-webkit-user-select: none;
 	overflow: hidden;
-}
-
-html[mode='Workspace']
-{
-	zoom: 1.05;
-}
-
-html[mode='Workspace'][mobile='mobile']
-{
-	zoom: 1;
+	transform: translate3d(0,0,0);
+	perspective: 1px;
 }
 
 body
