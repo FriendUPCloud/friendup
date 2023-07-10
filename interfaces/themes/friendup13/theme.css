@@ -6,6 +6,9 @@
 @import url(/themes/friendup13/core/workspace.css);
 @import url(/themes/friendup13/core/font-awesome.min.css);
 @import url(/webclient/css/FUI.css);
+@import url(/themes/friendup13/flavors_charcoal.css);
+@import url(/themes/friendup13/flavors_synthwave.css);
+@import url(/themes/friendup13/flavors_dark.css);
 
 @font-face {
     font-family: 'assistant';
