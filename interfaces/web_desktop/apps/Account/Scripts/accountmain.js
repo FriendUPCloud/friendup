@@ -38,6 +38,7 @@ Application.run = function( msg, iface )
 		d.execute( 'getsetting', { setting: 'avatar_color' } );
 	} );
 	
+	// Check if we disabled groups
 	const g = new Module( 'system' );
 	g.onExecuted = ( s, d ) => {
 		if ( 'ok' == s )
@@ -49,15 +50,17 @@ Application.run = function( msg, iface )
 			}
 			catch( ex )
 			{
+				refreshGroups( ge( 'groupSearcher' ).value );
 				return;
 			}
 			
 			if ( null != serverConfig.hasGroupsFeature )
 			{
-				if ( true === serverConfig.hasGroupsFeature )
-					refreshGroups( ge( 'groupSearcher' ).value );
+				if ( false === serverConfig.hasGroupsFeature )
+					return;
 			}
 		}
+		refreshGroups( ge( 'groupSearcher' ).value );
 	}
 	g.execute( 'sampleconfig' );
 	
