@@ -3415,10 +3415,9 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 	z-index: 1;*/
 }
 
-#OfflineMessage
+body #OfflineMessage
 {
 	position: absolute;
-	visibility: hidden; 
 	opacity: 0; 
 	pointer-events: none; 
 	z-index: 2147483647; 
@@ -3427,47 +3426,55 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 	left: 0;
 	height: 100%;
 	width: 100%;
-	background: rgba(0,0,0,0.85);
+	background: rgba(150,150,150,0.25);
 	color: white;
 }
 
 body.Offline #OfflineMessage
 {
-	visibility: visible;
 	opacity: 1;
 	pointer-events: all;
 }
 
-#OfflineMessage > div
+#OfflineMessage > div 
 {
-	position: absolute;
-	top: 30%;
-	left: 30%;
-	width: 40%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 26px;
+    overflow: hidden;
+    width: 100%;
+    background: linear-gradient(90deg, #e0e0e0, transparent);
+    color: #303030;
 }
 
-[mobile] #OfflineMessage > div
+#OfflineMessage > div:before 
 {
-	top: 20%;
-	left: 20%;
-	width: 60%;
+    content: " ";
+    font-size: 1.5em;
+    height: 20px;
+    position: relative;
+    left: 8px;
+    top: 3px;
+    float: left;
+    width: 20px;
+    display: block;
+    background-color: white;
+    background-image: url(/themes/friendup13/gfx/loading_corner.gif);
+    background-size: contain;
+    background-repeat: no-repeat;
+    border-radius: 100%;
 }
 
-#OfflineMessage > div:before
-{
-	font-size: 1.5em;
-	display: inline-block;
+#OfflineMessage > div h1 {
+    padding: 0;
+    margin: 4px 0 0px 16px;
+    display: inline-block;
+    font-size: 16px;
+    font-weight: bold;
+    display: inline-block;
 }
 
-#OfflineMessage > div h1
-{
-	display: inline-block;
-}
-
-#OfflineMessage > div p
-{
-	font-size: 1.3em;
-}
 
 .Screen, .Screen > .ScreenContent
 {

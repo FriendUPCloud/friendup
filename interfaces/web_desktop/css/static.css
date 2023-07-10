@@ -48,7 +48,7 @@ html > body
 
 body:not(.Offline) #OfflineMessage
 {
-	display: none;
+	/*display: none;*/
 }
 
 body:before
