@@ -222,13 +222,13 @@ function groupUsers( callback, pos, limit )
 	{
 		ge( 'InviteColumn' ).style.display = '';
 		ge( 'NameColumn' ).classList.remove( 'HContent70' );
-		ge( 'NameColumn' ).classList.add( 'HContent45' );
+		ge( 'NameColumn' ).classList.add( 'HContent40' );
 	}
 	else
 	{
 		ge( 'InviteColumn' ).style.display = 'none';
 		ge( 'NameColumn' ).classList.add( 'HContent70' );
-		ge( 'NameColumn' ).classList.remove( 'HContent45' );
+		ge( 'NameColumn' ).classList.remove( 'HContent40' );
 	}
 	
 	let m = new Module( 'system' );
