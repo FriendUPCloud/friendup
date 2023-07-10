@@ -47,7 +47,7 @@ function canQuitApp( appName )
             return false;
         }
     }
-    console.log( 'We can quit ' + appName, Workspace.noQuitList );
+    //console.log( 'We can quit ' + appName, Workspace.noQuitList );
     return true;
 }
 
