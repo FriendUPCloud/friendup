@@ -174,7 +174,7 @@ FriendWebSocket.prototype.connect = function()
 	
 	if( window.Friend && Friend.User && Friend.User.State == 'offline' )
 	{
-		console.log( 'Friend says the user is offline. Bye.' );
+		//console.log( 'Friend says the user is offline. Bye.' );
 		return;
 	}
 	
@@ -208,7 +208,7 @@ FriendWebSocket.prototype.connect = function()
 	
 	if( self.ws )
 	{
-		console.log( 'Reconnecting..' );
+		//console.log( 'Reconnecting..' );
 		let ws = self.ws;
 		self.ws = null;
 		if( ws && ws.cleanup )
@@ -216,7 +216,7 @@ FriendWebSocket.prototype.connect = function()
 		return;
 	}
 		
-	console.log( 'Connecting a new native websocket!' );
+	//console.log( 'Connecting a new native websocket!' );
 	
 	self.ws = new window.WebSocket( self.url, 'FC-protocol' );
 	

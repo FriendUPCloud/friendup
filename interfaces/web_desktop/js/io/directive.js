@@ -1859,7 +1859,7 @@ SubSubDomains =
 						self.initialized = 1;
 						return;
 					}
-					console.log( 'Security subdomains not activated');
+					//console.log( 'Security subdomains not activated');
 					self.initialized = -1;
 					return;
 				}
