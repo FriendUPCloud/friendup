@@ -323,7 +323,7 @@ html #DoorsScreen .Left > .VirtualWorkspaces > div
 {
 	height: 16px;
 	margin: 5px 6px 0 0 !important;
-	border-radius: 3px;
+	border-radius: 10px;
 	line-height: 16px;
 	overflow: hidden;
 	border: 0;
@@ -425,7 +425,7 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeac
 {
 	position: absolute;
 	clear: none;
-	border-radius: 8px;
+	border-radius: 10px;
 	box-shadow: 0px 2px 5px rgba(0,0,0,0.4);
 }
 
@@ -436,7 +436,7 @@ body[mobile]:not([tablet]) #Screens .ViewContainer.Closing
 
 body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelauedDeactivation) > .View
 {
-	border-radius: 8px 8px 0 0;
+	border-radius: 10px 10px 0 0;
 	height: 100% !important;
 	max-height: 100%;
 	overflow: visible;
@@ -476,7 +476,7 @@ html body[mobile=mobile].ViewMaximized #Screens .ScreenContent .ViewContainer:no
 body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation) > .View > .Title
 {
 	top: 0;
-	border-radius: 8px 8px 0 0;
+	border-radius: 10px 10px 0 0;
 	background: none;
 }
 
@@ -507,7 +507,7 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeac
 	background-position: center 20px;
 	background-repeat: no-repeat;
 	pointer-events: none;
-	border-radius: 8px;
+	border-radius: 10px;
 }
 
 body[mobile]:not([tablet]) #Screens .ViewContainer.Closing > .ViewIcon
@@ -646,7 +646,7 @@ html .Off
 html #RegionSelector
 {
 	z-index: 101;
-	border-radius: 2px;
+	border-radius: 10px;
 }
 
 html .File.Selected .Title,
@@ -656,7 +656,7 @@ html #Screens .File.Selected .Title
 	border: 0;
 	box-shadow: none;
 	color: #444444;
-	border-radius: 2px;
+	border-radius: 10px;
 	resize: none;
 }
 
@@ -784,7 +784,7 @@ html > body > div button, html > body > div .Button
 	background-position: top left;
 	background-color: #e3e7e8;
 	border: 0;
-	border-radius: 3px;
+	border-radius: 10px;
 	box-shadow: 0;
 	transition: background-color 0.25s;
 	color: #2a2a2a;
@@ -794,7 +794,7 @@ html > body > div button, html > body > div .Button
 
 html body .BigButton
 {
-	border-radius: 3px;
+	border-radius: 10px;
 }
 
 html > body > div button:last-child, html > body > div .Button:last-child
@@ -1031,7 +1031,7 @@ html .DockMenu .DockMenuHeader, html .DockMenu .DockMenuItem
 html .DockMenu .DockMenuHeader
 {
 	background: #20374D;
-	border-radius: 2px 2px 0 0;
+	border-radius: 10px 10px 0 0;
 }
 
 html .DockMenu .DockMenuItem
@@ -1072,22 +1072,16 @@ html .View
 {
 	border-bottom: none;
 	border-top: none;
-	border-radius: 3px;
-	-moz-border-radius: 3px;
-	-webkit-border-radius: 3px;
+	border-radius: 10px;
 }
 html body:not([mobile]) .View
 {
 	box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
-	-moz-box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
-	-webkit-box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
 }
 
 html .View.Active
 {
 	box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
-	-moz-box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
-	-webkit-box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
 }
 
 html .View.Active > .Title
@@ -1096,7 +1090,7 @@ html .View.Active > .Title
 	border-left: none;
 	border-right: none;
 	border-bottom: none;
-	border-radius: 2px 2px 0 0;
+	border-radius: 10px 10px 0 0;
 }
 
 html .View > .Title
@@ -1105,7 +1099,7 @@ html .View > .Title
 	border-bottom: 1px solid rgba(0,0,0,0);
 	height: 28px;
 	background-image: none;
-	border-radius: 2px 2px 0 0;
+	border-radius: 10px 10px 0 0;
 	/* --- old color --- */
 	/*background-color: #4A6075;*/
 	/* --- new color --- */
@@ -1500,8 +1494,6 @@ html body.InputParadigmTablet .Desklet
 .View > .LeftBar
 {
 	border-radius: 0;
-	-moz-border-radius: 0;
-	-webkit-border-radius: 0;
 }
 
 html div.Listview > .Headers > .Header:nth-child(odd),
@@ -1559,7 +1551,7 @@ html .View > .Content
  
 html body:not([mobile]) .View > .Content
 {
-	border-radius: 0 0 3px 3px;
+	border-radius: 0 0 10px 10px;
 }
 
 html > body:not(.Inside):not(.Loading), html body .View:not([transparent]) .View > .Content
@@ -1568,7 +1560,7 @@ html > body:not(.Inside):not(.Loading), html body .View:not([transparent]) .View
 	/*background-color: #f9f9f9 !important;*/
 	/* --- new color --- */
 	background-color: #ECF0F1 !important;
-	border-radius: 0 0 2px 2px;
+	border-radius: 0 0 10px 10px;
 }
 
 html .ViewContainer[childview].Active > .MobileBack:before
@@ -1797,7 +1789,7 @@ html #WorkspaceMenu .Open > ul
 	top: 28px;
 	opacity: 1;
 	background: rgba(255,255,255,0.9);
-	border-radius: 0 0 2px 2px;
+	border-radius: 0 0 10px 10px;
 }
 
 html #WorkspaceMenu .Open > ul:before 
@@ -1814,25 +1806,22 @@ html #WorkspaceMenu .Open > ul:before
 
 html #WorkspaceMenu li:last-child
 {
-	border-radius: 0 0 2px 2px;
-	border-radius: 0 0 1.2px 1.2px;
+	border-radius: 0 0 10px 10px;
 }
 
 html #WorkspaceMenu ul ul li:first-child
 {
-	border-radius: 2px 2px 0 0;
-	border-radius: 1.2px 1.2px 0 0;
+	border-radius: 10px 10px 0 0;
 }
 
 html #WorkspaceMenu ul ul li:only-child
 {
-	border-radius: 2px;
-	border-radius: 1.2px;
+	border-radius: 10px;
 }
 
 html #WorkspaceMenu .Open ul > li ul
 {
-	border-radius: 2px;
+	border-radius: 10px;
 }
 
 html #WorkspaceMenu .Menu
@@ -2185,13 +2174,11 @@ html body[mobile=mobile] .View > .Title > div > span:after
 [mobile=mobile] #CalendarWidget
 {
 	border-radius: 0;
-	-moz-border-radius: 0;
-	-webkit-border-radius: 0;
 }
 
 html #Statusbar .Task
 {
-	border-radius: 2px;
+	border-radius: 10px;
 	height: 27px;
 	background-color: transparent;
 	padding: 5px 8px 7px 38px;
@@ -2218,7 +2205,7 @@ html > body #DockWindowList .Task.Active:hover
 
 html #DockWindowList .Task
 {
-	border-radius: 2px;
+	border-radius: 10px;
 	background-color: transparent;
 	box-shadow: none;
 }
@@ -2226,7 +2213,7 @@ html #DockWindowList .Task
 html > body #DockWindowList .Task.Active,
 html > body #Statusbar .Task.Active
 {
-	border-radius: 2px;
+	border-radius: 10px;
 	background-color: #20374D;
 }
 
@@ -2253,7 +2240,7 @@ html .PageActive
 	left: 0;
 	border-top: 0;
 	top: 0;
-	border-radius: 2px;
+	border-radius: 10px;
 	box-shadow: none;
 	border: 1px solid #e8e8e8;
 	opacity: 1;
@@ -2306,17 +2293,17 @@ html .TabActive
 
 html div.Tab:first-child
 {
-	border-radius: 3px 0 0 3px;
+	border-radius: 10px 0 0 10px;
 }
 
 html div.TabActive:last-child, html div.Tab:last-child
 {
-	border-radius: 0 3px 3px 0;
+	border-radius: 0 10px 10px 0;
 }
 
 html div.Tab:first-child:last-child
 {
-	border-radius: 3px;
+	border-radius: 10px;
 }
 
 html .Pages > .Tab, html .Pages > .TabActive
@@ -2806,7 +2793,7 @@ html body[mobile=mobile] .File .Icon
 [mobile] .View .FileDialog .FileBrowser .DiskItem > .Name:active
 {
 	background-color: rgba(67,82,96,0.4);
-	border-radius: 3px;
+	border-radius: 10px;
 }
 
 [mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name:after,
@@ -2928,7 +2915,7 @@ html .File a
 html body .File.Selected:before
 {
 	background: rgba(185,185,185,0.2);
-	border-radius: 2px;
+	border-radius: 10px;
 	content: " ";
 	display: block;
 	width: 120%;
@@ -3719,7 +3706,7 @@ input[type=text], input[type=range], input[type=number], input[type=date],
 input[type=email], input[type=username],
 input[type=datetime-local], input[type=password], html body textarea, html select, html select:hover
 {
-	border-radius: 2px;
+	border-radius: 10px;
 	border: 1px solid #e3e7e8;
 	background: #e8e8e8;
 	font-size: 0.9em;
@@ -3832,8 +3819,6 @@ body:not([tablet])[mobile=mobile] .View > .Title,
 body:not([tablet])[mobile=mobile] .View.Active > .Title
 {
 	border-radius: 0;
-	-moz-border-radius: 0;
-	-webkit-border-radius: 0;
 }
 body .View[maximized=true],
 body .View.Active[maximized=true]
