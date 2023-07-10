@@ -218,6 +218,12 @@ Friend.User = {
 						console.log( '%cWelcome to %cFriend OS!', 'font-weight: bold;', 'font-weight: bold; color: #5599ff;' );
 						window.console.log = function( msg ){};
 					}
+					else
+					{
+						console.log( '%cWelcome to %cFriend OS administrator!', 'font-weight: bold;', 'font-weight: bold; color: #5599ff;' );
+						console.log( 'This console may become messy with error reporting.' );
+						console.log( '****' );
+					}
 					
 					// If we have inviteHash, verify and add relationship between the inviter and the invitee.
 					if( info.inviteHash ) json.inviteHash = info.inviteHash;
