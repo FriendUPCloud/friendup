@@ -4230,6 +4230,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 					    if( themeName && themeName != 'default' && themeName != 'friendup13' )
 					    {
+					        console.log( 'THEME: ' + themeName );
 						    AddCSSByUrl( '/themes/' + themeName + '/scrollbars.css' );
 						    styles.href = '/system.library/module/?module=system&command=theme&args=' + encodeURIComponent( '{"theme":"' + themeName + '"}' ) + '&sessionid=' + Workspace.sessionId;
 					    }
