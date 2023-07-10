@@ -77,7 +77,7 @@
 	width: calc(50% - 4px);
 	height: 25px;
 	float: left;
-	border-radius: 5px;
+	border-radius: var(--ButtonBorderRadius);
 	box-sizing: border-box;
 	border: 1px solid rgba(0,0,0,0.3);
 	margin: 2px 2px;
@@ -161,7 +161,7 @@
 	background-color: rgba(0,0,0,0);
 	transition: background-color 0.25s;
 	box-sizing: border-box;
-	border-radius: 3px;
+	border-radius: var(--ButtonBorderRadius);
 	max-height: 78px;
 	overflow: hidden;
 }
@@ -182,7 +182,7 @@
 	width: 70px;
 	height: 70px;
 	background-color: #06609A;
-	border-radius: 4px;
+	border-radius: var(--ButtonBorderRadius);
 	border: 2px solid rgba(0,0,0,0.25);
 	float: left;
 	box-sizing: border-box;

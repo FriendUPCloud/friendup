@@ -6653,7 +6653,7 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 			title: title,
 			width: 400,
 			resize: false,
-			height: d.offsetHeight + 75,
+			height: d.offsetHeight + 105,
 			id: 'confirm_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random(),
 			'standard-dialog': true
 		} );

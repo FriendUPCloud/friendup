@@ -687,7 +687,7 @@ html body[mobile] .Dialog > .ScrollArea
 
 .Padding
 {
-	padding: var(--PaddingBox);
+	padding: var(--PaddingBox) var(--PaddingBoxLarger);
 	box-sizing: border-box;
 }
 
@@ -699,13 +699,13 @@ html body[mobile] .Dialog > .ScrollArea
 
 .PaddingLeft
 {
-	padding-left: var(--PaddingBox);
+	padding-left: var(--PaddingBoxLarger);
 	box-sizing: border-box;
 }
 
 .PaddingRight
 {
-	padding-right: var(--PaddingBox);
+	padding-right: var(--PaddingBoxLarger);
 	box-sizing: border-box;
 }
 
@@ -714,7 +714,6 @@ html body[mobile] .Dialog > .ScrollArea
 	padding-bottom: var(--PaddingBox);
 	box-sizing: border-box;
 }
-
 
 
 .BorderRadius

@@ -153,6 +153,7 @@
 	--PaddingInput:           2px 5px;
 	--PaddingTabs:            8px 10px 8px 10px;
 	--PaddingBox:             10px;
+	--PaddingBoxLarger:       15px;
 
 	/* Tables */
 	--TblListsBorderCollapse: collapse;

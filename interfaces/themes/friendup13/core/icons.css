@@ -168,7 +168,7 @@
 {
 	background: var(--ColorBgButton);
 	color: var(--ColorButton);
-	border-radius: 5px;
+	border-radius: var(--ButtonBorderRadius);
 }
 
 .FileBrowser .DiskItem:not(.Open) > .SubItems,
