@@ -11907,7 +11907,6 @@ function loadApplicationBasics( callback )
 		
 		// Preload theme CSS
 		// Legacy friendup12 uses old css system server side
-		console.log( 'THEME: What is the theme name?' + themeName );
 		let c_ = new File( themeName == 'friendup12' ? ( '/system.library/module/?module=system&command=theme&args=%7B%22theme%22%3A%22' + themeName + '%22%7D&sessionid=' + Workspace.sessionId ) : '/themes/friendup13/theme.css' );
 		c_.onLoad = function( data )
 		{
