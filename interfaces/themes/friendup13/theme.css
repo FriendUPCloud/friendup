@@ -2584,16 +2584,16 @@ html .File .Icon > div
 	height: 48px;
 }
 
-html .File .Icon > div.TypeZip,
-html .File .Icon > div.TypeZip,
-html .File .Icon > div.TypeFPkg,
-html .File .Icon > div.TypePKGLINUX,
-html .File .Icon > div.TypeLHA,
-html .File .Icon > div.TypeTGZ,
-html .File .Icon > div.Type7Z,
-html .File .Icon > div.TypeTAR,
-html .File .Icon > div.TypeGZ,
-html .File .Icon > div.TypeBZ
+html .File:not(.Row) .Icon > div.TypeZip,
+html .File:not(.Row) .Icon > div.TypeZip,
+html .File:not(.Row) .Icon > div.TypeFPkg,
+html .File:not(.Row) .Icon > div.TypePKGLINUX,
+html .File:not(.Row) .Icon > div.TypeLHA,
+html .File:not(.Row) .Icon > div.TypeTGZ,
+html .File:not(.Row) .Icon > div.Type7Z,
+html .File:not(.Row) .Icon > div.TypeTAR,
+html .File:not(.Row) .Icon > div.TypeGZ,
+html .File:not(.Row) .Icon > div.TypeBZ
 {
 	height: 40px;
 }
@@ -2652,16 +2652,16 @@ html .File.Compact .Icon .TypeBZ
 	bottom: 3px;
 }
 
-html .File .Icon > div.Directory,
-html .File .Icon > div.TypeZip,
-html .File .Icon > .TypeFPkg,
-html .File .Icon > .TypePKGLINUX,
-html .File .Icon > .TypeLHA,
-html .File .Icon > .TypeTGZ,
-html .File .Icon > .Type7Z,
-html .File .Icon > .TypeTAR,
-html .File .Icon > .TypeGZ,
-html .File .Icon > .TypeBZ
+html .File:not(.Row) .Icon > div.Directory,
+html .File:not(.Row) .Icon > div.TypeZip,
+html .File:not(.Row) .Icon > .TypeFPkg,
+html .File:not(.Row) .Icon > .TypePKGLINUX,
+html .File:not(.Row) .Icon > .TypeLHA,
+html .File:not(.Row) .Icon > .TypeTGZ,
+html .File:not(.Row) .Icon > .Type7Z,
+html .File:not(.Row) .Icon > .TypeTAR,
+html .File:not(.Row) .Icon > .TypeGZ,
+html .File:not(.Row) .Icon > .TypeBZ
 {
 	height: 40px;
 }

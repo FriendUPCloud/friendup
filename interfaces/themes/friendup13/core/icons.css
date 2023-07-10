@@ -918,7 +918,7 @@ html .File.ZoomX3 > .Icon
 
 html .File.ZoomX3 .Icon > div
 {
-	height: 140px;
+	height: 140px !important;
 }
 
 html .File.ZoomX3 .Icon > .Shared:after
