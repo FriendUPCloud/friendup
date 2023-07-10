@@ -11,17 +11,8 @@
 @import url(/themes/friendup13/flavors_dark.css);
 
 @font-face {
-    font-family: 'assistant';
-    src: url('/themes/friendup13/fonts/Assistant-Regular.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'assistant';
-    src: url('/themes/friendup13/fonts/Assistant-SemiBold.ttf') format('truetype');
-    font-weight: bold;
-    font-style: bold;
+    font-family: 'MavenPro';
+    src: url('/themes/friendup13/fonts/MavenPro-VariableFont_wght.ttf') format('truetype');
 }
 
 @font-face
@@ -153,7 +144,7 @@
 	--FontWeightButtonActive: bold;
 
 	/* Default face */
-	--FontFaceNormal:         assistant, sans serif;
+	--FontFaceNormal:         MavenPro, sans serif;
 
 	/* Font transforms */
 	--FontTransformThList:    uppercase;
