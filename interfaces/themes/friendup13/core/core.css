@@ -3448,6 +3448,19 @@ body.Offline #OfflineMessage
     color: #303030;
 }
 
+[mobile] #OfflineMessage > div
+{
+	height: 40px;
+}
+[mobile] #OfflineMessage > div:before
+{
+	top: 10px;
+}
+[mobile] #OfflineMessage > div h1
+{
+	margin: 11px 0 0 16px;
+}
+
 #OfflineMessage > div:before 
 {
     content: " ";

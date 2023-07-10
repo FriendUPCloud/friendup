@@ -145,6 +145,11 @@ html .Screen > .TitleBar > .Left > .Info
 	margin: 0 8px 0 8px;
 }
 
+html [mobile] .Screen > .TitleBar > .Left > .Info
+{
+	line-height: 40px;
+}
+
 html #Screens > div
 {
 	background: #20374D;
