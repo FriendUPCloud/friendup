@@ -2610,10 +2610,12 @@ function checkMobileBrowser()
 	window.isTouch = !!('ontouchstart' in window);
 	if( window.isMobile )
 	{
+		document.body.parentMode.setAttribute( 'mobile', 'mobile' );
 		document.body.setAttribute( 'mobile', 'mobile' );
 	}
 	else if( window.isTablet )
 	{
+    	document.body.parentNode.setAttribute( 'tablet', 'tablet' );
 		document.body.setAttribute( 'tablet', 'tablet' );
 	}
 	else

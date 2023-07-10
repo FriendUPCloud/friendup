@@ -68,6 +68,11 @@ html[mode='Workspace']
 	zoom: 1.05;
 }
 
+html[mode='Workspace'][mobile='mobile']
+{
+	zoom: 1;
+}
+
 body
 {
 	font-family: var(--FontFaceNormal);
