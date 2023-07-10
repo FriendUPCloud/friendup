@@ -112,17 +112,21 @@ if( $app->ID )
 		<base href="' . $path . '"/>
 		<script src="/webclient/js/apps/api.js"></script>' . $scripts . '
 		<script>
-			' . $scrp . '
-			Application.checkAppPermission = function( key )
-			{
-				var permissions = {}; // <- inject user specific permissions here
-				if( permissions[ key ] )
-					return permissions[ key ];
-				return false;
-			}
+		    let Friend = window.Friend ? window.Friend : {};
+		    Friend.launch = function()
+		    {
+			    ' . $scrp . '
+			    Application.checkAppPermission = function( key )
+			    {
+				    var permissions = {}; // <- inject user specific permissions here
+				    if( permissions[ key ] )
+					    return permissions[ key ];
+				    return false;
+			    }
+		    }
 		</script>
 	</head>
-	<body>
+	<body onload="Friend.launch()">
 	</body>
 </html>';
 
