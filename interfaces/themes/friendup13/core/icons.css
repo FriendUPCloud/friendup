@@ -59,7 +59,6 @@
     z-index: 3;
     text-align: center;
     height: 100%;
-    mix-blend-mode: difference;
 }
 
 .ToggleGroup .VolumeInfo > .SizeGroove .SizeBar.AlmostFull + .SizeText
