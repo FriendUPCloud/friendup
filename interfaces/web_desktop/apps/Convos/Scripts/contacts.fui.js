@@ -70,7 +70,7 @@ class FUIContacts extends FUIElement
         if( user ) this.options.user = user;
     }
     // Just check the contact
-    poll( contactName )
+    poll( contactName, message )
     {
         let self = this;
         
@@ -86,7 +86,23 @@ class FUIContacts extends FUIElement
             // Not active, simply add activity marker
             else
             {
+            	// TODO: Support public key decryption
+				let text = decodeURIComponent( message );
+			    try
+			    {
+			        let dec = new TextDecoder().decode( base64ToBytes( text ) );
+			        text = dec;
+			    }
+			    catch( e2 ){};
+            
                 ele.classList.add( 'NewActivity' );
+                Notify( {
+                	title: 'From ' + contactName, 
+                	text: text
+                }, false, function()
+                {
+                	ele.click();                	
+                } );
             }
         }
     }

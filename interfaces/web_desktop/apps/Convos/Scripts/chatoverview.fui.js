@@ -141,7 +141,7 @@ class FUIChatoverview extends FUIElement
     	}
     	chans[ 0 ].click();
     }
-    activateDirectMessage( user )
+    activateDirectMessage( user, message )
     {
         let tabs = this.domChannels.getElementsByClassName( 'Channel' );
         for( let a = 0; a < tabs.length; a++ )
@@ -152,7 +152,7 @@ class FUIChatoverview extends FUIElement
     		    if( tabs[ a ].classList.contains( 'Active' ) )
     		    {
     		        let contacts = FUI.getElementByUniqueId( 'contacts' );
-    		        contacts.poll( user );
+    		        contacts.poll( user, message );
     		        return;
     		    }
     			tabs[ a ].classList.add( 'Active' );

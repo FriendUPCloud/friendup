@@ -25,7 +25,7 @@ Application.receiveMessage = function( msg )
     if( msg.sender )
     {
         let overview = FUI.getElementByUniqueId( 'convos' );
-        overview.activateDirectMessage( msg.sender );
+        overview.activateDirectMessage( msg.sender, msg.message );
     }
 }
 
