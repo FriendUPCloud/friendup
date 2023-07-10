@@ -31,6 +31,8 @@
     position: relative;
     width: 180px;
     height: 17px;
+    border-radius: var(--ButtonBorderRadius);
+    overflow: hidden;
 }
 
 .ToggleGroup .VolumeInfo > .SizeGroove .SizeBar
@@ -39,13 +41,13 @@
     top: 0;
     left: 0;
     height: 17px;
-    background-color: var(--fui-color-aqua);
+    background-color: var(--ColorLEDAvailable);
     z-index: 1;
 }
 
 .ToggleGroup .VolumeInfo > .SizeGroove .SizeBar.AlmostFull
 {
-	background-color: var(--fui-color-amaranth);
+	background-color: var(--ColorLEDAlert);
 }
 
 .ToggleGroup .VolumeInfo .SizeText 
@@ -57,11 +59,12 @@
     z-index: 3;
     text-align: center;
     height: 100%;
+    mix-blend-mode: difference;
 }
 
 .ToggleGroup .VolumeInfo > .SizeGroove .SizeBar.AlmostFull + .SizeText
 {
-	color: white;
+	mix-blend-mode: difference;
 }
 
 .IconWindow .Content > .FileBrowserContainer + .Listview,
