@@ -49,7 +49,7 @@ html
 
 html body
 {
-	font-size: 15px;
+	font-size: var(--FontSizeDefault);
 	color: #333333;
 	-webkit-font-smoothing:antialiased;
 }
