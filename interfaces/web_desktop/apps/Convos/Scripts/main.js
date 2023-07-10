@@ -19,6 +19,8 @@ Application.run = function( msg ){
 		background: 'transparent',
 		width: 800,
 		height: 600,
+		'min-width': 360,
+		'min-height': 360,
 		quitOnClose: true,
 		singleInstance: true
 	} );
