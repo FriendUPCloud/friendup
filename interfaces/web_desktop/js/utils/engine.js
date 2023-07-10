@@ -2610,7 +2610,7 @@ function checkMobileBrowser()
 	window.isTouch = !!('ontouchstart' in window);
 	if( window.isMobile )
 	{
-		document.body.parentMode.setAttribute( 'mobile', 'mobile' );
+		document.body.parentNode.setAttribute( 'mobile', 'mobile' );
 		document.body.setAttribute( 'mobile', 'mobile' );
 	}
 	else if( window.isTablet )
