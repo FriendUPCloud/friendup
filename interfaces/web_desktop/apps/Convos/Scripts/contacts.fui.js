@@ -117,6 +117,9 @@ class FUIContacts extends FUIElement
             d.className += ' User';
         }
         d.record = contact;
+       	let online = ( Math.floor( new Date().getTime() / 1000 ) - parseInt( contact.LastActionTime ) ) <= 600;
+       	if( online )
+       		d.className += ' Online';
         d.innerHTML = '<span class="Avatar"></span><span class="Name">' + contact.Fullname + '</span>';
         d.onclick = function()
         {

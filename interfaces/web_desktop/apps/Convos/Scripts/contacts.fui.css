@@ -53,6 +53,20 @@
     box-sizing: border-box;
 }
 
+.Contact.Online:before 
+{
+    position: absolute;
+    top: 29px;
+    left: 31px;
+    content: " ";
+    width: 12px;
+    height: 12px;
+    z-index: 3;
+    background-color: var(--ColorLEDOn);
+    border-radius: 100%;
+    border: 2px solid white;
+}
+
 .FUIContacts .Contacts .Slot:nth-child(even) .Contact
 {
     background-color: var(--fui-list-item-background-alternate);
