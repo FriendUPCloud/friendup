@@ -1719,13 +1719,18 @@ html .Screen > .TitleBar:after
 {
 	content: " ";
 	position: absolute;
-    top: 2px;
+    top: 3px;
     left: 9px;
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     background-repeat: no-repeat;
     background-size: contain;
     background-image: url(/iconthemes/friendup15/ScreenLogo.svg);
+}
+
+html body.Charcoal .Screen > .TitleBar:after
+{
+    filter: brightness(1.2);
 }
 
 html .Screen > .TitleBar .Left
