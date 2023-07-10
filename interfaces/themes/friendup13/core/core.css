@@ -116,14 +116,10 @@ body > iframe
 	display: block;
 	float: left;
 	margin: 10px;
-	border-radius: 3px;
-	-moz-border-radius: 3px;
-	-webkit-border-radius: 3px;
+	border-radius: 10px;
 	background: black;
 	border: 0;
 	box-shadow: 0px 2px 4px rgba(0,0,0,0.5);
-	-moz-box-shadow: 0px 2px 4px rgba(0,0,0,0.5);
-	-webkit-box-shadow: 0px 2px 4px rgba(0,0,0,0.5);
 	width: 144px;
 	height: 200px;
 }
@@ -247,12 +243,8 @@ select
 	border-right: var(--BorderDefaultRight);
 	border-bottom: var(--BorderDefaultBottom);
 	box-shadow: var(--BoxShadowButton);
-	-moz-box-shadow: var(--BoxShadowButton);
-	-webkit-box-shadow: var(--BoxShadowButton);
 	text-shadow: none;
 	border-radius: var(--ButtonBorderRadius);
-	-moz-border-radius: var(--ButtonBorderRadius);
-	-webkit-border-radius: var(--ButtonBorderRadius);
 	cursor: hand;
 	cursor: pointer;
 	position: relative;
@@ -368,12 +360,8 @@ button, .Button
 	border-right: var(--BorderDefaultRight);
 	border-bottom: var(--BorderDefaultBottom);
 	box-shadow: var(--BoxShadowButton);
-	-moz-box-shadow: var(--BoxShadowButton);
-	-webkit-box-shadow: var(--BoxShadowButton);
 	text-shadow: var(--TxtShdPositive);
 	border-radius: var(--ButtonBorderRadius);
-	-moz-border-radius: var(--ButtonBorderRadius);
-	-webkit-border-radius: var(--ButtonBorderRadius);
 	cursor: hand;
 	cursor: pointer;
 	position: relative;
@@ -598,8 +586,6 @@ div.Ghosted, .Ghosted *
 {
 	border: var(--BorderBox);
 	border-radius: var(--BorderBoxRadius);
-	-moz-border-radius: var(--BorderBoxRadius);
-	-webkit-border-radius: var(--BorderBoxRadius);
 	padding: var(--PaddingBox);
 	background: var(--ColorBgBox);
 	color: var(--ColorBox);
@@ -936,9 +922,7 @@ p.Layout
 {
 	position: fixed;
 	border: 1px solid #777777;
-	border-radius: 5px;
-	-moz-border-radius: 5px;
-	-webkit-border-radius: 5px;
+	border-radius: 10px;
 	background: #c5c0c0;
 	z-index: 9999;
 }
@@ -953,8 +937,6 @@ p.Layout
 	padding: 2px 4px;
 	background: #871433;
 	border-radius: 2px;
-	-moz-border-radius: 2px;
-	-webkit-border-radius: 2px;
 	width: 24px;
 	text-align: center;
 	color: #fff;
@@ -973,8 +955,6 @@ h2 .DateField, .DateField
 	float: left;
 	display: block;
 	border-radius: 3px;
-	-moz-border-radius: 3px;
-	-webkit-border-radius: 3px;
 	height: 22px;
 	vertical-align: middle;
 	margin: 7px 5px 0 -2px;
@@ -1026,13 +1006,9 @@ th > a.active { font-weight: bold; text-decoration: underline; }
 {
 	position: absolute;
 	border: 1px solid #777777;
-	border-radius: 5px;
-	-moz-border-radius: 5px;
-	-webkit-border-radius: 5px;
+	border-radius: 10px;
 	background: #c5c0c0;
 	box-shadow: 0px 1px 5px rgba(0,0,0,0.5);
-	-moz-box-shadow: 0px 1px 5px rgba(0,0,0,0.5);
-	-webkit-box-shadow: 0px 1px 5px rgba(0,0,0,0.5);
 }
 
 .GuiPopup > .Center > div > div
@@ -1104,11 +1080,7 @@ th > a.active { font-weight: bold; text-decoration: underline; }
 { 
 	position: relative;
 	box-shadow: 0px 0px 3px rgba(0,0,0,0.5);
-	-moz-box-shadow: 0px 0px 3px rgba(0,0,0,0.5);
-	-webkit-box-shadow: 0px 0px 3px rgba(0,0,0,0.5);
-	border-radius: 3px;
-	-moz-border-radius: 3px;
-	-webkit-border-radius: 3px;
+	border-radius: 10px;
 }
 .GuiContainer > div.GuiContent
 {
@@ -1200,7 +1172,7 @@ table.Calendar td:hover { background: #333333; color: #ffffff; }
     height: 165px;
     box-shadow: 0px 0px 20px rgba(0,0,0,0.5);
     background: #ffffff;
-    border-radius: 5px;
+    border-radius: 10px;
 }
 
 @media (max-width: 460px)
@@ -1213,7 +1185,7 @@ table.Calendar td:hover { background: #333333; color: #ffffff; }
 		height: 250px;
 		box-shadow: 0px 0px 20px rgba(0,0,0,0.5);
 		background: #ffffff;
-		border-radius: 5px;
+		border-radius: 10px;
 	}
 }
 
@@ -1407,7 +1379,7 @@ html #WorkspaceMenu .Menu li.Disabled *
 	z-index: 90;
 	left: -1000px;
 	top: -1000px;
-	border-radius: 5px;
+	border-radius: 10px;
 	box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
 }
 
@@ -1438,7 +1410,7 @@ html #WorkspaceMenu .Menu li.Disabled *
 
 .Rounded
 {
-	border-radius: 3px;
+	border-radius: 10px;
 }
 
 /* Colors */
@@ -1830,7 +1802,7 @@ a.Negative:hover, a.Negative:active, a.Negative:visited
 }
 body #CalendarWidget
 {
-	border-radius: 0 0 0 3px;
+	border-radius: 0 0 0 10px;
 }
 
 
@@ -1987,7 +1959,7 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 	left: 0px;
 	background: rgba(255,255,255,0.8);
 	color: black;
-	border-radius: 8px;
+	border-radius: 10px;
 	padding: 8px;
 	white-space: no-wrap;
 	box-shadow: 0px 2px rgba(0,0,0,0.5);
@@ -2016,7 +1988,7 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
     background: rgba(0,0,0,0.3);
     padding: 8px;
     box-sizing: border-box;
-    border-radius: 4px;
+    border-radius: 10px;
     margin: 0 0 5px 0;
 }
 
@@ -2037,7 +2009,7 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 	transition: transform,opacity,height 0.5s,0.25s,0.25s !important;
 	background: white;
 	box-shadow: 0px 2px 4px rgba(0,0,0,0.4);
-	border-radius: 8px;
+	border-radius: 10px;
 	position: absolute;
 	z-index: 5;
 	color: #202020;
@@ -2058,7 +2030,6 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 {
 	content: " ";
 	display: block;
-	/* border-radius: 100%; */
 	background: white;
 	width: 50px;
 	height: 50px;
@@ -2099,7 +2070,7 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 	margin: 10px 5px 5px 5px;
 	float: left;
 	border: 1px solid rgba(128,128,128,0.5);
-	border-radius: 2px;
+	border-radius: 10px;
 	box-sizing: border-box;
 	height: 200px;
 	overflow: hidden;
@@ -2152,7 +2123,7 @@ body:not([mobile]):not([tablet]) #Available_tutorials .Tutorial > div:hover
 #Available_tutorials .Tutorial.Big img
 {
     max-width: 100%;
-    border-radius: 3px;
+    border-radius: 10px;
 }
 
 #Available_tutorials .VContentTop:after
@@ -2229,7 +2200,7 @@ body:not([mobile]):not([tablet]) #Available_tutorials .Tutorial > div:hover
 	background-color: rgba(0,0,0,0.7);
 	box-shadow: 0 2px 3px rgba(0,0,0,0.3);
 	color: white;
-	border-radius: 3px;
+	border-radius: 10px;
 	outline : unset;
 }
 
@@ -2286,7 +2257,7 @@ html body.WindowMenu .Widget
 {
 	transition: all 0.15s;
 	opacity: 0;
-	border-radius: 4px;
+	border-radius: 10px;
 	height: 0px;
 	box-shadow: 0px 2px 4px rgba(0,0,0,0.6);
 	max-height: 0px;
@@ -2354,7 +2325,7 @@ body:not([mobile]):not([tablet]) .Widget .MenuItems .MenuItem:hover
 .Widget .MenuItems .MenuItem:last-child
 {
 	padding-bottom: 10px;
-	border-radius: 0 0 3px 3px;
+	border-radius: 0 0 10px 10px;
 }
 
 .Widget.HelpBubble:after
@@ -2532,9 +2503,7 @@ body #DeepestField
 	border: 0;
 	opacity: 0.7;
 	background: white;
-	border-radius: 3px;
-	-moz-border-radius: 3px;
-	-webkit-border-radius: 3px;
+	border-radius: 10px;
 }
 
 #ActionTray input:focus
@@ -2665,7 +2634,7 @@ html body .PopInfo + .BubbleInfo
 	top: 35px;
 	min-width: 100px;
 	max-height: 0px;
-	border-radius: 5px;
+	border-radius: 10px;
 	background: white;
 	color: black;
 	padding: 0 8px;
@@ -2877,17 +2846,17 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 
 .TrayElement .BubbleInfo.List > div > div:first-child
 {
-	border-radius: 5px 5px 0 0;
+	border-radius: 10px 10px 0 0;
 }
 
 .TrayElement .BubbleInfo.List > div > div:last-child
 {
-	border-radius: 0 0 5px 5px;
+	border-radius: 0 0 10px 10px;
 }
 
 .TrayElement .BubbleInfo.List > div > div:only-child
 {
-	border-radius: 5px;
+	border-radius: 10px;
 }
 
 /* Voice overlay handsfree mode --------------------------------------------- */
@@ -2963,9 +2932,7 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 
 .Desklet
 {
-	border-radius: 3px;
-	-moz-border-radius: 3px;
-	-webkit-border-radius: 3px;
+	border-radius: 10px;
 	background: rgba(0,0,0,0.5);
 	transition: top,left,width,height 0.25s;
 	height: 0;
@@ -2982,10 +2949,7 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 	background-repeat: no-repeat;
 	background-size: contain;
 	transition: filter 0.15s;
-	border-radius: 2px;
-	-moz-border-radius: 2px;
-	-webkit-border-radius: 2px;
-	-webkit-filter: drop-shadow(0 0 5px rgba(0,0,0,1));
+	border-radius: 10px;
 	filter: drop-shadow(0 0 5px rgba(0,0,0,1));
 	border: 0;
 }
@@ -3030,7 +2994,7 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
     transition: opacity 0.75s;
     opacity: 0;
     pointer-events: none;
-    border-radius: 5px;
+    border-radius: 10px;
 }
 
 /* running apps */
@@ -3163,7 +3127,7 @@ body:not([mobile]) #TaskSwitcher
 	left: 20%;
 	width: 60%;
 	height: 120px;
-	border-radius: 5px;
+	border-radius: 10px;
 	background: rgba(0,0,0,0.7);
 	transition: opacity 0.25s;
 	opacity: 0;
@@ -3350,7 +3314,7 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 	height: 24px;
 	line-height: 22px;
 	background: rgba(255,255,255,0.5);
-	border-radius: 5px;
+	border-radius: 10px;
 	margin: 5px 5px 0 0 !important;
 	box-sizing: border-box;
 	border: 1px solid rgba(0,0,0,0.1);
@@ -3828,7 +3792,7 @@ html .DirectoryToolbar button.Search
 	margin: 0 4px 0 0;
 	text-shadow: 0px 1px 1px rgba(0,0,0,0.5);
 	box-shadow: none;
-	border-radius: 5px;
+	border-radius: 10px;
 }
 
 .DirectoryToolbar button:hover
@@ -3845,7 +3809,7 @@ html .DirectoryToolbar button.Search
 	left: 0;
 	width: 100%;
 	height: 39px;
-	border-radius: 3px;
+	border-radius: 10px;
 	input-events: none;
 	transition: background-color 0.25s;
 	-moz-transition: background-color 0.25s;
@@ -4193,11 +4157,7 @@ html #Statusbar
 	opacity: 1;
 	border: 0;
 	border-radius: 0;
-	-moz-border-radius: 0;
-	-webkit-border-radius: 0;
 	box-shadow: none;
-	-moz-box-shadow: none;
-	-webkit-box-shadow: none;
 	padding: 0;
 	z-index: 2147483640;
 }
@@ -4289,7 +4249,7 @@ html #Statusbar > #Taskbar .Task
 	bottom: 0px;
 	padding: 7px 8px 7px 38px;
 	background-color: #878787;
-	border-radius: 5px 5px 0 0;
+	border-radius: 10px 10px 0 0;
 	box-shadow: 0px 1px 5px rgba(0,0,0,0.5);
 	color: white;
 	text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
@@ -4333,7 +4293,7 @@ html #DockWindowList .Task.Directory
 
 #DockWindowList .Task
 {
-	border-radius: 5px;
+	border-radius: 10px;
 	height: 22px;
 	line-height: 9px;
     margin-bottom: 4px;
@@ -4430,12 +4390,12 @@ html #Tray > div
 {
 	background: rgba(0,0,0,0.8);
 	box-shadow: 0px 1px 5px rgba(0,0,0,0.8);
-	border-radius: 3px 3px 0 0;
+	border-radius: 10px 10px 0 0;
 }
 
 .DockMenu .DockSubMenu .DockSubMenu
 {
-	border-radius: 3px;
+	border-radius: 10px;
 }
 
 .DockMenu .DockMenuItem
@@ -4464,7 +4424,7 @@ html #Tray > div
 	position: relative;
 	background: rgba(74,157,194,0.4);
 	font-weight: bold;
-	border-radius: 3px 3px 0 0;
+	border-radius: 10px 10px 0 0;
 }
 
 .DockMenu .DockMenuItem
@@ -4474,7 +4434,7 @@ html #Tray > div
 
 .DockMenu .DockSubMenu .DockSubMenu .DockMenuItem:last-child
 {
-	border-radius: 0 0 3px 3px;
+	border-radius: 0 0 10px 10px;
 }
 
 .DockMenu .DockMenuItem:hover,
@@ -4599,12 +4559,8 @@ html #Tray > div
 {
 	background: rgba(0,0,0,0.30);;
 	border: 1px solid rgba(0,0,0,0.30);
-	border-radius: 3px;
+	border-radius: 10px;
 	box-shadow: inset 0px 0px 4px 2px rgba(0,0,0,0.1);
-	-webkit-box-shadow: inset 0px 0px 4px 2px rgba(0,0,0,0.1);
-	-moz-box-shadow: inset 0px 0px 4px 2px rgba(0,0,0,0.1);
-	-ms-box-shadow: inset 0px 0px 4px 2px rgba(0,0,0,0.1);
-	-o-box-shadow: inset 0px 0px 4px 2px rgba(0,0,0,0.1);
 	position: absolute;
 	z-index: 0;
 }
@@ -4627,7 +4583,7 @@ html #Tray > div
 .Inside #DeepestCanvas
 {
 	background: #303030;
-	border-radius: 4px;
+	border-radius: 10px;
 }
 
 .Inside #DeepestField
@@ -4659,7 +4615,7 @@ html #Tray > div
 	top: 260px;
 	display: block;
 	color: white;
-	border-radius: 2px 2px 0 0;
+	border-radius: 10px 10px 0 0;
 	height: 30px;
 	line-height: 30px;
 	z-index: 2;
@@ -4688,7 +4644,7 @@ html #Tray > div
 	display: block;
 	color: white;
 	left: 20px;
-	border-radius: 2px 2px 0 0;
+	border-radius: 10px 10px 0 0;
 	height: 30px;
 	line-height: 30px;
 	z-index: 2;
@@ -4718,7 +4674,7 @@ html #Tray > div
 	display: block;
 	color: white;
 	left: 20px;
-	border-radius: 2px 2px 0 0;
+	border-radius: 10px 10px 0 0;
 	height: 30px;
 	line-height: 30px;
 	z-index: 2;
@@ -4734,7 +4690,7 @@ html #Tray > div
 {
 	background: rgba(0,0,0,0.3);
 	overflow: auto;
-	border-radius: 5px;
+	border-radius: 10px;
 	padding: 45px 20px 20px 20px;
 	box-sizing: border-box;
 	color: white;
@@ -4872,9 +4828,7 @@ body[mobile=mobile] #DeepestField #CapabilityHeader
 	position: relative;
 	z-index: 1;
 	background: black;
-	border-radius: 3px;
-	-moz-border-radius: 3px;
-	-webkit-border-radius: 3px;
+	border-radius: 10px;
 }
 
 #DeepestField .AppSandbox > .Close
@@ -4887,9 +4841,7 @@ body[mobile=mobile] #DeepestField #CapabilityHeader
 	background-color: #333333;
 	background-position: center;
 	background-size: contain;
-	border-radius: 2px;
-	-moz-border-radius: 2px;
-	-webkit-border-radius: 2px;
+	border-radius: 10px;
 	transition: background 0.3s;
 }
 
@@ -4994,7 +4946,7 @@ textarea.InputHeight, input.InputHeight
 	left: 14px;
 	width: 2px;
 	height: 2px;
-	border-radius: 4px;
+	border-radius: 10px;
 	background-color: white;
 }
 
@@ -5006,7 +4958,7 @@ textarea.InputHeight, input.InputHeight
 	right: 0;
 	width: 30px;
 	height: 15px;
-	border-radius: 3px;
+	border-radius: 10px;
 	border: 0;
 	background-color: white;
 	filter: drop-shadow(0px 0px 2px rgba(0,0,0,0.5));
@@ -5021,7 +4973,7 @@ blockquote.Code
 	color: #e0e0e0;
 	padding: 20px;
 	border: 1px dotted #000000;
-	border-radius: 3px;
+	border-radius: 10px;
 }
 
 /* Hardware accelerated ----------------------------------------------------- */
@@ -5188,7 +5140,7 @@ div.Orange, button.Orange
 	background-color: var(--ColorBgButton);
 	color: var(--ColorButton);
 	cursor: pointer;
-	border-radius: 5px;
+	border-radius: 10px;
 }
 
 .SliderElement:not(.Vertical) .SliderGroove .SliderButton:active:after,
@@ -5431,7 +5383,7 @@ div.Orange, button.Orange
 	height: 0px;
 	pointer-events: none;
 	transition: opacity,height,box-shadow 0.25s,0.25s,0.25s;
-	border-radius: 0 0 3px 3px;
+	border-radius: 0 0 10px 10px;
 	overflow: hidden;
 	box-shadow: 0 0 0 rgba(0,0,0,0);
 	box-sizing: border-box;

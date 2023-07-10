@@ -182,10 +182,10 @@
 	--TblListsBorderSpacing:  0px;
 
 	/* Borders */
-	--ButtonBorderRadius:     0px;
+	--ButtonBorderRadius:     10px;
 	--BorderBox:              1px solid rgba(255,255,255,0.1);
 	--BorderInput:            1px solid #c0c0c0;
-	--BorderBoxRadius:        2px;
+	--BorderBoxRadius:        10px;
 	--WinBorderTopActive:     1.4px solid #83c3ff;
 	--WinBorderLeftActive:    1px solid #1d66aa;
 	--WinBorderRightActive:   1px solid #1d66aa;
@@ -196,7 +196,7 @@
 	--WinBorderBottomBlur:    1.4px solid #707070;
 	--WinBottomBarHeight:     17px;
 	--WinContentBottom:       17px;
-	--BorderRadiusTabs:       3px 3px 0 0;
+	--BorderRadiusTabs:       10px 10px 0 0;
 	--BorderPageActive:       none;
 	--BorderRuler:            1px solid rgba(255,255,255,0.1);
 
@@ -206,11 +206,11 @@
 	--BorderDefaultBottom:    1px solid rgba(0,0,0,0.1);
 
 	/* Border radius */
-	--BorderRadius:            5px;
-	--BorderTopLeftRadius:     5px;
-	--BorderTopRightRadius:    5px;
-	--BorderBottomRightRadius: 5px;
-	--BorderBottomLeftRadius:  5px;
+	--BorderRadius:            10px;
+	--BorderTopLeftRadius:     10px;
+	--BorderTopRightRadius:    10px;
+	--BorderBottomRightRadius: 10px;
+	--BorderBottomLeftRadius:  10px;
 
 	/* Box shadow */
 	--BoxShadowButton:        none;
