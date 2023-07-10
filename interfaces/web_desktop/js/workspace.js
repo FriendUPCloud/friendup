@@ -893,7 +893,7 @@ Workspace = {
 	},
 	initUserWorkspace: function( json, callback, ev )
 	{
-		console.log( 'Test2: Init user workspace.' );
+		//console.log( 'Test2: Init user workspace.' );
 		
 		let _this = Workspace;
 
