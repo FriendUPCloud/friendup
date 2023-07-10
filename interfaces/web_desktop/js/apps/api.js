@@ -9170,7 +9170,6 @@ if( Friend )
 			parentClass.APIDefinition[ functionPath ] = definition;
 			return true;
 		}
-		console.log( 'ERROR - API function not found: ' + functionPath );
 		return 'ERROR - API function not found: ' + functionPath;
 	};
 
@@ -9181,7 +9180,6 @@ if( Friend )
 			Friend.APIDefinition = Friend.Utilities.cleanArray( Friend.APIDefinition, Friend.APIDefinition[ functionPath ] );
 			return true;
 		}
-		console.log( 'ERROR - API function not found: ' + functionPath );
 		return false;
 	}
 }
