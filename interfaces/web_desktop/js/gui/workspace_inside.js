@@ -4230,7 +4230,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 					    if( themeName && themeName != 'default' && themeName != 'friendup13' )
 					    {
-					        console.log( 'THEME: ' + themeName );
 						    AddCSSByUrl( '/themes/' + themeName + '/scrollbars.css' );
 						    styles.href = '/system.library/module/?module=system&command=theme&args=' + encodeURIComponent( '{"theme":"' + themeName + '"}' ) + '&sessionid=' + Workspace.sessionId;
 					    }
@@ -11908,6 +11907,7 @@ function loadApplicationBasics( callback )
 		
 		// Preload theme CSS
 		// Legacy friendup12 uses old css system server side
+		console.log( 'THEME: What is the theme name?' + themeName );
 		let c_ = new File( themeName == 'friendup12' ? ( '/system.library/module/?module=system&command=theme&args=%7B%22theme%22%3A%22' + themeName + '%22%7D&sessionid=' + Workspace.sessionId ) : '/themes/friendup13/theme.css' );
 		c_.onLoad = function( data )
 		{
