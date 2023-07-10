@@ -63,6 +63,11 @@ html
 	overflow: hidden;
 }
 
+html[mode='Workspace']
+{
+	zoom: 1.05;
+}
+
 body
 {
 	font-family: var(--FontFaceNormal);
