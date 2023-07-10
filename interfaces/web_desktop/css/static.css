@@ -32,6 +32,7 @@ body > .WelcomeGraphic.Animate.Done
 
 html > body
 {
+    border: 0 !important;
 	position: absolute;
 	top: 0;
 	left: 0;
