@@ -70,6 +70,12 @@ html body a, html body a:visited
 	color: #2980B9;
 }
 
+#launcherview .Content 
+{
+    background: rgba(0,0,0,0.7);
+    color: white;
+}
+
 html body #DoorsScreen .Left > .VirtualWorkspaces
 {
 	border-left: 1px solid rgba(0,0,0,0.05);

@@ -9685,7 +9685,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			return this.launcherWindow.activate();
 		}
-		let w = new View( {
+		
+		let flgs = {
 			title: i18n( 'menu_execute_command' ),
 			width: 320,
 			height: 80,
@@ -9695,7 +9696,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			id: 'launcherview',
 			dialog: true,
 			'standard-dialog': true
-		} );
+		};
+		if( isMobile )
+		{
+			flgs.background = 'transparent';
+		}
+		
+		let w = new View( flgs );
 		
 		w.onClose = function()
 		{
