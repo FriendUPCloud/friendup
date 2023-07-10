@@ -43,6 +43,7 @@
     height: 17px;
     background-color: var(--ColorLEDAvailable);
     z-index: 1;
+    transition: width 0.25s;
 }
 
 .ToggleGroup .VolumeInfo > .SizeGroove .SizeBar.AlmostFull
