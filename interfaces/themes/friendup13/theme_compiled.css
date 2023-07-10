@@ -1,0 +1,3741 @@
+/* This file is simply a raw copy of theme.css for compatability */
+@import url(/themes/friendup13/definitions.css);
+@import url(/themes/friendup13/core/core.css);
+@import url(/themes/friendup13/core/lists.css);
+@import url(/themes/friendup13/core/windows.css);
+@import url(/themes/friendup13/core/icons.css);
+@import url(/themes/friendup13/core/tabs.css);
+@import url(/themes/friendup13/core/workspace.css);
+@import url(/themes/friendup13/core/font-awesome.min.css);
+@import url(/webclient/css/FUI.css);
+@import url(/themes/friendup13/flavors_charcoal.css);
+@import url(/themes/friendup13/flavors_synthwave.css);
+@import url(/themes/friendup13/flavors_dark.css);
+
+@font-face {
+    font-family: 'MavenPro';
+    src: url('/themes/friendup13/fonts/MavenPro-VariableFont_wght.ttf') format('truetype');
+}
+
+@font-face
+{
+	font-family: fontawesome;
+	src: url(/webclient/theme/fonts/FontAwesome.otf);
+}
+
+/* VIRTUAL ELEMENTS --------------------------------------------------------- */
+
+/* Where the windows can move */
+.ScreenContentMargins
+{
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+}
+/* DONE VIRTUAL ELEMENTS ---------------------------------------------------- */
+
+::selection
+{
+	background: #1F2D39;
+	color: #E7B66F;
+}
+
+html 
+{
+	height: 100vh;
+	width: 100vw;
+	-webkit-text-size-adjust: 100%;
+}
+
+html body
+{
+	font-size: var(--FontSizeDefault);
+	color: #333333;
+	-webkit-font-smoothing:antialiased;
+}
+
+html body[mobile=mobile]
+{
+	font-size: 1em;
+}
+
+html body hr.Divider
+{
+	border-top: 1px solid rgba(0,0,0,0.05);
+	margin: 10px 0 10px 0;
+}
+
+html body a, html body a:visited
+{
+	color: #2980B9;
+}
+
+html body #DoorsScreen .Left > .VirtualWorkspaces
+{
+	border-left: 1px solid rgba(0,0,0,0.05);
+	border-right: 1px solid rgba(0,0,0,0.05);
+	padding-left: 0;
+	padding-right: 0;
+}
+
+html #DoorsScreen .Left > .VirtualWorkspaces > div
+{
+	height: 16px;
+	margin: 5px 6px 0 0 !important;
+	border-radius: 10px;
+	line-height: 16px;
+	overflow: hidden;
+	border: 0;
+	background: rgba(0,0,0,0.1);
+}
+
+html #DoorsScreen .Left > .VirtualWorkspaces > div:hover
+{
+	background: rgba(0,0,0,0.8);
+}
+
+html #DoorsScreen .Left > .VirtualWorkspaces > div:hover > span
+{
+	color: rgba(255,255,255,0.6);
+}
+
+html #DoorsScreen .Left > .VirtualWorkspaces > div.Active:hover
+{
+	background: rgba(0,0,0,0.9);
+}
+
+html #DoorsScreen .Left > .VirtualWorkspaces > div.Active
+{
+	background: rgba(0,0,0,0.4);
+	border: 0;
+}
+
+html #DoorsScreen .Left > .VirtualWorkspaces > div:first-child
+{
+	margin-left: 6px !important;
+}
+
+html #DoorsScreen .Left > .VirtualWorkspaces > div > span
+{
+	font-weight: normal;
+	font-size: 0.8em;
+}
+
+html #DoorsScreen .Left > .VirtualWorkspaces > div.Active > span
+{
+	background: transparent;
+	color: #e0e0e0;
+}
+
+html .Screen > .TitleBar > .Left
+{
+	margin-left: 0;
+	font-size: 1.1em;
+}
+
+html .Screen > .TitleBar > .Left *
+{
+	margin: 0;
+	color: #455155;
+	font-weight: bold;
+}
+
+html .Screen > .TitleBar > .Left > .Info
+{
+	margin: 0 8px 0 8px;
+}
+
+html #Screens > div
+{
+	background: #20374D;
+}
+
+html #DoorsScreen > .ScreenContent,
+html body:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
+{
+	top: 26px !important;
+	height: calc(100vh - 26px) !important;
+	min-height: calc(100vh - 26px) !important;
+}
+
+html body[mobile=mobile] #DoorsScreen > .ScreenContent,
+html body[mobile=mobile]:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
+{
+	top: 40px !important;
+	height: calc(100vh - 40px) !important;
+	min-height: calc(100vh - 40px) !important;
+}
+
+html .Screen > .ScreenContent
+{
+	perspective: 1000px;
+	perspective-origin: center;
+}
+
+html body .Screen > .TitleBar.Busy:after 
+{
+    /*clip-path: ellipse(9px 9px at 10px 10px);
+    -webkit-clip-path: ellipse(9px 9px at 10px 10px);*/
+}
+
+/* Views not activated for mobile ------------------------------------------- */
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation):not(.OnWorkspace)
+{
+	position: absolute;
+	clear: none;
+	border-radius: 10px;
+	box-shadow: 0px 2px 5px rgba(0,0,0,0.4);
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer.Closing
+{
+	box-shadow: 0px 2px 5px rgba(0,0,0,0.0);
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelauedDeactivation) > .View
+{
+	border-radius: 10px 10px 0 0;
+	height: 100% !important;
+	max-height: 100%;
+	overflow: visible;
+	background: none;
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation):after
+{
+	content: " ";
+	position: absolute;
+	width: 100%;
+	left: 0;
+	top: 40px;
+	bottom: 0;
+	z-index: 2;
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation) .Content
+{
+	display: none;
+}
+
+html .ViewContainer[childview].Active > .MobileBack, 
+html .ViewContainer.Active > .MobileBack.Showing
+{
+	color: white;
+}
+
+html body[mobile][focusmode=clicktofront].ViewMaximized .ViewContainer:not(.Active):not(.DelayedDeactivation) .View > .Title > div > .Close
+{
+	top: 3px;
+	left: auto;
+	right: 0;
+}
+
+html body[mobile=mobile].ViewMaximized #Screens .ScreenContent .ViewContainer:not(.Active):not(.DelayedDeactivation) .View > .Title,
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation) > .View > .Title
+{
+	top: 0;
+	border-radius: 10px 10px 0 0;
+	background: none;
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation) > .View > .Title > div > span
+{
+	position: absolute;
+	width: 94%;
+	left: 2%;
+	text-align: center;
+	top: 60px;
+	z-index: 2;
+	color: white;
+	text-shadow: 0px 1px 2px rgba(0,0,0,0.5);
+	font-size: 0.9em;
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation) > .ViewIcon
+{
+	display: block;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: calc(100% + 20px);
+	z-index: 1;
+	background-size: 45%;
+	background-color: rgba(100,100,100,0.3);
+	background-position: center 20px;
+	background-repeat: no-repeat;
+	pointer-events: none;
+	border-radius: 10px;
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer.Closing > .ViewIcon
+{
+	width: 0%;
+	height: 0%;
+	top: 0%;
+	left: 0%;
+}
+
+/* 3D is for later ---------------------------------------------------------- */
+
+/*html .Screen > .ScreenContent > .WorkspaceWallpaper:after
+{
+	content: " ";
+	display: block;
+	background-image: url(/themes/friendup12/gfx/aqua.png);
+	background-size: cover;
+	background-position: center;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}*/
+
+/* End 3D is for later ------------------------------------------------------ */
+
+html .Off
+{
+	opacity: 0.2;
+}
+
+.BordersDefault
+{
+	border-top: 1px solid var(--ColorBorder);
+	border-bottom: 1px solid var(--ColorBorder);
+	border-left: 1px solid var(--ColorBorder);
+	border-right: 1px solid var(--ColorBorder);
+}
+
+.BordersDefaultNegative
+{
+	border-top: 1px solid #909090;
+	border-left: 1px solid #909090;
+	border-right: 1px solid #f8f8f8;
+	border-bottom: 1px solid #f8f8f8;
+}
+
+.BorderTop
+{
+	border-top: 1px solid var(--ColorBorder);
+}
+
+.BorderBottom
+{
+	border-bottom: 1px solid var(--ColorBorder);
+}
+
+.BorderLeft
+{
+	border-left: 1px solid var(--ColorBorder);
+}
+
+.BorderRight
+{
+	border-right: 1px solid var(--ColorBorder);
+}
+
+.BordersDefaultButton
+{
+	border-top: 1px solid var(--ColorBorder);
+	border-bottom: 1px solid var(--ColorBorder);
+	border-left: 1px solid var(--ColorBorder);
+	border-right: 1px solid var(--ColorBorder);
+}
+
+.BordersDefaultButtonHover
+{
+	border-top: 1px solid var(--ColorBorder);
+	border-bottom: 1px solid var(--ColorBorder);
+	border-left: 1px solid var(--ColorBorder);
+	border-right: 1px solid var(--ColorBorder);
+}
+
+.BordersDefaultButtonActive
+{
+	border-top: 1px solid var(--ColorBorder);
+	border-bottom: 1px solid var(--ColorBorder);
+	border-left: 1px solid var(--ColorBorder);
+	border-right: 1px solid var(--ColorBorder);
+}
+
+.ButtonGradients
+{
+	background: #e8e8e8;
+	background: -moz-linear-gradient(top, #e8e8e8 0%, #cecece 100%);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#e8e8e8), color-stop(100%,#cecece));
+	background: -webkit-linear-gradient(top, #e8e8e8 0%,#cecece 100%);
+	background: -o-linear-gradient(top, #e8e8e8 0%,#cecece 100%);
+	background: -ms-linear-gradient(top, #e8e8e8 0%,#cecece 100%);
+	background: linear-gradient(to bottom, #e8e8e8 0%,#cecece 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e8e8e8', endColorstr='#cecece',GradientType=0 );
+}
+
+.ButtonGradientsHover
+{
+	background: #3c4f72;
+	background: -moz-linear-gradient(top, #59A3C4 0%, #3c4f72 100%);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#59A3C4), color-stop(100%,#3c4f72));
+	background: -webkit-linear-gradient(top, #59A3C4 0%,#3c4f72 100%);
+	background: -o-linear-gradient(top, #59A3C4 0%,#3c4f72 100%);
+	background: -ms-linear-gradient(top, #59A3C4 0%,#3c4f72 100%);
+	background: linear-gradient(to bottom, #59A3C4 0%,#3c4f72 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#59A3C4', endColorstr='#3c4f72',GradientType=0 );
+}
+
+.BordersDefaultButtonActive
+{
+	background: #3c4f72;
+	background: -moz-linear-gradient(top, #59A3C4 0%, #3c4f72 100%);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#59A3C4), color-stop(100%,#3c4f72));
+	background: -webkit-linear-gradient(top, #59A3C4 0%,#3c4f72 100%);
+	background: -o-linear-gradient(top, #59A3C4 0%,#3c4f72 100%);
+	background: -ms-linear-gradient(top, #59A3C4 0%,#3c4f72 100%);
+	background: linear-gradient(to bottom, #59A3C4 0%,#3c4f72 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#59A3C4', endColorstr='#3c4f72',GradientType=0 );
+}
+
+.Selected
+{
+	background-color: var(--ColorBgSelect);
+	color:            var(--ColorSelect);
+}
+
+html #RegionSelector
+{
+	z-index: 101;
+	border-radius: 10px;
+}
+
+html .File.Selected .Title,
+html #Screens .File.Selected .Title
+{
+	background-color: #e0e0e0;
+	border: 0;
+	box-shadow: none;
+	color: #444444;
+	border-radius: 10px;
+	resize: none;
+}
+
+html #DoorsScreen > .ScreenContent > div > div > .File.Selected .Title
+{
+	background: none;
+	border: 0;
+	box-shadow: none;
+}
+
+html #DoorsScreen > .ScreenContent > div > div > .File .Title > span
+{
+	transition: background 0.25s;
+	display: inline-block;
+	color: #f0f0f0;
+	border-radius: 15px;
+	padding: 1px 8px 2px 8px;
+	overflow: hidden;
+	max-height: 37px;
+	box-shadow: inset 0px 0px 2px rgb(0 0 0 / 25%);
+	background-color: rgba(0,0,0,0.2);
+}
+
+html #DoorsScreen > .ScreenContent > div > div > .File .Title
+{
+	overflow: visible !important;
+}
+
+html body.Box #DoorsScreen > .ScreenContent > div > div > .File:not(.Selected) .Title > span
+{
+	background: rgba(0,0,0,0.3);
+}
+
+html #DoorsScreen > .ScreenContent > div > div > .File.Selected .Title > span
+{
+	background: rgba(0,0,0,0.8);
+}
+
+.ToolbarBackground
+{
+	background-color: var(--ColorBgBox);
+}
+
+.WindowBackground
+{
+	background-color: var(--ColorBackground);
+}
+
+.WindowBackgroundActive
+{
+	background-color: var(--ColorBackground);
+}
+
+.WindowContentBorders
+{
+	border-left: 3px solid #808080;
+	border-right: 3px solid #808080;
+	border-bottom: 3px solid #808080;
+}
+
+.WindowContentBordersActive
+{
+	border-left: 3px solid #1d66aa;
+	border-right: 3px solid #1d66aa;
+	border-bottom: 3px solid #1d66aa;
+}
+
+.TabBorders
+{
+	border-top: 1px solid #d8d8d8;
+	border-left: 1px solid #d8d8d8;
+	border-right: 1px solid #d8d8d8;
+	border-bottom: 0;
+}
+
+.TabActiveBorders
+{
+	border-top: 1px solid #e0e0e0;
+	border-left: 1px solid #e0e0e0;
+	border-right: 1px solid #e0e0e0;
+	border-bottom: 0;
+}
+
+.TabGradients
+{
+	background-image: -webkit-gradient(
+		linear,
+		left top,
+		left bottom,
+		color-stop(0.12, #DEDEDE),
+		color-stop(0.15, #f0f0f0),
+		color-stop(1, #EDEDED)
+	);
+	background-image: -o-linear-gradient(bottom, #DEDEDE 12%, #f0f0f0 15%, #EDEDED 100%);
+	background-image: -moz-linear-gradient(bottom, #DEDEDE 12%, #f0f0f0 15%, #EDEDED 100%);
+	background-image: -webkit-linear-gradient(bottom, #DEDEDE 12%, #f0f0f0 15%, #EDEDED 100%);
+	background-image: -ms-linear-gradient(bottom, #DEDEDE 12%, #f0f0f0 15%, #EDEDED 100%);
+	background-image: linear-gradient(to bottom, #DEDEDE 12%, #f0f0f0 15%, #EDEDED 100%);
+}
+
+.TabActiveGradients
+{
+	background-image: -webkit-gradient(
+		linear,
+		left top,
+		left bottom,
+		color-stop(0.12, #9BD6F2),
+		color-stop(0.15, #f0f0f0),
+		color-stop(1, #FDFDFD)
+	);
+	background-image: -o-linear-gradient(bottom, #9BD6F2 12%, #f0f0f0 15%, #FDFDFD 100%);
+	background-image: -moz-linear-gradient(bottom, #9BD6F2 12%, #f0f0f0 15%, #FDFDFD 100%);
+	background-image: -webkit-linear-gradient(bottom, #9BD6F2 12%, #f0f0f0 15%, #FDFDFD 100%);
+	background-image: -ms-linear-gradient(bottom, #9BD6F2 12%, #f0f0f0 15%, #FDFDFD 100%);
+	background-image: linear-gradient(to bottom, #9BD6F2 12%, #f0f0f0 15%, #FDFDFD 100%);
+}
+
+/* Buttons */
+
+html > body > div button, html > body > div .Button
+{
+	text-shadow: none;
+	background-image: none;
+	background-repeat: repeat-x;
+	background-position: top left;
+	background-color: #e3e7e8;
+	border: 0;
+	border-radius: 10px;
+	box-shadow: 0;
+	transition: background-color 0.25s;
+	color: #2a2a2a;
+	padding: 5px 10px;
+	font-size: 0.9em;
+}
+
+html body .BigButton
+{
+	border-radius: 10px;
+}
+
+html > body > div button:last-child, html > body > div .Button:last-child
+{
+	margin-right: 0;
+}
+
+/* Notifications etc */
+
+html .BubbleInfo > div, html .PopInfo > div
+{
+	max-width: 170px;
+	min-width: 170px;
+}
+
+html .TrayElement.Notification .BubbleInfo, 
+html .TrayElement.PopNotification .PopInfo
+{
+	white-space: normal;
+}
+
+
+/* Dialog boxes */
+
+.Dialog
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: var(--ColorBackground);
+}
+
+.Dialog > .DialogHeader with .WindowBackground
+{
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0px;
+	height: 50px;
+	border-bottom: var(--BorderRuler);
+	color: var(--ColorDialogHeader);
+}
+
+.Dialog > .DialogContent, .Dialog > .DialogContentMiddle,
+.Dialog > .DialogContentBottom
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 50px;
+	overflow: auto;
+}
+
+.Dialog > .DialogContentMiddle
+{
+	top: 50px;
+}
+
+.Dialog > .DialogContentBottom
+{
+	bottom: 0px;
+	top: 50px;
+}
+
+.Dialog > .DialogButtons with .WindowBackground
+{
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0px;
+	height: 50px;
+	border-top: var(--BorderRuler);
+	color: var(--ColorDialogButtons);
+}
+
+.Dialog .DialogMargin
+{
+	padding: var(--PaddingBox);
+	box-sizing: border-box;
+}
+
+html body[mobile] .Dialog,
+html body[mobile] .Dialog > .DialogHeader, 
+html body[mobile] .Dialog > .DialogButtons
+{
+	background-color: rgba(0,0,0,0.6);
+	color: #ffffff;
+}
+
+html body[mobile] .Dialog > .ScrollArea:before
+{
+	font-family: FontAwesome;
+	color: #ffdd00;
+	content: "\f071";
+	font-size: 220%;
+	display: block;
+	float: left;
+	margin: 7px 10px 0 0;
+}
+
+html body[mobile] .Dialog .VContentBottom.BackgroundToolbar 
+{
+	top: calc(70% - 50px);
+	right: 20px;
+}
+
+html body[mobile] .Dialog .VContentBottom.BackgroundToolbar button
+{
+	background: transparent;
+	border: 0;
+	color: white;
+}
+
+html body[mobile] .Dialog > .ScrollArea
+{
+	font-size: 120%;
+	padding: 20px;
+	height: 40%;
+	top: 30%;
+	background: rgba(0,0,0,0.85);
+	border-radius: 5px;
+	left: 10px;
+	right: 10px;
+	box-shadow: 0px 2px 5px rgba(0,0,0,0.7);
+}
+
+
+
+.Padding
+{
+	padding: var(--PaddingBox);
+	box-sizing: border-box;
+}
+
+.PaddingTop
+{
+	padding-top: var(--PaddingBox);
+	box-sizing: border-box;
+}
+
+.PaddingLeft
+{
+	padding-left: var(--PaddingBox);
+	box-sizing: border-box;
+}
+
+.PaddingRight
+{
+	padding-right: var(--PaddingBox);
+	box-sizing: border-box;
+}
+
+.PaddingBottom
+{
+	padding-bottom: var(--PaddingBox);
+	box-sizing: border-box;
+}
+
+
+
+.BorderRadius
+{
+	border-radius: var(--BorderRadius);
+}
+
+.BorderRadiusTopLeft
+{
+	border-top-left-radius: var(--BorderTopLeftRadius);
+}
+
+.BorderRadiusTopRight
+{
+	border-top-right-radius: var(--BorderTopRightRadius);
+}
+
+.BorderRadiusBottomRight
+{
+	border-bottom-right-radius: var(--BorderBottomRightRadius);
+}
+
+.BorderRadiusBottomLeft
+{
+	border-bottom-left-radius: var(--BorderBottomLeftRadius);
+}
+
+
+.OverflowHidden
+{
+	overflow: hidden;
+}
+
+
+.FontLarge
+{
+	font-weight: normal;
+	font-size: 1.4em;
+}
+
+.FontMedium
+{
+	font-weight: normal;
+	font-size: 1.6em;
+}
+
+.IconSmall:before { font-family: FontAwesome; font-size: 1em; vertical-align: baseline; }
+.IconMedium:before { font-family: FontAwesome; font-size: 1.4em; vertical-align: baseline; }
+.IconLarge:before { font-family: FontAwesome; font-size: 1.6em; vertical-align: baseline; }
+.IconHeightSmall { height: 28px; padding: 4px; box-sizing: border-box; }
+.IconHeightMedium { height: 36px; padding: 4px; box-sizing: border-box; }
+.IconHeightLarge { height: 44px; padding: 4px; box-sizing: border-box; }
+
+/* Menu items --------------------------------------------------------------- */
+
+.Widget .MenuItems .MenuItem.Disabled
+{
+	display: none;
+}
+
+/* Dock menu ---------------------------------------------------------------- */
+
+html .DockMenu .DockSubMenu
+{
+	box-shadow: 0px 1px 5px rgba(0,0,0,0.3);
+}
+
+html .DockMenu .DockMenuHeader, html .DockMenu .DockMenuItem
+{
+	padding: 5px 8px;
+}
+
+html .DockMenu .DockMenuHeader
+{
+	background: #20374D;
+	border-radius: 10px 10px 0 0;
+}
+
+html .DockMenu .DockMenuItem
+{
+	border-top: 1px solid rgba(0,0,0,0.15);
+}
+
+html .DockMenu .DockMenuItem:hover
+{
+	background: rgba(52,73,94,0.5);
+}
+
+html .DockMenu .DockMenuItem > span:first-child
+{
+	display: inline-block;
+	vertical-align: middle;
+}
+
+html .DockMenu .DockMenuItem > span + span
+{
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	width: calc(100% - 28px);
+	position: relative;
+	display: inline-block;
+	vertical-align: middle;
+}
+
+html .DockMenu .DockMenuItem.Directory > span + span
+{
+	width: calc(100% - 40px);
+}
+
+/* Extra styling just for this theme ---------------------------------------- */
+
+html .View
+{
+	border-bottom: none;
+	border-top: none;
+	border-radius: 10px;
+}
+html body:not([mobile]) .View
+{
+	box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
+}
+
+html .View.Active
+{
+	box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
+}
+
+html .View.Active > .Title
+{
+	border-top: none;
+	border-left: none;
+	border-right: none;
+	border-bottom: none;
+	border-radius: 10px 10px 0 0;
+}
+
+html .View > .Title
+{
+	border-top: none;
+	border-bottom: 1px solid rgba(0,0,0,0);
+	height: 28px;
+	background-image: none;
+	border-radius: 10px 10px 0 0;
+	/* --- old color --- */
+	/*background-color: #4A6075;*/
+	/* --- new color --- */
+	background-color: #344A5E;
+}
+
+html .View > .Title > div > span
+{
+	height: 26px;
+	left: 90px;
+	line-height: 26px;
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.1);
+	color: #f0f0f0;
+	font-size: 1em;
+}
+
+html .View.Active > .Title > div > span
+{
+	color: white;
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.3);
+}
+
+html .View > .Title > div > div
+{
+	max-height: 28px;
+}
+
+html .View > .Content, html .View > .LeftBar, html .View > .RightBar
+{
+	top: 26px;
+}
+
+html body[mobile=mobile] .View > .Content, 
+html body[mobile=mobile] .View > .LeftBar, 
+html body[mobile=mobile] .View > .RightBar
+{
+	top: 40px;
+}
+
+html .View > .LeftBar,
+html .View > .RightBar
+{
+	width: 0;
+}
+
+html .View > .BottomBar, html .View.Active > .BottomBar
+{
+	border-top: 0;
+	height: 0px;
+}
+
+html .View.Active > .Title,
+html .View.Active > .LeftBar,
+html .View.Active > .RightBar,
+html .View.Active > .BottomBar
+{
+	background-image: none;
+	background-color: #455155;
+}
+
+html .View.Active > .Title,
+html body[mobile] .View > .Title
+{
+	/* --- old color --- */
+	/*background-color: #34495E;*/
+	/* --- new color ---*/
+	background-color: #20374D;
+}
+
+/* Done here - find marker to continue */
+
+.View.Active > .Title > div > .Close:hover,
+.View.Active > .Title > div > .Close,
+html .View > .Title > div > .Close
+{
+	background-image: url(/iconthemes/friendup15/close.svg);
+	margin: 0;
+	left: 8px;
+	top: 0;
+	position: absolute;
+}
+
+html .View > .Title > div > .Close:active
+{
+	border: 0;
+}
+
+.View.Active > .Title > div > .MobileClose
+{
+	position: absolute;
+	top: 3px;
+	right: 3px;
+	width: 33px;
+	height: 33px;
+	border-left: 1px solid rgba(0,0,0,0.0);
+	background-image: url(/iconthemes/friendup15/close.svg);
+	background-repeat: no-repeat;
+	background-size: 35%;
+	background-position: center;
+	
+}
+.View.Active > .Title > div > .MobileClose:after,
+.View.Active > .Title > div > .MobileClose:before
+{
+	display: none;
+}
+
+/* Snapping */
+
+body .View > .Snap > .SnapDown,
+body .View > .Snap > .SnapUp
+{
+	height: 4px;
+}
+body .View > .Snap > .SnapLeft,
+body .View > .Snap > .SnapRight
+{
+	width: 4px;
+}
+body .View > .Snap > .SnapDown,
+body .View > .Snap > .SnapUp,
+body .View > .Snap > .SnapLeft,
+body .View > .Snap > .SnapRight
+{
+	background-color: rgba(41, 128, 185, 0.7);
+}
+
+.View[viewsnap=right], 
+.View[viewsnap=right] > .Title,
+.View[attach_left=attached],
+.View[attach_left=attached] > .Title
+{
+	border-top-right-radius: 0px !important;
+	border-bottom-right-radius: 0px !important;
+}
+
+.View[viewsnap=left], 
+.View[viewsnap=left] > .Title,
+.View[attach_right=attached],
+.View[attach_right=attached] > .Title
+{
+	border-top-left-radius: 0px !important;
+	border-bottom-left-radius: 0px !important;
+}
+
+/* Mobile glypths */
+
+body:not([tablet])[mobile=mobile] .View > .Title > div > .Close
+{
+	background: rgba(200,200,200,1);
+	position: absolute;
+	margin: 0;
+	top: 23px;
+    right: 20px;
+    width: 56px;
+    min-height: 56px;
+	border-radius: 100%;
+	left: auto;
+	background-position: center;
+	padding: 0;
+	z-index: 100;
+	box-shadow: 0px 0px 10px rgba(0,0,0,0.5);
+	opacity: 1;
+}
+
+body:not([tablet])[mobile=mobile] .View > .Title > div > .Close:after
+{
+	content: "\f00d";
+	display: block;
+	font-family: fontawesome;
+	font-weight: normal;
+	font-size: 1.5em;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	color: white;
+	text-align: center;
+	line-height: 56px;
+}
+
+.View.Active > .Title > div > .MobileClose:before,
+body:not([tablet])[mobile=mobile] .View > .Title > div > .Close:before
+{
+	display: none;
+}
+
+html body[mobile][focusmode=clicktofront].ViewMaximized .View > .Title > div > .Close
+{
+	left: calc(100% - 65px);
+	margin: 0;
+	top: 1px;
+}
+
+/* Mobile glypths */
+body:not([tablet])[mobile=mobile] .View.Active > .Title > div > .Close
+{
+	background-image: none;
+}
+body:not([tablet])[mobile=mobile] .View.Active > .Title > div > .Close:before
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	margin: 0;
+	top: 0px;
+	width: 33px;
+	height: 33px;
+	background-image: url(/iconthemes/friendup15/minus.svg);
+	background-repeat: no-repeat;
+	background-size: 35%;
+	right: 5px;
+	left: auto;
+	background-position: center;
+}
+
+body:not([tablet])[mobile=mobile] .Calendar.MonthName
+{
+	padding: 6px 10px;
+	line-height: 20px;
+}
+
+body:not([tablet])[mobile=mobile]:not(.WidgetSlideDown) #CalendarWidget
+{
+	height: 40px !important;
+}
+
+/* Window menu */
+
+body.WindowMenu #Screens .View.Active[maximized=true],
+body.WindowMenu #Screens .View.Active,
+body.WindowMenu #Screens .View
+{
+	position: relative;
+	top: auto !important;
+	left: auto !important;
+	width: calc(50% - 20px) !important;
+	height: 100px !important;
+	min-height: 100px !important;
+	margin: 15px 0 0 13px;
+	clear: none;
+	background: #3a3a3a;
+	overflow: hidden;
+}
+body.WindowMenu #Screens .View .Zoom,
+body.WindowMenu #Screens .View .Depth,
+body.WindowMenu #Screens .View .Minimize,
+body.WindowMenu #Screens .View .Resize,
+body.WindowMenu #Screens .View span:after,
+body.WindowMenu #Screens .View.Active .BottomBar,
+body.WindowMenu #Screens .View.Active .Resize,
+body.WindowMenu #Screens .View.Active .RightBar,
+body.WindowMenu #Screens .View.Active .LeftBar
+{
+	display: none;
+}
+body.WindowMenu #Screens .View .Close
+{
+	position: absolute;
+	left: auto;
+	right: -8px;
+	top: 9px;
+	background-image: url(/themes/friendup_twilight/gfx/win_close_active.png);
+	border-right: 0;
+}
+body.WindowMenu #Screens .View span
+{
+	left: 4px;
+	width: calc(100% - 38px);
+	text-overflow: ellipsis;
+}
+body.WindowMenu #Screens .View .Content,
+body.WindowMenu #Screens .View .DirectoryToolbar,
+body.WindowMenu #Screens .View .VolumeGauge
+{
+	display: none;
+}
+body.WindowMenu #Screens .View:before
+{
+	content: " ";
+	position: absolute;
+	z-index: 100;
+	top: 30px; left: 0; width: 100%; height: calc(100% - 3px);
+	background: rgba(0,0,0,0.5);
+}
+body.WindowMenu .Widget, body.WindowMenu #Statusbar
+{
+	opacity: 0;
+	pointer-events: none;
+}
+
+/* Desklet */
+
+.Desklet.HasWindowlist
+{
+	border-radius: 0;
+}
+
+html .Desklet
+{
+	background-color: rgba(0,0,0,0.2);
+}
+
+html .Desklet #DockWindowList
+{
+	padding: 5px;
+}
+
+.Desklet.Open .Hider 
+{
+    position: absolute;
+    bottom: 20px;
+    left: calc(50% - 15px);
+    width: 30px;
+    height: 20px;
+    background: url(/iconthemes/friendup15/Arrow_Down.svg);
+    background-size: 30px;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.Desklet .Launcher
+{
+	background-size: 89% !important;
+	box-shadow: none;
+	filter: none !important;
+}
+
+body[mobile] .Desklet .Launcher.MousePointer
+{
+	background-size: auto 48px !important;
+	font-size: 0.9em;
+}
+
+body[mobile] .Desklet .Launcher.MousePointer > span
+{
+	top: 60px;
+}
+
+.Desklet .Launcher.Startmenu
+{
+	background-image: url(/themes/friendup12/gfx/AppsMenu.svg) !important;
+}
+
+html .Desklet.HasWindowlist
+{
+	background-color: rgba(0,0,0,0.4);
+}
+
+html .Horizontal #DockWindowList
+{
+	border-left: 0;
+}
+
+body:not([tablet]):not([mobile]) .Desklet .Launcher:hover
+{
+	background-color: #3c4f72;
+	box-shadow: 0px 1px 3px rgba(0,0,0,0.3);
+	filter: none !important;
+}
+
+html .Desklet[position=bottom_left] .Launcher.Running:after, 
+html .Desklet[position=bottom_center] .Launcher.Running:after, 
+html .Desklet[position=bottom_right] .Launcher.Running:after
+{
+	bottom: 94%;
+}
+
+html .Desklet[position=top_left] .Launcher.Running:after, 
+html .Desklet[position=top_center] .Launcher.Running:after, 
+html .Desklet[position=top_right] .Launcher.Running:after
+{
+	top: -6%;
+    left: 30%;
+    width: 40%;
+}
+
+html #DockWindowList.Size32 .Task
+{
+	height: 28px;
+}
+
+html body.InputParadigmTablet .Desklet
+{
+	display: none;
+}
+
+
+/* Window menu done */
+
+.View > .LeftBar
+{
+	border-radius: 0;
+}
+
+html div.Listview > .Headers > .Header:nth-child(odd),
+html div.Listview > .Headers > .Header:nth-child(even)
+{
+	color: #455155;
+}
+
+html div.Listview .fa-arrow-down:before
+{
+	margin: 0px 4px 0 0;
+	font-size: 0.7em;
+	position: relative;
+	top: -1px;
+}
+
+table.List > tbody > tr.sw1 > td
+{
+	border-top: 1px solid #f0f0f0;
+	border-bottom: 1px solid #e0e0e0;
+}
+table.List > tbody > tr.sw2 > td
+{
+	border-top: 1px solid #f0f0f0;
+	border-bottom: 1px solid #d8d8d8;
+}
+
+table.List > tbody > tr.sw1 > th,
+table.List > tbody > tr > th
+{
+	border-top: 1px solid #f8f8f8;
+	border-bottom: 1px solid #d8d8d8;
+}
+table.List > tbody > tr.sw2 > th
+{
+	border-top: 1px solid #f0f0f0;
+	border-bottom: 1px solid #d0d0d0;
+}
+
+/* Volume gauge */
+
+html .VolumeGauge
+{
+	display: none;
+}
+
+/* Volume gauge end */
+
+html .View > .Content
+{
+	bottom: 0px;
+	left: 0 !important;
+	right: 0;
+}
+ 
+html body:not([mobile]) .View > .Content
+{
+	border-radius: 0 0 10px 10px;
+}
+
+html > body:not(.Inside):not(.Loading), html body .View:not([transparent]) .View > .Content
+{
+	/* --- old color --- */
+	/*background-color: #f9f9f9 !important;*/
+	/* --- new color --- */
+	background-color: #ECF0F1 !important;
+	border-radius: 0 0 10px 10px;
+}
+
+html .ViewContainer[childview].Active > .MobileBack:before
+{
+	color: #ffffff;
+	font-size: 1.4em;
+}
+
+/* MSW mode of window glyphs */
+
+body.MSW div .View > .Title > div > .Close,
+body.MSW[focusmode=clicktofront] div .View > .Title > div > .Close
+{
+	top: 0;
+	right: 4px;
+	left: auto;
+	position: absolute;
+	margin: 0;
+}
+
+body.MSW div .View > .Title > div > .Zoom,
+body.MSW[focusmode=clicktofront] div .View > .Title > div > .Zoom
+{
+	top: 0;
+	right: 30px;
+	left: auto;
+	margin: 0;
+}
+
+body.MSW div .View > .Title > div > .Minimize,
+body.MSW[focusmode=clicktofront] div .View > .Title > div > .Minimize
+{
+	top: 0;
+	right: 60px;
+	left: auto;
+	margin: 0;
+}
+
+html body.MSW .View > .Title.NoResize > div > .Minimize,
+html body.MSW[focusmode=clicktofront] .View > .Title.NoResize > div > .Minimize
+{
+	top: 0;
+	left: auto;
+	right: 30px;
+	margin: 0;
+}
+
+/* End MSW mode */
+
+.View > .Content:before
+{
+	display: none;
+}
+
+html .View.Scrolling > .Resize
+{
+	background-color: transparent !important;
+}
+
+html body:not([mobile]) .View > .Resize
+{
+    background-color: transparent !important;
+    right: 2px;
+    bottom: 2px;
+    width: 20px !important;
+    height: 20px !important;
+    border-radius: 0 0 5px 0;
+    position: relative;
+    overflow: hidden;
+    background-image: none;
+}
+
+html body:not([mobile]) .View:not(.Active) > .Resize:before
+{
+	background-color: #20374D;
+}
+
+html body:not([mobile]) .View.Active > .Resize:before
+{
+	background-color: #20374D;
+}
+
+html body:not([mobile]) .View > .Resize:hover:before,
+html body:not([mobile]) .View > .Resize:active:before
+{
+	background-color: #455155;
+}
+
+.Screen > .TitleBar .ScreenList > img
+{
+    display: none;
+}
+
+html .Screen > .TitleBar > .Left
+{
+	padding: 0 40px 0 0;
+	line-height: 26px;
+}
+
+html .Screen > .TitleBar > .Left .Extra
+{
+	right: 33px;
+}
+
+html .Screen > .TitleBar > .Left .Extra,
+html .Screen > .TitleBar > .Left .Time,
+html .Screen > .TitleBar > .Left .Extra:hover
+{
+	height: 26px;
+	line-height: 26px;
+	font-weight: normal;
+}
+
+html .Screen > .TitleBar > .Left .Extra:hover .Time
+{
+	color: white;
+}
+
+html .Screen > .TitleBar > .Left > .Extra > span 
+{
+    margin: 0 5px 0 0;
+}
+
+html .Screen > .TitleBar > .Left > .Extra > div:last-child
+{
+    margin: 0;
+}
+
+html .Screen > .TitleBar
+{
+	background: #e0e0e0;
+	height: 26px;
+	box-sizing: border-box;
+	color: #444444;
+	box-shadow: 0px 0px 0 2px rgb(0 0 0 / 10%);
+}
+
+html .Screen > .TitleBar:after
+{
+	content: " ";
+	position: absolute;
+    top: 3px;
+    left: 9px;
+    width: 20px;
+    height: 20px;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-image: url(/iconthemes/friendup15/ScreenLogo.svg);
+}
+
+html body.Charcoal .Screen > .TitleBar:after
+{
+    filter: brightness(1.2);
+}
+
+html .Screen > .TitleBar .Left
+{
+	border-left: 0;
+	height: 26px;
+}
+
+html .Screen .TitleBar .Left:after
+{
+	display: none;
+}
+
+html #Tray
+{
+	bottom: 6px;
+}
+
+html div #Tray > div
+{
+	margin: -2px 0px 10px 0;
+	color: #455155;
+	text-shadow: none;
+}
+
+html #WorkspaceMenu
+{
+	background: transparent;
+	height: 26px;
+}
+
+html #WorkspaceMenu.Pear
+{
+	border-left: 1px solid rgba(0,0,0,0.05);
+}
+
+html #WorkspaceMenu .Open ul > li
+{
+	background: none;
+	padding: 2px 5px 2px 10px;
+}
+
+html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu,
+html [mobile=mobile].ViewMaximized #WorkspaceMenu,
+html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu
+{
+	background: #20374D;
+}
+
+html #WorkspaceMenu ul
+{
+	transition: opacity 0.25s;
+	white-space: nowrap;
+}
+
+html body[mobile] #WorkspaceMenu div:not(.Open) > ul
+{
+	display: none;
+}
+
+html body:not([mobile]) #WorkspaceMenu div:not(.Open) > ul
+{
+	opacity: 0;
+	display: block;
+	width: 1px;
+	overflow: hidden;
+	pointer-events: none;
+}
+
+html #WorkspaceMenu .Open > ul
+{
+	pointer-events: all;
+	top: 28px;
+	opacity: 1;
+	background: rgba(255,255,255,0.9);
+	border-radius: 0 0 10px 10px;
+}
+
+html #WorkspaceMenu .Open > ul:before 
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	top: -2px;
+	left: 0;
+	width: 100%;
+	height: 2px;
+	background-color: #07507f;
+}
+
+html #WorkspaceMenu li:last-child
+{
+	border-radius: 0 0 10px 10px;
+}
+
+html #WorkspaceMenu ul ul li:first-child
+{
+	border-radius: 10px 10px 0 0;
+}
+
+html #WorkspaceMenu ul ul li:only-child
+{
+	border-radius: 10px;
+}
+
+html #WorkspaceMenu .Open ul > li ul
+{
+	border-radius: 10px;
+}
+
+html #WorkspaceMenu .Menu
+{
+	color: #455155;
+	height: 26px;
+	font-size: 1.1em;
+	line-height: 26px;
+	padding: 0 8px 0 8px;
+	text-shadow: none;
+	font-weight: normal;
+}
+
+html body[mobile=mobile] #WorkspaceMenu
+{
+	height: 40px;
+}
+
+html body[mobile=mobile] #WorkspaceMenu .Menu
+{
+	line-height: 40px;
+	height: 40px;
+}
+
+html [mobile=mobile] #WorkspaceMenu .Menu
+{
+	color: white;
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.5);
+}
+
+html body #WorkspaceMenu .Menu:hover
+{
+	background-color: #07507f;
+	font-weight: normal;
+}
+
+html body[mobile=mobile] #WorkspaceMenu .Menu:hover
+{
+	background-color: transparent;
+}
+
+html #WorkspaceMenu > .Menu:hover, 
+html #WorkspaceMenu > .Menu.Open
+{
+	color: white;
+	font-weight: normal;
+}
+
+html #WorkspaceMenu .Open ul > li[divider]
+{
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
+html #WorkspaceMenu .Open ul > li[divider]:hover
+{
+	background: none;
+}
+
+html body:not([mobile]) #WorkspaceMenu .Open ul > li:not([divider]):hover
+{
+	background: #687f8c;
+	color: white;
+	text-shadow: none;
+}
+
+html body #WorkspaceMenu .Open ul > li:hover, 
+html body #WorkspaceMenu .Open ul > li.Open
+{
+	text-shadow: none;
+	color: inherit;
+}
+
+html body[mobile=mobile] > .MobileMenu.Visible > span.Close, 
+html body .MobileMenuClose, body[mobile=mobile] > .MobileMenu.Visible > span.Close, 
+html body #WorkspaceMenu .Open ul > li.CloseButton
+{
+	font-size: 1.2em;
+}
+
+html body[mobile=mobile] > .MobileMenu.Visible
+{
+	overflow: auto;
+}
+
+html body[mobile=mobile] > .MobileMenuClose:before, 
+html body #WorkspaceMenu .Open ul > li.CloseButton:before
+{
+	top: 2px;
+}
+
+/* Special case - maximized window */
+
+html #WorkspaceMenu
+{
+	transition: background,width 0.25s;
+}
+
+
+/* Mobile popup menu fixes */
+
+html > body[mobile=mobile] > .MobileMenuClose:before
+{
+	top: 2px;
+}
+
+html body[mobile=mobile] > .MobileMenu.Visible > span.Close, 
+html body .MobileMenuClose
+{
+	font-size: 1em !important;
+	line-height: 46px !important;
+}
+
+/* Done popup menu fixes */
+
+html [mobile=mobile].ViewMaximized #CalendarWidget
+{
+	z-index: 3 !important;
+	width: 0px !important;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+html [mobile=mobile].WidgetSlideDown #CalendarWidget.Raised .Hider
+{
+	position: absolute;
+    bottom: 20px;
+    left: calc(50% - 15px);
+    width: 30px;
+    height: 20px;
+    background: url(/iconthemes/friendup15/Arrow_Up.svg);
+    background-size: 30px;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+html [mobile=mobile].ViewMaximized #Screens .ScreenContent
+{
+	z-index: 5 !important;
+	overflow: visible !important;
+}
+
+html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View
+{
+	overflow: visible;
+}
+
+html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Title,
+html [mobile=mobile] #Screens .ScreenContent .Closing .View > .Title
+{
+	top: -40px;
+}
+
+html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Content,
+html [mobile=mobile] #Screens .ScreenContent .Closing .View > .Content
+{
+	top: 0px !important;
+}
+
+html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View.IconWindow > .Content
+{
+	top: 40px !important;
+}
+
+html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View.IconWindow.CustomToolbarArea > .Content
+{
+	top: 0 !important;
+}
+
+html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Title > div > span
+{
+	text-align: center;
+	text-shadow: none;
+}
+
+html body[mobile=mobile] > .MobileMenu div li .IconText
+{
+	font-size: 0.8em;
+}
+
+html body[mobile=mobile] > .MobileMenu div li span + .File
+{
+	position: relative;
+	top: 1px !important;
+}
+
+
+html .View > .RightBar
+{
+	border-radius: 0;
+}
+
+html .View > .LeftBar
+{
+	border-radius: 0;
+}
+
+html .View > .Title > div > .Close:after
+{
+	display: none;
+}
+
+html .View > .Title > div > .Close,
+html .View > .Title > div > .Minimize,
+html .View > .Title > div > .Zoom,
+html .View > .Title > div > .Depth
+{
+	border-right: 0;
+	height: 26px;
+	width: 20px;
+	opacity: 0.8;
+	transition: opacity 0.25s;
+}
+
+html .View > .Title > div > .Close:hover,
+html .View > .Title > div > .Minimize:hover,
+html .View > .Title > div > .Zoom:hover,
+html .View > .Title > div > .Depth:hover
+{
+	opacity: 1;
+}
+
+html .View > .Title > div > .Zoom,
+html body[viewlist=docked] .View > .Title > div > .Zoom,
+html body[viewlist=docked] div .View > .Title > div > .Zoom
+{
+	position: relative;
+	border-left: 0;
+	border-right: 0;
+}
+
+html .View > .Title > div > .Zoom
+{
+	background-image: url(/iconthemes/friendup15/expand.svg);
+}
+
+html .View[maximized=true] > .Title > div > .Zoom
+{
+	background-image: url(/iconthemes/friendup15/Contract.svg);
+}
+
+html body[focusmode=clicktofront] div .View > .Title > div > .Zoom
+{
+	position: absolute;
+	left: 61px;
+	top: 0px;
+	margin: 0;
+	border-left: 0;
+	border-right: 0;
+}
+
+html .View > .Title > div > .Zoom:after
+{
+	display: none;
+}
+
+.View.Active > .Title > div > .Zoom:hover,
+.View.Active > .Title > div > .Zoom
+{
+	background-image: url(/iconthemes/friendup15/expand.svg);
+}
+
+.View.Active[maximized=true] > .Title > div > .Zoom:hover,
+.View.Active[maximized=true] > .Title > div > .Zoom
+{
+	background-image: url(/iconthemes/friendup15/Contract.svg);
+}
+
+html .View > .Title > div > .Minimize,
+html body[focusmode=clicktofront] .View > .Title > div > .Minimize
+{
+	border-left: 0;
+	border-right: 0;
+	display: block;
+	background-image: url(/iconthemes/friendup15/minus.svg);
+	margin: 0;
+	position: absolute;
+    left: 28px;
+    top: 10px;
+}
+
+html .View > .Title.NoResize > div > .Minimize,
+html body[focusmode=clicktofront] .View > .Title.NoResize > div > .Minimize
+{
+	left: 28px;
+}
+
+
+.View.Active > .Title > div > .Minimize:hover,
+.View.Active > .Title > div > .Minimize
+{
+	background-image: url(/iconthemes/friendup15/minus.svg);
+}
+
+html body[focusmode=clicktofront] .View > .Title > div > .Minimize
+{
+	margin: -10px -9px 0px 7px;
+}
+
+html body[focusmode=clicktofront] .View > .Title > div > .Zoom
+{
+	border-right: 1px solid rgba(0,0,0,0.1);
+}
+
+html .View > .Title > div > .Depth
+{
+	position: relative;
+	border-left: 0;
+	border-right: 0;
+}
+
+html .View > .Title > div > .Depth:after
+{
+	display: none;
+}
+
+.View.Active > .Title > div > .Depth:hover,
+.View.Active > .Title > div > .Depth
+{
+	background-image: url(/themes/friendup12/gfx/win_depth_active.png);
+}
+
+body[focusmode=clicktofront] .View .Depth
+{
+	display: none;
+}
+
+html .View > .Title > div > span
+{
+	width: calc(100% - 180px);
+	max-width: 100%;
+	text-align: center;
+}
+
+html body[mobile=mobile] .View > .Title > div > span
+{
+	pointer-events: none;
+}
+
+html body[mobile=mobile] .View > .Title > div > span:after
+{
+	pointer-events: all;
+}
+
+[mobile=mobile]:not(.WidgetSlideDown) #CalendarWidget
+{
+	background: #444444;
+}
+
+[mobile=mobile] #CalendarWidget
+{
+	border-radius: 0;
+}
+
+html #Statusbar .Task
+{
+	border-radius: 10px;
+	height: 27px;
+	background-color: transparent;
+	padding: 5px 8px 7px 38px;
+	background-size: 22px 22px;
+	box-shadow: none;
+}
+
+html #Statusbar .Task.Active
+{
+	height: 27px;
+}
+
+html #Statusbar .Task:hover,
+html #DockWindowList .Task:hover
+{
+	background-color: #3c4f7222;
+}
+
+html > body #Statusbar .Task.Active:hover,
+html > body #DockWindowList .Task.Active:hover
+{
+	background-color: #20374D;
+}
+
+html #DockWindowList .Task
+{
+	border-radius: 10px;
+	background-color: transparent;
+	box-shadow: none;
+}
+
+html > body #DockWindowList .Task.Active,
+html > body #Statusbar .Task.Active
+{
+	border-radius: 10px;
+	background-color: #20374D;
+}
+
+html #DockWindowList .Task.Active:hover, html #DockWindowList .Task:hover,
+html #Statusbar .Task, html #DockWindowList .Task
+{
+	filter: none !important;
+	box-shadow: none;
+}
+
+html .Page
+{
+	transition: opacity 0.5s;
+	left: 0;
+	overflow: hidden;
+	opacity: 0;
+	pointer-events: none;
+	display: block;
+}
+
+html .PageActive
+{
+	pointer-events: all;
+	left: 0;
+	border-top: 0;
+	top: 0;
+	border-radius: 10px;
+	box-shadow: none;
+	border: 1px solid #e8e8e8;
+	opacity: 1;
+}
+
+html .PageActive, html .PageActive .PageScroll
+{
+	background-color: rgba(255,255,255,0.3);
+}
+
+html .Tab:before, html .TabActive:before
+{
+	margin-right: 4px;
+}
+
+html .TabContainer
+{
+	text-align: center;
+	width: auto;
+}
+
+html .Tab
+{
+	background-color: #f9f9f9;
+	box-shadow: none;
+}
+
+html .Tab
+{
+	transition: background-color 0.25s;
+	-webkit-transition: background-color 0.25s;
+	font-size: 1em;
+	margin: 5px -1px 5px 0;
+	font-weight: bold;
+	padding: 5px 10px 5px 10px;
+	font-weight: normal;
+	border-radius: 0px;
+	border: 1px solid #DADDDE99;
+	background-color: #e3e7e8;
+    color: #2a2a2a;
+}
+
+html .TabActive
+{
+    background-color: #F9F9F9;
+    color: #000000;
+    text-shadow: none;
+    border: 1px solid #e3e7e8;
+}
+
+html div.Tab:first-child
+{
+	border-radius: 10px 0 0 10px;
+}
+
+html div.TabActive:last-child, html div.Tab:last-child
+{
+	border-radius: 0 10px 10px 0;
+}
+
+html div.Tab:first-child:last-child
+{
+	border-radius: 10px;
+}
+
+html .Pages > .Tab, html .Pages > .TabActive
+{
+	z-index: 0;
+	box-shadow: 0px 1px 3px rgba(0,0,0,0.3);
+	border-top: 1px solid rgba(255,255,255,0.5);
+    border-left: 1px solid rgba(255,255,255,0.2);
+    border-right: 1px solid rgba(255,255,255,0.2);
+    margin: 5px 0 0 5px;
+}
+
+/* Some links --------------------------------------------------------------- */
+
+a
+{
+	text-decoration: none;
+}
+
+a, a:visited
+{
+	color: #115A9E;
+}
+
+a:active, a:hover
+{
+	color: #26537D;
+}
+
+/* Directory views ---------------------------------------------------------- */
+
+html .View .DirectoryToolbar
+{
+	background-color: #e0e0e0;
+	box-shadow: none;
+	height: 28px;
+	padding: 3px;
+	left: 0;
+	right: 0;
+	color: #455155;
+	border-bottom: 1px solid rgba(0,0,0,0.02);
+}
+html .View .DirectoryToolbar .DriveGauge,
+html body[mobile] .View .DirectoryToolbar
+{
+	display: none;
+}
+
+html body[mobile=mobile] .View.Active .DirectoryToolbar
+{
+	display: block;
+	top: 0px !important;
+	height: 40px !important;
+}
+
+html body[mobile=mobile] .View .DirectoryToolbar button
+{
+	height: 40px;
+}
+
+html > body[mobile=mobile] .View .DirectoryToolbar button:before, 
+html > body[mobile=mobile] .View .DirectoryToolbar button:after
+{
+	line-height: 35px;
+}
+
+html .View.Active .DirectoryToolbar
+{
+	background-color: #e0e0e0;
+}
+
+html > body .View .DirectoryToolbar button:before, 
+html > body .View .DirectoryToolbar button:after
+{
+	position: relative;
+	color: #455155;
+}
+
+html .View .DirectoryToolbar > .ToggleGroup
+{
+	top: 0px;
+	left: calc(50% - 54px);
+}
+
+html body .View .DirectoryToolbar > .ToggleGroup > button:hover:before,
+html body .View .DirectoryToolbar > button:hover:before
+{
+	color: black;
+}
+
+html body .View .DirectoryToolbar > button:before
+{
+	transition: color 0.25s;
+}
+
+html .View .DirectoryToolbar > .ToggleGroup > button
+{
+	height: 26px;
+	top: 0;
+	line-height: 26px;
+}
+html .View .DirectoryToolbar > .ToggleGroup > button.Active
+{
+	background: none;
+}
+
+html .View .DirectoryToolbar > .ToggleGroup > button:before
+{
+	color: #45515599;
+	transition: color 0.25s;
+}
+
+html .View .DirectoryToolbar > .ToggleGroup > button:hover:before
+{
+	color: #45515555;
+}
+
+html .View .DirectoryToolbar > .ToggleGroup > button.Active:before
+{
+	color: #455155;
+}
+
+html .View .DirectoryToolbar > .ToggleGroup > button:before
+{
+	margin-top: 0;
+}
+
+html .View .DirectoryToolbar .DriveGauge:before
+{
+    content: " ";
+    display: block;
+    position: relative;
+    top: 3px;
+    left: -5px;
+    width: 20px;
+    height: 10px;
+    border-radius: 3px;
+    border: 2px solid #444444;
+    background: transparent;
+}
+
+html .View .DirectoryToolbar .DriveGauge:after
+{
+	content: " ";
+	display: block;
+	position: relative;
+	top: -27px;
+	left: -1px;
+	width: calc(100% + 2px);
+	height: 6px;
+	border-radius: 2px;
+	background: #444444;
+	margin: 0;
+	transition: width 0.5s;
+}
+
+html .View .DirectoryToolbar .DriveGauge.Size0:after { width: 2px; background: #00aa00; }
+html .View .DirectoryToolbar .DriveGauge.Size1:after { width: calc(10% + 2px); background: #119900; }
+html .View .DirectoryToolbar .DriveGauge.Size2:after { width: calc(20% + 2px); background: #228800; }
+html .View .DirectoryToolbar .DriveGauge.Size3:after { width: calc(30% + 2px); background: #337700; }
+html .View .DirectoryToolbar .DriveGauge.Size4:after { width: calc(40% + 2px); background: #448800; }
+html .View .DirectoryToolbar .DriveGauge.Size5:after { width: calc(50% + 2px); background: #666600; }
+html .View .DirectoryToolbar .DriveGauge.Size6:after { width: calc(60% + 2px); background: #884400; }
+html .View .DirectoryToolbar .DriveGauge.Size7:after { width: calc(70% + 2px); background: #992200; }
+html .View .DirectoryToolbar .DriveGauge.Size8:after { width: calc(80% + 2px); background: #bb0000; }
+html .View .DirectoryToolbar .DriveGauge.Size9:after { width: calc(90% + 2px); background: #cc0000; }
+html .View .DirectoryToolbar .DriveGauge.Size10:after { width: calc(100% + 2px); background: #ff0000; }
+
+html .View .DirectoryToolbar button
+{
+	color: rgba(0,0,0,0);
+	height: 24px;
+	width: 40px;
+	overflow: hidden;
+	text-shadow: none;
+	position: relative;
+	top: -2px;
+	border-radius: 0;
+}
+
+html .View .DirectoryToolbar button:before
+{
+	margin-top: 2px;
+}
+
+html .View .DirectoryToolbar button:before
+{
+	z-index: 2;
+}
+
+html .View .DirectoryToolbar button:after
+{
+	z-index: 1;
+}
+
+html .View .DirectoryToolbar button:after:hover
+{
+	background-color: rgba(90,90,90,0.1);
+}
+
+html .View .DirectoryToolbar button.Active
+{
+	background-color: rgb(175,175,175);
+}
+
+html .View .DirectoryToolbar button.Active:before
+{
+	color: white;
+}
+
+html div.Listview > .Footer
+{
+	border: 0;
+}
+
+html .List tr.sw1.Selected, 
+html .List div.sw1.Selected
+{
+	background-color: #3c4f72;
+}
+html .List tr.sw2.Selected, 
+html .List div.sw2.Selected
+{
+	background-color: #3c4f72;
+}
+
+html body .Calendar div.HRow > .Current.Day:nth-child(odd), 
+html body .Calendar div.HRow > .Current.Day:nth-child(even), 
+html body .Calendar div.HRow > .Current.Day:nth-child(odd):hover, 
+html body .Calendar div.HRow > .Current.Day:nth-child(even):hover
+{
+	background-color: #3f51b5;
+}
+
+html body .List tr.sw1.Selected, html body .List div.sw1.Selected
+{
+	background-color: #20374D;
+}
+html body .List tr.sw2.Selected, html body .List div.sw2.Selected
+{
+	background-color: #304357;
+}
+
+/* Toolbar icons ------------------------------------------------------------ */
+
+.Toolbar .IconSmall
+{
+	width: 40px;
+	height: 40px;
+	box-sizing: border-box;
+	position: relative;
+}
+
+.Toolbar .IconSmall:after
+{
+	content: " ";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-size: 24px;
+	background-repeat: no-repeat;
+	background-position: center;
+	filter: invert(0);
+	-webkit-filter: invert(0);
+	transition: filter,webkit-filter 0.5s;
+}
+
+.Toolbar .IconSmall:hover:after
+{
+	filter: invert(1);
+	-webkit-filter: invert(1);
+}
+
+.Toolbar .ToolbarArrowMove.IconSmall:after
+{
+	background-image: url(/themes/friendup12/gfx/icons/Custom/toolbar_arrow_move_white.png);
+}
+
+.Toolbar .ToolbarPointer.IconSmall:after
+{
+	background-image: url(/themes/friendup12/gfx/icons/Custom/toolbar_pointer_white.png);
+}
+
+.Toolbar .ToolbarMagnifier.IconSmall:after
+{
+	background-image: url(/themes/friendup12/gfx/icons/Custom/toolbar_magnifier_white.png);
+}
+
+.Toolbar .ToolbarZoomOut.IconSmall:after
+{
+	background-image: url(/themes/friendup12/gfx/icons/Custom/toolbar_zoom_out.png);
+}
+
+.Toolbar .ToolbarZoomIn.IconSmall:after
+{
+	background-image: url(/themes/friendup12/gfx/icons/Custom/toolbar_zoom_in.png);
+}
+
+.Toolbar .ToolbarZoom1to1.IconSmall:after
+{
+	background-image: url(/themes/friendup12/gfx/icons/Custom/toolbar_zoom_1.png);
+}
+
+.Toolbar .ToolbarEdit.IconSmall:after
+{
+	background-image: url(/themes/friendup12/gfx/icons/Custom/toolbar_page_edit.png);
+}
+
+/* Lists etc ---------------------------------------------------------------- */
+
+html div.Listview > .Headers > .Header:nth-child(odd),
+html div.Listview > .Headers > .Header:nth-child(even)
+{
+	background-color: #f1f1f1;
+	height: 30px;
+}
+
+html div.Listview > .Headers > .Header
+{
+	border-top: 0;
+	border-bottom: 0;
+	border-right: 1px solid rgba(100,100,100,0.1);
+	border-left: 0;
+}
+html div.Listview > .Headers > .Header:last-child
+{
+	border-right: 0;
+}
+
+html div.Listview > .Icons > .Scroller > .Row > .Column, 
+html div.ColumnView .Row > .Column, 
+html #MousePointer .Row > .Column
+{
+	border-right: 1px solid rgba(100,100,100,0.1);
+	border-left: 0;
+}
+
+html div.Listview .Row > .Column + .Column
+{
+	color: #606060;
+}
+
+html div.Listview .Row > .Icon
+{
+	filter: none;
+	-webkit-filter: none;
+}
+
+html div.Listview > .Icons > .Scroller > .Row:last-child > .Column, 
+html div.ColumnView .Row:last-child > .Column, 
+html #MousePointer .Row:last-child > .Column
+{
+	border-bottom: 0;
+}
+
+html div.Listview > .Icons
+{
+	background: #ededed;
+}
+
+html div.Listview > .Icons > .Scroller > .Row.Odd .Column, 
+html div.ColumnView .Row.Odd .Column, 
+html #MousePointer .Row.Odd .Column
+{
+	background-color: #ededed;
+}
+
+html div.Listview > .Icons > .Scroller > .Row:hover > .Column
+{
+	background-color: #d0d0d0;
+	color: #444444;
+}
+
+html div.Listview > .Icons > .Scroller > .Row.Selected > .Column,
+html div.Listview > .Icons > .Scroller > .Row.Odd.Selected > .Column,
+html #MousePointer .Row.Selected .Column,
+html #MousePointer .Row.Odd.Selected .Column
+{
+	background: #20374D;
+	color: white;
+}
+
+html .GuiContainer
+{
+	border-radius: 0;
+}
+
+
+/* File icons --------------------------------------------------------------- */
+
+html .File
+{
+	width: 80px;
+}
+
+html .File .Icon
+{
+	width: 56px;
+	height: 56px;
+	-ms-filter: none;
+    filter: none;
+	-webkit-filter: none;
+	filter: none;
+}
+
+html .File.Selected
+{
+	z-index: 3; 
+}
+
+html .File .Title
+{
+	transition: height 0.2s;
+	max-height: 40px;
+}
+html body[mobile] .File .Title
+{
+	height: 30px;
+}
+
+html .File.Selected .Title
+{
+	-webkit-mask-image: none;
+	min-height: auto;
+	height: auto;
+	max-height: 200px !important;
+}
+
+html body[mobile] .File.Selected .Title
+{
+	height: fit-content;
+	color: black;
+}
+
+html body div .File.Selected:before
+{
+	background-color: rgba(220,220,220,1);
+}
+
+html .File.Selected .Title, 
+html #Screens .Content:not([listmode=compact]) .File.Selected .Title
+{
+	background-color: transparent;
+}
+
+
+@media (max-width: 320px)
+{
+	html body .File .Icon
+	{
+		width: 72px;
+	}
+	html body .File .Icon > div
+	{
+		max-height: 45px;
+	}
+}
+
+html body[mobile=mobile] .File .Icon
+{
+	filter: none;
+	-ms-filter: none;
+	-webkit-filter: none;
+}
+
+.FileBrowser > div
+{
+	font-size: 0.95em;
+}
+
+/* File browser */
+
+[mobile] .FileBrowser .Name.IconFolder
+{
+	font-size: 1.1em;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,
+[mobile] .View .FileDialog .FileBrowser .DiskItem > .Name
+{
+	color: black;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name:active,
+[mobile] .View .FileDialog .FileBrowser .DiskItem > .Name:active
+{
+	background-color: rgba(67,82,96,0.4);
+	border-radius: 10px;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name:after,
+[mobile] .View .FileDialog .FileBrowser .DiskItem > .Name:after
+{
+	content: "\f105";
+	font-family: fontawesome;
+	display: block;
+	float: right;
+}
+
+html .File
+{
+	margin: 20px 0 0 0;
+}
+
+html .File .Title
+{
+	width: calc(100% + 26px);
+	left: -13px;
+	font-size: 0.95em;
+}
+
+html .File .Icon > div
+{
+	background-size: contain;
+	position: absolute;
+	bottom: 0;
+	height: 48px;
+}
+
+html .File .Icon > div.TypeZip,
+html .File .Icon > div.TypeZip,
+html .File .Icon > div.TypeFPkg,
+html .File .Icon > div.TypePKGLINUX,
+html .File .Icon > div.TypeLHA,
+html .File .Icon > div.TypeTGZ,
+html .File .Icon > div.Type7Z,
+html .File .Icon > div.TypeTAR,
+html .File .Icon > div.TypeGZ,
+html .File .Icon > div.TypeBZ
+{
+	height: 40px;
+}
+
+html .File.Compact .Icon > div,
+html .File.Compact .Icon > div.Directory,
+html .File.Compact .Icon > div.TypeZip,
+html .File.Compact .Icon > div.TypeFPkg,
+html .File.Compact .Icon > div.TypePKGLINUX,
+html .File.Compact .Icon > .TypeLHA,
+html .File.Compact .Icon > .TypeTGZ,
+html .File.Compact .Icon > .Type7Z,
+html .File.Compact .Icon > .TypeTAR,
+html .File.Compact .Icon > .TypeGZ,
+html .File.Compact .Icon > .TypeBZ
+{
+	position: relative;
+	bottom: auto;
+	height: 33px;
+}
+
+html div.Listview .File > .Icon
+{
+	top: 0;
+}
+html div.Listview .File > .Icon > div
+{
+	top: 3px;
+}
+
+html div.Listview .File > .Icon > .Directory,
+html div.Listview .File > .Icon > .TypeZip,
+html div.Listview .File > .Icon > .TypeFPkg,
+html div.Listview .File > .Icon > .TypePKGLINUX,
+html div.Listview .File > .Icon > .TypeLHA,
+html div.Listview .File > .Icon > .TypeTGZ,
+html div.Listview .File > .Icon > .Type7Z,
+html div.Listview .File > .Icon > .TypeTAR,
+html div.Listview .File > .Icon > .TypeGZ,
+html div.Listview .File > .Icon > .TypeBZ
+{
+	top: 0px;
+}
+
+html .File.Compact .Icon > div.Directory,
+html .File.Compact .Icon > div.TypeZip,
+html .File.Compact .Icon > .TypeFPkg,
+html .File.Compact .Icon > .TypePKGLINUX,
+html .File.Compact .Icon > .TypeLHA,
+html .File.Compact .Icon .TypeTGZ,
+html .File.Compact .Icon .Type7Z,
+html .File.Compact .Icon .TypeTAR,
+html .File.Compact .Icon .TypeGZ,
+html .File.Compact .Icon .TypeBZ
+{
+	bottom: 3px;
+}
+
+html .File .Icon > div.Directory,
+html .File .Icon > div.TypeZip,
+html .File .Icon > .TypeFPkg,
+html .File .Icon > .TypePKGLINUX,
+html .File .Icon > .TypeLHA,
+html .File .Icon > .TypeTGZ,
+html .File .Icon > .Type7Z,
+html .File .Icon > .TypeTAR,
+html .File .Icon > .TypeGZ,
+html .File .Icon > .TypeBZ
+{
+	height: 40px;
+}
+
+html .File a
+{
+	color: #212729;
+}
+
+html body .File.Selected:before
+{
+	background: rgba(185,185,185,0.2);
+	border-radius: 10px;
+	content: " ";
+	display: block;
+	width: 120%;
+	position: absolute;
+	top: 0;
+	left: -10%;
+	height: 100%;
+}
+
+html body .View .Content[listmode=imageview] .File.Selected:before
+{
+    width: 90%;
+    top: 7%;
+    left: 5%;
+    height: 90%;
+}
+
+html body .ScreenContent > .Scroller > div > .File.Selected:before,
+html body #MousePointer .File.Selected:before,
+html .View .Content[listmode=compact] .File.Selected:before
+{
+	display: none;
+}
+
+html .File .Icon *
+{
+	background-size: 56px;
+}
+
+html .File .Icon .File
+{
+	background-image: url(/iconthemes/friendup15/File_Binary.svg);
+}
+
+html .File .Icon .Drive
+{
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
+}
+
+html body[mobile] .File .Icon .Drive > .Label
+{
+	top: calc(50% - 10px);
+	right: calc(50% - 8px);
+	width: 16px !important;
+	height: 16px !important;
+}
+
+html .File .Icon .Directory
+{
+	/*background-image: url(/themes/friendup/gfx/icons/directory.png);*/
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+html .File .Icon .DirectoryBrown
+{
+	/*background-image: url(/themes/friendup/gfx/icons/directory.png);*/
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+html .File.Selected .Icon .DirectoryBrown
+{
+	background-image: url(/iconthemes/friendup15/FolderActive.svg);
+}
+
+html .File .Icon .Directory.Upload
+{
+	/*background-image: url(/themes/friendup/gfx/icons/directory.png);*/
+	background-image: url(/iconthemes/friendup15/Folder.svg); /* TODO: Fix this */
+}
+
+html .File .Icon .NetworkDirectory
+{
+	/*background-image: url(/themes/friendup/gfx/icons/network.png);*/
+	background-image: url(/iconthemes/friendup15/Folder.svg); /* TODO: Fix this */
+}
+
+html .File .Icon .Directory,
+html .File .Icon .Directory.Upload,
+html .File .Icon .NetworkDirectory
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+html .File.Selected .Icon .Directory,
+html .File.Selected .Icon .Directory.Upload,
+html .File.Selected .Icon .NetworkDirectory
+{
+	background-image: url(/iconthemes/friendup15/FolderOpen.svg);
+}
+
+
+html .File .Icon .Arena
+{
+	background-image: url(/iconthemes/friendup15/File_Binary.svg); /* TODO: Fix this */
+}
+
+html .File .Icon .SystemDisk
+{
+	height: 48px;
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
+}
+
+
+html .File .Icon .Home
+{
+	/*background-image: url(/themes/friendup/gfx/icons/disk_home.png);*/
+	background-image: url(/iconthemes/friendup15/Friend_Master.svg);
+}
+
+html .File .Icon .Application
+{
+	/*background-image: url(/themes/friendup/gfx/icons/icon_executable.png);*/
+	background-image: url(/iconthemes/friendup15/File_CodeComplete.svg);
+}
+
+html .File .Icon .Trashcan
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+html .File .Icon .Ram
+{
+	background-image: url(/webclient/gfx/icons/64x64/devices/media-flash.png); /* TODO: Fix this one */
+}
+
+html .File .Icon .Door
+{
+	height: 48px;
+	filter: drop-shadow(0px 1px 4px rgba(0,0,0,0.4));
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
+}
+
+html .File .Icon .Door.local_fsys
+{
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
+}
+
+html .File .Icon .SystemDisk
+{
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
+}
+
+html .File .Icon .Door.Assign
+{
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
+}
+
+html .File .Icon .article
+{
+	background-image: url(/iconthemes/friendup15/File_Binary.svg); /* TODO: Fix this */
+}
+
+html .File .Icon .TypeJPG
+{
+	background-image: url(/iconthemes/friendup15/File_Image.svg);
+}
+
+html .File .Icon .TypeJPEG
+{
+	background-image: url(/iconthemes/friendup15/File_Image.svg);
+}
+
+html .File .Icon .TypePNG
+{
+	background-image: url(/iconthemes/friendup15/File_Image.svg);
+}
+
+html .File .Icon .TypePSD
+{
+	background-image: url(/iconthemes/friendup15/File_Image.svg);
+}
+
+html .File .Icon .TypeGIF
+{
+	background-image: url(/iconthemes/friendup15/File_Image.svg);
+}
+
+html .File .Icon .TypeBMP
+{
+	background-image: url(/iconthemes/friendup15/File_Image.svg);
+}
+
+html .File .Icon .TypeDOC
+{
+	background-image: url(/iconthemes/friendup15/File_Word.svg);
+}
+
+html .File .Icon .TypeODT
+{
+	background-image: url(/iconthemes/friendup15/File_Word.svg);
+}
+
+html .File .Icon .TypeXLS,
+html .File .Icon .TypeODS,
+html .File .Icon .TypeXLSX
+{
+	background-image: url(/iconthemes/friendup15/File_Excel.svg);
+}
+
+html .File .Icon .TypePPT,
+html .File .Icon .TypePPTX,
+html .File .Icon .TypeODP
+{
+	background-image: url(/iconthemes/friendup15/File_Powerpoint.svg);
+}
+
+html .File .Icon .TypeABW
+{
+	background-image: url(/iconthemes/friendup15/File_Word.svg);
+}
+
+html .File .Icon .TypeDOCX
+{
+	background-image: url(/iconthemes/friendup15/File_Word.svg);
+}
+
+html .File .Icon .TypeJSON
+{
+	background-image: url(/iconthemes/friendup15/File_Code.svg);
+}
+
+html .File .Icon .TypePDF
+{
+	background-image: url(/iconthemes/friendup15/File_PDF.svg);
+}
+
+html .File .Icon .TypeSVG
+{
+	background-image: url(/iconthemes/friendup15/File_Vector.svg);
+}
+
+html .File .Icon .TypeDRAWIO
+{
+	background-image: url(/iconthemes/friendup15/File_Drawio.svg);
+}
+
+html .File .Icon .TypeEPS
+{
+	background-image: url(/iconthemes/friendup15/File_Vector.svg);
+}
+
+html .File .Icon .TypeGoogleDocs
+{
+	background-image: url(/iconthemes/friendup15/File_Word.svg);
+}
+
+html .File .Icon .TypeWebUrl
+{
+	background-image: url(/iconthemes/friendup15/File_Bookmark.svg);
+}
+
+html .File .Icon .TypeTXT
+{
+	background-image: url(/iconthemes/friendup15/File_Text.svg);
+}
+
+html .File .Icon .TypeRUN
+{
+	background-image: url(/iconthemes/friendup15/File_CodeComplete.svg);
+}
+
+html .File .Icon .TypeMP3
+{
+	background-image: url(/iconthemes/friendup15/File_Sound.svg);
+}
+
+html .File .Icon .TypeOGG
+{
+	background-image: url(/iconthemes/friendup15/File_Sound.svg);
+}
+
+html .File .Icon .TypeWAV
+{
+	background-image: url(/iconthemes/friendup15/File_Sound.svg);
+}
+
+html .File .Icon .TypeFLAC
+{
+	background-image: url(/iconthemes/friendup15/File_Sound.svg);
+}
+
+html .File .Icon .TypeHTML
+{
+	background-image: url(/iconthemes/friendup15/File_Code.svg);
+}
+
+html .File .Icon .TypeCSS
+{
+	background-image: url(/iconthemes/friendup15/File_Code.svg);
+}
+
+html .File .Icon .TypePLS
+{
+	background-image: url(/iconthemes/friendup15/File_Music_Playlist.svg);
+}
+
+html .File .Icon .TypeBak
+{
+	background-image: url(/iconthemes/friendup15/File_Code.svg);
+}
+
+html .File .Icon .TApplication
+{
+	background-image: url(/iconthemes/friendup15/File_Code.svg);
+}
+
+html .File .Icon .TypePKGLINUX
+{
+	background-image: url(/iconthemes/friendup15/PackageUnknown.svg);
+	height: 44px;
+}
+
+html .File .Icon .TypeLHA
+{
+	background-image: url(/iconthemes/friendup15/File_ZipFolderUnknown.svg);
+	height: 44px;
+}
+
+html .File .Icon .TypeFPkg
+{
+	background-image: url(/iconthemes/friendup15/FriendPackage.svg);
+	height: 44px;
+}
+
+html .File .Icon .TypeApf
+{
+	background-image: url(/iconthemes/friendup15/File_Code.svg);
+}
+
+html .File .Icon .TypeTGZ,
+html .File .Icon .Type7Z,
+html .File .Icon .TypeTAR,
+html .File .Icon .TypeGZ,
+html .File .Icon .TypeBZ
+{
+	background-image: url(/iconthemes/friendup15/ZipPackageUnknown.svg);
+}
+
+html .File .Icon .TypeZip
+{
+	background-image: url(/iconthemes/friendup15/ZipPackage.svg);
+}
+
+html .File .Icon .TypeJS
+{
+	background-image: url(/iconthemes/friendup15/File_Code.svg);
+}
+
+html .File .Icon .TypeJSX
+{
+	background-image: url(/iconthemes/friendup15/File_CodeComplete.svg);
+}
+
+html .File .Icon .TypePHP
+{
+	background-image: url(/iconthemes/friendup15/File_Code.svg);
+}
+
+html .File .Icon .TypeAVI
+{
+	background-image: url(/iconthemes/friendup15/File_Movie.svg);
+}
+
+html .File .Icon .TypeFLV
+{
+	background-image: url(/iconthemes/friendup15/File_Movie.svg);
+}
+
+html .File .Icon .TypeMOV
+{
+	background-image: url(/iconthemes/friendup15/File_Movie.svg);
+}
+
+html .File .Icon .TypeWEBM
+{
+	background-image: url(/iconthemes/friendup15/File_Movie.svg);
+}
+
+html .File .Icon .TypeOGV
+{
+	background-image: url(/iconthemes/friendup15/File_Movie.svg);
+}
+
+html .File .Icon .TypeMPG, html .File .Icon .TypeMPEG
+{
+	background-image: url(/iconthemes/friendup15/File_Movie.svg);
+}
+
+html .File .Icon .TypeMOV, html .File .Icon .TypeMP4
+{
+	background-image: url(/iconthemes/friendup15/File_Movie.svg);
+}
+
+html .File .Icon .Devs_Drawer_DOSDrivers,
+html .File .Icon .Devs_Drawer_Printers,
+html .File .Icon .Devs_Drawer_Cores,
+html .File .Icon .Devs_Drawer_Sessions
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+html .File .Icon .Devs_Drawer_Cores:after
+{
+	content: "\f2db";
+	font-family: FontAwesome;
+	display: block;
+	position: absolute;
+	top: calc(50% - 1px);
+	left: calc(50% - 7px);
+	opacity: 0.7;
+}
+
+html .File .Icon .Devs_Drawer_DOSDrivers:after
+{
+	content: "\f277";
+	font-family: FontAwesome;
+	display: block;
+	position: absolute;
+	top: calc(50% - 1px);
+	left: calc(50% - 7px);
+	opacity: 0.7;
+}
+
+html .File .Icon .Devs_Drawer_Printers:after
+{
+	content: "\f02f";
+	font-family: FontAwesome;
+	display: block;
+	position: absolute;
+	top: calc(50% - 1px);
+	left: calc(50% - 7px);
+	opacity: 0.7;
+}
+
+html .File .Icon .Devs_Drawer_Sessions:after
+{
+	content: "\f235";
+	font-family: FontAwesome;
+	display: block;
+	position: absolute;
+	top: calc(50% - 1px);
+	left: calc(50% - 7px);
+	opacity: 0.7;
+}
+
+
+html .File .Icon .FriendCore
+{
+	background-image: url(/iconthemes/friendup15/File_Root.svg);
+}
+
+html .File .Icon .DeviceSession
+{
+	background-image: url(/iconthemes/friendup15/File_Session.svg);
+}
+
+html .File.Selected .Icon .Devs_Drawer_DOSDrivers
+{
+	background-image: url(/iconthemes/friendup15/FolderOpen.svg);
+}
+
+html .File .Icon .DOSDriver
+{
+	background-image: url(/iconthemes/friendup15/File_DosDriver.svg);
+}
+
+html .File .Icon .Printer
+{
+	background-image: url(/iconthemes/friendup15/File_Printer.svg);
+}
+
+html .File .Icon .MetaFile
+{
+	background-image: url(/iconthemes/friendup15/File_Binary.svg);
+}
+
+html .File .Icon .Module
+{
+	background-image: url(/iconthemes/friendup15/File_Module.svg);
+}
+
+html .File .Icon .System_Dormant_Function
+{
+	background-image: url(/iconthemes/friendup15/File_Function.svg);
+}
+
+html .File .Icon .System_File_Meta
+{
+	background-image: url(/iconthemes/friendup15/File_Binary.svg);
+}
+
+html .File .Icon .System_Library
+{
+	background-image: url(/iconthemes/friendup15/File_Library.svg);
+}
+
+/* System icons */
+
+html .File .Icon .System_Repositories
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+html .File .Icon .System_Repositories:after
+{
+	content: "\f0ac";
+	font-family: FontAwesome;
+	display: block;
+	position: absolute;
+	top: calc(50% - 1px);
+	left: calc(50% - 7px);
+	opacity: 0.7;
+}
+
+html .File.Selected .Icon .System_Repositories
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+html .File .Icon .System_Settings
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+html .File.Selected .Icon .System_Settings
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+html .File .Icon .System_Settings:after
+{
+	content: "\f0ad";
+	font-family: FontAwesome;
+	display: block;
+	position: absolute;
+	top: calc(50% - 1px);
+	left: calc(50% - 7px);
+	opacity: 0.7;
+}
+
+html .File .Icon .System_Documentation
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+html .File .Icon .System_Documentation:after
+{
+	content: "\f187";
+	font-family: FontAwesome;
+	display: block;
+	position: absolute;
+	top: calc(50% - 1px);
+	left: calc(50% - 7px);
+	opacity: 0.7;
+}
+
+
+html .File.Selected .Icon .System_Documentation
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+html .File .Icon .System_Modules
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+html .File.Selected .Icon .System_Modules
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+html .File .Icon .System_Modules:after
+{
+	content: "\f085";
+	font-family: FontAwesome;
+	display: block;
+	position: absolute;
+	top: calc(50% - 1px);
+	left: calc(50% - 7px);
+	opacity: 0.7;
+}
+
+html .File .Icon .System_Software
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+html .File .Icon .System_Software:after
+{
+	content: "\f00a";
+	font-family: FontAwesome;
+	display: block;
+	position: absolute;
+	top: calc(50% - 1px);
+	left: calc(50% - 7px);
+	opacity: 0.7;
+};
+
+html .File.Selected .Icon .System_Software
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+html .File .Icon .System_Functions
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+html .File .Icon .System_Functions:after
+{
+	content: "\f0d0";
+	font-family: FontAwesome;
+	display: block;
+	position: absolute;
+	top: calc(50% - 1px);
+	left: calc(50% - 7px);
+	opacity: 0.7;
+};
+
+html .File.Selected .Icon .System_Functions
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+html .File .Icon .System_Devices
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+html .File .Icon .System_Devices:after
+{
+	content: "\f0c7";
+	font-family: FontAwesome;
+	display: block;
+	position: absolute;
+	top: calc(50% - 1px);
+	left: calc(50% - 7px);
+	opacity: 0.7;
+};
+
+html .File.Selected .Icon .System_Devices
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+html .File .Icon .System_Libraries
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+html .File .Icon .System_Libraries:after
+{
+	content: "\f02d";
+	font-family: FontAwesome;
+	display: block;
+	position: absolute;
+	top: calc(50% - 1px);
+	left: calc(50% - 7px);
+	opacity: 0.7;
+}
+
+html .File.Selected .Icon .System_Libraries
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+html .File .Icon .System_Trashcan
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+html .File .Icon .System_Trashcan_Full
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+}
+
+.Launcher.View
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+	background-color: transparent;
+}
+
+html .Desklet[position=bottom_left] .Launcher.Running:after, 
+html .Desklet[position=bottom_center] .Launcher.Running:after, 
+html .Desklet[position=bottom_right] .Launcher.Running:after,
+html .Desklet[position=top_left] .Launcher.Running:after, 
+html .Desklet[position=top_center] .Launcher.Running:after, 
+html .Desklet[position=top_right] .Launcher.Running:after
+{
+	height: 4px;
+}
+
+html .Desklet[position=left_top] .Launcher.Running:after, 
+html .Desklet[position=left_middle] .Launcher.Running:after, 
+html .Desklet[position=left_bottom] .Launcher.Running:after,
+html .Desklet[position=right_top] .Launcher.Running:after, 
+html .Desklet[position=right_middle] .Launcher.Running:after, 
+html .Desklet[position=right_bottom] .Launcher.Running:after
+{
+	width: 4px;
+}
+
+
+/* Preference apps */
+
+html .File .Icon .Prefs_Wallpaper
+{
+	background-image: url(/iconthemes/friendup15/App_Wallpaper.png); /* TODO: Fix this */
+}
+
+html .File .Icon .Prefs_Screens
+{
+	background-image: url(/iconthemes/friendup15/App_Screens.png); /* TODO: Fix this */
+}
+
+html .File .Icon .Prefs_Security
+{
+	background-image: url(/iconthemes/friendup15/App_Security.png); /* TODO: Fix this */
+}
+
+html .File .Icon .Prefs_Software
+{
+	background-image: url(/iconthemes/friendup15/App_Software.png); /* TODO: Fix this */
+}
+
+html .File .Icon .Prefs_Dock
+{
+	background-image: url(/iconthemes/friendup15/App_Dock.png); /* TODO: Fix this */
+}
+
+html .File .Icon .Prefs_Startup
+{
+	background-image: url(/iconthemes/friendup15/App_StartupSequence.png); /* TODO: Fix this */
+}
+
+html .File .Icon .Prefs_Users
+{
+	background-image: url(/iconthemes/friendup15/App_Users.png); /* TODO: Fix this */
+}
+
+html .File .Icon .Prefs_Account
+{
+	background-image: url(/iconthemes/friendup15/App_AccountSettings.png); /* TODO: Fix this */
+}
+
+html .File .Icon .Prefs_Mimetypes
+{
+	background-image: url(/iconthemes/friendup15/App_MimeTypes.png); /* TODO: Fix this */
+}
+
+html .File .Icon .Prefs_DiskCatalog
+{
+	background-image: url(/iconthemes/friendup15/App_DiskCatalog.png); /* TODO: Fix this */
+}
+
+html .File .Icon .Prefs_Language
+{
+	background-image: url(/iconthemes/friendup15/App_Language.png); /* TODO: Fix this */
+}
+
+html .File .Icon .Prefs_Looknfeel
+{
+	background-image: url(/iconthemes/friendup15/App_LookAndFeel.png); /* TODO: Fix this */
+}
+
+html .File .Icon .Tool_ApplicationManager
+{
+	background-image: url(/iconthemes/friendup15/App_ApplicationManager.png);
+}
+
+html .File .Icon .Tool_SystemDiagnostics
+{
+	background-image: url(/iconthemes/friendup15/App_SystemDiagnostic.png);
+}
+
+/* Custom icons */
+html .File .Icon .Friend_Marketplace
+{
+	background-image: url(/iconthemes/friendup15/App_Marketplace.png) !important;
+	height: 48px;
+}
+
+
+/* Input elements ----------------------------------------------------------- */
+
+input[type=text], input[type=range], input[type=number], input[type=date],
+input[type=email], input[type=username],
+input[type=datetime-local], input[type=password], html body textarea, html select, html select:hover
+{
+	border-radius: 10px;
+	border: 1px solid #e3e7e8;
+	background: #e8e8e8;
+	font-size: 0.9em;
+}
+
+html select, html select:hover
+{
+	border: 0;
+	box-shadow: none;
+	color: #455155;
+	background: #e3e7e8;
+	vertical-align: top;
+	padding: 4px 2px !important;
+	font-size: 0.9em;
+}
+
+html button:before, html button.IconSmall:before
+{
+	font-size: 1.1em;
+	margin-right: 4px;
+}
+
+/* Mouse pointers ----------------------------------------------------------- */
+
+body
+{
+	cursor: default;
+}
+
+html .MousePointer,
+html .File, html button, html .Button, html .Desklet .Launcher, html #Tray > div,
+html #Statusbar .Task,
+html .View > .Title > div > .Zoom,
+html .View > .Title > div > .Depth,
+html .View > .Title > div > .Close,
+html .View > .Title,
+html .View > .Title *,
+html .View > .Title > div > span,
+html .View > .Title > div > span:hover,
+html select,
+html .List > div,
+html .Tab, html .TabActive, html .VertTab,
+html .ToolButton, html .ToolSelect, html .ToolButtonLabel,
+html #WorkspaceMenu .Menu, html #WorkspaceMenu .Open, html #WorkspaceMenu .Menu:hover,
+html input[type=checkbox], html input[type=radio], html input[type=image]
+{
+	cursor: pointer;
+}
+
+html .MouseCrosshair
+{
+	cursor: crosshair;
+}
+
+html .MouseCursor,
+html input, html textarea
+{
+	cursor: pointer;
+}
+
+html .MouseMove,
+html .TitleBar:hover .Left:after,
+html .TitleBar:active .Left:after,
+html .View > .Title:active, html .View:active > .Title,
+html .View[moving=moving], html .View[moving=moving] *,
+html .View > .MoveOverlay, html .Screen > .MoveOverlay,
+html .Screen > .ScreenOverlay
+{
+	cursor: move;
+}
+
+html body[windowcount] #WorkspaceMenu .Menu li.Disabled
+{
+	display: none;
+}
+
+html .MouseRestricted,
+html body #WorkspaceMenu .Menu li.Disabled,
+html body #WorkspaceMenu .Menu li.Disabled:hover,
+html body #WorkspaceMenu .Menu li.Disabled *
+{
+	cursor: not-allowed;
+}
+
+html .MouseDefault
+{
+	cursor: default;
+}
+
+html body.Busy, html body.Busy *
+{
+	cursor: progress;
+}
+
+
+/* Deepest field */
+
+#DeepestField #UserProfilePicture > p.Fullname
+{
+	color: white;
+	text-shadow: 0px 1px 1px #444444;
+}
+
+/* Mobile window management - special styles for different view modes ------- */
+body .View[maximized=true],
+body .View[maximized=true] > .Title,
+body .View.Active[maximized=true] > .Title,
+body:not([tablet])[mobile=mobile] .View,
+body:not([tablet])[mobile=mobile] .View > .Title,
+body:not([tablet])[mobile=mobile] .View.Active > .Title
+{
+	border-radius: 0;
+}
+body .View[maximized=true],
+body .View.Active[maximized=true]
+{
+	box-shadow: none !important;
+}
+body:not([tablet]) .View:not(.Active)[mobile=mobile][maximized=true] > .Content
+{
+	display: none;
+}
+body:not([tablet])[mobile=mobile] .View.Active > .Title > div > span
+{
+	left: 40px;
+	width: calc(100% - 80px);
+	text-align: center;
+}
+body:not([tablet])[mobile=mobile] #Screens .View
+body:not([tablet])[mobile=mobile] #Screens .View.Active
+{
+	border-top: 0;
+}
+body:not([tablet])[mobile=mobile] #Screens .View > .Title,
+body:not([tablet])[mobile=mobile] #Screens .View.Active > .Title
+{
+	height: 40px;
+	border-top: 0;
+}
+body:not([tablet])[mobile=mobile] #Screens .View > .Title > div > span
+{
+	line-height: 40px;
+}
+body:not([tablet])[mobile=mobile] #Screens .View .BottomBar,
+body:not([tablet])[mobile=mobile] #Screens .View .Resize,
+body:not([tablet])[mobile=mobile] #Screens .View .Zoom,
+body:not([tablet])[mobile=mobile] #Screens .View .Depth,
+body:not([tablet])[mobile=mobile] #Screens .View .Minimize,
+body:not([tablet])[mobile=mobile] #Screens .View .Depth,
+body:not([tablet])[mobile=mobile] #Screens .View .Zoom,
+body:not([tablet])[mobile=mobile] #Screens .View .Minimize
+{
+	visibility: hidden;
+	pointer-events: none;
+}
+body:not([tablet])[mobile=mobile] #Screens .View.Active .Close,
+body:not([tablet])[mobile=mobile].WindowMenu #Screens .View .Close,
+body:not([tablet])[mobile=mobile] #Screens .View.Active .Depth,
+body:not([tablet])[mobile=mobile] #Screens .View.Active .Zoom
+{
+	visibility: visible;
+	pointer-events: all;
+}
+
+body:not([tablet])[mobile=mobile] #Screens .View.Active .BottomBar,
+body:not([tablet])[mobile=mobile] #Screens .View.Active .Resize
+{
+	display: block;
+}
+
+body:not([tablet])[mobile=mobile] .IconWindow .File > .Icon
+{
+	left: 27px;
+}
+
+body:not([tablet])[mobile=mobile] .IconWindow .File > .Title
+{
+	left: 9px;
+}
+
+
+
+/* Done mobile window management -------------------------------------------- */
+
+/* Mobile menu */
+
+html [mobile=mobile] > #MobileMenu.Visible
+{
+	background: #f4f4f4;
+	color: #303030;
+}
+
+html body[mobile] #WorkspaceMenu.Open ul
+{
+	background: #20374D;
+}
+
+[mobile] #WorkspaceMenu:before
+{
+	color: white;
+}
+
+html [mobile=mobile] > #MobileMenu.Visible > div
+{
+	font-size: 1em;
+}
+
+html body[mobile=mobile] > .MobileMenu div li .IconText
+{
+	line-height: 30px;
+	font-size: 1.1em;
+}
+
+html body[mobile=mobile] > .MobileMenu.Visible > span.Close, 
+html body .MobileMenuClose, body[mobile=mobile] > .MobileMenu.Visible > span.Close, 
+html body #WorkspaceMenu .Open ul > li.CloseButton
+{
+	border-top: 2px solid rgba(0,0,0,0.1);
+}
+
+@media (max-device-width: 768px)
+{
+	::-webkit-scrollbar
+	{
+		width: 4px;
+		height: 4px;
+	}
+}
+
+body[mobile=mobile] .Desklet.Open:before,
+body[mobile=mobile] .Desklet:not(.Open):before
+{
+    font-size: 20px;
+    width: 50px;
+    height: 50px;
+    line-height: 50px;
+    color: #ffffff;
+    border-radius: 100%;
+}
+
+body[mobile=mobile] .Desklet:not(.Open):before
+{
+	top: -74px;
+	left: -2px;
+}
+
+body[mobile=mobile].AppsShowing #DoorsScreen .Scroller:before
+{
+	opacity: 0;
+	pointer-events: none;
+}
+
+body[mobile=mobile] .Desklet.Open.Opened
+{
+	height: calc(100% - 97px) !important;
+}
+
+html > body[mobile] > div button.IconButton,
+html > body[mobile] > div button.IconButton:hover,
+html > body[mobile] > div .Button.IconButton,
+html > body[mobile] > div .Button.IconButton:hover
+{
+	background-color: transparent !important;
+	outline: 0px !important;
+	border: 0 !important;
+}
+
+/* Flavors of the theme */
+@append url(System:../themes/friendup12/flavors_dark.css);
+@append url(System:../themes/friendup12/flavors_charcoal.css);
+@append url(System:../themes/friendup12/flavors_synthwave.css);
+@append url(System:../themes/friendup12/paradigm_tablet.css);

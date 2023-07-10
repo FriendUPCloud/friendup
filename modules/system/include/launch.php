@@ -118,7 +118,7 @@ if( $app->ID )
 			    ' . $scrp . '
 			    Application.checkAppPermission = function( key )
 			    {
-				    var permissions = {}; // <- inject user specific permissions here
+				    let permissions = {}; // <- inject user specific permissions here
 				    if( permissions[ key ] )
 					    return permissions[ key ];
 				    return false;
