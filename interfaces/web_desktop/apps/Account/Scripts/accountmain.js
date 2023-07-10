@@ -108,7 +108,6 @@ function findGroups()
 
 function refreshGroups( keys )
 {
-	console.trace( 'refreshgroups', keys );
 	if( !keys ) keys = '';
 	
 	let m = new Module( 'system' );
