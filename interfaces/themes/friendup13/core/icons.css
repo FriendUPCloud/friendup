@@ -1,0 +1,930 @@
+/* 
+
+	Directory views
+
+*/
+
+.ToggleGroup .VolumeInfo 
+{
+    display: inline-block;
+    font-size: 80%;
+    white-space: nowrap;
+}
+
+.ToggleGroup .VolumeInfo > * 
+{
+    display: inline-block;
+    vertical-align: top;
+    position: relative;
+    top: -2px;
+    left: -18px;
+}
+
+.ToggleGroup .VolumeInfo > .SizeLabel 
+{
+    margin: 0 5px 0 0;
+}
+
+.ToggleGroup .VolumeInfo > .SizeGroove 
+{
+    background-color: rgba(0,0,0,0.07);
+    position: relative;
+    width: 180px;
+    height: 17px;
+}
+
+.ToggleGroup .VolumeInfo > .SizeGroove .SizeBar
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 17px;
+    background-color: var(--fui-color-aqua);
+    z-index: 1;
+}
+
+.ToggleGroup .VolumeInfo > .SizeGroove .SizeBar.AlmostFull
+{
+	background-color: var(--fui-color-amaranth);
+}
+
+.ToggleGroup .VolumeInfo .SizeText 
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 3;
+    text-align: center;
+    height: 100%;
+}
+
+.ToggleGroup .VolumeInfo > .SizeGroove .SizeBar.AlmostFull + .SizeText
+{
+	color: white;
+}
+
+.IconWindow .Content > .FileBrowserContainer + .Listview,
+.IconWindow .Content > .FileBrowserContainer + .Scroller
+{
+	left: 200px;
+	width: calc(100% - 200px);
+}
+
+.IconWindow .Content
+{
+	will-change: scroll-position, content;
+}
+
+.Scroller
+{
+	scroll-behavior: smooth;
+}
+[mobile] .Scroller
+{
+	overflow-y: scroll;
+	-webkit-overflow-scrolling: touch;
+}
+
+.Content.SlideAnimation
+{
+	pointer-events: none;
+}
+
+.IconWindow .Content > .FileBrowserContainer
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 200px;
+	height: 100%;
+	padding: var(--PaddingBox);
+	box-sizing: border-box;
+}
+
+.FileBrowserContainer.FileBrowser.Bookmarks:after
+{
+	content: " ";
+	display: block;
+	position: relative;
+	height: 100px;
+	width: 100%;
+}
+
+/* Busy busy */
+
+.IconWindow .Content .DirectoryRefresh
+{
+	position: absolute;
+	box-sizing: border-box;
+	background: #444444;
+	border-radius: 5px;
+	padding: 20px;
+	font-size: 1.1em;
+	color: white;
+	width: 300px;
+	height: fit-content;
+	top: 20%;
+	left: calc(50% - 150px);
+	z-index: 2;
+}
+
+/* File browser */
+
+.FileBrowser
+{
+	overflow-y: auto;
+	background-color: var(--BackgroundHeavier);
+}
+
+.FileBrowser div.Name
+{
+	padding: 5px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.FileBrowserItemImage
+{
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: contain;
+	width: 16px;
+	height: 16px;
+	float: left;
+	vertical-align: middle;
+	display: block;
+	margin: 1px 4px 0 0;
+}
+
+.Active > .FileBrowserItemImage
+{
+	filter: invert(1);
+}
+
+.FileBrowser div.Name.Active, 
+.FileBrowser div.Name.Active
+{
+	background: var(--ColorBgButton);
+	color: var(--ColorButton);
+	border-radius: 5px;
+}
+
+.FileBrowser .DiskItem:not(.Open) > .SubItems,
+.FileBrowser .FolderItem:not(.Open) > .SubItems
+{
+	display: none;
+}
+
+.FileBrowser .DiskItem.Open > .SubItems,
+.FileBrowser .FolderItem.Open > .SubItems
+{
+	display: block;
+}
+
+.FileBrowser .IconDisk:before
+{
+	content: " ";
+	display: inline-block;
+	vertical-align: middle;
+	width: 16px;
+	height: 16px;
+	background-image: url(/iconthemes/friendup15/Disk.svg);
+	background-position: center;
+	background-size: contain;
+	background-repeat: no-repeat;	
+}
+
+.FileBrowser .IconFolder:before
+{
+	content: " ";
+	display: inline-block;
+	vertical-align: text-bottom;
+	width: 16px;
+	height: 16px;
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+	background-position: center;
+	background-size: contain;
+	background-repeat: no-repeat;	
+}
+
+.FileBrowser .IconFolder.Open:before
+{
+	background-image: url(/iconthemes/friendup15/FolderOpen.svg);
+}
+
+.FileBrowser .IconFile:before
+{
+	content: " ";
+	display: inline-block;
+	vertical-align: middle;
+	width: 16px;
+	height: 16px;
+	background-image: url(/iconthemes/friendup15/File_Code.svg);
+	background-position: center;
+	background-size: contain;
+	background-repeat: no-repeat;	
+}
+
+/* -------------------------------------------------------------------------- *\
+
+Icon styles for the workbench
+Just so that we can keep the outputted HTML smaller by using CSS classes :)
+
+\* -------------------------------------------------------------------------- */
+
+.File a
+{
+	color: #202020;
+	/*text-shadow: 0 1px 0 #000;*/
+}
+
+.Coldom > .File div, 
+.Row.File div
+{
+	pointer-events: none;
+}
+
+.Coldom > .File div.Icon:before,
+.Row.File div.Icon:before
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	top: -10px;
+    left: -10px;
+    width: calc(100% + 16px);
+    height: calc(100% + 16px);
+	background: transparent;
+}
+
+#Doors .File a
+{
+	color: #FFF;
+	text-shadow: 0 1px 0 #000;	
+}
+
+.File
+{
+	cursor: pointer;
+	float: left;
+	margin: 0;
+	overflow: visible;
+	position: relative;
+	width: 96px;
+	padding: 0px;
+	margin: 20px 0 0 10px;
+	transition: transform,opacity 0.25s;
+	webkit-transition: transform,opacity 0.25s;
+}
+
+.File.Editing a.Title,
+.File.Editing .Column
+{
+	display: none;
+}
+
+.Listview .File.Editing textarea
+{
+	text-align: left;
+	padding: 0 0 0 48px;
+	width: 100%;
+	box-sizing: border-box;
+	height: 28px;
+	line-height: 28px;
+}
+
+.File.Selected
+{
+	background: none;
+}
+
+.File .Icon
+{
+	height: 56px;
+	position: relative;
+	z-index: 2;
+	margin: auto;
+}
+
+.File .Icon > div
+{
+	height: 100%;
+	margin: 0 auto;
+	width: 100%;
+}
+
+/* TODO: Make ready for themes! */
+.File .Icon > .Label.Shared
+{
+    display: block;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 32px;
+	height: 32px;
+	overflow: hidden;
+	z-index: 100;
+	background: #444444;
+	color: white;
+	border-radius: 100%;
+	padding: 5px;
+	line-height: 20px;
+	white-space: nowrap;
+	box-shadow: 0px 1px 6px rgba(0,0,0,0.4);
+	box-sizing: border-box;
+	border: 2px solid white;
+	text-align: center;
+}
+
+.File.Selected
+{
+	/*
+	opacity: 0.7;
+	filter:alpha(opacity=70);
+	why do we want to make them transparent?
+	*/
+}
+
+.File.Selected .Title
+{
+	background-color: #404040;
+	background-color: rgba(0,0,0,0.3);
+	box-shadow: inset 0px 0px 1px rgba(0,0,0,0.8);
+	border-radius: 8px;
+	-moz-border-radius: 8px;
+	-webkit-border-radius: 8px;
+	color: white;
+	z-index: 1;
+}
+
+.File .Title
+{
+	margin-top: 2px;
+	box-sizing: border-box;
+	padding: 5px;
+	text-align: center;
+	position: relative;
+	left: -6px;
+	width: calc(100% + 12px);
+	font-weight: normal;
+	display: block;
+	white-space: normal;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	overflow-wrap: break-word;
+	word-wrap: break-word;
+	-ms-word-break: break-all;
+	word-break: break-word;
+	-ms-hyphens: auto;
+	-moz-hyphens: auto;
+	-webkit-hyphens: auto;
+	hyphens: auto;
+	z-index: 1;
+}
+
+.File .Title span
+{
+	display: inline;
+}
+
+/* Specific icons */
+
+.File > .Icon > div
+{
+	background-repeat: no-repeat !important;
+	background-position: bottom center !important;
+}
+
+.File .Icon .File
+{
+	float: none;
+}
+
+.Launcher .File, 
+.Launcher .File div 
+{
+    width: inherit;
+    height: inherit;
+    margin: 0;
+    padding: 0;
+}
+
+html .Launcher .File div *
+{
+	width: inherit;
+	height: inherit;
+}
+
+/* Download label */
+
+.File > a.Download
+{
+	display: block;
+	position: absolute;
+	top: 0px;
+	right: 0px;
+	width: 32px;
+	height: 32px;
+	overflow: hidden;
+	z-index: 100;
+	background: #444444;
+	color: white;
+	border-radius: 100%;
+	padding: 5px;
+	line-height: 20px;
+	white-space: nowrap;
+	box-shadow:0px 1px 6px rgba(0,0,0,0.4);
+	box-sizing: border-box;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.25s;
+	border: 2px solid white;
+	text-align: center;
+}
+.File > a.Download:after
+{
+	content: " ";
+	display: block;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	top: 0; left: 0;
+	box-shadow: inset 0px 0px 5px rgba(0,0,0,0.5);
+}
+
+.File > a.Download:hover
+{
+	background: #888888;
+}
+
+.File.Selected > a.Download
+{
+	opacity: 1;
+	pointer-events: all;
+}
+
+.File > a.Download.Active
+{
+	/*width:auto;*/
+	display:block;
+	overflow:show;
+	text-align:center;
+	background:rgba(255,255,255,0.8);
+	border-radius:10px;
+}
+
+.File.Selected .Door, .File.Selected .SystemDisk
+{
+	filter: drop-shadow(0px 0px 5px rgba(255,255,255,0.6));
+}
+
+/* Special case for the main doors screen */
+#DoorsScreen > .ScreenContent > .Scroller > div > .File > .Title
+{
+	color: white;
+	font-weight: bold;
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.4);
+}
+
+/* Small icons -------------------------------------------------------------- */
+
+.IconSmall.FUIArrowUp
+{
+	background-image: var(--IconSmallArrowUp);
+}
+
+.IconSmall.FUIArrowDown
+{
+	background-image: var(--IconSmallArrowDown);
+}
+
+.IconSmall.FUIArrowLeft
+{
+	background-image: var(--IconSmallArrowLeft);
+}
+
+.IconSmall.FUIArrowRight
+{
+	background-image: var(--IconSmallArrowRight);
+}
+
+.IconSmall.FUISave
+{
+	background-image: var(--IconSmallSave);
+}
+
+.IconSmall.FUIUse
+{
+	background-image: var(--IconSmallUse);
+}
+
+.IconSmall.FUICancel
+{
+	background-image: var(--IconSmallCancel);
+}
+
+.IconSmall.FUIListAdd
+{
+	background-image: var(--IconSmallListAdd);
+}
+
+.IconSmall.FUIListRemove
+{
+	background-image: var(--IconSmallListRemove);
+}
+
+/* File icons --------------------------------------------------------------- */
+
+html .File.Tiny, html .File.Tiny .Icon, html .File.Tiny .Icon > div
+{
+	margin: 0;
+	width: 24px;
+	height: 16px;
+}
+
+.File .Icon .Drive > .Label
+{
+	position: absolute;
+	right: calc(50% - 12px);
+	top: calc(50% - 17px);
+	width: 24px;
+	height: 24px;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: 76%;
+}
+
+.File .Icon .File
+{
+}
+
+.File .Icon .Drive
+{
+}
+
+.File .Icon .Directory
+{
+}
+
+.File .Icon .Directory.Upload
+{
+}
+
+.File .Icon .Directory.GroupShare:after,
+.File .Icon .Directory.YouShare:after
+{
+	font-family: fontawesome;
+	content: "\f0c0";
+	position: absolute;
+	top: 15px;
+	left: 0;
+	width: 100%;
+	text-align: center;
+}
+.File .Icon .Directory.YouShare:after
+{
+	content: "\f1e1";
+}
+.File .Icon > .FileShared:before,
+.File .Icon > .Shared:after
+{
+	opacity: 1;
+	transition: opacity 0.15s;
+}
+
+[listmode=iconview] .File .Icon > .FileShared:before,
+[listmode=iconview] .File .Icon > .Shared:after
+{
+	min-width: 8px;
+}
+
+div.Columnview .File .Directory.GroupShare:after,
+div.Columnview .File .Directory.YouShare:after,
+div.Columnview .File .Directory.UserShare:after,
+div.Listview .File .Directory.GroupShare:after,
+div.Listview .File .Directory.YouShare:after,
+div.Listview .File .Directory.UserShare:after
+{
+	top: 10px;
+	font-size: 0.6em;
+}
+
+div .File.ZoomX3 .Icon .Directory.GroupShare:after,
+div .File.ZoomX3 .Icon .Directory.YouShare:after,
+div .File.ZoomX3 .Icon .Directory.UserShare:after
+{
+	top: 62px;
+    font-size: 2em;
+}
+
+.File .Icon .Directory.UserShare:after
+{
+	font-family: fontawesome;
+	content: "\f007";
+	position: absolute;
+	top: 15px;
+	left: 0;
+	width: 100%;
+	text-align: center;
+}
+
+.File .Icon .NetworkDirectory
+{
+}
+
+.File .Icon .Arena
+{
+}
+
+.File .Icon .System
+{
+}
+
+
+.File .Icon .Home
+{
+}
+
+.File .Icon .Application
+{
+}
+
+.File .Icon .Trashcan
+{
+	background-size: contain;
+}
+
+.File .Icon .Ram
+{
+}
+
+.File .Icon .Custom
+{
+}
+
+.File .Icon .Door
+{
+}
+
+.File .Icon .SystemDisk
+{
+	background-size: contain;
+}
+
+.File .Icon .Door.Assign
+{
+
+}
+
+.File .Icon .article
+{
+	background-size: contain;
+}
+
+.File .Icon > .Shared:after
+{
+	display: block;
+	font-family: fontawesome;
+	font-size: 0.6em;
+	content: '\f0c1';
+	position: absolute;
+	right: 0;
+	top: 0;
+	background: #f0f0f0;
+	border: 2px solid rgba(0,0,0,0.2);
+	border-radius: 100%;
+	padding: 3px 3px;
+	color: black;
+}
+
+.File .Icon > .Shared.FileShared:before
+{
+	top: 20px;
+}
+
+div.Columnview .File .Icon > .Shared.FileShared:before,
+div.Listview .File .Icon > .Shared.FileShared:before,
+[listmode=compact] .File .Icon > .Shared.FileShared:before
+{
+	top: 10px;
+	right: 0;
+	width: 5px;
+}
+html .File.ZoomX3 .Icon > .Shared.FileShared::before
+{
+	right: 24px;
+	top: 35px;
+}
+
+html .File.ZoomX3 .Icon > .Shared.FileShared::before,
+html .File.ZoomX3 .Icon > .Shared:after
+{
+	padding: 4px;
+}
+
+[listmode=compact] .File .Icon > .Shared.FileShared:before
+{
+	top: 15px;
+}
+
+.File .Icon > .FileShared:before
+{
+	display: block;
+	font-family: fontawesome;
+	font-size: 0.6em;
+	content: '\f1e0';
+	position: absolute;
+	right: 0;
+	top: 0;
+	background: #f0f0f0;
+	border: 2px solid rgba(0,0,0,0.2);
+	border-radius: 100%;
+	padding: 3px 3px;
+	color: black;
+}
+
+div.Columnview .File .Icon > .FileShared:before,
+div.Columnview .File .Icon > .Shared:after,
+div.Listview .File .Icon > .FileShared:before,
+div.Listview .File .Icon > .Shared:after,
+[listmode=compact] .File .Icon > .FileShared:before,
+[listmode=compact] .File .Icon > .Shared:after
+{
+	font-size: 0.3em;
+	width: 5px;
+}
+
+.File .Icon .TypeJPG, .File .Icon .TypeJPEG, .File .Icon .TypePNG, 
+.File .Icon .TypeGIF
+{
+	background-size: contain;
+}
+
+.File .Icon .TypeDOC
+{
+	background-size: contain;
+}
+
+.File .Icon .TypePDF
+{
+	background-size: contain;
+}
+
+.File .Icon .TypeTXT
+{
+	background-size: contain;
+}
+
+.File .Icon .TypeRUN
+{
+	background-size: contain;
+}
+
+.File .Icon .TypeMP3,
+.File .Icon .TypeOGG,
+.File .Icon .TypeWAV
+{
+	background-size: contain;
+}
+
+.File .Icon .TypeHTML
+{
+	background-size: contain;
+}
+
+.File .Icon .TypeZip
+{
+	background-size: contain;
+}
+
+.File .Icon .TypeJS, .File .Icon .TypeJSX
+{
+	background-size: contain;
+}
+
+.File .Icon .TypeAVI
+{
+	background-size: contain;
+}
+
+.File .Icon .TypeMPG, .File .Icon .TypeMPEG
+{
+	background-size: contain;
+}
+
+.File .Icon .TypeMOV, .File .Icon .TypeMP4
+{
+	background-size: contain;
+}
+
+.File .Icon .Application.System_Repositories
+{
+	background-size: contain;
+}
+
+.File .Icon .Application.System_Prefs
+{
+	background-size: contain;
+}
+
+.File .Icon .Application.System_Plugins
+{
+	background-size: contain;
+}
+
+.File .Icon .Application.System_Docs
+{
+	background-size: contain;
+}
+
+.File .Icon .Application.System_Modules
+{
+	background-size: contain;
+}
+
+.File .Icon .Application.System_Applications
+{
+	background-size: contain;
+}
+
+/* Compact icons ------------------------------------------------------------ */
+
+html .File.Compact
+{
+	width: 170px;
+}
+
+html .File.Compact > .Title
+{
+	min-height: 35px;
+}
+
+
+html .File.Compact > .Icon
+{
+	height: 35px;
+}
+
+
+/* Zoomed icons ------------------------------------------------------------- */
+
+html .File.ZoomX2
+{
+	width: 140px;
+}
+
+html .File.ZoomX2 > .Title
+{
+	min-height: 32px;
+}
+
+
+html .File.ZoomX2 > .Icon
+{
+	width: 120px;
+	height: 80px;
+}
+
+html .File.ZoomX2 .Icon > div
+{
+	height: 70px;
+}
+
+html .File.ZoomX2 .Icon > .Shared:after
+{
+	top: 4px;
+	border-radius: 50%;
+    padding: 4px 4px;
+}
+
+html .File.ZoomX3
+{
+	width: 240px;
+}
+
+html .File.ZoomX3 > .Title
+{
+	min-height: 32px;
+}
+
+
+html .File.ZoomX3 > .Icon
+{
+	width: 220px;
+	height: 160px;
+}
+
+html .File.ZoomX3 .Icon > div
+{
+	height: 140px;
+}
+
+html .File.ZoomX3 .Icon > .Shared:after
+{
+	top: 8px;
+	right: 24px;
+    padding: 4px 4px;
+}
+

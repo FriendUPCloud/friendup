@@ -1,0 +1,17 @@
+
+i18n_ColorTitleActive                   : Active window color
+i18n_ColorButtonBackground              : Active button color
+i18n_ColorWindowBackground              : Background color
+i18n_ColorWindowText                    : Text color
+i18n_ColorScrollBackground              : Scroll background
+i18n_ColorScrollButton                  : Scroll button color
+i18n_ColorFileToolbarBackground         : File manager toolbar background
+i18n_ColorFileToolbarText               : File manager toolbar text color
+i18n_ColorFileIconText                  : File manager text color
+i18n_ButtonSchemeText                   : Window button layout scheme
+i18n_ColorSchemeText                    : GUI color scheme
+i18n_IconEffectText                     : Desktop icon effect
+i18n_InputParadigmText                  : Input paradigm
+
+i18n_set_defaults                       : Revert to defaults
+

@@ -1,0 +1,5662 @@
+/* Base setup */
+
+body *
+{
+	-webkit-tap-highlight-color: transparent;
+}
+
+:-webkit-full-screen-ancestor>:not(:-webkit-full-screen-ancestor):not(:-webkit-full-screen)
+{
+ display:none!important
+}
+:-moz-full-screen-ancestor>:not(:-moz-full-screen-ancestor):not(:-moz-full-screen)
+{
+ display:none!important
+}
+:-ms-fullscreen-ancestor>:not(:-ms-fullscreen-ancestor):not(:-ms-fullscreen)
+{
+ display:none!important
+}
+:fullscreen-ancestor>:not(:fullscreen-ancestor):not(:fullscreen)
+{
+	display:none!important
+}
+
+input:focus, textarea:focus, select:focus
+{
+    outline: none;
+}
+
+/* TEMPORARY TESThtml body.ViewStateActive:after,
+html body:not(.ViewStateActive):after 
+{
+    position: absolute;
+    display: block;
+    content: " ";
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    border-top: 2px solid green;
+    pointer-events: none;
+    box-sizing: border-box;
+    z-index: 9999;
+}
+
+html body:not(.ViewStateActive):after 
+{
+	border-top: 2px solid red;
+}
+ */
+
+html
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	user-select: none;
+	-webkit-user-select: none;
+	overflow: hidden;
+}
+
+body
+{
+	font-family: var(--FontFaceNormal);
+	font-size: var(--FontSizeDefault);
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	max-height: 100%;
+	max-width: 100%;
+	/*
+	TODO: Figure out why this ruins some apps
+	-webkit-transform: rotateZ(0deg);
+   -moz-transform: rotateZ(0deg);
+   -o-transform: rotateZ(0deg);
+   -ms-transform: rotateZ(0deg);
+ 	transform: rotateZ(0deg);*/
+	overflow: hidden;
+    touch-action: none;
+}
+
+
+body[mobile=mobile], body[tablet=tablet]
+{
+    touch-action: auto;
+}
+
+/* Preload images */
+body > img
+{
+	visibility: hidden;
+	position: absolute;
+	pointer-events: none;
+}
+
+iframe.hidden
+{
+	position:absolute;
+	top:0;
+	left:0;
+	width:1px;
+	height:1px;
+	overflow: hidden;
+	visibility: hidden;
+	pointer-events: none;
+}
+
+/* Apps */
+body > iframe
+{
+	display: block;
+	float: left;
+	margin: 10px;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	background: black;
+	border: 0;
+	box-shadow: 0px 2px 4px rgba(0,0,0,0.5);
+	-moz-box-shadow: 0px 2px 4px rgba(0,0,0,0.5);
+	-webkit-box-shadow: 0px 2px 4px rgba(0,0,0,0.5);
+	width: 144px;
+	height: 200px;
+}
+
+h1, h2, h3, h4
+{
+	font-weight: normal;
+	margin: 0 0 5px 0;
+	padding: 0;
+}
+
+body > #FocusGrabber
+{
+	position: fixed;
+	top: 100%;
+}
+
+.NoEvents
+{
+	pointer-events: none;
+}
+
+/* Some backgrounds and colors */
+
+.BackgroundHeavy
+{
+	background-color: var(--BackgroundHeavy);
+}
+
+.BackgroundHeavier
+{
+	background-color: var(--BackgroundHeavier);
+}
+
+.BackgroundHeaviest
+{
+	background-color: var(--BackgroundHeaviest);
+}
+
+.BackgroundStError
+{
+	background-color: var(--ColorBgStError);
+}
+.ColorStError
+{
+	color: var(--ColorStError);
+}
+.BackgroundStGreenLight
+{
+	background-color: var(--ColorBgStGreenLight);
+}
+.ColorStGreenLight
+{
+	color: var(--ColorStGreenLight);
+}
+.BackgroundStBlue
+{
+	background-color: var(--ColorBgStBlue);
+}
+.ColorStBlue
+{
+	color: var(--ColorStBlue);
+}
+.BackgroundStBlueLight
+{
+	background-color: var(--ColorBgStBlueLight);
+}
+.ColorStBlueLight
+{
+	color: var(--ColorStBlueLight);
+}
+.BackgroundStBlueDark
+{
+	background-color: var(--ColorBgStBlueDark);
+}
+.ColorStBlueDark
+{
+	color: var(--ColorStBlueDark);
+}
+.BackgroundStGrayLight
+{
+	background-color: var(--ColorBgStGrayLight);
+}
+.ColorStGrayLight
+{
+	color: var(--ColorStGrayLight);
+}
+
+/* Loading animation */
+
+body:not(.friendapp) .LoadingAnimation
+{
+	background: var(--GuiImgWinLoading);
+}
+
+.GuiContainer with .BordersDefault
+{
+	background: var(--ColorBackground);
+}
+
+.VerticalRuler with .BordersDefault
+{
+	display: inline;
+	width: 1px;
+	background: var(--ColorBackground);
+	margin: var(--MarginVerticalRuler);
+	padding: 0;
+}
+
+/* Selects */
+
+select
+{
+	display: inline;
+	color: var(--ColorSelect);
+	background-color: var(--ColorBgSelect);
+	padding: var(--PaddingSelect);
+	margin: var(--MarginButton);
+	border-top: var(--BorderDefaultTop);
+	border-left: var(--BorderDefaultLeft);
+	border-right: var(--BorderDefaultRight);
+	border-bottom: var(--BorderDefaultBottom);
+	box-shadow: var(--BoxShadowButton);
+	-moz-box-shadow: var(--BoxShadowButton);
+	-webkit-box-shadow: var(--BoxShadowButton);
+	text-shadow: none;
+	border-radius: var(--ButtonBorderRadius);
+	-moz-border-radius: var(--ButtonBorderRadius);
+	-webkit-border-radius: var(--ButtonBorderRadius);
+	cursor: hand;
+	cursor: pointer;
+	position: relative;
+}
+
+/* Mouse states ------------------------------------------------------------- */
+
+#MousePointer /* For holding icons */
+{
+	pointer-events: none;
+}
+
+#MousePointer *
+{
+	pointer-events: none;
+}
+
+#MousePointer > div
+{
+	filter: drop-shadow(0px 2px 6px rgba(0,0,0,0.4));
+	transform: rotate3d(0deg);
+}
+
+html #MousePointer .File .Title
+{
+	background-color: transparent;
+	filter: sepia(1);
+}
+
+.MousePointer
+{
+	cursor: hand;
+	cursor: pointer;
+}
+
+#MousePointer .MousePointer
+{
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.MouseCrosshair
+{
+	cursor: crosshair;
+}
+
+.MouseMove
+{
+	cursor: move;
+}
+
+.MouseBusy
+{
+	cursor: wait;
+}
+
+.MouseRestricted
+{
+	cursor: not-allowed;
+}
+
+.MouseCursor
+{
+	cursor: text;
+}
+
+.MouseDefault
+{
+	cursor: default;
+}
+
+/* Text classes and other */
+
+.TextareaRich
+{
+	display: block;
+}
+
+.StandardBoxShadow
+{
+	box-shadow: 0px 2px 4px rgba(0,0,0,0.5);
+}
+
+.Ellipsis
+{
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Buttons ------------------------------------------------------------------ */
+
+button::-moz-focus-inner
+{
+	border:0;
+	padding:0;
+}
+
+.ButtonHeight
+{
+	height: 28px;
+}
+
+button, .Button
+{
+	display: inline;
+	color: var(--ColorButton);
+	background-color: var(--ColorBgButton);
+	padding: var(--PaddingButton);
+	margin: var(--MarginButton);
+	border-top: var(--BorderDefaultTop);
+	border-left: var(--BorderDefaultLeft);
+	border-right: var(--BorderDefaultRight);
+	border-bottom: var(--BorderDefaultBottom);
+	box-shadow: var(--BoxShadowButton);
+	-moz-box-shadow: var(--BoxShadowButton);
+	-webkit-box-shadow: var(--BoxShadowButton);
+	text-shadow: var(--TxtShdPositive);
+	border-radius: var(--ButtonBorderRadius);
+	-moz-border-radius: var(--ButtonBorderRadius);
+	-webkit-border-radius: var(--ButtonBorderRadius);
+	cursor: hand;
+	cursor: pointer;
+	position: relative;
+	outline: 0 !important;
+	font-size: inherit;
+}
+
+.Button.NoText:after, .Button.NoText:before
+{
+	margin: 0;
+}
+
+button, .ButtonAlt
+{
+	color: var(--ColorButton);
+	background-color: var(--ColorBgButtonAlt);
+}
+
+body button.IconButton,
+body .Button.IconButton
+{
+	background-color: transparent !important;
+	border: 0 !important;
+}
+
+span.VerticalLine
+{
+    background-color: #455155;
+    width: 3px;
+    top: -1px;
+    border-radius: 5px;
+    position: relative;
+    height: 14px;
+    border: 0;
+    margin: 0px 10px 0 4px;
+    display: inline-block;
+}
+
+.Button.Glue, 
+button.Glue
+{
+	margin: 0;
+	border-radius: 0;
+}
+
+.Button.Glue:first-child,
+button.Glue:first-child
+{
+	border-top-left-radius: var(--ButtonBorderRadius);
+	border-bottom-left-radius: var(--ButtonBorderRadius);
+}
+
+.Button.Glue:last-child,
+button.Glue:last-child
+{
+	border-top-right-radius: var(--ButtonBorderRadius);
+	border-bottom-right-radius: var(--ButtonBorderRadius);
+}
+
+button:not(.Disabled):not(.IconButton):hover, .Button:not(.Disabled):not(.IconButton):hover
+{
+	color: var(--ColorButtonHover);
+	background-color: var(--ColorBgButtonHover);
+}
+
+button:not(.Disabled).IconButton:hover, .Button:not(.Disabled).IconButton:hover
+{
+	color: var(--ColorBgButton);
+}
+
+button.Recessed, .Button.Recessed
+{
+	background-color: #505050;
+	background-image: none;
+}
+
+.ButtonSpacer
+{
+	display: inline;
+	position: relative;
+	padding: var(--MarginButton);
+	margin: var(--MarginButton);
+	border-left: var(--BorderDefaultRight);
+}
+
+.Button.Recessed
+{
+	border-top: var(--BorderDefaultBottom);
+    border-left: var(--BorderDefaultRight);
+    border-right: var(--BorderDefaultLeft);
+    border-bottom: var(--BorderDefaultTop);
+    background: var(--ColorBgRecessed);
+    color: var(--ColorRecessed);
+}
+
+.Dialog > .DialogButtons > button
+{
+	margin: 0;
+	margin-right: var(--PaddingButton);
+}
+
+.Dialog > .DialogButtons > button:first-child
+{
+	margin: 0;
+}
+
+/* Stuff that is selectable */
+
+html *
+{
+	user-select: inherit;
+	-webkit-user-select: inherit;
+}
+
+html *[contenteditable]
+{
+	-webkit-user-select: text;
+	user-select: text;
+}
+
+html .Selectable
+{
+	-moz-user-select: -moz-all !important;
+	-khtml-user-select: all !important;
+	-webkit-user-select: all !important;
+	user-select: all !important;
+}
+
+html .SelectableText,
+html textarea,
+html input
+{
+	-moz-user-select: -moz-text !important;
+	-khtml-user-select: text !important;
+	-webkit-user-select: text !important;
+	user-select: text !important;
+}
+
+/* Input fields ------------------------------------------------------------- */
+
+input:disabled
+{
+	opacity: 0.6;
+	filter:alpha(opacity=60);
+}
+
+input
+{
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	border: var(--BorderInput);
+	padding: var(--PaddingInput);
+	margin: var(--MarginButton);
+	font-family: var(--FontFaceNormal);
+	line-height: var(--LineHeightInput);
+	background-color: var(--ColorBgInput);
+	color: var(--ColorInput);
+	font-size: var(--FontSizeButton);
+}
+
+textarea
+{
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	border: var(--BorderInput);
+	padding: var(--PaddingInput);
+	margin: var(--MarginButton);
+	font-family: var(--FontFaceNormal);
+	line-height: var(--LineHeightInput);
+	background-color: var(--ColorBgInput);
+	color: var(--ColorInput);
+	font-size: var(--FontSizeButton);
+}
+
+textarea.Required,
+input.Required
+{
+	border-color     : var(--ColorDangerBg);
+}
+
+.FileUploadWrapper { position: relative; overflow: hidden; }
+.FileUploadWrapper input[type=file]
+{
+  font-size: 100px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  z-index:2;
+
+}
+
+/* Boxes -------------------------------------------------------------------- */
+
+.Disabled
+{
+	opacity: 0.5;
+	cursor: wait;
+}
+
+.Disabled *
+{
+	cursor: wait;
+}
+
+div.Ghosted, .Ghosted *
+{
+	pointer-events: none !important;
+}
+
+.Ghosted *
+{
+	opacity: 0.4;
+}
+
+.HiddenElement
+{
+	display: none !important;
+}
+
+.Box, .BoxBlue
+{
+	border: var(--BorderBox);
+	border-radius: var(--BorderBoxRadius);
+	-moz-border-radius: var(--BorderBoxRadius);
+	-webkit-border-radius: var(--BorderBoxRadius);
+	padding: var(--PaddingBox);
+	background: var(--ColorBgBox);
+	color: var(--ColorBox);
+	margin; var(--MarginBox);
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+}
+.BoxBlue
+{
+	background: #C3CFD4;
+	border-color: #A9B3B8;
+	border-bottom: 1px solid #9BA4A8;
+}
+
+.BoxSelected
+{
+	box-sizing: border-box;
+	box-shadow: 0px 0px 1px var(--ColorLightBorder);
+}
+
+.Recessed
+{
+	box-shadow: var(--BoxShadowRecessed);
+	border: var(--BorderRecessed);
+	box-sizing: border-box;
+}
+
+.Elevated
+{
+	box-shadow: var(--BoxShadowElevated);
+	border: var(--BorderElevated);
+	box-sizing: border-box;
+}
+
+.FullWidth
+{
+	width: 100%;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+}
+
+.HoverFeedback
+{
+	transition: opacity 0.5s;
+	opacity: 1;
+}
+
+.HoverFeedback:hover
+{
+	opacity: 0.6;
+}
+
+/* Gui content -------------------------------------------------------------- */
+
+.TextCenter  { text-align: center; }
+.TextLeft    { text-align: left; }
+.TextJustify { text-align: justify; }
+.TextRight   { text-align: right; }
+.Ellipsis    { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.HContent10, .HContent20, .HContent30, .HContent40,
+.HContent50, .HContent60, .HContent70, .HContent80,
+.HContent90, .HContent100
+{
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+}
+
+.HContent1   { width:   1%; }
+.HContent2   { width:   2%; }
+.HContent3   { width:   3%; }
+.HContent4   { width:   4%; }
+.HContent5   { width:   5%; }
+.HContent6   { width:   6%; }
+.HContent7   { width:   7%; }
+.HContent8   { width:   8%; }
+.HContent9   { width:   9%; }
+
+.HContent10  { width:  10%; }
+.HContent15  { width:  15%; }
+.HContent20  { width:  20%; }
+.HContent25  { width:  25%; }
+.HContent30  { width:  30%; }
+.HContent33  { width:  33%; }
+.HContent35  { width:  35%; }
+.HContent40  { width:  40%; }
+.HContent45  { width:  45%; }
+.HContent50  { width:  50%; }
+.HContent55  { width:  55%; }
+.HContent60  { width:  60%; }
+.HContent65  { width:  65%; }
+.HContent66  { width:  66%; }
+.HContent70  { width:  70%; }
+.HContent75  { width:  75%; }
+.HContent80  { width:  80%; }
+.HContent85  { width:  85%; }
+.HContent90  { width:  90%; }
+.HContent95  { width:  95%; }
+.HContent100 { width: 100%; }
+
+.Relative
+{
+	position: relative;
+}
+
+.FloatLeft
+{
+	float: left;
+}
+
+.FloatRight
+{
+	float: right;
+}
+
+.Inline
+{
+	display: inline;
+}
+
+.HRow
+{
+	clear: both;
+}
+
+.HRow:after
+{
+	display: block;
+	content: " ";
+	clear: both;
+}
+
+.VDivider
+{
+	display: inline-block;
+	vertical-align: bottom;
+	border: 0;
+	border-left: 1px solid rgba(0,0,0,0.5);
+	margin: 0 5px 0 5px;
+	height: 31px;
+	width: 3px;
+}
+
+.VDivider.Large
+{
+	height: 40px;
+}
+
+hr.Divider
+{
+	border: 0;
+	border-top: 1px solid rgba(0,0,0,0.5);
+	margin: 5px 0 5px 0;
+	background: none;
+	height: 1px;
+}
+
+p.Layout
+{
+	margin: 0 0 4px 0;
+}
+
+.NoMargin
+{
+	margin: 0;
+}
+
+.VContentTop
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+}
+
+.VContentBottom
+{
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+}
+
+.VContent5   { height:   5%; }
+.VContent10  { height:  10%; }
+.VContent15  { height:  15%; }
+.VContent20  { height:  20%; }
+.VContent25  { height:  25%; }
+.VContent30  { height:  30%; }
+.VContent33  { height:  33%; }
+.VContent35  { height:  35%; }
+.VContent40  { height:  40%; }
+.VContent45  { height:  45%; }
+.VContent50  { height:  50%; }
+.VContent55  { height:  55%; }
+.VContent60  { height:  60%; }
+.VContent65  { height:  65%; }
+.VContent66  { height:  66%; }
+.VContent70  { height:  70%; }
+.VContent75  { height:  75%; }
+.VContent80  { height:  80%; }
+.VContent85  { height:  85%; }
+.VContent90  { height:  90%; }
+.VContent95  { height:  95%; }
+.VContent100 { height: 100%; }
+
+.ContentFull
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.LayoutButtonbarBottom > .VContentTop
+{
+	bottom: 50px;
+}
+
+.LayoutButtonbarBottom > .VContentBottom
+{
+	height: 50px;
+}
+
+.HContentRight
+{
+	position: absolute;
+	right: 0%;
+	top: 0;
+	bottom: 0px;
+}
+
+.HContentLeft
+{
+	position: absolute;
+	left: 0%;
+	top: 0;
+	bottom: 0px;
+}
+
+.ScrollArea
+{
+	position: absolute;
+	overflow: auto;
+}
+
+.LineHeight2x
+{
+	line-height: 200%;
+}
+
+.ScrollableX
+{
+	overflow-x: auto;
+	overflow-y: hidden;
+}
+
+.ScrollableY
+{
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+
+.ScrollableXY
+{
+	overflow: auto;
+}
+
+.NonScroll
+{
+	overflow: hidden;
+}
+
+.NoPadding
+{
+	padding: 0 !important;
+}
+
+.PaddingSmall
+{
+	padding: 4px;
+	box-sizing: border-box;
+}
+
+.PaddingMedium
+{
+	padding: 8px;
+	box-sizing: border-box;
+}
+
+.PaddingSmallLeft
+{
+	padding-left: 4px;
+	box-sizing: border-box;
+}
+
+.PaddingSmallTop
+{
+	padding-top: 4px;
+	box-sizing: border-box;
+}
+
+.PaddingSmallRight
+{
+	padding-right: 4px;
+	box-sizing: border-box;
+}
+
+.PaddingSmallBottom
+{
+	padding-bottom: 4px;
+	box-sizing: border-box;
+}
+
+.PadBorder {
+    border : 3px solid var(--ColorBackground);
+}
+
+.PadBackground {
+	background-color : var(--ColorBackground);
+	padding          : 3px;
+}
+
+/*                                                                            */
+/*                                                                            */
+/*                                                                            */
+/* Legacy classes and rules ------------------------------------------------- */
+/*                                                                            */
+/*                                                                            */
+/*                                                                            */
+
+#Dialog
+{
+	position: fixed;
+	border: 1px solid #777777;
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	background: #c5c0c0;
+	z-index: 9999;
+}
+#Dialog .Box { background: #f8f8f8; border: 1px solid #c0c0c0; }
+
+/** Calendar field related -------------------------------------------------- */
+
+#CalendarOutput #MonthName { text-transform: uppercase; }
+#CalendarOutput .DateColtrols a
+{
+	display: block;
+	padding: 2px 4px;
+	background: #871433;
+	border-radius: 2px;
+	-moz-border-radius: 2px;
+	-webkit-border-radius: 2px;
+	width: 24px;
+	text-align: center;
+	color: #fff;
+}
+#CalendarOutput .DateColtrols a:hover
+{
+	background: #FF0046;
+}
+
+h2 .DateField, .DateField
+{
+	border: 1px solid #c0c0c0;
+	font-weight: normal;
+	background: #ffffff;
+	padding: 0px 4px;
+	float: left;
+	display: block;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	height: 22px;
+	vertical-align: middle;
+	margin: 7px 5px 0 -2px;
+}
+
+h2 td { font-size: 11px; }
+
+h2 .DateField img, .DateField img
+{
+	margin: 0 0 0 2px;
+	cursor: hand; cursor: pointer;
+}
+
+.DateField td { vertical-align: middle; }
+
+table.Form { width: 100%; }
+table.Form input, table.Form textarea
+{
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	width: 100%;
+}
+
+th > a.active { font-weight: bold; text-decoration: underline; }
+
+/* Gui popups --------------------------------------------------------------- */
+
+.GuiPopup
+{
+	position: fixed;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+	z-index: 9999;
+	background: #303030;
+	background: rgba(0,0,0,0.8);
+}
+
+.GuiPopup > .Center
+{
+	position: absolute;
+	top: 50%;
+	left: 50%;
+}
+
+.GuiPopup > .Center > div
+{
+	position: absolute;
+	border: 1px solid #777777;
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	background: #c5c0c0;
+	box-shadow: 0px 1px 5px rgba(0,0,0,0.5);
+	-moz-box-shadow: 0px 1px 5px rgba(0,0,0,0.5);
+	-webkit-box-shadow: 0px 1px 5px rgba(0,0,0,0.5);
+}
+
+.GuiPopup > .Center > div > div
+{
+	margin: 5px;
+}
+
+/* Notes -------------------------------------------------------------------- */
+
+.Note
+{
+	border: 1px solid #BDBD63;
+	background: #FFFF96;
+	color: #555500;
+	margin: 0 0 5px 0;
+}
+
+.Note hr
+{
+	border: 0;
+	border-top: 1px solid #bdbd63;
+	background: none;
+	height: 1px;
+	margin: 5px 0 5px 0;
+}
+
+.Note .Edit
+{
+	font-size: 12px;
+}
+
+/* Slide lists -------------------------------------------------------------- */
+
+.CorvoSlideList > .SlideHeader
+{
+	cursor: hand;
+	cursor: pointer;
+}
+
+.CorvoSlideList > .SlideBox
+{
+	transition: all .3s;
+	-moz-transition: all .3s;
+	-webkit-transition: all .3s;
+	border-bottom: 2px solid #5c5c5c;
+}
+
+.CorvoSlideList > .SlideBox:last-child
+{
+	border-bottom: 0;
+}
+
+.CorvoSlideList > .SlideHeader:hover *,
+.CorvoSlideList > .On *
+{
+	background: #5C5C5C !important;
+	color: white;
+	text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+	border-bottom: 0;
+}
+
+/* Gui objects -------------------------------------------------------------- */
+
+.GuiColums { width: 100%; border-collapse: collapse; border-spacing: 0; }
+.GuiColums > tbody > tr > td { padding: 0 5px 5px 0; vertical-align: top; }
+.GuiColums > tbody > tr:last-child > td { padding: 0 5px 0 0; }
+.GuiColums > tbody > tr:last-child > td:last-child { padding: 0 0 0 0; }
+.GuiContainer  with .BordersDefault
+{ 
+	position: relative;
+	box-shadow: 0px 0px 3px rgba(0,0,0,0.5);
+	-moz-box-shadow: 0px 0px 3px rgba(0,0,0,0.5);
+	-webkit-box-shadow: 0px 0px 3px rgba(0,0,0,0.5);
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+}
+.GuiContainer > div.GuiContent
+{
+	padding: 5px;
+}
+
+/* Select boxen ------------------------------------------------------------- */
+
+
+
+.Content .ComponentToolbar
+{
+	margin: 0;
+}
+
+/* Popup headers ------------------------------------------------------------ */
+
+body > .Popup h3
+{
+	text-transform: none;
+	font-size: 16px;
+}
+
+
+
+table.Gui
+{
+	width: 100%;
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+table.Gui td, table.Gui th
+{
+	padding: 0 4px 4px 0;
+	text-align: left;
+}
+
+td.Vr { padding-left: 8px; border-left: 1px solid #aaaaaa; }
+td.Vrp { padding-right: 8px; border-right: 1px solid #dddddd; }
+
+table.Calendar tr th, table.Calendar tr td.Week { text-align: center; }
+table.Calendar td.Day1 { background: #fefefe; text-align: center; cursor: hand; cursor: pointer; }
+table.Calendar td.Day2 { background: #f0f0f0; text-align: center; cursor: hand; cursor: pointer; }
+table.Calendar td.CurrentDay { background: #224466; color: #ffffff; text-align: center; cursor: hand; cursor: pointer; }
+table.Calendar td:hover { background: #333333; color: #ffffff; }
+
+.ComponentBar
+{
+	position: relative;
+}
+
+.ComponentControls
+{	
+	position: absolute;
+	top: 0;
+	right: 0;
+	height: 100%;
+	font-size: 10px;
+	line-height: 34px;
+	margin-right: 10px;
+}
+
+.ButtonFiller
+{
+	display: block;
+	height: 21px;
+}
+
+/* Session blocker ---------------------------------------------------------- */
+
+#SessionBlock
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(255,255,255,0.8);
+	z-index: 2147483647;
+	box-sizing: border-box;
+}
+
+#SessionBlock > .VContentTop
+{
+    position: absolute;
+    top: calc(50% - 20px);
+    left: calc(50% - 200px);
+    width: 400px;
+    height: 165px;
+    box-shadow: 0px 0px 20px rgba(0,0,0,0.5);
+    background: #ffffff;
+    border-radius: 5px;
+}
+
+@media (max-width: 460px)
+{
+	#SessionBlock > .VContentTop
+	{
+		top: calc(50% - 125px);
+		left: calc(50% - 120px);
+		width: 240px;
+		height: 250px;
+		box-shadow: 0px 0px 20px rgba(0,0,0,0.5);
+		background: #ffffff;
+		border-radius: 5px;
+	}
+}
+
+
+/* Screen menu -------------------------------------------------------------- */
+
+.SmoothScrolling
+{
+	scroll-behavior: smooth;
+	-webkit-scroll-behavior: smooth;
+	-webkit-overflow-scrolling: touch;
+}
+[mobile] .SmoothScrolling
+{
+	overflow-y: scroll;
+}
+
+#WorkspaceMenu
+{
+	position: absolute;
+	z-index: 2147483647;
+	height: 32px;
+	background: white;
+	right: auto;
+	left: 0;
+	top: 0;
+}
+
+#WorkspaceMenu .Menu
+{
+	float: left;
+	display: block;
+	line-height: 32px;
+	color: black;
+	text-shadow: 1px 1px 1px white;
+	margin: 0 5px 0 0px;
+	padding: 0 10px 0 10px;
+	cursor: hand; cursor: pointer;
+}
+
+#WorkspaceMenu .Menu li.Submenu:after
+{
+	font-family: FontAwesome;
+	content: "\f0da";
+	display: block;
+	float: right;
+	color: black;
+	text-shadow: none;
+}
+
+#WorkspaceMenu .Menu .Open li.Submenu:after,
+#WorkspaceMenu .Menu li.Open.Submenu:after
+{
+	color: white;
+}
+
+#WorkspaceMenu .Menu li.Submenu:hover:after
+{
+	color: white;
+	text-shadow: inherit;
+}
+
+#WorkspaceMenu .Menu ul, #WorkspaceMenu .Menu li
+{
+	list-style: none; margin: 0; padding: 0;
+}
+#WorkspaceMenu .Menu > ul
+{
+	display: none;
+}
+#WorkspaceMenu .Menu li > ul 
+{
+	display: none;
+}
+#WorkspaceMenu .Menu li.Open > ul > li > ul 
+{
+	display: block;
+}
+#WorkspaceMenu .Menu li.Open > ul 
+{
+	position: absolute;
+	right: 0px;
+	width: 185px;
+}
+#WorkspaceMenu .Open, #WorkspaceMenu .Menu:hover
+{
+	cursor: hand;
+	cursor: pointer;
+	background: rgba(0,0,0,0.6);
+	color: white;
+	position: relative;
+}
+#WorkspaceMenu .Open.Menu, #WorkspaceMenu .Menu:hover
+{
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.5);
+	font-weight: bold;
+}
+#WorkspaceMenu .Open > ul, #WorkspaceMenu .Menu:hover > ul
+{
+	text-shadow: none;
+	font-weight: normal;
+}
+#WorkspaceMenu .Open > ul
+{
+	position: absolute;
+	top: 32px;
+	left: 0px;
+	width: 185px;
+	background: white;
+	list-style: none;
+	margin: 0;
+	padding: 0;	
+	display: block;
+	color: black;
+	box-shadow: 0px 0px 1px 2px rgb(0 0 0 / 10%);
+	-moz-box-shadow: 0px 0px 1px 2px rgb(0 0 0 / 10%);
+	-webkit-box-shadow: 0px 0px 1px 2px rgb(0 0 0 / 10%);
+}
+#WorkspaceMenu .Open ul > li
+{
+	display: block;
+	padding: 0px 5px 0px 10px;
+	background: white;
+	color: black;
+	position: relative;
+}
+#WorkspaceMenu .Open ul > li:hover,
+#WorkspaceMenu .Open ul > li.Open
+{
+	color: white;
+	text-shadow: 1px 1px 1px black;
+}
+
+#WorkspaceMenu .Open ul > li:hover > ul,
+#WorkspaceMenu .Open ul > li.Open > ul { text-shadow: none; }
+
+#WorkspaceMenu .Open ul > li.Open > ul
+{
+	position: absolute;
+	display: block;
+	left: 185px;
+	top: 0px;
+	box-shadow: 0px 0px 1px 2px rgba(0,0,0,0.2);
+	-moz-box-shadow: 0px 0px 1px 2px rgba(0,0,0,0.2);
+	-webkit-box-shadow: 0px 0px 1px 2px rgba(0,0,0,0.2);
+}
+#WorkspaceMenu .Open ul > li.Open > ul > li
+{
+	position: relative;
+}
+
+html #WorkspaceMenu .Menu li.Disabled,
+html #WorkspaceMenu .Menu li.Disabled:hover,
+html #WorkspaceMenu .Menu li.Disabled *
+{
+	opacity: 0.5;
+	cursor: default;
+}
+
+#WorkspaceMenu .Open ul > li > span
+{
+	display: block;
+	width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+#WorkspaceMenu.Pear
+{
+	border-left: 1px solid rgba(0,0,0,0.1);
+}
+
+#WorkspaceMenu li[divider=divider]
+{
+    border: 0;
+    border-top: 1px solid rgba(0,0,0,0.2);
+    margin: 0;
+    padding: 0;
+}
+
+.Popup
+{
+	position: absolute;
+	width: 320px;
+	min-height: 20px;
+	border: 1px solid #cfcfc0;
+	background: #ffffef;
+	color: #222222;
+	padding: 10px;
+	z-index: 90;
+	left: -1000px;
+	top: -1000px;
+	border-radius: 5px;
+	box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
+}
+
+.NoMargins
+{
+	margin: 0;
+}
+
+.MarginTop
+{
+	margin-top: var(--PaddingBox);
+}
+
+.MarginLeft
+{
+	margin-left: var(--PaddingBox);
+}
+
+.MarginRight
+{
+	margin-right: var(--PaddingBox);
+}
+
+.MarginBottom
+{
+	margin-bottom: var(--PaddingBox);
+}
+
+.Rounded
+{
+	border-radius: 3px;
+}
+
+/* Colors */
+
+.Negative
+{
+	color: var(--ColorNegative);
+}
+
+.NegativeAlt
+{
+	color: var(--ColorNegativeAlt);
+}
+
+a.Negative:hover, a.Negative:active, a.Negative:visited
+{
+	color: var(--ColorNegative);
+}
+
+.Positive
+{
+	color: var(--ColorPositive);
+}
+
+.ColorDefault
+{
+	color: var(--ColorText);
+}
+
+.ColorLists
+{
+	color: var(--ColorLists);
+}
+
+.ColorHighlight
+{
+	color: var(--ColorHighlight);
+}
+
+/* Backgrounds */
+
+.BackgroundLists
+{
+	background: var(--ColorBgListSw1);
+}
+
+.BackgroundDefault
+{
+	background: var(--ColorBackground);
+}
+
+.BackgroundNegative
+{
+	background: var(--ColorBgNegative);
+}
+
+.BackgroundNegativeAlt
+{
+	background: var(--ColorBgNegativeAlt);
+}
+
+.BackgroundPositive
+{
+	background: var(--ColorBgPositive);
+}
+
+.BackgroundPositiveAlt
+{
+	background: var(--ColorBgPositiveAlt);
+}
+
+.BackgroundHighlight
+{
+	background: var(--ColorBgHighlight);
+}
+
+/* Context Color --------------------------------------------------------- */
+
+/* basic ( put on divs ) */
+
+.Available {
+	color : var(--ColorAvailable);
+	background-color : var(--ColorAvailableBg);
+}
+
+.AvailableText {
+	color : var(--ColorAvailableBg);
+	background-color : transparent;
+}
+
+.Accept {
+	color : var(--ColorAccept);
+	background-color : var(--ColorAcceptBg);
+}
+
+.AcceptText {
+	color : var(--ColorAcceptBg);
+	background-color : transparent;
+}
+
+.Danger {
+	color : var(--ColorDanger);
+	background-color : var(--ColorDangerBg);
+}
+
+.DangerText {
+	color : var(--ColorDangerBg);
+	background-color : transparent;
+}
+
+.Warning {
+	color : var(--ColorWarning);
+	background-color : var(--ColorWarningBg);
+}
+
+.WarningText {
+	color : var(--ColorWarningBg);
+	background-color : transparent;
+}
+
+.Action {
+	color : var(--ColorAction);
+	background-color : var(--ColorActionBg);
+}
+
+.ActionText {
+	color : var(--ColorActionBg);
+	background-color : transparent;
+}
+
+.Highlight {
+	color : var(--ColorHighlight);
+	background-color : var(--ColorBgHighlight);
+}
+
+.Notify {
+	color : var(--ColorNotify);
+	background-color : var(--ColorNotifyBg);
+}
+
+/* for certain UI elements */
+
+.Button.Accept,
+.Select.Accept {
+	color            : var(--ColorAcceptButton);
+	background-color : var(--ColorAcceptButtonBg);
+}
+
+.Button.Accept:hover,
+.Select.Accept:hover {
+	color            : var(--ColorAcceptButtonHover);
+	background-color : var(--ColorAcceptButtonHoverBg);
+}
+
+.Button.Danger,
+.Select.Danger {
+	color            : var(--ColorDangerButton);
+	background-color : var(--ColorDangerButtonBg);
+}
+
+.Button.Danger:hover,
+.Select.Danger:hover {
+	color            : var(--ColorDangerButtonHover);
+	background-color : var(--ColorDangerButtonHoverBg);
+}
+
+.Button.Available,
+.Select.Available {
+	color            : var(--ColorAvailableButton);
+	background-color : var(--ColorAvailableButtonBg);
+}
+
+.Button.Available:hover,
+.Select.Available:hover {
+	color            : var(--ColorAvailableButtonHover);
+	background-color : var(--ColorAvailableButtonHoverBg);
+}
+
+/* put on text inputs */
+
+/* for font awesome icons */
+.BlinkIcon > i {
+	-webkit-animation : iconblink 2s ease-in-out infinite alternate;
+	animation : iconblink 0.4s ease-in-out infinite alternate;
+}
+
+@-webkit-keyframes iconblink {
+	from { color : var(--ColorIconBlinkStart); }
+	to { color : var(--ColorIconBlinkEnd); }
+}
+
+@keyframes iconblink {
+	from { color : var(--ColorIconBlinkStart); }
+	to { color : var(--ColorIconBlinkEnd); }
+}
+
+/* extend lists */
+
+.sw1.Highlight,
+.sw2.Highlight {
+	
+}
+
+
+/* LED ------------------------------------------------------------------- */
+
+.LED
+{
+	
+}
+
+.LED > div
+{
+	color: var(--ColorLEDText);
+}
+
+.LED > i {
+	/* text-shadow : 0 0 1px rgba( 0, 0, 0, 1 ); */
+	background-color : transparent;
+}
+
+/* led style, feel free to make more - works for div, not i */
+.LED.Narrow
+{
+	border-radius: 0px;
+	width: 0.5em;
+	height:2em;
+	padding: 2px 0;
+	margin : 0 2px;
+}
+
+.LED.Narrow > div
+{
+	height:100%;
+	width:100%;
+	box-shadow: inset 0 0 0.3em rgba( 0, 0, 0, 0.2 );
+	border : 1px solid rgba( 0, 0, 0, 0.20 ) ;
+}
+
+/* led states */
+
+.LED div.On { background-color: var(--ColorLEDOn); }
+.LED i.On { color : var(--ColorLEDOn); }
+
+.LED div.Available { background-color : var(--ColorLEDAvailable); }
+.LED i.Available { color : var(--ColorLEDAvailable); }
+
+.LED div.Warning { background-color : var(--ColorLEDWarning); }
+.LED i.Warning { color : var(--ColorLEDWarning); }
+
+.LED div.Notify
+{
+	background-color: var(--ColorLEDNotify);
+	-webkit-animation: notify-blink 0.5s ease-in-out infinite alternate;
+	animation: notify-blink 0.5s ease-in-out infinite alternate;
+}
+.LED i.Notify {
+	color: var(--ColorLEDNotify);
+	background-color: transparent;
+	-webkit-animation: notify-fg-blink 0.5s ease-in-out infinite alternate;
+	animation: notify-fg-blink 0.5s ease-in-out infinite alternate;
+}
+
+@-webkit-keyframes notify-blink
+{
+	from { background-color: var(--ColorLEDNotifyFrom); }
+	to { background-color: var(--ColorLEDNotifyTo); }
+}
+
+@-webkit-keyframes notify-fg-blink
+{
+	from { color: var(--ColorLEDNotifyFrom); }
+	to { color: var(--ColorLEDNotifyTo); }
+}
+
+@keyframes notify-blink
+{
+	from { background-color: var(--ColorLEDNotifyFrom); }
+	to { background-color: var(--ColorLEDNotifyTo); }
+}
+
+@keyframes notify-fg-blink
+{
+	from { color: var(--ColorLEDNotifyFrom); }
+	to { color: var(--ColorLEDNotifyTo); }
+}
+
+.LED div.Alert { background-color: var(--ColorLEDAlert); }
+.LED i.Alert { color: var(--ColorLEDAlert); }
+
+.LED div.Off { background-color: var(--ColorLEDOff); }
+.LED i.Off { color: var(--ColorLEDOff); }
+
+/* Log ---------------------------------------------------------------------- */
+
+.LogText
+{
+	font-style: italic;
+	opacity: 0.8;
+}
+
+
+/* Overlay ------------------------------------------------------------------ */
+
+.Overlay
+{
+	background-color : var(--ColorOverlayBg);
+}
+
+.Overlay .Item:hover
+{
+	color : var(--ColorHighlight);
+	background-color : var(--ColorBgHighlight);
+}
+
+/* Treeview ----------------------------------------------------------------- */
+
+.TreeListNode
+{
+	display: block;
+	padding: 0;
+	margin: 0;
+}
+
+.TreeListItem
+{
+	padding: 0;
+	margin: 0 0 5px 0;
+	cursor: pointer;
+}
+
+.TreeListItem.Current
+{
+	font-weight: bold;
+}
+
+.TreeListItem.Children:before
+{
+	box-shadow: inset 0px 0px 6px 4px rgba(0,0,0,0.5);
+	content: "+";
+	display: inline-block;
+	background: #808080;
+	border-radius: 100%;
+	border: 1px solid rgba(0,0,0,0.3);
+	margin: 0 5px 0 0;
+	color: white;
+	padding: 0px 4px;
+	width: 8px;
+	text-align: center;
+}
+
+.TreeListItem > .TreeListNode
+{
+	display: none;
+}
+
+.TreeListItem.Open > .TreeListNode
+{
+	display: block;
+}
+
+.TreeListItem.Open.Children:before
+{
+	content: "-";
+}
+
+.TreeListItem .TreeListItem
+{
+	margin: 0 0 5px 21px;
+	font-weight: normal;
+	padding: 5px 0 0 0;
+}
+
+.TreeListItem .TreeListItem.Current
+{
+	font-weight: bold;
+}
+
+.TreeListItem .TreeListItem + .TreeListItem
+{
+	border-top: 1px solid rgba(0,0,0,0.08);
+}
+
+/* Calendar ----------------------------------------------------------------- */
+
+.HidingCalendar #CalendarWidget
+{
+	height: 0px !important;
+}
+body #CalendarWidget
+{
+	border-radius: 0 0 0 3px;
+}
+
+
+#calendarEventsToday
+{
+	max-height: 400px;
+	overflow: auto;
+}
+
+.Calendar.MonthName
+{
+	padding: 8px;
+	font-weight: bold;
+}
+.Calendar.MonthName:first-letter
+{
+	text-transform: uppercase;
+}
+
+.Calendar.MonthName .Navigation
+{
+	float: right;
+}
+
+.Calendar.MonthName .Navigation span
+{
+	margin: 0 0 0 10px;
+}
+
+.Calendar .Day
+{
+	width: 14.285%;
+	float: left;
+	display: block;
+	height: 30px;
+	box-sizing: border-box;
+	position: relative;
+}
+
+html .Calendar div.HRow > .Current.Day:nth-child(odd),
+html .Calendar div.HRow > .Current.Day:nth-child(even),
+html .Calendar div.HRow > .Current.Day:nth-child(odd):hover,
+html .Calendar div.HRow > .Current.Day:nth-child(even):hover
+{
+	font-weight: bold;
+	background: var(--ColorBgStBlueLight);
+}
+
+.Calendar .Day > .Number
+{
+	position: absolute;
+	right: 6px;
+	top: 6px;
+	color: white;
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.5);
+}
+
+.Calendar .Day.Label
+{
+	height: 30px;
+	line-height: 30px;
+}
+
+.Calendar .Day.Label .LabelText
+{
+	width: 100%;
+	color: white;
+	text-align: center;
+	color: black;
+}
+
+.Calendar .HRow:nth-child(odd) .Day:nth-child(even),
+.Calendar .HRow:nth-child(even) .Day:nth-child(odd)
+{
+	background-color: rgba(0,0,0,0.8);
+}
+.Calendar .HRow:nth-child(odd) .Day:nth-child(odd),
+.Calendar .HRow:nth-child(even) .Day:nth-child(even)
+{
+	background-color: rgba(0,0,0,0.7);
+}
+.Calendar .HRow:nth-child(odd) .Day:nth-child(even):hover,
+.Calendar .HRow:nth-child(even) .Day:nth-child(odd):hover
+{
+	background-color: rgba(0,0,0,0.9);
+}
+.Calendar .HRow:nth-child(odd) .Day:nth-child(odd):hover,
+.Calendar .HRow:nth-child(even) .Day:nth-child(even):hover
+{
+	background-color: rgba(0,0,0,0.8);
+}
+
+.Calendar .HRow:nth-child(odd) .Day.Label:nth-child(even),
+.Calendar .HRow:nth-child(even) .Day.Label:nth-child(odd)
+{
+	background: #e0e0e0;
+	border-bottom: 1px solid #363636;
+}
+.Calendar .HRow:nth-child(odd) .Day.Label:nth-child(odd),
+.Calendar .HRow:nth-child(even) .Day.Label:nth-child(even)
+{
+	background: #EFEFEF;
+	border-bottom: 1px solid #303030;
+}
+
+.Calendar .Events
+{
+	position: absolute;
+	top: 10px;
+	left: 10px;
+}
+
+.Calendar .Event
+{
+	width: 10px;
+	height: 10px;
+	border-radius: 10px;
+	box-sizing: border-box;
+	background-color: #f09020;
+	float: right;
+	margin: 0 5px 0 0;
+	position: relative;
+}
+
+.Calendar .Day:hover .Event > .CalPopup
+{
+	opacity: 1;
+}
+
+.Calendar .Event[nth-child:0n6]
+{
+	clear: both;
+}
+
+.ActiveSessions .Divider
+{
+	margin-top: 0;
+}
+
+.Calendar em
+{
+	color: var(--ColorLEDOn);
+}
+
+.Calendar .Event > .CalPopup
+{
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.4s;
+	display: block;
+	position: absolute;
+	z-index: 1;
+	top: 10px;
+	left: 0px;
+	background: rgba(255,255,255,0.8);
+	color: black;
+	border-radius: 8px;
+	padding: 8px;
+	white-space: no-wrap;
+	box-shadow: 0px 2px rgba(0,0,0,0.5);
+}
+
+.CalendarDetailEvent:last-child 
+{
+    margin: 0;
+}
+
+.CalendarDetailEvent p
+{
+	margin: 0 0 8px 0;
+}
+
+.CalendarDetailEvent em
+{
+	display: inline-block;
+	width: 45px;
+	margin: 0 5px 0 0;
+	font-style: normal;
+}
+
+.CalendarDetailEvent 
+{
+    background: rgba(0,0,0,0.3);
+    padding: 8px;
+    box-sizing: border-box;
+    border-radius: 4px;
+    margin: 0 0 5px 0;
+}
+
+.ActiveSessions ul, .ActiveSessions.li
+{
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* Tutorial widgets --------------------------------------------------------- */
+
+.TutorialWidget
+{
+	opacity: 0;
+	pointer-events: none;
+	transform: rotatex(-10deg);
+	transition: transform,opacity,height 0.5s,0.25s,0.25s !important;
+	background: white;
+	box-shadow: 0px 2px 4px rgba(0,0,0,0.4);
+	border-radius: 8px;
+	position: absolute;
+	z-index: 5;
+	color: #202020;
+	box-sizing: border-box;
+}
+
+.TutorialWidget > .Content
+{
+	position: absolute;
+	top: 10px;
+	left: 10px;
+	right: 10px;
+	bottom: 10px;
+	overflow: hidden;
+}
+
+.TutorialWidget:after 
+{
+	content: " ";
+	display: block;
+	/* border-radius: 100%; */
+	background: white;
+	width: 50px;
+	height: 50px;
+	top: calc(100% - 25px);
+	left: calc(50% - 25px);
+	position: absolute;
+	transform: scaleX(0.4) scaleY(0.25) rotatez(45deg);
+}
+
+.TutorialWidget h2
+{
+	font-size: 1em;
+	font-weight: bold;
+}
+
+.TutorialWidget.Showing
+{
+	transform: rotatex(0deg);
+	opacity: 1;
+	pointer-events: all;
+}
+
+#Available_tutorials .VContentTop
+{
+    padding: 5px 0 10px 5px;
+	bottom: 50px;
+}
+
+#Available_tutorials .BottomBar
+{
+	height: 50px;
+	z-index: 3;
+}
+
+#Available_tutorials .Tutorial
+{
+	width: calc(33% - 10px);
+	margin: 10px 5px 5px 5px;
+	float: left;
+	border: 1px solid rgba(128,128,128,0.5);
+	border-radius: 2px;
+	box-sizing: border-box;
+	height: 200px;
+	overflow: hidden;
+	position: relative;
+	transition: width,height,top,left,filter,margin 0.15s,0.15s,0.15s,0.15s,0.15s,0.15s;
+	filter: blur(0px);
+}
+
+[mobile] #Available_tutorials .Tutorial
+{
+	width: calc(100% - 10px);
+}
+
+#Available_tutorials .Tutorial > div
+{
+	content: "";
+	box-sizing: border-box;
+	padding: 10px;
+	position: absolute;
+	top: 0; left: 0; width: 100%; height: 100%;
+	z-index: 2;
+	-webkit-mask-image: linear-gradient(180deg,black 0%, black calc(100% - 20px), transparent 100%);
+	-moz-mask-image: linear-gradient(180deg,black 0%, black calc(100% - 20px), transparent 100%);
+	mask-image: linear-gradient(180deg,black 0%, black calc(100% - 20px), transparent 100%);
+	cursor: pointer;
+}
+
+body:not([mobile]):not([tablet]) #Available_tutorials .Tutorial > div:hover
+{
+	filter: invert(0.2);
+}
+
+#Available_tutorials .Tutorial h2
+{
+	display: block;
+	font-size: 1em;
+	font-weight: bold;
+}
+
+#Available_tutorials .Content.Big
+{
+	overflow: hidden !important;
+}
+
+#Available_tutorials .Content.Big .Tutorial.Big
+{
+	overflow: auto !important;
+}
+
+#Available_tutorials .Tutorial.Big img
+{
+    max-width: 100%;
+    border-radius: 3px;
+}
+
+#Available_tutorials .VContentTop:after
+{
+	display: block;
+	content: " ";
+	clear: both;
+}
+
+#Available_tutorials .Content.Big:after
+{
+	content: " ";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0,0,0,0.6);
+	z-index: 2;
+}
+
+#Available_tutorials
+{
+	overflow: hidden;
+}
+
+#Available_tutorials .Content
+{
+	opacity: 1;
+	transition: opacity 0.15s;
+}
+
+#Available_tutorials .Content.Phase
+{
+	opacity: 0;
+}
+
+#Available_tutorials .Big .Big
+{
+	position: absolute;
+	top: 20px;
+	left: 20px;
+	width: calc(100% - 40px);
+	height: calc(100% - 40px);
+	z-index: 3;
+	margin: 0;
+	padding: 20px;
+	cursor: default;
+}
+
+#Available_tutorials .Tutorial.Big > div
+{
+	transition: opacity 0.15s;
+	opacity: 1;
+}
+
+#Available_tutorials .Tutorial.Big.Loading > div
+{
+	opacity: 0;
+}
+
+#Available_tutorials .Big .Tutorial:not(.Big)
+{
+	opacity: 0;
+}
+
+/* Context Menu items ------------------------------------------------------- */
+
+.Widget
+{
+	position: absolute;
+	min-width: 10px;
+	min-height: 10px;
+	background-color: rgba(0,0,0,0.7);
+	box-shadow: 0 2px 3px rgba(0,0,0,0.3);
+	color: white;
+	border-radius: 3px;
+	outline : unset;
+}
+
+.Widget.Fadable
+{
+	transition: opacity 0.25s;
+	opacity: 0;
+}
+
+.Widget.Faded
+{
+	opacity: 0;
+}
+
+.Widget.Fadable.Fadeout
+{
+	opacity: 0;
+}
+
+.Widget.Fadable.Fadein
+{
+	opacity: 1;
+}
+
+html body .Widget.Raised
+{
+	z-index: 2147483643;
+}
+
+html body[mobile=mobile] .Widget.Raised
+{
+	
+}
+
+.Widget.Faded
+{
+	opacity: 0;
+}
+
+html body.WindowMenu .Widget
+{
+	pointer-events: none;
+}
+
+.Widget > iframe
+{
+	border: 0;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+
+.Widget .MenuItems
+{
+	transition: all 0.15s;
+	opacity: 0;
+	border-radius: 4px;
+	height: 0px;
+	box-shadow: 0px 2px 4px rgba(0,0,0,0.6);
+	max-height: 0px;
+	overflow: hidden;
+	background: rgba(0,0,0,0.6);
+}
+
+.Widget .MenuItems.Open
+{
+	opacity: 1;
+	max-height: -moz-fit-content;
+	max-height: fit-content;
+}
+
+.Widget .MenuItems.Closing
+{
+	opacity: 0;
+	max-height: -moz-fit-content;
+	max-height: fit-content;
+}
+
+.Widget .MenuItems .MenuItem
+{
+	display: block;
+	padding: 10px 10px 5px 10px;
+	color: white;
+	margin: 0;
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.6);
+}
+
+body:not([mobile]):not([tablet]) .Widget .MenuItems .MenuItem:hover
+{
+	background: rgba(255,255,255,0.2);
+	color: white;
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.6);
+}
+
+.Widget .MenuItems .MenuHeader
+{
+	overflow      : hidden;
+	text-overflow : ellipsis;
+}
+
+.Widget .MenuItems .MenuHeader
+{
+	font-weight: bold;
+	display: block;
+	margin: 0;
+	padding: 5px 10px 5px 10px;
+	border-bottom: 1px solid rgba(0,0,0,0.6);
+	color: white;
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.6);
+}
+
+[tablet] .Widget .MenuItems .MenuHeader:after 
+{
+    font-family: fontawesome;
+    content: "\f00d";
+    display: block;
+    float: right;
+    font-weight: normal;
+    margin: 2px 0 0 0;
+}
+
+.Widget .MenuItems .MenuItem:last-child
+{
+	padding-bottom: 10px;
+	border-radius: 0 0 3px 3px;
+}
+
+.Widget.HelpBubble:after
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	top: 100%;
+	height: 30px;
+	left: calc(50% - 10px);
+	width: 20px;
+	background-image: url(/webclient/gfx/system/triangle_high.svg);
+	background-size: cover;
+	background-position: top center;
+	background-repeat: no-repeat;
+	opacity: 0.6;
+}
+
+.Widget.HelpBubble
+{
+	border-radius: 25px;
+}
+
+.Widget.HelpBubble.Fadable,
+.Widget.HelpBubble.Fadable:after
+{
+	transition: margin-top,height 0.25s,0.25s;
+}
+
+.Widget.HelpBubble.Fadable
+{
+	margin-top: 0;
+}
+
+.Widget.HelpBubble.Fadable.Fadein
+{
+	margin-top: -10px;
+}
+
+.Widget.HelpBubble.Fadable.Fadein:after
+{
+	height: 10px;
+}
+
+.Widget.HelpBubble.Fadable.Right:after
+{
+	left: calc(100% - 5px);
+	transform: rotate(270deg);
+	top: calc(50% - 4px);
+}
+
+.Widget.HelpBubble.Fadable.Left:after
+{
+	left: -15px;
+	transform: rotate(90deg);
+	top: calc(50% - 5px);
+}
+
+.Widget.HelpBubble.Fadable.Top:after
+{
+	top: -10px;
+	transform: rotate(180deg);
+}
+
+.Widget.HelpBubble.Fadable:after
+{
+	height: 5px;
+}
+
+/* Formerly doors.css ------------------------------------------------------- */
+
+/* Non logged in state */
+
+body #Screens
+{
+}
+
+body.Login > img
+{
+	display: none;
+}
+
+body.Loaded > #Screens
+{
+	transition-property: opacity;
+	transition-duration: 1s;
+	-webkit-transition-property: opacity;
+	-webkit-transition-duration: 1s;
+	opacity: 1;
+	box-sizing: border-box;
+}
+
+body.Loaded > #Screens > #DeepestField
+{
+	opacity: 1;
+}
+
+body.Loading:not(.Inside) > #Screens
+{
+	opacity: 0;
+}
+
+body.LoadingForm > div
+{
+	display: none;
+}
+
+body:not([viewlist]):not(.friendapp):not([mobile]).Loading:after,
+body:not([viewlist]):not(.friendapp):not([mobile]).LoadingForm:after,
+div.Loading:after
+{
+	content: ' ';
+	background: url(/themes/friendup12/gfx/busy.png) no-repeat center center #222222;
+	position: absolute;
+	top: calc(50% - 30px);
+	left: calc(50% - 30px);
+	height: 60px;
+	width: 60px;
+	color: white;
+	padding: 0;
+	text-align: center;
+	border-radius: 60px;
+	animation: bodyLoading 0.1s;
+	-webkit-animation: bodyLoading 0.1s;
+	z-index: 2147483646;
+}
+
+body[mobile].Loading:after, body[mobile].LoadingForm:after
+{
+	display: none;
+}
+
+@-webkit-keyframes bodyLoading
+{
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+@keyframes bodyLoading
+{
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+body.Inside #Screens
+{
+	background-image: none;
+}
+
+/* Hide this in the beginning */
+body #DeepestField
+{
+	opacity: 0;
+	z-index: 0;
+}
+
+
+/* Actiontray --------------------------------------------------------------- */
+
+#ActionTray
+{
+	position: fixed;
+	right: 5px;
+	bottom: 5px;
+}
+
+#ActionTray input
+{
+	position: absolute;
+	right: 0;
+	height: 17px;
+	line-height: 17px;
+	padding: 3px 8px;
+	bottom: -3px;
+	width: 110px;
+	border: 0;
+	opacity: 0.7;
+	background: white;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+}
+
+#ActionTray input:focus
+{
+	opacity: 1;
+}
+
+#Tray
+{
+    position: absolute;
+    right: 0;
+    min-width: 0px;
+    max-width: 300px;
+    height: 32px;
+    z-index: 999;
+}
+
+[mobile] #Tray
+{
+	display: none;
+}
+
+html #Tray.Size16
+{
+	height: 16px;
+	bottom: 0;
+}
+
+#Tray > div
+{
+    width: 32px;
+    height: 32px;
+    float: right;
+    color: white;
+    text-align: center;
+    line-height: 32px;
+    text-shadow: 0px 1px 1px rgba(0,0,0,0.5);
+    position: relative;
+}
+
+#Tray.Size16 > div
+{
+	width: 16px;
+	height: 16px;
+	line-height: 16px;
+	margin: 3px 10px 0 0;
+}
+
+#Tray.Size16 > div:before
+{
+	width: 16px;
+	height: 16px;
+	background-size: contain;
+}
+
+.SpeechResponse
+{
+	position: absolute;
+	top: 40%;
+	left: 5%;
+	width: 90%;
+	transition: opacity 0.5s;
+}
+
+.SpeechResponse > .Response
+{
+	min-height: 60px;
+	font-size: 30px;
+	background-color: rgba(0,0,0,0.7);
+	color: white;
+	font-weight: bold;
+	text-align: center;
+	line-height: 60px;
+	border-radius: 20px;
+	padding: 20px;
+}
+
+/* Some info from the tray */
+
+#Tray .NumberOfNotifications
+{
+	pointer-events: none;
+	position: absolute;
+	top: 6px;
+	left: 19px;
+	font-size: 65%;
+	color: white;
+	background: #C92918;
+	border-radius: 100%;
+	padding: 0;
+	border: 0;
+	line-height: 11px;
+	width: 11px;
+	height: 11px;
+	text-align: center;
+}
+
+.MobileNotification .Title > .DateStamp,
+.BubbleInfo .DateStamp
+{
+	font-size: 11px;
+}
+
+.BubbleInfo, .PopInfo
+{
+	position: absolute;
+	right: 0px;
+	top: 0px;
+	height: 0px;
+	opacity: 0.8;
+	z-index: 1;
+}
+.PopInfo
+{
+	z-index: 2;
+}
+
+html body .PopInfo + .BubbleInfo
+{
+	pointer-events: none !important;
+	opacity: 0 !important;
+}
+
+.BubbleInfo > div, .PopInfo > div
+{
+	position: absolute;
+	right: 0px;
+	top: 35px;
+	min-width: 100px;
+	max-height: 0px;
+	border-radius: 5px;
+	background: white;
+	color: black;
+	padding: 0 8px;
+	box-sizing: border-box;
+	font-size: 95%;
+	transition: max-height,padding 0.25s,0.25s;
+	overflow: hidden;
+	line-height: 20px;
+	border-bottom-width: 0;
+}
+
+#Tray .Hidden { display: none; }
+
+.TrayElement.Blink:before
+{
+	/*animation: blinking 1s infinite;*/
+}
+
+@keyframes blinking
+{
+	0% { opacity: 0.5; }
+	50% { opacity: 1; }
+	100% { opacity: 0.5; }
+}
+
+.TrayElement.Hidden,
+html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
+{
+	display: none;
+}
+
+.TrayElement.Notification .BubbleInfo,
+.TrayElement.PopNotification .PopInfo
+{
+	transition: opacity 0.25s;
+	text-align: left;
+	white-space: nowrap;
+}
+
+.TrayElement:hover .BubbleInfo > div,
+.TrayElement.Notification .BubbleInfo > div,
+.TrayElement.PopNotification .PopInfo > div
+{
+	max-height: initial;
+	padding: 8px;
+}
+
+#Tray .Notification .BubbleInfo p.Layout
+{
+	overflow-x: hidden;
+	text-overflow: ellipsis;
+}
+
+#Tray > .Notification > .TrayInformation
+{
+	position: absolute;
+	display: block;
+	width: 300px;
+	bottom: 40px;
+	right: 0px;
+	background: rgba(0,0,0,0.8);
+	color: white;
+	text-align: left;
+}
+#Tray > .Notification > .TrayInformation *
+{
+	color: white;
+}
+
+.PopInfo:before,
+.BubbleInfo:before
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	top: 30px;
+	width: 0px;
+	height: 0px;
+	right: 15px;
+	background: white;
+	transform: rotate(45deg);
+	transition: width,height,bottom,right 0.20s;
+	text-overflow: hidden;
+}
+
+.BubbleInfo:after
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	right: 0px;
+	width: 30px;
+	bottom: 0;
+	height: 30px;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.TrayElement:hover .BubbleInfo:after
+{
+	pointer-events: all;
+}
+
+.TrayElement:hover .BubbleInfo:before, 
+.TrayElement.Notification .BubbleInfo:before,
+.TrayElement.PopNotification .PopInfo:before
+{
+	height: 10px;
+	width: 10px;
+	bottom: 3px;
+	right: 10px;
+}
+
+.TrayElement:before
+{
+	content: " ";
+	position: absolute;
+	display: block;
+	width: 24px;
+	height: 24px;
+	top: 4px;
+	left: 4px;
+	background-repeat: none;
+}
+
+.TrayElement.Rounded
+{
+	border-radius: 100%;
+}
+
+/* Notification popups */
+.NotificationPopupElement p
+{
+	max-height: 38px;
+	overflow: hidden;
+}
+
+/* Various built-in icons */
+
+.TrayElement.Calendar:before
+{
+	font-family: fontawesome;
+	margin: 0px 0 0 2px;
+	content: "\f271";
+	font-size: 106%;
+	text-align: center;
+	line-height: 24px;
+}
+
+#Tray.Size16 .TrayElement.Calendar:before
+{
+    font-size: 93%;
+    line-height: 18px;
+}
+
+.TrayElement.Download:before
+{
+	font-family: fontawesome;
+	content: "\f0ed";
+	font-size: 135%;
+	text-align: center;
+	line-height: 24px;
+}
+
+#Tray.Size16 .TrayElement.Download:before
+{
+    font-size: 93%;
+    line-height: 18px;
+}
+
+.TrayElement.Tasks:before
+{
+	font-family: fontawesome;
+	content: "\f0ae";
+	font-size: 125%;
+	text-align: center;
+	line-height: 24px;
+}
+
+.TrayElement.Notification:before
+{
+	font-family: fontawesome;
+	content: "\f0f3";
+	font-size: 105%;
+	text-align: center;
+	line-height: 24px;
+}
+
+.TrayElement.Disks:before
+{
+	font-family: fontawesome;
+	content: "\f07c";
+	font-size: 135%;
+	text-align: center;
+	line-height: 24px;
+}
+
+.TrayElement:hover .BubbleInfo.List > div 
+{
+	padding: 4px;
+	box-sizing: border-box;
+}
+
+.TrayElement .BubbleInfo.List > div > div
+{
+	padding: 4px;
+	box-sizing: border-box;
+}
+
+.TrayElement .BubbleInfo.List > div > div:first-child
+{
+	border-radius: 5px 5px 0 0;
+}
+
+.TrayElement .BubbleInfo.List > div > div:last-child
+{
+	border-radius: 0 0 5px 5px;
+}
+
+.TrayElement .BubbleInfo.List > div > div:only-child
+{
+	border-radius: 5px;
+}
+
+/* Voice overlay handsfree mode --------------------------------------------- */
+
+#Handsfree
+{
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    /*background: rgba(255,255,255,0.5);*/
+    background: rgba(255,255,255,0.0);
+    text-align: center;
+    z-index: 9999999;
+}
+#Handsfree div > button
+{
+	position: absolute;
+	top: -100000px;
+    /*visibility: visible;
+    position: absolute;
+    top: 25%;
+    height: 50%;
+    left: 25%;
+    width: 50%;
+    border: 0;
+    background-color: transparent;
+    padding: 0;
+    background-image: url(/webclient/gfx/system/VoiceIcon.png);
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    box-shadow: none;
+    outline: none;*/
+}
+#Handsfree div > button:active, 
+#Handsfree div > button:focus
+{
+    border: 0;
+    outline: 0;
+}
+#Handsfree div > button > button
+{
+    display: none;
+}
+
+#Handsfree input
+{
+    position: absolute;
+    top: -10000px;
+}
+
+@-webkit-keyframes micblink
+{
+  0%   { color: #ffdd00; }
+  50% { color: #ff4444; }
+  100%   { color: #ffdd00; }
+}
+
+#Handsfree.listening + #Screens #Tray > .Microphone:before
+{
+	color: #ff4444;
+	transition: color 0.2s;
+	-webkit-animation: micblink 2s infinite;
+	-moz-animation:    micblink 2s infinite;
+	-o-animation:      micblink 2s infinite; 
+	animation:         micblink 2s infinite;
+}
+
+/* Desklets ----------------------------------------------------------------- */
+
+.Desklet
+{
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	background: rgba(0,0,0,0.5);
+	transition: top,left,width,height 0.25s;
+	height: 0;
+}
+
+.Desklet.Initializing
+{
+	transition: none;
+}
+
+.Desklet .Launcher
+{
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-size: contain;
+	transition: filter 0.15s;
+	border-radius: 2px;
+	-moz-border-radius: 2px;
+	-webkit-border-radius: 2px;
+	-webkit-filter: drop-shadow(0 0 5px rgba(0,0,0,1));
+	filter: drop-shadow(0 0 5px rgba(0,0,0,1));
+	border: 0;
+}
+
+.Desklet .Launcher span
+{
+	display: none;
+	color: white;
+}
+
+body:not([tablet]):not([mobile]) .Desklet .Launcher:hover
+{
+	-webkit-filter: drop-shadow(0 0 12px rgba(255,244,200,0.8));
+	filter: drop-shadow(0 0 6px rgba(255,244,200,0.8));
+}
+
+.Desklet .Launcher.Minimized
+{
+	filter: grayscale(100%);
+	-webkit-filter: grayscale(100%);
+}
+
+body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
+{
+	-webkit-filter: drop-shadow(0 0 12px rgba(255,255,200,1) );
+	filter: drop-shadow(0 0 8px rgba(255,255,200,1) );
+}
+
+.DockSubMenu.MaskedOverflow
+{
+	-webkit-mask-image: linear-gradient(180deg, black 0%, black calc(100% - 25px), rgba(0,0,0,0.9) calc(100% - 0px), transparent 100%);
+	-moz-mask-image: linear-gradient(180deg, black 0%, black calc(100% - 25px), rgba(0,0,0,0.9) calc(100% - 0px), transparent 100%);
+	mask-image: linear-gradient(180deg, black 0%, black calc(100% - 25px), rgba(0,0,0,0.9) calc(100% - 0px), transparent 100%);
+	overflow: auto;
+}
+
+/* non running */
+.Desklet .Launcher:after
+{
+    position: absolute;
+	content: ' ';
+    transition: opacity 0.75s;
+    opacity: 0;
+    pointer-events: none;
+    border-radius: 5px;
+}
+
+/* running apps */
+.Desklet[position=bottom_left] .Launcher:after,
+.Desklet[position=bottom_center] .Launcher:after,
+.Desklet[position=bottom_right] .Launcher:after
+{
+    width: 40%;
+	left: 30%;
+	top: 100%;
+	height: 3px;
+}
+.Desklet[position=bottom_left] .Launcher.Running:after,
+.Desklet[position=bottom_center] .Launcher.Running:after,
+.Desklet[position=bottom_right] .Launcher.Running:after
+{
+	background: rgba(255,255,255,0.8);
+	opacity: 1;
+	box-shadow: 0px 1px 2px rgba(0,0,0,0.5);
+}
+.Desklet[position=top_left] .Launcher:after,
+.Desklet[position=top_center] .Launcher:after,
+.Desklet[position=top_right] .Launcher:after
+{
+    height: 80%;
+	top: 0%;
+	right: -4px;
+	width: 3px;
+}
+.Desklet[position=top_left] .Launcher.Running:after,
+.Desklet[position=top_center] .Launcher.Running:after,
+.Desklet[position=top_right] .Launcher.Running:after
+{
+	background: rgba(255,255,255,0.8);
+	opacity: 1;
+	box-shadow: 0px 1px 2px rgba(0,0,0,0.5);
+}
+.Desklet[position=left_top] .Launcher:after,
+.Desklet[position=left_center] .Launcher:after,
+.Desklet[position=left_bottom] .Launcher:after
+{
+    height: 40%;
+	top: 30%;
+	right: -4px;
+	width: 3px;
+}
+.Desklet[position=left_top] .Launcher.Running:after,
+.Desklet[position=left_center] .Launcher.Running:after,
+.Desklet[position=left_bottom] .Launcher.Running:after
+{
+	background: rgba(255,255,255,0.8);
+	opacity: 1;
+	box-shadow: 0px 1px 2px rgba(0,0,0,0.5);
+}
+.Desklet[position=right_top] .Launcher:after,
+.Desklet[position=right_center] .Launcher:after,
+.Desklet[position=right_bottom] .Launcher:after
+{
+    height: 40%;
+	top: 30%;
+	left: -4px;
+	width: 3px;
+}
+.Desklet[position=right_top] .Launcher.Running:after,
+.Desklet[position=right_center] .Launcher.Running:after,
+.Desklet[position=right_bottom] .Launcher.Running:after
+{
+	background: rgba(255,255,255,0.8);
+	opacity: 1;
+	box-shadow: 0px 1px 2px rgba(0,0,0,0.5);
+}
+
+.Desklet .Launcher .LabelIcon
+{
+	position: absolute;
+	top: calc(50% - 12px);
+	left: calc(50% - 12px);
+	width: 24px;
+	height: 24px;
+	background-size: contain;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+
+.Desklet .Launcher.View.Directory
+{
+}
+
+.Desklet .Launcher .ElementCount
+{
+	display: none;
+}
+.Desklet .Launcher.Minimized .ElementCount
+{
+	display: block;
+	margin: 5px auto;
+	text-align: center;
+	position: relative;
+	pointer-events: none;
+}
+.Desklet .Launcher.Minimized .ElementCount > span
+{
+	display: inline-block;
+	color: white;
+	background: rgba(0,0,0,0.5);
+	font-size: 12px;
+	padding: 1px 4px;
+	border-radius: 100%;
+}
+
+#Tasks
+{
+	pointer-events: none;
+	visibility: hidden;
+	max-height: 1px;
+	max-width: 1px;
+}
+
+/* Tasks overlay ------------------------------------------------------------ */
+
+body[mobile] #TaskSwitcher
+{
+	display: none;
+}
+
+body:not([mobile]) #TaskSwitcher
+{
+	position: absolute;
+	top: calc(50% - 100px);
+	left: 20%;
+	width: 60%;
+	height: 120px;
+	border-radius: 5px;
+	background: rgba(0,0,0,0.7);
+	transition: opacity 0.25s;
+	opacity: 0;
+	pointer-events: none;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+body:not([mobile]).ShowTasks #TaskSwitcher
+{
+	opacity: 1;
+	pointer-events: all;
+}
+
+body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
+{
+	background-color: rgba(100,100,100,0.4);
+	box-shadow: 0px 0px 2px 2px rgba(255,255,225,0.4);
+}
+
+#TaskSwitcher .WindowItem
+{
+	width: 100px;
+	height: 100px;
+	position: absolute;
+	transition: left 0.25s;
+}
+
+#TaskSwitcher .WindowItem .Close
+{
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100px;
+	height: 80px;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 60%;
+	border-radius: 10px;
+}
+
+#TaskSwitcher .WindowItem .CloseButton
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 26px;
+	height: 26px;
+	text-align: center;
+	line-height: 26px;
+	background: rgba(0,0,0,0.6);
+	border-radius: 50%;
+}
+#TaskSwitcher .WindowItem .CloseButton:after
+{
+	content: "\f00d";
+	font-family: fontawesome;
+	font-size: 1.2em;
+	color: white;
+}
+
+#TaskSwitcher .WindowItem .Close img
+{
+	display: none;
+}
+
+#TaskSwitcher .WindowItem .Taskname
+{
+	position: absolute;
+	bottom: 0;
+	height: 20px;
+	text-align: center;
+	color: white;
+	width: 100%;
+	line-height: 26px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+/* Desklet widget end ------------------------------------------------------- */
+
+#DoorsScreen
+{
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	background: #3f3f3f;
+	overflow: hidden;
+	transition: background-color 0.5s;
+	-moz-transition: background-color 0.5s;
+	-webkit-transition: background-color 0.5s;
+	-ms-transition: background-color 0.5s;
+	-o-transition: background-color 0.5s;
+}
+
+#DoorsScreen > .ScreenContent
+{
+	position: absolute;
+	top: 32px !important;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	background-size: cover;
+	background-position: center;
+}
+
+#DoorsScreen > .ScreenContent > .Scroller
+{
+	height: 100%;
+	opacity: 0;
+	transition: opacity 0.25s;
+}
+
+#DoorsScreen > .ScreenContent > .Scroller.Loaded
+{
+	opacity: 1;
+}
+
+.DesktopIconsHidden #DoorsScreen > .ScreenContent > .Scroller 
+{
+	opacity: 0;
+	pointer-events: none;
+	visibility: hidden;
+}
+
+
+/* Different solution for drives */
+#DoorsScreen > .ScreenContent.DrivePanel > .Scroller 
+{
+	position: absolute;
+	background: rgba(0,0,0,0.1);
+	left: 0px;
+	top: 0px;
+	width: 130px;
+	height: 100%;
+	border-radius: 0;
+	overflow: scroll;
+	overflow-x: hidden;
+	pointer-events: visiblefill;
+	z-index: 2;
+}
+
+#DoorsScreen > .ScreenContent.DrivePanel > .Scroller *
+{
+	pointer-events: all;
+}
+
+#DoorsScreen > .ScreenContent.DrivePanel > .Scroller::-webkit-scrollbar
+{
+	width: 2px;
+}
+#DoorsScreen > .ScreenContent.DrivePanel > .Scroller::-webkit-scrollbar-track
+{
+	background: rgba(0,0,0,0.4);
+	box-shadow: none;
+}
+#DoorsScreen > .ScreenContent.DrivePanel > .Scroller::-webkit-scrollbar-thumb
+{
+	background: rgba(255,255,255,0.4);
+	border: 0;
+	background-image: none;
+	box-shadow: none;
+}
+
+#DoorsScreen .Left > .VirtualWorkspaces
+{
+	position: absolute;
+	right: 308px;
+	border-right: 1px solid rgba(0,0,0,0.1);
+	height: 33px;
+	top: 0;
+	padding-left: 8px;
+	padding-right: 3px;
+	border-left: 1px solid rgba(0,0,0,0.1);
+}
+
+#DoorsScreen .Left > .VirtualWorkspaces > div 
+{
+	display: inline-block;
+	position: relative;
+	width: 26px;
+	height: 24px;
+	line-height: 22px;
+	background: rgba(255,255,255,0.5);
+	border-radius: 5px;
+	margin: 5px 5px 0 0 !important;
+	box-sizing: border-box;
+	border: 1px solid rgba(0,0,0,0.1);
+	color: black;
+	transition: background,color 0.25s;
+}
+
+#DoorsScreen .Left > .VirtualWorkspaces > div.Workspace.WithIcon
+{
+	text-align: center;
+	font-size: 0.9em;
+	line-height: 16px;
+}
+
+#DoorsScreen .Left > .VirtualWorkspaces > div.Active
+{
+	background: transparent;
+	color: white;
+}
+
+#DoorsScreen .Left > .VirtualWorkspaces > div:hover
+{
+	background: rgba(255,255,255,1);
+}
+#DoorsScreen .Left > .VirtualWorkspaces > div.Active:hover
+{
+	background: rgba(0,0,0,1);
+}
+
+#DoorsScreen .Left > .VirtualWorkspaces > div > span
+{
+	width: 100% !important;
+	margin: 0 !important;
+	text-align: center;
+	text-shadow: none;
+}
+
+/* Search */
+
+[mobile] #SearchGuiContainer
+{
+	position: absolute;
+	width: calc(100% - 20px);
+	height: 75px;
+}
+
+[mobile] #WorkspaceSearchResults
+{
+	position: absolute;
+	top: 85px;
+	width: calc(100% - 20px);
+	height: calc(100% - 95px);
+	overflow: auto;
+}
+
+
+/* Wallpapers */
+
+.WorkspaceWallpaper
+{
+	pointer-events: none;
+	position: absolute;
+	top: 0px;
+	background-size: cover;
+	background-position: center;
+}
+
+.WorkspaceContainer
+{
+	position: absolute;
+	top: 0;
+	overflow: hidden;
+}
+
+.Inside #Screens
+{
+	background: rgba(0,0,0,0.5);
+}
+
+/* Don't show the .Offline thing on the desktop */
+#DoorsScreen > .Offline
+{
+	display: none;
+	/*position: absolute;
+	top: calc(50% - 50px);
+	left: 10%;
+	width: 80%;
+	text-align: center;
+	height: 72px;
+	text-transform: uppercase;
+	font-weight: bold;
+	font-size: 72px;
+	color: #F00;
+	opacity: 0.5;
+	pointer-events: none;
+	z-index: 1;*/
+}
+
+#OfflineMessage
+{
+	position: absolute;
+	visibility: hidden; 
+	opacity: 0; 
+	pointer-events: none; 
+	z-index: 2147483647; 
+	transition: opacity 0.75s; 
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	background: rgba(0,0,0,0.85);
+	color: white;
+}
+
+body.Offline #OfflineMessage
+{
+	visibility: visible;
+	opacity: 1;
+	pointer-events: all;
+}
+
+#OfflineMessage > div
+{
+	position: absolute;
+	top: 30%;
+	left: 30%;
+	width: 40%;
+}
+
+[mobile] #OfflineMessage > div
+{
+	top: 20%;
+	left: 20%;
+	width: 60%;
+}
+
+#OfflineMessage > div:before
+{
+	font-size: 1.5em;
+	display: inline-block;
+}
+
+#OfflineMessage > div h1
+{
+	display: inline-block;
+}
+
+#OfflineMessage > div p
+{
+	font-size: 1.3em;
+}
+
+.Screen, .Screen > .ScreenContent
+{
+	box-sizing: border-box;
+}
+
+.Screen > .TitleBar
+{
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 32px;
+	background: white;
+	z-index: 2147483646;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-shadow: 0px 0px 8px 1px rgba(0,0,0,0.5);
+	-moz-box-shadow: 0px 0px 8px 1px rgba(0,0,0,0.5);
+	-webkit-box-shadow: 0px 0px 8px 1px rgba(0,0,0,0.5);
+	background-image: url(/webclient/gfx/theme/logo_20px.png);
+	background-repeat: no-repeat;
+	background-position: 5px 5px;
+	padding-left: 30px;
+	overflow: hidden;
+}
+
+/* Show indicator when hovering over titlebar */
+
+.TitleBar .Left:after 
+{
+	opacity: 0;
+	transition: opacity 0.5s;
+    content: ": : :";
+    color: rgba(0,0,0,0.3);
+    position: absolute;
+    left: calc(50% - 10px);
+    top: 6px;
+}
+.TitleBar:hover .Left:after,
+.TitleBar:active .Left:after
+{
+	opacity: 1;
+	cursor: pointer;
+}
+
+.Screen > .TitleBar > .Left *
+{
+	float: left;
+	margin: 0 5px 0 0;
+}
+
+.Screen > .TitleBar > .Left > .Extra
+{
+	float: right;
+}
+
+.Screen > .TitleBar > .Left > .Extra > .ExtraClick
+{
+	display: inline-block;
+	padding: 0 10px 0 10px;
+	background: inherit;
+	float: right;
+	margin: 0 -10px 0 0;
+	border-left: 1px solid rgba(0,0,0,0.05)
+}
+
+.Screen > .TitleBar > .Left > .Extra:hover > .ExtraClick
+{
+	color: white;
+}
+
+@media (max-width: 955px)
+{
+	.Screen > .TitleBar > .Left > .Extra
+	{
+		display: none;
+	}
+}
+
+.Screen > .TitleBar > .Left
+{
+	padding: 8px 35px 6px 5px;
+	margin-left: 3px;
+	border-left: 1px solid #f0f0f0;
+	height: 32px;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+}
+
+.Screen > .TitleBar > .Left .Extra
+{
+	position: absolute;
+	right: 32px;
+	padding: 0 10px 0 10px;
+	top: 0;
+	height: 32px;
+	line-height: 32px;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+}
+
+.Screen > .TitleBar > .Left .Extra hr
+{
+	border: 0;
+	border-top: 1px solid rgba(255,255,255,0.2);
+	height: 1px;
+	background: none;
+}
+
+.Screen > .TitleBar > .Left .Extra.Hover
+{
+	background: rgba(0,0,0,0.6);
+	color: white;
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.5);
+	font-weight: bold;
+}
+
+.Screen > .TitleBar > .Left .Extra.Hover > span,
+.Screen > .TitleBar > .Left .Extra.Hover > div
+{
+    color: white;
+}
+
+.Screen > .TitleBar > .Left .Extra .Offline
+{
+	color: #aa0000;
+	display: inline-block;
+}
+
+.Screen > .TitleBar > .Left .Extra .Offline:before
+{
+	font-family: fontawesome;
+	font-size: 90%;
+	content: "\f186";
+	display: inline;
+	margin-right: 5px;
+}
+
+.Screen > .TitleBar > .Right
+{
+	float: right;
+}
+
+.Screen > .TitleBar > .Right > .Clock
+{
+	position: absolute;
+	width: 50px;
+	height: 32px;
+	right: 33px;
+	top: 0;
+	line-height: 32px;
+	text-align: center;	
+}
+
+.Screen > .TitleBar .ScreenList
+{
+	width: 32px;
+	height: 32px;
+	position: absolute;
+	right: 0;
+	top: 0;
+	color: #455155;
+}
+
+.Screen > .TitleBar .ScreenList:after
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: block;
+	content: "\f096";
+	font-family: "fontawesome";
+	width: 28px;
+	text-align: center;
+	line-height: 24px;
+	font-size: 1em;
+}
+.Screen > .TitleBar .ScreenList:before
+{
+	position: absolute;
+	top: 4px;
+	left: 4px;
+	display: block;
+	content: "\f0c8";
+	font-family: "fontawesome";
+	width: 28px;
+	text-align: center;
+	line-height: 24px;
+	font-size: 0.9em;
+}
+
+.Screen > .TitleBar .ScreenList:active
+{
+	opacity: 0.5;
+}
+
+.Frameloader, .Imageloader
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	border: 0;
+	outline: 0;
+}
+
+.Imageloader
+{
+	height: auto;
+}
+
+/* Progress bars ------------------------------------------------------------ */
+
+.Frame .Progress
+{
+	line-height: 30px;
+}
+
+.Frame .Groove + .Bar
+{
+	background-image: url(/webclient/gfx/system/progressbar.gif);
+	background-repeat: repeat-x;
+	background-size: auto;
+	background-position: 0 0;
+	height: 16px;
+}
+
+.Frame .Groove + .Bar > div
+{
+	text-overflow: ellipsis; 
+	text-align: center;
+	line-height: 30px; 
+	color: white;
+	position: absolute;
+	width: 100%;
+	overflow: hidden;
+}
+
+/* Directory view toolbar --------------------------------------------------- */
+
+.DirectoryToolbar
+{
+	z-index: 3;
+	position: absolute;
+	height: 56px;
+	background: #4c4c4c;
+	border-bottom: 1px solid rgba(0,0,0,0.3);
+	padding: 8px;
+	border-bottom: 3px solid;
+	border-bottom-color: var(--WinFrameBgBlur);
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-shadow: inset 0px 2px 8px rgba(0,0,0,0.3);
+	overflow: hidden;
+}
+
+html .DirectoryToolbar button.Makedir:before
+{
+	content: " ";
+	width: 16px;
+	height: 26px;
+	margin-top: 0;
+	display: inline-block;
+	background-image: url(/iconthemes/friendup15/AddFolder.svg);
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+	background-color: transparent;
+}
+
+html .DirectoryToolbar button.Makedir
+{
+	color: transparent;
+}
+
+html .DirectoryToolbar button.Search:before
+{
+	content: "\f002";
+	font-family: fontawesome;
+	width: 16px;
+	height: 26px;
+	line-height: 26px;
+	font-size: 0.9em;
+	margin-top: 0;
+	display: inline-block;
+	background-image: none;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+	background-color: transparent;
+}
+
+html .DirectoryToolbar button.Search
+{
+	color: transparent;
+}
+
+.Active .DirectoryToolbar
+{
+	border-bottom-color: var(--WinFrameBgActive);
+}
+
+.DirectoryToolbar .ToggleGroup
+{
+	position: absolute;
+	top: 8px;
+}
+
+.DirectoryToolbar .ToggleGroup.center
+{
+	left: calc(50% - 30px);
+}
+
+.DirectoryToolbar button
+{
+	outline: none;
+	border: 0px !important;
+	background: none;
+	line-height: 20px;
+	text-align: center;
+	padding: 0 8px 20px 8px;
+	margin: 0 4px 0 0;
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.5);
+	box-shadow: none;
+	border-radius: 5px;
+}
+
+.DirectoryToolbar button:hover
+{
+	background-color: transparent;
+}
+
+.DirectoryToolbar button:after
+{
+	content: " ";
+	background-color: rgba(100,100,100,0.0);
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 39px;
+	border-radius: 3px;
+	input-events: none;
+	transition: background-color 0.25s;
+	-moz-transition: background-color 0.25s;
+	-webkit-transition: background-color 0.25s;
+}
+
+.DirectoryToolbar button:hover:after
+{
+	background-color: rgba(100,100,100,0.2);
+}
+
+.Active .DirectoryToolbar button:hover:after
+{
+	background-color: rgba(36, 129, 215, 0.2);
+}
+
+.DirectoryToolbar button:before
+{
+	display: block;
+	clear: both;
+}
+
+@media (max-width: 346px)
+{
+	.DirectoryToolbar button
+	{
+		font-size: 90%;
+		padding: 0 4px;
+	}
+}
+
+/* Icon view ---------------------------------------------------------------- */
+
+.Content .Scroller:after
+{
+	transform: translate3d(0,0,0);
+	display: block;
+	content: " ";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 99;
+	pointer-events: none;
+	transition: opacity 0.25s;
+	background: var(--ColorBackground);
+	opacity: 0;
+}
+
+.Content.LoadingIcons .Scroller:after
+{
+	opacity: 1;
+	pointer-events: all;
+}
+
+.Content.LoadingIcons .File .Icon > .FileShared:before,
+.Content.LoadingIcons .File .Icon > .Shared:after
+{
+	opacity: 0;
+}
+
+/* Listview directory view -------------------------------------------------- */
+
+div.Listview
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+div.Listview > .Headers
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 30px;
+	background: var(--ColorBgNegative);
+	box-shadow: inset 0px 0px 5px rgba(0,0,0,0.5);
+}
+
+div.Listview > .Headers > .Header
+{
+	float: left;
+	position: relative;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	padding: 6px;
+	font-weight: bold;
+	border-top: 1px solid rgba(255,255,255,0.3);
+	border-left: 1px solid rgba(255,255,255,0.3);
+	border-right: 1px solid rgba(0,0,0,0.3);
+	border-bottom: 1px solid rgba(0,0,0,0.3);
+}
+
+div.Listview > .Headers > .Header:nth-child(odd)
+{
+	background-color: var(--ColorBgThListSw1);
+	color: var(--ColorThListSw1);
+}
+
+div.Listview > .Headers > .Header:nth-child(even)
+{
+	background-color: var(--ColorBgThListSw2);
+	color: var(--ColorThListSw2);
+}
+
+div.Listview > .Headers > .Header:active
+{
+	border-top: 1px solid rgba(0,0,0,0.3);
+	border-left: 1px solid rgba(0,0,0,0.3);
+	border-right: 1px solid rgba(255,255,255,0.3);
+	border-bottom: 1px solid rgba(255,255,255,0.3);
+	background-color: var(--ColorBgNegative);
+	color: var(--ColorNegative);
+}
+
+div.Listview > .Icons
+{
+	position: absolute;
+	top: 30px;
+	left: 0px;
+	width: 100%;
+	bottom: 30px;
+	background: var(--ColorBgNegative);
+}
+
+div.Listview > .Icons > .Scroller
+{
+	position: relative;
+	top: 0;
+	left: 0;
+	width: 100%;
+}
+
+div.Listview .Row,
+div.ColumnView .Row,
+#MousePointer .Row
+{
+	position: absolute;
+	height: 30px;
+	width: 100%;
+	clear: both;
+}
+
+html div.Listview .Row.MousePointer,
+html div.ColumnView .Row.MousePointer
+{
+	transform: rotate(0def);
+	-moz-transform: rotate(0def);
+	-webkit-transform: rotate(0def);
+}
+
+#MousePointer .Row
+{
+	width: 400px;
+	white-space: nowrap;
+}
+
+div.Listview > .Icons > .Scroller > .Row .Column,
+div.ColumnView .Row .Column,
+#MousePointer .Row .Column
+{
+	background: var(--ColorBgThListSw2);
+}
+
+div.Listview > .Icons > .Scroller > .Row.Odd .Column,
+div.ColumnView .Row.Odd .Column,
+#MousePointer .Row.Odd .Column
+{
+	background: var(--ColorBgThListSw1);
+}
+
+div.Listview > .Icons > .Scroller > .Row:hover > .Column,
+div.Listview > .Icons > .Scroller > .Row.Selected > .Column,
+div.ColumnView .Row:hover > .Column,
+div.ColumnView .Row.Selected > .Column,
+#MousePointer .Row.Selected .Column
+{
+	background: var(--ColorBgNegative);
+	color: var(--ColorNegative);
+}
+
+div.ColumnView .Row:hover > .Column,
+div.ColumnView .Row.Selected > .Column
+{
+	background: var(--ColorBgNegative);
+	color: var(--ColorNegative);
+}
+
+div.Listview > .Footer
+{
+	position: absolute;
+	bottom: 0;
+	height: 30px;
+	left: 0;
+	right: 0;
+	border-top: 1px solid rgba(255,255,255,0.3);
+	border-left: 1px solid rgba(255,255,255,0.3);
+	border-right: 1px solid rgba(0,0,0,0.3);
+	border-bottom: 1px solid rgba(0,0,0,0.3);
+	background: var(--ColorBackground);
+	color: var(--ColorText);
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	padding: var(--PaddingButton);
+}
+
+/* Columns in listview: */
+
+div.Listview > .Icons > .Scroller > .Row > .Column,
+div.ColumnView .Row > .Column,
+#MousePointer .Row > .Column
+{
+	float: left;
+	position: relative;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	padding: 6px;
+	font-weight: normal;
+	border-left: 1px solid rgba(255,255,255,0.3);
+	border-right: 1px solid rgba(0,0,0,0.3);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	height: 30px;
+	box-sizing: border-box;
+}
+
+div.Listview > .Icons > .Scroller > .Row:last-child > .Column,
+div.ColumnView .Row:last-child > .Column,
+#MousePointer .Row:last-child > .Column
+{
+	border-bottom: 1px solid rgba(0,0,0,0.3);
+}
+
+div.Listview > .Icons > .Scroller > .Row > .Column:first-child,
+div.ColumnView .Row > .Column:first-child,
+#MousePointer .Row > .Column:first-child
+{
+	padding-left: 36px;
+}
+
+div.ColumnView .Row > .Column
+{
+	width: 250px;
+}
+
+div.Listview .File,
+div.ColumnView .File,
+#MousePointer .Row.File
+{
+	padding: 0;
+	margin: 0;
+}
+
+div.Listview .File > .Icon,
+div.ColumnView .File > .Icon,
+#MousePointer .Row.File > .Icon
+{
+    width: 24px;
+    height: auto;
+    position: absolute;
+    top: 3px;
+    left: 6px;
+    margin: 0;
+    padding: 0;
+}
+
+#MousePointer .Row.File > .Icon
+{
+	height: 24px;
+}
+
+div.Listview .File > .Icon > div,
+div.ColumnView .File > .Icon > div,
+#MousePointer .Row.File > .Icon > div
+{
+    width: 100%;
+    height: 24px;
+    background-size: contain;
+}
+
+.File.Compact > .Icon
+{
+	width: 170px;
+}
+
+.File.Compact > .Icon > div
+{
+	width: 32px;
+	height: 32px;
+	margin: 0;
+	background-size: contain;
+	background-position: left center;
+}
+
+.File.Compact > .Title
+{
+	position: absolute;
+	top: 0px;
+	left: 36px;
+	width: 110px;
+	text-align: left;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.File.Compact > .Icon > .Label,
+.File.Compact > .Icon > .Label.Shared,
+.File.Compact > a.Download
+{
+	width: 16px;
+	height: 16px;
+	top: 0;
+	left: 0;
+	border-width: 1px;
+}
+
+.File.Compact > .Icon > .Label:before,
+.File.Compact > .Icon > .Label.Shared:before,
+.File.Compact > a.Download:before
+{
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	font-size: 10px;
+	line-height: 10px;
+}
+
+/* Columns in listview done */
+
+html #Statusbar
+{
+	position: absolute;
+	height: 30px;
+	bottom: 0px;
+	left: 5px;
+	right: 5px;
+	background: transparent;
+	opacity: 1;
+	border: 0;
+	border-radius: 0;
+	-moz-border-radius: 0;
+	-webkit-border-radius: 0;
+	box-shadow: none;
+	-moz-box-shadow: none;
+	-webkit-box-shadow: none;
+	padding: 0;
+	z-index: 2147483640;
+}
+
+html body[viewlist=dockedlist] #Statusbar
+{
+	width: auto;
+	z-index: 2147483643;
+	left: auto;
+}
+
+html body[viewlist=docked] #Statusbar
+{
+	height: 0;
+}
+
+html body[viewlist=docked] #Statusbar > #Taskbar
+{
+	height: 0;
+}
+
+#Statusbar, #Taskbar, #Tray
+{
+	pointer-events: none;
+}
+
+#Statusbar *:not(#Taskbar),
+#Taskbar *, #Tray *
+{
+	pointer-events: all;
+}
+
+html #Statusbar > #Taskbar
+{
+	position: absolute;
+	white-space: nowrap;
+	overflow: hidden;
+}
+html #Statusbar > #Taskbar.Horizontal
+{
+	width: 100%;
+}
+
+html #Statusbar > #Taskbar.Vertical
+{
+	height: 100%;
+}
+
+html #Statusbar > #Taskbar .Task
+{
+	display: inline-block;
+	float: none;
+}
+
+.Desklet #DockWindowList
+{
+	position: absolute;
+	padding: 5px 10px;
+	box-sizing: border-box;
+}
+
+.Desklet.Left #DockWindowList, .Desklet.Right #DockWindowList
+{
+	mask-image: linear-gradient(180deg, transparent 0%, black 20px, black calc(100% - 20px), transparent 100%);
+	-moz-mask-image: linear-gradient(180deg, transparent 0%, black 20px, black calc(100% - 20px), transparent 100%);
+	-webkit-mask-image: linear-gradient(180deg, transparent 0%, black 20px, black calc(100% - 20px), transparent 100%);
+}
+
+.Desklet.Top #DockWindowList, .Desklet.Bottom #DockWindowList
+{
+	mask-image: linear-gradient(90deg, transparent 0%, black 30px, black calc(100% - 30px), transparent 100%);
+	-moz-mask-image: linear-gradient(90deg, transparent 0%, black 30px, black calc(100% - 30px), transparent 100%);
+	-webkit-mask-image: linear-gradient(90deg, transparent 0%, black 30px, black calc(100% - 30px), transparent 100%);
+}
+
+.Desklet #DockWindowList.Size32
+{
+	padding-top: 9px;
+}
+
+#Statusbar .Task, #DockWindowList .Task
+{
+	position: relative;
+	float: left;
+	display: block;
+	height: 30px;
+	box-sizing: border-box;
+	margin: 0 5px 0 5px;
+	bottom: 0px;
+	padding: 7px 8px 7px 38px;
+	background-color: #878787;
+	border-radius: 5px 5px 0 0;
+	box-shadow: 0px 1px 5px rgba(0,0,0,0.5);
+	color: white;
+	text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+	transition-property: bottom, opacity, box-shadow, background;
+	transition-duration: 0.2s, 0.2s, 0.2s, 0.2s;
+	max-width: 250px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	background-size: 25px 25px;
+	background-position: 8px 3px;
+	background-image: url(/iconthemes/friendup15/File_Binary.svg);
+	background-repeat: no-repeat;
+}
+
+html #Statusbar .Task.Directory, 
+html #DockWindowList .Task.Directory
+{
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+	background-position: 5px center;
+}
+
+.Horizontal #DockWindowList
+{
+	border-left: 1px solid rgba(0,0,0,0.3);
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.Vertical #DockWindowList
+{
+	border-top: 1px solid rgba(0,0,0,0.3);
+	overflow: hidden;
+}
+
+.Horizontal #DockWindowList .Task
+{
+	float: none;
+	display: inline-block;
+}
+
+#DockWindowList .Task
+{
+	border-radius: 5px;
+	height: 22px;
+	line-height: 9px;
+    margin-bottom: 4px;
+	background-size: 18px;
+	background-position: 5px 2px;
+	padding: 7px 8px 7px 25px;
+}
+
+#DockWindowList.Size32 .Task
+{
+	height: 30px;
+	line-height: 15px;
+	font-size: 14px;
+	background-position: 5px 5px;
+	background-size: 16px;
+}
+#DockWindowList.Size32.Rows .Task
+{
+	height: 17px;
+	line-height: 3px;
+	font-size: 12px;
+	background-position: 5px 1px;
+	background-size: 16px;
+}
+
+#DockWindowList.Size59 .Task
+{
+	height: 24px;
+	line-height: 10px;
+	margin-top: 3px;
+}
+
+#DockWindowList.Size80 .Task
+{
+	height: 23px;
+	line-height: 10px;
+	margin-top: 2px;
+}
+
+.Vertical.Desklet #DockWindowList
+{
+	padding: 10px 5px 10px 5px;
+}
+
+.Vertical.Desklet #DockWindowList .Task
+{
+	margin: 0 0 5px 0;
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+html #Tray
+{
+	white-space: nowrap;
+	position: relative;
+	position: absolute;
+	top: 0;
+	z-index: 2147483647;
+}
+
+html #Tray > div
+{
+	display: inline-block;
+}
+
+.DockMenu
+{
+	position: absolute;
+	z-index: 2147483646;
+	width: 220px;
+	height: 0;
+	transition-property: height,top;
+	transition-duration: 0.25s,0.25s;
+	box-shadow: 0px 1px 1px rgba(0,0,0,0.5);
+	overflow: hidden;
+}
+
+.DockMenu *
+{
+	color: white;
+}
+.DockMenu.Visible
+{
+	overflow: visible;
+}
+
+.DockMenuSubHeader
+{
+	font-weight: bold;
+	padding: 5px 10px 5px 10px;
+}
+
+.DockMenu .DockSubMenu
+{
+	background: rgba(0,0,0,0.8);
+	box-shadow: 0px 1px 5px rgba(0,0,0,0.8);
+	border-radius: 3px 3px 0 0;
+}
+
+.DockMenu .DockSubMenu .DockSubMenu
+{
+	border-radius: 3px;
+}
+
+.DockMenu .DockMenuItem
+{
+	padding: 5px 10px 5px 10px;
+	position: relative;
+}
+
+.DockMenu .DockMenuItem img
+{
+	width: 20px;
+	height: auto;
+	vertical-align: middle;
+	margin-right: 5px;
+}
+
+.DockMenu .DockMenuItem.Directory > img
+{
+	position: relative;
+	top: -2px;
+}
+
+.DockMenu .DockMenuHeader
+{
+	padding: 5px 10px 5px 10px;
+	position: relative;
+	background: rgba(74,157,194,0.4);
+	font-weight: bold;
+	border-radius: 3px 3px 0 0;
+}
+
+.DockMenu .DockMenuItem
+{
+	border-top: 1px solid rgba(0,0,0,0.4);
+}
+
+.DockMenu .DockSubMenu .DockSubMenu .DockMenuItem:last-child
+{
+	border-radius: 0 0 3px 3px;
+}
+
+.DockMenu .DockMenuItem:hover,
+.DockMenu .DockMenuItem.Active
+{
+	background: rgba(157,157,157,0.4);
+}
+
+.Right .DockMenu .DockMenuItem.Directory:after
+{
+	font-family: FontAwesome;
+	content: "\f0d9";
+	float: left;
+}
+
+.DockMenu .DockMenuItem.Directory:after
+{
+	font-family: FontAwesome;
+	content: "\f0da";
+	display: block;
+	float: right;
+	margin: 4px 5px 0 0;
+}
+
+.DockMenu .DockMenuItem.Directory > .DockSubMenu
+{
+	visibility: hidden;
+	pointer-events: none;
+	position: absolute;
+	left: 100%;
+	top: 0;
+	width: 220px;
+	background: rgba(0,0,0,0.8);
+	transition: opacity 0.25s;
+	opacity: 0;
+}
+
+.DockMenu .DockMenuItem.Directory.Over > .DockSubMenu,
+.DockMenu .DockMenuItem.Directory.Active > .DockSubMenu
+{
+	pointer-events: all;
+	opacity: 1;
+	visibility: visible;
+}
+
+
+#Taskbar[full=full] .Task
+{
+	max-width: 50px;
+}
+
+#Statusbar .Task.Active, #DockWindowList .Task.Active
+{
+	background-color: #4A9DC2;
+}
+
+#Statusbar .Task.Hidden
+{
+	opacity: 0.5;
+	bottom: -5px;
+}
+
+#DockWindowList .Task.Hidden
+{
+	opacity: 0.5;
+}
+
+#Statusbar .Task:hover, #DockWindowList .Task:hover
+{
+	box-shadow: 0px 0px 10px 0px rgba(255,245,100,0.5);
+	opacity: 1;
+}
+
+/* Screens */
+
+#Screens
+{
+	position: fixed;
+	left: 0;
+	right: 0;
+	top: 0;
+	height: 100%;
+}
+
+#Screens > div
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	min-height: 100%;
+	max-height: 100%;
+	height: 100%;
+	overflow: hidden;
+	background: #2F669F;
+}
+
+.Screen > div
+{
+	z-index: 1;
+}
+
+.Screen > .VideoBackground
+{
+	position: absolute;
+	top: 50%; 
+	left: 50%;
+	-webkit-transform: translate3d(-50%,-50%,0);
+	transform: translate3d(-50%,-50%,0);
+	min-width: 100%; 
+	min-height: 100%; 
+	width: auto; 
+	height: auto;
+	overflow: hidden;
+	z-index: 0;
+	pointer-events: none;
+}
+
+/* Regions */
+
+#RegionSelector
+{
+	background: rgba(0,0,0,0.30);;
+	border: 1px solid rgba(0,0,0,0.30);
+	border-radius: 3px;
+	box-shadow: inset 0px 0px 4px 2px rgba(0,0,0,0.1);
+	-webkit-box-shadow: inset 0px 0px 4px 2px rgba(0,0,0,0.1);
+	-moz-box-shadow: inset 0px 0px 4px 2px rgba(0,0,0,0.1);
+	-ms-box-shadow: inset 0px 0px 4px 2px rgba(0,0,0,0.1);
+	-o-box-shadow: inset 0px 0px 4px 2px rgba(0,0,0,0.1);
+	position: absolute;
+	z-index: 0;
+}
+
+.ScreenContent > #RegionSelector
+{
+	z-index: 2;
+}
+
+/* Deepest field ------------------------------------------------------------ */
+
+/* Loggedin state */
+
+.Inside #DeepestField
+{
+	pointer-events: none;
+	opacity: 0;
+}
+
+.Inside #DeepestCanvas
+{
+	background: #303030;
+	border-radius: 4px;
+}
+
+.Inside #DeepestField
+{
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	bottom: 0px;
+	right: 0px;
+	background: #404040;
+	z-index: 0;
+}
+
+.Inside #DeepestField .LocalElements
+{
+	position: absolute;
+	width: 100%;
+	z-index: 2;
+	height: 100%;
+	top: 0;
+	left: 0;
+}
+
+#DeepestField > div > #NotificationHeader,
+#DeepestField > div > #FNetHeader
+{
+	background: rgba(0,0,0,0.8);
+	position: absolute;
+	top: 260px;
+	display: block;
+	color: white;
+	border-radius: 2px 2px 0 0;
+	height: 30px;
+	line-height: 30px;
+	z-index: 2;
+	padding: 0 10px 0 10px;
+	font-weight: bold;
+}
+#DeepestField > div > #NotificationHeader
+{
+	left: calc(75% + 10px);
+	right: 20px;
+}
+
+#DeepestField > div > #FNetHeader
+{
+	left: calc(50% + 10px);
+	right: calc(25% + 10px);
+}
+
+#DeepestField > div > #CapabilityHeader,
+#DeepestField > div > #NetconnectionsHeader
+{
+	background: rgba(0,0,0,0.8);
+	position: absolute;
+	right: calc(50% + 10px);
+	top: 260px;
+	display: block;
+	color: white;
+	left: 20px;
+	border-radius: 2px 2px 0 0;
+	height: 30px;
+	line-height: 30px;
+	z-index: 2;
+	padding: 0 10px 0 10px;
+	font-weight: bold;
+}
+
+#DeepestField > div > #CapabilityHeader,
+#DeepestField > div > #Capabilities
+{
+	right: calc(75% + 10px);
+}
+
+#DeepestField > div > #NetconnectionsHeader,
+#DeepestField > div > #Netconnections
+{
+	right: calc(50% + 10px);
+	left: calc( 25% + 10px);
+}
+
+#DeepestField > div > #TasksHeader
+{
+	background: rgba(0,0,0,0.8);
+	position: absolute;
+	right: 20px;
+	top: 20px;
+	display: block;
+	color: white;
+	left: 20px;
+	border-radius: 2px 2px 0 0;
+	height: 30px;
+	line-height: 30px;
+	z-index: 2;
+	padding: 0 10px 0 10px;
+	font-weight: bold;
+}
+
+#DeepestField > div > #Notifications,
+#DeepestField > div > #TasksList,
+#DeepestField > div > #Capabilities,
+#DeepestField > div > #Netconnections,
+#DeepestField > div > #FNetContent
+{
+	background: rgba(0,0,0,0.3);
+	overflow: auto;
+	border-radius: 5px;
+	padding: 45px 20px 20px 20px;
+	box-sizing: border-box;
+	color: white;
+}
+
+#DeepestField > div > #Notifications,
+#DeepestField > div > #FNetContent
+{
+	position: absolute;
+	left: calc(75% + 10px);
+    font-family: monospace, courier, courier new;
+    font-size: 13px;
+    top: 261px;
+    height: 246px;
+    right: 20px;
+    padding: 45px 20px 12px 20px;
+}
+
+#DeepestField > div > #FNetContent
+{
+	left: calc(50% + 10px);
+	right: calc(25% + 10px);
+}
+
+#DeepestField > div > #Capabilities,
+#DeepestField > div > #Netconnections
+{
+	position: absolute;
+	right: calc(75% + 10px);
+    font-family: monospace, courier, courier new;
+    font-size: 13px;
+    top: 261px;
+    height: 246px;
+    left: 20px;
+}
+
+#DeepestField > div > #Netconnections
+{
+	left: calc(25% + 10px);
+	right: calc(50% + 10px);
+}
+
+#DeepestField > div > #Capabilities div
+{
+	float: left;
+	margin: 0 10px 25px 0;
+	width: 64px;
+	height: 64px;
+	background: rgba(255,255,255,0.2);
+	border-radius: 10px;
+	font-size: 40px;
+    font-family: FontAwesome;
+    text-align: center;
+    position: relative;
+}
+
+#Capabilities > div:before
+{
+	top: 13px;
+    position: absolute;
+    left: 0;
+    width: 100%;
+}
+
+#DeepestField > div > #Capabilities div > span
+{
+	position: absolute;
+	left: 0px;
+	top: 69px;
+	text-overflow: ellipsis;
+	font-size: 12px;
+	width: 100%;
+	text-shadow: 0px 1px 1px black;
+	color: white;
+	font-family: monospace, courier, courier new;
+    overflow-x: hidden;
+    white-space: nowrap;
+}
+
+#DeepestField > div > #Capabilities div.Webcam.Disabled
+{
+	background: rgba(255,0,0,0.5);
+}
+
+
+#DeepestField > div > #Tasks
+{
+	position: absolute;
+	top: 20px;
+	left: 20px;
+	right: 20px;
+	height: 222px;	
+	overflow-x: hidden;
+}
+
+#DeepestField > div > #Tasks .Close img
+{
+	display: none;
+}
+
+
+/* Mobile specific */
+body[mobile=mobile] #DeepestField #Notifications,
+body[mobile=mobile] #DeepestField #NotificationHeader
+{
+	display: none;
+}
+
+body[mobile=mobile] #DeepestField #Tasks,
+body[mobile=mobile] #DeepestField #TasksHeader
+{
+	left: 20px;
+}
+
+body[mobile=mobile] #DeepestField #Tasks
+{
+	height: 180px;
+}
+
+body[mobile=mobile] #DeepestField #Capabilities,
+body[mobile=mobile] #DeepestField #CapabilityHeader
+{
+	right: 20px;
+	top: 220px;
+}
+
+/* Done mobile specific */
+
+#DeepestField .AppSandbox
+{
+	float: left;
+	margin: 0 20px 20px 0;
+	width: 48px;
+	height: 48px;
+	position: relative;
+	z-index: 1;
+	background: black;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+}
+
+#DeepestField .AppSandbox > .Close
+{
+	position: absolute;
+	top: 5px;
+	left: 5px;
+	right: 5px;
+	bottom: 5px;
+	background-color: #333333;
+	background-position: center;
+	background-size: contain;
+	border-radius: 2px;
+	-moz-border-radius: 2px;
+	-webkit-border-radius: 2px;
+	transition: background 0.3s;
+}
+
+#DeepestField .AppSandbox > iframe
+{
+	visibility: hidden;
+	top: 0px;
+	width: 1px;
+	height: 1px;
+}
+
+#DeepestField .AppSandbox > .Close:hover
+{
+	background-color: #cc4433;
+}
+
+#DeepestField .AppSandbox > .Taskname
+{
+	position: absolute;
+	bottom: -22px;
+	font-size: 11px;
+	left: -10px;
+	right: -10px;
+	height: 20px;
+	text-align: center;
+	color: white;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+}
+
+#DeepestField #UserProfilePicture
+{
+	width: 160px;
+	left: 30px;
+	top: 30px;
+	position: absolute;
+}
+
+#DeepestField #UserProfilePicture > img
+{
+	border-radius: 100%;
+	width: 100%;
+	border: 2px solid #cccccc;
+	height: auto;
+}
+
+#DeepestField #UserProfilePicture > p.Fullname
+{
+	margin: 5px 20px;
+	text-align: center;
+	line-height: 20px;
+}
+
+
+.Inside > input
+{
+	visibility: hidden;
+	position: absolute;
+	top: -100px;
+}
+
+.InputHeight
+{
+	padding: 0;
+	margin: 0;
+	line-height: 30px;
+	height: 30px;
+}
+
+textarea.InputHeight, input.InputHeight
+{
+	padding: 6px;
+}
+
+/* Color picker ------------------------------------------------------------- */
+
+
+.ColorPickerGUI .ColorPickerController
+{
+	width: 30px;
+	height: 30px;
+	border-radius: 30px;
+	border: 2px solid white;
+	background-color: transparent;
+	position: absolute;
+	top: -15px;
+	left: -15px;
+}
+
+.ColorPickerGUI .DiaColors
+{
+	overflow: hidden;
+}
+
+.ColorPickerGUI .ColorPickerController:after
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	top: 14px;
+	left: 14px;
+	width: 2px;
+	height: 2px;
+	border-radius: 4px;
+	background-color: white;
+}
+
+
+.ColorPickerGUI .ColorPickerShadeControl
+{
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 30px;
+	height: 15px;
+	border-radius: 3px;
+	border: 0;
+	background-color: white;
+	filter: drop-shadow(0px 0px 2px rgba(0,0,0,0.5));
+}
+
+
+/* Ho hoe ------------------------------------------------------------------- */
+
+blockquote.Code
+{
+	background: #222222;
+	color: #e0e0e0;
+	padding: 20px;
+	border: 1px dotted #000000;
+	border-radius: 3px;
+}
+
+/* Hardware accelerated ----------------------------------------------------- */
+
+.Accelerated, .View, .Screen, #RegionSelector, #MousePointer, .Desklet, .Widget
+{
+	webkit-transform: rotateZ(0deg);
+	-moz-transform: rotateZ(0deg);
+	-ms-transform: rotateZ(0deg);
+	-o-transform: rotateZ(0deg);
+	transform: rotateZ(0deg);
+	-webkit-backface-visibility: hidden;
+	-moz-backface-visibility: hidden;
+	-ms-backface-visibility: hidden;
+	-webkit-perspective: 1000;
+	backface-visibility: hidden;
+	perspective: 1000;
+}
+
+.Accelerated > *, .View > .Content > iframe, .Desklet > *, .Widget > *
+{
+	webkit-transform: none;
+	-moz-transform: none;
+	-ms-transform: none;
+	-o-transform: none;
+	transform: none;
+	-webkit-backface-visibility: none;
+	-moz-backface-visibility: none;
+	-ms-backface-visibility: none;
+	-webkit-perspective: none;
+	backface-visibility: none;
+	perspective: none;
+}
+
+html body .ScrollBarSmall::-webkit-scrollbar
+{
+	width: 4px;
+	height: 4px;
+}
+
+/* Palette colors */
+
+div.Green, button.Green
+{
+	color: white;
+	background: #74A790;
+	border-color: #638F7B;
+}
+
+div.Red, button.Red
+{
+	color: white;
+	background: #E2452F;
+	border-color: #C23B28;
+}
+
+div.Neutral, button.Neutral, .Button.Neutral
+{
+	background: rgba(155,155,155,0.35);
+	color: #222222;
+}
+
+div.Neutral:hover, button.Neutral:hover, .Button.Neutral:hover
+{
+	color: white;
+}
+
+div.Blue, button.Blue
+{
+	color: white;
+	background: #2481D7;
+	border-color: #1E6BB3;
+}
+
+div.Orange, button.Orange
+{
+	color: white;
+	background: #DE9446;
+	border-color: #C4833E;
+}
+
+/* Slider */
+
+.SliderElement:not(.Vertical)
+{
+	position: relative;
+	min-width: 100px;
+	height: 20px;
+	box-sizing: border-box;
+}
+
+.SliderElement:not(.Vertical) .SliderGauge
+{
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	height: 100%;
+	width: 0px;
+}
+
+.SliderElement:not(.Vertical) .SliderGauge:after
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	width: 100%;
+	height: 2px;
+	top: calc(50% - 1px);
+	left: 0%;
+	background-blend-mode: difference;
+	background-image: linear-gradient(90deg, transparent 0%, #88888844 70%, transparent 100%); 
+}
+
+.SliderElement.Vertical .SliderGauge
+{
+	position: absolute;
+	top: 100%;
+	left: 0px;
+	height: 0px;
+	width: 100%;
+}
+
+.SliderElement.Vertical .SliderGauge:after
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	height: 100%;
+	width: 2px;
+	left: calc(50% - 1px);
+	bottom: 0%;
+	background-image: linear-gradient(0deg, transparent 0%, #ffffff22 70%, transparent 100%); 
+}
+
+.SliderElement .SliderGroove
+{
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	border-radius: 10px;
+	background: rgba(0,0,0,0.1);
+	box-shadow: inset 0px 0px 10px rgba(0,0,0,0.1);
+	overflow: hidden;
+}
+
+.SliderElement:not(.Vertical) .SliderGroove .SliderButton
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 20px;
+	height: 100%;
+}
+
+.SliderElement:not(.Vertical) .SliderGroove .SliderButton:after
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	top: 3px;
+	left: 3px;
+	right: 3px;
+	bottom: 3px;
+	background-color: var(--ColorBgButton);
+	color: var(--ColorButton);
+	cursor: pointer;
+	border-radius: 5px;
+}
+
+.SliderElement:not(.Vertical) .SliderGroove .SliderButton:active:after,
+.SliderElement:not(.Vertical) .SliderGroove .SliderButton:hover:after
+{
+	background-color: var(--ColorLEDAlert);
+}
+
+
+/* Friend Network classes */
+
+.FNetBubble .HoverRow
+{
+	transition: background-color 0.25s;
+	background-color: var(--ColorBackground);
+	color: var(--ColorDefault);
+	padding-top: 2px;
+	padding-bottom: 2px;
+	padding-left: 4px;
+	padding-right: 4px;
+}
+
+.FNetBubble .HoverRow:hover
+{
+	background-color: var(--ColorBgNegative);
+	color: var(--ColorNegative);
+}
+
+.FNetBubble .HoverRow .Buttons
+{
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.25s;
+}
+
+.FNetBubble .HoverRow:hover .Buttons
+{
+	opacity: 1;
+	pointer-events: all;
+}
+
+.FNetBubble .HoverRow:hover .Buttons > span
+{
+	transition: invert 0.25s;
+	filter: invert(0);
+}
+
+.FNetBubble .HoverRow:hover .Buttons > span:hover
+{
+	filter:invert(0.5);
+}
+
+.FNetText 
+{
+    width: 250px;
+    float: left;
+	margin-left: 16px;
+    text-align: justify;
+    font-size: 10px;
+    overflow: hidden;
+}
+
+/* File upload adjustments */
+
+#fileUpload .FileUpload
+{
+	position: relative;
+}
+
+.UploadFeedbackContainer.Busy input,
+.UploadFeedbackContainer.Busy button
+{
+	pointer-events: none;
+	opacity: 0.8;
+	cursor: not-allowed;
+}
+
+.UploadFeedbackContainer.Busy input[type=file]
+{
+	display: none;
+}
+
+.UploadFeedbackContainer button.fa-upload
+{
+	transition: opacity 0.2s;
+	opacity: 1;
+}
+
+.UploadFeedbackContainer.Busy button.fa-upload
+{
+	opacity: 0.5;
+}
+
+.UploadFeedbackContainer.Busy button.fa-upload
+{
+	display: none;
+}
+
+.ProgressReport
+{
+	display: none;
+	opacity: 0;
+	transition: opacity 0.2s;
+}
+
+.UploadFeedbackContainer.Busy .ProgressReport
+{
+	display: block;
+	opacity: 1;
+	position: relative;
+	width: 60px;
+	margin: auto;
+	height: 40px;
+	line-height: 40px;
+	text-align: center;
+	left: 15px;
+}
+
+.ProgressReport .Progress
+{
+	position: absolute;
+	display: block;
+	font-size: 30px;
+	animation: uprotate 2s infinite linear;
+}
+
+.ProgressReport .Progress:after
+{
+	content: "\f1ce";
+	font-family: fontawesome;
+	display: block;
+}
+
+@keyframes uprotate
+{
+	0% { transform: rotateZ(0deg); }
+	100% { transform: rotateZ(360deg); }
+}
+
+.FileUpload > input
+{
+	opacity: 0;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.FileUpload .UploadButton 
+{
+	width: 100%;
+	height: 32px;
+	position: absolute;
+	top: 0;
+	left: 0;
+	pointer-events: none;
+}
+
+.FileUpload .UploadButton > .Button
+{
+	pointer-events: none;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+#fileUpload #uploadFileFileDisplay
+{
+	display:block;
+	padding-top:12px;
+}
+
+/* Responsive page layout */
+
+@media (max-width: 480px)
+{
+	.Responsive-Page
+	{
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100px;
+		height: 100%;
+		transition: left 0.25s;
+		z-index: 1;
+	}
+	.Responsive-Page-Active
+	{
+		position: fixed;
+		left: 0px;
+		width: 100%;
+		height: 100%;
+		z-index: 1000;
+	}
+	.Responsive-Page.Responsive-Page-Right
+	{
+		left: -100%;
+		z-index: 999;
+	}
+	.Responsive-Page.Responsive-Page-Left:not(.Responsive-Page-Active)
+	{
+		left: 100%;
+		z-index: 999;
+	}
+	.Responsive-Page.Responsive-Subpage
+	{
+		top: 32px;
+	}
+	.Responsive-Container
+	{
+		position: absolute;
+		top: 0;
+		left: 0px;
+		width: 100%;
+		height: 100%;
+	}
+	.Responsive-Button-Back
+	{
+		position: fixed;
+		z-index: 1001;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 32px;
+		box-sizing: border-box;
+		padding: 5px 10px;
+		font-weight: bold;
+		transition: height 0.25s;
+		overflow: hidden;
+	}
+}
+
+/* Misc elements */
+
+.Dropdown
+{
+	position: absolute;
+	padding: 10px;
+	top: -1px;
+	left: 0;
+	width: 100%;
+	opacity: 0;
+	height: 0px;
+	pointer-events: none;
+	transition: opacity,height,box-shadow 0.25s,0.25s,0.25s;
+	border-radius: 0 0 3px 3px;
+	overflow: hidden;
+	box-shadow: 0 0 0 rgba(0,0,0,0);
+	box-sizing: border-box;
+}
+
+.Dropdown.Showing
+{
+	opacity: 1;
+	z-index: 2;
+	height: 200px;
+	max-height: auto;
+	overflow: auto;
+	pointer-events: all;
+	box-shadow: 0px 1px 4px rgba(0,0,0,0.4);
+}
+
+.Dropdown .DropdownItem
+{
+	padding: 5px;
+	margin: 0 0 4px 0;
+	line-height: normal;
+}
+
+.Dropdown .DropdownItem.Active
+{
+	color: var(--ColorAction);
+	background-color: var(--ColorActionBg);
+}
+
+/* Share dialog */
+
+.ShareDialog
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 0;
+	opacity: 0;
+	overflow: hidden;
+	transition: height,background-color,opacity 0.25s,0.25s,0.25s;
+	z-index: 10;
+}
+
+.ShareDialog .SearchBar
+{
+	float: left;
+	position: relative;
+}
+
+.ShareDialog .SearchBar:before
+{
+	
+}
+
+.SearchBar::before
+{
+	position: absolute;
+	top: 5px;
+	left: 7px;
+	font-size: 0.9em;
+}
+
+.ShareDialog .SearchBar > input 
+{
+	padding-left: 24px;
+	height: 24px;
+	min-width: 175px;
+	max-width: 175px;
+}
+
+[mobile] .ShareDialog .SearchBar > input
+{
+	height: 28px;
+}
+
+[mobile] .SearchBar::before
+{
+	top: 8px;
+}
+
+.ShareDialog.Showing
+{
+	height: 100%;
+	opacity: 1;
+}
+
+.ShareDialog .Absolute .Padding
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 40px;
+}
+
+.ShareDialog .Absolute .Padding h3
+{
+	text-align: center;
+}
+
+.ShareDialog .Absolute .Workgroups_and_users
+{
+	position: absolute;
+	top: 40px;
+	left: 0;
+	width: 100%;
+	height: calc(100% - 90px);
+	overflow: auto;
+	text-align: center;
+}
+
+.ShareDialog .Absolute .BottomBar
+{
+	position: absolute;
+	top: calc(100% - 50px);
+	height: 50px;
+	width: 100%;
+	left: 0;
+	visibility: visible !important;
+	pointer-events: all !important;
+}
+
+.ShareDialog .ShareFile.File,
+.ShareDialog .ShareItem
+{
+	width: 96px;
+	height: 96px;
+	text-align: left;
+	float: none;
+	display: inline-block;
+	margin: 0 8px 8px 0;
+	position: relative;
+	background-color: rgba(0,0,0,0.15);
+	transition: background-color 0.25s;
+}
+
+.ShareDialog .ShareItem:not(.File):not(.Selected):hover
+{
+	background-color: rgba(0,0,0,0.25);
+}
+
+.ShareDialog .ShareFile.File
+{
+	cursor: default;
+}
+
+.ShareDialog .ShareFile.File > .Icon
+{
+	margin-top: 5px;
+}
+
+.ShareDialog .ShareFile.File > .Title
+{
+	width: calc(100% - 10px);
+	left: 4px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.ShareDialog .ShareItem:after
+{
+	display: block;
+	content: " ";
+	position: absolute;
+	top: 12px;
+	left: calc(50% - 25px);
+	width: 50px;
+	height: 50px;
+	border-radius: 100%;
+	background-size: 40px 40px;
+	background-color: #444444;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+
+.ShareDialog .ShareItem.Selected
+{
+	background-color: var(--ColorNotify);
+	color: var(--ColorNotifyBg);
+}
+
+.ShareDialog .ShareItem.Workgroup:before,
+.ShareDialog .ShareItem.User:before
+{
+	font-size: 1.5em;
+	text-align: center;
+	pointer-events: none;
+	position: absolute;
+	z-index: 2;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	line-height: 72px;
+}
+
+.ShareDialog .ShareItem.Workgroup:before
+{
+	color: #E8B975;
+}
+
+.ShareDialog .ShareItem.User:before
+{
+	color: #1abc9c;
+}
+
+.ShareDialog .ShareItem span
+{
+	position: absolute;
+	bottom: 10px;
+	width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	box-sizing: border-box;
+	padding: 0 10px;
+	text-align: center;
+	white-space: nowrap;
+}
+
+.ShareDialog .Absolute .Workgroups_and_users:after
+{
+	display: block;
+	content: " ";
+	clear: both;
+}
+

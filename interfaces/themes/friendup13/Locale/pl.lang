@@ -1,0 +1,14 @@
+
+i18n_ColorTitleActive                   : Kolor aktywnego okna
+i18n_ColorButtonBackground              : Kolor aktywnego przycisku
+i18n_ColorWindowBackground              : Kolor tła
+i18n_ColorWindowText                    : Kolor tekstu
+i18n_ColorScrollBackground              : Kolor paska przewijania
+i18n_ColorScrollButton                  : Kolor przycisku przewijania
+i18n_ColorFileToolbarBackground         : Tło paska narzędzi menedżera plików
+i18n_ColorFileToolbarText               : Kolor tekstu paska narzędzi menedżera plików
+i18n_ColorFileIconText                  : Kolor tekstu menedżera plików
+i18n_ButtonSchemeText                   : Schemat układu przycisku okna
+i18n_ColorSchemeText                    : Schemat kolorów GUI
+
+i18n_set_defaults                       : Przywróć domyślne wartości

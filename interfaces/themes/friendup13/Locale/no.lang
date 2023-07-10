@@ -1,0 +1,17 @@
+
+i18n_ColorTitleActive                   : Farge, aktivt vindu
+i18n_ColorButtonBackground              : Farge, aktiv knapp
+i18n_ColorWindowBackground              : Bakgrunnsfarge
+i18n_ColorWindowText                    : Tekstfarge
+i18n_ColorScrollBackground              : Farge, rullefelt
+i18n_ColorScrollButton                  : Farge, rullefelt knapp
+i18n_ColorFileToolbarBackground         : Filer, navigasjonsfelt farge
+i18n_ColorFileToolbarText               : Filer, navigasjonsfelt tekstfarge
+i18n_ColorFileIconText                  : Filikoner, tekstfarge
+i18n_ButtonSchemeText                   : Vindusknapper, layout
+i18n_ColorSchemeText                    : Fargetema
+i18n_IconEffectText                     : Ikon-effekt på skrivebord
+i18n_InputParadigmText                  : Interfaceparadigme
+
+i18n_set_defaults                       : Nullstill
+

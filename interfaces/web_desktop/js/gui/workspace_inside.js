@@ -3957,8 +3957,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Setting loading
 		Workspace.setLoading( true );
 
-		if( !themeName ) themeName = Workspace.theme ? Workspace.theme : 'friendup12';
-		if( themeName == 'friendup' ) themeName = 'friendup12';
+		if( !themeName ) themeName = Workspace.theme ? Workspace.theme : 'friendup13';
+		if( themeName == 'friendup' ) themeName = 'friendup13';
 		
 		themeName = themeName.toLowerCase();
 		
@@ -4228,15 +4228,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						    _kresize();
 					    }
 
-					    if( themeName && themeName != 'default' )
+					    if( themeName && themeName != 'default' && themeName != 'friendup13' )
 					    {
 						    AddCSSByUrl( '/themes/' + themeName + '/scrollbars.css' );
 						    styles.href = '/system.library/module/?module=system&command=theme&args=' + encodeURIComponent( '{"theme":"' + themeName + '"}' ) + '&sessionid=' + Workspace.sessionId;
 					    }
 					    else
 					    {
-						    AddCSSByUrl( '/themes/friendup12/scrollbars.css' );
-						    styles.href = '/system.library/module/?module=system&command=theme&args=' + encodeURIComponent( '{"theme":"friendup12"}' ) + '&sessionid=' + Workspace.sessionId;
+						    AddCSSByUrl( '/themes/friendup13/scrollbars.css' );
+						    styles.href = '/themes/friendup13/theme.css';
 					    }
 
 					    // Add new one
@@ -11865,7 +11865,7 @@ function loadApplicationBasics( callback )
 	{
 		_applicationBasicsLoading = null;
 		
-		let themeName = Workspace.theme ? Workspace.theme : 'friendup12';
+		let themeName = Workspace.theme ? Workspace.theme : 'friendup13';
 		
 		// Do not reload the same stuff
 		if( _previousBasicsTheme == themeName )
@@ -11896,7 +11896,7 @@ function loadApplicationBasics( callback )
 		_applicationBasics.css = '';
 		
 		// Preload scrollbars
-		let sb_ = new File( '/themes/friendup12/scrollbars.css' );
+		let sb_ = new File( '/themes/friendup13/scrollbars.css' );
 		sb_.onLoad = function( data )
 		{
 			if( _applicationBasics.css )
@@ -11906,7 +11906,8 @@ function loadApplicationBasics( callback )
 		sb_.load();
 		
 		// Preload theme CSS
-		let c_ = new File( '/system.library/module/?module=system&command=theme&args=%7B%22theme%22%3A%22' + themeName + '%22%7D&sessionid=' + Workspace.sessionId );
+		// Legacy friendup12 uses old css system server side
+		let c_ = new File( themeName == 'friendup12' ? ( '/system.library/module/?module=system&command=theme&args=%7B%22theme%22%3A%22' + themeName + '%22%7D&sessionid=' + Workspace.sessionId ) : '/themes/friendup13/theme.css' );
 		c_.onLoad = function( data )
 		{
 			// Convert @import to separate urls to load, because

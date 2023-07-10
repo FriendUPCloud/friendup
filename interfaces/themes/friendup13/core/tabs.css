@@ -1,0 +1,137 @@
+.Pages
+{
+	display: block;
+	position: relative;
+}
+
+.TabContainer
+{
+	position: relative;
+	width: 100%;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.Tabs.Centered
+{
+	text-align: center;
+}
+
+.Tabs.Centered .TabActive, .Tabs.Centered .Tab
+{
+	display: inline-block;
+	margin-right: 10px;
+	padding: 5px 10px;
+}
+
+.Tabs.Centered .TabActive:last-child, .Tabs.Centered .Tab:last-child
+{
+	margin-right: 0;
+}
+
+.TabActive, .Tab
+{
+	display: inline-block;
+	float: none;
+	padding: var(--PaddingTabs);
+	position: relative;
+	margin: var(--MarginTabs);
+	font-weight: var(--FontWeightTabs);
+	border-radius: var(--BorderRadiusTabs);
+	-moz-border-radius: var(--BorderRadiusTabs);
+	-webkit-border-radius: var(--BorderRadiusTabs);
+	border: var(--BorderPageActive);
+	border-bottom: 0;
+}
+
+.TabActive.Tall:before, .Tab.Tall:before
+{
+	font-size: 20px;
+	color: var(--ColorBgButton);
+	clear: both;
+	display: block;
+	text-align: center;
+	margin: 4px auto 6px auto;
+}
+
+.Tab img, .TabActive img
+{
+	position: relative;
+	margin: 0;
+	top: 4px;
+}
+.Tab with .TabGradients
+{
+	background-color: #c7c7c7;
+}
+.Tab with .TabBorders
+{
+}
+.TabActive with .TabActiveBorders
+{
+	position: relative;
+	z-index: 2;
+}
+.TabActive with .TabActiveGradients
+{
+	background-color: var(--ColorBgTabActive);
+}
+.Page
+{
+	position: absolute;
+	left: -10000px;
+	top: -10000px;
+}
+.PageActive
+{
+	clear: both;
+	position: relative;
+	left: auto;
+	top: -1px;
+	display: block;
+	border: var(--BorderPageActive);
+	background: var(--ColorBgPageActive);
+	padding: 5px;
+	box-sizing: border-box;
+}
+
+.PageActive .PageScroll
+{
+	background: var(--ColorBgTdListTable);
+	border-radius: var(--BorderBoxRadius);
+}
+
+/* Vertical tabs ------------------------------------------------------------ */
+
+.VertTab
+{
+	box-sizing: border-box;
+	padding: 10px;
+	background: #f8f8f8;
+	color: #040404;
+}
+.VertTab:hover
+{
+	background: white;
+}
+.VertTab.Active
+{
+	background: #fefefe;
+	color: black;
+	font-weight: bold;
+}
+.VertTab + .VertTab
+{
+	border-top: 1px solid #c0c0c0;
+}
+
+.VertPage
+{
+	display: none;
+}
+
+.VertPage.Active
+{
+	display: block;
+}
+

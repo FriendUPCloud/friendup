@@ -1,0 +1,1764 @@
+/* Popup windows (movable) -------------------------------------------------- */
+
+.ViewContainer
+{
+	top: 0;
+	left: 0;
+	position: absolute;
+	width: 0%;
+	height: 0%;
+	transform: rotatez(0deg);
+	pointer-events: none;
+}
+body:not([sharedapp]) .ViewContainer
+{
+	perspective: 1000px;
+}
+body:not([mobile]) .ViewContainer
+{
+	transition: opacity 0.2s;
+	opacity: 1;
+}
+
+.ViewContainer.Closing, .ViewContainer.Closing *
+{
+	pointer-events: none;
+}
+
+.View
+{
+	position: absolute;
+	width: 480px;
+	max-width:100%;
+	height: 480px;
+	z-index: 999;
+	padding: 0px;
+	
+	box-sizing: border-box;
+	
+	-moz-user-select: -moz-none;
+	-khtml-user-select: none;
+	-webkit-user-select: none;
+	user-select: none;
+	pointer-events: all;
+	background-color: transparent;
+}
+body:not([mobile]) .View
+{
+	transition-property: top, left, opacity, transform;
+	-transition-property: top, left, opacity, transform;
+	-webkit-transition-property: top, left, opacity, transform;
+	transition-duration: 0.25s, 0.25s, 0.25s, 0.25s;
+	-moz-transition-duration: 0.25s, 0.25s, 0.3s, 0.25s;
+	-webkit-transition-duration: 0.25s, 0.25s, 0.25s, 0.25s;
+}
+
+html body[singletask] .View,
+html body[singletask] .View > .Title
+{
+	border-radius: 0;
+	box-shadow: none;
+}
+
+.ViewContainer > .ViewTitle { display: none; }
+
+html body[singletask] .View > .Title
+{
+	border-top: 1px solid rgba(255,255,255,0.05);
+}
+html body[singletask] .View > .Content
+{
+	border-radius: 0;
+}
+html body[singletask] .View > .Title > div > .Minimize
+{
+	display: none;
+}
+
+.ViewContainer.Activating > .View > .Content, 
+.ViewContainer.DelayedDeactivation > .View > .Content
+{
+	overflow: hidden !important;
+}
+
+.ViewContainer > .View.TransparentBg > .Content
+{
+    background: transparent !important;
+}
+
+/* Disabled for default theme */
+.ViewContainer > .ViewIcon
+{
+	display: none;
+}
+
+/* Special case for mobile */
+[mobile] .View.IconWindow .MobileFileBrowser
+{
+	position: absolute;
+	z-index: 11;
+	height: calc(100% - 40px);
+	top: 40px;
+}
+
+[mobile] .View .DirectoryToolbar button
+{
+	opacity: 1;
+	transition: opacity 0.25s;
+}
+
+[mobile] .View.Mountlist .DirectoryToolbar button
+{
+	opacity: 0;
+	pointer-events: none;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser
+{
+	padding: 10px;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser,
+[mobile] .View .FileDialog .FileBrowser
+{
+	font-size: 1.1em;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem,
+[mobile] .View .FileDialog .FileBrowser .DiskItem
+{
+	padding: 0 0 10px 0;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,
+[mobile] .View .FileDialog .FileBrowser .DiskItem > .Name
+{
+	line-height: 1.6em;
+}
+
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem .fa-remove
+{
+	display: none;
+}
+
+html body[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .FileBrowserItemImage,
+html body[mobile] .View .FileDialog .FileBrowser .FileBrowserItemImage
+{
+	width: 24px;
+	height: 24px;
+	margin-right: 10px;
+}
+
+.FileBrowser .DiskItem > .Name span 
+{
+	white-space: nowrap;
+	max-width: 80%;
+	display: inline-block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.FileBrowser .DiskItem > .Name span.fa-remove
+{
+	cursor: pointer;
+	transition: opacity 0.25s;
+}
+
+.FileBrowser .DiskItem > .Name span.fa-remove:hover
+{
+	opacity: 0.8;
+}
+
+.FileBrowser .IconFolder, .FileBrowser .DiskItem
+{
+	cursor: pointer;
+}
+
+.FileBrowser .FolderItem > .Name, 
+.FileBrowser .DiskItem > .Name
+{
+	transition: opacity 0.25s;
+}
+
+.FileBrowser .FolderItem > .Name:hover, 
+.FileBrowser .DiskItem > .Name:hover
+{
+	opacity: 0.8;
+}
+
+
+.View > .ImageViewerToolbar
+{
+	overflow: hidden;
+	position: absolute;
+	bottom: 20px;
+	left: 10%;
+	width: 80%;
+	height: 40px;
+	border-radius: 20px;
+	background: rgba(0,0,0,0.5);
+	text-align: center;
+	z-index: 100;
+	color: white;
+}
+
+.View > .Content > .ImageViewerContent
+{
+	overflow: hidden;
+}
+
+.View > .Content > .ImageViewerContent > img
+{
+	position: absolute;
+	transform: rotateZ(0deg);
+	z-index: 99;
+}
+.View > .Content > .ImageViewerContent > img.Panning
+{
+	pointer-events: none;
+}
+.View > .Content > .ImageViewerContent > img:not(.Panning)
+{
+	transition: top,left,width,height 0.25s,0.25s,0.25s,0.25s;
+}
+
+@media (max-width: 380px)
+{
+	.View > .ImageViewerToolbar
+	{
+		left: calc(50% - 200px);
+		width: 400px;
+	}
+	.View > .ImageViewerToolbar
+	{
+		width: calc(100% - 40px);
+		left: 20px;
+	}
+}
+
+.View > .ImageViewerToolbar > div
+{
+	display: inline-block;
+	width: 40px;
+	height: 30px;
+	margin: 5px 15px 0 0;
+	border-radius: 5px;
+	line-height: 30px;
+	background: transparent;
+	transition: background 0.25s;
+}
+
+body:not([mobile]) .View > .ImageViewerToolbar > div:hover
+{
+	background: rgba(0,0,0,0.5);
+}
+
+.View > .ImageViewerToolbar > div > span
+{
+	display: block;
+	margin: auto;
+}
+
+
+.View > .ImageViewerToolbar > div:last-child
+{
+	margin: 5px 0 0 0;
+}
+
+
+/* Snapping */
+
+html .View[viewsnap] .Title > div > div
+{
+	opacity: 0;
+	pointer-events: none;
+}
+
+.View > .Snap > div
+{
+	transition: opacity,background-color 0.25s,0.25s;
+	opacity: 0;
+}
+
+.View > .Snap > .SnapLeft
+{
+	position: absolute;
+	width: 5px;
+	height: 80px;
+	border-radius: 10px 0 0 10px;
+	background-color: rgba(255,255,255,0.2);
+	right: 0px;
+	top: calc(50% - 40px);
+	z-index: 10;
+}
+
+.View[hardsnap] > .Snap > .SnapLeft
+{
+	height: 120px;
+	top: calc(50% - 60px);
+}
+
+.View[attach_left] > .Snap > .SnapLeft,
+.View[viewsnap=right] > .Snap > .SnapLeft
+{
+	opacity: 1;
+}
+
+.View > .Snap > .SnapRight
+{
+	position: absolute;
+	width: 5px;
+	height: 80px;
+	border-radius: 0 10px 10px 0;
+	background-color: rgba(255,255,255,0.2);
+	left: 0px;
+	top: calc(50% - 40px);
+	z-index: 10;
+}
+
+.View[hardsnap] > .Snap > .SnapRight
+{
+	height: 120px;
+	top: calc(50% - 60px);
+}
+
+.View[attach_right] > .Snap > .SnapRight,
+.View[viewsnap=left] > .Snap > .SnapRight
+{
+	opacity: 1;
+}
+
+.View[attach_up] > .Snap > .SnapUp:hover,
+.View[attach_down] > .Snap > .SnapDown:hover,
+.View[attach_left] > .Snap > .SnapLeft:hover,
+.View[attach_right] > .Snap > .SnapRight:hover
+{
+	background-color: rgba(255,255,255,0.8);
+}
+
+.View > .Snap > .SnapDown
+{
+	position: absolute;
+	width: 80px;
+	height: 5px;
+	border-radius: 0 0 10px 10px;
+	background-color: rgba(255,255,255,0.2);
+	top: 0px;
+	left: calc(50% - 40px);
+	z-index: 10;
+}
+
+.View[hardsnap] > .Snap > .SnapDown
+{
+	width: 120px;
+	left: calc(50% - 60px);
+}
+
+.View[attach_down] > .Snap > .SnapDown,
+.View[viewsnap=up] > .Snap > .SnapDown
+{
+	opacity: 1;
+}
+
+.View > .Snap > .SnapUp
+{
+	position: absolute;
+	width: 80px;
+	height: 5px;
+	border-radius: 10px 10px 0 0;
+	background-color: rgba(255,255,255,0.2);
+	bottom: 0px;
+	left: calc(50% - 40px);
+	z-index: 10;
+}
+
+.View[hardsnap] > .Snap > .SnapUp
+{
+	width: 120px;
+	left: calc(50% - 60px);
+}
+
+.View[attach_up] > .Snap > .SnapUp,
+.View[viewsnap=down] > .Snap > .SnapUp
+{
+	opacity: 1;
+}
+
+/* Done snapping */
+
+/* Views */
+
+#Screens .View
+{
+	position: absolute;
+}
+body:not([mobile]) #Screens .View
+{
+	transition: opacity 0.25s;
+	opacity: 1;
+}
+
+#Screens .View[moving]
+{
+	transition: none;
+}
+
+body:not([mobile]) #Screens .View:not([moving]):not(.Opening):not(.Opened)
+{
+	transition: opacity 0.25s;
+}
+
+body:not([mobile]) #Screens .View.Opening
+{
+	opacity: 0;
+}
+
+#Screens .View > .Content > iframe
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	border: 0;
+	margin: 0;
+	outline: none;
+	transition: opacity 0.1s ease;
+	opacity: 1;
+}
+
+#Screens .View > .Content > iframe.Loading
+{
+	opacity: 0;
+}
+
+
+.View.Virtual
+{
+	display: none;
+}
+
+.View.Opening
+{
+	will-change: transform, content;
+}
+
+/* View groups */
+
+.View.HasViewGroups .ViewGroup
+{
+	position: absolute;
+	overflow: hidden;
+	box-sizing: border-box;
+}
+
+.View.HasViewGroups .ViewGroup > .ViewGroupTabsHorizontal
+{
+	z-index: 999999999;
+	position: absolute;
+	width: 100%;
+	height: var(--MarginWindowTop);
+	overflow: hidden;
+	box-sizing: border-box;
+	border-bottom-height: 2px;
+	border-bottom-style: solid;
+	border-bottom-color: var(--WinFrameBgBlur);
+}
+
+.View.HasViewGroups .ViewGroup > .ViewGroupTabsHorizontal .Tab,
+.View.HasViewGroups .ViewGroup > .ViewGroupTabsHorizontal .TabActive
+{
+	height: 100%;
+}
+
+.ViewGroup > .View > .Content
+{
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+}
+
+.ViewGroup.TabsHorizontal > .View > .Content
+{
+	top: var(--MarginWindowTop);
+}
+
+.View.HasViewGroups .View > .Title,
+.View.HasViewGroups .View > .BottomBar,
+.View.HasViewGroups .View > .LeftBar,
+.View.HasViewGroups .View > .RightBar,
+.View.HasViewGroups .View > .Resize
+{
+	display: none;
+}
+
+.View.HasViewGroups .ViewGroup.Left
+{
+	right: auto;
+	left: var(--MarginWindowLeft);
+}
+.View.HasViewGroups .ViewGroup.Right
+{
+	left: auto;
+	right: var(--MarginWindowRight);
+}
+.View.HasViewGroups .ViewGroup.Top
+{
+	top: var(--MarginWindowTop);
+	bottom: auto;
+}
+.View.HasViewGroups .ViewGroup.Bottom
+{
+	top: auto;
+	bottom: var(--WinContentBottom);
+}
+.View.HasViewGroups .ViewGroup .View
+{
+	top: 0 !important;
+	left: 0 !important;
+	width: 100% !important;
+	height: 100% !important;
+	background: transparent !important;
+	box-shadow: none;
+	border: none;
+}
+
+.View[transparent=transparent]
+{
+	box-shadow: none !important;
+	background: none;
+}
+
+.View[transparent=transparent] > div
+{
+	border: 0 !important;
+}
+
+/* Always on top */
+.ViewContainer[sticky=sticky], body[mobile=mobile] #Screens .View.Active[maximized=true]
+{
+	z-index: 2147483646 !important;
+}
+
+/* Don't animate moving of windows! */
+.View:active, .View[moving=moving]
+{
+	transition: none;
+	-moz-transition: none;
+	-webkit-transition: none;
+}
+
+/* Don't animate but the opacity when fading in a window */
+body:not([mobile]) .View[created=created]
+{
+	transition: opacity 0.25s;
+	-moz-transition: opacity 0.25s;
+	-webkit-transition: opacity 0.25s;
+}
+
+.ViewContainer[minimized=minimized], 
+.ViewContainer[hidden=hidden]
+{
+	top: 100% !important;
+	opacity: 0;
+	-webkit-transform: scale(1,0.1) !important;
+	-moz-transform: scale(1,0.1) !important;
+	-ms-transform: scale(1,0.1) !important;
+	-o-transform: scale(1,0.1) !important;
+	transform: scale(1,0.1) !important;
+}
+
+.ViewContainer.Closing, .ViewContainer.Closing *
+{
+	pointer-events: none;
+}
+
+.View > .Toolbar
+{
+	position: absolute;
+	top: 32px;
+	left: 3px;
+	right: 3px;
+	height: 24px;
+	border-bottom: 1px solid #909090;
+	background: #e2e2e2; /* Old browsers */
+	background: -moz-linear-gradient(top, #e2e2e2 0%, #c0c0c0 78%, #d6d6d6 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#e2e2e2), color-stop(78%,#c0c0c0), color-stop(100%,#d6d6d6)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #e2e2e2 0%,#c0c0c0 78%,#d6d6d6 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #e2e2e2 0%,#c0c0c0 78%,#d6d6d6 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, #e2e2e2 0%,#c0c0c0 78%,#d6d6d6 100%); /* IE10+ */
+	background: linear-gradient(to bottom, #e2e2e2 0%,#c0c0c0 78%,#d6d6d6 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e2e2e2', endColorstr='#d6d6d6',GradientType=0 ); /* IE6-9 */
+	box-shadow: inset 0px 1px 2px rgba(0,0,0,0.5);
+}
+
+.View > .Toolbar > div
+{
+	float: left;
+	white-space: nowrap;
+	margin: 0;
+	line-height: 24px;
+	height: 24px;
+	font-size: 13px;
+	padding: 0 4px 0 4px;
+	text-shadow: 1px 1px 1px white;
+}
+
+.View > .Toolbar > div:hover
+{
+	cursor: hand;
+	cursor: pointer;
+	background: #a0a0a0;
+}
+
+.View > .Toolbar > div > img,
+.View > .Toolbar > div > span
+{
+	display: block;
+	float: left;
+}
+.View > .Toolbar > div > img
+{
+	margin: 4px 4px 0 0;
+}
+
+.View > .Title with .WindowBackground
+{
+	position: absolute;
+	margin: 0;
+	width: 100%;
+	height: var(--MarginWindowTop);
+	padding: 0;
+	border-top: var(--WinBorderTopBlur);
+	border-left: 0;
+	border-right: 0;
+	border-bottom: var(--WinBorderBottomBlur);
+	background-repeat: repeat-x;
+	background-position: top left;
+	background-image: var(--GuiImgWinTitle);
+	color: white;
+	font-weight: bold;
+	text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	
+	border-radius: 3px 3px 0 0;
+	-moz-border-radius: 3px 3px 0 0;
+	-webkit-border-radius: 3px 3px 0 0;
+}
+_:-ms-fullscreen, :root .View > .Title { border-top-width: 1px; } /* IE11 */
+
+.View > .Title *
+{
+	cursor: default;
+}
+
+.View > .Title > div > span
+{
+	position: absolute;
+	font-size: 15px;
+	left: 40px;
+	top: 0;
+	height: 35px;
+	box-sizing: border-box;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	line-height: 34px;
+}
+
+.View > .Title > div[close=false] > span
+{
+	left: 10px;
+}
+
+html .View .Title > div > div
+{
+	transition: opacity 0.25s;
+	opacity: 1;
+}
+
+.View > .Title > div > span:hover
+{
+	cursor: hand;
+	cursor: pointer;
+}
+
+.View > .BottomBar
+{
+	position: absolute;
+	bottom: 0;
+	height: var(--WinBottomBarHeight);
+	left: var(--MarginWindowLeft);
+	right: var(--MarginWindowRight);
+	z-index: 9;
+	background-color: var(--WinFrameBgBlur);
+	border-top: var(--WinBorderTopBlur);
+	box-sizing: border-box;
+}
+.View.Active > .BottomBar
+{
+	background-color: var(--WinFrameBgActive);
+	border-top: var(--WinBorderTopActive);
+}
+_:-ms-fullscreen, :root .View.Active > .BottomBar { border-top-width: 1px; } /* IE11 */
+
+.View > .LeftBar
+{
+	position: absolute;
+	top: var(--MarginWindowTopVBars);
+	left: 0;
+	width: var(--MarginWindowLeft);
+	bottom: 0;
+	background-color: var(--WinFrameBgBlur);
+}
+.View.Active > .LeftBar
+{
+	background-color: var(--WinFrameBgActive);
+}
+
+.View > .RightBar
+{
+	position: absolute;
+	top: var(--MarginWindowTopVBars);
+	right: 0;
+	width: var(--MarginWindowRight);
+	bottom: 0;
+	background-color: var(--WinFrameBgBlur);
+}
+.View.Active > .RightBar
+{
+	background-color: var(--WinFrameBgActive);
+}
+
+/* When maximizing an app, don't show the others */
+body.ViewMaximized .ScreenContent > .View:not(.Active)
+{
+	display: none;
+}
+
+.View > .MoveOverlay, .Screen > .MoveOverlay
+{
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 0%;
+	cursor: hand;
+	cursor: move;
+	z-index: 999999999;
+}
+
+.View > .Resize
+{
+	background-color: var(--WinGadResizeCol);
+	background-image: var(--WinGadResizeImg);
+	background-repeat: no-repeat;
+	background-position: center center;
+	cursor: resize;
+	cursor: nwse-resize;
+	right: 0px;
+	bottom: 0px;
+}
+
+.View.Active > .Title with .WindowBackgroundActive
+{
+	background-repeat: repeat-x;
+	background-position: top left;
+	background-image: var(--GuiImgWinTitleActive);
+	border-top: var(--WinBorderTopActive);
+	border-left: 0;
+	border-right: 0;
+	border-bottom: var(--WinBorderBottomActive);
+	border-radius: 3px 3px 0 0;
+	-moz-border-radius: 3px 3px 0 0;
+	-webkit-border-radius: 3px 3px 0 0;
+}
+_:-ms-fullscreen, :root .View.Active > .Title { border-top-width: 1px; } /* IE11 */
+
+.View.Active > .Resize
+{
+	background-color: var(--WinGadResizeColActive);
+}
+
+.View > .Title:active, .View:active > .Title
+{
+	cursor: hand;
+	cursor: move;
+}
+
+.View > .Title > div
+{
+	padding: 10px;
+	line-height: 13px;
+	box-sizing: border-box;
+	height: 100%;
+}
+
+.View > .Title > div > .Minimize
+{
+	display: none;
+}
+
+.View > .Title > div > .Close
+{
+	float: left;
+	margin: -10px 7px 0 -9px;
+	width: 32px;
+	height: 33px;
+	background-image: var(--WinGadCloseImg);
+	background-repeat: no-repeat;
+	background-position: center center;
+	cursor: hand;
+	cursor: pointer;
+	border-right: 1px solid rgba(0,0,0,0.2);
+	opacity: 1;
+}
+
+.View > .Title > div > .Close:active
+{
+	border-right: 1px solid rgba(0,0,0,0.4);
+	opacity: 0.5;
+}
+
+.View > .Title > div > .Zoom
+{
+	float: right;
+	margin: -10px 9px 0 0;
+	width: 32px;
+	height: 33px;
+	background-image: var(--WinGadZoomImg);
+	background-repeat: no-repeat;
+	background-position: center center;
+	cursor: hand;
+	cursor: pointer;
+	border-left: 1px solid rgba(0,0,0,0.2);
+	opacity: 1;
+}
+
+.View > .Title > div > .Zoom:active
+{
+	opacity: 0.5;
+}
+
+.View > .Title > div > .Depth
+{
+	float: right;
+	margin: -10px -9px 0 -9px;
+	width: 32px;
+	height: 33px;
+	background-image: var(--WinGadDepthImg);
+	background-repeat: no-repeat;
+	background-position: center center;
+	cursor: hand;
+	cursor: pointer;
+	border-left: 1px solid rgba(0,0,0,0.2);
+	opacity: 1;
+}
+
+.View > .Title > div > .Depth:active
+{
+	opacity: 0.5;
+}
+
+.View > .Title > div > .Minimize
+{
+	float: right;
+	margin: -10px -9px 0 -9px;
+	width: 32px;
+	height: 33px;
+	background-image: var(--WinGadMinimizeImg);
+	background-repeat: no-repeat;
+	background-position: center center;
+	cursor: hand;
+	cursor: pointer;
+	border-left: 1px solid rgba(0,0,0,0.2);
+	opacity: 1;
+}
+
+.View > .Title > div > .Minimize:active
+{
+	opacity: 0.5;
+}
+
+.View > .Content
+{
+	background: var(--ColorBackground);
+	position: absolute;
+	top: var(--MarginWindowTop);
+	left: var(--MarginWindowLeft);
+	right: var(--MarginWindowRight);
+	bottom: var(--WinContentBottom);
+	overflow: hidden;
+}
+
+/* Volume gauge */
+.View[volume=true] > .Content
+{
+    left: 23px;
+}
+
+.loadError
+{
+	color:#DBB;
+	width:calc(100% - 40px);
+	height:calc(100% - 40px);
+	padding:20px;
+	background:#DDD;
+	font-size:2rem;
+	text-align: center;
+}
+
+.VolumeGauge 
+{
+    border-right: 3px solid var(--WinFrameBgBlur);
+    box-shadow: inset 0px 0px 2px rgba(0,0,0,0.5);
+    position: absolute;
+    top: 35px;
+    left: 3px;
+    bottom: 17px;
+    width: 17px;
+    background: var(--WinFrameBgDarkBlur);
+}
+
+.Active .VolumeGauge
+{
+	border-right: 3px solid var(--WinFrameBgActive);
+	background: var(--WinFrameBgDarkActive);
+}
+
+.VolumeGauge > .Inner
+{
+	transition: height 0.5s;
+    box-shadow: 0px 1px 3px rgba(0,0,0,0.5);
+    position: absolute;
+    bottom: 1px;
+    left: 1px;
+    right: 1px;
+    box-sizing: border-box;
+    height: 0%;
+    max-height: calc(100% - 2px);
+    background: var(--WinFrameBgBlur);
+    border-top: 1px solid rgba(255,255,255,0.25);
+    border-left: 1px solid rgba(255,255,255,0.0);
+    border-right: 1px solid rgba(255,255,255,0.0);
+    border-bottom: 1px solid rgba(0,0,0,0.25);
+    border-radius: 3px;
+}
+
+.Active .VolumeGauge > .Inner
+{
+	background: var(--WinFrameBgActive);
+}
+
+.VolumeGauge > .Inner .Pct
+{
+    color: white;
+    -webkit-transform: rotate(-90deg);
+    position: absolute;
+    left: 0;
+    /* width: 100%; */
+    bottom: 0;
+    top: 45px;
+    height: 29px;
+}
+
+/* End volume gauge */
+
+.View > .Content > .Scroller, .View > .Content > iframe
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+}
+
+.View .PopupBox
+{
+	background: #f0f0f0;
+	padding: 4px;
+	box-shadow: inset 0px 0px 3px rgba(0,0,0,0.5);
+	-moz-box-shadow: inset 0px 0px 3px rgba(0,0,0,0.5);
+	-webkit-box-shadow: inset 0px 0px 3px rgba(0,0,0,0.5);
+}
+
+.View .ScrollbarVertical
+{
+	position: absolute;
+	right: 3px;
+	top: 35px;
+	bottom: 17px;
+	width: 14px;
+	border-left: 1px solid #969696;
+	background: #202020;
+}
+
+.View.Active .ScrollbarVertical
+{
+	border-left: 1px solid #96B2CC;
+	background: #162F47;
+}
+
+.View .ScrollbarVertical > .Groove
+{
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	box-shadow: inset 0px 0px 4px rgba(0,0,0,0.5);
+	-moz-box-shadow: inset 0px 0px 4px rgba(0,0,0,0.5);
+	-webkit-box-shadow: inset 0px 0px 4px rgba(0,0,0,0.5);
+}
+
+.View .ScrollbarVertical > .Groove > .Bar
+{
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	bottom: 2px;
+	right: 2px;
+	background: #777777;
+	cursor: hand;
+	cursor: pointer;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	box-shadow: inset 0px 0px 2px 2px #555555;
+	-moz-box-shadow: inset 0px 0px 2px 2px #555555;
+	-webkit-box-shadow: inset 0px 0px 2px 2px #555555;
+}
+
+.View.Active .ScrollbarVertical > .Groove > .Bar
+{
+	background: #2F6699;
+	box-shadow: inset 0px 0px 2px 2px #244E75;
+	-moz-box-shadow: inset 0px 0px 2px 2px #244E75;
+	-webkit-box-shadow: inset 0px 0px 2px 2px #244E75;
+}
+
+.View.Active .ScrollbarVertical > .Groove > .Bar:hover,
+.View.Active .ScrollbarVertical > .Groove > .Bar:active
+{
+	background: #499BC2;
+	box-shadow: inset 0px 0px 2px 2px #2F6699;
+	-moz-box-shadow: inset 0px 0px 2px 2px #2F6699;
+	-webkit-box-shadow: inset 0px 0px 2px 2px #2F6699;
+}
+
+html body:not([mobile]) .Screen > .TitleBar .Info,
+html body:not([mobile]) .Screen #WorkspaceMenu
+{
+	transition: opacity 0.07s;
+	opacity: 1;
+}
+
+html body:not([mobile]) .Screen.ChangingScreenTitle > .TitleBar .Info,
+html body:not([mobile]) .Screen.ChangingScreenTitle #WorkspaceMenu
+{
+	opacity: 0;
+}
+
+html [singletask] .Screen > .TitleBar
+{
+	box-shadow: none;
+	border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+html .Screen > .TitleBar.Busy:after
+{
+	/*background-image: url(/themes/friendup12/gfx/busy.png);
+	clip-path: ellipse(12px 12px at 12px 12px);
+	-webkit-clip-path: ellipse(12px 12px at 12px 12px);*/
+}
+
+html .Screen > .TitleBar > .Left .Time,
+html .Screen > .TitleBar > .Left .Offline
+{
+	margin: 0 10px 0 0;
+	pointer-events: none;
+}
+
+/* Fullscreen app */
+
+html body.FullscreenApp .Screen > .ScreenContent,
+html body.FullscreenApp #DoorsScreen.Screen > .ScreenContent
+{
+	position: fixed !important;
+	top: 0 !important;
+	left: 0 !important;
+	width: 100vw !important;
+	height: 100vh !important;
+	z-index: 2147483647 !important;
+}
+
+html body.FullscreenApp .MobileTopNavigation,
+html body.FullscreenApp .MobileAppMenu
+{
+	display: none !important;
+}
+
+/* Popup view --------------------------------------------------------------- */
+
+.PopupView
+{
+	position: absolute;
+	background: var(--BackgroundDefault);
+	border: 1px solid rgba(0,0,0,0.5);
+	min-width: 100px;
+	min-height: 20px;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	z-index: 9;
+	box-shadow: inset 0px 0px 2px 2px #2F6699;
+	-moz-box-shadow: inset 0px 0px 2px 2px #2F6699;
+	-webkit-box-shadow: inset 0px 0px 2px 2px #2F6699;
+}
+
+/* Drag target CSS ---------------------------------------------------------- */
+.View.DragTarget
+{
+	box-shadow: 0 0 30px 1px rgba(255,255,255,0.8);
+}
+
+.File.DragTarget
+{
+	box-shadow: 0 0 30px 1px rgba(255,255,255,0.8);
+}
+
+#DoorsScreen.DragTarget .ScreenContent
+{
+	box-shadow: inset 0px 0px 30px 1px rgba(0,0,0,0.9);
+}
+
+/* File dialogs ------------------------------------------------------------- */
+
+.FileDialog.Toolbarbox
+{
+	height: 26px;
+}
+
+[mobile] .FileDialog.Toolbarbox
+{
+	height: 40px;
+}
+
+[mobile] .FileDialog.Sidebar
+{
+	top: 26px; 
+	height: calc(100% - 26px);
+}
+
+[mobile] .FileDialog.Sidebar
+{
+	top: 40px; 
+	height: calc(100% - 40px);
+}
+
+.FileDialog.List-view
+{
+	top: 26px; 
+	height: calc(100% - 26px);
+}
+
+[mobile] .FileDialog.List-view
+{
+	top: 40px; 
+	height: calc(100% - 40px);
+}
+
+
+/* Friend graphics elements ------------------------------------------------- */
+
+.FriendGraphic
+{
+	position: absolute;
+	overflow: hidden;
+}
+.FriendGraphic.Default
+{
+	width: 200px;
+	height: 180px;
+	background: white;
+	border-radius: 2px;
+	box-shadow: 0px 0px 2px rgba(0,0,0,0.3);
+}
+.FriendGraphic.Circle
+{
+	border-radius: 500px;
+}
+.FriendGraphic.Recangle, .FriendGraphic.Image
+{
+}
+
+/* Mobile menu -------------------------------------------------------------- */
+
+.MobileMenu
+{
+	display: none;
+}
+
+body[mobile=mobile] > .MobileMenu
+{
+	display: block;
+	position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    bottom: 0;
+    transform: translate3d(0,100%,0);
+    transition: transform 0.25s;
+}
+
+body[mobile=mobile] > .MobileMenu.Visible
+{
+	overflow-y: scroll;
+    box-sizing: border-box;
+    z-index: 2147483647;
+    left: 0;
+    width: 100%;
+    bottom: 0;
+    background: rgba(255,255,255,0.9);
+    padding: 20px;
+    transform: translate3d(0,50px,0);
+}
+
+body[mobile=mobile] > .MobileMenu > div
+{
+    position: relative;
+    text-align: left;
+    padding: 0;
+    border-radius: 10px;
+    font-size: 150%;
+    z-index: 2;
+    margin: 0 0 20px 0;
+}
+
+body[mobile=mobile] > .MobileMenu > div:first-line
+{
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 105%;
+}
+
+body[mobile=mobile] > .MobileMenu > div li[divider=divider]
+{
+	display: none;
+}
+
+body > .MobileMenu > div > ul
+{
+	padding-top: 5px;
+}
+
+body[mobile=mobile] > .MobileMenu > div li, body > .MobileMenu > div ul
+{
+	list-style: none;
+	margin: 0; padding: 0;
+}
+
+body[mobile=mobile] > .MobileMenu > div li
+{
+	padding: 10px 0 0 0;
+	margin: 10px 0 0 0;
+	position: relative;
+}
+
+body[mobile=mobile] > .MobileMenu > div li.Disabled *
+{
+	opacity: 0.5;
+}
+
+body[mobile=mobile] > .MobileMenu > div li.Divider
+{
+	border-top: 2px solid rgba(255,255,255,0.5);
+	height: 2px;
+	padding: 0;
+	line-height: 0;
+}
+
+body[mobile=mobile] > .MobileMenu > div li.Divider + li
+{
+	margin: 0;
+}
+
+body[mobile=mobile] > .MobileMenu > div li.Divider + li:after
+{
+	display: none;
+}
+
+/* Line above li */
+body[mobile=mobile] > .MobileMenu > div li:after
+{
+	content: " ";
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 1px;
+	background: rgba(0,0,0,0.2);
+}
+
+body[mobile=mobile] > .MobileMenu > div li span.IconText
+{
+	margin: 0 0 0 8px;
+}
+
+body[mobile=mobile] > .MobileMenu div li span + .File
+{
+	top: -6px !important;
+	left: 0 !important;
+	margin: 0 !important;
+}
+
+/* Support icons */
+body[mobile=mobile] > .MobileMenu div li span + .File,
+body[mobile=mobile] > .MobileMenu div li span + .File *
+{
+    width: 32px !important;
+    height: 32px !important;
+    background-size: contain !important;
+    overflow: hidden;
+}
+body[mobile=mobile] > .MobileMenu div li span + .File .Title
+{
+	display: none;
+}
+
+body[mobile=mobile] > .MobileMenu.Visible > span.Close,
+body .MobileMenuClose,
+body[mobile=mobile] > .MobileMenu.Visible > span.Close,
+body #WorkspaceMenu .Open ul > li.CloseButton
+{
+	position: fixed;
+	border-bottom: 2px solid rgba(0,0,0,0.2);
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 48px;
+	line-height: 48px;
+	background: white;
+    text-align: left;
+    padding: 0 20px;
+    display: block;
+    z-index: 2147483647 !important;
+    font-size: 24px;
+    transition: top 0.15s,0.15s;
+    -moz-transition: top 0.15s,0.15s;
+    -webkit-transition: top 0.15s,0.15s;
+    color: black;
+    text-shadow: none;
+}
+
+html body[mobile=mobile].ViewMaximized #WorkspaceMenu.Open
+{
+	z-index: 2147483646 !important;
+	overflow: visible !important;
+}
+
+body[mobile=mobile] > .MobileMenuClose:before,
+body #WorkspaceMenu .Open ul > li.CloseButton:before
+{
+	position: relative;
+    top: -1px;
+    margin: 0 10px 0 0;
+}
+
+
+/* NativeViewContainer ------------------------------------------------------ */
+
+html .NativeViewContainer > .View
+{
+	top: 0px !important;
+	left: 0px !important;
+	width: 100% !important;
+	height: 100% !important;
+}
+
+html .NativeViewContainer > .View > .Title, 
+html .NativeViewContainer > .View > .LeftBar,
+html .NativeViewContainer > .View > .RightBar, 
+html .NativeViewContainer > .View > .BottomBar,
+html .NativeViewContainer > .View > .Resize
+{
+	display: none;
+}
+
+html .NativeViewContainer > .View > .Content
+{
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+}
+
+/* Attached windows | window tiling ----------------------------------------- */
+
+body.ViewMaximized .ViewContainer
+{
+	height: 100%;
+}
+
+body.ViewMaximized .View[maximized].TilingMode2
+{
+	top: 0 !important;
+	left: 0 !important;
+	width: 50vw !important;
+	height: 100% !important;
+}
+
+body.ViewMaximized .View.TilingMode2.Tile2
+{
+	top: 0 !important;
+	left: 50vw !important;
+	width: 50vw !important;
+	height: 100% !important;
+}
+
+/* Three tiles */
+
+body.ViewMaximized .View[maximized].TilingMode3
+{
+	top: 0 !important;
+	left: 0 !important;
+	width: 50vw !important;
+	height: 100% !important;
+}
+
+body.ViewMaximized .View.TilingMode3.Tile2
+{
+	top: 0 !important;
+	left: 50vw !important;
+	bottom: 50% !important;
+	height: 50% !important;
+	width: 50vw !important;
+}
+
+body.ViewMaximized .View.TilingMode3.Tile3
+{
+	top: 50% !important;
+	left: 50vw !important;
+	bottom: 100% !important;
+	height: 50% !important;
+	width: 50vw !important;
+}
+
+/* Camera ------------------------------------------------------------------- */
+
+.Content > .FriendCameraContainer
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	transition: transform 0.25s;
+	transform: translate3d(0,0,0);
+}
+
+.Content > .FriendCameraContainer video.FriendCameraElement
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: #000000;
+	z-index: 1;
+}
+
+.Content > .FriendCameraContainer.Flash:after
+{
+	opacity: 0;
+	transition: opacity 0.2s;
+	background-color: rgba(255,255,255,0.5);
+	content: " ";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 2;
+}
+
+.Content > .FriendCameraContainer.Flash.Flashing:after
+{
+	opacity: 1;
+}
+
+.Content > .FriendCameraContainer.Closing
+{
+	transform: translate3d(100%,0,0);
+}
+
+.Content > .FriendCameraContainer > button.fa-refresh, 
+.Content > .FriendCameraContainer > button.fa-refresh:hover,
+.Content > .FriendCameraContainer > button.fa-camera, 
+.Content > .FriendCameraContainer > button.fa-camera:hover
+{
+	position: absolute;
+	z-index: 3;
+	top: calc(100% - 45px);
+	left: calc(50% - 38px);
+	width: 30px;
+	height: 30px;
+	background-color: rgba(0,0,0,0.7) !important;
+	color: white;
+	text-align: center;
+	line-height: 30px;
+	padding: 0 !important;
+	margin: 0 !important;
+	border: 0 !important;
+	cursor: pointer;
+}
+
+.Content > .FriendCameraContainer > button.fa-refresh, 
+.Content > .FriendCameraContainer > button.fa-refresh:hover
+{
+	left: calc(50% + 7px);
+}
+body .Content > .FriendCameraContainer > button
+{
+	color: white;
+}
+
+/* For iOS and unsupported devices */
+
+.FriendCameraFallback
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	transition: transform 0.25s;
+	transform: scale3d(1,0,1);
+	background: rgba(0,0,0,0.7);
+	color: white;
+}
+
+body .FriendCameraFallback button
+{
+	color: white;
+}
+
+.FriendCameraFallback.Showing
+{
+	transform: scale3d(1,1,1);
+}
+
+.FriendCameraFallback.Showing p
+{
+	margin: 20px auto;
+	text-align: center;
+}
+
+body .FriendCameraFallback input[type=file]
+{
+	position: absolute;
+	top: 80px;
+	left: calc(50% - 100px);
+	width: 200px;
+	opacity: 0;
+	z-index: 2;
+}
+
+body .FriendCameraFallback button
+{
+	position: absolute;
+	top: 80px;
+	left: calc(50% - 100px);
+	width: 200px;
+	z-index: 1;
+}
+
+body .FriendCameraFallback button:before
+{
+	margin-right: 5px;
+}
+
+/* Screen overlay ----------------------------------------------------------- */
+
+html body.Loading #FriendScreenOverlay
+{
+	visibility: visible !important;
+}
+
+#FriendScreenOverlay
+{
+	position: absolute;
+	margin: 0;
+	padding: 0;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	display: none;
+	background-color: #222222;
+	color: white;
+	overflow: hidden;
+	font-size: 1em;
+	z-index: 2147483643;
+	opacity: 0;
+	box-sizing: border-box;
+	transition: opacity 0.25s;
+}
+
+#FriendScreenOverlay.Visible
+{
+	display: block;
+	opacity: 0;
+}
+
+#FriendScreenOverlay.Visible.Showing
+{
+	opacity: 1;
+}
+
+#FriendScreenOverlay:after
+{
+	opacity: 0;
+	transition: opacity 0.5s;
+}
+
+#FriendScreenOverlay.Visible.Showing:after
+{
+	opacity: 1;
+}
+
+#FriendScreenOverlay:after
+{
+	display: block;
+	content: " ";
+	position: absolute;
+	top: calc(100% - 50px);
+	left: calc(50% - 20px);
+	width: 40px;
+	height: 40px;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-image: url(/themes/friendup12/gfx/busy.png);
+	clip-path: ellipse(20px 20px at 20px 20px);
+	-webkit-clip-path: ellipse(20px 20px at 20px 20px);
+}
+
+#FriendScreenOverlay .Title
+{
+	position: absolute;
+	top: calc(50% - 300px);
+	left: calc(50% - 400px);
+	height: 40px;
+	width: 0px;
+	overflow: hidden;
+	white-space: nowrap;
+	border-bottom: 1px solid #555555;
+	line-height: 40px;
+	font-weight: bold;
+	color: white;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity,width 0.25s,0.5s;
+}
+
+[mobile] #FriendScreenOverlay .Title
+{
+	top: 0;
+	left: 0;
+	padding-left: 10px;
+	box-sizing: border-box;
+}
+
+#FriendScreenOverlay.Visible.Showing .Title.Showing
+{
+	opacity: 1;
+	width: 800px;
+}
+
+#FriendScreenOverlay .Debug
+{
+	position: absolute;
+	bottom: 40px;
+	left: 10px;
+	width: calc(100% - 20px);
+	text-align: center;
+	font-weight: bold;
+	color: var(--ColorLEDOn);
+}
+
+#FriendScreenOverlay .Debug .DebugLine
+{
+	display: block;
+	color: var(--ColorLEDNotify);
+	font-weight: normal;
+	width: 100%;
+	position: relative;
+	height: 25px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+[mobile] #FriendScreenOverlay.Visible.Showing .Title.Showing
+{
+	width: 100%;
+}
+
+#FriendScreenOverlay .StatusBox
+{
+	position: absolute;
+	top: calc(50% - 260px);
+	left: calc(50% - 400px);
+	height: 560px;
+	width: 800px;
+	line-height: 30px;
+	color: white;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity,width 0.5s,0.5s;
+}
+
+[mobile] #FriendScreenOverlay .StatusBox
+{
+	width: calc(100% - 20px);
+	height: calc(100% - 40px);
+	left: 10px;
+	top: 40px;
+}
+
+[mobile] #FriendScreenOverlay .StatusBox .HContent15
+{
+	display: none;
+}
+[mobile] #FriendScreenOverlay .StatusBox .HContent45,
+[mobile] #FriendScreenOverlay .StatusBox .HContent40
+{
+	width: 50% !important;
+}
+
+#FriendScreenOverlay.Visible.Showing .Title.Showing + .StatusBox
+{
+	opacity: 1;
+}
+
+#FriendScreenOverlay .StatusBox .Status
+{
+	font-weight: bold;
+	text-transform: uppercase;
+	color: #e67e22;
+}
+
+#FriendScreenOverlay .StatusBox .Status.Ok
+{
+	color: #27ae60;
+}
+
+#FriendScreenOverlay .StatusBox .Status.Error
+{
+	color: #c92918;
+}
+

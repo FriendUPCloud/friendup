@@ -1,0 +1,323 @@
+
+	<div class="HRow">
+		<div class="FloatLeft HContent50">
+			<!--<p class="Layout">
+				<strong id="LabelColorTitleActive"></strong>
+			</p>
+	
+			<div class="HRow">
+				<div class="FloatLeft"><input type="text" size="9" id="ColorTitleActive" onchange="setOption(this.id)"/></div>
+				<div class="FloatLeft Box" id="ColorTitleActivePreview" style="background-color: #34495E">    </div>
+			</div>
+	
+			<p>
+				<strong id="LabelColorButtonBackground"></strong>
+			</p>
+	
+			<div class="HRow">
+				<div class="FloatLeft"><input type="text" size="9" id="ColorButtonBackground" onchange="setOption(this.id)"/></div>
+				<div class="FloatLeft Box" id="ColorButtonBackgroundPreview" style="background-color: #E3E7E8">    </div>
+			</div>
+	
+			<p>
+				<strong id="LabelColorWindowBackground"></strong>
+			</p>
+	
+			<div class="HRow">
+				<div class="FloatLeft"><input type="text" size="9" id="ColorWindowBackground" onchange="setOption(this.id)"/></div>
+				<div class="FloatLeft Box" id="ColorWindowBackgroundPreview" style="background-color: #F9F9F9">    </div>
+			</div>
+	
+			<p>
+				<strong id="LabelColorWindowText"></strong>
+			</p>
+	
+			<div class="HRow">
+				<div class="FloatLeft"><input type="text" size="9" id="ColorWindowText" onchange="setOption(this.id)"/></div>
+				<div class="FloatLeft Box" id="ColorWindowTextPreview" style="background-color: #3F3F3F">    </div>
+			</div>
+			
+			<p>
+				<strong id="LabelColorScrollBackground"></strong>
+			</p>
+	
+			<div class="HRow">
+				<div class="FloatLeft"><input type="text" size="9" id="ColorScrollBackground" onchange="setOption(this.id)"/></div>
+				<div class="FloatLeft Box" id="ColorScrollBackgroundPreview" style="background-color: #E0E0E0">    </div>
+			</div>
+			
+			<p>
+				<strong id="LabelColorScrollButton"></strong>
+			</p>
+	
+			<div class="HRow">
+				<div class="FloatLeft"><input type="text" size="9" id="ColorScrollButton" onchange="setOption(this.id)"/></div>
+				<div class="FloatLeft Box" id="ColorScrollButtonPreview" style="background-color: #B0B0B0">    </div>
+			</div>
+			
+		</div>
+		<div class="FloatLeft HContent50">	
+			<p>
+				<strong id="LabelColorFileToolbarBackground"></strong>
+			</p>
+	
+			<div class="HRow">
+				<div class="FloatLeft"><input type="text" size="9" id="ColorFileToolbarBackground" onchange="setOption(this.id)"/></div>
+				<div class="FloatLeft Box" id="ColorFileToolbarBackgroundPreview" style="background-color: #E0E0E0">    </div>
+			</div>
+	
+			<p>
+				<strong id="LabelColorFileToolbarText"></strong>
+			</p>
+	
+			<div class="HRow">
+				<div class="FloatLeft"><input type="text" size="9" id="ColorFileToolbarText" onchange="setOption(this.id)"/></div>
+				<div class="FloatLeft Box" id="ColorFileToolbarTextPreview" style="background-color: #323232">    </div>
+			</div>
+	
+			<p>
+				<strong id="LabelColorFileIconText"></strong>
+			</p>
+	
+			<div class="HRow">
+				<div class="FloatLeft"><input type="text" size="9" id="ColorFileIconText" onchange="setOption(this.id)"/></div>
+				<div class="FloatLeft Box" id="ColorFileIconTextPreview" style="background-color: #313739">    </div>
+			</div>
+			-->
+			
+			<p class="Layout">
+				<strong id="LabelInputParadigmText"></strong>
+			</p>
+	
+			<form>
+				<div class="HRow MarginBottom MarginTop">
+					<div class="FloatLeft" id="InputParadigm">
+						<input type="radio" name="inputparadigm" id="inputparadigmautomatic" onchange="setOption('InputParadigm', this)" value="automatic" checked="checked"/> 
+						Automatic
+						<input type="radio" name="inputparadigm" id="inputparadigmtablet" onchange="setOption('InputParadigm', this)" value="tablet"/> 
+						Tablet
+						<input type="hidden" value="automatic" id="InputParadigmText" onchange="ge('inputparadigm'+this.value).click()"/>
+					</div>
+				</div>
+			</form>
+			
+			<p class="Layout">
+				<strong id="LabelButtonSchemeText"></strong>
+			</p>
+	
+			<form>
+				<div class="HRow MarginBottom MarginTop">
+					<div class="FloatLeft" id="ButtonScheme">
+						<input type="radio" name="buttonscheme" id="buttonschememac" onchange="setOption('ButtonScheme', this)" value="mac" checked="checked"/> 
+						Mac
+						<input type="radio" name="buttonscheme" id="buttonschemewindows" onchange="setOption('ButtonScheme', this)" value="windows"/> 
+						Windows
+						<input type="hidden" value="mac" id="ButtonSchemeText" onchange="ge('buttonscheme'+this.value).click()"/>
+					</div>
+				</div>
+			</form>
+			
+			<p class="Layout">
+				<strong id="LabelColorSchemeText"></strong>
+			</p>
+			
+			<div class="HRow MarginBottom MarginTop">
+				<div class="FloatLeft" id="ColorScheme">
+					<input type="radio" name="colorscheme" id="colorschemelight" onchange="setOption('ColorScheme', this)" value="light" checked="checked"/> 
+					Light
+					<!--<input type="radio" name="colorscheme" id="colorschemedark" onchange="setOption('ColorScheme', this)" value="dark"/> 
+					Dark-->
+					<input type="radio" name="colorscheme" id="colorschemecharcoal" onchange="setOption('ColorScheme', this)" value="charcoal"/> 
+					Charcoal
+					<input type="radio" name="colorscheme" id="colorschemesynthwave" onchange="setOption('ColorScheme', this)" value="synthwave"/> 
+					Synthwave
+					<!--<input type="radio" name="colorscheme" id="colorschemesynthwave" onchange="setOption('ColorScheme', this)" value="synthwave"/> 
+					Synthwave-->
+					<input type="hidden" value="light" id="ColorSchemeText" onchange="ge('colorscheme'+this.value).click()"/>
+				</div>
+			</div>
+			
+			<p class="Layout">
+				<strong id="LabelIconEffectText"></strong>
+			</p>
+			
+			<div class="HRow MarginBottom MarginTop">
+				<div class="FloatLeft" id="IconEffect">
+					<input type="radio" name="iconeffect" id="iconeffectshadow" onchange="setOption('IconEffect', this)" value="shadow" checked="checked"/> 
+					Drop shadow
+					<input type="radio" name="iconeffect" id="iconeffectbox" onchange="setOption('IconEffect', this)" value="box"/> 
+					Rounded box
+					<input type="hidden" value="shadow" id="IconEffectText" onchange="ge('iconeffect'+this.value).click()"/>
+				</div>
+			</div>
+			
+		</div>
+	</div>
+	
+	<div class="MarginTop BorderTop">
+		&nbsp;
+	</div>
+	
+	<p class="Layout">
+		<button type="button" class="Neutral IconSmall fa-undo" id="UndoButn"></button>
+	</p>
+	
+	<script>
+	
+		window.guichanged = 0;
+	
+		let defaultSetup = {
+			/*colorTitleActive: '#34495E',
+			colorButtonBackground: '#E3E7E8',
+			colorWindowBackground: '#F9F9F9',
+			colorWindowText: '#3F3F3F',
+			colorScrollBackground: '#E0E0E0',
+			colorScrollButton: '#B0B0B0',
+			colorFileToolbarBackground: '#E0E0E0',
+			colorFileToolbarText: '#323232',
+			colorFileIconText: '#313739',*/
+			buttonSchemeText: 'win',
+			colorSchemeText: 'light',
+			iconEffectText: 'shadow',
+			inputParadigmText: 'automatic'
+		};
+	
+		window.setOption = function( key, ele )
+		{
+			// Radio boxes behave differently
+			if( ele && ele.getAttribute( 'type' ) == 'radio' )
+			{
+				let sl = ele.parentNode.getElementsByTagName( 'input' );
+				for( let a = 0; a < sl.length; a++ )
+				{
+					// We find the container
+					if( sl[a].type == 'hidden' )
+					{
+						sl[a].value = ele.value;
+					}
+					// We find a radio that isn't clicked element
+					else if( sl[a] != ele )
+						sl[a].checked = '';
+				}
+				// Make sure it is checked
+				ele.checked = 'checked';
+				window.guichanged++;
+				return;
+			}
+			switch( key )
+			{
+				default:
+					if( ge( key + 'Preview' ) )
+					{
+						ge( key + 'Preview' ).style.backgroundColor = ge( key ).value;
+						window.guichanged++;
+					}
+					break;
+			}
+		}
+		
+		// Translate labels
+		for( let a in defaultSetup )
+		{
+			let upKey = a.charAt( 0 ).toUpperCase() + a.substr( 1, a.length - 1 );
+			if( ge( 'Label' + upKey ) )
+			{
+				ge( 'Label' + upKey ).innerHTML = i18n( 'i18n_' + upKey ) + ':';
+			}
+		}
+		
+		ge( 'UndoButn' ).innerHTML = ' ' + i18n( 'i18n_set_defaults' );
+		
+		ge( 'UndoButn' ).onclick = function()
+		{
+			let m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				for( let a in defaultSetup )
+				{
+					let upKey = a.charAt( 0 ).toUpperCase() + a.substr( 1, a.length - 1 );
+					if( ge( upKey ) )
+						ge( upKey ).value = defaultSetup[ a ];
+				}
+				refreshThemeOptions();
+				
+				// Tell Friend Workspace to refresh the theme..
+				Application.sendMessage( {
+					type: 'system',
+					command: 'refreshtheme'
+				} );
+			}
+			m.execute( 'resetguisettings' );
+		}
+		
+		window.refreshThemeOptions = function()
+		{
+			for( let a in defaultSetup )
+			{
+				let upKey = a.charAt( 0 ).toUpperCase() + a.substr( 1, a.length - 1 );
+				setOption( upKey );
+			}
+		}
+		
+		// Update defaults
+		if( ge( 'ThemeConfigData' ).value.length )
+		{
+			let d = ge( 'ThemeConfigData' ).value;
+			try
+			{
+				// Get stored value or default
+				d = JSON.parse( d );
+				for( let a in defaultSetup )
+				{
+					let upKey = a.charAt( 0 ).toUpperCase() + a.substr( 1, a.length - 1 );
+					if( ge( upKey ) )
+					{
+						if( ge( upKey ).tagName == 'INPUT' )
+						{
+							if( d[ a ] ) ge( upKey ).value = d[ a ];
+							else ge( upKey ).value = defaultSetup[ a ];
+							if( ge( upKey ).onchange )
+							{
+								try
+								{
+									ge( upKey ).onchange();
+								}
+								catch( e ){};
+							}
+						}
+					}
+				}
+				refreshThemeOptions();
+			}
+			catch( e )
+			{
+				for( let a in defaultSetup )
+				{
+					let upKey = a.charAt( 0 ).toUpperCase() + a.substr( 1, a.length - 1 );
+					if( ge( upKey ) )
+						ge( upKey ).value = defaultSetup[ a ];
+				}
+				refreshThemeOptions();
+			};
+		}
+		
+		// Trigger for Looknfeel!
+		window.onSaveThemeConfig = function()
+		{
+			let data = {};
+			// Only save if the gui changed
+			if( window.guichanged > 0 )
+			{
+				for( let a in defaultSetup )
+				{
+					let upKey = a.charAt( 0 ).toUpperCase() + a.substr( 1, a.length - 1 );
+					if( ge( upKey ) )
+						data[ a ] = ge( upKey ).value;
+				}
+				ge( 'ThemeConfigData' ).value = JSON.stringify( data );
+				window.guichanged = 0;
+			}
+		}
+		
+	</script>
+
