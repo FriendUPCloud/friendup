@@ -8,6 +8,11 @@
 	display: block;
 }
 
+html body .View
+{
+    max-width: 100% !important;
+}
+
 .View, .View.Active
 {
 	border-bottom: 0;
