@@ -1046,7 +1046,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 							js = JSON.parse( d );
 						}
 						catch( e ){}
-					    console.log( 'Got favorites', js );
+					    //console.log( 'Got favorites', js );
 					}
 					
 					if( !favoritesMode )
