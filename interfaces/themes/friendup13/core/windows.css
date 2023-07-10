@@ -1763,3 +1763,16 @@ html body.Loading #FriendScreenOverlay
 	color: #c92918;
 }
 
+.ProgressBar > .Info 
+{
+    display: inline-block;
+    width: 200px;
+    vertical-align: top;
+    padding: 0;
+}
+
+.ProgressBar > .Info > div#transfernotice
+{
+	padding-top: 0 !important;
+}
+
