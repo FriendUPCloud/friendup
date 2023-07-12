@@ -112,7 +112,7 @@ html input[type=text]:focus, html input[type=username]:focus, html input[type=pa
 	box-sizing: border-box;
 	width: 100%;
 	outline: 0;
-	border-radius: 2px;
+	border-radius: 15px;
 	box-shadow: none;
 	height: 35px;
 	line-height: 30px;
@@ -138,15 +138,15 @@ button
 	display: block;
 	font-size: 15px;
 	width: 100%;
-	background-color: #f0f1f2;
-	color: #95A5A6;
+	background-color: #e4d6c8;
+	color: #2b2b2b;
 	padding: 0px 10px;
 	height: 30px;
 	line-height: 28px;
 	border: 0;
 	text-transform: uppercase;
 	font-weight: bold;
-	border-radius: 2px;
+	border-radius: 15px;
 }
 
 #loginButton.Forgot
