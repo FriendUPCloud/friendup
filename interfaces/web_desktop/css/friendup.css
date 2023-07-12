@@ -37,6 +37,7 @@ body.Login .View
 	box-shadow: none;
 	border: 0;
 	background: transparent;
+	border-radius: 15px;
 }
 
 body .ViewTitle { display: none; }
