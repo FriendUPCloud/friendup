@@ -32,7 +32,7 @@ html body[mobile].Login
 	background-image: none;
 }
 
-body.Login .View
+html body:not([mobile]).Login #Login.View
 {
 	box-shadow: none;
 	border: 0;
