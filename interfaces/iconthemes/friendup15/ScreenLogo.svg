@@ -10,23 +10,23 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="13.499612mm"
-   height="13.852864mm"
-   viewBox="0 0 13.499612 13.852864"
+   width="12.834354mm"
+   height="13.658826mm"
+   viewBox="0 0 12.834354 13.658826"
    version="1.1"
-   id="svg4793"
+   id="svg962"
    inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)"
    sodipodi:docname="ScreenLogo.svg">
   <defs
-     id="defs4787">
+     id="defs956">
     <linearGradient
        inkscape:collect="always"
        xlink:href="#linearGradient4755"
-       id="linearGradient4757"
-       x1="73.457031"
-       y1="36.970703"
-       x2="73.457031"
-       y2="5.5463929"
+       id="linearGradient1045"
+       x1="66.441376"
+       y1="83.898407"
+       x2="66.441376"
+       y2="58.763927"
        gradientUnits="userSpaceOnUse" />
     <linearGradient
        inkscape:collect="always"
@@ -43,11 +43,11 @@
     <linearGradient
        inkscape:collect="always"
        xlink:href="#linearGradient4747"
-       id="linearGradient4749"
-       x1="71.263901"
-       y1="134.08942"
-       x2="71.263901"
-       y2="154.78654"
+       id="linearGradient1053"
+       x1="16.57263"
+       y1="22.979994"
+       x2="16.57263"
+       y2="29.252201"
        gradientUnits="userSpaceOnUse" />
     <linearGradient
        inkscape:collect="always"
@@ -69,9 +69,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.35"
-     inkscape:cx="969.79679"
-     inkscape:cy="-22.392787"
+     inkscape:zoom="2.8284271"
+     inkscape:cx="43.220199"
+     inkscape:cy="40.968091"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -80,12 +80,12 @@
      fit-margin-right="0"
      fit-margin-bottom="0"
      inkscape:window-width="1920"
-     inkscape:window-height="996"
+     inkscape:window-height="995"
      inkscape:window-x="0"
      inkscape:window-y="28"
      inkscape:window-maximized="1" />
   <metadata
-     id="metadata4790">
+     id="metadata959">
     <rdf:RDF>
       <cc:Work
          rdf:about="">
@@ -100,27 +100,27 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(291.74385,-129.05571)">
+     transform="translate(98.643366,-157.12296)">
     <g
-       id="g879-3"
-       transform="matrix(0.29829882,0,0,0.29829882,-299.8693,96.654894)"
-       style="stroke-width:3.35234332">
-      <g
-         id="g4612-0"
-         style="stroke-width:3.35234332">
-        <path
-           style="opacity:1;vector-effect:none;fill:url(#linearGradient4757);fill-opacity:1;stroke:none;stroke-width:4.66998339;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
-           d="M 41.935547,5.4492188 10.414062,36.970703 H 22.208984 L 41.935547,17.242188 61.662109,36.970703 h 11.794922 z"
-           transform="matrix(0.71784896,0,0,0.71784896,19.763567,104.70694)"
-           id="rect819-4"
-           inkscape:connector-curvature="0" />
-        <path
-           style="opacity:1;vector-effect:none;fill:url(#linearGradient4749);fill-opacity:1;stroke:none;stroke-width:3.35234261;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
-           d="m 71.058524,133.86642 -21.1918,21.19179 -21.191799,-21.19179 z"
-           id="rect819-3-4"
-           inkscape:connector-curvature="0"
-           sodipodi:nodetypes="cccc" />
-      </g>
+       transform="translate(-103.0555,141.57611)"
+       style="display:inline;opacity:1"
+       id="g1057"
+       inkscape:export-filename="/home/autocaret/Desktop/LogoSymbol.png"
+       inkscape:export-xdpi="911.20557"
+       inkscape:export-ydpi="911.20557">
+      <path
+         sodipodi:nodetypes="ccccccccccccccccccc"
+         inkscape:connector-curvature="0"
+         id="path1009"
+         transform="scale(0.26458333)"
+         d="m 40.929688,58.759766 c -0.260399,4.06e-4 -0.518922,0.117929 -0.685548,0.318038 -7.757468,7.762661 -15.509055,15.523699 -23.269531,23.285477 -0.18994,0.166817 -0.298825,0.407362 -0.298828,0.660157 -1.53e-4,0.48547 0.393437,0.87906 0.878907,0.878906 h 11.07544 c 0.255088,-3.5e-4 0.497432,-0.111543 0.664062,-0.304688 5.041153,-5.030154 6.03624,-6.047919 11.074951,-11.083371 0.157798,-0.159521 0.368704,-0.201724 0.560541,-0.199219 0.202989,1.13e-4 0.399677,0.07051 0.55664,0.199219 5.037248,5.027549 6.028429,6.042712 11.063234,11.075559 0.147324,0.19589 0.433343,0.3125 0.679676,0.3125 h 11.01685 v -0.002 c 0.715051,0 0.937496,-0.429723 0.937496,-0.876906 -1.49e-4,-0.229211 -0.08986,-0.44929 -0.25,-0.613282 -8.122271,-8.126208 -16.368671,-16.37707 -23.320297,-23.332352 -0.181753,-0.17205 -0.406599,-0.318038 -0.683587,-0.318038 z"
+         style="fill:url(#linearGradient1045);fill-opacity:1;stroke:none;stroke-width:0.99999994px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cccccccccccc"
+         inkscape:connector-curvature="0"
+         id="path1009-6"
+         d="m 10.829313,29.205673 c -0.0689,-1.08e-4 -0.137298,-0.0312 -0.181384,-0.08415 -2.0524971,-2.053871 -3.6874326,-3.680688 -5.7407252,-5.734325 -0.050255,-0.04414 -0.079064,-0.107781 -0.079065,-0.174667 -4.04e-5,-0.128447 0.1040969,-0.232584 0.2325442,-0.232544 0,0 5.345056,7e-6 11.511946,7e-6 v 5.3e-4 c 0.18919,0 0.248046,0.113697 0.248046,0.232014 -4e-5,0.06065 -0.02378,0.118875 -0.06615,0.162264 -2.149014,2.15006 -3.90506,3.906476 -5.744344,5.746728 -0.04809,0.04552 -0.10758,0.08415 -0.180866,0.08415 z"
+         style="display:inline;opacity:0.98000004;fill:url(#linearGradient1053);fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
     </g>
   </g>
 </svg>
