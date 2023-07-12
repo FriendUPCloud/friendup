@@ -1,16 +1,10 @@
 @font-face {
-    font-family: 'assistant';
-    src: url('/themes/friendup12/fonts/Assistant-Regular.ttf') format('truetype');
+    font-family: 'Maven Pro';
+    src: url('/themes/friendup13/fonts/MavenPro-VariableFont_wght.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
 }
 
-@font-face {
-    font-family: 'assistant';
-    src: url('/themes/friendup12/fonts/Assistant-SemiBold.ttf') format('truetype');
-    font-weight: bold;
-    font-style: bold;
-}
 /* Tags */
 
 html
@@ -25,7 +19,7 @@ body
 	margin: 0;
 	padding: 0;
 	color: #5f7172;
-	font-family: 'assistant', sans-serif;
+	font-family: 'Maven Pro', sans-serif;
 	font-size: 15px;
 }
 
@@ -68,7 +62,7 @@ body
 
 #invalidLogin { color:#F00; padding-top:6px; }
 #invalidLogin p { margin:0 0 6px 0; }
-button, .Button { margin:0; font-family: 'assistant'; }
+button, .Button { margin:0; font-family: 'Maven Pro'; }
 
 div.Logo
 {
@@ -171,7 +165,7 @@ input[type=text], input[type=password]
 	border: 0;
 	border-radius: 5px;
 	font-size: 15px;
-	font-family: 'assistant', sans-serif;
+	font-family: 'Maven Pro', sans-serif;
 	font-weight: bold;
 	color: #4B9CE6;
 	box-shadow: 0px 0px 1px 2px rgba(0,0,0,0.1);
