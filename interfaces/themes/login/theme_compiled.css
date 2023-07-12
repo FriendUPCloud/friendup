@@ -79,8 +79,8 @@ div.Logo
 	height: 60px;
 	box-sizing: border-box;
 	font-size: 18px;
-	background-position: center 20px;
-	background-color: #F0F1F2;
+	background-position: center 30px;
+	background-color: #F0E8E0;
 	padding: 70px 40px 50px 40px;
 	margin: -20px -20px 20px -20px;
 	text-align: center;
@@ -101,7 +101,7 @@ p
 
 a, a:hover, a:visited, a:focus, a:active
 {
-	color: #3498DB;
+	color: #386287;
 	text-decoration: none;
 	font-weight: normal;
 }
