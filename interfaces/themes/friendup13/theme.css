@@ -1482,7 +1482,7 @@ html .Screen > .TitleBar:after
 
 html body.Charcoal .Screen > .TitleBar:after
 {
-    filter: brightness(1.2);
+    filter: grayscale(1) brightness(2.2) contrast(0.7)
 }
 
 html .Screen > .TitleBar .Left
